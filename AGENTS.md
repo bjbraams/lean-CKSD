@@ -22,17 +22,20 @@ One component of the lean-CKSD project is to assemble a bibliography. The main w
 numbered from 101 on.
 
 PDF files for some of the references are in the directory ../lean-CKMA/References/. The directory
-../lean-CMKA/ReferencesSuppl/ may contain PDF files for some books in the same general area that
+../lean-CKMA/ReferencesSuppl/ may contain PDF files for some books in the same general area that
 are not in the bibliography.
 
 There may be additional files, for example `*.json`, for precise bibliographical data.
 
-Following work on the bibliography the next major task is to create files SYNOPSIS.md and
-SYNOPSISddd.md (where ddd numbers from 101 on) in the style of such files in the sibling CKMA
-project. These SYNOPSIS files are mean for the human mathematician reader; they do not reference
-any technical Lean concepts.
+Files `SYNOPSIS.md` and `SYNOPSIS101.md`–`SYNOPSIS113.md` describe the mathematical content of
+Sections 101–113, in the style of the SYNOPSIS files in the sibling CKMA project. `SYNOPSIS.md`
+is the index. Numbered entries, cited as `<ddd>.<k>`, are stable identifiers: existing numbers
+are kept when a statement is revised, removed numbers are not reused, and a new statement takes
+the next free number in its file. These files are meant for the human mathematician reader; they
+do not reference any technical Lean concepts. Proofs are outside their scope. The selection is
+the recurring core of each section. The index records how far the series has been written.
 
-Following the work on both bibliography and SYNOPSIS the next major task is to inventorize
+Following completion of the synopsis series, the next major task is to inventorize
 coverage of the SYNOPSIS in Lean Mathlib and TauCeti. This inventory is to be documented in files
 STRUCTURE.md and STRUCTUREddd.md, following the style of the sibling CKMA project. These STRUCTURE
 files are meant to support future Lean projects.
