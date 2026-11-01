@@ -1,20 +1,21 @@
-# Synopsis: Bayesian statistics and Monte Carlo methods
+# Synopsis: Linear models, multivariate analysis, experimental design, and causal inference
 
 Part of the [mathematical synopsis series](SYNOPSIS.md).
 [Bibliographical scope and references](CKSD-bib.md#cks-105).
 
-This synopsis follows Section 105. Subdivision 105A is parametric Bayesian
-theory. Subdivision 105B is nonparametric priors, posterior contraction, and
-inverse problems. Subdivision 105C is Monte Carlo and Markov chain Monte
-Carlo. De Finetti's theorem is
-[CKMA SYNOPSIS06](../lean-CKMA/SYNOPSIS06.md), item 55. Bayes rules for a
-specified loss are [SYNOPSIS102](SYNOPSIS102.md), item 2. Geometric
-ergodicity of a Markov chain is
-[CKMA SYNOPSIS08](../lean-CKMA/SYNOPSIS08.md), item 69. Langevin algorithms
-and diffusion-based sampling are in Section 112, and the construction of
-variational families is in Section 113. Gaussian-process regression
-posteriors are [SYNOPSIS113](SYNOPSIS113.md), item 30, and kriging is
-[SYNOPSIS108](SYNOPSIS108.md), items 18 and 31.
+This synopsis follows Section 105. Subdivision 105A is the linear model,
+the analysis of variance and variance components, generalised linear
+models, quantiles, finite mixtures, classical multivariate analysis,
+graphical models, and directional data. Subdivision 105B is experimental
+design, including block, factorial, and Latin-square designs, and causal
+inference: potential outcomes, randomized and observational studies,
+interventions on directed graphical models, structural counterfactuals,
+mediation, sensitivity, and discovery. Simultaneous confidence procedures
+for the linear model are [SYNOPSIS101](SYNOPSIS101.md), items 60 and 61. Likelihood-ratio asymptotics are
+[SYNOPSIS102](SYNOPSIS102.md), item 11. Missingness at random, the efficient influence function for a
+missing mean, and semiparametric efficiency are [SYNOPSIS102](SYNOPSIS102.md), items 34, 35, and 37. The Cox
+model is [SYNOPSIS106](SYNOPSIS106.md), item 30. High-dimensional covariance and sparsity are
+[SYNOPSIS103](SYNOPSIS103.md).
 
 Numbered definitions and results have stable identifiers. Additions take the
 next free number and are placed beside related material; numbers need not
@@ -22,588 +23,1305 @@ increase in reading order. Proofs are outside the scope of this synopsis.
 
 <a id="synopsis-105a"></a>
 
-## 105A. Foundations and Parametric Bayesian Theory
+## 105A. Regression, Multivariate Analysis, and Graphical Models
 
-Let the observations be independent with common density $f(x\mid\theta)$
-relative to a dominating measure, and let the prior distribution $\Pi$ have
-density $\pi$ relative to a measure on the parameter space. The **marginal
-density** of the sample $y$ is $m(y)=\int f(y\mid\theta)\,\pi(\theta)\,d\theta$,
-and the **posterior density** is $\pi(\theta\mid y)=f(y\mid\theta)\pi(\theta)/m(y)$
-wherever $m(y)>0$.
+### Regression, generalised linear models, and mixtures
 
-* **1. Bernstein–von Mises theorem.** Let the experiment be locally
-  asymptotically normal through independent sampling from a model
-  differentiable in quadratic mean at an interior $\theta_0\in\mathbb R^k$,
-  with nonsingular Fisher information $I(\theta_0)$. Assume a prior density
-  continuous and positive at $\theta_0$ and, for each $\delta>0$, tests
-  with both type I error and the supremum type II error over
-  $\|\theta-\theta_0\|\ge\delta$ tending to zero. Let $\hat\theta_n$ be
-  efficient, with
-  $\sqrt n(\hat\theta_n-\theta_0)=I(\theta_0)^{-1}
-  n^{-1/2}\sum_i\dot\ell_{\theta_0}(X_i)+o_P(1)$. Then the posterior law of
-  $\sqrt n\,(\theta-\hat\theta_n)$ converges in total variation to
-  $N(0,I(\theta_0)^{-1})$, in $P_{\theta_0}$-probability. Posterior credible
-  balls of a fixed credibility level are therefore asymptotic confidence sets
-  of the same level.
+Throughout this subdivision, $Y$ is an $n$-vector of responses, $X$ is a fixed
+$n\times p$ design matrix, and the mean of $Y$ is $X\beta$ unless a statement
+says otherwise. Write $r=\mathop{\mathrm{rank}}(X)$.
 
-A regular exponential family in the natural parameter $\eta$ has density
-$h(x)\exp(\eta\cdot T(x)-A(\eta))$ on the natural parameter space.
+* **1. Gauss–Markov theorem.** Assume $\mathbb E\varepsilon=0$ and
+  $\mathop{\mathrm{Cov}}(\varepsilon)=\sigma^2 I_n$. Among linear unbiased
+  estimators of an estimable functional $c^\top\beta$, the least-squares
+  estimator has the smallest variance. If $X$ has full column rank, the
+  covariance $\sigma^2(X^\top X)^{-1}$ of the least-squares estimator is the
+  Loewner minimum of the covariances of linear unbiased estimators of $\beta$.
+  The comparison uses the first two moments of $\varepsilon$.
 
-* **2. Conjugate updating.** A prior with density proportional to
-  $\exp(\eta\cdot\chi_0-\nu_0 A(\eta))$, for $\nu_0>0$ and $\chi_0/\nu_0$ in
-  the interior of the mean domain, is conjugate for this family. After
-  $n$ independent observations the posterior belongs to the same family, with
-  parameters $\chi_0+\sum_{i=1}^n T(X_i)$ and $\nu_0+n$.
+Let $P$ be the orthogonal projection onto the column space of $X$, and write
+$\mu=\mathbb EY$.
 
-* **3. Jeffreys prior.** On a regular parametric model of dimension $k$, the
-  Jeffreys prior has density proportional to $(\det I(\theta))^{1/2}$ with
-  respect to Lebesgue measure, wherever the Fisher information is positive
-  definite and continuous. If $\eta=g(\theta)$ is a smooth reparameterization
-  with nonsingular derivative, the Jeffreys density computed in the
-  $\eta$-coordinate is the image of the Jeffreys density computed in the
-  $\theta$-coordinate.
+* **2. Normal sampling theory.** If $\varepsilon\sim N(0,\sigma^2 I_n)$, then
+  $\|PY\|^2/\sigma^2$ has the noncentral chi-squared law on $r$ degrees of
+  freedom with noncentrality $\|P\mu\|^2/\sigma^2$, and $\|PY\|^2$ is
+  independent of $\|(I-P)Y\|^2$. The residual sum of squares
+  $\|(I-P)Y\|^2/\sigma^2$ is chi-squared on $n-r$ degrees of freedom. When
+  $X$ has full column rank, the least-squares estimator is normal with mean
+  $\beta$ and covariance $\sigma^2(X^\top X)^{-1}$, and it is independent of
+  the residual sum of squares.
 
-* **4. Normal sampling model.** Let $X_1,\ldots,X_n$ be independent
-  $N(\mu,\sigma^2)$. If $\sigma^2$ is known and the prior is
-  $\mu\sim N(\mu_0,\tau^2)$, the posterior of $\mu$ is normal, with precision
-  $\tau^{-2}+n\sigma^{-2}$ and with mean equal to the precision-weighted
-  average of $\mu_0$ and $\bar X$. If $\sigma^2$ is unknown and the prior
-  density of $(\mu,\sigma^2)$ is proportional to $1/\sigma^2$, the marginal
-  posterior of $\mu$ is a Student $t$ law on $n-1$ degrees of freedom,
-  centered at $\bar X$, with scale $s/\sqrt n$, where
-  $s^2=\sum_{i=1}^n(X_i-\bar X)^2/(n-1)$, provided $n\ge2$ and
-  $s^2>0$, which ensure posterior propriety.
+An **exponential dispersion family** has density
+$$\exp\Bigl(\frac{y\theta-b(\theta)}{a(\varphi)}+c(y,\varphi)\Bigr)$$
+with respect to a dominating measure. Then $\mathbb EY=b'(\theta)$ and
+$\mathop{\mathrm{Var}}(Y)=b''(\theta)\,a(\varphi)$. A **generalised linear
+model** specifies $g(\mu_i)=x_i^\top\beta$ for a link $g$, with
+$\eta_i=x_i^\top\beta$. The link is canonical when the natural parameter
+equals $\eta_i$. Write $V$ for the variance function in the case
+$a(\varphi)=\varphi$, so that $\mathop{\mathrm{Var}}(Y_i)=\varphi V(\mu_i)$,
+and write $W=\mathop{\mathrm{diag}}\bigl((d\mu_i/d\eta_i)^2/V(\mu_i)\bigr)$.
 
-* **5. Laplace approximation and the BIC.** Let the model dimension be $k$,
-  let the prior density be continuous and positive at an interior maximum
-  likelihood estimator $\hat\theta_n$, and let the observed information
-  $J_n=-D^2\ell_n(\hat\theta_n)$ be positive definite. Assume the
-  regular fixed-dimensional local quadratic expansion, $J_n/n$ tending to
-  a positive definite limit, and tail control making the integral outside
-  the concentrating neighborhood negligible. Then
-  $$\log m(y)=\ell_n(\hat\theta_n)+\log\pi(\hat\theta_n)
-  +\frac k2\log(2\pi)-\frac12\log\det J_n+o_P(1).$$
-  Under the regularity of SYNOPSIS103, item 3, $J_n$ is of exact order $n$,
-  so $-2\log m(y)=-2\ell_n(\hat\theta_n)+k\log n+O_P(1)$. The Bayes information
-  criterion $-2\ell_n(\hat\theta_n)+k\log n$ therefore tracks $-2\log m(y)$
-  up to a tight term. Its model-selection property is recorded in
-  SYNOPSIS107, item 4.
+* **3. Asymptotics of the generalised linear model.** For independent
+  responses from an exponential dispersion family, with $a(\varphi)=\varphi$
+  and with the design and link satisfying the usual full-rank and interior
+  conditions, the Fisher information for $\beta$ is $\varphi^{-1}X^\top WX$.
+  The maximum likelihood estimator is asymptotically normal with covariance
+  equal to the inverse of this information, and a consistent estimator of
+  $\varphi$ may be substituted. The difference of the deviances of two nested
+  regular models is the likelihood-ratio statistic of SYNOPSIS102, item 11,
+  and is asymptotically chi-squared on the difference of the dimensions under
+  the smaller model.
 
-### Posterior decisions, prediction, and comparison
+* **4. Quasi-likelihood.** Let $D_i=\partial\mu_i/\partial\beta$ and let $V_i$
+  be a positive definite working covariance. A root $\hat\beta$ of the
+  estimating equation $\sum_i D_i^\top V_i^{-1}(Y_i-\mu_i(\beta))=0$ is
+  asymptotically normal whenever the mean $\mu(\beta)$ is correctly specified
+  and the usual regularity conditions hold. A consistent estimator of its
+  covariance is the sandwich
+  $$A_n^{-1}B_nA_n^{-1},$$
+  where $A_n=\sum_i D_i^\top V_i^{-1}D_i$ and
+  $B_n=\sum_i D_i^\top V_i^{-1}\widehat{\mathop{\mathrm{Cov}}}(Y_i)\,V_i^{-1}D_i$.
+  If $V_i$ equals the true covariance, the sandwich reduces to $A_n^{-1}$.
 
-* **16. Posterior means and quantiles.** For a real parameter with finite
-  posterior second moment, squared-error posterior risk is minimized
-  uniquely by its posterior mean, and the minimum is its posterior
-  variance. With finite posterior first moment, absolute-error risk is
-  minimized by any posterior median. More generally, the check loss
-  $\rho_\tau(\theta-a)$ of SYNOPSIS106, item 5, is minimized by a posterior
-  $\tau$-quantile. A $(1-\alpha)$ credible set $C(X)$ under a proper prior
-  satisfies
-  $$\int P_\theta(\theta\in C(X))\,\Pi(d\theta)=1-\alpha$$
-  if its posterior content is exactly $1-\alpha$ almost surely.
-  This is prior-averaged coverage; pointwise asymptotic coverage follows
-  under item 1 for the usual regular credible balls.
+The **check function** of order $\tau\in(0,1)$ is
+$\rho_\tau(u)=u(\tau-1_{\{u<0\}})$. The $\tau$-quantile regression estimator
+minimizes $\sum_{i=1}^n\rho_\tau(Y_i-x_i^\top\beta)$.
 
-* **17. Elementary conjugate families.** For $S\sim\mathop{\mathrm{Bin}}(n,p)$
-  and a $\mathop{\mathrm{Beta}}(a,b)$ prior, $a,b>0$, the posterior is
-  $\mathop{\mathrm{Beta}}(a+S,b+n-S)$ and the next Bernoulli success
-  probability is $(a+S)/(a+b+n)$. For independent Poisson observations of
-  mean $\lambda$ and a gamma prior with shape $a$ and rate $b$, the
-  posterior has shape $a+\sum_iX_i$ and rate $b+n$. For multinomial counts
-  and a Dirichlet prior with positive parameters $a_j$, the posterior
-  parameters are $a_j+N_j$ and predictive probabilities are
-  $(a_j+N_j)/(\sum_\ell a_\ell+n)$. These are finite-dimensional instances
-  of the updating rule in item 6.
+* **5. Quantile regression.** Let $\beta_\tau$ be a minimizer of the
+  population criterion $\mathbb E\rho_\tau(Y-x^\top\beta)$ in an
+  independent random-design sample, and assume the conditional
+  $\tau$-quantile is correctly specified as $x^\top\beta_\tau$.
+  Write $\varepsilon=Y-x^\top\beta_\tau$. Suppose that the conditional density of
+  $\varepsilon$ given $x$ is continuous and positive at $0$, that
+  $D_0=\mathbb E[xx^\top]$ and
+  $D_1=\mathbb E[f_{\varepsilon\mid x}(0)\,xx^\top]$ are finite, and that
+  $D_1$ is nonsingular. Then
+  $$\sqrt n\,(\hat\beta_\tau-\beta_\tau)
+  \Rightarrow N\bigl(0,\,\tau(1-\tau)\,D_1^{-1}D_0D_1^{-1}\bigr).$$
 
-* **18. Posterior predictive distribution.** For a future observation
-  $Y^\star$ conditionally independent of the data given $\theta$,
-  $$P(Y^\star\in B\mid X)=\int P_\theta(Y^\star\in B)\,\Pi(d\theta\mid X).$$
-  If $\mu(\theta)=\mathbb E_\theta Y^\star$ and
-  $v(\theta)=\mathop{\mathrm{Var}}_\theta Y^\star$ have the needed moments,
-  $$\mathop{\mathrm{Var}}(Y^\star\mid X)
-  =\mathbb E[v(\theta)\mid X]
-  +\mathop{\mathrm{Var}}(\mu(\theta)\mid X).$$
-  Under normal sampling with the improper prior of item 4 and a proper
-  posterior, $(Y^\star-\bar X)/(s\sqrt{1+1/n})$ has posterior predictive
-  law $t_{n-1}$. Parameter uncertainty and future observation noise both
-  contribute to predictive uncertainty.
+* **6. Finite normal mixtures.** A finite mixture of nondegenerate Gaussian
+  distributions on $\mathbb R^d$, with distinct component parameters
+  and strictly positive weights, is identifiable up to permutation of
+  the component labels. With at least two components and unconstrained
+  component covariance matrices, the likelihood is unbounded: a
+  component mean placed at an observation, with that component's variance sent
+  to zero, drives the likelihood to infinity. The EM iteration of SYNOPSIS102, item 36, can diverge to this boundary.
 
-* **19. Bayes factors.** Let models $M_0,M_1$ have positive prior
-  probabilities and proper within-model priors, with finite positive
-  marginal densities $m_0(x),m_1(x)$. Then
-  $$\frac{P(M_1\mid x)}{P(M_0\mid x)}
-  =\frac{m_1(x)}{m_0(x)}\frac{P(M_1)}{P(M_0)}.$$
-  The ratio $m_1/m_0$ is the Bayes factor. Under $0$–$1$ model-selection
-  loss the posterior-preferred model is the Bayes decision. An arbitrary
-  multiplicative constant in an improper within-model prior generally
-  prevents the marginal-likelihood ratio from being defined.
+* **7. Residual maximum likelihood.** In the Gaussian linear model of item 2,
+  the maximum likelihood estimator of $\sigma^2$ is the residual sum of
+  squares divided by $n$. The residual maximum likelihood estimator, formed
+  from the likelihood of any full-rank set of error contrasts, is the residual
+  sum of squares divided by $n-r$. That estimator is unbiased for $\sigma^2$.
 
-### Credible regions, point nulls, and hierarchical shrinkage
+### Linear-model reductions and diagnostics
 
-Suppose the posterior has density $\pi(\theta\mid x)$ with respect to
-Lebesgue measure on $\mathbb R^k$. A set $C$ is a **highest posterior
-density region** of level $1-\alpha$ when
-$\{\theta:\pi(\theta\mid x)>k_\alpha\}\subset C\subset
-\{\theta:\pi(\theta\mid x)\ge k_\alpha\}$, where $k_\alpha$ is the largest
-constant for which $C$ has posterior content at least $1-\alpha$.
+A linear functional $c^\top\beta$ is **estimable** when an unbiased
+linear estimator $a^\top Y$ exists. In the model with mean $X\beta$, this
+is equivalent to $c\in\mathop{\mathrm{col}}(X^\top)$. Fitted values and
+estimable functionals are unique even if a least-squares coefficient vector
+is not. The following formulas involving $(X^\top X)^{-1}$ assume full
+column rank.
 
-* **22. Highest posterior density regions.** Let $C$ be a highest
-  posterior density region with posterior content exactly $1-\alpha$ and
-  with $k_\alpha>0$. Then $C$ has the smallest Lebesgue volume among all
-  measurable sets of posterior content at least $1-\alpha$. For a
-  unimodal posterior density on the line that is symmetric about its mode,
-  $C$ is the equal-tailed credible interval. The construction is not
-  invariant under nonlinear reparameterization: the image of a highest
-  posterior density region under a smooth bijection is in general not a
-  highest posterior density region for the image posterior. In the model
-  $X\sim N(\theta,\sigma^2)$ with $\sigma$ known and the flat prior, the
-  region is $[X-z_{\alpha/2}\sigma,\,X+z_{\alpha/2}\sigma]$, which is also
-  the exact confidence interval of level $1-\alpha$.
+* **8. Generalized least squares.** If the error covariance is
+  $\sigma^2V$, with $V$ known positive definite, then
+  $$\hat\beta_V=(X^\top V^{-1}X)^{-1}X^\top V^{-1}Y,\qquad
+  \mathop{\mathrm{Cov}}(\hat\beta_V)
+  =\sigma^2(X^\top V^{-1}X)^{-1}.$$
+  It is the best linear unbiased estimator. Multiplication by $V^{-1/2}$
+  reduces the problem to item 1. With Gaussian errors the corresponding
+  normal, chi-squared, and $F$ laws hold after this transformation.
 
-* **23. Point-null Bayes factor and Lindley's paradox.** Let
-  $\bar X\sim N(\theta,\sigma^2/n)$ with $\sigma$ known, and test
-  $H_0:\theta=\theta_0$ against $H_1:\theta\ne\theta_0$, with
-  $\theta\sim N(\theta_0,\tau^2)$ under $H_1$, $\tau>0$. Put
-  $z=\sqrt n\,|\bar X-\theta_0|/\sigma$. The Bayes factor of $H_0$ to $H_1$
-  is
-  $$B_{01}=\Bigl(1+\frac{n\tau^2}{\sigma^2}\Bigr)^{1/2}
-  \exp\Bigl(-\frac{z^2}{2}\Bigl(1+\frac{\sigma^2}{n\tau^2}\Bigr)^{-1}\Bigr).$$
-  For fixed $z$, and hence fixed $p$-value, $B_{01}\to\infty$ as
-  $n\to\infty$ or as $\tau\to\infty$, so the posterior probability of
-  $H_0$ tends to $1$ for any fixed positive prior probability of $H_0$.
-  Under $H_0$, $B_{01}\to\infty$ in probability; under a fixed
-  $\theta\ne\theta_0$, $B_{01}\to0$ almost surely. Over all priors $g_1$
-  on $\{\theta\ne\theta_0\}$,
-  $$B_{01}\ge\frac{f(x\mid\theta_0)}{\sup_{\theta\ne\theta_0}f(x\mid\theta)},$$
-  which equals $\exp(-z^2/2)$ in this normal model.
+* **9. Partial regression.** Partition $X=(X_1,X_2)$ and let
+  $M_1=I-P_{X_1}$. If $X$ has full column rank, the coefficient of $X_2$
+  in the full least-squares fit is
+  $$(X_2^\top M_1X_2)^{-1}X_2^\top M_1Y.$$
+  Thus projecting both the response and the regressors off the nuisance
+  columns yields the same coefficient and residual sum of squares. This
+  is the Frisch–Waugh–Lovell theorem; its conditional-mean analogue is
+  SYNOPSIS102, item 40.
 
-* **24. Hierarchical normal model.** Let $y_j\mid\theta_j\sim
-  N(\theta_j,\sigma_j^2)$ be independent for $j=1,\ldots,J$, with known
-  $\sigma_j>0$; let $\theta_j\mid\mu,\tau$ be independent $N(\mu,\tau^2)$;
-  and let the hyperprior be $p(\mu,\tau)=p(\tau)$, flat in $\mu$. Then,
-  given $(\mu,\tau)$ and $y$, the $\theta_j$ are independent normal with
-  $$\hat\theta_j=\frac{y_j/\sigma_j^2+\mu/\tau^2}
-  {1/\sigma_j^2+1/\tau^2},\qquad
-  V_j=\frac1{1/\sigma_j^2+1/\tau^2}.$$
-  Marginally $y_j\mid\mu,\tau\sim N(\mu,\sigma_j^2+\tau^2)$ independently,
-  and $\mu\mid\tau,y\sim N(\hat\mu,V_\mu)$ with
-  $V_\mu^{-1}=\sum_j(\sigma_j^2+\tau^2)^{-1}$ and
-  $\hat\mu=V_\mu\sum_j y_j/(\sigma_j^2+\tau^2)$. Finally
-  $$p(\tau\mid y)\propto p(\tau)\,V_\mu^{1/2}
-  \prod_{j=1}^J(\sigma_j^2+\tau^2)^{-1/2}
-  \exp\Bigl(-\frac{(y_j-\hat\mu)^2}{2(\sigma_j^2+\tau^2)}\Bigr).$$
-  With $p(\tau)\propto1$ on $(0,\infty)$ the joint posterior is proper if
-  and only if $J\ge3$; with $p(\tau)\propto1/\tau$ it is improper for
-  every $J$.
+* **10. Exact tests of nested linear models.** Let $P_0,P_1$ project onto
+  nested model spaces of dimensions $r_0<r_1<n$. Under the smaller model
+  and independent $N(0,\sigma^2)$ errors,
+  $$\frac{\|(P_1-P_0)Y\|^2/(r_1-r_0)}
+  {\|(I-P_1)Y\|^2/(n-r_1)}\sim F_{r_1-r_0,n-r_1}.$$
+  The numerator and denominator sums of squares, divided by $\sigma^2$,
+  are independent chi-squared variables. Under the larger model the
+  numerator has noncentrality
+  $\|(P_1-P_0)X\beta\|^2/\sigma^2$. A single estimable contrast gives
+  the square of the usual Student $t$ statistic.
 
-* **25. Empirical Bayes form of the James–Stein estimator.** Let
-  $X\sim N_p(\theta,I_p)$ and let the $\theta_i$ be independent
-  $N(0,\tau^2)$. The posterior mean is $(1-B)X$ with
-  $B=1/(1+\tau^2)$, and marginally $X\sim N_p(0,(1+\tau^2)I_p)$. For
-  $p\ge3$, $(p-2)/\|X\|^2$ is unbiased for $B$ under this marginal law,
-  and substituting it gives the James–Stein estimator of SYNOPSIS102,
-  item 14. Substituting instead the marginal maximum likelihood estimator
-  of $\tau^2$, truncated at zero, gives
-  $(1-p/\|X\|^2)_+X$. If the common prior mean $\mu$ is also unknown and
-  $S=\sum_i(X_i-\bar X)^2$, then for $p\ge4$ the quantity $(p-3)/S$ is
-  unbiased for $B$, giving the Efron–Morris estimator
-  $\bar X+(1-(p-3)/S)(X_i-\bar X)$, which shrinks toward the grand mean.
+* **11. Leverage, deletion, and prediction error.** Write
+  $H=X(X^\top X)^{-1}X^\top$, $h_i=H_{ii}$, and $e=(I-H)Y$.
+  Then $0\le h_i\le1$, $\sum_i h_i=p$, and
+  $\mathop{\mathrm{Cov}}(e)=\sigma^2(I-H)$. If $h_i<1$, deleting case
+  $i$ preserves the design rank and gives
+  $$\hat\beta_{(-i)}=\hat\beta-
+  \frac{(X^\top X)^{-1}x_i e_i}{1-h_i},\qquad
+  Y_i-x_i^\top\hat\beta_{(-i)}=\frac{e_i}{1-h_i}.$$
+  Hence the leave-one-out squared prediction criterion is
+  $n^{-1}\sum_i(e_i/(1-h_i))^2$ without refitting $n$ models. Under
+  normal errors, the externally studentized residual
+  $e_i/(s_{(-i)}\sqrt{1-h_i})$ has law $t_{n-p-1}$ when $n>p+1$.
 
-* **26. Tweedie's formula and Robbins' estimator.** Let
-  $f(x\mid\theta)=h(x)\exp(\theta\cdot x-\psi(\theta))$ be a density on
-  $\mathbb R^k$ with respect to Lebesgue measure, let the prior $g$ be
-  arbitrary, and let $m$ be the marginal density, assumed positive and
-  differentiable under the integral sign. Then
-  $$\mathbb E[\theta\mid X=x]=\nabla\log m(x)-\nabla\log h(x).$$
-  The Gaussian case is SYNOPSIS112, item 21. For Poisson sampling,
-  $X\mid\theta\sim\mathop{\mathrm{Poi}}(\theta)$ with any prior on
-  $(0,\infty)$, the posterior mean is
-  $$\mathbb E[\theta\mid X=x]=(x+1)\frac{m(x+1)}{m(x)},$$
-  where $m$ is the marginal probability mass function. Robbins'
-  nonparametric empirical Bayes estimator replaces $m$ by the empirical
-  frequencies of independent observations $X_1,\ldots,X_n$ drawn from
-  $m$, with no parametric form assumed for the prior.
+* **12. Ridge bias and variance.** For $\lambda>0$, the minimizer of
+  $\|Y-Xb\|^2+\lambda\|b\|^2$ is
+  $\hat\beta_\lambda=(X^\top X+\lambda I)^{-1}X^\top Y$, even for a
+  rank-deficient design. If $\mathbb E\varepsilon=0$ and
+  $\mathop{\mathrm{Cov}}\varepsilon=\sigma^2I$, its bias is
+  $-\lambda(X^\top X+\lambda I)^{-1}\beta$ and its covariance is
+  $$\sigma^2(X^\top X+\lambda I)^{-1}X^\top X
+  (X^\top X+\lambda I)^{-1}.$$
+  The fitted-value map has effective degrees of freedom
+  $\mathop{\mathrm{tr}}[X(X^\top X+\lambda I)^{-1}X^\top]$.
+
+* **13. Canonical likelihood and separation.** For a canonical generalized
+  linear model with known dispersion, the log-likelihood in $\beta$ is
+  concave, with negative Hessian $\varphi^{-1}X^\top W X$.
+  It is strictly concave when $X$ has full column rank and all variance
+  weights are positive; thus any finite score root is the unique maximum.
+  In binary logistic regression, if a nonzero $b$ satisfies
+  $(2Y_i-1)x_i^\top b\ge0$ for every $i$, with strict inequality for at
+  least one observation, the likelihood increases along that direction
+  and has no finite maximizer. Strict inequalities for every $i$ give
+  complete separation. Concavity does not by itself establish existence.
+
+* **14. Prediction in a linear mixed model.** Suppose
+  $Y=X\beta+Zu+\varepsilon$, where $u$ and $\varepsilon$ are centered,
+  uncorrelated, with known covariance matrices $G$ and $R>0$, and
+  $X$ has full column rank. Set $V=ZGZ^\top+R$ and let $\hat\beta_V$ be generalized least squares.
+  The best linear unbiased predictor of $u$ is
+  $$\hat u=GZ^\top V^{-1}(Y-X\hat\beta_V).$$
+  Here unbiasedness is averaged over both random components and holds
+  for every $\beta$. If $\beta$ is known and the components are jointly
+  Gaussian, $GZ^\top V^{-1}(Y-X\beta)=\mathbb E[u\mid Y]$; with unknown
+  fixed effects, substitution of $\hat\beta_V$ gives the stated predictor.
+
+### Quadratic forms and the analysis of variance
+
+For a $k$-vector $Z\sim N_k(m,I_k)$, the law of $\|Z\|^2$ is the
+**noncentral chi-squared law** on $k$ degrees of freedom with
+noncentrality $\|m\|^2$; this is the convention of item 2.
+
+* **15. Distribution of quadratic forms.** Let $Y\sim N_n(\mu,\Sigma)$
+  with $\Sigma$ positive definite, and let $A$ and $B$ be symmetric.
+  If $A\Sigma$ is idempotent of rank $r$, then $Y^\top AY$ is noncentral
+  chi-squared on $r$ degrees of freedom with noncentrality
+  $\mu^\top A\mu$; for $\mu=0$, $Y^\top AY$ is chi-squared on $r$ degrees
+  of freedom only if $A\Sigma$ is idempotent of rank $r$. If
+  $A\Sigma B=0$, then $Y^\top AY$ and $Y^\top BY$ are independent; for
+  $\mu=0$ the condition is also necessary (Craig–Sakamoto). In the case
+  $\Sigma=I_n$, Cochran's theorem states: if
+  $Y^\top Y=\sum_{i=1}^kY^\top A_iY$ with $\mathop{\mathrm{rank}}A_i=n_i$,
+  then the forms $Y^\top A_iY$ are independent noncentral chi-squared
+  variables, on $n_i$ degrees of freedom with noncentralities
+  $\mu^\top A_i\mu$, if and only if $\sum_in_i=n$.
+
+* **16. Optimality of the $F$ test.** In the setting of item 10, the
+  power of the $F$ test of fixed level depends on the parameters only
+  through the noncentrality
+  $\delta^2=\|(P_1-P_0)X\beta\|^2/\sigma^2$, and it is strictly increasing
+  in $\delta^2$. Among level-$\alpha$ tests invariant under the group
+  generated by positive rescaling of $Y$, translation within the smaller
+  model space, and orthogonal transformations of the residual space and
+  of the hypothesis space $\mathop{\mathrm{col}}(P_1-P_0)$, the $F$ test
+  is uniformly most powerful. Among all similar tests of level $\alpha$, it
+  maximizes the average power over every sphere of alternatives with
+  fixed $\delta^2$, fixed nuisance mean component, and fixed $\sigma$.
+
+* **17. Balanced two-way layout.** Let $Y_{ijk}=\eta_{ij}+e_{ijk}$ for
+  $i\le I$, $j\le J$, $k\le K$, with $K\ge2$ and independent
+  $N(0,\sigma^2)$ errors. Define the general mean, main effects, and
+  interactions by $\mu=\eta_{\cdot\cdot}$,
+  $\alpha_i=\eta_{i\cdot}-\eta_{\cdot\cdot}$,
+  $\beta_j=\eta_{\cdot j}-\eta_{\cdot\cdot}$, and
+  $\gamma_{ij}=\eta_{ij}-\eta_{i\cdot}-\eta_{\cdot j}+\eta_{\cdot\cdot}$,
+  dots denoting unweighted averages. Their least-squares estimators
+  replace each $\eta$ by the corresponding cell mean of the data. The
+  total sum of squares splits orthogonally as
+  $$\sum_{ijk}Y_{ijk}^2=IJK\bar Y_{\cdot\cdot\cdot}^2
+  +\mathrm{SS}_A+\mathrm{SS}_B+\mathrm{SS}_{AB}+\mathrm{SS}_e,$$
+  with $1$, $I-1$, $J-1$, $(I-1)(J-1)$, and $IJ(K-1)$ degrees of freedom,
+  where for instance
+  $\mathrm{SS}_A=JK\sum_i(\bar Y_{i\cdot\cdot}-\bar Y_{\cdot\cdot\cdot})^2$
+  and $\mathrm{SS}_e=\sum_{ijk}(Y_{ijk}-\bar Y_{ij\cdot})^2$. These five
+  quadratic forms are independent; divided by $\sigma^2$, the last is
+  central chi-squared and the others are noncentral chi-squared, with
+  noncentralities $JK\sum_i\alpha_i^2/\sigma^2$,
+  $IK\sum_j\beta_j^2/\sigma^2$, and $K\sum_{ij}\gamma_{ij}^2/\sigma^2$ for
+  the two main-effect and the interaction terms. The hypotheses of no
+  main effect and of no interaction are tested by the corresponding $F$
+  ratios against $\mathrm{SS}_e/(IJ(K-1))$. If some cell is empty, the main
+  effects and interactions defined above are not estimable.
+
+Consider the balanced one-way random model
+$Y_{ij}=\mu+a_i+e_{ij}$, $i\le a$, $j\le n$, $a\ge2$, $n\ge2$, with all
+$a_i$ and $e_{ij}$ independent, $a_i\sim N(0,\sigma_a^2)$ and
+$e_{ij}\sim N(0,\sigma_e^2)$. Write
+$\mathrm{MSA}=n\sum_i(\bar Y_{i\cdot}-\bar Y_{\cdot\cdot})^2/(a-1)$ and
+$\mathrm{MSE}=\sum_{ij}(Y_{ij}-\bar Y_{i\cdot})^2/(a(n-1))$.
+
+* **18. One-way variance components.** Here
+  $(a-1)\mathrm{MSA}/(n\sigma_a^2+\sigma_e^2)$ and
+  $a(n-1)\mathrm{MSE}/\sigma_e^2$ are independent chi-squared variables on
+  $a-1$ and $a(n-1)$ degrees of freedom. Hence
+  $\mathbb E\,\mathrm{MSA}=n\sigma_a^2+\sigma_e^2$ and
+  $\mathbb E\,\mathrm{MSE}=\sigma_e^2$, and the analysis-of-variance
+  estimators $\hat\sigma_e^2=\mathrm{MSE}$ and
+  $\hat\sigma_a^2=(\mathrm{MSA}-\mathrm{MSE})/n$ are unbiased; the first
+  two moment equalities need only uncorrelated components with these
+  variances. The estimator $\hat\sigma_a^2$ is negative with probability
+  $$P\bigl(F_{a(n-1),\,a-1}>1+n\sigma_a^2/\sigma_e^2\bigr)>0.$$
+  When $\mathrm{MSA}\ge\mathrm{MSE}$ these estimators are the residual
+  maximum likelihood estimators of item 7. The maximum likelihood
+  estimator of $\sigma_a^2$, when positive, is
+  $((1-1/a)\mathrm{MSA}-\mathrm{MSE})/n$.
+
+* **19. Mallows' $C_p$.** In the model $Y=\mu+\varepsilon$ with
+  $\mathbb E\varepsilon=0$ and $\mathop{\mathrm{Cov}}\varepsilon=\sigma^2I_n$,
+  let a candidate submodel have an $n\times p$ design $X_p$ of full rank,
+  projection $P_p$, and residual sum of squares $\mathrm{RSS}_p$. The
+  model error $\mathrm{ME}_p=\|P_pY-\mu\|^2$ satisfies
+  $$\mathbb E\,\mathrm{RSS}_p=\|(I-P_p)\mu\|^2+(n-p)\sigma^2
+  =\mathbb E\,\mathrm{ME}_p+(n-2p)\sigma^2.$$
+  Thus $\mathrm{RSS}_p+(2p-n)\sigma^2$ is unbiased for
+  $\mathbb E\,\mathrm{ME}_p$, and
+  $C_p=\mathrm{RSS}_p/\hat\sigma^2+2p-n$, with an independent or
+  full-model estimator $\hat\sigma^2$, estimates
+  $\mathbb E\,\mathrm{ME}_p/\sigma^2$. For a submodel whose column
+  space contains $\mu$, $\mathbb E\,\mathrm{RSS}_p/\sigma^2+2p-n=p$.
+  Selection over many submodels by minimizing $C_p$ is governed by
+  SYNOPSIS103, items 35 and 36.
+
+### Fitting and assessing generalised linear models
+
+* **20. Fisher scoring as iteratively reweighted least squares.** In
+  the generalised linear model with $a(\varphi)=\varphi$, let $\beta^{(t)}$
+  be the current value, with linear predictor $\eta^{(t)}=X\beta^{(t)}$,
+  mean $\mu^{(t)}$, and weights $W^{(t)}$ as in item 3. Form the adjusted
+  response
+  $$z_i=\eta_i^{(t)}+(Y_i-\mu_i^{(t)})\,g'(\mu_i^{(t)}).$$
+  One step of Fisher scoring for the likelihood equations is the
+  weighted least-squares fit
+  $$\beta^{(t+1)}=(X^\top W^{(t)}X)^{-1}X^\top W^{(t)}z.$$
+  The dispersion $\varphi$ cancels from the update. For a canonical
+  link, the expected and observed information agree, so this is
+  Newton's method, and under item 13 a limit is the unique maximizer.
+
+For a generalised linear model with $a_i(\varphi)=\varphi/w_i$, the
+**deviance** of fitted means $\hat\mu$ is
+$D(y;\hat\mu)=\varphi\cdot2\{\ell(y;y)-\ell(\hat\mu;y)\}$, where
+$\ell(y;y)$ is the log-likelihood of the saturated model that fits each
+observation exactly; $D/\varphi$ is the **scaled deviance**.
+
+* **21. Deviance.** The deviance does not depend on $\varphi$. Summing
+  over observations with unit prior weights, it equals $\sum(y-\hat\mu)^2$ for the normal model,
+  $$2\sum\bigl\{y\log(y/\hat\mu)-(y-\hat\mu)\bigr\}$$
+  for the Poisson model, and
+  $$2\sum\bigl\{y\log(y/\hat\mu)+(m-y)\log((m-y)/(m-\hat\mu))\bigr\}$$
+  for binomial counts out of $m$, with $0\log0=0$. Maximizing the
+  likelihood minimizes the deviance, and for nested models fitted by
+  maximum likelihood the deviances are additive, giving the analysis of
+  deviance. Differences of scaled deviances obey item 3. The residual
+  scaled deviance itself is close to chi-squared on $n-p$ degrees of
+  freedom only in a small-dispersion regime, such as large binomial
+  indices or large Poisson means; for binary data it is a function of
+  $\hat\beta$ alone and carries no information on fit.
+
+### Multivariate analysis, invariance, and graphical models
+
+* **22. Wishart distribution and Hotelling's $T^2$.** Let $Z_1,\ldots,Z_n$ be
+  independent $N_p(0,\Sigma)$ with $n\ge p$ and with $\Sigma$ positive
+  definite. Then $W=\sum_{i=1}^n Z_iZ_i^\top$ has the Wishart distribution
+  $W_p(n,\Sigma)$. For an independent normal sample of size $n\ge p+1$, the
+  sample mean $\bar X$ and the sample covariance $S$ with divisor $n-1$ are
+  independent, and $(n-1)S\sim W_p(n-1,\Sigma)$. Hotelling's statistic
+  $T^2=n(\bar X-\mu)^\top S^{-1}(\bar X-\mu)$ satisfies
+  $$\frac{n-p}{(n-1)p}\,T^2\sim F_{p,\,n-p}$$
+  when the true mean is $\mu$.
+
+* **23. Wilks's lambda.** In a multivariate normal linear model, let $E$ and
+  $H$ be the residual and hypothesis sums of squares and products, and let
+  $\Lambda=\det(E)/\det(E+H)$. Under the null hypothesis, $\Lambda$ has the
+  same law as a product of independent beta random variables, with parameters
+  determined by the response dimension $p$, the hypothesis degrees of freedom
+  $h$, and the error degrees of freedom $e$. Bartlett's statistic
+  $$-\bigl(e-(p-h+1)/2\bigr)\log\Lambda$$
+  is asymptotically chi-squared on $ph$ degrees of freedom as $e\to\infty$,
+  and the displayed multiplier is the standard finite-sample correction to
+  $-e\log\Lambda$.
+
+* **24. Principal component eigenvalues.** Let $S_n$ be the sample covariance,
+  with divisor $n$, of an independent normal sample in $\mathbb R^p$, and let
+  $\lambda_j$ be a simple positive eigenvalue of the population covariance.
+  The corresponding eigenvalue $\hat\lambda_j$ of $S_n$ satisfies
+  $$\sqrt n\,(\hat\lambda_j-\lambda_j)\Rightarrow N(0,2\lambda_j^2).$$
+
+* **25. Fisher's linear discriminant.** Consider two classes with priors
+  $\pi_1>0$ and $\pi_2>0$, Gaussian conditional laws with means $\mu_1$
+  and $\mu_2$, and a common positive definite covariance $\Sigma$. The Bayes rule for $0$–$1$ loss assigns an
+  observation $x$ to class $1$ when
+  $$(\mu_1-\mu_2)^\top\Sigma^{-1}\Bigl(x-\frac{\mu_1+\mu_2}2\Bigr)
+  >\log\frac{\pi_2}{\pi_1}.$$
+  The decision boundary is affine. If the two class covariances differ, the
+  Bayes boundary is quadratic.
+
+Let $G$ be an undirected graph with vertex set $\{1,\ldots,p\}$. A positive
+continuous density on $\mathbb R^p$ satisfies the **pairwise Markov property**
+when $X_i$ and $X_j$ are conditionally independent given the remaining
+coordinates whenever $\{i,j\}$ is not an edge. It satisfies the **global
+Markov property** when separation in $G$ implies the corresponding conditional
+independence.
+
+* **26. Undirected graphical models.** For a positive continuous density, the
+  pairwise Markov property, the local Markov property, and the global Markov
+  property are equivalent. Under the same positivity condition, the
+  Hammersley–Clifford theorem gives a factorization of the density into a
+  product of positive functions, each depending on the coordinates in a single
+  clique. For a nondegenerate Gaussian law, $X_i$ and $X_j$ are conditionally
+  independent given the remaining coordinates if and only if the $(i,j)$ entry
+  of the precision matrix vanishes.
+
+The **von Mises–Fisher** density on the unit sphere $S^{p-1}$ is
+$c_p(\kappa)\exp(\kappa\mu\cdot x)$, with $\|\mu\|=1$ and concentration
+$\kappa\ge0$.
+
+* **27. von Mises–Fisher model.** The maximum likelihood estimator of the mean
+  direction $\mu$ is the direction of the resultant $\sum_{i=1}^n X_i$. On the
+  circle, $\mathbb E[\cos(X-\mu)]=I_1(\kappa)/I_0(\kappa)$, and the likelihood
+  equation for $\kappa$ equates this function to the mean resultant length.
+
+### Covariance geometry and multivariate reduction
+
+* **28. Gaussian covariance likelihood.** For a normal sample with unknown
+  mean and positive definite covariance, if the centered sample spans
+  $\mathbb R^p$, the maximum likelihood estimators are
+  $$\hat\mu=\bar X,\qquad
+  \hat\Sigma=\frac1n\sum_i(X_i-\bar X)(X_i-\bar X)^\top.$$
+  If that scatter matrix is singular, the likelihood is unbounded over
+  positive definite covariance matrices and there is no finite covariance
+  maximizer in that space. This occurs almost surely when $n\le p$.
+  Dividing by $n-1$ instead gives the unbiased covariance estimator whose
+  Wishart law is item 22.
+
+* **29. Canonical correlations.** For centered random vectors $(U,V)$
+  with positive definite marginal covariances, the largest correlation
+  between $a^\top U$ and $b^\top V$ is the largest singular value of
+  $$\Sigma_{UU}^{-1/2}\Sigma_{UV}\Sigma_{VV}^{-1/2}.$$
+  Subsequent singular values solve the same maximization with successive
+  variates uncorrelated within each vector. They lie in $[0,1]$ and are
+  unchanged by nonsingular linear transformations within $U$ or $V$.
+  For a jointly Gaussian pair, all canonical correlations vanish if and
+  only if $U$ and $V$ are independent.
+
+* **30. Principal components and reconstruction.** For a centered vector
+  with covariance eigenvalues $\lambda_1\ge\cdots\ge\lambda_p\ge0$,
+  the first $k$ eigenvectors maximize captured variance
+  $\mathop{\mathrm{tr}}(P\Sigma)$ among rank-$k$ orthogonal projections.
+  The minimal mean squared reconstruction error is
+  $\sum_{j>k}\lambda_j$. For a centered data matrix, truncating its singular
+  value decomposition gives the best rank-$k$ approximation in Frobenius
+  norm. Functional observations are covered by SYNOPSIS103, item 31;
+  fixed-dimensional eigenvalue asymptotics are item 24.
+
+### Wishart structure and correlation coefficients
+
+* **31. Structure of the Wishart law.** Let $W\sim W_p(n,\Sigma)$ with
+  $n\ge p$ an integer and $\Sigma$ positive definite. Then $W$ has density
+  $$\frac{(\det w)^{(n-p-1)/2}\exp\bigl(-\tfrac12\mathop{\mathrm{tr}}(\Sigma^{-1}w)\bigr)}
+  {2^{np/2}(\det\Sigma)^{n/2}\,\Gamma_p(n/2)}$$
+  on positive definite matrices, where $\Gamma_p$ is the multivariate
+  gamma function. For a $k\times p$ matrix $M$ of rank $k$,
+  $MWM^\top\sim W_k(n,M\Sigma M^\top)$. Partition $W$ and $\Sigma$ into
+  blocks of sizes $k$ and $p-k$. Then $W_{22}\sim W_{p-k}(n,\Sigma_{22})$,
+  and the Schur complement $W_{11\cdot2}=W_{11}-W_{12}W_{22}^{-1}W_{21}$ is
+  $W_k(n-p+k,\Sigma_{11\cdot2})$ and independent of $(W_{12},W_{22})$.
+  If $\Sigma=I_p$ and $W=T^\top T$ with $T$ upper triangular with
+  positive diagonal, the entries $t_{ij}$, $i\le j$, are independent, with
+  $t_{ii}^2\sim\chi^2_{n-i+1}$ and $t_{ij}\sim N(0,1)$ for $i<j$; this is the
+  Bartlett decomposition. Consequently $\det W/\det\Sigma$ has the law of
+  a product of independent $\chi^2_{n-i+1}$ variables,
+  $i=1,\ldots,p$.
+
+* **32. Sampling theory of correlation coefficients.** Let $r$ be the
+  sample correlation of $N$ independent observations from a bivariate
+  normal law with correlation $\rho$. If $\rho=0$ and $N>2$, then
+  $\sqrt{N-2}\,r/\sqrt{1-r^2}$ has law $t_{N-2}$. As $N\to\infty$,
+  $$\sqrt N\,(r-\rho)\Rightarrow N\bigl(0,(1-\rho^2)^2\bigr),\qquad
+  \sqrt N\,(\mathop{\mathrm{artanh}}r-\mathop{\mathrm{artanh}}\rho)
+  \Rightarrow N(0,1),$$
+  the second being Fisher's variance-stabilizing $z$ transformation. For
+  a $p$-variate normal sample, the sample partial correlation of two
+  coordinates given $p-q$ other coordinates has the law of an ordinary
+  sample correlation from $N-(p-q)$ observations with $\rho$ replaced by
+  the population partial correlation. If the population multiple
+  correlation of $X_1$ with $(X_2,\ldots,X_p)$ vanishes and $N>p$, the
+  sample multiple correlation $R$ satisfies
+  $$\frac{R^2}{1-R^2}\cdot\frac{N-p}{p-1}\sim F_{p-1,\,N-p}.$$
+
+### Tests on covariance structure and multivariate hypotheses
+
+In the next item, $X_1,\ldots,X_N$ are independent $N_p(\mu,\Sigma)$ with
+$N>p$, $n=N-1$, and $A=\sum_i(X_i-\bar X)(X_i-\bar X)^\top$.
+
+* **33. Likelihood-ratio tests of sphericity and independence.** For
+  $H:\Sigma=\lambda I_p$ with $\lambda>0$ unspecified, the likelihood
+  ratio is $V^{N/2}$ with
+  $$V=\frac{\det A}{\bigl(\mathop{\mathrm{tr}}A/p\bigr)^p}.$$
+  Under $H$, $-N\log V\Rightarrow\chi^2_f$ with $f=p(p+1)/2-1$, and with
+  $$\rho=1-\frac{2p^2+p+2}{6pn}$$
+  the distribution function of $-n\rho\log V$ differs from that of
+  $\chi^2_f$ by $O(n^{-2})$. For independence of $k$ subvectors of sizes
+  $p_1,\ldots,p_k$, the likelihood ratio is $\Lambda^{N/2}$ with
+  $\Lambda=\det A/\prod_i\det A_{ii}$, and under independence
+  $-N\log\Lambda\Rightarrow\chi^2_f$ with
+  $f=\sum_{i<j}p_ip_j$; Box's multiplier again reduces the error to
+  $O(N^{-2})$. For $k=2$,
+  $\Lambda=\prod_i(1-r_i^2)$, where the $r_i$ are the sample canonical
+  correlations of item 29.
+
+* **34. Invariant tests of a multivariate linear hypothesis.** In the
+  setting of item 23 let $E$ be positive definite, and let
+  $l_1\ge\cdots\ge l_p\ge0$ be the roots of $\det(H-lE)=0$. Under the
+  group of nonsingular linear maps of the response, together with the
+  translations and orthogonal maps that leave the problem invariant,
+  these roots form a maximal invariant, so every invariant test is a
+  function of them. Wilks's statistic is $\prod_i(1+l_i)^{-1}$, the
+  Lawley–Hotelling trace is $\mathop{\mathrm{tr}}HE^{-1}=\sum_il_i$,
+  the Pillai trace is $\mathop{\mathrm{tr}}H(H+E)^{-1}=\sum_il_i/(1+l_i)$,
+  and Roy's statistic is $l_1$. Under the null hypothesis,
+  $e\mathop{\mathrm{tr}}HE^{-1}\Rightarrow\chi^2_{ph}$ as $e\to\infty$.
+  If $\min(p,h)=1$ there is at most one nonzero root, and all four tests
+  reduce to the same exact $F$ test, as for Hotelling's $T^2$ in item 22.
+
+The **orthogonal factor model** with $m$ factors states
+$X=\mu+\Lambda f+u$, where $\Lambda$ is a $p\times m$ loading matrix,
+$f$ has mean $0$ and covariance $I_m$, $u$ is uncorrelated with $f$ and
+has mean $0$ and diagonal positive definite covariance $\Psi$. Then
+$\mathop{\mathrm{Cov}}X=\Lambda\Lambda^\top+\Psi$.
+
+* **35. Factor analysis and identification.** For every orthogonal
+  $m\times m$ matrix $O$, the loadings $\Lambda O$ give the same
+  covariance, so $\Lambda$ can be identified only after
+  $m(m-1)/2$ further conditions. One standard choice requires
+  $\Lambda^\top\Psi^{-1}\Lambda$ to be diagonal with distinct diagonal
+  entries in decreasing order; given $\Lambda\Lambda^\top$, this fixes
+  $\Lambda$ up to the signs of its columns. Whether $\Sigma$ determines
+  $\Lambda\Lambda^\top$ and $\Psi$ is a separate question, and the count
+  $$\tfrac12\bigl[(p-m)^2-p-m\bigr]$$
+  of covariance entries plus identifying conditions minus free parameters
+  is the degrees of freedom of the asymptotic chi-squared law of the
+  Gaussian likelihood-ratio test of the $m$-factor model, under the
+  regularity conditions for asymptotic normality of the estimators. Under
+  this identification, if the sample covariance converges in probability
+  to $\Lambda\Lambda^\top+\Psi$, the Gaussian maximum likelihood
+  estimators are consistent.
+
+### Decomposable graphical models
+
+An undirected graph is **decomposable** when every cycle of length at least
+four has a chord. Its cliques can then be ordered so that each meets the
+union of the earlier ones in a complete **separator**, and the multiset of
+separators, with multiplicities $\nu(S)$, does not depend on the chosen
+perfect order. For a matrix $B$ indexed by a subset $C$ of the vertices,
+$[B]^V$ denotes the $p\times p$ matrix with $B$ in the block $C\times C$
+and zeros elsewhere.
+
+* **36. Decomposable models.** For a decomposable graph with cliques
+  $\mathcal C$ and separators $\mathcal S$, a positive density is globally
+  Markov if and only if
+  $$f(x)=\frac{\prod_{C\in\mathcal C}f_C(x_C)}
+  {\prod_{S\in\mathcal S}f_S(x_S)^{\nu(S)}},$$
+  with $f_C,f_S$ the marginal densities. In the Gaussian model whose
+  concentration matrix vanishes off the edges, let $\mathrm{ssd}$ be the
+  centered sum-of-squares matrix of $n$ observations. The maximum
+  likelihood estimator exists with probability one if and only if
+  $n>\max_C|C|$, and then
+  $$\hat K=n\Bigl(\sum_{C\in\mathcal C}\bigl[(\mathrm{ssd}_C)^{-1}\bigr]^V
+  -\sum_{S\in\mathcal S}\nu(S)\bigl[(\mathrm{ssd}_S)^{-1}\bigr]^V\Bigr).$$
+  For a general graph, the estimate, when it exists, is the unique
+  positive definite $\hat\Sigma$ that matches $\mathrm{ssd}/n$ on the
+  diagonal and on the edges and whose inverse vanishes off the edges. It
+  exists whenever $\mathrm{ssd}$ is positive definite, in particular almost
+  surely when $n>p$, and iterative proportional scaling converges to it.
 
 <a id="synopsis-105b"></a>
 
-## 105B. Nonparametric Bayes, Posterior Asymptotics, and Inverse Problems
+## 105B. Experimental Design and Causal Inference
 
-Let $\mathcal X$ be a standard Borel space and let $\alpha$ be a finite
-nonzero measure on $\mathcal X$. Write $|\alpha|=\alpha(\mathcal X)$ and
-$H=\alpha/|\alpha|$.
+Randomization connects the two halves of this subdivision: the design of experiments, and the identification and estimation of causal effects in experiments and observational studies.
 
-* **6. Dirichlet process.** A random probability measure $P$ is a Dirichlet
-  process with parameter $\alpha$ when, for every finite measurable partition
-  $A_1,\ldots,A_k$,
-  $$(P(A_1),\ldots,P(A_k))\sim\mathop{\mathrm{Dirichlet}}(\alpha(A_1),\ldots,\alpha(A_k)).$$
-  Conditionally on $P$, let $X_1,\ldots,X_n$ be independent with law $P$. The
-  posterior of $P$ is a Dirichlet process with parameter
-  $\alpha+\sum_{i=1}^n\delta_{X_i}$. The one-step predictive distribution is
-  $$\frac{\alpha+\sum_{i=1}^n\delta_{X_i}}{|\alpha|+n}.$$
-  In the Sethuraman representation, let $V_k$ be independent
-  $\mathop{\mathrm{Beta}}(1,|\alpha|)$ and let $\theta_k$ be independent with
-  law $H$, independent of the $V_k$. The weights
-  $\pi_k=V_k\prod_{j<k}(1-V_j)$ give
-  $\sum_{k\ge1}\pi_k\delta_{\theta_k}$ the law of a Dirichlet process with
-  parameter $\alpha$.
+### Experimental design
 
-* **27. Pólya urn scheme and distinct values.** If $X_1,X_2,\ldots$ are
-  conditionally independent with law $P$ given a Dirichlet process
-  $P$ with parameter $\alpha$, then $X_1\sim H$ and
-  $$X_{n+1}\mid X_1,\ldots,X_n\sim
-  \frac{\alpha+\sum_{i=1}^n\delta_{X_i}}{|\alpha|+n},$$
-  the generalized Pólya urn of Blackwell and MacQueen. Conversely, a
-  sequence with these predictive laws is exchangeable, and the random
-  measure given by de Finetti's theorem (CKMA SYNOPSIS06, item 55) is a
-  Dirichlet process with parameter $\alpha$. If $\alpha$ is atomless, the
-  indicators that $X_i$ is a new value are independent Bernoulli variables
-  with success probabilities $|\alpha|/(|\alpha|+i-1)$. Hence the number
-  $K_n$ of distinct values among $X_1,\ldots,X_n$ satisfies
-  $$\mathbb EK_n=\sum_{i=1}^n\frac{|\alpha|}{|\alpha|+i-1}
-  \sim|\alpha|\log n,\qquad \frac{K_n}{\log n}\to|\alpha|
-  \quad\text{almost surely}.$$
+For a regression with regressor $f(x)\in\mathbb R^p$ and a design given by a
+probability measure $\xi$, the information matrix is
+$M(\xi)=\int f(x)f(x)^\top\,\xi(dx)$.
 
-* **7. Doob's consistency theorem.** Consider a dominated model
-  $\{P_\theta:\theta\in\Theta\}$ on a standard Borel sample space, with
-  $\Theta$ Polish with its Borel $\sigma$-field, and a prior $\Pi$ on
-  $\Theta$. Assume the family is measurably parameterized. If
-  $\theta\mapsto P_\theta$ is injective, then there is a $\Pi$-null set $N$ such that for every
-  $\theta\notin N$ and every neighborhood $U$ of $\theta$, the posterior
-  probability of $U$ tends to $1$, $P_\theta$-almost surely.
+* **37. Kiefer–Wolfowitz equivalence.** Assume $M(\xi^*)$ is nonsingular. The
+  design $\xi^*$ maximizes $\det M(\xi)$ if and only if
+  $$\max_x f(x)^\top M(\xi^*)^{-1}f(x)=p,$$
+  with equality for every $x$ in the support of $\xi^*$. For a design
+  criterion that is concave and strictly increasing with respect to the
+  Loewner order on information matrices, a design is optimal if and only if
+  the directional derivative of the criterion at $M(\xi^*)$ is nonpositive in
+  the direction of every one-point design.
 
-* **8. Schwartz's theorem.** Let $P_0$ have density $p_0$, and write
-  $K(P_0,P)=\int p_0\log(p_0/p)$ for the Kullback–Leibler divergence. Suppose
-  that the prior gives positive mass to
-  $\{P:K(P_0,P)<\varepsilon\}$ for every $\varepsilon>0$. Suppose that for
-  every weak neighborhood $U$ of $P_0$ there exist tests of $P_0$ against
-  $U^c$ whose type I and type II errors both tend to zero, uniformly over
-  $U^c$. Then the posterior probability of $U$ tends to $1$ in
-  $P_0$-probability.
+* **38. Randomization test.** Under the sharp null hypothesis that each unit's
+  response is unchanged by its treatment assignment, redraw the assignment
+  from the randomization distribution while holding the responses fixed. The
+  induced distribution of a test statistic is free of unknown parameters.
+  The test that rejects when the observed statistic lies in the upper fraction
+  $\alpha$ of this distribution has conditional level at most $\alpha$ given
+  the responses, and therefore unconditional level at most $\alpha$. When the
+  randomization distribution is atomless, or when ties are broken by an
+  auxiliary randomization, the conditional level equals $\alpha$.
 
-For a probability $P$ with density $p$, write
-$V(P_0,P)=\int p_0\bigl(\log(p_0/p)\bigr)^2$ and write $h$ for Hellinger
-distance, normalized by $h^2(P,Q)=\int(\sqrt p-\sqrt q)^2$.
-Let $N(\varepsilon,\mathcal F,h)$ be the covering number of
-$\mathcal F$ in that distance.
+For a block design with $v$ treatments, let $N$ be the treatment-by-block
+incidence matrix, let $R$ be the diagonal matrix of treatment replications,
+and let $K$ be the diagonal matrix of block sizes. The **information matrix**
+of the treatment effects in the additive block model is
+$C=R-NK^{-1}N^\top$.
 
-* **9. Contraction rate of Ghosal, Ghosh, and van der Vaart.** Let
-  $\varepsilon_n\to0$ with $n\varepsilon_n^2\to\infty$. Suppose that for some
-  finite $C$,
-  $$\Pi\bigl(\{P:K(P_0,P)\le\varepsilon_n^2,\;
-  V(P_0,P)\le\varepsilon_n^2\}\bigr)
-  \ge\exp(-Cn\varepsilon_n^2),$$
-  and that there exist sieves $\mathcal F_n$ with
-  $\log N(\varepsilon_n/2,\mathcal F_n,h)\le n\varepsilon_n^2$ and
-  $$\Pi(\mathcal F_n^c)\le\exp(-(C+4)n\varepsilon_n^2).$$
-  Then there exists $M_0<\infty$ such that for every $M\ge M_0$ the posterior
-  probability of $\{P:h(P,P_0)\ge M\varepsilon_n\}$ tends to zero in
-  $P_0$-probability.
+* **39. Connectedness and estimability.** The design is connected if and only
+  if $\mathop{\mathrm{rank}}(C)=v-1$. A treatment contrast $c^\top\tau$ is
+  estimable if and only if $c$ lies in the column space of $C$.
 
-* **10. Linear inverse problems.** In the white-noise model
-  $dY=Af\,dt+\varepsilon\,dW$ on a bounded domain, suppose that $A$ is compact
-  and injective with singular values of order $j^{-a}$, $a\ge0$, and that the
-  unknown function lies in a Sobolev ellipsoid of smoothness $\beta>0$
-  in the right singular-vector basis of $A$, so that its smoothness and
-  the singular-value decay are aligned. The minimax rate for the $L^2$
-  estimation error is of order $\varepsilon^{2\beta/(2\beta+2a+1)}$.
-  Independent centered Gaussian prior coefficients with variances of
-  order $j^{-1-2\beta}$ yield posterior contraction at this rate,
-  uniformly over a fixed such ball. Fixing a different prior smoothness
-  generally worsens this uniform rate, although individual smoother
-  truths can have faster contraction.
+An $N\times k$ array on $s$ symbols is an **orthogonal array of strength $t$**
+when, in every set of $t$ columns, every possible $t$-tuple appears equally
+often.
 
-<a id="synopsis-105c"></a>
+* **40. Orthogonal arrays.** Use orthogonal contrasts for each factor.
+  In an array of strength $t$, distinct effect columns of orders $r,s$
+  are orthogonal when $r+s\le t$. In particular, a factorial model
+  containing effects through order $q$ has mutually orthogonal columns
+  when $2q\le t$; under independent homoscedastic errors its least-squares
+  contrast estimators are uncorrelated. Effects of order less than $t$
+  need not all be mutually orthogonal, since their products can involve
+  more than $t$ factors.
 
-## 105C. Monte Carlo and Bayesian Computation
+* **41. Balanced incomplete blocks.** In a balanced incomplete block design
+  with $v$ treatments, common replication $r$, block size $k$, and pair
+  concurrence $\lambda>0$, one has $r(k-1)=\lambda(v-1)$ and
+  $$C=\frac{\lambda v}{k}\left(I-\frac1v11^\top\right).$$
+  Consequently every treatment contrast is estimable in the additive
+  homoscedastic block model and has best linear unbiased variance
+  $\sigma^2 k\|c\|^2/(\lambda v)$ for $1^\top c=0$.
 
-* **11. Importance sampling.** Let the target probability have density $p$ and
-  let the proposal have density $q$, with $p$ absolutely continuous with
-  respect to $q$. If $\mathbb E_q[(p/q)|h|]<\infty$, then
-  $\mathbb E_p h=\mathbb E_q[(p/q)h]$. For an independent sample from $q$, the
-  average of $(p/q)(X_i)h(X_i)$ is unbiased for $\mathbb E_p h$, with variance
-  $n^{-1}\bigl(\mathbb E_q[(p/q)^2h^2]-(\mathbb E_p h)^2\bigr)$. The
-  self-normalized weights $w_i/\sum_j w_j$, with $w_i=p(X_i)/q(X_i)$, are
-  consistent for $\mathbb E_p h$ whenever $\mathbb E_q[(p/q)|h|]<\infty$.
+### Optimality of block and polynomial designs
 
-Let $\pi$ be a target density on a measurable space and let $q(x,dy)$ be a
-proposal kernel that admits a density $q(x,y)$ in the second variable.
+For a connected block design $d$ let $\mu_1,\ldots,\mu_{v-1}$ be the
+positive eigenvalues of its information matrix $C_d$. The design is
+**A-optimal** in a class if it minimizes $\sum_i\mu_i^{-1}$, which is
+proportional to the average variance of the estimated pairwise treatment
+differences; **D-optimal** if it maximizes $\prod_i\mu_i$; and
+**E-optimal** if it maximizes $\min_i\mu_i$. A disconnected design is worst
+under each criterion.
 
-* **12. Metropolis–Hastings.** Define the acceptance probability
-  $$\alpha(x,y)=\min\Bigl(1,
-  \frac{\pi(y)q(y,x)}{\pi(x)q(x,y)}\Bigr)$$
-  when the denominator is positive, and $\alpha(x,y)=1$ when
-  $\pi(x)q(x,y)=0$. The kernel that proposes $Y\sim q(x,\cdot)$ and moves
-  from $x$ to $Y$ with probability $\alpha(x,Y)$, remaining at $x$ otherwise,
-  is reversible with respect to $\pi$ and therefore leaves $\pi$ invariant.
+* **42. Fisher's inequality and optimality of balanced incomplete
+  blocks.** A balanced incomplete block design with $v$ treatments and
+  $b$ blocks satisfies $b\ge v$. Every block design with $b$ blocks of
+  size $k<v$ has $\mathop{\mathrm{tr}}C_d\le b(k-1)$, with equality exactly
+  when no treatment occurs twice in a block. A balanced incomplete block
+  design attains this bound and, by item 41, has all $v-1$ positive
+  eigenvalues equal to $\lambda v/k=b(k-1)/(v-1)$. Hence, if one exists,
+  it is A-, D-, and E-optimal among all block designs with the same
+  $v$, $b$, and $k$. More generally it minimizes every criterion of $C_d$
+  that is convex, invariant under relabeling of treatments, and
+  nonincreasing under multiplication of $C_d$ by scalars at least $1$;
+  this is Kiefer's universal optimality.
 
-* **13. Gibbs sampling.** Suppose the joint distribution is absolutely
-  continuous with respect to a product measure and its density is positive on
-  the product of the coordinate supports. The kernel that updates one
-  coordinate from its conditional distribution given the others, in a
-  deterministic or a random scan, leaves the joint distribution invariant.
+* **43. D-optimal polynomial regression.** For polynomial regression of
+  degree $d\ge1$ on $[-1,1]$, with $f(t)=(1,t,\ldots,t^d)^\top$, the
+  unique design maximizing $\det M(\xi)$ assigns weight $1/(d+1)$ to each of
+  the $d+1$ roots of $(1-t^2)P_d'(t)$, where $P_d$ is the Legendre
+  polynomial of degree $d$. By item 37,
+  $\max_tf(t)^\top M(\xi)^{-1}f(t)=d+1$ for this design, the maximum being
+  attained exactly at its support points.
 
-* **14. Central limit theorem for Markov chain Monte Carlo.** Let
-  $(X_t)_{t\ge0}$ be a Markov chain with invariant probability $\pi$,
-  satisfying the drift and minorization condition of CKMA SYNOPSIS08,
-  item 69. If $f$ is measurable and $\mathbb E_\pi|f|^{2+\delta}<\infty$ for
-  some $\delta>0$, then
-  $$\sqrt n\Bigl(n^{-1}\sum_{t=1}^n f(X_t)-\pi(f)\Bigr)
-  \Rightarrow N(0,\sigma^2(f)),$$
-  where
-  $$\sigma^2(f)=\mathop{\mathrm{Var}}_\pi(f(X_0))
-  +2\sum_{k=1}^\infty\mathop{\mathrm{Cov}}_\pi\bigl(f(X_0),f(X_k)\bigr)$$
-  and the series converges absolutely.
+### Latin squares and regular fractions
 
-For a density $q$ on the parameter, the **evidence lower bound** of a sample
-$y$ is $\mathbb E_q\log p(y,\theta)-\mathbb E_q\log q(\theta)$.
+A **Latin square** of order $n$ is an $n\times n$ array of $n$ symbols in
+which each symbol occurs once in every row and once in every column. Two
+Latin squares of order $n$ are **orthogonal** when, superimposed, every
+ordered pair of symbols occurs in exactly one cell.
 
-* **15. Evidence lower bound.** For every probability $q$ absolutely
-  continuous with respect to the posterior,
-  $$\log p(y)=\mathbb E_q\log p(y,\theta)-\mathbb E_q\log q(\theta)
-  +\mathop{\mathrm{KL}}(q\,\|\,p(\cdot\mid y)).$$
-  Maximizing the evidence lower bound over a family of densities $q$ is
-  therefore the same as minimizing the Kullback–Leibler divergence from $q$
-  to the posterior. A mean-field family restricts $q$ to a product of
-  coordinate laws. The construction of such families is in Section 113.
+* **44. Latin squares and mutually orthogonal sets.** In the additive
+  model with row, column, and treatment effects for a Latin square of order
+  $n\ge3$, with independent homoscedastic errors, the spaces of row,
+  column, and treatment contrasts are mutually orthogonal. The
+  analysis of variance splits the corrected total sum of squares into
+  rows, columns, treatments, and residual, with $n-1$, $n-1$, $n-1$, and
+  $(n-1)(n-2)$ degrees of freedom. The least-squares estimator of a
+  difference of two treatment effects is the difference of the two
+  treatment means, with variance $2\sigma^2/n$. A set of $k$ mutually
+  orthogonal Latin squares of order $s$ is equivalent to an orthogonal
+  array with $s^2$ rows, $k+2$ columns on $s$ symbols, and strength $2$.
+  Consequently $k\le s-1$, and the bound is attained when $s$ is a prime
+  power.
 
-* **20. Self-normalized importance-sampling limit.** In item 11, put
-  $w=p/q$, $\mu=\mathbb E_p h$, and suppose
-  $\mathbb E_q[w^2(h-\mu)^2]<\infty$ and $\mathbb E_q[w|h|]<\infty$.
-  For independent proposal draws,
-  $$\sqrt n\left(\frac{\sum_iw(X_i)h(X_i)}{\sum_iw(X_i)}-\mu\right)
-  \Rightarrow N\left(0,\mathbb E_q[w^2(h-\mu)^2]\right).$$
-  Multiplying all weights by a common unknown constant leaves the estimator
-  unchanged. The asymptotic variance can be much larger than
-  $\mathop{\mathrm{Var}}_p h$ when the proposal poorly covers the target.
+In a $2^m$ factorial, write each factorial effect as a word in the factor
+letters. A **regular $2^{m-l}$ fraction** is the set of treatment
+combinations on which every word of a chosen subgroup of $2^l$ words,
+the **defining contrast subgroup**, has a fixed sign. Two effects are
+**aliased** when their product lies in that subgroup. The **resolution**
+of the fraction is the length of the shortest nonidentity defining word.
 
-* **21. Conditional Monte Carlo.** If $(U_i,V_i)$ are independent copies
-  and $H(U,V)\in L^2$, replacing $H(U_i,V_i)$ by
-  $\mathbb E[H(U_i,V_i)\mid U_i]$ in a Monte Carlo average preserves its
-  expectation and decreases its variance. This is the conditional-expectation
-  argument behind Rao–Blackwellization, without a statistical sufficiency
-  requirement. For a serial Markov chain, a decrease in one-step variance
-  alone does not compare the full asymptotic variances of item 14.
+* **45. Aliasing and resolution.** In a regular $2^{m-l}$ fraction, each
+  effect not in the defining subgroup is aliased with exactly $2^l-1$
+  others, and aliased effects have identical contrast columns up to sign,
+  so only their signed sum is estimable. An effect of order $r$ and a
+  distinct effect of order $s$ can be aliased only if $r+s\ge R$, where
+  $R$ is the resolution. In resolution III no two main effects are
+  aliased; in resolution IV no main effect is aliased with a two-factor
+  interaction; in resolution V no two-factor interaction is aliased with
+  another. A regular fraction of resolution $R$ is an orthogonal array of
+  strength $R-1$, as in item 40, and $R-1$ is its maximal strength.
 
-### Exact simulation and variance reduction
+### Experiments, identification, and estimation
 
-For a distribution function $F$ on $\mathbb R$, the **generalized inverse**
-is $F^-(u)=\inf\{x:F(x)\ge u\}$ for $u\in(0,1)$.
+A unit has **potential outcomes** $Y(a)$ under each treatment level $a$ in
+a finite set of treatments. The **stable unit treatment value assumption**
+is that these potential outcomes do not depend on the treatments of other
+units and that each treatment level has one version. The observed outcome
+is the potential outcome of the treatment actually received. For a binary
+treatment $A\in\{0,1\}$, the **average treatment effect** is
+$\theta=\mathbb E[Y(1)-Y(0)]$.
 
-* **28. Inverse-transform sampling.** If $U$ is uniform on $(0,1)$, then
-  $F^-(U)$ has distribution function $F$, since $F^-(u)\le x$ exactly
-  when $u\le F(x)$. If $F$ is continuous and $X\sim F$, then $F(X)$ is
-  uniform on $(0,1)$.
+Consider a finite population of $n$ units and a completely randomized
+experiment that assigns treatment to a simple random subset of $n_1$ units
+and control to the remaining $n_0=n-n_1$ units. Write
+$\tau_i=Y_i(1)-Y_i(0)$, $\tau=n^{-1}\sum_{i=1}^n\tau_i$, and
+$\bar Y(a)=n^{-1}\sum_{i=1}^n Y_i(a)$. The finite-population variances, with
+divisor $n-1$, are
+$$
+S^2(a)=\frac1{n-1}\sum_{i=1}^n\bigl(Y_i(a)-\bar Y(a)\bigr)^2,
+\qquad
+S^2(\tau)=\frac1{n-1}\sum_{i=1}^n(\tau_i-\tau)^2.
+$$
+The difference-in-means estimator is $\hat\tau=\bar Y_1-\bar Y_0$, where
+$\bar Y_a$ is the average of the observed outcomes in the arm of size $n_a$.
 
-* **29. Accept–reject sampling.** Let $f$ and $g$ be probability densities
-  with $f\le Mg$ for a constant $M\ge1$. Draw $Y\sim g$ and an independent
-  uniform $U$ on $(0,1)$, and accept $Y$ when $U\le f(Y)/(Mg(Y))$;
-  otherwise repeat independently. The accepted value has density $f$
-  exactly, each trial is accepted with probability $1/M$, and the number
-  of trials is geometric with mean $M$. If only an unnormalized
-  $\tilde f=Zf$ is known, with $\tilde f\le\tilde Mg$, the same rule with
-  $\tilde M$ in place of $M$ still produces exact draws from $f$, with
-  acceptance probability $Z/\tilde M$.
+* **46. Neyman's theorem.** In a completely randomized experiment the
+  potential outcomes are fixed and the only randomness is the assignment.
+  Then $\mathbb E\hat\tau=\tau$ and
+  $$\mathop{\mathrm{Var}}(\hat\tau)
+  =\frac{S^2(1)}{n_1}+\frac{S^2(0)}{n_0}-\frac{S^2(\tau)}{n}.$$
+  Let $\hat S^2(a)$ be the sample variance of the observed outcomes in arm
+  $a$, with divisor $n_a-1$. The estimator
+  $\hat V=\hat S^2(1)/n_1+\hat S^2(0)/n_0$ is conservative:
+  $$\mathbb E\hat V-\mathop{\mathrm{Var}}(\hat\tau)=S^2(\tau)/n\ge0,$$
+  with equality if and only if $\tau_i=\tau$ for every unit.
 
-* **30. Control and antithetic variates.** Let $Y$ and $C$ be
-  square-integrable functions of the same simulation draw, with
-  $\mathbb EC$ known and $\mathop{\mathrm{Var}}C>0$. For every $b$, the
-  variable $Y-b(C-\mathbb EC)$ has mean $\mathbb EY$; its variance is
-  minimized at $b^*=\mathop{\mathrm{Cov}}(Y,C)/\mathop{\mathrm{Var}}C$,
-  where it equals $(1-\rho^2)\mathop{\mathrm{Var}}Y$ with $\rho$ the
-  correlation of $Y$ and $C$. For antithetic sampling, let $U$ be uniform
-  on $(0,1)$ and let $h\in L^2(0,1)$ be monotone. Then
-  $\mathop{\mathrm{Cov}}(h(U),h(1-U))\le0$, so the unbiased average
-  $\tfrac12(h(U)+h(1-U))$ has variance at most
-  $\tfrac12\mathop{\mathrm{Var}}h(U)$, the variance obtained from two
-  independent draws.
+Let $e_a(x)=P(A=a\mid X=x)$ and write
+$m_a(x)=\mathbb E[Y\mid A=a,X=x]$. **Conditional ignorability** is the
+independence $Y(a)\perp A\mid X$. **Positivity** at level $a$ is
+$e_a(X)\ge\delta>0$ almost surely.
 
-### Convergence of Markov chain samplers
+* **47. Identification by regression and by weighting.** Under conditional
+  ignorability and positivity,
+  $$\mathbb E[Y(a)]
+  =\mathbb E\bigl[m_a(X)\bigr]
+  =\mathbb E\Bigl[\frac{1_{\{A=a\}}Y}{e_a(X)}\Bigr].$$
+  For a binary treatment the average treatment effect is therefore
+  $\mathbb E[m_1(X)-m_0(X)]$.
 
-* **31. Convergence of Metropolis–Hastings.** Suppose the chain of item
-  12 is $\pi$-irreducible. Then it is Harris recurrent, and for every
-  $h\in L^1(\pi)$ the averages $n^{-1}\sum_{t\le n}h(X_t)$ converge to
-  $\pi(h)$ almost surely from every starting point. If it is also
-  aperiodic, then $P^n(x,\cdot)\to\pi$ in total variation for every $x$,
-  as in CKMA SYNOPSIS08, item 68. Irreducibility holds if $q(x,y)>0$ for
-  all $x,y$ in the support of $\pi$, and aperiodicity holds if rejection
-  has positive probability. On $\mathbb R^d$, if the support of $\pi$ is
-  open and connected, $\pi$ is bounded and bounded away from zero on its
-  compact subsets, and $q(x,y)\ge\varepsilon$ whenever
-  $|x-y|<\delta$, for some $\varepsilon,\delta>0$, then the chain is
-  $\pi$-irreducible and aperiodic and every nonempty compact subset of
-  the support is small.
+A measurable function $b$ of $X$ is a **balancing score** when
+$A\perp X\mid b(X)$. The **propensity score** of a binary treatment is
+$e(X)=P(A=1\mid X)$.
 
-* **32. Independence and random-walk samplers.** In the independence
-  sampler, $q(x,y)=g(y)$ for a density $g$. If $\pi\le Mg$ on the support of
-  $\pi$, then
-  $$\sup_A|P^n(x,A)-\pi(A)|\le(1-1/M)^n$$
-  for every $x$, so the chain is uniformly ergodic. If $\pi/g$ is not
-  essentially bounded, the chain is not geometrically ergodic. For a
-  random-walk sampler on $\mathbb R$, with symmetric positive increment
-  density, geometric ergodicity requires
-  $\int e^{s|x|}\pi(dx)<\infty$ for some $s>0$. If $\pi$ is symmetric
-  and log-concave in the tails, in the sense that
-  $\log\pi(x)-\log\pi(y)\ge a|y-x|$ for some $a>0$ and $x_1$ whenever
-  $x_1\le x<y$ or $y<x\le-x_1$, the chain is geometrically ergodic.
+* **48. Propensity score.** Under conditional ignorability, $Y(a)$ is
+  independent of $A$ given $e(X)$. The propensity score is a balancing
+  score, and it is a function of every balancing score.
 
-* **33. Gibbs sampling as Metropolis–Hastings; two-stage samplers.**
-  Each coordinate update of item 13 is a Metropolis–Hastings step whose
-  proposal is the full conditional law, and its acceptance probability is
-  identically $1$. For a two-stage sampler on a pair $(X,Y)$, which
-  alternately draws $X$ given $Y$ and $Y$ given $X$, each of the two
-  marginal sequences is itself a Markov chain, reversible with respect to
-  its stationary marginal. If one marginal chain is ergodic, or
-  geometrically ergodic, so is the other. Under stationarity the
-  autocovariances $\mathop{\mathrm{Cov}}(h(X^{(0)}),h(X^{(t)}))$ are
-  nonnegative and nonincreasing in $t$ for every $h$ with finite
-  variance. Moreover, the conditional average
-  $T^{-1}\sum_{t\le T}\mathbb E[h(X)\mid Y^{(t)}]$ has variance no
-  larger than $T^{-1}\sum_{t\le T}h(X^{(t)})$ for every $T$. In this
-  two-stage setting the comparison left open in item 21 is therefore
-  resolved in favor of conditioning. When $X$ is a parameter and $Y$ is
-  missing data, the scheme is data augmentation.
+Write $\mu_a$ for a candidate regression and $e$ for a candidate propensity
+score, and set
+$$
+\varphi
+=\mu_1(X)-\mu_0(X)
++\frac{A\bigl(Y-\mu_1(X)\bigr)}{e(X)}
+-\frac{(1-A)\bigl(Y-\mu_0(X)\bigr)}{1-e(X)}.
+$$
 
-For a nonnegative integrable function $f_1$ proportional to $\pi$ on
-$\mathbb R^d$, the **slice sampler** alternates
-$U\mid X=x\sim\mathop{\mathrm{Unif}}(0,f_1(x))$ and
-$X\mid U=u\sim\mathop{\mathrm{Unif}}\{x:f_1(x)>u\}$, with the uniform law
-taken with respect to Lebesgue measure.
+* **49. Doubly robust estimator of the average treatment effect.** Assume
+  conditional ignorability and $e_0(X)\in[\delta,1-\delta]$. The expectation
+  of $\varphi$ equals $\theta$ as soon as either $e=e_0$ and the functions
+  $\mu_a$ are square-integrable, or $\mu_a=m_a$ for $a\in\{0,1\}$ and $e$
+  is any measurable function with values in $[\delta,1-\delta]$. The sample
+  average of $\varphi$, with estimated nuisance functions, is therefore
+  consistent when at least one of the two fitted models is correct. If both
+  are correct and the product of their $L^2$ errors is $o_P(n^{-1/2})$, the
+  estimator is asymptotically linear with efficient influence function
+  $\varphi-\theta$, provided the empirical-process remainder is controlled,
+  for example by cross-fitting and $L^2$ convergence of the fitted
+  estimating function as specified in SYNOPSIS102, item 39. The missing-mean analogue is SYNOPSIS102, item 37, and
+  the efficiency bound is SYNOPSIS102, item 34.
 
-* **34. Slice sampler.** Both steps leave invariant the uniform law on
-  $\{(x,u):0<u<f_1(x)\}$, whose first marginal is $\pi$, so the
-  $X$-sequence has stationary law $\pi$ and the normalizing constant of
-  $f_1$ is never needed. If $f_1$ is bounded and has bounded support, the
-  slice sampler is uniformly ergodic.
+Let $Z\in\{0,1\}$ be an instrument, let $A(z)$ be the potential treatment,
+and let $Y(a)$ be the potential outcome. **Exclusion** means that the
+instrument affects the outcome only through $A$. **Monotonicity** means
+$A(1)\ge A(0)$ almost surely. A unit is a **complier** when
+$A(1)>A(0)$.
 
-Let $\pi(x)\propto\exp(-U(x))$ on $\mathbb R^d$ with $U$ continuously
-differentiable, let $M$ be positive definite, and put
-$H(x,p)=U(x)+\tfrac12p^\top M^{-1}p$. One **leapfrog step** of size
-$\varepsilon>0$ maps $(x,p)$ to $(x',p')$ through
-$p_{1/2}=p-\tfrac\varepsilon2\nabla U(x)$,
-$x'=x+\varepsilon M^{-1}p_{1/2}$, and
-$p'=p_{1/2}-\tfrac\varepsilon2\nabla U(x')$. Let $\Phi$ be the composition
-of $L$ such steps.
+* **50. Local average treatment effect.** Assume that
+  $(Y(0),Y(1),A(0),A(1))$ is independent of $Z$, that exclusion and
+  monotonicity hold, and that $P(A=1\mid Z=1)\ne P(A=1\mid Z=0)$. Then the
+  Wald ratio equals the average treatment effect on the compliers:
+  $$\frac{\mathbb E[Y\mid Z=1]-\mathbb E[Y\mid Z=0]}
+  {\mathbb E[A\mid Z=1]-\mathbb E[A\mid Z=0]}
+  =\mathbb E\bigl[Y(1)-Y(0)\mid A(1)>A(0)\bigr].$$
 
-* **35. Hamiltonian Monte Carlo.** The map $\Phi$ preserves Lebesgue
-  measure on $\mathbb R^{2d}$ and is reversible:
-  $\Phi(x,p)=(x',p')$ implies $\Phi(x',-p')=(x,-p)$. Draw
-  $p\sim N(0,M)$, compute $(x',p')=\Phi(x,p)$, and move to $x'$ with
-  probability
-  $$\min\bigl(1,\exp(H(x,p)-H(x',p'))\bigr),$$
-  remaining at $x$ otherwise. This kernel leaves $\pi$ invariant, because
-  it is a Metropolis–Hastings step for the joint density proportional to
-  $\exp(-H)$ with a measure-preserving involutive proposal, followed by
-  momentum refreshment. The exact Hamiltonian flow conserves $H$, so
-  rejections arise only from discretization error. Langevin-type
-  dynamics are in Section 112.
+### Stratified, paired, and regression-adjusted experiments
 
-### Mean-field coordinate ascent
+The sharp-null randomization test, valid in each of the designs below, is
+item 38. In a **stratified randomized experiment** the units are
+partitioned into strata $k=1,\ldots,K$ of sizes $n_{[k]}$, with
+$\pi_{[k]}=n_{[k]}/n$, and independent completely randomized experiments with
+$n_{[k]1}$ treated and $n_{[k]0}$ control units are run within the strata.
+Write $\tau_{[k]}$, $\hat\tau_{[k]}$, and $S^2_{[k]}(\cdot)$ for the
+quantities of item 46 within stratum $k$, and $\bar Y_{[k]}(a)$ for the
+stratum mean of $Y(a)$.
 
-* **36. Coordinate-ascent variational updates.** In item 15, restrict
-  $q=\prod_jq_j$ to a product over blocks $\theta=(\theta_1,\ldots,\theta_J)$.
-  With the factors $q_\ell$, $\ell\ne j$, held fixed, the evidence lower
-  bound is maximized over $q_j$ by
-  $$q_j^*(\theta_j)\propto\exp\Bigl(\mathbb E_{q_{-j}}\log p(y,\theta)\Bigr),$$
-  provided the right side is integrable, where $\mathbb E_{q_{-j}}$
-  averages over the other blocks. Indeed, as a function of $q_j$, the
-  evidence lower bound differs from
-  $-\mathop{\mathrm{KL}}(q_j\,\|\,q_j^*)$ by a constant. Cycling through
-  these updates therefore never decreases the evidence lower bound. The
-  mean-field problem is not convex in general, so the limit can be a
-  local optimum that depends on the initialization.
+* **51. Stratified experiments.** The stratified estimator
+  $\hat\tau_S=\sum_k\pi_{[k]}\hat\tau_{[k]}$ is unbiased for $\tau$, with
+  $$\mathop{\mathrm{Var}}(\hat\tau_S)=\sum_{k=1}^K\pi_{[k]}^2\Bigl(
+  \frac{S^2_{[k]}(1)}{n_{[k]1}}+\frac{S^2_{[k]}(0)}{n_{[k]0}}
+  -\frac{S^2_{[k]}(\tau)}{n_{[k]}}\Bigr).$$
+  If every arm of every stratum has at least two units, the estimator
+  $\hat V_S=\sum_k\pi_{[k]}^2\bigl(\hat S^2_{[k]}(1)/n_{[k]1}
+  +\hat S^2_{[k]}(0)/n_{[k]0}\bigr)$ is conservative, exactly as in item 46.
+  If the treated fraction $n_{[k]1}/n_{[k]}$ is the same in every stratum,
+  then $\hat\tau_S$ equals the difference in means, and for large strata the
+  variance under complete randomization exceeds that under stratification by
+  approximately
+  $$\sum_{k=1}^K\frac{\pi_{[k]}}n\Bigl\{\Bigl(\frac{n_0}{n_1}\Bigr)^{1/2}
+  \bigl(\bar Y_{[k]}(1)-\bar Y(1)\bigr)+\Bigl(\frac{n_1}{n_0}\Bigr)^{1/2}
+  \bigl(\bar Y_{[k]}(0)-\bar Y(0)\bigr)\Bigr\}^2\ge0.$$
+  The gain vanishes only when the stratifying variable does not predict the
+  potential outcomes in this sense.
+
+In a **matched-pairs experiment** there are $n$ pairs of units, and within
+each pair one unit is assigned to treatment by an independent fair coin. Let
+$\tau_i$ be the average of the two unit effects in pair $i$,
+$\tau=n^{-1}\sum_i\tau_i$, and let $\hat\tau_i$ be the treated-minus-control
+difference in pair $i$, with $\hat\tau=n^{-1}\sum_i\hat\tau_i$.
+
+* **52. Matched-pairs experiments.** The estimator $\hat\tau$ is unbiased for
+  $\tau$. Although no within-pair variance can be estimated, the
+  between-pair estimator $\hat V=\{n(n-1)\}^{-1}\sum_i(\hat\tau_i-\hat\tau)^2$
+  is conservative:
+  $$\mathbb E\hat V-\mathop{\mathrm{Var}}(\hat\tau)
+  =\frac1{n(n-1)}\sum_{i=1}^n(\tau_i-\tau)^2\ge0,$$
+  with equality when the pair effects $\tau_i$ are all equal. The estimator
+  and its variance estimate coincide with the one-sample $t$ analysis of the
+  differences $\hat\tau_i$.
+
+In the completely randomized experiment of item 46, let $x_i$ be fixed
+covariate vectors centered so that $\bar x=0$. **Fisher's covariance-adjusted
+estimator** $\hat\tau_F$ is the coefficient of the treatment indicator in the
+least-squares fit of $Y$ on $(1,A,x)$. **Lin's estimator** $\hat\tau_L$ is the
+coefficient of $A$ in the least-squares fit of $Y$ on $(1,A,x,Ax)$.
+
+* **53. Regression adjustment in randomized experiments.** For fixed
+  vectors $b_1,b_0$, the adjusted difference in means
+  $$\hat\tau(b_1,b_0)=n_1^{-1}\sum_iA_i(Y_i-b_1^\top x_i)
+  -n_0^{-1}\sum_i(1-A_i)(Y_i-b_0^\top x_i)$$
+  is unbiased for $\tau$, with the variance of item 46 computed from the
+  adjusted potential outcomes $Y_i(a)-b_a^\top x_i$. Lin's estimator is
+  $\hat\tau(\hat b_1,\hat b_0)$ with $\hat b_a$ the least-squares slope of $Y$
+  on $x$ in arm $a$; it equals the difference of the two arm-wise fitted
+  intercepts. Under finite-population asymptotics with a fixed number of
+  covariates and suitable moment conditions, $\hat\tau_L$ is consistent and
+  asymptotically normal, its asymptotic variance is no larger than that of
+  the difference in means or of $\hat\tau_F$, and the
+  heteroscedasticity-robust (Eicker–Huber–White) standard error is
+  conservative. By contrast, $\hat\tau_F$ is biased in finite samples, can be
+  less precise than the difference in means when $n_1\ne n_0$, and its usual
+  homoscedastic standard error is inconsistent (Freedman). None of these
+  conclusions requires the linear model to be correct; the randomization
+  alone justifies them.
+
+### Treated-unit effects and instrumental variables
+
+* **54. Average effect on the treated.** For a binary treatment with
+  propensity score $e$, suppose only $Y(0)\perp A\mid X$ and $e(X)<1$ almost
+  surely. Then the average treatment effect on the treated,
+  $\tau_T=\mathbb E[Y(1)-Y(0)\mid A=1]$, is identified by
+  $$\tau_T=\mathbb E[Y\mid A=1]-\mathbb E\bigl[m_0(X)\mid A=1\bigr]
+  =\mathbb E[Y\mid A=1]-\frac{\mathbb E\bigl[(1-A)\,e(X)Y/(1-e(X))\bigr]}{P(A=1)}.$$
+  Only one-sided ignorability and overlap are needed, because the
+  counterfactual mean concerns the control outcome of treated units.
+
+In the **linear instrumental-variable model**
+$Y=D^\top\beta+\varepsilon$, the regressor vector $D$ may be correlated with
+$\varepsilon$, and an instrument vector $Z$ satisfies $\mathbb E[Z\varepsilon]=0$,
+with $\mathbb E[ZZ^\top]$ nonsingular and $\mathbb E[ZD^\top]$ of full column
+rank. Observed and exogenous regressors are included in both $D$ and $Z$.
+The **two-stage least-squares estimator** regresses $D$ on $Z$ by least
+squares and then $Y$ on the fitted values $\hat D$.
+
+* **55. Two-stage least squares.** For independent copies with finite second
+  moments,
+  $$\hat\beta_{\mathrm{tsls}}=\beta+\Bigl(\sum_i\hat D_i\hat D_i^\top\Bigr)^{-1}
+  \sum_i\hat D_i\varepsilon_i\to_P\beta.$$
+  With finite fourth moments it is asymptotically normal, and a consistent
+  sandwich variance estimate uses the residuals $Y_i-\hat\beta^\top_{\mathrm{tsls}}D_i$,
+  not the second-stage residuals $Y_i-\hat\beta^\top_{\mathrm{tsls}}\hat D_i$. When
+  $D$ and $Z$ have the same dimension, it equals the instrumental-variable
+  estimator $(\sum_iZ_iD_i^\top)^{-1}\sum_iZ_iY_i$. With one endogenous
+  regressor and one instrument it equals the ratio of the reduced-form
+  coefficients of $Z$ for $Y$ and for $D$; for binary $Z$ and $D$ without
+  covariates this is the Wald ratio of item 50, which estimates the complier
+  effect even when constant linear effects fail. The rank condition is the
+  population form of instrument relevance; with weak instruments the normal
+  approximation can be poor.
+
+### Efficiency, partial identification, and design-based identification
+
+* **56. Efficient variance for an average treatment effect.** Under the
+  assumptions of item 49, write $\sigma_a^2(X)=\mathop{\mathrm{Var}}(Y\mid
+  A=a,X)$ and suppose the following expression is finite. In the
+  unrestricted observed-data model the efficient influence function is
+  $\varphi-\theta$ with true nuisance functions, and its variance is
+  $$\mathop{\mathrm{Var}}(m_1(X)-m_0(X))+
+  \mathbb E\left[\frac{\sigma_1^2(X)}{e_0(X)}+
+  \frac{\sigma_0^2(X)}{1-e_0(X)}\right].$$
+  Cross-fitting with the $L^2$ and product-rate conditions of SYNOPSIS102, item 39, for each arm yields an estimator attaining this bound.
+  Small treatment probabilities increase the information cost of
+  estimating the corresponding conditional mean.
+
+* **57. Bounds without ignorability.** Suppose only consistency and
+  $0\le Y(a)\le1$. Write $p=P(A=1)\in(0,1)$ and
+  $\mu_a=\mathbb E[Y\mid A=a]$. Then the average treatment effect lies in
+  $$[p\mu_1-(1-p)\mu_0-p,\quad
+  p\mu_1+(1-p)-(1-p)\mu_0].$$
+  These bounds are sharp: every value in the interval is compatible with
+  the observed law. They result from letting each unobserved potential
+  outcome range over $[0,1]$. Additional independence, monotonicity, or
+  instrumental-variable restrictions can narrow the interval.
+
+* **58. Regression discontinuity.** Let treatment be
+  $A=1_{\{X\ge c\}}$, with observations possible on both sides of $c$.
+  If $x\mapsto\mathbb E[Y(a)\mid X=x]$ has a version continuous at $c$
+  for each $a$, then the effect at the cutoff is identified by
+  $$\mathbb E[Y(1)-Y(0)\mid X=c]
+  =\lim_{x\downarrow c}\mathbb E[Y\mid X=x]
+  -\lim_{x\uparrow c}\mathbb E[Y\mid X=x].$$
+  The conditional effect at a null-probability cutoff is understood
+  through these continuous versions. This identifies a local effect even
+  though ordinary treatment positivity fails at each running-variable value.
+
+* **59. Difference in differences.** For two periods $t=0,1$ and group
+  indicator $G$, suppose only group $G=1$ receives treatment at $t=1$.
+  Assume no anticipation, consistency, and parallel untreated mean trends:
+  $$\mathbb E[Y_1(0)-Y_0(0)\mid G=1]
+  =\mathbb E[Y_1(0)-Y_0(0)\mid G=0].$$
+  Then the average effect on the treated at time 1 equals
+  $$\{\mathbb E[Y_1\mid G=1]-\mathbb E[Y_0\mid G=1]\}
+  -\{\mathbb E[Y_1\mid G=0]-\mathbb E[Y_0\mid G=0]\}.$$
+  The group populations must be comparable over time, as with panel data
+  or repeated samples from unchanged group populations. Parallel trends
+  is a restriction on counterfactual means, not a consequence of an
+  observed regression fit.
+
+### Sensitivity to unmeasured confounding and mediation
+
+Let the treatment $A$ and outcome $Y$ be binary, let $U$ be a binary
+unmeasured confounder with $A\perp Y\mid(X,U)$, and, at a fixed value $x$ of
+the measured covariates, write
+$$\mathrm{rr}_{AU}=\frac{P(U=1\mid A=1,x)}{P(U=1\mid A=0,x)},\qquad
+\mathrm{rr}_{UY}=\frac{P(Y=1\mid U=1,x)}{P(Y=1\mid U=0,x)},\qquad
+\mathrm{rr}^{\mathrm{obs}}=\frac{P(Y=1\mid A=1,x)}{P(Y=1\mid A=0,x)}.$$
+
+* **60. Cornfield inequalities and the E-value.** If
+  $\mathrm{rr}^{\mathrm{obs}}>1$, $\mathrm{rr}_{AU}>1$, and
+  $\mathrm{rr}_{UY}>1$, then
+  $$\mathrm{rr}^{\mathrm{obs}}\le
+  \frac{\mathrm{rr}_{AU}\,\mathrm{rr}_{UY}}{\mathrm{rr}_{AU}+\mathrm{rr}_{UY}-1}.$$
+  Consequently both $\mathrm{rr}_{AU}$ and $\mathrm{rr}_{UY}$ are at least
+  $\mathrm{rr}^{\mathrm{obs}}$ (Cornfield's inequality), and
+  $$\max(\mathrm{rr}_{AU},\mathrm{rr}_{UY})\ge
+  \mathrm{rr}^{\mathrm{obs}}+\sqrt{\mathrm{rr}^{\mathrm{obs}}
+  (\mathrm{rr}^{\mathrm{obs}}-1)}.$$
+  The right side is the **E-value** of Ding and VanderWeele: an unmeasured
+  confounder that fully explains an observed risk ratio must be associated
+  with both treatment and outcome at least this strongly on the risk-ratio
+  scale. The case $\mathrm{rr}^{\mathrm{obs}}<1$ follows by relabeling the
+  treatment levels. Item 66 is the corresponding design-based sensitivity
+  analysis for matched pairs.
+
+For a binary treatment $A$, a mediator $M$, and outcome $Y$, let $M(a)$ be the
+potential mediator and $Y(a,m)$ the potential outcome with consistency
+$M=M(A)$ and $Y=Y(A,M)$. Write $Y(a,M(a'))$ for the nested potential outcome
+and define the **natural direct** and **natural indirect effects**
+$$\mathrm{NDE}=\mathbb E\bigl[Y(1,M(0))-Y(0,M(0))\bigr],\qquad
+\mathrm{NIE}=\mathbb E\bigl[Y(1,M(1))-Y(1,M(0))\bigr],$$
+whose sum is the total effect $\mathbb E[Y(1,M(1))-Y(0,M(0))]$.
+
+* **61. Mediation formula.** Assume, for all $a,a',m$, that
+  $A\perp Y(a,m)\mid X$, $M\perp Y(a,m)\mid(X,A)$, $A\perp M(a)\mid X$, and the
+  cross-world independence $Y(a,m)\perp M(a')\mid X$, together with
+  positivity of the conditioning events. Then, for discrete $M$ and $X$,
+  $$\mathbb E\bigl[Y(a,M(a'))\bigr]=\sum_x\sum_m
+  \mathbb E[Y\mid A=a,M=m,X=x]\,P(M=m\mid A=a',X=x)\,P(X=x),$$
+  with integrals against conditional densities in general. Hence the natural
+  direct and indirect effects are identified. The first three conditions
+  hold when treatment and mediator are both randomized given $X$; the
+  cross-world condition cannot be ensured by any experiment and is not
+  testable. In a structural causal model whose treatment, mediator, and
+  outcome equations have mutually independent errors and depend on $X$,
+  all four conditions hold.
+
+### Graphical interventions
+
+Let $G$ be a directed acyclic graph on a finite set of vertices, and let
+the law of the corresponding random vector admit a recursive factorization
+along $G$. A path is **blocked** by $W$ if at least one noncollider on
+the path belongs to $W$, or at least one collider has no descendant,
+including itself, in $W$. Two disjoint vertex sets are **$d$-separated**
+by a third if every path between them is blocked. The **global Markov property** says
+that $d$-separation implies the corresponding conditional independence.
+
+* **62. Directed Markov properties.** For a directed acyclic graph, recursive
+  factorization, the local Markov property, and the global Markov property
+  are equivalent for every such factorization. The undirected
+  Hammersley–Clifford theorem is item 26.
+
+For an intervention $\mathop{\mathrm{do}}(X=x)$, write $G_{\bar X}$ for the
+graph with arrows into $X$ removed and $G_{\underline Z}$ for the graph
+with arrows out of $Z$ removed. A set $Z$ satisfies the **back-door
+criterion** relative to $(X,Y)$ when no vertex of $Z$ is a descendant of
+$X$ and $Z$ blocks every path from $X$ to $Y$ that contains an arrow into
+$X$. A set $Z$ satisfies the **front-door criterion** when $Z$ intercepts
+every directed path from $X$ to $Y$, every back-door path from $X$ to $Z$
+is blocked, and $X$ blocks every back-door path from $Z$ to $Y$.
+
+* **63. Back-door and front-door formulae.** If $Z$ satisfies the back-door
+  criterion relative to $(X,Y)$, then
+  $$P\bigl(y\mid\mathop{\mathrm{do}}(x)\bigr)
+  =\sum_z P(y\mid x,z)\,P(z).$$
+  If $Z$ satisfies the front-door criterion, then
+  $$P\bigl(y\mid\mathop{\mathrm{do}}(x)\bigr)
+  =\sum_z P(z\mid x)\sum_{x'}P(y\mid x',z)\,P(x').$$
+
+* **64. Rules of the do-calculus.** Let $X,Y,Z,W$ be disjoint sets of
+  vertices. Write $Z(W)$ for the vertices of $Z$ that are not ancestors of
+  any vertex of $W$ in $G_{\bar X}$. Then
+  $$
+  \begin{aligned}
+  P(y\mid\mathop{\mathrm{do}}(x),z,w)
+  &=P(y\mid\mathop{\mathrm{do}}(x),w)
+  &&\text{if }(Y\perp Z\mid X,W)_{G_{\bar X}},\\
+  P(y\mid\mathop{\mathrm{do}}(x),\mathop{\mathrm{do}}(z),w)
+  &=P(y\mid\mathop{\mathrm{do}}(x),z,w)
+  &&\text{if }(Y\perp Z\mid X,W)_{G_{\bar X\underline Z}},\\
+  P(y\mid\mathop{\mathrm{do}}(x),\mathop{\mathrm{do}}(z),w)
+  &=P(y\mid\mathop{\mathrm{do}}(x),w)
+  &&\text{if }(Y\perp Z\mid X,W)_{G_{\bar X,\overline{Z(W)}}}.
+  \end{aligned}
+  $$
+  These are Pearl's Theorem 3.4.1. A query
+  $P(y\mid\mathop{\mathrm{do}}(x),z)$ is identifiable from the observational
+  law if and only if these rules reduce it to an expression that contains
+  no intervention.
+
+Let $A_t$ be a treatment at time $t=0,\ldots,T$, let $H_t$ be the history
+available just before $A_t$, and let $Y(\bar a)$ be the outcome under a
+treatment regime $\bar a=(a_0,\ldots,a_T)$. **Sequential exchangeability**
+is the independence
+$Y(\bar a)\perp A_t\mid H_t,\,A_{0:t-1}=a_{0:t-1}$ at each $t$.
+**Sequential positivity** is a lower bound, uniform in $t$, on the
+conditional probability of $A_t=a_t$ given the observed past.
+
+* **65. Longitudinal $g$-formula.** Write
+  $H_t=(L_0,A_0,L_1,\ldots,A_{t-1},L_t)$, where $L_0$ is baseline
+  and $L_t$ is measured before $A_t$. Under consistency, sequential
+  exchangeability, and sequential positivity, for discrete covariates,
+  $$\mathbb E[Y(\bar a)]
+  =\sum_{\bar l} \mathbb E[Y\mid\bar L_T=\bar l,\bar A_T=\bar a]
+  P(L_0=l_0)\prod_{t=1}^T
+  P(L_t=l_t\mid\bar L_{t-1}=\bar l_{t-1},
+  \bar A_{t-1}=\bar a_{t-1}).$$
+  Integrals against the corresponding conditional kernels replace sums
+  for general covariates. Successive regression implements this formula
+  by setting each treatment to its prescribed value while integrating
+  over the covariate transition law under the preceding treatments.
+
+For a matched-pair observational study, Rosenbaum's model with parameter
+$\Gamma\ge1$ bounds the ratio of the two units' treatment odds within
+each pair between $1/\Gamma$ and $\Gamma$. Conditional on one treated
+unit per pair, each assignment probability therefore lies between
+$1/(1+\Gamma)$ and $\Gamma/(1+\Gamma)$.
+
+* **66. Sensitivity of a randomization test.** Under that odds constraint,
+  the tail probability of a test statistic is maximized by an explicit
+  product of biased pair assignments, with success probabilities
+  $\Gamma/(1+\Gamma)$ or $1/(1+\Gamma)$ according to the sign that enlarges
+  the tail. The resulting upper bound is a valid $p$-value throughout the
+  sensitivity model. At $\Gamma=1$ the bound is the randomization $p$-value
+  of the paired experiment.
+
+* **67. Markov equivalence of directed graphs.** Two directed acyclic
+  graphs have the same $d$-separation relations if and only if they have
+  the same skeleton and the same unshielded colliders
+  $i\to j\leftarrow k$ with $i,k$ nonadjacent. Under **faithfulness**,
+  the conditional independences of the distribution are exactly those
+  implied by $d$-separation. Even with faithfulness and unlimited
+  observational data, conditional-independence information in general
+  determines only this equivalence class. Interventions can distinguish
+  members because they change the factorization in different ways.
+
+### Structural counterfactuals and time-varying treatments
+
+A **structural causal model** consists of background variables $U$ with a
+probability law, endogenous variables $V_1,\ldots,V_n$, and functions
+$v_i=f_i(\mathrm{pa}_i,u_i)$ that determine $V$ uniquely from $U$; in the
+recursive case the parent relation is a directed acyclic graph. The
+intervention $\mathop{\mathrm{do}}(X=x)$ replaces the equations of $X$ by
+$X=x$, and the **potential response** $Y_x(u)$ is the value of $Y$ in the
+modified system. These responses are potential outcomes in the sense of the
+opening paragraph, and consistency $Y_X=Y$ holds by construction. For binary
+$X$ and $Y$, write $y,y'$ and $x,x'$ for the two values, $y_x$ for the event
+$Y_x=y$, and define the **probability of necessity**
+$\mathrm{PN}=P(y'_{x'}\mid x,y)$, the **probability of sufficiency**
+$\mathrm{PS}=P(y_x\mid x',y')$, and the **probability of necessity and
+sufficiency** $\mathrm{PNS}=P(y_x,y'_{x'})$. The treatment is **exogenous**
+when $(Y_x,Y_{x'})\perp X$, and $Y$ is **monotone** in $X$ when the event
+$y_{x'}\cap y'_x$ is empty.
+
+* **68. Probabilities of causation.** Under exogeneity,
+  $$\max\bigl\{0,P(y\mid x)-P(y\mid x')\bigr\}\le\mathrm{PNS}\le
+  \min\bigl\{P(y\mid x),P(y'\mid x')\bigr\},$$
+  both bounds are sharp, and
+  $\mathrm{PN}=\mathrm{PNS}/P(y\mid x)$ and $\mathrm{PS}=\mathrm{PNS}/P(y'\mid x')$.
+  If in addition $Y$ is monotone in $X$, all three are identified, with
+  $\mathrm{PNS}=P(y\mid x)-P(y\mid x')$ and the excess risk ratio
+  $$\mathrm{PN}=\frac{P(y\mid x)-P(y\mid x')}{P(y\mid x)}.$$
+  Under monotonicity alone, whenever $P(y_x)$ and $P(y_{x'})$ are identified,
+  $\mathrm{PNS}=P(y_x)-P(y_{x'})$, $\mathrm{PN}=(P(y)-P(y_{x'}))/P(x,y)$,
+  and $\mathrm{PS}=(P(y_x)-P(y))/P(x',y')$. These are unit-level
+  counterfactual quantities: unlike average effects, they are not identified
+  by randomization without monotonicity.
+
+In the setting of item 65, write
+$e_t(a_t\mid H_t,\bar a_{t-1})=P(A_t=a_t\mid H_t,A_{0:t-1}=\bar a_{t-1})$ for
+the treatment probabilities. A **marginal structural model** is a
+parametric model $\mathbb E[Y(\bar a)\mid L_0]=f(\bar a,L_0;\beta)$ for the
+regime-specific means.
+
+* **69. Inverse probability weighting for time-varying treatments.**
+  Under consistency, sequential exchangeability, and sequential positivity,
+  $$\mathbb E[Y(\bar a)]=\mathbb E\Bigl[\frac{1_{\{\bar A_T=\bar a\}}\,Y}
+  {\prod_{t=0}^Te_t(a_t\mid H_t,\bar a_{t-1})}\Bigr],$$
+  which equals the $g$-formula of item 65. If the marginal structural model
+  is correct, its parameter is the minimizer
+  $$\beta=\mathop{\mathrm{arg\,min}}_b\sum_{\bar a}\mathbb E\Bigl[
+  \frac{1_{\{\bar A_T=\bar a\}}}{\prod_te_t(a_t\mid H_t,\bar a_{t-1})}
+  \bigl(Y-f(\bar a,L_0;b)\bigr)^2\Bigr],$$
+  so it is estimated by weighted least squares with estimated treatment
+  probabilities. Multiplying the weights by a function of $(\bar a,L_0)$,
+  such as the product of the marginal treatment probabilities, gives
+  **stabilized weights** without changing the limit when $f$ is correct. Time-varying
+  confounders affected by earlier treatment are handled here, whereas
+  ordinary regression adjustment for them can be biased.
+
+### Causal discovery
+
+* **70. Skeleton and colliders from conditional independences.** In a
+  directed acyclic graph, two vertices are adjacent if and only if no subset
+  of the other vertices $d$-separates them, and two nonadjacent vertices are
+  $d$-separated by the parents of one of them. If $i-j-k$ is a path in the
+  skeleton with $i,k$ nonadjacent and $S$ is any set $d$-separating $i$ and
+  $k$, then $i\to j\leftarrow k$ if and only if $j\notin S$. Consequently,
+  under the global Markov property and faithfulness, an algorithm that
+  removes the edge $i-j$ as soon as some conditioning set renders $i$ and $j$
+  independent, searching sets of increasing size among current neighbors as
+  the PC algorithm does, recovers the skeleton and the unshielded colliders,
+  and hence the Markov equivalence class of item 67; Meek's rules then orient
+  every edge common to the class. With Gaussian data and tests of vanishing
+  partial correlation, the sample version is consistent for the class.
+
+* **71. Identifiability of restricted structural equation models.** Suppose
+  $X_j=\sum_{k\in\mathrm{pa}(j)}\beta_{jk}X_k+N_j$ along a directed acyclic
+  graph $G$, with jointly independent noises and $\beta_{jk}\ne0$ for every
+  edge. If the noises are non-Gaussian with strictly positive densities
+  (the linear non-Gaussian acyclic model), or if they are Gaussian with a
+  common variance, then $G$ is identifiable from the joint distribution.
+  The same holds for $X_j=f_j(X_{\mathrm{pa}(j)})+N_j$ with Gaussian noises and
+  three times differentiable functions $f_j$ that are nonlinear in each
+  argument. By contrast, linear Gaussian models with unrestricted variances
+  identify only the Markov equivalence class. The non-Gaussian case rests on
+  the Darmois–Skitovič theorem.
 
 ## Reference guide
 
 ### Correspondence with the subdivisions
 
-- **[105A](#synopsis-105a)**: Jeffreys, Box and Tiao, Berger, Robert, Ghosh,
-  Delampady, and Samanta, and Gelman, Carlin, Stern, Dunson, Vehtari, and
-  Rubin carry conjugate analysis, invariant priors, the Laplace expansion,
-  and the Bernstein–von Mises theorem.
-- **[105B](#synopsis-105b)**: Giné and Nickl, and Nickl's Zurich lectures,
-  carry posterior contraction and Bayesian inverse problems. The Dirichlet
-  process and the general contraction theorem are the theorems of Ferguson,
-  Sethuraman, Doob, Schwartz, and Ghosal, Ghosh, and van der Vaart.
-- **[105C](#synopsis-105c)**: Robert's computational chapters, Del Moral,
-  Douc, Moulines, Priouret, and Soulier, Meyn and Tweedie, and Levin, Peres,
-  and Wilmer carry importance sampling and Markov chain Monte Carlo.
-  Wainwright and Jordan carry the evidence lower bound. Robert and Casella,
-  Liu, and Hammersley and Handscomb carry exact simulation, variance
-  reduction, convergence of Metropolis–Hastings and Gibbs samplers, the
-  slice sampler, and hybrid Monte Carlo.
+- **[105A](#synopsis-105a)**: Rao, Scheffé, Seber and Lee, and Christensen
+  carry the linear model, quadratic forms, and the analysis of variance.
+  McCullagh and Nelder carry generalised linear models and quasi-likelihood.
+  Koenker carries quantile regression. McLachlan and Peel carry finite
+  mixtures. Searle, Casella, and McCulloch carry residual maximum likelihood
+  in the linear model. Anderson, Muirhead, Mardia, Kent, and Bibby, Eaton, and
+  Bilodeau and Brenner carry the Wishart, Hotelling, Wilks, and
+  principal-component limits and discriminant analysis. Lauritzen carries
+  graphical models. Mardia and Jupp carry the von Mises–Fisher likelihood.
+  Anderson and Muirhead also carry correlation theory, covariance tests, and
+  factor analysis.
+- **[105B](#synopsis-105b)**: Silvey, Pukelsheim, and Fedorov and Hackl carry
+  optimal design. Cox and Reid, Bailey, and Cheng carry randomization and
+  block designs. Hedayat, Sloane, and Stufken carry orthogonal arrays. Cheng
+  carries Latin squares, regular fractions, and resolution. Rosenbaum carries
+  randomization inference and sensitivity analysis. Pearl carries directed
+  interventions, the do-calculus, structural counterfactuals, and
+  probabilities of causation. Imbens and Rubin, and Ding, carry potential
+  outcomes, completely randomized, stratified, and paired experiments,
+  regression adjustment, and instrumental variables; Ding also carries the
+  E-value and the mediation formula. Hernán and Robins carry the $g$-formula,
+  marginal structural models, and time-varying treatments. Peters, Janzing,
+  and Schölkopf carry the graphical and structural-equation account, including
+  the identifiability of restricted structural equation models. Spirtes,
+  Glymour, and Scheines carry conditional-independence search. The efficiency
+  theory used by the doubly robust estimator is in SYNOPSIS102.
 
 ### Source comparisons and local copies
 
-Ghosh, Delampady, and Samanta, Sections 2.6–2.8, were consulted for
-posterior propriety, posterior loss minimization, Bayes factors, and
-prediction. Robert–Casella, Chapters 3–4, supplies importance sampling
-and conditional Monte Carlo; its full text is in `ReferencesSuppl`.
-For item 1, van der Vaart's Theorem 10.1 gives quadratic-mean
-differentiability and uniformly consistent separation tests, rather than
-posterior consistency alone. Ghosal–van der Vaart's Theorem 8.9, also
-read in a supplemental local copy, supplies the half-radius entropy
-condition and the sieve-tail exponent $C+4$ used in item 9.
+#### Linear models, multivariate analysis, and design
 
-Item 5 is the Laplace expansion used by Ghosh, Delampady, and Samanta and by
-Robert. Item 9 uses a standard sufficient contraction criterion with
-sieve-tail exponent $C+4$, consistent with the local Ghosal–van der Vaart
-treatment. Items 12 and 13 are the invariance statements of the Monte Carlo
-texts. Item 14 invokes the geometric
-ergodicity criterion already numbered in the analysis synopsis.
+For the expansion, Seber–Lee's Section 3.10 was read for generalized
+least squares and Section 10.1 for case deletion and studentization;
+its Chapters 4 and 12 supply the nested-model and shrinkage framework.
+Anderson's Chapters 3, 11, and 12 cover normal covariance likelihood,
+principal components, and canonical correlations. The partial-regression,
+ridge, and balanced-block formulas are given with their matrix and rank
+conditions. Item 40 now imposes the sum-of-orders condition on effect
+columns; strength $t$ alone does not decorrelate all effects of orders
+less than $t$.
 
-For the third expansion, Berger's Sections 4.3.2–4.3.3 and 4.5.2–4.5.4
-were read for highest posterior density sets, the point-null Bayes factor
-(4.17) with the lower bound of Theorem 1 in Section 4.3.3, the normal-means
-empirical Bayes estimates (4.33)–(4.35), and Robbins' Poisson estimator
-(Example 16). Robert's Definition 5.5.2, Lemma 10.4.2, and Examples 10.4.1
-and 10.5.1 supply the volume property of highest posterior density
-regions, the exponential-family posterior-mean identity, and the empirical
-Bayes reading of the James–Stein estimator. Ghosh, Delampady, and Samanta,
-Section 6.4, were read for the Jeffreys–Lindley paradox, and Gelman et
-al., Section 5.4, equations (5.17)–(5.21), for the hierarchical normal
-model; the propriety threshold $J\ge3$ for the flat prior on $\tau$ in item
-24 follows from the tail $\tau^{1-J}$ of (5.21). Ghosal–van der Vaart,
-Section 4.1.4, Proposition 4.8, and Section 4.2.4 supply item 27. In
-Robert–Casella, Lemma 2.4, Corollary 2.17, and Section 4.4.2 were read for
-items 28–30, Theorem 7.4, Lemmas 7.3 and 7.6, Theorems 7.8 and 7.15 for
-items 31 and 32, Theorems 9.12, 9.19, 10.13, Corollary 9.14, and
-Proposition 9.18 for item 33, and Section 8.1 with Lemma 8.5 for item 34.
-Hammersley and Handscomb, Sections 5.5–5.6, supply the control and
-antithetic constructions. Liu, Sections 9.2–9.3, was read for the leapfrog
-integrator and hybrid Monte Carlo. Gelman et al., Section 13.7, and
-Wainwright and Jordan, Section 5.3, were read for the mean-field
-coordinate update.
+For the third expansion, the following passages were read. Rao's
+Section 3b.4 and its Complement 1.5 (Fisher–Cochran and Craig–Sakamoto),
+Seber–Lee's Theorems 2.7–2.9 and corollary, and Searle, Casella, and
+McCulloch's display (59) and (62) give item 15. Scheffé's Section 2.10,
+Theorems 1–3, gives item 16, and his Section 4.3, Tables 4.3.2–4.3.3,
+gives item 17. Searle, Casella, and McCulloch's Section 3.5, displays
+(60)–(63) and (74), with the comparison of ML, REML, and ANOVA
+estimators at (146), gives item 18. Seber–Lee's Section 12.3.2, (12.17)–(12.19),
+gives item 19. McCullagh and Nelder's Sections 2.3 and 2.5, and Davison's
+Section 10.3.2 on chi-squared approximations for deviances, give items 20 and 21. Muirhead's Theorems 3.2.1, 3.2.5, 3.2.10, 3.2.14, and 3.2.15
+give item 31; his Theorems 5.1.1, 5.1.6, and 5.1.7, with Anderson's
+Theorems 4.3.5 and 4.4.2, give item 32; his Theorems 8.3.2, 8.3.7,
+11.2.1, and 11.2.5 give item 33. Anderson's Section 8.6, Theorem 8.6.1
+and Corollary 8.6.1, gives item 34, and his Sections 14.2–14.3, with
+Theorem 14.3.1 and the test of the number of factors, give item 35.
+Lauritzen's Proposition 3.19, Theorem 5.3, Theorem 5.4, and
+Proposition 5.9 give item 36. Bailey's Theorem 11.2, Cheng's Exercise
+2.5, and Pukelsheim's Section 14.9 give item 42; the trace bound and the
+eigenvalue comparison are elementary. Pukelsheim's Section 9.5 gives
+item 43. Cheng's Section 8.6 with Theorem 8.10, Bailey's Section 9.2, Cox
+and Reid's Section 5.6 on fractional replication, and Cheng's Theorem 9.5
+give items 44 and 45.
 
-Bernardo and Smith, *Bayesian Theory*, DeGroot, *Optimal Statistical
-Decisions* were not located locally. Supplemental copies of Ghosh–Ramamoorthi,
-Kaipio–Somersalo, Asmussen–Glynn, and Chopin–Papaspiliopoulos are present;
-they were located but not read for this expansion. The consulted
-supplemental copies of Ghosal–van der Vaart and Robert–Casella are linked
-below.
+The local Agresti copies of *Foundations of Linear and Generalized Linear
+Models* and *Categorical Data Analysis* are image scans without usable
+text extraction in this pass. They were not used as full-text evidence;
+the linear-model expansion uses Seber–Lee and Anderson, and the canonical
+likelihood calculation specializes the exponential-family formulas in
+SYNOPSIS101.
+
+Item 5 is the asymptotic covariance in Koenker. Item 22 uses the sample
+covariance with divisor $n-1$, so that $(n-1)S$ is Wishart on $n-1$ degrees
+of freedom. Item 24 uses the divisor $n$; the two normalizations differ by
+$o_P(n^{-1/2})$ for a fixed eigenvalue. Item 37 is the equivalence theorem
+for $D$-optimality, together with the general equivalence theorem for concave
+Loewner-isotone criteria.
+
+Shape analysis in the sense of Kendall and of Dryden and Mardia is recorded
+in [SYNOPSIS108](SYNOPSIS108.md), item 6. Diaconis and Wijsman develop the
+group-invariance theory behind the sampling laws of this section; the
+numbered entries record the sampling consequences.
+
+#### Causal inference
+
+For the expansion, Ding's Section 18.2 was read for sharp worst-case
+bounds and Section 20.2.2, Theorem 20.2, for identification at a regression
+discontinuity. Item 59 records the elementary two-period identification
+identity under an explicit parallel-trends assumption. The variance in
+item 56 is obtained from the efficient influence function by conditioning
+on $X$. Items 49 and 56 use the sample-splitting conditions in SYNOPSIS102, item 39, when fitted nuisances are evaluated on the observations.
+
+The path-blocking definition and the covariate-kernel $g$-formula have
+been written explicitly: an active path can contain noncolliders outside
+the conditioning set, and treatment fixing in a longitudinal intervention
+changes which covariate transition laws are integrated. A sharp-null
+randomization test is item 38; its exactness does not extend
+automatically to the weaker hypothesis of zero average treatment effect.
+
+Item 46 is Ding's Theorem 4.1, including the divisor $n-1$ in $S^2$ and the
+identity $\mathbb E\hat V-\mathop{\mathrm{Var}}(\hat\tau)=S^2(\tau)/n$.
+Item 64 is Pearl's Theorem 3.4.1. Item 49 records the product condition
+$o_P(n^{-1/2})$ under which the estimated influence function is efficient.
+Item 66 is the paired sensitivity model: the worst-case assignment
+probability within a pair is $\Gamma/(1+\Gamma)$.
+
+For the third expansion the following passages were read. Ding: Section
+5.3 (stratified experiments, including the comparison (5.4) with complete
+randomization) for item 51; Section 7.3 and Theorem 7.1 for item 52;
+Section 6.2.2 and Proposition 6.2 for item 53, where the asymptotic
+comparisons are Lin's (2013) results and the negative results Freedman's
+(2008) as reported by Ding; Section 13.1, Theorem 13.1, for item 54;
+Sections 23.4–23.6 and Theorem 23.1 for item 55; Theorem 17.1, Lemma 17.1,
+and Definition 17.1 for item 60; Definition 27.1, Assumptions 27.2–27.5,
+Theorem 27.1, and Example 27.4 for item 61; Problems 29.6–29.8, Theorems
+29.6–29.8, for item 69. Pearl: Definitions 7.1.1–7.1.5 for structural
+causal models, and Definitions 9.2.1–9.2.3, 9.2.9, 9.2.13 with Theorems
+9.2.10, 9.2.11, 9.2.14, and 9.2.15 for item 68. Hernán and Robins,
+Sections 12.3–12.4 and 21.2, for stabilized weights and marginal
+structural models. Peters, Janzing, and Schölkopf: Lemma 7.8 and Section
+7.2.1 for item 70, and Proposition 7.5 and Theorems 7.6–7.7 for item 71;
+the consistency of the Gaussian PC algorithm is the result of Kalisch and
+Bühlmann (2007) cited there. Matching estimators and their bias
+(Abadie and Imbens) were not added: Ding's Chapter 15 gives the
+bias-corrected estimator but not the rate theory, and the original papers
+are not local.
+
+Spirtes, Glymour, and Scheines, *Causation, Prediction, and Search*, and
+van der Laan and Rose, *Targeted Learning*, are not in the local reference
+directory. The local Rosenbaum file is the 2025 introduction; the 2002
+monograph *Observational Studies* is not that file. Tsiatis,
+*Semiparametric Theory and Missing Data*, is absent, as already recorded
+in the reference guide of SYNOPSIS102.
 
 Local texts directly consulted or identified for this selection:
 
-- [Ghosal and van der Vaart, *Fundamentals of Nonparametric Bayesian Inference*](../lean-CKMA/ReferencesSuppl/GhosalVanDerVaart2017FundamentalsNonparametricBayesianInference-CambridgeSerStatProbMath44.pdf).
-  Theorem 8.9 was read for the contraction criterion.
-- [Robert and Casella, *Monte Carlo Statistical Methods*](../lean-CKMA/ReferencesSuppl/RobertCasella2004MonteCarloStatisticalMethods2ndEd-Springer.pdf).
-  Chapters 3–4 were consulted for importance sampling and variance reduction.
-- [Liu, *Monte Carlo Strategies in Scientific Computing*](../lean-CKMA/ReferencesSuppl/Liu2004MonteCarloStrategiesScientificComputing-SpringerSerStat.pdf).
-  Sections 9.2–9.3 were read for hybrid Monte Carlo.
-- [Hammersley and Handscomb, *Monte Carlo Methods*](../lean-CKMA/ReferencesSuppl/HammersleyHandscomb1964MonteCarloMethods-ChapmanHallMonogAPS.pdf).
-  Sections 5.5–5.6 were read for control and antithetic variates.
-- [van der Vaart, *Asymptotic Statistics*](../lean-CKMA/References/VanDerVaart1998AsymptoticStatistics-CambridgeSerStatProbMath03.pdf).
-  Theorem 10.1 was read for the parametric posterior normal limit.
-- [Jeffreys, *Theory of Probability*](../lean-CKMA/References/Jeffreys1998TheoryProbability3rdEd-OxfordUP.ClassicTextsPhysSci.pdf).
-- [Savage, *The Foundations of Statistics*](../lean-CKMA/References/Savage1972FoundationsStatistics2ndRevEd-Dover.pdf).
-- [Box and Tiao, *Bayesian Inference in Statistical Analysis*](../lean-CKMA/References/BoxTiao1973BayesianInferenceStatisticalAnalysis-AddisonWesley.pdf).
-- [Berger, *Statistical Decision Theory and Bayesian Analysis*](../lean-CKMA/References/Berger1985StatisticalDecisionTheoryBayesianAnalysis2ndEd-Springer.SSS.pdf).
-- [Ghosh, Delampady, and Samanta, *An Introduction to Bayesian Analysis*](../lean-CKMA/References/GhoshDelampadySamanta2006IntroductionBayesianAnalysisTheoryMethods-SpringerSTS.pdf).
-- [Robert, *The Bayesian Choice*](../lean-CKMA/References/Robert2007BayesianChoiceDecisionTheoreticFoundationsComputationalImplementation2ndEd-Springer.STS.pdf).
-- [Gelman, Carlin, Stern, Dunson, Vehtari, and Rubin, *Bayesian Data Analysis*](../lean-CKMA/References/GelmanEtAl2014BayesianDataAnalysis3rdEd-ChapmanHallCRC.TextsStatSci.pdf).
-- [Giné and Nickl, *Mathematical Foundations of Infinite-Dimensional Statistical Models*](../lean-CKMA/References/GinéNickl2015MathematicalFoundationsInfiniteDimensionalStatisticalModels-CambridgeSerStatProbMath40.pdf).
-- [Nickl, *Bayesian Non-linear Statistical Inverse Problems*](../lean-CKMA/References/Nickl2023BayesianNonlinearStatisticalInverseProblems-EMS.ZLAM30.pdf).
-- [Del Moral, *Mean Field Simulation for Monte Carlo Integration*](../lean-CKMA/References/DelMoral2013MeanFieldSimulationMonteCarloIntegration-ChapmanHallCRC.MSAP126.pdf).
-- [Douc, Moulines, Priouret, and Soulier, *Markov Chains*](../lean-CKMA/References/DoucMoulinesPriouretSoulier2018MarkovChains-Springer.SSORFE.pdf).
-- [Meyn and Tweedie, *Markov Chains and Stochastic Stability*](../lean-CKMA/References/MeynTweedie2009MarkovChainsStochasticStability-CambridgeMathLibrary.pdf).
-- [Levin, Peres, and Wilmer, *Markov Chains and Mixing Times*](../lean-CKMA/References/LevinPeres2017MarkovChainsMixingTimes2ndEd-AMS.pdf).
-- [Wainwright and Jordan, *Graphical Models, Exponential Families, and Variational Inference*](../lean-CKMA/References/WainwrightJordan2008GraphicalModelsExponentialFamiliesVariationalInference-NowPublishers.FnTML1.pdf).
+- [Rao, *Linear Statistical Inference and Its Applications*](../lean-CKMA/References/Rao1973LinearStatisticalInferenceApplications2ndEd-WileySerProbStat.pdf).
+- [Scheffé, *The Analysis of Variance*](../lean-CKMA/References/Scheffé1959AnalysisVariance-Wiley.pdf).
+- [Seber and Lee, *Linear Regression Analysis*](../lean-CKMA/References/SeberLee2003LinearRegressionAnalysis2ndEd-WileySerProbStat.pdf).
+- [Christensen, *Plane Answers to Complex Questions*](../lean-CKMA/References/Christensen2020PlaneAnswersComplexQuestionsTheoryLinearModels5thEd-SpringerSTS.pdf).
+- [Searle, Casella, and McCulloch, *Variance Components*](../lean-CKMA/References/SearleCasellaMcCulloch2006VarianceComponents-Wiley.pdf).
+- [McCullagh and Nelder, *Generalized Linear Models*](../lean-CKMA/References/McCullaghNelder1989GeneralizedLinearModels2ndEd-ChapmanHallCRC.MSAP37.pdf).
+- [Hastie and Tibshirani, *Generalized Additive Models*](../lean-CKMA/References/HastieTibshirani1990GeneralizedAdditiveModels-ChapmanHallCRC.MSAP43.pdf).
+- [Agresti, *Foundations of Linear and Generalized Linear Models*](../lean-CKMA/References/Agresti2015FoundationsLinearGeneralizedLinearModels-Wiley.SerProbStat.pdf).
+- [Koenker, *Quantile Regression*](../lean-CKMA/References/Koenker2005QuantileRegression-Cambridge.EconometricSocMonographs38.pdf).
+- [McLachlan and Peel, *Finite Mixture Models*](../lean-CKMA/References/McLachlanPeel2000FiniteMixtureModels-Wiley.SerProbStat.pdf).
+- [Anderson, *An Introduction to Multivariate Statistical Analysis*](../lean-CKMA/References/Anderson2003IntroductionMultivariateStatisticalAnalysis3rdEd-WileySerProbStat.pdf).
+- [Muirhead, *Aspects of Multivariate Statistical Theory*](../lean-CKMA/References/Muirhead2005AspectsMultivariateStatisticalTheory-Wiley.pdf).
+- [Mardia, Kent, and Bibby, *Multivariate Analysis*](../lean-CKMA/References/MardiaKentBibby1979MultivariateAnalysis-AcademicPress.pdf).
+- [Eaton, *Multivariate Statistics*](../lean-CKMA/References/Eaton2007MultivariateStatisticsVectorSpaceApproach-IMS.LNMS53.pdf).
+- [Davison, *Statistical Models*](../lean-CKMA/References/Davison2003StatisticalModels-Cambridge.SerStatProbMath.pdf).
+  Section 10.3.2 was read for deviance asymptotics.
+- [Lauritzen, *Graphical Models*](../lean-CKMA/References/Lauritzen1996GraphicalModels-Oxford.StatSci17.pdf).
+- [Mardia and Jupp, *Directional Statistics*](../lean-CKMA/References/MardiaJupp2000DirectionalStatistics-Wiley.SerProbStat.pdf).
+- [Silvey, *Optimal Design*](../lean-CKMA/References/Silvey1980OptimalDesignIntroductionTheoryParameterEstimation-ChapmanHallMonogAPS.pdf).
+- [Pukelsheim, *Optimal Design of Experiments*](../lean-CKMA/References/Pukelsheim2006OptimalDesignExperiments-SIAM.CAM50.pdf).
+- [Fedorov and Hackl, *Model-Oriented Design of Experiments*](../lean-CKMA/References/FedorovHackl2025ModelOrientedDesignExperiments2ndEd-Springer.LNS209.pdf).
+- [Cox and Reid, *The Theory of the Design of Experiments*](../lean-CKMA/References/CoxReid2000TheoryDesignExperiments-ChapmanHallCRC.MSAP86.pdf).
+- [Bailey, *Design of Comparative Experiments*](../lean-CKMA/References/Bailey2008DesignComparativeExperiments-Cambridge.SerStatProbMath.pdf).
+- [Cheng, *Theory of Factorial Design*](../lean-CKMA/References/Cheng2014TheoryFactorialDesignSingleMultiStratumExperiments-ChapmanHallCRC.MSAP131.pdf).
+- [Hedayat, Sloane, and Stufken, *Orthogonal Arrays*](../lean-CKMA/References/HedayatSloaneStufken1999OrthogonalArraysTheoryApplications-Springer.SSS.pdf).
+- [Ding, *A First Course in Causal Inference*](../lean-CKMA/References/Ding2024FirstCourseCausalInference-ChapmanHallCRC.TextsStatSci.pdf).
+  Theorem 4.1 and the passages listed above were read.
+- [Pearl, *Causality*](../lean-CKMA/References/Pearl2009CausalityModelsReasoningInference2ndEd-Cambridge.pdf).
+  Theorem 3.4.1 and the Chapter 7 and 9 passages listed above were read.
+- [Imbens and Rubin, *Causal Inference for Statistics, Social, and Biomedical Sciences*](../lean-CKMA/References/ImbensRubin2015CausalInferenceStatisticsSocialBiomedicalSciencesIntroduction-Cambridge.pdf).
+- [Hernán and Robins, *Causal Inference: What If*](../lean-CKMA/References/HernánRobins2020CausalInferenceWhatIf-ChapmanHallCRC.pdf).
+- [Peters, Janzing, and Schölkopf, *Elements of Causal Inference*](../lean-CKMA/References/PetersJanzingSchölkopf2017ElementsCausalInferenceFoundationsLearningAlgorithms-MITPressAdaptiveCompMl.pdf).
+- [Rosenbaum, *An Introduction to the Theory of Observational Studies*](../lean-CKMA/References/Rosenbaum2025IntroductionTheoryObservationalStudies-Springer.STS.pdf).

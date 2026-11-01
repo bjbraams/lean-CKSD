@@ -1,26 +1,24 @@
-# Synopsis: Asymptotic statistics
+# Synopsis: Nonparametric and high-dimensional inference
 
 Part of the [mathematical synopsis series](SYNOPSIS.md).
 [Bibliographical scope and references](CKSD-bib.md#cks-103).
 
-This synopsis follows Section 103. Subdivision 103A is the first-order
-asymptotic theory of parametric experiments. Subdivision 103B is the
-higher-order, resampling, and information-geometric refinement that recurs
-in the same sources. Weak convergence, Slutsky's theorem, the
-continuous-mapping theorem, and the empirical distribution function are
-[CKMA SYNOPSIS06](../lean-CKMA/SYNOPSIS06.md), items 15, 16, 58, and 59.
-Uniform entropy and bracketing criteria for Donsker classes are
-[CKMA SYNOPSIS07](../lean-CKMA/SYNOPSIS07.md), items 40 and 41. The
-Berry–Esseen bound is CKMA SYNOPSIS06, item 36. Semiparametric efficiency
-and nonparametric rates are in Section 104.
-
-Observations $X_1,\ldots,X_n$ are independent with common law $P_\theta$ unless
-a statement says otherwise. Write $\ell_n$ for the log-likelihood and
-$I(\theta)$ for the Fisher information matrix of one observation, as in
-SYNOPSIS101. A sequence of estimators $\hat\theta_n$ is **consistent** when
-$\hat\theta_n\to\theta$ in $P_\theta$-probability, and **asymptotically
-normal** when $\sqrt n\,(\hat\theta_n-\theta)$ converges in distribution under
-$P_\theta$.
+This synopsis follows Section 103. Subdivision 103A is rank methods,
+smoothing, shape constraints, nonparametric minimax rates, and functional
+data. Subdivision 103B is sparsity, minimax lower bounds, sparse recovery,
+model selection, multiple testing, low-rank and graphical-model estimation,
+and high-dimensional covariance and principal components. The two
+subdivisions share the reduction of estimation to testing. Parametric
+efficiency is [SYNOPSIS102](SYNOPSIS102.md), items 13, 14, 16, and 17, and semiparametric efficiency is [SYNOPSIS102](SYNOPSIS102.md), item 34. The
+empirical-process limit and the Dvoretzky–Kiefer–Wolfowitz inequality are
+[CKMA SYNOPSIS06](../lean-CKMA/SYNOPSIS06.md), item 59, and
+[CKMA SYNOPSIS07](../lean-CKMA/SYNOPSIS07.md), item 39. The Sauer–Shelah
+bound, uniform deviations for VC classes, covariance estimation, the
+restricted isometry property, the Marchenko–Pastur law, and the Tracy–Widom
+law of the Gaussian unitary ensemble are CKMA SYNOPSIS07, items 35, 37, 46,
+48, 51, and 69. Bonferroni's method is [SYNOPSIS101](SYNOPSIS101.md), item 59. Learning-theoretic bounds
+are [SYNOPSIS107](SYNOPSIS107.md), and nonparametric priors are
+[SYNOPSIS104](SYNOPSIS104.md).
 
 Numbered definitions and results have stable identifiers. Additions take the
 next free number and are placed beside related material; numbers need not
@@ -28,825 +26,1105 @@ increase in reading order. Proofs are outside the scope of this synopsis.
 
 <a id="synopsis-103a"></a>
 
-## 103A. First-Order Asymptotics, Statistical Experiments, and Empirical Processes
+## 103A. Ranks, Smoothing, Shape Constraints, Minimax Estimation, and Functional Data
 
-### Parametric estimators and tests
+Throughout this subdivision, $X_1,\ldots,X_n$ are independent copies of a real
+random variable with distribution function $F$ and, when a density exists,
+density $f$. The empirical distribution function is $F_n$.
 
-* **1. Delta method.** Let $T_n$ be a random vector in $\mathbb R^k$ with
-  $\sqrt n\,(T_n-\theta)\Rightarrow N(0,\Sigma)$, and let
-  $g:\mathbb R^k\to\mathbb R^m$ be differentiable at $\theta$. Then
-  $$\sqrt n\,\bigl(g(T_n)-g(\theta)\bigr)
-  \Rightarrow N\bigl(0,\,Dg(\theta)\,\Sigma\,Dg(\theta)^\top\bigr).$$
-  The same expansion holds with convergence in probability of the linear
-  approximation when $g$ is continuously differentiable in a neighborhood
-  of $\theta$.
+* **1. Kolmogorov–Smirnov statistic.** If $F$ is continuous, the law of
+  $\sup_x|F_n(x)-F(x)|$ does not depend on $F$. By the empirical-process
+  limit,
+  $$\sqrt n\sup_x|F_n(x)-F(x)|\Rightarrow\sup_{t\in[0,1]}|B^0(t)|,$$
+  and for $x>0$
+  $$P\bigl(\sup_t|B^0(t)|\le x\bigr)
+  =1-2\sum_{k=1}^\infty(-1)^{k-1}e^{-2k^2x^2}.$$
+  The Dvoretzky–Kiefer–Wolfowitz inequality supplies the corresponding
+  finite-sample tail bound.
 
-* **2. Consistency of maximum likelihood.** Let $\Theta$ be a compact metric
-  space and let $\theta\mapsto\log f(x\mid\theta)$ be continuous for almost
-  every $x$. Suppose $\theta_0$ is the unique maximizer of
-  $\theta\mapsto\mathbb E_{\theta_0}\log f(X\mid\theta)$, the expectation
-  being allowed to take the value $-\infty$, and suppose the supremum of the
-  log-likelihood over each closed set not containing $\theta_0$ satisfies a
-  uniform strong law. Then every approximate maximizer $\hat\theta_n$ of the
-  likelihood converges to $\theta_0$ almost surely under $P_{\theta_0}$.
-  Identifiability and a $\theta_0$-integrable envelope of
-  $|\log f(X\mid\theta)|$ give the unique-maximum and uniform-law
-  hypotheses for a dominated model with a common support.
+* **2. Linear rank statistics.** Let the observations be continuous and
+  independent, and let $R_i$ be the rank of the $i$th observation in the
+  pooled sample. Under a null hypothesis that makes the vector of ranks
+  uniform on the permutations, every rank statistic has a distribution free
+  of the unknown continuous law. For scores $a_n(i)$ and regression constants
+  $c_{n,i}$ satisfying the usual growth and nondegeneracy conditions, the
+  Hájek projection of the linear rank statistic
+  $S_n=\sum_i c_{n,i}a_n(R_i)$ is asymptotically normal under the null and
+  under contiguous location alternatives. In the two-sample shift problem
+  the Wilcoxon rank-sum test is the locally most powerful rank test for the
+  logistic shift, and its Pitman efficiency relative to the two-sample $t$
+  test, at a normal shift, equals $3/\pi$.
 
-* **3. Asymptotic normality of maximum likelihood.** Let $\theta$ lie in the
-  interior of an open subset of $\mathbb R^k$. Assume a dominated model with
-  support free of $\theta$, nonsingular and continuous information $I(\theta)$,
-  and enough domination of the second or third derivatives of the
-  log-density to expand the score in a neighborhood of $\theta$. If
-  $\hat\theta_n$ is a consistent root of the score equation
-  $\nabla\ell_n(\theta)=0$, then
-  $$\sqrt n\,(\hat\theta_n-\theta)\Rightarrow N\bigl(0,I(\theta)^{-1}\bigr)$$
-  under $P_\theta$. When $\theta$ is interior, the differentiability hypotheses
-  hold, and a global maximizer is consistent, that maximizer is such a root
-  with probability tending to one. A single Newton step from any
-  $\sqrt n$-consistent preliminary estimator has the same limit.
+* **3. Hodges–Lehmann estimator.** For a distribution symmetric about
+  $\theta$ with density $f$, let $\hat\theta_n$ be the median of the Walsh
+  averages $(X_i+X_j)/2$ for $1\le i\le j\le n$. If $\int f^2<\infty$ and
+  $f$ is continuous and positive at the center of symmetry of $X_1-X_2$, then
+  $$\sqrt n\,(\hat\theta_n-\theta)
+  \Rightarrow N\Bigl(0,\frac{1}{12\bigl(\int f(x)^2\,dx\bigr)^2}\Bigr).$$
+  The asymptotic variance is the reciprocal of the efficacy of the Wilcoxon
+  signed-rank test.
 
-* **4. Z-estimators.** Let $\psi_\theta(x)$ take values in $\mathbb R^k$, write
-  $\Psi(\theta)=\mathbb E_{\theta_0}\psi_\theta(X)$ and
-  $\Psi_n(\theta)=n^{-1}\sum_{i=1}^n\psi_\theta(X_i)$, and suppose
-  $\Psi(\theta_0)=0$. If $\Psi$ is differentiable at $\theta_0$ with
-  nonsingular derivative $V$, a Lipschitz or stochastic-equicontinuity
-  condition holds in a neighborhood of $\theta_0$, and $\hat\theta_n$ is a
-  consistent solution of $\Psi_n(\hat\theta_n)=0$, then
-  $$\sqrt n\,(\hat\theta_n-\theta_0)
-  =-V^{-1}\sqrt n\,\Psi_n(\theta_0)+o_P(1).$$
-  When $\psi_{\theta_0}(X)$ has finite covariance $\Sigma$, the limit law is
-  $N(0,V^{-1}\Sigma(V^{-1})^\top)$. Maximum likelihood is the case
-  $\psi_\theta=\nabla_\theta\log f(\cdot\mid\theta)$, for which $V=-I(\theta_0)$
-  and $\Sigma=I(\theta_0)$.
+A **kernel density estimator** with bandwidth $h>0$ and kernel $K$ is
+$$\hat f_h(x)=\frac1{nh}\sum_{i=1}^n K\bigl((x-X_i)/h\bigr).$$
+Write $\mu_2(K)=\int u^2K(u)\,du$ and $R(K)=\int K(u)^2\,du$.
 
-* **36. One-step estimators.** Let $\Psi_n$ be random estimating functions
-  with $\sqrt n\,\Psi_n(\theta_0)\Rightarrow Z$, and suppose that for a
-  nonsingular matrix $V$ and every $M<\infty$
-  $$\sup_{\sqrt n\|\theta-\theta_0\|\le M}
-  \bigl\|\sqrt n\bigl(\Psi_n(\theta)-\Psi_n(\theta_0)\bigr)
-  -V\sqrt n(\theta-\theta_0)\bigr\|\to_P0.$$
-  Let $\tilde\theta_n$ be **$\sqrt n$-consistent**, meaning that
-  $\sqrt n(\tilde\theta_n-\theta_0)$ is uniformly tight, and let $\hat V_n$ be
-  nonsingular random matrices with $\hat V_n\to_P V$. Then the one-step
-  estimator $\hat\theta_n=\tilde\theta_n-\hat V_n^{-1}\Psi_n(\tilde\theta_n)$
-  satisfies
-  $$\sqrt n(\hat\theta_n-\theta_0)
-  =-V^{-1}\sqrt n\,\Psi_n(\theta_0)+o_P(1)\Rightarrow -V^{-1}Z.$$
-  The displayed uniformity holds under the conditions of item 4 for
-  $\Psi_n=n^{-1}\sum_i\psi_\theta(X_i)$. With the likelihood score and
-  $\hat V_n$ the negative observed or estimated Fisher information, the
-  one-step estimator has the efficient limit of item 3 even where the
-  likelihood equation has several roots or its global maximizer is
-  inconsistent; further Newton steps do not change the limit law. If the
-  preliminary estimator is discretized to the grid $n^{-1/2}\mathbb Z^k$,
-  it suffices that the displayed approximation hold along every
-  deterministic sequence $\theta_n=\theta_0+O(n^{-1/2})$; for a model
-  differentiable in quadratic mean this reduces to an $L^2$-continuity
-  condition on $\psi_\theta\sqrt{p_\theta}$.
+* **4. Kernel density asymptotics.** Let $K$ be a bounded symmetric
+  probability density with finite $\mu_2(K)$ and $R(K)$. Let $f$ be twice
+  continuously differentiable, with $f$ and $f''$ square-integrable and $f(x)>0$.
+  If $h\to0$, $nh\to\infty$, and $nh^5=O(1)$, then
+  $$\sqrt{nh}\Bigl(\hat f_h(x)-f(x)-\tfrac12 h^2\mu_2(K)f''(x)\Bigr)
+  \Rightarrow N\bigl(0,R(K)f(x)\bigr).$$
+  The asymptotic mean integrated squared error is
+  $$\tfrac14 h^4\mu_2(K)^2\int(f'')^2+R(K)/(nh),$$
+  and the bandwidth of exact order $n^{-1/5}$ minimizes the displayed
+  expression. The resulting optimal rate is of order $n^{-4/5}$.
 
-* **5. Sample quantiles.** Let $F$ be differentiable at its quantile
-  $q=F^{-1}(p)$, with $0<p<1$ and density $f(q)>0$, and let $F$ be strictly
-  increasing in a neighborhood of $q$. If $F_n^{-1}(p)$ is a sample
-  $p$-quantile, then
-  $$\sqrt n\,\bigl(F_n^{-1}(p)-q\bigr)
-  \Rightarrow N\Bigl(0,\frac{p(1-p)}{f(q)^2}\Bigr).$$
+* **5. Universal $L^1$ consistency.** Let $K$ be a bounded integrable kernel
+  on $\mathbb R^d$ with $\int K=1$ and compact support. If $h\to0$ and
+  $nh^d\to\infty$, then $\int|\hat f_h-f|\to0$ almost surely for every
+  density $f$ on $\mathbb R^d$.
 
-* **33. Bahadur representation of sample quantiles.** Let $0<p<1$, let
-  $F_n^{-1}(p)=\inf\{x:F_n(x)\ge p\}$, and let $F$ be differentiable at
-  $\xi_p=F^{-1}(p)$ with $f(\xi_p)=F'(\xi_p)>0$. Then
-  $$F_n^{-1}(p)=\xi_p+\frac{p-F_n(\xi_p)}{f(\xi_p)}+R_n,
-  \qquad \sqrt n\,R_n\to_P0.$$
-  Hence finitely many sample quantiles are jointly asymptotically normal,
-  with asymptotic covariance
-  $(p\wedge p'-pp')/\bigl(f(\xi_p)f(\xi_{p'})\bigr)$ between the
-  $p$- and $p'$-quantiles. If $F$ is moreover twice differentiable at
-  $\xi_p$, the Bahadur–Kiefer theorem gives the exact almost-sure order of
-  the remainder:
-  $$\limsup_{n\to\infty}\frac{n^{3/4}|R_n|}{(\log\log n)^{3/4}}
-  =\frac{\bigl(32\,p(1-p)/27\bigr)^{1/4}}{f(\xi_p)}
-  \quad\text{almost surely.}$$
-  Thus the linearization error is of order $n^{-3/4}$ up to a logarithmic
-  factor, not merely $o(n^{-1/2})$.
+For regression, let $(X_i,Y_i)$ be independent copies of $(X,Y)$ with
+$m(x)=\mathbb E[Y\mid X=x]$ and $\sigma^2(x)=\mathop{\mathrm{Var}}(Y\mid X=x)$.
+The **Nadaraya–Watson** estimator weights $Y_i$ by
+$K_h(X_i-x)/\sum_j K_h(X_j-x)$. The **local linear** estimator is the
+intercept of the weighted least-squares fit of a straight line, with the same
+kernel weights.
 
-* **6. Nondegenerate U-statistics.** Let $h$ be a symmetric kernel of order
-  $m\ge 1$ with $\mathbb E h(X_1,\ldots,X_m)^2<\infty$, and let $U_n$ be the
-  average of $h$ over the $\binom{n}{m}$ subsamples. Set
-  $\theta=\mathbb E h$ and
-  $g(x)=\mathbb E[h(x,X_2,\ldots,X_m)]-\theta$. If
-  $\zeta_1=\mathop{\mathrm{Var}} g(X_1)>0$, then
-  $$\sqrt n\,(U_n-\theta)\Rightarrow N(0,m^2\zeta_1).$$
-  The projection $n^{-1}\sum_{i=1}^n m g(X_i)$ is the Hájek projection of
-  $U_n-\theta$ and accounts for the limit.
+* **6. Interior asymptotics of kernel regression.** Let $X$ have density
+  $f_X$ continuous and positive at an interior point $x$, let $m$ be twice
+  continuously differentiable at $x$, and let $\sigma^2$ be continuous at $x$.
+  Assume a locally bounded conditional $(2+\delta)$ moment of $Y$ for
+  some $\delta>0$, and a nonnegative bounded symmetric compactly supported
+  probability kernel positive near zero. If $h\to0$, $nh\to\infty$, and
+  $nh^5=O(1)$, the local linear estimator satisfies
+  $$\sqrt{nh}\Bigl(\hat m_h(x)-m(x)-\tfrac12 h^2\mu_2(K)m''(x)\Bigr)
+  \Rightarrow N\Bigl(0,\frac{R(K)\sigma^2(x)}{f_X(x)}\Bigr).$$
+  If in addition $f_X$ and $m$ are continuously differentiable at $x$, the
+  Nadaraya–Watson estimator satisfies the same limit with the bias
+  $\tfrac12 h^2\mu_2(K)m''(x)$ replaced by
+  $$\tfrac12 h^2\mu_2(K)\Bigl(m''(x)+2m'(x)\frac{f_X'(x)}{f_X(x)}\Bigr).$$
+  At a boundary point the local linear bias remains of order $h^2$, while the
+  Nadaraya–Watson bias is of order $h$.
 
-Let $X_1,\ldots,X_n$ be independent and let $T$ be a square-integrable
-statistic. The **Hájek projection** of $T$ is its $L^2$-projection onto the
-linear space of sums $\sum_{i=1}^n g_i(X_i)$ with square-integrable
-$g_i(X_i)$; it equals
-$$\hat T=\sum_{i=1}^n\mathbb E(T\mid X_i)-(n-1)\,\mathbb ET.$$
-
-* **35. Hájek projection.** Let $T_n$ be square-integrable statistics of
-  independent observations, with Hájek projections $\hat T_n$. If
-  $\mathop{\mathrm{Var}}T_n/\mathop{\mathrm{Var}}\hat T_n\to1$, then
-  $$\frac{T_n-\mathbb ET_n}{(\mathop{\mathrm{Var}}T_n)^{1/2}}
-  -\frac{\hat T_n-\mathbb E\hat T_n}{(\mathop{\mathrm{Var}}\hat T_n)^{1/2}}
+* **7. Stone's theorem.** Assume $\mathbb E Y^2<\infty$. For kernel
+  regression with a nonnegative bounded compactly supported kernel
+  bounded below by a positive constant in a neighborhood of zero,
+  $h\to0$ and $nh^d\to\infty$ imply
+  $$\mathbb E\bigl[(\hat m_n(X)-m(X))^2\bigm|X_1,Y_1,\ldots,X_n,Y_n\bigr]
   \to0$$
-  in $L^2$, hence in probability. Because $\hat T_n$ is a sum of independent
-  terms, the Lindeberg–Feller theorem (CKMA SYNOPSIS06, item 34) then gives
-  the asymptotic normality of $T_n$. The same conclusion holds for the
-  projection onto any closed linear space containing the constants. Items 6
-  and 34 and the linear rank statistics of SYNOPSIS104, item 2, are
-  obtained this way.
+  in probability, for every distribution of $(X,Y)$ on $\mathbb R^d\times\mathbb R$.
+  The same universal $L^2$ consistency holds for $k$-nearest-neighbor
+  regression when $k\to\infty$ and $k/n\to0$.
 
-An **$L$-statistic** is a linear combination of the order statistics
-$X_{n(1)}\le\cdots\le X_{n(n)}$. For $0<\alpha<1/2$ the **$\alpha$-trimmed
-mean** $T_n$ is the average of the $X_{n(i)}$ with
-$\lfloor\alpha n\rfloor<i\le n-\lfloor\alpha n\rfloor$.
+Let $\mathcal H$ be a reproducing-kernel Hilbert space of real functions on
+a set $\mathcal X$, with kernel $K$. A loss $L(y,u)$ is evaluated only through
+the predicted value $u$.
 
-* **34. Asymptotic normality of $L$-statistics.** Let $\mathbb EX_1^2<\infty$,
-  let $\phi$ be a bounded function on $(0,1)$ that is continuous at $F(y)$ for
-  Lebesgue-almost every $y$, and let
-  $L_n=n^{-1}\sum_{i=1}^n\phi\bigl(i/(n+1)\bigr)X_{n(i)}$. Then
-  $\sqrt n\,(L_n-\mathbb EL_n)\Rightarrow N\bigl(0,\sigma^2(\phi,F)\bigr)$,
-  where
-  $$\sigma^2(\phi,F)=\iint\phi\bigl(F(x)\bigr)\phi\bigl(F(y)\bigr)
-  \bigl(F(x\wedge y)-F(x)F(y)\bigr)\,dx\,dy.$$
-  For the $\alpha$-trimmed mean no moment condition is needed: if the set
-  $\{x:F(x)\in\{\alpha,1-\alpha\}\}$ has Lebesgue measure zero, then with
-  $\mu_\alpha=(1-2\alpha)^{-1}\int_\alpha^{1-\alpha}F^{-1}(u)\,du$, $a=F^{-1}(\alpha)$,
-  and $b=F^{-1}(1-\alpha)$,
-  $$\sqrt n\,(T_n-\mu_\alpha)\Rightarrow
-  N\Bigl(0,\frac1{(1-2\alpha)^2}\int_a^b\!\!\int_a^b
-  \bigl(F(x\wedge y)-F(x)F(y)\bigr)\,dx\,dy\Bigr).$$
-  The double integral is the variance of $X_1$ clipped to $[a,b]$; for $F$
-  symmetric about $0$ the asymptotic variance is
-  $(1-2\alpha)^{-2}\bigl(\int_{-b}^{b}x^2\,dF(x)+2\alpha b^2\bigr)$. The robustness
-  interpretation of trimming is in SYNOPSIS104C.
+* **8. Representer theorem.** A minimizer of
+  $$\frac1n\sum_{i=1}^n L(Y_i,f(X_i))+\lambda\|f\|_{\mathcal H}^2,
+  \qquad\lambda>0,$$
+  over $f\in\mathcal H$, has the form
+  $f(\cdot)=\sum_{i=1}^n\alpha_i K(X_i,\cdot)$. In particular, the smoothing
+  spline
+  $$\sum_{i=1}^n(Y_i-f(x_i))^2+\lambda\int(f'')^2$$
+  on the Sobolev space of square-integrable second derivatives has a
+  minimizer that is a natural cubic spline with knots at the design points
+  $x_i$.
 
-* **7. Likelihood-ratio, Wald, and score tests.** Consider testing a smooth
-  hypothesis of codimension $q$ in a regular parametric model of dimension
-  $k$, with the null value an interior point at which $I(\theta)$ is
-  nonsingular and the null can be written locally as $q$ independent
-  constraints. Let $\lambda_n$ be twice the difference of the maximized
-  log-likelihoods, let $W_n$ be the Wald quadratic form in the unconstrained
-  estimator and its information, and let $S_n$ be the quadratic form in the
-  score at the restricted estimator. Under the null,
-  $\lambda_n$, $W_n$, and $S_n$ each converge in distribution to $\chi^2_q$,
-  and the three statistics differ by $o_P(1)$. Under the local alternatives
-  of item 9 the common limit is noncentral chi-squared, with noncentrality
-  parameter determined by the Fisher information on the local parameter.
+In the **Gaussian sequence model**, one observes
+$Y_i=\theta_i+\varepsilon\xi_i$ for $i\ge1$, with $\xi_i$ independent standard
+normal. The white-noise model $dY(t)=f(t)\,dt+\varepsilon\,dW(t)$ on $[0,1]$
+is equivalent to a sequence model through an orthonormal basis.
 
-### Limits of experiments
+* **9. Pinsker's theorem and the Sobolev rate.** For the ellipsoid
+  $\sum_{j\ge1}a_j^2\theta_j^2\le R$ with $a_j$ regularly varying of order
+  $\beta>0$, the minimax mean squared error among all estimators is
+  asymptotic, as $\varepsilon\to0$, to the minimax risk among linear
+  estimators. A linear shrinkage filter attains the asymptotic constant.
+  For a Sobolev ball of smoothness $\beta$ and radius $R$ in the white-noise
+  model, this risk is of exact order
+  $R^{1/(2\beta+1)}\varepsilon^{4\beta/(2\beta+1)}$. With
+  $\varepsilon=n^{-1/2}$ the squared-error rate is
+  $n^{-2\beta/(2\beta+1)}$.
 
-A sequence of probability measures $Q_n$ is **contiguous** to $P_n$ when
-$P_n(A_n)\to 0$ implies $Q_n(A_n)\to 0$. The sequence of experiments is
-**locally asymptotically normal** at $\theta$, with nonsingular information
-$I(\theta)$ and central sequence $\Delta_n$, when for every local parameter
-$h$
-$$\log\frac{dP_{\theta+h/\sqrt n}^{\,n}}{dP_\theta^{\,n}}
-=h\cdot\Delta_n-\tfrac12 h^\top I(\theta)\,h+o_{P_\theta}(1)$$
-and $\Delta_n\Rightarrow N(0,I(\theta))$ under $P_\theta$. An estimator
-sequence $T_n$ is **regular** at $\theta$ when, for every $h$, the law of
-$\sqrt n\,(T_n-\theta-h/\sqrt n)$ under $P_{\theta+h/\sqrt n}$ converges to a
-limit that does not depend on $h$.
+* **10. Soft-threshold oracle inequality.** In the finite sequence model
+  $Y_i=\theta_i+\sigma\xi_i$, $i=1,\ldots,n$, let $\hat\theta$ be coordinatewise
+  soft thresholding at $\lambda=\sigma\sqrt{2\log n}$. Then
+  $$\mathbb E\|\hat\theta-\theta\|^2
+  \le(2\log n+1)\Bigl(\sigma^2+\sum_{i=1}^n\min(\theta_i^2,\sigma^2)\Bigr).$$
+  The estimator therefore tracks, up to the factor $2\log n+1$, the ideal
+  risk of an oracle that retains only those coordinates larger than the
+  noise level.
 
-* **8. Contiguity.** If the log-likelihood ratio $\Lambda_n$ of $Q_n$ with
-  respect to $P_n$ converges in distribution under $P_n$ to a random
-  variable $\Lambda$ with $\mathbb E e^{\Lambda}=1$, then $Q_n$ is
-  contiguous to $P_n$. In particular, local alternatives in a locally
-  asymptotically normal experiment are mutually contiguous.
+* **11. Grenander estimator.** Let $f$ be decreasing and positive on
+  $[0,\infty)$, with $f'(x_0)<0$ and $f$ continuous at $x_0>0$. The maximum
+  likelihood estimator $\hat f_n$ is the left slope of the least concave
+  majorant of $F_n$. Then
+  $$n^{1/3}\bigl(\hat f_n(x_0)-f(x_0)\bigr)
+  \Rightarrow\bigl|4f(x_0)f'(x_0)\bigr|^{1/3}Z,$$
+  where $Z=\mathop{\mathrm{argmax}}_{t\in\mathbb R}\bigl(W(t)-t^2\bigr)$ and
+  $W$ is standard two-sided Brownian motion. The limit law is Chernoff's
+  distribution up to the deterministic scale displayed above.
 
-* **9. Local asymptotic normality of smooth models.** Assume independent
-  sampling from a dominated model that is differentiable in quadratic mean
-  at an interior point $\theta$, with nonsingular Fisher information
-  $I(\theta)$. Then the product experiments are locally asymptotically normal
-  with central sequence equal to the normalized score
-  $n^{-1/2}\sum_{i=1}^n\nabla\log f(X_i\mid\theta)$.
-  Quadratic-mean differentiability means that for a score
-  $\dot\ell_\theta\in L^2(P_\theta)$,
-  $$\int\left(\sqrt{p_{\theta+h}}-\sqrt{p_\theta}
-  -\tfrac12h^\top\dot\ell_\theta\sqrt{p_\theta}\right)^2d\mu
-  =o(\|h\|^2).$$
-  It is a square-root-density condition and need not imply a KL expansion.
-  If the support is common and the first two $h$-derivatives of
-  $p_{\theta+h}\log(p_{\theta+h}/p_\theta)$ admit a common integrable
-  bound locally, differentiation under the integral also gives
-  $$D(P_{\theta+h}\|P_\theta)=\tfrac12 h^\top I(\theta)h+o(\|h\|^2).$$
+Let $K\subset\mathbb R^p$ be a closed polyhedral convex cone and let
+$Y\sim N_p(\mu,I_p)$. Write $P_K$ for metric projection onto $K$.
 
-* **10. Le Cam's third lemma.** Suppose that under $P_n$ the pair
-  $(S_n,\Lambda_n)$ converges to a normal law whose second margin is
-  $N(-\sigma^2/2,\sigma^2)$ and whose cross-covariance is $\tau$. If $Q_n$
-  has log-likelihood ratio $\Lambda_n$ against $P_n$, then under $Q_n$ the
-  sequence $S_n$ converges to the normal law with the same covariance and
-  with mean shifted by $\tau$. In a locally asymptotically normal
-  experiment the central sequence itself shifts by $I(\theta)h$ under the
-  local alternative $\theta+h/\sqrt n$.
+* **12. Chi-bar-squared limit.** The likelihood-ratio statistic for testing
+  $\mu=0$ against $\mu\in K$ equals $\|P_KY\|^2$. Under the null its law is
+  the mixture $\sum_{j=0}^p w_j\chi^2_j$, where $w_j$ is the probability that
+  $P_KY$ lies in the relative interior of a $j$-dimensional face of $K$.
+  The same mixture limit, with weights determined by the cone of feasible
+  directions after whitening by the information matrix, holds for
+  regular fixed-dimensional likelihood-ratio tests with polyhedral tangent
+  cones. For Gaussian monotone regression at a fixed finite design,
+  the corresponding cone projection gives the finite-sample mixture;
+  an increasing-dimensional problem needs its own asymptotic analysis.
 
-A **randomized statistic** in an experiment with observation $X$ is a
-measurable function $T(X,U)$, where $U$ is uniform on $[0,1]$ and independent
-of $X$.
+Testing $f=0$ in the white-noise model against a smoothness class at a
+positive $L^2$ separation is a different problem from estimating $f$.
 
-* **37. Asymptotic representation theorem.** Let the model be
-  differentiable in quadratic mean at an interior point $\theta$ with
-  nonsingular information $I(\theta)$, and let $T_n$ be statistics based on
-  $n$ observations such that, for every $h\in\mathbb R^k$, $T_n$ converges in
-  distribution under $P_{\theta+h/\sqrt n}^{\,n}$ to a law $L_h$. Then there is
-  a randomized statistic $T$ in the Gaussian shift experiment of observing
-  a single $X\sim N\bigl(h,I(\theta)^{-1}\bigr)$, $h\in\mathbb R^k$, such that
-  $T$ has law $L_h$ for every $h$. For estimators of a differentiable
-  $\psi(\theta)$ with $\sqrt n\bigl(T_n-\psi(\theta+h/\sqrt n)\bigr)$
-  converging to $L_{\theta,h}$ under every $h$, there is such a $T$ with
-  $T-\dot\psi_\theta h$ distributed as $L_{\theta,h}$. Thus every attainable
-  local limit behavior is that of a procedure in the limiting Gaussian
-  experiment, and items 11 and 12 follow from the corresponding exact
-  statements for that experiment, Anderson's lemma among them.
+* **13. Nonparametric detection boundary.** In the white-noise model, the
+  minimax separation $\rho_n$ for testing $f=0$ against the alternative
+  that $f$ lies in a Sobolev or Hölder ball of smoothness $\beta$ and
+  $\|f\|_2\ge\rho_n$ is of order $n^{-2\beta/(4\beta+1)}$. At smaller
+  orders no test can separate zero uniformly from all alternatives at that
+  separation. At sufficiently larger orders uniformly consistent tests
+  exist. The detection separation is smaller than the $L^2$ estimation
+  error rate $n^{-\beta/(2\beta+1)}$ of item 9.
 
-* **11. Convolution theorem.** In a locally asymptotically normal experiment
-  with information $I(\theta)$, the limit law $L$ of a regular estimator
-  sequence is the convolution of $N(0,I(\theta)^{-1})$ with some probability
-  measure on $\mathbb R^k$. If the limiting law has finite covariance,
-  that covariance is at least $I(\theta)^{-1}$ in the Loewner order.
-  Convergence of scaled finite-sample covariances requires additional
-  moment control. The maximum likelihood estimator of item 3 is regular
-  and has the normal factor as its
-  limit law.
+### Rank scores, rank correlation, and goodness of fit
 
-* **12. Local asymptotic minimax theorem.** Let $\ell$ be a nonnegative
-  lower-semicontinuous bowl-shaped loss on $\mathbb R^k$: its sublevel
-  sets are convex and symmetric about zero. For any estimator sequence $T_n$ in a locally
-  asymptotically normal experiment,
-  $$\lim_{c\to\infty}\liminf_{n\to\infty}
-  \sup_{\|h\|\le c}
-  \mathbb E_{\theta+h/\sqrt n}\,
-  \ell\bigl(\sqrt n\,(T_n-\theta-h/\sqrt n)\bigr)
-  \ge\int\ell\,dN\bigl(0,I(\theta)^{-1}\bigr).$$
-  The maximum likelihood estimator attains the bound for bounded continuous
-  bowl-shaped losses, and for squared error under uniform integrability.
+Let $U_{N(1)}<\cdots<U_{N(N)}$ be the order statistics of $N$ independent
+uniform variables on $[0,1]$. A measurable, not almost everywhere constant
+function $\varphi$ on $(0,1)$ with $\int_0^1\varphi^2<\infty$ is a
+**score-generating function**; it generates the **exact scores**
+$a_N(i)=\mathbb E\varphi(U_{N(i)})$ and the **approximate scores**
+$\varphi(i/(N+1))$. Write $\bar c_N$ and $\bar a_N$ for the averages of the
+regression constants and of the scores.
 
-* **13. Superefficiency.** Let $X_1,\ldots,X_n$ be independent
-  $N(\theta,1)$ and set $\hat\theta_n=\bar X$ when $|\bar X|\ge n^{-1/4}$ and
-  $\hat\theta_n=0$ otherwise. Then $\sqrt n\,(\hat\theta_n-\theta)$ converges
-  to $N(0,1)$ for $\theta\neq 0$ and converges to $0$ for $\theta=0$, so the
-  asymptotic variance at $0$ is smaller than the information bound. The
-  estimator is not regular at $0$, and the convergence of risks is not
-  uniform in shrinking neighborhoods of $0$. In a regular parametric model
-  the set of parameter points at which any given estimator sequence is
-  superefficient has Lebesgue measure zero.
+* **14. Score-generating functions and locally most powerful rank tests.**
+  Let $X_1,\ldots,X_N$ be independent with a common continuous distribution
+  function $F$, let $R_i$ be their ranks, and let
+  $T_N=\sum_ic_{N,i}a_N(R_i)$ with exact scores. Then
+  $\mathbb ET_N=N\bar c_N\bar a_N$,
+  $$\mathop{\mathrm{Var}}T_N=\frac1{N-1}\sum_{i=1}^N(c_{N,i}-\bar c_N)^2
+  \sum_{i=1}^N\bigl(a_N(i)-\bar a_N\bigr)^2,$$
+  and $T_N$ is asymptotically equivalent, in the sense that the variance of
+  the difference is negligible relative to $\mathop{\mathrm{Var}}T_N$, to
+  $$N\bar c_N\bar a_N+\sum_{i=1}^N(c_{N,i}-\bar c_N)\,\varphi(F(X_i)).$$
+  The standardized statistic is therefore asymptotically normal whenever
+  $\max_i(c_{N,i}-\bar c_N)^2/\sum_i(c_{N,i}-\bar c_N)^2\to0$. The same
+  holds for approximate scores if $\varphi$ is continuous almost everywhere
+  and $N^{-1}\sum_i\varphi^2(i/(N+1))\to\int_0^1\varphi^2$. If $X_i$ has
+  density $f(x-\theta c_{N,i})$, where $f$ is absolutely continuous with
+  finite Fisher information for location, the locally most powerful rank
+  test of $\theta=0$ against small $\theta>0$ rejects for large $T_N$ with
+  exact scores generated by
+  $$\varphi_f(u)=-\frac{f'}{f}\bigl(F^{-1}(u)\bigr).$$
+  For the logistic density this gives the Wilcoxon scores $i$; for the
+  normal density it gives the normal scores
+  $\mathbb E\Phi^{-1}(U_{N(i)})$, of which
+  $\Phi^{-1}(i/(N+1))$ are the van der Waerden approximations. For the
+  scale family $e^{-\theta}f(e^{-\theta}x)$ the generating function is
+  $-1-F^{-1}(u)\,(f'/f)(F^{-1}(u))$; for proportional-hazards alternatives
+  it gives the log-rank (Savage) scores of SYNOPSIS106, item 32.
 
-### Local tests and asymptotic relative efficiency
+* **15. Asymptotic optimality and efficiencies of rank tests.** Let
+  $X_1,\ldots,X_m$ have density $f(x-\mu)$ and $Y_1,\ldots,Y_n$ density
+  $f(x-\nu)$, all independent, with $f$ of finite Fisher information
+  $I_f$, $N=m+n$, and $m/N\to\lambda\in(0,1)$. For local alternatives
+  $\nu-\mu=h/\sqrt N$, the two-sample rank test with scores generated by
+  $\varphi_f$ of item 14 has asymptotic power
+  $1-\Phi\bigl(z_\alpha-h\sqrt{\lambda(1-\lambda)I_f}\bigr)$, the largest
+  attainable by any asymptotically level-$\alpha$ test of $\nu=\mu$ against
+  $\nu>\mu$, even when $f$ is known. Thus the Wilcoxon test is asymptotically optimal for the
+  logistic shift and the normal-scores test for the normal shift. For a
+  symmetric $f$ of finite Fisher information, the signed-rank statistic
+  $\sum_i\mathop{\mathrm{sign}}(X_i)\,a_n(R_i^+)$, with $R_i^+$ the rank of
+  $|X_i|$ and exact scores generated by
+  $-(f'/f)\bigl((F^+)^{-1}(u)\bigr)$, $F^+=2F-1$ on $[0,\infty)$, gives an
+  asymptotically optimal test of the center of symmetry; the scores are
+  unchanged within a scale family. The Pitman efficiencies of the sign and
+  Wilcoxon tests relative to the $t$ test, including the Hodges–Lehmann
+  bound $108/125$, are SYNOPSIS102, item 22. The efficiency of the
+  normal-scores test relative to the $t$ test is at least $1$ for every
+  $f$ of finite variance, with equality at the normal law
+  (Chernoff–Savage). The general theory of Pitman efficiency is
+  SYNOPSIS102, item 21.
 
-For a test $\phi_n$ based on $n$ observations the **power function** is
-$\pi_n(\theta)=\mathbb E_\theta\phi_n$. Write $z_\alpha$ for the upper
-$\alpha$-quantile of the standard normal law, $1-\Phi(z_\alpha)=\alpha$.
+For independent copies of a pair $(X,Y)$ with continuous marginal laws,
+**Kendall's tau** is $\tau=2P\bigl((X_2-X_1)(Y_2-Y_1)>0\bigr)-1$, estimated by
+$$\hat\tau_n=\binom n2^{-1}\sum_{i<j}
+\mathop{\mathrm{sign}}\bigl((X_j-X_i)(Y_j-Y_i)\bigr).$$
+**Spearman's rho** $r_s$ is the ordinary sample correlation of the two rank
+vectors, $r_s=1-6\sum_i(R_i-S_i)^2/\bigl(n(n^2-1)\bigr)$.
 
-* **40. Asymptotic power envelope.** Let the model be differentiable in
-  quadratic mean at an interior point $\theta_0$ with nonsingular
-  information $I=I(\theta_0)$, and let $\psi:\Theta\to\mathbb R$ be
-  differentiable at $\theta_0$ with $\psi(\theta_0)=0$ and nonzero gradient
-  $\dot\psi$. For every sequence of level-$\alpha$ tests of
-  $H_0:\psi(\theta)\le0$ against $H_1:\psi(\theta)>0$ and every $h$ with
-  $\dot\psi h>0$,
-  $$\limsup_{n\to\infty}\pi_n(\theta_0+h/\sqrt n)\le
-  1-\Phi\Bigl(z_\alpha-\frac{\dot\psi h}
-  {(\dot\psi I^{-1}\dot\psi^\top)^{1/2}}\Bigr).$$
-  The bound is attained for every $h$ by the tests that reject when
-  $T_n\ge z_\alpha$, whenever under $P_{\theta_0}$
-  $$T_n=\frac{\dot\psi I^{-1}\Delta_n}{(\dot\psi I^{-1}\dot\psi^\top)^{1/2}}
-  +o_P(1),$$
-  with $\Delta_n$ the normalized score of item 9. The Wald statistic
-  $\sqrt n\,\psi(\hat\theta_n)/(\dot\psi I^{-1}\dot\psi^\top)^{1/2}$ built on an
-  efficient estimator satisfies this, and so, under the regularity of
-  item 7, do the corresponding score and signed likelihood-ratio
-  statistics. For a scalar parameter and
-  $\psi(\theta)=\theta-\theta_0$ the envelope is
-  $1-\Phi\bigl(z_\alpha-hI^{1/2}\bigr)$.
+* **16. Rank tests of independence.** The statistic $\hat\tau_n$ is a
+  $U$-statistic of order $2$ with bounded kernel. By SYNOPSIS102, item 8,
+  $\sqrt n(\hat\tau_n-\tau)\Rightarrow N(0,4\zeta_1)$, where $\zeta_1$ is
+  the variance of the conditional expectation of the kernel given one pair.
+  Under independence the rank vectors are independent and uniform on the
+  permutations, so the laws of $\hat\tau_n$ and $r_s$ are distribution-free.
+  Then
+  $$\mathbb E\hat\tau_n=0,\qquad
+  \mathop{\mathrm{Var}}\hat\tau_n=\frac{2(2n+5)}{9n(n-1)},\qquad
+  \sqrt n\,\hat\tau_n\Rightarrow N(0,4/9),$$
+  and
+  $$\mathbb Er_s=0,\qquad\mathop{\mathrm{Var}}r_s=\frac1{n-1},\qquad
+  \sqrt n\,r_s\Rightarrow N(0,1).$$
+  Since $\tau=0$ does not imply independence, the test based on
+  $\hat\tau_n$ is consistent against alternatives with $\tau\ne0$, not against
+  all dependent alternatives; the same restriction applies to $r_s$ and the
+  population rank correlation.
 
-The local parameter sets at a null point $\theta\in\Theta_0$ are
-$H_n=\sqrt n(\Theta-\theta)$ and $H_{n,0}=\sqrt n(\Theta_0-\theta)$. They
-**converge** to $H$ and $H_0$ when $H$ is the set of limits of convergent
-sequences $h_n\in H_n$ and also contains every limit of a convergent
-subsequence $h_{n_i}\in H_{n_i}$, and likewise for $H_0$.
+* **17. Cramér–von Mises and two-sample Kolmogorov–Smirnov limits.** If $F$
+  is continuous, the Cramér–von Mises statistic
+  $W_n^2=n\int(F_n-F)^2\,dF$ is distribution-free and
+  $$W_n^2\Rightarrow\int_0^1B^0(t)^2\,dt
+  \stackrel{d}{=}\sum_{j=1}^\infty\frac{Z_j^2}{j^2\pi^2},$$
+  with $Z_j$ independent standard normal; the numbers $(j\pi)^{-2}$ are the
+  eigenvalues of the Brownian-bridge covariance $s\wedge t-st$, and the
+  limit has mean $1/6$. For independent samples of sizes $m$ and $n$ with
+  empirical distribution functions $F_m$ and $G_n$, under a common continuous
+  law the statistic $D_{m,n}=\sup_x|F_m(x)-G_n(x)|$ is distribution-free and,
+  as $\min(m,n)\to\infty$,
+  $$\sqrt{\frac{mn}{m+n}}\,D_{m,n}\Rightarrow\sup_{t\in[0,1]}|B^0(t)|,$$
+  with the Kolmogorov law of item 1. If the two laws differ, the normalized
+  statistic tends to infinity in probability, so the test is consistent
+  against every alternative. When a parameter of a composite null family is
+  estimated by an asymptotically linear estimator, the empirical process
+  with estimated parameter converges to a Gaussian process whose covariance
+  involves the influence function of that estimator. The resulting limits
+  of the Kolmogorov–Smirnov and Cramér–von Mises statistics are no longer
+  distribution-free.
 
-* **41. Likelihood ratio on general local parameter sets.** Let the model be
-  differentiable in quadratic mean at $\theta\in\Theta_0$ with nonsingular
-  information $I$, and let
-  $|\log p_{\theta_1}(x)-\log p_{\theta_2}(x)|\le\dot\ell(x)\|\theta_1-\theta_2\|$
-  for $\theta_1,\theta_2$ near $\theta$ with $P_\theta\dot\ell^2<\infty$.
-  Suppose the maximum likelihood estimators over $\Theta_0$ and over
-  $\Theta$ are consistent and $H_n\to H$, $H_{n,0}\to H_0$. Then, under
-  $P_{\theta+h/\sqrt n}$, the likelihood-ratio statistic $\lambda_n$ of
-  item 7 converges in distribution to
-  $$\inf_{g\in H_0}\|I^{1/2}(X-g)\|^2-\inf_{g\in H}\|I^{1/2}(X-g)\|^2,
-  \qquad X\sim N(h,I^{-1}).$$
-  If $\theta$ is interior and $H_0$ is a linear subspace of dimension $l$,
-  the null limit is $\chi^2_{k-l}$, as in item 7. If the local sets are
-  polyhedral cones, the null limit is the chi-bar-squared law of
-  SYNOPSIS104, item 12. For a scalar parameter with $\Theta=[0,\infty)$ and
-  $H_0:\theta=0$ the null limit is the mixture
-  $\tfrac12\delta_0+\tfrac12\chi^2_1$, as in tests that a variance
-  component vanishes.
+### Exact ranks, smoothing bias, and shape constraints
 
-Consider tests of $H_0:\theta=0$ against $\theta>0$. Given
-$0<\alpha<\gamma<1$ and alternatives $\theta_\nu\downarrow0$, let
-$n_{\nu,i}$ be the least sample size for which the $i$th sequence of tests
-has level at most $\alpha$ and power at least $\gamma$ at $\theta_\nu$. When
-it exists, $\lim_\nu n_{\nu,2}/n_{\nu,1}$ is the **Pitman asymptotic
-relative efficiency** of the first sequence with respect to the second.
-Test statistics $T_n$ are **locally uniformly asymptotically normal** with
-functions $\mu$ and $\sigma$ if
-$\sqrt n\bigl(T_n-\mu(\theta_n)\bigr)/\sigma(\theta_n)\Rightarrow N(0,1)$
-under $\theta_n$ for every sequence $\theta_n\downarrow0$. The **slope** of the
-tests that reject for large $T_n$ is $\mu'(0)/\sigma(0)$, and its square is the
-**efficacy**.
+* **18. Sign test.** For independent continuous observations with median
+  $\theta_0$, $\sum_i1_{\{X_i>\theta_0\}}\sim\mathop{\mathrm{Bin}}(n,1/2)$.
+  Binomial tails give exact or conservative tests of the median without a
+  symmetry assumption. Inversion is the quantile interval in SYNOPSIS101, item 22. Symmetry is needed for the signed-rank procedure below.
 
-* **42. Pitman efficiency and Noether's theorem.** Suppose that, for each
-  $n$, $P_{n,\theta}\to P_{n,0}$ in total variation as $\theta\to0$. Let
-  $T_{n,1}$ and $T_{n,2}$ be locally uniformly asymptotically normal with
-  $\mu_i$ differentiable at $0$, $\mu_i'(0)>0$, and $\sigma_i$ continuous at
-  $0$ with $\sigma_i(0)>0$. The tests rejecting when
-  $\sqrt n\bigl(T_{n,i}-\mu_i(0)\bigr)>\sigma_i(0)z_\alpha$ have asymptotic
-  level $\alpha$ and local power
-  $$\pi_{n,i}(h/\sqrt n)\to1-\Phi\bigl(z_\alpha-h\,\mu_i'(0)/\sigma_i(0)\bigr),$$
-  and their Pitman relative efficiency is the ratio of efficacies
-  $$\frac{\bigl(\mu_1'(0)/\sigma_1(0)\bigr)^2}{\bigl(\mu_2'(0)/\sigma_2(0)\bigr)^2},$$
-  for every $\alpha$, $\gamma$, and sequence $\theta_\nu\downarrow0$. If the
-  power functions are nondecreasing, asymptotic normality along
-  sequences $\theta_n=O(n^{-1/2})$ suffices. In location problems the
-  efficacy of a test is often the reciprocal asymptotic variance of an
-  associated estimator: the sign test and the median, the Wilcoxon
-  signed-rank test and the Hodges–Lehmann estimator of SYNOPSIS104,
-  item 3.
+* **19. Wilcoxon sampling laws.** Under a continuous distribution symmetric
+  about zero, the signs are independent fair signs and independent of the
+  absolute values. Thus the positive signed-rank sum has the law
+  $\sum_{j=1}^n jB_j$ for independent Bernoulli$(1/2)$ variables, with
+  mean $n(n+1)/4$ and variance $n(n+1)(2n+1)/24$.
+  For independent samples of sizes $m,n$ from a common continuous law,
+  $U=\sum_{i,j}1_{\{X_i<Y_j\}}$ has mean $mn/2$ and variance
+  $mn(m+n+1)/12$. Both centered, variance-normalized statistics tend to
+  $N(0,1)$, in the second case when $m/(m+n)\to\lambda\in(0,1)$.
 
-* **43. Efficiencies of the sign, Wilcoxon, and $t$ tests.** Let the
-  observations have density $f(x-\theta)$ with $f$ symmetric about $0$,
-  finite variance $\sigma^2$, $f$ continuous at $0$ with $f(0)>0$, and
-  $\int f^2<\infty$. For $H_0:\theta=0$ against $\theta>0$ the efficacies of
-  the $t$ test, the sign test, and the Wilcoxon signed-rank test are
-  $1/\sigma^2$, $4f(0)^2$, and $12\bigl(\int f^2\bigr)^2$, so
-  $$e_{S,t}=4\sigma^2f(0)^2,\qquad
-  e_{W,t}=12\sigma^2\Bigl(\int f^2\Bigr)^2,\qquad
-  e_{S,W}=\frac{f(0)^2}{3\bigl(\int f^2\bigr)^2}.$$
-  At the normal law $e_{S,t}=2/\pi\approx0.637$ and
-  $e_{W,t}=3/\pi\approx0.955$; at the Laplace law they are $2$ and $3/2$;
-  at the uniform law $1/3$ and $1$; at the logistic law $\pi^2/12$ and
-  $\pi^2/9$. Over all such $f$,
-  $$e_{W,t}\ge\frac{108}{125}=0.864,$$
-  the minimum being attained by the scale family of the density
-  proportional to $(1-x^2)\vee0$, while $e_{W,t}$ is unbounded above. Among symmetric
-  unimodal $f$, $e_{S,t}\ge1/3$, with equality for the uniform law. In the
-  two-sample shift model $G(x)=F(x-\theta)$ the efficiency of the
-  Wilcoxon–Mann–Whitney test relative to the two-sample $t$ test is given by
-  the same formula for $e_{W,t}$, without symmetry of $f$, and obeys the same
-  bound. The tests themselves are SYNOPSIS104, items 2, 22, and 23;
-  optimal rank scores are SYNOPSIS104, items 32 and 33.
+* **20. Kruskal–Wallis test.** For $k$ independent samples from a common
+  continuous law, let $R_j$ be the sum of pooled ranks in group $j$, of
+  size $n_j$, and put $N=\sum_jn_j$. For fixed $k$ and
+  $n_j/N\to\lambda_j>0$,
+  $$\frac{12}{N(N+1)}\sum_{j=1}^k\frac{R_j^2}{n_j}-3(N+1)
+  \Rightarrow\chi^2_{k-1}.$$
+  Its finite-sample permutation law is distribution-free. The statistic
+  tests equality of distributions; a location interpretation requires a
+  common-shape shift model.
 
-### General criteria, moment methods, and nonlinear limits
+* **21. Isotonic least squares.** For observations $y_i$ at ordered design
+  points and weights $w_i>0$, the minimizer of
+  $\sum_iw_i(y_i-\theta_i)^2$ over $\theta_1\le\cdots\le\theta_n$ is unique
+  and satisfies
+  $$\hat\theta_i=\max_{a\le i}\min_{b\ge i}
+  \frac{\sum_{j=a}^bw_jy_j}{\sum_{j=a}^bw_j}.$$
+  It is the vector of successive slopes of the greatest convex minorant
+  of the cumulative-sum diagram
+  $(\sum_{j\le i}w_j,\sum_{j\le i}w_jy_j)$, including $(0,0)$.
+  Pooling adjacent blocks whose weighted means violate monotonicity
+  computes this projection.
 
-For a measurable criterion $m_\theta$, an **$M$-estimator** approximately
-maximizes $P_nm_\theta=n^{-1}\sum_i m_\theta(X_i)$. The law $P$ in this
-paragraph need not belong to a parametric model.
+* **22. Hölder regression rates.** In Gaussian regression on $[0,1]^d$
+  with fixed positive noise variance and a design density bounded above and
+  below by positive constants, the minimax integrated squared error over
+  a fixed Hölder ball of smoothness $\beta>0$ is of order
+  $n^{-2\beta/(2\beta+d)}$. Boundary-adapted local polynomials of degree
+  at least $\lceil\beta\rceil-1$, with bandwidth of order
+  $n^{-1/(2\beta+d)}$, attain this order. Under the same regular design
+  conditions the minimax expected squared supremum error is of order
+  $(\log n/n)^{2\beta/(2\beta+d)}$. The testing reductions in items 39 and 40, supply matching lower bounds.
 
-* **23. Consistency of $M$-estimators.** Suppose
-  $\sup_{\theta\in\Theta}|P_nm_\theta-Pm_\theta|\to_P0$ and the population
-  maximum is separated: for every $\varepsilon>0$,
-  $$\sup_{d(\theta,\theta_0)\ge\varepsilon}Pm_\theta<Pm_{\theta_0}.$$
-  If $P_nm_{\hat\theta_n}\ge\sup_\theta P_nm_\theta-o_P(1)$, then
-  $\hat\theta_n\to_P\theta_0$. Compactness, almost-sure continuity in
-  $\theta$, and an integrable envelope are a useful sufficient condition
-  for the uniform law. The separation condition also applies on
-  noncompact spaces.
+Bias matters for confidence statements even at a mean-squared-error optimal
+bandwidth. For the second-order smoothers of items 4 and 6, $nh^5\to0$
+makes the leading $h^2$ bias negligible relative to $(nh)^{-1/2}$.
+At $h\asymp n^{-1/5}$ it has the same order as the standard error, so
+pointwise intervals require bias correction or undersmoothing.
 
-* **38. Asymptotic normality of $M$-estimators.** Let $\Theta$ be open in
-  $\mathbb R^k$. Suppose $\theta\mapsto m_\theta(x)$ is differentiable at
-  $\theta_0$ for $P$-almost every $x$, with derivative $\dot m_{\theta_0}(x)$,
-  and that there is a function $\dot m$ with $P\dot m^2<\infty$ such that
-  $$|m_{\theta_1}(x)-m_{\theta_2}(x)|\le\dot m(x)\,\|\theta_1-\theta_2\|$$
-  for all $\theta_1,\theta_2$ in a neighborhood of $\theta_0$. Suppose
-  $\theta\mapsto Pm_\theta$ has a second-order Taylor expansion at a point of
-  maximum $\theta_0$ with nonsingular symmetric second derivative $V$. If
-  $P_nm_{\hat\theta_n}\ge\sup_\theta P_nm_\theta-o_P(n^{-1})$ and
-  $\hat\theta_n\to_P\theta_0$, then
-  $$\sqrt n(\hat\theta_n-\theta_0)
-  =-V^{-1}\frac1{\sqrt n}\sum_{i=1}^n\dot m_{\theta_0}(X_i)+o_P(1)
-  \Rightarrow N\bigl(0,V^{-1}P[\dot m_{\theta_0}\dot m_{\theta_0}^{\top}]V^{-1}\bigr).$$
-  Only the population criterion needs two derivatives. For the median,
-  $m_\theta(x)=|x|-|x-\theta|$ gives $V=-2f(\theta_0)$ and recovers item 5 at
-  $p=1/2$. Items 3 and 24 are the case $m_\theta=\log p_\theta$.
+### Bandwidth selection, linear smoothers, and density rates
 
-Let $M_n$ be random criterion functions and $M$ a deterministic function on
-a semimetric space $(\Theta,d)$, with $\theta_0$ a point of maximum of $M$.
-In the next item $\mathbb E^*$ is outer expectation, which avoids
-measurability questions for suprema.
+For the kernel density estimator, let $\hat f_{h,-i}$ be the estimator
+computed from the observations other than $X_i$, with divisor $(n-1)h$. The
+**least-squares cross-validation criterion** is
+$$\mathop{\mathrm{CV}}(h)=\int\hat f_h^2-\frac2n\sum_{i=1}^n\hat f_{h,-i}(X_i).$$
+A regression estimator is a **linear smoother** if its fitted values are
+$\hat m=LY$ for a matrix $L$ depending only on the design and the smoothing
+parameter.
 
-* **39. Rate of convergence of $M$-estimators.** Suppose
-  $M(\theta)-M(\theta_0)\le-c\,d(\theta,\theta_0)^2$ for $\theta$ near
-  $\theta_0$, with $c>0$. Suppose that for every $n$ and all sufficiently
-  small $\delta>0$
-  $$\mathbb E^*\sup_{d(\theta,\theta_0)<\delta}
-  \bigl|(M_n-M)(\theta)-(M_n-M)(\theta_0)\bigr|\le C\,\frac{\phi_n(\delta)}{\sqrt n},$$
-  where $\delta\mapsto\phi_n(\delta)/\delta^a$ is decreasing for some $a<2$
-  not depending on $n$. Let $r_n^2\,\phi_n(1/r_n)\le\sqrt n$ for every $n$. If
-  $M_n(\hat\theta_n)\ge M_n(\theta_0)-O_P(r_n^{-2})$ and $\hat\theta_n\to\theta_0$
-  in outer probability, then $r_n\,d(\hat\theta_n,\theta_0)=O_P(1)$. For
-  $M_n=P_nm_\theta$ the modulus bound is a maximal inequality for the
-  empirical process over $\{m_\theta-m_{\theta_0}:d(\theta,\theta_0)<\delta\}$,
-  obtained from bracketing or uniform entropy (CKMA SYNOPSIS07, items 40
-  and 41). The modulus $\phi_n(\delta)=\delta$, as under the Lipschitz
-  condition of item 38, gives $r_n=\sqrt n$. The modulus
-  $\phi_n(\delta)=\delta^{1/2}$, typical of indicator criteria, gives the
-  cube-root rate $r_n=n^{1/3}$: for example the center of the interval of
-  fixed length containing the most observations, when $\theta\mapsto
-  P[\theta-1,\theta+1]$ is twice differentiable with a proper maximum.
-  Cube-root rates also hold for the Grenander estimator of SYNOPSIS104,
-  item 11. The rescaled limit then follows from the argmax theorem,
-  item 31, and is the location of the maximum of a Gaussian process with
-  quadratic drift.
+* **23. Cross-validation.** If $\int f^2<\infty$ and
+  $\iint|K((x-z)/h)|f(z)f(x)\,dz\,dx<\infty$, then for every $h>0$
+  $$\mathbb E\mathop{\mathrm{CV}}(h)
+  =\mathbb E\int(\hat f_h-f)^2-\int f^2.$$
+  Minimizing $\mathop{\mathrm{CV}}$ therefore targets the mean integrated
+  squared error. For a bounded density and a kernel satisfying Stone's
+  regularity conditions, the cross-validated bandwidth $\hat h$ is
+  asymptotically optimal:
+  $$\frac{\int(\hat f_{\hat h}-f)^2}{\inf_{h>0}\int(\hat f_h-f)^2}\to1
+  \quad\hbox{almost surely}.$$
+  Under second-order smoothness, $\hat h$ approaches the MISE-optimal
+  bandwidth only at relative rate $n^{-1/10}$. For a linear smoother whose
+  leave-one-out fit $\hat m_{(-i)}$ is obtained by setting the weight of the
+  $i$th observation to zero and renormalizing the remaining weights in row
+  $i$, the leave-one-out score is
+  $$\frac1n\sum_{i=1}^n\bigl(Y_i-\hat m_{(-i)}(x_i)\bigr)^2
+  =\frac1n\sum_{i=1}^n\left(\frac{Y_i-\hat m(x_i)}{1-L_{ii}}\right)^2.$$
+  Kernel, local polynomial, and spline smoothers satisfy this
+  leave-one-out identity.
 
-* **24. Misspecified maximum likelihood.** Suppose a consistent likelihood
-  maximizer converges to the unique interior maximizer $\theta^\star$ of
-  $P\log p_\theta$. Under the score expansion and moment hypotheses of
-  item 4, with
-  $$A=-P D^2\log p_{\theta^\star},\qquad
-  B=P[\nabla\log p_{\theta^\star}\nabla\log p_{\theta^\star}^{\top}],$$
-  and $A$ nonsingular,
-  $$\sqrt n(\hat\theta_n-\theta^\star)
-  \Rightarrow N(0,A^{-1}BA^{-\top}).$$
-  When finite, $D(P\|P_\theta)$ is minimized at $\theta^\star$.
-  The equality $A=B$ follows from correct specification and regularity;
-  it is not a general property of likelihood fitting.
+Let $\hat\beta(x_0)$ be the coefficient vector of the kernel-weighted
+least-squares fit of a polynomial of degree $p$ in $X_i-x_0$, and estimate
+$m^{(\nu)}(x_0)$, $0\le\nu\le p$, by $\hat m_\nu(x_0)=\nu!\,\hat\beta_\nu$. With
+$\mu_j=\int u^jK(u)\,du$ and $S=(\mu_{j+l})_{0\le j,l\le p}$, the
+**equivalent kernel** is
+$$K_\nu^*(t)=e_{\nu+1}^\top S^{-1}(1,t,\ldots,t^p)^\top K(t),$$
+which satisfies $\int t^qK_\nu^*(t)\,dt=\delta_{\nu q}$ for $0\le q\le p$.
 
-* **25. Second-order delta method.** If
-  $\sqrt n(T_n-\theta)\Rightarrow Z$, $g$ is twice differentiable at
-  $\theta$, and $Dg(\theta)=0$, then
-  $$n(g(T_n)-g(\theta))\Rightarrow
-  \tfrac12 Z^\top D^2g(\theta)Z.$$
-  Even for Gaussian $Z$ the limit need not be normal. In particular,
-  $\sqrt n\,\bar X\Rightarrow N(0,\sigma^2)$ implies
-  $n\bar X^2\Rightarrow\sigma^2\chi^2_1$.
+* **24. Local polynomial regression.** Let $f_X(x_0)>0$, let $f_X$,
+  $m^{(p+1)}$, and $\sigma^2$ be continuous near $x_0$, let $K$ be a bounded
+  symmetric compactly supported probability density, and let $h\to0$ and
+  $nh\to\infty$. If $p-\nu$ is odd, then, conditionally on the design,
+  $$\mathop{\mathrm{Bias}}\hat m_\nu(x_0)
+  =\frac{\nu!}{(p+1)!}\Bigl(\int t^{p+1}K_\nu^*(t)\,dt\Bigr)
+  m^{(p+1)}(x_0)\,h^{p+1-\nu}+o_P(h^{p+1-\nu}),$$
+  $$\mathop{\mathrm{Var}}\hat m_\nu(x_0)
+  =\frac{\nu!^2\int K_\nu^{*2}\;\sigma^2(x_0)}{f_X(x_0)\,nh^{1+2\nu}}
+  +o_P\bigl((nh^{1+2\nu})^{-1}\bigr).$$
+  If $p-\nu$ is even, the term of order $h^{p+1-\nu}$ vanishes by symmetry.
+  If also $f_X'$ and $m^{(p+2)}$ are continuous near $x_0$ and
+  $nh^3\to\infty$, the leading bias is of order $h^{p+2-\nu}$ and involves
+  $f_X'(x_0)/f_X(x_0)$. Passing from an even $p-\nu$ to the next odd
+  degree leaves the asymptotic variance unchanged. Odd $p-\nu$ is therefore
+  preferred, usually $p=\nu+1$. At a boundary point $x_0=ch$ of the support
+  of the design, the same orders of bias and variance hold with $S$ replaced
+  by the truncated moment matrix $\bigl(\int_{-c}^\infty u^{j+l}K\bigr)$. The
+  method thus corrects boundary bias automatically. Item 6 is the case
+  $p=1$, $\nu=0$, and the Nadaraya–Watson estimator is $p=\nu=0$.
 
-A map $\Phi$ between subsets of normed spaces is **Hadamard differentiable**
-at $\theta$, tangentially to a linear space $D_0$, if there is a continuous
-linear map $\Phi'_\theta$ such that
-$[\Phi(\theta+t_nh_n)-\Phi(\theta)]/t_n\to\Phi'_\theta h$ whenever
-$t_n\downarrow0$, $h_n\to h\in D_0$, and the arguments are in the domain.
+For design points $a<t_1<\cdots<t_n<b$, let $Q$ and $R$ be the
+$n\times(n-2)$ and $(n-2)\times(n-2)$ band matrices of the
+**value–second-derivative representation** of natural cubic splines with
+knots $t_i$. For such a spline $g$, with
+$\mathbf g=(g(t_1),\ldots,g(t_n))^\top$, the penalty is
+$\int(g'')^2=\mathbf g^\top QR^{-1}Q^\top\mathbf g$.
 
-* **26. Functional delta method.** If
-  $r_n(T_n-\theta)\Rightarrow G$ in the relevant normed space,
-  $r_n\to\infty$, $G$ is tight and supported on $D_0$, and $\Phi$ is
-  Hadamard differentiable tangentially to $D_0$, then
-  $$r_n(\Phi(T_n)-\Phi(\theta))\Rightarrow\Phi'_\theta G.$$
-  For inversion of a distribution function at a fixed quantile with
-  positive continuous density, the derivative sends $h$ to $-h(q_p)/f(q_p)$,
-  recovering item 5.
+* **25. Smoothing splines as linear smoothers.** Let $n\ge3$ and $\alpha>0$.
+  The unique minimizer of
+  $$\sum_{i=1}^n\bigl(Y_i-g(t_i)\bigr)^2+\alpha\int_a^b g''(t)^2\,dt$$
+  over functions with absolutely continuous first derivative and
+  square-integrable second derivative is the natural cubic spline with
+  values $(I+\alpha QR^{-1}Q^\top)^{-1}Y$ at the knots. It is a linear
+  smoother with hat matrix $A(\alpha)=(I+\alpha QR^{-1}Q^\top)^{-1}$, so item 23 gives
+  $$\mathop{\mathrm{CV}}(\alpha)
+  =\frac1n\sum_{i=1}^n\left(\frac{Y_i-\hat g(t_i)}{1-A_{ii}(\alpha)}\right)^2.$$
+  Suppose that $n$ is large, the design points have a smooth local density
+  $f$, $s$ is away from the ends, and $\alpha$ is neither too small nor too
+  large. Then $\hat g(s)=n^{-1}\sum_iY_iG(s,t_i)$, where the weight
+  function satisfies the approximation
+  $$G(s,t)\approx\frac1{f(t)h(t)}\,\kappa\Bigl(\frac{s-t}{h(t)}\Bigr),
+  \qquad h(t)=\Bigl(\frac{\alpha}{nf(t)}\Bigr)^{1/4},$$
+  $$\kappa(u)=\tfrac12e^{-|u|/\sqrt2}\sin\bigl(|u|/\sqrt2+\pi/4\bigr).$$
+  The kernel $\kappa$ has Fourier transform $1/(1+\omega^4)$; it is a kernel
+  of order four. The local bandwidth varies as the inverse fourth root of
+  the design density.
 
-* **27. Hoeffding decomposition.** For the square-integrable kernel of
-  item 6 there are symmetric canonical kernels $h_j$ of orders $1\le j\le m$
-  with zero conditional expectation in each argument, such that
-  $$U_n-\theta=\sum_{j=1}^m\binom mj U_{n,j},\qquad
-  \mathop{\mathrm{Var}}U_n
-  =\sum_{j=1}^m\frac{\binom mj^2}{\binom nj}\mathbb E h_j^2.$$
-  The terms are orthogonal in $L^2$, and $h_1=g$ of item 6.
-  Among unbiased estimators of $\mathbb E h$ in the unrestricted
-  independent-sampling model, $U_n$ has minimum variance whenever the
-  competing estimators have finite variance throughout that model.
+A **kernel of order** $\ell\ge1$ is a function $K$ with $\int K=1$ and
+$\int u^jK(u)\,du=0$ for $1\le j\le\ell$. For $\beta>0$, let $\ell$ be the
+largest integer strictly smaller than $\beta$. The **Hölder density class**
+$\mathcal P(\beta,L)$ is the set of probability densities on $\mathbb R$ that
+are $\ell$ times differentiable with
+$|f^{(\ell)}(x)-f^{(\ell)}(x')|\le L|x-x'|^{\beta-\ell}$.
 
-* **28. Degenerate quadratic $U$-statistics.** Let $h\in L^2(P\otimes P)$
-  be symmetric and satisfy $\mathbb E[h(X_1,X_2)\mid X_1]=0$. Let
-  $(\lambda_j)$ be the eigenvalues, with multiplicity, of the integral
-  operator $a\mapsto\int h(\cdot,y)a(y)\,P(dy)$. Then
-  $$nU_n\Rightarrow\sum_j\lambda_j(Z_j^2-1),$$
-  where the $Z_j$ are independent standard normals and the series converges
-  in $L^2$. This gives a basic nonnormal null limit for quadratic
-  goodness-of-fit and independence statistics.
+* **26. Minimax rates of density estimation.** Let $K$ be a kernel of order
+  $\ell$ with $\int K^2<\infty$ and $\int|u|^\beta|K(u)|\,du<\infty$, and let
+  $h=c\,n^{-1/(2\beta+1)}$ for fixed $c>0$. Then
+  $$\sup_{x_0\in\mathbb R}\ \sup_{f\in\mathcal P(\beta,L)}
+  \mathbb E\bigl(\hat f_h(x_0)-f(x_0)\bigr)^2\le Cn^{-2\beta/(2\beta+1)},$$
+  and no estimator achieves a faster order uniformly over
+  $\mathcal P(\beta,L)$, either at a fixed point or in integrated squared
+  error. For an integer $m\ge1$, let $\mathcal F_{m,M}$ be the class of
+  densities with $m$ continuous derivatives and $\int(f^{(m)})^2\le M$.
+  Kernels of order $m-1$ with $\int|y|^m|K(y)|\,dy<\infty$ and bandwidth
+  $n^{-1/(2m+1)}$ give
+  $$\sup_{f\in\mathcal F_{m,M}}\mathbb E\int(\hat f_h-f)^2
+  \le C_{m,M}n^{-2m/(2m+1)}.$$
+  Assouad's lemma, applied to $2^{r_n}$ local perturbations with
+  $r_n\asymp n^{1/(2m+1)}$, gives a matching lower bound
+  $D_{m,M}n^{-2m/(2m+1)}$ for every estimator. Kernels of order at least
+  two are not nonnegative; the rate gain beyond $n^{-4/5}$ in item 4
+  requires them.
 
-* **29. Pearson's multinomial tests.** If
-  $(N_1,\ldots,N_k)\sim\mathop{\mathrm{Mult}}(n;p_1,\ldots,p_k)$ with
-  fixed $k$ and all $p_i>0$, then
-  $$\sum_{i=1}^k\frac{(N_i-np_i)^2}{np_i}\Rightarrow\chi^2_{k-1}.$$
-  Fitting a regular $d$-dimensional multinomial submodel by maximum
-  likelihood gives $k-1-d$ degrees of freedom. For an $r\times c$ table
-  under independence, fitted counts $N_{i+}N_{+j}/n$ give
-  $(r-1)(c-1)$ degrees of freedom. The likelihood-ratio statistic
-  $2\sum N_{ij}\log(N_{ij}/\hat N_{ij})$, with $0\log0=0$, has the same
-  limit and differs from Pearson's statistic by $o_P(1)$.
+### Risk bounds under shape constraints
 
-* **30. Generalized method of moments.** Let $m(X,\theta)\in\mathbb R^q$
-  have expectation zero at $\theta_0\in\mathbb R^k$, $q\ge k$, and let
-  $G=P D_\theta m(X,\theta_0)$ have full column rank. Suppose the sample
-  moments obey a local uniform derivative law and a central limit theorem
-  with positive definite covariance $\Omega$. A consistent minimizer of
-  $\bar m_n(\theta)^\top W_n\bar m_n(\theta)$, where $W_n\to_P W>0$, has
-  limiting covariance
-  $$(G^\top WG)^{-1}G^\top W\Omega WG(G^\top WG)^{-1}.$$
-  The choice $W=\Omega^{-1}$ minimizes this covariance in the Loewner
-  order. With a consistent estimate of that weight, the minimized criterion
-  multiplied by $n$ converges to $\chi^2_{q-k}$.
+* **27. Risk of isotonic regression.** Let $Y_i=\theta_i^*+\varepsilon_i$ for
+  $i=1,\ldots,n$, with $\theta_1^*\le\cdots\le\theta_n^*$ and independent
+  errors of mean zero and variance one. Let $\hat\theta$ be the
+  isotonic least-squares estimator of item 21 with unit weights. There is a
+  universal constant $C$ such that
+  $$\frac1n\mathbb E\|\hat\theta-\theta^*\|^2
+  \le C\left\{\Bigl(\frac{\theta_n^*-\theta_1^*}{n}\Bigr)^{2/3}
+  +\frac{\log(en)}n\right\}.$$
+  In particular the worst-case risk over sequences with
+  $\|\theta^*\|_\infty\le1$ is of order $n^{-2/3}$, the minimax order for
+  this class. For constant $\theta^*$ the risk is of the nearly parametric
+  order $\log(en)/n$, without any tuning parameter.
 
-* **31. Argmax theorem.** Let $M_n$ converge weakly, uniformly on compact
-  subsets of a metric space, to a continuous process $M$. Suppose $M$ has
-  an almost surely unique maximizer $T$, separated from the rest of each
-  compact set. If approximate maximizers $T_n$ are tight and their criterion
-  errors are $o_P(1)$, then $T_n\Rightarrow T$. Applied to rescaled local
-  criteria, this also yields nonnormal limits such as the Chernoff law in
-  SYNOPSIS104, item 11.
+Let $\mathcal F_d$ be the class of upper semicontinuous log-concave
+densities on $\mathbb R^d$. The squared Hellinger distance is
+$H^2(f,g)=\int(\sqrt f-\sqrt g)^2$.
+
+* **28. Log-concave maximum likelihood.** Let $P$ be a probability measure on
+  $\mathbb R^d$ with finite first moment that assigns probability less than
+  one to every hyperplane. Then $\int\log f\,dP$ has a unique maximizer
+  $f^*\in\mathcal F_d$, the log-concave projection of $P$. The set where
+  $f^*>0$ contains the interior of the convex support of $P$ and is
+  contained in that convex support. If
+  $X_1,\ldots,X_n$ are points of $\mathbb R^d$ with $n\ge d+1$ and
+  $d$-dimensional convex hull $C_n$, this gives a unique log-concave maximum
+  likelihood estimator $\hat f_n$, which is supported on $C_n$. Its
+  logarithm is a tent function: for suitable heights $y_i$, the smallest
+  concave function with value at least $y_i$ at $X_i$ for every $i$,
+  which is piecewise affine on $C_n$. For samples
+  from $f_0\in\mathcal F_d$,
+  $$\sup_{f_0\in\mathcal F_d}\mathbb E H^2(\hat f_n,f_0)\le C_d\cdot
+  \begin{cases}n^{-4/5},&d=1,\\ n^{-2/(d+1)}\log n,&d\ge2,\end{cases}$$
+  and no estimator improves on these orders apart from the logarithm.
+  The estimator involves no smoothing parameter.
+
+### Functional data analysis
+
+Let $X$ be a random element of a separable Hilbert space $H$ with
+$\mathbb E\|X\|^2<\infty$, mean $\mu$, and covariance operator
+$C=\mathbb E[(X-\mu)\otimes(X-\mu)]$. Then $C$ is compact, self-adjoint,
+nonnegative, and trace-class. Its eigenvalues and orthonormal eigenfunctions
+are $(\lambda_j,\varphi_j)$.
+
+* **29. Karhunen–Loève expansion and the Hilbertian central limit theorem.**
+  For each positive eigenvalue, set
+  $\xi_j=\langle X-\mu,\varphi_j\rangle/\sqrt{\lambda_j}$.
+  These variables are uncorrelated with mean $0$ and variance $1$, and
+  $$X=\mu+\sum_{j\ge1}\sqrt{\lambda_j}\,\xi_j\varphi_j,$$
+  where only positive eigenvalues are included, with convergence in $L^2$
+  and almost surely in $H$. For independent copies,
+  $\sqrt n\,(\bar X_n-\mu)$ converges in law in $H$ to the centered Gaussian
+  random element with covariance operator $C$.
+
+* **30. Principal components of the empirical covariance.** Let $\hat C_n$ be
+  the empirical covariance and let $\hat\lambda_j$ and $\hat\varphi_j$ be its
+  eigenvalues and eigenfunctions. If $\lambda_j$ is simple and positive and
+  $\mathbb E\|X\|^4<\infty$, then
+  $$\sqrt n\,(\hat\lambda_j-\lambda_j)
+  \Rightarrow N\bigl(0,\mathop{\mathrm{Var}}(\langle X-\mu,\varphi_j\rangle^2)\bigr).$$
+  For a Gaussian $X$ the asymptotic variance equals $2\lambda_j^2$. The
+  empirical eigenfunction, multiplied by a sign so that
+  $\langle\hat\varphi_j,\varphi_j\rangle\ge0$, satisfies
+  $\|\hat\varphi_j-\varphi_j\|=O_P(n^{-1/2}/\delta_j)$, where
+  $\delta_j$ is the distance from $\lambda_j$ to the rest of the spectrum.
+  Its first-order expansion is
+  $$\hat\varphi_j-\varphi_j
+  =\sum_{k\ne j}\frac{\langle(\hat C_n-C)\varphi_j,\varphi_k\rangle}
+  {\lambda_j-\lambda_k}\varphi_k+o_P(n^{-1/2}),$$
+  with the zero eigenspace included when present.
+
+* **31. Optimality of functional principal components.** If the eigenvalues
+  of $C$ are ordered decreasingly, then among all orthogonal projections
+  $P_V$ onto $k$-dimensional subspaces of $H$,
+  $$\inf_{\dim V=k}\mathbb E\|X-\mu-P_V(X-\mu)\|^2
+  =\sum_{j>k}\lambda_j.$$
+  The first $k$ eigenfunctions span a minimizing subspace. If
+  $\lambda_k>\lambda_{k+1}$, that subspace is unique. This reconstruction
+  characterization does not require Gaussian observations.
+
+### Functional linear regression
+
+Let $X$ be a centered random element of $L^2[0,1]$ with continuous
+covariance kernel, covariance eigenvalues $\lambda_1\ge\lambda_2\ge\cdots$, and
+tail sums $V_k=\sum_{j>k}\lambda_j$. In the **functional linear model**
+$Y_i=\langle\beta,X_i\rangle+\varepsilon_i$, the $X_i$ are independent copies
+of $X$, the errors are independent of them with mean zero and variance
+$\sigma^2$, and $\beta$ lies in the Sobolev space $W_q[0,1]$ with
+$\|g\|_{W_q}^2=\|g\|^2+\|g^{(q)}\|^2$. The **penalized least-squares
+estimator** $\hat\beta_\eta$ minimizes
+$$\frac1n\sum_{i=1}^n\bigl(Y_i-\langle g,X_i\rangle\bigr)^2
++\eta\|g\|_{W_q}^2,\qquad g\in W_q[0,1].$$
+
+* **32. Prediction rates in functional linear regression.** Assume
+  $V_k=O(k^{-\alpha})$ for some $\alpha>0$. Assume also a fourth-moment
+  condition on the principal-component scores $Z_j=\langle X,\varphi_j\rangle$:
+  $\mathop{\mathrm{Var}}(Z_jZ_k)\le c\,\lambda_j\lambda_k$ for all $j,k$ and
+  a constant $c$. With
+  $\eta=n^{-(2q+\alpha+1)/(2q+\alpha+2)}$, the prediction error for an
+  independent new $X$ satisfies
+  $$\mathbb E_{\varepsilon,X}\bigl(\langle X,\hat\beta_\eta\rangle
+  -\langle X,\beta\rangle\bigr)^2
+  =O_P\bigl(n^{-(2q+\alpha+1)/(2q+\alpha+2)}+n^{-(\alpha+1)/2}\bigr).$$
+  For $\alpha\ge1$, the first term dominates. Over models with
+  $\|\beta\|_{W_q}\le1$ and $V_k\le k^{-\alpha}$, no estimator has a
+  smaller order of worst-case prediction risk, so the penalized estimator is
+  rate optimal. For Brownian-motion covariates, $\lambda_j=4/((2j-1)\pi)^2$,
+  $\alpha=1$, and the rate is $n^{-(2q+2)/(2q+3)}$. The rate concerns the
+  prediction functional $\langle X,\beta\rangle$. Recovering $\beta$ itself
+  in $L^2$ is an ill-posed inverse problem, because the covariance operator
+  has an unbounded inverse on its range.
 
 <a id="synopsis-103b"></a>
 
-## 103B. Higher-Order Asymptotics, Resampling, and Information Geometry
+## 103B. High-Dimensional and Large-Scale Inference
 
-* **14. One-term Edgeworth expansion.** Let $X_i$ be independent and
-  identically distributed, with mean $0$, variance $1$, and finite third
-  moment $\rho=\mathbb E X_1^3$, and assume the law is nonlattice. Then
-  $$P\bigl(\sqrt n\,\bar X\le x\bigr)
-  =\Phi(x)-\varphi(x)\,(x^2-1)\frac{\rho}{6\sqrt n}+o(n^{-1/2}),$$
-  uniformly in $x$. The lattice case adds a periodic continuity correction
-  of the same order. The Berry–Esseen bound of CKMA SYNOPSIS06, item 36,
-  is the corresponding uniform estimate of order $n^{-1/2}$ without an
-  explicit skewness term.
+In the Gaussian sequence model, one observes $Y=\theta+\sigma\xi$ in
+$\mathbb R^p$, with $\xi$ standard normal.
 
-* **44. Edgeworth expansion for smooth functions of means.** Let $X_i$ be
-  independent copies of a random vector $X$ in $\mathbb R^d$ with mean $\mu$
-  and covariance $\Sigma$, and let $j\ge1$. Let $A:\mathbb R^d\to\mathbb R$
-  have $j+2$ continuous derivatives in a neighborhood of $\mu$, with
-  $A(\mu)=0$ and $\sigma^2=\nabla A(\mu)^\top\Sigma\,\nabla A(\mu)>0$. Assume
-  $\mathbb E\|X\|^{j+2}<\infty$ and **Cramér's condition**
-  $\limsup_{\|t\|\to\infty}|\mathbb E e^{it^\top X}|<1$. Then, uniformly in $x$,
-  $$P\bigl(\sqrt n\,A(\bar X)/\sigma\le x\bigr)
-  =\Phi(x)+\sum_{r=1}^{j}n^{-r/2}p_r(x)\varphi(x)+o(n^{-j/2}),$$
-  where $p_r$ is a polynomial of degree at most $3r-1$, odd for even $r$ and
-  even for odd $r$, with coefficients determined by the moments of $X$ of
-  order at most $r+2$ and the derivatives of $A$ at $\mu$. Studentized
-  statistics are included by adjoining products of coordinates to $X$: for
-  $\theta=g(\mu)$ with variance estimate $h(\bar X)^2$, take
-  $A(x)=\bigl(g(x)-g(\mu)\bigr)/h(x)$, which covers Student's $t$
-  statistic. Cramér's condition holds when the law of $X$ has a nonzero
-  absolutely continuous component, or when $X=(W,W^2,\ldots,W^d)$ with $W$
-  of that kind; it makes atoms of the law of $\bar X$ exponentially small.
-  Item 14 is the one-dimensional mean with $j=1$, where the nonlattice
-  condition replaces Cramér's condition.
+* **33. Sparse minimax rate.** Over the class of vectors with at most $s$
+  nonzero coordinates, $1\le s\le p/2$, the minimax mean squared error is of
+  order $\sigma^2 s\log(p/s)$. When $s$ is known, soft thresholding
+  at a level of order $\sigma\sqrt{\log(p/s)}$ attains this order.
+  The universal threshold $\sigma\sqrt{2\log p}$ instead gives the
+  bound of order $\sigma^2s\log p$ from item 10; it is
+  rate optimal when $\log(p/s)$ is comparable to $\log p$.
 
-* **15. Bootstrap of the mean.** Let $X_i$ be independent and identically
-  distributed real random variables and let $P_n^\star$ be the conditional
-  law of the bootstrap sample mean $\bar X^\star$ given the sample. The
-  Kolmogorov distance between the conditional law of
-  $\sqrt n\,(\bar X^\star-\bar X)$ and the law of $\sqrt n\,(\bar X-\mu)$
-  tends to $0$ in probability if the observations have finite variance
-  $\sigma^2$. The conditional limit is then $N(0,\sigma^2)$.
-  Infinite-variance cases need separate normalization and assumptions;
-  this is a sufficient finite-variance theorem, not an equivalence.
+Let $Y=X\beta+\varepsilon$ with $X$ an $n\times p$ design and with
+$\varepsilon\in\mathbb R^n$. The **lasso** is any minimizer
+$$\hat\beta\in\mathop{\mathrm{argmin}}_{\beta\in\mathbb R^p}
+\Bigl(\frac1{2n}\|Y-X\beta\|_2^2+\lambda\|\beta\|_1\Bigr).$$
+For an index set $S$ and a stretching factor $L>0$, the **compatibility
+constant** is
+$$\kappa^2(S,L)=\inf\Bigl\{
+\frac{|S|\,\|X\delta\|_2^2}{n\|\delta_S\|_1^2}:
+\delta\neq0,\;\|\delta_{S^c}\|_1\le L\|\delta_S\|_1\Bigr\}.$$
 
-* **16. Bootstrap of the empirical distribution function.** For independent
-  real observations with distribution function $F$, the conditional law of
-  the bootstrap empirical process $\sqrt n\,(F_n^\star-F_n)$ converges in
-  probability to the law of the $F$-Brownian bridge, in the same sense as
-  the unconditional limit of $\sqrt n\,(F_n-F)$ in CKMA SYNOPSIS06,
-  item 59.
-
-* **17. Jackknife variance of a smooth function of means.** Let
-  $\theta=g(\mu)$ with $g$ continuously differentiable at the mean $\mu$ of
-  a square-integrable random vector, and let $\hat\theta_{(i)}$ be $g$
-  evaluated at the sample mean with the $i$th observation removed. The
-  delete-one jackknife variance
-  $$v_n=\frac{n-1}{n}\sum_{i=1}^n
-  \bigl(\hat\theta_{(i)}-\hat\theta_{(\cdot)}\bigr)^2$$
-  satisfies $n v_n\to_p \nabla g(\mu)^\top\Sigma\nabla g(\mu)$, where
-  $\Sigma$ is the covariance of one observation and $\hat\theta_{(\cdot)}$
-  is the average of the delete-one values.
-
-* **18. Bartlett correction.** Under the regularity used for the chi-squared
-  limit of the likelihood-ratio statistic $\lambda_n$ in item 7, strengthened
-  by the smoothness that yields an Edgeworth expansion of $\lambda_n$,
-  $$\mathbb E_\theta\lambda_n=q\bigl(1+b(\theta)/n\bigr)+O(n^{-2})$$
+* **34. Lasso under compatibility.** Suppose $\beta$ is supported on $S$ and
+  $$\lambda\ge\frac2n\|X^\top\varepsilon\|_\infty.$$
+  If $\kappa(S,3)>0$, then every lasso solution satisfies
+  $$\frac1n\|X(\hat\beta-\beta)\|_2^2
+  \le\frac{9\lambda^2|S|}{4\kappa^2(S,3)}$$
   and
-  $$P_\theta\bigl(\lambda_n/(1+b(\theta)/n)\le x\bigr)
-  =P(\chi^2_q\le x)+O(n^{-2}).$$
-  The uncorrected approximation has error of order $n^{-1}$. Replacing
-  $b(\theta)$ by an estimator requires a separate expansion to retain
-  that error order; consistency alone is insufficient.
+  $$\|\hat\beta-\beta\|_1\le\frac{6\lambda|S|}{\kappa^2(S,3)}.$$
+  The error $\hat\beta-\beta$ lies in the cone
+  $\|\delta_{S^c}\|_1\le3\|\delta_S\|_1$. If the design satisfies the
+  **restricted eigenvalue condition**
+  $n^{-1}\|X\delta\|_2^2\ge\kappa\|\delta\|_2^2$ on that cone, with
+  $\kappa>0$, then
+  $$\|\hat\beta-\beta\|_2\le\frac{3\sqrt{|S|}\,\lambda}\kappa,$$
+  and $\kappa^2(S,3)\ge\kappa$, since $\|\delta_S\|_1^2\le|S|\,\|\delta\|_2^2$. For a design with
+  independent centered sub-Gaussian entries, the restricted isometry property
+  of CKMA SYNOPSIS07, item 48, supplies such a bound with high probability
+  once $n$ is at least a constant multiple of $|S|\log(ep/|S|)$. If the
+  columns satisfy $\|X_{\cdot j}\|_2^2/n\le1$ and the errors are
+  $N(0,\sigma^2)$, a choice of $\lambda$ of order $\sigma\sqrt{(\log p)/n}$
+  meets the noise condition with high probability.
 
-* **19. Saddlepoint approximation.** Let the cumulant generating function
-  $K(s)=\log\mathbb E e^{s X}$ be finite in an open neighborhood of the
-  origin, and let $\hat s$ solve $K'(\hat s)=x$ for $x$ in the interior of
-  the range of $K'$. Assume absolute continuity and sufficient Fourier
-  integrability of the exponentially tilted laws, uniformly on compact
-  saddlepoint sets, so that density inversion and its expansion are valid.
-  For independent copies of $X$, the density of the sample mean then
-  admits the approximation
-  $$f_{\bar X}(x)
-  =\Bigl(\frac{n}{2\pi K''(\hat s)}\Bigr)^{1/2}
-  \exp\bigl(n\bigl(K(\hat s)-\hat s\, x\bigr)\bigr)
-  \bigl(1+O(n^{-1})\bigr),$$
-  uniformly for $x$ in compact subsets of that interior. The formula is the
-  leading term of an expansion in powers of $n^{-1}$.
+Let $(S_m)$ be a countable collection of linear subspaces of the regression
+space, of dimensions $d_m$, and let $\hat f_m$ be the orthogonal projection
+of $Y$ onto $S_m$. Write $\|\cdot\|_n$ for the norm
+$\|v\|_n^2=n^{-1}\|v\|_2^2$.
 
-* **20. Empirical likelihood.** Let $X_i$ be independent and identically
-  distributed in $\mathbb R^d$ with mean $\mu_0$ and nonsingular finite
-  covariance. The empirical likelihood ratio $R(\mu_0)$ is the maximum, over
-  probability weights on the sample with weighted mean $\mu_0$, of
-  $n^n\prod_{i=1}^n w_i$. Then
-  $-2\log R(\mu_0)\Rightarrow\chi^2_d$. For a just-identified smooth moment
-  condition $\mathbb E m(X,\theta_0)=0$ of dimension $q$, with nonsingular
-  Jacobian and finite nonsingular covariance of $m(X,\theta_0)$, the
-  empirical likelihood ratio statistic at $\theta_0$ has the same limit with
-  $d$ replaced by $q$.
+* **35. Penalized model selection.** In the Gaussian regression model with
+  error variance $\sigma^2$, let $(\pi_m)$ be positive weights with
+  $\sum_m\pi_m\le1$. For a sufficiently large universal constant
+  $\kappa$, take
+  $$\mathop{\mathrm{pen}}(m)\ge\kappa\frac{\sigma^2}n\bigl(d_m+\log(1/\pi_m)\bigr).$$
+  The penalized selector $\hat m$ minimizing
+  $\|Y-\hat f_m\|_n^2+\mathop{\mathrm{pen}}(m)$ obeys
+  $$\mathbb E\|\hat f_{\hat m}-f\|_n^2
+  \le C(\kappa)\inf_m\Bigl(
+  \inf_{g\in S_m}\|g-f\|_n^2+\mathop{\mathrm{pen}}(m)\Bigr),$$
+  where the constant $C(\kappa)$ depends only on $\kappa$.
 
-* **21. Subsampling.** Let $\hat\theta_n$ be computed from an independent
-  sample of size $n$, and let $b\to\infty$ with $b/n\to0$.
-  Suppose $\tau_n\to\infty$, $\tau_b/\tau_n\to0$, and
-  $\tau_n(\hat\theta_n-\theta)$ converges to a law with continuous
-  distribution function. Over all subsamples of size $b$, form the
-  empirical distribution of $\tau_b(\hat\theta_{b,I}-\hat\theta_n)$.
-  Its distribution function converges uniformly in probability to that
-  limiting distribution function. The construction uses no estimate
-  of an asymptotic variance and does not require the limit to be normal.
+* **36. AIC and BIC.** In a regular parametric model of dimension $k$ that
+  contains the true distribution, compare the maximized training
+  log-likelihood with the log-likelihood of an independent sample of the
+  same size, evaluated at the training estimate. Under the regularity and
+  moment conditions for taking expectations of the likelihood expansion,
+  the expected training excess is $k+o(1)$.
+  Akaike's criterion $-2\ell_n(\hat\theta)+2k$ corrects
+  the maximized log-likelihood by this optimism. In a finite nested list of
+  regular models of fixed dimension, one of which is the smallest model
+  containing the truth, the probability that the Akaike selector returns a
+  strictly larger model stays positive as $n\to\infty$. The Bayes information
+  criterion of SYNOPSIS104, item 5, $-2\ell_n(\hat\theta)+k\log n$, selects
+  that smallest true model with probability tending to one.
 
-On the simplex of strictly positive probability vectors
-$(p_1,\ldots,p_m)$, $m\ge 2$, the **Fisher–Rao metric** is
-$\sum_{i=1}^m dp_i^2/p_i$. A **congruent embedding** is a Markov kernel that
-carries this simplex into the simplex of another finite sample space and is
-a sufficient statistic for the image model.
+Let $p_{(1)}\le\cdots\le p_{(m)}$ be ordered $p$-values for $m$ hypotheses,
+of which $m_0$ are true nulls, each with a valid $p$-value, and let $V$ and $R$ be the numbers of false
+and of all rejections.
 
-* **22. Čencov's theorem.** Up to a positive constant factor, the Fisher–Rao
-  metric is the unique Riemannian metric on the positive simplex that is
-  invariant under congruent embeddings. The Amari–Chentsov tensor is, up to
-  a constant factor, the unique symmetric covariant $3$-tensor with the same
-  invariance. These two objects determine the one-parameter family of
-  $\alpha$-connections used to compare exponential and mixture geometries
-  on a parametric model.
+* **37. Benjamini–Hochberg procedure.** Fix $\alpha\in(0,1)$ and let
+  $k=\max\{i:p_{(i)}\le i\alpha/m\}$, with $k=0$ when the set is empty. Reject
+  the hypotheses attached to $p_{(1)},\ldots,p_{(k)}$. If the null $p$-values
+  are independent of each other and of the non-null $p$-values, or if the
+  vector of $p$-values is positively regression dependent on the subset of
+  null coordinates, then the false-discovery rate satisfies
+  $$\mathbb E\Bigl[\frac{V}{\max(R,1)}\Bigr]\le\alpha\frac{m_0}m\le\alpha.$$
 
-### Bootstrap for smooth functionals
+Let $X$ be an $n\times p$ matrix with independent standard normal entries, and
+let $\ell_{\max}$ be the largest eigenvalue of the sample covariance
+$n^{-1}X^\top X$. Write $y$ for a limit of $p/n$ in $(0,\infty)$.
 
-* **32. Bootstrap delta method.** Suppose both
-  $r_n(T_n-\theta)\Rightarrow G$ and, conditionally on the observations,
-  $r_n(T_n^\star-T_n)\Rightarrow G$ in probability, with a tight limit
-  supported on $D_0$. For a map Hadamard differentiable as in item 26,
-  the conditional law of
-  $r_n(\Phi(T_n^\star)-\Phi(T_n))$ converges to that of $\Phi'_\theta G$.
-  This justifies resampling smooth distributional functionals and quantiles
-  with positive density. If the first derivative vanishes, this theorem
-  only gives a degenerate limit; it does not justify the second-order
-  bootstrap. For a zero-mean normal sample, the conditional law of
-  $n((\bar X^\star)^2-\bar X^2)$ does not consistently estimate the law
-  of $n\bar X^2$.
+* **38. Tracy–Widom law and spiked covariance.** As $n,p\to\infty$ with
+  $p/n\to y$,
+  $$\frac{\ell_{\max}-\mu_{n,p}}{\sigma_{n,p}}\Rightarrow F_1,$$
+  where $F_1$ is the Tracy–Widom law of the Gaussian orthogonal ensemble,
+  $$\mu_{n,p}=\frac{\bigl(\sqrt{n-1}+\sqrt p\bigr)^2}n,$$
+  and
+  $$\sigma_{n,p}
+  =\frac{\bigl(\sqrt{n-1}+\sqrt p\bigr)
+  \bigl((n-1)^{-1/2}+p^{-1/2}\bigr)^{1/3}}n.$$
+  The bulk of the spectrum converges to the Marchenko–Pastur law on
+  $[(1-\sqrt y)^2,(1+\sqrt y)^2]$, by CKMA SYNOPSIS07, item 51. The edge law
+  $F_2$ of the Gaussian unitary ensemble is CKMA SYNOPSIS07, item 69. In
+  Johnstone's spiked model, the population covariance has one eigenvalue
+  $\alpha$ and the remaining eigenvalues equal to $1$. The corresponding
+  sample eigenvalue converges almost surely to $(1+\sqrt y)^2$ when
+  $1<\alpha\le1+\sqrt y$, and to $\alpha+y\alpha/(\alpha-1)$ when
+  $\alpha>1+\sqrt y$.
 
-### Accuracy and failure of the bootstrap
+### Lower bounds, regularization, and multiplicity
 
-A statistic is **asymptotically pivotal** when its limit law does not depend
-on unknown quantities.
+* **39. Le Cam's two-point method.** If two parameters are at metric
+  distance at least $2s$, then every estimator satisfies
+  $$\max_{j=0,1}P_j(d(\hat\theta,\theta_j)\ge s)
+  \ge\tfrac12(1-\|P_0-P_1\|_{\mathrm{TV}}).$$
+  For any nonnegative increasing loss $\ell$, this gives a minimax risk
+  lower bound $\ell(s)(1-\|P_0-P_1\|_{\mathrm{TV}})/2$.
+  The probabilities here are the full observation laws; for $n$
+  independent observations the KL divergence used to bound total
+  variation is $n$ times the one-observation divergence.
 
-* **45. Second-order accuracy of the studentized bootstrap.** In the
-  setting of item 44 let $\hat\theta=g(\bar X)$ estimate $\theta=g(\mu)$, let
-  $\hat\sigma^2=h(\bar X)^2$ be a smooth consistent estimator of the
-  asymptotic variance of $\sqrt n\,\hat\theta$, and let
-  $T=\sqrt n(\hat\theta-\theta)/\hat\sigma$. Let
-  $T^\star=\sqrt n(\hat\theta^\star-\hat\theta)/\hat\sigma^\star$ be computed from
-  a resample drawn from the empirical distribution. Assume $g$ and $h$
-  smooth, enough moments, and Cramér's condition, so that $T$ and, with
-  probability tending to one, $T^\star$ admit the expansions of item 44 to
-  order $n^{-1}$, the bootstrap polynomials being the population ones with
-  moments replaced by sample moments. Then
-  $$\sup_x\bigl|P(T^\star\le x\mid X_1,\ldots,X_n)-P(T\le x)\bigr|
-  =O_P(n^{-1}),$$
-  whereas the normal approximation to the law of $T$ has error of order
-  $n^{-1/2}$ unless $p_1$ vanishes. For the nonpivotal
-  $\sqrt n(\hat\theta-\theta)$ the bootstrap error is generally of exact
-  order $n^{-1/2}$, because $\hat\sigma-\sigma$ is of that order. Let
-  $\hat v_\alpha$ be the $\alpha$-quantile of the conditional law of
-  $T^\star$. The one-sided percentile-$t$ interval
-  $(-\infty,\hat\theta-n^{-1/2}\hat\sigma\hat v_\alpha]$ has coverage
-  $1-\alpha+O(n^{-1})$, while the one-sided normal-theory and percentile
-  intervals have coverage error of order $n^{-1/2}$ in general. In two-sided
-  equal-tailed intervals the terms of order $n^{-1/2}$ cancel by parity, so
-  all three have coverage error $O(n^{-1})$; the symmetric two-sided
-  percentile-$t$ interval has coverage error $O(n^{-2})$.
+* **40. Fano's method.** Let $\theta_1,\ldots,\theta_M$ be $2s$-separated,
+  $M\ge2$, with observation laws $P_j$. For a uniform index $J$ and
+  data $X\mid J=j\sim P_j$, every estimator satisfies
+  $$\sup_jP_j(d(\hat\theta,\theta_j)\ge s)
+  \ge1-\frac{I(J;X)+\log2}{\log M}.$$
+  With $\bar P=M^{-1}\sum_jP_j$,
+  $$I(J;X)=\frac1M\sum_jD(P_j\|\bar P)
+  \le\frac1M\sum_jD(P_j\|Q)$$
+  for any reference law $Q$ for which the right side is finite.
+  Large packings with small divergences yield the sparse rate of item 33
+  and the nonparametric rates in item 22.
 
-* **46. Inconsistency of the bootstrap for the sample maximum.** Let $F$
-  be continuous with right endpoint $\theta<\infty$, so $F(\theta)=1$ and
-  $F(x)<1$ for $x<\theta$, and suppose that $b_n(\theta-X_{n(n)})$ has a
-  continuous nondegenerate limit law for constants $b_n\to\infty$; for the
-  uniform law on $[0,\theta]$, $n(\theta-X_{n(n)})/\theta\Rightarrow$ the
-  standard exponential law. The bootstrap maximum $X^\star_{n(n)}$ equals
-  $X_{n(n)}$ with conditional probability
-  $$1-(1-1/n)^n\to1-e^{-1},$$
-  so the conditional law of $b_n(X_{n(n)}-X^\star_{n(n)})$ keeps an atom of
-  mass near $1-e^{-1}$ at $0$ and does not converge to the continuous limit:
-  the bootstrap is inconsistent. With resample size $m\to\infty$ and
-  $m/n\to0$, the $m$-out-of-$n$ bootstrap of $b_m(X_{n(n)}-X^\star_{m(m)})$ is
-  consistent when $b_n=n^{1/\delta}$ for some $\delta>0$, as is subsampling,
-  item 21.
+* **41. Lasso without a restricted eigenvalue.** Under the noise event
+  of item 34, the basic inequality gives
+  $$\frac1n\|X(\hat\beta-\beta)\|^2\le3\lambda\|\beta\|_1.$$
+  This prediction bound does not require sparsity or compatibility.
+  Compatibility converts the basic inequality into the faster
+  $s\lambda^2$ rate of item 34. Small prediction error alone need not
+  imply small coefficient error when the design has nearly dependent
+  columns.
+
+* **42. Orthogonal designs and soft thresholding.** If
+  $X^\top X/n=I_p$, the lasso solution is
+  $$\hat\beta_j=\mathop{\mathrm{sign}}(z_j)(|z_j|-\lambda)_+,
+  \qquad z=X^\top Y/n.$$
+  Ridge instead multiplies $z$ by $n/(n+\lambda)$ for the penalty
+  convention of SYNOPSIS105, item 12. The coordinate calculation connects
+  sparse regression to Gaussian sequence estimation; correlated designs
+  require the cone conditions in item 34.
+
+* **43. Debiased linear estimation.** In the Gaussian linear model let
+  $\hat\Theta$ depend on $X$ and define
+  $$\tilde\beta=\hat\beta+
+  \hat\Theta X^\top(Y-X\hat\beta)/n.$$
+  Then the exact decomposition is
+  $$\sqrt n(\tilde\beta-\beta)
+  =\hat\Theta X^\top\varepsilon/\sqrt n
+  +\sqrt n(I-\hat\Theta\hat\Sigma)(\hat\beta-\beta),
+  \qquad\hat\Sigma=X^\top X/n.$$
+  If $\|\hat\Theta\hat\Sigma-I\|_{\max}
+  \|\hat\beta-\beta\|_1=o_P(n^{-1/2})$, each remainder coordinate
+  vanishes. Conditionally on $X$, the leading term is Gaussian with
+  covariance $\sigma^2\hat\Theta\hat\Sigma\hat\Theta^\top$.
+  Consistent variance estimates and variances bounded away from zero
+  yield asymptotic coordinate confidence intervals. Suitable sparse
+  designs often reduce the remainder condition to $s\log p=o(\sqrt n)$.
+
+* **44. False-discovery control under arbitrary dependence.** Let
+  $H_m=\sum_{j=1}^m1/j$. Replacing the Benjamini–Hochberg thresholds in
+  item 37 by $i\alpha/(mH_m)$ controls the false-discovery rate at most
+  $\alpha m_0/m$ for any joint distribution of valid null $p$-values.
+  This is the Benjamini–Yekutieli correction. Family-wise error control
+  under arbitrary dependence is SYNOPSIS101, items 67 and 68.
+
+### Packings and hypercube lower bounds
+
+Write $\rho(\omega,\omega')=\sum_{j=1}^m1_{\{\omega_j\ne\omega'_j\}}$ for the
+**Hamming distance** on the hypercube $\Omega=\{0,1\}^m$.
+
+* **45. Varshamov–Gilbert bound.** If $m\ge8$, there are points
+  $\omega^{(0)},\ldots,\omega^{(M)}$ of $\{0,1\}^m$ with
+  $\omega^{(0)}=(0,\ldots,0)$,
+  $$\rho(\omega^{(j)},\omega^{(k)})\ge\frac m8
+  \quad(0\le j<k\le M),\qquad M\ge2^{m/8}.$$
+  Thus the hypercube contains exponentially many points at pairwise
+  distance proportional to $m$. Indexing parameters by such points
+  supplies the large separated families required in Fano's method,
+  item 40.
+
+* **46. Assouad's lemma.** Let $(P_\omega)_{\omega\in\Omega}$ be $2^m$
+  probability laws for the observation, indexed by $\Omega=\{0,1\}^m$.
+  For every estimator $\hat\omega$ with values in $\Omega$,
+  $$\max_{\omega\in\Omega}E_\omega\,\rho(\hat\omega,\omega)
+  \ge\frac m2\min_{\rho(\omega,\omega')=1}\;\inf_\psi
+  \bigl(P_\omega(\psi=1)+P_{\omega'}(\psi=0)\bigr),$$
+  where $\psi$ ranges over tests with values in $\{0,1\}$. If
+  $\|P_\omega-P_{\omega'}\|_{\mathrm{TV}}\le\alpha<1$ whenever
+  $\rho(\omega,\omega')=1$, the right side is at least $m(1-\alpha)/2$; if
+  instead each such pair has $D(P_\omega\|P_{\omega'})\le\alpha<\infty$,
+  it is at least
+  $$\frac m2\max\Bigl(\tfrac12e^{-\alpha},\,1-\sqrt{\alpha/2}\Bigr).$$
+  For parameters $\theta_\omega$ in a metric space with
+  $d(\theta_\omega,\theta_{\omega'})^2\ge c\,\rho(\omega,\omega')$, every
+  estimator $\hat\theta$ obeys
+  $\max_\omega E_\omega d(\hat\theta,\theta_\omega)^2\ge(c/4)\max_\omega
+  E_\omega\rho(\hat\omega,\omega)$, where $\hat\omega$ is a nearest index to
+  $\hat\theta$. Unlike Fano's method, the lower bound is assembled from $m$
+  two-point problems of the kind in item 39.
+
+Let $Y=X\beta+\varepsilon$ with $\varepsilon\sim N(0,\sigma^2I_n)$ and a fixed
+$n\times p$ design. For an integer $D_{\max}\le p/5$ let
+$\underline c_X$ and $\overline c_X$ be the infimum and supremum of
+$\|X\beta\|_2/\|\beta\|_2$ over nonzero $\beta$ with at most $2D_{\max}$
+nonzero coordinates, and let
+$V_D(X)=\{X\beta:\beta\text{ has exactly }D\text{ nonzero coordinates}\}$.
+
+* **47. Minimax risk of sparse regression.** For $1\le D\le D_{\max}$,
+  $$\inf_{\hat f}\sup_{f\in V_D(X)}E_f\|\hat f-f\|_2^2
+  \ge\frac e{4(2e+1)^2}\Bigl(\frac{\underline c_X}{\overline c_X}\Bigr)^2
+  D\log\Bigl(\frac p{5D}\Bigr)\sigma^2,$$
+  the infimum running over all estimators. Penalized model selection over
+  all coordinate subsets, item 35 with weights decreasing in the subset
+  size, attains the order $D\log(p/D)\sigma^2$. When the restricted
+  isometry ratio stays bounded away from zero, the sparse rate of item 33
+  is therefore the minimax prediction rate in the regression model as well.
+
+### Exact and stable sparse recovery
+
+For $S\subset\{1,\ldots,p\}$ and $L>0$ write
+$\mathcal C_L(S)=\{\delta:\|\delta_{S^c}\|_1\le L\|\delta_S\|_1\}$. An
+$n\times p$ matrix $X$ has the **restricted nullspace property** with respect
+to $S$ if its kernel meets $\mathcal C_1(S)$ only at $0$. **Basis pursuit**
+is the program of minimizing $\|b\|_1$ subject to $Xb=y$. The
+**restricted isometry constant** $\delta_k(A)$ of a matrix $A$ is the
+smallest $\delta\ge0$ with
+$(1-\delta)\|v\|_2^2\le\|Av\|_2^2\le(1+\delta)\|v\|_2^2$ for every $v$ with
+at most $k$ nonzero coordinates.
+
+* **48. Restricted nullspace and exact recovery.** The following are
+  equivalent: for every $\beta$ supported in $S$, basis pursuit with
+  $y=X\beta$ has the unique solution $\beta$; and $X$ has the restricted
+  nullspace property with respect to $S$. If
+  $\delta_{2s}(n^{-1/2}X)<1/3$, the restricted nullspace property holds for
+  every $S$ with $|S|\le s$, so every $s$-sparse vector is recovered from
+  its noiseless measurements. By CKMA SYNOPSIS07, item 48, this holds with
+  high probability for independent centered unit-variance sub-Gaussian
+  entries once $n\ge Cs\log(ep/s)$.
+
+Write $\sigma_s(\beta)_1=\min\{\|\beta-b\|_1:b\text{ has at most }s
+\text{ nonzero coordinates}\}$ for the $\ell^1$ error of best $s$-term
+approximation.
+
+* **49. Stable recovery under restricted isometry.** Let $A$ be an
+  $n\times p$ matrix with
+  $$\delta_{2s}(A)<\frac4{\sqrt{41}}\approx0.6246.$$
+  For every $\beta\in\mathbb R^p$ and $y$ with $\|A\beta-y\|_2\le\eta$, every
+  minimizer $\beta^\sharp$ of $\|b\|_1$ subject to $\|Ab-y\|_2\le\eta$
+  satisfies
+  $$\|\beta^\sharp-\beta\|_1\le C\sigma_s(\beta)_1+D\sqrt s\,\eta,
+  \qquad
+  \|\beta^\sharp-\beta\|_2\le\frac C{\sqrt s}\sigma_s(\beta)_1+D\eta,$$
+  with constants $C,D$ depending only on $\delta_{2s}(A)$. The guarantee
+  is uniform over all signals, degrades gracefully for approximately sparse
+  vectors, and reduces to exact recovery when $\eta=0$ and $\beta$ is
+  $s$-sparse.
+
+* **50. Support recovery under mutual incoherence.** Let $\beta$ be
+  supported on $S$ with $|S|=s$. Assume that
+  $\lambda_{\min}(X_S^\top X_S/n)\ge c_{\min}>0$ and that, for some
+  $\alpha\in[0,1)$,
+  $$\max_{j\notin S}\bigl\|(X_S^\top X_S)^{-1}X_S^\top X_{\cdot j}\bigr\|_1
+  \le\alpha.$$
+  Let $\Pi$ be the orthogonal projection onto the orthogonal complement of
+  the column span of $X_S$, and let
+  $$\lambda\ge\frac2{1-\alpha}
+  \Bigl\|X_{S^c}^\top\Pi\varepsilon/n\Bigr\|_\infty.$$
+  Then the lasso has a unique solution, its support is contained in $S$,
+  and
+  $$\|\hat\beta_S-\beta_S\|_\infty\le
+  B=\Bigl\|\Bigl(\frac{X_S^\top X_S}n\Bigr)^{-1}
+  \frac{X_S^\top\varepsilon}n\Bigr\|_\infty
+  +\Bigl\|\Bigl(\frac{X_S^\top X_S}n\Bigr)^{-1}\Bigr\|_{\infty\to\infty}
+  \lambda.$$
+  Every $j\in S$ with $|\beta_j|>B$ is selected. If the errors are
+  independent, centered, and $\sigma$-sub-Gaussian, and
+  $\|X_{\cdot j}\|_2\le C\sqrt n$ for all $j$, the choice
+  $$\lambda=\frac{2C\sigma}{1-\alpha}
+  \Bigl(\sqrt{\frac{2\log(p-s)}n}+\delta\Bigr)$$
+  gives these conclusions with probability at least $1-4e^{-n\delta^2/2}$,
+  with the first term of $B$ at most
+  $c_{\min}^{-1/2}\sigma(\sqrt{2(\log s)/n}+\delta)$. The incoherence
+  condition bounds the $\ell^1$ norm of the least-squares coefficients of
+  each inactive column on the active ones; it is a stronger requirement
+  than the restricted eigenvalue condition of item 34.
+
+### Low-rank and structured covariance estimation
+
+For matrices write $\|\cdot\|_{\mathrm{op}}$, $\|\cdot\|_F$, and
+$\|\cdot\|_{\mathrm{nuc}}$ for the operator, Frobenius, and nuclear
+(trace) norms, and $\|M\|_{\max}=\max_{j,k}|M_{jk}|$. In **trace
+regression** one observes $y_i=\mathop{\mathrm{tr}}(X_i^\top\Theta^*)+w_i$,
+$i=1,\ldots,n$, for an unknown $d_1\times d_2$ matrix $\Theta^*$.
+
+* **51. Nuclear-norm penalized trace regression.** Let the $X_i$ have
+  independent standard normal entries, let the $w_i$ be independent
+  $N(0,\sigma^2)$ and independent of the design, and let $\Theta^*$ have
+  rank at most $r$. Let $\hat\Theta$ minimize
+  $$\frac1{2n}\sum_{i=1}^n\bigl(y_i-\mathop{\mathrm{tr}}(X_i^\top\Theta)\bigr)^2
+  +\lambda\|\Theta\|_{\mathrm{nuc}},
+  \qquad\lambda=10\sigma\Bigl(\sqrt{\frac{d_1+d_2}n}+\delta\Bigr).$$
+  There are universal constants $c,C$ such that, if
+  $n>c\,r(d_1+d_2)$, then with probability at least $1-2e^{-2n\delta^2}$,
+  $$\|\hat\Theta-\Theta^*\|_F^2\le
+  C\sigma^2\Bigl(\frac{r(d_1+d_2)}n+r\delta^2\Bigr).$$
+  The rate $r(d_1+d_2)/n$ counts the degrees of freedom of a rank-$r$
+  matrix. The nuclear norm plays the role of the $\ell^1$ norm, and
+  singular values that of coefficients.
+
+Let $x_1,\ldots,x_n$ be independent copies of a centered random vector in
+$\mathbb R^p$ with covariance $\Sigma$, and let
+$\hat\Sigma=n^{-1}\sum_ix_ix_i^\top$. The **hard-threshold operator**
+$T_\lambda$ replaces each entry $u$ of a matrix by $u1_{\{|u|>\lambda\}}$.
+Let $A$ be the $0$–$1$ matrix with $A_{jk}=1$ exactly when
+$\Sigma_{jk}\ne0$.
+
+* **52. Thresholded covariance estimation.** If
+  $\|\hat\Sigma-\Sigma\|_{\max}\le\lambda$, then
+  $$\|T_\lambda(\hat\Sigma)-\Sigma\|_{\mathrm{op}}
+  \le2\lambda\|A\|_{\mathrm{op}}\le2s\lambda,$$
+  where $s$ is the largest number of nonzero entries in a row of $\Sigma$.
+  If each coordinate of $x_i$ is $\sigma$-sub-Gaussian and $n>\log p$, the
+  choice $\lambda=\sigma^2(8\sqrt{(\log p)/n}+\delta)$ makes this event hold
+  with probability at least $1-8e^{-n\min(\delta,\delta^2)/16}$. Thus a
+  row-sparse covariance is estimated in operator norm at rate
+  $s\sqrt{(\log p)/n}$, while the sample covariance itself needs $n$ of
+  order $p$, by CKMA SYNOPSIS07, item 46. This is the thresholding
+  estimator of Bickel and Levina.
+
+For a centered Gaussian vector with covariance $\Sigma$ and **precision
+matrix** $\Theta=\Sigma^{-1}$, the conditional-independence graph of
+SYNOPSIS105, item 26, has an edge $\{j,k\}$ exactly when $\Theta_{jk}\ne0$.
+The **neighbourhood** $N(j)$ of $j$ is the set of such $k$. The regression of
+coordinate $j$ on the others has coefficients $-\Theta_{jk}/\Theta_{jj}$,
+so its support is $N(j)$. **Neighbourhood selection** runs a lasso of each
+coordinate on the others and joins the estimated neighbourhoods by the
+"and" or the "or" rule. The **graphical lasso** minimizes
+$$\mathop{\mathrm{tr}}(\Theta\hat\Sigma)-\log\det\Theta
++\lambda\sum_{j\ne k}|\Theta_{jk}|$$
+over positive definite $\Theta$.
+
+* **53. Gaussian graphical model selection.** Let the data be $n$
+  independent $N(0,\Sigma)$ vectors in $\mathbb R^p$, with
+  $\Sigma_{jj}\le1$, at most $m$ neighbours per vertex, and $n$ at least a
+  constant multiple of $m\log p$. Suppose that for each $j$ the covariance
+  $\Gamma$ of the coordinates other than $j$ satisfies
+  $$\max_{k\notin N(j)}\|\Gamma_{kN(j)}\Gamma_{N(j)N(j)}^{-1}\|_1\le1-\alpha$$
+  for some $\alpha\in(0,1]$, and that
+  $\|\Sigma_{N(j)N(j)}^{-1}\|_{\infty\to\infty}\le b$ with $b\ge1$. With
+  $\lambda=c_0\alpha^{-1}(\sqrt{(\log p)/n}+\delta)$, $0<\delta\le1$,
+  neighbourhood selection by either rule includes no false edge and
+  includes every edge with $|\Theta_{jk}|\ge7b\lambda$, with probability
+  at least $1-c_2\exp(-c_3n\min(\delta^2,1/m))$; the constants are
+  universal. For the graphical lasso with sub-Gaussian coordinates and
+  $\lambda$ of order $\sigma^2\sqrt{(\log p)/n}$, the Frobenius error
+  $\|\hat\Theta-\Theta\|_F^2$ is with high probability at most a constant
+  times $(\|\Theta\|_{\mathrm{op}}+1)^4mp\lambda^2$, once $n$ is large
+  enough. This is the high-dimensional analogue of the covariance
+  likelihood of SYNOPSIS105, item 28.
+
+### Principal components in high dimensions
+
+* **54. Perturbation of the leading eigenvector.** Let $\Sigma$ be
+  symmetric positive semidefinite with eigenvalues
+  $\gamma_1>\gamma_2\ge\cdots$, eigengap $\nu=\gamma_1-\gamma_2$, and unit
+  leading eigenvector $\theta^*$. Let $P$ be symmetric with
+  $\|P\|_{\mathrm{op}}<\nu/2$. Then $\Sigma+P$ has a unique leading unit
+  eigenvector $\hat\theta$, up to sign, and with the sign chosen so that
+  $\langle\hat\theta,\theta^*\rangle\ge0$,
+  $$\|\hat\theta-\theta^*\|_2\le
+  \frac{2\|(I-\theta^*\theta^{*\top})P\theta^*\|_2}{\nu-2\|P\|_{\mathrm{op}}}.$$
+  This is a form of the Davis–Kahan theorem, CKMA SYNOPSIS13, item 67. In
+  the spiked model $\Sigma=\nu\theta^*\theta^{*\top}+I_p$ with
+  $x_i=\sqrt\nu\,\xi_i\theta^*+w_i$, where $\xi_i$ and $w_i$ are
+  independent, centered, sub-Gaussian with parameter at most one, of
+  variance one and covariance $I_p$ respectively, assume $n>p$ and
+  $\nu^{-2}(\nu+1)p/n\le1/128$. Then with probability at least
+  $1-c_1\exp(-c_2n\min(\sqrt\nu\,\delta,\nu\delta^2))$, the leading sample
+  eigenvector satisfies
+  $$\|\hat\theta-\theta^*\|_2\le
+  c_0\sqrt{\frac{\nu+1}{\nu^2}\frac pn}+\delta,$$
+  with universal constants $c_0,c_1,c_2$.
+
+* **55. Spiked sample eigenvectors.** In the spiked model of item 38 with a
+  single spike $\alpha>1+\sqrt y$ in the direction $e_1$, let $\hat u$ be a
+  unit eigenvector of the sample covariance for its largest eigenvalue.
+  Almost surely,
+  $$\langle\hat u,e_1\rangle^2\to
+  \frac{(\alpha-1)^2-y}{(\alpha-1)(\alpha-1+y)}.$$
+  The limit is strictly less than one when $y>0$, and it tends to zero as
+  $\alpha$ decreases to the threshold $1+\sqrt y$ at which the sample
+  eigenvalue of item 38 separates from the bulk. Thus classical principal
+  components are inconsistent when $p/n$ has a positive limit, and
+  consistency requires additional structure, such as sparsity of the
+  leading eigenvector.
 
 ## Reference guide
 
 ### Correspondence with the subdivisions
 
-- **[103A](#synopsis-103a)**: Lehmann's large-sample course, Serfling,
-  Ibragimov and Has'minskii, Le Cam and Yang, Borovkov, Pfanzagl, and the
-  asymptotic chapters of Casella–Berger, Cox–Hinkley, Schervish, and
-  Bickel–Doksum carry consistency, asymptotic normality, the classical
-  tests, contiguity, local asymptotic normality, the convolution and
-  minimax theorems, projections and $L$-statistics, rates of
-  $M$-estimators, and the asymptotic power and relative efficiency of
-  tests.
-- **[103B](#synopsis-103b)**: Bhattacharya and Ranga Rao, Hall, Efron, Shao
-  and Tu, Davison and Hinkley, Barndorff-Nielsen and Cox, Owen, Politis,
-  Romano, and Wolf, and the information-geometry monographs of Amari and of
-  Amari and Nagaoka carry the expansions, the resampling theorems, and
-  Čencov's invariance theorem.
+- **[103A](#synopsis-103a)**: Wand and Jones, Fan and Gijbels, Wahba,
+  Groeneboom and Jongbloed, Johnstone's Gaussian-sequence draft, the wavelet
+  monograph of Härdle, Kerkyacharian, Picard, and Tsybakov, and Ingster and
+  Suslina carry the smoothing expansions, the representer theorem,
+  shape-constrained limits, and the sequence-model minimax theory. Rank
+  asymptotics are the subject of Hájek, Šidák, and Sen, and of van der Vaart,
+  Chapters 13–15. Samworth and Shah give the finite-sample shape-constrained
+  risk bounds. Hsing and Eubank develop the Hilbert-space geometry, the
+  covariance operator, and the asymptotics of functional principal components.
+- **[103B](#synopsis-103b)**: van de Geer, Wainwright, Giraud, Koltchinskii,
+  and Massart carry sparsity and penalized model selection. Dudoit and van der
+  Laan, and Dickhaus, carry multiple testing. Yao, Zheng, and Bai carry the
+  Wishart edge and the spiked model. Vershynin, Boucheron, Lugosi, and
+  Massart, Tropp, and Foucart and Rauhut supply the concentration and
+  restricted-isometry ingredients cited from the analysis synopsis. Tsybakov
+  and Giraud carry the hypercube and sparse minimax lower bounds; Wainwright
+  carries sparse recovery, low-rank and graphical-model estimation, and
+  high-dimensional principal components.
 
 ### Source comparisons and local copies
 
-Van der Vaart's local full text was consulted for this expansion:
-Theorem 5.7 for general consistency; Theorem 5.23 and Example 5.25 for
-criterion expansions and misspecification; Theorem 5.56 for argmax limits;
-Chapters 11–12 for projections and degenerate $U$-statistics; and
-Theorem 20.8 and Chapter 23 for the functional and bootstrap delta methods.
-The definitions of quadratic-mean differentiability and bowl-shaped loss
-were checked against Chapters 7 and 8. Pearson tests and generalized
-moment estimation are recorded as quadratic normal-limit applications,
-with fitting and overidentification degrees of freedom stated explicitly.
-The KL expansion, density saddlepoint approximation, Bartlett plug-in
-correction, and subsampling centering have hypotheses beyond a bare
-first-order weak limit; these are made explicit in items 9, 18, 19, and 21.
+#### Nonparametric, semiparametric, and robust inference
 
-Pfanzagl, Chapters 6–8, is the local theorem-proof source for consistency of
-maximum likelihood, asymptotic normality, the convolution theorem, and
-superefficiency. Le Cam and Yang develop local asymptotic normality and the
-limits of experiments; their Chapter 6 is the LAN chapter. Ibragimov and
-Has'minskii is the monograph on asymptotic estimation from which the
-convolution and local minimax statements entered the subject. Borovkov
-develops the same first-order theory from empirical distributions and
-$M$-estimators. Lehmann, *Elements of Large-Sample Theory*, and the
-asymptotic chapters of Casella–Berger, Cox–Hinkley, Schervish, and
-Bickel–Doksum give the delta method, quantiles, the three classical test
-statistics, and the first asymptotic normality proofs.
+Hollander, Wolfe, and Chicken, Chapters 3, 4, and 6, provide the exact sign
+and rank procedures and the several-sample comparison added here. Robertson,
+Wright, and Dykstra, Section 1.2 and the max–min formulas of Section 1.4,
+give the cumulative-sum and pooling descriptions of isotonic regression.
+Wand–Jones and Fan–Gijbels supply the bias expansions; the bandwidth
+conditions now ensure that replacing the exact bias by its leading term is
+legitimate in the normal limit. Tsybakov's full text is available in
+`ReferencesSuppl`; its regression upper and lower bound chapters were
+consulted, including the supremum-norm comparison in Corollary 2.5. Item 22
+records the corresponding dimension-dependent Hölder rates. Hsing–Eubank,
+Chapters 1 and 9, supplies the reconstruction interpretation and the
+spectral perturbation framework.
 
-Van der Vaart, *Asymptotic Statistics*, is present locally and supplies a
-modern organizing treatment of both subdivisions. The other local texts
-above give overlapping first-order formulations.
+The kernel expansions of items 4 and 6 are the interior-point formulae of
+Wand and Jones and of Fan and Gijbels. Item 8 is the Kimeldorf–Wahba
+representer theorem, as used throughout Wahba's spline monograph. Items 9 and 10 follow Johnstone's chapters on Pinsker's theorem and on thresholding.
+Item 11 is the pointwise limit in Groeneboom and Jongbloed. Item 13 is the
+Sobolev detection boundary of Ingster and Suslina. Item 12 is the cone
+mixture of Robertson, Wright, and Dykstra.
 
-For 103B, Bhattacharya and Ranga Rao supply the Edgeworth expansion, Efron
-and Shao and Tu the bootstrap and jackknife consistency theorems, Owen the
-empirical likelihood limit, and Politis, Romano, and Wolf the subsampling
-theorem. The saddlepoint formula is the one developed in Barndorff-Nielsen
-and Cox and in Butler; those two monographs are not local, and the formula
-was checked against the expansion literature cited in the bibliography.
-Amari and Nagaoka is the local source for the invariant characterization of
-the Fisher–Rao metric. Čencov's monograph is not local.
+Items 14–17, 23–28, and 32, and SYNOPSIS102, items 41–43, 47, and 48 were added from the following passages. The rank items 14–17
+follow van der Vaart, Theorem 13.5, Section 13.3 and Examples 13.13–13.22,
+Corollary 15.10 and Example 15.15, Table 14.2 with Problem 14.8, Examples
+12.5 and 12.13, and Corollary 19.21 and Theorem 19.23. The exact null
+moments of Kendall's and Spearman's statistics and the two-sample
+Kolmogorov–Smirnov limit are those of Hollander, Wolfe, and Chicken,
+Sections 5.4, 8.1, and 8.5; the Chernoff–Savage bound is quoted there. Item 23 follows Tsybakov, Proposition 1.9, Wasserman, Theorems 5.34, 6.34, and
+6.37, and Wand–Jones, Section 3.8. Item 24 is Fan–Gijbels, Theorems 3.1 and
+3.2 with Sections 3.2.2 and 3.3. Item 25 is Green–Silverman, Theorems 2.4
+and 3.1 and Section 3.7, on Silverman's equivalent kernel; Tsybakov, Section
+1.3, supplies its Fourier transform. Item 26 combines Tsybakov, Theorem 1.1
+and Exercises 2.8 and 2.10, with van der Vaart, Theorems 24.2 and 24.4.
+Items 27 and 28 are Samworth and Shah, Theorems 9.39, 9.15, and 9.26, with
+the tent-function description of Section 9.2.
 
-Hall, *The Bootstrap and Edgeworth Expansion*, is present in
-`ReferencesSuppl`. In the third expansion it was used for items 44 and 45:
-Theorem 2.2 and the discussion of Cramér's condition after it for the
-smooth-function Edgeworth expansion; Section 3.1, equations (3.1)–(3.4), for
-the pivotal and nonpivotal bootstrap errors; Section 3.5, Proposition 3.1
-and subsections 3.5.4–3.5.5, for one- and two-sided coverage errors; and
-Theorems 5.1–5.2 for the regularity behind bootstrap Edgeworth and
-Cornish–Fisher expansions. Serfling's scan did not yield extractable
-text in the first pass. Items 14–21 are the forms shared by the extractable local sources and
-by the monographs named in the bibliography.
+Item 32 is Hsing and Eubank, Theorems 11.2.7 and 11.3.1.
 
-The third expansion added items 33–46 after reading the following passages.
-Van der Vaart: Section 5.7, Theorems 5.45 and 5.48 with Addenda 5.46 and
-5.49, for one-step estimators (item 36); Theorem 5.23 for $M$-estimators
-with Lipschitz criteria (item 38); Theorem 5.52, Corollary 5.53, and
-Example 5.54 for rates and the cube-root modal interval (item 39);
-Theorem 7.10 and Theorem 8.3 for the representation theorem (item 37);
-Theorems 11.1–11.2 and Lemma 11.10 for the Hájek projection (item 35);
-Examples 14.9–14.13, Tables 14.1–14.2, and Theorems 14.7 and 14.19 for
-slopes and Pitman efficiency (items 42–43); Theorem 15.4 and Addendum 15.5
-for the power envelope (item 40); Section 16.3, display (16.5) and
-Theorem 16.7, for likelihood ratios with converging local parameter sets
-(item 41); Corollary 21.5 and the Bahadur–Kiefer discussion after it
-(item 33); and Theorem 22.3 with Examples 22.1 and 22.11 for $L$-statistics
-and trimmed means (item 34). Van der Vaart and Wellner, Theorem 3.2.5, is
-the form of the rate theorem stated in item 39. Lehmann, *Elements of
-Large-Sample Theory*, Section 3.4, Examples 3.4.1–3.4.3 and Theorem 3.4.1,
-gives the sign, Wilcoxon, and $t$ efficiencies and the bound
-$e_{W,t}\ge0.864$ for one and two samples. Shao and Tu, Example 3.9 and
-Theorem 3.15 in Section 3.6, give the failure of the bootstrap for the
-sample maximum and the consistency of the $m$-out-of-$n$ bootstrap
-(item 46). Local asymptotic mixed normality was not added; it is not part
-of the recurring independent-sampling core of these texts.
+Lehmann's *Nonparametrics*, Silverman's density monograph, and the Györfi,
+Kohler, Krzyżak, and Walk distribution-free regression monograph were not
+located in the local reference directories. Hájek, Šidák, and Sen is present
+as a DjVu file and was not text-extracted.
 
-Local texts directly consulted for this selection:
+#### High-dimensional statistics and statistical learning
 
+Wainwright's Chapter 15 was read for the estimation-to-testing reduction, Le
+Cam's method, and Proposition 15.12 on Fano's method. Its sparse-regression
+and model-selection chapters supply the surrounding regularization
+framework. Item 33 distinguishes a sparsity-tuned threshold from the
+universal threshold, and item 35 requires a sufficiently large penalty
+multiplier. Item 43 states the exact bias decomposition and a sufficient
+remainder condition, without asserting asymptotic normality for arbitrary
+designs.
+
+Item 34 is the consequence, at stretching factor $3$, of the sharp oracle
+inequality in van de Geer for the lasso normalized as
+$n^{-1}\|Y-X\beta\|_2^2+2\lambda\|\beta\|_1$. The factor $3$ is the cone
+constant obtained when the penalty level is at least twice
+$n^{-1}\|X^\top\varepsilon\|_\infty$. Item 38 follows Yao, Zheng, and Bai:
+the centering $\mu_{n,p}$ is asymptotic to the Marchenko–Pastur right edge
+$(1+\sqrt y)^2$, and the spike map $\alpha+y\alpha/(\alpha-1)$ is continuous
+at the threshold $1+\sqrt y$.
+
+For items 45–55, and SYNOPSIS107, items 10–15 the following passages were read. Tsybakov, Lemma 2.9 and
+Lemma 2.12 with Theorem 2.12, supplies the Varshamov–Gilbert bound and
+Assouad's lemma; the metric reduction in item 46 is the nearest-index
+argument of his Example 2.2. Giraud, Theorem 3.5 and Section 3.4.2, gives
+the sparse-regression minimax bound of item 47. Wainwright supplies Theorem
+7.8 and Proposition 7.11 (item 48), Theorem 7.13 (the $\ell^2$ bound in item 34), Theorem 7.21 and
+Corollary 7.22 (item 50), Corollary 10.10 for the standard Gaussian ensemble
+(item 51), Theorem 6.23 and Corollary 6.24 (item 52), Proposition 11.9 and
+Theorem 11.12 (item 53), Theorem 8.5 and Corollary 8.7 (item 54), and
+Theorem 13.17, Corollary 13.18, and Examples 13.19–13.20 (SYNOPSIS107, item 13). Foucart
+and Rauhut, Theorem 6.12, gives item 49. Yao, Zheng, and Bai, Theorem 11.5
+and Corollary 11.6, give the spiked-eigenvector limit of item 55.
+
+The graphical-lasso bound in item 53 is stated only up to a constant factor.
+No local source treats the knockoff filter or PAC-Bayes bounds, and the
+boosting training-error bound is left to the model-oriented Section 107.
+
+The false-discovery statement in item 37 is the Benjamini–Hochberg theorem
+under independence and under positive regression dependence. A supplemental
+copy of Cucker and Zhou, *Learning Theory*, is present but was not read for
+this expansion.
+
+Local texts directly consulted or identified for this selection:
+
+- [Hollander, Wolfe, and Chicken, *Nonparametric Statistical Methods*](../lean-CKMA/References/HollanderWolfeChicken2014NonparametricStatisticalMethods3rdEd-Wiley.SerProbStat.pdf).
+- [Tsybakov, *Introduction to Nonparametric Estimation*](../lean-CKMA/ReferencesSuppl/Tsybakov2009IntroductionNonparametricEstimation-SpringerSSS.pdf).
+- [Wand and Jones, *Kernel Smoothing*](../lean-CKMA/References/WandJones1995KernelSmoothing-ChapmanHallCRC.MSAP60.pdf).
+- [Fan and Gijbels, *Local Polynomial Modelling and Its Applications*](../lean-CKMA/References/FanGijbels1996LocalPolynomialModellingApplications-ChapmanHallCRC.MSAP66.pdf).
+- [Wahba, *Spline Models for Observational Data*](../lean-CKMA/References/Wahba1990SplineModelsObservationalData-SIAM.CBMS59.pdf).
+- [Groeneboom and Jongbloed, *Nonparametric Estimation under Shape Constraints*](../lean-CKMA/References/GroeneboomJongbloed2014NonparametricEstimationShapeConstraintsEstimatorsAlgorithmsAsymptotics-Cambridge.SerStatProbMath.pdf).
+- [Johnstone, *Gaussian Estimation: Sequence and Wavelet Models*](../lean-CKMA/References/Johnstone2017GaussianEstimationSequenceWaveletModels-AuthorManuscript.pdf).
+- [Härdle, Kerkyacharian, Picard, and Tsybakov, *Wavelets, Approximation, and Statistical Applications*](../lean-CKMA/References/HärdleKerkyacharianPicardTsybakov1998WaveletsApproximationStatisticalApplications-Springer.LNS129.pdf).
+- [Ingster and Suslina, *Nonparametric Goodness-of-Fit Testing Under Gaussian Models*](../lean-CKMA/References/IngsterSuslina2003NonparametricGoodnessFitTestingGaussianModels-Springer.LNS169.pdf).
+- [Robertson, Wright, and Dykstra, *Order Restricted Statistical Inference*](../lean-CKMA/References/RobertsonWrightDykstra1988OrderRestrictedStatisticalInference-Wiley.SerProbStat.pdf).
+- [Devroye and Lugosi, *Combinatorial Methods in Density Estimation*](../lean-CKMA/References/DevroyeLugosi2001CombinatorialMethodsDensityEstimation-Springer.SSS.pdf).
+- [Hsing and Eubank, *Theoretical Foundations of Functional Data Analysis*](../lean-CKMA/References/HsingEubank2015TheoreticalFoundationsFunctionalDataAnalysisIntroductionLinearOperators-Wiley.SerProbStat.pdf).
+- [Hájek, Šidák, and Sen, *Theory of Rank Tests*](../lean-CKMA/References/HájekŠidákSen1999TheoryRankTests2ndEd-AcademicPress.djvu).
 - [van der Vaart, *Asymptotic Statistics*](../lean-CKMA/References/VanDerVaart1998AsymptoticStatistics-CambridgeSerStatProbMath03.pdf).
-- [Pfanzagl, *Parametric Statistical Theory*](../lean-CKMA/References/Pfanzagl1994ParametricStatisticalTheory-DeGruyter.Textbook.pdf).
-- [Le Cam and Yang, *Asymptotics in Statistics*](../lean-CKMA/References/LeCamYang2000AsymptoticsStatisticsBasicConcepts2ndEd-Springer.SSS.pdf).
-- [Ibragimov and Has'minskii, *Statistical Estimation: Asymptotic Theory*](../lean-CKMA/References/IbragimovHasminskii1981StatisticalEstimationAsymptoticTheory-Springer.pdf).
-- [Borovkov, *Mathematical Statistics*](../lean-CKMA/References/Borovkov1998MathematicalStatistics-GordonBreach.pdf).
-- [Lehmann, *Elements of Large-Sample Theory*](../lean-CKMA/References/Lehmann1999ElementsLargeSampleTheory-Springer.STS.pdf).
-- [Casella and Berger, *Statistical Inference*](../lean-CKMA/References/CasellaBerger2024StatisticalInference2ndEd-ChapmanHallCRC.TextsStatSci.pdf).
-- [Cox and Hinkley, *Theoretical Statistics*](../lean-CKMA/References/CoxHinkley1974TheoreticalStatistics-ChapmanHallCRC.pdf).
-- [Schervish, *Theory of Statistics*](../lean-CKMA/References/Schervish1995TheoryStatistics-Springer.SSS.pdf).
-- [Bickel and Doksum, *Mathematical Statistics*, Volume I](../lean-CKMA/References/BickelDoksum2015MathematicalStatisticsBasicIdeasSelectedTopics2ndEdVol1-ChapmanHallCRC.TextsStatSci.pdf).
-- [Bhattacharya and Ranga Rao, *Normal Approximation and Asymptotic Expansions*](../lean-CKMA/References/BhattacharyaRangaRao2010NormalApproximationAsymptoticExpansions-SIAM.CAM64.pdf).
-- [Efron, *The Jackknife, the Bootstrap, and Other Resampling Plans*](../lean-CKMA/References/Efron1982JackknifeBootstrapOtherResamplingPlans-SIAM.CBMS38.pdf).
-- [Efron and Tibshirani, *An Introduction to the Bootstrap*](../lean-CKMA/References/EfronTibshirani1994IntroductionBootstrap-ChapmanHallCRC.MSAP57.pdf).
-- [Shao and Tu, *The Jackknife and Bootstrap*](../lean-CKMA/References/ShaoTu1995JackknifeBootstrap-Springer.SSS.pdf).
-- [Davison and Hinkley, *Bootstrap Methods and their Application*](../lean-CKMA/References/DavisonHinkley1997BootstrapMethodsApplication-Cambridge.SerStatProbMath.pdf).
-- [Owen, *Empirical Likelihood*](../lean-CKMA/References/Owen2001EmpiricalLikelihood-ChapmanHallCRC.MSAP99.pdf).
-- [Politis, Romano, and Wolf, *Subsampling*](../lean-CKMA/References/PolitisRomanoWolf1999Subsampling-Springer.SSS.pdf).
-- [Amari, *Differential-Geometrical Methods in Statistics*](../lean-CKMA/References/Amari1985DifferentialGeometricalMethodsStatistics-Springer.LNS28.pdf).
-- [Amari and Nagaoka, *Methods of Information Geometry*](../lean-CKMA/References/AmariNagaoka2000MethodsInformationGeometry-AMS.TMM191.pdf).
-- [van der Vaart and Wellner, *Weak Convergence and Empirical Processes*, 2nd ed.](../lean-CKMA/References/VanDerVaartWellner2023WeakConvergenceEmpiricalProcessesApplicationsStatistics2ndEd-SpringerSSS.pdf).
-- [Hall, *The Bootstrap and Edgeworth Expansion*](../lean-CKMA/ReferencesSuppl/Hall1992BootstrapEdgeworthExpansion-SpringerSerStat.pdf).
+- [Wasserman, *All of Nonparametric Statistics*](../lean-CKMA/ReferencesSuppl/Wasserman2006NonparametricStatistics-SpringerSTS.pdf).
+- [Green and Silverman, *Nonparametric Regression and Generalized Linear Models*](../lean-CKMA/References/GreenSilverman1994NonparametricRegressionGeneralizedLinearModelsRoughnessPenaltyApproach-ChapmanHall.MSAP58.pdf).
+- [Samworth and Shah, *Modern Statistical Methods and Theory*](../lean-CKMA/References/SamworthShah2026ModernStatisticalMethodsTheoryIntroductionNonparametricHighDimensionalStatistics-Cambridge.SerStatProbMat.pdf).
+- [van de Geer, *Estimation and Testing Under Sparsity*](../lean-CKMA/References/VanDeGeer2016EstimationTestingUnderSparsityÉcoleDÉtéProbabilitésSaintFlourXLV2015-Springer.LNM2159.pdf).
+- [Wainwright, *High-Dimensional Statistics*](../lean-CKMA/References/Wainwright2019HighDimensionalStatistics-Cambridge.pdf).
+- [Giraud, *Introduction to High-Dimensional Statistics*](../lean-CKMA/References/Giraud2022IntroductionHighDimensionalStatistics2ndEd-ChapmanHallCRC.MSAP168.pdf).
+- [Massart, *Concentration Inequalities and Model Selection*](../lean-CKMA/References/Massart2007ConcentrationInequalitiesModelSelectionÉcoleDÉtéProbabilitésSaintFlourXXXIII2003-Springer.LNM1896.pdf).
+- [Koltchinskii, *Oracle Inequalities in Empirical Risk Minimization*](../lean-CKMA/References/Koltchinskii2011OracleInequalitiesEmpiricalRiskMinimizationSparseRecoveryProblems-Springer.LNM2033.pdf).
+- [Yao, Zheng, and Bai, *Large Sample Covariance Matrices and High-Dimensional Data Analysis*](../lean-CKMA/References/YaoZhengBai2015LargeSampleCovarianceMatricesHighDimensionalDataAnalysis-Cambridge.SerStatProbMath.pdf).
+- [Dudoit and van der Laan, *Multiple Testing Procedures*](../lean-CKMA/References/DudoitVanDerLaan2008MultipleTestingProceduresApplicationsGenomics-Springer.SSS.pdf).
+- [Dickhaus, *Simultaneous Statistical Inference*](../lean-CKMA/References/Dickhaus2014SimultaneousStatisticalInferenceApplicationsLifeSciences-Springer.pdf).
+- [Vershynin, *High-Dimensional Probability*](../lean-CKMA/References/Vershynin2018HighDimensionalProbabilityIntroductionApplicationsDataScience-CambridgeSerStatProbMath47.pdf).
+- [Boucheron, Lugosi, and Massart, *Concentration Inequalities*](../lean-CKMA/References/BoucheronLugosiMassart2013ConcentrationInequalitiesNonasymptoticTheoryIndependence-Oxford.pdf).
+- [Foucart and Rauhut, *A Mathematical Introduction to Compressive Sensing*](../lean-CKMA/References/FoucartRauhut2013MathematicalIntroductionCompressiveSensing-BirkhäuserANHA.pdf).

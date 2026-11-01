@@ -27,11 +27,12 @@ are not in the bibliography.
 
 There may be additional files, for example `*.json`, for precise bibliographical data.
 
-Files `SYNOPSIS.md` and `SYNOPSIS101.md`–`SYNOPSIS113.md` describe the mathematical content of
-Sections 101–113, in the style of the SYNOPSIS files in the sibling CKMA project. `SYNOPSIS.md`
+Files `SYNOPSIS.md` and `SYNOPSIS101.md`–`SYNOPSIS108.md` describe the mathematical content of
+Sections 101–108, in the style of the SYNOPSIS files in the sibling CKMA project. `SYNOPSIS.md`
 is the index. Numbered entries, cited as `<ddd>.<k>`, are stable identifiers: existing numbers
 are kept when a statement is revised, removed numbers are not reused, and a new statement takes
-the next free number in its file. These files are meant for the human mathematician reader; they
+the next free number in its file. The sections were reorganized on 2026-11-01 from the earlier
+Sections 101–114; `SYNOPSIS-CONCORDANCE.md` maps every earlier identifier to its current one. These files are meant for the human mathematician reader; they
 do not reference any technical Lean concepts. Proofs are outside their scope. The selection is
 the recurring core of each section. The index records how far the series has been written.
 

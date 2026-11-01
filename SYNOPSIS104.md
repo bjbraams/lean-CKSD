@@ -1,18 +1,27 @@
-# Synopsis: Nonparametric, semiparametric, and robust inference
+# Synopsis: Bayesian inference and stochastic computation
 
 Part of the [mathematical synopsis series](SYNOPSIS.md).
 [Bibliographical scope and references](CKSD-bib.md#cks-104).
 
-This synopsis follows Section 104. Subdivision 104A is rank methods, smoothing,
-shape constraints, and minimax rates. Subdivision 104B is semiparametric
-efficiency and missing data. Subdivision 104C is robust estimation.
-Subdivision 104D is functional data. Parametric efficiency is
-[SYNOPSIS103](SYNOPSIS103.md), items 9–12. The empirical-process limit and the
-Dvoretzky–Kiefer–Wolfowitz inequality are
-[CKMA SYNOPSIS06](../lean-CKMA/SYNOPSIS06.md), item 59, and
-[CKMA SYNOPSIS07](../lean-CKMA/SYNOPSIS07.md), item 39. High-dimensional
-penalties and learning bounds are in Section 107. Nonparametric priors are in
-Section 105.
+This synopsis follows Section 104. Subdivision 104A is parametric
+Bayesian theory, nonparametric priors, posterior contraction, and inverse
+problems. Subdivision 104B is Monte Carlo and Markov chain Monte Carlo,
+followed by the continuous-time sampling dynamics of Langevin type,
+stochastic approximation, interacting particle systems, filtering, and
+mean-field training. Subdivision 104C is score-based generation and
+Schrödinger bridges. De Finetti's theorem is
+[CKMA SYNOPSIS06](../lean-CKMA/SYNOPSIS06.md), item 55. Bayes rules for a
+specified loss are [SYNOPSIS101](SYNOPSIS101.md), item 33. Geometric ergodicity of a Markov chain, Girsanov's
+theorem, and the Feynman–Kac formula are
+[CKMA SYNOPSIS08](../lean-CKMA/SYNOPSIS08.md), items 69, 29, and 36. The
+Wasserstein gradient flow of free energy, the contraction of $\mathrm{EVI}$
+flows, and entropic transport are
+[CKMA SYNOPSIS39](../lean-CKMA/SYNOPSIS39.md), items 62, 59, and 90.
+Poincaré and logarithmic Sobolev inequalities, with the Bakry–Émery
+criterion, are [CKMA SYNOPSIS14](../lean-CKMA/SYNOPSIS14.md), items 34–38
+and 47–48. Gaussian-process regression posteriors are [SYNOPSIS107](SYNOPSIS107.md), item 34; kriging and
+the Kalman filter are [SYNOPSIS106](SYNOPSIS106.md), items 7, 20, and 23. Mean-field games remain in CKMA
+Section 8.
 
 Numbered definitions and results have stable identifiers. Additions take the
 next free number and are placed beside related material; numbers need not
@@ -20,971 +29,1525 @@ increase in reading order. Proofs are outside the scope of this synopsis.
 
 <a id="synopsis-104a"></a>
 
-## 104A. Ranks, Smoothing, Shape Constraints, and Minimax Estimation
+## 104A. Foundations, Parametric Bayesian Theory, and Nonparametric Bayes
 
-Throughout this subdivision, $X_1,\ldots,X_n$ are independent copies of a real
-random variable with distribution function $F$ and, when a density exists,
-density $f$. The empirical distribution function is $F_n$.
+Let the observations be independent with common density $f(x\mid\theta)$
+relative to a dominating measure, and let the prior distribution $\Pi$ have
+density $\pi$ relative to a measure on the parameter space. The **marginal
+density** of the sample $y$ is $m(y)=\int f(y\mid\theta)\,\pi(\theta)\,d\theta$,
+and the **posterior density** is $\pi(\theta\mid y)=f(y\mid\theta)\pi(\theta)/m(y)$
+wherever $m(y)>0$.
 
-* **1. Kolmogorov–Smirnov statistic.** If $F$ is continuous, the law of
-  $\sup_x|F_n(x)-F(x)|$ does not depend on $F$. By the empirical-process
-  limit,
-  $$\sqrt n\sup_x|F_n(x)-F(x)|\Rightarrow\sup_{t\in[0,1]}|B^0(t)|,$$
-  and for $x>0$
-  $$P\bigl(\sup_t|B^0(t)|\le x\bigr)
-  =1-2\sum_{k=1}^\infty(-1)^{k-1}e^{-2k^2x^2}.$$
-  The Dvoretzky–Kiefer–Wolfowitz inequality supplies the corresponding
-  finite-sample tail bound.
+* **1. Bernstein–von Mises theorem.** Let the experiment be locally
+  asymptotically normal through independent sampling from a model
+  differentiable in quadratic mean at an interior $\theta_0\in\mathbb R^k$,
+  with nonsingular Fisher information $I(\theta_0)$. Assume a prior density
+  continuous and positive at $\theta_0$ and, for each $\delta>0$, tests
+  with both type I error and the supremum type II error over
+  $\|\theta-\theta_0\|\ge\delta$ tending to zero. Let $\hat\theta_n$ be
+  efficient, with
+  $\sqrt n(\hat\theta_n-\theta_0)=I(\theta_0)^{-1}
+  n^{-1/2}\sum_i\dot\ell_{\theta_0}(X_i)+o_P(1)$. Then the posterior law of
+  $\sqrt n\,(\theta-\hat\theta_n)$ converges in total variation to
+  $N(0,I(\theta_0)^{-1})$, in $P_{\theta_0}$-probability. Posterior credible
+  balls of a fixed credibility level are therefore asymptotic confidence sets
+  of the same level.
 
-* **2. Linear rank statistics.** Let the observations be continuous and
-  independent, and let $R_i$ be the rank of the $i$th observation in the
-  pooled sample. Under a null hypothesis that makes the vector of ranks
-  uniform on the permutations, every rank statistic has a distribution free
-  of the unknown continuous law. For scores $a_n(i)$ and regression constants
-  $c_{n,i}$ satisfying the usual growth and nondegeneracy conditions, the
-  Hájek projection of the linear rank statistic
-  $S_n=\sum_i c_{n,i}a_n(R_i)$ is asymptotically normal under the null and
-  under contiguous location alternatives. In the two-sample shift problem
-  the Wilcoxon rank-sum test is the locally most powerful rank test for the
-  logistic shift, and its Pitman efficiency relative to the two-sample $t$
-  test, at a normal shift, equals $3/\pi$.
+A regular exponential family in the natural parameter $\eta$ has density
+$h(x)\exp(\eta\cdot T(x)-A(\eta))$ on the natural parameter space.
 
-* **3. Hodges–Lehmann estimator.** For a distribution symmetric about
-  $\theta$ with density $f$, let $\hat\theta_n$ be the median of the Walsh
-  averages $(X_i+X_j)/2$ for $1\le i\le j\le n$. If $\int f^2<\infty$ and
-  $f$ is continuous and positive at the center of symmetry of $X_1-X_2$, then
-  $$\sqrt n\,(\hat\theta_n-\theta)
-  \Rightarrow N\Bigl(0,\frac{1}{12\bigl(\int f(x)^2\,dx\bigr)^2}\Bigr).$$
-  The asymptotic variance is the reciprocal of the efficacy of the Wilcoxon
-  signed-rank test.
+* **2. Conjugate updating.** A prior with density proportional to
+  $\exp(\eta\cdot\chi_0-\nu_0 A(\eta))$, for $\nu_0>0$ and $\chi_0/\nu_0$ in
+  the interior of the mean domain, is conjugate for this family. After
+  $n$ independent observations the posterior belongs to the same family, with
+  parameters $\chi_0+\sum_{i=1}^n T(X_i)$ and $\nu_0+n$.
 
-A **kernel density estimator** with bandwidth $h>0$ and kernel $K$ is
-$$\hat f_h(x)=\frac1{nh}\sum_{i=1}^n K\bigl((x-X_i)/h\bigr).$$
-Write $\mu_2(K)=\int u^2K(u)\,du$ and $R(K)=\int K(u)^2\,du$.
+* **3. Jeffreys prior.** On a regular parametric model of dimension $k$, the
+  Jeffreys prior has density proportional to $(\det I(\theta))^{1/2}$ with
+  respect to Lebesgue measure, wherever the Fisher information is positive
+  definite and continuous. If $\eta=g(\theta)$ is a smooth reparameterization
+  with nonsingular derivative, the Jeffreys density computed in the
+  $\eta$-coordinate is the image of the Jeffreys density computed in the
+  $\theta$-coordinate.
 
-* **4. Kernel density asymptotics.** Let $K$ be a bounded symmetric
-  probability density with finite $\mu_2(K)$ and $R(K)$. Let $f$ be twice
-  continuously differentiable, with $f$ and $f''$ square-integrable and $f(x)>0$.
-  If $h\to0$, $nh\to\infty$, and $nh^5=O(1)$, then
-  $$\sqrt{nh}\Bigl(\hat f_h(x)-f(x)-\tfrac12 h^2\mu_2(K)f''(x)\Bigr)
-  \Rightarrow N\bigl(0,R(K)f(x)\bigr).$$
-  The asymptotic mean integrated squared error is
-  $$\tfrac14 h^4\mu_2(K)^2\int(f'')^2+R(K)/(nh),$$
-  and the bandwidth of exact order $n^{-1/5}$ minimizes the displayed
-  expression. The resulting optimal rate is of order $n^{-4/5}$.
+* **4. Normal sampling model.** Let $X_1,\ldots,X_n$ be independent
+  $N(\mu,\sigma^2)$. If $\sigma^2$ is known and the prior is
+  $\mu\sim N(\mu_0,\tau^2)$, the posterior of $\mu$ is normal, with precision
+  $\tau^{-2}+n\sigma^{-2}$ and with mean equal to the precision-weighted
+  average of $\mu_0$ and $\bar X$. If $\sigma^2$ is unknown and the prior
+  density of $(\mu,\sigma^2)$ is proportional to $1/\sigma^2$, the marginal
+  posterior of $\mu$ is a Student $t$ law on $n-1$ degrees of freedom,
+  centered at $\bar X$, with scale $s/\sqrt n$, where
+  $s^2=\sum_{i=1}^n(X_i-\bar X)^2/(n-1)$, provided $n\ge2$ and
+  $s^2>0$, which ensure posterior propriety.
 
-* **5. Universal $L^1$ consistency.** Let $K$ be a bounded integrable kernel
-  on $\mathbb R^d$ with $\int K=1$ and compact support. If $h\to0$ and
-  $nh^d\to\infty$, then $\int|\hat f_h-f|\to0$ almost surely for every
-  density $f$ on $\mathbb R^d$.
+* **5. Laplace approximation and the BIC.** Let the model dimension be $k$,
+  let the prior density be continuous and positive at an interior maximum
+  likelihood estimator $\hat\theta_n$, and let the observed information
+  $J_n=-D^2\ell_n(\hat\theta_n)$ be positive definite. Assume the
+  regular fixed-dimensional local quadratic expansion, $J_n/n$ tending to
+  a positive definite limit, and tail control making the integral outside
+  the concentrating neighborhood negligible. Then
+  $$\log m(y)=\ell_n(\hat\theta_n)+\log\pi(\hat\theta_n)
+  +\frac k2\log(2\pi)-\frac12\log\det J_n+o_P(1).$$
+  Under the regularity of SYNOPSIS102, item 3, $J_n$ is of exact order $n$,
+  so $-2\log m(y)=-2\ell_n(\hat\theta_n)+k\log n+O_P(1)$. The Bayes information
+  criterion $-2\ell_n(\hat\theta_n)+k\log n$ therefore tracks $-2\log m(y)$
+  up to a tight term. Its model-selection property is recorded in
+  SYNOPSIS103, item 36.
 
-For regression, let $(X_i,Y_i)$ be independent copies of $(X,Y)$ with
-$m(x)=\mathbb E[Y\mid X=x]$ and $\sigma^2(x)=\mathop{\mathrm{Var}}(Y\mid X=x)$.
-The **Nadaraya–Watson** estimator weights $Y_i$ by
-$K_h(X_i-x)/\sum_j K_h(X_j-x)$. The **local linear** estimator is the
-intercept of the weighted least-squares fit of a straight line, with the same
-kernel weights.
+### Posterior decisions, prediction, and comparison
 
-* **6. Interior asymptotics of kernel regression.** Let $X$ have density
-  $f_X$ continuous and positive at an interior point $x$, let $m$ be twice
-  continuously differentiable at $x$, and let $\sigma^2$ be continuous at $x$.
-  Assume a locally bounded conditional $(2+\delta)$ moment of $Y$ for
-  some $\delta>0$, and a nonnegative bounded symmetric compactly supported
-  probability kernel positive near zero. If $h\to0$, $nh\to\infty$, and
-  $nh^5=O(1)$, the local linear estimator satisfies
-  $$\sqrt{nh}\Bigl(\hat m_h(x)-m(x)-\tfrac12 h^2\mu_2(K)m''(x)\Bigr)
-  \Rightarrow N\Bigl(0,\frac{R(K)\sigma^2(x)}{f_X(x)}\Bigr).$$
-  If in addition $f_X$ and $m$ are continuously differentiable at $x$, the
-  Nadaraya–Watson estimator satisfies the same limit with the bias
-  $\tfrac12 h^2\mu_2(K)m''(x)$ replaced by
-  $$\tfrac12 h^2\mu_2(K)\Bigl(m''(x)+2m'(x)\frac{f_X'(x)}{f_X(x)}\Bigr).$$
-  At a boundary point the local linear bias remains of order $h^2$, while the
-  Nadaraya–Watson bias is of order $h$.
+* **6. Posterior means and quantiles.** For a real parameter with finite
+  posterior second moment, squared-error posterior risk is minimized
+  uniquely by its posterior mean, and the minimum is its posterior
+  variance. With finite posterior first moment, absolute-error risk is
+  minimized by any posterior median. More generally, the check loss
+  $\rho_\tau(\theta-a)$ of SYNOPSIS105, item 5, is minimized by a posterior
+  $\tau$-quantile. A $(1-\alpha)$ credible set $C(X)$ under a proper prior
+  satisfies
+  $$\int P_\theta(\theta\in C(X))\,\Pi(d\theta)=1-\alpha$$
+  if its posterior content is exactly $1-\alpha$ almost surely.
+  This is prior-averaged coverage; pointwise asymptotic coverage follows
+  under item 1 for the usual regular credible balls.
 
-* **7. Stone's theorem.** Assume $\mathbb E Y^2<\infty$. For kernel
-  regression with a nonnegative bounded compactly supported kernel
-  bounded below by a positive constant in a neighborhood of zero,
-  $h\to0$ and $nh^d\to\infty$ imply
-  $$\mathbb E\bigl[(\hat m_n(X)-m(X))^2\bigm|X_1,Y_1,\ldots,X_n,Y_n\bigr]
-  \to0$$
-  in probability, for every distribution of $(X,Y)$ on $\mathbb R^d\times\mathbb R$.
-  The same universal $L^2$ consistency holds for $k$-nearest-neighbor
-  regression when $k\to\infty$ and $k/n\to0$.
+* **7. Elementary conjugate families.** For $S\sim\mathop{\mathrm{Bin}}(n,p)$
+  and a $\mathop{\mathrm{Beta}}(a,b)$ prior, $a,b>0$, the posterior is
+  $\mathop{\mathrm{Beta}}(a+S,b+n-S)$ and the next Bernoulli success
+  probability is $(a+S)/(a+b+n)$. For independent Poisson observations of
+  mean $\lambda$ and a gamma prior with shape $a$ and rate $b$, the
+  posterior has shape $a+\sum_iX_i$ and rate $b+n$. For multinomial counts
+  and a Dirichlet prior with positive parameters $a_j$, the posterior
+  parameters are $a_j+N_j$ and predictive probabilities are
+  $(a_j+N_j)/(\sum_\ell a_\ell+n)$. These are finite-dimensional instances
+  of the updating rule in item 15.
 
-Let $\mathcal H$ be a reproducing-kernel Hilbert space of real functions on
-a set $\mathcal X$, with kernel $K$. A loss $L(y,u)$ is evaluated only through
-the predicted value $u$.
+* **8. Posterior predictive distribution.** For a future observation
+  $Y^\star$ conditionally independent of the data given $\theta$,
+  $$P(Y^\star\in B\mid X)=\int P_\theta(Y^\star\in B)\,\Pi(d\theta\mid X).$$
+  If $\mu(\theta)=\mathbb E_\theta Y^\star$ and
+  $v(\theta)=\mathop{\mathrm{Var}}_\theta Y^\star$ have the needed moments,
+  $$\mathop{\mathrm{Var}}(Y^\star\mid X)
+  =\mathbb E[v(\theta)\mid X]
+  +\mathop{\mathrm{Var}}(\mu(\theta)\mid X).$$
+  Under normal sampling with the improper prior of item 4 and a proper
+  posterior, $(Y^\star-\bar X)/(s\sqrt{1+1/n})$ has posterior predictive
+  law $t_{n-1}$. Parameter uncertainty and future observation noise both
+  contribute to predictive uncertainty.
 
-* **8. Representer theorem.** A minimizer of
-  $$\frac1n\sum_{i=1}^n L(Y_i,f(X_i))+\lambda\|f\|_{\mathcal H}^2,
-  \qquad\lambda>0,$$
-  over $f\in\mathcal H$, has the form
-  $f(\cdot)=\sum_{i=1}^n\alpha_i K(X_i,\cdot)$. In particular, the smoothing
-  spline
-  $$\sum_{i=1}^n(Y_i-f(x_i))^2+\lambda\int(f'')^2$$
-  on the Sobolev space of square-integrable second derivatives has a
-  minimizer that is a natural cubic spline with knots at the design points
-  $x_i$.
+* **9. Bayes factors.** Let models $M_0,M_1$ have positive prior
+  probabilities and proper within-model priors, with finite positive
+  marginal densities $m_0(x),m_1(x)$. Then
+  $$\frac{P(M_1\mid x)}{P(M_0\mid x)}
+  =\frac{m_1(x)}{m_0(x)}\frac{P(M_1)}{P(M_0)}.$$
+  The ratio $m_1/m_0$ is the Bayes factor. Under $0$–$1$ model-selection
+  loss the posterior-preferred model is the Bayes decision. An arbitrary
+  multiplicative constant in an improper within-model prior generally
+  prevents the marginal-likelihood ratio from being defined.
 
-In the **Gaussian sequence model**, one observes
-$Y_i=\theta_i+\varepsilon\xi_i$ for $i\ge1$, with $\xi_i$ independent standard
-normal. The white-noise model $dY(t)=f(t)\,dt+\varepsilon\,dW(t)$ on $[0,1]$
-is equivalent to a sequence model through an orthonormal basis.
+### Credible regions, point nulls, and hierarchical shrinkage
 
-* **9. Pinsker's theorem and the Sobolev rate.** For the ellipsoid
-  $\sum_{j\ge1}a_j^2\theta_j^2\le R$ with $a_j$ regularly varying of order
-  $\beta>0$, the minimax mean squared error among all estimators is
-  asymptotic, as $\varepsilon\to0$, to the minimax risk among linear
-  estimators. A linear shrinkage filter attains the asymptotic constant.
-  For a Sobolev ball of smoothness $\beta$ and radius $R$ in the white-noise
-  model, this risk is of exact order
-  $R^{1/(2\beta+1)}\varepsilon^{4\beta/(2\beta+1)}$. With
-  $\varepsilon=n^{-1/2}$ the squared-error rate is
-  $n^{-2\beta/(2\beta+1)}$.
+Suppose the posterior has density $\pi(\theta\mid x)$ with respect to
+Lebesgue measure on $\mathbb R^k$. A set $C$ is a **highest posterior
+density region** of level $1-\alpha$ when
+$\{\theta:\pi(\theta\mid x)>k_\alpha\}\subset C\subset
+\{\theta:\pi(\theta\mid x)\ge k_\alpha\}$, where $k_\alpha$ is the largest
+constant for which $C$ has posterior content at least $1-\alpha$.
 
-* **10. Soft-threshold oracle inequality.** In the finite sequence model
-  $Y_i=\theta_i+\sigma\xi_i$, $i=1,\ldots,n$, let $\hat\theta$ be coordinatewise
-  soft thresholding at $\lambda=\sigma\sqrt{2\log n}$. Then
-  $$\mathbb E\|\hat\theta-\theta\|^2
-  \le(2\log n+1)\Bigl(\sigma^2+\sum_{i=1}^n\min(\theta_i^2,\sigma^2)\Bigr).$$
-  The estimator therefore tracks, up to the factor $2\log n+1$, the ideal
-  risk of an oracle that retains only those coordinates larger than the
-  noise level.
+* **10. Highest posterior density regions.** Let $C$ be a highest
+  posterior density region with posterior content exactly $1-\alpha$ and
+  with $k_\alpha>0$. Then $C$ has the smallest Lebesgue volume among all
+  measurable sets of posterior content at least $1-\alpha$. For a
+  unimodal posterior density on the line that is symmetric about its mode,
+  $C$ is the equal-tailed credible interval. The construction is not
+  invariant under nonlinear reparameterization: the image of a highest
+  posterior density region under a smooth bijection is in general not a
+  highest posterior density region for the image posterior. In the model
+  $X\sim N(\theta,\sigma^2)$ with $\sigma$ known and the flat prior, the
+  region is $[X-z_{\alpha/2}\sigma,\,X+z_{\alpha/2}\sigma]$, which is also
+  the exact confidence interval of level $1-\alpha$.
 
-* **11. Grenander estimator.** Let $f$ be decreasing and positive on
-  $[0,\infty)$, with $f'(x_0)<0$ and $f$ continuous at $x_0>0$. The maximum
-  likelihood estimator $\hat f_n$ is the left slope of the least concave
-  majorant of $F_n$. Then
-  $$n^{1/3}\bigl(\hat f_n(x_0)-f(x_0)\bigr)
-  \Rightarrow\bigl|4f(x_0)f'(x_0)\bigr|^{1/3}Z,$$
-  where $Z=\mathop{\mathrm{argmax}}_{t\in\mathbb R}\bigl(W(t)-t^2\bigr)$ and
-  $W$ is standard two-sided Brownian motion. The limit law is Chernoff's
-  distribution up to the deterministic scale displayed above.
+* **11. Point-null Bayes factor and Lindley's paradox.** Let
+  $\bar X\sim N(\theta,\sigma^2/n)$ with $\sigma$ known, and test
+  $H_0:\theta=\theta_0$ against $H_1:\theta\ne\theta_0$, with
+  $\theta\sim N(\theta_0,\tau^2)$ under $H_1$, $\tau>0$. Put
+  $z=\sqrt n\,|\bar X-\theta_0|/\sigma$. The Bayes factor of $H_0$ to $H_1$
+  is
+  $$B_{01}=\Bigl(1+\frac{n\tau^2}{\sigma^2}\Bigr)^{1/2}
+  \exp\Bigl(-\frac{z^2}{2}\Bigl(1+\frac{\sigma^2}{n\tau^2}\Bigr)^{-1}\Bigr).$$
+  For fixed $z$, and hence fixed $p$-value, $B_{01}\to\infty$ as
+  $n\to\infty$ or as $\tau\to\infty$, so the posterior probability of
+  $H_0$ tends to $1$ for any fixed positive prior probability of $H_0$.
+  Under $H_0$, $B_{01}\to\infty$ in probability; under a fixed
+  $\theta\ne\theta_0$, $B_{01}\to0$ almost surely. Over all priors $g_1$
+  on $\{\theta\ne\theta_0\}$,
+  $$B_{01}\ge\frac{f(x\mid\theta_0)}{\sup_{\theta\ne\theta_0}f(x\mid\theta)},$$
+  which equals $\exp(-z^2/2)$ in this normal model.
 
-Let $K\subset\mathbb R^p$ be a closed polyhedral convex cone and let
-$Y\sim N_p(\mu,I_p)$. Write $P_K$ for metric projection onto $K$.
+* **12. Hierarchical normal model.** Let $y_j\mid\theta_j\sim
+  N(\theta_j,\sigma_j^2)$ be independent for $j=1,\ldots,J$, with known
+  $\sigma_j>0$; let $\theta_j\mid\mu,\tau$ be independent $N(\mu,\tau^2)$;
+  and let the hyperprior be $p(\mu,\tau)=p(\tau)$, flat in $\mu$. Then,
+  given $(\mu,\tau)$ and $y$, the $\theta_j$ are independent normal with
+  $$\hat\theta_j=\frac{y_j/\sigma_j^2+\mu/\tau^2}
+  {1/\sigma_j^2+1/\tau^2},\qquad
+  V_j=\frac1{1/\sigma_j^2+1/\tau^2}.$$
+  Marginally $y_j\mid\mu,\tau\sim N(\mu,\sigma_j^2+\tau^2)$ independently,
+  and $\mu\mid\tau,y\sim N(\hat\mu,V_\mu)$ with
+  $V_\mu^{-1}=\sum_j(\sigma_j^2+\tau^2)^{-1}$ and
+  $\hat\mu=V_\mu\sum_j y_j/(\sigma_j^2+\tau^2)$. Finally
+  $$p(\tau\mid y)\propto p(\tau)\,V_\mu^{1/2}
+  \prod_{j=1}^J(\sigma_j^2+\tau^2)^{-1/2}
+  \exp\Bigl(-\frac{(y_j-\hat\mu)^2}{2(\sigma_j^2+\tau^2)}\Bigr).$$
+  With $p(\tau)\propto1$ on $(0,\infty)$ the joint posterior is proper if
+  and only if $J\ge3$; with $p(\tau)\propto1/\tau$ it is improper for
+  every $J$.
 
-* **12. Chi-bar-squared limit.** The likelihood-ratio statistic for testing
-  $\mu=0$ against $\mu\in K$ equals $\|P_KY\|^2$. Under the null its law is
-  the mixture $\sum_{j=0}^p w_j\chi^2_j$, where $w_j$ is the probability that
-  $P_KY$ lies in the relative interior of a $j$-dimensional face of $K$.
-  The same mixture limit, with weights determined by the cone of feasible
-  directions after whitening by the information matrix, holds for
-  regular fixed-dimensional likelihood-ratio tests with polyhedral tangent
-  cones. For Gaussian monotone regression at a fixed finite design,
-  the corresponding cone projection gives the finite-sample mixture;
-  an increasing-dimensional problem needs its own asymptotic analysis.
+* **13. Empirical Bayes form of the James–Stein estimator.** Let
+  $X\sim N_p(\theta,I_p)$ and let the $\theta_i$ be independent
+  $N(0,\tau^2)$. The posterior mean is $(1-B)X$ with
+  $B=1/(1+\tau^2)$, and marginally $X\sim N_p(0,(1+\tau^2)I_p)$. For
+  $p\ge3$, $(p-2)/\|X\|^2$ is unbiased for $B$ under this marginal law,
+  and substituting it gives the James–Stein estimator of SYNOPSIS101, item 57. Substituting instead the marginal maximum likelihood estimator
+  of $\tau^2$, truncated at zero, gives
+  $(1-p/\|X\|^2)_+X$. If the common prior mean $\mu$ is also unknown and
+  $S=\sum_i(X_i-\bar X)^2$, then for $p\ge4$ the quantity $(p-3)/S$ is
+  unbiased for $B$, giving the Efron–Morris estimator
+  $\bar X+(1-(p-3)/S)(X_i-\bar X)$, which shrinks toward the grand mean.
 
-Testing $f=0$ in the white-noise model against a smoothness class at a
-positive $L^2$ separation is a different problem from estimating $f$.
+* **14. Tweedie's formula and Robbins' estimator.** Let
+  $f(x\mid\theta)=h(x)\exp(\theta\cdot x-\psi(\theta))$ be a density on
+  $\mathbb R^k$ with respect to Lebesgue measure, let the prior $g$ be
+  arbitrary, and let $m$ be the marginal density, assumed positive and
+  differentiable under the integral sign. Then
+  $$\mathbb E[\theta\mid X=x]=\nabla\log m(x)-\nabla\log h(x).$$
+  The Gaussian case is item 69. For Poisson sampling,
+  $X\mid\theta\sim\mathop{\mathrm{Poi}}(\theta)$ with any prior on
+  $(0,\infty)$, the posterior mean is
+  $$\mathbb E[\theta\mid X=x]=(x+1)\frac{m(x+1)}{m(x)},$$
+  where $m$ is the marginal probability mass function. Robbins'
+  nonparametric empirical Bayes estimator replaces $m$ by the empirical
+  frequencies of independent observations $X_1,\ldots,X_n$ drawn from
+  $m$, with no parametric form assumed for the prior.
 
-* **13. Nonparametric detection boundary.** In the white-noise model, the
-  minimax separation $\rho_n$ for testing $f=0$ against the alternative
-  that $f$ lies in a Sobolev or Hölder ball of smoothness $\beta$ and
-  $\|f\|_2\ge\rho_n$ is of order $n^{-2\beta/(4\beta+1)}$. At smaller
-  orders no test can separate zero uniformly from all alternatives at that
-  separation. At sufficiently larger orders uniformly consistent tests
-  exist. The detection separation is smaller than the $L^2$ estimation
-  error rate $n^{-\beta/(2\beta+1)}$ of item 9.
+### Nonparametric Bayes, posterior asymptotics, and inverse problems
 
-### Rank scores, rank correlation, and goodness of fit
+Let $\mathcal X$ be a standard Borel space and let $\alpha$ be a finite
+nonzero measure on $\mathcal X$. Write $|\alpha|=\alpha(\mathcal X)$ and
+$H=\alpha/|\alpha|$.
 
-Let $U_{N(1)}<\cdots<U_{N(N)}$ be the order statistics of $N$ independent
-uniform variables on $[0,1]$. A measurable, not almost everywhere constant
-function $\varphi$ on $(0,1)$ with $\int_0^1\varphi^2<\infty$ is a
-**score-generating function**; it generates the **exact scores**
-$a_N(i)=\mathbb E\varphi(U_{N(i)})$ and the **approximate scores**
-$\varphi(i/(N+1))$. Write $\bar c_N$ and $\bar a_N$ for the averages of the
-regression constants and of the scores.
+* **15. Dirichlet process.** A random probability measure $P$ is a Dirichlet
+  process with parameter $\alpha$ when, for every finite measurable partition
+  $A_1,\ldots,A_k$,
+  $$(P(A_1),\ldots,P(A_k))\sim\mathop{\mathrm{Dirichlet}}(\alpha(A_1),\ldots,\alpha(A_k)).$$
+  Conditionally on $P$, let $X_1,\ldots,X_n$ be independent with law $P$. The
+  posterior of $P$ is a Dirichlet process with parameter
+  $\alpha+\sum_{i=1}^n\delta_{X_i}$. The one-step predictive distribution is
+  $$\frac{\alpha+\sum_{i=1}^n\delta_{X_i}}{|\alpha|+n}.$$
+  In the Sethuraman representation, let $V_k$ be independent
+  $\mathop{\mathrm{Beta}}(1,|\alpha|)$ and let $\theta_k$ be independent with
+  law $H$, independent of the $V_k$. The weights
+  $\pi_k=V_k\prod_{j<k}(1-V_j)$ give
+  $\sum_{k\ge1}\pi_k\delta_{\theta_k}$ the law of a Dirichlet process with
+  parameter $\alpha$.
 
-* **32. Score-generating functions and locally most powerful rank tests.**
-  Let $X_1,\ldots,X_N$ be independent with a common continuous distribution
-  function $F$, let $R_i$ be their ranks, and let
-  $T_N=\sum_ic_{N,i}a_N(R_i)$ with exact scores. Then
-  $\mathbb ET_N=N\bar c_N\bar a_N$,
-  $$\mathop{\mathrm{Var}}T_N=\frac1{N-1}\sum_{i=1}^N(c_{N,i}-\bar c_N)^2
-  \sum_{i=1}^N\bigl(a_N(i)-\bar a_N\bigr)^2,$$
-  and $T_N$ is asymptotically equivalent, in the sense that the variance of
-  the difference is negligible relative to $\mathop{\mathrm{Var}}T_N$, to
-  $$N\bar c_N\bar a_N+\sum_{i=1}^N(c_{N,i}-\bar c_N)\,\varphi(F(X_i)).$$
-  The standardized statistic is therefore asymptotically normal whenever
-  $\max_i(c_{N,i}-\bar c_N)^2/\sum_i(c_{N,i}-\bar c_N)^2\to0$. The same
-  holds for approximate scores if $\varphi$ is continuous almost everywhere
-  and $N^{-1}\sum_i\varphi^2(i/(N+1))\to\int_0^1\varphi^2$. If $X_i$ has
-  density $f(x-\theta c_{N,i})$, where $f$ is absolutely continuous with
-  finite Fisher information for location, the locally most powerful rank
-  test of $\theta=0$ against small $\theta>0$ rejects for large $T_N$ with
-  exact scores generated by
-  $$\varphi_f(u)=-\frac{f'}{f}\bigl(F^{-1}(u)\bigr).$$
-  For the logistic density this gives the Wilcoxon scores $i$; for the
-  normal density it gives the normal scores
-  $\mathbb E\Phi^{-1}(U_{N(i)})$, of which
-  $\Phi^{-1}(i/(N+1))$ are the van der Waerden approximations. For the
-  scale family $e^{-\theta}f(e^{-\theta}x)$ the generating function is
-  $-1-F^{-1}(u)\,(f'/f)(F^{-1}(u))$; for proportional-hazards alternatives
-  it gives the log-rank (Savage) scores of SYNOPSIS108, item 28.
+* **16. Pólya urn scheme and distinct values.** If $X_1,X_2,\ldots$ are
+  conditionally independent with law $P$ given a Dirichlet process
+  $P$ with parameter $\alpha$, then $X_1\sim H$ and
+  $$X_{n+1}\mid X_1,\ldots,X_n\sim
+  \frac{\alpha+\sum_{i=1}^n\delta_{X_i}}{|\alpha|+n},$$
+  the generalized Pólya urn of Blackwell and MacQueen. Conversely, a
+  sequence with these predictive laws is exchangeable, and the random
+  measure given by de Finetti's theorem (CKMA SYNOPSIS06, item 55) is a
+  Dirichlet process with parameter $\alpha$. If $\alpha$ is atomless, the
+  indicators that $X_i$ is a new value are independent Bernoulli variables
+  with success probabilities $|\alpha|/(|\alpha|+i-1)$. Hence the number
+  $K_n$ of distinct values among $X_1,\ldots,X_n$ satisfies
+  $$\mathbb EK_n=\sum_{i=1}^n\frac{|\alpha|}{|\alpha|+i-1}
+  \sim|\alpha|\log n,\qquad \frac{K_n}{\log n}\to|\alpha|
+  \quad\text{almost surely}.$$
 
-* **33. Asymptotic optimality and efficiencies of rank tests.** Let
-  $X_1,\ldots,X_m$ have density $f(x-\mu)$ and $Y_1,\ldots,Y_n$ density
-  $f(x-\nu)$, all independent, with $f$ of finite Fisher information
-  $I_f$, $N=m+n$, and $m/N\to\lambda\in(0,1)$. For local alternatives
-  $\nu-\mu=h/\sqrt N$, the two-sample rank test with scores generated by
-  $\varphi_f$ of item 32 has asymptotic power
-  $1-\Phi\bigl(z_\alpha-h\sqrt{\lambda(1-\lambda)I_f}\bigr)$, the largest
-  attainable by any asymptotically level-$\alpha$ test of $\nu=\mu$ against
-  $\nu>\mu$, even when $f$ is known. Thus the Wilcoxon test is asymptotically optimal for the
-  logistic shift and the normal-scores test for the normal shift. For a
-  symmetric $f$ of finite Fisher information, the signed-rank statistic
-  $\sum_i\mathop{\mathrm{sign}}(X_i)\,a_n(R_i^+)$, with $R_i^+$ the rank of
-  $|X_i|$ and exact scores generated by
-  $-(f'/f)\bigl((F^+)^{-1}(u)\bigr)$, $F^+=2F-1$ on $[0,\infty)$, gives an
-  asymptotically optimal test of the center of symmetry; the scores are
-  unchanged within a scale family. The Pitman efficiencies of the sign and
-  Wilcoxon tests relative to the $t$ test, including the Hodges–Lehmann
-  bound $108/125$, are SYNOPSIS103, item 43. The efficiency of the
-  normal-scores test relative to the $t$ test is at least $1$ for every
-  $f$ of finite variance, with equality at the normal law
-  (Chernoff–Savage). The general theory of Pitman efficiency is
-  SYNOPSIS103, item 42.
+* **17. Doob's consistency theorem.** Consider a dominated model
+  $\{P_\theta:\theta\in\Theta\}$ on a standard Borel sample space, with
+  $\Theta$ Polish with its Borel $\sigma$-field, and a prior $\Pi$ on
+  $\Theta$. Assume the family is measurably parameterized. If
+  $\theta\mapsto P_\theta$ is injective, then there is a $\Pi$-null set $N$ such that for every
+  $\theta\notin N$ and every neighborhood $U$ of $\theta$, the posterior
+  probability of $U$ tends to $1$, $P_\theta$-almost surely.
 
-For independent copies of a pair $(X,Y)$ with continuous marginal laws,
-**Kendall's tau** is $\tau=2P\bigl((X_2-X_1)(Y_2-Y_1)>0\bigr)-1$, estimated by
-$$\hat\tau_n=\binom n2^{-1}\sum_{i<j}
-\mathop{\mathrm{sign}}\bigl((X_j-X_i)(Y_j-Y_i)\bigr).$$
-**Spearman's rho** $r_s$ is the ordinary sample correlation of the two rank
-vectors, $r_s=1-6\sum_i(R_i-S_i)^2/\bigl(n(n^2-1)\bigr)$.
+* **18. Schwartz's theorem.** Let $P_0$ have density $p_0$, and write
+  $K(P_0,P)=\int p_0\log(p_0/p)$ for the Kullback–Leibler divergence. Suppose
+  that the prior gives positive mass to
+  $\{P:K(P_0,P)<\varepsilon\}$ for every $\varepsilon>0$. Suppose that for
+  every weak neighborhood $U$ of $P_0$ there exist tests of $P_0$ against
+  $U^c$ whose type I and type II errors both tend to zero, uniformly over
+  $U^c$. Then the posterior probability of $U$ tends to $1$ in
+  $P_0$-probability.
 
-* **34. Rank tests of independence.** The statistic $\hat\tau_n$ is a
-  $U$-statistic of order $2$ with bounded kernel. By SYNOPSIS103, item 6,
-  $\sqrt n(\hat\tau_n-\tau)\Rightarrow N(0,4\zeta_1)$, where $\zeta_1$ is
-  the variance of the conditional expectation of the kernel given one pair.
-  Under independence the rank vectors are independent and uniform on the
-  permutations, so the laws of $\hat\tau_n$ and $r_s$ are distribution-free.
-  Then
-  $$\mathbb E\hat\tau_n=0,\qquad
-  \mathop{\mathrm{Var}}\hat\tau_n=\frac{2(2n+5)}{9n(n-1)},\qquad
-  \sqrt n\,\hat\tau_n\Rightarrow N(0,4/9),$$
-  and
-  $$\mathbb Er_s=0,\qquad\mathop{\mathrm{Var}}r_s=\frac1{n-1},\qquad
-  \sqrt n\,r_s\Rightarrow N(0,1).$$
-  Since $\tau=0$ does not imply independence, the test based on
-  $\hat\tau_n$ is consistent against alternatives with $\tau\ne0$, not against
-  all dependent alternatives; the same restriction applies to $r_s$ and the
-  population rank correlation.
+For a probability $P$ with density $p$, write
+$V(P_0,P)=\int p_0\bigl(\log(p_0/p)\bigr)^2$ and write $h$ for Hellinger
+distance, normalized by $h^2(P,Q)=\int(\sqrt p-\sqrt q)^2$.
+Let $N(\varepsilon,\mathcal F,h)$ be the covering number of
+$\mathcal F$ in that distance.
 
-* **35. Cramér–von Mises and two-sample Kolmogorov–Smirnov limits.** If $F$
-  is continuous, the Cramér–von Mises statistic
-  $W_n^2=n\int(F_n-F)^2\,dF$ is distribution-free and
-  $$W_n^2\Rightarrow\int_0^1B^0(t)^2\,dt
-  \stackrel{d}{=}\sum_{j=1}^\infty\frac{Z_j^2}{j^2\pi^2},$$
-  with $Z_j$ independent standard normal; the numbers $(j\pi)^{-2}$ are the
-  eigenvalues of the Brownian-bridge covariance $s\wedge t-st$, and the
-  limit has mean $1/6$. For independent samples of sizes $m$ and $n$ with
-  empirical distribution functions $F_m$ and $G_n$, under a common continuous
-  law the statistic $D_{m,n}=\sup_x|F_m(x)-G_n(x)|$ is distribution-free and,
-  as $\min(m,n)\to\infty$,
-  $$\sqrt{\frac{mn}{m+n}}\,D_{m,n}\Rightarrow\sup_{t\in[0,1]}|B^0(t)|,$$
-  with the Kolmogorov law of item 1. If the two laws differ, the normalized
-  statistic tends to infinity in probability, so the test is consistent
-  against every alternative. When a parameter of a composite null family is
-  estimated by an asymptotically linear estimator, the empirical process
-  with estimated parameter converges to a Gaussian process whose covariance
-  involves the influence function of that estimator. The resulting limits
-  of the Kolmogorov–Smirnov and Cramér–von Mises statistics are no longer
-  distribution-free.
+* **19. Contraction rate of Ghosal, Ghosh, and van der Vaart.** Let
+  $\varepsilon_n\to0$ with $n\varepsilon_n^2\to\infty$. Suppose that for some
+  finite $C$,
+  $$\Pi\bigl(\{P:K(P_0,P)\le\varepsilon_n^2,\;
+  V(P_0,P)\le\varepsilon_n^2\}\bigr)
+  \ge\exp(-Cn\varepsilon_n^2),$$
+  and that there exist sieves $\mathcal F_n$ with
+  $\log N(\varepsilon_n/2,\mathcal F_n,h)\le n\varepsilon_n^2$ and
+  $$\Pi(\mathcal F_n^c)\le\exp(-(C+4)n\varepsilon_n^2).$$
+  Then there exists $M_0<\infty$ such that for every $M\ge M_0$ the posterior
+  probability of $\{P:h(P,P_0)\ge M\varepsilon_n\}$ tends to zero in
+  $P_0$-probability.
 
-### Exact ranks, smoothing bias, and shape constraints
-
-* **22. Sign test.** For independent continuous observations with median
-  $\theta_0$, $\sum_i1_{\{X_i>\theta_0\}}\sim\mathop{\mathrm{Bin}}(n,1/2)$.
-  Binomial tails give exact or conservative tests of the median without a
-  symmetry assumption. Inversion is the quantile interval in SYNOPSIS101,
-  item 18. Symmetry is needed for the signed-rank procedure below.
-
-* **23. Wilcoxon sampling laws.** Under a continuous distribution symmetric
-  about zero, the signs are independent fair signs and independent of the
-  absolute values. Thus the positive signed-rank sum has the law
-  $\sum_{j=1}^n jB_j$ for independent Bernoulli$(1/2)$ variables, with
-  mean $n(n+1)/4$ and variance $n(n+1)(2n+1)/24$.
-  For independent samples of sizes $m,n$ from a common continuous law,
-  $U=\sum_{i,j}1_{\{X_i<Y_j\}}$ has mean $mn/2$ and variance
-  $mn(m+n+1)/12$. Both centered, variance-normalized statistics tend to
-  $N(0,1)$, in the second case when $m/(m+n)\to\lambda\in(0,1)$.
-
-* **24. Kruskal–Wallis test.** For $k$ independent samples from a common
-  continuous law, let $R_j$ be the sum of pooled ranks in group $j$, of
-  size $n_j$, and put $N=\sum_jn_j$. For fixed $k$ and
-  $n_j/N\to\lambda_j>0$,
-  $$\frac{12}{N(N+1)}\sum_{j=1}^k\frac{R_j^2}{n_j}-3(N+1)
-  \Rightarrow\chi^2_{k-1}.$$
-  Its finite-sample permutation law is distribution-free. The statistic
-  tests equality of distributions; a location interpretation requires a
-  common-shape shift model.
-
-* **25. Isotonic least squares.** For observations $y_i$ at ordered design
-  points and weights $w_i>0$, the minimizer of
-  $\sum_iw_i(y_i-\theta_i)^2$ over $\theta_1\le\cdots\le\theta_n$ is unique
-  and satisfies
-  $$\hat\theta_i=\max_{a\le i}\min_{b\ge i}
-  \frac{\sum_{j=a}^bw_jy_j}{\sum_{j=a}^bw_j}.$$
-  It is the vector of successive slopes of the greatest convex minorant
-  of the cumulative-sum diagram
-  $(\sum_{j\le i}w_j,\sum_{j\le i}w_jy_j)$, including $(0,0)$.
-  Pooling adjacent blocks whose weighted means violate monotonicity
-  computes this projection.
-
-* **26. Hölder regression rates.** In Gaussian regression on $[0,1]^d$
-  with fixed positive noise variance and a design density bounded above and
-  below by positive constants, the minimax integrated squared error over
-  a fixed Hölder ball of smoothness $\beta>0$ is of order
-  $n^{-2\beta/(2\beta+d)}$. Boundary-adapted local polynomials of degree
-  at least $\lceil\beta\rceil-1$, with bandwidth of order
-  $n^{-1/(2\beta+d)}$, attain this order. Under the same regular design
-  conditions the minimax expected squared supremum error is of order
-  $(\log n/n)^{2\beta/(2\beta+d)}$. The testing reductions in SYNOPSIS107,
-  items 14 and 15, supply matching lower bounds.
-
-Bias matters for confidence statements even at a mean-squared-error optimal
-bandwidth. For the second-order smoothers of items 4 and 6, $nh^5\to0$
-makes the leading $h^2$ bias negligible relative to $(nh)^{-1/2}$.
-At $h\asymp n^{-1/5}$ it has the same order as the standard error, so
-pointwise intervals require bias correction or undersmoothing.
-
-### Bandwidth selection, linear smoothers, and density rates
-
-For the kernel density estimator, let $\hat f_{h,-i}$ be the estimator
-computed from the observations other than $X_i$, with divisor $(n-1)h$. The
-**least-squares cross-validation criterion** is
-$$\mathop{\mathrm{CV}}(h)=\int\hat f_h^2-\frac2n\sum_{i=1}^n\hat f_{h,-i}(X_i).$$
-A regression estimator is a **linear smoother** if its fitted values are
-$\hat m=LY$ for a matrix $L$ depending only on the design and the smoothing
-parameter.
-
-* **36. Cross-validation.** If $\int f^2<\infty$ and
-  $\iint|K((x-z)/h)|f(z)f(x)\,dz\,dx<\infty$, then for every $h>0$
-  $$\mathbb E\mathop{\mathrm{CV}}(h)
-  =\mathbb E\int(\hat f_h-f)^2-\int f^2.$$
-  Minimizing $\mathop{\mathrm{CV}}$ therefore targets the mean integrated
-  squared error. For a bounded density and a kernel satisfying Stone's
-  regularity conditions, the cross-validated bandwidth $\hat h$ is
-  asymptotically optimal:
-  $$\frac{\int(\hat f_{\hat h}-f)^2}{\inf_{h>0}\int(\hat f_h-f)^2}\to1
-  \quad\hbox{almost surely}.$$
-  Under second-order smoothness, $\hat h$ approaches the MISE-optimal
-  bandwidth only at relative rate $n^{-1/10}$. For a linear smoother whose
-  leave-one-out fit $\hat m_{(-i)}$ is obtained by setting the weight of the
-  $i$th observation to zero and renormalizing the remaining weights in row
-  $i$, the leave-one-out score is
-  $$\frac1n\sum_{i=1}^n\bigl(Y_i-\hat m_{(-i)}(x_i)\bigr)^2
-  =\frac1n\sum_{i=1}^n\left(\frac{Y_i-\hat m(x_i)}{1-L_{ii}}\right)^2.$$
-  Kernel, local polynomial, and spline smoothers satisfy this
-  leave-one-out identity.
-
-Let $\hat\beta(x_0)$ be the coefficient vector of the kernel-weighted
-least-squares fit of a polynomial of degree $p$ in $X_i-x_0$, and estimate
-$m^{(\nu)}(x_0)$, $0\le\nu\le p$, by $\hat m_\nu(x_0)=\nu!\,\hat\beta_\nu$. With
-$\mu_j=\int u^jK(u)\,du$ and $S=(\mu_{j+l})_{0\le j,l\le p}$, the
-**equivalent kernel** is
-$$K_\nu^*(t)=e_{\nu+1}^\top S^{-1}(1,t,\ldots,t^p)^\top K(t),$$
-which satisfies $\int t^qK_\nu^*(t)\,dt=\delta_{\nu q}$ for $0\le q\le p$.
-
-* **37. Local polynomial regression.** Let $f_X(x_0)>0$, let $f_X$,
-  $m^{(p+1)}$, and $\sigma^2$ be continuous near $x_0$, let $K$ be a bounded
-  symmetric compactly supported probability density, and let $h\to0$ and
-  $nh\to\infty$. If $p-\nu$ is odd, then, conditionally on the design,
-  $$\mathop{\mathrm{Bias}}\hat m_\nu(x_0)
-  =\frac{\nu!}{(p+1)!}\Bigl(\int t^{p+1}K_\nu^*(t)\,dt\Bigr)
-  m^{(p+1)}(x_0)\,h^{p+1-\nu}+o_P(h^{p+1-\nu}),$$
-  $$\mathop{\mathrm{Var}}\hat m_\nu(x_0)
-  =\frac{\nu!^2\int K_\nu^{*2}\;\sigma^2(x_0)}{f_X(x_0)\,nh^{1+2\nu}}
-  +o_P\bigl((nh^{1+2\nu})^{-1}\bigr).$$
-  If $p-\nu$ is even, the term of order $h^{p+1-\nu}$ vanishes by symmetry.
-  If also $f_X'$ and $m^{(p+2)}$ are continuous near $x_0$ and
-  $nh^3\to\infty$, the leading bias is of order $h^{p+2-\nu}$ and involves
-  $f_X'(x_0)/f_X(x_0)$. Passing from an even $p-\nu$ to the next odd
-  degree leaves the asymptotic variance unchanged. Odd $p-\nu$ is therefore
-  preferred, usually $p=\nu+1$. At a boundary point $x_0=ch$ of the support
-  of the design, the same orders of bias and variance hold with $S$ replaced
-  by the truncated moment matrix $\bigl(\int_{-c}^\infty u^{j+l}K\bigr)$. The
-  method thus corrects boundary bias automatically. Item 6 is the case
-  $p=1$, $\nu=0$, and the Nadaraya–Watson estimator is $p=\nu=0$.
-
-For design points $a<t_1<\cdots<t_n<b$, let $Q$ and $R$ be the
-$n\times(n-2)$ and $(n-2)\times(n-2)$ band matrices of the
-**value–second-derivative representation** of natural cubic splines with
-knots $t_i$. For such a spline $g$, with
-$\mathbf g=(g(t_1),\ldots,g(t_n))^\top$, the penalty is
-$\int(g'')^2=\mathbf g^\top QR^{-1}Q^\top\mathbf g$.
-
-* **38. Smoothing splines as linear smoothers.** Let $n\ge3$ and $\alpha>0$.
-  The unique minimizer of
-  $$\sum_{i=1}^n\bigl(Y_i-g(t_i)\bigr)^2+\alpha\int_a^b g''(t)^2\,dt$$
-  over functions with absolutely continuous first derivative and
-  square-integrable second derivative is the natural cubic spline with
-  values $(I+\alpha QR^{-1}Q^\top)^{-1}Y$ at the knots. It is a linear
-  smoother with hat matrix $A(\alpha)=(I+\alpha QR^{-1}Q^\top)^{-1}$, so item
-  36 gives
-  $$\mathop{\mathrm{CV}}(\alpha)
-  =\frac1n\sum_{i=1}^n\left(\frac{Y_i-\hat g(t_i)}{1-A_{ii}(\alpha)}\right)^2.$$
-  Suppose that $n$ is large, the design points have a smooth local density
-  $f$, $s$ is away from the ends, and $\alpha$ is neither too small nor too
-  large. Then $\hat g(s)=n^{-1}\sum_iY_iG(s,t_i)$, where the weight
-  function satisfies the approximation
-  $$G(s,t)\approx\frac1{f(t)h(t)}\,\kappa\Bigl(\frac{s-t}{h(t)}\Bigr),
-  \qquad h(t)=\Bigl(\frac{\alpha}{nf(t)}\Bigr)^{1/4},$$
-  $$\kappa(u)=\tfrac12e^{-|u|/\sqrt2}\sin\bigl(|u|/\sqrt2+\pi/4\bigr).$$
-  The kernel $\kappa$ has Fourier transform $1/(1+\omega^4)$; it is a kernel
-  of order four. The local bandwidth varies as the inverse fourth root of
-  the design density.
-
-A **kernel of order** $\ell\ge1$ is a function $K$ with $\int K=1$ and
-$\int u^jK(u)\,du=0$ for $1\le j\le\ell$. For $\beta>0$, let $\ell$ be the
-largest integer strictly smaller than $\beta$. The **Hölder density class**
-$\mathcal P(\beta,L)$ is the set of probability densities on $\mathbb R$ that
-are $\ell$ times differentiable with
-$|f^{(\ell)}(x)-f^{(\ell)}(x')|\le L|x-x'|^{\beta-\ell}$.
-
-* **39. Minimax rates of density estimation.** Let $K$ be a kernel of order
-  $\ell$ with $\int K^2<\infty$ and $\int|u|^\beta|K(u)|\,du<\infty$, and let
-  $h=c\,n^{-1/(2\beta+1)}$ for fixed $c>0$. Then
-  $$\sup_{x_0\in\mathbb R}\ \sup_{f\in\mathcal P(\beta,L)}
-  \mathbb E\bigl(\hat f_h(x_0)-f(x_0)\bigr)^2\le Cn^{-2\beta/(2\beta+1)},$$
-  and no estimator achieves a faster order uniformly over
-  $\mathcal P(\beta,L)$, either at a fixed point or in integrated squared
-  error. For an integer $m\ge1$, let $\mathcal F_{m,M}$ be the class of
-  densities with $m$ continuous derivatives and $\int(f^{(m)})^2\le M$.
-  Kernels of order $m-1$ with $\int|y|^m|K(y)|\,dy<\infty$ and bandwidth
-  $n^{-1/(2m+1)}$ give
-  $$\sup_{f\in\mathcal F_{m,M}}\mathbb E\int(\hat f_h-f)^2
-  \le C_{m,M}n^{-2m/(2m+1)}.$$
-  Assouad's lemma, applied to $2^{r_n}$ local perturbations with
-  $r_n\asymp n^{1/(2m+1)}$, gives a matching lower bound
-  $D_{m,M}n^{-2m/(2m+1)}$ for every estimator. Kernels of order at least
-  two are not nonnegative; the rate gain beyond $n^{-4/5}$ in item 4
-  requires them.
-
-### Risk bounds under shape constraints
-
-* **40. Risk of isotonic regression.** Let $Y_i=\theta_i^*+\varepsilon_i$ for
-  $i=1,\ldots,n$, with $\theta_1^*\le\cdots\le\theta_n^*$ and independent
-  errors of mean zero and variance one. Let $\hat\theta$ be the
-  isotonic least-squares estimator of item 25 with unit weights. There is a
-  universal constant $C$ such that
-  $$\frac1n\mathbb E\|\hat\theta-\theta^*\|^2
-  \le C\left\{\Bigl(\frac{\theta_n^*-\theta_1^*}{n}\Bigr)^{2/3}
-  +\frac{\log(en)}n\right\}.$$
-  In particular the worst-case risk over sequences with
-  $\|\theta^*\|_\infty\le1$ is of order $n^{-2/3}$, the minimax order for
-  this class. For constant $\theta^*$ the risk is of the nearly parametric
-  order $\log(en)/n$, without any tuning parameter.
-
-Let $\mathcal F_d$ be the class of upper semicontinuous log-concave
-densities on $\mathbb R^d$. The squared Hellinger distance is
-$H^2(f,g)=\int(\sqrt f-\sqrt g)^2$.
-
-* **41. Log-concave maximum likelihood.** Let $P$ be a probability measure on
-  $\mathbb R^d$ with finite first moment that assigns probability less than
-  one to every hyperplane. Then $\int\log f\,dP$ has a unique maximizer
-  $f^*\in\mathcal F_d$, the log-concave projection of $P$. The set where
-  $f^*>0$ contains the interior of the convex support of $P$ and is
-  contained in that convex support. If
-  $X_1,\ldots,X_n$ are points of $\mathbb R^d$ with $n\ge d+1$ and
-  $d$-dimensional convex hull $C_n$, this gives a unique log-concave maximum
-  likelihood estimator $\hat f_n$, which is supported on $C_n$. Its
-  logarithm is a tent function: for suitable heights $y_i$, the smallest
-  concave function with value at least $y_i$ at $X_i$ for every $i$,
-  which is piecewise affine on $C_n$. For samples
-  from $f_0\in\mathcal F_d$,
-  $$\sup_{f_0\in\mathcal F_d}\mathbb E H^2(\hat f_n,f_0)\le C_d\cdot
-  \begin{cases}n^{-4/5},&d=1,\\ n^{-2/(d+1)}\log n,&d\ge2,\end{cases}$$
-  and no estimator improves on these orders apart from the logarithm.
-  The estimator involves no smoothing parameter.
+* **20. Linear inverse problems.** In the white-noise model
+  $dY=Af\,dt+\varepsilon\,dW$ on a bounded domain, suppose that $A$ is compact
+  and injective with singular values of order $j^{-a}$, $a\ge0$, and that the
+  unknown function lies in a Sobolev ellipsoid of smoothness $\beta>0$
+  in the right singular-vector basis of $A$, so that its smoothness and
+  the singular-value decay are aligned. The minimax rate for the $L^2$
+  estimation error is of order $\varepsilon^{2\beta/(2\beta+2a+1)}$.
+  Independent centered Gaussian prior coefficients with variances of
+  order $j^{-1-2\beta}$ yield posterior contraction at this rate,
+  uniformly over a fixed such ball. Fixing a different prior smoothness
+  generally worsens this uniform rate, although individual smoother
+  truths can have faster contraction.
 
 <a id="synopsis-104b"></a>
 
-## 104B. Semiparametric Models and Missing Data
+## 104B. Monte Carlo, Langevin Dynamics, and Particle Methods
 
-A **semiparametric model** is a family $\{P_{\theta,\eta}\}$ in which $\theta$
-is a Euclidean parameter and the nuisance parameter $\eta$ ranges over an
-infinite-dimensional set. A parametric submodel $t\mapsto P_{\theta,\eta_t}$
-that varies only the nuisance parameter has a nuisance score. The
-**nuisance tangent space** is the closed linear span of the nuisance scores
-of smooth finite-dimensional submodels. The **efficient score** $\tilde\ell_\theta$
-is the residual of the ordinary score for $\theta$ after orthogonal projection
-onto that tangent space, and the **efficient information** is
-$\tilde I(\theta)=\mathbb E[\tilde\ell_\theta\tilde\ell_\theta^\top]$.
+Discrete-time Monte Carlo and Markov chain samplers come first; the continuous-time sampling dynamics, stochastic approximation, and interacting particle systems that describe or replace them follow.
 
-* **14. Semiparametric convolution bound.** Assume local asymptotic normality
-  of every regular finite-dimensional submodel, nonsingular efficient
-  information, and the usual differentiability of the parameter along those
-  submodels. Every regular estimator sequence of $\theta$ has a limit law
-  equal to the convolution of $N(0,\tilde I(\theta)^{-1})$ with some
-  probability measure on the parameter space. An estimator is asymptotically
-  linear with influence function equal to $\tilde I(\theta)^{-1}\tilde\ell_\theta$
-  if and only if it attains this bound. The ordinary parametric bound of
-  SYNOPSIS103, item 11, is the case of a finite-dimensional nuisance
-  parameter.
+### Monte Carlo and Markov chain Monte Carlo
 
-Let $Y$ be a response, let $X$ be covariates that are always observed, and
-let $R$ indicate whether $Y$ is observed. The observations are independent
-copies of $(R,X,RY)$. The response is **missing at random** when
-$P(R=1\mid X,Y)=P(R=1\mid X)$. It is **missing completely at random** when
-$R$ is independent of $(X,Y)$. Write $\pi(x)=P(R=1\mid X=x)$ and
-$m(x)=\mathbb E[Y\mid R=1,X=x]$.
+* **21. Importance sampling.** Let the target probability have density $p$ and
+  let the proposal have density $q$, with $p$ absolutely continuous with
+  respect to $q$. If $\mathbb E_q[(p/q)|h|]<\infty$, then
+  $\mathbb E_p h=\mathbb E_q[(p/q)h]$. For an independent sample from $q$, the
+  average of $(p/q)(X_i)h(X_i)$ is unbiased for $\mathbb E_p h$, with variance
+  $n^{-1}\bigl(\mathbb E_q[(p/q)^2h^2]-(\mathbb E_p h)^2\bigr)$. The
+  self-normalized weights $w_i/\sum_j w_j$, with $w_i=p(X_i)/q(X_i)$, are
+  consistent for $\mathbb E_p h$ whenever $\mathbb E_q[(p/q)|h|]<\infty$.
 
-* **15. Ignorability.** Under missingness at random, the density of the
-  observed data factors into a part that depends on the law of $(X,Y)$ and a
-  part that depends on the missingness mechanism. If those two parameters
-  are variation-independent, the maximizer of the observed-data likelihood
-  for the law of $(X,Y)$ does not depend on the missingness parameter. The
-  mechanism is then ignorable for likelihood inference.
+Let $\pi$ be a target density on a measurable space and let $q(x,dy)$ be a
+proposal kernel that admits a density $q(x,y)$ in the second variable.
 
-For a complete-data density $f(x\mid\theta)$ and observed data $Y=t(X)$, the
-**EM iteration** from $\theta'$ maximizes
-$Q(\theta\mid\theta')=\mathbb E_{\theta'}[\log f(X\mid\theta)\mid Y]$ and
-sets the next value equal to that maximizer.
+* **22. Metropolis–Hastings.** Define the acceptance probability
+  $$\alpha(x,y)=\min\Bigl(1,
+  \frac{\pi(y)q(y,x)}{\pi(x)q(x,y)}\Bigr)$$
+  when the denominator is positive, and $\alpha(x,y)=1$ when
+  $\pi(x)q(x,y)=0$. The kernel that proposes $Y\sim q(x,\cdot)$ and moves
+  from $x$ to $Y$ with probability $\alpha(x,Y)$, remaining at $x$ otherwise,
+  is reversible with respect to $\pi$ and therefore leaves $\pi$ invariant.
 
-* **16. Monotonicity of EM.** The observed-data log-likelihood at the new
-  value is at least the observed-data log-likelihood at $\theta'$. A fixed
-  point of a continuous EM map at which $Q$ has a unique maximizer is a
-  stationary point of the observed-data likelihood.
+* **23. Gibbs sampling.** Suppose the joint distribution is absolutely
+  continuous with respect to a product measure and its density is positive on
+  the product of the coordinate supports. The kernel that updates one
+  coordinate from its conditional distribution given the others, in a
+  deterministic or a random scan, leaves the joint distribution invariant.
 
-* **17. Double robustness for a missing mean.** Under missingness at random
-  and $\pi_0(X)\ge\delta>0$, the estimating function
-  $$\varphi_{m,\pi}(R,X,Y)
-  =\frac{RY}{\pi(X)}-\frac{R-\pi(X)}{\pi(X)}m(X)$$
-  has expectation $\mathbb E Y$ as soon as either $\pi=\pi_0$, with $m$ any
-  square-integrable function, or $m(x)=\mathbb E[Y\mid X=x]$, with $\pi$ any
-  measurable function bounded away from zero. The estimator obtained by
-  substituting estimators of $m$ and $\pi$ and taking the sample average is
-  therefore consistent when at least one of the two fitted models is
-  correct. If both are correct and converge quickly enough, the estimator
-  is asymptotically linear with the efficient influence function for
-  $\mathbb E Y$.
+* **24. Central limit theorem for Markov chain Monte Carlo.** Let
+  $(X_t)_{t\ge0}$ be a Markov chain with invariant probability $\pi$,
+  satisfying the drift and minorization condition of CKMA SYNOPSIS08,
+  item 69. If $f$ is measurable and $\mathbb E_\pi|f|^{2+\delta}<\infty$ for
+  some $\delta>0$, then
+  $$\sqrt n\Bigl(n^{-1}\sum_{t=1}^n f(X_t)-\pi(f)\Bigr)
+  \Rightarrow N(0,\sigma^2(f)),$$
+  where
+  $$\sigma^2(f)=\mathop{\mathrm{Var}}_\pi(f(X_0))
+  +2\sum_{k=1}^\infty\mathop{\mathrm{Cov}}_\pi\bigl(f(X_0),f(X_k)\bigr)$$
+  and the series converges absolutely.
 
-### Pathwise derivatives and orthogonal estimation
+For a density $q$ on the parameter, the **evidence lower bound** of a sample
+$y$ is $\mathbb E_q\log p(y,\theta)-\mathbb E_q\log q(\theta)$.
 
-For a scalar parameter $\psi(P)$, let $\mathcal T\subset L^2_0(P)$ be the
-closed tangent space of scores of differentiable submodels. The parameter
-is **pathwise differentiable** if its derivative along every score $s$ is
-$\dot\psi_P(s)=P(\phi s)$ for some $\phi\in L^2_0(P)$. The unique such
-representative in $\mathcal T$ is the **canonical gradient**.
+* **25. Evidence lower bound.** For every probability $q$ absolutely
+  continuous with respect to the posterior,
+  $$\log p(y)=\mathbb E_q\log p(y,\theta)-\mathbb E_q\log q(\theta)
+  +\mathop{\mathrm{KL}}(q\,\|\,p(\cdot\mid y)).$$
+  Maximizing the evidence lower bound over a family of densities $q$ is
+  therefore the same as minimizing the Kullback–Leibler divergence from $q$
+  to the posterior. A mean-field family restricts $q$ to a product of
+  coordinate laws. The construction of such families is in Section 107.
 
-* **27. Canonical gradient and efficiency.** If a regular asymptotically
-  linear estimator has influence function $\phi$, its projection onto
-  $\mathcal T$ is the canonical gradient $\phi_{\mathrm{eff}}$. Hence
-  $$P\phi^2=P\phi_{\mathrm{eff}}^2
-  +P(\phi-\phi_{\mathrm{eff}})^2.$$
-  The efficient variance bound is $P\phi_{\mathrm{eff}}^2$. In the
-  unrestricted model, the mean has canonical gradient $x-PX$, and the
-  $p$-quantile with positive density has gradient
-  $(p-1_{\{x\le q_p\}})/f(q_p)$. A derivative that has no continuous
-  $L^2$ representation precludes regular estimation at rate $\sqrt n$.
+* **26. Self-normalized importance-sampling limit.** In item 21, put
+  $w=p/q$, $\mu=\mathbb E_p h$, and suppose
+  $\mathbb E_q[w^2(h-\mu)^2]<\infty$ and $\mathbb E_q[w|h|]<\infty$.
+  For independent proposal draws,
+  $$\sqrt n\left(\frac{\sum_iw(X_i)h(X_i)}{\sum_iw(X_i)}-\mu\right)
+  \Rightarrow N\left(0,\mathbb E_q[w^2(h-\mu)^2]\right).$$
+  Multiplying all weights by a common unknown constant leaves the estimator
+  unchanged. The asymptotic variance can be much larger than
+  $\mathop{\mathrm{Var}}_p h$ when the proposal poorly covers the target.
 
-* **28. Cross-fitted estimation of a missing mean.** Use a fixed finite
-  number of folds, evaluating the estimating function in item 17 on each
-  fold with nuisance estimates trained on the other folds. Suppose
-  $Y\in L^2$, the true and fitted response probabilities are bounded below
-  by $\delta>0$, both nuisance estimates are $L^2$ consistent, and
-  $$\|\hat m-m_0\|_2\,\|\hat\pi-\pi_0\|_2=o_P(n^{-1/2}).$$
-  If the fitted estimating functions also converge in $L^2$ to the true
-  one, then
-  $$\sqrt n(\hat\mu-\mu)
-  =n^{-1/2}\sum_{i=1}^n
-  \left[m_0(X_i)+\frac{R_i(Y_i-m_0(X_i))}{\pi_0(X_i)}-\mu\right]+o_P(1).$$
-  The variance is the efficient bound of item 27. Conditional second-moment
-  bounds on $Y$ and bounded or suitably truncated regressions are useful
-  sufficient conditions for the additional $L^2$ convergence. Sample
-  splitting avoids requiring a Donsker class for the fitted nuisances.
+* **27. Conditional Monte Carlo.** If $(U_i,V_i)$ are independent copies
+  and $H(U,V)\in L^2$, replacing $H(U_i,V_i)$ by
+  $\mathbb E[H(U_i,V_i)\mid U_i]$ in a Monte Carlo average preserves its
+  expectation and decreases its variance. This is the conditional-expectation
+  argument behind Rao–Blackwellization, without a statistical sufficiency
+  requirement. For a serial Markov chain, a decrease in one-step variance
+  alone does not compare the full asymptotic variances of item 24.
 
-* **29. Partially linear regression.** Suppose
-  $Y=D^\top\beta+g(X)+\varepsilon$, $\mathbb E[\varepsilon\mid D,X]=0$,
-  and $\mathbb E[\varepsilon^2\mid D,X]=\sigma^2\in(0,\infty)$. Write
-  $V=D-\mathbb E[D\mid X]$ and assume $Q=\mathbb E[VV^\top]$ is positive
-  definite. Then
-  $$\beta=Q^{-1}\mathbb E[V(Y-\mathbb E[Y\mid X])].$$
-  In the model imposing the conditional mean restriction, with conditional
-  variance unrestricted away from the true law, the efficient influence
-  function at this homoscedastic law is $Q^{-1}V\varepsilon$, with
-  covariance $\sigma^2Q^{-1}$. Residualizing both $Y$ and $D$
-  and fitting least squares attains this bound under consistent nuisance
-  estimation and appropriate product-rate and moment conditions, using
-  cross-fitting as in item 28.
+### Exact simulation and variance reduction
 
-### Adaptation, missing information, and multiple imputation
+For a distribution function $F$ on $\mathbb R$, the **generalized inverse**
+is $F^-(u)=\inf\{x:F(x)\ge u\}$ for $u\in(0,1)$.
 
-An estimator is **adaptive** in a semiparametric model if it attains, at
-every law of the model, the information bound of the parametric submodel in
-which the nuisance parameter is known. Adaptation requires that the score for
-$\theta$ be orthogonal to the nuisance tangent space, so that the efficient
-score of item 14 equals the ordinary score.
+* **28. Inverse-transform sampling.** If $U$ is uniform on $(0,1)$, then
+  $F^-(U)$ has distribution function $F$, since $F^-(u)\le x$ exactly
+  when $u\le F(x)$. If $F$ is continuous and $X\sim F$, then $F(X)$ is
+  uniform on $(0,1)$.
 
-* **42. Adaptive estimation of a center of symmetry.** Let the observations
-  have density $\eta(x-\theta)$, where $\eta$ ranges over all densities
-  symmetric about zero that are absolutely continuous with finite Fisher
-  information $I_\eta=\int(\eta'/\eta)^2\eta$. Nuisance scores are functions
-  of $|x-\theta|$, while the location score $-(\eta'/\eta)(x-\theta)$ is odd
-  about $\theta$. Thus the efficient score is the ordinary score and the
-  efficient information is $I_\eta$. There are estimators $\hat\theta_n$, not
-  depending on $\eta$, such that
-  $$\sqrt n(\hat\theta_n-\theta)\Rightarrow N(0,I_\eta^{-1})$$
-  regularly at every such $\eta$. One construction starts from a discretized
-  $\sqrt n$-consistent location estimator. It then takes one Newton step
-  on an estimated efficient score, formed from a truncated kernel estimate
-  of $g'/g$ for the density $g$ of $|X_i-\theta|$, extended as an odd
-  function of $x-\theta$. If $\eta$ is only required to have median zero,
-  with a positive continuous density there, the information bound drops
-  to $4\eta(0)^2$, the bound for the median in items 27 and 30.
+* **29. Accept–reject sampling.** Let $f$ and $g$ be probability densities
+  with $f\le Mg$ for a constant $M\ge1$. Draw $Y\sim g$ and an independent
+  uniform $U$ on $(0,1)$, and accept $Y$ when $U\le f(Y)/(Mg(Y))$;
+  otherwise repeat independently. The accepted value has density $f$
+  exactly, each trial is accepted with probability $1/M$, and the number
+  of trials is geometric with mean $M$. If only an unnormalized
+  $\tilde f=Zf$ is known, with $\tilde f\le\tilde Mg$, the same rule with
+  $\tilde M$ in place of $M$ still produces exact draws from $f$, with
+  acceptance probability $Z/\tilde M$.
 
-For the EM iteration of item 16, let $\theta^*$ be an interior limit point
-at which the observed-data likelihood is twice differentiable and
-differentiation may be passed under the conditional expectations. Define
-the **complete information** $i_{\mathrm{com}}=-D^{20}Q(\theta^*\mid\theta^*)$,
-the **observed information** $i_{\mathrm{obs}}$ (minus the Hessian of the
-observed-data log-likelihood at $\theta^*$), and the **missing
-information** $i_{\mathrm{mis}}=i_{\mathrm{com}}-i_{\mathrm{obs}}$.
+* **30. Control and antithetic variates.** Let $Y$ and $C$ be
+  square-integrable functions of the same simulation draw, with
+  $\mathbb EC$ known and $\mathop{\mathrm{Var}}C>0$. For every $b$, the
+  variable $Y-b(C-\mathbb EC)$ has mean $\mathbb EY$; its variance is
+  minimized at $b^*=\mathop{\mathrm{Cov}}(Y,C)/\mathop{\mathrm{Var}}C$,
+  where it equals $(1-\rho^2)\mathop{\mathrm{Var}}Y$ with $\rho$ the
+  correlation of $Y$ and $C$. For antithetic sampling, let $U$ be uniform
+  on $(0,1)$ and let $h\in L^2(0,1)$ be monotone. Then
+  $\mathop{\mathrm{Cov}}(h(U),h(1-U))\le0$, so the unbiased average
+  $\tfrac12(h(U)+h(1-U))$ has variance at most
+  $\tfrac12\mathop{\mathrm{Var}}h(U)$, the variance obtained from two
+  independent draws.
 
-* **43. Missing information and the rate of EM.** The missing information is
-  the conditional covariance of the complete-data score given the observed
-  data, at $\theta^*$; hence $i_{\mathrm{mis}}$ is positive semidefinite. At a
-  stationary point, Louis's formula reads
-  $$i_{\mathrm{obs}}=i_{\mathrm{com}}
-  -\mathbb E_{\theta^*}\bigl[S_c(\theta^*)S_c(\theta^*)^\top\bigm|Y_{\mathrm{obs}}\bigr],$$
-  where $S_c$ is the complete-data score. If $i_{\mathrm{com}}$ and
-  $i_{\mathrm{obs}}$ are positive definite and the EM map $M$ is
-  differentiable at $\theta^*$, then
-  $$DM(\theta^*)=i_{\mathrm{com}}^{-1}i_{\mathrm{mis}}
-  =I-i_{\mathrm{com}}^{-1}i_{\mathrm{obs}}.$$
-  Its eigenvalues, the **fractions of missing information**, lie in $[0,1)$.
-  Iterates near $\theta^*$ converge linearly, with rate given by the
-  largest eigenvalue. EM is slow exactly when some parameter combination
-  is poorly informed by the observed data. Expanding the parameter space
-  so as to lower the fraction of missing information accelerates the
-  iteration.
+### Convergence of Markov chain samplers
 
-Let $Y_{\mathrm{mis}}^{(1)},\ldots,Y_{\mathrm{mis}}^{(D)}$ be independent draws
-from the posterior predictive law of the missing values given the observed
-data. For a scalar estimand, let $\hat\theta_d$ and $V_d$ be the
-complete-data posterior mean and variance computed from the $d$th completed
-data set. Put
-$\bar\theta=D^{-1}\sum_d\hat\theta_d$, $\bar V=D^{-1}\sum_dV_d$, and
-$B=(D-1)^{-1}\sum_d(\hat\theta_d-\bar\theta)^2$.
+* **31. Convergence of Metropolis–Hastings.** Suppose the chain of item 22 is $\pi$-irreducible. Then it is Harris recurrent, and for every
+  $h\in L^1(\pi)$ the averages $n^{-1}\sum_{t\le n}h(X_t)$ converge to
+  $\pi(h)$ almost surely from every starting point. If it is also
+  aperiodic, then $P^n(x,\cdot)\to\pi$ in total variation for every $x$,
+  as in CKMA SYNOPSIS08, item 68. Irreducibility holds if $q(x,y)>0$ for
+  all $x,y$ in the support of $\pi$, and aperiodicity holds if rejection
+  has positive probability. On $\mathbb R^d$, if the support of $\pi$ is
+  open and connected, $\pi$ is bounded and bounded away from zero on its
+  compact subsets, and $q(x,y)\ge\varepsilon$ whenever
+  $|x-y|<\delta$, for some $\varepsilon,\delta>0$, then the chain is
+  $\pi$-irreducible and aperiodic and every nonempty compact subset of
+  the support is small.
 
-* **44. Multiple-imputation combining rules.** The identities
-  $$\mathbb E(\theta\mid Y_{\mathrm{obs}})
-  =\mathbb E\bigl[\mathbb E(\theta\mid Y_{\mathrm{obs}},Y_{\mathrm{mis}})
-  \bigm|Y_{\mathrm{obs}}\bigr],$$
-  $$\mathop{\mathrm{Var}}(\theta\mid Y_{\mathrm{obs}})
-  =\mathbb E\bigl[\mathop{\mathrm{Var}}(\theta\mid Y_{\mathrm{obs}},Y_{\mathrm{mis}})
-  \bigm|Y_{\mathrm{obs}}\bigr]
-  +\mathop{\mathrm{Var}}\bigl[\mathbb E(\theta\mid Y_{\mathrm{obs}},Y_{\mathrm{mis}})
-  \bigm|Y_{\mathrm{obs}}\bigr]$$
-  are approximated by $\bar\theta$ and by the total variance
-  $T=\bar V+(1+D^{-1})B$. The factor $1+D^{-1}$ accounts for the finite
-  number of imputations. Rubin's rules use a $t$ reference distribution for
-  $(\theta-\bar\theta)/\sqrt T$ with
-  $$\nu=(D-1)\Bigl(1+\frac{D\bar V}{(D+1)B}\Bigr)^2$$
-  degrees of freedom. The ratio $(1+D^{-1})B/T$ estimates the fraction of
-  missing information of item 43. For a vector estimand the squared
-  deviations are replaced by outer products. The rules approximate a
-  posterior from a model in which imputer and analyst agree. Frequentist
-  validity has been shown for several imputation methods under
-  missingness at random. When the imputation model and the analysis model
-  are incompatible, the resulting intervals are usually, but not always,
-  conservative.
+* **32. Independence and random-walk samplers.** In the independence
+  sampler, $q(x,y)=g(y)$ for a density $g$. If $\pi\le Mg$ on the support of
+  $\pi$, then
+  $$\sup_A|P^n(x,A)-\pi(A)|\le(1-1/M)^n$$
+  for every $x$, so the chain is uniformly ergodic. If $\pi/g$ is not
+  essentially bounded, the chain is not geometrically ergodic. For a
+  random-walk sampler on $\mathbb R$, with symmetric positive increment
+  density, geometric ergodicity requires
+  $\int e^{s|x|}\pi(dx)<\infty$ for some $s>0$. If $\pi$ is symmetric
+  and log-concave in the tails, in the sense that
+  $\log\pi(x)-\log\pi(y)\ge a|y-x|$ for some $a>0$ and $x_1$ whenever
+  $x_1\le x<y$ or $y<x\le-x_1$, the chain is geometrically ergodic.
+
+* **33. Gibbs sampling as Metropolis–Hastings; two-stage samplers.**
+  Each coordinate update of item 23 is a Metropolis–Hastings step whose
+  proposal is the full conditional law, and its acceptance probability is
+  identically $1$. For a two-stage sampler on a pair $(X,Y)$, which
+  alternately draws $X$ given $Y$ and $Y$ given $X$, each of the two
+  marginal sequences is itself a Markov chain, reversible with respect to
+  its stationary marginal. If one marginal chain is ergodic, or
+  geometrically ergodic, so is the other. Under stationarity the
+  autocovariances $\mathop{\mathrm{Cov}}(h(X^{(0)}),h(X^{(t)}))$ are
+  nonnegative and nonincreasing in $t$ for every $h$ with finite
+  variance. Moreover, the conditional average
+  $T^{-1}\sum_{t\le T}\mathbb E[h(X)\mid Y^{(t)}]$ has variance no
+  larger than $T^{-1}\sum_{t\le T}h(X^{(t)})$ for every $T$. In this
+  two-stage setting the comparison left open in item 27 is therefore
+  resolved in favor of conditioning. When $X$ is a parameter and $Y$ is
+  missing data, the scheme is data augmentation.
+
+For a nonnegative integrable function $f_1$ proportional to $\pi$ on
+$\mathbb R^d$, the **slice sampler** alternates
+$U\mid X=x\sim\mathop{\mathrm{Unif}}(0,f_1(x))$ and
+$X\mid U=u\sim\mathop{\mathrm{Unif}}\{x:f_1(x)>u\}$, with the uniform law
+taken with respect to Lebesgue measure.
+
+* **34. Slice sampler.** Both steps leave invariant the uniform law on
+  $\{(x,u):0<u<f_1(x)\}$, whose first marginal is $\pi$, so the
+  $X$-sequence has stationary law $\pi$ and the normalizing constant of
+  $f_1$ is never needed. If $f_1$ is bounded and has bounded support, the
+  slice sampler is uniformly ergodic.
+
+Let $\pi(x)\propto\exp(-U(x))$ on $\mathbb R^d$ with $U$ continuously
+differentiable, let $M$ be positive definite, and put
+$H(x,p)=U(x)+\tfrac12p^\top M^{-1}p$. One **leapfrog step** of size
+$\varepsilon>0$ maps $(x,p)$ to $(x',p')$ through
+$p_{1/2}=p-\tfrac\varepsilon2\nabla U(x)$,
+$x'=x+\varepsilon M^{-1}p_{1/2}$, and
+$p'=p_{1/2}-\tfrac\varepsilon2\nabla U(x')$. Let $\Phi$ be the composition
+of $L$ such steps.
+
+* **35. Hamiltonian Monte Carlo.** The map $\Phi$ preserves Lebesgue
+  measure on $\mathbb R^{2d}$ and is reversible:
+  $\Phi(x,p)=(x',p')$ implies $\Phi(x',-p')=(x,-p)$. Draw
+  $p\sim N(0,M)$, compute $(x',p')=\Phi(x,p)$, and move to $x'$ with
+  probability
+  $$\min\bigl(1,\exp(H(x,p)-H(x',p'))\bigr),$$
+  remaining at $x$ otherwise. This kernel leaves $\pi$ invariant, because
+  it is a Metropolis–Hastings step for the joint density proportional to
+  $\exp(-H)$ with a measure-preserving involutive proposal, followed by
+  momentum refreshment. The exact Hamiltonian flow conserves $H$, so
+  rejections arise only from discretization error. Langevin-type
+  dynamics follow under the next heading.
+
+### Mean-field coordinate ascent
+
+* **36. Coordinate-ascent variational updates.** In item 25, restrict
+  $q=\prod_jq_j$ to a product over blocks $\theta=(\theta_1,\ldots,\theta_J)$.
+  With the factors $q_\ell$, $\ell\ne j$, held fixed, the evidence lower
+  bound is maximized over $q_j$ by
+  $$q_j^*(\theta_j)\propto\exp\Bigl(\mathbb E_{q_{-j}}\log p(y,\theta)\Bigr),$$
+  provided the right side is integrable, where $\mathbb E_{q_{-j}}$
+  averages over the other blocks. Indeed, as a function of $q_j$, the
+  evidence lower bound differs from
+  $-\mathop{\mathrm{KL}}(q_j\,\|\,q_j^*)$ by a constant. Cycling through
+  these updates therefore never decreases the evidence lower bound. The
+  mean-field problem is not convex in general, so the limit can be a
+  local optimum that depends on the initialization.
+
+### Langevin dynamics, sampling, and gradient flows
+
+Let $V:\mathbb R^d\to\mathbb R$ be smooth and confining with
+$\int e^{-V(x)}dx<\infty$, and let $\pi(dx)\propto e^{-V(x)}\,dx$.
+Assume the stochastic dynamics are well posed and nonexplosive and the
+integration-by-parts identities used below are justified.
+The **overdamped Langevin diffusion** is
+$$dX_t=-\nabla V(X_t)\,dt+\sqrt2\,dW_t.$$
+
+* **37. Invariant measure and gradient-flow structure.** The probability
+  $\pi$ is invariant for the diffusion. Its marginal flow is the
+  $W_2$ gradient flow of $\rho\mapsto\int\rho\log\rho+\int V\,d\rho$, and
+  therefore solves $\partial_t\rho=\Delta\rho+\nabla\cdot(\rho\nabla V)$.
+  That identification is CKMA SYNOPSIS39, item 62.
+
+* **38. Contraction under strong convexity.** If $\nabla^2V\ge mI$ for some
+  $m>0$, then
+  $$W_2(\mu_t,\pi)\le e^{-mt}W_2(\mu_0,\pi)$$
+  for the law $\mu_t$ of $X_t$. The same convexity makes the relative
+  entropy $m$-displacement-convex, so the $\mathrm{EVI}_m$ contraction of
+  CKMA SYNOPSIS39, item 59, applies.
+
+The **unadjusted Langevin algorithm** is the Euler–Maruyama discretization
+$$X_{(n+1)h}=X_{nh}-h\nabla V(X_{nh})+\sqrt{2h}\,\xi_{n+1},$$
+with $\xi_n$ standard normal. Write $\kappa=\beta/\alpha$ when
+$\alpha I\preceq\nabla^2V\preceq\beta I$ and $\alpha>0$.
+
+* **39. Iteration complexity of Langevin Monte Carlo.** Suppose
+  $\alpha I\preceq\nabla^2V\preceq\beta I$, $\alpha>0$, and
+  $\varepsilon\in(0,\sqrt d]$. A step size of order
+  $\varepsilon^2/(\beta d)$ gives
+  $\sqrt\alpha\,W_2(\hat\mu_{Nh},\pi)\le\varepsilon$ after
+  $$N=O\left(\frac{\kappa d}{\varepsilon^2}
+  \log\left(e+\frac{\alpha W_2^2(\hat\mu_0,\pi)}{\varepsilon^2}\right)\right)$$
+  iterations. The mixture of marginal laws
+  $\bar\mu=N^{-1}\sum_{j=N+1}^{2N}\hat\mu_{jh}$ satisfies
+  $\sqrt{\mathop{\mathrm{KL}}(\bar\mu\|\pi)}\le\varepsilon$,
+  with suitable constants. This is Chewi's Theorem 4.3.6.
+  The mixture is the law of a randomly selected iterate, not the law
+  of the arithmetic average of the iterates. A Metropolis–Hastings
+  correction of the Euler proposal instead has invariant measure $\pi$.
+
+Let $h:\mathbb R^p\to\mathbb R^p$ satisfy $h(\theta^\star)=0$, and let the
+recursion be
+$\theta_{n+1}=\theta_n-a_n\bigl(h(\theta_n)+M_{n+1}\bigr)$, where $M_{n+1}$
+is a martingale difference.
+
+* **40. Robbins–Monro convergence and averaging.** Suppose $h$ is
+  globally Lipschitz and
+  $(\theta-\theta^\star)\cdot h(\theta)\ge
+  m\|\theta-\theta^\star\|^2$ for $m>0$. For positive steps with
+  $\sum a_n=\infty$, $\sum a_n^2<\infty$, square-integrable initial
+  state, and uniformly bounded conditional noise second moments,
+  $\theta_n\to\theta^\star$ almost surely. More general ODE criteria
+  require bounded iterates and an attracting limiting invariant set.
+  For $a_n=n^{-\alpha}$, $1/2<\alpha<1$, suppose additionally that
+  $h$ has a locally Lipschitz derivative, $A=Dh(\theta^\star)$ has
+  eigenvalues with positive real part, conditional noise covariances
+  tend to $S$, and the noise satisfies a uniform conditional
+  $(2+\delta)$ moment bound. Then the averaged iterate satisfies
+  $$\sqrt n(\bar\theta_n-\theta^\star)
+  \Rightarrow N(0,A^{-1}SA^{-\top}).$$
+  With the sign convention $\dot\theta=-h(\theta)$, it is $-A$
+  that is Hurwitz. A nonnegative radial drift alone does not guarantee
+  convergence to the specified root.
+
+### Entropy and discretization bias
+
+* **41. Entropy dissipation of Langevin flow.** For smooth positive
+  densities with the needed integrability and boundary decay,
+  $$\frac d{dt}\mathop{\mathrm{KL}}(\rho_t\|\pi)
+  =-\int\|\nabla\log(\rho_t/\pi)\|^2\rho_t\,dx.$$
+  If $\pi$ satisfies the logarithmic Sobolev inequality
+  $\mathop{\mathrm{KL}}(\rho\|\pi)\le I(\rho\|\pi)/(2m)$,
+  then KL decays at least as $e^{-2mt}$. Strong convexity
+  $\nabla^2V\ge mI$ is a sufficient condition. Entropy dissipation
+  measures distributional error, whereas item 38 controls $W_2$.
+
+* **42. Exact Gaussian discretization bias.** For $V(x)=x^\top Ax/2$,
+  $A>0$, the diffusion has invariant law $N(0,A^{-1})$.
+  The unadjusted chain is stable for $0<h<2/\lambda_{\max}(A)$
+  and has invariant covariance
+  $$\Sigma_h=(A-\tfrac h2A^2)^{-1}.$$
+  This follows from the discrete covariance equation
+  $\Sigma_h=(I-hA)\Sigma_h(I-hA)+2hI$. At a fixed positive step,
+  running the chain longer does not remove this bias. The example
+  distinguishes time-discretization error from finite-time mixing error.
+
+### Variational time stepping and functional inequalities
+
+Write $\mathcal F(\rho)=\int\rho\log\rho\,dx+\int V\rho\,dx$, which differs
+from $\mathop{\mathrm{KL}}(\rho\|\pi)$ by a constant. For a time step
+$\tau>0$ and a probability density $\rho_0$, the **JKO scheme** sets
+$\rho_0^\tau=\rho_0$ and lets $\rho_{k+1}^\tau$ minimize
+$$\rho\mapsto\frac1{2\tau}W_2^2(\rho,\rho_k^\tau)+\mathcal F(\rho)$$
+over probability densities with finite second moment. Its piecewise-constant
+interpolation is $\rho^\tau(t)=\rho_k^\tau$ for $k\tau\le t<(k+1)\tau$.
+
+* **43. Jordan–Kinderlehrer–Otto theorem.** Let $V$ be smooth and
+  nonnegative with $\|\nabla V\|\le C(V+1)$, and let $\rho_0$ have
+  finite second moment and $\mathcal F(\rho_0)<\infty$. Then every step
+  of the JKO scheme has a unique minimizer. As $\tau\downarrow0$,
+  $\rho^\tau(t)$ converges weakly in $L^1$ for every $t\ge0$, and
+  strongly in $L^1((0,T)\times\mathbb R^d)$ for every $T$, to the unique
+  solution of $\partial_t\rho=\Delta\rho+\nabla\cdot(\rho\nabla V)$ with
+  initial datum $\rho_0$. Each step is an implicit Euler step in $W_2$ for
+  the relative entropy, so the law of the Langevin diffusion is obtained as
+  a limit of entropy minimizations. Here $\pi$ need not be normalizable;
+  the general metric version is CKMA SYNOPSIS39, items 57 and 61–62.
+
+The **chi-squared divergence** is
+$\chi^2(\mu\|\pi)=\mathop{\mathrm{Var}}_\pi(d\mu/d\pi)$ if $\mu\ll\pi$, and
+$+\infty$ otherwise. The target $\pi$ satisfies a **Poincaré inequality**
+with constant $C_P$ if $\mathop{\mathrm{Var}}_\pi f\le C_P\,\mathbb E_\pi\|\nabla f\|^2$
+for all smooth $f$, and a **logarithmic Sobolev inequality** with constant
+$C_{LS}$ if $\mathop{\mathrm{KL}}(\mu\|\pi)\le\tfrac{C_{LS}}2
+\mathbb E_\mu\|\nabla\log(d\mu/d\pi)\|^2$ for all smooth positive $\mu$.
+Item 41 is the case $C_{LS}=1/m$.
+
+* **44. Convergence of the Langevin diffusion under functional
+  inequalities.** Let $\mu_t$ be the law of $X_t$. The Poincaré
+  inequality with constant $C_P$ holds if and only if
+  $$\chi^2(\mu_t\|\pi)\le e^{-2t/C_P}\chi^2(\mu_0\|\pi)$$
+  for every initial law. The logarithmic Sobolev inequality with constant
+  $C_{LS}$ holds if and only if
+  $\mathop{\mathrm{KL}}(\mu_t\|\pi)\le e^{-2t/C_{LS}}
+  \mathop{\mathrm{KL}}(\mu_0\|\pi)$ for every initial law, and it then
+  also gives
+  $W_2^2(\mu_t,\pi)\le2C_{LS}e^{-2t/C_{LS}}\mathop{\mathrm{KL}}(\mu_0\|\pi)$
+  by the Otto–Villani inequality, CKMA SYNOPSIS14, item 57. The logarithmic
+  Sobolev inequality implies the Poincaré inequality with $C_P\le C_{LS}$.
+  Neither requires convexity: if $V=V_0+\psi$ with $\nabla^2V_0\ge mI$,
+  $m>0$, and $\psi$ bounded, then both hold with constant at most
+  $e^{\sup\psi-\inf\psi}/m$, by CKMA SYNOPSIS14, items 38 and 48.
+  For a point-mass or otherwise concentrated start, $\chi^2(\mu_0\|\pi)$
+  typically grows exponentially in $d$, while
+  $\mathop{\mathrm{KL}}(\mu_0\|\pi)$ grows only polynomially; this is why
+  sampling bounds are usually stated under the logarithmic Sobolev
+  inequality.
+
+### Unadjusted, stochastic-gradient, and Metropolis-adjusted Langevin
+
+Let $\hat\mu_{nh}$ denote the law of the $n$-th iterate of the unadjusted
+Langevin algorithm above. The potential is **$\beta$-smooth** if $\nabla V$
+is $\beta$-Lipschitz.
+
+* **45. Langevin Monte Carlo under a logarithmic Sobolev inequality.**
+  Suppose $\pi$ satisfies the logarithmic Sobolev inequality with
+  constant $1/\alpha$ and $V$ is $\beta$-smooth; $V$ need not be convex.
+  For $0<h\le1/(4\beta)$ and all $N$,
+  $$\mathop{\mathrm{KL}}(\hat\mu_{Nh}\|\pi)\le
+  e^{-\alpha Nh}\mathop{\mathrm{KL}}(\hat\mu_0\|\pi)
+  +O\!\left(\frac{\beta^2dh}\alpha\right)$$
+  (Vempala–Wibisono). With $\kappa=\beta/\alpha$ and a step of order
+  $\varepsilon^2/(\beta\kappa d)$, one gets
+  $\mathop{\mathrm{KL}}(\hat\mu_{Nh}\|\pi)\le\varepsilon^2$ after
+  $N=O(\kappa^2d\varepsilon^{-2}\log(\mathop{\mathrm{KL}}(\hat\mu_0\|\pi)/\varepsilon^2))$
+  iterations. If instead $0\prec\alpha I\preceq\nabla^2V\preceq\beta I$
+  and $h$ is small compared with $1/(\beta\kappa)$, a synchronous coupling
+  gives
+  $$W_2(\hat\mu_{Nh},\pi)\le e^{-\alpha Nh/2}W_2(\hat\mu_0,\pi)
+  +O\!\left(\frac{\beta\sqrt{dh}}\alpha\right).$$
+  In both bounds the second term is a bias that persists as
+  $N\to\infty$ at fixed $h$, as in item 42.
+
+A **stochastic gradient oracle** returns, at each query point $x$ and with
+fresh randomness, a vector $\widehat{\nabla V}(x)$ with
+$\mathbb E\widehat{\nabla V}(x)=\nabla V(x)$ and
+$\mathbb E\|\widehat{\nabla V}(x)-\nabla V(x)\|^2\le\sigma^2$; a minibatch
+gradient of a sum over data points is the typical case. **Stochastic
+gradient Langevin dynamics** replaces $\nabla V$ by
+$\widehat{\nabla V}$ in the unadjusted Langevin algorithm.
+
+* **46. Stochastic gradient Langevin dynamics.** The one-step mean of the
+  stochastic-gradient update equals that of the exact-gradient update, so
+  the weak local error is unchanged; the strong local error acquires an
+  additional term of order $\sigma h$. Under
+  $0\prec\alpha I\preceq\nabla^2V\preceq\beta I$, a step size of suitable
+  order gives $\sqrt\alpha\,W_2(\hat\mu_{Nh},\pi)\le\varepsilon$ after
+  $$N=\tilde O\!\left(\frac{\kappa^2d}{\varepsilon^2}
+  +\frac{\sigma^2}{\alpha\varepsilon^2}\right)$$
+  iterations. The second term is the strongly convex stochastic-gradient
+  rate. At fixed step the gradient noise adds a further bias; the original
+  proposal of Welling and Teh uses decreasing steps, as in stochastic
+  approximation (item 40).
+
+The **Metropolis-adjusted Langevin algorithm** (MALA) uses the
+unadjusted step $y=x-h\nabla V(x)+\sqrt{2h}\,\xi$ as the proposal of the
+Metropolis–Hastings algorithm of item 22, with proposal density
+$q(x,y)\propto\exp(-\|y-x+h\nabla V(x)\|^2/(4h))$. Its kernel leaves $\pi$
+invariant for every $h>0$, so it has no discretization bias. The random-walk
+Metropolis algorithm uses $y=x+\sqrt{2h}\,\xi$ instead. A start $\mu_0$ is
+**warm** if $\chi^2(\mu_0\|\pi)=O(1)$.
+
+* **47. Mixing and scaling of Metropolis-adjusted Langevin.** Suppose
+  $0\prec\alpha I\preceq\nabla^2V\preceq\beta I$ and $\kappa=\beta/\alpha$.
+  From a warm start and with suitably tuned $h$, MALA reaches total
+  variation $\varepsilon$ after $\tilde O(\kappa d^{1/2}\mathop{\mathrm{polylog}}(1/\varepsilon))$
+  iterations. From the cold start $N(x^\star,\beta^{-1}I)$, with $x^\star$
+  the minimizer of $V$, it needs $\tilde O(\kappa d\mathop{\mathrm{polylog}}(1/\varepsilon))$
+  iterations, as does random-walk Metropolis. The warm-start dimension
+  dependence is sharp: for every $h$ there are such targets and warm starts
+  requiring $\tilde\Omega(\kappa\sqrt d\log(1/\varepsilon))$ iterations.
+  The dependence on $\varepsilon$ is polylogarithmic, in contrast with the
+  polynomial dependence of items 39 and 45. In the older asymptotic theory,
+  for product targets $\pi_d=f^{\otimes d}$ with smooth $\log f$ and a
+  stationary start, random-walk proposals of variance $\ell^2/d$ give, after
+  speeding up time by $d$, a Langevin diffusion limit for each coordinate,
+  with efficiency maximized at asymptotic acceptance rate about $0.234$
+  (Roberts–Gelman–Gilks). For MALA the corresponding step is
+  $h=\ell^2d^{-1/3}$ and the optimal acceptance rate is about $0.574$
+  (Roberts–Rosenthal). These scaling limits presuppose stationarity and
+  product structure; they are not mixing-time bounds.
+
+### Kinetic Langevin dynamics
+
+The **underdamped**, or kinetic, **Langevin diffusion** with friction
+$\gamma>0$ is
+$$dX_t=P_t\,dt,\qquad dP_t=-\nabla V(X_t)\,dt-\gamma P_t\,dt+\sqrt{2\gamma}\,dW_t$$
+on $\mathbb R^{2d}$. Hamiltonian Monte Carlo, which refreshes the momentum
+at discrete times, is item 35; the kinetic diffusion
+refreshes it continuously.
+
+* **48. Invariance, contraction, and hypocoercivity.** The probability
+  $\boldsymbol\pi(dx\,dp)\propto e^{-V(x)-\|p\|^2/2}\,dx\,dp=\pi\otimes N(0,I)$
+  is invariant, and its $x$-marginal is $\pi$. The process is not
+  reversible: the law solves
+  $$\partial_t\boldsymbol\pi_t=\nabla\cdot\left(\boldsymbol\pi_t\,J_\gamma
+  \nabla\log\frac{\boldsymbol\pi_t}{\boldsymbol\pi}\right),\qquad
+  J_\gamma(a,b)=(-b,\;a+\gamma b),$$
+  where $J_\gamma$ acts on the pair of $x$- and $p$-gradients. This is
+  a damped Hamiltonian flow of the relative entropy rather than its $W_2$
+  gradient flow. Since the noise acts on $p$ only, Poincaré and logarithmic
+  Sobolev inequalities do not give decay directly. If
+  $0\prec\alpha I\preceq\nabla^2V\preceq\beta I$ and
+  $\gamma\ge\sqrt{2\beta}$, two copies driven by the same Brownian motion
+  contract at rate $\alpha/\gamma$ in the norm
+  $\|x\|^2+\|x+2p/\gamma\|^2$. If $\pi$ satisfies a Poincaré inequality
+  with constant $1/\alpha$, $V$ is $\beta$-smooth, and
+  $\gamma=c_0\sqrt\beta$, then the relative density $f_t=d\boldsymbol\pi_t/d\boldsymbol\pi-1$
+  satisfies
+  $$\|f_t\|^2+\tfrac1\beta\|\nabla_xf_t\|^2+\|\nabla_pf_t\|^2
+  \le Ce^{-c\alpha t/\sqrt\beta}\bigl(\|f_0\|^2+\tfrac1\beta\|\nabla_xf_0\|^2
+  +\|\nabla_pf_0\|^2\bigr)$$
+  in $L^2(\boldsymbol\pi)$, with $c$ depending only on $c_0$ and $C$
+  universal. A logarithmic Sobolev inequality gives the same rate for
+  relative entropy plus a twisted Fisher information. This is the
+  hypocoercive mechanism of CKMA SYNOPSIS34, item 75, in a confining
+  potential.
+
+### The ordinary differential equation method
+
+For the recursion of item 40, the **limiting equation** is
+$\dot\theta=-h(\theta)$, with flow $\Phi_t$. A compact set $A$ is
+**invariant** if $\Phi_t(A)=A$ for all real $t$. It is **internally chain
+transitive** if, in addition, for all $x,y\in A$ and all
+$\varepsilon,T>0$ there are points $x_0,\ldots,x_n=y$ in $A$ with
+$\|x_0-x\|<\varepsilon$ such that the trajectory from each $x_i$ enters
+the $\varepsilon$-neighbourhood of $x_{i+1}$ after a time at least $T$.
+
+* **49. Benaïm's limit-set theorem.** Suppose $h$ is globally Lipschitz,
+  $a_n>0$, $\sum a_n=\infty$, $\sum a_n^2<\infty$, $(M_n)$ is a
+  martingale difference sequence with respect to
+  $\mathcal F_n=\sigma(\theta_0,M_1,\ldots,M_n)$ satisfying
+  $\mathbb E[\|M_{n+1}\|^2\mid\mathcal F_n]\le K(1+\|\theta_n\|^2)$, and
+  $\sup_n\|\theta_n\|<\infty$ almost surely. Then almost surely $\theta_n$
+  converges to a, possibly sample-path-dependent, compact connected
+  internally chain transitive invariant set of the limiting equation.
+  Consequently, if $U\ge0$ is continuously differentiable,
+  $U(\theta)\to\infty$ as $\|\theta\|\to\infty$, the set
+  $H=\{U=0\}$ is nonempty, and $\langle h,\nabla U\rangle\ge0$ with
+  equality exactly on $H$, then $\theta_n$ converges to a subset of $H$.
+  If the only internally chain transitive invariant sets are isolated
+  equilibria, $\theta_n$ converges to an equilibrium. The interpolated
+  iterates track trajectories of the limiting equation on every finite
+  time window, which is the ordinary differential equation method of
+  Kushner–Clark and Ljung.
+
+* **50. Stability by the scaling limit.** Suppose the hypotheses of item 49 other than boundedness hold. Suppose further that
+  $h_c(\theta)=h(c\theta)/c$ converges, as $c\to\infty$, uniformly on
+  compact sets to a limit $h_\infty$, and that the origin is the unique
+  globally asymptotically stable equilibrium of
+  $\dot\theta=-h_\infty(\theta)$. Then $\sup_n\|\theta_n\|<\infty$ almost
+  surely, so the conclusion of item 49 holds (Borkar–Meyn). For example,
+  if $h(\theta)=A\theta+b+o(\|\theta\|)$ with $-A$ Hurwitz, then
+  $h_\infty(\theta)=A\theta$. Boundedness of the iterates is otherwise not
+  automatic.
+
+### Particle methods, data assimilation, and training dynamics
+
+Let $b(x,\mu)$ be a Lipschitz drift on $\mathbb R^d\times\mathcal P_1$.
+The **McKean–Vlasov equation** is the law of
+$d\bar X_t=b(\bar X_t,\mathop{\mathrm{Law}}(\bar X_t))\,dt+dW_t$. The
+$N$-particle system uses the same drift evaluated at the empirical measure
+of the $N$ particles.
+
+* **51. Propagation of chaos.** Assume a drift globally Lipschitz in
+  position and in $W_1$ of the measure, independent Brownian drivers,
+  and independent identically distributed initial states with finite
+  second moment, independent of those drivers. The limiting equation
+  and particle systems are well posed. On every fixed finite time
+  interval, the joint path law of any fixed $k$ particles converges to
+  the $k$-fold product of the McKean–Vlasov path law as $N\to\infty$.
+  The initial independence can be replaced by an appropriate chaotic
+  initial sequence. Fixed-time chaos alone is not a statement uniform
+  over arbitrarily long time horizons.
+
+In a linear-Gaussian state-space model, the **ensemble Kalman** update
+replaces the forecast covariance in the Kalman gain by the covariance of a
+finite ensemble.
+
+* **52. Ensemble Kalman limit.** In a linear-Gaussian model with
+  independent forecast noises and independent Gaussian initial ensemble,
+  the perturbed-observation update
+  $$X_i^a=X_i^f+K_N(y+\eta_i-HX_i^f),\qquad
+  \eta_i\sim N(0,R),$$
+  with $K_N=C_NH^\top(HC_NH^\top+R)^{-1}$ and $R>0$, converges at
+  each fixed assimilation time to the Kalman analysis law as $N\to\infty$.
+  A properly constructed square-root update has the same limiting
+  mean and covariance. Updating all forecast particles against the same
+  unperturbed observation without a covariance correction does not have
+  the correct analysis covariance. For nonlinear models, an infinite
+  ensemble does not in general give the exact Bayesian filter.
+
+Consider a two-layer network whose parameters are $N$ particles and whose
+prediction at a feature $x$ is an average of ridge functions of those
+particles. Under a $1/N$ scaling of the output weights, gradient descent on
+the empirical risk induces a flow on the empirical measure of the particles.
+
+* **53. Mean-field training.** Write
+  $f_\rho(x)=\int\phi(x,\theta)\,\rho(d\theta)$ and
+  $\mathcal R(\rho)=\mathbb E L(Y,f_\rho(X))$ for a fixed data law.
+  For $N$ particles and the time scaling
+  $\dot\theta_i=-N\nabla_{\theta_i}\mathcal R(\rho_N)$,
+  assume smooth bounded Lipschitz interaction derivatives, compactly
+  supported independent initialization, and well-posed characteristic
+  flows on the time interval considered. Then $\rho_N$ converges on
+  each finite time interval to
+  $$\partial_t\rho=\nabla\cdot
+  \left(\rho\nabla_\theta\frac{\delta\mathcal R}{\delta\rho}\right).$$
+  An empirical data law gives empirical risk in this limit; a population
+  law gives population risk. Global convergence of the risk is a separate
+  theorem requiring further assumptions. Positive homogeneity and an
+  initialization with full support alone do not establish it.
+
+**Stein variational gradient descent** evaluates a kernel velocity at
+particle locations. Its variational derivation differentiates the
+Kullback–Leibler divergence of a smooth density under transport;
+the KL divergence of a finite atomic measure from a positive continuous
+target is infinite and is not the differentiable objective.
+
+* **54. Stein variational flow.** For a smooth density $\rho$, a smooth
+  positive target density $\pi$, and a differentiable scalar kernel $k$,
+  with integrable terms and vanishing integration-by-parts boundary terms,
+  the RKHS descent velocity is
+  $$v_\rho(x)=\int[k(y,x)\nabla\log\pi(y)+\nabla_y k(y,x)]\rho(y)\,dy
+  =\int k(y,x)(\nabla\log\pi(y)-\nabla\log\rho(y))\rho(y)\,dy.$$
+  Along $\partial_t\rho=-\nabla\cdot(\rho v_\rho)$,
+  $$\frac d{dt}\mathop{\mathrm{KL}}(\rho\|\pi)
+  =-\|v_\rho\|_{\mathcal H^d}^2.$$
+  This is a kernel-dependent transport geometry; it is not in general
+  the ordinary $W_2$ gradient flow of KL. Replacing the integrals by
+  particle sums defines the finite-particle update without assigning
+  finite KL to the empirical measure.
+
+A **particle filter** approximates the filter of a hidden Markov model by a
+weighted system of particles, resampled according to the incremental
+likelihood weights. The underlying unnormalized measures are the
+Feynman–Kac measures of CKMA SYNOPSIS08, item 36.
+
+* **55. Consistency of the particle filter.** If the observation potentials
+  are bounded and bounded away from zero, then at each fixed time the
+  particle approximation of the filter converges in probability to the true
+  filter as the number of particles tends to infinity.
+
+### Quantitative chaos and nonlinear filtering
+
+* **56. A quantitative interaction model.** Suppose
+  $b(x,\mu)=b_0(x)+\int K(x,y)\,\mu(dy)$, where $b_0$ is globally
+  Lipschitz and $K$ is bounded and globally Lipschitz. Couple the
+  particles with independent nonlinear copies using the same initial
+  values and Brownian motions. For every finite $T$,
+  $$\mathbb E\sup_{t\le T}\|X_t^{i,N}-\bar X_t^i\|^2\le C_T/N.$$
+  The bound follows from the variance of an empirical interaction and
+  Grönwall's inequality. Its constant can grow with $T$; a uniform-time
+  bound needs additional dissipativity or contractivity.
+
+* **57. Prediction and Bayesian correction.** For a hidden Markov model,
+  let $M_t$ be the state transition kernel and
+  $G_t(x)=p(y_t\mid x)>0$ the likelihood of the observed datum.
+  The exact filtering probabilities obey
+  $$\eta_t^- =\eta_{t-1}M_t,\qquad
+  \eta_t(f)=\frac{\eta_t^-(G_tf)}{\eta_t^-(G_t)}.$$
+  The data likelihood satisfies
+  $Z_t=Z_{t-1}\eta_t^-(G_t)$, $Z_0=1$.
+  For nonlinear or non-Gaussian models this recursion acts on entire
+  measures, even when a Gaussian approximation only tracks moments.
+
+* **58. Unbiased particle likelihood.** In a bootstrap particle filter
+  with conditionally unbiased resampling, let $X_t^{i,-}$ be the
+  predicted particles and set
+  $$\hat Z_t=\prod_{s=1}^t
+  \left(\frac1N\sum_{i=1}^NG_s(X_s^{i,-})\right).$$
+  Then $\mathbb E\hat Z_t=Z_t$, even though the normalized particle
+  estimate of $\eta_t(f)$ is generally biased at finite $N$.
+  With bounded positive potentials bounded away from zero and fixed
+  $t$, its mean squared error for bounded $f$ is at most
+  $C_t\|f\|_\infty^2/N$. Uniformity in $t$ requires additional mixing
+  assumptions. The likelihood statement conditions on the observed data
+  and averages over the particle system's randomness.
+
+### Fluctuations, stability, and resampling of particle filters
+
+In the indexing of Del Moral, let $(X_n)_{n\ge0}$ be a Markov chain with
+initial law $\eta_0$ and kernels $M_n$, and let $G_n>0$ be bounded
+potentials. Put
+$$\gamma_n(f)=\mathbb E\Bigl[f(X_n)\prod_{p=0}^{n-1}G_p(X_p)\Bigr],\qquad
+\eta_n=\gamma_n/\gamma_n(1),$$
+$$Q_{p,n}f(x)=\mathbb E\Bigl[f(X_n)\prod_{q=p}^{n-1}G_q(X_q)\Bigm|X_p=x\Bigr].$$
+With $G_p(x)=p(y_p\mid x)$, $\eta_n$ is the one-step predictor $\eta_n^-$
+of item 57 and $\gamma_n(1)$ is the likelihood of $y_0,\ldots,y_{n-1}$. The
+**bootstrap particle model** draws $\xi_0^1,\ldots,\xi_0^N$ independently
+from $\eta_0$ and, given generation $n-1$, draws generation $n$
+independently from $\sum_iG_{n-1}(\xi_{n-1}^i)M_n(\xi_{n-1}^i,\cdot)\big/
+\sum_iG_{n-1}(\xi_{n-1}^i)$; that is, multinomial selection followed by
+mutation. Write $\eta_n^N$ for the empirical measure of generation $n$ and
+$\gamma_n^N(1)=\prod_{p<n}\eta_p^N(G_p)$, the estimator of item 58.
+
+* **59. Central limit theorem for Feynman–Kac particle models.**
+  Suppose $\inf_xG_p(x)>0$ for every $p$. For bounded measurable $f$ and
+  fixed $n$, as $N\to\infty$,
+  $$\sqrt N\bigl(\eta_n^N(f)-\eta_n(f)\bigr)\Rightarrow
+  N\bigl(0,\sigma_n^2(f)\bigr),\qquad
+  \sigma_n^2(f)=\sum_{p=0}^n
+  \frac{\eta_p\bigl([Q_{p,n}(f-\eta_nf)]^2\bigr)}{\eta_p(Q_{p,n}1)^2},$$
+  and
+  $$\sqrt N\left(\frac{\gamma_n^N(1)}{\gamma_n(1)}-1\right)\Rightarrow
+  N\left(0,\sum_{p=0}^{n}\left[\frac{\eta_p\bigl((Q_{p,n}1)^2\bigr)}
+  {\eta_p(Q_{p,n}1)^2}-1\right]\right).$$
+  Each summand is the variance contributed by the sampling at
+  generation $p$, propagated to time $n$ by the normalized semigroup.
+  Without further assumptions these asymptotic variances may grow
+  exponentially in $n$.
+
+* **60. Uniform-in-time particle approximation.** Suppose there are
+  $\varepsilon_G,\varepsilon_M\in(0,1]$ such that, for all $n$ and all
+  $x,x'$,
+  $$G_n(x)\ge\varepsilon_GG_n(x'),\qquad
+  M_n(x,\cdot)\ge\varepsilon_MM_n(x',\cdot).$$
+  Then for every $p\ge1$ there is $c_p<\infty$ such that
+  $$\sup_{n\ge0}\ \sup_{\mathop{\mathrm{osc}}(f)\le1}
+  \sqrt N\,\Bigl(\mathbb E\bigl|\eta_n^N(f)-\eta_n(f)\bigr|^p\Bigr)^{1/p}
+  \le\frac{c_p}{\varepsilon_M^2\varepsilon_G},$$
+  where $\mathop{\mathrm{osc}}(f)=\sup f-\inf f$. The mixing hypothesis
+  makes the normalized Feynman–Kac semigroup forget its initial condition
+  geometrically, and this forgetting stops the local sampling errors from
+  accumulating. The second hypothesis holds, for instance, for a kernel
+  with density bounded above and below on a compact state space; it fails
+  for most noncompact state spaces, where time-uniform results require
+  localized or Lyapunov-type versions.
+
+A resampling step maps weighted particles $(x_i,w_i)$, with
+$\sum_iw_i=1$, to $N$ equally weighted particles in which $x_i$ appears
+$m_i$ times. It is **unbiased** if $\mathbb E[m_i\mid x,w]=Nw_i$.
+**Multinomial resampling** draws $(m_i)$ from the multinomial law with
+$N$ trials and probabilities $w_i$. **Residual resampling** keeps
+$\lfloor Nw_i\rfloor$ copies of $x_i$ and allocates the remaining
+$R=N-\sum_i\lfloor Nw_i\rfloor$ copies multinomially with probabilities
+proportional to $Nw_i-\lfloor Nw_i\rfloor$. **Systematic resampling** uses
+the single uniform $U$ and
+$m_i=\lfloor N(w_1+\cdots+w_i)+U\rfloor-\lfloor N(w_1+\cdots+w_{i-1})+U\rfloor$.
+
+* **61. Unbiased resampling and variance.** Multinomial, residual, and
+  systematic resampling are unbiased, so the resampled average
+  $N^{-1}\sum_im_if(x_i)$ has conditional mean $\sum_iw_if(x_i)$. Its
+  conditional variance under multinomial resampling is
+  $N^{-1}\mathop{\mathrm{Var}}_w(f)$, where
+  $\mathop{\mathrm{Var}}_w(f)=\sum_iw_if(x_i)^2-(\sum_iw_if(x_i))^2$.
+  Under residual resampling it is
+  $RN^{-2}\mathop{\mathrm{Var}}_{\bar w}(f)$, where $\bar w$ are the
+  normalized residual weights. Since $w$ is the mixture of the retained
+  weights and $\bar w$ with weight $R/N$ on $\bar w$, this is never larger
+  than the multinomial variance, for every $f$. Systematic resampling uses
+  less randomness but has no general variance ordering with respect to
+  multinomial resampling. Any unbiased scheme preserves the unbiasedness
+  of item 58.
+
+### Variational data assimilation
+
+Consider the **stochastic dynamics model**
+$v_{j+1}=\Psi(v_j)+\xi_j$, $v_0\sim N(m_0,C_0)$, with observations
+$y_{j+1}=h(v_{j+1})+\eta_{j+1}$, $j=0,\ldots,J-1$, where
+$\xi_j\sim N(0,\Sigma)$, $\eta_{j+1}\sim N(0,\Gamma)$, $C_0,\Sigma,\Gamma>0$,
+and all of these are independent. Write $|a|_C^2=a^\top C^{-1}a$ and, for a
+path $v=(v_0,\ldots,v_J)$,
+$$I(v;y)=\tfrac12|v_0-m_0|_{C_0}^2+\sum_{j=0}^{J-1}
+\Bigl(\tfrac12|v_{j+1}-\Psi(v_j)|_\Sigma^2
++\tfrac12|y_{j+1}-h(v_{j+1})|_\Gamma^2\Bigr).$$
+**Weak-constraint 4DVAR** minimizes $I(\cdot;y)$. **Strong-constraint
+4DVAR** imposes the deterministic dynamics $v_{j+1}=\Psi(v_j)$ and minimizes
+$I_{\det}(v_0;y)=\tfrac12|v_0-m_0|_{C_0}^2
++\sum_j\tfrac12|y_{j+1}-h(\Psi^{(j+1)}(v_0))|_\Gamma^2$
+over the initial state only. **3DVAR** is the filter that, at each step,
+minimizes the analogous one-step objective with a fixed model covariance.
+
+* **62. 4DVAR as maximum a posteriori estimation.** The smoothing
+  posterior of $v$ given $y$ has Lebesgue density proportional to
+  $\exp(-I(v;y))$, and in the deterministic model the posterior of $v_0$
+  has density proportional to $\exp(-I_{\det}(v_0;y))$. If $\Psi$ and $h$
+  are continuously differentiable, each infimum is attained, and for all
+  $u_1,u_2$
+  $$\lim_{\delta\to0}\frac{\mathbb P(B(u_1,\delta)\mid y)}
+  {\mathbb P(B(u_2,\delta)\mid y)}=\exp\bigl(I(u_2;y)-I(u_1;y)\bigr),$$
+  with the analogous statement for $I_{\det}$. Thus the 4DVAR minimizers
+  are exactly the posterior modes in the small-ball sense. For linear
+  $\Psi$ and $h$ the posterior is Gaussian and the minimizer is the
+  Kalman smoother mean; in nonlinear models the mode and mean differ in
+  general, and the minimizer carries no uncertainty quantification. The
+  objective of strong-constraint 4DVAR is often harder to minimize for
+  chaotic dynamics, despite its lower dimension.
 
 <a id="synopsis-104c"></a>
 
-## 104C. Robust Statistics
+## 104C. Score Matching, Diffusion Generative Models, and Schrödinger Bridges
 
-For a functional $T$ defined on a neighborhood of a distribution $F$, the
-**influence function** at $x$ is
-$$\mathop{\mathrm{IF}}(x;T,F)
-=\lim_{\varepsilon\downarrow0}
-\frac{T((1-\varepsilon)F+\varepsilon\delta_x)-T(F)}{\varepsilon},$$
-when the limit exists. The **gross-error sensitivity** is the supremum of
-$|\mathop{\mathrm{IF}}(x;T,F)|$ over $x$. The finite-sample **breakdown
-point** of an estimator at a sample is the smallest fraction of the sample
-that can be replaced so that the estimator becomes arbitrarily large or
-otherwise leaves every compact set of the parameter space.
+Let the forward diffusion on $[0,T]$ be
+$$dX_t=f(t,X_t)\,dt+g(t)\,dW_t,$$
+with $g(t)$ invertible, and write $p_t$ for the law of $X_t$. The **time
+reversal** is $Y_t=X_{T-t}$.
 
-* **18. M-estimators and the Huber minimax property.** An $M$-functional of
-  location defined by $\int\psi(x-\theta)\,dF(x)=0$, with $\psi$ odd and
-  $\int\psi'\,dF\neq0$, has influence function
-  $\psi(x-\theta)/\int\psi'\,dF$. For a location sample its estimator is
-  asymptotically normal with variance
-  $\mathbb E\psi(X-\theta)^2/(\mathbb E\psi'(X-\theta))^2$, under the
-  standard Lipschitz and nondegeneracy conditions of SYNOPSIS103, item 4.
-  Among Fisher-consistent location functionals whose gross-error sensitivity
-  at the standard normal law is at most a prescribed bound, the asymptotic
-  variance at that law is minimized by Huber's clipped score
-  $\psi_k(u)=\max(-k,\min(k,u))$ for a clip $k$ determined by the bound.
-  The same score is minimax for asymptotic variance over
-  $\varepsilon$-contamination neighborhoods of the normal law.
+* **63. Anderson's time reversal and the probability-flow equation.** Under
+  smoothness, nonexplosion, ellipticity, and integrability hypotheses
+  for time reversal, with smooth positive marginal densities and
+  well-posed reverse dynamics,
+  $$
+  dY_t=\Bigl(-f(T-t,Y_t)+g(T-t)g(T-t)^\top\nabla\log p_{T-t}(Y_t)\Bigr)dt
+  +g(T-t)\,d\bar W_t.
+  $$
+  The ordinary differential equation with the same drift except for a factor
+  $\tfrac12$ on the score correction has, at each time, the same marginal
+  law as $Y_t$.
 
-* **19. Breakdown points.** The sample mean has replacement breakdown
-  point $1/n$ at a sample of size $n$, tending to zero as $n\to\infty$. The
-  sample median of a one-dimensional sample of size $n=2m+1$ has breakdown
-  point $(m+1)/n$, which tends to $1/2$. Ordinary least squares has
-  breakdown point $1/n$. The least-median-of-squares regression estimator
-  has breakdown point that tends to $1/2$ as $n\to\infty$ with the number of
-  covariates fixed.
+For a smooth positive density $q_\theta$ with the same support as a data
+density $p$, the **Hyvärinen objective** is
+$$\int\Bigl(\tfrac12\|\nabla\log q_\theta\|^2+\Delta\log q_\theta\Bigr)\,dp.$$
 
-* **30. Influence of a median and a contamination bound.** If $F$ has
-  unique median $m$ and a positive continuous density there, the median
-  functional has influence function
-  $$\frac{1/2-1_{\{x\le m\}}}{f(m)},\qquad x\ne m.$$
-  Its asymptotic variance is $1/(4f(m)^2)$ and its gross-error sensitivity
-  is $1/(2f(m))$. For $G=(1-\varepsilon)F+\varepsilon H$,
-  $0\le\varepsilon<1/2$, with continuous strictly increasing $F$, every
-  median of $G$ lies between
-  $$F^{-1}\left(\frac{1/2-\varepsilon}{1-\varepsilon}\right)
-  \quad\hbox{and}\quad
-  F^{-1}\left(\frac{1/2}{1-\varepsilon}\right).$$
-  Extreme contaminating distributions approach these bounds. Bounded
-  local influence and a positive breakdown point describe different
-  aspects of robustness.
+* **64. Score matching.** If the boundary terms from integration by parts
+  vanish, the Hyvärinen objective equals
+  $\tfrac12\int\|\nabla\log q_\theta-\nabla\log p\|^2\,dp$ up to a constant
+  free of $\theta$. If $Y=X+\sigma\varepsilon$ with $\varepsilon$ standard
+  normal and independent of $X$, the regression target $-\varepsilon/\sigma=-(Y-X)/\sigma^2$
+  has conditional expectation $\nabla\log p_\sigma(Y)$, where $p_\sigma$ is
+  the law of $Y$. The population minimizer of the corresponding least-squares
+  objective is therefore the score of the smoothed density.
 
-### Von Mises expansions and regression $M$-estimators
+A **diffusion generative model** runs a forward noising process from the
+data law toward a simple reference law, estimates the score along that
+process, and generates a sample by the reverse equation of item 63, or by
+its probability-flow equation, with the estimated score in place of
+$\nabla\log p_t$.
 
-* **45. Influence function and asymptotic variance.** Let $T$ be defined on
-  distribution functions on $\mathbb R$. Suppose $T$ is Hadamard
-  differentiable at $F$ for the supremum norm, with a derivative $T_F'$ that
-  is a continuous linear map on all bounded functions. Then the influence
-  function is $\mathop{\mathrm{IF}}(x;T,F)=T_F'(1_{[x,\infty)}-F)$, it has mean
-  zero under $F$, and, by SYNOPSIS103, item 26, and linearity of $T_F'$,
-  $$\sqrt n\bigl(T(F_n)-T(F)\bigr)
-  =\frac1{\sqrt n}\sum_{i=1}^n\mathop{\mathrm{IF}}(X_i;T,F)+o_P(1)
-  \Rightarrow N\Bigl(0,\int\mathop{\mathrm{IF}}(x;T,F)^2\,dF(x)\Bigr),$$
-  provided the second moment is finite. If $T$ is differentiable only
-  tangentially to a subspace carrying the limit $B^0\circ F$, as for
-  quantiles, the limit is still the centered normal law
-  $T_F'(B^0\circ F)$. In the usual examples its variance is again the
-  second moment of the influence function computed as a directional
-  derivative. The asymptotic variance of a
-  plug-in estimator is thus the second moment of its influence function.
-  Its gross-error sensitivity, the supremum of $|\mathop{\mathrm{IF}}|$,
-  bounds to first order the asymptotic bias caused by a small fraction
-  $\varepsilon$ of contamination, at $\varepsilon$ times that supremum. Items 18 and 30 are instances. When
-  Hadamard differentiability fails, the same expansion is a heuristic for
-  the limit law, to be confirmed by direct arguments.
+* **65. Generation by a learned reversal.** Suppose the learned reverse
+  SDE is initialized from the correct terminal law $p_T$, or from laws
+  $\eta$ with $\mathop{\mathrm{KL}}(p_T\|\eta)\to0$. If the
+  time-integrated, diffusion-weighted
+  score error in item 68 tends to zero and the change-of-measure
+  hypotheses there hold, the endpoint laws converge in total variation
+  to the endpoint law of the exact reversal. This conclusion concerns
+  the continuous-time SDE. Numerical discretization and probability-flow
+  ODEs require their own error controls. If the reversal is stopped at
+  a positive noising time, its endpoint is the smoothed data law; this
+  does not assert total-variation recovery of a singular data law.
 
-Consider the linear model $Y_i=x_i^\top\beta+\varepsilon_i$ with fixed design
-rows $x_i\in\mathbb R^p$, the first coordinate equal to one, and independent
-errors with distribution function $F$. A **regression $M$-estimator** with
-score $\psi=\rho'$ minimizes $\sum_i\rho(Y_i-x_i^\top t)$; its studentized
-version minimizes $\sum_i\rho\bigl((Y_i-x_i^\top t)/S_n\bigr)$ for a
-regression-invariant, scale-equivariant scale statistic $S_n$.
+Let $R$ be the path law of Brownian motion with a specified initial
+probability, or another specified Markov reference. The **Schrödinger bridge** from $\mu_0$ to
+$\mu_1$ is the path measure of minimum Kullback–Leibler divergence from $R$
+among path measures with those endpoint marginals.
 
-* **46. Asymptotics of regression $M$-estimators.** Assume that
-  $n^{-1}\sum_ix_ix_i^\top\to Q$ positive definite, with the moment bounds
-  on the rows used by Jurečková and Sen. Assume also that
-  $t\mapsto\int\rho(z-t)\,dF(z)$ has a unique minimum at $0$, so that
-  $\mathbb E\psi(\varepsilon)=0$. Let $\psi$ be decomposable into smooth,
-  piecewise linear, and monotone step parts, with the matching smoothness
-  of $F$ near the kinks and jumps of $\psi$. Let
-  $\gamma=-\frac d{dt}\mathbb E\psi(\varepsilon-t)\big|_{t=0}\neq0$. Then a
-  $\sqrt n$-consistent $M$-estimator satisfies
-  $$\sqrt n(\hat\beta_n-\beta)
-  =\frac{Q^{-1}}{\gamma\sqrt n}\sum_{i=1}^nx_i\psi(\varepsilon_i)+o_P(1)
-  \Rightarrow N\Bigl(0,\frac{\mathbb E\psi(\varepsilon)^2}{\gamma^2}Q^{-1}\Bigr).$$
-  The scalar factor is the location variance of item 18. With a scale
-  statistic $S_n$ satisfying $\sqrt n(S_n-S)=O_P(1)$, the same holds with
-  $\psi(\cdot/S)$ in place of $\psi$, except for an additional term in the
-  intercept proportional to $S_n/S-1$. The slope coordinates are
-  unaffected by studentization. Least squares is the case $\psi(u)=u$.
-  Bounded $\psi$ limits the influence of large residuals but not of
-  high-leverage design points. When whole pairs $(x_i,Y_i)$ may be replaced,
-  the least-absolute-deviation and other $M$-estimators of regression have
-  breakdown point $1/n$, in contrast with the least-median-of-squares
-  estimator of item 19.
+* **66. Schrödinger bridge.** Suppose a finite-entropy feasible path
+  law exists. The bridge is unique and reduces to minimizing
+  $\mathop{\mathrm{KL}}(\gamma\|R_{0T})$ over couplings of the prescribed
+  endpoints. Given those endpoints its conditional path law is that of
+  the reference bridge. For standard Brownian motion,
+  $R_{0T}(dx,dy)=r_0(x)q_T(y-x)\,dx\,dy$ with
+  $q_T(z)=(2\pi T)^{-d/2}e^{-\|z\|^2/(2T)}$.
+  When the endpoint densities and their entropies permit this rewriting,
+  the static problem is, up to marginal-only constants,
+  $$\inf_{\gamma\in\Pi(\mu_0,\mu_T)}
+  \left\{\int\frac{\|x-y\|^2}{2T}\,d\gamma
+  +\mathop{\mathrm{KL}}(\gamma\|\mu_0\otimes\mu_T)\right\}.$$
+  The reference initial law is part of the specification; unrestricted
+  Wiener paths from a fixed point cannot realize a different initial
+  marginal at finite relative entropy.
 
-<a id="synopsis-104d"></a>
+Let $(X_0,X_1)$ be a coupling of $\mu_0$ and $\mu_1$, and let
+$v_t(x\mid x_0,x_1)$ be a conditional velocity whose flow carries $x_0$ to
+$x_1$. **Flow matching** regresses a time-dependent vector field against
+that conditional velocity.
 
-## 104D. Functional Data Analysis
+* **67. Marginal velocity.** For differentiable conditional paths
+  $X_t$ with square-integrable velocities, conditional expectation gives
+  the population least-squares minimizer
+  $$v_t(x)=\mathbb E[\dot X_t\mid X_t=x].$$
+  The marginal law $\mu_t$ satisfies
+  $\partial_t\mu_t+\nabla\cdot(\mu_t v_t)=0$ weakly, whenever
+  differentiation under the expectation is justified. If this continuity
+  equation is uniquely represented by a well-posed ODE flow, that flow
+  carries $\mu_0$ to $\mu_1$. The conditional-expectation identity alone
+  does not ensure a classical ODE exists at singular endpoints.
 
-Let $X$ be a random element of a separable Hilbert space $H$ with
-$\mathbb E\|X\|^2<\infty$, mean $\mu$, and covariance operator
-$C=\mathbb E[(X-\mu)\otimes(X-\mu)]$. Then $C$ is compact, self-adjoint,
-nonnegative, and trace-class. Its eigenvalues and orthonormal eigenfunctions
-are $(\lambda_j,\varphi_j)$.
+* **68. Score error and total variation.** Let $P$ be the exact reverse
+  path law and $Q$ use an estimated score $s_t$, the same diffusion
+  coefficient, and initial law $\eta$ at reverse time zero. Assume the
+  Girsanov absolute-continuity and integrability conditions, including
+  $p_T\ll\eta$. Then
+  $$\mathop{\mathrm{KL}}(P\|Q)
+  =\mathop{\mathrm{KL}}(p_T\|\eta)
+  +\frac12\int_0^T\mathbb E_{p_t}
+  \|g(t)^\top(s_t-\nabla\log p_t)\|^2\,dt.$$
+  Marginalization cannot increase KL, and the endpoint total variation
+  is at most $\sqrt{\mathop{\mathrm{KL}}(P\|Q)/2}$.
+  The bound requires the weighted error integral, not just pointwise
+  convergence at each time. Its dimension and horizon dependence comes
+  through that integral and the initialization error; smooth marginal
+  densities alone imply no uniform polynomial complexity bound.
 
-* **20. Karhunen–Loève expansion and the Hilbertian central limit theorem.**
-  For each positive eigenvalue, set
-  $\xi_j=\langle X-\mu,\varphi_j\rangle/\sqrt{\lambda_j}$.
-  These variables are uncorrelated with mean $0$ and variance $1$, and
-  $$X=\mu+\sum_{j\ge1}\sqrt{\lambda_j}\,\xi_j\varphi_j,$$
-  where only positive eigenvalues are included, with convergence in $L^2$
-  and almost surely in $H$. For independent copies,
-  $\sqrt n\,(\bar X_n-\mu)$ converges in law in $H$ to the centered Gaussian
-  random element with covariance operator $C$.
+### Gaussian noising, endpoint constraints, and interpolants
 
-* **21. Principal components of the empirical covariance.** Let $\hat C_n$ be
-  the empirical covariance and let $\hat\lambda_j$ and $\hat\varphi_j$ be its
-  eigenvalues and eigenfunctions. If $\lambda_j$ is simple and positive and
-  $\mathbb E\|X\|^4<\infty$, then
-  $$\sqrt n\,(\hat\lambda_j-\lambda_j)
-  \Rightarrow N\bigl(0,\mathop{\mathrm{Var}}(\langle X-\mu,\varphi_j\rangle^2)\bigr).$$
-  For a Gaussian $X$ the asymptotic variance equals $2\lambda_j^2$. The
-  empirical eigenfunction, multiplied by a sign so that
-  $\langle\hat\varphi_j,\varphi_j\rangle\ge0$, satisfies
-  $\|\hat\varphi_j-\varphi_j\|=O_P(n^{-1/2}/\delta_j)$, where
-  $\delta_j$ is the distance from $\lambda_j$ to the rest of the spectrum.
-  Its first-order expansion is
-  $$\hat\varphi_j-\varphi_j
-  =\sum_{k\ne j}\frac{\langle(\hat C_n-C)\varphi_j,\varphi_k\rangle}
-  {\lambda_j-\lambda_k}\varphi_k+o_P(n^{-1/2}),$$
-  with the zero eigenspace included when present.
+* **69. Tweedie's denoising identity.** Let $Y=X+\sigma\varepsilon$,
+  $\sigma>0$, with independent standard Gaussian $\varepsilon$ and
+  $X\in L^2$. For the positive smoothed density $p_\sigma$,
+  $$\mathbb E[X\mid Y=y]=y+\sigma^2\nabla\log p_\sigma(y).$$
+  Differentiating the Gaussian convolution also gives
+  $$\mathop{\mathrm{Cov}}(X\mid Y=y)
+  =\sigma^2I+\sigma^4\nabla^2\log p_\sigma(y).$$
+  Thus squared-error denoising, noise prediction, and estimation of the
+  smoothed score are linked by explicit scale factors, as in item 64.
 
-* **31. Optimality of functional principal components.** If the eigenvalues
-  of $C$ are ordered decreasingly, then among all orthogonal projections
-  $P_V$ onto $k$-dimensional subspaces of $H$,
-  $$\inf_{\dim V=k}\mathbb E\|X-\mu-P_V(X-\mu)\|^2
-  =\sum_{j>k}\lambda_j.$$
-  The first $k$ eigenfunctions span a minimizing subspace. If
-  $\lambda_k>\lambda_{k+1}$, that subspace is unique. This reconstruction
-  characterization does not require Gaussian observations.
+* **70. Gaussian diffusion marginals.** For the forward chain
+  $Z_t=\sqrt{1-\beta_t}Z_{t-1}+\sqrt{\beta_t}\xi_t$,
+  with independent standard normal noises and $0<\beta_t<1$, put
+  $\bar\alpha_t=\prod_{s=1}^t(1-\beta_s)$. Then
+  $$Z_t\mid Z_0=x\sim
+  N(\sqrt{\bar\alpha_t}x,(1-\bar\alpha_t)I).$$
+  The population squared-error minimizer for predicting the aggregate
+  standard normal noise $\varepsilon$ from $Z_t$ is
+  $\mathbb E[\varepsilon\mid Z_t]$. Multiplying it by
+  $-1/\sqrt{1-\bar\alpha_t}$ gives the marginal score at time $t$.
+  The identity concerns the population optimum and does not by itself
+  control the error of a fitted denoiser.
 
-### Functional linear regression
+* **71. Endpoint potentials and entropy projection.** Under existence
+  and dual-attainment assumptions for the Schrödinger problem, its path
+  law has the form
+  $$\frac{dP^*}{dR}=f(X_0)g(X_T).$$
+  Strictly positive continuous reference kernels and positive bounded
+  endpoint densities on compact state spaces are a useful sufficient
+  setting. The factors enforce the two prescribed marginals and are
+  determined up to reciprocal constants. For every feasible $Q$ with
+  finite relevant entropies and integrable log potentials,
+  $$\mathop{\mathrm{KL}}(Q\|R)
+  =\mathop{\mathrm{KL}}(Q\|P^*)+
+  \mathop{\mathrm{KL}}(P^*\|R).$$
+  This entropy projection explains uniqueness and the reduction to
+  endpoint coupling in item 66.
 
-Let $X$ be a centered random element of $L^2[0,1]$ with continuous
-covariance kernel, covariance eigenvalues $\lambda_1\ge\lambda_2\ge\cdots$, and
-tail sums $V_k=\sum_{j>k}\lambda_j$. In the **functional linear model**
-$Y_i=\langle\beta,X_i\rangle+\varepsilon_i$, the $X_i$ are independent copies
-of $X$, the errors are independent of them with mean zero and variance
-$\sigma^2$, and $\beta$ lies in the Sobolev space $W_q[0,1]$ with
-$\|g\|_{W_q}^2=\|g\|^2+\|g^{(q)}\|^2$. The **penalized least-squares
-estimator** $\hat\beta_\eta$ minimizes
-$$\frac1n\sum_{i=1}^n\bigl(Y_i-\langle g,X_i\rangle\bigr)^2
-+\eta\|g\|_{W_q}^2,\qquad g\in W_q[0,1].$$
+* **72. Straight interpolants and transport action.** For any coupling
+  of square-integrable endpoints, put $X_t=(1-t)X_0+tX_1$ and
+  $v_t(x)=\mathbb E[X_1-X_0\mid X_t=x]$. Then
+  $$W_2^2(\mu_0,\mu_1)\le
+  \int_0^1\mathbb E\|v_t(X_t)\|^2dt
+  \le\mathbb E\|X_1-X_0\|^2.$$
+  The right inequality is conditional Jensen; the left is the
+  dynamic transport bound for the induced continuity equation.
+  An optimal quadratic endpoint coupling gives displacement
+  interpolation, CKMA SYNOPSIS39, item 48. An arbitrary coupling need
+  not produce the optimal-transport path.
 
-* **47. Prediction rates in functional linear regression.** Assume
-  $V_k=O(k^{-\alpha})$ for some $\alpha>0$. Assume also a fourth-moment
-  condition on the principal-component scores $Z_j=\langle X,\varphi_j\rangle$:
-  $\mathop{\mathrm{Var}}(Z_jZ_k)\le c\,\lambda_j\lambda_k$ for all $j,k$ and
-  a constant $c$. With
-  $\eta=n^{-(2q+\alpha+1)/(2q+\alpha+2)}$, the prediction error for an
-  independent new $X$ satisfies
-  $$\mathbb E_{\varepsilon,X}\bigl(\langle X,\hat\beta_\eta\rangle
-  -\langle X,\beta\rangle\bigr)^2
-  =O_P\bigl(n^{-(2q+\alpha+1)/(2q+\alpha+2)}+n^{-(\alpha+1)/2}\bigr).$$
-  For $\alpha\ge1$, the first term dominates. Over models with
-  $\|\beta\|_{W_q}\le1$ and $V_k\le k^{-\alpha}$, no estimator has a
-  smaller order of worst-case prediction risk, so the penalized estimator is
-  rate optimal. For Brownian-motion covariates, $\lambda_j=4/((2j-1)\pi)^2$,
-  $\alpha=1$, and the rate is $n^{-(2q+2)/(2q+3)}$. The rate concerns the
-  prediction functional $\langle X,\beta\rangle$. Recovering $\beta$ itself
-  in $L^2$ is an ill-posed inverse problem, because the covariance operator
-  has an unbounded inverse on its range.
+### Training objectives and discrete-time samplers
+
+For the forward diffusion of item 63, let $p_{t|0}(x\mid x_0)$ be its
+transition density from time $0$. For an affine drift and scalar $g$, as
+in the usual noising processes,
+$X_t\mid X_0\sim N(A_tX_0,\sigma_t^2I)$ for deterministic $A_t$ and
+$\sigma_t>0$, and $\nabla_x\log p_{t|0}(X_t\mid X_0)=-Z/\sigma_t$ where
+$X_t=A_tX_0+\sigma_tZ$.
+
+* **73. Denoising score matching along a diffusion.** Fix $t>0$, suppose
+  $p_t$ is smooth and positive, and suppose
+  $\mathbb E\|\nabla_x\log p_{t|0}(X_t\mid X_0)\|^2<\infty$. Then for every
+  measurable $s$ with $\mathbb E\|s(X_t)\|^2<\infty$,
+  $$\mathbb E\|s(X_t)-\nabla\log p_t(X_t)\|^2
+  =\mathbb E\|s(X_t)-\nabla_x\log p_{t|0}(X_t\mid X_0)\|^2-C_t,$$
+  where $C_t=\mathbb E\|\nabla_x\log p_{t|0}(X_t\mid X_0)
+  -\nabla\log p_t(X_t)\|^2$ does not depend on $s$. The identity is the
+  Pythagorean relation for the conditional expectation
+  $\nabla\log p_t(X_t)=\mathbb E[\nabla_x\log p_{t|0}(X_t\mid X_0)\mid X_t]$,
+  which extends item 64 to every noising kernel. Integrating against a
+  weight $w(t)\ge0$ gives a regression objective whose excess risk is the
+  time-integrated score error of item 68 when $w=g^2$ for scalar $g$.
+  In the Gaussian case $C_t\le d/\sigma_t^2$, which is not integrable near
+  $t=0$ when $\sigma_t^2$ is of order $t$; hence the time integral is
+  truncated at a positive time, or weighted by $w(t)=\sigma_t^2$, which
+  turns the objective into the noise-prediction loss
+  $\mathbb E\|\sigma_ts(X_t)+Z\|^2$.
+
+* **74. Gaussian reverse conditionals and the diffusion evidence bound.**
+  In the chain of item 70, with $\bar\alpha_0=1$ and $t\ge2$,
+  $$Z_{t-1}\mid(Z_t,Z_0=x)\sim N\bigl(m_t(x,Z_t),s_t^2I\bigr),\quad
+  m_t=\frac{\sqrt{1-\beta_t}\,(1-\bar\alpha_{t-1})Z_t
+  +\sqrt{\bar\alpha_{t-1}}\,\beta_tx}{1-\bar\alpha_t},\quad
+  s_t^2=\frac{\beta_t(1-\bar\alpha_{t-1})}{1-\bar\alpha_t}.$$
+  For a reverse model $p_\theta(z_T)\prod_tp_\theta(z_{t-1}\mid z_t)$,
+  $$-\log p_\theta(x)\le
+  \mathbb E[-\log p_\theta(x\mid Z_1)]
+  +\sum_{t=2}^T\mathbb E\,\mathop{\mathrm{KL}}\bigl(q(\cdot\mid Z_t,x)\,\|\,
+  p_\theta(\cdot\mid Z_t)\bigr)
+  +\mathop{\mathrm{KL}}\bigl(q(Z_T\mid x)\,\|\,p_\theta(Z_T)\bigr),$$
+  where $q$ is the forward chain started at $x$; this is the evidence
+  lower bound of item 25, for the latent path. If
+  $p_\theta(\cdot\mid z_t)=N(\mu_\theta(z_t,t),s_t^2I)$ and
+  $\mu_\theta=(1-\beta_t)^{-1/2}\bigl(z_t-\beta_t(1-\bar\alpha_t)^{-1/2}
+  \varepsilon_\theta(z_t,t)\bigr)$, then the $t$-th term equals
+  $$\frac{\beta_t^2}{2s_t^2(1-\beta_t)(1-\bar\alpha_t)}\,
+  \mathbb E\|\varepsilon-\varepsilon_\theta(Z_t,t)\|^2,
+  \qquad Z_t=\sqrt{\bar\alpha_t}\,x+\sqrt{1-\bar\alpha_t}\,\varepsilon.$$
+  Dropping these weights gives the usual noise-prediction objective,
+  a weighted sum of the denoising score matching losses of item 73 at
+  discrete noise levels.
+
+Consider the variance-exploding forward process $dX_t=dW_t$, $X_0\sim\pi$,
+so $\pi_t=\pi*N(0,tI)$. Let $0=\tau_0<\cdots<\tau_N<T$ with steps
+$h_n=\tau_{n+1}-\tau_n$, put $\delta=T-\tau_N$, and let $\hat s_t$ be a
+score estimate. The **DDPM sampler** starts from $\hat X_0\sim N(0,TI)$ and
+sets
+$$\hat X_{\tau_{n+1}}=\hat X_{\tau_n}+h_n\hat s_{T-\tau_n}(\hat X_{\tau_n})
++\sqrt{\frac{(T-\tau_{n+1})h_n}{T-\tau_n}}\,\xi_{n+1},$$
+with independent standard normal $\xi_n$, which freezes the denoiser of
+item 69 on each step.
+
+* **75. Convergence of diffusion sampling under a second-moment
+  assumption.** Suppose only that $m_2^2=\mathbb E_\pi\|X\|^2<\infty$, and
+  that $h_n\le\bar h(T-\tau_n)$ with $\bar h\le1/2$. Put
+  $\varepsilon_{\mathrm{sc}}^2=\sum_nh_n\mathbb E_{\pi_{T-\tau_n}}
+  \|\hat s_{T-\tau_n}-\nabla\log\pi_{T-\tau_n}\|^2$. Then the law
+  $\hat\pi$ of $\hat X_{\tau_N}$ satisfies
+  $$\mathop{\mathrm{KL}}(\pi_\delta\|\hat\pi)\le\frac{m_2^2}{2T}
+  +4\varepsilon_{\mathrm{sc}}^2+2\bar h\,d\bigl(1+\log(T/\delta)\bigr),$$
+  the three terms being initialization, score, and discretization error.
+  With $T$ of order $m_2^2/\varepsilon^2$, $\bar h$ of order
+  $\varepsilon^2/(d\log(T/\delta))$, and steps proportional to the
+  remaining time, $N=O\bigl(d\varepsilon^{-2}
+  \log^2(m_2^2/(\delta\varepsilon^2))\bigr)$ steps give
+  $\mathop{\mathrm{KL}}(\pi_\delta\|\hat\pi)\lesssim\varepsilon^2
+  +\varepsilon_{\mathrm{sc}}^2$. No log-concavity, functional inequality,
+  or density of $\pi$ is required, and $W_2(\pi,\pi_\delta)\le\sqrt{\delta d}$.
+  The earlier polynomial bounds of Chen, Chewi, Li, Li, Salim, and Zhang
+  assumed Lipschitz scores along the forward process. The step count is
+  linear in $d$ up to logarithmic factors, but the score error
+  $\varepsilon_{\mathrm{sc}}$ must itself be small, as in item 68.
+
+### Marginal-preserving dynamics and bridge iterations
+
+* **76. A family of diffusions with prescribed marginals.** Let $\mu_t$,
+  $t\in[0,1]$, be smooth positive densities solving
+  $\partial_t\mu_t+\nabla\cdot(\mu_tv_t)=0$, and let $\epsilon_t\ge0$ be
+  continuous. Then $\mu_t$ also solves the Fokker–Planck equation of
+  $$dX_t=\bigl(v_t+\epsilon_t\nabla\log\mu_t\bigr)(X_t)\,dt
+  +\sqrt{2\epsilon_t}\,dW_t,$$
+  because $\epsilon_t\nabla\cdot(\mu_t\nabla\log\mu_t)=\epsilon_t\Delta\mu_t$.
+  If that Fokker–Planck equation has unique solutions in the class
+  considered, $X_0\sim\mu_0$ gives $X_t\sim\mu_t$ for all $t$; the same
+  holds in reverse time with drift $v_t-\epsilon_t\nabla\log\mu_t$. For a
+  forward diffusion with scalar $g$, the choices $\epsilon=0$ and
+  $\epsilon=g^2/2$ with $v_t=f-\tfrac12g^2\nabla\log p_t$ recover the
+  probability-flow equation and the original diffusion of item 63. For a
+  **stochastic interpolant** $X_t=I_t(X_0,X_1)+\gamma_tZ$, with
+  $I_0(x_0,x_1)=x_0$, $I_1(x_0,x_1)=x_1$, $\gamma_0=\gamma_1=0$,
+  $\gamma_t>0$ on $(0,1)$, and $Z$ standard normal independent of the
+  coupling,
+  $$v_t(x)=\mathbb E[\partial_tI_t(X_0,X_1)+\dot\gamma_tZ\mid X_t=x],\qquad
+  \nabla\log\mu_t(x)=-\gamma_t^{-1}\mathbb E[Z\mid X_t=x],$$
+  so velocity and score are both population least-squares regressions, as
+  in item 67. Flow matching is the case $\gamma=0$ of the velocity
+  regression; score-based diffusion is a case of the score regression.
+
+For path measures $Q,R$ on $C([0,T];\mathbb R^d)$, write $Q_0,Q_T$ for the
+endpoint laws and $Q^x$ for a regular conditional law of $Q$ given
+$X_0=x$. The **half-bridge** problems minimize $\mathop{\mathrm{KL}}(Q\|P)$
+over $Q$ with one prescribed endpoint law. **Iterative proportional
+fitting** sets $P^0=R$ and alternately takes $P^{2k+1}$ to be the
+half-bridge from $P^{2k}$ with terminal law $\mu_T$ and $P^{2k+2}$ the
+half-bridge from $P^{2k+1}$ with initial law $\mu_0$.
+
+* **77. Half-bridges and iterative proportional fitting.** The chain
+  rule
+  $\mathop{\mathrm{KL}}(Q\|P)=\mathop{\mathrm{KL}}(Q_0\|P_0)
+  +\int\mathop{\mathrm{KL}}(Q^x\|P^x)\,Q_0(dx)$
+  shows that if $\mathop{\mathrm{KL}}(\mu_0\|P_0)<\infty$, the unique
+  half-bridge with initial law $\mu_0$ is
+  $\int P^x\,\mu_0(dx)=\frac{d\mu_0}{dP_0}(X_0)\cdot P$, with value
+  $\mathop{\mathrm{KL}}(\mu_0\|P_0)$; similarly at the terminal time, where
+  it is simulated by running the time reversal of $P$ from $\mu_T$. Every
+  iterate therefore has the form $f_k(X_0)g_k(X_T)\cdot R$, keeps the
+  reference bridges of item 66, and has endpoint couplings equal to the
+  Sinkhorn iterates for the kernel $R_{0T}$, CKMA SYNOPSIS39, item 90.
+  If $P^*$ is the Schrödinger bridge of item 66 with
+  $\mathop{\mathrm{KL}}(P^*\|R)<\infty$, then each half-step is an entropy
+  projection onto a linear family containing $P^*$, so
+  $$\mathop{\mathrm{KL}}(P^*\|P^k)=\mathop{\mathrm{KL}}(P^*\|P^{k+1})
+  +\mathop{\mathrm{KL}}(P^{k+1}\|P^k),$$
+  as in item 71. Hence $\mathop{\mathrm{KL}}(P^*\|P^k)$ is nonincreasing
+  and $\sum_k\mathop{\mathrm{KL}}(P^{k+1}\|P^k)\le\mathop{\mathrm{KL}}(P^*\|R)$.
+  The static iteration converges to the Schrödinger coupling under these
+  hypotheses (Rüschendorf). The diffusion Schrödinger bridge of De Bortoli,
+  Thornton, Heng, and Doucet implements the half-steps by learned
+  time reversals as in items 63 and 73.
 
 ## Reference guide
 
 ### Correspondence with the subdivisions
 
-- **[104A](#synopsis-104a)**: Wand and Jones, Fan and Gijbels, Wahba,
-  Groeneboom and Jongbloed, Johnstone's Gaussian-sequence draft, the
-  wavelet monograph of Härdle, Kerkyacharian, Picard, and Tsybakov, and
-  Ingster and Suslina carry the smoothing expansions, the representer
-  theorem, shape-constrained limits, and the sequence-model minimax theory.
-  Rank asymptotics are the subject of Hájek, Šidák, and Sen, and of
-  van der Vaart, Chapters 13–15. Samworth and Shah give the finite-sample
-  shape-constrained risk bounds.
-- **[104B](#synopsis-104b)**: Bickel, Klaassen, Ritov, and Wellner, Kosorok,
-  Little and Rubin, and van der Laan and Robins carry efficiency bounds,
-  ignorability, EM, and double robustness.
-- **[104C](#synopsis-104c)**: Jurečková and Sen develop the asymptotics of
-  $M$-estimators. Huber and Ronchetti, and Hampel, Ronchetti, Rousseeuw,
-  and Stahel, are the organizing monographs for influence functions and
-  breakdown.
-- **[104D](#synopsis-104d)**: Hsing and Eubank develop the Hilbert-space
-  geometry, the covariance operator, and the asymptotics of functional
-  principal components.
+- **[104A](#synopsis-104a)**: Jeffreys, Box and Tiao, Berger, Robert, Ghosh,
+  Delampady, and Samanta, and Gelman, Carlin, Stern, Dunson, Vehtari, and
+  Rubin carry conjugate analysis, invariant priors, the Laplace expansion, and
+  the Bernstein–von Mises theorem. Giné and Nickl, and Nickl's Zurich
+  lectures, carry posterior contraction and Bayesian inverse problems. The
+  Dirichlet process and the general contraction theorem are the theorems of
+  Ferguson, Sethuraman, Doob, Schwartz, and Ghosal, Ghosh, and van der Vaart.
+- **[104B](#synopsis-104b)**: Robert's computational chapters, Del Moral,
+  Douc, Moulines, Priouret, and Soulier, Meyn and Tweedie, and Levin, Peres,
+  and Wilmer carry importance sampling and Markov chain Monte Carlo.
+  Wainwright and Jordan carry the evidence lower bound. Robert and Casella,
+  Liu, and Hammersley and Handscomb carry exact simulation, variance
+  reduction, convergence of Metropolis–Hastings and Gibbs samplers, the slice
+  sampler, and hybrid Monte Carlo. Jordan, Kinderlehrer, and Otto, and Figalli
+  and Glaudo, carry the minimizing-movement scheme. Pavliotis carries the
+  Langevin diffusion. Chewi's manuscript carries non-asymptotic bounds for its
+  discretization. Kushner and Yin, and Borkar, carry stochastic approximation
+  and averaging. Ambrosio, Gigli, and Savaré carry the gradient-flow
+  identification already numbered in CKMA SYNOPSIS39. Sznitman carries
+  propagation of chaos. Carmona and Delarue carry mean-field games and
+  interacting diffusions. Del Moral carries Feynman–Kac particle systems. Mei,
+  Montanari, and Nguyen, and Chizat and Bach, carry the mean-field limit of
+  two-layer networks.
+- **[104C](#synopsis-104c)**: Hyvärinen carries score matching. Vincent
+  carries denoising score matching. Song, and Ho, Jain, and Abbeel, carry
+  diffusion generative models. Léonard, and Peyré and Cuturi, carry the
+  Schrödinger bridge. Lipman, Chen, Ben-Hamu, Nickel, and Le carry flow
+  matching.
 
 ### Source comparisons and local copies
 
-Hollander, Wolfe, and Chicken, Chapters 3, 4, and 6, provide the exact
-sign and rank procedures and the several-sample comparison added here.
-Robertson, Wright, and Dykstra, Section 1.2 and the max–min formulas of
-Section 1.4, give the cumulative-sum and pooling descriptions of isotonic
-regression. Wand–Jones and Fan–Gijbels supply the bias expansions; the
-bandwidth conditions now ensure that replacing the exact bias by its
-leading term is legitimate in the normal limit. Tsybakov's full text is
-available in `ReferencesSuppl`; its regression upper and lower bound
-chapters were consulted, including the supremum-norm comparison in
-Corollary 2.5. Item 26 records the corresponding dimension-dependent
-Hölder rates. Hsing–Eubank, Chapters 1 and 9, supplies the reconstruction
-interpretation and the spectral perturbation framework.
+#### Bayesian statistics and Monte Carlo methods
 
-Items 27–29 make the semiparametric geometry operational: representing
-derivatives in $L^2$, projecting out nuisance regressions, and controlling
-the product remainder after sample splitting. They give explicit
-conditions for the efficiency claims in items 14 and 17, rather than
-treating consistency of fitted nuisances alone as sufficient for a
-central limit theorem.
+Ghosh, Delampady, and Samanta, Sections 2.6–2.8, were consulted for
+posterior propriety, posterior loss minimization, Bayes factors, and
+prediction. Robert–Casella, Chapters 3–4, supplies importance sampling
+and conditional Monte Carlo; its full text is in `ReferencesSuppl`.
+For item 1, van der Vaart's Theorem 10.1 gives quadratic-mean
+differentiability and uniformly consistent separation tests, rather than
+posterior consistency alone. Ghosal–van der Vaart's Theorem 8.9, also
+read in a supplemental local copy, supplies the half-radius entropy
+condition and the sieve-tail exponent $C+4$ used in item 19.
 
-The kernel expansions of items 4 and 6 are the interior-point formulae of
-Wand and Jones and of Fan and Gijbels. Item 8 is the Kimeldorf–Wahba
-representer theorem, as used throughout Wahba's spline monograph. Items 9
-and 10 follow Johnstone's chapters on Pinsker's theorem and on thresholding.
-Item 11 is the pointwise limit in Groeneboom and Jongbloed. Item 13 is the
-Sobolev detection boundary of Ingster and Suslina. Item 12 is the cone
-mixture of Robertson, Wright, and Dykstra.
+Item 5 is the Laplace expansion used by Ghosh, Delampady, and Samanta and by
+Robert. Item 19 uses a standard sufficient contraction criterion with
+sieve-tail exponent $C+4$, consistent with the local Ghosal–van der Vaart
+treatment. Items 22 and 23 are the invariance statements of the Monte Carlo
+texts. Item 24 invokes the geometric
+ergodicity criterion already numbered in the analysis synopsis.
 
-Lehmann's *Nonparametrics*, Silverman's density monograph, and the
-Györfi, Kohler, Krzyżak, and Walk distribution-free regression monograph
-were not located in the local reference directories. Hájek, Šidák, and Sen is present as a DjVu file
-and was not text-extracted. Huber and Ronchetti, and Hampel, Ronchetti,
-Rousseeuw, and Stahel, are also absent locally; items 18 and 19 are the
-forms used by Jurečková and Sen and by the robust chapters of the general
-inference texts. Tsiatis's missing-data monograph is absent locally; item 17
-is the augmented inverse-probability function of that book and of van der
-Laan and Robins.
+For the third expansion, Berger's Sections 4.3.2–4.3.3 and 4.5.2–4.5.4
+were read for highest posterior density sets, the point-null Bayes factor
+(4.17) with the lower bound of Theorem 1 in Section 4.3.3, the normal-means
+empirical Bayes estimates (4.33)–(4.35), and Robbins' Poisson estimator
+(Example 16). Robert's Definition 5.5.2, Lemma 10.4.2, and Examples 10.4.1
+and 10.5.1 supply the volume property of highest posterior density
+regions, the exponential-family posterior-mean identity, and the empirical
+Bayes reading of the James–Stein estimator. Ghosh, Delampady, and Samanta,
+Section 6.4, were read for the Jeffreys–Lindley paradox, and Gelman et
+al., Section 5.4, equations (5.17)–(5.21), for the hierarchical normal
+model; the propriety threshold $J\ge3$ for the flat prior on $\tau$ in item 12 follows from the tail $\tau^{1-J}$ of (5.21). Ghosal–van der Vaart,
+Section 4.1.4, Proposition 4.8, and Section 4.2.4 supply item 16. In
+Robert–Casella, Lemma 2.4, Corollary 2.17, and Section 4.4.2 were read for
+items 28–30, Theorem 7.4, Lemmas 7.3 and 7.6, Theorems 7.8 and 7.15 for
+items 31 and 32, Theorems 9.12, 9.19, 10.13, Corollary 9.14, and
+Proposition 9.18 for item 33, and Section 8.1 with Lemma 8.5 for item 34.
+Hammersley and Handscomb, Sections 5.5–5.6, supply the control and
+antithetic constructions. Liu, Sections 9.2–9.3, was read for the leapfrog
+integrator and hybrid Monte Carlo. Gelman et al., Section 13.7, and
+Wainwright and Jordan, Section 5.3, were read for the mean-field
+coordinate update.
 
-Items 32–47 were added from the following passages. The rank items 32–35
-follow van der Vaart, Theorem 13.5, Section 13.3 and Examples 13.13–13.22,
-Corollary 15.10 and Example 15.15, Table 14.2 with Problem
-14.8, Examples 12.5 and 12.13, and Corollary 19.21 and Theorem 19.23. The
-exact null moments of Kendall's and Spearman's statistics and the two-sample
-Kolmogorov–Smirnov limit are those of Hollander, Wolfe, and Chicken, Sections
-5.4, 8.1, and 8.5; the Chernoff–Savage bound is quoted there. Item 36 follows
-Tsybakov, Proposition 1.9, Wasserman, Theorems 5.34, 6.34, and 6.37, and
-Wand–Jones, Section 3.8. Item 37 is Fan–Gijbels, Theorems 3.1 and 3.2 with
-Sections 3.2.2 and 3.3. Item 38 is Green–Silverman, Theorems 2.4 and 3.1 and
-Section 3.7, on Silverman's equivalent kernel; Tsybakov, Section 1.3,
-supplies its Fourier transform. Item 39 combines Tsybakov, Theorem 1.1 and
-Exercises 2.8 and 2.10, with van der Vaart, Theorems 24.2 and 24.4. Items
-40 and 41 are Samworth and Shah, Theorems 9.39, 9.15, and 9.26, with the
-tent-function description of Section 9.2. Item 42 is van der Vaart, Example
-25.27 and Section 25.8.1. Items 43 and 44 are Little and Rubin, Sections
-8.4.3 and 10.2, including equations (8.27)–(8.30) and (10.13)–(10.15).
-Item 45 follows van der Vaart, Section 20.1. Item 46 is Jurečková and Sen,
-Theorems 5.5.1–5.5.3, with the breakdown remarks of their Section 4.8. Item 47 is
-Hsing and Eubank, Theorems 11.2.7 and 11.3.1. Hampel's general optimal
-bounded-influence estimator is not stated, because the Hampel–Ronchetti–
-Rousseeuw–Stahel monograph is not available locally. Item 18 records its
-location case.
+Bernardo and Smith, *Bayesian Theory*, DeGroot, *Optimal Statistical
+Decisions* were not located locally. Supplemental copies of Ghosh–Ramamoorthi,
+Kaipio–Somersalo, Asmussen–Glynn, and Chopin–Papaspiliopoulos are present;
+they were located but not read for this expansion. The consulted
+supplemental copies of Ghosal–van der Vaart and Robert–Casella are linked
+below.
 
-Local texts directly consulted for this selection:
+#### Stochastic dynamics for data
 
-- [Hollander, Wolfe, and Chicken, *Nonparametric Statistical Methods*](../lean-CKMA/References/HollanderWolfeChicken2014NonparametricStatisticalMethods3rdEd-Wiley.SerProbStat.pdf).
-- [Tsybakov, *Introduction to Nonparametric Estimation*](../lean-CKMA/ReferencesSuppl/Tsybakov2009IntroductionNonparametricEstimation-SpringerSSS.pdf).
-- [Wand and Jones, *Kernel Smoothing*](../lean-CKMA/References/WandJones1995KernelSmoothing-ChapmanHallCRC.MSAP60.pdf).
-- [Fan and Gijbels, *Local Polynomial Modelling and Its Applications*](../lean-CKMA/References/FanGijbels1996LocalPolynomialModellingApplications-ChapmanHallCRC.MSAP66.pdf).
-- [Wahba, *Spline Models for Observational Data*](../lean-CKMA/References/Wahba1990SplineModelsObservationalData-SIAM.CBMS59.pdf).
-- [Groeneboom and Jongbloed, *Nonparametric Estimation under Shape Constraints*](../lean-CKMA/References/GroeneboomJongbloed2014NonparametricEstimationShapeConstraintsEstimatorsAlgorithmsAsymptotics-Cambridge.SerStatProbMath.pdf).
-- [Johnstone, *Gaussian Estimation: Sequence and Wavelet Models*](../lean-CKMA/References/Johnstone2017GaussianEstimationSequenceWaveletModels-AuthorManuscript.pdf).
-- [Härdle, Kerkyacharian, Picard, and Tsybakov, *Wavelets, Approximation, and Statistical Applications*](../lean-CKMA/References/HärdleKerkyacharianPicardTsybakov1998WaveletsApproximationStatisticalApplications-Springer.LNS129.pdf).
-- [Ingster and Suslina, *Nonparametric Goodness-of-Fit Testing Under Gaussian Models*](../lean-CKMA/References/IngsterSuslina2003NonparametricGoodnessFitTestingGaussianModels-Springer.LNS169.pdf).
-- [Robertson, Wright, and Dykstra, *Order Restricted Statistical Inference*](../lean-CKMA/References/RobertsonWrightDykstra1988OrderRestrictedStatisticalInference-Wiley.SerProbStat.pdf).
-- [Devroye and Lugosi, *Combinatorial Methods in Density Estimation*](../lean-CKMA/References/DevroyeLugosi2001CombinatorialMethodsDensityEstimation-Springer.SSS.pdf).
-- [Bickel, Klaassen, Ritov, and Wellner, *Efficient and Adaptive Estimation for Semiparametric Models*](../lean-CKMA/References/BickelKlaassenRitovWellner1993EfficientAdaptiveEstimationSemiparametricModels-JohnsHopkins.MathSci.pdf).
-- [Kosorok, *Introduction to Empirical Processes and Semiparametric Inference*](../lean-CKMA/References/Kosorok2008IntroductionEmpiricalProcessesSemiparametricInference-Springer.SSS.pdf).
-- [Little and Rubin, *Statistical Analysis with Missing Data*](../lean-CKMA/References/LittleRubin2020StatisticalAnalysisMissingData3rdEd-Wiley.SerProbStat.pdf).
-- [van der Laan and Robins, *Unified Methods for Censored Longitudinal Data and Causality*](../lean-CKMA/References/VanDerLaanRobins2003UnifiedMethodsCensoredLongitudinalDataCausality-Springer.SSS.pdf).
-- [Jurečková and Sen, *Robust Statistical Procedures*](../lean-CKMA/References/JurečkováSen1996RobustStatisticalProceduresAsymptoticsInterrelations-Wiley.SerProbStat.pdf).
-- [Hsing and Eubank, *Theoretical Foundations of Functional Data Analysis*](../lean-CKMA/References/HsingEubank2015TheoreticalFoundationsFunctionalDataAnalysisIntroductionLinearOperators-Wiley.SerProbStat.pdf).
-- [Hájek, Šidák, and Sen, *Theory of Rank Tests*](../lean-CKMA/References/HájekŠidákSen1999TheoryRankTests2ndEd-AcademicPress.djvu).
+Chewi's local 2026 manuscript, Theorem 4.3.6, was reread. Its entropy
+guarantee is for a mixture of iterate laws, with square-root KL bounded by
+$\varepsilon$; it is not a guarantee for the law of the arithmetic average.
+The Gaussian covariance calculation in item 42 gives an exact example
+of discretization bias. Pavliotis supplies the invariant-density and entropy
+framework; Kushner–Yin and Borkar supply stochastic approximation. The
+minus sign in the recursion makes positive real parts of $Dh$ the stable
+case. Nonnegative radial drift without attraction was insufficient.
+
+Law–Stuart–Zygalakis was found in `ReferencesSuppl`; Sections 4.2.3–4.2.4
+were read for perturbed-observation and square-root ensemble updates.
+The distinction from exact nonlinear filtering is explicit there.
+Del Moral's 2013 volume treats Feynman–Kac measures, unbiased unnormalized
+particle estimates, and particle normalizing constants. Items 57 and 58 use
+fixed observations and average over particle randomness. Finite-time
+propagation of chaos requires an initial independence or chaos hypothesis;
+neither it nor a finite-time training limit implies a global convergence
+or uniform-time theorem.
+
+For item 54, [Liu and Wang's original paper](https://papers.neurips.cc/paper_files/paper/2016/hash/b3ba8f1bee1238a2f37603d90b58898d-Abstract.html)
+was read for the transport derivative and kernel velocity. The smooth-law
+variational calculation does not differentiate the infinite KL divergence
+of an empirical atomic measure from a continuous target.
+
+Bishop–Bishop, Chapter 20, especially Sections 20.2–20.3, was read for
+Gaussian diffusion marginals, denoising scores, and reverse SDEs.
+The noise target in item 64 is $-\varepsilon/\sigma$ when
+$Y=X+\sigma\varepsilon$. Item 69 follows by differentiating that Gaussian
+convolution. The endpoint error in item 68 is the Girsanov entropy
+identity and marginal contraction; it includes initialization, weighted
+time-integrated score error, and absolute continuity. No automatic
+polynomial dimension bound is asserted.
+
+Peyré–Cuturi's Schrödinger discussion distinguishes static endpoint
+coupling from reference conditional bridges. Item 66 specifies the
+Brownian noise normalization and initial reference law. The conditional
+expectation in flow matching gives a continuity equation; a deterministic
+ODE representation needs well-posedness. The straight-interpolant action
+bound in item 72 is also a direct consequence of conditional Jensen and
+CKMA SYNOPSIS39, items 48–49.
+
+Evensen's book and the original papers of Song, Ho–Jain–Abbeel, and
+Lipman and coauthors were not located locally. Their diffusion framework
+is treated in the consulted Bishop–Bishop text. Del Moral's 2013 volume
+is in `References`; his 2004 Feynman–Kac monograph is in `ReferencesSuppl`
+and was used for the third expansion.
+
+For 104B, Chewi's manuscript was read in Theorems 1.2.21–1.2.26 (Poincaré
+and $\chi^2$ decay, logarithmic Sobolev and KL decay; item 44), Theorems
+4.1.2 and 4.2.7 (coupling bias and the Vempala–Wibisono bound; item 45),
+Section 10.1 and display (10.1.1) (stochastic-gradient Langevin; item 46),
+Theorems 7.3.4, 7.3.5, and 7.6.5 with the bibliographical notes to Chapter 7
+(MALA; item 47), and Section 5.3, Theorems 5.3.6, 5.3.14, and 5.3.15
+(kinetic Langevin; item 48). Robert and Casella, Section 7.8, was read for
+the acceptance rates $0.234$ and $0.574$; the papers of Roberts, Gelman, and
+Gilks and of Roberts and Rosenthal were not available locally, and item 47
+states their product-target hypotheses only in outline. Figalli–Glaudo,
+Section 3.3, was read for the JKO scheme on bounded convex domains; the
+whole-space hypotheses of item 43 are those of the original JKO paper, which
+is not local. Borkar's second edition, Chapter 2 (assumptions (A1)–(A4),
+Theorem 2.1, Corollaries 2.1–2.2) and Chapter 4 (assumption (A9), Theorem 4.1),
+was read for items 49 and 50, with the signs converted to the convention of item 40.
+
+For 104B, Del Moral's 2004 monograph (local in `ReferencesSuppl`) was read in
+Chapter 9, Theorem 9.3.1, Corollary 9.3.1, and Propositions 9.4.1–9.4.2, for
+the fluctuation variances in item 59, which are specialized here to
+multinomial selection, and in Theorem 7.4.4 with conditions (G) and $(M)_m$
+of Section 4.4, for item 60 with $m=1$. Liu, Section 3.4, and Robert–Casella,
+Section 14.3.5, were read for residual and systematic resampling; the
+variance comparison in item 61 is the law of total variance. Law, Stuart, and
+Zygalakis, Theorems 2.8, 2.11, 3.10, and 3.12 and Section 4.2.1, were read for
+item 62. An earlier entry on the free energy and Gibbs fixed point of
+mean-field Langevin training had no local full-text source and was
+removed; see [SYNOPSIS-CONCORDANCE.md](SYNOPSIS-CONCORDANCE.md).
+
+For 104C, Chewi, Chapter 12 (Sections 12.1–12.3, Theorem 12.3.2 and Lemma
+12.3.3), was read for items 73, 75, and 76, including the denoising
+identity, the probability-flow variants, and the stochastic-interpolant
+regression. Bishop–Bishop, Sections 20.1.2 and 20.2.2–20.2.4, was read for
+item 74. Item 77 uses the chain rule for relative entropy and the projection
+identity of item 71; the convergence of iterative proportional fitting is
+due to Rüschendorf, not consulted locally, and the finite-state rate is
+CKMA SYNOPSIS39, item 90.
+
+Local texts directly consulted or identified for this selection:
+
+- [Ghosal and van der Vaart, *Fundamentals of Nonparametric Bayesian Inference*](../lean-CKMA/ReferencesSuppl/GhosalVanDerVaart2017FundamentalsNonparametricBayesianInference-CambridgeSerStatProbMath44.pdf).
+  Theorem 8.9 was read for the contraction criterion.
+- [Robert and Casella, *Monte Carlo Statistical Methods*](../lean-CKMA/ReferencesSuppl/RobertCasella2004MonteCarloStatisticalMethods2ndEd-Springer.pdf).
+  Chapters 3–4 were consulted for importance sampling and variance reduction.
+  Sections 7.8 and 14.3.5 were read.
+- [Liu, *Monte Carlo Strategies in Scientific Computing*](../lean-CKMA/ReferencesSuppl/Liu2004MonteCarloStrategiesScientificComputing-SpringerSerStat.pdf).
+  Sections 9.2–9.3 were read for hybrid Monte Carlo.
+  Section 3.4 (residual resampling) was read.
+- [Hammersley and Handscomb, *Monte Carlo Methods*](../lean-CKMA/ReferencesSuppl/HammersleyHandscomb1964MonteCarloMethods-ChapmanHallMonogAPS.pdf).
+  Sections 5.5–5.6 were read for control and antithetic variates.
 - [van der Vaart, *Asymptotic Statistics*](../lean-CKMA/References/VanDerVaart1998AsymptoticStatistics-CambridgeSerStatProbMath03.pdf).
-- [Wasserman, *All of Nonparametric Statistics*](../lean-CKMA/ReferencesSuppl/Wasserman2006NonparametricStatistics-SpringerSTS.pdf).
-- [Green and Silverman, *Nonparametric Regression and Generalized Linear Models*](../lean-CKMA/References/GreenSilverman1994NonparametricRegressionGeneralizedLinearModelsRoughnessPenaltyApproach-ChapmanHall.MSAP58.pdf).
-- [Samworth and Shah, *Modern Statistical Methods and Theory*](../lean-CKMA/References/SamworthShah2026ModernStatisticalMethodsTheoryIntroductionNonparametricHighDimensionalStatistics-Cambridge.SerStatProbMat.pdf).
+  Theorem 10.1 was read for the parametric posterior normal limit.
+- [Jeffreys, *Theory of Probability*](../lean-CKMA/References/Jeffreys1998TheoryProbability3rdEd-OxfordUP.ClassicTextsPhysSci.pdf).
+- [Savage, *The Foundations of Statistics*](../lean-CKMA/References/Savage1972FoundationsStatistics2ndRevEd-Dover.pdf).
+- [Box and Tiao, *Bayesian Inference in Statistical Analysis*](../lean-CKMA/References/BoxTiao1973BayesianInferenceStatisticalAnalysis-AddisonWesley.pdf).
+- [Berger, *Statistical Decision Theory and Bayesian Analysis*](../lean-CKMA/References/Berger1985StatisticalDecisionTheoryBayesianAnalysis2ndEd-Springer.SSS.pdf).
+- [Ghosh, Delampady, and Samanta, *An Introduction to Bayesian Analysis*](../lean-CKMA/References/GhoshDelampadySamanta2006IntroductionBayesianAnalysisTheoryMethods-SpringerSTS.pdf).
+- [Robert, *The Bayesian Choice*](../lean-CKMA/References/Robert2007BayesianChoiceDecisionTheoreticFoundationsComputationalImplementation2ndEd-Springer.STS.pdf).
+- [Gelman, Carlin, Stern, Dunson, Vehtari, and Rubin, *Bayesian Data Analysis*](../lean-CKMA/References/GelmanEtAl2014BayesianDataAnalysis3rdEd-ChapmanHallCRC.TextsStatSci.pdf).
+- [Giné and Nickl, *Mathematical Foundations of Infinite-Dimensional Statistical Models*](../lean-CKMA/References/GinéNickl2015MathematicalFoundationsInfiniteDimensionalStatisticalModels-CambridgeSerStatProbMath40.pdf).
+- [Nickl, *Bayesian Non-linear Statistical Inverse Problems*](../lean-CKMA/References/Nickl2023BayesianNonlinearStatisticalInverseProblems-EMS.ZLAM30.pdf).
+- [Del Moral, *Mean Field Simulation for Monte Carlo Integration*](../lean-CKMA/References/DelMoral2013MeanFieldSimulationMonteCarloIntegration-ChapmanHallCRC.MSAP126.pdf).
+- [Douc, Moulines, Priouret, and Soulier, *Markov Chains*](../lean-CKMA/References/DoucMoulinesPriouretSoulier2018MarkovChains-Springer.SSORFE.pdf).
+- [Meyn and Tweedie, *Markov Chains and Stochastic Stability*](../lean-CKMA/References/MeynTweedie2009MarkovChainsStochasticStability-CambridgeMathLibrary.pdf).
+- [Levin, Peres, and Wilmer, *Markov Chains and Mixing Times*](../lean-CKMA/References/LevinPeres2017MarkovChainsMixingTimes2ndEd-AMS.pdf).
+- [Wainwright and Jordan, *Graphical Models, Exponential Families, and Variational Inference*](../lean-CKMA/References/WainwrightJordan2008GraphicalModelsExponentialFamiliesVariationalInference-NowPublishers.FnTML1.pdf).
+- [Law, Stuart, and Zygalakis, *Data Assimilation: A Mathematical Introduction*](../lean-CKMA/ReferencesSuppl/LawStuartZygalakis2015DataAssimilationMathematicalIntroduction-Springer.TAM62.pdf).
+  The two ensemble Kalman variants in Sections 4.2.3–4.2.4 were read.
+- [Bishop and Bishop, *Deep Learning: Foundations and Concepts*](../lean-CKMA/References/BishopBishop2024DeepLearningFoundationsConcepts-Springer.pdf).
+  Chapter 20 was consulted for diffusion and score models.
+- [Chewi, *Log-Concave Sampling*](../lean-CKMA/References/Chewi2026LogConcaveSampling-AuthorManuscript.pdf).
+  Theorem 4.3.6 was read; for items 43–50, 59–62, and 73–77 also the passages listed above.
+- [Pavliotis, *Stochastic Processes and Applications*](../lean-CKMA/References/Pavliotis2014StochasticProcessesApplications-SpringerTAM.pdf).
+- [Kushner and Yin, *Stochastic Approximation and Recursive Algorithms and Applications*](../lean-CKMA/References/KushnerYin2003StochasticApproximationRecursiveAlgorithmsApplications2ndEd-Springer.SMAP35.pdf).
+- [Borkar, *Stochastic Approximation: A Dynamical Systems Viewpoint*](../lean-CKMA/References/Borkar2023StochasticApproximationDynamicalSystemsViewpoint2ndEd-SpringerHindustanTRIM48.pdf).
+- [Ambrosio, Gigli, and Savaré, *Gradient Flows*](../lean-CKMA/References/AmbrosioGigliSavaré2008GradientFlowsMetricSpacesSpaceProbabilityMeasures2ndEd-Birkhäuser.LMETH.pdf).
+- [Carmona and Delarue, *Probabilistic Theory of Mean Field Games*, Vol. I](../lean-CKMA/References/CarmonaDelarue2018ProbabilisticTheoryMeanFieldGamesApplications1FBSDEsControl-SpringerPTSM83.pdf).
+- [Carmona and Delarue, *Probabilistic Theory of Mean Field Games*, Vol. II](../lean-CKMA/References/CarmonaDelarue2018ProbabilisticTheoryMeanFieldGamesApplications2CommonNoiseMasterEquations-SpringerPTSM84.pdf).
+- [Figalli and Glaudo, *An Invitation to Optimal Transport, Wasserstein Distances, and Gradient Flows*](../lean-CKMA/References/FigalliGlaudo2021InvitationOptimalTransportWassersteinDistancesGradientFlows-EMS.TextbooksMath.pdf).
+  Section 3.3 (JKO scheme) was read.
+- [Del Moral, *Feynman–Kac Formulae: Genealogical and Interacting Particle Systems with Applications*](../lean-CKMA/ReferencesSuppl/Moral2004FeynmanKacFormulaeGenealogicalInteractingParticleSystemsApplications-Springer.PIA.pdf).
+  Sections 4.4, 7.4, and 9.3–9.4 were read.
+- [Peyré and Cuturi, *Computational Optimal Transport*](../lean-CKMA/References/PeyréCuturi2019ComputationalOptimalTransportApplicationsDataSciences-NowPublishers.FnTML11.pdf).
