@@ -39,7 +39,11 @@ the recurring core of each section. The index records how far the series has bee
 Following completion of the synopsis series, the next major task is to inventorize
 coverage of the SYNOPSIS in Lean Mathlib and TauCeti. This inventory is to be documented in files
 STRUCTURE.md and STRUCTUREddd.md, following the style of the sibling CKMA project. These STRUCTURE
-files are meant to support future Lean projects.
+files are meant to support future Lean projects. The inventory has been written: `STRUCTURE.md`
+is the index and states the classification rule (covered, partly covered, not covered);
+`MathlibCoverage.md` and `TauCetiCoverage.md` summarize coverage per library; `GAPS.md` restates
+the principal results that neither library proves. `GAPS_EASY.md` outlines
+short derivations from library results for some of them.
 
 You may be asked to edit, revise or expand any of the files in the project directory or to create
 new files.

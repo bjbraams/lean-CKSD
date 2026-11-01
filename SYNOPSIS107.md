@@ -68,7 +68,9 @@ independent and identically distributed sample $Z_1,\ldots,Z_n$ with law $P$
 write $Pf=\mathbb Ef(Z_1)$ and $P_nf=n^{-1}\sum_{i=1}^nf(Z_i)$, and evaluate
 the empirical complexity at $x_i=Z_i$.
 
-* **2. Rademacher bound.** For a class of functions with values in $[0,1]$,
+* **2. Rademacher bound.** For a countable class of measurable functions
+  with values in $[0,1]$, or any such class for which the suprema below are
+  measurable,
   $$\mathbb E\sup_{f\in\mathcal F}(P_n-P)f
   \le2\,\mathbb E\,\widehat{\mathop{\mathrm{Rad}}}_n(\mathcal F),$$
   and the same holds with $P-P_n$ in place of $P_n-P$.
@@ -191,15 +193,18 @@ $L_\Phi(x,u)=\eta(x)\Phi(-u)+(1-\eta(x))\Phi(u)$.
   when $\eta(x)=1/2$. If there are $s\ge1$ and $c>0$ with
   $$\bigl|\eta(x)-\tfrac12\bigr|^s
   \le c^s\Bigl(L_\Phi(x,0)-\inf_uL_\Phi(x,u)\Bigr)$$
-  for all $x$, then for every measurable $h$,
+  for all $x$, then for every measurable $h$ with $P(h(X)=0)=0$,
   $$R(h)-R^*\le2c\bigl(R_\Phi(h)-R_\Phi^*\bigr)^{1/s}.$$
+  The condition $P(h(X)=0)=0$ cannot be dropped: for $\eta\equiv1/2$ and
+  $h\equiv0$ one has $R(h)-R^*=1/2$ and $R_\Phi(h)=R_\Phi^*$.
   For the hinge loss $\Phi(u)=\max(0,1+u)$ one may take $s=1$, $c=1/2$,
   giving $R(h)-R^*\le R_\Phi(h)-R_\Phi^*$. For the squared hinge loss
   $\Phi(u)=\max(0,1+u)^2$ one may take $s=2$, $c=1/2$. This is Zhang's
   inequality.
 
 A learning algorithm maps a sample $S$ of size $n$ to a predictor $h_S$.
-It is **uniformly $\beta$-stable** for a loss $L$ if
+For a loss $L$ the map $(S,z)\mapsto L(h_S,z)$ is assumed measurable.
+It is **uniformly $\beta$-stable** for $L$ if
 $|L(h_S,z)-L(h_{S'},z)|\le\beta$ for every point $z$ and every pair of
 samples $S,S'$ that differ in one point.
 
@@ -1345,7 +1350,11 @@ tie-breaking, and Section 22.1 with Theorem
 13.18, and Examples 13.19–13.20, give item 13. The hinge-loss constants in
 item 11, and the critical radii for finite rank, polynomial eigenvalue
 decay, and the equispaced Sobolev design in item 13, are direct
-computations from those statements.
+computations from those statements. The condition $P(h(X)=0)=0$ in item 11
+is needed because $R(h)=P(Yh(X)\le0)$ counts $h(X)=0$ as an error; the
+inequality holds for every measurable $h$ when $R(h)$ is instead the error
+of $\mathop{\mathrm{sign}}h$ with a fixed value of
+$\mathop{\mathrm{sign}}0\in\{-1,1\}$.
 
 Bühlmann and van de Geer, *Statistics for High-Dimensional Data*, Hastie,
 Tibshirani, and Friedman, *The Elements of Statistical Learning*,

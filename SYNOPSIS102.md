@@ -39,7 +39,8 @@ $P_\theta$.
 
 * **1. Delta method.** Let $T_n$ be a random vector in $\mathbb R^k$ with
   $\sqrt n\,(T_n-\theta)\Rightarrow N(0,\Sigma)$, and let
-  $g:\mathbb R^k\to\mathbb R^m$ be differentiable at $\theta$. Then
+  $g:\mathbb R^k\to\mathbb R^m$ be Borel measurable and differentiable at
+  $\theta$. Then
   $$\sqrt n\,\bigl(g(T_n)-g(\theta)\bigr)
   \Rightarrow N\bigl(0,\,Dg(\theta)\,\Sigma\,Dg(\theta)^\top\bigr).$$
   Moreover
@@ -225,10 +226,13 @@ sequence $T_n$ is **regular** at $\theta$ when, for every $h$, the law of
 $\sqrt n\,(T_n-\theta-h/\sqrt n)$ under $P_{\theta+h/\sqrt n}$ converges to a
 limit that does not depend on $h$.
 
-* **12. Contiguity.** If the log-likelihood ratio $\Lambda_n$ of $Q_n$ with
-  respect to $P_n$ converges in distribution under $P_n$ to a random
-  variable $\Lambda$ with $\mathbb E e^{\Lambda}=1$, then $Q_n$ is
-  contiguous to $P_n$. In particular, local alternatives in a locally
+* **12. Contiguity.** Let $L_n=dQ_n^{\mathrm a}/dP_n$, where
+  $Q_n^{\mathrm a}$ is the part of $Q_n$ absolutely continuous with respect
+  to $P_n$, so that $\Lambda_n=\log L_n$, with values in
+  $[-\infty,\infty)$, is the log-likelihood ratio. If $L_n$ converges in
+  distribution under $P_n$ to $e^{\Lambda}$ for a real random variable
+  $\Lambda$ with $\mathbb E e^{\Lambda}=1$, then $Q_n$ is contiguous to
+  $P_n$. In particular, local alternatives in a locally
   asymptotically normal experiment are mutually contiguous.
 
 * **13. Local asymptotic normality of smooth models.** Assume independent

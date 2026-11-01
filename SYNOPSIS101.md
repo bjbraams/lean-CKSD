@@ -231,7 +231,10 @@ assumed to exist.
 
 * **12. Characterization of UMVU estimators.** Let $W$ be an unbiased
   estimator of $g(\theta)$ with $\mathbb E_\theta W^2<\infty$ for every
-  $\theta$. Then $W$ is UMVU if and only if
+  $\theta$. Then
+  $\mathop{\mathrm{Var}}_\theta W\le\mathop{\mathrm{Var}}_\theta W'$ for
+  every $\theta$ and every unbiased estimator $W'$ of $g(\theta)$ with
+  $\mathbb E_\theta W'^2<\infty$ for every $\theta$ if and only if
   $\mathop{\mathrm{Cov}}_\theta(W,U)=0$ for every $\theta$ and every unbiased
   estimator $U$ of zero with $\mathbb E_\theta U^2<\infty$ for every
   $\theta$. If $T$ is sufficient and $W=h(T)$, it suffices to check

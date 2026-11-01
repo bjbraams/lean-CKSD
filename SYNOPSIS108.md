@@ -1150,7 +1150,8 @@ the supremum norm.
   Fourier transform is analytic. The sinc kernel, with band-limited
   spectrum, is not characteristic.
   (d) Polynomial kernels see only finitely many moments. For instance, for
-  $k(x,y)=(1+x^\top y)^2$,
+  the unbounded kernel $k(x,y)=(1+x^\top y)^2$ and laws with finite fourth
+  moments,
   $$\mathop{\mathrm{MMD}}^2(\mu,\nu)=2\|m_\mu-m_\nu\|^2
   +\|\Sigma_\mu-\Sigma_\nu+m_\mu m_\mu^\top-m_\nu m_\nu^\top\|_F^2,$$
   with means $m$ and covariances $\Sigma$. This vanishes for distinct laws
