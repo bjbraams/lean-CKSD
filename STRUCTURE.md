@@ -38,14 +38,26 @@ section **Missing from both libraries**, a brief review of the principal
 results of the synopsis that neither library provides, with the existing
 infrastructure from which they would be developed.
 
-Across the 535 synopsis entries, the two libraries together cover 4, partly
-cover 48, and do not cover 483. Section-by-section summaries for each
+Across the 537 synopsis entries, the two libraries together cover 4, partly
+cover 48, and do not cover 485. Section-by-section summaries for each
 library are in [MathlibCoverage.md](MathlibCoverage.md) and
 [TauCetiCoverage.md](TauCetiCoverage.md). The separate
-[gap inventory](GAPS.md) selects 295 principal missing results, restates
+[gap inventory](GAPS.md) selects 297 principal missing results, restates
 them, and assesses what the libraries supply towards each. Of these,
 [GAPS_EASY.md](GAPS_EASY.md) outlines short derivations from library
-results for 107, some for part of the statement only.
+results for 109, some for part of the statement only.
+
+## Comparison with CKMA
+
+The counts in this series measure direct declaration coverage under the
+rule above. CKMA sometimes also classifies short derivations as partly
+covered, and its recorded TauCeti revision is earlier. The two sets of
+counts therefore cannot be compared as coverage percentages on a common
+basis. The distinction is retained explicitly for the separate projects;
+a future merger will need a common classification rule and source
+baseline, followed by review of the affected verdicts. A short derivation
+in GAPS_EASY.md remains a missing library statement under the present
+rule, and a Scope paragraph may delimit only part of its entry.
 
 ## Source baseline and conventions
 

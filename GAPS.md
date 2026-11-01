@@ -14,8 +14,8 @@ and hypotheses ([coverage index](STRUCTURE.md)). Section-by-section
 summaries for each library are in [MathlibCoverage.md](MathlibCoverage.md)
 and [TauCetiCoverage.md](TauCetiCoverage.md).
 
-This catalogue selects **295 principal theorem statements and theorem
-families** from the 535 synopsis entries for which Lean code would be a
+This catalogue selects **297 principal theorem statements and theorem
+families** from the 537 synopsis entries for which Lean code would be a
 genuine addition to the combined Mathlib and TauCeti core. The emphasis is
 on the central theorems of each section, the results that organize its
 theory, and the results that many others depend on. The catalogue does not
@@ -52,14 +52,22 @@ reference-text guide. The **numbered assertions**, at the scope specified in
 each assessment, are the selected gaps. Counts refer to selected statements
 or families, not to independent theorems or percentages of a subject.
 
+The coverage counts use CKSD's direct-declaration rule, which differs
+from some CKMA classifications; see [Comparison with CKMA](STRUCTURE.md#comparison-with-ckma).
+The size of GAPS_EASY.md measures selected statements or delimited parts
+with short mathematical derivations, not statements already proved in a
+library or estimates of Lean implementation effort.
+
 ## Where the largest gaps lie
 
 Statistics in the formal sense is almost absent from both libraries. Of the
-535 synopsis entries, 4 are covered and 48 partly covered by the two
-libraries together; the remaining 483 are not covered. Neither library
-defines a statistical model as a parametrized family of laws, a sufficient
-statistic, Fisher information, a test with its size and power, a confidence
-set, an estimator sequence, a learning rule, or a Markov decision process.
+537 synopsis entries, 4 are covered and 48 partly covered by the two
+libraries together; the remaining 485 are not covered. Neither library
+has a dedicated API for sufficient statistics, Fisher information, tests
+with size and power, confidence sets, estimator sequences, learning rules,
+or Markov decision processes. Measurable families of laws and randomized
+estimators are already represented by Markov kernels in Mathlib, with
+risk integrals and definitions of average, Bayes, and minimax risk.
 The foundation on which such definitions would rest is nevertheless
 substantial. Mathlib contributes:
 
@@ -100,7 +108,7 @@ They are distributed by section as follows:
 * [102. Asymptotic, semiparametric, and robust statistics](#102-asymptotic-semiparametric-and-robust-statistics): 35 statements.
 * [103. Nonparametric and high-dimensional inference](#103-nonparametric-and-high-dimensional-inference): 30 statements.
 * [104. Bayesian inference and stochastic computation](#104-bayesian-inference-and-stochastic-computation): 40 statements.
-* [105. Linear models, multivariate analysis, experimental design, and causal inference](#105-linear-models-multivariate-analysis-experimental-design-and-causal-inference): 38 statements.
+* [105. Linear models, multivariate analysis, experimental design, and causal inference](#105-linear-models-multivariate-analysis-experimental-design-and-causal-inference): 40 statements.
 * [106. Dependent data and stochastic models](#106-dependent-data-and-stochastic-models): 28 statements.
 * [107. Statistical learning and machine learning](#107-statistical-learning-and-machine-learning): 46 statements.
 * [108. Geometry of data: manifolds, topology, optimal transport, and kernels](#108-geometry-of-data-manifolds-topology-optimal-transport-and-kernels): 42 statements.
@@ -121,9 +129,10 @@ kernel discrepancies (108).
 
 ## 101. Statistical inference: foundations, decision theory, estimation, and testing
 
-Neither library defines a statistical model as a parametrized family of
-laws, a sufficient, ancillary, or complete statistic, Fisher information, a
-test with size and power, a $p$-value, or a confidence set. Mathlib supplies
+Neither library defines sufficiency, ancillarity, completeness, Fisher
+information, tests with size and power, $p$-values, or confidence sets.
+Mathlib already represents measurable parametrized models and randomized
+estimators by Markov kernels. It supplies
 the surrounding probability and a decision-theoretic vocabulary: risk, Bayes
 risk and minimax risk for randomized rules given as Markov kernels, the
 inequality between the maximal Bayes risk and the minimax risk, the posterior
@@ -1243,31 +1252,44 @@ the synopsis.
 
 ### Accuracy and failure of the bootstrap
 
-* **102.60. Second-order accuracy of the studentized bootstrap.** Let
-  $X\in\mathbb R^d$ have mean $\mu$, finite moments of every order, and
-  Cramér's condition; let $g,h$ be infinitely differentiable near $\mu$
-  with $h(\mu)>0$ and
-  $h(\mu)^2$ the asymptotic variance of $\sqrt ng(\bar X)$; and put
-  $T=\sqrt n(g(\bar X)-g(\mu))/h(\bar X)$ with bootstrap analogue
-  $T^\star$ from a resample of size $n$. Then
-  $$\sup_x|P(T^\star\le x\mid X_1,\ldots,X_n)-P(T\le x)|=O_P(n^{-1}),$$
-  whereas $\sup_x|P(T\le x)-\Phi(x)|=n^{-1/2}\sup_x|p_1(x)\varphi(x)|
-  +o(n^{-1/2})$ with $p_1$ from 102.50. Write $\hat\theta=g(\bar X)$,
-  $\hat\sigma=h(\bar X)$, and let $\hat v_\beta$ and $\hat x_\beta$ be
-  the $\beta$-quantiles of the conditional laws of $T^\star$ and of
-  $\hat\theta^\star$. The one-sided percentile-$t$ interval
+* **102.60. Second-order accuracy of the studentized bootstrap.** Let $X$ be a
+  random vector in $\mathbb R^d$ with mean $\mu$, covariance $\Sigma$, and
+  finite moments of every order. Assume Cramér's condition of 102.50 for
+  the augmented vector $Z=(X,(X_jX_k)_{1\le j\le k\le d})$. Let $g$ be
+  infinitely differentiable near $\mu$, with
+  $\sigma^2=\nabla g(\mu)^\top\Sigma\nabla g(\mu)>0$. Put
+  $$\hat\theta=g(\bar X),\qquad\theta=g(\mu),\qquad
+  \hat\Sigma=\frac1n\sum_i(X_i-\bar X)(X_i-\bar X)^\top,\qquad
+  \hat\sigma^2=\nabla g(\bar X)^\top\hat\Sigma\nabla g(\bar X).$$
+  For a resample of size $n$, recompute the mean, covariance, and the
+  entire variance estimate to obtain $\hat\theta^\star$ and
+  $\hat\sigma^\star$. Define
+  $T=\sqrt n(\hat\theta-\theta)/\hat\sigma$ and
+  $T^\star=\sqrt n(\hat\theta^\star-\hat\theta)/\hat\sigma^\star$;
+  use arbitrary finite definitions of the estimates outside the smooth
+  neighborhood, and set the statistics to zero when their denominators
+  vanish or their means lie outside that neighborhood. Under the joint
+  sample-and-resample law these exceptional events have probability
+  smaller than every fixed inverse power of $n$.
+  Then
+  $$\sup_x\bigl|P(T^\star\le x\mid X_1,\ldots,X_n)-P(T\le x)\bigr|
+  =O_P(n^{-1}),$$
+  whereas
+  $$\sup_x|P(T\le x)-\Phi(x)|=n^{-1/2}\sup_x|p_1(x)\varphi(x)|+o(n^{-1/2}),$$
+  with $p_1$ the polynomial of 102.50 applied to the smooth function of
+  the augmented sample mean defining $T$. Fix $0<\alpha<1/2$. Let
+  $\hat v_\beta$ be the $\beta$-quantile of the conditional law of $T^\star$ and $\hat x_\beta$ that
+  of $\hat\theta^\star$. The one-sided percentile-$t$ interval
   $(-\infty,\hat\theta-n^{-1/2}\hat\sigma\hat v_\alpha]$ has coverage
   $1-\alpha+O(n^{-1})$, while the one-sided normal-theory interval
-  $(-\infty,\hat\theta+n^{-1/2}\hat\sigma z_\alpha]$ and percentile
-  interval $(-\infty,\hat x_{1-\alpha}]$ have coverage
-  $1-\alpha+O(n^{-1/2})$. The corresponding two-sided equal-tailed
-  intervals of nominal coverage $1-2\alpha$ have coverage
-  $1-2\alpha+O(n^{-1})$, and the symmetric percentile-$t$ interval
-  $[\hat\theta-n^{-1/2}\hat\sigma\hat w,\,
-  \hat\theta+n^{-1/2}\hat\sigma\hat w]$, with $\hat w$ the
-  $(1-2\alpha)$-quantile of the conditional law of $|T^\star|$, has
-  coverage $1-2\alpha+O(n^{-2})$. Absent; it rests on 102.50 and its bootstrap
-  analogue.
+  $(-\infty,\hat\theta+n^{-1/2}\hat\sigma z_\alpha]$ and the one-sided
+  percentile interval $(-\infty,\hat x_{1-\alpha}]$ have coverage
+  $1-\alpha+O(n^{-1/2})$. The corresponding two-sided equal-tailed intervals
+  of nominal coverage $1-2\alpha$ all have coverage $1-2\alpha+O(n^{-1})$,
+  and the symmetric percentile-$t$ interval
+  $[\hat\theta-n^{-1/2}\hat\sigma\hat w,\hat\theta+n^{-1/2}\hat\sigma\hat w]$,
+  with $\hat w$ the $(1-2\alpha)$-quantile of the conditional law of
+  $|T^\star|$, has coverage $1-2\alpha+O(n^{-2})$. Absent; it rests on 102.50 and its bootstrap analogue.
 
 ## 103. Nonparametric and high-dimensional inference
 
@@ -1642,7 +1664,8 @@ count false and all rejections.
   $\sigma\sqrt{2\log p}$ has risk at most $(2\log p+1)(s+1)\sigma^2$. No
   part is present beyond Mathlib's definition of minimax risk.
 
-* **103.34. Lasso under compatibility.** Suppose $\beta$ is supported on $S$
+* **103.34. Lasso under compatibility.** Let $S$ be nonempty and
+  $\lambda>0$. Suppose $\beta$ is supported on $S$
   and $\lambda\ge2n^{-1}\|X^\top\varepsilon\|_\infty$. If $\kappa(S,3)>0$,
   every lasso solution satisfies
   $$\frac1n\|X(\hat\beta-\beta)\|_2^2\le\frac{9\lambda^2|S|}{4\kappa^2(S,3)},
@@ -2618,8 +2641,8 @@ $(\det A)^{1/n}$, and sampling without replacement. The principal omissions
 are the normal theory of the linear model with its noncentral laws and
 Cochran's theorem, generalized-linear-model and quantile-regression
 asymptotics, the classical multivariate sampling theory and tests, graphical
-Markov properties, optimal and combinatorial design, and the whole of
-potential-outcome and graphical causal inference. The Gauss–Markov theorem,
+Markov properties, optimal and combinatorial design, finite-population
+survey sampling, and the whole of potential-outcome and graphical causal inference. The Gauss–Markov theorem,
 the randomization test, Neyman's variance formula, and the identification
 formulas of items 47, 48 and 50 are selected although each follows from
 library results by a short argument, which is indicated.
@@ -3058,6 +3081,64 @@ when every $t$-tuple appears equally often in every set of $t$ columns.
   finite projective planes, from which the classical construction proceeds;
   Latin squares, orthogonal arrays, the bound, and the construction are
   absent.
+
+### Survey sampling and finite populations
+
+A **sampling design** is a probability law on the subsets $s$ of a finite
+population $U=\{1,\ldots,N\}$. The values $y_i\in\mathbb R$ are fixed;
+only $s$ is random. Put $I_i=1_{\{i\in s\}}$,
+$\pi_i=\mathbb E I_i$, $\pi_{ij}=\mathbb E I_iI_j$, with
+$\pi_{ii}=\pi_i$, and $\Delta_{ij}=\pi_{ij}-\pi_i\pi_j$.
+
+* **105.72. Horvitz–Thompson estimation and design variance.** Assume
+  $\pi_i>0$ for every unit. For the population total $t_y=\sum_i y_i$,
+  $$\hat t_y=\sum_{i\in s}\frac{y_i}{\pi_i},\qquad
+  \mathbb E\hat t_y=t_y,\qquad
+  \mathop{\mathrm{Var}}(\hat t_y)
+  =\sum_{i,j\in U}\Delta_{ij}\frac{y_i y_j}{\pi_i\pi_j}.$$
+  If $\pi_{ij}>0$ for every distinct pair, an unbiased variance estimator is
+  $$\hat V=\sum_{i,j\in s}\frac{\Delta_{ij}}{\pi_{ij}}
+  \frac{y_i y_j}{\pi_i\pi_j}.$$
+  If $|s|=n$ almost surely, the Sen–Yates–Grundy variance identity and,
+  when all distinct pairs have positive inclusion probability, its
+  unbiased estimator are
+  $$\mathop{\mathrm{Var}}(\hat t_y)
+  =-\frac12\sum_{i,j\in U}\Delta_{ij}
+  \left(\frac{y_i}{\pi_i}-\frac{y_j}{\pi_j}\right)^2,\qquad
+  \hat V_{\mathrm{SYG}}=-\frac12\sum_{i,j\in s}
+  \frac{\Delta_{ij}}{\pi_{ij}}
+  \left(\frac{y_i}{\pi_i}-\frac{y_j}{\pi_j}\right)^2.$$
+  The latter is unbiased and is nonnegative when
+  $\pi_{ij}\le\pi_i\pi_j$ for distinct pairs. Positive pairwise inclusion
+  is needed for the displayed unbiased variance estimators, not for
+  unbiased estimation of the total itself.
+
+* **105.73. Simple and stratified random sampling; Neyman allocation.**
+  For a uniform subset of size $1\le n\le N$ from $N\ge2$ units,
+  the sample mean is unbiased for $\bar y=N^{-1}\sum_i y_i$ and
+  $$\mathop{\mathrm{Var}}(\bar y_s)
+  =\left(1-\frac nN\right)\frac{S^2}{n},\qquad
+  S^2=\frac1{N-1}\sum_i(y_i-\bar y)^2.$$
+  Partition the population into strata of sizes $N_h\ge2$, with
+  $W_h=N_h/N$, and select independent uniform subsets of sizes
+  $1\le n_h\le N_h$. With $\bar y_h,S_h^2$ the stratum population mean
+  and variance, the estimator $\hat{\bar y}=\sum_h W_h\bar y_{s,h}$ is
+  unbiased and has variance
+  $$\sum_h W_h^2\left(1-\frac{n_h}{N_h}\right)\frac{S_h^2}{n_h}.$$
+  For $n_h\ge2$, replacing each $S_h^2$ by the sample variance with
+  divisor $n_h-1$ gives an unbiased variance estimator. For $S_h>0$
+  and a fixed total $n=\sum_h n_h$, the continuous allocation problem
+  has the solution
+  $$n_h=\frac{nN_hS_h}{\sum_l N_lS_l},$$
+  provided these values satisfy $1\le n_h\le N_h$. This is Neyman
+  allocation for equal sampling costs; integer allocations require
+  rounding or discrete optimization. Complete enumeration gives zero
+  sampling variance. The one-stratum formula also supplies the sampling
+  variance used in the randomized-experiment results below.
+
+The libraries supply finite probability laws, indicator expectations, and
+covariance expansions, but do not state these sampling formulas. Short
+derivations are given in [GAPS_EASY.md](GAPS_EASY.md).
 
 ### Experiments, identification, and estimation
 
@@ -4845,10 +4926,12 @@ $2r$.
 
 * **108.22. Homology from a sample.** Let $M\subset\mathbb R^D$ be a compact
   smooth $d$-dimensional submanifold without boundary with reach $\tau>0$, and
-  let $P$ be finite with $d_H(P,M)=\varepsilon<\sqrt{3/20}\,\tau$. Then for
+  let $P\subset M$ be finite with $d_H(P,M)=\varepsilon<\sqrt{3/20}\,\tau$. Then for
   every $r\in(2\varepsilon,\sqrt{3/5}\,\tau)$ the offset $P^r$ deformation
   retracts onto $M$, so the Čech complex of radius $r$ has the homotopy type of
-  $M$. If $X_1,\ldots,X_n$ are independent with a law on $M$ whose density
+  $M$. This radius interval is asserted for noiseless samples on $M$;
+  Hausdorff closeness of an off-manifold cloud alone does not suffice.
+  If $X_1,\ldots,X_n$ are independent with a law on $M$ whose density
   with respect to volume is bounded below by a positive constant, then
   $d_H(\{X_1,\ldots,X_n\},M)\le\varepsilon$ with probability at least
   $1-\delta$ whenever
@@ -4932,16 +5015,25 @@ bijections $\eta$ with the diagonal available. A triangulable compact metric
 space has **polynomially growing triangulations** if triangulations of mesh at
 most $r$ with at most $cr^{-j}$ simplices exist for small $r$.
 
-* **108.35. Wasserstein stability.** For tame Lipschitz functions $f,g$ on a
-  space with polynomially growing triangulations, there are constants $C$ and
-  $k\ge1$ with $k>j$, depending on the space and the Lipschitz constants, such
-  that
+* **108.35. Wasserstein stability.** Write $D_p^{\mathrm{fin}}(f)$ for the
+  finite-death part of the diagram. For tame Lipschitz functions $f,g$ on
+  such a space $X$ in a fixed degree $p\ge0$, choose $k\ge1$ with
+  $k>j$. For every finite $q\ge k$
+  there is $C$ depending on the space, $k,q$, and the Lipschitz constants
+  such that, with $\delta=\|f-g\|_\infty>0$,
+  $$W_q\bigl(D_p^{\mathrm{fin}}(f),D_p^{\mathrm{fin}}(g)\bigr)
+  \le C\delta^{1-k/q}.$$
+  The essential bars, whose number is $\beta_p(X)$ in each diagram,
+  admit a matching with birth differences at most $\delta$. Consequently
+  the full diagrams satisfy
   $$W_q\bigl(\mathop{\mathrm{Dgm}}_p(f),\mathop{\mathrm{Dgm}}_p(g)\bigr)
-  \le C\|f-g\|_\infty^{1-k/q}\qquad(q\ge k).$$
-  For monotone functions on the simplices of a finite complex $K$, meaning
+  \le C\delta^{1-k/q}+\beta_p(X)^{1/q}\delta.$$
+  When $\delta=0$ both distances are zero. For
+  monotone functions on the simplices of a finite complex $K$, meaning
   $f(\tau)\le f(\sigma)$ whenever $\tau$ is a face of $\sigma$,
   $$W_q\bigl(\mathop{\mathrm{Dgm}}_p(f),\mathop{\mathrm{Dgm}}_p(g)\bigr)
   \le\Bigl(\sum_{\sigma\in K}|f(\sigma)-g(\sigma)|^q\Bigr)^{1/q}.$$
+
   Absent from both libraries.
 
 * **108.36. Gromov–Hausdorff stability of Rips persistence.** For totally

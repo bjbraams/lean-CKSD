@@ -1282,11 +1282,16 @@ that conditional velocity.
 ### Training objectives and discrete-time samplers
 
 For the forward diffusion of item 63, let $p_{t|0}(x\mid x_0)$ be its
-transition density from time $0$. For an affine drift and scalar $g$, as
-in the usual noising processes,
+transition density from time $0$. For a drift $f(t,x)=a(t)x$ with scalar
+continuous $a$ and scalar continuous nonzero $g$, as in the usual
+isotropic noising processes,
 $X_t\mid X_0\sim N(A_tX_0,\sigma_t^2I)$ for deterministic $A_t$ and
 $\sigma_t>0$, and $\nabla_x\log p_{t|0}(X_t\mid X_0)=-Z/\sigma_t$ where
 $X_t=A_tX_0+\sigma_tZ$.
+Here $A_t=\exp(\int_0^t a(s)\,ds)I$ and
+$\sigma_t^2=\int_0^t\exp(2\int_s^t a(u)\,du)g(s)^2\,ds$.
+A general affine matrix drift instead gives an affine conditional mean
+and a matrix covariance; the isotropic formula is not asserted for it.
 
 * **73. Denoising score matching along a diffusion.** Fix $t>0$, suppose
   $p_t$ is smooth and positive, and suppose

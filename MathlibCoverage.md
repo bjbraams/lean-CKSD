@@ -12,9 +12,10 @@ missing results.
 
 Statistics and data science are thinly covered by Mathlib. Its probability
 library supplies much of the infrastructure on which the subject rests, but
-statistical objects as such (a parametrized model, an estimator, a test, a
-confidence set, a learning rule) are not defined, with the single exception of
-the decision-theoretic risks of `Mathlib.Probability.Decision`. Six of the eight
+`Mathlib.Probability.Decision` already represents measurable parametrized
+models and randomized estimators by Markov kernels and supplies their risk
+integrals, average risk, Bayes risk, and minimax risk. Dedicated APIs for
+sufficiency, tests, confidence sets, and learning rules are absent. Six of the eight
 verdicts below are Thin and two are None.
 
 ## Source baseline
@@ -34,6 +35,10 @@ an entry for which the libraries supply only ingredients, from which the
 statement would follow by a further argument however short, is not covered.
 Such *ingredients only* entries are mentioned below among the supporting
 material, not as coverage.
+
+These are direct-coverage verdicts under the CKSD rule. They are not
+numerically comparable with CKMA's verdicts without reconciling the rules
+and source revisions; see [Comparison with CKMA](STRUCTURE.md#comparison-with-ckma).
 
 Each section below gives a verdict for this library alone, judged against the
 content of the corresponding synopsis:
@@ -55,8 +60,8 @@ content of the corresponding synopsis:
 - [107](#107-statistical-learning-and-machine-learning) Statistical learning and machine learning — Thin
 - [108](#108-geometry-of-data-manifolds-topology-optimal-transport-and-kernels) Geometry of data: manifolds, topology, optimal transport, and kernels — Thin
 
-Across the 535 numbered entries of Sections 101–108, the two libraries together
-cover 4 entries, partly cover 48, and do not cover 483. Mathlib takes part in one
+Across the 537 numbered entries of Sections 101–108, the two libraries together
+cover 4 entries, partly cover 48, and do not cover 485. Mathlib takes part in one
 covered entry (101.44, together with TauCeti) and in 17 partly covered entries:
 101.4, 101.32, 101.33, 101.42, 102.43, 104.9, 104.22, 104.27, 106.38, 107.38 and
 108.11 on its own, and 101.17, 101.27, 101.66, 104.21, 104.25 and 106.20 together
@@ -64,7 +69,7 @@ with TauCeti.
 
 ## 101. Statistical inference: foundations, decision theory, estimation, and testing
 
-**Thin.** Mathlib's one statistical framework is its decision-theory directory: a model is a kernel from parameters to data, a randomized rule is a Markov kernel, and the average, Bayes and minimax risks are defined for losses in \([0,\infty]\). It proves that the Bayes risk under any probability prior is at most the minimax risk (101.32, partly; equality, minimax rules and least favorable priors are absent), and, with the posterior kernel defined by disintegration on a standard Borel parameter space, that a measurable minimizer of posterior expected loss is a Bayes rule attaining the Bayes risk (101.33, partly; the converse is not stated). The basic theory of relative entropy, namely vanishing exactly at equality, the chain rule for composition products, and data processing under maps and kernels, gives 101.44 (covered, with TauCeti's tensorization). In one dimension the tilted measure and the cumulant-generating function give convexity of the natural domain, analyticity, and the tilted mean and variance as first and second derivatives (101.4, 101.42, partly). Mathlib also contributes the normality of the Gaussian sample mean (101.17, partly), the law of total variance as the prediction identity for constant predictors (101.27, partly), and total variation through a Hahn set (101.66, partly). Supporting are conditional Jensen, the easy direction of Blackwell's comparison in integrated form (garbling cannot decrease Bayes or minimax risk; 101.62 has ingredients only), DeGroot's statistical information, Sion's minimax theorem, the union bound and Haar measure. Absent are statistical models as parametrized families, sufficiency, ancillarity and completeness, the score, Fisher information and the information inequality, tests, \(p\)-values and confidence sets, the Neyman–Pearson lemma and the optimal-test theory, admissibility and complete classes, equivariance, and the James–Stein phenomenon. [Details in STRUCTURE101.md](STRUCTURE101.md).
+**Thin.** Mathlib's one statistical framework is its decision-theory directory: a model is a kernel from parameters to data, a randomized rule is a Markov kernel, and the average, Bayes and minimax risks are defined for losses in \([0,\infty]\). It proves that the Bayes risk under any probability prior is at most the minimax risk (101.32, partly; equality, minimax rules and least favorable priors are absent), and, with the posterior kernel defined by disintegration on a standard Borel parameter space, that a measurable minimizer of posterior expected loss is a Bayes rule attaining the Bayes risk (101.33, partly; the converse is not stated). The basic theory of relative entropy, namely vanishing exactly at equality, the chain rule for composition products, and data processing under maps and kernels, gives 101.44 (covered, with TauCeti's tensorization). In one dimension the tilted measure and the cumulant-generating function give convexity of the natural domain, analyticity, and the tilted mean and variance as first and second derivatives (101.4, 101.42, partly). Mathlib also contributes the normality of the Gaussian sample mean (101.17, partly), the law of total variance as the prediction identity for constant predictors (101.27, partly), and total variation through a Hahn set (101.66, partly). Supporting are conditional Jensen, the easy direction of Blackwell's comparison in integrated form (garbling cannot decrease Bayes or minimax risk; 101.62 has ingredients only), DeGroot's statistical information, Sion's minimax theorem, the union bound and Haar measure. Absent are dedicated APIs for sufficiency, ancillarity and completeness, the score, Fisher information and the information inequality, tests, \(p\)-values and confidence sets, the Neyman–Pearson lemma and the optimal-test theory, admissibility and complete classes, equivariance, and the James–Stein phenomenon. [Details in STRUCTURE101.md](STRUCTURE101.md).
 
 ## 102. Asymptotic, semiparametric, and robust statistics
 
@@ -80,7 +85,7 @@ with TauCeti.
 
 ## 105. Linear models, multivariate analysis, experimental design, and causal inference
 
-**None.** Mathlib defines no linear model, least-squares estimator, analysis-of-variance decomposition, generalized linear model, design, potential-outcome model or directed graphical model, and proves no entry of Section 105, even in part. Its supporting linear algebra is extensive: orthogonal projection as the nearest-point map with its orthogonality characterization, the trace of a projection equal to its rank (hence \(\mathop{\mathrm{tr}}H=p\) for a hat matrix), the Woodbury identity, Schur-complement determinant, inverse and positivity criteria, and \(\mathop{\mathrm{rank}}(A^{\mathsf T}A)=\mathop{\mathrm{rank}}A\). On the probabilistic side it has the tilted-measure identities \(\mathbb EY=b'(\theta)\), \(\mathop{\mathrm{Var}}Y=b''(\theta)\) for one-parameter natural families, independence of jointly Gaussian variables with zero covariance, conditional independence, the posterior kernel and Bayes estimators, and the scalar limit theorems. Combinatorial ingredients include the graph Laplacian with its kernel dimension equal to the number of components, Hadamard matrices, finite projective planes, Galois fields, shifted Legendre polynomials, directed graphs and kernel composition; Fisher's inequality is available only for \(\lambda=1\), through incidence configurations (105.42 has ingredients only). Absent are Gauss–Markov, the normal sampling theory of least squares and the noncentral laws, Cochran's theorem and exact \(F\) tests, generalized linear model fitting and asymptotics, Hotelling's \(T^2\), Wilks's lambda and covariance tests, Markov properties on graphs, optimal and combinatorial designs, randomization inference, the identification formulas of causal inference, \(d\)-separation and the do-calculus. [Details in STRUCTURE105.md](STRUCTURE105.md).
+**None.** Mathlib defines no linear model, least-squares estimator, analysis-of-variance decomposition, generalized linear model, design, potential-outcome model or directed graphical model, and proves no entry of Section 105, even in part. Its supporting linear algebra is extensive: orthogonal projection as the nearest-point map with its orthogonality characterization, the trace of a projection equal to its rank (hence \(\mathop{\mathrm{tr}}H=p\) for a hat matrix), the Woodbury identity, Schur-complement determinant, inverse and positivity criteria, and \(\mathop{\mathrm{rank}}(A^{\mathsf T}A)=\mathop{\mathrm{rank}}A\). On the probabilistic side it has the tilted-measure identities \(\mathbb EY=b'(\theta)\), \(\mathop{\mathrm{Var}}Y=b''(\theta)\) for one-parameter natural families, independence of jointly Gaussian variables with zero covariance, conditional independence, the posterior kernel and Bayes estimators, and the scalar limit theorems. Combinatorial ingredients include the graph Laplacian with its kernel dimension equal to the number of components, Hadamard matrices, finite projective planes, Galois fields, shifted Legendre polynomials, directed graphs and kernel composition; Fisher's inequality is available only for \(\lambda=1\), through incidence configurations (105.42 has ingredients only). Finite-population inclusion-probability estimators and the survey-sampling variance and allocation formulas (105.72, 105.73) are also absent; finite moment identities are ingredients only. Absent are Gauss–Markov, the normal sampling theory of least squares and the noncentral laws, Cochran's theorem and exact \(F\) tests, generalized linear model fitting and asymptotics, Hotelling's \(T^2\), Wilks's lambda and covariance tests, Markov properties on graphs, optimal and combinatorial designs, randomization inference, the identification formulas of causal inference, \(d\)-separation and the do-calculus. [Details in STRUCTURE105.md](STRUCTURE105.md).
 
 ## 106. Dependent data and stochastic models
 

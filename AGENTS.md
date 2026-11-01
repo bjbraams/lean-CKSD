@@ -50,3 +50,19 @@ new files.
 - Keep changes narrowly related to the request.
 - Preserve unrelated user changes.
 - Do not commit changes unless explicitly requested.
+
+## Documentation consistency
+
+- Treat each numbered SYNOPSIS statement as the mathematical source for
+  its restatements in GAPS.md and GAPS_EASY.md. Propagate corrections to
+  hypotheses, conventions, and conclusions to every affected restatement
+  and STRUCTURE assessment. A Scope or Argument paragraph must not silently
+  add a missing hypothesis to a Statement paragraph.
+- After changing statements or selections, recount synopsis entries,
+  coverage classifications, selected gaps, easy entries, and Scope
+  paragraphs. Update the indexes and library summaries, and check local
+  Markdown links. New entries take the next free identifier; the
+  concordance identifies later additions without inventing earlier IDs.
+- Preserve the explicit distinction between CKSD's direct-declaration
+  coverage rule and CKMA's broader use of partly covered. Comparisons need
+  a common rule and source baseline before counts can be combined.

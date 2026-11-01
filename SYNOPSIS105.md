@@ -7,7 +7,8 @@ This synopsis follows Section 105. Subdivision 105A is the linear model,
 the analysis of variance and variance components, generalised linear
 models, quantiles, finite mixtures, classical multivariate analysis,
 graphical models, and directional data. Subdivision 105B is experimental
-design, including block, factorial, and Latin-square designs, and causal
+design, including block, factorial, and Latin-square designs;
+finite-population survey sampling and allocation; and causal
 inference: potential outcomes, randomized and observational studies,
 interventions on directed graphical models, structural counterfactuals,
 mediation, sensitivity, and discovery. Simultaneous confidence procedures
@@ -589,9 +590,11 @@ and zeros elsewhere.
 
 <a id="synopsis-105b"></a>
 
-## 105B. Experimental Design and Causal Inference
+## 105B. Experimental Design, Survey Sampling, and Causal Inference
 
-Randomization connects the two halves of this subdivision: the design of experiments, and the identification and estimation of causal effects in experiments and observational studies.
+Randomization connects experimental design, finite-population survey
+sampling, and the identification and estimation of causal effects in
+experiments and observational studies.
 
 ### Experimental design
 
@@ -724,6 +727,60 @@ of the fraction is the length of the shortest nonidentity defining word.
   interaction; in resolution V no two-factor interaction is aliased with
   another. A regular fraction of resolution $R$ is an orthogonal array of
   strength $R-1$, as in item 40, and $R-1$ is its maximal strength.
+
+### Survey sampling and finite populations
+
+A **sampling design** is a probability law on the subsets $s$ of a finite
+population $U=\{1,\ldots,N\}$. The values $y_i\in\mathbb R$ are fixed;
+only $s$ is random. Put $I_i=1_{\{i\in s\}}$,
+$\pi_i=\mathbb E I_i$, $\pi_{ij}=\mathbb E I_iI_j$, with
+$\pi_{ii}=\pi_i$, and $\Delta_{ij}=\pi_{ij}-\pi_i\pi_j$.
+
+* **72. Horvitz–Thompson estimation and design variance.** Assume
+  $\pi_i>0$ for every unit. For the population total $t_y=\sum_i y_i$,
+  $$\hat t_y=\sum_{i\in s}\frac{y_i}{\pi_i},\qquad
+  \mathbb E\hat t_y=t_y,\qquad
+  \mathop{\mathrm{Var}}(\hat t_y)
+  =\sum_{i,j\in U}\Delta_{ij}\frac{y_i y_j}{\pi_i\pi_j}.$$
+  If $\pi_{ij}>0$ for every distinct pair, an unbiased variance estimator is
+  $$\hat V=\sum_{i,j\in s}\frac{\Delta_{ij}}{\pi_{ij}}
+  \frac{y_i y_j}{\pi_i\pi_j}.$$
+  If $|s|=n$ almost surely, the Sen–Yates–Grundy variance identity and,
+  when all distinct pairs have positive inclusion probability, its
+  unbiased estimator are
+  $$\mathop{\mathrm{Var}}(\hat t_y)
+  =-\frac12\sum_{i,j\in U}\Delta_{ij}
+  \left(\frac{y_i}{\pi_i}-\frac{y_j}{\pi_j}\right)^2,\qquad
+  \hat V_{\mathrm{SYG}}=-\frac12\sum_{i,j\in s}
+  \frac{\Delta_{ij}}{\pi_{ij}}
+  \left(\frac{y_i}{\pi_i}-\frac{y_j}{\pi_j}\right)^2.$$
+  The latter is unbiased and is nonnegative when
+  $\pi_{ij}\le\pi_i\pi_j$ for distinct pairs. Positive pairwise inclusion
+  is needed for the displayed unbiased variance estimators, not for
+  unbiased estimation of the total itself.
+
+* **73. Simple and stratified random sampling; Neyman allocation.**
+  For a uniform subset of size $1\le n\le N$ from $N\ge2$ units,
+  the sample mean is unbiased for $\bar y=N^{-1}\sum_i y_i$ and
+  $$\mathop{\mathrm{Var}}(\bar y_s)
+  =\left(1-\frac nN\right)\frac{S^2}{n},\qquad
+  S^2=\frac1{N-1}\sum_i(y_i-\bar y)^2.$$
+  Partition the population into strata of sizes $N_h\ge2$, with
+  $W_h=N_h/N$, and select independent uniform subsets of sizes
+  $1\le n_h\le N_h$. With $\bar y_h,S_h^2$ the stratum population mean
+  and variance, the estimator $\hat{\bar y}=\sum_h W_h\bar y_{s,h}$ is
+  unbiased and has variance
+  $$\sum_h W_h^2\left(1-\frac{n_h}{N_h}\right)\frac{S_h^2}{n_h}.$$
+  For $n_h\ge2$, replacing each $S_h^2$ by the sample variance with
+  divisor $n_h-1$ gives an unbiased variance estimator. For $S_h>0$
+  and a fixed total $n=\sum_h n_h$, the continuous allocation problem
+  has the solution
+  $$n_h=\frac{nN_hS_h}{\sum_l N_lS_l},$$
+  provided these values satisfy $1\le n_h\le N_h$. This is Neyman
+  allocation for equal sampling costs; integer allocations require
+  rounding or discrete optimization. Complete enumeration gives zero
+  sampling variance. The one-stratum formula also supplies the sampling
+  variance used in the randomized-experiment results below.
 
 ### Experiments, identification, and estimation
 
@@ -1008,10 +1065,13 @@ $$\mathrm{rr}_{AU}=\frac{P(U=1\mid A=1,x)}{P(U=1\mid A=0,x)},\qquad
   $$\max(\mathrm{rr}_{AU},\mathrm{rr}_{UY})\ge
   \mathrm{rr}^{\mathrm{obs}}+\sqrt{\mathrm{rr}^{\mathrm{obs}}
   (\mathrm{rr}^{\mathrm{obs}}-1)}.$$
-  The right side is the **E-value** of Ding and VanderWeele: an unmeasured
-  confounder that fully explains an observed risk ratio must be associated
-  with both treatment and outcome at least this strongly on the risk-ratio
-  scale. The case $\mathrm{rr}^{\mathrm{obs}}<1$ follows by relabeling the
+  The right side is the **E-value** of Ding and VanderWeele. At least one
+  of the two confounding associations must reach it; if the two
+  associations are equal, both must reach it. One association may be
+  smaller when the other is sufficiently larger, subject to the joint
+  bound above. Both must separately reach $\mathrm{rr}^{\mathrm{obs}}$,
+  which is the weaker Cornfield bound. The case
+  $\mathrm{rr}^{\mathrm{obs}}<1$ follows by relabeling the
   treatment levels. Item 66 is the corresponding design-based sensitivity
   analysis for matched pairs.
 
@@ -1264,7 +1324,9 @@ regime-specific means.
 - **[105B](#synopsis-105b)**: Silvey, Pukelsheim, and Fedorov and Hackl carry
   optimal design. Cox and Reid, Bailey, and Cheng carry randomization and
   block designs. Hedayat, Sloane, and Stufken carry orthogonal arrays. Cheng
-  carries Latin squares, regular fractions, and resolution. Rosenbaum carries
+  carries Latin squares, regular fractions, and resolution. Cochran and
+  Särndal, Swensson, and Wretman carry finite-population sampling,
+  inclusion-probability estimation, and allocation. Rosenbaum carries
   randomization inference and sensitivity analysis. Pearl carries directed
   interventions, the do-calculus, structural counterfactuals, and
   probabilities of causation. Imbens and Rubin, and Ding, carry potential
@@ -1278,6 +1340,24 @@ regime-specific means.
   theory used by the doubly robust estimator is in SYNOPSIS102.
 
 ### Source comparisons and local copies
+
+#### Survey sampling
+
+Items 72 and 73 add the finite-population sampling core represented in
+Cochran, *Sampling Techniques*, and Särndal, Swensson, and Wretman,
+*Model Assisted Survey Sampling*. Neither full text was located in the
+local reference directories; the supplemental Ghosh–Meeden file is a
+preview and is not treated as a full source. The publisher records were
+checked for the two added books. Horvitz and Thompson's original paper
+is [JASA 47 (1952), 663–685](https://doi.org/10.1080/01621459.1952.10483446).
+The formulas were checked directly by finite indicator-moment and
+covariance calculations, including the zero row sums for fixed-size
+designs, the finite-population correction, and the Cauchy–Schwarz
+allocation argument. Positive first-order inclusion suffices for the
+total; the displayed unbiased variance estimators additionally require
+positive pairwise inclusion. Sample-variance estimation requires at least
+two observations in each sampled stratum. These results concern fixed
+population values with randomness from the sampling design.
 
 #### Linear models, multivariate analysis, and design
 

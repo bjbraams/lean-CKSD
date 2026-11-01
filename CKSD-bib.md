@@ -1437,11 +1437,13 @@ path-space relative entropy defining the bridge.
 
 Linear and generalised linear models, mixtures, classical multivariate
 analysis, invariance, graphical models, directional and shape data, the
-theory of experimental design, and the potential-outcome, graphical, and
-structural models of causal inference with the semiparametric estimators
+theory of experimental design, finite-population survey sampling, and the
+potential-outcome, graphical, and structural models of causal inference
+with the semiparametric estimators
 that target intervention effects. Subdivision 105A is regression and
-multivariate analysis; 105B is experimental design and causal inference,
-which share the logic of randomization. High-dimensional covariance and
+multivariate analysis; 105B is experimental design, survey sampling, and
+causal inference, which share the logic of randomization. High-dimensional
+covariance and
 sparsity are in Section 103; the missing-data and efficiency theory that
 many causal estimators use is in Section 102.
 
@@ -1611,10 +1613,11 @@ Riemannian statistics on manifolds are in 108A.
 
 <a id="cks-105b"></a>
 
-### 105B. Experimental Design and Causal Inference
+### 105B. Experimental Design, Survey Sampling, and Causal Inference
 
 Randomisation, optimality criteria, information matrices, and the
-combinatorial structure of factorial experiments; potential outcomes,
+combinatorial structure of factorial experiments; finite-population
+sampling, inclusion probabilities, and allocation; potential outcomes,
 graphical and structural models, and the estimators that target intervention
 effects.
 
@@ -1652,6 +1655,25 @@ effects.
   construction of orthogonal arrays through codes, finite fields, and
   difference schemes. The reference for the combinatorics behind
   fractional factorial designs.
+
+##### Survey sampling
+
+* **William G. Cochran, *Sampling Techniques*** (3rd ed., 1977,
+  [Wiley](https://www.wiley.com/en-ae/sampling-techniques-3rd-edition-p-9780471162407)).
+  Finite-population sampling, simple and stratified random sampling,
+  allocation, unequal probabilities, and ratio and regression estimation.
+  The classical course-length treatment of design-based inference.
+* **Carl-Erik Särndal, Bengt Swensson, and Jan Wretman, *Model Assisted
+  Survey Sampling*** (1992,
+  [Springer](https://link.springer.com/book/9780387406206), Springer
+  Series in Statistics). Inclusion probabilities, design-unbiased
+  estimation and variance estimation, and the use of auxiliary information.
+  The research reference connecting sampling designs with model assistance.
+* **D. G. Horvitz and D. J. Thompson, “A Generalization of Sampling
+  Without Replacement from a Finite Universe”** (1952,
+  [Journal of the American Statistical Association 47, 663–685](https://doi.org/10.1080/01621459.1952.10483446)).
+  The inverse-inclusion-probability estimator of a population total and
+  its design variance. The foundational unequal-probability result.
 
 ##### Causal inference
 

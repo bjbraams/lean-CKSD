@@ -665,7 +665,8 @@ $$\kappa^2(S,L)=\inf\Bigl\{
 \frac{|S|\,\|X\delta\|_2^2}{n\|\delta_S\|_1^2}:
 \delta\neq0,\;\|\delta_{S^c}\|_1\le L\|\delta_S\|_1\Bigr\}.$$
 
-* **34. Lasso under compatibility.** Suppose $\beta$ is supported on $S$ and
+* **34. Lasso under compatibility.** Let $S$ be nonempty and $\lambda>0$.
+  Suppose $\beta$ is supported on $S$ and
   $$\lambda\ge\frac2n\|X^\top\varepsilon\|_\infty.$$
   If $\kappa(S,3)>0$, then every lasso solution satisfies
   $$\frac1n\|X(\hat\beta-\beta)\|_2^2

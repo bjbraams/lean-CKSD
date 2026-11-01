@@ -232,9 +232,11 @@ components of the graph are those of the graph of positive weights.
   $\lambda_1,\dots,\lambda_k$, equivalently by $Y=D^{-1/2}U$ with $U$
   holding orthonormal eigenvectors of $\mathcal L$ orthogonal to
   $D^{1/2}\mathbf 1$. The rows $y_i$ are the Laplacian eigenmap
-  coordinates of Belkin and Niyogi. The minimizer is determined up to a
-  right orthogonal factor, and its column space is unique when
-  $\lambda_k<\lambda_{k+1}$. The trace minimization is the Ky Fan
+  coordinates of Belkin and Niyogi. For a fixed minimizing column space,
+  its orthonormal bases differ by a right orthogonal factor. The column
+  space is unique when $k=n-1$ or when $k<n-1$ and
+  $\lambda_k<\lambda_{k+1}$; a tie across the truncation boundary allows
+  different minimizing column spaces. The trace minimization is the Ky Fan
   principle, CKMA SYNOPSIS13, item 6.
 
 ### Fréchet means and Procrustes analysis
@@ -290,12 +292,15 @@ $\mathbb{CP}^{k-2}$, as in item 6.
   $\lambda_1\ge\cdots\ge\lambda_{m-1}\ge|\lambda_m|$. Here $\lambda_m<0$
   exactly when $\det(Z_2^\top Z_1)<0$. The minimum of
   $\|X_2-\beta X_1\Gamma-\mathbf 1\gamma^\top\|^2$ over
-  $\Gamma\in SO(m)$, $\beta>0$, and $\gamma\in\mathbb R^m$ is attained at
+  $\Gamma\in SO(m)$, $\beta\ge0$, and $\gamma\in\mathbb R^m$ is attained at
   $$\gamma=0,\qquad\Gamma=UV^\top,\qquad
   \beta=\frac{\mathop{\mathrm{tr}}(X_2^\top X_1\Gamma)}{\|X_1\|^2}.$$
   The minimum is $\|X_2\|^2\sin^2\rho$, where
-  $\cos\rho=\sum_i\lambda_i$ and $\rho\in[0,\pi/2]$. The Riemannian shape
-  distance is $\rho$. The full and partial Procrustes distances are
+  $\cos\rho=\sum_i\lambda_i$ and $\rho\in[0,\pi/2]$. If scale is
+  restricted to $\beta>0$, attainment
+  requires $\sum_i\lambda_i>0$; when this sum is zero the same value is
+  only an infimum, approached as $\beta\downarrow0$. The Riemannian shape
+  distance remains $\rho$. The full and partial Procrustes distances are
   $$d_F=\sin\rho=\Bigl(1-\Bigl(\sum_i\lambda_i\Bigr)^2\Bigr)^{1/2},
   \qquad d_P=2\sin(\rho/2).$$
   The optimal rotation is the same with or without scaling. Rotations
@@ -390,12 +395,13 @@ neighborhood.
 
 * **22. Homology from a sample.** Let $M\subset\mathbb R^D$ be a compact
   smooth $d$-dimensional submanifold without boundary and with reach
-  $\tau>0$. Let $P$ be finite with Hausdorff distance
+  $\tau>0$. Let $P\subset M$ be finite with Hausdorff distance
   $d_H(P,M)=\varepsilon<\sqrt{3/20}\,\tau$. Then for every
   $r\in(2\varepsilon,\sqrt{3/5}\,\tau)$ the offset
   $P^r=\{x:d(x,P)\le r\}$, a union of balls, deformation retracts onto
-  $M$. Niyogi, Smale, and Weinberger prove this for $P\subset M$; Oudot
-  states it for a point cloud near $M$. By the nerve theorem of item 21,
+  $M$. This is the noiseless Niyogi–Smale–Weinberger theorem. Mere
+  Hausdorff closeness of an off-manifold cloud does not suffice for this
+  radius interval. By the nerve theorem of item 21,
   the Čech complex of radius $r$ then has the homotopy type of $M$.
   If $X_1,\ldots,X_n$ are independent with a law on $M$ whose density
   with respect to volume is bounded below by a positive constant, then
@@ -571,11 +577,20 @@ triangulable compact metric space has **polynomially growing
 triangulations** if triangulations of mesh at most $r$ with at most
 $cr^{-j}$ simplices exist for small $r$.
 
-* **35. Wasserstein stability.** For tame Lipschitz functions $f,g$ on
-  such a space, there are constants $C$ and $k\ge1$ with $k>j$ such that
+* **35. Wasserstein stability.** Write $D_p^{\mathrm{fin}}(f)$ for the
+  finite-death part of the diagram. For tame Lipschitz functions $f,g$ on
+  such a space $X$ in a fixed degree $p\ge0$, choose $k\ge1$ with
+  $k>j$. For every finite $q\ge k$
+  there is $C$ depending on the space, $k,q$, and the Lipschitz constants
+  such that, with $\delta=\|f-g\|_\infty>0$,
+  $$W_q\bigl(D_p^{\mathrm{fin}}(f),D_p^{\mathrm{fin}}(g)\bigr)
+  \le C\delta^{1-k/q}.$$
+  The essential bars, whose number is $\beta_p(X)$ in each diagram,
+  admit a matching with birth differences at most $\delta$. Consequently
+  the full diagrams satisfy
   $$W_q\bigl(\mathop{\mathrm{Dgm}}_p(f),\mathop{\mathrm{Dgm}}_p(g)\bigr)
-  \le C\|f-g\|_\infty^{1-k/q}\qquad(q\ge k).$$
-  The constants depend on the space and the Lipschitz constants. For
+  \le C\delta^{1-k/q}+\beta_p(X)^{1/q}\delta.$$
+  When $\delta=0$ both distances are zero. For
   monotone functions on the simplices of a finite complex $K$, meaning
   $f(\tau)\le f(\sigma)$ whenever $\tau$ is a face of $\sigma$,
   $$W_q\bigl(\mathop{\mathrm{Dgm}}_p(f),\mathop{\mathrm{Dgm}}_p(g)\bigr)
@@ -1408,8 +1423,14 @@ Proposition 6.12, and Theorem 6.13, give items 32–38; their Rips
 parameter is the diameter-$2r$ one of item 21. Oudot, Chapter 2.2.3,
 Chapter 4.1 (Theorem 4.1, Lemma 4.3, Theorem 4.4), and Chapter 7
 (Theorems 7.2 and 7.5, maximum-edge parameter), give items 22, 33, 36, and 37. Carlsson–Vejdemo-Johansson, Section 4.1, gives single linkage.
-Item 22 was sharpened to the Niyogi–Smale–Weinberger constants as stated
-in Oudot, Theorem 4.1, and item 5 now points to item 13.
+Item 22 uses the Niyogi–Smale–Weinberger constants with the essential
+restriction $P\subset M$. Oudot, Theorem 4.1, states the same constants
+for a nearby cloud in the ambient space, but that extension is false.
+For example, 100 equally spaced points on the circle of radius $0.7$
+have Hausdorff distance about $0.30115$ from the unit circle, of reach
+one. At radius $0.75$ the displayed bounds hold, but every sampling ball
+contains the origin and their union is star-shaped. The noiseless
+restriction avoids this counterexample. Item 5 points to item 13.
 
 Some statements were not checked against a local full text. Two
 earlier entries, on density-corrected Laplace–Beltrami limits (after
@@ -1432,7 +1453,10 @@ dimensions $p$ and $p+1$; the $\ell^\infty$ form stated is weaker. Their
 Theorem 3.2 restates the Lipschitz bound of Cohen-Steiner, Edelsbrunner,
 Harer, and Mileyko with constant $C_X^{1/q}\max(\mathop{\mathrm{Lip}}f,
 \mathop{\mathrm{Lip}}g)^{k/q}$, in agreement with Edelsbrunner–Harer,
-Chapter VIII.2. The Čech statements of item 36 are Oudot, Theorem 7.10,
+Chapter VIII.2, for the finite-death diagrams. Item 35 treats essential
+bars separately using bottleneck stability; their births cannot satisfy
+the same homogeneous bound under arbitrary constant shifts of the
+functions. The Čech statements of item 36 are Oudot, Theorem 7.10,
 with the ambient Čech complex of item 21 taking the whole space as
 witnesses. The Rips pair of item 37 is
 [Chazal and Oudot, Theorem 3.6](https://arxiv.org/abs/0712.2638), also

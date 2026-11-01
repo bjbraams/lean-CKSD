@@ -2,7 +2,7 @@
 
 [GAPS.md](GAPS.md) selects principal theorem statements of core statistics
 and data science that are not proved in Mathlib or TauCeti. Neither library
-states the **107 statements** below, or the parts of them delimited by a
+states the **109 statements** below, or the parts of them delimited by a
 **Scope** paragraph. Each follows from results that the libraries do prove,
 by a comparatively short argument: a combination of existing theorems, a
 specialization, a finite calculation, or a construction packaged in a new
@@ -14,10 +14,14 @@ sibling analysis project, [CKMA GAPS_EASY.md](../lean-CKMA/GAPS_EASY.md).
 The proportion is higher than in the analysis project. Much of the
 statistics of a graduate course is a short argument from probability,
 measure theory, and linear algebra once the statistical notions are
-defined, and neither library defines a statistical model, a sufficient
-statistic, a test, an estimator's risk, or a design. Many of the arguments
-below therefore begin by introducing such definitions; the definitions are
-part of the work, but not a substantial theorem.
+defined. Mathlib already represents measurable parametrized models by
+data-generating Markov kernels and randomized estimators by Markov kernels,
+and supplies their risk integrals, average risk, Bayes risk, and minimax
+risk in `Mathlib.Probability.Decision`. Dedicated notions of sufficiency,
+tests, and sampling or experimental designs are absent. Many arguments
+below introduce these missing notions while reusing the existing model
+and risk framework; a new name for a kernel or integral is not a new
+mathematical foundation.
 
 The library revisions are those recorded in `GAPS.md`:
 
@@ -35,7 +39,7 @@ the following parts.
 - **Statement:** the entry as it appears in `GAPS.md`, including its
   account of what the libraries already contain.
 - **Scope:** present only when the short argument covers just part of the
-  statement (54 entries). The rest of that statement remains a
+  statement (53 entries). The rest of that statement remains a
   substantial gap.
 - **Argument:** an outline of the proof from library results. Where a
   hypothesis of the statement is not needed, or a degenerate case or a
@@ -57,7 +61,7 @@ not thereby certified to lack a short proof.
 - **102.** 102.1 Delta method; 102.8 Nondegenerate $U$-statistics; 102.12 Contiguity; 102.23 Consistency of $M$-estimators; 102.31 Pearson's multinomial tests; 102.44 $M$-estimators and the Huber minimax property.
 - **103.** 103.1 Kolmogorov–Smirnov statistic; 103.8 Representer theorem; 103.17 Cramér–von Mises and two-sample Kolmogorov–Smirnov limits; 103.31 Optimality of functional principal components; 103.34 Lasso under compatibility; 103.37 Benjamini–Hochberg procedure; 103.39 Le Cam's two-point method; 103.40 Fano's method; 103.45 Varshamov–Gilbert bound; 103.46 Assouad's lemma; 103.48 Restricted nullspace and exact recovery; 103.52 Thresholded covariance estimation; 103.54 Perturbation of the leading eigenvector.
 - **104.** 104.10 Highest posterior density regions; 104.14 Tweedie's formula and Robbins' estimator; 104.17 Doob's consistency theorem; 104.22 Metropolis–Hastings; 104.32 Independence and random-walk samplers; 104.35 Hamiltonian Monte Carlo; 104.68 Score error and total variation; 104.77 Half-bridges and iterative proportional fitting.
-- **105.** 105.1 Gauss–Markov theorem; 105.2 Normal sampling theory; 105.10 Exact tests of nested linear models; 105.15 Distribution of quadratic forms; 105.22 Wishart distribution and Hotelling's $T^2$; 105.28 Gaussian covariance likelihood; 105.31 Structure of the Wishart law; 105.37 Kiefer–Wolfowitz equivalence; 105.38 Randomization test; 105.42 Fisher's inequality and optimality of balanced incomplete blocks; 105.44 Latin squares and mutually orthogonal sets; 105.46 Neyman's theorem; 105.47 Identification by regression and by weighting; 105.48 Propensity score; 105.50 Local average treatment effect.
+- **105.** 105.1 Gauss–Markov theorem; 105.2 Normal sampling theory; 105.10 Exact tests of nested linear models; 105.15 Distribution of quadratic forms; 105.22 Wishart distribution and Hotelling's $T^2$; 105.28 Gaussian covariance likelihood; 105.31 Structure of the Wishart law; 105.37 Kiefer–Wolfowitz equivalence; 105.38 Randomization test; 105.42 Fisher's inequality and optimality of balanced incomplete blocks; 105.44 Latin squares and mutually orthogonal sets; 105.72 Horvitz–Thompson estimation and design variance; 105.73 Simple and stratified random sampling; Neyman allocation; 105.46 Neyman's theorem; 105.47 Identification by regression and by weighting; 105.48 Propensity score; 105.50 Local average treatment effect.
 - **106.** 106.12 Long-run variance of a sample mean; 106.14 Herglotz theorem and rational spectral densities; 106.18 Stationarity of GARCH$(1,1)$; 106.24 Bochner's theorem and the Matérn family; 106.37 Sequential probability ratio test; 106.38 Ville's inequality and e-values; 106.41 Wald's fundamental identity and the operating characteristic; 106.42 Anscombe's theorem; 106.44 Optimality of CUSUM; 106.48 Extremal index; 106.50 Poisson approximation for exceedances.
 - **107.** 107.2 Rademacher bound; 107.5 Hedge; 107.6 Split conformal prediction; 107.7 No free lunch; 107.8 Bayes classification risk; 107.10 Margin bound; 107.11 Comparison inequality for convex surrogates; 107.12 Generalization of stable algorithms; 107.24 AdaBoost: training error and margins; 107.26 Variational representation of the cumulant function; 107.31 Ridgeless least squares; 107.40 Implicit bias of gradient descent; 107.52 Adversarial bandits; 107.59 Sample complexity with a generative model; 107.60 Temporal differences with linear features; 107.65 Composition; 107.74 Sparse vector technique; 107.75 Contraction under local privacy.
 - **108.** 108.1 Cheeger inequality for the normalized Laplacian; 108.8 Classical multidimensional scaling; 108.10 Extrinsic projection mean; 108.21 Čech, Rips, and the nerve; 108.23 Central limit theorem for landscapes; 108.24 Stability of the distance to a measure; 108.42 Consistency of Brenier maps; 108.43 Gromov–Wasserstein distance; 108.50 Minimax lower bounds for transport estimation; 108.51 Smooth laws and smoothed distances; 108.56 Semidiscrete dual; 108.57 Tangent-space linearization; 108.59 Procrustes iteration for barycenters; 108.68 Criteria for characteristic kernels; 108.70 Metrization of weak convergence; 108.74 Random Fourier features.
@@ -1527,8 +1531,9 @@ then trivial.
 
 ### 103.34. Lasso under compatibility
 
-**Statement.** Suppose $\beta$ is supported on $S$ and
-$\lambda\ge2n^{-1}\|X^\top\varepsilon\|_\infty$. If $\kappa(S,3)>0$, every
+**Statement.** Let $S$ be nonempty and $\lambda>0$. Suppose $\beta$ is
+supported on $S$ and $\lambda\ge2n^{-1}\|X^\top\varepsilon\|_\infty$.
+If $\kappa(S,3)>0$, every
 lasso solution satisfies
 $$\frac1n\|X(\hat\beta-\beta)\|_2^2\le\frac{9\lambda^2|S|}{4\kappa^2(S,3)},
 \qquad\|\hat\beta-\beta\|_1\le\frac{6\lambda|S|}{\kappa^2(S,3)},$$
@@ -1553,8 +1558,9 @@ covering argument with concentration of $\|Xv\|^2$, and remains a
 substantial gap.
 
 **Argument.** The lasso must be introduced as a definition. Put
-$\delta=\hat\beta-\beta$ and $a=n^{-1}\|X\delta\|_2^2$. We need $\lambda>0$
-and $S\ne\varnothing$: if $\lambda=0$ the noise condition forces
+$\delta=\hat\beta-\beta$ and $a=n^{-1}\|X\delta\|_2^2$. The hypotheses $\lambda>0$
+and $S\ne\varnothing$ are retained from the statement: if $\lambda=0$,
+the noise condition forces
 $X^\top\varepsilon=0$ and $a=0$, but the cone and $\ell^1$ conclusions can
 fail. A first-order condition is used, not the basic inequality, which loses
 a factor $2$. For $0<t\le1$, the point $\hat\beta-t\delta=(1-t)\hat\beta+t
@@ -3106,6 +3112,100 @@ orthogonal.
 `Submodule.norm_sq_eq_add_norm_sq_starProjection` in
 `Mathlib/Analysis/InnerProductSpace/Projection/Basic.lean`; the results
 listed for 105.1.
+
+### 105.72. Horvitz–Thompson estimation and design variance
+
+**Statement.** Let a sampling design be a probability law on subsets $s$
+of $U=\{1,\ldots,N\}$, and let $y_i$ be fixed real population values.
+Put $I_i=1_{\{i\in s\}}$, $\pi_i=\mathbb E I_i>0$,
+$\pi_{ij}=\mathbb E I_iI_j$, $\pi_{ii}=\pi_i$, and
+$\Delta_{ij}=\pi_{ij}-\pi_i\pi_j$. The Horvitz–Thompson estimator
+$\hat t_y=\sum_{i\in s}y_i/\pi_i$ is unbiased for $\sum_i y_i$, with
+variance $\sum_{i,j}\Delta_{ij}y_i y_j/(\pi_i\pi_j)$. If all distinct
+pairs have $\pi_{ij}>0$, the sample sum
+$\hat V=\sum_{i,j\in s}(\Delta_{ij}/\pi_{ij})y_i y_j/(\pi_i\pi_j)$ is
+unbiased for that variance. For fixed sample size, the variance and,
+assuming positive pairwise inclusion, its unbiased estimator have the
+Sen–Yates–Grundy forms
+$-\tfrac12\sum_{i,j\in U}\Delta_{ij}(y_i/\pi_i-y_j/\pi_j)^2$ and
+$-\tfrac12\sum_{i,j\in s}(\Delta_{ij}/\pi_{ij})(y_i/\pi_i-y_j/\pi_j)^2$.
+The latter is nonnegative when $\Delta_{ij}\le0$ for distinct pairs.
+Positive pairwise inclusion is required for the variance estimators.
+These formulas are absent from both libraries.
+
+**Argument.** Define the design on the finite type of subsets and put
+$z_i=y_i/\pi_i$. Since $I_i^2=I_i$, the indicator moments give
+$\mathbb E I_i=\pi_i$ and $\mathop{\mathrm{Cov}}(I_i,I_j)=\Delta_{ij}$.
+Linearity and the variance-of-a-sum identity yield
+$\mathbb E\sum_iI_iz_i=\sum_i y_i$ and
+$\mathop{\mathrm{Var}}(\sum_iI_iz_i)=\sum_{i,j}\Delta_{ij}z_i z_j$.
+Taking expectations term by term in $\hat V$ cancels each positive
+$\pi_{ij}$, proving unbiasedness. No independence is needed.
+
+For fixed sample size $\sum_jI_j=n$, so
+$\sum_j\Delta_{ij}=\mathop{\mathrm{Cov}}(I_i,n)=0$. Symmetry gives
+zero column sums as well. Expanding the squared differences therefore
+shows
+$$-\frac12\sum_{i,j}\Delta_{ij}(z_i-z_j)^2
+=\sum_{i,j}\Delta_{ij}z_i z_j.$$
+The sample version is unbiased by the same inclusion-probability
+cancellation. Its diagonal terms vanish and its other terms are
+nonnegative when $\Delta_{ij}\le0$. If some $\pi_{ij}=0$, cancellation
+for that pair is unavailable; it is not needed for unbiasedness of the
+total estimator.
+
+**Library results.** `MeasureTheory.integral_finsetSum` in
+`Mathlib/MeasureTheory/Integral/Bochner/Basic.lean`;
+`MeasureTheory.integral_indicator` in
+`Mathlib/MeasureTheory/Integral/Bochner/Set.lean`;
+`ProbabilityTheory.variance_sum` in
+`Mathlib/Probability/Moments/Variance.lean`; finite-sum algebra.
+
+### 105.73. Simple and stratified random sampling; Neyman allocation
+
+**Statement.** For a uniform subset of size $1\le n\le N$ from $N\ge2$
+fixed real values, the sample mean is unbiased for the population mean
+and has variance $(1-n/N)S^2/n$, with $S^2$ the population variance of
+divisor $N-1$. For independent uniform samples of sizes $1\le n_h\le N_h$
+from strata of sizes $N_h\ge2$, the weighted mean $\sum_hW_h\bar y_{s,h}$,
+$W_h=N_h/N$, is unbiased and has variance
+$\sum_hW_h^2(1-n_h/N_h)S_h^2/n_h$. If $n_h\ge2$, substitution of the
+sample variances of divisor $n_h-1$ gives an unbiased variance estimator.
+For $S_h>0$ and fixed total $n$, the continuous allocation minimizing
+variance is $n_h=nN_hS_h/\sum_lN_lS_l$, provided it satisfies the sampling
+bounds; integer allocation is a separate discrete problem. These
+statistical formulas are absent from both libraries.
+
+**Argument.** Counting subsets of size $n$ gives
+$\pi_i=n/N$ and $\pi_{ij}=n(n-1)/(N(N-1))$ for $i\ne j$. Substitute in
+105.72 and divide the total estimator by $N$. Equivalently, center the
+values $z_i=y_i-\bar y$, so $\sum_i z_i=0$ and
+$\sum_{i\ne j}z_i z_j=-\sum_i z_i^2$; the covariance sum is then
+$(1-n/N)S^2/n$. This also covers $n=1$ and $n=N$.
+For $n\ge2$, the identity
+$$s^2=\frac1{2n(n-1)}\sum_{i,j\in s}(y_i-y_j)^2$$
+and the pairwise inclusion probability show $\mathbb E s^2=S^2$.
+Independent strata have zero cross-covariances, so summing their weighted
+variances gives the formula and the unbiased variance estimate.
+
+The allocation-dependent term is $\sum_h (W_hS_h)^2/n_h$; the
+finite-population correction $-\sum_hW_h^2S_h^2/N_h$ is constant.
+Cauchy–Schwarz gives
+$$(\sum_hW_hS_h)^2\le (\sum_hn_h)
+\sum_h\frac{(W_hS_h)^2}{n_h},$$
+with equality precisely when $n_h$ is proportional to $W_hS_h$.
+The stated allocation follows. If it violates a stratum size bound,
+that unconstrained solution is not feasible and is not asserted optimal
+for the constrained problem.
+
+**Library results.** `ProbabilityTheory.uniformOn` in
+`Mathlib/Probability/UniformOn.lean`; `Finset.card_powersetCard` in
+`Mathlib/Data/Finset/Powerset.lean`;
+`ProbabilityTheory.variance_sum` and `ProbabilityTheory.IndepFun.variance_sum`
+in `Mathlib/Probability/Moments/Variance.lean`; the finite
+Cauchy–Schwarz inequality. `TauCeti.Probability.sampleWithoutReplacement`
+in `TauCeti/Probability/PopulationSampling/Finite.lean` gives the
+same simple-random-sampling law in ordered form.
 
 ### 105.46. Neyman's theorem
 

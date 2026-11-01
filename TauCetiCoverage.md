@@ -44,6 +44,10 @@ statement would follow by a further argument however short, is not covered.
 Such *ingredients only* entries are mentioned below among the supporting
 material, not as coverage.
 
+These are direct-coverage verdicts under the CKSD rule. They are not
+numerically comparable with CKMA's verdicts without reconciling the rules
+and source revisions; see [Comparison with CKMA](STRUCTURE.md#comparison-with-ckma).
+
 Each section below gives a verdict for this library alone, judged against the
 content of the corresponding synopsis:
 
@@ -64,8 +68,8 @@ content of the corresponding synopsis:
 - [107](#107-statistical-learning-and-machine-learning) Statistical learning and machine learning — Thin
 - [108](#108-geometry-of-data-manifolds-topology-optimal-transport-and-kernels) Geometry of data: manifolds, topology, optimal transport, and kernels — Partial
 
-Across the 535 numbered entries of Sections 101–108, the two libraries together
-cover 4 entries, partly cover 48, and do not cover 483. TauCeti takes part in all
+Across the 537 numbered entries of Sections 101–108, the two libraries together
+cover 4 entries, partly cover 48, and do not cover 485. TauCeti takes part in all
 four covered entries: 104.28, 108.41 and 108.49 on its own, and 101.44 together
 with Mathlib. It takes part in 37 of the partly covered entries, 31 on its own
 and 6 (101.17, 101.27, 101.66, 104.21, 104.25, 106.20) together with Mathlib.
@@ -88,7 +92,7 @@ and 6 (101.17, 101.27, 101.66, 104.21, 104.25, 106.20) together with Mathlib.
 
 ## 105. Linear models, multivariate analysis, experimental design, and causal inference
 
-**Thin.** TauCeti's multivariate distribution theory is the most developed material of the section, but it reaches entries only in part. Gaussian conditioning with affine images gives the conditional mean of random effects in the mixed model with \(\beta\) known (105.14, partly). The Gram sum of \(n\ge p\) independent \(N_p(0,\Sigma)\) vectors has the nonsingular Wishart density law (105.22, partly; \(\bar X\), \(S\) and Hotelling's \(T^2\) are absent), and the Wishart density, congruence, principal-submatrix marginals and the Bartlett decomposition are proved (105.31, partly; the Schur-complement law and the determinant law are absent). Independence of Gaussian blocks is equivalent to vanishing cross-covariance (105.29, partly), and Ky Fan's inequality bounds captured variance by the leading eigenvalues (105.30, partly; the Frobenius Eckart–Young theorem is not stated). Supporting are the chi-squared law of Gaussian squares and its convolution, the moment-generating function of Gaussian quadratic forms (one step from the central case of 105.15), the \(t\) and \(F\) ratio laws, the trace of an idempotent as its rank, the covariance matrix and Gaussian density, Courant–Fischer, operator-norm Eckart–Young, principal cosines, the Gamma–Beta relation, Wishart moments and transforms, weak union for conditional independence, concavity of \((\det A)^{1/n}\) (the D-criterion), finite iterative proportional fitting, sampling without replacement, the functional representation of conditional independence, the modified Bessel function \(I_\nu\), and the logistic derivative. Nothing is added on linear models and least squares, noncentral laws and Cochran's theorem, generalized linear models, multivariate tests, graphical Markov properties, designs, or causal identification. [Details in STRUCTURE105.md](STRUCTURE105.md).
+**Thin.** TauCeti's multivariate distribution theory is the most developed material of the section, but it reaches entries only in part. Gaussian conditioning with affine images gives the conditional mean of random effects in the mixed model with \(\beta\) known (105.14, partly). The Gram sum of \(n\ge p\) independent \(N_p(0,\Sigma)\) vectors has the nonsingular Wishart density law (105.22, partly; \(\bar X\), \(S\) and Hotelling's \(T^2\) are absent), and the Wishart density, congruence, principal-submatrix marginals and the Bartlett decomposition are proved (105.31, partly; the Schur-complement law and the determinant law are absent). Independence of Gaussian blocks is equivalent to vanishing cross-covariance (105.29, partly), and Ky Fan's inequality bounds captured variance by the leading eigenvalues (105.30, partly; the Frobenius Eckart–Young theorem is not stated). Supporting are the chi-squared law of Gaussian squares and its convolution, the moment-generating function of Gaussian quadratic forms (one step from the central case of 105.15), the \(t\) and \(F\) ratio laws, the trace of an idempotent as its rank, the covariance matrix and Gaussian density, Courant–Fischer, operator-norm Eckart–Young, principal cosines, the Gamma–Beta relation, Wishart moments and transforms, weak union for conditional independence, concavity of \((\det A)^{1/n}\) (the D-criterion), finite iterative proportional fitting, sampling without replacement (ingredients only for the survey-sampling formulas 105.72 and 105.73), the functional representation of conditional independence, the modified Bessel function \(I_\nu\), and the logistic derivative. Nothing is added on linear models and least squares, noncentral laws and Cochran's theorem, generalized linear models, multivariate tests, graphical Markov properties, designs, or causal identification. [Details in STRUCTURE105.md](STRUCTURE105.md).
 
 ## 106. Dependent data and stochastic models
 

@@ -31,7 +31,7 @@ the sibling analysis project. Those entries are cited as CKMA SYNOPSIS items.
 
 ## Progress
 
-As of 2026-11-01, Sections 101–108 contain 535 numbered entries.
+As of 2026-11-01, Sections 101–108 contain 537 numbered entries.
 
 The series was first written on 2026-10-29 as thirteen synopses, Sections
 101–113, with 220 entries. A mathematical-statistics expansion and a
@@ -64,6 +64,15 @@ practice was deleted, and several incorrect statements were corrected.
 Of the 536 entries, 398 were reworded and one, the Bartlett correction
 (102.54), was removed because its hypotheses have no concise precise
 form.
+
+A further mathematical review on 2026-11-01 corrected the bootstrap
+studentization hypotheses (102.60), positivity in the lasso statement
+(103.34), the isotropic diffusion preamble (104C), the E-value interpretation
+(105.60), and the optimizer and persistence qualifications in 108.12,
+108.16, 108.22, and 108.35. It also added the finite-population survey
+sampling core as 105.72 and 105.73. Existing identifiers were retained;
+the series now has 537 entries. Corresponding gap statements, short
+derivations, coverage summaries, and counts were synchronized.
 
 The first expansion develops exact sampling and confidence procedures, decision
 bounds and simultaneous tests, functional and resampling asymptotics,
@@ -137,7 +146,7 @@ cross-references place shared probability and analytic tools in CKMA.
 * 102. Asymptotic, semiparametric, and robust statistics: [SYNOPSIS102.md](SYNOPSIS102.md), 60 numbered entries.
 * 103. Nonparametric and high-dimensional inference: [SYNOPSIS103.md](SYNOPSIS103.md), 55 numbered entries.
 * 104. Bayesian inference and stochastic computation: [SYNOPSIS104.md](SYNOPSIS104.md), 77 numbered entries.
-* 105. Linear models, multivariate analysis, experimental design, and causal inference: [SYNOPSIS105.md](SYNOPSIS105.md), 71 numbered entries.
+* 105. Linear models, multivariate analysis, experimental design, and causal inference: [SYNOPSIS105.md](SYNOPSIS105.md), 73 numbered entries.
 * 106. Dependent data and stochastic models: [SYNOPSIS106.md](SYNOPSIS106.md), 51 numbered entries.
 * 107. Statistical learning and machine learning: [SYNOPSIS107.md](SYNOPSIS107.md), 77 numbered entries.
 * 108. Geometry of data: manifolds, topology, optimal transport, and kernels: [SYNOPSIS108.md](SYNOPSIS108.md), 74 numbered entries.
@@ -174,7 +183,7 @@ bibliography separates the general texts and decision-theoretic monographs
 
   - [105A. Regression, Multivariate Analysis, and Graphical Models](SYNOPSIS105.md#synopsis-105a)
 
-  - [105B. Experimental Design and Causal Inference](SYNOPSIS105.md#synopsis-105b)
+  - [105B. Experimental Design, Survey Sampling, and Causal Inference](SYNOPSIS105.md#synopsis-105b)
 
 - **Section 106:**
 

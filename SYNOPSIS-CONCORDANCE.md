@@ -609,3 +609,11 @@ reorganization on, identifiers are stable in the sense of
 - 113.62 → 107.75, Contraction under local privacy.
 - 113.63 → 107.76, Independence versus the conditional criteria.
 - 113.64 → 107.77, Label shift: correction and identification.
+
+## Entries added after the reorganization
+
+The following entries were added during the subsequent review on
+2026-11-01 and have no identifier in the earlier numbering:
+
+- 105.72, Horvitz–Thompson estimation and design variance.
+- 105.73, Simple and stratified random sampling; Neyman allocation.

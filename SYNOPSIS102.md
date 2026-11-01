@@ -1016,21 +1016,32 @@ A statistic is **asymptotically pivotal** when its limit law does not depend
 on unknown quantities.
 
 * **60. Second-order accuracy of the studentized bootstrap.** Let $X$ be a
-  random vector in $\mathbb R^d$ with mean $\mu$, finite moments of every
-  order, and Cramér's condition of item 50. Let $g$ and $h$ be infinitely
-  differentiable near $\mu$, with $h(\mu)>0$ and $h(\mu)^2$ the asymptotic
-  variance of $\sqrt n\,g(\bar X)$. Put $\hat\theta=g(\bar X)$,
-  $\theta=g(\mu)$, $\hat\sigma=h(\bar X)$, and
-  $T=\sqrt n(\hat\theta-\theta)/\hat\sigma$, so that item 50 applies to $T$
-  with $A(x)=(g(x)-g(\mu))/h(x)$. Let
-  $T^\star=\sqrt n(\hat\theta^\star-\hat\theta)/\hat\sigma^\star$ be computed from
-  a resample of size $n$ drawn from the empirical distribution. Then
+  random vector in $\mathbb R^d$ with mean $\mu$, covariance $\Sigma$, and
+  finite moments of every order. Assume Cramér's condition of item 50 for
+  the augmented vector $Z=(X,(X_jX_k)_{1\le j\le k\le d})$. Let $g$ be
+  infinitely differentiable near $\mu$, with
+  $\sigma^2=\nabla g(\mu)^\top\Sigma\nabla g(\mu)>0$. Put
+  $$\hat\theta=g(\bar X),\qquad\theta=g(\mu),\qquad
+  \hat\Sigma=\frac1n\sum_i(X_i-\bar X)(X_i-\bar X)^\top,\qquad
+  \hat\sigma^2=\nabla g(\bar X)^\top\hat\Sigma\nabla g(\bar X).$$
+  For a resample of size $n$, recompute the mean, covariance, and the
+  entire variance estimate to obtain $\hat\theta^\star$ and
+  $\hat\sigma^\star$. Define
+  $T=\sqrt n(\hat\theta-\theta)/\hat\sigma$ and
+  $T^\star=\sqrt n(\hat\theta^\star-\hat\theta)/\hat\sigma^\star$;
+  use arbitrary finite definitions of the estimates outside the smooth
+  neighborhood, and set the statistics to zero when their denominators
+  vanish or their means lie outside that neighborhood. Under the joint
+  sample-and-resample law these exceptional events have probability
+  smaller than every fixed inverse power of $n$.
+  Then
   $$\sup_x\bigl|P(T^\star\le x\mid X_1,\ldots,X_n)-P(T\le x)\bigr|
   =O_P(n^{-1}),$$
   whereas
   $$\sup_x|P(T\le x)-\Phi(x)|=n^{-1/2}\sup_x|p_1(x)\varphi(x)|+o(n^{-1/2}),$$
-  with $p_1$ the polynomial of item 50. Let $\hat v_\beta$ be the
-  $\beta$-quantile of the conditional law of $T^\star$ and $\hat x_\beta$ that
+  with $p_1$ the polynomial of item 50 applied to the smooth function of
+  the augmented sample mean defining $T$. Fix $0<\alpha<1/2$. Let
+  $\hat v_\beta$ be the $\beta$-quantile of the conditional law of $T^\star$ and $\hat x_\beta$ that
   of $\hat\theta^\star$. The one-sided percentile-$t$ interval
   $(-\infty,\hat\theta-n^{-1/2}\hat\sigma\hat v_\alpha]$ has coverage
   $1-\alpha+O(n^{-1})$, while the one-sided normal-theory interval
@@ -1143,7 +1154,12 @@ smooth-function Edgeworth expansion; Section 3.1, equations (3.1)–(3.4), for
 the pivotal and nonpivotal bootstrap errors; Section 3.5, Proposition 3.1
 and subsections 3.5.4–3.5.5, for one- and two-sided coverage errors; and
 Theorems 5.1–5.2 for the regularity behind bootstrap Edgeworth and
-Cornish–Fisher expansions. Serfling's scan did not yield extractable
+Cornish–Fisher expansions. Item 60 uses the plug-in delta-method variance
+computed from first and second sample moments, recomputed in every
+resample. Matching the variance at the true mean alone is insufficient:
+even for a standard normal sample, a fixed denominator of one leaves
+the bootstrap variance fluctuations of order $n^{-1/2}$. The symmetric
+interval refinement is Hall, Section 3.6. Serfling's scan did not yield extractable
 text in the first pass. Items 49, 51–53, and 55–57 are the forms shared by the extractable local sources and
 by the monographs named in the bibliography.
 

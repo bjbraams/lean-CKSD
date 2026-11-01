@@ -177,9 +177,9 @@ Iterative proportional fitting is defined for measures on a product of two space
 
 <a id="structure-105b"></a>
 
-## 105B. Experimental Design and Causal Inference
+## 105B. Experimental Design, Survey Sampling, and Causal Inference
 
-Optimal and combinatorial design, randomization inference, potential-outcome identification and estimation, sensitivity analysis, and directed graphical causal models are grouped here. Apart from scattered combinatorial and convex-analytic ingredients, none of this material is formalized; the conditional-independence and kernel infrastructure of Mathlib, recorded in [CKMA Structure 06](../lean-CKMA/STRUCTURE06.md), is the nearest support for the identification formulas.
+Optimal and combinatorial design, finite-population survey sampling, randomization inference, potential-outcome identification and estimation, sensitivity analysis, and directed graphical causal models are grouped here. Apart from scattered combinatorial and convex-analytic ingredients, none of this material is formalized; the conditional-independence and kernel infrastructure of Mathlib, recorded in [CKMA Structure 06](../lean-CKMA/STRUCTURE06.md), is the nearest support for the identification formulas.
 
 ### Experimental design
 
@@ -222,6 +222,35 @@ No Latin square, orthogonal array, or fractional factorial is defined. As suppor
 No relevant declarations were found.
 
 **Synopsis entries.** Not covered: 105.44, 105.45.
+
+### Survey sampling and finite populations
+
+[Mathematical scope](SYNOPSIS105.md#survey-sampling-and-finite-populations).
+
+#### Mathlib
+
+A sampling design is representable by a probability measure on the finite
+type of subsets; no new general model structure is needed. Finite sums,
+indicator expectations, and the covariance expansion of a variance are
+available (`ProbabilityTheory.variance_sum`,
+`Mathlib/Probability/Moments/Variance.lean`). The uniform law
+`ProbabilityTheory.uniformOn` (`Mathlib/Probability/UniformOn.lean`) and
+subset counts (`Finset.card_powersetCard`,
+`Mathlib/Data/Finset/Powerset.lean`) supply simple random sampling. The
+Horvitz–Thompson estimator, inclusion-probability variance estimators,
+finite-population correction, and Neyman allocation are not stated.
+
+#### TauCeti
+
+`TauCeti.Probability.sampleWithoutReplacement` in
+`TauCeti/Probability/PopulationSampling/Finite.lean` represents uniform
+sampling without replacement, as described under *Experiments,
+identification, and estimation*. It does not state the sample-mean
+variance, general unequal-probability estimation, or stratified allocation.
+
+**Synopsis entries.** Not covered: 105.72, 105.73 (ingredients only:
+finite-sum moment identities and uniform sampling without replacement;
+the statistical formulas require the finite arguments in GAPS_EASY.md).
 
 ### Experiments, identification, and estimation
 
@@ -336,6 +365,13 @@ No relevant declarations were found.
 **Synopsis entries.** Not covered: 105.70, 105.71.
 
 ## Missing from both libraries
+
+**Survey sampling (items 72, 73).** The generic finite probability and
+covariance infrastructure is present, and TauCeti represents uniform
+sampling without replacement. Inclusion-probability estimators, their
+design variance and variance estimators, stratified sampling formulas,
+and Neyman allocation are missing. These are short finite derivations
+from that infrastructure; see [GAPS_EASY.md](GAPS_EASY.md).
 
 **Linear model and least squares (items 1, 2, 7–12, 19).** Neither library defines the linear model \(Y=X\beta+\varepsilon\), a least-squares or generalized-least-squares estimator, or estimability. Mathlib's orthogonal projection and nearest-point theorems, the Woodbury identity, Schur complements, and the trace-equals-rank theorem for idempotents supply the algebra; Gauss–Markov (item 1) is a short argument from them once linear unbiased estimators are formalized. The normal sampling theory of item 2 needs the noncentral chi-squared law, which is absent; its central part is one step from TauCeti's Gaussian-square and affine-image theorems together with Mathlib's Gaussian independence criterion.
 
