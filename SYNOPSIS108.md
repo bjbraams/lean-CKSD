@@ -20,7 +20,7 @@ coupling, Brenier's theorem, displacement interpolation, the
 Benamou–Brenier formula, and entropic transport are
 [CKMA SYNOPSIS39](../lean-CKMA/SYNOPSIS39.md), items 39–49 and 90; the heat
 flow as a Wasserstein gradient flow is CKMA SYNOPSIS39, item 62. The von
-Mises–Fisher model is [SYNOPSIS105](SYNOPSIS105.md), item 27. Subsampling is [SYNOPSIS102](SYNOPSIS102.md), item 57. The representer
+Mises–Fisher model is [SYNOPSIS105](SYNOPSIS105.md), item 27. The representer
 theorem and the Hilbertian central limit theorem are [SYNOPSIS103](SYNOPSIS103.md), items 8 and 29. Kernel
 Rademacher complexity is [SYNOPSIS107](SYNOPSIS107.md), item 3.
 
@@ -59,11 +59,13 @@ $$
   Dirichlet inequality is CKMA SYNOPSIS14, item 20.
 
 * **2. Spectral relaxation of the normalized cut.** Every bipartition
-  satisfies $\mathop{\mathrm{Ncut}}(S,S^c)\ge\lambda_1$. The minimum of the
-  Rayleigh quotient $f^\top\mathcal L f/f^\top f$ over vectors orthogonal to
-  $D^{1/2}\mathbf 1$ equals $\lambda_1$, and a bipartition is read from a
-  corresponding eigenvector. This is the spectral clustering relaxation of
-  Shi and Malik.
+  satisfies $\mathop{\mathrm{Ncut}}(S,S^c)\ge\lambda_1$. Indeed, the minimum
+  of the Rayleigh quotient $f^\top\mathcal L f/f^\top f$ over nonzero vectors
+  orthogonal to $D^{1/2}\mathbf 1$ equals $\lambda_1$, and the vector
+  $f=D^{1/2}g$ with $g=1/\mathop{\mathrm{vol}}S$ on $S$ and
+  $g=-1/\mathop{\mathrm{vol}}S^c$ on $S^c$ is such a vector with Rayleigh
+  quotient $\mathop{\mathrm{Ncut}}(S,S^c)$. This is the spectral clustering
+  relaxation of Shi and Malik.
 
 Let $P$ be an irreducible reversible Markov matrix on a finite state space,
 with stationary probability $\pi$, eigenvalues
@@ -78,13 +80,7 @@ $$
 * **3. Diffusion distance.** One has
   $$D_t(x,y)^2=\sum_z\frac{(P^t(x,z)-P^t(y,z))^2}{\pi(z)}.$$
   The truncated spectral sum is the squared Euclidean distance in
-  $x\mapsto(\lambda_j^t\psi_j(x))_{1\le j\le m}$. The identity extends
-  to reversible integral operators when a discrete spectral expansion
-  and the required square-integrability hold. For manifold samples,
-  a graph operator generally has a density-dependent limiting drift.
-  Recovering the Laplace–Beltrami operator requires uniform sampling or
-  an appropriate density correction, as well as bandwidth and smoothness
-  assumptions; bounded positive sampling density alone is insufficient.
+  $x\mapsto(\lambda_j^t\psi_j(x))_{1\le j\le m}$.
 
 Let $M\subset\mathbb R^D$ be a compact Riemannian submanifold. A
 neighborhood graph joins sample points at Euclidean distance at most
@@ -96,32 +92,39 @@ distances in that graph and applies classical multidimensional scaling.
   $\delta_n$-net in its intrinsic metric. Join pairs at Euclidean
   distance at most $\varepsilon_n$, weighting edges by their Euclidean
   lengths. If $\varepsilon_n\to0$ and
-  $\delta_n/\varepsilon_n\to0$, the graph shortest-path distances
-  converge uniformly to intrinsic distances between sample points.
-  On a manifold isometric to a convex Euclidean domain, the limiting
-  geodesic distances are Euclidean distances in intrinsic coordinates.
-  Multidimensional scaling then recovers those coordinates in the limit,
-  subject to the spectral nondegeneracy needed for stability. Finite
-  neighborhood-graph distances do not generally give exact recovery.
+  $\delta_n/\varepsilon_n\to0$, then the maximum over pairs of sample
+  points of $|d_{G_n}(x,y)-d_M(x,y)|$ tends to $0$, where $d_{G_n}$ is the
+  graph shortest-path distance and $d_M$ the intrinsic distance. If
+  $\varphi:M\to\Omega$ is an isometry onto a convex domain
+  $\Omega\subset\mathbb R^d$, then $d_M(x,y)=\|\varphi(x)-\varphi(y)\|$,
+  so classical multidimensional scaling (item 8) applied to the squared
+  intrinsic distances of a finite sample returns the points
+  $\varphi(x_i)$ up to a Euclidean isometry.
 
 On a metric space $(M,d)$, the **Fréchet function** of a Borel probability
 $\mu$ with finite second moment is
 $F(x)=\int_M d(x,y)^2\,\mu(dy)$. A **Fréchet mean** is a minimizer of $F$.
 
 * **5. Fréchet means.** In a complete Hadamard space every probability
-  with finite second moment has a unique Fréchet mean. On a general
-  Riemannian manifold neither uniqueness nor a normal limit is automatic;
-  a convex support neighborhood must satisfy the relevant curvature and
-  squared-distance convexity conditions; item 13 gives a sufficient
-  ball condition. Suppose the population mean
-  $m$ is unique, empirical means $\hat m_n$ are consistent, and
-  $F$ has a differentiable score expansion in normal coordinates near
-  $m$, with positive definite Hessian $H$, an integrable local Hessian
-  envelope, and finite score covariance $\Sigma$. Then
-  $$\sqrt n\,\log_m(\hat m_n)\Rightarrow
-  N(0,H^{-1}\Sigma H^{-\top}).$$
-  Here the score is the coordinate gradient of $d(\cdot,X)^2$ at $m$;
-  cut-locus effects must be excluded or controlled in the expansion.
+  with finite second moment has a unique Fréchet mean; item 13 gives a
+  sufficient ball condition on a general Riemannian manifold. Let
+  $X_1,X_2,\ldots$ be independent with law $Q$ on a $d$-dimensional
+  Riemannian manifold $M$ with geodesic distance $\rho$, and let $\hat m_n$
+  be a measurable selection of sample Fréchet means. Suppose that $Q$ has a
+  unique Fréchet mean $m$, that $\hat m_n\to m$ almost surely, and that $Q$
+  is supported in the domain $U$ of a chart $\phi:U\to\mathbb R^d$. Put
+  $h(x,y)=\rho(\phi^{-1}x,\phi^{-1}y)^2$ and $\tilde X=\phi(X_1)$, and
+  write $D$ for derivatives in $y$. Assume that for every $x$ the map
+  $y\mapsto h(x,y)$ is twice continuously differentiable near
+  $\phi(m)$, that $\mathbb E\|Dh(\tilde X,\phi(m))\|^2<\infty$, that
+  $\mathbb E\sup_{\|u-v\|\le\varepsilon}\|D^2h(\tilde X,u)-D^2h(\tilde X,v)\|
+  \to0$ as $\varepsilon\to0$, and that
+  $\Lambda=\mathbb E\,D^2h(\tilde X,\phi(m))$ is nonsingular. Then
+  $$\sqrt n\,\bigl(\phi(\hat m_n)-\phi(m)\bigr)\Rightarrow
+  N(0,\Lambda^{-1}\Sigma\Lambda^{-1}),\qquad
+  \Sigma=\mathop{\mathrm{Cov}}Dh(\tilde X,\phi(m)).$$
+  The usual chart is $\phi=\log_m$, the inverse of the exponential map
+  on a ball where it is a diffeomorphism.
 
 A **planar shape** of $k\ge3$ labeled landmarks, not all coincident, is an
 equivalence class of $k$-ads in $\mathbb R^2$ under translation, rotation,
@@ -135,22 +138,28 @@ and scaling.
   $$d_F([z],[w])^2=1-|z^*w|^2.$$
   The full Procrustes mean is represented by a unit eigenvector for the
   largest eigenvalue of $\mathbb E[ZZ^*]$; it is unique as a shape if
-  that eigenvalue is simple. A positive eigenvalue gap gives consistency
-  and a tangent-space normal limit for the sample mean by spectral
-  perturbation. This requires no choice of rotation for each observation.
+  that eigenvalue is simple. The matrix $ZZ^*$ does not depend on the
+  choice of preshape representative $Z$ of the shape. If the largest
+  eigenvalue of $\mathbb E[ZZ^*]$ is simple and $Z_1,Z_2,\ldots$ are
+  independent copies of $Z$, the sample full Procrustes mean shape, given
+  by a top eigenvector of $n^{-1}\sum_iZ_iZ_i^*$, converges almost surely
+  to the population mean shape.
 
-* **7. Hausdorff estimation of a submanifold.** For noiseless sampling
-  on a fixed compact $d$-dimensional manifold from a density bounded below,
-  the sample is within $O_P((\log n/n)^{1/d})$ of the manifold in
-  Hausdorff distance. In the perpendicular-noise model of Genovese and
-  coauthors, the manifold lies in a fixed compact set, has reach at least
-  $\kappa>0$, and each observation is a uniform manifold point displaced
-  uniformly in its normal ball of fixed radius $0<\sigma<\kappa$.
-  For that model their minimax expected Hausdorff risk satisfies
+* **7. Hausdorff estimation of a submanifold.** Let $M\subset\mathbb R^D$
+  be a compact smooth $d$-dimensional submanifold without boundary, and let
+  $X_1,\ldots,X_n$ be independent with a law on $M$ whose density with
+  respect to volume is bounded below by a positive constant. Then
+  $d_H(\{X_1,\ldots,X_n\},M)=O_P((\log n/n)^{1/d})$ as $n\to\infty$. In
+  the perpendicular-noise model of Genovese and coauthors, the class
+  consists of compact $d$-dimensional submanifolds without boundary
+  contained in a fixed compact set and with reach at least $\kappa>0$, and
+  each observation is a uniform point of $M$ displaced uniformly in its
+  normal ball of fixed radius $0<\sigma<\kappa$. For that model the
+  minimax risk $R_n=\inf_{\hat M}\sup_M\mathbb E\,d_H(\hat M,M)$, the
+  infimum over estimators from $n$ observations, satisfies, for constants
+  $0<c\le C$ independent of $n$ and all large $n$,
   $$c n^{-2/(d+2)}\le R_n\le
   C(\log n/n)^{2/(d+2)}.$$
-  The bounds match up to a logarithmic factor; compactly supported noise
-  without this model restriction does not imply the same rate.
 
 Locally linear embedding, $t$-SNE, and UMAP construct a low-dimensional
 layout from neighborhood weights.
@@ -165,8 +174,6 @@ layout from neighborhood weights.
   coordinates realizing them, unique up to a Euclidean isometry.
   Keeping the largest $k$ positive eigenvalues gives the best rank-at-most-$k$
   positive semidefinite approximation to $B$ in Frobenius norm.
-  This optimizes the Gram-matrix criterion, rather than every definition
-  of distance stress.
 
 * **9. Locally linear embedding.** Suppose neighborhood reconstruction
   weights $W_{ij}$ vanish off chosen neighborhoods and satisfy
@@ -174,23 +181,24 @@ layout from neighborhood weights.
   $Z^\top1=0$, minimizing
   $$\sum_i\left\|z_i-\sum_jW_{ij}z_j\right\|^2
   =\mathop{\mathrm{tr}}[Z^\top(I-W)^\top(I-W)Z]$$
-  selects the $k$ lowest eigenvectors of $(I-W)^\top(I-W)$ on
-  $1^\perp$. Reconstruction weights may need regularization if the
-  local covariance is singular. This variational characterization is
-  independent of a consistency claim for a sampled manifold.
+  is a problem on $1^\perp$, which $(I-W)^\top(I-W)$ maps into itself
+  because $(I-W)1=0$. The minimum is the sum of the $k$ smallest
+  eigenvalues of $(I-W)^\top(I-W)$ restricted to $1^\perp$, and it is
+  attained when the columns of $Z$ are orthonormal eigenvectors in
+  $1^\perp$ for those eigenvalues.
 
 Let $j:M\to\mathbb R^D$ be an embedding with closed image. An
 **extrinsic mean** minimizes $\mathbb E\|j(X)-j(m)\|^2$ over $m\in M$.
 
-* **10. Extrinsic projection mean.** If $j(X)\in L^2$, put
+* **10. Extrinsic projection mean.** Let $X_1,X_2,\ldots$ be independent
+  copies of $X$. If $j(X)\in L^2$, put
   $\mu=\mathbb E j(X)$. The extrinsic means are the nearest points
   in $j(M)$ to $\mu$. Suppose this projection $P$ is single-valued
   and continuously differentiable in a neighborhood of $\mu$. Then
   $$\sqrt n\left(P\left(n^{-1}\sum_i j(X_i)\right)-P(\mu)\right)
   \Rightarrow N(0,DP_\mu\Sigma DP_\mu^\top),$$
   where $\Sigma=\mathop{\mathrm{Cov}}(j(X))$ and the limit is supported
-  on the tangent space at $P(\mu)$. Focal points can destroy uniqueness
-  or the smooth projection expansion. Intrinsic means instead minimize
+  on the tangent space at $P(\mu)$. Intrinsic means instead minimize
   squared geodesic distance, as in item 5.
 
 ### Graph Laplacians and eigenmaps
@@ -213,9 +221,6 @@ components of the graph are those of the graph of positive weights.
   $L_{\mathrm{rw}}$, with kernel spanned by the $\mathbf 1_C$. The
   eigenvalues of $\mathcal L$ lie in $[0,2]$, and $2$ is an eigenvalue
   exactly when some component with at least two vertices is bipartite.
-  Thus for $k$ exactly disconnected clusters the bottom eigenspace is
-  spanned by cluster indicators; spectral clustering perturbs this ideal
-  case.
 
 * **12. Laplacian eigenmaps.** Let the weighted graph be connected with
   generalized eigenvalues $0=\lambda_0<\lambda_1\le\cdots\le\lambda_{n-1}$
@@ -238,23 +243,28 @@ components of the graph are those of the graph of positive weights.
   complete Riemannian manifold with sectional curvature at most
   $\Delta$ and injectivity radius $\mathop{\mathrm{inj}}(M)$. Put
   $r^*=\frac12\min\{\mathop{\mathrm{inj}}(M),\pi/\sqrt\Delta\}$, read as
-  $\frac12\mathop{\mathrm{inj}}(M)$ when $\Delta\le0$. If the data, or
-  the support of a probability, lie in an open geodesic ball of radius
-  $r^*$, the Fréchet mean is unique. This is the Karcher–Kendall
-  condition in Afsari's form. On the unit sphere $S^2$ it covers every
-  open hemisphere, whereas two antipodal points have the whole equator
-  as Fréchet mean set.
+  $\frac12\mathop{\mathrm{inj}}(M)$ when $\Delta\le0$. If the support
+  of a probability $Q$ lies in an open geodesic ball $B(o,\rho)$ with
+  $\rho<r^*$, the Fréchet mean, the global minimizer of
+  $p\mapsto\int d(p,x)^2\,Q(dx)$, is unique and lies in $B(o,\rho)$.
+  A compact set inside an open ball of radius $r^*$ lies in a concentric
+  ball of smaller radius, so for finitely many data points, or any
+  compact support, an open ball of radius $r^*$ suffices. This is the
+  Karcher–Kendall condition in Afsari's form. On the unit sphere $S^2$
+  it covers finite data in any open hemisphere, whereas two antipodal
+  points have the whole equator as Fréchet mean set.
 
 * **14. Strong consistency of Fréchet mean sets.** Let $(M,\rho)$ be a
   metric space whose closed bounded sets are compact, and let
   $F(p)=\int\rho(p,x)^\beta\,Q(dx)$ be finite for some $p$, where
   $\beta\ge1$. Then the mean set $C_Q$ of minimizers is nonempty and
-  compact. For every $\varepsilon>0$, almost surely the sample mean sets
-  $C_{Q_n}$ lie in the $\varepsilon$-neighborhood of $C_Q$ for all large
-  $n$. If $C_Q=\{\mu\}$, every measurable choice of sample Fréchet mean
-  is strongly consistent for $\mu$. On a compact space any continuous
-  loss of the distance may be used. The sample sets need not fill out a
-  nonsingleton $C_Q$.
+  compact. Let $Q_n$ be the empirical measure of $n$ independent
+  observations from $Q$. For every $\varepsilon>0$, almost surely the
+  sample mean sets $C_{Q_n}$ lie in the $\varepsilon$-neighborhood of
+  $C_Q$ for all large $n$. If $C_Q=\{\mu\}$, every measurable choice of
+  sample Fréchet mean is strongly consistent for $\mu$. On a compact
+  metric space the same holds with $\rho^\beta$ replaced by $f\circ\rho$
+  for any continuous $f:[0,\infty)\to\mathbb R$.
 
 * **15. Barycentric equation.** Let $M$ be a complete Riemannian manifold
   and $Q$ a probability with finite second moment. At a point $p$ whose
@@ -264,15 +274,7 @@ components of the graph are those of the graph of positive weights.
   Hence a Fréchet mean at such a point satisfies
   $\int\mathop{\mathrm{Log}}_p(x)\,Q(dx)=0$. Solutions of this equation
   are called exponential barycenters, or Karcher means. They are critical
-  points of $F$ and need not minimize it. The gradient iteration
-  $p_{j+1}=\mathop{\mathrm{Exp}}_{p_j}\bigl(\tau n^{-1}
-  \sum_i\mathop{\mathrm{Log}}_{p_j}X_i\bigr)$ is the standard algorithm
-  for sample means; its convergence needs concentration conditions such
-  as those of item 13. Tangent principal component analysis
-  diagonalizes the sample covariance of the vectors
-  $\mathop{\mathrm{Log}}_{\hat p}X_i$. Principal geodesic analysis instead
-  maximizes projected variance over geodesic submanifolds through
-  $\hat p$.
+  points of $F$ and need not minimize it.
 
 A configuration of $k$ labeled landmarks in $\mathbb R^m$ is a $k\times m$
 matrix. After centering, a nonzero configuration $X$ has **preshape**
@@ -311,8 +313,8 @@ $\mathbb{CP}^{k-2}$, as in item 6.
   \sum_{i=1}^n d_F(X_i,\mu)^2 .$$
   It has the same shape as the arithmetic mean of the full Procrustes
   fits from the minimizing superimposition. For $m=2$ it is the leading
-  eigenvector of item 6. The usual algorithm alternates ordinary
-  Procrustes fits to the current mean with averaging and rescaling.
+  eigenvector of item 6, for the matrix $\sum_iZ_iZ_i^*$ of the
+  preshapes.
 
 ### Persistent homology and computational topology
 
@@ -332,14 +334,24 @@ interval decomposition. The diagonal is available for matching at zero cost.
   module over a field decomposes as a direct sum of interval modules. The
   multiset of intervals is unique.
 
-For tame functions $f,g$ on a triangulable space, let
-$\mathop{\mathrm{Dgm}}(f)$ be the persistence diagram of a sublevel-set, or
-other standard, filtration. The **bottleneck distance** $d_B$ is the
-infimum, over bijections of the diagrams with the diagonal available, of
-the largest $\ell^\infty$ displacement of a point.
+Let $f$ be a continuous function on a triangulable space $X$, write
+$X_a=f^{-1}(-\infty,a]$, and fix a field of coefficients. A value $a$ is a
+**homological critical value** of $f$ if for no $\varepsilon>0$ the maps
+$H_p(X_{a-\varepsilon})\to H_p(X_{a+\varepsilon})$ induced by inclusion
+are isomorphisms for every $p$. The function $f$ is **tame** if it has
+finitely many homological critical values and every $H_p(X_a)$ is
+finite-dimensional. For tame $f$ and each $p$, let
+$\mathop{\mathrm{Dgm}}_p(f)$ be the $p$-th persistence diagram of the
+sublevel-set filtration: a finite multiset of points $(b,d)$ with
+$b<d$, $b\in\mathbb R$, and $d\in\mathbb R\cup\{+\infty\}$, together with
+every point of the diagonal with infinite multiplicity. The **bottleneck
+distance** $d_B$ between two such diagrams is the infimum, over bijections
+between them, of the supremum of the $\ell^\infty$ distances between
+matched points, with $|\infty-\infty|=0$.
 
-* **19. Bottleneck stability.** For tame functions,
-  $$d_B\bigl(\mathop{\mathrm{Dgm}}(f),\mathop{\mathrm{Dgm}}(g)\bigr)
+* **19. Bottleneck stability.** Let $X$ be a triangulable space and
+  $f,g:X\to\mathbb R$ tame functions. Then for every $p\ge0$,
+  $$d_B\bigl(\mathop{\mathrm{Dgm}}_p(f),\mathop{\mathrm{Dgm}}_p(g)\bigr)
   \le\|f-g\|_\infty.$$
 
 An **$\varepsilon$-interleaving** consists of maps
@@ -385,57 +397,55 @@ neighborhood.
   $M$. Niyogi, Smale, and Weinberger prove this for $P\subset M$; Oudot
   states it for a point cloud near $M$. By the nerve theorem of item 21,
   the Čech complex of radius $r$ then has the homotopy type of $M$.
-  For independent sampling with
-  a density bounded below, an $\varepsilon$-net has probability at least
-  $1-\delta$ once
+  If $X_1,\ldots,X_n$ are independent with a law on $M$ whose density
+  with respect to volume is bounded below by a positive constant, then
+  $d_H(\{X_1,\ldots,X_n\},M)\le\varepsilon$ with probability at least
+  $1-\delta$ whenever
   $$n\ge C\varepsilon^{-d}
   (\log(1/\varepsilon)+\log(1/\delta)),$$
-  for small $\varepsilon$, with constants depending on the manifold and
-  density bound. The logarithm of the covering number cannot generally
-  be omitted when the net scale tends to zero.
+  for $0<\varepsilon<\varepsilon_0$ and $0<\delta<1$, where $C$ and
+  $\varepsilon_0$ depend only on $M$ and the density bound.
 
 A **persistence landscape** converts a barcode into a sequence of functions
-by taking the successive largest values of the tent functions over its bars.
-Its $L^p$ interpretation requires the corresponding integrability.
+by taking the successive largest values of the tent functions over its bars,
+as in item 29.
 
 * **23. Central limit theorem for landscapes.** Realize a landscape
   as $\Lambda\in L^p(\mathbb N\times\mathbb R)$, using counting and
-  Lebesgue measure. For independent copies, if $1\le p<\infty$ and
+  Lebesgue measure. For independent copies of a random landscape
+  $\Lambda$, if $1\le p<\infty$ and
   $\mathbb E\|\Lambda\|_p<\infty$, their mean converges almost surely
   in $L^p$ to $\mathbb E\Lambda$. If $2\le p<\infty$ and
   $\mathbb E\|\Lambda\|_p^2<\infty$, the centered mean multiplied by
-  $\sqrt n$ converges to a Gaussian random element in $L^p$.
-  These spaces have type 2 for $p\ge2$. A finite second moment alone
-  does not give a central limit theorem in an arbitrary separable
-  Banach space.
+  $\sqrt n$ converges in distribution to a centered Gaussian random
+  element of $L^p$ with the covariance of $\Lambda$.
 
-For a probability $\mu$ and a mass $m\in(0,1]$, the **distance to the
-measure** $d_{\mu,m}(x)$ is determined by the distances from $x$ to the
-smallest masses of $\mu$: its square averages, up to mass $m$, the squared
-radius needed to capture each intermediate mass.
+For a probability $\mu$ on $\mathbb R^D$, $x\in\mathbb R^D$ and
+$u\in(0,1]$, put
+$\delta_{\mu,u}(x)=\inf\{r\ge0:\mu(\overline B(x,r))\ge u\}$. For a mass
+$m\in(0,1]$, the **distance to the measure** is given by
+$$d_{\mu,m}(x)^2=\frac1m\int_0^m\delta_{\mu,u}(x)^2\,du.$$
 
-* **24. Stability of the distance to a measure.** For probabilities with
-  finite second moment,
+* **24. Stability of the distance to a measure.** For probabilities on
+  $\mathbb R^D$ with finite second moment,
   $$\|d_{\mu,m}-d_{\nu,m}\|_\infty
   \le m^{-1/2}W_2(\mu,\nu).$$
   The right-hand side uses the Wasserstein distance of
   CKMA SYNOPSIS39, item 42.
 
-* **25. Confidence sets for diagrams.** Suppose a population diagram
-  $D$ and empirical diagram $\hat D_n$ satisfy
-  $d_B(\hat D_n,D)\le\|\hat f_n-f\|_\infty$ by stability. Any radius
-  $r_n$ with $P(\|\hat f_n-f\|_\infty\le r_n)\ge1-\alpha$
-  gives a bottleneck confidence ball of coverage at least $1-\alpha$.
-  An estimated quantile can replace the radius only when its calibration
-  is justified. In particular, subsampling requires a continuous limiting
-  law for the normalized statistic and the scale and centering conditions
-  of SYNOPSIS102, item 57. There is no unconditional subsampling theorem
-  for every density or distance filtration.
+* **25. Confidence sets for diagrams.** Let $f$ be a tame function on a
+  triangulable space and $\hat f_n$ a random tame function on the same
+  space, fix $p\ge0$, and write $D=\mathop{\mathrm{Dgm}}_p(f)$ and
+  $\hat D_n=\mathop{\mathrm{Dgm}}_p(\hat f_n)$.
+  If $r_n$ satisfies $P(\|\hat f_n-f\|_\infty\le r_n)\ge1-\alpha$, then
+  by item 19
+  $$P\bigl(d_B(\hat D_n,D)\le r_n\bigr)\ge1-\alpha,$$
+  so the bottleneck ball of radius $r_n$ about $\hat D_n$ is a confidence
+  set for $D$ of coverage at least $1-\alpha$.
 
 The **Mapper** construction pulls a cover back along a filter function,
 refines the pullback into connected components, and takes their nerve.
-For finite data a chosen clustering rule provides the pullback components;
-the resulting summary depends on that rule and the cover.
+For finite data a chosen clustering rule provides the pullback components.
 
 ### Persistent summaries and perturbation certificates
 
@@ -447,8 +457,7 @@ $\beta_q(s,t)=\mathop{\mathrm{rank}}[H_q(K_s)\to H_q(K_t)]$.
   $[b,d)$, $\beta_q(s,t)$ is the number of degree-$q$ bars with
   $b\le s$ and $d>t$. Thus the two-parameter rank function determines
   the finite barcode with multiplicities. The ordinary Betti number
-  $\beta_q(t,t)$ counts bars alive at $t$; it loses the information
-  about which classes survive from one scale to another.
+  $\beta_q(t,t)$ counts bars alive at $t$.
 
 * **27. Hausdorff perturbations and offsets.** For nonempty compact
   subsets $A,B$ of a Euclidean space,
@@ -456,16 +465,13 @@ $\beta_q(s,t)=\mathop{\mathrm{rank}}[H_q(K_s)\to H_q(K_t)]$.
   If $d_H(A,B)\le\eta$, their offset filtrations satisfy
   $A^r\subseteq B^{r+\eta}$ and $B^r\subseteq A^{r+\eta}$.
   Consequently their $q$-tame persistence diagrams are within $\eta$
-  in bottleneck distance. This turns geometric sampling control into
-  a topological error bound without choosing one reconstruction scale.
+  in bottleneck distance.
 
-* **28. Empirical distance to a measure.** Define
-  $\delta_{\mu,u}(x)=\inf\{r\ge0:\mu(\overline B(x,r))\ge u\}$ and
-  $$d_{\mu,m}(x)^2=\frac1m\int_0^m\delta_{\mu,u}(x)^2\,du.$$
-  For an empirical measure with $n$ atoms and $m=k/n$, this is
+* **28. Empirical distance to a measure.** For the empirical measure of
+  $n$ points $X_1,\ldots,X_n$ and $m=k/n$, the square of the distance to
+  the measure defined before item 24 is
   $k^{-1}\sum_{i=1}^k\|x-X_{(i)}(x)\|^2$, where the observations are
-  ordered by distance to $x$. Averaging nearby mass replaces dependence
-  on the single closest observation. The function $d_{\mu,m}$ is
+  ordered by distance to $x$. The function $d_{\mu,m}$ is
   1-Lipschitz, and its perturbation under a change of measure is item 24.
 
 * **29. Landscape stability.** For a finite barcode, replace each bar
@@ -473,18 +479,14 @@ $\beta_q(s,t)=\mathop{\mathrm{rank}}[H_q(K_s)\to H_q(K_t)]$.
   The $k$th landscape function is the $k$th largest tent value at each
   $t$. For two finite diagrams,
   $$\|\Lambda_D-\Lambda_E\|_\infty\le d_B(D,E).$$
-  Thus landscape evaluation and averaging are compatible with bottleneck
-  perturbation control. A bound in $L^p$ additionally depends on the
-  number, lengths, or total persistence of bars; a uniform bound alone
-  does not give it on an unbounded domain.
 
-* **30. Persistence beyond the error scale.** If $d_B(D,\hat D)\le\eta$,
-  every finite bar in $\hat D$ of length greater than $2\eta$ must
-  match an off-diagonal bar of $D$, with birth and death errors at most
-  $\eta$. Such a bar cannot be matched to the diagonal. Applying this
-  statement on the confidence event in item 25 gives a simultaneous
-  certificate for all bars longer than the error threshold. Shorter
-  bars may be genuine; the certificate makes no converse assertion.
+* **30. Persistence beyond the error scale.** Let $D,\hat D$ be finite
+  diagrams with $d_B(D,\hat D)\le\eta$. Then there is a matching of cost
+  at most $\eta$, and under it every finite bar of $\hat D$ of length
+  greater than $2\eta$ is matched to a bar of $D$, not to the diagonal,
+  with birth and death differing by at most $\eta$. Consequently, on the
+  event $d_B(\hat D_n,D)\le r_n$ of item 25, this holds simultaneously for
+  all bars of $\hat D_n$ longer than $2r_n$.
 
 ### Simplicial homology and the persistence algorithm
 
@@ -527,10 +529,12 @@ of rows $i,\dots,m$ and columns $1,\dots,j$.
   $p$-simplex, $\sigma_j$ is a negative $(p+1)$-simplex, and $[i,j)$ is
   a degree-$p$ bar. If column $j$ of $R$ is zero and $j$ is the low of no
   column, then $[j,\infty)$ is an essential bar of degree
-  $\dim\sigma_j$. Function values replace indices for a filtration by a
-  monotone function on simplices. The same holds over any field with
-  signed boundary matrices. Standard reduction uses at most cubic time in
-  $m$.
+  $\dim\sigma_j$. For a monotone function $f$ on simplices and an order
+  with $f(\sigma_1)\le\cdots\le f(\sigma_m)$, the bars of the sublevel
+  filtration of $f$ are the intervals $[f(\sigma_i),f(\sigma_j))$ and
+  $[f(\sigma_j),\infty)$ obtained in this way, those of length zero being
+  discarded. The same holds over any field with signed boundary matrices.
+  The standard column reduction uses $O(m^3)$ field operations.
 
 * **33. Zero-dimensional persistence and single linkage.** Let $(X,d)$
   be a finite metric space with $n$ points, filtered by Rips complexes
@@ -576,9 +580,6 @@ $cr^{-j}$ simplices exist for small $r$.
   $f(\tau)\le f(\sigma)$ whenever $\tau$ is a face of $\sigma$,
   $$W_q\bigl(\mathop{\mathrm{Dgm}}_p(f),\mathop{\mathrm{Dgm}}_p(g)\bigr)
   \le\Bigl(\sum_{\sigma\in K}|f(\sigma)-g(\sigma)|^q\Bigr)^{1/q}.$$
-  No bound in $\|f-g\|_\infty$ alone can hold for $W_q$: many narrow
-  wrinkles of height $\varepsilon$ produce arbitrarily many bars of
-  persistence about $2\varepsilon$.
 
 A **correspondence** between metric spaces $X,Y$ is a relation
 $C\subseteq X\times Y$ projecting onto both factors. Its distortion is
@@ -612,13 +613,11 @@ onto $K^i$.
   $\varepsilon<i$ and $i+2\varepsilon\le j<\mathrm{wfs}(K)-\varepsilon$,
   the image of $H_*(P^i)\to H_*(P^j)$ is isomorphic to $H_*(K^r)$ for
   every $r\in(0,\mathrm{wfs}(K))$. By the nerve theorem the same holds for
-  the Čech complexes of radii $i$ and $j$. If
-  $\varepsilon<\mathrm{wfs}(K)/9$ and
+  the Čech complexes of radii $i$ and $j$. If instead
+  $d_H(K,P)<\varepsilon$ for some $\varepsilon<\mathrm{wfs}(K)/9$ and
   $2\varepsilon\le\alpha\le(\mathrm{wfs}(K)-\varepsilon)/4$, the image of
   $H_*(\mathrm{Rips}(\alpha/2))\to H_*(\mathrm{Rips}(2\alpha))$ is
-  isomorphic to $H_*(K^r)$, in the parameter of item 21. Single offsets
-  of $P$ need not have the homology of $K^r$, and $K$ itself need not
-  have the homotopy type of its small offsets.
+  isomorphic to $H_*(K^r)$, in the parameter of item 21.
 
 * **38. Rips pairs on a manifold.** Let $M\subset\mathbb R^D$ be a compact
   smooth submanifold with reach $\tau>0$, and let $d_H(P,M)\le\varepsilon$
@@ -627,24 +626,18 @@ onto $K^i$.
   parameter of item 21
   $$\mathop{\mathrm{rank}}\bigl(H_*(\mathrm{Rips}(\alpha))
   \to H_*(\mathrm{Rips}(2\alpha))\bigr)=\dim H_*(M).$$
-  The proof sandwiches the Rips complexes between Čech complexes whose
-  homology is that of $M$, by item 21 and the offset theorem of item 22.
 
 A probability $\mu$ with compact support $X_\mu$ in a metric space is
 **$(a,b)$-standard** if $\mu(B(x,r))\ge\min(1,ar^b)$ for all $x\in X_\mu$
 and $r>0$.
 
 * **39. Rates for persistence diagram estimation.** Let $\hat X_n$ be an
-  independent sample of size $n$ from an $(a,b)$-standard $\mu$. A
-  covering argument gives
+  independent sample of size $n\ge2$ from an $(a,b)$-standard $\mu$. Then
   $\mathbb E\,d_H(\hat X_n,X_\mu)\le C(\log n/n)^{1/b}$ with $C$
   depending on $a$ and $b$. Since $d_{GH}\le d_H$, item 36 gives
   $$\mathbb E\,d_B\bigl(\mathop{\mathrm{Dgm}}\mathrm{Rips}(\hat X_n),
   \mathop{\mathrm{Dgm}}\mathrm{Rips}(X_\mu)\bigr)
   \le C\Bigl(\frac{\log n}n\Bigr)^{1/b}.$$
-  The target
-  is the diagram of the support; outliers or ambient noise call instead
-  for the distance to a measure of items 24 and 28.
 
 <a id="synopsis-108b"></a>
 
@@ -659,19 +652,20 @@ CKMA SYNOPSIS39.
 Let $\mu_n$ be the empirical measure of $n$ independent copies of a
 probability $\mu$ on $\mathbb R^d$.
 
-* **40. Empirical Wasserstein bounds.** For a probability supported in
-  a fixed bounded subset of $\mathbb R^d$ and $p\ge1$,
+* **40. Empirical Wasserstein bounds.** Let $p\ge1$ and let $A$ be a
+  bounded subset of $\mathbb R^d$. There is a constant $C$ depending only
+  on $p$, $d$, and $A$ such that for every probability $\mu$ supported in
+  $A$ and every $n\ge1$,
   $$\mathbb E W_p^p(\mu_n,\mu)\le C
   \begin{cases}n^{-1/2},&p>d/2,\\
   n^{-1/2}\log(1+n),&p=d/2,\\
   n^{-p/d},&p<d/2.
   \end{cases}$$
-  If only a finite $q$th moment is assumed, $q>p$, the usual
-  Fournier–Guillin bound adds $C n^{-(q-p)/q}$, away from the critical
-  cases $q=2p$ for $p\ge d/2$ and $q=dp/(d-p)$ for $p<d/2$,
-  where logarithmic modifications are needed. These are upper bounds,
-  not the exact rate for every distribution. Smooth one-dimensional
-  laws can converge faster, whereas atoms can attain slower rates.
+  More generally, let $q>p$ and
+  $M_q(\mu)=\int\|x\|^q\,\mu(dx)<\infty$, and assume $q\ne2p$ if
+  $p\ge d/2$ and $q\ne d/(d-p)$ if $p<d/2$. Then the same bound holds
+  with $C$ replaced by $CM_q(\mu)^{p/q}$, $C$ depending only on $p,d,q$,
+  and with $n^{-(q-p)/q}$ added inside each case.
 
 Let $\mu_1,\ldots,\mu_K\in\mathcal P_2(\mathbb R^d)$ and let
 $\lambda_i>0$ sum to one. A **Wasserstein barycenter** minimizes
@@ -684,9 +678,7 @@ $\mu\mapsto\sum_{i=1}^K\lambda_i W_2^2(\mu,\mu_i)$.
   be absolutely continuous and let $\nu,\nu_n\in\mathcal P_2(\mathbb R^d)$
   satisfy $W_2(\nu_n,\nu)\to0$. Let $T$ and $T_n$ be the Brenier maps pushing
   $\mu$ forward to $\nu$ and to $\nu_n$, in the sense of CKMA SYNOPSIS39,
-  item 46. Then $T_n\to T$ in $L^2(\mu)$. A quantitative comparison of map
-  error and target-measure error requires additional regularity; this
-  consistency theorem supplies no universal rate.
+  item 46. Then $T_n\to T$ in $L^2(\mu)$.
 
 A **metric measure space** is a complete separable metric space equipped
 with a Borel probability. For $p\ge1$ and probabilities of finite $p$th
@@ -700,10 +692,9 @@ $$
 * **43. Gromov–Wasserstein distance.** With the normalization above,
   $\mathop{\mathrm{GW}}_p$ is a metric on compact metric probability
   spaces modulo measure-preserving isometries of their supports.
-  In particular, it vanishes exactly when those supports are isomorphic.
-  Extra points outside the support are invisible to the discrepancy;
-  an isometry of the entire underlying spaces follows if both measures
-  have full support.
+  In particular, $\mathop{\mathrm{GW}}_p(\mu,\nu)=0$ exactly when there is
+  an isometry from $\mathop{\mathrm{supp}}\mu$ onto
+  $\mathop{\mathrm{supp}}\nu$ pushing $\mu$ forward to $\nu$.
 
 For $\varepsilon>0$ let $\mathop{\mathrm{OT}}_\varepsilon(\mu,\nu)$ be the
 entropic transport cost of CKMA SYNOPSIS39, item 90. The **debiased
@@ -715,14 +706,13 @@ S_\varepsilon(\mu,\nu)
 -\tfrac12\mathop{\mathrm{OT}}_\varepsilon(\nu,\nu).
 $$
 
-* **44. Debiased Sinkhorn divergence.** On a compact Euclidean domain
-  with quadratic cost, for every $\varepsilon>0$,
-  $S_\varepsilon(\mu,\nu)\ge0$, with equality exactly when $\mu=\nu$.
-  Moreover $S_\varepsilon(\mu_n,\mu)\to0$ if and only if
-  $\mu_n\Rightarrow\mu$. A sufficient general setting is a compact
-  metric space with Lipschitz symmetric cost whose Gibbs kernel
-  $e^{-c/\varepsilon}$ is positive and universal. These hypotheses
-  distinguish the theorem from a claim for arbitrary costs or tails.
+* **44. Debiased Sinkhorn divergence.** Let $X$ be a compact metric
+  space, $\varepsilon>0$, and $c$ a symmetric Lipschitz cost on $X\times X$
+  such that $e^{-c/\varepsilon}$ is a positive definite universal kernel;
+  for example, $X$ a compact subset of $\mathbb R^d$ with quadratic cost.
+  Then for probabilities on $X$, $S_\varepsilon(\mu,\nu)\ge0$, with
+  equality exactly when $\mu=\nu$, and $S_\varepsilon(\mu_n,\mu)\to0$ if
+  and only if $\mu_n\Rightarrow\mu$.
 
 ### Explicit geometries and empirical inference
 
@@ -731,10 +721,10 @@ $$
   $$F_{\bar\mu}^{-1}(u)=\sum_i\lambda_iF_{\mu_i}^{-1}(u).$$
   More generally, for a random measure $\Lambda$ with
   $\mathbb E\int x^2\Lambda(dx)<\infty$, the population barycenter
-  has quantile $\mathbb E F_\Lambda^{-1}$ almost everywhere. The quantile
-  embedding
-  makes this a Hilbert-space mean. Such an averaging formula does not
-  hold for arbitrary multivariate transport maps.
+  has quantile $\mathbb E F_\Lambda^{-1}$ almost everywhere. The map
+  $\mu\mapsto F_\mu^{-1}$ is an isometry of $(\mathcal P_2(\mathbb R),W_2)$
+  onto the closed convex cone of nondecreasing left-continuous functions
+  in $L^2(0,1)$.
 
 * **46. Gaussian transport and barycenters.** For covariance matrices
   $A,B\ge0$,
@@ -743,22 +733,22 @@ $$
   [A+B-2(A^{1/2}BA^{1/2})^{1/2}].$$
   If $A>0$, the optimal map is
   $x\mapsto n+A^{-1/2}(A^{1/2}BA^{1/2})^{1/2}A^{-1/2}(x-m)$.
-  A barycenter of positive definite Gaussian measures is Gaussian,
-  with mean $\sum_i\lambda_i m_i$ and covariance satisfying
+  For finitely many Gaussian measures $N(m_i,A_i)$ with $A_i>0$ and
+  weights $\lambda_i\ge0$ summing to one, the barycenter is unique and
+  Gaussian, with mean $\sum_i\lambda_i m_i$ and covariance the unique
+  positive definite solution of
   $$\bar A=\sum_i\lambda_i
   (\bar A^{1/2}A_i\bar A^{1/2})^{1/2}.$$
-  If the $A_i$ commute, $\bar A=(\sum_i\lambda_i A_i^{1/2})^2$;
-  a matrix square-root average is not the general noncommuting solution.
+  If the $A_i$ commute, $\bar A=(\sum_i\lambda_i A_i^{1/2})^2$.
 
 * **47. One-dimensional empirical transport limit.** Suppose $\mu$ is
   supported on $[a,b]$ and has a continuous density bounded above and
   below by positive constants there. Then
   $$nW_2^2(\mu_n,\mu)\Rightarrow
   \int_0^1\frac{B^0(u)^2}{f(F^{-1}(u))^2}\,du,$$
-  by the quantile-process delta method. Thus $W_2(\mu_n,\mu)=O_P(n^{-1/2})$
-  under these assumptions, faster than the distribution-free bound
-  inferred from item 40. Atoms, gaps, and unbounded tails can change
-  the rate or invalidate this integral limit.
+  where $f$ and $F$ are the density and distribution function of $\mu$
+  and $B^0$ is a standard Brownian bridge on $[0,1]$. Thus
+  $W_2(\mu_n,\mu)=O_P(n^{-1/2})$.
 
 * **48. Sliced Wasserstein distance.** Let $\sigma$ be uniform probability
   on $S^{d-1}$ and $P_\theta(x)=\theta^\top x$. Then
@@ -766,20 +756,14 @@ $$
   =\left(\int W_p^p((P_\theta)_\#\mu,(P_\theta)_\#\nu)
   \,\sigma(d\theta)\right)^{1/p}$$
   defines a metric on $\mathcal P_p(\mathbb R^d)$ and is at most
-  $W_p(\mu,\nu)$. Vanishing projected distances imply equality of
-  the laws by continuity of characteristic functions and the
-  Cramér–Wold characterization. A finite collection of directions alone
-  does not determine every multivariate law.
+  $W_p(\mu,\nu)$. Definiteness follows from the Cramér–Wold theorem.
 
 * **49. Consistency of empirical barycenters.** Suppose independent
   identically distributed random measures $\Lambda_i$ are supported in a common compact set
   $K\subset\mathbb R^d$, and the population Fréchet functional
   $\mathbb E W_2^2(\mu,\Lambda_1)$ has a unique minimizer $\bar\mu$.
-  Any sequence minimizing $n^{-1}\sum_iW_2^2(\mu,\Lambda_i)$ converges
-  almost surely to $\bar\mu$ in $W_2$. Minimizers can be confined to
-  the compact convex hull of $K$; uniform convergence there gives the
-  argmin conclusion. Noncompact versions require suitable moment and
-  compactness control.
+  If $\hat\mu_n$ minimizes $\mu\mapsto n^{-1}\sum_{i=1}^nW_2^2(\mu,\Lambda_i)$
+  for each $n$, then $W_2(\hat\mu_n,\bar\mu)\to0$ almost surely.
 
 ### Minimax limits, smoothness, and smoothing
 
@@ -793,13 +777,11 @@ $$
   $$\sup_\mu\mathbb E_\mu W_1(\tilde\mu_n,\mu)\ge\tfrac1{16}(2n)^{-1/d},$$
   the supremum over probabilities supported in $[0,1]^d$. Thus the rate
   $n^{-1/d}$ of item 40 for $p=1$ cannot be improved uniformly by any
-  estimator. The plug-in estimator $W_1(\mu_m,\nu_n)$ of $W_1(\mu,\nu)$ from two
-  independent samples has error of order $(m\wedge n)^{-1/d}$, which is
-  sharp in general, and a goodness-of-fit or two-sample test based on the
-  empirical $W_1$ needs thresholds, hence separations, of order at least
-  $n^{-1/d}$. The
-  adversarial laws in the proof are atomic; item 51 shows how smoothness
-  changes the picture.
+  estimator. For $\mu,\nu$ supported in $[0,1]^d$ and empirical measures
+  $\mu_m,\nu_n$ of independent samples, the triangle inequality and
+  item 40 give
+  $\mathbb E|W_1(\mu_m,\nu_n)-W_1(\mu,\nu)|\le C(m\wedge n)^{-1/d}$, with
+  $C$ depending only on $d$.
 
 On the torus $\mathbb T^d=\mathbb R^d/(2\pi\mathbb Z)^d$ with its quotient
 metric, the Sobolev space $H^s$, $s$ a positive integer, consists of
@@ -808,19 +790,22 @@ For $\sigma>0$, the **smoothed Wasserstein distance** is
 $W_p^{(\sigma)}(\mu,\nu)=W_p(\mu*N(0,\sigma^2I),\nu*N(0,\sigma^2I))$;
 it is a metric on $\mathcal P_p(\mathbb R^d)$.
 
-* **51. Smooth laws and smoothed distances.** Let $d\ge3$. If $\mu$ has a
-  density on $\mathbb T^d$ with $H^s$ norm bounded by a constant, the
-  estimator obtained by truncating the empirical Fourier series at
-  frequencies $\|m\|\le M$, $M\asymp n^{1/(d+2s)}$, satisfies
-  $$\mathbb E W_1(\tilde\mu_n,\mu)\lesssim n^{-(s+1)/(d+2s)}.$$
-  The truncated series is a signed measure; its $W_1$-projection onto
-  probability measures loses at most a factor two. Smoothing the metric
-  instead of the estimator removes the curse of dimensionality from the
-  exponent: for $\mu$ supported in $[-1,1]^d$,
-  $$\mathbb E W_1^{(\sigma)}(\mu_n,\mu)\lesssim n^{-1/2},$$
-  with a constant depending on $\sigma$ and on $d$, growing exponentially
-  in $d$. That growth reflects the difficulty of item 50 and is not
-  removable.
+* **51. Smooth laws and smoothed distances.** Let $d\ge3$, and let
+  $\widetilde W_1$ be the dual Lipschitz norm
+  $\widetilde W_1(\alpha,\beta)=\sup\{\int f\,d(\alpha-\beta):
+  \mathop{\mathrm{Lip}}f\le1\}$, which extends $W_1$ to signed measures of
+  equal total mass. Let $\mu$ have a density on $\mathbb T^d$ with $H^s$
+  norm at most $L$, and let $\tilde\mu_n$ be the signed measure obtained by
+  truncating the empirical Fourier series at frequencies $\|m\|\le M$,
+  with $M\asymp n^{1/(d+2s)}$. Then
+  $$\mathbb E\widetilde W_1(\tilde\mu_n,\mu)\le Cn^{-(s+1)/(d+2s)},$$
+  with $C$ depending only on $d$, $s$, $L$, and the constant in
+  $M\asymp n^{1/(d+2s)}$. A probability $\bar\mu_n$ minimizing
+  $\widetilde W_1(\cdot,\tilde\mu_n)$ satisfies
+  $W_1(\bar\mu_n,\mu)\le2\widetilde W_1(\tilde\mu_n,\mu)$. For the smoothed
+  distance and $\mu$ supported in $[-1,1]^d$, with any $d\ge1$,
+  $$\mathbb E W_1^{(\sigma)}(\mu_n,\mu)\le C_{\sigma,d}\,n^{-1/2},$$
+  with $C_{\sigma,d}$ depending only on $\sigma$ and $d$.
 
 ### Estimation of transport maps
 
@@ -841,23 +826,21 @@ The error is measured in $L^2(\mu)$; it bounds $W_2^2((\nabla\hat\phi)_\#\mu,\nu
   $$\tfrac14\|\nabla\phi-\nabla\varphi\|_{L^2(\mu)}^2
   \le\mathcal S(\phi)-\mathcal S(\varphi)
   \le\|\nabla\phi-\nabla\varphi\|_{L^2(\mu)}^2.$$
-  Thus excess semidual risk and squared map error are comparable for
-  strongly convex smooth candidates. This turns map estimation into
-  empirical risk minimization. Without strong convexity and smoothness,
-  Brenier's uniqueness gives identifiability but no such quantitative
-  comparison.
 
 * **53. Rates for transport-map estimation.** Let $\mu$ and $\nu$ be
   supported in the unit ball, and let $\nu=(\nabla\varphi)_\#\mu$ with
   $\varphi\in\Phi$. Suppose the potentials in $\Phi$ are uniformly bounded
   there, satisfy $\tfrac12I\preceq\nabla^2\phi\preceq2I$ in the open ball,
-  and have uniform covering numbers
+  and have covering numbers in the supremum norm on the ball satisfying
   $\log N(\varepsilon,\Phi)\lesssim\varepsilon^{-\gamma}\log(1+\varepsilon^{-1})$
-  with $\gamma\in[0,1)$. With $n$ independent observations from each law,
+  with $\gamma\in[0,1)$. In this item $\lesssim$ and $\asymp$ hide
+  constants independent of $n$ and $\varepsilon$. With $n$ independent
+  observations from each law,
   the semidual estimator satisfies
   $\mathbb E\|\nabla\hat\phi-\nabla\varphi\|_{L^2(\mu)}^2\lesssim n^{-1/2}$.
   If moreover $\Phi$ is convex and $\mu$ satisfies a Poincaré
-  inequality, the rate improves to
+  inequality $\mathop{\mathrm{Var}}_\mu(h)\le C_P\int\|\nabla h\|^2\,d\mu$
+  for smooth $h$, the rate improves to
   $$\mathbb E\|\nabla\hat\phi-\nabla\varphi\|_{L^2(\mu)}^2
   \lesssim\Bigl(\frac{\log n}{n}\Bigr)^{2/(2+\gamma)},$$
   which is $(\log n)/n$ for finite-dimensional classes. For
@@ -870,8 +853,7 @@ The error is measured in $L^2(\mu)$; it bounds $W_2^2((\nabla\hat\phi)_\#\mu,\nu
   $$\inf_{\hat T}\sup\mathbb E\|\hat T-T\|_{L^2(\mu)}^2\asymp
   n^{-2\alpha/(2\alpha-2+d)}\vee n^{-1},$$
   up to a factor $(\log n)^2$ in the upper bound. A semidual estimator over
-  truncated wavelet expansions attains it. The rate escapes the curse of
-  dimensionality only as the smoothness grows with $d$.
+  truncated wavelet expansions attains it.
 
 ### Entropic transport: duality and statistical rates
 
@@ -888,17 +870,17 @@ conditional mean $b_\varepsilon(x)=\mathbb E_{\pi_\varepsilon}[Y\mid X=x]$.
   over bounded continuous $f,g$, an unconstrained strictly concave problem
   in $f\oplus g$. The Schrödinger potentials attain it. Conversely, if
   $e^{(f\oplus g-c)/\varepsilon}\,d(\mu\otimes\nu)$ is a coupling of $\mu$ and $\nu$,
-  then it is the optimal coupling and $(f,g)$ is dual optimal. This is
-  the entropic form of complementary slackness. Exact maximization in $g$
+  then it is the optimal coupling and $(f,g)$ is dual optimal. Exact maximization in $g$
   for fixed $f$ gives
   $g(y)=-\varepsilon\log\int e^{(f(x)-c(x,y))/\varepsilon}\mu(dx)$, so
   Sinkhorn's iteration is alternating maximization of this dual. With the
   canonical smooth extension
   $f(x)=-\varepsilon\log\int e^{(g(y)-\|x-y\|^2)/\varepsilon}\nu(dy)$,
   $$b_\varepsilon=\nabla\Bigl(\tfrac12\|x\|^2-\tfrac12f(x)\Bigr),$$
-  the gradient of a convex function. In general
-  $(b_\varepsilon)_\#\mu\ne\nu$; the entropic map is the $L^2$ projection of the
-  coupling onto maps, not a transport map.
+  the gradient of a convex function. The entropic map is the
+  $L^2(\pi_\varepsilon)$-orthogonal projection of $(x,y)\mapsto y$ onto
+  functions of $x$; the pushforward $(b_\varepsilon)_\#\mu$ need not
+  equal $\nu$.
 
 * **55. Dimension-free sample complexity of entropic transport.** Let
   $\mu$ and $\nu$ be supported in a ball of radius $\tfrac12$ in
@@ -910,13 +892,9 @@ conditional mean $b_\varepsilon(x)=\mathbb E_{\pi_\varepsilon}[Y\mid X=x]$.
   \bigl|\mathbb E\mathop{\mathrm{OT}}_\varepsilon(\mu_n,\nu_n)-\mathop{\mathrm{OT}}_\varepsilon(\mu,\nu)\bigr|
   \lesssim\frac1n,$$
   $$\mathbb E\|\hat b-b_\varepsilon\|_{L^2(\mu)}^2\lesssim\frac1n.$$
-  The implicit constants do not depend on the dimension through the
-  exponent of $n$, but grow exponentially in $1/\varepsilon$. The bounded
-  diameter and strong concavity of the dual are the operative
-  hypotheses. Earlier bounds of Genevay and coauthors, and of Mena and
-  Niles-Weed, give rate $n^{-1/2}$ for the cost with powers of
-  $1/\varepsilon$ that grow with $d$. Such parametric rates do not transfer
-  to unregularized transport as $\varepsilon\downarrow0$, by item 50.
+  Here the implicit constants depend only on $\varepsilon$, growing
+  exponentially in $1/\varepsilon$; they do not depend on $d$, $\mu$,
+  $\nu$, or $n$.
 
 ### Semidiscrete transport
 
@@ -936,11 +914,7 @@ overlaps of Lebesgue measure zero.
   and its maximum equals the optimal transport cost from $\mu$ to $\nu$.
   A vector $g$ is a maximizer exactly when every cell has mass
   $\mu(L_j(g))=b_j$. The map sending $L_j(g)$ to $y_j$ is then the optimal
-  transport map, piecewise constant on the power diagram. Thus semidiscrete
-  transport, such as transport to an empirical measure, is a smooth
-  finite-dimensional concave maximization. Gradient and Newton methods
-  apply. The differentiability uses that $\mu$ does not charge cell
-  boundaries.
+  transport map, piecewise constant on the power diagram.
 
 ### Tangent space, linearization, and Fréchet means
 
@@ -969,43 +943,47 @@ $\gamma,\mu,\nu\in\mathcal C$.
   All absolutely continuous laws on $\mathbb R$ are compatible, recovering
   item 45. A family of centered nondegenerate Gaussian laws containing
   the standard Gaussian is compatible exactly when the covariances commute,
-  consistent with item 46. In
-  general the inequality is strict, reflecting the nonnegative curvature
-  of $W_2$ in dimension at least two.
+  consistent with item 46.
 
 * **58. First-order conditions for barycenters.** Let
   $F(\gamma)=\frac1{2N}\sum_{i=1}^NW_2^2(\gamma,\mu_i)$. At absolutely continuous
-  $\gamma$, $F$ is Fréchet differentiable along $W_2$ with gradient
+  $\gamma$, $F$ is Fréchet differentiable with gradient
   $$F'(\gamma)=-\frac1N\sum_{i=1}^N\log_\gamma\mu_i
-  =-\frac1N\sum_{i=1}^N(t_\gamma^{\mu_i}-\mathrm{id})\in\mathop{\mathrm{Tan}}_\gamma.$$
+  =-\frac1N\sum_{i=1}^N(t_\gamma^{\mu_i}-\mathrm{id})\in\mathop{\mathrm{Tan}}_\gamma,$$
+  in the sense that
+  $F(\nu)-F(\gamma)-\langle F'(\gamma),\log_\gamma\nu\rangle_{L^2(\gamma)}
+  =o(W_2(\nu,\gamma))$ as $W_2(\nu,\gamma)\to0$.
   An absolutely continuous $\gamma$ with $F'(\gamma)=0$ is a **Karcher
   mean**. That is, $N^{-1}\sum_it_\gamma^{\mu_i}=\mathrm{id}$ holds $\gamma$-almost
   everywhere. If one $\mu_i$ has a bounded density, the Fréchet mean is
-  absolutely continuous and hence a Karcher mean. The converse can fail,
-  but holds under regularity. Suppose the $\mu_i$ and $\gamma$ have bounded,
-  strictly positive densities on an open convex $U$. Suppose further that
-  $U=\mathbb R^d$ with Hölder continuous densities, or that $U$ is bounded
-  with densities bounded below. Then a Karcher mean is the Fréchet mean.
-  The Agueh–Carlier criterion is sufficient in general. Let the $\mu_i$
-  be absolutely continuous. Suppose the closed convex potentials $\phi_i$
-  of the maps $t_\gamma^{\mu_i}$ satisfy
+  absolutely continuous and hence a Karcher mean. Conversely, let $U$ be
+  open and convex, suppose the $\mu_i$ and a Karcher mean $\gamma$ are
+  supported in $U$ with bounded, strictly positive densities there, and
+  suppose that either $U=\mathbb R^d$ and the densities are Hölder
+  continuous, or $U$ is bounded and the densities are bounded below on
+  $U$. Then $\gamma$ is the Fréchet mean. (Agueh–Carlier criterion.) Let
+  the $\mu_i$ be absolutely continuous. If the closed convex potentials
+  $\phi_i$ of the maps $t_\gamma^{\mu_i}$ satisfy
   $N^{-1}\sum_i\phi_i(x)\le\tfrac12\|x\|^2$ everywhere, with equality
   $\gamma$-almost everywhere, then $\gamma$ is the unique Fréchet mean.
 
 * **59. Procrustes iteration for barycenters.** Start from an absolutely
   continuous $\gamma_0$ and set
-  $\gamma_{j+1}=\bigl(N^{-1}\sum_it_{\gamma_j}^{\mu_i}\bigr)_\#\gamma_j$. This is
-  steepest descent for $F$ with unit step. That step minimizes the bound
-  $F(\gamma_{j+1})-F(\gamma_j)\le-\|F'(\gamma_j)\|^2(\tau-\tau^2/2)$, and
-  steps in $[0,1]$ preserve absolute continuity. If one $\mu_i$ has a
-  bounded density, then $F(\gamma_j)$ decreases and the iterates stay in
-  a $W_2$-compact set. Every limit point is a Karcher mean. If $F$ has a
-  unique stationary point, then $\gamma_j\to\bar\mu$ in $W_2$, and the
-  maps $t_{\gamma_j}^{\mu_i}$ converge uniformly on compacta of full
-  measure. For positive definite Gaussian laws the iteration converges to
-  the barycenter of item 46. It is the Wasserstein analogue of generalized
-  Procrustes analysis: register to the template through log maps,
-  average linearly, retract by the exponential map.
+  $\gamma_{j+1}=\bigl(N^{-1}\sum_it_{\gamma_j}^{\mu_i}\bigr)_\#\gamma_j$, that
+  is, $\gamma_{j+1}=\exp_{\gamma_j}(-F'(\gamma_j))$. For absolutely
+  continuous $\gamma$ and $\tau\in[0,1]$, the measure
+  $\gamma_\tau=\exp_\gamma(-\tau F'(\gamma))$ is absolutely continuous and
+  $F(\gamma_\tau)-F(\gamma)\le-\|F'(\gamma)\|_{L^2(\gamma)}^2(\tau-\tau^2/2)$;
+  the bound is smallest at $\tau=1$. If one $\mu_i$ has a bounded density,
+  then the iterates stay in a $W_2$-compact set and every limit point is a
+  Karcher mean. If moreover $F$ has a unique stationary point, then
+  $W_2(\gamma_j,\bar\mu)\to0$, where $\bar\mu$ is the Fréchet mean, and
+  there is a set $A$ with $\bar\mu(A)=1$ such that
+  $t_{\gamma_j}^{\mu_i}\to t_{\bar\mu}^{\mu_i}$ uniformly on compact
+  subsets of $A$. For centered Gaussian $\mu_i$ with one covariance
+  nonsingular and a nonsingular centered Gaussian $\gamma_0$, the
+  iterates converge to the barycenter of item 46. This is the Wasserstein
+  analogue of generalized Procrustes analysis.
 
 ### Kernel mean embeddings and integral probability metrics
 
@@ -1051,12 +1029,11 @@ on $L^2(\mu)$.
   Here $Z_j$ are independent standard normals and $\lambda_j$ are the
   eigenvalues of the centered one-sample kernel specified above.
   Under a fixed alternative, with $\Delta=\Phi(\mu)-\Phi(\nu)$,
-  the $\sqrt n$-normalized centered unbiased statistic has a normal
-  limit with variance
+  $\sqrt n\bigl(\mathop{\mathrm{MMD}}_{u,n}^2-\|\Delta\|_{\mathcal H}^2\bigr)$
+  converges in distribution to a centered normal law with variance
   $$4\mathop{\mathrm{Var}}_\mu\langle k(X,\cdot),\Delta\rangle
-  +4\mathop{\mathrm{Var}}_\nu\langle k(Y,\cdot),\Delta\rangle.$$
-  This variance may be zero, even for a characteristic kernel and unequal
-  laws. A nondegenerate normal limit requires it to be positive.
+  +4\mathop{\mathrm{Var}}_\nu\langle k(Y,\cdot),\Delta\rangle,$$
+  read as the point mass at $0$ when this variance vanishes.
 
 On $\mathbb R^d$, with $X,X'$ independent copies of $\mu$ and $Y,Y'$
 independent copies of $\nu$, all four variables independent, the **energy
@@ -1070,8 +1047,7 @@ arguments under the marginal law of $X$, and define $b(y,y')$ similarly.
 The squared **distance covariance** is
 $\mathcal V^2(X,Y)=\mathbb E[a(X,X')b(Y,Y')]$ for independent copies
 of the pair, whenever the expectations exist. Finite second moments are
-a sufficient condition. This is not the ordinary Euclidean energy distance
-on the concatenated vector space.
+a sufficient condition.
 
 * **62. Energy distance and independence.** For laws on $\mathbb R^d$
   with finite first moment, $D^2(\mu,\nu)\ge0$, with equality exactly
@@ -1098,11 +1074,11 @@ the product kernel $k\otimes\ell$.
   space, as for Gaussian kernels on Euclidean coordinates. Then HSIC
   vanishes if and only if $X$ and $Y$ are independent. An unbiased
   estimator based on paired observations is a $U$-statistic of order
-  four, because both marginal embeddings must also be estimated.
-  Under independence its first projection vanishes and its scaled limit
-  is a centered weighted chi-squared series. Under alternatives its
-  $\sqrt n$ limit is normal, possibly degenerate. The biased Gram-matrix
-  estimator in item 67 has an uncentered null limit.
+  four. Under independence its first Hoeffding projection vanishes and
+  $n$ times it converges in distribution to the centered series of
+  item 67. Under dependence, $\sqrt n$ times its deviation from HSIC
+  converges in distribution to a centered normal law, possibly the point
+  mass at $0$.
 
 ### Kernel estimation, witnesses, and test calibration
 
@@ -1114,27 +1090,26 @@ the product kernel $k\otimes\ell$.
   $$\|\Phi(\mu_n)-\Phi(\mu)\|_{\mathcal H}
   \le\frac\kappa{\sqrt n}
   +\kappa\sqrt{\frac{2\log(1/\delta)}n}.$$
-  The second statement follows from bounded differences. The constants
-  do not contain the input dimension, although the chosen kernel's
-  ability to distinguish the alternatives still matters.
 
 * **65. Witness function.** If $\Delta=\Phi(\mu)-\Phi(\nu)\ne0$, the
   function attaining the MMD supremum is
   $$f^*(x)=\frac{\mathbb E_\mu k(x,X)-\mathbb E_\nu k(x,Y)}
   {\|\Delta\|_{\mathcal H}}.$$
   It has RKHS norm one, and its mean difference is the MMD.
-  The unnormalized numerator describes where the distributions differ
-  at the resolution selected by the kernel.
 
-* **66. Permutation calibration.** Under equality of two independent
-  sample laws, labels are uniform over all allocations of the pooled
-  observations to the two fixed sample sizes. Recomputing any fixed
-  statistic under those allocations gives a test of conditional level
-  at most $\alpha$, or exactly $\alpha$ with boundary randomization.
-  This applies to MMD, energy, and empirical transport statistics
-  without estimating their asymptotic null laws. For independence
-  testing, permuting one coordinate of independent observed pairs
-  gives the analogous calibration under the product-law null.
+* **66. Permutation calibration.** Let $X_1,\ldots,X_m\sim\mu$ and
+  $Y_1,\ldots,Y_n\sim\nu$ be independent, let $Z$ be the pooled vector
+  of length $N=m+n$, and let $T$ be any statistic of $Z$. Given $Z$, let
+  $c_\alpha(Z)$ be the $(1-\alpha)$-quantile of the $N!$ values
+  $T(Z_\sigma)$ over permutations $\sigma$, and reject when
+  $T(Z)>c_\alpha(Z)$. If $\mu=\nu$, the pooled vector is exchangeable,
+  and this test has level at most $\alpha$, conditionally on the
+  multiset of pooled values; randomizing on the event
+  $T(Z)=c_\alpha(Z)$ gives level exactly $\alpha$. This applies to MMD,
+  energy, and empirical transport statistics. For $n$ independent pairs
+  $(X_i,Y_i)$ and the null hypothesis that $X_i$ and $Y_i$ are
+  independent, the same holds with permutations of $(Y_1,\ldots,Y_n)$
+  alone.
 
 * **67. Gram-matrix independence statistic.** Let $K,L$ be the Gram
   matrices of the two coordinates of $n$ independent pairs and put
@@ -1144,9 +1119,8 @@ the product kernel $k\otimes\ell$.
   $\sum_{r,s}\lambda_r\eta_sZ_{rs}^2$, where $\lambda_r,\eta_s$
   are eigenvalues of the two centered marginal kernel operators.
   The unbiased order-four estimator has the corresponding centered
-  series $\sum_{r,s}\lambda_r\eta_s(Z_{rs}^2-1)$.
-  There is one sample of pairs here, unlike the two independent
-  samples and factor two in item 61.
+  series $\sum_{r,s}\lambda_r\eta_s(Z_{rs}^2-1)$. Here the $Z_{rs}$ are
+  independent standard normals.
 
 ### Characteristic kernels and comparison of metrics
 
@@ -1200,8 +1174,11 @@ functions (CKMA SYNOPSIS39, item 44).
   Moreover $\beta\le W_1$, $\beta\le2d_{\mathrm{TV}}$, and on a bounded space
   $W_1\le\mathop{\mathrm{diam}}(M)\,d_{\mathrm{TV}}$. On a separable metric space,
   $\beta$ metrizes weak convergence and is equivalent to the Prokhorov
-  metric. Wasserstein and total variation are strictly stronger. For
-  $\mu_n=(1-\frac1n)\delta_0+\frac1n\delta_n$ on $\mathbb R$, $\mu_n\Rightarrow\delta_0$
+  metric. Convergence in $W_1$ or in $d_{\mathrm{TV}}$ implies weak
+  convergence, but not conversely: on $\mathbb R$,
+  $\delta_{1/n}\Rightarrow\delta_0$ while
+  $d_{\mathrm{TV}}(\delta_{1/n},\delta_0)=1$, and for
+  $\mu_n=(1-\frac1n)\delta_0+\frac1n\delta_n$, $\mu_n\Rightarrow\delta_0$
   while $W_1(\mu_n,\delta_0)=1$. For the Gaussian, Laplace, or inverse
   multiquadric kernel, $\mathop{\mathrm{MMD}}(\mu_n,\delta_0)\to0$. These
   inequalities hold whether or not the kernel is characteristic.
@@ -1245,11 +1222,11 @@ $$k_P(x,y)=\sum_{j=1}^d\bigl[b_j(x)b_j(y)k(x,y)+b_j(x)\partial_{y_j}k(x,y)
   kernel Stein set. If $\mathbb E_\mu k_P(X,X)<\infty$, then
   $$\mathop{\mathrm{KSD}}(\mu)^2=\mathbb E\,k_P(X,X'),\qquad X,X'\ \text{independent with law }\mu.$$
   For an empirical or weighted sample this is a double sum over sample
-  pairs. Each coordinate term is a maximum mean discrepancy between $\mu$
-  and $P$ for a kernel whose $P$-embedding vanishes. The associated
+  pairs. Since $\mathbb E_Pk_P(Z,y)=0$ for every $y$, this is the squared
+  maximum mean discrepancy between $\mu$ and $P$ for the kernel $k_P$.
+  The associated
   degenerate $U$-statistic is the kernel goodness-of-fit statistic of Liu,
-  Lee, and Jordan, and of Chwialkowski, Strathmann, and Gretton. Its limit
-  theory follows SYNOPSIS102, items 29 and 30.
+  Lee, and Jordan, and of Chwialkowski, Strathmann, and Gretton.
 
 A target $P$ is **distantly dissipative** if
 $\liminf_{r\to\infty}\kappa(r)>0$, where
@@ -1267,13 +1244,16 @@ that are strongly log-concave outside a compact set.
   (c) For a translation-invariant $C^2$ kernel with nonvanishing
   generalized Fourier transform, the same conclusion holds for
   uniformly tight sequences, and for all sequences when $d=1$.
-  (d) Tightness is the real issue. Let $d\ge3$, $P=N(0,I)$, and let the
-  kernel and its first derivatives decay like $o(r^{-\alpha})$ at distance
-  $r$, with $\alpha=(\tfrac12-\tfrac1d)^{-1}$. Then
-  $\mathop{\mathrm{KSD}}$ can tend to zero along sequences that converge to no
-  probability. This includes the Gaussian, Matérn, and compactly
-  supported Wendland kernels. The slowly decaying inverse multiquadric
-  of (b) generates coercive test functions that enforce tightness.
+  (d) Let $d\ge3$ and $P=N(0,I)$, let $k$ be bounded with bounded
+  continuous derivatives $\nabla_xk$, $\nabla_yk$, and
+  $\langle\nabla_x,\nabla_y\rangle k$, and put
+  $\gamma(r)=\sup\{\max(|k(x,y)|,\|\nabla_xk(x,y)\|,
+  |\langle\nabla_x,\nabla_y\rangle k(x,y)|):\|x-y\|\ge r\}$. If
+  $\gamma(r)=o(r^{-\alpha})$ as $r\to\infty$ with
+  $\alpha=(\tfrac12-\tfrac1d)^{-1}$, then there is a sequence of
+  probabilities $\mu_m$ with $\mathop{\mathrm{KSD}}(\mu_m)\to0$ that does not
+  converge weakly to $P$. This includes the Gaussian, Matérn, and compactly
+  supported Wendland kernels.
 
 ### Conditional embeddings and random features
 
@@ -1300,9 +1280,7 @@ adjoint $C_{YX}$.
   \beta(x)=(K+n\lambda I)^{-1}\bigl(k(x,x_i)\bigr)_{i=1}^n,$$
   with Gram matrix $K$. This is kernel ridge regression of the feature
   $\ell(Y,\cdot)$ on $X$, a vector-valued form of the estimator in
-  SYNOPSIS107, item 13. The weights need be neither
-  positive nor normalized. Its rates are slower than the $n^{-1/2}$ rate
-  of marginal embeddings in item 64.
+  SYNOPSIS107, item 13.
 
 * **74. Random Fourier features.** Let $k(x,y)=\psi(x-y)$ be continuous
   and positive definite on $\mathbb R^d$ with $\psi(0)=1$, so its spectral
@@ -1310,19 +1288,25 @@ adjoint $C_{YX}$.
   and $b_1,\ldots,b_D$ uniform on $[0,2\pi]$ be independent. Put
   $z(x)=\sqrt{2/D}\,(\cos(\omega_j^\top x+b_j))_{j\le D}$. Then
   $\mathbb E\,z(x)^\top z(y)=k(x,y)$. For fixed $x,y$,
-  $\mathbb P(|z(x)^\top z(y)-k(x,y)|\ge\varepsilon)\le2e^{-D\varepsilon^2/4}$ by
-  Hoeffding's inequality. If $\sigma^2=\int\|\omega\|^2\Lambda(d\omega)<\infty$
-  and $M\subset\mathbb R^d$ is compact, then
+  $\mathbb P(|z(x)^\top z(y)-k(x,y)|\ge\varepsilon)\le2e^{-D\varepsilon^2/8}$ by
+  Hoeffding's inequality, since each of the $D$ summands of
+  $z(x)^\top z(y)$ is $D^{-1}$ times a variable with values in $[-2,2]$.
+  Let $\sigma^2=\int\|\omega\|^2\Lambda(d\omega)<\infty$ and let
+  $M\subset\mathbb R^d$ be compact with $\sigma\mathop{\mathrm{diam}}M\ge\varepsilon$.
+  Then
   $$\mathbb P\Bigl(\sup_{x,y\in M}|z(x)^\top z(y)-k(x,y)|\ge\varepsilon\Bigr)
-  \le2^8\Bigl(\frac{\sigma\mathop{\mathrm{diam}}M}{\varepsilon}\Bigr)^2
-  \exp\Bigl(-\frac{D\varepsilon^2}{4(d+2)}\Bigr),$$
-  as stated by Rahimi and Recht.
-  Hence $D$ of order $d\varepsilon^{-2}\log(\sigma\mathop{\mathrm{diam}}M/\varepsilon)$ features
-  suffice for uniform error $\varepsilon$. For laws on $M$, the squared MMD
-  of the feature map $z$ is
-  $\|\int z\,d\mu-\int z\,d\nu\|^2$. It is computable in linear time and
-  differs from $\mathop{\mathrm{MMD}}_k^2$ by at most $4\varepsilon$ on that event. For
-  the Gaussian kernel $e^{-\gamma\|x-y\|^2}$, $\sigma^2=2d\gamma$.
+  \le 98\Bigl(\frac{\sigma\mathop{\mathrm{diam}}M}{\varepsilon}\Bigr)^2
+  \exp\Bigl(-\frac{D\varepsilon^2}{32(d+1)}\Bigr).$$
+  Hence the probability is at most $\delta$ once
+  $D\ge32(d+1)\varepsilon^{-2}
+  \log\bigl(98(\sigma\mathop{\mathrm{diam}}M/\varepsilon)^2/\delta\bigr)$.
+  For probabilities $\mu,\nu$ on $M$, put
+  $\mathop{\mathrm{MMD}}_z(\mu,\nu)^2=\|\int z\,d\mu-\int z\,d\nu\|^2$. On the
+  event that the supremum above is less than $\varepsilon$,
+  $|\mathop{\mathrm{MMD}}_z(\mu,\nu)^2-\mathop{\mathrm{MMD}}_k(\mu,\nu)^2|\le4\varepsilon$
+  for all such $\mu,\nu$. For empirical measures of $n$ points,
+  $\mathop{\mathrm{MMD}}_z^2$ takes $O(nD)$ operations. For the Gaussian
+  kernel $e^{-\gamma\|x-y\|^2}$, $\sigma^2=2d\gamma$.
 
 ## Reference guide
 
@@ -1366,7 +1350,10 @@ adjoint $C_{YX}$.
 #### Geometric and topological data analysis
 
 The local Edelsbrunner–Harer manuscript, Parts B and C, supplies the
-nerve construction, persistent Betti numbers, diagrams, and stability.
+nerve construction, persistent Betti numbers, diagrams, and stability;
+item 19 and the definitions before it are the Stability Theorem for Tame
+Functions in its Chapter VIII.2, due to Cohen-Steiner, Edelsbrunner, and
+Harer (*Discrete Comput. Geom.* 37, 2007).
 Chazal–de Silva–Glisse–Oudot, especially the isometry theorem in Chapter 5,
 distinguishes $q$-tameness from a pointwise finite-dimensional interval
 decomposition. The new rank and offset statements make the passage from
@@ -1376,7 +1363,7 @@ retain the radius convention already used here.
 Bhattacharya–Bhattacharya, Chapter 4 and Proposition 4.3, was read for the
 extrinsic projection and normal limit; the planar-shape chapters give the
 matrix representation of a Procrustes mean. Intrinsic inference instead
-needs the score and cut-locus assumptions in item 5. Mere geodesic convexity
+needs the chart assumptions of their Theorem 3.10, which item 5 states. Mere geodesic convexity
 of a support ball is not used as a sufficient uniqueness theorem.
 
 The original [Genovese and coauthors paper](https://www.jmlr.org/papers/v13/genovese12a.html),
@@ -1384,8 +1371,8 @@ Theorems 1–2 and Section 2, was read online: item 7 now includes its
 perpendicular-noise model and logarithmic gap. For landscapes,
 [Bubenik's paper](https://www.jmlr.org/papers/v16/bubenik15a.html),
 Theorems 8–10, supplies the type-2 requirement. The finite-net size in
-item 22 includes the covering logarithm; confidence calibration in item 25
-requires more than persistence stability.
+item 22 includes the covering logarithm; item 25 takes a calibrated
+sup-norm radius as given.
 
 The local Chung text remains the source for normalized spectral quantities.
 The added multidimensional-scaling and locally-linear-embedding formulas
@@ -1427,12 +1414,34 @@ Some statements were not checked against a local full text. Two
 earlier entries, on density-corrected Laplace–Beltrami limits (after
 Coifman–Lafon and Hein–Audibert–von Luxburg) and on the consistency of
 spectral clustering (after von Luxburg–Belkin–Bousquet), were removed for
-that reason; see [SYNOPSIS-CONCORDANCE.md](SYNOPSIS-CONCORDANCE.md). The Skraba–Turner cellular bound in item 35
-is checked only against its statement in Dey–Wang, Theorem 3.4. The
-bound in item 39 follows from a covering argument and item 36; the
-matching minimax lower bound of Chazal, Glisse, Labruère, and Michel is
-cited in Oudot, Chapter 8, but was not checked and is not stated. Afsari's form
-of the uniqueness radius in item 13 is as quoted by Pennec–Sommer–Fletcher.
+that reason; see [SYNOPSIS-CONCORDANCE.md](SYNOPSIS-CONCORDANCE.md).
+
+The following primary papers were read online for items 13 and 35–39.
+Afsari's paper (Proc. Amer. Math. Soc. 139 (2011), 655–673) could not be
+fetched; its Theorem 2.1, as restated by Pennec–Sommer–Fletcher,
+Theorem 2.2, and in
+[Afsari, Tron, and Vidal, Theorem 2.6 and footnote 11](https://arxiv.org/abs/1201.0925),
+requires the support to lie in a ball $B(o,\rho)$ with $\rho<r^*$, and
+gives a unique global minimizer inside that ball. Item 13 now states that
+hypothesis; Pennec–Sommer–Fletcher state the finite-data case.
+[Skraba and Turner, Theorem 4.6](https://arxiv.org/abs/2006.16824)
+proves the cellular bound of item 35 with the $\ell^q$ ground metric on
+diagram points, and degree by degree with the sum restricted to cells of
+dimensions $p$ and $p+1$; the $\ell^\infty$ form stated is weaker. Their
+Theorem 3.2 restates the Lipschitz bound of Cohen-Steiner, Edelsbrunner,
+Harer, and Mileyko with constant $C_X^{1/q}\max(\mathop{\mathrm{Lip}}f,
+\mathop{\mathrm{Lip}}g)^{k/q}$, in agreement with Edelsbrunner–Harer,
+Chapter VIII.2. The Čech statements of item 36 are Oudot, Theorem 7.10,
+with the ambient Čech complex of item 21 taking the whole space as
+witnesses. The Rips pair of item 37 is
+[Chazal and Oudot, Theorem 3.6](https://arxiv.org/abs/0712.2638), also
+Dey–Wang, Theorem 6.13, which assume $d_H(K,P)<\varepsilon$; their Rips
+parameter is the maximum-edge one, and item 37 converts it. Item 38 is
+Dey–Wang, Theorem 6.11, in their diameter-$2r$ parameter. For item 39,
+[Chazal, Glisse, Labruère, and Michel](https://www.jmlr.org/papers/v16/chazal15a.html),
+Theorem 2 gives the Hausdorff tail bound behind the expectation bound and
+Theorem 4 gives the diagram bound with $C$ depending only on $a$ and $b$;
+the matching minimax lower bound in their Theorem 4 is not stated.
 Federer's reach theory is in his 1959 curvature-measures paper rather than
 in the local *Geometric Measure Theory*, so reach is taken from Oudot and
 Dey–Wang.
@@ -1442,13 +1451,21 @@ Dey–Wang.
 Panaretos–Zemel is present in `ReferencesSuppl`. Section 1.6.3, the
 one-dimensional barycenter theorem in Section 3.2.2, and the Gaussian
 covariance equation in Section 5.4.1 were read for items 45 and 46.
+For item 46,
+[Álvarez-Esteban, del Barrio, Cuesta-Albertos, and Matrán, Theorem 4.2 and Corollary 4.5](https://arxiv.org/abs/1511.05355)
+were read online: the fixed-point equation has a unique positive definite
+solution, already when the $A_i$ are positive semidefinite and one of
+them is positive definite, and it is the covariance of the Gaussian
+barycenter (also Agueh–Carlier, Theorem 6.1, as cited there).
 Chewi–Niles-Weed–Rigollet is also present there; Chapter 2 develops the
 distribution-free empirical bounds and why they need not be sharp for
 each law. The quantile-process limit in item 47 specializes SYNOPSIS102, items 6 and 28, under compact-support density bounds.
 
 For item 40, [Fournier–Guillin, Theorem 1](https://arxiv.org/abs/1312.2128),
 was read online. It gives upper bounds with moment remainders, not an
-exact rate for every measure. The bounded-domain positivity statement
+exact rate for every measure. Its excluded exponents are $q=2p$ for
+$p\ge d/2$ and $q=d/(d-p)$ for $p<d/2$, as now stated in item 40; the
+bounded-support case follows by taking $q$ large. The bounded-domain positivity statement
 in item 44 follows [Feydy and coauthors, Theorem 1](https://proceedings.mlr.press/v89/feydy19a.html).
 The entropic cost convention is fixed by CKMA SYNOPSIS39, item 90;
 debiasing subtracts the two self-costs.
@@ -1510,10 +1527,19 @@ Theorems 4.1–4.2, and footnote 2 on the Gaussian counterexample),
 Theorem 3.4, and Section 3.3.1 were used for items 64, 68, and 73.
 [Rahimi and Recht, “Random Features for Large-Scale Kernel Machines”
 (NIPS 2007)](https://people.eecs.berkeley.edu/~brecht/papers/07.rah.rec.nips.pdf),
-Claim 1 and the Hoeffding remark preceding it, was read online for
-item 74. The linear-time MMD consequence there is a triangle-inequality
-corollary. Other papers named in items 55 and 71 (Genevay and coauthors;
-Mena and Niles-Weed; Liu, Lee, and Jordan; Chwialkowski, Strathmann, and
+Claim 1, its proof, and the Hoeffding remark preceding it, was read online
+for item 74. Their pointwise remark gives the exponent $D\varepsilon^2/4$;
+Hoeffding's inequality for summands in $[-2,2]$ gives $D\varepsilon^2/8$,
+which item 74 states. Their Claim 1 gives the uniform bound with constant
+$2^8$ and exponent $D\varepsilon^2/(4(d+2))$, but the proof treats
+$z(x)^\top z(y)$ as a function of $x-y$, which is false for the features
+with random phases $b_j$, and its Hoeffding step for the net is too
+optimistic. Item 74 therefore states
+[Sutherland and Schneider, “On the Error of Random Fourier Features”
+(UAI 2015), Proposition 2](https://arxiv.org/abs/1506.02785), which
+treats exactly these features, assumes $\varepsilon\le\sigma\mathop{\mathrm{diam}}M$
+for the numerical constant 98, and was read online. The MMD comparison
+is a direct corollary. Other papers named in item 71 (Liu, Lee, and Jordan; Chwialkowski, Strathmann, and
 Gretton) are cited through these sources and were not read here.
 
 Local sources and online papers are distinguished here. The local transport

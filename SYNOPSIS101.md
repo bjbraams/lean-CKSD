@@ -51,14 +51,23 @@ For a dominated model on a standard Borel space, a statistic $T$ is
 given $T$ can be chosen independent of $\theta$. An **ancillary** statistic
 is one whose distribution does not depend on $\theta$.
 
-The **sufficiency principle** says that if $T$ is sufficient and
-$T(x)=T(y)$, then $x$ and $y$ yield the same evidence about $\theta$. The
-**conditionality principle** says that if an ancillary statistic selects
-which of several experiments was performed, then the evidence about $\theta$
-is the evidence in the selected experiment. The **likelihood principle**
-says that if two outcomes, possibly from different dominated experiments,
-have likelihood functions that are positive scalar multiples of one another
-as functions of $\theta$, then they yield the same evidence about $\theta$.
+For the principles of inference, a **discrete experiment** $E$ is a
+countable sample space with probability mass functions
+$f_E(\cdot\mid\theta)$, $\theta\in\Theta$, for a fixed parameter set
+$\Theta$, such that every point has positive mass for some $\theta$. For
+two such experiments $E_1,E_2$, the **mixture** $E^\ast$ has
+sample space $\{1\}\times\mathcal X_1\cup\{2\}\times\mathcal X_2$ and mass
+functions $f^\ast((j,x_j)\mid\theta)=\tfrac12f_{E_j}(x_j\mid\theta)$. An
+**evidence function** assigns a value $\mathop{\mathrm{Ev}}(E,x)$ in some
+fixed set to each experiment $E$ of a class closed under mixtures and each
+outcome $x$ of $E$. It satisfies the **sufficiency principle** when
+$\mathop{\mathrm{Ev}}(E,x)=\mathop{\mathrm{Ev}}(E,y)$ whenever $T$ is
+sufficient for $E$ and $T(x)=T(y)$; the **conditionality principle** when
+$\mathop{\mathrm{Ev}}(E^\ast,(j,x_j))=\mathop{\mathrm{Ev}}(E_j,x_j)$ for all
+mixtures; and the **likelihood principle** when
+$\mathop{\mathrm{Ev}}(E_1,x_1)=\mathop{\mathrm{Ev}}(E_2,x_2)$ whenever there
+is $c>0$ with $f_{E_2}(x_2\mid\theta)=c\,f_{E_1}(x_1\mid\theta)$ for every
+$\theta$.
 
 * **1. Factorization theorem.** Let the model be dominated by a
   $\sigma$-finite measure $\mu$. A statistic $T$ is sufficient if and only
@@ -68,19 +77,32 @@ as functions of $\theta$, then they yield the same evidence about $\theta$.
   for $\mu$-almost every $x$. In that case the conditional form of
   sufficiency holds whenever a regular conditional distribution exists.
 
-* **2. Minimal sufficiency.** Assume the model is dominated and has a common
-  support. Fix a reference parameter $\theta_0$ and write
-  $\lambda_\theta(x)=f(x\mid\theta)/f(x\mid\theta_0)$ where the denominator
-  is positive. The map $x\mapsto(\lambda_\theta(x))_{\theta\in\Theta}$, taken
-  up to $\mu$-null sets, is sufficient, and it is a function of every
-  sufficient statistic. Equivalently, a sufficient statistic $T$ is minimal
-  when $T(x)=T(y)$ if and only if $\theta\mapsto f(x\mid\theta)$ and
+* **2. Minimal sufficiency.** Assume the model is dominated by $\mu$ and
+  has a common support $\mathcal X_0=\{x:f(x\mid\theta)>0\}$, the same set
+  for every $\theta$. Fix a reference parameter $\theta_0$ and write
+  $\lambda_\theta(x)=f(x\mid\theta)/f(x\mid\theta_0)$ for
+  $x\in\mathcal X_0$. The map
+  $\Lambda:x\mapsto(\lambda_\theta(x))_{\theta\in\Theta}$, with the product
+  $\sigma$-algebra on $\mathbb R^\Theta$, is sufficient. For every
+  sufficient statistic $S$ and every $\theta$ there is a measurable
+  $\varphi_\theta$ with $\lambda_\theta=\varphi_\theta\circ S$
+  $\mu$-almost everywhere on $\mathcal X_0$; when $\Theta$ is countable a
+  single measurable $\varphi$ gives $\Lambda=\varphi\circ S$ almost
+  everywhere. A sufficient statistic $T$ is **minimal sufficient** when for
+  every sufficient statistic $S$ there is a set $N$ with $P_\theta(N)=0$
+  for every $\theta$ such that
+  $T(x)=T(y)$ whenever $x,y\notin N$ and $S(x)=S(y)$. Suppose $\Theta$ is
+  countable, or the sample space is countable and $\mu$ is counting
+  measure. If a statistic $T$ with values in a standard Borel space
+  satisfies, for all $x,y\in\mathcal X_0$,
+  $T(x)=T(y)$ if and only if $\theta\mapsto f(x\mid\theta)$ and
   $\theta\mapsto f(y\mid\theta)$ are positive scalar multiples of one
-  another.
+  another, then $T$ is minimal sufficient.
 
-* **3. Birnbaum's theorem.** For dominated experiments in the usual discrete
-  mixture formulation, the sufficiency principle and the conditionality
-  principle together imply the likelihood principle.
+* **3. Birnbaum's theorem.** An evidence function on a class of discrete
+  experiments closed under mixtures satisfies the likelihood principle if
+  and only if it satisfies both the sufficiency principle and the
+  conditionality principle.
 
 ### Exponential families
 
@@ -112,18 +134,20 @@ family is a smooth lower-dimensional subfamily of a full-rank family.
   parameter in a nonempty open set satisfies $g(T)=0$ almost surely under
   every such parameter. Bounded completeness is included.
 
-* **6. Pitman–Koopman–Darmois theorem.** Consider independent sampling from
-  a dominated family on a Euclidean sample space, with common support, a
-  parameter in an open subset of $\mathbb R^k$, and densities positive and
-  continuously differentiable in the parameter. Under the classical
-  smoothness and constant-rank hypotheses on the densities and the
-  sufficient reductions, a sufficient statistic of fixed dimension $d$
-  for every sample size implies an exponential-family representation of
-  order at most $d$. The reductions here must be regular smooth statistics;
-  allowing arbitrary measurable encodings of a sample as a single real
-  number would make a dimension assertion meaningless. The common-support hypothesis excludes
-  families such as the uniform law on $(0,\theta)$, whose maximum is
-  one-dimensional and sufficient for every $n$.
+* **6. Pitman–Koopman–Darmois theorem, monotone form.** Let $\mathcal P$ be
+  a family of mutually absolutely continuous laws on
+  $(\mathcal X,\mathcal A)$ and let $P_0$ be a law equivalent to every
+  member of $\mathcal P$. Suppose there is an infinite set
+  $\mathbb N_0\subset\mathbb N$ containing $1$ such that for every
+  $n\in\mathbb N_0$ there are a measurable $T_n:\mathcal X^n\to\mathbb R$
+  and nondecreasing functions $H_{P,n}$, $P\in\mathcal P$, for which
+  $H_{P,n}\circ T_n$ is a $P_0^n$-density of $P^n$. Then there are a
+  measurable $S:\mathcal X\to\mathbb R$ and functions
+  $C:\mathcal P\to(0,\infty)$ and $a:\mathcal P\to\mathbb R$ such that
+  $x\mapsto C(P)\exp(a(P)S(x))$ is a $P_0$-density of $P$ for every
+  $P\in\mathcal P$: the family is a one-parameter exponential family.
+  Mutual absolute continuity excludes the uniform laws on $(0,\theta)$, for
+  which $X_{(n)}$ is sufficient for every $n$.
 
 ### Unbiased estimation and information
 
@@ -159,10 +183,15 @@ information $I_1(\theta)$ therefore has information $n I_1(\theta)$.
   $P_\theta$.
 
 * **10. Information inequality.** Let $\theta$ lie in an open subset of
-  $\mathbb R^k$, and assume the support is free of $\theta$, the information
-  matrix $I(\theta)$ exists and is nonsingular, and differentiation under
-  the integral is legitimate for the density and for an unbiased estimator
-  $W$ of a differentiable map $g$. Then, in the Loewner order,
+  $\mathbb R^k$, and assume the support is free of $\theta$, the density is
+  differentiable in $\theta$, and the information matrix $I(\theta)$
+  exists and is nonsingular. Let $W$ be an unbiased estimator of a
+  differentiable map $g:\Theta\to\mathbb R^m$ with
+  $\mathbb E_\theta\|W\|^2<\infty$, and assume that for every $j$
+  $$\partial_{\theta_j}\int W(x)f(x\mid\theta)\,\mu(dx)
+  =\int W(x)\,\partial_{\theta_j}f(x\mid\theta)\,\mu(dx),$$
+  and the same identity with $W$ replaced by $1$. Then, in the Loewner
+  order,
   $$\mathop{\mathrm{Cov}}_\theta(W)
   \ge Dg(\theta)\,I(\theta)^{-1}\,Dg(\theta)^\top.$$
   For a real parameter and a real unbiased estimator of $g$,
@@ -170,13 +199,23 @@ information $I_1(\theta)$ therefore has information $n I_1(\theta)$.
   For an independent sample the matrix $I(\theta)$ is replaced by
   $n I_1(\theta)$.
 
-* **11. Equality in the information inequality.** Under the hypotheses of
-  the one-parameter inequality, assume $g'(\theta)\ne0$ throughout an
-  open interval and the usual common-support differentiability conditions.
-  Equality holds throughout that interval if and only if the model is a one-parameter exponential family on
-  that interval and $g(\theta)$ is an affine function of
-  $\mathbb E_\theta T$. The unbiased estimator attaining the bound is then an
-  affine function of $T$.
+* **11. Equality in the information inequality.** Assume the hypotheses
+  of item 10 for a real parameter and a real unbiased estimator $W$ of
+  $g$, at a point $\theta$ with $g'(\theta)\ne0$. Then
+  $\mathop{\mathrm{Var}}_\theta(W)=g'(\theta)^2/I(\theta)$ if and only if
+  $$W(x)-g(\theta)=\frac{g'(\theta)}{I(\theta)}\,
+  \partial_\theta\log f(x\mid\theta)$$
+  for $P_\theta$-almost every $x$. Suppose equality holds at every point of
+  an open interval $J\subset\Theta$, with $g'\ne0$ on $J$, and
+  $\theta\mapsto\log f(x\mid\theta)$ is continuously differentiable on $J$
+  for every $x$ in the support. Then there are functions $\eta$ and $B$ on
+  $J$ and a measurable $h\ge0$ such that
+  $f(x\mid\theta)=h(x)\exp\bigl(\eta(\theta)W(x)-B(\theta)\bigr)$ for
+  $\mu$-almost every $x$ and every $\theta\in J$: the model restricted to
+  $J$ is a one-parameter exponential family with natural statistic $W$.
+  Conversely, in a one-parameter exponential family with natural statistic
+  $T$ and natural parameter in an open interval, $T$ attains the bound as
+  an unbiased estimator of $\mathbb E_\eta T$.
 
 ### Minimum-variance unbiased estimators beyond the information bound
 
@@ -198,9 +237,7 @@ assumed to exist.
   $\theta$. If $T$ is sufficient and $W=h(T)$, it suffices to check
   unbiased estimators of zero that are functions of $T$. A UMVU estimator
   is unique: two UMVU estimators of $g(\theta)$ agree $P_\theta$-almost
-  surely for every $\theta$. The criterion is used chiefly to show that a
-  given unbiased estimator is not UMVU, and it applies without
-  completeness; with a complete sufficient statistic it reduces to item 8.
+  surely for every $\theta$.
 
 * **13. Completeness of the order statistic.** Let $\mathcal P$ be a
   complete family of laws on $(\mathcal X,\mathcal A)$ that is closed under
@@ -251,9 +288,11 @@ $C(x)=\{\theta:\text{the test of }\theta\text{ accepts }x\}$.
   everywhere under $P_0+P_1$, except possibly on $\{f_1=k f_0\}$.
 
 * **15. Karlin–Rubin theorem.** Suppose the family has monotone likelihood
-  ratio in a real statistic $T$. For $\theta_0\in\Theta$ and $\alpha\in(0,1)$,
-  any test that rejects for large values of $T$, and that has size $\alpha$
-  at $\theta_0$, is uniformly most powerful of level $\alpha$ for
+  ratio in a real statistic $T$, with $\Theta\subset\mathbb R$. For
+  $\theta_0\in\Theta$ and $\alpha\in(0,1)$, any test with $\varphi=1$ when
+  $T>c$, $\varphi=\gamma$ when $T=c$, and $\varphi=0$ when $T<c$, for
+  constants $c$ and $\gamma\in[0,1]$, that has size $\alpha$ at $\theta_0$,
+  is uniformly most powerful of level $\alpha$ for
   $H:\theta\le\theta_0$ against $K:\theta>\theta_0$. Its power function is
   nondecreasing. A one-parameter exponential family has monotone likelihood
   ratio in its natural statistic, so the one-sided test based on that
@@ -353,9 +392,9 @@ $P_\theta(p(X)\le u)\le u$ for every $u\in[0,1]$ and every null parameter.
   $$P(X_{(r)}\le q_p\le X_{(s)})
   =\sum_{j=r}^{s-1}\binom nj p^j(1-p)^{n-j}.$$
   Thus binomial quantiles yield confidence intervals for a population
-  quantile with coverage independent of $F$. Taking $X_{(0)}=-\infty$
-  and $X_{(n+1)}=\infty$ extends the construction to extreme confidence
-  levels. Quantile asymptotics are SYNOPSIS102, item 6.
+  quantile with coverage independent of $F$. With $X_{(0)}=-\infty$
+  and $X_{(n+1)}=\infty$ the formula holds for $0\le r<s\le n+1$. Quantile
+  asymptotics are SYNOPSIS102, item 6.
 
 * **23. Exact binomial confidence interval.** If $S\sim
   \mathop{\mathrm{Bin}}(n,p)$, the Clopper–Pearson interval has endpoints
@@ -363,37 +402,40 @@ $P_\theta(p(X)\le u)\le u$ for every $u\in[0,1]$ and every null parameter.
   U(s)=B_{s+1,n-s}^{-1}(1-\alpha/2),$$
   with $L(0)=0$ and $U(n)=1$; $B_{a,b}^{-1}$ denotes a beta quantile.
   For every $p\in[0,1]$, $P_p(L(S)\le p\le U(S))\ge1-\alpha$.
-  Discreteness generally makes the coverage larger than the nominal level.
 
 * **24. Fisher's exact test.** Let $S_1,S_2$ be independent binomial counts
   with sample sizes $n_1,n_2$. Under equality of their success probabilities,
   conditionally on $S_1+S_2=s$,
   $$P(S_1=j\mid S_1+S_2=s)
   =\frac{\binom{n_1}j\binom{n_2}{s-j}}{\binom{n_1+n_2}s}.$$
-  This law is free of the common probability. Its upper tail gives a valid
-  conditional and unconditional $p$-value for a larger success probability
-  in the first population. Randomization at the critical count gives exact
-  conditional size when desired.
+  This law is free of the common probability. Write $H_s$ for this
+  hypergeometric law and let $p(j,s)=H_s(\{j,j+1,\ldots\})$. For the null
+  hypothesis $p_1\le p_2$ on the success probabilities, $p(S_1,S_1+S_2)$
+  is a valid $p$-value, both conditionally on $S_1+S_2$ and
+  unconditionally. Randomizing at the critical count gives, for each $s$, a
+  test of conditional size exactly $\alpha$ under $p_1=p_2$.
 
 * **25. Tail probabilities as $p$-values.** For a real statistic $T$, the
   upper-tail probability $P_0(T\ge T(x))$ is a valid $p$-value for a simple
   null. It is uniform on $[0,1]$ if the null law of $T$ is continuous.
   For a composite null,
   $p(x)=\sup_{\theta\in\Theta_0}P_\theta(T\ge T(x))$ is valid whenever
-  it is measurable. Conditioning on a statistic whose conditional null
-  distribution of $T$ is parameter-free gives the same validity by
-  averaging the conditional error bounds.
+  it is measurable. If $V$ is a statistic and there are laws $Q_v$ such
+  that, for every null parameter, the conditional law of $T$ given $V=v$
+  is $Q_v$ for almost every $v$, then $p(x)=Q_{V(x)}([T(x),\infty))$ is a
+  valid $p$-value, conditionally on $V$ and unconditionally.
 
 * **26. Exact inference for normal variance.** Under the normal sampling
   assumptions of item 17, with $n\ge2$, a confidence interval for $\sigma^2$
   of exact coverage $1-\alpha$ is
   $$\left[\frac{(n-1)S^2}{\chi^2_{n-1,1-\alpha/2}},
   \frac{(n-1)S^2}{\chi^2_{n-1,\alpha/2}}\right].$$
-  For two independent samples, division of the observed variance ratio by
-  the corresponding $F$ quantiles gives an exact interval for the ratio of
-  population variances. The degrees of freedom are the two sample sizes
-  minus one; equality of the population variances is needed for a test of
-  ratio one, rather than for the pivot itself.
+  For two independent normal samples of sizes $m,n\ge2$ with sample
+  variances $S_1^2,S_2^2$, the interval
+  $$\left[\frac{S_1^2/S_2^2}{F_{m-1,n-1,1-\alpha/2}},
+  \frac{S_1^2/S_2^2}{F_{m-1,n-1,\alpha/2}}\right]$$
+  covers $\sigma_1^2/\sigma_2^2$ with probability exactly $1-\alpha$, by
+  the $F$ pivot of item 17.
 
 * **27. Bias–variance and prediction decompositions.** For a
   square-integrable vector estimator $T$ of $g(\theta)$,
@@ -434,14 +476,13 @@ $T(ax+b\mathbf 1)=aT(x)+b$.
   $1-\alpha$. The normal pivots of items 17 and 26 are the Gaussian case.
 
 * **29. Shortest intervals from a unimodal pivot.** Let a pivot have a
-  density $f$ that is unimodal with mode $x^\ast$. If $[a,b]$ satisfies
-  $\int_a^bf=1-\alpha$, $f(a)=f(b)>0$, and $a\le x^\ast\le b$, then $[a,b]$ has
-  minimal length among all intervals of probability $1-\alpha$ under $f$.
+  density $f$ that is unimodal with mode $x^\ast$, that is, nondecreasing
+  on $(-\infty,x^\ast]$ and nonincreasing on $[x^\ast,\infty)$. If
+  $[a,b]$ satisfies $\int_a^bf=1-\alpha$, $f(a)=f(b)>0$, and
+  $a\le x^\ast\le b$, then $[a,b]$ has minimal length among all intervals
+  of probability $1-\alpha$ under $f$.
   For a location pivot $T-\mu$ this gives the shortest interval of the form
   $[T-b,T-a]$, and for a symmetric unimodal pivot the equal-tailed choice.
-  For scale pivots the length of the resulting interval for the parameter
-  is not $b-a$, and the criterion must be applied to the transformed
-  length.
 
 * **30. Pratt's theorem.** Let $C(x)\subset\mathbb R^k$ be a confidence set
   for $\theta\in\mathbb R^k$ such that $\{(x,\theta):\theta\in C(x)\}$ is
@@ -466,8 +507,7 @@ $T(ax+b\mathbf 1)=aT(x)+b$.
   that is, the likelihood normalized as a function of the location. The
   conditional law of $T-\theta$ given $A$ is free of $\theta$, so its
   conditional quantiles give confidence sets with conditional coverage
-  $1-\alpha$ given almost every configuration, hence also unconditionally. This is Fisher's conditional inference, the case of
-  the conditionality principle in which the ancillary is the configuration.
+  $1-\alpha$ given almost every configuration, hence also unconditionally.
   The minimum-risk equivariant estimator is computed from the same
   conditional law; see item 40.
 
@@ -490,15 +530,17 @@ priors.
 * **32. Value of a finite statistical game.** If $\Theta$ and $\mathcal A$
   are finite, the statistical game has a value: the minimax risk equals
   the supremum over priors of the minimal Bayes risk. A minimax rule exists,
-  and a least favorable prior exists. Priors are mixed strategies for
-  nature, and randomized rules are mixed strategies for the statistician.
+  and a least favorable prior exists.
 
-* **33. Bayes rules and posterior risk.** Let the model be dominated, let the
-  prior be a probability, and assume the marginal distribution of the
-  observation is $\sigma$-finite. A rule minimizes the Bayes risk if and
-  only if, for almost every observation under the marginal, its action
-  minimizes the posterior expected loss. The minimal Bayes risk equals the
-  marginal expectation of that minimal posterior expected loss.
+* **33. Bayes rules and posterior risk.** Let the model be dominated with
+  $(x,\theta)\mapsto f(x\mid\theta)$ jointly measurable, let $\pi$ be a
+  prior, let the loss be nonnegative, and let $\pi(\cdot\mid x)$ be the
+  posterior. Suppose a rule $\delta^\ast$ has, for almost every $x$ under
+  the marginal law of the observation, posterior expected loss equal to
+  $\rho(x)=\inf_a\int L(\theta,a)\,\pi(d\theta\mid x)$. Then $\delta^\ast$
+  is Bayes, and its Bayes risk is the marginal expectation of $\rho$. If
+  moreover $r(\pi,\delta^\ast)<\infty$, every Bayes rule has this
+  property.
 
 * **34. Admissibility of Bayes rules.** A Bayes rule whose Bayes risk is
   finite, and which is unique up to almost-sure equality under every
@@ -511,16 +553,22 @@ priors.
   attain the minimax value.
 
 * **36. Extended Bayes rules.** If a rule has constant risk $r$ and is
-  extended Bayes, then it is minimax. In particular, a limit of Bayes risks
-  equal to $r$ along priors that escape every compact set yields minimaxity
-  of a constant-risk procedure.
+  extended Bayes, then it is minimax. More generally, if
+  $R(\theta,\delta)\le r$ for every $\theta$ and there are priors $\pi_k$
+  with Bayes rules $\delta_k$ such that $r(\pi_k,\delta_k)\to r$, then
+  $\delta$ is minimax.
 
-* **37. Complete classes.** If $\Theta$ is finite and the action space is
-  finite, or compact with continuous loss, then every admissible rule is
-  Bayes for some prior, and the Bayes rules form a complete class. If
-  $\Theta$ is a compact metric space, the action space is finite, and
-  $\theta\mapsto R(\theta,a)$ is continuous for each action, the Bayes rules
-  again form a complete class.
+* **37. Complete classes.** Let $\Theta$ be finite. Every admissible rule
+  is Bayes for some prior. If the risk set
+  $\{(R(\theta,\delta))_{\theta\in\Theta}\}\subset\mathbb R^\Theta$ of
+  randomized rules is bounded from below and closed from below (it
+  contains every point $x$ of its closure such that no other point $y$ of
+  the closure has $y\le x$ coordinatewise), then the Bayes rules form a
+  complete class and the admissible Bayes rules form a minimal complete
+  class. With the loss bounded below, both conditions hold when the action
+  space is finite, or is a closed bounded subset of a Euclidean space with
+  $a\mapsto L(\theta,a)$ continuous for each $\theta$; the risk set is then
+  closed and bounded.
 
 ### A constant-risk example
 
@@ -532,8 +580,9 @@ priors.
   and its risk is the constant $1/\bigl(4(1+\sqrt n)^2\bigr)$. By item 35,
   $\delta$ is minimax and the beta prior is least favorable. The unbiased
   estimator $X/n$ has maximal risk $1/(4n)$, larger than the minimax value,
-  but smaller risk than $\delta$ outside an interval around $p=1/2$ that
-  shrinks as $n$ grows.
+  and its risk $p(1-p)/n$ is smaller than that of $\delta$ exactly when
+  $|p-1/2|>\sqrt{1+2\sqrt n}/\bigl(2(1+\sqrt n)\bigr)$, a bound that tends
+  to $0$ as $n\to\infty$.
 
 ### Equivariance
 
@@ -544,27 +593,29 @@ $L(g\theta,ga)=L(\theta,a)$. A rule is **equivariant** when it intertwines
 the actions on the sample and on the action space. For a location family
 the translations act by $x\mapsto x+g$ and $\theta\mapsto\theta+g$.
 
-* **39. Hunt–Stein theorem.** Let the loss be invariant and bounded below. If
-  $G$ is compact, Haar averaging produces an equivariant randomized
-  rule whose risk at $\theta$ is the group average of the original risks
-  at points in the orbit of $\theta$. Its maximum risk is no larger than
-  the original maximum risk. The minimax value therefore equals the
-  infimum over equivariant rules, and an equivariant minimax rule exists
-  whenever a minimax rule exists. Averaging need not improve risk at
-  each parameter point. For Euclidean translations, the Hunt–Stein
-  argument uses asymptotically invariant probabilities; the analogous
-  reduction holds under the usual compactness and lower-semicontinuity
-  hypotheses ensuring an equivariant limit rule.
+* **39. Hunt–Stein theorem, compact form.** Let the model and the loss be
+  invariant and the loss bounded below, and let $G$ be a compact group
+  with normalized Haar measure $\nu$, acting so that
+  $(g,x)\mapsto gx$, $(g,\theta)\mapsto g\theta$ and $(g,a)\mapsto ga$ are
+  jointly measurable. For every randomized rule $\delta$, Haar averaging
+  produces an equivariant randomized rule $\bar\delta$ with
+  $$R(\theta,\bar\delta)=\int_GR(g\theta,\delta)\,\nu(dg)$$
+  for every $\theta$. Hence
+  $\sup_\theta R(\theta,\bar\delta)\le\sup_\theta R(\theta,\delta)$, the
+  minimax value equals the infimum of the maximum risk over equivariant
+  rules, and an equivariant minimax rule exists whenever a minimax rule
+  exists.
 
 * **40. Pitman estimator of location.** Let $X_1,\ldots,X_n$ be independent
   with common density $f(x-\theta)$ on $\mathbb R$, and let the loss be
-  squared error. Assume the integrals below are finite. The minimum-risk
-  equivariant estimator is the formal posterior mean under Lebesgue measure,
+  squared error. Assume some location-equivariant estimator has finite
+  risk. Then the minimum-risk equivariant estimator exists, is unique
+  almost surely, and is the formal posterior mean under Lebesgue measure,
   $$\delta(X)
   =\frac{\int u\prod_{i=1}^n f(X_i-u)\,du}
   {\int\prod_{i=1}^n f(X_i-u)\,du}.$$
-  Its risk is finite and constant. By the Hunt–Stein theorem for
-  translations it is minimax among all estimators, equivariant or not.
+  Its risk is finite and constant. It is minimax among all estimators,
+  equivariant or not (Girshick and Savage).
 
 ### Scale parameters
 
@@ -573,16 +624,19 @@ the translations act by $x\mapsto x+g$ and $\theta\mapsto\theta+g$.
   $\mathbb R$, with $\sigma>0$, and let the loss be
   $(a-\sigma)^2/\sigma^2$. An estimator is scale equivariant when
   $\delta(cx)=c\,\delta(x)$ for $c>0$; such estimators have constant risk.
-  Assume the integrals below are finite and positive. The minimum-risk
+  Assume some scale-equivariant estimator has finite risk and the integrals
+  below are finite and positive almost surely. The minimum-risk
   scale-equivariant estimator is
   $$\delta(X)=\frac{\int_0^\infty v^{n}\prod_{i=1}^nf(vX_i)\,dv}
   {\int_0^\infty v^{n+1}\prod_{i=1}^nf(vX_i)\,dv},$$
   the formal Bayes rule for the prior $d\sigma/\sigma$. For an exponential
   sample with mean $\sigma$ it is $\sum_iX_i/(n+1)$; for a sample from
   $N(0,\sigma^2)$, the analogous estimator of $\sigma^2$ under the loss
-  $(a/\sigma^2-1)^2$ is $\sum_iX_i^2/(n+2)$. For positive observations, the
-  logarithmic transformation reduces the scale problem to the location
-  problem of item 40.
+  $(a/\sigma^2-1)^2$ is $\sum_iX_i^2/(n+2)$. For observations on
+  $(0,\infty)$, the variables $\log X_i$ form a sample from a location
+  family with location parameter $\log\sigma$, and scale-equivariant
+  estimators of $\sigma$ correspond to location-equivariant estimators
+  of $\log\sigma$ under $\delta\mapsto\log\delta$.
 
 ### Exponential families and discrimination information
 
@@ -590,23 +644,25 @@ The natural exponential family, its cumulant function, and completeness are
 items 4 and 5. Write $\mathcal N$ for the natural parameter
 space and $A$ for the cumulant function.
 
-* **42. Mean parameterization.** For a minimal full-rank exponential family
-  with open natural parameter space, $\nabla A$ is a real-analytic
-  diffeomorphism onto its image, the mean domain. This image lies in the
-  interior of the convex support of the natural statistic. For a full
-  steep family the image is the entire interior. Here steepness requires
-  the norm of $\nabla A$ to diverge when an interior natural parameter
-  approaches a finite boundary point of the natural parameter space.
-  Surjectivity onto the convex-support interior does not hold for every
-  nonsteep family. The covariance matrix is the Hessian of $A$.
+* **42. Mean parameterization.** Let the family be minimal, with natural
+  parameter space $\mathcal N$ having nonempty interior
+  $\mathcal N^\circ$, and let $K^\circ$ be the interior of the convex hull of
+  the support of the law of $T$. Then $\nabla A$ is a real-analytic
+  diffeomorphism of $\mathcal N^\circ$ onto an open subset of $K^\circ$, the
+  mean domain. The family is **steep** when
+  $\mathbb E_\eta\|T\|=\infty$ for every $\eta\in\mathcal N\setminus
+  \mathcal N^\circ$; in particular it is steep when $\mathcal N$ is open.
+  For a steep family the mean domain is all of $K^\circ$. The covariance
+  matrix of $T$ under $P_\eta$ is the Hessian of $A$ at $\eta$.
 
 * **43. Conditional exponential families.** Let the natural statistic split
   as $(T,S)$, with natural parameter $(\eta,\zeta)$. The conditional
   distribution of $T$ given $S=s$ is an exponential family with natural
-  parameter $\eta$ and with cumulant function depending on $s$. The
-  conditional distribution is free of $\zeta$. Conditioning on $S$ is the
-  operation that removes this nuisance parameter inside the exponential
-  family.
+  parameter $\eta$: there are measures $\nu_s$, free of $(\eta,\zeta)$,
+  such that for almost every $s$ it has density
+  $t\mapsto\exp(\eta\cdot t-A_s(\eta))$ with respect to $\nu_s$, where
+  $A_s(\eta)=\log\int\exp(\eta\cdot t)\,\nu_s(dt)$. In particular the
+  conditional distribution is free of $\zeta$.
 
 The **Kullback–Leibler divergence** of probability measures $P$ and $Q$ is
 $$D(P\|Q)=\int\log\frac{dP}{dQ}\,dP$$
@@ -642,8 +698,10 @@ forms.
   is uniformly most powerful unbiased of level $\alpha$.
 
 * **46. Conditional tests with a nuisance parameter.** Let the model be a
-  minimal exponential family with natural statistic $(T,S)$ and natural
-  parameter $(\eta,\zeta)$, and test $H:\eta=\eta_0$ against $\eta\neq\eta_0$,
+  minimal exponential family with natural statistic $(T,S)$, $T$ real, and
+  natural parameter $(\eta,\zeta)$ ranging over an open convex set that
+  meets the hyperplane $\eta=\eta_0$, and test $H:\eta=\eta_0$ against
+  $\eta\neq\eta_0$,
   with $\zeta$ unknown. The conditional law of $T$ given $S$ is free of
   $\zeta$. The two-sided test of item 45, applied conditionally on $S$ and
   so of conditional size $\alpha$, is uniformly most powerful unbiased of
@@ -714,9 +772,7 @@ $\eta_1<\eta_2$ are interior points, and $\alpha\in(0,1)$.
   \mathbb E_{\eta_2}\varphi=\alpha$ is uniformly most powerful unbiased of
   level $\alpha$. No uniformly most powerful level-$\alpha$ test exists for
   this problem. The complementary test $1-\varphi$ is of the form of
-  item 50 at level $1-\alpha$. Item 45 is the limiting case
-  $\eta_1=\eta_2$, in which the second side condition becomes a condition
-  on the derivative of the power.
+  item 50 at level $1-\alpha$.
 
 ### Unbiased confidence sets and complete classes of tests
 
@@ -806,8 +862,6 @@ when it is uniformly most powerful among invariant level-$\alpha$ tests.
   most powerful invariant test rejects for large values of
   $$\frac{\int f_1(x_1-u,\ldots,x_n-u)\,du}
   {\int f_0(x_1-u,\ldots,x_n-u)\,du}.$$
-  In the standard examples invariance is applied after reduction to a
-  sufficient statistic.
 
 * **56. Normal tests as uniformly most powerful invariant tests.** For a
   sample from $N(\mu,\sigma^2)$, $n\ge2$, reduce to $(\bar X,S^2)$. The
@@ -905,7 +959,8 @@ risk is no larger at every parameter value.
 
 * **62. Blackwell's theorem.** Let $\mathcal E=\{P_\theta\}$ and
   $\mathcal F=\{Q_\theta\}$ be dominated experiments with the same finite
-  parameter space. The following are equivalent. The experiment
+  parameter space, the sample space of $\mathcal F$ being a standard Borel
+  space. The following are equivalent. The experiment
   $\mathcal E$ is more informative than $\mathcal F$. There is a Markov
   kernel $K$ from the sample space of $\mathcal E$ to the sample space of
   $\mathcal F$ such that $Q_\theta=\int K(x,\cdot)\,P_\theta(dx)$ for every
@@ -913,9 +968,7 @@ risk is no larger at every parameter value.
   risk function available from $\mathcal F$ is available from $\mathcal E$.
   A sufficient statistic realizes the equivalence case: the experiment that
   reports only the sufficient statistic is equivalent to the original
-  experiment. Le Cam's deficiency extends the comparison to a quantitative
-  distance between experiments with general parameter spaces; the finite
-  Blackwell order is the case of deficiency zero.
+  experiment.
 
 ### Further bounds, shrinkage, and simultaneous testing
 
@@ -925,9 +978,9 @@ risk is no larger at every parameter value.
   $$\mathop{\mathrm{Var}}_\theta T\ge
   \frac{(g(\theta')-g(\theta))^2}
   {\mathbb E_\theta[(dP_{\theta'}/dP_\theta-1)^2]}.$$
-  Taking the supremum gives a bound without differentiation or a common
-  support assumption. Under regularity, letting $\theta'\to\theta$
-  recovers the scalar information inequality of item 10.
+  Hence $\mathop{\mathrm{Var}}_\theta T$ is at least the supremum of the
+  right-hand side over such $\theta'$; no differentiability or common
+  support is assumed.
 
 * **64. Stein's identity and unbiased risk estimation.** Let
   $X\sim N_p(\theta,\sigma^2I)$, with known $\sigma^2>0$. For weakly
@@ -941,18 +994,24 @@ risk is no larger at every parameter value.
   This is Stein's unbiased risk estimate. With $g(x)=-(p-2)x/\|x\|^2$
   and $\sigma=1$ it yields the risk formula in item 57.
 
-* **65. Information with a nuisance parameter.** In a regular model with
-  parameter $(\psi,\lambda)$, partition the information as
+* **65. Information with a nuisance parameter.** Assume the hypotheses of
+  item 10 for a parameter $\theta=(\psi,\lambda)$ in an open subset of
+  $\mathbb R^{k_1}\times\mathbb R^{k_2}$, write $\ell_\psi$ and
+  $\ell_\lambda$ for the corresponding blocks of the score vector, and
+  partition the information as
   $$I=\begin{pmatrix}I_{\psi\psi}&I_{\psi\lambda}\\
   I_{\lambda\psi}&I_{\lambda\lambda}\end{pmatrix}.$$
   If $I$ is positive definite, the information for $\psi$ when $\lambda$
   is unknown is
   $$I_{\psi\cdot\lambda}
   =I_{\psi\psi}-I_{\psi\lambda}I_{\lambda\lambda}^{-1}I_{\lambda\psi}.$$
-  An unbiased estimator of $\psi$ has covariance at least
-  $I_{\psi\cdot\lambda}^{-1}$. The efficient score is
-  $\ell_\psi-I_{\psi\lambda}I_{\lambda\lambda}^{-1}\ell_\lambda$.
-  Orthogonal nuisance scores cause no information loss. Projection onto
+  An unbiased estimator of $\psi$ satisfying the hypotheses of item 10 has
+  covariance at least $I_{\psi\cdot\lambda}^{-1}$ in the Loewner order. The
+  efficient score
+  $\tilde\ell_\psi=\ell_\psi-I_{\psi\lambda}I_{\lambda\lambda}^{-1}\ell_\lambda$
+  is uncorrelated with $\ell_\lambda$ and has covariance
+  $I_{\psi\cdot\lambda}$. If $I_{\psi\lambda}=0$, then
+  $I_{\psi\cdot\lambda}=I_{\psi\psi}$. Projection onto
   an infinite-dimensional nuisance space is SYNOPSIS102, item 34.
 
 * **66. Testing and total variation.** For two probability laws $P,Q$,
@@ -961,8 +1020,8 @@ risk is no larger at every parameter value.
   =1-\|P-Q\|_{\mathrm{TV}}.$$
   A likelihood-ratio test with threshold one attains the infimum.
   Furthermore $\|P-Q\|_{\mathrm{TV}}\le\sqrt{D(P\|Q)/2}$.
-  These comparisons turn indistinguishability into estimation lower bounds;
-  see SYNOPSIS103, item 39.
+  Lower bounds for estimation built on these inequalities are
+  SYNOPSIS103, item 39.
 
 A procedure **strongly controls family-wise error** at level $\alpha$ when
 the probability of even one false rejection is at most $\alpha$ under
@@ -979,27 +1038,31 @@ null $p$-value below is valid in the sense of item 25.
   hypotheses, choose a level-$\alpha$ test of their intersection $H_J$.
   Reject an elementary $H_i$ only if every $H_J$ containing it is rejected.
   The resulting procedure strongly controls family-wise error at level
-  $\alpha$, regardless of dependence. Bonferroni local tests yield Holm's
-  procedure as a computational shortcut.
+  $\alpha$, regardless of dependence. If each $H_J$ is tested by the
+  Bonferroni test that rejects when $\min_{i\in J}p_i\le\alpha/|J|$, the
+  closed procedure rejects exactly the hypotheses rejected by Holm's
+  procedure of item 67.
 
 ### Likelihood and convex geometry
 
 * **69. Existence of an exponential-family maximum.** In a minimal regular
   natural exponential family with cumulant $A$, an independent sample has
   log-likelihood $n(\eta\cdot\bar T-A(\eta))$ up to an additive constant.
-  A finite maximum in the open natural parameter space exists if and only
-  if $\bar T$ lies in $\nabla A(\mathcal N)$. It is unique and solves
-  $\nabla A(\hat\eta)=\bar T$. In a steep full family this mean domain is
-  the interior of the convex support. Boundary empirical means may yield
-  only a supremum, as in a Bernoulli sample containing only successes.
+  A maximizer over the open natural parameter space $\mathcal N$ exists if
+  and only if $\bar T$ lies in $\nabla A(\mathcal N)$, which by item 42 is
+  the interior $K^\circ$ of the convex hull of the support of $T$. The
+  maximizer is then unique and solves $\nabla A(\hat\eta)=\bar T$. For
+  example, a Bernoulli sample consisting only of successes has
+  $\bar T=1\notin K^\circ=(0,1)$ and no maximizer.
 
 * **70. Divergence in an exponential family.** For two interior natural
   parameters,
   $$D(P_\eta\|P_\zeta)
   =A(\zeta)-A(\eta)-\nabla A(\eta)\cdot(\zeta-\eta).$$
   Thus relative entropy is the Bregman divergence of the cumulant function
-  with this order of arguments. Its local quadratic term is
-  $\tfrac12(\zeta-\eta)^\top\nabla^2A(\eta)(\zeta-\eta)$.
+  with this order of arguments. As $\zeta\to\eta$,
+  $D(P_\eta\|P_\zeta)=\tfrac12(\zeta-\eta)^\top\nabla^2A(\eta)(\zeta-\eta)
+  +o(\|\zeta-\eta\|^2)$.
 
 ### Distribution handbooks and history
 
@@ -1069,11 +1132,17 @@ ratio, and the duality of tests and confidence bounds. Bickel–Doksum,
 Volume I, Chapters 1–4, carries the same course at a higher level of
 mathematical detail.
 
-Birnbaum's theorem is the form in Casella–Berger, Chapter 6, and
-Cox–Hinkley, Chapter 2. The Pitman–Koopman–Darmois theorem is the
-common-support form discussed with Brown's exponential-family monograph.
-Equality cases of the information inequality are in Cramér and in
-Pfanzagl, Chapter 2.
+Birnbaum's theorem is Casella–Berger, Theorem 6.3.6, with the formal
+sufficiency, conditionality, and likelihood principles of their
+Section 6.3.2 for discrete experiments; Cox–Hinkley, Chapter 2, discusses
+the same principles. Item 6 is Pfanzagl, Theorem 1.7.16 (Borges and
+Pfanzagl, 1963), the monotone form of the Pitman–Koopman–Darmois theorem;
+Pfanzagl's preceding remark records that the forms without monotonicity
+need regularity conditions on the densities and on the sufficient
+statistic, the weakest being Hipp's (1974). Equality cases of the
+information inequality are in Cramér and in Pfanzagl, Chapter 2; the
+passage from pointwise equality to an exponential family in item 11
+integrates the score in $\theta$.
 
 Lehmann and Casella, *Theory of Point Estimation*, and Lehmann and Romano,
 *Testing Statistical Hypotheses*, are the standard research monographs for
@@ -1087,12 +1156,25 @@ matched to the local texts listed below.
 
 For the expansion, Schervish's Theorem 5.18 was read for item 63.
 Ferguson's Section 4.2 gives the averaging argument: its inequality is for
-maximum risk, as now stated in item 39. Berger's normal-mean discussion
+maximum risk, as now stated in item 39, which is restricted to compact
+groups. The minimaxity of the Pitman estimator in item 40 is the theorem
+of Girshick and Savage (1951, *Proc. Second Berkeley Symp.*, 53–73); the
+original paper was not available, and the statement was checked against
+Theorem 3.1 of Maruyama and Strawderman, "A Gaussian sequence approach for
+proving minimaxity: a review" (arXiv:1810.02088), which proves minimaxity
+of the best equivariant location estimator under squared error for a
+general location density; it uses Gaussian priors of growing scale where
+Girshick and Savage used uniform priors on expanding intervals.
+Item 37 is Ferguson, Theorems 2.10.1 and 2.10.2, and Berger, Section
+8.2.3, Theorem 2; the sufficient conditions on the action space and loss
+are Berger, Section 5.3.3, Lemmas 9 and 10 (loss
+bounded below, action space finite or a bounded closed subset of
+$\mathbb R^m$ with continuous loss). Berger's normal-mean discussion
 supplies the risk-estimation framework of item 64. Item 65 is the block
 information inequality, and items 69 and 70 specialize the exponential-family
-geometry of Brown and Barndorff-Nielsen. The qualification by steepness
-in item 42 distinguishes the mean domain from the entire convex-support
-interior. Holm and closed testing extend the simultaneous-inference
+geometry of Brown and Barndorff-Nielsen. Steepness in item 42 is Brown,
+Proposition 3.3, and the mean-value homeomorphism is his Theorem 3.6.
+Holm and closed testing extend the simultaneous-inference
 material; their error control uses valid marginal and intersection tests,
 without independence assumptions.
 

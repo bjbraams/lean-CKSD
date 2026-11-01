@@ -42,48 +42,56 @@ $P_\theta$.
   $g:\mathbb R^k\to\mathbb R^m$ be differentiable at $\theta$. Then
   $$\sqrt n\,\bigl(g(T_n)-g(\theta)\bigr)
   \Rightarrow N\bigl(0,\,Dg(\theta)\,\Sigma\,Dg(\theta)^\top\bigr).$$
-  The same expansion holds with convergence in probability of the linear
-  approximation when $g$ is continuously differentiable in a neighborhood
-  of $\theta$.
+  Moreover
+  $\sqrt n\,\bigl(g(T_n)-g(\theta)\bigr)-Dg(\theta)\sqrt n\,(T_n-\theta)\to0$
+  in probability.
 
 * **2. Consistency of maximum likelihood.** Let $\Theta$ be a compact metric
-  space and let $\theta\mapsto\log f(x\mid\theta)$ be continuous for almost
-  every $x$. Suppose $\theta_0$ is the unique maximizer of
-  $\theta\mapsto\mathbb E_{\theta_0}\log f(X\mid\theta)$, the expectation
-  being allowed to take the value $-\infty$, and suppose the supremum of the
-  log-likelihood over each closed set not containing $\theta_0$ satisfies a
-  uniform strong law. Then every approximate maximizer $\hat\theta_n$ of the
-  likelihood converges to $\theta_0$ almost surely under $P_{\theta_0}$.
-  Identifiability and a $\theta_0$-integrable envelope of
-  $|\log f(X\mid\theta)|$ give the unique-maximum and uniform-law
-  hypotheses for a dominated model with a common support.
+  space, let the model be dominated with densities $p_\theta$, and let
+  $\theta\mapsto\log p_\theta(x)$ be upper semicontinuous for almost every
+  $x$. Suppose the model is identifiable, $P_\theta\neq P_{\theta_0}$ for
+  $\theta\neq\theta_0$, and every point of $\Theta$ has an open ball $U$
+  around it for which $x\mapsto\sup_{\theta\in U}\log(p_\theta/p_{\theta_0})(x)$
+  is measurable with
+  $$\mathbb E_{\theta_0}\sup_{\theta\in U}\log\frac{p_\theta}{p_{\theta_0}}(X)
+  <\infty.$$
+  If $\ell_n(\hat\theta_n)\ge\ell_n(\theta_0)-o_P(n)$ under $P_{\theta_0}$,
+  then $\hat\theta_n\to\theta_0$ in $P_{\theta_0}$-probability.
 
-* **3. Asymptotic normality of maximum likelihood.** Let $\theta$ lie in the
-  interior of an open subset of $\mathbb R^k$. Assume a dominated model with
-  support free of $\theta$, nonsingular and continuous information $I(\theta)$,
-  and enough domination of the second or third derivatives of the
-  log-density to expand the score in a neighborhood of $\theta$. If
+* **3. Asymptotic normality of maximum likelihood.** Let $\Theta$ be open in
+  $\mathbb R^k$ and $\theta\in\Theta$. Assume a dominated model in which, for
+  every $x$, $\vartheta\mapsto\log p_\vartheta(x)$ is three times continuously
+  differentiable on a neighborhood $U$ of $\theta$, with all third partial
+  derivatives bounded in absolute value on $U$ by a $P_\theta$-integrable
+  function of $x$. Assume that the score $\dot\ell_\theta=\nabla\log p_\theta$
+  has $\mathbb E_\theta\dot\ell_\theta=0$ and finite nonsingular covariance
+  $I(\theta)$, and that $\mathbb E_\theta D^2\log p_\theta=-I(\theta)$. If
   $\hat\theta_n$ is a consistent root of the score equation
   $\nabla\ell_n(\theta)=0$, then
-  $$\sqrt n\,(\hat\theta_n-\theta)\Rightarrow N\bigl(0,I(\theta)^{-1}\bigr)$$
-  under $P_\theta$. When $\theta$ is interior, the differentiability hypotheses
-  hold, and a global maximizer is consistent, that maximizer is such a root
-  with probability tending to one. A single Newton step from any
-  $\sqrt n$-consistent preliminary estimator has the same limit.
+  $$\sqrt n\,(\hat\theta_n-\theta)
+  =I(\theta)^{-1}\frac1{\sqrt n}\sum_{i=1}^n\dot\ell_\theta(X_i)+o_P(1)
+  \Rightarrow N\bigl(0,I(\theta)^{-1}\bigr)$$
+  under $P_\theta$. A consistent sequence of maximizers of $\ell_n$ is such a
+  root with probability tending to one.
 
-* **4. Z-estimators.** Let $\psi_\theta(x)$ take values in $\mathbb R^k$, write
+* **4. Z-estimators.** Let $\Theta$ be open in $\mathbb R^k$, let
+  $\psi_\theta(x)$ take values in $\mathbb R^k$, write
   $\Psi(\theta)=\mathbb E_{\theta_0}\psi_\theta(X)$ and
   $\Psi_n(\theta)=n^{-1}\sum_{i=1}^n\psi_\theta(X_i)$, and suppose
-  $\Psi(\theta_0)=0$. If $\Psi$ is differentiable at $\theta_0$ with
-  nonsingular derivative $V$, a Lipschitz or stochastic-equicontinuity
-  condition holds in a neighborhood of $\theta_0$, and $\hat\theta_n$ is a
-  consistent solution of $\Psi_n(\hat\theta_n)=0$, then
+  $\Psi(\theta_0)=0$ and $\mathbb E_{\theta_0}\|\psi_{\theta_0}(X)\|^2<\infty$.
+  Suppose there is a function $\dot\psi$ with
+  $\mathbb E_{\theta_0}\dot\psi(X)^2<\infty$ such that
+  $\|\psi_{\theta_1}(x)-\psi_{\theta_2}(x)\|\le\dot\psi(x)\|\theta_1-\theta_2\|$
+  for all $\theta_1,\theta_2$ in a neighborhood of $\theta_0$. If $\Psi$ is
+  differentiable at $\theta_0$ with nonsingular derivative $V$ and
+  $\hat\theta_n$ is a consistent sequence with
+  $\Psi_n(\hat\theta_n)=o_P(n^{-1/2})$, then
   $$\sqrt n\,(\hat\theta_n-\theta_0)
-  =-V^{-1}\sqrt n\,\Psi_n(\theta_0)+o_P(1).$$
-  When $\psi_{\theta_0}(X)$ has finite covariance $\Sigma$, the limit law is
-  $N(0,V^{-1}\Sigma(V^{-1})^\top)$. Maximum likelihood is the case
-  $\psi_\theta=\nabla_\theta\log f(\cdot\mid\theta)$, for which $V=-I(\theta_0)$
-  and $\Sigma=I(\theta_0)$.
+  =-V^{-1}\sqrt n\,\Psi_n(\theta_0)+o_P(1)
+  \Rightarrow N\bigl(0,V^{-1}\Sigma(V^{-1})^\top\bigr),$$
+  where $\Sigma$ is the covariance of $\psi_{\theta_0}(X)$. Maximum likelihood
+  is the case $\psi_\theta=\nabla_\theta\log p_\theta$; under the hypotheses
+  of item 3, $V=-I(\theta_0)$ and $\Sigma=I(\theta_0)$.
 
 * **5. One-step estimators.** Let $\Psi_n$ be random estimating functions
   with $\sqrt n\,\Psi_n(\theta_0)\Rightarrow Z$, and suppose that for a
@@ -98,17 +106,15 @@ $P_\theta$.
   satisfies
   $$\sqrt n(\hat\theta_n-\theta_0)
   =-V^{-1}\sqrt n\,\Psi_n(\theta_0)+o_P(1)\Rightarrow -V^{-1}Z.$$
-  The displayed uniformity holds under the conditions of item 4 for
-  $\Psi_n=n^{-1}\sum_i\psi_\theta(X_i)$. With the likelihood score and
-  $\hat V_n$ the negative observed or estimated Fisher information, the
-  one-step estimator has the efficient limit of item 3 even where the
-  likelihood equation has several roots or its global maximizer is
-  inconsistent; further Newton steps do not change the limit law. If the
-  preliminary estimator is discretized to the grid $n^{-1/2}\mathbb Z^k$,
-  it suffices that the displayed approximation hold along every
-  deterministic sequence $\theta_n=\theta_0+O(n^{-1/2})$; for a model
-  differentiable in quadratic mean this reduces to an $L^2$-continuity
-  condition on $\psi_\theta\sqrt{p_\theta}$.
+  The displayed uniformity holds under the hypotheses of item 4 for
+  $\Psi_n=n^{-1}\sum_i\psi_\theta(X_i)$. Under the hypotheses of item 3, with
+  $\Psi_n=n^{-1}\nabla\ell_n$ and $\hat V_n=n^{-1}D^2\ell_n(\tilde\theta_n)$,
+  the one-step estimator satisfies
+  $\sqrt n(\hat\theta_n-\theta_0)\Rightarrow N\bigl(0,I(\theta_0)^{-1}\bigr)$;
+  no root of the likelihood equation is required. If the preliminary
+  estimator takes values in the grid $n^{-1/2}\mathbb Z^k$, it suffices that
+  $\sqrt n\bigl(\Psi_n(\theta_n)-\Psi_n(\theta_0)\bigr)-V\sqrt n(\theta_n-\theta_0)
+  \to_P0$ for every deterministic sequence $\theta_n=\theta_0+O(n^{-1/2})$.
 
 * **6. Sample quantiles.** Let $F$ be differentiable at its quantile
   $q=F^{-1}(p)$, with $0<p<1$ and density $f(q)>0$, and let $F$ be strictly
@@ -131,8 +137,6 @@ $P_\theta$.
   $$\limsup_{n\to\infty}\frac{n^{3/4}|R_n|}{(\log\log n)^{3/4}}
   =\frac{\bigl(32\,p(1-p)/27\bigr)^{1/4}}{f(\xi_p)}
   \quad\text{almost surely.}$$
-  Thus the linearization error is of order $n^{-3/4}$ up to a logarithmic
-  factor, not merely $o(n^{-1/2})$.
 
 * **8. Nondegenerate U-statistics.** Let $h$ be a symmetric kernel of order
   $m\ge 1$ with $\mathbb E h(X_1,\ldots,X_m)^2<\infty$, and let $U_n$ be the
@@ -141,8 +145,9 @@ $P_\theta$.
   $g(x)=\mathbb E[h(x,X_2,\ldots,X_m)]-\theta$. If
   $\zeta_1=\mathop{\mathrm{Var}} g(X_1)>0$, then
   $$\sqrt n\,(U_n-\theta)\Rightarrow N(0,m^2\zeta_1).$$
-  The projection $n^{-1}\sum_{i=1}^n m g(X_i)$ is the Hájek projection of
-  $U_n-\theta$ and accounts for the limit.
+  The Hájek projection of $U_n-\theta$, defined below, is
+  $\hat U_n=n^{-1}\sum_{i=1}^n m g(X_i)$, and
+  $\sqrt n\,(U_n-\theta-\hat U_n)\to0$ in $L^2$.
 
 Let $X_1,\ldots,X_n$ be independent and let $T$ be a square-integrable
 statistic. The **Hájek projection** of $T$ is its $L^2$-projection onto the
@@ -156,11 +161,11 @@ $$\hat T=\sum_{i=1}^n\mathbb E(T\mid X_i)-(n-1)\,\mathbb ET.$$
   $$\frac{T_n-\mathbb ET_n}{(\mathop{\mathrm{Var}}T_n)^{1/2}}
   -\frac{\hat T_n-\mathbb E\hat T_n}{(\mathop{\mathrm{Var}}\hat T_n)^{1/2}}
   \to0$$
-  in $L^2$, hence in probability. Because $\hat T_n$ is a sum of independent
-  terms, the Lindeberg–Feller theorem (CKMA SYNOPSIS06, item 34) then gives
-  the asymptotic normality of $T_n$. The same conclusion holds for the
-  projection onto any closed linear space containing the constants. Items 8 and 10 and the linear rank statistics of SYNOPSIS103, item 2, are
-  obtained this way.
+  in $L^2$, hence in probability. Consequently, if the summands of
+  $\hat T_n$ satisfy the Lindeberg condition (CKMA SYNOPSIS06, item 34),
+  then $(T_n-\mathbb ET_n)/(\mathop{\mathrm{Var}}T_n)^{1/2}\Rightarrow N(0,1)$.
+  The displayed convergence also holds with $\hat T_n$ the projection onto
+  any closed linear space containing the constants.
 
 An **$L$-statistic** is a linear combination of the order statistics
 $X_{n(1)}\le\cdots\le X_{n(n)}$. For $0<\alpha<1/2$ the **$\alpha$-trimmed
@@ -184,21 +189,27 @@ $\lfloor\alpha n\rfloor<i\le n-\lfloor\alpha n\rfloor$.
   \bigl(F(x\wedge y)-F(x)F(y)\bigr)\,dx\,dy\Bigr).$$
   The double integral is the variance of $X_1$ clipped to $[a,b]$; for $F$
   symmetric about $0$ the asymptotic variance is
-  $(1-2\alpha)^{-2}\bigl(\int_{-b}^{b}x^2\,dF(x)+2\alpha b^2\bigr)$. The robustness
-  interpretation of trimming is in SYNOPSIS104C.
+  $(1-2\alpha)^{-2}\bigl(\int_{-b}^{b}x^2\,dF(x)+2\alpha b^2\bigr)$.
 
-* **11. Likelihood-ratio, Wald, and score tests.** Consider testing a smooth
-  hypothesis of codimension $q$ in a regular parametric model of dimension
-  $k$, with the null value an interior point at which $I(\theta)$ is
-  nonsingular and the null can be written locally as $q$ independent
-  constraints. Let $\lambda_n$ be twice the difference of the maximized
-  log-likelihoods, let $W_n$ be the Wald quadratic form in the unconstrained
-  estimator and its information, and let $S_n$ be the quadratic form in the
-  score at the restricted estimator. Under the null,
-  $\lambda_n$, $W_n$, and $S_n$ each converge in distribution to $\chi^2_q$,
-  and the three statistics differ by $o_P(1)$. Under the local alternatives
-  of item 13 the common limit is noncentral chi-squared, with noncentrality
-  parameter determined by the Fisher information on the local parameter.
+* **11. Likelihood-ratio, Wald, and score tests.** Let $\Theta$ be open in
+  $\mathbb R^k$ and let the null hypothesis be
+  $\Theta_0=\{\theta\in\Theta:c(\theta)=0\}$ for a continuously
+  differentiable $c:\Theta\to\mathbb R^q$. Let $\theta_0\in\Theta_0$, let the
+  hypotheses of item 3 hold at $\theta_0$ with $I$ continuous at $\theta_0$,
+  let $C=Dc(\theta_0)$ have rank $q$, and let $\hat\theta_n$ and
+  $\tilde\theta_n$ be consistent maximizers of $\ell_n$ over $\Theta$ and
+  over $\Theta_0$. Put
+  $\lambda_n=2\bigl(\ell_n(\hat\theta_n)-\ell_n(\tilde\theta_n)\bigr)$,
+  $$W_n=n\,c(\hat\theta_n)^\top\bigl[Dc(\hat\theta_n)I(\hat\theta_n)^{-1}
+  Dc(\hat\theta_n)^\top\bigr]^{-1}c(\hat\theta_n),\qquad
+  S_n=\tfrac1n\nabla\ell_n(\tilde\theta_n)^\top I(\tilde\theta_n)^{-1}
+  \nabla\ell_n(\tilde\theta_n).$$
+  Under $P_{\theta_0}$, $\lambda_n$, $W_n$, and $S_n$ each converge in
+  distribution to $\chi^2_q$, and the three statistics differ by $o_P(1)$.
+  If moreover the model is differentiable in quadratic mean at $\theta_0$
+  (item 13), then under $P_{\theta_0+h/\sqrt n}$ the common limit is the
+  noncentral chi-squared law with $q$ degrees of freedom and noncentrality
+  parameter $(Ch)^\top\bigl[CI(\theta_0)^{-1}C^\top\bigr]^{-1}Ch$.
 
 ### Limits of experiments
 
@@ -225,16 +236,19 @@ limit that does not depend on $h$.
   at an interior point $\theta$, with nonsingular Fisher information
   $I(\theta)$. Then the product experiments are locally asymptotically normal
   with central sequence equal to the normalized score
-  $n^{-1/2}\sum_{i=1}^n\nabla\log f(X_i\mid\theta)$.
+  $\Delta_n=n^{-1/2}\sum_{i=1}^n\dot\ell_\theta(X_i)$ and
+  $I(\theta)=\mathbb E_\theta\dot\ell_\theta\dot\ell_\theta^\top$.
   Quadratic-mean differentiability means that for a score
   $\dot\ell_\theta\in L^2(P_\theta)$,
   $$\int\left(\sqrt{p_{\theta+h}}-\sqrt{p_\theta}
   -\tfrac12h^\top\dot\ell_\theta\sqrt{p_\theta}\right)^2d\mu
   =o(\|h\|^2).$$
-  It is a square-root-density condition and need not imply a KL expansion.
-  If the support is common and the first two $h$-derivatives of
-  $p_{\theta+h}\log(p_{\theta+h}/p_\theta)$ admit a common integrable
-  bound locally, differentiation under the integral also gives
+  Suppose in addition that the densities $p_{\theta+h}$ for $h$ near $0$
+  are positive on a common set $A$ and vanish outside it, and that, for $x\in A$, the maps $h\mapsto p_{\theta+h}(x)$ and
+  $h\mapsto p_{\theta+h}(x)\log\bigl(p_{\theta+h}(x)/p_\theta(x)\bigr)$ are
+  twice continuously differentiable near $0$, with first and second
+  derivatives bounded in absolute value, for $h$ in a neighborhood of $0$,
+  by a $\mu$-integrable function of $x$. Then
   $$D(P_{\theta+h}\|P_\theta)=\tfrac12 h^\top I(\theta)h+o(\|h\|^2).$$
 
 * **14. Le Cam's third lemma.** Suppose that under $P_n$ the pair
@@ -260,20 +274,18 @@ of $X$.
   $T$ has law $L_h$ for every $h$. For estimators of a differentiable
   $\psi(\theta)$ with $\sqrt n\bigl(T_n-\psi(\theta+h/\sqrt n)\bigr)$
   converging to $L_{\theta,h}$ under every $h$, there is such a $T$ with
-  $T-\dot\psi_\theta h$ distributed as $L_{\theta,h}$. Thus every attainable
-  local limit behavior is that of a procedure in the limiting Gaussian
-  experiment, and items 16 and 17 follow from the corresponding exact
-  statements for that experiment, Anderson's lemma among them.
+  $T-\dot\psi_\theta h$ distributed as $L_{\theta,h}$ for every $h$.
 
 * **16. Convolution theorem.** In a locally asymptotically normal experiment
   with information $I(\theta)$, the limit law $L$ of a regular estimator
   sequence is the convolution of $N(0,I(\theta)^{-1})$ with some probability
   measure on $\mathbb R^k$. If the limiting law has finite covariance,
-  that covariance is at least $I(\theta)^{-1}$ in the Loewner order.
-  Convergence of scaled finite-sample covariances requires additional
-  moment control. The maximum likelihood estimator of item 3 is regular
-  and has the normal factor as its
-  limit law.
+  that covariance is at least $I(\theta)^{-1}$ in the Loewner order. An
+  estimator sequence with
+  $\sqrt n(T_n-\theta)=I(\theta)^{-1}\Delta_n+o_{P_\theta}(1)$ is regular with
+  limit law $N(0,I(\theta)^{-1})$. By items 3 and 13 this applies to a
+  consistent root of the likelihood equation when the hypotheses of both
+  items hold.
 
 * **17. Local asymptotic minimax theorem.** Let $\ell$ be a nonnegative
   lower-semicontinuous bowl-shaped loss on $\mathbb R^k$: its sublevel
@@ -284,18 +296,23 @@ of $X$.
   \mathbb E_{\theta+h/\sqrt n}\,
   \ell\bigl(\sqrt n\,(T_n-\theta-h/\sqrt n)\bigr)
   \ge\int\ell\,dN\bigl(0,I(\theta)^{-1}\bigr).$$
-  The maximum likelihood estimator attains the bound for bounded continuous
-  bowl-shaped losses, and for squared error under uniform integrability.
+  If the experiments are those of item 13 and
+  $\sqrt n(T_n-\theta)=I(\theta)^{-1}\Delta_n+o_{P_\theta}(1)$, as in
+  item 16, equality holds for every bounded continuous bowl-shaped $\ell$.
 
 * **18. Superefficiency.** Let $X_1,\ldots,X_n$ be independent
   $N(\theta,1)$ and set $\hat\theta_n=\bar X$ when $|\bar X|\ge n^{-1/4}$ and
   $\hat\theta_n=0$ otherwise. Then $\sqrt n\,(\hat\theta_n-\theta)$ converges
   to $N(0,1)$ for $\theta\neq 0$ and converges to $0$ for $\theta=0$, so the
-  asymptotic variance at $0$ is smaller than the information bound. The
-  estimator is not regular at $0$, and the convergence of risks is not
-  uniform in shrinking neighborhoods of $0$. In a regular parametric model
-  the set of parameter points at which any given estimator sequence is
-  superefficient has Lebesgue measure zero.
+  asymptotic variance at $0$ is smaller than the information bound. Under
+  $\theta_n=h/\sqrt n$, $\sqrt n\,(\hat\theta_n-\theta_n)\to-h$ in probability,
+  so the estimator is not regular at $0$. In general, let the model be
+  differentiable in quadratic mean at every point of an open
+  $\Theta\subset\mathbb R^k$ with nonsingular information, and let
+  $\sqrt n(T_n-\theta)$ converge in distribution under every $\theta$ to a
+  law $L_\theta$ with covariance $\Sigma_\theta$. Then
+  $\Sigma_\theta-I(\theta)^{-1}$ is positive semidefinite for Lebesgue-almost
+  every $\theta$.
 
 ### Local tests and asymptotic relative efficiency
 
@@ -319,9 +336,8 @@ $\alpha$-quantile of the standard normal law, $1-\Phi(z_\alpha)=\alpha$.
   +o_P(1),$$
   with $\Delta_n$ the normalized score of item 13. The Wald statistic
   $\sqrt n\,\psi(\hat\theta_n)/(\dot\psi I^{-1}\dot\psi^\top)^{1/2}$ built on an
-  efficient estimator satisfies this, and so, under the regularity of
-  item 11, do the corresponding score and signed likelihood-ratio
-  statistics. For a scalar parameter and
+  estimator with $\sqrt n(\hat\theta_n-\theta_0)=I^{-1}\Delta_n+o_P(1)$
+  satisfies this. For a scalar parameter and
   $\psi(\theta)=\theta-\theta_0$ the envelope is
   $1-\Phi\bigl(z_\alpha-hI^{1/2}\bigr)$.
 
@@ -347,8 +363,7 @@ subsequence $h_{n_i}\in H_{n_i}$, and likewise for $H_0$.
   polyhedral cones, the null limit is the chi-bar-squared law of
   SYNOPSIS103, item 12. For a scalar parameter with $\Theta=[0,\infty)$ and
   $H_0:\theta=0$ the null limit is the mixture
-  $\tfrac12\delta_0+\tfrac12\chi^2_1$, as in tests that a variance
-  component vanishes.
+  $\tfrac12\delta_0+\tfrac12\chi^2_1$.
 
 Consider tests of $H_0:\theta=0$ against $\theta>0$. Given
 $0<\alpha<\gamma<1$ and alternatives $\theta_\nu\downarrow0$, let
@@ -375,10 +390,7 @@ tests that reject for large $T_n$ is $\mu'(0)/\sigma(0)$, and its square is the
   $$\frac{\bigl(\mu_1'(0)/\sigma_1(0)\bigr)^2}{\bigl(\mu_2'(0)/\sigma_2(0)\bigr)^2},$$
   for every $\alpha$, $\gamma$, and sequence $\theta_\nu\downarrow0$. If the
   power functions are nondecreasing, asymptotic normality along
-  sequences $\theta_n=O(n^{-1/2})$ suffices. In location problems the
-  efficacy of a test is often the reciprocal asymptotic variance of an
-  associated estimator: the sign test and the median, the Wilcoxon
-  signed-rank test and the Hodges–Lehmann estimator of SYNOPSIS103, item 3.
+  sequences $\theta_n=O(n^{-1/2})$ suffices.
 
 * **22. Efficiencies of the sign, Wilcoxon, and $t$ tests.** Let the
   observations have density $f(x-\theta)$ with $f$ symmetric about $0$,
@@ -414,10 +426,9 @@ paragraph need not belong to a parametric model.
   maximum is separated: for every $\varepsilon>0$,
   $$\sup_{d(\theta,\theta_0)\ge\varepsilon}Pm_\theta<Pm_{\theta_0}.$$
   If $P_nm_{\hat\theta_n}\ge\sup_\theta P_nm_\theta-o_P(1)$, then
-  $\hat\theta_n\to_P\theta_0$. Compactness, almost-sure continuity in
-  $\theta$, and an integrable envelope are a useful sufficient condition
-  for the uniform law. The separation condition also applies on
-  noncompact spaces.
+  $\hat\theta_n\to_P\theta_0$. The uniform convergence holds when $\Theta$
+  is a compact metric space, $\theta\mapsto m_\theta(x)$ is continuous for
+  every $x$, and $P\sup_\theta|m_\theta|<\infty$.
 
 * **24. Asymptotic normality of $M$-estimators.** Let $\Theta$ be open in
   $\mathbb R^k$. Suppose $\theta\mapsto m_\theta(x)$ is differentiable at
@@ -432,9 +443,10 @@ paragraph need not belong to a parametric model.
   $$\sqrt n(\hat\theta_n-\theta_0)
   =-V^{-1}\frac1{\sqrt n}\sum_{i=1}^n\dot m_{\theta_0}(X_i)+o_P(1)
   \Rightarrow N\bigl(0,V^{-1}P[\dot m_{\theta_0}\dot m_{\theta_0}^{\top}]V^{-1}\bigr).$$
-  Only the population criterion needs two derivatives. For the median,
+  For the median $\theta_0$ of a distribution function $F$ that is
+  differentiable at $\theta_0$ with $f(\theta_0)>0$, the criterion
   $m_\theta(x)=|x|-|x-\theta|$ gives $V=-2f(\theta_0)$ and recovers item 6 at
-  $p=1/2$. Items 3 and 26 are the case $m_\theta=\log p_\theta$.
+  $p=1/2$.
 
 Let $M_n$ be random criterion functions and $M$ a deterministic function on
 a semimetric space $(\Theta,d)$, with $\theta_0$ a point of maximum of $M$.
@@ -447,42 +459,44 @@ measurability questions for suprema.
   small $\delta>0$
   $$\mathbb E^*\sup_{d(\theta,\theta_0)<\delta}
   \bigl|(M_n-M)(\theta)-(M_n-M)(\theta_0)\bigr|\le C\,\frac{\phi_n(\delta)}{\sqrt n},$$
-  where $\delta\mapsto\phi_n(\delta)/\delta^a$ is decreasing for some $a<2$
+  where $C$ does not depend on $n$ or $\delta$ and
+  $\delta\mapsto\phi_n(\delta)/\delta^a$ is decreasing for some $a<2$
   not depending on $n$. Let $r_n^2\,\phi_n(1/r_n)\le\sqrt n$ for every $n$. If
   $M_n(\hat\theta_n)\ge M_n(\theta_0)-O_P(r_n^{-2})$ and $\hat\theta_n\to\theta_0$
-  in outer probability, then $r_n\,d(\hat\theta_n,\theta_0)=O_P(1)$. For
-  $M_n=P_nm_\theta$ the modulus bound is a maximal inequality for the
-  empirical process over $\{m_\theta-m_{\theta_0}:d(\theta,\theta_0)<\delta\}$,
-  obtained from bracketing or uniform entropy (CKMA SYNOPSIS07, items 40
-  and 41). The modulus $\phi_n(\delta)=\delta$, as under the Lipschitz
-  condition of item 24, gives $r_n=\sqrt n$. The modulus
-  $\phi_n(\delta)=\delta^{1/2}$, typical of indicator criteria, gives the
-  cube-root rate $r_n=n^{1/3}$: for example the center of the interval of
-  fixed length containing the most observations, when $\theta\mapsto
-  P[\theta-1,\theta+1]$ is twice differentiable with a proper maximum.
-  Cube-root rates also hold for the Grenander estimator of SYNOPSIS103, item 11. The rescaled limit then follows from the argmax theorem,
-  item 33, and is the location of the maximum of a Gaussian process with
-  quadratic drift.
+  in outer probability, then $r_n\,d(\hat\theta_n,\theta_0)=O_P(1)$. The
+  modulus $\phi_n(\delta)=\delta$ gives $r_n=\sqrt n$, and the modulus
+  $\phi_n(\delta)=\delta^{1/2}$ gives $r_n=n^{1/3}$. The latter applies to the
+  center $\hat\theta_n$ of an interval of length $2$ containing the most
+  observations, $m_\theta=1_{[\theta-1,\theta+1]}$, when $P$ has a bounded
+  density, $\theta\mapsto P[\theta-1,\theta+1]$ has a unique maximizer
+  $\theta_0$ at which it is twice differentiable with negative second
+  derivative, and $\hat\theta_n\to_P\theta_0$: then
+  $n^{1/3}(\hat\theta_n-\theta_0)=O_P(1)$.
 
-* **26. Misspecified maximum likelihood.** Suppose a consistent likelihood
-  maximizer converges to the unique interior maximizer $\theta^\star$ of
-  $P\log p_\theta$. Under the score expansion and moment hypotheses of
-  item 4, with
-  $$A=-P D^2\log p_{\theta^\star},\qquad
-  B=P[\nabla\log p_{\theta^\star}\nabla\log p_{\theta^\star}^{\top}],$$
-  and $A$ nonsingular,
+* **26. Misspecified maximum likelihood.** Let $\Theta$ be open in
+  $\mathbb R^k$, let the observations have law $P$, not necessarily in the
+  model, and let $\theta^\star\in\Theta$ be the unique maximizer of
+  $\theta\mapsto P\log p_\theta$. Suppose $\theta\mapsto\log p_\theta(x)$ is
+  differentiable near $\theta^\star$ for every $x$, that
+  $\psi_\theta=\nabla\log p_\theta$ satisfies the hypotheses of item 4 with
+  $P$ in place of $P_{\theta_0}$ and $\theta^\star$ in place of $\theta_0$,
+  and that the derivative of $\theta\mapsto P\psi_\theta$ at $\theta^\star$ is
+  $-A$ with $A$ nonsingular. Put
+  $B=P[\nabla\log p_{\theta^\star}\nabla\log p_{\theta^\star}^{\top}]$. If
+  $\hat\theta_n$ is a sequence of maximizers of $\ell_n$ with
+  $\hat\theta_n\to_P\theta^\star$, then
   $$\sqrt n(\hat\theta_n-\theta^\star)
   \Rightarrow N(0,A^{-1}BA^{-\top}).$$
-  When finite, $D(P\|P_\theta)$ is minimized at $\theta^\star$.
-  The equality $A=B$ follows from correct specification and regularity;
-  it is not a general property of likelihood fitting.
+  When $P\log p$ is finite for the density $p$ of $P$, $\theta^\star$ is the
+  minimizer of $\theta\mapsto D(P\|P_\theta)$. When $P=P_{\theta^\star}$ and
+  the hypotheses of item 3 hold, $A=B=I(\theta^\star)$.
 
 * **27. Second-order delta method.** If
   $\sqrt n(T_n-\theta)\Rightarrow Z$, $g$ is twice differentiable at
   $\theta$, and $Dg(\theta)=0$, then
   $$n(g(T_n)-g(\theta))\Rightarrow
   \tfrac12 Z^\top D^2g(\theta)Z.$$
-  Even for Gaussian $Z$ the limit need not be normal. In particular,
+  In particular,
   $\sqrt n\,\bar X\Rightarrow N(0,\sigma^2)$ implies
   $n\bar X^2\Rightarrow\sigma^2\chi^2_1$.
 
@@ -503,14 +517,16 @@ $t_n\downarrow0$, $h_n\to h\in D_0$, and the arguments are in the domain.
 
 * **29. Hoeffding decomposition.** For the square-integrable kernel of
   item 8 there are symmetric canonical kernels $h_j$ of orders $1\le j\le m$
-  with zero conditional expectation in each argument, such that
+  with zero conditional expectation in each argument, such that, with
+  $U_{n,j}$ the $U$-statistic of order $j$ with kernel $h_j$,
   $$U_n-\theta=\sum_{j=1}^m\binom mj U_{n,j},\qquad
   \mathop{\mathrm{Var}}U_n
   =\sum_{j=1}^m\frac{\binom mj^2}{\binom nj}\mathbb E h_j^2.$$
   The terms are orthogonal in $L^2$, and $h_1=g$ of item 8.
-  Among unbiased estimators of $\mathbb E h$ in the unrestricted
-  independent-sampling model, $U_n$ has minimum variance whenever the
-  competing estimators have finite variance throughout that model.
+  Let $\mathcal P$ be the family of all laws $P$ with
+  $\mathbb E_Ph(X_1,\ldots,X_m)^2<\infty$. Among estimators that are unbiased
+  for $\mathbb E_Ph$ and have finite variance at every $P\in\mathcal P$,
+  $U_n$ has the smallest variance at every $P\in\mathcal P$.
 
 * **30. Degenerate quadratic $U$-statistics.** Let $h\in L^2(P\otimes P)$
   be symmetric and satisfy $\mathbb E[h(X_1,X_2)\mid X_1]=0$. Let
@@ -518,39 +534,48 @@ $t_n\downarrow0$, $h_n\to h\in D_0$, and the arguments are in the domain.
   operator $a\mapsto\int h(\cdot,y)a(y)\,P(dy)$. Then
   $$nU_n\Rightarrow\sum_j\lambda_j(Z_j^2-1),$$
   where the $Z_j$ are independent standard normals and the series converges
-  in $L^2$. This gives a basic nonnormal null limit for quadratic
-  goodness-of-fit and independence statistics.
+  in $L^2$.
 
 * **31. Pearson's multinomial tests.** If
   $(N_1,\ldots,N_k)\sim\mathop{\mathrm{Mult}}(n;p_1,\ldots,p_k)$ with
   fixed $k$ and all $p_i>0$, then
   $$\sum_{i=1}^k\frac{(N_i-np_i)^2}{np_i}\Rightarrow\chi^2_{k-1}.$$
-  Fitting a regular $d$-dimensional multinomial submodel by maximum
-  likelihood gives $k-1-d$ degrees of freedom. For an $r\times c$ table
+  Let $p=p(\vartheta_0)$ for a map $\vartheta\mapsto p(\vartheta)$ from an
+  open set in $\mathbb R^d$ into the open simplex that is continuously
+  differentiable with derivative of rank $d$ at $\vartheta_0$. If
+  $\hat\vartheta_n$ is a consistent maximum likelihood estimator of
+  $\vartheta_0$, the statistic with $p(\hat\vartheta_n)$ in place of $p$
+  converges in distribution to $\chi^2_{k-1-d}$. For an $r\times c$ table
   under independence, fitted counts $N_{i+}N_{+j}/n$ give
   $(r-1)(c-1)$ degrees of freedom. The likelihood-ratio statistic
   $2\sum N_{ij}\log(N_{ij}/\hat N_{ij})$, with $0\log0=0$, has the same
   limit and differs from Pearson's statistic by $o_P(1)$.
 
-* **32. Generalized method of moments.** Let $m(X,\theta)\in\mathbb R^q$
-  have expectation zero at $\theta_0\in\mathbb R^k$, $q\ge k$, and let
-  $G=P D_\theta m(X,\theta_0)$ have full column rank. Suppose the sample
-  moments obey a local uniform derivative law and a central limit theorem
-  with positive definite covariance $\Omega$. A consistent minimizer of
-  $\bar m_n(\theta)^\top W_n\bar m_n(\theta)$, where $W_n\to_P W>0$, has
-  limiting covariance
+* **32. Generalized method of moments.** Let $\Theta$ be open in
+  $\mathbb R^k$, let $m(X,\theta)\in\mathbb R^q$, $q\ge k$, have
+  $Pm(X,\theta_0)=0$ and finite positive definite covariance
+  $\Omega=P[m(X,\theta_0)m(X,\theta_0)^\top]$. Suppose that on a neighborhood
+  $N$ of $\theta_0$ the map $\theta\mapsto m(x,\theta)$ is continuously
+  differentiable for every $x$, with
+  $P\sup_{\theta\in N}\|D_\theta m(X,\theta)\|<\infty$,
+  and that $G=P D_\theta m(X,\theta_0)$ has rank $k$. Let
+  $\bar m_n(\theta)=n^{-1}\sum_i m(X_i,\theta)$, let $W_n\to_P W$ with $W$
+  positive definite, and let $\hat\theta_n\to_P\theta_0$ minimize
+  $\bar m_n(\theta)^\top W_n\bar m_n(\theta)$. Then
+  $\sqrt n(\hat\theta_n-\theta_0)$ converges in distribution to the centered
+  normal law with covariance
   $$(G^\top WG)^{-1}G^\top W\Omega WG(G^\top WG)^{-1}.$$
   The choice $W=\Omega^{-1}$ minimizes this covariance in the Loewner
-  order. With a consistent estimate of that weight, the minimized criterion
-  multiplied by $n$ converges to $\chi^2_{q-k}$.
+  order. If $W_n=\hat\Omega_n^{-1}$ with $\hat\Omega_n\to_P\Omega$, then
+  $n\,\bar m_n(\hat\theta_n)^\top W_n\bar m_n(\hat\theta_n)\Rightarrow\chi^2_{q-k}$.
 
-* **33. Argmax theorem.** Let $M_n$ converge weakly, uniformly on compact
-  subsets of a metric space, to a continuous process $M$. Suppose $M$ has
-  an almost surely unique maximizer $T$, separated from the rest of each
-  compact set. If approximate maximizers $T_n$ are tight and their criterion
-  errors are $o_P(1)$, then $T_n\Rightarrow T$. Applied to rescaled local
-  criteria, this also yields nonnormal limits such as the Chernoff law in
-  SYNOPSIS103, item 11.
+* **33. Argmax theorem.** Let $M_n$ and $M$ be stochastic processes indexed
+  by a metric space $H$ such that $M_n\Rightarrow M$ in the space of bounded
+  functions on $K$ with the supremum norm, for every compact $K\subset H$.
+  Suppose almost every sample path of $M$ is upper semicontinuous and has a
+  unique maximizer $T$, and $T$ is a tight random element of $H$. If $T_n$ is
+  uniformly tight and $M_n(T_n)\ge\sup_hM_n(h)-o_P(1)$, then
+  $T_n\Rightarrow T$ in $H$.
 
 ### Semiparametric models and missing data
 
@@ -564,16 +589,20 @@ is the residual of the ordinary score for $\theta$ after orthogonal projection
 onto that tangent space, and the **efficient information** is
 $\tilde I(\theta)=\mathbb E[\tilde\ell_\theta\tilde\ell_\theta^\top]$.
 
-* **34. Semiparametric convolution bound.** Assume local asymptotic normality
-  of every regular finite-dimensional submodel, nonsingular efficient
-  information, and the usual differentiability of the parameter along those
-  submodels. Every regular estimator sequence of $\theta$ has a limit law
-  equal to the convolution of $N(0,\tilde I(\theta)^{-1})$ with some
-  probability measure on the parameter space. An estimator is asymptotically
-  linear with influence function equal to $\tilde I(\theta)^{-1}\tilde\ell_\theta$
-  if and only if it attains this bound. The ordinary parametric bound of
-  item 16, is the case of a finite-dimensional nuisance
-  parameter.
+* **34. Semiparametric convolution bound.** Fix $P=P_{\theta,\eta}$. Suppose
+  that for every $a\in\mathbb R^k$ and every nuisance submodel $\eta_t$ in a
+  given class, the submodel $t\mapsto P_{\theta+ta,\eta_t}$ is differentiable
+  in quadratic mean at $t=0$ with score $a^\top\dot\ell_\theta+g$, where the
+  nuisance scores $g$ form a linear space whose closure is the nuisance
+  tangent space, and that $\tilde I(\theta)$ is nonsingular. Call an
+  estimator sequence regular if it is regular, in the sense defined above,
+  along every such submodel. Every regular estimator sequence of $\theta$
+  has a limit law equal to the convolution of $N(0,\tilde I(\theta)^{-1})$
+  with some probability measure on $\mathbb R^k$. An estimator sequence is
+  regular with limit law $N(0,\tilde I(\theta)^{-1})$ if and only if
+  $$\sqrt n(T_n-\theta)=\frac1{\sqrt n}\sum_{i=1}^n
+  \tilde I(\theta)^{-1}\tilde\ell_\theta(X_i)+o_P(1).$$
+  Item 16 is the case without nuisance parameter.
 
 Let $Y$ be a response, let $X$ be covariates that are always observed, and
 let $R$ indicate whether $Y$ is observed. The observations are independent
@@ -582,35 +611,42 @@ $P(R=1\mid X,Y)=P(R=1\mid X)$. It is **missing completely at random** when
 $R$ is independent of $(X,Y)$. Write $\pi(x)=P(R=1\mid X=x)$ and
 $m(x)=\mathbb E[Y\mid R=1,X=x]$.
 
-* **35. Ignorability.** Under missingness at random, the density of the
-  observed data factors into a part that depends on the law of $(X,Y)$ and a
-  part that depends on the missingness mechanism. If those two parameters
-  are variation-independent, the maximizer of the observed-data likelihood
-  for the law of $(X,Y)$ does not depend on the missingness parameter. The
-  mechanism is then ignorable for likelihood inference.
+* **35. Ignorability.** Let $(X,Y)$ have density $f_\theta(x,y)$ and let
+  $P(R=1\mid X=x,Y=y)=\pi_\phi(x)$, so that the response is missing at
+  random, with $(\theta,\phi)$ ranging over a product set
+  $\Theta\times\Phi$. Then the observed-data likelihood of one observation
+  is
+  $$\pi_\phi(x)^r\bigl(1-\pi_\phi(x)\bigr)^{1-r}\cdot
+  \begin{cases}f_\theta(x,y),&r=1,\\ \int f_\theta(x,y')\,dy',&r=0,\end{cases}$$
+  a function of $\phi$ times a function of $\theta$. Hence the set of
+  maximizers in $\theta$ of the observed-data likelihood does not depend on
+  $\phi$, and equals the set of maximizers of the second factor.
 
 For a complete-data density $f(x\mid\theta)$ and observed data $Y=t(X)$, the
 **EM iteration** from $\theta'$ maximizes
 $Q(\theta\mid\theta')=\mathbb E_{\theta'}[\log f(X\mid\theta)\mid Y]$ and
 sets the next value equal to that maximizer.
 
-* **36. Monotonicity of EM.** The observed-data log-likelihood at the new
-  value is at least the observed-data log-likelihood at $\theta'$. A fixed
-  point of a continuous EM map at which $Q$ has a unique maximizer is a
-  stationary point of the observed-data likelihood.
+* **36. Monotonicity of EM.** Let $L(\theta)$ be the observed-data
+  log-likelihood and suppose $Q(\cdot\mid\theta')$ is finite. If $\theta''$
+  maximizes $Q(\cdot\mid\theta')$, then $L(\theta'')\ge L(\theta')$. Let
+  $\theta^*$ be an interior point that maximizes $Q(\cdot\mid\theta^*)$, and
+  suppose $L$ and $Q(\cdot\mid\theta^*)$ are differentiable at $\theta^*$ with
+  $\nabla L(\theta^*)=\nabla_\theta Q(\theta\mid\theta^*)\big|_{\theta=\theta^*}$
+  (Fisher's identity). Then $\nabla L(\theta^*)=0$.
 
-* **37. Double robustness for a missing mean.** Under missingness at random
-  and $\pi_0(X)\ge\delta>0$, the estimating function
+* **37. Double robustness for a missing mean.** Assume
+  $\mathbb E|Y|<\infty$, missingness at random, and that the true response
+  probability $\pi_0(x)=P(R=1\mid X=x)$ satisfies $\pi_0(X)\ge\delta>0$.
+  Write $m_0(x)=\mathbb E[Y\mid X=x]$. The estimating function
   $$\varphi_{m,\pi}(R,X,Y)
   =\frac{RY}{\pi(X)}-\frac{R-\pi(X)}{\pi(X)}m(X)$$
   has expectation $\mathbb E Y$ as soon as either $\pi=\pi_0$, with $m$ any
-  square-integrable function, or $m(x)=\mathbb E[Y\mid X=x]$, with $\pi$ any
-  measurable function bounded away from zero. The estimator obtained by
-  substituting estimators of $m$ and $\pi$ and taking the sample average is
-  therefore consistent when at least one of the two fitted models is
-  correct. If both are correct and converge quickly enough, the estimator
-  is asymptotically linear with the efficient influence function for
-  $\mathbb E Y$.
+  square-integrable function, or $m=m_0$, with $\pi$ any
+  measurable function bounded away from zero. If $\mathbb EY^2<\infty$, the
+  efficient influence function of $\mathbb EY$ in the model of all laws of
+  $(R,X,RY)$ arising from a law of $(X,Y)$ and a response mechanism that is
+  missing at random with $\pi_0\ge\delta$ is $\varphi_{m_0,\pi_0}-\mathbb EY$.
 
 ### Pathwise derivatives and orthogonal estimation
 
@@ -628,24 +664,24 @@ representative in $\mathcal T$ is the **canonical gradient**.
   The efficient variance bound is $P\phi_{\mathrm{eff}}^2$. In the
   unrestricted model, the mean has canonical gradient $x-PX$, and the
   $p$-quantile with positive density has gradient
-  $(p-1_{\{x\le q_p\}})/f(q_p)$. A derivative that has no continuous
-  $L^2$ representation precludes regular estimation at rate $\sqrt n$.
+  $(p-1_{\{x\le q_p\}})/f(q_p)$.
 
-* **39. Cross-fitted estimation of a missing mean.** Use a fixed finite
-  number of folds, evaluating the estimating function in item 37 on each
-  fold with nuisance estimates trained on the other folds. Suppose
+* **39. Cross-fitted estimation of a missing mean.** Split the sample into
+  a fixed finite number of folds of sizes proportional to $n$. On each fold,
+  evaluate the estimating function $\varphi_{\hat m,\hat\pi}$ of item 37 with
+  nuisance estimates $\hat m,\hat\pi$ computed from the other folds, and let
+  $\hat\mu$ be the average of these values over all observations. Suppose
   $Y\in L^2$, the true and fitted response probabilities are bounded below
-  by $\delta>0$, both nuisance estimates are $L^2$ consistent, and
-  $$\|\hat m-m_0\|_2\,\|\hat\pi-\pi_0\|_2=o_P(n^{-1/2}).$$
-  If the fitted estimating functions also converge in $L^2$ to the true
-  one, then
+  by $\delta>0$, and for each fold, with norms in $L^2$ of the law of $X$,
+  $\|\hat m-m_0\|_2\to_P0$, $\|\hat\pi-\pi_0\|_2\to_P0$,
+  $$\|\hat m-m_0\|_2\,\|\hat\pi-\pi_0\|_2=o_P(n^{-1/2}),$$
+  and $\|\varphi_{\hat m,\hat\pi}-\varphi_{m_0,\pi_0}\|_{L^2(P)}\to_P0$, the
+  norm being taken with the nuisance estimates held fixed. Then
   $$\sqrt n(\hat\mu-\mu)
   =n^{-1/2}\sum_{i=1}^n
   \left[m_0(X_i)+\frac{R_i(Y_i-m_0(X_i))}{\pi_0(X_i)}-\mu\right]+o_P(1).$$
-  The variance is the efficient bound of item 38. Conditional second-moment
-  bounds on $Y$ and bounded or suitably truncated regressions are useful
-  sufficient conditions for the additional $L^2$ convergence. Sample
-  splitting avoids requiring a Donsker class for the fitted nuisances.
+  The summand is the efficient influence function of item 37, so the
+  limiting variance is the efficient bound of item 38.
 
 * **40. Partially linear regression.** Suppose
   $Y=D^\top\beta+g(X)+\varepsilon$, $\mathbb E[\varepsilon\mid D,X]=0$,
@@ -656,10 +692,7 @@ representative in $\mathcal T$ is the **canonical gradient**.
   In the model imposing the conditional mean restriction, with conditional
   variance unrestricted away from the true law, the efficient influence
   function at this homoscedastic law is $Q^{-1}V\varepsilon$, with
-  covariance $\sigma^2Q^{-1}$. Residualizing both $Y$ and $D$
-  and fitting least squares attains this bound under consistent nuisance
-  estimation and appropriate product-rate and moment conditions, using
-  cross-fitting as in item 39.
+  covariance $\sigma^2Q^{-1}$.
 
 ### Adaptation, missing information, and multiple imputation
 
@@ -678,11 +711,7 @@ score of item 34 equals the ordinary score.
   efficient information is $I_\eta$. There are estimators $\hat\theta_n$, not
   depending on $\eta$, such that
   $$\sqrt n(\hat\theta_n-\theta)\Rightarrow N(0,I_\eta^{-1})$$
-  regularly at every such $\eta$. One construction starts from a discretized
-  $\sqrt n$-consistent location estimator. It then takes one Newton step
-  on an estimated efficient score, formed from a truncated kernel estimate
-  of $g'/g$ for the density $g$ of $|X_i-\theta|$, extended as an odd
-  function of $x-\theta$. If $\eta$ is only required to have median zero,
+  regularly at every such $\eta$. If $\eta$ is only required to have median zero,
   with a positive continuous density there, the information bound drops
   to $4\eta(0)^2$, the bound for the median in items 38 and 46.
 
@@ -701,16 +730,14 @@ information** $i_{\mathrm{mis}}=i_{\mathrm{com}}-i_{\mathrm{obs}}$.
   $$i_{\mathrm{obs}}=i_{\mathrm{com}}
   -\mathbb E_{\theta^*}\bigl[S_c(\theta^*)S_c(\theta^*)^\top\bigm|Y_{\mathrm{obs}}\bigr],$$
   where $S_c$ is the complete-data score. If $i_{\mathrm{com}}$ and
-  $i_{\mathrm{obs}}$ are positive definite and the EM map $M$ is
-  differentiable at $\theta^*$, then
+  $i_{\mathrm{obs}}$ are positive definite and the EM map $M$ has
+  $M(\theta^*)=\theta^*$ and is differentiable at $\theta^*$, then
   $$DM(\theta^*)=i_{\mathrm{com}}^{-1}i_{\mathrm{mis}}
   =I-i_{\mathrm{com}}^{-1}i_{\mathrm{obs}}.$$
   Its eigenvalues, the **fractions of missing information**, lie in $[0,1)$.
-  Iterates near $\theta^*$ converge linearly, with rate given by the
-  largest eigenvalue. EM is slow exactly when some parameter combination
-  is poorly informed by the observed data. Expanding the parameter space
-  so as to lower the fraction of missing information accelerates the
-  iteration.
+  If $\lambda_{\max}$ is the largest of them, there is a neighborhood of
+  $\theta^*$ such that EM iterates $\theta_t$ started in it converge to
+  $\theta^*$ with $\limsup_{t\to\infty}\|\theta_t-\theta^*\|^{1/t}\le\lambda_{\max}$.
 
 Let $Y_{\mathrm{mis}}^{(1)},\ldots,Y_{\mathrm{mis}}^{(D)}$ be independent draws
 from the posterior predictive law of the missing values given the observed
@@ -729,19 +756,16 @@ $B=(D-1)^{-1}\sum_d(\hat\theta_d-\bar\theta)^2$.
   \bigm|Y_{\mathrm{obs}}\bigr]
   +\mathop{\mathrm{Var}}\bigl[\mathbb E(\theta\mid Y_{\mathrm{obs}},Y_{\mathrm{mis}})
   \bigm|Y_{\mathrm{obs}}\bigr]$$
-  are approximated by $\bar\theta$ and by the total variance
-  $T=\bar V+(1+D^{-1})B$. The factor $1+D^{-1}$ accounts for the finite
-  number of imputations. Rubin's rules use a $t$ reference distribution for
-  $(\theta-\bar\theta)/\sqrt T$ with
-  $$\nu=(D-1)\Bigl(1+\frac{D\bar V}{(D+1)B}\Bigr)^2$$
-  degrees of freedom. The ratio $(1+D^{-1})B/T$ estimates the fraction of
-  missing information of item 42. For a vector estimand the squared
-  deviations are replaced by outer products. The rules approximate a
-  posterior from a model in which imputer and analyst agree. Frequentist
-  validity has been shown for several imputation methods under
-  missingness at random. When the imputation model and the analysis model
-  are incompatible, the resulting intervals are usually, but not always,
-  conservative.
+  hold in the joint Bayesian model. Suppose $D\ge2$, $\theta$ has finite
+  posterior variance and, given $Y_{\mathrm{obs}}$, the imputations are independent of
+  $\theta$. Write $B_\infty$ for the last term of the second identity. Then,
+  conditionally on $Y_{\mathrm{obs}}$, $\bar\theta$ has mean
+  $\mathbb E(\theta\mid Y_{\mathrm{obs}})$, and the total variance
+  $T=\bar V+(1+D^{-1})B$ has mean
+  $$\mathop{\mathrm{Var}}(\theta-\bar\theta\mid Y_{\mathrm{obs}})
+  =\mathop{\mathrm{Var}}(\theta\mid Y_{\mathrm{obs}})+D^{-1}B_\infty.$$
+  For a vector estimand the same holds with squared deviations replaced
+  by outer products.
 
 ### Robust statistics
 
@@ -756,27 +780,46 @@ point** of an estimator at a sample is the smallest fraction of the sample
 that can be replaced so that the estimator becomes arbitrarily large or
 otherwise leaves every compact set of the parameter space.
 
-* **44. M-estimators and the Huber minimax property.** An $M$-functional of
-  location defined by $\int\psi(x-\theta)\,dF(x)=0$, with $\psi$ odd and
-  $\int\psi'\,dF\neq0$, has influence function
-  $\psi(x-\theta)/\int\psi'\,dF$. For a location sample its estimator is
-  asymptotically normal with variance
-  $\mathbb E\psi(X-\theta)^2/(\mathbb E\psi'(X-\theta))^2$, under the
-  standard Lipschitz and nondegeneracy conditions of item 4.
-  Among Fisher-consistent location functionals whose gross-error sensitivity
-  at the standard normal law is at most a prescribed bound, the asymptotic
-  variance at that law is minimized by Huber's clipped score
-  $\psi_k(u)=\max(-k,\min(k,u))$ for a clip $k$ determined by the bound.
-  The same score is minimax for asymptotic variance over
-  $\varepsilon$-contamination neighborhoods of the normal law.
+* **44. M-estimators and the Huber minimax property.** Let $\psi$ be odd
+  and continuous, let $T$ be an $M$-functional of location, defined on a
+  set of laws containing the contaminations $(1-\varepsilon)F+\varepsilon\delta_x$
+  by $\int\psi(x-T(G))\,dG(x)=0$, and put $\theta_0=T(F)$ and
+  $\lambda(\theta)=\int\psi(x-\theta)\,dF(x)$. If $\lambda$ is differentiable
+  at $\theta_0$ with $\gamma=-\lambda'(\theta_0)\neq0$ and
+  $\varepsilon\mapsto T((1-\varepsilon)F+\varepsilon\delta_x)$ is
+  differentiable at $0$, then
+  $\mathop{\mathrm{IF}}(x;T,F)=\psi(x-\theta_0)/\gamma$. If moreover $\psi$
+  is Lipschitz and $\mathbb E\psi(X-\theta_0)^2<\infty$, a consistent
+  sequence $\hat\theta_n$ with
+  $\sum_i\psi(X_i-\hat\theta_n)=o_P(n^{1/2})$ satisfies, by item 4,
+  $$\sqrt n(\hat\theta_n-\theta_0)\Rightarrow
+  N\bigl(0,\mathbb E\psi(X-\theta_0)^2/\gamma^2\bigr).$$
+  Let $\Phi$ and $\varphi$ be the standard normal distribution function and
+  density and $\psi_k(u)=\max(-k,\min(k,u))$. Hampel's optimality: for
+  $c>\sqrt{\pi/2}$, among functions $\phi$ with $\int\phi\,d\Phi=0$,
+  $\int x\phi(x)\,d\Phi(x)=1$, and $\sup|\phi|\le c$, the integral
+  $\int\phi^2\,d\Phi$ is uniquely minimized by
+  $\phi=\psi_k/(2\Phi(k)-1)$, where $k>0$ solves $k/(2\Phi(k)-1)=c$.
+  Huber's minimax property: for $0<\varepsilon<1$ let $k>0$ solve
+  $2\varphi(k)/k-2\Phi(-k)=\varepsilon/(1-\varepsilon)$, and let $G_0$ have
+  density $(1-\varepsilon)\varphi(x)$ for $|x|\le k$ and
+  $(1-\varepsilon)\varphi(k)e^{k^2-k|x|}$ for $|x|>k$. Then
+  $G_0=(1-\varepsilon)\Phi+\varepsilon H_0$ for a law $H_0$ symmetric about
+  $0$, $\psi_k=-g_0'/g_0$, and with
+  $V(\psi_k,G)=\int\psi_k^2\,dG/G\bigl((-k,k)\bigr)^2$,
+  $$V(\psi_k,G)\le V(\psi_k,G_0)=1/I(G_0)$$
+  for every $G=(1-\varepsilon)\Phi+\varepsilon H$ with $H$ symmetric about
+  $0$, while
+  $\int\psi^2\,dG_0/\bigl(\int\psi'\,dG_0\bigr)^2\ge1/I(G_0)$ for every
+  bounded absolutely continuous $\psi$ with $\int\psi'\,dG_0\neq0$.
 
 * **45. Breakdown points.** The sample mean has replacement breakdown
   point $1/n$ at a sample of size $n$, tending to zero as $n\to\infty$. The
   sample median of a one-dimensional sample of size $n=2m+1$ has breakdown
   point $(m+1)/n$, which tends to $1/2$. Ordinary least squares has
-  breakdown point $1/n$. The least-median-of-squares regression estimator
-  has breakdown point that tends to $1/2$ as $n\to\infty$ with the number of
-  covariates fixed.
+  breakdown point $1/n$. For a regression sample with $p\ge2$ coefficients
+  whose observations are in general position, the least-median-of-squares
+  estimator has breakdown point $(\lfloor n/2\rfloor-p+2)/n$.
 
 * **46. Influence of a median and a contamination bound.** If $F$ has
   unique median $m$ and a positive continuous density there, the median
@@ -789,9 +832,8 @@ otherwise leaves every compact set of the parameter space.
   $$F^{-1}\left(\frac{1/2-\varepsilon}{1-\varepsilon}\right)
   \quad\hbox{and}\quad
   F^{-1}\left(\frac{1/2}{1-\varepsilon}\right).$$
-  Extreme contaminating distributions approach these bounds. Bounded
-  local influence and a positive breakdown point describe different
-  aspects of robustness.
+  The bounds are attained by $H=\delta_y$ for $y$ sufficiently far to the
+  left and to the right, respectively.
 
 ### Von Mises expansions and regression $M$-estimators
 
@@ -799,53 +841,42 @@ otherwise leaves every compact set of the parameter space.
   distribution functions on $\mathbb R$. Suppose $T$ is Hadamard
   differentiable at $F$ for the supremum norm, with a derivative $T_F'$ that
   is a continuous linear map on all bounded functions. Then the influence
-  function is $\mathop{\mathrm{IF}}(x;T,F)=T_F'(1_{[x,\infty)}-F)$, it has mean
-  zero under $F$, and, by item 28, and linearity of $T_F'$,
+  function is $\mathop{\mathrm{IF}}(x;T,F)=T_F'(1_{[x,\infty)}-F)$. If
+  $\int\mathop{\mathrm{IF}}(x;T,F)^2\,dF(x)<\infty$, then the influence
+  function has mean zero under $F$ and, by item 28 and linearity of $T_F'$,
   $$\sqrt n\bigl(T(F_n)-T(F)\bigr)
   =\frac1{\sqrt n}\sum_{i=1}^n\mathop{\mathrm{IF}}(X_i;T,F)+o_P(1)
-  \Rightarrow N\Bigl(0,\int\mathop{\mathrm{IF}}(x;T,F)^2\,dF(x)\Bigr),$$
-  provided the second moment is finite. If $T$ is differentiable only
-  tangentially to a subspace carrying the limit $B^0\circ F$, as for
-  quantiles, the limit is still the centered normal law
-  $T_F'(B^0\circ F)$. In the usual examples its variance is again the
-  second moment of the influence function computed as a directional
-  derivative. The asymptotic variance of a
-  plug-in estimator is thus the second moment of its influence function.
-  Its gross-error sensitivity, the supremum of $|\mathop{\mathrm{IF}}|$,
-  bounds to first order the asymptotic bias caused by a small fraction
-  $\varepsilon$ of contamination, at $\varepsilon$ times that supremum. Items 44 and 46 are instances. When
-  Hadamard differentiability fails, the same expansion is a heuristic for
-  the limit law, to be confirmed by direct arguments.
+  \Rightarrow N\Bigl(0,\int\mathop{\mathrm{IF}}(x;T,F)^2\,dF(x)\Bigr).$$
+  If $T$ is Hadamard differentiable only tangentially to a closed subspace
+  carrying the limit $B^0\circ F$ of $\sqrt n(F_n-F)$, as for quantiles,
+  then $\sqrt n\bigl(T(F_n)-T(F)\bigr)\Rightarrow T_F'(B^0\circ F)$, a
+  centered normal law.
 
 Consider the linear model $Y_i=x_i^\top\beta+\varepsilon_i$ with fixed design
 rows $x_i\in\mathbb R^p$, the first coordinate equal to one, and independent
 errors with distribution function $F$. A **regression $M$-estimator** with
-score $\psi=\rho'$ minimizes $\sum_i\rho(Y_i-x_i^\top t)$; its studentized
-version minimizes $\sum_i\rho\bigl((Y_i-x_i^\top t)/S_n\bigr)$ for a
-regression-invariant, scale-equivariant scale statistic $S_n$.
+score $\psi=\rho'$ minimizes $\sum_i\rho(Y_i-x_i^\top t)$.
 
-* **48. Asymptotics of regression $M$-estimators.** Assume that
-  $n^{-1}\sum_ix_ix_i^\top\to Q$ positive definite, with the moment bounds
-  on the rows used by Jurečková and Sen. Assume also that
-  $t\mapsto\int\rho(z-t)\,dF(z)$ has a unique minimum at $0$, so that
-  $\mathbb E\psi(\varepsilon)=0$. Let $\psi$ be decomposable into smooth,
-  piecewise linear, and monotone step parts, with the matching smoothness
-  of $F$ near the kinks and jumps of $\psi$. Let
-  $\gamma=-\frac d{dt}\mathbb E\psi(\varepsilon-t)\big|_{t=0}\neq0$. Then a
-  $\sqrt n$-consistent $M$-estimator satisfies
+* **48. Asymptotics of regression $M$-estimators.** Let $\rho$ be convex and
+  let $\psi$ be its right derivative. Assume that
+  $n^{-1}\sum_ix_ix_i^\top\to Q$ positive definite and
+  $\max_{i\le n}\|x_i\|/\sqrt n\to0$. Assume $\mathbb E\psi(\varepsilon)=0$,
+  $\mathbb E\psi(\varepsilon)^2<\infty$,
+  $\mathbb E\bigl(\psi(\varepsilon-t)-\psi(\varepsilon)\bigr)^2\to0$ as
+  $t\to0$, and that $t\mapsto\mathbb E\psi(\varepsilon-t)$ is differentiable
+  at $0$ with
+  $\gamma=-\frac d{dt}\mathbb E\psi(\varepsilon-t)\big|_{t=0}>0$. Then every
+  sequence of minimizers $\hat\beta_n$ satisfies
   $$\sqrt n(\hat\beta_n-\beta)
   =\frac{Q^{-1}}{\gamma\sqrt n}\sum_{i=1}^nx_i\psi(\varepsilon_i)+o_P(1)
   \Rightarrow N\Bigl(0,\frac{\mathbb E\psi(\varepsilon)^2}{\gamma^2}Q^{-1}\Bigr).$$
-  The scalar factor is the location variance of item 44. With a scale
-  statistic $S_n$ satisfying $\sqrt n(S_n-S)=O_P(1)$, the same holds with
-  $\psi(\cdot/S)$ in place of $\psi$, except for an additional term in the
-  intercept proportional to $S_n/S-1$. The slope coordinates are
-  unaffected by studentization. Least squares is the case $\psi(u)=u$.
-  Bounded $\psi$ limits the influence of large residuals but not of
-  high-leverage design points. When whole pairs $(x_i,Y_i)$ may be replaced,
-  the least-absolute-deviation and other $M$-estimators of regression have
-  breakdown point $1/n$, in contrast with the least-median-of-squares
-  estimator of item 45.
+  The scalar factor is the location variance of item 44. Least squares is
+  the case $\rho(u)=u^2/2$, with $\mathbb E\varepsilon^2<\infty$, and least
+  absolute deviations the case $\rho(u)=|u|$, when $F$ has median $0$ and
+  is differentiable there with $F'(0)>0$, so that $\gamma=2F'(0)$. When
+  whole pairs $(x_i,Y_i)$ may be replaced, the least-absolute-deviation
+  estimator has breakdown point $1/n$, in contrast with the
+  least-median-of-squares estimator of item 45.
 
 <a id="synopsis-102b"></a>
 
@@ -856,10 +887,7 @@ regression-invariant, scale-equivariant scale statistic $S_n$.
   moment $\rho=\mathbb E X_1^3$, and assume the law is nonlattice. Then
   $$P\bigl(\sqrt n\,\bar X\le x\bigr)
   =\Phi(x)-\varphi(x)\,(x^2-1)\frac{\rho}{6\sqrt n}+o(n^{-1/2}),$$
-  uniformly in $x$. The lattice case adds a periodic continuity correction
-  of the same order. The Berry–Esseen bound of CKMA SYNOPSIS06, item 36,
-  is the corresponding uniform estimate of order $n^{-1/2}$ without an
-  explicit skewness term.
+  uniformly in $x$.
 
 * **50. Edgeworth expansion for smooth functions of means.** Let $X_i$ be
   independent copies of a random vector $X$ in $\mathbb R^d$ with mean $\mu$
@@ -878,7 +906,7 @@ regression-invariant, scale-equivariant scale statistic $S_n$.
   $A(x)=\bigl(g(x)-g(\mu)\bigr)/h(x)$, which covers Student's $t$
   statistic. Cramér's condition holds when the law of $X$ has a nonzero
   absolutely continuous component, or when $X=(W,W^2,\ldots,W^d)$ with $W$
-  of that kind; it makes atoms of the law of $\bar X$ exponentially small.
+  of that kind.
   Item 49 is the one-dimensional mean with $j=1$, where the nonlattice
   condition replaces Cramér's condition.
 
@@ -889,15 +917,17 @@ regression-invariant, scale-equivariant scale statistic $S_n$.
   $\sqrt n\,(\bar X^\star-\bar X)$ and the law of $\sqrt n\,(\bar X-\mu)$
   tends to $0$ in probability if the observations have finite variance
   $\sigma^2$. The conditional limit is then $N(0,\sigma^2)$.
-  Infinite-variance cases need separate normalization and assumptions;
-  this is a sufficient finite-variance theorem, not an equivalence.
 
 * **52. Bootstrap of the empirical distribution function.** For independent
   real observations with distribution function $F$, the conditional law of
   the bootstrap empirical process $\sqrt n\,(F_n^\star-F_n)$ converges in
-  probability to the law of the $F$-Brownian bridge, in the same sense as
-  the unconditional limit of $\sqrt n\,(F_n-F)$ in CKMA SYNOPSIS06,
-  item 59.
+  outer probability to the law of the $F$-Brownian bridge $B^0\circ F$ of
+  CKMA SYNOPSIS06, item 59, in the bounded Lipschitz metric on the space of
+  bounded functions on $\mathbb R$ with the supremum norm:
+  $$\sup_{h}\bigl|\mathbb E\bigl[h\bigl(\sqrt n(F_n^\star-F_n)\bigr)\bigm|X_1,\ldots,X_n\bigr]
+  -\mathbb Eh(B^0\circ F)\bigr|\to0,$$
+  the supremum being over functions $h$ bounded by $1$ and $1$-Lipschitz
+  for the supremum norm.
 
 * **53. Jackknife variance of a smooth function of means.** Let
   $\theta=g(\mu)$ with $g$ continuously differentiable at the mean $\mu$ of
@@ -910,31 +940,19 @@ regression-invariant, scale-equivariant scale statistic $S_n$.
   $\Sigma$ is the covariance of one observation and $\hat\theta_{(\cdot)}$
   is the average of the delete-one values.
 
-* **54. Bartlett correction.** Under the regularity used for the chi-squared
-  limit of the likelihood-ratio statistic $\lambda_n$ in item 11, strengthened
-  by the smoothness that yields an Edgeworth expansion of $\lambda_n$,
-  $$\mathbb E_\theta\lambda_n=q\bigl(1+b(\theta)/n\bigr)+O(n^{-2})$$
-  and
-  $$P_\theta\bigl(\lambda_n/(1+b(\theta)/n)\le x\bigr)
-  =P(\chi^2_q\le x)+O(n^{-2}).$$
-  The uncorrected approximation has error of order $n^{-1}$. Replacing
-  $b(\theta)$ by an estimator requires a separate expansion to retain
-  that error order; consistency alone is insufficient.
-
 * **55. Saddlepoint approximation.** Let the cumulant generating function
   $K(s)=\log\mathbb E e^{s X}$ be finite in an open neighborhood of the
   origin, and let $\hat s$ solve $K'(\hat s)=x$ for $x$ in the interior of
-  the range of $K'$. Assume absolute continuity and sufficient Fourier
-  integrability of the exponentially tilted laws, uniformly on compact
-  saddlepoint sets, so that density inversion and its expansion are valid.
-  For independent copies of $X$, the density of the sample mean then
-  admits the approximation
+  the range of $K'$ on the interior of the domain of $K$. Assume that $X$
+  has a density and that there is $\nu\ge1$ such that
+  $\int_{\mathbb R}\bigl|\mathbb E e^{(\hat s+it)X}/\mathbb Ee^{\hat sX}
+  \bigr|^\nu\,dt<\infty$. For independent copies of $X$ and $n>\nu$, the
+  sample mean $\bar X$ of $n$ copies has a bounded continuous density
+  $f_{\bar X}$, and for this fixed $x$, as $n\to\infty$,
   $$f_{\bar X}(x)
   =\Bigl(\frac{n}{2\pi K''(\hat s)}\Bigr)^{1/2}
   \exp\bigl(n\bigl(K(\hat s)-\hat s\, x\bigr)\bigr)
-  \bigl(1+O(n^{-1})\bigr),$$
-  uniformly for $x$ in compact subsets of that interior. The formula is the
-  leading term of an expansion in powers of $n^{-1}$.
+  \bigl(1+O(n^{-1})\bigr).$$
 
 * **56. Empirical likelihood.** Let $X_i$ be independent and identically
   distributed in $\mathbb R^d$ with mean $\mu_0$ and nonsingular finite
@@ -954,68 +972,72 @@ regression-invariant, scale-equivariant scale statistic $S_n$.
   distribution function. Over all subsamples of size $b$, form the
   empirical distribution of $\tau_b(\hat\theta_{b,I}-\hat\theta_n)$.
   Its distribution function converges uniformly in probability to that
-  limiting distribution function. The construction uses no estimate
-  of an asymptotic variance and does not require the limit to be normal.
+  limiting distribution function.
 
-On the simplex of strictly positive probability vectors
-$(p_1,\ldots,p_m)$, $m\ge 2$, the **Fisher–Rao metric** is
-$\sum_{i=1}^m dp_i^2/p_i$. A **congruent embedding** is a Markov kernel that
-carries this simplex into the simplex of another finite sample space and is
-a sufficient statistic for the image model.
+Let $S_m$ be the simplex of strictly positive probability vectors
+$(p_1,\ldots,p_m)$, $m\ge 2$, with tangent vectors $u\in\mathbb R^m$,
+$\sum_iu_i=0$. The **Fisher–Rao metric** is
+$g_p(u,v)=\sum_{i=1}^m u_iv_i/p_i$, and the **Amari–Chentsov tensor** is
+$T_p(u,v,w)=\sum_{i=1}^m u_iv_iw_i/p_i^2$. For $2\le m\le n$, a
+**congruent embedding** $f:S_m\to S_n$ is given by a partition of
+$\{1,\ldots,n\}$ into nonempty blocks $A_1,\ldots,A_m$ and probability
+vectors $q^{(i)}$ with positive entries on $A_i$, by
+$f(p)_j=p_iq^{(i)}_j$ for $j\in A_i$.
 
-* **58. Čencov's theorem.** Up to a positive constant factor, the Fisher–Rao
-  metric is the unique Riemannian metric on the positive simplex that is
-  invariant under congruent embeddings. The Amari–Chentsov tensor is, up to
-  a constant factor, the unique symmetric covariant $3$-tensor with the same
-  invariance. These two objects determine the one-parameter family of
-  $\alpha$-connections used to compare exponential and mixture geometries
-  on a parametric model.
+* **58. Čencov's theorem.** Let $(h_m)_{m\ge2}$ be Riemannian metrics on
+  the simplices $S_m$ such that $f^*h_n=h_m$ for every congruent embedding
+  $f:S_m\to S_n$. Then there is a constant $c>0$ with $h_m=c\,g$ on every
+  $S_m$. Likewise, a family of symmetric covariant $3$-tensors on the $S_m$
+  that is invariant under all congruent embeddings is a constant multiple
+  of the Amari–Chentsov tensor.
 
 ### Bootstrap for smooth functionals
 
 * **59. Bootstrap delta method.** Suppose both
   $r_n(T_n-\theta)\Rightarrow G$ and, conditionally on the observations,
-  $r_n(T_n^\star-T_n)\Rightarrow G$ in probability, with a tight limit
+  $r_n(T_n^\star-T_n)\Rightarrow G$ in probability in the bounded Lipschitz
+  metric (as in item 52), with a tight limit
   supported on $D_0$. For a map Hadamard differentiable as in item 28,
   the conditional law of
-  $r_n(\Phi(T_n^\star)-\Phi(T_n))$ converges to that of $\Phi'_\theta G$.
-  This justifies resampling smooth distributional functionals and quantiles
-  with positive density. If the first derivative vanishes, this theorem
-  only gives a degenerate limit; it does not justify the second-order
-  bootstrap. For a zero-mean normal sample, the conditional law of
-  $n((\bar X^\star)^2-\bar X^2)$ does not consistently estimate the law
-  of $n\bar X^2$.
+  $r_n(\Phi(T_n^\star)-\Phi(T_n))$ converges in probability to that of
+  $\Phi'_\theta G$, in the same metric. The theorem
+  does not extend to a vanishing first derivative: for an independent
+  $N(0,\sigma^2)$ sample, $\sigma>0$, the bounded Lipschitz distance between
+  the conditional law of $n((\bar X^\star)^2-\bar X^2)$ and the law of
+  $n\bar X^2$ does not converge to $0$ in probability.
 
 ### Accuracy and failure of the bootstrap
 
 A statistic is **asymptotically pivotal** when its limit law does not depend
 on unknown quantities.
 
-* **60. Second-order accuracy of the studentized bootstrap.** In the
-  setting of item 50 let $\hat\theta=g(\bar X)$ estimate $\theta=g(\mu)$, let
-  $\hat\sigma^2=h(\bar X)^2$ be a smooth consistent estimator of the
-  asymptotic variance of $\sqrt n\,\hat\theta$, and let
-  $T=\sqrt n(\hat\theta-\theta)/\hat\sigma$. Let
+* **60. Second-order accuracy of the studentized bootstrap.** Let $X$ be a
+  random vector in $\mathbb R^d$ with mean $\mu$, finite moments of every
+  order, and Cramér's condition of item 50. Let $g$ and $h$ be infinitely
+  differentiable near $\mu$, with $h(\mu)>0$ and $h(\mu)^2$ the asymptotic
+  variance of $\sqrt n\,g(\bar X)$. Put $\hat\theta=g(\bar X)$,
+  $\theta=g(\mu)$, $\hat\sigma=h(\bar X)$, and
+  $T=\sqrt n(\hat\theta-\theta)/\hat\sigma$, so that item 50 applies to $T$
+  with $A(x)=(g(x)-g(\mu))/h(x)$. Let
   $T^\star=\sqrt n(\hat\theta^\star-\hat\theta)/\hat\sigma^\star$ be computed from
-  a resample drawn from the empirical distribution. Assume $g$ and $h$
-  smooth, enough moments, and Cramér's condition, so that $T$ and, with
-  probability tending to one, $T^\star$ admit the expansions of item 50 to
-  order $n^{-1}$, the bootstrap polynomials being the population ones with
-  moments replaced by sample moments. Then
+  a resample of size $n$ drawn from the empirical distribution. Then
   $$\sup_x\bigl|P(T^\star\le x\mid X_1,\ldots,X_n)-P(T\le x)\bigr|
   =O_P(n^{-1}),$$
-  whereas the normal approximation to the law of $T$ has error of order
-  $n^{-1/2}$ unless $p_1$ vanishes. For the nonpivotal
-  $\sqrt n(\hat\theta-\theta)$ the bootstrap error is generally of exact
-  order $n^{-1/2}$, because $\hat\sigma-\sigma$ is of that order. Let
-  $\hat v_\alpha$ be the $\alpha$-quantile of the conditional law of
-  $T^\star$. The one-sided percentile-$t$ interval
+  whereas
+  $$\sup_x|P(T\le x)-\Phi(x)|=n^{-1/2}\sup_x|p_1(x)\varphi(x)|+o(n^{-1/2}),$$
+  with $p_1$ the polynomial of item 50. Let $\hat v_\beta$ be the
+  $\beta$-quantile of the conditional law of $T^\star$ and $\hat x_\beta$ that
+  of $\hat\theta^\star$. The one-sided percentile-$t$ interval
   $(-\infty,\hat\theta-n^{-1/2}\hat\sigma\hat v_\alpha]$ has coverage
-  $1-\alpha+O(n^{-1})$, while the one-sided normal-theory and percentile
-  intervals have coverage error of order $n^{-1/2}$ in general. In two-sided
-  equal-tailed intervals the terms of order $n^{-1/2}$ cancel by parity, so
-  all three have coverage error $O(n^{-1})$; the symmetric two-sided
-  percentile-$t$ interval has coverage error $O(n^{-2})$.
+  $1-\alpha+O(n^{-1})$, while the one-sided normal-theory interval
+  $(-\infty,\hat\theta+n^{-1/2}\hat\sigma z_\alpha]$ and the one-sided
+  percentile interval $(-\infty,\hat x_{1-\alpha}]$ have coverage
+  $1-\alpha+O(n^{-1/2})$. The corresponding two-sided equal-tailed intervals
+  of nominal coverage $1-2\alpha$ all have coverage $1-2\alpha+O(n^{-1})$,
+  and the symmetric percentile-$t$ interval
+  $[\hat\theta-n^{-1/2}\hat\sigma\hat w,\hat\theta+n^{-1/2}\hat\sigma\hat w]$,
+  with $\hat w$ the $(1-2\alpha)$-quantile of the conditional law of
+  $|T^\star|$, has coverage $1-2\alpha+O(n^{-2})$.
 
 * **61. Inconsistency of the bootstrap for the sample maximum.** Let $F$
   be continuous with right endpoint $\theta<\infty$, so $F(\theta)=1$ and
@@ -1025,12 +1047,14 @@ on unknown quantities.
   standard exponential law. The bootstrap maximum $X^\star_{n(n)}$ equals
   $X_{n(n)}$ with conditional probability
   $$1-(1-1/n)^n\to1-e^{-1},$$
-  so the conditional law of $b_n(X_{n(n)}-X^\star_{n(n)})$ keeps an atom of
-  mass near $1-e^{-1}$ at $0$ and does not converge to the continuous limit:
-  the bootstrap is inconsistent. With resample size $m\to\infty$ and
-  $m/n\to0$, the $m$-out-of-$n$ bootstrap of $b_m(X_{n(n)}-X^\star_{m(m)})$ is
-  consistent when $b_n=n^{1/\delta}$ for some $\delta>0$, as is subsampling,
-  item 57.
+  so the conditional law of $b_n(X_{n(n)}-X^\star_{n(n)})$ has an atom of
+  mass $1-(1-1/n)^n$ at $0$, and its Kolmogorov distance to the continuous
+  limit law of $b_n(\theta-X_{n(n)})$ is at least $\bigl(1-(1-1/n)^n\bigr)/2$,
+  which does not tend to $0$. With resample size $m\to\infty$ and
+  $m/n\to0$, and $b_n=n^{1/\delta}$ for some $\delta>0$, the Kolmogorov
+  distance between the conditional law of $b_m(X_{n(n)}-X^\star_{m(m)})$ and
+  that limit law tends to $0$ in probability; subsampling, item 57, is
+  likewise consistent.
 
 ## Reference guide
 
@@ -1067,9 +1091,21 @@ The definitions of quadratic-mean differentiability and bowl-shaped loss
 were checked against Chapters 7 and 8. Pearson tests and generalized
 moment estimation are recorded as quadratic normal-limit applications,
 with fitting and overidentification degrees of freedom stated explicitly.
-The KL expansion, density saddlepoint approximation, Bartlett plug-in
-correction, and subsampling centering have hypotheses beyond a bare
-first-order weak limit; these are made explicit in items 13, 54, 55, and 57.
+The KL expansion, density saddlepoint approximation, and subsampling
+centering have hypotheses beyond a bare first-order weak limit; these are
+made explicit in items 13, 55, and 57. Item 55 is stated pointwise in $x$:
+it follows by exponential tilting at $\hat s$, as in Severini, *Elements of
+Distribution Theory*, Theorem 14.4 and its proof, combined with the local
+expansion of Bhattacharya and Ranga Rao, Theorem 19.2 with $s=4$, whose
+hypothesis is the $\nu$-th power integrability of the tilted
+characteristic function; the odd term vanishes at the mean. The uniform
+relative error over compact sets of $x$ asserted by Daniels (1954) and
+Jensen (1995) was not checked against those sources, which are not local,
+and is not stated. An earlier entry on the Bartlett
+correction of the likelihood-ratio statistic (item 54) was removed because
+its hypotheses, a valid Edgeworth expansion of the likelihood-ratio
+statistic to order $n^{-2}$, have no concise precise formulation; see
+[SYNOPSIS-CONCORDANCE.md](SYNOPSIS-CONCORDANCE.md).
 
 Pfanzagl, Chapters 6–8, is the local theorem-proof source for consistency of
 maximum likelihood, asymptotic normality, the convolution theorem, and
@@ -1104,7 +1140,7 @@ the pivotal and nonpivotal bootstrap errors; Section 3.5, Proposition 3.1
 and subsections 3.5.4–3.5.5, for one- and two-sided coverage errors; and
 Theorems 5.1–5.2 for the regularity behind bootstrap Edgeworth and
 Cornish–Fisher expansions. Serfling's scan did not yield extractable
-text in the first pass. Items 49 and 51–57 are the forms shared by the extractable local sources and
+text in the first pass. Items 49, 51–53, and 55–57 are the forms shared by the extractable local sources and
 by the monographs named in the bibliography.
 
 The third expansion added items 5, 7, 9, 10, 15, 19–22, 24, 25, 50, 60, and 61 after reading the following passages.
@@ -1142,15 +1178,35 @@ theorem.
 Huber and Ronchetti, and Hampel, Ronchetti, Rousseeuw, and Stahel, are
 absent locally; items 44 and 45
 are the forms used by Jurečková and Sen and by the robust chapters of the
-general inference texts. Tsiatis's missing-data monograph is absent locally;
+general inference texts. Huber's saddle point in item 44 was checked
+against Jurečková and Sen, Section 2.4, displays (2.4.9)–(2.4.16), which
+restate Huber (1964, *Ann. Math. Statist.* 35) for the symmetrically
+contaminated normal model: the score $\psi_k$, the equation for $k$, which
+is (2.4.15) rewritten, and the inequality chain (2.4.16). The explicit
+density of $G_0$, its decomposition with $H_0$ carried by $|x|>k$, and the
+identity $V(\psi_k,G_0)=1/I(G_0)$ were verified directly; Huber's paper
+itself was not accessible. The breakdown point of least median of squares
+in item 45 is Rousseeuw (1984, *J. Amer. Statist. Assoc.* 79, 871–880),
+Theorem 1, for the replacement breakdown point of Donoho and Huber, his
+display (2.1), with general position meaning that any $p$ observations
+determine the coefficient vector uniquely. Tsiatis's missing-data monograph is absent locally;
 item 37 is the augmented inverse-probability function of that book and of
 van der Laan and Robins.
 
 Item 41 is van der Vaart, Example 25.27 and Section 25.8.1. Items 42 and 43
 are Little and Rubin, Sections 8.4.3 and 10.2, including equations
 (8.27)–(8.30) and (10.13)–(10.15). Item 47 follows van der Vaart, Section
-20.1. Item 48 is Jurečková and Sen, Theorems 5.5.1–5.5.3, with the breakdown
-remarks of their Section 4.8.
+20.1. Item 48 is the convex-criterion case of the regression theory of
+Jurečková and Sen, Section 5.5, with the breakdown remarks of their
+Section 4.8; their Theorems 5.5.1–5.5.3 also cover nonconvex criteria and
+studentized versions. The statement of item 48 is an application of Hjort
+and Pollard, *Asymptotics for minimisers of convex processes* (1993,
+arXiv:1107.3806), Theorem 2.2, with $g_i(y,t)=\rho(y-x_i^\top t)$,
+$D_i=-\psi(\varepsilon_i)x_i$, $A_i=\gamma x_ix_i^\top$, $J=\gamma Q$, and
+$K=\mathbb E\psi(\varepsilon)^2\,Q$; the stated moment, continuity, and
+design conditions give their remainder conditions and the Lindeberg
+condition. This is the convexity argument of Pollard (1991) for least
+absolute deviations, which Jurečková and Sen cite in Section 5.7.
 
 Hampel's general optimal bounded-influence estimator is not stated, because
 the Hampel–Ronchetti–Rousseeuw–Stahel monograph is not available locally;
@@ -1169,6 +1225,7 @@ Local texts directly consulted or identified for this selection:
 - [Schervish, *Theory of Statistics*](../lean-CKMA/References/Schervish1995TheoryStatistics-Springer.SSS.pdf).
 - [Bickel and Doksum, *Mathematical Statistics*, Volume I](../lean-CKMA/References/BickelDoksum2015MathematicalStatisticsBasicIdeasSelectedTopics2ndEdVol1-ChapmanHallCRC.TextsStatSci.pdf).
 - [Bhattacharya and Ranga Rao, *Normal Approximation and Asymptotic Expansions*](../lean-CKMA/References/BhattacharyaRangaRao2010NormalApproximationAsymptoticExpansions-SIAM.CAM64.pdf).
+- [Severini, *Elements of Distribution Theory*](../lean-CKMA/ReferencesSuppl/Severini2005ElementsDistributionTheory-Cambridge.SerStatProbMat.pdf).
 - [Efron, *The Jackknife, the Bootstrap, and Other Resampling Plans*](../lean-CKMA/References/Efron1982JackknifeBootstrapOtherResamplingPlans-SIAM.CBMS38.pdf).
 - [Efron and Tibshirani, *An Introduction to the Bootstrap*](../lean-CKMA/References/EfronTibshirani1994IntroductionBootstrap-ChapmanHallCRC.MSAP57.pdf).
 - [Shao and Tu, *The Jackknife and Bootstrap*](../lean-CKMA/References/ShaoTu1995JackknifeBootstrap-Springer.SSS.pdf).

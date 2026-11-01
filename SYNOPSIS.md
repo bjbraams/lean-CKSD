@@ -31,7 +31,7 @@ the sibling analysis project. Those entries are cited as CKMA SYNOPSIS items.
 
 ## Progress
 
-As of 2026-11-01, Sections 101–108 contain 536 numbered entries.
+As of 2026-11-01, Sections 101–108 contain 535 numbered entries.
 
 The series was first written on 2026-10-29 as thirteen synopses, Sections
 101–113, with 220 entries. A mathematical-statistics expansion and a
@@ -53,6 +53,17 @@ Section 108. The lettered subdivisions were reduced from 33 to 13. Entries
 were renumbered in reading order within each new section, and all
 cross-references were rewritten; no statement was changed by the
 reorganization. The bibliography was reorganized in the same way.
+
+A review the same day checked every entry for a precise
+definition–theorem formulation: one whose hypotheses, quantifiers, and
+terms are explicit enough to be stated formally without guessing.
+Unstated regularity conditions were written out or replaced by a clean
+special case, hedged or approximate conclusions were replaced by exact
+limits, inequalities, or explicitly quantified constants, commentary on
+practice was deleted, and several incorrect statements were corrected.
+Of the 536 entries, 398 were reworded and one, the Bartlett correction
+(102.54), was removed because its hypotheses have no concise precise
+form.
 
 The first expansion develops exact sampling and confidence procedures, decision
 bounds and simultaneous tests, functional and resampling asymptotics,
@@ -123,7 +134,7 @@ relevant. Definitions are interleaved with the results they support, and
 cross-references place shared probability and analytic tools in CKMA.
 
 * 101. Statistical inference: foundations, decision theory, estimation, and testing: [SYNOPSIS101.md](SYNOPSIS101.md), 70 numbered entries.
-* 102. Asymptotic, semiparametric, and robust statistics: [SYNOPSIS102.md](SYNOPSIS102.md), 61 numbered entries.
+* 102. Asymptotic, semiparametric, and robust statistics: [SYNOPSIS102.md](SYNOPSIS102.md), 60 numbered entries.
 * 103. Nonparametric and high-dimensional inference: [SYNOPSIS103.md](SYNOPSIS103.md), 55 numbered entries.
 * 104. Bayesian inference and stochastic computation: [SYNOPSIS104.md](SYNOPSIS104.md), 77 numbered entries.
 * 105. Linear models, multivariate analysis, experimental design, and causal inference: [SYNOPSIS105.md](SYNOPSIS105.md), 71 numbered entries.

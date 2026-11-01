@@ -5,7 +5,9 @@ Part of the [mathematical synopsis series](SYNOPSIS.md).
 On 2026-11-01 the synopses of Sections 101–113 were reorganized into the
 eight Sections 101–108, and the entries of each new synopsis were
 renumbered in reading order. This file maps every identifier of the
-earlier numbering to its current identifier. Identifiers of the form
+earlier numbering to its current identifier. Titles are the current
+ones, after the review for precise formulation later the same day; an
+entry removed after the reorganization is marked as such. Identifiers of the form
 `<ddd>.<k>` below the heading of an earlier section are earlier
 identifiers; the arrow gives the current one and its title. From this
 reorganization on, identifiers are stable in the sense of
@@ -30,7 +32,7 @@ reorganization on, identifiers are stable in the sense of
 - 101.3 → 101.3, Birnbaum's theorem.
 - 101.4 → 101.4, Structure of a full-rank exponential family.
 - 101.5 → 101.5, Completeness in a full-rank exponential family.
-- 101.6 → 101.6, Pitman–Koopman–Darmois theorem.
+- 101.6 → 101.6, Pitman–Koopman–Darmois theorem, monotone form.
 - 101.7 → 101.7, Rao–Blackwell theorem.
 - 101.8 → 101.8, Lehmann–Scheffé theorem.
 - 101.9 → 101.9, Basu's theorem.
@@ -65,7 +67,7 @@ reorganization on, identifiers are stable in the sense of
 - 102.4 → 101.35, Constant risk and least favorable priors.
 - 102.5 → 101.36, Extended Bayes rules.
 - 102.6 → 101.37, Complete classes.
-- 102.7 → 101.39, Hunt–Stein theorem.
+- 102.7 → 101.39, Hunt–Stein theorem, compact form.
 - 102.8 → 101.40, Pitman estimator of location.
 - 102.9 → 101.42, Mean parameterization.
 - 102.10 → 101.43, Conditional exponential families.
@@ -119,7 +121,7 @@ reorganization on, identifiers are stable in the sense of
 - 103.15 → 102.51, Bootstrap of the mean.
 - 103.16 → 102.52, Bootstrap of the empirical distribution function.
 - 103.17 → 102.53, Jackknife variance of a smooth function of means.
-- 103.18 → 102.54, Bartlett correction.
+- 103.18 → 102.54, Bartlett correction; 102.54 removed on 2026-11-01.
 - 103.19 → 102.55, Saddlepoint approximation.
 - 103.20 → 102.56, Empirical likelihood.
 - 103.21 → 102.57, Subsampling.
@@ -162,7 +164,7 @@ reorganization on, identifiers are stable in the sense of
 - 104.9 → 103.9, Pinsker's theorem and the Sobolev rate.
 - 104.10 → 103.10, Soft-threshold oracle inequality.
 - 104.11 → 103.11, Grenander estimator.
-- 104.12 → 103.12, Chi-bar-squared limit.
+- 104.12 → 103.12, Chi-bar-squared law.
 - 104.13 → 103.13, Nonparametric detection boundary.
 - 104.14 → 102.34, Semiparametric convolution bound.
 - 104.15 → 102.35, Ignorability.
@@ -525,7 +527,7 @@ reorganization on, identifiers are stable in the sense of
   inequalities.
 - 112.27 → 104.45, Langevin Monte Carlo under a logarithmic Sobolev inequality.
 - 112.28 → 104.46, Stochastic gradient Langevin dynamics.
-- 112.29 → 104.47, Mixing and scaling of Metropolis-adjusted Langevin.
+- 112.29 → 104.47, Mixing of Metropolis-adjusted Langevin.
 - 112.30 → 104.48, Invariance, contraction, and hypocoercivity.
 - 112.31 → 104.49, Benaïm's limit-set theorem.
 - 112.32 → 104.50, Stability by the scaling limit.
