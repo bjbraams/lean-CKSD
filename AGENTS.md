@@ -13,8 +13,8 @@ report that fact rather than proceeding without it.
 
 ## Project
 
-This is a new project in the area of Core Knowledge of Statistics and Data Science at the level
-of graduate students and beginning researchers. The project follows the style of the earlier
+This project is in the area of Core Knowledge of Statistics and Data Science at the level
+of graduate students and beginning researchers. The project follows the style of the
 sibling ../lean-CKMA project that is devoted to core knowledge in mathematical analysis.
 
 One component of the lean-CKSD project is to assemble a bibliography. The main working file is
@@ -31,17 +31,15 @@ Files `SYNOPSIS.md` and `SYNOPSIS101.md`–`SYNOPSIS108.md` describe the mathema
 Sections 101–108, in the style of the SYNOPSIS files in the sibling CKMA project. `SYNOPSIS.md`
 is the index. Numbered entries, cited as `<ddd>.<k>`, are stable identifiers: existing numbers
 are kept when a statement is revised, removed numbers are not reused, and a new statement takes
-the next free number in its file. The sections were reorganized on 2026-11-01 from the earlier
-Sections 101–114; `SYNOPSIS-CONCORDANCE.md` maps every earlier identifier to its current one. These files are meant for the human mathematician reader; they
+the next free number in its file. These files are meant for the human mathematician reader; they
 do not reference any technical Lean concepts. Proofs are outside their scope. The selection is
-the recurring core of each section. The index records how far the series has been written.
+the recurring core of each section. The index records the scope and size of the series.
 
-Following completion of the synopsis series, the next major task is to inventorize
-coverage of the SYNOPSIS in Lean Mathlib and TauCeti. This inventory is to be documented in files
+Coverage of the SYNOPSIS in Lean Mathlib and TauCeti is documented in files
 STRUCTURE.md and STRUCTUREddd.md, following the style of the sibling CKMA project. These STRUCTURE
-files are meant to support future Lean projects. The inventory has been written: `STRUCTURE.md`
-is the index and states the classification rule (covered, partly covered, not covered);
-`MathlibCoverage.md` and `TauCetiCoverage.md` summarize coverage per library; `GAPS.md` restates
+files support Lean projects. `STRUCTURE.md` is the index and states the classification rule
+(covered, partly covered, not covered); `MathlibCoverage.md` and `TauCetiCoverage.md`
+summarize coverage per library; `GAPS.md` restates
 the principal results that neither library proves. `GAPS_EASY.md` outlines
 short derivations from library results for some of them.
 
@@ -53,6 +51,10 @@ new files.
 
 ## Documentation consistency
 
+- Describe the present mathematical content and coverage. Do not include
+  development histories, review rounds, or accounts of additions, removals,
+  renumbering, or changes in inventory counts. Retain source provenance
+  and the library revisions needed to interpret coverage claims.
 - Treat each numbered SYNOPSIS statement as the mathematical source for
   its restatements in GAPS.md and GAPS_EASY.md. Propagate corrections to
   hypotheses, conventions, and conclusions to every affected restatement
@@ -61,8 +63,7 @@ new files.
 - After changing statements or selections, recount synopsis entries,
   coverage classifications, selected gaps, easy entries, and Scope
   paragraphs. Update the indexes and library summaries, and check local
-  Markdown links. New entries take the next free identifier; the
-  concordance identifies later additions without inventing earlier IDs.
+  Markdown links. New entries take the next free identifier.
 - Preserve the explicit distinction between CKSD's direct-declaration
   coverage rule and CKMA's broader use of partly covered. Comparisons need
   a common rule and source baseline before counts can be combined.

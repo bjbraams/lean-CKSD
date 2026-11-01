@@ -1491,8 +1491,8 @@ treatment. Items 22 and 23 are the invariance statements of the Monte Carlo
 texts. Item 24 invokes the geometric
 ergodicity criterion already numbered in the analysis synopsis.
 
-For the third expansion, Berger's Sections 4.3.2–4.3.3 and 4.5.2–4.5.4
-were read for highest posterior density sets, the point-null Bayes factor
+Berger's Sections 4.3.2–4.3.3 and 4.5.2–4.5.4
+supply highest posterior density sets, the point-null Bayes factor
 (4.17) with the lower bound of Theorem 1 in Section 4.3.3, the normal-means
 empirical Bayes estimates (4.33)–(4.35), and Robbins' Poisson estimator
 (Example 16). Robert's Definition 5.5.2, Lemma 10.4.2, and Examples 10.4.1
@@ -1516,20 +1516,20 @@ coordinate update.
 Bernardo and Smith, *Bayesian Theory*, DeGroot, *Optimal Statistical
 Decisions* were not located locally. Supplemental copies of Ghosh–Ramamoorthi,
 Kaipio–Somersalo, Asmussen–Glynn, and Chopin–Papaspiliopoulos are present;
-they were located but not read for this expansion. The consulted
+they are not part of the consulted source basis. The consulted
 supplemental copies of Ghosal–van der Vaart and Robert–Casella are linked
 below.
 
 #### Stochastic dynamics for data
 
-Chewi's local 2026 manuscript, Theorem 4.3.6, was reread. Its entropy
-guarantee is for a mixture of iterate laws, with square-root KL bounded by
+Chewi's local 2026 manuscript, Theorem 4.3.6, gives an entropy
+guarantee for a mixture of iterate laws, with square-root KL bounded by
 $\varepsilon$; it is not a guarantee for the law of the arithmetic average.
 The Gaussian covariance calculation in item 42 gives an exact example
 of discretization bias. Pavliotis supplies the invariant-density and entropy
 framework; Kushner–Yin and Borkar supply stochastic approximation. The
 minus sign in the recursion makes positive real parts of $Dh$ the stable
-case. Nonnegative radial drift without attraction was insufficient.
+case. Nonnegative radial drift without attraction is insufficient.
 The original paper of Polyak and Juditsky (SIAM J. Control Optim. 30,
 1992) could not be accessed. The averaging statement in item 40 was
 checked against Theorem B.1 of
@@ -1625,7 +1625,7 @@ Evensen's book and the original papers of Song, Ho–Jain–Abbeel, and
 Lipman and coauthors were not located locally. Their diffusion framework
 is treated in the consulted Bishop–Bishop text. Del Moral's 2013 volume
 is in `References`; his 2004 Feynman–Kac monograph is in `ReferencesSuppl`
-and was used for the third expansion.
+and supplies the Feynman–Kac results below.
 
 For 104B, Chewi's manuscript was read in Theorems 1.2.21–1.2.26 (Poincaré
 and $\chi^2$ decay, logarithmic Sobolev and KL decay; item 44), Theorems
@@ -1657,9 +1657,7 @@ depending only on $c_0$ with a universal prefactor, and Theorem 5.3.15 a
 universal rate constant $c'$; the coefficients $a,b,c$ of its Lyapunov
 functional are not specified in the statement. Robert and Casella, Section 7.8, was read for
 the acceptance rates $0.234$ and $0.574$; the papers of Roberts, Gelman, and
-Gilks and of Roberts and Rosenthal were not available locally, and the
-scaling-limit statements formerly in item 47 were removed because their
-hypotheses could not be stated precisely from local sources. Figalli–Glaudo,
+Gilks and of Roberts and Rosenthal are not available locally. Figalli–Glaudo,
 Section 3.3, was read for the JKO scheme on bounded convex domains; the
 whole-space hypotheses of item 43 are those of the original JKO paper, which
 is not local. Borkar's second edition, Chapter 2 (assumptions (A1)–(A4),
@@ -1674,9 +1672,7 @@ of Section 4.4, for item 60 with $m=1$. Liu, Section 3.4, and Robert–Casella,
 Section 14.3.5, were read for residual and systematic resampling; the
 variance comparison in item 61 is the law of total variance. Law, Stuart, and
 Zygalakis, Theorems 2.8, 2.11, 3.10, and 3.12 and Section 4.2.1, were read for
-item 62. An earlier entry on the free energy and Gibbs fixed point of
-mean-field Langevin training had no local full-text source and was
-removed; see [SYNOPSIS-CONCORDANCE.md](SYNOPSIS-CONCORDANCE.md).
+item 62.
 
 For 104C, Chewi, Chapter 12 (Sections 12.1–12.3, Theorem 12.3.2 and Lemma
 12.3.3), was read for items 73, 75, and 76, including the denoising
@@ -1692,9 +1688,8 @@ $\mathop{\mathrm{KL}}(\pi^*\|\pi_t)\to0$ and convergence in variation of
 the couplings under the stated lower bound and exponential integrability
 of $c$. Nutz, Remark 6.17, records that Rüschendorf's convergence theorem
 (Ann. Statist. 23, 1995, not accessed) also needs additional integrability
-conditions, so an earlier claim that finiteness of
-$\mathop{\mathrm{KL}}(P^*\|R)$ alone gives convergence of the couplings
-in total variation was withdrawn. The finite-state rate is CKMA SYNOPSIS39,
+conditions; finiteness of $\mathop{\mathrm{KL}}(P^*\|R)$ alone is not
+the convergence criterion used here. The finite-state rate is CKMA SYNOPSIS39,
 item 90.
 
 Local texts directly consulted or identified for this selection:

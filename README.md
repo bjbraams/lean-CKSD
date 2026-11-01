@@ -4,7 +4,6 @@ This project inventories core statistics and data science at the level of
 graduate students and beginning researchers, and compares that mathematics
 with the Lean libraries Mathlib and TauCeti. It follows the sibling
 [Core Knowledge of Mathematical Analysis](../lean-CKMA/README.md) project.
-The projects remain separate; a future merger has not been performed.
 
 The [bibliography](CKSD-bib.md) organizes Sections 101–109. The mathematical
 synopses and library inventories cover Sections 101–108; Section 109, on
@@ -13,8 +12,7 @@ optimization and numerical algorithms, is outside this series.
 ## Main documents
 
 - [SYNOPSIS.md](SYNOPSIS.md) indexes the mathematical synopses. Their
-  numbered statements have stable identifiers, with the earlier numbering
-  recorded in [SYNOPSIS-CONCORDANCE.md](SYNOPSIS-CONCORDANCE.md).
+  numbered statements have stable identifiers.
 - [STRUCTURE.md](STRUCTURE.md) indexes the coverage inventories and records
   their source revisions and classification rule. Each topic file names
   declarations, source locations, hypotheses, and missing results.

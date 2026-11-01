@@ -1343,12 +1343,12 @@ regime-specific means.
 
 #### Survey sampling
 
-Items 72 and 73 add the finite-population sampling core represented in
+Items 72 and 73 describe the finite-population sampling core represented in
 Cochran, *Sampling Techniques*, and Särndal, Swensson, and Wretman,
 *Model Assisted Survey Sampling*. Neither full text was located in the
 local reference directories; the supplemental Ghosh–Meeden file is a
 preview and is not treated as a full source. The publisher records were
-checked for the two added books. Horvitz and Thompson's original paper
+checked for these two books. Horvitz and Thompson's original paper
 is [JASA 47 (1952), 663–685](https://doi.org/10.1080/01621459.1952.10483446).
 The formulas were checked directly by finite indicator-moment and
 covariance calculations, including the zero row sums for fixed-size
@@ -1361,17 +1361,17 @@ population values with randomness from the sampling design.
 
 #### Linear models, multivariate analysis, and design
 
-For the expansion, Seber–Lee's Section 3.10 was read for generalized
-least squares and Section 10.1 for case deletion and studentization;
+Seber–Lee's Section 3.10 supplies generalized
+least squares and Section 10.1 supplies case deletion and studentization;
 its Chapters 4 and 12 supply the nested-model and shrinkage framework.
 Anderson's Chapters 3, 11, and 12 cover normal covariance likelihood,
 principal components, and canonical correlations. The partial-regression,
 ridge, and balanced-block formulas are given with their matrix and rank
-conditions. Item 40 now imposes the sum-of-orders condition on effect
+conditions. Item 40 imposes the sum-of-orders condition on effect
 columns; strength $t$ alone does not decorrelate all effects of orders
 less than $t$.
 
-For the third expansion, the following passages were read. Rao's
+The following passages support the numbered statements. Rao's
 Section 3b.4 and its Complement 1.5 (Fisher–Cochran and Craig–Sakamoto),
 Seber–Lee's Theorems 2.7–2.9 and corollary, and Searle, Casella, and
 McCulloch's display (59) and (62) give item 15. Scheffé's Section 2.10,
@@ -1405,8 +1405,8 @@ give items 44 and 45.
 
 The local Agresti copies of *Foundations of Linear and Generalized Linear
 Models* and *Categorical Data Analysis* are image scans without usable
-text extraction in this pass. They were not used as full-text evidence;
-the linear-model expansion uses Seber–Lee and Anderson, and the canonical
+text extraction. They were not used as full-text evidence;
+the linear-model statements use Seber–Lee and Anderson, and the canonical
 likelihood calculation specializes the exponential-family formulas in
 SYNOPSIS101.
 
@@ -1430,15 +1430,15 @@ numbered entries record the sampling consequences.
 
 #### Causal inference
 
-For the expansion, Ding's Section 18.2 was read for sharp worst-case
-bounds and Section 20.2.2, Theorem 20.2, for identification at a regression
+Ding's Section 18.2 supplies sharp worst-case
+bounds and Section 20.2.2, Theorem 20.2, supplies identification at a regression
 discontinuity. Item 59 records the elementary two-period identification
 identity under an explicit parallel-trends assumption. The variance in
 item 56 is obtained from the efficient influence function by conditioning
 on $X$. Items 49 and 56 use the sample-splitting conditions in SYNOPSIS102, item 39, when fitted nuisances are evaluated on the observations.
 
-The path-blocking definition and the covariate-kernel $g$-formula have
-been written explicitly: an active path can contain noncolliders outside
+The path-blocking definition and the covariate-kernel $g$-formula specify
+that an active path can contain noncolliders outside
 the conditioning set, and treatment fixing in a longitudinal intervention
 changes which covariate transition laws are integrated. A sharp-null
 randomization test is item 38; its exactness does not extend
@@ -1461,7 +1461,7 @@ $o_P(n^{-1/2})$ under which the estimated influence function is efficient.
 Item 66 is the paired sensitivity model: the worst-case assignment
 probability within a pair is $\Gamma/(1+\Gamma)$.
 
-For the third expansion the following passages were read. Ding: Section
+Further source passages are as follows. Ding: Section
 5.3 (stratified experiments, including the comparison (5.4) with complete
 randomization) for item 51, where the exact variance difference replaces
 Ding's large-stratum approximation and was checked by direct algebra;
@@ -1493,8 +1493,8 @@ structural models. Peters, Janzing, and Schölkopf: Lemma 7.8 and Section
 7.2.1 for item 70, and Proposition 7.5 and Theorems 7.6–7.7 for item 71.
 Item 70 records the population (oracle) form of the PC algorithm; the
 sample consistency result of Kalisch and Bühlmann (2007) needs conditions
-that are not restated here. Matching estimators and their bias
-(Abadie and Imbens) were not added: Ding's Chapter 15 gives the
+that are not restated here. Matching-estimator rate theory (Abadie and
+Imbens) is outside the selection: Ding's Chapter 15 gives the
 bias-corrected estimator but not the rate theory, and the original papers
 are not local.
 

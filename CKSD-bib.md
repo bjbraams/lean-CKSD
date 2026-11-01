@@ -2,9 +2,7 @@
      Sections 101-106 are mathematical statistics; Sections 107-109 are
      data science. They follow the conventions of CKMA-bib.md (../lean-CKMA).
      Numbers start at 101 to avoid collision with Sections 1-55 there;
-     "Section N" with N <= 55 refers to CKMA-bib.md. The sections were
-     reorganized on 2026-11-01 from the earlier Sections 101-114; see
-     SYNOPSIS-CONCORDANCE.md for the correspondence. -->
+     "Section N" with N <= 55 refers to CKMA-bib.md. -->
 
 ---
 

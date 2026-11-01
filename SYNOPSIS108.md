@@ -1372,7 +1372,7 @@ Functions in its Chapter VIII.2, due to Cohen-Steiner, Edelsbrunner, and
 Harer (*Discrete Comput. Geom.* 37, 2007).
 Chazal–de Silva–Glisse–Oudot, especially the isometry theorem in Chapter 5,
 distinguishes $q$-tameness from a pointwise finite-dimensional interval
-decomposition. The new rank and offset statements make the passage from
+decomposition. The rank and offset statements make the passage from
 geometric perturbations to persistence explicit. The Čech–Rips constants
 retain the radius convention already used here.
 
@@ -1383,15 +1383,15 @@ needs the chart assumptions of their Theorem 3.10, which item 5 states. Mere geo
 of a support ball is not used as a sufficient uniqueness theorem.
 
 The original [Genovese and coauthors paper](https://www.jmlr.org/papers/v13/genovese12a.html),
-Theorems 1–2 and Section 2, was read online: item 7 now includes its
+Theorems 1–2 and Section 2, was read online: item 7 uses its
 perpendicular-noise model and logarithmic gap. For landscapes,
 [Bubenik's paper](https://www.jmlr.org/papers/v16/bubenik15a.html),
 Theorems 8–10, supplies the type-2 requirement. The finite-net size in
 item 22 includes the covering logarithm; item 25 takes a calibrated
 sup-norm radius as given.
 
-The local Chung text remains the source for normalized spectral quantities.
-The added multidimensional-scaling and locally-linear-embedding formulas
+The local Chung text is the source for normalized spectral quantities.
+The multidimensional-scaling and locally-linear-embedding formulas
 record their finite-dimensional variational problems. They do not assume
 that graph shortest-path distances are already exact intrinsic coordinates,
 or that uncorrected nonuniform sampling gives a Laplace–Beltrami limit.
@@ -1403,8 +1403,7 @@ not read as a local full text; the reconstruction framework is also developed
 in the local topology monographs. The Mapper cover is refined into its
 connected pullback components before taking its nerve.
 
-For the third expansion (items 11–17 and 31–39 and the revision of item 22), the
-following local passages were read. Chung, Lemma 1.7, gives the kernel and
+Items 11–17, 22, and 31–39 have the following local source basis. Chung, Lemma 1.7, gives the kernel and
 spectral range of the normalized Laplacian in item 11. Wang, *Geometric
 Structure of High-Dimensional Data*, Chapter 12.1, gives the Laplacian
 eigenmap optimization of item 12, and Section 8.5 the Isomap justification
@@ -1432,19 +1431,13 @@ one. At radius $0.75$ the displayed bounds hold, but every sampling ball
 contains the origin and their union is star-shaped. The noiseless
 restriction avoids this counterexample. Item 5 points to item 13.
 
-Some statements were not checked against a local full text. Two
-earlier entries, on density-corrected Laplace–Beltrami limits (after
-Coifman–Lafon and Hein–Audibert–von Luxburg) and on the consistency of
-spectral clustering (after von Luxburg–Belkin–Bousquet), were removed for
-that reason; see [SYNOPSIS-CONCORDANCE.md](SYNOPSIS-CONCORDANCE.md).
-
 The following primary papers were read online for items 13 and 35–39.
 Afsari's paper (Proc. Amer. Math. Soc. 139 (2011), 655–673) could not be
 fetched; its Theorem 2.1, as restated by Pennec–Sommer–Fletcher,
 Theorem 2.2, and in
 [Afsari, Tron, and Vidal, Theorem 2.6 and footnote 11](https://arxiv.org/abs/1201.0925),
 requires the support to lie in a ball $B(o,\rho)$ with $\rho<r^*$, and
-gives a unique global minimizer inside that ball. Item 13 now states that
+gives a unique global minimizer inside that ball. Item 13 uses that
 hypothesis; Pennec–Sommer–Fletcher state the finite-data case.
 [Skraba and Turner, Theorem 4.6](https://arxiv.org/abs/2006.16824)
 proves the cellular bound of item 35 with the $\ell^q$ ground metric on
@@ -1489,7 +1482,7 @@ each law. The quantile-process limit in item 47 specializes SYNOPSIS102, items 6
 For item 40, [Fournier–Guillin, Theorem 1](https://arxiv.org/abs/1312.2128),
 was read online. It gives upper bounds with moment remainders, not an
 exact rate for every measure. Its excluded exponents are $q=2p$ for
-$p\ge d/2$ and $q=d/(d-p)$ for $p<d/2$, as now stated in item 40; the
+$p\ge d/2$ and $q=d/(d-p)$ for $p<d/2$, as stated in item 40; the
 bounded-support case follows by taking $q$ large. The bounded-domain positivity statement
 in item 44 follows [Feydy and coauthors, Theorem 1](https://proceedings.mlr.press/v89/feydy19a.html).
 The entropic cost convention is fixed by CKMA SYNOPSIS39, item 90;
@@ -1509,9 +1502,9 @@ different discrepancy. HSIC is the squared norm convention, its unbiased
 estimator has order four, and a nonzero discrepancy does not by itself
 force a positive first-projection variance. The energy–kernel comparison
 is treated by Sejdinovic and coauthors, listed in the bibliography; that
-paper was not consulted as a local full text in this expansion.
+paper is not part of the local full-text source basis.
 
-For the third expansion (items 50–59 and 68–74) the following passages were read.
+Items 50–59 and 68–74 have the following source basis.
 In the local Chewi–Niles-Weed–Rigollet: Section 2.5 (plug-in estimation and
 testing), Theorems 2.14–2.15 (lower bounds), Proposition 2.17 and
 Theorem 2.18 (smooth torus estimator and its projection), Definition 2.23
@@ -1568,8 +1561,8 @@ is a direct corollary. Other papers named in item 71 (Liu, Lee, and Jordan; Chwi
 Gretton) are cited through these sources and were not read here.
 
 Local sources and online papers are distinguished here. The local transport
-books supply the analytic background; missing local copies of an original
-paper were not taken to preclude consulting its primary online version.
+books supply the analytic background, with online primary sources
+identified separately.
 
 Local texts directly consulted or identified for this selection:
 

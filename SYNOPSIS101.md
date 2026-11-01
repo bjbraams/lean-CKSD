@@ -1084,14 +1084,14 @@ theory. Those sources do not add a further numbered list in this selection.
   theorem, exponential families, completeness, the information inequality, the
   Neyman–Pearson and Karlin–Rubin theorems, and the normal sampling laws.
 - **[101B](CKSD-bib.md#cks-101b)**: The distribution catalogues and the
-  histories support formulae and attribution. They are not given numbered
-  entries in this pass.
+  histories support formulae and attribution without separate numbered
+  entries.
 
 ### Source comparisons and local copies
 
 #### General graduate texts
 
-The expanded sampling and exact-inference group uses Casella–Berger,
+The sampling and exact-inference group uses Casella–Berger,
 Section 5.4 (Theorems 5.4.4 and 5.4.6 and the uniform-order-statistic
 example), Section 8.3.4 (validity of tail and conditional $p$-values and
 Example 8.3.30), and Section 9.2 with Exercise 9.21 (exact binomial
@@ -1101,7 +1101,7 @@ the variance interval uses the pivot in item 17. Item 27 records the
 squared-error consequences of conditional projection, rather than
 introducing a separate probability theorem.
 
-The third expansion (items 12, 13, 19, 20, and 28–31) uses Casella–Berger, Theorems 7.3.19
+Items 12, 13, 19, 20, and 28–31 use Casella–Berger, Theorems 7.3.19
 and 7.3.20 and Example 7.3.21 (unbiased estimators of zero), Definition
 8.2.1, Theorem 8.2.4, and Examples 8.2.2, 8.2.6 and Exercise 8.41 (likelihood
 ratio tests and the two-sample $t$ test), Definition 9.2.6 and Examples
@@ -1157,9 +1157,9 @@ matched to the local texts listed below.
 
 #### Decision theory, estimation, and testing
 
-For the expansion, Schervish's Theorem 5.18 was read for item 63.
+Schervish's Theorem 5.18 supplies item 63.
 Ferguson's Section 4.2 gives the averaging argument: its inequality is for
-maximum risk, as now stated in item 39, which is restricted to compact
+maximum risk, as stated in item 39, which is restricted to compact
 groups. The minimaxity of the Pitman estimator in item 40 is the theorem
 of Girshick and Savage (1951, *Proc. Second Berkeley Symp.*, 53–73); the
 original paper was not available, and the statement was checked against
@@ -1181,8 +1181,7 @@ Holm and closed testing extend the simultaneous-inference
 material; their error control uses valid marginal and intersection tests,
 without independence assumptions.
 
-The third expansion (items 38, 41, 47–56, and 58) was checked against the following
-passages. Item 38 is Schervish, Section 3.2.4 (the binomial example with
+Items 38, 41, 47–56, and 58 have the following source basis. Item 38 is Schervish, Section 3.2.4 (the binomial example with
 a beta prior). Item 41 follows Berger, Section 6.4 (reduction of scale to
 location by logarithms), with the formula checked on the exponential case
 and on the scale exercises of Shao's exercise volume. Items 47–49
@@ -1219,7 +1218,7 @@ Variance* is the source for the simultaneous $F$ bounds.
 Lehmann and Casella, *Theory of Point Estimation*, and Lehmann and Romano,
 *Testing Statistical Hypotheses*, are not in the local reference directory.
 Torgersen's comparison monograph is present as a DjVu file and was not
-text-extracted for this pass; item 62 is the finite-parameter theorem shared
+text-extracted; item 62 is the finite-parameter theorem shared
 by Ferguson and by Blackwell and Girshick. The local Blackwell–Girshick and
 Wald scans have no extractable outline; the numbered statements were checked
 against Ferguson, Schervish, Cox–Hinkley, and Pfanzagl.

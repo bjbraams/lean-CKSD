@@ -1037,7 +1037,7 @@ incidence is essential when other causes compete. Independent censoring
 identifies the failure distribution only over the observable time range.
 Item 40 is the parameterwise inversion of Ville's inequality; item 23
 combines generalized least squares with the kriging projection of item 20.
-The negative-index tail ratio in item 46 now uses the same limiting
+The negative-index tail ratio in item 46 uses the same limiting
 variable in numerator and denominator.
 
 Item 6 uses the Brockwell–Davis normalization in which the spectral density
@@ -1045,11 +1045,9 @@ integrates to $\gamma(0)$ over $[-\pi,\pi]$ and a white-noise periodogram has
 exponential mean $f(\omega)$. Item 6 follows Brockwell and Davis,
 Theorem 10.3.2 and the lag-window variance (10.4.11) under the conditions
 of Theorem 10.4.1; a central limit theorem for the lag-window estimator
-needs a bias condition and was not stated. Item 8 is the matrix-product form of the likelihood and the forward
-recursion, as in Cappé, Moulines, and Rydén; an earlier statement of
-consistency and asymptotic normality of the maximum likelihood estimator
-(Bickel, Ritov, and Rydén) was dropped because its hypotheses could not be
-stated concisely. Item 10 is narrowed to a drift linear in the parameter,
+needs a bias condition and is not stated. Item 8 is the matrix-product form of the likelihood and the forward
+recursion, as in Cappé, Moulines, and Rydén. Item 10 concerns a drift
+linear in the parameter,
 where the estimator is explicit; Kutoyants treats the general case. Item 11
 is the moving-block bootstrap theorem for the mean in the strong-mixing form
 of Lahiri, *Resampling Methods for Dependent Data* (2003), Theorem 3.2, in
@@ -1063,10 +1061,10 @@ Stein (1990a), Theorem 3.1 and Corollary 3.1), stated for zero means: its
 two displays are (37) and (35) there, and the exchanged forms are (38) and
 (36). Item 21 uses equivalence of Gaussian measures in the form already numbered in the
 analysis synopsis. Item 48 states Leadbetter's conditions as in Leadbetter,
-Lindgren, and Rootzén, Section 3.4. Item 49 now states the second-order condition and the bias term of de Haan and
+Lindgren, and Rootzén, Section 3.4. Item 49 states the second-order condition and the bias term of de Haan and
 Ferreira, Theorem 3.2.5.
 
-For the third expansion the following passages were read. Brockwell and
+The following source passages support the numbered statements. Brockwell and
 Davis (1991): Theorem 4.3.1 (Herglotz), Theorem 4.4.2 (ARMA spectral
 density), Proposition 5.2.1 (Durbin–Levinson), Theorem 5.8.1 (Kolmogorov's
 formula, proved there for a continuous spectral density bounded away from
@@ -1107,12 +1105,12 @@ Section 2.9 on intrinsic random functions and semivariograms (Matheron's
 representation with $r=0$), and Section 2.10. Møller and Waagepetersen:
 Proposition 3.8, Definitions 4.4 and 4.6 with (4.5)–(4.6),
 Proposition 4.3, and Example 5.3 with (5.10). de Haan and Ferreira:
-Theorems 1.2.1 and 3.2.5, used to sharpen items 46 and 49. Leadbetter,
+Theorems 1.2.1 and 3.2.5 for items 46 and 49. Leadbetter,
 Lindgren, and Rootzén: Theorems 1.5.1 and 1.7.13 for item 50. Coles,
 Sections 3.3.2–3.3.3, for item 51, where the regular range $\gamma>-1/2$ is
 Smith's (1985) result as reported by Coles; the nonregular ranges are not
 stated. The Dickey–Fuller limit in
-terms of Brownian functionals was not added: Brockwell and Davis (2016),
+terms of Brownian functionals is outside the selection: Brockwell and Davis (2016),
 Section 6.3, gives only the test and its quantiles, and Fuller is not in
 the local directory.
 

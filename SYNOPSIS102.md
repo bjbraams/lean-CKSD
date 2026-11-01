@@ -1097,7 +1097,7 @@ on unknown quantities.
 
 #### Asymptotic statistics
 
-Van der Vaart's local full text was consulted for this expansion:
+Van der Vaart's local full text supplies the following source basis:
 Theorem 5.7 for general consistency; Theorem 5.23 and Example 5.25 for
 criterion expansions and misspecification; Theorem 5.56 for argmax limits;
 Chapters 11–12 for projections and degenerate $U$-statistics; and
@@ -1116,11 +1116,7 @@ hypothesis is the $\nu$-th power integrability of the tilted
 characteristic function; the odd term vanishes at the mean. The uniform
 relative error over compact sets of $x$ asserted by Daniels (1954) and
 Jensen (1995) was not checked against those sources, which are not local,
-and is not stated. An earlier entry on the Bartlett
-correction of the likelihood-ratio statistic (item 54) was removed because
-its hypotheses, a valid Edgeworth expansion of the likelihood-ratio
-statistic to order $n^{-2}$, have no concise precise formulation; see
-[SYNOPSIS-CONCORDANCE.md](SYNOPSIS-CONCORDANCE.md).
+and is not stated.
 
 Pfanzagl, Chapters 6–8, is the local theorem-proof source for consistency of
 maximum likelihood, asymptotic normality, the convolution theorem, and
@@ -1148,7 +1144,7 @@ Amari and Nagaoka is the local source for the invariant characterization of
 the Fisher–Rao metric. Čencov's monograph is not local.
 
 Hall, *The Bootstrap and Edgeworth Expansion*, is present in
-`ReferencesSuppl`. In the third expansion it was used for items 50 and 60:
+`ReferencesSuppl`. It supplies items 50 and 60:
 Theorem 2.2 and the discussion of Cramér's condition after it for the
 smooth-function Edgeworth expansion; Section 3.1, equations (3.1)–(3.4), for
 the pivotal and nonpivotal bootstrap errors; Section 3.5, Proposition 3.1
@@ -1160,10 +1156,11 @@ resample. Matching the variance at the true mean alone is insufficient:
 even for a standard normal sample, a fixed denominator of one leaves
 the bootstrap variance fluctuations of order $n^{-1/2}$. The symmetric
 interval refinement is Hall, Section 3.6. Serfling's scan did not yield extractable
-text in the first pass. Items 49, 51–53, and 55–57 are the forms shared by the extractable local sources and
+text. Items 49, 51–53, and 55–57 are the forms shared by the extractable local sources and
 by the monographs named in the bibliography.
 
-The third expansion added items 5, 7, 9, 10, 15, 19–22, 24, 25, 50, 60, and 61 after reading the following passages.
+Items 5, 7, 9, 10, 15, 19–22, 24, 25, 50, 60, and 61 have the following
+source basis.
 Van der Vaart: Section 5.7, Theorems 5.45 and 5.48 with Addenda 5.46 and
 5.49, for one-step estimators (item 5); Theorem 5.23 for $M$-estimators
 with Lipschitz criteria (item 24); Theorem 5.52, Corollary 5.53, and
@@ -1183,8 +1180,8 @@ gives the sign, Wilcoxon, and $t$ efficiencies and the bound
 $e_{W,t}\ge0.864$ for one and two samples. Shao and Tu, Example 3.9 and
 Theorem 3.15 in Section 3.6, give the failure of the bootstrap for the
 sample maximum and the consistency of the $m$-out-of-$n$ bootstrap
-(item 61). Local asymptotic mixed normality was not added; it is not part
-of the recurring independent-sampling core of these texts.
+(item 61). Local asymptotic mixed normality is outside the recurring
+independent-sampling core of these texts.
 
 #### Nonparametric, semiparametric, and robust inference
 

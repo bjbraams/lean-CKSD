@@ -1093,11 +1093,11 @@ over positive definite $\Theta$.
 #### Nonparametric, semiparametric, and robust inference
 
 Hollander, Wolfe, and Chicken, Chapters 3, 4, and 6, provide the exact sign
-and rank procedures and the several-sample comparison added here. Robertson,
+and rank procedures and the several-sample comparison. Robertson,
 Wright, and Dykstra, Section 1.2 and the max–min formulas of Section 1.4,
 give the cumulative-sum and max–min descriptions of isotonic regression.
 Wand–Jones and Fan–Gijbels supply the bias expansions; the bandwidth
-conditions now ensure that replacing the exact bias by its leading term is
+conditions ensure that replacing the exact bias by its leading term is
 legitimate in the normal limit. Tsybakov's full text is available in
 `ReferencesSuppl`; its regression upper and lower bound chapters were
 consulted, including the supremum-norm comparison in Corollary 2.5. Item 22
@@ -1113,7 +1113,7 @@ Item 11 is the pointwise limit in Groeneboom and Jongbloed. Item 13 is the
 Sobolev detection boundary of Ingster and Suslina. Item 12 is the cone
 mixture of Robertson, Wright, and Dykstra.
 
-Items 14–17, 23–28, and 32, and SYNOPSIS102, items 41–43, 47, and 48 were added from the following passages. The rank items 14–17
+The following passages support items 14–17, 23–28, and 32. The rank items 14–17
 follow van der Vaart, Theorem 13.5, Section 13.3 and Examples 13.13–13.22,
 Corollary 15.10 and Example 15.15, Table 14.2 with Problem 14.8, Examples
 12.5 and 12.13, and Corollary 19.21 and Theorem 19.23. The exact null
@@ -1194,8 +1194,8 @@ boosting training-error bound is left to the model-oriented Section 107.
 
 The false-discovery statement in item 37 is the Benjamini–Hochberg theorem
 under independence and under positive regression dependence. A supplemental
-copy of Cucker and Zhou, *Learning Theory*, is present but was not read for
-this expansion.
+copy of Cucker and Zhou, *Learning Theory*, is present but is not part of
+the consulted source basis.
 
 Local texts directly consulted or identified for this selection:
 

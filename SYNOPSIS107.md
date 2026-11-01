@@ -1370,7 +1370,7 @@ literature.
 
 Wainwright–Jordan's tree and Bethe variational developments were consulted
 for items 19 and 23. Their tree exactness does not imply convergence or
-global optimality of loopy belief propagation. The corrected boosting
+global optimality of loopy belief propagation. The boosting
 statement is the squared-error line-search identity; the forest statement
 is Stone's theorem for weights that do not depend on the responses, in
 the form of Györfi, Kohler, Krzyżak, and Walk, Theorem 4.1, which is not
@@ -1390,11 +1390,11 @@ Item 29 follows
 online: the class $\mathcal G(q,\mathbf d,\mathbf t,\boldsymbol\beta,K)$
 and Hölder ball of his Section 3, the lower bound of his Theorem 3, and
 the upper bound of his Theorem 1 and Corollary 1 with network sup-norm
-bound $F=\max(K,1)$ and depth of order $\log n$. Item 31 now gives finite-sample expected
+bound $F=\max(K,1)$ and depth of order $\log n$. Item 31 gives finite-sample expected
 Gaussian-design risks and assumes a limiting signal norm; item 32 permits
 boundary discriminator values when claiming an attained maximum.
 Bishop–Bishop supplies the probabilistic output and Gaussian-conditioning
-framework for the new prediction entries.
+framework for the prediction entries.
 
 [Abbe's survey, Theorem 13 and its boundary discussion](https://jmlr.org/papers/v18/16-480.html),
 was checked online for items 41 and 42. The exact-recovery equality case
@@ -1406,7 +1406,7 @@ which it is assumed or constructed.
 
 Puterman and Bertsekas–Tsitsiklis supply discounted policy evaluation,
 improvement, and the stochastic approximation framework. The finite-model
-conditions are now explicit for Bellman contraction and $Q$-learning.
+conditions are explicit for Bellman contraction and $Q$-learning.
 Items 56 and 57 record the occupancy and score identities for those models.
 The bandit entries distinguish instance-dependent logarithmic regret,
 its leading divergence constant, discounted Bayesian index optimality,
@@ -1433,9 +1433,8 @@ full texts.
 
 Dwork–Roth, Proposition 2.1 and Sections 3.2–3.5, was consulted for
 post-processing, randomized response, the exponential mechanism, and
-Theorem 3.22 on Gaussian noise. Item 66 now fixes bounded observations
-and the privacy model; it no longer states a uniform minimax rate from
-boundedness of the mean alone. The local-model comparison is in
+Theorem 3.22 on Gaussian noise. Item 66 assumes bounded observations
+and specifies the privacy model. The local-model comparison is in
 [Duchi–Jordan–Wainwright](https://arxiv.org/abs/1604.02390): the upper
 bound is their Corollary 1, since bounded laws have every $k$th moment at
 most $1$, and the lower bound is the two-point argument of its proof with
@@ -1454,9 +1453,8 @@ condition for weighted inference.
 Hastie–Tibshirani–Friedman, Goodfellow–Bengio–Courville, Murphy,
 Bishop's 2006 pattern-recognition book, and Lovász were not located in
 the two reference directories. Bishop–Bishop's 2024 text is a different
-local book and was consulted. Original online papers read for this review
-are identified above; the lists below also retain other source copies
-identified in the first pass.
+local book and is part of the consulted source basis. Online primary
+sources are identified above; local source copies are listed below.
 
 Items 24–27, 35–40, 47, 48, 58–63, and 74–77 were checked against the following passages. Mohri,
 Rostamizadeh, and Talwalkar, Theorem 7.2, Lemma 7.4, Corollary 7.5,
@@ -1480,9 +1478,7 @@ Blum, Hopcroft, and Kannan, Table 8.1, Theorems 8.6 and 8.11, and Section
 Erdős–Rényi theorem, not proved in these local texts. Vershynin (2018),
 Theorems 4.5.5–4.5.6 and Exercises 5.5.1–5.5.2, give item 48; the explicit
 constant $8$ follows from his inequality (4.19). Lovász, *Large Networks
-and Graph Limits*, is not local; an earlier entry on the counting lemma
-and the Lovász–Szegedy limit and compactness theorems was removed for
-want of a local check. Agarwal, Brantley, Jiang, Kakade, and Sun, Theorem 1.7,
+and Graph Limits*, is not local. Agarwal, Brantley, Jiang, Kakade, and Sun, Theorem 1.7,
 Proposition 1.15 with the primal and dual programs of Section 1.3,
 Lemma 2.2, Proposition 2.1, Theorems 2.6–2.7, Lemma 10.6, Theorems
 10.3 and 10.8, Theorems 5.2 and 5.4–5.5, and Lemma A.9, give items 58, 59, and 61–63. In Lemma A.9 the regressors are taken predictable, as in
@@ -1493,8 +1489,7 @@ the regret against the best arm in expectation on stochastic Bernoulli
 instances.
 
 Dwork and Roth, Algorithm 1 with Theorems 3.23–3.24 and Section 3.6,
-give item 74. An earlier entry giving the hypothesis-testing restatement
-of the privacy definition was removed as redundant with that definition. Item 75 is
+give item 74. Item 75 is
 Theorem 1 of the Duchi–Jordan–Wainwright paper linked above.
 Barocas, Hardt, and Narayanan, Propositions 1–3 of the classification
 chapter, give item 76. Quiñonero-Candela and coauthors, Section 1.5, give
