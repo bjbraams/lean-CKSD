@@ -68,6 +68,19 @@ increase in reading order. Proofs are outside the scope of this synopsis.
   $\theta\mapsto R(\theta,a)$ is continuous for each action, the Bayes rules
   again form a complete class.
 
+### A constant-risk example
+
+* **27. Minimax estimation of a binomial proportion.** Let
+  $X\sim\mathop{\mathrm{Bin}}(n,p)$ with $p\in[0,1]$ and squared-error loss.
+  The posterior mean under the $\mathop{\mathrm{Beta}}(\sqrt n/2,\sqrt n/2)$
+  prior is
+  $$\delta(X)=\frac{X+\sqrt n/2}{n+\sqrt n},$$
+  and its risk is the constant $1/\bigl(4(1+\sqrt n)^2\bigr)$. By item 4,
+  $\delta$ is minimax and the beta prior is least favorable. The unbiased
+  estimator $X/n$ has maximal risk $1/(4n)$, larger than the minimax value,
+  but smaller risk than $\delta$ outside an interval around $p=1/2$ that
+  shrinks as $n$ grows.
+
 ## Equivariance
 
 A group $G$ acts measurably on the sample space, on $\Theta$, and on
@@ -98,6 +111,24 @@ the translations act by $x\mapsto x+g$ and $\theta\mapsto\theta+g$.
   {\int\prod_{i=1}^n f(X_i-u)\,du}.$$
   Its risk is finite and constant. By the Hunt–Stein theorem for
   translations it is minimax among all estimators, equivariant or not.
+
+### Scale parameters
+
+* **28. Pitman estimator of scale.** Let $X_1,\ldots,X_n$ be independent
+  with common density $\sigma^{-1}f(x/\sigma)$ on $(0,\infty)$ or on
+  $\mathbb R$, with $\sigma>0$, and let the loss be
+  $(a-\sigma)^2/\sigma^2$. An estimator is scale equivariant when
+  $\delta(cx)=c\,\delta(x)$ for $c>0$; such estimators have constant risk.
+  Assume the integrals below are finite and positive. The minimum-risk
+  scale-equivariant estimator is
+  $$\delta(X)=\frac{\int_0^\infty v^{n}\prod_{i=1}^nf(vX_i)\,dv}
+  {\int_0^\infty v^{n+1}\prod_{i=1}^nf(vX_i)\,dv},$$
+  the formal Bayes rule for the prior $d\sigma/\sigma$. For an exponential
+  sample with mean $\sigma$ it is $\sum_iX_i/(n+1)$; for a sample from
+  $N(0,\sigma^2)$, the analogous estimator of $\sigma^2$ under the loss
+  $(a/\sigma^2-1)^2$ is $\sum_iX_i^2/(n+2)$. For positive observations, the
+  logarithmic transformation reduces the scale problem to the location
+  problem of item 8.
 
 ## Exponential families and discrimination information
 
@@ -166,6 +197,183 @@ forms.
   conditional test, is uniformly most powerful unbiased for a one-sided
   hypothesis on $\eta$.
 
+### The generalized Neyman–Pearson lemma and similar tests
+
+For a parameter set $\Theta\subset\mathbb R^k$ and hypotheses
+$\Theta_0,\Theta_1$, the **boundary** is
+$\omega=\overline{\Theta_0}\cap\overline{\Theta_1}$. A test $\varphi$ is
+**$\alpha$-similar** on $\omega$ when $\mathbb E_\theta\varphi=\alpha$ for
+every $\theta\in\omega$. If $T$ is sufficient for $\{P_\theta:\theta\in\omega\}$,
+a test has **Neyman structure** with respect to $T$ when
+$\mathbb E_\theta[\varphi\mid T]=\alpha$ almost surely for every
+$\theta\in\omega$. A test with Neyman structure is $\alpha$-similar.
+
+* **29. Generalized Neyman–Pearson lemma.** Let $f_0,f_1,\ldots,f_m$ be
+  $\mu$-integrable real functions and $k_1,\ldots,k_m$ real constants, and
+  let $\varphi_0$ be a test with $\varphi_0=1$ where
+  $f_0>\sum_ik_if_i$ and $\varphi_0=0$ where $f_0<\sum_ik_if_i$. Then
+  $\varphi_0$ maximizes $\int\varphi f_0\,d\mu$ among all tests $\varphi$
+  satisfying
+  $\int\varphi f_i\,d\mu\le\int\varphi_0f_i\,d\mu$ for each $i$ with
+  $k_i>0$ and $\int\varphi f_i\,d\mu\ge\int\varphi_0f_i\,d\mu$ for each $i$
+  with $k_i<0$. In particular it maximizes $\int\varphi f_0\,d\mu$ among
+  tests with $\int\varphi f_i\,d\mu=\int\varphi_0f_i\,d\mu$ for every $i$.
+  The functions $f_i$ need not be densities; in item 12 one of them is
+  $T f_{\eta_0}$, which expresses the condition on the derivative of the
+  power at $\eta_0$.
+
+* **30. Unbiasedness and similarity.** Suppose the power function
+  $\theta\mapsto\mathbb E_\theta\varphi$ of every test is continuous, as in
+  an exponential family on the interior of its natural parameter space.
+  Then every unbiased level-$\alpha$ test is $\alpha$-similar on $\omega$.
+  Consequently a level-$\alpha$ test that is uniformly most powerful among
+  $\alpha$-similar tests on $\omega$ is uniformly most powerful unbiased.
+
+* **31. Neyman structure.** If $T$ is a boundedly complete sufficient
+  statistic for $\{P_\theta:\theta\in\omega\}$, then every $\alpha$-similar
+  test on $\omega$ has Neyman structure with respect to $T$. Maximizing the
+  power among similar tests therefore reduces to maximizing the conditional
+  power given $T=t$ for each $t$, subject to conditional size $\alpha$. In
+  the setting of item 13 the statistic $S$ is complete and sufficient on
+  the boundary $\eta=\eta_0$ by SYNOPSIS101, item 5, and this reduction,
+  together with items 12 and 30, gives item 13.
+
+### Interval hypotheses in one-parameter exponential families
+
+In items 32 and 33 the model is a minimal exponential family of order one
+with natural statistic $T$ and natural parameter $\eta$ in an open interval,
+$\eta_1<\eta_2$ are interior points, and $\alpha\in(0,1)$.
+
+* **32. Uniformly most powerful tests of a two-sided hypothesis.** For
+  $H:\eta\le\eta_1$ or $\eta\ge\eta_2$ against $K:\eta_1<\eta<\eta_2$,
+  there is a test with $\varphi=1$ when $c_1<T<c_2$, $\varphi=\gamma_i$ when
+  $T=c_i$, and $\varphi=0$ when $T<c_1$ or $T>c_2$, where $c_1\le c_2$, such
+  that $\mathbb E_{\eta_1}\varphi=\mathbb E_{\eta_2}\varphi=\alpha$. It is
+  uniformly most powerful of level $\alpha$. Among tests with the same power
+  at $\eta_1$ and $\eta_2$ it also minimizes the power at every
+  $\eta<\eta_1$ and every $\eta>\eta_2$.
+
+* **33. Uniformly most powerful unbiased tests of an interval
+  hypothesis.** For $H:\eta_1\le\eta\le\eta_2$ against $\eta<\eta_1$ or
+  $\eta>\eta_2$, the test that rejects when $T<c_1$ or $T>c_2$, randomizes
+  at $c_1$ and $c_2$, and has $\mathbb E_{\eta_1}\varphi=
+  \mathbb E_{\eta_2}\varphi=\alpha$ is uniformly most powerful unbiased of
+  level $\alpha$. No uniformly most powerful level-$\alpha$ test exists for
+  this problem. The complementary test $1-\varphi$ is of the form of
+  item 32 at level $1-\alpha$. Item 12 is the limiting case
+  $\eta_1=\eta_2$, in which the second side condition becomes a condition
+  on the derivative of the power.
+
+### Unbiased confidence sets and complete classes of tests
+
+A confidence set $C$ of level $1-\alpha$ for $\theta$ is **unbiased** when
+$P_\theta(\theta'\in C(X))\le1-\alpha$ for all $\theta'\ne\theta$; with a
+nuisance parameter the condition is imposed for all values of the nuisance
+parameter. It is **uniformly most accurate unbiased** when it minimizes
+every such false-coverage probability among unbiased level-$(1-\alpha)$
+confidence sets.
+
+* **34. Uniformly most accurate unbiased confidence sets.** For each
+  $\theta_0$, let $A(\theta_0)$ be the acceptance region of a
+  nonrandomized uniformly most powerful unbiased level-$\alpha$ test of
+  $\theta=\theta_0$ against $\theta\ne\theta_0$. Then
+  $C(x)=\{\theta_0:x\in A(\theta_0)\}$ is a uniformly most accurate unbiased
+  confidence set of level $1-\alpha$. By Pratt's theorem, SYNOPSIS101,
+  item 30, it minimizes the expected length among unbiased confidence sets
+  of that level at every parameter value. By items 12 and 13, the
+  Student $t$ interval for a normal mean with unknown variance, the
+  two-sample $t$ interval of SYNOPSIS101, item 27, and the normal-variance
+  interval with the unbiased choice of chi-squared endpoints are uniformly
+  most accurate unbiased; the equal-tailed variance interval of
+  SYNOPSIS101, item 22, is not unbiased.
+
+* **35. Karlin–Rubin complete class theorem.** Let a real-parameter family
+  have monotone likelihood ratio in $T$, let the action space be
+  $\{0,1\}$ (accept, reject), and let $\theta_0$ be such that
+  $L(\theta,1)-L(\theta,0)>0$ for $\theta<\theta_0$ and
+  $L(\theta,1)-L(\theta,0)<0$ for $\theta>\theta_0$. Then the one-sided
+  tests, with $\varphi=1$ when $T>c$, $\varphi=\gamma$ when $T=c$, and
+  $\varphi=0$ when $T<c$, for $c\in[-\infty,\infty]$ and
+  $\gamma\in[0,1]$, form an essentially complete class: every test has a
+  one-sided test whose risk is no larger at every $\theta$. The one-sided
+  test matching the power of a given test at $\theta_0$ has no larger power
+  below $\theta_0$ and no smaller power above it.
+
+## Composite hypotheses: least favorable distributions and invariance
+
+### Least favorable distributions
+
+Let the null family $\{P_\vartheta:\vartheta\in\Theta_0\}$ be indexed
+measurably, so that for a probability $\Lambda$ on $\Theta_0$ the mixture
+$P_\Lambda=\int P_\vartheta\,\Lambda(d\vartheta)$ is a probability. A
+distribution $\Lambda_0$ is **least favorable** for testing the null family
+against a simple alternative $Q$ at level $\alpha$ when the most powerful
+level-$\alpha$ test of $P_{\Lambda_0}$ against $Q$ has power no larger than
+that of the most powerful test of $P_\Lambda$ against $Q$, for every
+$\Lambda$.
+
+* **36. Least favorable distributions.** Let $\varphi_0$ be most powerful
+  of level $\alpha$ for $P_{\Lambda_0}$ against $Q$, and suppose
+  $\mathbb E_\vartheta\varphi_0\le\alpha$ for every $\vartheta\in\Theta_0$.
+  Then $\varphi_0$ is most powerful of level $\alpha$ for the composite
+  null against $Q$, and $\Lambda_0$ is least favorable. If the power of
+  $\varphi_0$ is less than one, $\Lambda_0$ is concentrated on
+  $\{\vartheta:\mathbb E_\vartheta\varphi_0=\alpha\}$. For example, for a
+  sample from $N(\mu,\sigma^2)$, $n\ge2$, the null $\sigma\le\sigma_0$ with
+  $\mu$ unrestricted, and the alternative $(\mu_1,\sigma_1)$ with
+  $\sigma_1>\sigma_0$, the normal law of mean $\mu_1$ and variance
+  $(\sigma_1^2-\sigma_0^2)/n$ for $\mu$ at $\sigma=\sigma_0$ is least
+  favorable. The resulting test rejects when
+  $\sum_i(X_i-\bar X)^2>\sigma_0^2\chi^2_{n-1,1-\alpha}$; it does not depend
+  on the alternative and is therefore uniformly most powerful for
+  $\sigma\le\sigma_0$ against $\sigma>\sigma_0$.
+
+### Invariant tests
+
+A group $G$ acting measurably on the sample space leaves a testing problem
+**invariant** when each $g$ maps the law $P_\theta$ to a law
+$P_{\bar g\theta}$ and the induced map $\bar g$ preserves $\Theta_0$ and
+$\Theta_1$. A test is **invariant** when $\varphi(gx)=\varphi(x)$ for all
+$g$ and $x$. A statistic $M$ is a **maximal invariant** when it is
+invariant and $M(x)=M(x')$ implies $x'=gx$ for some $g\in G$; it labels the
+orbits. A test is **uniformly most powerful invariant** of level $\alpha$
+when it is uniformly most powerful among invariant level-$\alpha$ tests.
+
+* **37. Reduction by a maximal invariant.** A test is invariant if and
+  only if it is a function of a maximal invariant $M$. The distribution of
+  an invariant statistic depends on $\theta$ only through a maximal
+  invariant $v(\theta)$ of the induced group on the parameter space.
+  Hence, if the hypotheses are expressed in terms of $v(\theta)$ and the
+  family of laws of $M$ is simple against simple, or has monotone
+  likelihood ratio for one-sided hypotheses in $v(\theta)$, the
+  Neyman–Pearson lemma or the Karlin–Rubin theorem, SYNOPSIS101, items 12
+  and 13, applied to $M$ gives a uniformly most powerful invariant test.
+  Standard maximal invariants: differences $(x_1-x_n,\ldots,x_{n-1}-x_n)$
+  for translations; the order statistic for permutations; the ranks for
+  continuous increasing transformations of the coordinates; and
+  $\|x\|$ for orthogonal transformations. For two location families with
+  densities $f_0$ and $f_1$ on $\mathbb R^n$ and unknown common shift, the
+  most powerful invariant test rejects for large values of
+  $$\frac{\int f_1(x_1-u,\ldots,x_n-u)\,du}
+  {\int f_0(x_1-u,\ldots,x_n-u)\,du}.$$
+  In the standard examples invariance is applied after reduction to a
+  sufficient statistic.
+
+* **38. Normal tests as uniformly most powerful invariant tests.** For a
+  sample from $N(\mu,\sigma^2)$, $n\ge2$, reduce to $(\bar X,S^2)$. The
+  problem of testing $\mu\le0$ against $\mu>0$ is invariant under
+  $x\mapsto cx$, $c>0$, with maximal invariant $t=\sqrt n\bar X/S$. Its law
+  is the noncentral $t$ law on $n-1$ degrees of freedom with noncentrality
+  $\sqrt n\mu/\sigma$, which has monotone likelihood ratio in $t$; the
+  one-sided $t$ test is uniformly most powerful invariant. For $\mu=0$
+  against $\mu\ne0$, adjoining $x\mapsto-x$ gives the maximal invariant
+  $|t|$, and the two-sided $t$ test is uniformly most powerful invariant.
+  The same holds for the two-sample $t$ tests of SYNOPSIS101, item 27,
+  under location and scale changes, the noncentrality depending only on
+  $(\mu_X-\mu_Y)/\sigma$. For the variance, translations give the maximal
+  invariant $S^2$, and the one-sided chi-squared tests are uniformly most
+  powerful invariant.
+
 ## The normal mean and simultaneous coverage
 
 * **14. Estimation of a normal mean.** Let $X$ be $N_p(\theta,I_p)$ and let
@@ -180,6 +388,25 @@ forms.
   The positive-part estimator that replaces the scalar factor by its
   positive part has risk no larger than the risk of $\delta$ at every
   $\theta$.
+
+### Admissibility by limits of Bayes rules
+
+* **39. Blyth's method.** Let $\Theta$ be a convex subset of Euclidean
+  space with nonempty interior, suppose the rules with continuous risk
+  functions form a complete class, and let $\delta_0$ have continuous risk.
+  Suppose there are finite, possibly unnormalized, prior measures $\pi_n$
+  with Bayes rules $\delta_n$ such that the Bayes risks
+  $r(\pi_n,\delta_0)$ and $r(\pi_n,\delta_n)$ are finite; for every convex
+  $C\subset\Theta$ with nonempty interior there are $K>0$ and $N$ with
+  $\pi_n(C)\ge K$ for $n\ge N$; and
+  $r(\pi_n,\delta_0)-r(\pi_n,\delta_n)\to0$. Then $\delta_0$ is
+  admissible. For $X\sim N(\theta,1)$ and squared error, the unnormalized
+  priors $\pi_n(d\theta)=\exp(-\theta^2/(2n))\,d\theta$ give
+  $r(\pi_n,\delta_0)-r(\pi_n,\delta_n)=\sqrt{2\pi n}/(n+1)\to0$, which
+  proves the one-dimensional admissibility of $X$ in item 14. Normalized
+  $N(0,n)$ priors fail the mass condition.
+
+### Simultaneous coverage
 
 For simultaneous statements, a family of confidence sets has **simultaneous
 coverage** $1-\alpha$ when the probability that every member covers its
@@ -339,6 +566,24 @@ interior. Holm and closed testing extend the simultaneous-inference
 material; their error control uses valid marginal and intersection tests,
 without independence assumptions.
 
+The third expansion (items 27–39) was checked against the following
+passages. Item 27 is Schervish, Section 3.2.4 (the binomial example with
+a beta prior). Item 28 follows Berger, Section 6.4 (reduction of scale to
+location by logarithms), with the formula checked on the exponential case
+and on the scale exercises of Shao's exercise volume. Items 29, 30, and 31
+are Schervish, Lemma 4.78, Proposition 4.92 with Lemma 4.96, and
+Lemma 4.122 with Definition 4.120; Cox–Hinkley, Section 5.2, gives the same
+Neyman-structure argument. Items 32 and 33 are Schervish, Theorem 4.82 and
+Theorem 4.100, Section 4.4.2; the limiting point-hypothesis case is his
+Theorem 4.104. Item 34 is Schervish, Definition 5.60 and Proposition 5.61,
+Ferguson, Section 5.8, and Young–Smith, Section 7.3, which also gives the
+expected-length interpretation. Item 35 is Schervish, Theorem 4.68.
+Item 36 is Pfanzagl, Proposition 4.4.2 and Example 4.4.5, after Lehmann
+and Stein. Items 37 and 38 are Ferguson, Section 5.6 (Theorems 1 and 2, the
+listed maximal invariants, and the $t$-test examples with Exercises 5.6.4–
+5.6.6), Berger, Section 6.5, and Cox–Hinkley, Section 5.3. Item 39 is
+Berger, Section 8.9.2, Theorem 13 and Example 10 (Blyth, 1951).
+
 Ferguson, Chapters 1, 2, 4, and 5, is the course-length source for the
 minimax theorem, complete classes, invariance, and testing. Schervish,
 Chapters 3–6, develops Bayes rules, admissibility, equivariance, and the
@@ -378,3 +623,5 @@ Local texts directly consulted for this selection:
 - [Scheffé, *The Analysis of Variance*](../lean-CKMA/References/Scheffé1959AnalysisVariance-Wiley.pdf).
 - [Blackwell and Girshick, *Theory of Games and Statistical Decisions*](../lean-CKMA/References/BlackwellGirshick1979TheoryGamesStatisticalDecisions-Dover.pdf).
 - [Wald, *Statistical Decision Functions*](../lean-CKMA/References/Wald1950StatisticalDecisionFunctions-Wiley.pdf).
+- [Young and Smith, *Essentials of Statistical Inference*](../lean-CKMA/References/YoungSmith2005EssentialsStatisticalInference-Cambridge.SerStatProbMath.pdf).
+- [Shao, *Mathematical Statistics: Exercises and Solutions*](../lean-CKMA/References/Shao2005MathematicalStatisticsExercisesSolutions-Springer.pdf).

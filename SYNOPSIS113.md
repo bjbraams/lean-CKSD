@@ -140,6 +140,108 @@ approximation is $H_B=\sum_{\{i,j\}\in E}H(b_{ij})
   a tree, and the Bethe entropy is exact there. Cycles remove these
   guarantees.
 
+### Boosting and tree splitting
+
+Let a sample $(x_i,y_i)$, $i=1,\ldots,m$, have labels $y_i\in\{-1,1\}$, and
+let the base classifiers take values in $\{-1,1\}$. **AdaBoost** starts from
+the uniform weights $D_1(i)=1/m$. At round $t$ it selects $h_t$ with
+weighted error $\varepsilon_t=\sum_iD_t(i)1_{\{h_t(x_i)\ne y_i\}}$, sets
+$\alpha_t=\tfrac12\log\bigl((1-\varepsilon_t)/\varepsilon_t\bigr)$, and
+puts $D_{t+1}(i)\propto D_t(i)\exp(-\alpha_ty_ih_t(x_i))$. After $T$ rounds
+it returns $f=\sum_{t\le T}\alpha_th_t$.
+
+* **41. AdaBoost: training error and margins.** Suppose
+  $0<\varepsilon_t<1/2$ in every round. Then the training error of
+  $\mathop{\mathrm{sign}}f$ satisfies
+  $$\frac1m\#\{i:y_if(x_i)\le0\}
+  \le\prod_{t=1}^T2\sqrt{\varepsilon_t(1-\varepsilon_t)}
+  \le\exp\Bigl(-2\sum_{t=1}^T\bigl(\tfrac12-\varepsilon_t\bigr)^2\Bigr),$$
+  hence it is at most $e^{-2\gamma^2T}$ if every
+  $\varepsilon_t\le\frac12-\gamma$. For $\rho>0$, the fraction of sample
+  points with normalized margin $y_if(x_i)/\|\alpha\|_1\le\rho$ is at most
+  $2^T\prod_t\sqrt{\varepsilon_t^{1-\rho}(1-\varepsilon_t)^{1+\rho}}$; it
+  decreases geometrically in $T$ when every
+  $\varepsilon_t\le\frac12-\gamma$ and $\rho<\gamma$. The empirical
+  Rademacher complexity of the convex hull of a class equals that of the
+  class, so the margin bound of SYNOPSIS107, item 34, applies to
+  $f/\|\alpha\|_1$ with the complexity of the base class and without
+  dependence on $T$. AdaBoost is coordinate descent with exact line
+  search on the empirical exponential loss $\sum_ie^{-y_if(x_i)}$. These
+  are training-sample and uniform-deviation statements; they do not
+  assert consistency of boosting run for an arbitrary number of rounds.
+
+For $J$ classes, an **impurity function** $\phi$ on the probability simplex
+is symmetric, maximal only at the uniform vector, and minimal only at the
+vertices. At a node $t$ with class proportions $p(\cdot\mid t)$ the node
+impurity is $i(t)=\phi(p(\cdot\mid t))$. A split sending proportions $p_L$
+and $p_R$ of the cases in $t$ to children $t_L$ and $t_R$ has **impurity
+decrease** $\Delta i=i(t)-p_Li(t_L)-p_Ri(t_R)$. The Gini index
+$1-\sum_jp_j^2$ and the entropy $-\sum_jp_j\log p_j$ are strictly concave
+impurity functions.
+
+* **42. Impurity decrease of a split.** If $\phi$ is strictly concave, then
+  $\Delta i\ge0$ for every split with $p_L,p_R>0$, with equality only when
+  both children have the class proportions of the parent. Since
+  $p(j\mid t)=p_Lp(j\mid t_L)+p_Rp(j\mid t_R)$, this is Jensen's
+  inequality. For two classes and a categorical predictor with $L$
+  categories, order the categories by their class-one proportion within
+  the node. For a twice differentiable strictly concave symmetric impurity
+  vanishing at the vertices, some optimal split puts an initial segment of
+  this ordering in one child. Thus $L-1$ splits replace the
+  $2^{L-1}-1$ candidates. The resubstitution misclassification rate is
+  concave but not strictly concave, and its decrease can vanish for splits
+  that change the class proportions.
+
+### Variational and exact inference
+
+Let $p_\theta(x)=\exp(\langle\theta,\phi(x)\rangle-A(\theta))$ be an
+exponential family with respect to $\nu$, with open natural parameter
+space $\Omega$ and affinely independent statistics. The **set of realizable
+mean parameters** $\mathcal M$ consists of the vectors $\mathbb E_p\phi(X)$
+over all $\nu$-densities $p$ for which this expectation exists. Its
+**conjugate dual** is
+$A^*(\mu)=\sup_{\theta\in\Omega}\{\langle\mu,\theta\rangle-A(\theta)\}$.
+For a finite discrete graphical model with indicator statistics of node and
+edge configurations, $\mathcal M$ is the **marginal polytope**; the
+consistency constraints of item 4 define a polytope containing it.
+
+* **43. Variational representation of the cumulant function.** The map
+  $\nabla A$ sends $\Omega$ onto the interior $\mathcal M^\circ$. For
+  $\mu\in\mathcal M^\circ$, $A^*(\mu)=-H(p_{\theta(\mu)})$ is the negative
+  entropy of the unique member with mean $\mu$, and $A^*=+\infty$ off the
+  closure of $\mathcal M$. Moreover
+  $$A(\theta)=\sup_{\mu\in\mathcal M}\{\langle\theta,\mu\rangle-A^*(\mu)\},$$
+  attained uniquely at $\mu=\mathbb E_\theta\phi(X)$. For a finite
+  discrete model,
+  $$\max_x\langle\theta,\phi(x)\rangle
+  =\max_{\mu\in\bar{\mathcal M}}\langle\theta,\mu\rangle
+  =\lim_{\beta\to\infty}A(\beta\theta)/\beta,$$
+  so mode computation is a linear program over the marginal polytope.
+  Mean-field methods restrict $\mu$ to an inner subset on which $A^*$ is
+  computable and give lower bounds on $A$. The Bethe problem of item 4
+  uses the larger consistency polytope and the entropy $H_B$; on graphs
+  with cycles its value is in general not a bound on $A$. The
+  statistical mean parameterization is SYNOPSIS102, item 9.
+
+A **clique tree** of a graph is a tree whose nodes are its maximal cliques.
+It has the **running intersection property**, and is then a **junction
+tree**, when every clique on the path joining two cliques contains their
+intersection. The intersections of adjacent cliques are the separators.
+
+* **44. Junction-tree exactness.** A graph has a junction tree if and only
+  if it is triangulated, that is, decomposable in the sense of
+  SYNOPSIS106, item 41. On a junction tree, nonnegative clique and
+  separator tables are the marginals of a single distribution if and only
+  if each separator table is normalized and each clique table marginalizes
+  to every separator it contains. The distribution is then the ratio of
+  clique marginals to separator marginals of that item. Consequently,
+  after triangulating, sum-product message passing between cliques gives
+  exact marginals and the cumulant function of any finite model that
+  factorizes over the original graph. Its cost grows exponentially in the
+  largest clique size of the triangulation. Item 28 is the tree case.
+  Without triangulation, local consistency does not imply global
+  realizability, as in item 4.
+
 <a id="synopsis-113b"></a>
 
 ## 113B. Deep Learning: Architectures, Approximation, and Training Theory
@@ -251,6 +353,121 @@ $$\mathbb E_p\log D(X)+\mathbb E_{p_g}\log\bigl(1-D(X)\bigr).$$
   the averaged squared-loss convention. This equality of means does
   not identify a frequentist confidence band with a posterior band.
 
+### Capacity, depth, and symmetry
+
+A **feedforward network** of depth $L$ with widths $N_0=d,N_1,\ldots,N_L$
+alternates affine maps with a coordinatewise activation on the $L-1$ hidden
+layers; $P$ denotes its number of weights and biases. An activation is
+**piecewise polynomial** when the line splits into finitely many intervals on
+each of which it is a polynomial. The ReLU $\max(u,0)$ is piecewise linear
+and positively homogeneous.
+
+* **45. Capacity of network classes.** For a fixed piecewise-polynomial
+  activation there is a constant $c$ such that, for every depth $L$ and
+  every architecture with $P$ parameters, the sign classifiers of that
+  architecture have VC dimension at most $c(PL\log P+PL^2)$. With the
+  fundamental theorem of SYNOPSIS107, item 7, fixed-depth classes thus
+  have uniform deviations of order $\sqrt{P\log P/n}$ up to confidence
+  terms. For ReLU networks Bartlett, Harvey, Liaw, and Mehrabian sharpen
+  the upper bound to order $PL\log P$, with a lower bound of order
+  $PL\log(P/L)$. For bias-free networks on the unit ball, with a
+  $1$-Lipschitz positively homogeneous activation and every weight matrix
+  of Frobenius norm at most $C$, the Rademacher complexity of the
+  real-valued class is at most $2^{L-1}C^L/\sqrt n$, independent of the
+  widths. Parameter-count bounds are vacuous when the parameters outnumber
+  the samples; norm bounds instead depend on the size of the trained
+  weights.
+
+* **46. Approximation rates of deep ReLU networks.** Let $k\ge2$,
+  $p\in[1,\infty]$, $s\in[0,1]$, and $B>0$, and let the activation be
+  piecewise linear with at least one breakpoint. There is a constant $c$
+  such that for each $\varepsilon\in(0,1/2)$ a single architecture with at
+  most $c\varepsilon^{-d/(k-s)}\log(1/\varepsilon)$ parameters
+  approximates every $g$ with $\|g\|_{W^{k,p}((0,1)^d)}\le B$ within
+  $\varepsilon$ in the $W^{s,p}((0,1)^d)$ norm. For $p=\infty$ and $s=0$
+  this is Yarotsky's theorem. The depth of the architectures must grow as
+  $\varepsilon\to0$; the exponent $d/k$ is that of classical
+  approximation and still deteriorates with the dimension. Item 7 is the
+  corresponding statistical statement for compositional classes.
+
+* **47. Depth separation.** For the ReLU, logistic, or Heaviside
+  activation there are $c,C>0$ such that for each $d\ge C$ there exist a
+  probability measure $\mu$ on $\mathbb R^d$ and a function $g$, bounded by
+  $2$ and computed by a network with two hidden layers of width at most
+  $Cd^5$ and weights at most $Cd^C$, such that every network with one
+  hidden layer of width $n\le ce^{cd}$ has $L^2(\mu)$ distance at least $c$
+  from $g$ (Eldan and Shamir). If $g\in C^2([0,1]^d)$ is not affine and
+  $L\ge2$, there is $c>0$ such that, for every $\varepsilon\in(0,1)$, every
+  ReLU network with $L-1$ hidden layers and at most
+  $c\varepsilon^{-1/(2(L-1))}$ neurons has uniform error at least
+  $\varepsilon$ on $[0,1]^d$ (Yarotsky). These are approximation lower
+  bounds at fixed depth; they do not say that training finds the deeper
+  approximant.
+
+The **cyclic shift** $S$ on $\mathbb R^n$ moves each coordinate one place
+to the right, cyclically. A matrix is **circulant** when it is a polynomial
+in $S$; it acts as a cyclic convolution. A map $F$ on feature matrices
+$X\in\mathbb R^{n\times d}$ is **permutation equivariant** if
+$F(PX)=PF(X)$ for every $n\times n$ permutation matrix $P$. **Self-attention**
+with query, key, and value matrices $W_Q,W_K\in\mathbb R^{d\times d_k}$
+and $W_V\in\mathbb R^{d\times d_v}$ is
+$$\mathop{\mathrm{Att}}(X)=\mathop{\mathrm{softmax}}
+\bigl(XW_QW_K^\top X^\top/\sqrt{d_k}\bigr)XW_V,$$
+with the softmax of item 29 applied to each row.
+
+* **48. Equivariant linear layers and self-attention.** A matrix commutes
+  with $S$ if and only if it is circulant; all circulant matrices are
+  diagonalized by the discrete Fourier basis. For $n\ge2$, the linear maps
+  $F:\mathbb R^n\to\mathbb R^n$ with $F(Px)=PF(x)$ for every permutation
+  matrix are exactly $aI+b\mathbf 1\mathbf 1^\top$. On feature matrices
+  the linear permutation-equivariant maps are
+  $X\mapsto X\Theta_1+n^{-1}\mathbf 1\mathbf 1^\top X\Theta_2$.
+  Self-attention satisfies $\mathop{\mathrm{Att}}(PX)=P\mathop{\mathrm{Att}}(X)$;
+  it is a message-passing map, as in item 32, on the complete graph with
+  data-dependent weights. Order enters a transformer only through
+  positional encodings added to $X$, which break this equivariance.
+  Exact translation equivariance of a convolutional layer on a finite grid
+  requires periodic boundary conditions; padding and strided pooling
+  break it.
+
+### Random initialization and implicit bias
+
+Consider a fully connected network whose biases are independent
+$N(0,C_b)$ and whose weights into layer $\ell+1$ are independent
+$N(0,C_W/N_\ell)$, with $C_b\ge0$ and $C_W>0$. Write $z^{(\ell)}(x)$ for the
+preactivation vector of layer $\ell$ at input $x\in\mathbb R^d$.
+
+* **49. Gaussian-process limit at initialization.** Let the activation
+  $\sigma$ be continuous with $|\sigma(u)|\le a+b|u|$. Fix the depth and
+  finitely many inputs, and let the hidden widths tend to infinity. Then
+  the coordinates of $z^{(\ell)}$ converge jointly in distribution to
+  independent copies of a centered Gaussian process with covariance
+  $K^{(\ell)}$, where $K^{(1)}(x,x')=C_b+C_W\langle x,x'\rangle/d$ and
+  $$K^{(\ell+1)}(x,x')=C_b+C_W\,\mathbb E[\sigma(U)\sigma(U')],$$
+  with $(U,U')$ centered Gaussian of covariance given by $K^{(\ell)}$ on
+  $\{x,x'\}$. Bayesian regression with this network prior and Gaussian
+  noise becomes, in the limit, the Gaussian-process prediction of item 30
+  with kernel $K^{(L)}$. At finite width the law is non-Gaussian, with
+  corrections of order the inverse width. The tangent kernel of item 8 is
+  a different kernel, which governs training rather than the prior.
+
+* **50. Implicit bias of gradient descent.** For
+  $\frac12\|X\theta-y\|_2^2$ with $X\in\mathbb R^{n\times p}$, gradient
+  descent with constant step $0<\eta<2/\lambda_{\max}(X^\top X)$ from
+  $\theta_0$ converges to $X^+y+(I-X^+X)\theta_0$. From $\theta_0=0$ this
+  is the minimum-norm least-squares solution, which is the interpolant of
+  item 9 when $p>n$ and $X$ has full row rank. For linearly separable data
+  $(x_i,y_i)$, the logistic loss, and gradient descent with a sufficiently
+  small constant step from any initialization, $\|\theta_t\|\to\infty$ and
+  $\theta_t/\|\theta_t\|\to\hat\theta/\|\hat\theta\|$, where $\hat\theta$
+  minimizes $\|\theta\|_2$ subject to $y_i\langle\theta,x_i\rangle\ge1$
+  for all $i$ (Soudry, Hoffer, Nacson, Gunasekar, and Srebro). The
+  directional convergence is only logarithmic in $t$. In the kernel limit
+  of item 8, squared-loss training converges to the minimum-norm
+  interpolant in the reproducing kernel Hilbert space of the limiting
+  kernel, up to a term from the random initial function. Analogous
+  statements for deep nonlinear networks need additional assumptions.
+
 <a id="synopsis-113c"></a>
 
 ## 113C. Networks and Graph Representation Learning
@@ -341,6 +558,72 @@ features of its neighbors.
   a graph invariant. Equivariance is a constraint on relabeling, while
   the Weisfeiler–Leman theorem of item 14 bounds distinguishing power;
   one does not imply that the other is maximal.
+
+### Random graphs, spectral recovery, and graph limits
+
+The **Erdős–Rényi graph** $G(n,p)$ includes each of the $\binom n2$
+possible edges independently with probability $p$.
+
+* **51. Phase transitions of the Erdős–Rényi graph.** Let $p=c/n$ with a
+  fixed $c>0$. If $c<1$, then with probability tending to one every
+  component has $O(\log n)$ vertices. If $c>1$, the largest component
+  $C_1$ satisfies $|C_1|/n\to\zeta_c$ in probability, where
+  $\zeta_c\in(0,1)$ is the positive solution of $1-\zeta=e^{-c\zeta}$,
+  and with probability tending to one every other component has
+  $O(\log n)$ vertices. Here $\zeta_c$ is the survival probability of a
+  Galton–Watson process with Poisson($c$) offspring, CKMA SYNOPSIS06,
+  item 65. For $p=(\log n+x_n)/n$, the graph is connected with
+  probability tending to one if $x_n\to\infty$, and has isolated vertices
+  with probability tending to one if $x_n\to-\infty$; for fixed $x_n=x$
+  the probability of connectivity tends to $\exp(-e^{-x})$. Thus
+  connectivity and the disappearance of isolated vertices share the sharp
+  threshold $\log n/n$, whereas the giant component appears at average
+  degree one.
+
+For the two-group model of item 31 with $p>q$, let $D$ be the
+$n\times n$ matrix with entries $p$ within and $q$ between groups,
+diagonal included, let $R=A-D$, and put $\mu=\min\{q,(p-q)/2\}$.
+**Spectral clustering** labels each vertex by the sign of its coordinate in
+a unit eigenvector for the second largest eigenvalue of $A$.
+
+* **52. Spectral clustering of the block model.** If $\mu>0$, then up to
+  a global flip spectral clustering misclassifies at most
+  $8\|R\|_{\mathrm{op}}^2/(\mu^2n)$ vertices. This is a deterministic
+  consequence of the Davis–Kahan theorem, CKMA SYNOPSIS13, item 67, and
+  the population eigenvectors of item 31. Since
+  $\|R\|_{\mathrm{op}}\le C\sqrt n$ with probability at least $1-4e^{-n}$,
+  at most $C/\mu^2$ vertices are misclassified, a bounded number when
+  $p$ and $q$ are fixed. With $\bar d=n(p+q)/2$, the matrix Bernstein
+  inequality, CKMA SYNOPSIS07, item 44, gives
+  $\mathbb E\|R\|_{\mathrm{op}}\le C(\sqrt{\bar d\log n}+\log n)$; hence
+  the misclassified fraction tends to zero in probability when
+  $\bar d\ge\log n$ and $n^2\mu^2/(\bar d\log n)\to\infty$. These
+  conditions are stronger than the thresholds of items 11 and 12, which
+  require other methods.
+
+For a finite simple graph $F$ and a graphon $W$, the **homomorphism
+density** is
+$$t(F,W)=\int_{[0,1]^{V(F)}}\prod_{\{i,j\}\in E(F)}W(x_i,x_j)\,dx.$$
+A finite graph is identified with its step graphon. The **cut norm** of a
+bounded symmetric measurable $U$ on $[0,1]^2$ is
+$\|U\|_\square=\sup_{S,T}\bigl|\int_{S\times T}U\bigr|$ over measurable
+$S,T\subseteq[0,1]$. The **cut distance** is
+$\delta_\square(U,W)=\inf_\varphi\|U-W^\varphi\|_\square$, over invertible
+measure-preserving maps $\varphi$ of $[0,1]$, where
+$W^\varphi(x,y)=W(\varphi(x),\varphi(y))$.
+
+* **53. Graph limits.** For graphons $U$ and $W$,
+  $$|t(F,U)-t(F,W)|\le|E(F)|\,\delta_\square(U,W).$$
+  Conversely, if graphs $G_n$ with $|V(G_n)|\to\infty$ have convergent
+  densities $t(F,G_n)$ for every $F$, then there is a graphon $W$ with
+  $\delta_\square(G_n,W)\to0$ and $t(F,W)=\lim_nt(F,G_n)$ (Lovász and
+  Szegedy). Graphons at cut distance zero are exactly the weakly
+  isomorphic ones of item 13, and the space of graphons modulo cut
+  distance zero is compact; hence every sequence of graphs has a
+  convergent subsequence. The graphon random graphs of item 13 on $n$
+  vertices converge to $W$ almost surely. Sequences with $o(n^2)$ edges
+  converge to the zero graphon, so sparse networks need rescaled or
+  different limit objects.
 
 <a id="synopsis-113d"></a>
 
@@ -458,6 +741,142 @@ The **advantage** is $A^\pi(s,a)=Q^\pi(s,a)-V^\pi(s)$.
   bounded rewards, and local differentiability justify the
   discounted differentiation. Variance and bias of a fitted critic
   are additional questions.
+
+### Optimal policies, planning, and sample complexity
+
+* **54. Stationary optimal policies and linear programming.** In the
+  finite discounted model of item 19, let $V^\star$ and $Q^\star$ be the
+  suprema of $V^\pi$ and $Q^\pi$ over all history-dependent randomized
+  policies. Some stationary deterministic policy attains both at every
+  state and action; every policy greedy for $Q^\star$ does. The function
+  $V^\star$ is the componentwise smallest $V$ satisfying
+  $$V(s)\ge r(s,a)+\gamma\sum_{s'}P(s'\mid s,a)V(s')
+  \quad\text{for all }(s,a),$$
+  and for an initial law $\mu$ of full support it is the unique minimizer
+  of $\sum_s\mu(s)V(s)$ over this set. The state-action occupancy measures
+  $d^\pi_\mu(s,a)=(1-\gamma)\sum_t\gamma^tP_{\mu,\pi}(S_t=s,A_t=a)$ of
+  stationary policies are exactly the nonnegative $d$ with
+  $$\sum_ad(s,a)=(1-\gamma)\mu(s)
+  +\gamma\sum_{s',a'}P(s\mid s',a')d(s',a')\quad\text{for all }s,$$
+  and $J(\pi)=(1-\gamma)^{-1}\sum_{s,a}d^\pi_\mu(s,a)r(s,a)$. Maximizing
+  this linear function over the polytope is the dual linear program. If
+  $\mu$ has full support and $d^\star$ is optimal, then
+  $\pi(a\mid s)=d^\star(s,a)/\sum_{a'}d^\star(s,a')$ is optimal.
+
+In the **generative model** the rewards $r(s,a)\in[0,1]$ are known and, for
+each state-action pair, $N$ independent next states are drawn from
+$P(\cdot\mid s,a)$. Let $\hat P$ be the empirical transition law, and let
+hats denote quantities of the model with $\hat P$ in place of $P$.
+
+* **55. Sample complexity with a generative model.** For every stationary
+  policy $\pi$,
+  $$Q^\pi-\hat Q^\pi=\gamma(I-\gamma\hat P^\pi)^{-1}(P-\hat P)V^\pi,$$
+  with $\hat P^\pi$ the empirical state-action transition matrix under
+  $\pi$; hence
+  $\|Q^\pi-\hat Q^\pi\|_\infty\le\gamma(1-\gamma)^{-1}
+  \|(P-\hat P)V^\pi\|_\infty$. There is an absolute constant $c$ such
+  that, if $\varepsilon\le1$, $\delta\in(0,1)$, and
+  $$N\ge\frac{c\log(c|S||A|/\delta)}{(1-\gamma)^3\varepsilon^2},$$
+  then with probability at least $1-\delta$ the optimal function of the
+  empirical model satisfies $\|\hat Q^\star-Q^\star\|_\infty\le\varepsilon$.
+  If $\varepsilon\le(1-\gamma)^{-1/2}$, a sample size of the same order
+  makes an optimal policy $\hat\pi$ of the empirical model satisfy
+  $\|Q^{\hat\pi}-Q^\star\|_\infty\le\varepsilon$. Conversely, for some
+  class of models every procedure that is $\varepsilon$-accurate for
+  $Q^\star$ with probability $1-\delta$ needs at least
+  $c|S||A|\log(c/\delta)/((1-\gamma)^3\varepsilon^2)$ samples in total.
+  A crude argument through uniform model accuracy gives the worse factor
+  $|S|^2|A|(1-\gamma)^{-4}$; the sharp exponent uses the variance of
+  $V^\star$ under the transitions.
+
+For a fixed policy, let the states form an irreducible aperiodic chain on
+$\{1,\ldots,n\}$ with transition matrix $P$, stationary law $\varpi$,
+one-step costs $g(i,j)$, and value $V$. Let $\Phi$ be an $n\times K$ feature
+matrix of full column rank, with rows $\phi(i)^\top$. **TD($\lambda$)**, for
+$\lambda\in[0,1]$, runs along one trajectory $(i_t)$ with
+$d_t=g(i_t,i_{t+1})+\gamma\phi(i_{t+1})^\top r_t-\phi(i_t)^\top r_t$,
+eligibility $z_t=\sum_{k\le t}(\gamma\lambda)^{t-k}\phi(i_k)$, and update
+$r_{t+1}=r_t+\alpha_td_tz_t$. Let $\Pi$ be the orthogonal projection onto
+the range of $\Phi$ in the $\varpi$-weighted norm $\|\cdot\|_\varpi$.
+
+* **56. Temporal differences with linear features.** If the steps are
+  positive, deterministic, $\sum_t\alpha_t=\infty$, and
+  $\sum_t\alpha_t^2<\infty$, then $r_t\to r^\star$ almost surely, where
+  $\Phi r^\star$ is the unique fixed point of $\Pi T^{(\lambda)}$, with
+  $T^{(\lambda)}=(1-\lambda)\sum_{m\ge0}\lambda^mT^{m+1}$ for $\lambda<1$,
+  $T^{(1)}$ the constant map to $V$, and $T$ the policy Bellman operator. Moreover
+  $$\|\Phi r^\star-V\|_\varpi\le\frac{1-\gamma\lambda}{1-\gamma}
+  \|\Pi V-V\|_\varpi.$$
+  For $\lambda=1$ the limit is the best approximation $\Pi V$. The
+  argument uses that $P$ is nonexpansive in $\|\cdot\|_\varpi$; sampling
+  states from another law, or nonlinear parameterizations, can make the
+  iteration diverge (Tsitsiklis and Van Roy).
+
+For a finite discounted model with rewards in $[0,1]$, the **softmax
+policy** with parameters $\theta_{s,a}$ is
+$\pi_\theta(a\mid s)\propto e^{\theta_{s,a}}$. With start law $\rho$, the
+**natural policy gradient** update is
+$\theta^{(t+1)}=\theta^{(t)}+\eta F_\rho(\theta^{(t)})^+\nabla_\theta J(\pi_{\theta^{(t)}})$,
+where $F_\rho(\theta)$ is the Fisher information of $\pi_\theta(\cdot\mid S)$
+averaged over $S\sim d_\rho^{\pi_\theta}$ and $^+$ is the Moore–Penrose
+inverse.
+
+* **57. Convergence of natural policy gradient.** For the softmax policy
+  the update is
+  $\pi^{(t+1)}(a\mid s)\propto
+  \pi^{(t)}(a\mid s)\exp\bigl(\eta A^{(t)}(s,a)/(1-\gamma)\bigr)$, with
+  $A^{(t)}$ the advantage of $\pi^{(t)}$. From $\theta^{(0)}=0$ and any
+  step $\eta>0$, for every $T\ge1$,
+  $$J^\star(\rho)-J(\pi^{(T)})\le\frac{\log|A|}{\eta T}
+  +\frac1{(1-\gamma)^2T},$$
+  where $J^\star(\rho)$ is the optimal value from $\rho$. The bound is free
+  of $|S|$ and of distribution-mismatch coefficients. It assumes exact
+  advantages; sampled versions add estimation errors. The ordinary
+  softmax policy gradient of item 35 converges to optimality for a
+  small enough step when its start law has full support, but its
+  worst-case rate can be very slow.
+
+### Minimax and linear bandits
+
+* **58. Minimax regret of finite-armed bandits.** For $K\ge2$ arms and a
+  horizon $n>K/(4\log(4/3))$, every strategy, possibly randomized, has
+  regret at least
+  $$\frac{\sqrt2-1}{\sqrt{32\log(4/3)}}\sqrt{nK}$$
+  on some instance with independent Bernoulli rewards. The hard instances
+  have all arms of mean $1/2$ except one, chosen uniformly at random, whose
+  mean is shifted by an amount of order $\sqrt{K/n}$. Since UCB attains
+  $O(\sqrt{Kn\log n})$ uniformly over rewards in $[0,1]$, and Exp3 the
+  bound of item 18 against oblivious adversaries, these orders are
+  minimax up to logarithmic factors. Item 15 instead concerns fixed
+  instances as $n\to\infty$.
+
+In a **linear bandit** the learner picks $x_t$ in a decision set
+$\mathcal D\subseteq\mathbb R^d$ and observes $\langle\mu^\star,x_t\rangle+\eta_t$.
+The regret is $R_T=\sum_{t<T}(\max_{x\in\mathcal D}\langle\mu^\star,x\rangle
+-\langle\mu^\star,x_t\rangle)$. **LinUCB** forms the ridge estimate
+$\hat\mu_t$ with $\Sigma_t=\lambda I+\sum_{\tau<t}x_\tau x_\tau^\top$, and
+chooses $x_t$ maximizing
+$\langle\hat\mu_t,x\rangle+\sqrt{\beta_t}\,(x^\top\Sigma_t^{-1}x)^{1/2}$.
+
+* **59. Self-normalized confidence and LinUCB.** Let $(\mathcal F_t)$ be a
+  filtration, let real $\varepsilon_t$ be $\mathcal F_t$-measurable,
+  conditionally centered and $\sigma$-sub-Gaussian given
+  $\mathcal F_{t-1}$, and let $X_t\in\mathbb R^d$ be
+  $\mathcal F_{t-1}$-measurable. For positive definite $V_0$ and
+  $V_t=V_0+\sum_{i\le t}X_iX_i^\top$, with probability at least $1-\delta$,
+  simultaneously for all $t\ge1$,
+  $$\Bigl\|\sum_{i\le t}X_i\varepsilon_i\Bigr\|_{V_t^{-1}}^2
+  \le2\sigma^2\log\frac{\det(V_t)^{1/2}\det(V_0)^{-1/2}}{\delta}$$
+  (Abbasi-Yadkori, Pál, and Szepesvári). If
+  $|\langle\mu^\star,x\rangle|\le1$ and $\|x\|_2\le B$ on $\mathcal D$,
+  $\|\mu^\star\|_2\le W$, and the noise satisfies these conditions, then
+  LinUCB with $\lambda=\sigma^2/W^2$ and
+  $\beta_t=\sigma^2\bigl(2+4d\log(1+tB^2W^2/(d\sigma^2))+8\log(4/\delta)\bigr)$
+  has, with probability at least $1-\delta$ and for all $T$,
+  $$R_T\le c\sigma\sqrt T\Bigl(d\log\bigl(1+TB^2W^2/(d\sigma^2)\bigr)
+  +\log(4/\delta)\Bigr).$$
+  This is $\tilde O(d\sqrt T)$, with no dependence on $|\mathcal D|$. A
+  lower bound of order $d\sqrt T$ holds for $T\ge\max\{256,d^2/16\}$.
 
 <a id="synopsis-113e"></a>
 
@@ -588,6 +1007,91 @@ It is twice the integral probability metric of
   Estimating the ratio or selecting the predictor on those same
   validation observations requires further error control.
 
+### Threshold queries, testing, and local contraction
+
+**AboveThreshold** answers an adaptively chosen stream of real queries
+$f_1,f_2,\ldots$, each of sensitivity at most $1$, against a public
+threshold $T$. It draws $\hat T=T+\mathop{\mathrm{Lap}}(2/\varepsilon)$ once
+and, for each query, an independent $\nu_i\sim\mathop{\mathrm{Lap}}(4/\varepsilon)$.
+It reports "below" while $f_i(D)+\nu_i<\hat T$, and at the first $i$ with
+$f_i(D)+\nu_i\ge\hat T$ it reports "above" and halts.
+
+* **60. Sparse vector technique.** AboveThreshold is
+  $\varepsilon$-differentially private, whatever the number of queries.
+  If among the first $k$ queries only the last can satisfy
+  $f_i(D)\ge T-\alpha$, then with probability at least $1-\beta$ it does
+  not halt before query $k$, every "above" report has $f_i(D)\ge T-\alpha$,
+  and every "below" report has $f_i(D)\le T+\alpha$, where
+  $$\alpha=\frac{8(\log k+\log(2/\beta))}{\varepsilon}.$$
+  Privacy is paid for the above-threshold reports only; restarting after
+  each of $c$ such reports and using item 22 handles $c>1$. Releasing all
+  noisy query values would instead cost privacy for every query.
+
+* **61. Testing interpretation of privacy.** Let $M$ be
+  $(\varepsilon,\delta)$-differentially private, let $D,D'$ be
+  neighboring, and let $\varphi$ be any test with values in $[0,1]$ based
+  on the output, of $D$ against $D'$, with size
+  $\alpha=\mathbb E\varphi(M(D))$ and type II error
+  $\beta=1-\mathbb E\varphi(M(D'))$. Then
+  $$1-\beta\le e^\varepsilon\alpha+\delta,\qquad
+  1-\alpha\le e^\varepsilon\beta+\delta.$$
+  Conversely, if these inequalities hold for all indicator tests and all
+  neighboring pairs, then $M$ is $(\varepsilon,\delta)$-private. Thus no
+  test distinguishes the presence of any one record with power much above
+  its size. The statement concerns one record; for groups of $k$ records
+  the factor of item 36 applies.
+
+A release kernel $Q$ is **$\varepsilon$-locally private** when
+$Q(B\mid x)\le e^\varepsilon Q(B\mid x')$ for all measurable $B$ and all
+inputs $x,x'$. For a law $P$ of the input write $M_P=\int Q(\cdot\mid x)\,dP(x)$
+for the law of the release, and let $\|P_1-P_2\|_{\mathrm{TV}}
+=\sup_B|P_1(B)-P_2(B)|$.
+
+* **62. Contraction under local privacy.** If $Q$ is
+  $\varepsilon$-locally private, then for all input laws $P_1,P_2$,
+  $$D(M_{P_1}\|M_{P_2})+D(M_{P_2}\|M_{P_1})
+  \le4(e^\varepsilon-1)^2\|P_1-P_2\|_{\mathrm{TV}}^2$$
+  (Duchi, Jordan, and Wainwright). For $n$ individuals with independent
+  inputs and noninteractive releases, divergences add, so the two-point
+  and Fano methods of SYNOPSIS107, items 14 and 15, apply with $n$
+  replaced by an effective sample size of order $n(e^\varepsilon-1)^2$,
+  that is $n\varepsilon^2$ for $\varepsilon\le1$. This yields the local
+  lower bound of item 23. The statement extends to sequentially
+  interactive releases.
+
+### Fairness criteria and label shift
+
+A score $S$ satisfies **independence**, or demographic parity, when
+$S\perp A$.
+
+* **63. Independence versus the conditional criteria.** If $A$ and $Y$
+  are dependent, independence and sufficiency cannot both hold, since
+  $A\perp S$ and $A\perp Y\mid S$ give $A\perp(Y,S)$. If $Y$ is binary,
+  $A$ and $Y$ are dependent, and $S$ and $Y$ are dependent, independence
+  and separation cannot both hold; this can fail for a response with more
+  than two values. A sufficient score becomes calibrated within groups
+  after the relabeling $\ell(s)=P(Y=1\mid S=s)$. With item 24, each pair
+  of the three criteria is therefore incompatible outside degenerate
+  cases.
+
+Under **label shift**, source and target laws of $(X,Y)$, with
+$Y\in\{1,\ldots,K\}$, have the same class-conditional laws of $X$ given
+$Y=j$ but label marginals $p_S$ and $p_T$, with $p_S(j)>0$ for all $j$. Put
+$w_j=p_T(j)/p_S(j)$.
+
+* **64. Label shift: correction and identification.** The target
+  conditional probabilities are
+  $$p_T(j\mid x)=\frac{w_jp_S(j\mid x)}{\sum_kw_kp_S(k\mid x)},$$
+  and for an integrable loss $R_T(f)=\mathbb E_S[w_YL(Y,f(X))]$. For any
+  fixed classifier $h$ with values in $\{1,\ldots,K\}$, the target law of
+  its predictions is $q_i=P_T(h(X)=i)=\sum_jC_{ij}w_j$, with
+  $C_{ij}=P_S(h(X)=i,\,Y=j)$. If $C$ is invertible, then $w=C^{-1}q$ is
+  identified from labeled source data and unlabeled target covariates.
+  The weights here depend on the label, whereas under covariate shift,
+  item 25, they depend on the covariates. A classifier that never predicts
+  some class makes $C$ singular, and plug-in estimation error grows as
+  the smallest singular value of $C$ decreases.
+
 ## Reference guide
 
 ### Correspondence with the subdivisions
@@ -596,28 +1100,41 @@ It is twice the integral probability metric of
   cost-complexity pruning. Pollard carries consistency of $k$-means.
   Wainwright and Jordan carry the Bethe free energy and belief propagation.
   Scornet, Biau, and Vert carry consistency of random forests in additive
-  models.
+  models. Mohri, Rostamizadeh, and Talwalkar carry AdaBoost and ensemble
+  margins; Wainwright and Jordan also carry the conjugate duality of the
+  cumulant function and junction trees.
 - **[113B](#synopsis-113b)**: Cybenko, Hornik, Stinchcombe, and White, and
   Leshno, Lin, Pinkus, and Schocken carry universal approximation. Barron
   carries the dimension-free one-hidden-layer rate. Schmidt-Hieber carries
   compositional rates for deep ReLU networks. Jacot, Gabriel, and Hongler
   carry the neural tangent kernel. Hastie, Montanari, Rosset, and Tibshirani
   carry ridgeless interpolation. Goodfellow and coauthors carry the
-  adversarial equilibrium.
+  adversarial equilibrium. Grohs and Kutyniok's collection carries network
+  capacity, depth separation, Yarotsky's rates, and implicit bias; Roberts,
+  Yaida, and Hanin carry the infinite-width kernel recursion; Bronstein,
+  Bruna, Cohen, and Veličković carry equivariant layers and attention.
 - **[113C](#synopsis-113c)**: Abbe's survey carries the stochastic block model
   thresholds. Lovász carries graphons. Kolaczyk and Newman carry the
   statistical and probabilistic background on networks. Xu, Hu, Leskovec, and
   Jegelka carry the Weisfeiler–Leman comparison for message-passing networks.
+  Blum, Hopcroft, and Kannan, and Newman, carry Erdős–Rényi thresholds;
+  Vershynin carries spectral clustering of the block model.
 - **[113D](#synopsis-113d)**: Lai and Robbins carry the asymptotic lower
   bound. Auer, Cesa-Bianchi, and Fischer carry UCB1 and Exp3. Puterman, and
   Bertsekas and Tsitsiklis, carry Markov decision processes and the
   convergence of $Q$-learning. Gittins carries the index theorem.
+  Agarwal, Brantley, Jiang, Kakade, and Sun carry the linear-programming
+  view, generative-model sample complexity, natural policy gradient, and
+  LinUCB; Bertsekas and Tsitsiklis carry TD($\lambda$); Cesa-Bianchi and
+  Lugosi carry the minimax bandit lower bound.
 - **[113E](#synopsis-113e)**: Dwork and Roth carry differential privacy, the
   Laplace mechanism, and composition. Barocas, Hardt, and Narayanan carry
   the fairness definitions and the incompatibility and post-processing
   statements. Ben-David, Blitzer, Crammer, and Pereira carry the
   $\mathcal H\Delta\mathcal H$ bound. Shimodaira carries covariate-shift
-  reweighting.
+  reweighting. Dwork and Roth also carry the sparse vector technique;
+  Duchi, Jordan, and Wainwright carry local-privacy contraction;
+  Quiñonero-Candela and coauthors carry prior-probability shift.
 
 ### Source comparisons and local copies
 
@@ -678,12 +1195,59 @@ local book and was consulted. Original online papers read for this review
 are identified above; the lists below also retain other source copies
 identified in the first pass.
 
+Items 41–64 were checked against the following passages. Mohri,
+Rostamizadeh, and Talwalkar, Theorem 7.2, Lemma 7.4, Corollary 7.5,
+Theorem 7.7 with the discussion of (7.18), and Section 7.2.2, give item 41.
+Breiman, Friedman, Olshen, and Stone, Definitions 2.5–2.6, Proposition 4.4,
+and Theorem 4.5, give item 42; the multiclass Jensen form is a direct
+computation. Wainwright and Jordan, Theorems 3.3–3.4, Theorem 8.1,
+Proposition 4.1, Definition 2.1, and Proposition 2.1 with the
+triangulation discussion of Section 2.5.2, give items 43–44. Grohs and
+Kutyniok, Chapter 1, Theorems 1.20, 1.23, 1.24, 1.25, and 1.26, and
+Section 1.2.3 with equation (1.24), give items 45–47 and 50; the
+Bartlett–Harvey–Liaw–Mehrabian ReLU bounds, the linear-envelope condition
+of Matthews and coauthors in item 49, and the Soudry et al. statement in
+item 50 are recorded from the primary papers, which are not local.
+Roberts, Yaida, and Hanin, equations (4.3)–(4.4), (4.8), and (5.1)–(5.2),
+give the kernel recursion of item 49. Bronstein, Bruna, Cohen, and
+Veličković, Sections 4.1, 4.2 on circulant matrices, and 5.4, give item
+48; the self-attention identity is a direct computation.
+
+Blum, Hopcroft, and Kannan, Table 8.1, Theorems 8.6 and 8.11, and Section
+8.3, and Newman, equation (11.16), give the Erdős–Rényi thresholds of item
+51; the double-exponential connectivity limit is the classical
+Erdős–Rényi theorem, not proved in these local texts. Vershynin (2018),
+Theorems 4.5.5–4.5.6 and Exercises 5.5.1–5.5.2, give item 52; the explicit
+constant $8$ follows from his inequality (4.19). Lovász, *Large Networks
+and Graph Limits*, is not local; item 53 records the standard counting
+lemma and the Lovász–Szegedy limit and compactness theorems without
+a local check. Agarwal, Brantley, Jiang, Kakade, and Sun, Theorem 1.7,
+Proposition 1.15 with the primal and dual programs of Section 1.3,
+Lemma 2.2, Proposition 2.1, Theorems 2.6–2.7, Lemma 10.6, Theorems
+10.3 and 10.8, Theorems 5.2 and 5.4–5.5, and Lemma A.9, give items 54, 55,
+57, 58, and 59. In Lemma A.9 the regressors are taken predictable, as in
+Abbasi-Yadkori, Pál, and Szepesvári. Bertsekas and Tsitsiklis, Section 6.3,
+Assumption 6.1 and Propositions 6.4–6.5, give item 56. Cesa-Bianchi and
+Lugosi, Theorem 6.11 and its proof, give item 58; the proof bounds
+the regret against the best arm in expectation on stochastic Bernoulli
+instances.
+
+Dwork and Roth, Algorithm 1 with Theorems 3.23–3.24 and Section 3.6,
+give item 60. Item 61 follows directly from the definition and is the
+testing view of Wasserman and Zhou, whose paper is not local. Item 62 is
+Theorem 1 of the Duchi–Jordan–Wainwright paper linked above.
+Barocas, Hardt, and Narayanan, Propositions 1–3 of the classification
+chapter, give item 63. Quiñonero-Candela and coauthors, Section 1.5, give
+the prior-shift correction of item 64; the confusion-matrix identification
+is a direct computation, the black-box shift estimator of Lipton, Wang,
+and Smola, which is not local.
+
 Local texts directly consulted or identified for this selection:
 
 - [Bishop and Bishop, *Deep Learning: Foundations and Concepts*](../lean-CKMA/References/BishopBishop2024DeepLearningFoundationsConcepts-Springer.pdf).
   Probabilistic prediction and the diffusion chapter were consulted.
 - [Dwork and Roth, *The Algorithmic Foundations of Differential Privacy*](../lean-CKMA/References/DworkRoth2014AlgorithmicFoundationsDifferentialPrivacy-NowPublishers.FnTTCS9.pdf).
-  Theorems 3.6, 3.16, and 3.20 were read.
+  Theorems 3.6, 3.16, 3.20, and 3.23–3.24 were read.
 - [Wainwright and Jordan, *Graphical Models, Exponential Families, and Variational Inference*](../lean-CKMA/References/WainwrightJordan2008GraphicalModelsExponentialFamiliesVariationalInference-NowPublishers.FnTML1.pdf).
 - [Breiman, Friedman, Olshen, and Stone, *Classification and Regression Trees*](../lean-CKMA/References/BreimanFriedmanOlshenStone1984ClassificationRegressionTrees-ChapmanHallCRC.pdf).
 - [Koller and Friedman, *Probabilistic Graphical Models*](../lean-CKMA/References/KollerFriedman2009ProbabilisticGraphicalModelsPrinciplesTechniques-MITPress.ACML.pdf).
@@ -698,3 +1262,16 @@ Local texts directly consulted or identified for this selection:
 - [Barocas, Hardt, and Narayanan, *Fairness and Machine Learning*](../lean-CKMA/References/BarocasHardtNarayanan2022FairnessMachineLearningLimitationsOpportunities-AuthorManuscript.pdf).
 - [Hardt and Recht, *Patterns, Predictions, and Actions*](../lean-CKMA/References/HardtRecht2023PatternsPredictionsActionsStoryMachineLearning-AuthorManuscript.pdf).
 - [Blum, Hopcroft, and Kannan, *Foundations of Data Science*](../lean-CKMA/References/BlumHopcroftKannan2020FoundationsDataScience-Cambridge.pdf).
+- [Mohri, Rostamizadeh, and Talwalkar, *Foundations of Machine Learning*](../lean-CKMA/References/MohriRostamizadehTalwalkar2018FoundationsMachineLearning2ndEd-MITPress.ACML.pdf).
+  Chapter 7 was read.
+- [Agarwal, Brantley, Jiang, Kakade, and Sun, *Reinforcement Learning: Theory and Algorithms*](../lean-CKMA/References/AgarwalEtAl2026ReinforcementLearningTheoryAlgorithms-BookDraft.pdf).
+  Chapters 1, 2, 5, and 10 and Appendix A.5 were read.
+- [Cesa-Bianchi and Lugosi, *Prediction, Learning, and Games*](../lean-CKMA/References/CesaBianchiLugosi2006PredictionLearningGames-Cambridge.pdf).
+  Theorem 6.11 was read.
+- [Vershynin, *High-Dimensional Probability*](../lean-CKMA/References/Vershynin2018HighDimensionalProbabilityIntroductionApplicationsDataScience-CambridgeSerStatProbMath47.pdf).
+  Sections 4.5 and 5.5 were read.
+- [Bronstein, Bruna, Cohen, and Veličković, *Geometric Deep Learning*](../lean-CKMA/References/BronsteinBrunaCohenVeličković2021GeometricDeepLearningGridsGroupsGraphsGeodesicsGauges-BookDraft.Arxiv2104.13478v2.pdf).
+- [Roberts and Yaida, with Hanin, *The Principles of Deep Learning Theory*](../lean-CKMA/References/RobertsYaidaHanin2022PrinciplesDeepLearningTheory-CambridgeUP.pdf).
+  Chapters 4 and 5 were consulted for the kernel recursion.
+- [Quiñonero-Candela, Sugiyama, Schwaighofer, and Lawrence, editors, *Dataset Shift in Machine Learning*](../lean-CKMA/References/QuiñoneroCandelaSugiyamaSchwaighoferLawrenceEds2009DatasetShiftMachineLearning-MITPress.NeuralInfProc.pdf).
+  Section 1.5 was read.

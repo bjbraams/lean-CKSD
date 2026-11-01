@@ -12,7 +12,9 @@ specified loss are [SYNOPSIS102](SYNOPSIS102.md), item 2. Geometric
 ergodicity of a Markov chain is
 [CKMA SYNOPSIS08](../lean-CKMA/SYNOPSIS08.md), item 69. Langevin algorithms
 and diffusion-based sampling are in Section 112, and the construction of
-variational families is in Section 113.
+variational families is in Section 113. Gaussian-process regression
+posteriors are [SYNOPSIS113](SYNOPSIS113.md), item 30, and kriging is
+[SYNOPSIS108](SYNOPSIS108.md), items 18 and 31.
 
 Numbered definitions and results have stable identifiers. Additions take the
 next free number and are placed beside related material; numbers need not
@@ -136,6 +138,92 @@ $h(x)\exp(\eta\cdot T(x)-A(\eta))$ on the natural parameter space.
   multiplicative constant in an improper within-model prior generally
   prevents the marginal-likelihood ratio from being defined.
 
+### Credible regions, point nulls, and hierarchical shrinkage
+
+Suppose the posterior has density $\pi(\theta\mid x)$ with respect to
+Lebesgue measure on $\mathbb R^k$. A set $C$ is a **highest posterior
+density region** of level $1-\alpha$ when
+$\{\theta:\pi(\theta\mid x)>k_\alpha\}\subset C\subset
+\{\theta:\pi(\theta\mid x)\ge k_\alpha\}$, where $k_\alpha$ is the largest
+constant for which $C$ has posterior content at least $1-\alpha$.
+
+* **22. Highest posterior density regions.** Let $C$ be a highest
+  posterior density region with posterior content exactly $1-\alpha$ and
+  with $k_\alpha>0$. Then $C$ has the smallest Lebesgue volume among all
+  measurable sets of posterior content at least $1-\alpha$. For a
+  unimodal posterior density on the line that is symmetric about its mode,
+  $C$ is the equal-tailed credible interval. The construction is not
+  invariant under nonlinear reparameterization: the image of a highest
+  posterior density region under a smooth bijection is in general not a
+  highest posterior density region for the image posterior. In the model
+  $X\sim N(\theta,\sigma^2)$ with $\sigma$ known and the flat prior, the
+  region is $[X-z_{\alpha/2}\sigma,\,X+z_{\alpha/2}\sigma]$, which is also
+  the exact confidence interval of level $1-\alpha$.
+
+* **23. Point-null Bayes factor and Lindley's paradox.** Let
+  $\bar X\sim N(\theta,\sigma^2/n)$ with $\sigma$ known, and test
+  $H_0:\theta=\theta_0$ against $H_1:\theta\ne\theta_0$, with
+  $\theta\sim N(\theta_0,\tau^2)$ under $H_1$, $\tau>0$. Put
+  $z=\sqrt n\,|\bar X-\theta_0|/\sigma$. The Bayes factor of $H_0$ to $H_1$
+  is
+  $$B_{01}=\Bigl(1+\frac{n\tau^2}{\sigma^2}\Bigr)^{1/2}
+  \exp\Bigl(-\frac{z^2}{2}\Bigl(1+\frac{\sigma^2}{n\tau^2}\Bigr)^{-1}\Bigr).$$
+  For fixed $z$, and hence fixed $p$-value, $B_{01}\to\infty$ as
+  $n\to\infty$ or as $\tau\to\infty$, so the posterior probability of
+  $H_0$ tends to $1$ for any fixed positive prior probability of $H_0$.
+  Under $H_0$, $B_{01}\to\infty$ in probability; under a fixed
+  $\theta\ne\theta_0$, $B_{01}\to0$ almost surely. Over all priors $g_1$
+  on $\{\theta\ne\theta_0\}$,
+  $$B_{01}\ge\frac{f(x\mid\theta_0)}{\sup_{\theta\ne\theta_0}f(x\mid\theta)},$$
+  which equals $\exp(-z^2/2)$ in this normal model.
+
+* **24. Hierarchical normal model.** Let $y_j\mid\theta_j\sim
+  N(\theta_j,\sigma_j^2)$ be independent for $j=1,\ldots,J$, with known
+  $\sigma_j>0$; let $\theta_j\mid\mu,\tau$ be independent $N(\mu,\tau^2)$;
+  and let the hyperprior be $p(\mu,\tau)=p(\tau)$, flat in $\mu$. Then,
+  given $(\mu,\tau)$ and $y$, the $\theta_j$ are independent normal with
+  $$\hat\theta_j=\frac{y_j/\sigma_j^2+\mu/\tau^2}
+  {1/\sigma_j^2+1/\tau^2},\qquad
+  V_j=\frac1{1/\sigma_j^2+1/\tau^2}.$$
+  Marginally $y_j\mid\mu,\tau\sim N(\mu,\sigma_j^2+\tau^2)$ independently,
+  and $\mu\mid\tau,y\sim N(\hat\mu,V_\mu)$ with
+  $V_\mu^{-1}=\sum_j(\sigma_j^2+\tau^2)^{-1}$ and
+  $\hat\mu=V_\mu\sum_j y_j/(\sigma_j^2+\tau^2)$. Finally
+  $$p(\tau\mid y)\propto p(\tau)\,V_\mu^{1/2}
+  \prod_{j=1}^J(\sigma_j^2+\tau^2)^{-1/2}
+  \exp\Bigl(-\frac{(y_j-\hat\mu)^2}{2(\sigma_j^2+\tau^2)}\Bigr).$$
+  With $p(\tau)\propto1$ on $(0,\infty)$ the joint posterior is proper if
+  and only if $J\ge3$; with $p(\tau)\propto1/\tau$ it is improper for
+  every $J$.
+
+* **25. Empirical Bayes form of the James–Stein estimator.** Let
+  $X\sim N_p(\theta,I_p)$ and let the $\theta_i$ be independent
+  $N(0,\tau^2)$. The posterior mean is $(1-B)X$ with
+  $B=1/(1+\tau^2)$, and marginally $X\sim N_p(0,(1+\tau^2)I_p)$. For
+  $p\ge3$, $(p-2)/\|X\|^2$ is unbiased for $B$ under this marginal law,
+  and substituting it gives the James–Stein estimator of SYNOPSIS102,
+  item 14. Substituting instead the marginal maximum likelihood estimator
+  of $\tau^2$, truncated at zero, gives
+  $(1-p/\|X\|^2)_+X$. If the common prior mean $\mu$ is also unknown and
+  $S=\sum_i(X_i-\bar X)^2$, then for $p\ge4$ the quantity $(p-3)/S$ is
+  unbiased for $B$, giving the Efron–Morris estimator
+  $\bar X+(1-(p-3)/S)(X_i-\bar X)$, which shrinks toward the grand mean.
+
+* **26. Tweedie's formula and Robbins' estimator.** Let
+  $f(x\mid\theta)=h(x)\exp(\theta\cdot x-\psi(\theta))$ be a density on
+  $\mathbb R^k$ with respect to Lebesgue measure, let the prior $g$ be
+  arbitrary, and let $m$ be the marginal density, assumed positive and
+  differentiable under the integral sign. Then
+  $$\mathbb E[\theta\mid X=x]=\nabla\log m(x)-\nabla\log h(x).$$
+  The Gaussian case is SYNOPSIS112, item 21. For Poisson sampling,
+  $X\mid\theta\sim\mathop{\mathrm{Poi}}(\theta)$ with any prior on
+  $(0,\infty)$, the posterior mean is
+  $$\mathbb E[\theta\mid X=x]=(x+1)\frac{m(x+1)}{m(x)},$$
+  where $m$ is the marginal probability mass function. Robbins'
+  nonparametric empirical Bayes estimator replaces $m$ by the empirical
+  frequencies of independent observations $X_1,\ldots,X_n$ drawn from
+  $m$, with no parametric form assumed for the prior.
+
 <a id="synopsis-105b"></a>
 
 ## 105B. Nonparametric Bayes, Posterior Asymptotics, and Inverse Problems
@@ -158,6 +246,22 @@ $H=\alpha/|\alpha|$.
   $\pi_k=V_k\prod_{j<k}(1-V_j)$ give
   $\sum_{k\ge1}\pi_k\delta_{\theta_k}$ the law of a Dirichlet process with
   parameter $\alpha$.
+
+* **27. Pólya urn scheme and distinct values.** If $X_1,X_2,\ldots$ are
+  conditionally independent with law $P$ given a Dirichlet process
+  $P$ with parameter $\alpha$, then $X_1\sim H$ and
+  $$X_{n+1}\mid X_1,\ldots,X_n\sim
+  \frac{\alpha+\sum_{i=1}^n\delta_{X_i}}{|\alpha|+n},$$
+  the generalized Pólya urn of Blackwell and MacQueen. Conversely, a
+  sequence with these predictive laws is exchangeable, and the random
+  measure given by de Finetti's theorem (CKMA SYNOPSIS06, item 55) is a
+  Dirichlet process with parameter $\alpha$. If $\alpha$ is atomless, the
+  indicators that $X_i$ is a new value are independent Bernoulli variables
+  with success probabilities $|\alpha|/(|\alpha|+i-1)$. Hence the number
+  $K_n$ of distinct values among $X_1,\ldots,X_n$ satisfies
+  $$\mathbb EK_n=\sum_{i=1}^n\frac{|\alpha|}{|\alpha|+i-1}
+  \sim|\alpha|\log n,\qquad \frac{K_n}{\log n}\to|\alpha|
+  \quad\text{almost surely}.$$
 
 * **7. Doob's consistency theorem.** Consider a dominated model
   $\{P_\theta:\theta\in\Theta\}$ on a standard Borel sample space, with
@@ -280,6 +384,134 @@ $y$ is $\mathbb E_q\log p(y,\theta)-\mathbb E_q\log q(\theta)$.
   requirement. For a serial Markov chain, a decrease in one-step variance
   alone does not compare the full asymptotic variances of item 14.
 
+### Exact simulation and variance reduction
+
+For a distribution function $F$ on $\mathbb R$, the **generalized inverse**
+is $F^-(u)=\inf\{x:F(x)\ge u\}$ for $u\in(0,1)$.
+
+* **28. Inverse-transform sampling.** If $U$ is uniform on $(0,1)$, then
+  $F^-(U)$ has distribution function $F$, since $F^-(u)\le x$ exactly
+  when $u\le F(x)$. If $F$ is continuous and $X\sim F$, then $F(X)$ is
+  uniform on $(0,1)$.
+
+* **29. Accept–reject sampling.** Let $f$ and $g$ be probability densities
+  with $f\le Mg$ for a constant $M\ge1$. Draw $Y\sim g$ and an independent
+  uniform $U$ on $(0,1)$, and accept $Y$ when $U\le f(Y)/(Mg(Y))$;
+  otherwise repeat independently. The accepted value has density $f$
+  exactly, each trial is accepted with probability $1/M$, and the number
+  of trials is geometric with mean $M$. If only an unnormalized
+  $\tilde f=Zf$ is known, with $\tilde f\le\tilde Mg$, the same rule with
+  $\tilde M$ in place of $M$ still produces exact draws from $f$, with
+  acceptance probability $Z/\tilde M$.
+
+* **30. Control and antithetic variates.** Let $Y$ and $C$ be
+  square-integrable functions of the same simulation draw, with
+  $\mathbb EC$ known and $\mathop{\mathrm{Var}}C>0$. For every $b$, the
+  variable $Y-b(C-\mathbb EC)$ has mean $\mathbb EY$; its variance is
+  minimized at $b^*=\mathop{\mathrm{Cov}}(Y,C)/\mathop{\mathrm{Var}}C$,
+  where it equals $(1-\rho^2)\mathop{\mathrm{Var}}Y$ with $\rho$ the
+  correlation of $Y$ and $C$. For antithetic sampling, let $U$ be uniform
+  on $(0,1)$ and let $h\in L^2(0,1)$ be monotone. Then
+  $\mathop{\mathrm{Cov}}(h(U),h(1-U))\le0$, so the unbiased average
+  $\tfrac12(h(U)+h(1-U))$ has variance at most
+  $\tfrac12\mathop{\mathrm{Var}}h(U)$, the variance obtained from two
+  independent draws.
+
+### Convergence of Markov chain samplers
+
+* **31. Convergence of Metropolis–Hastings.** Suppose the chain of item
+  12 is $\pi$-irreducible. Then it is Harris recurrent, and for every
+  $h\in L^1(\pi)$ the averages $n^{-1}\sum_{t\le n}h(X_t)$ converge to
+  $\pi(h)$ almost surely from every starting point. If it is also
+  aperiodic, then $P^n(x,\cdot)\to\pi$ in total variation for every $x$,
+  as in CKMA SYNOPSIS08, item 68. Irreducibility holds if $q(x,y)>0$ for
+  all $x,y$ in the support of $\pi$, and aperiodicity holds if rejection
+  has positive probability. On $\mathbb R^d$, if the support of $\pi$ is
+  open and connected, $\pi$ is bounded and bounded away from zero on its
+  compact subsets, and $q(x,y)\ge\varepsilon$ whenever
+  $|x-y|<\delta$, for some $\varepsilon,\delta>0$, then the chain is
+  $\pi$-irreducible and aperiodic and every nonempty compact subset of
+  the support is small.
+
+* **32. Independence and random-walk samplers.** In the independence
+  sampler, $q(x,y)=g(y)$ for a density $g$. If $\pi\le Mg$ on the support of
+  $\pi$, then
+  $$\sup_A|P^n(x,A)-\pi(A)|\le(1-1/M)^n$$
+  for every $x$, so the chain is uniformly ergodic. If $\pi/g$ is not
+  essentially bounded, the chain is not geometrically ergodic. For a
+  random-walk sampler on $\mathbb R$, with symmetric positive increment
+  density, geometric ergodicity requires
+  $\int e^{s|x|}\pi(dx)<\infty$ for some $s>0$. If $\pi$ is symmetric
+  and log-concave in the tails, in the sense that
+  $\log\pi(x)-\log\pi(y)\ge a|y-x|$ for some $a>0$ and $x_1$ whenever
+  $x_1\le x<y$ or $y<x\le-x_1$, the chain is geometrically ergodic.
+
+* **33. Gibbs sampling as Metropolis–Hastings; two-stage samplers.**
+  Each coordinate update of item 13 is a Metropolis–Hastings step whose
+  proposal is the full conditional law, and its acceptance probability is
+  identically $1$. For a two-stage sampler on a pair $(X,Y)$, which
+  alternately draws $X$ given $Y$ and $Y$ given $X$, each of the two
+  marginal sequences is itself a Markov chain, reversible with respect to
+  its stationary marginal. If one marginal chain is ergodic, or
+  geometrically ergodic, so is the other. Under stationarity the
+  autocovariances $\mathop{\mathrm{Cov}}(h(X^{(0)}),h(X^{(t)}))$ are
+  nonnegative and nonincreasing in $t$ for every $h$ with finite
+  variance. Moreover, the conditional average
+  $T^{-1}\sum_{t\le T}\mathbb E[h(X)\mid Y^{(t)}]$ has variance no
+  larger than $T^{-1}\sum_{t\le T}h(X^{(t)})$ for every $T$. In this
+  two-stage setting the comparison left open in item 21 is therefore
+  resolved in favor of conditioning. When $X$ is a parameter and $Y$ is
+  missing data, the scheme is data augmentation.
+
+For a nonnegative integrable function $f_1$ proportional to $\pi$ on
+$\mathbb R^d$, the **slice sampler** alternates
+$U\mid X=x\sim\mathop{\mathrm{Unif}}(0,f_1(x))$ and
+$X\mid U=u\sim\mathop{\mathrm{Unif}}\{x:f_1(x)>u\}$, with the uniform law
+taken with respect to Lebesgue measure.
+
+* **34. Slice sampler.** Both steps leave invariant the uniform law on
+  $\{(x,u):0<u<f_1(x)\}$, whose first marginal is $\pi$, so the
+  $X$-sequence has stationary law $\pi$ and the normalizing constant of
+  $f_1$ is never needed. If $f_1$ is bounded and has bounded support, the
+  slice sampler is uniformly ergodic.
+
+Let $\pi(x)\propto\exp(-U(x))$ on $\mathbb R^d$ with $U$ continuously
+differentiable, let $M$ be positive definite, and put
+$H(x,p)=U(x)+\tfrac12p^\top M^{-1}p$. One **leapfrog step** of size
+$\varepsilon>0$ maps $(x,p)$ to $(x',p')$ through
+$p_{1/2}=p-\tfrac\varepsilon2\nabla U(x)$,
+$x'=x+\varepsilon M^{-1}p_{1/2}$, and
+$p'=p_{1/2}-\tfrac\varepsilon2\nabla U(x')$. Let $\Phi$ be the composition
+of $L$ such steps.
+
+* **35. Hamiltonian Monte Carlo.** The map $\Phi$ preserves Lebesgue
+  measure on $\mathbb R^{2d}$ and is reversible:
+  $\Phi(x,p)=(x',p')$ implies $\Phi(x',-p')=(x,-p)$. Draw
+  $p\sim N(0,M)$, compute $(x',p')=\Phi(x,p)$, and move to $x'$ with
+  probability
+  $$\min\bigl(1,\exp(H(x,p)-H(x',p'))\bigr),$$
+  remaining at $x$ otherwise. This kernel leaves $\pi$ invariant, because
+  it is a Metropolis–Hastings step for the joint density proportional to
+  $\exp(-H)$ with a measure-preserving involutive proposal, followed by
+  momentum refreshment. The exact Hamiltonian flow conserves $H$, so
+  rejections arise only from discretization error. Langevin-type
+  dynamics are in Section 112.
+
+### Mean-field coordinate ascent
+
+* **36. Coordinate-ascent variational updates.** In item 15, restrict
+  $q=\prod_jq_j$ to a product over blocks $\theta=(\theta_1,\ldots,\theta_J)$.
+  With the factors $q_\ell$, $\ell\ne j$, held fixed, the evidence lower
+  bound is maximized over $q_j$ by
+  $$q_j^*(\theta_j)\propto\exp\Bigl(\mathbb E_{q_{-j}}\log p(y,\theta)\Bigr),$$
+  provided the right side is integrable, where $\mathbb E_{q_{-j}}$
+  averages over the other blocks. Indeed, as a function of $q_j$, the
+  evidence lower bound differs from
+  $-\mathop{\mathrm{KL}}(q_j\,\|\,q_j^*)$ by a constant. Cycling through
+  these updates therefore never decreases the evidence lower bound. The
+  mean-field problem is not convex in general, so the limit can be a
+  local optimum that depends on the initialization.
+
 ## Reference guide
 
 ### Correspondence with the subdivisions
@@ -295,7 +527,10 @@ $y$ is $\mathbb E_q\log p(y,\theta)-\mathbb E_q\log q(\theta)$.
 - **[105C](#synopsis-105c)**: Robert's computational chapters, Del Moral,
   Douc, Moulines, Priouret, and Soulier, Meyn and Tweedie, and Levin, Peres,
   and Wilmer carry importance sampling and Markov chain Monte Carlo.
-  Wainwright and Jordan carry the evidence lower bound.
+  Wainwright and Jordan carry the evidence lower bound. Robert and Casella,
+  Liu, and Hammersley and Handscomb carry exact simulation, variance
+  reduction, convergence of Metropolis–Hastings and Gibbs samplers, the
+  slice sampler, and hybrid Monte Carlo.
 
 ### Source comparisons and local copies
 
@@ -316,9 +551,31 @@ treatment. Items 12 and 13 are the invariance statements of the Monte Carlo
 texts. Item 14 invokes the geometric
 ergodicity criterion already numbered in the analysis synopsis.
 
+For the third expansion, Berger's Sections 4.3.2–4.3.3 and 4.5.2–4.5.4
+were read for highest posterior density sets, the point-null Bayes factor
+(4.17) with the lower bound of Theorem 1 in Section 4.3.3, the normal-means
+empirical Bayes estimates (4.33)–(4.35), and Robbins' Poisson estimator
+(Example 16). Robert's Definition 5.5.2, Lemma 10.4.2, and Examples 10.4.1
+and 10.5.1 supply the volume property of highest posterior density
+regions, the exponential-family posterior-mean identity, and the empirical
+Bayes reading of the James–Stein estimator. Ghosh, Delampady, and Samanta,
+Section 6.4, were read for the Jeffreys–Lindley paradox, and Gelman et
+al., Section 5.4, equations (5.17)–(5.21), for the hierarchical normal
+model; the propriety threshold $J\ge3$ for the flat prior on $\tau$ in item
+24 follows from the tail $\tau^{1-J}$ of (5.21). Ghosal–van der Vaart,
+Section 4.1.4, Proposition 4.8, and Section 4.2.4 supply item 27. In
+Robert–Casella, Lemma 2.4, Corollary 2.17, and Section 4.4.2 were read for
+items 28–30, Theorem 7.4, Lemmas 7.3 and 7.6, Theorems 7.8 and 7.15 for
+items 31 and 32, Theorems 9.12, 9.19, 10.13, Corollary 9.14, and
+Proposition 9.18 for item 33, and Section 8.1 with Lemma 8.5 for item 34.
+Hammersley and Handscomb, Sections 5.5–5.6, supply the control and
+antithetic constructions. Liu, Sections 9.2–9.3, was read for the leapfrog
+integrator and hybrid Monte Carlo. Gelman et al., Section 13.7, and
+Wainwright and Jordan, Section 5.3, were read for the mean-field
+coordinate update.
+
 Bernardo and Smith, *Bayesian Theory*, DeGroot, *Optimal Statistical
-Decisions*, and Liu, *Monte Carlo Strategies in Scientific Computing*,
-were not located locally. Supplemental copies of Ghosh–Ramamoorthi,
+Decisions* were not located locally. Supplemental copies of Ghosh–Ramamoorthi,
 Kaipio–Somersalo, Asmussen–Glynn, and Chopin–Papaspiliopoulos are present;
 they were located but not read for this expansion. The consulted
 supplemental copies of Ghosal–van der Vaart and Robert–Casella are linked
@@ -330,6 +587,10 @@ Local texts directly consulted or identified for this selection:
   Theorem 8.9 was read for the contraction criterion.
 - [Robert and Casella, *Monte Carlo Statistical Methods*](../lean-CKMA/ReferencesSuppl/RobertCasella2004MonteCarloStatisticalMethods2ndEd-Springer.pdf).
   Chapters 3–4 were consulted for importance sampling and variance reduction.
+- [Liu, *Monte Carlo Strategies in Scientific Computing*](../lean-CKMA/ReferencesSuppl/Liu2004MonteCarloStrategiesScientificComputing-SpringerSerStat.pdf).
+  Sections 9.2–9.3 were read for hybrid Monte Carlo.
+- [Hammersley and Handscomb, *Monte Carlo Methods*](../lean-CKMA/ReferencesSuppl/HammersleyHandscomb1964MonteCarloMethods-ChapmanHallMonogAPS.pdf).
+  Sections 5.5–5.6 were read for control and antithetic variates.
 - [van der Vaart, *Asymptotic Statistics*](../lean-CKMA/References/VanDerVaart1998AsymptoticStatistics-CambridgeSerStatProbMath03.pdf).
   Theorem 10.1 was read for the parametric posterior normal limit.
 - [Jeffreys, *Theory of Probability*](../lean-CKMA/References/Jeffreys1998TheoryProbability3rdEd-OxfordUP.ClassicTextsPhysSci.pdf).

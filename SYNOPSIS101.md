@@ -176,6 +176,53 @@ information $I_1(\theta)$ therefore has information $n I_1(\theta)$.
   $\mathbb E_\theta T$. The unbiased estimator attaining the bound is then an
   affine function of $T$.
 
+### Minimum-variance unbiased estimators beyond the information bound
+
+An unbiased estimator $W$ of $g(\theta)$ with finite variance under every
+$P_\theta$ is **uniformly minimum variance unbiased** (UMVU) when
+$\mathop{\mathrm{Var}}_\theta W\le\mathop{\mathrm{Var}}_\theta W'$ for every
+$\theta$ and every unbiased estimator $W'$ of $g(\theta)$. An **unbiased
+estimator of zero** is a statistic $U$ with $\mathbb E_\theta U=0$ for every
+$\theta$. A family $\mathcal P$ of laws on $(\mathcal X,\mathcal A)$ is
+**complete** when $\int f\,dP=0$ for every $P\in\mathcal P$ forces $f=0$
+$P$-almost everywhere for every $P\in\mathcal P$, the integrals being
+assumed to exist.
+
+* **24. Characterization of UMVU estimators.** Let $W$ be an unbiased
+  estimator of $g(\theta)$ with $\mathbb E_\theta W^2<\infty$ for every
+  $\theta$. Then $W$ is UMVU if and only if
+  $\mathop{\mathrm{Cov}}_\theta(W,U)=0$ for every $\theta$ and every unbiased
+  estimator $U$ of zero with $\mathbb E_\theta U^2<\infty$ for every
+  $\theta$. If $T$ is sufficient and $W=h(T)$, it suffices to check
+  unbiased estimators of zero that are functions of $T$. A UMVU estimator
+  is unique: two UMVU estimators of $g(\theta)$ agree $P_\theta$-almost
+  surely for every $\theta$. The criterion is used chiefly to show that a
+  given unbiased estimator is not UMVU, and it applies without
+  completeness; with a complete sufficient statistic it reduces to item 8.
+
+* **25. Completeness of the order statistic.** Let $\mathcal P$ be a
+  complete family of laws on $(\mathcal X,\mathcal A)$ that is closed under
+  finite convex combinations. Then for every $n$ the order statistic, that
+  is the $\sigma$-algebra of permutation-invariant events in
+  $\mathcal X^n$, is complete for $\{P^n:P\in\mathcal P\}$; it is always
+  sufficient. The hypotheses hold for the family of all laws on
+  $\mathbb R^d$ with a Lebesgue density, for the family of all laws on
+  $\mathbb R$ with continuous distribution function, and for the subfamily
+  of laws with a Lebesgue density for which prescribed absolute moments
+  are finite. Consequently, if $\kappa(P)=\mathbb E_P h(X_1,\ldots,X_m)$ for a
+  symmetric kernel $h$ that is integrable under $P^m$ for every
+  $P\in\mathcal P$, and $n\ge m$, the $U$-statistic
+  $$U_n=\binom nm^{-1}\sum_{i_1<\cdots<i_m}h(X_{i_1},\ldots,X_{i_m})$$
+  is the unique unbiased estimator of $\kappa$ that is symmetric in the
+  observations, and it minimizes the risk among all unbiased estimators of
+  $\kappa$ for every loss convex in the action. In particular, among laws
+  with a Lebesgue density, $\bar X$ is UMVU for the mean when the variance is
+  finite, and $S^2$ is UMVU for the variance when the fourth moment is
+  finite. Convex closure cannot be dropped: for $n\ge2$ and the normal
+  location family $N(\mu,1)$ the nonzero function
+  $n\bar X^2-\sum_i X_i^2+n-1$ is symmetric with expectation zero for every
+  $\mu$. The large-sample behaviour of $U_n$ is SYNOPSIS103, item 6.
+
 ### Tests and confidence sets
 
 A **test** is a measurable function $\varphi$ with values in $[0,1]$; the
@@ -243,6 +290,42 @@ $C(x)=\{\theta:\text{the test of }\theta\text{ accepts }x\}$.
   induced likelihood of a value $\psi$ is the supremum of $L(\theta;x)$ over
   $\{\theta:g(\theta)=\psi\}$. Then $g(\hat\theta(x))$ maximizes the induced
   likelihood.
+
+### Likelihood ratio tests and two-sample normal procedures
+
+For a hypothesis $H:\theta\in\Theta_0$ with alternative
+$\theta\in\Theta\setminus\Theta_0$, the **likelihood ratio statistic** is
+$$\lambda(x)=\frac{\sup_{\theta\in\Theta_0}L(\theta;x)}
+{\sup_{\theta\in\Theta}L(\theta;x)}\in[0,1],$$
+and a **likelihood ratio test** rejects when $\lambda(x)\le c$ for a
+constant $c\in[0,1]$, chosen to give the desired size. Its large-sample
+calibration is SYNOPSIS103, item 7; the statements below are exact.
+
+* **26. Likelihood ratio tests in finite samples.** If $T$ is sufficient
+  then $\lambda(x)$ depends on $x$ only through $T(x)$. For a sample from
+  $N(\theta,1)$ and $H:\theta=\theta_0$,
+  $\lambda=\exp(-n(\bar X-\theta_0)^2/2)$, so the test rejects for large
+  $|\bar X-\theta_0|$ and has exact size from the normal law of $\bar X$.
+  For a sample from $N(\mu,\sigma^2)$ with both parameters unknown,
+  $n\ge2$, and $H:\mu=\mu_0$, the restricted and unrestricted maximizers give
+  $$\lambda^{-2/n}=1+\frac{t^2}{n-1},\qquad
+  t=\frac{\sqrt n(\bar X-\mu_0)}{S},$$
+  so the likelihood ratio test is the two-sided Student $t$ test of item 15.
+  For $H:\mu\le\mu_0$ the likelihood ratio test is the one-sided $t$ test.
+
+* **27. Two-sample $t$ procedures.** Let $X_1,\ldots,X_m$ be independent
+  $N(\mu_X,\sigma^2)$ and $Y_1,\ldots,Y_n$ independent $N(\mu_Y,\sigma^2)$,
+  the two samples independent with a common unknown variance, and
+  $m+n\ge3$. With the pooled variance
+  $$S_p^2=\frac{\sum_i(X_i-\bar X)^2+\sum_j(Y_j-\bar Y)^2}{m+n-2},$$
+  the statistic
+  $$\frac{\bar X-\bar Y-(\mu_X-\mu_Y)}{S_p\sqrt{1/m+1/n}}$$
+  has the Student $t$ law on $m+n-2$ degrees of freedom. It yields an exact
+  confidence interval for $\mu_X-\mu_Y$ and exact one- and two-sided tests
+  of $\mu_X=\mu_Y$; these tests are uniformly most powerful unbiased and
+  uniformly most powerful invariant, see SYNOPSIS102, items 13 and 38.
+  Without equality of the variances the statistic with separate variance
+  estimates is not a pivot; this is the Behrens–Fisher problem.
 
 ### Order statistics and exact confidence procedures
 
@@ -324,6 +407,68 @@ $P_\theta(p(X)\le u)\le u$ for every $u\in[0,1]$ and every null parameter.
   predictor fitted on independent training data the same identity holds
   conditionally on that data.
 
+### Pivots, interval length, and conditional inference
+
+A **location–scale family** on $\mathbb R$ has densities
+$\sigma^{-1}f((x-\mu)/\sigma)$ with $f$ a known density, $\mu\in\mathbb R$,
+and $\sigma>0$; the **location** and **scale** families fix $\sigma=1$ and
+$\mu=0$ respectively. A statistic $T$ on samples of size $n$ is
+**location equivariant** when $T(x+c\mathbf 1)=T(x)+c$, and a positive
+statistic $S$ is **scale equivariant** when $S(ax+b\mathbf 1)=aS(x)$ for
+$a>0$ and $b\in\mathbb R$; here $\mathbf 1$ is the vector of ones. A
+statistic is location–scale equivariant when
+$T(ax+b\mathbf 1)=aT(x)+b$.
+
+* **28. Pivots in location and scale families.** For an independent sample
+  from a location–scale family, let $T$ be location–scale equivariant and
+  $S$ scale equivariant and positive. Then $(T-\mu)/S$ and $S/\sigma$ are
+  pivots, and so is $T-\mu$ when $\sigma$ is known. If $a<b$ are quantiles
+  with $P(a\le (T-\mu)/S\le b)=1-\alpha$, then $[T-bS,\,T-aS]$ is a
+  confidence interval for $\mu$ of exact coverage $1-\alpha$. Examples: for
+  an exponential sample with mean $\lambda$, $2\sum_iX_i/\lambda$ is
+  $\chi^2_{2n}$; for a sample from the uniform law on $(0,\theta)$,
+  $X_{(n)}/\theta$ has distribution function $t^n$ on $[0,1]$, so
+  $[X_{(n)},\,\alpha^{-1/n}X_{(n)}]$ covers $\theta$ with probability exactly
+  $1-\alpha$. The normal pivots of items 15 and 22 are the Gaussian case.
+
+* **29. Shortest intervals from a unimodal pivot.** Let a pivot have a
+  density $f$ that is unimodal with mode $x^\ast$. If $[a,b]$ satisfies
+  $\int_a^bf=1-\alpha$, $f(a)=f(b)>0$, and $a\le x^\ast\le b$, then $[a,b]$ has
+  minimal length among all intervals of probability $1-\alpha$ under $f$.
+  For a location pivot $T-\mu$ this gives the shortest interval of the form
+  $[T-b,T-a]$, and for a symmetric unimodal pivot the equal-tailed choice.
+  For scale pivots the length of the resulting interval for the parameter
+  is not $b-a$, and the criterion must be applied to the transformed
+  length.
+
+* **30. Pratt's theorem.** Let $C(x)\subset\mathbb R^k$ be a confidence set
+  for $\theta\in\mathbb R^k$ such that $\{(x,\theta):\theta\in C(x)\}$ is
+  jointly measurable, and let $|C(x)|$ be its Lebesgue measure. Then, for
+  every $\theta^\ast$,
+  $$\mathbb E_{\theta^\ast}|C(X)|
+  =\int_{\theta\ne\theta^\ast}P_{\theta^\ast}(\theta\in C(X))\,d\theta.$$
+  Expected length or volume is thus the integrated probability of false
+  coverage. A confidence set minimizing every false-coverage probability
+  within a class therefore minimizes expected volume within that class;
+  see item 14 and SYNOPSIS102, item 34.
+
+* **31. Conditional inference in a location family.** Let
+  $X_1,\ldots,X_n$ be independent with density $f(x-\theta)$ on
+  $\mathbb R$, and let $T$ be a location-equivariant statistic, for example
+  $X_{(1)}$ or an equivariant maximum likelihood estimator. The
+  **configuration**
+  $A=(X_1-T,\ldots,X_n-T)$ is ancillary, and it is a maximal invariant
+  under translation. Given $A=a$, the conditional density of $T$ is
+  $$t\mapsto\frac{\prod_{i=1}^nf(a_i+t-\theta)}
+  {\int\prod_{i=1}^nf(a_i+u-\theta)\,du},$$
+  that is, the likelihood normalized as a function of the location. The
+  conditional law of $T-\theta$ given $A$ is free of $\theta$, so its
+  conditional quantiles give confidence sets with conditional coverage
+  $1-\alpha$ given almost every configuration, hence also unconditionally. This is Fisher's conditional inference, the case of
+  the conditionality principle in which the ancillary is the configuration.
+  The minimum-risk equivariant estimator is computed from the same
+  conditional law; see SYNOPSIS102, item 8.
+
 <a id="synopsis-101b"></a>
 
 ## 101B. Large References, Distribution Handbooks, and History
@@ -359,6 +504,23 @@ the variance interval uses the pivot in item 15. Item 23 records the
 squared-error consequences of conditional projection, rather than
 introducing a separate probability theorem.
 
+The third expansion (items 24–31) uses Casella–Berger, Theorems 7.3.19
+and 7.3.20 and Example 7.3.21 (unbiased estimators of zero), Definition
+8.2.1, Theorem 8.2.4, and Examples 8.2.2, 8.2.6 and Exercise 8.41 (likelihood
+ratio tests and the two-sample $t$ test), Definition 9.2.6 and Examples
+9.2.7 and 9.2.8 (location–scale and gamma pivots), and Theorems 9.3.2 and
+9.3.9 (shortest unimodal intervals and Pratt's theorem). Pratt's theorem is
+stated in the Fubini form of Young–Smith, Section 7.3, rather than with the
+monotone endpoints of Casella–Berger. Shao's exercise volume records the
+UMVU criterion and the Watson–Royall completeness of order statistics as
+Theorems 3.2 and 3.13 of his main text. Item 25 follows Pfanzagl,
+Section 1.5 (Definition 1.5.4, Theorem 1.5.10, Corollary 1.5.11, and the
+normal counterexample after Theorem 1.5.10) and Theorem 3.2.7; Cox–Hinkley,
+Section 6.2, uses the same completeness for permutation tests. Item 31 is
+Cox–Hinkley, Example 4.15 and Example 2.36, with Young–Smith, Sections 5.2
+and 9.8 (the configuration as maximal invariant and ancillary), and Berger,
+Section 6.5, Example 16.
+
 The same finite-sample core is shared by the general texts of subdivision
 101A. Casella–Berger, Chapters 3 and 5–9, is the detailed first-course
 development: exponential families, sufficiency, unbiased estimation,
@@ -386,7 +548,8 @@ Lehmann and Casella, *Theory of Point Estimation*, and Lehmann and Romano,
 *Testing Statistical Hypotheses*, are the standard research monographs for
 this material and for Section 102. They are not in the local reference
 directory. Shao's *Mathematical Statistics* and Keener's *Theoretical
-Statistics* are likewise absent locally. The numbered statements were
+Statistics* are likewise absent locally; Shao's companion exercise volume is
+present and cites the theorem numbers of the main text. The numbered statements were
 matched to the local texts listed below.
 
 Local texts directly consulted for this selection:
@@ -399,3 +562,6 @@ Local texts directly consulted for this selection:
 - [Cramér, *Mathematical Methods of Statistics*](../lean-CKMA/References/Cramér1946MathematicalMethodsStatistics-Princeton.MathSer9.pdf).
 - [Pfanzagl, *Parametric Statistical Theory*](../lean-CKMA/References/Pfanzagl1994ParametricStatisticalTheory-DeGruyter.Textbook.pdf).
 - [Brown, *Fundamentals of Statistical Exponential Families*](../lean-CKMA/References/Brown1986FundamentalsStatisticalExponentialFamiliesApplicationsStatisticalDecisionTheory-IMS.LNMS9.pdf).
+- [Young and Smith, *Essentials of Statistical Inference*](../lean-CKMA/References/YoungSmith2005EssentialsStatisticalInference-Cambridge.SerStatProbMath.pdf).
+- [Shao, *Mathematical Statistics: Exercises and Solutions*](../lean-CKMA/References/Shao2005MathematicalStatisticsExercisesSolutions-Springer.pdf).
+- [Berger, *Statistical Decision Theory and Bayesian Analysis*](../lean-CKMA/References/Berger1985StatisticalDecisionTheoryBayesianAnalysis2ndEd-Springer.SSS.pdf).

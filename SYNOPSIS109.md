@@ -4,7 +4,9 @@ Part of the [mathematical synopsis series](SYNOPSIS.md).
 [Bibliographical scope and references](CKSD-bib.md#cks-109).
 
 This synopsis follows Section 109. The objects are potential outcomes and
-interventions on directed graphical models. Missingness at random, the
+interventions on directed graphical models, together with the structural
+counterfactuals, mediation, sensitivity, and discovery questions they
+raise. Missingness at random, the
 efficient influence function for a missing mean, and semiparametric
 efficiency are [SYNOPSIS104](SYNOPSIS104.md), items 15, 17, and 14.
 Undirected Markov properties are SYNOPSIS106, item 12. The Cox model is
@@ -108,6 +110,111 @@ $A(1)>A(0)$.
   {\mathbb E[A\mid Z=1]-\mathbb E[A\mid Z=0]}
   =\mathbb E\bigl[Y(1)-Y(0)\mid A(1)>A(0)\bigr].$$
 
+### Stratified, paired, and regression-adjusted experiments
+
+The sharp-null randomization test, valid in each of the designs below, is
+SYNOPSIS106, item 15. In a **stratified randomized experiment** the units are
+partitioned into strata $k=1,\ldots,K$ of sizes $n_{[k]}$, with
+$\pi_{[k]}=n_{[k]}/n$, and independent completely randomized experiments with
+$n_{[k]1}$ treated and $n_{[k]0}$ control units are run within the strata.
+Write $\tau_{[k]}$, $\hat\tau_{[k]}$, and $S^2_{[k]}(\cdot)$ for the
+quantities of item 1 within stratum $k$, and $\bar Y_{[k]}(a)$ for the
+stratum mean of $Y(a)$.
+
+* **16. Stratified experiments.** The stratified estimator
+  $\hat\tau_S=\sum_k\pi_{[k]}\hat\tau_{[k]}$ is unbiased for $\tau$, with
+  $$\mathop{\mathrm{Var}}(\hat\tau_S)=\sum_{k=1}^K\pi_{[k]}^2\Bigl(
+  \frac{S^2_{[k]}(1)}{n_{[k]1}}+\frac{S^2_{[k]}(0)}{n_{[k]0}}
+  -\frac{S^2_{[k]}(\tau)}{n_{[k]}}\Bigr).$$
+  If every arm of every stratum has at least two units, the estimator
+  $\hat V_S=\sum_k\pi_{[k]}^2\bigl(\hat S^2_{[k]}(1)/n_{[k]1}
+  +\hat S^2_{[k]}(0)/n_{[k]0}\bigr)$ is conservative, exactly as in item 1.
+  If the treated fraction $n_{[k]1}/n_{[k]}$ is the same in every stratum,
+  then $\hat\tau_S$ equals the difference in means, and for large strata the
+  variance under complete randomization exceeds that under stratification by
+  approximately
+  $$\sum_{k=1}^K\frac{\pi_{[k]}}n\Bigl\{\Bigl(\frac{n_0}{n_1}\Bigr)^{1/2}
+  \bigl(\bar Y_{[k]}(1)-\bar Y(1)\bigr)+\Bigl(\frac{n_1}{n_0}\Bigr)^{1/2}
+  \bigl(\bar Y_{[k]}(0)-\bar Y(0)\bigr)\Bigr\}^2\ge0.$$
+  The gain vanishes only when the stratifying variable does not predict the
+  potential outcomes in this sense.
+
+In a **matched-pairs experiment** there are $n$ pairs of units, and within
+each pair one unit is assigned to treatment by an independent fair coin. Let
+$\tau_i$ be the average of the two unit effects in pair $i$,
+$\tau=n^{-1}\sum_i\tau_i$, and let $\hat\tau_i$ be the treated-minus-control
+difference in pair $i$, with $\hat\tau=n^{-1}\sum_i\hat\tau_i$.
+
+* **17. Matched-pairs experiments.** The estimator $\hat\tau$ is unbiased for
+  $\tau$. Although no within-pair variance can be estimated, the
+  between-pair estimator $\hat V=\{n(n-1)\}^{-1}\sum_i(\hat\tau_i-\hat\tau)^2$
+  is conservative:
+  $$\mathbb E\hat V-\mathop{\mathrm{Var}}(\hat\tau)
+  =\frac1{n(n-1)}\sum_{i=1}^n(\tau_i-\tau)^2\ge0,$$
+  with equality when the pair effects $\tau_i$ are all equal. The estimator
+  and its variance estimate coincide with the one-sample $t$ analysis of the
+  differences $\hat\tau_i$.
+
+In the completely randomized experiment of item 1, let $x_i$ be fixed
+covariate vectors centered so that $\bar x=0$. **Fisher's covariance-adjusted
+estimator** $\hat\tau_F$ is the coefficient of the treatment indicator in the
+least-squares fit of $Y$ on $(1,A,x)$. **Lin's estimator** $\hat\tau_L$ is the
+coefficient of $A$ in the least-squares fit of $Y$ on $(1,A,x,Ax)$.
+
+* **18. Regression adjustment in randomized experiments.** For fixed
+  vectors $b_1,b_0$, the adjusted difference in means
+  $$\hat\tau(b_1,b_0)=n_1^{-1}\sum_iA_i(Y_i-b_1^\top x_i)
+  -n_0^{-1}\sum_i(1-A_i)(Y_i-b_0^\top x_i)$$
+  is unbiased for $\tau$, with the variance of item 1 computed from the
+  adjusted potential outcomes $Y_i(a)-b_a^\top x_i$. Lin's estimator is
+  $\hat\tau(\hat b_1,\hat b_0)$ with $\hat b_a$ the least-squares slope of $Y$
+  on $x$ in arm $a$; it equals the difference of the two arm-wise fitted
+  intercepts. Under finite-population asymptotics with a fixed number of
+  covariates and suitable moment conditions, $\hat\tau_L$ is consistent and
+  asymptotically normal, its asymptotic variance is no larger than that of
+  the difference in means or of $\hat\tau_F$, and the
+  heteroscedasticity-robust (Eicker–Huber–White) standard error is
+  conservative. By contrast, $\hat\tau_F$ is biased in finite samples, can be
+  less precise than the difference in means when $n_1\ne n_0$, and its usual
+  homoscedastic standard error is inconsistent (Freedman). None of these
+  conclusions requires the linear model to be correct; the randomization
+  alone justifies them.
+
+### Treated-unit effects and instrumental variables
+
+* **19. Average effect on the treated.** For a binary treatment with
+  propensity score $e$, suppose only $Y(0)\perp A\mid X$ and $e(X)<1$ almost
+  surely. Then the average treatment effect on the treated,
+  $\tau_T=\mathbb E[Y(1)-Y(0)\mid A=1]$, is identified by
+  $$\tau_T=\mathbb E[Y\mid A=1]-\mathbb E\bigl[m_0(X)\mid A=1\bigr]
+  =\mathbb E[Y\mid A=1]-\frac{\mathbb E\bigl[(1-A)\,e(X)Y/(1-e(X))\bigr]}{P(A=1)}.$$
+  Only one-sided ignorability and overlap are needed, because the
+  counterfactual mean concerns the control outcome of treated units.
+
+In the **linear instrumental-variable model**
+$Y=D^\top\beta+\varepsilon$, the regressor vector $D$ may be correlated with
+$\varepsilon$, and an instrument vector $Z$ satisfies $\mathbb E[Z\varepsilon]=0$,
+with $\mathbb E[ZZ^\top]$ nonsingular and $\mathbb E[ZD^\top]$ of full column
+rank. Observed and exogenous regressors are included in both $D$ and $Z$.
+The **two-stage least-squares estimator** regresses $D$ on $Z$ by least
+squares and then $Y$ on the fitted values $\hat D$.
+
+* **20. Two-stage least squares.** For independent copies with finite second
+  moments,
+  $$\hat\beta_{\mathrm{tsls}}=\beta+\Bigl(\sum_i\hat D_i\hat D_i^\top\Bigr)^{-1}
+  \sum_i\hat D_i\varepsilon_i\to_P\beta.$$
+  With finite fourth moments it is asymptotically normal, and a consistent
+  sandwich variance estimate uses the residuals $Y_i-\hat\beta^\top_{\mathrm{tsls}}D_i$,
+  not the second-stage residuals $Y_i-\hat\beta^\top_{\mathrm{tsls}}\hat D_i$. When
+  $D$ and $Z$ have the same dimension, it equals the instrumental-variable
+  estimator $(\sum_iZ_iD_i^\top)^{-1}\sum_iZ_iY_i$. With one endogenous
+  regressor and one instrument it equals the ratio of the reduced-form
+  coefficients of $Z$ for $Y$ and for $D$; for binary $Z$ and $D$ without
+  covariates this is the Wald ratio of item 5, which estimates the complier
+  effect even when constant linear effects fail. The rank condition is the
+  population form of instrument relevance; with weak instruments the normal
+  approximation can be poor.
+
 ### Efficiency, partial identification, and design-based identification
 
 * **11. Efficient variance for an average treatment effect.** Under the
@@ -156,6 +263,54 @@ $A(1)>A(0)$.
   or repeated samples from unchanged group populations. Parallel trends
   is a restriction on counterfactual means, not a consequence of an
   observed regression fit.
+
+### Sensitivity to unmeasured confounding and mediation
+
+Let the treatment $A$ and outcome $Y$ be binary, let $U$ be a binary
+unmeasured confounder with $A\perp Y\mid(X,U)$, and, at a fixed value $x$ of
+the measured covariates, write
+$$\mathrm{rr}_{AU}=\frac{P(U=1\mid A=1,x)}{P(U=1\mid A=0,x)},\qquad
+\mathrm{rr}_{UY}=\frac{P(Y=1\mid U=1,x)}{P(Y=1\mid U=0,x)},\qquad
+\mathrm{rr}^{\mathrm{obs}}=\frac{P(Y=1\mid A=1,x)}{P(Y=1\mid A=0,x)}.$$
+
+* **21. Cornfield inequalities and the E-value.** If
+  $\mathrm{rr}^{\mathrm{obs}}>1$, $\mathrm{rr}_{AU}>1$, and
+  $\mathrm{rr}_{UY}>1$, then
+  $$\mathrm{rr}^{\mathrm{obs}}\le
+  \frac{\mathrm{rr}_{AU}\,\mathrm{rr}_{UY}}{\mathrm{rr}_{AU}+\mathrm{rr}_{UY}-1}.$$
+  Consequently both $\mathrm{rr}_{AU}$ and $\mathrm{rr}_{UY}$ are at least
+  $\mathrm{rr}^{\mathrm{obs}}$ (Cornfield's inequality), and
+  $$\max(\mathrm{rr}_{AU},\mathrm{rr}_{UY})\ge
+  \mathrm{rr}^{\mathrm{obs}}+\sqrt{\mathrm{rr}^{\mathrm{obs}}
+  (\mathrm{rr}^{\mathrm{obs}}-1)}.$$
+  The right side is the **E-value** of Ding and VanderWeele: an unmeasured
+  confounder that fully explains an observed risk ratio must be associated
+  with both treatment and outcome at least this strongly on the risk-ratio
+  scale. The case $\mathrm{rr}^{\mathrm{obs}}<1$ follows by relabeling the
+  treatment levels. Item 10 is the corresponding design-based sensitivity
+  analysis for matched pairs.
+
+For a binary treatment $A$, a mediator $M$, and outcome $Y$, let $M(a)$ be the
+potential mediator and $Y(a,m)$ the potential outcome with consistency
+$M=M(A)$ and $Y=Y(A,M)$. Write $Y(a,M(a'))$ for the nested potential outcome
+and define the **natural direct** and **natural indirect effects**
+$$\mathrm{NDE}=\mathbb E\bigl[Y(1,M(0))-Y(0,M(0))\bigr],\qquad
+\mathrm{NIE}=\mathbb E\bigl[Y(1,M(1))-Y(1,M(0))\bigr],$$
+whose sum is the total effect $\mathbb E[Y(1,M(1))-Y(0,M(0))]$.
+
+* **22. Mediation formula.** Assume, for all $a,a',m$, that
+  $A\perp Y(a,m)\mid X$, $M\perp Y(a,m)\mid(X,A)$, $A\perp M(a)\mid X$, and the
+  cross-world independence $Y(a,m)\perp M(a')\mid X$, together with
+  positivity of the conditioning events. Then, for discrete $M$ and $X$,
+  $$\mathbb E\bigl[Y(a,M(a'))\bigr]=\sum_x\sum_m
+  \mathbb E[Y\mid A=a,M=m,X=x]\,P(M=m\mid A=a',X=x)\,P(X=x),$$
+  with integrals against conditional densities in general. Hence the natural
+  direct and indirect effects are identified. The first three conditions
+  hold when treatment and mediator are both randomized given $X$; the
+  cross-world condition cannot be ensured by any experiment and is not
+  testable. In a structural causal model whose treatment, mediator, and
+  outcome equations have mutually independent errors and depend on $X$,
+  all four conditions hold.
 
 ## Graphical interventions
 
@@ -256,17 +411,102 @@ $1/(1+\Gamma)$ and $\Gamma/(1+\Gamma)$.
   determines only this equivalence class. Interventions can distinguish
   members because they change the factorization in different ways.
 
+### Structural counterfactuals and time-varying treatments
+
+A **structural causal model** consists of background variables $U$ with a
+probability law, endogenous variables $V_1,\ldots,V_n$, and functions
+$v_i=f_i(\mathrm{pa}_i,u_i)$ that determine $V$ uniquely from $U$; in the
+recursive case the parent relation is a directed acyclic graph. The
+intervention $\mathop{\mathrm{do}}(X=x)$ replaces the equations of $X$ by
+$X=x$, and the **potential response** $Y_x(u)$ is the value of $Y$ in the
+modified system. These responses are potential outcomes in the sense of the
+opening paragraph, and consistency $Y_X=Y$ holds by construction. For binary
+$X$ and $Y$, write $y,y'$ and $x,x'$ for the two values, $y_x$ for the event
+$Y_x=y$, and define the **probability of necessity**
+$\mathrm{PN}=P(y'_{x'}\mid x,y)$, the **probability of sufficiency**
+$\mathrm{PS}=P(y_x\mid x',y')$, and the **probability of necessity and
+sufficiency** $\mathrm{PNS}=P(y_x,y'_{x'})$. The treatment is **exogenous**
+when $(Y_x,Y_{x'})\perp X$, and $Y$ is **monotone** in $X$ when the event
+$y_{x'}\cap y'_x$ is empty.
+
+* **23. Probabilities of causation.** Under exogeneity,
+  $$\max\bigl\{0,P(y\mid x)-P(y\mid x')\bigr\}\le\mathrm{PNS}\le
+  \min\bigl\{P(y\mid x),P(y'\mid x')\bigr\},$$
+  both bounds are sharp, and
+  $\mathrm{PN}=\mathrm{PNS}/P(y\mid x)$ and $\mathrm{PS}=\mathrm{PNS}/P(y'\mid x')$.
+  If in addition $Y$ is monotone in $X$, all three are identified, with
+  $\mathrm{PNS}=P(y\mid x)-P(y\mid x')$ and the excess risk ratio
+  $$\mathrm{PN}=\frac{P(y\mid x)-P(y\mid x')}{P(y\mid x)}.$$
+  Under monotonicity alone, whenever $P(y_x)$ and $P(y_{x'})$ are identified,
+  $\mathrm{PNS}=P(y_x)-P(y_{x'})$, $\mathrm{PN}=(P(y)-P(y_{x'}))/P(x,y)$,
+  and $\mathrm{PS}=(P(y_x)-P(y))/P(x',y')$. These are unit-level
+  counterfactual quantities: unlike average effects, they are not identified
+  by randomization without monotonicity.
+
+In the setting of item 9, write
+$e_t(a_t\mid H_t,\bar a_{t-1})=P(A_t=a_t\mid H_t,A_{0:t-1}=\bar a_{t-1})$ for
+the treatment probabilities. A **marginal structural model** is a
+parametric model $\mathbb E[Y(\bar a)\mid L_0]=f(\bar a,L_0;\beta)$ for the
+regime-specific means.
+
+* **24. Inverse probability weighting for time-varying treatments.**
+  Under consistency, sequential exchangeability, and sequential positivity,
+  $$\mathbb E[Y(\bar a)]=\mathbb E\Bigl[\frac{1_{\{\bar A_T=\bar a\}}\,Y}
+  {\prod_{t=0}^Te_t(a_t\mid H_t,\bar a_{t-1})}\Bigr],$$
+  which equals the $g$-formula of item 9. If the marginal structural model
+  is correct, its parameter is the minimizer
+  $$\beta=\mathop{\mathrm{arg\,min}}_b\sum_{\bar a}\mathbb E\Bigl[
+  \frac{1_{\{\bar A_T=\bar a\}}}{\prod_te_t(a_t\mid H_t,\bar a_{t-1})}
+  \bigl(Y-f(\bar a,L_0;b)\bigr)^2\Bigr],$$
+  so it is estimated by weighted least squares with estimated treatment
+  probabilities. Multiplying the weights by a function of $(\bar a,L_0)$,
+  such as the product of the marginal treatment probabilities, gives
+  **stabilized weights** without changing the limit when $f$ is correct. Time-varying
+  confounders affected by earlier treatment are handled here, whereas
+  ordinary regression adjustment for them can be biased.
+
+### Causal discovery
+
+* **25. Skeleton and colliders from conditional independences.** In a
+  directed acyclic graph, two vertices are adjacent if and only if no subset
+  of the other vertices $d$-separates them, and two nonadjacent vertices are
+  $d$-separated by the parents of one of them. If $i-j-k$ is a path in the
+  skeleton with $i,k$ nonadjacent and $S$ is any set $d$-separating $i$ and
+  $k$, then $i\to j\leftarrow k$ if and only if $j\notin S$. Consequently,
+  under the global Markov property and faithfulness, an algorithm that
+  removes the edge $i-j$ as soon as some conditioning set renders $i$ and $j$
+  independent, searching sets of increasing size among current neighbors as
+  the PC algorithm does, recovers the skeleton and the unshielded colliders,
+  and hence the Markov equivalence class of item 15; Meek's rules then orient
+  every edge common to the class. With Gaussian data and tests of vanishing
+  partial correlation, the sample version is consistent for the class.
+
+* **26. Identifiability of restricted structural equation models.** Suppose
+  $X_j=\sum_{k\in\mathrm{pa}(j)}\beta_{jk}X_k+N_j$ along a directed acyclic
+  graph $G$, with jointly independent noises and $\beta_{jk}\ne0$ for every
+  edge. If the noises are non-Gaussian with strictly positive densities
+  (the linear non-Gaussian acyclic model), or if they are Gaussian with a
+  common variance, then $G$ is identifiable from the joint distribution.
+  The same holds for $X_j=f_j(X_{\mathrm{pa}(j)})+N_j$ with Gaussian noises and
+  three times differentiable functions $f_j$ that are nonlinear in each
+  argument. By contrast, linear Gaussian models with unrestricted variances
+  identify only the Markov equivalence class. The non-Gaussian case rests on
+  the Darmois–Skitovič theorem.
+
 ## Reference guide
 
 ### Correspondence with the section
 
 Rosenbaum carries randomization inference and sensitivity analysis. Pearl
-carries directed interventions and the do-calculus. Imbens and Rubin, and
-Ding, carry potential outcomes, completely randomized experiments, and
-instrumental variables. Hernán and Robins carry the $g$-formula and
-time-varying treatments. Peters, Janzing, and Schölkopf carry the graphical
-and structural-equation account. Spirtes, Glymour, and Scheines carry
-conditional-independence search. The efficiency theory used by the doubly
+carries directed interventions, the do-calculus, structural counterfactuals,
+and probabilities of causation. Imbens and Rubin, and Ding, carry potential
+outcomes, completely randomized, stratified, and paired experiments,
+regression adjustment, and instrumental variables; Ding also carries the
+E-value and the mediation formula. Hernán and Robins carry the $g$-formula,
+marginal structural models, and time-varying treatments. Peters, Janzing,
+and Schölkopf carry the graphical and structural-equation account,
+including the identifiability of restricted structural equation models.
+Spirtes, Glymour, and Scheines carry conditional-independence search. The efficiency theory used by the doubly
 robust estimator is in Section 104.
 
 ### Source comparisons and local copies
@@ -293,6 +533,27 @@ $o_P(n^{-1/2})$ under which the estimated influence function is efficient.
 Item 10 is the paired sensitivity model: the worst-case assignment
 probability within a pair is $\Gamma/(1+\Gamma)$.
 
+For the third expansion the following passages were read. Ding: Section
+5.3 (stratified experiments, including the comparison (5.4) with complete
+randomization) for item 16; Section 7.3 and Theorem 7.1 for item 17;
+Section 6.2.2 and Proposition 6.2 for item 18, where the asymptotic
+comparisons are Lin's (2013) results and the negative results Freedman's
+(2008) as reported by Ding; Section 13.1, Theorem 13.1, for item 19;
+Sections 23.4–23.6 and Theorem 23.1 for item 20; Theorem 17.1, Lemma 17.1,
+and Definition 17.1 for item 21; Definition 27.1, Assumptions 27.2–27.5,
+Theorem 27.1, and Example 27.4 for item 22; Problems 29.6–29.8, Theorems
+29.6–29.8, for item 24. Pearl: Definitions 7.1.1–7.1.5 for structural
+causal models, and Definitions 9.2.1–9.2.3, 9.2.9, 9.2.13 with Theorems
+9.2.10, 9.2.11, 9.2.14, and 9.2.15 for item 23. Hernán and Robins,
+Sections 12.3–12.4 and 21.2, for stabilized weights and marginal
+structural models. Peters, Janzing, and Schölkopf: Lemma 7.8 and Section
+7.2.1 for item 25, and Proposition 7.5 and Theorems 7.6–7.7 for item 26;
+the consistency of the Gaussian PC algorithm is the result of Kalisch and
+Bühlmann (2007) cited there. Matching estimators and their bias
+(Abadie and Imbens) were not added: Ding's Chapter 15 gives the
+bias-corrected estimator but not the rate theory, and the original papers
+are not local.
+
 Spirtes, Glymour, and Scheines, *Causation, Prediction, and Search*, and
 van der Laan and Rose, *Targeted Learning*, are not in the local reference
 directory. The local Rosenbaum file is the 2025 introduction; the 2002
@@ -303,9 +564,9 @@ for Section 104.
 Local texts directly consulted or identified for this selection:
 
 - [Ding, *A First Course in Causal Inference*](../lean-CKMA/References/Ding2024FirstCourseCausalInference-ChapmanHallCRC.TextsStatSci.pdf).
-  Theorem 4.1 was read.
+  Theorem 4.1 and the passages listed above were read.
 - [Pearl, *Causality*](../lean-CKMA/References/Pearl2009CausalityModelsReasoningInference2ndEd-Cambridge.pdf).
-  Theorem 3.4.1 was read.
+  Theorem 3.4.1 and the Chapter 7 and 9 passages listed above were read.
 - [Imbens and Rubin, *Causal Inference for Statistics, Social, and Biomedical Sciences*](../lean-CKMA/References/ImbensRubin2015CausalInferenceStatisticsSocialBiomedicalSciencesIntroduction-Cambridge.pdf).
 - [Hernán and Robins, *Causal Inference: What If*](../lean-CKMA/References/HernánRobins2020CausalInferenceWhatIf-ChapmanHallCRC.pdf).
 - [Peters, Janzing, and Schölkopf, *Elements of Causal Inference*](../lean-CKMA/References/PetersJanzingSchölkopf2017ElementsCausalInferenceFoundationsLearningAlgorithms-MITPressAdaptiveCompMl.pdf).

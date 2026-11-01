@@ -189,6 +189,142 @@ variance, assumed positive and finite.
   representation, computes these conditional means and variances. This
   gives the exact likelihood, including the initial-state contribution.
 
+### Spectral representation and linear prediction
+
+A complex function $\gamma$ on the integers is **nonnegative definite** when
+$\sum_{r,s=1}^n a_r\gamma(r-s)\bar a_s\ge0$ for all $n$ and all complex
+$a_1,\ldots,a_n$. An **ARMA$(p,q)$ process** is a weakly stationary solution of
+$\varphi(B)X_t=\theta(B)Z_t$, where $B$ is the backward shift, $(Z_t)$ is white
+noise of variance $\sigma^2$, $\varphi(z)=1-\varphi_1z-\cdots-\varphi_pz^p$, and
+$\theta(z)=1+\theta_1z+\cdots+\theta_qz^q$.
+
+* **32. Herglotz theorem and rational spectral densities.** A complex
+  function $\gamma$ on the integers is the autocovariance function of a weakly
+  stationary process if and only if it is Hermitian and nonnegative definite,
+  and if and only if
+  $$\gamma(h)=\int_{(-\pi,\pi]}e^{ih\nu}\,dF(\nu),\qquad h\in\mathbb Z,$$
+  for a right-continuous, nondecreasing, bounded function $F$ on $[-\pi,\pi]$
+  with $F(-\pi)=0$. This **spectral distribution function** is uniquely
+  determined by $\gamma$. If $\sum_h|\gamma(h)|<\infty$, then $F$ has the
+  continuous density $f$ of item 6. If $\varphi$ and $\theta$ have no common
+  zeros and $\varphi$ has no zero on the unit circle, then the ARMA equation
+  has a unique stationary solution, and its spectral density is
+  $$f(\lambda)=\frac{\sigma^2}{2\pi}\,
+  \frac{|\theta(e^{-i\lambda})|^2}{|\varphi(e^{-i\lambda})|^2},
+  \qquad\lambda\in[-\pi,\pi].$$
+  Causality and invertibility are not needed for this formula.
+
+For a zero-mean weakly stationary process, write
+$\hat X_{n+1}=\varphi_{n1}X_n+\cdots+\varphi_{nn}X_1$ for the best linear
+predictor of $X_{n+1}$ from $X_1,\ldots,X_n$ and $v_n$ for its mean squared
+error, with $v_0=\gamma(0)$. The **partial autocorrelation** at lag $n$ is
+$\alpha(n)=\varphi_{nn}$.
+
+* **33. Durbin–Levinson algorithm and partial autocorrelation.** If
+  $\gamma(0)>0$ and $\gamma(h)\to0$ as $h\to\infty$, the predictor coefficients
+  are uniquely determined and satisfy $\varphi_{11}=\gamma(1)/\gamma(0)$ and,
+  for $n\ge2$,
+  $$
+  \begin{aligned}
+  \varphi_{nn}&=\frac{\gamma(n)-\sum_{j=1}^{n-1}\varphi_{n-1,j}\gamma(n-j)}{v_{n-1}},\\
+  \varphi_{nj}&=\varphi_{n-1,j}-\varphi_{nn}\varphi_{n-1,n-j},
+  \qquad 1\le j\le n-1,\\
+  v_n&=v_{n-1}\bigl(1-\varphi_{nn}^2\bigr).
+  \end{aligned}
+  $$
+  For a causal autoregression of order $p$, $\alpha(p)=\varphi_p$ and
+  $\alpha(h)=0$ for $h>p$. If, in addition, the innovations are independent
+  and identically distributed with finite variance, the sample partial
+  autocorrelation obtained by inserting sample autocovariances satisfies
+  $\sqrt n\,\hat\alpha(h)\Rightarrow N(0,1)$ for each fixed $h>p$.
+
+* **34. Kolmogorov's formula for the prediction error.** Let $(X_t)$ be a
+  real, zero-mean, weakly stationary process with spectral distribution
+  function $F$, and let $f$ be the density of the absolutely continuous part
+  of $F$. The one-step mean squared prediction error from the infinite past,
+  $\sigma^2=\mathbb E(X_t-P_{t-1}X_t)^2$ in the notation of item 2, is
+  $$\sigma^2=2\pi\exp\Bigl\{\frac1{2\pi}\int_{-\pi}^{\pi}\log f(\lambda)
+  \,d\lambda\Bigr\},$$
+  read as $0$ when the integral is $-\infty$. Thus $X_t$ is linearly
+  predictable without error from its past if and only if
+  $\int_{-\pi}^{\pi}\log f=-\infty$. In the normalization of item 6 this is the
+  Szegő infimum theorem, [CKMA SYNOPSIS42](../lean-CKMA/SYNOPSIS42.md),
+  item 28.
+
+### ARMA estimation, conditional heteroscedasticity, and Markov chains
+
+Write $\beta=(\varphi_1,\ldots,\varphi_p,\theta_1,\ldots,\theta_q)$ and
+$g(\lambda;\beta)=|\theta(e^{-i\lambda})|^2/|\varphi(e^{-i\lambda})|^2$, so that
+$f=\sigma^2g/(2\pi)$. The **Whittle estimator** minimizes
+$n^{-1}\sum_jI_n(\omega_j)/g(\omega_j;\beta)$ over the Fourier frequencies
+$\omega_j\in(-\pi,\pi]$.
+
+* **35. Asymptotic covariance of ARMA estimators.** Let $(X_t)$ be an
+  ARMA$(p,q)$ process with innovations that are independent and identically
+  distributed with mean $0$ and variance $\sigma^2>0$, not necessarily
+  Gaussian. Suppose the true parameter has $\varphi(z)\theta(z)\ne0$ for
+  $|z|\le1$, $\varphi$ and $\theta$ have no common zeros, and
+  $(\varphi_p,\theta_q)\ne(0,0)$. Then the Gaussian maximum likelihood
+  estimator, the least-squares estimator, and the Whittle estimator, each
+  computed over parameters with these properties, are strongly consistent,
+  the corresponding innovation-variance estimators converge almost surely to
+  $\sigma^2$, and each of the three estimators $\hat\beta_n$ satisfies
+  $$\sqrt n\,(\hat\beta_n-\beta)\Rightarrow N\bigl(0,W(\beta)^{-1}\bigr),\qquad
+  W(\beta)=\frac1{4\pi}\int_{-\pi}^{\pi}
+  \nabla_\beta\log g(\lambda;\beta)\,\nabla_\beta\log g(\lambda;\beta)^\top
+  \,d\lambda.$$
+  For an autoregression $W(\beta)^{-1}=\sigma^2\Gamma_p^{-1}$, the limit of the
+  Yule–Walker estimator in item 3. The Gaussian likelihood thus gives valid
+  inference for the ARMA coefficients without Gaussian innovations; item 5
+  adds that under Gaussianity $W(\beta)$ is the Fisher information.
+
+A **GARCH$(1,1)$ process** is a solution of $X_t=\sigma_t\varepsilon_t$ and
+$\sigma_t^2=\alpha_0+\alpha_1X_{t-1}^2+\beta_1\sigma_{t-1}^2$, where
+$(\varepsilon_t)_{t\in\mathbb Z}$ is independent and identically distributed
+with mean $0$ and variance $1$, $\alpha_0>0$, and $\alpha_1,\beta_1\ge0$. It is
+**nonanticipative** when $\varepsilon_t$ is independent of
+$\{\sigma_s^2:s\le t\}$ for every $t$.
+
+* **36. Stationarity of GARCH$(1,1)$.** Let
+  $\gamma=\mathbb E\log(\beta_1+\alpha_1\varepsilon_0^2)\in[-\infty,\infty)$.
+  If $\gamma<0$, the series below converges almost surely, and
+  $$\sigma_t^2=\alpha_0\Bigl(1+\sum_{n=1}^\infty\prod_{j=1}^n
+  (\beta_1+\alpha_1\varepsilon_{t-j}^2)\Bigr),\qquad X_t=\sigma_t\varepsilon_t,$$
+  defines the unique strictly stationary solution. If $\gamma\ge0$, there is
+  no strictly stationary solution. A nonanticipative solution with finite
+  second moments that is weakly stationary exists if and only if
+  $\alpha_1+\beta_1<1$; it is then the solution above, and $(X_t)$ is weak
+  white noise with variance $\alpha_0/(1-\alpha_1-\beta_1)$. Since
+  $\gamma\le\log(\alpha_1+\beta_1)$ by Jensen's inequality, strict
+  stationarity with infinite variance occurs when $\gamma<0\le
+  \log(\alpha_1+\beta_1)$.
+
+Let $(X_k)_{k\ge0}$ be an irreducible aperiodic Markov chain on
+$\{1,\ldots,m\}$ with transition matrix $P=(p_{ij})$ and stationary law $\pi$.
+From $X_0,\ldots,X_n$ let $n_{ij}$ be the number of transitions from $i$ to $j$
+and $n_i=\sum_jn_{ij}$.
+
+* **37. Maximum likelihood for a finite Markov chain.** Conditionally on
+  $X_0$, the maximum likelihood estimator of $p_{ij}$ is
+  $\hat p_{ij}=n_{ij}/n_i$. As $n\to\infty$, $n_i/n\to\pi_i$ almost surely by
+  [CKMA SYNOPSIS08](../lean-CKMA/SYNOPSIS08.md), item 50, and
+  $\sqrt n\,(\hat p_{ij}-p_{ij})_{i,j}$ is asymptotically centered normal with
+  $$\lim_n n\mathop{\mathrm{Cov}}(\hat p_{ij},\hat p_{i'j'})
+  =\frac{\delta_{ii'}\bigl(\delta_{jj'}p_{ij}-p_{ij}p_{ij'}\bigr)}{\pi_i}.$$
+  Thus different rows are asymptotically independent, and row $i$ behaves
+  like a multinomial sample of size $n\pi_i$. If $p_{ij}=p_{ij}(\theta)$ for
+  a parameter $\theta\in\mathbb R^k$ that is identifiable, with continuous
+  second derivatives and nonsingular information
+  $$\mathcal I(\theta)=\sum_{i,j:\,p_{ij}>0}\pi_i\,
+  \frac{\nabla p_{ij}(\theta)\nabla p_{ij}(\theta)^\top}{p_{ij}(\theta)},$$
+  a consistent root of the likelihood equation satisfies
+  $\sqrt n(\hat\theta-\theta)\Rightarrow N(0,\mathcal I(\theta)^{-1})$. For
+  the simple hypothesis $P=P^0$, the statistics
+  $\sum_{i,j}(n_{ij}-n_ip^0_{ij})^2/(n_ip^0_{ij})$ and
+  $2\sum_{i,j}n_{ij}\log(\hat p_{ij}/p^0_{ij})$, summed over the positive
+  entries of $P^0$, are asymptotically chi-squared with $d-m$ degrees of
+  freedom, where $d$ is the number of positive entries of $P^0$.
+
 <a id="synopsis-108b"></a>
 
 ## 108B. Survival Analysis and Counting Processes
@@ -280,6 +416,83 @@ still at risk at time $t$, with weights proportional to $\exp(\beta\cdot Z)$.
   do not identify the joint law of hypothetical latent cause-specific
   failure times without further assumptions.
 
+### Counting-process martingales and regression for hazards
+
+Let $N=(N_1,\ldots,N_k)$ be a multivariate counting process, adapted to a
+filtration, with no two components jumping at the same time, and with
+intensity processes $\lambda_h$. By the Doob–Meyer decomposition,
+[CKMA SYNOPSIS08](../lean-CKMA/SYNOPSIS08.md), item 13, the processes
+$M_h=N_h-\int_0^\cdot\lambda_h(s)\,ds$ are local square-integrable martingales,
+and their predictable covariations are
+$\langle M_h,M_{h'}\rangle=\delta_{hh'}\int_0^\cdot\lambda_h(s)\,ds$. For
+locally bounded predictable $H_h$, the integral
+$\sum_h\int_0^\cdot H_h\,dM_h$ is a local square-integrable martingale with
+predictable variation $\sum_h\int_0^\cdot H_h^2\lambda_h\,ds$.
+
+* **38. Rebolledo's martingale central limit theorem.** For each $n$ let
+  $N^{(n)}$ be a $k_n$-variate counting process as above, with intensities
+  $\lambda_h^{(n)}$, let $H^{(n)}=(H^{(n)}_{jh})$ be a $k\times k_n$ matrix of
+  locally bounded predictable processes, and set
+  $$M_j^{(n)}(t)=\sum_{h=1}^{k_n}\int_0^tH_{jh}^{(n)}(s)
+  \bigl(dN_h^{(n)}(s)-\lambda_h^{(n)}(s)\,ds\bigr),\qquad j=1,\ldots,k.$$
+  Let $V$ be a continuous deterministic function on $[0,\tau]$ with values in
+  the positive semidefinite $k\times k$ matrices, $V(0)=0$, and positive
+  semidefinite increments, and let $M^{(\infty)}$ be the continuous centered
+  Gaussian martingale with independent increments
+  $M^{(\infty)}(t)-M^{(\infty)}(s)\sim N(0,V(t)-V(s))$. Suppose that for all
+  $t\in[0,\tau]$, all $j,j'$, and all $\varepsilon>0$,
+  $$\sum_h\int_0^tH_{jh}^{(n)}H_{j'h}^{(n)}\lambda_h^{(n)}\,ds\to_PV_{jj'}(t),
+  \qquad
+  \sum_h\int_0^t\bigl(H_{jh}^{(n)}\bigr)^2
+  1_{\{|H_{jh}^{(n)}|>\varepsilon\}}\lambda_h^{(n)}\,ds\to_P0.$$
+  Then $M^{(n)}\Rightarrow M^{(\infty)}$ in the Skorokhod space
+  $D[0,\tau]^k$. This is the continuous-time analogue of item 1, and items
+  12–14 are applications of it.
+
+In the setting of item 14, write $s^{(0)}(\beta,u)=\mathbb E[Y(u)e^{\beta\cdot
+Z}]$ and let $\bar e(u)$ be the limit in probability of $e(\beta,u)$ at the true
+$\beta$. The **Breslow estimator** of the cumulative baseline hazard
+$\Lambda_0(t)=\int_0^t\lambda_0$ is
+$$\hat\Lambda_0(t)=\int_0^t
+\frac{d\bar N(u)}{\sum_jY_j(u)\exp(\hat\beta\cdot Z_j)},$$
+where $\bar N$ is the pooled counting process.
+
+* **39. Breslow estimator.** Under the conditions of item 14 on $[0,\tau]$,
+  with $y$ there replaced by $s^{(0)}$ bounded away from zero, the process
+  $\sqrt n\,(\hat\Lambda_0-\Lambda_0)$ converges weakly on $[0,\tau]$ to
+  $$W(t)-q(t)^\top G,\qquad q(t)=\int_0^t\bar e(u)\,d\Lambda_0(u),$$
+  where $W$ is a centered Gaussian martingale with variance function
+  $\int_0^td\Lambda_0(u)/s^{(0)}(\beta,u)$, $G$ is the normal limit of
+  $\sqrt n(\hat\beta-\beta)$ in item 14, and $W$ and $G$ are independent. The
+  asymptotic variance at $t$ is therefore
+  $\int_0^td\Lambda_0/s^{(0)}+q(t)^\top\mathcal I^{-1}q(t)$, with
+  $\mathcal I$ the information matrix of item 14. Estimated survival
+  curves $\exp(-\hat\Lambda_0(t)e^{\hat\beta\cdot z})$ for a fixed covariate
+  value follow by the functional delta method of SYNOPSIS103, item 26.
+
+In **Aalen's additive hazards model**, subject $i$ has intensity
+$Y_i(t)\bigl(\beta_0(t)+\beta_1(t)Z_{i1}(t)+\cdots+\beta_p(t)Z_{ip}(t)\bigr)$ with
+unspecified locally integrable regression functions $\beta_j$ and predictable
+covariates. Let $\mathbf Y(t)$ be the $n\times(p+1)$ matrix with rows
+$Y_i(t)(1,Z_{i1}(t),\ldots,Z_{ip}(t))$, let $J(t)$ indicate that $\mathbf Y(t)$
+has full column rank, and set $B_j(t)=\int_0^t\beta_j$.
+
+* **40. Aalen's additive hazards estimator.** The least-squares estimator
+  $$\hat B(t)=\int_0^tJ(u)\bigl(\mathbf Y(u)^\top\mathbf Y(u)\bigr)^{-1}
+  \mathbf Y(u)^\top dN(u)$$
+  satisfies $\hat B-B^*=\int J(\mathbf Y^\top\mathbf Y)^{-1}\mathbf Y^\top dM$,
+  a local martingale, where $B^*=\int J\beta$. Suppose that, uniformly on
+  $[0,t]$, $n^{-1}\mathbf Y^\top\mathbf Y$ and the corresponding normalized
+  third-order sums $n^{-1}\sum_iY_{ij}Y_{ik}Y_{il}$ converge in probability
+  to continuous limits, the limit $r^{(2)}(s)$ of $n^{-1}\mathbf Y^\top\mathbf Y$
+  is nonsingular for $s\in[0,t]$, and
+  $n^{-1/2}\max_{i,j}\sup_{s\le t}|Y_{ij}(s)|\to_P0$. Then
+  $\sqrt n(\hat B-B)$ converges weakly in $D[0,t]^{p+1}$ to a centered
+  Gaussian martingale. Its covariance function is consistently estimated by
+  $n\int_0^\cdot J(\mathbf Y^\top\mathbf Y)^{-1}\mathbf Y^\top
+  \mathop{\mathrm{diag}}(dN)\,\mathbf Y(\mathbf Y^\top\mathbf Y)^{-1}$. The
+  slopes of $\hat B_j$ estimate the time-varying effects $\beta_j(t)$.
+
 <a id="synopsis-108c"></a>
 
 ## 108C. Sequential Analysis, Change Detection, and Anytime-Valid Inference
@@ -334,6 +547,121 @@ $\Lambda_n\le A$, where $0<A<1<B$.
   such supermartingales, provide constructions. Simultaneous coverage
   in time follows from item 16, rather than from a separate fixed-time
   calibration at each look.
+
+### Wald's identity, random sample sizes, and fixed-width intervals
+
+In the setting of item 15, write $Z_i=\log(f_1(X_i)/f_0(X_i))$ and
+$S_n=Z_1+\cdots+Z_n$, and suppose the observations are independent with a
+common law $P_\theta$, not necessarily one of the two hypotheses. Wald's
+identity $\mathbb E_\theta S_N=\mathbb E_\theta N\,\mathbb E_\theta Z$ is
+[CKMA SYNOPSIS06](../lean-CKMA/SYNOPSIS06.md), item 47. The **operating
+characteristic** is $L(\theta)=P_\theta(\text{accept }H_0)$.
+
+* **41. Wald's fundamental identity and the operating characteristic.**
+  Suppose $P_\theta(Z>0)>0$, $P_\theta(Z<0)>0$, and
+  $\phi(t)=\mathbb E_\theta e^{tZ}<\infty$ for every real $t$. Then the
+  stopping time $N$ of the sequential probability ratio test satisfies
+  $$\mathbb E_\theta\bigl[e^{tS_N}\phi(t)^{-N}\bigr]=1$$
+  for every real $t$ with $\phi(t)\ge1$. If $\mathbb E_\theta Z\ne0$, there is
+  exactly one real $h=h(\theta)\ne0$ with $\phi(h)=1$, and neglecting the
+  overshoot of $S_N$ beyond $\log A$ and $\log B$ gives
+  $$L(\theta)\approx\frac{B^{h}-1}{B^{h}-A^{h}},\qquad
+  \mathbb E_\theta N\approx
+  \frac{L(\theta)\log A+(1-L(\theta))\log B}{\mathbb E_\theta Z}.$$
+  At the two hypotheses $h(\theta_0)=1$ and $h(\theta_1)=-1$, and with the
+  thresholds of item 15 these approximations return $1-\alpha$ and $\beta$.
+  Wald also gives explicit upper and lower bounds for $L(\theta)$ in terms of
+  the conditional law of the overshoot.
+
+* **42. Anscombe's theorem.** Let $X_1,X_2,\ldots$ be independent and
+  identically distributed with mean $\mu$ and variance $\sigma^2\in(0,\infty)$,
+  and let $N_a$ be positive integer random variables with
+  $N_a/a\to_Pk\in(0,\infty)$ as $a\to\infty$. Then
+  $$\frac{S_{N_a}-N_a\mu}{\sigma\sqrt{N_a}}\Rightarrow N(0,1),$$
+  with no independence required between $N_a$ and the observations. More
+  generally, if $Y_n\Rightarrow Y$ and $(Y_n)$ is uniformly continuous in
+  probability, in the sense that for each $\varepsilon>0$ there is $\delta>0$
+  with $P(\max_{0\le j\le n\delta}|Y_{n+j}-Y_n|>\varepsilon)<\varepsilon$ for all
+  $n$, then $Y_{N_a}\Rightarrow Y$.
+
+Let $X_1,X_2,\ldots$ be independent $N(\mu,\sigma^2)$ with both parameters
+unknown. A **fixed-width interval** of half-width $d>0$ and confidence
+$1-\alpha$ has the form $[\bar X_N-d,\bar X_N+d]$. With $a$ the upper
+$\alpha/2$ point of $N(0,1)$, the sample size that would be required if
+$\sigma$ were known is $C=a^2\sigma^2/d^2$. No fixed sample size achieves
+coverage at least $1-\alpha$ for every $\sigma$.
+
+* **43. Stein's two-stage procedure and the Chow–Robbins rule.** Let
+  $m\ge2$, let $t_{m-1}$ be the upper $\alpha/2$ point of the $t$ law with
+  $m-1$ degrees of freedom, and let $S_m^2$ be the sample variance of the
+  first $m$ observations. Stein's rule takes $N$ to be the smallest integer
+  $n\ge m$ with $n\ge t_{m-1}^2S_m^2/d^2$. Then
+  $$P_{\mu,\sigma}\bigl(|\bar X_N-\mu|\le d\bigr)\ge1-\alpha
+  \quad\text{for all }\mu,\sigma,\qquad
+  \lim_{d\to0}\frac{\mathbb EN}{C}=\frac{t_{m-1}^2}{a^2}>1.$$
+  Exactness rests on the independence of $\bar X_n$ and $S_m^2$ for each
+  $n\ge m$ (Basu's theorem, SYNOPSIS101, item 9). The Chow–Robbins rule
+  $N=\inf\{n\ge n_0:n\ge a^2s_n^2/d^2\}$, with $n_0\ge2$ and $s_n^2$ the
+  running sample variance, satisfies $N<\infty$ almost surely, $N/C\to1$
+  almost surely and $\mathbb EN/C\to1$ as $d\to0$, and coverage tending to
+  $1-\alpha$. Asymptotic efficiency is gained at the price of exact
+  coverage. Chow and Robbins established the same asymptotic properties for
+  any distribution with finite positive variance, using a slightly inflated
+  variance estimate; item 42 supplies the coverage limit.
+
+### Optimal change detection
+
+For a change point $\nu\in\{0,1,2,\ldots\}$, let $P_\nu$ be the law under which
+$X_1,\ldots,X_\nu$ are independent with density $f_0$ and
+$X_{\nu+1},X_{\nu+2},\ldots$ are independent with density $f_1$, the two blocks
+being independent; $P_\infty$ is the law with no change. Let
+$L_n=f_1(X_n)/f_0(X_n)$. The **CUSUM statistic** is
+$V_n=\max_{0\le k<n}\prod_{i=k+1}^nL_i$, which satisfies
+$V_n=\max(1,V_{n-1})L_n$ with $V_0=1$, and the CUSUM procedure stops at
+$T_{\mathrm{CS}}(A)=\inf\{n\ge1:V_n\ge A\}$. **Lorden's worst-case delay** of
+a stopping time $T$ is
+$$\mathop{\mathrm{ESADD}}(T)=\sup_{\nu\ge0}\mathop{\mathrm{ess\,sup}}
+\mathbb E_\nu\bigl[(T-\nu)^+\mid X_1,\ldots,X_\nu\bigr],$$
+and $\mathcal C_\gamma$ is the class of stopping times with average run length
+to false alarm $\mathbb E_\infty T\ge\gamma$. Write $I=\mathbb E_0\log L_1$ for
+the Kullback–Leibler divergence of $f_1$ from $f_0$.
+
+* **44. Optimality of CUSUM.** For every $A>0$,
+  $\mathbb E_\infty T_{\mathrm{CS}}(A)\ge A$, and the worst-case delay of the
+  CUSUM procedure equals $\mathbb E_0T_{\mathrm{CS}}(A)$. If $\gamma>1$ and the
+  threshold $A_\gamma$ is chosen so that $\mathbb E_\infty
+  T_{\mathrm{CS}}(A_\gamma)=\gamma$, randomizing on the boundary if
+  necessary, then
+  $$\mathop{\mathrm{ESADD}}(T_{\mathrm{CS}}(A_\gamma))
+  =\inf_{T\in\mathcal C_\gamma}\mathop{\mathrm{ESADD}}(T)$$
+  (Moustakides). If $0<I<\infty$, then as $\gamma\to\infty$
+  $$\inf_{T\in\mathcal C_\gamma}\mathop{\mathrm{ESADD}}(T)\sim
+  \mathbb E_0T_{\mathrm{CS}}(A_\gamma)\sim\frac{\log\gamma}{I}$$
+  (Lorden), and the same first-order asymptotics hold for the threshold
+  $A=\gamma$. On the logarithmic scale, $W_n=\log V_n$ follows Page's
+  recursion $W_n=\max(0,W_{n-1})+\log L_n$.
+
+* **45. Shiryaev and Shiryaev–Roberts procedures.** Let $\nu$ be random,
+  independent of the observations without change, with geometric law
+  $P(\nu=k)=p(1-p)^k$, $k\ge0$, and let
+  $\Pi_n=P(\nu<n\mid X_1,\ldots,X_n)$. Shiryaev's procedure stops at the first
+  $n$ with $\Pi_n\ge B$. For every cost $c>0$ per observation of delay, it is
+  optimal, with a threshold depending on $(c,p)$, for the Bayes risk
+  $P(T\le\nu)+c\,\mathbb E(T-\nu)^+$. Also, if $0<\alpha<1$ and its threshold
+  gives false-alarm probability exactly $\alpha$, it minimizes
+  $\mathbb E(T-\nu\mid T>\nu)$ among stopping times with
+  $P(T\le\nu)\le\alpha$; the threshold $B=1-\alpha$ guarantees
+  $P(T\le\nu)\le\alpha$. As $p\to0$ the suitably normalized posterior odds
+  tend to the **Shiryaev–Roberts statistic**
+  $$R_n=\sum_{k=1}^n\prod_{i=k}^nL_i,\qquad R_n=(1+R_{n-1})L_n,\quad R_0=0.$$
+  Under $P_\infty$ the process $R_n-n$ is a zero-mean martingale, so
+  $T_{\mathrm{SR}}(A)=\inf\{n:R_n\ge A\}$ has
+  $\mathbb E_\infty T_{\mathrm{SR}}(A)\ge A$ by optional sampling. If
+  $L_1$ has a continuous law under $P_\infty$ and $A_\gamma$ gives
+  $\mathbb E_\infty T_{\mathrm{SR}}(A_\gamma)=\gamma>1$, then $T_{\mathrm{SR}}(A_\gamma)$
+  minimizes the integral average delay
+  $\sum_{k\ge0}\mathbb E_k(T-k)^+/\mathbb E_\infty T$ over
+  $\mathcal C_\gamma$.
 
 <a id="synopsis-108d"></a>
 
@@ -391,6 +719,100 @@ item 70 of that synopsis.
   (f_0-F^\top K^{-1}k_0).$$
   A constant mean gives ordinary kriging; a known mean gives item 18.
 
+### Covariance models for random fields
+
+A complex function $K$ on $\mathbb R^d$ is **positive definite** when
+$\sum_{j,k}c_j\bar c_kK(x_j-x_k)\ge0$ for all finite families of points and
+complex coefficients. A field on $\mathbb R$ is **mean-square differentiable**
+when its difference quotients converge in $L^2$, and **$m$ times mean-square
+differentiable** when this holds iteratively.
+
+* **46. Bochner's theorem and the Matérn family.** A function $K$ on
+  $\mathbb R^d$ is the autocovariance function of a weakly stationary,
+  mean-square continuous, complex random field if and only if
+  $$K(x)=\int_{\mathbb R^d}e^{i\omega\cdot x}\,F(d\omega)$$
+  for a finite positive measure $F$, the **spectral measure**. This is
+  Bochner's theorem, [CKMA SYNOPSIS28](../lean-CKMA/SYNOPSIS28.md), item 30.
+  On $\mathbb R$, the field is $m$ times mean-square differentiable if and
+  only if $K$ has a finite derivative of order $2m$ at $0$, equivalently
+  $\int\omega^{2m}F(d\omega)<\infty$; the derivative then has autocovariance
+  $-K''$ when $m=1$. The **Matérn covariance**
+  $$K(x)=\phi\,(\alpha|x|)^\nu\mathcal K_\nu(\alpha|x|),\qquad
+  \phi,\alpha,\nu>0,$$
+  with $\mathcal K_\nu$ the modified Bessel function of the second kind, is
+  positive definite on every $\mathbb R^d$, with isotropic spectral density
+  proportional to $(\alpha^2+|\omega|^2)^{-\nu-d/2}$. On $\mathbb R$ the
+  corresponding field is $m$ times mean-square differentiable if and only if
+  $\nu>m$. For $\nu=1/2$ the covariance is exponential, and for
+  $\nu=m+1/2$ it is $e^{-\alpha|x|}$ times a polynomial of degree $m$ in
+  $|x|$. Item 19 explains why the smoothness parameter $\nu$ dominates the
+  behavior of kriging under infill asymptotics.
+
+A field $Z$ on $\mathbb R^d$ is **intrinsically stationary** when its
+increments $Z(x+h)-Z(x)$ have mean zero and a variance depending only on $h$.
+Its **semivariogram** is $\gamma(h)=\tfrac12\mathop{\mathrm{Var}}(Z(x+h)-Z(x))$.
+A symmetric function $\gamma$ is **conditionally negative definite** when
+$\sum_{j,k}c_jc_k\gamma(x_j-x_k)\le0$ whenever $\sum_jc_j=0$.
+
+* **47. Valid semivariograms.** For an intrinsically stationary field and
+  real $c_j$ with $\sum_jc_j=0$,
+  $$\mathop{\mathrm{Var}}\Bigl(\sum_jc_jZ(x_j)\Bigr)
+  =-\sum_{j,k}c_jc_k\gamma(x_j-x_k),$$
+  so every semivariogram is conditionally negative definite with
+  $\gamma(0)=0$. Conversely, a continuous symmetric function with
+  $\gamma(0)=0$ is the semivariogram of some intrinsically stationary field
+  if and only if it is conditionally negative definite, and if and only if
+  $$\gamma(x)=\int_{\mathbb R^d}\bigl(1-\cos(\omega\cdot x)\bigr)F(d\omega)
+  +x^\top Qx$$
+  for a symmetric positive measure $F$ with
+  $\int|\omega|^2(1+|\omega|^2)^{-1}F(d\omega)<\infty$ and a positive
+  semidefinite matrix $Q$. If $Z$ is weakly stationary with covariance $K$,
+  then $\gamma=K(0)-K$ is bounded; unbounded examples are
+  $\gamma(h)=|h|^s$, from fractional Brownian fields when $0<s<2$ and
+  from a field linear in $x$ when $s=2$.
+  Ordinary kriging, item 31 with a constant mean, can be written with
+  $\gamma$ in place of $K$ because its weights sum to one.
+
+### Likelihood and second-order structure of point patterns
+
+* **48. Poisson likelihood.** Let $S\subset\mathbb R^d$ be bounded and let
+  $\rho_1,\rho_2\ge0$ be intensity functions on $S$ with finite integrals
+  $\mu_i(S)=\int_S\rho_i$ and with $\rho_2>0$ wherever $\rho_1>0$. Then the
+  Poisson process on $S$ with intensity $\rho_1$ is absolutely continuous
+  with respect to that with intensity $\rho_2$, with density
+  $$f(x)=\exp\bigl(\mu_2(S)-\mu_1(S)\bigr)\prod_{\xi\in x}
+  \frac{\rho_1(\xi)}{\rho_2(\xi)}$$
+  at finite configurations $x\subset S$. Taking $\rho_2\equiv1$, the
+  log-likelihood of a parametric intensity $\rho_\theta$ is
+  $$\ell(\theta)=\sum_{\xi\in x}\log\rho_\theta(\xi)-\int_S\rho_\theta(\xi)\,d\xi,$$
+  up to a constant. For a log-linear intensity
+  $\rho_\theta=\exp(\theta\cdot z)$ it is concave, and its score
+  $\sum_{\xi\in x}z(\xi)-\int_Sz\rho_\theta$ has mean zero by Campbell's
+  formula, [CKMA SYNOPSIS06](../lean-CKMA/SYNOPSIS06.md), item 54. Item 20 is
+  the constant case. On all of $\mathbb R^d$, by contrast, homogeneous
+  Poisson processes of different intensities are mutually singular.
+
+For a point process with intensity function $\rho$ and second-order product
+density $\rho^{(2)}$, the **pair correlation function** is
+$g(\xi,\eta)=\rho^{(2)}(\xi,\eta)/(\rho(\xi)\rho(\eta))$. When $g(\xi,\eta)$
+depends only on $\xi-\eta$, the **$K$-function** and **$L$-function** are
+$$K(r)=\int_{|\xi|\le r}g(\xi)\,d\xi,\qquad L(r)=\bigl(K(r)/\omega_d\bigr)^{1/d},$$
+where $\omega_d$ is the volume of the unit ball in $\mathbb R^d$.
+
+* **49. Second-order summaries under complete spatial randomness.** For a
+  Poisson process, $g\equiv1$, so $K(r)=\omega_dr^d$ and $L(r)=r$; in the
+  plane $K(r)=\pi r^2$. If $g$ is isotropic, then
+  $K(r)=\sigma_d\int_0^rt^{d-1}g(t)\,dt$ with $\sigma_d$ the surface area of
+  the unit sphere. For a stationary process of intensity $\rho$,
+  $\rho K(r)$ is the expected number of further points within distance $r$
+  of a typical point, the expectation being under the Palm distribution
+  described in CKMA SYNOPSIS06, item 70. The $K$-function is unchanged by
+  independent thinning. For the planar Thomas cluster process, with parent
+  intensity $\kappa$ and Gaussian dispersal of standard deviation $\omega$,
+  $$K(r)=\pi r^2+\frac{1-\exp(-r^2/(4\omega^2))}{\kappa},$$
+  exceeding the Poisson value; values of $L(r)-r$ above zero thus indicate
+  clustering and values below zero indicate regularity at scale $r$.
+
 <a id="synopsis-108e"></a>
 
 ## 108E. Extreme-Value Statistics
@@ -403,12 +825,19 @@ with distribution function $F$, and write $x_F=\sup\{x:F(x)<1\}$.
   laws
   $$G_\gamma(x)=\exp\bigl(-(1+\gamma x)^{-1/\gamma}\bigr),
   \qquad\gamma\neq0,\;1+\gamma x>0,$$
-  and $G_0(x)=\exp(-e^{-x})$. The survival function of $F$ lies in the domain
-  of $G_\gamma$ for $\gamma>0$ when
-  $$\frac{1-F(tx)}{1-F(t)}\to x^{-1/\gamma},\qquad x>0.$$
-  It lies in the domain of $G_\gamma$ for $\gamma<0$ when $x_F<\infty$ and
+  and $G_0(x)=\exp(-e^{-x})$. For $\gamma>0$, $F$ lies in the domain of
+  attraction of $G_\gamma$ if and only if $x_F=\infty$ and
+  $$\frac{1-F(tx)}{1-F(t)}\to x^{-1/\gamma},\qquad x>0,\quad t\to\infty,$$
+  that is, $1-F$ is regularly varying with index $-1/\gamma$. For
+  $\gamma<0$, it does so if and only if $x_F<\infty$ and
   $$\frac{1-F(x_F-(tx)^{-1})}{1-F(x_F-t^{-1})}\to x^{1/\gamma},
   \qquad x>0,\quad t\to\infty.$$
+  For $\gamma=0$, it does so if and only if there is a positive function
+  $a$ with
+  $$\frac{1-F(t+xa(t))}{1-F(t)}\to e^{-x},\qquad x\in\mathbb R,\quad
+  t\uparrow x_F;$$
+  one may then take the mean excess
+  $a(t)=\int_t^{x_F}(1-F(s))\,ds/(1-F(t))$, which is finite for $t<x_F$.
   A sufficient condition for the Gumbel domain $\gamma=0$ is the von Mises
   condition: $F$ has a positive density $f$ in a left neighborhood of $x_F$
   and $(d/dx)\bigl((1-F(x))/f(x)\bigr)\to0$ as $x\uparrow x_F$.
@@ -438,11 +867,55 @@ order statistics is
 $$H_{k,n}
 =\frac1k\sum_{i=1}^k\log X_{(n-i+1)}-\log X_{(n-k)}.$$
 
+Let $U$ be the left-continuous inverse of $1/(1-F)$, so that $U(t)$ is the
+quantile of order $1-1/t$. A **second-order condition** with index $\gamma>0$
+and second-order parameter $\rho<0$ holds when, for a function $A$ of
+constant sign with $A(t)\to0$,
+$$\lim_{t\to\infty}\frac{U(tx)/U(t)-x^\gamma}{A(t)}=x^\gamma\,\frac{x^\rho-1}{\rho},
+\qquad x>0.$$
+
 * **24. Hill estimator.** Suppose $1-F$ is regularly varying of index
-  $-1/\gamma$ with $\gamma>0$, and suppose a second-order regular-variation
-  condition holds. If $k\to\infty$ and $k/n\to0$ slowly enough for that
-  second-order condition, then
-  $$\sqrt k\,(H_{k,n}-\gamma)\Rightarrow N(0,\gamma^2).$$
+  $-1/\gamma$ with $\gamma>0$, and suppose the second-order condition above
+  holds. If $k\to\infty$, $k/n\to0$, and $\sqrt k\,A(n/k)\to\lambda\in\mathbb R$,
+  then
+  $$\sqrt k\,(H_{k,n}-\gamma)\Rightarrow N\Bigl(\frac{\lambda}{1-\rho},\gamma^2\Bigr).$$
+  In particular the limit is $N(0,\gamma^2)$ when $\sqrt k\,A(n/k)\to0$. Larger
+  $k$ reduces variance at the price of the asymptotic bias $\lambda/(1-\rho)$.
+
+### Exceedances and block maxima
+
+* **50. Poisson approximation for exceedances.** For independent
+  observations, $0\le\tau\le\infty$, and real $u_n$,
+  $$P(M_n\le u_n)\to e^{-\tau}\quad\text{if and only if}\quad
+  n\bigl(1-F(u_n)\bigr)\to\tau.$$
+  For finite $\tau$ the number of exceedances of $u_n$ among
+  $X_1,\ldots,X_n$ then converges in law to a Poisson law with mean $\tau$,
+  by CKMA SYNOPSIS06, item 38. For $0<\tau<\infty$, levels $u_n$ with
+  $n(1-F(u_n))\to\tau$ exist if and only if
+  $(1-F(x))/(1-F(x-))\to1$ as $x\uparrow x_F$. Hence the Poisson and
+  geometric laws, whose atoms do not become negligible in this ratio, are in
+  no domain of attraction. Item 23 replaces $e^{-\tau}$ by $e^{-\theta\tau}$
+  for dependent sequences.
+
+The **return level** $z_p$ of a law $G$ is the level exceeded with probability
+$p$, $G(z_p)=1-p$. For block maxima with the generalized extreme-value law of
+location $\mu$, scale $\sigma>0$, and shape $\gamma$,
+$$z_p=\mu-\frac\sigma\gamma\Bigl[1-\bigl(-\log(1-p)\bigr)^{-\gamma}\Bigr]
+\quad(\gamma\ne0),\qquad z_p=\mu-\sigma\log\bigl(-\log(1-p)\bigr)\quad(\gamma=0).$$
+
+* **51. Likelihood for block maxima.** Let $Z_1,\ldots,Z_m$ be independent
+  with the generalized extreme-value law
+  $G_\gamma((z-\mu)/\sigma)$, whose support depends on the parameters. If
+  $\gamma>-1/2$, the maximum likelihood estimator of $(\mu,\sigma,\gamma)$ is
+  regular: consistent, asymptotically normal, and efficient with the inverse
+  Fisher information as asymptotic covariance. For $-1<\gamma<-1/2$, maximum
+  likelihood estimators generally exist but do not have the standard
+  asymptotics, and for $\gamma<-1$ they are generally not obtainable. In the
+  regular range, estimated return levels and their intervals follow by the
+  delta method or by inverting the likelihood-ratio test of SYNOPSIS103,
+  item 7. The
+  generalized extreme-value law is the limit of item 21, so the block length
+  governs a bias of the same kind as the choice of $k$ in item 24.
 
 ## Reference guide
 
@@ -455,22 +928,30 @@ $$H_{k,n}
   filter. Cappé, Moulines, and Rydén carry hidden Markov likelihoods.
   Giraitis, Koul, and Surgailis carry long memory. Kutoyants and Liptser and
   Shiryaev carry likelihood theory for diffusions. Fan and Yao, and Douc,
-  Moulines, and Stoffer, carry the block bootstrap for series.
+  Moulines, and Stoffer, carry the block bootstrap for series. Brockwell and
+  Davis also carry the Herglotz representation, the Durbin–Levinson
+  recursion, Kolmogorov's formula, and the Whittle asymptotics; Douc,
+  Moulines, and Stoffer carry GARCH stationarity; Basawa and Prakasa Rao
+  carry likelihood inference for finite Markov chains.
 - **[108B](#synopsis-108b)**: Andersen, Borgan, Gill, and Keiding, Fleming
   and Harrington, Kalbfleisch and Prentice, and Aalen, Borgan, and Gjessing
   carry the Nelson–Aalen estimator, the Kaplan–Meier estimator, and the Cox
-  partial likelihood.
+  partial likelihood. Andersen, Borgan, Gill, and Keiding carry Rebolledo's
+  theorem, the Breslow estimator, and Aalen's additive model.
 - **[108C](#synopsis-108c)**: Wald carries the sequential probability ratio
   test. Ghosh, Mukhopadhyay, and Sen, and Tartakovsky, Nikiforov, and
-  Basseville carry sequential estimation and change detection. Csörgő and
+  Basseville carry sequential estimation and change detection: Anscombe's
+  theorem and fixed-width intervals in the former, the optimality of CUSUM,
+  Shiryaev, and Shiryaev–Roberts procedures in the latter. Csörgő and
   Horváth carry the bridge limit for the CUSUM.
-- **[108D](#synopsis-108d)**: Stein carries kriging and covariance
-  misspecification. Møller and Waagepetersen, and Daley and Vere-Jones, carry
+- **[108D](#synopsis-108d)**: Stein carries kriging, covariance
+  misspecification, spectral and Matérn models, and semivariograms. Møller and Waagepetersen, and Daley and Vere-Jones, carry
   point processes. Rue and Held carry Gaussian Markov random fields.
 - **[108E](#synopsis-108e)**: Leadbetter, Lindgren, and Rootzén, Embrechts,
   Klüppelberg, and Mikosch, Resnick, and de Haan and Ferreira carry domains
   of attraction, threshold excesses, the extremal index, and the Hill
-  estimator. Coles is the applied companion.
+  estimator. Coles is the applied companion and carries block-maximum
+  likelihood and return levels.
 
 ### Source comparisons and local copies
 
@@ -493,8 +974,41 @@ normality theorem of Bickel, Ritov, and Rydén in the form developed by Cappé,
 Moulines, and Rydén. Item 15 records Wald's inequalities; the approximate
 expected sample size neglects overshoot. Item 19 uses equivalence of Gaussian
 measures in the form already numbered in the analysis synopsis. Item 24
-leaves the admissible range of $k$ to the second-order condition of the tail,
-as in de Haan and Ferreira.
+now states the second-order condition and the bias term of de Haan and
+Ferreira, Theorem 3.2.5.
+
+For the third expansion the following passages were read. Brockwell and
+Davis (1991): Theorem 4.3.1 (Herglotz), Theorem 4.4.2 (ARMA spectral
+density), Proposition 5.2.1 (Durbin–Levinson), Theorem 5.8.1 (Kolmogorov's
+formula, proved there for a continuous spectral density bounded away from
+zero, with the general case referred to Hannan), Theorems 8.1.1–8.1.2, and
+Theorems 10.8.1–10.8.2 with their parameter set, which give item 35 for
+independent identically distributed innovations without Gaussianity.
+Douc, Moulines, and Stoffer, Theorems 4.13 and 4.18 and Remark 4.16, for
+item 36. Basawa and Prakasa Rao, Chapter 4, Section 2, for item 37.
+Andersen, Borgan, Gill, and Keiding: Theorem II.5.1 and its
+counting-process form (2.5.6)–(2.5.8) for item 38, Theorem VII.2.3 for
+item 39, and Section VII.4 with Theorem VII.4.1 for item 40. Wald,
+Appendix A.2.2–A.2.3, for the fundamental identity and the operating
+characteristic of item 41, written here with $A<1<B$ as in item 15 (Wald
+labels the upper threshold $A$). Ghosh, Mukhopadhyay, and Sen: Theorems
+2.7.1–2.7.2 (Anscombe), Theorem 6.2.1 (Stein), and Theorem 8.2.1
+(Chow–Robbins, stated there for normal data). Tartakovsky, Nikiforov, and
+Basseville: Theorems 8.2.1 and 8.2.3 and Lemma 8.2.1 for item 44,
+Theorems 7.1.1–7.1.2, formula (7.6), and Theorem 7.6.1 for item 45. Stein
+(1999): Sections 2.4 and 2.6 on mean-square differentiability, Section 2.5,
+Theorem 1, Section 2.7 on the Matérn class,
+Section 2.9 on intrinsic random functions and semivariograms (Matheron's
+representation with $r=0$), and Section 2.10. Møller and Waagepetersen:
+Proposition 3.8, Definitions 4.4 and 4.6 with (4.5)–(4.6),
+Proposition 4.3, and Example 5.3 with (5.10). de Haan and Ferreira:
+Theorems 1.2.1 and 3.2.5, used to sharpen items 21 and 24. Leadbetter,
+Lindgren, and Rootzén: Theorems 1.5.1 and 1.7.13 for item 50. Coles,
+Sections 3.3.2–3.3.3, for item 51, where the regularity ranges are
+Smith's (1985) results as reported by Coles. The Dickey–Fuller limit in
+terms of Brownian functionals was not added: Brockwell and Davis (2016),
+Section 6.3, gives only the test and its quantiles, and Fuller is not in
+the local directory.
 
 Siegmund, *Sequential Analysis*, Ramdas and Wang's survey of e-values, and
 Chopin and Papaspiliopoulos, *An Introduction to Sequential Monte Carlo*, are
@@ -518,6 +1032,8 @@ Local texts directly consulted or identified for this selection:
 - [Liptser and Shiryaev, *Statistics of Random Processes*, Vol. I](../lean-CKMA/References/LiptserShiryaev2001StatisticsRandomProcessesVol1GeneralTheory2ndEd-Springer.SMAP5.pdf).
 - [Fan and Yao, *Nonlinear Time Series*](../lean-CKMA/References/FanYao2005NonlinearTimeSeriesNonparametricParametricMethods-Springer.SSS.pdf).
 - [Douc, Moulines, and Stoffer, *Nonlinear Time Series*](../lean-CKMA/References/DoucMoulinesStoffer2014NonlinearTimeSeriesTheoryMethodsApplicationsRExamples-ChapmanHallCRC.TextsStatSci.pdf).
+- [Basawa and Prakasa Rao, *Statistical Inference for Stochastic Processes*](../lean-CKMA/References/BasawaPrakasaRao1980StatisticalInferenceStochasticProcesses-AcademicPress.ProbMathStat.pdf).
+- [Brockwell and Davis, *Introduction to Time Series and Forecasting*](../lean-CKMA/References/BrockwellDavis2016IntroductionTimeSeriesForecasting3rdEd-Springer.STS.pdf).
 - [Andersen, Borgan, Gill, and Keiding, *Statistical Models Based on Counting Processes*](../lean-CKMA/References/AndersenBorganGillKeiding1993StatisticalModelsBasedCountingProcesses-Springer.SSS.pdf).
 - [Fleming and Harrington, *Counting Processes and Survival Analysis*](../lean-CKMA/References/FlemingHarrington1991CountingProcessesSurvivalAnalysis-Wiley.SerProbStat.pdf).
 - [Kalbfleisch and Prentice, *The Statistical Analysis of Failure Time Data*](../lean-CKMA/References/KalbfleischPrentice2002StatisticalAnalysisFailureTimeData2ndEd-WileySerProbStat.pdf).

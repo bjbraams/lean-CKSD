@@ -25,11 +25,13 @@ the sibling analysis project. Those entries are cited as CKMA SYNOPSIS items.
 
 ## Progress
 
-As of 2026-10-30, Sections 101–113 contain 333 numbered entries.
+As of 2026-11-01, Sections 101–113 contain 542 numbered entries.
 The initial selective pass of 2026-10-29 had 220. The mathematical-statistics
-expansion added 72 entries to Sections 101–109, which now have 228.
-The subsequent review of data science, Sections 110–113, adds 41 entries,
-bringing those sections to 105. All existing identifiers are preserved;
+expansion added 72 entries to Sections 101–109, and the subsequent review of
+data science added 41 entries to Sections 110–113, for 333 entries on
+2026-10-30. The third expansion of 2026-11-01 adds 132 entries to
+Sections 101–109, which now have 360, and 77 entries to Sections 110–113,
+which now have 182. All existing identifiers are preserved;
 Section 114 remains outside the series.
 
 The expansion develops exact sampling and confidence procedures, decision
@@ -54,6 +56,41 @@ threshold boundaries, and the conditions for fairness and privacy claims.
 Each affected reference guide records the substantive qualifications and
 distinguishes local full texts from primary papers consulted online.
 
+The third expansion completes the classical finite-sample theory with
+UMVU characterization, completeness of the order statistic, pivots and
+Pratt's theorem, the generalized Neyman–Pearson lemma, Neyman structure,
+interval hypotheses, least favorable distributions, invariant tests, and
+Blyth's method. In asymptotics it adds one-step and $M$-estimator rate
+theory, Bahadur representations, $L$-statistics, power envelopes, Pitman
+efficiency, and second-order bootstrap accuracy and failure. Further additions
+cover optimal rank scores and rank correlation, bandwidth selection and
+smoothing splines, log-concave estimation, adaptation and missing
+information; empirical Bayes and hierarchical shrinkage, exact simulation
+and the convergence of Markov chain samplers; quadratic forms, the $F$ test,
+variance components, Wishart structure, covariance tests, factor analysis,
+and design optimality; packing and hypercube lower bounds, sparse recovery,
+low-rank and covariance estimation, high-dimensional principal components,
+surrogate losses and stability; spectral prediction theory, counting-process
+martingales, optimal sequential and change-point procedures, random-field
+covariances and point-process likelihoods; and stratified and adjusted
+experiments, instrumental variables, sensitivity, mediation, probabilities
+of causation, time-varying treatments, and causal discovery. In data
+science it adds graph-Laplacian limits, Fréchet-mean and Procrustes
+theory, the persistence algorithm and topological inference; transport-map
+and entropic estimation, Wasserstein linearization, characteristic kernels,
+and kernel Stein discrepancies; functional-inequality convergence of
+Langevin dynamics, Metropolis-adjusted and kinetic Langevin methods,
+stochastic approximation, particle-filter fluctuations, variational
+assimilation, and diffusion-model training and convergence; and boosting,
+variational inference, network capacity and approximation, implicit bias,
+random graphs and graph limits, planning and policy optimization, linear
+bandits, and further privacy and distribution-shift results. Corrections
+sharpen the extreme-value domain-of-attraction conditions and the Hill
+estimator limit (SYNOPSIS108, items 21 and 24) and the sampling
+constants for homology inference (SYNOPSIS110, item 12). Several
+data-science entries rest on primary papers that are not local; the
+affected reference guides identify them, including papers read online.
+
 Reference guides distinguish passages read for the expansion, other local
 copies, and unavailable sources. Both `../lean-CKMA/References/` and
 `../lean-CKMA/ReferencesSuppl/` were checked. Van der Vaart's *Asymptotic
@@ -65,19 +102,19 @@ basis. Image scans without usable text extraction are identified where
 relevant. Definitions are interleaved with the results they support, and
 cross-references place shared probability and analytic tools in CKMA.
 
-* 101. Statistical inference: general texts, references, and history: [SYNOPSIS101.md](SYNOPSIS101.md), 23 numbered entries.
-* 102. Classical inference: decision theory, estimation, and testing: [SYNOPSIS102.md](SYNOPSIS102.md), 26 numbered entries.
-* 103. Asymptotic statistics: [SYNOPSIS103.md](SYNOPSIS103.md), 32 numbered entries.
-* 104. Nonparametric, semiparametric, and robust inference: [SYNOPSIS104.md](SYNOPSIS104.md), 31 numbered entries.
-* 105. Bayesian statistics and Monte Carlo methods: [SYNOPSIS105.md](SYNOPSIS105.md), 21 numbered entries.
-* 106. Linear models, multivariate analysis, and experimental design: [SYNOPSIS106.md](SYNOPSIS106.md), 28 numbered entries.
-* 107. High-dimensional statistics and statistical learning: [SYNOPSIS107.md](SYNOPSIS107.md), 21 numbered entries.
-* 108. Dependent data and stochastic models: [SYNOPSIS108.md](SYNOPSIS108.md), 31 numbered entries.
-* 109. Causal inference: [SYNOPSIS109.md](SYNOPSIS109.md), 15 numbered entries.
-* 110. Geometric and topological data analysis: [SYNOPSIS110.md](SYNOPSIS110.md), 23 numbered entries.
-* 111. Optimal transport and kernel discrepancies for comparing datasets: [SYNOPSIS111.md](SYNOPSIS111.md), 18 numbered entries.
-* 112. Mean-field limits and stochastic dynamics for data: [SYNOPSIS112.md](SYNOPSIS112.md), 24 numbered entries.
-* 113. Machine-learning models, representation, and sequential decisions: [SYNOPSIS113.md](SYNOPSIS113.md), 40 numbered entries.
+* 101. Statistical inference: general texts, references, and history: [SYNOPSIS101.md](SYNOPSIS101.md), 31 numbered entries.
+* 102. Classical inference: decision theory, estimation, and testing: [SYNOPSIS102.md](SYNOPSIS102.md), 39 numbered entries.
+* 103. Asymptotic statistics: [SYNOPSIS103.md](SYNOPSIS103.md), 46 numbered entries.
+* 104. Nonparametric, semiparametric, and robust inference: [SYNOPSIS104.md](SYNOPSIS104.md), 47 numbered entries.
+* 105. Bayesian statistics and Monte Carlo methods: [SYNOPSIS105.md](SYNOPSIS105.md), 36 numbered entries.
+* 106. Linear models, multivariate analysis, and experimental design: [SYNOPSIS106.md](SYNOPSIS106.md), 45 numbered entries.
+* 107. High-dimensional statistics and statistical learning: [SYNOPSIS107.md](SYNOPSIS107.md), 39 numbered entries.
+* 108. Dependent data and stochastic models: [SYNOPSIS108.md](SYNOPSIS108.md), 51 numbered entries.
+* 109. Causal inference: [SYNOPSIS109.md](SYNOPSIS109.md), 26 numbered entries.
+* 110. Geometric and topological data analysis: [SYNOPSIS110.md](SYNOPSIS110.md), 41 numbered entries.
+* 111. Optimal transport and kernel discrepancies for comparing datasets: [SYNOPSIS111.md](SYNOPSIS111.md), 35 numbered entries.
+* 112. Mean-field limits and stochastic dynamics for data: [SYNOPSIS112.md](SYNOPSIS112.md), 42 numbered entries.
+* 113. Machine-learning models, representation, and sequential decisions: [SYNOPSIS113.md](SYNOPSIS113.md), 64 numbered entries.
 
 ## Lettered subdivisions
 
