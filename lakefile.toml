@@ -1,0 +1,22 @@
+name = "LeanCKSD"
+version = "0.1.0"
+defaultTargets = ["Suggested"]
+buildDir = ".lake/build-CKSD"
+
+[leanOptions]
+autoImplicit = false
+relaxedAutoImplicit = false
+
+[[lean_lib]]
+name = "Suggested"
+roots = ["Suggested101", "Suggested102", "Suggested103", "Suggested104", "Suggested105", "Suggested106", "Suggested107", "Suggested108"]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "911003dd6dea5df215dff57f2717be762e11a6ca"
+
+[[require]]
+name = "TauCeti"
+git = "https://github.com/TauCetiProject/TauCeti"
+rev = "a049b4264d2cf4dbf4720796f844a3a3764914a5"
