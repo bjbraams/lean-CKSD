@@ -51,11 +51,6 @@ def blockAverage {n : ℕ} (y : Fin n → ℝ) (a b : Fin n) : ℝ :=
 def isotonicLeastSquares {n : ℕ} (y : Fin n → ℝ) (i : Fin n) : ℝ :=
   ⨆ a : {a : Fin n // a ≤ i}, ⨅ b : {b : Fin n // i ≤ b}, blockAverage y a.val b.val
 
-/-- GAPS 103.27: the max–min block-average formula is the isotonic least-squares fit. -/
-theorem isIsotonicRegressionEstimator_isotonicLeastSquares {n : ℕ} (y : Fin n → ℝ) :
-    IsIsotonicRegressionEstimator y (isotonicLeastSquares y) := by
-  sorry
-
 /-- GAPS 103.27: existence and uniqueness of the isotonic least-squares fit. -/
 theorem existsUnique_isIsotonicRegressionEstimator {n : ℕ} (y : Fin n → ℝ) :
     ∃! θ : Fin n → ℝ, IsIsotonicRegressionEstimator y θ := by
@@ -108,6 +103,193 @@ theorem existsUnique_isIsotonicRegressionEstimator {n : ℕ} (y : Fin n → ℝ)
     have heq : w = v := sub_eq_zero.mp (norm_eq_zero.mp hnormzero)
     funext i
     exact congrArg (fun a : EuclideanSpace ℝ (Fin n) ↦ a i) heq
+
+/-- Variational inequality for isotonic least squares: the residual of the fit has
+nonpositive inner product with every monotone direction `φ - θ`. -/
+theorem IsIsotonicRegressionEstimator.sum_mul_sub_nonpos {n : ℕ} {y θ : Fin n → ℝ}
+    (hθ : IsIsotonicRegressionEstimator y θ) (φ : Fin n → ℝ) (hφ : Monotone φ) :
+    ∑ i, (y i - θ i) * (φ i - θ i) ≤ 0 := by
+  set c := ∑ i, (y i - θ i) * (φ i - θ i) with hc
+  set W := ∑ i, (φ i - θ i) ^ 2 with hW
+  have hW0 : 0 ≤ W := Finset.sum_nonneg fun i _ ↦ sq_nonneg _
+  by_contra hpos
+  push Not at hpos
+  set t := c / (c + W) with ht
+  have ht0 : 0 < t := div_pos hpos (by linarith)
+  have ht1 : t ≤ 1 := (div_le_one (by linarith)).mpr (by linarith)
+  have hmono : Monotone fun i ↦ θ i + t * (φ i - θ i) := by
+    intro i j hij
+    have h1 := hθ.1 hij
+    have h2 := hφ hij
+    nlinarith
+  have hmin := hθ.2 _ hmono
+  have hexp : ∑ i, (y i - (θ i + t * (φ i - θ i))) ^ 2 =
+      ∑ i, (y i - θ i) ^ 2 - 2 * t * c + t ^ 2 * W := by
+    rw [hc, hW, Finset.mul_sum, Finset.mul_sum, ← Finset.sum_sub_distrib,
+      ← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    ring
+  rw [hexp] at hmin
+  -- `2 c ≤ t W < c`
+  have h1 : 2 * c ≤ t * W := by nlinarith
+  have h2 : t * W < c := by
+    rw [ht, div_mul_eq_mul_div, div_lt_iff₀ (by linarith)]
+    nlinarith
+  linarith
+
+/-- Suffix sums of the isotonic residual are nonpositive, vanish at `0`, and vanish at
+every jump of the fit. -/
+theorem IsIsotonicRegressionEstimator.suffix_sum_props {n : ℕ} {y θ : Fin n → ℝ}
+    (hθ : IsIsotonicRegressionEstimator y θ) :
+    (∀ k : ℕ, ∑ j : Fin n, (if k ≤ (j : ℕ) then y j - θ j else 0) ≤ 0) ∧
+    0 ≤ ∑ j : Fin n, (y j - θ j) ∧
+    ∀ (k : ℕ) (hk : 0 < k) (hkn : k < n), θ ⟨k - 1, by omega⟩ < θ ⟨k, hkn⟩ →
+      0 ≤ ∑ j : Fin n, (if k ≤ (j : ℕ) then y j - θ j else 0) := by
+  refine ⟨fun k ↦ ?_, ?_, fun k hk hkn hjump ↦ ?_⟩
+  · have := hθ.sum_mul_sub_nonpos (fun j ↦ θ j + if k ≤ (j : ℕ) then 1 else 0) (by
+      intro i j hij
+      have h1 := hθ.1 hij
+      have h2 : (i : ℕ) ≤ j := hij
+      simp only
+      split_ifs with ha hb hb <;> linarith)
+    convert this using 2 with j
+    split_ifs <;> ring
+  · have := hθ.sum_mul_sub_nonpos (fun j ↦ θ j - 1) (fun i j hij ↦ by
+      have := hθ.1 hij; simp only; linarith)
+    have e : ∑ i, (y i - θ i) * (θ i - 1 - θ i) = -∑ j, (y j - θ j) := by
+      rw [← Finset.sum_neg_distrib]; refine Finset.sum_congr rfl fun j _ ↦ ?_; ring
+    linarith
+  · set g := θ ⟨k, hkn⟩ - θ ⟨k - 1, by omega⟩ with hg
+    have hg0 : 0 < g := by linarith
+    have := hθ.sum_mul_sub_nonpos (fun j ↦ θ j - if k ≤ (j : ℕ) then g else 0) (by
+      intro i j hij
+      have h1 := hθ.1 hij
+      have h2 : (i : ℕ) ≤ j := hij
+      simp only
+      split_ifs with ha hb hb
+      · linarith
+      · omega
+      · have hi : θ i ≤ θ ⟨k - 1, by omega⟩ := hθ.1 (show (i : ℕ) ≤ k - 1 by omega)
+        have hj : θ ⟨k, hkn⟩ ≤ θ j := hθ.1 (show k ≤ (j : ℕ) by omega)
+        linarith
+      · linarith)
+    have e : ∑ i, (y i - θ i) * (θ i - (if k ≤ (i : ℕ) then g else 0) - θ i) =
+        -g * ∑ j : Fin n, (if k ≤ (j : ℕ) then y j - θ j else 0) := by
+      rw [Finset.mul_sum]; refine Finset.sum_congr rfl fun j _ ↦ ?_; split_ifs <;> ring
+    rw [e] at this
+    nlinarith
+
+/-- GAPS 103.27: the max–min block-average formula is the isotonic least-squares fit. -/
+theorem isIsotonicRegressionEstimator_isotonicLeastSquares {n : ℕ} (y : Fin n → ℝ) :
+    IsIsotonicRegressionEstimator y (isotonicLeastSquares y) := by
+  classical
+  obtain ⟨θ, hθ, -⟩ := existsUnique_isIsotonicRegressionEstimator y
+  suffices h : isotonicLeastSquares y = θ by rw [h]; exact hθ
+  obtain ⟨hneg, htot, hjump⟩ := hθ.suffix_sum_props
+  set Sfx : ℕ → ℝ := fun k ↦ ∑ j : Fin n, (if k ≤ (j : ℕ) then y j - θ j else 0) with hSfx
+  have hS0 : Sfx 0 = 0 := le_antisymm (hneg 0) (by simpa [Sfx] using htot)
+  have hSn : ∀ k, n ≤ k → Sfx k = 0 := fun k hk ↦
+    Finset.sum_eq_zero fun j _ ↦ ite_eq_right (by have := j.isLt; omega)
+  -- interval sums of the residual
+  have hIcc : ∀ a b : Fin n, a ≤ b → ∑ j ∈ Finset.Icc a b, (y j - θ j) =
+      Sfx a - Sfx (b + 1) := by
+    intro a b hab
+    have hset : Finset.Icc a b = Finset.univ.filter fun j : Fin n ↦ a ≤ j ∧ j ≤ b := by
+      ext j; simp
+    rw [hset, Finset.sum_filter, eq_sub_iff_add_eq, ← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun j _ ↦ ?_
+    have hab' : (a : ℕ) ≤ b := hab
+    by_cases h1 : (a : ℕ) ≤ j <;> by_cases h2 : (j : ℕ) ≤ b
+    · have : a ≤ j ∧ j ≤ b := ⟨h1, h2⟩
+      simp [this, h1, show ¬ ((b : ℕ) + 1 ≤ j) by omega]
+    · have : ¬ (a ≤ j ∧ j ≤ b) := fun h ↦ h2 h.2
+      simp [this, h1, show (b : ℕ) + 1 ≤ j by omega]
+    · have : ¬ (a ≤ j ∧ j ≤ b) := fun h ↦ h1 h.1
+      simp [this, h1, show ¬ ((b : ℕ) + 1 ≤ j) by omega]
+    · have : ¬ (a ≤ j ∧ j ≤ b) := fun h ↦ h1 h.1
+      simp [this, h1, show ¬ ((b : ℕ) + 1 ≤ j) by omega]
+  have hcardIcc : ∀ a b : Fin n, a ≤ b →
+      ((Finset.Icc a b).card : ℝ) = ((b.val - a.val + 1 : ℕ) : ℝ) := by
+    intro a b hab
+    have hab' : (a : ℕ) ≤ b := hab
+    rw [Fin.card_Icc]
+    congr 1
+    omega
+  have hcardpos : ∀ a b : Fin n, a ≤ b → (0 : ℝ) < ((b.val - a.val + 1 : ℕ) : ℝ) := by
+    intro a b _; positivity
+  funext i
+  set E := Finset.univ.filter fun j ↦ θ j = θ i with hE
+  have hiE : i ∈ E := by simp [E]
+  set a₀ := E.min' ⟨i, hiE⟩ with ha₀
+  set b₀ := E.max' ⟨i, hiE⟩ with hb₀
+  have ha₀E : θ a₀ = θ i := by
+    have := E.min'_mem ⟨i, hiE⟩; simp only [E, Finset.mem_filter] at this; exact this.2
+  have hb₀E : θ b₀ = θ i := by
+    have := E.max'_mem ⟨i, hiE⟩; simp only [E, Finset.mem_filter] at this; exact this.2
+  have ha₀i : a₀ ≤ i := E.min'_le i hiE
+  have hib₀ : i ≤ b₀ := E.le_max' i hiE
+  have hSa : Sfx a₀ = 0 := by
+    rcases Nat.eq_zero_or_pos (a₀ : ℕ) with h | h
+    · rw [h]; exact hS0
+    refine le_antisymm (hneg _) (hjump _ h a₀.isLt ?_)
+    set q : Fin n := ⟨(a₀ : ℕ) - 1, by omega⟩
+    have hq : q < a₀ := by change (a₀ : ℕ) - 1 < a₀; omega
+    have hqE : q ∉ E := fun hq' ↦ absurd (E.min'_le q hq') (not_le.mpr hq)
+    have hne : θ q ≠ θ i := by simpa [E] using hqE
+    have hle : θ q ≤ θ a₀ := hθ.1 hq.le
+    rw [ha₀E] at hle ⊢
+    exact lt_of_le_of_ne hle hne
+  have hSb : Sfx ((b₀ : ℕ) + 1) = 0 := by
+    by_cases h : (b₀ : ℕ) + 1 < n
+    · refine le_antisymm (hneg _) (hjump _ (by omega) h ?_)
+      set q : Fin n := ⟨(b₀ : ℕ) + 1, h⟩
+      have hq : b₀ < q := by change (b₀ : ℕ) < b₀ + 1; omega
+      have hqE : q ∉ E := fun hq' ↦ absurd (E.le_max' q hq') (not_le.mpr hq)
+      have hne : θ q ≠ θ i := by simpa [E] using hqE
+      have hle : θ b₀ ≤ θ q := hθ.1 hq.le
+      have e : (⟨(b₀ : ℕ) + 1 - 1, by omega⟩ : Fin n) = b₀ := Fin.ext (by simp)
+      rw [e, hb₀E]
+      rw [hb₀E] at hle
+      exact lt_of_le_of_ne hle (Ne.symm hne)
+    · exact hSn _ (by omega)
+  -- lower bound for blocks starting at `a₀`
+  have hlow : ∀ b : Fin n, i ≤ b → θ i ≤ blockAverage y a₀ b := by
+    intro b hb
+    have hab : a₀ ≤ b := ha₀i.trans hb
+    unfold blockAverage
+    rw [le_div_iff₀ (hcardpos a₀ b hab), ← hcardIcc a₀ b hab]
+    have h1 := hIcc a₀ b hab
+    rw [hSa, Finset.sum_sub_distrib] at h1
+    have h2 := Finset.card_nsmul_le_sum (Finset.Icc a₀ b) θ (θ i) (fun j hj ↦ by
+      rw [← ha₀E]; exact hθ.1 (Finset.mem_Icc.mp hj).1)
+    rw [nsmul_eq_mul] at h2
+    have h3 := hneg ((b : ℕ) + 1)
+    linarith
+  -- upper bound for blocks ending at `b₀`
+  have hup : ∀ a : Fin n, a ≤ i → blockAverage y a b₀ ≤ θ i := by
+    intro a ha
+    have hab : a ≤ b₀ := ha.trans hib₀
+    unfold blockAverage
+    rw [div_le_iff₀ (hcardpos a b₀ hab), ← hcardIcc a b₀ hab]
+    have h1 := hIcc a b₀ hab
+    rw [hSb, Finset.sum_sub_distrib] at h1
+    have h2 := Finset.sum_le_card_nsmul (Finset.Icc a b₀) θ (θ i) (fun j hj ↦ by
+      rw [← hb₀E]; exact hθ.1 (Finset.mem_Icc.mp hj).2)
+    rw [nsmul_eq_mul] at h2
+    have h3 := hneg a
+    linarith
+  have : Nonempty {a : Fin n // a ≤ i} := ⟨⟨i, le_rfl⟩⟩
+  have : Nonempty {b : Fin n // i ≤ b} := ⟨⟨i, le_rfl⟩⟩
+  have hbdd : ∀ a : Fin n, BddBelow (range fun b : {b : Fin n // i ≤ b} ↦ blockAverage y a b.val) :=
+    fun a ↦ (finite_range _).bddBelow
+  have hinner : ∀ a : {a : Fin n // a ≤ i},
+      (⨅ b : {b : Fin n // i ≤ b}, blockAverage y a.val b.val) ≤ θ i := fun a ↦
+    (ciInf_le (hbdd a.val) ⟨b₀, hib₀⟩).trans (hup a.val a.property)
+  have hinner₀ : θ i ≤ ⨅ b : {b : Fin n // i ≤ b}, blockAverage y a₀ b.val :=
+    le_ciInf fun b ↦ hlow b.val b.property
+  unfold isotonicLeastSquares
+  refine le_antisymm (ciSup_le hinner) ?_
+  exact le_ciSup_of_le (finite_range _).bddAbove ⟨a₀, ha₀i⟩ hinner₀
 
 /-- GAPS 103.27: the adaptive variation risk bound for Gaussian isotonic least squares.
 The more general independent finite-variance-error version is not asserted here. -/

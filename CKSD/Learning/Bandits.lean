@@ -6,6 +6,9 @@ public import Mathlib.Probability.Distributions.Beta
 public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
 public import TauCeti.Probability.Quantile
+public import CKSD.Learning.UCBAnalysis
+public import Mathlib.Probability.Independence.InfinitePi
+public import Mathlib.Probability.Independence.Integration
 
 /-!
 # Stochastic bandits in the reward-table model
@@ -166,6 +169,489 @@ theorem exists_bernoulli_banditRegret_ge {U : Type*} [MeasurableSpace U] (ρ : M
         banditRegret π ρ (fun k ↦ banditBernoulli (μ k)) n := by
   sorry
 
+/-! ### Histories of a policy on a reward table -/
+
+/-- Appending a pair to a history increases the count of its arm by one. -/
+theorem historyPlayCount_snoc {K t : ℕ} (h : Fin t → Fin K × ℝ) (x : Fin K × ℝ) (k : Fin K) :
+    historyPlayCount (Fin.snoc (α := fun _ ↦ Fin K × ℝ) h x) k =
+      historyPlayCount h k + if x.1 = k then 1 else 0 := by
+  unfold historyPlayCount
+  rw [Finset.card_filter, Finset.card_filter, Fin.sum_univ_castSucc]
+  simp only [Fin.snoc_castSucc, Fin.snoc_last]
+
+/-- Appending a pair to a history adds its reward to the total of its arm. -/
+theorem historyRewardSum_snoc {K t : ℕ} (h : Fin t → Fin K × ℝ) (x : Fin K × ℝ) (k : Fin K) :
+    historyRewardSum (Fin.snoc (α := fun _ ↦ Fin K × ℝ) h x) k =
+      historyRewardSum h k + if x.1 = k then x.2 else 0 := by
+  unfold historyRewardSum
+  rw [Fin.sum_univ_castSucc]
+  simp only [Fin.snoc_castSucc, Fin.snoc_last]
+
+/-- The arm process of a seeded policy on a reward table, as a function of the table. -/
+def banditArmProcess {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U) (u : U) :
+    ℕ → (Fin K × ℕ → ℝ) → Fin K :=
+  fun t R ↦ banditArm π u R t
+
+/-- The count of an arm in the history equals the number of its plays. -/
+theorem historyPlayCount_banditHistory {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U) (u : U)
+    (R : Fin K × ℕ → ℝ) (k : Fin K) (t : ℕ) :
+    historyPlayCount (banditHistory π u R t) k = armPlayCount (banditArmProcess π u) k t R := by
+  induction t with
+  | zero => simp [historyPlayCount, armPlayCount]
+  | succ t ih =>
+    rw [banditHistory, historyPlayCount_snoc, ih, armPlayCount_succ]
+    rfl
+
+/-- The reward total of an arm in the history is the sum of its first table entries. -/
+theorem historyRewardSum_banditHistory {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U)
+    (u : U) (R : Fin K × ℕ → ℝ) (k : Fin K) (t : ℕ) :
+    historyRewardSum (banditHistory π u R t) k =
+      ∑ j ∈ Finset.range (historyPlayCount (banditHistory π u R t) k), R (k, j) := by
+  induction t with
+  | zero => simp [historyRewardSum, historyPlayCount]
+  | succ t ih =>
+    rw [banditHistory, historyRewardSum_snoc, historyPlayCount_snoc, ih]
+    dsimp only
+    split_ifs with h
+    · rw [Finset.sum_range_succ, h]
+    · simp
+
+/-- Changing a table entry `(k, j)` that has not been reached leaves the history unchanged. -/
+theorem banditHistory_update {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U) (u : U)
+    (R : Fin K × ℕ → ℝ) (k : Fin K) (j : ℕ) (x : ℝ) (t : ℕ)
+    (ht : historyPlayCount (banditHistory π u R t) k ≤ j) :
+    banditHistory π u (Function.update R (k, j) x) t = banditHistory π u R t := by
+  induction t with
+  | zero => rfl
+  | succ t ih =>
+    rw [banditHistory, historyPlayCount_snoc] at ht
+    have ht' : historyPlayCount (banditHistory π u R t) k ≤ j := by
+      split_ifs at ht <;> omega
+    rw [banditHistory, banditHistory, ih ht']
+    congr 2
+    apply Function.update_of_ne
+    intro heq
+    simp only [Prod.mk.injEq] at heq
+    obtain ⟨h1, h2⟩ := heq
+    rw [h1] at h2
+    simp only [h1, ↓reduceIte] at ht
+    omega
+
+/-- A seeded policy that is measurable in the history for a fixed seed. -/
+def SeededBanditPolicy.IsMeasurableAt {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U)
+    (u : U) : Prop :=
+  ∀ t, Measurable fun h : Fin t → Fin K × ℝ ↦ π t h u
+
+/-- The count of an arm is a measurable function of the history. -/
+theorem measurable_historyPlayCount {K t : ℕ} (k : Fin K) :
+    Measurable fun h : Fin t → Fin K × ℝ ↦ historyPlayCount h k := by
+  have : (fun h : Fin t → Fin K × ℝ ↦ historyPlayCount h k) =
+      fun h ↦ ∑ i, if (h i).1 = k then 1 else 0 := by
+    funext h; unfold historyPlayCount; rw [Finset.card_filter]
+  rw [this]
+  exact Finset.measurable_sum _ fun i _ ↦ Measurable.ite
+    (measurableSet_eq_fun (measurable_fst.comp (measurable_pi_apply i)) measurable_const)
+    measurable_const measurable_const
+
+/-- The reward total of an arm is a measurable function of the history. -/
+theorem measurable_historyRewardSum {K t : ℕ} (k : Fin K) :
+    Measurable fun h : Fin t → Fin K × ℝ ↦ historyRewardSum h k := by
+  unfold historyRewardSum
+  exact Finset.measurable_sum _ fun i _ ↦ Measurable.ite
+    (measurableSet_eq_fun (measurable_fst.comp (measurable_pi_apply i)) measurable_const)
+    (measurable_snd.comp (measurable_pi_apply i)) measurable_const
+
+/-- The history is a measurable function of the reward table. -/
+theorem measurable_banditHistory {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U) (u : U)
+    (hπ : π.IsMeasurableAt u) (t : ℕ) :
+    Measurable fun R : Fin K × ℕ → ℝ ↦ banditHistory π u R t := by
+  induction t with
+  | zero => exact measurable_const
+  | succ t ih =>
+    have ha : Measurable fun R : Fin K × ℕ → ℝ ↦ π t (banditHistory π u R t) u :=
+      (hπ t).comp ih
+    have hc : Measurable fun R : Fin K × ℕ → ℝ ↦
+        historyPlayCount (banditHistory π u R t) (π t (banditHistory π u R t) u) := by
+      have : Measurable fun p : (Fin t → Fin K × ℝ) × Fin K ↦ historyPlayCount p.1 p.2 :=
+        measurable_from_prod_countable_left fun k ↦ measurable_historyPlayCount k
+      exact this.comp (ih.prodMk ha)
+    have hr : Measurable fun R : Fin K × ℕ → ℝ ↦ R (π t (banditHistory π u R t) u,
+        historyPlayCount (banditHistory π u R t) (π t (banditHistory π u R t) u)) := by
+      have : Measurable fun p : (Fin K × ℕ → ℝ) × (Fin K × ℕ) ↦ p.1 p.2 :=
+        measurable_from_prod_countable_left fun z ↦ measurable_pi_apply z
+      exact this.comp (measurable_id.prodMk (ha.prodMk hc))
+    simp only [banditHistory]
+    rw [measurable_pi_iff]
+    intro i
+    refine Fin.lastCases ?_ (fun i ↦ ?_) i
+    · simp only [Fin.snoc_last]
+      exact ha.prodMk hr
+    · simp only [Fin.snoc_castSucc]
+      exact (measurable_pi_apply i).comp ih
+
+/-- The arm process of a measurable policy is measurable. -/
+theorem measurable_banditArmProcess {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U) (u : U)
+    (hπ : π.IsMeasurableAt u) (t : ℕ) : Measurable (banditArmProcess π u t) :=
+  (hπ t).comp (measurable_banditHistory π u hπ t)
+
+/-- The first maximizing coordinate is a maximizer. -/
+theorem le_banditFirstArgmax {K : ℕ} [NeZero K] (v : Fin K → ℝ) (j : Fin K) :
+    v j ≤ v (banditFirstArgmax v) := by
+  have hne : (Finset.univ.filter fun k ↦ ∀ j, v j ≤ v k).Nonempty := by
+    obtain ⟨k, -, hk⟩ := Finset.exists_max_image Finset.univ v Finset.univ_nonempty
+    exact ⟨k, by simpa using fun j ↦ hk j (Finset.mem_univ j)⟩
+  unfold banditFirstArgmax
+  simp only [hne, ↓reduceDIte]
+  have := Finset.min'_mem _ hne
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and] at this
+  exact this j
+
+/-- The first maximizing coordinate is a measurable function of the vector. -/
+theorem measurable_banditFirstArgmax {K : ℕ} [NeZero K] :
+    Measurable (banditFirstArgmax : (Fin K → ℝ) → Fin K) := by
+  refine measurable_to_countable' fun k ↦ ?_
+  have hmax : ∀ k : Fin K, MeasurableSet {v : Fin K → ℝ | ∀ j, v j ≤ v k} := fun k ↦ by
+    rw [Set.ofPred_forall]
+    exact MeasurableSet.iInter fun j ↦
+      measurableSet_le (measurable_pi_apply j) (measurable_pi_apply k)
+  have hset : banditFirstArgmax ⁻¹' {k} = {v : Fin K → ℝ | ∀ j, v j ≤ v k} ∩
+      ⋂ j ∈ (Finset.univ.filter fun j : Fin K ↦ j < k), {v | ∀ j', v j' ≤ v j}ᶜ := by
+    ext v
+    have hne : (Finset.univ.filter fun k ↦ ∀ j, v j ≤ v k).Nonempty :=
+      ⟨banditFirstArgmax v, by simpa using le_banditFirstArgmax v⟩
+    simp only [Set.mem_preimage, Set.mem_singleton_iff, Set.mem_inter_iff, Set.mem_iInter,
+      Set.mem_compl_iff, Finset.mem_filter, Finset.mem_univ, true_and]
+    unfold banditFirstArgmax
+    simp only [hne, ↓reduceDIte]
+    constructor
+    · rintro rfl
+      have hm := Finset.min'_mem _ hne
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hm
+      refine ⟨hm, fun j hj hjmax ↦ ?_⟩
+      have := Finset.min'_le (Finset.univ.filter fun k ↦ ∀ j, v j ≤ v k) j
+        (by simpa using hjmax)
+      exact absurd hj (not_lt.mpr this)
+    · rintro ⟨hk, hlt⟩
+      refine le_antisymm (Finset.min'_le _ k (by simpa using hk)) (Finset.le_min' _ _ _ ?_)
+      intro j hj
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hj
+      by_contra hjk
+      exact hlt j (lt_of_not_ge hjk) hj
+  rw [hset]
+  exact (hmax k).inter (MeasurableSet.biInter (Set.to_countable _) fun j _ ↦ (hmax j).compl)
+
+/-- The UCB1 policy is measurable in the history. -/
+theorem ucb1Policy_isMeasurableAt (K : ℕ) [NeZero K] : (ucb1Policy K).IsMeasurableAt () := by
+  intro t
+  unfold ucb1Policy
+  by_cases ht : t < K
+  · simp only [ht, ↓reduceDIte]
+    exact measurable_const
+  · simp only [ht, ↓reduceDIte]
+    refine measurable_banditFirstArgmax.comp (measurable_pi_iff.mpr fun k ↦ ?_)
+    have h1 := measurable_historyRewardSum (t := t) k
+    have h2 : Measurable fun h : Fin t → Fin K × ℝ ↦ (historyPlayCount h k : ℝ) :=
+      measurable_from_top.comp (measurable_historyPlayCount k)
+    exact (h1.div h2).add ((measurable_const.div h2).sqrt)
+
+/-! ### Expected rewards in the reward-table model -/
+
+/-- Under a product law on `ι → ℝ`, a coordinate is independent of every measurable function
+that does not depend on that coordinate, so their product integrates to the product of the
+integrals. The independence comes from Mathlib's `iIndepFun_infinitePi` and
+`indep_iSup_of_disjoint`. -/
+theorem integral_eval_mul_eq_of_update_invariant {ι : Type*} [hd : DecidableEq ι]
+    (μ : ι → Measure ℝ)
+    [∀ i, IsProbabilityMeasure (μ i)] (z : ι) {g : (ι → ℝ) → ℝ} (hg : Measurable g)
+    (hinv : ∀ R x, g (Function.update R z x) = g R) :
+    ∫ R, R z * g R ∂Measure.infinitePi μ = (∫ x, x ∂μ z) * ∫ R, g R ∂Measure.infinitePi μ := by
+  set m : ι → MeasurableSpace (ι → ℝ) := fun i ↦
+    MeasurableSpace.comap (fun ω : ι → ℝ ↦ ω i) inferInstance with hm_def
+  have hind := iIndepFun_infinitePi (P := μ) (X := fun _ x ↦ x) fun _ ↦ measurable_id
+  have hI : iIndep m (Measure.infinitePi μ) :=
+    (iIndepFun_iff_iIndep (fun _ ↦ (inferInstance : MeasurableSpace ℝ)) _ _).mp hind
+  have hle : ∀ i, m i ≤ MeasurableSpace.pi := fun i ↦ (measurable_pi_apply i).comap_le
+  have hST := indep_iSup_of_disjoint hle hI (S := {z}) (T := {z}ᶜ) disjoint_compl_right
+  have hupd : Measurable[⨆ i ∈ ({z}ᶜ : Set ι), m i]
+      (fun R : ι → ℝ ↦ Function.update R z 0) := by
+    refine @measurable_pi_iff _ _ _ (⨆ i ∈ ({z}ᶜ : Set ι), m i) _ _ |>.mpr fun i ↦ ?_
+    by_cases hi : i = z
+    · subst hi
+      simp only [Function.update_self]
+      exact @measurable_const ℝ (ι → ℝ) _ _ 0
+    · simp only [Function.update_of_ne hi]
+      exact Measurable.of_comap_le (le_iSup₂ (f := fun i (_ : i ∈ ({z}ᶜ : Set ι)) ↦ m i) i hi)
+  have hgT : Measurable[⨆ i ∈ ({z}ᶜ : Set ι), m i] g := by
+    have : g = g ∘ fun R ↦ Function.update R z 0 := funext fun R ↦ (hinv R 0).symm
+    rw [this]
+    exact hg.comp hupd
+  have hIF : IndepFun (fun R : ι → ℝ ↦ R z) g (Measure.infinitePi μ) := by
+    rw [IndepFun_iff_Indep]
+    refine indep_of_indep_of_le_right (indep_of_indep_of_le_left hST ?_) hgT.comap_le
+    exact le_iSup₂ (f := fun i (_ : i ∈ ({z} : Set ι)) ↦ m i) z rfl
+  rw [ProbabilityTheory.IndepFun.integral_fun_mul_eq_mul_integral hIF
+    (measurable_pi_apply z).aestronglyMeasurable hg.aestronglyMeasurable]
+  congr 1
+  conv_rhs => rw [← Measure.infinitePi_map_eval μ z]
+  rw [integral_map (φ := fun R : ι → ℝ ↦ R z) (f := fun x ↦ x)
+    (measurable_pi_apply z).aemeasurable aestronglyMeasurable_id]
+
+/-- The law of a table entry is the law of its arm. -/
+theorem rewardTableLaw_map_eval {K : ℕ} (ν : Fin K → Measure ℝ)
+    (hν : ∀ k, IsProbabilityMeasure (ν k)) (z : Fin K × ℕ) :
+    (rewardTableLaw ν).map (fun R ↦ R z) = ν z.1 := by
+  have := fun z : Fin K × ℕ ↦ hν z.1
+  exact Measure.infinitePi_map_eval _ z
+
+/-- The table law is a probability measure. -/
+theorem isProbabilityMeasure_rewardTableLaw {K : ℕ} (ν : Fin K → Measure ℝ)
+    (hν : ∀ k, IsProbabilityMeasure (ν k)) : IsProbabilityMeasure (rewardTableLaw ν) := by
+  have := fun z : Fin K × ℕ ↦ hν z.1
+  unfold rewardTableLaw
+  infer_instance
+
+/-- The mean of a table entry is the mean of its arm. -/
+theorem integral_eval_rewardTableLaw {K : ℕ} (ν : Fin K → Measure ℝ)
+    (hν : ∀ k, IsProbabilityMeasure (ν k)) (z : Fin K × ℕ) :
+    ∫ R, R z ∂rewardTableLaw ν = armMean ν z.1 := by
+  rw [armMean, ← rewardTableLaw_map_eval ν hν z,
+    integral_map (φ := fun R : Fin K × ℕ → ℝ ↦ R z) (f := fun x ↦ x)
+      (measurable_pi_apply z).aemeasurable aestronglyMeasurable_id]
+
+/-- Table entries lie in `[0,1]` almost surely when the reward laws do. -/
+theorem ae_eval_mem_Icc_rewardTableLaw {K : ℕ} (ν : Fin K → Measure ℝ)
+    (hν : ∀ k, IsProbabilityMeasure (ν k)) (hsupp : ∀ k, ν k (Icc 0 1)ᶜ = 0) (z : Fin K × ℕ) :
+    ∀ᵐ R ∂rewardTableLaw ν, R z ∈ Icc (0 : ℝ) 1 := by
+  have h : ∀ᵐ x ∂(rewardTableLaw ν).map (fun R ↦ R z), x ∈ Icc (0 : ℝ) 1 := by
+    rw [rewardTableLaw_map_eval ν hν z]
+    exact measure_eq_zero_iff_ae_notMem.mp (hsupp z.1) |>.mono fun x hx ↦ by simpa using hx
+  exact ae_of_ae_map (measurable_pi_apply z).aemeasurable h
+
+/-- The mean of a law on `[0,1]` lies in `[0,1]`. -/
+theorem armMean_mem_Icc {K : ℕ} (ν : Fin K → Measure ℝ) (hν : ∀ k, IsProbabilityMeasure (ν k))
+    (hsupp : ∀ k, ν k (Icc 0 1)ᶜ = 0) (k : Fin K) : armMean ν k ∈ Icc (0 : ℝ) 1 := by
+  have hmem : ∀ᵐ x ∂ν k, x ∈ Icc (0 : ℝ) 1 :=
+    measure_eq_zero_iff_ae_notMem.mp (hsupp k) |>.mono fun x hx ↦ by simpa using hx
+  have := hν k
+  constructor
+  · exact integral_nonneg_of_ae (hmem.mono fun x hx ↦ hx.1)
+  · calc armMean ν k ≤ ∫ _x, (1 : ℝ) ∂ν k :=
+          integral_mono_ae (Integrable.of_mem_Icc 0 1 aemeasurable_id hmem)
+            (integrable_const _) (hmem.mono fun x hx ↦ hx.2)
+      _ = 1 := by simp
+
+/-- The indicator that at time `t` the policy plays arm `k` for the `(j+1)`-st time. -/
+def banditPlayIndicator {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U) (u : U) (t : ℕ)
+    (k : Fin K) (j : ℕ) (R : Fin K × ℕ → ℝ) : ℝ :=
+  if π t (banditHistory π u R t) u = k ∧ historyPlayCount (banditHistory π u R t) k = j then 1
+  else 0
+
+/-- Whether arm `k` is played for the `(j+1)`-st time at time `t` does not depend on the
+table entry `(k, j)`. -/
+theorem banditPlayIndicator_update {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U) (u : U)
+    (t : ℕ) (k : Fin K) (j : ℕ) (R : Fin K × ℕ → ℝ) (x : ℝ) :
+    banditPlayIndicator π u t k j (Function.update R (k, j) x) =
+      banditPlayIndicator π u t k j R := by
+  by_cases h : historyPlayCount (banditHistory π u R t) k ≤ j
+  · unfold banditPlayIndicator
+    rw [banditHistory_update π u R k j x t h]
+  · by_cases h' : historyPlayCount (banditHistory π u (Function.update R (k, j) x) t) k ≤ j
+    · have := banditHistory_update π u (Function.update R (k, j) x) k j (R (k, j)) t h'
+      rw [Function.update_idem, Function.update_eq_self] at this
+      unfold banditPlayIndicator
+      rw [this]
+    · unfold banditPlayIndicator
+      simp only [show ¬(_ ∧ historyPlayCount (banditHistory π u
+          (Function.update R (k, j) x) t) k = j) from fun hc ↦ h' hc.2.le,
+        show ¬(_ ∧ historyPlayCount (banditHistory π u R t) k = j) from fun hc ↦ h hc.2.le,
+        ↓reduceIte]
+
+/-- The play indicator is measurable in the table. -/
+theorem measurable_banditPlayIndicator {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U)
+    (u : U) (hπ : π.IsMeasurableAt u) (t : ℕ) (k : Fin K) (j : ℕ) :
+    Measurable (banditPlayIndicator π u t k j) := by
+  have hH := measurable_banditHistory π u hπ t
+  refine Measurable.ite ?_ measurable_const measurable_const
+  exact (measurableSet_eq_fun ((hπ t).comp hH) measurable_const).inter
+    (measurableSet_eq_fun ((measurable_historyPlayCount k).comp hH) measurable_const)
+
+/-- The count of an arm in a history of length `t` is at most `t`. -/
+theorem historyPlayCount_le {K t : ℕ} (h : Fin t → Fin K × ℝ) (k : Fin K) :
+    historyPlayCount h k ≤ t :=
+  (Finset.card_filter_le _ _).trans (by simp)
+
+/-- Selecting the term `(a, c a)` of a double sum by indicators. -/
+theorem sum_sum_mul_ite_eq {K t : ℕ} (a : Fin K) (c : Fin K → ℕ) (hc : c a ≤ t)
+    (F : Fin K → ℕ → ℝ) :
+    ∑ k, ∑ j ∈ Finset.range (t + 1), F k j * (if a = k ∧ c k = j then 1 else 0) = F a (c a) := by
+  rw [Finset.sum_eq_single a]
+  · rw [Finset.sum_eq_single (c a)]
+    · simp
+    · intro j _ hj
+      simp [Ne.symm hj]
+    · intro h
+      exact absurd (Finset.mem_range.2 (by omega)) h
+  · intro k _ hk
+    refine Finset.sum_eq_zero fun j _ ↦ ?_
+    simp [Ne.symm hk]
+  · intro h
+    exact absurd (Finset.mem_univ a) h
+
+/-- A function of the arm played and of its count, written with play indicators. -/
+theorem eq_sum_sum_mul_banditPlayIndicator {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U)
+    (u : U) (t : ℕ) (R : Fin K × ℕ → ℝ) (F : Fin K → ℕ → ℝ) :
+    F (banditArm π u R t) (historyPlayCount (banditHistory π u R t) (banditArm π u R t)) =
+      ∑ k, ∑ j ∈ Finset.range (t + 1), F k j * banditPlayIndicator π u t k j R :=
+  (sum_sum_mul_ite_eq (banditArm π u R t) (fun k ↦ historyPlayCount (banditHistory π u R t) k)
+    (historyPlayCount_le _ _) F).symm
+
+/-- The expected reward at time `t` is the expected mean of the arm played (Wald's identity
+in the reward-table model): the play of arm `k` for the `(j+1)`-st time is decided before the
+entry `(k, j)` is revealed, hence independently of it. -/
+theorem integral_banditReward_eq {K : ℕ} {U : Type*} (π : SeededBanditPolicy K U) (u : U)
+    (hπ : π.IsMeasurableAt u) (ν : Fin K → Measure ℝ) (hν : ∀ k, IsProbabilityMeasure (ν k))
+    (hsupp : ∀ k, ν k (Icc 0 1)ᶜ = 0) (t : ℕ) :
+    Integrable (fun R ↦ banditReward π u R t) (rewardTableLaw ν) ∧
+    Integrable (fun R ↦ armMean ν (banditArm π u R t)) (rewardTableLaw ν) ∧
+    ∫ R, banditReward π u R t ∂rewardTableLaw ν =
+      ∫ R, armMean ν (banditArm π u R t) ∂rewardTableLaw ν := by
+  have := isProbabilityMeasure_rewardTableLaw ν hν
+  have := fun z : Fin K × ℕ ↦ hν z.1
+  have hIm := measurable_banditPlayIndicator π u hπ t
+  have hIb : ∀ k j R, ‖banditPlayIndicator π u t k j R‖ ≤ 1 := fun k j R ↦ by
+    unfold banditPlayIndicator; split_ifs <;> simp
+  have hIi : ∀ k j, Integrable (banditPlayIndicator π u t k j) (rewardTableLaw ν) :=
+    fun k j ↦ Integrable.of_bound (hIm k j).aestronglyMeasurable 1 (ae_of_all _ (hIb k j))
+  have hRIi : ∀ k j, Integrable (fun R : Fin K × ℕ → ℝ ↦ R (k, j) *
+      banditPlayIndicator π u t k j R) (rewardTableLaw ν) := fun k j ↦ by
+    refine Integrable.of_bound ((measurable_pi_apply (k, j)).mul (hIm k j)).aestronglyMeasurable
+      1 ?_
+    filter_upwards [ae_eval_mem_Icc_rewardTableLaw ν hν hsupp (k, j)] with R hR
+    rw [norm_mul]
+    have : ‖R (k, j)‖ ≤ 1 := by rw [Real.norm_eq_abs, abs_le]; exact ⟨by linarith [hR.1], hR.2⟩
+    calc ‖R (k, j)‖ * ‖banditPlayIndicator π u t k j R‖ ≤ 1 * 1 :=
+          mul_le_mul this (hIb k j R) (norm_nonneg _) zero_le_one
+      _ = 1 := one_mul 1
+  have hrew : (fun R ↦ banditReward π u R t) = fun R ↦
+      ∑ k, ∑ j ∈ Finset.range (t + 1), R (k, j) * banditPlayIndicator π u t k j R := by
+    funext R
+    exact eq_sum_sum_mul_banditPlayIndicator π u t R fun k j ↦ R (k, j)
+  have hmean : (fun R ↦ armMean ν (banditArm π u R t)) = fun R ↦
+      ∑ k, ∑ j ∈ Finset.range (t + 1), armMean ν k * banditPlayIndicator π u t k j R := by
+    funext R
+    exact eq_sum_sum_mul_banditPlayIndicator π u t R fun k _ ↦ armMean ν k
+  refine ⟨?_, ?_, ?_⟩
+  · rw [hrew]
+    exact integrable_finsetSum _ fun k _ ↦ integrable_finsetSum _ fun j _ ↦ hRIi k j
+  · rw [hmean]
+    exact integrable_finsetSum _ fun k _ ↦ integrable_finsetSum _ fun j _ ↦
+      (hIi k j).const_mul _
+  rw [hrew, hmean, integral_finsetSum _ fun k _ ↦ integrable_finsetSum _ fun j _ ↦ hRIi k j,
+    integral_finsetSum _ fun k _ ↦ integrable_finsetSum _ fun j _ ↦ (hIi k j).const_mul _]
+  refine Finset.sum_congr rfl fun k _ ↦ ?_
+  rw [integral_finsetSum _ fun j _ ↦ hRIi k j,
+    integral_finsetSum _ fun j _ ↦ (hIi k j).const_mul _]
+  refine Finset.sum_congr rfl fun j _ ↦ ?_
+  have := integral_eval_mul_eq_of_update_invariant (hd := instDecidableEqProd)
+    (fun z : Fin K × ℕ ↦ ν z.1) (k, j)
+    (hIm k j) (banditPlayIndicator_update π u t k j)
+  rw [integral_const_mul]
+  exact this
+
+/-- The expected play counts add up to the number of rounds. -/
+theorem sum_integral_armPlayCount_eq {Ω : Type*} [MeasurableSpace Ω] {K : ℕ} (P : Measure Ω)
+    [IsProbabilityMeasure P] (A : ℕ → Ω → Fin K) (hA : ∀ t, Measurable (A t)) (n : ℕ) :
+    ∑ k, ∫ ω, (armPlayCount A k n ω : ℝ) ∂P = n := by
+  rw [← integral_finsetSum _ fun k _ ↦ integrable_armPlayCount P A hA k n]
+  have : ∀ ω, ∑ k, (armPlayCount A k n ω : ℝ) = n := fun ω ↦ by
+    have := sum_range_comp_eq_sum_mul_armPlayCount (M := ℝ) A (fun _ ↦ 1) n ω
+    simpa using this.symm
+  simp_rw [this]
+  simp
+
+/-- The regret of a policy with a fixed seed is the gap-weighted sum of the expected play
+counts. -/
+theorem banditRegret_dirac_eq {K : ℕ} {U : Type*} [MeasurableSpace U]
+    [MeasurableSingletonClass U] (π : SeededBanditPolicy K U) (u : U) (hπ : π.IsMeasurableAt u)
+    (ν : Fin K → Measure ℝ) (hν : ∀ k, IsProbabilityMeasure (ν k))
+    (hsupp : ∀ k, ν k (Icc 0 1)ᶜ = 0) (n : ℕ) :
+    banditRegret π (Measure.dirac u) ν n = ∑ k, ((⨆ k, armMean ν k) - armMean ν k) *
+      ∫ R, (armPlayCount (banditArmProcess π u) k n R : ℝ) ∂rewardTableLaw ν := by
+  have := isProbabilityMeasure_rewardTableLaw ν hν
+  have hW := integral_banditReward_eq π u hπ ν hν hsupp
+  have hA := measurable_banditArmProcess π u hπ
+  unfold banditRegret
+  rw [integral_dirac, integral_finsetSum _ fun t _ ↦ (hW t).1,
+    Finset.sum_congr rfl fun t _ ↦ (hW t).2.2,
+    ← integral_finsetSum _ fun t _ ↦ (hW t).2.1]
+  have hpt : ∀ R, ∑ t ∈ Finset.range n, armMean ν (banditArm π u R t) =
+      ∑ k, armMean ν k * (armPlayCount (banditArmProcess π u) k n R : ℝ) := fun R ↦
+    sum_range_comp_eq_sum_mul_armPlayCount (banditArmProcess π u) (armMean ν) n R
+  simp_rw [hpt]
+  have hint := integrable_armPlayCount (rewardTableLaw ν) (banditArmProcess π u) hA
+  rw [integral_finsetSum _ fun k _ ↦ (hint k n).const_mul _]
+  simp_rw [integral_const_mul, sub_mul]
+  rw [Finset.sum_sub_distrib, ← Finset.mul_sum,
+    sum_integral_armPlayCount_eq (rewardTableLaw ν) _ hA n]
+  ring
+
+/-- Splitting the arms at the gap `√(K L / n)` bounds the gap-weighted play counts by
+`14 √(K n L)`, given the per-arm bound `8 L / Δ² + 3` on the counts of arms with positive
+gap. -/
+theorem sum_gap_mul_le_sqrt {K n : ℕ} (hK : 1 ≤ K) (hKn : K ≤ n) {L : ℝ} (hL : 1 / 2 ≤ L)
+    (Δ E : Fin K → ℝ) (hΔ0 : ∀ k, 0 ≤ Δ k) (hΔ1 : ∀ k, Δ k ≤ 1) (hE0 : ∀ k, 0 ≤ E k)
+    (hEsum : ∑ k, E k = n) (hE : ∀ k, 0 < Δ k → E k ≤ 8 * L / Δ k ^ 2 + 3) :
+    ∑ k, Δ k * E k ≤ 14 * Real.sqrt (K * n * L) := by
+  have hKr : (1 : ℝ) ≤ K := by exact_mod_cast hK
+  have hnr : (K : ℝ) ≤ n := by exact_mod_cast hKn
+  have hn0 : (0 : ℝ) < n := by linarith
+  have hL0 : 0 < L := by linarith
+  set S := Real.sqrt (K * n * L) with hS_def
+  have hS2 : S ^ 2 = K * n * L := Real.sq_sqrt (by positivity)
+  have hS : 0 < S := Real.sqrt_pos.mpr (by positivity)
+  set δ := S / n with hδ_def
+  have hδ : 0 < δ := by positivity
+  have hk : ∀ k, Δ k * E k ≤ δ * E k + (8 * L / δ + 3) := by
+    intro k
+    have hc : 0 ≤ 8 * L / δ + 3 := by positivity
+    by_cases h : Δ k ≤ δ
+    · have := mul_le_mul_of_nonneg_right h (hE0 k)
+      linarith
+    · push Not at h
+      have hΔpos : 0 < Δ k := hδ.trans h
+      have h1 := mul_le_mul_of_nonneg_left (hE k hΔpos) (hΔ0 k)
+      have h2 : Δ k * (8 * L / Δ k ^ 2 + 3) = 8 * L / Δ k + 3 * Δ k := by
+        field_simp
+      have h3 : 8 * L / Δ k ≤ 8 * L / δ := div_le_div_of_nonneg_left (by positivity) hδ h.le
+      have h4 : 0 ≤ δ * E k := mul_nonneg hδ.le (hE0 k)
+      have h5 := hΔ1 k
+      linarith
+  have hsum : ∑ k, Δ k * E k ≤ δ * n + K * (8 * L / δ + 3) := by
+    calc ∑ k, Δ k * E k ≤ ∑ k, (δ * E k + (8 * L / δ + 3)) := Finset.sum_le_sum fun k _ ↦ hk k
+      _ = δ * n + K * (8 * L / δ + 3) := by
+        rw [Finset.sum_add_distrib, ← Finset.mul_sum, hEsum, Finset.sum_const, Finset.card_univ,
+          Fintype.card_fin, nsmul_eq_mul]
+  have he1 : δ * n = S := by rw [hδ_def]; field_simp
+  have he2 : K * (8 * L / δ) = 8 * S := by
+    rw [hδ_def, div_div_eq_mul_div, mul_div_assoc', div_eq_iff hS.ne']
+    nlinarith [hS2]
+  have he3 : 3 * (K : ℝ) ≤ 5 * S := by
+    have hsq : (3 * (K : ℝ)) ^ 2 ≤ (5 * S) ^ 2 := by
+      rw [mul_pow, mul_pow, hS2]
+      have h1 : (K : ℝ) * K ≤ K * n := mul_le_mul_of_nonneg_left hnr (by positivity)
+      have h2 : (K : ℝ) * n * (1 / 2) ≤ K * n * L := mul_le_mul_of_nonneg_left hL (by positivity)
+      have h3 : 0 ≤ (K : ℝ) * n * L := by positivity
+      nlinarith
+    nlinarith [hS]
+  nlinarith
+
+/-- For `t ≥ K` the UCB1 policy plays the first maximizer of the UCB1 index. -/
+theorem ucb1Policy_of_le (K : ℕ) [NeZero K] {t : ℕ} (ht : K ≤ t) (h : Fin t → Fin K × ℝ) :
+    ucb1Policy K t h () = banditFirstArgmax fun k ↦
+      historyRewardSum h k / historyPlayCount h k +
+        Real.sqrt (2 * Real.log t / historyPlayCount h k) := by
+  simp [ucb1Policy, not_lt.mpr ht]
+
 /-- GAPS 107.62, upper bound: UCB1 has regret at most `C √(K n log n)` for all `n ≥ max(K, 2)`
 and all reward laws on `[0,1]`, with a universal constant `C`. -/
 theorem exists_ucb1_banditRegret_le :
@@ -174,7 +660,75 @@ theorem exists_ucb1_banditRegret_le :
       ∀ n : ℕ, max K 2 ≤ n →
         banditRegret (ucb1Policy K) (Measure.dirac ()) ν n ≤
           C * Real.sqrt (K * n * Real.log n) := by
-  sorry
+  refine ⟨14, by norm_num, ?_⟩
+  intro K _ hK ν hν hsupp n hn
+  have hP := isProbabilityMeasure_rewardTableLaw ν hν
+  set A := banditArmProcess (ucb1Policy K) () with hA_def
+  set R' : Fin K → ℕ → (Fin K × ℕ → ℝ) → ℝ := fun i j R ↦ R (i, j) with hR'
+  have hm : ∀ i j, Measurable (R' i j) := fun i j ↦ measurable_pi_apply _
+  have hb : ∀ i j, ∀ᵐ R ∂rewardTableLaw ν, R' i j R ∈ Icc 0 1 := fun i j ↦
+    ae_eval_mem_Icc_rewardTableLaw ν hν hsupp (i, j)
+  have hind : iIndepFun (fun z : Fin K × ℕ ↦ R' z.1 z.2) (rewardTableLaw ν) := by
+    have := fun z : Fin K × ℕ ↦ hν z.1
+    exact iIndepFun_infinitePi (P := fun z : Fin K × ℕ ↦ ν z.1) (X := fun _ x ↦ x)
+      fun _ ↦ measurable_id
+  have hlaw : ∀ i j, (rewardTableLaw ν).map (R' i j) = (rewardTableLaw ν).map (R' i 0) :=
+    fun i j ↦ (rewardTableLaw_map_eval ν hν (i, j)).trans
+      (rewardTableLaw_map_eval ν hν (i, 0)).symm
+  have hmean : ∀ i, ∫ R, R' i 0 R ∂rewardTableLaw ν = armMean ν i := fun i ↦
+    integral_eval_rewardTableLaw ν hν (i, 0)
+  have hinit : ∀ t : ℕ, ∀ ht : t < K, ∀ R, A t R = ⟨t, ht⟩ := by
+    intro t ht R
+    simp [A, banditArmProcess, banditArm, ucb1Policy, ht]
+  have hucb : ∀ t ≥ K, ∀ R i, armSampleAverage R' i (armPlayCount A i t R) R +
+        Real.sqrt (2 * Real.log t / armPlayCount A i t R) ≤
+      armSampleAverage R' (A t R) (armPlayCount A (A t R) t R) R +
+        Real.sqrt (2 * Real.log t / armPlayCount A (A t R) t R) := by
+    intro t ht R i
+    have hidx : (fun k ↦ historyRewardSum (banditHistory (ucb1Policy K) () R t) k /
+          historyPlayCount (banditHistory (ucb1Policy K) () R t) k +
+        Real.sqrt (2 * Real.log t / historyPlayCount (banditHistory (ucb1Policy K) () R t) k)) =
+        fun k ↦ armSampleAverage R' k (armPlayCount A k t R) R +
+          Real.sqrt (2 * Real.log t / armPlayCount A k t R) := by
+      funext k
+      rw [historyRewardSum_banditHistory, historyPlayCount_banditHistory]
+      rfl
+    have hAt : A t R = banditFirstArgmax fun k ↦ armSampleAverage R' k (armPlayCount A k t R) R +
+        Real.sqrt (2 * Real.log t / armPlayCount A k t R) := by
+      rw [← hidx]
+      show ucb1Policy K t (banditHistory (ucb1Policy K) () R t) () = _
+      exact ucb1Policy_of_le K ht _
+    rw [hAt]
+    exact le_banditFirstArgmax (fun k ↦ armSampleAverage R' k (armPlayCount A k t R) R +
+        Real.sqrt (2 * Real.log t / armPlayCount A k t R)) i
+  obtain ⟨star, -, hstar⟩ := Finset.exists_max_image Finset.univ (armMean ν) Finset.univ_nonempty
+  have hstar' : ∀ k, armMean ν k ≤ armMean ν star := fun k ↦ hstar k (Finset.mem_univ k)
+  have hsup : (⨆ k, armMean ν k) = armMean ν star :=
+    le_antisymm (ciSup_le hstar') (le_ciSup (Set.finite_range _).bddAbove star)
+  rw [banditRegret_dirac_eq (ucb1Policy K) () (ucb1Policy_isMeasurableAt K) ν hν hsupp n, hsup]
+  have hKn : K ≤ n := le_trans (le_max_left _ _) hn
+  have hn2 : 2 ≤ n := le_trans (le_max_right _ _) hn
+  have hL : 1 / 2 ≤ Real.log n := by
+    have hnr : (2 : ℝ) ≤ n := by exact_mod_cast hn2
+    have := Real.one_sub_inv_le_log_of_pos (x := (n : ℝ)) (by linarith)
+    have : (n : ℝ)⁻¹ ≤ 1 / 2 := by rw [inv_le_comm₀ (by linarith) (by norm_num)]; linarith
+    linarith
+  refine sum_gap_mul_le_sqrt (by omega) hKn hL (fun k ↦ armMean ν star - armMean ν k)
+    (fun k ↦ ∫ R, (armPlayCount A k n R : ℝ) ∂rewardTableLaw ν)
+    (fun k ↦ sub_nonneg.mpr (hstar' k))
+    (fun k ↦ by
+      have h1 := armMean_mem_Icc ν hν hsupp star
+      have h2 := armMean_mem_Icc ν hν hsupp k
+      linarith [h1.2, h2.1])
+    (fun k ↦ integral_nonneg fun R ↦ Nat.cast_nonneg _)
+    (sum_integral_armPlayCount_eq (rewardTableLaw ν) A
+      (measurable_banditArmProcess _ _ (ucb1Policy_isMeasurableAt K)) n)
+    (fun k hk ↦ ?_)
+  have hlt : ∫ R, R' k 0 R ∂rewardTableLaw ν < ∫ R, R' star 0 R ∂rewardTableLaw ν := by
+    rw [hmean, hmean]; linarith
+  have := integral_armPlayCount_le_of_ucb (rewardTableLaw ν) R' hm hb hind hlaw A hinit hucb
+    hlt n
+  rwa [hmean, hmean] at this
 
 /-- The regularized design matrix `V₀ + ∑_{1 ≤ i ≤ t} Xᵢ Xᵢᵀ`. -/
 def selfNormalizedDesign {Ω : Type*} {d : ℕ} (V₀ : Matrix (Fin d) (Fin d) ℝ)

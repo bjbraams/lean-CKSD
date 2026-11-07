@@ -2,6 +2,8 @@ module
 
 public import CKSD.Geometry.Basic
 public import CKSD.Bayes.Basic
+public import Mathlib.Probability.Moments.SubGaussian
+public import Mathlib.MeasureTheory.Integral.Pi
 
 /-!
 # Geometry: Kernels
@@ -258,6 +260,126 @@ theorem integral_langevin_stein_operator_eq_zero
     exact mul_le_mul_of_nonneg_right (hC x) (hpos x).le
   exact integral_eq_zero_of_hasDerivAt_of_integrable (fun x ↦ (hdg x).mul (hdp x)) hsum hgp
 
+/-- Over a uniformly distributed phase on `[0, 2π]`, `cos (c + 2b)` has mean zero. -/
+theorem integral_cos_add_two_mul_uniformPhase (phase : Measure ℝ)
+    (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
+    (c : ℝ) : ∫ b, Real.cos (c + 2 * b) ∂phase = 0 := by
+  rw [hphase, integral_smul_measure, integral_Icc_eq_integral_Ioc,
+    ← intervalIntegral.integral_of_le (by positivity)]
+  have hderiv : ∀ b ∈ uIcc 0 (2 * Real.pi),
+      HasDerivAt (fun b ↦ Real.sin (c + 2 * b) / 2) (Real.cos (c + 2 * b)) b := by
+    intro b _
+    have := ((hasDerivAt_id' b).const_mul 2).const_add c |>.sin
+    convert this.div_const 2 using 1
+    ring
+  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv
+    (by apply Continuous.intervalIntegrable; fun_prop)]
+  have : Real.sin (c + 2 * (2 * Real.pi)) = Real.sin c := by
+    rw [show c + 2 * (2 * Real.pi) = c + ((2 : ℕ) : ℝ) * (2 * Real.pi) by push_cast; ring]
+    exact Real.sin_add_nat_mul_two_pi c 2
+  rw [this]
+  simp
+
+/-- The random-feature summand `2 cos(⟨w, x⟩ + b) cos(⟨w, y⟩ + b)`. -/
+noncomputable def randomFourierFeatureTerm {d : ℕ} (x y : EuclideanSpace ℝ (Fin d))
+    (s : EuclideanSpace ℝ (Fin d) × ℝ) : ℝ :=
+  2 * Real.cos (inner ℝ s.1 x + s.2) * Real.cos (inner ℝ s.1 y + s.2)
+
+/-- The random-feature summand is continuous in the frequency and phase. -/
+theorem continuous_randomFourierFeatureTerm {d : ℕ} (x y : EuclideanSpace ℝ (Fin d)) :
+    Continuous (randomFourierFeatureTerm x y) := by
+  unfold randomFourierFeatureTerm; fun_prop
+
+/-- The random-feature summand takes values in `[-2, 2]`. -/
+theorem randomFourierFeatureTerm_mem_Icc {d : ℕ} (x y : EuclideanSpace ℝ (Fin d))
+    (s : EuclideanSpace ℝ (Fin d) × ℝ) : randomFourierFeatureTerm x y s ∈ Icc (-2 : ℝ) 2 := by
+  unfold randomFourierFeatureTerm
+  have h1 := Real.abs_cos_le_one (inner ℝ s.1 x + s.2)
+  have h2 := Real.abs_cos_le_one (inner ℝ s.1 y + s.2)
+  have : |2 * Real.cos (inner ℝ s.1 x + s.2) * Real.cos (inner ℝ s.1 y + s.2)| ≤ 2 := by
+    rw [abs_mul, abs_mul, abs_two]
+    nlinarith [abs_nonneg (Real.cos (inner ℝ s.1 x + s.2)),
+      abs_nonneg (Real.cos (inner ℝ s.1 y + s.2))]
+  exact abs_le.mp this
+
+/-- The random-feature summand is unbiased for the translation-invariant kernel. -/
+theorem integral_randomFourierFeatureTerm {d : ℕ}
+    (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
+    (phase : Measure ℝ) [IsProbabilityMeasure phase]
+    (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
+    (x y : EuclideanSpace ℝ (Fin d)) :
+    ∫ s, randomFourierFeatureTerm x y s ∂L.prod phase = ∫ w, Real.cos (inner ℝ w (x - y)) ∂L := by
+  have hint : Integrable (randomFourierFeatureTerm x y) (L.prod phase) := by
+    refine Integrable.of_bound (C := 2)
+      (continuous_randomFourierFeatureTerm x y).measurable.aestronglyMeasurable
+      (ae_of_all _ fun s ↦ ?_)
+    rw [Real.norm_eq_abs, abs_le]
+    exact randomFourierFeatureTerm_mem_Icc x y s
+  rw [integral_prod _ hint]
+  refine integral_congr_ae (ae_of_all _ fun w ↦ ?_)
+  have hpt : ∀ b, randomFourierFeatureTerm x y (w, b) =
+      Real.cos (inner ℝ w (x - y)) + Real.cos ((inner ℝ w x + inner ℝ w y) + 2 * b) := by
+    intro b
+    have e1 : inner ℝ w (x - y) = (inner ℝ w x + b) - (inner ℝ w y + b) := by
+      rw [inner_sub_right]; ring
+    have e2 : inner ℝ w x + inner ℝ w y + 2 * b = (inner ℝ w x + b) + (inner ℝ w y + b) := by
+      ring
+    rw [e1, e2, Real.cos_sub (inner ℝ w x + b), Real.cos_add (inner ℝ w x + b) (inner ℝ w y + b)]
+    simp only [randomFourierFeatureTerm]
+    ring
+  simp_rw [hpt]
+  rw [integral_add (integrable_const _) ?_, integral_const, probReal_univ, one_smul,
+    integral_cos_add_two_mul_uniformPhase phase hphase, add_zero]
+  exact Integrable.of_bound (C := 1) (by fun_prop) (ae_of_all _ fun b ↦ by
+    rw [Real.norm_eq_abs]; exact Real.abs_cos_le_one _)
+
+/-- Hoeffding's inequality for a sample of `D` independent copies of a variable with values in
+`[-2, 2]`: the sum of the centered copies exceeds `D ε` with probability at most
+`exp (-D ε² / 8)`. -/
+theorem measureReal_pi_sum_sub_integral_ge_le {Y : Type*} [MeasurableSpace Y] (D : ℕ)
+    (μ : Measure Y) [IsProbabilityMeasure μ] {g : Y → ℝ} (hg : Measurable g)
+    (hb : ∀ s, g s ∈ Icc (-2 : ℝ) 2) {ε : ℝ} (hε : 0 ≤ ε) :
+    (Measure.pi fun _ : Fin D ↦ μ).real
+        {s | D * ε ≤ ∑ j, (g (s j) - ∫ t, g t ∂μ)} ≤ Real.exp (-(D : ℝ) * ε ^ 2 / 8) := by
+  set P := Measure.pi fun _ : Fin D ↦ μ
+  have hindep : iIndepFun (fun (j : Fin D) (s : Fin D → Y) ↦ g (s j) - ∫ t, g t ∂μ) P :=
+    iIndepFun_pi (X := fun _ t ↦ g t - ∫ t, g t ∂μ) fun _ ↦ (hg.sub_const _).aemeasurable
+  have hsub : ∀ j : Fin D, HasSubgaussianMGF (fun s : Fin D → Y ↦ g (s j) - ∫ t, g t ∂μ)
+      ((‖(2 : ℝ) - (-2)‖₊ / 2) ^ 2) P := by
+    intro j
+    have hm : AEMeasurable (fun s : Fin D → Y ↦ g (s j)) P :=
+      (hg.comp (measurable_pi_apply j)).aemeasurable
+    have h := hasSubgaussianMGF_of_mem_Icc hm (ae_of_all _ fun s ↦ hb (s j))
+    have hint : ∫ s, g (s j) ∂P = ∫ t, g t ∂μ :=
+      integral_comp_eval (μ := fun _ : Fin D ↦ μ) hg.aestronglyMeasurable
+    simpa only [hint] using h
+  have hc : ((‖(2 : ℝ) - (-2)‖₊ / 2) ^ 2 : ℝ≥0) = 4 := by
+    ext
+    simp only [NNReal.coe_pow, NNReal.coe_div, coe_nnnorm, Real.norm_eq_abs]
+    norm_num
+  rw [hc] at hsub
+  have h := HasSubgaussianMGF.measure_sum_ge_le_of_iIndepFun hindep (c := fun _ ↦ 4) (s := Finset.univ)
+    (fun j _ ↦ hsub j) (ε := D * ε) (by positivity)
+  refine h.trans_eq ?_
+  congr 1
+  simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+  rcases Nat.eq_zero_or_pos D with hD | hD
+  · subst hD; simp
+  · have : (D : ℝ) ≠ 0 := by exact_mod_cast hD.ne'
+    push_cast
+    field_simp
+    ring
+
+/-- The random-feature kernel is the sample mean of the random-feature summands. -/
+theorem randomFourierFeatureKernel_eq_mean {d D : ℕ}
+    (sample : Fin D → EuclideanSpace ℝ (Fin d) × ℝ) (x y : EuclideanSpace ℝ (Fin d)) :
+    randomFourierFeatureKernel sample x y =
+      (D : ℝ)⁻¹ * ∑ j, randomFourierFeatureTerm x y (sample j) := by
+  unfold randomFourierFeatureKernel randomFourierFeatureTerm
+  rw [Finset.mul_sum, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun j _ ↦ ?_
+  ring
+
 /-- GAPS 108.74: unbiased random Fourier features and their pointwise Hoeffding bound. -/
 theorem randomFourierFeatureKernel_unbiased_and_concentration {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
@@ -269,7 +391,68 @@ theorem randomFourierFeatureKernel_unbiased_and_concentration {d : ℕ} (D : ℕ
     (∫ sample, randomFourierFeatureKernel sample x y ∂P) = k ∧
       P.real {sample | epsilon ≤ |randomFourierFeatureKernel sample x y - k|} ≤
         2 * Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) := by
-  sorry
+  intro P k
+  have hDpos : (0 : ℝ) < D := by exact_mod_cast hD
+  have hmeas : Measurable (randomFourierFeatureTerm x y) :=
+    (continuous_randomFourierFeatureTerm x y).measurable
+  have hk : ∫ s, randomFourierFeatureTerm x y s ∂L.prod phase = k :=
+    integral_randomFourierFeatureTerm L phase hphase x y
+  have hcoord : ∀ j : Fin D, ∫ s, randomFourierFeatureTerm x y (s j) ∂P = k := fun j ↦ by
+    rw [← hk]
+    exact integral_comp_eval (μ := fun _ : Fin D ↦ L.prod phase) hmeas.aestronglyMeasurable
+  have hintj : ∀ j : Fin D, Integrable (fun s : Fin D → _ ↦ randomFourierFeatureTerm x y (s j)) P :=
+    fun j ↦ Integrable.of_bound (C := 2)
+      (hmeas.comp (measurable_pi_apply j)).aestronglyMeasurable
+      (ae_of_all _ fun s ↦ by
+        rw [Real.norm_eq_abs, abs_le]; exact randomFourierFeatureTerm_mem_Icc x y (s j))
+  refine ⟨?_, ?_⟩
+  · simp_rw [randomFourierFeatureKernel_eq_mean]
+    rw [integral_const_mul, integral_finsetSum _ fun j _ ↦ hintj j]
+    simp only [hcoord, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    field_simp
+  · have hcenter : ∀ s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ,
+        randomFourierFeatureKernel s x y - k =
+          (D : ℝ)⁻¹ * ∑ j, (randomFourierFeatureTerm x y (s j) - k) := by
+      intro s
+      rw [randomFourierFeatureKernel_eq_mean, Finset.sum_sub_distrib]
+      simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+      field_simp
+    have hup := measureReal_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas
+      (randomFourierFeatureTerm_mem_Icc x y) he.le
+    have hlo := measureReal_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas.neg
+      (fun s ↦ by
+        have := randomFourierFeatureTerm_mem_Icc x y s
+        exact ⟨by simp only [Pi.neg_apply]; linarith [this.2],
+          by simp only [Pi.neg_apply]; linarith [this.1]⟩) he.le
+    rw [hk] at hup
+    simp only [Pi.neg_apply, integral_neg, hk] at hlo
+    have hsub : {sample | epsilon ≤ |randomFourierFeatureKernel sample x y - k|} ⊆
+        {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ | (D : ℝ) * epsilon ≤ ∑ j, (randomFourierFeatureTerm x y (s j) - k)} ∪
+          {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ | (D : ℝ) * epsilon ≤ ∑ j, (-randomFourierFeatureTerm x y (s j) - -k)} := by
+      intro s hs
+      simp only [mem_ofPred_eq, hcenter] at hs
+      simp only [mem_union, mem_ofPred_eq]
+      have hsum : ∑ j, (-randomFourierFeatureTerm x y (s j) - -k) =
+          -∑ j, (randomFourierFeatureTerm x y (s j) - k) := by
+        rw [← Finset.sum_neg_distrib]
+        exact Finset.sum_congr rfl fun j _ ↦ by ring
+      rw [hsum]
+      rcases le_abs'.mp hs with h | h
+      · right
+        have := mul_le_mul_of_nonneg_left h hDpos.le
+        rw [← mul_assoc, mul_inv_cancel₀ hDpos.ne', one_mul] at this
+        linarith
+      · left
+        have := mul_le_mul_of_nonneg_left h hDpos.le
+        rwa [← mul_assoc, mul_inv_cancel₀ hDpos.ne', one_mul] at this
+    calc P.real {sample | epsilon ≤ |randomFourierFeatureKernel sample x y - k|}
+        ≤ P.real ({s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ | (D : ℝ) * epsilon ≤ ∑ j, (randomFourierFeatureTerm x y (s j) - k)} ∪
+          {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ | (D : ℝ) * epsilon ≤ ∑ j, (-randomFourierFeatureTerm x y (s j) - -k)}) :=
+          measureReal_mono hsub
+      _ ≤ _ := measureReal_union_le _ _
+      _ ≤ Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) + Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) :=
+          add_le_add hup hlo
+      _ = 2 * Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) := by ring
 
 /-- GAPS 108.74: the uniform compact-set random-feature bound. -/
 theorem measure_uniform_randomFourierFeatureKernel_error_le {d : ℕ} (D : ℕ) (hD : 1 ≤ D)

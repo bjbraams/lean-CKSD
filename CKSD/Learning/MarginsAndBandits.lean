@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Learning.Algorithms
+public import CKSD.Learning.Generalization
 
 /-!
 # Margin generalization and adversarial bandits
@@ -25,6 +26,163 @@ attribute [local instance] Classical.propDecidable
 def signedMargin {H X : Type*} (f : H → X → ℝ) (h : H) (z : X × Bool) : ℝ :=
   if z.2 then f h z.1 else -f h z.1
 
+/-- The supremum of a function on a finite nonempty type is attained. -/
+theorem exists_sSup_range_eq {H : Type*} [Fintype H] [Nonempty H] (u : H → ℝ) :
+    ∃ k, sSup (range u) = u k := by
+  obtain ⟨k, -, hk⟩ := Finset.exists_max_image Finset.univ u
+    ⟨Classical.arbitrary H, Finset.mem_univ _⟩
+  exact ⟨k, le_antisymm (csSup_le (range_nonempty u) (by
+    rintro _ ⟨j, rfl⟩; exact hk j (Finset.mem_univ _)))
+    (le_csSup (finite_range u).bddAbove ⟨k, rfl⟩)⟩
+
+/-- One-coordinate contraction step: for an `L`-Lipschitz `φ` and `c ≥ 0`,
+`sup(a + cφ(u)) + sup(a - cφ(u)) ≤ sup(a + cLu) + sup(a - cLu)` over a finite index. -/
+theorem sSup_add_sSup_le_of_lipschitz {H : Type*} [Fintype H] [Nonempty H] (a u : H → ℝ)
+    (φ : ℝ → ℝ) {L c : ℝ} (hc : 0 ≤ c) (hφ : ∀ x y, |φ x - φ y| ≤ L * |x - y|) :
+    sSup (range fun h ↦ a h + c * φ (u h)) + sSup (range fun h ↦ a h - c * φ (u h)) ≤
+      sSup (range fun h ↦ a h + c * (L * u h)) + sSup (range fun h ↦ a h - c * (L * u h)) := by
+  obtain ⟨h₁, h₁eq⟩ := exists_sSup_range_eq fun h ↦ a h + c * φ (u h)
+  obtain ⟨h₂, h₂eq⟩ := exists_sSup_range_eq fun h ↦ a h - c * φ (u h)
+  rw [h₁eq, h₂eq]
+  have hb1 := fun k ↦ le_csSup (finite_range fun h ↦ a h + c * (L * u h)).bddAbove ⟨k, rfl⟩
+  have hb2 := fun k ↦ le_csSup (finite_range fun h ↦ a h - c * (L * u h)).bddAbove ⟨k, rfl⟩
+  have hlip : c * (φ (u h₁) - φ (u h₂)) ≤ c * (L * |u h₁ - u h₂|) :=
+    mul_le_mul_of_nonneg_left ((le_abs_self _).trans (hφ _ _)) hc
+  rcases le_total (u h₂) (u h₁) with hu | hu
+  · rw [abs_of_nonneg (sub_nonneg.mpr hu)] at hlip
+    have := hb1 h₁; have := hb2 h₂
+    simp only at *
+    nlinarith
+  · rw [abs_of_nonpos (sub_nonpos.mpr hu)] at hlip
+    have := hb1 h₂; have := hb2 h₁
+    simp only at *
+    nlinarith
+
+/-- Ledoux–Talagrand contraction for a finite class: composing the coordinates with an
+`L`-Lipschitz function multiplies the summed Rademacher suprema by at most `L`. -/
+theorem sum_sSup_rademacher_comp_le {H : Type*} [Fintype H] [Nonempty H] (n : ℕ)
+    (t : H → Fin n → ℝ) (φ : ℝ → ℝ) {L : ℝ} (hL : 0 ≤ L)
+    (hφ : ∀ x y, |φ x - φ y| ≤ L * |x - y|) :
+    ∑ σ : Fin n → Bool, sSup (range fun h ↦
+        (∑ i, (if σ i then (1 : ℝ) else -1) * φ (t h i)) / n) ≤
+      L * ∑ σ : Fin n → Bool, sSup (range fun h ↦
+        (∑ i, (if σ i then (1 : ℝ) else -1) * t h i) / n) := by
+  set w : ℕ → H → Fin n → ℝ := fun k h i ↦ if (i : ℕ) < k then L * t h i else φ (t h i)
+  set Q : ℕ → (Fin n → Bool) → ℝ := fun k σ ↦ sSup (range fun h ↦
+    (∑ i, (if σ i then (1 : ℝ) else -1) * w k h i) / n)
+  have hQ0 : ∀ σ, Q 0 σ = sSup (range fun h ↦
+      (∑ i, (if σ i then (1 : ℝ) else -1) * φ (t h i)) / n) := fun σ ↦ by
+    simp [Q, w]
+  have hstep : ∀ k, k < n → ∑ σ, Q k σ ≤ ∑ σ, Q (k + 1) σ := by
+    intro k hk
+    set j : Fin n := ⟨k, hk⟩
+    set fl : (Fin n → Bool) → (Fin n → Bool) := fun σ ↦ Function.update σ j (!σ j)
+    have hfl : Function.Involutive fl := fun σ ↦ by
+      funext i
+      by_cases hi : i = j
+      · subst hi; simp [fl]
+      · simp [fl, Function.update_of_ne hi]
+    have hsum_fl : ∀ F : (Fin n → Bool) → ℝ, ∑ σ, F (fl σ) = ∑ σ, F σ := fun F ↦
+      Fintype.sum_equiv (hfl.toPerm fl) _ _ fun σ ↦ rfl
+    -- decomposition at coordinate `j`
+    set A : (Fin n → Bool) → H → ℝ := fun σ h ↦
+      ∑ i ∈ Finset.univ.erase j, (if σ i then (1 : ℝ) else -1) * w k h i
+    have hA : ∀ σ h, A (fl σ) h = A σ h := fun σ h ↦
+      Finset.sum_congr rfl fun i hi ↦ by
+        simp [fl, Function.update_of_ne (Finset.ne_of_mem_erase hi)]
+    have hw : ∀ h, ∀ i ∈ Finset.univ.erase j, w (k + 1) h i = w k h i := by
+      intro h i hi
+      have hij : (i : ℕ) ≠ k := fun h' ↦ Finset.ne_of_mem_erase hi (Fin.ext h')
+      simp only [w]
+      congr 1
+      exact propext ⟨fun h' ↦ by omega, fun h' ↦ by omega⟩
+    have hAk1 : ∀ σ h, ∑ i ∈ Finset.univ.erase j,
+        (if σ i then (1 : ℝ) else -1) * w (k + 1) h i = A σ h := fun σ h ↦
+      Finset.sum_congr rfl fun i hi ↦ by rw [hw h i hi]
+    have hdec : ∀ (k' : ℕ) (σ : Fin n → Bool) (h : H), (∑ i, (if σ i then (1 : ℝ) else -1) * w k' h i) / n =
+        (∑ i ∈ Finset.univ.erase j, (if σ i then (1 : ℝ) else -1) * w k' h i) / n +
+          (1 / n) * ((if σ j then (1 : ℝ) else -1) * w k' h j) := by
+      intro k' σ h
+      rw [← Finset.add_sum_erase _ _ (Finset.mem_univ j)]
+      ring
+    have hwk : ∀ h, w k h j = φ (t h j) := fun h ↦ by simp [w, j]
+    have hwk1 : ∀ h, w (k + 1) h j = L * t h j := fun h ↦ by simp [w, j]
+    have hflj : ∀ σ, fl σ j = !σ j := fun σ ↦ by simp [fl]
+    have hpair : ∀ σ, Q k σ + Q k (fl σ) ≤ Q (k + 1) σ + Q (k + 1) (fl σ) := by
+      intro σ
+      simp only [Q]
+      simp_rw [hdec k, hdec (k + 1), hAk1]
+      change sSup (range fun h ↦ A σ h / n + 1 / n * ((if σ j then (1 : ℝ) else -1) *
+          w k h j)) + sSup (range fun h ↦ A (fl σ) h / n + 1 / n *
+          ((if fl σ j then (1 : ℝ) else -1) * w k h j)) ≤
+        sSup (range fun h ↦ A σ h / n + 1 / n * ((if σ j then (1 : ℝ) else -1) *
+          w (k + 1) h j)) + sSup (range fun h ↦ A (fl σ) h / n + 1 / n *
+          ((if fl σ j then (1 : ℝ) else -1) * w (k + 1) h j))
+      simp only [hA, hflj, hwk, hwk1]
+      have hc : (0 : ℝ) ≤ 1 / n := by positivity
+      have key := sSup_add_sSup_le_of_lipschitz (fun h ↦ A σ h / n) (fun h ↦ t h j) φ hc hφ
+      cases σ j
+      · simp only [Bool.not_false, ite_true, Bool.false_eq_true, ite_false, neg_one_mul,
+          one_mul, mul_neg, ← sub_eq_add_neg]
+        linarith
+      · simp only [Bool.not_true, ite_true, Bool.false_eq_true, ite_false, neg_one_mul,
+          one_mul, mul_neg, ← sub_eq_add_neg]
+        linarith
+    have h2 : 2 * ∑ σ, Q k σ = ∑ σ, (Q k σ + Q k (fl σ)) := by
+      rw [Finset.sum_add_distrib, hsum_fl (Q k)]; ring
+    have h3 : 2 * ∑ σ, Q (k + 1) σ = ∑ σ, (Q (k + 1) σ + Q (k + 1) (fl σ)) := by
+      rw [Finset.sum_add_distrib, hsum_fl (Q (k + 1))]; ring
+    have := Finset.sum_le_sum fun σ (_ : σ ∈ Finset.univ) ↦ hpair σ
+    linarith
+  have hmono : ∀ k, k ≤ n → ∑ σ, Q 0 σ ≤ ∑ σ, Q k σ := by
+    intro k
+    induction k with
+    | zero => intro _; exact le_rfl
+    | succ k ih => intro hk; exact (ih (by omega)).trans (hstep k (by omega))
+  have hQn : ∀ σ, Q n σ ≤ L * sSup (range fun h ↦
+      (∑ i, (if σ i then (1 : ℝ) else -1) * t h i) / n) := by
+    intro σ
+    refine csSup_le (range_nonempty _) ?_
+    rintro _ ⟨h, rfl⟩
+    beta_reduce
+    have : (∑ i, (if σ i then (1 : ℝ) else -1) * w n h i) / n =
+        L * ((∑ i, (if σ i then (1 : ℝ) else -1) * t h i) / n) := by
+      simp only [w, Fin.is_lt, ite_true]
+      rw [mul_div_assoc', Finset.mul_sum]
+      congr 1
+      exact Finset.sum_congr rfl fun i _ ↦ by ring
+    rw [this]
+    exact mul_le_mul_of_nonneg_left
+      (le_csSup (finite_range _).bddAbove ⟨h, rfl⟩) hL
+  have h1 : ∑ σ : Fin n → Bool, sSup (range fun h ↦
+      (∑ i, (if σ i then (1 : ℝ) else -1) * φ (t h i)) / n) = ∑ σ, Q 0 σ :=
+    Finset.sum_congr rfl fun σ _ ↦ (hQ0 σ).symm
+  rw [h1, Finset.mul_sum]
+  exact (hmono n le_rfl).trans (Finset.sum_le_sum fun σ _ ↦ hQn σ)
+
+/-- The ramp margin loss `min(1, max(0, 1 - u/ρ))` is `1/ρ`-Lipschitz. -/
+theorem abs_marginLoss_sub_le {ρ : ℝ} (hρ : 0 < ρ) (u v : ℝ) :
+    |marginLoss ρ u - marginLoss ρ v| ≤ 1 / ρ * |u - v| := by
+  unfold marginLoss
+  refine (abs_min_sub_min_le_max _ _ _ _).trans ?_
+  rw [sub_self, abs_zero]
+  refine max_le (by positivity) ((abs_max_sub_max_le_max _ _ _ _).trans (max_le (by
+    rw [sub_self, abs_zero]; positivity) ?_))
+  rw [show 1 - u / ρ - (1 - v / ρ) = (v - u) / ρ by ring, abs_div, abs_of_pos hρ, abs_sub_comm]
+  rw [div_eq_inv_mul, one_div]
+
+/-- The ramp margin loss takes values in `[0,1]`. -/
+theorem marginLoss_mem_Icc (ρ u : ℝ) : marginLoss ρ u ∈ Icc 0 1 :=
+  ⟨le_min zero_le_one (le_max_left _ _), min_le_left _ _⟩
+
+/-- The ramp margin loss dominates the zero-one loss of a nonpositive margin. -/
+theorem marginLoss_eq_one_of_nonpos {ρ u : ℝ} (hρ : 0 < ρ) (hu : u ≤ 0) : marginLoss ρ u = 1 := by
+  unfold marginLoss
+  have : 1 ≤ 1 - u / ρ := by
+    have : u / ρ ≤ 0 := div_nonpos_of_nonpos_of_nonneg hu hρ.le
+    linarith
+  rw [max_eq_right (by linarith), min_eq_left this]
+
 /-- GAPS 107.10: uniform expected-Rademacher margin bound for a finite class. -/
 theorem measure_margin_generalization_error_le {H X : Type*} [Fintype H] [Nonempty H]
     [MeasurableSpace X] (P : Measure (X × Bool)) [IsProbabilityMeasure P]
@@ -37,7 +195,235 @@ theorem measure_margin_generalization_error_le {H X : Type*} [Fintype H] [Nonemp
       empiricalRisk (fun h z ↦ marginLoss ρ (signedMargin f h z)) h x +
         2 / ρ * rad + Real.sqrt (Real.log (1 / δ) / (2 * n)) <
           P.real {z | signedMargin f h z ≤ 0}} ≤ δ := by
-  sorry
+  intro Pn rad
+  have hnr : (0 : ℝ) < n := by exact_mod_cast hn
+  have hB : 0 ≤ max B 0 := le_max_right _ _
+  -- margins
+  have hsm : ∀ h, Measurable (signedMargin f h) := fun h ↦ by
+    unfold signedMargin
+    exact Measurable.ite (measurableSet_eq_fun measurable_snd measurable_const)
+      ((hm h).comp measurable_fst) ((hm h).comp measurable_fst).neg
+  have hsb : ∀ h z, |signedMargin f h z| ≤ max B 0 := fun h z ↦ by
+    refine le_max_of_le_left ?_
+    unfold signedMargin; split_ifs <;> simp [hb]
+  -- the negated loss class
+  set F : H → X × Bool → ℝ := fun h z ↦ -marginLoss ρ (signedMargin f h z) with hF_def
+  have hφm : ∀ h, Measurable fun z ↦ marginLoss ρ (signedMargin f h z) := fun h ↦ by
+    have : Measurable (marginLoss ρ) := by unfold marginLoss; fun_prop
+    exact this.comp (hsm h)
+  have hFm : ∀ h, Measurable (F h) := fun h ↦ (hφm h).neg
+  have hFb : ∀ h z, |F h z| ≤ 1 := fun h z ↦ by
+    have := marginLoss_mem_Icc ρ (signedMargin f h z)
+    simp only [F, abs_neg, abs_le]; constructor <;> linarith [this.1, this.2]
+  have hFosc : ∀ h z w, |F h z - F h w| ≤ 1 := fun h z w ↦ by
+    have h1 := marginLoss_mem_Icc ρ (signedMargin f h z)
+    have h2 := marginLoss_mem_Icc ρ (signedMargin f h w)
+    simp only [F, abs_le]; constructor <;> linarith [h1.1, h1.2, h2.1, h2.2]
+  -- expected supremum via symmetrization and contraction
+  have hsym := integral_sSup_sub_le_two_mul_rademacher P F hFm hFb n hn
+  have hcontr : ∀ x, empiricalRademacherComplexity n F x ≤
+      1 / ρ * empiricalRademacherComplexity n (signedMargin f) x := by
+    intro x
+    have hneg := empiricalRademacherComplexity_neg n
+      (fun h z ↦ marginLoss ρ (signedMargin f h z)) x
+    simp only [F]
+    rw [hneg]
+    simp only [empiricalRademacherComplexity]
+    rw [mul_left_comm]
+    exact mul_le_mul_of_nonneg_left (sum_sSup_rademacher_comp_le n
+      (fun h i ↦ signedMargin f h (x i)) (marginLoss ρ) (by positivity)
+      (abs_marginLoss_sub_le hρ)) (by positivity)
+  have hRadF : ∫ x, empiricalRademacherComplexity n F x ∂Pn ≤ 1 / ρ * rad := by
+    rw [← integral_const_mul]
+    refine integral_mono (integrable_of_abs_le _
+      (measurable_empiricalRademacherComplexity n F hFm)
+      (abs_empiricalRademacherComplexity_le n F zero_le_one hFb))
+      ((integrable_of_abs_le _ (measurable_empiricalRademacherComplexity n _ hsm)
+        (abs_empiricalRademacherComplexity_le n _ hB hsb)).const_mul _) hcontr
+  -- tail
+  set tt := Real.sqrt (Real.log (1 / δ) / (2 * n)) with htt
+  have htail := measureReal_integral_add_le_sSup_le P F hFm hFosc n hn (Real.sqrt_nonneg _)
+    (t := tt)
+  have hexp : Real.exp (-2 * n * tt ^ 2) = δ := by
+    have hlog : 0 ≤ Real.log (1 / δ) / (2 * n) := by
+      refine div_nonneg (Real.log_nonneg ?_) (by positivity)
+      rw [le_div_iff₀ hδ.1]; linarith [hδ.2]
+    rw [htt, Real.sq_sqrt hlog]
+    have : -2 * (n : ℝ) * (Real.log (1 / δ) / (2 * n)) = -Real.log (1 / δ) := by
+      field_simp
+    rw [this, Real.exp_neg, Real.exp_log (div_pos one_pos hδ.1), inv_div, div_one]
+  rw [hexp] at htail
+  refine le_trans (measureReal_mono ?_) htail
+  intro x hx
+  obtain ⟨h, hh⟩ := hx
+  simp only [mem_ofPred_eq]
+  -- the zero-one risk is dominated by the ramp risk
+  have hrisk : P.real {z | signedMargin f h z ≤ 0} ≤
+      ∫ z, marginLoss ρ (signedMargin f h z) ∂P := by
+    have hS : MeasurableSet {z | signedMargin f h z ≤ 0} :=
+      measurableSet_le (hsm h) measurable_const
+    rw [← integral_indicator_one hS]
+    refine integral_mono ((integrable_const 1).indicator hS) (integrable_of_abs_le _
+      (hφm h) (C := 1) fun z ↦ by simpa [F] using hFb h z) fun z ↦ ?_
+    by_cases hz : z ∈ {z | signedMargin f h z ≤ 0}
+    · rw [indicator_of_mem hz, Pi.one_apply, marginLoss_eq_one_of_nonpos hρ hz]
+    · rw [indicator_of_notMem hz]; exact (marginLoss_mem_Icc _ _).1
+  have hle := le_csSup (finite_range fun h ↦ (∑ i, F h (x i)) / n - ∫ z, F h z ∂P).bddAbove
+    ⟨h, rfl⟩
+  have heq : (∑ i, F h (x i)) / n - ∫ z, F h z ∂P =
+      ∫ z, marginLoss ρ (signedMargin f h z) ∂P -
+        empiricalRisk (fun h z ↦ marginLoss ρ (signedMargin f h z)) h x := by
+    simp only [F, empiricalRisk, Finset.sum_neg_distrib, integral_neg]; ring
+  simp only at hle
+  rw [heq] at hle
+  have : 2 / ρ * rad = 2 * (1 / ρ * rad) := by ring
+  linarith
+
+
+/-- Second-order bound `exp(-x) ≤ 1 - x + x²/2` for `x ≥ 0`. -/
+theorem exp_neg_le_one_sub_add_sq_div_two {x : ℝ} (hx : 0 ≤ x) :
+    Real.exp (-x) ≤ 1 - x + x ^ 2 / 2 := by
+  set g : ℝ → ℝ := fun y ↦ 1 - y + y ^ 2 / 2 - Real.exp (-y) with hg
+  have hd : ∀ y, HasDerivAt g (-1 + y + Real.exp (-y)) y := by
+    intro y
+    have h := (((hasDerivAt_id y).const_sub 1).add ((hasDerivAt_pow 2 y).div_const 2)).sub
+      (hasDerivAt_neg y).exp
+    convert h using 1
+    · funext z; simp only [hg, Pi.add_apply, Pi.sub_apply, id]
+    · simp only [Nat.cast_ofNat, Nat.add_one_sub_one, pow_one]; ring
+  have hcont : Continuous g := continuous_iff_continuousAt.2 fun y ↦ (hd y).continuousAt
+  have hmono : MonotoneOn g (Ici 0) := by
+    refine monotoneOn_of_deriv_nonneg (convex_Ici 0) hcont.continuousOn
+      (fun y _ ↦ (hd y).differentiableAt.differentiableWithinAt) fun y _ ↦ ?_
+    rw [(hd y).deriv]
+    linarith [Real.add_one_le_exp (-y)]
+  have := hmono (show (0 : ℝ) ∈ Ici 0 from mem_Ici.mpr le_rfl) hx hx
+  simp only [hg, neg_zero, Real.exp_zero] at this
+  linarith
+
+/-- Deterministic exponential-weights bound with nonnegative estimated losses `ℓ̂`: if
+`p t i ∝ exp(-η ∑_{s<t} ℓ̂ s i)`, then
+`∑_{t<T} ∑ᵢ p t i ℓ̂ t i - ∑_{t<T} ℓ̂ t i⋆ ≤ log K / η + (η/2) ∑_{t<T} ∑ᵢ p t i ℓ̂ t i²`. -/
+theorem sum_sum_mul_sub_le_of_exponential_weights {K : ℕ} (hK : 0 < K) {η : ℝ} (hη : 0 < η)
+    (lh : ℕ → Fin K → ℝ) (hlh : ∀ t i, 0 ≤ lh t i) (p : ℕ → Fin K → ℝ)
+    (hp : ∀ t i, p t i = Real.exp (-η * ∑ s ∈ Finset.range t, lh s i) /
+      ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j)) (T : ℕ) (istar : Fin K) :
+    ∑ t ∈ Finset.range T, ∑ i, p t i * lh t i - ∑ t ∈ Finset.range T, lh t istar ≤
+      Real.log K / η + η / 2 * ∑ t ∈ Finset.range T, ∑ i, p t i * lh t i ^ 2 := by
+  set W : ℕ → ℝ := fun t ↦ ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j) with hW
+  have hWpos : ∀ t, 0 < W t := fun t ↦
+    Finset.sum_pos (fun j _ ↦ Real.exp_pos _) ⟨⟨0, hK⟩, Finset.mem_univ _⟩
+  have hpsum : ∀ t, ∑ i, p t i = 1 := fun t ↦ by
+    simp only [hp, ← Finset.sum_div]
+    exact div_self (hWpos t).ne'
+  have hppos : ∀ t i, 0 < p t i := fun t i ↦ by
+    rw [hp]; exact div_pos (Real.exp_pos _) (hWpos t)
+  have hpnn : ∀ t i, 0 ≤ p t i := fun t i ↦ (hppos t i).le
+  have hratio : ∀ t, W (t + 1) = W t * ∑ i, p t i * Real.exp (-η * lh t i) := by
+    intro t
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [hp, Finset.sum_range_succ, mul_add, Real.exp_add]
+    have := (hWpos t).ne'
+    simp only [hW] at this ⊢
+    field_simp
+  have hstep : ∀ t, Real.log (W (t + 1)) - Real.log (W t) ≤
+      -η * ∑ i, p t i * lh t i + η ^ 2 / 2 * ∑ i, p t i * lh t i ^ 2 := by
+    intro t
+    have hZpos : 0 < ∑ i, p t i * Real.exp (-η * lh t i) :=
+      Finset.sum_pos (fun i _ ↦ mul_pos (hppos t i) (Real.exp_pos _)) ⟨⟨0, hK⟩, Finset.mem_univ _⟩
+    rw [hratio, Real.log_mul (hWpos t).ne' hZpos.ne', add_sub_cancel_left]
+    refine (Real.log_le_sub_one_of_pos hZpos).trans ?_
+    have hb : ∀ i, p t i * Real.exp (-η * lh t i) ≤
+        p t i * (1 - η * lh t i + (η * lh t i) ^ 2 / 2) := fun i ↦ by
+      refine mul_le_mul_of_nonneg_left ?_ (hpnn t i)
+      rw [neg_mul]
+      exact exp_neg_le_one_sub_add_sq_div_two (mul_nonneg hη.le (hlh t i))
+    have := Finset.sum_le_sum fun i (_ : i ∈ Finset.univ) ↦ hb i
+    have hexp : ∑ i, p t i * (1 - η * lh t i + (η * lh t i) ^ 2 / 2) =
+        ∑ i, p t i - η * ∑ i, p t i * lh t i + η ^ 2 / 2 * ∑ i, p t i * lh t i ^ 2 := by
+      simp only [mul_add, mul_sub, mul_one, Finset.sum_add_distrib, Finset.sum_sub_distrib,
+        Finset.mul_sum]
+      congr 1
+      · congr 1
+        exact Finset.sum_congr rfl fun _ _ ↦ by ring
+      · exact Finset.sum_congr rfl fun _ _ ↦ by ring
+    rw [hexp, hpsum] at this
+    linarith
+  have htel : Real.log (W T) - Real.log (W 0) ≤ ∑ t ∈ Finset.range T,
+      (-η * ∑ i, p t i * lh t i + η ^ 2 / 2 * ∑ i, p t i * lh t i ^ 2) := by
+    rw [← Finset.sum_range_sub (fun t ↦ Real.log (W t))]
+    exact Finset.sum_le_sum fun t _ ↦ hstep t
+  have hW0 : W 0 = K := by simp [hW]
+  have hWT : -η * ∑ s ∈ Finset.range T, lh s istar ≤ Real.log (W T) := by
+    rw [← Real.log_exp (-η * _)]
+    exact Real.log_le_log (Real.exp_pos _)
+      (Finset.single_le_sum (f := fun j ↦ Real.exp (-η * ∑ s ∈ Finset.range T, lh s j))
+        (fun j _ ↦ (Real.exp_pos _).le) (Finset.mem_univ istar))
+  rw [hW0] at htel
+  rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.mul_sum] at htel
+  have hfinal : η * (∑ t ∈ Finset.range T, ∑ i, p t i * lh t i -
+      ∑ t ∈ Finset.range T, lh t istar) ≤
+      η * (Real.log K / η + η / 2 * ∑ t ∈ Finset.range T, ∑ i, p t i * lh t i ^ 2) := by
+    have : η * (Real.log K / η) = Real.log K := by field_simp
+    rw [mul_add, this]
+    nlinarith
+  exact le_of_mul_le_mul_left hfinal hη
+
+/-- Multiplicative update form of exponential weights:
+`p (t+1) i = p t i exp(-η ℓ̂ t i) / ∑ⱼ p t j exp(-η ℓ̂ t j)`. -/
+theorem exponentialWeights_succ {K : ℕ} (hK : 0 < K) (η : ℝ) (lh : ℕ → Fin K → ℝ)
+    (p : ℕ → Fin K → ℝ)
+    (hp : ∀ t i, p t i = Real.exp (-η * ∑ s ∈ Finset.range t, lh s i) /
+      ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j)) (t : ℕ) (i : Fin K) :
+    p (t + 1) i = p t i * Real.exp (-η * lh t i) /
+      ∑ j, p t j * Real.exp (-η * lh t j) := by
+  have hWpos : ∀ t, 0 < ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j) := fun t ↦
+    Finset.sum_pos (fun j _ ↦ Real.exp_pos _) ⟨⟨0, hK⟩, Finset.mem_univ _⟩
+  have hsplit : ∀ j, Real.exp (-η * ∑ s ∈ Finset.range (t + 1), lh s j) =
+      Real.exp (-η * ∑ s ∈ Finset.range t, lh s j) * Real.exp (-η * lh t j) := fun j ↦ by
+    rw [Finset.sum_range_succ, mul_add, Real.exp_add]
+  have hZ : ∑ j, p t j * Real.exp (-η * lh t j) =
+      (∑ j, Real.exp (-η * ∑ s ∈ Finset.range (t + 1), lh s j)) /
+        ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j) := by
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun j _ ↦ ?_
+    rw [hp, hsplit]; ring
+  rw [hZ, hp (t + 1), hp t, hsplit]
+  have h0 := (hWpos t).ne'
+  have h1 := (hWpos (t + 1)).ne'
+  generalize (∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j)) = W0 at *
+  generalize (∑ j, Real.exp (-η * ∑ s ∈ Finset.range (t + 1), lh s j)) = W1 at *
+  field_simp
+
+/-- Conditional-probability identity: if `P[1_{A = j} | 𝓕] = p` and `g` is bounded and
+`𝓕`-measurable, then `∫ 1_{A = j} g = ∫ p g`. -/
+theorem integral_indicator_mul_eq_of_condExp {Ω : Type*} {m : MeasurableSpace Ω}
+    [mΩ : MeasurableSpace Ω] (hm : m ≤ mΩ) (P : Measure Ω)
+    [IsProbabilityMeasure P] {K : ℕ} (A : Ω → Fin K) (hA : Measurable A) (j : Fin K)
+    (q : Ω → ℝ) (hq : P[(fun ω ↦ if A ω = j then (1 : ℝ) else 0) | m] =ᵐ[P] q)
+    (g : Ω → ℝ) (hg : StronglyMeasurable[m] g) {C : ℝ} (hgb : ∀ ω, |g ω| ≤ C) :
+    ∫ ω, (if A ω = j then (1 : ℝ) else 0) * g ω ∂P = ∫ ω, q ω * g ω ∂P := by
+  have hXm : Measurable fun ω ↦ if A ω = j then (1 : ℝ) else 0 :=
+    Measurable.ite (hA (measurableSet_singleton j)) measurable_const measurable_const
+  have hX : Integrable (fun ω ↦ if A ω = j then (1 : ℝ) else 0) P :=
+    Integrable.of_bound hXm.aestronglyMeasurable 1 (ae_of_all _ fun ω ↦ by
+      split_ifs <;> simp)
+  have hgm : Measurable g := (hg.mono hm).measurable
+  have hgX : Integrable (g * fun ω ↦ if A ω = j then (1 : ℝ) else 0) P :=
+    Integrable.of_bound (hgm.mul hXm).aestronglyMeasurable C (ae_of_all _ fun ω ↦ by
+      simp only [Pi.mul_apply, Real.norm_eq_abs, abs_mul]
+      split_ifs <;> simp [hgb ω, (abs_nonneg _).trans (hgb ω)])
+  have h1 := condExp_mul_of_stronglyMeasurable_left hg hgX hX
+  calc ∫ ω, (if A ω = j then (1 : ℝ) else 0) * g ω ∂P
+      = ∫ ω, (g * fun ω ↦ if A ω = j then (1 : ℝ) else 0) ω ∂P := by
+        congr 1; funext ω; simp [mul_comm]
+    _ = ∫ ω, (P[g * fun ω ↦ if A ω = j then (1 : ℝ) else 0 | m]) ω ∂P :=
+        (integral_condExp hm).symm
+    _ = ∫ ω, q ω * g ω ∂P := by
+        refine integral_congr_ae (h1.trans ?_)
+        filter_upwards [hq] with ω hω
+        simp only [Pi.mul_apply, hω, mul_comm]
 
 /-- Exp3 importance-weighted cumulative estimated loss. -/
 def exp3EstimatedCumulativeLoss {Ω : Type*} {K : ℕ} (loss : ℕ → Fin K → ℝ)
@@ -61,6 +447,180 @@ theorem exp3_expected_regret_le {Ω : Type*} [MeasurableSpace Ω]
         ∑ j, Real.exp (-η * exp3EstimatedCumulativeLoss loss p A t j ω)) (i : Fin K) :
     (∫ ω, ∑ t ∈ Finset.range T, loss t (A t ω) ∂P) - (∑ t ∈ Finset.range T, loss t i) ≤
       Real.sqrt (2 * T * K * Real.log K) := by
-  sorry
+  set η := Real.sqrt (2 * Real.log K / (T * K)) with hη_def
+  have hK0 : 0 < K := by omega
+  have hKr : (2 : ℝ) ≤ K := by exact_mod_cast hK
+  have hlogK : 0 < Real.log K := Real.log_pos (by linarith)
+  have hTr : (0 : ℝ) < T := by exact_mod_cast hT
+  have hη : 0 < η := Real.sqrt_pos.mpr (by positivity)
+  -- estimated losses
+  set lh : ℕ → Ω → Fin K → ℝ := fun t ω j ↦ if A t ω = j then loss t j / p t ω j else 0
+    with hlh_def
+  have hlh0 : ∀ t ω j, 0 ≤ lh t ω j := fun t ω j ↦ by
+    simp only [lh]; split_ifs
+    · exact div_nonneg (hloss t j).1 (hpos t ω j).le
+    · exact le_rfl
+  have hrec' : ∀ ω t j, p t ω j = Real.exp (-η * ∑ s ∈ Finset.range t, lh s ω j) /
+      ∑ j', Real.exp (-η * ∑ s ∈ Finset.range t, lh s ω j') := fun ω t j ↦ hrec t ω j
+  -- deterministic lower bounds on the probabilities
+  obtain ⟨c, hc0, hcs⟩ : ∃ c : ℕ → ℝ, c 0 = (K : ℝ)⁻¹ ∧
+      ∀ t, c (t + 1) = c t * Real.exp (-η / c t) :=
+    ⟨fun t ↦ Nat.rec (K : ℝ)⁻¹ (fun _ x ↦ x * Real.exp (-η / x)) t, rfl, fun _ ↦ rfl⟩
+  have hlh1 : ∀ t ω j, lh t ω j ≤ 1 / p t ω j := fun t ω j ↦ by
+    simp only [lh]; split_ifs
+    · exact div_le_div_of_nonneg_right (hloss t j).2 (hpos t ω j).le
+    · exact (one_div_pos.mpr (hpos t ω j)).le
+  have hc : ∀ t, 0 < c t ∧ ∀ ω j, c t ≤ p t ω j := by
+    intro t
+    induction t with
+    | zero =>
+      refine ⟨by rw [hc0]; positivity, fun ω j ↦ ?_⟩
+      rw [hc0, hrec' ω 0 j]
+      simp
+    | succ t ih =>
+      refine ⟨by rw [hcs]; exact mul_pos ih.1 (Real.exp_pos _), fun ω j ↦ ?_⟩
+      have hup := exponentialWeights_succ hK0 η (lh · ω) (fun t j ↦ p t ω j) (hrec' ω) t j
+      have hZpos : 0 < ∑ j', p t ω j' * Real.exp (-η * lh t ω j') :=
+        Finset.sum_pos (fun j' _ ↦ mul_pos (hpos t ω j') (Real.exp_pos _))
+          ⟨⟨0, hK0⟩, Finset.mem_univ _⟩
+      have hZ1 : ∑ j', p t ω j' * Real.exp (-η * lh t ω j') ≤ 1 := by
+        rw [← hsum t ω]
+        refine Finset.sum_le_sum fun j' _ ↦ ?_
+        calc p t ω j' * Real.exp (-η * lh t ω j') ≤ p t ω j' * 1 :=
+              mul_le_mul_of_nonneg_left (Real.exp_le_one_iff.mpr (by
+                nlinarith [hlh0 t ω j'])) (hpos t ω j').le
+          _ = p t ω j' := mul_one _
+      have hge : p t ω j * Real.exp (-η * lh t ω j) ≤ p (t + 1) ω j := by
+        rw [hup]
+        exact (le_div_iff₀ hZpos).mpr (mul_le_of_le_one_right
+          (mul_nonneg (hpos t ω j).le (Real.exp_pos _).le) hZ1)
+      have hexp : Real.exp (-η / c t) ≤ Real.exp (-η * lh t ω j) := by
+        apply Real.exp_le_exp.mpr
+        have h1 : lh t ω j ≤ 1 / c t :=
+          (hlh1 t ω j).trans (one_div_le_one_div_of_le ih.1 (ih.2 ω j))
+        rw [neg_div, neg_mul, neg_le_neg_iff, ← mul_one_div]
+        exact mul_le_mul_of_nonneg_left h1 hη.le
+      rw [hcs]
+      calc c t * Real.exp (-η / c t) ≤ p t ω j * Real.exp (-η * lh t ω j) :=
+            mul_le_mul (ih.2 ω j) hexp (Real.exp_pos _).le (hpos t ω j).le
+        _ ≤ _ := hge
+  -- measurability
+  have hpm : ∀ t j, Measurable[F t] fun ω ↦ p t ω j := fun t j ↦
+    (measurable_pi_apply j).comp (hp t)
+  have hAm : ∀ t, Measurable (A t) := fun t ↦ (hA t).mono (F.le (t + 1)) le_rfl
+  -- the conditional-probability identities
+  have hg : ∀ t j (r : ℝ), r ∈ Icc (0 : ℝ) 1 →
+      ∫ ω, (if A t ω = j then (1 : ℝ) else 0) * (r / p t ω j) ∂P = r := by
+    intro t j r hr
+    have hgm : StronglyMeasurable[F t] fun ω ↦ r / p t ω j :=
+      (measurable_const.div (hpm t j)).stronglyMeasurable
+    have hb : ∀ ω, |r / p t ω j| ≤ 1 / c t := fun ω ↦ by
+      rw [abs_of_nonneg (div_nonneg hr.1 (hpos t ω j).le)]
+      exact (div_le_div_of_nonneg_right hr.2 (hpos t ω j).le).trans
+        (one_div_le_one_div_of_le (hc t).1 ((hc t).2 ω j))
+    rw [integral_indicator_mul_eq_of_condExp (F.le t) P (A t) (hAm t) j _ (hchoice t j) _ hgm hb]
+    have : ∀ ω, p t ω j * (r / p t ω j) = r := fun ω ↦ by
+      field_simp [(hpos t ω j).ne']
+    simp only [this, integral_const, probReal_univ, one_smul]
+  -- pointwise identities
+  have hplh : ∀ t ω, ∑ j, p t ω j * lh t ω j = loss t (A t ω) := fun t ω ↦ by
+    rw [Finset.sum_eq_single (A t ω)]
+    · simp only [lh, ↓reduceIte]; field_simp [(hpos t ω (A t ω)).ne']
+    · intro j _ hj; simp [lh, Ne.symm hj]
+    · intro h; exact absurd (Finset.mem_univ _) h
+  have hplh2 : ∀ t ω j, p t ω j * lh t ω j ^ 2 =
+      (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j) := fun t ω j ↦ by
+    simp only [lh]; split_ifs
+    · field_simp [(hpos t ω j).ne']
+    · simp
+  have hlhi : ∀ t ω j, lh t ω j =
+      (if A t ω = j then (1 : ℝ) else 0) * (loss t j / p t ω j) := fun t ω j ↦ by
+    simp only [lh]; split_ifs <;> simp
+  have hpt : ∀ ω, ∑ t ∈ Finset.range T, loss t (A t ω) - ∑ t ∈ Finset.range T, lh t ω i ≤
+      Real.log K / η + η / 2 * ∑ t ∈ Finset.range T, ∑ j,
+        (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j) := fun ω ↦ by
+    have h := sum_sum_mul_sub_le_of_exponential_weights hK0 hη (lh · ω) (fun t j ↦ hlh0 t ω j)
+      (fun t j ↦ p t ω j) (hrec' ω) T i
+    simp only [hplh, hplh2] at h
+    exact h
+  -- integrability of the bounded measurable pieces
+  have hterm : ∀ t j (r : ℝ), r ∈ Icc (0 : ℝ) 1 →
+      Integrable (fun ω ↦ (if A t ω = j then (1 : ℝ) else 0) * (r / p t ω j)) P := by
+    intro t j r hr
+    have hXm : Measurable fun ω ↦ if A t ω = j then (1 : ℝ) else 0 :=
+      Measurable.ite ((hAm t) (measurableSet_singleton j)) measurable_const measurable_const
+    have hgm : Measurable fun ω ↦ r / p t ω j :=
+      measurable_const.div ((hpm t j).mono (F.le t) le_rfl)
+    refine Integrable.of_bound (hXm.mul hgm).aestronglyMeasurable (1 / c t)
+      (ae_of_all _ fun ω ↦ ?_)
+    rw [Real.norm_eq_abs, abs_mul]
+    have hb : |r / p t ω j| ≤ 1 / c t := by
+      rw [abs_of_nonneg (div_nonneg hr.1 (hpos t ω j).le)]
+      exact (div_le_div_of_nonneg_right hr.2 (hpos t ω j).le).trans
+        (one_div_le_one_div_of_le (hc t).1 ((hc t).2 ω j))
+    split_ifs
+    · simpa using hb
+    · simp only [abs_zero, zero_mul]; exact (one_div_pos.mpr (hc t).1).le
+  have hsq : ∀ t j, loss t j ^ 2 ∈ Icc (0 : ℝ) 1 := fun t j ↦
+    ⟨sq_nonneg _, by nlinarith [(hloss t j).1, (hloss t j).2]⟩
+  have hXint : Integrable (fun ω ↦ ∑ t ∈ Finset.range T, loss t (A t ω)) P := by
+    refine integrable_finsetSum _ fun t _ ↦ ?_
+    have : (fun ω ↦ loss t (A t ω)) = fun ω ↦ ∑ j,
+        (if A t ω = j then (1 : ℝ) else 0) * (loss t j / p t ω j) * p t ω j := by
+      funext ω
+      rw [Finset.sum_eq_single (A t ω)]
+      · simp only [↓reduceIte, one_mul]; field_simp [(hpos t ω (A t ω)).ne']
+      · intro j _ hj; simp [Ne.symm hj]
+      · intro h; exact absurd (Finset.mem_univ _) h
+    rw [this]
+    refine integrable_finsetSum _ fun j _ ↦ ?_
+    refine (hterm t j _ (hloss t j)).mul_of_top_left ?_
+    refine memLp_top_of_bound ((hpm t j).mono (F.le t) le_rfl).aestronglyMeasurable 1
+      (ae_of_all _ fun ω ↦ ?_)
+    rw [Real.norm_eq_abs, abs_of_pos (hpos t ω j), ← hsum t ω]
+    exact Finset.single_le_sum (fun j' _ ↦ (hpos t ω j').le) (Finset.mem_univ j)
+  have hYint : Integrable (fun ω ↦ ∑ t ∈ Finset.range T, lh t ω i) P := by
+    simp only [hlhi]
+    exact integrable_finsetSum _ fun t _ ↦ hterm t i _ (hloss t i)
+  have hZint : Integrable (fun ω ↦ ∑ t ∈ Finset.range T, ∑ j,
+      (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j)) P :=
+    integrable_finsetSum _ fun t _ ↦ integrable_finsetSum _ fun j _ ↦ hterm t j _ (hsq t j)
+  have hY : ∫ ω, ∑ t ∈ Finset.range T, lh t ω i ∂P = ∑ t ∈ Finset.range T, loss t i := by
+    simp only [hlhi]
+    rw [integral_finsetSum _ fun t _ ↦ hterm t i _ (hloss t i)]
+    exact Finset.sum_congr rfl fun t _ ↦ hg t i _ (hloss t i)
+  have hZ : ∫ ω, ∑ t ∈ Finset.range T, ∑ j,
+      (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j) ∂P ≤ T * K := by
+    rw [integral_finsetSum _ fun t _ ↦ integrable_finsetSum _ fun j _ ↦ hterm t j _ (hsq t j)]
+    calc ∑ t ∈ Finset.range T, ∫ ω, ∑ j,
+          (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j) ∂P
+        = ∑ t ∈ Finset.range T, ∑ j : Fin K, loss t j ^ 2 := by
+          refine Finset.sum_congr rfl fun t _ ↦ ?_
+          rw [integral_finsetSum _ fun j _ ↦ hterm t j _ (hsq t j)]
+          exact Finset.sum_congr rfl fun j _ ↦ hg t j _ (hsq t j)
+      _ ≤ ∑ t ∈ Finset.range T, ∑ j : Fin K, (1 : ℝ) :=
+          Finset.sum_le_sum fun t _ ↦ Finset.sum_le_sum fun j _ ↦ (hsq t j).2
+      _ = T * K := by simp
+  have hint : ∫ ω, (∑ t ∈ Finset.range T, loss t (A t ω) - ∑ t ∈ Finset.range T, lh t ω i) ∂P ≤
+      ∫ ω, (Real.log K / η + η / 2 * ∑ t ∈ Finset.range T, ∑ j,
+        (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j)) ∂P :=
+    integral_mono (hXint.sub hYint)
+      ((integrable_const (Real.log K / η)).add (hZint.const_mul (η / 2))) hpt
+  rw [integral_sub hXint hYint, integral_add (integrable_const _) (hZint.const_mul _),
+    integral_const_mul, integral_const, probReal_univ, one_smul, hY] at hint
+  have hη2 : η ^ 2 = 2 * Real.log K / (T * K) := Real.sq_sqrt (by positivity)
+  have hTK : (0 : ℝ) < T * K := by positivity
+  have hfinal : Real.log K / η + η / 2 * (T * K) = Real.sqrt (2 * T * K * Real.log K) := by
+    have hs : Real.sqrt (2 * T * K * Real.log K) = η * (T * K) := by
+      rw [show (2 : ℝ) * T * K * Real.log K = (η * (T * K)) ^ 2 by
+        rw [mul_pow, hη2]; field_simp]
+      exact Real.sqrt_sq (by positivity)
+    have h2 : η ^ 2 * (T * K) = 2 * Real.log K := by rw [hη2]; field_simp
+    rw [hs]
+    field_simp
+    linear_combination -h2
+  calc _ ≤ Real.log K / η + η / 2 * (T * K) := by
+        nlinarith [mul_le_mul_of_nonneg_left hZ (by positivity : (0 : ℝ) ≤ η / 2)]
+    _ = _ := hfinal
 
 end CKSD

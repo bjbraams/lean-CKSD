@@ -132,7 +132,120 @@ theorem tendsto_least_squares_gradient_descent {n p : ℕ}
     ∃ thetaStar, A.adjoint (A thetaStar - y) = 0 ∧
       thetaStar - theta₀ ∈ LinearMap.range A.adjoint.toLinearMap ∧
       Tendsto (fun t : ℕ ↦ update^[t] theta₀) atTop (𝓝 thetaStar) := by
-  sorry
+  intro update
+  set K := LinearMap.range A.adjoint.toLinearMap with hK
+  set R := LinearMap.range A.toLinearMap with hR
+  -- a least-squares solution in `θ₀ + K`
+  set r := y - A theta₀
+  obtain ⟨z, hz⟩ : R.starProjection r ∈ R := R.starProjection_apply_mem r
+  have hz' : A z = R.starProjection r := hz
+  have hres : A.adjoint (r - A z) = 0 := by
+    rw [hz']
+    have horth := R.sub_starProjection_mem_orthogonal r
+    refine ext_inner_left ℝ fun v ↦ ?_
+    rw [ContinuousLinearMap.adjoint_inner_right, inner_zero_right]
+    exact inner_eq_zero_symm.mpr ((Submodule.mem_orthogonal' R _).mp horth _ ⟨v, rfl⟩)
+  set k := K.starProjection z
+  have hkK : k ∈ K := K.starProjection_apply_mem z
+  have hAk : A k = A z := by
+    have horth := K.sub_starProjection_mem_orthogonal z
+    have h0 : A (z - k) = 0 := by
+      refine ext_inner_right ℝ fun w ↦ ?_
+      rw [← ContinuousLinearMap.adjoint_inner_right, inner_zero_left]
+      exact (Submodule.mem_orthogonal' K _).mp horth _ ⟨w, rfl⟩
+    rw [map_sub, sub_eq_zero] at h0
+    exact h0.symm
+  set thetaStar := theta₀ + k
+  have hnormal : A.adjoint (A thetaStar - y) = 0 := by
+    have : A thetaStar - y = -(r - A z) := by
+      simp only [thetaStar, map_add, hAk, r]; abel
+    rw [this, map_neg, hres, neg_zero]
+  refine ⟨thetaStar, hnormal, by simpa [thetaStar] using hkK, ?_⟩
+  -- error recursion
+  set e : ℕ → EuclideanSpace ℝ (Fin p) := fun t ↦ update^[t] theta₀ - thetaStar
+  have he_succ : ∀ t, e (t + 1) = e t - eta • A.adjoint (A (e t)) := by
+    intro t
+    simp only [e, Function.iterate_succ_apply', update]
+    have : A.adjoint (A (update^[t] theta₀) - y) =
+        A.adjoint (A (update^[t] theta₀ - thetaStar)) := by
+      have h : A (update^[t] theta₀) - y =
+          A (update^[t] theta₀ - thetaStar) + (A thetaStar - y) := by
+        rw [map_sub]; abel
+      rw [h, map_add, hnormal, add_zero]
+    rw [this]
+    abel
+  have heK : ∀ t, e t ∈ K := by
+    intro t
+    induction t with
+    | zero =>
+      have : e 0 = -k := by simp [e, thetaStar]
+      rw [this]; exact K.neg_mem hkK
+    | succ t ih =>
+      rw [he_succ]
+      exact K.sub_mem ih (K.smul_mem _ ⟨_, rfl⟩)
+  -- energy decrease
+  set c := eta * (2 - eta * ‖A‖ ^ 2)
+  have hc : 0 < c := mul_pos he (by linarith)
+  have henergy : ∀ t, ‖e (t + 1)‖ ^ 2 + c * ‖A (e t)‖ ^ 2 ≤ ‖e t‖ ^ 2 := by
+    intro t
+    rw [he_succ]
+    have h1 : ‖A.adjoint (A (e t))‖ ≤ ‖A‖ * ‖A (e t)‖ := by
+      calc ‖A.adjoint (A (e t))‖ ≤ ‖A.adjoint‖ * ‖A (e t)‖ := A.adjoint.le_opNorm _
+        _ = ‖A‖ * ‖A (e t)‖ := by rw [LinearIsometryEquiv.norm_map]
+    have h2 : (inner ℝ (e t) (A.adjoint (A (e t)))) = ‖A (e t)‖ ^ 2 := by
+      rw [ContinuousLinearMap.adjoint_inner_right, real_inner_self_eq_norm_sq]
+    rw [norm_sub_sq_real, inner_smul_right, h2, norm_smul, Real.norm_eq_abs, abs_of_pos he]
+    have h3 : (eta * ‖A.adjoint (A (e t))‖) ^ 2 ≤ eta ^ 2 * ‖A‖ ^ 2 * ‖A (e t)‖ ^ 2 := by
+      have := mul_le_mul_of_nonneg_left h1 he.le
+      have h0 : 0 ≤ eta * ‖A.adjoint (A (e t))‖ := by positivity
+      calc (eta * ‖A.adjoint (A (e t))‖) ^ 2 ≤ (eta * (‖A‖ * ‖A (e t)‖)) ^ 2 :=
+            pow_le_pow_left₀ h0 this 2
+        _ = eta ^ 2 * ‖A‖ ^ 2 * ‖A (e t)‖ ^ 2 := by ring
+    calc ‖e t‖ ^ 2 - 2 * (eta * ‖A (e t)‖ ^ 2) + (eta * ‖A.adjoint (A (e t))‖) ^ 2 +
+          c * ‖A (e t)‖ ^ 2 = ‖e t‖ ^ 2 - (eta ^ 2 * ‖A‖ ^ 2 * ‖A (e t)‖ ^ 2 -
+            (eta * ‖A.adjoint (A (e t))‖) ^ 2) := by simp only [c]; ring
+      _ ≤ ‖e t‖ ^ 2 := by linarith
+  -- `A` is bounded below on `K`
+  have hinjK : ∀ v ∈ K, A v = 0 → v = 0 := by
+    rintro v ⟨w, rfl⟩ hv
+    have : inner ℝ (A.adjoint w) (A.adjoint w) = 0 := by
+      rw [ContinuousLinearMap.adjoint_inner_left]
+      simp only [ContinuousLinearMap.coe_coe] at hv
+      rw [hv, inner_zero_right]
+    exact inner_self_eq_zero.mp this
+  obtain ⟨C, -, hC⟩ := (A.toLinearMap.comp K.subtype).exists_antilipschitzWith (by
+    rw [LinearMap.ker_eq_bot']
+    intro v hv
+    exact Subtype.ext (hinjK v v.2 hv))
+  have hbelow : ∀ v ∈ K, ‖v‖ ≤ C * ‖A v‖ := fun v hv ↦ by
+    have := ZeroHomClass.bound_of_antilipschitz _ hC (⟨v, hv⟩ : K)
+    simpa using this
+  -- summability of the residuals
+  have hsum : Summable fun t ↦ c * ‖A (e t)‖ ^ 2 := by
+    refine summable_of_sum_range_le (c := ‖e 0‖ ^ 2) (fun t ↦ by positivity) fun T ↦ ?_
+    have : ∀ T, ∑ t ∈ Finset.range T, c * ‖A (e t)‖ ^ 2 + ‖e T‖ ^ 2 ≤ ‖e 0‖ ^ 2 := by
+      intro T
+      induction T with
+      | zero => simp
+      | succ T ih =>
+        rw [Finset.sum_range_succ]
+        linarith [henergy T]
+    linarith [this T, sq_nonneg ‖e T‖]
+  have hA0 : Tendsto (fun t ↦ ‖A (e t)‖) atTop (𝓝 0) := by
+    have h := hsum.tendsto_atTop_zero
+    have h' : Tendsto (fun t ↦ ‖A (e t)‖ ^ 2) atTop (𝓝 0) := by
+      have := h.const_mul c⁻¹
+      simp only [mul_zero, ← mul_assoc, inv_mul_cancel₀ hc.ne', one_mul] at this
+      exact this
+    have := h'.sqrt
+    simpa [Real.sqrt_sq (norm_nonneg _)] using this
+  have he0 : Tendsto (fun t ↦ ‖e t‖) atTop (𝓝 0) := by
+    have hup : Tendsto (fun t ↦ (C : ℝ) * ‖A (e t)‖) atTop (𝓝 0) := by
+      simpa using hA0.const_mul (C : ℝ)
+    exact squeeze_zero (fun t ↦ norm_nonneg _) (fun t ↦ hbelow _ (heK t)) hup
+  have : Tendsto (fun t ↦ e t + thetaStar) atTop (𝓝 (0 + thetaStar)) :=
+    (tendsto_zero_iff_norm_tendsto_zero.mpr he0).add tendsto_const_nhds
+  simpa [e] using this
 
 
 end CKSD

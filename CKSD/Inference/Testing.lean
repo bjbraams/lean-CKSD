@@ -2,6 +2,9 @@ module
 
 public import CKSD.Inference.Density
 public import CKSD.Inference.InvariantTesting
+public import TauCeti.Probability.Distributions.Gaussian.Projection
+public import TauCeti.Probability.Distributions.StudentT.ChiSquared
+public import TauCeti.Probability.Quantile
 
 /-!
 # Inference: Testing
@@ -315,7 +318,221 @@ theorem isUniformlyMostPowerfulTest_of_monotone_likelihood_ratio (P : ℝ → Me
     · exact hsize.le
   · exact step θ₀ θ hθ ψ hψ ((hlevel θ₀ (mem_Iic.2 le_rfl)).trans hsize.symm.le)
 
-/-- GAPS 101.17: chi-squared residual law and independence from the sample mean. -/
+/-- For laws with densities, a positive density at `Pa` lets a vanishing bounded mean under `Pa`
+pass to `Pb`. -/
+theorem integral_eq_zero_of_integral_eq_zero_of_pos_density {μ Pa Pb : Measure X}
+    [IsFiniteMeasure Pa] [IsFiniteMeasure Pb] {fa fb : X → ℝ}
+    (ha : HasDensity Pa μ fa) (hb : HasDensity Pb μ fb) (hpos : ∀ x, 0 < fa x)
+    {g : X → ℝ} (hg : Measurable g) (hg0 : ∀ x, 0 ≤ g x) (hg1 : ∀ x, g x ≤ 1)
+    (h0 : (∫ x, g x ∂Pa) = 0) : (∫ x, g x ∂Pb) = 0 := by
+  rw [ha.integral_eq] at h0
+  rw [hb.integral_eq]
+  have hint : Integrable (fun x ↦ fa x * g x) μ := by
+    refine ha.integrable.mul_bdd (c := 1) hg.aestronglyMeasurable (ae_of_all _ fun x ↦ ?_)
+    rw [Real.norm_eq_abs, abs_of_nonneg (hg0 x)]; exact hg1 x
+  have hz := (integral_eq_zero_iff_of_nonneg (fun x ↦ mul_nonneg (hpos x).le (hg0 x)) hint).1 h0
+  have hg' : g =ᵐ[μ] 0 := hz.mono fun x hx ↦ by
+    simpa [(hpos x).ne'] using hx
+  rw [integral_congr_ae (hg'.mono fun x hx ↦ by simp [hx] : (fun x ↦ fb x * g x) =ᵐ[μ] 0)]
+  simp
+
+
+/-- The mean of `1 - ψ` for a test `ψ` under a probability law. -/
+theorem integral_one_sub_of_isStatisticalTest (P : Measure X) [IsProbabilityMeasure P]
+    {ψ : X → ℝ} (hψ : IsStatisticalTest ψ) :
+    (∫ x, (1 - ψ x) ∂P) = 1 - ∫ x, ψ x ∂P := by
+  rw [integral_sub (integrable_const 1) (integrable_of_measurable_of_abs_le P hψ.1 fun x ↦
+    abs_le.2 ⟨by linarith [(hψ.2 x).1], (hψ.2 x).2⟩)]
+  simp
+
+/-- The reversed Neyman–Pearson step of the Karlin–Rubin theorem: if the density ratio `fb / fa`
+is a nondecreasing function of `T`, a one-sided test in `T` whose size under `Pb` is at most that
+of another test also has at most its power under `Pa`. -/
+theorem integral_threshold_test_le_of_monotone_likelihood_ratio (μ : Measure X)
+    (Pa Pb : Measure X) [IsProbabilityMeasure Pa] [IsProbabilityMeasure Pb] (fa fb : X → ℝ)
+    (ha : HasDensity Pa μ fa) (hb : HasDensity Pb μ fb) (hpos : ∀ x, 0 < fa x)
+    (hposb : ∀ x, 0 < fb x)
+    (T : X → ℝ) (r : ℝ → ℝ) (hr : Monotone r) (hratio : ∀ x, fb x / fa x = r (T x))
+    (c γ : ℝ) (φ : X → ℝ) (hφ : IsStatisticalTest φ)
+    (hφdef : ∀ x, φ x = if c < T x then 1 else if T x = c then γ else 0)
+    (ψ : X → ℝ) (hψ : IsStatisticalTest ψ) (hle : (∫ x, φ x ∂Pb) ≤ ∫ x, ψ x ∂Pb) :
+    (∫ x, φ x ∂Pa) ≤ ∫ x, ψ x ∂Pa := by
+  have hφ' : IsStatisticalTest (fun x ↦ 1 - φ x) :=
+    ⟨measurable_const.sub hφ.1, fun x ↦ ⟨by linarith [(hφ.2 x).2], by linarith [(hφ.2 x).1]⟩⟩
+  have hψ' : IsStatisticalTest (fun x ↦ 1 - ψ x) :=
+    ⟨measurable_const.sub hψ.1, fun x ↦ ⟨by linarith [(hψ.2 x).2], by linarith [(hψ.2 x).1]⟩⟩
+  by_cases hrc : 0 < r c
+  · have key := integral_le_of_generalized_neyman_pearson (m := 1) μ fa (fun _ ↦ fb)
+      (fun _ ↦ (r c)⁻¹) ha.integrable (fun _ ↦ hb.integrable) (fun x ↦ 1 - φ x)
+      (fun x ↦ 1 - ψ x) hφ' hψ' (ae_of_all _ fun x ↦ ?_) (fun _ ↦ ?_)
+    · have e : ∀ (P : Measure X) (f : X → ℝ), HasDensity P μ f → ∀ χ : X → ℝ,
+          (∫ x, χ x * f x ∂μ) = ∫ x, χ x ∂P := by
+        intro P f hP χ
+        rw [hP.integral_eq]
+        exact integral_congr_ae (ae_of_all _ fun x ↦ mul_comm _ _)
+      rw [e Pa fa ha (fun x ↦ 1 - ψ x), e Pa fa ha (fun x ↦ 1 - φ x),
+        integral_one_sub_of_isStatisticalTest Pa hψ,
+        integral_one_sub_of_isStatisticalTest Pa hφ] at key
+      linarith
+    · simp only [Finset.univ_unique, Fin.default_eq_zero, Finset.sum_singleton]
+      refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+      · have h1 : fb x < r c * fa x := by
+          have := mul_lt_mul_of_pos_left h hrc
+          rwa [← mul_assoc, mul_inv_cancel₀ hrc.ne', one_mul] at this
+        have h2 : r (T x) < r c := by
+          rw [← hratio x, div_lt_iff₀ (hpos x)]; exact h1
+        have hT : T x < c := by
+          by_contra hT
+          exact absurd (hr (not_lt.1 hT)) (not_le.2 h2)
+        simp [hφdef, not_lt.2 hT.le, hT.ne]
+      · have h1 : r c * fa x < fb x := by
+          have := mul_lt_mul_of_pos_left h hrc
+          rwa [← mul_assoc, mul_inv_cancel₀ hrc.ne', one_mul] at this
+        have h2 : r c < r (T x) := by
+          rw [← hratio x, lt_div_iff₀ (hpos x)]; exact h1
+        have hT : c < T x := by
+          by_contra hT
+          exact absurd (hr (not_lt.1 hT)) (not_le.2 h2)
+        simp [hφdef, hT]
+    · have e : ∀ χ : X → ℝ, IsStatisticalTest χ →
+          (∫ x, (1 - χ x) * fb x ∂μ) = 1 - ∫ x, χ x ∂Pb := by
+        intro χ hχ
+        rw [← integral_one_sub_of_isStatisticalTest Pb hχ, hb.integral_eq]
+        exact integral_congr_ae (ae_of_all _ fun x ↦ mul_comm _ _)
+      rw [e ψ hψ, e φ hφ]
+      exact mul_le_mul_of_nonneg_left (by linarith) (inv_nonneg.2 hrc.le)
+  · -- every observation exceeds the threshold, so the threshold test is identically one
+    have hall : ∀ x, c < T x := by
+      intro x
+      by_contra hT
+      have h1 := hr (not_lt.1 hT)
+      rw [← hratio x] at h1
+      exact hrc (lt_of_lt_of_le (div_pos (hposb x) (hpos x)) h1)
+    have hφ1 : ∀ x, φ x = 1 := fun x ↦ by simp [hφdef, hall x]
+    simp only [hφ1, integral_const, probReal_univ, smul_eq_mul, mul_one] at hle ⊢
+    have h0 : (∫ x, (1 - ψ x) ∂Pb) = 0 := by
+      rw [integral_one_sub_of_isStatisticalTest Pb hψ]
+      have : (∫ x, ψ x ∂Pb) ≤ 1 := by
+        calc (∫ x, ψ x ∂Pb) ≤ ∫ _x, (1 : ℝ) ∂Pb := integral_mono
+              (integrable_of_measurable_of_abs_le Pb hψ.1 fun x ↦
+                abs_le.2 ⟨by linarith [(hψ.2 x).1], (hψ.2 x).2⟩)
+              (integrable_const 1) fun x ↦ (hψ.2 x).2
+          _ = 1 := by simp
+      linarith
+    have := integral_eq_zero_of_integral_eq_zero_of_pos_density hb ha hposb hψ'.1
+      (fun x ↦ (hψ'.2 x).1) (fun x ↦ (hψ'.2 x).2) h0
+    rw [integral_one_sub_of_isStatisticalTest Pa hψ] at this
+    linarith
+
+
+/-- The size of a one-sided randomized test in a real statistic. -/
+theorem integral_threshold_test_eq (P : Measure X) [IsProbabilityMeasure P] {T : X → ℝ}
+    (hT : Measurable T) (c γ : ℝ) :
+    (∫ x, (if c < T x then 1 else if T x = c then γ else 0) ∂P) =
+      P.real {x | c < T x} + γ * P.real {x | T x = c} := by
+  have hm1 : MeasurableSet {x | c < T x} := measurableSet_lt measurable_const hT
+  have hm2 : MeasurableSet {x | T x = c} := measurableSet_eq_fun hT measurable_const
+  have hpt : (fun x ↦ if c < T x then (1 : ℝ) else if T x = c then γ else 0) =
+      fun x ↦ {x | c < T x}.indicator (fun _ ↦ (1 : ℝ)) x +
+        {x | T x = c}.indicator (fun _ ↦ γ) x := by
+    funext x
+    by_cases h1 : c < T x
+    · have h2 : T x ≠ c := h1.ne'
+      simp [indicator, h1, h2]
+    · by_cases h2 : T x = c
+      · simp [indicator, h2]
+      · simp [indicator, h1, h2]
+  rw [hpt, integral_add ((integrable_const _).indicator hm1) ((integrable_const _).indicator hm2),
+    integral_indicator_const _ hm1, integral_indicator_const _ hm2]
+  simp [mul_comm]
+
+/-- Every size in `(0, 1)` is attained by a one-sided randomized test in a real statistic. -/
+theorem exists_threshold_test_integral_eq (P : Measure X) [IsProbabilityMeasure P] {T : X → ℝ}
+    (hT : Measurable T) {β : ℝ} (hβ : β ∈ Ioo 0 1) :
+    ∃ c γ : ℝ, γ ∈ Icc 0 1 ∧
+      (∫ x, (if c < T x then 1 else if T x = c then γ else 0) ∂P) = β := by
+  set ν := P.map T
+  have h0 : 0 < 1 - β := by linarith [hβ.2]
+  have h1 : 1 - β < 1 := by linarith [hβ.1]
+  set c := ν.quantile (1 - β)
+  have hlt := ν.measureReal_Iio_quantile_le h0 h1
+  have hle := ν.le_cdf_quantile h1
+  rw [ProbabilityTheory.cdf_eq_real] at hle
+  rw [map_measureReal_apply hT measurableSet_Iio] at hlt
+  rw [map_measureReal_apply hT measurableSet_Iic] at hle
+  change P.real {x | T x < c} ≤ 1 - β at hlt
+  change 1 - β ≤ P.real {x | T x ≤ c} at hle
+  have hm1 : MeasurableSet {x | T x ≤ c} := measurableSet_le hT measurable_const
+  have hgt : P.real {x | c < T x} = 1 - P.real {x | T x ≤ c} := by
+    rw [← probReal_compl_eq_one_sub hm1]
+    congr 1
+    ext x; simp
+  have heq : P.real {x | T x = c} = P.real {x | T x ≤ c} - P.real {x | T x < c} := by
+    have hdisj : {x | T x ≤ c} = {x | T x < c} ∪ {x | T x = c} := by
+      ext x; simp [le_iff_lt_or_eq]
+    rw [hdisj, measureReal_union _ (measurableSet_eq_fun hT measurable_const)]
+    · ring
+    · exact Set.disjoint_left.2 fun x hx hx' ↦ (ne_of_lt hx) hx'
+  set pg := P.real {x | c < T x}
+  set pe := P.real {x | T x = c}
+  have hA : pg ≤ β := by linarith
+  have hB : β ≤ pg + pe := by linarith
+  by_cases hpe : pe = 0
+  · refine ⟨c, 0, ⟨le_rfl, zero_le_one⟩, ?_⟩
+    rw [integral_threshold_test_eq P hT]
+    simp only [zero_mul, add_zero]
+    rw [hpe] at hB
+    linarith
+  · have hpe0 : 0 < pe := lt_of_le_of_ne measureReal_nonneg (Ne.symm hpe)
+    refine ⟨c, (β - pg) / pe, ⟨div_nonneg (by linarith) hpe0.le, ?_⟩, ?_⟩
+    · rw [div_le_one hpe0]; linarith
+    · rw [integral_threshold_test_eq P hT]
+      field_simp
+      ring
+
+
+/-- Standardization of a Gaussian sample: the coordinates `(xᵢ - m) / √v` of an i.i.d.
+`N(m, v)` sample form a standard Gaussian vector in Euclidean space. -/
+theorem hasLaw_standardize_pi_gaussianReal (n : ℕ) (m : ℝ) (v : ℝ≥0) (hv : 0 < v) :
+    HasLaw (fun x : Fin n → ℝ ↦ WithLp.toLp 2 (fun i ↦ (x i - m) / Real.sqrt v))
+      (stdGaussian (EuclideanSpace ℝ (Fin n))) (Measure.pi fun _ : Fin n ↦ gaussianReal m v) := by
+  have h1 : (gaussianReal m v).map (fun t ↦ (t - m) / Real.sqrt v) = gaussianReal 0 1 := by
+    have : (fun t : ℝ ↦ (t - m) / Real.sqrt v) = (· / Real.sqrt v) ∘ (· - m) := rfl
+    rw [this, ← Measure.map_map (by fun_prop) (by fun_prop), gaussianReal_map_sub_const,
+      gaussianReal_map_div_const]
+    congr 1
+    · simp
+    · ext
+      simp [Real.sq_sqrt (NNReal.coe_nonneg v), (NNReal.coe_pos.2 hv).ne']
+  have hm : Measurable (fun x : Fin n → ℝ ↦ fun i ↦ (x i - m) / Real.sqrt v) := by fun_prop
+  refine ⟨((WithLp.measurable_toLp 2 _).comp hm).aemeasurable, ?_⟩
+  have : (fun x : Fin n → ℝ ↦ WithLp.toLp 2 (fun i ↦ (x i - m) / Real.sqrt v)) =
+      (WithLp.toLp 2) ∘ (fun x : Fin n → ℝ ↦ fun i ↦ (x i - m) / Real.sqrt v) := rfl
+  rw [this, ← Measure.map_map (WithLp.measurable_toLp 2 _) hm,
+    Measure.pi_map_pi (f := fun _ t ↦ (t - m) / Real.sqrt v) (fun _ ↦ by fun_prop)]
+  simp_rw [h1]
+  exact map_pi_eq_stdGaussian
+
+
+/-- A unit linear functional of a standard Gaussian vector is standard Gaussian, from Mathlib's
+`variance_dual_stdGaussian` and `integral_strongDual_stdGaussian`. -/
+theorem stdGaussian_map_inner_of_norm_eq_one {E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
+    (w : E) (hw : ‖w‖ = 1) :
+    (stdGaussian E).map (fun y ↦ inner ℝ w y) = gaussianReal 0 1 := by
+  have hL : (fun y ↦ inner ℝ w y) = ⇑(innerSL ℝ w) := rfl
+  rw [hL, (inferInstance : IsGaussian ((stdGaussian E).map (innerSL ℝ w))).eq_gaussianReal,
+    integral_map (by fun_prop) (by fun_prop), variance_map (by fun_prop) (by fun_prop)]
+  simp only [id_eq, Function.id_comp]
+  rw [show (∫ x, innerSL ℝ w x ∂stdGaussian E) = 0 from integral_strongDual_stdGaussian _,
+    variance_dual_stdGaussian, innerSL_apply_norm, hw]
+  simp
+
+/-- GAPS 101.17: chi-squared residual law and independence from the sample mean.
+The proof projects the standardized sample onto the constants and their orthogonal complement,
+using TauCeti's `HasLaw.iIndepFun_orthogonalProjectionOnto_stdGaussian`,
+`HasLaw.norm_sq_orthogonalProjectionOnto_stdGaussian`, and
+`TauCeti.Probability.hasLaw_studentT_of_gaussian_chiSquared`. -/
 theorem gaussian_sample_mean_residual_laws (n : ℕ) (hn : 2 ≤ n) (m : ℝ) (v : ℝ≥0) (hv : 0 < v) :
     let P := Measure.pi (fun _ : Fin n ↦ gaussianReal m v);
     let mean := fun x : Fin n → ℝ ↦ (∑ i, x i) / n;
@@ -324,7 +541,117 @@ theorem gaussian_sample_mean_residual_laws (n : ℕ) (hn : 2 ≤ n) (m : ℝ) (v
       IndepFun mean ss P ∧
       P.map (fun x ↦ Real.sqrt n * (mean x - m) /
         Real.sqrt (ss x / (n - 1 : ℕ))) = TauCeti.Probability.studentTMeasure (n - 1 : ℕ) := by
-  sorry
-
+  intro P mean ss
+  let one : EuclideanSpace ℝ (Fin n) := WithLp.toLp 2 (fun _ ↦ 1)
+  let K : Submodule ℝ (EuclideanSpace ℝ (Fin n)) := ℝ ∙ one
+  let Y : (Fin n → ℝ) → EuclideanSpace ℝ (Fin n) := fun x ↦ WithLp.toLp 2 (fun i ↦ (x i - m) / Real.sqrt v)
+  have hY : HasLaw Y (stdGaussian (EuclideanSpace ℝ (Fin n))) P := hasLaw_standardize_pi_gaussianReal n m v hv
+  have hn0 : (n : ℝ) ≠ 0 := by positivity
+  have hsv : Real.sqrt v ≠ 0 := (Real.sqrt_pos.2 (NNReal.coe_pos.2 hv)).ne'
+  have hinner : ∀ y : EuclideanSpace ℝ (Fin n), inner ℝ one y = ∑ i, y i := by
+    intro y; rw [EuclideanSpace.inner_eq_star_dotProduct]; simp [one, dotProduct]
+  have hone : ‖one‖ ^ 2 = n := by
+    rw [EuclideanSpace.real_norm_sq_eq]; simp [one]
+  have hprojK : ∀ y : EuclideanSpace ℝ (Fin n), (K.starProjection y) = (inner ℝ one y / n) • one := by
+    intro y; rw [Submodule.starProjection_singleton, hone]; simp
+  -- the residual sum of squares is `v` times the squared length of the residual projection
+  have hss : ∀ x, ss x = v * ‖Kᗮ.orthogonalProjectionOnto (Y x)‖ ^ 2 := by
+    intro x
+    rw [← Submodule.norm_coe, Submodule.coe_orthogonalProjectionOnto_apply,
+      Submodule.starProjection_orthogonal_val, hprojK, hinner, EuclideanSpace.real_norm_sq_eq,
+      Finset.mul_sum]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    simp only [Y, one, mean, WithLp.ofLp_sub, WithLp.ofLp_smul, Pi.sub_apply,
+      Pi.smul_apply, smul_eq_mul, mul_one]
+    rw [← Finset.sum_div, Finset.sum_sub_distrib]
+    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    have hv2 : Real.sqrt v ^ 2 = v := Real.sq_sqrt (NNReal.coe_nonneg v)
+    field_simp
+    rw [hv2]
+    ring
+  -- the sample mean is a function of the projection onto the constants
+  have hmean : ∀ x, mean x = m + Real.sqrt v * (inner ℝ one (K.orthogonalProjectionOnto (Y x) : EuclideanSpace ℝ (Fin n)) / n) := by
+    intro x
+    rw [Submodule.coe_orthogonalProjectionOnto_apply,
+      ← Submodule.inner_starProjection_left_eq_right,
+      Submodule.starProjection_eq_self_iff.2 (Submodule.mem_span_singleton_self one), hinner]
+    simp only [Y, mean, ← Finset.sum_div, Finset.sum_sub_distrib]
+    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    field_simp
+    ring
+  have hinnerK : ∀ y, inner ℝ one (K.orthogonalProjectionOnto y : EuclideanSpace ℝ (Fin n)) =
+      inner ℝ one y := by
+    intro y
+    rw [Submodule.coe_orthogonalProjectionOnto_apply,
+      ← Submodule.inner_starProjection_left_eq_right,
+      Submodule.starProjection_eq_self_iff.2 (Submodule.mem_span_singleton_self one)]
+  -- independence of the two projections
+  have hK : Pairwise fun i j : Bool ↦ (bif i then K else Kᗮ) ⟂ (bif j then K else Kᗮ) := by
+    intro i j hij
+    cases i <;> cases j
+    · exact absurd rfl hij
+    · exact K.isOrtho_orthogonal_right.symm
+    · exact K.isOrtho_orthogonal_right
+    · exact absurd rfl hij
+  have hTF : IndepFun (fun x ↦ K.orthogonalProjectionOnto (Y x))
+      (fun x ↦ Kᗮ.orthogonalProjectionOnto (Y x)) P :=
+    (hY.iIndepFun_orthogonalProjectionOnto_stdGaussian (fun b ↦ bif b then K else Kᗮ) hK).indepFun
+      (i := true) (j := false) (by decide)
+  -- the residual squared length is chi-squared with `n - 1` degrees of freedom
+  have hone0 : one ≠ 0 := by
+    intro h
+    rw [h, norm_zero] at hone
+    exact hn0 (by rw [← hone]; ring)
+  have hfin : Module.finrank ℝ Kᗮ = n - 1 := by
+    have : Fact (Module.finrank ℝ (EuclideanSpace ℝ (Fin n)) = (n - 1) + 1) :=
+      ⟨by rw [finrank_euclideanSpace_fin]; omega⟩
+    exact Submodule.finrank_orthogonal_span_singleton hone0
+  have hV : HasLaw (fun x ↦ ‖Kᗮ.orthogonalProjectionOnto (Y x)‖ ^ 2)
+      (TauCeti.Probability.chiSquaredMeasure (n - 1 : ℕ)) P := by
+    have := hY.norm_sq_orthogonalProjectionOnto_stdGaussian Kᗮ
+    rwa [hfin] at this
+  refine ⟨?_, ?_, ?_⟩
+  · rw [← hV.map_eq]
+    congr 1
+    funext x
+    rw [hss x]
+    field_simp
+  · have := hTF.comp (φ := fun z : K ↦ m + Real.sqrt v *
+        (inner ℝ one (z : EuclideanSpace ℝ (Fin n)) / n))
+      (ψ := fun z : Kᗮ ↦ (v : ℝ) * ‖z‖ ^ 2) (by fun_prop) (by fun_prop)
+    convert this using 1
+    · funext x; exact hmean x
+    · funext x; exact hss x
+  · let w : EuclideanSpace ℝ (Fin n) := (Real.sqrt n)⁻¹ • one
+    have hsn : Real.sqrt n ≠ 0 := (Real.sqrt_pos.2 (by positivity)).ne'
+    have hw : ‖w‖ = 1 := by
+      have h1 : ‖one‖ = Real.sqrt n := by
+        rw [← hone, Real.sqrt_sq (norm_nonneg _)]
+      rw [norm_smul, h1, norm_inv, Real.norm_eq_abs, abs_of_pos (Real.sqrt_pos.2 (by positivity)),
+        inv_mul_cancel₀ hsn]
+    have hZ : HasLaw (fun x ↦ inner ℝ w (Y x)) (gaussianReal 0 1) P :=
+      HasLaw.comp ⟨by fun_prop, stdGaussian_map_inner_of_norm_eq_one w hw⟩ hY
+    have hZV : IndepFun (fun x ↦ inner ℝ w (Y x))
+        (fun x ↦ ‖Kᗮ.orthogonalProjectionOnto (Y x)‖ ^ 2) P := by
+      have := hTF.comp (φ := fun z : K ↦ (Real.sqrt n)⁻¹ *
+          inner ℝ one (z : EuclideanSpace ℝ (Fin n)))
+        (ψ := fun z : Kᗮ ↦ ‖z‖ ^ 2) (by fun_prop) (by fun_prop)
+      convert this using 1
+      · funext x
+        simp only [Function.comp_apply, hinnerK, w, inner_smul_left]
+        simp
+      · rfl
+    have hν : (0 : ℝ) < ((n - 1 : ℕ) : ℝ) := by
+      have : 1 ≤ n - 1 := by omega
+      exact_mod_cast this
+    rw [← (TauCeti.Probability.hasLaw_studentT_of_gaussian_chiSquared hν hZV hZ hV).map_eq]
+    congr 1
+    funext x
+    rw [hmean x, hss x, mul_div_assoc (v : ℝ), Real.sqrt_mul (NNReal.coe_nonneg v)]
+    simp only [w, inner_smul_left, hinnerK]
+    have hn2 : Real.sqrt n ^ 2 = n := Real.sq_sqrt (by positivity)
+    simp only [RCLike.conj_to_real, add_sub_cancel_left]
+    field_simp
+    rw [hn2, mul_comm]
 
 end CKSD

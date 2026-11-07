@@ -296,6 +296,127 @@ theorem lasso_cone_and_error_bounds {n p : ℕ} (hn : 0 < n)
       _ ≤ 4 * (3 * lambda * S.card / (2 * κ ^ 2)) := by gcongr
       _ = 6 * lambda * S.card / κ ^ 2 := by field_simp; ring
 
+/-- The Benjamini–Hochberg count `R` is at most `m` and satisfies its defining inequality
+`R ≤ #{j : x j ≤ R α / m}`. -/
+theorem benjaminiHochbergCount_le_and_le_card {m : ℕ} (x : Fin m → ℝ) (α : ℝ) :
+    benjaminiHochbergCount x α ≤ m ∧ benjaminiHochbergCount x α ≤
+      (Finset.univ.filter fun j ↦ x j ≤ (benjaminiHochbergCount x α : ℝ) * α / m).card := by
+  classical
+  obtain ⟨k, hk, heq⟩ := Finset.exists_mem_eq_sup
+    ((Finset.range (m + 1)).filter fun k : ℕ ↦
+      k ≤ (Finset.univ.filter fun i ↦ x i ≤ (k : ℝ) * α / m).card)
+    ⟨0, by simp⟩ id
+  have hR : benjaminiHochbergCount x α = k := by
+    rw [benjaminiHochbergCount]; convert heq; rfl
+  rw [Finset.mem_filter, Finset.mem_range] at hk
+  rw [hR]
+  exact ⟨by omega, by convert hk.2⟩
+
+/-- Every `k ≤ m` satisfying the Benjamini–Hochberg inequality is at most the count. -/
+theorem le_benjaminiHochbergCount {m : ℕ} (x : Fin m → ℝ) (α : ℝ) (k : ℕ) (hk : k ≤ m)
+    (hkN : k ≤ (Finset.univ.filter fun j ↦ x j ≤ (k : ℝ) * α / m).card) :
+    k ≤ benjaminiHochbergCount x α := by
+  classical
+  unfold benjaminiHochbergCount
+  exact Finset.le_sup (f := id) (Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), by
+    convert hkN⟩)
+
+/-- Setting one p-value to zero: the Benjamini–Hochberg count does not decrease, it is at
+least one, and it is unchanged whenever the modified p-value is rejected by either count. -/
+theorem benjaminiHochbergCount_update_zero {m : ℕ} (hm : 0 < m) (x : Fin m → ℝ) (α : ℝ)
+    (hα : 0 ≤ α) (i : Fin m) :
+    let q := Function.update x i 0
+    benjaminiHochbergCount x α ≤ benjaminiHochbergCount q α ∧
+    1 ≤ benjaminiHochbergCount q α ∧
+    (x i ≤ (benjaminiHochbergCount q α : ℝ) * α / m →
+      benjaminiHochbergCount x α = benjaminiHochbergCount q α) := by
+  classical
+  intro q
+  have hc : ∀ k : ℕ, 0 ≤ (k : ℝ) * α / m := fun k ↦ by positivity
+  have hsub : ∀ k : ℕ, (Finset.univ.filter fun j ↦ x j ≤ (k : ℝ) * α / m) ⊆
+      (Finset.univ.filter fun j ↦ q j ≤ (k : ℝ) * α / m) := by
+    intro k j hj
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hj ⊢
+    by_cases hji : j = i
+    · subst hji; simp [q, hc k]
+    · simp [q, Function.update_of_ne hji, hj]
+  have heq : ∀ k : ℕ, x i ≤ (k : ℝ) * α / m →
+      (Finset.univ.filter fun j ↦ q j ≤ (k : ℝ) * α / m) =
+      (Finset.univ.filter fun j ↦ x j ≤ (k : ℝ) * α / m) := by
+    intro k hk
+    refine Finset.Subset.antisymm (fun j hj ↦ ?_) (hsub k)
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hj ⊢
+    by_cases hji : j = i
+    · subst hji; exact hk
+    · simpa [q, Function.update_of_ne hji] using hj
+  obtain ⟨hxm, hxN⟩ := benjaminiHochbergCount_le_and_le_card x α
+  obtain ⟨hqm, hqN⟩ := benjaminiHochbergCount_le_and_le_card q α
+  refine ⟨?_, ?_, fun hi ↦ ?_⟩
+  · exact le_benjaminiHochbergCount q α _ hxm (hxN.trans (Finset.card_le_card (hsub _)))
+  · refine le_benjaminiHochbergCount q α 1 hm ?_
+    rw [Finset.one_le_card]
+    exact ⟨i, by simp only [Finset.mem_filter, Finset.mem_univ, true_and, q,
+      Function.update_self]; exact hc 1⟩
+  · refine le_antisymm ?_ ?_
+    · exact le_benjaminiHochbergCount q α _ hxm (hxN.trans (Finset.card_le_card (hsub _)))
+    · refine le_benjaminiHochbergCount x α _ hqm ?_
+      rw [← heq _ hi]; exact hqN
+
+/-- Leave-one-out decomposition of a Benjamini–Hochberg rejection: the contribution of
+hypothesis `i` to the false discovery proportion splits over the value `k` of the count
+computed with `x i` replaced by zero. -/
+theorem benjaminiHochberg_rejection_div_eq_sum {m : ℕ} (hm : 0 < m) (x : Fin m → ℝ) (α : ℝ)
+    (hα : 0 ≤ α) (i : Fin m) :
+    (if x i ≤ (benjaminiHochbergCount x α : ℝ) * α / m then (1 : ℝ) else 0) /
+        max (benjaminiHochbergCount x α : ℝ) 1 =
+      ∑ k ∈ Finset.Icc 1 m, (if x i ≤ (k : ℝ) * α / m ∧
+        benjaminiHochbergCount (Function.update x i 0) α = k then (1 : ℝ) / k else 0) := by
+  classical
+  obtain ⟨hmono, hone, hsame⟩ := benjaminiHochbergCount_update_zero hm x α hα i
+  set R := benjaminiHochbergCount x α
+  set Rq := benjaminiHochbergCount (Function.update x i 0) α
+  have hRqm : Rq ≤ m := (benjaminiHochbergCount_le_and_le_card _ α).1
+  by_cases hrej : x i ≤ (R : ℝ) * α / m
+  · have hle : x i ≤ (Rq : ℝ) * α / m := hrej.trans (by
+      gcongr)
+    have hR : R = Rq := hsame hle
+    rw [ite_eq_left hrej, Finset.sum_eq_single Rq]
+    · rw [ite_eq_left ⟨hle, rfl⟩, hR, max_eq_left (by exact_mod_cast hone)]
+    · intro k _ hk
+      rw [ite_eq_right]; rintro ⟨_, h⟩; exact hk h.symm
+    · intro h
+      exact absurd (Finset.mem_Icc.mpr ⟨hone, hRqm⟩) h
+  · rw [ite_eq_right hrej, zero_div]
+    symm
+    refine Finset.sum_eq_zero fun k _ ↦ ite_eq_right ?_
+    rintro ⟨hk, hRk⟩
+    rw [← hRk] at hk
+    exact hrej (by rw [hsame hk]; exact hk)
+
+/-- The Benjamini–Hochberg count is a measurable function of the p-values. -/
+theorem measurable_benjaminiHochbergCount (m : ℕ) (α : ℝ) :
+    Measurable fun x : Fin m → ℝ ↦ benjaminiHochbergCount x α := by
+  classical
+  -- the count factors through the finitely many rejection counts
+  set N : (Fin m → ℝ) → (Fin (m + 1) → ℕ) := fun x k ↦
+    (Finset.univ.filter fun j ↦ x j ≤ ((k : ℕ) : ℝ) * α / m).card with hN
+  set G : (Fin (m + 1) → ℕ) → ℕ := fun v ↦
+    ((Finset.range (m + 1)).filter fun k : ℕ ↦
+      k ≤ (if h : k < m + 1 then v ⟨k, h⟩ else 0)).sup id with hG
+  have hfac : (fun x : Fin m → ℝ ↦ benjaminiHochbergCount x α) = G ∘ N := by
+    funext x
+    simp only [Function.comp, hG, hN, benjaminiHochbergCount]
+    congr 1
+    refine Finset.filter_congr fun k hk ↦ ?_
+    rw [dif_pos (Finset.mem_range.mp hk)]
+  rw [hfac]
+  refine (measurable_of_countable G).comp ?_
+  refine measurable_pi_iff.mpr fun k ↦ ?_
+  simp only [hN, Finset.card_filter]
+  refine Finset.measurable_sum _ fun j _ ↦ ?_
+  exact Measurable.ite (measurableSet_le (measurable_pi_apply j) measurable_const)
+    measurable_const measurable_const
+
 /-- GAPS 103.37, FDR control for mutually independent p-values. -/
 theorem benjamini_hochberg_false_discovery_rate_le {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (m : ℕ) (hm : 0 < m)
@@ -306,7 +427,102 @@ theorem benjamini_hochberg_false_discovery_rate_le {Ω : Type*} [MeasurableSpace
     (∫ ω, ((H₀.filter fun i ↦ p i ω ≤
       (benjaminiHochbergCount (fun j ↦ p j ω) α : ℝ) * α / m).card : ℝ) /
         max (benjaminiHochbergCount (fun j ↦ p j ω) α : ℝ) 1 ∂μ) ≤ α * H₀.card / m := by
-  sorry
+  classical
+  obtain ⟨hα0, hα1⟩ := hα
+  have hmR : (0 : ℝ) < m := by exact_mod_cast hm
+  -- the leave-one-out counts
+  set Ri : Fin m → Ω → ℕ := fun i ω ↦
+    benjaminiHochbergCount (Function.update (fun j ↦ p j ω) i 0) α with hRi
+  have hupd_meas : ∀ i, Measurable fun ω ↦ Function.update (fun j ↦ p j ω) i 0 := by
+    intro i
+    refine measurable_pi_iff.mpr fun j ↦ ?_
+    by_cases hji : j = i
+    · subst hji; simp only [Function.update_self]; exact measurable_const
+    · simp only [Function.update_of_ne hji]; exact hp j
+  have hRi_meas : ∀ i, Measurable (Ri i) := fun i ↦
+    (measurable_benjaminiHochbergCount m α).comp (hupd_meas i)
+  -- independence of `p i` and the leave-one-out count
+  have hindep : ∀ i, IndepFun (p i) (Ri i) μ := by
+    intro i
+    have h := hind.indepFun_finset {i} (Finset.univ \ {i}) Finset.disjoint_sdiff hp
+    have hφ : Measurable fun z : ({i} : Finset (Fin m)) → ℝ ↦ z ⟨i, Finset.mem_singleton_self i⟩ :=
+      measurable_pi_apply _
+    let ext : ((Finset.univ \ {i} : Finset (Fin m)) → ℝ) → (Fin m → ℝ) := fun z j ↦
+      if hj : j ∈ Finset.univ \ {i} then z ⟨j, hj⟩ else 0
+    have hext_meas : Measurable ext := by
+      refine measurable_pi_iff.mpr fun j ↦ ?_
+      by_cases hj : j ∈ Finset.univ \ {i}
+      · simp only [ext, dif_pos hj]; exact measurable_pi_apply _
+      · simp only [ext, dif_neg hj]; exact measurable_const
+    have h2 := h.comp hφ ((measurable_benjaminiHochbergCount m α).comp hext_meas)
+    have e1 : p i = (fun z : ({i} : Finset (Fin m)) → ℝ ↦ z ⟨i, Finset.mem_singleton_self i⟩) ∘
+        (fun ω (j : ({i} : Finset (Fin m))) ↦ p j ω) := rfl
+    have e2 : Ri i = ((fun x : Fin m → ℝ ↦ benjaminiHochbergCount x α) ∘ ext) ∘
+        (fun ω (j : (Finset.univ \ {i} : Finset (Fin m))) ↦ p j ω) := by
+      funext ω
+      refine congrArg (fun x ↦ benjaminiHochbergCount x α) (funext fun j ↦ ?_)
+      by_cases hji : j = i
+      · subst hji; simp [ext]
+      · simp only [Function.update_of_ne hji, ext, dif_pos (show j ∈ Finset.univ \ {i} by simp [hji])]
+    rw [e1, e2]
+    exact h2
+  -- the events
+  set E : Fin m → ℕ → Set Ω := fun i k ↦ {ω | p i ω ≤ (k : ℝ) * α / m} ∩ Ri i ⁻¹' {k} with hE
+  have hE_meas : ∀ i k, MeasurableSet (E i k) := fun i k ↦
+    (measurableSet_le (hp i) measurable_const).inter (hRi_meas i (measurableSet_singleton k))
+  -- pointwise decomposition of the false discovery proportion
+  have hpt : ∀ ω, ((H₀.filter fun i ↦ p i ω ≤
+      (benjaminiHochbergCount (fun j ↦ p j ω) α : ℝ) * α / m).card : ℝ) /
+        max (benjaminiHochbergCount (fun j ↦ p j ω) α : ℝ) 1 =
+      ∑ i ∈ H₀, ∑ k ∈ Finset.Icc 1 m, (E i k).indicator (fun _ ↦ (1 : ℝ) / k) ω := by
+    intro ω
+    rw [Finset.card_filter, Nat.cast_sum, Finset.sum_div]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [Nat.cast_ite, Nat.cast_one, Nat.cast_zero,
+      benjaminiHochberg_rejection_div_eq_sum hm (fun j ↦ p j ω) α hα0.le i]
+    refine Finset.sum_congr rfl fun k _ ↦ ?_
+    simp only [Set.indicator, hE, Set.mem_inter_iff, Set.mem_preimage, Set.mem_singleton_iff,
+      mem_ofPred_eq, hRi]
+  rw [integral_congr_ae (Eventually.of_forall hpt)]
+  rw [integral_finsetSum _ fun i _ ↦ integrable_finsetSum _ fun k _ ↦
+    (integrable_const _).indicator (hE_meas i k)]
+  have hterm : ∀ i ∈ H₀, ∫ ω, ∑ k ∈ Finset.Icc 1 m, (E i k).indicator (fun _ ↦ (1 : ℝ) / k) ω ∂μ
+      ≤ α / m := by
+    intro i hi
+    rw [integral_finsetSum _ fun k _ ↦ (integrable_const _).indicator (hE_meas i k)]
+    have hk : ∀ k ∈ Finset.Icc 1 m, ∫ ω, (E i k).indicator (fun _ ↦ (1 : ℝ) / k) ω ∂μ ≤
+        α / m * μ.real (Ri i ⁻¹' {k}) := by
+      intro k hk
+      obtain ⟨hk1, hkm⟩ := Finset.mem_Icc.mp hk
+      have hkR : (0 : ℝ) < k := by exact_mod_cast hk1
+      rw [integral_indicator_const _ (hE_meas i k), smul_eq_mul]
+      have hmul : μ.real (E i k) = μ.real {ω | p i ω ≤ (k : ℝ) * α / m} *
+          μ.real (Ri i ⁻¹' {k}) := by
+        simp only [hE, Measure.real]
+        rw [← ENNReal.toReal_mul]
+        congr 1
+        exact (hindep i).measure_inter_preimage_eq_mul (Iic ((k : ℝ) * α / m)) {k}
+          measurableSet_Iic (measurableSet_singleton k)
+      have ht : (k : ℝ) * α / m ∈ Icc (0 : ℝ) 1 := by
+        refine ⟨by positivity, ?_⟩
+        rw [div_le_one hmR]
+        have : (k : ℝ) ≤ m := by exact_mod_cast hkm
+        nlinarith
+      have hv := hvalid i hi _ ht
+      rw [hmul]
+      have hB := measureReal_nonneg (μ := μ) (s := Ri i ⁻¹' {k})
+      calc μ.real {ω | p i ω ≤ (k : ℝ) * α / m} * μ.real (Ri i ⁻¹' {k}) * (1 / k)
+          ≤ (k : ℝ) * α / m * μ.real (Ri i ⁻¹' {k}) * (1 / k) := by gcongr
+        _ = α / m * μ.real (Ri i ⁻¹' {k}) := by field_simp
+    refine (Finset.sum_le_sum hk).trans ?_
+    rw [← Finset.mul_sum, sum_measureReal_preimage_singleton _ fun k _ ↦
+      hRi_meas i (measurableSet_singleton k)]
+    have : μ.real (Ri i ⁻¹' ↑(Finset.Icc 1 m)) ≤ 1 := measureReal_le_one
+    have hαm : 0 ≤ α / m := by positivity
+    nlinarith
+  calc ∑ i ∈ H₀, ∫ ω, ∑ k ∈ Finset.Icc 1 m, (E i k).indicator (fun _ ↦ (1 : ℝ) / k) ω ∂μ
+      ≤ ∑ _i ∈ H₀, α / m := Finset.sum_le_sum hterm
+    _ = α * H₀.card / m := by rw [Finset.sum_const, nsmul_eq_mul]; ring
 
 
 end CKSD

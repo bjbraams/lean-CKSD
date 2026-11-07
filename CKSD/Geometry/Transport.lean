@@ -2,6 +2,9 @@ module
 
 public import CKSD.Geometry.Basic
 public import CKSD.Bayes.Basic
+public import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Commute
+public import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Instances
+public import Mathlib.Analysis.SpecialFunctions.ContinuousFunctionalCalculus.Rpow.Basic
 
 /-!
 # Geometry: Transport
@@ -122,6 +125,12 @@ theorem semidiscreteTransportDual_concave_differentiable_and_attains_max {d k : 
           (y j))).toReal ^ 2 := by
   sorry
 
+/-- A matrix commuting with `B` commutes with its square root `CFC.sqrt B`. -/
+theorem commute_cfcSqrt_right {d : ℕ} {A B : Matrix (Fin d) (Fin d) ℝ} (h : Commute A B) :
+    Commute A (CFC.sqrt B) := by
+  rw [CFC.sqrt_eq_cfc]
+  exact (h.symm.cfc_nnreal _).symm
+
 /-- GAPS 108.57, the covariance-commutation criterion for compatibility with the standard
 Gaussian. -/
 theorem gaussian_optimal_maps_compatible_iff_covariances_commute
@@ -130,7 +139,104 @@ theorem gaussian_optimal_maps_compatible_iff_covariances_commute
     CFC.sqrt B * (CFC.sqrt A)⁻¹ =
       (CFC.sqrt A)⁻¹ * CFC.sqrt (CFC.sqrt A * B * CFC.sqrt A) * (CFC.sqrt A)⁻¹ ↔
       A * B = B * A := by
-  sorry
+  set S := CFC.sqrt A with hSdef
+  set R := CFC.sqrt B with hRdef
+  have hA0 : 0 ≤ A := hA.posSemidef.nonneg
+  have hB0 : 0 ≤ B := hB.posSemidef.nonneg
+  have hS0 : 0 ≤ S := CFC.sqrt_nonneg A
+  have hR0 : 0 ≤ R := CFC.sqrt_nonneg B
+  have hSS : S * S = A := CFC.sqrt_mul_sqrt_self A
+  have hRR : R * R = B := CFC.sqrt_mul_sqrt_self B
+  have hSu : IsUnit S := (CFC.isUnit_sqrt_iff A).mpr hA.isUnit
+  have hSdet : IsUnit S.det := (Matrix.isUnit_iff_isUnit_det S).mp hSu
+  have hSinv : S * S⁻¹ = 1 := Matrix.mul_nonsing_inv S hSdet
+  have hinvS : S⁻¹ * S = 1 := Matrix.nonsing_inv_mul S hSdet
+  have hSsa : S.conjTranspose = S := hS0.isSelfAdjoint
+  have hRsa : R.conjTranspose = R := hR0.isSelfAdjoint
+  constructor
+  · intro h
+    set M := CFC.sqrt (S * B * S)
+    have hMsa : M.conjTranspose = M := (CFC.sqrt_nonneg _).isSelfAdjoint
+    have hstar := congrArg Matrix.conjTranspose h
+    rw [Matrix.conjTranspose_mul, Matrix.conjTranspose_mul, Matrix.conjTranspose_mul,
+      Matrix.conjTranspose_nonsing_inv, hSsa, hRsa, hMsa, ← Matrix.mul_assoc, ← h] at hstar
+    -- `hstar : S⁻¹ * R = R * S⁻¹`
+    have hcomm : S * R = R * S := by
+      calc S * R = S * (R * S⁻¹) * S := by
+            rw [Matrix.mul_assoc S, Matrix.mul_assoc R, hinvS, Matrix.mul_one]
+        _ = S * (S⁻¹ * R) * S := by rw [hstar]
+        _ = R * S := by rw [← Matrix.mul_assoc S, hSinv, Matrix.one_mul]
+    have hSR : Commute S R := hcomm
+    have hSB : Commute S B := by
+      have := hSR.mul_right hSR
+      rwa [hRR] at this
+    have hAB : Commute A B := by
+      have := hSB.mul_left hSB
+      rwa [hSS] at this
+    exact hAB.eq
+  · intro h
+    have hSB : Commute S B := commute_cfcSqrt_right (h.symm : Commute B A) |>.symm
+    have hSR : Commute S R := commute_cfcSqrt_right hSB
+    have hM : CFC.sqrt (S * B * S) = S * R := by
+      refine CFC.sqrt_unique ?_ (hSR.mul_nonneg hS0 hR0 |> fun h ↦ ?_)
+      · calc S * R * (S * R) = S * S * (R * R) := by
+              rw [Matrix.mul_assoc, ← Matrix.mul_assoc R, ← hSR.eq, Matrix.mul_assoc,
+                Matrix.mul_assoc]
+          _ = S * (S * B) := by rw [hRR, Matrix.mul_assoc]
+          _ = S * (B * S) := by rw [hSB.eq]
+          _ = S * B * S := (Matrix.mul_assoc _ _ _).symm
+      · exact h
+    rw [hM, ← Matrix.mul_assoc, hinvS, Matrix.one_mul]
+
+/-- The squared `2`-Wasserstein distance between the laws of `S` and `T` under `P` is at most
+the mean squared distance `∫ ‖S x - T x‖² dP`, by the coupling `(S, T)_# P`. -/
+theorem wassersteinEDist_two_map_toReal_sq_le {d : ℕ}
+    (P : Measure (EuclideanSpace ℝ (Fin d))) {S T : EuclideanSpace ℝ (Fin d) →
+      EuclideanSpace ℝ (Fin d)} (hS : Measurable S) (hT : Measurable T)
+    (h : MemLp (fun x ↦ S x - T x) 2 P) :
+    (TauCeti.wassersteinEDist 2 (P.map S) (P.map T)).toReal ^ 2 ≤ ∫ x, ‖S x - T x‖ ^ 2 ∂P := by
+  have hc := TauCeti.isCoupling_map_prodMk_of_aemeasurable (γ := P) hS.aemeasurable
+    hT.aemeasurable rfl rfl
+  have hW := TauCeti.wassersteinEDist_le hc 2
+  rw [eLpNorm_map_measure (by fun_prop) (by fun_prop)] at hW
+  have he : eLpNorm ((fun z : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) ↦
+      edist z.1 z.2) ∘ fun x ↦ (S x, T x)) 2 P = eLpNorm (fun x ↦ S x - T x) 2 P := by
+    refine eLpNorm_congr_enorm_ae (by fun_prop) h.aestronglyMeasurable
+      (ae_of_all _ fun x ↦ ?_)
+    simp [edist_eq_enorm_sub]
+  rw [he, h.eLpNorm_eq_integral_rpow_norm (by norm_num) (by norm_num)] at hW
+  have hI : 0 ≤ ∫ x, ‖S x - T x‖ ^ (2 : ℝ≥0∞).toReal ∂P :=
+    integral_nonneg fun x ↦ by positivity
+  have hle := ENNReal.toReal_mono ENNReal.ofReal_ne_top hW
+  rw [ENNReal.toReal_ofReal (by positivity)] at hle
+  have hsq := pow_le_pow_left₀ ENNReal.toReal_nonneg hle 2
+  refine hsq.trans_eq ?_
+  simp only [ENNReal.toReal_ofNat, Real.rpow_two] at hI ⊢
+  rw [← Real.rpow_natCast, ← Real.rpow_mul hI]
+  norm_num
+
+/-- Pointwise form of the descent identity: with `g = x - k⁻¹ ∑ Tᵢ`, moving `x` by `-τ g` changes
+the sum of squared distances to the `Tᵢ` by `-k (2τ - τ²) ‖g‖²`. -/
+theorem sum_norm_sub_smul_sub_sq {d k : ℕ} (hk : 0 < k) (x : EuclideanSpace ℝ (Fin d))
+    (t : Fin k → EuclideanSpace ℝ (Fin d)) (tau : ℝ) :
+    ∑ i, ‖x - tau • (x - (k : ℝ)⁻¹ • ∑ j, t j) - t i‖ ^ 2 =
+      ∑ i, ‖x - t i‖ ^ 2 - k * (2 * tau - tau ^ 2) * ‖x - (k : ℝ)⁻¹ • ∑ j, t j‖ ^ 2 := by
+  set g := x - (k : ℝ)⁻¹ • ∑ j, t j
+  have hk' : (k : ℝ) ≠ 0 := by exact_mod_cast hk.ne'
+  have hsum : ∑ i, (x - t i) = (k : ℝ) • g := by
+    simp only [g, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+      smul_sub, smul_smul, mul_inv_cancel₀ hk', one_smul, Nat.cast_smul_eq_nsmul]
+  have hpt : ∀ i, ‖x - tau • g - t i‖ ^ 2 =
+      ‖x - t i‖ ^ 2 - 2 * tau * inner ℝ (x - t i) g + tau ^ 2 * ‖g‖ ^ 2 := by
+    intro i
+    rw [show x - tau • g - t i = (x - t i) - tau • g by abel, norm_sub_sq_real, inner_smul_right,
+      norm_smul, mul_pow, Real.norm_eq_abs, sq_abs]
+    ring
+  simp_rw [hpt]
+  rw [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum, ← sum_inner, hsum,
+    real_inner_smul_left, real_inner_self_eq_norm_sq]
+  simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+  ring
 
 /-- GAPS 108.59, the energy-descent inequality for the averaged-transport update.
 Only this finite-step inequality is asserted, not the convergence of the iteration. -/
@@ -146,7 +252,43 @@ theorem wasserstein_energy_descent_of_averaged_transport {d k : ℕ} (hk : 0 < k
     ∀ (htau : tau ∈ Icc 0 1),
     F (P.map (fun x ↦ x - tau • g x)) - F P ≤
       -(tau - tau ^ 2 / 2) * ∫ x, ‖g x‖ ^ 2 ∂P := by
-  sorry
+  intro g F tau _
+  have hk' : (0 : ℝ) < k := by exact_mod_cast hk
+  have hsumT : MemLp (fun x ↦ ∑ i, T i x) 2 P := memLp_finsetSum Finset.univ fun i _ ↦ hT2 i
+  have hg2 : MemLp g 2 P := hP2.sub (hsumT.const_smul ((k : ℝ)⁻¹))
+  have hgm : Measurable g := measurable_id.sub
+    ((Finset.measurable_fun_sum Finset.univ fun i _ ↦ hT i).const_smul ((k : ℝ)⁻¹))
+  have hSm : Measurable fun x ↦ x - tau • g x := measurable_id.sub (hgm.const_smul tau)
+  have hS2 : MemLp (fun x ↦ x - tau • g x) 2 P := hP2.sub (hg2.const_smul tau)
+  have hdiff : ∀ i, MemLp (fun x ↦ x - tau • g x - T i x) 2 P := fun i ↦ hS2.sub (hT2 i)
+  have hdiff0 : ∀ i, MemLp (fun x ↦ x - T i x) 2 P := fun i ↦ hP2.sub (hT2 i)
+  have hint : ∀ {f : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)}, MemLp f 2 P →
+      Integrable (fun x ↦ ‖f x‖ ^ 2) P := fun hf ↦ hf.integrable_norm_pow two_ne_zero
+  -- each new squared distance is bounded by the cost of the coupling through `P`
+  have hbound : ∀ i, (TauCeti.wassersteinEDist 2 (P.map fun x ↦ x - tau • g x)
+      (P.map (T i))).toReal ^ 2 ≤ ∫ x, ‖x - tau • g x - T i x‖ ^ 2 ∂P :=
+    fun i ↦ wassersteinEDist_two_map_toReal_sq_le P hSm (hT i) (hdiff i)
+  have hnew : F (P.map fun x ↦ x - tau • g x) ≤
+      (∑ i, ∫ x, ‖x - tau • g x - T i x‖ ^ 2 ∂P) / (2 * k) := by
+    simp only [F]
+    gcongr with i
+    exact hbound i
+  have hold : F P = (∑ i, ∫ x, ‖x - T i x‖ ^ 2 ∂P) / (2 * k) := by
+    simp only [F, hopt]
+  have hid : (∑ i, ∫ x, ‖x - tau • g x - T i x‖ ^ 2 ∂P) =
+      (∑ i, ∫ x, ‖x - T i x‖ ^ 2 ∂P) - k * (2 * tau - tau ^ 2) * ∫ x, ‖g x‖ ^ 2 ∂P := by
+    rw [← integral_finsetSum _ fun i _ ↦ hint (hdiff i),
+      ← integral_finsetSum _ fun i _ ↦ hint (hdiff0 i), ← integral_const_mul,
+      ← integral_sub (integrable_finsetSum _ fun i _ ↦ hint (hdiff0 i))
+        ((hint hg2).const_mul _)]
+    congr 1
+    ext x
+    exact sum_norm_sub_smul_sub_sq hk x (fun i ↦ T i x) tau
+  rw [hold]
+  refine (sub_le_sub_right hnew _).trans_eq ?_
+  rw [hid]
+  field_simp
+  ring
 
 
 end CKSD

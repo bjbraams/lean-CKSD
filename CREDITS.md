@@ -128,6 +128,90 @@ Specific proof reuse includes:
   TauCeti's singular chains and homology, `manifoldMorseIndex`, and `IsMorse`, and
   Mathlib's `PreAbstractSimplicialComplex` and `GromovHausdorff.ghDist`; the
   sinkhorn lower bound uses TauCeti's entropic-cost and coupling lemmas.
+- Section 101, further proofs: the Gaussian sampling laws use TauCeti's
+  `HasLaw.iIndepFun_orthogonalProjectionOnto_stdGaussian`,
+  `HasLaw.norm_sq_orthogonalProjectionOnto_stdGaussian`, and
+  `TauCeti.Probability.hasLaw_studentT_of_gaussian_chiSquared`; the marginal
+  order-statistic density uses `cdf_map_orderStatistic_pi_eq_regularizedIncompleteBeta`
+  and TauCeti's beta-law CDF; Gaussian integration by parts uses Mathlib's
+  `integral_mul_fderiv_eq_neg_fderiv_mul_of_integrable`.
+- Section 102, further proofs: the delta method, Cramér's MLE theorem, and the Hadamard
+  delta method use Mathlib's bounded-Lipschitz and closed-set Portmanteau theorems,
+  `ProbabilityTheory.strong_law_ae`, and the central limit theorem
+  `ProbabilityTheory.tendstoInDistribution_inv_sqrt_mul_sum_sub`. The Huber bound uses
+  TauCeti's `TauCeti.Probability.hasDerivAt_gaussianPDFReal` and
+  `TauCeti.Probability.integral_sq_gaussianReal`, with Mathlib's improper fundamental
+  theorem of calculus.
+- Section 103, further proofs: Fano's inequality uses Statlib's
+  `ProbabilityTheory.klDiv_eq_klDiv_boolMeasure_add_add`
+  (`Statlib/Divergence/KullbackLeibler/Event.lean`) and its Bernoulli divergence lemmas
+  (`Statlib/ForMathlib/InformationTheory/KullbackLeibler/Bernoulli.lean`). The
+  distribution-free goodness-of-fit laws use TauCeti's quantile coupling
+  (`TauCeti/Probability/Quantile.lean`), `MeasureTheory.Measure.continuous_cdf_of_noAtoms`,
+  and `TauCeti.Probability.uniformMeasure`. The eigenvector bound uses Mathlib's
+  `IsSelfAdjoint.hasEigenvector_of_isMaxOn`.
+- Section 104, further proofs: the log-Sobolev-to-Poincaré implication uses TauCeti's
+  `TauCeti/Probability/Concentration/PoincareLogSobolev.lean` and
+  `TauCeti/MeasureTheory/Integral/Entropy.lean`; the Pólya-urn and Metropolis ergodic
+  limits use Mathlib's Borel–Cantelli lemma, harmonic-number bounds, and
+  `tendsto_div_of_monotone_of_exists_subseq_tendsto_div`.
+- Section 105, further proofs: the Latin-square and block-design results use Mathlib's
+  `GaloisField.card` and matrix-rank lemmas; the canonical-correlation and multivariate
+  root statistics use `Matrix.IsHermitian.spectral_theorem` and the L² operator norm.
+- Section 106, further proofs: the stationary Gaussian process uses Mathlib's Kolmogorov
+  extension (`projectiveLimit`, `IsProjectiveLimit.unique`) and `IsGaussian.ext`; the
+  exceedance count uses TauCeti's `iIndepFun.hasLaw_card_filter_mem` and
+  `poissonBinomialMeasure_const`; Anscombe's theorem reuses the Section 102 Slutsky and
+  central-limit adapters.
+- Section 107, further proofs: the stability and Rademacher bounds use TauCeti's
+  `TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences`
+  (`TauCeti/Probability/McDiarmid.lean`) and Mathlib's `HasSubgaussianMGF.measure_ge_le`;
+  Exp3 uses `condExp_mul_of_stronglyMeasurable_left`.
+- Section 108, further proofs: the Čech–Rips inclusion uses Mathlib's
+  `geometric_hahn_banach_point_closed`; the Gaussian transport maps use the continuous
+  functional calculus (`Commute.cfc_nnreal`, `CFC.sqrt_unique`); random Fourier features
+  use `HasSubgaussianMGF.measure_sum_ge_le_of_iIndepFun`; transport descent uses TauCeti's
+  `TauCeti.isCoupling_map_prodMk_of_aemeasurable` and `TauCeti.wassersteinEDist_le`.
+- Section 101, round three: the factorization theorem uses the Halmos–Savage
+  countable-mixture domination with Mathlib's `condDistrib`, `compProd_map_condDistrib`,
+  `Measure.condKernel`, and `Measure.withDensity_compProd`; completeness of a full-rank
+  exponential family uses TauCeti's `TauCeti.Measure.ext_of_mgf`
+  (`TauCeti/Probability/Moments/Determinacy.lean`) and Mathlib's `Measure.ext_of_charFun`.
+- Section 102, round three: the Z-estimator theorem follows van der Vaart, *Asymptotic
+  Statistics*, Theorem 5.21, with a local chaining bound; the Bahadur representation
+  follows Ghosh (1971); local asymptotic normality follows van der Vaart, Theorem 7.2. The
+  likelihood-ratio, Wald, and score limits use Mathlib's `Measure.infinitePi` and
+  `iIndepFun_infinitePi`, and TauCeti's `gaussianReal_map_sq_noncentral` and
+  `noncentralChiSquaredMeasure_zero_noncentrality`
+  (`TauCeti/Probability/Distributions/NoncentralChiSquared/Gaussian.lean`).
+- Section 103, round three: stable recovery under the restricted isometry property follows
+  Foucart and Rauhut (2013), Theorems 4.20, 4.22, and 6.13, with an elementary proof of the
+  square-root lifting inequality in place of Lemma 6.14. The Grenander maximum-likelihood
+  proof uses Mathlib's concave slope inequalities.
+- Section 104, round three: the Laplace approximation uses TauCeti's multivariate Gaussian
+  density (`TauCeti/Probability/Distributions/Gaussian/Density.lean`) and Mathlib's
+  `ContDiffAt.isSymmSndFDerivAt`; particle-filter consistency uses
+  `ProbabilityTheory.variance_sum_pi`.
+- Section 105, round three: the global directed Markov property, the back-door and
+  front-door formulae, the do-calculus rules, and the decomposable factorization follow
+  Lauritzen (1996), Section 3.2 and the decomposable-model chapter, and Pearl (2009),
+  Sections 3.3–3.4, using Mathlib's simple-graph walks and cliques.
+- Section 106, round three: the Kalman filter uses TauCeti's `map_affine_multivariateGaussian`,
+  `multivariateGaussian_conv_multivariateGaussian`, and
+  `indepFun_matrix_of_hasLaw_multivariateGaussian_iff`, with Mathlib's
+  `condDistrib_ae_eq_of_measure_eq_compProd`; the Wold decomposition uses Mathlib's
+  `LinearMap.extendOfNorm`, Bessel's inequality `Orthonormal.inner_products_summable`, and
+  TauCeti's `Finsupp.norm_linearCombination_eq_of_inner_eq`, following the construction of
+  its `kolmogorovIsometry`.
+- Section 107, round three: the bandit and privacy lower bounds use Statlib's
+  Bretagnolle–Huber inequality `exp_neg_klDiv_le_two_sub_tvDist`, its total-variation
+  lemmas (`tvDist_comp_le`, `integral_sub_integral_le_tvDist`, `etvDist_eq_two_mul_iSup_sub`),
+  and `klDiv_pi`; the local-privacy contraction uses Mathlib's
+  `InformationTheory.klDiv_eq_lintegral_klFun_of_ac`; UCB uses Mathlib's Hoeffding bound
+  `HasSubgaussianMGF.measure_sum_range_ge_le_of_iIndepFun`.
+- Section 108, round three: Gromov–Hausdorff stability of Rips persistence uses Mathlib's
+  `GromovHausdorff.ghDist_eq_hausdorffDist`; Wasserstein stability uses the Minkowski
+  inequality `ENNReal.Lp_add_le`.
 
 The posterior-contraction formulations reuse Statlib's squared Hellinger
 divergence from `Statlib/Divergence/Hellinger/Basic.lean`. Extreme-value

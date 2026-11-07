@@ -31,6 +31,19 @@ theorem cheeger_inequalities {n : ℕ} (hn : 2 ≤ n) (W : Matrix (Fin n) (Fin n
       1 - Real.sqrt (1 - cheegerConstant W ^ 2) ≤ spectralGap W := by
   sorry
 
+/-- Squared distances to any point are integrable once they are integrable for one point. -/
+theorem integrable_dist_sq_of_integrable_dist_sq
+    {X : Type*} [MetricSpace X] [MeasurableSpace X] [BorelSpace X] (P : Measure X)
+    [IsFiniteMeasure P] (o : X) (h2 : Integrable (fun x ↦ dist o x ^ 2) P) (p : X) :
+    Integrable (fun x ↦ dist p x ^ 2) P := by
+  refine ((h2.const_mul 2).add (integrable_const (2 * dist p o ^ 2))).mono'
+    ((continuous_const.dist continuous_id).pow 2).aestronglyMeasurable
+    (ae_of_all _ fun x ↦ ?_)
+  rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]
+  simp only [Pi.add_apply]
+  have h := pow_le_pow_left₀ dist_nonneg (dist_triangle p o x) 2
+  nlinarith [sq_nonneg (dist p o - dist o x)]
+
 /-- GAPS 108.5, existence and uniqueness in a complete space satisfying the CAT(0) midpoint
 inequality. -/
 theorem existsUnique_frechet_mean_of_midpoint_inequality
@@ -41,7 +54,104 @@ theorem existsUnique_frechet_mean_of_midpoint_inequality
       (dist z x ^ 2 + dist z y ^ 2) / 2 - dist x y ^ 2 / 4)
     (o : X) (h2 : Integrable (fun x ↦ dist o x ^ 2) P) :
     ∃! m : X, ∀ p : X, (∫ x, dist m x ^ 2 ∂P) ≤ ∫ x, dist p x ^ 2 ∂P := by
-  sorry
+  set F : X → ℝ := fun p ↦ ∫ x, dist p x ^ 2 ∂P with hF
+  have hint := integrable_dist_sq_of_integrable_dist_sq P o h2
+  have hF0 : ∀ p, 0 ≤ F p := fun p ↦ integral_nonneg fun x ↦ sq_nonneg _
+  -- the integrated midpoint inequality
+  have hFmid : ∀ x y, dist x y ^ 2 ≤ 2 * F x + 2 * F y - 4 * F (mid x y) := by
+    intro x y
+    have hle : F (mid x y) ≤ ∫ z, ((dist x z ^ 2 + dist y z ^ 2) / 2 - dist x y ^ 2 / 4) ∂P := by
+      refine integral_mono (hint _) ?_ fun z ↦ ?_
+      · exact (((hint x).add (hint y)).div_const 2).sub (integrable_const _)
+      · simpa only [dist_comm] using hmid x y z
+    rw [integral_sub (f := fun z ↦ (dist x z ^ 2 + dist y z ^ 2) / 2)
+      (((hint x).add (hint y)).div_const 2) (integrable_const _),
+      integral_div, integral_add (hint x) (hint y), integral_const, probReal_univ,
+      one_smul] at hle
+    simp only [F] at hle ⊢
+    linarith
+  have : Nonempty X := ⟨o⟩
+  set I := sInf (range F) with hI
+  have hbdd : BddBelow (range F) := ⟨0, by rintro _ ⟨p, rfl⟩; exact hF0 p⟩
+  have hIle : ∀ p, I ≤ F p := fun p ↦ csInf_le hbdd ⟨p, rfl⟩
+  have hex : ∀ n : ℕ, ∃ u, F u < I + 1 / (n + 1) := by
+    intro n
+    have : I < I + 1 / (n + 1) := by
+      have : (0 : ℝ) < 1 / (n + 1) := by positivity
+      linarith
+    obtain ⟨_, ⟨u, rfl⟩, hu⟩ := exists_lt_of_csInf_lt (range_nonempty F) this
+    exact ⟨u, hu⟩
+  choose u hu using hex
+  -- the minimizing sequence is Cauchy
+  have hdist : ∀ n k, dist (u n) (u k) ^ 2 ≤ 2 / (n + 1) + 2 / (k + 1) := by
+    intro n k
+    have h := hFmid (u n) (u k)
+    have := hIle (mid (u n) (u k))
+    have hn := hu n
+    have hk := hu k
+    have e1 : 2 / ((n : ℝ) + 1) = 2 * (1 / (n + 1)) := by ring
+    have e2 : 2 / ((k : ℝ) + 1) = 2 * (1 / (k + 1)) := by ring
+    rw [e1, e2]
+    linarith
+  have hcauchy : CauchySeq u := by
+    refine cauchySeq_of_le_tendsto_0 (fun N : ℕ ↦ Real.sqrt (4 / (N + 1))) ?_ ?_
+    · intro n k N hn hk
+      apply Real.le_sqrt_of_sq_le
+      refine (hdist n k).trans ?_
+      have hn' : (N : ℝ) ≤ n := by exact_mod_cast hn
+      have hk' : (N : ℝ) ≤ k := by exact_mod_cast hk
+      have h1 : 2 / ((n : ℝ) + 1) ≤ 2 / (N + 1) :=
+        div_le_div_of_nonneg_left (by norm_num) (by positivity) (by linarith)
+      have h2' : 2 / ((k : ℝ) + 1) ≤ 2 / (N + 1) :=
+        div_le_div_of_nonneg_left (by norm_num) (by positivity) (by linarith)
+      have : 4 / ((N : ℝ) + 1) = 2 / (N + 1) + 2 / (N + 1) := by ring
+      linarith
+    · have h := (tendsto_one_div_add_atTop_nhds_zero_nat (𝕜 := ℝ)).const_mul 4
+      have h' : Tendsto (fun N : ℕ ↦ √(4 * (1 / ((N : ℝ) + 1)))) atTop (𝓝 (√(4 * 0))) :=
+        (Real.continuous_sqrt.tendsto _).comp h
+      rw [mul_zero, Real.sqrt_zero] at h'
+      refine h'.congr fun N ↦ ?_
+      congr 1
+      ring
+  obtain ⟨m, hm⟩ := cauchySeq_tendsto_of_complete hcauchy
+  have hFu : Tendsto (fun n ↦ F (u n)) atTop (𝓝 I) := by
+    refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds ?_ (fun n ↦ hIle _)
+      (fun n ↦ (hu n).le)
+    have := (tendsto_one_div_add_atTop_nhds_zero_nat (𝕜 := ℝ)).const_add I
+    simpa using this
+  have hδ : Tendsto (fun n ↦ dist m (u n)) atTop (𝓝 0) := by
+    have := (tendsto_iff_dist_tendsto_zero.mp hm)
+    simpa only [dist_comm] using this
+  -- comparison of `F m` with `F (u n)`
+  have hcomp : ∀ n, F m ≤ (1 + dist m (u n)) * F (u n) + dist m (u n) + dist m (u n) ^ 2 := by
+    intro n
+    set δ := dist m (u n)
+    have hδ0 : 0 ≤ δ := dist_nonneg
+    have hle : F m ≤ ∫ x, ((1 + δ) * dist (u n) x ^ 2 + (δ + δ ^ 2)) ∂P := by
+      refine integral_mono (hint m) (((hint _).const_mul _).add (integrable_const _)) fun x ↦ ?_
+      have htri : dist m x ≤ δ + dist (u n) x := dist_triangle _ _ _
+      have ha : 0 ≤ dist (u n) x := dist_nonneg
+      have h2a : 2 * dist (u n) x ≤ dist (u n) x ^ 2 + 1 := by nlinarith [sq_nonneg (dist (u n) x - 1)]
+      have : dist m x ^ 2 ≤ (δ + dist (u n) x) ^ 2 :=
+        pow_le_pow_left₀ dist_nonneg htri 2
+      nlinarith
+    rw [integral_add ((hint _).const_mul _) (integrable_const _), integral_const_mul,
+      integral_const, probReal_univ, one_smul] at hle
+    simp only [F] at hle ⊢
+    linarith
+  have hlim : Tendsto (fun n ↦ (1 + dist m (u n)) * F (u n) + dist m (u n) + dist m (u n) ^ 2)
+      atTop (𝓝 ((1 + 0) * I + 0 + 0 ^ 2)) :=
+    ((tendsto_const_nhds.add hδ).mul hFu).add hδ |>.add (hδ.pow 2)
+  simp only [add_zero, one_mul, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow] at hlim
+  have hFm : F m ≤ I := ge_of_tendsto' hlim hcomp
+  refine ⟨m, fun p ↦ hFm.trans (hIle p), fun m' hm' ↦ ?_⟩
+  have h1 := hm' m
+  have h3 := hFmid m' m
+  have h4 : F m ≤ F (mid m' m) := hFm.trans (hIle _)
+  have h5 : F m' ≤ F m := h1
+  have : dist m' m ^ 2 ≤ 0 := by simp only [F] at *; linarith
+  have : dist m' m = 0 := by nlinarith [dist_nonneg (x := m') (y := m)]
+  exact dist_eq_zero.mp this
 
 /-- GAPS 108.7, noiseless Hausdorff sampling rate from a uniform small-ball lower bound. -/
 theorem isBoundedInProbability_hausdorff_sampling_error

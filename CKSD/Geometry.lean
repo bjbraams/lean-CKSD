@@ -15,6 +15,7 @@ public import CKSD.Geometry.TopologicalInference
 public import CKSD.Geometry.ManifoldLearning
 public import CKSD.Geometry.TransportRates
 public import CKSD.Geometry.SteinDiscrepancy
+public import CKSD.Geometry.RipsStability
 
 /-! # Section 108: Geometry
 

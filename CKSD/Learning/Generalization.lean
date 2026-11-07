@@ -6,6 +6,7 @@ public import CKSD.Nonparametric.Basic
 public import Mathlib.Analysis.Convex.Deriv
 public import Mathlib.Analysis.Calculus.LocalExtr.Basic
 public import Mathlib.Probability.Moments.SubGaussian
+public import TauCeti.Probability.McDiarmid
 
 /-!
 # Learning: Generalization
@@ -107,6 +108,319 @@ theorem measure_uniform_empirical_risk_deviation_le
       Finset.sum_le_sum (fun h _ ↦ htail h)
     _ = _ := by simp only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]; ring
 
+/-- Suprema over a finite nonempty index of pointwise `c`-close families are `c`-close. -/
+theorem abs_sSup_range_sub_sSup_range_le {H : Type*} [Finite H] [Nonempty H] {u v : H → ℝ}
+    {c : ℝ} (h : ∀ k, |u k - v k| ≤ c) : |sSup (range u) - sSup (range v)| ≤ c := by
+  have hu : BddAbove (range u) := (finite_range u).bddAbove
+  have hv : BddAbove (range v) := (finite_range v).bddAbove
+  rw [abs_le]
+  constructor
+  · have : sSup (range v) ≤ sSup (range u) + c := csSup_le (range_nonempty v) <| by
+      rintro _ ⟨k, rfl⟩
+      linarith [(abs_le.mp (h k)).1, le_csSup hu ⟨k, rfl⟩]
+    linarith
+  · have : sSup (range u) ≤ sSup (range v) + c := csSup_le (range_nonempty u) <| by
+      rintro _ ⟨k, rfl⟩
+      linarith [(abs_le.mp (h k)).2, le_csSup hv ⟨k, rfl⟩]
+    linarith
+
+/-- The supremum over a finite nonempty index of a sum is at most the sum of the suprema. -/
+theorem sSup_range_add_le {H : Type*} [Finite H] [Nonempty H] (u v : H → ℝ) :
+    sSup (range fun k ↦ u k + v k) ≤ sSup (range u) + sSup (range v) :=
+  csSup_le (range_nonempty _) <| by
+    rintro _ ⟨k, rfl⟩
+    exact add_le_add (le_csSup (finite_range u).bddAbove ⟨k, rfl⟩)
+      (le_csSup (finite_range v).bddAbove ⟨k, rfl⟩)
+
+/-- Measurability of a supremum over a finite index of measurable functions. -/
+theorem measurable_sSup_range {H α : Type*} [Finite H] [MeasurableSpace α] {u : H → α → ℝ}
+    (hu : ∀ k, Measurable (u k)) : Measurable fun x ↦ sSup (range fun k ↦ u k x) :=
+  have : Countable H := Finite.to_countable
+  Measurable.iSup hu
+
+/-- The empirical Rademacher complexity is unchanged when the class is negated. -/
+theorem empiricalRademacherComplexity_neg {H X : Type*} [Fintype H] (n : ℕ) (f : H → X → ℝ)
+    (x : Fin n → X) :
+    empiricalRademacherComplexity n (fun h z ↦ -f h z) x = empiricalRademacherComplexity n f x := by
+  unfold empiricalRademacherComplexity
+  congr 1
+  let e : (Fin n → Bool) ≃ (Fin n → Bool) :=
+    Function.Involutive.toPerm (fun σ i ↦ !σ i) fun σ ↦ by funext i; simp
+  have he : ∀ τ : Fin n → Bool, ∀ j, e τ j = !τ j := fun _ _ ↦ rfl
+  refine Fintype.sum_equiv e _ _ fun σ ↦ ?_
+  congr 2
+  funext h
+  congr 1
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  rw [he]
+  cases σ i <;> simp
+
+/-- Measure preservation of the coordinatewise swap of a ghost sample: for a sign pattern `σ`,
+coordinates with `σ i = false` are exchanged between the two samples. -/
+theorem measurePreserving_ghostSwap {X : Type*} [MeasurableSpace X] (P : Measure X)
+    [IsProbabilityMeasure P] (n : ℕ) (σ : Fin n → Bool) :
+    MeasurePreserving (fun p : (Fin n → X) × (Fin n → X) ↦
+        ((fun i ↦ if σ i then p.1 i else p.2 i), (fun i ↦ if σ i then p.2 i else p.1 i)))
+      ((Measure.pi fun _ : Fin n ↦ P).prod (Measure.pi fun _ : Fin n ↦ P))
+      ((Measure.pi fun _ : Fin n ↦ P).prod (Measure.pi fun _ : Fin n ↦ P)) := by
+  set E := MeasurableEquiv.arrowProdEquivProdArrow X X (Fin n)
+  have hE := measurePreserving_arrowProdEquivProdArrow X X (Fin n) (fun _ ↦ P) (fun _ ↦ P)
+  have hS : MeasurePreserving (fun (y : Fin n → X × X) i ↦ if σ i then y i else (y i).swap)
+      (Measure.pi fun _ ↦ P.prod P) (Measure.pi fun _ ↦ P.prod P) := by
+    refine measurePreserving_pi (ι := Fin n) (fun _ ↦ P.prod P) (fun _ ↦ P.prod P)
+      (f := fun i (q : X × X) ↦ if σ i then q else q.swap) fun i ↦ ?_
+    by_cases hσ : σ i = true
+    · simp only [hσ, ite_true]
+      exact MeasurePreserving.id _
+    · simp only [hσ]
+      exact Measure.measurePreserving_swap
+  have hcomp := (hE.comp hS).comp hE.symm
+  convert hcomp using 1
+  funext p
+  simp only [Function.comp_apply, MeasurableEquiv.arrowProdEquivProdArrow,
+    MeasurableEquiv.coe_mk, MeasurableEquiv.symm_mk, Equiv.arrowProdEquivProdArrow]
+  ext i <;> by_cases hσ : σ i = true <;> simp [hσ]
+
+/-- A supremum over a finite nonempty index of values bounded by `C` is bounded by `C`. -/
+theorem abs_sSup_range_le {H : Type*} [Finite H] [Nonempty H] {u : H → ℝ} {C : ℝ}
+    (h : ∀ k, |u k| ≤ C) : |sSup (range u)| ≤ C := by
+  have := abs_sSup_range_sub_sSup_range_le (v := fun _ : H ↦ (0 : ℝ)) (c := C)
+    fun k ↦ by simpa using h k
+  rwa [range_const, csSup_singleton, sub_zero] at this
+
+/-- A measurable function bounded in absolute value is integrable for a finite measure. -/
+theorem integrable_of_abs_le {α : Type*} [MeasurableSpace α] (μ : Measure α) [IsFiniteMeasure μ]
+    {g : α → ℝ} (hg : Measurable g) {C : ℝ} (hb : ∀ x, |g x| ≤ C) : Integrable g μ :=
+  Integrable.of_bound hg.aestronglyMeasurable C (ae_of_all _ fun x ↦ by
+    rw [Real.norm_eq_abs]; exact hb x)
+
+/-- An average `(∑ᵢ aᵢ uᵢ)/n` with `|aᵢ| ≤ 1` and `|uᵢ| ≤ C`, `C ≥ 0`, lies in `[-C,C]`. -/
+theorem abs_sum_mul_div_le {n : ℕ} (a u : Fin n → ℝ) {C : ℝ} (hC : 0 ≤ C)
+    (ha : ∀ i, |a i| ≤ 1) (hu : ∀ i, |u i| ≤ C) : |(∑ i, a i * u i) / n| ≤ C := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · simpa using hC
+  have hnr : (0 : ℝ) < n := by exact_mod_cast hn
+  rw [abs_div, abs_of_pos hnr, div_le_iff₀ hnr]
+  calc |∑ i, a i * u i| ≤ ∑ i, |a i * u i| := Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ _i : Fin n, C := Finset.sum_le_sum fun i _ ↦ by
+        rw [abs_mul]
+        calc |a i| * |u i| ≤ 1 * C := mul_le_mul (ha i) (hu i) (abs_nonneg _) zero_le_one
+          _ = C := one_mul C
+    _ = C * n := by simp [mul_comm]
+
+/-- Measurability of the empirical Rademacher complexity of a measurable finite class. -/
+theorem measurable_empiricalRademacherComplexity {H X : Type*} [Fintype H] [MeasurableSpace X]
+    (n : ℕ) (f : H → X → ℝ) (hm : ∀ h, Measurable (f h)) :
+    Measurable fun x : Fin n → X ↦ empiricalRademacherComplexity n f x := by
+  simp only [empiricalRademacherComplexity]
+  refine Measurable.const_mul (Finset.measurable_sum _ fun σ _ ↦ ?_) _
+  exact measurable_sSup_range fun h ↦ (Finset.measurable_sum _ fun i _ ↦
+    ((hm h).comp (measurable_pi_apply i)).const_mul _).div_const _
+
+/-- The empirical Rademacher complexity of a nonempty finite class bounded by `C` is bounded
+by `C`. -/
+theorem abs_empiricalRademacherComplexity_le {H X : Type*} [Fintype H] [Nonempty H] (n : ℕ)
+    (f : H → X → ℝ) {C : ℝ} (hC : 0 ≤ C) (hb : ∀ h x, |f h x| ≤ C) (x : Fin n → X) :
+    |empiricalRademacherComplexity n f x| ≤ C := by
+  simp only [empiricalRademacherComplexity]
+  have hsig : ∀ σ : Fin n → Bool, ∀ i, |(if σ i then (1 : ℝ) else -1)| ≤ 1 := fun σ i ↦ by
+    split_ifs <;> simp
+  rw [abs_mul, abs_of_nonneg (by positivity)]
+  calc (2 : ℝ)⁻¹ ^ n * |∑ σ : Fin n → Bool, sSup (range fun h ↦
+        (∑ i, (if σ i then (1 : ℝ) else -1) * f h (x i)) / n)|
+      ≤ (2 : ℝ)⁻¹ ^ n * ∑ _σ : Fin n → Bool, C := by
+        gcongr
+        refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun σ _ ↦ ?_)
+        exact abs_sSup_range_le fun h ↦
+          abs_sum_mul_div_le _ _ hC (hsig σ) fun i ↦ hb h (x i)
+    _ = C := by
+        simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fun, Fintype.card_bool,
+          Fintype.card_fin, nsmul_eq_mul, Nat.cast_pow, Nat.cast_ofNat, ← mul_assoc, ← mul_pow,
+          inv_mul_cancel₀ (two_ne_zero : (2 : ℝ) ≠ 0), one_pow, one_mul]
+
+/-- GAPS 107.2, symmetrization: the expected supremum of the centered empirical means of a
+finite class with values in `[-1,1]` is at most twice the expected empirical Rademacher
+complexity. -/
+theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonempty H]
+    [MeasurableSpace X] (P : Measure X) [IsProbabilityMeasure P] (f : H → X → ℝ)
+    (hm : ∀ h, Measurable (f h)) (hb : ∀ h x, |f h x| ≤ 1) (n : ℕ) (hn : 0 < n) :
+    ∫ x, sSup (range fun h ↦ (∑ i, f h (x i)) / n - ∫ z, f h z ∂P)
+        ∂(Measure.pi fun _ : Fin n ↦ P) ≤
+      2 * ∫ x, empiricalRademacherComplexity n f x ∂(Measure.pi fun _ : Fin n ↦ P) := by
+  set Pn := Measure.pi fun _ : Fin n ↦ P
+  have hnr : (0 : ℝ) < n := by exact_mod_cast hn
+  set g : H → (Fin n → X) → ℝ := fun h x ↦ (∑ i, f h (x i)) / n with hg_def
+  have hgm : ∀ h, Measurable (g h) := fun h ↦
+    (Finset.measurable_sum _ fun i _ ↦ (hm h).comp (measurable_pi_apply i)).div_const _
+  have hgb : ∀ h x, |g h x| ≤ 1 := fun h x ↦ by
+    have := abs_sum_mul_div_le (fun _ ↦ (1 : ℝ)) (fun i ↦ f h (x i)) zero_le_one
+      (fun _ ↦ by simp) fun i ↦ hb h (x i)
+    simpa using this
+  have hmean : ∀ h, ∫ x, g h x ∂Pn = ∫ z, f h z ∂P := by
+    intro h
+    have hi : ∀ i, ∫ x, f h (x i) ∂Pn = ∫ z, f h z ∂P := by
+      intro i
+      have hp := measurePreserving_eval (fun _ : Fin n ↦ P) i
+      have heq := (integral_map hp.measurable.aemeasurable
+        (by rw [hp.map_eq]; exact (hm h).aestronglyMeasurable)).symm
+      rw [hp.map_eq] at heq
+      exact heq
+    have hint : ∀ i, Integrable (fun x : Fin n → X ↦ f h (x i)) Pn := fun i ↦
+      integrable_of_abs_le _ ((hm h).comp (measurable_pi_apply i)) fun x ↦ hb h (x i)
+    simp only [g]
+    rw [integral_div, integral_finsetSum _ fun i _ ↦ hint i]
+    simp only [hi, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    field_simp
+  -- the ghost-sample supremum
+  set G : (Fin n → X) × (Fin n → X) → ℝ := fun p ↦ sSup (range fun h ↦ g h p.1 - g h p.2)
+    with hG_def
+  have hGm : Measurable G := measurable_sSup_range fun h ↦
+    ((hgm h).comp measurable_fst).sub ((hgm h).comp measurable_snd)
+  have hGb : ∀ p, |G p| ≤ 2 := fun p ↦ abs_sSup_range_le fun h ↦ by
+    calc |g h p.1 - g h p.2| ≤ |g h p.1| + |g h p.2| := abs_sub _ _
+      _ ≤ 2 := by linarith [hgb h p.1, hgb h p.2]
+  have hGi : Integrable G (Pn.prod Pn) := integrable_of_abs_le _ hGm hGb
+  -- step 1: replace the mean by the ghost sample
+  have hstep1 : ∀ x, sSup (range fun h ↦ g h x - ∫ z, f h z ∂P) ≤ ∫ x', G (x, x') ∂Pn := by
+    intro x
+    refine csSup_le (range_nonempty _) ?_
+    rintro _ ⟨h, rfl⟩
+    have hgi : Integrable (g h) Pn := integrable_of_abs_le _ (hgm h) (hgb h)
+    have : g h x - ∫ z, f h z ∂P = ∫ x', (g h x - g h x') ∂Pn := by
+      rw [integral_sub (integrable_const _) hgi, integral_const, probReal_univ, one_smul, hmean]
+    change g h x - ∫ z, f h z ∂P ≤ _
+    rw [this]
+    refine integral_mono ((integrable_const _).sub hgi)
+      (integrable_of_abs_le _ (hGm.comp measurable_prodMk_left) fun x' ↦ hGb _) fun x' ↦ ?_
+    exact le_csSup (finite_range _).bddAbove ⟨h, rfl⟩
+  have hlhs : ∫ x, sSup (range fun h ↦ g h x - ∫ z, f h z ∂P) ∂Pn ≤ ∫ p, G p ∂(Pn.prod Pn) := by
+    rw [integral_prod _ hGi]
+    refine integral_mono (integrable_of_abs_le _ (C := 2) (measurable_sSup_range fun h ↦
+      (hgm h).sub measurable_const) fun x ↦ abs_sSup_range_le fun h ↦ ?_)
+      (hGi.integral_prod_left) hstep1
+    have hI : |∫ z, f h z ∂P| ≤ 1 := by
+      have := norm_integral_le_of_norm_le_const (μ := P) (C := 1)
+        (ae_of_all _ fun z ↦ by rw [Real.norm_eq_abs]; exact hb h z)
+      simpa [Real.norm_eq_abs] using this
+    calc |g h x - ∫ z, f h z ∂P| ≤ |g h x| + |∫ z, f h z ∂P| := abs_sub _ _
+      _ ≤ 2 := by linarith [hgb h x]
+  -- step 2: average over sign patterns
+  set T : (Fin n → Bool) → (Fin n → X) × (Fin n → X) → (Fin n → X) × (Fin n → X) :=
+    fun σ p ↦ ((fun i ↦ if σ i then p.1 i else p.2 i), (fun i ↦ if σ i then p.2 i else p.1 i))
+  have hT : ∀ σ, ∫ p, G p ∂(Pn.prod Pn) = ∫ p, G (T σ p) ∂(Pn.prod Pn) := by
+    intro σ
+    have hmp := measurePreserving_ghostSwap P n σ
+    rw [← integral_map hmp.measurable.aemeasurable
+      (by rw [hmp.map_eq]; exact hGm.aestronglyMeasurable), hmp.map_eq]
+  set Rad : (Fin n → X) → ℝ := fun x ↦ empiricalRademacherComplexity n f x with hRad_def
+  have hsupm : ∀ (u : (Fin n → Bool) → H → (Fin n → X) → ℝ), (∀ σ h, Measurable (u σ h)) →
+      ∀ σ, Measurable fun x ↦ sSup (range fun h ↦ u σ h x) := fun u hu σ ↦
+    measurable_sSup_range fun h ↦ hu σ h
+  have hRm : Measurable Rad := measurable_empiricalRademacherComplexity n f hm
+  have hRb : ∀ x, |Rad x| ≤ 1 := abs_empiricalRademacherComplexity_le n f zero_le_one hb
+  have hRi : Integrable Rad Pn := integrable_of_abs_le _ hRm hRb
+  -- pointwise bound of the sign average
+  have hpt : ∀ p, (2 : ℝ)⁻¹ ^ n * ∑ σ : Fin n → Bool, G (T σ p) ≤ Rad p.1 + Rad p.2 := by
+    intro p
+    have hRneg := empiricalRademacherComplexity_neg n f p.2
+    simp only [Rad]
+    rw [← hRneg]
+    simp only [empiricalRademacherComplexity]
+    rw [← mul_add, ← Finset.sum_add_distrib]
+    gcongr with σ _
+    simp only [G]
+    refine le_of_eq_of_le ?_ (sSup_range_add_le _ _)
+    congr 2
+    funext h
+    simp only [g, T]
+    rw [← add_div, ← sub_div, ← Finset.sum_add_distrib, ← Finset.sum_sub_distrib]
+    congr 1
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    cases σ i <;> simp <;> ring
+  -- assemble
+  have hcard : ((Finset.univ : Finset (Fin n → Bool)).card : ℝ) = 2 ^ n := by
+    simp [Finset.card_univ, Fintype.card_bool]
+  have hTi : ∀ σ, Integrable (fun p ↦ G (T σ p)) (Pn.prod Pn) := fun σ ↦
+    integrable_of_abs_le _ (g := fun p ↦ G (T σ p))
+      (hGm.comp (measurePreserving_ghostSwap P n σ).measurable) fun p ↦ hGb _
+  have havg : ∫ p, G p ∂(Pn.prod Pn) =
+      ∫ p, (2 : ℝ)⁻¹ ^ n * ∑ σ : Fin n → Bool, G (T σ p) ∂(Pn.prod Pn) := by
+    rw [integral_const_mul, integral_finsetSum _ fun σ _ ↦ hTi σ, ← Finset.sum_congr rfl
+      fun σ _ ↦ hT σ, Finset.sum_const, nsmul_eq_mul, hcard, ← mul_assoc, ← mul_pow,
+      inv_mul_cancel₀ two_ne_zero, one_pow, one_mul]
+  have hfinal : ∫ p, (Rad p.1 + Rad p.2) ∂(Pn.prod Pn) = 2 * ∫ x, Rad x ∂Pn := by
+    have h1 : ∫ p, Rad p.1 ∂(Pn.prod Pn) = ∫ x, Rad x ∂Pn := by
+      have hmp : MeasurePreserving Prod.fst (Pn.prod Pn) Pn := measurePreserving_fst
+      rw [← integral_map hmp.measurable.aemeasurable
+        (by rw [hmp.map_eq]; exact hRm.aestronglyMeasurable), hmp.map_eq]
+    have h2 : ∫ p, Rad p.2 ∂(Pn.prod Pn) = ∫ x, Rad x ∂Pn := by
+      have hmp : MeasurePreserving Prod.snd (Pn.prod Pn) Pn := measurePreserving_snd
+      rw [← integral_map hmp.measurable.aemeasurable
+        (by rw [hmp.map_eq]; exact hRm.aestronglyMeasurable), hmp.map_eq]
+    rw [integral_add
+      (integrable_of_abs_le _ (g := fun p : (Fin n → X) × (Fin n → X) ↦ Rad p.1)
+        (hRm.comp measurable_fst) fun p ↦ hRb _)
+      (integrable_of_abs_le _ (g := fun p : (Fin n → X) × (Fin n → X) ↦ Rad p.2)
+        (hRm.comp measurable_snd) fun p ↦ hRb _), h1, h2]
+    ring
+  calc _ ≤ ∫ p, G p ∂(Pn.prod Pn) := hlhs
+    _ = _ := havg
+    _ ≤ ∫ p, (Rad p.1 + Rad p.2) ∂(Pn.prod Pn) := by
+        refine integral_mono ?_ ?_ hpt
+        · exact (integrable_finsetSum _ fun σ _ ↦ hTi σ).const_mul _
+        · exact (integrable_of_abs_le _ (g := fun p : (Fin n → X) × (Fin n → X) ↦ Rad p.1)
+            (hRm.comp measurable_fst) fun p ↦ hRb _).add
+              (integrable_of_abs_le _ (g := fun p : (Fin n → X) × (Fin n → X) ↦ Rad p.2)
+                (hRm.comp measurable_snd) fun p ↦ hRb _)
+    _ = 2 * ∫ x, Rad x ∂Pn := hfinal
+
+/-- McDiarmid tail for the supremum of the centered empirical means of a finite class whose
+members oscillate by at most `1`: the supremum exceeds its mean by `t ≥ 0` with probability
+at most `exp(-2 n t²)`. -/
+theorem measureReal_integral_add_le_sSup_le {H X : Type*} [Fintype H] [Nonempty H]
+    [MeasurableSpace X] (P : Measure X) [IsProbabilityMeasure P] (f : H → X → ℝ)
+    (hm : ∀ h, Measurable (f h)) (hosc : ∀ h x y, |f h x - f h y| ≤ 1) (n : ℕ) (hn : 0 < n)
+    {t : ℝ} (ht : 0 ≤ t) :
+    (Measure.pi fun _ : Fin n ↦ P).real {x | ∫ y, sSup (range fun h ↦
+        (∑ i, f h (y i)) / n - ∫ z, f h z ∂P) ∂(Measure.pi fun _ : Fin n ↦ P) + t ≤
+          sSup (range fun h ↦ (∑ i, f h (x i)) / n - ∫ z, f h z ∂P)} ≤
+      Real.exp (-2 * n * t ^ 2) := by
+  set Pn := Measure.pi fun _ : Fin n ↦ P
+  have hnr : (0 : ℝ) < n := by exact_mod_cast hn
+  set F : (Fin n → X) → ℝ := fun x ↦ sSup (range fun h ↦
+    (∑ i, f h (x i)) / n - ∫ z, f h z ∂P) with hF_def
+  have hFm : Measurable F := measurable_sSup_range fun h ↦
+    ((Finset.measurable_sum _ fun i _ ↦ (hm h).comp (measurable_pi_apply i)).div_const _).sub
+      measurable_const
+  have hbd : ∀ (i : Fin n) (x x' : Fin n → X), (∀ l, l ≠ i → x l = x' l) →
+      |F x - F x'| ≤ 1 / n := by
+    intro i x x' hxx'
+    refine abs_sSup_range_sub_sSup_range_le fun h ↦ ?_
+    have hs : ∑ j, f h (x j) - ∑ j, f h (x' j) = f h (x i) - f h (x' i) := by
+      rw [← Finset.sum_sub_distrib]
+      refine Finset.sum_eq_single i (fun j _ hj ↦ by rw [hxx' j hj, sub_self]) (by simp)
+    have : (∑ j, f h (x j)) / n - ∫ z, f h z ∂P - ((∑ j, f h (x' j)) / n - ∫ z, f h z ∂P) =
+        (f h (x i) - f h (x' i)) / n := by
+      rw [← hs]; ring
+    rw [this, abs_div, abs_of_pos hnr]
+    exact div_le_div_of_nonneg_right (hosc h _ _) hnr.le
+  have hsub := TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences P F hFm
+    (fun _ ↦ 1 / n) hbd
+  have hset : {x | ∫ y, F y ∂Pn + t ≤ F x} = {x | t ≤ F x - ∫ y, F y ∂Pn} := by
+    ext x; simp only [mem_ofPred_eq]; constructor <;> intro h <;> linarith
+  change Pn.real {x | ∫ y, F y ∂Pn + t ≤ F x} ≤ _
+  rw [hset]
+  refine (hsub.measure_ge_le ht).trans_eq ?_
+  congr 1
+  have hcoe : ((∑ _i : Fin n, (1 / (n : ℝ)).toNNReal ^ 2 / 4 : ℝ≥0) : ℝ) = 1 / (4 * n) := by
+    push_cast
+    rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul,
+      Real.coe_toNNReal _ (by positivity)]
+    field_simp
+  rw [hcoe]
+  field_simp
+  ring
+
 /-- GAPS 107.2, symmetrization and the expected-complexity bound for a finite class. -/
 theorem rademacher_symmetrization_and_risk_bound
     {H X : Type*} [Fintype H] [Nonempty H] [MeasurableSpace X]
@@ -118,7 +432,64 @@ theorem rademacher_symmetrization_and_risk_bound
     (∫ x, sSup (range fun h ↦ (∑ i, f h (x i)) / n - ∫ z, f h z ∂P) ∂Pn) ≤ 2 * R ∧
       Pn.real {x | 2 * R + Real.sqrt (Real.log (2 / delta) / (2 * n)) <
         sSup (range fun h ↦ |(∑ i, f h (x i)) / n - ∫ z, f h z ∂P|)} ≤ delta := by
-  sorry
+  intro Pn R
+  have hnr : (0 : ℝ) < n := by exact_mod_cast hn
+  have hab : ∀ h x, |f h x| ≤ 1 := fun h x ↦ by
+    rw [abs_le]; constructor <;> linarith [(hb h x).1, (hb h x).2]
+  have hosc : ∀ h x y, |f h x - f h y| ≤ 1 := fun h x y ↦ by
+    rw [abs_le]; constructor <;> linarith [(hb h x).1, (hb h x).2, (hb h y).1, (hb h y).2]
+  have hsym := integral_sSup_sub_le_two_mul_rademacher P f hm hab n hn
+  refine ⟨hsym, ?_⟩
+  -- the negated class
+  have hsymneg := integral_sSup_sub_le_two_mul_rademacher P (fun h z ↦ -f h z)
+    (fun h ↦ (hm h).neg) (fun h x ↦ by rw [abs_neg]; exact hab h x) n hn
+  simp only [empiricalRademacherComplexity_neg] at hsymneg
+  set tt := Real.sqrt (Real.log (2 / delta) / (2 * n)) with htt
+  have htt0 : 0 ≤ tt := Real.sqrt_nonneg _
+  have htail := measureReal_integral_add_le_sSup_le P f hm hosc n hn htt0
+  have htailneg := measureReal_integral_add_le_sSup_le P (fun h z ↦ -f h z)
+    (fun h ↦ (hm h).neg) (fun h x y ↦ by
+      rw [show -f h x - -f h y = f h y - f h x by ring]; exact hosc h y x) n hn htt0
+  have hexp : Real.exp (-2 * n * tt ^ 2) = delta / 2 := by
+    have hlog : 0 ≤ Real.log (2 / delta) / (2 * n) := by
+      refine div_nonneg (Real.log_nonneg ?_) (by positivity)
+      rw [le_div_iff₀ hd.1]; linarith [hd.2]
+    rw [htt, Real.sq_sqrt hlog]
+    have : -2 * (n : ℝ) * (Real.log (2 / delta) / (2 * n)) = -Real.log (2 / delta) := by
+      field_simp
+    rw [this, Real.exp_neg, Real.exp_log (div_pos two_pos hd.1), inv_div]
+  rw [hexp] at htail htailneg
+  -- the two one-sided events cover the event
+  have hsub : {x : Fin n → X | 2 * R + tt <
+      sSup (range fun h ↦ |(∑ i, f h (x i)) / n - ∫ z, f h z ∂P|)} ⊆
+      {x | ∫ y, sSup (range fun h ↦ (∑ i, f h (y i)) / n - ∫ z, f h z ∂P) ∂Pn + tt ≤
+          sSup (range fun h ↦ (∑ i, f h (x i)) / n - ∫ z, f h z ∂P)} ∪
+        {x | ∫ y, sSup (range fun h ↦ (∑ i, -f h (y i)) / n - ∫ z, -f h z ∂P) ∂Pn + tt ≤
+          sSup (range fun h ↦ (∑ i, -f h (x i)) / n - ∫ z, -f h z ∂P)} := by
+    intro x hx
+    simp only [mem_ofPred_eq] at hx
+    obtain ⟨_, ⟨h, rfl⟩, hlt⟩ := exists_lt_of_lt_csSup (range_nonempty _) hx
+    beta_reduce at hlt
+    rcases le_total 0 ((∑ i, f h (x i)) / n - ∫ z, f h z ∂P) with hs | hs
+    · left
+      rw [abs_of_nonneg hs] at hlt
+      have := le_csSup (finite_range fun h ↦ (∑ i, f h (x i)) / n - ∫ z, f h z ∂P).bddAbove
+        ⟨h, rfl⟩
+      simp only [mem_ofPred_eq]
+      linarith
+    · right
+      rw [abs_of_nonpos hs] at hlt
+      have := le_csSup (finite_range fun h ↦ (∑ i, -f h (x i)) / n - ∫ z, -f h z ∂P).bddAbove
+        ⟨h, rfl⟩
+      have heq : (∑ i, -f h (x i)) / n - ∫ z, -f h z ∂P =
+          -((∑ i, f h (x i)) / n - ∫ z, f h z ∂P) := by
+        rw [Finset.sum_neg_distrib, integral_neg]; ring
+      simp only [mem_ofPred_eq]
+      linarith
+  calc Pn.real _ ≤ Pn.real (_ ∪ _) := measureReal_mono hsub
+    _ ≤ _ := measureReal_union_le _ _
+    _ ≤ delta / 2 + delta / 2 := add_le_add htail htailneg
+    _ = delta := by ring
 
 /-- Integrals against a finite weighted sum of Dirac masses on `Fin K`. -/
 theorem integral_finiteDiracSum {K : ℕ} (p : Fin K → ℝ) (hp : ∀ j, 0 ≤ p j) (g : Fin K → ℝ) :
@@ -620,6 +991,113 @@ theorem surrogate_minimizer_sign_of_convex (phi : ℝ → ℝ) (hc : ConvexOn �
         linarith
       exact mul_pos (sub_pos.mpr (lt_of_le_of_ne hηge hne.symm)) hpos
 
+/-- A measurable function with values in `[0, M]` is integrable for a finite measure. -/
+theorem integrable_of_mem_Icc {α : Type*} [MeasurableSpace α] (μ : Measure α) [IsFiniteMeasure μ]
+    {g : α → ℝ} (hg : Measurable g) {M : ℝ} (hb : ∀ x, g x ∈ Icc 0 M) : Integrable g μ :=
+  Integrable.of_bound hg.aestronglyMeasurable M (ae_of_all _ fun x ↦ by
+    rw [Real.norm_eq_abs, abs_of_nonneg (hb x).1]; exact (hb x).2)
+
+/-- Exchange step for replace-one stable algorithms: the expected risk of the output is at most
+the expected loss on the `i`-th training point plus the stability constant. -/
+theorem integral_integral_loss_le {X : Type*} [MeasurableSpace X]
+    (P : Measure X) [IsProbabilityMeasure P] (n : ℕ) (hn : 0 < n)
+    (loss : (Fin n → X) → X → ℝ) (hm : Measurable (Function.uncurry loss))
+    (beta M : ℝ) (hl : ∀ x z, loss x z ∈ Icc 0 M)
+    (hstable : ∀ x y, (∃ i : Fin n, ∀ j, j ≠ i → x j = y j) →
+      ∀ z, |loss x z - loss y z| ≤ beta) (i : Fin n) :
+    ∫ x, ∫ z, loss x z ∂P ∂(Measure.pi fun _ : Fin n ↦ P) ≤
+      ∫ x, loss x (x i) ∂(Measure.pi fun _ : Fin n ↦ P) + beta := by
+  obtain ⟨m, rfl⟩ : ∃ m, n = m + 1 := ⟨n - 1, by omega⟩
+  set Pm := Measure.pi fun _ : Fin m ↦ P
+  set e := MeasurableEquiv.piFinSuccAbove (fun _ : Fin (m + 1) ↦ X) i
+  have hmp : MeasurePreserving e.symm (P.prod Pm) (Measure.pi fun _ : Fin (m + 1) ↦ P) :=
+    (measurePreserving_piFinSuccAbove (fun _ : Fin (m + 1) ↦ P) i).symm
+  have hes : Measurable e.symm := e.symm.measurable
+  have hei : ∀ y, e.symm y i = y.1 := fun y ↦ by simp [e]
+  have hediff : ∀ a b w, ∀ j, j ≠ i → e.symm (a, w) j = e.symm (b, w) j := by
+    intro a b w j hj
+    obtain ⟨k, rfl⟩ := Fin.exists_succAbove_eq hj
+    simp [e]
+  have hl1 : ∀ p : (Fin (m + 1) → X) × X, Function.uncurry loss p ∈ Icc 0 M := fun p ↦ hl _ _
+  -- measurability of the iterated integrands
+  have hR : Measurable fun x : Fin (m + 1) → X ↦ ∫ z, loss x z ∂P :=
+    hm.stronglyMeasurable.integral_prod_right'.measurable
+  have hS : Measurable fun x : Fin (m + 1) → X ↦ loss x (x i) :=
+    hm.comp (measurable_id.prodMk (measurable_pi_apply i))
+  have hRb : ∀ x, ∫ z, loss x z ∂P ∈ Icc 0 M := fun x ↦
+    ⟨integral_nonneg fun z ↦ (hl x z).1, by
+      calc ∫ z, loss x z ∂P ≤ ∫ _z, M ∂P := integral_mono
+              (integrable_of_mem_Icc P (hm.comp measurable_prodMk_left) (hl x))
+              (integrable_const M) fun z ↦ (hl x z).2
+        _ = M := by simp⟩
+  -- rewrite both sides on the product `P ⊗ Pm`
+  have hlhs : ∫ x, ∫ z, loss x z ∂P ∂(Measure.pi fun _ : Fin (m + 1) ↦ P) =
+      ∫ a, ∫ w, ∫ z, loss (e.symm (a, w)) z ∂P ∂Pm ∂P := by
+    rw [← hmp.integral_comp' (fun x ↦ ∫ z, loss x z ∂P)]
+    exact integral_prod _ (integrable_of_mem_Icc _ (hR.comp hes) fun y ↦ hRb _)
+  have hrhs : ∫ x, loss x (x i) ∂(Measure.pi fun _ : Fin (m + 1) ↦ P) =
+      ∫ z, ∫ w, loss (e.symm (z, w)) z ∂Pm ∂P := by
+    rw [← hmp.integral_comp' (fun x ↦ loss x (x i))]
+    simp only [hei]
+    exact integral_prod (fun y ↦ loss (e.symm y) y.1)
+      (integrable_of_mem_Icc _ (hm.comp (hes.prodMk measurable_fst)) fun y ↦ hl _ _)
+  -- the swapped integrand
+  have hF : Measurable fun p : X × (Fin m → X) ↦ loss (e.symm (p.1, p.2)) p.1 :=
+    hm.comp ((hes.comp (measurable_fst.prodMk measurable_snd)).prodMk measurable_fst)
+  have hswap : ∫ w, ∫ z, loss (e.symm (z, w)) z ∂P ∂Pm =
+      ∫ z, ∫ w, loss (e.symm (z, w)) z ∂Pm ∂P := by
+    refine (integral_integral_swap ?_).symm
+    exact integrable_of_mem_Icc _ hF fun _ ↦ hl _ _
+  have hinner : ∀ a, ∫ w, ∫ z, loss (e.symm (a, w)) z ∂P ∂Pm ≤
+      ∫ w, ∫ z, loss (e.symm (z, w)) z ∂P ∂Pm + beta := by
+    intro a
+    have hmeas1 : Measurable fun w : Fin m → X ↦ ∫ z, loss (e.symm (a, w)) z ∂P :=
+      hR.comp (hes.comp measurable_prodMk_left)
+    have hmeas2 : Measurable fun w : Fin m → X ↦ ∫ z, loss (e.symm (z, w)) z ∂P := by
+      have : Measurable fun q : (Fin m → X) × X ↦ loss (e.symm (q.2, q.1)) q.2 :=
+        hm.comp ((hes.comp (measurable_snd.prodMk measurable_fst)).prodMk measurable_snd)
+      exact this.stronglyMeasurable.integral_prod_right'.measurable
+    have hb2 : ∀ w, ∫ z, loss (e.symm (z, w)) z ∂P ∈ Icc 0 M := fun w ↦
+      ⟨integral_nonneg fun z ↦ (hl _ z).1, by
+        calc ∫ z, loss (e.symm (z, w)) z ∂P ≤ ∫ _z, M ∂P := integral_mono
+                (integrable_of_mem_Icc P (hF.comp (measurable_id.prodMk measurable_const))
+                  fun z ↦ hl _ _) (integrable_const M) fun z ↦ (hl _ z).2
+          _ = M := by simp⟩
+    have hpt : ∀ w, ∫ z, loss (e.symm (a, w)) z ∂P ≤
+        ∫ z, loss (e.symm (z, w)) z ∂P + beta := by
+      intro w
+      have hi1 : Integrable (fun z ↦ loss (e.symm (z, w)) z) P :=
+        integrable_of_mem_Icc P (hF.comp (measurable_id.prodMk measurable_const)) fun z ↦ hl _ _
+      calc ∫ z, loss (e.symm (a, w)) z ∂P ≤ ∫ z, (loss (e.symm (z, w)) z + beta) ∂P := by
+            refine integral_mono (integrable_of_mem_Icc P
+              (hm.comp measurable_prodMk_left) (hl _)) (hi1.add (integrable_const _)) fun z ↦ ?_
+            have := hstable _ _ ⟨i, hediff a z w⟩ z
+            linarith [(abs_le.mp this).2]
+        _ = ∫ z, loss (e.symm (z, w)) z ∂P + beta := by
+            rw [integral_add hi1 (integrable_const _), integral_const, probReal_univ, one_smul]
+    have hi2 : Integrable (fun w ↦ ∫ z, loss (e.symm (z, w)) z ∂P) Pm :=
+      integrable_of_mem_Icc _ hmeas2 hb2
+    calc ∫ w, ∫ z, loss (e.symm (a, w)) z ∂P ∂Pm
+        ≤ ∫ w, (∫ z, loss (e.symm (z, w)) z ∂P + beta) ∂Pm :=
+          integral_mono (integrable_of_mem_Icc _ hmeas1 fun w ↦ hRb _)
+            (hi2.add (integrable_const _)) hpt
+      _ = _ := by rw [integral_add hi2 (integrable_const _), integral_const, probReal_univ,
+          one_smul]
+  have hmeasA : Measurable fun a : X ↦ ∫ w, ∫ z, loss (e.symm (a, w)) z ∂P ∂Pm := by
+    have : Measurable fun p : X × (Fin m → X) ↦ ∫ z, loss (e.symm p) z ∂P := hR.comp hes
+    exact this.stronglyMeasurable.integral_prod_right'.measurable
+  have hbA : ∀ a, ∫ w, ∫ z, loss (e.symm (a, w)) z ∂P ∂Pm ∈ Icc 0 M := fun a ↦
+    ⟨integral_nonneg fun w ↦ (hRb _).1, by
+      calc ∫ w, ∫ z, loss (e.symm (a, w)) z ∂P ∂Pm ≤ ∫ _w, M ∂Pm := integral_mono
+              (integrable_of_mem_Icc _ (hR.comp (hes.comp measurable_prodMk_left))
+                fun w ↦ hRb _) (integrable_const M) fun w ↦ (hRb _).2
+        _ = M := by simp [Pm]⟩
+  rw [hlhs, hrhs, ← hswap]
+  calc ∫ a, ∫ w, ∫ z, loss (e.symm (a, w)) z ∂P ∂Pm ∂P
+      ≤ ∫ _a, (∫ w, ∫ z, loss (e.symm (z, w)) z ∂P ∂Pm + beta) ∂P :=
+        integral_mono (integrable_of_mem_Icc _ hmeasA hbA) (integrable_const _) hinner
+    _ = _ := by rw [integral_const, probReal_univ, one_smul]
+
 /-- GAPS 107.12: generalization of a measurable uniformly stable algorithm. -/
 theorem generalization_bound_of_uniform_stability {X : Type*} [MeasurableSpace X]
     (P : Measure X) [IsProbabilityMeasure P] (n : ℕ) (hn : 0 < n)
@@ -631,7 +1109,131 @@ theorem generalization_bound_of_uniform_stability {X : Type*} [MeasurableSpace X
     (Measure.pi fun _ : Fin n ↦ P).real {x |
       (∑ i, loss x (x i)) / n + beta + (2 * n * beta + M) *
         Real.sqrt (Real.log (1 / delta) / (2 * n)) < ∫ z, loss x z ∂P} ≤ delta := by
-  sorry
+  set Pn := Measure.pi fun _ : Fin n ↦ P
+  have hnr : (0 : ℝ) < n := by exact_mod_cast hn
+  -- the defect `Φ = risk - empirical risk`
+  set Φ : (Fin n → X) → ℝ := fun x ↦ ∫ z, loss x z ∂P - (∑ i, loss x (x i)) / n with hΦ_def
+  have hR : Measurable fun x : Fin n → X ↦ ∫ z, loss x z ∂P :=
+    hm.stronglyMeasurable.integral_prod_right'.measurable
+  have hS : ∀ i, Measurable fun x : Fin n → X ↦ loss x (x i) := fun i ↦
+    hm.comp (measurable_id.prodMk (measurable_pi_apply i))
+  have hRb : ∀ x, ∫ z, loss x z ∂P ∈ Icc 0 M := fun x ↦
+    ⟨integral_nonneg fun z ↦ (hl x z).1, by
+      calc ∫ z, loss x z ∂P ≤ ∫ _z, M ∂P := integral_mono
+              (integrable_of_mem_Icc P (hm.comp measurable_prodMk_left) (hl x))
+              (integrable_const M) fun z ↦ (hl x z).2
+        _ = M := by simp⟩
+  have hΦm : Measurable Φ := hR.sub ((Finset.measurable_sum _ fun i _ ↦ hS i).div_const _)
+  have hRi : Integrable (fun x : Fin n → X ↦ ∫ z, loss x z ∂P) Pn :=
+    integrable_of_mem_Icc _ hR hRb
+  have hSi : ∀ i, Integrable (fun x : Fin n → X ↦ loss x (x i)) Pn := fun i ↦
+    integrable_of_mem_Icc _ (hS i) fun x ↦ hl _ _
+  -- expected defect
+  have hEΦ : ∫ x, Φ x ∂Pn ≤ beta := by
+    have hsumi : Integrable (fun x : Fin n → X ↦ ∑ i, loss x (x i)) Pn :=
+      integrable_finsetSum _ fun i _ ↦ hSi i
+    rw [integral_sub hRi (hsumi.div_const _), integral_div, integral_finsetSum _ fun i _ ↦ hSi i]
+    have hex := fun i ↦ integral_integral_loss_le P n hn loss hm beta M hl hstable i
+    have hsum : (n : ℝ) * ∫ x, ∫ z, loss x z ∂P ∂Pn ≤
+        ∑ i, ∫ x, loss x (x i) ∂Pn + n * beta := by
+      have := Finset.sum_le_sum fun i (_ : i ∈ Finset.univ) ↦ hex i
+      simp only [Finset.sum_add_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+        nsmul_eq_mul] at this
+      linarith
+    have : ∫ x, ∫ z, loss x z ∂P ∂Pn - beta ≤ (∑ i, ∫ x, loss x (x i) ∂Pn) / n := by
+      rw [le_div_iff₀ hnr]; linarith
+    linarith
+  -- bounded differences
+  set c : ℝ := 2 * beta + M / n with hc_def
+  have hbd : ∀ (i : Fin n) (x x' : Fin n → X), (∀ l, l ≠ i → x l = x' l) →
+      |Φ x - Φ x'| ≤ c := by
+    intro i x x' hxx'
+    have h1 : |∫ z, loss x z ∂P - ∫ z, loss x' z ∂P| ≤ beta := by
+      rw [← integral_sub
+        (integrable_of_mem_Icc P (g := fun z ↦ loss x z) (hm.comp measurable_prodMk_left) (hl x))
+        (integrable_of_mem_Icc P (g := fun z ↦ loss x' z) (hm.comp measurable_prodMk_left)
+          (hl x'))]
+      have := norm_integral_le_of_norm_le_const (μ := P) (C := beta)
+        (f := fun z ↦ loss x z - loss x' z)
+        (ae_of_all _ fun z ↦ by rw [Real.norm_eq_abs]; exact hstable x x' ⟨i, hxx'⟩ z)
+      simpa [Real.norm_eq_abs] using this
+    have h2 : |∑ j, loss x (x j) - ∑ j, loss x' (x' j)| ≤ n * beta + M := by
+      rw [← Finset.sum_sub_distrib]
+      calc |∑ j, (loss x (x j) - loss x' (x' j))| ≤ ∑ j, |loss x (x j) - loss x' (x' j)| :=
+            Finset.abs_sum_le_sum_abs _ _
+        _ ≤ ∑ j, (beta + if j = i then M else 0) := Finset.sum_le_sum fun j _ ↦ by
+            by_cases hj : j = i
+            · subst hj
+              simp only [ite_true]
+              obtain ⟨a1, a2⟩ := hl x (x j); obtain ⟨b1, b2⟩ := hl x' (x' j)
+              rw [abs_le]; constructor <;> linarith
+            · simp only [hj, ite_false, add_zero]
+              rw [← hxx' j hj]
+              exact hstable x x' ⟨i, hxx'⟩ _
+        _ = n * beta + M := by
+            rw [Finset.sum_add_distrib, Finset.sum_ite_eq' Finset.univ i]
+            simp
+    have h3 : |(∑ j, loss x (x j)) / n - (∑ j, loss x' (x' j)) / n| ≤ beta + M / n := by
+      rw [← sub_div, abs_div, abs_of_pos hnr, div_le_iff₀ hnr, add_mul,
+        div_mul_cancel₀ _ hnr.ne']
+      linarith
+    have : Φ x - Φ x' = (∫ z, loss x z ∂P - ∫ z, loss x' z ∂P) -
+        ((∑ j, loss x (x j)) / n - (∑ j, loss x' (x' j)) / n) := by
+      simp only [Φ]; ring
+    rw [this]
+    calc _ ≤ |∫ z, loss x z ∂P - ∫ z, loss x' z ∂P| +
+          |(∑ j, loss x (x j)) / n - (∑ j, loss x' (x' j)) / n| := abs_sub _ _
+      _ ≤ c := by simp only [c]; linarith
+  have hsub := TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences P Φ hΦm
+    (fun _ ↦ c) hbd
+  -- the tail bound
+  set L := Real.log (1 / delta) with hL
+  have hL0 : 0 < L := Real.log_pos (by rw [one_div]; exact one_lt_inv_iff₀.mpr hd)
+  by_cases hzero : 2 * n * beta + M = 0
+  · have hb0 : beta = 0 := by nlinarith
+    have hM0 : M = 0 := by nlinarith
+    have hempty : {x : Fin n → X | (∑ i, loss x (x i)) / n + beta + (2 * n * beta + M) *
+        Real.sqrt (Real.log (1 / delta) / (2 * n)) < ∫ z, loss x z ∂P} = ∅ := by
+      ext x
+      simp only [mem_ofPred_eq, mem_empty_iff_false, iff_false, not_lt]
+      rw [hzero, zero_mul, add_zero, hb0, add_zero]
+      have h1 := (hRb x).2
+      have h2 : 0 ≤ (∑ i, loss x (x i)) / n :=
+        div_nonneg (Finset.sum_nonneg fun i _ ↦ (hl _ _).1) hnr.le
+      rw [hM0] at h1
+      linarith
+    rw [hempty, measureReal_empty]
+    exact hd.1.le
+  have hpos : 0 < 2 * n * beta + M := lt_of_le_of_ne (by positivity) (Ne.symm hzero)
+  set tt := (2 * n * beta + M) * Real.sqrt (L / (2 * n)) with htt
+  have htt0 : 0 ≤ tt := mul_nonneg hpos.le (Real.sqrt_nonneg _)
+  have hsubset : {x : Fin n → X | (∑ i, loss x (x i)) / n + beta + tt < ∫ z, loss x z ∂P} ⊆
+      {x | tt ≤ Φ x - ∫ y, Φ y ∂Pn} := by
+    intro x hx
+    simp only [mem_ofPred_eq] at hx ⊢
+    simp only [Φ] at hEΦ ⊢
+    linarith
+  have hc0 : 0 ≤ c := by positivity
+  calc Pn.real {x | (∑ i, loss x (x i)) / n + beta + tt < ∫ z, loss x z ∂P}
+      ≤ Pn.real {x | tt ≤ Φ x - ∫ y, Φ y ∂Pn} := measureReal_mono hsubset
+    _ ≤ Real.exp (-tt ^ 2 / (2 * ((∑ _i : Fin n, c.toNNReal ^ 2 / 4 : ℝ≥0) : ℝ))) :=
+        hsub.measure_ge_le htt0
+    _ = delta := by
+        have hcoe : ((∑ _i : Fin n, c.toNNReal ^ 2 / 4 : ℝ≥0) : ℝ) = n * c ^ 2 / 4 := by
+          push_cast
+          rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul,
+            Real.coe_toNNReal _ hc0]
+          ring
+        have hsq : tt ^ 2 = (2 * n * beta + M) ^ 2 * (L / (2 * n)) := by
+          rw [htt, mul_pow, Real.sq_sqrt (by positivity)]
+        have hcn : c = (2 * n * beta + M) / n := by
+          rw [hc_def]; field_simp
+        rw [hcoe, hsq, hcn]
+        have : -((2 * n * beta + M) ^ 2 * (L / (2 * n))) /
+            (2 * (n * ((2 * n * beta + M) / n) ^ 2 / 4)) = -L := by
+          field_simp
+          ring
+        rw [this, hL, Real.exp_neg, Real.exp_log (one_div_pos.mpr hd.1), one_div, inv_inv]
 
 
 end CKSD

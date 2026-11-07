@@ -463,7 +463,7 @@ measurability questions for suprema.
   small $\delta>0$
   $$\mathbb E^*\sup_{d(\theta,\theta_0)<\delta}
   \bigl|(M_n-M)(\theta)-(M_n-M)(\theta_0)\bigr|\le C\,\frac{\phi_n(\delta)}{\sqrt n},$$
-  where $C$ does not depend on $n$ or $\delta$ and
+  where $C\ge0$ does not depend on $n$ or $\delta$ and
   $\delta\mapsto\phi_n(\delta)/\delta^a$ is decreasing for some $a<2$
   not depending on $n$. Let $r_n^2\,\phi_n(1/r_n)\le\sqrt n$ for every $n$. If
   $M_n(\hat\theta_n)\ge M_n(\theta_0)-O_P(r_n^{-2})$ and $\hat\theta_n\to\theta_0$

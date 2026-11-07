@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DECL = re.compile(r"(?m)^(?:@\[[^\]]*\]\s*)*(?:(?:noncomputable|scoped|local) )*"
                   r"(def|abbrev|structure|inductive|theorem|lemma)\s+([^\s({:]+)")
 DOC = re.compile(r"/--(.*?)\-/", re.S)
+COMMENT = re.compile(r"/-.*?-/", re.S)
 GAP = re.compile(r"GAPS (\d{3}\.\d+)")
 ADMISSION = re.compile(r"(?m)^\s*sorry\b")
 AREAS = {101: 'Inference', 102: 'Asymptotics', 103: 'Nonparametric', 104: 'Bayes',
@@ -46,13 +47,18 @@ def read_declarations():
     result = []
     for path in sorted((ROOT / 'CKSD').rglob('*.lean')):
         source = path.read_text()
-        matches, docs = list(DECL.finditer(source)), list(DOC.finditer(source))
+        docs = list(DOC.finditer(source))
+        comments = [(c.start(), c.end()) for c in COMMENT.finditer(source)]
+        # Ignore keyword-initial lines that are prose inside a comment or docstring.
+        matches = [m for m in DECL.finditer(source)
+                   if not any(a < m.start() < b for a, b in comments)]
         for i, match in enumerate(matches):
             earlier = [d for d in docs if d.end() <= match.start()]
             if not earlier:
                 raise ValueError(f'Missing docstring: {path}:{match[2]}')
             doc = earlier[-1]
-            between = re.sub(r'@\[[^\]]*\]', '', source[doc.end():match.start()]).strip()
+            between = re.sub(r'@\[[^\]]*\]', '', source[doc.end():match.start()])
+            between = re.sub(r'(?ms)^omit .*? in$', '', between).strip()
             if between:
                 raise ValueError(f'Docstring not adjacent: {path}:{match[2]}')
             body = source[match.end():matches[i + 1].start() if i + 1 < len(matches) else len(source)]

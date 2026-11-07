@@ -3,6 +3,7 @@ module
 public import CKSD.Asymptotics.Basic
 public import CKSD.Inference.Model
 public import Statlib.Contiguity.Def
+import Mathlib.MeasureTheory.Measure.Portmanteau
 
 /-!
 # Asymptotic statistical interfaces
@@ -12,6 +13,8 @@ The local parameter `h` of an experiment denotes the displacement `h / sqrt n` f
 its estimator is already scaled by `sqrt n`. This permits observation spaces depending on `n`.
 Contiguity for probability measures is Statlib's `Contiguous5` (direct set formulation).
 Sources: Sections 102 and 103 of `GAPS.md`.
+The functional delta method uses Mathlib's closed-set portmanteau theorem
+(`ProbabilityMeasure.limsup_measure_closed_le_of_tendsto`, `tendsto_of_forall_isClosed_limsup_le'`).
 -/
 
 @[expose] public section
@@ -142,7 +145,88 @@ theorem tendstoInDistribution_of_hasHadamardFDerivAt
     (hd : HasHadamardFDerivAt g domain D₀ D θ)
     (hlim : TendstoInDistribution μ (fun n ω ↦ r n • (T n ω - θ)) G) :
     TendstoInDistribution μ (fun n ω ↦ r n • (g (T n ω) - g θ)) (G.map D) := by
-  sorry
+  set Z : ℕ → Ω → E := fun n ω ↦ r n • (T n ω - θ) with hZ
+  set Y : ℕ → Ω → F := fun n ω ↦ r n • (g (T n ω) - g θ) with hY
+  have hZm : ∀ n, Measurable (Z n) := fun n ↦
+    ((continuous_id.sub continuous_const).const_smul _).measurable.comp (hT n)
+  have hYm : ∀ n, Measurable (Y n) := fun n ↦
+    ((continuous_id.sub continuous_const).const_smul _).measurable.comp (hg.comp (hT n))
+  -- Probability-measure versions of the laws.
+  let PZ : ℕ → ProbabilityMeasure E := fun n ↦ ⟨μ.map (Z n), inferInstance⟩
+  let PY : ℕ → ProbabilityMeasure F := fun n ↦ ⟨μ.map (Y n), inferInstance⟩
+  let PG : ProbabilityMeasure E := ⟨G, inferInstance⟩
+  let PGD : ProbabilityMeasure F := ⟨G.map D, inferInstance⟩
+  have hZlim : Tendsto PZ atTop (𝓝 PG) :=
+    ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.2 hlim
+  suffices hYlim : Tendsto PY atTop (𝓝 PGD) from
+    fun f ↦ ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.1 hYlim f
+  refine tendsto_of_forall_isClosed_limsup_le' fun Fc hFc ↦ ?_
+  -- The sets of local increments mapped into `Fc` at stage `m`.
+  let A : ℕ → Set E := fun m ↦
+    {h | θ + (r m)⁻¹ • h ∈ domain ∧ r m • (g (θ + (r m)⁻¹ • h) - g θ) ∈ Fc}
+  let C : ℕ → Set E := fun k ↦ closure (⋃ m ≥ k, A m)
+  have hCc : ∀ k, IsClosed (C k) := fun k ↦ isClosed_closure
+  have hCanti : Antitone C := fun k l hkl ↦
+    closure_mono (iUnion₂_subset fun m hm ↦ subset_iUnion₂_of_subset m (hkl.trans hm) le_rfl)
+  have hTZ : ∀ n ω, θ + (r n)⁻¹ • Z n ω = T n ω := fun n ω ↦ by
+    simp only [hZ, smul_smul, inv_mul_cancel₀ (hr n).ne', one_smul, add_sub_cancel]
+  -- Step 1: bound the laws of `Yₙ` on `Fc` by those of `Zₙ` on `C k`.
+  have hstep : ∀ k, limsup (fun n ↦ (PY n : Measure F) Fc) atTop ≤ G (C k) := by
+    intro k
+    have hle : ∀ n ≥ k, (PY n : Measure F) Fc ≤ (PZ n : Measure E) (C k) := by
+      intro n hn
+      change μ.map (Y n) Fc ≤ μ.map (Z n) (C k)
+      rw [Measure.map_apply (hYm n) hFc.measurableSet,
+        Measure.map_apply (hZm n) (hCc k).measurableSet]
+      refine measure_mono fun ω hω ↦ subset_closure ?_
+      refine mem_iUnion₂.2 ⟨n, hn, ?_⟩
+      simp only [A, mem_ofPred_eq, hTZ]
+      exact ⟨hdomain n ω, hω⟩
+    calc limsup (fun n ↦ (PY n : Measure F) Fc) atTop
+        ≤ limsup (fun n ↦ (PZ n : Measure E) (C k)) atTop :=
+          limsup_le_limsup (eventually_atTop.2 ⟨k, hle⟩)
+      _ ≤ G (C k) := ProbabilityMeasure.limsup_measure_closed_le_of_tendsto hZlim (hCc k)
+  -- Step 2: pass to the intersection.
+  have hInter : Tendsto (fun k ↦ G (C k)) atTop (𝓝 (G (⋂ k, C k))) :=
+    tendsto_measure_iInter_atTop (fun k ↦ (hCc k).measurableSet.nullMeasurableSet) hCanti
+      ⟨0, measure_ne_top _ _⟩
+  have hlimsup : limsup (fun n ↦ (PY n : Measure F) Fc) atTop ≤ G (⋂ k, C k) :=
+    ge_of_tendsto hInter (Eventually.of_forall hstep)
+  -- Step 3: on `D₀`, the intersection maps into `Fc`.
+  have hsub : (⋂ k, C k) ∩ D₀ ⊆ D ⁻¹' Fc := by
+    rintro v ⟨hv, hvD⟩
+    have hvk : ∀ k : ℕ, ∃ m, k ≤ m ∧ ∃ h ∈ A m, dist h v < 1 / ((k : ℝ) + 1) := by
+      intro k
+      have hk := mem_iInter.1 hv k
+      obtain ⟨h, hh, hdist⟩ := Metric.mem_closure_iff.1 hk _ Nat.one_div_pos_of_nat
+      obtain ⟨m, hm, hhm⟩ := mem_iUnion₂.1 hh
+      exact ⟨m, hm, h, hhm, by rwa [dist_comm]⟩
+    choose m hm h hhA hhd using hvk
+    have hmlim : Tendsto m atTop atTop := tendsto_atTop_mono hm tendsto_id
+    have ht : Tendsto (fun k ↦ (r (m k))⁻¹) atTop (𝓝 0) :=
+      tendsto_inv_atTop_zero.comp (hrlim.comp hmlim)
+    have hh : Tendsto h atTop (𝓝 v) := by
+      rw [tendsto_iff_dist_tendsto_zero]
+      exact squeeze_zero (fun _ ↦ dist_nonneg) (fun k ↦ (hhd k).le)
+        tendsto_one_div_add_atTop_nhds_zero_nat
+    have hconv := hd.2 (fun k ↦ (r (m k))⁻¹) h v (fun k ↦ inv_pos.2 (hr _)) ht hh hvD
+      (fun k ↦ (hhA k).1)
+    simp only [inv_inv] at hconv
+    exact hFc.mem_of_tendsto hconv (Eventually.of_forall fun k ↦ (hhA k).2)
+  -- Step 4: conclude.
+  have hD0c : G (D₀ : Set E)ᶜ = 0 := by
+    rw [prob_compl_eq_one_sub hclosed.measurableSet, hsupp, tsub_self]
+  refine hlimsup.trans ?_
+  change G (⋂ k, C k) ≤ G.map D Fc
+  rw [Measure.map_apply D.continuous.measurable hFc.measurableSet]
+  calc G (⋂ k, C k) ≤ G (((⋂ k, C k) ∩ D₀) ∪ (D₀ : Set E)ᶜ) := by
+        refine measure_mono fun v hv ↦ ?_
+        by_cases hvD : v ∈ (D₀ : Set E)
+        · exact Or.inl ⟨hv, hvD⟩
+        · exact Or.inr hvD
+    _ ≤ G ((⋂ k, C k) ∩ D₀) + G (D₀ : Set E)ᶜ := measure_union_le _ _
+    _ ≤ G (D ⁻¹' Fc) := by rw [hD0c, add_zero]; exact measure_mono hsub
+
 
 /-- Fisher–Rao bilinear form on the open finite probability simplex. -/
 def fisherRaoMetric {m : ℕ} (p u v : Fin m → ℝ) : ℝ := ∑ i, u i * v i / p i

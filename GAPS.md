@@ -1102,7 +1102,7 @@ $\theta_n\downarrow0$; the **efficacy** is $(\mu'(0)/\sigma(0))^2$.
   $c>0$, and that for every $n$ and all sufficiently small $\delta>0$
   $$\mathbb E^*\sup_{d(\theta,\theta_0)<\delta}
   |(M_n-M)(\theta)-(M_n-M)(\theta_0)|\le C\phi_n(\delta)/\sqrt n,$$
-  where $C$ does not depend on $n$ or $\delta$ and
+  where $C\ge0$ does not depend on $n$ or $\delta$ and
   $\delta\mapsto\phi_n(\delta)/\delta^a$ is decreasing for some $a<2$ not
   depending on $n$. If $r_n^2\phi_n(1/r_n)\le\sqrt n$ for every $n$,
   $M_n(\hat\theta_n)\ge M_n(\theta_0)-O_P(r_n^{-2})$ and

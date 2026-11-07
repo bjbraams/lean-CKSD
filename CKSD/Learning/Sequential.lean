@@ -1,6 +1,8 @@
 module
 
 public import CKSD.Learning.Basic
+public import CKSD.Learning.UCBAnalysis
+public import Mathlib.Analysis.Real.Pi.Bounds
 public import CKSD.Asymptotics.Basic
 public import CKSD.Nonparametric.Basic
 
@@ -44,7 +46,30 @@ theorem ucb_regret_le {Ω : Type*} [MeasurableSpace Ω]
     (∫ ω, ∑ t ∈ Finset.range T, (mu star - mu (A t ω)) ∂P) ≤
       8 * (∑ i, if mu i < mu star then Real.log T / (mu star - mu i) else 0) +
         (1 + Real.pi ^ 2 / 3) * ∑ i, (mu star - mu i) := by
-  sorry
+  intro mu star hstar A hA hinit index hucb T _
+  have hb' : ∀ i j, ∀ᵐ ω ∂P, R i j ω ∈ Icc 0 1 := fun i j ↦ ae_of_all _ (hb i j)
+  have hpt : ∀ ω, ∑ t ∈ Finset.range T, (mu star - mu (A t ω)) =
+      ∑ i, (mu star - mu i) * (armPlayCount A i T ω : ℝ) := fun ω ↦
+    sum_range_comp_eq_sum_mul_armPlayCount A (fun i ↦ mu star - mu i) T ω
+  simp_rw [hpt]
+  rw [integral_finsetSum _ fun i _ ↦ (integrable_armPlayCount P A hA i T).const_mul _,
+    Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib]
+  refine Finset.sum_le_sum fun i _ ↦ ?_
+  rw [integral_const_mul]
+  have hπ : (3 : ℝ) ≤ 1 + Real.pi ^ 2 / 3 := by nlinarith [Real.pi_gt_three]
+  have hΔnn : 0 ≤ mu star - mu i := sub_nonneg.mpr (hstar i)
+  split_ifs with hlt
+  · have hcount := integral_armPlayCount_le_of_ucb P R hm hb' hind hlaw A hinit hucb hlt T
+    have hΔ : 0 < mu star - mu i := sub_pos.mpr hlt
+    calc (mu star - mu i) * ∫ ω, (armPlayCount A i T ω : ℝ) ∂P
+        ≤ (mu star - mu i) * (8 * Real.log T / (mu star - mu i) ^ 2 + 3) :=
+          mul_le_mul_of_nonneg_left hcount hΔnn
+      _ = 8 * (Real.log T / (mu star - mu i)) + 3 * (mu star - mu i) := by
+          field_simp
+      _ ≤ _ := by nlinarith
+  · have : mu star - mu i = 0 := by linarith [not_lt.mp hlt, hstar i]
+    rw [this]
+    simp
 
 /-- GAPS 107.54, bounded-noise asynchronous stochastic approximation for a contraction.
 The tabular Q-learning application uses the Bellman operator and visited-pair steps. -/

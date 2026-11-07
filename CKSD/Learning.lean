@@ -7,6 +7,7 @@ public import CKSD.Learning.KernelAndClustering
 public import CKSD.Learning.Approximation
 public import CKSD.Learning.Generalization
 public import CKSD.Learning.Models
+public import CKSD.Learning.UCBAnalysis
 public import CKSD.Learning.Sequential
 public import CKSD.Learning.Privacy
 public import CKSD.Learning.LocalAveraging

@@ -1,6 +1,10 @@
 module
 
-public import CKSD.Inference.Basic
+public import CKSD.Inference.Density
+public import TauCeti.Probability.Distributions.Gaussian.Density
+public import Mathlib.Analysis.Calculus.LineDeriv.IntegrationByParts
+public import Mathlib.Analysis.InnerProductSpace.Calculus
+public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 
 /-!
 # Inference: Gaussian
@@ -32,7 +36,29 @@ theorem james_stein_risk_eq_and_lt {p : ℕ} (hp : 3 ≤ p) (θ : EuclideanSpace
       (∫ x, (‖x‖ ^ 2)⁻¹ ∂P) ∧ (∫ x, ‖δ x - θ‖ ^ 2 ∂P) < p := by
   sorry
 
-/-- GAPS 101.64: Gaussian integration by parts, in the continuously differentiable scope. -/
+/-- The isotropic Gaussian density `N(θ, v I)` in closed form: its value at `θ` times
+`exp (-‖x - θ‖² / (2v))`. Stated for TauCeti's `multivariateGaussianPDFReal`. -/
+theorem multivariateGaussianPDFReal_smul_one {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) (v : ℝ≥0)
+    (hv : 0 < v) (x : EuclideanSpace ℝ (Fin p)) :
+    TauCeti.Probability.multivariateGaussianPDFReal θ ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)) x =
+      TauCeti.Probability.multivariateGaussianPDFReal θ
+        ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)) θ *
+        Real.exp (-((v : ℝ)⁻¹ * ‖x - θ‖ ^ 2) / 2) := by
+  have hv' : (v : ℝ) ≠ 0 := (NNReal.coe_pos.2 hv).ne'
+  have hinv : ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ))⁻¹ = (v : ℝ)⁻¹ • 1 := by
+    apply Matrix.inv_eq_left_inv
+    rw [smul_mul_smul, Matrix.one_mul, inv_mul_cancel₀ hv', one_smul]
+  simp only [TauCeti.Probability.multivariateGaussianPDFReal_def, hinv, sub_self, map_zero,
+    inner_zero_left, neg_zero, zero_div, Real.exp_zero, mul_one]
+  congr 2
+  rw [map_smul, LinearMap.smul_apply, Matrix.toLpLin_one, LinearMap.id_apply, inner_smul_right,
+    real_inner_self_eq_norm_sq]
+
+
+/-- GAPS 101.64: Gaussian integration by parts, in the continuously differentiable scope.
+The proof writes the law as a density against Lebesgue measure
+(TauCeti's `multivariateGaussian_eq_withDensity`) and applies Mathlib's
+`integral_mul_fderiv_eq_neg_fderiv_mul_of_integrable`. -/
 theorem gaussian_integration_by_parts {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) (v : ℝ≥0)
     (hv : 0 < v) (g : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p))
     (hg : ContDiff ℝ 1 g) :
@@ -43,7 +69,79 @@ theorem gaussian_integration_by_parts {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)
     ∀ (i : Fin p),
     (∫ x, (x i - θ i) * g x i ∂P) =
       (v : ℝ) * ∫ x, (fderiv ℝ g x (EuclideanSpace.single i 1)) i ∂P := by
-  sorry
+  intro P hL2 hder i
+  have hv' : (v : ℝ) ≠ 0 := (NNReal.coe_pos.2 hv).ne'
+  have hS : ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)).PosDef :=
+    Matrix.PosDef.one.smul (NNReal.coe_pos.2 hv)
+  let φ := TauCeti.Probability.multivariateGaussianPDFReal θ
+    ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ))
+  let e : EuclideanSpace ℝ (Fin p) := EuclideanSpace.single i 1
+  have hφm : Measurable φ := TauCeti.Probability.measurable_multivariateGaussianPDFReal _ _
+  have hφnn : ∀ x, 0 ≤ φ x := TauCeti.Probability.multivariateGaussianPDFReal_nonneg _ _
+  have hden : HasDensity P volume φ :=
+    ⟨hφm, ae_of_all _ hφnn, by
+      show multivariateGaussian θ ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)) = _
+      rw [TauCeti.Probability.multivariateGaussian_eq_withDensity hS θ,
+        TauCeti.Probability.multivariateGaussianPDF_def]⟩
+  have hint : ∀ h : EuclideanSpace ℝ (Fin p) → ℝ,
+      Integrable h P ↔ Integrable (fun x ↦ φ x * h x) volume := by
+    intro h
+    rw [hden.2.2, integrable_withDensity_iff_integrable_smul' hφm.ennreal_ofReal
+      (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
+    simp only [ENNReal.toReal_ofReal (hφnn _), smul_eq_mul]
+  -- the coordinate function `g i` and its partial derivative
+  let gi : EuclideanSpace ℝ (Fin p) → ℝ := fun x ↦ g x i
+  have hgd : Differentiable ℝ g := hg.differentiable one_ne_zero
+  have hgi : ∀ x, HasFDerivAt gi ((EuclideanSpace.proj i).comp (fderiv ℝ g x)) x :=
+    fun x ↦ (EuclideanSpace.proj (𝕜 := ℝ) (ι := Fin p) i).hasFDerivAt.comp x (hgd x).hasFDerivAt
+  have hgi_fd : ∀ x, fderiv ℝ gi x e = fderiv ℝ g x e i := fun x ↦ by
+    rw [(hgi x).fderiv]; rfl
+  -- the derivative of the density
+  let c := φ θ
+  have hφeq : φ = fun x ↦ c * Real.exp (-((v : ℝ)⁻¹ * ‖x - θ‖ ^ 2) / 2) :=
+    funext fun x ↦ multivariateGaussianPDFReal_smul_one θ v hv x
+  have hφd : ∀ x, HasFDerivAt φ (c • (Real.exp (-((v : ℝ)⁻¹ * ‖x - θ‖ ^ 2) / 2) •
+      ((-(v : ℝ)⁻¹ / 2) • (2 • (innerSL ℝ (x - θ)).comp (ContinuousLinearMap.id ℝ _))))) x := by
+    intro x
+    rw [hφeq]
+    have h1 := HasFDerivAt.norm_sq ((hasFDerivAt_id x).sub_const θ)
+    have h2 := (h1.const_mul (-(v : ℝ)⁻¹ / 2)).exp.const_mul c
+    convert h2 using 2
+    · simp only [id]; congr 1; ring_nf
+    · simp only [id]; congr 2; ring_nf
+  have hφ_fd : ∀ x, fderiv ℝ φ x e = -((v : ℝ)⁻¹ * (x i - θ i)) * φ x := fun x ↦ by
+    rw [(hφd x).fderiv, hφeq]
+    simp [e, EuclideanSpace.inner_single_right]
+    ring_nf
+  -- integrability under `P`
+  have hmemLp_gi : MemLp gi 2 P :=
+    (EuclideanSpace.proj (𝕜 := ℝ) (ι := Fin p) i).comp_memLp' hL2
+  have hmemLp_x : MemLp (fun x : EuclideanSpace ℝ (Fin p) ↦ x i - θ i) 2 P :=
+    (IsGaussian.memLp_dual (multivariateGaussian θ ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)))
+      (EuclideanSpace.proj i) 2 (by simp)).sub (memLp_const _)
+  have hxg : Integrable (fun x ↦ (x i - θ i) * gi x) P := hmemLp_x.integrable_mul hmemLp_gi
+  have hgP : Integrable gi P := hmemLp_gi.integrable one_le_two
+  have hf'g : Integrable (fun x ↦ fderiv ℝ φ x e * gi x) volume := by
+    simp_rw [hφ_fd]
+    refine (((hint _).1 hxg).const_mul (-(v : ℝ)⁻¹)).congr (ae_of_all _ fun x ↦ ?_)
+    simp only
+    ring
+  have hfg' : Integrable (fun x ↦ φ x * fderiv ℝ gi x e) volume := by
+    simp_rw [hgi_fd]
+    exact (hint _).1 (hder i)
+  have hibp := integral_mul_fderiv_eq_neg_fderiv_mul_of_integrable hf'g hfg' ((hint _).1 hgP)
+    (fun x _ ↦ (hφd x).differentiableAt) (fun x _ ↦ (hgi x).differentiableAt)
+  rw [hden.integral_eq, hden.integral_eq]
+  have hrw : (∫ x, φ x * (fderiv ℝ g x (EuclideanSpace.single i 1)) i) =
+      ∫ x, φ x * fderiv ℝ gi x e := by
+    simp_rw [hgi_fd]; rfl
+  rw [hrw, hibp]
+  simp_rw [hφ_fd]
+  rw [← integral_neg, ← integral_const_mul]
+  congr 1
+  funext x
+  field_simp
+  ring
 
 /-- GAPS 101.69: existence and uniqueness of a regular natural-exponential-family maximum.
 The domain is the full Laplace-integrability domain, not an arbitrary open

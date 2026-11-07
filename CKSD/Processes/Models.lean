@@ -9,7 +9,7 @@ public import Mathlib.Probability.BrownianMotion.Basic
 First-exit times take values in `ℕ∞`, so a procedure that never stops has infinite stopping time.
 The Brownian bridge uses Mathlib's Brownian process; counting-process compensators use ordinary
 Lebesgue integrals and martingales, without postulating a stochastic integral.
-Sources: GAPS 106.7, 106.24, 106.30, 106.34, 106.37–106.44.
+Sources: GAPS 106.24, 106.30, 106.34, 106.37–106.44.
 -/
 
 @[expose] public section
@@ -76,34 +76,6 @@ def coxPartialLogLikelihood {n d : ℕ} (time : Fin n → ℝ) (event : Fin n �
     (z : Fin n → EuclideanSpace ℝ (Fin d)) (β : EuclideanSpace ℝ (Fin d)) : ℝ :=
   ∑ i, if event i then inner ℝ β (z i) -
     Real.log (∑ j, if time i ≤ time j then Real.exp (inner ℝ β (z j)) else 0) else 0
-
-/-- A time-homogeneous linear Gaussian state-space specification. -/
-structure LinearGaussianStateSpaceModel (d p : ℕ) where
-  /-- State transition matrix. -/
-  transition : Matrix (Fin d) (Fin d) ℝ
-  /-- Observation matrix. -/
-  observation : Matrix (Fin p) (Fin d) ℝ
-  /-- State noise covariance. -/
-  stateCovariance : Matrix (Fin d) (Fin d) ℝ
-  /-- Positive semidefinite state covariance. -/
-  stateCovariance_posSemidef : stateCovariance.PosSemidef
-  /-- Observation noise covariance. -/
-  observationCovariance : Matrix (Fin p) (Fin p) ℝ
-  /-- Positive definite observation noise covariance. -/
-  observationCovariance_posDef : observationCovariance.PosDef
-
-/-- Kalman gain for a predicted state covariance. -/
-def kalmanGain {d p : ℕ} (M : LinearGaussianStateSpaceModel d p)
-    (C : Matrix (Fin d) (Fin d) ℝ) : Matrix (Fin d) (Fin p) ℝ :=
-  C * M.observation.transpose * (M.observation * C * M.observation.transpose +
-    M.observationCovariance)⁻¹
-
-/-- Kalman correction of a predicted state mean. -/
-def kalmanUpdatedMean {d p : ℕ} (M : LinearGaussianStateSpaceModel d p)
-    (C : Matrix (Fin d) (Fin d) ℝ) (m : EuclideanSpace ℝ (Fin d))
-    (y : EuclideanSpace ℝ (Fin p)) : EuclideanSpace ℝ (Fin d) :=
-  m + Matrix.toEuclideanLin (𝕜 := ℝ) (kalmanGain M C)
-    (y - Matrix.toEuclideanLin (𝕜 := ℝ) M.observation m)
 
 /-- Nonnegativity of the Shiryaev–Roberts statistic for nonnegative likelihood ratios. -/
 theorem shiryaevRobertsStatistic_nonneg {Ω : Type*} (L : ℕ → Ω → ℝ)

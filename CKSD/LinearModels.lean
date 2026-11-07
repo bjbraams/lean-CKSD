@@ -13,6 +13,7 @@ public import CKSD.LinearModels.Design
 public import CKSD.LinearModels.CausalAndSurvey
 public import CKSD.LinearModels.CanonicalCorrelation
 public import CKSD.LinearModels.Decomposable
+public import CKSD.LinearModels.ActiveTrails
 public import CKSD.LinearModels.DirectedGraphical
 public import CKSD.LinearModels.FTest
 public import CKSD.LinearModels.GFormula

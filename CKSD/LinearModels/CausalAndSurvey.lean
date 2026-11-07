@@ -78,15 +78,6 @@ theorem integral_sample_pair_sum {N : ℕ} (P : Measure (Finset (Fin N))) [IsFin
     (integral_indicator_const (μ := P) (b i j)
       (Set.to_countable {s : Finset (Fin N) | i ∈ s ∧ j ∈ s}).measurableSet)
 
-/-- GAPS 105.46, Neyman's exact design variance in a completely randomized experiment. -/
-theorem randomized_treatment_difference_mean_and_variance {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n₀ = N)
-    (h₁ : 0 < n₁) (h₀ : 0 < n₀) (y₁ y₀ : Fin N → ℝ) :
-    let T := fun s : Finset (Fin N) ↦ (∑ i ∈ s, y₁ i) / n₁ - (∑ i ∈ sᶜ, y₀ i) / n₀;
-    (∫ s, T s ∂simpleRandomSampleDesign N n₁) = populationMean (y₁ - y₀) ∧
-      variance (simpleRandomSampleDesign N n₁) T = populationVariance y₁ / n₁ + populationVariance y₀ / n₀ -
-        populationVariance (y₁ - y₀) / N := by
-  sorry
-
 /-- GAPS 105.47, finite-stratum potential-outcome identification under mean ignorability. -/
 theorem treatment_effect_identification_of_conditional_independence
     {Ω : Type*} [MeasurableSpace Ω] {k : ℕ}
@@ -491,6 +482,179 @@ theorem horvitz_thompson_variance_eq_sen_yates_grundy
   rw [hvar, hdiff]
   ring
 
+/-- Under simple random sampling of `n` units, the probability that the sample contains a given
+set `B` of at most `n` units is `C(N - |B|, n - |B|) / C(N, n)`. -/
+theorem simpleRandomSampleDesign_real_superset {N n : ℕ} (B : Finset (Fin N))
+    (hB : B.card ≤ n) :
+    (simpleRandomSampleDesign N n).real {s | B ⊆ s} =
+      (Nat.choose (N - B.card) (n - B.card) : ℝ) / Nat.choose N n := by
+  have hset : ({s : Finset (Fin N) | B ⊆ s} ∩ {s | s.card = n}) =
+      ↑((Finset.univ.powersetCard n).filter (B ⊆ ·)) := by
+    ext s; simp [and_comm]
+  have hmeas : MeasurableSet {s : Finset (Fin N) | s.card = n} :=
+    (Set.to_countable _).measurableSet
+  simp only [simpleRandomSampleDesign, measureReal_def, smul_apply,
+    Measure.restrict_apply' hmeas, hset, Measure.count_apply_finset, smul_eq_mul]
+  rw [Finset.card_filter_powersetCard_subset B Finset.univ n (Finset.subset_univ B) hB,
+    Finset.card_univ, Fintype.card_fin]
+  rw [ENNReal.toReal_mul, ENNReal.toReal_inv]
+  simp [div_eq_mul_inv, mul_comm]
+
+/-- Simple random sampling of `n ≤ N` units is a probability measure. -/
+theorem isProbabilityMeasure_simpleRandomSampleDesign {N n : ℕ} (h : n ≤ N) :
+    IsProbabilityMeasure (simpleRandomSampleDesign N n) := by
+  constructor
+  have hset : {s : Finset (Fin N) | s.card = n} = ((Finset.univ : Finset (Fin N)).powersetCard n : Set (Finset (Fin N))) := by
+    ext s; simp
+  have hC : (Nat.choose N n : ℝ≥0∞) ≠ 0 := by exact_mod_cast (Nat.choose_pos h).ne'
+  simp only [simpleRandomSampleDesign, smul_apply, Measure.restrict_apply MeasurableSet.univ,
+    Set.univ_inter, hset, Measure.count_apply_finset, Finset.card_powersetCard, Finset.card_univ,
+    Fintype.card_fin, smul_eq_mul]
+  exact ENNReal.inv_mul_cancel hC (ENNReal.natCast_ne_top _)
+
+/-- Under simple random sampling, the probability that the sample contains `B` is the
+proportion of `n`-subsets containing `B`. -/
+theorem simpleRandomSampleDesign_real_superset_eq_card {N n : ℕ} (B : Finset (Fin N)) :
+    (simpleRandomSampleDesign N n).real {s | B ⊆ s} =
+      (((Finset.univ.powersetCard n).filter (B ⊆ ·)).card : ℝ) / Nat.choose N n := by
+  have hset : ({s : Finset (Fin N) | B ⊆ s} ∩ {s | s.card = n}) =
+      ↑((Finset.univ.powersetCard n).filter (B ⊆ ·)) := by
+    ext s; simp [and_comm]
+  have hmeas : MeasurableSet {s : Finset (Fin N) | s.card = n} :=
+    (Set.to_countable _).measurableSet
+  simp only [simpleRandomSampleDesign, measureReal_def, smul_apply,
+    Measure.restrict_apply' hmeas, hset, Measure.count_apply_finset, smul_eq_mul]
+  rw [ENNReal.toReal_mul, ENNReal.toReal_inv]
+  simp [div_eq_mul_inv, mul_comm]
+
+/-- First-order inclusion probabilities of simple random sampling. -/
+theorem simpleRandomSampleDesign_real_mem {N n : ℕ} (hn : 1 ≤ n) (hnN : n ≤ N) (i : Fin N) :
+    (simpleRandomSampleDesign N n).real {s | i ∈ s} = n / N := by
+  have := simpleRandomSampleDesign_real_superset (N := N) (n := n) {i} (by simpa using hn)
+  simp only [Finset.singleton_subset_iff, Finset.card_singleton] at this
+  rw [this]
+  obtain ⟨M, rfl⟩ : ∃ M, N = M + 1 := ⟨N - 1, by omega⟩
+  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
+  have h := Nat.add_one_mul_choose_eq M k
+  have hC : (Nat.choose (M + 1) (k + 1) : ℝ) ≠ 0 := by
+    exact_mod_cast (Nat.choose_pos hnN).ne'
+  simp only [Nat.add_sub_cancel]
+  rw [div_eq_div_iff hC (by positivity)]
+  have h' : ((M + 1 : ℕ) : ℝ) * (Nat.choose M k) = (Nat.choose (M + 1) (k + 1)) * (k + 1 : ℕ) := by
+    exact_mod_cast h
+  push_cast at h' ⊢
+  linarith
+
+/-- Second-order inclusion probabilities of simple random sampling for distinct units. -/
+theorem simpleRandomSampleDesign_real_mem_mem {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
+    (hnN : n ≤ N) {i j : Fin N} (hij : i ≠ j) :
+    (simpleRandomSampleDesign N n).real {s | i ∈ s ∧ j ∈ s} =
+      n * (n - 1) / (N * (N - 1)) := by
+  have hset : {s : Finset (Fin N) | i ∈ s ∧ j ∈ s} = {s | {i, j} ⊆ s} := by
+    ext s; simp [Finset.insert_subset_iff]
+  have hcard : ({i, j} : Finset (Fin N)).card = 2 := Finset.card_pair hij
+  rw [hset]
+  rcases Nat.lt_or_ge n 2 with h1 | h2
+  · have hn1 : n = 1 := by omega
+    subst hn1
+    rw [simpleRandomSampleDesign_real_superset_eq_card]
+    have : (Finset.univ.powersetCard 1).filter (({i, j} : Finset (Fin N)) ⊆ ·) = ∅ := by
+      ext s
+      simp only [Finset.mem_filter, Finset.mem_powersetCard_univ, Finset.notMem_empty,
+        iff_false, not_and]
+      intro hs hsub
+      have := Finset.card_le_card hsub
+      omega
+    simp [this]
+  · rw [simpleRandomSampleDesign_real_superset {i, j} (by omega), hcard]
+    obtain ⟨M, rfl⟩ : ∃ M, N = M + 2 := ⟨N - 2, by omega⟩
+    obtain ⟨k, rfl⟩ : ∃ k, n = k + 2 := ⟨n - 2, by omega⟩
+    have h₁ := Nat.add_one_mul_choose_eq (M + 1) (k + 1)
+    have h₂ := Nat.add_one_mul_choose_eq M k
+    have hC : (Nat.choose (M + 2) (k + 2) : ℝ) ≠ 0 := by
+      exact_mod_cast (Nat.choose_pos hnN).ne'
+    simp only [Nat.add_sub_cancel]
+    rw [div_eq_div_iff hC (by push_cast; nlinarith)]
+    have h₁' : ((M + 2 : ℕ) : ℝ) * (Nat.choose (M + 1) (k + 1)) =
+        (Nat.choose (M + 2) (k + 2)) * (k + 2 : ℕ) := by exact_mod_cast h₁
+    have h₂' : ((M + 1 : ℕ) : ℝ) * (Nat.choose M k) =
+        (Nat.choose (M + 1) (k + 1)) * (k + 1 : ℕ) := by exact_mod_cast h₂
+    push_cast at h₁' h₂' ⊢
+    linear_combination (↑k + 1 : ℝ) * h₁' + ((M : ℝ) + 2) * h₂'
+
+/-- The finite-population variance as a difference of sums. -/
+theorem populationVariance_eq_sum_sq {N : ℕ} (hN : 1 ≤ N) (y : Fin N → ℝ) :
+    populationVariance y = ((∑ i, y i ^ 2) - (∑ i, y i) ^ 2 / N) / (N - 1) := by
+  have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
+  unfold populationVariance populationMean
+  rw [Nat.cast_sub hN, Nat.cast_one]
+  congr 1
+  simp_rw [sub_sq, Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.sum_mul,
+    ← Finset.mul_sum, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+  field_simp
+  ring
+
+/-- A double sum with one coefficient on the diagonal and another off it. -/
+theorem sum_sum_ite_eq_mul {N : ℕ} (d e : ℝ) (w : Fin N → ℝ) :
+    (∑ i, ∑ j, (if i = j then d else e) * w i * w j) =
+      (d - e) * ∑ i, w i ^ 2 + e * (∑ i, w i) ^ 2 := by
+  have h : ∀ i j, (if i = j then d else e) * w i * w j =
+      e * (w i * w j) + if i = j then (d - e) * w i ^ 2 else 0 := by
+    intro i j
+    split_ifs with hij
+    · subst hij; ring
+    · ring
+  have hsq : (∑ i, ∑ j, e * (w i * w j)) = e * (∑ i, w i) ^ 2 := by
+    rw [sq, Finset.sum_mul_sum, Finset.mul_sum]
+    simp_rw [Finset.mul_sum]
+  simp_rw [h, Finset.sum_add_distrib, Finset.sum_ite_eq, Finset.mem_univ, ite_true]
+  rw [hsq, ← Finset.mul_sum]
+  ring
+
+/-- Mean and design variance of a sample total under simple random sampling. -/
+theorem simpleRandomSampleDesign_sum_mean_and_variance {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
+    (hnN : n ≤ N) (w : Fin N → ℝ) :
+    (∫ s, ∑ i ∈ s, w i ∂simpleRandomSampleDesign N n) = n / N * ∑ i, w i ∧
+      variance (simpleRandomSampleDesign N n) (fun s ↦ ∑ i ∈ s, w i) =
+        n * (N - n) / N * populationVariance w := by
+  have := isProbabilityMeasure_simpleRandomSampleDesign hnN
+  set P := simpleRandomSampleDesign N n
+  have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
+  have hN1 : (N : ℝ) - 1 ≠ 0 := by
+    have : (2 : ℝ) ≤ N := by exact_mod_cast hN
+    linarith
+  have hn0 : (n : ℝ) ≠ 0 := by exact_mod_cast (show n ≠ 0 by omega)
+  have hpi : ∀ i, P.real {s | i ∈ s} = n / N := simpleRandomSampleDesign_real_mem hn hnN
+  have hpos : ∀ i, 0 < P.real {s | i ∈ s} := fun i ↦ by
+    rw [hpi]; exact div_pos (by positivity) (by positivity)
+  have hHT := horvitz_thompson_mean_and_variance P (fun i ↦ n / N * w i) hpos
+  have hT : (fun s : Finset (Fin N) ↦ ∑ i ∈ s, (n / N * w i) / P.real {s | i ∈ s}) =
+      fun s ↦ ∑ i ∈ s, w i := by
+    funext s
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [hpi]
+    field_simp
+  simp only [hT] at hHT
+  refine ⟨by rw [hHT.1, Finset.mul_sum], ?_⟩
+  rw [hHT.2]
+  have hpij : ∀ i j, P.real {s | i ∈ s ∧ j ∈ s} =
+      if i = j then (n / N : ℝ) else n * (n - 1) / (N * (N - 1)) := by
+    intro i j
+    split_ifs with hij
+    · subst hij; simpa using hpi i
+    · exact simpleRandomSampleDesign_real_mem_mem hN hn hnN hij
+  have hterm : ∀ i j, (P.real {s | i ∈ s ∧ j ∈ s} - P.real {s | i ∈ s} * P.real {s | j ∈ s}) *
+      (n / N * w i) * (n / N * w j) / (P.real {s | i ∈ s} * P.real {s | j ∈ s}) =
+      (if i = j then (n / N - (n / N) ^ 2 : ℝ) else n * (n - 1) / (N * (N - 1)) - (n / N) ^ 2) *
+        w i * w j := by
+    intro i j
+    rw [hpij, hpi, hpi]
+    split_ifs <;> field_simp
+  simp_rw [hterm]
+  rw [sum_sum_ite_eq_mul, populationVariance_eq_sum_sq (by omega)]
+  field_simp
+  ring
+
 /-- GAPS 105.73, finite-population correction for a simple random sample mean. -/
 theorem simple_random_sample_mean_and_variance
     {N : ℕ} (hN : 2 ≤ N) (n : ℕ) (hn : 1 ≤ n) (hnN : n ≤ N)
@@ -498,7 +662,82 @@ theorem simple_random_sample_mean_and_variance
     let T := fun s : Finset (Fin N) ↦ (∑ i ∈ s, y i) / n;
     (∫ s, T s ∂simpleRandomSampleDesign N n) = populationMean y ∧
       variance (simpleRandomSampleDesign N n) T = (1 - (n : ℝ) / N) * populationVariance y / n := by
-  sorry
+  intro T
+  have hT : T = fun s ↦ ∑ i ∈ s, y i / n := funext fun s ↦ Finset.sum_div _ _ _
+  obtain ⟨h1, h2⟩ := simpleRandomSampleDesign_sum_mean_and_variance hN hn hnN (fun i ↦ y i / n)
+  have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
+  have hn0 : (n : ℝ) ≠ 0 := by exact_mod_cast (show n ≠ 0 by omega)
+  rw [hT, h1, h2, populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega)]
+  simp only [div_pow, ← Finset.sum_div, populationMean]
+  refine ⟨by field_simp, ?_⟩
+  field_simp
+
+/-- GAPS 105.46, Neyman's exact design variance in a completely randomized experiment. -/
+theorem randomized_treatment_difference_mean_and_variance {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n₀ = N)
+    (h₁ : 0 < n₁) (h₀ : 0 < n₀) (y₁ y₀ : Fin N → ℝ) :
+    let T := fun s : Finset (Fin N) ↦ (∑ i ∈ s, y₁ i) / n₁ - (∑ i ∈ sᶜ, y₀ i) / n₀;
+    (∫ s, T s ∂simpleRandomSampleDesign N n₁) = populationMean (y₁ - y₀) ∧
+      variance (simpleRandomSampleDesign N n₁) T = populationVariance y₁ / n₁ + populationVariance y₀ / n₀ -
+        populationVariance (y₁ - y₀) / N := by
+  intro T
+  have hnN : n₁ ≤ N := by omega
+  have := isProbabilityMeasure_simpleRandomSampleDesign hnN
+  let w := fun i ↦ y₁ i / n₁ + y₀ i / n₀
+  let c := (∑ i, y₀ i) / n₀
+  have hT : T = fun s ↦ (∑ i ∈ s, w i) - c := by
+    funext s
+    simp only [T, w, c, Finset.sum_add_distrib, ← Finset.sum_div]
+    rw [← Finset.sum_compl_add_sum s y₀]
+    ring
+  obtain ⟨hm, hv⟩ := simpleRandomSampleDesign_sum_mean_and_variance (by omega) h₁ hnN w
+  have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
+  have hn₁ : (n₁ : ℝ) ≠ 0 := by exact_mod_cast h₁.ne'
+  have hn₀ : (n₀ : ℝ) ≠ 0 := by exact_mod_cast h₀.ne'
+  have hNr : (N : ℝ) = n₁ + n₀ := by exact_mod_cast hn.symm
+  have hint : Integrable (fun s : Finset (Fin N) ↦ ∑ i ∈ s, w i)
+      (simpleRandomSampleDesign N n₁) :=
+    (memLp_finite_sample _ _ 1).integrable le_rfl
+  constructor
+  · rw [hT, integral_sub hint (integrable_const c), hm, integral_const, smul_eq_mul,
+      probReal_univ, one_mul]
+    simp only [w, c, populationMean, Pi.sub_apply, Finset.sum_sub_distrib, Finset.sum_add_distrib,
+      ← Finset.sum_div]
+    rw [hNr]
+    field_simp
+    ring
+  · rw [hT, variance_eq_mathlib _ _ (measurable_of_countable _).aemeasurable,
+      ProbabilityTheory.variance_sub_const (measurable_of_countable _).aestronglyMeasurable,
+      ← variance_eq_mathlib _ _ (measurable_of_countable _).aemeasurable, hv]
+    rw [populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega),
+      populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega)]
+    have e1 : (∑ i, w i ^ 2) = (∑ i, y₁ i ^ 2) / n₁ ^ 2 + (∑ i, y₀ i ^ 2) / n₀ ^ 2 +
+        2 * (∑ i, y₁ i * y₀ i) / (n₁ * n₀) := by
+      have h : ∀ i, w i ^ 2 = y₁ i ^ 2 / n₁ ^ 2 + y₀ i ^ 2 / n₀ ^ 2 +
+          2 * (y₁ i * y₀ i) / (n₁ * n₀) := by
+        intro i
+        simp only [w]
+        field_simp
+        ring
+      simp_rw [h, Finset.sum_add_distrib, ← Finset.sum_div, ← Finset.mul_sum]
+    have e2 : (∑ i, (y₁ - y₀) i ^ 2) = (∑ i, y₁ i ^ 2) + (∑ i, y₀ i ^ 2) -
+        2 * (∑ i, y₁ i * y₀ i) := by
+      have h : ∀ i, (y₁ - y₀) i ^ 2 = y₁ i ^ 2 + y₀ i ^ 2 - 2 * (y₁ i * y₀ i) := by
+        intro i
+        simp only [Pi.sub_apply]
+        ring
+      simp_rw [h, Finset.sum_sub_distrib, Finset.sum_add_distrib, ← Finset.mul_sum]
+    have e3 : (∑ i, w i) = (∑ i, y₁ i) / n₁ + (∑ i, y₀ i) / n₀ := by
+      simp only [w, Finset.sum_add_distrib, ← Finset.sum_div]
+    have e4 : (∑ i, (y₁ - y₀) i) = (∑ i, y₁ i) - (∑ i, y₀ i) := by
+      simp only [Pi.sub_apply, Finset.sum_sub_distrib]
+    rw [e1, e2, e3, e4, hNr]
+    have hN1 : (n₁ : ℝ) + n₀ - 1 ≠ 0 := by
+      have : (1 : ℝ) ≤ n₁ := by exact_mod_cast h₁
+      have : (1 : ℝ) ≤ n₀ := by exact_mod_cast h₀
+      linarith
+    have hN0' : (n₁ : ℝ) + n₀ ≠ 0 := by rw [← hNr]; exact hN0
+    field_simp
+    ring
 
 /-- GAPS 105.73, the continuous Neyman allocation optimization. -/
 theorem neyman_allocation_optimal {k : ℕ} (a : Fin k → ℝ) (ha : ∀ i, 0 < a i)
