@@ -1,0 +1,86 @@
+module
+
+public import CKSD.LinearModels.Basic
+public import CKSD.Asymptotics.Basic
+public import CKSD.Nonparametric.Basic
+public import TauCeti.Probability.Distributions.ChiSquared.Basic
+public import TauCeti.Probability.Distributions.StudentT.Basic
+public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
+
+/-!
+# LinearModels: Regression
+
+Sources: `GAPS.md`, `SYNOPSIS105.md`, and `STRUCTURE105.md`.
+Declarations adapted from this project's section drafts.
+The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+-/
+
+@[expose] public section
+
+noncomputable section
+
+open MeasureTheory ProbabilityTheory Filter Set
+open scoped ENNReal NNReal Topology BigOperators MatrixOrder Matrix.Norms.L2Operator
+
+namespace CKSD
+
+open scoped CKSD
+
+attribute [local instance] Classical.propDecidable
+
+-- Use the common finite-sample measurable structure.
+attribute [local instance] finiteSampleMeasurableSpace
+
+/-- GAPS 105.1, scalar Gauss–Markov comparison by projecting an unbiased coefficient. -/
+theorem variance_projection_le_of_unbiased {Ω : Type*} [MeasurableSpace Ω] {n : ℕ}
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (Y : Ω → EuclideanSpace ℝ (Fin n))
+    (hY : MemLp Y 2 μ) (v : ℝ) (hv : 0 ≤ v)
+    (hcov : ∀ i j, covariance μ (fun ω ↦ Y ω i) (fun ω ↦ Y ω j) = if i = j then v else 0)
+    (P : EuclideanSpace ℝ (Fin n) →L[ℝ] EuclideanSpace ℝ (Fin n))
+    (hPid : ∀ x, P (P x) = P x)
+    (hPsym : ∀ x y, inner ℝ (P x) y = inner ℝ x (P y))
+    (hm : P (∫ ω, Y ω ∂μ) = ∫ ω, Y ω ∂μ) (a : EuclideanSpace ℝ (Fin n)) :
+    (∫ ω, inner ℝ (P a) (Y ω) ∂μ) = ∫ ω, inner ℝ a (Y ω) ∂μ ∧
+      variance μ (fun ω ↦ inner ℝ (P a) (Y ω)) ≤
+        variance μ (fun ω ↦ inner ℝ a (Y ω)) := by
+  sorry
+
+/-- GAPS 105.2, residual chi-squared law and projection independence. -/
+theorem gaussian_projection_residual_law_and_indepFun
+    {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0) (hv : 0 < v)
+    (P : EuclideanSpace ℝ (Fin n) →L[ℝ] EuclideanSpace ℝ (Fin n))
+    (hPid : ∀ x, P (P x) = P x)
+    (hPsym : ∀ x y, inner ℝ (P x) y = inner ℝ x (P y)) (hm : P m = m) :
+    let r := Module.finrank ℝ (LinearMap.range P.toLinearMap);
+    let G := multivariateGaussian m ((v : ℝ) • (1 : Matrix (Fin n) (Fin n) ℝ));
+    G.map (fun x ↦ ‖x - P x‖ ^ 2 / v) = TauCeti.Probability.chiSquaredMeasure (n - r : ℕ) ∧
+      IndepFun P (fun x ↦ ‖x - P x‖ ^ 2) G := by
+  sorry
+
+/-- GAPS 105.10, exact null F law for nested Gaussian projection models. -/
+theorem nested_gaussian_projection_fisher_law
+    {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0) (hv : 0 < v)
+    (P₀ P₁ : EuclideanSpace ℝ (Fin n) →L[ℝ] EuclideanSpace ℝ (Fin n))
+    (hid : ∀ x, P₀ (P₀ x) = P₀ x ∧ P₁ (P₁ x) = P₁ x)
+    (hsym : ∀ x y, inner ℝ (P₀ x) y = inner ℝ x (P₀ y) ∧
+      inner ℝ (P₁ x) y = inner ℝ x (P₁ y))
+    (hnest : ∀ x, P₁ (P₀ x) = P₀ x) (hm : P₀ m = m) :
+    let r₀ := Module.finrank ℝ (LinearMap.range P₀.toLinearMap);
+    let r₁ := Module.finrank ℝ (LinearMap.range P₁.toLinearMap);
+    ∀ (hr : r₀ < r₁),
+    ∀ (hrn : r₁ < n),
+    let G := multivariateGaussian m ((v : ℝ) • (1 : Matrix (Fin n) (Fin n) ℝ));
+    G.map (fun x ↦ (‖P₁ x - P₀ x‖ ^ 2 / (r₁ - r₀ : ℕ)) /
+      (‖x - P₁ x‖ ^ 2 / (n - r₁ : ℕ))) =
+      TauCeti.Probability.fisherSnedecorMeasure (r₁ - r₀ : ℕ) (n - r₁ : ℕ) := by
+  sorry
+
+/-- GAPS 105.15, Craig–Sakamoto criterion for centered quadratic forms. -/
+theorem indepFun_matrixQuadraticForm_iff {n : ℕ} (Sigma A B : Matrix (Fin n) (Fin n) ℝ)
+    (hS : Sigma.PosDef) (hA : A.IsSymm) (hB : B.IsSymm) :
+    IndepFun (matrixQuadraticForm A) (matrixQuadraticForm B)
+      (multivariateGaussian 0 Sigma) ↔ A * Sigma * B = 0 := by
+  sorry
+
+
+end CKSD

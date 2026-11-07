@@ -10,6 +10,17 @@ report that fact rather than proceeding without it.
 - Lake root: the directory containing this `AGENTS.md`.
 - Build output: `.lake/build-CKSD`; preserve the matching `buildDir` in `lakefile.toml`.
 - Ordinary build command: `lake build > /tmp/cksd-build.log 2>&1`.
+- Local exception to the shared build topology: `.lake` is a symlink to
+  `/export/scratch1/braams/lean-CKSD-lake` on local disk, not to the shared
+  `lean-codes-lake`. This project has its own `.lake/packages` because it requires
+  Statlib (`https://github.com/stat-lib/statlib`) in addition to Mathlib and TauCeti,
+  with Lean, Mathlib, and TauCeti revisions newer than those of the sibling projects.
+  The pins in `lakefile.toml`, `lake-manifest.json`, and `lean-toolchain` are
+  authoritative. The other shared rules for `.lake` apply to this target: never replace,
+  delete, or retarget it without being asked, and never write to `lean-codes-lake`
+  from this project.
+- In this project the library search order is Mathlib → pinned TauCeti → pinned
+  Statlib → local project code.
 
 ## Project
 
@@ -35,12 +46,12 @@ the next free number in its file. These files are meant for the human mathematic
 do not reference any technical Lean concepts. Proofs are outside their scope. The selection is
 the recurring core of each section. The index records the scope and size of the series.
 
-Coverage of the SYNOPSIS in Lean Mathlib and TauCeti is documented in files
+Coverage of the SYNOPSIS in Lean Mathlib, TauCeti, and Statlib is documented in files
 STRUCTURE.md and STRUCTUREddd.md, following the style of the sibling CKMA project. These STRUCTURE
 files support Lean projects. `STRUCTURE.md` is the index and states the classification rule
-(covered, partly covered, not covered); `MathlibCoverage.md` and `TauCetiCoverage.md`
-summarize coverage per library; `GAPS.md` restates
-the principal results that neither library proves. `GAPS_EASY.md` outlines
+(covered, partly covered, not covered); `MathlibCoverage.md`, `TauCetiCoverage.md`, and
+`StatlibCoverage.md` summarize coverage per library; `GAPS.md` restates
+the principal results that none of the libraries proves. `GAPS_EASY.md` outlines
 short derivations from library results for some of them.
 
 You may be asked to edit, revise or expand any of the files in the project directory or to create

@@ -476,12 +476,16 @@ intersection. The intersections of adjacent cliques are the separators.
 
 * **27. Junction-tree exactness.** A graph has a junction tree if and only
   if it is triangulated, that is, decomposable in the sense of
-  SYNOPSIS105, item 36. On a junction tree, nonnegative clique and
-  separator tables are the marginals of a single distribution if and only
-  if each separator table is normalized and each clique table marginalizes
-  to every separator it contains. The distribution is then the ratio of
-  clique marginals to separator marginals of that item. Item 23 is the
-  tree case.
+  SYNOPSIS105, item 36. On a junction tree with finite state spaces,
+  nonnegative clique and separator tables are the marginals of a joint
+  probability law if and only if every table is normalized and, on each
+  tree edge, both incident clique tables marginalize to its separator
+  table. The joint law that is Markov with respect to the graph is unique
+  and is the product of clique tables divided by the product of separator
+  tables, with one separator factor per tree edge. A configuration with a
+  zero separator factor has probability zero; the ratio is interpreted
+  with $0/0=0$. The prescribed marginals need not determine a joint law
+  outside the Markov class. Item 23 is the tree case.
 
 ### Deep learning: architectures, approximation, and training
 
@@ -493,11 +497,14 @@ item 76.
   function, that is, a continuous $\phi$ with $\phi(u)\to1$ as
   $u\to\infty$ and $\phi(u)\to0$ as $u\to-\infty$. There is a constant
   $c$, depending only on the activation, such that for all $d,n\ge1$,
-  every probability measure $\mu$ on the closed unit ball of $\mathbb R^d$, and every $f\in L^1(\mathbb R^d)$
-  with finite Fourier moment
+  every probability measure $\mu$ on the closed unit ball of $\mathbb R^d$,
+  and every continuous integrable $f:\mathbb R^d\to\mathbb R$ with finite
+  Fourier moment
   $C_f=\int_{\mathbb R^d}\|\omega\|\,|\hat f(\omega)|\,d\omega$, some
   one-hidden-layer network with $n$ hidden units and an output bias has
-  $L^2(\mu)$ distance at most $cC_fn^{-1/2}$ from $f$.
+  $L^2(\mu)$ distance at most $cC_fn^{-1/2}$ from $f$. The pointwise
+  target is the continuous representative determined by Fourier inversion,
+  including when $\mu$ is singular with respect to Lebesgue measure.
 
 Fix $q\ge0$, dimensions $d_0=d,d_1,\ldots,d_q$ and $d_{q+1}=1$, integers
 $1\le t_i\le d_i$, smoothness indices $\beta_i>0$, and $K>0$. The
@@ -651,10 +658,12 @@ and positively homogeneous.
   $Cd^5$ and weights at most $Cd^C$, such that every network with one
   hidden layer of width $n\le ce^{cd}$ has $L^2(\mu)$ distance at least $c$
   from $g$ (Eldan and Shamir). If $g\in C^2([0,1]^d)$ is not affine and
-  $L\ge2$, there is $c>0$ such that, for every $\varepsilon\in(0,1)$, every
-  ReLU network with $L-1$ hidden layers and at most
-  $c\varepsilon^{-1/(2(L-1))}$ neurons has uniform error at least
-  $\varepsilon$ on $[0,1]^d$ (Yarotsky).
+  $L\ge2$, there are $c,\varepsilon_0>0$ such that, for every
+  $\varepsilon\in(0,\varepsilon_0)$, every ReLU network with $L-1$ hidden
+  layers and at most $c\varepsilon^{-1/(2(L-1))}$ neurons has uniform error
+  at least $\varepsilon$ on $[0,1]^d$ (Yarotsky). The restriction to small
+  $\varepsilon$ is necessary, since a constant approximates $g$ within
+  $\sup|g|$.
 
 The **cyclic shift** $S$ on $\mathbb R^n$ moves each coordinate one place
 to the right, cyclically. A matrix is **circulant** when it is a polynomial

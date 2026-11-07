@@ -867,19 +867,26 @@ when it is uniformly most powerful among invariant level-$\alpha$ tests.
   {\int f_0(x_1-u,\ldots,x_n-u)\,du}.$$
 
 * **56. Normal tests as uniformly most powerful invariant tests.** For a
-  sample from $N(\mu,\sigma^2)$, $n\ge2$, reduce to $(\bar X,S^2)$. The
-  problem of testing $\mu\le0$ against $\mu>0$ is invariant under
-  $x\mapsto cx$, $c>0$, with maximal invariant $t=\sqrt n\bar X/S$. Its law
-  is the noncentral $t$ law on $n-1$ degrees of freedom with noncentrality
-  $\sqrt n\mu/\sigma$, which has monotone likelihood ratio in $t$; the
-  one-sided $t$ test is uniformly most powerful invariant. For $\mu=0$
-  against $\mu\ne0$, adjoining $x\mapsto-x$ gives the maximal invariant
-  $|t|$, and the two-sided $t$ test is uniformly most powerful invariant.
-  The same holds for the two-sample $t$ tests of item 20,
-  under location and scale changes, the noncentrality depending only on
-  $(\mu_X-\mu_Y)/\sigma$. For the variance, translations give the maximal
-  invariant $S^2$, and the one-sided chi-squared tests are uniformly most
-  powerful invariant.
+  sample from $N(\mu,\sigma^2)$, $\sigma>0$, $n\ge2$, work with the
+  sufficient statistic $(\bar X,S^2)$. On this reduced sample space with
+  $S>0$, an event of probability one, positive rescaling
+  $(\bar x,s^2)\mapsto(c\bar x,c^2s^2)$, $c>0$, has maximal invariant
+  $t=\sqrt n\bar X/S$. Its law is the noncentral $t$ law on $n-1$ degrees
+  of freedom with noncentrality $\sqrt n\mu/\sigma$, which has monotone
+  likelihood ratio in $t$; the one-sided $t$ test is uniformly most
+  powerful invariant for $\mu\le0$ against $\mu>0$. For $\mu=0$ against
+  $\mu\ne0$, adjoining reflection gives the maximal invariant $|t|$ and
+  the two-sided uniformly most powerful invariant $t$ test.
+  For the two independent normal samples with a common unknown variance
+  of item 20, use the sufficient statistic $(\bar X,\bar Y,S_p^2)$.
+  Common translations and positive rescalings give the pooled two-sample
+  $t$ statistic as maximal invariant on $S_p>0$, with noncentrality
+  depending only on $(\mu_X-\mu_Y)/\sigma$; adjoining reflection gives
+  its absolute value. The corresponding one- and two-sided tests are
+  uniformly most powerful invariant. For variance hypotheses with unknown
+  mean, translations acting on $(\bar X,S^2)$ have maximal invariant
+  $S^2$, and the one-sided chi-squared tests are uniformly most powerful
+  invariant.
 
 ### The normal mean and simultaneous coverage
 

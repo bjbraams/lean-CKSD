@@ -105,8 +105,10 @@ $$f(\omega)=\frac1{2\pi}\sum_{h=-\infty}^\infty\gamma(h)e^{-ih\omega},
 \qquad\omega\in[-\pi,\pi],$$
 and let the periodogram be
 $$I_n(\omega)=\frac1{2\pi n}\Bigl|\sum_{t=1}^n X_te^{-it\omega}\Bigr|^2.$$
-A **lag window** is an even, piecewise continuous function $w$ with $w(0)=1$,
-$|w|\le1$, and $w(x)=0$ for $|x|>1$. The lag-window estimator with
+A **lag window** is an even, piecewise continuous function $w$, continuous at
+$0$, with $w(0)=1$, $|w|\le1$, and $w(x)=0$ for $|x|>1$. Continuity at $0$
+gives $w(h/r)\to1$ for each fixed lag $h$ as $r\to\infty$; without it the
+mean of the lag-window estimator below need not converge to $f$. The lag-window estimator with
 truncation $r$ is
 $$\hat f_n(\omega)=\frac1{2\pi}\sum_{|h|\le r}w(h/r)\hat\gamma(h)e^{-ih\omega}.$$
 The Fourier frequencies are $2\pi k/n$ with $k\in\mathbb Z$ and
@@ -966,7 +968,8 @@ $$\lim_{t\to\infty}\frac{U(tx)/U(t)-x^\gamma}{A(t)}=x^\gamma\,\frac{x^\rho-1}{\r
   For finite $\tau$ the number of exceedances of $u_n$ among
   $X_1,\ldots,X_n$ then converges in law to a Poisson law with mean $\tau$,
   by CKMA SYNOPSIS06, item 38. For $0<\tau<\infty$, levels $u_n$ with
-  $n(1-F(u_n))\to\tau$ exist if and only if
+  $n(1-F(u_n))\to\tau$ exist if and only if both
+  $\lim_{x\uparrow x_F}F(x)=1$ and
   $(1-F(x))/(1-F(x-))\to1$ as $x\uparrow x_F$. Hence the Poisson and
   geometric laws, whose atoms do not become negligible in this ratio, are in
   no domain of attraction. Item 48 replaces $e^{-\tau}$ by $e^{-\theta\tau}$

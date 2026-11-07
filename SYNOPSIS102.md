@@ -951,8 +951,10 @@ score $\psi=\rho'$ minimizes $\sum_i\rho(Y_i-x_i^\top t)$.
   has a density and that there is $\nu\ge1$ such that
   $\int_{\mathbb R}\bigl|\mathbb E e^{(\hat s+it)X}/\mathbb Ee^{\hat sX}
   \bigr|^\nu\,dt<\infty$. For independent copies of $X$ and $n>\nu$, the
-  sample mean $\bar X$ of $n$ copies has a bounded continuous density
-  $f_{\bar X}$, and for this fixed $x$, as $n\to\infty$,
+  sample mean $\bar X$ of $n$ copies has a continuous density
+  $f_{\bar X}$, which is bounded if also
+  $\int_{\mathbb R}|\mathbb E e^{itX}|^\nu\,dt<\infty$, and for this fixed
+  $x$, as $n\to\infty$,
   $$f_{\bar X}(x)
   =\Bigl(\frac{n}{2\pi K''(\hat s)}\Bigr)^{1/2}
   \exp\bigl(n\bigl(K(\hat s)-\hat s\, x\bigr)\bigr)
@@ -1113,7 +1115,11 @@ it follows by exponential tilting at $\hat s$, as in Severini, *Elements of
 Distribution Theory*, Theorem 14.4 and its proof, combined with the local
 expansion of Bhattacharya and Ranga Rao, Theorem 19.2 with $s=4$, whose
 hypothesis is the $\nu$-th power integrability of the tilted
-characteristic function; the odd term vanishes at the mean. The uniform
+characteristic function; the odd term vanishes at the mean. Tilting writes
+$f_{\bar X}(y)$ as $(\mathbb Ee^{\hat sX})^ne^{-n\hat sy}$ times the density
+of the tilted mean, so the tilted condition gives continuity but not
+boundedness; boundedness uses the condition at $s=0$, as in Daniels (1954).
+The uniform
 relative error over compact sets of $x$ asserted by Daniels (1954) and
 Jensen (1995) was not checked against those sources, which are not local,
 and is not stated.

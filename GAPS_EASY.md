@@ -1,8 +1,8 @@
 # Short derivations for entries of GAPS.md
 
 [GAPS.md](GAPS.md) selects principal theorem statements of core statistics
-and data science that are not proved in Mathlib or TauCeti. Neither library
-states the **109 statements** below, or the parts of them delimited by a
+and data science that are not proved in Mathlib, TauCeti, or Statlib. None of
+the three libraries states the **110 statements** below, or the parts of them delimited by a
 **Scope** paragraph. Each follows from results that the libraries do prove,
 by a comparatively short argument: a combination of existing theorems, a
 specialization, a finite calculation, or a construction packaged in a new
@@ -17,19 +17,22 @@ measure theory, and linear algebra once the statistical notions are
 defined. Mathlib already represents measurable parametrized models by
 data-generating Markov kernels and randomized estimators by Markov kernels,
 and supplies their risk integrals, average risk, Bayes risk, and minimax
-risk in `Mathlib.Probability.Decision`. Dedicated notions of sufficiency,
-tests, and sampling or experimental designs are absent. Many arguments
+risk in `Mathlib.Probability.Decision`. Statlib builds on that framework
+the Bayes risk of binary tests, the total-variation testing identity, and
+Bayes rules under 0–1 loss (`Statlib/Testing/Binary.lean`). Dedicated
+notions of sufficiency, tests of a given size, and sampling or experimental
+designs are absent from all three libraries. Many arguments
 below introduce these missing notions while reusing the existing model
 and risk framework; a new name for a kernel or integral is not a new
 mathematical foundation.
 
 The library revisions are those recorded in `GAPS.md`:
 
-- Mathlib `911003dd6dea5df215dff57f2717be762e11a6ca`
-- TauCeti `a049b4264d2cf4dbf4720796f844a3a3764914a5`
+- Mathlib `6135ffb78e8bcd3fcc8ec02f3f82ea0b0737358b` (5 November 2026)
+- TauCeti `afa08a3ed16fb167e35de371afb1eb03fbc5913a` (6 November 2026)
+- Statlib `eeaac0283690efaa60c31115400cf561836baeb9` (5 November 2026)
 
-Both are dated 18 October 2026. Paths are relative to the root of the
-respective repository.
+Paths are relative to the root of the respective repository.
 
 ## How to read the entries
 
@@ -48,11 +51,12 @@ the following parts.
 
 Every declaration and file named here was located in the sources at the
 revisions above. Admissions, acquisition targets and roadmap text were not
-used. No Lean code implementing these arguments has been written or
-compiled, and no axiom audit has been performed. "Short" describes the
-mathematics. Some arguments still need definitions, transport between
-formulations, or measurability code, and none of this is an estimate of the
-effort needed to formalize them. An entry of `GAPS.md` that is absent here is
+used. Local theorem formulations, their exact scopes, completed proofs,
+admissions, and compiled axiom audits are tracked separately in
+[FORMALIZATION.md](FORMALIZATION.md). "Short" describes the mathematics.
+Some arguments still need definitions, transport between formulations, or
+measurability code, and none of this is an estimate of the effort needed to
+formalize them. An entry of `GAPS.md` that is absent here is
 not thereby certified to lack a short proof.
 
 ## Index
@@ -61,10 +65,10 @@ not thereby certified to lack a short proof.
 - **102.** 102.1 Delta method; 102.8 Nondegenerate $U$-statistics; 102.12 Contiguity; 102.23 Consistency of $M$-estimators; 102.31 Pearson's multinomial tests; 102.44 $M$-estimators and the Huber minimax property.
 - **103.** 103.1 Kolmogorov–Smirnov statistic; 103.8 Representer theorem; 103.17 Cramér–von Mises and two-sample Kolmogorov–Smirnov limits; 103.31 Optimality of functional principal components; 103.34 Lasso under compatibility; 103.37 Benjamini–Hochberg procedure; 103.39 Le Cam's two-point method; 103.40 Fano's method; 103.45 Varshamov–Gilbert bound; 103.46 Assouad's lemma; 103.48 Restricted nullspace and exact recovery; 103.52 Thresholded covariance estimation; 103.54 Perturbation of the leading eigenvector.
 - **104.** 104.10 Highest posterior density regions; 104.14 Tweedie's formula and Robbins' estimator; 104.17 Doob's consistency theorem; 104.22 Metropolis–Hastings; 104.32 Independence and random-walk samplers; 104.35 Hamiltonian Monte Carlo; 104.68 Score error and total variation; 104.77 Half-bridges and iterative proportional fitting.
-- **105.** 105.1 Gauss–Markov theorem; 105.2 Normal sampling theory; 105.10 Exact tests of nested linear models; 105.15 Distribution of quadratic forms; 105.22 Wishart distribution and Hotelling's $T^2$; 105.28 Gaussian covariance likelihood; 105.31 Structure of the Wishart law; 105.37 Kiefer–Wolfowitz equivalence; 105.38 Randomization test; 105.42 Fisher's inequality and optimality of balanced incomplete blocks; 105.44 Latin squares and mutually orthogonal sets; 105.72 Horvitz–Thompson estimation and design variance; 105.73 Simple and stratified random sampling; Neyman allocation; 105.46 Neyman's theorem; 105.47 Identification by regression and by weighting; 105.48 Propensity score; 105.50 Local average treatment effect.
+- **105.** 105.1 Gauss–Markov theorem; 105.2 Normal sampling theory; 105.10 Exact tests of nested linear models; 105.15 Distribution of quadratic forms; 105.22 Wishart distribution and Hotelling's $T^2$; 105.28 Gaussian covariance likelihood; 105.37 Kiefer–Wolfowitz equivalence; 105.38 Randomization test; 105.42 Fisher's inequality and optimality of balanced incomplete blocks; 105.44 Latin squares and mutually orthogonal sets; 105.72 Horvitz–Thompson estimation and design variance; 105.73 Simple and stratified random sampling; Neyman allocation; 105.46 Neyman's theorem; 105.47 Identification by regression and by weighting; 105.48 Propensity score; 105.50 Local average treatment effect.
 - **106.** 106.12 Long-run variance of a sample mean; 106.14 Herglotz theorem and rational spectral densities; 106.18 Stationarity of GARCH$(1,1)$; 106.24 Bochner's theorem and the Matérn family; 106.37 Sequential probability ratio test; 106.38 Ville's inequality and e-values; 106.41 Wald's fundamental identity and the operating characteristic; 106.42 Anscombe's theorem; 106.44 Optimality of CUSUM; 106.48 Extremal index; 106.50 Poisson approximation for exceedances.
 - **107.** 107.2 Rademacher bound; 107.5 Hedge; 107.6 Split conformal prediction; 107.7 No free lunch; 107.8 Bayes classification risk; 107.10 Margin bound; 107.11 Comparison inequality for convex surrogates; 107.12 Generalization of stable algorithms; 107.24 AdaBoost: training error and margins; 107.26 Variational representation of the cumulant function; 107.31 Ridgeless least squares; 107.40 Implicit bias of gradient descent; 107.52 Adversarial bandits; 107.59 Sample complexity with a generative model; 107.60 Temporal differences with linear features; 107.65 Composition; 107.74 Sparse vector technique; 107.75 Contraction under local privacy.
-- **108.** 108.1 Cheeger inequality for the normalized Laplacian; 108.8 Classical multidimensional scaling; 108.10 Extrinsic projection mean; 108.21 Čech, Rips, and the nerve; 108.23 Central limit theorem for landscapes; 108.24 Stability of the distance to a measure; 108.42 Consistency of Brenier maps; 108.43 Gromov–Wasserstein distance; 108.50 Minimax lower bounds for transport estimation; 108.51 Smooth laws and smoothed distances; 108.56 Semidiscrete dual; 108.57 Tangent-space linearization; 108.59 Procrustes iteration for barycenters; 108.68 Criteria for characteristic kernels; 108.70 Metrization of weak convergence; 108.74 Random Fourier features.
+- **108.** 108.1 Cheeger inequality for the normalized Laplacian; 108.8 Classical multidimensional scaling; 108.10 Extrinsic projection mean; 108.21 Čech, Rips, and the nerve; 108.23 Central limit theorem for landscapes; 108.24 Stability of the distance to a measure; 108.42 Consistency of Brenier maps; 108.43 Gromov–Wasserstein distance; 108.44 Debiased Sinkhorn divergence; 108.46 Gaussian transport and barycenters; 108.50 Minimax lower bounds for transport estimation; 108.51 Smooth laws and smoothed distances; 108.56 Semidiscrete dual; 108.57 Tangent-space linearization; 108.59 Procrustes iteration for barycenters; 108.68 Criteria for characteristic kernels; 108.70 Metrization of weak convergence; 108.74 Random Fourier features.
 
 ---
 
@@ -192,7 +196,7 @@ is what 101.7 requires.
 
 **Statement.** If $T$ is a boundedly complete sufficient statistic and $V$ is
 ancillary, then $T$ and $V$ are independent under every $P_\theta$. Not
-present in either library.
+present in any of the three libraries.
 
 **Argument.** Let $\kappa$ be the kernel of the definition of sufficiency
 in 101.7. Fix a measurable set $B$ in the range of $V$. Put
@@ -230,8 +234,10 @@ in the Loewner order. For a real parameter this reads
 $\mathop{\mathrm{Var}}_\theta W\ge g'(\theta)^2/I(\theta)$, and for an
 independent sample $I(\theta)$ is replaced by $nI_1(\theta)$. Fisher
 information and the score are not defined. The ingredients are available
-in general form: differentiation under the integral sign, Cauchy–Schwarz
-for covariances, and the Loewner order.
+in general form: Mathlib's differentiation under the integral sign with a
+dominated derivative, covariance bilinearity and Cauchy–Schwarz, and the
+Loewner order. Statlib's quadratic-mean differentiability, with a score of
+mean zero, is a starting point for the score under weaker regularity.
 
 **Argument.** Define the score
 $S_j=\partial_{\theta_j}f(\cdot\mid\theta)/f(\cdot\mid\theta)$ on the common
@@ -250,10 +256,15 @@ $$
 For an independent sample, the score of the product density is the sum of
 the $n$ independent, centred one-observation scores. Its covariance is
 therefore $nI_1(\theta)$. The interchange hypotheses are then those of the
-$n$-sample model.
+$n$-sample model. They are hypotheses of the statement; where they are to
+be verified, Mathlib's differentiation under the integral sign with an
+integrable bound on the derivative gives them.
 
 **Library results.** `ProbabilityTheory.covariance` and its bilinearity
 lemmas in `Mathlib/Probability/Moments/Covariance.lean`;
+`hasFDerivAt_integral_of_dominated_of_fderiv_le` in
+`Mathlib/Analysis/Calculus/ParametricIntegral.lean`, for the interchange
+hypotheses;
 `ProbabilityTheory.variance_nonneg` and `IndepFun.variance_sum` in
 `Mathlib/Probability/Moments/Variance.lean`; the Loewner order
 `Matrix.instPartialOrder` in `Mathlib/Analysis/Matrix/Order.lean`.
@@ -308,11 +319,17 @@ and let $0<\alpha<1$. There are $k\ge0$ and a test $\varphi$ with
 $\mathbb E_{P_0}\varphi=\alpha$, $\varphi=1$ where $f_1>kf_0$ and
 $\varphi=0$ where $f_1<kf_0$. Any such test is most powerful of level
 $\alpha$. Every most powerful level-$\alpha$ test agrees with it
-$(P_0+P_1)$-almost everywhere off $\{f_1=kf_0\}$. Tests are not defined in
-either library. Optimality follows from the pointwise inequality
-$(\varphi-\varphi')(f_1-kf_0)\ge0$ by integration. Existence of $k$ and of
-the randomization constant uses the distribution function of $f_1/f_0$
-under $P_0$.
+$(P_0+P_1)$-almost everywhere off $\{f_1=kf_0\}$. Statlib treats a simple
+binary test as a Markov kernel into $\{0,1\}$ assessed by its Bayes risk
+under the $0$–$1$ loss: for prior weights $\pi_0,\pi_1$ the Bayes risk is
+the infimum over measurable regions $E$ of $\pi_0P_0(E)+\pi_1P_1(E^c)$, and
+the likelihood-ratio test that decides for $P_1$ where
+$\pi_0\,dP_0\le\pi_1\,dP_1$ is a Bayes test. This is the Lagrangian form of
+the construction; tests of prescribed size, the existence of $k$ and of the
+randomization, and uniqueness are not stated in any library. Optimality
+follows from the pointwise inequality $(\varphi-\varphi')(f_1-kf_0)\ge0$ by
+integration. Existence of $k$ and of the randomization constant uses the
+distribution function of $f_1/f_0$ under $P_0$.
 
 **Argument.** *Existence.* Put $Z=f_1/f_0$ on $\{f_0>0\}$ and $Z=0$
 elsewhere; the set $\{f_0=0\}$ is $P_0$-null. Let $G$ be the law of $Z$
@@ -340,6 +357,14 @@ with nonpositive integral vanishes $\mu$-almost everywhere. Hence
 $\varphi=\varphi'$ $\mu$-almost everywhere off $\{f_1=kf_0\}$, and so
 $(P_0+P_1)$-almost everywhere there. The optimality part holds for any test
 of this form with any $k\ge0$, whatever its size.
+
+Statlib's Bayes form does not shorten the argument: it minimizes
+$\pi_0\mathbb E_0\varphi+\pi_1(1-\mathbb E_1\varphi)$ without a size
+constraint. With $\pi_0/\pi_1=k$ the nonrandomized likelihood-ratio test
+it constructs has the form above, and its Bayes optimality gives the
+optimality of that particular test among tests of no larger size. The
+size $\alpha$ still has to be reached by the choice of $k$ and $\gamma$,
+which needs the randomized test of the existence step.
 
 **Library results.** `MeasureTheory.Measure.quantile`,
 `MeasureTheory.Measure.le_cdf_quantile` and
@@ -399,32 +424,40 @@ $\bar X\pm t_{n-1,1-\alpha/2}S/\sqrt n$ has exact coverage $1-\alpha$. For
 two independent normal samples, each of size at least two,
 $(S_1^2/\sigma_1^2)/(S_2^2/\sigma_2^2)$ has the $F$ law with the sample
 sizes minus one as degrees of freedom. Mathlib gives the law of $\bar X$.
-TauCeti gives the known-mean chi-squared law and the representations of
-$t$ and $F$ as ratios of independent Gaussian and chi-squared variables.
-Missing are the chi-squared law of $S^2$ and its independence from $\bar X$;
-the rest then follows from the ratio theorems. The natural route is
-Mathlib's orthogonal invariance of the standard Gaussian applied to a
-Helmert matrix.
+TauCeti gives the known-mean chi-squared law, the representations of $t$
+and $F$ as ratios of independent Gaussian and chi-squared variables, and,
+for the standard Gaussian on a Euclidean space, the independence of its
+orthogonal projections onto mutually orthogonal subspaces and the
+$\chi^2_{\dim K}$ law of the squared length of its projection onto a
+subspace $K$. Missing is the identification of $(n-1)S^2/\sigma^2$ with the
+squared projection of the standardized sample onto the orthogonal
+complement of the constant vectors, and of $\bar X$ with a function of the
+projection onto the constants. The chi-squared law of $S^2$ and its
+independence from $\bar X$ then follow from the projection theorems by a
+short argument, and the rest from the ratio theorems.
 
-**Argument.** Put $Z_i=(X_i-\mu)/\sigma$, so that the vector $Z$ has the
-standard Gaussian law on $\mathbb R^n$. Extend the unit vector
-$u=n^{-1/2}(1,\ldots,1)$ to an orthonormal basis $b_0=u,b_1,\ldots,b_{n-1}$.
-The standard Gaussian is the image of the product of $N(0,1)$ laws under
-$y\mapsto\sum_iy_ib_i$. Hence the coordinates $Y_i=\langle Z,b_i\rangle$
-are independent $N(0,1)$; this is the Helmert transformation. Then:
+**Argument.** Put $Z_i=(X_i-\mu)/\sigma$. The vector $Z$, read in the
+Euclidean space $E=\mathbb R^n$, has the standard Gaussian law, because the
+standard Gaussian of $E$ is the image of the product of $N(0,1)$ laws. Let
+$K$ be the line spanned by $\mathbf 1=(1,\ldots,1)$ and $K^\perp$ its
+orthogonal complement, of dimension $n-1$. The orthogonal projections are
+$$
+P_KZ=\bar Z\,\mathbf 1,\qquad P_{K^\perp}Z=Z-\bar Z\,\mathbf 1,
+\qquad\bar Z=\frac1n\sum_iZ_i .
+$$
+Then:
 
-- $Y_0=\sqrt n\bar Z$, so $\bar X=\mu+\sigma Y_0/\sqrt n\sim N(\mu,\sigma^2/n)$.
-- Parseval gives
-  $$
-  \frac{(n-1)S^2}{\sigma^2}=\|Z\|^2-n\bar Z^2=\sum_{i=1}^{n-1}Y_i^2,
-  $$
-  which has the $\chi^2_{n-1}$ law.
-- $\bar X$ is a function of $Y_0$ and $S^2$ of $(Y_1,\ldots,Y_{n-1})$.
-  Independence of disjoint blocks of independent coordinates gives the
-  independence of $\bar X$ and $S^2$.
-- With $V=\sum_{i\ge1}Y_i^2$, the statistic is
-  $\sqrt n(\bar X-\mu)/S=Y_0/\sqrt{V/(n-1)}$, which has the $t_{n-1}$ law
-  by TauCeti's ratio theorem. This uses $n-1>0$.
+- $\bar X=\mu+\sigma\bar Z$ is a function of $P_KZ$, and
+  $\bar X\sim N(\mu,\sigma^2/n)$ by Mathlib's sums and scalings of
+  independent Gaussians.
+- $\|P_{K^\perp}Z\|^2=\sum_i(Z_i-\bar Z)^2=(n-1)S^2/\sigma^2$, which has
+  the $\chi^2_{n-1}$ law by TauCeti's projection theorem.
+- $K$ and $K^\perp$ are orthogonal, so TauCeti's independence theorem makes
+  $P_KZ$ and $P_{K^\perp}Z$ independent. Hence $\bar X$ and $S^2$ are
+  independent.
+- With $Y_0=\sqrt n\bar Z\sim N(0,1)$ and $V=\|P_{K^\perp}Z\|^2$, the
+  statistic is $\sqrt n(\bar X-\mu)/S=Y_0/\sqrt{V/(n-1)}$, which has the
+  $t_{n-1}$ law by TauCeti's ratio theorem. This uses $n-1>0$.
 - For the $F$ law, $(S_1^2/\sigma_1^2)/(S_2^2/\sigma_2^2)
   =(V_1/(n_1-1))/(V_2/(n_2-1))$ with $V_1,V_2$ independent chi-squared,
   and TauCeti's ratio theorem applies.
@@ -432,20 +465,23 @@ are independent $N(0,1)$; this is the Helmert transformation. Then:
   is symmetric. Hence, with $q$ its quantile at $1-\alpha/2$,
   $P(T\le q)=1-\alpha/2$ and $P(T<-q)=\alpha/2$, so $P(|T|\le q)=1-\alpha$.
 
-**Library results.** `stdGaussian_eq_map_pi_orthonormalBasis`,
-`map_pi_eq_stdGaussian` and `stdGaussian_map` in
+**Library results.** `map_pi_eq_stdGaussian` in
 `Mathlib/Probability/Distributions/Gaussian/Multivariate.lean`;
-`Orthonormal.exists_orthonormalBasis_extension` and
-`OrthonormalBasis.sum_sq_norm_inner_right` in
-`Mathlib/Analysis/InnerProductSpace/PiL2.lean`;
-`ProbabilityTheory.iIndepFun_pi` and
-`ProbabilityTheory.iIndepFun.indepFun_finset` in
-`Mathlib/Probability/Independence/Basic.lean`;
+`Submodule.map_norm_sq_starProjection_stdGaussian`,
+`ProbabilityTheory.HasLaw.norm_sq_orthogonalProjectionOnto_stdGaussian`
+and `ProbabilityTheory.HasLaw.iIndepFun_orthogonalProjectionOnto_stdGaussian`
+in `TauCeti/Probability/Distributions/Gaussian/Projection.lean`;
+`Submodule.starProjection_singleton` and
+`Submodule.starProjection_orthogonal_val` in
+`Mathlib/Analysis/InnerProductSpace/Projection/Basic.lean`;
+`Submodule.finrank_orthogonal_span_singleton` in
+`Mathlib/Analysis/InnerProductSpace/Projection/FiniteDimensional.lean`;
+`Submodule.isOrtho_orthogonal_right` in
+`Mathlib/Analysis/InnerProductSpace/Orthogonal.lean`;
+`ProbabilityTheory.gaussianReal_add_gaussianReal_of_indepFun`,
 `ProbabilityTheory.gaussianReal_map_const_mul` and
 `gaussianReal_map_add_const` in
 `Mathlib/Probability/Distributions/Gaussian/Real.lean`;
-`TauCeti.Probability.map_sum_sq_pi_gaussianReal` in
-`TauCeti/Probability/Distributions/Gaussian/ChiSquared.lean`;
 `TauCeti.Probability.hasLaw_studentT_of_gaussian_chiSquared` in
 `TauCeti/Probability/Distributions/StudentT/ChiSquared.lean`;
 `TauCeti.Probability.hasLaw_fisherSnedecor_of_chiSquared` in
@@ -464,27 +500,46 @@ $n!\prod_if(x_i)$ on $x_1<\cdots<x_n$, and $X_{(j)}$ has density
 $$\frac{n!}{(j-1)!(n-j)!}F(x)^{j-1}(1-F(x))^{n-j}f(x).$$
 In particular $F(X_{(j)})\sim\mathop{\mathrm{Beta}}(j,n+1-j)$, and the
 ranks are uniform on the $n!$ permutations and independent of the ordered
-sample. TauCeti proves the distribution function of a single order
-statistic for every law, atoms included, and its beta law for uniform
-samples. The beta law of $F(X_{(j)})$ is two steps from these and the
-probability integral transform. Missing are the joint density, the
-explicit marginal density, and the law of the ranks with its independence
-from the order statistic.
+sample. TauCeti proves that the law of the sorted sample of an atomless
+independent identically distributed sample is $n!$ times the product law
+restricted to the strictly increasing chamber, and, for every law, atoms
+included, the distribution function of a single order statistic and its
+representation as the quantile image of a beta law. The joint density is
+one step from the chamber formula, and the beta law of $F(X_{(j)})$ two
+steps from the quantile representation and the probability integral
+transform. Missing are the explicit marginal density for general $F$, and
+the law of the ranks with its independence from the order statistic.
 
-**Scope.** The argument proves the beta law of $F(X_{(j)})$, for
-continuous $F$; the density $f$ is not used. The joint density, the
-marginal density and the law of the ranks remain substantial gaps.
+**Scope.** The argument proves the joint density and the beta law of
+$F(X_{(j)})$; the latter uses only the continuity of $F$. The marginal
+density of $X_{(j)}$ and the law of the ranks remain substantial gaps.
 
-**Argument.** With zero-based index $k=j-1$, TauCeti represents the law of
-$X_{(j)}$ as the image of $\mathop{\mathrm{Beta}}(k+1,n-k)$ under the
-quantile function $F^{-1}$. Hence $F(X_{(j)})$ has the image of the same
-beta law under $F\circ F^{-1}$. For continuous $F$,
-$F(F^{-1}(u))=u$ for $0<u<1$. The beta law is concentrated on $(0,1)$, so
-the image is $\mathop{\mathrm{Beta}}(j,n+1-j)$.
+**Argument.** *Joint density.* A continuous distribution function has no
+atoms, so TauCeti's chamber formula applies: the sorted sample has the law
+$n!\,P^{\otimes n}$ restricted to $C=\{x_1<\cdots<x_n\}$, with $P$ the
+common law. With $P=f\,dx$, the product law has density
+$\prod_if(x_i)$ with respect to Lebesgue measure on $\mathbb R^n$, and its
+restriction to the measurable set $C$ has density
+$\mathbf 1_C\prod_if(x_i)$. So the sorted sample has density
+$n!\prod_if(x_i)$ on $C$.
 
-**Library results.**
+*Beta law of $F(X_{(j)})$.* With zero-based index $k=j-1$, TauCeti
+represents the law of $X_{(j)}$ as the image of
+$\mathop{\mathrm{Beta}}(k+1,n-k)$ under the quantile function $F^{-1}$.
+Hence $F(X_{(j)})$ has the image of the same beta law under $F\circ F^{-1}$.
+For continuous $F$, $F(F^{-1}(u))=u$ for $0<u<1$. The beta law is
+concentrated on $(0,1)$, so the image is $\mathop{\mathrm{Beta}}(j,n+1-j)$.
+
+**Library results.** `TauCeti.Probability.map_orderStatistics_pi` in
+`TauCeti/Probability/Distributions/OrderStatistic/Joint.lean`;
+`TauCeti.pi_withDensity` in
+`TauCeti/MeasureTheory/Measure/PiWithDensity.lean`;
+`MeasureTheory.restrict_withDensity` in
+`Mathlib/MeasureTheory/Measure/WithDensity.lean`;
+`TauCeti.measurableSet_setOf_strictMono` in
+`TauCeti/MeasureTheory/MeasurableSpace/StrictMono.lean`;
 `TauCeti.Probability.map_orderStatistic_pi_eq_map_betaMeasure_quantile` in
-`TauCeti/Probability/Distributions/OrderStatistic.lean`;
+`TauCeti/Probability/Distributions/OrderStatistic/Basic.lean`;
 `MeasureTheory.Measure.cdf_quantile` in `TauCeti/Probability/Quantile.lean`;
 `TauCeti.Probability.ae_mem_Ioo_betaMeasure` in
 `TauCeti/Probability/Distributions/Beta/Basic.lean`.
@@ -690,8 +745,8 @@ $L(\theta,1)-L(\theta,0)$ be positive for $\theta<\theta_0$ and negative for
 $\theta>\theta_0$. Then the one-sided tests, with $\varphi=1$ for $T>c$,
 $\gamma$ at $T=c$ and $0$ for $T<c$, where $c\in[-\infty,\infty]$ and
 $\gamma\in[0,1]$, form an essentially complete class: for every test there
-is a one-sided test with risk no larger at every $\theta$. Absent from both
-libraries.
+is a one-sided test with risk no larger at every $\theta$. Absent from all
+three libraries.
 
 **Scope.** The argument covers every test $\varphi$ with
 $0<\mathbb E_{\theta_0}\varphi<1$. Tests of size $0$ or $1$ at $\theta_0$
@@ -818,20 +873,25 @@ $$\sup_{c\in C\setminus\{0\}}
 which has the law of $rF_{r,n-r}$. So the intervals
 $c\cdot\hat\beta\pm\hat\sigma\sqrt{rF_{r,n-r,1-\alpha}\,c^\top(X^\top X)^-c}$,
 $c\in C$, have exact simultaneous coverage $1-\alpha$. TauCeti has the $F$
-law as a ratio of independent chi-squared laws, and the moment generating
-function of Gaussian quadratic forms. Missing is the chi-squared law and
-independence of the projections of a Gaussian vector onto orthogonal
-subspaces (Cochran's theorem), on which the statement rests.
+law as a ratio of independent chi-squared laws, the moment generating
+function of Gaussian quadratic forms, and the chi-squared laws and
+independence of the projections of a standard Gaussian vector onto
+mutually orthogonal subspaces, which is Cochran's theorem in projection
+form. Missing are the identification of the fitted values and residuals of
+a least-squares fit with such projections, the evaluation of the supremum
+by Cauchy–Schwarz, and the coverage statement; with the projection
+theorems these form a short argument.
 
-**Argument.** Cochran's theorem for two orthogonal subspaces follows by the
-orthonormal-basis argument of 101.17. Let $V$ be the column space of $X$,
-of dimension $r\ge1$, and $P_V$ the orthogonal projection onto it.
+**Argument.** Let $V$ be the column space of $X$, of dimension $r\ge1$, and
+$P_V$ the orthogonal projection onto it.
 
-- *Cochran.* Take an orthonormal basis of $\mathbb R^n$ whose first $r$
-  vectors span $V$. The coefficients of $\varepsilon/\sigma$ are independent
-  $N(0,1)$. So $\|P_V\varepsilon\|^2/\sigma^2\sim\chi^2_r$ and
-  $\|P_{V^\perp}\varepsilon\|^2/\sigma^2\sim\chi^2_{n-r}$, and the two are
-  independent.
+- *Cochran.* The vector $\varepsilon/\sigma$ has the standard Gaussian law
+  on $\mathbb R^n$. The subspaces $V$ and $V^\perp$ are orthogonal, of
+  dimensions $r$ and $n-r$. TauCeti's projection theorem for a pair of
+  orthogonal subspaces gives the joint law of
+  $(\|P_V\varepsilon\|^2/\sigma^2,\|P_{V^\perp}\varepsilon\|^2/\sigma^2)$
+  as the product of $\chi^2_r$ and $\chi^2_{n-r}$: the two are independent
+  with these laws.
 - *Least squares.* $X\hat\beta$ minimizes $\|Y-v\|$ over $v\in V$, so
   $X\hat\beta=P_VY$. Hence $X(\hat\beta-\beta)=P_V\varepsilon$ and
   $Y-X\hat\beta=P_{V^\perp}\varepsilon$.
@@ -857,7 +917,16 @@ of dimension $r\ge1$, and $P_V$ the orthogonal projection onto it.
   under a map injective on $(0,1)$, so it has no atoms. The quantile then
   gives exact probability $1-\alpha$.
 
-**Library results.** As in 101.17, together with
+**Library results.** `map_pi_eq_stdGaussian` in
+`Mathlib/Probability/Distributions/Gaussian/Multivariate.lean`;
+`TauCeti.Probability.map_norm_sq_orthogonalProjectionOnto_stdGaussian_pi`
+in `TauCeti/Probability/Distributions/Gaussian/Projection.lean`;
+`Submodule.isOrtho_orthogonal_right` in
+`Mathlib/Analysis/InnerProductSpace/Orthogonal.lean`;
+`Submodule.finrank_add_finrank_orthogonal` in
+`Mathlib/Analysis/InnerProductSpace/Projection/FiniteDimensional.lean`;
+`TauCeti.Probability.hasLaw_fisherSnedecor_of_chiSquared` in
+`TauCeti/Probability/Distributions/FisherSnedecor/ChiSquared.lean`;
 `Submodule.starProjection_minimal`,
 `Submodule.eq_starProjection_of_mem_of_inner_eq_zero` and
 `norm_sq_eq_add_norm_sq_starProjection` in
@@ -875,21 +944,29 @@ $g:\mathbb R^p\to\mathbb R^p$ be weakly differentiable with
 $\mathbb E\|g(X)\|^2<\infty$ and $\mathbb E|\partial_ig_i(X)|<\infty$. Then
 $$\mathbb E[(X_i-\theta_i)g_i(X)]=\sigma^2\,\mathbb E\,\partial_ig_i(X),$$
 so the squared-error risk of $X+g(X)$ is the expectation of
-$p\sigma^2+\|g(X)\|^2+2\sigma^2\sum_i\partial_ig_i(X)$. Gaussian
-integration by parts is not stated in either library, although the
-multivariate Gaussian and its density are available.
+$p\sigma^2+\|g(X)\|^2+2\sigma^2\sum_i\partial_ig_i(X)$. TauCeti proves the
+identity in dimension one: for $X\sim N(\mu,v)$, $v\ge0$, and $f$
+differentiable everywhere with $(x-\mu)f(x)$ and $f'$ integrable,
+$\mathbb E[(X-\mu)f(X)]=v\,\mathbb Ef'(X)$. Missing are the
+$p$-dimensional form for weakly differentiable $g$ and the unbiased risk
+estimate.
 
 **Scope.** The argument covers $g$ whose coordinate $g_i$ is, for almost
 every value of the other coordinates, locally absolutely continuous in
-$x_i$. This includes continuously differentiable $g$. The identification of
-weakly differentiable functions with such functions is the ACL
-characterization of Sobolev functions. It is not in the libraries and
-remains a gap; it is needed, for example, for the James–Stein estimator of
-101.57.
+$x_i$. This includes everywhere-differentiable $g$ with the stated
+integrability. The identification of weakly differentiable functions with
+such functions is the ACL characterization of Sobolev functions. It is not
+in the libraries and remains a gap. The James–Stein choice
+$g(x)=-(p-2)x/\|x\|^2$ of 101.57, $p\ge3$, is covered directly: almost
+every coordinate line misses the origin, and on such a line $g_i$ is
+smooth.
 
 **Argument.** *One dimension.* Let $Y\sim N(\theta,\sigma^2)$ with density
-$\phi$, and let $h$ be locally absolutely continuous with
-$\mathbb E|h'(Y)|<\infty$. For $x>\theta$,
+$\phi$. If $h$ is differentiable everywhere and $(Y-\theta)h(Y)$ and $h'(Y)$
+are integrable, TauCeti's identity gives
+$\mathbb E[(Y-\theta)h(Y)]=\sigma^2\,\mathbb Eh'(Y)$ directly. For $h$
+only locally absolutely continuous with $\mathbb E|h'(Y)|<\infty$, the
+identity follows from Mathlib's calculus. For $x>\theta$,
 $$
 \phi(x)=\int_x^\infty\frac{t-\theta}{\sigma^2}\phi(t)\,dt,
 $$
@@ -905,15 +982,22 @@ $(Y-\theta)h(Y)$ is integrable.
 
 *Several dimensions.* The law of $X$ is a product of one-dimensional
 Gaussians. Fubini over the coordinate $x_i$ and the others, together with
-Tonelli for $\mathbb E|\partial_ig_i|<\infty$, applies the one-dimensional
-identity on almost every line.
+Tonelli for $\mathbb E|\partial_ig_i|<\infty$ and for
+$\mathbb E|(X_i-\theta_i)g_i(X)|<\infty$, which follows from
+$\mathbb E\|g(X)\|^2<\infty$ by Cauchy–Schwarz, applies the
+one-dimensional identity on almost every line; for everywhere-differentiable
+$g$ every line satisfies the differentiability hypothesis of TauCeti's
+identity, and almost every line its integrability hypotheses.
 
 *Risk.* Expanding
 $\|X+g(X)-\theta\|^2$ and using $\mathbb E\|X-\theta\|^2=p\sigma^2$ gives
 the risk formula. Cauchy–Schwarz and $\mathbb E\|g\|^2<\infty$ justify the
 expansion.
 
-**Library results.** `AbsolutelyContinuousOnInterval.integral_deriv_eq_sub` in
+**Library results.**
+`TauCeti.Probability.integral_sub_mul_eq_mul_integral_deriv_gaussianReal`
+in `TauCeti/Probability/Distributions/Gaussian/IntegrationByParts.lean`;
+`AbsolutelyContinuousOnInterval.integral_deriv_eq_sub` in
 `Mathlib/MeasureTheory/Integral/IntervalIntegral/AbsolutelyContinuousFun.lean`;
 `MeasureTheory.integral_Ioi_of_hasDerivAt_of_tendsto` and
 `integral_Iic_of_hasDerivAt_of_tendsto` in
@@ -944,8 +1028,7 @@ $o_P(1)$ perturbations, and Fréchet derivatives with little-$o$ remainder.
 TauCeti computes affine images of multivariate Gaussians. The theorem
 follows by a short argument once one lemma is supplied: a deterministic
 $o(\|h\|)$ remainder evaluated along an $O_P(n^{-1/2})$ sequence is
-$o_P(n^{-1/2})$. Neither that lemma nor stochastic order symbols are
-present.
+$o_P(n^{-1/2})$. No library has that lemma or stochastic order symbols.
 
 **Argument.** Measurability of $g$ is needed for $g(T_n)$ to be a random
 vector; differentiability at one point does not give it. Mathlib's
@@ -1051,13 +1134,28 @@ part of $Q_n$ absolutely continuous with respect to $P_n$ converges in
 distribution under $P_n$ to $e^\Lambda$ for a real random variable $\Lambda$
 with $\mathbb Ee^\Lambda=1$, then $Q_n$ is contiguous to $P_n$. In particular,
 local alternatives in a LAN experiment are mutually contiguous. Mathlib has
-absolute continuity, Radon–Nikodým derivatives and log-likelihood ratios;
-contiguity is not defined.
+absolute continuity, Radon–Nikodým derivatives, the Lebesgue decomposition
+and log-likelihood ratios. Statlib defines contiguity for families of
+probability measures indexed along a filter, in five formulations, among
+them the one above and the condition that weak limits of the laws of
+$dQ_n/dP_n$ under $P_n$ have mean one. It proves only that the set
+formulation, tested along every finer filter, is equivalent to
+preservation of convergence in probability and implies the set
+formulation along the filter itself. The likelihood-ratio
+characterizations, which contain this statement, appear there only as
+plans in comments. With the definition in place the statement follows by a
+short argument.
 
-**Argument.** Contiguity must be defined. Mathlib's `llr` takes
-$\log0=0$, so the argument works, as the statement does, with the
-likelihood ratio $L_n$ of the Lebesgue decomposition
-$Q_n=L_n\cdot P_n+Q_n^\perp$, where $Q_n^\perp$ is singular to $P_n$.
+**Argument.** Statlib's set formulation `Contiguous1`, for sequences
+indexed along the filter `Filter.atTop` of $\mathbb N$, is the definition
+of contiguity used here. It requires $Q_n(A_n)\to0$ along every finer
+filter along which $P_n(A_n)\to0$. The argument below applies verbatim
+along any finer filter, since the convergence in distribution in the
+hypothesis passes to finer filters. Its density $dQ_n/dP_n$ is Mathlib's Radon–Nikodým derivative,
+which is the density $L_n$ of the absolutely continuous part in the
+Lebesgue decomposition $Q_n=L_n\cdot P_n+Q_n^\perp$, where $Q_n^\perp$ is
+singular to $P_n$. Mathlib's `llr` takes $\log0=0$, so the argument works,
+as the statement does, with $L_n$ rather than with $\Lambda_n$.
 
 *$Q_n$ is contiguous to $P_n$.* Let $P_n(A_n)\to0$ and fix $M>0$. Since
 $Q_n^\perp(\Omega_n)=1-\int L_n\,dP_n$,
@@ -1089,7 +1187,8 @@ Both contiguity relations follow. For the $o_P(1)$ transfer, Mathlib's
 lemma needs one probability space; for independent sampling the product
 experiments are realized on the infinite product $X^{\mathbb N}$.
 
-**Library results.** `MeasureTheory.Measure.rnDeriv_add_singularPart` in
+**Library results.** `Contiguous1` in `Statlib/Contiguity/Def.lean`;
+`MeasureTheory.Measure.rnDeriv_add_singularPart` in
 `Mathlib/MeasureTheory/Measure/Decomposition/Lebesgue.lean`;
 `MeasureTheory.Measure.setLIntegral_rnDeriv_le` in
 `Mathlib/MeasureTheory/Measure/Decomposition/RadonNikodym.lean`;
@@ -1174,10 +1273,12 @@ independence, fitted counts $\hat N_{ij}=N_{i+}N_{+j}/n$ give
 $(r-1)(c-1)$ degrees of freedom. The likelihood-ratio statistic
 $2\sum N_{ij}\log(N_{ij}/\hat N_{ij})$, with $0\log0=0$, has the same limit
 and differs from Pearson's by $o_P(1)$. TauCeti computes the multinomial
-covariance. The simple-hypothesis case follows by a short argument from
-the multivariate central limit theorem and the chi-squared law of the
-squared norm of a Gaussian vector after an orthogonal projection of rank
-$k-1$. Neither of these is stated, and the composite case needs 102.3.
+covariance and proves the chi-squared law of the squared norm of a
+standard Gaussian vector after an orthogonal projection of rank $k-1$. The
+simple-hypothesis case follows by a short argument from these and the
+multivariate central limit theorem, which is not stated but follows from
+Mathlib's Cramér–Wold device and one-dimensional central limit theorem;
+the composite case needs 102.3.
 
 **Scope.** The argument proves the simple-hypothesis case, the first
 sentence. The composite and contingency-table statements, and the
@@ -1202,11 +1303,11 @@ $Z_n=n^{-1/2}\sum_{l<n}Y_l$. The Cramér–Wold theorem gives
 $Z_n\Rightarrow W$.
 
 *Chi-squared limit.* The statistic is $\|Z_n\|^2$, so continuous mapping
-gives $\|Z_n\|^2\Rightarrow\|W\|^2$. Take an orthonormal basis
-$b_0=u,b_1,\ldots,b_{k-1}$. As in 101.17, the coordinates
-$\langle G,b_i\rangle$ are independent $N(0,1)$, and
-$\|W\|^2=\sum_{i\ge1}\langle G,b_i\rangle^2\sim\chi^2_{k-1}$. For $k=1$
-both sides are the point mass at $0$.
+gives $\|Z_n\|^2\Rightarrow\|W\|^2$. The vector $W$ is the orthogonal
+projection of $G$ onto the complement $K$ of the line spanned by $u$,
+which has dimension $k-1$. TauCeti's projection theorem gives
+$\|W\|^2\sim\chi^2_{k-1}$. For $k=1$ both sides are the point mass at $0$;
+TauCeti's theorem includes the zero subspace.
 
 **Library results.** `ProbabilityTheory.exists_iid` in
 `Mathlib/Probability/HasLawExists.lean`;
@@ -1216,13 +1317,16 @@ both sides are the point mass at $0$.
 `Mathlib/Probability/CramerWold.lean`;
 `TendstoInDistribution.continuous_comp` in
 `Mathlib/MeasureTheory/Function/ConvergenceInDistribution.lean`;
-`stdGaussian_eq_map_pi_orthonormalBasis` in
-`Mathlib/Probability/Distributions/Gaussian/Multivariate.lean`;
-`Orthonormal.exists_orthonormalBasis_extension` and
-`OrthonormalBasis.sum_sq_norm_inner_right` in
-`Mathlib/Analysis/InnerProductSpace/PiL2.lean`;
-`TauCeti.Probability.map_sum_sq_pi_gaussianReal` in
-`TauCeti/Probability/Distributions/Gaussian/ChiSquared.lean`.
+`Submodule.map_norm_sq_starProjection_stdGaussian` in
+`TauCeti/Probability/Distributions/Gaussian/Projection.lean`;
+`Submodule.starProjection_orthogonal_val` and
+`Submodule.starProjection_singleton` in
+`Mathlib/Analysis/InnerProductSpace/Projection/Basic.lean`;
+`Submodule.finrank_orthogonal_span_singleton` in
+`Mathlib/Analysis/InnerProductSpace/Projection/FiniteDimensional.lean`;
+`ProbabilityTheory.charFun_stdGaussian` in
+`Mathlib/Probability/Distributions/Gaussian/Multivariate.lean`, for the
+law of $\langle t,W\rangle$.
 
 ### 102.44. $M$-estimators and the Huber minimax property
 
@@ -1486,11 +1590,14 @@ probability tending to one, while $mn/(m+n)\ge\min(m,n)/2\to\infty$.
 $$\inf_{\dim V=k}\mathbb E\|X-\mu-P_V(X-\mu)\|^2=\sum_{j>k}\lambda_j,$$
 the infimum over orthogonal projections onto $k$-dimensional subspaces; the
 first $k$ eigenfunctions span a minimizer, unique if
-$\lambda_k>\lambda_{k+1}$. TauCeti's Ky Fan trace inequality gives the
-deterministic inequality in finite dimension, through
-$\mathbb E\|X-\mu-P_V(X-\mu)\|^2=\mathop{\mathrm{tr}}C-\mathop{\mathrm{tr}}(P_VC)$.
-Missing are the expectation formulation, attainment, uniqueness, and the
-trace-class Hilbert-space case.
+$\lambda_k>\lambda_{k+1}$. The entry is partly covered: TauCeti's Ky Fan
+trace inequality gives the deterministic inequality in finite dimension,
+through
+$\mathbb E\|X-\mu-P_V(X-\mu)\|^2=\mathop{\mathrm{tr}}C-\mathop{\mathrm{tr}}(P_VC)$,
+and for a positive operator the bound is attained by some orthonormal
+family of $k$ vectors. Missing are the expectation formulation, attainment
+by the leading eigenvectors, uniqueness, and the trace-class Hilbert-space
+case.
 
 **Scope.** The whole statement when $H$ is finite dimensional, of dimension
 $d\ge k$. The infinite-dimensional case, which needs compactness and the
@@ -1510,8 +1617,12 @@ $\sum_jc_j=k$. Using $\sum_{j\le k}(1-c_j)=\sum_{j>k}c_j$,
 $$\sum_{j\le k}\lambda_j-\sum_j\lambda_jc_j
 \ge\lambda_k\sum_{j\le k}(1-c_j)-\lambda_{k+1}\sum_{j>k}c_j
 =(\lambda_k-\lambda_{k+1})\sum_{j>k}c_j\ge0.$$
-This is Ky Fan's inequality and gives the lower bound
-$\sum_{j>k}\lambda_j$. The span of $\varphi_1,\ldots,\varphi_k$ attains it.
+This is Ky Fan's inequality, which TauCeti states directly for the
+orthonormal family $(w_i)$, and gives the lower bound $\sum_{j>k}\lambda_j$.
+The span of $\varphi_1,\ldots,\varphi_k$ attains it, since then $c_j=1$ for
+$j\le k$ and $c_j=0$ otherwise; TauCeti's attainment theorem for positive
+operators gives only some attaining family, so this explicit choice is
+used instead.
 If $\lambda_k>\lambda_{k+1}$ and $V$ attains it, then $c_j=0$ for $j>k$, so
 $V\perp\varphi_j$ for $j>k$ and $V=\mathop{\mathrm{span}}(\varphi_1,\ldots,
 \varphi_k)$ by dimension. For $k=d$ put $\lambda_{d+1}=0$; the statement is
@@ -1548,14 +1659,18 @@ with $\|X_{\cdot j}\|_2^2/n\le1$ and independent $N(0,\sigma^2)$ errors,
 $\lambda=2\sigma\sqrt{2(\log p+t)/n}$ meets the noise condition with
 probability at least $1-2e^{-t}$. The deterministic part is
 finite-dimensional convex analysis, and the noise event follows from
-Mathlib's Gaussian tail bound by a union bound; the lasso, the cone
-argument, and the restricted eigenvalue property of random designs are
-missing.
+Mathlib's Gaussian tail bound by a union bound. For random designs,
+TauCeti bounds the operator norm of a sub-Gaussian matrix from above with
+exponential probability, by a net argument, and bounds covering numbers by
+volume; the lower restricted eigenvalue bound, uniform over the cone, is
+not stated. The lasso, the cone argument, and the restricted eigenvalue
+property of random designs are missing.
 
 **Scope.** The deterministic bounds and the Gaussian noise event. The
 restricted eigenvalue property of random sub-Gaussian designs needs a
-covering argument with concentration of $\|Xv\|^2$, and remains a
-substantial gap.
+covering argument with two-sided concentration of $\|Xv\|^2$, uniformly
+over the cone, and remains a substantial gap; TauCeti's operator-norm tail
+bound for sub-Gaussian matrices controls only the upper side.
 
 **Argument.** The lasso must be introduced as a definition. Put
 $\delta=\hat\beta-\beta$ and $a=n^{-1}\|X\delta\|_2^2$. The hypotheses $\lambda>0$
@@ -1608,7 +1723,7 @@ $p_{(1)},\ldots,p_{(k)}$. If the null $p$-values are independent of each
 other and of the non-null ones, or if the $p$-value vector $p$ is positively
 regression dependent on the subset of null coordinates, then
 $$\mathbb E\Bigl[\frac V{\max(R,1)}\Bigr]\le\alpha\frac{m_0}m\le\alpha.$$
-Neither library defines $p$-values or multiple-testing procedures; the
+No library defines $p$-values or multiple-testing procedures; the
 argument is finite and combinatorial–probabilistic, but no part is present.
 
 **Scope.** The independence case. Only the independence of each null
@@ -1653,54 +1768,56 @@ $P_j=Q_j^{\otimes n}$, $D(P_0\|P_1)=nD(Q_0\|Q_1)$ and
 $\|P_0-P_1\|_{\mathrm{TV}}\le\sqrt{D(P_0\|P_1)/2}$. The argument is short: the
 test choosing the nearer parameter has errors bounded by the two
 probabilities, and the sum of errors of any test is at least
-$1-\|P_0-P_1\|_{\mathrm{TV}}$, which follows from Mathlib's
-Hahn-decomposition formula for the total variation distance. TauCeti proves
-Pinsker's inequality and tensorization over two factors, so the $n$-fold
-identity is an induction. Missing are the test-affinity identity, the
-reduction itself, and a reconciliation of Mathlib's total variation distance
-with the signed-measure total variation of TauCeti's Pinsker theorem.
+$1-\|P_0-P_1\|_{\mathrm{TV}}$. Statlib proves this testing identity, as the
+value of the Bayes risk of testing $P_0$ against $P_1$ under the prior with
+unit masses, and the identity $D(Q_0^{\otimes n}\|Q_1^{\otimes n})
+=nD(Q_0\|Q_1)$; TauCeti proves Pinsker's inequality, stated for Mathlib's
+total variation distance, which is twice the synopsis convention. Missing is
+the reduction from an estimator to a test, so the two-point lower bound
+itself is not stated.
 
-**Argument.** Test affinity. Let $A$ be a Hahn set with
-$P_0\le P_1$ on $A$ and $P_1\le P_0$ on $A^c$. Mathlib's formula, together
-with $P_0(\Omega)=P_1(\Omega)=1$, gives
-$\mathrm{tvDist}(P_0,P_1)=2(P_1(A)-P_0(A))$, so in the synopsis convention
-$\|P_0-P_1\|_{\mathrm{TV}}=P_1(A)-P_0(A)$. For a randomized test
-$\varphi$ with values in $[0,1]$,
-$$\int\varphi\,dP_0+\int(1-\varphi)\,dP_1=1-\int\varphi\,d(P_1-P_0)
-\ge1-(P_1-P_0)(A),$$
-since $\int\varphi\,d(P_1-P_0)$ is largest for $\varphi=1_A$. Reduction.
-Put $\varphi=1\{d(\hat\theta,\theta_1)<d(\hat\theta,\theta_0)\}$, or, for a
-randomized estimator given by a Markov kernel, the kernel probability of
-that event. If $d(\hat\theta,\theta_0)<s$, the triangle inequality gives
-$d(\hat\theta,\theta_1)>s$, so $\varphi=0$; thus
-$\int\varphi\,dP_0\le P_0(d(\hat\theta,\theta_0)\ge s)$, and symmetrically
-for $P_1$. The maximum is at least half the sum. For the risk,
+**Argument.** Test affinity. Statlib's Bayes binary risk for the prior
+with unit masses on the two hypotheses is the infimum over measurable
+rejection regions $E$ of $P_0(E)+P_1(E^c)$, and also over randomized tests
+given by Markov kernels into `Bool`. For probability measures its value is
+$1-\frac12\mathrm{tvDist}(P_0,P_1)=1-\|P_0-P_1\|_{\mathrm{TV}}$. Hence
+$P_0(E)+P_1(E^c)\ge1-\|P_0-P_1\|_{\mathrm{TV}}$ for every measurable $E$,
+and the same holds for randomized tests.
+
+Reduction. Put $E=\{d(\hat\theta,\theta_1)<d(\hat\theta,\theta_0)\}$, which
+is measurable for a measurable estimator; for a randomized estimator given
+by a Markov kernel, compose it with the indicator of that event to obtain a
+randomized test. If $d(\hat\theta,\theta_0)<s$, the triangle inequality and
+$d(\theta_0,\theta_1)\ge2s$ give $d(\hat\theta,\theta_1)>s$, so the data
+point is not in $E$; thus $P_0(E)\le P_0(d(\hat\theta,\theta_0)\ge s)$, and
+symmetrically $P_1(E^c)\le P_1(d(\hat\theta,\theta_1)\ge s)$. The maximum is
+at least half the sum. For the risk,
 $\mathbb E_j\ell(d(\hat\theta,\theta_j))\ge\ell(s)P_j(d(\hat\theta,\theta_j)
 \ge s)$, and the minimax risk is at least the supremum over the two points,
 for instance through the two-point prior.
 
-Products. Induct on $n$ with the measurable equivalence
-$\prod_{i\le n}\cong\prod_{i<n}\times(\text{last factor})$; the divergence
-is invariant under measurable equivalences by applying data processing in
-both directions, and two-factor tensorization adds $D(Q_0\|Q_1)$. For the
-total variation bound, no reconciliation of conventions is needed: TauCeti's
-event form of Pinsker's inequality, applied to the Hahn set $A$, gives
-$2(P_1(A)-P_0(A))^2\le D(P_0\|P_1)$, which is the claim.
+Products. Statlib's tensorization for identical factors gives
+$D(Q_0^{\otimes n}\|Q_1^{\otimes n})=nD(Q_0\|Q_1)$ for probability measures.
+Pinsker's inequality in TauCeti's form
+$\mathrm{etvDist}(P_0,P_1)^2\le2D(P_0\|P_1)$, with
+$\mathrm{etvDist}=2\|P_0-P_1\|_{\mathrm{TV}}$ for probability measures, gives
+$\|P_0-P_1\|_{\mathrm{TV}}\le\sqrt{D(P_0\|P_1)/2}$; when the divergence is
+infinite there is nothing to prove.
 
-**Library results.** `MeasureTheory.exists_isHahnDecomposition` in
-`Mathlib/MeasureTheory/Measure/Decomposition/Hahn.lean`;
-`MeasureTheory.IsHahnDecomposition.tvDist_eq` in
-`Mathlib/MeasureTheory/Measure/TotalVariation/Basic.lean`;
-`ProbabilityTheory.minimaxRisk` and `ProbabilityTheory.iSup_bayesRisk_le_minimaxRisk`
-in `Mathlib/Probability/Decision/Risk/`;
-`TauCeti.two_mul_sq_measureReal_sub_le_klDiv` in
+**Library results.** `ProbabilityTheory.bayesBinaryRisk`,
+`ProbabilityTheory.bayesBinaryRisk_eq_iInf_measurableSet` and
+`ProbabilityTheory.bayesBinaryRisk_eq_iInf_kernel` in
+`Statlib/Testing/Binary.lean`;
+`ProbabilityTheory.bayesBinaryRisk_one_one_eq_ofReal_one_sub_tvDist_div_two`
+in `Statlib/Divergence/TotalVariation.lean`;
+`ProbabilityTheory.klDiv_pi_const` in
+`Statlib/Divergence/KullbackLeibler/CondKL.lean`;
+`TauCeti.etvDist_sq_le_two_mul_klDiv` in
 `TauCeti/InformationTheory/KullbackLeibler/Pinsker.lean`;
-`TauCeti.klDiv_prod_prod` in
-`TauCeti/InformationTheory/KullbackLeibler/ChainRule.lean`;
-`InformationTheory.klDiv_map_le` in
-`Mathlib/InformationTheory/KullbackLeibler/DataProcessing.lean`;
-`MeasureTheory.measurePreserving_piFinSuccAbove` in
-`Mathlib/MeasureTheory/Constructions/Pi.lean`.
+`MeasureTheory.etvDist` and `MeasureTheory.tvDist` in
+`Mathlib/MeasureTheory/Measure/TotalVariation/Defs.lean`;
+`ProbabilityTheory.minimaxRisk` and `ProbabilityTheory.iSup_bayesRisk_le_minimaxRisk`
+in `Mathlib/Probability/Decision/Risk/`.
 
 ### 103.40. Fano's method
 
@@ -1711,48 +1828,69 @@ $$\sup_jP_j\bigl(d(\hat\theta,\theta_j)\ge s\bigr)
 \ge1-\frac{I(J;X)+\log2}{\log M},\qquad
 I(J;X)=\frac1M\sum_jD(P_j\|\bar P)\le\frac1M\sum_jD(P_j\|Q)$$
 for $\bar P=M^{-1}\sum_jP_j$ and any reference law $Q$ with finite right
-side. Mutual information is not defined in either library; Mathlib's
-data-processing inequality for the divergence is the starting point, and
-Fano's inequality and the reduction are missing.
+side. Statlib defines mutual information as the divergence of the joint law
+from the product of its marginals and proves the identities from which the
+two displayed formulas for $I(J;X)$ follow, and, for a loss with values in
+$[0,1]$, the bound $\mathrm{kl}(R_\pi^P,R_\pi^0)\le I(\pi\otimes P)$ of the
+binary divergence between the Bayes risk with observations and the Bayes
+risk without them. The $M$-ary bound is a short argument from this: under
+the $0$–$1$ loss and the uniform prior on $M$ indices every decision without
+data has risk $1-1/M$, and a lower bound for the binary divergence turns
+the inequality into the display. Missing are this specialization and the
+reduction from an estimator to an index test; the $M$-ary Fano bound is not
+stated.
 
-**Argument.** Define $I(J;X)$ as the divergence of the joint law
-$\mathbf P=U\otimes P_\bullet$ from $U\otimes\bar P$, where $U$ is uniform
-on $\{1,\ldots,M\}$. TauCeti's formula for the divergence of two
-composition products with the same first marginal gives
-$I(J;X)=M^{-1}\sum_jD(P_j\|\bar P)$, and likewise
-$D(\mathbf P\|U\otimes Q)=M^{-1}\sum_jD(P_j\|Q)$.
+**Argument.** Let $\Theta=\{1,\ldots,M\}$ with the discrete structure, $U$
+the uniform law on it, and $P$ the Markov kernel $j\mapsto P_j$, so that
+the law of $(J,X)$ is $U\otimes P$ and its second marginal is $\bar P$; the
+mutual information is Statlib's $I(U\otimes P)$.
+
+Formulas for $I(J;X)$. Statlib expresses $I(U\otimes P)$ as the conditional
+divergence of $P$ from the constant kernel at $\bar P$, and since $\Theta$
+is countable the conditional divergence is the integral
+$\int D(P_j\|\bar P)\,dU(j)=M^{-1}\sum_jD(P_j\|\bar P)$. For a reference
+law $Q$, the compensation identity gives
+$D(U\otimes P\,\|\,U\times Q)=I(U\otimes P)+D(\bar P\|Q)\ge I(U\otimes P)$,
+and the left side is the conditional divergence of $P$ from the constant
+kernel at $Q$, which is $M^{-1}\sum_jD(P_j\|Q)$ by the same integral
+formula.
+
+Fano bound. Take the action space $\Theta$ and Statlib's $0$–$1$ loss
+$\ell(j,z)=1\{j\ne z\}$, which is measurable and bounded by $1$. Without
+observations a randomized decision is a probability $\nu$ on $\Theta$, and
+its risk under $U$ is $M^{-1}\sum_j(1-\nu\{j\})=1-1/M$, so
+$R_U^0=1-1/M$. Statlib's bound gives
+$\mathrm{kl}(R_U^P,1-1/M)\le I(U\otimes P)$, and
+$\mathrm{kl}(1-p,1-q)=\mathrm{kl}(p,q)$ turns this into
+$\mathrm{kl}(a,1/M)\le I(U\otimes P)$ with $a=1-R_U^P$. For $a\in[0,1]$,
+$$\mathrm{kl}(a,1/M)=a\log M-h(a)+(1-a)\log\frac M{M-1}\ge a\log M-\log2,$$
+with $h$ the binary entropy, so $R_U^P\ge1-(I(J;X)+\log2)/\log M$; this is
+trivial when $I(J;X)=\infty$.
 
 Reduction. Let $\psi(x)$ be the index $j$ with
 $d(\hat\theta(x),\theta_j)<s$ if there is one, and $1$ otherwise; by
 $2s$-separation there is at most one such $j$, and $\psi$ is measurable.
-Then $P_j(d(\hat\theta,\theta_j)\ge s)\ge P_j(\psi\ne j)$, and the supremum
-is at least the average error $1-a$, where $a=M^{-1}\sum_jP_j(\psi=j)$.
+For a randomized estimator compose its kernel with $\psi$. Then
+$P_j(d(\hat\theta,\theta_j)\ge s)\ge P_j(\psi\ne j)$, so the supremum is at
+least the average error $M^{-1}\sum_jP_j(\psi\ne j)$, which is the risk of
+the decision rule $\psi$ and hence at least the Bayes risk $R_U^P$.
 
-Fano bound. The map $(j,x)\mapsto1\{\psi(x)=j\}$ sends $\mathbf P$ to the
-Bernoulli law with parameter $a$ and $U\otimes Q$ to the Bernoulli law with
-parameter $1/M$, since the events $\{\psi=j\}$ partition the sample space.
-Data processing gives $\mathrm{kl}(a\|1/M)\le M^{-1}\sum_jD(P_j\|Q)$. A
-direct computation, using $(1-a)\log(M/(M-1))\ge0$ and the bound $\log2$ on
-the binary entropy, gives $\mathrm{kl}(a\|1/M)\ge a\log M-\log2$. So
-$a\le(M^{-1}\sum_jD(P_j\|Q)+\log2)/\log M$; take $Q=\bar P$.
-
-Comparison with $Q$. Let $\pi$ be the posterior of $J$ given $X$. After
-swapping coordinates, the posterior disintegration turns $\mathbf P$ into
-$\bar P\otimes\pi$, while $U\otimes Q$ and $U\otimes\bar P$ become
-$Q\otimes U$ and $\bar P\otimes U$. The chain rule gives
-$M^{-1}\sum_jD(P_j\|Q)=D(\bar P\|Q)+\int D(\pi_x\|U)\,d\bar P(x)$, and
-$I(J;X)$ is the last integral. Hence the inequality, with equality exactly
-when $D(\bar P\|Q)=0$. The swap does not change divergences: apply data
-processing to the swap in both directions.
-
-**Library results.** `TauCeti.klDiv_compProd_right` and
-`TauCeti.klDiv_compProd_eq_add_lintegral` in
-`TauCeti/InformationTheory/KullbackLeibler/ChainRule.lean`;
-`InformationTheory.klDiv_map_le` in
-`Mathlib/InformationTheory/KullbackLeibler/DataProcessing.lean`;
-`ProbabilityTheory.posterior` and
-`ProbabilityTheory.compProd_posterior_eq_map_swap` in
-`Mathlib/Probability/Kernel/Posterior.lean`; `Real.binEntropy_le_log_two` in
+**Library results.** `ProbabilityTheory.mutualInfo`,
+`ProbabilityTheory.mutualInfo_compProd_eq_condKL` and
+`ProbabilityTheory.klDiv_compProd_prod_eq_mutualInfo_add` in
+`Statlib/Divergence/MutualInformation/Basic.lean`;
+`ProbabilityTheory.condKL` and `ProbabilityTheory.condKL_eq_lintegral` in
+`Statlib/Divergence/KullbackLeibler/CondKL.lean`;
+`ProbabilityTheory.ofReal_klBerReal_bayesRisk_le_mutualInfo` in
+`Statlib/Divergence/MutualInformation/Estimation.lean`;
+`ProbabilityTheory.zeroOneLoss` in
+`Statlib/ForMathlib/Probability/Decision/ZeroOneLoss.lean`;
+`InformationTheory.klBerReal` and `InformationTheory.klBerReal_one_sub` in
+`Statlib/ForMathlib/InformationTheory/KullbackLeibler/Bernoulli.lean`;
+`MeasureTheory.Measure.compProd_const` in
+`Mathlib/Probability/Kernel/Composition/MeasureCompProd.lean`;
+`ProbabilityTheory.bayesRisk` in `Mathlib/Probability/Decision/Risk/Defs.lean`;
+`Real.binEntropy_le_log_two` in
 `Mathlib/Analysis/SpecialFunctions/BinaryEntropy.lean`.
 
 ### 103.45. Varshamov–Gilbert bound
@@ -1761,8 +1899,9 @@ processing to the swap in both directions.
 $\omega^{(0)}=0,\omega^{(1)},\ldots,\omega^{(M)}$ of $\{0,1\}^m$ with
 $\rho(\omega^{(j)},\omega^{(k)})\ge m/8$ for $j<k$ and $M\ge2^{m/8}$.
 Mathlib defines the Hamming distance and packing numbers, and TauCeti
-develops minimum distances of codes without an existence bound. The
-statement follows by a counting argument: the Hamming balls of radius $m/8$
+develops minimum distances of codes without an existence bound; its
+volumetric covering bounds concern balls of normed spaces, not Hamming
+balls. The statement follows by a counting argument: the Hamming balls of radius $m/8$
 about a maximal separated set cover the cube, and Hoeffding's inequality,
 which Mathlib proves, bounds the size of each ball. It is not stated.
 
@@ -1803,9 +1942,12 @@ $d(\theta_\omega,\theta_{\omega'})^2\ge c\rho(\omega,\omega')$, every
 estimator $\hat\theta$ obeys
 $\max_\omega E_\omega d(\hat\theta,\theta_\omega)^2\ge
 (c/4)\max_\omega E_\omega\rho(\hat\omega,\omega)$ for a nearest index
-$\hat\omega$. The lemma combines $m$ two-point bounds of the kind in 103.39
-and is missing with them; Mathlib's Assouad bound on dual VC dimension is
-unrelated.
+$\hat\omega$. The lemma combines $m$ two-point bounds of the kind in
+103.39. For each neighbouring pair, Statlib's testing identity gives the
+total-variation form of the bound and its Bretagnolle–Huber inequality the
+term $\frac12e^{-\alpha}$, and TauCeti's Pinsker inequality the term
+$1-\sqrt{\alpha/2}$; the reduction from the hypercube to its edges is not
+stated. Mathlib's Assouad bound on dual VC dimension is unrelated.
 
 **Argument.** The maximum is at least the average over $\Omega$, and
 $\rho(\hat\omega,\omega)=\sum_j1\{\hat\omega_j\ne\omega_j\}$. For fixed $j$,
@@ -1817,15 +1959,12 @@ right. There are $2^{m-1}$ pairs for each of the $m$ coordinates, so the
 average is at least $2^{-m}\cdot m\cdot2^{m-1}$ times the minimum.
 
 The infimum over tests equals $1-\|P_\omega-P_{\omega'}\|_{\mathrm{TV}}$ by
-the test-affinity identity of 103.39, which gives the total variation form.
-In the divergence form, $1-\sqrt{\alpha/2}$ follows from Pinsker's
-inequality as in 103.39. For $\frac12e^{-\alpha}$ (Bretagnolle–Huber), let
-$p,q$ be densities against $P+Q$. Then $1-\|P-Q\|_{\mathrm{TV}}=\int
-\min(p,q)$, and Cauchy–Schwarz gives
-$(\int\sqrt{pq})^2\le\int\min(p,q)\int\max(p,q)\le2\int\min(p,q)$. Finite
-divergence gives $P\ll Q$ and an integrable log-likelihood ratio, so Jensen's
-inequality for $\exp$ gives
-$\int\sqrt{pq}=\mathbb E_P\exp(-\frac12\log(p/q))\ge e^{-D(P\|Q)/2}$.
+Statlib's testing identity, as in 103.39, which gives the total variation
+form. In the divergence form, $1-\sqrt{\alpha/2}$ follows from Pinsker's
+inequality as in 103.39, and $\frac12e^{-\alpha}$ is Statlib's
+Bretagnolle–Huber inequality $e^{-D(P\|Q)}\le2-\mathrm{tvDist}(P,Q)$, that
+is, $1-\|P-Q\|_{\mathrm{TV}}\ge\frac12e^{-D(P\|Q)}$, which Statlib states for
+probability measures of finite divergence.
 
 For the metric statement, let $\hat\omega$ be a measurable nearest index
 (finite set, fixed tie-breaking). Then
@@ -1833,15 +1972,12 @@ $d(\theta_{\hat\omega},\theta_\omega)\le d(\theta_{\hat\omega},\hat\theta)+
 d(\hat\theta,\theta_\omega)\le2d(\hat\theta,\theta_\omega)$, so
 $c\rho(\hat\omega,\omega)\le4d(\hat\theta,\theta_\omega)^2$ pointwise.
 
-**Library results.** The identity and Pinsker step as in 103.39
-(`MeasureTheory.IsHahnDecomposition.tvDist_eq`,
-`TauCeti.two_mul_sq_measureReal_sub_le_klDiv`);
-`ConvexOn.map_integral_le` in `Mathlib/Analysis/Convex/Integral.lean` and
-`convexOn_exp` in `Mathlib/Analysis/Convex/SpecificFunctions/Basic.lean`;
-`MeasureTheory.integral_mul_le_Lp_mul_Lq_of_nonneg` with $p=q=2$ in
-`Mathlib/MeasureTheory/Integral/Bochner/Basic.lean`;
-`InformationTheory.klDiv_ne_top_iff` in
-`Mathlib/InformationTheory/KullbackLeibler/Basic.lean`.
+**Library results.** The testing identity and Pinsker step as in 103.39
+(`ProbabilityTheory.bayesBinaryRisk_eq_iInf_measurableSet`,
+`ProbabilityTheory.bayesBinaryRisk_one_one_eq_ofReal_one_sub_tvDist_div_two`,
+`TauCeti.etvDist_sq_le_two_mul_klDiv`);
+`ProbabilityTheory.exp_neg_klDiv_le_two_sub_tvDist` in
+`Statlib/Divergence/BretagnolleHuber.lean`.
 
 ### 103.48. Restricted nullspace and exact recovery
 
@@ -1853,9 +1989,11 @@ $|S|\le s$. For independent centered unit-variance sub-Gaussian entries there
 are $C,c>0$, depending only on the sub-Gaussian parameter, such that
 $\delta_{2s}(n^{-1/2}X)<1/3$ with probability at least $1-2e^{-cn}$ whenever
 $n\ge Cs\log(ep/s)$. The equivalence and the restricted-isometry criterion
-are finite-dimensional linear algebra not present in either library; the
-probabilistic part needs covering arguments for random matrices, also
-absent.
+are finite-dimensional linear algebra not present in any of the three
+libraries. For the probabilistic part TauCeti supplies an operator-norm
+tail bound for sub-Gaussian matrices, proved by a net argument, and
+volumetric covering bounds; the two-sided isometry bound uniformly over
+sparse supports is absent.
 
 **Scope.** The equivalence and the restricted-isometry criterion. The
 probabilistic part remains a substantial gap.
@@ -1902,13 +2040,18 @@ $\|T_\lambda(\hat\Sigma)-\Sigma\|_{\mathrm{op}}\le2\lambda\|A\|_{\mathrm{op}}
 \le2s\lambda$. If each coordinate is $\sigma$-sub-Gaussian and $n>\log p$,
 $\lambda=\sigma^2(8\sqrt{(\log p)/n}+\delta)$ makes this event hold with
 probability at least $1-8e^{-n\min(\delta,\delta^2)/16}$. TauCeti bounds the
-operator norm of a matrix with small entries by a dimension-dependent factor
-and has Chebyshev-type entrywise deviation bounds; the sparsity-adapted
-operator-norm bound and the exponential entrywise concentration of
-$\hat\Sigma$ are missing.
+operator norm of a matrix with small entries by a dimension-dependent factor,
+has Chebyshev-type entrywise deviation bounds for sample second-moment
+matrices, and proves Bernstein's inequality and a Bernstein-type tail for
+sums of independent sub-exponential variables. Missing are the
+sparsity-adapted operator-norm bound, the sub-exponential property of
+products of sub-Gaussian coordinates, and hence the exponential entrywise
+concentration of $\hat\Sigma$.
 
-**Scope.** The deterministic bound. The probability bound needs Bernstein's
-inequality for products of sub-Gaussian variables and remains a gap.
+**Scope.** The deterministic bound. The probability bound remains a gap:
+TauCeti's sub-exponential tail supplies the scalar inequality, but the
+sub-exponential moment-generating bound for products of sub-Gaussian
+coordinates, with the constants of the statement, is not available.
 
 **Argument.** Put $E=T_\lambda(\hat\Sigma)-\Sigma$. Entrywise: if
 $\Sigma_{jk}=0$, then $|\hat\Sigma_{jk}|\le\lambda$, so the thresholded entry
@@ -1944,9 +2087,13 @@ eigenvector satisfies
 $\|\hat\theta-\theta^*\|_2\le c_0\sqrt{(\nu+1)\nu^{-2}p/n}+\delta$, with
 universal constants $c_0,c_1,c_2$ (hypotheses as in `GAPS.md`). TauCeti's
 Davis–Kahan theorem with Weyl's bound gives the sine of the angle at most
-$\|P\|_{\mathrm{op}}/(\nu-\|P\|_{\mathrm{op}})$, a bound of the same type
-with the full perturbation norm. Missing are the residual form, uniqueness of
-the leading eigenvector, and the spiked-model bound.
+$\|P\|_{\mathrm{op}}/(\nu-\|P\|_{\mathrm{op}})$, and its Yu–Wang–Samworth
+eigenvector bound gives, for a suitable sign,
+$\|\hat\theta-\theta^*\|_2\le2\sqrt2\|P\|_{\mathrm{op}}/\nu$; these are bounds
+of the same type with the full perturbation norm. Its residual $\sin\Theta$
+theorem in unitarily invariant norms gives the stated form by a short
+argument. Missing are the residual form as stated, uniqueness of the leading
+eigenvector, and the spiked-model bound.
 
 **Scope.** The deterministic part: uniqueness and the residual bound. The
 spiked-model bound needs concentration of sample covariance matrices and
@@ -1972,7 +2119,10 @@ $\delta\sin\angle(\hat\theta,\theta^*)=\delta\|P_{U^\perp}\theta^*\|\le
 $c=\langle\hat\theta,\theta^*\rangle\in[0,1]$,
 $\|\hat\theta-\theta^*\|^2=2(1-c)\le2(1-c^2)=2\sin^2$, so
 $\|\hat\theta-\theta^*\|\le\sqrt2\sin\angle\le2\|(I-\theta^*\theta^{*\top})
-P\theta^*\|/(\nu-2\eta)$.
+P\theta^*\|/(\nu-2\eta)$. TauCeti's Yu–Wang–Samworth eigenvector bound,
+applied with the gap $\nu$ of $\Sigma$, gives the different bound
+$2\sqrt2\eta/\nu$ directly; it does not give the residual form, so the
+Sylvester form of the $\sin\Theta$ theorem is used here.
 
 **Library results.**
 `TauCeti.UnitarilyInvariantSeminorm.mul_frobenius_starProjection_comp_le_frobenius_sylvester_apply`
@@ -2053,7 +2203,9 @@ $N_n(x)=\#\{i\le n:X_i=x\}$, Robbins' estimator $(x+1)N_n(x+1)/N_n(x)$
 converges almost surely to $\mathbb E[\theta\mid X=x]$ whenever $m(x)>0$.
 The formulas are a differentiation under the integral in the posterior
 density formula of Mathlib, and Robbins' limit follows from the strong law
-applied to the two counts; none of this is stated.
+applied to the two counts; none of this is stated. TauCeti's
+one-dimensional Gaussian integration by parts is the corresponding identity
+for the normal location model only.
 
 **Argument.** Posterior means. By Bayes' formula the posterior is the prior
 with density $f(x\mid\theta)/m(x)$. For the Poisson model the data space
@@ -2319,12 +2471,15 @@ $$\mathop{\mathrm{KL}}(P\|Q)\le\mathop{\mathrm{KL}}(p_T\|\eta)
 +\frac12\int_0^T\mathbb E_{p_t}\|g(t)^\top(s_t-\nabla\log p_t)\|^2\,dt,$$
 and the total variation distance between $p_0$ and the endpoint law of $Q$
 is at most $\sqrt{\mathop{\mathrm{KL}}(P\|Q)/2}$. Mathlib's data-processing
-inequality and TauCeti's Pinsker inequality give the last step; the Girsanov
-bound is missing.
+inequality and TauCeti's Pinsker inequality give the last step. TauCeti
+proves Girsanov's theorem for a constant drift only, and stochastic
+integrals are absent; the Girsanov bound is missing.
 
 **Scope.** Only the final total variation bound, given probability measures
 $P,Q$ on path space with $P$ having endpoint law $p_0$. The Girsanov bound,
-and the stochastic calculus it needs, remain a substantial gap.
+and the stochastic calculus it needs, remain a substantial gap; TauCeti's
+constant-drift Girsanov theorem does not cover the state-dependent drift
+$s_t-\nabla\log p_t$.
 
 **Argument.** Let $e(\omega)=\omega(T)$, which is measurable on path space.
 Then $e_\ast P=p_0$, and $e_\ast Q$ is the endpoint law of $Q$. Data
@@ -2424,8 +2579,8 @@ $\mathop{\mathrm{Cov}}(\varepsilon)=\sigma^2I_n$. Among linear unbiased
 estimators of an estimable functional $c^\top\beta$, the least-squares
 estimator has the smallest variance. If $X$ has full column rank,
 $\sigma^2(X^\top X)^{-1}$ is the Loewner minimum of the covariances of linear
-unbiased estimators of $\beta$. Neither library defines the linear model or
-its estimators; the theorem follows from Mathlib's orthogonal projection by a
+unbiased estimators of $\beta$. None of the three libraries defines the
+linear model or its estimators; the theorem follows from Mathlib's orthogonal projection by a
 short argument.
 
 **Argument.** Let $V=\mathop{\mathrm{col}}X$ and $P$ the orthogonal
@@ -2482,60 +2637,65 @@ independent of $\|(I-P)Y\|^2$; the residual sum of squares
 $\|(I-P)Y\|^2/\sigma^2$ is chi-squared on $n-r$ degrees of freedom. When $X$
 has full column rank, the least-squares estimator is normal with mean $\beta$
 and covariance $\sigma^2(X^\top X)^{-1}$ and is independent of the residual
-sum of squares. TauCeti proves that a sum of $k$ squared independent
-$N(0,v)$ coordinates is $v$ times chi-squared on $k$ degrees of freedom, and
-that linear images of Gaussian vectors are Gaussian; the noncentral
-chi-squared law and the assembled statement are missing.
+sum of squares. TauCeti proves the case $\mu=0$, $\sigma=1$: for a standard
+Gaussian vector, the squared lengths of its projections onto pairwise
+orthogonal subspaces are independent chi-squared variables on the respective
+dimensions. TauCeti also defines the noncentral chi-squared law, proves that
+a sum of squares of independent $N(m_i,1)$ variables, and the squared norm of
+an $N_n(m,I_n)$ vector, have that law with noncentrality $\sum_im_i^2$,
+respectively $\|m\|^2$, and proves that affine images of Gaussian vectors are
+Gaussian. Not stated are the noncentral law of $\|PY\|^2/\sigma^2$ for
+general $\mu$ and $\sigma$, its independence of the residual sum of squares,
+and the law of the least-squares estimator; they follow by a short argument.
 
-**Argument.** The noncentral law must first be introduced. Following the
-definition in `GAPS.md`, let $\chi^2_k(\delta)$ be the law of
-$\sum_{i<k}(\xi_i+m_i)^2$ for independent $\xi_i\sim N(0,1)$ and any
-$m\in\mathbb R^k$ with $\|m\|^2=\delta$. This depends only on $\|m\|$: if
-$\|m\|=\|m'\|$, the reflection in the hyperplane orthogonal to $m-m'$ is a
-linear isometry carrying $m$ to $m'$, it preserves the standard Gaussian
-law, and $\|\xi+m\|=\|R(\xi+m)\|=\|R\xi+m'\|$.
+**Argument.** Write $Y=\mu+\sigma Z$ with $Z$ standard Gaussian on
+$\mathbb R^n$ and $\mu=X\beta\in V=\mathop{\mathrm{col}}X$, so that
+$PY=\mu+\sigma PZ$ and $(I-P)Y=\sigma(I-P)Z$. By TauCeti's projection
+theorems for the pair of orthogonal subspaces $V$ and $V^\perp$, the
+projections $PZ$ and $(I-P)Z$ are independent, $PZ$ is standard Gaussian
+on $V$, and $\|(I-P)Z\|^2$ has the chi-squared law on $n-r$ degrees of
+freedom. Hence $\|(I-P)Y\|^2/\sigma^2=\|(I-P)Z\|^2\sim\chi^2_{n-r}$, and
+every function of $PY$ is independent of the residual sum of squares.
 
-Write $Y=\mu+\sigma Z$ with $Z$ standard Gaussian on $\mathbb R^n$ and
-$\mu=X\beta\in V=\mathop{\mathrm{col}}X$. Choose an orthonormal basis
-$b_1,\ldots,b_n$ whose first $r$ vectors span $V$ (extend an orthonormal
-basis of $V$). The standard Gaussian is the image of the product of $n$
-standard real Gaussians under $\xi\mapsto\sum_i\xi_ib_i$, so
-$Z=\sum_i\xi_ib_i$ with $\xi_1,\ldots,\xi_n$ independent $N(0,1)$. Then
+For the noncentral law, choose an orthonormal basis $b_1,\ldots,b_r$ of $V$.
+The standard Gaussian on $V$ is the image of the product of $r$ standard
+real Gaussians under $\xi\mapsto\sum_i\xi_ib_i$, so
+$PZ=\sum_i\xi_ib_i$ with $\xi_1,\ldots,\xi_r$ independent $N(0,1)$, and
 $$
-(I-P)Y=\sigma\sum_{i>r}\xi_ib_i,\qquad
-PY=\sum_{i\le r}(\langle\mu,b_i\rangle+\sigma\xi_i)b_i,
+\frac{\|PY\|^2}{\sigma^2}=\sum_{i\le r}(\xi_i+m_i)^2,\qquad
+m_i=\frac{\langle\mu,b_i\rangle}\sigma .
 $$
-because $(I-P)\mu=0$. Hence
-$\|(I-P)Y\|^2/\sigma^2=\sum_{i>r}\xi_i^2$ has the chi-squared law on $n-r$
-degrees of freedom, and
-$\|PY\|^2/\sigma^2=\sum_{i\le r}(\xi_i+m_i)^2$ with
-$m_i=\langle\mu,b_i\rangle/\sigma$, so it is
-$\chi^2_r(\|P\mu\|^2/\sigma^2)$. The vector $PY$ is a function of
-$(\xi_i)_{i\le r}$ and the residual of $(\xi_i)_{i>r}$; disjoint blocks of
-independent coordinates are independent, so $PY$, and every function of it,
-is independent of $\|(I-P)Y\|^2$. Under full column rank,
+The variables $\xi_i+m_i$ are independent $N(m_i,1)$, and TauCeti's
+noncentral sum-of-squares theorem gives the noncentral chi-squared law on
+$r$ degrees of freedom with noncentrality
+$\sum_im_i^2=\|P\mu\|^2/\sigma^2=\|\mu\|^2/\sigma^2$.
+
+Under full column rank,
 $\hat\beta=(X^\top X)^{-1}X^\top Y=(X^\top X)^{-1}X^\top PY$ is a function
 of $PY$, hence independent of the residual sum of squares, and it is the
 affine image $\beta+\sigma(X^\top X)^{-1}X^\top Z$ of a standard Gaussian,
 hence Gaussian with covariance
 $\sigma^2(X^\top X)^{-1}X^\top X(X^\top X)^{-1}=\sigma^2(X^\top X)^{-1}$.
-The degenerate cases $r=0$ and $r=n$ give the Dirac law $\chi^2_0$ for the
-corresponding sum, which is the empty-index case of the TauCeti law.
+The degenerate cases $r=0$ and $r=n$ give the Dirac law at $0$ for the
+corresponding sum, which is the zero-dimensional case of the TauCeti laws.
 
-**Library results.** `ProbabilityTheory.stdGaussian_eq_map_pi_orthonormalBasis`,
-`ProbabilityTheory.stdGaussian_map` and
-`ProbabilityTheory.multivariateGaussian_zero_one` in
-`Mathlib/Probability/Distributions/Gaussian/Multivariate.lean`;
-`Orthonormal.exists_orthonormalBasis_extension` in
-`Mathlib/Analysis/InnerProductSpace/PiL2.lean`; `Submodule.reflection_sub` in
-`Mathlib/Analysis/InnerProductSpace/Projection/Reflection.lean`;
-`ProbabilityTheory.iIndepFun_pi` and
-`ProbabilityTheory.iIndepFun.indepFun_finset` in
-`Mathlib/Probability/Independence/Basic.lean`;
-`TauCeti.Probability.map_sum_sq_pi_gaussianReal` in
-`TauCeti/Probability/Distributions/Gaussian/ChiSquared.lean`;
+**Library results.**
+`Submodule.map_orthogonalProjectionOnto_stdGaussian`,
+`Submodule.map_norm_sq_starProjection_stdGaussian` and
+`TauCeti.Probability.iIndepFun_orthogonalProjectionOnto_stdGaussian` in
+`TauCeti/Probability/Distributions/Gaussian/Projection.lean`;
+`TauCeti.Probability.noncentralChiSquaredMeasure` in
+`TauCeti/Probability/Distributions/NoncentralChiSquared/Basic.lean`;
+`TauCeti.Probability.map_sum_sq_pi_gaussianReal_noncentral` in
+`TauCeti/Probability/Distributions/NoncentralChiSquared/Gaussian.lean`;
 `TauCeti.Probability.map_affine_multivariateGaussian` in
-`TauCeti/Probability/Distributions/Gaussian/Affine.lean`.
+`TauCeti/Probability/Distributions/Gaussian/Affine.lean`;
+`ProbabilityTheory.stdGaussian_eq_map_pi_orthonormalBasis` in
+`Mathlib/Probability/Distributions/Gaussian/Multivariate.lean`;
+`ProbabilityTheory.gaussianReal_map_add_const` in
+`Mathlib/Probability/Distributions/Gaussian/Real.lean`;
+`ProbabilityTheory.iIndepFun.comp` in
+`Mathlib/Probability/Independence/Basic.lean`.
 
 ### 105.10. Exact tests of nested linear models
 
@@ -2547,27 +2707,31 @@ the numerator and denominator sums of squares, divided by $\sigma^2$, being
 independent chi-squared variables. Under the larger model the numerator has
 noncentrality $\|(P_1-P_0)X\beta\|^2/\sigma^2$, and a single estimable
 contrast gives the square of the Student $t$ statistic. TauCeti proves the
-Fisher and Student constructions from independent chi-squared variables; the
-null statement would follow from the central part of 105.2, and the
-noncentral alternative law is missing.
+Fisher and Student constructions from independent chi-squared variables, and
+the noncentral $F$ law of the ratio when the numerator is noncentral. None of
+the three libraries states the test; the null statement follows from
+TauCeti's projection laws and Fisher construction by a short argument, and
+the noncentral numerator law under the larger model follows as in 105.2.
 
-**Argument.** Let $V_0\subset V_1$ be the model spaces. Choose an orthonormal
-basis $b_1,\ldots,b_n$ adapted to the flag: $b_1,\ldots,b_{r_0}$ span $V_0$
-and $b_1,\ldots,b_{r_1}$ span $V_1$ (extend twice). As in 105.2 write
-$Y=\mu+\sigma\sum_i\xi_ib_i$ with independent standard $\xi_i$ and
-$\mu=X\beta\in V_1$. Then
+**Argument.** Let $V_0\subset V_1$ be the model spaces and write
+$Y=\mu+\sigma Z$ with $Z$ standard Gaussian and $\mu=X\beta\in V_1$. The
+subspaces $W=V_1\cap V_0^\perp$, of dimension $r_1-r_0$, and $V_1^\perp$, of
+dimension $n-r_1$, are orthogonal, $P_1-P_0$ is the projection onto $W$, and
 $$
-\frac{\|(P_1-P_0)Y\|^2}{\sigma^2}=\sum_{r_0<i\le r_1}(\xi_i+m_i)^2,
-\qquad
-\frac{\|(I-P_1)Y\|^2}{\sigma^2}=\sum_{i>r_1}\xi_i^2,
+(P_1-P_0)Y=(P_1-P_0)\mu+\sigma(P_1-P_0)Z,\qquad
+(I-P_1)Y=\sigma(I-P_1)Z .
 $$
-with $m_i=\langle\mu,b_i\rangle/\sigma$, and the two are independent as
-functions of disjoint blocks. The second is chi-squared on $n-r_1$ degrees
-of freedom; the first is $\chi^2_{r_1-r_0}(\delta)$ with
-$\delta=\|(P_1-P_0)\mu\|^2/\sigma^2$, the noncentral law defined in 105.2.
-Under the smaller model $\mu\in V_0$, so $\delta=0$, the numerator is
-central chi-squared, and TauCeti's Fisher construction gives the
-$F_{r_1-r_0,n-r_1}$ law of the ratio (the factors $\sigma^2$ cancel).
+By TauCeti's projection theorems, $(P_1-P_0)Z$ and $(I-P_1)Z$ are
+independent and $\|(I-P_1)Z\|^2\sim\chi^2_{n-r_1}$. Under the smaller model
+$\mu\in V_0$, so $(P_1-P_0)\mu=0$ and $\|(P_1-P_0)Z\|^2\sim\chi^2_{r_1-r_0}$;
+the two sums of squares divided by $\sigma^2$ are independent chi-squared
+variables, and TauCeti's Fisher construction gives the $F_{r_1-r_0,n-r_1}$
+law of the ratio (the factors $\sigma^2$ cancel). Under the larger model the
+computation of 105.2 with $W$ in place of the column space gives the
+noncentral chi-squared law on $r_1-r_0$ degrees of freedom with noncentrality
+$\|(P_1-P_0)\mu\|^2/\sigma^2$ for the numerator, still independent of the
+denominator, and TauCeti's noncentral $F$ construction then gives the law of
+the ratio.
 
 For a single contrast, let the smaller model be $V_0=\{X\beta:c^\top\beta=0\}$
 inside $V_1=\mathop{\mathrm{col}}X$, with $c^\top\beta$ estimable and not
@@ -2584,9 +2748,11 @@ $s^2/\sigma^2$, so TauCeti's Student construction gives $t\sim t_{n-r_1}$.
 
 **Library results.** As for 105.2, together with
 `TauCeti.Probability.hasLaw_fisherSnedecor_of_chiSquared` in
-`TauCeti/Probability/Distributions/FisherSnedecor/ChiSquared.lean` and
+`TauCeti/Probability/Distributions/FisherSnedecor/ChiSquared.lean`,
 `TauCeti.Probability.hasLaw_studentT_of_gaussian_chiSquared` in
-`TauCeti/Probability/Distributions/StudentT/ChiSquared.lean`.
+`TauCeti/Probability/Distributions/StudentT/ChiSquared.lean`, and
+`TauCeti.Probability.hasLaw_noncentralF_of_noncentralChiSquared` in
+`TauCeti/Probability/Distributions/NoncentralF/Basic.lean`.
 
 ### 105.15. Distribution of quadratic forms
 
@@ -2602,15 +2768,21 @@ $\mathop{\mathrm{rank}}A_i=n_i$, the forms $Y^\top A_iY$ are independent
 noncentral chi-squared variables on $n_i$ degrees of freedom with
 noncentralities $\mu^\top A_i\mu$ if and only if $\sum_in_i=n$. TauCeti
 computes the moment-generating function of a centred Gaussian quadratic form
-and the chi-squared moment-generating function. The noncentral case, the
-converse, Craig–Sakamoto, and Cochran's theorem are missing.
+and the chi-squared moment-generating function, proves the chi-squared laws
+and independence of squared Gaussian projections, the noncentral
+chi-squared law of $\|Y\|^2$ for identity covariance, and the criterion that
+linear images $AY$ and $BY$ of a Gaussian vector are independent if and
+only if $A\Sigma B^\top=0$. No law of a quadratic form $Y^\top AY$ is
+stated; the sufficiency of idempotence, its converse for $\mu=0$, the
+sufficiency half of Craig–Sakamoto, and Cochran's theorem follow by short
+arguments. The necessity half of Craig–Sakamoto is missing.
 
 **Scope.** The argument covers everything except the necessity half of
 Craig–Sakamoto (that independence of $Y^\top AY$ and $Y^\top BY$ for $\mu=0$
 forces $A\Sigma B=0$), which remains a substantial gap.
 
-**Argument.** Noncentral chi-squared is the law $\chi^2_k(\delta)$ introduced
-in 105.2. Write $S=\Sigma^{1/2}$ (positive definite, symmetric) and
+**Argument.** Noncentral chi-squared is TauCeti's law, written
+$\chi^2_k(\delta)$. Write $S=\Sigma^{1/2}$ (positive definite, symmetric) and
 $Y=\mu+SZ$ with $Z$ standard Gaussian.
 
 *Sufficiency of idempotence.* Put $C=SAS$, symmetric. If $A\Sigma$ is
@@ -2655,9 +2827,10 @@ needed specialization.)
 $A=\sum_{\lambda_i\ne0}\lambda_iv_iv_i^\top$, so
 $Y^\top AY=\sum\lambda_i(v_i^\top Y)^2$ and
 $v_i^\top Y=\lambda_i^{-1}v_i^\top(AY)$; thus $Y^\top AY$ is a measurable
-function of $AY$, and likewise $Y^\top BY$ of $BY$. The pair $(AY,BY)$ is
-jointly Gaussian with cross-covariance $A\Sigma B=0$, hence $AY$ and $BY$
-are independent, and so are the quadratic forms.
+function of $AY$, and likewise $Y^\top BY$ of $BY$. Since $B$ is symmetric,
+$A\Sigma B^\top=A\Sigma B=0$, and TauCeti's independence criterion for
+linear images of a Gaussian vector gives the independence of $AY$ and $BY$,
+hence of the quadratic forms.
 
 *Cochran's theorem.* Here $\Sigma=I$, the $A_i$ are symmetric, and
 $\sum_iA_i=I$ (the identity of quadratic forms for all $Y$). If
@@ -2667,11 +2840,13 @@ $x\in\mathop{\mathrm{ran}}A_j$, the decompositions $x=\sum_iA_ix$ and $x=x$
 coincide, so $A_ix=0$ for $i\ne j$ and $A_jx=x$; hence
 $A_iA_j=\delta_{ij}A_j$. Each $A_i$ is a symmetric idempotent of rank
 $n_i$, so $Y^\top A_iY\sim\chi^2_{n_i}(\mu^\top A_i\mu)$ by the first part.
-The vectors $A_iY$ are jointly Gaussian with cross-covariances $A_iA_j=0$,
-hence mutually independent, and the forms are functions of them.
-Conversely, if the forms are independent with laws
+The ranges of the $A_i$ are mutually orthogonal, so the vectors
+$A_iY=A_i\mu+A_i(Y-\mu)$ are, up to the constants $A_i\mu$, projections of
+a standard Gaussian vector onto orthogonal subspaces, hence mutually
+independent by TauCeti's projection theorem, and the forms are functions of
+them. Conversely, if the forms are independent with laws
 $\chi^2_{n_i}(\mu^\top A_i\mu)$, compare means: a $\chi^2_k(\delta)$ variable
-has mean $k+\delta$ (expand $\sum(\xi_i+m_i)^2$), so
+has mean $k+\delta$ (TauCeti's moment formula), so
 $\mathbb EY^\top Y=n+\|\mu\|^2$ equals
 $\sum_i(n_i+\mu^\top A_i\mu)=\sum_in_i+\|\mu\|^2$, and $\sum_in_i=n$. The
 hypothesis of independence is not needed for this direction.
@@ -2695,9 +2870,10 @@ hypothesis of independence is not needed for this direction.
 `Matrix.IsHermitian.spectral_theorem` and
 `Matrix.IsHermitian.det_eq_prod_eigenvalues` in
 `Mathlib/Analysis/Matrix/Spectrum.lean`;
-`HasGaussianLaw.indepFun_of_covariance_strongDual` and
-`HasGaussianLaw.iIndepFun_of_covariance_strongDual` in
-`Mathlib/Probability/Distributions/Gaussian/HasGaussianLaw/Independence.lean`;
+`TauCeti.Probability.indepFun_matrix_multivariateGaussian_iff` in
+`TauCeti/Probability/Distributions/Gaussian/Independence.lean`;
+`TauCeti.Probability.integral_id_noncentralChiSquaredMeasure` in
+`TauCeti/Probability/Distributions/NoncentralChiSquared/Moments.lean`;
 the results listed for 105.2.
 
 ### 105.22. Wishart distribution and Hotelling's $T^2$
@@ -2710,18 +2886,15 @@ covariance $S$ with divisor $n-1$ are independent,
 $(n-1)S\sim W_p(n-1,\Sigma)$, and Hotelling's statistic
 $T^2=n(\bar X-\mu)^\top S^{-1}(\bar X-\mu)$ satisfies
 $$\frac{n-p}{(n-1)p}\,T^2\sim F_{p,\,n-p}$$
-when the true mean is $\mu$. TauCeti proves the first sentence. Missing are
-the independence of $\bar X$ and $S$, the law of $(n-1)S$, and the law of
-$T^2$.
+when the true mean is $\mu$. TauCeti proves the first sentence. Not stated
+are the independence of $\bar X$ and $S$, the law of $(n-1)S$, and the law
+of $T^2$. They follow by a short argument: an orthogonal rotation of the
+sample separates $\bar X$ from $n-1$ independent $N_p(0,\Sigma)$ vectors
+whose Gram sum is $(n-1)S$, and the law of $T^2$ follows from TauCeti's
+Schur-complement law for a block of size one, after a congruence, together
+with its Fisher construction.
 
-**Scope.** The argument gives the independence of $\bar X$ and $S$ and the
-law $(n-1)S\sim W_p(n-1,\Sigma)$ (in TauCeti's Gram form, for every $n\ge2$;
-with the density form when $n-1\ge p$). The law of $T^2$ needs the
-distribution of $a^\top\Sigma^{-1}a/a^\top W^{-1}a$ for a Wishart matrix
-$W$, which rests on the Schur-complement theorem of 105.31, and remains a
-gap.
-
-**Argument.** Write $X_i=\mu+RG_i$ with $R=\Sigma^{1/2}$ and $G_1,\ldots,G_n$
+**Argument.** *Independence and the Wishart law.* Write $X_i=\mu+RG_i$ with $R=\Sigma^{1/2}$ and $G_1,\ldots,G_n$
 independent standard Gaussian vectors in $\mathbb R^p$. Stacked, $G$ is a
 standard Gaussian on $\mathbb R^{n\times p}$ with its Frobenius inner
 product (the product of $np$ standard real Gaussians). Let $H$ be an
@@ -2739,9 +2912,35 @@ $$
 So $\bar X$ is a function of $Z_1$ and $S$ of $(Z_2,\ldots,Z_n)$, which are
 independent, and TauCeti's Gram theorem gives
 $(n-1)S\sim$ `wishartGramMeasure` $(n-1)$ $\Sigma$, which agrees with the
-density law when $n-1\ge p$. The identification of the row structure of the
-standard Gaussian on $\mathbb R^{n\times p}$ is product-measure bookkeeping
-(equality of characteristic functions).
+density law when $n-1\ge p$; this holds for every $n\ge p+1$. The
+identification of the row structure of the standard Gaussian on
+$\mathbb R^{n\times p}$ is product-measure bookkeeping (equality of
+characteristic functions).
+
+*Hotelling's $T^2$.* Put $W=(n-1)S$, Wishart of degree $m=n-1\ge p$ and
+scale $\Sigma$, independent of $\bar X$, and $a=\bar X-\mu$, which is
+nonzero almost surely. For a fixed $a\ne0$, choose an invertible $M$ with
+$M^{-1}e_1=a$ (extend $a$ to a basis). TauCeti's congruence theorem makes
+$W'=MWM^\top$ Wishart of degree $m$ and scale $\Sigma'=M\Sigma M^\top$, and
+$$
+(W'^{-1})_{11}=a^\top W^{-1}a,\qquad(\Sigma'^{-1})_{11}=a^\top\Sigma^{-1}a .
+$$
+TauCeti's Schur-complement law for a block of size one, applied to $W'$ at
+the index $1$ (with scale $\Sigma'=(\Sigma'^{-1})^{-1}$ and real degree
+$m>p-1$), shows that
+$g(a,W)=a^\top\Sigma^{-1}a/a^\top W^{-1}a$ has the chi-squared law on
+$m-p+1=n-p$ degrees of freedom, whatever $a\ne0$. Since $\bar X$ and $W$ are
+independent, the joint law of $(a,W)$ is a product, and Fubini's theorem
+shows that $V=g(\bar X-\mu,W)$ is $\chi^2_{n-p}$ and independent of
+$\bar X$. Moreover $\sqrt n(\bar X-\mu)\sim N_p(0,\Sigma)$, so
+$U=n\,a^\top\Sigma^{-1}a$ is the squared norm of a standard Gaussian vector
+in $\mathbb R^p$ and has law $\chi^2_p$; it is a function of $\bar X$, hence
+independent of $V$. Then
+$$
+T^2=n(n-1)\,a^\top W^{-1}a=(n-1)\frac UV,\qquad
+\frac{n-p}{(n-1)p}\,T^2=\frac{U/p}{V/(n-p)},
+$$
+and TauCeti's Fisher construction gives the law $F_{p,n-p}$.
 
 **Library results.** `ProbabilityTheory.stdGaussian_map` and
 `ProbabilityTheory.map_pi_eq_stdGaussian` in
@@ -2756,7 +2955,18 @@ standard Gaussian on $\mathbb R^{n\times p}$ is product-measure bookkeeping
 `TauCeti.Probability.wishartGramMeasure_eq_nonsingularWishartMeasure` in
 `TauCeti/Probability/Distributions/Wishart/Agreement.lean`;
 `TauCeti.Probability.map_affine_multivariateGaussian` in
-`TauCeti/Probability/Distributions/Gaussian/Affine.lean`.
+`TauCeti/Probability/Distributions/Gaussian/Affine.lean`;
+`TauCeti.Probability.map_symmetricCongruenceLinearMap_nonsingularWishartMeasure`
+in `TauCeti/Probability/Distributions/Wishart/Marginal.lean`;
+`TauCeti.Probability.map_inv_inv_apply_nonsingularWishartMeasure` in
+`TauCeti/Probability/Distributions/Wishart/Inverse/Marginal.lean`;
+`TauCeti.Probability.stdGaussian_map_norm_sq` in
+`TauCeti/Probability/Distributions/Chi/Gaussian.lean`;
+`TauCeti.Probability.hasLaw_fisherSnedecor_of_chiSquared` in
+`TauCeti/Probability/Distributions/FisherSnedecor/ChiSquared.lean`;
+`ProbabilityTheory.indepFun_iff_map_prod_eq_prod_map_map` in
+`Mathlib/Probability/Independence/Basic.lean`; `MeasureTheory.lintegral_prod`
+in `Mathlib/MeasureTheory/Measure/Prod.lean`.
 
 ### 105.28. Gaussian covariance likelihood
 
@@ -2812,45 +3022,6 @@ in `TauCeti/Probability/Distributions/Gaussian/Density.lean`;
 `Matrix.IsHermitian.trace_eq_sum_eigenvalues` in
 `Mathlib/Analysis/Matrix/Spectrum.lean`; `Real.log_le_sub_one_of_pos` in
 `Mathlib/Analysis/SpecialFunctions/Log/Basic.lean`.
-
-### 105.31. Structure of the Wishart law
-
-**Statement.** Let $W\sim W_p(n,\Sigma)$ with $n\ge p$ an integer and
-$\Sigma$ positive definite. Then $W$ has the classical density,
-$MWM^\top\sim W_k(n,M\Sigma M^\top)$ for a $k\times p$ matrix $M$ of rank
-$k$, $W_{22}\sim W_{p-k}(n,\Sigma_{22})$, the Schur complement
-$W_{11\cdot2}$ is $W_k(n-p+k,\Sigma_{11\cdot2})$ and independent of
-$(W_{12},W_{22})$, the Bartlett decomposition holds, and consequently
-$\det W/\det\Sigma$ has the law of a product of independent
-$\chi^2_{n-i+1}$ variables. TauCeti proves the density, the congruence and
-marginal statements, and the Bartlett decomposition (for real degree).
-Missing are the law of the Schur complement and its independence of
-$(W_{12},W_{22})$, and the determinant law, which is one step from Bartlett.
-
-**Scope.** The argument gives the determinant law, for every real degree
-$n>p-1$. The Schur-complement law and independence remain a gap.
-
-**Argument.** Let $C$ be the Cholesky factor of $\Sigma$, so
-$\Sigma=CC^\top$ with $C$ invertible. By TauCeti's congruence theorem with
-$M=C^{-1}$ (rank $p$), $W_0=C^{-1}WC^{-\top}$ has the standard law
-$W_p(n,I_p)$, and $\det W_0=\det W/\det\Sigma$. Let $L$ be the Cholesky
-factor of $W_0$ (defined since $W_0$ is almost surely positive definite).
-Then $\det W_0=\det(LL^\top)=\prod_iL_{ii}^2$ because $L$ is triangular. By
-TauCeti's Bartlett theorem the entries of $L$ on and below the diagonal are
-independent and $L_{ii}^2\sim\chi^2_{n-i}$ for $i=0,\ldots,p-1$, that is
-$\chi^2_{n-i+1}$ in $1$-based indexing. The squared diagonal entries are
-functions of a subfamily of an independent family, hence independent, and
-$\det W/\det\Sigma$ is their product.
-
-**Library results.** `TauCeti.Probability.bartlett_nonsingularWishartMeasure`
-in `TauCeti/Probability/Distributions/Wishart/Bartlett.lean`;
-`TauCeti.Probability.map_symmetricCongruenceLinearMap_nonsingularWishartMeasure`
-in `TauCeti/Probability/Distributions/Wishart/Marginal.lean`;
-`TauCeti.cholesky` and `TauCeti.cholesky_mul_transpose` in
-`TauCeti/LinearAlgebra/Matrix/Cholesky/Basic.lean`;
-`Matrix.det_of_isLowerTriangular` in `Mathlib/LinearAlgebra/Matrix/Block.lean`;
-`ProbabilityTheory.iIndepFun.comp` in
-`Mathlib/Probability/Independence/Basic.lean`.
 
 ### 105.37. Kiefer–Wolfowitz equivalence
 
@@ -3131,7 +3302,7 @@ $-\tfrac12\sum_{i,j\in U}\Delta_{ij}(y_i/\pi_i-y_j/\pi_j)^2$ and
 $-\tfrac12\sum_{i,j\in s}(\Delta_{ij}/\pi_{ij})(y_i/\pi_i-y_j/\pi_j)^2$.
 The latter is nonnegative when $\Delta_{ij}\le0$ for distinct pairs.
 Positive pairwise inclusion is required for the variance estimators.
-These formulas are absent from both libraries.
+These formulas are absent from all three libraries.
 
 **Argument.** Define the design on the finite type of subsets and put
 $z_i=y_i/\pi_i$. Since $I_i^2=I_i$, the indicator moments give
@@ -3174,7 +3345,7 @@ sample variances of divisor $n_h-1$ gives an unbiased variance estimator.
 For $S_h>0$ and fixed total $n$, the continuous allocation minimizing
 variance is $n_h=nN_hS_h/\sum_lN_lS_l$, provided it satisfies the sampling
 bounds; integer allocation is a separate discrete problem. These
-statistical formulas are absent from both libraries.
+statistical formulas are absent from all three libraries.
 
 **Argument.** Counting subsets of size $n$ gives
 $\pi_i=n/N$ and $\pi_{ij}=n(n-1)/(N(N-1))$ for $i\ne j$. Substitute in
@@ -3216,7 +3387,9 @@ $$\mathop{\mathrm{Var}}(\hat\tau)
 The estimator $\hat V=\hat S^2(1)/n_1+\hat S^2(0)/n_0$ satisfies
 $\mathbb E\hat V-\mathop{\mathrm{Var}}(\hat\tau)=S^2(\tau)/n\ge0$, with
 equality if and only if all $\tau_i$ are equal. TauCeti defines sampling
-without replacement. The theorem is a finite computation from the
+without replacement, and Statlib's potential-response notation expresses the
+observed outcomes $Y_i(A_i)$; no assignment mechanism or design-based
+estimator is defined. The theorem is a finite computation from the
 covariances of the treatment indicators under that law, which are not
 stated.
 
@@ -3256,7 +3429,9 @@ $S^2(\tau)=0$ exactly when all $\tau_i$ are equal.
 TauCeti's `TauCeti.Probability.sampleWithoutReplacement`
 (`TauCeti/Probability/PopulationSampling/Finite.lean`) is an equivalent
 formulation of the design, after transport from ordered to unordered
-samples.
+samples. Statlib's `PotentialResponse` and `PotentialResponse.select`
+(`Statlib/Causal/PotentialResponse.lean`) supply the notation for the
+potential and observed outcomes.
 
 ### 105.47. Identification by regression and by weighting
 
@@ -3265,9 +3440,11 @@ and if $\mathbb E|Y(a)|<\infty$,
 $$\mathbb E[Y(a)]=\mathbb E[m_a(X)]
 =\mathbb E\Bigl[\frac{1_{\{A=a\}}Y}{e_a(X)}\Bigr],$$
 so for binary treatment $\theta=\mathbb E[m_1(X)-m_0(X)]$ when the
-hypotheses hold at both levels. No potential-outcome model is defined. The
-identities follow by a short argument from Mathlib's conditional independence
-and conditional expectation.
+hypotheses hold at both levels. Statlib's potential-response notation gives
+$Y(a)$ and the observed outcome under consistency, but no potential-outcome
+model with a probability structure is defined in any of the three
+libraries. The identities follow by a short argument from Mathlib's
+conditional independence and conditional expectation.
 
 **Argument.** Formalize ignorability as conditional independence of
 $\sigma(Y(a))$ and $\sigma(A)$ given $\sigma(X)$, and consistency as
@@ -3305,7 +3482,8 @@ in `TauCeti/Probability/Independence/Conditional.lean`;
 **Statement.** Under conditional ignorability, $Y(a)$ is conditionally
 independent of $A$ given $e(X)$. The propensity score is a balancing score,
 and it is a function of every balancing score. This follows by a short
-argument from Mathlib's conditional expectation; it is not stated.
+argument from Mathlib's conditional expectation; it is not stated in any of
+the three libraries.
 
 **Argument.** Let $A$ be binary, $H=\{A=1\}$ and
 $e(X)=\mathbb E[1_H\mid X]$; by Doob–Dynkin it is a measurable function of
@@ -3347,7 +3525,8 @@ and monotonicity hold, and $P(A=1\mid Z=1)\ne P(A=1\mid Z=0)$, then
 $$\frac{\mathbb E[Y\mid Z=1]-\mathbb E[Y\mid Z=0]}
 {\mathbb E[A\mid Z=1]-\mathbb E[A\mid Z=0]}
 =\mathbb E\bigl[Y(1)-Y(0)\mid A(1)>A(0)\bigr].$$
-Not stated. It follows by a short computation from independence.
+Not stated in any of the three libraries. It follows by a short computation
+from independence.
 
 **Argument.** Assume $Y(0),Y(1)$ integrable, $A(z)\in\{0,1\}$, and
 $0<P(Z=1)<1$ so that the conditional expectations are defined. By
@@ -3422,9 +3601,13 @@ $$f(\lambda)=\frac{\sigma^2}{2\pi}\,
 \frac{|\theta(e^{-i\lambda})|^2}{|\varphi(e^{-i\lambda})|^2}.$$
 TauCeti proves Herglotz's equivalence between positive definiteness on
 $\mathbb Z$ and representation by a finite positive measure on the unit
-circle. Missing are the realization as an autocovariance, the density for
-summable $\gamma$, the ARMA statement, and uniqueness, which follows from
-injectivity of the Fourier–Stieltjes transform but is not stated.
+circle, and realizes positive-definite kernels as Gram kernels in a Hilbert
+space. Missing are the realization as the autocovariance of a stationary
+process (for instance a Gaussian one, through Mathlib's projective limit of
+finite-dimensional laws, or a random-phase process), the density for
+summable $\gamma$, and the ARMA statement; uniqueness follows from
+TauCeti's injectivity of the Fourier–Stieltjes transform on Pontryagin duals
+but is not stated.
 
 **Scope.** The argument covers the three-way equivalence, the uniqueness of
 $F$, and the continuous density for summable $\gamma$. The ARMA existence,
@@ -3500,18 +3683,18 @@ unique strictly stationary solution; if $\gamma\ge0$, there is no strictly
 stationary solution. A nonanticipative weakly stationary solution with
 finite second moments exists if and only if $\alpha_1+\beta_1<1$; it is then
 the solution above, and $(X_t)$ is weak white noise of variance
-$\alpha_0/(1-\alpha_1-\beta_1)$. Absent from both libraries.
+$\alpha_0/(1-\alpha_1-\beta_1)$. Absent from all three libraries.
 Because the innovations are independent, the almost-sure convergence and
-uniqueness need only the strong law for independent identically distributed
-variables; nonexistence in the boundary case $\gamma=0$ needs the
-oscillation of a nondegenerate mean-zero random walk, which neither library
-proves.
+uniqueness need only Mathlib's strong law for independent identically
+distributed variables; nonexistence in the boundary case $\gamma=0$ needs
+the oscillation of a nondegenerate mean-zero random walk, which none of the
+three libraries proves.
 
 **Scope.** The argument covers everything except nonexistence in the
 boundary case $\gamma=0$ when $\log(\beta_1+\alpha_1\varepsilon_0^2)$ is not
 almost surely constant; that case needs the oscillation of a
 nondegenerate mean-zero random walk ($\limsup_nS_n=+\infty$ almost surely),
-which neither library proves, and remains a gap.
+which none of the three libraries proves, and remains a gap.
 
 **Argument.** Write $a_s=\beta_1+\alpha_1\varepsilon_s^2$ and
 $\Pi_{t,n}=\prod_{j=1}^na_{t-j}$. For fixed $t$ the variables
@@ -3647,8 +3830,15 @@ $\beta=\mathbb P_1(\text{accept }H_0)$,
 $$B\le\frac{1-\beta}\alpha,\qquad A\ge\frac\beta{1-\alpha}.$$
 Among all tests with type I error at most $\alpha$ and type II error at most
 $\beta$, the test minimizes both $\mathbb E_0N$ and $\mathbb E_1N$ (Wald and
-Wolfowitz). Mathlib's optional sampling covers only bounded stopping times;
-Wald's identity and sequential tests are absent.
+Wolfowitz). Mathlib's optional sampling covers only bounded stopping times.
+Statlib proves Wald's identity for integrable stopping times of independent
+identically distributed sequences, the likelihood-ratio density of the laws
+stopped at a stopping time, and the identity
+$\mathbb E_\mu[N]\,\mathrm{KL}(\mu,\nu)$ for the Kullback–Leibler divergence
+of the stopped laws, which supplies the information lower bound used for the
+optimality. No sequential test is defined in any of the three libraries; the
+finiteness of $\mathbb E_iN$, the error bounds, and the Wald–Wolfowitz
+optimality are absent.
 
 **Scope.** The argument covers finiteness of $\mathbb E_iN$, Wald's identity,
 and Wald's inequalities. The Wald–Wolfowitz optimality, which needs
@@ -3670,10 +3860,13 @@ $\mathbb P_i(N>km)\le(1-p^m)^k$, and $N$ has geometric tails, so
 $\mathbb E_iN<\infty$.
 
 *Wald's identity.* $S_N=\sum_k Z_k1_{\{N\ge k\}}$ and $\{N\ge k\}$ is
-determined by $X_1,\ldots,X_{k-1}$, hence independent of $Z_k$. Summing
-$\mathbb E_i|Z_k|1_{\{N\ge k\}}=\mathbb E_i|Z|\,\mathbb P_i(N\ge k)$ gives
-$\mathbb E_i|Z|\,\mathbb E_iN<\infty$, which justifies exchanging sum and
-expectation, and $\mathbb E_iS_N=\mathbb E_iZ\,\mathbb E_iN$. The mean is
+determined by $X_1,\ldots,X_{k-1}$, hence independent of $Z_k$, so
+$\mathbb E_i[Z_k;N\ge k]=\mathbb P_i(N\ge k)\,\mathbb E_iZ$, and
+$\sum_k\mathbb E_i[|Z_k|;N\ge k]=\mathbb E_i|Z|\,\mathbb E_iN<\infty$. These
+are the hypotheses of Statlib's general form of Wald's identity, applied in
+its indexing from $0$ to the random time $N-1$ (set to $0$ on the null event
+$\{N=\infty\}$, which changes the events $\{N\ge k\}$ only by null sets);
+it gives $\mathbb E_iS_N=\mathbb E_iZ\,\mathbb E_iN$. The mean is
 nonzero: $\mathbb E_1Z$ is the Kullback–Leibler divergence of the
 single-observation law under $\mathbb P_1$ from that under $\mathbb P_0$
 (absolute continuity holds since $f_0>0$ $\mathbb P_1$-almost surely), and
@@ -3693,7 +3886,10 @@ and in the same way
 $\beta=\sum_n\mathbb E_0[\Lambda_n;N=n,\Lambda_n\le A]\le A(1-\alpha)$. If
 $\alpha=0$ the first inequality is read as $B\le\infty$.
 
-**Library results.** `MeasureTheory.Measure.infinitePi` in
+**Library results.**
+`ProbabilityTheory.integral_sum_Iic_eq_integral_sum_Iic_integral` (Wald's
+identity) in `Statlib/Testing/Sequential/Wald.lean`;
+`MeasureTheory.Measure.infinitePi` in
 `Mathlib/Probability/ProductMeasure.lean`;
 `ProbabilityTheory.iIndepFun.indepFun_finset` in
 `Mathlib/Probability/Independence/Basic.lean`;
@@ -3714,10 +3910,14 @@ $\mathbb E[E_n\mid\mathcal F_{n-1}]\le1$ under every law in a null
 hypothesis, then $M_n=E_1\cdots E_n$, $M_0=1$, is a nonnegative
 supermartingale under each such law, $M_\tau$ is an e-value for every almost
 surely finite stopping time $\tau$, and rejecting at the first $n$ with
-$M_n\ge1/\alpha$ has level $\alpha$. Mathlib's Doob maximal inequality gives
-the bound for nonnegative martingales on each finite horizon. The
+$M_n\ge1/\alpha$ has level $\alpha$. Mathlib's Doob maximal inequality, which
+TauCeti extends to general linearly ordered time, gives the bound for
+nonnegative martingales on each finite horizon. Statlib defines e-variables
+for a set of laws, with convexity, closure under $\liminf$, products for
+product laws, and the existence of the numeraire e-variable. The
 supermartingale case follows by a short argument; neither step, nor the
-product supermartingale and e-value consequences, is stated.
+product supermartingale and the e-value consequences for running products
+of conditional e-values, is stated in any of the three libraries.
 
 **Argument.** *Ville.* Put $c=1/\alpha$ and let $\pi_n$ be the hitting time
 of $[c,\infty)$ by $M$ capped at $n$, a stopping time bounded by $n$. Since
@@ -3740,7 +3940,8 @@ integrability of $M_n$ and $\mathbb E[M_n\mid\mathcal F_{n-1}]\le M_{n-1}$.
 
 *E-values and level.* For an almost surely finite stopping time $\tau$,
 $M_{\tau\wedge n}\to M_\tau$ almost surely, and optional stopping gives
-$\mathbb EM_{\tau\wedge n}\le1$; Fatou's lemma gives $\mathbb EM_\tau\le1$.
+$\mathbb EM_{\tau\wedge n}\le1$; Fatou's lemma gives $\mathbb EM_\tau\le1$,
+so $M_\tau$ is an e-variable for the null hypothesis in Statlib's sense.
 The rejection event $\{\exists n:M_n\ge1/\alpha\}$ has probability at most
 $\alpha$ by Ville, under each law of the null hypothesis separately.
 
@@ -3755,7 +3956,8 @@ in `Mathlib/Probability/Martingale/OptionalStopping.lean`;
 `MeasureTheory.lintegral_liminf_le` in
 `Mathlib/MeasureTheory/Integral/Lebesgue/Add.lean`;
 `MeasureTheory.tendsto_measure_iUnion_atTop` in
-`Mathlib/MeasureTheory/Measure/Continuity.lean`.
+`Mathlib/MeasureTheory/Measure/Continuity.lean`; `ProbabilityTheory.IsEVar`
+in `Statlib/EValues/EVariable.lean`.
 
 ### 106.41. Wald's fundamental identity and the operating characteristic
 
@@ -3770,8 +3972,12 @@ $$L(\theta)=\frac{B^h-1}{B^h-A^h},\qquad
 \mathbb E_\theta N=\frac{L(\theta)\log A+(1-L(\theta))\log B}
 {\mathbb E_\theta Z}.$$
 Mathlib has moment-generating functions and their multiplicativity over
-independent sums; optional stopping at the unbounded time $N$ and the
-identity are missing.
+independent sums, and Statlib proves Wald's identity
+$\mathbb ES_N=\mathbb EN\,\mathbb EZ$ for integrable stopping times of
+independent identically distributed sequences. Optional stopping of the
+exponential martingale at the unbounded time $N$, the fundamental identity,
+the existence of $h$, and the operating characteristic are missing from all
+three libraries.
 
 **Argument.** As in 106.37, $P_\theta(N>km)\le(1-p^m)^k$, so $N$ has
 geometric tails and $\mathbb E_\theta N<\infty$. Fix $t$ with $\phi(t)\ge1$
@@ -3793,8 +3999,8 @@ $0$ and the intermediate value theorem gives a root $h<0$; symmetrically for
 $\mathbb E_\theta Z<0$; strict convexity allows at most two roots of
 $\phi=1$. Then $\phi(h)=1$ gives $\mathbb E_\theta e^{hS_N}=1$, and
 $\mathbb E_\theta N=\mathbb E_\theta S_N/\mathbb E_\theta Z$ is Wald's
-identity from 106.37 (it uses only $\mathbb E_\theta N<\infty$ and
-$\mathbb E_\theta|Z|<\infty$). If $S_N\in\{\log A,\log B\}$ almost surely,
+identity, from Statlib as in 106.37 (it uses only
+$\mathbb E_\theta N<\infty$ and $\mathbb E_\theta|Z|<\infty$). If $S_N\in\{\log A,\log B\}$ almost surely,
 with $L=P_\theta(S_N=\log A)$ the identity reads $LA^h+(1-L)B^h=1$, which
 solves to the stated $L(\theta)$ because $A^h\ne B^h$; and
 $\mathbb E_\theta S_N=L\log A+(1-L)\log B$.
@@ -3819,8 +4025,9 @@ $N_a$ be positive integer random variables with $N_a/a\to_Pk\in(0,\infty)$.
 Then $(S_{N_a}-N_a\mu)/(\sigma\sqrt{N_a})\Rightarrow N(0,1)$, with no
 independence required between $N_a$ and the observations. More generally, if
 $Y_n\Rightarrow Y$ and $(Y_n)$ is uniformly continuous in probability, then
-$Y_{N_a}\Rightarrow Y$. Random-index limit theorems are absent from both
-libraries.
+$Y_{N_a}\Rightarrow Y$. Random-index limit theorems are absent from all three
+libraries; TauCeti's strong law and central limit theorem for the renewal
+count are the nearest results.
 
 **Argument.** *General statement.* Put $n_a=\lceil ka\rceil\to\infty$, so
 $N_a/n_a\to_P1$. Given $\varepsilon>0$, take $\delta$ from the uniform
@@ -3875,7 +4082,9 @@ $\mathbb E_0T_{\mathrm{CS}}(A)$. If $\gamma>1$ and $A_\gamma$ is chosen so
 that $\mathbb E_\infty T_{\mathrm{CS}}(A_\gamma)=\gamma$, then CUSUM minimizes
 Lorden's worst-case delay over $\mathcal C_\gamma$ (Moustakides), and the
 first-order asymptotics $\log\gamma/I$ hold (Lorden). Optimal-stopping theory
-and change-detection procedures are absent from both libraries.
+and change-detection procedures are absent from all three libraries; Statlib's
+divergences of laws stopped at a stopping time are ingredients of lower
+bounds on the delay.
 
 **Scope.** The argument gives the first sentence. Moustakides' optimality and
 Lorden's asymptotics remain a gap.
@@ -3925,7 +4134,7 @@ pre-change block of a product space).
 every $\tau>0$, $P(M_n\le u_n)\to e^{-\theta\tau}$ for every $(u_n)$ with
 $n(1-F(u_n))\to\tau$. An independent sequence has extremal index $1$; more
 generally, if $D(u_n)$ and $D'(u_n)$ hold for every such sequence and every
-$\tau>0$, the extremal index is $1$ (Leadbetter). Absent from both
+$\tau>0$, the extremal index is $1$ (Leadbetter). Absent from all three
 libraries.
 
 **Scope.** The argument gives the independent case. Leadbetter's theorem
@@ -3944,7 +4153,8 @@ $F(u_n)^n\to e^{-\tau}$ whenever $n(1-F(u_n))\to\tau$. So $\theta=1$.
 $u_n$, $P(M_n\le u_n)\to e^{-\tau}$ if and only if $n(1-F(u_n))\to\tau$; for
 finite $\tau$ the number of exceedances of $u_n$ then converges in law to a
 Poisson law of mean $\tau$. For $0<\tau<\infty$, levels with
-$n(1-F(u_n))\to\tau$ exist if and only if $(1-F(x))/(1-F(x-))\to1$ as
+$n(1-F(u_n))\to\tau$ exist if and only if both
+$\lim_{x\uparrow x_F}F(x)=1$ and $(1-F(x))/(1-F(x-))\to1$ as
 $x\uparrow x_F$; hence the Poisson and geometric laws are in no domain of
 attraction. The forward direction for finite $\tau$ follows by a short
 argument from TauCeti's formula $P(M_n\le u)=F(u)^n$, Mathlib's limit
@@ -3954,8 +4164,9 @@ existence criterion for the levels are missing.
 
 **Scope.** The argument gives the first sentence in full (both directions,
 $0\le\tau\le\infty$) and the Poisson limit of the number of exceedances. The
-existence criterion for the levels, and its consequence for the Poisson and
-geometric laws, remain a gap.
+endpoint and tail-ratio conditions for the existence of these levels, and
+their consequence for the Poisson and geometric laws, are outside this
+argument.
 
 **Argument.** The observations are independent with common distribution
 function $F$, so $P(M_n\le u_n)=F_n^n$ with $F_n=F(u_n)$; put
@@ -4057,7 +4268,7 @@ and `TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences_fin` in
 `ProbabilityTheory.HasSubgaussianMGF.measure_ge_le` in
 `Mathlib/Probability/Moments/SubGaussian.lean`;
 `TauCeti.Probability.rademacherMeasure` in
-`TauCeti/Probability/Distributions/Rademacher.lean`;
+`TauCeti/Probability/Distributions/Rademacher/Basic.lean`;
 `ProbabilityTheory.exists_iid` in `Mathlib/Probability/HasLawExists.lean`;
 `MeasureTheory.measure_iUnion_fintype_le` in
 `Mathlib/MeasureTheory/OuterMeasure/Basic.lean`; Fubini for product
@@ -4071,8 +4282,8 @@ $p_t(i)\propto\exp(-\eta\sum_{s<t}\ell_s(i))$ and $\eta=\sqrt{8(\log K)/T}$
 has regret at most $\sqrt{(T/2)\log K}$ after $T$ rounds against the best
 fixed action. The argument is short from Mathlib: bound the logarithm of the
 ratio of successive normalizing sums by Hoeffding's lemma applied to $p_t$,
-and compare the telescoped sum with the weight of the best action. Neither
-the forecaster nor regret is defined.
+and compare the telescoped sum with the weight of the best action. No library
+defines the forecaster or regret.
 
 **Argument.** The forecaster and the regret
 $\sum_{t\le T}\langle p_t,\ell_t\rangle-\min_i\sum_{t\le T}\ell_t(i)$ are new
@@ -4111,7 +4322,7 @@ $\mathbb P(Y_{n+1}\in C(X_{n+1}))\ge1-\alpha$, and the probability is at
 most $1-\alpha+1/(n+1)$ if the $n+1$ scores are almost surely distinct.
 TauCeti defines exchangeability of sequences; the statement follows from the
 uniform distribution of the rank of $S_{n+1}$ among $n+1$ exchangeable
-scores, which neither library states.
+scores, which none of the three libraries states.
 
 **Argument.** Conditionally on the training part the score function is
 fixed, so the vector $(S_1,\ldots,S_{n+1})$ is exchangeable under the
@@ -4181,19 +4392,35 @@ A plug-in rule $\hat g=1_{\{\hat\eta\ge1/2\}}$ built from independent
 training data has conditional excess risk at most
 $2\mathbb E|\hat\eta(X)-\eta(X)|$; if $P(|\eta(X)-1/2|\le t)\le Ct^\alpha$ for
 all $t>0$ and $\|\hat\eta-\eta\|_\infty\le\delta$, it is at most
-$2C\delta^{\alpha+1}$. Mathlib supplies conditional expectation, so $\eta$
-is available; the identity follows by writing
+$2C\delta^{\alpha+1}$. Statlib proves the first assertion in likelihood-ratio
+form: with the conditional laws of $X$ given $Y=0$ and $Y=1$ and the law of
+$Y$ as prior, its Bayes test between the two laws is the rule
+$1_{\{\eta\ge1/2\}}$, it is a Bayes rule for the $0$–$1$ loss, and its Bayes
+risk is $\mathbb E\min(\eta(X),1-\eta(X))$. The excess-risk identity for an
+arbitrary classifier, the plug-in bound, and the margin bound are not stated;
+the identity follows by writing
 $R(g)=\mathbb E[\eta(X)1_{\{g=0\}}+(1-\eta(X))1_{\{g=1\}}]$ and comparing
-pointwise. None of these statements is present; the item is the common base
-of 107.11 and 107.14.
+pointwise. The item is the common base of 107.11 and 107.14.
 
-**Argument.** Take $\eta(x)=\kappa(x)\{1\}$ for the conditional distribution
-$\kappa$ of $Y$ given $X$. The disintegration of the law of $(X,Y)$ gives
-$$R(g)=\mathbb E\bigl[\eta(X)1_{\{g(X)=0\}}+(1-\eta(X))1_{\{g(X)=1\}}\bigr].$$
+**Argument.** Let $\pi$ be the law of $Y$ on $\{0,1\}$ and $\mu,\nu$ the
+conditional laws of $X$ given $Y=0$ and $Y=1$, so that the joint law of
+$(Y,X)$ is $\pi\otimes\kappa$ for the kernel $\kappa$ sending $0$ to $\mu$
+and $1$ to $\nu$, and the law $P_X$ of $X$ is $\kappa\circ\pi$. The posterior
+weights of the two labels are $\pi\{1\}\,d\nu/dP_X$ and
+$\pi\{0\}\,d\mu/dP_X$ almost everywhere, so these are $\eta$ and $1-\eta$.
+Statlib's test answers $1$ exactly where
+$\pi\{0\}\,d\mu/dP_X\le\pi\{1\}\,d\nu/dP_X$, that is, where $\eta\ge1/2$; so
+it is $g^*$ up to a $P_X$-null set. It is an argmin, hence Bayes, estimator
+for the $0$–$1$ loss among all randomized rules, which is the minimality of
+$g^*$.
+
+For a measurable classifier $g=1_E$, Statlib's risk formula for a
+deterministic test gives
+$$R(g)=\pi\{0\}\mu(E)+\pi\{1\}\nu(E^c)
+=\mathbb E\bigl[(1-\eta(X))1_{\{g(X)=1\}}+\eta(X)1_{\{g(X)=0\}}\bigr].$$
 Pointwise, the integrand for $g$ minus that for $g^*$ vanishes where
 $g=g^*$, and equals $|2\eta-1|$ where they differ: if $\eta\ge1/2$ and
-$g=0$ it is $\eta-(1-\eta)$, and symmetrically. This gives the identity, and
-minimality follows since the right side is nonnegative.
+$g=0$ it is $\eta-(1-\eta)$, and symmetrically. This gives the identity.
 
 For the plug-in rule, condition on the training data, which is independent
 of $(X,Y)$; then $\hat\eta$ and $\hat g$ are fixed measurable functions, and
@@ -4205,7 +4432,18 @@ bound. Under $\|\hat\eta-\eta\|_\infty\le\delta$ the same inclusion gives
 $\{\hat g\ne g^*\}\subseteq\{|\eta-1/2|\le\delta\}$, so the excess risk is
 at most $2\delta\,P(|\eta(X)-1/2|\le\delta)\le2C\delta^{\alpha+1}$.
 
-**Library results.** `ProbabilityTheory.condDistrib` and
+**Library results.** `ProbabilityTheory.binaryArgminEstimator`,
+`ProbabilityTheory.isArgminEstimator_binaryArgminEstimator`,
+`ProbabilityTheory.avgRisk_binary_of_deterministic_indicator` and
+`ProbabilityTheory.bayesBinaryRisk_eq_lintegral_min` in
+`Statlib/Testing/Binary.lean`;
+`ProbabilityTheory.posterior_boolKernel_apply_true` and
+`ProbabilityTheory.posterior_boolKernel_apply_false` in
+`Mathlib/Probability/Kernel/Posterior.lean`;
+`ProbabilityTheory.IsArgminEstimator.isBayesEstimator` in
+`Mathlib/Probability/Decision/BayesEstimator.lean`;
+`ProbabilityTheory.Kernel.boolKernel` in
+`Mathlib/Probability/Kernel/Basic.lean`; `ProbabilityTheory.condDistrib` and
 `ProbabilityTheory.compProd_map_condDistrib` in
 `Mathlib/Probability/Kernel/CondDistrib.lean`; independence and Fubini in
 `Mathlib/Probability/Independence/Basic.lean` and
@@ -4246,7 +4484,7 @@ $\mathop{\mathrm{Rad}}_n$.
 `RKHS.norm_apply_le` in `Mathlib/Analysis/InnerProductSpace/Reproducing.lean`
 (scalar case $V=\mathbb R$); `ConvexOn.map_integral_le` in
 `Mathlib/Analysis/Convex/Integral.lean`; `TauCeti.Probability.rademacherMeasure`
-in `TauCeti/Probability/Distributions/Rademacher.lean`.
+in `TauCeti/Probability/Distributions/Rademacher/Basic.lean`.
 
 ### 107.11. Comparison inequality for convex surrogates
 
@@ -4509,20 +4747,29 @@ $X^+y+(I-X^+X)\theta_0$, the minimum-norm solution when $\theta_0=0$. For
 linearly separable data and the logistic loss there is $\eta_0>0$ such that
 gradient descent with any step in $(0,\eta_0)$ from any start has
 $\|\theta_t\|\to\infty$ and $\theta_t/\|\theta_t\|\to\hat\theta/\|\hat\theta\|$,
-with $\hat\theta$ the hard-margin solution (Soudry et al.). Mathlib has no
-Moore–Penrose pseudoinverse of a real matrix and no convergence theorem for
-gradient descent.
+with $\hat\theta$ the hard-margin solution (Soudry et al.). TauCeti
+constructs the Moore–Penrose inverse of a linear map between
+finite-dimensional inner product spaces from its singular system and
+characterizes it by the four Penrose equations, which supplies the limit
+$X^+y+(I-X^+X)\theta_0$; no library proves a convergence theorem for
+gradient descent, and the logistic implicit bias is absent.
 
 **Scope.** The least-squares assertion is proved here. The logistic
 assertion remains a gap.
 
 **Argument.** Let $A=X^\top X$, symmetric and positive semidefinite, and let
 $R=\mathop{\mathrm{range}}A$, so that $\ker A=\ker X=R^\perp$ and
-$R=\mathop{\mathrm{range}}X^\top$. The pseudoinverse is a new definition:
-$X^+y$ is the unique element of $R$ solving the normal equations
-$A\theta=X^\top y$. It exists because $X^\top y\in R$, it is unique because
-$A$ is injective on $R$, and it is the minimum-norm least-squares solution.
-Then $X^+X$ is the orthogonal projection onto $R$, so
+$R=\mathop{\mathrm{range}}X^\top$. Take $X^+$ to be TauCeti's Moore–Penrose
+inverse of the Euclidean map of $X$; a matrix satisfying the Penrose
+equations gives the same relation for the associated maps. By the Penrose
+equations $XX^+$ and $X^+X$ are symmetric idempotents, hence orthogonal
+projections. From $XX^+X=X$, the kernel of $X^+X$ is $\ker X$, so $X^+X$ is
+the orthogonal projection onto $R$; likewise $XX^+$ projects onto
+$\mathop{\mathrm{range}}X$. Then $X^+y=X^+XX^+y\in R$, and
+$AX^+y=X^\top(XX^+y)=X^\top y$ because $y-XX^+y$ is orthogonal to the range
+of $X$, which $X^\top$ annihilates. So $X^+y$ is the element of $R$ solving
+the normal equations, unique because $A$ is injective on $R$, and it is the
+minimum-norm least-squares solution. Since $X(I-X^+X)=0$,
 $\theta^*=X^+y+(I-X^+X)\theta_0$ also solves the normal equations.
 
 The iteration is $\theta_{t+1}=\theta_t-\eta(A\theta_t-X^\top y)$, so
@@ -4533,7 +4780,12 @@ $\lambda\in(0,\lambda_{\max}]$, all of absolute value less than one. Its
 norm $q$ is therefore below one, and $\|e_t\|\le q^t\|e_0\|\to0$. If $X=0$
 then $\theta_t=\theta_0=\theta^*$ and the step condition is vacuous.
 
-**Library results.** `LinearMap.IsSymmetric.eigenvectorBasis` and
+**Library results.** `LinearMap.moorePenroseInverse`,
+`LinearMap.IsMoorePenroseInverse`,
+`LinearMap.isMoorePenroseInverse_moorePenroseInverse` and
+`Matrix.isMoorePenroseInverse_toEuclideanLin_of_penrose` in
+`TauCeti/Analysis/InnerProductSpace/MoorePenrose.lean`;
+`LinearMap.IsSymmetric.eigenvectorBasis` and
 `LinearMap.IsSymmetric.apply_eigenvectorBasis` in
 `Mathlib/Analysis/InnerProductSpace/Spectrum.lean`;
 `Submodule.starProjection` and `Submodule.starProjection_norm_le` in
@@ -4609,9 +4861,11 @@ on each model of the class outputs $\hat Q$ with
 $\|\hat Q-Q^\star\|_\infty\le\varepsilon$ with probability at least
 $1-\delta$ uses at least $c'|S||A|\log(c'/\delta)/((1-\gamma)^3\varepsilon^2)$
 samples from the generative model. The identity is one step from Mathlib's
-Neumann series, but the $(1-\gamma)^{-3}$ rate needs a Bernstein-type
-variance argument absent from both libraries, and the lower bound is
-missing.
+Neumann series. The $(1-\gamma)^{-3}$ rate needs a Bernstein-type variance
+argument: TauCeti's Bernstein inequality for independent bounded summands
+gives the concentration of $(\hat P-P)V$ for each fixed $V$, but the bound
+on the total variance of the discounted returns and the passage to the
+data-dependent values $\hat V^\star$ are missing, and so is the lower bound.
 
 **Scope.** The identity and the sup-norm bound for a fixed stationary policy
 are proved here. The rates and the lower bound remain gaps.
@@ -4701,7 +4955,8 @@ $(\varepsilon,\delta)$-private, then for every $\delta'\in(0,1)$ the
 composition is $(\varepsilon',k\delta+\delta')$-private with
 $\varepsilon'=\sqrt{2k\log(1/\delta')}\,\varepsilon+k\varepsilon(e^\varepsilon-1)$.
 The advanced bound would use the Azuma–Hoeffding inequality, which Mathlib
-has in conditional sub-Gaussian form; no privacy notion is defined.
+has in conditional sub-Gaussian form and TauCeti for bounded martingale
+differences; no privacy notion is defined.
 
 **Scope.** The basic adaptive composition bound is proved here. The advanced
 composition bound remains a gap.
@@ -4784,8 +5039,11 @@ $\varepsilon$-locally private kernels that may depend on earlier releases,
 the same holds for the joint release laws with an extra factor $n$. The
 tensorization step follows from Mathlib's divergence chain rule once the
 single-release bound is known; TauCeti's Pinsker inequality bounds total
-variation by divergence, the opposite direction, and the reverse bound under
-a likelihood-ratio constraint is missing.
+variation by divergence, the opposite direction. Statlib's data-processing
+inequalities for total variation under a Markov kernel and for mutual
+information under kernels acting on each component give contraction without
+the factor $(e^\varepsilon-1)^2$. The reverse bound under a likelihood-ratio
+constraint is missing.
 
 **Argument.** Here $\|P_1-P_2\|_{\mathrm{TV}}=\sup_B|P_1(B)-P_2(B)|$. The
 proof gives the constant $2$ in place of $4$. Put
@@ -4846,7 +5104,7 @@ vertices,
 $$\frac{\lambda_1}2\le h(G)\le\sqrt{2\lambda_1},$$
 and the sharper lower bound $\lambda_1\ge1-\sqrt{1-h(G)^2}$ holds as well.
 Mathlib has only the unweighted Laplacian $D-A$ and the Rayleigh-quotient
-characterization of extreme eigenvalues; neither library defines the
+characterization of extreme eigenvalues; no library defines the
 normalized Laplacian, conductance or Cheeger constant, and the sweep-cut
 argument for the upper bound is absent.
 
@@ -5154,10 +5412,12 @@ spaces modulo measure-preserving isometries of their supports; in particular
 $\mathop{\mathrm{GW}}_p(\mu,\nu)=0$ exactly when some isometry of
 $\mathop{\mathrm{supp}}\mu$ onto $\mathop{\mathrm{supp}}\nu$ pushes $\mu$ to
 $\nu$. TauCeti defines $\mathop{\mathrm{GW}}_p$ with this normalization,
-proves it is an extended pseudodistance, and proves that it vanishes exactly
-on weakly isomorphic measured kernels (identified almost everywhere by a
-coupling); missing is the upgrade from weak isomorphism to an isometry of
-supports for compact metric spaces.
+proves it is an extended pseudodistance, proves that it vanishes exactly on
+weakly isomorphic measured kernels (identified almost everywhere by a
+coupling), and makes the measured kernels of finite $p$-size on standard
+Borel probability spaces, modulo weak isomorphism, a metric space; missing is
+the upgrade from weak isomorphism to an isometry of supports for compact
+metric spaces.
 
 **Argument.** Compact metric spaces are Polish, hence standard Borel and
 second countable. Each probability is tight, and the distance kernels are
@@ -5198,7 +5458,134 @@ $\pi=(\mathrm{id},f)_\#\mu$ and $f_\#\mu=\nu$.
 `MeasureTheory.Measure.isClosed_support`,
 `MeasureTheory.Measure.measure_compl_support` and
 `MeasureTheory.Measure.support_subset_of_isClosed` in
-`Mathlib/MeasureTheory/Measure/Support.lean`.
+`Mathlib/MeasureTheory/Measure/Support.lean`; for the quotient metric
+structure, `TauCeti.GromovWassersteinSpace` in
+`TauCeti/MeasureTheory/OptimalTransport/GromovWasserstein/Space.lean`.
+
+### 108.44. Debiased Sinkhorn divergence
+
+**Statement.** Let $X$ be a compact metric space, $\varepsilon>0$, and $c$ a
+symmetric Lipschitz cost on $X\times X$ such that $e^{-c/\varepsilon}$ is a
+positive definite universal kernel (for example quadratic cost on a compact
+subset of $\mathbb R^d$). Then for probabilities on $X$,
+$S_\varepsilon(\mu,\nu)\ge0$ with equality exactly when $\mu=\nu$, and
+$S_\varepsilon(\mu_n,\mu)\to0$ if and only if $\mu_n\Rightarrow\mu$. TauCeti
+defines $S_\varepsilon$ for costs with values in $[0,\infty]$ and proves the
+first assertion for bounded measurable costs on a compact space whose Gibbs
+kernel $e^{-c/\varepsilon}$ is jointly continuous and positive definite:
+$S_\varepsilon(\mu,\nu)\ge0$, and, when the space is moreover compact
+metrizable with its Borel $\sigma$-algebra and the Gibbs kernel is universal,
+$S_\varepsilon(\mu,\nu)=0$ exactly when $\mu=\nu$. A real-valued Lipschitz
+cost reduces to this case by adding a constant, a reduction that is not
+stated. The metrization of weak convergence by $S_\varepsilon$ is absent, and
+so is the universality of the Gaussian kernel needed for the quadratic-cost
+example.
+
+**Scope.** Nonnegativity and definiteness, for every cost satisfying the
+stated hypotheses, are proved here. The metrization of weak convergence and
+the quadratic-cost example remain gaps.
+
+**Argument.** For a real-valued cost the entropic cost is the new definition
+$\mathop{\mathrm{OT}}_\varepsilon(\mu,\nu)=\inf_\pi\bigl(\int c\,d\pi
++\varepsilon D(\pi\|\mu\otimes\nu)\bigr)$ over couplings. A Lipschitz
+function on the compact space $X\times X$ is continuous and bounded; put
+$a=-\min c$ and $c'=c+a$, a continuous cost with values in $[0,\infty)$,
+bounded and measurable. For a coupling $\pi$ of probabilities,
+$\int c'\,d\pi=\int c\,d\pi+a$, so the entropic costs for $c'$ and $c$ differ
+by $a$ for every pair of probabilities. They are finite, since the product
+coupling has divergence $0$ and bounded cost. In $S_\varepsilon$ the shifts
+cancel, $a-\frac a2-\frac a2=0$, so the divergences for $c$ and $c'$ agree.
+The Gibbs kernel of $c'$ is $e^{-a/\varepsilon}e^{-c/\varepsilon}$, a
+positive multiple of that of $c$. It is therefore positive definite, and it
+is universal because scaling the sections by a positive constant does not
+change their span. It is jointly continuous by TauCeti's continuity lemma for
+a continuous finite cost. A compact metric space carries its Borel
+$\sigma$-algebra and approximates closed sets from outside, being
+metrizable. TauCeti's two theorems therefore apply to $c'$ and give
+$S_\varepsilon(\mu,\nu)\ge0$ and $S_\varepsilon(\mu,\nu)=0\iff\mu=\nu$.
+The symmetry of $c$ is not used beyond the symmetry of the positive definite
+Gibbs kernel.
+
+**Library results.** `TauCeti.sinkhornDivergence`,
+`TauCeti.sinkhornDivergence_nonneg` and `TauCeti.sinkhornDivergence_eq_zero_iff`
+in `TauCeti/MeasureTheory/OptimalTransport/Entropic/SinkhornDivergence.lean`;
+`TauCeti.entropicTransportCost` in
+`TauCeti/MeasureTheory/OptimalTransport/Entropic/Basic.lean`;
+`TauCeti.entropicGibbsKernel` and `TauCeti.continuous_entropicGibbsKernel` in
+`TauCeti/MeasureTheory/OptimalTransport/Entropic/Duality.lean`;
+`TauCeti.IsUniversalKernel` in
+`TauCeti/Analysis/PositiveDefinite/Kernel/Universal.lean`;
+`InformationTheory.klDiv_self` in
+`Mathlib/InformationTheory/KullbackLeibler/Basic.lean`; the instance
+`HasOuterApproxClosed` for pseudometrizable spaces in
+`Mathlib/MeasureTheory/Measure/HasOuterApproxClosed.lean`.
+
+### 108.46. Gaussian transport and barycenters
+
+**Statement.** For covariance matrices $A,B\ge0$,
+$$W_2^2(N(m,A),N(n,B))=\|m-n\|^2+\mathop{\mathrm{tr}}
+[A+B-2(A^{1/2}BA^{1/2})^{1/2}],$$
+and if $A>0$ the optimal map is
+$x\mapsto n+A^{-1/2}(A^{1/2}BA^{1/2})^{1/2}A^{-1/2}(x-m)$. For finitely many
+Gaussian laws $N(m_i,A_i)$ with $A_i>0$ and weights $\lambda_i\ge0$ summing
+to one, the barycenter is unique and Gaussian, with mean $\sum_i\lambda_im_i$
+and covariance the unique positive definite solution of
+$$\bar A=\sum_i\lambda_i(\bar A^{1/2}A_i\bar A^{1/2})^{1/2};$$
+if the $A_i$ commute, $\bar A=(\sum_i\lambda_iA_i^{1/2})^2$. TauCeti proves
+the distance formula and optimal affine map when $A$ is positive definite,
+and the barycenter of two Gaussian laws through the geodesic. For finitely
+many Gaussian laws with positive semidefinite covariances it proves that, if
+a positive definite $\bar A$ solves the fixed-point equation, the Gaussian
+law with mean $\sum_i\lambda_im_i$ and covariance $\bar A$ is a barycenter,
+the only one when some covariance with positive weight is positive definite.
+Missing are the distance formula with both covariances singular, the
+existence of a positive definite solution of the fixed-point equation, and
+the commuting case; the uniqueness of the solution follows from the
+uniqueness of the barycenter.
+
+**Scope.** The uniqueness of a positive definite solution of the fixed-point
+equation, and the commuting case, with the barycenter unique and Gaussian of
+covariance $(\sum_i\lambda_iA_i^{1/2})^2$, are proved here. The existence of
+a positive definite solution for noncommuting covariances, and with it the
+Gaussian form of the barycenter in general, and the distance formula with
+both covariances singular remain gaps.
+
+**Argument.** Some $\lambda_{i_0}$ is positive, and $A_{i_0}$ is positive
+definite, so TauCeti's uniqueness theorem applies. If $S$ and $S'$ are
+positive definite solutions, the set of barycenters is both
+$\{N(\bar m,S)\}$ and $\{N(\bar m,S')\}$, with $\bar m=\sum_i\lambda_im_i$.
+The two Gaussian laws are equal, and so are their covariance matrices,
+$S=S'$.
+
+Let the $A_i$ commute. A matrix commuting with $A_i$ commutes with its square
+root, which is a continuous function of $A_i$. Hence all $A_i$ and
+$A_j^{1/2}$ commute pairwise, and they commute with
+$T=\sum_i\lambda_iA_i^{1/2}$. Since $A_{i_0}^{1/2}$ is positive definite and
+the other terms are positive semidefinite, $T$ is positive definite. Put
+$S=T^2$, positive definite with $S^{1/2}=T$ by uniqueness of positive square
+roots. For each $i$, $TA_i^{1/2}$ is positive semidefinite as a product of
+commuting positive semidefinite matrices, and
+$(TA_i^{1/2})^2=TA_iT=S^{1/2}A_iS^{1/2}$. By uniqueness of square roots
+again, $(S^{1/2}A_iS^{1/2})^{1/2}=TA_i^{1/2}$, and
+$$\sum_i\lambda_i(S^{1/2}A_iS^{1/2})^{1/2}=T\sum_i\lambda_iA_i^{1/2}=T^2=S .$$
+So $S$ solves the fixed-point equation, and TauCeti's two theorems make
+$N(\bar m,S)$ the unique barycenter.
+
+**Library results.**
+`TauCeti.Probability.isFrechetBarycenter_sum_smul_dirac_multivariateGaussian`
+and `TauCeti.Probability.frechetBarycenters_sum_smul_dirac_multivariateGaussian`
+in `TauCeti/MeasureTheory/OptimalTransport/Wasserstein/Gaussian/FixedPoint.lean`;
+`TauCeti.Probability.gaussianWassersteinLaw` in
+`TauCeti/MeasureTheory/OptimalTransport/Wasserstein/Gaussian/Barycenter.lean`;
+`TauCeti.Probability.covMatrix_multivariateGaussian` in
+`TauCeti/Probability/Distributions/Gaussian/Multivariate.lean`;
+`CFC.sqrt`, `CFC.sqrt_unique` and `CFC.sqrt_mul_sqrt_self` in
+`Mathlib/Analysis/SpecialFunctions/ContinuousFunctionalCalculus/Rpow/Basic.lean`;
+`Commute.cfcₙ_nnreal` in
+`Mathlib/Analysis/CStarAlgebra/ContinuousFunctionalCalculus/Commute.lean`;
+`Commute.mul_nonneg` in
+`Mathlib/Analysis/CStarAlgebra/ContinuousFunctionalCalculus/Instances.lean`;
+`Matrix.nonneg_iff_posSemidef` in `Mathlib/Analysis/Matrix/Order.lean`.
 
 ### 108.50. Minimax lower bounds for transport estimation
 
@@ -5229,7 +5616,8 @@ $$\int\mathop{\mathrm{dist}}(x,S)\,d\lambda\ge r\bigl(1-n(2r)^d\bigr).$$
 With $r=\frac12(2n)^{-1/d}$ the bracket is $\frac12$, and the bound is
 $\frac14(2n)^{-1/d}\ge n^{-1/d}/8\ge n^{-1/d}/(108\,d)$.
 
-**Library results.** `TauCeti.wassersteinQuantizationError` and
+**Library results.** `TauCeti.wassersteinQuantizationError` in
+`TauCeti/MeasureTheory/OptimalTransport/Wasserstein/FiniteSupport.lean` and
 `TauCeti.wassersteinQuantizationError_eq_iInf_eLpNorm_infEDist` in
 `TauCeti/MeasureTheory/OptimalTransport/Wasserstein/Quantization.lean`;
 `TauCeti.wassersteinEDist` in
@@ -5377,7 +5765,7 @@ $$\|t_\gamma^\mu-t_\gamma^\nu\|_{L^2(\gamma)}^2
 and `TauCeti.IsOptimalCoupling.unique` in
 `TauCeti/MeasureTheory/OptimalTransport/Brenier.lean`;
 `TauCeti.WassersteinSpace.exists_isGeodesicSegment_map_smul_add_smul` in
-`TauCeti/MeasureTheory/OptimalTransport/Wasserstein/Geodesic.lean`;
+`TauCeti/MeasureTheory/OptimalTransport/Wasserstein/Geodesic/Basic.lean`;
 `TauCeti.wassersteinEDist_map_le_eLpNorm` in
 `TauCeti/MeasureTheory/OptimalTransport/Wasserstein/Pushforward.lean`;
 `TauCeti.wassersteinTangentSpace` in
@@ -5399,7 +5787,7 @@ $\bar\mu$, and $t_{\gamma_j}^{\mu_i}\to t_{\bar\mu}^{\mu_i}$ uniformly on
 compact subsets of a set of full $\bar\mu$-measure. For centered Gaussian
 $\mu_i$ with one covariance nonsingular and a nonsingular centered Gaussian
 $\gamma_0$, the iterates converge to the Gaussian barycenter of 108.46.
-Absent from both libraries.
+Absent from all three libraries.
 
 **Scope.** The descent inequality, with
 $F'(\gamma)=-N^{-1}\sum_i(t_\gamma^{\mu_i}-\mathrm{id})$ taken as a
@@ -5491,11 +5879,14 @@ $\psi\in C_0\cap L^1$ real, bounded and strictly positive definite, and
 $\int(\hat\psi(\omega)(1+\|\omega\|^2)^l)^{-1}\,d\omega<\infty$ for some
 integer $l$, the MMD metrizes weak convergence (this covers the Matérn
 family but not the Gaussian kernel). Mathlib's Prokhorov theorem and
-TauCeti's injectivity of universal mean embeddings give the tight case by a
-short subsequence argument, and the forward implication follows from weak
-convergence of $\mu_n\otimes\mu_n$ against the bounded continuous $k$; MMD is
-not defined on probability measures in either library, and the metrization
-statements (a) and (b) are absent.
+TauCeti's kernel mean embedding with its double-integral formula give the
+tight case by a short subsequence argument, and the forward implication
+follows from weak convergence of $\mu_n\otimes\mu_n$ against the bounded
+continuous $k$. TauCeti characterizes weak convergence on Polish spaces by
+uniform convergence of integrals of bounded $1$-Lipschitz functions and by
+truncated transport costs, but MMD is not defined on probability measures in
+any of the three libraries, and the metrization statements (a) and (b) are
+absent.
 
 **Scope.** The forward implication and the converse for tight sequences are
 proved here. The metrization statements (a) and (b) remain gaps.
@@ -5550,9 +5941,11 @@ $\mathop{\mathrm{MMD}}_z(\mu,\nu)^2=\|\int z\,d\mu-\int z\,d\nu\|^2$.
 TauCeti's probability form of Bochner's theorem gives the unbiasedness
 identity by a product-to-sum computation, and Mathlib's Hoeffding inequality
 then gives the pointwise bound, since each summand of $z(x)^\top z(y)$ is
-$D^{-1}$ times a variable in $[-2,2]$; neither is stated, and the uniform
-bound, which needs a net argument on $M\times M$ with a Lipschitz control of
-the error, is absent.
+$D^{-1}$ times a variable in $[-2,2]$; neither is stated. The uniform bound
+needs a net argument on $M\times M$ with a Lipschitz control of the error;
+TauCeti's volumetric bound on covering numbers of bounded sets in
+finite-dimensional normed spaces supplies the nets, and the argument is
+absent.
 
 **Scope.** The unbiasedness identity, the pointwise bound, and the MMD
 comparison on the event are proved here. The uniform bound remains a gap.

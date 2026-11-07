@@ -2,7 +2,7 @@
 
 This project inventories core statistics and data science at the level of
 graduate students and beginning researchers, and compares that mathematics
-with the Lean libraries Mathlib and TauCeti. It follows the sibling
+with the Lean libraries Mathlib, TauCeti, and Statlib. It follows the sibling
 [Core Knowledge of Mathematical Analysis](../lean-CKMA/README.md) project.
 
 The [bibliography](CKSD-bib.md) organizes Sections 101–109. The mathematical
@@ -16,20 +16,32 @@ optimization and numerical algorithms, is outside this series.
 - [STRUCTURE.md](STRUCTURE.md) indexes the coverage inventories and records
   their source revisions and classification rule. Each topic file names
   declarations, source locations, hypotheses, and missing results.
-- [MathlibCoverage.md](MathlibCoverage.md) and
-  [TauCetiCoverage.md](TauCetiCoverage.md) summarize each library separately.
+- [MathlibCoverage.md](MathlibCoverage.md),
+  [TauCetiCoverage.md](TauCetiCoverage.md), and
+  [StatlibCoverage.md](StatlibCoverage.md) summarize each library separately.
 - [GAPS.md](GAPS.md) selects principal missing statements and assesses the
   work remaining.
 - [GAPS_EASY.md](GAPS_EASY.md) gives short mathematical derivations for
   selected gaps. A Scope paragraph identifies when only part is addressed.
 
-Coverage and short derivations rest on source inspection. They have not
-been implemented and compiled as Lean proofs. Mathlib already provides
-models and randomized estimators as Markov kernels, with a decision-theory
-risk framework; many dedicated statistical notions and theorems remain
-absent. CKSD's direct-coverage rule is stricter than some CKMA
-classifications, so their counts are not directly comparable; see the
-[comparison conventions](STRUCTURE.md#comparison-with-ckma).
+The local Lean library is in [CKSD/](CKSD/), with public entry point
+[CKSD.lean](CKSD.lean). All project declarations use namespace `CKSD`.
+[FORMALIZATION.md](FORMALIZATION.md) indexes every selected gap against the
+available theorem formulations and records proofs, admissions, and work
+still needing a statement. Definitions contain no admissions. The remaining
+theorem proofs may use explicit `sorry`.
+
+The coverage inventories describe the pinned external libraries; local
+statements and proofs are tracked separately. Mathlib provides models and
+randomized estimators as Markov kernels and the risk framework on which
+Statlib builds binary testing. CKSD's direct-coverage rule is stricter than
+some CKMA classifications, so their counts are not directly comparable; see
+the [comparison conventions](STRUCTURE.md#comparison-with-ckma).
+
+Build from the project root with `lake build > /tmp/cksd-build.log 2>&1`.
+The dependency pins and the project-specific `.lake` symlink are authoritative.
+See [formalization validation](FORMALIZATION.md#validation) and
+[CREDITS.md](CREDITS.md) for checks and source provenance.
 
 ## Areas
 

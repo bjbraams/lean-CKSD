@@ -1019,9 +1019,16 @@ over positive definite $\Theta$.
   $\|\Sigma_{N(j)N(j)}^{-1}\|_{\infty\to\infty}\le b$ with $b\ge1$. With
   $\lambda=c_0\alpha^{-1}(\sqrt{(\log p)/n}+\delta)$, $0<\delta\le1$,
   neighbourhood selection by either rule includes no false edge and
-  includes every edge with $|\Theta_{jk}|\ge7b\lambda$, with probability
-  at least $1-c_2\exp(-c_3n\min(\delta^2,1/m))$; the constants
-  $c_0,c_1,c_2,c_3$ are universal. For the graphical lasso, let the
+  includes every edge with
+  $|\Theta_{jk}|\ge7b\lambda\max(\Theta_{jj},\Theta_{kk})$, that is, every
+  edge whose two regression coefficients $-\Theta_{jk}/\Theta_{jj}$ and
+  $-\Theta_{jk}/\Theta_{kk}$ are at least $7b\lambda$ in absolute value,
+  with probability at least $1-c_2\exp(-c_3n\min(\delta^2,1/m))$; the
+  constants $c_0,c_1,c_2,c_3$ are universal. Since $\Theta_{jj}\ge1$ is not
+  bounded above by these hypotheses, this condition is stronger than
+  $|\Theta_{jk}|\ge7b\lambda$, the form in the statement of Wainwright
+  (2019), Theorem 11.12; the proof there bounds the regression coefficients
+  and gives the condition stated here. For the graphical lasso, let the
   coordinates of the observations be $\sigma$-sub-Gaussian, let $\Theta$
   have at most $m$ nonzero entries per row, and let
   $\lambda=8\sigma^2(\sqrt{(\log p)/n}+\delta)$ with $0<\delta\le1$. If

@@ -1,17 +1,17 @@
 # Structure 101: Statistical inference: foundations, decision theory, estimation, and testing
 
-Part of the [Mathlib and TauCeti coverage series](STRUCTURE.md).
+Part of the [Mathlib, TauCeti, and Statlib coverage series](STRUCTURE.md).
 [Mathematical inventory](SYNOPSIS101.md); [bibliographical scope](CKSD-bib.md#cks-101).
 
 This file follows the thematic order of the mathematical inventory, which has no lettered subdivisions. It records definitions, structures, and proved results, with supporting material identified separately. A topic heading locates the recorded statements; the **Synopsis entries** line at the end of each section states which numbered results are covered. Much of the probabilistic infrastructure used here (laws, kernels, conditional expectation, Gaussian measures, relative entropy) is described in [CKMA Structure 06](../lean-CKMA/STRUCTURE06.md) and is cited rather than repeated.
 
-**Source baseline.** Mathlib `911003dd6dea5df215dff57f2717be762e11a6ca` and TauCeti `a049b4264d2cf4dbf4720796f844a3a3764914a5`, both of 2026-10-18, checked against local checkouts on 2026-11-01. See the [revision and source conventions](STRUCTURE.md#source-baseline-and-conventions).
+**Source baseline.** Mathlib `6135ffb78e8bcd3fcc8ec02f3f82ea0b0737358b` of 2026-11-05, TauCeti `afa08a3ed16fb167e35de371afb1eb03fbc5913a` of 2026-11-06, and Statlib `eeaac0283690efaa60c31115400cf561836baeb9` of 2026-11-05, checked against local checkouts on 2026-11-06. See the [revision and source conventions](STRUCTURE.md#source-baseline-and-conventions).
 
-**Mathlib source areas.** `Mathlib.Probability.Decision` (risk, Bayes risk, minimax risk, Bayes estimators), `Mathlib.Probability.Kernel.Posterior`, `Mathlib.Probability.Moments` (cumulant-generating functions, tilting, variance), `Mathlib.Probability.CondVar`, `Mathlib.Probability.Distributions`, `Mathlib.MeasureTheory.Function.ConditionalExpectation.CondJensen`, `Mathlib.MeasureTheory.Measure.LogLikelihoodRatio`, `Mathlib.MeasureTheory.Measure.TotalVariation`, `Mathlib.InformationTheory.KullbackLeibler`, `Mathlib.Topology.Sion`.
+**Mathlib source areas.** `Mathlib.Probability.Decision` (risk, Bayes risk, minimax risk, Bayes estimators), `Mathlib.Probability.Kernel.Posterior`, `Mathlib.Probability.Moments` (cumulant-generating functions, tilting, variance), `Mathlib.Probability.CondVar`, `Mathlib.Probability.Distributions`, `Mathlib.MeasureTheory.Function.ConditionalExpectation.CondJensen`, `Mathlib.MeasureTheory.Measure.LogLikelihoodRatio`, `Mathlib.MeasureTheory.Measure.TotalVariation`, `Mathlib.InformationTheory.KullbackLeibler`, `Mathlib.Topology.Sion`, `Mathlib.Analysis.Calculus.ParametricIntegral`.
 
-**Namespaces.** Decision-theoretic declarations (`avgRisk`, `bayesRisk`, `minimaxRisk`, `IsBayesEstimator`, `riskIncrease`) and the posterior kernel `posterior`, written `κ†μ`, are in `ProbabilityTheory`. Relative entropy `klDiv` is in `InformationTheory`; log-likelihood ratios `llr` and total variation `tvDist` are in `MeasureTheory`. Sion's theorem is in `Sion`. TauCeti declarations are in `TauCeti` and `TauCeti.Probability`, with some extensions of `MeasureTheory.Measure` and `ProbabilityTheory`.
+**Namespaces.** Decision-theoretic declarations (`avgRisk`, `bayesRisk`, `minimaxRisk`, `IsBayesEstimator`, `riskIncrease`) and the posterior kernel `posterior`, written `κ†μ`, are in `ProbabilityTheory`. Relative entropy `klDiv` is in `InformationTheory`; log-likelihood ratios `llr` and total variation `tvDist` and `etvDist` are in `MeasureTheory`. Sion's theorem is in `Sion`. TauCeti declarations are in `TauCeti` and `TauCeti.Probability`, with some extensions of `MeasureTheory`, `MeasureTheory.Measure`, `ProbabilityTheory`, and `Submodule`. Statlib declarations cited here are in `ProbabilityTheory`, apart from the two-point priors `MeasureTheory.Measure.boolMeasure` and the inference-model structures, which are in the root namespace.
 
-Neither library defines sufficiency, ancillarity, completeness, unbiasedness, Fisher information, tests with size and power, \(p\)-values, or confidence sets. Mathlib's decision-theory directory already represents measurable parametrized models and randomized estimators: a model is a kernel `P : Kernel Θ 𝓧`, a randomized rule is a Markov kernel `κ : Kernel 𝓧 𝓨`, and losses take values in \([0,\infty]\).
+None of the three libraries defines sufficiency, ancillarity, completeness, unbiasedness, Fisher information, tests with size and power, \(p\)-values, or confidence sets. Mathlib's decision-theory directory already represents measurable parametrized models and randomized estimators: a model is a kernel `P : Kernel Θ 𝓧`, a randomized rule is a Markov kernel `κ : Kernel 𝓧 𝓨`, and losses take values in \([0,\infty]\). Statlib builds on this vocabulary: a simple binary test is a Markov kernel into `Bool`, assessed by its Bayes risk under the 0–1 loss (`bayesBinaryRisk`), and the structures `InferenceModelofMeasure` and `InferenceModelofKernel` package a family of laws, a target functional, the data map, a randomized rule, and a loss ([inference models](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Inference/Inference.lean)).
 
 ### Sufficiency, likelihood, and minimal reduction
 
@@ -23,7 +23,11 @@ No definition of a sufficient, minimal sufficient, or ancillary statistic was fo
 
 #### TauCeti
 
-No relevant declarations were found. A lemma that the initial state and the transition counts of a finite path determine its mass under a Markov law ([mixed Markov chains](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Exchangeability/MixedMarkovChain.lean)) is a combinatorial factorization used for Markov exchangeability, not a sufficiency theorem.
+No relevant declarations were found. A lemma that the initial state and the transition counts of a finite path determine its mass under a Markov law ([mixed Markov chains](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Exchangeability/MixedMarkovChain.lean)) is a combinatorial factorization used for Markov exchangeability, not a sufficiency theorem.
+
+#### Statlib
+
+No definition of sufficiency was found. For finite measures \(\mu,\nu\), restricting both to the \(\sigma\)-algebra generated by \(d\mu/d(\mu+\nu)\) leaves every \(f\)-divergence unchanged (`ProbabilityTheory.fDiv_trim_comap_rnDeriv_add`, [restriction](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/FDiv/Trim.lean)). This is the divergence form of the sufficiency of the likelihood ratio for a pair of laws, not a factorization theorem.
 
 **Synopsis entries.** Not covered: 101.1–101.3.
 
@@ -39,11 +43,15 @@ Uniqueness of the complex moment-generating function is proved: if the complex m
 
 #### TauCeti
 
-Tilting is described completely in one dimension: the tilted law has mgf \(s\mapsto M(t+s)/M(t)\), its exponential-integrability domain is the original one translated by \(-t\), and its cgf is \(s\mapsto A(t+s)-A(t)\) ([tilted generating functions](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Moments/Tilted.lean), `TauCeti.mgf_tilted_mul`, `TauCeti.integrableExpSet_tilted_mul`, `TauCeti.cgf_tilted_mul`). The Gaussian, gamma, Poisson, and binomial families are proved closed under tilting, with the explicit parameter maps, for example \(N(m,v)\) to \(N(m+vt,v)\) and success probability \(p\) to \(pe^t/(1-p+pe^t)\) ([tilted families](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/Tilted.lean), `TauCeti.Probability.gaussianReal_tilted_mul`, `TauCeti.Probability.binomial_tilted_mul`). These identify the classical families as one-parameter natural exponential families, without a general definition.
+Tilting is described completely in one dimension: the tilted law has mgf \(s\mapsto M(t+s)/M(t)\), its exponential-integrability domain is the original one translated by \(-t\), and its cgf is \(s\mapsto A(t+s)-A(t)\) ([tilted generating functions](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Moments/Tilted.lean), `TauCeti.mgf_tilted_mul`, `TauCeti.integrableExpSet_tilted_mul`, `TauCeti.cgf_tilted_mul`). The Gaussian, gamma, Poisson, and binomial families are proved closed under tilting, with the explicit parameter maps, for example \(N(m,v)\) to \(N(m+vt,v)\) and success probability \(p\) to \(pe^t/(1-p+pe^t)\) ([tilted families](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Tilted.lean), `TauCeti.Probability.gaussianReal_tilted_mul`, `TauCeti.Probability.binomial_tilted_mul`). These identify the classical families as one-parameter natural exponential families, without a general definition.
 
-A finite measure on \(\mathbb R\) with finite exponential moments near \(0\) is determined by its mgf on a neighbourhood of \(0\) ([determinacy](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Moments/Determinacy.lean), `TauCeti.Measure.ext_of_mgf`). Applied to the positive and negative parts of \(g\,d\nu_T\) after a tilt to the centre of the open set, this is the analytic step of completeness in a one-parameter family; the completeness statement itself is not formulated.
+A finite measure on \(\mathbb R\) with finite exponential moments near \(0\) is determined by its mgf on a neighbourhood of \(0\) ([determinacy](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Moments/Determinacy.lean), `TauCeti.Measure.ext_of_mgf`). Applied to the positive and negative parts of \(g\,d\nu_T\) after a tilt to the centre of the open set, this is the analytic step of completeness in a one-parameter family; the completeness statement itself is not formulated.
 
-**Synopsis entries.** Partly covered: 101.4 (one-parameter case only: convexity of the domain, analyticity of the cumulant function, and its first two derivatives as tilted mean and variance; the multiparameter form, positive definiteness, identifiability, and the sufficiency of the sample sum are not stated). Not covered: 101.5, 101.6.
+#### Statlib
+
+No relevant declarations were found.
+
+**Synopsis entries.** Partly covered: 101.4 (in Mathlib; one-parameter case only: convexity of the domain, analyticity of the cumulant function, and its first two derivatives as tilted mean and variance; the multiparameter form, positive definiteness, identifiability, and the sufficiency of the sample sum are not stated). Not covered: 101.5, 101.6.
 
 ### Unbiased estimation and information
 
@@ -51,11 +59,15 @@ A finite measure on \(\mathbb R\) with finite exponential moments near \(0\) is 
 
 #### Mathlib
 
-Fisher information and the score are not defined. Conditional Jensen's inequality is proved: if \(\sigma\)-finiteness holds on the sub-\(\sigma\)-algebra, \(\varphi\) is convex and lower semicontinuous on a closed set \(s\) containing the values of \(f\) almost everywhere, and \(f\) and \(\varphi\circ f\) are integrable, then \(\varphi(\mathbb E[f\mid\mathcal G])\le\mathbb E[\varphi\circ f\mid\mathcal G]\) almost everywhere, for \(f\) with values in a Banach space (`ConvexOn.map_condExp_le`, `MeasureTheory/Function/ConditionalExpectation/CondJensen.lean`). Taking expectations gives the Rao–Blackwell risk inequality for a single law and a loss convex in the action. The variance identities that would underlie the information inequality are the covariance and variance API of `Probability/Moments/Variance.lean` and `Probability/Moments/Covariance.lean`.
+Fisher information and the score are not defined. Conditional Jensen's inequality is proved: if \(\sigma\)-finiteness holds on the sub-\(\sigma\)-algebra, \(\varphi\) is convex and lower semicontinuous on a closed set \(s\) containing the values of \(f\) almost everywhere, and \(f\) and \(\varphi\circ f\) are integrable, then \(\varphi(\mathbb E[f\mid\mathcal G])\le\mathbb E[\varphi\circ f\mid\mathcal G]\) almost everywhere, for \(f\) with values in a Banach space (`ConvexOn.map_condExp_le`, `MeasureTheory/Function/ConditionalExpectation/CondJensen.lean`). Taking expectations gives the Rao–Blackwell risk inequality for a single law and a loss convex in the action. The variance identities that would underlie the information inequality are the covariance and variance API of `Probability/Moments/Variance.lean` and `Probability/Moments/Covariance.lean`. Differentiation under the integral sign with a dominated derivative, including the iterated form, is proved (`hasFDerivAt_integral_of_dominated_of_fderiv_le`, `hasFTaylorSeriesUpToOn_integral_of_le_bound`, `Analysis/Calculus/ParametricIntegral.lean`); this is the regularity step of the information inequality.
 
 #### TauCeti
 
 No declarations on information, unbiasedness, completeness, or the Cramér–Rao bound were found.
+
+#### Statlib
+
+No relevant declarations were found.
 
 **Synopsis entries.** Not covered: 101.7 (ingredients only: for a fixed law, conditional Jensen gives the risk reduction; that the conditional expectation given a sufficient statistic is free of \(\theta\) requires sufficiency, which is not defined), 101.8–101.11.
 
@@ -69,7 +81,11 @@ No relevant declarations were found. The \(L^2\) projection property of conditio
 
 #### TauCeti
 
-No relevant declarations were found. The mean-square error of a sample mean of pairwise independent square-integrable vectors with a common mean is computed, \(\mathbb E\|\bar X-m\|^2=r^{-2}\sum_k\mathbb E\|X_k-m\|^2\) ([sample means](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Moments/SampleMean.lean), `TauCeti.integral_norm_finiteMean_sub_sq`), but no optimality of \(\bar X\) is stated.
+No relevant declarations were found. The mean-square error of a sample mean of pairwise independent square-integrable vectors with a common mean is computed, \(\mathbb E\|\bar X-m\|^2=r^{-2}\sum_k\mathbb E\|X_k-m\|^2\) ([sample means](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Moments/SampleMean.lean), `TauCeti.integral_norm_finiteMean_sub_sq`), but no optimality of \(\bar X\) is stated.
+
+#### Statlib
+
+No relevant declarations were found.
 
 **Synopsis entries.** Not covered: 101.12, 101.13.
 
@@ -83,15 +99,20 @@ Tests, size, power, monotone likelihood ratio, and confidence sets are not defin
 
 #### TauCeti
 
-The chi-squared, Student \(t\), and Fisher \(F\) laws are defined (`TauCeti.Probability.chiSquaredMeasure`, the gamma law of shape \(k/2\) and rate \(1/2\); `studentTMeasure`; `fisherSnedecorMeasure`) with densities, distribution functions, moments, and quantiles ([distributions](https://github.com/TauCetiProject/TauCeti/tree/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions)). The following classical relations are proved.
+The chi-squared, Student \(t\), and Fisher \(F\) laws are defined (`TauCeti.Probability.chiSquaredMeasure`, the gamma law of shape \(k/2\) and rate \(1/2\); `studentTMeasure`; `fisherSnedecorMeasure`) with densities, distribution functions, moments, and quantiles ([distributions](https://github.com/TauCetiProject/TauCeti/tree/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions)). The following classical relations are proved.
 
-- A finite sum of squares of independent standard Gaussians has the chi-squared law with one degree per summand, and the sum of squares of a product of \(N(0,v)\) laws is \(v\) times that law ([Gaussian squares](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/Gaussian/ChiSquared.lean), `TauCeti.Probability.iIndepFun.hasLaw_sum_sq_gaussian`, `TauCeti.Probability.map_sum_sq_pi_gaussianReal`). This is the known-mean statement \(\sum_i(X_i-\mu)^2/\sigma^2\sim\chi^2_n\).
-- If \(Z\) is standard Gaussian, \(V\) is \(\chi^2_\nu\) with \(\nu>0\), and they are independent, then \(Z/\sqrt{V/\nu}\) has the Student \(t_\nu\) law ([Student t](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/StudentT/ChiSquared.lean), `TauCeti.Probability.hasLaw_studentT_of_gaussian_chiSquared`).
-- If \(U\sim\chi^2_m\) and \(V\sim\chi^2_n\) are independent with \(m,n>0\), then \((U/m)/(V/n)\) has the \(F_{m,n}\) law ([Fisher F](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/FisherSnedecor/ChiSquared.lean), `TauCeti.Probability.hasLaw_fisherSnedecor_of_chiSquared`).
+- A finite sum of squares of independent standard Gaussians has the chi-squared law with one degree per summand, and the sum of squares of a product of \(N(0,v)\) laws is \(v\) times that law ([Gaussian squares](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Gaussian/ChiSquared.lean), `TauCeti.Probability.iIndepFun.hasLaw_sum_sq_gaussian`, `TauCeti.Probability.map_sum_sq_pi_gaussianReal`). This is the known-mean statement \(\sum_i(X_i-\mu)^2/\sigma^2\sim\chi^2_n\).
+- If \(Z\) is standard Gaussian, \(V\) is \(\chi^2_\nu\) with \(\nu>0\), and they are independent, then \(Z/\sqrt{V/\nu}\) has the Student \(t_\nu\) law ([Student t](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/StudentT/ChiSquared.lean), `TauCeti.Probability.hasLaw_studentT_of_gaussian_chiSquared`).
+- If \(U\sim\chi^2_m\) and \(V\sim\chi^2_n\) are independent with \(m,n>0\), then \((U/m)/(V/n)\) has the \(F_{m,n}\) law ([Fisher F](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/FisherSnedecor/ChiSquared.lean), `TauCeti.Probability.hasLaw_fisherSnedecor_of_chiSquared`).
+- For the standard Gaussian on a finite-dimensional inner product space, the orthogonal projections onto mutually orthogonal subspaces are independent standard Gaussians on those subspaces, and the squared length of the projection onto a subspace \(K\) has the \(\chi^2_{\dim K}\) law ([Gaussian projections](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Gaussian/Projection.lean), `TauCeti.Probability.iIndepFun_orthogonalProjectionOnto_stdGaussian`, `Submodule.map_norm_sq_starProjection_stdGaussian`, `TauCeti.Probability.map_norm_sq_orthogonalProjectionOnto_stdGaussian_pi`). Two linear images of a multivariate Gaussian, with singular covariance allowed, are independent exactly when their cross-covariance vanishes ([Gaussian independence](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Gaussian/Independence.lean), `TauCeti.Probability.indepFun_matrix_multivariateGaussian_iff`).
 
-What is missing for 101.17 is the law of \((n-1)S^2/\sigma^2\) and its independence from \(\bar X\); the \(t\) and \(F\) statements for the studentized mean and the variance ratio follow from these by the relations above.
+What is missing for 101.17 is the identification of \((n-1)S^2/\sigma^2\) with the squared projection of the standardized sample onto the orthogonal complement of the constant vectors; its \(\chi^2_{n-1}\) law and its independence from \(\bar X\) then follow from the projection theorems, and the \(t\) and \(F\) statements for the studentized mean and the variance ratio follow by the relations above.
 
-**Synopsis entries.** Partly covered: 101.17 (normality of \(\bar X\) from Mathlib; the known-mean chi-squared law and the \(t\) and \(F\) ratio constructions from TauCeti; the chi-squared law of \(S^2\) and its independence from \(\bar X\) are absent). Not covered: 101.14–101.16, 101.18.
+#### Statlib
+
+Simple binary tests appear in Bayes form. For finite measures \(\mu,\nu\) and a finite prior \(\pi\) on `Bool`, the Bayes risk of testing \(\mu\) against \(\nu\) under the 0–1 loss is the infimum over measurable regions \(E\) of \(\pi\{\mathrm{false}\}\,\mu(E)+\pi\{\mathrm{true}\}\,\nu(E^c)\), and the likelihood-ratio test that decides for \(\nu\) where \(\pi\{\mathrm{false}\}\,d\mu/dP\le\pi\{\mathrm{true}\}\,d\nu/dP\), with \(P\) the marginal law of the observation, is a Bayes test (`ProbabilityTheory.bayesBinaryRisk_eq_iInf_measurableSet`, `ProbabilityTheory.isArgminEstimator_binaryArgminEstimator`, [binary tests](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Testing/Binary.lean)). This is the Bayes form of the likelihood-ratio construction in 101.14; tests of prescribed size, the existence of \(k\) and of the randomization, and uniqueness are not stated.
+
+**Synopsis entries.** Partly covered: 101.17 (normality of \(\bar X\) from Mathlib; the known-mean chi-squared law, the \(t\) and \(F\) ratio constructions, and the laws and independence of orthogonal projections of a standard Gaussian from TauCeti; the identification of \((n-1)S^2/\sigma^2\) with such a projection, hence its chi-squared law and its independence from \(\bar X\), is absent). Not covered: 101.14 (ingredients only: the Bayes form of the likelihood-ratio test of two laws, in Statlib; the size-\(\alpha\) statement and uniqueness are not stated), 101.15, 101.16, 101.18.
 
 ### Likelihood ratio tests and two-sample normal procedures
 
@@ -105,6 +126,10 @@ No relevant declarations were found. Maximum likelihood estimators and likelihoo
 
 No relevant declarations were found beyond the \(t\) and chi-squared relations recorded under the previous heading.
 
+#### Statlib
+
+No relevant declarations were found.
+
 **Synopsis entries.** Not covered: 101.19, 101.20.
 
 ### Order statistics and exact confidence procedures
@@ -117,15 +142,19 @@ Variance and the law of total variance are proved: for a square-integrable \(X\)
 
 #### TauCeti
 
-**Order statistics.** The \(k\)-th order statistic of a finite real tuple is defined by sorting, counted from \(0\); it is characterized by counting, commutes with monotone maps, and is measurable ([tuples](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Data/Fin/Tuple/OrderStatistic.lean), `TauCeti.orderStatistic`, `TauCeti.orderStatistic_comp_of_monotone`). For an i.i.d. sample from any real law \(\mu\), atoms included, the distribution function of the \(k\)-th order statistic at \(t\) is the binomial tail \(\sum_{j=k+1}^n\binom nj F(t)^j(1-F(t))^{n-j}\), equivalently the regularized incomplete beta value \(I_{F(t)}(k+1,n-k)\). The \(k\)-th order statistic of \(n\) independent uniforms on \([0,1]\) has the law \(\mathop{\mathrm{Beta}}(k+1,n-k)\), and for general \(\mu\) it is the image of that beta law under the quantile function of \(\mu\) ([order-statistic laws](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/OrderStatistic.lean), `TauCeti.Probability.cdf_map_orderStatistic_pi`, `TauCeti.Probability.cdf_map_orderStatistic_pi_eq_regularizedIncompleteBeta`, `TauCeti.Probability.map_orderStatistic_pi_uniformMeasure`, `TauCeti.Probability.map_orderStatistic_pi_eq_map_betaMeasure_quantile`). With 0-based indexing these are the synopsis formulas for \(X_{(k+1)}\). The extremes of an independent family have distribution functions \(\prod_iF_i\) and \(1-\prod_i(1-F_i)\), and \(F^d\), \(1-(1-F)^d\) in the i.i.d. case ([extremes](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/Relations.lean), `TauCeti.Probability.cdf_max_iid`, `TauCeti.Probability.cdf_min_iid`).
+**Order statistics.** The \(k\)-th order statistic of a finite real tuple is defined by sorting, counted from \(0\); it is characterized by counting, commutes with monotone maps, and is measurable ([tuples](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Data/Fin/Tuple/OrderStatistic.lean), `TauCeti.orderStatistic`, `TauCeti.orderStatistic_comp_of_monotone`). For an i.i.d. sample from any real law \(\mu\), atoms included, the distribution function of the \(k\)-th order statistic at \(t\) is the binomial tail \(\sum_{j=k+1}^n\binom nj F(t)^j(1-F(t))^{n-j}\), equivalently the regularized incomplete beta value \(I_{F(t)}(k+1,n-k)\). The \(k\)-th order statistic of \(n\) independent uniforms on \([0,1]\) has the law \(\mathop{\mathrm{Beta}}(k+1,n-k)\), and for general \(\mu\) it is the image of that beta law under the quantile function of \(\mu\) ([order-statistic laws](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/OrderStatistic/Basic.lean), `TauCeti.Probability.cdf_map_orderStatistic_pi`, `TauCeti.Probability.cdf_map_orderStatistic_pi_eq_regularizedIncompleteBeta`, `TauCeti.Probability.map_orderStatistic_pi_uniformMeasure`, `TauCeti.Probability.map_orderStatistic_pi_eq_map_betaMeasure_quantile`). With 0-based indexing these are the synopsis formulas for \(X_{(k+1)}\). For an atomless i.i.d. sample in a second-countable linear order with order-closed topology, the law of the sorted tuple is \(n!\) times the product law restricted to the strictly increasing chamber; for uniforms on \([0,1]\) this is the density \(n!\) on the increasing part of the open unit cube ([joint laws](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/OrderStatistic/Joint.lean), `TauCeti.Probability.map_orderStatistics_pi`, `TauCeti.Probability.map_orderStatistics_pi_uniformMeasure`). The extremes of an independent family have distribution functions \(\prod_iF_i\) and \(1-\prod_i(1-F_i)\), and \(F^d\), \(1-(1-F)^d\) in the i.i.d. case ([extremes](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Relations.lean), `TauCeti.Probability.cdf_max_iid`, `TauCeti.Probability.cdf_min_iid`).
 
-**Probability integral transform.** For an atomless probability law \(\nu\) on \(\mathbb R\), the distribution function pushes \(\nu\) forward to the uniform law on \([0,1]\) ([quantiles](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Quantile.lean), `MeasureTheory.Measure.cdf_map_eq_volume_restrict`); the quantile function pushes the uniform law on \((0,1)\) to \(\nu\) for every law (`map_quantile_volume_Ioo`). With the monotone-map property of order statistics this gives the beta law of \(F(X_{(j)})\) for continuous \(F\) in two steps, which are not written out. It also gives the uniformity of the tail \(p\)-value \(1-F(T)\) for a continuous null law of \(T\).
+**Probability integral transform.** For an atomless probability law \(\nu\) on \(\mathbb R\), the distribution function pushes \(\nu\) forward to the uniform law on \([0,1]\) ([quantiles](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Quantile.lean), `MeasureTheory.Measure.cdf_map_eq_volume_restrict`); the quantile function pushes the uniform law on \((0,1)\) to \(\nu\) for every law (`map_quantile_volume_Ioo`). With the monotone-map property of order statistics this gives the beta law of \(F(X_{(j)})\) for continuous \(F\) in two steps, which are not written out. It also gives the uniformity of the tail \(p\)-value \(1-F(T)\) for a continuous null law of \(T\).
 
-**Binomial, beta, and hypergeometric laws.** For \(m\le n\) the binomial tail is a regularized incomplete beta value, \(\mathop{\mathrm{Bin}}(n,p)\{k\ge m\}=I_p(m,n-m+1)\) ([binomial tail](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/Binomial/Tail.lean), `TauCeti.Probability.binomial_tail_eq_regularizedIncompleteBeta`). The beta quantile at an interior level is the inverse regularized incomplete beta function ([beta quantiles](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/Beta/Quantile.lean), `TauCeti.Probability.quantile_betaMeasure`), and binomial laws increase stochastically in \(p\) and in \(n\) ([binomial order](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/Binomial/StochasticOrder.lean), `TauCeti.Probability.cdf_map_cast_binomial_le_of_le_prob`). These three facts are the ingredients of the Clopper–Pearson coverage bound, which is not stated. The hypergeometric law is defined with mass function, normalization, mean, and variance ([hypergeometric](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/Hypergeometric/Basic.lean), `TauCeti.Probability.hypergeometricMeasure`); the identification of the conditional law of a binomial count given the total, which is Fisher's exact test, is not stated. Chi-squared quantiles are given through the inverse regularized gamma function ([chi-squared quantiles](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/ChiSquared/Quantile.lean), `TauCeti.Probability.quantile_chiSquaredMeasure`), and Student \(t\) and \(F\) quantiles are given explicitly as well ([t quantiles](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/StudentT/Quantile.lean), [F quantiles](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/FisherSnedecor/Quantile.lean)).
+**Binomial, beta, and hypergeometric laws.** For \(m\le n\) the binomial tail is a regularized incomplete beta value, \(\mathop{\mathrm{Bin}}(n,p)\{k\ge m\}=I_p(m,n-m+1)\) ([binomial tail](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Binomial/Tail.lean), `TauCeti.Probability.binomial_tail_eq_regularizedIncompleteBeta`). The beta quantile at an interior level is the inverse regularized incomplete beta function ([beta quantiles](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Beta/Quantile.lean), `TauCeti.Probability.quantile_betaMeasure`), and binomial laws increase stochastically in \(p\) and in \(n\) ([binomial order](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Binomial/StochasticOrder.lean), `TauCeti.Probability.cdf_map_cast_binomial_le_of_le_prob`). These three facts are the ingredients of the Clopper–Pearson coverage bound, which is not stated. The hypergeometric law is defined with mass function, normalization, mean, and variance ([hypergeometric](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Hypergeometric/Basic.lean), `TauCeti.Probability.hypergeometricMeasure`); the identification of the conditional law of a binomial count given the total, which is Fisher's exact test, is not stated. Chi-squared quantiles are given through the inverse regularized gamma function ([chi-squared quantiles](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/ChiSquared/Quantile.lean), `TauCeti.Probability.quantile_chiSquaredMeasure`), and Student \(t\) and \(F\) quantiles are given explicitly as well ([t quantiles](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/StudentT/Quantile.lean), [F quantiles](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/FisherSnedecor/Quantile.lean)).
 
-**Second moments.** The second moment of a Euclidean-valued law with finite second moment is the squared norm of the mean plus the trace of the covariance matrix ([covariance matrices](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Moments/Covariance.lean), `TauCeti.integral_norm_sq_eq_norm_integral_sq_add_trace_covMatrix`). Applied to the law of \(T-g(\theta)\), whose covariance is that of \(T\), it is the bias–variance decomposition.
+**Second moments.** For a probability law \(\mu\) on a Euclidean space with finite second moment and any point \(c\), \(\int\|x-c\|^2\,d\mu=\|\int x\,d\mu-c\|^2+\mathop{\mathrm{tr}}\mathop{\mathrm{Cov}}(\mu)\) ([covariance matrices](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Moments/Covariance.lean), `TauCeti.integral_norm_sub_sq_eq_norm_integral_sub_sq_add_trace_covMatrix`). Applied to the law of \(T\) with \(c=g(\theta)\), it is the bias–variance decomposition. The variance of a probability mixture is the mean component variance plus the variance of the component means ([mixtures](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Moments/Mixture.lean), `TauCeti.Probability.variance_bind`), a kernel form of the law of total variance.
 
-**Synopsis entries.** Partly covered: 101.21 (laws of single order statistics, by distribution function for every law and as beta laws for uniform samples; the joint density, the explicit marginal density, and the law of the ranks are absent), 101.27 (the bias–variance identity in second-moment form, TauCeti; the prediction identity only for constant predictors, via the law of total variance, Mathlib). Not covered: 101.22–101.24, 101.25 (ingredients only: uniformity of the tail probability under a continuous null via the probability integral transform; validity for general and composite nulls and the conditional form are not stated), 101.26.
+#### Statlib
+
+No relevant declarations were found.
+
+**Synopsis entries.** Partly covered: 101.21 (the joint law of the order statistics of an atomless i.i.d. sample in measure form, with density \(n!\) for uniform samples; the law of each order statistic by distribution function for every law, and as beta laws for uniform samples, all in TauCeti; the explicit marginal density for general \(F\) and the law of the ranks are absent), 101.27 (the bias–variance identity, TauCeti; the prediction identity only for constant predictors, via the law of total variance, Mathlib). Not covered: 101.22–101.24, 101.25 (ingredients only: uniformity of the tail probability under a continuous null via the probability integral transform; validity for general and composite nulls and the conditional form are not stated), 101.26.
 
 ### Pivots, interval length, and conditional inference
 
@@ -137,7 +166,11 @@ No relevant declarations were found. Location–scale families, equivariant stat
 
 #### TauCeti
 
-Two of the example pivots have their laws computed. A nonempty finite sum of independent exponential variables of common rate \(r\) has the gamma law of shape \(n\) and rate \(r\) ([sums](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/Sums.lean), `TauCeti.Probability.iIndepFun.hasLaw_sum_expMeasure`); since \(\chi^2_{2n}\) is by definition the gamma law of shape \(n\) and rate \(1/2\), the pivot \(2\sum_iX_i/\lambda\sim\chi^2_{2n}\) is one rescaling away. The maximum of \(n\) i.i.d. variables has distribution function \(F^n\) (`TauCeti.Probability.cdf_max_iid`), which for the uniform law on \((0,\theta)\) is the law of \(X_{(n)}/\theta\). The general location–scale pivot statement, interval optimality, Pratt's identity, and the conditional analysis given the configuration are absent.
+Two of the example pivots have their laws computed. A nonempty finite sum of independent exponential variables of common rate \(r\) has the gamma law of shape \(n\) and rate \(r\) ([sums](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Sums.lean), `TauCeti.Probability.iIndepFun.hasLaw_sum_expMeasure`); since \(\chi^2_{2n}\) is by definition the gamma law of shape \(n\) and rate \(1/2\), the pivot \(2\sum_iX_i/\lambda\sim\chi^2_{2n}\) is one rescaling away. The maximum of \(n\) i.i.d. variables has distribution function \(F^n\) (`TauCeti.Probability.cdf_max_iid`), which for the uniform law on \((0,\theta)\) is the law of \(X_{(n)}/\theta\). The general location–scale pivot statement, interval optimality, Pratt's identity, and the conditional analysis given the configuration are absent.
+
+#### Statlib
+
+No relevant declarations were found.
 
 **Synopsis entries.** Not covered: 101.28 (ingredients only: the exponential and uniform example laws, up to a rescaling; the general location–scale pivot and the coverage statement are not stated), 101.29–101.31.
 
@@ -155,9 +188,13 @@ Two of the example pivots have their laws computed. A nonempty finite sum of ind
 
 #### TauCeti
 
-Real-valued convexity and concavity are transferred to the `EReal`-valued quasiconvexity used by Mathlib's Sion theorem ([Sion helpers](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Topology/Sion.lean)). No statistical decision theory was found.
+No statistical decision theory was found.
 
-**Synopsis entries.** Partly covered: 101.32 (the inequality \(\sup_\pi\) Bayes risk \(\le\) minimax risk, and Sion's theorem as supporting material; equality, existence of a minimax rule, and of a least favorable prior are not stated), 101.33 (for deterministic measurable rules attaining the posterior infimum, with \(\Theta\) standard Borel; the converse for every Bayes rule of finite Bayes risk is not stated). Not covered: 101.34, 101.35 and 101.36 (ingredients only: the comparison \(r(\pi,\cdot)\le\) minimax risk from which both follow in a few lines is proved; neither statement is formulated), 101.37.
+#### Statlib
+
+For the 0–1 loss and a countable parameter space, a measurable rule maximizing the posterior probability exists, and every measurable rule that maximizes the posterior probability almost everywhere is an argmin estimator, hence Bayes (`ProbabilityTheory.hasArgminEstimator_zeroOneLoss`, `ProbabilityTheory.isArgminEstimator_zeroOneLoss_of_posterior`, [0–1 loss](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/ForMathlib/Probability/Decision/ZeroOneLoss.lean)). When an argmin rule exists, \(P_\theta\ll P\circ\pi\) for \(\pi\)-almost every \(\theta\), and \(\Theta\) is countable or the sample space countably generated, the Bayes risk is the marginal expectation of the minimal posterior expected loss written with the Radon–Nikodym densities of the model (`ProbabilityTheory.HasArgminEstimator.bayesRisk_eq_lintegral_rnDeriv`, [Bayes estimators](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/ForMathlib/Probability/Decision/BayesEstimator.lean)); this is the density form of the Bayes-risk identity of 101.33 for a dominated model. The Bayes risk is concave in the data-generating kernel and positively homogeneous in the prior (`ProbabilityTheory.mul_bayesRisk_add_mul_bayesRisk_le`, `ProbabilityTheory.bayesRisk_smul_prior`, [risk](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/ForMathlib/Probability/Decision/Risk/Basic.lean)). Minimax theorems, admissibility, and complete classes are absent.
+
+**Synopsis entries.** Partly covered: 101.32 (the inequality \(\sup_\pi\) Bayes risk \(\le\) minimax risk, in Mathlib, with Sion's theorem as supporting material; equality, existence of a minimax rule, and of a least favorable prior are not stated), 101.33 (for deterministic measurable rules attaining the posterior infimum, with \(\Theta\) standard Borel, in Mathlib; the density form of the Bayes-risk identity also in Statlib; the converse for every Bayes rule of finite Bayes risk is not stated). Not covered: 101.34, 101.35 and 101.36 (ingredients only: the comparison \(r(\pi,\cdot)\le\) minimax risk from which both follow in a few lines is proved; neither statement is formulated), 101.37.
 
 ### A constant-risk example
 
@@ -169,7 +206,11 @@ No relevant declarations were found. The binomial and beta laws are defined (`Pr
 
 #### TauCeti
 
-The beta-binomial law is defined as the beta mixture of binomial laws, with its mass function ([beta-binomial](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/BetaBinomial/Basic.lean)). This is the marginal law of the observation in 101.38; the beta posterior is not computed.
+The beta-binomial law is defined as the beta mixture of binomial laws, with its mass function ([beta-binomial](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/BetaBinomial/Basic.lean)). This is the marginal law of the observation in 101.38; the beta posterior is not computed.
+
+#### Statlib
+
+No relevant declarations were found.
 
 **Synopsis entries.** Not covered: 101.38.
 
@@ -182,6 +223,10 @@ The beta-binomial law is defined as the beta mixture of binomial laws, with its 
 No relevant declarations were found. Haar measure on locally compact groups is available (`MeasureTheory.Measure.haarMeasure`, `MeasureTheory/Measure/Haar/Basic.lean`) as supporting material for the averaging in the Hunt–Stein theorem.
 
 #### TauCeti
+
+No relevant declarations were found.
+
+#### Statlib
 
 No relevant declarations were found.
 
@@ -199,6 +244,10 @@ No relevant declarations were found.
 
 No relevant declarations were found.
 
+#### Statlib
+
+No relevant declarations were found.
+
 **Synopsis entries.** Not covered: 101.41.
 
 ### Exponential families and discrimination information
@@ -213,9 +262,13 @@ No relevant declarations were found.
 
 #### TauCeti
 
-The conditional term in Mathlib's chain rule is identified with the averaged divergence of the kernels when the target is countably generated, giving \(D(\mu\otimes\kappa\|\nu\otimes\eta)=D(\mu\|\nu)+\int D(\kappa_a\|\eta_a)\,\mu(da)\) for Markov \(\kappa\). For finite measures on \(\alpha\times\Omega\) with \(\Omega\) standard Borel, the divergence is that of the first marginals plus the averaged divergence of the conditional laws. Relative entropy tensorizes: \(D(\mu\otimes\mu'\|\nu\otimes\nu')=D(\mu\|\nu)+D(\mu'\|\nu')\) for probability measures \(\mu,\mu',\nu'\) and finite \(\nu\) ([chain rule](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/InformationTheory/KullbackLeibler/ChainRule.lean), `TauCeti.klDiv_compProd_eq_add_lintegral`, `TauCeti.klDiv_eq_klDiv_fst_add_lintegral_condKernel`, `TauCeti.klDiv_prod_prod`). Convexity and strict convexity of the divergence in its first argument, Csiszár's Pythagorean identity, and the Donsker–Varadhan formula are also proved ([KL directory](https://github.com/TauCetiProject/TauCeti/tree/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/InformationTheory/KullbackLeibler)).
+The conditional term in Mathlib's chain rule is identified with the averaged divergence of the kernels when the target is countably generated, giving \(D(\mu\otimes\kappa\|\nu\otimes\eta)=D(\mu\|\nu)+\int D(\kappa_a\|\eta_a)\,\mu(da)\) for Markov \(\kappa\). For finite measures on \(\alpha\times\Omega\) with \(\Omega\) standard Borel, the divergence is that of the first marginals plus the averaged divergence of the conditional laws. Relative entropy tensorizes: \(D(\mu\otimes\mu'\|\nu\otimes\nu')=D(\mu\|\nu)+D(\mu'\|\nu')\) for probability measures \(\mu,\mu',\nu'\) and finite \(\nu\) ([chain rule](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/InformationTheory/KullbackLeibler/ChainRule.lean), `TauCeti.klDiv_compProd_eq_add_lintegral`, `TauCeti.klDiv_eq_klDiv_fst_add_lintegral_condKernel`, `TauCeti.klDiv_prod_prod`). Convexity and strict convexity of the divergence in its first argument, Csiszár's Pythagorean identity, and the Donsker–Varadhan formula are also proved ([KL directory](https://github.com/TauCetiProject/TauCeti/tree/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/InformationTheory/KullbackLeibler)).
 
-**Synopsis entries.** Covered: 101.44 (Mathlib, TauCeti). Partly covered: 101.42 (in one dimension, the variance under the tilted law is the second derivative of the cumulant function; the mean-value diffeomorphism, steepness, and the mean domain are not stated). Not covered: 101.43.
+#### Statlib
+
+The product rule is proved for two factors, \(D(\mu\otimes\xi\|\nu\otimes\psi)=D(\mu\|\nu)+D(\xi\|\psi)\) for probability measures \(\mu,\xi,\psi\) and finite \(\nu\), as in TauCeti, and for finite products of probability measures, \(D(\bigotimes_i\mu_i\|\bigotimes_i\nu_i)=\sum_iD(\mu_i\|\nu_i)\), with \(D(\mu^{\otimes n}\|\nu^{\otimes n})=n\,D(\mu\|\nu)\) for identical factors (`ProbabilityTheory.klDiv_prod_two`, `ProbabilityTheory.klDiv_pi`, `ProbabilityTheory.klDiv_pi_const`, [conditional divergence](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/KullbackLeibler/CondKL.lean)). The conditional divergence `condKL κ η μ` is defined as \(D(\mu\otimes\kappa\|\mu\otimes\eta)\) and equals \(\int D(\kappa_a\|\eta_a)\,\mu(da)\) when the source is countable or the target countably generated; for finite measures on \(\alpha\times\beta\) with \(\beta\) standard Borel, the divergence is that of the first marginals plus the conditional divergence of the disintegrations (`ProbabilityTheory.condKL_eq_lintegral`, `ProbabilityTheory.klDiv_fst_add_condKL`, same file). This averaged chain rule is also proved in TauCeti. A further chain rule passes through the posteriors, \(D(\mu\otimes\kappa\|\nu\otimes\eta)=D(\kappa\circ\mu\|\eta\circ\nu)+\) the conditional divergence of \(\kappa^\dagger\mu\) from \(\eta^\dagger\nu\) (`ProbabilityTheory.klDiv_compProd_eq_add_condKL_posterior`, same file), and the divergence is jointly convex (`ProbabilityTheory.klDiv_smul_add_smul_le`, [KL basics](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/KullbackLeibler/Basic.lean)).
+
+**Synopsis entries.** Covered: 101.44 (Mathlib and TauCeti; the product rule, its \(n\)-fold form, and the averaged chain rule also in Statlib). Partly covered: 101.42 (in Mathlib, in one dimension: the variance under the tilted law is the second derivative of the cumulant function; the mean-value diffeomorphism, steepness, and the mean domain are not stated). Not covered: 101.43.
 
 ### Unbiased tests in exponential families
 
@@ -226,6 +279,10 @@ The conditional term in Mathlib's chain rule is identified with the averaged div
 No relevant declarations were found.
 
 #### TauCeti
+
+No relevant declarations were found.
+
+#### Statlib
 
 No relevant declarations were found.
 
@@ -243,6 +300,10 @@ No relevant declarations were found.
 
 No relevant declarations were found.
 
+#### Statlib
+
+No relevant declarations were found.
+
 **Synopsis entries.** Not covered: 101.47–101.49.
 
 ### Interval hypotheses in one-parameter exponential families
@@ -254,6 +315,10 @@ No relevant declarations were found.
 No relevant declarations were found.
 
 #### TauCeti
+
+No relevant declarations were found.
+
+#### Statlib
 
 No relevant declarations were found.
 
@@ -271,6 +336,10 @@ No relevant declarations were found.
 
 No relevant declarations were found.
 
+#### Statlib
+
+No relevant declarations were found.
+
 **Synopsis entries.** Not covered: 101.52, 101.53.
 
 ### Least favorable distributions
@@ -285,6 +354,10 @@ No relevant declarations were found. Mixtures \(\int P_\vartheta\,\Lambda(d\vart
 
 No relevant declarations were found.
 
+#### Statlib
+
+No relevant declarations were found.
+
 **Synopsis entries.** Not covered: 101.54.
 
 ### Invariant tests
@@ -293,13 +366,17 @@ No relevant declarations were found.
 
 #### Mathlib
 
-No relevant declarations were found. Maximal invariants and noncentral \(t\) laws are not defined.
+No relevant declarations were found. The sufficient-statistic reductions and induced scale and translation actions of 101.56 are not formalized; maximal invariants and noncentral \(t\) laws are not defined.
 
 #### TauCeti
 
-No relevant declarations were found. The order statistic of a tuple, a maximal invariant for permutations, is defined (see *Order statistics and exact confidence procedures*), but its maximal invariance is not stated.
+The order statistic of a tuple, a maximal invariant for permutations, is defined (see *Order statistics and exact confidence procedures*), but its maximal invariance is not stated. The noncentral \(t\) law on \(\nu>0\) degrees of freedom with noncentrality \(\delta\) is defined, with density, distribution function, and moments; it is the law of \((Z+\delta)/\sqrt{V/\nu}\) for independent \(Z\sim N(0,1)\) and \(V\sim\chi^2_\nu\), and its square has the noncentral \(F_{1,\nu}\) law with noncentrality \(\delta^2\) ([noncentral t](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/NoncentralT/Basic.lean), `TauCeti.Probability.noncentralTMeasure`, `TauCeti.Probability.hasLaw_noncentralT_of_gaussian_chiSquared`, `TauCeti.Probability.noncentralTMeasure_map_sq`). Its monotone likelihood ratio is not stated.
 
-**Synopsis entries.** Not covered: 101.55, 101.56.
+#### Statlib
+
+No relevant declarations were found.
+
+**Synopsis entries.** Not covered: 101.55, 101.56 (ingredients only: the noncentral \(t\) law as a ratio of independent Gaussian and chi-squared variables, in TauCeti; the law of the \(t\) statistic, which needs the independence of \(\bar X\) and \(S^2\), the monotone likelihood ratio, and the optimality statements are not stated).
 
 ### The normal mean and simultaneous coverage
 
@@ -311,7 +388,11 @@ No relevant declarations were found. The multivariate standard Gaussian and its 
 
 #### TauCeti
 
-No relevant declarations were found. Gaussian integration by parts (Stein's identity) is not stated.
+No relevant declarations were found. Gaussian integration by parts in dimension one is proved (see *Further bounds, shrinkage, and simultaneous testing*); the risk of the James–Stein estimator is not computed.
+
+#### Statlib
+
+No relevant declarations were found.
 
 **Synopsis entries.** Not covered: 101.57.
 
@@ -327,6 +408,10 @@ No relevant declarations were found. Admissibility is not defined; Mathlib's Bay
 
 No relevant declarations were found.
 
+#### Statlib
+
+No relevant declarations were found.
+
 **Synopsis entries.** Not covered: 101.58.
 
 ### Simultaneous coverage
@@ -339,9 +424,13 @@ The union bound \(\mu(\bigcup_{i\in I}s_i)\le\sum_{i\in I}\mu(s_i)\) for a finit
 
 #### TauCeti
 
-The \(F\) law as a ratio of independent chi-squared laws (see *Tests and confidence sets*) and the moment-generating function of a Gaussian quadratic form \(\langle x,Bx\rangle\), \(\det(1-2tS^{1/2}BS^{1/2})^{-1/2}\) where finite ([Gaussian quadratic forms](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions/Gaussian/QuadraticForm.lean)), are supporting material for Scheffé's method. The distribution of a projected Gaussian norm and of the studentized range are not stated.
+The \(F\) law as a ratio of independent chi-squared laws (see *Tests and confidence sets*) and the moment-generating function of a Gaussian quadratic form \(\langle x,Bx\rangle\), \(\det(1-2tS^{1/2}BS^{1/2})^{-1/2}\) where finite ([Gaussian quadratic forms](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Gaussian/QuadraticForm.lean)), are supporting material for Scheffé's method, as are the chi-squared laws and the independence of orthogonal projections of a standard Gaussian (see *Tests and confidence sets*). Their application to the fitted values and residuals of a least-squares fit, and the studentized range law, are not stated.
 
-**Synopsis entries.** Not covered: 101.59 (ingredients only: the union bound, from which the coverage statement follows by complementation), 101.60, 101.61.
+#### Statlib
+
+No relevant declarations were found.
+
+**Synopsis entries.** Not covered: 101.59 (ingredients only: the union bound, from which the coverage statement follows by complementation), 101.60 (ingredients only: the \(F\) law of a ratio of independent chi-squared variables and the laws of orthogonal Gaussian projections, in TauCeti; the least-squares identity and the \(rF_{r,n-r}\) law are not stated), 101.61.
 
 ### Comparison of experiments
 
@@ -355,7 +444,11 @@ The easy direction of Blackwell's theorem is proved in the integrated forms. If 
 
 No relevant declarations were found.
 
-**Synopsis entries.** Not covered: 101.62 (ingredients only: garbling implies comparison of Bayes and minimax risks; the pointwise risk-function form and the converse are absent).
+#### Statlib
+
+The easy direction is refined. Forgetting a component of the observation cannot decrease the Bayes risk (`ProbabilityTheory.bayesRisk_le_bayesRisk_fst`, `ProbabilityTheory.bayesRisk_le_bayesRisk_snd`, [risk](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/ForMathlib/Probability/Decision/Risk/Basic.lean)); the risk increase of \(P\) splits as the increase of the Bayes risk under a garbling \(\eta\) plus the risk increase of \(\eta\circ P\) (`ProbabilityTheory.riskIncrease_eq_sub_add_riskIncrease_comp`, [risk increase](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/ForMathlib/Probability/Decision/Risk/RiskIncrease.lean)); and the binary Bayes risk and DeGroot's statistical information satisfy the data-processing inequality under Markov kernels (`ProbabilityTheory.bayesBinaryRisk_le_bayesBinaryRisk_comp`, [binary tests](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Testing/Binary.lean); `ProbabilityTheory.statInfo_comp_le`, [statistical information](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/StatInfo/Basic.lean)). A kernel with a Markov left inverse preserves every \(f\)-divergence (`ProbabilityTheory.fDiv_comp_eq_of_comp_eq_id`, [kernels and divergences](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/FDiv/CompProd.lean)), an equivalence statement for experiments related by mutually inverse garblings. The converse of Blackwell's theorem is absent.
+
+**Synopsis entries.** Not covered: 101.62 (ingredients only: garbling implies comparison of Bayes and minimax risks, in Mathlib, with refinements in Statlib; the pointwise risk-function form and the converse are absent).
 
 ### Further bounds, shrinkage, and simultaneous testing
 
@@ -367,9 +460,15 @@ The total variation distance of finite measures is defined as the total variatio
 
 #### TauCeti
 
-Pinsker's inequality is proved with natural logarithms and without an absolute-continuity hypothesis: for probability measures, \(2\,(P(A)-Q(A))^2\le D(P\|Q)\) for every measurable \(A\), and \(|P-Q|^2\le2D(P\|Q)\) for the total variation \(|P-Q|\) of the signed measure, which is twice the usual distance ([Pinsker](https://github.com/TauCetiProject/TauCeti/blob/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/InformationTheory/KullbackLeibler/Pinsker.lean), `TauCeti.two_mul_sq_measureReal_sub_le_klDiv`, `TauCeti.totalVariation_sq_le_two_mul_klDiv`). In the synopsis normalization this is \(\|P-Q\|_{\mathrm{TV}}\le\sqrt{D(P\|Q)/2}\).
+Pinsker's inequality is proved with natural logarithms and without an absolute-continuity hypothesis: for probability measures, \(2\,(P(A)-Q(A))^2\le D(P\|Q)\) for every measurable \(A\), and \(\mathrm{etvDist}(P,Q)^2\le2D(P\|Q)\) for Mathlib's extended total variation distance, which is twice the synopsis distance ([Pinsker](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/InformationTheory/KullbackLeibler/Pinsker.lean), `TauCeti.two_mul_sq_measureReal_sub_le_klDiv`, `TauCeti.etvDist_sq_le_two_mul_klDiv`). In the synopsis normalization this is \(\|P-Q\|_{\mathrm{TV}}\le\sqrt{D(P\|Q)/2}\). For finite measures of equal mass, `etvDist` is twice \(\sup_A(\mu(A)-\nu(A))\) ([total variation](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/MeasureTheory/Measure/TotalVariation.lean), `MeasureTheory.etvDist_eq_two_mul_iSup_sub`), so the synopsis definition of \(\|P-Q\|_{\mathrm{TV}}\) agrees with half of Mathlib's distance.
 
-**Synopsis entries.** Partly covered: 101.66 (Pinsker's inequality, TauCeti; total variation through a Hahn set, Mathlib; the testing identity is not stated). Not covered: 101.63–101.65, 101.67, 101.68.
+Stein's identity is proved in dimension one: if \(f\) is differentiable everywhere, with values in a Banach space, and \((x-\mu)f(x)\) and \(f'\) are integrable under \(N(\mu,v)\), then \(\mathbb E[(X-\mu)f(X)]=v\,\mathbb E f'(X)\); the variance \(v=0\) is allowed ([Gaussian integration by parts](https://github.com/TauCetiProject/TauCeti/blob/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions/Gaussian/IntegrationByParts.lean), `TauCeti.Probability.integral_sub_smul_eq_smul_integral_deriv_gaussianReal`, `TauCeti.Probability.integral_sub_mul_eq_mul_integral_deriv_gaussianReal`).
+
+#### Statlib
+
+Statlib writes the synopsis distance as `tvDist P Q / 2`, Mathlib's `tvDist` being twice it. The testing identity is proved for probability measures: the Bayes risk of testing \(P\) against \(Q\) with prior weights \(1,1\) is \(1-\mathrm{tvDist}(P,Q)/2\) (`ProbabilityTheory.bayesBinaryRisk_one_one_eq_ofReal_one_sub_tvDist_div_two`, [total variation](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/TotalVariation.lean)), and that Bayes risk is the infimum over Markov kernels \(\kappa\) into `Bool`, that is over tests \(\varphi=\kappa(\cdot)\{\mathrm{true}\}\), of \(P\varphi+Q(1-\varphi)\) (`ProbabilityTheory.bayesBinaryRisk_eq_iInf_kernel`, [binary tests](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Testing/Binary.lean)). The infimum is attained by the likelihood-ratio test of threshold one, which decides for \(Q\) where \(dP/d(P+Q)\le dQ/d(P+Q)\) with these weights: `ProbabilityTheory.isArgminEstimator_binaryArgminEstimator` makes it an argmin estimator, hence a Bayes estimator by Mathlib's `IsArgminEstimator.isBayesEstimator`; nonrandomized tests suffice (`ProbabilityTheory.bayesBinaryRisk_eq_iInf_measurableSet`, same file). The identity \(\mathrm{etvDist}=2\sup_A(\mu(A)-\nu(A))\) for finite measures of equal mass is also proved in Statlib, as in TauCeti (`ProbabilityTheory.etvDist_eq_two_mul_iSup_sub`, [events](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/TotalVariation/Event.lean)). Supporting material: the variational formula \(\mathrm{tvDist}(\mu,\nu)=\sup_{|f|\le1}(\int f\,d\mu-\int f\,d\nu)\) and the density formula \(\int|d\mu/d\zeta-d\nu/d\zeta|\,d\zeta\) (`ProbabilityTheory.tvDist_eq_iSup_integral_sub`, `ProbabilityTheory.tvDist_eq_integral_abs_sub_rnDeriv`, [integral forms](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/TotalVariation/Integral.lean)); data processing for total variation under Markov kernels (`ProbabilityTheory.tvDist_comp_le`, `ProbabilityTheory.etvDist_comp_le`); and the Bretagnolle–Huber inequality \(-\log(1-\|P-Q\|_{\mathrm{TV}}^2)\le D(P\|Q)\), with the consequence \(\tfrac12e^{-D(P\|Q)}\le1-\|P-Q\|_{\mathrm{TV}}\) when the divergence is finite (`ProbabilityTheory.neg_log_one_sub_tvDist_div_two_sq_le_klDiv`, `ProbabilityTheory.exp_neg_klDiv_le_two_sub_tvDist`, [Bretagnolle–Huber](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/BretagnolleHuber.lean)). Pinsker's inequality is not stated in Statlib.
+
+**Synopsis entries.** Covered: 101.66 (the testing identity and its attainment by the likelihood-ratio test of threshold one, in Statlib, the attainment through Mathlib's `IsArgminEstimator.isBayesEstimator`; Pinsker's inequality, in TauCeti). Partly covered: 101.64 (Stein's identity in dimension one for everywhere-differentiable \(g\), in TauCeti; the \(p\)-dimensional, weakly differentiable form and the unbiased risk estimate are not stated). Not covered: 101.63, 101.65, 101.67, 101.68.
 
 ### Likelihood and convex geometry
 
@@ -383,28 +482,30 @@ No relevant declarations were found. The tilted log-likelihood-ratio identities 
 
 No relevant declarations were found.
 
+#### Statlib
+
+No relevant declarations were found.
+
 **Synopsis entries.** Not covered: 101.69, 101.70.
 
 ### Distribution handbooks and history
 
 [Mathematical scope](SYNOPSIS101.md#distribution-handbooks-and-history).
 
-The handbook content is the catalogue of classical laws. Mathlib defines the Bernoulli, binomial, geometric, Poisson, beta, Cauchy, exponential, gamma, Pareto, uniform, and Gaussian laws (`Probability/Distributions/`). TauCeti adds chi-squared, Student \(t\), Fisher \(F\), beta-prime, Laplace, logistic, Gumbel, Weibull, log-normal, inverse-gamma, negative-binomial, hypergeometric, beta-binomial, multinomial, Dirichlet, and Wishart laws, with distribution functions, quantiles, moments, and the classical relations among them ([distributions](https://github.com/TauCetiProject/TauCeti/tree/a049b4264d2cf4dbf4720796f844a3a3764914a5/TauCeti/Probability/Distributions)).
+The handbook content is the catalogue of classical laws. Mathlib defines the Bernoulli, binomial, geometric, Poisson, beta, Cauchy, exponential, gamma, Pareto, uniform, and Gaussian laws (`Probability/Distributions/`). TauCeti adds chi-squared, Student \(t\), Fisher \(F\), their noncentral versions, beta-prime, Laplace, logistic, Gumbel, Weibull, log-normal, inverse-gamma, negative-binomial, hypergeometric, beta-binomial, multinomial, Dirichlet, and Wishart laws, with distribution functions, quantiles, moments, and the classical relations among them ([distributions](https://github.com/TauCetiProject/TauCeti/tree/afa08a3ed16fb167e35de371afb1eb03fbc5913a/TauCeti/Probability/Distributions)). Statlib adds no laws to this catalogue; it develops Mathlib's two-point Bernoulli law and uses the measures `MeasureTheory.Measure.boolMeasure a b` on `Bool` as binary priors.
 
 **Synopsis entries.** None; this heading has no numbered entries.
 
-## Missing from both libraries
+## Missing from all three libraries
 
-**Statistical models and sufficiency.** Measurable parametrized families of laws are already represented by Mathlib's Markov kernels `Kernel Θ 𝓧`. Dedicated notions of sufficient, ancillary, or complete statistics and parametric likelihoods are absent, and sufficiency of \(T\) is the existence of a kernel from the range of \(T\) that is a version of the conditional law given \(T\) for every \(\theta\), expressible with `condDistrib`. The factorization theorem (101.1) for a dominated family needs this definition and Halmos–Savage's reduction to a countable equivalent subfamily, which is absent; the infrastructure (Radon–Nikodym derivatives, conditional kernels on standard Borel spaces) is in place. Minimal sufficiency (101.2), Basu's theorem (101.9), the Lehmann–Scheffé theorem (101.8), and the UMVU theory (101.12, 101.13) depend on these definitions. Birnbaum's theorem (101.3) is combinatorial once evidence functions are defined.
+**Statistical models and sufficiency.** Measurable parametrized families of laws are already represented by Mathlib's Markov kernels `Kernel Θ 𝓧`, and Statlib's inference-model structures package such a family with a functional, data, a rule, and a loss. Dedicated notions of sufficient, ancillary, or complete statistics and parametric likelihoods are absent, and sufficiency of \(T\) is the existence of a kernel from the range of \(T\) that is a version of the conditional law given \(T\) for every \(\theta\), expressible with `condDistrib`. The factorization theorem (101.1) for a dominated family needs this definition and Halmos–Savage's reduction to a countable equivalent subfamily, which is absent; the infrastructure (Radon–Nikodym derivatives, conditional kernels on standard Borel spaces) is in place, and Statlib's invariance of \(f\)-divergences under restriction to \(\sigma(d\mu/d(\mu+\nu))\) is the corresponding statement for a pair of laws. Minimal sufficiency (101.2), Basu's theorem (101.9), the Lehmann–Scheffé theorem (101.8), and the UMVU theory (101.12, 101.13) depend on these definitions. Birnbaum's theorem (101.3) is combinatorial once evidence functions are defined.
 
 **Exponential families.** A general \(k\)-parameter natural exponential family, its natural parameter space, and the minimal representation are not defined. In one dimension the tilted measure and the cgf API (Mathlib) with TauCeti's tilting identities give convexity, analyticity, and the first two derivatives. Completeness (101.5) is one step from TauCeti's determinacy theorem `TauCeti.Measure.ext_of_mgf` in one dimension and needs the multivariate Laplace uniqueness theorem for \(k>1\). The mean-value diffeomorphism and steepness (101.42), conditional families (101.43), existence of the maximum likelihood estimator (101.69), and the Bregman form of the divergence (101.70) need the multiparameter theory; the last is a short computation from Mathlib's `llr_tilted_left` and `llr_tilted_right` in one dimension. The Pitman–Koopman–Darmois theorem (101.6) is far from the present material.
 
-**Information and unbiased estimation.** Fisher information, the score, and the information inequality (101.10, 101.11, 101.65) are absent. Each needs differentiation under the integral sign for a parametrized density and the Cauchy–Schwarz inequality for covariances, both available in general form. The Chapman–Robbins bound (101.63) needs only Cauchy–Schwarz in \(L^2(P_\theta)\) and the likelihood ratio, and is close to existing material. Rao–Blackwell (101.7) is one step from conditional Jensen once sufficiency is defined.
+**Information and unbiased estimation.** Fisher information, the score, and the information inequality (101.10, 101.11, 101.65) are absent. Each needs differentiation under the integral sign for a parametrized density and the Cauchy–Schwarz inequality for covariances, both available in general form; Statlib's quadratic-mean differentiability, with its mean-zero score (see [Structure 102](STRUCTURE102.md)), is a starting point for the score under weaker regularity. The Chapman–Robbins bound (101.63) needs only Cauchy–Schwarz in \(L^2(P_\theta)\) and the likelihood ratio, and is close to existing material. Rao–Blackwell (101.7) is one step from conditional Jensen once sufficiency is defined.
 
-**Gaussian sampling theory.** The independence of \(\bar X\) and \(S^2\) and the law \((n-1)S^2/\sigma^2\sim\chi^2_{n-1}\) are the main missing link for 101.17, 101.19, 101.20, 101.26, 101.52, and 101.56. The natural route is orthogonal invariance of the standard Gaussian (Mathlib `stdGaussian_map`) applied to a Helmert matrix, followed by TauCeti's `map_sum_sq_pi_gaussianReal`; after that the Student \(t\) and \(F\) statements follow from TauCeti's ratio theorems. Cochran's theorem for projections, needed for Scheffé's method (101.60), is the same argument with an orthogonal projection. The noncentral \(t\) law (101.56) and the studentized range law (101.61) are not defined.
+**Gaussian sampling theory.** The independence of \(\bar X\) and \(S^2\) and the law \((n-1)S^2/\sigma^2\sim\chi^2_{n-1}\) are the main missing link for 101.17, 101.19, 101.20, 101.26, 101.52, and 101.56. TauCeti's projection theorems for the standard Gaussian (`TauCeti.Probability.iIndepFun_orthogonalProjectionOnto_stdGaussian`, `Submodule.map_norm_sq_starProjection_stdGaussian`) give both once the standardized sample is placed in a Euclidean space and \((n-1)S^2/\sigma^2\) is identified with the squared projection onto the orthogonal complement of the constant vectors; after that the Student \(t\) and \(F\) statements follow from TauCeti's ratio theorems. Scheffé's method (101.60) is the same argument applied to the fitted values and residuals of a least-squares fit. The noncentral \(t\) law is defined in TauCeti, but its monotone likelihood ratio (101.56) is not stated, and the studentized range law (101.61) is not defined.
 
-**Tests, \(p\)-values, and confidence sets.** No notion of a test, size, power, \(p\)-value, or confidence set exists, so the Neyman–Pearson lemma (101.14), the Karlin–Rubin theorems (101.15, 101.53), the test–interval duality (101.16), and the optimal unbiased and invariant tests (101.45–101.56) are all absent. The Neyman–Pearson lemma is an elementary pointwise inequality once tests are defined as measurable \([0,1]\)-valued functions, and its generalized form (101.47) is the same argument. The unbiased-test theory then needs completeness (101.5) and conditional exponential families (101.43). Exact procedures based on order statistics are close: the quantile interval (101.22) is a short consequence of TauCeti's order-statistic distribution function, and the Clopper–Pearson bound (101.23) combines TauCeti's binomial tail, beta quantile, and stochastic-order theorems. Fisher's exact test (101.24) needs the conditional law of a binomial count given the total, which is an elementary computation against TauCeti's hypergeometric law. Holm's procedure and closed testing (101.67, 101.68) are finite combinatorial arguments from the union bound.
+**Tests, \(p\)-values, and confidence sets.** No notion of size, power, \(p\)-value, or confidence set exists; Statlib's binary tests are assessed only by their Bayes risk. So the Neyman–Pearson lemma (101.14), the Karlin–Rubin theorems (101.15, 101.53), the test–interval duality (101.16), and the optimal unbiased and invariant tests (101.45–101.56) are all absent. The Neyman–Pearson lemma is an elementary pointwise inequality once tests are defined as measurable \([0,1]\)-valued functions, and its generalized form (101.47) is the same argument; Statlib's Bayes optimality of the likelihood-ratio test for two laws (`ProbabilityTheory.isArgminEstimator_binaryArgminEstimator`) is the Lagrangian form from which the size-constrained statement is usually derived. The unbiased-test theory then needs completeness (101.5) and conditional exponential families (101.43). Exact procedures based on order statistics are close: the quantile interval (101.22) is a short consequence of TauCeti's order-statistic distribution function, and the Clopper–Pearson bound (101.23) combines TauCeti's binomial tail, beta quantile, and stochastic-order theorems. Fisher's exact test (101.24) needs the conditional law of a binomial count given the total, which is an elementary computation against TauCeti's hypergeometric law. Holm's procedure and closed testing (101.67, 101.68) are finite combinatorial arguments from the union bound.
 
-**Decision theory.** Mathlib has risks, Bayes and minimax risks, the posterior, and Bayes estimators, but not admissibility, complete classes, least favorable priors, or equality of the maximal Bayes risk and the minimax risk. The finite minimax theorem (101.32) would follow from Sion's theorem in Mathlib once randomized rules on a finite action space are identified with a compact convex set. The constant-risk and extended Bayes criteria (101.35, 101.36) are a few lines from `bayesRisk_le_minimaxRisk`, and the binomial example (101.38) further needs the beta posterior for binomial data. Admissibility of Bayes rules (101.34), complete classes (101.37), Blyth's method (101.58), and the James–Stein phenomenon (101.57, with Stein's identity 101.64) need the notion of admissibility, and the last two need Gaussian integration by parts, which neither library states. Equivariance and the Hunt–Stein theorem (101.39–101.41) need group actions on models; Mathlib's Haar measure is the starting point. The pointwise form and converse of Blackwell's theorem (101.62) need a separation argument in the space of risk functions for finite parameter spaces.
-
-**Distances and testing.** The testing form of total variation (101.66) is one step from Mathlib's Hahn-decomposition formula for `tvDist`, and Pinsker's inequality is in TauCeti.
+**Decision theory.** Mathlib has risks, Bayes and minimax risks, the posterior, and Bayes estimators, and Statlib adds measurable Bayes rules for the 0–1 loss on countable parameter spaces and the concavity of the Bayes risk, but no library has admissibility, complete classes, least favorable priors, or equality of the maximal Bayes risk and the minimax risk. The finite minimax theorem (101.32) would follow from Sion's theorem in Mathlib once randomized rules on a finite action space are identified with a compact convex set. The constant-risk and extended Bayes criteria (101.35, 101.36) are a few lines from `bayesRisk_le_minimaxRisk`, and the binomial example (101.38) further needs the beta posterior for binomial data. Admissibility of Bayes rules (101.34), complete classes (101.37), Blyth's method (101.58), and the James–Stein phenomenon (101.57, with Stein's identity 101.64) need the notion of admissibility, and the James–Stein phenomenon and Stein's identity need Gaussian integration by parts in \(p\) dimensions for weakly differentiable functions; TauCeti proves the one-dimensional identity for everywhere-differentiable functions. Equivariance and the Hunt–Stein theorem (101.39–101.41) need group actions on models; Mathlib's Haar measure is the starting point. The pointwise form and converse of Blackwell's theorem (101.62) need a separation argument in the space of risk functions for finite parameter spaces; the data-processing inequalities of Mathlib and Statlib give only the easy direction.
