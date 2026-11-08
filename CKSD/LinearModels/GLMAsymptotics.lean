@@ -1,6 +1,5 @@
 module
 
-public import CKSD.LinearModels.Causal
 public import CKSD.Inference.Basic
 public import TauCeti.Probability.Distributions.ChiSquared.Basic
 
@@ -15,7 +14,27 @@ the weight is `w(x) = b''(⟪x, β⟫)`, and the likelihood equations are
 `∑ᵢ xᵢ (Yᵢ - b'(⟪xᵢ, β⟫)) = 0`.
 
 The pairs `(xᵢ, Yᵢ)` are independent and identically distributed; the conditional law of the
-response given the covariate is supplied by a Markov kernel. Source: GAPS 105.3.
+response given the covariate is supplied by a Markov kernel.
+
+## Main definitions
+
+* `CKSD.exponentialDispersionLaw`: the law `exp((yθ - b θ) / φ) ν(dy)`.
+* `CKSD.canonicalGLMInformation`: `J = E[x xᵀ b''(⟪x, β⟫)]`.
+* `CKSD.canonicalGLMLogLikelihood`, `CKSD.IsCanonicalGLMRoot`: the log likelihood and the
+  likelihood equations of the first `n` observations.
+
+## Main results
+
+* `CKSD.tendstoInDistribution_canonicalGLM_root`: asymptotic normality
+  `√n (β̂ - β) ⇒ N(0, φ J⁻¹)` of consistent roots, and its studentized form.
+* `CKSD.tendstoInDistribution_canonicalGLM_deviance`: the deviance difference of nested
+  models is asymptotically chi-squared.
+
+## References
+
+* P. McCullagh and J. A. Nelder, *Generalized Linear Models*, 2nd ed., Chapman and Hall, 1989.
+* L. Fahrmeir and H. Kaufmann, *Consistency and asymptotic normality of the maximum likelihood
+  estimator in generalized linear models*, Ann. Statist. 13 (1985).
 -/
 
 @[expose] public section

@@ -15,7 +15,21 @@ The `k`-nearest-neighbour rule predicts `1` when more than half of the `k` neare
 `1`. The expected error `𝔼 Lₙ` is the probability that the rule misclassifies an independent
 test pair.
 
-Sources: GAPS 107.14 and 107.20.
+## Main definitions
+
+* `CKSD.knnRule`: the `k`-nearest-neighbour majority rule with random tie-breaking.
+* `CKSD.knnExpectedError`: the expected error `𝔼 Lₙ` of that rule.
+* `CKSD.bayesClassificationRisk`, `CKSD.nearestNeighborAsymptoticRisk`: the Bayes risk
+  `𝔼 min(η, 1 - η)` and the Cover–Hart limit `𝔼 2η(1 - η)`.
+
+## Main results
+
+* `CKSD.tendsto_oneNN_expectedError`: Cover–Hart convergence of the `1`-NN error (GAPS 107.14).
+* `CKSD.bayesRisk_le_nnRisk_le`: `R* ≤ L_NN ≤ 2R*(1 - R*)` (GAPS 107.14).
+* `CKSD.exists_tendsto_knn_expectedError`, `CKSD.tendsto_knn_expectedError_bayesRisk`: limits
+  for fixed odd `k` and Stone's universal consistency (GAPS 107.14).
+* `CKSD.tendsto_localAveraging_sq_error`: Stone's theorem for response-independent local
+  averaging (GAPS 107.20).
 -/
 
 @[expose] public section

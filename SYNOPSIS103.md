@@ -170,8 +170,9 @@ is equivalent to a sequence model through an orthonormal basis.
   $$\mathbb E\|\hat\theta-\theta\|^2
   \le(2\log n+1)\Bigl(\sigma^2+\sum_{i=1}^n\min(\theta_i^2,\sigma^2)\Bigr).$$
 
-* **11. Grenander estimator.** Let $f$ be decreasing and positive on
-  $[0,\infty)$, with $f'(x_0)<0$ and $f$ continuous at $x_0>0$. The maximum
+* **11. Grenander estimator.** Let $f$ be a density vanishing on
+  $(-\infty,0)$ and decreasing on $[0,\infty)$, with $f'(x_0)<0$ and $f$
+  continuous at $x_0>0$. The maximum
   likelihood estimator $\hat f_n$ is the left slope of the least concave
   majorant of $F_n$. Then
   $$n^{1/3}\bigl(\hat f_n(x_0)-f(x_0)\bigr)

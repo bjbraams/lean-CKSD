@@ -1,6 +1,7 @@
 module
 
 public import CKSD.LinearModels.DirectedGraphical
+public import CKSD.LinearModels.GaussianGraphical
 public import Mathlib.Combinatorics.SimpleGraph.Clique
 public import Mathlib.Combinatorics.SimpleGraph.Paths
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
@@ -8,15 +9,39 @@ public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 /-!
 # Decomposable graphical models
 
-Undirected graphs are Mathlib's `SimpleGraph`. A graph is chordal when every cycle of length at
-least four has a chord. A perfect sequence lists the maximal cliques `C₀, …, C_{k-1}` so that
-each separator `S_j = C_j ∩ (C₀ ∪ ⋯ ∪ C_{j-1})`, `j ≥ 1`, lies in an earlier clique; separators
-are then counted with their multiplicities `ν(S)` by running over `j`.
+Undirected graphs are Mathlib's `SimpleGraph`. A graph is chordal (decomposable) when every
+cycle of length at least four has a chord. A perfect sequence lists the maximal cliques
+`C₀, …, C_{k-1}` so that each separator `S_j = C_j ∩ (C₀ ∪ ⋯ ∪ C_{j-1})`, `j ≥ 1`, lies in an
+earlier clique; separators are then counted with their multiplicities `ν(S)` by running over
+`j`. A finite graph admits a perfect sequence of its maximal cliques exactly when it is chordal,
+so the results below are stated for a perfect sequence only.
 
-The factorization statement is in the discrete form, for a positive probability mass function
-on finitely many finite-valued variables, with the marginal masses of
-`CKSD.LinearModels.DirectedGraphical`. The Gaussian statements concern the deterministic
-maximization of the Gaussian likelihood of a concentration matrix. Source: GAPS 105.36.
+## Main definitions
+
+* `CKSD.IsChordalGraph`, `CKSD.GraphSeparates`, `CKSD.IsPerfectCliqueSequence`,
+  `CKSD.cliqueSeparator`.
+* `CKSD.IsUndirectedGlobalMarkovMass`: separation of disjoint sets implies conditional
+  independence, for a probability mass function.
+* `CKSD.decomposableConcentrationMLE`: the explicit Gaussian concentration estimate
+  `n (∑_C [(ssd_C)⁻¹]^V - ∑_S ν(S) [(ssd_S)⁻¹]^V)`.
+
+## Main results
+
+* `CKSD.isUndirectedGlobalMarkovMass_of_factorization`: a clique factorization implies the
+  undirected global Markov property.
+* `CKSD.graphSeparates_cliqueSeparator`: in a perfect sequence, `S_j` separates `C_j \ S_j` from
+  the earlier vertices.
+* `CKSD.isUndirectedGlobalMarkovMass_iff_clique_factorization`: a positive mass function is
+  globally Markov exactly when `p(x) ∏_S p_S(x_S)^{ν(S)} = ∏_C p_C(x_C)`.
+* `CKSD.isConcentrationMLE_decomposableConcentrationMLE` and
+  `CKSD.existsUnique_isConcentrationMLE_inv`: the Gaussian maximum likelihood estimate of the
+  concentration matrix for a decomposable and for a general graph.
+
+## References
+
+* S. L. Lauritzen, *Graphical Models*, Oxford University Press, 1996, Ch. 2, §3.2, §5.3.
+
+Source: GAPS 105.36.
 -/
 
 @[expose] public section
@@ -211,17 +236,6 @@ theorem graphSeparates_cliqueSeparator [Fintype V] (G : SimpleGraph V) {k : ℕ}
     exact ⟨f, Fin.lt_def.1 hfj', hfv⟩
   -- labels: lying in a clique of the subtree of `j`
   let L : V → Prop := fun v ↦ ∃ m, Sub m ∧ v ∈ C m
-  have hwalk : ∀ {a b : V} (w : G.Walk a b), L a → ¬ L b →
-      ∃ u v, G.Adj u v ∧ u ∈ w.support ∧ L u ∧ ¬ L v := by
-    intro a b w
-    induction w with
-    | nil => intro h h'; exact absurd h h'
-    | @cons a c b hac w ih =>
-      intro ha hb
-      by_cases hc : L c
-      · obtain ⟨u, v, huv, hu, hLu, hLv⟩ := ih hc hb
-        exact ⟨u, v, huv, by simp [hu], hLu, hLv⟩
-      · exact ⟨a, c, hac, by simp, ha, hc⟩
   intro a ha b hb w
   by_contra hno
   push Not at hno
@@ -234,7 +248,11 @@ theorem graphSeparates_cliqueSeparator [Fintype V] (G : SimpleGraph V) {k : ℕ}
     obtain ⟨i, hi, hbi⟩ := hbH
     exact hbS (hL2 b m i hbm hSm hbi fun hSi ↦ absurd (hSub_le i hSi) (by
       rw [not_le, Fin.lt_def]; exact hi))
-  obtain ⟨u, v, huv, hu, hLu, hLv⟩ := hwalk w hLa hLb
+  obtain ⟨d, hd, hLu, hLv⟩ := w.exists_boundary_dart {v | L v} hLa hLb
+  have hu : d.fst ∈ w.support := w.dart_fst_mem_support_of_mem_darts hd
+  set u := d.fst
+  set v := d.snd
+  have huv : G.Adj u v := d.adj
   have hpair : G.IsClique (({u, v} : Finset V) : Set V) := by
     rw [Finset.coe_pair]
     exact SimpleGraph.isClique_pair.2 fun _ ↦ huv
@@ -395,56 +413,53 @@ theorem isUndirectedGlobalMarkovMass_iff_clique_factorization [Fintype V] [Finty
         · exact mul_inv_cancel₀ (hMpos _ y).ne'
       simp only [this, Finset.prod_const_one, mul_one]
 
+section Gaussian
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+
 /-- The block `B_{CC}` of a square matrix indexed by a finite set `C` of coordinates. -/
-def principalBlock {p : ℕ} (B : Matrix (Fin p) (Fin p) ℝ) (C : Finset (Fin p)) :
-    Matrix C C ℝ :=
+def principalBlock (B : Matrix ι ι ℝ) (C : Finset ι) : Matrix C C ℝ :=
   B.submatrix Subtype.val Subtype.val
 
-/-- `[B]^V`: a matrix indexed by `C`, padded with zeros to a `p × p` matrix. -/
-def padBlock {p : ℕ} (C : Finset (Fin p)) (B : Matrix C C ℝ) : Matrix (Fin p) (Fin p) ℝ :=
+/-- `[B]^V`: a matrix indexed by `C`, padded with zeros to a square matrix indexed by `ι`. -/
+def padBlock (C : Finset ι) (B : Matrix C C ℝ) : Matrix ι ι ℝ :=
   fun i j ↦ if h : i ∈ C ∧ j ∈ C then B ⟨i, h.1⟩ ⟨j, h.2⟩ else 0
 
-/-- The Gaussian log likelihood of a concentration matrix `K` for `n` observations with centred
-sum-of-squares matrix `ssd`, up to an additive constant and the factor `n / 2`:
-`log det K - tr(K ssd) / n`. -/
-def gaussianConcentrationLogLikelihood {p : ℕ} (n : ℕ) (ssd K : Matrix (Fin p) (Fin p) ℝ) : ℝ :=
-  Real.log K.det - Matrix.trace (K * ssd) / n
+/-- The explicit maximum likelihood estimate of the concentration matrix in a decomposable
+Gaussian graphical model with perfect sequence of cliques `C`:
+`n (∑_C [(ssd_C)⁻¹]^V - ∑_S ν(S) [(ssd_S)⁻¹]^V)`, the separators being counted with
+multiplicity. -/
+def decomposableConcentrationMLE {k : ℕ} (C : Fin k → Finset ι) (n : ℕ)
+    (ssd : Matrix ι ι ℝ) : Matrix ι ι ℝ :=
+  (n : ℝ) • (∑ j, padBlock (C j) (principalBlock ssd (C j))⁻¹ -
+    ∑ j : Fin k, if (j : ℕ) = 0 then 0 else
+      padBlock (cliqueSeparator C j) (principalBlock ssd (cliqueSeparator C j))⁻¹)
 
-/-- Concentration matrices of the Gaussian graphical model of `G`: positive definite with zero
-entries off the edges. -/
-def concentrationModel {p : ℕ} (G : SimpleGraph (Fin p)) : Set (Matrix (Fin p) (Fin p) ℝ) :=
-  {K | K.PosDef ∧ ∀ i j, i ≠ j → ¬ G.Adj i j → K i j = 0}
-
-/-- GAPS 105.36, Gaussian decomposable model: if every clique block of `ssd` is positive
-definite (which holds almost surely when `n > max_C |C|` for a Gaussian sample), the maximum
-likelihood estimator of the concentration matrix exists, is unique, and equals
-`n (∑_C [(ssd_C)⁻¹]^V - ∑_S ν(S) [(ssd_S)⁻¹]^V)`. The almost-sure existence criterion
-`n > max_C |C|` as a necessary condition is not stated. -/
-theorem isGreatest_gaussianConcentrationLogLikelihood_decomposable {p : ℕ}
-    (G : SimpleGraph (Fin p)) (hG : IsChordalGraph G) {k : ℕ} (C : Fin k → Finset (Fin p))
-    (hC : IsPerfectCliqueSequence G C) (n : ℕ) (hn : 0 < n) (ssd : Matrix (Fin p) (Fin p) ℝ)
-    (hssd : ssd.PosSemidef) (hblock : ∀ j, (principalBlock ssd (C j)).PosDef) :
-    let K := (n : ℝ) • (∑ j, padBlock (C j) (principalBlock ssd (C j))⁻¹ -
-      ∑ j : Fin k, if (j : ℕ) = 0 then 0 else
-        padBlock (cliqueSeparator C j) (principalBlock ssd (cliqueSeparator C j))⁻¹)
-    K ∈ concentrationModel G ∧
-      ∀ K' ∈ concentrationModel G, K' ≠ K →
-        gaussianConcentrationLogLikelihood n ssd K' <
-          gaussianConcentrationLogLikelihood n ssd K := by
+/-- GAPS 105.36, Gaussian decomposable model: for a perfect sequence `C` of the maximal cliques
+of `G` (so that `G` is decomposable) and `n > 0` observations, if every clique block of the
+sum-of-squares matrix `ssd` is positive definite (which holds almost surely when
+`n > max_C |C|` for a Gaussian sample), the maximum likelihood estimate of the concentration
+matrix exists, is unique, and equals `n (∑_C [(ssd_C)⁻¹]^V - ∑_S ν(S) [(ssd_S)⁻¹]^V)`.
+The likelihood involves `ssd` only through its clique blocks, so no condition on `ssd` outside
+them is needed. The almost-sure existence criterion `n > max_C |C|` as a necessary condition
+is not stated. -/
+theorem isConcentrationMLE_decomposableConcentrationMLE (G : SimpleGraph ι) {k : ℕ}
+    (C : Fin k → Finset ι) (hC : IsPerfectCliqueSequence G C) (n : ℕ) (hn : 0 < n)
+    (ssd : Matrix ι ι ℝ) (hblock : ∀ j, (principalBlock ssd (C j)).PosDef) :
+    IsConcentrationMLE G n ssd (decomposableConcentrationMLE C n ssd) := by
   sorry
 
-/-- GAPS 105.36, general graph: if `ssd` is positive definite, there is a unique positive
-definite `Σ̂` that agrees with `ssd / n` on the diagonal and on the edges and whose inverse
-vanishes off the edges, and `Σ̂⁻¹` is the unique maximizer of the likelihood over the
-concentration model. Convergence of iterative proportional scaling is not stated. -/
-theorem existsUnique_gaussianConcentration_mle {p : ℕ} (G : SimpleGraph (Fin p)) (n : ℕ)
-    (hn : 0 < n) (ssd : Matrix (Fin p) (Fin p) ℝ) (hssd : ssd.PosDef) :
-    ∃! Sig : Matrix (Fin p) (Fin p) ℝ, Sig.PosDef ∧
+/-- GAPS 105.36, general graph: if `ssd` is positive definite and `n > 0`, there is a unique
+positive definite `Σ̂` that agrees with `ssd / n` on the diagonal and on the edges and whose
+inverse is the maximum likelihood estimate of the concentration matrix (in particular `Σ̂⁻¹`
+vanishes off the edges). Convergence of iterative proportional scaling is not stated. -/
+theorem existsUnique_isConcentrationMLE_inv (G : SimpleGraph ι) (n : ℕ) (hn : 0 < n)
+    (ssd : Matrix ι ι ℝ) (hssd : ssd.PosDef) :
+    ∃! Sig : Matrix ι ι ℝ, Sig.PosDef ∧
       (∀ i j, (i = j ∨ G.Adj i j) → Sig i j = ssd i j / n) ∧
-      (∀ i j, i ≠ j → ¬ G.Adj i j → Sig⁻¹ i j = 0) ∧
-      ∀ K ∈ concentrationModel G, K ≠ Sig⁻¹ →
-        gaussianConcentrationLogLikelihood n ssd K <
-          gaussianConcentrationLogLikelihood n ssd Sig⁻¹ := by
+      IsConcentrationMLE G n ssd Sig⁻¹ := by
   sorry
+
+end Gaussian
 
 end CKSD

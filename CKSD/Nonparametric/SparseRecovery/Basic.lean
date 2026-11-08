@@ -5,10 +5,28 @@ public import Mathlib.Algebra.Order.Chebyshev
 public import Mathlib.Analysis.MeanInequalitiesPow
 
 /-!
-# Sparse-vector and restricted-isometry algebra
+# Sparse vectors, the null space property, and restricted orthogonality
 
-Restricted coordinate norms, null-space uniqueness of basis pursuit, and polarization estimates
-for sparse vectors with disjoint supports. Sources: GAPS 103.48 and 103.49.
+Coordinate `ℓ¹` norms on sets of coordinates, basis pursuit, and the null space property, with
+the polarization estimate that turns the restricted isometry property into restricted
+orthogonality of sparse vectors with disjoint supports.
+
+## Main definitions
+
+* `CKSD.HasNullspaceProperty A S`: every nonzero `δ` in the kernel of `A` has
+  `‖δ_S‖₁ < ‖δ_{Sᶜ}‖₁`.
+* `CKSD.IsBasisPursuitEstimator A y η β`: `β` minimizes `‖b‖₁` subject to `‖A b - y‖ ≤ η`.
+
+## Main results
+
+* `CKSD.hasNullspaceProperty_iff`: the null space property on `S` holds if and only if basis
+  pursuit recovers every vector supported in `S` as the unique `ℓ¹` minimizer of its
+  measurements.
+* `CKSD.abs_inner_apply_le_of_hasRestrictedIsometry`: if `A` has the restricted isometry
+  property of order `2 s` with constant `δ`, then `|⟪A x, A y⟫| ≤ δ ‖x‖ ‖y‖` for `s`-sparse `x`,
+  `y` with disjoint supports.
+
+Sources: GAPS 103.48 and 103.49.
 -/
 
 @[expose] public section
@@ -43,11 +61,26 @@ theorem restrictedL1Norm_le_add_sub {p : ℕ} (S : Finset (Fin p))
     _ ≤ |y j| + |x j - y j| := abs_add_le _ _
     _ = |y j| + |y j - x j| := by rw [abs_sub_comm]
 
-/-- GAPS 103.48, equivalence between the nullspace property and unique basis pursuit. -/
-theorem nullspace_property_iff_basis_pursuit_unique {n p : ℕ}
+/-- The null space property of `A` on the coordinate set `S`: every nonzero vector `δ` in the
+kernel of `A` has `‖δ_S‖₁ < ‖δ_{Sᶜ}‖₁`. -/
+def HasNullspaceProperty {n p : ℕ} (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
+    (S : Finset (Fin p)) : Prop :=
+  ∀ δ, A δ = 0 → δ ≠ 0 → restrictedL1Norm S δ < restrictedL1Norm Sᶜ δ
+
+/-- `β` is a basis pursuit estimate with residual bound `η`: it minimizes `‖b‖₁` over all `b`
+with `‖A b - y‖ ≤ η`. -/
+def IsBasisPursuitEstimator {n p : ℕ}
+    (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
+    (y : EuclideanSpace ℝ (Fin n)) (η : ℝ) (β : EuclideanSpace ℝ (Fin p)) : Prop :=
+  ‖A β - y‖ ≤ η ∧ ∀ b, ‖A b - y‖ ≤ η →
+    restrictedL1Norm Finset.univ β ≤ restrictedL1Norm Finset.univ b
+
+/-- GAPS 103.48: the null space property on `S` holds if and only if every `β` supported in `S`
+is the unique minimizer of `‖b‖₁` subject to `A b = A β`. -/
+theorem hasNullspaceProperty_iff {n p : ℕ}
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
     (S : Finset (Fin p)) :
-    (∀ δ, A δ = 0 → δ ≠ 0 → restrictedL1Norm S δ < restrictedL1Norm Sᶜ δ) ↔
+    HasNullspaceProperty A S ↔
     ∀ β, (∀ j ∉ S, β j = 0) → ∀ b, A b = A β → b ≠ β →
       restrictedL1Norm Finset.univ β < restrictedL1Norm Finset.univ b := by
   constructor
@@ -120,17 +153,21 @@ theorem sparsity_smul_add_smul_le {p s : ℕ} (x y : EuclideanSpace ℝ (Fin p))
     _ ≤ _ := Finset.card_union_le _ _
     _ ≤ 2 * s := by omega
 
+/-- Vectors with disjoint supports are orthogonal. -/
+theorem inner_eq_zero_of_forall_eq_zero_or_eq_zero {p : ℕ} {x y : EuclideanSpace ℝ (Fin p)}
+    (hxy : ∀ j, x j = 0 ∨ y j = 0) : ⟪x, y⟫ = 0 := by
+  rw [PiLp.inner_apply]
+  refine Finset.sum_eq_zero fun j _ ↦ ?_
+  rcases hxy j with h | h <;> simp [h]
+
 /-- Restricted orthogonality from the restricted isometry property: for `s`-sparse vectors
 with disjoint supports, `|⟪A x, A y⟫| ≤ δ ‖x‖ ‖y‖` when `A` has the RIP of order `2 s`. -/
-theorem inner_apply_le_of_hasRestrictedIsometry {n p s : ℕ}
+theorem abs_inner_apply_le_of_hasRestrictedIsometry {n p s : ℕ}
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)) (δ : ℝ)
     (hrip : HasRestrictedIsometry A (2 * s) δ) (x y : EuclideanSpace ℝ (Fin p))
     (hx : sparsity x ≤ s) (hy : sparsity y ≤ s) (hxy : ∀ j, x j = 0 ∨ y j = 0) :
     |⟪A x, A y⟫| ≤ δ * ‖x‖ * ‖y‖ := by
-  have hinner : ⟪x, y⟫ = 0 := by
-    rw [PiLp.inner_apply]
-    refine Finset.sum_eq_zero fun j _ ↦ ?_
-    rcases hxy j with h | h <;> simp [h]
+  have hinner : ⟪x, y⟫ = 0 := inner_eq_zero_of_forall_eq_zero_or_eq_zero hxy
   rcases (norm_nonneg x).eq_or_lt with hx0 | hx0
   · rw [eq_comm, norm_eq_zero] at hx0; simp [hx0]
   rcases (norm_nonneg y).eq_or_lt with hy0 | hy0

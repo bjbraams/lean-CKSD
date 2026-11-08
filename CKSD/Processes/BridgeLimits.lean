@@ -29,12 +29,14 @@ def cusumBridgeStatistic {Ω : Type*} (X : ℕ → Ω → ℝ) (σ : ℝ) (n : �
     |(∑ i ∈ Finset.range k.val, X i ω) - (k.val : ℝ) / n *
       (∑ i ∈ Finset.range n, X i ω)|) / (σ * Real.sqrt n)
 
-/-- GAPS 106.39: the iid finite-variance CUSUM statistic converges to the Brownian-bridge supremum. -/
+/-- GAPS 106.39: the iid finite-variance CUSUM statistic converges to the Brownian-bridge
+supremum: for iid observations with positive (hence finite) variance `σ²`,
+`max_{k ≤ n} |S_k - (k / n) S_n| / (σ √n) ⇒ sup_{t ∈ [0, 1]} |B_t - t B_1|`. -/
 theorem tendstoInDistribution_cusumBridgeStatistic {Ω Ω' : Type*}
     [MeasurableSpace Ω] [MeasurableSpace Ω']
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P)
-    (h2 : MemLp id 2 P) (hv : 0 < variance P id)
+    (hv : 0 < variance P id)
     (ν : Measure Ω') [IsProbabilityMeasure ν] (B : ℝ≥0 → Ω' → ℝ)
     (hB : IsBrownianReal B ν) :
     TendstoInDistribution μ (fun n ω ↦ cusumBridgeStatistic X (Real.sqrt (variance P id)) n ω)

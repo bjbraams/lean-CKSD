@@ -16,6 +16,26 @@ infinitesimal covariance `2I`) on every bounded time interval; no stochastic dif
 is constructed. The Poincaré and logarithmic Sobolev inequalities are TauCeti's. The JKO step is a
 point of TauCeti's Moreau–Yosida resolvent on the Wasserstein space `P₂(ℝᵈ)`, for the free energy
 built from TauCeti's Boltzmann entropy relative to Lebesgue measure and potential energy.
+
+## Main definitions
+
+* `CKSD.IsLangevinFlow`: a weak solution of the overdamped Langevin Fokker–Planck equation.
+* `CKSD.chiSqDiv`: the `χ²` divergence.
+* `CKSD.jkoFreeEnergy`: the free energy `∫ ρ log ρ + ∫ V dν` on `P₂(ℝᵈ)`.
+
+## Main results
+
+* `CKSD.poincareInequality_iff_chiSqDiv_langevin_le`,
+  `CKSD.logSobolevInequality_iff_klDiv_langevin_le`: the Poincaré and logarithmic Sobolev
+  inequalities as exponential decay of `χ²` and relative entropy along the Langevin flow.
+* `CKSD.wasserstein_sq_langevin_le_of_logSobolev`: Otto–Villani decay in Wasserstein distance.
+* `CKSD.poincareInequality_of_logSobolevInequality`: a logarithmic Sobolev inequality implies the
+  Poincaré inequality with the same constant.
+* `CKSD.logSobolevInequality_gibbsMeasure_of_bounded_perturbation`,
+  `CKSD.poincareInequality_gibbsMeasure_of_bounded_perturbation`: Bakry–Émery and
+  Holley–Stroock.
+* `CKSD.jko_scheme_tendsto_fokkerPlanck`: the Jordan–Kinderlehrer–Otto theorem.
+
 Sources: GAPS 104.43 and 104.44.
 -/
 
@@ -309,10 +329,11 @@ theorem tendsto_mul_arctan_inv_mul (s : ℝ) :
   simp only [Function.comp_apply, slope, sub_zero, Real.arctan_zero, smul_eq_mul, vsub_eq_sub]
   field_simp
 
-/-- A logarithmic Sobolev inequality implies the Poincaré inequality with the same constant, for
-every probability measure on a real normed space. Unbounded test functions are reduced to the
-bounded case through the truncations `R arctan(f/R)` and dominated convergence. -/
-theorem poincareInequality_of_logSobolevInequality_general {E : Type*} [NormedAddCommGroup E]
+/-- GAPS 104.44: a logarithmic Sobolev inequality implies the Poincaré inequality with the same
+constant, for every probability measure on a real normed space. Unbounded test functions are
+reduced to the bounded case `variance_le_of_logSobolevInequality_of_abs_le` through the
+truncations `R arctan(f/R)` and dominated convergence. -/
+theorem poincareInequality_of_logSobolevInequality {E : Type*} [NormedAddCommGroup E]
     [NormedSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E] (μ : Measure E)
     [IsProbabilityMeasure μ] (C : ℝ) (h : μ.LogSobolevInequality C) :
     μ.PoincareInequality C := by
@@ -407,25 +428,107 @@ theorem poincareInequality_of_logSobolevInequality_general {E : Type*} [NormedAd
     · simpa using ((hwx x).mul_const ‖fderiv ℝ f x‖).pow 2
   exact le_of_tendsto_of_tendsto' hlimV (hlimD.const_mul C) hstep
 
-/-- GAPS 104.44: a logarithmic Sobolev inequality implies the Poincaré inequality with the same
-constant, for every probability measure on `ℝᵈ`. -/
-theorem poincareInequality_of_logSobolevInequality {d : ℕ}
-    (μ : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure μ] (C : ℝ)
-    (h : μ.LogSobolevInequality C) : μ.PoincareInequality C :=
-  poincareInequality_of_logSobolevInequality_general μ C h
+/-- Quadratic lower bound from a strongly monotone gradient:
+`V x ≥ V 0 + ⟪∇V(0), x⟫ + (α/2) ‖x‖²`. -/
+theorem add_inner_add_le_of_isStronglyMonotoneGradient {d : ℕ}
+    {V : EuclideanSpace ℝ (Fin d) → ℝ}
+    {gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)} {α : ℝ}
+    (hgrad : ∀ x, HasGradientAt V (gradV x) x) (hα : IsStronglyMonotoneGradient gradV α)
+    (x : EuclideanSpace ℝ (Fin d)) :
+    V 0 + inner ℝ (gradV 0) x + α / 2 * ‖x‖ ^ 2 ≤ V x := by
+  set φ : ℝ → ℝ := fun t ↦
+    V (t • x) - V 0 - t * inner ℝ (gradV 0) x - α / 2 * t ^ 2 * ‖x‖ ^ 2 with hφ
+  have hd (t : ℝ) : HasDerivAt φ
+      (inner ℝ (gradV (t • x)) x - inner ℝ (gradV 0) x - α * t * ‖x‖ ^ 2) t := by
+    have h1 : HasDerivAt (fun s : ℝ ↦ V (s • x)) (inner ℝ (gradV (t • x)) x) t := by
+      have := (hgrad (t • x)).hasFDerivAt.comp_hasDerivAt t ((hasDerivAt_id t).smul_const x)
+      simp only [id, one_smul, InnerProductSpace.toDual_apply_apply] at this
+      exact this
+    have h2 := ((h1.sub_const (V 0)).sub ((hasDerivAt_id t).mul_const (inner ℝ (gradV 0) x))).sub
+      (((hasDerivAt_pow 2 t).const_mul (α / 2)).mul_const (‖x‖ ^ 2))
+    refine (h2.congr_deriv ?_).congr_of_eventuallyEq (Eventually.of_forall fun s ↦ rfl)
+    simp only [Nat.cast_ofNat, Nat.add_one_sub_one, pow_one, one_mul]
+    ring
+  have hmono : MonotoneOn φ (Ici 0) := by
+    refine monotoneOn_of_hasDerivWithinAt_nonneg (convex_Ici 0)
+      (fun t _ ↦ (hd t).continuousAt.continuousWithinAt) (fun t _ ↦ (hd t).hasDerivWithinAt) ?_
+    intro t ht
+    rw [interior_Ici, mem_Ioi] at ht
+    have h := hα (t • x) 0
+    simp only [sub_zero] at h
+    rw [real_inner_smul_right, norm_smul, Real.norm_eq_abs, abs_of_pos ht,
+      mul_pow, inner_sub_left] at h
+    have : α * t * ‖x‖ ^ 2 ≤ inner ℝ (gradV (t • x)) x - inner ℝ (gradV 0) x := by
+      refine le_of_mul_le_mul_left ?_ ht
+      calc t * (α * t * ‖x‖ ^ 2) = α * (t ^ 2 * ‖x‖ ^ 2) := by ring
+        _ ≤ _ := h
+    linarith
+  have h01 := hmono (mem_Ici.2 le_rfl) (mem_Ici.2 zero_le_one) zero_le_one
+  simp only [hφ, zero_smul, zero_mul, one_smul, one_mul, sub_self, one_pow,
+    ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow] at h01
+  linarith
+
+/-- For a potential with a strongly monotone gradient (`∇²V ⪰ αI` with `α > 0`), the Gibbs
+density `e^{-V}` is integrable, by the quadratic lower bound
+`add_inner_add_le_of_isStronglyMonotoneGradient` and Gaussian integrability. -/
+theorem integrable_exp_neg_of_isStronglyMonotoneGradient {d : ℕ}
+    {V : EuclideanSpace ℝ (Fin d) → ℝ}
+    {gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)} {α : ℝ}
+    (hgrad : ∀ x, HasGradientAt V (gradV x) x) (hα : IsStronglyMonotoneGradient gradV α)
+    (hα0 : 0 < α) : Integrable (fun x ↦ Real.exp (-V x)) := by
+  have hG := GaussianFourier.integrable_cexp_neg_mul_sq_norm_add
+    (V := EuclideanSpace ℝ (Fin d)) (b := ((α / 2 : ℝ) : ℂ)) (by simpa using half_pos hα0)
+    (-1) (gradV 0)
+  have hG' : Integrable (fun x : EuclideanSpace ℝ (Fin d) ↦
+      Real.exp (-(α / 2) * ‖x‖ ^ 2 - inner ℝ (gradV 0) x)) := by
+    refine hG.norm.congr (ae_of_all _ fun x ↦ ?_)
+    dsimp only
+    rw [Complex.norm_exp]
+    congr 1
+    simp only [Complex.add_re, Complex.mul_re, Complex.neg_re, Complex.ofReal_re,
+      Complex.neg_im, Complex.ofReal_im, Complex.one_re, Complex.one_im, ← Complex.ofReal_pow]
+    ring
+  have hVc : Continuous V :=
+    continuous_iff_continuousAt.2 fun x ↦ (hgrad x).hasFDerivAt.continuousAt
+  refine (hG'.const_mul (Real.exp (-V 0))).mono' (hVc.neg.rexp.aestronglyMeasurable)
+    (ae_of_all _ fun x ↦ ?_)
+  rw [Real.norm_eq_abs, Real.abs_exp, ← Real.exp_add]
+  refine Real.exp_le_exp.2 ?_
+  have := add_inner_add_le_of_isStronglyMonotoneGradient hgrad hα x
+  linarith
 
 /-- GAPS 104.44: Bakry–Émery and Holley–Stroock. If `V = V₀ + ψ` with `∇²V₀ ⪰ mI`, `m > 0`, and
-`a ≤ ψ ≤ b`, then the Gibbs law satisfies the Poincaré and logarithmic Sobolev inequalities with
-constant `e^{b-a}/m`. -/
-theorem poincare_and_logSobolev_of_bounded_perturbation {d : ℕ}
+`a ≤ ψ ≤ b`, then the Gibbs law satisfies the logarithmic Sobolev inequality with constant
+`e^{b-a}/m`. -/
+theorem logSobolevInequality_gibbsMeasure_of_bounded_perturbation {d : ℕ}
     (V₀ ψ : EuclideanSpace ℝ (Fin d) → ℝ)
     (gradV₀ : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (m a b : ℝ) (hm : 0 < m)
     (hV₀ : ContDiff ℝ 2 V₀) (hgrad : ∀ x, HasGradientAt V₀ (gradV₀ x) x)
     (hconv : IsStronglyMonotoneGradient gradV₀ m) (hψ : Measurable ψ)
     (hab : ∀ x, ψ x ∈ Icc a b) :
-    (gibbsMeasure (V₀ + ψ)).PoincareInequality (Real.exp (b - a) / m) ∧
-      (gibbsMeasure (V₀ + ψ)).LogSobolevInequality (Real.exp (b - a) / m) := by
+    (gibbsMeasure (V₀ + ψ)).LogSobolevInequality (Real.exp (b - a) / m) := by
   sorry
+
+/-- GAPS 104.44: under the hypotheses of the Bakry–Émery and Holley–Stroock theorem, the Gibbs law
+of `V₀ + ψ` satisfies the Poincaré inequality with constant `e^{b-a}/m`. It follows from the
+logarithmic Sobolev inequality `logSobolevInequality_gibbsMeasure_of_bounded_perturbation`. -/
+theorem poincareInequality_gibbsMeasure_of_bounded_perturbation {d : ℕ}
+    (V₀ ψ : EuclideanSpace ℝ (Fin d) → ℝ)
+    (gradV₀ : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (m a b : ℝ) (hm : 0 < m)
+    (hV₀ : ContDiff ℝ 2 V₀) (hgrad : ∀ x, HasGradientAt V₀ (gradV₀ x) x)
+    (hconv : IsStronglyMonotoneGradient gradV₀ m) (hψ : Measurable ψ)
+    (hab : ∀ x, ψ x ∈ Icc a b) :
+    (gibbsMeasure (V₀ + ψ)).PoincareInequality (Real.exp (b - a) / m) := by
+  have hint : Integrable (fun x ↦ Real.exp (-(V₀ + ψ) x)) := by
+    refine ((integrable_exp_neg_of_isStronglyMonotoneGradient hgrad hconv hm).const_mul
+      (Real.exp (-a))).mono' ((hV₀.continuous.measurable.add hψ).neg.exp.aestronglyMeasurable)
+      (ae_of_all _ fun x ↦ ?_)
+    rw [Real.norm_eq_abs, Real.abs_exp, ← Real.exp_add, Pi.add_apply]
+    exact Real.exp_le_exp.2 (by linarith [(hab x).1])
+  have := isProbabilityMeasure_gibbsMeasure hint
+  exact poincareInequality_of_logSobolevInequality _ _
+    (logSobolevInequality_gibbsMeasure_of_bounded_perturbation V₀ ψ gradV₀ m a b hm hV₀ hgrad
+      hconv hψ hab)
 
 /-- The underlying measure of a law in the Wasserstein space `P₂(ℝᵈ)`. -/
 def wassersteinLaw {d : ℕ} (ν : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d))) :

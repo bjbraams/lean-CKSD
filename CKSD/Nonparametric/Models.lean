@@ -4,11 +4,34 @@ public import CKSD.Nonparametric.Basic
 public import Mathlib.Probability.ProductMeasure
 
 /-!
-# Nonparametric and sparse estimation models
+# Gaussian sequence, regression, and sparse estimation models
 
-Gaussian sequence experiments, Sobolev ellipsoids, regression smoothers, isotonic criteria, and
-regularized linear estimation. All losses that may be infinite use nonnegative extended reals.
-Sources: GAPS 103.7–103.11, 103.22–103.28, 103.33–103.35, 103.48–103.49.
+The Gaussian sequence model `y_j = θ_j + ε ξ_j` with its ellipsoid parameter sets, the
+Nadaraya–Watson smoother, isotonic least squares, the lasso with the compatibility condition, and
+the sparse Gaussian location model. Losses that may be infinite take values in `ℝ≥0∞`, and
+minimax risks are infima over measurable estimators of suprema of such risks.
+
+## Main definitions
+
+* `CKSD.gaussianSequenceLaw`, `CKSD.sequenceEllipsoid`, `CKSD.sobolevEllipsoid`,
+  `CKSD.gaussianSequenceMinimaxRisk`, `CKSD.gaussianSequenceLinearMinimaxRisk`: the Gaussian
+  sequence experiment, the ellipsoids `∑ (a_j θ_j)² ≤ R`, and the minimax and linear minimax
+  squared risks.
+* `CKSD.nadarayaWatson`: the Nadaraya–Watson estimator, with value `0` where all weights vanish.
+* `CKSD.IsIsotonicRegressionEstimator`: a least-squares fit over nondecreasing vectors.
+* `CKSD.lassoObjective`, `CKSD.IsLassoEstimator`, `CKSD.HasCompatibility`: the lasso criterion
+  `‖y - A β‖² / (2n) + λ ‖β‖₁`, its minimizers, and the compatibility condition on a cone.
+* `CKSD.sparseGaussianLaw`, `CKSD.sparseGaussianMinimaxRisk`: the Gaussian location model and
+  the minimax squared risk over `s`-sparse means.
+
+## Main results
+
+* `CKSD.tendsto_gaussianSequenceMinimaxRisk_div_linear` (Pinsker): on an ellipsoid the minimax
+  risk is asymptotically equivalent to the linear minimax risk as `ε → 0`.
+* `CKSD.sparseGaussianMinimaxRisk_bounds`: the minimax risk over `s`-sparse means is of order
+  `σ² s log(p / s)`.
+
+Sources: GAPS 103.7, 103.9, 103.21, 103.33, and 103.34.
 -/
 
 @[expose] public section
@@ -48,14 +71,14 @@ def gaussianSequenceLinearMinimaxRisk (Θ : Set (ℕ → ℝ)) (ε : ℝ) : ℝ�
   ⨅ c : ℕ → ℝ, ⨆ θ : Θ,
     ∫⁻ y, sequenceSquaredError (fun j ↦ c j * y j) θ.val ∂gaussianSequenceLaw θ.val ε
 
-/-- Pinsker's positive-part shrinkage weights. -/
-def pinskerWeight (a : ℕ → ℝ) (μ : ℝ) (j : ℕ) : ℝ := max 0 (1 - a j / μ)
-
-/-- GAPS 103.9: asymptotic equivalence of arbitrary and linear minimax risks on an ellipsoid. -/
+/-- GAPS 103.9: Pinsker's theorem. On the ellipsoid `∑ (a_j θ_j)² ≤ R` with positive
+nondecreasing `a_j → ∞`, the ratio of the minimax squared risk to the linear minimax squared
+risk tends to `1` as the noise level `ε` decreases to `0`. -/
 theorem tendsto_gaussianSequenceMinimaxRisk_div_linear (a : ℕ → ℝ)
     (ha : ∀ j, 0 < a j) (hmono : Monotone a) (hlim : Tendsto a atTop atTop)
     (R : ℝ) (hR : 0 < R) :
-    Tendsto (fun ε ↦ (gaussianSequenceMinimaxRisk (sequenceEllipsoid a (ENNReal.ofReal R)) ε).toReal /
+    Tendsto (fun ε ↦
+      (gaussianSequenceMinimaxRisk (sequenceEllipsoid a (ENNReal.ofReal R)) ε).toReal /
       (gaussianSequenceLinearMinimaxRisk (sequenceEllipsoid a (ENNReal.ofReal R)) ε).toReal)
       (𝓝[>] 0) (𝓝 1) := by
   sorry
@@ -88,22 +111,13 @@ def IsLassoEstimator {n p : ℕ}
     (y : EuclideanSpace ℝ (Fin n)) (lambda : ℝ) (β : EuclideanSpace ℝ (Fin p)) : Prop :=
   ∀ b, lassoObjective A y lambda β ≤ lassoObjective A y lambda b
 
-/-- Compatibility lower bound on the specified sparsity cone. -/
+/-- The compatibility condition with constant `κ` on the cone `‖δ_{Sᶜ}‖₁ ≤ L ‖δ_S‖₁`:
+`κ² ‖δ_S‖₁² ≤ |S| ‖A δ‖² / n` for every `δ` in the cone. -/
 def HasCompatibility {n p : ℕ}
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
     (S : Finset (Fin p)) (L κ : ℝ) : Prop :=
   ∀ δ, restrictedL1Norm Sᶜ δ ≤ L * restrictedL1Norm S δ →
     κ ^ 2 * (restrictedL1Norm S δ) ^ 2 ≤ (S.card : ℝ) * ‖A δ‖ ^ 2 / n
-
-/-- Basis pursuit with a norm-bounded residual. -/
-def IsBasisPursuitEstimator {n p : ℕ}
-    (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
-    (y : EuclideanSpace ℝ (Fin n)) (η : ℝ) (β : EuclideanSpace ℝ (Fin p)) : Prop :=
-  ‖A β - y‖ ≤ η ∧ ∀ b, ‖A b - y‖ ≤ η →
-    restrictedL1Norm Finset.univ β ≤ restrictedL1Norm Finset.univ b
-
-/-- Scalar soft thresholding. -/
-def softThreshold (τ x : ℝ) : ℝ := max 0 (x - τ) - max 0 (-x - τ)
 
 /-- Gaussian finite-dimensional sparse estimation experiment. -/
 def sparseGaussianLaw {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) (σ : ℝ) :
@@ -116,19 +130,15 @@ def sparseGaussianMinimaxRisk (p s : ℕ) (σ : ℝ) : ℝ≥0∞ :=
     ⨆ θ : {θ : EuclideanSpace ℝ (Fin p) // sparsity θ ≤ s},
       ∫⁻ y, ENNReal.ofReal (‖T.val y - θ.val‖ ^ 2) ∂sparseGaussianLaw θ.val σ
 
-/-- GAPS 103.33: minimax sparse Gaussian rate with universal constants. -/
+/-- GAPS 103.33: the sparse minimax rate. There are universal constants `0 < c ≤ C` such that
+for `1 ≤ s` and `2 s ≤ p` the minimax squared risk over `s`-sparse means in `N(θ, σ² I_p)` lies
+between `c σ² s log(p / s)` and `C σ² s log(p / s)`. -/
 theorem sparseGaussianMinimaxRisk_bounds :
     ∃ c > (0 : ℝ), ∃ C > (0 : ℝ), ∀ p s : ℕ, 1 ≤ s → 2 * s ≤ p → ∀ σ : ℝ, 0 < σ →
       ENNReal.ofReal (c * σ ^ 2 * s * Real.log ((p : ℝ) / s)) ≤ sparseGaussianMinimaxRisk p s σ ∧
       sparseGaussianMinimaxRisk p s σ ≤
         ENNReal.ofReal (C * σ ^ 2 * s * Real.log ((p : ℝ) / s)) := by
   sorry
-
-/-- A Hölder ball of order at most one on a specified domain. -/
-def IsHolderRegressionFunction {X : Type*} [PseudoMetricSpace X]
-    (domain : Set X) (β L : ℝ) (f : X → ℝ) : Prop :=
-  (∀ x ∈ domain, |f x| ≤ L) ∧
-    ∀ x ∈ domain, ∀ y ∈ domain, |f x - f y| ≤ L * Real.rpow (dist x y) β
 
 /-- Any sequence has zero squared error against itself, including nonsummable sequences. -/
 @[simp] theorem sequenceSquaredError_self (θ : ℕ → ℝ) : sequenceSquaredError θ θ = 0 := by

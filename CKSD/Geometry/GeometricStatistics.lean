@@ -6,11 +6,25 @@ public import CKSD.Bayes.Basic
 public import TauCeti.Probability.Moments.Covariance
 
 /-!
-# Geometry: GeometricStatistics
+# Geometric statistics: graphs, Fréchet means, sampling, and multidimensional scaling
 
-Sources: `GAPS.md`, `SYNOPSIS108.md`, and `STRUCTURE108.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+## Main results
+
+* `CKSD.spectralGap_cheegerConstant_bounds`: Cheeger's inequalities for the normalized Laplacian
+  of a connected weighted graph (GAPS 108.1).
+* `CKSD.existsUnique_frechet_mean_of_midpoint_inequality`: existence and uniqueness of the
+  Fréchet mean in a complete space satisfying the CAT(0) midpoint inequality (GAPS 108.5).
+* `CKSD.isBoundedInProbability_hausdorff_sampling_error`: the Hausdorff sampling rate of a support
+  under a uniform small-ball lower bound (GAPS 108.7).
+* `CKSD.posSemidef_double_centering_iff_sq_euclidean_distances`: Schoenberg's criterion for
+  Euclidean distance matrices, the basis of classical multidimensional scaling (GAPS 108.8).
+* `CKSD.extrinsic_mean_iff_nearest_expectation`,
+  `CKSD.tendstoInDistribution_projected_sampleAverage`: the extrinsic mean as the projection of the
+  Euclidean mean and its delta-method central limit theorem (GAPS 108.10).
+
+## Main definitions
+
+* `CKSD.centeringMatrix`: the centering matrix `J = I - n⁻¹ 1 1ᵀ`.
 -/
 
 @[expose] public section
@@ -24,8 +38,12 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- GAPS 108.1: Cheeger's inequalities for a finite weighted connected graph. -/
-theorem cheeger_inequalities {n : ℕ} (hn : 2 ≤ n) (W : Matrix (Fin n) (Fin n) ℝ)
+/-- GAPS 108.1: Cheeger's inequalities for a finite weighted connected graph. For a symmetric
+nonnegative weight matrix without loops on `n ≥ 2` vertices in which every nonempty proper cut has
+positive weight, the spectral gap `λ₁` of the normalized Laplacian and the conductance `h` satisfy
+`λ₁ / 2 ≤ h ≤ √(2 λ₁)` and `1 - √(1 - h²) ≤ λ₁`. Under these hypotheses the sets defining `λ₁`
+and `h` are nonempty and bounded below, so no junk values occur. -/
+theorem spectralGap_cheegerConstant_bounds {n : ℕ} (hn : 2 ≤ n) (W : Matrix (Fin n) (Fin n) ℝ)
     (hsym : W.IsSymm) (hpos : ∀ i j, 0 ≤ W i j) (hdiag : ∀ i, W i i = 0)
     (hconn : ∀ S : Finset (Fin n), S.Nonempty → S ≠ Finset.univ → 0 < cutWeight W S) :
     spectralGap W / 2 ≤ cheegerConstant W ∧ cheegerConstant W ≤ Real.sqrt (2 * spectralGap W) ∧
@@ -46,7 +64,9 @@ theorem integrable_dist_sq_of_integrable_dist_sq
   nlinarith [sq_nonneg (dist p o - dist o x)]
 
 /-- GAPS 108.5, existence and uniqueness in a complete space satisfying the CAT(0) midpoint
-inequality. -/
+inequality: if a complete metric space has midpoints `mid x y` with
+`d(z, mid x y)² ≤ (d(z, x)² + d(z, y)²) / 2 - d(x, y)² / 4`, then every probability law with finite
+second moment has a unique Fréchet mean, a unique minimizer of `p ↦ ∫ d(p, x)² dP(x)`. -/
 theorem existsUnique_frechet_mean_of_midpoint_inequality
     {X : Type*} [MetricSpace X] [CompleteSpace X]
     [MeasurableSpace X] [BorelSpace X] (P : Measure X) [IsProbabilityMeasure P]
@@ -154,7 +174,10 @@ theorem existsUnique_frechet_mean_of_midpoint_inequality
   have : dist m' m = 0 := by nlinarith [dist_nonneg (x := m') (y := m)]
   exact dist_eq_zero.mp this
 
-/-- GAPS 108.7, noiseless Hausdorff sampling rate from a uniform small-ball lower bound. -/
+/-- GAPS 108.7, noiseless Hausdorff sampling rate from a uniform small-ball lower bound: if a
+law `P` is carried by a compact set `K` and gives every ball of radius `r < r₀` centered in `K`
+mass at least `c r^d`, then the Hausdorff distance between `K` and an i.i.d. sample of size `n` is
+`O_P((log n / n)^{1/d})`. -/
 theorem isBoundedInProbability_hausdorff_sampling_error
     {Ω X : Type*} [MeasurableSpace Ω] [MetricSpace X]
     [MeasurableSpace X] [BorelSpace X] [SecondCountableTopology X]
@@ -196,8 +219,11 @@ theorem sum_sub_sq_eq {n : ℕ} (a : Fin n → ℝ) (j : ℝ) :
     Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, ← Finset.mul_sum, ← Finset.sum_mul]
   ring
 
-/-- One-coordinate form of the double-centering identity. -/
-theorem centered_identity {n : ℕ} (a : Fin n → ℝ) (c : ℝ) (hc : c * n = 1) (i j : Fin n) :
+/-- One-coordinate form of the double-centering identity: for `c n = 1`, minus one half of the
+doubly centered squared differences `(a_i - a_j)²` is the product of the centered values
+`(a_i - ā)(a_j - ā)`. -/
+theorem neg_half_mul_doubleCentered_sq_sub_eq {n : ℕ} (a : Fin n → ℝ) (c : ℝ) (hc : c * n = 1)
+    (i j : Fin n) :
     -(1 / 2 : ℝ) * ((a i - a j) ^ 2 - c * ∑ l, (a l - a j) ^ 2 - c * ∑ l, (a i - a l) ^ 2 +
       c ^ 2 * ∑ l, ∑ l', (a l - a l') ^ 2) =
       (a i - c * ∑ l, a l) * (a j - c * ∑ l, a l) := by
@@ -212,21 +238,21 @@ theorem centered_identity {n : ℕ} (a : Fin n → ℝ) (c : ℝ) (hc : c * n = 
     ← Finset.mul_sum, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
   linear_combination ((a i ^ 2 + a j ^ 2) / 2 - c * ∑ l, a l ^ 2) * hc
 
-/-- Squared Euclidean distance in coordinates. -/
-theorem euclideanSpace_norm_sub_sq {n : ℕ} (u v : EuclideanSpace ℝ (Fin n)) :
-    ‖u - v‖ ^ 2 = ∑ k, (u k - v k) ^ 2 := by
-  rw [EuclideanSpace.norm_sq_eq]
-  simp [Real.norm_eq_abs, sq_abs]
-
-/-- GAPS 108.8, Schoenberg's Euclidean-distance criterion by double centering. -/
+/-- GAPS 108.8, Schoenberg's Euclidean-distance criterion by double centering: a symmetric matrix
+`D` with zero diagonal is a matrix of squared Euclidean distances `‖x_i - x_j‖²` exactly when
+`-½ J D J` is positive semidefinite, where `J` is the centering matrix. The points can be taken in
+`ℝ^n`; classical multidimensional scaling recovers them from a square root of `-½ J D J`. -/
 theorem posSemidef_double_centering_iff_sq_euclidean_distances
-    {n : ℕ} (hn : 0 < n) (D : Matrix (Fin n) (Fin n) ℝ)
+    {n : ℕ} (D : Matrix (Fin n) (Fin n) ℝ)
     (hsym : D.IsSymm) (hdiag : ∀ i, D i i = 0) :
     let J := (1 : Matrix (Fin n) (Fin n) ℝ) - (n : ℝ)⁻¹ • Matrix.of (fun _ _ ↦ (1 : ℝ));
     ((-(1 / 2 : ℝ)) • (J * D * J)).PosSemidef ↔
       ∃ x : Fin n → EuclideanSpace ℝ (Fin n), ∀ i j, D i j = ‖x i - x j‖ ^ 2 := by
   intro J
   change ((-(1 / 2 : ℝ)) • (centeringMatrix n * D * centeringMatrix n)).PosSemidef ↔ _
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · exact ⟨fun _ ↦ ⟨Fin.elim0, fun i ↦ i.elim0⟩,
+      fun _ ↦ by convert Matrix.PosSemidef.zero; exact Subsingleton.elim _ _⟩
   set c : ℝ := (n : ℝ)⁻¹ with hcdef
   have hc : c * n = 1 := inv_mul_cancel₀ (by exact_mod_cast hn.ne')
   set B := (-(1 / 2 : ℝ)) • (centeringMatrix n * D * centeringMatrix n) with hBdef
@@ -243,7 +269,8 @@ theorem posSemidef_double_centering_iff_sq_euclidean_distances
       have h1 : Cᴴ = C := (CFC.sqrt_nonneg B).isSelfAdjoint.star_eq
       rw [h1, CFC.sqrt_mul_sqrt_self B hB0]
     refine ⟨fun i ↦ WithLp.toLp 2 fun k ↦ C k i, fun i j ↦ ?_⟩
-    rw [euclideanSpace_norm_sub_sq]
+    rw [EuclideanSpace.real_norm_sq_eq]
+    simp only [PiLp.sub_apply]
     have hentry : ∀ i j, B i j = ∑ k, C k i * C k j := fun i j ↦ by
       rw [← hCC, Matrix.mul_apply]
       simp [Matrix.conjTranspose_apply]
@@ -251,7 +278,6 @@ theorem posSemidef_double_centering_iff_sq_euclidean_distances
       rw [hentry, hentry, hentry, ← Finset.sum_add_distrib, Finset.mul_sum,
         ← Finset.sum_sub_distrib]
       exact Finset.sum_congr rfl fun k _ ↦ by ring
-    dsimp only
     rw [this, hB, hB, hB, hdiag, hdiag, hcol i, hcol j]
     ring
   · rintro ⟨x, hx⟩
@@ -261,7 +287,7 @@ theorem posSemidef_double_centering_iff_sq_euclidean_distances
       ext i j
       rw [Matrix.mul_apply, hB]
       simp only [Matrix.conjTranspose_apply, star_trivial, C, Matrix.of_apply, m]
-      simp only [hx, euclideanSpace_norm_sub_sq]
+      simp only [hx, EuclideanSpace.real_norm_sq_eq, PiLp.sub_apply]
       rw [Finset.sum_comm (f := fun k l ↦ (x k l - x j l) ^ 2),
         Finset.sum_comm (f := fun k l ↦ (x i l - x k l) ^ 2)]
       have hdouble : ∑ k, ∑ l, ∑ q, (x k q - x l q) ^ 2 =
@@ -272,63 +298,42 @@ theorem posSemidef_double_centering_iff_sq_euclidean_distances
       rw [hdouble, Finset.mul_sum, Finset.mul_sum, Finset.mul_sum, ← Finset.sum_sub_distrib,
         ← Finset.sum_sub_distrib, ← Finset.sum_add_distrib, Finset.mul_sum]
       exact Finset.sum_congr rfl fun q _ ↦ by
-        have := centered_identity (fun l ↦ x l q) c hc i j
+        have := neg_half_mul_doubleCentered_sq_sub_eq (fun l ↦ x l q) c hc i j
         simp only at this
         linarith
     rw [hBC]
     exact Matrix.posSemidef_conjTranspose_mul_self C
 
 /-- GAPS 108.10: squared-distance comparisons over a set are equivalent to distance comparisons
-with the Euclidean expectation, for any fixed candidate point.
-Uses TauCeti's covariance-trace decomposition of the second moment about a point. -/
+with the Euclidean expectation. For a law `P` on `ℝ^d` with finite second moment, a candidate point
+`m` minimizes `p ↦ E ‖X - p‖²` over `S` exactly when it is a point of `S` nearest to `E X`; in
+particular the extrinsic mean on `S` is the nearest-point projection of the Euclidean mean. The
+proof uses TauCeti's covariance-trace decomposition of the second moment about a point. -/
 theorem extrinsic_mean_iff_nearest_expectation {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure P] (h2 : MemLp id 2 P) (S : Set (EuclideanSpace ℝ (Fin d)))
-    (m : EuclideanSpace ℝ (Fin d))  :
+    (m : EuclideanSpace ℝ (Fin d)) :
     (∀ p ∈ S, (∫ x, ‖x - m‖ ^ 2 ∂P) ≤ ∫ x, ‖x - p‖ ^ 2 ∂P) ↔
       ∀ p ∈ S, ‖(∫ x, x ∂P) - m‖ ≤ ‖(∫ x, x ∂P) - p‖ := by
-  constructor
-  · intro h p hp
-    have hcomp := h p hp
-    rw [TauCeti.integral_norm_sub_sq_eq_norm_integral_sub_sq_add_trace_covMatrix P h2 m,
-      TauCeti.integral_norm_sub_sq_eq_norm_integral_sub_sq_add_trace_covMatrix P h2 p] at hcomp
-    nlinarith [norm_nonneg ((∫ x, x ∂P) - m), norm_nonneg ((∫ x, x ∂P) - p)]
-  · intro h p hp
-    have hcomp := h p hp
-    rw [TauCeti.integral_norm_sub_sq_eq_norm_integral_sub_sq_add_trace_covMatrix P h2 m,
-      TauCeti.integral_norm_sub_sq_eq_norm_integral_sub_sq_add_trace_covMatrix P h2 p]
-    nlinarith [norm_nonneg ((∫ x, x ∂P) - m), norm_nonneg ((∫ x, x ∂P) - p)]
+  simp only [TauCeti.integral_norm_sub_sq_eq_norm_integral_sub_sq_add_trace_covMatrix P h2,
+    add_le_add_iff_right]
+  exact forall₂_congr fun p _ ↦ pow_le_pow_iff_left₀ (norm_nonneg _) (norm_nonneg _) two_ne_zero
 
-/-- GAPS 108.10, projected empirical-mean central limit theorem. -/
+/-- GAPS 108.10, projected empirical-mean central limit theorem (delta method): for an i.i.d.
+sample with finite second moments, mean `m` and covariance matrix `C`, and a measurable map `proj`
+differentiable at `m` with derivative `D`, `√n (proj(X̄_n) - proj m)` converges in distribution to
+the image of `N(0, C)` under `D`. -/
 theorem tendstoInDistribution_projected_sampleAverage {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (hiid : IsIndependentIdenticallyDistributed μ X P)
-      (h2 : MemLp id 2 P) :
-    let m := ∫ x, x ∂P;
-    let C := Matrix.of (fun i j ↦ ∫ x, (x i - m i) * (x j - m j) ∂P);
-    ∀ (proj : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)),
-    ∀ (_hm : Measurable proj),
-    ∀ (D : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)),
-    ∀ (_hd : HasFDerivAt proj D m),
-    TendstoInDistribution μ (fun n ω ↦ Real.sqrt n • (proj (sampleAverage X n ω) - proj m))
-      ((multivariateGaussian 0 C).map D) := by
-  intro m C proj hm D hd
-  have hC : TauCeti.covMatrix P = C := by
-    ext i j
-    rw [TauCeti.covMatrix_apply]
-    dsimp only [ProbabilityTheory.covariance]
-    change (∫ x, (x i - ∫ z, z i ∂P) * (x j - ∫ z, z j ∂P) ∂P) =
-      ∫ x, (x i - m i) * (x j - m j) ∂P
-    have hmcoord : ∀ k : Fin d, (∫ z, z k ∂P) = m k := by
-      intro k
-      exact (EuclideanSpace.proj k : EuclideanSpace ℝ (Fin d) →L[ℝ] ℝ).integral_comp_id_comm
-        (h2.integrable (by norm_num))
-    simp only [hmcoord]
-  have hlim := tendstoInDistribution_sqrt_smul_sampleAverage μ P X hiid h2
-  rw [hC] at hlim
-  exact (tendstoInDistribution_delta_method μ (fun n ω ↦ sampleAverage X n ω)
+    (h2 : MemLp id 2 P) (proj : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
+    (hm : Measurable proj) (D : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d))
+    (hd : HasFDerivAt proj D (∫ x, x ∂P)) :
+    TendstoInDistribution μ
+      (fun n ω ↦ Real.sqrt n • (proj (sampleAverage X n ω) - proj (∫ x, x ∂P)))
+      ((multivariateGaussian 0 (TauCeti.covMatrix P)).map D) :=
+  (tendstoInDistribution_delta_method μ (fun n ω ↦ sampleAverage X n ω)
     (fun n ↦ (Finset.measurable_fun_sum _ fun i _ ↦ hiid.1 i).const_smul ((n : ℝ)⁻¹))
-    m (multivariateGaussian 0 C) proj hm D hd hlim).1
-
+    _ _ proj hm D hd (tendstoInDistribution_sqrt_smul_sampleAverage μ P X hiid h2)).1
 
 end CKSD

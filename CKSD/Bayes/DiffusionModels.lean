@@ -1,21 +1,42 @@
 module
 
 public import CKSD.Bayes.MeanField
-public import CKSD.Bayes.ParticleAndDiffusion
+public import CKSD.Bayes.Diffusion
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
 public import Mathlib.Analysis.Calculus.LineDeriv.IntegrationByParts
 
 /-!
 # Time reversal, diffusion sampling, and marginal-preserving dynamics
 
-Laws of forward diffusions are weak solutions of their Fokker–Planck equations
-(`IsFokkerPlanckSolution`), and the probability-flow statement uses TauCeti's continuity equation;
-the reverse-time stochastic differential equation of Anderson and Haussmann–Pardoux needs
-stochastic integration and is not stated. For the variance-exploding process, the smoothed law
-`π * N(0, tI)` is an explicit push-forward and its score is written by the Tweedie formula
-`∇ log πₜ(x) = 𝔼[(Y - x)/t | Y + √t ξ = x]` as a ratio of Gaussian integrals. The DDPM sampler is
-iterated on laws through `ddpmStep`. Diffusions with prescribed marginals are stated with a
-constant noise level, for which the equation is pathwise. Sources: GAPS 104.63, 104.75, 104.76.
+Results on score-based generative models. Laws of forward diffusions are weak solutions of their
+Fokker–Planck equations (`IsFokkerPlanckSolution`), and the probability-flow statement uses
+TauCeti's continuity equation; the reverse-time stochastic differential equation of Anderson and
+Haussmann–Pardoux needs stochastic integration and is not stated. For the variance-exploding
+process, the smoothed law `π * N(0, tI)` is an explicit push-forward and its score is written by
+the Tweedie formula `∇ log πₜ(x) = 𝔼[(Y - x)/t | Y + √t ξ = x]` as a ratio of Gaussian integrals.
+The DDPM sampler is iterated on laws through `ddpmStep`. Diffusions with prescribed marginals are
+stated with a constant noise level, for which the equation is pathwise.
+
+## Main definitions
+
+* `CKSD.probabilityFlowVelocity`: the velocity field of the probability-flow ODE.
+* `CKSD.varianceExplodingLaw`, `CKSD.varianceExplodingScore`: the law `π * N(0, tI)` and its score.
+* `CKSD.ddpmLaw`, `CKSD.ddpmStepRatio`: the law of the DDPM sampler and the step-ratio parameter.
+
+## Main results
+
+* `CKSD.probabilityFlow_isContinuityEquation_and_map`: the probability flow transports the
+  time-reversed marginals (GAPS 104.63).
+* `CKSD.klDiv_ddpmLaw_le`: the KL bound for DDPM under a second-moment assumption (GAPS 104.75),
+  with the step schedule `CKSD.exists_ddpm_geometric_schedule` and the parameter choice
+  `CKSD.ddpmStepRatio_le_half`, `CKSD.div_two_mul_add_two_mul_ddpmStepRatio_eq`,
+  `CKSD.one_add_inv_ddpmStepRatio_mul_log`.
+* `CKSD.isFokkerPlanckSolution_add_score_of_continuityEquation`: adding `ε ∇ log μₜ` to the drift
+  and noise of level `√(2ε)` preserves the marginals (GAPS 104.76).
+* `CKSD.map_marginalPreservingDiffusion`: the pathwise version at a constant noise level
+  (GAPS 104.76).
+* `CKSD.stochasticInterpolant_score_and_velocity`: score and velocity of stochastic interpolants
+  (GAPS 104.76).
 -/
 
 @[expose] public section
@@ -114,7 +135,7 @@ theorem klDiv_ddpmLaw_le {d : ℕ} (π : Measure (EuclideanSpace ℝ (Fin d)))
 /-- GAPS 104.75: the geometric step schedule. With `N` least such that `(1 - h̄)ᴺ T ≤ δ`, the times
 `τₙ = T - (1 - h̄)ⁿ T` for `n < N` and `τ_N = T - δ` satisfy the step hypothesis, and
 `N ≤ 1 + h̄⁻¹ log(T/δ)`. -/
-theorem ddpm_geometric_schedule (T δ hbar : ℝ) (hδ : 0 < δ) (hδT : δ < T) (hbar0 : 0 < hbar)
+theorem exists_ddpm_geometric_schedule (T δ hbar : ℝ) (hδ : 0 < δ) (hδT : δ < T) (hbar0 : 0 < hbar)
     (hbar1 : hbar ≤ 1 / 2) :
     ∃ N : ℕ, (1 - hbar) ^ N * T ≤ δ ∧ (∀ m < N, δ < (1 - hbar) ^ m * T) ∧
       let τ := fun n : ℕ ↦ if n < N then T - (1 - hbar) ^ n * T else T - δ
@@ -177,41 +198,58 @@ theorem ddpm_geometric_schedule (T δ hbar : ℝ) (hδ : 0 < δ) (hδT : δ < T)
       linarith
     linarith
 
-/-- GAPS 104.75: the parameter choice `T = m₂²/ε²`, `h̄ = ε²/(2d(1 + log(T/δ)))` turns the bound
-`m₂²/(2T) + 2h̄d(1 + log(T/δ))` into `3ε²/2`, is admissible (`h̄ ≤ 1/2`), and makes the schedule
-bound `1 + h̄⁻¹ log(T/δ)` equal to `1 + 2dε⁻²(1 + log(T/δ)) log(T/δ)`. -/
-theorem ddpm_parameter_choice (m₂ ε δ : ℝ) (d : ℕ) (hε : 0 < ε) (hεd : ε ^ 2 ≤ d)
-    (hδ : 0 < δ) (hδT : δ < m₂ ^ 2 / ε ^ 2) :
-    let T := m₂ ^ 2 / ε ^ 2
-    let hbar := ε ^ 2 / (2 * d * (1 + Real.log (T / δ)))
-    m₂ ^ 2 / (2 * T) + 2 * hbar * d * (1 + Real.log (T / δ)) = 3 / 2 * ε ^ 2 ∧
-      0 < hbar ∧ hbar ≤ 1 / 2 ∧
-      1 + hbar⁻¹ * Real.log (T / δ) =
-        1 + 2 * d / ε ^ 2 * (1 + Real.log (T / δ)) * Real.log (T / δ) := by
-  intro T hbar
-  have hε2 : 0 < ε ^ 2 := by positivity
-  have hd : (0 : ℝ) < d := hε2.trans_le hεd
-  have hT : 0 < T := hδ.trans hδT
-  have hm : m₂ ^ 2 ≠ 0 := by
-    intro h
-    simp only [T, h, zero_div] at hT
-    exact lt_irrefl 0 hT
+/-- Step ratio `h̄ = ε² / (2d(1 + log(T/δ)))` of the DDPM parameter choice of GAPS 104.75. -/
+def ddpmStepRatio (d : ℕ) (ε T δ : ℝ) : ℝ := ε ^ 2 / (2 * d * (1 + Real.log (T / δ)))
+
+/-- GAPS 104.75: the parameter choice `h̄ = ε²/(2d(1 + log(T/δ)))` is positive for
+`0 < ε² ≤ d` and `0 < δ < T`. -/
+theorem ddpmStepRatio_pos {d : ℕ} {ε T δ : ℝ} (hε : 0 < ε) (hεd : ε ^ 2 ≤ d) (hδ : 0 < δ)
+    (hδT : δ < T) : 0 < ddpmStepRatio d ε T δ := by
+  have hd : (0 : ℝ) < d := (pow_pos hε 2).trans_le hεd
+  have hL : 0 < Real.log (T / δ) := Real.log_pos ((one_lt_div hδ).2 hδT)
+  unfold ddpmStepRatio
+  positivity
+
+/-- GAPS 104.75: the parameter choice `h̄ = ε²/(2d(1 + log(T/δ)))` is admissible, `h̄ ≤ 1/2`, for
+`0 < ε² ≤ d` and `0 < δ < T`. -/
+theorem ddpmStepRatio_le_half {d : ℕ} {ε T δ : ℝ} (hε : 0 < ε) (hεd : ε ^ 2 ≤ d) (hδ : 0 < δ)
+    (hδT : δ < T) : ddpmStepRatio d ε T δ ≤ 1 / 2 := by
+  have hd : (0 : ℝ) < d := (pow_pos hε 2).trans_le hεd
   have hL : 0 < Real.log (T / δ) := Real.log_pos ((one_lt_div hδ).2 hδT)
   have hden : 0 < 2 * d * (1 + Real.log (T / δ)) := by positivity
-  refine ⟨?_, div_pos hε2 hden, ?_, ?_⟩
-  · have h1 : m₂ ^ 2 / (2 * T) = ε ^ 2 / 2 := by
-      have hm' : m₂ ≠ 0 := fun h ↦ hm (by rw [h]; ring)
-      simp only [T]
-      field_simp
-    have h2 : 2 * hbar * d * (1 + Real.log (T / δ)) = ε ^ 2 := by
-      simp only [hbar]
-      field_simp
-    rw [h1, h2]
-    ring
-  · rw [div_le_iff₀ hden]
-    nlinarith
-  · simp only [hbar, inv_div]
+  rw [ddpmStepRatio, div_le_iff₀ hden]
+  nlinarith
+
+/-- GAPS 104.75: with `T = m₂²/ε²` and `h̄ = ε²/(2d(1 + log(T/δ)))`, the deterministic part
+`m₂²/(2T) + 2h̄d(1 + log(T/δ))` of the KL bound equals `3ε²/2`. -/
+theorem div_two_mul_add_two_mul_ddpmStepRatio_eq {d : ℕ} {m₂ ε δ : ℝ} (hε : 0 < ε)
+    (hεd : ε ^ 2 ≤ d) (hδ : 0 < δ) (hδT : δ < m₂ ^ 2 / ε ^ 2) :
+    m₂ ^ 2 / (2 * (m₂ ^ 2 / ε ^ 2)) +
+        2 * ddpmStepRatio d ε (m₂ ^ 2 / ε ^ 2) δ * d * (1 + Real.log (m₂ ^ 2 / ε ^ 2 / δ)) =
+      3 / 2 * ε ^ 2 := by
+  have hd : (0 : ℝ) < d := (pow_pos hε 2).trans_le hεd
+  have hT : 0 < m₂ ^ 2 / ε ^ 2 := hδ.trans hδT
+  have hm' : m₂ ≠ 0 := by
+    rintro rfl
+    simp at hT
+  have hL : 0 < Real.log (m₂ ^ 2 / ε ^ 2 / δ) := Real.log_pos ((one_lt_div hδ).2 hδT)
+  have h1 : m₂ ^ 2 / (2 * (m₂ ^ 2 / ε ^ 2)) = ε ^ 2 / 2 := by field_simp
+  have h2 : 2 * ddpmStepRatio d ε (m₂ ^ 2 / ε ^ 2) δ * d *
+      (1 + Real.log (m₂ ^ 2 / ε ^ 2 / δ)) = ε ^ 2 := by
+    have h0 : 1 + Real.log (m₂ ^ 2 / ε ^ 2 / δ) ≠ 0 := by positivity
+    simp only [ddpmStepRatio]
+    generalize 1 + Real.log (m₂ ^ 2 / ε ^ 2 / δ) = L at h0 ⊢
     field_simp
+  rw [h1, h2]
+  ring
+
+/-- GAPS 104.75: with `h̄ = ε²/(2d(1 + log(T/δ)))`, the schedule bound `1 + h̄⁻¹ log(T/δ)` on the
+number of steps equals `1 + 2dε⁻²(1 + log(T/δ)) log(T/δ)`. -/
+theorem one_add_inv_ddpmStepRatio_mul_log (d : ℕ) (ε T δ : ℝ) :
+    1 + (ddpmStepRatio d ε T δ)⁻¹ * Real.log (T / δ) =
+      1 + 2 * d / ε ^ 2 * (1 + Real.log (T / δ)) * Real.log (T / δ) := by
+  simp only [ddpmStepRatio, inv_div]
+  ring
 
 /-- A linear functional applied to a gradient, in Euclidean coordinates. -/
 theorem clm_apply_gradient_eq_sum {d : ℕ} (L : EuclideanSpace ℝ (Fin d) →L[ℝ] ℝ)

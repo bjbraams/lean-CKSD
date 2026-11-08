@@ -4,11 +4,33 @@ public import CKSD.Nonparametric.Models
 public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
 
 /-!
-# Shape constraints and penalized projection models
+# Isotonic regression and penalized model selection
 
-The isotonic risk bounds are in the Gaussian-noise scope, with the empirical squared norm
-normalization `1/n`. The model-selection statement permits a countable collection of linear
-models, specifies the measurable selected index, and uses actual orthogonal projections.
+Isotonic least squares fits a nondecreasing vector to responses `y₁, …, yₙ`. This file proves
+that the fit exists and is unique, characterizes it by its variational inequality, and shows
+that it is given by the max–min formula `θ̂ᵢ = max_{a ≤ i} min_{b ≥ i} ȳ[a, b]` of block
+averages. It also states the Gaussian adaptive risk bound and the matching minimax lower bound,
+with the empirical squared norm normalized by `1/n`, and the oracle inequality for penalized
+least-squares selection among countably many linear models with orthogonal-projection fits.
+
+## Main definitions
+
+* `CKSD.isotonicCone n`: the cone of nondecreasing vectors in `ℝⁿ`.
+* `CKSD.isotonicLeastSquares y`: the max–min block-average formula.
+* `CKSD.isotonicGaussianRisk`, `CKSD.isotonicGaussianMinimaxRisk`: Gaussian risks.
+* `CKSD.projectionModelFit`, `CKSD.penalizedModelCriterion`, `CKSD.selectedProjectionRisk`:
+  projection fits, the penalized residual criterion, and the risk of the selected fit.
+
+## Main results
+
+* `CKSD.existsUnique_isIsotonicRegressionEstimator`: existence and uniqueness of the fit.
+* `CKSD.IsIsotonicRegressionEstimator.sum_mul_sub_nonpos`: the variational inequality.
+* `CKSD.isIsotonicRegressionEstimator_isotonicLeastSquares`: the max–min formula.
+* `CKSD.isotonicGaussianRisk_le`, `CKSD.isotonicGaussianMinimaxRisk_lower_bound`: the
+  `n^{-2/3}` adaptive upper bound and minimax lower bound (stated).
+* `CKSD.selectedProjectionRisk_oracle_bound`: the oracle inequality for penalized model
+  selection (stated).
+
 Sources: GAPS 103.27 and 103.35.
 -/
 
@@ -23,6 +45,14 @@ namespace CKSD
 
 /-- Cone of nondecreasing finite real vectors. -/
 def isotonicCone (n : ℕ) : Set (Fin n → ℝ) := {θ | Monotone θ}
+
+/-- The isotonic cone is convex. -/
+theorem convex_isotonicCone (n : ℕ) : Convex ℝ (isotonicCone n) := by
+  intro x hx y hy a b ha hb _ i j hij
+  change a * x i + b * y i ≤ a * x j + b * y j
+  have hx' := hx hij
+  have hy' := hy hij
+  nlinarith [mul_nonneg ha (sub_nonneg.mpr hx'), mul_nonneg hb (sub_nonneg.mpr hy')]
 
 /-- Variation of a finite real vector, including the empty-vector value zero. -/
 def finiteVectorVariation {n : ℕ} (θ : Fin n → ℝ) : ℝ :=
@@ -57,19 +87,15 @@ theorem existsUnique_isIsotonicRegressionEstimator {n : ℕ} (y : Fin n → ℝ)
   let K : Set (EuclideanSpace ℝ (Fin n)) := {x | Monotone (fun i ↦ x i)}
   have hclosed : IsClosed K :=
     isClosed_monotone.preimage (PiLp.continuous_ofLp 2 (fun _ : Fin n ↦ ℝ))
-  have hconv : Convex ℝ K := by
-    intro x hx z hz a b ha hb _ i j hij
-    change a * x i + b * z i ≤ a * x j + b * z j
-    have hx' := hx hij
-    have hz' := hz hij
-    nlinarith [mul_nonneg ha (sub_nonneg.mpr hx'), mul_nonneg hb (sub_nonneg.mpr hz')]
+  have hconv : Convex ℝ K :=
+    (convex_isotonicCone n).linear_preimage (WithLp.linearEquiv 2 ℝ (Fin n → ℝ)).toLinearMap
   have hne : K.Nonempty := ⟨0, fun _ _ _ ↦ le_rfl⟩
-  letI : Nonempty K := hne.to_subtype
+  have : Nonempty K := hne.to_subtype
   let u : EuclideanSpace ℝ (Fin n) := WithLp.toLp 2 y
   have hsq (a : EuclideanSpace ℝ (Fin n)) :
       ‖u - a‖ ^ 2 = ∑ i, (y i - a i) ^ 2 := by
     rw [PiLp.norm_sq_eq_of_L2]
-    simp only [u, PiLp.sub_apply, PiLp.toLp_apply, Real.norm_eq_abs, sq_abs]
+    simp only [u, PiLp.sub_apply, Real.norm_eq_abs, sq_abs]
   obtain ⟨v, hv, hvnorm⟩ :=
     exists_norm_eq_iInf_of_complete_convex hne hclosed.isComplete hconv u
   have hbelow (a : K) : (⨅ w : K, ‖u - w‖) ≤ ‖u - a‖ :=
@@ -137,47 +163,54 @@ theorem IsIsotonicRegressionEstimator.sum_mul_sub_nonpos {n : ℕ} {y θ : Fin n
     nlinarith
   linarith
 
-/-- Suffix sums of the isotonic residual are nonpositive, vanish at `0`, and vanish at
-every jump of the fit. -/
-theorem IsIsotonicRegressionEstimator.suffix_sum_props {n : ℕ} {y θ : Fin n → ℝ}
-    (hθ : IsIsotonicRegressionEstimator y θ) :
-    (∀ k : ℕ, ∑ j : Fin n, (if k ≤ (j : ℕ) then y j - θ j else 0) ≤ 0) ∧
-    0 ≤ ∑ j : Fin n, (y j - θ j) ∧
-    ∀ (k : ℕ) (hk : 0 < k) (hkn : k < n), θ ⟨k - 1, by omega⟩ < θ ⟨k, hkn⟩ →
-      0 ≤ ∑ j : Fin n, (if k ≤ (j : ℕ) then y j - θ j else 0) := by
-  refine ⟨fun k ↦ ?_, ?_, fun k hk hkn hjump ↦ ?_⟩
-  · have := hθ.sum_mul_sub_nonpos (fun j ↦ θ j + if k ≤ (j : ℕ) then 1 else 0) (by
-      intro i j hij
-      have h1 := hθ.1 hij
-      have h2 : (i : ℕ) ≤ j := hij
-      simp only
-      split_ifs with ha hb hb <;> linarith)
-    convert this using 2 with j
-    split_ifs <;> ring
-  · have := hθ.sum_mul_sub_nonpos (fun j ↦ θ j - 1) (fun i j hij ↦ by
-      have := hθ.1 hij; simp only; linarith)
-    have e : ∑ i, (y i - θ i) * (θ i - 1 - θ i) = -∑ j, (y j - θ j) := by
-      rw [← Finset.sum_neg_distrib]; refine Finset.sum_congr rfl fun j _ ↦ ?_; ring
-    linarith
-  · set g := θ ⟨k, hkn⟩ - θ ⟨k - 1, by omega⟩ with hg
-    have hg0 : 0 < g := by linarith
-    have := hθ.sum_mul_sub_nonpos (fun j ↦ θ j - if k ≤ (j : ℕ) then g else 0) (by
-      intro i j hij
-      have h1 := hθ.1 hij
-      have h2 : (i : ℕ) ≤ j := hij
-      simp only
-      split_ifs with ha hb hb
-      · linarith
-      · omega
-      · have hi : θ i ≤ θ ⟨k - 1, by omega⟩ := hθ.1 (show (i : ℕ) ≤ k - 1 by omega)
-        have hj : θ ⟨k, hkn⟩ ≤ θ j := hθ.1 (show k ≤ (j : ℕ) by omega)
-        linarith
-      · linarith)
-    have e : ∑ i, (y i - θ i) * (θ i - (if k ≤ (i : ℕ) then g else 0) - θ i) =
-        -g * ∑ j : Fin n, (if k ≤ (j : ℕ) then y j - θ j else 0) := by
-      rw [Finset.mul_sum]; refine Finset.sum_congr rfl fun j _ ↦ ?_; split_ifs <;> ring
-    rw [e] at this
-    nlinarith
+/-- Suffix sums of the isotonic residual are nonpositive: `∑_{j ≥ k} (yⱼ - θ̂ⱼ) ≤ 0`. -/
+theorem IsIsotonicRegressionEstimator.sum_ite_le_sub_nonpos {n : ℕ} {y θ : Fin n → ℝ}
+    (hθ : IsIsotonicRegressionEstimator y θ) (k : ℕ) :
+    ∑ j : Fin n, (if k ≤ (j : ℕ) then y j - θ j else 0) ≤ 0 := by
+  have := hθ.sum_mul_sub_nonpos (fun j ↦ θ j + if k ≤ (j : ℕ) then 1 else 0) (by
+    intro i j hij
+    have h1 := hθ.1 hij
+    have h2 : (i : ℕ) ≤ j := hij
+    simp only
+    split_ifs with ha hb hb <;> linarith)
+  convert this using 2 with j
+  split_ifs <;> ring
+
+/-- The total isotonic residual is nonnegative: `0 ≤ ∑ⱼ (yⱼ - θ̂ⱼ)`. Together with
+`IsIsotonicRegressionEstimator.sum_ite_le_sub_nonpos` for `k = 0` it vanishes. -/
+theorem IsIsotonicRegressionEstimator.sum_sub_nonneg {n : ℕ} {y θ : Fin n → ℝ}
+    (hθ : IsIsotonicRegressionEstimator y θ) : 0 ≤ ∑ j : Fin n, (y j - θ j) := by
+  have := hθ.sum_mul_sub_nonpos (fun j ↦ θ j - 1) (fun i j hij ↦ by
+    have := hθ.1 hij; simp only; linarith)
+  have e : ∑ i, (y i - θ i) * (θ i - 1 - θ i) = -∑ j, (y j - θ j) := by
+    rw [← Finset.sum_neg_distrib]; refine Finset.sum_congr rfl fun j _ ↦ ?_; ring
+  linarith
+
+/-- At a jump `θ̂_{k-1} < θ̂_k` of the isotonic fit, the suffix sum of the residual from `k` on is
+nonnegative, hence zero by `IsIsotonicRegressionEstimator.sum_ite_le_sub_nonpos`. -/
+theorem IsIsotonicRegressionEstimator.sum_ite_le_sub_nonneg_of_lt {n : ℕ} {y θ : Fin n → ℝ}
+    (hθ : IsIsotonicRegressionEstimator y θ) (k : ℕ) (hk : 0 < k) (hkn : k < n)
+    (hjump : θ ⟨k - 1, by omega⟩ < θ ⟨k, hkn⟩) :
+    0 ≤ ∑ j : Fin n, (if k ≤ (j : ℕ) then y j - θ j else 0) := by
+  set g := θ ⟨k, hkn⟩ - θ ⟨k - 1, by omega⟩ with hg
+  have hg0 : 0 < g := by linarith
+  have := hθ.sum_mul_sub_nonpos (fun j ↦ θ j - if k ≤ (j : ℕ) then g else 0) (by
+    intro i j hij
+    have h1 := hθ.1 hij
+    have h2 : (i : ℕ) ≤ j := hij
+    simp only
+    split_ifs with ha hb hb
+    · linarith
+    · omega
+    · have hi : θ i ≤ θ ⟨k - 1, by omega⟩ := hθ.1 (show (i : ℕ) ≤ k - 1 by omega)
+      have hj : θ ⟨k, hkn⟩ ≤ θ j := hθ.1 (show k ≤ (j : ℕ) by omega)
+      linarith
+    · linarith)
+  have e : ∑ i, (y i - θ i) * (θ i - (if k ≤ (i : ℕ) then g else 0) - θ i) =
+      -g * ∑ j : Fin n, (if k ≤ (j : ℕ) then y j - θ j else 0) := by
+    rw [Finset.mul_sum]; refine Finset.sum_congr rfl fun j _ ↦ ?_; split_ifs <;> ring
+  rw [e] at this
+  nlinarith
 
 /-- GAPS 103.27: the max–min block-average formula is the isotonic least-squares fit. -/
 theorem isIsotonicRegressionEstimator_isotonicLeastSquares {n : ℕ} (y : Fin n → ℝ) :
@@ -185,7 +218,9 @@ theorem isIsotonicRegressionEstimator_isotonicLeastSquares {n : ℕ} (y : Fin n 
   classical
   obtain ⟨θ, hθ, -⟩ := existsUnique_isIsotonicRegressionEstimator y
   suffices h : isotonicLeastSquares y = θ by rw [h]; exact hθ
-  obtain ⟨hneg, htot, hjump⟩ := hθ.suffix_sum_props
+  have hneg := hθ.sum_ite_le_sub_nonpos
+  have htot := hθ.sum_sub_nonneg
+  have hjump := hθ.sum_ite_le_sub_nonneg_of_lt
   set Sfx : ℕ → ℝ := fun k ↦ ∑ j : Fin n, (if k ≤ (j : ℕ) then y j - θ j else 0) with hSfx
   have hS0 : Sfx 0 = 0 := le_antisymm (hneg 0) (by simpa [Sfx] using htot)
   have hSn : ∀ k, n ≤ k → Sfx k = 0 := fun k hk ↦
@@ -291,18 +326,23 @@ theorem isIsotonicRegressionEstimator_isotonicLeastSquares {n : ℕ} (y : Fin n 
   refine le_antisymm (ciSup_le hinner) ?_
   exact le_ciSup_of_le (finite_range _).bddAbove ⟨a₀, ha₀i⟩ hinner₀
 
-/-- GAPS 103.27: the adaptive variation risk bound for Gaussian isotonic least squares.
-The more general independent finite-variance-error version is not asserted here. -/
+/-- GAPS 103.27: the adaptive variation risk bound for Gaussian isotonic least squares. There
+is a universal constant `C` such that for every nondecreasing `θ ∈ ℝⁿ` and observations
+`yᵢ = θᵢ + εᵢ` with independent standard Gaussian errors, the isotonic least-squares fit `θ̂`
+satisfies `E[n⁻¹ ‖θ̂ - θ‖²] ≤ C ((V(θ)/n)^{2/3} + log(e n)/n)`, where `V(θ) = θₙ - θ₁`. The more
+general independent finite-variance-error version is not asserted here. -/
 theorem isotonicGaussianRisk_le :
     ∃ C > (0 : ℝ), ∀ n : ℕ, 0 < n → ∀ θ : Fin n → ℝ, Monotone θ →
-      ∀ T : (Fin n → ℝ) → (Fin n → ℝ), Measurable T →
+      ∀ T : (Fin n → ℝ) → (Fin n → ℝ),
       (∀ y, IsIsotonicRegressionEstimator y (T y)) →
       isotonicGaussianRisk θ T ≤ ENNReal.ofReal
         (C * (Real.rpow (finiteVectorVariation θ / n) (2 / 3 : ℝ) +
           Real.log (Real.exp 1 * n) / n)) := by
   sorry
 
-/-- GAPS 103.27: no estimator improves the Gaussian bounded-isotonic minimax rate. -/
+/-- GAPS 103.27: no estimator improves the Gaussian bounded-isotonic minimax rate. There is a
+universal `c > 0` such that the minimax risk `inf_T sup_θ E[n⁻¹ ‖T(y) - θ‖²]`, over measurable
+estimators and nondecreasing `θ` with `|θᵢ| ≤ 1`, is at least `c n^{-2/3}`. -/
 theorem isotonicGaussianMinimaxRisk_lower_bound :
     ∃ c > (0 : ℝ), ∀ n : ℕ, 0 < n →
       ENNReal.ofReal (c * Real.rpow (n : ℝ) (-2 / 3 : ℝ)) ≤
@@ -329,8 +369,12 @@ def selectedProjectionRisk {M : Type*} {n : ℕ}
   ∫⁻ y, ENNReal.ofReal (‖projectionModelFit S (select y) y - f‖ ^ 2 / n)
     ∂(multivariateGaussian f (σ ^ 2 • (1 : Matrix (Fin n) (Fin n) ℝ)))
 
-/-- GAPS 103.35: the countable-model oracle inequality for penalized least squares.
-The prior weights, dimension penalty, and empirical minimizer are explicit. -/
+/-- GAPS 103.35: the countable-model oracle inequality for penalized least squares. For a
+countable family of linear models `S m ⊆ ℝⁿ` with prior weights `π m > 0`, `∑ π m ≤ 1`,
+Gaussian noise of variance `σ²`, and a penalty
+`pen m ≥ κ σ² (dim S m + log (1 / π m)) / n` with `κ > κ₀`, the measurable minimizer `m̂` of the
+penalized residual criterion satisfies
+`E[n⁻¹ ‖Π_{m̂} y - f‖²] ≤ C (inf_m (n⁻¹ ‖f - Π_m f‖² + pen m) + σ² / n)`. -/
 theorem selectedProjectionRisk_oracle_bound :
     ∃ κ₀ > (0 : ℝ), ∀ κ > κ₀, ∃ C > (0 : ℝ),
       ∀ n : ℕ, 0 < n → ∀ (M : Type*) [Countable M] [Nonempty M]
@@ -347,18 +391,11 @@ theorem selectedProjectionRisk_oracle_bound :
         (C * ((⨅ m, ‖f - projectionModelFit S m f‖ ^ 2 / n + pen m) + σ ^ 2 / n)) := by
   sorry
 
-/-- The isotonic cone is convex. -/
-theorem convex_isotonicCone (n : ℕ) : Convex ℝ (isotonicCone n) := by
-  intro x hx y hy a b ha hb _ i j hij
-  change a * x i + b * y i ≤ a * x j + b * y j
-  have hx' := hx hij
-  have hy' := hy hij
-  nlinarith [mul_nonneg ha (sub_nonneg.mpr hx'), mul_nonneg hb (sub_nonneg.mpr hy')]
-
-/-- The fitted value is unchanged when the response already lies in the selected model. -/
-theorem projectionModelFit_of_mem {M : Type*} {n : ℕ}
+/-- The fitted value equals the response exactly when the response lies in the selected
+model. -/
+theorem projectionModelFit_eq_self_iff {M : Type*} {n : ℕ}
     (S : M → Submodule ℝ (EuclideanSpace ℝ (Fin n))) (m : M)
-    (y : EuclideanSpace ℝ (Fin n)) (hy : y ∈ S m) : projectionModelFit S m y = y := by
-  exact Submodule.starProjection_eq_self_iff.mpr hy
+    (y : EuclideanSpace ℝ (Fin n)) : projectionModelFit S m y = y ↔ y ∈ S m :=
+  Submodule.starProjection_eq_self_iff
 
 end CKSD

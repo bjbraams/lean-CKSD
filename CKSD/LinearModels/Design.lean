@@ -9,15 +9,41 @@ public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
 public import Mathlib.FieldTheory.Finite.GaloisField
 
 /-!
-# LinearModels: Design
+# Optimal and combinatorial experimental design
 
-Sources: `GAPS.md`, `SYNOPSIS105.md`, and `STRUCTURE105.md`.
-Declarations adapted from this project's section drafts.
-Randomization p-value validity uses Mathlib's minimum-on-a-finite-set theorem.
-Fisher's inequality uses Mathlib's matrix rank bounds `Matrix.rank_mul_le_left` and
+Results on the design of experiments: approximate D-optimal designs on a finite design space,
+randomization tests, balanced incomplete block designs, and mutually orthogonal Latin squares.
+
+## Main definitions
+
+* `CKSD.designInformationMatrix`: the information matrix `M(a) = ∑ᵢ aᵢ fᵢ fᵢᵀ` of a design
+  `a` (weights on a finite design space with regression vectors `fᵢ`).
+* `CKSD.randomizationPValue`: the randomization p-value `∑_{j : T_j ≥ T_i} w_j` of the
+  observed arrangement `i` under randomization weights `w`.
+
+## Main results
+
+* `CKSD.kiefer_wolfowitz_equivalence`: a design maximizes `det M(a)` if and only if the
+  standardized variance `fᵢᵀ M(w)⁻¹ fᵢ` is at most `p` everywhere, with equality on the support
+  (Kiefer–Wolfowitz equivalence theorem).
+* `CKSD.sum_ite_randomizationPValue_le`: randomization p-values are conservative,
+  `P(p ≤ α) ≤ α`, ties included.
+* `CKSD.fisher_inequality`: a balanced incomplete block design has at least as many blocks as
+  points (Fisher's inequality).
+* `CKSD.card_le_sub_one_of_orthogonalLatinSquares`: at most `s - 1` mutually orthogonal Latin
+  squares of order `s ≥ 2` exist, and `CKSD.exists_orthogonalLatinSquares_of_isPrimePow`: for a
+  prime power `s` this bound is attained.
+
+The proof of Fisher's inequality uses Mathlib's rank bounds `Matrix.rank_mul_le_left` and
 `Matrix.rank_le_width`; the complete families of orthogonal Latin squares use Mathlib's
 `GaloisField` and its cardinality `GaloisField.card`.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+
+## References
+
+* J. Kiefer and J. Wolfowitz, *The equivalence of two extremum problems*, Canad. J. Math. 12
+  (1960).
+* R. A. Fisher, *An examination of the different possible solutions of a problem in incomplete
+  blocks*, Ann. Eugenics 10 (1940).
 -/
 
 @[expose] public section
@@ -33,30 +59,39 @@ open scoped CKSD
 
 attribute [local instance] Classical.propDecidable
 
--- Use the common finite-sample measurable structure.
-attribute [local instance] finiteSampleMeasurableSpace
+/-- The information matrix `M(a) = ∑ᵢ aᵢ fᵢ fᵢᵀ` of a design with weights `a` on a finite
+design space whose points have regression vectors `f`. -/
+def designInformationMatrix {ι : Type*} [Fintype ι] {p : ℕ} (f : ι → EuclideanSpace ℝ (Fin p))
+    (a : ι → ℝ) : Matrix (Fin p) (Fin p) ℝ :=
+  Matrix.of fun j k ↦ ∑ i, a i * f i j * f i k
 
-/-- GAPS 105.37, Kiefer–Wolfowitz equivalence for a finite design space. -/
-theorem kiefer_wolfowitz_equivalence {s p : ℕ} (hp : 0 < p)
-    (f : Fin s → EuclideanSpace ℝ (Fin p)) (w : Fin s → ℝ)
-    (hw : ∀ i, 0 ≤ w i) (hw1 : ∑ i, w i = 1) :
-    let M := fun a : Fin s → ℝ ↦ Matrix.of (fun j k ↦ ∑ i, a i * f i j * f i k);
-    ∀ (hM : (M w).PosDef),
-    (∀ a, (∀ i, 0 ≤ a i) → (∑ i, a i = 1) → (M a).det ≤ (M w).det) ↔
-      (∀ i, matrixQuadraticForm (M w)⁻¹ (f i) ≤ p) ∧
-        ∀ i, 0 < w i → matrixQuadraticForm (M w)⁻¹ (f i) = p := by
+/-- GAPS 105.37, Kiefer–Wolfowitz equivalence for a finite design space: a probability design
+`w` with nonsingular information matrix maximizes `det M(a)` over all probability designs if and
+only if `fᵢᵀ M(w)⁻¹ fᵢ ≤ p` at every design point, with equality at the points of positive
+weight. -/
+theorem kiefer_wolfowitz_equivalence {ι : Type*} [Fintype ι] {p : ℕ}
+    (f : ι → EuclideanSpace ℝ (Fin p)) (w : ι → ℝ)
+    (hw : ∀ i, 0 ≤ w i) (hw1 : ∑ i, w i = 1) (hM : (designInformationMatrix f w).PosDef) :
+    (∀ a, (∀ i, 0 ≤ a i) → (∑ i, a i = 1) →
+        (designInformationMatrix f a).det ≤ (designInformationMatrix f w).det) ↔
+      (∀ i, matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f i) ≤ p) ∧
+        ∀ i, 0 < w i → matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f i) = p := by
   sorry
 
-/-- GAPS 105.38, conservative finite randomization p-values, including ties. -/
-theorem randomization_p_value_valid {s : ℕ} (w T : Fin s → ℝ)
-    (hw : ∀ i, 0 ≤ w i) (α : ℝ) (hα : 0 ≤ α) :
-    let p := fun i ↦ ∑ j, if T i ≤ T j then w j else 0;
-    (∑ i, if p i ≤ α then w i else 0) ≤ α := by
+/-- The randomization p-value of arrangement `i`: the total randomization weight of the
+arrangements `j` whose statistic `T j` is at least `T i`. -/
+def randomizationPValue {ι : Type*} [Fintype ι] (w T : ι → ℝ) (i : ι) : ℝ :=
+  ∑ j, if T i ≤ T j then w j else 0
+
+/-- GAPS 105.38, conservative finite randomization p-values, including ties: for nonnegative
+randomization weights `w` (of total mass at most one, in applications) and `0 ≤ α`, the total
+weight of the arrangements whose randomization p-value is at most `α` is at most `α`. -/
+theorem sum_ite_randomizationPValue_le {ι : Type*} [Fintype ι] (w T : ι → ℝ)
+    (hw : ∀ i, 0 ≤ w i) {α : ℝ} (hα : 0 ≤ α) :
+    (∑ i, if randomizationPValue w T i ≤ α then w i else 0) ≤ α := by
   classical
-  dsimp only
-  let p := fun i ↦ ∑ j, if T i ≤ T j then w j else 0
-  change (∑ i, if p i ≤ α then w i else 0) ≤ α
-  by_cases hs : ({i | p i ≤ α} : Set (Fin s)).Nonempty
+  set p := randomizationPValue w T
+  by_cases hs : ({i | p i ≤ α} : Set ι).Nonempty
   · obtain ⟨i, hi, hmin⟩ :=
       Set.exists_min_image {i | p i ≤ α} T (Set.toFinite _) hs
     calc
@@ -66,19 +101,21 @@ theorem randomization_p_value_valid {s : ℕ} (w T : Fin s → ℝ)
         intro j _
         by_cases hj : p j ≤ α
         · simp [hj, hmin j hj]
-        · simp only [if_neg hj]
+        · simp only [ite_eq_right hj]
           exact ite_nonneg (hw j) (le_refl 0)
       _ = p i := rfl
       _ ≤ α := hi
   · have hz : (∑ i, if p i ≤ α then w i else 0) = 0 := by
       apply Finset.sum_eq_zero
       intro i _
-      exact if_neg (fun hi ↦ hs ⟨i, hi⟩)
+      exact ite_eq_right (fun hi ↦ hs ⟨i, hi⟩)
     rw [hz]
     exact hα
 
-/-- GAPS 105.42, Fisher's inequality for nontrivial balanced incomplete blocks. -/
-theorem fisher_inequality_of_balanced_incomplete_block_design
+/-- GAPS 105.42, Fisher's inequality: in a balanced incomplete block design on `v` points with
+`b` blocks of size `k < v`, every point in `r > 0` blocks and every pair of distinct points in
+`ell` blocks, there are at least as many blocks as points, `v ≤ b`. -/
+theorem fisher_inequality
     (v b k r ell : ℕ) (hkv : k < v)
     (hr : 0 < r) (B : Fin b → Finset (Fin v))
     (hsize : ∀ j, (B j).card = k)
@@ -163,8 +200,9 @@ theorem fisher_inequality_of_balanced_incomplete_block_design
     _ ≤ N.rank := Matrix.rank_mul_le_left _ _
     _ ≤ b := Matrix.rank_le_width N
 
-/-- GAPS 105.44, the upper bound on a family of mutually orthogonal Latin squares. -/
-theorem card_orthogonal_latin_squares_le (s k : ℕ) (hs : 2 ≤ s)
+/-- GAPS 105.44, the upper bound on a family of mutually orthogonal Latin squares: there are at
+most `s - 1` pairwise orthogonal Latin squares of order `s ≥ 2`. -/
+theorem card_le_sub_one_of_orthogonalLatinSquares (s k : ℕ) (hs : 2 ≤ s)
     (L : Fin k → Fin s → Fin s → Fin s)
     (hLatin : ∀ i, IsLatinSquare (L i))
     (hortho : ∀ i j, i ≠ j → OrthogonalLatinSquares (L i) (L j)) : k ≤ s - 1 := by
@@ -195,7 +233,7 @@ theorem card_orthogonal_latin_squares_le (s k : ℕ) (hs : 2 ≤ s)
 
 /-- Over a finite field `F` identified with `Fin s`, the squares `(x, y) ↦ a x + y` for the
 nonzero elements `a` form a complete family of mutually orthogonal Latin squares. -/
-theorem exists_complete_orthogonal_latin_squares_of_equiv {F : Type*} [Field F] {t : ℕ}
+theorem exists_orthogonalLatinSquares_of_equiv {F : Type*} [Field F] {t : ℕ}
     (e : F ≃ Fin (t + 1)) :
     ∃ L : Fin t → Fin (t + 1) → Fin (t + 1) → Fin (t + 1),
       (∀ i, IsLatinSquare (L i)) ∧ ∀ i j, i ≠ j → OrthogonalLatinSquares (L i) (L j) := by
@@ -227,18 +265,19 @@ theorem exists_complete_orthogonal_latin_squares_of_equiv {F : Type*} [Field F] 
     simp only [Prod.mk.injEq]
     exact ⟨e.symm.injective hx, e.symm.injective hy⟩
 
-/-- GAPS 105.44, existence of a complete family at prime-power orders. -/
-theorem exists_complete_orthogonal_latin_squares_of_isPrimePow (s : ℕ) (hs : IsPrimePow s) :
+/-- GAPS 105.44, existence of a complete family at prime-power orders: for a prime power `s`
+there are `s - 1` pairwise orthogonal Latin squares of order `s`. -/
+theorem exists_orthogonalLatinSquares_of_isPrimePow (s : ℕ) (hs : IsPrimePow s) :
     ∃ L : Fin (s - 1) → Fin s → Fin s → Fin s,
       (∀ i, IsLatinSquare (L i)) ∧ ∀ i j, i ≠ j → OrthogonalLatinSquares (L i) (L j) := by
   obtain ⟨p, n, hp, hn, rfl⟩ := (isPrimePow_nat_iff s).1 hs
   have : Fact p.Prime := ⟨hp⟩
   have hcard : Nat.card (GaloisField p n) = p ^ n := GaloisField.card p n hn.ne'
-  obtain ⟨t, ht⟩ : ∃ t, p ^ n = t + 1 := ⟨p ^ n - 1, (Nat.sub_add_cancel (Nat.one_le_pow _ _ hp.pos)).symm⟩
+  obtain ⟨t, ht⟩ : ∃ t, p ^ n = t + 1 :=
+    ⟨p ^ n - 1, (Nat.sub_add_cancel (Nat.one_le_pow _ _ hp.pos)).symm⟩
   have e : GaloisField p n ≃ Fin (t + 1) := (Finite.equivFin _).trans (finCongr (hcard.trans ht))
-  obtain ⟨L, hL⟩ := exists_complete_orthogonal_latin_squares_of_equiv e
+  obtain ⟨L, hL⟩ := exists_orthogonalLatinSquares_of_equiv e
   rw [ht, Nat.add_sub_cancel]
   exact ⟨L, hL⟩
-
 
 end CKSD

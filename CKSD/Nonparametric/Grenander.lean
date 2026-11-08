@@ -357,7 +357,8 @@ theorem leastConcaveMajorant_eq_affine {F : ℝ → ℝ} (hF0 : ∀ t, 0 ≤ t �
     have hu' : (0 : ℝ) ≤ u := hu
     refine le_inf (hFG u hu') ?_
     rcases lt_or_ge u a with hua | hua
-    · exact (hFG u hu').trans (ConcaveOn.le_chord_of_ge hGc (show b ∈ Ici (0:ℝ) from hb) hu hab hua.le)
+    · exact (hFG u hu').trans
+        (ConcaveOn.le_chord_of_ge hGc (show b ∈ Ici (0:ℝ) from hb) hu hab hua.le)
     rcases lt_or_ge u b with hub | hub
     · rw [hconst u hua hub]
       have : G a ≤ L u := by
@@ -367,7 +368,8 @@ theorem leastConcaveMajorant_eq_affine {F : ℝ → ℝ} (hF0 : ∀ t, 0 ≤ t �
   have ht : 0 ≤ t := ha.trans hat
   have h1 := leastConcaveMajorant_le hmaj ht
   rw [← hGdef] at h1
-  have h2 := ConcaveOn.chord_le hGc (show a ∈ Ici (0:ℝ) from ha) (show b ∈ Ici (0:ℝ) from hb) hab hat htb
+  have h2 := ConcaveOn.chord_le hGc (show a ∈ Ici (0:ℝ) from ha) (show b ∈ Ici (0:ℝ) from hb)
+    hab hat htb
   simp only [Pi.inf_apply] at h1
   exact le_antisymm ((h1.trans inf_le_right)) h2
 
@@ -621,7 +623,8 @@ theorem grenanderEstimator_isMaximumLikelihood {Ω : Type*} (X : ℕ → Ω → 
     have : 0 < t := lt_of_le_of_lt (hynn j hj.le) h1
     simp only [ĝ, this, ite_true]
     exact hderiv j hj t h1 h2
-  have hrep : ĝ = fun t ↦ ∑ j ∈ Finset.range k, (Ioc (y j) (y (j + 1))).indicator (fun _ ↦ s j) t := by
+  have hrep : ĝ = fun t ↦
+      ∑ j ∈ Finset.range k, (Ioc (y j) (y (j + 1))).indicator (fun _ ↦ s j) t := by
     funext t
     rcases le_or_gt t 0 with ht | ht
     · simp only [ĝ, not_lt.mpr ht, ite_false]
@@ -813,14 +816,16 @@ theorem grenanderEstimator_isMaximumLikelihood {Ω : Type*} (X : ℕ → Ω → 
   calc _ ≤ (∏ i ∈ Finset.range n, ĝ (X i ω)) * 1 := mul_le_mul_of_nonneg_left hu hprod0
     _ = _ := mul_one _
 
-/-- GAPS 103.11: the cube-root limit law of the Grenander estimator at an interior point.
-The density `f` is a version vanishing on the negative half-line, positive and nonincreasing
-on `[0, ∞)`, and differentiable at `x₀ > 0` with negative derivative (which gives continuity
-at `x₀`); the limit is the law of `|4 f(x₀) f'(x₀)| ^ (1/3) Z` for Chernoff's `Z`. -/
+/-- GAPS 103.11: the cube-root limit law of the Grenander estimator at an interior point. Let
+`X₁, X₂, …` be independent with law `P`, whose density `f` vanishes on `(-∞, 0)` and is
+nonincreasing on `[0, ∞)`, and let `f` be differentiable at `x₀ > 0` with `f'(x₀) < 0` (which
+gives continuity at `x₀`). Then `n^{1/3} (f̂ₙ(x₀) - f(x₀))` converges in distribution to
+`|4 f(x₀) f'(x₀)|^{1/3} Z`, where `Z = argmax_t (W(t) - t²)` for a two-sided Brownian motion `W`.
+Positivity `f(x₀) > 0` is not assumed: it follows from monotonicity and `f'(x₀) < 0`. -/
 theorem tendstoInDistribution_grenanderEstimator {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (f : ℝ → ℝ)
-    (hf : HasDensity P volume f) (hneg : ∀ t < 0, f t = 0) (hfpos : ∀ t, 0 ≤ t → 0 < f t)
+    (hf : HasDensity P volume f) (hneg : ∀ t < 0, f t = 0)
     (hanti : AntitoneOn f (Ici 0)) (x₀ f' : ℝ) (hx₀ : 0 < x₀) (hderiv : HasDerivAt f f' x₀)
     (hf' : f' < 0) {Ω' : Type*} [MeasurableSpace Ω'] (ν : Measure Ω') [IsProbabilityMeasure ν]
     (B₁ B₂ : ℝ≥0 → Ω' → ℝ) (Z : Ω' → ℝ) (hZ : IsChernoffArgmax ν B₁ B₂ Z) :

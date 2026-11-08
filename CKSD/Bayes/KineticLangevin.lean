@@ -20,7 +20,25 @@ of a function on `ℝᵈ × ℝᵈ`.
 The Gibbs law has a smooth phase-space density. Invariance follows by writing the kinetic
 generator in weighted divergence form and using TauCeti
 `integral_fderiv_apply_eq_zero_of_hasCompactSupport` for each coordinate. The Gaussian density
-is TauCeti's `stdGaussian_eq_withDensity`. Source: GAPS 104.48.
+is TauCeti's `stdGaussian_eq_withDensity`.
+
+## Main definitions
+
+* `CKSD.kineticGenerator`, `CKSD.kineticGibbsMeasure`: the kinetic Langevin generator and its
+  invariant law `π ⊗ N(0, I)` on phase space.
+* `CKSD.IsKineticFokkerPlanckSolution`: a weak solution of the kinetic Fokker–Planck equation.
+* `CKSD.kineticCouplingNorm`, `CKSD.kineticH1Energy`: the twisted norm and the twisted `H¹`
+  energy of hypocoercivity.
+
+## Main results
+
+* `CKSD.integral_kineticGenerator_eq_zero`: invariance of the Gibbs law.
+* `CKSD.exists_kineticGenerator_not_symmetric`: the dynamics is not reversible.
+* `CKSD.kineticCouplingNorm_synchronous_le`: contraction of synchronous coupling.
+* `CKSD.exists_kinetic_hypocoercive_decay_of_poincare`,
+  `CKSD.exists_kinetic_entropic_hypocoercive_decay`: `L²` and entropic hypocoercivity.
+
+Source: GAPS 104.48.
 -/
 
 @[expose] public section

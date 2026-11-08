@@ -13,6 +13,11 @@ singular laws. The proof approximates a covariance by positive definite matrices
 It uses TauCeti's positive-definite Bures formula, weak continuity of Gaussian laws,
 and the weak-convergence-plus-moment criterion for Wasserstein convergence.
 Continuity of the matrix square root is Mathlib's continuous functional calculus.
+
+## Main results
+
+* `CKSD.wasserstein_multivariateGaussian_sq_eq`: the Bures formula
+  `W₂²(N(m, A), N(n, B)) = ‖m - n‖² + tr (A + B - 2 (A^{1/2} B A^{1/2})^{1/2})` (GAPS 108.46).
 -/
 
 @[expose] public section
@@ -92,7 +97,9 @@ lemma continuous_gaussian_bures_expression (m n : E) (B : M) (hB : B.PosSemidef)
     (continuous_subtype_val.add continuous_const).sub (hr.const_smul (2 : ℕ))
   exact continuous_const.add hc.matrix_trace
 
-/-- GAPS 108.46: the Gaussian Bures formula, allowing both covariances to be singular. -/
+/-- GAPS 108.46: the Gaussian Bures formula, allowing both covariances to be singular: for
+positive semidefinite `A, B`,
+`W₂²(N(m, A), N(n, B)) = ‖m - n‖² + tr (A + B - 2 (A^{1/2} B A^{1/2})^{1/2})`. -/
 theorem wasserstein_multivariateGaussian_sq_eq (m n : E) (A B : M)
     (hA : A.PosSemidef) (hB : B.PosSemidef) :
     (TauCeti.wassersteinEDist 2 (multivariateGaussian m A) (multivariateGaussian n B)).toReal ^ 2 =

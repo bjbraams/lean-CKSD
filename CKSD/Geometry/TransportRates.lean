@@ -17,7 +17,19 @@ the closed unit ball, which carries both laws, and covering numbers of a class o
 taken in the supremum norm over that ball. A semidual estimator is any minimizer over the class of
 the empirical semidual functional.
 
-Sources: GAPS 108.47 and 108.53.
+## Main definitions
+
+* `CKSD.ballLegendreConjugate`, `CKSD.semidualFunctional`, `CKSD.ballSupCoveringNumber`.
+* `CKSD.IsRegularPotentialClass`: the regularity class of potentials for map estimation.
+* `CKSD.IsSemidualEstimator`, `CKSD.transportMapRisk`.
+
+## Main results
+
+* `CKSD.tendstoInDistribution_mul_wasserstein_sq_empiricalMeasure`: the one-dimensional limit law
+  of `n W₂²(μ_n, μ)` (GAPS 108.47).
+* `CKSD.lintegral_transportMapRisk_semidualEstimator_le` and
+  `CKSD.lintegral_transportMapRisk_semidualEstimator_le_of_poincare`: risk bounds for semidual
+  transport-map estimators (GAPS 108.53).
 -/
 
 @[expose] public section
@@ -30,15 +42,16 @@ open scoped ENNReal NNReal Topology BigOperators InnerProductSpace
 namespace CKSD
 
 /-- GAPS 108.47: let `μ` be concentrated on `[a, b]` with a density `f` continuous on `[a, b]`
-and bounded there between positive constants. For an i.i.d. sample of law `μ`,
-`n W₂²(μ_n, μ)` converges in distribution to `∫₀¹ B⁰(u)² / f(F⁻¹(u))² du`, where
-`B⁰(u) = W(u) - u W(1)` is the Brownian bridge built from any Brownian motion `W`; consequently
+and bounded there between positive constants (the upper bound is automatic by continuity on the
+compact interval, and `a < b` follows because `μ` has a density and total mass one). For an
+i.i.d. sample of law `μ`, `n W₂²(μ_n, μ)` converges in distribution to
+`∫₀¹ B⁰(u)² / f(F⁻¹(u))² du`, where `B⁰(u) = W(u) - u W(1)` is the Brownian bridge built from any Brownian motion `W`; consequently
 `√n W₂(μ_n, μ)` is bounded in probability. -/
 theorem tendstoInDistribution_mul_wasserstein_sq_empiricalMeasure
     {Ω Ω' : Type*} [MeasurableSpace Ω] [MeasurableSpace Ω'] (P : Measure Ω) [IsProbabilityMeasure P]
-    (μ : Measure ℝ) [IsProbabilityMeasure μ] (a b : ℝ) (hab : a < b) (f : ℝ → ℝ)
+    (μ : Measure ℝ) [IsProbabilityMeasure μ] (a b : ℝ) (f : ℝ → ℝ)
     (hμ : HasDensity μ volume f) (hsupp : μ (Icc a b)ᶜ = 0) (hf : ContinuousOn f (Icc a b))
-    (c C : ℝ) (hc : 0 < c) (hfb : ∀ x ∈ Icc a b, c ≤ f x ∧ f x ≤ C)
+    (c : ℝ) (hc : 0 < c) (hfb : ∀ x ∈ Icc a b, c ≤ f x)
     (X : ℕ → Ω → ℝ) (hX : IsIndependentIdenticallyDistributed P X μ)
     (P' : Measure Ω') [IsProbabilityMeasure P'] (W : ℝ≥0 → Ω' → ℝ) (hW : IsBrownianReal W P') :
     TendstoInDistribution P

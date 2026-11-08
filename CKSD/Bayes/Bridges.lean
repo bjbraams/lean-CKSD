@@ -5,9 +5,25 @@ public import TauCeti.InformationTheory.KullbackLeibler.Projection
 /-!
 # Half-bridges and alternating marginal projections
 
-The observations `start` and `finish` can be endpoint evaluations on a path space. Defining the
-iteration on an arbitrary measurable space also covers its static endpoint coupling.
-The entropy projection and its proofs are imported from TauCeti, without duplication.
+The half-bridge of a reference law `R` with prescribed law `μ` of an observation `f` is TauCeti's
+entropy projection `R.fitLaw f μ`. TauCeti proves that it has law `μ` under `f`
+(`Measure.map_fitLaw_of_absolutelyContinuous`), that its relative entropy to `R` is
+`KL(μ ‖ R ∘ f⁻¹)` (`TauCeti.klDiv_fitLaw`), and that it is the unique finite-entropy minimizer
+(`TauCeti.eq_fitLaw_of_klDiv_le`). This file defines the alternating iteration of these
+projections. The observations `start` and `finish` can be the endpoint evaluations on a path
+space; on an arbitrary measurable space the same definition also covers the static endpoint
+coupling.
+
+## Main definitions
+
+* `CKSD.bridgeIterate R start finish μ ν`: the iterates of iterative proportional fitting,
+  alternately fitting the law `ν` of `finish` and the law `μ` of `start`, starting from `R`.
+
+## Main results
+
+* `CKSD.klDiv_bridgeIterate_step`: the entropy Pythagorean identity
+  `KL(σ ‖ Pⁿ) = KL(σ ‖ Pⁿ⁺¹) + KL(Pⁿ⁺¹ ‖ Pⁿ)` for every law `σ` with both marginals.
+
 Source: GAPS 104.77, in the scope of GAPS_EASY 104.77.
 -/
 
@@ -20,7 +36,8 @@ open scoped ENNReal
 
 namespace CKSD
 
-/-- Alternating terminal- and initial-law entropy projections, starting from `R`. -/
+/-- Iterative proportional fitting from `R`: odd iterates fit the law `ν` of `finish`, even
+iterates of positive index fit the law `μ` of `start`. -/
 def bridgeIterate {Ω X Y : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
     [MeasurableSpace Y] (R : Measure Ω) (start : Ω → X) (finish : Ω → Y)
     (μ : Measure X) (ν : Measure Y) : ℕ → Measure Ω
@@ -33,28 +50,6 @@ def bridgeIterate {Ω X Y : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
     [MeasurableSpace X] [MeasurableSpace Y] (R : Measure Ω) (start : Ω → X)
     (finish : Ω → Y) (μ : Measure X) (ν : Measure Y) :
     bridgeIterate R start finish μ ν 0 = R := rfl
-
-/-- GAPS 104.77: the half-bridge has the prescribed marginal, by TauCeti's entropy projection. -/
-theorem map_half_bridge {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
-    (R : Measure Ω) [IsFiniteMeasure R] (f : Ω → X) (hf : Measurable f)
-    (μ : Measure X) [IsFiniteMeasure μ] (hac : μ ≪ R.map f) :
-    (R.fitLaw f μ).map f = μ :=
-  Measure.map_fitLaw_of_absolutelyContinuous hf hac
-
-/-- GAPS 104.77: the half-bridge attains the marginal relative entropy, by TauCeti. -/
-theorem klDiv_half_bridge {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
-    (R : Measure Ω) [IsFiniteMeasure R] (f : Ω → X) (hf : Measurable f)
-    (μ : Measure X) [IsFiniteMeasure μ] (hac : μ ≪ R.map f) :
-    klDiv (R.fitLaw f μ) R = klDiv μ (R.map f) :=
-  TauCeti.klDiv_fitLaw hf hac
-
-/-- GAPS 104.77: finite-entropy uniqueness of the half-bridge, by TauCeti. -/
-theorem eq_half_bridge_of_minimum_entropy {Ω X : Type*} [MeasurableSpace Ω]
-    [MeasurableSpace X] (R σ : Measure Ω) [IsFiniteMeasure R] [IsFiniteMeasure σ]
-    (f : Ω → X) (hf : Measurable f) (μ : Measure X) (hlaw : σ.map f = μ)
-    (hmin : klDiv σ R ≤ klDiv (R.fitLaw f μ) R) (hfin : klDiv σ R ≠ ∞) :
-    σ = R.fitLaw f μ :=
-  TauCeti.eq_fitLaw_of_klDiv_le hf hlaw hmin hfin
 
 /-- GAPS 104.77: the entropy Pythagorean identity for each step of the path-space iteration.
 It holds for every feasible competitor, without assuming it minimizes entropy. -/

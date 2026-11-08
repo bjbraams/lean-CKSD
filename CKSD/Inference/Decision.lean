@@ -1,15 +1,33 @@
 module
 
+public import CKSD.Inference.Model
 public import CKSD.Inference.Sufficiency
 
 /-!
-# Inference: Decision
+# Decision theory: minimax, complete classes, admissibility, and comparison of experiments
 
-Sources: `GAPS.md`, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+## Main definitions
+
+* `CKSD.IsMoreInformative P Q`: Blackwell's order on experiments through finite decision
+  problems with bounded loss.
+
+## Main results
+
+* `CKSD.exists_statistical_game_saddle_point`: finite statistical games have a saddle point
+  (GAPS 101.32).
+* `CKSD.exists_admissible_bayes_risk_le_of_closed_convex`: the complete class theorem for a
+  finite parameter set (GAPS 101.37), by separation of the risk set from a lower orthant.
+* `CKSD.exists_equivariant_rule_risk_eq_average`: averaging over a finite group (GAPS 101.39).
+* `CKSD.exists_analytic_inverse_exponential_family_mean`: the mean parametrization of a regular
+  minimal exponential family (GAPS 101.42).
+* `CKSD.isAdmissibleRisk_of_blyth`: Blyth's method for admissibility (GAPS 101.58).
+* `CKSD.isMoreInformative_iff_isGarbling`: Blackwell's comparison theorem (GAPS 101.62).
+
+## References
+
+* E. L. Lehmann and G. Casella, *Theory of Point Estimation*, Chapter 5.
+* D. Blackwell, Equivalent comparisons of experiments, *Ann. Math. Statist.* 24 (1953).
 -/
-
 @[expose] public section
 
 noncomputable section
@@ -24,18 +42,23 @@ attribute [local instance] Classical.propDecidable
 variable {Θ X S V : Type*} [MeasurableSpace X] [MeasurableSpace S]
   [MeasurableSpace V]
 
-/-- GAPS 101.32: finite statistical games have a saddle point in rules and priors. -/
+/-- GAPS 101.32: the minimax theorem for statistical games with finitely many parameters and
+actions. There are a randomized rule `δ` and a prior `π` such that `δ` is a Bayes rule for `π`
+and the risk of `δ` at every parameter is at most its Bayes risk; hence `δ` is minimax, `π` is
+least favorable, and the minimax and maximin values agree. -/
 theorem exists_statistical_game_saddle_point [Fintype Θ] [Nonempty Θ] [MeasurableSpace Θ]
     [MeasurableSingletonClass Θ] {A : Type*} [Fintype A] [Nonempty A]
     [MeasurableSpace A] [MeasurableSingletonClass A]
-    (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ)) (L : Θ → A → ℝ) :
+    (P : Θ → Measure X) [∀ θ, IsProbabilityMeasure (P θ)] (L : Θ → A → ℝ) :
     ∃ δ : RandomizedDecisionRule X A, ∃ π : ProbabilityMeasure Θ,
-      (∀ δ', (∫ θ, risk P L δ θ ∂(π : Measure Θ)) ≤
-        ∫ θ, risk P L δ' θ ∂(π : Measure Θ)) ∧
+      IsBayesRule (risk P L) (π : Measure Θ) δ ∧
       ∀ θ, risk P L δ θ ≤ ∫ θ', risk P L δ θ' ∂(π : Measure Θ) := by
   sorry
 
-/-- GAPS 101.37, the closed-convex-risk-set form of the finite complete-class theorem. -/
+/-- GAPS 101.37: the complete class theorem for a finite parameter set, in risk-set form. Let `C`
+be a closed convex set of risk vectors in `ℝ^d`, `d > 0`, bounded below. Every `x ∈ C` is
+dominated by an admissible point `y ∈ C` (no point of `C` is at most `y` coordinatewise and
+strictly smaller somewhere) that is Bayes for some prior `w` on the `d` parameter values. -/
 theorem exists_admissible_bayes_risk_le_of_closed_convex {d : ℕ} (hd : 0 < d) (C : Set (Fin d → ℝ))
     (hc : Convex ℝ C) (hclosed : IsClosed C) (hb : ∃ b : Fin d → ℝ, ∀ x ∈ C, ∀ i, b i ≤ x i) :
     ∀ x ∈ C, ∃ y ∈ C, (∀ i, y i ≤ x i) ∧
@@ -126,8 +149,10 @@ theorem exists_admissible_bayes_risk_le_of_closed_convex {d : ℕ} (hd : 0 < d) 
     rw [div_le_div_iff_of_pos_right hsum, ← hexp, ← hexp]
     exact hfy.trans (hfE z ⟨z, hz, fun _ ↦ le_rfl⟩)
 
-/-- GAPS 101.39, the compact-group averaging theorem for a finite group with its uniform Haar
-measure and a bounded loss. The minimax consequences are not included. -/
+/-- GAPS 101.39: the averaging (Hunt–Stein) construction for a finite group with its uniform Haar
+measure. In an invariant decision problem with bounded measurable invariant loss, every
+randomized rule `δ` has an equivariant rule `bar` whose risk at `θ` is the average of the risks
+of `δ` over the orbit of `θ`. The minimax consequences are not included. -/
 theorem exists_equivariant_rule_risk_eq_average {G A : Type*} [Group G] [Fintype G]
     [MulAction G X] [MulAction G Θ] [MulAction G A] [MeasurableSpace A]
     (hX : ∀ g : G, Measurable (fun x : X ↦ g • x))
@@ -202,25 +227,108 @@ theorem exists_equivariant_rule_risk_eq_average {G A : Type*} [Group G] [Fintype
     simp only [c, ENNReal.toReal_inv, ENNReal.toReal_natCast]
     rw [div_eq_inv_mul]
 
-/-- GAPS 101.42, the mean diffeomorphism in a minimal regular family.
-An analytic inverse is stated on the open convex-support interior. -/
+/-- GAPS 101.42: the mean parametrization of a regular minimal natural exponential family. For a
+nonzero σ-finite base measure `ν` on a finite-dimensional real inner product space `E` whose
+natural parameter space `N` is open and nonempty, the mean map `η ↦ ∫ x d(P η)(x)` is real
+analytic on `N` and is a bijection of `N` onto the interior `K` of the convex hull of the support
+of `ν`, with real analytic inverse on `K`. -/
 theorem exists_analytic_inverse_exponential_family_mean
-    {d : ℕ} (nu : Measure (EuclideanSpace ℝ (Fin d))) [SigmaFinite nu]
-    (hne : nu ≠ 0)
-    (hminimal : ∀ u : EuclideanSpace ℝ (Fin d), u ≠ 0 → ∀ c : ℝ,
-      ¬ (∀ᵐ x ∂nu, inner ℝ u x = c)) :
-    let N := {eta : EuclideanSpace ℝ (Fin d) |
-      Integrable (fun x ↦ Real.exp (inner ℝ eta x)) nu};
-    let mean := fun eta : EuclideanSpace ℝ (Fin d) ↦
-      (∫ x, Real.exp (inner ℝ eta x) ∂nu)⁻¹ •
-        (∫ x, Real.exp (inner ℝ eta x) • x ∂nu);
-    let K := interior (convexHull ℝ nu.support);
-    IsOpen N → N.Nonempty →
-      ∃ g : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d),
-        AnalyticOnNhd ℝ mean N ∧ AnalyticOnNhd ℝ g K ∧
-        (∀ eta ∈ N, mean eta ∈ K ∧ g (mean eta) = eta) ∧
-        ∀ m ∈ K, g m ∈ N ∧ mean (g m) = m := by
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+    [MeasurableSpace E] [BorelSpace E] (ν : Measure E) [SigmaFinite ν] (hne : ν ≠ 0)
+    (hminimal : IsMinimalExponentialFamily ν id) (hN : IsOpen (naturalParameterSpace ν id))
+    (hNne : (naturalParameterSpace ν id).Nonempty) :
+    ∃ g : E → E,
+      AnalyticOnNhd ℝ (fun η ↦ ∫ x, x ∂exponentialFamilyMeasure ν id η)
+          (naturalParameterSpace ν id) ∧
+        AnalyticOnNhd ℝ g (interior (convexHull ℝ ν.support)) ∧
+        (∀ η ∈ naturalParameterSpace ν id,
+          (∫ x, x ∂exponentialFamilyMeasure ν id η) ∈ interior (convexHull ℝ ν.support) ∧
+            g (∫ x, x ∂exponentialFamilyMeasure ν id η) = η) ∧
+        ∀ m ∈ interior (convexHull ℝ ν.support),
+          g m ∈ naturalParameterSpace ν id ∧ (∫ x, x ∂exponentialFamilyMeasure ν id (g m)) = m := by
   sorry
 
+/-- GAPS 101.58: Blyth's method. Let `Θ` be a convex subset of Euclidean space with nonempty
+interior and let the rules `δ` in a class `D` have continuous risk functions `R δ`. Suppose there
+are finite measures `π n` on `Θ` with Bayes rules `δ n`, giving uniformly positive mass to every
+convex subset with nonempty interior for large `n`, such that the Bayes risk excess
+`∫ R δ₀ dπ n - ∫ R (δ n) dπ n` of `δ₀` tends to zero. Then `δ₀` is admissible. -/
+theorem isAdmissibleRisk_of_blyth {d : ℕ} {D : Type*}
+    (Θ : Set (EuclideanSpace ℝ (Fin d))) (hΘ : Convex ℝ Θ)
+    (hinterior : (interior Θ).Nonempty) (R : D → Θ → ℝ)
+    (hc : ∀ δ, Continuous (R δ)) (δ₀ : D) (π : ℕ → Measure Θ)
+    (hπ : ∀ n, IsFiniteMeasure (π n)) (δ : ℕ → D)
+    (hbayes : ∀ n, IsBayesRule R (π n) (δ n))
+    (hint : ∀ n a, Integrable (R a) (π n))
+    (hmass : ∀ C : Set Θ, Convex ℝ (Subtype.val '' C) →
+      (interior (Subtype.val '' C)).Nonempty →
+      ∃ K > 0, ∀ᶠ n in atTop, K ≤ (π n).real C)
+    (hgap : Tendsto (fun n ↦ (∫ θ, R δ₀ θ ∂π n) - ∫ θ, R (δ n) θ ∂π n) atTop (𝓝 0)) :
+    IsAdmissibleRisk R δ₀ := by
+  rintro ⟨δ', hle, θ₁, hlt⟩
+  set ε := (R δ₀ θ₁ - R δ' θ₁) / 2 with hε
+  have hε0 : 0 < ε := by rw [hε]; linarith
+  -- a ball around `θ₁` on which the risk gap exceeds `ε`
+  have hcont : Continuous (fun θ ↦ R δ₀ θ - R δ' θ) := (hc δ₀).sub (hc δ')
+  obtain ⟨ρ, hρ, hball⟩ := Metric.continuous_iff.1 hcont θ₁ ε hε0
+  let C : Set Θ := {θ | dist θ θ₁ < ρ}
+  have hCimg : Subtype.val '' C = Metric.ball θ₁.val ρ ∩ Θ := by
+    ext z
+    constructor
+    · rintro ⟨θ, hθ, rfl⟩
+      exact ⟨hθ, θ.2⟩
+    · rintro ⟨hz, hzΘ⟩
+      exact ⟨⟨z, hzΘ⟩, hz, rfl⟩
+  have hCconv : Convex ℝ (Subtype.val '' C) := by
+    rw [hCimg]; exact (convex_ball _ _).inter hΘ
+  have hCint : (interior (Subtype.val '' C)).Nonempty := by
+    rw [hCimg, interior_inter, Metric.isOpen_ball.interior_eq]
+    have hcl : θ₁.val ∈ closure (interior Θ) := by
+      rw [hΘ.closure_interior_eq_closure_of_nonempty_interior hinterior]
+      exact subset_closure θ₁.2
+    obtain ⟨z, hz, hdist⟩ := Metric.mem_closure_iff.1 hcl ρ hρ
+    exact ⟨z, by rw [Metric.mem_ball, dist_comm]; exact hdist, hz⟩
+  obtain ⟨K, hK, hKev⟩ := hmass C hCconv hCint
+  have hCm : MeasurableSet C :=
+    measurableSet_lt (measurable_id.dist measurable_const) measurable_const
+  have hlower : ∀ᶠ n in atTop,
+      ε * K ≤ (∫ θ, R δ₀ θ ∂π n) - ∫ θ, R (δ n) θ ∂π n := by
+    filter_upwards [hKev] with n hn
+    have := hπ n
+    have hb := (hbayes n).2 δ' (hint n δ')
+    have hdiff : Integrable (fun θ ↦ R δ₀ θ - R δ' θ) (π n) := (hint n δ₀).sub (hint n δ')
+    have hnn : 0 ≤ᵐ[π n] fun θ ↦ R δ₀ θ - R δ' θ :=
+      ae_of_all _ fun θ ↦ sub_nonneg.2 (hle θ)
+    have h1 := setIntegral_le_integral (s := C) hdiff hnn
+    have h2 := setIntegral_ge_of_const_le_real (μ := π n) (c := ε) hCm (measure_ne_top _ _)
+      (fun θ hθ ↦ by
+        have := hball θ hθ
+        rw [Real.dist_eq] at this
+        have h3 := neg_abs_le (R δ₀ θ - R δ' θ - (R δ₀ θ₁ - R δ' θ₁))
+        linarith) hdiff.integrableOn
+    rw [integral_sub (hint n δ₀) (hint n δ')] at h1
+    nlinarith [mul_le_mul_of_nonneg_left hn hε0.le]
+  have hlim : ε * K ≤ 0 := ge_of_tendsto hgap hlower
+  nlinarith [mul_pos hε0 hK]
+
+/-- The experiment `P` is more informative than `Q` (Blackwell): for every finite decision problem
+with bounded loss, every randomized rule based on `Q` is matched, at every parameter, by a rule
+based on `P` with risk at most its risk. -/
+def IsMoreInformative {Θ X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
+    (P : Θ → Measure X) (Q : Θ → Measure Y) : Prop :=
+  ∀ n : ℕ, ∀ L : Θ → Fin n → ℝ, (∃ C, ∀ θ a, |L θ a| ≤ C) →
+    ∀ δ : RandomizedDecisionRule Y (Fin n), ∃ δ' : RandomizedDecisionRule X (Fin n),
+      ∀ θ, risk P L δ' θ ≤ risk Q L δ θ
+
+/-- GAPS 101.62: Blackwell's comparison theorem for a finite parameter set. A family of
+probability laws `P` is more informative than `Q`, whose sample space is standard Borel, if and
+only if `Q` is a garbling of `P`. Both families are dominated, by `∑ θ, P θ` and `∑ θ, Q θ`,
+since the parameter set is finite. -/
+theorem isMoreInformative_iff_isGarbling {Θ X Y : Type*} [Fintype Θ]
+    [MeasurableSpace X] [MeasurableSpace Y] [StandardBorelSpace Y] [Nonempty Y]
+    (P : Θ → Measure X) (Q : Θ → Measure Y)
+    [∀ θ, IsProbabilityMeasure (P θ)] [∀ θ, IsProbabilityMeasure (Q θ)] :
+    IsMoreInformative P Q ↔ IsGarbling P Q := by
+  sorry
 
 end CKSD

@@ -694,14 +694,14 @@ is $\beta$-Lipschitz.
 * **45. Langevin Monte Carlo under a logarithmic Sobolev inequality.**
   Suppose $\pi$ satisfies the logarithmic Sobolev inequality with
   constant $1/\alpha$ and $V$ is $\beta$-smooth; $V$ need not be convex.
-  There is a universal constant $C$ such that for $0<h\le1/(4\beta)$ and
+  There is a universal constant $C$ such that for $0<h\le\alpha/(4\beta^2)$ and
   all $N$,
   $$\mathop{\mathrm{KL}}(\hat\mu_{Nh}\|\pi)\le
   e^{-\alpha Nh}\mathop{\mathrm{KL}}(\hat\mu_0\|\pi)
   +C\,\frac{\beta^2dh}\alpha$$
   (Vempala–Wibisono). With $\kappa=\beta/\alpha$, it follows that there are
   universal constants $c,C'$ such that for
-  $0<\varepsilon\le\sqrt{\kappa d}$ the step
+  $0<\varepsilon\le\sqrt d$ the step
   $h=c\varepsilon^2/(\beta\kappa d)$ gives
   $\mathop{\mathrm{KL}}(\hat\mu_{Nh}\|\pi)\le\varepsilon^2$ whenever
   $N\ge C'\kappa^2d\varepsilon^{-2}

@@ -13,6 +13,21 @@ coordinate `j` on the other coordinates with the `1/(2n)` squared-error normaliz
 joins the estimated neighbourhoods by the "and" or the "or" rule. The graphical lasso
 minimizes `tr(Θ Σ̂) - log det Θ + λ ∑_{j ≠ k} |Θ j k|` over positive definite `Θ`, where
 `Σ̂ = n⁻¹ ∑ xᵢ xᵢᵀ` is the second-moment matrix of a centered sample.
+
+## Main definitions
+
+* `CKSD.precisionNeighbourhood`, `CKSD.IsIncoherentAt`, `CKSD.RowSumNormLE`: the graph of a
+  precision matrix and the incoherence and row-sum conditions.
+* `CKSD.IsNodeLassoEstimate`, `CKSD.andRuleEdge`, `CKSD.orRuleEdge`: neighbourhood selection.
+* `CKSD.sampleSecondMomentMatrix`, `CKSD.IsGraphicalLassoEstimate`: the graphical lasso.
+
+## Main results
+
+* `CKSD.neighbourhoodSelection_graph_recovery`: graph recovery by neighbourhood selection
+  (stated).
+* `CKSD.graphicalLasso_frobenius_error_bound`: the Frobenius error bound for the graphical lasso
+  (stated).
+
 Source: GAPS 103.53 (Wainwright, Theorem 11.12 and Proposition 11.9).
 -/
 
@@ -99,7 +114,7 @@ theorem neighbourhoodSelection_graph_recovery :
   sorry
 
 /-- The second-moment matrix `n⁻¹ ∑ xᵢ xᵢᵀ` of a centered sample. -/
-def centeredSampleCovariance {n p : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin p)) :
+def sampleSecondMomentMatrix {n p : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin p)) :
     Matrix (Fin p) (Fin p) ℝ :=
   fun j k ↦ (∑ i, x i j * x i k) / n
 
@@ -115,9 +130,11 @@ def IsGraphicalLassoEstimate {p : ℕ} (S : Matrix (Fin p) (Fin p) ℝ) (lambda 
     graphicalLassoObjective S lambda Θ ≤ graphicalLassoObjective S lambda Θ'
 
 /-- GAPS 103.53, graphical lasso: the Frobenius error bound under `σ`-sub-Gaussian centered
-coordinates and at most `m` nonzero entries per row of `Θ = Σ⁻¹`. The estimator `T x` is
-required to be a graphical lasso estimate whenever one exists; the operator norm is the
-Euclidean one. -/
+coordinates and at most `m` nonzero entries per row of `Θ = Σ⁻¹`. With
+`λ = 8 σ² (√(log p / n) + δ)` and `6 (‖Θ‖ + 1)² λ √(m p) < 1`, with probability at least
+`1 - 8 exp (-n δ² / 16)` the graphical lasso estimate `Θ̂` satisfies
+`‖Θ̂ - Θ‖_F² ≤ 9 (‖Θ‖ + 1)⁴ m p λ²`. The estimator `T x` is required to be a graphical lasso
+estimate whenever one exists; the operator norm is the Euclidean one. -/
 theorem graphicalLasso_frobenius_error_bound {p n : ℕ} (hn : 0 < n)
     (P : Measure (EuclideanSpace ℝ (Fin p))) [IsProbabilityMeasure P] (σ : ℝ≥0)
     (hsub : ∀ j, HasSubgaussianMGF (fun x ↦ x j) (σ ^ 2) P)
@@ -128,8 +145,8 @@ theorem graphicalLasso_frobenius_error_bound {p n : ℕ} (hn : 0 < n)
     (hside : 6 * (‖Matrix.toEuclideanCLM (𝕜 := ℝ) (euclideanCovarianceMatrix P)⁻¹‖ + 1) ^ 2 *
       lambda * Real.sqrt (m * p) < 1)
     (T : (Fin n → EuclideanSpace ℝ (Fin p)) → Matrix (Fin p) (Fin p) ℝ)
-    (hT : ∀ x, (∃ Θ, IsGraphicalLassoEstimate (centeredSampleCovariance x) lambda Θ) →
-      IsGraphicalLassoEstimate (centeredSampleCovariance x) lambda (T x)) :
+    (hT : ∀ x, (∃ Θ, IsGraphicalLassoEstimate (sampleSecondMomentMatrix x) lambda Θ) →
+      IsGraphicalLassoEstimate (sampleSecondMomentMatrix x) lambda (T x)) :
     1 - 8 * Real.exp (-(n * δ ^ 2 / 16)) ≤
       (Measure.pi fun _ : Fin n ↦ P).real
         {x | ∑ j, ∑ k, (T x j k - (euclideanCovarianceMatrix P)⁻¹ j k) ^ 2 ≤

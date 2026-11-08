@@ -13,7 +13,17 @@ kernel is
 and the squared kernel Stein discrepancy of `μ` is `KSD(μ)² = ∫∫ k_P(x, x') dμ(x) dμ(x')`, the
 closed form of GAPS 108.71 under its integrability hypotheses.
 
-Source: GAPS 108.72.
+## Main definitions
+
+* `CKSD.mixedKernelDivergence`, `CKSD.langevinSteinKernel`, `CKSD.kernelSteinDiscrepancySq`.
+* `CKSD.IsDistantlyDissipative`, `CKSD.inverseMultiquadricKernel`.
+
+## Main results
+
+* `CKSD.tendstoWeakly_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero`: the inverse
+  multiquadric KSD controls weak convergence (GAPS 108.72(b)).
+* `CKSD.exists_not_tendstoWeakly_of_kernelSteinDiscrepancySq_tendsto_zero`: fast-decaying kernels
+  fail to detect non-convergence for `d ≥ 3` (GAPS 108.72(d)).
 -/
 
 @[expose] public section

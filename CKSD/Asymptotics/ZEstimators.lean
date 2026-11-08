@@ -462,7 +462,7 @@ theorem tendstoInProbabilityConst_centredSum_sub_of_lipschitz {Ω E : Type*} [Me
     _ ≤ η := by rw [hGc]; linarith
 
 /-- GAPS 102.4, the scalar Z-estimator theorem under a square-integrable Lipschitz envelope. -/
-theorem z_estimator_asymptotic_linearization_and_normality
+theorem zEstimator_asymptotic_linearization_and_normality
     {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
     (mu : Measure Ω) [IsProbabilityMeasure mu] (P : Measure E) [IsProbabilityMeasure P]
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed mu X P) (psi : ℝ → E → ℝ)

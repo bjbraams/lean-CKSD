@@ -1,21 +1,36 @@
 module
 
-public import CKSD.Inference.Basic
+public import CKSD.Inference.Model
 public import CKSD.Inference.Factorization
 public import CKSD.Inference.LaplaceDeterminacy
 public import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 
 /-!
-# Factorization and natural exponential families
+# Sufficiency and natural exponential families
 
-The sufficient-statistic factorization theorem, convexity of the natural domain, completeness
-on a nonempty open parameter set, and likelihood-ratio minimal sufficiency. Multivariate
-cumulant identities and the monotone Pitman–Koopman–Darmois characterization are stated in
-their indicated scopes. The completeness proof uses the finite-measure Laplace determinacy
-adapter and Mathlib's density and pushforward operations.
-Sources: GAPS 101.1–101.6, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
+## Main definitions
+
+* `CKSD.RealExponentialFamily`: a regular scalar natural exponential family, with
+  `RealExponentialFamily.cumulant` and `RealExponentialFamily.law`.
+
+## Main results
+
+* `CKSD.isSufficientStatistic_iff_exists_factorization`: the factorization theorem (GAPS 101.1).
+* `CKSD.isSufficientStatistic_likelihoodRatio_and_ae_eq_comp`: the likelihood-ratio statistic is
+  minimal sufficient (GAPS 101.2).
+* `CKSD.convex_naturalParameterSpace` and `CKSD.analyticOnNhd_logPartition_and_fderiv_eq_moments`:
+  convexity of the natural parameter space, and analyticity and cumulant identities of the log
+  partition function (GAPS 101.4).
+* `CKSD.isCompleteStatistic_withDensity_exp_inner`: completeness of the natural statistic on a
+  parameter set with nonempty interior (GAPS 101.5).
+* `CKSD.exists_exponential_family_of_monotone_sufficient_statistics`: the Pitman–Koopman–Darmois
+  theorem with monotone sufficient statistics (GAPS 101.6).
+
+## Implementation notes
+
+The completeness proof uses Laplace determinacy (`CKSD.measure_eq_of_integral_exp_inner_eq`)
+and Mathlib's density and pushforward operations.
 -/
-
 @[expose] public section
 
 noncomputable section
@@ -44,12 +59,16 @@ theorem isSufficientStatistic_iff_exists_factorization
   rintro ⟨g, h, hg, -, -, hfac⟩
   exact isSufficientStatistic_of_factorization P μ hP f hf hT g h hg hfac
 
-/-- GAPS 101.4, convexity part: the Laplace-integrability domain in a real inner-product space is convex. -/
-theorem convex_laplace_integrability_domain {H : Type*} [NormedAddCommGroup H]
+/-- GAPS 101.4, convexity part: the natural parameter space `{η | ∫ exp ⟪η, t⟫ dν(t) < ∞}` of a
+measure `ν` on a real inner product space is convex (Hölder's inequality, here through the
+convexity of `exp`). -/
+theorem convex_naturalParameterSpace {H : Type*} [NormedAddCommGroup H]
     [InnerProductSpace ℝ H] [MeasurableSpace H] [BorelSpace H] (ν : Measure H) :
-    Convex ℝ {η : H |
-      Integrable (fun t ↦ Real.exp (inner ℝ η t)) ν} := by
+    Convex ℝ (naturalParameterSpace ν id) := by
   intro η hη ζ hζ a b ha hb hab
+  replace hη : Integrable (fun t ↦ Real.exp (inner ℝ η t)) ν := hη
+  replace hζ : Integrable (fun t ↦ Real.exp (inner ℝ ζ t)) ν := hζ
+  change Integrable (fun t ↦ Real.exp (inner ℝ (a • η + b • ζ) t)) ν
   apply ((hη.const_mul a).add (hζ.const_mul b)).mono'
   · exact (by fun_prop : Continuous (fun t ↦ Real.exp (inner ℝ (a • η + b • ζ) t))).aestronglyMeasurable
   · filter_upwards [] with t
@@ -57,8 +76,10 @@ theorem convex_laplace_integrability_domain {H : Type*} [NormedAddCommGroup H]
     simpa only [inner_add_left, real_inner_smul_left, smul_eq_mul, Pi.add_apply] using
       convexOn_exp.2 (mem_univ (inner ℝ η t)) (mem_univ (inner ℝ ζ t)) ha hb hab
 
-/-- GAPS 101.5: completeness of a natural statistic over a nonempty open parameter set. -/
-theorem isCompleteStatistic_exponential_family {d : ℕ} (ν : Measure X)
+/-- GAPS 101.5: completeness of the natural statistic. For the laws
+`exp ⟪η, T⟫ / Z(η) · ν` with `η` ranging over a nonempty open set `U`, where `Z(η)` is the
+(finite, positive) normalizer, the statistic `T` is complete. -/
+theorem isCompleteStatistic_withDensity_exp_inner {d : ℕ} (ν : Measure X)
     (T : X → EuclideanSpace ℝ (Fin d)) (hT : Measurable T)
     (U : Set (EuclideanSpace ℝ (Fin d))) (hU : IsOpen U) (hne : U.Nonempty)
     (Z : EuclideanSpace ℝ (Fin d) → ℝ)
@@ -145,7 +166,7 @@ theorem isCompleteStatistic_exponential_family {d : ℕ} (ν : Measure X)
       Measurable fun t : EuclideanSpace ℝ (Fin d) ↦ Real.exp (inner ℝ u t) := fun u ↦ by
     fun_prop
   have hμ : μp = μm := by
-    refine Measure.ext_of_integral_exp_inner_eq μp μm hr (fun u hu ↦ ?_) (fun u hu ↦ ?_)
+    refine measure_eq_of_integral_exp_inner_eq μp μm hr (fun u hu ↦ ?_) (fun u hu ↦ ?_)
     · exact (integrable_map_withDensity_ofReal_iff ν hT hpm hp0 (hFm u)).2 (hpart u hu).1
     · rw [integral_map_withDensity_ofReal ν hT hpm hp0 (hFm u),
         integral_map_withDensity_ofReal ν hT hmm hm0 (hFm u), ← sub_eq_zero,
@@ -198,8 +219,10 @@ theorem isCompleteStatistic_exponential_family {d : ℕ} (ν : Measure X)
       exact mul_pos (lt_max_of_lt_left hgt) (Real.exp_pos _)
   exact withDensity_absolutelyContinuous _ _ hae
 
-/-- GAPS 101.2, minimal likelihood-ratio statistic for a countable parameter family. -/
-theorem likelihood_ratio_statistic_minimal_sufficient
+/-- GAPS 101.2: for a countable family with everywhere positive densities `f θ`, the likelihood
+ratio `R(x) = (f θ x / f θ₀ x)_θ` is sufficient, and it is minimal: for every sufficient statistic
+`T` there is a measurable `φ` with `R = φ ∘ T` almost surely under every `P θ`. -/
+theorem isSufficientStatistic_likelihoodRatio_and_ae_eq_comp
     [StandardBorelSpace X] [Nonempty X] [Countable Θ]
     (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
     (mu : Measure X) [SigmaFinite mu] (f : Θ → X → ℝ)
@@ -226,7 +249,11 @@ theorem likelihood_ratio_statistic_minimal_sufficient
   simp only [R, Function.comp_apply, hx θ', hx θ₀]
   exact mul_div_mul_right _ _ hh
 
-/-- GAPS 101.6: the monotone Pitman–Koopman–Darmois characterization. -/
+/-- GAPS 101.6: a Pitman–Koopman–Darmois theorem. Let the laws `P θ` be mutually absolutely
+continuous with a reference probability `P₀`, and suppose that for infinitely many sample sizes
+`n` (including `n = 1`) the product densities are nondecreasing functions of a real statistic
+`Tₙ`. Then the family is a one-parameter exponential family: `dP θ / dP₀ = C(θ) exp (a(θ) T)` for
+a real statistic `T`. -/
 theorem exists_exponential_family_of_monotone_sufficient_statistics
     (P : Θ → Measure X) (P₀ : Measure X) [IsProbabilityMeasure P₀]
     (hP : ∀ θ, IsProbabilityMeasure (P θ))
@@ -240,21 +267,58 @@ theorem exists_exponential_family_of_monotone_sufficient_statistics
       HasDensity (P θ) P₀ (fun x ↦ C * Real.exp (a * T x)) := by
   sorry
 
-/-- GAPS 101.4, multivariate analyticity and first/second cumulant derivatives. -/
-theorem analyticOnNhd_cumulant_and_fderiv_eq_moments
-    {d : ℕ} (nu : Measure (EuclideanSpace ℝ (Fin d)))
-    [SigmaFinite nu] (hne : nu ≠ 0) :
-    let N := {eta : EuclideanSpace ℝ (Fin d) |
-      Integrable (fun x ↦ Real.exp (inner ℝ eta x)) nu};
-    let A := fun eta : EuclideanSpace ℝ (Fin d) ↦
-      Real.log (∫ x, Real.exp (inner ℝ eta x) ∂nu);
-    let P := fun eta ↦ nu.withDensity (fun x ↦ ENNReal.ofReal (Real.exp (inner ℝ eta x - A eta)));
-    AnalyticOnNhd ℝ A (interior N) ∧ ∀ eta ∈ interior N,
-      HasFDerivAt A (innerSL ℝ (∫ x, x ∂P eta)) eta ∧
-      ∀ u v : EuclideanSpace ℝ (Fin d),
-        fderiv ℝ (fderiv ℝ A) eta u v =
-          covariance (P eta) (fun x ↦ inner ℝ u x) (fun x ↦ inner ℝ v x) := by
+/-- GAPS 101.4: in the natural exponential family with base measure `ν` on a finite-dimensional
+real inner product space `E` and statistic the identity, the log partition function `A` is real
+analytic on the interior of the natural parameter space `N`; at every `η ∈ interior N` its
+gradient is the mean of the law `P η` at `η` and its Hessian is the covariance of `P η`. -/
+theorem analyticOnNhd_logPartition_and_fderiv_eq_moments
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+    [MeasurableSpace E] [BorelSpace E] (ν : Measure E) [SigmaFinite ν] (hne : ν ≠ 0) :
+    AnalyticOnNhd ℝ (logPartition ν id) (interior (naturalParameterSpace ν id)) ∧
+      ∀ η ∈ interior (naturalParameterSpace ν id),
+        HasFDerivAt (logPartition ν id)
+          (innerSL ℝ (∫ x, x ∂exponentialFamilyMeasure ν id η)) η ∧
+        ∀ u v : E, fderiv ℝ (fderiv ℝ (logPartition ν id)) η u v =
+          covariance (exponentialFamilyMeasure ν id η) (fun x ↦ inner ℝ u x)
+            (fun x ↦ inner ℝ v x) := by
   sorry
 
+/-- A regular scalar natural exponential family: laws `exp (η T - A(η)) · base` for natural
+parameters `η` in an open interval `domain` on which `exp (η T)` is `base`-integrable, with a
+nonzero σ-finite base measure and a statistic `T` that is not almost everywhere constant. -/
+structure RealExponentialFamily (X : Type*) [MeasurableSpace X] where
+  /-- Base measure, including any parameter-free carrier density. -/
+  base : Measure X
+  /-- The base measure is sigma finite. -/
+  sigmaFinite : SigmaFinite base
+  /-- Real natural statistic. -/
+  statistic : X → ℝ
+  /-- Measurability of the statistic. -/
+  measurable_statistic : Measurable statistic
+  /-- Parameter domain. -/
+  domain : Set ℝ
+  /-- Regularity of the domain. -/
+  isOpen_domain : IsOpen domain
+  /-- Interval property of the domain. -/
+  convex_domain : Convex ℝ domain
+  /-- The parameter domain is nonempty. -/
+  nonempty_domain : domain.Nonempty
+  /-- Exponential integrability at each parameter. -/
+  integrable_exp : ∀ η ∈ domain, Integrable (fun x ↦ Real.exp (η * statistic x)) base
+  /-- The base measure is nonzero. -/
+  base_ne_zero : base ≠ 0
+  /-- Nondegeneracy of the statistic. -/
+  nonconstant : ∀ c : ℝ, ¬ (∀ᵐ x ∂base, statistic x = c)
+
+/-- The log normalizer `A(η) = log ∫ exp (η T) d base` of a scalar exponential family. -/
+def RealExponentialFamily.cumulant {X : Type*} [MeasurableSpace X]
+    (F : RealExponentialFamily X) (η : ℝ) : ℝ :=
+  Real.log (∫ x, Real.exp (η * F.statistic x) ∂F.base)
+
+/-- The law `exp (η T - A(η)) · base` of the family at a natural parameter `η ∈ domain`. -/
+def RealExponentialFamily.law {X : Type*} [MeasurableSpace X]
+    (F : RealExponentialFamily X) (η : F.domain) : Measure X :=
+  F.base.withDensity (fun x ↦ ENNReal.ofReal
+    (Real.exp (η.val * F.statistic x - F.cumulant η.val)))
 
 end CKSD

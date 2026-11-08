@@ -11,7 +11,19 @@ Persistence modules reuse Mathlib's functors to `ModuleCat`. Diagram distances b
 birth and death coordinates; essential bars are a separate component of a full diagram. Index
 sets retain multiplicities: two indices may carry the same point. Unmatched points are matched
 to the diagonal at half their lifetime. The landscape is indexed from zero.
-Sources: GAPS 108.18–108.24 and 108.32–108.37.
+
+## Main definitions
+
+* `CKSD.PersistenceModule`, `CKSD.IsPointwiseFiniteDimensional`, `CKSD.IsQTame`.
+* `CKSD.PersistenceInterleaving`, `CKSD.interleavingEDist`: interleavings and the interleaving
+  distance.
+* `CKSD.FiniteDeathDiagram`, `CKSD.DiagramMatching`, `CKSD.bottleneckEDist`.
+* `CKSD.persistenceTent`, `CKSD.persistenceLandscape`.
+* `CKSD.IsCechSimplex`, `CKSD.IsRipsSimplex`.
+
+## Main results
+
+* `CKSD.IsCechSimplex.isRipsSimplex`: the first Čech/Rips inclusion (GAPS 108.21).
 -/
 
 @[expose] public section
@@ -115,7 +127,9 @@ def IsCechSimplex {X : Type*} [PseudoMetricSpace X] (r : ℝ) (S : Finset X) : P
 def IsRipsSimplex {X : Type*} [PseudoMetricSpace X] (r : ℝ) (S : Finset X) : Prop :=
   ∀ x ∈ S, ∀ y ∈ S, dist x y ≤ 2 * r
 
-/-- GAPS 108.21, the first Čech/Rips inclusion in every pseudometric space. -/
+/-- GAPS 108.21, the first Čech/Rips inclusion in every pseudometric space: a Čech simplex of
+radius `r` is a Rips simplex of parameter `r`, since points within `r` of a common center are
+within `2r` of each other. -/
 theorem IsCechSimplex.isRipsSimplex {X : Type*} [PseudoMetricSpace X]
     {r : ℝ} {S : Finset X} (h : IsCechSimplex r S) : IsRipsSimplex r S := by
   obtain ⟨c, hc⟩ := h

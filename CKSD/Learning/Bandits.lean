@@ -5,6 +5,8 @@ public import Mathlib.Probability.ProductMeasure
 public import Mathlib.Probability.Distributions.Beta
 public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
+public import Mathlib.Probability.Distributions.Bernoulli
+public import Statlib.ForMathlib.InformationTheory.KullbackLeibler.Bernoulli
 public import TauCeti.Probability.Quantile
 public import CKSD.Learning.UCBAnalysis
 public import Mathlib.Probability.Independence.InfinitePi
@@ -118,14 +120,6 @@ theorem lai_robbins_lower_bound {U : Type*} [MeasurableSpace U] (ρ : Measure U)
     ∀ c < bound, ∀ᶠ n : ℕ in atTop, c ≤ banditRegret π ρ ν n / Real.log n := by
   sorry
 
-/-- The Bernoulli law on `{0, 1} ⊆ ℝ` with success probability `p`. -/
-def banditBernoulli (p : ℝ) : Measure ℝ :=
-  ENNReal.ofReal (1 - p) • Measure.dirac 0 + ENNReal.ofReal p • Measure.dirac 1
-
-/-- Kullback–Leibler divergence between Bernoulli laws with parameters `p` and `q`. -/
-def banditBernoulliKL (p q : ℝ) : ℝ :=
-  p * Real.log (p / q) + (1 - p) * Real.log ((1 - p) / (1 - q))
-
 /-- The first maximizing coordinate of a finite real vector (the arm `0` is never needed). -/
 def banditFirstArgmax {K : ℕ} [NeZero K] (v : Fin K → ℝ) : Fin K :=
   if h : (Finset.univ.filter fun k ↦ ∀ j, v j ≤ v k).Nonempty then
@@ -145,11 +139,12 @@ def thompsonSeedLaw (K : ℕ) : Measure (ℕ × Fin K → ℝ) :=
 
 /-- GAPS 107.51, Thompson sampling: for Bernoulli arms with means in `(0,1)` and a unique
 optimal arm, Thompson sampling with uniform priors attains the Lai–Robbins constant. -/
-theorem tendsto_thompson_regret_div_log (K : ℕ) [NeZero K] (μ : Fin K → ℝ)
-    (hμ : ∀ k, μ k ∈ Ioo 0 1) (star : Fin K) (hstar : ∀ k ≠ star, μ k < μ star) :
+theorem tendsto_thompson_regret_div_log (K : ℕ) [NeZero K] (μ : Fin K → unitInterval)
+    (hμ : ∀ k, (μ k : ℝ) ∈ Ioo 0 1) (star : Fin K) (hstar : ∀ k ≠ star, μ k < μ star) :
     Tendsto (fun n : ℕ ↦ banditRegret (thompsonPolicy K) (thompsonSeedLaw K)
-        (fun k ↦ banditBernoulli (μ k)) n / Real.log n) atTop
-      (𝓝 (∑ k, if k = star then 0 else (μ star - μ k) / banditBernoulliKL (μ k) (μ star))) := by
+        (fun k ↦ bernoulliMeasure (1 : ℝ) 0 (μ k)) n / Real.log n) atTop
+      (𝓝 (∑ k, if k = star then 0 else
+        ((μ star : ℝ) - μ k) / InformationTheory.klBerReal (μ k) (μ star))) := by
   sorry
 
 /-- The UCB1 policy: each arm once, then a maximizer of `x̄ⱼ + √(2 log t / nⱼ)`. -/
@@ -164,9 +159,9 @@ independent Bernoulli rewards. -/
 theorem exists_bernoulli_banditRegret_ge {U : Type*} [MeasurableSpace U] (ρ : Measure U)
     [IsProbabilityMeasure ρ] (K : ℕ) (hK : 2 ≤ K) (π : SeededBanditPolicy K U)
     (hπ : π.IsMeasurable) (n : ℕ) (hn : (K : ℝ) / (4 * Real.log (4 / 3)) < n) :
-    ∃ μ : Fin K → ℝ, (∀ k, μ k ∈ Icc 0 1) ∧
+    ∃ μ : Fin K → unitInterval,
       (Real.sqrt 2 - 1) * Real.sqrt (n * K) / Real.sqrt (32 * Real.log (4 / 3)) ≤
-        banditRegret π ρ (fun k ↦ banditBernoulli (μ k)) n := by
+        banditRegret π ρ (fun k ↦ bernoulliMeasure (1 : ℝ) 0 (μ k)) n := by
   sorry
 
 /-! ### Histories of a policy on a reward table -/
@@ -481,7 +476,7 @@ theorem historyPlayCount_le {K t : ℕ} (h : Fin t → Fin K × ℝ) (k : Fin K)
   (Finset.card_filter_le _ _).trans (by simp)
 
 /-- Selecting the term `(a, c a)` of a double sum by indicators. -/
-theorem sum_sum_mul_ite_eq {K t : ℕ} (a : Fin K) (c : Fin K → ℕ) (hc : c a ≤ t)
+private theorem sum_sum_mul_ite_eq {K t : ℕ} (a : Fin K) (c : Fin K → ℕ) (hc : c a ≤ t)
     (F : Fin K → ℕ → ℝ) :
     ∑ k, ∑ j ∈ Finset.range (t + 1), F k j * (if a = k ∧ c k = j then 1 else 0) = F a (c a) := by
   rw [Finset.sum_eq_single a]
@@ -655,13 +650,13 @@ theorem ucb1Policy_of_le (K : ℕ) [NeZero K] {t : ℕ} (ht : K ≤ t) (h : Fin 
 /-- GAPS 107.62, upper bound: UCB1 has regret at most `C √(K n log n)` for all `n ≥ max(K, 2)`
 and all reward laws on `[0,1]`, with a universal constant `C`. -/
 theorem exists_ucb1_banditRegret_le :
-    ∃ C > (0 : ℝ), ∀ (K : ℕ) [NeZero K], 2 ≤ K → ∀ ν : Fin K → Measure ℝ,
+    ∃ C > (0 : ℝ), ∀ (K : ℕ) [NeZero K], ∀ ν : Fin K → Measure ℝ,
       (∀ k, IsProbabilityMeasure (ν k)) → (∀ k, ν k (Icc 0 1)ᶜ = 0) →
       ∀ n : ℕ, max K 2 ≤ n →
         banditRegret (ucb1Policy K) (Measure.dirac ()) ν n ≤
           C * Real.sqrt (K * n * Real.log n) := by
   refine ⟨14, by norm_num, ?_⟩
-  intro K _ hK ν hν hsupp n hn
+  intro K _ ν hν hsupp n hn
   have hP := isProbabilityMeasure_rewardTableLaw ν hν
   set A := banditArmProcess (ucb1Policy K) () with hA_def
   set R' : Fin K → ℕ → (Fin K × ℕ → ℝ) → ℝ := fun i j R ↦ R (i, j) with hR'
@@ -672,11 +667,10 @@ theorem exists_ucb1_banditRegret_le :
     have := fun z : Fin K × ℕ ↦ hν z.1
     exact iIndepFun_infinitePi (P := fun z : Fin K × ℕ ↦ ν z.1) (X := fun _ x ↦ x)
       fun _ ↦ measurable_id
-  have hlaw : ∀ i j, (rewardTableLaw ν).map (R' i j) = (rewardTableLaw ν).map (R' i 0) :=
-    fun i j ↦ (rewardTableLaw_map_eval ν hν (i, j)).trans
-      (rewardTableLaw_map_eval ν hν (i, 0)).symm
-  have hmean : ∀ i, ∫ R, R' i 0 R ∂rewardTableLaw ν = armMean ν i := fun i ↦
-    integral_eval_rewardTableLaw ν hν (i, 0)
+  have hmean : ∀ i j, ∫ R, R' i j R ∂rewardTableLaw ν = armMean ν i := fun i j ↦
+    integral_eval_rewardTableLaw ν hν (i, j)
+  have hmean' : ∀ i j, ∫ R, R' i j R ∂rewardTableLaw ν = ∫ R, R' i 0 R ∂rewardTableLaw ν :=
+    fun i j ↦ by rw [hmean, hmean]
   have hinit : ∀ t : ℕ, ∀ ht : t < K, ∀ R, A t R = ⟨t, ht⟩ := by
     intro t ht R
     simp [A, banditArmProcess, banditArm, ucb1Policy, ht]
@@ -713,7 +707,7 @@ theorem exists_ucb1_banditRegret_le :
     have := Real.one_sub_inv_le_log_of_pos (x := (n : ℝ)) (by linarith)
     have : (n : ℝ)⁻¹ ≤ 1 / 2 := by rw [inv_le_comm₀ (by linarith) (by norm_num)]; linarith
     linarith
-  refine sum_gap_mul_le_sqrt (by omega) hKn hL (fun k ↦ armMean ν star - armMean ν k)
+  refine sum_gap_mul_le_sqrt NeZero.one_le hKn hL (fun k ↦ armMean ν star - armMean ν k)
     (fun k ↦ ∫ R, (armPlayCount A k n R : ℝ) ∂rewardTableLaw ν)
     (fun k ↦ sub_nonneg.mpr (hstar' k))
     (fun k ↦ by
@@ -726,7 +720,7 @@ theorem exists_ucb1_banditRegret_le :
     (fun k hk ↦ ?_)
   have hlt : ∫ R, R' k 0 R ∂rewardTableLaw ν < ∫ R, R' star 0 R ∂rewardTableLaw ν := by
     rw [hmean, hmean]; linarith
-  have := integral_armPlayCount_le_of_ucb (rewardTableLaw ν) R' hm hb hind hlaw A hinit hucb
+  have := integral_armPlayCount_le_of_ucb (rewardTableLaw ν) R' hm hb hind hmean' A hinit hucb
     hlt n
   rwa [hmean, hmean] at this
 
@@ -765,7 +759,8 @@ least `1 - δ`, for all `T`, the regret is at most
 accounts for initial leverage when `λ = σ²/W²`. The minimax lower bound `d√T/2500` is
 not formalized here. -/
 theorem exists_linUCB_regret_le :
-    ∃ c > (0 : ℝ), ∀ {Ω : Type} [MeasurableSpace Ω] [StandardBorelSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
+    ∃ c > (0 : ℝ), ∀ {Ω : Type} [MeasurableSpace Ω] [StandardBorelSpace Ω] (P : Measure Ω)
+      [IsProbabilityMeasure P]
       (F : Filtration ℕ (inferInstance : MeasurableSpace Ω)) (d : ℕ) (hd : 0 < d)
       (D : Finset (Fin d → ℝ)) (hD : D.Nonempty) (μstar : Fin d → ℝ) (B W : ℝ) (σ : ℝ≥0),
       0 < B → 0 < W → 0 < σ → (∀ x ∈ D, |μstar ⬝ᵥ x| ≤ 1 ∧ ‖(WithLp.toLp 2 x :

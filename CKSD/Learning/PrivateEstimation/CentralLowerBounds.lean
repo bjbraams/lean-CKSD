@@ -154,24 +154,38 @@ theorem ofReal_half_le_or_of_ofReal_le_add {x y : ℝ≥0∞} {r : ℝ} (h : ENN
   exact absurd h (not_le.mpr this)
 
 /-- The event bound from the total variation distance: `2 (Q A - Q' A) ≤ tvDist Q Q'`. -/
-theorem two_mul_measureReal_sub_le_tvDist {Q Q' : Measure ℝ} [IsProbabilityMeasure Q]
-    [IsProbabilityMeasure Q'] {A : Set ℝ} (hA : MeasurableSet A) :
+theorem two_mul_measureReal_sub_le_tvDist {Y : Type*} [MeasurableSpace Y] {Q Q' : Measure Y}
+    [IsProbabilityMeasure Q] [IsProbabilityMeasure Q'] {A : Set Y} (hA : MeasurableSet A) :
     2 * (Q.real A - Q'.real A) ≤ tvDist Q Q' := by
-  have hf : ∀ (ξ : Measure ℝ) [IsProbabilityMeasure ξ],
-      ∫ y, (2 * A.indicator (1 : ℝ → ℝ) y - 1) ∂ξ = 2 * ξ.real A - 1 := by
+  have hf : ∀ (ξ : Measure Y) [IsProbabilityMeasure ξ],
+      ∫ y, (2 * A.indicator (1 : Y → ℝ) y - 1) ∂ξ = 2 * ξ.real A - 1 := by
     intro ξ _
-    have hI : Integrable (A.indicator (1 : ℝ → ℝ)) ξ := (integrable_const (1 : ℝ)).indicator hA
+    have hI : Integrable (A.indicator (1 : Y → ℝ)) ξ := (integrable_const (1 : ℝ)).indicator hA
     rw [integral_sub (hI.const_mul 2) (integrable_const 1), integral_const_mul,
       integral_indicator_one hA]
     simp
   have h := integral_sub_integral_le_tvDist (μ := Q) (ν := Q')
-    (f := fun y ↦ 2 * A.indicator (1 : ℝ → ℝ) y - 1)
+    (f := fun y ↦ 2 * A.indicator (1 : Y → ℝ) y - 1)
     ((((measurable_const.indicator hA).const_mul 2).sub_const 1).aestronglyMeasurable)
     (ae_of_all _ fun y ↦ by
       by_cases hy : y ∈ A
       · simp [indicator_of_mem hy]; norm_num
       · simp [indicator_of_notMem hy])
   rw [hf Q, hf Q'] at h
+  linarith
+
+/-- The testing step of Le Cam's method after the Bretagnolle–Huber inequality: if
+`e⁻¹ ≤ 2 - tvDist Q' Q`, then every test errs with total probability at least `1/6`, that is,
+`1/6 ≤ Q A + Q' Aᶜ` for every event `A`. -/
+theorem one_div_six_le_measureReal_add_measureReal_compl {Y : Type*} [MeasurableSpace Y]
+    {Q Q' : Measure Y} [IsProbabilityMeasure Q] [IsProbabilityMeasure Q']
+    (hTV : Real.exp (-1) ≤ 2 - tvDist Q' Q) {A : Set Y} (hA : MeasurableSet A) :
+    1 / 6 ≤ Q.real A + Q'.real Aᶜ := by
+  have hev := two_mul_measureReal_sub_le_tvDist (Q := Q') (Q' := Q) hA
+  have he3 : 1 / 3 ≤ Real.exp (-1) := by
+    rw [Real.exp_neg, one_div]
+    exact inv_anti₀ (Real.exp_pos 1) (by linarith [Real.exp_one_lt_d9])
+  rw [measureReal_compl hA, probReal_univ]
   linarith
 
 /-- The non-private part of the central lower bound: for every mechanism some Bernoulli law
@@ -229,14 +243,8 @@ theorem exists_bernoulli_centralMeanRisk_ge_inv {n : ℕ} (hn : 0 < n)
   have hexp : Real.exp (-1) ≤ Real.exp (-(InformationTheory.klDiv μb μa).toReal) :=
     Real.exp_le_exp.mpr (by linarith)
   have hTV := tvDist_comp_le μb μa M
-  have hev := two_mul_measureReal_sub_le_tvDist (Q := M ∘ₘ μb) (Q' := M ∘ₘ μa) hA
-  have he3 : 1 / 3 ≤ Real.exp (-1) := by
-    rw [Real.exp_neg, one_div]
-    exact inv_anti₀ (Real.exp_pos 1) (by linarith [Real.exp_one_lt_d9])
-  have hcompl : (M ∘ₘ μb).real Aᶜ = 1 - (M ∘ₘ μb).real A := by
-    rw [measureReal_compl hA, probReal_univ]
-  have htest : 1 / 6 ≤ (M ∘ₘ μa).real A + (M ∘ₘ μb).real Aᶜ := by
-    rw [hcompl]; linarith
+  have htest : 1 / 6 ≤ (M ∘ₘ μa).real A + (M ∘ₘ μb).real Aᶜ :=
+    one_div_six_le_measureReal_add_measureReal_compl (by linarith) hA
   have hLC := centralMeanRisk_add_centralMeanRisk_ge M hab (n := n)
   have hsum : ENNReal.ofReal (1 / (96 * n)) ≤
       centralMeanRisk M (Ber((1 : ℝ), 0, a)) + centralMeanRisk M (Ber((1 : ℝ), 0, b)) := by

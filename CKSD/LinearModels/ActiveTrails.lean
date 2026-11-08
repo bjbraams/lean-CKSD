@@ -19,8 +19,9 @@ condition of d-separation. The main results are:
 * a trail between `A` and `B` whose noncolliders avoid `C` and whose colliders lie in the
   ancestral closure of `A ∪ B ∪ C` can be turned into an active trail
   (`CausalGraph.exists_activeTrail_of_semiActive`);
-* consequently such a trail cannot exist when `A` and `B` are d-separated by `C`
-  (`CausalGraph.false_of_dSeparated_of_semiActiveTrail`).
+* consequently neither an active trail (`CausalGraph.DSeparated.false_of_isTrailWith`) nor such
+  a semi-active trail (`CausalGraph.false_of_dSeparated_of_semiActiveTrail`) can join `A` and
+  `B` when they are d-separated by `C`.
 
 These are the graph-theoretic steps in the proof that a recursively factorizing mass function
 satisfies the global directed Markov property (Lauritzen, *Graphical Models*, 1996, §3.2).
@@ -545,6 +546,18 @@ theorem exists_activeTrail_of_semiActive (G : CausalGraph V) {A B C D : Set V}
   · rw [trailAppend_of_ge hjunc (Nat.le_add_right _ _), Nat.add_sub_cancel_left]
     exact hrBm
 
+/-- If `A` and `B` are d-separated by `C`, there is no active trail (repetitions allowed)
+from a vertex of `A` to a vertex of `B`: such a trail can be shortened to an active path. This is
+the bridge between trails on `ℕ` and the paths on `Fin (n + 1)` of `CausalGraph.IsActivePath`. -/
+theorem DSeparated.false_of_isTrailWith {G : CausalGraph V} {A B C : Set V}
+    (hsep : G.DSeparated A B C) {n : ℕ} {q : ℕ → V}
+    (h : G.IsTrailWith (G.MemAncestorClosure C) (· ∉ C) n q) (h0 : q 0 ∈ A) (hn : q n ∈ B) :
+    False := by
+  obtain ⟨m, r, hr, hr0, hrm, hinj⟩ := G.exists_injective_activeTrail C n q h
+  refine hsep m (fun i ↦ r i) ?_ ?_ (G.isActivePath_of_isTrailWith hr hinj)
+  · simpa [hr0] using h0
+  · simpa [hrm] using hn
+
 /-- If `A` and `B` are d-separated by `C`, there is no trail between `A` and `B` whose
 noncolliders avoid `C` and whose colliders lie in a set `D` all of whose vertices outside the
 ancestral closure of `C` are ancestors of `A ∪ B` or lie in it. -/
@@ -554,10 +567,7 @@ theorem false_of_dSeparated_of_semiActiveTrail (G : CausalGraph V) {A B C D : Se
     {n : ℕ} {q : ℕ → V} (h : G.IsTrailWith (· ∈ D) (· ∉ C) n q) (h0 : q 0 ∈ A)
     (hn : q n ∈ B) : False := by
   obtain ⟨m, r, hr, hr0, hrm⟩ := G.exists_activeTrail_of_semiActive hAC hBC hD h h0 hn
-  obtain ⟨m', r', hr', hr'0, hr'm, hinj⟩ := G.exists_injective_activeTrail C m r hr
-  refine hsep m' (fun i ↦ r' i) ?_ ?_ (G.isActivePath_of_isTrailWith hr' hinj)
-  · simpa [hr'0] using hr0
-  · simpa [hr'm] using hrm
+  exact hsep.false_of_isTrailWith hr hr0 hrm
 
 end CausalGraph
 

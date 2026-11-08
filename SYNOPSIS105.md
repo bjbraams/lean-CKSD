@@ -985,10 +985,11 @@ squares and then $Y$ on the fitted values $\hat D$.
   Write $Q_{ZZ}=\mathbb E[ZZ^\top]$, $Q_{ZD}=\mathbb E[ZD^\top]$,
   $H=Q_{ZD}^\top Q_{ZZ}^{-1}Q_{ZD}$, and
   $\Omega=\mathbb E[\varepsilon^2ZZ^\top]$.
-  If $Z$ and $D$ have finite fourth moments and $\Omega$ is finite, then
+  If $\Omega$ is finite, then
   $$\sqrt n(\hat\beta_{\mathrm{tsls}}-\beta)\Rightarrow N\bigl(0,\;
   H^{-1}Q_{ZD}^\top Q_{ZZ}^{-1}\,\Omega\,Q_{ZZ}^{-1}Q_{ZD}H^{-1}\bigr),$$
-  and this covariance is estimated consistently by replacing the moments
+  and if moreover $Z$ and $D$ have finite fourth moments, this covariance is
+  estimated consistently by replacing the moments
   with sample moments and $\varepsilon_i$ with the residuals
   $Y_i-\hat\beta^\top_{\mathrm{tsls}}D_i$. When
   $D$ and $Z$ have the same dimension, it equals the instrumental-variable

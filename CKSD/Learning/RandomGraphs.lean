@@ -33,9 +33,10 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- A real number clamped to the unit interval, used as an edge probability. -/
+/-- A real number clamped to the unit interval (Mathlib's projection `Set.projIcc`), used as an
+edge probability. -/
 def clampUnitInterval (x : ℝ) : unitInterval :=
-  ⟨max 0 (min 1 x), le_max_left _ _, max_le zero_le_one (min_le_left _ _)⟩
+  Set.projIcc 0 1 zero_le_one x
 
 /-- Labellings of `Fin n` with exactly `n / 2` vertices in the group `true`. -/
 def balancedLabelings (n : ℕ) : Finset (Fin n → Bool) :=
@@ -99,10 +100,10 @@ theorem exists_weakRecovery_iff (a b : ℝ) (ha : 0 < a) (hb : 0 < b) :
 
 /-- GAPS 107.42: below the Kesten–Stigum threshold the sparse block model and the binomial
 random graph with the same average degree are mutually contiguous, stated directly on
-sequences of events. -/
+sequences of events (every set of graphs on `Fin n` is measurable). -/
 theorem blockModel_binomialRandom_mutually_contiguous (a b : ℝ) (ha : 0 < a) (hb : 0 < b)
     (hbelow : (a - b) ^ 2 < 2 * (a + b))
-    (A : ∀ n : ℕ, Set (SimpleGraph (Fin n))) (hA : ∀ n, MeasurableSet (A n)) :
+    (A : ∀ n : ℕ, Set (SimpleGraph (Fin n))) :
     Tendsto (fun n : ℕ ↦ blockModelGraphLaw n (a / n) (b / n) (A n)) atTop (𝓝 0) ↔
       Tendsto (fun n : ℕ ↦ SimpleGraph.binomialRandom (Fin n)
         (clampUnitInterval ((a + b) / (2 * n))) (A n)) atTop (𝓝 0) := by
@@ -225,7 +226,8 @@ theorem existsUnique_graphonMixture_of_finitePerm_invariant (law : Measure (Simp
     (hinv : ∀ n (σ : Equiv.Perm (Fin n)),
       law.map (SimpleGraph.comap ⇑(finitePermOfFin σ)) = law) :
     ∃! P : ProbabilityMeasure TauCeti.DenseGraphLimits.GraphonSpaceI,
-      (P : Measure TauCeti.DenseGraphLimits.GraphonSpaceI).bind TauCeti.DenseGraphLimits.infiniteSampleLawOnSpace = law :=
+      (P : Measure TauCeti.DenseGraphLimits.GraphonSpaceI).bind
+        TauCeti.DenseGraphLimits.infiniteSampleLawOnSpace = law :=
   TauCeti.DenseGraphLimits.InfiniteExchangeableGraphLaw.existsUnique_bind_infiniteSampleLawOnSpace
     ⟨law, inferInstance, map_comap_eq_of_finitePerm_invariant law hinv⟩
 

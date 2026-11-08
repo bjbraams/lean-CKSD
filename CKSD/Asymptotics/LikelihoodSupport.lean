@@ -103,7 +103,8 @@ theorem measureReal_le_abs_sum_sub_le_of_iid {Ω E : Type*} [MeasurableSpace Ω]
     (φ : E → ℝ) (hφ : Measurable φ) (h2 : MemLp φ 2 P) (n : ℕ) {ε : ℝ} (hε : 0 < ε) :
     μ.real {ω | ε ≤ |∑ i ∈ Finset.range n, φ (X i ω) - n * ∫ x, φ x ∂P|} ≤
       n * (∫ x, φ x ^ 2 ∂P) / ε ^ 2 := by
-  obtain ⟨hindep, hident⟩ := iid_comp_pairwise_identDistrib hiid hφ
+  have hindep := hiid.pairwise_indepFun_comp hφ
+  have hident := hiid.identDistrib_comp hφ
   have hm := hiid.1
   have h2i : ∀ i, MemLp (φ ∘ X i) 2 μ := fun i ↦ by
     have h := h2
@@ -258,33 +259,6 @@ theorem tendsto_mul_measureReal_lt_abs_of_integrable_sq {E : Type*} [MeasurableS
     simpa using this
   refine squeeze_zero (fun n ↦ by positivity) h1 ?_
   simpa using h2'.div_const (c ^ 2)
-
-/-- For a law with a density, a real function is integrable iff its product with the density is
-integrable for the reference measure, and the integrals agree. -/
-theorem integrable_and_integral_eq_of_hasDensity {E : Type*} [MeasurableSpace E]
-    {P ν : Measure E} {p : E → ℝ} (hp : HasDensity P ν p) (φ : E → ℝ) :
-    (Integrable φ P ↔ Integrable (fun x ↦ p x * φ x) ν) ∧
-      ∫ x, φ x ∂P = ∫ x, p x * φ x ∂ν := by
-  obtain ⟨hpm, hp0, hPe⟩ := hp
-  have hae : (fun x ↦ (ENNReal.ofReal (p x)).toReal • φ x) =ᵐ[ν] fun x ↦ p x * φ x := by
-    filter_upwards [hp0] with x hx
-    rw [ENNReal.toReal_ofReal hx, smul_eq_mul]
-  subst hPe
-  constructor
-  · rw [integrable_withDensity_iff_integrable_smul' hpm.ennreal_ofReal
-      (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
-    exact integrable_congr hae
-  · rw [integral_withDensity_eq_integral_toReal_smul hpm.ennreal_ofReal
-      (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
-    exact integral_congr_ae hae
-
-/-- The density of a probability law is integrable with integral one. -/
-theorem integrable_and_integral_eq_one_of_hasDensity {E : Type*} [MeasurableSpace E]
-    {P ν : Measure E} [IsProbabilityMeasure P] {p : E → ℝ} (hp : HasDensity P ν p) :
-    Integrable p ν ∧ ∫ x, p x ∂ν = 1 := by
-  obtain ⟨h1, h2⟩ := integrable_and_integral_eq_of_hasDensity hp (fun _ ↦ 1)
-  simp only [mul_one] at h1 h2
-  exact ⟨h1.1 (integrable_const 1), by rw [← h2]; simp⟩
 
 /-- The derivative in a real parameter of a family of measurable functions, differentiable in the
 parameter, is measurable in the observation. -/

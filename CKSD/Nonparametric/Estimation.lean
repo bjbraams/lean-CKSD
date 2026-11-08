@@ -3,11 +3,29 @@ module
 public import CKSD.Nonparametric.Basic
 
 /-!
-# Nonparametric: Estimation
+# Empirical distribution functions, kernel density estimation, and rank statistics
 
-Sources: `GAPS.md`, `SYNOPSIS103.md`, and `STRUCTURE103.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Classical one-dimensional nonparametric estimation: the Dvoretzky–Kiefer–Wolfowitz–Massart
+inequality, the pointwise central limit theorem and the universal `L¹` consistency of kernel
+density estimators, the representer theorem for penalized empirical risk over a Hilbert space,
+and the exact moments of linear rank statistics under uniformly distributed ranks.
+
+## Main definitions
+
+* `CKSD.uniformPermMeasure n`: the uniform probability measure on the permutations of `Fin n`.
+* `CKSD.linearRankStatistic a c σ`: the linear rank statistic `∑ᵢ cᵢ a(σ i)`.
+
+## Main results
+
+* `CKSD.measure_kolmogorovSmirnovStatistic_gt_le`: `P(√n ‖F_n - F‖_∞ > t) ≤ 2 exp(-2t²)`.
+* `CKSD.tendstoInDistribution_kernelDensityEstimator`: the bias-corrected central limit
+  theorem for the kernel density estimator at a point.
+* `CKSD.ae_tendsto_integral_abs_kernelDensityEstimator_sub`: `∫ |f̂_n - f| → 0` almost surely.
+* `CKSD.minimizer_mem_span_of_feature_vectors`: the representer theorem.
+* `CKSD.integral_linearRankStatistic`, `CKSD.variance_linearRankStatistic`: the mean
+  `N c̄ ā` and the variance `(N - 1)⁻¹ ∑ (cᵢ - c̄)² ∑ (a(i) - ā)²` of a linear rank statistic.
+
+Sources: GAPS 103.1, 103.4, 103.5, 103.8, and 103.14.
 -/
 
 @[expose] public section
@@ -26,7 +44,8 @@ attribute [local instance] Classical.propDecidable
 -- Use the common rank measurable structure.
 attribute [local instance] rankMeasurableSpace
 
-/-- GAPS 103.1, finite-sample Dvoretzky–Kiefer–Wolfowitz–Massart bound. -/
+/-- GAPS 103.1: the Dvoretzky–Kiefer–Wolfowitz inequality with Massart's constant. For i.i.d.
+real observations and every `t > 0`, `P(√n sup_x |F_n(x) - F(x)| > t) ≤ 2 exp(-2 t²)`. -/
 theorem measure_kolmogorovSmirnovStatistic_gt_le {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (n : ℕ) (hn : 0 < n)
@@ -35,7 +54,11 @@ theorem measure_kolmogorovSmirnovStatistic_gt_le {Ω : Type*} [MeasurableSpace �
       (-2 * t ^ 2) := by
   sorry
 
-/-- GAPS 103.4, pointwise bias-corrected kernel-density central limit theorem. -/
+/-- GAPS 103.4: the pointwise central limit theorem for the kernel density estimator. For a
+bounded symmetric probability kernel `K` with finite second moment `μ₂(K)` and a twice
+continuously differentiable density `f` with bounded `f''`, if `f(t) > 0`, `h → 0`, `nh → ∞`,
+and `nh⁵ = O(1)`, then `√(nh) (f̂_h(t) - f(t) - h² μ₂(K) f''(t) / 2) ⇒ N(0, R(K) f(t))` with
+`R(K) = ∫ K²`. -/
 theorem tendstoInDistribution_kernelDensityEstimator {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (f K : ℝ → ℝ)
@@ -43,8 +66,7 @@ theorem tendstoInDistribution_kernelDensityEstimator {Ω : Type*} [MeasurableSpa
     (hL2 : MemLp f 2 volume) (hD2 : MemLp (deriv (deriv f)) 2 volume)
     (hDb : ∃ C, ∀ x, |deriv (deriv f) x| ≤ C)
     (hKm : Measurable K) (hKpos : ∀ x, 0 ≤ K x) (hKsym : ∀ x, K (-x) = K x)
-    (hKb : ∃ C, ∀ x, K x ≤ C) (hKi : Integrable K volume)
-    (hK1 : (∫ x, K x) = 1) (hK2 : Integrable (fun x ↦ x ^ 2 * K x) volume)
+    (hKb : ∃ C, ∀ x, K x ≤ C) (hK1 : (∫ x, K x) = 1) (hK2 : Integrable (fun x ↦ x ^ 2 * K x) volume)
     (h : ℕ → ℝ) (hh : ∀ n : ℕ, 0 < h n) (hh0 : Tendsto h atTop (𝓝 0))
     (hnh : Tendsto (fun n : ℕ ↦ (n : ℝ) * h n) atTop atTop)
     (hnh5 : ∃ C, ∀ᶠ n : ℕ in atTop, (n : ℝ) * h n ^ 5 ≤ C)
@@ -55,22 +77,26 @@ theorem tendstoInDistribution_kernelDensityEstimator {Ω : Type*} [MeasurableSpa
       (gaussianReal 0 (Real.toNNReal ((∫ u, K u ^ 2) * f t))) := by
   sorry
 
-/-- GAPS 103.5, one-dimensional universal almost-sure L1 consistency. -/
+/-- GAPS 103.5: universal `L¹` consistency of the kernel density estimator, in dimension one.
+For a bounded compactly supported kernel with `∫ K = 1`, if `h → 0` and `nh → ∞`, then
+`∫ |f̂_n - f| → 0` almost surely for every density `f`. -/
 theorem ae_tendsto_integral_abs_kernelDensityEstimator_sub {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (f K : ℝ → ℝ)
-    (hf : HasDensity P volume f) (hKm : Measurable K) (hKi : Integrable K volume)
-    (hK1 : (∫ x, K x) = 1) (hKb : ∃ C, ∀ x, |K x| ≤ C)
+    (hf : HasDensity P volume f) (hKm : Measurable K) (hK1 : (∫ x, K x) = 1)
+    (hKb : ∃ C, ∀ x, |K x| ≤ C)
     (hKc : ∃ R > 0, ∀ x, R < |x| → K x = 0)
     (h : ℕ → ℝ) (hh : ∀ n : ℕ, 0 < h n) (hh0 : Tendsto h atTop (𝓝 0))
     (hnh : Tendsto (fun n : ℕ ↦ (n : ℝ) * h n) atTop atTop) :
     ∀ᵐ ω ∂μ, Tendsto (fun n ↦ ∫ t, |kernelDensityEstimator X K h n ω t - f t|) atTop (𝓝 0) := by
   sorry
 
-/-- GAPS 103.8, representer theorem in its Hilbert feature-vector formulation. -/
+/-- GAPS 103.8: the representer theorem, in its Hilbert feature-vector formulation. A
+minimizer `f` of `∑ᵢ L(yᵢ, ⟪f, vᵢ⟫) + λ ‖f‖²` with `λ > 0` lies in the span of the feature
+vectors `vᵢ`. -/
 theorem minimizer_mem_span_of_feature_vectors
-    {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H]
-     {n : ℕ} (v : Fin n → H) (y : Fin n → ℝ)
+    {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H] {n : ℕ} (v : Fin n → H)
+    (y : Fin n → ℝ)
     (L : ℝ → ℝ → ℝ) (lambda : ℝ) (hlambda : 0 < lambda) (f : H)
     (hmin : ∀ g : H, (∑ i, L (y i) (inner ℝ f (v i))) + lambda * ‖f‖ ^ 2 ≤
       (∑ i, L (y i) (inner ℝ g (v i))) + lambda * ‖g‖ ^ 2) :
@@ -143,13 +169,22 @@ theorem natCast_mul_sum_perm_apply_mul_apply {n : ℕ} (a : Fin n → ℝ) (i j 
   change (n : ℝ) * (n - 1) * F j = _
   linear_combination htot - hdiag
 
-/-- GAPS 103.14, the exact mean and variance under uniform ranks. -/
-theorem linear_rank_statistic_mean_and_variance (n : ℕ) (hn : 2 ≤ n) (a c : Fin n → ℝ) :
-    let P := ((Nat.factorial n : ℝ≥0∞)⁻¹) •
-      (Measure.count : Measure (Equiv.Perm (Fin n)));
+/-- The uniform probability measure on the permutations of `Fin n`: the law of the rank vector
+of `n` independent observations from a continuous distribution. -/
+def uniformPermMeasure (n : ℕ) : Measure (Equiv.Perm (Fin n)) :=
+  ((Nat.factorial n : ℝ≥0∞)⁻¹) • (Measure.count : Measure (Equiv.Perm (Fin n)))
+
+/-- The linear rank statistic `∑ᵢ cᵢ a(σ i)` with regression constants `c` and scores `a`. -/
+def linearRankStatistic {n : ℕ} (a c : Fin n → ℝ) (σ : Equiv.Perm (Fin n)) : ℝ :=
+  ∑ i, c i * a (σ i)
+
+/-- The exact mean and variance of a linear rank statistic under uniform ranks. -/
+private theorem integral_and_variance_linearRankStatistic (n : ℕ) (hn : 2 ≤ n)
+    (a c : Fin n → ℝ) :
+    let P := uniformPermMeasure n;
     let abar := (∑ i, a i) / n;
     let cbar := (∑ i, c i) / n;
-    let T := fun σ : Equiv.Perm (Fin n) ↦ ∑ i, c i * a (σ i);
+    let T := linearRankStatistic a c;
     (∫ σ, T σ ∂P) = (n : ℝ) * abar * cbar ∧
       variance P T = (∑ i, (c i - cbar) ^ 2) *
         (∑ i, (a i - abar) ^ 2) / (n - 1 : ℕ) := by
@@ -159,7 +194,7 @@ theorem linear_rank_statistic_mean_and_variance (n : ℕ) (hn : 2 ≤ n) (a c : 
   have hint : ∀ g : Equiv.Perm (Fin n) → ℝ,
       ∫ σ, g σ ∂P = (n.factorial : ℝ)⁻¹ * ∑ σ, g σ := by
     intro g
-    simp only [P]
+    simp only [P, uniformPermMeasure]
     rw [integral_smul_measure, integral_count, ENNReal.toReal_inv, ENNReal.toReal_natCast,
       smul_eq_mul]
   have hn0 : (n : ℝ) ≠ 0 := by positivity
@@ -177,7 +212,7 @@ theorem linear_rank_statistic_mean_and_variance (n : ℕ) (hn : 2 ≤ n) (a c : 
     rw [eq_div_iff hn0, mul_comm, natCast_mul_sum_perm_apply]
   have hmean : ∫ σ, T σ ∂P = A * C / n := by
     rw [hint]
-    simp only [T]
+    simp only [T, linearRankStatistic]
     rw [Finset.sum_comm]
     simp_rw [← Finset.mul_sum, hsum1, ← Finset.sum_mul]
     field_simp
@@ -201,7 +236,7 @@ theorem linear_rank_statistic_mean_and_variance (n : ℕ) (hn : 2 ≤ n) (a c : 
     set D : ℝ := n.factorial * Sa / n with hD
     have hexpand : ∑ σ, T σ ^ 2 =
         ∑ i, ∑ j, ∑ σ : Equiv.Perm (Fin n), c i * a (σ i) * (c j * a (σ j)) := by
-      simp only [T, sq, Finset.sum_mul_sum]
+      simp only [T, linearRankStatistic, sq, Finset.sum_mul_sum]
       rw [Finset.sum_comm]
       refine Finset.sum_congr rfl fun i _ ↦ ?_
       rw [Finset.sum_comm]
@@ -257,5 +292,18 @@ theorem linear_rank_statistic_mean_and_variance (n : ℕ) (hn : 2 ≤ n) (a c : 
     field_simp
     ring
 
+/-- GAPS 103.14: the mean of a linear rank statistic under uniform ranks,
+`E T_N = N c̄ ā`. -/
+theorem integral_linearRankStatistic (n : ℕ) (hn : 2 ≤ n) (a c : Fin n → ℝ) :
+    ∫ σ, linearRankStatistic a c σ ∂uniformPermMeasure n =
+      (n : ℝ) * ((∑ i, a i) / n) * ((∑ i, c i) / n) :=
+  (integral_and_variance_linearRankStatistic n hn a c).1
+
+/-- GAPS 103.14: the variance of a linear rank statistic under uniform ranks,
+`Var T_N = (N - 1)⁻¹ ∑ᵢ (cᵢ - c̄)² ∑ᵢ (a(i) - ā)²`. -/
+theorem variance_linearRankStatistic (n : ℕ) (hn : 2 ≤ n) (a c : Fin n → ℝ) :
+    variance (uniformPermMeasure n) (linearRankStatistic a c) =
+      (∑ i, (c i - (∑ i, c i) / n) ^ 2) * (∑ i, (a i - (∑ i, a i) / n) ^ 2) / (n - 1 : ℕ) :=
+  (integral_and_variance_linearRankStatistic n hn a c).2
 
 end CKSD

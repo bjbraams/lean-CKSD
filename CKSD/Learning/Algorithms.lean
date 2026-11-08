@@ -4,10 +4,27 @@ public import CKSD.Learning.Basic
 public import CKSD.Processes.Models
 
 /-!
-# Learning objectives, networks, and sequential algorithms
+# Learning objectives, boosting, and private threshold queries
 
-Definitions for empirical risk minimization, margins, boosting, finite neural networks, bandits,
-and private threshold queries. Kernels continue to represent randomized algorithms.
+Basic objects of empirical risk minimization, margin-based classification and boosting, simple
+neural predictors, `k`-means, and the AboveThreshold mechanism.
+
+## Main definitions
+
+* `CKSD.empiricalRisk`, `CKSD.IsEmpiricalRiskMinimizer`: empirical risk on a finite sample.
+* `CKSD.marginLoss`, `CKSD.exponentialLoss`: ramp and exponential margin losses.
+* `CKSD.boostingScore`, `CKSD.boostingWeight`, `CKSD.boostingWeightedError`: AdaBoost.
+* `CKSD.relu`, `CKSD.twoLayerPredictor`: one-hidden-layer predictors.
+* `CKSD.kmeansRisk`: the population `k`-means distortion.
+* `CKSD.HasQuerySensitivity`, `CKSD.aboveThresholdTime`: the AboveThreshold mechanism.
+
+## Main results
+
+* `CKSD.training_error_le_exponential_loss`: the exponential loss dominates the training error
+  (GAPS 107.24).
+* `CKSD.sub_le_of_threshold_add_le_add`, `CKSD.le_add_of_add_lt_threshold_add`: accuracy of
+  AboveThreshold on the bounded-noise event (GAPS 107.74).
+
 Sources: Sections 107A–107D of `GAPS.md`.
 -/
 
@@ -52,65 +69,21 @@ def boostingWeightedError {X : Type*} {n : ℕ} (x : Fin n → X) (y : Fin n →
     (h : ℕ → X → ℝ) (α : ℕ → ℝ) (t : ℕ) : ℝ :=
   ∑ i, if h t (x i) ≠ y i then boostingWeight x y h α t i else 0
 
-/-- Scalar ReLU activation. -/
+/-- Scalar ReLU activation `x ↦ max 0 x` (the scalar form of TauCeti's vector-valued
+`reluActivation`). -/
 def relu (x : ℝ) : ℝ := max 0 x
 
-/-- An affine layer of a finite dense neural network. -/
-structure DenseLayer (m n : ℕ) where
-  /-- Weight matrix. -/
-  weight : Matrix (Fin n) (Fin m) ℝ
-  /-- Bias vector. -/
-  bias : Fin n → ℝ
+/-- A one-hidden-layer real predictor `x ↦ ∑ⱼ aⱼ σ(⟪wⱼ, x⟫ + bⱼ)` with `N` hidden units on a
+real inner product space. -/
+def twoLayerPredictor {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] {N : ℕ}
+    (σ : ℝ → ℝ) (a : Fin N → ℝ) (w : Fin N → E) (b : Fin N → ℝ) (x : E) : ℝ :=
+  ∑ j, a j * σ (inner ℝ (w j) x + b j)
 
-/-- Affine evaluation of one dense layer. -/
-def DenseLayer.affine {m n : ℕ} (L : DenseLayer m n) (x : Fin m → ℝ) : Fin n → ℝ :=
-  L.weight.mulVec x + L.bias
-
-/-- A finite feed-forward network, built from compatible affine layers. -/
-inductive FeedForwardNetwork (input : ℕ) : ℕ → Type
-  /-- The identity network on the input space, with no affine layers. -/
-  | inputLayer : FeedForwardNetwork input input
-  /-- Append an affine layer with compatible input and output dimensions. -/
-  | addLayer {m n : ℕ} : FeedForwardNetwork input m → DenseLayer m n → FeedForwardNetwork input n
-
-/-- Evaluation with a fixed activation after every affine layer. -/
-def FeedForwardNetwork.eval {d n : ℕ} (σ : ℝ → ℝ) :
-    FeedForwardNetwork d n → (Fin d → ℝ) → (Fin n → ℝ)
-  | .inputLayer, x => x
-  | .addLayer net layer, x => fun i ↦ σ (layer.affine (net.eval σ x) i)
-
-/-- Number of affine layers in a finite network. -/
-def FeedForwardNetwork.depth {d n : ℕ} : FeedForwardNetwork d n → ℕ
-  | .inputLayer => 0
-  | .addLayer net _ => net.depth + 1
-
-/-- Number of scalar parameters of a network, including biases. -/
-def FeedForwardNetwork.parameterCount {d n : ℕ} : FeedForwardNetwork d n → ℕ
-  | .inputLayer => 0
-  | @FeedForwardNetwork.addLayer _ m n net _ => net.parameterCount + m * n + n
-
-/-- A one-hidden-layer real predictor, with an affine output layer. -/
-def twoLayerPredictor {d N : ℕ} (σ : ℝ → ℝ) (a : Fin N → ℝ)
-    (w : Fin N → EuclideanSpace ℝ (Fin d)) (b : Fin N → ℝ)
-    (x : EuclideanSpace ℝ (Fin d)) : ℝ := ∑ j, a j * σ (inner ℝ (w j) x + b j)
-
-/-- Population `k`-means distortion for an ordered representation of the centers. -/
+/-- Population `k`-means distortion `∫ minⱼ d(x, cⱼ)² dP` for an ordered list of `k` centers.
+The minimum is the real `sInf` of a finite set; for `k = 0` it is `sInf ∅ = 0`. -/
 def kmeansRisk {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X] {k : ℕ}
     (P : Measure X) (centers : Fin k → X) : ℝ :=
   ∫ x, sInf (range fun j ↦ dist x (centers j) ^ 2) ∂P
-
-/-- A policy maps the observed past actions and rewards to a distribution on the next arm. -/
-abbrev BanditPolicy (K : ℕ) :=
-  ∀ t : ℕ, Kernel (Fin t → Fin K × ℝ) (Fin K)
-
-/-- Cumulative pseudo-regret relative to an optimal arm. -/
-def banditPseudoRegret {Ω : Type*} {K : ℕ} (μ : Fin K → ℝ) (star : Fin K)
-    (A : ℕ → Ω → Fin K) (T : ℕ) (ω : Ω) : ℝ :=
-  ∑ t ∈ Finset.range T, (μ star - μ (A t ω))
-
-/-- Exp3's importance-weighted estimated loss for one observed action and loss. -/
-def importanceWeightedBanditLoss {K : ℕ} (p : Fin K → ℝ) (chosen : Fin K)
-    (loss : ℝ) (i : Fin K) : ℝ := if i = chosen then loss / p i else 0
 
 /-- A query has sensitivity at most `c` for the supplied neighboring-data relation. -/
 def HasQuerySensitivity {D : Type*} (R : D → D → Prop) (c : ℝ) (f : D → ℝ) : Prop :=
@@ -136,13 +109,21 @@ theorem training_error_le_exponential_loss {n : ℕ} (margin : Fin n → ℝ) :
       · exact (Real.one_le_exp_iff).mpr (neg_nonneg.mpr h)
       · exact (Real.exp_pos _).le
 
-/-- GAPS 107.74, deterministic accuracy on the simultaneous bounded-noise event. -/
-theorem aboveThreshold_comparison (value T z noise α : ℝ)
-    (hz : |z| ≤ α / 2) (hnoise : |noise| ≤ α / 2) :
-    (T + z ≤ value + noise → T - α ≤ value) ∧
-      (value + noise < T + z → value ≤ T + α) := by
-  constructor <;> intro h <;> obtain ⟨hz₁, hz₂⟩ := abs_le.mp hz <;>
-    obtain ⟨hn₁, hn₂⟩ := abs_le.mp hnoise <;> linarith
+/-- GAPS 107.74, deterministic accuracy on the simultaneous bounded-noise event, crossing case:
+if the threshold noise `z` and the query noise are at most `α / 2` in absolute value, a noisy
+query value at or above the noisy threshold `T + z` has true value at least `T - α`. -/
+theorem sub_le_of_threshold_add_le_add {value T z noise α : ℝ}
+    (hz : |z| ≤ α / 2) (hnoise : |noise| ≤ α / 2) (h : T + z ≤ value + noise) :
+    T - α ≤ value := by
+  linarith [abs_le.mp hz, abs_le.mp hnoise]
+
+/-- GAPS 107.74, deterministic accuracy on the simultaneous bounded-noise event, non-crossing
+case: if the threshold noise `z` and the query noise are at most `α / 2` in absolute value, a
+noisy query value below the noisy threshold `T + z` has true value at most `T + α`. -/
+theorem le_add_of_add_lt_threshold_add {value T z noise α : ℝ}
+    (hz : |z| ≤ α / 2) (hnoise : |noise| ≤ α / 2) (h : value + noise < T + z) :
+    value ≤ T + α := by
+  linarith [abs_le.mp hz, abs_le.mp hnoise]
 
 /-- The ReLU activation is nonnegative. -/
 theorem relu_nonneg (x : ℝ) : 0 ≤ relu x := le_max_left _ _

@@ -32,7 +32,10 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- GAPS 102.8: the nondegenerate U-statistic CLT, with its first projection. -/
+/-- GAPS 102.8: the central limit theorem for U-statistics. For a symmetric square-integrable
+kernel `h` of order `m + 1` with mean `θ` and first projection `g(x) = E h(x, X₂, …) - θ`,
+`√n (Uₙ - θ)` converges in law to `N(0, (m + 1)² Var g)`. In the degenerate case `Var g = 0`
+the limit is the point mass at `0`. -/
 theorem tendstoInDistribution_uStatistic_of_nondegenerate
     {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) [IsProbabilityMeasure P]
@@ -42,7 +45,6 @@ theorem tendstoInDistribution_uStatistic_of_nondegenerate
     (h2 : MemLp h 2 (Measure.pi fun _ : Fin (m + 1) ↦ P)) :
     let θ := ∫ x, h x ∂(Measure.pi fun _ : Fin (m + 1) ↦ P);
     let g := fun x ↦ (∫ y, h (Fin.cases x y) ∂(Measure.pi fun _ : Fin m ↦ P)) - θ;
-    ∀ (hv : 0 < variance P g),
     TendstoInDistribution μ (fun n ω ↦ Real.sqrt n *
       (uStatistic (m + 1) n h (fun i ↦ X i.val ω) - θ))
       (gaussianReal 0 (Real.toNNReal (((m + 1 : ℕ) : ℝ) ^ 2 * variance P g))) := by

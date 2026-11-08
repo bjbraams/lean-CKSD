@@ -48,7 +48,7 @@ Specific proof reuse includes:
   equation follows from the local proved transport-energy descent inequality.
 - `minimizer_mem_span_of_feature_vectors` uses Mathlib's complete
   finite-dimensional span, orthogonal projection, and norm bounds.
-- `ae_tendsto_landscape_sampleAverage` specializes Mathlib's
+- `LandscapeLp.ae_tendsto_sampleAverage` specializes Mathlib's
   `ProbabilityTheory.strong_law_ae` (the Banach-space Etemadi strong law).
 - `hasDerivAt_predictions_of_gradient_flow` uses Mathlib's Fréchet/ordinary
   derivative chain rule and linearity.
@@ -302,3 +302,32 @@ The exact noncentral F law uses the completed Gaussian projection/residual
 independence theorem, TauCeti's shifted standard-Gaussian norm law from
 `Probability/Distributions/NoncentralChiSquared/Gaussian.lean`, and its independent
 noncentral-chi-squared/chi-squared ratio characterization of the noncentral F law.
+
+Upstream definitions replace local duplicates, with bridge lemmas where CKSD keeps a
+statistical adapter:
+
+- Mathlib: `Measure.conv` for convolution laws; `TendstoInMeasure` through
+  `tendstoInProbabilityConst_iff_tendstoInMeasure`; `tvDist` through
+  `tvDist_eq_two_mul_totalVariationDistance`; `Matrix.rowStochastic` for Markov
+  transition matrices; `poissonMeasure` through `poissonMass_coe`; `bernoulliMeasure` for
+  Bernoulli bandit arms; `HolderOnWith` and `HolderWith` for Hölder classes; `hammingDist`
+  in Assouad's lemma and local privacy; `Maximal` for maximal cliques; `Set.projIcc` for
+  clipping; `Real.negMulLog` for finite entropies; `Relator.BiUnique` for diagram matchings;
+  `exists_eq_ciSup_of_finite`, `Measurable.iSup`, `Integrable.of_mem_Icc`,
+  `Finite.exists_le`, `EquivLike.range_comp`, `SimpleGraph.Walk.exists_boundary_dart`,
+  `ContinuousLinearMap.isStarProjection_iff_eq_starProjection_range`,
+  `Finset.sum_mul_sq_le_sq_mul_sq`, `Finset.sq_sum_div_le_sum_sq_div`,
+  `Matrix.PosSemidef.mul_mul_conjTranspose_same`, `Real.rpow_add_le_add_rpow`,
+  `Real.tendsto_one_add_pow_exp_of_tendsto` and `Measure.pi_map_pi` in the corresponding
+  proofs.
+- TauCeti: `Probability.uniformMeasure` for the uniform law on the unit interval;
+  `Measure.quantile`, `le_cdf_quantile`, `lt_quantile_iff` and `Measure.map_quantile_volume_Ioo`
+  for tail quantiles and probability-integral transforms; `MeasurableEquiv.map_withDensity` in
+  Gaussian conditioning; `map_affine_multivariateGaussian` for stationary Gaussian
+  finite-dimensional laws; `noncentralFMeasure_zero_noncentrality`, which gives the central
+  F law as the zero-noncentrality case of the nested F theorem; `covMatrix` and
+  `Matrix.PosSemidef.kernelMeanEmbedding` with `norm_kernelMeanEmbedding_sub_sq`, which
+  identify the squared MMD with a squared embedding distance; and `Measure.fitLaw`,
+  `klDiv_fitLaw` and `eq_fitLaw_of_klDiv_le` in the Schrödinger-bridge half steps.
+- Statlib: `InformationTheory.klBerReal` for Bernoulli divergences in bandit lower bounds,
+  and `etvDist_eq_two_mul_iSup_sub` for the total-variation bridge.

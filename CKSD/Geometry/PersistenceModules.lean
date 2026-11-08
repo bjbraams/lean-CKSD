@@ -16,7 +16,15 @@ A partial matching of bars whose matched supports are `ε`-close, and whose unma
 `2ε`-short, gives an `ε`-interleaving bar by bar. For closed-open bars this proves that the
 interleaving distance is at most the bottleneck distance.
 
-Sources: GAPS 108.18 and 108.20.
+## Main definitions
+
+* `CKSD.IntervalBasis`: an interval decomposition of a persistence module over a preorder.
+
+## Main results
+
+* `CKSD.exists_intervalBasis_of_isPointwiseFiniteDimensional`: existence of interval
+  decompositions (GAPS 108.18).
+* `CKSD.IntervalBasis.exists_equiv_support_eq`: uniqueness of the barcode (GAPS 108.18).
 -/
 
 @[expose] public section
@@ -56,10 +64,12 @@ theorem exists_intervalBasis_of_isPointwiseFiniteDimensional {K : Type*} [Field 
   sorry
 
 /-- GAPS 108.18, uniqueness: the multiset of intervals of an interval decomposition of a
-pointwise finite-dimensional persistence module over `ℝ` is unique, that is, any two interval
-bases are related by a support-preserving bijection of their index sets. -/
+persistence module over `ℝ` is unique, that is, any two interval bases are related by a
+support-preserving bijection of their index sets. Pointwise finite dimensionality is not needed:
+interval modules have local endomorphism rings, so the Krull–Remak–Schmidt–Azumaya theorem
+applies to arbitrary direct sums of them. -/
 theorem IntervalBasis.exists_equiv_support_eq {K : Type*} [Field K] {V : PersistenceModule K}
-    (hV : IsPointwiseFiniteDimensional V) {ι ι' : Type*} (B : IntervalBasis V ι)
+    {ι ι' : Type*} (B : IntervalBasis V ι)
     (B' : IntervalBasis V ι') : ∃ e : ι ≃ ι', ∀ j, B'.support (e j) = B.support j := by
   sorry
 

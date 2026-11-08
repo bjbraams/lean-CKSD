@@ -38,7 +38,7 @@ theorem tendstoWeakly_of_forall_lipschitz {E : Type*} [PseudoMetricSpace E] [Mea
   let ν' : ProbabilityMeasure E := ⟨ν, inferInstance⟩
   have ht : Tendsto μs' atTop (𝓝 ν') :=
     tendsto_iff_forall_lipschitz_integral_tendsto.2 fun f hb hl ↦ h f hb hl
-  letI : ∀ n, IsProbabilityMeasure (μs n) := hμs
+  have : ∀ n, IsProbabilityMeasure (μs n) := hμs
   exact TendstoWeakly.of_forall_integral_tendsto
     (fun f ↦ ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.1 ht f)
 
@@ -70,8 +70,8 @@ theorem tendstoInDistribution_comp_of_continuous {Ω E F : Type*} [MeasurableSpa
     (φ : E → F) (hφ : Continuous φ) (h : TendstoInDistribution μ Z ν) :
     TendstoInDistribution μ (fun n ω ↦ φ (Z n ω)) (ν.map φ) := by
   have hφm : Measurable φ := hφ.measurable
-  letI : ∀ n, IsFiniteMeasure (μ.map (Z n)) := h.finite
-  letI : IsFiniteMeasure ν := h.finite_limit
+  have : ∀ n, IsFiniteMeasure (μ.map (Z n)) := h.finite
+  have : IsFiniteMeasure ν := h.finite_limit
   refine ⟨fun n ↦ ?_, inferInstance, ?_⟩
   · change IsFiniteMeasure (μ.map (φ ∘ Z n))
     rw [← Measure.map_map hφm (hZ n)]
@@ -455,24 +455,19 @@ theorem tendstoInProbabilityConst_mul_zero_of_isBoundedInProbability {Ω : Type*
     _ ≤ η / 2 + η / 2 := (measureReal_union_le _ _).trans (add_le_add h1 h2)
     _ = η := add_halves η
 
-/-- Convergence in measure gives the CKSD convergence in probability to a constant. -/
-theorem tendstoInProbabilityConst_of_tendstoInMeasure {Ω E : Type*} [MeasurableSpace Ω]
-    [PseudoMetricSpace E] (μ : Measure Ω) [IsFiniteMeasure μ] (X : ℕ → Ω → E) (c : E)
-    (h : TendstoInMeasure μ X atTop (fun _ ↦ c)) : TendstoInProbabilityConst μ X c := by
-  intro ε hε
-  have h' := (tendstoInMeasure_iff_measureReal_dist.1 h) ε hε
-  exact squeeze_zero (fun _ ↦ measureReal_nonneg)
-    (fun n ↦ measureReal_mono fun ω (hω : ε < dist (X n ω) c) ↦ (le_of_lt hω : ε ≤ _)) h'
-
-/-- Measurable real statistics of an iid sequence are pairwise independent and identically
-distributed. -/
-theorem iid_comp_pairwise_identDistrib {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
-    {μ : Measure Ω} {P : Measure E} {X : ℕ → Ω → E}
+/-- Measurable real statistics `s ∘ X i` of an i.i.d. sequence are pairwise independent. -/
+theorem IsIndependentIdenticallyDistributed.pairwise_indepFun_comp {Ω E : Type*}
+    [MeasurableSpace Ω] [MeasurableSpace E] {μ : Measure Ω} {P : Measure E} {X : ℕ → Ω → E}
     (hiid : IsIndependentIdenticallyDistributed μ X P) {s : E → ℝ} (hs : Measurable s) :
-    Pairwise (fun i j ↦ IndepFun (s ∘ X i) (s ∘ X j) μ) ∧
-      ∀ i, IdentDistrib (s ∘ X i) (s ∘ X 0) μ μ := by
-  obtain ⟨hm, hind, hlaw⟩ := hiid
-  refine ⟨fun i j hij ↦ ((hind.comp (fun _ ↦ s) (fun _ ↦ hs)).indepFun hij), fun i ↦ ?_⟩
+    Pairwise (fun i j ↦ IndepFun (s ∘ X i) (s ∘ X j) μ) :=
+  fun _ _ hij ↦ (hiid.2.1.comp (fun _ ↦ s) (fun _ ↦ hs)).indepFun hij
+
+/-- Measurable real statistics `s ∘ X i` of an i.i.d. sequence are identically distributed. -/
+theorem IsIndependentIdenticallyDistributed.identDistrib_comp {Ω E : Type*}
+    [MeasurableSpace Ω] [MeasurableSpace E] {μ : Measure Ω} {P : Measure E} {X : ℕ → Ω → E}
+    (hiid : IsIndependentIdenticallyDistributed μ X P) {s : E → ℝ} (hs : Measurable s) (i : ℕ) :
+    IdentDistrib (s ∘ X i) (s ∘ X 0) μ μ := by
+  obtain ⟨hm, -, hlaw⟩ := hiid
   refine ⟨(hs.comp (hm i)).aemeasurable, (hs.comp (hm 0)).aemeasurable, ?_⟩
   rw [← Measure.map_map hs (hm i), ← Measure.map_map hs (hm 0), hlaw i, hlaw 0]
 
@@ -484,7 +479,8 @@ theorem tendstoInProbabilityConst_sampleMean_of_iid {Ω E : Type*} [MeasurableSp
     (hs : Measurable s) (hint : Integrable s P) :
     TendstoInProbabilityConst μ (fun n ω ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, s (X i ω))
       (∫ x, s x ∂P) := by
-  obtain ⟨hindep, hident⟩ := iid_comp_pairwise_identDistrib hiid hs
+  have hindep := hiid.pairwise_indepFun_comp hs
+  have hident := hiid.identDistrib_comp hs
   have hm := hiid.1
   have hlaw := hiid.2.2 0
   have hint0 : Integrable (s ∘ X 0) μ := by
@@ -494,7 +490,7 @@ theorem tendstoInProbabilityConst_sampleMean_of_iid {Ω E : Type*} [MeasurableSp
   have hmean : μ[s ∘ X 0] = ∫ x, s x ∂P := by
     rw [← hlaw, integral_map (hm 0).aemeasurable hs.aestronglyMeasurable]; rfl
   rw [hmean] at hslln
-  refine tendstoInProbabilityConst_of_tendstoInMeasure μ _ _
+  refine tendstoInProbabilityConst_iff_tendstoInMeasure.2
     (tendstoInMeasure_of_tendsto_ae (fun n ↦ ?_) ?_)
   · exact (measurable_const.mul
       (Finset.measurable_sum _ fun i _ ↦ hs.comp (hm i))).aestronglyMeasurable
@@ -510,7 +506,8 @@ theorem tendstoInDistribution_inv_sqrt_mul_sum_of_iid {Ω E : Type*} [Measurable
     (hs : Measurable s) (h2 : MemLp s 2 P) (h0 : (∫ x, s x ∂P) = 0) :
     TendstoInDistribution μ (fun n ω ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, s (X i ω))
       (gaussianReal 0 (Real.toNNReal (∫ x, s x ^ 2 ∂P))) := by
-  obtain ⟨hindep, hident⟩ := iid_comp_pairwise_identDistrib hiid hs
+  have hindep := hiid.pairwise_indepFun_comp hs
+  have hident := hiid.identDistrib_comp hs
   have hm := hiid.1
   have hlaw := hiid.2.2 0
   have hindep' : iIndepFun (fun i ↦ s ∘ X i) μ :=

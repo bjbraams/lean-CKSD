@@ -1,23 +1,25 @@
 module
 
-public import CKSD.Inference.Basic
+public import CKSD.Inference.Density
 public import TauCeti.Probability.Moments.Determinacy
 
 /-!
-# Inference: Laplace determinacy and densities
+# Laplace determinacy of finite measures
 
-* `Measure.ext_of_integral_exp_inner_eq`: two finite measures on a finite-dimensional real inner
-  product space whose Laplace transforms are finite and agree on a ball around the origin are
-  equal. Each one-dimensional projection is determined by its moment-generating function near
-  the origin (TauCeti's `TauCeti.Measure.ext_of_mgf`), and the characteristic function of the
-  measure is that of its projections (Mathlib's `Measure.ext_of_charFun`).
-* Integral and integrability transfer for measures `ν.withDensity (ofReal ∘ h)` and their images.
+Two finite measures on a finite-dimensional real inner product space whose Laplace transforms
+`u ↦ ∫ exp ⟪u, t⟫` are finite and agree on a ball around the origin are equal. This is the
+analytic step in the completeness of full-rank exponential families (GAPS 101.5).
 
-These are the analytic steps in completeness of full-rank exponential families (GAPS 101.5).
+## Main results
 
-Sources: `GAPS.md` and `SYNOPSIS101.md`.
+* `CKSD.measure_eq_of_integral_exp_inner_eq`.
+
+## Implementation notes
+
+Each one-dimensional projection is determined by its moment generating function near the origin
+(TauCeti's `TauCeti.Measure.ext_of_mgf`), and a measure is determined by the characteristic
+functions of its projections (Mathlib's `Measure.ext_of_charFun`).
 -/
-
 @[expose] public section
 
 noncomputable section
@@ -31,7 +33,7 @@ namespace CKSD
 /-- Multivariate Laplace determinacy: two finite measures on a finite-dimensional real inner
 product space whose Laplace transforms `u ↦ ∫ exp ⟪u, t⟫` are finite and agree on a ball around
 the origin are equal. -/
-theorem Measure.ext_of_integral_exp_inner_eq {E : Type*} [NormedAddCommGroup E]
+theorem measure_eq_of_integral_exp_inner_eq {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     (μ₁ μ₂ : Measure (E)) [IsFiniteMeasure μ₁] [IsFiniteMeasure μ₂] {r : ℝ} (hr : 0 < r)
     (hint : ∀ u : E, ‖u‖ < r → Integrable (fun t ↦ Real.exp (inner ℝ u t)) μ₁)
@@ -65,45 +67,5 @@ theorem Measure.ext_of_integral_exp_inner_eq {E : Type*} [NormedAddCommGroup E]
     simp only [mgf, id]
     rw [integral_map hw.aemeasurable (by fun_prop), integral_map hw.aemeasurable (by fun_prop)]
     simpa [hexp] using heq _ (hsmall s hs)
-
-variable {X : Type*} [MeasurableSpace X]
-
-/-- Integrals against a measure with a nonnegative real density `h`. -/
-theorem integral_withDensity_ofReal (ν : Measure X) {h : X → ℝ} (hh : Measurable h)
-    (hh0 : ∀ x, 0 ≤ h x) (F : X → ℝ) :
-    ∫ x, F x ∂(ν.withDensity fun x ↦ ENNReal.ofReal (h x)) = ∫ x, h x * F x ∂ν := by
-  refine (integral_withDensity_eq_integral_smul (f := fun x ↦ (h x).toNNReal)
-    (measurable_real_toNNReal.comp hh) F).trans ?_
-  congr 1
-  funext x
-  rw [NNReal.smul_def, Real.coe_toNNReal _ (hh0 x), smul_eq_mul]
-
-/-- Integrability against a measure with a nonnegative real density `h`. -/
-theorem integrable_withDensity_ofReal_iff (ν : Measure X) {h : X → ℝ} (hh : Measurable h)
-    (hh0 : ∀ x, 0 ≤ h x) (F : X → ℝ) :
-    Integrable F (ν.withDensity fun x ↦ ENNReal.ofReal (h x)) ↔
-      Integrable (fun x ↦ h x * F x) ν := by
-  refine (integrable_withDensity_iff_integrable_smul (f := fun x ↦ (h x).toNNReal)
-    (measurable_real_toNNReal.comp hh) (g := F)).trans ?_
-  have : (fun x ↦ (h x).toNNReal • F x) = fun x ↦ h x * F x :=
-    funext fun x ↦ by rw [NNReal.smul_def, Real.coe_toNNReal _ (hh0 x), smul_eq_mul]
-  rw [this]
-
-/-- Integrals against the image under `T` of a measure with a nonnegative real density `h`. -/
-theorem integral_map_withDensity_ofReal {E : Type*} [MeasurableSpace E] (ν : Measure X)
-    {T : X → E} (hT : Measurable T) {h : X → ℝ} (hh : Measurable h) (hh0 : ∀ x, 0 ≤ h x)
-    {F : E → ℝ} (hF : Measurable F) :
-    ∫ t, F t ∂(ν.withDensity fun x ↦ ENNReal.ofReal (h x)).map T = ∫ x, h x * F (T x) ∂ν := by
-  rw [integral_map hT.aemeasurable hF.aestronglyMeasurable]
-  exact integral_withDensity_ofReal ν hh hh0 _
-
-/-- Integrability against the image under `T` of a measure with a nonnegative real density. -/
-theorem integrable_map_withDensity_ofReal_iff {E : Type*} [MeasurableSpace E] (ν : Measure X)
-    {T : X → E} (hT : Measurable T) {h : X → ℝ} (hh : Measurable h) (hh0 : ∀ x, 0 ≤ h x)
-    {F : E → ℝ} (hF : Measurable F) :
-    Integrable F ((ν.withDensity fun x ↦ ENNReal.ofReal (h x)).map T) ↔
-      Integrable (fun x ↦ h x * F (T x)) ν := by
-  rw [integrable_map_measure hF.aestronglyMeasurable hT.aemeasurable]
-  exact integrable_withDensity_ofReal_iff ν hh hh0 _
 
 end CKSD

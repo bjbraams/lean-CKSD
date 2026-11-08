@@ -344,7 +344,9 @@ theorem tendstoInProbabilityConst_sub_of_crossing {Ω : Type*} [MeasurableSpace 
     _ ≤ η / 2 + η / 2 := add_le_add hn1 hn2
     _ = η := add_halves η
 
-/-- GAPS 102.7: the first-order Bahadur representation. -/
+/-- GAPS 102.7: the Bahadur representation of a sample quantile. If the distribution function `F`
+is differentiable at the `p`-quantile `q` with `F'(q) = f > 0`, then
+`√n (ξ̂ₙ,ₚ - q - (p - Fₙ(q)) / f) → 0` in probability. -/
 theorem tendstoInProbabilityConst_bahadur_remainder {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (p q f : ℝ)
@@ -421,7 +423,9 @@ theorem tendstoInProbabilityConst_bahadur_remainder {Ω : Type*} [MeasurableSpac
     right
     nlinarith
 
-/-- GAPS 102.6: asymptotic normality of a sample quantile. -/
+/-- GAPS 102.6: asymptotic normality of a sample quantile. If the distribution function is
+differentiable at the `p`-quantile `q` with positive derivative `f`, then `√n (ξ̂ₙ,ₚ - q)`
+converges in law to `N(0, p (1 - p) / f²)`. -/
 theorem tendstoInDistribution_sampleQuantile {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (p q f : ℝ)

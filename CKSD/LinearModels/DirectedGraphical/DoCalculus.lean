@@ -3,10 +3,29 @@ module
 public import CKSD.LinearModels.DirectedGraphical.Markov
 
 /-!
-# Augmentation and the third rule of do-calculus
+# Augmentation and rule 3 of the do-calculus
 
-An intervention indicator augments the causal graph and yields the third rule of do-calculus,
-following Pearl, *Causality* (2009), §3.4.
+Augmenting `G_{\bar X}` by an intervention indicator with an arrow into each vertex of `Z`
+turns the deletion of the action `do(Z = z)` into the deletion of an observation, and yields
+rule 3 of the do-calculus from the global directed Markov property.
+
+## Main definitions
+
+* `CKSD.CausalGraph.nonAncestorPart`: the set `Z(W)` of vertices of `Z` that are not ancestors
+  of `W` in `G_{\bar X}`.
+* `CKSD.CausalGraph.augment`: the graph augmented by an intervention indicator.
+
+## Main results
+
+* `CKSD.CausalGraph.dSeparated_augment_of_rule_three`: the graph-theoretic step of rule 3.
+* `CKSD.condDoMass_rule_three`: rule 3 (insertion and deletion of actions),
+  `P(y | do(x), do(z), w) = P(y | do(x), w)` when `Y` and `Z` are d-separated by `X ∪ W` in
+  `G_{\bar X, \overline{Z(W)}}`.
+
+## References
+
+* J. Pearl, *Causality*, 2nd ed., Cambridge University Press, 2009, §3.4.
+
 Source: GAPS 105.64.
 -/
 
@@ -180,7 +199,7 @@ theorem directedFactorizationMass_augmentedLocalMass [Fintype V]
 
 /-- Splitting a sum over configurations of `Option V` into the value at `none` and the
 configuration on `V`. -/
-theorem sum_option_pi [Fintype V] [Fintype S]
+private theorem sum_option_pi [Fintype V] [Fintype S]
     (F : (Option V → S) → ℝ) :
     ∑ y, F y = ∑ s, ∑ y : V → S, F (fun o ↦ Option.elim o s y) := by
   rw [← Fintype.sum_prod_type']
@@ -434,9 +453,7 @@ theorem CausalGraph.dSeparated_augment_of_rule_three (G : CausalGraph V)
         · exact ⟨w, Finset.mem_union_right _ hw, Or.inr
             (G.transGen_removeIncoming_nonAncestorPart (Finset.disjoint_coe.2 hZW) _ _ hd hw)⟩
       · exact fun h ↦ hs ⟨_, h, rfl⟩
-  obtain ⟨m, r', hr', hr'0, hr'm, hinj'⟩ := G3.exists_injective_activeTrail _ _ _ hrtr
-  exact hsep.symm m (fun i ↦ r' i) (by simpa [hr'0] using hr0) (by simpa [hr'm] using hrn)
-    (G3.isActivePath_of_isTrailWith hr' hinj')
+  exact hsep.symm.false_of_isTrailWith hrtr hr0 hrn
 
 /-- GAPS 105.64, rule 3 of the do-calculus (insertion and deletion of actions):
 if `Y` and `Z` are d-separated by `X ∪ W` in `G_{\bar X, \overline{Z(W)}}`, then

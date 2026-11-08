@@ -8,13 +8,32 @@ public import TauCeti.Probability.Distributions.Gaussian.Density
 public import Mathlib.Analysis.Calculus.FDeriv.Symmetric
 
 /-!
-# Bayes: Posterior
+# Posterior summaries, empirical Bayes, and asymptotic normality of posteriors
 
-Sources: `GAPS.md`, `SYNOPSIS104.md`, and `STRUCTURE104.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
-The Laplace approximation uses TauCeti's normalization of the multivariate normal density
-(`TauCeti.Probability.multivariateGaussian_eq_withDensity`) for the Gaussian integral.
+Results on posteriors in finite-dimensional models: the volume minimality of highest-density
+regions, Tweedie's formula and its Poisson analogue with Robbins' empirical Bayes estimator, the
+Bernstein–von Mises theorem in the normal location model, and the deterministic core of the
+Laplace approximation of posterior normalizing constants.
+
+## Main results
+
+* `CKSD.volume_highest_density_region_le`: a highest-density region has least volume among sets of
+  at least its probability (GAPS 104.10).
+* `CKSD.integral_mul_gaussianPDFReal_div_eq_add_mul_deriv_log`: Tweedie's formula
+  `E[θ | x] = x + v (log m)'(x)` for normal observations (GAPS 104.14).
+* `CKSD.integral_mul_poissonMass_div_eq`: the Poisson identity
+  `E[θ | x] = (x + 1) m(x + 1) / m(x)` (GAPS 104.14).
+* `CKSD.ae_tendsto_robbins_estimator`: almost-sure consistency of Robbins' estimator
+  (GAPS 104.14).
+* `CKSD.tendstoInProbabilityConst_totalVariationDistance_normalPosterior`: Bernstein–von Mises in
+  the normal location model (GAPS 104.1).
+* `CKSD.integral_exp_neg_inner_toEuclideanCLM_div_two`: the Gaussian integral
+  `∫ exp(-⟪y, H y⟫/2) dy = (2π)^{d/2} / √(det H)`.
+* `CKSD.tendsto_laplace_approximation`: Laplace's method on a compact set
+  `n^{d/2} ∫_K a e^{-n f} → a(m) (2π)^{d/2} / √(det ∇²f(m))` (GAPS 104.5).
+
+The Gaussian integral uses TauCeti's normalization of the multivariate normal density
+(`TauCeti.Probability.multivariateGaussian_eq_withDensity`).
 -/
 
 @[expose] public section
@@ -28,7 +47,8 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- GAPS 104.10, volume minimality of a highest-density region. -/
+/-- GAPS 104.10: volume minimality of a highest-density region. If `P` has density `f`, the set
+`C` lies between `{f > k}` and `{f ≥ k}` with `k > 0`, and `P C ≤ P D`, then `vol C ≤ vol D`. -/
 theorem volume_highest_density_region_le {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure P] (f : EuclideanSpace ℝ (Fin d) → ℝ)
     (hf : HasDensity P volume f) (k : ℝ) (hk : 0 < k)
@@ -58,9 +78,10 @@ theorem volume_highest_density_region_le {d : ℕ} (P : Measure (EuclideanSpace 
   rw [← measure_inter_add_sdiff C hD, ← measure_inter_add_sdiff D hC, inter_comm D C]
   gcongr
 
-/-- GAPS 104.14, Tweedie's formula for normal means under an arbitrary probability prior. -/
-theorem normal_posterior_mean_tweedie (π : Measure ℝ) [IsProbabilityMeasure π]
-    (v : ℝ≥0) (hv : 0 < v) (x : ℝ) :
+/-- GAPS 104.14: Tweedie's formula. For `X | θ ~ N(θ, v)` and an arbitrary probability prior `π`
+with marginal density `m(x) = ∫ φ_{θ,v}(x) dπ(θ)`, the posterior mean is `x + v (log m)'(x)`. -/
+theorem integral_mul_gaussianPDFReal_div_eq_add_mul_deriv_log (π : Measure ℝ)
+    [IsProbabilityMeasure π] (v : ℝ≥0) (hv : 0 < v) (x : ℝ) :
     let m := fun t ↦ ∫ θ, gaussianPDFReal θ v t ∂π;
     (∫ θ, θ * gaussianPDFReal θ v x ∂π) / m x =
       x + (v : ℝ) * deriv (fun t ↦ Real.log (m t)) x := by
@@ -145,10 +166,11 @@ theorem normal_posterior_mean_tweedie (π : Measure ℝ) [IsProbabilityMeasure �
   rw [hsplit]
   field_simp
 
-/-- GAPS 104.14, the algebraic Poisson mass-ratio identity for any prior measure.
-For a probability prior on positive intensities with finite first moment and positive marginal
-mass, the left side is the posterior mean; the equality itself needs none of these restrictions. -/
-theorem poisson_posterior_mean_eq_mass_ratio (π : Measure ℝ)
+/-- GAPS 104.14: the Poisson mass-ratio identity `∫ θ p_θ(x) dπ / m(x) = (x + 1) m(x + 1) / m(x)`
+with `m(j) = ∫ p_θ(j) dπ(θ)`. For a probability prior on nonnegative intensities with finite first
+moment and `m(x) > 0`, the left side is the posterior mean; the identity itself holds for every
+measure `π`. -/
+theorem integral_mul_poissonMass_div_eq (π : Measure ℝ)
     (x : ℕ) :
     let m := fun j ↦ ∫ θ, poissonMass θ j ∂π;
     (∫ θ, θ * poissonMass θ x ∂π) / m x = (x + 1 : ℕ) * m (x + 1) / m x := by
@@ -162,7 +184,9 @@ theorem poisson_posterior_mean_eq_mass_ratio (π : Measure ℝ)
   simp_rw [hpoint]
   rw [integral_const_mul]
 
-/-- GAPS 104.14, almost-sure consistency of Robbins' count-ratio estimator. -/
+/-- GAPS 104.14: almost-sure consistency of Robbins' estimator. For i.i.d. counts with law `P`
+and `P{x} > 0`, the ratio `(x + 1) #{i < n | Xᵢ = x + 1} / #{i < n | Xᵢ = x}` converges almost
+surely to `(x + 1) P{x + 1} / P{x}`. -/
 theorem ae_tendsto_robbins_estimator {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (P : Measure ℕ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℕ) (hiid : IsIndependentIdenticallyDistributed μ X P) (x : ℕ) (hx : 0 < P {x}) :
@@ -205,17 +229,19 @@ theorem ae_tendsto_robbins_estimator {Ω : Type*} [MeasurableSpace Ω]
   have hn0 : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.ne_of_gt hn)
   simp only [Pi.div_apply, ← mul_div_assoc, div_div_div_cancel_right₀ hn0]
 
-/-- GAPS 104.1, Bernstein–von Mises for the scalar normal location model with any
-proper prior density continuous and positive at the true mean. -/
-theorem bernstein_von_mises_normal_location {Ω : Type*} [MeasurableSpace Ω]
-    (mu : Measure Ω) [IsProbabilityMeasure mu] (theta₀ : ℝ) (v : ℝ≥0) (hv : 0 < v)
-    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed mu X (gaussianReal theta₀ v))
-    (prior : ℝ → ℝ) (hm : Measurable prior) (hi : Integrable prior volume)
-    (hpos : ∀ theta, 0 ≤ prior theta) (h1 : (∫ theta, prior theta) = 1)
-    (hc : ContinuousAt prior theta₀) (htrue : 0 < prior theta₀) :
-    TendstoInProbabilityConst mu (fun n w ↦ totalVariationDistance
+/-- GAPS 104.1: Bernstein–von Mises theorem for the normal location model `N(θ, v)`. For any
+prior density that is continuous and positive at the true mean `θ₀`, the posterior of
+`√n (θ - X̄ₙ)` converges to `N(0, v)` in total variation, in probability. The normalization
+`∫ prior = 1` forces the prior density to be integrable. -/
+theorem tendstoInProbabilityConst_totalVariationDistance_normalPosterior {Ω : Type*}
+    [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ] (θ₀ : ℝ) (v : ℝ≥0) (hv : 0 < v)
+    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X (gaussianReal θ₀ v))
+    (prior : ℝ → ℝ) (hm : Measurable prior)
+    (hpos : ∀ θ, 0 ≤ prior θ) (h1 : (∫ θ, prior θ) = 1)
+    (hc : ContinuousAt prior θ₀) (htrue : 0 < prior θ₀) :
+    TendstoInProbabilityConst μ (fun n w ↦ totalVariationDistance
       ((normalPosterior prior v n (sampleAverage X n w)).map
-        (fun theta ↦ Real.sqrt n * (theta - sampleAverage X n w)))
+        (fun θ ↦ Real.sqrt n * (θ - sampleAverage X n w)))
       (gaussianReal 0 v)) 0 := by
   sorry
 
@@ -384,14 +410,16 @@ theorem exists_pos_mul_norm_sub_sq_le_of_isCompact {E : Type*} [NormedAddCommGro
       _ ≤ f x := hηA x hxA
 
 
-/-- GAPS 104.5, deterministic Laplace core on a compact parameter region.
-This states the analytic approximation; the random-likelihood and BIC
-conclusions of the source require its additional probabilistic hypotheses. -/
+/-- GAPS 104.5: Laplace's method on a compact region `K`. If `f` is `C²` with `f(m) = 0` at an
+interior point `m`, `f > 0` on `K \ {m}`, and `∇²f(m) = H` is positive definite, then for `a`
+continuous on `K`, `n^{d/2} ∫_K a e^{-n f} → a(m) (2π)^{d/2} / √(det H)`. This is the
+deterministic core of the approximation; the random-likelihood and BIC conclusions of the source
+require additional probabilistic hypotheses. -/
 theorem tendsto_laplace_approximation
     {d : ℕ} (K : Set (EuclideanSpace ℝ (Fin d))) (hK : IsCompact K)
     (m : EuclideanSpace ℝ (Fin d)) (hm : m ∈ interior K)
     (f a : EuclideanSpace ℝ (Fin d) → ℝ) (hf : ContDiff ℝ 2 f)
-    (ha : ContinuousOn a K) (hapos : 0 < a m) (hmin : f m = 0)
+    (ha : ContinuousOn a K) (hmin : f m = 0)
     (huniq : ∀ x ∈ K, x ≠ m → 0 < f x)
     (H : Matrix (Fin d) (Fin d) ℝ) (hH : H.PosDef)
     (hhess : ∀ u v, fderiv ℝ (fderiv ℝ f) m u v =

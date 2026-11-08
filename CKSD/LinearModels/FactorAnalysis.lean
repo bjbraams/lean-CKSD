@@ -7,12 +7,38 @@ public import TauCeti.Analysis.Matrix.GramFactorization.Uniqueness
 /-!
 # Orthogonal factor models
 
-The factor covariance and Gaussian likelihood criterion are explicit matrix functions.
-Identification below concerns the nonzero, distinct normalized-loading regime; it does not
-assert identifiability of the decomposition into common and unique covariance components.
-The sign-identification proof uses TauCeti’s Gram-factor uniqueness theorem and Mathlib’s
-uniqueness of ordered embeddings with equal ranges.
+The orthogonal factor model `X = μ + L F + ε` with `m` common factors has covariance
+`Σ = L Lᵀ + Ψ`, where `L` is the `p × m` loading matrix and `Ψ = diag ψ` the diagonal matrix of
+unique variances. The loadings are determined by `Σ` only up to an orthogonal rotation; under
+the normalization that `Lᵀ Ψ⁻¹ L` is diagonal with distinct positive decreasing entries they
+are determined up to the signs of the columns.
+
+## Main definitions
+
+* `CKSD.factorCovariance`: the implied covariance `L Lᵀ + diag ψ`.
+* `CKSD.factorLikelihoodCriterion`: the Gaussian criterion `log det Σ + tr(C Σ⁻¹)`.
+* `CKSD.IsNormalizedFactorLoading`: `Lᵀ Ψ⁻¹ L` is diagonal with distinct positive decreasing
+  entries.
+* `CKSD.factorColumnSigns`, `CKSD.loadingSignDistance`: sign changes of the factor columns and
+  the operator-norm distance of two loading matrices modulo such sign changes.
+
+## Main results
+
+* `CKSD.factorCovariance_mul_orthogonal`: rotating the factors does not change the covariance.
+* `CKSD.IsNormalizedFactorLoading.exists_eq_mul_factorColumnSigns`: normalized loadings with the
+  same common covariance agree up to column signs. The proof uses TauCeti's uniqueness of Gram
+  factors and Mathlib's uniqueness of order embeddings with equal ranges.
+* `CKSD.tendstoInProbabilityConst_factor_mle_of_compact`: consistency of the Gaussian
+  maximum-likelihood estimator on a compact identified parameter set.
+
+The identification result concerns the normalized-loading regime with known unique variances; it
+does not assert identifiability of the decomposition of `Σ` into its common and unique parts.
 Sources: GAPS 105.35 and SYNOPSIS105, item 35.
+
+## References
+
+* T. W. Anderson, *An Introduction to Multivariate Statistical Analysis*, 3rd ed., Wiley, 2003,
+  Chapter 14.
 -/
 
 @[expose] public section
@@ -24,26 +50,30 @@ open scoped NNReal ENNReal Topology BigOperators MatrixOrder Matrix.Norms.L2Oper
 
 namespace CKSD
 
-/-- Covariance of an orthogonal factor model with diagonal unique variances. -/
+/-- Covariance `L Lᵀ + diag ψ` of an orthogonal factor model with loadings `L` and unique
+variances `ψ`. -/
 def factorCovariance {p m : ℕ} (L : Matrix (Fin p) (Fin m) ℝ) (psi : Fin p → ℝ) :
     Matrix (Fin p) (Fin p) ℝ := L * L.transpose + Matrix.diagonal psi
 
-/-- Gaussian covariance criterion for a factor model, up to a constant and sample-size factor. -/
+/-- The Gaussian covariance criterion `log det Σ + tr(C Σ⁻¹)` at `Σ = L Lᵀ + diag ψ`, for a sample
+covariance `C`; it is the negative log-likelihood up to a constant and the factor `n / 2`. -/
 def factorLikelihoodCriterion {p m : ℕ} (C : Matrix (Fin p) (Fin p) ℝ)
     (L : Matrix (Fin p) (Fin m) ℝ) (psi : Fin p → ℝ) : ℝ :=
   Real.log (factorCovariance L psi).det + Matrix.trace (C * (factorCovariance L psi)⁻¹)
 
-/-- Normalized loadings have distinct decreasing positive weighted column squared lengths. -/
+/-- Normalized loadings: `Lᵀ (diag ψ)⁻¹ L` is a diagonal matrix with distinct positive entries in
+decreasing order. -/
 def IsNormalizedFactorLoading {p m : ℕ} (L : Matrix (Fin p) (Fin m) ℝ)
     (psi : Fin p → ℝ) : Prop :=
   ∃ a : Fin m → ℝ, StrictAnti a ∧ (∀ i, 0 < a i) ∧
     L.transpose * (Matrix.diagonal psi)⁻¹ * L = Matrix.diagonal a
 
-/-- A signed relabeling that changes only factor-column signs. -/
+/-- The diagonal sign matrix changing the signs of the factor columns `j` with `s j = false`. -/
 def factorColumnSigns {m : ℕ} (s : Fin m → Bool) : Matrix (Fin m) (Fin m) ℝ :=
   Matrix.diagonal (fun j ↦ if s j then (1 : ℝ) else -1)
 
-/-- Distance between two loading matrices modulo factor-column signs, in operator norm. -/
+/-- Distance between two loading matrices modulo factor-column signs: the least operator norm of
+`L S - M` over the sign matrices `S`. -/
 def loadingSignDistance {p m : ℕ} (L M : Matrix (Fin p) (Fin m) ℝ) : ℝ :=
   sInf (range fun s : Fin m → Bool ↦
     ‖LinearMap.toContinuousLinearMap
@@ -61,10 +91,11 @@ theorem factorCovariance_mul_orthogonal {p m : ℕ}
       simp only [Matrix.mul_assoc]
     _ = L * L.transpose := by rw [hO, Matrix.mul_one]
 
-/-- GAPS 105.35: normalized nondegenerate loadings are identified up to column signs once
-both their common covariance and the diagonal unique covariance are specified. -/
-theorem normalizedFactorLoading_eq_up_to_signs {p m : ℕ}
-    (L M : Matrix (Fin p) (Fin m) ℝ) (psi : Fin p → ℝ)
+/-- GAPS 105.35: normalized loadings are identified up to column signs once both their common
+covariance `L Lᵀ` and the diagonal unique covariance `diag ψ` are specified: if `L` and `M` are
+normalized for `ψ` and `L Lᵀ = M Mᵀ`, then `M = L S` for a diagonal sign matrix `S`. -/
+theorem IsNormalizedFactorLoading.exists_eq_mul_factorColumnSigns {p m : ℕ}
+    {L M : Matrix (Fin p) (Fin m) ℝ} {psi : Fin p → ℝ}
     (hL : IsNormalizedFactorLoading L psi) (hM : IsNormalizedFactorLoading M psi)
     (hcov : L * L.transpose = M * M.transpose) :
     ∃ s : Fin m → Bool, M = L * factorColumnSigns s := by
@@ -146,9 +177,13 @@ theorem normalizedFactorLoading_eq_up_to_signs {p m : ℕ}
   funext i
   rcases hsign i with h | h <;> simp [h]
 
-/-- GAPS 105.35: consistency of factor maximum likelihood on a compact identified parameter set.
-Compactness and uniform positive unique variances are explicit restrictions of this formulation;
-the unrestricted parameter-space and asymptotic-normality assertions are not included. -/
+/-- GAPS 105.35: consistency of factor maximum likelihood on a compact identified parameter set:
+if the sample covariances `Cₙ` converge in probability to `Σ₀ = L₀ L₀ᵀ + diag ψ₀`, the parameter
+`(L₀, ψ₀)` lies in a compact set `K` on which the unique variances are bounded below by `a > 0`
+and on which `Σ₀` determines `ψ₀` and `L₀` up to column signs, then every minimizer `Tₙ` of the
+criterion over `K` has `ψ̂ₙ → ψ₀` and `L̂ₙ → L₀` modulo column signs, in probability.
+Compactness and the uniform lower bound on the unique variances are restrictions of this
+formulation; the unrestricted parameter space and asymptotic normality are not included. -/
 theorem tendstoInProbabilityConst_factor_mle_of_compact
     {Ω : Type*} [MeasurableSpace Ω] {p m : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]

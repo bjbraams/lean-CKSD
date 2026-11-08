@@ -5,13 +5,31 @@ public import Mathlib.Algebra.Order.Chebyshev
 public import Mathlib.Analysis.MeanInequalitiesPow
 public import Statlib.Divergence.KullbackLeibler.Event
 public import Statlib.ForMathlib.InformationTheory.KullbackLeibler.Bernoulli
+public import Mathlib.InformationTheory.Hamming
 
 /-!
-# Statistical testing lower bounds
+# Testing lower bounds for minimax risk
 
-Le Cam, Fano, Boolean Hamming packing, and Assouad bounds with the statistical total-variation
-normalization. Fano uses the pinned Statlib event chain rule and Bernoulli KL formulas.
-Sources: GAPS 103.39, 103.40, and 103.46.
+The classical reductions of estimation to testing, stated for an estimator `T` of a parameter
+in a metric space and losses of the form `P(dist(T, θ) ≥ s)`. Total variation is in the
+statistical normalization `sup_A |P(A) - Q(A)|` (`CKSD.totalVariationDistance`).
+
+## Main results
+
+* `CKSD.one_sub_totalVariationDistance_div_two_le_max_measureReal` (Le Cam's two-point
+  method): for `2s`-separated parameters, `max_i P_i(dist(T, θ_i) ≥ s) ≥ (1 - TV(P₀, P₁)) / 2`.
+* `CKSD.measureReal_mul_neg_log_sub_log_two_le_klDiv`: the binary data-processing bound
+  `P(A) log(1 / Q(A)) - log 2 ≤ KL(P, Q)`, from Statlib's event chain rule and the Bernoulli
+  Kullback–Leibler formula.
+* `CKSD.one_sub_div_log_le_sSup_measureReal` (Fano's method): for `M ≥ 2` parameters that are
+  `2s`-separated, `max_j P_j(dist(T, θ_j) ≥ s) ≥ 1 - (M⁻¹ ∑_j KL(P_j, Q) + log 2) / log M`.
+* `CKSD.exists_hamming_packing` (Varshamov–Gilbert): for `m ≥ 8` there is a code in `{0,1}^m`
+  containing `0`, of more than `2^(m/8)` words, with pairwise Hamming distance at least `m / 8`.
+* `CKSD.mul_one_sub_div_two_le_sSup_integral_hammingDist` (Assouad's lemma, total variation
+  form): if neighbouring vertices of the cube have laws at total variation at most `α`, every
+  estimator has worst-case expected Hamming loss at least `m (1 - α) / 2`.
+
+Sources: GAPS 103.39, 103.40, 103.45, and 103.46.
 -/
 
 @[expose] public section
@@ -26,27 +44,13 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- Every measurable event difference is bounded by statistical total variation. -/
-theorem abs_measureReal_sub_le_totalVariationDistance {X : Type*} [MeasurableSpace X]
-    (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
-    (A : Set X) (hA : MeasurableSet A) :
-    |P.real A - Q.real A| ≤ totalVariationDistance P Q := by
-  apply le_csSup (show BddAbove {r : ℝ | ∃ B : Set X,
-      MeasurableSet B ∧ r = |P.real B - Q.real B|} from ?_)
-    (show |P.real A - Q.real A| ∈ {r : ℝ | ∃ B : Set X,
-      MeasurableSet B ∧ r = |P.real B - Q.real B|} from ⟨A, hA, rfl⟩)
-  refine ⟨1, ?_⟩
-  rintro r ⟨B, hB, rfl⟩
-  apply abs_le.mpr
-  constructor <;> linarith [measureReal_nonneg (μ := P) (s := B),
-    measureReal_nonneg (μ := Q) (s := B),
-    measureReal_le_one (μ := P) (s := B), measureReal_le_one (μ := Q) (s := B)]
-
-/-- GAPS 103.39: Le Cam's two-point lower bound with the statistical TV normalization. -/
-theorem le_cam_two_point_lower_bound {X Θ : Type*} [MeasurableSpace X] [MetricSpace Θ]
-    [MeasurableSpace Θ] [BorelSpace Θ]
+/-- GAPS 103.39: Le Cam's two-point lower bound. If `dist θ₀ θ₁ ≥ 2 s`, every measurable
+estimator `T` satisfies `max_i P_i(dist(T, θ_i) ≥ s) ≥ (1 - TV(P₀, P₁)) / 2`, with total
+variation in the statistical normalization. -/
+theorem one_sub_totalVariationDistance_div_two_le_max_measureReal {X Θ : Type*}
+    [MeasurableSpace X] [MetricSpace Θ] [MeasurableSpace Θ] [BorelSpace Θ]
     (P₀ P₁ : Measure X) [IsProbabilityMeasure P₀] [IsProbabilityMeasure P₁]
-    (θ₀ θ₁ : Θ) (s : ℝ)  (hsep : 2 * s ≤ dist θ₀ θ₁)
+    (θ₀ θ₁ : Θ) (s : ℝ) (hsep : 2 * s ≤ dist θ₀ θ₁)
     (T : X → Θ) (hT : Measurable T) :
     (1 - totalVariationDistance P₀ P₁) / 2 ≤ max (P₀.real {x | s ≤ dist (T x) θ₀})
       (P₁.real {x | s ≤ dist (T x) θ₁}) := by
@@ -117,12 +121,15 @@ theorem measureReal_mul_neg_log_sub_log_two_le_klDiv {X : Type*} [MeasurableSpac
   nlinarith
 
 
-/-- GAPS 103.40: Fano's bound in its finite-reference-KL form. -/
-theorem fano_lower_bound {X Θ : Type*} [MeasurableSpace X] [MetricSpace Θ]
+/-- GAPS 103.40: Fano's method with a reference law. For `M ≥ 2` parameters with pairwise
+distances at least `2 s` and laws `P_j` of finite Kullback–Leibler divergence from a reference
+probability `Q`, every measurable estimator satisfies
+`max_j P_j(dist(T, θ_j) ≥ s) ≥ 1 - (M⁻¹ ∑_j KL(P_j, Q) + log 2) / log M`. -/
+theorem one_sub_div_log_le_sSup_measureReal {X Θ : Type*} [MeasurableSpace X] [MetricSpace Θ]
     [MeasurableSpace Θ] [BorelSpace Θ] (M : ℕ) (hM : 2 ≤ M)
-    (θ : Fin M → Θ) (P : Fin M → Measure X) (hP : ∀ j, IsProbabilityMeasure (P j))
+    (θ : Fin M → Θ) (P : Fin M → Measure X) [∀ j, IsProbabilityMeasure (P j)]
     (Q : Measure X) [IsProbabilityMeasure Q] (hKL : ∀ j, InformationTheory.klDiv (P j) Q ≠ ∞)
-    (s : ℝ)  (hsep : ∀ i j, i ≠ j → 2 * s ≤ dist (θ i) (θ j))
+    (s : ℝ) (hsep : ∀ i j, i ≠ j → 2 * s ≤ dist (θ i) (θ j))
     (T : X → Θ) (hT : Measurable T) :
     1 - (((∑ j, (InformationTheory.klDiv (P j) Q).toReal) / M + Real.log 2) / Real.log M) ≤
       sSup (range fun j ↦ (P j).real {x | s ≤ dist (T x) (θ j)}) := by
@@ -203,9 +210,10 @@ theorem fano_lower_bound {X Θ : Type*} [MeasurableSpace X] [MetricSpace Θ]
 
 /-- Exponential moment of the Hamming distance to a fixed binary word:
 `∑_y x ^ d(c, y) = (1 + x) ^ m`. -/
-theorem sum_pow_hammingCard_eq {m : ℕ} (c : Fin m → Bool) (x : ℝ) :
-    ∑ y : Fin m → Bool, x ^ (Finset.univ.filter fun i ↦ c i ≠ y i).card = (1 + x) ^ m := by
+theorem sum_pow_hammingDist_eq {m : ℕ} (c : Fin m → Bool) (x : ℝ) :
+    ∑ y : Fin m → Bool, x ^ hammingDist c y = (1 + x) ^ m := by
   classical
+  simp only [hammingDist]
   have h : ∀ y : Fin m → Bool, x ^ (Finset.univ.filter fun i ↦ c i ≠ y i).card =
       ∏ i, (if c i ≠ y i then x else 1) := by
     intro y
@@ -219,13 +227,15 @@ theorem sum_pow_hammingCard_eq {m : ℕ} (c : Fin m → Bool) (x : ℝ) :
     intro i; cases c i <;> simp [add_comm]
   simp only [hb, Finset.prod_const, Finset.card_univ, Fintype.card_fin]
 
-/-- GAPS 103.45: a separated binary packing containing zero. -/
+/-- GAPS 103.45: the Varshamov–Gilbert bound. For `m ≥ 8` there is a set `C ⊆ {0,1}^m`
+containing the zero word with `|C| - 1 ≥ 2^(m/8)` and pairwise Hamming distances at least
+`m / 8`. -/
 theorem exists_hamming_packing (m : ℕ) (hm : 8 ≤ m) :
     ∃ C : Finset (Fin m → Bool), (fun _ ↦ false) ∈ C ∧
       Real.rpow 2 ((m : ℝ) / 8) ≤ (C.card : ℝ) - 1 ∧
-      ∀ x ∈ C, ∀ y ∈ C, x ≠ y →
-        (m : ℝ) / 8 ≤ ((Finset.univ.filter fun i ↦ x i ≠ y i).card : ℝ) := by
+      ∀ x ∈ C, ∀ y ∈ C, x ≠ y → (m : ℝ) / 8 ≤ (hammingDist x y : ℝ) := by
   classical
+  simp only [hammingDist]
   set d : ℝ := (m : ℝ) / 8 with hd
   have hd1 : 1 ≤ d := by rw [hd, le_div_iff₀ (by norm_num)]; exact_mod_cast (by omega : 8 ≤ m)
   set h : (Fin m → Bool) → (Fin m → Bool) → ℕ :=
@@ -295,11 +305,13 @@ theorem exists_hamming_packing (m : ℕ) (hm : 8 ≤ m) :
       · positivity
     have hsum := Finset.sum_le_sum fun y (_ : y ∈ Finset.univ) ↦ hpt y
     rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, mul_one, ← Finset.mul_sum] at hsum
-    have hexp := sum_pow_hammingCard_eq c (1 / 4 : ℝ)
+    have hexp := sum_pow_hammingDist_eq c (1 / 4 : ℝ)
+    simp only [hammingDist] at hexp
     simp only [hh] at hsum
     rw [hexp] at hsum
     have h54 : (1 + 1 / 4 : ℝ) ^ m ≤ t ^ 3 := by
-      refine (pow_le_pow_iff_left₀ (by positivity) (by positivity) (by norm_num : (8 : ℕ) ≠ 0)).mp ?_
+      refine (pow_le_pow_iff_left₀ (by positivity) (by positivity)
+        (by norm_num : (8 : ℕ) ≠ 0)).mp ?_
       calc ((1 + 1 / 4 : ℝ) ^ m) ^ 8 = ((1 + 1 / 4 : ℝ) ^ 8) ^ m := by
             rw [← pow_mul, ← pow_mul, mul_comm]
         _ ≤ (8 : ℝ) ^ m := pow_le_pow_left₀ (by positivity) (by norm_num) m
@@ -335,15 +347,17 @@ theorem exists_hamming_packing (m : ℕ) (hm : 8 ≤ m) :
   change t ≤ _
   linarith
 
-/-- GAPS 103.46, TV version of Assouad's lemma for binary-valued estimators. -/
-theorem assouad_lower_bound {X : Type*} [MeasurableSpace X] (m : ℕ)
-    (P : (Fin m → Bool) → Measure X) (hP : ∀ w, IsProbabilityMeasure (P w))
+/-- GAPS 103.46: Assouad's lemma in total variation form. If the laws `P_w` indexed by the
+cube `{0,1}^m` satisfy `TV(P_w, P_w') ≤ α` whenever `w` and `w'` differ in one coordinate, then
+every measurable estimator `T` with values in the cube has worst-case expected Hamming loss
+`max_w E_w d(T, w) ≥ m (1 - α) / 2`. -/
+theorem mul_one_sub_div_two_le_sSup_integral_hammingDist {X : Type*} [MeasurableSpace X] (m : ℕ)
+    (P : (Fin m → Bool) → Measure X) [∀ w, IsProbabilityMeasure (P w)]
     (α : ℝ)
-    (hnear : ∀ w w', (Finset.univ.filter fun i ↦ w i ≠ w' i).card = 1 → totalVariationDistance (P w)
-      (P w') ≤ α)
+    (hnear : ∀ w w', hammingDist w w' = 1 → totalVariationDistance (P w) (P w') ≤ α)
     (T : X → (Fin m → Bool)) (hT : Measurable T) :
-    (m : ℝ) * (1 - α) / 2 ≤ sSup (range fun w ↦
-      ∫ x, ((Finset.univ.filter fun i ↦ T x i ≠ w i).card : ℝ) ∂P w) := by
+    (m : ℝ) * (1 - α) / 2 ≤ sSup (range fun w ↦ ∫ x, (hammingDist (T x) w : ℝ) ∂P w) := by
+  simp only [hammingDist] at hnear ⊢
   set f := fun w : Fin m → Bool ↦
     ∫ x, ((Finset.univ.filter fun i ↦ T x i ≠ w i).card : ℝ) ∂P w with hf
   -- the events on which the `j`-th coordinate is wrong

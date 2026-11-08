@@ -9,7 +9,19 @@ The ridge model is represented by a finite feature matrix, hence a positive semi
 matrix. Its normalization matches the objective with squared-error coefficient `1/(2n)`.
 The clustering statement uses a compact set containing both observations and centers and asks
 for uniqueness only of the center set; different orderings are identified by Hausdorff distance.
-Sources: GAPS 107.13 and 107.16. Matrices, Gaussian laws, and Hausdorff distance are Mathlib APIs.
+Matrices, Gaussian laws, and Hausdorff distance are Mathlib APIs.
+
+## Main definitions
+
+* `CKSD.ridgeSmoother`, `CKSD.ridgePrediction`: fixed-design ridge regression.
+* `CKSD.HasKernelCriticalRadius`: the empirical kernel critical-radius inequality.
+* `CKSD.kmeansSampleRisk`: the empirical `k`-means distortion.
+
+## Main results
+
+* `CKSD.ridgePrediction_oracle_bounds`: kernel-ridge oracle bounds (GAPS 107.13).
+* `CKSD.ae_tendsto_kmeans_centers_of_compact`: consistency of empirical `k`-means
+  (GAPS 107.16).
 -/
 
 @[expose] public section
@@ -39,7 +51,9 @@ def HasKernelCriticalRadius {n : ℕ} (eigenvalues : Fin n → ℝ) (R sigma del
 
 /-- GAPS 107.13: fixed-design kernel-ridge oracle bounds for a finite feature representation.
 The constants are universal. Both the expected bound and the Gaussian tail bound use the same
-critical radius. This does not formalize the eigenvalue-decay calculation for infinite RKHSs. -/
+critical radius. The eigenvalues `mu j` of the normalized Gram matrix `A Aᵀ / n` are
+automatically nonnegative. This does not formalize the eigenvalue-decay calculation for infinite
+RKHSs. -/
 theorem ridgePrediction_oracle_bounds :
     ∃ c₀ > (0 : ℝ), ∃ c₁ > (0 : ℝ), ∃ c₂ > (0 : ℝ), ∃ c₃ > (0 : ℝ),
       ∀ n p : ℕ, 0 < n → ∀ A : Matrix (Fin n) (Fin p) ℝ,
@@ -47,7 +61,7 @@ theorem ridgePrediction_oracle_bounds :
       ∀ mu : Fin n → ℝ,
       (∀ j, Matrix.toEuclideanLin (𝕜 := ℝ) (((n : ℝ)⁻¹) • (A * A.transpose)) (e j) =
         mu j • e j) →
-      (∀ j, 0 ≤ mu j) → ∀ R sigma delta lambda : ℝ,
+      ∀ R sigma delta lambda : ℝ,
       0 < R → 0 < sigma → 0 < delta → HasKernelCriticalRadius mu R sigma delta →
       2 * delta ^ 2 ≤ lambda → ∀ truth : EuclideanSpace ℝ (Fin n),
       ∀ beta : EuclideanSpace ℝ (Fin p), ‖beta‖ ≤ R →
@@ -67,9 +81,10 @@ def kmeansSampleRisk {X : Type*} [PseudoMetricSpace X] {n k : ℕ}
 
 /-- GAPS 107.16: almost-sure consistency of compactly constrained empirical `k`-means minimizers.
 This scope assumes a fixed compact support containing all centers. The unbounded-support theorem
-under only a second moment requires an additional localization argument. -/
+under only a second moment requires an additional localization argument. (For `k = 0` all center
+sets are empty and the statement is trivial.) -/
 theorem ae_tendsto_kmeans_centers_of_compact
-    {Ω : Type*} [MeasurableSpace Ω] {d k : ℕ} (hk : 0 < k)
+    {Ω : Type*} [MeasurableSpace Ω] {d k : ℕ}
     (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (hiid : IsIndependentIdenticallyDistributed μ X P)
@@ -93,19 +108,8 @@ theorem kmeansRisk_comp_perm {X : Type*} [PseudoMetricSpace X] [MeasurableSpace 
     {k : ℕ} (P : Measure X) (c : Fin k → X) (σ : Equiv.Perm (Fin k)) :
     kmeansRisk P (c ∘ σ) = kmeansRisk P c := by
   unfold kmeansRisk
-  apply integral_congr_ae
-  apply Filter.Eventually.of_forall
-  intro x
-  have hr : range (fun j ↦ dist x ((c ∘ σ) j) ^ 2) =
-      range (fun j ↦ dist x (c j) ^ 2) := by
-    ext r
-    constructor
-    · rintro ⟨j, rfl⟩
-      exact ⟨σ j, rfl⟩
-    · rintro ⟨j, rfl⟩
-      obtain ⟨i, rfl⟩ := σ.surjective j
-      exact ⟨i, rfl⟩
-  exact congrArg sInf hr
+  congr 1 with x
+  exact congrArg sInf (EquivLike.range_comp (fun j ↦ dist x (c j) ^ 2) σ)
 
 /-- A ridge smoother sends zero observations to zero predicted values. -/
 @[simp] theorem ridgePrediction_zero {n p : ℕ} (A : Matrix (Fin n) (Fin p) ℝ)

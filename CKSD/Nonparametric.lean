@@ -13,6 +13,16 @@ public import CKSD.Nonparametric.LogConcave
 public import CKSD.Nonparametric.TracyWidom
 public import CKSD.Nonparametric.GraphicalModels
 
-/-! # Section 103: Nonparametric
+/-!
+# Section 103: Nonparametric and high-dimensional statistics
 
-Entry module for the CKSD formalization of Section 103. -/
+Entry module for the CKSD formalization of Section 103 of the synopsis: density and regression
+estimation by kernels and smoothing (`CKSD.Nonparametric.Estimation`,
+`CKSD.Nonparametric.SmoothingRates`), rank statistics and distribution-free goodness-of-fit
+tests (`CKSD.Nonparametric.GoodnessOfFit`), shape-constrained estimation
+(`CKSD.Nonparametric.Grenander`, `CKSD.Nonparametric.ShapeAndSelection`,
+`CKSD.Nonparametric.LogConcave`), high-dimensional estimation and testing
+(`CKSD.Nonparametric.HighDimensional`, `CKSD.Nonparametric.EmpiricalCovariance`,
+`CKSD.Nonparametric.TracyWidom`, `CKSD.Nonparametric.GraphicalModels`), and minimax lower
+bounds, sparse recovery, and covariance thresholding (`CKSD.Nonparametric.LowerBounds`).
+-/

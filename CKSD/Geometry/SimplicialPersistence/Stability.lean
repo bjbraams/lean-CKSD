@@ -8,7 +8,18 @@ public import CKSD.Geometry.DiagramDistances
 
 Relabeling along a common simplex order and resolving discordant pairs prove bottleneck and
 Wasserstein stability. Distinct endpoint simplices control the Wasserstein cost. The Rips
-filtration uses the diameter divided by two. Sources: GAPS 108.19, 108.35, and 108.36.
+filtration uses the diameter divided by two.
+
+## Main definitions
+
+* `CKSD.relabelDiagram`, `CKSD.discordantPairs`.
+* `CKSD.ripsFiltrationValue`: the Rips filtration value `diam σ / 2`.
+
+## Main results
+
+* `CKSD.fullBottleneckEDist_le_of_isSublevelDiagram`: bottleneck stability (GAPS 108.19).
+* `CKSD.diagramWassersteinEDist_le_of_isSublevelDiagram`: Wasserstein stability (GAPS 108.35).
+* `CKSD.ripsFiltrationValue_le_iff`: Rips filtration values and `CKSD.IsRipsSimplex`.
 -/
 
 @[expose] public section
@@ -26,28 +37,6 @@ section Stability
 
 variable {ι : Type*} [Fintype ι] [LinearOrder ι] (𝕜 : Type*) [Field 𝕜]
 
-omit [Fintype ι] [LinearOrder ι] in
-/-- Sublevel chains of two functions agree when the sublevel sets agree on `K`. -/
-theorem sublevelChains_congr_fun (K : PreAbstractSimplicialComplex ι) {f h : Finset ι → ℝ}
-    (q : ℕ) {a a' : ℝ} (hiff : ∀ σ ∈ K, f σ ≤ a ↔ h σ ≤ a') :
-    sublevelChains 𝕜 K f q a = sublevelChains 𝕜 K h q a' := by
-  ext c
-  constructor
-  · intro hc σ hσ
-    obtain ⟨h1, h2, h3⟩ := hc σ hσ
-    exact ⟨h1, h2, (hiff σ h1).mp h3⟩
-  · intro hc σ hσ
-    obtain ⟨h1, h2, h3⟩ := hc σ hσ
-    exact ⟨h1, h2, (hiff σ h1).mpr h3⟩
-
-/-- Persistent Betti numbers of two functions agree when the two pairs of sublevel sets agree. -/
-theorem sublevelPersistentBetti_congr_fun (K : PreAbstractSimplicialComplex ι)
-    {f h : Finset ι → ℝ} (p : ℕ) {a a' b b' : ℝ} (ha : ∀ σ ∈ K, f σ ≤ a ↔ h σ ≤ a')
-    (hb : ∀ σ ∈ K, f σ ≤ b ↔ h σ ≤ b') :
-    sublevelPersistentBetti 𝕜 K f p a b = sublevelPersistentBetti 𝕜 K h p a' b' := by
-  unfold sublevelPersistentBetti sublevelCycles sublevelBoundaries
-  rw [sublevelChains_congr_fun 𝕜 K p ha, sublevelChains_congr_fun 𝕜 K (p + 1) hb]
-
 omit [LinearOrder ι] in
 /-- If `f` is ordered by `h` on `K` (`h σ ≤ h τ → f σ ≤ f τ`), every sublevel set of `f` on `K`
 is a sublevel set of `h`. -/
@@ -56,15 +45,11 @@ theorem exists_forall_le_iff_le_of_ordered (K : PreAbstractSimplicialComplex ι)
     ∃ a', ∀ σ ∈ K, f σ ≤ a ↔ h σ ≤ a' := by
   set S := Finset.univ.filter fun σ ↦ σ ∈ K ∧ f σ ≤ a
   rcases S.eq_empty_or_nonempty with hS | hS
-  · set t0 : ℝ := -(1 + ∑ σ ∈ Finset.univ.filter (· ∈ K), |h σ|)
-    refine ⟨t0, fun σ hσ ↦ ⟨fun hσa ↦ ?_, fun hσt ↦ ?_⟩⟩
+  · obtain ⟨M, hM⟩ := Finite.exists_ge h
+    refine ⟨M - 1, fun σ hσ ↦ ⟨fun hσa ↦ ?_, fun hσt ↦ ?_⟩⟩
     · have : σ ∈ S := by simp [S, hσ, hσa]
       simp [hS] at this
-    · have h1 := Finset.single_le_sum (f := fun σ ↦ |h σ|) (fun σ _ ↦ abs_nonneg _)
-        (show σ ∈ Finset.univ.filter (· ∈ K) by simpa using hσ)
-      have h2 := neg_abs_le (h σ)
-      simp only [t0] at hσt
-      linarith
+    · linarith [hM σ]
   · obtain ⟨σ0, hσ0, hmax⟩ := S.exists_max_image h hS
     simp only [S, Finset.mem_filter, Finset.mem_univ, true_and] at hσ0
     refine ⟨h σ0, fun σ hσ ↦ ⟨fun hσa ↦ hmax σ (by simp [S, hσ, hσa]), fun hσt ↦ ?_⟩⟩
@@ -497,11 +482,11 @@ theorem diagramWassersteinEDist_eq_zero_of_equiv {α β κ κ' : Type*} [Fintype
       right_unique := fun i j k hi hj ↦ σ.injective (hi.symm.trans hj) }
   refine le_antisymm ((iInf_le_of_le M (iInf_le _ τ)).trans (le_of_eq ?_)) bot_le
   rw [diagramWassersteinCost_eq]
-  have h1 : ∀ i, M.leftTerm D E i = 0 := fun i ↦ by
-    rw [M.leftTerm_of_relates D E (j := σ i) rfl, (hσ i).1, (hσ i).2]
+  have h1 : ∀ i, M.leftCost D E i = 0 := fun i ↦ by
+    rw [M.leftCost_of_relates D E (j := σ i) rfl, (hσ i).1, (hσ i).2]
     simp
-  have h2 : ∀ j, M.rightTerm E j = 0 := fun j ↦
-    M.rightTerm_of_relates E (i := σ.symm j) (by simp [M])
+  have h2 : ∀ j, M.rightCost E j = 0 := fun j ↦
+    M.rightCost_of_relates E (i := σ.symm j) (by simp [M])
   simp [h1, h2, hτ, ENNReal.zero_rpow_of_pos hq, hq]
 
 /-- Diagrams of the same function are at `q`-Wasserstein distance zero. -/
@@ -596,15 +581,15 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
     { relates := fun x y ↦ x.1 = y.1
       left_unique := fun x y z hy hz ↦ Subtype.ext (hy.symm.trans hz)
       right_unique := fun x y z hx hy ↦ Subtype.ext (hx.trans hy.symm) }
-  have hL : ∀ x, M.leftTerm (relabelDiagram f sb sd) (relabelDiagram g sb sd) x ^ q ≤ U x.1 := by
+  have hL : ∀ x, M.leftCost (relabelDiagram f sb sd) (relabelDiagram g sb sd) x ^ q ≤ U x.1 := by
     rintro ⟨i, hi⟩
     refine le_trans (ENNReal.rpow_le_rpow ?_ hq0.le) (hW i)
     by_cases hgi : g (sb i) < g (sd i)
-    · rw [M.leftTerm_of_relates _ _ (j := ⟨i, hgi⟩) rfl]
+    · rw [M.leftCost_of_relates _ _ (j := ⟨i, hgi⟩) rfl]
       rfl
     · have hnot : ¬ ∃ y, M.relates ⟨i, hi⟩ y := fun ⟨y, hy⟩ ↦ hgi (by
         have := y.2; rw [← show i = y.1 from hy] at this; exact this)
-      rw [M.leftTerm_of_not _ _ hnot]
+      rw [M.leftCost_of_not _ _ hnot]
       refine ENNReal.ofReal_le_ofReal ?_
       have h2 := le_max_left |f (sb i) - g (sb i)| |f (sd i) - g (sd i)|
       have h3 := le_max_right |f (sb i) - g (sb i)| |f (sd i) - g (sd i)|
@@ -612,15 +597,15 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
       have h5 := le_abs_self (f (sd i) - g (sd i))
       simp only [relabelDiagram]
       linarith [not_lt.mp hgi]
-  have hR : ∀ y, M.rightTerm (relabelDiagram g sb sd) y ^ q ≤
+  have hR : ∀ y, M.rightCost (relabelDiagram g sb sd) y ^ q ≤
       if f (sb y.1) < f (sd y.1) then 0 else U y.1 := by
     rintro ⟨i, hi⟩
     by_cases hfi : f (sb i) < f (sd i)
-    · rw [M.rightTerm_of_relates _ (i := ⟨i, hfi⟩) rfl, ite_eq_left hfi,
+    · rw [M.rightCost_of_relates _ (i := ⟨i, hfi⟩) rfl, ite_eq_left hfi,
         ENNReal.zero_rpow_of_pos hq0]
     · have hnot : ¬ ∃ x, M.relates x ⟨i, hi⟩ := fun ⟨x, hx⟩ ↦ hfi (by
         have := x.2; rw [show x.1 = i from hx] at this; exact this)
-      rw [M.rightTerm_of_not _ hnot, ite_eq_right hfi]
+      rw [M.rightCost_of_not _ hnot, ite_eq_right hfi]
       refine le_trans (ENNReal.rpow_le_rpow (ENNReal.ofReal_le_ofReal ?_) hq0.le) (hW i)
       have h2 := le_max_left |f (sb i) - g (sb i)| |f (sd i) - g (sd i)|
       have h3 := le_max_right |f (sb i) - g (sb i)| |f (sd i) - g (sd i)|
@@ -636,8 +621,8 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
       (fun k ↦ f (se k)) (relabelDiagram g sb sd) (fun k ↦ g (se k)) ≤
       ∑ σ ∈ Finset.univ.filter (· ∈ K), G σ := by
     rw [diagramWassersteinCost_eq]
-    have hA : ∑ x, M.leftTerm (relabelDiagram f sb sd) (relabelDiagram g sb sd) x ^ q +
-        ∑ y, M.rightTerm (relabelDiagram g sb sd) y ^ q ≤ ∑ i, U i := by
+    have hA : ∑ x, M.leftCost (relabelDiagram f sb sd) (relabelDiagram g sb sd) x ^ q +
+        ∑ y, M.rightCost (relabelDiagram g sb sd) y ^ q ≤ ∑ i, U i := by
       refine (add_le_add (Finset.sum_le_sum fun x _ ↦ hL x)
         (Finset.sum_le_sum fun y _ ↦ hR y)).trans ?_
       rw [hsub (fun i ↦ f (sb i) < f (sd i)) U,
@@ -865,20 +850,30 @@ theorem diagramWassersteinEDist_le_of_isSublevelDiagram
         exact add_le_add le_rfl (diagramWassersteinEDist_triangle hq _ _ _ _ _ _)
     _ ≤ _ := by rw [h3, zero_add, add_zero]; exact h2
 
-/-- The full simplex on a finite vertex type: all nonempty vertex sets. -/
-def fullSimplexComplex (X : Type*) : PreAbstractSimplicialComplex X := ⊤
-
 /-- The Rips filtration value of a simplex in the diameter-`2r` convention: `σ ∈ Rips(r)` exactly
 when `diam σ ≤ 2r`. -/
 def ripsFiltrationValue {X : Type*} [PseudoMetricSpace X] (σ : Finset X) : ℝ :=
   Metric.diam (σ : Set X) / 2
 
 /-- Diameters are monotone, so the Rips filtration is a monotone filtration of the full simplex. -/
-theorem isMonotoneOnFaces_ripsFiltrationValue {X : Type*} [PseudoMetricSpace X]  : IsMonotoneOnFaces (fullSimplexComplex X) (ripsFiltrationValue (X := X)) := by
+theorem isMonotoneOnFaces_ripsFiltrationValue {X : Type*} [PseudoMetricSpace X] :
+    IsMonotoneOnFaces (⊤ : PreAbstractSimplicialComplex X) (ripsFiltrationValue (X := X)) := by
   intro τ σ _ _ hτσ
   unfold ripsFiltrationValue
   gcongr
   exact Metric.diam_mono (by exact_mod_cast hτσ) σ.finite_toSet.isBounded
+
+/-- A nonempty simplex has Rips filtration value at most `r` exactly when it is a Rips simplex of
+parameter `r`, that is, when all its pairwise distances are at most `2r`. -/
+theorem ripsFiltrationValue_le_iff {X : Type*} [PseudoMetricSpace X] {σ : Finset X}
+    (hσ : σ.Nonempty) {r : ℝ} : ripsFiltrationValue σ ≤ r ↔ IsRipsSimplex r σ := by
+  unfold ripsFiltrationValue IsRipsSimplex
+  rw [div_le_iff₀ two_pos, mul_comm]
+  refine ⟨fun h x hx y hy ↦ (Metric.dist_le_diam_of_mem σ.finite_toSet.isBounded
+    (Finset.mem_coe.mpr hx) (Finset.mem_coe.mpr hy)).trans h, fun h ↦ ?_⟩
+  obtain ⟨x, hx⟩ := hσ
+  exact Metric.diam_le_of_forall_dist_le (by linarith [h x hx x hx, dist_self x])
+    fun x hx y hy ↦ h x hx y hy
 
 end Stability
 

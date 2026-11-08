@@ -1,8 +1,6 @@
 module
 
-public import CKSD.Processes.Basic
-public import CKSD.Asymptotics.Basic
-public import CKSD.Nonparametric.Basic
+public import CKSD.Processes.Independence
 public import Statlib.Testing.Sequential.Wald
 public import Statlib.ForMathlib.MeasureTheory.Measure.Bool
 public import Mathlib.Probability.Martingale.OptionalStopping
@@ -10,19 +8,23 @@ public import Mathlib.Probability.Independence.Integration
 public import CKSD.Asymptotics.Estimators
 
 /-!
-# Processes: Sequential
+# Sequential analysis: Wald's identity, Ville's inequality and Anscombe's theorem
 
-Sources: `GAPS.md`, `SYNOPSIS106.md`, and `STRUCTURE106.md`.
-Declarations adapted from this project's section drafts.
-Wald's identity uses Rémy Degenne's general stopped-sum theorem in
-`Statlib.Testing.Sequential.Wald`, with a zero term prepended to account for
-this project's convention of summing over `range N`.
-Anscombe's theorem standardizes the observations, applies the central limit theorem along
-`⌈k n⌉`, controls the random-index fluctuation with Kolmogorov's maximal inequality, and
-concludes with Slutsky's lemma from `CKSD.Asymptotics.Estimators`.
-Ville's inequality applies Mathlib's optional stopping theorem to the submartingale `-M` at the
-hitting time of a level capped at a finite horizon.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+## Main results
+
+* `CKSD.integrable_stopped_sum`, `CKSD.integral_stopped_sum_eq` (GAPS 106.37): Wald's
+  identity `𝔼 ∑_{i < N} X_i = 𝔼 N · 𝔼 X_0` for identically distributed integrable summands,
+  each independent of the event `{i < N}`. The proof uses Rémy Degenne's general stopped-sum
+  theorem in `Statlib.Testing.Sequential.Wald`, with a zero term prepended to account for the
+  convention of summing over `range N`.
+* `CKSD.measure_iSup_supermartingale_ge_le` (GAPS 106.38): Ville's inequality
+  `P(sup_n M_n ≥ 1/α) ≤ α` for a nonnegative supermartingale with `M_0 ≤ 1`, by optional
+  stopping of the submartingale `-M` at the hitting time of a level capped at a finite horizon.
+* `CKSD.sq_mul_measureReal_exists_le_abs_sum_le`: Kolmogorov's maximal inequality.
+* `CKSD.tendstoInDistribution_random_sampleAverage` (GAPS 106.42): Anscombe's theorem. The
+  proof standardizes the observations, applies the central limit theorem along `⌈k n⌉`,
+  controls the random-index fluctuation with Kolmogorov's maximal inequality, and concludes
+  with Slutsky's lemma from `CKSD.Asymptotics.Estimators`.
 -/
 
 @[expose] public section
@@ -36,18 +38,19 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- GAPS 106.37, Wald's stopped-sum identity under the past/future independence condition. -/
-theorem integrable_stopped_sum_and_integral_eq {Ω : Type*} [MeasurableSpace Ω]
+/-- Wald's stopped-sum identity in conjunction form; see
+`integrable_stopped_sum` and `integral_stopped_sum_eq`. -/
+private theorem integrable_stopped_sum_and_integral_eq {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ)
-    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (hX : Integrable id P)
+    (X : ℕ → Ω → ℝ) (hX : ∀ i, HasLaw (X i) P μ) (hP : Integrable id P)
     (N : Ω → ℕ) (hN : Measurable N) (hNi : Integrable (fun ω ↦ (N ω : ℝ)) μ)
     (hpast : ∀ i : ℕ, IndepFun (X i) (fun ω ↦ decide (i < N ω)) μ) :
     Integrable (fun ω ↦ ∑ i ∈ Finset.range (N ω), X i ω) μ ∧
       (∫ ω, ∑ i ∈ Finset.range (N ω), X i ω ∂μ) =
         (∫ ω, (N ω : ℝ) ∂μ) * ∫ x, x ∂P := by
   have hlaw (i : ℕ) : IdentDistrib (X i) id μ P :=
-    ⟨(hiid.1 i).aemeasurable, measurable_id.aemeasurable, by simp [hiid.2.2 i]⟩
-  have hXi (i : ℕ) : Integrable (X i) μ := (hlaw i).integrable_iff.mpr hX
+    ⟨(hX i).aemeasurable, measurable_id.aemeasurable, by simp [(hX i).map_eq]⟩
+  have hXi (i : ℕ) : Integrable (X i) μ := (hlaw i).integrable_iff.mpr hP
   have hXmean (i : ℕ) : (∫ ω, X i ω ∂μ) = ∫ t, t ∂P := (hlaw i).integral_eq
   have hset (i : ℕ) (f : ℝ → ℝ) (hf : Measurable f) :
       (∫ ω in {ω | i < N ω}, f (X i ω) ∂μ) =
@@ -62,7 +65,7 @@ theorem integrable_stopped_sum_and_integral_eq {Ω : Type*} [MeasurableSpace Ω]
     have hind : Indep ((inferInstance : MeasurableSpace Bool).comap b)
         ((inferInstance : MeasurableSpace ℝ).comap (X i)) μ :=
       (IndepFun_iff_Indep _ _ _).mp (hpast i).symm
-    rw [Indep.setIntegral_eq_mul hb.comap_le hind (hiid.1 i).aemeasurable hA
+    rw [Indep.setIntegral_eq_mul hb.comap_le hind (hX i).aemeasurable hA
       hf.aestronglyMeasurable]
     congr 1
     simpa only [Function.comp_apply, id_eq] using ((hlaw i).comp hf).integral_eq
@@ -71,7 +74,7 @@ theorem integrable_stopped_sum_and_integral_eq {Ω : Type*} [MeasurableSpace Ω]
     | n + 1 => X n
   have hYi (n : ℕ) : Integrable (Y n) μ := by
     cases n with
-    | zero => simpa [Y] using (integrable_const (μ := μ) (0 : ℝ))
+    | zero => simp [Y]
     | succ n => exact hXi n
   have hYind (n : ℕ) : (∫ ω in {ω | n ≤ N ω}, Y n ω ∂μ) =
       μ.real {ω | n ≤ N ω} * ∫ ω, Y n ω ∂μ := by
@@ -107,6 +110,28 @@ theorem integrable_stopped_sum_and_integral_eq {Ω : Type*} [MeasurableSpace Ω]
       integral_sum_Iic_eq_integral_sum_Iic_integral hYi hN hYind hYsum]
     simp_rw [hmeanSum]
     rw [integral_mul_const]
+
+/-- GAPS 106.37, Wald's stopped-sum identity under the past/future independence condition,
+integrability part: if the `X i` have a common integrable law `P`, `N` is integrable, and each
+`X i` is independent of the event `{i < N}`, then `∑_{i < N} X i` is integrable. In particular
+this holds for iid `X` and a stopping time `N` of their natural filtration. -/
+theorem integrable_stopped_sum {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ)
+    (X : ℕ → Ω → ℝ) (hX : ∀ i, HasLaw (X i) P μ) (hP : Integrable id P)
+    (N : Ω → ℕ) (hN : Measurable N) (hNi : Integrable (fun ω ↦ (N ω : ℝ)) μ)
+    (hpast : ∀ i : ℕ, IndepFun (X i) (fun ω ↦ decide (i < N ω)) μ) :
+    Integrable (fun ω ↦ ∑ i ∈ Finset.range (N ω), X i ω) μ :=
+  (integrable_stopped_sum_and_integral_eq μ P X hX hP N hN hNi hpast).1
+
+/-- GAPS 106.37, Wald's stopped-sum identity under the past/future independence condition:
+under the hypotheses of `integrable_stopped_sum`, `𝔼 ∑_{i < N} X i = 𝔼 N · ∫ x dP`. -/
+theorem integral_stopped_sum_eq {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ)
+    (X : ℕ → Ω → ℝ) (hX : ∀ i, HasLaw (X i) P μ) (hP : Integrable id P)
+    (N : Ω → ℕ) (hN : Measurable N) (hNi : Integrable (fun ω ↦ (N ω : ℝ)) μ)
+    (hpast : ∀ i : ℕ, IndepFun (X i) (fun ω ↦ decide (i < N ω)) μ) :
+    (∫ ω, ∑ i ∈ Finset.range (N ω), X i ω ∂μ) = (∫ ω, (N ω : ℝ) ∂μ) * ∫ x, x ∂P :=
+  (integrable_stopped_sum_and_integral_eq μ P X hX hP N hN hNi hpast).2
 
 /-- Finite-horizon maximal bound `c · P(max_{k ≤ n} M_k ≥ c) ≤ 1` for a nonnegative supermartingale
 with `M_0 ≤ 1`, by optional stopping at the capped hitting time of `[c, ∞)`. -/
@@ -150,14 +175,15 @@ theorem ofReal_mul_measure_exists_le_supermartingale_le_one {Ω : Type*} [Measur
     _ ≤ ENNReal.ofReal 1 := ENNReal.ofReal_le_ofReal (hmarkov.trans (hmono.trans hM0))
     _ = 1 := ENNReal.ofReal_one
 
-/-- GAPS 106.38: infinite-horizon Ville inequality, including a supremum not attained. -/
+/-- GAPS 106.38: infinite-horizon Ville inequality, including a supremum not attained. For a
+nonnegative supermartingale `M` with `M 0 ≤ 1` and every `α > 0`,
+`P(sup_n M_n ≥ 1/α) ≤ α`; the bound is trivial for `α ≥ 1`. -/
 theorem measure_iSup_supermartingale_ge_le {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (F : Filtration ℕ (inferInstance : MeasurableSpace Ω)) (M : ℕ → Ω → ℝ)
     (hsuper : Supermartingale M F μ) (hpos : ∀ n, ∀ᵐ ω ∂μ, 0 ≤ M n ω)
-    (hinit : M 0 ≤ᵐ[μ] fun _ ↦ 1) (α : ℝ) (hα : α ∈ Ioo 0 1) :
+    (hinit : M 0 ≤ᵐ[μ] fun _ ↦ 1) (α : ℝ) (hα : 0 < α) :
     μ {ω | ENNReal.ofReal (1 / α) ≤ ⨆ n : ℕ, ENNReal.ofReal (M n ω)} ≤ ENNReal.ofReal α := by
-  have hα0 : 0 < α := hα.1
   set S := {ω | ENNReal.ofReal (1 / α) ≤ ⨆ n : ℕ, ENNReal.ofReal (M n ω)}
   have key : ∀ c : ℝ, 0 < c → c < 1 / α → μ S ≤ ENNReal.ofReal (1 / c) := by
     intro c hc hcα
@@ -179,36 +205,9 @@ theorem measure_iSup_supermartingale_ge_le {Ω : Type*} [MeasurableSpace Ω]
   refine ENNReal.le_of_forall_pos_le_add fun ε hε _ ↦ ?_
   have hαε : 0 < α + ε := by positivity
   calc μ S ≤ ENNReal.ofReal (1 / (1 / (α + ε))) :=
-        key _ (by positivity) (one_div_lt_one_div_of_lt hα.1 (by linarith [hε]))
+        key _ (by positivity) (one_div_lt_one_div_of_lt hα (by linarith [hε]))
     _ = ENNReal.ofReal α + ε := by
-        rw [one_div_one_div, ENNReal.ofReal_add hα.1.le ε.coe_nonneg, ENNReal.ofReal_coe_nnreal]
-
-/-- Functions measurable with respect to the σ-algebras generated by disjoint index sets of an
-independent family are independent. -/
-theorem indepFun_of_measurable_biSup {Ω ι : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-    {Y : ι → Ω → ℝ} (hm : ∀ i, Measurable (Y i)) (hind : iIndepFun Y μ) {S T : Set ι}
-    (hST : Disjoint S T) {U V : Ω → ℝ}
-    (hU : Measurable[⨆ i ∈ S, MeasurableSpace.comap (Y i) inferInstance] U)
-    (hV : Measurable[⨆ i ∈ T, MeasurableSpace.comap (Y i) inferInstance] V) :
-    IndepFun U V μ := by
-  have h := indep_iSup_of_disjoint (m := fun i ↦ MeasurableSpace.comap (Y i) inferInstance)
-    (fun i ↦ (hm i).comap_le) hind.iIndep hST
-  rw [IndepFun_iff_Indep]
-  exact indep_of_indep_of_le_right (indep_of_indep_of_le_left h hU.comap_le) hV.comap_le
-
-/-- A finite partial sum over indices in `S` is measurable for the σ-algebra generated by `S`. -/
-theorem measurable_biSup_sum {Ω ι : Type*} {Y : ι → Ω → ℝ} {S : Set ι}
-    (s : Finset ι) (hs : ∀ i ∈ s, i ∈ S) :
-    Measurable[⨆ i ∈ S, MeasurableSpace.comap (Y i) inferInstance]
-      fun ω ↦ ∑ i ∈ s, Y i ω :=
-  Finset.measurable_fun_sum _ fun i hi ↦
-    Measurable.of_comap_le (le_iSup₂_of_le i (hs i hi) le_rfl)
-
-/-- The σ-algebra generated by a subfamily of measurable functions is coarser than the ambient one. -/
-theorem measurable_biSup_le {Ω ι : Type*} [MeasurableSpace Ω] {Y : ι → Ω → ℝ}
-    (hm : ∀ i, Measurable (Y i)) (S : Set ι) :
-    (⨆ i ∈ S, MeasurableSpace.comap (Y i) inferInstance) ≤ ‹MeasurableSpace Ω› :=
-  iSup₂_le fun i _ ↦ (hm i).comap_le
+        rw [one_div_one_div, ENNReal.ofReal_add hα.le ε.coe_nonneg, ENNReal.ofReal_coe_nnreal]
 
 /-- **Kolmogorov's maximal inequality** for independent, centred, square-integrable variables. -/
 theorem sq_mul_measureReal_exists_le_abs_sum_le {Ω : Type*} [MeasurableSpace Ω]
@@ -226,7 +225,8 @@ theorem sq_mul_measureReal_exists_le_abs_sum_le {Ω : Type*} [MeasurableSpace Ω
       ext ω; simp [A]
     rw [this]
     exact (measurableSet_le measurable_const (continuous_abs.measurable.comp (hSm k))).inter
-      (Finset.measurableSet_biInter _ fun i _ ↦ measurableSet_lt (continuous_abs.measurable.comp (hSm i)) measurable_const)
+      (Finset.measurableSet_biInter _ fun i _ ↦
+        measurableSet_lt (continuous_abs.measurable.comp (hSm i)) measurable_const)
   have hunion : {ω | ∃ j ≤ r, c ≤ |S j ω|} ⊆ ⋃ k ∈ Finset.range (r + 1), A k := by
     intro ω ⟨j, hj, hcj⟩
     classical
@@ -262,9 +262,10 @@ theorem sq_mul_measureReal_exists_le_abs_sum_le {Ω : Type*} [MeasurableSpace Ω
         have hSm' : ∀ j ≤ k, Measurable[⨆ i ∈ {i | i < k},
             MeasurableSpace.comap (Y i) inferInstance] (S j) := fun j hj ↦
           measurable_biSup_sum _ fun i hi ↦ by simp at hi ⊢; omega
-        exact (measurableSet_le measurable_const (continuous_abs.measurable.comp (hSm' k le_rfl))).inter
-          (Finset.measurableSet_biInter _ fun i hi ↦
-            measurableSet_lt (continuous_abs.measurable.comp (hSm' i (Finset.mem_range.1 hi).le)) measurable_const)
+        exact (measurableSet_le measurable_const
+          (continuous_abs.measurable.comp (hSm' k le_rfl))).inter
+          (Finset.measurableSet_biInter _ fun i hi ↦ measurableSet_lt
+            (continuous_abs.measurable.comp (hSm' i (Finset.mem_range.1 hi).le)) measurable_const)
       exact (measurable_biSup_sum (S := {i | i < k}) (Y := Y) (Finset.range k)
         fun i hi ↦ by simpa using hi).indicator hA'
     have hDm : Measurable[⨆ i ∈ {i | k ≤ i}, MeasurableSpace.comap (Y i) inferInstance] D := by
@@ -312,7 +313,8 @@ theorem sq_mul_measureReal_exists_le_abs_sum_le {Ω : Type*} [MeasurableSpace Ω
   calc c ^ 2 * μ.real {ω | ∃ j ≤ r, c ≤ |S j ω|}
       ≤ c ^ 2 * ∑ k ∈ Finset.range (r + 1), μ.real (A k) := by
         gcongr
-        exact (measureReal_mono hunion (measure_ne_top _ _)).trans (measureReal_biUnion_finset_le _ _)
+        exact (measureReal_mono hunion (measure_ne_top _ _)).trans
+          (measureReal_biUnion_finset_le _ _)
     _ = ∑ k ∈ Finset.range (r + 1), c ^ 2 * μ.real (A k) := Finset.mul_sum _ _ _
     _ ≤ ∑ k ∈ Finset.range (r + 1), ∫ ω, (A k).indicator (fun ω ↦ S r ω ^ 2) ω ∂μ :=
         Finset.sum_le_sum fun k hk ↦ hkey k (by simpa [Nat.lt_succ_iff] using hk)
@@ -562,13 +564,6 @@ theorem tendstoInProbabilityConst_sqrt_ceil_div {Ω : Type*} [MeasurableSpace Ω
   linarith
 
 
-/-- Evaluating a sequence of measurable functions at a measurable random index is measurable. -/
-theorem measurable_randomIndex {Ω : Type*} [MeasurableSpace Ω] {g : ℕ → Ω → ℝ}
-    (hg : ∀ j, Measurable (g j)) {N : Ω → ℕ} (hN : Measurable N) :
-    Measurable fun ω ↦ g (N ω) ω :=
-  (measurable_from_prod_countable_left (f := fun p : Ω × ℕ ↦ g p.2 p.1) hg).comp
-    (measurable_id.prodMk hN)
-
 /-- The standardized sample average at a fixed sample size is measurable. -/
 theorem measurable_sqrt_mul_sampleAverage_sub {Ω : Type*} [MeasurableSpace Ω]
     {X : ℕ → Ω → ℝ} (hX : ∀ i, Measurable (X i)) (j : ℕ) (m σ : ℝ) :
@@ -578,15 +573,18 @@ theorem measurable_sqrt_mul_sampleAverage_sub {Ω : Type*} [MeasurableSpace Ω]
   simp only [smul_eq_mul]
   fun_prop
 
-/-- GAPS 106.42: Anscombe's theorem for an observation-dependent random sample size. -/
+/-- GAPS 106.42: Anscombe's theorem for an observation-dependent random sample size. For iid
+observations with positive (hence finite) variance `σ²` and random sample sizes `N n` with
+`N n / n → k > 0` in probability, `√(N n) (X̄_{N n} - m) / σ ⇒ N(0, 1)`. No independence between
+`N n` and the observations is assumed. On the event `N n = 0` the statistic is `0`. -/
 theorem tendstoInDistribution_random_sampleAverage {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
-    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (h2 : MemLp id 2 P)
-    (hv : 0 < variance P id) (N : ℕ → Ω → ℕ) (hN : ∀ n, Measurable (N n))
-    (hpos : ∀ n ω, 0 < N n ω) (k : ℝ) (hk : 0 < k)
+    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P)
+    (hv : 0 < variance P id) (N : ℕ → Ω → ℕ) (hN : ∀ n, Measurable (N n)) (k : ℝ) (hk : 0 < k)
     (hratio : TendstoInProbabilityConst μ (fun n ω ↦ (N n ω : ℝ) / n) k) :
     TendstoInDistribution μ (fun n ω ↦ Real.sqrt (N n ω) *
       (sampleAverage X (N n ω) ω - ∫ x, x ∂P) / Real.sqrt (variance P id)) (gaussianReal 0 1) := by
+  have h2 : MemLp id 2 P := memLp_id_two_of_variance_pos hv
   set m : ℝ := ∫ x, x ∂P with hmdef
   set σ : ℝ := Real.sqrt (variance P id) with hσdef
   have hσ : 0 < σ := Real.sqrt_pos.2 hv
@@ -648,7 +646,9 @@ theorem tendstoInDistribution_random_sampleAverage {Ω : Type*} [MeasurableSpace
   ext ω
   simp only [mem_ofPred_eq]
   congr! 2
-  have hj : (0 : ℝ) < N n ω := by exact_mod_cast hpos n ω
+  rcases Nat.eq_zero_or_pos (N n ω) with hN0 | hpos
+  · simp [W, hN0]
+  have hj : (0 : ℝ) < N n ω := by exact_mod_cast hpos
   have hc : (0 : ℝ) < M n := by
     have : (0 : ℝ) < k * n := mul_pos hk (by exact_mod_cast hn)
     exact lt_of_lt_of_le this (Nat.le_ceil _)

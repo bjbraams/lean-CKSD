@@ -1,25 +1,25 @@
 module
 
 public import CKSD.Processes.Basic
-public import CKSD.Asymptotics.Basic
-public import CKSD.Nonparametric.Basic
-public import CKSD.Processes.Dependence
 public import Mathlib.Analysis.Normed.Group.Tannery
-public import Mathlib.MeasureTheory.Constructions.KolmogorovExtension
-public import Mathlib.Probability.Distributions.Gaussian.Multivariate
-public import Mathlib.Probability.Distributions.Gaussian.CharFun
-public import Mathlib.Probability.Distributions.Gaussian.Fernique
-public import Mathlib.Probability.Independence.Integration
-public import Mathlib.MeasureTheory.Constructions.Polish.Basic
-public import Mathlib.Analysis.Normed.Operator.Extend
-public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
-public import TauCeti.Analysis.InnerProductSpace.LinearCombination
 
 /-!
-# Lag counting and long-run variance
+# Long-run variance of a sample mean
 
-Lag-counting weights regroup finite covariance sums. Absolute summability of stationary
-autocovariances yields the limiting variance of the normalized sample mean. Source: GAPS 106.12.
+For a square-integrable process `(X_t)_{t ∈ ℤ}` with autocovariance
+`Cov(X_s, X_t) = γ(s - t)` and `∑_h |γ(h)| < ∞`, `n Var(X̄_n) → ∑_h γ(h)`. The proof regroups
+the double sum of covariances by lag, with weights `#{(i, j) : i, j < n, i - j = h} / n` that
+tend to `1`, and passes to the limit by Tannery's theorem.
+
+## Main definitions
+
+* `CKSD.lagCountWeight`: the lag-counting weight `#{(i, j) : i, j < n, i - j = h} / n`.
+
+## Main results
+
+* `CKSD.sum_sum_eq_tsum_lagCountWeight`: regrouping by lag.
+* `CKSD.tendsto_lagCountWeight`: the weights tend to `1` at each fixed lag.
+* `CKSD.tendsto_mul_variance_sampleAverage` (GAPS 106.12): `n Var(X̄_n) → ∑_h γ(h)`.
 -/
 
 @[expose] public section
@@ -27,8 +27,7 @@ autocovariances yields the limiting variance of the normalized sample mean. Sour
 noncomputable section
 
 open MeasureTheory ProbabilityTheory Filter Set
-open scoped ENNReal NNReal Topology BigOperators MatrixOrder Matrix.Norms.L2Operator
-open scoped RealInnerProductSpace
+open scoped ENNReal NNReal Topology BigOperators
 
 namespace CKSD
 
@@ -118,8 +117,10 @@ theorem tendsto_lagCountWeight (h : ℤ) : Tendsto (fun n ↦ lagCountWeight n h
     (fun n ↦ le_lagCountWeight n h) (fun n ↦ lagCountWeight_le_one n h)
 
 
-/-- GAPS 106.12, long-run variance from summable autocovariances. -/
-theorem tendsto_normalized_variance_eq_tsum_covariance {Ω : Type*} [MeasurableSpace Ω]
+/-- GAPS 106.12, long-run variance from summable autocovariances: if the autocovariance
+`Cov(X_s, X_t) = γ(s - t)` is absolutely summable, then `n Var(X̄_n) → ∑_h γ(h)`, with `X̄_n` the
+mean of `X 0, …, X (n - 1)`. -/
+theorem tendsto_mul_variance_sampleAverage {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℤ → Ω → ℝ)
     (h2 : ∀ t, MemLp (X t) 2 μ) (γ : ℤ → ℝ) (hγ : Summable (fun t ↦ |γ t|))
     (hcov : ∀ s t, covariance μ (X s) (X t) = γ (s - t)) :

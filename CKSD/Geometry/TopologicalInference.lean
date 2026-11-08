@@ -87,9 +87,9 @@ def offsetInclusion (P : Set E) {i j : ℝ} (h : i ≤ j) : C(cthickening i P, c
   ContinuousMap.inclusion (cthickening_mono h P)
 
 /-- GAPS 108.22, deformation retraction of offsets. Let `M = j(N) ⊂ ℝ^D` be a compact smooth
-`d`-dimensional submanifold without boundary with reach at least `τ > 0`, and `P ⊆ M` finite and nonempty with
-`d_H(P, M) = ε < √(3/20) τ`. For `r ∈ (2ε, √(3/5) τ)` the offset `P^r` contains `M` and strongly
-deformation retracts onto it. By the nerve theorem the Čech complex of radius `r` then has the
+`d`-dimensional submanifold without boundary with reach at least `τ > 0`, and `P ⊆ M` finite and
+nonempty with `d_H(P, M) = ε < √(3/20) τ`. For `r ∈ (2ε, √(3/5) τ)` the offset `P^r` contains
+`M` and strongly deformation retracts onto it. By the nerve theorem the Čech complex of radius `r` then has the
 homotopy type of `M`; the nerve theorem is not part of this statement. -/
 theorem exists_deformationRetraction_offset_of_hausdorffDist_lt
     {d : ℕ} {N : Type*} [TopologicalSpace N] [ChartedSpace (EuclideanSpace ℝ (Fin d)) N]
@@ -124,23 +124,27 @@ theorem exists_sample_size_hausdorffDist_le
   sorry
 
 /-- GAPS 108.37, offsets: let `K ⊂ ℝ^D` be compact and nonempty with weak feature size at least
-`τ > 0`, and `P` finite and nonempty with `d_H(K, P) = ε < τ/4`. If `ε < i` and
-`i + 2ε ≤ j < τ - ε`, the image of `H_n(P^i) → H_n(P^j)` is isomorphic to `H_n(K^r)` for every
+`τ > 0`, and `P` finite and nonempty with `d_H(K, P) = ε`. If `ε < i` and `i + 2ε ≤ j < τ - ε`
+(which forces `ε < τ/4`), the image of `H_n(P^i) → H_n(P^j)` is isomorphic to `H_n(K^r)` for every
 `r ∈ (0, τ)`, in every degree `n` and over every field. Taking `τ = wfs(K)` when it is finite
-gives the source statement. The Čech-complex form follows by the nerve theorem and is not stated
-separately. -/
+gives the source statement. Offsets are closed thickenings; since `P` is finite and `K` compact,
+`d_H(K, P) = ε` gives the closed interleavings `K^a ⊆ P^{a+ε}` and `P^a ⊆ K^{a+ε}` used by the
+argument. The Čech-complex form follows by the nerve theorem and is not stated separately. -/
 theorem nonempty_range_offsetHomology_equiv_of_weakFeatureSize (k : Type) [Field k]
     (K : Set E) (hK : IsCompact K) (hKne : K.Nonempty) (τ : ℝ) (hτ : 0 < τ)
     (hwfs : ENNReal.ofReal τ ≤ weakFeatureSize K) (P : Finset E) (hPne : (P : Set E).Nonempty)
-    (ε : ℝ) (hε : hausdorffDist K P = ε) (hετ : ε < τ / 4) (i j : ℝ) (hi : ε < i)
-    (hij : i + 2 * ε ≤ j) (hj : j < τ - ε) (hle : i ≤ j) (r : ℝ) (hr : r ∈ Ioo 0 τ) (n : ℕ) :
+    (ε : ℝ) (hε : hausdorffDist K P = ε) (i j : ℝ) (hi : ε < i)
+    (hij : i + 2 * ε ≤ j) (hj : j < τ - ε) (r : ℝ) (hr : r ∈ Ioo 0 τ) (n : ℕ) :
     Nonempty (LinearMap.range (ContinuousMap.singularHomologyMap k n
-      (offsetInclusion (P : Set E) hle)) ≃ₗ[k] singularHomologyModule k n (cthickening r K)) := by
+      (offsetInclusion (P : Set E) (le_trans (le_add_of_nonneg_right
+        (mul_nonneg zero_le_two (hε ▸ hausdorffDist_nonneg))) hij))) ≃ₗ[k]
+      singularHomologyModule k n (cthickening r K)) := by
   sorry
 
-/-- The Rips filtration of a finite indexed sample, in the diameter-`2r` convention. -/
+/-- The Rips filtration of a finite indexed sample, in the diameter-`2r` convention: the Rips
+filtration value `diam (x '' σ) / 2` of the image of the index simplex `σ`. -/
 def sampleRipsFiltrationValue {N : ℕ} (x : Fin N → E) (σ : Finset (Fin N)) : ℝ :=
-  Metric.diam (x '' σ) / 2
+  ripsFiltrationValue (σ.image x)
 
 /-- GAPS 108.37, Rips complexes: let `K ⊂ ℝ^D` be compact and nonempty with weak feature size at
 least `τ > 0`, and `x` a finite sample with `d_H(K, {x_i}) < ε` for some `ε < τ/9`. If
@@ -151,7 +155,7 @@ theorem nonempty_ripsPersistentHomology_equiv_of_weakFeatureSize (k : Type) [Fie
     (hwfs : ENNReal.ofReal τ ≤ weakFeatureSize K) {N : ℕ} (hN : 0 < N) (x : Fin N → E)
     (ε : ℝ) (hε : hausdorffDist K (range x) < ε) (hετ : ε < τ / 9) (α : ℝ) (hα : 2 * ε ≤ α)
     (hατ : α ≤ (τ - ε) / 4) (r : ℝ) (hr : r ∈ Ioo 0 τ) (n : ℕ) :
-    Nonempty (sublevelPersistentHomology k (fullSimplexComplex (Fin N))
+    Nonempty (sublevelPersistentHomology k ((⊤ : PreAbstractSimplicialComplex (Fin N)))
       (sampleRipsFiltrationValue x) n (α / 2) (2 * α) ≃ₗ[k]
         singularHomologyModule k n (cthickening r K)) := by
   sorry

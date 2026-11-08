@@ -6,7 +6,16 @@ public import CKSD.Nonparametric.Basic
 # Deterministic covariance thresholding bounds
 
 A symmetric Schur estimate controls the Euclidean operator norm by absolute row sums. It gives
-the sparse-row error bound for hard covariance thresholding. Source: GAPS 103.52.
+the sparse-row error bound for hard covariance thresholding: if every entry of `S` is within
+`λ` of the corresponding entry of `Σ` and every row of `Σ` has at most `s` nonzero entries, then
+the hard-thresholded matrix `T_λ(S)` satisfies `‖T_λ(S) - Σ‖ ≤ 2 s λ` in operator norm.
+
+## Main results
+
+* `CKSD.norm_toEuclideanCLM_le_of_rowSum_le`: the Schur test for symmetric matrices.
+* `CKSD.norm_thresholded_covariance_sub_le`: the deterministic thresholding bound.
+
+Source: GAPS 103.52.
 -/
 
 @[expose] public section
@@ -19,11 +28,10 @@ open scoped RealInnerProductSpace
 
 namespace CKSD
 
-attribute [local instance] Classical.propDecidable
-
 /-- Schur test for a symmetric matrix: the Euclidean operator norm is at most any bound on
 the absolute row sums. -/
-theorem norm_toEuclideanCLM_le_of_rowSum_le {p : ℕ} (D : Matrix (Fin p) (Fin p) ℝ)
+theorem norm_toEuclideanCLM_le_of_rowSum_le {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (D : Matrix ι ι ℝ)
     (hD : D.IsSymm) (R : ℝ) (hR : 0 ≤ R) (hrow : ∀ i, ∑ j, |D i j| ≤ R) :
     ‖Matrix.toEuclideanCLM (𝕜 := ℝ) D‖ ≤ R := by
   have hsymm : ∀ i j, D i j = D j i := fun i j ↦ by
@@ -54,8 +62,12 @@ theorem norm_toEuclideanCLM_le_of_rowSum_le {p : ℕ} (D : Matrix (Fin p) (Fin p
       _ = R ^ 2 * ∑ j, x j ^ 2 := by rw [← Finset.sum_mul]; ring
   exact (pow_le_pow_iff_left₀ (norm_nonneg _) (by positivity) two_ne_zero).mp key
 
-/-- GAPS 103.52, deterministic sparse-row bound for hard covariance thresholding. -/
-theorem norm_thresholded_covariance_sub_le {p : ℕ} (Sigma S : Matrix (Fin p) (Fin p) ℝ)
+/-- GAPS 103.52, deterministic sparse-row bound for hard covariance thresholding. If `Σ` and `S`
+are symmetric, `|S i j - Σ i j| ≤ λ` for all entries, and each row of `Σ` has at most `s`
+nonzero entries, then the hard-thresholded matrix `T_λ(S) i j = S i j 1{|S i j| > λ}` satisfies
+`‖T_λ(S) - Σ‖ ≤ 2 s λ` in Euclidean operator norm. -/
+theorem norm_thresholded_covariance_sub_le {ι : Type*} [Fintype ι] [DecidableEq ι]
+    (Sigma S : Matrix ι ι ℝ)
     (hSigma : Sigma.IsSymm) (hS : S.IsSymm) (lambda : ℝ) (hlambda : 0 ≤ lambda)
     (herr : ∀ i j, |S i j - Sigma i j| ≤ lambda) (s : ℕ)
     (hs : ∀ i, (Finset.univ.filter fun j ↦ Sigma i j ≠ 0).card ≤ s) :

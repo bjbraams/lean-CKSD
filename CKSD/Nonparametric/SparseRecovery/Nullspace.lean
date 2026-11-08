@@ -3,10 +3,29 @@ module
 public import CKSD.Nonparametric.SparseRecovery.Basic
 
 /-!
-# Restricted isometry and the null-space property
+# Restricted isometry and the null space property
 
-Ordered sparse blocks and their norm estimates give the null-space criterion under restricted
-isometry. The robust constants and lifting bounds are recorded for noisy recovery.
+The classical block argument: sort the coordinates of `v` by decreasing absolute value and cut
+them into consecutive blocks of `s` coordinates. Restricted orthogonality of the leading block
+against the others, together with the comparison of each block with the preceding one, gives the
+null space property under the restricted isometry property. The sharpened estimates of this file
+are used for the robust null space property in `CKSD.Nonparametric.SparseRecovery.Robust`.
+
+## Main definitions
+
+* `CKSD.blockVector ℓ v k`: the restriction of `v` to the coordinates `j` with `ℓ j = k`.
+* `CKSD.ripNullspaceRho`, `CKSD.ripNullspaceTau`: the constants `ρ(δ)` and `τ(δ)` of the
+  robust null space property.
+
+## Main results
+
+* `CKSD.exists_decreasing_blocks`: the decomposition into blocks of decreasing absolute value.
+* `CKSD.hasNullspaceProperty_of_hasRestrictedIsometry`: the restricted isometry property of
+  order `2 s` with constant `δ < 1/3` implies the null space property on every set of at most
+  `s` coordinates.
+* `CKSD.abs_inner_apply_le_sqrt_of_hasRestrictedIsometry`: the sharpened restricted
+  orthogonality bound `|⟪A x, A y⟫| ≤ √(δ² - t²) ‖x‖ ‖y‖` when `‖A x‖² = (1 + t) ‖x‖²`.
+
 Sources: GAPS 103.48 and 103.49.
 -/
 
@@ -22,233 +41,6 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- GAPS 103.48, restricted-isometry sufficient condition for exact sparse recovery. -/
-theorem nullspace_property_of_hasRestrictedIsometry {n p s : ℕ}
-    (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
-    (δ : ℝ) (hδ : δ ∈ Ico 0 (1 / 3 : ℝ)) (hrip : HasRestrictedIsometry A (2 * s) δ)
-    (S : Finset (Fin p)) (hS : S.card ≤ s) :
-    ∀ v, A v = 0 → v ≠ 0 → restrictedL1Norm S v < restrictedL1Norm Sᶜ v := by
-  classical
-  intro v hv hne
-  obtain ⟨hδ0, hδ1⟩ := hδ
-  -- positivity of the full L1 norm
-  have hpos : 0 < restrictedL1Norm Finset.univ v := by
-    obtain ⟨j, hj⟩ : ∃ j, v j ≠ 0 := by
-      by_contra h
-      push Not at h
-      exact hne (PiLp.ext fun j ↦ by simp [h j])
-    calc (0 : ℝ) < |v j| := abs_pos.mpr hj
-      _ ≤ restrictedL1Norm Finset.univ v :=
-        Finset.single_le_sum (f := fun j ↦ |v j|) (fun j _ ↦ abs_nonneg _) (Finset.mem_univ j)
-  have hsplit := restrictedL1Norm_add_compl S v
-  have hS0 : 0 ≤ restrictedL1Norm S v := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
-  have hSc0 : 0 ≤ restrictedL1Norm Sᶜ v := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
-  rcases Nat.eq_zero_or_pos s with rfl | hs
-  · have : S = ∅ := Finset.card_eq_zero.mp (Nat.le_zero.mp hS)
-    subst this
-    have h0 : restrictedL1Norm ∅ v = 0 := Finset.sum_empty
-    linarith
-  -- the key estimate `(1 - δ) ‖v_S‖₁ ≤ δ ‖v‖₁`
-  have hkey : (1 - δ) * restrictedL1Norm S v ≤ δ * restrictedL1Norm Finset.univ v := by
-    -- sort the coordinates by decreasing absolute value and cut into blocks of size `s`
-    obtain ⟨σ, hmono⟩ : ∃ σ : Equiv.Perm (Fin p), Monotone ((fun j ↦ -|v j|) ∘ σ) :=
-      ⟨_, Tuple.monotone_sort _⟩
-    set r : Fin p → Fin p := fun j ↦ σ.symm j with hr
-    set ℓ : Fin p → ℕ := fun j ↦ (r j : ℕ) / s with hℓ
-    have hcmp : ∀ i j, ℓ j < ℓ i → |v i| ≤ |v j| := by
-      intro i j hij
-      have hle : r j ≤ r i := by
-        by_contra h
-        push Not at h
-        exact absurd (Nat.div_le_div_right (c := s) (le_of_lt (show (r i : ℕ) < r j from h)))
-          (not_le.mpr hij)
-      have := hmono hle
-      simp only [Function.comp, r, Equiv.apply_symm_apply] at this
-      linarith
-    set lev : ℕ → Finset (Fin p) := fun k ↦ Finset.univ.filter fun j ↦ ℓ j = k with hlev
-    have hcard : ∀ k, (lev k).card ≤ s := by
-      intro k
-      calc (lev k).card ≤ (Finset.Ico (k * s) (k * s + s)).card := by
-            refine Finset.card_le_card_of_injOn (fun j ↦ (r j : ℕ)) ?_ ?_
-            · intro j hj
-              simp only [lev, Finset.coe_filter, Finset.mem_univ, true_and, mem_ofPred_eq] at hj
-              simp only [Finset.coe_Ico, mem_Ico]
-              constructor
-              · rw [← hj]; exact Nat.div_mul_le_self _ _
-              · have := Nat.lt_div_mul_add (a := (r j : ℕ)) hs
-                rw [← hj]; exact this
-            · intro i _ j _ hij
-              exact σ.symm.injective (Fin.ext hij)
-        _ = s := by simp
-    have hfull : ∀ k, (∃ i, k < ℓ i) → (lev k).card = s := by
-      rintro k ⟨i, hi⟩
-      refine le_antisymm (hcard k) ?_
-      have hbound : (k + 1) * s ≤ (r i : ℕ) :=
-        (Nat.mul_le_mul_right s hi).trans (Nat.div_mul_le_self _ _)
-      have hlt : ∀ t < s, k * s + t < p := fun t ht ↦ by
-        have := (r i).isLt
-        nlinarith
-      calc s = (Finset.range s).card := (Finset.card_range s).symm
-        _ ≤ (lev k).card := by
-            refine Finset.card_le_card_of_injOn
-              (fun t ↦ if ht : t < s then σ ⟨k * s + t, hlt t ht⟩ else σ ⟨0, by omega⟩) ?_ ?_
-            · intro t ht
-              have ht' : t < s := Finset.mem_range.mp ht
-              simp only [lev, Finset.coe_filter, Finset.mem_univ, true_and, mem_ofPred_eq, ht',
-                dite_true, ℓ, r, Equiv.symm_apply_apply]
-              rw [show k * s + t = t + k * s by ring, Nat.add_mul_div_right _ _ hs,
-                Nat.div_eq_of_lt ht', zero_add]
-            · intro t ht t' ht' h
-              have ht1 : t < s := Finset.mem_range.mp ht
-              have ht2 : t' < s := Finset.mem_range.mp ht'
-              simp only [ht1, ht2, dite_true] at h
-              have := congrArg Fin.val (σ.injective h)
-              simp at this
-              exact this
-    -- block vectors
-    set vk : ℕ → EuclideanSpace ℝ (Fin p) :=
-      fun k ↦ WithLp.toLp 2 (fun j ↦ if ℓ j = k then v j else 0) with hvk
-    have hvk_apply : ∀ k j, vk k j = if ℓ j = k then v j else 0 := fun k j ↦ rfl
-    have hsp : ∀ k, sparsity (vk k) ≤ s := by
-      intro k
-      refine le_trans (Finset.card_le_card ?_) (hcard k)
-      intro j hj
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and, hvk_apply] at hj
-      simp only [lev, Finset.mem_filter, Finset.mem_univ, true_and]
-      by_contra h
-      exact hj (ite_eq_right h)
-    have hdisj : ∀ k k', k ≠ k' → ∀ j, vk k j = 0 ∨ vk k' j = 0 := by
-      intro k k' hkk j
-      simp only [hvk_apply]
-      by_cases h : ℓ j = k
-      · right; rw [ite_eq_right]; rw [h]; exact hkk
-      · left; rw [ite_eq_right h]
-    have hnorm_sq : ∀ k, ‖vk k‖ ^ 2 = ∑ j ∈ lev k, v j ^ 2 := by
-      intro k
-      rw [EuclideanSpace.norm_sq_eq]
-      simp only [hvk_apply, Real.norm_eq_abs, sq_abs, lev, Finset.sum_filter]
-      refine Finset.sum_congr rfl fun j _ ↦ ?_
-      split_ifs <;> simp
-    set L : ℕ → ℝ := fun k ↦ ∑ j ∈ lev k, |v j| with hL
-    have hℓlt : ∀ j, ℓ j < p := fun j ↦ (Nat.div_le_self _ _).trans_lt (r j).isLt
-    have hdecomp : v = vk 0 + ∑ k ∈ Finset.range p, vk (k + 1) := by
-      ext j
-      simp only [PiLp.add_apply, WithLp.ofLp_sum, Finset.sum_apply]
-      change v j = vk 0 j + ∑ c ∈ Finset.range p, vk (c + 1) j
-      simp only [hvk_apply]
-      rcases Nat.eq_zero_or_pos (ℓ j) with h0 | h0
-      · rw [ite_eq_left h0, Finset.sum_eq_zero fun k _ ↦ ite_eq_right (by omega)]; ring
-      · obtain ⟨m, hm⟩ : ∃ m, ℓ j = m + 1 := ⟨ℓ j - 1, by omega⟩
-        rw [ite_eq_right (by omega), zero_add, Finset.sum_eq_single m]
-        · rw [ite_eq_left hm]
-        · intro b _ hb; rw [ite_eq_right (by omega)]
-        · intro hm'; exact absurd (Finset.mem_range.mpr (by have := hℓlt j; omega)) hm'
-    have hblock_pt : ∀ k j, ℓ j = k + 1 → |v j| ≤ L k / s := by
-      intro k j hj
-      have hc := hfull k ⟨j, by omega⟩
-      rw [le_div_iff₀ (by exact_mod_cast hs)]
-      have := Finset.card_nsmul_le_sum (lev k) (fun i ↦ |v i|) (|v j|) (fun i hi ↦ by
-        simp only [lev, Finset.mem_filter, Finset.mem_univ, true_and] at hi
-        exact hcmp j i (by omega))
-      rw [hc, nsmul_eq_mul] at this
-      linarith
-    have hspos : (0 : ℝ) < s := by exact_mod_cast hs
-    have hsqrt : 0 < Real.sqrt s := Real.sqrt_pos.mpr hspos
-    have hL0 : ∀ k, 0 ≤ L k := fun k ↦ Finset.sum_nonneg fun j _ ↦ abs_nonneg _
-    have hblock : ∀ k, ‖vk (k + 1)‖ ≤ L k / Real.sqrt s := by
-      intro k
-      refine (pow_le_pow_iff_left₀ (norm_nonneg _) (div_nonneg (hL0 k) hsqrt.le)
-        two_ne_zero).mp ?_
-      rw [hnorm_sq, div_pow, Real.sq_sqrt hspos.le]
-      calc ∑ j ∈ lev (k + 1), v j ^ 2 ≤ ∑ _j ∈ lev (k + 1), (L k / s) ^ 2 := by
-            refine Finset.sum_le_sum fun j hj ↦ ?_
-            simp only [lev, Finset.mem_filter, Finset.mem_univ, true_and] at hj
-            rw [← sq_abs]
-            exact pow_le_pow_left₀ (abs_nonneg _) (hblock_pt k j hj) 2
-        _ = (lev (k + 1)).card * (L k / s) ^ 2 := by rw [Finset.sum_const, nsmul_eq_mul]
-        _ ≤ s * (L k / s) ^ 2 := by
-            gcongr; exact_mod_cast hcard (k + 1)
-        _ = L k ^ 2 / s := by field_simp
-    have hsumL : ∑ k ∈ Finset.range p, L k = restrictedL1Norm Finset.univ v := by
-      simp only [L, lev, restrictedL1Norm]
-      exact Finset.sum_fiberwise_of_maps_to (fun j _ ↦ Finset.mem_range.mpr (hℓlt j)) _
-    have hL0le : L 0 ≤ restrictedL1Norm Finset.univ v := by
-      rw [← hsumL]
-      exact Finset.single_le_sum (fun k _ ↦ hL0 k) (Finset.mem_range.mpr (by
-        have hp : 0 < p := Nat.pos_of_ne_zero fun h ↦ hne (by subst h; exact Subsingleton.elim _ _)
-        omega))
-    -- the RIP step `(1 - δ) ‖v₀‖ ≤ δ ∑ₖ ‖vₖ₊₁‖`
-    set X := ∑ k ∈ Finset.range p, ‖vk (k + 1)‖ with hX
-    have hX0 : 0 ≤ X := Finset.sum_nonneg fun k _ ↦ norm_nonneg _
-    have hAsq : ‖A (vk 0)‖ ^ 2 ≤ δ * ‖vk 0‖ * X := by
-      have h0 : ⟪A (vk 0), A v⟫ = 0 := by rw [hv, inner_zero_right]
-      rw [hdecomp, map_add, inner_add_right, map_sum, inner_sum,
-        real_inner_self_eq_norm_sq] at h0
-      have hb : ∀ k ∈ Finset.range p, -(δ * ‖vk 0‖ * ‖vk (k + 1)‖) ≤
-          ⟪A (vk 0), A (vk (k + 1))⟫ := fun k _ ↦
-        (abs_le.mp (inner_apply_le_of_hasRestrictedIsometry A δ hrip _ _ (hsp 0) (hsp (k + 1))
-          (hdisj 0 (k + 1) (by omega)))).1
-      have := Finset.sum_le_sum hb
-      rw [Finset.sum_neg_distrib, ← Finset.mul_sum] at this
-      linarith
-    have hlow := (hrip (vk 0) ((hsp 0).trans (by omega))).1
-    have hv0 : (1 - δ) * ‖vk 0‖ ≤ δ * X := by
-      rcases (norm_nonneg (vk 0)).eq_or_lt with h | h
-      · rw [← h, mul_zero]; positivity
-      · nlinarith
-    have hXle : X ≤ restrictedL1Norm Finset.univ v / Real.sqrt s := by
-      rw [← hsumL, Finset.sum_div]
-      exact Finset.sum_le_sum fun k _ ↦ hblock k
-    have hL0v0 : L 0 ≤ Real.sqrt s * ‖vk 0‖ := by
-      refine (pow_le_pow_iff_left₀ (hL0 0) (by positivity) two_ne_zero).mp ?_
-      rw [mul_pow, Real.sq_sqrt hspos.le, hnorm_sq]
-      calc L 0 ^ 2 ≤ (lev 0).card * ∑ j ∈ lev 0, |v j| ^ 2 := sq_sum_le_card_mul_sum_sq
-        _ ≤ s * ∑ j ∈ lev 0, v j ^ 2 := by
-            simp only [sq_abs]
-            gcongr
-            exact_mod_cast hcard 0
-    -- the first block carries the largest entries
-    have hSB : restrictedL1Norm S v ≤ L 0 := by
-      have hmemB : ∀ j, j ∈ lev 0 ↔ ℓ j = 0 := fun j ↦ by simp [lev]
-      by_cases hsub : S ⊆ lev 0
-      · exact Finset.sum_le_sum_of_subset_of_nonneg hsub fun j _ _ ↦ abs_nonneg _
-      obtain ⟨j₀, hj₀S, hj₀B⟩ := Finset.not_subset.mp hsub
-      have hcB : (lev 0).card = s := hfull 0 ⟨j₀, by
-        rw [hmemB] at hj₀B; omega⟩
-      set I := S ∩ lev 0 with hI
-      have hIS : I ⊆ S := Finset.inter_subset_left
-      have hIB : I ⊆ lev 0 := Finset.inter_subset_right
-      have hsumS := Finset.sum_sdiff (f := fun j ↦ |v j|) hIS
-      have hsumB := Finset.sum_sdiff (f := fun j ↦ |v j|) hIB
-      have hcardS := Finset.card_sdiff_add_card_eq_card hIS
-      have hcardB := Finset.card_sdiff_add_card_eq_card hIB
-      have hne1 : (S \ I).Nonempty := ⟨j₀, Finset.mem_sdiff.mpr ⟨hj₀S, fun h ↦ hj₀B (hIB h)⟩⟩
-      set m := (S \ I).sup' hne1 (fun j ↦ |v j|) with hm
-      have hm0 : 0 ≤ m := (abs_nonneg _).trans (Finset.le_sup' (fun j ↦ |v j|)
-        (Finset.mem_sdiff.mpr ⟨hj₀S, fun h ↦ hj₀B (hIB h)⟩))
-      have h1 := Finset.sum_le_card_nsmul (S \ I) (fun j ↦ |v j|) m
-        (fun j hj ↦ Finset.le_sup' (fun j ↦ |v j|) hj)
-      have h2 := Finset.card_nsmul_le_sum (lev 0 \ I) (fun j ↦ |v j|) m (fun i hi ↦ by
-        refine Finset.sup'_le _ _ fun j hj ↦ ?_
-        have hiB : ℓ i = 0 := (hmemB i).mp (Finset.mem_sdiff.mp hi).1
-        have hjB : ℓ j ≠ 0 := by
-          intro h
-          obtain ⟨hjS, hjI⟩ := Finset.mem_sdiff.mp hj
-          exact hjI (Finset.mem_inter.mpr ⟨hjS, (hmemB j).mpr h⟩)
-        exact hcmp j i (by omega))
-      rw [nsmul_eq_mul] at h1 h2
-      have hcd : ((S \ I).card : ℝ) ≤ ((lev 0 \ I).card : ℝ) := by
-        exact_mod_cast (show (S \ I).card ≤ (lev 0 \ I).card by omega)
-      have h3 := mul_le_mul_of_nonneg_right hcd hm0
-      change ∑ j ∈ S, |v j| ≤ ∑ j ∈ lev 0, |v j|
-      linarith
-    have hsq : Real.sqrt s * X ≤ restrictedL1Norm Finset.univ v := by
-      rw [le_div_iff₀ hsqrt] at hXle; linarith
-    nlinarith
-  by_contra hcon
-  push Not at hcon
-  nlinarith
-
 /-- Blocks of coordinates of size `s` in order of decreasing absolute value: `ℓ j` is the index
 of the block containing coordinate `j`. Blocks have at most `s` elements, a block followed by a
 nonempty block is full, and all block indices are smaller than `p`. -/
@@ -262,17 +54,8 @@ theorem exists_decreasing_blocks {p : ℕ} (v : Fin p → ℝ) {s : ℕ} (hs : 0
     ⟨_, Tuple.monotone_sort _⟩
   set r : Fin p → Fin p := fun j ↦ σ.symm j with hr
   set ℓ : Fin p → ℕ := fun j ↦ (r j : ℕ) / s with hℓ
-  refine ⟨ℓ, ?_, ?_, ?_, fun j ↦ (Nat.div_le_self _ _).trans_lt (r j).isLt⟩
-  · intro i j hij
-    have hle : r j ≤ r i := by
-      by_contra h
-      push Not at h
-      exact absurd (Nat.div_le_div_right (c := s) (le_of_lt (show (r i : ℕ) < r j from h)))
-        (not_le.mpr hij)
-    have := hmono hle
-    simp only [Function.comp, r, Equiv.apply_symm_apply] at this
-    linarith
-  · intro k
+  have hcard : ∀ k, (Finset.univ.filter fun j ↦ ℓ j = k).card ≤ s := by
+    intro k
     calc (Finset.univ.filter fun j ↦ ℓ j = k).card ≤ (Finset.Ico (k * s) (k * s + s)).card := by
           refine Finset.card_le_card_of_injOn (fun j ↦ (r j : ℕ)) ?_ ?_
           · intro j hj
@@ -285,20 +68,18 @@ theorem exists_decreasing_blocks {p : ℕ} (v : Fin p → ℝ) {s : ℕ} (hs : 0
           · intro i _ j _ hij
             exact σ.symm.injective (Fin.ext hij)
       _ = s := by simp
+  refine ⟨ℓ, ?_, hcard, ?_, fun j ↦ (Nat.div_le_self _ _).trans_lt (r j).isLt⟩
+  · intro i j hij
+    have hle : r j ≤ r i := by
+      by_contra h
+      push Not at h
+      exact absurd (Nat.div_le_div_right (c := s) (le_of_lt (show (r i : ℕ) < r j from h)))
+        (not_le.mpr hij)
+    have := hmono hle
+    simp only [Function.comp, r, Equiv.apply_symm_apply] at this
+    linarith
   · rintro k ⟨i, hi⟩
-    refine le_antisymm ?_ ?_
-    · calc (Finset.univ.filter fun j ↦ ℓ j = k).card ≤ (Finset.Ico (k * s) (k * s + s)).card := by
-            refine Finset.card_le_card_of_injOn (fun j ↦ (r j : ℕ)) ?_ ?_
-            · intro j hj
-              simp only [Finset.coe_filter, Finset.mem_univ, true_and, mem_ofPred_eq] at hj
-              simp only [Finset.coe_Ico, mem_Ico]
-              constructor
-              · rw [← hj]; exact Nat.div_mul_le_self _ _
-              · have := Nat.lt_div_mul_add (a := (r j : ℕ)) hs
-                rw [← hj]; exact this
-            · intro i _ j _ hij
-              exact σ.symm.injective (Fin.ext hij)
-        _ = s := by simp
+    refine le_antisymm (hcard k) ?_
     have hbound : (k + 1) * s ≤ (r i : ℕ) :=
       (Nat.mul_le_mul_right s hi).trans (Nat.div_mul_le_self _ _)
     have hlt : ∀ t < s, k * s + t < p := fun t ht ↦ by
@@ -322,10 +103,240 @@ theorem exists_decreasing_blocks {p : ℕ} (v : Fin p → ℝ) {s : ℕ} (hs : 0
             simp at this
             exact this
 
-/-- Square-root lifting: if at most `s` values lie in `[m, M]` with `0 ≤ m`, and `m = 0`
-unless there are exactly `s` of them, then their Euclidean norm is at most their sum divided
-by `√s` plus `√s (M - m) / 4`. -/
-theorem sqrt_sum_sq_le_lifting {ι : Type*} (B : Finset ι) (a : ι → ℝ) {s : ℕ} (hs : 0 < s)
+/-- The restriction `v_{B_k}` of `v` to the block `B_k = {j | ℓ j = k}`. -/
+def blockVector {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p)) (k : ℕ) :
+    EuclideanSpace ℝ (Fin p) :=
+  WithLp.toLp 2 (fun j ↦ if ℓ j = k then v j else 0)
+
+/-- Coordinates of a block vector. -/
+theorem blockVector_apply {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p)) (k : ℕ)
+    (j : Fin p) : blockVector ℓ v k j = if ℓ j = k then v j else 0 := rfl
+
+/-- A block vector is supported in its block. -/
+theorem sparsity_blockVector_le {p s : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p))
+    (k : ℕ) (hcard : (Finset.univ.filter fun j ↦ ℓ j = k).card ≤ s) :
+    sparsity (blockVector ℓ v k) ≤ s := by
+  refine le_trans (Finset.card_le_card ?_) hcard
+  intro j hj
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and, blockVector_apply] at hj ⊢
+  by_contra h
+  exact hj (ite_eq_right h)
+
+/-- Distinct block vectors have disjoint supports. -/
+theorem blockVector_eq_zero_or_eq_zero {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p))
+    {k k' : ℕ} (hkk : k ≠ k') (j : Fin p) :
+    blockVector ℓ v k j = 0 ∨ blockVector ℓ v k' j = 0 := by
+  simp only [blockVector_apply]
+  by_cases h : ℓ j = k
+  · right; rw [ite_eq_right]; rw [h]; exact hkk
+  · left; rw [ite_eq_right h]
+
+/-- The squared norm of a block vector is the sum of squares over its block. -/
+theorem norm_blockVector_sq {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p)) (k : ℕ) :
+    ‖blockVector ℓ v k‖ ^ 2 = ∑ j ∈ Finset.univ.filter (fun j ↦ ℓ j = k), v j ^ 2 := by
+  rw [EuclideanSpace.norm_sq_eq]
+  simp only [blockVector_apply, Real.norm_eq_abs, sq_abs, Finset.sum_filter]
+  refine Finset.sum_congr rfl fun j _ ↦ ?_
+  split_ifs <;> simp
+
+/-- A vector is the sum of its blocks when all block indices are below `p`. -/
+theorem eq_blockVector_zero_add_sum {p : ℕ} (ℓ : Fin p → ℕ) (hℓ : ∀ j, ℓ j < p)
+    (v : EuclideanSpace ℝ (Fin p)) :
+    v = blockVector ℓ v 0 + ∑ k ∈ Finset.range p, blockVector ℓ v (k + 1) := by
+  ext j
+  simp only [PiLp.add_apply, WithLp.ofLp_sum, Finset.sum_apply]
+  change v j = blockVector ℓ v 0 j + ∑ c ∈ Finset.range p, blockVector ℓ v (c + 1) j
+  simp only [blockVector_apply]
+  rcases Nat.eq_zero_or_pos (ℓ j) with h0 | h0
+  · rw [ite_eq_left h0, Finset.sum_eq_zero fun k _ ↦ ite_eq_right (by omega)]; ring
+  · obtain ⟨m, hm⟩ : ∃ m, ℓ j = m + 1 := ⟨ℓ j - 1, by omega⟩
+    rw [ite_eq_right (by omega), zero_add, Finset.sum_eq_single m]
+    · rw [ite_eq_left hm]
+    · intro b _ hb; rw [ite_eq_right (by omega)]
+    · intro hm'; exact absurd (Finset.mem_range.mpr (by have := hℓ j; omega)) hm'
+
+/-- The block `ℓ¹` norms add up to the full `ℓ¹` norm. -/
+theorem sum_range_sum_abs_eq_restrictedL1Norm {p : ℕ} (ℓ : Fin p → ℕ) (hℓ : ∀ j, ℓ j < p)
+    (v : EuclideanSpace ℝ (Fin p)) :
+    ∑ k ∈ Finset.range p, ∑ j ∈ Finset.univ.filter (fun j ↦ ℓ j = k), |v j| =
+      restrictedL1Norm Finset.univ v :=
+  Finset.sum_fiberwise_of_maps_to (fun j _ ↦ Finset.mem_range.mpr (hℓ j)) _
+
+/-- Expanding `⟪A v₀, A v⟫` over the blocks of `v`, where `v₀` is the leading block. -/
+theorem inner_apply_blockVector_zero_apply {n p : ℕ}
+    (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)) (ℓ : Fin p → ℕ)
+    (hℓ : ∀ j, ℓ j < p) (v : EuclideanSpace ℝ (Fin p)) :
+    ⟪A (blockVector ℓ v 0), A v⟫ = ‖A (blockVector ℓ v 0)‖ ^ 2 +
+      ∑ k ∈ Finset.range p, ⟪A (blockVector ℓ v 0), A (blockVector ℓ v (k + 1))⟫ := by
+  calc ⟪A (blockVector ℓ v 0), A v⟫ = ⟪A (blockVector ℓ v 0),
+        A (blockVector ℓ v 0 + ∑ k ∈ Finset.range p, blockVector ℓ v (k + 1))⟫ :=
+        congrArg (fun w ↦ ⟪A (blockVector ℓ v 0), A w⟫) (eq_blockVector_zero_add_sum ℓ hℓ v)
+    _ = _ := by rw [map_add, inner_add_right, map_sum, inner_sum, real_inner_self_eq_norm_sq]
+
+/-- A sum of nonnegative values over a set `S` is at most the sum over a set `B` that
+dominates its complement and has at least as many elements as `S`. -/
+theorem sum_le_sum_of_forall_le_of_card_le {ι : Type*} [DecidableEq ι] (S B : Finset ι)
+    (f : ι → ℝ) (hf : ∀ i, 0 ≤ f i) (hdom : ∀ i ∈ B, ∀ j ∉ B, f j ≤ f i)
+    (hcard : S.card ≤ B.card) : ∑ j ∈ S, f j ≤ ∑ j ∈ B, f j := by
+  by_cases hsub : S ⊆ B
+  · exact Finset.sum_le_sum_of_subset_of_nonneg hsub fun j _ _ ↦ hf j
+  obtain ⟨j₀, hj₀S, hj₀B⟩ := Finset.not_subset.mp hsub
+  set I := S ∩ B with hI
+  have hIS : I ⊆ S := Finset.inter_subset_left
+  have hIB : I ⊆ B := Finset.inter_subset_right
+  have hsumS := Finset.sum_sdiff (f := f) hIS
+  have hsumB := Finset.sum_sdiff (f := f) hIB
+  have hcardS := Finset.card_sdiff_add_card_eq_card hIS
+  have hcardB := Finset.card_sdiff_add_card_eq_card hIB
+  have hmem : j₀ ∈ S \ I := Finset.mem_sdiff.mpr ⟨hj₀S, fun h ↦ hj₀B (hIB h)⟩
+  have hne1 : (S \ I).Nonempty := ⟨j₀, hmem⟩
+  set m := (S \ I).sup' hne1 f with hm
+  have hm0 : 0 ≤ m := (hf j₀).trans (Finset.le_sup' f hmem)
+  have h1 := Finset.sum_le_card_nsmul (S \ I) f m (fun j hj ↦ Finset.le_sup' f hj)
+  have h2 := Finset.card_nsmul_le_sum (B \ I) f m (fun i hi ↦ by
+    refine Finset.sup'_le _ _ fun j hj ↦ ?_
+    have hiB : i ∈ B := (Finset.mem_sdiff.mp hi).1
+    have hjB : j ∉ B := by
+      intro h
+      obtain ⟨hjS, hjI⟩ := Finset.mem_sdiff.mp hj
+      exact hjI (Finset.mem_inter.mpr ⟨hjS, h⟩)
+    exact hdom i hiB j hjB)
+  rw [nsmul_eq_mul] at h1 h2
+  have hcd : ((S \ I).card : ℝ) ≤ ((B \ I).card : ℝ) := by
+    exact_mod_cast (show (S \ I).card ≤ (B \ I).card by omega)
+  have h3 := mul_le_mul_of_nonneg_right hcd hm0
+  linarith
+
+/-- For decreasing blocks, a sum over at most `s` coordinates of a quantity nondecreasing in
+`|v j|` is at most the sum over the leading block. -/
+theorem sum_le_sum_filter_eq_zero_of_decreasing_blocks {p s : ℕ} {v : Fin p → ℝ}
+    {ℓ : Fin p → ℕ} (hcmp : ∀ i j, ℓ j < ℓ i → |v i| ≤ |v j|)
+    (hfull : ∀ k, (∃ i, k < ℓ i) → (Finset.univ.filter fun j ↦ ℓ j = k).card = s)
+    (S : Finset (Fin p)) (hS : S.card ≤ s) (f : Fin p → ℝ) (hf : ∀ i, 0 ≤ f i)
+    (hmono : ∀ i j, |v i| ≤ |v j| → f i ≤ f j) :
+    ∑ j ∈ S, f j ≤ ∑ j ∈ Finset.univ.filter (fun j ↦ ℓ j = 0), f j := by
+  refine sum_le_sum_of_forall_le_of_card_le S _ f hf (fun i hi j hj ↦ ?_) ?_
+  · simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi hj
+    exact hmono j i (hcmp j i (by omega))
+  · by_cases h : ∃ i, 0 < ℓ i
+    · rw [hfull 0 h]; exact hS
+    · push Not at h
+      refine Finset.card_le_card fun j _ ↦ ?_
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+      exact Nat.le_zero.mp (h j)
+
+/-- GAPS 103.48, restricted-isometry sufficient condition for exact sparse recovery: if `A` has
+the restricted isometry property of order `2 s` with constant `0 ≤ δ < 1/3`, then `A` has the
+null space property on every set `S` of at most `s` coordinates. -/
+theorem hasNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ}
+    (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
+    (δ : ℝ) (hδ : δ ∈ Ico 0 (1 / 3 : ℝ)) (hrip : HasRestrictedIsometry A (2 * s) δ)
+    (S : Finset (Fin p)) (hS : S.card ≤ s) : HasNullspaceProperty A S := by
+  classical
+  intro v hv hne
+  obtain ⟨hδ0, hδ1⟩ := hδ
+  -- positivity of the full L1 norm
+  have hpos : 0 < restrictedL1Norm Finset.univ v := by
+    obtain ⟨j, hj⟩ : ∃ j, v j ≠ 0 := by
+      by_contra h
+      push Not at h
+      exact hne (PiLp.ext fun j ↦ by simp [h j])
+    calc (0 : ℝ) < |v j| := abs_pos.mpr hj
+      _ ≤ restrictedL1Norm Finset.univ v :=
+        Finset.single_le_sum (f := fun j ↦ |v j|) (fun j _ ↦ abs_nonneg _) (Finset.mem_univ j)
+  have hsplit := restrictedL1Norm_add_compl S v
+  have hS0 : 0 ≤ restrictedL1Norm S v := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+  have hSc0 : 0 ≤ restrictedL1Norm Sᶜ v := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+  rcases Nat.eq_zero_or_pos s with rfl | hs
+  · have : S = ∅ := Finset.card_eq_zero.mp (Nat.le_zero.mp hS)
+    subst this
+    have h0 : restrictedL1Norm ∅ v = 0 := Finset.sum_empty
+    linarith
+  -- the key estimate `(1 - δ) ‖v_S‖₁ ≤ δ ‖v‖₁`
+  have hkey : (1 - δ) * restrictedL1Norm S v ≤ δ * restrictedL1Norm Finset.univ v := by
+    obtain ⟨ℓ, hcmp, hcard, hfull, hℓlt⟩ := exists_decreasing_blocks (fun j ↦ v j) hs
+    set lev : ℕ → Finset (Fin p) := fun k ↦ Finset.univ.filter fun j ↦ ℓ j = k with hlev
+    set vk : ℕ → EuclideanSpace ℝ (Fin p) := blockVector ℓ v with hvk
+    have hsp : ∀ k, sparsity (vk k) ≤ s := fun k ↦ sparsity_blockVector_le ℓ v k (hcard k)
+    set L : ℕ → ℝ := fun k ↦ ∑ j ∈ lev k, |v j| with hL
+    have hblock_pt : ∀ k j, ℓ j = k + 1 → |v j| ≤ L k / s := by
+      intro k j hj
+      have hc := hfull k ⟨j, by omega⟩
+      rw [le_div_iff₀ (by exact_mod_cast hs)]
+      have := Finset.card_nsmul_le_sum (lev k) (fun i ↦ |v i|) (|v j|) (fun i hi ↦ by
+        simp only [lev, Finset.mem_filter, Finset.mem_univ, true_and] at hi
+        exact hcmp j i (by omega))
+      rw [hc, nsmul_eq_mul] at this
+      linarith
+    have hspos : (0 : ℝ) < s := by exact_mod_cast hs
+    have hsqrt : 0 < Real.sqrt s := Real.sqrt_pos.mpr hspos
+    have hL0 : ∀ k, 0 ≤ L k := fun k ↦ Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+    have hblock : ∀ k, ‖vk (k + 1)‖ ≤ L k / Real.sqrt s := by
+      intro k
+      refine (pow_le_pow_iff_left₀ (norm_nonneg _) (div_nonneg (hL0 k) hsqrt.le)
+        two_ne_zero).mp ?_
+      rw [hvk, norm_blockVector_sq, div_pow, Real.sq_sqrt hspos.le]
+      calc ∑ j ∈ lev (k + 1), v j ^ 2 ≤ ∑ _j ∈ lev (k + 1), (L k / s) ^ 2 := by
+            refine Finset.sum_le_sum fun j hj ↦ ?_
+            simp only [lev, Finset.mem_filter, Finset.mem_univ, true_and] at hj
+            rw [← sq_abs]
+            exact pow_le_pow_left₀ (abs_nonneg _) (hblock_pt k j hj) 2
+        _ = (lev (k + 1)).card * (L k / s) ^ 2 := by rw [Finset.sum_const, nsmul_eq_mul]
+        _ ≤ s * (L k / s) ^ 2 := by
+            gcongr; exact_mod_cast hcard (k + 1)
+        _ = L k ^ 2 / s := by field_simp
+    have hsumL : ∑ k ∈ Finset.range p, L k = restrictedL1Norm Finset.univ v :=
+      sum_range_sum_abs_eq_restrictedL1Norm ℓ hℓlt v
+    have hL0le : L 0 ≤ restrictedL1Norm Finset.univ v := by
+      rw [← hsumL]
+      exact Finset.single_le_sum (fun k _ ↦ hL0 k) (Finset.mem_range.mpr (by
+        have hp : 0 < p := Nat.pos_of_ne_zero fun h ↦ hne (by subst h; exact Subsingleton.elim _ _)
+        omega))
+    -- the RIP step `(1 - δ) ‖v₀‖ ≤ δ ∑ₖ ‖vₖ₊₁‖`
+    set X := ∑ k ∈ Finset.range p, ‖vk (k + 1)‖ with hX
+    have hX0 : 0 ≤ X := Finset.sum_nonneg fun k _ ↦ norm_nonneg _
+    have hAsq : ‖A (vk 0)‖ ^ 2 ≤ δ * ‖vk 0‖ * X := by
+      have h0 := inner_apply_blockVector_zero_apply A ℓ hℓlt v
+      rw [hv, inner_zero_right] at h0
+      have hb : ∀ k ∈ Finset.range p, -(δ * ‖vk 0‖ * ‖vk (k + 1)‖) ≤
+          ⟪A (vk 0), A (vk (k + 1))⟫ := fun k _ ↦
+        (abs_le.mp (abs_inner_apply_le_of_hasRestrictedIsometry A δ hrip _ _ (hsp 0)
+          (hsp (k + 1)) (blockVector_eq_zero_or_eq_zero ℓ v (by omega)))).1
+      have := Finset.sum_le_sum hb
+      rw [Finset.sum_neg_distrib, ← Finset.mul_sum] at this
+      linarith
+    have hlow := (hrip (vk 0) ((hsp 0).trans (by omega))).1
+    have hv0 : (1 - δ) * ‖vk 0‖ ≤ δ * X := by
+      rcases (norm_nonneg (vk 0)).eq_or_lt with h | h
+      · rw [← h, mul_zero]; positivity
+      · nlinarith
+    have hXle : X ≤ restrictedL1Norm Finset.univ v / Real.sqrt s := by
+      rw [← hsumL, Finset.sum_div]
+      exact Finset.sum_le_sum fun k _ ↦ hblock k
+    have hL0v0 : L 0 ≤ Real.sqrt s * ‖vk 0‖ := by
+      refine (pow_le_pow_iff_left₀ (hL0 0) (by positivity) two_ne_zero).mp ?_
+      rw [mul_pow, Real.sq_sqrt hspos.le, hvk, norm_blockVector_sq]
+      calc L 0 ^ 2 ≤ (lev 0).card * ∑ j ∈ lev 0, |v j| ^ 2 := sq_sum_le_card_mul_sum_sq
+        _ ≤ s * ∑ j ∈ lev 0, v j ^ 2 := by
+            simp only [sq_abs]
+            gcongr
+            exact_mod_cast hcard 0
+    -- the first block carries the largest entries
+    have hSB : restrictedL1Norm S v ≤ L 0 :=
+      sum_le_sum_filter_eq_zero_of_decreasing_blocks hcmp hfull S hS (fun j ↦ |v j|)
+        (fun j ↦ abs_nonneg _) fun _ _ h ↦ h
+    have hsq : Real.sqrt s * X ≤ restrictedL1Norm Finset.univ v := by
+      rw [le_div_iff₀ hsqrt] at hXle; linarith
+    nlinarith
+  by_contra hcon
+  push Not at hcon
+  nlinarith
+
+/-- Square-root lifting bound used for the blocks of the restricted isometry argument: if at
+most `s` values lie in `[m, M]` with `0 ≤ m`, and `m = 0` unless there are exactly `s` of them,
+then their Euclidean norm is at most their sum divided by `√s` plus `√s (M - m) / 4`. -/
+theorem sqrt_sum_sq_le_sum_div_sqrt_add {ι : Type*} (B : Finset ι) (a : ι → ℝ) {s : ℕ}
+    (hs : 0 < s)
     (hB : B.card ≤ s) {m M : ℝ} (hm : 0 ≤ m) (hmM : m ≤ M)
     (ha : ∀ j ∈ B, m ≤ a j ∧ a j ≤ M) (hfull : B.card < s → m = 0) :
     Real.sqrt (∑ j ∈ B, a j ^ 2) ≤ (∑ j ∈ B, a j) / Real.sqrt s + Real.sqrt s / 4 * (M - m) := by
@@ -386,16 +397,13 @@ theorem le_sqrt_of_forall_two_mul_le {c D : ℝ} (h : ∀ lam : ℝ, 2 * lam * c
 /-- Sharpened restricted orthogonality: if `‖A x‖² = (1 + t) ‖x‖²`, then for `s`-sparse
 vectors with disjoint supports `|⟪A x, A y⟫| ≤ √(δ² - t²) ‖x‖ ‖y‖` when `A` has the RIP of
 order `2 s` with constant `δ > 0`. -/
-theorem inner_apply_le_sqrt_of_hasRestrictedIsometry {n p s : ℕ}
+theorem abs_inner_apply_le_sqrt_of_hasRestrictedIsometry {n p s : ℕ}
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)) {δ : ℝ} (hδ : 0 < δ)
     (hrip : HasRestrictedIsometry A (2 * s) δ) (x y : EuclideanSpace ℝ (Fin p))
     (hx : sparsity x ≤ s) (hy : sparsity y ≤ s) (hxy : ∀ j, x j = 0 ∨ y j = 0) (t : ℝ)
     (ht : ‖A x‖ ^ 2 = (1 + t) * ‖x‖ ^ 2) :
     |⟪A x, A y⟫| ≤ Real.sqrt (δ ^ 2 - t ^ 2) * ‖x‖ * ‖y‖ := by
-  have hinner : ⟪x, y⟫ = 0 := by
-    rw [PiLp.inner_apply]
-    refine Finset.sum_eq_zero fun j _ ↦ ?_
-    rcases hxy j with h | h <;> simp [h]
+  have hinner : ⟪x, y⟫ = 0 := inner_eq_zero_of_forall_eq_zero_or_eq_zero hxy
   rcases (norm_nonneg x).eq_or_lt with hx0 | hx0
   · rw [eq_comm, norm_eq_zero] at hx0; simp [hx0]
   rcases (norm_nonneg y).eq_or_lt with hy0 | hy0
@@ -457,42 +465,6 @@ theorem inner_apply_le_sqrt_of_hasRestrictedIsometry {n p s : ℕ}
   rw [this, abs_mul, abs_of_pos hXY]
   calc |c'| * (X * Y) ≤ Real.sqrt D * (X * Y) := mul_le_mul_of_nonneg_right habs hXY.le
     _ = _ := by ring
-
-/-- A sum of nonnegative values over a set `S` is at most the sum over a set `B` that
-dominates its complement, provided `S ⊆ B` or `S` has at most as many elements as `B`. -/
-theorem sum_le_sum_of_dominates {ι : Type*} [DecidableEq ι] (S B : Finset ι) (f : ι → ℝ)
-    (hf : ∀ i, 0 ≤ f i) (hdom : ∀ i ∈ B, ∀ j ∉ B, f j ≤ f i)
-    (hcard : S ⊆ B ∨ S.card ≤ B.card) : ∑ j ∈ S, f j ≤ ∑ j ∈ B, f j := by
-  rcases hcard with hsub | hcard
-  · exact Finset.sum_le_sum_of_subset_of_nonneg hsub fun j _ _ ↦ hf j
-  by_cases hsub : S ⊆ B
-  · exact Finset.sum_le_sum_of_subset_of_nonneg hsub fun j _ _ ↦ hf j
-  obtain ⟨j₀, hj₀S, hj₀B⟩ := Finset.not_subset.mp hsub
-  set I := S ∩ B with hI
-  have hIS : I ⊆ S := Finset.inter_subset_left
-  have hIB : I ⊆ B := Finset.inter_subset_right
-  have hsumS := Finset.sum_sdiff (f := f) hIS
-  have hsumB := Finset.sum_sdiff (f := f) hIB
-  have hcardS := Finset.card_sdiff_add_card_eq_card hIS
-  have hcardB := Finset.card_sdiff_add_card_eq_card hIB
-  have hmem : j₀ ∈ S \ I := Finset.mem_sdiff.mpr ⟨hj₀S, fun h ↦ hj₀B (hIB h)⟩
-  have hne1 : (S \ I).Nonempty := ⟨j₀, hmem⟩
-  set m := (S \ I).sup' hne1 f with hm
-  have hm0 : 0 ≤ m := (hf j₀).trans (Finset.le_sup' f hmem)
-  have h1 := Finset.sum_le_card_nsmul (S \ I) f m (fun j hj ↦ Finset.le_sup' f hj)
-  have h2 := Finset.card_nsmul_le_sum (B \ I) f m (fun i hi ↦ by
-    refine Finset.sup'_le _ _ fun j hj ↦ ?_
-    have hiB : i ∈ B := (Finset.mem_sdiff.mp hi).1
-    have hjB : j ∉ B := by
-      intro h
-      obtain ⟨hjS, hjI⟩ := Finset.mem_sdiff.mp hj
-      exact hjI (Finset.mem_inter.mpr ⟨hjS, h⟩)
-    exact hdom i hiB j hjB)
-  rw [nsmul_eq_mul] at h1 h2
-  have hcd : ((S \ I).card : ℝ) ≤ ((B \ I).card : ℝ) := by
-    exact_mod_cast (show (S \ I).card ≤ (B \ I).card by omega)
-  have h3 := mul_le_mul_of_nonneg_right hcd hm0
-  linarith
 
 /-- The robust null space constant `ρ(δ) = δ / (√(1 - δ²) - δ / 4)` of the restricted
 isometry analysis of basis pursuit. -/

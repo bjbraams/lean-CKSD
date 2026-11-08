@@ -14,7 +14,23 @@ quotients by the probability of the event, with Lean's convention `x / 0 = 0`.
 The proof first establishes the inverse-probability-weighted representation by induction on
 the number of time points, partitioning each regime-adherent past by the next covariate value,
 and then telescopes the weights into the sequential factorization of the g-formula.
-Source: GAPS 105.65.
+
+## Main definitions
+
+* `CKSD.gHistoryEvent`: the observed history `{L̄_k = l̄_k, Ā_{k-1} = ā_{k-1}}`.
+* `CKSD.gRegimeEvent`: the regime-adherent past `{L̄_{k-1} = l̄_{k-1}, Ā_{k-1} = ā_{k-1}}`.
+
+## Main results
+
+* `CKSD.integral_eq_sum_gInverseWeight`: the inverse-probability-weighted representation of
+  the mean of a potential outcome.
+* `CKSD.integral_potentialOutcome_eq_gFormula`: Robins' g-formula for the mean of the
+  potential outcome under a static treatment regime (GAPS 105.65).
+
+## References
+
+* J. M. Robins, *A new approach to causal inference in mortality studies with a sustained
+  exposure period*, Math. Modelling 7 (1986).
 -/
 
 @[expose] public section
@@ -222,7 +238,10 @@ outcome under the regime `a` and `Y` the observed outcome. Consistency is `Y = Y
 observed treatments follow the regime. Sequential exchangeability is used in its mean form,
 `E[Ya 1{A_t = a_t} | H_t, Ā_{t-1} = ā_{t-1}] = E[Ya | H_t, Ā_{t-1} = ā_{t-1}] P(A_t = a_t | …)`,
 written without division; it is implied by `Ya ⊥ A_t | H_t, Ā_{t-1} = ā_{t-1}`. Sequential
-positivity is the uniform lower bound `δ` on `P(A_t = a_t | H_t, Ā_{t-1} = ā_{t-1})`. The
+positivity is `P(A_t = a_t | H_t, Ā_{t-1} = ā_{t-1}) > 0` for every observed history of positive
+probability, written as: a regime-adherent continuation of probability zero comes from a
+history of probability zero (it follows from any uniform lower bound on these conditional
+probabilities). The
 `t = 0` factor of the product is `P(L_0 = l_0)`, since the regime-adherent past before time
 `0` is the whole space. The iterated-conditional-expectation form and the general kernel form
 are not stated. -/
@@ -234,21 +253,12 @@ theorem integral_potentialOutcome_eq_gFormula [MeasurableSpace Ω] [Fintype 𝓛
     (hexch : ∀ t ≤ T, ∀ l : Fin (T + 1) → 𝓛,
       (∫ ω in gRegimeEvent L A a l (t + 1), Ya ω ∂P) * P.real (gHistoryEvent L A a l t) =
         (∫ ω in gHistoryEvent L A a l t, Ya ω ∂P) * P.real (gRegimeEvent L A a l (t + 1)))
-    (δ : ℝ) (hδ : 0 < δ)
     (hpos : ∀ t ≤ T, ∀ l : Fin (T + 1) → 𝓛,
-      δ * P.real (gHistoryEvent L A a l t) ≤ P.real (gRegimeEvent L A a l (t + 1))) :
+      P.real (gRegimeEvent L A a l (t + 1)) = 0 → P.real (gHistoryEvent L A a l t) = 0) :
     ∫ ω, Ya ω ∂P = ∑ l : Fin (T + 1) → 𝓛,
       (∫ ω in gRegimeEvent L A a l (T + 1), Y ω ∂P) / P.real (gRegimeEvent L A a l (T + 1)) *
         ∏ t ∈ Finset.range (T + 1),
           P.real (gHistoryEvent L A a l t) / P.real (gRegimeEvent L A a l t) := by
-  -- positivity in the form needed below
-  have hpos' : ∀ t ≤ T, ∀ l : Fin (T + 1) → 𝓛,
-      P.real (gRegimeEvent L A a l (t + 1)) = 0 → P.real (gHistoryEvent L A a l t) = 0 := by
-    intro t ht l h0
-    have := hpos t ht l
-    rw [h0] at this
-    have hnn : 0 ≤ P.real (gHistoryEvent L A a l t) := measureReal_nonneg
-    exact le_antisymm (by nlinarith) hnn
   -- extension of a record of length `n + 1 ≤ T + 1` to a full record
   have hext : ∀ n ≤ T, ∀ l : Fin (n + 1) → 𝓛, ∃ l' : Fin (T + 1) → 𝓛,
       gHistoryEvent L A a l n = gHistoryEvent L A a l' n ∧
@@ -263,7 +273,7 @@ theorem integral_potentialOutcome_eq_gFormula [MeasurableSpace Ω] [Fintype 𝓛
       rw [h₁, h₂]; exact hexch n (by omega) l')
     (fun n hn l ↦ by
       obtain ⟨l', h₁, h₂⟩ := hext n (by omega) l
-      rw [h₁, h₂]; exact hpos' n (by omega) l')
+      rw [h₁, h₂]; exact hpos n (by omega) l')
     (T + 1) le_rfl
   rw [hipw]
   refine Finset.sum_congr rfl fun l _ ↦ ?_
@@ -277,7 +287,7 @@ theorem integral_potentialOutcome_eq_gFormula [MeasurableSpace Ω] [Fintype 𝓛
     (by simp [gRegimeEvent])
     (fun k hk ↦ le_antisymm (hk ▸ measureReal_mono
       (gHistoryEvent_subset_gRegimeEvent L A a l k)) measureReal_nonneg)
-    (fun k hk ↦ hpos' k (by omega) l) (T + 1) le_rfl
+    (fun k hk ↦ hpos k (by omega) l) (T + 1) le_rfl
   rw [← htel]
   by_cases h0 : P.real (gRegimeEvent L A a l (T + 1)) = 0
   · rw [setIntegral_measure_zero (f := Ya) ((measureReal_eq_zero_iff).1 h0)]

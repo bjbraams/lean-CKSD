@@ -1,13 +1,35 @@
 module
 
 public import CKSD.Nonparametric.LowerBounds
+public import CKSD.Nonparametric.Models
 
 /-!
-# Nonparametric: HighDimensional
+# Principal components, the lasso, and false discovery rate control
 
-Sources: `GAPS.md`, `SYNOPSIS103.md`, and `STRUCTURE103.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Results on high-dimensional estimation and multiple testing: the central limit theorem in a
+separable Hilbert space, the optimality of principal components for reconstruction, the
+deterministic analysis of the lasso, and the Benjamini–Hochberg procedure.
+
+## Main definitions
+
+* `CKSD.benjaminiHochbergFalseDiscoveryProportion`: the proportion of true null hypotheses among
+  the rejections of the Benjamini–Hochberg procedure.
+
+## Main results
+
+* `CKSD.tendstoInDistribution_hilbert_sampleAverage`: the central limit theorem for i.i.d.
+  square-integrable random elements of a separable Hilbert space.
+* `CKSD.sum_ite_le_integral_norm_sub_sum_inner_smul_sq`: no projection onto `k` orthonormal
+  directions has expected reconstruction error below the sum of the trailing eigenvalues of the
+  covariance.
+* `CKSD.IsLassoEstimator.norm_apply_sub_sq_div_le`: the basic inequality of the lasso, with the
+  cone condition `CKSD.IsLassoEstimator.restrictedL1Norm_compl_sub_le` and the prediction and
+  `ℓ¹` error bounds under compatibility.
+* `CKSD.integral_benjaminiHochbergFalseDiscoveryProportion_le`: the Benjamini–Hochberg
+  procedure at level `α` controls the false discovery rate at `α m₀ / m` for independent
+  p-values whose null p-values are superuniform.
+
+Sources: GAPS 103.29, 103.31, 103.34, and 103.37.
 -/
 
 @[expose] public section
@@ -19,24 +41,21 @@ open scoped ENNReal NNReal Topology BigOperators MatrixOrder Matrix.Norms.L2Oper
 
 namespace CKSD
 
-open scoped CKSD
-
 attribute [local instance] Classical.propDecidable
 
--- Use the common rank measurable structure.
-attribute [local instance] rankMeasurableSpace
-
-/-- GAPS 103.29, the separable-Hilbert-space CLT, characterized by scalar variances. -/
+/-- GAPS 103.29: the central limit theorem in a separable Hilbert space. For i.i.d.
+square-integrable `X_i` with mean `m`, `√n (X̄_n - m)` converges in law to a centred Gaussian
+measure `G`, characterized by its one-dimensional marginals
+`⟪u, ·⟫_* G = N(0, E ⟪u, X - m⟫²)`. -/
 theorem tendstoInDistribution_hilbert_sampleAverage {Ω H : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup H] [InnerProductSpace ℝ H] [CompleteSpace H]
     [MeasurableSpace H] [BorelSpace H] [SecondCountableTopology H]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure H) [IsProbabilityMeasure P]
     (X : ℕ → Ω → H) (hiid : IsIndependentIdenticallyDistributed μ X P) (h2 : MemLp id 2 P) :
-    let m := ∫ x, x ∂P;
     ∃ G : Measure H, IsProbabilityMeasure G ∧
       (∀ u : H, G.map (fun x ↦ inner ℝ u x) =
-        gaussianReal 0 (Real.toNNReal (∫ x, (inner ℝ u (x - m)) ^ 2 ∂P))) ∧
-      TendstoInDistribution μ (fun n ω ↦ Real.sqrt n • (sampleAverage X n ω - m)) G := by
+        gaussianReal 0 (Real.toNNReal (∫ x, (inner ℝ u (x - ∫ z, z ∂P)) ^ 2 ∂P))) ∧
+      TendstoInDistribution μ (fun n ω ↦ Real.sqrt n • (sampleAverage X n ω - ∫ z, z ∂P)) G := by
   sorry
 
 /-- Pythagoras for the projection onto the span of an orthonormal family. -/
@@ -53,19 +72,26 @@ theorem norm_sub_sum_inner_smul_sq {E : Type*} [NormedAddCommGroup E] [InnerProd
   rw [norm_sub_sq_real, h1, h2]
   ring
 
-/-- GAPS 103.31, finite-dimensional PCA minimizes expected reconstruction error about any specified center: no projection
-onto the span of `k` orthonormal vectors has risk below the tail eigenvalue sum. Attainment by
-the leading eigenvectors, uniqueness, and the Hilbert-space case are not asserted. -/
-theorem pca_reconstruction_risk_bound {Ω : Type*} [MeasurableSpace Ω] {d k : ℕ}
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (X : Ω → EuclideanSpace ℝ (Fin d))
-    (hX : MemLp X 2 μ) (m : EuclideanSpace ℝ (Fin d))
-     (e : OrthonormalBasis (Fin d) ℝ (EuclideanSpace ℝ (Fin d)))
+/-- GAPS 103.31: principal components minimize the expected reconstruction error, in finite
+dimension and about any specified center `m`. If the second-moment operator of `X - m` is
+diagonal in the orthonormal basis `e` with nonincreasing eigenvalues `λ_j`, then no projection
+onto the span of `k` orthonormal vectors `q_i` has expected squared reconstruction error below
+the trailing eigenvalue sum `∑_{j ≥ k} λ_j`. Attainment by the leading eigenvectors,
+uniqueness, and the Hilbert-space case are not asserted. -/
+theorem sum_ite_le_integral_norm_sub_sum_inner_smul_sq {Ω E : Type*} [MeasurableSpace Ω]
+    [NormedAddCommGroup E] [InnerProductSpace ℝ E] {d k : ℕ}
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (X : Ω → E)
+    (hX : MemLp X 2 μ) (m : E) (e : OrthonormalBasis (Fin d) ℝ E)
     (lambda : Fin d → ℝ) (hlambda : Antitone lambda)
     (hcov : ∀ i j, (∫ ω, inner ℝ (X ω - m) (e i) * inner ℝ (X ω - m) (e j) ∂μ) =
-      if i = j then lambda i else 0) (hk : k ≤ d)
-    (q : Fin k → EuclideanSpace ℝ (Fin d)) (hq : Orthonormal ℝ q) :
+      if i = j then lambda i else 0)
+    (q : Fin k → E) (hq : Orthonormal ℝ q) :
     (∑ j : Fin d, if k ≤ j.val then lambda j else 0) ≤
       ∫ ω, ‖X ω - m - ∑ j, inner ℝ (X ω - m) (q j) • q j‖ ^ 2 ∂μ := by
+  have : FiniteDimensional ℝ E := e.toBasis.finiteDimensional_of_finite
+  have hk : k ≤ d := by
+    simpa [Module.finrank_eq_card_basis e.toBasis] using
+      hq.linearIndependent.fintype_card_le_finrank
   set y := fun (j : Fin d) (ω : Ω) ↦ inner ℝ (X ω - m) (e j) with hy
   set w := fun (i : Fin k) (j : Fin d) ↦ inner ℝ (e j) (q i) with hw
   have hY : MemLp (fun ω ↦ X ω - m) 2 μ := hX.sub (memLp_const m)
@@ -160,8 +186,9 @@ theorem pca_reconstruction_risk_bound {Ω : Type*} [MeasurableSpace Ω] {d k : �
     · simp only [hj, show k ≤ j.val by omega, ↓reduceIte, zero_add]
   linarith
 
-/-- The coordinatewise L1 norm is convex along segments. -/
-theorem restrictedL1Norm_convex_comb {p : ℕ} (S : Finset (Fin p))
+/-- The coordinate `ℓ¹` norm is convex along segments:
+`‖x - h (x - y)‖₁ ≤ (1 - h) ‖x‖₁ + h ‖y‖₁` for `0 ≤ h ≤ 1`. -/
+theorem restrictedL1Norm_sub_smul_sub_le {p : ℕ} (S : Finset (Fin p))
     (x y : EuclideanSpace ℝ (Fin p)) (h : ℝ) (h0 : 0 ≤ h) (h1 : h ≤ 1) :
     restrictedL1Norm S (x - h • (x - y)) ≤
       (1 - h) * restrictedL1Norm S x + h * restrictedL1Norm S y := by
@@ -176,20 +203,19 @@ theorem restrictedL1Norm_convex_comb {p : ℕ} (S : Finset (Fin p))
     _ = (1 - h) * |x j| + h * |y j| := by
       rw [abs_mul, abs_mul, abs_of_nonneg (by linarith), abs_of_nonneg h0]
 
-/-- GAPS 103.34, deterministic lasso prediction/L1 bounds and the cone condition. -/
-theorem lasso_cone_and_error_bounds {n p : ℕ} (hn : 0 < n)
-    (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
-    (β b : EuclideanSpace ℝ (Fin p)) (ε : EuclideanSpace ℝ (Fin n))
-    (S : Finset (Fin p)) (hne : S.Nonempty) (lambda κ : ℝ) (hlambda : 0 < lambda) (hκ : 0 < κ)
-    (hsupp : ∀ j ∉ S, β j = 0)
-    (hnoise : ∀ δ, |inner ℝ ε (A δ)| / n ≤ lambda / 2 * restrictedL1Norm Finset.univ δ)
-    (hcompat : ∀ δ, restrictedL1Norm Sᶜ δ ≤ 3 * restrictedL1Norm S δ →
-      κ ^ 2 * (restrictedL1Norm S δ) ^ 2 ≤ (S.card : ℝ) * ‖A δ‖ ^ 2 / n)
-    (hmin : ∀ t, ‖A β + ε - A b‖ ^ 2 / (2 * n) + lambda * restrictedL1Norm Finset.univ b ≤
-      ‖A β + ε - A t‖ ^ 2 / (2 * n) + lambda * restrictedL1Norm Finset.univ t) :
-    restrictedL1Norm Sᶜ (b - β) ≤ 3 * restrictedL1Norm S (b - β) ∧
-      ‖A (b - β)‖ ^ 2 / n ≤ 9 * lambda ^ 2 * S.card / (4 * κ ^ 2) ∧
-      restrictedL1Norm Finset.univ (b - β) ≤ 6 * lambda * S.card / κ ^ 2 := by
+/-- The basic inequality of the lasso. Let `y = A β + ε` with `β` supported in `S`, and let `b`
+be a lasso estimate with penalty `λ > 0` on the noise event `|⟪ε, A δ⟫| / n ≤ λ ‖δ‖₁ / 2`.
+Then `‖A (b - β)‖² / n ≤ (3λ/2) ‖(b - β)_S‖₁ - (λ/2) ‖(b - β)_{Sᶜ}‖₁`. -/
+theorem IsLassoEstimator.norm_apply_sub_sq_div_le {n p : ℕ} (hn : 0 < n)
+    {A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)}
+    {β b : EuclideanSpace ℝ (Fin p)} {ε : EuclideanSpace ℝ (Fin n)} {lambda : ℝ}
+    (hb : IsLassoEstimator A (A β + ε) lambda b) (hlambda : 0 < lambda)
+    (S : Finset (Fin p)) (hsupp : ∀ j ∉ S, β j = 0)
+    (hnoise : ∀ δ, |inner ℝ ε (A δ)| / n ≤ lambda / 2 * restrictedL1Norm Finset.univ δ) :
+    ‖A (b - β)‖ ^ 2 / n ≤
+      3 * lambda / 2 * restrictedL1Norm S (b - β) - lambda / 2 * restrictedL1Norm Sᶜ (b - β) := by
+  have hmin : ∀ t, ‖A β + ε - A b‖ ^ 2 / (2 * n) + lambda * restrictedL1Norm Finset.univ b ≤
+      ‖A β + ε - A t‖ ^ 2 / (2 * n) + lambda * restrictedL1Norm Finset.univ t := hb
   set δ := b - β with hδ
   have hN : (0 : ℝ) < n := Nat.cast_pos.mpr hn
   set u' := ‖A δ‖ ^ 2 with hu'
@@ -205,7 +231,7 @@ theorem lasso_cone_and_error_bounds {n p : ℕ} (hn : 0 < n)
       rw [map_sub, map_smul, hδ, map_sub]; abel
     rw [hr, hr', norm_add_sq_real, norm_smul, inner_smul_right, inner_sub_left,
       real_inner_self_eq_norm_sq, Real.norm_eq_abs, abs_of_pos h0] at hm
-    have hl1 := restrictedL1Norm_convex_comb Finset.univ b β h h0.le h1
+    have hl1 := restrictedL1Norm_sub_smul_sub_le Finset.univ b β h h0.le h1
     rw [← hδ] at hl1
     have key : 0 ≤ h * ((e - u') / n + h * u' / (2 * n) +
         lambda * (restrictedL1Norm Finset.univ β - restrictedL1Norm Finset.univ b)) := by
@@ -270,35 +296,91 @@ theorem lasso_cone_and_error_bounds {n p : ℕ} (hn : 0 < n)
   have hmain : u' / n ≤ 3 * lambda / 2 * a - lambda / 2 * c := by
     rw [← hsδ] at hnz
     nlinarith
-  have hcone : c ≤ 3 * a := by nlinarith
-  have hcomp' := hcompat δ hcone
+  exact hmain
+
+/-- GAPS 103.34: the cone condition for the lasso. Under the noise event
+`|⟪ε, A δ⟫| / n ≤ λ ‖δ‖₁ / 2`, the error `δ = b - β` of a lasso estimate satisfies
+`‖δ_{Sᶜ}‖₁ ≤ 3 ‖δ_S‖₁`, where `S` contains the support of `β`. -/
+theorem IsLassoEstimator.restrictedL1Norm_compl_sub_le {n p : ℕ} (hn : 0 < n)
+    {A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)}
+    {β b : EuclideanSpace ℝ (Fin p)} {ε : EuclideanSpace ℝ (Fin n)} {lambda : ℝ}
+    (hb : IsLassoEstimator A (A β + ε) lambda b) (hlambda : 0 < lambda)
+    (S : Finset (Fin p)) (hsupp : ∀ j ∉ S, β j = 0)
+    (hnoise : ∀ δ, |inner ℝ ε (A δ)| / n ≤ lambda / 2 * restrictedL1Norm Finset.univ δ) :
+    restrictedL1Norm Sᶜ (b - β) ≤ 3 * restrictedL1Norm S (b - β) := by
+  have hmain := hb.norm_apply_sub_sq_div_le hn hlambda S hsupp hnoise
+  have hu0 : 0 ≤ ‖A (b - β)‖ ^ 2 / n := by positivity
+  nlinarith
+
+/-- Under the compatibility condition, the lasso error has `‖δ_S‖₁ ≤ 3 λ |S| / (2 κ²)`. -/
+private theorem IsLassoEstimator.restrictedL1Norm_sub_le_aux {n p : ℕ} (hn : 0 < n)
+    {A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)}
+    {β b : EuclideanSpace ℝ (Fin p)} {ε : EuclideanSpace ℝ (Fin n)} {lambda κ : ℝ}
+    (hb : IsLassoEstimator A (A β + ε) lambda b) (hlambda : 0 < lambda) (hκ : 0 < κ)
+    (S : Finset (Fin p)) (hne : S.Nonempty) (hsupp : ∀ j ∉ S, β j = 0)
+    (hnoise : ∀ δ, |inner ℝ ε (A δ)| / n ≤ lambda / 2 * restrictedL1Norm Finset.univ δ)
+    (hcompat : HasCompatibility A S 3 κ) :
+    restrictedL1Norm S (b - β) ≤ 3 * lambda * S.card / (2 * κ ^ 2) := by
+  have hmain := hb.norm_apply_sub_sq_div_le hn hlambda S hsupp hnoise
+  have hcone := hb.restrictedL1Norm_compl_sub_le hn hlambda S hsupp hnoise
+  set a := restrictedL1Norm S (b - β)
+  set c := restrictedL1Norm Sᶜ (b - β)
+  set u := ‖A (b - β)‖ ^ 2 / n with hu
+  have ha0 : 0 ≤ a := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+  have hc0 : 0 ≤ c := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
   have hs : (0 : ℝ) < S.card := Nat.cast_pos.mpr (Finset.card_pos.mpr hne)
-  have hcomp'' : κ ^ 2 * a ^ 2 ≤ S.card * (u' / n) := by
-    rw [hu'] at *; calc κ ^ 2 * a ^ 2 ≤ (S.card : ℝ) * ‖A δ‖ ^ 2 / n := hcomp'
-      _ = _ := by ring
+  have hcomp : κ ^ 2 * a ^ 2 ≤ S.card * u := by
+    calc κ ^ 2 * a ^ 2 ≤ (S.card : ℝ) * ‖A (b - β)‖ ^ 2 / n := hcompat (b - β) hcone
+      _ = _ := by rw [hu]; ring
   have hka : κ ^ 2 * a ≤ 3 * lambda * S.card / 2 := by
     rcases ha0.eq_or_lt with h0 | h0
     · rw [← h0]; simp; positivity
     · have : κ ^ 2 * a ^ 2 ≤ S.card * (3 * lambda / 2 * a) := by
-        calc κ ^ 2 * a ^ 2 ≤ S.card * (u' / n) := hcomp''
+        calc κ ^ 2 * a ^ 2 ≤ S.card * u := hcomp
           _ ≤ S.card * (3 * lambda / 2 * a) := by
             apply mul_le_mul_of_nonneg_left _ hs.le; nlinarith
       nlinarith
-  have hκ2 : 0 < κ ^ 2 := by positivity
-  have ha_le : a ≤ 3 * lambda * S.card / (2 * κ ^ 2) := by
-    rw [le_div_iff₀ (by positivity)]; nlinarith
-  refine ⟨hcone, ?_, ?_⟩
-  · calc u' / n ≤ 3 * lambda / 2 * a := by nlinarith
-      _ ≤ 3 * lambda / 2 * (3 * lambda * S.card / (2 * κ ^ 2)) := by gcongr
-      _ = 9 * lambda ^ 2 * S.card / (4 * κ ^ 2) := by field_simp; ring
-  · rw [← hsδ]
-    calc a + c ≤ 4 * a := by linarith
-      _ ≤ 4 * (3 * lambda * S.card / (2 * κ ^ 2)) := by gcongr
-      _ = 6 * lambda * S.card / κ ^ 2 := by field_simp; ring
+  rw [le_div_iff₀ (by positivity)]; nlinarith
 
-/-- The Benjamini–Hochberg count `R` is at most `m` and satisfies its defining inequality
-`R ≤ #{j : x j ≤ R α / m}`. -/
-theorem benjaminiHochbergCount_le_and_le_card {m : ℕ} (x : Fin m → ℝ) (α : ℝ) :
+/-- GAPS 103.34: the lasso prediction bound under compatibility. Under the noise event and the
+compatibility condition with constant `κ` on the cone `‖δ_{Sᶜ}‖₁ ≤ 3 ‖δ_S‖₁`, a lasso estimate
+satisfies `‖A (b - β)‖² / n ≤ 9 λ² |S| / (4 κ²)`. -/
+theorem IsLassoEstimator.norm_apply_sub_sq_div_le_of_hasCompatibility {n p : ℕ} (hn : 0 < n)
+    {A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)}
+    {β b : EuclideanSpace ℝ (Fin p)} {ε : EuclideanSpace ℝ (Fin n)} {lambda κ : ℝ}
+    (hb : IsLassoEstimator A (A β + ε) lambda b) (hlambda : 0 < lambda) (hκ : 0 < κ)
+    (S : Finset (Fin p)) (hne : S.Nonempty) (hsupp : ∀ j ∉ S, β j = 0)
+    (hnoise : ∀ δ, |inner ℝ ε (A δ)| / n ≤ lambda / 2 * restrictedL1Norm Finset.univ δ)
+    (hcompat : HasCompatibility A S 3 κ) :
+    ‖A (b - β)‖ ^ 2 / n ≤ 9 * lambda ^ 2 * S.card / (4 * κ ^ 2) := by
+  have hmain := hb.norm_apply_sub_sq_div_le hn hlambda S hsupp hnoise
+  have ha := hb.restrictedL1Norm_sub_le_aux hn hlambda hκ S hne hsupp hnoise hcompat
+  have hc0 : 0 ≤ restrictedL1Norm Sᶜ (b - β) := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+  calc ‖A (b - β)‖ ^ 2 / n ≤ 3 * lambda / 2 * restrictedL1Norm S (b - β) := by nlinarith
+    _ ≤ 3 * lambda / 2 * (3 * lambda * S.card / (2 * κ ^ 2)) := by gcongr
+    _ = 9 * lambda ^ 2 * S.card / (4 * κ ^ 2) := by field_simp; ring
+
+/-- GAPS 103.34: the lasso `ℓ¹` error bound under compatibility. Under the noise event and the
+compatibility condition with constant `κ` on the cone `‖δ_{Sᶜ}‖₁ ≤ 3 ‖δ_S‖₁`, a lasso estimate
+satisfies `‖b - β‖₁ ≤ 6 λ |S| / κ²`. -/
+theorem IsLassoEstimator.restrictedL1Norm_sub_le {n p : ℕ} (hn : 0 < n)
+    {A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)}
+    {β b : EuclideanSpace ℝ (Fin p)} {ε : EuclideanSpace ℝ (Fin n)} {lambda κ : ℝ}
+    (hb : IsLassoEstimator A (A β + ε) lambda b) (hlambda : 0 < lambda) (hκ : 0 < κ)
+    (S : Finset (Fin p)) (hne : S.Nonempty) (hsupp : ∀ j ∉ S, β j = 0)
+    (hnoise : ∀ δ, |inner ℝ ε (A δ)| / n ≤ lambda / 2 * restrictedL1Norm Finset.univ δ)
+    (hcompat : HasCompatibility A S 3 κ) :
+    restrictedL1Norm Finset.univ (b - β) ≤ 6 * lambda * S.card / κ ^ 2 := by
+  have hcone := hb.restrictedL1Norm_compl_sub_le hn hlambda S hsupp hnoise
+  have ha := hb.restrictedL1Norm_sub_le_aux hn hlambda hκ S hne hsupp hnoise hcompat
+  rw [← restrictedL1Norm_add_compl S (b - β)]
+  calc restrictedL1Norm S (b - β) + restrictedL1Norm Sᶜ (b - β)
+      ≤ 4 * restrictedL1Norm S (b - β) := by linarith
+    _ ≤ 4 * (3 * lambda * S.card / (2 * κ ^ 2)) := by gcongr
+    _ = 6 * lambda * S.card / κ ^ 2 := by field_simp; ring
+
+/-- The Benjamini–Hochberg count `R` is attained: `R ≤ m` and `R ≤ #{j : x j ≤ R α / m}`. -/
+private theorem benjaminiHochbergCount_le_and_le_card {m : ℕ} (x : Fin m → ℝ) (α : ℝ) :
     benjaminiHochbergCount x α ≤ m ∧ benjaminiHochbergCount x α ≤
       (Finset.univ.filter fun j ↦ x j ≤ (benjaminiHochbergCount x α : ℝ) * α / m).card := by
   classical
@@ -312,6 +394,18 @@ theorem benjaminiHochbergCount_le_and_le_card {m : ℕ} (x : Fin m → ℝ) (α 
   rw [hR]
   exact ⟨by omega, by convert hk.2⟩
 
+/-- The Benjamini–Hochberg count is at most the number of hypotheses. -/
+theorem benjaminiHochbergCount_le {m : ℕ} (x : Fin m → ℝ) (α : ℝ) :
+    benjaminiHochbergCount x α ≤ m :=
+  (benjaminiHochbergCount_le_and_le_card x α).1
+
+/-- The Benjamini–Hochberg count `R` satisfies its defining inequality
+`R ≤ #{j : x j ≤ R α / m}`. -/
+theorem benjaminiHochbergCount_le_card {m : ℕ} (x : Fin m → ℝ) (α : ℝ) :
+    benjaminiHochbergCount x α ≤
+      (Finset.univ.filter fun j ↦ x j ≤ (benjaminiHochbergCount x α : ℝ) * α / m).card :=
+  (benjaminiHochbergCount_le_and_le_card x α).2
+
 /-- Every `k ≤ m` satisfying the Benjamini–Hochberg inequality is at most the count. -/
 theorem le_benjaminiHochbergCount {m : ℕ} (x : Fin m → ℝ) (α : ℝ) (k : ℕ) (hk : k ≤ m)
     (hkN : k ≤ (Finset.univ.filter fun j ↦ x j ≤ (k : ℝ) * α / m).card) :
@@ -321,46 +415,52 @@ theorem le_benjaminiHochbergCount {m : ℕ} (x : Fin m → ℝ) (α : ℝ) (k : 
   exact Finset.le_sup (f := id) (Finset.mem_filter.mpr ⟨Finset.mem_range.mpr (by omega), by
     convert hkN⟩)
 
-/-- Setting one p-value to zero: the Benjamini–Hochberg count does not decrease, it is at
-least one, and it is unchanged whenever the modified p-value is rejected by either count. -/
-theorem benjaminiHochbergCount_update_zero {m : ℕ} (hm : 0 < m) (x : Fin m → ℝ) (α : ℝ)
+/-- Setting a p-value to zero can only enlarge the sets of p-values below each threshold. -/
+private theorem filter_le_subset_filter_update_zero {m : ℕ} (x : Fin m → ℝ) (α : ℝ)
+    (hα : 0 ≤ α) (i : Fin m) (k : ℕ) :
+    (Finset.univ.filter fun j ↦ x j ≤ (k : ℝ) * α / m) ⊆
+      (Finset.univ.filter fun j ↦ Function.update x i 0 j ≤ (k : ℝ) * α / m) := by
+  intro j hj
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hj ⊢
+  by_cases hji : j = i
+  · subst hji; simp only [Function.update_self]; positivity
+  · simp [Function.update_of_ne hji, hj]
+
+/-- Setting one p-value to zero does not decrease the Benjamini–Hochberg count. -/
+theorem benjaminiHochbergCount_le_update_zero {m : ℕ} (x : Fin m → ℝ) (α : ℝ)
     (hα : 0 ≤ α) (i : Fin m) :
-    let q := Function.update x i 0
-    benjaminiHochbergCount x α ≤ benjaminiHochbergCount q α ∧
-    1 ≤ benjaminiHochbergCount q α ∧
-    (x i ≤ (benjaminiHochbergCount q α : ℝ) * α / m →
-      benjaminiHochbergCount x α = benjaminiHochbergCount q α) := by
+    benjaminiHochbergCount x α ≤ benjaminiHochbergCount (Function.update x i 0) α :=
+  le_benjaminiHochbergCount _ α _ (benjaminiHochbergCount_le x α)
+    ((benjaminiHochbergCount_le_card x α).trans
+      (Finset.card_le_card (filter_le_subset_filter_update_zero x α hα i _)))
+
+/-- After setting one p-value to zero, the Benjamini–Hochberg procedure rejects at least once. -/
+theorem one_le_benjaminiHochbergCount_update_zero {m : ℕ} (hm : 0 < m) (x : Fin m → ℝ)
+    (α : ℝ) (hα : 0 ≤ α) (i : Fin m) :
+    1 ≤ benjaminiHochbergCount (Function.update x i 0) α := by
+  refine le_benjaminiHochbergCount _ α 1 hm ?_
+  rw [Finset.one_le_card]
+  exact ⟨i, by simp only [Finset.mem_filter, Finset.mem_univ, true_and,
+    Function.update_self]; positivity⟩
+
+/-- The Benjamini–Hochberg count is unchanged by setting the `i`-th p-value to zero whenever
+that p-value is rejected by the modified count. -/
+theorem benjaminiHochbergCount_eq_update_zero_of_le {m : ℕ} (x : Fin m → ℝ) (α : ℝ)
+    (hα : 0 ≤ α) (i : Fin m)
+    (hi : x i ≤ (benjaminiHochbergCount (Function.update x i 0) α : ℝ) * α / m) :
+    benjaminiHochbergCount x α = benjaminiHochbergCount (Function.update x i 0) α := by
   classical
-  intro q
-  have hc : ∀ k : ℕ, 0 ≤ (k : ℝ) * α / m := fun k ↦ by positivity
-  have hsub : ∀ k : ℕ, (Finset.univ.filter fun j ↦ x j ≤ (k : ℝ) * α / m) ⊆
-      (Finset.univ.filter fun j ↦ q j ≤ (k : ℝ) * α / m) := by
-    intro k j hj
+  set q := Function.update x i 0
+  have heq : (Finset.univ.filter fun j ↦ q j ≤ (benjaminiHochbergCount q α : ℝ) * α / m) =
+      (Finset.univ.filter fun j ↦ x j ≤ (benjaminiHochbergCount q α : ℝ) * α / m) := by
+    refine Finset.Subset.antisymm (fun j hj ↦ ?_) (filter_le_subset_filter_update_zero x α hα i _)
     simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hj ⊢
     by_cases hji : j = i
-    · subst hji; simp [q, hc k]
-    · simp [q, Function.update_of_ne hji, hj]
-  have heq : ∀ k : ℕ, x i ≤ (k : ℝ) * α / m →
-      (Finset.univ.filter fun j ↦ q j ≤ (k : ℝ) * α / m) =
-      (Finset.univ.filter fun j ↦ x j ≤ (k : ℝ) * α / m) := by
-    intro k hk
-    refine Finset.Subset.antisymm (fun j hj ↦ ?_) (hsub k)
-    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hj ⊢
-    by_cases hji : j = i
-    · subst hji; exact hk
+    · subst hji; exact hi
     · simpa [q, Function.update_of_ne hji] using hj
-  obtain ⟨hxm, hxN⟩ := benjaminiHochbergCount_le_and_le_card x α
-  obtain ⟨hqm, hqN⟩ := benjaminiHochbergCount_le_and_le_card q α
-  refine ⟨?_, ?_, fun hi ↦ ?_⟩
-  · exact le_benjaminiHochbergCount q α _ hxm (hxN.trans (Finset.card_le_card (hsub _)))
-  · refine le_benjaminiHochbergCount q α 1 hm ?_
-    rw [Finset.one_le_card]
-    exact ⟨i, by simp only [Finset.mem_filter, Finset.mem_univ, true_and, q,
-      Function.update_self]; exact hc 1⟩
-  · refine le_antisymm ?_ ?_
-    · exact le_benjaminiHochbergCount q α _ hxm (hxN.trans (Finset.card_le_card (hsub _)))
-    · refine le_benjaminiHochbergCount x α _ hqm ?_
-      rw [← heq _ hi]; exact hqN
+  refine le_antisymm (benjaminiHochbergCount_le_update_zero x α hα i) ?_
+  refine le_benjaminiHochbergCount x α _ (benjaminiHochbergCount_le q α) ?_
+  rw [← heq]; exact benjaminiHochbergCount_le_card q α
 
 /-- Leave-one-out decomposition of a Benjamini–Hochberg rejection: the contribution of
 hypothesis `i` to the false discovery proportion splits over the value `k` of the count
@@ -372,10 +472,12 @@ theorem benjaminiHochberg_rejection_div_eq_sum {m : ℕ} (hm : 0 < m) (x : Fin m
       ∑ k ∈ Finset.Icc 1 m, (if x i ≤ (k : ℝ) * α / m ∧
         benjaminiHochbergCount (Function.update x i 0) α = k then (1 : ℝ) / k else 0) := by
   classical
-  obtain ⟨hmono, hone, hsame⟩ := benjaminiHochbergCount_update_zero hm x α hα i
+  have hmono := benjaminiHochbergCount_le_update_zero x α hα i
+  have hone := one_le_benjaminiHochbergCount_update_zero hm x α hα i
+  have hsame := benjaminiHochbergCount_eq_update_zero_of_le x α hα i
   set R := benjaminiHochbergCount x α
   set Rq := benjaminiHochbergCount (Function.update x i 0) α
-  have hRqm : Rq ≤ m := (benjaminiHochbergCount_le_and_le_card _ α).1
+  have hRqm : Rq ≤ m := benjaminiHochbergCount_le _ α
   by_cases hrej : x i ≤ (R : ℝ) * α / m
   · have hle : x i ≤ (Rq : ℝ) * α / m := hrej.trans (by
       gcongr)
@@ -408,7 +510,7 @@ theorem measurable_benjaminiHochbergCount (m : ℕ) (α : ℝ) :
     simp only [Function.comp, hG, hN, benjaminiHochbergCount]
     congr 1
     refine Finset.filter_congr fun k hk ↦ ?_
-    rw [dif_pos (Finset.mem_range.mp hk)]
+    rw [dite_eq_left (Finset.mem_range.mp hk)]
   rw [hfac]
   refine (measurable_of_countable G).comp ?_
   refine measurable_pi_iff.mpr fun k ↦ ?_
@@ -417,16 +519,26 @@ theorem measurable_benjaminiHochbergCount (m : ℕ) (α : ℝ) :
   exact Measurable.ite (measurableSet_le (measurable_pi_apply j) measurable_const)
     measurable_const measurable_const
 
-/-- GAPS 103.37, FDR control for mutually independent p-values. -/
-theorem benjamini_hochberg_false_discovery_rate_le {Ω : Type*} [MeasurableSpace Ω]
+/-- The false discovery proportion of the Benjamini–Hochberg procedure at level `α` with
+p-values `x` and set of true null hypotheses `H₀`: the number of rejected true nulls divided by
+the number of rejections, with `0 / 0 = 0`. -/
+def benjaminiHochbergFalseDiscoveryProportion {m : ℕ} (H₀ : Finset (Fin m)) (x : Fin m → ℝ)
+    (α : ℝ) : ℝ :=
+  ((H₀.filter fun i ↦ x i ≤ (benjaminiHochbergCount x α : ℝ) * α / m).card : ℝ) /
+    max (benjaminiHochbergCount x α : ℝ) 1
+
+/-- GAPS 103.37: false discovery rate control by the Benjamini–Hochberg procedure. For
+mutually independent p-values whose true-null p-values are superuniform,
+`P(p_i ≤ t) ≤ t` for `t ∈ [0, 1]`, the expected false discovery proportion at level
+`α ∈ (0, 1)` is at most `α |H₀| / m`. -/
+theorem integral_benjaminiHochbergFalseDiscoveryProportion_le {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (m : ℕ) (hm : 0 < m)
-    (p : Fin m → Ω → ℝ) (hp : ∀ i, Measurable (p i))
-     (hind : iIndepFun p μ)
+    (p : Fin m → Ω → ℝ) (hp : ∀ i, Measurable (p i)) (hind : iIndepFun p μ)
     (H₀ : Finset (Fin m)) (hvalid : ∀ i ∈ H₀, ∀ t ∈ Icc (0 : ℝ) 1,
       μ.real {ω | p i ω ≤ t} ≤ t) (α : ℝ) (hα : α ∈ Ioo 0 1) :
-    (∫ ω, ((H₀.filter fun i ↦ p i ω ≤
-      (benjaminiHochbergCount (fun j ↦ p j ω) α : ℝ) * α / m).card : ℝ) /
-        max (benjaminiHochbergCount (fun j ↦ p j ω) α : ℝ) 1 ∂μ) ≤ α * H₀.card / m := by
+    ∫ ω, benjaminiHochbergFalseDiscoveryProportion H₀ (fun j ↦ p j ω) α ∂μ ≤
+      α * H₀.card / m := by
+  unfold benjaminiHochbergFalseDiscoveryProportion
   classical
   obtain ⟨hα0, hα1⟩ := hα
   have hmR : (0 : ℝ) < m := by exact_mod_cast hm
@@ -452,8 +564,8 @@ theorem benjamini_hochberg_false_discovery_rate_le {Ω : Type*} [MeasurableSpace
     have hext_meas : Measurable ext := by
       refine measurable_pi_iff.mpr fun j ↦ ?_
       by_cases hj : j ∈ Finset.univ \ {i}
-      · simp only [ext, dif_pos hj]; exact measurable_pi_apply _
-      · simp only [ext, dif_neg hj]; exact measurable_const
+      · simp only [ext, dite_eq_left hj]; exact measurable_pi_apply _
+      · simp only [ext, dite_eq_right hj]; exact measurable_const
     have h2 := h.comp hφ ((measurable_benjaminiHochbergCount m α).comp hext_meas)
     have e1 : p i = (fun z : ({i} : Finset (Fin m)) → ℝ ↦ z ⟨i, Finset.mem_singleton_self i⟩) ∘
         (fun ω (j : ({i} : Finset (Fin m))) ↦ p j ω) := rfl
@@ -463,7 +575,8 @@ theorem benjamini_hochberg_false_discovery_rate_le {Ω : Type*} [MeasurableSpace
       refine congrArg (fun x ↦ benjaminiHochbergCount x α) (funext fun j ↦ ?_)
       by_cases hji : j = i
       · subst hji; simp [ext]
-      · simp only [Function.update_of_ne hji, ext, dif_pos (show j ∈ Finset.univ \ {i} by simp [hji])]
+      · simp only [Function.update_of_ne hji, ext,
+          dite_eq_left (show j ∈ Finset.univ \ {i} by simp [hji])]
     rw [e1, e2]
     exact h2
   -- the events

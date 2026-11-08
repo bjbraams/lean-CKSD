@@ -6,10 +6,29 @@ public import TauCeti.Probability.Distributions.Gaussian.Mixture.Multivariate
 /-!
 # Identifiable finite Gaussian mixtures
 
-The laws and densities are TauCeti's general finite multivariate Gaussian-mixture constructions.
-This module restricts their parameters to distinct, nondegenerate, positive-weight components,
-then states identifiability across different component counts and likelihood unboundedness.
+A reduced finite Gaussian mixture on `ℝ^d` has `k` components with positive weights, distinct
+(mean, covariance) pairs, and positive definite covariances. Laws and densities are TauCeti's
+finite multivariate Gaussian-mixture constructions.
+
+## Main definitions
+
+* `CKSD.GaussianMixtureModel`: the parameters of a reduced mixture.
+* `CKSD.GaussianMixtureModel.law`, `CKSD.GaussianMixtureModel.density`,
+  `CKSD.GaussianMixtureModel.logLikelihood`: its law, density and sample log-likelihood.
+
+## Main results
+
+* `CKSD.GaussianMixtureModel.exists_equiv_of_law_eq`: reduced Gaussian mixtures are identifiable
+  up to relabeling of the components, including the number of components.
+* `CKSD.GaussianMixtureModel.not_bddAbove_logLikelihood`: with unconstrained covariances the
+  likelihood of a two-component mixture is unbounded on every nonempty sample.
+
 Sources: GAPS 105.6 and SYNOPSIS105, item 6.
+
+## References
+
+* S. J. Yakowitz and J. D. Spragins, *On the identifiability of finite mixtures*, Ann. Math.
+  Statist. 39 (1968), 209–214.
 -/
 
 @[expose] public section
@@ -74,9 +93,10 @@ theorem GaussianMixtureModel.hasDensity {d k : ℕ} (M : GaussianMixtureModel d 
       funext x
       exact TauCeti.Probability.multivariateGaussianMixturePDF_eq_ofReal _ _ _ _)
 
-/-- GAPS 105.6: finite nondegenerate Gaussian mixtures are identifiable up to relabeling,
-including equality of the number of distinct positive-weight components. -/
-theorem gaussianMixtureModel_identifiable {d k l : ℕ} (hd : 0 < d)
+/-- GAPS 105.6: finite nondegenerate Gaussian mixtures are identifiable up to relabeling: two
+reduced mixtures with the same law have the same number of components, and a bijection of the
+components matches their weights, means and covariances. -/
+theorem GaussianMixtureModel.exists_equiv_of_law_eq {d k l : ℕ}
     (M : GaussianMixtureModel d k) (N : GaussianMixtureModel d l) (h : M.law = N.law) :
     ∃ e : Fin k ≃ Fin l, ∀ i,
       M.weights.weights i = N.weights.weights (e i) ∧
@@ -84,10 +104,12 @@ theorem gaussianMixtureModel_identifiable {d k l : ℕ} (hd : 0 < d)
   sorry
 
 /-- GAPS 105.6: two Gaussian components already give an unbounded likelihood when their
-covariances are unconstrained. The sample and ambient dimension are both nonempty. -/
-theorem gaussianMixtureModel_logLikelihood_unbounded {d n : ℕ} (hd : 0 < d) (hn : 0 < n)
+covariances are unconstrained: on a nonempty sample in positive dimension, the log-likelihoods of
+the two-component reduced mixtures are not bounded above. -/
+theorem GaussianMixtureModel.not_bddAbove_logLikelihood {d n : ℕ} (hd : 0 < d) (hn : 0 < n)
     (x : Fin n → EuclideanSpace ℝ (Fin d)) :
-    ∀ R : ℝ, ∃ M : GaussianMixtureModel d 2, R < M.logLikelihood x := by
+    ¬ BddAbove (Set.range fun M : GaussianMixtureModel d 2 ↦ M.logLikelihood x) := by
+  rw [not_bddAbove_iff]
   intro R
   classical
   set i₀ : Fin n := ⟨0, hn⟩
@@ -140,7 +162,7 @@ theorem gaussianMixtureModel_logLikelihood_unbounded {d n : ℕ} (hd : 0 < d) (h
           simp [S] at this
           exact ht1 this.symm
         · rfl }
-  refine ⟨M, ?_⟩
+  refine ⟨_, ⟨M, rfl⟩, ?_⟩
   have hdens : ∀ y, M.density y = 1 / 2 * φ μ (t • 1) y + 1 / 2 * φ μ 1 y := by
     intro y
     simp only [GaussianMixtureModel.density, M,

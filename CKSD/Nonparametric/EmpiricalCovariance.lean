@@ -11,6 +11,20 @@ component in finite-dimensional Euclidean space under a fourth-moment hypothesis
 assert the infinite-dimensional spectral expansion of GAPS 103.30. The spectral gap is specified
 by a Rayleigh bound on the orthogonal complement, without choosing an ordering of eigenbases.
 Population covariance reuses `TauCeti.covMatrix`.
+
+## Main definitions
+
+* `CKSD.empiricalCovarianceMatrix X n ω`: the empirical covariance with divisor `n`.
+* `CKSD.leadingRayleighValue A`: `sup_{‖u‖ = 1} ⟪u, A u⟫`, the largest eigenvalue of a symmetric
+  matrix.
+
+## Main results
+
+* `CKSD.leading_empirical_covariance_eigenvalue_asymptotics`,
+  `CKSD.isBoundedInProbability_leading_empirical_eigenvector_error`: the root-`n` asymptotics of
+  a simple leading eigenvalue and eigenvector (stated).
+
+Source: GAPS 103.30.
 -/
 
 @[expose] public section
@@ -41,7 +55,13 @@ def leadingRayleighValue {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ) : ℝ :=
     r = inner ℝ u (Matrix.toEuclideanCLM (𝕜 := ℝ) A u)}
 
 /-- GAPS 103.30: leading empirical covariance eigenvalue expansion and CLT in finite dimension.
-The Gaussian variance formula is not needed for this non-Gaussian fourth-moment version. -/
+Let `X₁, X₂, …` be independent with law `P` on `ℝ^d` with finite fourth moment, and let the
+covariance `Σ` of `P` have a unit eigenvector `v`, `Σ v = λ v`, with
+`⟪u, Σ u⟫ ≤ (λ - gap) ‖u‖²` for `u ⊥ v` and `gap > 0`. Then the largest eigenvalue `λ̂ₙ` of the
+empirical covariance `Σ̂ₙ` satisfies `√n (λ̂ₙ - λ - ⟪v, (Σ̂ₙ - Σ) v⟫) → 0` in probability, and
+`√n (λ̂ₙ - λ)` converges in law to `N(0, Var ⟪X - E X, v⟫²)`. The Gaussian variance formula is
+not needed for this non-Gaussian fourth-moment version. Positivity of `λ` is not assumed (it
+follows from the gap when `d ≥ 2`). -/
 theorem leading_empirical_covariance_eigenvalue_asymptotics
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ]
@@ -49,7 +69,7 @@ theorem leading_empirical_covariance_eigenvalue_asymptotics
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d))
     (hiid : IsIndependentIdenticallyDistributed μ X P) (h4 : MemLp id 4 P)
     (v : EuclideanSpace ℝ (Fin d)) (hv : ‖v‖ = 1) (lambda gap : ℝ)
-    (hlambda : 0 < lambda) (hgap : 0 < gap)
+    (hgap : 0 < gap)
     (heig : Matrix.toEuclideanCLM (𝕜 := ℝ) (euclideanCovarianceMatrix P) v = lambda • v)
     (hother : ∀ u : EuclideanSpace ℝ (Fin d), inner ℝ u v = 0 →
       inner ℝ u (Matrix.toEuclideanCLM (𝕜 := ℝ) (euclideanCovarianceMatrix P) u) ≤
@@ -64,8 +84,10 @@ theorem leading_empirical_covariance_eigenvalue_asymptotics
         (variance P (fun x ↦ inner ℝ (x - ∫ z, z ∂P) v ^ 2)))) := by
   sorry
 
-/-- GAPS 103.30: the root-`n` bound for a measurably chosen leading empirical eigenvector.
-Its sign is fixed by nonnegative inner product with the population eigenvector. -/
+/-- GAPS 103.30: the root-`n` bound for a measurably chosen leading empirical eigenvector. Under
+the hypotheses of `CKSD.leading_empirical_covariance_eigenvalue_asymptotics`, a measurable unit
+eigenvector `ŵₙ` of `Σ̂ₙ` for its largest eigenvalue, with sign fixed by `⟪ŵₙ, v⟫ ≥ 0`, satisfies
+`√n ‖ŵₙ - v‖ = O_P(1)`. -/
 theorem isBoundedInProbability_leading_empirical_eigenvector_error
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ]
@@ -73,7 +95,7 @@ theorem isBoundedInProbability_leading_empirical_eigenvector_error
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d))
     (hiid : IsIndependentIdenticallyDistributed μ X P) (h4 : MemLp id 4 P)
     (v : EuclideanSpace ℝ (Fin d)) (hv : ‖v‖ = 1) (lambda gap : ℝ)
-    (hlambda : 0 < lambda) (hgap : 0 < gap)
+    (hgap : 0 < gap)
     (heig : Matrix.toEuclideanCLM (𝕜 := ℝ) (euclideanCovarianceMatrix P) v = lambda • v)
     (hother : ∀ u : EuclideanSpace ℝ (Fin d), inner ℝ u v = 0 →
       inner ℝ u (Matrix.toEuclideanCLM (𝕜 := ℝ) (euclideanCovarianceMatrix P) u) ≤

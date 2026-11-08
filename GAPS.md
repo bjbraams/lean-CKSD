@@ -1580,8 +1580,9 @@ weights $Y_i$ by $K_h(X_i-x)/\sum_jK_h(X_j-x)$.
   $\varepsilon$. Mathlib defines the minimax risk; the sequence model,
   ellipsoids, and every part of the theorem are missing.
 
-* **103.11. Grenander estimator.** Let $f$ be decreasing and positive on
-  $[0,\infty)$, continuous at $x_0>0$ with $f'(x_0)<0$. The maximum
+* **103.11. Grenander estimator.** Let $f$ be a density vanishing on
+  $(-\infty,0)$ and decreasing on $[0,\infty)$, continuous at $x_0>0$
+  with $f'(x_0)<0$. The maximum
   likelihood estimator $\hat f_n$ among decreasing densities is the left
   slope of the least concave majorant of $F_n$, and
   $$n^{1/3}\bigl(\hat f_n(x_0)-f(x_0)\bigr)
@@ -2520,7 +2521,7 @@ $\|\mu_n-\pi\|_{\mathrm{TV}}\le\varepsilon$.
 * **104.45. Langevin Monte Carlo under a logarithmic Sobolev inequality.**
   If $\pi$ satisfies the logarithmic Sobolev inequality with constant
   $1/\alpha$ and $V$ is $\beta$-smooth, not necessarily convex, there is a
-  universal $C$ such that for $0<h\le1/(4\beta)$ and all $N$
+  universal $C$ such that for $0<h\le\alpha/(4\beta^2)$ and all $N$
   $$\mathop{\mathrm{KL}}(\hat\mu_{Nh}\|\pi)\le
   e^{-\alpha Nh}\mathop{\mathrm{KL}}(\hat\mu_0\|\pi)+C\frac{\beta^2dh}\alpha$$
   (Vempala–Wibisono). If instead $0\prec\alpha I\preceq\nabla^2V\preceq\beta I$,
@@ -3499,11 +3500,12 @@ values $\hat D$.
   second moments, $\hat\beta_{\mathrm{tsls}}\to_P\beta$. With
   $Q_{ZZ}=\mathbb E[ZZ^\top]$, $Q_{ZD}=\mathbb E[ZD^\top]$,
   $H=Q_{ZD}^\top Q_{ZZ}^{-1}Q_{ZD}$, and $\Omega=\mathbb E[\varepsilon^2ZZ^\top]$,
-  if $Z$ and $D$ have finite fourth moments and $\Omega$ is finite, then
+  if $\Omega$ is finite, then
   $$\sqrt n(\hat\beta_{\mathrm{tsls}}-\beta)\Rightarrow N\bigl(0,\;
   H^{-1}Q_{ZD}^\top Q_{ZZ}^{-1}\,\Omega\,Q_{ZZ}^{-1}Q_{ZD}H^{-1}\bigr),$$
-  and the covariance is estimated consistently with sample moments and
-  residuals. When $D$ and $Z$ have the same dimension it is the
+  and if moreover $Z$ and $D$ have finite fourth moments, the covariance is
+  estimated consistently with sample moments and residuals. When $D$ and
+  $Z$ have the same dimension it is the
   instrumental-variable estimator; for binary $Z$ and $D$ without
   covariates it is the sample Wald ratio, whose limit under the assumptions
   of 105.50 is the complier effect. Mathlib's strong law, scalar central

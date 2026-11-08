@@ -1,26 +1,34 @@
 module
 
 public import CKSD.Processes.Basic
-public import CKSD.Asymptotics.Basic
-public import CKSD.Nonparametric.Basic
-public import CKSD.Processes.Dependence
-public import Mathlib.Analysis.Normed.Group.Tannery
 public import Mathlib.MeasureTheory.Constructions.KolmogorovExtension
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
-public import Mathlib.Probability.Distributions.Gaussian.CharFun
-public import Mathlib.Probability.Distributions.Gaussian.Fernique
-public import Mathlib.Probability.Independence.Integration
-public import Mathlib.MeasureTheory.Constructions.Polish.Basic
-public import Mathlib.Analysis.Normed.Operator.Extend
-public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
-public import TauCeti.Analysis.InnerProductSpace.LinearCombination
+public import TauCeti.Probability.Distributions.Gaussian.Affine
 
 /-!
 # Stationary Gaussian processes
 
-Coordinate selection of Gaussian vectors and projective consistency construct a real
-stationary Gaussian process for every positive-definite stationary covariance.
-The construction uses Mathlib Kolmogorov extension. Source: GAPS 106.14.
+Every symmetric positive-semidefinite sequence `γ : ℤ → ℝ` is the autocovariance of a real
+strictly stationary centred Gaussian process: the centred Gaussian laws with covariance matrices
+`(γ(t_k - t_l))_{k,l}` on finite sets of times form a projective family, whose Kolmogorov
+extension is shift invariant.
+
+## Main definitions
+
+* `CKSD.IsPositiveSemidefiniteSequence`: `γ(-t) = γ(t)` and `∑_{i,j} a_i γ(t_i - t_j) a_j ≥ 0`.
+* `CKSD.euclideanSelect`: coordinate selection `x ↦ (x (σ k))_k` of Euclidean vectors.
+* `CKSD.stationaryCovMatrix`, `CKSD.stationaryGaussianFamily`: the covariance matrices and the
+  finite-dimensional Gaussian laws.
+
+## Main results
+
+* `CKSD.map_euclideanSelect_multivariateGaussian`: coordinate selections of centred Gaussian
+  vectors are centred Gaussian with the selected covariance submatrix.
+* `CKSD.IsPositiveSemidefiniteSequence.exists_stationary_gaussian` (GAPS 106.14): the stationary
+  Gaussian realization.
+
+The construction uses Mathlib's Kolmogorov extension theorem and TauCeti's affine images of
+multivariate Gaussian laws.
 -/
 
 @[expose] public section
@@ -28,8 +36,7 @@ The construction uses Mathlib Kolmogorov extension. Source: GAPS 106.14.
 noncomputable section
 
 open MeasureTheory ProbabilityTheory Filter Set
-open scoped ENNReal NNReal Topology BigOperators MatrixOrder Matrix.Norms.L2Operator
-open scoped RealInnerProductSpace
+open scoped ENNReal NNReal Topology BigOperators
 
 namespace CKSD
 
@@ -47,47 +54,47 @@ def euclideanSelect {ι κ : Type*} (σ : κ → ι) :
 
 /-- The image of a centred multivariate Gaussian law under the coordinate selection
 `x ↦ (x (σ k))_k`, with `σ` not necessarily injective, is the centred Gaussian law with covariance
-`S.submatrix σ σ`. This generalizes Mathlib's `measurePreserving_restrict₂_multivariateGaussian`,
-whose proof it follows. -/
+`S.submatrix σ σ`. This generalizes Mathlib's `measurePreserving_restrict₂_multivariateGaussian`;
+the selection is the matrix `(1_{σ k = i})_{k,i}`, and TauCeti's
+`map_affine_multivariateGaussian` applies. -/
 theorem map_euclideanSelect_multivariateGaussian {ι κ : Type*} [Fintype ι] [DecidableEq ι]
     [Fintype κ] [DecidableEq κ] {S : Matrix ι ι ℝ} (hS : S.PosSemidef) (σ : κ → ι) :
     (multivariateGaussian 0 S).map (euclideanSelect σ) =
       multivariateGaussian 0 (S.submatrix σ σ) := by
-  apply IsGaussian.ext
-  · simp only [id_eq, integral_id_multivariateGaussian]
-    rw [ContinuousLinearMap.integral_id_map, integral_id_multivariateGaussian, map_zero]
-    exact IsGaussian.integrable_id
-  rw [← ContinuousLinearMap.toBilinForm_inj]
-  refine LinearMap.BilinForm.ext_basis (EuclideanSpace.basisFun κ ℝ).toBasis fun i j ↦ ?_
-  rw [ContinuousLinearMap.toBilinForm_apply, ContinuousLinearMap.toBilinForm_apply,
-    covarianceBilin_apply_eq_cov, covariance_map]
-  · have (i : κ) : (fun u ↦ ⟪(EuclideanSpace.basisFun κ ℝ).toBasis i, u⟫) ∘
-        euclideanSelect σ = fun u ↦ u (σ i) := by ext; simp [PiLp.inner_apply]
-    simp_rw [this, covariance_eval_multivariateGaussian hS,
-      covarianceBilin_multivariateGaussian (hS.submatrix _)]
-    simp
-  any_goals exact Measurable.aestronglyMeasurable (by fun_prop)
-  · fun_prop
-  · exact IsGaussian.memLp_two_id
+  let L : Matrix κ ι ℝ := Matrix.of fun k i ↦ if σ k = i then 1 else 0
+  have hL : ⇑(euclideanSelect σ) = fun x ↦ L.toEuclideanLin x + 0 := by
+    funext x; ext k; simp [L, Matrix.mulVec, dotProduct]
+  rw [hL, TauCeti.Probability.map_affine_multivariateGaussian 0 hS L 0]
+  congr 1
+  · simp
+  · ext k l; simp [L, Matrix.mul_apply]
 
+/-- A real sequence `γ` on `ℤ` is positive semidefinite (nonnegative definite) when it is
+symmetric and all its quadratic forms `∑_{i,j} a_i γ(t_i - t_j) a_j` are nonnegative; these are
+exactly the autocovariance functions of real weakly stationary processes. -/
+structure IsPositiveSemidefiniteSequence (γ : ℤ → ℝ) : Prop where
+  /-- Symmetry `γ(-t) = γ(t)`. -/
+  symm : ∀ t, γ (-t) = γ t
+  /-- Nonnegativity of the quadratic forms. -/
+  sum_nonneg : ∀ n : ℕ, ∀ (t : Fin n → ℤ) (a : Fin n → ℝ),
+    0 ≤ ∑ i, ∑ j, a i * γ (t i - t j) * a j
 
 /-- The stationary covariance matrix `(γ (t k - t l))_{k,l}` at times `t`. -/
 def stationaryCovMatrix {κ : Type*} (γ : ℤ → ℝ) (t : κ → ℤ) : Matrix κ κ ℝ :=
   Matrix.of fun k l ↦ γ (t k - t l)
 
-/-- A symmetric positive-definite sequence gives positive-semidefinite covariance matrices at
-every finite family of times. -/
-theorem posSemidef_stationaryCovMatrix (γ : ℤ → ℝ) (hsym : ∀ t, γ (-t) = γ t)
-    (hpd : ∀ n : ℕ, ∀ (t : Fin n → ℤ) (a : Fin n → ℝ),
-      0 ≤ ∑ i, ∑ j, a i * γ (t i - t j) * a j)
-    {κ : Type*} [Fintype κ] (t : κ → ℤ) : (stationaryCovMatrix γ t).PosSemidef := by
+/-- A positive-semidefinite sequence gives positive-semidefinite covariance matrices at every
+finite family of times. -/
+theorem IsPositiveSemidefiniteSequence.posSemidef_stationaryCovMatrix {γ : ℤ → ℝ}
+    (hγ : IsPositiveSemidefiniteSequence γ) {κ : Type*} [Fintype κ] (t : κ → ℤ) :
+    (stationaryCovMatrix γ t).PosSemidef := by
   classical
   refine Matrix.posSemidef_iff_dotProduct_mulVec.2 ⟨?_, fun x ↦ ?_⟩
   · ext k l
     simp only [Matrix.conjTranspose_apply, stationaryCovMatrix, Matrix.of_apply, star_trivial]
-    rw [← hsym, neg_sub]
+    rw [← hγ.symm, neg_sub]
   · let e := Fintype.equivFin κ
-    have h1 := hpd (Fintype.card κ) (t ∘ e.symm) (x ∘ e.symm)
+    have h1 := hγ.sum_nonneg (Fintype.card κ) (t ∘ e.symm) (x ∘ e.symm)
     have h2 : (∑ i : Fin (Fintype.card κ), ∑ j : Fin (Fintype.card κ),
         (x ∘ e.symm) i * γ ((t ∘ e.symm) i - (t ∘ e.symm) j) * (x ∘ e.symm) j) =
           ∑ k, ∑ l, x k * γ (t k - t l) * x l := by
@@ -112,10 +119,8 @@ instance (γ : ℤ → ℝ) (J : Finset ℤ) : IsProbabilityMeasure (stationaryG
 
 
 /-- The stationary Gaussian laws form a projective family. -/
-theorem isProjectiveMeasureFamily_stationaryGaussianFamily (γ : ℤ → ℝ)
-    (hsym : ∀ t, γ (-t) = γ t)
-    (hpd : ∀ n : ℕ, ∀ (t : Fin n → ℤ) (a : Fin n → ℝ),
-      0 ≤ ∑ i, ∑ j, a i * γ (t i - t j) * a j) :
+theorem IsPositiveSemidefiniteSequence.isProjectiveMeasureFamily_stationaryGaussianFamily
+    {γ : ℤ → ℝ} (hγ : IsPositiveSemidefiniteSequence γ) :
     IsProjectiveMeasureFamily (α := fun _ : ℤ ↦ ℝ) (stationaryGaussianFamily γ) := by
   intro I J hJI
   let σ : J → I := fun j ↦ ⟨j, hJI j.2⟩
@@ -127,22 +132,20 @@ theorem isProjectiveMeasureFamily_stationaryGaussianFamily (γ : ℤ → ℝ)
         (euclideanSelect σ)).map WithLp.ofLp := by
     rw [stationaryGaussianFamily, Measure.map_map, hfun, Measure.map_map]
     all_goals first | fun_prop | exact Finset.measurable_restrict₂ _
-  rw [h1, map_euclideanSelect_multivariateGaussian (posSemidef_stationaryCovMatrix γ hsym hpd _)]
+  rw [h1, map_euclideanSelect_multivariateGaussian (hγ.posSemidef_stationaryCovMatrix _)]
   rfl
 
 /-- The Kolmogorov extension of the stationary Gaussian family has centred Gaussian
 finite-dimensional laws with covariance `γ (t k - t l)`, for any finite family of times, with
 repetitions allowed. -/
-theorem map_eval_projectiveLimit_stationaryGaussianFamily (γ : ℤ → ℝ)
-    (hsym : ∀ t, γ (-t) = γ t)
-    (hpd : ∀ n : ℕ, ∀ (t : Fin n → ℤ) (a : Fin n → ℝ),
-      0 ≤ ∑ i, ∑ j, a i * γ (t i - t j) * a j)
+theorem IsPositiveSemidefiniteSequence.map_eval_projectiveLimit_stationaryGaussianFamily
+    {γ : ℤ → ℝ} (hγ : IsPositiveSemidefiniteSequence γ)
     {κ : Type*} [Fintype κ] [DecidableEq κ] (t : κ → ℤ) :
     (projectiveLimit (α := fun _ : ℤ ↦ ℝ) (stationaryGaussianFamily γ)
-        (isProjectiveMeasureFamily_stationaryGaussianFamily γ hsym hpd)).map
+        hγ.isProjectiveMeasureFamily_stationaryGaussianFamily).map
       (fun x ↦ WithLp.toLp 2 (fun k ↦ x (t k))) =
       multivariateGaussian 0 (stationaryCovMatrix γ t) := by
-  set hP := isProjectiveMeasureFamily_stationaryGaussianFamily γ hsym hpd
+  set hP := hγ.isProjectiveMeasureFamily_stationaryGaussianFamily
   let J : Finset ℤ := Finset.univ.image t
   let σ : κ → J := fun k ↦ ⟨t k, Finset.mem_image_of_mem t (Finset.mem_univ k)⟩
   have hfun : (fun x : ℤ → ℝ ↦ WithLp.toLp 2 (fun k ↦ x (t k))) =
@@ -156,31 +159,34 @@ theorem map_eval_projectiveLimit_stationaryGaussianFamily (γ : ℤ → ℝ)
   have : (WithLp.toLp 2 ∘ WithLp.ofLp : EuclideanSpace ℝ J → EuclideanSpace ℝ J) = id := by
     funext x; rfl
   rw [this, Measure.map_id,
-    map_euclideanSelect_multivariateGaussian (posSemidef_stationaryCovMatrix γ hsym hpd _)]
+    map_euclideanSelect_multivariateGaussian (hγ.posSemidef_stationaryCovMatrix _)]
   rfl
 
-/-- GAPS 106.14, real Gaussian realization of a positive-definite stationary covariance. -/
-theorem exists_stationary_gaussian_process_of_posSemidef (γ : ℤ → ℝ) (hsym : ∀ t, γ (-t) = γ t)
-    (hpd : ∀ n : ℕ, ∀ (t : Fin n → ℤ) (a : Fin n → ℝ),
-      0 ≤ ∑ i, ∑ j, a i * γ (t i - t j) * a j) :
+/-- GAPS 106.14, real Gaussian realization of a stationary covariance: for every
+positive-semidefinite sequence `γ` there is a shift-invariant probability measure on `ℤ → ℝ`
+whose finite-dimensional laws are centred Gaussian with covariance `γ(t_i - t_j)`; that is,
+`γ` is the autocovariance of a strictly stationary centred Gaussian process. -/
+theorem IsPositiveSemidefiniteSequence.exists_stationary_gaussian {γ : ℤ → ℝ}
+    (hγ : IsPositiveSemidefiniteSequence γ) :
     ∃ P : Measure (ℤ → ℝ), IsProbabilityMeasure P ∧
       (∀ h : ℤ, P.map (fun x t ↦ x (t + h)) = P) ∧
       ∀ n : ℕ, ∀ t : Fin n → ℤ,
         P.map (fun x ↦ WithLp.toLp 2 (fun i : Fin n ↦ x (t i))) =
           multivariateGaussian 0 (fun i j ↦ γ (t i - t j)) := by
-  set hP := isProjectiveMeasureFamily_stationaryGaussianFamily γ hsym hpd
+  set hP := hγ.isProjectiveMeasureFamily_stationaryGaussianFamily
   set Q := projectiveLimit (α := fun _ : ℤ ↦ ℝ) (stationaryGaussianFamily γ) hP
   refine ⟨Q, inferInstance, fun h ↦ ?_, fun n t ↦
-    map_eval_projectiveLimit_stationaryGaussianFamily γ hsym hpd t⟩
+    hγ.map_eval_projectiveLimit_stationaryGaussianFamily t⟩
   have hshift : Measurable fun (x : ℤ → ℝ) (t : ℤ) ↦ x (t + h) :=
     Measurable.of_eval fun t ↦ measurable_pi_apply (t + h)
-  refine IsProjectiveLimit.unique (α := fun _ : ℤ ↦ ℝ) (P := stationaryGaussianFamily γ) (fun J ↦ ?_)
+  refine IsProjectiveLimit.unique (α := fun _ : ℤ ↦ ℝ) (P := stationaryGaussianFamily γ)
+    (fun J ↦ ?_)
     (isProjectiveLimit_projectiveLimit hP)
   rw [Measure.map_map (Finset.measurable_restrict J) hshift]
   have hfun : (J.restrict ∘ fun (x : ℤ → ℝ) (t : ℤ) ↦ x (t + h)) =
       WithLp.ofLp ∘ fun x ↦ WithLp.toLp 2 (fun j : J ↦ x ((j : ℤ) + h)) := by
     funext x; rfl
-  rw [hfun, ← Measure.map_map, map_eval_projectiveLimit_stationaryGaussianFamily γ hsym hpd,
+  rw [hfun, ← Measure.map_map, hγ.map_eval_projectiveLimit_stationaryGaussianFamily,
     stationaryGaussianFamily]
   rotate_left
   · exact WithLp.measurable_ofLp _ _

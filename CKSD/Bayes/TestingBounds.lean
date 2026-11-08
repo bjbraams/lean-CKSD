@@ -8,6 +8,11 @@ public import TauCeti.InformationTheory.KullbackLeibler.Pinsker
 
 This is the data-processing and Pinsker step of GAPS 104.68. The stochastic-calculus bound on
 path relative entropy is a separate statement. Pinsker's event inequality is imported from TauCeti.
+
+## Main results
+
+* `CKSD.totalVariationDistance_map_le_sqrt_klDiv`: the total variation distance between the laws
+  of a measurable map is at most `√(KL / 2)` of the underlying laws.
 -/
 
 @[expose] public section

@@ -5,12 +5,15 @@ public import Mathlib.Probability.CDF
 public import Mathlib.Probability.Moments.Variance
 
 /-!
-# Statistical moment adapters
+# Moment and distribution-function adapters
 
-The section interfaces take a measure first. These equalities connect their distribution and
-second-moment conventions to the existing Mathlib API. No statistical result is proved anew here.
+The CKSD interfaces `CKSD.cdf` and `CKSD.variance` take the measure first. This file identifies
+them with Mathlib's `ProbabilityTheory.cdf` and `ProbabilityTheory.variance`.
+
+## Main results
+
+* `CKSD.cdf_eq_mathlib`, `CKSD.variance_eq_mathlib`.
 -/
-
 @[expose] public section
 
 noncomputable section

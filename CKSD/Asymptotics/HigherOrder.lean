@@ -8,15 +8,24 @@ import TauCeti.Probability.Distributions.Gaussian.Basic
 import TauCeti.Probability.Distributions.Gaussian.Moments
 
 /-!
-# Asymptotics: HigherOrder
+# Robustness, Edgeworth expansion, and bootstrap of the mean
 
-Sources: `GAPS.md`, `SYNOPSIS102.md`, and `STRUCTURE102.md`.
-Declarations adapted from this project's section drafts.
+Higher-order and robustness results of Section 102.
+
+## Main results
+
+* `CKSD.integral_huberScore_sq_le`: Hampel's optimality of the Huber score at the Gaussian model
+  (GAPS 102.44), from `CKSD.integral_mul_huberScore_gaussianReal`.
+* `CKSD.exists_uniform_edgeworth_expansion`: the one-term Edgeworth expansion of the
+  standardized mean (GAPS 102.49).
+* `CKSD.tendstoInProbabilityConst_bootstrap_mean_kolmogorovDistance`: consistency of the
+  nonparametric bootstrap of the mean (GAPS 102.51).
+
+## Implementation notes
+
 The Huber computation uses TauCeti's `hasDerivAt_gaussianPDFReal`,
 `integrable_gaussianReal_iff_integrable_gaussianPDFReal_smul`, and `integral_sq_gaussianReal`.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
 -/
-
 @[expose] public section
 
 noncomputable section
@@ -154,16 +163,18 @@ theorem abs_huberScore_le {k : ℝ} (hk : 0 ≤ k) (x : ℝ) : |huberScore k x| 
 theorem measurable_huberScore (k : ℝ) : Measurable (huberScore k) := by
   unfold huberScore; fun_prop
 
-/-- GAPS 102.44, Hampel optimality part of the Huber statement. -/
-theorem integral_huberScore_sq_le (k : ℝ) (hk : 0 < k) :
-    let G := gaussianReal 0 1;
-    let a := 2 * cdf G k - 1;
-    ∀ (φ : ℝ → ℝ),
-    ∀ (hm : Measurable φ),
-    ∀ (hbound : ∀ x, |φ x| ≤ k / a),
-    ∀ (h1 : (∫ x, x * φ x ∂G) = 1),
-    (∫ x, (huberScore k x / a) ^ 2 ∂G) ≤ ∫ x, φ x ^ 2 ∂G := by
-  intro G a φ hm hbound h1
+/-- GAPS 102.44, Hampel optimality part of the Huber statement. Under the standard Gaussian
+model, with `a = 2 Φ(k) - 1`, the normalized Huber score `ψ_k / a` has the smallest second moment
+among measurable scores `φ` bounded by `k / a` with `∫ x φ(x) dΦ(x) = 1`; that is, it minimizes
+the asymptotic variance among location M-estimators with gross-error sensitivity at most
+`k / a`. -/
+theorem integral_huberScore_sq_le (k : ℝ) (hk : 0 < k) (φ : ℝ → ℝ) (hm : Measurable φ)
+    (hbound : ∀ x, |φ x| ≤ k / (2 * cdf (gaussianReal 0 1) k - 1))
+    (h1 : (∫ x, x * φ x ∂gaussianReal 0 1) = 1) :
+    (∫ x, (huberScore k x / (2 * cdf (gaussianReal 0 1) k - 1)) ^ 2 ∂gaussianReal 0 1) ≤
+      ∫ x, φ x ^ 2 ∂gaussianReal 0 1 := by
+  set G := gaussianReal 0 1 with hG
+  set a := 2 * cdf G k - 1 with ha
   have hx : Integrable (fun x : ℝ ↦ x) G :=
     (memLp_id_gaussianReal' (μ := 0) (v := 1) 1 ENNReal.one_ne_top).integrable le_rfl
   have hhm := measurable_huberScore k
@@ -252,8 +263,11 @@ theorem integral_huberScore_sq_le (k : ℝ) (hk : 0 < k) :
         integral_mono (hψ2.add ((hxφ.sub hxψ).const_mul _)) hφ2 hpt
 
 
-/-- GAPS 102.49: uniform one-term Edgeworth expansion under the stated nonlattice condition. -/
-theorem uniform_edgeworth_expansion {Ω : Type*} [MeasurableSpace Ω]
+/-- GAPS 102.49: the one-term Edgeworth expansion of the standardized mean. For an i.i.d. sequence
+with mean zero, variance one, finite third absolute moment `ρ = E X³`, and a nonlattice law, the
+distribution function of `√n X̄ₙ` is `Φ(t) - φ(t) (t² - 1) ρ / (6 √n) + o(n^{-1/2})` uniformly
+in `t`. -/
+theorem exists_uniform_edgeworth_expansion {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (h3 : Integrable
       (fun x ↦ |x| ^ 3) P)
@@ -266,7 +280,9 @@ theorem uniform_edgeworth_expansion {Ω : Type*} [MeasurableSpace Ω]
           ρ / (6 * Real.sqrt n))| ≤ e n := by
   sorry
 
-/-- GAPS 102.51: conditional bootstrap consistency of the mean, for positive variance. -/
+/-- GAPS 102.51: bootstrap consistency for the mean. For an i.i.d. sequence with finite positive
+variance `σ²`, the Kolmogorov distance between the bootstrap law of `√n (X̄*ₙ - X̄ₙ)` (resampling
+from the empirical measure) and `N(0, σ²)` tends to zero in probability. -/
 theorem tendstoInProbabilityConst_bootstrap_mean_kolmogorovDistance {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (h2 : MemLp id 2 P)

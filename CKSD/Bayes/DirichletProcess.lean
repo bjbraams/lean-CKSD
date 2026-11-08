@@ -11,7 +11,16 @@ A Dirichlet process law is a law on probability measures whose partition margina
 finite-dimensional Dirichlet laws of TauCeti (`IsDirichletProcess` with the identity map).
 Posterior laws are specified as disintegrations (`IsPosteriorKernel`), so the statements apply to
 every version of the posterior. The mean of a partition cell uses TauCeti's
-`integral_eval_dirichletMeasure`. Sources: GAPS 104.15.
+`integral_eval_dirichletMeasure`.
+
+## Main results
+
+* `CKSD.integral_measureReal_of_isDirichletProcess`: the mean of `P(A)` is `α(A) / α(X)`.
+* `CKSD.ae_isDirichletProcessLaw_posterior`: conjugacy.
+* `CKSD.ae_integral_posterior_eq_polyaPredictiveLaw`: the Blackwell–MacQueen predictive law.
+* `CKSD.isDirichletProcess_stickBreaking`: Sethuraman's stick-breaking representation.
+
+Sources: GAPS 104.15.
 -/
 
 @[expose] public section

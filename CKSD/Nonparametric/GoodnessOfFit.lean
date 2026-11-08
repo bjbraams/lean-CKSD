@@ -6,16 +6,40 @@ public import TauCeti.Probability.Distributions.Uniform.Basic
 public import TauCeti.Probability.Quantile
 
 /-!
-# Distribution-free goodness-of-fit statistics and residual eigenvector bounds
+# Distribution-free goodness-of-fit statistics and eigenvector perturbation
 
-Sources: GAPS 103.17 and 103.54; the scopes are the finite-sample distribution-freeness and
-deterministic residual-bound parts described in `GAPS_EASY.md`.
+For a continuous distribution `P` on the line, the laws of the Cramér–von Mises statistic and
+of the two-sample Kolmogorov–Smirnov statistic under `P` coincide with their laws under the
+uniform distribution on `[0, 1]`. The proofs transport samples by inverse transform sampling,
+`u ↦ P.quantile u`, under which the empirical distribution function becomes `F_n ∘ F`. The file
+also proves the deterministic residual bound for the leading eigenvector of a perturbed
+self-adjoint operator.
 
-The Cramér–von Mises argument uses TauCeti's inverse transform sampling
+## Main definitions
+
+* `CKSD.finiteEmpiricalCDF x`: the empirical distribution function of a finite sample.
+* `CKSD.cramerVonMisesStatistic P x`: `n ∫ (F_n - F)² dF`.
+* `CKSD.twoSampleKolmogorovSmirnovStatistic x y`: `sup_t |F_m(t) - G_n(t)|`.
+
+## Main results
+
+* `CKSD.map_cramerVonMisesStatistic_eq_uniform`,
+  `CKSD.map_twoSampleKolmogorovSmirnovStatistic_eq_uniform`: finite-sample distribution-freeness.
+* `CKSD.exists_unit_eigenvector_rayleigh_le`: a self-adjoint operator on a finite-dimensional
+  inner product space has a unit eigenvector whose eigenvalue bounds the Rayleigh quotient.
+* `CKSD.exists_eigenvector_norm_sub_le_of_rayleigh_gap`: if `A v = a v` and the Rayleigh
+  quotient of `A` on `v^⊥` is at most `a - gap`, then for `2 ‖E‖ < gap` the top eigenvalue of
+  `A + E` is simple, with a unit eigenvector `w` satisfying
+  `‖w - v‖ ≤ 2 ‖E v - ⟪v, E v⟫ v‖ / (gap - 2 ‖E‖)`.
+
+The Cramér–von Mises and Kolmogorov–Smirnov arguments use TauCeti's inverse transform sampling
 (`MeasureTheory.Measure.map_quantile_volume_Ioo`), the quantile–CDF relations
 `MeasureTheory.Measure.quantile_le_iff` and `MeasureTheory.Measure.cdf_quantile`, CDF continuity
 `MeasureTheory.Measure.continuous_cdf_of_noAtoms`, and the uniform law
 `TauCeti.Probability.uniformMeasure` with `TauCeti.Probability.cdf_uniformMeasure`.
+
+Sources: GAPS 103.17 and 103.54 (the finite-sample and deterministic parts described in
+`GAPS_EASY.md`).
 -/
 
 @[expose] public section
@@ -51,6 +75,44 @@ theorem measurable_finiteEmpiricalCDF_uncurry (n : ℕ) :
   exact Measurable.ite (measurableSet_le ((measurable_pi_apply i).comp measurable_fst)
     measurable_snd) measurable_const measurable_const
 
+/-- The finite empirical distribution function at a fixed point is measurable in the sample. -/
+theorem measurable_finiteEmpiricalCDF {k : ℕ} (t : ℝ) :
+    Measurable fun x : Fin k → ℝ ↦ finiteEmpiricalCDF x t :=
+  (measurable_finiteEmpiricalCDF_uncurry k).comp
+    (f := fun x : Fin k → ℝ ↦ (x, t)) (measurable_id.prodMk measurable_const)
+
+/-- The uniform law on `[0, 1]` is Lebesgue measure restricted to `(0, 1)`. -/
+theorem uniformMeasure_zero_one_eq_restrict_Ioo :
+    TauCeti.Probability.uniformMeasure 0 1 = volume.restrict (Ioo (0 : ℝ) 1) := by
+  simp only [TauCeti.Probability.uniformMeasure_eq_smul, sub_zero, ENNReal.ofReal_one,
+    inv_one, one_smul]
+  exact Measure.restrict_congr_set Ioo_ae_eq_Ioc.symm
+
+/-- Coordinatewise application of the quantile function is measurable. -/
+theorem measurable_pi_quantile (P : Measure ℝ) (k : ℕ) :
+    Measurable fun (u : Fin k → ℝ) (i : Fin k) ↦ P.quantile (u i) :=
+  measurable_pi_iff.mpr fun i ↦ (Measure.measurable_quantile P).comp (measurable_pi_apply i)
+
+/-- Inverse transform sampling for samples: `P^k` is the image of the uniform law on `(0, 1)^k`
+under coordinatewise application of the quantile function of `P`. -/
+theorem pi_eq_map_pi_quantile (P : Measure ℝ) [IsProbabilityMeasure P] (k : ℕ) :
+    (Measure.pi fun _ : Fin k ↦ P) =
+      (Measure.pi fun _ : Fin k ↦ volume.restrict (Ioo (0 : ℝ) 1)).map
+        fun u i ↦ P.quantile (u i) := by
+  have : IsProbabilityMeasure (volume.restrict (Ioo (0 : ℝ) 1)) := ⟨by simp⟩
+  rw [Measure.pi_map_pi (fun _ ↦ (Measure.measurable_quantile P).aemeasurable)]
+  simp only [Measure.map_quantile_volume_Ioo P]
+
+/-- Almost every sample from the uniform law on `(0, 1)` has all its values in `(0, 1)`. -/
+theorem ae_forall_mem_Ioo_pi_restrict (k : ℕ) :
+    ∀ᵐ u ∂(Measure.pi fun _ : Fin k ↦ volume.restrict (Ioo (0 : ℝ) 1)),
+      ∀ i, u i ∈ Ioo (0 : ℝ) 1 := by
+  have : IsProbabilityMeasure (volume.restrict (Ioo (0 : ℝ) 1)) := ⟨by simp⟩
+  rw [ae_all_iff]
+  intro i
+  exact (measurePreserving_eval (fun _ : Fin k ↦ volume.restrict (Ioo (0 : ℝ) 1)) i)
+    |>.quasiMeasurePreserving.ae (ae_restrict_mem measurableSet_Ioo)
+
 /-- The distribution function `t ↦ P (-∞, t]` of a finite measure is measurable. -/
 theorem measurable_cdf_of_isFiniteMeasure (P : Measure ℝ) [IsFiniteMeasure P] :
     Measurable (cdf P) :=
@@ -62,28 +124,27 @@ theorem measurable_cramerVonMisesStatistic (P : Measure ℝ) [IsFiniteMeasure P]
   unfold cramerVonMisesStatistic
   refine measurable_const.mul ?_
   have h : Measurable fun z : (Fin n → ℝ) × ℝ ↦ (finiteEmpiricalCDF z.1 z.2 - cdf P z.2) ^ 2 :=
-    ((measurable_finiteEmpiricalCDF_uncurry n).sub ((measurable_cdf_of_isFiniteMeasure P).comp measurable_snd)).pow_const 2
+    ((measurable_finiteEmpiricalCDF_uncurry n).sub
+      ((measurable_cdf_of_isFiniteMeasure P).comp measurable_snd)).pow_const 2
   exact (h.stronglyMeasurable.integral_prod_right' (ν := P)).measurable
 
-/-- GAPS 103.17: finite-sample distribution-freeness of the Cramér–von Mises statistic.
-The reference law `U` is the uniform probability law on the unit interval. -/
+/-- GAPS 103.17: finite-sample distribution-freeness of the Cramér–von Mises statistic. For a
+probability measure `P` without atoms, the law of `n ∫ (F_n - F)² dF` under `P^n` equals its law
+under the uniform distribution on `[0, 1]`. -/
 theorem map_cramerVonMisesStatistic_eq_uniform (P : Measure ℝ) [IsProbabilityMeasure P]
-    [NullSingletonClass P] (n : ℕ)  :
-    let U := TauCeti.Probability.uniformMeasure 0 1;
+    [NullSingletonClass P] (n : ℕ) :
     (Measure.pi fun _ : Fin n ↦ P).map (cramerVonMisesStatistic P) =
-      (Measure.pi fun _ : Fin n ↦ U).map (cramerVonMisesStatistic U) := by
-  intro U
+      (Measure.pi fun _ : Fin n ↦ TauCeti.Probability.uniformMeasure 0 1).map
+        (cramerVonMisesStatistic (TauCeti.Probability.uniformMeasure 0 1)) := by
+  set U := TauCeti.Probability.uniformMeasure 0 1 with hU
   set V : Measure ℝ := volume.restrict (Ioo (0 : ℝ) 1) with hV
   have hVprob : IsProbabilityMeasure V := ⟨by simp [V]⟩
-  have hUV : U = V := by
-    simp only [U, V, TauCeti.Probability.uniformMeasure_eq_smul, sub_zero, ENNReal.ofReal_one,
-      inv_one, one_smul]
-    exact Measure.restrict_congr_set Ioo_ae_eq_Ioc.symm
+  have hUV : U = V := uniformMeasure_zero_one_eq_restrict_Ioo
   have hcdfV : ∀ s ∈ Ioo (0 : ℝ) 1, cdf V s = s := by
     intro s hs
     have : cdf V s = ProbabilityTheory.cdf V s := (ProbabilityTheory.cdf_eq_real (μ := V) s).symm
-    rw [this, ← hUV, TauCeti.Probability.cdf_uniformMeasure zero_lt_one, if_neg (not_le.mpr hs.1),
-      if_neg (not_le.mpr hs.2)]
+    rw [this, ← hUV, TauCeti.Probability.cdf_uniformMeasure zero_lt_one,
+      ite_eq_right (not_le.mpr hs.1), ite_eq_right (not_le.mpr hs.2)]
     simp
   set Q := P.quantile with hQ
   have hQm : Measurable Q := Measure.measurable_quantile P
@@ -117,19 +178,9 @@ theorem map_cramerVonMisesStatistic_eq_uniform (P : Measure ℝ) [IsProbabilityM
           show Q (u i) ≤ Q s ↔ u i ≤ s
           rw [hQ, Measure.quantile_le_iff P (hu i).1 (hu i).2, ← hQ, hFQ']
   -- assemble
-  have hQn : Measurable fun (u : Fin n → ℝ) (i : Fin n) ↦ Q (u i) :=
-    measurable_pi_iff.mpr fun i ↦ hQm.comp (measurable_pi_apply i)
-  have hpi : (Measure.pi fun _ : Fin n ↦ P) =
-      (Measure.pi fun _ : Fin n ↦ V).map fun u i ↦ Q (u i) := by
-    rw [Measure.pi_map_pi (fun _ ↦ hQm.aemeasurable)]
-    simp only [hmap]
-  have hae : ∀ᵐ u ∂(Measure.pi fun _ : Fin n ↦ V), ∀ i, u i ∈ Ioo (0 : ℝ) 1 := by
-    rw [ae_all_iff]
-    intro i
-    exact (measurePreserving_eval (fun _ : Fin n ↦ V) i).quasiMeasurePreserving.ae
-      (ae_restrict_mem measurableSet_Ioo)
-  rw [hpi, Measure.map_map (measurable_cramerVonMisesStatistic P n) hQn, hUV]
-  exact Measure.map_congr (hae.mono fun u hu ↦ hpt u hu)
+  rw [pi_eq_map_pi_quantile P n, Measure.map_map (measurable_cramerVonMisesStatistic P n)
+    (measurable_pi_quantile P n), hUV]
+  exact Measure.map_congr ((ae_forall_mem_Ioo_pi_restrict n).mono fun u hu ↦ hpt u hu)
 
 /-- The finite empirical distribution function takes values in `[0, 1]`. -/
 theorem finiteEmpiricalCDF_mem_Icc {n : ℕ} (x : Fin n → ℝ) (t : ℝ) :
@@ -187,15 +238,6 @@ theorem exists_rat_finiteEmpiricalCDF_eq {m n : ℕ} (x : Fin m → ℝ) (y : Fi
     have := Finset.min'_le S _ this
     linarith
 
-/-- The finite empirical distribution function at a fixed point is measurable in the sample. -/
-theorem measurable_finiteEmpiricalCDF {k : ℕ} (t : ℝ) :
-    Measurable fun x : Fin k → ℝ ↦ finiteEmpiricalCDF x t := by
-  unfold finiteEmpiricalCDF
-  simp only [Finset.card_filter, Nat.cast_sum, Nat.cast_ite, Nat.cast_one, Nat.cast_zero]
-  refine Measurable.div_const (Finset.measurable_sum _ fun i _ ↦ ?_) _
-  exact Measurable.ite (measurableSet_le (measurable_pi_apply i) measurable_const)
-    measurable_const measurable_const
-
 /-- The two-sample Kolmogorov–Smirnov statistic is a measurable function of the two samples. -/
 theorem measurable_twoSampleKolmogorovSmirnovStatistic (m n : ℕ) :
     Measurable fun z : (Fin m → ℝ) × (Fin n → ℝ) ↦
@@ -228,26 +270,21 @@ theorem finiteEmpiricalCDF_quantile_comp (P : Measure ℝ) {k : ℕ} (u : Fin k 
   refine congrArg (fun s : Finset _ ↦ (s.card : ℝ)) (Finset.filter_congr fun i _ ↦ ?_)
   exact Measure.quantile_le_iff P (hu i).1 (hu i).2
 
-/-- GAPS 103.17: finite-sample distribution-freeness of the two-sample KS statistic.
-The reference law `U` is the uniform probability law on the unit interval. -/
+/-- GAPS 103.17: finite-sample distribution-freeness of the two-sample Kolmogorov–Smirnov
+statistic. For a probability measure `P` without atoms and nonempty samples, the law of
+`sup_t |F_m(t) - G_n(t)|` under `P^m ⊗ P^n` equals its law under the uniform distribution on
+`[0, 1]`. -/
 theorem map_twoSampleKolmogorovSmirnovStatistic_eq_uniform
     (P : Measure ℝ) [IsProbabilityMeasure P] [NullSingletonClass P]
     (m n : ℕ) (hm : 0 < m) (hn : 0 < n) :
-    let U := TauCeti.Probability.uniformMeasure 0 1;
     ((Measure.pi fun _ : Fin m ↦ P).prod (Measure.pi fun _ : Fin n ↦ P)).map
       (fun z ↦ twoSampleKolmogorovSmirnovStatistic z.1 z.2) =
-      ((Measure.pi fun _ : Fin m ↦ U).prod (Measure.pi fun _ : Fin n ↦ U)).map
+      ((Measure.pi fun _ : Fin m ↦ TauCeti.Probability.uniformMeasure 0 1).prod
+        (Measure.pi fun _ : Fin n ↦ TauCeti.Probability.uniformMeasure 0 1)).map
         (fun z ↦ twoSampleKolmogorovSmirnovStatistic z.1 z.2) := by
-  intro U
   set V : Measure ℝ := volume.restrict (Ioo (0 : ℝ) 1) with hV
   have hVprob : IsProbabilityMeasure V := ⟨by simp [V]⟩
-  have hUV : U = V := by
-    simp only [U, V, TauCeti.Probability.uniformMeasure_eq_smul, sub_zero, ENNReal.ofReal_one,
-      inv_one, one_smul]
-    exact Measure.restrict_congr_set Ioo_ae_eq_Ioc.symm
   set Q := P.quantile with hQ
-  have hQm : Measurable Q := Measure.measurable_quantile P
-  have hmap : V.map Q = P := Measure.map_quantile_volume_Ioo P
   have hcont := Measure.continuous_cdf_of_noAtoms P
   -- edge values of the empirical distribution function of a sample in `(0, 1)`
   have hedge : ∀ {k : ℕ}, 0 < k → ∀ u : Fin k → ℝ, (∀ i, u i ∈ Ioo (0 : ℝ) 1) →
@@ -270,7 +307,8 @@ theorem map_twoSampleKolmogorovSmirnovStatistic_eq_uniform
     unfold twoSampleKolmogorovSmirnovStatistic
     refine le_antisymm (csSup_le (range_nonempty _) ?_) (csSup_le (range_nonempty _) ?_)
     · rintro _ ⟨t, rfl⟩
-      simp only [hQ, finiteEmpiricalCDF_quantile_comp P u hu, finiteEmpiricalCDF_quantile_comp P w hw]
+      simp only [hQ, finiteEmpiricalCDF_quantile_comp P u hu,
+        finiteEmpiricalCDF_quantile_comp P w hw]
       obtain ⟨q, hq1, hq2⟩ := exists_rat_finiteEmpiricalCDF_eq u w (ProbabilityTheory.cdf P t)
       rw [← hq1, ← hq2]
       exact le_csSup (bddAbove_range_abs_finiteEmpiricalCDF_sub u w) (mem_range_self q)
@@ -289,50 +327,43 @@ theorem map_twoSampleKolmogorovSmirnovStatistic_eq_uniform
         exact le_csSup_of_le (bddAbove_range_abs_finiteEmpiricalCDF_sub _ _) (mem_range_self 0)
           (abs_nonneg _)
   -- assemble
-  have hQn : ∀ k : ℕ, Measurable fun (u : Fin k → ℝ) (i : Fin k) ↦ Q (u i) := fun k ↦
-    measurable_pi_iff.mpr fun i ↦ hQm.comp (measurable_pi_apply i)
-  have hpi : ∀ k : ℕ, (Measure.pi fun _ : Fin k ↦ P) =
-      (Measure.pi fun _ : Fin k ↦ V).map fun u i ↦ Q (u i) := by
-    intro k
-    rw [Measure.pi_map_pi (fun _ ↦ hQm.aemeasurable)]
-    simp only [hmap]
-  have hae : ∀ k : ℕ, ∀ᵐ u ∂(Measure.pi fun _ : Fin k ↦ V), ∀ i, u i ∈ Ioo (0 : ℝ) 1 := by
-    intro k
-    rw [ae_all_iff]
-    intro i
-    exact (measurePreserving_eval (fun _ : Fin k ↦ V) i).quasiMeasurePreserving.ae
-      (ae_restrict_mem measurableSet_Ioo)
   have hae2 : ∀ᵐ z ∂((Measure.pi fun _ : Fin m ↦ V).prod (Measure.pi fun _ : Fin n ↦ V)),
       (∀ i, z.1 i ∈ Ioo (0 : ℝ) 1) ∧ ∀ j, z.2 j ∈ Ioo (0 : ℝ) 1 :=
-    (Measure.quasiMeasurePreserving_fst.ae (hae m)).and
-      (Measure.quasiMeasurePreserving_snd.ae (hae n))
-  rw [hpi m, hpi n, Measure.map_prod_map _ _ (hQn m) (hQn n),
+    (Measure.quasiMeasurePreserving_fst.ae (ae_forall_mem_Ioo_pi_restrict m)).and
+      (Measure.quasiMeasurePreserving_snd.ae (ae_forall_mem_Ioo_pi_restrict n))
+  rw [pi_eq_map_pi_quantile P m, pi_eq_map_pi_quantile P n,
+    Measure.map_prod_map _ _ (measurable_pi_quantile P m) (measurable_pi_quantile P n),
     Measure.map_map (measurable_twoSampleKolmogorovSmirnovStatistic m n)
-      ((hQn m).prodMap (hQn n)), hUV]
+      ((measurable_pi_quantile P m).prodMap (measurable_pi_quantile P n)),
+    uniformMeasure_zero_one_eq_restrict_Ioo]
   exact Measure.map_congr (hae2.mono fun z hz ↦ hpt z.1 hz.1 z.2 hz.2)
 
-/-- A self-adjoint operator on a finite-dimensional real Euclidean space has a unit
-eigenvector whose eigenvalue dominates the Rayleigh quotient. -/
-theorem exists_unit_eigenvector_rayleigh_le {p : ℕ}
-    (M : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin p)) (hM : IsSelfAdjoint M)
-    (x : EuclideanSpace ℝ (Fin p)) (hx : ‖x‖ = 1) :
-    ∃ w : EuclideanSpace ℝ (Fin p), ‖w‖ = 1 ∧ ∃ b : ℝ, M w = b • w ∧
+section Eigenvector
+
+variable {F : Type*} [NormedAddCommGroup F] [InnerProductSpace ℝ F] [FiniteDimensional ℝ F]
+
+/-- A self-adjoint operator `M` on a nonzero finite-dimensional real inner product space has a
+unit eigenvector `w`, `M w = b w`, whose eigenvalue bounds the quadratic form:
+`⟪u, M u⟫ ≤ b ‖u‖²` for all `u`. The unit vector `x` only witnesses that the space is nonzero. -/
+theorem exists_unit_eigenvector_rayleigh_le
+    (M : F →L[ℝ] F) (hM : IsSelfAdjoint M) (x : F) (hx : ‖x‖ = 1) :
+    ∃ w : F, ‖w‖ = 1 ∧ ∃ b : ℝ, M w = b • w ∧
       ∀ u, inner ℝ u (M u) ≤ b * ‖u‖ ^ 2 := by
-  have hcpt : IsCompact (Metric.sphere (0 : EuclideanSpace ℝ (Fin p)) 1) := isCompact_sphere _ _
+  have hcpt : IsCompact (Metric.sphere (0 : F) 1) := isCompact_sphere _ _
   obtain ⟨w, hw, hmax⟩ := hcpt.exists_isMaxOn ⟨x, by simp [hx]⟩
     M.reApplyInnerSelf_continuous.continuousOn
   have hw1 : ‖w‖ = 1 := by simpa using hw
   have hw0 : w ≠ 0 := by rintro rfl; simp at hw1
   have hmax' : IsMaxOn M.reApplyInnerSelf (Metric.sphere 0 ‖w‖) w := by rw [hw1]; exact hmax
   have hev := hM.hasEigenvector_of_isMaxOn hw0 hmax'
-  set lam := (⨆ x : { x : EuclideanSpace ℝ (Fin p) // x ≠ 0 }, M.rayleighQuotient x : ℝ)
+  set lam := (⨆ x : { x : F // x ≠ 0 }, M.rayleighQuotient x : ℝ)
   have hMw : M w = lam • w := Module.End.mem_eigenspace_iff.mp hev.1
   refine ⟨w, hw1, lam, hMw, fun u ↦ ?_⟩
   rcases eq_or_ne u 0 with rfl | hu
   · simp
   have hun : 0 < ‖u‖ := norm_pos_iff.mpr hu
   set u' := ‖u‖⁻¹ • u
-  have hu' : u' ∈ Metric.sphere (0 : EuclideanSpace ℝ (Fin p)) 1 := by
+  have hu' : u' ∈ Metric.sphere (0 : F) 1 := by
     simp [u', norm_smul, hun.ne']
   have h1 : M.reApplyInnerSelf u' ≤ M.reApplyInnerSelf w := hmax hu'
   simp only [ContinuousLinearMap.reApplyInnerSelf, RCLike.re_to_real] at h1
@@ -344,16 +375,54 @@ theorem exists_unit_eigenvector_rayleigh_le {p : ℕ}
   rw [this]
   nlinarith [sq_nonneg ‖u‖]
 
-/-- GAPS 103.54: residual perturbation bound, with the gap specified by a Rayleigh bound.
-The probabilistic spiked-covariance bound is outside this deterministic statement. -/
-theorem leading_eigenvector_residual_bound {p : ℕ}
-    (A E : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin p))
+omit [FiniteDimensional ℝ F] in
+/-- If every eigenvector of `M` for the eigenvalue `b` orthogonal to `v` vanishes, then the
+`b`-eigenspace is spanned by any unit eigenvector `w` for `b`: the eigenvalue `b` is simple. -/
+theorem mem_span_singleton_of_eigenvector_of_forall_inner_eq_zero (M : F →L[ℝ] F) {b : ℝ}
+    {v w : F} (hw1 : ‖w‖ = 1) (hMw : M w = b • w)
+    (hzero : ∀ u, inner ℝ u v = 0 → M u = b • u → u = 0) {z : F} (hz : M z = b • z) :
+    z ∈ Submodule.span ℝ {w} := by
+  obtain ⟨z', hz'⟩ : ∃ z', z' = z - inner ℝ w z • w := ⟨_, rfl⟩
+  have hz'w : inner ℝ w z' = 0 := by
+    rw [hz', inner_sub_right, inner_smul_right, real_inner_self_eq_norm_sq, hw1]; ring
+  have hMz' : M z' = b • z' := by
+    rw [hz', map_sub, map_smul, hz, hMw, smul_sub, smul_comm]
+  have hz'0 : z' = 0 := by
+    by_cases hwv0 : inner ℝ w v = 0
+    · -- then `w` itself would be orthogonal to `v`
+      exact absurd (hzero w hwv0 hMw) (by rintro rfl; simp at hw1)
+    · obtain ⟨u, hu⟩ : ∃ u, u = inner ℝ z' v • w - inner ℝ w v • z' := ⟨_, rfl⟩
+      have huv : inner ℝ u v = 0 := by
+        rw [hu, inner_sub_left, inner_smul_left, inner_smul_left]
+        simp only [RCLike.conj_to_real]; ring
+      have hMu' : M u = b • u := by
+        rw [hu, map_sub, map_smul, map_smul, hMw, hMz', smul_sub, smul_comm b (inner ℝ z' v),
+          smul_comm b (inner ℝ w v)]
+      have hu0 := hzero u huv hMu'
+      have := congrArg (fun t ↦ inner ℝ z' t) hu0
+      simp only [hu, inner_sub_right, inner_smul_right, inner_zero_right] at this
+      rw [real_inner_comm w z', hz'w, real_inner_self_eq_norm_sq] at this
+      have h' : inner ℝ w v * ‖z'‖ ^ 2 = 0 := by linarith
+      rcases mul_eq_zero.mp h' with h | h
+      · exact absurd h hwv0
+      · exact norm_eq_zero.mp (pow_eq_zero_iff two_ne_zero |>.mp h)
+  rw [Submodule.mem_span_singleton]
+  exact ⟨inner ℝ w z, by rw [hz', sub_eq_zero] at hz'0; exact hz'0.symm⟩
+
+/-- GAPS 103.54: deterministic residual perturbation bound for the leading eigenvector. Let `A`
+and `E` be self-adjoint operators on a finite-dimensional real inner product space, and let `v`
+be a unit vector with `A v = a v` such that `⟪u, A u⟫ ≤ (a - gap) ‖u‖²` for all `u ⊥ v`. If
+`2 ‖E‖ < gap`, then the top eigenvalue `b` of `A + E` is simple, and it has a unit eigenvector
+`w` with `⟪w, v⟫ ≥ 0` and `‖w - v‖ ≤ 2 ‖E v - ⟪v, E v⟫ v‖ / (gap - 2 ‖E‖)`. The probabilistic
+spiked-covariance bound is outside this deterministic statement. -/
+theorem exists_eigenvector_norm_sub_le_of_rayleigh_gap
+    (A E : F →L[ℝ] F)
     (hA : IsSelfAdjoint A) (hE : IsSelfAdjoint E)
-    (v : EuclideanSpace ℝ (Fin p)) (hv : ‖v‖ = 1) (a gap : ℝ)
+    (v : F) (hv : ‖v‖ = 1) (a gap : ℝ)
     (heig : A v = a • v)
     (hother : ∀ u, inner ℝ u v = 0 → inner ℝ u (A u) ≤ (a - gap) * ‖u‖ ^ 2)
     (hsmall : 2 * ‖E‖ < gap) :
-    ∃ w : EuclideanSpace ℝ (Fin p), ‖w‖ = 1 ∧ 0 ≤ inner ℝ w v ∧
+    ∃ w : F, ‖w‖ = 1 ∧ 0 ≤ inner ℝ w v ∧
       (∃ b : ℝ, (A + E) w = b • w ∧
         (∀ u, inner ℝ u ((A + E) u) ≤ b * ‖u‖ ^ 2) ∧
         ∀ z, (A + E) z = b • z → z ∈ Submodule.span ℝ {w}) ∧
@@ -369,7 +438,7 @@ theorem leading_eigenvector_residual_bound {p : ℕ}
   have hMu : ∀ u, inner ℝ u (M u) = inner ℝ u (A u) + inner ℝ u (E u) := fun u ↦ by
     simp [hMdef, inner_add_right]
   obtain ⟨w₀, hw₀, b, hMw₀, hray⟩ := exists_unit_eigenvector_rayleigh_le M hM v hv
-  obtain ⟨w, hw1, hwv, hMw⟩ : ∃ w : EuclideanSpace ℝ (Fin p), ‖w‖ = 1 ∧ 0 ≤ inner ℝ w v ∧
+  obtain ⟨w, hw1, hwv, hMw⟩ : ∃ w : F, ‖w‖ = 1 ∧ 0 ≤ inner ℝ w v ∧
       M w = b • w := by
     by_cases h : 0 ≤ inner ℝ w₀ v
     · exact ⟨w₀, hw₀, h, hMw₀⟩
@@ -398,85 +467,61 @@ theorem leading_eigenvector_residual_bound {p : ℕ}
     have h3 : ‖u‖ ^ 2 ≤ 0 := by
       by_contra h; push Not at h; nlinarith
     exact norm_eq_zero.mp (by nlinarith [norm_nonneg u])
-  refine ⟨w, hw1, hwv, ⟨b, hMw, hray, fun z hz ↦ ?_⟩, ?_⟩
-  · -- simplicity of the top eigenvalue
-    obtain ⟨z', hz'⟩ : ∃ z', z' = z - inner ℝ w z • w := ⟨_, rfl⟩
-    have hz'w : inner ℝ w z' = 0 := by
-      rw [hz', inner_sub_right, inner_smul_right, real_inner_self_eq_norm_sq, hw1]; ring
-    have hMz' : M z' = b • z' := by
-      rw [hz', map_sub, map_smul, hz, hMw, smul_sub, smul_comm]
-    have hz'0 : z' = 0 := by
-      by_cases hwv0 : inner ℝ w v = 0
-      · -- then `w` itself would be orthogonal to `v`
-        exact absurd (hzero w hwv0 hMw) (by rintro rfl; simp at hw1)
-      · obtain ⟨u, hu⟩ : ∃ u, u = inner ℝ z' v • w - inner ℝ w v • z' := ⟨_, rfl⟩
-        have huv : inner ℝ u v = 0 := by
-          rw [hu, inner_sub_left, inner_smul_left, inner_smul_left]
-          simp only [RCLike.conj_to_real]; ring
-        have hMu' : M u = b • u := by
-          rw [hu, map_sub, map_smul, map_smul, hMw, hMz', smul_sub, smul_comm b (inner ℝ z' v),
-            smul_comm b (inner ℝ w v)]
-        have hu0 := hzero u huv hMu'
-        have := congrArg (fun t ↦ inner ℝ z' t) hu0
-        simp only [hu, inner_sub_right, inner_smul_right, inner_zero_right] at this
-        rw [real_inner_comm w z', hz'w, real_inner_self_eq_norm_sq] at this
-        have h' : inner ℝ w v * ‖z'‖ ^ 2 = 0 := by linarith
-        rcases mul_eq_zero.mp h' with h | h
-        · exact absurd h hwv0
-        · exact norm_eq_zero.mp (pow_eq_zero_iff two_ne_zero |>.mp h)
-    rw [Submodule.mem_span_singleton]
-    exact ⟨inner ℝ w z, by rw [hz', sub_eq_zero] at hz'0; exact hz'0.symm⟩
-  · -- the distance bound
-    obtain ⟨c, hc⟩ : ∃ c, c = inner ℝ w v := ⟨_, rfl⟩
-    have hc' : inner ℝ v w = c := by rw [real_inner_comm]; exact hc.symm
-    rw [← hc] at hwv
-    obtain ⟨r, hr⟩ : ∃ r, r = E v - inner ℝ v (E v) • v := ⟨_, rfl⟩
-    rw [← hr]
-    obtain ⟨u, hu⟩ : ∃ u, u = w - c • v := ⟨_, rfl⟩
-    have hwu : w = u + c • v := by rw [hu]; abel
-    have hvv : inner ℝ v v = 1 := by rw [real_inner_self_eq_norm_sq, hv]; norm_num
-    have huv : inner ℝ u v = 0 := by
-      rw [hu, inner_sub_left, inner_smul_left, hvv, ← hc]; simp
-    have hvu : inner ℝ v u = 0 := by rw [real_inner_comm]; exact huv
-    have hc1 : c ≤ 1 := by
-      have := real_inner_le_norm w v; rw [hw1, hv, ← hc] at this; linarith
-    have hnu : ‖u‖ ^ 2 = 1 - c ^ 2 := by
-      rw [hu, norm_sub_sq_real, inner_smul_right, norm_smul, hw1, hv, ← hc, Real.norm_eq_abs,
-        mul_pow, sq_abs]
-      ring
-    have huw : inner ℝ u w = ‖u‖ ^ 2 := by
-      rw [hwu, inner_add_right, inner_smul_right, huv, real_inner_self_eq_norm_sq]; ring
-    have hMv : inner ℝ u (M v) = inner ℝ u r := by
-      rw [hMdef, add_apply, inner_add_right, heig, inner_smul_right, huv, hr, inner_sub_right,
-        inner_smul_right, huv]; ring
-    have hMw' : inner ℝ u (M w) = inner ℝ u (M u) + c * inner ℝ u r := by
-      rw [hwu, map_add, map_smul, inner_add_right, inner_smul_right, hMv]
-    have hkey : b * ‖u‖ ^ 2 ≤ (a - gap + ‖E‖) * ‖u‖ ^ 2 + c * (‖u‖ * ‖r‖) := by
-      have h1 : inner ℝ u (M w) = b * ‖u‖ ^ 2 := by rw [hMw, inner_smul_right, huw]
-      have h2 := hperp u huv
-      have h3 : inner ℝ u r ≤ ‖u‖ * ‖r‖ := real_inner_le_norm u r
-      have h4 := mul_le_mul_of_nonneg_left h3 hwv
-      linarith
-    have hur : (gap - 2 * ‖E‖) * ‖u‖ ≤ ‖r‖ := by
-      rcases (norm_nonneg u).eq_or_lt with h | h
-      · rw [← h, mul_zero]; exact norm_nonneg _
-      · have s1 : (gap - 2 * ‖E‖) * ‖u‖ ^ 2 ≤ (b - (a - gap + ‖E‖)) * ‖u‖ ^ 2 :=
-          mul_le_mul_of_nonneg_right (by linarith) (sq_nonneg _)
-        have s2 : c * (‖u‖ * ‖r‖) ≤ ‖u‖ * ‖r‖ :=
-          mul_le_of_le_one_left (mul_nonneg h.le (norm_nonneg r)) hc1
-        have s3 : ‖u‖ * ((gap - 2 * ‖E‖) * ‖u‖) ≤ ‖u‖ * ‖r‖ := by
-          have : ‖u‖ * ((gap - 2 * ‖E‖) * ‖u‖) = (gap - 2 * ‖E‖) * ‖u‖ ^ 2 := by ring
-          linarith
-        exact le_of_mul_le_mul_left s3 h
-    have hwv2 : ‖w - v‖ ^ 2 ≤ (2 * ‖u‖) ^ 2 := by
-      rw [norm_sub_sq_real, hw1, hv, ← hc, mul_pow, hnu]
-      nlinarith [mul_nonneg hwv (sub_nonneg.mpr hc1)]
-    have hwv' : ‖w - v‖ ≤ 2 * ‖u‖ :=
-      (pow_le_pow_iff_left₀ (norm_nonneg _) (by positivity) two_ne_zero).mp hwv2
-    rw [le_div_iff₀ hdel]
-    calc ‖w - v‖ * (gap - 2 * ‖E‖) ≤ 2 * ‖u‖ * (gap - 2 * ‖E‖) :=
-          mul_le_mul_of_nonneg_right hwv' hdel.le
-      _ = 2 * ((gap - 2 * ‖E‖) * ‖u‖) := by ring
-      _ ≤ 2 * ‖r‖ := by linarith
+  refine ⟨w, hw1, hwv, ⟨b, hMw, hray, fun z hz ↦
+    mem_span_singleton_of_eigenvector_of_forall_inner_eq_zero M hw1 hMw hzero hz⟩, ?_⟩
+  -- the distance bound
+  obtain ⟨c, hc⟩ : ∃ c, c = inner ℝ w v := ⟨_, rfl⟩
+  have hc' : inner ℝ v w = c := by rw [real_inner_comm]; exact hc.symm
+  rw [← hc] at hwv
+  obtain ⟨r, hr⟩ : ∃ r, r = E v - inner ℝ v (E v) • v := ⟨_, rfl⟩
+  rw [← hr]
+  obtain ⟨u, hu⟩ : ∃ u, u = w - c • v := ⟨_, rfl⟩
+  have hwu : w = u + c • v := by rw [hu]; abel
+  have hvv : inner ℝ v v = 1 := by rw [real_inner_self_eq_norm_sq, hv]; norm_num
+  have huv : inner ℝ u v = 0 := by
+    rw [hu, inner_sub_left, inner_smul_left, hvv, ← hc]; simp
+  have hvu : inner ℝ v u = 0 := by rw [real_inner_comm]; exact huv
+  have hc1 : c ≤ 1 := by
+    have := real_inner_le_norm w v; rw [hw1, hv, ← hc] at this; linarith
+  have hnu : ‖u‖ ^ 2 = 1 - c ^ 2 := by
+    rw [hu, norm_sub_sq_real, inner_smul_right, norm_smul, hw1, hv, ← hc, Real.norm_eq_abs,
+      mul_pow, sq_abs]
+    ring
+  have huw : inner ℝ u w = ‖u‖ ^ 2 := by
+    rw [hwu, inner_add_right, inner_smul_right, huv, real_inner_self_eq_norm_sq]; ring
+  have hMv : inner ℝ u (M v) = inner ℝ u r := by
+    rw [hMdef, add_apply, inner_add_right, heig, inner_smul_right, huv, hr, inner_sub_right,
+      inner_smul_right, huv]; ring
+  have hMw' : inner ℝ u (M w) = inner ℝ u (M u) + c * inner ℝ u r := by
+    rw [hwu, map_add, map_smul, inner_add_right, inner_smul_right, hMv]
+  have hkey : b * ‖u‖ ^ 2 ≤ (a - gap + ‖E‖) * ‖u‖ ^ 2 + c * (‖u‖ * ‖r‖) := by
+    have h1 : inner ℝ u (M w) = b * ‖u‖ ^ 2 := by rw [hMw, inner_smul_right, huw]
+    have h2 := hperp u huv
+    have h3 : inner ℝ u r ≤ ‖u‖ * ‖r‖ := real_inner_le_norm u r
+    have h4 := mul_le_mul_of_nonneg_left h3 hwv
+    linarith
+  have hur : (gap - 2 * ‖E‖) * ‖u‖ ≤ ‖r‖ := by
+    rcases (norm_nonneg u).eq_or_lt with h | h
+    · rw [← h, mul_zero]; exact norm_nonneg _
+    · have s1 : (gap - 2 * ‖E‖) * ‖u‖ ^ 2 ≤ (b - (a - gap + ‖E‖)) * ‖u‖ ^ 2 :=
+        mul_le_mul_of_nonneg_right (by linarith) (sq_nonneg _)
+      have s2 : c * (‖u‖ * ‖r‖) ≤ ‖u‖ * ‖r‖ :=
+        mul_le_of_le_one_left (mul_nonneg h.le (norm_nonneg r)) hc1
+      have s3 : ‖u‖ * ((gap - 2 * ‖E‖) * ‖u‖) ≤ ‖u‖ * ‖r‖ := by
+        have : ‖u‖ * ((gap - 2 * ‖E‖) * ‖u‖) = (gap - 2 * ‖E‖) * ‖u‖ ^ 2 := by ring
+        linarith
+      exact le_of_mul_le_mul_left s3 h
+  have hwv2 : ‖w - v‖ ^ 2 ≤ (2 * ‖u‖) ^ 2 := by
+    rw [norm_sub_sq_real, hw1, hv, ← hc, mul_pow, hnu]
+    nlinarith [mul_nonneg hwv (sub_nonneg.mpr hc1)]
+  have hwv' : ‖w - v‖ ≤ 2 * ‖u‖ :=
+    (pow_le_pow_iff_left₀ (norm_nonneg _) (by positivity) two_ne_zero).mp hwv2
+  rw [le_div_iff₀ hdel]
+  calc ‖w - v‖ * (gap - 2 * ‖E‖) ≤ 2 * ‖u‖ * (gap - 2 * ‖E‖) :=
+        mul_le_mul_of_nonneg_right hwv' hdel.le
+    _ = 2 * ((gap - 2 * ‖E‖) * ‖u‖) := by ring
+    _ ≤ 2 * ‖r‖ := by linarith
+
+end Eigenvector
 
 end CKSD

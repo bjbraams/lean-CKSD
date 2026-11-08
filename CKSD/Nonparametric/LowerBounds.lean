@@ -7,6 +7,8 @@ public import CKSD.Nonparametric.CovarianceThresholding
 /-!
 # Testing lower bounds and sparse recovery
 
-Entry module for statistical testing/packing bounds, restricted-isometry recovery theory, and
-deterministic covariance thresholding. Sources: GAPS 103.39–103.40, 103.46, 103.48–103.49, 103.52.
+Entry module for the minimax lower-bound tools (Le Cam's two-point bound, Fano's inequality,
+Assouad's lemma and Hamming packings), restricted-isometry recovery theory, and deterministic
+covariance thresholding.
+Sources: GAPS 103.39–103.40, 103.45–103.46, 103.48–103.49, 103.52.
 -/

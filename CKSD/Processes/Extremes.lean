@@ -1,23 +1,45 @@
 module
 
 public import CKSD.Processes.Basic
-public import CKSD.Asymptotics.Basic
-public import CKSD.Nonparametric.Basic
 public import Mathlib.Probability.Distributions.Poisson.PoissonLimitThm
 public import Mathlib.Analysis.Normed.Group.Tannery
+public import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 public import TauCeti.Probability.Distributions.PoissonBinomial.Count
+public import TauCeti.Probability.Quantile
 
 /-!
-# Processes: Extremes
+# Maxima and exceedances of independent observations
 
-Sources: `GAPS.md`, `SYNOPSIS106.md`, and `STRUCTURE106.md`.
-Declarations adapted from this project's section drafts.
+For iid real observations `X 0, X 1, …` with distribution function `F`, the maximum of the first
+`n` observations satisfies `P(max_{i<n} X_i ≤ c) = F(c)^n`, and the number of exceedances of a
+level `u` is binomial with success probability `1 - F(u)`.
+
+## Main definitions
+
+* `CKSD.tailQuantile`: the tail quantile `U(t) = F^←(1 - 1/t)`, TauCeti's quantile at level
+  `1 - 1/t`.
+* `CKSD.HasRegularlyVaryingTail`: `1 - F` is positive everywhere and regularly varying at
+  infinity with index `-1/γ`.
+
+## Main results
+
+* `CKSD.tendsto_maximum_of_hasRegularlyVaryingTail` (GAPS 106.46): if `1 - F` is regularly
+  varying with index `-1/γ`, `γ > 0`, then `P(max_{i<n} X_i ≤ U(n) x) → exp(-x^{-1/γ})`, the
+  Fréchet limit, for every `x > 0`.
+* `CKSD.tendsto_measureReal_forall_le_of_tendsto_mul` (GAPS 106.48, independent case): if
+  `n (1 - F(u_n)) → τ` then `P(max_{i<n} X_i ≤ u_n) → e^{-τ}`.
+* `CKSD.tendstoInDistribution_card_exceedances` (GAPS 106.50): under the same condition the
+  number of exceedances of `u_n` converges in law to the Poisson law with mean `τ`.
+
+## Implementation notes
+
 The exceedance count is binomial by TauCeti's `iIndepFun.hasLaw_card_filter_mem` and
-`poissonBinomialMeasure_const`, which also give the law `F(c)^n` of the maximum. The Poisson
-limit combines Mathlib's Poisson limit theorem `tendsto_choose_mul_pow_of_tendsto_mul_atTop`
-with Tannery's theorem. The Fréchet limit compares `n (1 - F(a_n))` with `1` through the
-regular variation of the tail at the quantiles `a_n`.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+`poissonBinomialMeasure_const`, which also give the law `F(c)^n` of the maximum. The limit
+`(1 - p_n)^n → e^{-τ}` is Mathlib's `Real.tendsto_one_add_pow_exp_of_tendsto`. The Poisson
+limit of the binomial laws combines Mathlib's `tendsto_choose_mul_pow_of_tendsto_mul_atTop` with
+Tannery's theorem. The Fréchet limit compares `n (1 - F(U(n)))` with `1` through the regular
+variation of the tail at the quantiles `U(n)`, using TauCeti's quantile inequalities
+`MeasureTheory.Measure.le_cdf_quantile` and `MeasureTheory.Measure.lt_quantile_iff`.
 -/
 
 @[expose] public section
@@ -25,7 +47,7 @@ The docstrings specify the scope of each result; `sorry` marks unfinished proofs
 noncomputable section
 
 open MeasureTheory ProbabilityTheory Filter Set
-open scoped ENNReal NNReal Topology BigOperators MatrixOrder Matrix.Norms.L2Operator unitInterval Nat
+open scoped ENNReal NNReal Topology BigOperators unitInterval Nat
 
 namespace CKSD
 
@@ -102,37 +124,11 @@ theorem hasLaw_card_exceedances_binomial {Ω : Type*} [MeasurableSpace Ω]
   exact (card_filter_univ_fin_eq_card_filter_range n (fun i ↦ u < X i ω)).symm
 
 
-/-- The generalized quantile `sInf {t | c ≤ F t}` of a level `c ∈ (0, 1)` satisfies
-`c ≤ F(sInf …)`, by right continuity, and `F t < c` below it. -/
-theorem cdf_sInf_setOf_le_cdf (P : Measure ℝ) [IsProbabilityMeasure P] {c : ℝ} (hc0 : 0 < c)
-    (hc1 : c < 1) :
-    c ≤ cdf P (sInf {t | c ≤ cdf P t}) ∧ ∀ t < sInf {t | c ≤ cdf P t}, cdf P t < c := by
-  set S := {t | c ≤ cdf P t}
-  have hF : ∀ t, cdf P t = ProbabilityTheory.cdf P t := fun t ↦ (cdf_eq_real P t).symm
-  have hne : S.Nonempty := by
-    obtain ⟨t, ht⟩ := ((tendsto_cdf_atTop (μ := P)).eventually (lt_mem_nhds hc1)).exists
-    exact ⟨t, by simp only [S, mem_ofPred_eq, hF]; exact ht.le⟩
-  have hbdd : BddBelow S := by
-    obtain ⟨t₀, ht₀⟩ := (eventually_atBot.1 ((tendsto_cdf_atBot (μ := P)).eventually
-      (gt_mem_nhds hc0)))
-    refine ⟨t₀, fun s hs ↦ ?_⟩
-    by_contra h
-    have := ht₀ s (not_le.1 h).le
-    simp only [S, mem_ofPred_eq, hF] at hs
-    linarith
-  have hlt : ∀ t < sInf S, cdf P t < c := fun t ht ↦ by
-    by_contra h
-    exact absurd (csInf_le hbdd (show t ∈ S from not_lt.1 h)) (not_le.2 ht)
-  refine ⟨?_, hlt⟩
-  rw [hF]
-  have hrc : Tendsto (ProbabilityTheory.cdf P) (𝓝[>] (sInf S)) (𝓝 (ProbabilityTheory.cdf P (sInf S))) :=
-    ((ProbabilityTheory.cdf P).right_continuous (sInf S)).mono Ioi_subset_Ici_self
-  refine ge_of_tendsto hrc ?_
-  filter_upwards [self_mem_nhdsWithin] with t ht
-  obtain ⟨s, hs, hst⟩ := exists_lt_of_csInf_lt hne ht
-  simp only [S, mem_ofPred_eq, hF] at hs
-  exact hs.trans ((ProbabilityTheory.cdf P).mono hst.le)
-
+/-- The tail of a probability measure on the line is the mass of the open upper ray:
+`1 - F(c) = P(c, ∞)`. -/
+theorem one_sub_cdf_eq_measureReal_Ioi (P : Measure ℝ) [IsProbabilityMeasure P] (c : ℝ) :
+    1 - cdf P c = P.real (Ioi c) := by
+  rw [cdf, ← compl_Iic, probReal_compl_eq_one_sub measurableSet_Iic]
 
 /-- The probability that the first `n` iid observations do not exceed `c` is `F(c)^n`, written
 as `(1 - (1 - F(c)))^n`. -/
@@ -146,118 +142,146 @@ theorem measureReal_forall_le_eq_pow {Ω : Type*} [MeasurableSpace Ω]
     ext ω
     simp [Finset.card_eq_zero, Finset.filter_eq_empty_iff]
   rw [hset, measureReal_def, ← Measure.map_apply_of_aemeasurable hlaw.aemeasurable
-    (measurableSet_singleton 0), hlaw.map_eq, ← measureReal_def, binomial_real_zero]
-  simp only [cdf]
-  rw [← compl_Iic, probReal_compl_eq_one_sub measurableSet_Iic]
+    (measurableSet_singleton 0), hlaw.map_eq, ← measureReal_def, binomial_real_zero,
+    one_sub_cdf_eq_measureReal_Ioi]
 
-/-- GAPS 106.46, the regularly varying positive-tail sufficient condition for a Fréchet limit. -/
-theorem tendsto_maximum_of_regularly_varying_tail {Ω : Type*} [MeasurableSpace Ω]
+/-- If `n (1 - F(u_n)) → τ`, the probability that none of the first `n` iid observations exceeds
+`u_n` tends to `e^{-τ}`. -/
+theorem tendsto_measureReal_forall_le_of_tendsto_mul {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (P : Measure ℝ) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (u : ℕ → ℝ) (τ : ℝ)
+    (htail : Tendsto (fun n : ℕ ↦ (n : ℝ) * (1 - cdf P (u n))) atTop (𝓝 τ)) :
+    Tendsto (fun n ↦ μ.real {ω | ∀ i < n, X i ω ≤ u n}) atTop (𝓝 (Real.exp (-τ))) := by
+  have h := Real.tendsto_one_add_pow_exp_of_tendsto (g := fun n ↦ -(1 - cdf P (u n)))
+    (by simpa only [mul_neg] using htail.neg)
+  refine h.congr fun n ↦ ?_
+  rw [measureReal_forall_le_eq_pow μ P X hiid n (u n), ← sub_eq_add_neg]
+
+/-- The tail quantile `U(t) = F^←(1 - 1/t)`, TauCeti's quantile of `P` at level `1 - 1/t`; it is
+used for `t > 1`. -/
+def tailQuantile (P : Measure ℝ) (t : ℝ) : ℝ :=
+  P.quantile (1 - 1 / t)
+
+/-- At the tail quantile the tail mass is at most `1/t`. -/
+theorem one_sub_cdf_tailQuantile_le (P : Measure ℝ) [IsProbabilityMeasure P] {t : ℝ}
+    (ht : 1 < t) : 1 - cdf P (tailQuantile P t) ≤ t⁻¹ := by
+  have h1 : 1 - 1 / t < 1 := sub_lt_self 1 (by positivity)
+  have h := P.le_cdf_quantile h1
+  rw [cdf_eq_real] at h
+  rw [tailQuantile, cdf, ← one_div]
+  linarith
+
+/-- Below the tail quantile the tail mass exceeds `1/t`. -/
+theorem lt_one_sub_cdf_of_lt_tailQuantile (P : Measure ℝ) [IsProbabilityMeasure P] {t x : ℝ}
+    (ht : 1 < t) (hx : x < tailQuantile P t) : t⁻¹ < 1 - cdf P x := by
+  have h0 : 0 < 1 - 1 / t := by
+    rw [sub_pos, div_lt_one (by linarith)]; exact ht
+  have h := (P.lt_quantile_iff h0 (sub_lt_self 1 (by positivity))).1 hx
+  rw [cdf_eq_real, one_div] at h
+  rw [cdf]
+  linarith
+
+/-- The tail `1 - F` is positive everywhere (the upper endpoint is infinite) and regularly
+varying at infinity with index `-1/γ`: `(1 - F(tx)) / (1 - F(t)) → x^{-1/γ}` for every `x > 0`. -/
+def HasRegularlyVaryingTail (P : Measure ℝ) (γ : ℝ) : Prop :=
+  (∀ t : ℝ, cdf P t < 1) ∧ ∀ x > 0,
+    Tendsto (fun t ↦ (1 - cdf P (t * x)) / (1 - cdf P t)) atTop
+      (𝓝 (Real.rpow x (-1 / γ)))
+
+/-- Under an everywhere positive tail, the tail quantiles `U(n)` tend to infinity. -/
+theorem tendsto_tailQuantile_atTop (P : Measure ℝ) [IsProbabilityMeasure P]
+    (hpos : ∀ t : ℝ, cdf P t < 1) :
+    Tendsto (fun n : ℕ ↦ tailQuantile P n) atTop atTop := by
+  refine tendsto_atTop.2 fun M ↦ ?_
+  have hlim : Tendsto (fun n : ℕ ↦ (n : ℝ)⁻¹) atTop (𝓝 0) := tendsto_inv_atTop_nhds_zero_nat
+  filter_upwards [eventually_ge_atTop 2, hlim.eventually (gt_mem_nhds (sub_pos.2 (hpos M)))]
+    with n hn hnM
+  by_contra h
+  have h1 := one_sub_cdf_tailQuantile_le P (t := n) (by exact_mod_cast hn)
+  have h2 : cdf P (tailQuantile P n) ≤ cdf P M := by
+    rw [cdf, cdf]
+    exact measureReal_mono (Iic_subset_Iic.2 (not_le.1 h).le)
+  linarith
+
+/-- If `1 - F` is regularly varying with index `-1/γ`, `γ > 0`, then `n (1 - F(U(n))) → 1`. -/
+theorem tendsto_mul_one_sub_cdf_tailQuantile (P : Measure ℝ) [IsProbabilityMeasure P] {γ : ℝ}
+    (hγ : 0 < γ) (hrv : HasRegularlyVaryingTail P γ) :
+    Tendsto (fun n : ℕ ↦ (n : ℝ) * (1 - cdf P (tailQuantile P n))) atTop (𝓝 1) := by
+  set a : ℕ → ℝ := fun n ↦ tailQuantile P n
+  set Fb : ℝ → ℝ := fun t ↦ 1 - cdf P t with hFb
+  have hFb_pos : ∀ t, 0 < Fb t := fun t ↦ sub_pos.2 (hrv.1 t)
+  have ha_top : Tendsto a atTop atTop := tendsto_tailQuantile_atTop P hrv.1
+  have hcast : ∀ n : ℕ, 2 ≤ n → (1 : ℝ) < n := fun n hn ↦ by
+    have : (2 : ℝ) ≤ n := by exact_mod_cast hn
+    linarith
+  refine tendsto_order.2 ⟨fun b hb ↦ ?_, fun b hb ↦ ?_⟩
+  · set z := (max b 0 + 1) / 2 with hz
+    have hz0 : 0 < z := by have := le_max_right b 0; linarith
+    have hz1 : z < 1 := by have := max_lt hb one_pos; linarith
+    have hbz : b < z := by have := le_max_left b 0; linarith
+    set y := z ^ γ with hy
+    have hy0 : 0 < y := Real.rpow_pos_of_pos hz0 γ
+    have hy1 : y < 1 := Real.rpow_lt_one hz0.le hz1 hγ
+    have hlimy : Real.rpow y (-1 / γ) = z⁻¹ := by
+      change (z ^ γ) ^ (-1 / γ) = z⁻¹
+      rw [← Real.rpow_mul hz0.le, show γ * (-1 / γ) = -1 by field_simp, Real.rpow_neg_one]
+    have hinv : Tendsto (fun n ↦ Fb (a n) / Fb (a n * y)) atTop (𝓝 z) := by
+      have := ((hrv.2 y hy0).comp ha_top).inv₀ (by rw [hlimy]; positivity)
+      rw [hlimy, inv_inv] at this
+      simpa only [Function.comp_def, inv_div] using this
+    filter_upwards [hinv.eventually (lt_mem_nhds hbz), eventually_ge_atTop 2,
+      ha_top.eventually (eventually_gt_atTop 0)] with n h1 hn ha0
+    have hlt : a n * y < a n := mul_lt_of_lt_one_right ha0 hy1
+    have h2 := lt_one_sub_cdf_of_lt_tailQuantile P (hcast n hn) hlt
+    have hn0 : (0 : ℝ) < n := by linarith [hcast n hn]
+    have h3 : 1 < n * Fb (a n * y) := by
+      have := mul_lt_mul_of_pos_left h2 hn0
+      rwa [mul_inv_cancel₀ hn0.ne'] at this
+    have h4 : Fb (a n) / Fb (a n * y) ≤ n * Fb (a n) := by
+      rw [div_le_iff₀ (hFb_pos _)]
+      nlinarith [hFb_pos (a n)]
+    linarith
+  · filter_upwards [eventually_ge_atTop 2] with n hn
+    have hn0 : (0 : ℝ) < n := by linarith [hcast n hn]
+    calc (n : ℝ) * Fb (a n) ≤ n * (n : ℝ)⁻¹ := by
+          gcongr; exact one_sub_cdf_tailQuantile_le P (hcast n hn)
+      _ = 1 := mul_inv_cancel₀ hn0.ne'
+      _ < b := hb
+
+/-- GAPS 106.46, sufficient condition for the Fréchet limit: if `1 - F` is regularly varying
+with index `-1/γ`, `γ > 0`, then `P(max_{i<n} X_i ≤ U(n) x) → exp(-x^{-1/γ})` for every
+`x > 0`, with `U` the tail quantile. -/
+theorem tendsto_maximum_of_hasRegularlyVaryingTail {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (γ : ℝ) (hγ : 0 < γ)
-    (hpos : ∀ t : ℝ, cdf P t < 1)
-    (hrv : ∀ x > 0, Tendsto (fun t ↦ (1 - cdf P (t * x)) / (1 - cdf P t))
-      atTop (𝓝 (Real.rpow x (-1 / γ)))) :
-    let a := fun n : ℕ ↦ sInf {t | 1 - (n : ℝ)⁻¹ ≤ cdf P t};
-    ∀ x > 0, Tendsto (fun n ↦ μ.real {ω | ∀ i < n, X i ω ≤ a n * x}) atTop
+    (hrv : HasRegularlyVaryingTail P γ) (x : ℝ) (hx : 0 < x) :
+    Tendsto (fun n : ℕ ↦ μ.real {ω | ∀ i < n, X i ω ≤ tailQuantile P n * x}) atTop
       (𝓝 (Real.exp (-Real.rpow x (-1 / γ)))) := by
-  intro a x hx
-  set Fb : ℝ → ℝ := fun t ↦ 1 - cdf P t with hFb
-  have hFb_pos : ∀ t, 0 < Fb t := fun t ↦ sub_pos.2 (hpos t)
-  have hF : ∀ t, cdf P t = ProbabilityTheory.cdf P t := fun t ↦ (cdf_eq_real P t).symm
-  have hmono : Monotone (cdf P) := fun s t hst ↦ by
-    rw [hF, hF]; exact (ProbabilityTheory.cdf P).mono hst
-  -- properties of `a n` for `n ≥ 2`
-  have hprop : ∀ n : ℕ, 2 ≤ n → Fb (a n) ≤ (n : ℝ)⁻¹ ∧ ∀ t < a n, (n : ℝ)⁻¹ < Fb t := by
-    intro n hn
-    have hn' : (2 : ℝ) ≤ n := by exact_mod_cast hn
-    have hinv : (n : ℝ)⁻¹ ≤ 1 / 2 := by
-      rw [inv_le_comm₀ (by linarith) (by norm_num)]; linarith
-    have hinv0 : 0 < (n : ℝ)⁻¹ := by positivity
-    obtain ⟨h1, h2⟩ := cdf_sInf_setOf_le_cdf P (c := 1 - (n : ℝ)⁻¹) (by linarith) (by linarith)
-    exact ⟨by simp only [Fb]; linarith, fun t ht ↦ by have := h2 t ht; simp only [Fb]; linarith⟩
-  have ha_top : Tendsto a atTop atTop := by
-    refine tendsto_atTop.2 fun M ↦ ?_
-    have hlim : Tendsto (fun n : ℕ ↦ (n : ℝ)⁻¹) atTop (𝓝 0) := tendsto_inv_atTop_nhds_zero_nat
-    filter_upwards [eventually_ge_atTop 2, hlim.eventually (gt_mem_nhds (hFb_pos M))]
-      with n hn hnM
-    by_contra h
-    have h1 := (hprop n hn).1
-    have h2 := hmono (not_le.1 h).le
-    simp only [Fb] at h1 hnM
-    linarith
-  have hratio : ∀ y > 0, Tendsto (fun n ↦ Fb (a n * y) / Fb (a n)) atTop
-      (𝓝 (Real.rpow y (-1 / γ))) := fun y hy ↦ (hrv y hy).comp ha_top
-  have hnF : Tendsto (fun n : ℕ ↦ (n : ℝ) * Fb (a n)) atTop (𝓝 1) := by
-    refine tendsto_order.2 ⟨fun b hb ↦ ?_, fun b hb ↦ ?_⟩
-    · set z := (max b 0 + 1) / 2 with hz
-      have hz0 : 0 < z := by have := le_max_right b 0; linarith
-      have hz1 : z < 1 := by have := max_lt hb one_pos; linarith
-      have hbz : b < z := by have := le_max_left b 0; linarith
-      set y := z ^ γ with hy
-      have hy0 : 0 < y := Real.rpow_pos_of_pos hz0 γ
-      have hy1 : y < 1 := Real.rpow_lt_one hz0.le hz1 hγ
-      have hlimy : Real.rpow y (-1 / γ) = z⁻¹ := by
-        change (z ^ γ) ^ (-1 / γ) = z⁻¹
-        rw [← Real.rpow_mul hz0.le, show γ * (-1 / γ) = -1 by field_simp, Real.rpow_neg_one]
-      have hinv : Tendsto (fun n ↦ Fb (a n) / Fb (a n * y)) atTop (𝓝 z) := by
-        have := (hratio y hy0).inv₀ (by rw [hlimy]; positivity)
-        rw [hlimy, inv_inv] at this
-        simpa only [inv_div] using this
-      filter_upwards [hinv.eventually (lt_mem_nhds hbz), eventually_ge_atTop 2,
-        ha_top.eventually (eventually_gt_atTop 0)] with n h1 hn ha0
-      have hlt : a n * y < a n := mul_lt_of_lt_one_right ha0 hy1
-      have h2 := (hprop n hn).2 _ hlt
-      have hn0 : (0 : ℝ) < n := by have : (2 : ℝ) ≤ n := by exact_mod_cast hn
-                                   linarith
-      have h3 : 1 < n * Fb (a n * y) := by
-        have := mul_lt_mul_of_pos_left h2 hn0
-        rwa [mul_inv_cancel₀ hn0.ne'] at this
-      have h4 : Fb (a n) / Fb (a n * y) ≤ n * Fb (a n) := by
-        rw [div_le_iff₀ (hFb_pos _)]
-        nlinarith [hFb_pos (a n)]
-      linarith
-    · filter_upwards [eventually_ge_atTop 2] with n hn
-      have hn0 : (0 : ℝ) < n := by have : (2 : ℝ) ≤ n := by exact_mod_cast hn
-                                   linarith
-      calc (n : ℝ) * Fb (a n) ≤ n * (n : ℝ)⁻¹ := by gcongr; exact (hprop n hn).1
-        _ = 1 := mul_inv_cancel₀ hn0.ne'
-        _ < b := hb
-  have hq : Tendsto (fun n : ℕ ↦ (n : ℝ) * Fb (a n * x)) atTop (𝓝 (Real.rpow x (-1 / γ))) := by
-    have := hnF.mul (hratio x hx)
-    rw [one_mul] at this
-    refine this.congr fun n ↦ ?_
-    have := (hFb_pos (a n)).ne'
-    field_simp
-  have h0 := tendsto_choose_mul_pow_of_tendsto_mul_atTop 0 hq
-  simp only [Nat.choose_zero_right, Nat.cast_one, pow_zero, one_mul, Nat.sub_zero,
-    Nat.factorial_zero, div_one, mul_one] at h0
-  exact h0.congr fun n ↦ (measureReal_forall_le_eq_pow μ P X hiid n (a n * x)).symm
+  refine tendsto_measureReal_forall_le_of_tendsto_mul μ P X hiid _ _ ?_
+  have hratio := (hrv.2 x hx).comp (tendsto_tailQuantile_atTop P hrv.1)
+  have := (tendsto_mul_one_sub_cdf_tailQuantile P hγ hrv).mul hratio
+  rw [one_mul] at this
+  refine this.congr fun n ↦ ?_
+  have := (sub_pos.2 (hrv.1 (tailQuantile P n))).ne'
+  simp only [Function.comp_apply]
+  field_simp
 
-/-- GAPS 106.48 (independent scope) and GAPS 106.50, finite-intensity exceedance limit; also the
-independent part of 106.48. -/
-theorem tendsto_maximum_and_exceedance_count_of_tail_limit {Ω : Type*} [MeasurableSpace Ω]
+/-- GAPS 106.50, finite-intensity exceedance limit (also the independent case of GAPS 106.48):
+if `n (1 - F(u_n)) → τ`, the number of exceedances of `u_n` among the first `n` iid
+observations converges in law to the Poisson law with mean `τ`. -/
+theorem tendstoInDistribution_card_exceedances {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (u : ℕ → ℝ) (τ : ℝ≥0)
     (htail : Tendsto (fun n : ℕ ↦ (n : ℝ) * (1 - cdf P (u n))) atTop (𝓝 (τ : ℝ))) :
-    Tendsto (fun n ↦ μ.real {ω | ∀ i < n, X i ω ≤ u n}) atTop (𝓝 (Real.exp (-τ))) ∧
-      TendstoInDistribution μ (fun n ω ↦ ((Finset.range n).filter (fun i ↦ u n < X i ω)).card)
-        (poissonMeasure τ) := by
+    TendstoInDistribution μ (fun n ω ↦ ((Finset.range n).filter (fun i ↦ u n < X i ω)).card)
+      (poissonMeasure τ) := by
   let p : ℕ → I := fun n ↦ ⟨P.real (Ioi (u n)), by simp⟩
-  have hp : ∀ n, 1 - cdf P (u n) = (p n : ℝ) := fun n ↦ by
-    simp only [p, cdf]
-    rw [← compl_Iic, probReal_compl_eq_one_sub measurableSet_Iic]
   have hpt : Tendsto (fun n : ℕ ↦ (n : ℝ) * (p n : ℝ)) atTop (𝓝 (τ : ℝ)) := by
-    simpa only [hp] using htail
+    simpa only [one_sub_cdf_eq_measureReal_Ioi] using htail
   have hlaw := fun n ↦ hasLaw_card_exceedances_binomial μ P X hiid n (u n)
-  refine ⟨?_, TendstoWeakly.of_forall_integral_tendsto (fun f ↦ ?_)⟩
-  · have h0 := tendsto_choose_mul_pow_of_tendsto_mul_atTop 0 hpt
-    simp only [Nat.choose_zero_right, Nat.cast_one, pow_zero, one_mul, Nat.sub_zero,
-      Nat.factorial_zero, div_one, mul_one] at h0
-    refine h0.congr fun n ↦ ?_
-    rw [measureReal_forall_le_eq_pow μ P X hiid n (u n), hp n]
-  · simp_rw [fun n ↦ (hlaw n).map_eq]
-    exact tendsto_integral_binomial_poissonMeasure p τ hpt f ⟨‖f‖, fun k ↦ by
-      simpa [Real.norm_eq_abs] using f.norm_coe_le_norm k⟩
-
+  refine TendstoWeakly.of_forall_integral_tendsto (fun f ↦ ?_)
+  simp_rw [fun n ↦ (hlaw n).map_eq]
+  exact tendsto_integral_binomial_poissonMeasure p τ hpt f ⟨‖f‖, fun k ↦ by
+    simpa [Real.norm_eq_abs] using f.norm_coe_le_norm k⟩
 
 end CKSD

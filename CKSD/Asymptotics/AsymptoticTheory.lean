@@ -37,7 +37,7 @@ theorem tendstoInProbabilityConst_const {Ω E : Type*} [MeasurableSpace Ω]
 
 /-- GAPS 102.23: consistency from uniform convergence and a separated maximum.
 Pointwise bounds avoid any unmentioned measurability of a supremum. -/
-theorem tendstoInProbabilityConst_m_estimator {Ω Θ : Type*} [MeasurableSpace Ω]
+theorem tendstoInProbabilityConst_mEstimator {Ω Θ : Type*} [MeasurableSpace Ω]
     [MetricSpace Θ] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (M : Θ → ℝ) (Mn : ℕ → Ω → Θ → ℝ) (θ₀ : Θ) (T : ℕ → Ω → Θ)
     (e r : ℕ → Ω → ℝ)
@@ -72,7 +72,8 @@ theorem tendstoInProbabilityConst_m_estimator {Ω Θ : Type*} [MeasurableSpace �
   exact squeeze_zero (fun _ ↦ measureReal_nonneg) hbound
     (by simpa using he'.add hr')
 
-/-- GAPS 102.31: Pearson's test for a simple multinomial null. -/
+/-- GAPS 102.31: Pearson's chi-squared statistic `∑ (Nᵢ - n pᵢ)² / (n pᵢ)` for i.i.d. observations
+with `k ≥ 2` categories of positive probabilities `pᵢ` converges in law to `χ²_{k-1}`. -/
 theorem tendstoInDistribution_pearson_statistic {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (k : ℕ) (hk : 2 ≤ k)
     (p : Fin k → ℝ) (hp : ∀ i, 0 < p i) (hsum : ∑ i, p i = 1)
@@ -83,7 +84,9 @@ theorem tendstoInDistribution_pearson_statistic {Ω : Type*} [MeasurableSpace Ω
         ((n : ℝ) * p i)) (TauCeti.Probability.chiSquaredMeasure (k - 1 : ℕ)) := by
   sorry
 
-/-- GAPS 102.33, compact deterministic-limit scope of the argmax theorem. -/
+/-- GAPS 102.33, the argmax theorem with a deterministic limit on a compact space. If the
+criteria `Mₙ` converge uniformly in probability to a continuous `M` with a unique maximizer `θ`,
+then maximizers `Tₙ` of `Mₙ` converge in probability to `θ`. -/
 theorem tendstoInProbabilityConst_argmax_of_compact
     {Ω H : Type*} [MeasurableSpace Ω]
     [MetricSpace H] [CompactSpace H] (μ : Measure Ω) [IsProbabilityMeasure μ]
@@ -112,7 +115,7 @@ theorem tendstoInProbabilityConst_argmax_of_compact
     · refine ⟨1, zero_lt_one, ?_⟩
       intro h hh
       exact (hne ⟨h, hh⟩).elim
-  apply tendstoInProbabilityConst_m_estimator μ M Mn θ T e (fun _ _ ↦ 0)
+  apply tendstoInProbabilityConst_mEstimator μ M Mn θ T e (fun _ _ ↦ 0)
     he (tendstoInProbabilityConst_const μ 0) hsep hu
   intro n
   filter_upwards [ho n] with ω hω

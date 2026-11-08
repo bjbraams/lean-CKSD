@@ -6,9 +6,21 @@ public import CKSD.Learning.Generalization
 /-!
 # Margin generalization and adversarial bandits
 
-The finite-class margin bound uses measurable bounded scores. The Exp3 protocol specifies its
-conditional action probabilities and importance-weighted cumulative losses, so the algorithmic
-hypotheses do not assume a regret conclusion. Sources: GAPS 107.10 and 107.52.
+The finite-class margin bound uses measurable bounded scores, symmetrization and the
+Ledoux–Talagrand contraction. The Exp3 protocol specifies its conditional action probabilities
+and importance-weighted cumulative losses, so the algorithmic hypotheses do not assume a regret
+conclusion.
+
+## Main definitions
+
+* `CKSD.signedMargin`: the signed margin of a score for Boolean labels.
+* `CKSD.exp3EstimatedCumulativeLoss`: Exp3's importance-weighted cumulative loss.
+* `CKSD.exp3WeightLowerBound`: a deterministic lower bound for Exp3 probabilities.
+
+## Main results
+
+* `CKSD.measure_margin_generalization_error_le`: the margin bound (GAPS 107.10).
+* `CKSD.integral_regret_le_of_exp3`: the Exp3 regret bound `√(2 T K log K)` (GAPS 107.52).
 -/
 
 @[expose] public section
@@ -25,140 +37,6 @@ attribute [local instance] Classical.propDecidable
 /-- Signed classification margin for Boolean labels, with `true` representing `+1`. -/
 def signedMargin {H X : Type*} (f : H → X → ℝ) (h : H) (z : X × Bool) : ℝ :=
   if z.2 then f h z.1 else -f h z.1
-
-/-- The supremum of a function on a finite nonempty type is attained. -/
-theorem exists_sSup_range_eq {H : Type*} [Fintype H] [Nonempty H] (u : H → ℝ) :
-    ∃ k, sSup (range u) = u k := by
-  obtain ⟨k, -, hk⟩ := Finset.exists_max_image Finset.univ u
-    ⟨Classical.arbitrary H, Finset.mem_univ _⟩
-  exact ⟨k, le_antisymm (csSup_le (range_nonempty u) (by
-    rintro _ ⟨j, rfl⟩; exact hk j (Finset.mem_univ _)))
-    (le_csSup (finite_range u).bddAbove ⟨k, rfl⟩)⟩
-
-/-- One-coordinate contraction step: for an `L`-Lipschitz `φ` and `c ≥ 0`,
-`sup(a + cφ(u)) + sup(a - cφ(u)) ≤ sup(a + cLu) + sup(a - cLu)` over a finite index. -/
-theorem sSup_add_sSup_le_of_lipschitz {H : Type*} [Fintype H] [Nonempty H] (a u : H → ℝ)
-    (φ : ℝ → ℝ) {L c : ℝ} (hc : 0 ≤ c) (hφ : ∀ x y, |φ x - φ y| ≤ L * |x - y|) :
-    sSup (range fun h ↦ a h + c * φ (u h)) + sSup (range fun h ↦ a h - c * φ (u h)) ≤
-      sSup (range fun h ↦ a h + c * (L * u h)) + sSup (range fun h ↦ a h - c * (L * u h)) := by
-  obtain ⟨h₁, h₁eq⟩ := exists_sSup_range_eq fun h ↦ a h + c * φ (u h)
-  obtain ⟨h₂, h₂eq⟩ := exists_sSup_range_eq fun h ↦ a h - c * φ (u h)
-  rw [h₁eq, h₂eq]
-  have hb1 := fun k ↦ le_csSup (finite_range fun h ↦ a h + c * (L * u h)).bddAbove ⟨k, rfl⟩
-  have hb2 := fun k ↦ le_csSup (finite_range fun h ↦ a h - c * (L * u h)).bddAbove ⟨k, rfl⟩
-  have hlip : c * (φ (u h₁) - φ (u h₂)) ≤ c * (L * |u h₁ - u h₂|) :=
-    mul_le_mul_of_nonneg_left ((le_abs_self _).trans (hφ _ _)) hc
-  rcases le_total (u h₂) (u h₁) with hu | hu
-  · rw [abs_of_nonneg (sub_nonneg.mpr hu)] at hlip
-    have := hb1 h₁; have := hb2 h₂
-    simp only at *
-    nlinarith
-  · rw [abs_of_nonpos (sub_nonpos.mpr hu)] at hlip
-    have := hb1 h₂; have := hb2 h₁
-    simp only at *
-    nlinarith
-
-/-- Ledoux–Talagrand contraction for a finite class: composing the coordinates with an
-`L`-Lipschitz function multiplies the summed Rademacher suprema by at most `L`. -/
-theorem sum_sSup_rademacher_comp_le {H : Type*} [Fintype H] [Nonempty H] (n : ℕ)
-    (t : H → Fin n → ℝ) (φ : ℝ → ℝ) {L : ℝ} (hL : 0 ≤ L)
-    (hφ : ∀ x y, |φ x - φ y| ≤ L * |x - y|) :
-    ∑ σ : Fin n → Bool, sSup (range fun h ↦
-        (∑ i, (if σ i then (1 : ℝ) else -1) * φ (t h i)) / n) ≤
-      L * ∑ σ : Fin n → Bool, sSup (range fun h ↦
-        (∑ i, (if σ i then (1 : ℝ) else -1) * t h i) / n) := by
-  set w : ℕ → H → Fin n → ℝ := fun k h i ↦ if (i : ℕ) < k then L * t h i else φ (t h i)
-  set Q : ℕ → (Fin n → Bool) → ℝ := fun k σ ↦ sSup (range fun h ↦
-    (∑ i, (if σ i then (1 : ℝ) else -1) * w k h i) / n)
-  have hQ0 : ∀ σ, Q 0 σ = sSup (range fun h ↦
-      (∑ i, (if σ i then (1 : ℝ) else -1) * φ (t h i)) / n) := fun σ ↦ by
-    simp [Q, w]
-  have hstep : ∀ k, k < n → ∑ σ, Q k σ ≤ ∑ σ, Q (k + 1) σ := by
-    intro k hk
-    set j : Fin n := ⟨k, hk⟩
-    set fl : (Fin n → Bool) → (Fin n → Bool) := fun σ ↦ Function.update σ j (!σ j)
-    have hfl : Function.Involutive fl := fun σ ↦ by
-      funext i
-      by_cases hi : i = j
-      · subst hi; simp [fl]
-      · simp [fl, Function.update_of_ne hi]
-    have hsum_fl : ∀ F : (Fin n → Bool) → ℝ, ∑ σ, F (fl σ) = ∑ σ, F σ := fun F ↦
-      Fintype.sum_equiv (hfl.toPerm fl) _ _ fun σ ↦ rfl
-    -- decomposition at coordinate `j`
-    set A : (Fin n → Bool) → H → ℝ := fun σ h ↦
-      ∑ i ∈ Finset.univ.erase j, (if σ i then (1 : ℝ) else -1) * w k h i
-    have hA : ∀ σ h, A (fl σ) h = A σ h := fun σ h ↦
-      Finset.sum_congr rfl fun i hi ↦ by
-        simp [fl, Function.update_of_ne (Finset.ne_of_mem_erase hi)]
-    have hw : ∀ h, ∀ i ∈ Finset.univ.erase j, w (k + 1) h i = w k h i := by
-      intro h i hi
-      have hij : (i : ℕ) ≠ k := fun h' ↦ Finset.ne_of_mem_erase hi (Fin.ext h')
-      simp only [w]
-      congr 1
-      exact propext ⟨fun h' ↦ by omega, fun h' ↦ by omega⟩
-    have hAk1 : ∀ σ h, ∑ i ∈ Finset.univ.erase j,
-        (if σ i then (1 : ℝ) else -1) * w (k + 1) h i = A σ h := fun σ h ↦
-      Finset.sum_congr rfl fun i hi ↦ by rw [hw h i hi]
-    have hdec : ∀ (k' : ℕ) (σ : Fin n → Bool) (h : H), (∑ i, (if σ i then (1 : ℝ) else -1) * w k' h i) / n =
-        (∑ i ∈ Finset.univ.erase j, (if σ i then (1 : ℝ) else -1) * w k' h i) / n +
-          (1 / n) * ((if σ j then (1 : ℝ) else -1) * w k' h j) := by
-      intro k' σ h
-      rw [← Finset.add_sum_erase _ _ (Finset.mem_univ j)]
-      ring
-    have hwk : ∀ h, w k h j = φ (t h j) := fun h ↦ by simp [w, j]
-    have hwk1 : ∀ h, w (k + 1) h j = L * t h j := fun h ↦ by simp [w, j]
-    have hflj : ∀ σ, fl σ j = !σ j := fun σ ↦ by simp [fl]
-    have hpair : ∀ σ, Q k σ + Q k (fl σ) ≤ Q (k + 1) σ + Q (k + 1) (fl σ) := by
-      intro σ
-      simp only [Q]
-      simp_rw [hdec k, hdec (k + 1), hAk1]
-      change sSup (range fun h ↦ A σ h / n + 1 / n * ((if σ j then (1 : ℝ) else -1) *
-          w k h j)) + sSup (range fun h ↦ A (fl σ) h / n + 1 / n *
-          ((if fl σ j then (1 : ℝ) else -1) * w k h j)) ≤
-        sSup (range fun h ↦ A σ h / n + 1 / n * ((if σ j then (1 : ℝ) else -1) *
-          w (k + 1) h j)) + sSup (range fun h ↦ A (fl σ) h / n + 1 / n *
-          ((if fl σ j then (1 : ℝ) else -1) * w (k + 1) h j))
-      simp only [hA, hflj, hwk, hwk1]
-      have hc : (0 : ℝ) ≤ 1 / n := by positivity
-      have key := sSup_add_sSup_le_of_lipschitz (fun h ↦ A σ h / n) (fun h ↦ t h j) φ hc hφ
-      cases σ j
-      · simp only [Bool.not_false, ite_true, Bool.false_eq_true, ite_false, neg_one_mul,
-          one_mul, mul_neg, ← sub_eq_add_neg]
-        linarith
-      · simp only [Bool.not_true, ite_true, Bool.false_eq_true, ite_false, neg_one_mul,
-          one_mul, mul_neg, ← sub_eq_add_neg]
-        linarith
-    have h2 : 2 * ∑ σ, Q k σ = ∑ σ, (Q k σ + Q k (fl σ)) := by
-      rw [Finset.sum_add_distrib, hsum_fl (Q k)]; ring
-    have h3 : 2 * ∑ σ, Q (k + 1) σ = ∑ σ, (Q (k + 1) σ + Q (k + 1) (fl σ)) := by
-      rw [Finset.sum_add_distrib, hsum_fl (Q (k + 1))]; ring
-    have := Finset.sum_le_sum fun σ (_ : σ ∈ Finset.univ) ↦ hpair σ
-    linarith
-  have hmono : ∀ k, k ≤ n → ∑ σ, Q 0 σ ≤ ∑ σ, Q k σ := by
-    intro k
-    induction k with
-    | zero => intro _; exact le_rfl
-    | succ k ih => intro hk; exact (ih (by omega)).trans (hstep k (by omega))
-  have hQn : ∀ σ, Q n σ ≤ L * sSup (range fun h ↦
-      (∑ i, (if σ i then (1 : ℝ) else -1) * t h i) / n) := by
-    intro σ
-    refine csSup_le (range_nonempty _) ?_
-    rintro _ ⟨h, rfl⟩
-    beta_reduce
-    have : (∑ i, (if σ i then (1 : ℝ) else -1) * w n h i) / n =
-        L * ((∑ i, (if σ i then (1 : ℝ) else -1) * t h i) / n) := by
-      simp only [w, Fin.is_lt, ite_true]
-      rw [mul_div_assoc', Finset.mul_sum]
-      congr 1
-      exact Finset.sum_congr rfl fun i _ ↦ by ring
-    rw [this]
-    exact mul_le_mul_of_nonneg_left
-      (le_csSup (finite_range _).bddAbove ⟨h, rfl⟩) hL
-  have h1 : ∑ σ : Fin n → Bool, sSup (range fun h ↦
-      (∑ i, (if σ i then (1 : ℝ) else -1) * φ (t h i)) / n) = ∑ σ, Q 0 σ :=
-    Finset.sum_congr rfl fun σ _ ↦ (hQ0 σ).symm
-  rw [h1, Finset.mul_sum]
-  exact (hmono n le_rfl).trans (Finset.sum_le_sum fun σ _ ↦ hQn σ)
 
 /-- The ramp margin loss `min(1, max(0, 1 - u/ρ))` is `1/ρ`-Lipschitz. -/
 theorem abs_marginLoss_sub_le {ρ : ℝ} (hρ : 0 < ρ) (u v : ℝ) :
@@ -183,7 +61,10 @@ theorem marginLoss_eq_one_of_nonpos {ρ u : ℝ} (hρ : 0 < ρ) (hu : u ≤ 0) :
     linarith
   rw [max_eq_right (by linarith), min_eq_left this]
 
-/-- GAPS 107.10: uniform expected-Rademacher margin bound for a finite class. -/
+/-- GAPS 107.10: uniform expected-Rademacher margin bound for a finite class. For real scores
+`f h` bounded by `B`, margin scale `ρ > 0` and `δ ∈ (0,1)`, with probability at least `1 - δ`
+every `h` has misclassification probability at most its empirical ramp margin risk plus
+`2/ρ` times the expected Rademacher complexity of the margins plus `√(log(1/δ) / (2n))`. -/
 theorem measure_margin_generalization_error_le {H X : Type*} [Fintype H] [Nonempty H]
     [MeasurableSpace X] (P : Measure (X × Bool)) [IsProbabilityMeasure P]
     (f : H → X → ℝ) (hm : ∀ h, Measurable (f h)) (B : ℝ)
@@ -227,9 +108,8 @@ theorem measure_margin_generalization_error_le {H X : Type*} [Fintype H] [Nonemp
     have hneg := empiricalRademacherComplexity_neg n
       (fun h z ↦ marginLoss ρ (signedMargin f h z)) x
     simp only [F]
-    rw [hneg]
-    simp only [empiricalRademacherComplexity]
-    rw [mul_left_comm]
+    rw [hneg, empiricalRademacherComplexity_eq, empiricalRademacherComplexity_eq,
+      mul_left_comm]
     exact mul_le_mul_of_nonneg_left (sum_sSup_rademacher_comp_le n
       (fun h i ↦ signedMargin f h (x i)) (marginLoss ρ) (by positivity)
       (abs_marginLoss_sub_le hρ)) (by positivity)
@@ -280,122 +160,6 @@ theorem measure_margin_generalization_error_le {H X : Type*} [Fintype H] [Nonemp
   linarith
 
 
-/-- Second-order bound `exp(-x) ≤ 1 - x + x²/2` for `x ≥ 0`. -/
-theorem exp_neg_le_one_sub_add_sq_div_two {x : ℝ} (hx : 0 ≤ x) :
-    Real.exp (-x) ≤ 1 - x + x ^ 2 / 2 := by
-  set g : ℝ → ℝ := fun y ↦ 1 - y + y ^ 2 / 2 - Real.exp (-y) with hg
-  have hd : ∀ y, HasDerivAt g (-1 + y + Real.exp (-y)) y := by
-    intro y
-    have h := (((hasDerivAt_id y).const_sub 1).add ((hasDerivAt_pow 2 y).div_const 2)).sub
-      (hasDerivAt_neg y).exp
-    convert h using 1
-    · funext z; simp only [hg, Pi.add_apply, Pi.sub_apply, id]
-    · simp only [Nat.cast_ofNat, Nat.add_one_sub_one, pow_one]; ring
-  have hcont : Continuous g := continuous_iff_continuousAt.2 fun y ↦ (hd y).continuousAt
-  have hmono : MonotoneOn g (Ici 0) := by
-    refine monotoneOn_of_deriv_nonneg (convex_Ici 0) hcont.continuousOn
-      (fun y _ ↦ (hd y).differentiableAt.differentiableWithinAt) fun y _ ↦ ?_
-    rw [(hd y).deriv]
-    linarith [Real.add_one_le_exp (-y)]
-  have := hmono (show (0 : ℝ) ∈ Ici 0 from mem_Ici.mpr le_rfl) hx hx
-  simp only [hg, neg_zero, Real.exp_zero] at this
-  linarith
-
-/-- Deterministic exponential-weights bound with nonnegative estimated losses `ℓ̂`: if
-`p t i ∝ exp(-η ∑_{s<t} ℓ̂ s i)`, then
-`∑_{t<T} ∑ᵢ p t i ℓ̂ t i - ∑_{t<T} ℓ̂ t i⋆ ≤ log K / η + (η/2) ∑_{t<T} ∑ᵢ p t i ℓ̂ t i²`. -/
-theorem sum_sum_mul_sub_le_of_exponential_weights {K : ℕ} (hK : 0 < K) {η : ℝ} (hη : 0 < η)
-    (lh : ℕ → Fin K → ℝ) (hlh : ∀ t i, 0 ≤ lh t i) (p : ℕ → Fin K → ℝ)
-    (hp : ∀ t i, p t i = Real.exp (-η * ∑ s ∈ Finset.range t, lh s i) /
-      ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j)) (T : ℕ) (istar : Fin K) :
-    ∑ t ∈ Finset.range T, ∑ i, p t i * lh t i - ∑ t ∈ Finset.range T, lh t istar ≤
-      Real.log K / η + η / 2 * ∑ t ∈ Finset.range T, ∑ i, p t i * lh t i ^ 2 := by
-  set W : ℕ → ℝ := fun t ↦ ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j) with hW
-  have hWpos : ∀ t, 0 < W t := fun t ↦
-    Finset.sum_pos (fun j _ ↦ Real.exp_pos _) ⟨⟨0, hK⟩, Finset.mem_univ _⟩
-  have hpsum : ∀ t, ∑ i, p t i = 1 := fun t ↦ by
-    simp only [hp, ← Finset.sum_div]
-    exact div_self (hWpos t).ne'
-  have hppos : ∀ t i, 0 < p t i := fun t i ↦ by
-    rw [hp]; exact div_pos (Real.exp_pos _) (hWpos t)
-  have hpnn : ∀ t i, 0 ≤ p t i := fun t i ↦ (hppos t i).le
-  have hratio : ∀ t, W (t + 1) = W t * ∑ i, p t i * Real.exp (-η * lh t i) := by
-    intro t
-    rw [Finset.mul_sum]
-    refine Finset.sum_congr rfl fun i _ ↦ ?_
-    rw [hp, Finset.sum_range_succ, mul_add, Real.exp_add]
-    have := (hWpos t).ne'
-    simp only [hW] at this ⊢
-    field_simp
-  have hstep : ∀ t, Real.log (W (t + 1)) - Real.log (W t) ≤
-      -η * ∑ i, p t i * lh t i + η ^ 2 / 2 * ∑ i, p t i * lh t i ^ 2 := by
-    intro t
-    have hZpos : 0 < ∑ i, p t i * Real.exp (-η * lh t i) :=
-      Finset.sum_pos (fun i _ ↦ mul_pos (hppos t i) (Real.exp_pos _)) ⟨⟨0, hK⟩, Finset.mem_univ _⟩
-    rw [hratio, Real.log_mul (hWpos t).ne' hZpos.ne', add_sub_cancel_left]
-    refine (Real.log_le_sub_one_of_pos hZpos).trans ?_
-    have hb : ∀ i, p t i * Real.exp (-η * lh t i) ≤
-        p t i * (1 - η * lh t i + (η * lh t i) ^ 2 / 2) := fun i ↦ by
-      refine mul_le_mul_of_nonneg_left ?_ (hpnn t i)
-      rw [neg_mul]
-      exact exp_neg_le_one_sub_add_sq_div_two (mul_nonneg hη.le (hlh t i))
-    have := Finset.sum_le_sum fun i (_ : i ∈ Finset.univ) ↦ hb i
-    have hexp : ∑ i, p t i * (1 - η * lh t i + (η * lh t i) ^ 2 / 2) =
-        ∑ i, p t i - η * ∑ i, p t i * lh t i + η ^ 2 / 2 * ∑ i, p t i * lh t i ^ 2 := by
-      simp only [mul_add, mul_sub, mul_one, Finset.sum_add_distrib, Finset.sum_sub_distrib,
-        Finset.mul_sum]
-      congr 1
-      · congr 1
-        exact Finset.sum_congr rfl fun _ _ ↦ by ring
-      · exact Finset.sum_congr rfl fun _ _ ↦ by ring
-    rw [hexp, hpsum] at this
-    linarith
-  have htel : Real.log (W T) - Real.log (W 0) ≤ ∑ t ∈ Finset.range T,
-      (-η * ∑ i, p t i * lh t i + η ^ 2 / 2 * ∑ i, p t i * lh t i ^ 2) := by
-    rw [← Finset.sum_range_sub (fun t ↦ Real.log (W t))]
-    exact Finset.sum_le_sum fun t _ ↦ hstep t
-  have hW0 : W 0 = K := by simp [hW]
-  have hWT : -η * ∑ s ∈ Finset.range T, lh s istar ≤ Real.log (W T) := by
-    rw [← Real.log_exp (-η * _)]
-    exact Real.log_le_log (Real.exp_pos _)
-      (Finset.single_le_sum (f := fun j ↦ Real.exp (-η * ∑ s ∈ Finset.range T, lh s j))
-        (fun j _ ↦ (Real.exp_pos _).le) (Finset.mem_univ istar))
-  rw [hW0] at htel
-  rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.mul_sum] at htel
-  have hfinal : η * (∑ t ∈ Finset.range T, ∑ i, p t i * lh t i -
-      ∑ t ∈ Finset.range T, lh t istar) ≤
-      η * (Real.log K / η + η / 2 * ∑ t ∈ Finset.range T, ∑ i, p t i * lh t i ^ 2) := by
-    have : η * (Real.log K / η) = Real.log K := by field_simp
-    rw [mul_add, this]
-    nlinarith
-  exact le_of_mul_le_mul_left hfinal hη
-
-/-- Multiplicative update form of exponential weights:
-`p (t+1) i = p t i exp(-η ℓ̂ t i) / ∑ⱼ p t j exp(-η ℓ̂ t j)`. -/
-theorem exponentialWeights_succ {K : ℕ} (hK : 0 < K) (η : ℝ) (lh : ℕ → Fin K → ℝ)
-    (p : ℕ → Fin K → ℝ)
-    (hp : ∀ t i, p t i = Real.exp (-η * ∑ s ∈ Finset.range t, lh s i) /
-      ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j)) (t : ℕ) (i : Fin K) :
-    p (t + 1) i = p t i * Real.exp (-η * lh t i) /
-      ∑ j, p t j * Real.exp (-η * lh t j) := by
-  have hWpos : ∀ t, 0 < ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j) := fun t ↦
-    Finset.sum_pos (fun j _ ↦ Real.exp_pos _) ⟨⟨0, hK⟩, Finset.mem_univ _⟩
-  have hsplit : ∀ j, Real.exp (-η * ∑ s ∈ Finset.range (t + 1), lh s j) =
-      Real.exp (-η * ∑ s ∈ Finset.range t, lh s j) * Real.exp (-η * lh t j) := fun j ↦ by
-    rw [Finset.sum_range_succ, mul_add, Real.exp_add]
-  have hZ : ∑ j, p t j * Real.exp (-η * lh t j) =
-      (∑ j, Real.exp (-η * ∑ s ∈ Finset.range (t + 1), lh s j)) /
-        ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j) := by
-    rw [Finset.sum_div]
-    refine Finset.sum_congr rfl fun j _ ↦ ?_
-    rw [hp, hsplit]; ring
-  rw [hZ, hp (t + 1), hp t, hsplit]
-  have h0 := (hWpos t).ne'
-  have h1 := (hWpos (t + 1)).ne'
-  generalize (∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j)) = W0 at *
-  generalize (∑ j, Real.exp (-η * ∑ s ∈ Finset.range (t + 1), lh s j)) = W1 at *
-  field_simp
-
 /-- Conditional-probability identity: if `P[1_{A = j} | 𝓕] = p` and `g` is bounded and
 `𝓕`-measurable, then `∫ 1_{A = j} g = ∫ p g`. -/
 theorem integral_indicator_mul_eq_of_condExp {Ω : Type*} {m : MeasurableSpace Ω}
@@ -430,15 +194,78 @@ def exp3EstimatedCumulativeLoss {Ω : Type*} {K : ℕ} (loss : ℕ → Fin K →
     (p : ℕ → Ω → Fin K → ℝ) (A : ℕ → Ω → Fin K) (t : ℕ) (i : Fin K) (ω : Ω) : ℝ :=
   ∑ s ∈ Finset.range t, if A s ω = i then loss s i / p s ω i else 0
 
-/-- GAPS 107.52: expected Exp3 regret against an oblivious loss sequence. -/
-theorem exp3_expected_regret_le {Ω : Type*} [MeasurableSpace Ω]
+/-- The deterministic lower bound for Exp3 probabilities: `c₀ = 1/K` and
+`c_{t+1} = c_t exp(-η / c_t)`. -/
+def exp3WeightLowerBound (K : ℕ) (η : ℝ) : ℕ → ℝ
+  | 0 => (K : ℝ)⁻¹
+  | t + 1 => exp3WeightLowerBound K η t * Real.exp (-η / exp3WeightLowerBound K η t)
+
+/-- The Exp3 lower-bound sequence is positive. -/
+theorem exp3WeightLowerBound_pos {K : ℕ} (hK : 0 < K) (η : ℝ) (t : ℕ) :
+    0 < exp3WeightLowerBound K η t := by
+  induction t with
+  | zero => simp only [exp3WeightLowerBound]; positivity
+  | succ t ih => exact mul_pos ih (Real.exp_pos _)
+
+/-- Exponential weights with nonnegative estimated losses `ℓ̂ t j ≤ 1 / p t j` stay above the
+positive sequence `exp3WeightLowerBound K η`. -/
+theorem exp3WeightLowerBound_le {K : ℕ} (hK : 0 < K) {η : ℝ} (hη : 0 < η)
+    (lh p : ℕ → Fin K → ℝ) (hlh0 : ∀ t j, 0 ≤ lh t j) (hlh1 : ∀ t j, lh t j ≤ 1 / p t j)
+    (hp : ∀ t i, p t i = Real.exp (-η * ∑ s ∈ Finset.range t, lh s i) /
+      ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j)) (t : ℕ) :
+    ∀ j, exp3WeightLowerBound K η t ≤ p t j := by
+  have hne : (Finset.univ : Finset (Fin K)).Nonempty := ⟨⟨0, hK⟩, Finset.mem_univ _⟩
+  have hW : ∀ t, 0 < ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j) := fun t ↦
+    Finset.sum_pos (fun j _ ↦ Real.exp_pos _) hne
+  have hpos : ∀ t i, 0 < p t i := fun t i ↦ by
+    rw [hp]; exact div_pos (Real.exp_pos _) (hW t)
+  have hsum : ∀ t, ∑ i, p t i = 1 := fun t ↦ by
+    simp_rw [hp t]; rw [← Finset.sum_div, div_self (hW t).ne']
+  induction t with
+  | zero =>
+    intro j
+    rw [hp 0 j]
+    simp [exp3WeightLowerBound]
+  | succ t ih =>
+    set c := exp3WeightLowerBound K η t
+    have hc := exp3WeightLowerBound_pos hK η t
+    intro j
+    have hup := exponentialWeights_succ hK η lh p hp t j
+    have hZpos : 0 < ∑ j', p t j' * Real.exp (-η * lh t j') :=
+      Finset.sum_pos (fun j' _ ↦ mul_pos (hpos t j') (Real.exp_pos _)) hne
+    have hZ1 : ∑ j', p t j' * Real.exp (-η * lh t j') ≤ 1 := by
+      rw [← hsum t]
+      refine Finset.sum_le_sum fun j' _ ↦ ?_
+      calc p t j' * Real.exp (-η * lh t j') ≤ p t j' * 1 :=
+            mul_le_mul_of_nonneg_left (Real.exp_le_one_iff.mpr (by
+              nlinarith [hlh0 t j'])) (hpos t j').le
+        _ = p t j' := mul_one _
+    have hge : p t j * Real.exp (-η * lh t j) ≤ p (t + 1) j := by
+      rw [hup]
+      exact (le_div_iff₀ hZpos).mpr (mul_le_of_le_one_right
+        (mul_nonneg (hpos t j).le (Real.exp_pos _).le) hZ1)
+    have hexp : Real.exp (-η / c) ≤ Real.exp (-η * lh t j) := by
+      apply Real.exp_le_exp.mpr
+      have h1 : lh t j ≤ 1 / c := (hlh1 t j).trans (one_div_le_one_div_of_le hc (ih j))
+      rw [neg_div, neg_mul, neg_le_neg_iff, ← mul_one_div]
+      exact mul_le_mul_of_nonneg_left h1 hη.le
+    calc exp3WeightLowerBound K η (t + 1) = c * Real.exp (-η / c) := rfl
+      _ ≤ p t j * Real.exp (-η * lh t j) :=
+          mul_le_mul (ih j) hexp (Real.exp_pos _).le (hpos t j).le
+      _ ≤ _ := hge
+
+/-- GAPS 107.52: expected Exp3 regret against an oblivious loss sequence. The arm `A t` is
+drawn with conditional probabilities `p t` given the past `F t`, and `p t` is the exponential-
+weights distribution, with learning rate `η = √(2 log K / (T K))`, of the importance-weighted
+cumulative estimated losses. Then the expected regret against every fixed arm over `T` rounds is
+at most `√(2 T K log K)`. -/
+theorem integral_regret_le_of_exp3 {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P]
     (F : Filtration ℕ (inferInstance : MeasurableSpace Ω))
     (K T : ℕ) (hK : 2 ≤ K) (hT : 0 < T)
     (loss : ℕ → Fin K → ℝ) (hloss : ∀ t i, loss t i ∈ Icc 0 1)
     (p : ℕ → Ω → Fin K → ℝ) (A : ℕ → Ω → Fin K)
     (hp : ∀ t, Measurable[F t] (p t)) (hA : ∀ t, Measurable[F (t + 1)] (A t))
-    (hpos : ∀ t ω i, 0 < p t ω i) (hsum : ∀ t ω, ∑ i, p t ω i = 1)
     (hchoice : ∀ t i, P[(fun ω ↦ if A t ω = i then (1 : ℝ) else 0) | F t] =ᵐ[P]
       fun ω ↦ p t ω i)
     (hrec : ∀ t ω i,
@@ -456,54 +283,27 @@ theorem exp3_expected_regret_le {Ω : Type*} [MeasurableSpace Ω]
   -- estimated losses
   set lh : ℕ → Ω → Fin K → ℝ := fun t ω j ↦ if A t ω = j then loss t j / p t ω j else 0
     with hlh_def
+  have hrec' : ∀ ω t j, p t ω j = Real.exp (-η * ∑ s ∈ Finset.range t, lh s ω j) /
+      ∑ j', Real.exp (-η * ∑ s ∈ Finset.range t, lh s ω j') := fun ω t j ↦ hrec t ω j
+  have hW : ∀ ω t, 0 < ∑ j', Real.exp (-η * ∑ s ∈ Finset.range t, lh s ω j') := fun _ _ ↦
+    Finset.sum_pos (fun j _ ↦ Real.exp_pos _) ⟨⟨0, hK0⟩, Finset.mem_univ _⟩
+  have hpos : ∀ t ω i, 0 < p t ω i := fun t ω i ↦ by
+    rw [hrec' ω t i]; exact div_pos (Real.exp_pos _) (hW ω t)
+  have hsum : ∀ t ω, ∑ i, p t ω i = 1 := fun t ω ↦ by
+    simp_rw [hrec' ω t]; rw [← Finset.sum_div, div_self (hW ω t).ne']
   have hlh0 : ∀ t ω j, 0 ≤ lh t ω j := fun t ω j ↦ by
     simp only [lh]; split_ifs
     · exact div_nonneg (hloss t j).1 (hpos t ω j).le
     · exact le_rfl
-  have hrec' : ∀ ω t j, p t ω j = Real.exp (-η * ∑ s ∈ Finset.range t, lh s ω j) /
-      ∑ j', Real.exp (-η * ∑ s ∈ Finset.range t, lh s ω j') := fun ω t j ↦ hrec t ω j
-  -- deterministic lower bounds on the probabilities
-  obtain ⟨c, hc0, hcs⟩ : ∃ c : ℕ → ℝ, c 0 = (K : ℝ)⁻¹ ∧
-      ∀ t, c (t + 1) = c t * Real.exp (-η / c t) :=
-    ⟨fun t ↦ Nat.rec (K : ℝ)⁻¹ (fun _ x ↦ x * Real.exp (-η / x)) t, rfl, fun _ ↦ rfl⟩
   have hlh1 : ∀ t ω j, lh t ω j ≤ 1 / p t ω j := fun t ω j ↦ by
     simp only [lh]; split_ifs
     · exact div_le_div_of_nonneg_right (hloss t j).2 (hpos t ω j).le
     · exact (one_div_pos.mpr (hpos t ω j)).le
-  have hc : ∀ t, 0 < c t ∧ ∀ ω j, c t ≤ p t ω j := by
-    intro t
-    induction t with
-    | zero =>
-      refine ⟨by rw [hc0]; positivity, fun ω j ↦ ?_⟩
-      rw [hc0, hrec' ω 0 j]
-      simp
-    | succ t ih =>
-      refine ⟨by rw [hcs]; exact mul_pos ih.1 (Real.exp_pos _), fun ω j ↦ ?_⟩
-      have hup := exponentialWeights_succ hK0 η (lh · ω) (fun t j ↦ p t ω j) (hrec' ω) t j
-      have hZpos : 0 < ∑ j', p t ω j' * Real.exp (-η * lh t ω j') :=
-        Finset.sum_pos (fun j' _ ↦ mul_pos (hpos t ω j') (Real.exp_pos _))
-          ⟨⟨0, hK0⟩, Finset.mem_univ _⟩
-      have hZ1 : ∑ j', p t ω j' * Real.exp (-η * lh t ω j') ≤ 1 := by
-        rw [← hsum t ω]
-        refine Finset.sum_le_sum fun j' _ ↦ ?_
-        calc p t ω j' * Real.exp (-η * lh t ω j') ≤ p t ω j' * 1 :=
-              mul_le_mul_of_nonneg_left (Real.exp_le_one_iff.mpr (by
-                nlinarith [hlh0 t ω j'])) (hpos t ω j').le
-          _ = p t ω j' := mul_one _
-      have hge : p t ω j * Real.exp (-η * lh t ω j) ≤ p (t + 1) ω j := by
-        rw [hup]
-        exact (le_div_iff₀ hZpos).mpr (mul_le_of_le_one_right
-          (mul_nonneg (hpos t ω j).le (Real.exp_pos _).le) hZ1)
-      have hexp : Real.exp (-η / c t) ≤ Real.exp (-η * lh t ω j) := by
-        apply Real.exp_le_exp.mpr
-        have h1 : lh t ω j ≤ 1 / c t :=
-          (hlh1 t ω j).trans (one_div_le_one_div_of_le ih.1 (ih.2 ω j))
-        rw [neg_div, neg_mul, neg_le_neg_iff, ← mul_one_div]
-        exact mul_le_mul_of_nonneg_left h1 hη.le
-      rw [hcs]
-      calc c t * Real.exp (-η / c t) ≤ p t ω j * Real.exp (-η * lh t ω j) :=
-            mul_le_mul (ih.2 ω j) hexp (Real.exp_pos _).le (hpos t ω j).le
-        _ ≤ _ := hge
+  -- deterministic lower bounds on the probabilities
+  set c := exp3WeightLowerBound K η
+  have hc : ∀ t, 0 < c t ∧ ∀ ω j, c t ≤ p t ω j := fun t ↦
+    ⟨exp3WeightLowerBound_pos hK0 η t, fun ω ↦ exp3WeightLowerBound_le hK0 hη (lh · ω)
+      (fun t j ↦ p t ω j) (fun t j ↦ hlh0 t ω j) (fun t j ↦ hlh1 t ω j) (hrec' ω) t⟩
   -- measurability
   have hpm : ∀ t j, Measurable[F t] fun ω ↦ p t ω j := fun t j ↦
     (measurable_pi_apply j).comp (hp t)

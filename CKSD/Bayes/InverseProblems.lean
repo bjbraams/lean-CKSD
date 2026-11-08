@@ -11,7 +11,23 @@ The white-noise model `Y = Af + εW` for a compact injective operator with singu
 indexed from `0`, the coordinate `j` standing for the index `j + 1` of the singular system.
 Squared `ℓ²` distances are taken in `ℝ≥0∞`, so that the risks and the Sobolev ellipsoid are
 meaningful for arbitrary sequences. The Gaussian-prior posterior is written in its conjugate
-closed form, coordinatewise independent normal. Sources: GAPS 104.20.
+closed form, coordinatewise independent normal.
+
+## Main definitions
+
+* `CKSD.inverseProblemLaw κ ε f`: the law of the sequence observation `Yⱼ = κⱼ fⱼ + ε Zⱼ`.
+* `CKSD.inverseProblemRisk`, `CKSD.inverseProblemSobolevBall`: the squared `ℓ²` risk of an
+  estimator and the Sobolev ellipsoid `∑ⱼ (j + 1)^{2β} fⱼ² ≤ R²`.
+* `CKSD.gaussianSeqPosterior κ β ε y`: the posterior under the Gaussian prior
+  `fⱼ ∼ N(0, (j + 1)^{-1-2β})`.
+
+## Main results
+
+* `CKSD.exists_minimax_rate_inverseProblem`: the minimax rate `ε^{2β/(2β+2a+1)}`.
+* `CKSD.tendsto_gaussianSeqPosterior_contraction`: posterior contraction of the Gaussian-prior
+  posterior.
+
+Sources: GAPS 104.20.
 -/
 
 @[expose] public section
@@ -51,11 +67,13 @@ def gaussianSeqPosterior (κ : ℕ → ℝ) (β ε : ℝ) (y : ℕ → ℝ) : Me
 def HasPolynomialSingularValues (κ : ℕ → ℝ) (a c₀ : ℝ) : Prop :=
   ∀ j : ℕ, c₀⁻¹ * ((j : ℝ) + 1) ^ (-a) ≤ κ j ∧ κ j ≤ c₀ * ((j : ℝ) + 1) ^ (-a)
 
-/-- GAPS 104.20: the minimax `ℓ²` rate `ε^r`, `r = 2β/(2β+2a+1)`, over a Sobolev ellipsoid in the
-sequence form of a mildly ill-posed linear inverse problem. Estimators are measurable maps of the
-whole observation sequence, and the constants depend only on `a`, `β`, `R`, and `c₀`. -/
-theorem minimax_rate_inverseProblem (a β R c₀ : ℝ) (ha : 0 ≤ a) (hβ : 0 < β) (hR : 0 < R)
-    (hc₀ : 1 ≤ c₀) :
+/-- GAPS 104.20: the minimax `ℓ²` rate over a Sobolev ellipsoid in a mildly ill-posed linear
+inverse problem is `ε^r` with `r = 2β/(2β+2a+1)`. There are constants `0 < c ≤ C`, depending only
+on `a`, `β`, `R`, and `c₀`, such that for every operator with polynomially decaying singular values
+and every noise level `ε ∈ (0, 1]` some measurable estimator has worst-case squared risk at most
+`(C ε^r)²` and every measurable estimator has worst-case squared risk at least `(c ε^r)²`. -/
+theorem exists_minimax_rate_inverseProblem (a β R c₀ : ℝ) (ha : 0 ≤ a) (hβ : 0 < β)
+    (hR : 0 < R) (hc₀ : 1 ≤ c₀) :
     let r := 2 * β / (2 * β + 2 * a + 1)
     ∃ c C : ℝ, 0 < c ∧ c ≤ C ∧ ∀ κ : ℕ → ℝ, HasPolynomialSingularValues κ a c₀ →
       ∀ ε ∈ Ioc (0 : ℝ) 1,

@@ -6,18 +6,31 @@ public import CKSD.Inference.Factorization
 public import CKSD.Inference.LaplaceDeterminacy
 
 /-!
-# Inference: conditional exponential families and conditional tests
+# Conditional exponential families and conditional tests
 
-Natural exponential families whose natural statistic splits as a pair `(T, S)`, the
-conditional law of `T` given `S` (GAPS 101.43), and the conditional UMPU tests in the presence
-of a nuisance parameter (GAPS 101.46).
+Natural exponential families whose natural statistic splits as a pair `(T, S)`: the conditional
+law of `T` given `S` and the conditional UMPU tests in the presence of a nuisance parameter.
 
-Sources: `GAPS.md`, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
+## Main definitions
+
+* `CKSD.splitLogPartition`, `CKSD.splitExponentialFamilyMeasure`: the family with density
+  `exp (⟪η, T⟫ + ⟪ζ, S⟫ - A(η, ζ))`.
+* `CKSD.conditionalExponentialKernel κ η`: the kernel `s ↦ exp (⟪η, t⟫ - A_s(η)) κ s (dt)`.
+* `CKSD.IsMinimalSplitStatistic`.
+
+## Main results
+
+* `CKSD.exists_kernel_conditional_exponential_family`: the conditional law of `T` given `S` is a
+  parameter-free exponential tilt depending only on `η` (GAPS 101.43).
+* `CKSD.isUniformlyMostPowerfulUnbiasedTest_conditional_two_sided` and
+  `CKSD.isUniformlyMostPowerfulUnbiasedTest_conditional_one_sided`: conditional UMPU tests with a
+  nuisance parameter (GAPS 101.46).
+
+## Implementation notes
+
 Conditional laws are expressed by Mathlib's measure-kernel composition `⊗ₘ` and conditional
-sizes by Mathlib's conditional expectation. The docstrings specify the scope of each result;
-`sorry` marks unfinished proofs.
+sizes by Mathlib's conditional expectation.
 -/
-
 @[expose] public section
 
 noncomputable section

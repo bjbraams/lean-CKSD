@@ -3,10 +3,28 @@ module
 public import CKSD.LinearModels.DirectedGraphical.Basic
 
 /-!
-# Marginal and interventional probability masses
+# Marginal and interventional masses; rules 1 and 2 of the do-calculus
 
-Finite marginal sums, truncated intervention factorizations, and action/observation exchange.
-A configuration supplies all values occurring in a query.
+For a law on the configurations `V → S` given by a mass function, marginal probabilities are
+finite sums. An intervention `do(X = x)` replaces the local masses of the vertices of `X` by
+point masses at `x` (`CKSD.intervenedLocalMass`); its joint mass is the truncated
+factorization `CKSD.interventionMass`, and its marginals are `CKSD.doMarginalMass`. A single
+configuration `b` supplies all values occurring in a query.
+
+## Main results
+
+* `CKSD.doMarginalMass_eq_marginalMass_of_nonDescendant`: an intervention does not change the
+  marginal law of the nondescendants of the intervened set.
+* Graph surgery lemmas relating back-door blocking, interception of directed paths, and
+  d-separation in `G_{\bar X}` and `G_{\underline X}`.
+* `CKSD.condDoMass_rule_one`, `CKSD.condDoMass_rule_two`: rules 1 (insertion and deletion of
+  observations) and 2 (action/observation exchange) of Pearl's do-calculus. Rule 3 is
+  `CKSD.condDoMass_rule_three` in `CKSD.LinearModels.DirectedGraphical.DoCalculus`.
+
+## References
+
+* J. Pearl, *Causality*, 2nd ed., Cambridge University Press, 2009, §3.4.
+
 Sources: GAPS 105.63 and 105.64.
 -/
 
@@ -387,16 +405,38 @@ theorem CausalGraph.not_isDescendant_removeIncoming_of_intercepts (G : CausalGra
     rw [Nat.sub_add_cancel h] at this
     exact this hi'
 
-/-! ### The global Markov property and the rules of the do-calculus -/
+/-! ### Rules 1 and 2 of the do-calculus -/
 
+/-- GAPS 105.64, rule 1 of the do-calculus (insertion and deletion of observations):
+if `Y` and `Z` are d-separated by `X ∪ W` in `G_{\bar X}`, then
+`P(y | do(x), z, w) = P(y | do(x), w)`. The conditioning event `{Z = z, W = w}` has positive
+interventional probability. -/
+theorem condDoMass_rule_one [Fintype V] [Fintype S] (G : CausalGraph V)
+    (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
+    (hpar : G.RespectsParents localMass) (X Y Z W : Finset V)
+    (hdisj : Disjoint X Y ∧ Disjoint X Z ∧ Disjoint X W ∧ Disjoint Y Z ∧ Disjoint Y W ∧
+      Disjoint Z W)
+    (hsep : (G.removeIncoming X).DSeparated Y Z ↑(X ∪ W)) (b : V → S)
+    (hpos : 0 < doMarginalMass localMass X b (Z ∪ W) b) :
+    condDoMass localMass X Y (Z ∪ W) b = condDoMass localMass X Y W b := by
+  obtain ⟨hXY, hXZ, hXW, hYZ, hYW, hZW⟩ := hdisj
+  have hci := condIndepMass_directedFactorizationMass_of_dSeparated (G.removeIncoming ↑X)
+    (intervenedLocalMass localMass X b) (isLocalMassFamily_intervenedLocalMass hloc X b)
+    (respectsParents_intervenedLocalMass G hpar X b) Y Z (X ∪ W)
+    (Finset.disjoint_union_right.2 ⟨hXY.symm, hYW⟩)
+    (Finset.disjoint_union_right.2 ⟨hXZ.symm, hZW⟩) hsep
+  rw [directedFactorizationMass_intervenedLocalMass] at hci
+  exact div_eq_div_of_condIndepMass (interventionMass_nonneg hloc X b)
+    (fun y hy ↦ interventionMass_support hy) hci hpos
 
-/-- Action/observation exchange (rule 2 of the do-calculus) under the single positivity
-condition `P(z, w | do(x)) > 0`: if `Y` and `Z` are d-separated by `X ∪ W` in
-`G_{\bar X \underline Z}`, then `P(y | do(x), do(z), w) = P(y | do(x), z, w)`.
+/-- GAPS 105.64, rule 2 of the do-calculus (action/observation exchange):
+if `Y` and `Z` are d-separated by `X ∪ W` in `G_{\bar X \underline Z}`, then
+`P(y | do(x), do(z), w) = P(y | do(x), z, w)`. The event `(z,w)` has positive
+probability under `do(x)`.
 
 The proof compares both sides with the mass in which the children of `Z` read the fixed values
 of `b` on `Z`; that mass factorizes along `G_{\bar X \underline Z}`. -/
-theorem condDoMass_union_eq_of_dSeparated [Fintype V] [Fintype S] (G : CausalGraph V)
+theorem condDoMass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
     (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (X Y Z W : Finset V)
     (hdisj : Disjoint X Y ∧ Disjoint X Z ∧ Disjoint X W ∧ Disjoint Y Z ∧ Disjoint Y W ∧

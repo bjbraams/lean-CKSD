@@ -12,13 +12,27 @@ public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.PlanInte
 public import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Map
 
 /-!
-# Bayes: Dynamics
+# Langevin dynamics: invariance, contraction, entropy decay, and score matching
 
-Sources: `GAPS.md`, `SYNOPSIS104.md`, and `STRUCTURE104.md`.
-Declarations adapted from this project's section drafts.
-The barycentric action bound uses TauCeti's displacement interpolation and Benamou–Brenier
-lower bound, with Mathlib's conditional-expectation uniqueness and Jensen inequality.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Deterministic and integral identities underlying Langevin sampling and score-based generative
+models.
+
+## Main results
+
+* `CKSD.integral_langevin_generator_eq_zero`: the Gibbs law `e^{-V}/Z` on `ℝ` is invariant for the
+  scalar Langevin generator `f'' - V' f'` on compactly supported test functions (GAPS 104.37).
+* `CKSD.dist_synchronous_langevin_le_exp`: two solutions of `dX = b(X) dt + dW` driven by the same
+  noise contract at rate `m` when `b` is `m`-monotone, `⟪b x - b y, x - y⟫ ≥ m ‖x - y‖²`
+  (GAPS 104.38).
+* `CKSD.le_exp_neg_mul_of_hasDerivAt_neg_of_two_mul_le`: the Grönwall step behind exponential
+  entropy decay: `E' = -I` and `2m E ≤ I` give `E t ≤ e^{-2mt} E 0` (GAPS 104.41).
+* `CKSD.integral_sq_sub_score_div_two_eq`: Hyvärinen's score-matching identity (GAPS 104.64).
+* `CKSD.wasserstein_le_barycentric_velocity_action`: the barycentric velocity of a straight
+  coupling has kinetic action between `W₂²` of the marginals and the transport cost of the
+  coupling (SYNOPSIS 104.72).
+
+The barycentric action bound uses TauCeti's displacement interpolation and Benamou–Brenier lower
+bound, with Mathlib's conditional-expectation uniqueness and Jensen inequality.
 -/
 
 @[expose] public section
@@ -32,13 +46,14 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- GAPS 104.37, the scalar Langevin generator has zero Gibbs expectation on smooth tests. -/
+/-- GAPS 104.37: invariance of the Gibbs law for the scalar Langevin generator. For a `C¹`
+potential `V` and a compactly supported `C²` test function `f`,
+`∫ (f'' - V' f') e^{-V} / Z = 0` with `Z = ∫ e^{-V}`. The identity holds for the unnormalized
+weight `e^{-V}`, so it needs no integrability of `e^{-V}`. -/
 theorem integral_langevin_generator_eq_zero (V f : ℝ → ℝ) (hV : ContDiff ℝ 1 V)
     (hf : ContDiff ℝ 2 f) (hfc : HasCompactSupport f) :
-    let Z := ∫ x, Real.exp (-V x);
-    ∀ (hZ : 0 < Z),
-    ∀ (hi : Integrable (fun x ↦ Real.exp (-V x)) volume),
-    (∫ x, (deriv (deriv f) x - deriv V x * deriv f x) * Real.exp (-V x) / Z) = 0 := by
+    (∫ x, (deriv (deriv f) x - deriv V x * deriv f x) * Real.exp (-V x) /
+      ∫ y, Real.exp (-V y)) = 0 := by
   let F : ℝ → ℝ := deriv f * (fun x ↦ Real.exp (-V x))
   have hF : ContDiff ℝ 1 F := hf.deriv'.mul hV.neg.exp
   have hFc : HasCompactSupport F := hfc.deriv.mul_right
@@ -46,7 +61,7 @@ theorem integral_langevin_generator_eq_zero (V f : ℝ → ℝ) (hV : ContDiff �
       ((deriv (deriv f) x - deriv V x * deriv f x) * Real.exp (-V x)) x := by
     have hd := (hf.differentiable_deriv_two x).hasDerivAt.mul
       ((hV.differentiable (by norm_num) x).hasDerivAt.neg.exp)
-    convert hd using 1 <;> simp only [Pi.neg_apply] <;> ring
+    convert hd using 1; simp only [Pi.neg_apply]; ring
   have hiF : Integrable F := hF.continuous.integrable_of_hasCompactSupport hFc
   have hidi : Integrable (fun x ↦
       (deriv (deriv f) x - deriv V x * deriv f x) * Real.exp (-V x)) := by
@@ -55,12 +70,12 @@ theorem integral_langevin_generator_eq_zero (V f : ℝ → ℝ) (hV : ContDiff �
     convert hdFi using 1
     funext x
     exact (hder x).deriv.symm
-  dsimp only
-  intro hZ hi
   rw [integral_div, integral_eq_zero_of_hasDerivAt_of_integrable hder hidi hiF, zero_div]
 
-/-- GAPS 104.38, pathwise synchronous exponential estimate from a common additive forcing.
-The monotonicity coefficient may be any real number; a positive coefficient gives contraction. -/
+/-- GAPS 104.38: synchronous coupling. If `x` and `y` solve `x t = x 0 - ∫₀ᵗ b(x s) ds + W t`
+with the same continuous forcing `W` (so that their difference solves the integral equation below)
+and `⟪b x - b y, x - y⟫ ≥ m ‖x - y‖²`, then `‖x t - y t‖ ≤ e^{-mt} ‖x 0 - y 0‖`. The coefficient `m`
+may be any real number; `m > 0` gives contraction. -/
 theorem dist_synchronous_langevin_le_exp {d : ℕ}
     (b : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (hb : Continuous b)
     (m : ℝ)
@@ -125,28 +140,11 @@ theorem dist_synchronous_langevin_le_exp {d : ℕ}
           mul_le_mul_of_nonneg_left hbound (by positivity)
   exact (pow_le_pow_iff_left₀ (norm_nonneg _) (by positivity) two_ne_zero).1 hsq
 
-/-- GAPS 104.40, almost-sure Robbins–Monro convergence under bounded conditional noise variance. -/
-theorem ae_tendsto_robbins_monro {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
-    (μ : Measure Ω) [IsProbabilityMeasure μ]
-    (F : Filtration ℕ (inferInstance : MeasurableSpace Ω))
-    (θ M : ℕ → Ω → EuclideanSpace ℝ (Fin d))
-    (ha : ∀ n, Measurable[F n] (θ n)) (hM : ∀ n, Measurable[F n] (M n))
-    (hθ2 : MemLp (θ 0) 2 μ) (hM2 : ∀ n, MemLp (M n) 2 μ)
-    (hzero : ∀ n, μ[M (n + 1) | F n] =ᵐ[μ] fun _ ↦ 0)
-    (K : ℝ) (hnoise : ∀ n, μ[(fun ω ↦ ‖M (n + 1) ω‖ ^ 2) | F n] ≤ᵐ[μ] fun _ ↦ K)
-    (h : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (L : ℝ≥0) (hL : LipschitzWith L h) (θ₀ : EuclideanSpace ℝ (Fin d))
-    (hz : h θ₀ = 0) (m : ℝ) (hm : 0 < m)
-    (hdrift : ∀ x, m * ‖x - θ₀‖ ^ 2 ≤ inner ℝ (x - θ₀) (h x))
-    (a : ℕ → ℝ) (hapos : ∀ n, 0 < a n) (ha2 : Summable (fun n ↦ a n ^ 2))
-    (haDiverges : Tendsto (fun n ↦ ∑ k ∈ Finset.range n, a k) atTop atTop)
-    (hrec : ∀ n, ∀ᵐ ω ∂μ, θ (n + 1) ω = θ n ω - a n • (h (θ n ω) + M (n + 1) ω)) :
-    ∀ᵐ ω ∂μ, Tendsto (fun n ↦ θ n ω) atTop (𝓝 θ₀) := by
-  sorry
-
-/-- GAPS 104.41, the exponential estimate from dissipation and a log-Sobolev bound.
-A positive coefficient gives entropy decay; the estimate also holds for real coefficients. -/
-theorem entropy_le_exp_of_log_sobolev (E I : ℝ → ℝ) (m : ℝ)
+/-- GAPS 104.41: the Grönwall step of exponential entropy decay. If `E` is continuous on `[0, ∞)`
+with `E' = -I` on `(0, ∞)` (dissipation of relative entropy by Fisher information) and
+`2m E ≤ I` (a logarithmic Sobolev inequality), then `E t ≤ e^{-2mt} E 0` for `t ≥ 0`. The
+coefficient `m` may be any real number. -/
+theorem le_exp_neg_mul_of_hasDerivAt_neg_of_two_mul_le (E I : ℝ → ℝ) (m : ℝ)
     (hE : ContinuousOn E (Ici 0))
     (hder : ∀ t > 0, HasDerivAt E (-I t) t)
     (hlsi : ∀ t > 0, 2 * m * E t ≤ I t) :
@@ -157,7 +155,7 @@ theorem entropy_le_exp_of_log_sobolev (E I : ℝ → ℝ) (m : ℝ)
     have he : HasDerivAt (fun s : ℝ ↦ Real.exp (2 * m * s))
         (Real.exp (2 * m * t) * (2 * m)) t := by
       simpa using ((hasDerivAt_id t).const_mul (2 * m)).exp
-    convert he.mul (hder t ht) using 1 <;> ring
+    convert he.mul (hder t ht) using 1; ring
   have hcont : Continuous (fun t : ℝ ↦ Real.exp (2 * m * t)) := by fun_prop
   have hanti : AntitoneOn F (Ici 0) := by
     apply antitoneOn_of_deriv_nonpos (f := F) (convex_Ici 0) (hcont.continuousOn.mul hE)
@@ -174,11 +172,14 @@ theorem entropy_le_exp_of_log_sobolev (E I : ℝ → ℝ) (m : ℝ)
   have hscaled := mul_le_mul_of_nonneg_left hbound (Real.exp_pos (-2 * m * t)).le
   have hcancel : Real.exp (-2 * m * t) * Real.exp (2 * m * t) = 1 := by
     rw [← Real.exp_add]
-    convert Real.exp_zero using 1 <;> ring
+    convert Real.exp_zero using 1; ring
   rwa [← mul_assoc, hcancel, one_mul] at hscaled
 
-/-- GAPS 104.64, scalar score-matching identity for compactly supported fitted scores. -/
-theorem score_matching_risk_identity (P : Measure ℝ) [IsProbabilityMeasure P] (p g : ℝ → ℝ)
+/-- GAPS 104.64: Hyvärinen's score-matching identity on `ℝ`. For a positive `C¹` density `p` with
+square-integrable score `p'/p` and a compactly supported `C¹` candidate score `g`,
+`𝔼[(g - p'/p)²/2] = 𝔼[g²/2 + g'] + 𝔼[(p'/p)²/2]`, so the score-matching risk is minimized
+without knowledge of `p'/p`. -/
+theorem integral_sq_sub_score_div_two_eq (P : Measure ℝ) [IsProbabilityMeasure P] (p g : ℝ → ℝ)
     (hp : HasDensity P volume p) (hpos : ∀ x, 0 < p x)
     (hp1 : ContDiff ℝ 1 p) (hg : ContDiff ℝ 1 g) (hgc : HasCompactSupport g)
     (hscore : Integrable (fun x ↦ (deriv p x / p x) ^ 2) P) :
@@ -250,8 +251,9 @@ theorem score_matching_risk_identity (P : Measure ℝ) [IsProbabilityMeasure P] 
   simp only [Pi.add_apply] at hsplit
   rw [hsplit, integral_add hA hB, hcross, sub_zero]
 
-/-- Slice conditional expectations give the conditional expectation on the product space,
-when the conditioning map records the time as well as the observation. -/
+/-- Slice conditional expectations give the conditional expectation on the product space: if
+`v t (X t ·)` is a version of `𝔼[W | X t]` for `ρ`-almost every `t`, then `(t, ω) ↦ v t (X t ω)` is
+a version of `𝔼[W | (t, X t)]` under `ρ ⊗ π`. -/
 theorem condExp_prod_of_condExp_slices
     {T Ω Y E : Type*} [MeasurableSpace T] [MeasurableSpace Ω] [MeasurableSpace Y]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
@@ -302,7 +304,10 @@ theorem condExp_prod_of_condExp_slices
     setIntegral_congr_ae hAt' (ht.mono fun ω hω _ ↦ hω),
     setIntegral_condExp hXt.comap_le hW hAt]
 
-/-- SYNOPSIS 104.72: action bounds for the barycentric velocity of an arbitrary straight coupling. -/
+/-- SYNOPSIS 104.72: action bounds for the barycentric velocity of a straight coupling. For a
+coupling `π` with finite second moment and `X_t = (1 - t) X₀ + t X₁`, if `v t (X_t)` is a version
+of `𝔼[X₁ - X₀ | X_t]` for every `t ∈ [0, 1]`, then
+`W₂²(π₀, π₁) ≤ ∫₀¹ 𝔼‖v t (X_t)‖² dt ≤ 𝔼‖X₁ - X₀‖²`. -/
 theorem wasserstein_le_barycentric_velocity_action {d : ℕ}
     (π : Measure (EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure π] (h2 : MemLp id 2 π)
@@ -310,7 +315,7 @@ theorem wasserstein_le_barycentric_velocity_action {d : ℕ}
     (hv : Measurable (Function.uncurry v)) :
     let Xt := fun t (z : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d)) ↦
       (1 - t) • z.1 + t • z.2;
-    ∀ (hcond : ∀ t ∈ Icc (0 : ℝ) 1,
+    ∀ (_hcond : ∀ t ∈ Icc (0 : ℝ) 1,
       (fun z ↦ v t (Xt t z)) =ᵐ[π]
         π[(fun z ↦ z.2 - z.1) | (inferInstance : MeasurableSpace
           (EuclideanSpace ℝ (Fin d))).comap (Xt t)]),

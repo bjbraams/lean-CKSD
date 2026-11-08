@@ -66,11 +66,11 @@ def johnstoneScale (n p : ℕ) : ℝ :=
     ((n - 1 : ℝ) ^ (-1 / 2 : ℝ) + (p : ℝ) ^ (-1 / 2 : ℝ)) ^ (1 / 3 : ℝ) / n
 
 /-- GAPS 103.38: Johnstone's Tracy–Widom limit for the largest eigenvalue of a white Wishart
-matrix as `n, p → ∞` with `p / n → y ∈ (0, ∞)`, in the form of convergence of distribution
-functions to the continuous limit `F₁`. -/
+matrix as `n → ∞` with `p / n → y ∈ (0, ∞)` (so that `p → ∞` as well), in the form of
+convergence of distribution functions to the continuous limit `F₁`. -/
 theorem tendsto_largestSampleCovarianceEigenvalue_tracyWidom
     (q : ℝ → ℝ) (hq : IsHastingsMcLeodSolution q)
-    (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop) (hp : Tendsto p atTop atTop)
+    (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop)
     (y : ℝ) (hy : 0 < y) (hpn : Tendsto (fun k ↦ (p k : ℝ) / n k) atTop (𝓝 y)) (s : ℝ) :
     Tendsto (fun k ↦ (standardGaussianMatrixLaw (n k) (p k)).real
       {X | (largestSampleCovarianceEigenvalue X - johnstoneCenter (n k) (p k)) /
@@ -87,10 +87,11 @@ def spikedDataMatrix (α : ℝ) (n p : ℕ) (ω : ℕ × ℕ → ℝ) : Fin n �
   fun i j ↦ (if j.val = 0 then Real.sqrt α else 1) * ω (i.val, j.val)
 
 /-- GAPS 103.38, subcritical spike: for `1 < α ≤ 1 + √y` the largest sample covariance
-eigenvalue converges almost surely to the bulk edge `(1 + √y) ^ 2`. Scope: diagonal spiked
+eigenvalue converges almost surely to the bulk edge `(1 + √y) ^ 2`. Here `n → ∞` and
+`p / n → y > 0` (which force `p → ∞`). Scope: diagonal spiked
 covariance on the array coupling described in the module header. -/
 theorem ae_tendsto_largestEigenvalue_spiked_subcritical
-    (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop) (hp : Tendsto p atTop atTop)
+    (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop)
     (y : ℝ) (hy : 0 < y) (hpn : Tendsto (fun k ↦ (p k : ℝ) / n k) atTop (𝓝 y))
     (α : ℝ) (hα : 1 < α) (hαy : α ≤ 1 + Real.sqrt y) :
     ∀ᵐ ω ∂standardGaussianArrayLaw, Tendsto
@@ -99,10 +100,11 @@ theorem ae_tendsto_largestEigenvalue_spiked_subcritical
   sorry
 
 /-- GAPS 103.38, supercritical spike: for `α > 1 + √y` the largest sample covariance
-eigenvalue converges almost surely to `α + y α / (α - 1)`. Scope: diagonal spiked covariance
+eigenvalue converges almost surely to `α + y α / (α - 1)`. Here `n → ∞` and `p / n → y > 0`
+(which force `p → ∞`). Scope: diagonal spiked covariance
 on the array coupling described in the module header. -/
 theorem ae_tendsto_largestEigenvalue_spiked_supercritical
-    (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop) (hp : Tendsto p atTop atTop)
+    (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop)
     (y : ℝ) (hy : 0 < y) (hpn : Tendsto (fun k ↦ (p k : ℝ) / n k) atTop (𝓝 y))
     (α : ℝ) (hαy : 1 + Real.sqrt y < α) :
     ∀ᵐ ω ∂standardGaussianArrayLaw, Tendsto

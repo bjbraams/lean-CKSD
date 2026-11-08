@@ -1,96 +1,64 @@
 module
 
-public import CKSD.LinearModels.Basic
-public import CKSD.Asymptotics.Basic
-public import CKSD.Nonparametric.Basic
-public import CKSD.Inference.Moments
-public import TauCeti.Probability.Distributions.ChiSquared.Basic
-public import TauCeti.Probability.Distributions.StudentT.Basic
-public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
+public import CKSD.LinearModels.CausalEfficiency
 public import Mathlib.Probability.Independence.Integration
 
 /-!
-# LinearModels: CausalAndSurvey
+# Identification of causal effects from observational and instrumental data
 
-Sources: `GAPS.md`, `SYNOPSIS105.md`, and `STRUCTURE105.md`.
-Declarations adapted from this project's section drafts.
-The finite-design moment identities use Mathlib's indicator and finite-sum integrals
-and its second-moment formula for variance. The Wald-ratio identity uses Mathlib's
-`IndepFun.integral_fun_mul_eq_mul_integral` for the instrument strata.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Potential outcomes `Y a` (for a binary treatment `a`) are ordinary random variables on the
+sample space; the observed outcome is `Y (A ω) ω`. Covariates take finitely many values, so that
+conditional means and probabilities given a covariate stratum are quotients of integrals.
+
+## Main definitions
+
+* `CKSD.instrumentStratumMean`: the mean of a variable on an instrument stratum `{Z = z}`.
+
+## Main results
+
+* `CKSD.integral_potentialOutcome_eq_sum_stratumOutcomeMean`,
+  `CKSD.integral_potentialOutcome_eq_integral_div_propensity`: under mean ignorability and
+  overlap, the mean potential outcome is given by the adjustment formula and by inverse
+  propensity weighting (GAPS 105.47).
+* `CKSD.integral_treatmentEffectInfluence_sub_eq_sum_mul`: the bias of the augmented inverse
+  probability weighted functional is a product of the outcome-regression and propensity errors
+  (double robustness, GAPS 105.49).
+* `CKSD.wald_ratio_eq_complier_average_effect`: under instrument independence and
+  monotonicity, the Wald ratio is the average treatment effect on compliers (Imbens–Angrist,
+  GAPS 105.50). Its proof uses Mathlib's `IndepFun.integral_fun_mul_eq_mul_integral` for the
+  instrument strata.
+
+## References
+
+* G. W. Imbens and J. D. Angrist, *Identification and estimation of local average treatment
+  effects*, Econometrica 62 (1994).
+* J. M. Robins, A. Rotnitzky and L. P. Zhao, *Estimation of regression coefficients when some
+  regressors are not always observed*, J. Amer. Statist. Assoc. 89 (1994).
 -/
 
 @[expose] public section
 
 noncomputable section
 
-open MeasureTheory ProbabilityTheory Filter Set
-open scoped ENNReal NNReal Topology BigOperators MatrixOrder Matrix.Norms.L2Operator
+open MeasureTheory ProbabilityTheory Set
 
 namespace CKSD
 
-open scoped CKSD
-
-attribute [local instance] Classical.propDecidable
-
--- Use the common finite-sample measurable structure.
-attribute [local instance] finiteSampleMeasurableSpace
-
-/-- Every real statistic on the finite sample space has finite moments under a finite design. -/
-theorem memLp_finite_sample {N : ℕ} (P : Measure (Finset (Fin N))) [IsFiniteMeasure P]
-    (f : Finset (Fin N) → ℝ) (p : ℝ≥0∞) : MemLp f p P := by
-  exact eLpNorm_lt_top_of_finite (measurable_of_countable f).aestronglyMeasurable
-
-/-- Integrating a sum over a random sample uses the first-order inclusion probabilities. -/
-theorem integral_sample_sum {N : ℕ} (P : Measure (Finset (Fin N))) [IsFiniteMeasure P]
-    (b : Fin N → ℝ) :
-    (∫ s, ∑ i ∈ s, b i ∂P) = ∑ i, P.real {s | i ∈ s} * b i := by
-  classical
-  have hfun : (fun s : Finset (Fin N) ↦ ∑ i ∈ s, b i) =
-      (fun s ↦ ∑ i, if i ∈ s then b i else 0) := by
-    funext s
-    simp
-  rw [hfun, integral_finsetSum _ (fun i _ ↦ (memLp_finite_sample P _ 1).integrable le_rfl)]
-  apply Finset.sum_congr rfl
-  intro i _
-  simpa only [Set.indicator, mem_ofPred_eq, smul_eq_mul] using
-    (integral_indicator_const (μ := P) (b i)
-      (Set.to_countable {s : Finset (Fin N) | i ∈ s}).measurableSet)
-
-/-- Integrating a double sum over a random sample uses joint inclusion probabilities. -/
-theorem integral_sample_pair_sum {N : ℕ} (P : Measure (Finset (Fin N))) [IsFiniteMeasure P]
-    (b : Fin N → Fin N → ℝ) :
-    (∫ s, ∑ i ∈ s, ∑ j ∈ s, b i j ∂P) =
-      ∑ i, ∑ j, P.real {s | i ∈ s ∧ j ∈ s} * b i j := by
-  classical
-  have hfun : (fun s : Finset (Fin N) ↦ ∑ i ∈ s, ∑ j ∈ s, b i j) =
-      (fun s ↦ ∑ i, ∑ j, if i ∈ s ∧ j ∈ s then b i j else 0) := by
-    funext s
-    simp only [ite_and]
-    simp
-  rw [hfun, integral_finsetSum _ (fun i _ ↦ (memLp_finite_sample P _ 1).integrable le_rfl)]
-  apply Finset.sum_congr rfl
-  intro i _
-  rw [integral_finsetSum _ (fun j _ ↦ (memLp_finite_sample P _ 1).integrable le_rfl)]
-  apply Finset.sum_congr rfl
-  intro j _
-  simpa only [Set.indicator, mem_ofPred_eq, smul_eq_mul] using
-    (integral_indicator_const (μ := P) (b i j)
-      (Set.to_countable {s : Finset (Fin N) | i ∈ s ∧ j ∈ s}).measurableSet)
-
-/-- GAPS 105.47, finite-stratum potential-outcome identification under mean ignorability. -/
-theorem treatment_effect_identification_of_conditional_independence
-    {Ω : Type*} [MeasurableSpace Ω] {k : ℕ}
-    (P : Measure Ω) (X : Ω → Fin k) (A : Ω → Bool)
+/-- Identification of a potential-outcome mean in finite strata, with the stratum masses,
+propensities and outcome means as local definitions (both conclusions together). -/
+private theorem integral_potentialOutcome_aux
+    {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
+    [MeasurableSingletonClass ι]
+    (P : Measure Ω) (X : Ω → ι) (A : Ω → Bool)
     (hX : Measurable X) (hA : Measurable A) (Y : Bool → Ω → ℝ)
     (hY : ∀ a, Integrable (Y a) P) (a : Bool) :
     let p := fun x ↦ P.real {ω | X ω = x};
     let e := fun x ↦ P.real {ω | X ω = x ∧ A ω = a} / p x;
     let m := fun x ↦ (∫ ω in {ω | X ω = x ∧ A ω = a}, Y a ω ∂P) / (p x * e x);
-    ∀ (hp : ∀ x, 0 < p x),
-    ∀ (he : ∀ x, 0 < e x),
-    ∀ (hign : ∀ x, (∫ ω in {ω | X ω = x ∧ A ω = a}, Y a ω ∂P) =
-      e x * ∫ ω in {ω | X ω = x}, Y a ω ∂P),
+    (∀ x, 0 < p x) →
+    (∀ x, 0 < e x) →
+    (∀ x, (∫ ω in {ω | X ω = x ∧ A ω = a}, Y a ω ∂P) =
+      e x * ∫ ω in {ω | X ω = x}, Y a ω ∂P) →
     (∫ ω, Y a ω ∂P) = ∑ x, p x * m x ∧
       (∫ ω, Y a ω ∂P) = ∫ ω, (if A ω = a then Y (A ω) ω else 0) / e (X ω) ∂P := by
   intro p e m hp he hign
@@ -135,19 +103,19 @@ theorem treatment_effect_identification_of_conditional_independence
       setIntegral_indicator hAs, ← hstrat x, div_eq_inv_mul]
     rfl
 
-/-- GAPS 105.49, finite-stratum double-robustness bias identity.
-The causal identification and cross-fitting conclusions require the additional
-frameworks described in the source; this is the observable-moment identity. -/
-theorem doubly_robust_bias_identity {Ω : Type*} [MeasurableSpace Ω] {k : ℕ}
-    (P : Measure Ω) [IsProbabilityMeasure P] (X : Ω → Fin k) (A : Ω → Bool)
+/-- The double-robustness bias identity in finite strata, with the stratum masses and
+propensities as local definitions. -/
+private theorem integral_treatmentEffectInfluence_aux {Ω : Type*} [MeasurableSpace Ω]
+    {ι : Type*} [Fintype ι] [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    (P : Measure Ω) [IsProbabilityMeasure P] (X : Ω → ι) (A : Ω → Bool)
     (hX : Measurable X) (hA : Measurable A) (Y : Ω → ℝ) (hY : Integrable Y P)
-    (m₁ m₀ a₁ a₀ e : Fin k → ℝ) :
+    (m₁ m₀ a₁ a₀ e : ι → ℝ) :
     let p := fun x ↦ P.real {ω | X ω = x};
     let e₀ := fun x ↦ P.real {ω | X ω = x ∧ A ω = true} / p x;
-    ∀ (hp : ∀ x, 0 < p x),
-    ∀ (he : ∀ x, e x ∈ Ioo 0 1),
-    ∀ (hcond₁ : ∀ x, (∫ ω in {ω | X ω = x ∧ A ω = true}, Y ω ∂P) = p x * e₀ x * m₁ x),
-    ∀ (hcond₀ : ∀ x, (∫ ω in {ω | X ω = x ∧ A ω = false}, Y ω ∂P) = p x * (1 - e₀ x) * m₀ x),
+    (∀ x, 0 < p x) →
+    (∀ x, e x ∈ Ioo 0 1) →
+    (∀ x, (∫ ω in {ω | X ω = x ∧ A ω = true}, Y ω ∂P) = p x * e₀ x * m₁ x) →
+    (∀ x, (∫ ω in {ω | X ω = x ∧ A ω = false}, Y ω ∂P) = p x * (1 - e₀ x) * m₀ x) →
     (∫ ω, a₁ (X ω) - a₀ (X ω) +
       (if A ω then (Y ω - a₁ (X ω)) / e (X ω)
         else -(Y ω - a₀ (X ω)) / (1 - e (X ω))) ∂P) -
@@ -191,7 +159,7 @@ theorem doubly_robust_bias_identity {Ω : Type*} [MeasurableSpace Ω] {k : ℕ}
   have hmass₀ : ∀ x, P.real {ω | X ω = x ∧ A ω = false} = p x * (1 - e₀ x) := by
     intro x
     have h := measureReal_inter_add_sdiff (μ := P) (s := {ω | X ω = x}) hAs
-    rw [Set.diff_eq, hset₁, hset₀] at h
+    rw [Set.sdiff_eq, hset₁, hset₀] at h
     simp only [e₀]
     field_simp [(hp x).ne']
     simp only [p]
@@ -230,8 +198,8 @@ theorem doubly_robust_bias_identity {Ω : Type*} [MeasurableSpace Ω] {k : ℕ}
   field_simp
   ring
 
-/-- GAPS 105.50: the Wald ratio identifies the complier average effect. -/
-theorem local_average_treatment_effect_eq_wald_ratio {Ω : Type*} [MeasurableSpace Ω]
+/-- The Wald-ratio identity with the stratum means as local definitions. -/
+private theorem wald_ratio_aux {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (Z : Ω → Bool) (A : Bool → Ω → Bool)
     (Y : Bool → Ω → ℝ) (hZ : Measurable Z) (hA : ∀ z, Measurable (A z))
     (hY : ∀ a, Integrable (Y a) P)
@@ -241,11 +209,10 @@ theorem local_average_treatment_effect_eq_wald_ratio {Ω : Type*} [MeasurableSpa
     let obsA := fun ω ↦ if A (Z ω) ω then (1 : ℝ) else 0;
     let obsY := fun ω ↦ Y (A (Z ω) ω) ω;
     let mean := fun (f : Ω → ℝ) z ↦ (∫ ω in {ω | Z ω = z}, f ω ∂P) / P.real {ω | Z ω = z};
-    ∀ (hstage : mean obsA true ≠ mean obsA false),
     let C := {ω | A false ω = false ∧ A true ω = true};
     (mean obsY true - mean obsY false) / (mean obsA true - mean obsA false) =
       (∫ ω in C, Y true ω - Y false ω ∂P) / P.real C := by
-  intro obsA obsY mean _ C
+  intro obsA obsY mean C
   set W := fun ω ↦ (Y false ω, Y true ω, A false ω, A true ω)
   -- the potential treatment under instrument value `z`, read from `W`
   let sel : Bool → ℝ × ℝ × Bool × Bool → Bool := fun z w ↦ cond z w.2.2.2 w.2.2.1
@@ -330,486 +297,100 @@ theorem local_average_treatment_effect_eq_wald_ratio {Ω : Type*} [MeasurableSpa
     cases h0 : A false ω <;> cases h1 : A true ω <;> simp_all
   rw [hmeanY, hmeanY, hmeanA, hmeanA, hnum, hden]
 
-/-- GAPS 105.72, Horvitz–Thompson unbiasedness and exact design variance. -/
-theorem horvitz_thompson_mean_and_variance
-    {N : ℕ} (P : Measure (Finset (Fin N))) [IsProbabilityMeasure P]
-    (y : Fin N → ℝ) :
-    let pi := fun i ↦ P.real {s | i ∈ s};
-    let pij := fun i j ↦ P.real {s | i ∈ s ∧ j ∈ s};
-    ∀ (hp : ∀ i, 0 < pi i),
-    let T := fun s : Finset (Fin N) ↦ ∑ i ∈ s, y i / pi i;
-    (∫ s, T s ∂P) = ∑ i, y i ∧
-      variance P T = ∑ i, ∑ j, (pij i j - pi i * pi j) * y i * y j / (pi i * pi j) := by
-  classical
-  dsimp only
-  intro hp
-  let pi := fun i ↦ P.real {s : Finset (Fin N) | i ∈ s}
-  let pij := fun i j ↦ P.real {s : Finset (Fin N) | i ∈ s ∧ j ∈ s}
-  have hpi0 : ∀ i, pi i ≠ 0 := fun i ↦ (hp i).ne'
-  let T := fun s : Finset (Fin N) ↦ ∑ i ∈ s, y i / pi i
-  have hmean : (∫ s, T s ∂P) = ∑ i, y i := by
-    rw [integral_sample_sum]
-    apply Finset.sum_congr rfl
-    intro i _
-    exact mul_div_cancel₀ (y i) (hp i).ne'
-  refine ⟨hmean, ?_⟩
-  rw [variance_eq_mathlib P T (measurable_of_countable _).aemeasurable,
-    ProbabilityTheory.variance_eq_sub (memLp_finite_sample P T 2), hmean]
-  have hsquare : T ^ 2 =
-      (fun s ↦ ∑ i ∈ s, ∑ j ∈ s, y i / pi i * (y j / pi j)) := by
-    funext s
-    simp only [T, pow_two, Pi.mul_apply, Finset.sum_mul_sum]
-  rw [hsquare, integral_sample_pair_sum]
-  have hpop : (∑ i, y i) ^ 2 = ∑ i, ∑ j, y i * y j := by
-    simp only [pow_two, Finset.sum_mul_sum]
-  rw [hpop, ← Finset.sum_sub_distrib]
-  apply Finset.sum_congr rfl
-  intro i _
-  rw [← Finset.sum_sub_distrib]
-  apply Finset.sum_congr rfl
-  intro j _
-  change pij i j * (y i / pi i * (y j / pi j)) - y i * y j = _
-  change _ = (pij i j - pi i * pi j) * y i * y j / (pi i * pi j)
-  field_simp [hpi0 i, hpi0 j]
-  <;> ring
-
-/-- GAPS 105.72, unbiased estimation of the Horvitz–Thompson design variance. -/
-theorem horvitz_thompson_variance_estimator_unbiased
-    {N : ℕ} (P : Measure (Finset (Fin N))) [IsProbabilityMeasure P]
-    (y : Fin N → ℝ) :
-    let pi := fun i ↦ P.real {s | i ∈ s};
-    let pij := fun i j ↦ P.real {s | i ∈ s ∧ j ∈ s};
-    ∀ (hp : ∀ i j, 0 < pij i j),
-    (∫ s, ∑ i ∈ s, ∑ j ∈ s,
-      (pij i j - pi i * pi j) / pij i j * y i * y j / (pi i * pi j) ∂P) =
-      variance P (fun s ↦ ∑ i ∈ s, y i / pi i) := by
-  classical
-  dsimp only
-  intro hp
-  have hpi : ∀ i, 0 < P.real {s : Finset (Fin N) | i ∈ s} := by
-    intro i
-    simpa only [and_self] using hp i i
-  rw [integral_sample_pair_sum, (horvitz_thompson_mean_and_variance P y hpi).2]
-  apply Finset.sum_congr rfl
-  intro i _
-  apply Finset.sum_congr rfl
-  intro j _
-  field_simp [(hp i j).ne']
-
-/-- GAPS 105.72, Sen–Yates–Grundy identity for a fixed-size sampling design. -/
-theorem horvitz_thompson_variance_eq_sen_yates_grundy
-    {N : ℕ} (P : Measure (Finset (Fin N))) [IsProbabilityMeasure P]
-    (n : ℕ) (hn : ∀ᵐ s ∂P, s.card = n) (y : Fin N → ℝ) :
-    let pi := fun i ↦ P.real {s | i ∈ s};
-    let pij := fun i j ↦ P.real {s | i ∈ s ∧ j ∈ s};
-    ∀ (hp : ∀ i, 0 < pi i),
-    variance P (fun s ↦ ∑ i ∈ s, y i / pi i) =
-      -(1 / 2 : ℝ) * ∑ i, ∑ j, (pij i j - pi i * pi j) * (y i / pi i - y j / pi j) ^ 2 := by
-  classical
-  dsimp only
-  intro hp
-  let pi := fun i ↦ P.real {s : Finset (Fin N) | i ∈ s}
-  let pij := fun i j ↦ P.real {s : Finset (Fin N) | i ∈ s ∧ j ∈ s}
-  let c := fun i j ↦ pij i j - pi i * pi j
-  let w := fun i ↦ y i / pi i
-  have htotal : ∑ i, pi i = (n : ℝ) := by
-    calc
-      _ = ∫ s, ∑ i ∈ s, (1 : ℝ) ∂P := by
-        simpa only [mul_one] using (integral_sample_sum P (fun _ ↦ (1 : ℝ))).symm
-      _ = ∫ _, (n : ℝ) ∂P := by
-        apply integral_congr_ae
-        filter_upwards [hn] with s hs
-        simp [hs]
-      _ = _ := by simp
-  have hrow : ∀ i, ∑ j, pij i j = (n : ℝ) * pi i := by
-    intro i
-    calc
-      _ = ∫ s, ∑ j : Fin N, if i ∈ s ∧ j ∈ s then (1 : ℝ) else 0 ∂P := by
-        rw [integral_finsetSum _
-          (fun j _ ↦ (memLp_finite_sample P _ 1).integrable le_rfl)]
-        apply Finset.sum_congr rfl
-        intro j _
-        simpa only [Set.indicator, mem_ofPred_eq, smul_eq_mul, mul_one] using
-          (integral_indicator_const (μ := P) (1 : ℝ)
-            (Set.to_countable {s : Finset (Fin N) | i ∈ s ∧ j ∈ s}).measurableSet).symm
-      _ = ∫ s, if i ∈ s then (n : ℝ) else 0 ∂P := by
-        apply integral_congr_ae
-        filter_upwards [hn] with s hs
-        by_cases hi : i ∈ s <;> simp [hi, hs]
-      _ = _ := by
-        simpa only [Set.indicator, mem_ofPred_eq, smul_eq_mul, mul_comm] using
-          (integral_indicator_const (μ := P) (n : ℝ)
-            (Set.to_countable {s : Finset (Fin N) | i ∈ s}).measurableSet)
-  have hrow0 : ∀ i, ∑ j, c i j = 0 := by
-    intro i
-    simp only [c, Finset.sum_sub_distrib, ← Finset.mul_sum, hrow, htotal]
-    ring
-  have hsym : ∀ i j, c i j = c j i := by
-    intro i j
-    simp only [c, pij, and_comm, mul_comm]
-  have hcol0 : ∀ j, ∑ i, c i j = 0 := by
-    intro j
-    simp_rw [hsym _ j]
-    exact hrow0 j
-  have hfirst : (∑ i, ∑ j, w i ^ 2 * c i j) = 0 := by
-    simp_rw [← Finset.mul_sum, hrow0, mul_zero]
-    simp
-  have hsecond : (∑ i, ∑ j, w j ^ 2 * c i j) = 0 := by
-    rw [Finset.sum_comm]
-    simp_rw [← Finset.mul_sum, hcol0, mul_zero]
-    simp
-  have hdiff : (∑ i, ∑ j, c i j * (w i - w j) ^ 2) =
-      -2 * ∑ i, ∑ j, c i j * w i * w j := by
-    have hexpand : ∀ i j, c i j * (w i - w j) ^ 2 =
-        w i ^ 2 * c i j + w j ^ 2 * c i j - 2 * (c i j * w i * w j) := by
-      intro i j
-      ring
-    simp_rw [hexpand, Finset.sum_sub_distrib, Finset.sum_add_distrib]
-    rw [hfirst, hsecond]
-    simp_rw [← Finset.mul_sum]
-    ring
-  have hvar : variance P (fun s ↦ ∑ i ∈ s, y i / pi i) =
-      ∑ i, ∑ j, c i j * w i * w j := by
-    rw [(horvitz_thompson_mean_and_variance P y hp).2]
-    apply Finset.sum_congr rfl
-    intro i _
-    apply Finset.sum_congr rfl
-    intro j _
-    simp only [c, w, pi, pij, div_eq_mul_inv, mul_inv_rev]
-    ring
-  change variance P (fun s ↦ ∑ i ∈ s, y i / pi i) =
-    -(1 / 2 : ℝ) * ∑ i, ∑ j, c i j * (w i - w j) ^ 2
-  rw [hvar, hdiff]
-  ring
-
-/-- Under simple random sampling of `n` units, the probability that the sample contains a given
-set `B` of at most `n` units is `C(N - |B|, n - |B|) / C(N, n)`. -/
-theorem simpleRandomSampleDesign_real_superset {N n : ℕ} (B : Finset (Fin N))
-    (hB : B.card ≤ n) :
-    (simpleRandomSampleDesign N n).real {s | B ⊆ s} =
-      (Nat.choose (N - B.card) (n - B.card) : ℝ) / Nat.choose N n := by
-  have hset : ({s : Finset (Fin N) | B ⊆ s} ∩ {s | s.card = n}) =
-      ↑((Finset.univ.powersetCard n).filter (B ⊆ ·)) := by
-    ext s; simp [and_comm]
-  have hmeas : MeasurableSet {s : Finset (Fin N) | s.card = n} :=
-    (Set.to_countable _).measurableSet
-  simp only [simpleRandomSampleDesign, measureReal_def, smul_apply,
-    Measure.restrict_apply' hmeas, hset, Measure.count_apply_finset, smul_eq_mul]
-  rw [Finset.card_filter_powersetCard_subset B Finset.univ n (Finset.subset_univ B) hB,
-    Finset.card_univ, Fintype.card_fin]
-  rw [ENNReal.toReal_mul, ENNReal.toReal_inv]
-  simp [div_eq_mul_inv, mul_comm]
-
-/-- Simple random sampling of `n ≤ N` units is a probability measure. -/
-theorem isProbabilityMeasure_simpleRandomSampleDesign {N n : ℕ} (h : n ≤ N) :
-    IsProbabilityMeasure (simpleRandomSampleDesign N n) := by
-  constructor
-  have hset : {s : Finset (Fin N) | s.card = n} = ((Finset.univ : Finset (Fin N)).powersetCard n : Set (Finset (Fin N))) := by
-    ext s; simp
-  have hC : (Nat.choose N n : ℝ≥0∞) ≠ 0 := by exact_mod_cast (Nat.choose_pos h).ne'
-  simp only [simpleRandomSampleDesign, smul_apply, Measure.restrict_apply MeasurableSet.univ,
-    Set.univ_inter, hset, Measure.count_apply_finset, Finset.card_powersetCard, Finset.card_univ,
-    Fintype.card_fin, smul_eq_mul]
-  exact ENNReal.inv_mul_cancel hC (ENNReal.natCast_ne_top _)
-
-/-- Under simple random sampling, the probability that the sample contains `B` is the
-proportion of `n`-subsets containing `B`. -/
-theorem simpleRandomSampleDesign_real_superset_eq_card {N n : ℕ} (B : Finset (Fin N)) :
-    (simpleRandomSampleDesign N n).real {s | B ⊆ s} =
-      (((Finset.univ.powersetCard n).filter (B ⊆ ·)).card : ℝ) / Nat.choose N n := by
-  have hset : ({s : Finset (Fin N) | B ⊆ s} ∩ {s | s.card = n}) =
-      ↑((Finset.univ.powersetCard n).filter (B ⊆ ·)) := by
-    ext s; simp [and_comm]
-  have hmeas : MeasurableSet {s : Finset (Fin N) | s.card = n} :=
-    (Set.to_countable _).measurableSet
-  simp only [simpleRandomSampleDesign, measureReal_def, smul_apply,
-    Measure.restrict_apply' hmeas, hset, Measure.count_apply_finset, smul_eq_mul]
-  rw [ENNReal.toReal_mul, ENNReal.toReal_inv]
-  simp [div_eq_mul_inv, mul_comm]
-
-/-- First-order inclusion probabilities of simple random sampling. -/
-theorem simpleRandomSampleDesign_real_mem {N n : ℕ} (hn : 1 ≤ n) (hnN : n ≤ N) (i : Fin N) :
-    (simpleRandomSampleDesign N n).real {s | i ∈ s} = n / N := by
-  have := simpleRandomSampleDesign_real_superset (N := N) (n := n) {i} (by simpa using hn)
-  simp only [Finset.singleton_subset_iff, Finset.card_singleton] at this
-  rw [this]
-  obtain ⟨M, rfl⟩ : ∃ M, N = M + 1 := ⟨N - 1, by omega⟩
-  obtain ⟨k, rfl⟩ : ∃ k, n = k + 1 := ⟨n - 1, by omega⟩
-  have h := Nat.add_one_mul_choose_eq M k
-  have hC : (Nat.choose (M + 1) (k + 1) : ℝ) ≠ 0 := by
-    exact_mod_cast (Nat.choose_pos hnN).ne'
-  simp only [Nat.add_sub_cancel]
-  rw [div_eq_div_iff hC (by positivity)]
-  have h' : ((M + 1 : ℕ) : ℝ) * (Nat.choose M k) = (Nat.choose (M + 1) (k + 1)) * (k + 1 : ℕ) := by
-    exact_mod_cast h
-  push_cast at h' ⊢
-  linarith
-
-/-- Second-order inclusion probabilities of simple random sampling for distinct units. -/
-theorem simpleRandomSampleDesign_real_mem_mem {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
-    (hnN : n ≤ N) {i j : Fin N} (hij : i ≠ j) :
-    (simpleRandomSampleDesign N n).real {s | i ∈ s ∧ j ∈ s} =
-      n * (n - 1) / (N * (N - 1)) := by
-  have hset : {s : Finset (Fin N) | i ∈ s ∧ j ∈ s} = {s | {i, j} ⊆ s} := by
-    ext s; simp [Finset.insert_subset_iff]
-  have hcard : ({i, j} : Finset (Fin N)).card = 2 := Finset.card_pair hij
-  rw [hset]
-  rcases Nat.lt_or_ge n 2 with h1 | h2
-  · have hn1 : n = 1 := by omega
-    subst hn1
-    rw [simpleRandomSampleDesign_real_superset_eq_card]
-    have : (Finset.univ.powersetCard 1).filter (({i, j} : Finset (Fin N)) ⊆ ·) = ∅ := by
-      ext s
-      simp only [Finset.mem_filter, Finset.mem_powersetCard_univ, Finset.notMem_empty,
-        iff_false, not_and]
-      intro hs hsub
-      have := Finset.card_le_card hsub
-      omega
-    simp [this]
-  · rw [simpleRandomSampleDesign_real_superset {i, j} (by omega), hcard]
-    obtain ⟨M, rfl⟩ : ∃ M, N = M + 2 := ⟨N - 2, by omega⟩
-    obtain ⟨k, rfl⟩ : ∃ k, n = k + 2 := ⟨n - 2, by omega⟩
-    have h₁ := Nat.add_one_mul_choose_eq (M + 1) (k + 1)
-    have h₂ := Nat.add_one_mul_choose_eq M k
-    have hC : (Nat.choose (M + 2) (k + 2) : ℝ) ≠ 0 := by
-      exact_mod_cast (Nat.choose_pos hnN).ne'
-    simp only [Nat.add_sub_cancel]
-    rw [div_eq_div_iff hC (by push_cast; nlinarith)]
-    have h₁' : ((M + 2 : ℕ) : ℝ) * (Nat.choose (M + 1) (k + 1)) =
-        (Nat.choose (M + 2) (k + 2)) * (k + 2 : ℕ) := by exact_mod_cast h₁
-    have h₂' : ((M + 1 : ℕ) : ℝ) * (Nat.choose M k) =
-        (Nat.choose (M + 1) (k + 1)) * (k + 1 : ℕ) := by exact_mod_cast h₂
-    push_cast at h₁' h₂' ⊢
-    linear_combination (↑k + 1 : ℝ) * h₁' + ((M : ℝ) + 2) * h₂'
-
-/-- The finite-population variance as a difference of sums. -/
-theorem populationVariance_eq_sum_sq {N : ℕ} (hN : 1 ≤ N) (y : Fin N → ℝ) :
-    populationVariance y = ((∑ i, y i ^ 2) - (∑ i, y i) ^ 2 / N) / (N - 1) := by
-  have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
-  unfold populationVariance populationMean
-  rw [Nat.cast_sub hN, Nat.cast_one]
-  congr 1
-  simp_rw [sub_sq, Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.sum_mul,
-    ← Finset.mul_sum, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
-  field_simp
-  ring
-
-/-- A double sum with one coefficient on the diagonal and another off it. -/
-theorem sum_sum_ite_eq_mul {N : ℕ} (d e : ℝ) (w : Fin N → ℝ) :
-    (∑ i, ∑ j, (if i = j then d else e) * w i * w j) =
-      (d - e) * ∑ i, w i ^ 2 + e * (∑ i, w i) ^ 2 := by
-  have h : ∀ i j, (if i = j then d else e) * w i * w j =
-      e * (w i * w j) + if i = j then (d - e) * w i ^ 2 else 0 := by
-    intro i j
-    split_ifs with hij
-    · subst hij; ring
-    · ring
-  have hsq : (∑ i, ∑ j, e * (w i * w j)) = e * (∑ i, w i) ^ 2 := by
-    rw [sq, Finset.sum_mul_sum, Finset.mul_sum]
-    simp_rw [Finset.mul_sum]
-  simp_rw [h, Finset.sum_add_distrib, Finset.sum_ite_eq, Finset.mem_univ, ite_true]
-  rw [hsq, ← Finset.mul_sum]
-  ring
-
-/-- Mean and design variance of a sample total under simple random sampling. -/
-theorem simpleRandomSampleDesign_sum_mean_and_variance {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
-    (hnN : n ≤ N) (w : Fin N → ℝ) :
-    (∫ s, ∑ i ∈ s, w i ∂simpleRandomSampleDesign N n) = n / N * ∑ i, w i ∧
-      variance (simpleRandomSampleDesign N n) (fun s ↦ ∑ i ∈ s, w i) =
-        n * (N - n) / N * populationVariance w := by
-  have := isProbabilityMeasure_simpleRandomSampleDesign hnN
-  set P := simpleRandomSampleDesign N n
-  have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
-  have hN1 : (N : ℝ) - 1 ≠ 0 := by
-    have : (2 : ℝ) ≤ N := by exact_mod_cast hN
-    linarith
-  have hn0 : (n : ℝ) ≠ 0 := by exact_mod_cast (show n ≠ 0 by omega)
-  have hpi : ∀ i, P.real {s | i ∈ s} = n / N := simpleRandomSampleDesign_real_mem hn hnN
-  have hpos : ∀ i, 0 < P.real {s | i ∈ s} := fun i ↦ by
-    rw [hpi]; exact div_pos (by positivity) (by positivity)
-  have hHT := horvitz_thompson_mean_and_variance P (fun i ↦ n / N * w i) hpos
-  have hT : (fun s : Finset (Fin N) ↦ ∑ i ∈ s, (n / N * w i) / P.real {s | i ∈ s}) =
-      fun s ↦ ∑ i ∈ s, w i := by
-    funext s
-    refine Finset.sum_congr rfl fun i _ ↦ ?_
-    rw [hpi]
-    field_simp
-  simp only [hT] at hHT
-  refine ⟨by rw [hHT.1, Finset.mul_sum], ?_⟩
-  rw [hHT.2]
-  have hpij : ∀ i j, P.real {s | i ∈ s ∧ j ∈ s} =
-      if i = j then (n / N : ℝ) else n * (n - 1) / (N * (N - 1)) := by
-    intro i j
-    split_ifs with hij
-    · subst hij; simpa using hpi i
-    · exact simpleRandomSampleDesign_real_mem_mem hN hn hnN hij
-  have hterm : ∀ i j, (P.real {s | i ∈ s ∧ j ∈ s} - P.real {s | i ∈ s} * P.real {s | j ∈ s}) *
-      (n / N * w i) * (n / N * w j) / (P.real {s | i ∈ s} * P.real {s | j ∈ s}) =
-      (if i = j then (n / N - (n / N) ^ 2 : ℝ) else n * (n - 1) / (N * (N - 1)) - (n / N) ^ 2) *
-        w i * w j := by
-    intro i j
-    rw [hpij, hpi, hpi]
-    split_ifs <;> field_simp
-  simp_rw [hterm]
-  rw [sum_sum_ite_eq_mul, populationVariance_eq_sum_sq (by omega)]
-  field_simp
-  ring
-
-/-- GAPS 105.73, finite-population correction for a simple random sample mean. -/
-theorem simple_random_sample_mean_and_variance
-    {N : ℕ} (hN : 2 ≤ N) (n : ℕ) (hn : 1 ≤ n) (hnN : n ≤ N)
-    (y : Fin N → ℝ) :
-    let T := fun s : Finset (Fin N) ↦ (∑ i ∈ s, y i) / n;
-    (∫ s, T s ∂simpleRandomSampleDesign N n) = populationMean y ∧
-      variance (simpleRandomSampleDesign N n) T = (1 - (n : ℝ) / N) * populationVariance y / n := by
-  intro T
-  have hT : T = fun s ↦ ∑ i ∈ s, y i / n := funext fun s ↦ Finset.sum_div _ _ _
-  obtain ⟨h1, h2⟩ := simpleRandomSampleDesign_sum_mean_and_variance hN hn hnN (fun i ↦ y i / n)
-  have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
-  have hn0 : (n : ℝ) ≠ 0 := by exact_mod_cast (show n ≠ 0 by omega)
-  rw [hT, h1, h2, populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega)]
-  simp only [div_pow, ← Finset.sum_div, populationMean]
-  refine ⟨by field_simp, ?_⟩
+/-- GAPS 105.47, finite-stratum potential-outcome identification under mean ignorability:
+if every covariate stratum and every treatment stratum `{X = x, A = a}` has positive
+probability and `E[Y(a) | X = x, A = a] = E[Y(a) | X = x]` (written without division), then
+`E[Y(a)] = ∑ₓ P(X = x) E[Y(a) | X = x, A = a]` (the adjustment formula). -/
+theorem integral_potentialOutcome_eq_sum_stratumOutcomeMean
+    {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
+    [MeasurableSingletonClass ι]
+    (P : Measure Ω) (X : Ω → ι) (A : Ω → Bool)
+    (hX : Measurable X) (hA : Measurable A) (Y : Bool → Ω → ℝ)
+    (hY : ∀ a, Integrable (Y a) P) (a : Bool)
+    (hp : ∀ x, 0 < P.real {ω | X ω = x})
+    (he : ∀ x, 0 < P.real (treatmentStratum X A x a))
+    (hign : ∀ x, (∫ ω in treatmentStratum X A x a, Y a ω ∂P) =
+      P.real (treatmentStratum X A x a) / P.real {ω | X ω = x} *
+        ∫ ω in {ω | X ω = x}, Y a ω ∂P) :
+    (∫ ω, Y a ω ∂P) = ∑ x, P.real {ω | X ω = x} * stratumOutcomeMean P X A (Y a) x a := by
+  rw [(integral_potentialOutcome_aux P X A hX hA Y hY a hp
+    (fun x ↦ div_pos (he x) (hp x)) hign).1]
+  refine Finset.sum_congr rfl fun x _ ↦ ?_
+  have h₁ := (hp x).ne'
+  have h₂ := (he x).ne'
+  simp only [stratumOutcomeMean, treatmentStratum] at h₂ ⊢
   field_simp
 
-/-- GAPS 105.46, Neyman's exact design variance in a completely randomized experiment. -/
-theorem randomized_treatment_difference_mean_and_variance {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n₀ = N)
-    (h₁ : 0 < n₁) (h₀ : 0 < n₀) (y₁ y₀ : Fin N → ℝ) :
-    let T := fun s : Finset (Fin N) ↦ (∑ i ∈ s, y₁ i) / n₁ - (∑ i ∈ sᶜ, y₀ i) / n₀;
-    (∫ s, T s ∂simpleRandomSampleDesign N n₁) = populationMean (y₁ - y₀) ∧
-      variance (simpleRandomSampleDesign N n₁) T = populationVariance y₁ / n₁ + populationVariance y₀ / n₀ -
-        populationVariance (y₁ - y₀) / N := by
-  intro T
-  have hnN : n₁ ≤ N := by omega
-  have := isProbabilityMeasure_simpleRandomSampleDesign hnN
-  let w := fun i ↦ y₁ i / n₁ + y₀ i / n₀
-  let c := (∑ i, y₀ i) / n₀
-  have hT : T = fun s ↦ (∑ i ∈ s, w i) - c := by
-    funext s
-    simp only [T, w, c, Finset.sum_add_distrib, ← Finset.sum_div]
-    rw [← Finset.sum_compl_add_sum s y₀]
-    ring
-  obtain ⟨hm, hv⟩ := simpleRandomSampleDesign_sum_mean_and_variance (by omega) h₁ hnN w
-  have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
-  have hn₁ : (n₁ : ℝ) ≠ 0 := by exact_mod_cast h₁.ne'
-  have hn₀ : (n₀ : ℝ) ≠ 0 := by exact_mod_cast h₀.ne'
-  have hNr : (N : ℝ) = n₁ + n₀ := by exact_mod_cast hn.symm
-  have hint : Integrable (fun s : Finset (Fin N) ↦ ∑ i ∈ s, w i)
-      (simpleRandomSampleDesign N n₁) :=
-    (memLp_finite_sample _ _ 1).integrable le_rfl
-  constructor
-  · rw [hT, integral_sub hint (integrable_const c), hm, integral_const, smul_eq_mul,
-      probReal_univ, one_mul]
-    simp only [w, c, populationMean, Pi.sub_apply, Finset.sum_sub_distrib, Finset.sum_add_distrib,
-      ← Finset.sum_div]
-    rw [hNr]
-    field_simp
-    ring
-  · rw [hT, variance_eq_mathlib _ _ (measurable_of_countable _).aemeasurable,
-      ProbabilityTheory.variance_sub_const (measurable_of_countable _).aestronglyMeasurable,
-      ← variance_eq_mathlib _ _ (measurable_of_countable _).aemeasurable, hv]
-    rw [populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega),
-      populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega)]
-    have e1 : (∑ i, w i ^ 2) = (∑ i, y₁ i ^ 2) / n₁ ^ 2 + (∑ i, y₀ i ^ 2) / n₀ ^ 2 +
-        2 * (∑ i, y₁ i * y₀ i) / (n₁ * n₀) := by
-      have h : ∀ i, w i ^ 2 = y₁ i ^ 2 / n₁ ^ 2 + y₀ i ^ 2 / n₀ ^ 2 +
-          2 * (y₁ i * y₀ i) / (n₁ * n₀) := by
-        intro i
-        simp only [w]
-        field_simp
-        ring
-      simp_rw [h, Finset.sum_add_distrib, ← Finset.sum_div, ← Finset.mul_sum]
-    have e2 : (∑ i, (y₁ - y₀) i ^ 2) = (∑ i, y₁ i ^ 2) + (∑ i, y₀ i ^ 2) -
-        2 * (∑ i, y₁ i * y₀ i) := by
-      have h : ∀ i, (y₁ - y₀) i ^ 2 = y₁ i ^ 2 + y₀ i ^ 2 - 2 * (y₁ i * y₀ i) := by
-        intro i
-        simp only [Pi.sub_apply]
-        ring
-      simp_rw [h, Finset.sum_sub_distrib, Finset.sum_add_distrib, ← Finset.mul_sum]
-    have e3 : (∑ i, w i) = (∑ i, y₁ i) / n₁ + (∑ i, y₀ i) / n₀ := by
-      simp only [w, Finset.sum_add_distrib, ← Finset.sum_div]
-    have e4 : (∑ i, (y₁ - y₀) i) = (∑ i, y₁ i) - (∑ i, y₀ i) := by
-      simp only [Pi.sub_apply, Finset.sum_sub_distrib]
-    rw [e1, e2, e3, e4, hNr]
-    have hN1 : (n₁ : ℝ) + n₀ - 1 ≠ 0 := by
-      have : (1 : ℝ) ≤ n₁ := by exact_mod_cast h₁
-      have : (1 : ℝ) ≤ n₀ := by exact_mod_cast h₀
-      linarith
-    have hN0' : (n₁ : ℝ) + n₀ ≠ 0 := by rw [← hNr]; exact hN0
-    field_simp
-    ring
+/-- GAPS 105.47, inverse-propensity weighting: under the hypotheses of
+`integral_potentialOutcome_eq_sum_stratumOutcomeMean`, `E[Y(a)] = E[1{A = a} Y / e_a(X)]`
+with the observed outcome `Y = Y(A)` and the stratum propensity
+`e_a(x) = P(A = a | X = x)`. -/
+theorem integral_potentialOutcome_eq_integral_div_propensity
+    {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
+    [MeasurableSingletonClass ι]
+    (P : Measure Ω) (X : Ω → ι) (A : Ω → Bool)
+    (hX : Measurable X) (hA : Measurable A) (Y : Bool → Ω → ℝ)
+    (hY : ∀ a, Integrable (Y a) P) (a : Bool)
+    (hp : ∀ x, 0 < P.real {ω | X ω = x})
+    (he : ∀ x, 0 < P.real (treatmentStratum X A x a))
+    (hign : ∀ x, (∫ ω in treatmentStratum X A x a, Y a ω ∂P) =
+      P.real (treatmentStratum X A x a) / P.real {ω | X ω = x} *
+        ∫ ω in {ω | X ω = x}, Y a ω ∂P) :
+    (∫ ω, Y a ω ∂P) = ∫ ω, (if A ω = a then Y (A ω) ω else 0) /
+      (P.real (treatmentStratum X A (X ω) a) / P.real {ω' | X ω' = X ω}) ∂P :=
+  (integral_potentialOutcome_aux P X A hX hA Y hY a hp
+    (fun x ↦ div_pos (he x) (hp x)) hign).2
 
-/-- GAPS 105.73, the continuous Neyman allocation optimization. -/
-theorem neyman_allocation_optimal {k : ℕ} (a : Fin k → ℝ) (ha : ∀ i, 0 < a i)
-    (n : ℝ) (hn : 0 < n) (x : Fin k → ℝ) (hx : ∀ i, 0 < x i)
-    (hxsum : ∑ i, x i = n) :
-    (∑ i, a i) ^ 2 / n ≤ ∑ i, a i ^ 2 / x i ∧
-      ((∑ i, a i) ^ 2 / n = ∑ i, a i ^ 2 / x i ↔
-        ∀ i, x i = n * a i / ∑ j, a j) := by
-  classical
-  let S := ∑ i, a i
-  have hn0 : n ≠ 0 := hn.ne'
-  have hx0 : ∀ i, x i ≠ 0 := fun i ↦ (hx i).ne'
-  have hS : 0 < S := by
-    by_cases hk : k = 0
-    · subst k
-      simp only [Finset.univ_eq_empty, Finset.sum_empty] at hxsum
-      linarith
-    · letI : NeZero k := ⟨hk⟩
-      exact Finset.sum_pos (fun i _ ↦ ha i) Finset.univ_nonempty
-  have hS0 : S ≠ 0 := hS.ne'
-  let q := fun i ↦ (a i - (S / n) * x i) ^ 2 / x i
-  have hq : ∀ i, 0 ≤ q i := fun i ↦ div_nonneg (sq_nonneg _) (hx i).le
-  have hid : (∑ i, q i) = (∑ i, a i ^ 2 / x i) - S ^ 2 / n := by
-    have hterm : ∀ i, q i = a i ^ 2 / x i - (2 * S / n) * a i +
-        (S / n) ^ 2 * x i := by
-      intro i
-      dsimp [q]
-      field_simp [hn0, hx0 i]
-      <;> ring
-    simp_rw [hterm, Finset.sum_add_distrib, Finset.sum_sub_distrib,
-      ← Finset.mul_sum]
-    change (∑ i, a i ^ 2 / x i) - (2 * S / n) * S + (S / n) ^ 2 *
-      (∑ i, x i) = _
-    rw [hxsum]
-    field_simp
-    <;> ring
-  have hbound : S ^ 2 / n ≤ ∑ i, a i ^ 2 / x i := by
-    have := Finset.sum_nonneg (fun i (_ : i ∈ Finset.univ) ↦ hq i)
-    rw [hid] at this
-    linarith
-  refine ⟨hbound, ?_⟩
-  constructor
-  · intro heq i
-    have hz : ∑ j, q j = 0 := by rw [hid, ← heq]; ring
-    have hqi : q i = 0 :=
-      (Finset.sum_eq_zero_iff_of_nonneg (fun j _ ↦ hq j)).mp hz i (Finset.mem_univ i)
-    have hi : a i - (S / n) * x i = 0 := by
-      have : (a i - (S / n) * x i) ^ 2 = 0 :=
-        (div_eq_zero_iff.mp hqi).resolve_right (hx0 i)
-      exact sq_eq_zero_iff.mp this
-    dsimp [S] at hS0 ⊢
-    apply (eq_div_iff hS0).mpr
-    have hi' : a i * n - S * x i = 0 := by
-      have := (div_eq_zero_iff.mp (show (a i * n - S * x i) / n = 0 by
-        convert hi using 1 <;> field_simp <;> ring)).resolve_right hn0
-      exact this
-    dsimp [S] at hi'
-    nlinarith
-  · intro heq
-    have hz : ∑ i, q i = 0 := by
-      apply Finset.sum_eq_zero
-      intro i _
-      dsimp [q]
-      rw [heq i]
-      change (a i - (S / n) * (n * a i / S)) ^ 2 / _ = 0
-      have : a i - (S / n) * (n * a i / S) = 0 := by
-        field_simp
-        <;> ring
-      rw [this]
-      simp
-    rw [hid] at hz
-    linarith
+/-- GAPS 105.49, finite-stratum double-robustness bias identity.
+The causal identification and cross-fitting conclusions require the additional
+frameworks described in the source; this is the observable-moment identity. For working
+outcome regressions `a₁`, `a₀` and a working propensity `e` with values in `(0, 1)`, true
+stratum outcome means `m₁`, `m₀` and true propensity `e₀ = stratumPropensity P X A`, the bias
+of the augmented inverse-probability-weighted functional is
+`∑ₓ P(X = x) (e(x) - e₀(x)) ((a₁ - m₁)(x) / e(x) + (a₀ - m₀)(x) / (1 - e(x)))`; it vanishes
+when either the outcome regressions or the propensity are correct. -/
+theorem integral_treatmentEffectInfluence_sub_eq_sum_mul
+    {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
+    [MeasurableSingletonClass ι]
+    (P : Measure Ω) [IsProbabilityMeasure P] (X : Ω → ι) (A : Ω → Bool)
+    (hX : Measurable X) (hA : Measurable A) (Y : Ω → ℝ) (hY : Integrable Y P)
+    (m₁ m₀ a₁ a₀ e : ι → ℝ) (hp : ∀ x, 0 < P.real {ω | X ω = x})
+    (he : ∀ x, e x ∈ Ioo 0 1)
+    (hcond₁ : ∀ x, (∫ ω in treatmentStratum X A x true, Y ω ∂P) =
+      P.real {ω | X ω = x} * stratumPropensity P X A x * m₁ x)
+    (hcond₀ : ∀ x, (∫ ω in treatmentStratum X A x false, Y ω ∂P) =
+      P.real {ω | X ω = x} * (1 - stratumPropensity P X A x) * m₀ x) :
+    (∫ ω, treatmentEffectInfluence a₀ a₁ e 0 (X ω) (A ω) (Y ω) ∂P) -
+        (∑ x, P.real {ω | X ω = x} * (m₁ x - m₀ x)) =
+      ∑ x, P.real {ω | X ω = x} * (e x - stratumPropensity P X A x) *
+        ((a₁ x - m₁ x) / e x + (a₀ x - m₀ x) / (1 - e x)) := by
+  simpa only [treatmentEffectInfluence, sub_zero, stratumPropensity, treatmentStratum] using
+    integral_treatmentEffectInfluence_aux P X A hX hA Y hY m₁ m₀ a₁ a₀ e hp he hcond₁ hcond₀
 
+/-- The mean of `f` on the instrument stratum `{Z = z}`. -/
+def instrumentStratumMean {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (Z : Ω → Bool)
+    (f : Ω → ℝ) (z : Bool) : ℝ :=
+  (∫ ω in {ω | Z ω = z}, f ω ∂P) / P.real {ω | Z ω = z}
+
+/-- GAPS 105.50: the Wald ratio identifies the complier average effect. For a binary
+instrument `Z` independent of the potential treatments `A z` and potential outcomes `Y a`,
+with monotonicity `A 0 ≤ A 1` and both instrument values of positive probability, the ratio of
+the instrument-stratum contrasts of the observed outcome `Y(A(Z))` and of the observed
+treatment `A(Z)` equals `E[Y 1 - Y 0 | A 0 = 0, A 1 = 1]`, the average effect on compliers.
+When the first-stage contrast vanishes both sides are zero, by the convention `x / 0 = 0`. -/
+theorem wald_ratio_eq_complier_average_effect {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P] (Z : Ω → Bool) (A : Bool → Ω → Bool)
+    (Y : Bool → Ω → ℝ) (hZ : Measurable Z) (hA : ∀ z, Measurable (A z))
+    (hY : ∀ a, Integrable (Y a) P)
+    (hind : IndepFun (fun ω ↦ (Y false ω, Y true ω, A false ω, A true ω)) Z P)
+    (hmon : ∀ᵐ ω ∂P, A false ω = true → A true ω = true)
+    (hp : ∀ z : Bool, 0 < P {ω | Z ω = z}) :
+    (instrumentStratumMean P Z (fun ω ↦ Y (A (Z ω) ω) ω) true -
+        instrumentStratumMean P Z (fun ω ↦ Y (A (Z ω) ω) ω) false) /
+      (instrumentStratumMean P Z (fun ω ↦ if A (Z ω) ω then 1 else 0) true -
+        instrumentStratumMean P Z (fun ω ↦ if A (Z ω) ω then 1 else 0) false) =
+      (∫ ω in {ω | A false ω = false ∧ A true ω = true}, Y true ω - Y false ω ∂P) /
+        P.real {ω | A false ω = false ∧ A true ω = true} :=
+  wald_ratio_aux P Z A Y hZ hA hY hind hmon hp
 
 end CKSD

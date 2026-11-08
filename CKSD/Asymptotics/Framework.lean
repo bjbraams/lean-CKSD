@@ -2,21 +2,48 @@ module
 
 public import CKSD.Asymptotics.Basic
 public import CKSD.Inference.Model
+public import Mathlib.MeasureTheory.Group.Convolution
 public import Statlib.Contiguity.Def
 import Mathlib.MeasureTheory.Measure.Portmanteau
 
 /-!
-# Asymptotic statistical interfaces
+# Asymptotic statistical interfaces: local experiments, efficiency, and the delta method
 
-Outer expectation, stochastic orders, tangential Hadamard differentiation, and local experiments.
-The local parameter `h` of an experiment denotes the displacement `h / sqrt n` from its centre;
-its estimator is already scaled by `sqrt n`. This permits observation spaces depending on `n`.
-Contiguity for probability measures is Statlib's `Contiguous5` (direct set formulation).
-Sources: Sections 102 and 103 of `GAPS.md`.
+## Main definitions
+
+* `CKSD.outerExpectation`, `CKSD.TendstoInOuterDistribution`: outer expectation and weak
+  convergence of possibly nonmeasurable random elements.
+* `CKSD.TendstoInProbabilityZero`, `CKSD.IsLittleOInProbability`, `CKSD.IsBigOInProbability`:
+  stochastic orders.
+* `CKSD.HasHadamardFDerivAt`: sequential Hadamard differentiability tangentially to a subspace.
+* `CKSD.LocalExperiment`, `CKSD.IsLocallyAsymptoticallyNormal`, `CKSD.IsRegularEstimator`.
+* `CKSD.fisherRaoMetric`, `CKSD.amariChentsovTensor`, `CKSD.openProbabilitySimplex`,
+  `CKSD.simplexTangentSpace`, `CKSD.CongruentSimplexEmbedding`.
+
+## Main results
+
+* `CKSD.exists_gaussian_shift_kernel_of_local_limits`: limits of statistics in a LAN experiment
+  are randomizations of the Gaussian shift experiment (GAPS 102.15).
+* `CKSD.exists_convolution_of_isRegularEstimator`: Hájek's convolution theorem (GAPS 102.16).
+* `CKSD.gaussian_risk_le_local_asymptotic_minimax`: the local asymptotic minimax theorem
+  (GAPS 102.17).
+* `CKSD.tendstoInDistribution_of_hasHadamardFDerivAt`: the functional delta method
+  (GAPS 102.28).
+* `CKSD.fisherRaoMetric_congruent_embedding`: invariance of the Fisher–Rao metric under
+  congruent embeddings (GAPS 102.58).
+* `CKSD.isContiguous_iff_contiguous5`: `CKSD.IsContiguous` is Statlib's `Contiguous5`.
+
+## Conventions
+
+The local parameter `h` of an experiment denotes the displacement `h / √n` from its centre; an
+estimator is already scaled by `√n`. Observation spaces may depend on `n`. Convolutions of laws
+are Mathlib's `MeasureTheory.Measure.conv`.
+
+## References
+
 The functional delta method uses Mathlib's closed-set portmanteau theorem
 (`ProbabilityMeasure.limsup_measure_closed_le_of_tendsto`, `tendsto_of_forall_isClosed_limsup_le'`).
 -/
-
 @[expose] public section
 
 noncomputable section
@@ -40,7 +67,9 @@ def TendstoInOuterDistribution {Ω E : Type*} [MeasurableSpace Ω]
     Tendsto (fun n ↦ (outerExpectation μ (fun ω ↦ ENNReal.ofReal (f (X n ω) + ‖f‖))).toReal)
       atTop (𝓝 (∫ x, f x + ‖f‖ ∂ν))
 
-/-- Convergence to zero in probability for a sequence of varying observation spaces and laws. -/
+/-- Convergence to zero in probability, `P n {ε < |X n|} → 0` for every `ε > 0`, for observation
+spaces and laws varying with `n`. On a fixed probability space it is
+`TendstoInProbabilityConst μ X 0`. -/
 def TendstoInProbabilityZero {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
     (P : ∀ n, Measure (Ω n)) (X : ∀ n, Ω n → ℝ) : Prop :=
   ∀ ε > 0, Tendsto (fun n ↦ (P n).real {ω | ε < |X n ω|}) atTop (𝓝 0)
@@ -88,37 +117,39 @@ def IsRegularEstimator {d : ℕ} {Ω : ℕ → Type*} [∀ n, MeasurableSpace (�
   (∀ n, Measurable (T n)) ∧ ∀ h,
     TendstoWeakly (fun n ↦ (P n h : Measure (Ω n)).map (fun ω ↦ T n ω - h)) L
 
-/-- Convolution of two vector laws, using the pushforward of independent addition. -/
-def convolutionLaw {E : Type*} [MeasurableSpace E] [Add E] (P Q : Measure E) : Measure E :=
-  (P.prod Q).map (fun z ↦ z.1 + z.2)
-
-/-- GAPS 102.15: representation of limit procedures by a kernel in the Gaussian shift experiment. -/
+/-- GAPS 102.15: the asymptotic representation theorem. In a LAN experiment with information `I`,
+if statistics `T n` with values in a Polish space have limit laws `L h` under every local
+parameter `h`, there is a Markov kernel `K` with `L h = K ∘ₘ N(h, I⁻¹)` for all `h`, i.e. the
+limit is a randomized statistic in the Gaussian shift experiment. -/
 theorem exists_gaussian_shift_kernel_of_local_limits
     {d : ℕ} {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
-    {S : Type*} [MeasurableSpace S] [StandardBorelSpace S] [Nonempty S]
-    [TopologicalSpace S] [PolishSpace S] [BorelSpace S]
+    {S : Type*} [MeasurableSpace S] [Nonempty S] [TopologicalSpace S] [PolishSpace S]
+    [BorelSpace S]
     (P : LocalExperiment d Ω) (I : Matrix (Fin d) (Fin d) ℝ)
     (Δ : ∀ n, Ω n → EuclideanSpace ℝ (Fin d)) (hLAN : IsLocallyAsymptoticallyNormal P I Δ)
     (T : ∀ n, Ω n → S) (hT : ∀ n, Measurable (T n))
-    (L : EuclideanSpace ℝ (Fin d) → Measure S) (hL : ∀ h, IsProbabilityMeasure (L h))
+    (L : EuclideanSpace ℝ (Fin d) → Measure S)
     (hlim : ∀ h, TendstoWeakly (fun n ↦ (P n h : Measure (Ω n)).map (T n)) (L h)) :
     ∃ K : Kernel (EuclideanSpace ℝ (Fin d)) S, IsMarkovKernel K ∧
       ∀ h, L h = K ∘ₘ multivariateGaussian h I⁻¹ := by
   sorry
 
-/-- GAPS 102.16: convolution theorem for a regular estimator in a LAN experiment. -/
+/-- GAPS 102.16: Hájek's convolution theorem. In a LAN experiment with information `I`, the limit
+law `L` of a regular estimator sequence is the convolution of `N(0, I⁻¹)` with a probability
+measure `M`. -/
 theorem exists_convolution_of_isRegularEstimator
     {d : ℕ} {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
     (P : LocalExperiment d Ω) (I : Matrix (Fin d) (Fin d) ℝ)
     (Δ : ∀ n, Ω n → EuclideanSpace ℝ (Fin d)) (hLAN : IsLocallyAsymptoticallyNormal P I Δ)
     (T : ∀ n, Ω n → EuclideanSpace ℝ (Fin d))
-    (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
-    (hreg : IsRegularEstimator P T L) :
+    (L : Measure (EuclideanSpace ℝ (Fin d))) (hreg : IsRegularEstimator P T L) :
     ∃ M : Measure (EuclideanSpace ℝ (Fin d)), IsProbabilityMeasure M ∧
-      L = convolutionLaw (multivariateGaussian 0 I⁻¹) M := by
+      L = (multivariateGaussian 0 I⁻¹).conv M := by
   sorry
 
-/-- GAPS 102.17: local asymptotic minimax lower bound for a bowl-shaped nonnegative loss. -/
+/-- GAPS 102.17: the local asymptotic minimax theorem. In a LAN experiment with information `I`,
+for a lower semicontinuous, symmetric, quasiconvex (bowl-shaped) loss `ℓ ≥ 0`, every estimator
+sequence satisfies `E ℓ(N(0, I⁻¹)) ≤ sup_c liminf_n sup_{‖h‖ ≤ c} E_h ℓ(T n - h)`. -/
 theorem gaussian_risk_le_local_asymptotic_minimax
     {d : ℕ} {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
     (P : LocalExperiment d Ω) (I : Matrix (Fin d) (Fin d) ℝ)
@@ -271,11 +302,13 @@ structure CongruentSimplexEmbedding (m n : ℕ) where
   /-- Weights in a block sum to one. -/
   sum_weight : ∀ i, ∑ j, (if block j = i then weight j else 0) = 1
 
-/-- Linear map underlying a congruent simplex embedding and its derivative. -/
+/-- The map `p ↦ (p (block j) · weight j)ⱼ` of a congruent simplex embedding; it is the
+restriction of a linear map, and so is its own derivative. -/
 def CongruentSimplexEmbedding.map {m n : ℕ} (f : CongruentSimplexEmbedding m n)
     (p : Fin m → ℝ) : Fin n → ℝ := fun j ↦ p (f.block j) * f.weight j
 
-/-- GAPS 102.58, defining invariance of Fisher–Rao under congruent embeddings. -/
+/-- GAPS 102.58: the Fisher–Rao metric `∑ uᵢ vᵢ / pᵢ` on the open simplex is invariant under
+congruent embeddings (Chentsov's defining invariance). -/
 theorem fisherRaoMetric_congruent_embedding {m n : ℕ} (f : CongruentSimplexEmbedding m n)
     (p : Fin m → ℝ) (hp : p ∈ openProbabilitySimplex m) (u v : Fin m → ℝ) :
     fisherRaoMetric (f.map p) (f.map u) (f.map v) = fisherRaoMetric p u v := by
@@ -296,7 +329,8 @@ theorem fisherRaoMetric_congruent_embedding {m n : ℕ} (f : CongruentSimplexEmb
       simp_rw [Finset.mul_sum, mul_ite, mul_zero]
     _ = ∑ i, u i * v i / p i := by simp_rw [f.sum_weight, mul_one]; rfl
 
-/-- CKSD's measure-sequence contiguity adapter agrees with Statlib's direct set formulation. -/
+/-- For probability measures, `CKSD.IsContiguous` is Statlib's direct set formulation
+`Contiguous5` of contiguity. -/
 theorem isContiguous_iff_contiguous5 {Ω : Type*} [MeasurableSpace Ω]
     (P Q : ℕ → ProbabilityMeasure Ω) :
     IsContiguous (fun n ↦ (P n : Measure Ω)) (fun n ↦ (Q n : Measure Ω)) ↔

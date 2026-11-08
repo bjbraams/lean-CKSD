@@ -7,10 +7,27 @@ public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
 /-!
 # Statistical entropic transport and Wasserstein barycenter gradients
 
-Entropic and Wasserstein costs are TauCeti constructions. Empirical laws use the CKSD statistical
-adapter. The barycenter differentiation statement is a directional derivative along a specified
-square-integrable displacement; it does not claim the full Wasserstein Fréchet expansion.
-Sources: GAPS 108.55 and 108.58.
+Sample-complexity bounds for empirical entropic transport costs, and the first-order theory of the
+equal-weight Wasserstein barycenter energy. Entropic and Wasserstein costs are TauCeti
+constructions; empirical laws use `CKSD.empiricalMeasure`.
+
+## Main definitions
+
+* `CKSD.quadraticEntropicCost`, `CKSD.quadraticEntropicTransport`: the squared Euclidean cost and
+  the real-valued entropic transport cost.
+* `CKSD.entropicBarycentricMap`: the barycentric projection of a quadratic Gibbs coupling.
+* `CKSD.SatisfiesWassersteinKarcherEquation`: the Karcher (first-order) equation for a barycenter.
+* `CKSD.displacementLaw`: the law displaced along a vector field.
+
+## Main results
+
+* `CKSD.quadraticEntropicTransport_empirical_bounds`: dimension-free mean-square and bias bounds
+  (GAPS 108.55).
+* `CKSD.hasDerivAt_wassersteinBarycenterEnergy_displacement`: the directional first variation of
+  the barycenter energy (GAPS 108.58). It is a directional derivative along a specified
+  square-integrable displacement, not the full Wasserstein Fréchet expansion.
+* `CKSD.satisfiesWassersteinKarcherEquation_of_minimizer`: minimizers satisfy the Karcher equation
+  (GAPS 108.58).
 -/
 
 @[expose] public section
@@ -39,8 +56,11 @@ def entropicBarycentricMap {d : ℕ} (ε : ℝ)
   let weight := fun y ↦ Real.exp ((potential y - ‖x - y‖ ^ 2) / ε)
   (∫ y, weight y ∂Q)⁻¹ • ∫ y, weight y • y ∂Q
 
-/-- GAPS 108.55: dimension-free mean-square and bias bounds for empirical entropic costs.
-The entropic-map estimation bound is not asserted here. Constants may depend on `ε` only. -/
+/-- GAPS 108.55: dimension-free mean-square and bias bounds for empirical entropic costs. For
+`ε > 0` there is `C > 0`, independent of the dimension, such that for laws `P, Q` on the ball of
+radius `1/2` and `n ≥ 1` samples the empirical entropic cost `S_n` satisfies
+`E (S_n - S)² ≤ C / n` and `|E S_n - S| ≤ C / n`. The entropic-map estimation bound is not
+asserted here. Constants may depend on `ε` only. -/
 theorem quadraticEntropicTransport_empirical_bounds (ε : ℝ≥0) (hε : 0 < ε) :
     ∃ C > (0 : ℝ), ∀ d : ℕ,
       ∀ P Q : Measure (EuclideanSpace ℝ (Fin d)),
@@ -55,18 +75,6 @@ theorem quadraticEntropicTransport_empirical_bounds (ε : ℝ≥0) (hε : 0 < ε
       |(∫ z, cost z ∂sampleLaw) - quadraticEntropicTransport ε P Q| ≤ C / n := by
   sorry
 
-/-- Equal-weight Wasserstein barycenter energy, with the factor `1/2` normalization. -/
-def wassersteinBarycenterEnergy {d k : ℕ}
-    (target : Fin k → Measure (EuclideanSpace ℝ (Fin d)))
-    (P : Measure (EuclideanSpace ℝ (Fin d))) : ℝ :=
-  (∑ i, (TauCeti.wassersteinEDist 2 P (target i)).toReal ^ 2) / (2 * k)
-
-/-- Candidate barycenter gradient represented by residual optimal transport maps. -/
-def wassersteinBarycenterGradient {d k : ℕ}
-    (T : Fin k → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (x : EuclideanSpace ℝ (Fin d)) : EuclideanSpace ℝ (Fin d) :=
-  x - (k : ℝ)⁻¹ • ∑ i, T i x
-
 /-- Karcher equation for a specified collection of optimal transport maps. -/
 def SatisfiesWassersteinKarcherEquation {d k : ℕ}
     (P : Measure (EuclideanSpace ℝ (Fin d)))
@@ -78,13 +86,15 @@ def displacementLaw {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
     (v : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (t : ℝ) :
     Measure (EuclideanSpace ℝ (Fin d)) := P.map (fun x ↦ x + t • v x)
 
-/-- GAPS 108.58, directional first variation of the equal-weight barycenter energy.
-The source is absolutely continuous, and each supplied map is optimal with its stated target. -/
+/-- GAPS 108.58, directional first variation of the equal-weight barycenter energy. For an
+absolutely continuous law `P` with finite second moment and square-integrable maps `T_i` that are
+optimal from `P` to the targets, the energy along the displacement `x ↦ x + t v(x)` has derivative
+`∫ ⟨x - k⁻¹ ∑ T_i x, v x⟩ dP` at `t = 0`. The targets are probability laws with finite second
+moment because they are the images `(T_i)_# P`. -/
 theorem hasDerivAt_wassersteinBarycenterEnergy_displacement {d k : ℕ} (hk : 0 < k)
     (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
     (hP : P ≪ volume) (hP2 : MemLp id 2 P)
     (target : Fin k → Measure (EuclideanSpace ℝ (Fin d)))
-    (htarget : ∀ i, IsProbabilityMeasure (target i)) (h2 : ∀ i, MemLp id 2 (target i))
     (T : Fin k → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (hT : ∀ i, Measurable (T i)) (hT2 : ∀ i, MemLp (T i) 2 P)
     (hlaw : ∀ i, P.map (T i) = target i)
@@ -100,9 +110,8 @@ theorem hasDerivAt_wassersteinBarycenterEnergy_displacement {d k : ℕ} (hk : 0 
 Karcher equation. -/
 theorem satisfiesWassersteinKarcherEquation_of_minimizer {d k : ℕ} (hk : 0 < k)
     (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
-     (hP2 : MemLp id 2 P)
+    (hP2 : MemLp id 2 P)
     (target : Fin k → Measure (EuclideanSpace ℝ (Fin d)))
-
     (T : Fin k → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (hT : ∀ i, Measurable (T i)) (hT2 : ∀ i, MemLp (T i) 2 P)
     (hlaw : ∀ i, P.map (T i) = target i)
@@ -128,14 +137,14 @@ theorem satisfiesWassersteinKarcherEquation_of_minimizer {d k : ℕ} (hk : 0 < k
     intro i
     rw [hlaw]
     exact hopt i
-  have hdescent := wasserstein_energy_descent_of_averaged_transport hk P hP2 T hT hT2
-    hopt' 1
+  have hdescent := wassersteinBarycenterEnergy_map_sub_le hk P hP2 T hT hT2 hopt' 1
   have hmin' := hmin (P.map (fun x ↦ x - (1 : ℝ) • g x))
     inferInstance hmap2
   simp only [wassersteinBarycenterEnergy, ← hlaw] at hmin'
   change _ ≤ -(1 - 1 ^ 2 / 2) * ∫ x, ‖g x‖ ^ 2 ∂P at hdescent
   have hzero : (∫ x, ‖g x‖ ^ 2 ∂P) = 0 := by
     have hnonneg : 0 ≤ ∫ x, ‖g x‖ ^ 2 ∂P := integral_nonneg fun x ↦ sq_nonneg _
+    simp only [wassersteinBarycenterEnergy] at hdescent
     norm_num [g, wassersteinBarycenterGradient] at hmin' hdescent hnonneg
     change (∫ x, ‖x - (k : ℝ)⁻¹ • ∑ i, T i x‖ ^ 2 ∂P) = 0
     linarith

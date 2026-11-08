@@ -104,7 +104,7 @@ theorem exists_bernoulli_localMeanRisk_ge {n : ℕ} (hn : 0 < n) {ε : ℝ} (hε
   have hKLi : ∀ i, InformationTheory.klDiv (Q i ∘ₘ Ber((1 : ℝ), 0, b))
       (Q i ∘ₘ Ber((1 : ℝ), 0, a)) ≤ ENNReal.ofReal (16 * ε ^ 2 * δ ^ 2) := by
     intro i
-    have h := klDiv_comp_le_of_local_differential_privacy (Q i) ε hε0.le (hpriv i)
+    have h := klDiv_comp_le_of_local_differential_privacy (Q i) ε (hpriv i)
       (Ber((1 : ℝ), 0, b)) (Ber((1 : ℝ), 0, a))
     refine le_trans le_self_add (h.trans (ENNReal.ofReal_le_ofReal ?_))
     have hTV := totalVariationDistance_bernoulliMeasure_le b a
@@ -139,14 +139,8 @@ theorem exists_bernoulli_localMeanRisk_ge {n : ℕ} (hn : 0 < n) {ε : ℝ} (hε
   have hexp : Real.exp (-1) ≤ Real.exp (-(InformationTheory.klDiv μb μa).toReal) :=
     Real.exp_le_exp.mpr (by linarith)
   have hTV := tvDist_map_le μb μa hest
-  have hev := two_mul_measureReal_sub_le_tvDist (Q := μb.map est) (Q' := μa.map est) hA
-  have he3 : 1 / 3 ≤ Real.exp (-1) := by
-    rw [Real.exp_neg, one_div]
-    exact inv_anti₀ (Real.exp_pos 1) (by linarith [Real.exp_one_lt_d9])
-  have hcompl : (μb.map est).real Aᶜ = 1 - (μb.map est).real A := by
-    rw [measureReal_compl hA, probReal_univ]
-  have htest : 1 / 6 ≤ (μa.map est).real A + (μb.map est).real Aᶜ := by
-    rw [hcompl]; linarith
+  have htest : 1 / 6 ≤ (μa.map est).real A + (μb.map est).real Aᶜ :=
+    one_div_six_le_measureReal_add_measureReal_compl (by linarith) hA
   have hLa := ofReal_mul_map_le_localMeanRisk Q hest (Ber((1 : ℝ), 0, a)) hA
     (r := ((b - a : ℝ) / 2) ^ 2) fun y hy ↦ by
       rw [integral_id_bernoulliMeasure_one_zero]
@@ -179,9 +173,8 @@ theorem exists_bernoulli_localMeanRisk_ge {n : ℕ} (hn : 0 < n) {ε : ℝ} (hε
 def localLaplaceKernel (ε : ℝ) : Kernel ℝ ℝ where
   toFun x := TauCeti.Probability.laplaceMeasure (clipUnit x) (2 / ε : ℝ)
   measurable' := by
-    have hc : Measurable fun x : ℝ ↦ clipUnit x := by unfold clipUnit; fun_prop
     exact TauCeti.Probability.measurable_laplaceMeasure.comp
-      (f := fun x : ℝ ↦ (clipUnit x, (2 / ε : ℝ))) (hc.prodMk measurable_const)
+      (f := fun x : ℝ ↦ (clipUnit x, (2 / ε : ℝ))) (measurable_clipUnit.prodMk measurable_const)
 
 /-- The local Laplace release kernel is a Markov kernel for positive `ε`. -/
 theorem isMarkovKernel_localLaplaceKernel {ε : ℝ} (hε : 0 < ε) :
@@ -191,28 +184,13 @@ theorem isMarkovKernel_localLaplaceKernel {ε : ℝ} (hε : 0 < ε) :
 /-- GAPS 107.66: the local Laplace release kernel is `ε`-locally differentially private. -/
 theorem isDifferentiallyPrivate_localLaplaceKernel {ε : ℝ} (hε : 0 < ε) :
     IsDifferentiallyPrivate (fun _ _ : ℝ ↦ True) ε 0 (localLaplaceKernel ε) := by
-  intro x x' _ A _
-  set b : ℝ := 2 / ε with hb_def
-  have hb : 0 < b := by positivity
-  have hclip : ∀ x, clipUnit x ∈ Icc (-1 : ℝ) 1 := fun x ↦
-    ⟨le_max_left _ _, max_le (by norm_num) (min_le_left _ _)⟩
-  have hratio : |clipUnit x - clipUnit x'| / b ≤ ε := by
-    rw [div_le_iff₀ hb, hb_def]
-    have h1 := hclip x; have h2 := hclip x'
-    calc |clipUnit x - clipUnit x'| ≤ 2 := by
-          rw [abs_le]; constructor <;> linarith [h1.1, h1.2, h2.1, h2.2]
-      _ = ε * (2 / ε) := by field_simp
-  have hk : ∀ e : ℝ, localLaplaceKernel ε e =
-      volume.withDensity (TauCeti.Probability.laplacePDF (clipUnit e) b) := fun e ↦
-    TauCeti.Probability.laplaceMeasure_eq_withDensity _ _
-  rw [ENNReal.ofReal_zero, add_zero, hk, hk, withDensity_apply' _ A, withDensity_apply' _ A,
-    ← lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
-  refine lintegral_mono fun y ↦ ?_
-  calc TauCeti.Probability.laplacePDF (clipUnit x) b y
-      ≤ ENNReal.ofReal (Real.exp (|clipUnit x - clipUnit x'| / b)) *
-          TauCeti.Probability.laplacePDF (clipUnit x') b y := laplacePDF_le_exp_mul hb _ _ y
-    _ ≤ ENNReal.ofReal (Real.exp ε) * TauCeti.Probability.laplacePDF (clipUnit x') b y := by
-      gcongr
+  refine isDifferentiallyPrivate_of_eq_laplaceMeasure _ _ clipUnit (by positivity)
+    (fun _ ↦ rfl) fun x x' _ ↦ ?_
+  have h1 := clipUnit_mem_Icc x
+  have h2 := clipUnit_mem_Icc x'
+  calc |clipUnit x - clipUnit x'| ≤ 2 := by
+        rw [abs_le]; constructor <;> linarith [h1.1, h1.2, h2.1, h2.2]
+    _ = ε * (2 / ε) := by field_simp
 
 /-- Under a law supported by `[-1,1]`, the squared deviation of a local Laplace release from
 the mean has lower integral at most `4 + 8/ε²`. -/
@@ -225,8 +203,7 @@ theorem lintegral_sq_sub_localLaplace_le {ε : ℝ} (hε : 0 < ε) (P : Measure 
   have hb : 0 < b := by positivity
   have hθ := abs_integral_le_one_of_support P hP
   rw [abs_le] at hθ
-  have hclip : ∀ x, clipUnit x ∈ Icc (-1 : ℝ) 1 := fun x ↦
-    ⟨le_max_left _ _, max_le (by norm_num) (min_le_left _ _)⟩
+  have hclip := clipUnit_mem_Icc
   rw [Measure.lintegral_bind (Kernel.aemeasurable _) (by fun_prop)]
   have hinner : ∀ x, ∫⁻ y, ENNReal.ofReal ((y - θ) ^ 2) ∂localLaplaceKernel ε x =
       ENNReal.ofReal ((clipUnit x - θ) ^ 2 + 2 * b ^ 2) := fun x ↦ by
@@ -254,7 +231,7 @@ theorem integral_id_localLaplace {ε : ℝ} (hε : 0 < ε) (P : Measure ℝ)
     have hmem : ∀ᵐ x ∂P, x ∈ Icc (-1 : ℝ) 1 := measure_eq_zero_iff_ae_notMem.mp hP |>.mono
       fun x hx ↦ by simpa using hx
     filter_upwards [hmem] with x hx
-    simp only [clipUnit, min_eq_right hx.2, max_eq_right hx.1]
+    exact clipUnit_of_mem hx
   rw [Measure.comp_eq_comp_const_apply] at hint ⊢
   rw [Kernel.integral_comp hint]
   simp only [Kernel.const_apply]

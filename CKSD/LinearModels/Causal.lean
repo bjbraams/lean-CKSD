@@ -1,60 +1,65 @@
 module
 
 public import CKSD.LinearModels.Basic
-public import Mathlib.Probability.Independence.Conditional
 
 /-!
-# Regression criteria and finite causal graphs
+# Finite causal graphs and d-separation
 
-Potential outcomes are ordinary random variables; finite causal graphs are acyclic relations.
-The intervention mass is the truncated product of the supplied local conditional masses.
-Sources: GAPS 105.3, 105.5, 105.26, 105.48, 105.55–105.71.
+A causal graph on a vertex type `V` is a directed acyclic graph, given by an edge relation whose
+transitive closure is irreflexive. This file sets up the graph-theoretic vocabulary of directed
+graphical models: parents, descendants, active paths, d-separation, Markov equivalence, skeleton
+adjacency and unshielded colliders, together with the recursive product of local conditional
+masses and its truncated version for interventions.
+
+## Main definitions
+
+* `CKSD.CausalGraph`: a directed acyclic graph.
+* `CKSD.CausalGraph.IsActivePath`: a path (injective sequence of adjacent vertices) on which
+  every interior collider has a descendant in the conditioning set (or lies in it) and every
+  interior noncollider lies outside it.
+* `CKSD.CausalGraph.DSeparated`: no active path joins the two sets.
+* `CKSD.CausalGraph.MarkovEquivalent`: the two graphs have the same d-separation statements.
+* `CKSD.CausalGraph.IsUnshieldedCollider`: `u → v ← w` with `u` and `w` nonadjacent.
+* `CKSD.directedFactorizationMass`, `CKSD.interventionMass`: the recursive product of local
+  masses and the truncated product under an intervention.
+
+## Main results
+
+* `CKSD.markovEquivalent_iff_skeleton_and_colliders`: the Verma–Pearl theorem, two directed
+  acyclic graphs on a finite vertex set are Markov equivalent if and only if they have the same
+  skeleton and the same unshielded colliders.
+
+## Conventions
+
+The conditions of an active path constrain only its interior vertices, and `DSeparated A B Z`
+is defined for arbitrary sets, not only for pairwise disjoint ones. Hence `A` and `B` are never
+d-separated when they meet (a path of length zero is active), and an endpoint lying in `Z` does
+not block a path. For pairwise disjoint `A`, `B`, `Z` this is the usual d-separation. The
+d-separation statements with overlapping sets reduce to disjoint ones on a larger graph: for
+`a ∈ Z`, the paths from `a` that are active given `Z` in `G` are exactly the paths from `a` that
+are active given `(Z \ {a}) ∪ {a'}` in the graph obtained from `G` by adding a new vertex `a'`
+with the single edge `a → a'`, and adding such a child to two graphs preserves the equality of
+their skeletons and of their unshielded colliders. Consequently, by the classical Verma–Pearl
+theorem for disjoint triples applied to the enlarged graphs, `MarkovEquivalent`, which
+quantifies over all triples, agrees with Markov equivalence in the usual sense (agreement on
+pairwise disjoint triples), and `markovEquivalent_iff_skeleton_and_colliders` holds as stated.
+
+## References
+
+* T. Verma and J. Pearl, *Equivalence and synthesis of causal models*, UAI 1990.
+* S. L. Lauritzen, *Graphical Models*, Oxford University Press, 1996.
 -/
 
 @[expose] public section
 
 noncomputable section
 
-open MeasureTheory ProbabilityTheory Set
-open scoped NNReal ENNReal Topology BigOperators
+open Set
+open scoped BigOperators
 
 namespace CKSD
 
 attribute [local instance] Classical.propDecidable
-
-/-- Quantile-regression check loss, with the conventional left/right value zero at the origin. -/
-def quantileCheckLoss (τ u : ℝ) : ℝ := u * (τ - if u < 0 then 1 else 0)
-
-/-- Fixed-design quantile-regression objective. -/
-def quantileRegressionObjective {n p : ℕ} (τ : ℝ) (x : Fin n → EuclideanSpace ℝ (Fin p))
-    (y : Fin n → ℝ) (β : EuclideanSpace ℝ (Fin p)) : ℝ :=
-  ∑ i, quantileCheckLoss τ (y i - inner ℝ (x i) β)
-
-/-- A quantile-regression estimate minimizes the check-loss objective. -/
-def IsQuantileRegressionEstimator {n p : ℕ} (τ : ℝ)
-    (x : Fin n → EuclideanSpace ℝ (Fin p)) (y : Fin n → ℝ)
-    (β : EuclideanSpace ℝ (Fin p)) : Prop :=
-  ∀ b, quantileRegressionObjective τ x y β ≤ quantileRegressionObjective τ x y b
-
-/-- An exponential-dispersion log density. -/
-def exponentialDispersionLogDensity (b : ℝ → ℝ) (c : ℝ → ℝ → ℝ)
-    (y θ φ : ℝ) : ℝ := (y * θ - b θ) / φ + c y φ
-
-/-- Generalized-linear-model information matrix for a specified diagonal weight vector. -/
-def glmInformationMatrix {n p : ℕ} (X : Matrix (Fin n) (Fin p) ℝ)
-    (w : Fin n → ℝ) (φ : ℝ) : Matrix (Fin p) (Fin p) ℝ :=
-  φ⁻¹ • (X.transpose * Matrix.diagonal w * X)
-
-/-- Two-stage least-squares coefficient, using the instrument projection. -/
-def twoStageLeastSquares {n p k : ℕ} (X : Matrix (Fin n) (Fin p) ℝ)
-    (Z : Matrix (Fin n) (Fin k) ℝ) (y : Fin n → ℝ) : Fin p → ℝ :=
-  let P := Z * (Z.transpose * Z)⁻¹ * Z.transpose
-  (X.transpose * P * X)⁻¹.mulVec ((X.transpose * P).mulVec y)
-
-/-- Average-treatment-effect efficient influence function, with observed outcome as argument. -/
-def treatmentEffectInfluence {X : Type*} (m₀ m₁ e : X → ℝ) (ate : ℝ)
-    (x : X) (a : Bool) (y : ℝ) : ℝ :=
-  m₁ x - m₀ x - ate + if a then (y - m₁ x) / e x else -(y - m₀ x) / (1 - e x)
 
 /-- Finite directed acyclic causal graph; acyclicity excludes every nonempty directed cycle. -/
 structure CausalGraph (V : Type*) where
@@ -71,8 +76,9 @@ def CausalGraph.parents {V : Type*} (G : CausalGraph V) (v : V) : Set V :=
 def CausalGraph.IsDescendant {V : Type*} (G : CausalGraph V) (u v : V) : Prop :=
   Relation.TransGen G.edge u v
 
-/-- A path is active when each noncollider is unconditioned and each collider has an observed
-descendant. -/
+/-- A path `p 0, …, p n` (pairwise distinct vertices, consecutive ones adjacent) is active given
+`Z` when every interior collider `p (i-1) → p i ← p (i+1)` lies in `Z` or has a descendant in
+`Z`, and every interior noncollider lies outside `Z`. The endpoints are not constrained. -/
 def CausalGraph.IsActivePath {V : Type*} (G : CausalGraph V) (Z : Set V)
     {n : ℕ} (p : Fin (n + 1) → V) : Prop :=
   Function.Injective p ∧
@@ -85,11 +91,15 @@ def CausalGraph.IsActivePath {V : Type*} (G : CausalGraph V) (Z : Set V)
       then ∃ z ∈ Z, z = p b ∨ G.IsDescendant (p b) z
       else p b ∉ Z
 
-/-- Graphical d-separation by absence of an active path. -/
+/-- `Z` d-separates `A` from `B` when no path from a vertex of `A` to a vertex of `B` is active
+given `Z`. The sets need not be disjoint; see the module docstring for the resulting
+conventions (`A ∩ B ≠ ∅` excludes d-separation, endpoints in `Z` do not block). -/
 def CausalGraph.DSeparated {V : Type*} (G : CausalGraph V) (A B Z : Set V) : Prop :=
   ∀ n : ℕ, ∀ p : Fin (n + 1) → V, p 0 ∈ A → p (Fin.last n) ∈ B → ¬ G.IsActivePath Z p
 
-/-- Two causal graphs are Markov equivalent if all their d-separation statements agree. -/
+/-- Two causal graphs are Markov equivalent if all their d-separation statements agree. The
+quantification is over all triples of vertex sets; by the reduction described in the module
+docstring this is equivalent to agreement on pairwise disjoint triples. -/
 def CausalGraph.MarkovEquivalent {V : Type*} (G H : CausalGraph V) : Prop :=
   ∀ A B Z, G.DSeparated A B Z ↔ H.DSeparated A B Z
 
@@ -101,22 +111,26 @@ def CausalGraph.Adjacent {V : Type*} (G : CausalGraph V) (u v : V) : Prop :=
 def CausalGraph.IsUnshieldedCollider {V : Type*} (G : CausalGraph V) (u v w : V) : Prop :=
   u ≠ w ∧ G.edge u v ∧ G.edge w v ∧ ¬ G.Adjacent u w
 
-/-- Local mass functions obey the parent restriction of a specified graph. -/
+/-- Local mass functions respect the parents of `G`: the local mass of `v` depends on the
+configuration only through its values at the parents of `v`. -/
 def CausalGraph.RespectsParents {V S : Type*} (G : CausalGraph V)
     (localMass : V → (V → S) → S → ℝ) : Prop :=
   ∀ v x y, (∀ u ∈ G.parents v, x u = y u) → localMass v x = localMass v y
 
-/-- Recursive product mass from local conditional masses. -/
+/-- Recursive product mass `∏_v k_v(x_v | x)` from local conditional masses `k_v`. -/
 def directedFactorizationMass {V S : Type*} [Fintype V]
     (localMass : V → (V → S) → S → ℝ) (x : V → S) : ℝ :=
   ∏ v, localMass v x (x v)
 
-/-- Truncated factorization for an intervention on a finite set of vertices. -/
+/-- Truncated factorization for the intervention `do(X_A = a_A)`: zero unless `x` agrees with
+`a` on `A`, and otherwise the product of the local masses over the vertices outside `A`. -/
 def interventionMass {V S : Type*} [Fintype V] [DecidableEq V] [DecidableEq S]
     (localMass : V → (V → S) → S → ℝ) (A : Finset V) (a x : V → S) : ℝ :=
   if ∀ v ∈ A, x v = a v then ∏ v ∈ Aᶜ, localMass v x (x v) else 0
 
-/-- GAPS 105.67: skeleton and unshielded colliders characterize Markov equivalence. -/
+/-- GAPS 105.67 (Verma–Pearl): two directed acyclic graphs on a finite vertex set are Markov
+equivalent if and only if they have the same skeleton (adjacency relation) and the same
+unshielded colliders. -/
 theorem markovEquivalent_iff_skeleton_and_colliders {V : Type*} [Fintype V]
     (G H : CausalGraph V) :
     G.MarkovEquivalent H ↔
@@ -124,41 +138,8 @@ theorem markovEquivalent_iff_skeleton_and_colliders {V : Type*} [Fintype V]
         ∀ u v w, G.IsUnshieldedCollider u v w ↔ H.IsUnshieldedCollider u v w := by
   sorry
 
-/-- Check loss is nonnegative for a probability level. -/
-theorem quantileCheckLoss_nonneg (τ u : ℝ) (hτ : τ ∈ Icc 0 1) :
-    0 ≤ quantileCheckLoss τ u := by
-  unfold quantileCheckLoss
-  split_ifs with h
-  · exact mul_nonneg_of_nonpos_of_nonpos h.le (by linarith [hτ.2])
-  · exact mul_nonneg (le_of_not_gt h) (by simpa using hτ.1)
-
 /-- Graphical Markov equivalence is reflexive. -/
 theorem CausalGraph.markovEquivalent_refl {V : Type*} (G : CausalGraph V) :
     G.MarkovEquivalent G := fun _ _ _ ↦ Iff.rfl
-
-/-- The propensity score as a conditional expectation on the original sample space. -/
-def propensityScore {Ω S : Type*} [MeasurableSpace Ω] [MeasurableSpace S]
-    (P : Measure Ω) (A : Ω → Bool) (X : Ω → S) : Ω → ℝ :=
-  P[(fun ω ↦ if A ω then (1 : ℝ) else 0) | (inferInstance : MeasurableSpace S).comap X]
-
-/-- GAPS 105.48: the propensity score is a balancing score, in the standard Borel setting. -/
-theorem condIndepFun_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [StandardBorelSpace Ω]
-    [MeasurableSpace S] (P : Measure Ω) [IsProbabilityMeasure P]
-    (A : Ω → Bool) (hA : Measurable A) (X : Ω → S) (hX : Measurable X)
-    (he : Measurable (propensityScore P A X)) :
-    CondIndepFun ((inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X))
-      he.comap_le A X P := by
-  sorry
-
-/-- GAPS 105.48: ignorability descends from the covariates to their propensity score. -/
-theorem condIndepFun_of_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [StandardBorelSpace Ω]
-    [MeasurableSpace S] (P : Measure Ω) [IsProbabilityMeasure P]
-    (A : Ω → Bool) (hA : Measurable A) (X : Ω → S) (hX : Measurable X)
-    (Y : Ω → ℝ) (hY : Measurable Y)
-    (hind : CondIndepFun ((inferInstance : MeasurableSpace S).comap X) hX.comap_le Y A P)
-    (he : Measurable (propensityScore P A X)) :
-    CondIndepFun ((inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X))
-      he.comap_le Y A P := by
-  sorry
 
 end CKSD

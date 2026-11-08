@@ -7,16 +7,34 @@ public import TauCeti.Probability.Distributions.Gaussian.Independence
 /-!
 # Canonical correlations
 
-For centred random vectors `U ∈ ℝ^p` and `V ∈ ℝ^q` with covariance blocks `Σ_UU`, `Σ_UV`,
-`Σ_VV`, the canonical correlations are the singular values of
-`Σ_UU^{-1/2} Σ_UV Σ_VV^{-1/2}`; the largest one is its L2 operator norm. Matrix square roots
-are Mathlib's continuous functional calculus `CFC.sqrt`. The squared canonical correlations are
-the roots of the characteristic polynomial of `M Mᵀ` for this matrix `M`.
+For random vectors `U ∈ ℝ^p` and `V ∈ ℝ^q` with covariance blocks `Σ_UU`, `Σ_UV`, `Σ_VV`
+(the diagonal blocks positive definite), the canonical correlations are the singular values of
+the whitened cross-covariance `K = Σ_UU^{-1/2} Σ_UV Σ_VV^{-1/2}`; the largest one is its L2
+operator norm, and the squared canonical correlations are the roots of the characteristic
+polynomial of `K Kᵀ`, equivalently of `Σ_UU⁻¹ Σ_UV Σ_VV⁻¹ Σ_VU`. Matrix square roots are
+Mathlib's continuous functional calculus `CFC.sqrt`.
 
-The extremal characterization of the largest canonical correlation, the bound by one, the
-invariance theorem, and the Gaussian independence criterion are proved; the last reuses
-TauCeti's criterion `indepFun_matrix_multivariateGaussian_iff` for independence of linear
-images of a Gaussian vector. Source: GAPS 105.29.
+## Main definitions
+
+* `CKSD.linearCombinationCorrelation`: the correlation of `aᵀU` and `bᵀV`.
+* `CKSD.canonicalCorrelationMatrix`: the whitened cross-covariance `K`.
+
+## Main results
+
+* `CKSD.isGreatest_linearCombinationCorrelation`: the largest correlation between linear
+  combinations of `U` and of `V` is `‖K‖`, and it is attained.
+* `CKSD.norm_canonicalCorrelationMatrix_le_one`: the canonical correlations lie in `[0, 1]`.
+* `CKSD.charpoly_canonicalCorrelationMatrix_transform`: the canonical correlations are invariant
+  under nonsingular linear transformations of `U` and of `V`.
+* `CKSD.indepFun_gaussian_blocks_iff_canonicalCorrelationMatrix_eq_zero`: two jointly Gaussian
+  blocks are independent exactly when all canonical correlations vanish. The proof uses
+  TauCeti's criterion `indepFun_matrix_multivariateGaussian_iff` for independence of linear
+  images of a Gaussian vector.
+
+## References
+
+* T. W. Anderson, *An Introduction to Multivariate Statistical Analysis*, 3rd ed., Wiley, 2003,
+  Chapter 12.
 -/
 
 @[expose] public section
@@ -43,16 +61,49 @@ def canonicalCorrelationMatrix (Suu : Matrix (Fin p) (Fin p) ℝ)
     Matrix (Fin p) (Fin q) ℝ :=
   (CFC.sqrt Suu)⁻¹ * Suv * (CFC.sqrt Svv)⁻¹
 
-/-- A real positive semidefinite matrix has a symmetric inverse square root whose square is the
-inverse. -/
-theorem PosDef.inv_sqrt_facts {n : ℕ} {S : Matrix (Fin n) (Fin n) ℝ} (hS : S.PosDef) :
-    ((CFC.sqrt S)⁻¹)ᵀ = (CFC.sqrt S)⁻¹ ∧ (CFC.sqrt S)⁻¹ * (CFC.sqrt S)⁻¹ = S⁻¹ := by
-  rw [hS.posSemidef.inv_sqrt]
-  have hnn : 0 ≤ S⁻¹ := hS.inv.posSemidef.nonneg
-  refine ⟨?_, CFC.sqrt_mul_sqrt_self _ hnn⟩
+section InverseSquareRoot
+
+variable {n : Type*} [Fintype n] [DecidableEq n] {S : Matrix n n ℝ}
+
+/-- For a real positive semidefinite matrix `S`, the inverse `(S^{1/2})⁻¹` of its square root is
+symmetric. -/
+theorem transpose_inv_sqrt_of_posSemidef (hS : S.PosSemidef) :
+    ((CFC.sqrt S)⁻¹)ᵀ = (CFC.sqrt S)⁻¹ := by
+  rw [hS.inv_sqrt]
   have h := (CFC.sqrt_nonneg S⁻¹).posSemidef.isHermitian
   rw [Matrix.IsHermitian, Matrix.conjTranspose_eq_transpose_of_trivial] at h
   exact h
+
+/-- For a real positive semidefinite matrix `S`, `(S^{1/2})⁻¹ (S^{1/2})⁻¹ = S⁻¹`. -/
+theorem inv_sqrt_mul_inv_sqrt_of_posSemidef (hS : S.PosSemidef) :
+    (CFC.sqrt S)⁻¹ * (CFC.sqrt S)⁻¹ = S⁻¹ := by
+  rw [hS.inv_sqrt]
+  exact CFC.sqrt_mul_sqrt_self _ hS.inv.nonneg
+
+/-- The inverse square root of a real positive definite matrix is invertible. -/
+theorem isUnit_det_inv_sqrt_of_posDef (hS : S.PosDef) :
+    IsUnit ((CFC.sqrt S)⁻¹).det := by
+  have h := congrArg Matrix.det (inv_sqrt_mul_inv_sqrt_of_posSemidef hS.posSemidef)
+  rw [Matrix.det_mul] at h
+  have hpos : 0 < S⁻¹.det := hS.inv.det_pos
+  refine isUnit_iff_ne_zero.2 fun h0 ↦ ?_
+  rw [h0, zero_mul] at h
+  exact hpos.ne' h.symm
+
+/-- The whitening identity `Σ^{-1/2} Σ Σ^{-1/2} = 1` for a real positive definite `Σ`. -/
+theorem inv_sqrt_mul_mul_inv_sqrt_of_posDef (hS : S.PosDef) :
+    (CFC.sqrt S)⁻¹ * S * (CFC.sqrt S)⁻¹ = 1 := by
+  have key : ∀ R : Matrix n n ℝ, IsUnit R.det → R * R = S⁻¹ → R * S * R = 1 := by
+    intro R hR hRR
+    have hSdet : IsUnit S.det := isUnit_iff_ne_zero.2 hS.det_pos.ne'
+    have hS' : S = R⁻¹ * R⁻¹ := by
+      rw [← Matrix.mul_inv_rev, hRR, Matrix.nonsing_inv_nonsing_inv _ hSdet]
+    rw [hS', Matrix.mul_assoc, Matrix.nonsing_inv_mul_cancel_right _ _ hR,
+      Matrix.mul_nonsing_inv _ hR]
+  exact key _ (isUnit_det_inv_sqrt_of_posDef hS)
+    (inv_sqrt_mul_inv_sqrt_of_posSemidef hS.posSemidef)
+
+end InverseSquareRoot
 
 /-- The squared canonical correlations are the roots of the characteristic polynomial of
 `Σ_UU⁻¹ Σ_UV Σ_VV⁻¹ Σ_VU`. -/
@@ -61,8 +112,10 @@ theorem charpoly_canonicalCorrelationMatrix_mul_transpose (Suu : Matrix (Fin p) 
     (hUU : Suu.PosDef) (hVV : Svv.PosDef) :
     (canonicalCorrelationMatrix Suu Suv Svv * (canonicalCorrelationMatrix Suu Suv Svv)ᵀ).charpoly =
       (Suu⁻¹ * Suv * Svv⁻¹ * Suvᵀ).charpoly := by
-  obtain ⟨hR, hRR⟩ := PosDef.inv_sqrt_facts hUU
-  obtain ⟨hT, hTT⟩ := PosDef.inv_sqrt_facts hVV
+  have hR := transpose_inv_sqrt_of_posSemidef hUU.posSemidef
+  have hRR := inv_sqrt_mul_inv_sqrt_of_posSemidef hUU.posSemidef
+  have hT := transpose_inv_sqrt_of_posSemidef hVV.posSemidef
+  have hTT := inv_sqrt_mul_inv_sqrt_of_posSemidef hVV.posSemidef
   have hM : canonicalCorrelationMatrix Suu Suv Svv * (canonicalCorrelationMatrix Suu Suv Svv)ᵀ =
       (CFC.sqrt Suu)⁻¹ * ((Suv * Svv⁻¹ * Suvᵀ) * (CFC.sqrt Suu)⁻¹) := by
     simp only [canonicalCorrelationMatrix, Matrix.transpose_mul, hR, hT, ← hTT, Matrix.mul_assoc]
@@ -100,24 +153,14 @@ theorem charpoly_canonicalCorrelationMatrix_transform (Suu : Matrix (Fin p) (Fin
   rw [hK, Matrix.charpoly_mul_comm, Matrix.mul_assoc, Matrix.mul_nonsing_inv _ hPT,
     Matrix.mul_one]
 
-/-- The inverse square root of a real positive definite matrix is invertible. -/
-theorem PosDef.isUnit_det_inv_sqrt {n : ℕ} {S : Matrix (Fin n) (Fin n) ℝ} (hS : S.PosDef) :
-    IsUnit ((CFC.sqrt S)⁻¹).det := by
-  have h := congrArg Matrix.det (PosDef.inv_sqrt_facts hS).2
-  rw [Matrix.det_mul] at h
-  have hpos : 0 < S⁻¹.det := hS.inv.det_pos
-  refine isUnit_iff_ne_zero.2 fun h0 ↦ ?_
-  rw [h0, zero_mul] at h
-  exact hpos.ne' h.symm
-
 /-- The whitened cross-covariance vanishes exactly when the cross-covariance does. -/
 theorem canonicalCorrelationMatrix_eq_zero_iff (Suu : Matrix (Fin p) (Fin p) ℝ)
     (Suv : Matrix (Fin p) (Fin q) ℝ) (Svv : Matrix (Fin q) (Fin q) ℝ)
     (hUU : Suu.PosDef) (hVV : Svv.PosDef) :
     canonicalCorrelationMatrix Suu Suv Svv = 0 ↔ Suv = 0 := by
   refine ⟨fun h ↦ ?_, fun h ↦ by simp [canonicalCorrelationMatrix, h]⟩
-  have hR := PosDef.isUnit_det_inv_sqrt hUU
-  have hT := PosDef.isUnit_det_inv_sqrt hVV
+  have hR := isUnit_det_inv_sqrt_of_posDef hUU
+  have hT := isUnit_det_inv_sqrt_of_posDef hVV
   unfold canonicalCorrelationMatrix at h
   have h₁ : Suv * (CFC.sqrt Svv)⁻¹ = 0 := by
     rw [← Matrix.nonsing_inv_mul_cancel_left _ (Suv * (CFC.sqrt Svv)⁻¹) hR,
@@ -160,38 +203,12 @@ theorem sq_dotProduct_mulVec_le_of_posSemidef_fromBlocks (Suu : Matrix (Fin p) (
   unfold discrim at this
   nlinarith
 
-/-- A whitening identity: `Σ^{-1/2} Σ Σ^{-1/2} = 1`. -/
-theorem PosDef.inv_sqrt_mul_mul_inv_sqrt {n : ℕ} {S : Matrix (Fin n) (Fin n) ℝ} (hS : S.PosDef) :
-    (CFC.sqrt S)⁻¹ * S * (CFC.sqrt S)⁻¹ = 1 := by
-  have key : ∀ R : Matrix (Fin n) (Fin n) ℝ, IsUnit R.det → R * R = S⁻¹ → R * S * R = 1 := by
-    intro R hR hRR
-    have hSdet : IsUnit S.det := isUnit_iff_ne_zero.2 hS.det_pos.ne'
-    have hS' : S = R⁻¹ * R⁻¹ := by
-      rw [← Matrix.mul_inv_rev, hRR, Matrix.nonsing_inv_nonsing_inv _ hSdet]
-    rw [hS', Matrix.mul_assoc, Matrix.nonsing_inv_mul_cancel_right _ _ hR,
-      Matrix.mul_nonsing_inv _ hR]
-  exact key _ (PosDef.isUnit_det_inv_sqrt hS) (PosDef.inv_sqrt_facts hS).2
-
 /-- The Euclidean norm as the square root of the dot product. -/
 theorem norm_euclideanSpace_eq_sqrt_dotProduct {n : ℕ} (v : EuclideanSpace ℝ (Fin n)) :
     ‖v‖ = Real.sqrt (v.ofLp ⬝ᵥ v.ofLp) := by
   rw [EuclideanSpace.norm_eq]
   congr 1
   simp [dotProduct, Real.norm_eq_abs, sq]
-
-/-- Cauchy–Schwarz for the real dot product. -/
-theorem sq_dotProduct_le_dotProduct_self_mul {n : ℕ} (x w : Fin n → ℝ) :
-    (x ⬝ᵥ w) ^ 2 ≤ (x ⬝ᵥ x) * (w ⬝ᵥ w) := by
-  have h : ∀ t : ℝ, 0 ≤ (x ⬝ᵥ x) * (t * t) + 2 * (x ⬝ᵥ w) * t + w ⬝ᵥ w := by
-    intro t
-    have : 0 ≤ (t • x + w) ⬝ᵥ (t • x + w) := by
-      simpa [dotProduct] using Finset.sum_nonneg fun i _ ↦ mul_self_nonneg ((t • x + w) i)
-    simp only [add_dotProduct, dotProduct_add, smul_dotProduct, dotProduct_smul,
-      smul_eq_mul, dotProduct_comm w x] at this
-    linarith
-  have := discrim_le_zero h
-  unfold discrim at this
-  nlinarith
 
 /-- The squared L2 operator-norm bound for a real matrix, in dot-product form. -/
 theorem dotProduct_mulVec_self_le {m n : ℕ} (K : Matrix (Fin m) (Fin n) ℝ) (y : Fin n → ℝ) :
@@ -267,10 +284,10 @@ theorem canonicalCorrelationMatrix_whitening (Suu : Matrix (Fin p) (Fin p) ℝ)
         x ⬝ᵥ (canonicalCorrelationMatrix Suu Suv Svv *ᵥ y) ∧
       ((CFC.sqrt Suu)⁻¹ *ᵥ x) ⬝ᵥ (Suu *ᵥ ((CFC.sqrt Suu)⁻¹ *ᵥ x)) = x ⬝ᵥ x ∧
       ((CFC.sqrt Svv)⁻¹ *ᵥ y) ⬝ᵥ (Svv *ᵥ ((CFC.sqrt Svv)⁻¹ *ᵥ y)) = y ⬝ᵥ y := by
-  obtain ⟨hRt, -⟩ := PosDef.inv_sqrt_facts hUU
-  obtain ⟨hTt, -⟩ := PosDef.inv_sqrt_facts hVV
-  have hRSR := PosDef.inv_sqrt_mul_mul_inv_sqrt hUU
-  have hTST := PosDef.inv_sqrt_mul_mul_inv_sqrt hVV
+  have hRt := transpose_inv_sqrt_of_posSemidef hUU.posSemidef
+  have hTt := transpose_inv_sqrt_of_posSemidef hVV.posSemidef
+  have hRSR := inv_sqrt_mul_mul_inv_sqrt_of_posDef hUU
+  have hTST := inv_sqrt_mul_mul_inv_sqrt_of_posDef hVV
   set R := (CFC.sqrt Suu)⁻¹
   set T := (CFC.sqrt Svv)⁻¹
   have e2 : ∀ {n : ℕ} (M : Matrix (Fin n) (Fin n) ℝ) (S : Matrix (Fin n) (Fin n) ℝ)
@@ -352,8 +369,8 @@ theorem isGreatest_linearCombinationCorrelation (Suu : Matrix (Fin p) (Fin p) �
       · rw [linearCombinationCorrelation, h1, h2, h3, hxK, hxx, hy1]
         simp
   · rintro r ⟨a, b, ha, hb, rfl⟩
-    have hR := PosDef.isUnit_det_inv_sqrt hUU
-    have hT := PosDef.isUnit_det_inv_sqrt hVV
+    have hR := isUnit_det_inv_sqrt_of_posDef hUU
+    have hT := isUnit_det_inv_sqrt_of_posDef hVV
     obtain ⟨x, rfl⟩ : ∃ x, R *ᵥ x = a :=
       ⟨R⁻¹ *ᵥ a, by rw [mulVec_mulVec, Matrix.mul_nonsing_inv _ hR, one_mulVec]⟩
     obtain ⟨y, rfl⟩ : ∃ y, T *ᵥ y = b :=
@@ -363,7 +380,8 @@ theorem isGreatest_linearCombinationCorrelation (Suu : Matrix (Fin p) (Fin p) �
     set c := ‖K‖
     have hc : 0 ≤ c := norm_nonneg _
     have hsq : (x ⬝ᵥ (K *ᵥ y)) ^ 2 ≤ c ^ 2 * ((x ⬝ᵥ x) * (y ⬝ᵥ y)) := by
-      have := sq_dotProduct_le_dotProduct_self_mul x (K *ᵥ y)
+      have : (x ⬝ᵥ (K *ᵥ y)) ^ 2 ≤ (x ⬝ᵥ x) * ((K *ᵥ y) ⬝ᵥ (K *ᵥ y)) := by
+        simpa only [dotProduct, sq] using Finset.sum_mul_sq_le_sq_mul_sq Finset.univ x (K *ᵥ y)
       have := dotProduct_mulVec_self_le K y
       have := hnn x
       nlinarith

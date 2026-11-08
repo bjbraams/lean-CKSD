@@ -7,7 +7,8 @@ public import CKSD.Processes.Kalman.Recursion
 
 Under `KalmanModel.GaussianInputs`, prediction and filtering errors are centred Gaussian
 and independent of the preceding observation record. The update lemmas yield conditional
-state laws, independent innovations and the product predictive density in `kalmanFilter`.
+state laws, independent innovations and the product predictive density in
+`KalmanModel.kalman_filter`.
 Gaussian shift and conditioning tools are provided by `CKSD.Processes.GaussianConditioning`.
 Source: GAPS 106.7.
 -/
@@ -23,7 +24,8 @@ namespace CKSD
 
 namespace KalmanModel
 
-variable {d p : ℕ} (M : KalmanModel d p)
+variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
+  (M : KalmanModel ι κ)
 
 section Filter
 
@@ -32,8 +34,8 @@ variable {Ω : Type*} [MeasurableSpace Ω]
 /-- The hypotheses of the Kalman filter theorem: positive-semidefinite noise and initial
 covariances, a Gaussian initial state, independent Gaussian white noises independent of the
 initial state, and nonsingular innovation covariances. -/
-structure GaussianInputs (P : Measure Ω) (x₀ : Ω → EuclideanSpace ℝ (Fin d))
-    (w : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (v : ℕ → Ω → EuclideanSpace ℝ (Fin p)) : Prop where
+structure GaussianInputs (P : Measure Ω) (x₀ : Ω → EuclideanSpace ℝ ι)
+    (w : ℕ → Ω → EuclideanSpace ℝ ι) (v : ℕ → Ω → EuclideanSpace ℝ κ) : Prop where
   /-- The state-noise covariance `Q_t` is positive semidefinite at every time. -/
   stateCov_posSemidef : ∀ t, (M.stateCov t).PosSemidef
   /-- The observation-noise covariance `R_t` is positive semidefinite at every time. -/
@@ -57,8 +59,8 @@ structure GaussianInputs (P : Measure Ω) (x₀ : Ω → EuclideanSpace ℝ (Fin
   /-- Each innovation covariance is nonsingular, so its Gaussian law has a density. -/
   innovCov_det_ne_zero : ∀ t, (M.innovCov t).det ≠ 0
 
-variable {M} {P : Measure Ω} [IsProbabilityMeasure P] {x₀ : Ω → EuclideanSpace ℝ (Fin d)}
-  {w : ℕ → Ω → EuclideanSpace ℝ (Fin d)} {v : ℕ → Ω → EuclideanSpace ℝ (Fin p)}
+variable {M} {P : Measure Ω} [IsProbabilityMeasure P] {x₀ : Ω → EuclideanSpace ℝ ι}
+  {w : ℕ → Ω → EuclideanSpace ℝ ι} {v : ℕ → Ω → EuclideanSpace ℝ κ}
 
 namespace GaussianInputs
 
@@ -125,7 +127,7 @@ theorem measurement_update (t : ℕ)
   set H := M.observation t
   set K := M.gain t
   have hinnov : M.innovation x₀ w v t = fun ω ↦ Matrix.toEuclideanLin H (M.predErr x₀ w v t ω) +
-      Matrix.toEuclideanLin (1 : Matrix (Fin p) (Fin p) ℝ) (v t ω) := by
+      Matrix.toEuclideanLin (1 : Matrix κ κ ℝ) (v t ω) := by
     funext ω
     simp [innovation_eq, H]
   have hfilt : M.filtErr x₀ w v t = fun ω ↦
@@ -155,7 +157,7 @@ theorem measurement_update (t : ℕ)
       (fun ω ↦ (M.filtErr x₀ w v t ω, M.innovation x₀ w v t ω)) P := by
     have := hYεv.comp (φ := id) (ψ := fun q ↦
       (Matrix.toEuclideanLin (1 - K * H) q.1 + Matrix.toEuclideanLin (-K) q.2,
-        Matrix.toEuclideanLin H q.1 + Matrix.toEuclideanLin (1 : Matrix (Fin p) (Fin p) ℝ) q.2))
+        Matrix.toEuclideanLin H q.1 + Matrix.toEuclideanLin (1 : Matrix κ κ ℝ) q.2))
       measurable_id (by fun_prop)
     rw [hfilt, hinnov]
     simpa only [Function.comp_def, id] using this
@@ -169,21 +171,21 @@ theorem measurement_update (t : ℕ)
     simpa only [Function.comp_def, id] using hc.symm
   refine ⟨hlawe, hlawf, ?_, heY⟩
   have hY : M.obsPrefix x₀ w v (t + 1) = fun ω ↦
-      (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ (Fin p)) (Fin.last t)).symm
+      (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ κ) (Fin.last t)).symm
         (M.innovation x₀ w v t ω + Matrix.toEuclideanLin (M.observation t)
           (M.predMean (extendObservations (M.obsPrefix x₀ w v t ω)) t),
           M.obsPrefix x₀ w v t ω) := funext (M.obsPrefix_succ_eq x₀ w v t)
-  have hmeas : Measurable fun q : EuclideanSpace ℝ (Fin p) ×
-      (Fin t → EuclideanSpace ℝ (Fin p)) ↦
-      (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ (Fin p)) (Fin.last t)).symm
+  have hmeas : Measurable fun q : EuclideanSpace ℝ κ ×
+      (Fin t → EuclideanSpace ℝ κ) ↦
+      (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ κ) (Fin.last t)).symm
         (q.1 + Matrix.toEuclideanLin (M.observation t) (M.predMean (extendObservations q.2) t),
           q.2) := by
     refine (MeasurableEquiv.measurable _).comp (Measurable.prodMk ?_ measurable_snd)
     refine measurable_fst.add ?_
-    exact (by fun_prop : Measurable fun z : EuclideanSpace ℝ (Fin d) ↦
+    exact (by fun_prop : Measurable fun z : EuclideanSpace ℝ ι ↦
       Matrix.toEuclideanLin (M.observation t) z).comp
-      ((M.measurable_predMean (y := fun i (q : EuclideanSpace ℝ (Fin p) ×
-        (Fin t → EuclideanSpace ℝ (Fin p))) ↦ extendObservations q.2 i)
+      ((M.measurable_predMean (y := fun i (q : EuclideanSpace ℝ κ ×
+        (Fin t → EuclideanSpace ℝ κ)) ↦ extendObservations q.2 i)
         (fun i ↦ (measurable_extendObservations_apply i).comp measurable_snd) t))
   have hc := hf_eY.comp (φ := id) measurable_id hmeas
   rw [hY]
@@ -206,7 +208,7 @@ theorem time_update (t : ℕ)
   set F := M.transition t
   have hpred : M.predErr x₀ w v (t + 1) = fun ω ↦
       Matrix.toEuclideanLin F (M.filtErr x₀ w v t ω) +
-        Matrix.toEuclideanLin (1 : Matrix (Fin d) (Fin d) ℝ) (w t ω) := by
+        Matrix.toEuclideanLin (1 : Matrix ι ι ℝ) (w t ω) := by
     funext ω
     simp [predErr_succ, F]
   have hYφw : IndepFun (M.obsPrefix x₀ w v (t + 1))
@@ -214,7 +216,7 @@ theorem time_update (t : ℕ)
     indepFun_prodMk_of_indepFun_of_indepFun_prodMk hm.snd hm.fst hwt.aemeasurable hind.symm
       (hF.comp (φ := id) (ψ := Prod.swap) measurable_id measurable_swap).symm
   have hc := hYφw.comp (φ := id) (ψ := fun q ↦ Matrix.toEuclideanLin F q.1 +
-    Matrix.toEuclideanLin (1 : Matrix (Fin d) (Fin d) ℝ) q.2) measurable_id (by fun_prop)
+    Matrix.toEuclideanLin (1 : Matrix ι ι ℝ) q.2) measurable_id (by fun_prop)
   rw [hpred]
   refine ⟨?_, ?_⟩
   swap
@@ -232,7 +234,7 @@ theorem predErr_hasLaw_indepFun (t : ℕ) :
   | zero =>
     refine ⟨?_, ?_⟩
     · have hmap := TauCeti.Probability.map_affine_multivariateGaussian M.initMean
-        h.initCov_posSemidef (1 : Matrix (Fin d) (Fin d) ℝ) (-M.initMean)
+        h.initCov_posSemidef (1 : Matrix ι ι ℝ) (-M.initMean)
       simp only [Matrix.toLpLin_one, LinearMap.id_apply, add_neg_cancel, Matrix.one_mul,
         Matrix.transpose_one, Matrix.mul_one] at hmap
       have hc := HasLaw.comp (Y := fun x ↦ x + -M.initMean) ⟨by fun_prop, hmap⟩ h.hasLaw_init
@@ -240,7 +242,7 @@ theorem predErr_hasLaw_indepFun (t : ℕ) :
       convert hc using 1
       funext ω
       simp [predErr, state, predMean, sub_eq_add_neg]
-    · have hc : M.obsPrefix x₀ w v 0 = fun _ ↦ (Fin.elim0 : Fin 0 → EuclideanSpace ℝ (Fin p)) :=
+    · have hc : M.obsPrefix x₀ w v 0 = fun _ ↦ (Fin.elim0 : Fin 0 → EuclideanSpace ℝ κ) :=
         funext fun _ ↦ Subsingleton.elim _ _
       rw [hc]
       exact indepFun_const_right _ _
@@ -305,12 +307,12 @@ theorem indepFun_innovation_obsPrefix (t : ℕ) :
 /-- The innovations are mutually independent. -/
 theorem iIndepFun_innovation : iIndepFun (M.innovation x₀ w v) P := by
   refine iIndepFun_of_indepFun_finPrefix fun n ↦ ?_
-  let Ψ : (Fin n → EuclideanSpace ℝ (Fin p)) → Fin n → EuclideanSpace ℝ (Fin p) :=
+  let Ψ : (Fin n → EuclideanSpace ℝ κ) → Fin n → EuclideanSpace ℝ κ :=
     fun ys i ↦ ys i - Matrix.toEuclideanLin (M.observation i)
       (M.predMean (extendObservations ys) i)
   have hΨ : Measurable Ψ := by
     refine measurable_pi_iff.mpr fun i ↦ (measurable_pi_apply i).sub ?_
-    exact (by fun_prop : Measurable fun z : EuclideanSpace ℝ (Fin d) ↦
+    exact (by fun_prop : Measurable fun z : EuclideanSpace ℝ ι ↦
       Matrix.toEuclideanLin (M.observation i) z).comp
       (M.measurable_predMean_extendObservations n i)
   have hpre : (fun ω (i : Fin n) ↦ M.innovation x₀ w v i ω) =
@@ -330,7 +332,7 @@ theorem map_obsPrefix_eq_withDensity (n : ℕ) :
     P.map (M.obsPrefix x₀ w v n) = volume.withDensity (M.innovDensity n) := by
   induction n with
   | zero =>
-    have hc : M.obsPrefix x₀ w v 0 = fun _ ↦ (Fin.elim0 : Fin 0 → EuclideanSpace ℝ (Fin p)) :=
+    have hc : M.obsPrefix x₀ w v 0 = fun _ ↦ (Fin.elim0 : Fin 0 → EuclideanSpace ℝ κ) :=
       funext fun _ ↦ Subsingleton.elim _ _
     have hd : M.innovDensity 0 = 1 := by
       funext ys
@@ -339,10 +341,10 @@ theorem map_obsPrefix_eq_withDensity (n : ℕ) :
       Measure.pi_of_empty]
     congr 1
   | succ n ih =>
-    let g : (Fin n → EuclideanSpace ℝ (Fin p)) → EuclideanSpace ℝ (Fin p) :=
+    let g : (Fin n → EuclideanSpace ℝ κ) → EuclideanSpace ℝ κ :=
       fun ys ↦ Matrix.toEuclideanLin (M.observation n) (M.predMean (extendObservations ys) n)
     have hg : Measurable g :=
-      (by fun_prop : Measurable fun z : EuclideanSpace ℝ (Fin d) ↦
+      (by fun_prop : Measurable fun z : EuclideanSpace ℝ ι ↦
         Matrix.toEuclideanLin (M.observation n) z).comp
         (M.measurable_predMean_extendObservations n n)
     have hPD := M.innovCov_posDef h.stateCov_posSemidef h.obsCov_posSemidef
@@ -350,33 +352,33 @@ theorem map_obsPrefix_eq_withDensity (n : ℕ) :
     have hm : AEMeasurable (M.obsPrefix x₀ w v n) P := (h.aemeasurable_indepFun_predErr n).1.snd
     have hjoint := map_prodMk_add_eq_compProd hg hm hPD.posSemidef (h.hasLaw_innovation n)
       (h.indepFun_innovation_obsPrefix n).symm
-    let f : (Fin n → EuclideanSpace ℝ (Fin p)) → EuclideanSpace ℝ (Fin p) → ℝ≥0∞ :=
+    let f : (Fin n → EuclideanSpace ℝ κ) → EuclideanSpace ℝ κ → ℝ≥0∞ :=
       fun ys y ↦ TauCeti.Probability.multivariateGaussianPDF (g ys) (M.innovCov n) y
-    have hq : Measurable fun q : (Fin n → EuclideanSpace ℝ (Fin p)) ×
-        EuclideanSpace ℝ (Fin p) ↦ (g q.1, q.2) :=
+    have hq : Measurable fun q : (Fin n → EuclideanSpace ℝ κ) ×
+        EuclideanSpace ℝ κ ↦ (g q.1, q.2) :=
       (hg.comp measurable_fst).prodMk measurable_snd
     have hf : Measurable (Function.uncurry f) := by
       have := (measurable_multivariateGaussianPDF_uncurry (M.innovCov n)).comp hq
       exact this
-    have : IsSFiniteKernel ((Kernel.const (Fin n → EuclideanSpace ℝ (Fin p))
-        (volume : Measure (EuclideanSpace ℝ (Fin p)))).withDensity f) :=
+    have : IsSFiniteKernel ((Kernel.const (Fin n → EuclideanSpace ℝ κ)
+        (volume : Measure (EuclideanSpace ℝ κ))).withDensity f) :=
       Kernel.IsSFiniteKernel.withDensity _ fun _ _ ↦
         TauCeti.Probability.multivariateGaussianPDF_ne_top _ _ _
     have hκ : (gaussianShiftKernel (M.innovCov n)).comap g hg =
-        (Kernel.const (Fin n → EuclideanSpace ℝ (Fin p))
-          (volume : Measure (EuclideanSpace ℝ (Fin p)))).withDensity f := by
+        (Kernel.const (Fin n → EuclideanSpace ℝ κ)
+          (volume : Measure (EuclideanSpace ℝ κ))).withDensity f := by
       ext1 ys
       rw [Kernel.comap_apply, gaussianShiftKernel_apply, Kernel.withDensity_apply _ hf,
         Kernel.const_apply, TauCeti.Probability.multivariateGaussian_eq_withDensity hPD]
     rw [hκ, ih, Measure.withDensity_compProd_withDensity (M.measurable_innovDensity n) hf,
       Measure.compProd_const] at hjoint
-    let e : (Fin n → EuclideanSpace ℝ (Fin p)) × EuclideanSpace ℝ (Fin p) ≃ᵐ
-        (Fin (n + 1) → EuclideanSpace ℝ (Fin p)) :=
+    let e : (Fin n → EuclideanSpace ℝ κ) × EuclideanSpace ℝ κ ≃ᵐ
+        (Fin (n + 1) → EuclideanSpace ℝ κ) :=
       MeasurableEquiv.prodComm.trans
-        (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ (Fin p)) (Fin.last n)).symm
+        (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ κ) (Fin.last n)).symm
     have he : ∀ q, e q = Fin.snoc q.1 q.2 := by
       intro q
-      change (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ (Fin p))
+      change (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ κ)
         (Fin.last n)).symm (q.2, q.1) = _
       rw [MeasurableEquiv.piFinSuccAbove_symm_apply, Fin.insertNthEquiv_apply,
         Fin.insertNth_last']
@@ -385,18 +387,18 @@ theorem map_obsPrefix_eq_withDensity (n : ℕ) :
           M.innovation x₀ w v n ω) := by
       funext ω
       rw [M.obsPrefix_succ_eq x₀ w v n ω, Function.comp_apply]
-      change _ = (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ (Fin p))
+      change _ = (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ κ)
         (Fin.last n)).symm (g (M.obsPrefix x₀ w v n ω) + M.innovation x₀ w v n ω,
           M.obsPrefix x₀ w v n ω)
       rw [add_comm (M.innovation x₀ w v n ω)]
-    have hvol : (volume.prod volume : Measure ((Fin n → EuclideanSpace ℝ (Fin p)) ×
-        EuclideanSpace ℝ (Fin p))).map e = volume := by
+    have hvol : (volume.prod volume : Measure ((Fin n → EuclideanSpace ℝ κ) ×
+        EuclideanSpace ℝ κ)).map e = volume := by
       have h₁ := (measurePreserving_piFinSuccAbove
-        (fun _ : Fin (n + 1) ↦ (volume : Measure (EuclideanSpace ℝ (Fin p)))) (Fin.last n)).symm
+        (fun _ : Fin (n + 1) ↦ (volume : Measure (EuclideanSpace ℝ κ))) (Fin.last n)).symm
       have h₂ := Measure.measurePreserving_swap (μ := (volume : Measure
-        (Fin n → EuclideanSpace ℝ (Fin p)))) (ν := (volume : Measure (EuclideanSpace ℝ (Fin p))))
+        (Fin n → EuclideanSpace ℝ κ))) (ν := (volume : Measure (EuclideanSpace ℝ κ)))
       exact (h₁.comp h₂).map_eq
-    have hD : (fun q : (Fin n → EuclideanSpace ℝ (Fin p)) × EuclideanSpace ℝ (Fin p) ↦
+    have hD : (fun q : (Fin n → EuclideanSpace ℝ κ) × EuclideanSpace ℝ κ ↦
         M.innovDensity n q.1 * f q.1 q.2) = M.innovDensity (n + 1) ∘ e := by
       funext q
       rw [Function.comp_apply, he, M.innovDensity_snoc]
@@ -404,8 +406,8 @@ theorem map_obsPrefix_eq_withDensity (n : ℕ) :
         M.innovation x₀ w v n ω)) P :=
       hm.prodMk ((hg.comp_aemeasurable hm).add (h.hasLaw_innovation n).aemeasurable)
     rw [hY, ← AEMeasurable.map_map_of_aemeasurable e.measurable.aemeasurable hpm,
-      hjoint, hD, map_withDensity_comp_measurableEquiv _ e (M.measurable_innovDensity (n + 1)),
-      hvol]
+      hjoint, hD, MeasurableEquiv.map_withDensity, hvol]
+    simp only [Function.comp_apply, MeasurableEquiv.apply_symm_apply]
 
 end GaussianInputs
 
@@ -420,11 +422,12 @@ covariances. Conditionally on `y_0, …, y_t`, the state `x_t` is Gaussian with 
 mean and covariance and `x_{t+1}` with the predicted ones; the innovations
 `y_t - H_t x_{t|t-1}` are independent with laws `N(0, Σ_t)`; and the density of
 `(y_0, …, y_{n-1})` is the product of the one-step predictive densities. -/
-theorem kalmanFilter {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
-    {d p : ℕ} (M : KalmanModel d p) (hQ : ∀ t, (M.stateCov t).PosSemidef)
+theorem KalmanModel.kalman_filter {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
+    [IsProbabilityMeasure P] {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ]
+    [DecidableEq κ] (M : KalmanModel ι κ) (hQ : ∀ t, (M.stateCov t).PosSemidef)
     (hR : ∀ t, (M.obsCov t).PosSemidef) (hP₀ : M.initCov.PosSemidef)
-    (x₀ : Ω → EuclideanSpace ℝ (Fin d)) (w : ℕ → Ω → EuclideanSpace ℝ (Fin d))
-    (v : ℕ → Ω → EuclideanSpace ℝ (Fin p))
+    (x₀ : Ω → EuclideanSpace ℝ ι) (w : ℕ → Ω → EuclideanSpace ℝ ι)
+    (v : ℕ → Ω → EuclideanSpace ℝ κ)
     (hx₀ : HasLaw x₀ (multivariateGaussian M.initMean M.initCov) P)
     (hw : ∀ t, HasLaw (w t) (multivariateGaussian 0 (M.stateCov t)) P)
     (hv : ∀ t, HasLaw (v t) (multivariateGaussian 0 (M.obsCov t)) P)
@@ -434,8 +437,8 @@ theorem kalmanFilter {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProba
     (hinnov : ∀ t, (M.innovCov t).det ≠ 0) :
     let x := M.state x₀ w
     let y := M.observationProcess x v
-    let obs : (t : ℕ) → Ω → Fin (t + 1) → EuclideanSpace ℝ (Fin p) := fun t ω i ↦ y i ω
-    let e : ℕ → Ω → EuclideanSpace ℝ (Fin p) := fun t ω ↦
+    let obs : (t : ℕ) → Ω → Fin (t + 1) → EuclideanSpace ℝ κ := fun _ ω i ↦ y i ω
+    let e : ℕ → Ω → EuclideanSpace ℝ κ := fun t ω ↦
       y t ω - Matrix.toEuclideanLin (M.observation t) (M.predMean (fun i ↦ y i ω) t)
     (∀ t, ∀ᵐ ys ∂(P.map (obs t)), condDistrib (x t) (obs t) P ys =
       multivariateGaussian (M.filtMean (extendObservations ys) t) (M.filtCov t)) ∧
@@ -444,7 +447,7 @@ theorem kalmanFilter {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProba
     iIndepFun e P ∧
     (∀ t, HasLaw (e t) (multivariateGaussian 0 (M.innovCov t)) P) ∧
     ∀ n : ℕ, P.map (fun ω (i : Fin n) ↦ y i ω) =
-      volume.withDensity fun ys : Fin n → EuclideanSpace ℝ (Fin p) ↦
+      volume.withDensity fun ys : Fin n → EuclideanSpace ℝ κ ↦
         ∏ i : Fin n, TauCeti.Probability.multivariateGaussianPDF
           (Matrix.toEuclideanLin (M.observation i) (M.predMean (extendObservations ys) i))
           (M.innovCov i) (ys i) := by

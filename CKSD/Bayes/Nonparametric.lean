@@ -8,10 +8,27 @@ public import Mathlib.Probability.ProductMeasure
 /-!
 # Random probability measures and posterior consistency
 
+Vocabulary for Bayesian nonparametrics: Dirichlet processes through their finite-dimensional
+partition laws, the Blackwell–MacQueen predictive law, stick breaking, posterior kernels given as
+disintegrations, posterior consistency, and posterior contraction rates.
+
 The finite-dimensional Dirichlet laws are those of TauCeti. Zero-parameter cells in a partition
 are required to have random mass zero; the Dirichlet law is tested on positive-mass cells.
 Posterior kernels are specified by disintegration, so statements apply to any chosen version.
-Sources: GAPS 104.15–104.19.
+
+## Main definitions
+
+* `CKSD.IsDirichletProcess μ P α`: the random measure `P` is a Dirichlet process with base `α`.
+* `CKSD.dirichletPosteriorBase`, `CKSD.polyaPredictiveLaw`: the posterior base `α + ∑ δ_{xᵢ}` and
+  the predictive law `(α + ∑ δ_{xᵢ}) / (|α| + n)`.
+* `CKSD.stickBreakingWeight`, `CKSD.stickBreakingMeasure`: Sethuraman's stick-breaking weights
+  and random atomic measure.
+* `CKSD.IsPosteriorKernel`, `CKSD.IsPosteriorConsistent`, `CKSD.HasPosteriorContractionRate`:
+  posterior kernels, consistency, and contraction at a rate.
+
+## Main results
+
+* `CKSD.ae_isPosteriorConsistent_of_identifiable`: Doob's consistency theorem (GAPS 104.17).
 -/
 
 @[expose] public section
@@ -24,7 +41,8 @@ open scoped NNReal ENNReal Topology BigOperators
 namespace CKSD
 
 /-- Finite-dimensional partition characterization of a Dirichlet process.
-`A` partitions a set of full base mass; this includes partitions with null cells after deleting them. -/
+`A` partitions a set of full base mass; this includes partitions with null cells after deleting
+them. -/
 def IsDirichletProcess {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
     (μ : Measure Ω) (P : Ω → ProbabilityMeasure X) (α : Measure X) : Prop :=
   (∀ A, MeasurableSet A → Measurable (fun ω ↦ (P ω : Measure X) A)) ∧
@@ -65,32 +83,35 @@ def IsPosteriorConsistent {Θ X : Type*} [TopologicalSpace Θ]
     (law : Measure (ℕ → X)) (post : ∀ n, Kernel (Fin n → X) Θ) (θ : Θ) : Prop :=
   ∀ U ∈ 𝓝 θ, ∀ᵐ x ∂law, Tendsto (fun n ↦ (post n (fun i ↦ x i.val)).real U) atTop (𝓝 1)
 
-/-- GAPS 104.17: Doob consistency for any posterior versions based on finite prefixes.
-The `n`th posterior is conditioned on exactly the first `n` observations. -/
+/-- GAPS 104.17: Doob's consistency theorem. For an identifiable model (`P` injective) on standard
+Borel spaces, any versions of the posteriors given the first `n` i.i.d. observations are
+consistent at `π`-almost every parameter. -/
 theorem ae_isPosteriorConsistent_of_identifiable
     {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
     [TopologicalSpace Θ] [PolishSpace Θ] [BorelSpace Θ]
     [StandardBorelSpace X] [Nonempty Θ]
     (π : Measure Θ) [IsProbabilityMeasure π] (P : Kernel Θ X) [IsMarkovKernel P]
     (hinj : Function.Injective P)
-    (Q : ∀ n, Kernel Θ (Fin n → X)) (hMarkov : ∀ n, IsMarkovKernel (Q n))
+    (Q : ∀ n, Kernel Θ (Fin n → X))
     (hQ : ∀ n θ, Q n θ = Measure.pi (fun _ : Fin n ↦ P θ))
     (post : ∀ n, Kernel (Fin n → X) Θ)
     (hpost : ∀ n, IsPosteriorKernel π (Q n) (post n)) :
     ∀ᵐ θ ∂π, IsPosteriorConsistent (Measure.infinitePi (fun _ : ℕ ↦ P θ)) post θ := by
   sorry
 
-/-- Second log-likelihood-ratio moment, used in posterior contraction neighborhoods. -/
+/-- Second moment `∫ (log dP/dQ)² dP` of the log-likelihood ratio, used in the Kullback–Leibler
+neighbourhoods of posterior contraction theory. -/
 def logLikelihoodRatioSecondMoment {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) : ℝ≥0∞ :=
   ∫⁻ x, ENNReal.ofReal (Real.log ((P.rnDeriv Q x).toReal) ^ 2) ∂P
 
-/-- Posterior contraction at a specified deterministic rate in a metric on parameters. -/
+/-- Posterior contraction at the deterministic rate `ε` with respect to a loss `ρ` on parameters
+(typically `ρ θ = d(θ, θ₀)` for a true parameter `θ₀`): there is `M₀ > 0` such that for every
+`M ≥ M₀` the posterior mass `post n ω {θ | M εₙ ≤ ρ θ}` tends to zero in `μ`-probability. -/
 def HasPosteriorContractionRate {Ω Θ : Type*} [MeasurableSpace Ω] [MeasurableSpace Θ]
-    [PseudoMetricSpace Θ] (μ : Measure Ω) (post : ℕ → Kernel Ω Θ)
-    (θ₀ : Θ) (ε : ℕ → ℝ) : Prop :=
+    (μ : Measure Ω) (post : ℕ → Ω → Measure Θ) (ρ : Θ → ℝ) (ε : ℕ → ℝ) : Prop :=
   ∃ M₀ > 0, ∀ M ≥ M₀,
-    TendstoInProbabilityConst μ (fun n ω ↦ (post n ω).real {θ | M * ε n ≤ dist θ θ₀}) 0
+    TendstoInProbabilityConst μ (fun n ω ↦ (post n ω).real {θ | M * ε n ≤ ρ θ}) 0
 
 /-- The initial empty sample leaves the Dirichlet base measure unchanged. -/
 @[simp] theorem dirichletPosteriorBase_empty {X : Type*} [MeasurableSpace X]

@@ -3,16 +3,20 @@ module
 public import CKSD.Inference.Basic
 
 /-!
-# Inference: integration identities for sufficient statistics
+# Integration identities for sufficient statistics
 
 A sufficient statistic `T` comes with one Markov kernel `K` disintegrating every joint law of
-`(T, X)`. This file records the resulting identity
-`E_θ[g(T) φ] = E_θ[g(T) ∫ φ dK(T)]` for bounded measurable `g` and `φ`, the common step in the
-proofs of Basu's theorem (GAPS 101.9) and of Neyman structure (GAPS 101.49).
+`(T, X)`. This file records the resulting identity `E_θ[g(T) φ] = E_θ[g(T) ∫ φ dK(T)]` for bounded
+measurable `g` and `φ`, the common step in the proofs of Basu's theorem (GAPS 101.9) and of Neyman
+structure (GAPS 101.49).
 
-Sources: `GAPS.md` and `SYNOPSIS101.md`. The proofs use Mathlib's measure-kernel composition.
+## Main results
+
+* `CKSD.integral_comp_mul_eq_integral_comp_mul_integral_kernel`, `CKSD.integral_indicator_comp_mul_eq`.
+* `CKSD.integral_comp_eq_integral_integral`: integrals against a mixture `P ∘ₘ Λ`.
+* `CKSD.ae_integral_kernel_eq_of_isBoundedlyCompleteStatistic`: under bounded completeness, a
+  bounded function with constant mean has constant conditional mean `∫ φ dK(T)`.
 -/
-
 @[expose] public section
 
 noncomputable section

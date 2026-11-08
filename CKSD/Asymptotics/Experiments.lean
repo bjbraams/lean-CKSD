@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Asymptotics.Basic
+public import CKSD.Inference.Density
 public import Mathlib.MeasureTheory.Measure.Portmanteau
 public import TauCeti.Probability.Distributions.ChiSquared.Basic
 public import TauCeti.Probability.Distributions.StudentT.Basic
@@ -8,19 +9,29 @@ public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
 import CKSD.Asymptotics.Estimators
 
 /-!
-# Asymptotics: Experiments
+# Contiguity, Le Cam's lemmas, and local asymptotic normality
 
-Sources: `GAPS.md`, `SYNOPSIS102.md`, and `STRUCTURE102.md`.
-Declarations adapted from this project's section drafts.
-The LAN expansion under quadratic-mean differentiability follows the argument of van der Vaart,
-*Asymptotic Statistics*, Theorem 7.2: the root density ratios are controlled by Chebyshev's and
-Markov's inequalities for iid sums, Mathlib's weak law and central limit theorem (through the
-adapters of `CKSD.Asymptotics.Estimators`), and Mathlib's logarithmic Taylor bound
-`Real.abs_log_sub_add_sum_range_le`. Le Cam's third lemma is also stated for observation spaces
-depending on the sample size.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+## Main results
+
+* `CKSD.tendsto_measureReal_of_tendstoWeakly`, `CKSD.tendsto_integral_mul_of_tendstoWeakly`:
+  portmanteau and weighted weak convergence for `CKSD.TendstoWeakly`.
+* `CKSD.isContiguous_of_integral_likelihood_ratio_limit_eq_one`: Le Cam's first lemma
+  (GAPS 102.12).
+* `CKSD.tendstoWeakly_of_log_likelihood_ratio`: Le Cam's third lemma, for observation spaces
+  depending on the sample size (GAPS 102.14).
+* `CKSD.tendsto_local_normal_power`: local power under a normal limit (GAPS 102.21).
+* `CKSD.memLp_and_tendsto_sqrt_likelihood_ratio_of_dqm`,
+  `CKSD.tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm`, and
+  `CKSD.tendstoInDistribution_score_and_log_likelihood_ratio_expansion_of_dqm`: differentiability
+  in quadratic mean implies local asymptotic normality (GAPS 102.13).
+
+## References
+
+The LAN expansion follows van der Vaart, *Asymptotic Statistics*, Theorem 7.2: the root density
+ratios are controlled by Chebyshev's and Markov's inequalities for i.i.d. sums, Mathlib's weak law
+and central limit theorem (through the adapters of `CKSD.Asymptotics.Convergence`), and Mathlib's
+logarithmic Taylor bound `Real.abs_log_sub_add_sum_range_le`.
 -/
-
 @[expose] public section
 
 noncomputable section
@@ -127,14 +138,21 @@ theorem tendsto_integral_mul_of_tendstoWeakly {X : Type*} [TopologicalSpace X]
           linarith
     _ < ε := by linarith
 
-/-- GAPS 102.12: Le Cam's first lemma, for absolutely continuous alternatives. -/
+/-- GAPS 102.12: Le Cam's first lemma, for absolutely continuous alternatives. If `Q n ≪ P n`
+and the likelihood ratios `dQ n / dP n` under `P n` converge in law to a limit `ν` with mean one,
+then `Q n` is contiguous with respect to `P n`: `P n (A n) → 0` implies `Q n (A n) → 0`. -/
 theorem isContiguous_of_integral_likelihood_ratio_limit_eq_one {Ω : Type*} [MeasurableSpace Ω]
     (P Q : ℕ → Measure Ω) (hP : ∀ n, IsProbabilityMeasure (P n))
     (hQ : ∀ n, IsProbabilityMeasure (Q n)) (hac : ∀ n, Q n ≪ P n)
     (ν : Measure ℝ)
     (hlim : TendstoWeakly (fun n ↦ (P n).map (fun ω ↦ ((Q n).rnDeriv (P n) ω).toReal)) ν)
-    (hint : Integrable id ν) (hmean : (∫ x, x ∂ν) = 1) :
+    (hmean : (∫ x, x ∂ν) = 1) :
     IsContiguous P Q := by
+  have hint : Integrable id ν := by
+    by_contra hni
+    have hni' : ¬ Integrable (fun x : ℝ ↦ x) ν := hni
+    rw [integral_undef hni'] at hmean
+    exact zero_ne_one hmean
   intro A hA hPA
   set L := fun n ω ↦ ((Q n).rnDeriv (P n) ω).toReal with hLdef
   have hLm : ∀ n, Measurable (L n) := fun n ↦ (Measure.measurable_rnDeriv _ _).ennreal_toReal
@@ -207,26 +225,32 @@ theorem isContiguous_of_integral_likelihood_ratio_limit_eq_one {Ω : Type*} [Mea
   simp only [hLdef] at this
   linarith
 
-/-- Le Cam's third lemma in change-of-law form, for observation spaces `Ω n` depending on the
-sample size. -/
-theorem tendstoWeakly_of_log_likelihood_ratio_dependent {Ω : ℕ → Type*}
+/-- GAPS 102.14: Le Cam's third lemma in change-of-law form, for observation spaces `Ω n`
+depending on the sample size. If `Q n = exp (Λ n) · P n` and the joint laws of `(S n, Λ n)` under
+`P n` converge weakly to `ν` with `∫ exp z₂ dν(z) = 1`, then the laws of `S n` under `Q n` converge
+weakly to the first marginal of `exp z₂ · ν`. Taking a joint Gaussian limit gives the mean shift
+stated in GAPS. -/
+theorem tendstoWeakly_of_log_likelihood_ratio {Ω : ℕ → Type*}
     [∀ n, MeasurableSpace (Ω n)] {E : Type*}
     [MeasurableSpace E] [MetricSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P Q : ∀ n, Measure (Ω n)) (hP : ∀ n, IsProbabilityMeasure (P n))
     (hQ : ∀ n, IsProbabilityMeasure (Q n)) (S : ∀ n, Ω n → E) (Λ : ∀ n, Ω n → ℝ)
     (hS : ∀ n, Measurable (S n)) (hΛ : ∀ n, Measurable (Λ n))
     (hrn : ∀ n, Q n = (P n).withDensity (fun ω ↦ ENNReal.ofReal (Real.exp (Λ n ω))))
-    (ν : Measure (E × ℝ)) [IsProbabilityMeasure ν]
+    (ν : Measure (E × ℝ))
     (hlim : TendstoWeakly (fun n ↦ (P n).map (fun ω ↦ (S n ω, Λ n ω))) ν)
     (hmean : (∫ z, Real.exp z.2 ∂ν) = 1) :
     TendstoWeakly (fun n ↦ (Q n).map (S n))
       ((ν.withDensity fun z ↦ ENNReal.ofReal (Real.exp z.2)).map Prod.fst) := by
+  have : ∀ n, IsProbabilityMeasure ((P n).map fun ω ↦ (S n ω, Λ n ω)) := fun n ↦ by
+    have := hP n; infer_instance
+  have : IsProbabilityMeasure ν := hlim.isProbabilityMeasure
   have hint : Integrable (fun z : E × ℝ ↦ Real.exp z.2) ν := by
     by_contra hni
     rw [integral_undef hni] at hmean
     exact zero_ne_one hmean
-  letI : ∀ n, IsProbabilityMeasure (Q n) := hQ
-  letI : IsFiniteMeasure (ν.withDensity fun z : E × ℝ ↦ ENNReal.ofReal (Real.exp z.2)) :=
+  have : ∀ n, IsProbabilityMeasure (Q n) := hQ
+  have : IsFiniteMeasure (ν.withDensity fun z : E × ℝ ↦ ENNReal.ofReal (Real.exp z.2)) :=
     isFiniteMeasure_withDensity hint.lintegral_lt_top.ne
   refine TendstoWeakly.of_forall_integral_tendsto ?_
   intro f
@@ -260,23 +284,8 @@ theorem tendstoWeakly_of_log_likelihood_ratio_dependent {Ω : ℕ → Type*}
       simp [ENNReal.toReal_ofReal (Real.exp_pos _).le]
     simpa using h1
 
-/-- GAPS 102.14: the change-of-law form of the third lemma.
-Taking a joint Gaussian limit gives the mean shift stated in GAPS. -/
-theorem tendstoWeakly_of_log_likelihood_ratio {Ω E : Type*} [MeasurableSpace Ω]
-    [MeasurableSpace E] [MetricSpace E] [BorelSpace E] [SecondCountableTopology E]
-    (P Q : ℕ → Measure Ω) (hP : ∀ n, IsProbabilityMeasure (P n))
-    (hQ : ∀ n, IsProbabilityMeasure (Q n)) (S : ℕ → Ω → E) (Λ : ℕ → Ω → ℝ)
-    (hS : ∀ n, Measurable (S n)) (hΛ : ∀ n, Measurable (Λ n))
-    (hrn : ∀ n, Q n = (P n).withDensity (fun ω ↦ ENNReal.ofReal (Real.exp (Λ n ω))))
-    (ν : Measure (E × ℝ)) [IsProbabilityMeasure ν]
-    (hlim : TendstoWeakly (fun n ↦ (P n).map (fun ω ↦ (S n ω, Λ n ω))) ν)
-    (hmean : (∫ z, Real.exp z.2 ∂ν) = 1) :
-    TendstoWeakly (fun n ↦ (Q n).map (S n))
-      ((ν.withDensity fun z ↦ ENNReal.ofReal (Real.exp z.2)).map Prod.fst) :=
-  tendstoWeakly_of_log_likelihood_ratio_dependent (Ω := fun _ ↦ Ω) P Q hP hQ S Λ hS hΛ hrn ν hlim
-    hmean
-
-/-- GAPS 102.21, local power calculation for a normal limit with mean shift. -/
+/-- GAPS 102.21: local power of a test with a normal limit. If `T n` converges in law to `N(a, 1)`
+under the alternatives `P n`, the power `P n {T n > z}` tends to `1 - Φ(z - a)`. -/
 theorem tendsto_local_normal_power {Ω : Type*} [MeasurableSpace Ω]
     (P : ℕ → Measure Ω) (hP : ∀ n, IsProbabilityMeasure (P n))
     (T : ℕ → Ω → ℝ) (hT : ∀ n, Measurable (T n)) (a z : ℝ)
@@ -302,32 +311,27 @@ theorem tendsto_local_normal_power {Ω : Type*} [MeasurableSpace Ω]
     ext x; simp [le_sub_iff_add_le]
   rw [hcdf, ← compl_Iic, probReal_compl_eq_one_sub measurableSet_Iic]
 
-/-- GAPS 102.13, scalar DQM implies LAN, with common strictly positive densities. -/
-theorem local_asymptotic_normality_of_differentiable_in_quadratic_mean
-    {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
-    (mu : Measure Ω) [IsProbabilityMeasure mu] (nu : Measure E)
+/-- The deterministic step of LAN under differentiability in quadratic mean. For the root
+likelihood ratios `gₙ = √(f (θ₀ + h / √n) / f θ₀) - 1` and their linearizations
+`uₙ = gₙ - (h / √n) / 2 · ℓ̇` with the score `ℓ̇`, each `uₙ` is in `L²(P θ₀)`,
+`n E[uₙ²] → 0`, and `n E[gₙ] → -h² I / 8`, where `I = E[ℓ̇²]`. -/
+theorem memLp_and_tendsto_sqrt_likelihood_ratio_of_dqm
+    {E : Type*} [MeasurableSpace E] (nu : Measure E)
     (P : ℝ → Measure E) (hP : ∀ theta, IsProbabilityMeasure (P theta))
     (f : ℝ → E → ℝ) (hf : ∀ theta, HasDensity (P theta) nu (f theta))
     (hpos : ∀ theta x, 0 < f theta x) (theta₀ : ℝ) (score : E → ℝ)
     (hs : Measurable score) (hs2 : MemLp score 2 (P theta₀))
-    (hs0 : (∫ x, score x ∂P theta₀) = 0)
     (hdqm : Asymptotics.IsLittleO (𝓝 0)
       (fun h : ℝ ↦ ∫ x, (Real.sqrt (f (theta₀ + h) x) - Real.sqrt (f theta₀ x) -
-        h / 2 * score x * Real.sqrt (f theta₀ x)) ^ 2 ∂nu) (fun h : ℝ ↦ h ^ 2))
-    (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed mu X (P theta₀)) :
-    let I := ∫ x, score x ^ 2 ∂P theta₀;
-    0 < I →
-      TendstoInDistribution mu (fun n w ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, score (X i w))
-        (gaussianReal 0 (Real.toNNReal I)) ∧
-      ∀ h : ℝ, TendstoInProbabilityConst mu (fun n w ↦
-        (∑ i ∈ Finset.range n, Real.log (f (theta₀ + h / Real.sqrt n) (X i w) / f theta₀ (X i w))) -
-          h / Real.sqrt n * (∑ i ∈ Finset.range n, score (X i w)) + h ^ 2 * I / 2) 0 := by
-  intro I hIpos
+        h / 2 * score x * Real.sqrt (f theta₀ x)) ^ 2 ∂nu) (fun h : ℝ ↦ h ^ 2)) (h : ℝ) :
+    (∀ n : ℕ, MemLp (fun x ↦ Real.sqrt (f (theta₀ + h / Real.sqrt n) x / f theta₀ x) - 1 -
+      h / Real.sqrt n / 2 * score x) 2 (P theta₀)) ∧
+    Tendsto (fun n : ℕ ↦ (n : ℝ) * ∫ x, (Real.sqrt (f (theta₀ + h / Real.sqrt n) x /
+      f theta₀ x) - 1 - h / Real.sqrt n / 2 * score x) ^ 2 ∂P theta₀) atTop (𝓝 0) ∧
+    Tendsto (fun n : ℕ ↦ (n : ℝ) * ∫ x, (Real.sqrt (f (theta₀ + h / Real.sqrt n) x / f theta₀ x) - 1)
+      ∂P theta₀) atTop (𝓝 (-(h ^ 2 * (∫ x, score x ^ 2 ∂P theta₀) / 8))) := by
   have hP0 := hP theta₀
-  refine ⟨?_, fun h ↦ ?_⟩
-  · simpa [I] using tendstoInDistribution_inv_sqrt_mul_sum_of_iid mu (P theta₀) X hiid score hs
-      hs2 hs0
-  obtain ⟨hXm, hind, hlaw⟩ := hiid
+  set I := ∫ x, score x ^ 2 ∂P theta₀ with hI
   set p₀ : E → ℝ := f theta₀ with hp₀
   set t : ℕ → ℝ := fun n ↦ h / Real.sqrt n with ht
   set q : ℕ → E → ℝ := fun n ↦ f (theta₀ + t n) with hq
@@ -345,13 +349,14 @@ theorem local_asymptotic_normality_of_differentiable_in_quadratic_mean
     (((hqm n).div hp₀m).sqrt).sub_const 1
   have hum : ∀ n, Measurable (u n) := fun n ↦ (hgm n).sub (hs.const_mul _)
   -- densities
-  obtain ⟨hp₀i, hp₀1⟩ := integrable_and_integral_eq_one_of_hasDensity (hf theta₀)
+  have hp₀i : Integrable p₀ nu := HasDensity.integrable (hf theta₀)
+  have hp₀1 : ∫ x, p₀ x ∂nu = 1 := HasDensity.integral_eq_one (hf theta₀)
   have hqi1 : ∀ n, Integrable (q n) nu ∧ ∫ x, q n x ∂nu = 1 := fun n ↦ by
     have := hP (theta₀ + t n)
-    exact integrable_and_integral_eq_one_of_hasDensity (hf _)
+    exact ⟨HasDensity.integrable (hf _), HasDensity.integral_eq_one (hf _)⟩
   have hdens : ∀ φ : E → ℝ, (Integrable φ (P theta₀) ↔ Integrable (fun x ↦ p₀ x * φ x) nu) ∧
       ∫ x, φ x ∂P theta₀ = ∫ x, p₀ x * φ x ∂nu :=
-    integrable_and_integral_eq_of_hasDensity (hf theta₀)
+    fun φ ↦ ⟨HasDensity.integrable_iff (hf theta₀) φ, HasDensity.integral_eq (hf theta₀) φ⟩
   -- `v = √p₀ u` and `v² = p₀ u²`
   have hvu : ∀ n x, v n x = Real.sqrt (p₀ x) * u n x := by
     intro n x
@@ -504,6 +509,55 @@ theorem local_asymptotic_normality_of_differentiable_in_quadratic_mean
     have := hnt2 n hn
     simp only [ht] at this ⊢
     linear_combination ((1 / 8) * I) * this
+  exact ⟨hu2', hnD.congr fun n ↦ by rw [(hu2 n).2], hgmean⟩
+
+/-- GAPS 102.13: differentiability in quadratic mean implies local asymptotic normality, for a
+scalar parameter and common strictly positive densities. If `√f θ` is differentiable in
+quadratic mean at `θ₀` with score `ℓ̇` (centred, square-integrable) and `I = E[ℓ̇²]`, then for an
+i.i.d. sample from `P θ₀` and every `h`, the log likelihood ratio of `θ₀ + h / √n` against `θ₀`
+satisfies `∑ log (f (θ₀ + h/√n) (Xᵢ) / f θ₀ (Xᵢ)) = (h / √n) ∑ ℓ̇(Xᵢ) - h² I / 2 + o_P(1)`.
+The proof follows van der Vaart, *Asymptotic Statistics*, Theorem 7.2. -/
+theorem tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm
+    {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
+    (mu : Measure Ω) [IsProbabilityMeasure mu] (nu : Measure E)
+    (P : ℝ → Measure E) (hP : ∀ theta, IsProbabilityMeasure (P theta))
+    (f : ℝ → E → ℝ) (hf : ∀ theta, HasDensity (P theta) nu (f theta))
+    (hpos : ∀ theta x, 0 < f theta x) (theta₀ : ℝ) (score : E → ℝ)
+    (hs : Measurable score) (hs2 : MemLp score 2 (P theta₀))
+    (hs0 : (∫ x, score x ∂P theta₀) = 0)
+    (hdqm : Asymptotics.IsLittleO (𝓝 0)
+      (fun h : ℝ ↦ ∫ x, (Real.sqrt (f (theta₀ + h) x) - Real.sqrt (f theta₀ x) -
+        h / 2 * score x * Real.sqrt (f theta₀ x)) ^ 2 ∂nu) (fun h : ℝ ↦ h ^ 2))
+    (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed mu X (P theta₀)) (h : ℝ) :
+    TendstoInProbabilityConst mu (fun n w ↦
+      (∑ i ∈ Finset.range n, Real.log (f (theta₀ + h / Real.sqrt n) (X i w) / f theta₀ (X i w))) -
+        h / Real.sqrt n * (∑ i ∈ Finset.range n, score (X i w)) +
+          h ^ 2 * (∫ x, score x ^ 2 ∂P theta₀) / 2) 0 := by
+  have hP0 := hP theta₀
+  set I := ∫ x, score x ^ 2 ∂P theta₀ with hI
+  obtain ⟨hXm, hind, hlaw⟩ := hiid
+  obtain ⟨hu2'', hnDu', hgmean'⟩ :=
+    memLp_and_tendsto_sqrt_likelihood_ratio_of_dqm nu P hP f hf hpos theta₀ score hs hs2 hdqm h
+  set p₀ : E → ℝ := f theta₀ with hp₀
+  set t : ℕ → ℝ := fun n ↦ h / Real.sqrt n with ht
+  set q : ℕ → E → ℝ := fun n ↦ f (theta₀ + t n) with hq
+  set g : ℕ → E → ℝ := fun n x ↦ Real.sqrt (q n x / p₀ x) - 1 with hg
+  set u : ℕ → E → ℝ := fun n x ↦ g n x - t n / 2 * score x with hu
+  set v : ℕ → E → ℝ := fun n x ↦
+    Real.sqrt (q n x) - Real.sqrt (p₀ x) - t n / 2 * score x * Real.sqrt (p₀ x) with hv
+  set D : ℝ → ℝ := fun τ ↦ ∫ x, (Real.sqrt (f (theta₀ + τ) x) - Real.sqrt (f theta₀ x) -
+    τ / 2 * score x * Real.sqrt (f theta₀ x)) ^ 2 ∂nu with hD
+  have hp₀pos : ∀ x, 0 < p₀ x := hpos theta₀
+  have hqpos : ∀ n x, 0 < q n x := fun n ↦ hpos _
+  have hgm : ∀ n, Measurable (g n) := fun n ↦
+    ((((hf _).1.div (hf theta₀).1).sqrt).sub_const 1)
+  have hum : ∀ n, Measurable (u n) := fun n ↦ (hgm n).sub (hs.const_mul _)
+  have hs2P : Integrable (fun x ↦ score x ^ 2) (P theta₀) := hs2.integrable_sq
+  have hu2' : ∀ n, MemLp (u n) 2 (P theta₀) := hu2''
+  have hu2 : ∀ n, Integrable (fun x ↦ u n x ^ 2) (P theta₀) := fun n ↦ (hu2' n).integrable_sq
+  have hgmean : Tendsto (fun n : ℕ ↦ n * ∫ x, g n x ∂P theta₀) atTop (𝓝 (-(h ^ 2 * I / 8))) :=
+    hgmean'
+  have hnDu' : Tendsto (fun n : ℕ ↦ n * ∫ x, u n x ^ 2 ∂P theta₀) atTop (𝓝 0) := hnDu'
   -- sample-level quantities
   have hiid' : IsIndependentIdenticallyDistributed mu X (P theta₀) := ⟨hXm, hind, hlaw⟩
   set Z : ℕ → Ω → ℝ := fun n w ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, score (X i w) with hZ
@@ -518,8 +572,7 @@ theorem local_asymptotic_normality_of_differentiable_in_quadratic_mean
   have hui : ∀ n, ∫ x, u n x ∂P theta₀ = ∫ x, g n x ∂P theta₀ := fun n ↦ by
     simp only [hu]
     rw [integral_sub (hgi n) (hs1.const_mul _), integral_const_mul, hs0, mul_zero, sub_zero]
-  have hnDu : Tendsto (fun n : ℕ ↦ n * ∫ x, u n x ^ 2 ∂P theta₀) atTop (𝓝 0) := by
-    simpa only [(hu2 _).2] using hnD
+  have hnDu := hnDu'
   have hF2 : TendstoInProbabilityConst mu
       (fun n w ↦ G1 n w - h / 2 * Z n w + h ^ 2 * I / 8) 0 := by
     have h1 := tendstoInProbabilityConst_sum_sub_of_iid mu (P theta₀) X hiid' u hum hu2' hnDu
@@ -543,7 +596,7 @@ theorem local_asymptotic_normality_of_differentiable_in_quadratic_mean
       hs2P
   set U2 : ℕ → Ω → ℝ := fun n w ↦ ∑ i ∈ Finset.range n, u n (X i w) ^ 2 with hU2
   have hU2lim : TendstoInProbabilityConst mu U2 0 :=
-    tendstoInProbabilityConst_sum_sq_of_iid mu (P theta₀) X hiid' u hum (fun n ↦ (hu2 n).1) hnDu
+    tendstoInProbabilityConst_sum_sq_of_iid mu (P theta₀) X hiid' u hum hu2 hnDu
   have ht2 : ∀ n : ℕ, t n ^ 2 = h ^ 2 * (n : ℝ)⁻¹ := fun n ↦ by
     simp only [ht, div_pow, Real.sq_sqrt (Nat.cast_nonneg _)]
     ring
@@ -635,7 +688,7 @@ theorem local_asymptotic_normality_of_differentiable_in_quadratic_mean
       rw [hgu] at hx
       linarith [abs_add_le (u n x) (t n / 2 * score x)]
     have hmk := mul_meas_ge_le_integral_of_nonneg (μ := P theta₀) (f := fun x ↦ u n x ^ 2)
-      (ae_of_all _ fun _ ↦ sq_nonneg _) (hu2 n).1 ((ε / 2) ^ 2)
+      (ae_of_all _ fun _ ↦ sq_nonneg _) (hu2 n) ((ε / 2) ^ 2)
     have hmk' : (P theta₀).real {x | (ε / 2) ^ 2 ≤ u n x ^ 2} ≤
         (∫ x, u n x ^ 2 ∂P theta₀) / (ε / 2) ^ 2 := by
       rw [le_div_iff₀ (by positivity)]; linarith [hmk]
@@ -722,5 +775,31 @@ theorem local_asymptotic_normality_of_differentiable_in_quadratic_mean
   simp only [hR, hZ]
   ring
 
+/-- GAPS 102.13: local asymptotic normality from differentiability in quadratic mean, with the
+central sequence: the normalized score sum `n^{-1/2} ∑ ℓ̇(Xᵢ)` converges in law to `N(0, I)`, and
+the log likelihood ratio has the expansion of
+`tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm`. -/
+theorem tendstoInDistribution_score_and_log_likelihood_ratio_expansion_of_dqm
+    {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
+    (mu : Measure Ω) [IsProbabilityMeasure mu] (nu : Measure E)
+    (P : ℝ → Measure E) (hP : ∀ theta, IsProbabilityMeasure (P theta))
+    (f : ℝ → E → ℝ) (hf : ∀ theta, HasDensity (P theta) nu (f theta))
+    (hpos : ∀ theta x, 0 < f theta x) (theta₀ : ℝ) (score : E → ℝ)
+    (hs : Measurable score) (hs2 : MemLp score 2 (P theta₀))
+    (hs0 : (∫ x, score x ∂P theta₀) = 0)
+    (hdqm : Asymptotics.IsLittleO (𝓝 0)
+      (fun h : ℝ ↦ ∫ x, (Real.sqrt (f (theta₀ + h) x) - Real.sqrt (f theta₀ x) -
+        h / 2 * score x * Real.sqrt (f theta₀ x)) ^ 2 ∂nu) (fun h : ℝ ↦ h ^ 2))
+    (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed mu X (P theta₀)) :
+    TendstoInDistribution mu (fun n w ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, score (X i w))
+        (gaussianReal 0 (Real.toNNReal (∫ x, score x ^ 2 ∂P theta₀))) ∧
+      ∀ h : ℝ, TendstoInProbabilityConst mu (fun n w ↦
+        (∑ i ∈ Finset.range n, Real.log (f (theta₀ + h / Real.sqrt n) (X i w) / f theta₀ (X i w))) -
+          h / Real.sqrt n * (∑ i ∈ Finset.range n, score (X i w)) +
+            h ^ 2 * (∫ x, score x ^ 2 ∂P theta₀) / 2) 0 :=
+  have := hP theta₀
+  ⟨tendstoInDistribution_inv_sqrt_mul_sum_of_iid mu (P theta₀) X hiid score hs hs2 hs0,
+    tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm mu nu P hP f hf hpos theta₀ score hs
+      hs2 hs0 hdqm X hiid⟩
 
 end CKSD

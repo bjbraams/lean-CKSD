@@ -5,11 +5,26 @@ public import CKSD.Asymptotics.Basic
 public import CKSD.Nonparametric.Basic
 
 /-!
-# Learning: Models
+# Log partition functions, tangent-kernel dynamics and least squares
 
-Sources: `GAPS.md`, `SYNOPSIS107.md`, and `STRUCTURE107.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+This file collects results on simple learning models from Section 107 of the catalogue: the
+entropy variational formula and zero-temperature limit of a finite log partition function, the
+finite-width tangent-kernel dynamics of gradient flow, the risk of the ridgeless least-squares
+estimator, and the implicit bias of gradient descent on least squares.
+
+## Main results
+
+* `CKSD.sum_mul_sub_mul_log_le_log_sum_exp`,
+  `CKSD.sum_softmax_mul_sub_mul_log_eq_log_sum_exp`: `log ∑ᵢ exp aᵢ = max_w (⟨w, a⟩ + H(w))`
+  over probability vectors, attained at the softmax vector (GAPS 107.26).
+* `CKSD.tendsto_log_sum_exp_div_atTop`: `β⁻¹ log ∑ᵢ exp(β aᵢ) → maxᵢ aᵢ` (GAPS 107.26).
+* `CKSD.hasDerivAt_predictions_of_gradient_flow`: predictions along the squared-loss gradient
+  flow evolve through the tangent kernel `Df Dfᵀ` (GAPS 107.30).
+* `CKSD.ridgeless_gaussian_risk_eq`: the risk `v p / (n - p - 1)` of ordinary least squares
+  with Gaussian design (GAPS 107.31).
+* `CKSD.tendsto_least_squares_gradient_descent`: gradient descent on least squares converges to
+  the least-squares solution closest to the initial point in the sense that the `ker A`
+  component is preserved (GAPS 107.40).
 -/
 
 @[expose] public section
@@ -23,55 +38,65 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- GAPS 107.26, finite-state entropy variational formula for the log partition function. -/
-theorem log_sum_exp_entropy_variational_formula {n : ℕ} (hn : 0 < n) (a : Fin n → ℝ) :
-    let Z := ∑ i, Real.exp (a i);
-    (∀ w : Fin n → ℝ, (∀ i, 0 ≤ w i) → (∑ i, w i = 1) →
-      (∑ i, (w i * a i - w i * Real.log (w i))) ≤ Real.log Z) ∧
-      (∑ i, ((Real.exp (a i) / Z) * a i -
-        (Real.exp (a i) / Z) * Real.log (Real.exp (a i) / Z))) = Real.log Z := by
-  intro Z
-  have hZ : 0 < Z := Finset.sum_pos (fun i _ ↦ Real.exp_pos _) ⟨⟨0, hn⟩, Finset.mem_univ _⟩
-  have hq1 : ∑ i, Real.exp (a i) / Z = 1 := by rw [← Finset.sum_div, div_self hZ.ne']
-  constructor
-  · intro w hw hw1
-    have hpt : ∀ i, w i * a i - w i * Real.log (w i) ≤
-        w i * Real.log Z + (Real.exp (a i) / Z - w i) := by
-      intro i
-      rcases (hw i).lt_or_eq with hpos | hzero
-      · have hq : 0 < Real.exp (a i) / Z := div_pos (Real.exp_pos _) hZ
-        have hl := Real.log_le_sub_one_of_pos (div_pos hq hpos)
-        rw [Real.log_div hq.ne' hpos.ne', Real.log_div (Real.exp_pos _).ne' hZ.ne',
-          Real.log_exp] at hl
-        have := mul_le_mul_of_nonneg_left hl hpos.le
-        have hc : w i * (Real.exp (a i) / Z / w i - 1) = Real.exp (a i) / Z - w i := by
-          field_simp
-        rw [hc] at this
-        nlinarith
-      · rw [← hzero]; simp only [zero_mul, sub_zero, zero_add]; positivity
-    calc (∑ i, (w i * a i - w i * Real.log (w i)))
-        ≤ ∑ i, (w i * Real.log Z + (Real.exp (a i) / Z - w i)) := Finset.sum_le_sum fun i _ ↦ hpt i
-      _ = Real.log Z := by
-        rw [Finset.sum_add_distrib, ← Finset.sum_mul, hw1, Finset.sum_sub_distrib, hq1, hw1]
-        ring
-  · have hpt : ∀ i, (Real.exp (a i) / Z) * a i -
-        (Real.exp (a i) / Z) * Real.log (Real.exp (a i) / Z) = (Real.exp (a i) / Z) * Real.log Z := by
-      intro i
-      rw [Real.log_div (Real.exp_pos _).ne' hZ.ne', Real.log_exp]; ring
-    simp_rw [hpt]
-    rw [← Finset.sum_mul, hq1, one_mul]
+section LogSumExp
 
-/-- GAPS 107.26, the zero-temperature limit of a finite log partition function. -/
-theorem tendsto_log_sum_exp_div_atTop {n : ℕ} (hn : 0 < n) (a : Fin n → ℝ) :
+variable {ι : Type*} [Fintype ι] [Nonempty ι]
+
+/-- GAPS 107.26, finite-state entropy variational formula for the log partition function, upper
+bound: for every probability vector `w`, `∑ᵢ wᵢ aᵢ + H(w) ≤ log ∑ᵢ exp aᵢ`. -/
+theorem sum_mul_sub_mul_log_le_log_sum_exp (a : ι → ℝ) (w : ι → ℝ) (hw : ∀ i, 0 ≤ w i)
+    (hw1 : ∑ i, w i = 1) :
+    ∑ i, (w i * a i - w i * Real.log (w i)) ≤ Real.log (∑ i, Real.exp (a i)) := by
+  set Z := ∑ i, Real.exp (a i)
+  have hZ : 0 < Z := Finset.sum_pos (fun i _ ↦ Real.exp_pos _) Finset.univ_nonempty
+  have hq1 : ∑ i, Real.exp (a i) / Z = 1 := by rw [← Finset.sum_div, div_self hZ.ne']
+  have hpt : ∀ i, w i * a i - w i * Real.log (w i) ≤
+      w i * Real.log Z + (Real.exp (a i) / Z - w i) := by
+    intro i
+    rcases (hw i).lt_or_eq with hpos | hzero
+    · have hq : 0 < Real.exp (a i) / Z := div_pos (Real.exp_pos _) hZ
+      have hl := Real.log_le_sub_one_of_pos (div_pos hq hpos)
+      rw [Real.log_div hq.ne' hpos.ne', Real.log_div (Real.exp_pos _).ne' hZ.ne',
+        Real.log_exp] at hl
+      have := mul_le_mul_of_nonneg_left hl hpos.le
+      have hc : w i * (Real.exp (a i) / Z / w i - 1) = Real.exp (a i) / Z - w i := by
+        field_simp
+      rw [hc] at this
+      nlinarith
+    · rw [← hzero]; simp only [zero_mul, sub_zero, zero_add]; positivity
+  calc (∑ i, (w i * a i - w i * Real.log (w i)))
+      ≤ ∑ i, (w i * Real.log Z + (Real.exp (a i) / Z - w i)) := Finset.sum_le_sum fun i _ ↦ hpt i
+    _ = Real.log Z := by
+      rw [Finset.sum_add_distrib, ← Finset.sum_mul, hw1, Finset.sum_sub_distrib, hq1, hw1]
+      ring
+
+/-- GAPS 107.26, finite-state entropy variational formula for the log partition function,
+attainment: the Gibbs (softmax) vector `exp aᵢ / Z` attains `log Z`. -/
+theorem sum_softmax_mul_sub_mul_log_eq_log_sum_exp (a : ι → ℝ) :
+    ∑ i, ((Real.exp (a i) / ∑ j, Real.exp (a j)) * a i -
+      (Real.exp (a i) / ∑ j, Real.exp (a j)) *
+        Real.log (Real.exp (a i) / ∑ j, Real.exp (a j))) =
+      Real.log (∑ i, Real.exp (a i)) := by
+  set Z := ∑ i, Real.exp (a i)
+  have hZ : 0 < Z := Finset.sum_pos (fun i _ ↦ Real.exp_pos _) Finset.univ_nonempty
+  have hq1 : ∑ i, Real.exp (a i) / Z = 1 := by rw [← Finset.sum_div, div_self hZ.ne']
+  have hpt : ∀ i, (Real.exp (a i) / Z) * a i -
+      (Real.exp (a i) / Z) * Real.log (Real.exp (a i) / Z) = (Real.exp (a i) / Z) * Real.log Z := by
+    intro i
+    rw [Real.log_div (Real.exp_pos _).ne' hZ.ne', Real.log_exp]; ring
+  simp_rw [hpt]
+  rw [← Finset.sum_mul, hq1, one_mul]
+
+/-- GAPS 107.26, the zero-temperature limit of a finite log partition function:
+`β⁻¹ log ∑ᵢ exp(β aᵢ) → maxᵢ aᵢ` as `β → ∞`. -/
+theorem tendsto_log_sum_exp_div_atTop (a : ι → ℝ) :
     Tendsto (fun beta : ℝ ↦ Real.log (∑ i, Real.exp (beta * a i)) / beta)
       atTop (𝓝 (sSup (range a))) := by
-  have hne : (Finset.univ : Finset (Fin n)).Nonempty := ⟨⟨0, hn⟩, Finset.mem_univ _⟩
+  have hne : (Finset.univ : Finset ι).Nonempty := Finset.univ_nonempty
   obtain ⟨k, -, hk⟩ := Finset.exists_max_image Finset.univ a hne
-  have hM : sSup (range a) = a k := by
-    apply le_antisymm
-    · have : Nonempty (Fin n) := ⟨⟨0, hn⟩⟩
-      exact csSup_le (range_nonempty a) (by rintro _ ⟨i, rfl⟩; exact hk i (Finset.mem_univ _))
-    · exact le_csSup (finite_range a).bddAbove ⟨k, rfl⟩
+  have hM : sSup (range a) = a k :=
+    le_antisymm (csSup_le (range_nonempty a) (by rintro _ ⟨i, rfl⟩; exact hk i (Finset.mem_univ _)))
+      (le_csSup (finite_range a).bddAbove ⟨k, rfl⟩)
   rw [hM]
   have hlow : ∀ β > (0 : ℝ), a k ≤ Real.log (∑ i, Real.exp (β * a i)) / β := by
     intro β hβ
@@ -80,15 +105,16 @@ theorem tendsto_log_sum_exp_div_atTop {n : ℕ} (hn : 0 < n) (a : Fin n → ℝ)
     rw [mul_comm]
     exact Finset.single_le_sum (f := fun i ↦ Real.exp (β * a i)) (fun i _ ↦ (Real.exp_pos _).le)
       (Finset.mem_univ k)
+  set n := Fintype.card ι
   have hup : ∀ β > (0 : ℝ), Real.log (∑ i, Real.exp (β * a i)) / β ≤ a k + Real.log n / β := by
     intro β hβ
     have hsum : ∑ i, Real.exp (β * a i) ≤ n * Real.exp (β * a k) := by
-      calc ∑ i, Real.exp (β * a i) ≤ ∑ _i : Fin n, Real.exp (β * a k) :=
+      calc ∑ i, Real.exp (β * a i) ≤ ∑ _i : ι, Real.exp (β * a k) :=
             Finset.sum_le_sum fun i _ ↦ Real.exp_le_exp.mpr
               (mul_le_mul_of_nonneg_left (hk i (Finset.mem_univ _)) hβ.le)
-        _ = n * Real.exp (β * a k) := by simp
+        _ = n * Real.exp (β * a k) := by simp [n]
     have hpos : 0 < ∑ i, Real.exp (β * a i) := Finset.sum_pos (fun i _ ↦ Real.exp_pos _) hne
-    have hnr : (0 : ℝ) < n := Nat.cast_pos.mpr hn
+    have hnr : (0 : ℝ) < n := Nat.cast_pos.mpr Fintype.card_pos
     have hl := Real.log_le_log hpos hsum
     rw [Real.log_mul hnr.ne' (Real.exp_pos _).ne', Real.log_exp] at hl
     rw [div_le_iff₀ hβ, add_mul, div_mul_cancel₀ _ hβ.ne']
@@ -100,11 +126,15 @@ theorem tendsto_log_sum_exp_div_atTop {n : ℕ} (hn : 0 < n) (a : Fin n → ℝ)
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hlim
     (eventually_gt_atTop 0 |>.mono hlow) (eventually_gt_atTop 0 |>.mono hup)
 
-/-- GAPS 107.30, finite-width tangent-kernel training dynamics for a differentiable model. -/
-theorem hasDerivAt_predictions_of_gradient_flow {p n : ℕ}
-    (f : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin n))
-    (theta : ℝ → EuclideanSpace ℝ (Fin p)) (y : EuclideanSpace ℝ (Fin n))
-    (t : ℝ) (D : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
+end LogSumExp
+
+/-- GAPS 107.30, finite-width tangent-kernel training dynamics for a differentiable model: along
+the gradient flow `θ' = -n⁻¹ Dfᵀ (f(θ) - y)` of the empirical squared loss on `n` outputs, the
+predictions evolve by `(f ∘ θ)' = -n⁻¹ Df Dfᵀ (f(θ) - y)`, with tangent kernel `Df Dfᵀ`. The
+parameter and output spaces are arbitrary real Hilbert spaces. -/
+theorem hasDerivAt_predictions_of_gradient_flow {E F : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] [CompleteSpace E] [NormedAddCommGroup F] [InnerProductSpace ℝ F]
+    [CompleteSpace F] (n : ℕ) (f : E → F) (theta : ℝ → E) (y : F) (t : ℝ) (D : E →L[ℝ] F)
     (hf : HasFDerivAt f D (theta t))
     (hflow : HasDerivAt theta (-((n : ℝ)⁻¹) • D.adjoint (f (theta t) - y)) t) :
     HasDerivAt (f ∘ theta) (-((n : ℝ)⁻¹) • D (D.adjoint (f (theta t) - y))) t := by
@@ -123,10 +153,14 @@ theorem ridgeless_gaussian_risk_eq {n p : ℕ} (hn : p + 1 < n)
     (∫ z, ‖fit z - beta‖ ^ 2 ∂P) = (v : ℝ) * p / (n - p - 1 : ℕ) := by
   sorry
 
-/-- GAPS 107.40, least-squares gradient descent and the preserved nullspace component. -/
-theorem tendsto_least_squares_gradient_descent {n p : ℕ}
-    (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
-    (y : EuclideanSpace ℝ (Fin n)) (theta₀ : EuclideanSpace ℝ (Fin p))
+/-- GAPS 107.40, least-squares gradient descent and the preserved nullspace component: for a
+step `0 < η < 2 / ‖A‖²`, the iterates `θ ↦ θ - η Aᵀ(Aθ - y)` converge to a solution `θ*` of the
+normal equations with `θ* - θ₀ ∈ range Aᵀ`, i.e. the component of `θ₀` in `ker A` is preserved.
+The parameter space is a finite-dimensional real inner product space and the output space a real
+Hilbert space. -/
+theorem tendsto_least_squares_gradient_descent {E F : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [NormedAddCommGroup F]
+    [InnerProductSpace ℝ F] [CompleteSpace F] (A : E →L[ℝ] F) (y : F) (theta₀ : E)
     (eta : ℝ) (he : 0 < eta) (hstep : eta * ‖A‖ ^ 2 < 2) :
     let update := fun x ↦ x - eta • A.adjoint (A x - y);
     ∃ thetaStar, A.adjoint (A thetaStar - y) = 0 ∧
@@ -162,7 +196,7 @@ theorem tendsto_least_squares_gradient_descent {n p : ℕ}
     rw [this, map_neg, hres, neg_zero]
   refine ⟨thetaStar, hnormal, by simpa [thetaStar] using hkK, ?_⟩
   -- error recursion
-  set e : ℕ → EuclideanSpace ℝ (Fin p) := fun t ↦ update^[t] theta₀ - thetaStar
+  set e : ℕ → E := fun t ↦ update^[t] theta₀ - thetaStar
   have he_succ : ∀ t, e (t + 1) = e t - eta • A.adjoint (A (e t)) := by
     intro t
     simp only [e, Function.iterate_succ_apply', update]
@@ -246,6 +280,5 @@ theorem tendsto_least_squares_gradient_descent {n p : ℕ}
   have : Tendsto (fun t ↦ e t + thetaStar) atTop (𝓝 (0 + thetaStar)) :=
     (tendsto_zero_iff_norm_tendsto_zero.mpr he0).add tendsto_const_nhds
   simpa [e] using this
-
 
 end CKSD

@@ -1,16 +1,45 @@
 module
 
-public import CKSD.LinearModels.Causal
+public import CKSD.LinearModels.Basic
 public import CKSD.Asymptotics.Basic
 
 /-!
-# Quantile-regression and instrumental-variable limits
+# Quantile regression and instrumental variables
 
-Quantile regression uses independent, nonidentically distributed responses and fixed design.
-Instrumental-variable experiments store the regressor, instrument, and structural error, with
-outcomes obtained from the structural equation. The quantile characterization of check-loss
-minimizers uses Mathlib's continuity of measure (`Monotone.measure_iUnion`) and the right
-continuity of `ProbabilityTheory.cdf`. Sources: GAPS 105.5 and 105.55.
+The check loss `ρ_τ(u) = u (τ - 1{u < 0})`, quantile regression with fixed design, and two-stage
+least squares in the linear instrumental-variable model.
+
+## Main definitions
+
+* `CKSD.quantileCheckLoss`, `CKSD.quantileRegressionObjective`,
+  `CKSD.IsQuantileRegressionEstimator`: the check loss, the objective
+  `β ↦ ∑ᵢ ρ_τ(yᵢ - ⟪xᵢ, β⟫)` and its minimizers.
+* `CKSD.expectedQuantileCheckLoss`: the risk `a ↦ E ρ_τ(Y - a)` of a location candidate.
+* `CKSD.twoStageLeastSquares`: `β̂ = (Xᵀ P_Z X)⁻¹ Xᵀ P_Z y` with `P_Z = Z (Zᵀ Z)⁻¹ Zᵀ`.
+* `CKSD.InstrumentalVariableObservation`, `CKSD.instrumentalVariableSampleEstimator`,
+  `CKSD.instrumentalVariableCovariance`: observations `(x, z, ε)` with outcome
+  `y = ⟪x, β⟫ + ε`, the resulting estimator, and the sandwich covariance
+  `H⁻¹ Dᵀ Σ_Z⁻¹ Ω Σ_Z⁻¹ D H⁻¹` with `Σ_Z = E[z zᵀ]`, `D = E[z xᵀ]`, `H = Dᵀ Σ_Z⁻¹ D` and
+  `Ω = E[ε² z zᵀ]`.
+
+## Main results
+
+* `CKSD.minimizes_expectedQuantileCheckLoss_iff`: the minimizers of the expected check loss are
+  exactly the `τ`-quantiles, `P(Y < a) ≤ τ ≤ P(Y ≤ a)`.
+* `CKSD.tendstoInDistribution_quantile_regression`: the fixed-design quantile-regression
+  central limit theorem, `√n (β̂ - β) ⇒ N(0, τ(1-τ) D₁⁻¹ D₀ D₁⁻¹)`.
+* `CKSD.tendstoInProbabilityConst_twoStageLeastSquares`,
+  `CKSD.tendstoInDistribution_twoStageLeastSquares`: consistency and asymptotic normality of
+  two-stage least squares.
+
+The quantile characterization uses Mathlib's continuity of measure (`Monotone.measure_iUnion`)
+and the right continuity of `ProbabilityTheory.cdf`.
+
+## References
+
+* R. Koenker, *Quantile Regression*, Cambridge University Press, 2005, §4.2.
+* J. M. Wooldridge, *Econometric Analysis of Cross Section and Panel Data*, 2nd ed., MIT Press,
+  2010, §5.2.
 -/
 
 @[expose] public section
@@ -21,6 +50,35 @@ open MeasureTheory ProbabilityTheory Filter Set
 open scoped NNReal ENNReal Topology BigOperators MatrixOrder Matrix.Norms.L2Operator
 
 namespace CKSD
+
+/-- The quantile-regression check loss `ρ_τ(u) = u (τ - 1{u < 0})`; it vanishes at `u = 0`. -/
+def quantileCheckLoss (τ u : ℝ) : ℝ := u * (τ - if u < 0 then 1 else 0)
+
+/-- The fixed-design quantile-regression objective `β ↦ ∑ᵢ ρ_τ(yᵢ - ⟪xᵢ, β⟫)`. -/
+def quantileRegressionObjective {n p : ℕ} (τ : ℝ) (x : Fin n → EuclideanSpace ℝ (Fin p))
+    (y : Fin n → ℝ) (β : EuclideanSpace ℝ (Fin p)) : ℝ :=
+  ∑ i, quantileCheckLoss τ (y i - inner ℝ (x i) β)
+
+/-- A quantile-regression estimate minimizes the check-loss objective. -/
+def IsQuantileRegressionEstimator {n p : ℕ} (τ : ℝ)
+    (x : Fin n → EuclideanSpace ℝ (Fin p)) (y : Fin n → ℝ)
+    (β : EuclideanSpace ℝ (Fin p)) : Prop :=
+  ∀ b, quantileRegressionObjective τ x y β ≤ quantileRegressionObjective τ x y b
+
+/-- The check loss is nonnegative for a level `τ ∈ [0, 1]`. -/
+theorem quantileCheckLoss_nonneg (τ u : ℝ) (hτ : τ ∈ Icc 0 1) :
+    0 ≤ quantileCheckLoss τ u := by
+  unfold quantileCheckLoss
+  split_ifs with h
+  · exact mul_nonneg_of_nonpos_of_nonpos h.le (by linarith [hτ.2])
+  · exact mul_nonneg (le_of_not_gt h) (by simpa using hτ.1)
+
+/-- The two-stage least-squares coefficient `(Xᵀ P_Z X)⁻¹ Xᵀ P_Z y`, with the instrument
+projection `P_Z = Z (Zᵀ Z)⁻¹ Zᵀ` (matrix inverses are Mathlib's, zero for singular matrices). -/
+def twoStageLeastSquares {n p k : ℕ} (X : Matrix (Fin n) (Fin p) ℝ)
+    (Z : Matrix (Fin n) (Fin k) ℝ) (y : Fin n → ℝ) : Fin p → ℝ :=
+  let P := Z * (Z.transpose * Z)⁻¹ * Z.transpose
+  (X.transpose * P * X)⁻¹.mulVec ((X.transpose * P).mulVec y)
 
 /-- Expected check loss for a scalar location candidate. -/
 def expectedQuantileCheckLoss (P : Measure ℝ) (tau a : ℝ) : ℝ :=
@@ -43,19 +101,22 @@ theorem measurable_quantileCheckLoss (τ : ℝ) : Measurable (quantileCheckLoss 
 
 /-- The check loss at a translated location is integrable when the law has a first moment. -/
 theorem integrable_quantileCheckLoss_sub (P : Measure ℝ) [IsProbabilityMeasure P]
-    (hint : Integrable id P) (τ a : ℝ) (hτ : τ ∈ Icc (0 : ℝ) 1) :
+    (hint : Integrable id P) (τ a : ℝ) :
     Integrable (fun y ↦ quantileCheckLoss τ (y - a)) P := by
-  refine Integrable.mono' ((hint.norm.add (integrable_const |a|))) ?_ ?_
+  refine Integrable.mono' (((hint.norm.add (integrable_const |a|))).const_mul (|τ| + 1)) ?_ ?_
   · exact ((measurable_quantileCheckLoss τ).comp (measurable_id.sub_const a)).aestronglyMeasurable
   · refine Filter.Eventually.of_forall fun y ↦ ?_
     rw [quantileCheckLoss_eq_add_max, Real.norm_eq_abs]
     simp only [Pi.add_apply, id, Real.norm_eq_abs]
-    have h1 := abs_sub (y) a
-    rcases le_total (y - a) 0 with h | h
-    · rw [max_eq_left (by linarith), abs_le]
-      constructor <;> nlinarith [abs_nonneg (y - a), abs_of_nonpos h, hτ.1, hτ.2]
-    · rw [max_eq_right (by linarith), abs_le]
-      constructor <;> nlinarith [abs_nonneg (y - a), abs_of_nonneg h, hτ.1, hτ.2]
+    have h1 : |y - a| ≤ |y| + |a| := abs_sub _ _
+    have h2 : |τ * (y - a) + max (-(y - a)) 0| ≤ (|τ| + 1) * |y - a| := by
+      calc |τ * (y - a) + max (-(y - a)) 0| ≤ |τ * (y - a)| + |max (-(y - a)) 0| :=
+            abs_add_le _ _
+        _ ≤ |τ| * |y - a| + |y - a| := by
+            rw [abs_mul, abs_of_nonneg (le_max_right (-(y - a)) 0)]
+            exact add_le_add le_rfl (max_le (neg_le_abs _) (abs_nonneg _))
+        _ = (|τ| + 1) * |y - a| := by ring
+    exact h2.trans (mul_le_mul_of_nonneg_left h1 (by positivity))
 
 /-- A constant multiple of a centred indicator is integrable under a probability measure. -/
 theorem integrable_add_mul_sub_indicator (P : Measure ℝ) [IsProbabilityMeasure P]
@@ -72,14 +133,31 @@ theorem integral_add_mul_sub_indicator (P : Measure ℝ) [IsProbabilityMeasure P
     integral_sub (integrable_const τ) h₁, integral_const, integral_indicator_one hs]
   simp
 
+/-- Integrating a pointwise bound `g₁ ≤ g₂ + c (τ - 1_s)`. -/
+theorem integral_le_integral_add_mul_sub_indicator (P : Measure ℝ) [IsProbabilityMeasure P]
+    {g₁ g₂ : ℝ → ℝ} (hg₁ : Integrable g₁ P) (hg₂ : Integrable g₂ P) {s : Set ℝ}
+    (hs : MeasurableSet s) (c τ : ℝ) (hle : ∀ y, g₁ y ≤ g₂ y + c * (τ - s.indicator 1 y)) :
+    (∫ y, g₁ y ∂P) ≤ (∫ y, g₂ y ∂P) + c * (τ - P.real s) := by
+  have h := integral_mono hg₁ (hg₂.add (integrable_add_mul_sub_indicator P hs c τ)) hle
+  simp only [Pi.add_apply] at h
+  rwa [integral_add_mul_sub_indicator P hg₂ hs] at h
+
+/-- Integrating a pointwise bound `g₂ + c (τ - 1_s) ≤ g₁`. -/
+theorem integral_add_mul_sub_indicator_le_integral (P : Measure ℝ) [IsProbabilityMeasure P]
+    {g₁ g₂ : ℝ → ℝ} (hg₁ : Integrable g₁ P) (hg₂ : Integrable g₂ P) {s : Set ℝ}
+    (hs : MeasurableSet s) (c τ : ℝ) (hle : ∀ y, g₂ y + c * (τ - s.indicator 1 y) ≤ g₁ y) :
+    (∫ y, g₂ y ∂P) + c * (τ - P.real s) ≤ ∫ y, g₁ y ∂P := by
+  have h := integral_mono (hg₂.add (integrable_add_mul_sub_indicator P hs c τ)) hg₁ hle
+  simp only [Pi.add_apply] at h
+  rwa [integral_add_mul_sub_indicator P hg₂ hs] at h
+
 /-- GAPS 105.5: expected check-loss minimizers are precisely the distributional quantiles.
 This characterization allows atoms; finite first moment makes every displayed risk finite. -/
 theorem minimizes_expectedQuantileCheckLoss_iff (P : Measure ℝ) [IsProbabilityMeasure P]
     (hint : Integrable id P) (tau : ℝ) (htau : tau ∈ Ioo 0 1) (a : ℝ) :
     (∀ b, expectedQuantileCheckLoss P tau a ≤ expectedQuantileCheckLoss P tau b) ↔
       P.real (Iio a) ≤ tau ∧ tau ≤ P.real (Iic a) := by
-  have hτ : tau ∈ Icc (0 : ℝ) 1 := Ioo_subset_Icc_self htau
-  have hI := fun c ↦ integrable_quantileCheckLoss_sub P hint tau c hτ
+  have hI := fun c ↦ integrable_quantileCheckLoss_sub P hint tau c
   simp only [quantileCheckLoss_eq_add_max] at hI
   unfold expectedQuantileCheckLoss
   simp only [quantileCheckLoss_eq_add_max]
@@ -133,10 +211,8 @@ theorem minimizes_expectedQuantileCheckLoss_iff (P : Measure ℝ) [IsProbability
           rw [max_eq_right (by linarith)]
           have := le_max_right (-(y - a)) 0
           nlinarith
-      have hint' := integral_mono (hI (a - h)) ((hI a).add
-        (integrable_add_mul_sub_indicator P measurableSet_Iic h tau)) hle
-      simp only [Pi.add_apply] at hint'
-      rw [integral_add_mul_sub_indicator P (hI a) measurableSet_Iic] at hint'
+      have hint' := integral_le_integral_add_mul_sub_indicator P (hI (a - h)) (hI a)
+        measurableSet_Iic h tau hle
       have := hmin (a - h)
       nlinarith
     · by_contra hlt
@@ -171,10 +247,8 @@ theorem minimizes_expectedQuantileCheckLoss_iff (P : Measure ℝ) [IsProbability
       have hle' : ∀ y, tau * (y - (a + h)) + max (-(y - (a + h))) 0 ≤
           tau * (y - a) + max (-(y - a)) 0 + (-h) * (tau - (Iic (a + h)).indicator 1 y) := by
         intro y; have := hle y; linarith
-      have hint' := integral_mono (hI (a + h)) ((hI a).add
-        (integrable_add_mul_sub_indicator P measurableSet_Iic (-h) tau)) hle'
-      simp only [Pi.add_apply] at hint'
-      rw [integral_add_mul_sub_indicator P (hI a) measurableSet_Iic] at hint'
+      have hint' := integral_le_integral_add_mul_sub_indicator P (hI (a + h)) (hI a)
+        measurableSet_Iic (-h) tau hle'
       have := hmin (a + h)
       nlinarith
   · rintro ⟨h₁, h₂⟩ b
@@ -193,10 +267,8 @@ theorem minimizes_expectedQuantileCheckLoss_iff (P : Measure ℝ) [IsProbability
           rw [max_eq_right (by linarith)]
           have := le_max_right (-(y - b)) 0
           nlinarith
-      have hint' := integral_mono ((hI a).add
-        (integrable_add_mul_sub_indicator P measurableSet_Iic (a - b) tau)) (hI b) hle
-      simp only [Pi.add_apply] at hint'
-      rw [integral_add_mul_sub_indicator P (hI a) measurableSet_Iic] at hint'
+      have hint' := integral_add_mul_sub_indicator_le_integral P (hI b) (hI a)
+        measurableSet_Iic (a - b) tau hle
       nlinarith
     · have hle : ∀ y, tau * (y - a) + max (-(y - a)) 0 + (a - b) * (tau - (Iio a).indicator 1 y) ≤
           tau * (y - b) + max (-(y - b)) 0 := by
@@ -213,10 +285,8 @@ theorem minimizes_expectedQuantileCheckLoss_iff (P : Measure ℝ) [IsProbability
           rw [max_eq_right (by linarith)]
           have := le_max_right (-(y - b)) 0
           nlinarith
-      have hint' := integral_mono ((hI a).add
-        (integrable_add_mul_sub_indicator P measurableSet_Iio (a - b) tau)) (hI b) hle
-      simp only [Pi.add_apply] at hint'
-      rw [integral_add_mul_sub_indicator P (hI a) measurableSet_Iio] at hint'
+      have hint' := integral_add_mul_sub_indicator_le_integral P (hI b) (hI a)
+        measurableSet_Iio (a - b) tau hle
       nlinarith
 
 /-- Normalized weighted design second-moment matrix. -/
@@ -224,13 +294,16 @@ def weightedDesignMoment {p : ℕ} (x : ℕ → EuclideanSpace ℝ (Fin p))
     (w : ℕ → ℝ) (n : ℕ) : Matrix (Fin p) (Fin p) ℝ :=
   fun j k ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, w i * x i j * x i k
 
-/-- GAPS 105.5: fixed-design quantile-regression central limit theorem.
-The density bounds, uniform local continuity, design limits, and maximal leverage condition
-are all explicit. No identical-distribution assumption is imposed on the responses. -/
+/-- GAPS 105.5: fixed-design quantile-regression central limit theorem. Let the responses
+`Yᵢ` be independent with laws `Qᵢ` having densities `fᵢ`, with `τ`-quantile `⟪xᵢ, β⟫`, and
+`fᵢ(⟪xᵢ, β⟫) ∈ [a, b]` with `a > 0`, the densities equicontinuous at these quantiles. If
+`n⁻¹ ∑ xᵢ xᵢᵀ → D₀` (positive definite), `n⁻¹ ∑ fᵢ(⟪xᵢ, β⟫) xᵢ xᵢᵀ → D₁`, and
+`maxᵢ ‖xᵢ‖ / √n → 0`, then every sequence of quantile-regression estimates satisfies
+`√n (β̂ - β) ⇒ N(0, τ(1-τ) D₁⁻¹ D₀ D₁⁻¹)`. The limit `D₁ ≥ a D₀` is then positive definite.
+No identical-distribution assumption is imposed on the responses. -/
 theorem tendstoInDistribution_quantile_regression
     {Ω : Type*} [MeasurableSpace Ω] {p : ℕ}
-    (P : Measure Ω) [IsProbabilityMeasure P] (Q : ℕ → Measure ℝ)
-    (hQ : ∀ i, IsProbabilityMeasure (Q i)) (f : ℕ → ℝ → ℝ)
+    (P : Measure Ω) [IsProbabilityMeasure P] (Q : ℕ → Measure ℝ) (f : ℕ → ℝ → ℝ)
     (hf : ∀ i, HasDensity (Q i) volume (f i))
     (Y : ℕ → Ω → ℝ) (hY : ∀ i, Measurable (Y i)) (hind : iIndepFun Y P)
     (hlaw : ∀ i, P.map (Y i) = Q i) (x : ℕ → EuclideanSpace ℝ (Fin p))
@@ -240,7 +313,7 @@ theorem tendstoInDistribution_quantile_regression
     (hbound : ∀ i, f i (inner ℝ (x i) beta) ∈ Icc a b)
     (hequi : ∀ eps > 0, ∃ delta > 0, ∀ i t,
       |t - inner ℝ (x i) beta| < delta → |f i t - f i (inner ℝ (x i) beta)| < eps)
-    (D₀ D₁ : Matrix (Fin p) (Fin p) ℝ) (hD₀ : D₀.PosDef) (hD₁ : D₁.PosDef)
+    (D₀ D₁ : Matrix (Fin p) (Fin p) ℝ) (hD₀ : D₀.PosDef)
     (hdesign : Tendsto (weightedDesignMoment x (fun _ ↦ 1)) atTop (𝓝 D₀))
     (hweighted : Tendsto (weightedDesignMoment x (fun i ↦ f i (inner ℝ (x i) beta)))
       atTop (𝓝 D₁))
@@ -284,7 +357,11 @@ def instrumentalVariableCovariance {p k : ℕ}
   let H := D.transpose * Z⁻¹ * D
   H⁻¹ * D.transpose * Z⁻¹ * instrumentErrorMoment Q * Z⁻¹ * D * H⁻¹
 
-/-- GAPS 105.55: consistency of two-stage least squares under second-moment and rank conditions. -/
+/-- GAPS 105.55: consistency of two-stage least squares. For independent identically
+distributed observations `(xᵢ, zᵢ, εᵢ)` with finite second moments, instruments orthogonal to
+the error (`E[z ε] = 0`), `E[z zᵀ]` positive definite, and the rank condition that
+`Dᵀ E[z zᵀ]⁻¹ D` with `D = E[z xᵀ]` is positive definite, the estimator computed from
+`yᵢ = ⟪xᵢ, β⟫ + εᵢ` converges in probability to `β`. -/
 theorem tendstoInProbabilityConst_twoStageLeastSquares
     {Ω : Type*} [MeasurableSpace Ω] {p k : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
@@ -301,13 +378,14 @@ theorem tendstoInProbabilityConst_twoStageLeastSquares
   sorry
 
 /-- GAPS 105.55: heteroscedasticity-robust two-stage least-squares central limit theorem.
-Square integrability of the instrument-error product is explicit, as required for its CLT. -/
+Under the hypotheses of `tendstoInProbabilityConst_twoStageLeastSquares` and square
+integrability of the score `ε z`, `√n (β̂ - β) ⇒ N(0, H⁻¹ Dᵀ Σ_Z⁻¹ Ω Σ_Z⁻¹ D H⁻¹)` with
+`Ω = E[ε² z zᵀ]`. No fourth moments are needed. -/
 theorem tendstoInDistribution_twoStageLeastSquares
     {Ω : Type*} [MeasurableSpace Ω] {p k : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (Q : Measure (InstrumentalVariableObservation p k)) [IsProbabilityMeasure Q]
-    (h2 : MemLp id 2 Q) (hD4 : MemLp Prod.fst 4 Q)
-    (hZ4 : MemLp (fun z ↦ z.2.1) 4 Q)
+    (h2 : MemLp id 2 Q)
     (hscore : MemLp (fun z ↦ z.2.2 • z.2.1) 2 Q)
     (horthogonal : ∀ i : Fin k, (∫ z, z.2.1 i * z.2.2 ∂Q) = 0)
     (hZ : (instrumentSecondMoment Q).PosDef)

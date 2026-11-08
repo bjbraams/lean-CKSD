@@ -1,6 +1,6 @@
 module
 
-public import CKSD.Processes.Basic
+public import CKSD.Processes.Independence
 
 /-!
 # Strong mixing, the moving-block bootstrap, and Stein's prediction theorem
@@ -15,7 +15,22 @@ two centred Gaussian laws with prescribed finite-dimensional marginals. The best
 of `ψ` from the first `n` coordinates computed under covariance `k` has coefficients
 `K_n⁻¹ c`, with `K_n` the Gram matrix of `k` and `c` the covariances of `ψ` with the coordinates.
 
-Sources: GAPS 106.11 and 106.21.
+## Main definitions
+
+* `CKSD.pastSigmaAlgebra`, `CKSD.futureSigmaAlgebra`: `σ(X_s : s ≤ t)` and `σ(X_s : s ≥ t)`.
+* `CKSD.strongMixingCoefficient`: the strong mixing coefficients `α(k)`.
+* `CKSD.blockMean`, `CKSD.movingBlockBootstrapLaw`: the moving-block bootstrap.
+* `CKSD.kernelGram`, `CKSD.linearPredictionError`: Gram matrices and errors of linear predictors.
+
+## Main results
+
+* `CKSD.indepFun_of_measurable_pastSigmaAlgebra`: for an independent sequence, a function of the
+  strict past `σ(ε_s : s < t)` is independent of `ε_t`; with the monotonicity and measurability
+  lemmas for `pastSigmaAlgebra`.
+* `CKSD.tendstoInProbabilityConst_kolmogorovDistance_movingBlockBootstrapLaw` (GAPS 106.11):
+  consistency of the moving-block bootstrap for the mean of a strongly mixing sequence.
+* `CKSD.eventually_abs_linearPredictionError_div_sub_one_le` (GAPS 106.21): Stein's theorem on
+  asymptotically efficient prediction under equivalent Gaussian laws.
 -/
 
 @[expose] public section
@@ -31,6 +46,30 @@ namespace CKSD
 @[instance_reducible]
 def pastSigmaAlgebra {Ω : Type*} (X : ℤ → Ω → ℝ) (t : ℤ) : MeasurableSpace Ω :=
   ⨆ s : ℤ, ⨆ _ : s ≤ t, MeasurableSpace.comap (X s) inferInstance
+
+/-- The coordinate `ε_s` is measurable with respect to the past `σ(ε_r : r ≤ t)` when `s ≤ t`. -/
+theorem measurable_pastSigmaAlgebra_of_le {Ω : Type*}
+    {ε : ℤ → Ω → ℝ} {s t : ℤ} (hst : s ≤ t) :
+    Measurable[pastSigmaAlgebra ε t] (ε s) :=
+  Measurable.of_comap_le (le_iSup₂_of_le s hst le_rfl)
+
+/-- The past σ-algebras increase with time. -/
+theorem pastSigmaAlgebra_mono {Ω : Type*} (ε : ℤ → Ω → ℝ) {s t : ℤ} (hst : s ≤ t) :
+    pastSigmaAlgebra ε s ≤ pastSigmaAlgebra ε t :=
+  iSup₂_le fun r hr ↦ le_iSup₂_of_le r (hr.trans hst) le_rfl
+
+/-- The past σ-algebras of a measurable process are sub-σ-algebras. -/
+theorem pastSigmaAlgebra_le {Ω : Type*} [MeasurableSpace Ω] {ε : ℤ → Ω → ℝ}
+    (hm : ∀ t, Measurable (ε t)) (t : ℤ) : pastSigmaAlgebra ε t ≤ ‹MeasurableSpace Ω› :=
+  iSup₂_le fun r _ ↦ (hm r).comap_le
+
+/-- A function of the strict past `σ(ε_s : s < t)` of an independent sequence is independent
+of `ε_t`. -/
+theorem indepFun_of_measurable_pastSigmaAlgebra {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {ε : ℤ → Ω → ℝ} (hm : ∀ t, Measurable (ε t)) (hind : iIndepFun ε μ)
+    (t : ℤ) {Y : Ω → ℝ} (hY : Measurable[pastSigmaAlgebra ε (t - 1)] Y) :
+    IndepFun Y (ε t) μ :=
+  indepFun_of_measurable_biSup_of_notMem hm hind (S := {s | s ≤ t - 1}) (by simp) hY
 
 /-- The future σ-algebra `σ(X_s : s ≥ t)` of a real process on `ℤ`. -/
 @[instance_reducible]
@@ -62,14 +101,15 @@ def movingBlockBootstrapLaw (x : ℕ → ℝ) (n b : ℕ) : Measure ℝ :=
 stationary strongly mixing sequence with `𝔼|X|^{2+δ} < ∞` and `∑ α(k)^{δ/(2+δ)} < ∞`:
 the autocovariances are absolutely summable, `√n (X̄_n - μ) ⇒ N(0, σ²_∞)`, and the Kolmogorov
 distance between the bootstrap law and the law of `√n (X̄_n - μ)` tends to `0` in probability,
-for block lengths `b → ∞` with `b/n → 0`. -/
-theorem movingBlockBootstrap_consistent {Ω : Type*} [MeasurableSpace Ω]
+for block lengths `b → ∞` with `b/n → 0` (so that eventually `1 ≤ b ≤ n`). -/
+theorem tendstoInProbabilityConst_kolmogorovDistance_movingBlockBootstrapLaw {Ω : Type*}
+    [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℤ → Ω → ℝ) (hXm : ∀ t, Measurable (X t))
     (hstat : ∀ h : ℤ, μ.map (fun ω t ↦ X (t + h) ω) = μ.map (fun ω t ↦ X t ω))
     (δ : ℝ) (hδ : 0 < δ) (hmom : MemLp (X 0) (ENNReal.ofReal (2 + δ)) μ)
     (hmix : Summable fun k : ℕ ↦ strongMixingCoefficient μ X k ^ (δ / (2 + δ)))
     (hσ : 0 < ∑' k : ℤ, covariance μ (X k) (X 0))
-    (b : ℕ → ℕ) (hbn : ∀ᶠ n in atTop, 1 ≤ b n ∧ b n ≤ n) (hb : Tendsto b atTop atTop)
+    (b : ℕ → ℕ) (hb : Tendsto b atTop atTop)
     (hb' : Tendsto (fun n ↦ (b n : ℝ) / n) atTop (𝓝 0)) :
     let σsq := ∑' k : ℤ, covariance μ (X k) (X 0)
     let S : ℕ → Ω → ℝ := fun n ω ↦
@@ -97,10 +137,12 @@ Gaussian laws. The coordinates are linearly independent under `k₀`, the laws `
 centred Gaussian with covariances `k₀` and `k₁`, and `ψ` ranges over the closed linear span `H`
 of the coordinates in `L²(P₀)`. Uniformly over `ψ ∈ H` with nonzero `P₀`-error, the relative
 excess error of the `k₁`-predictor and the relative misstatement of its error tend to zero; the
-exchanged roles are the same statement applied to `(k₁, P₁, k₀, P₀)`. -/
-theorem stein_linearPrediction_equivalent_gaussian (k₀ k₁ : ℕ → ℕ → ℝ)
+exchanged roles are the same statement applied to `(k₁, P₁, k₀, P₀)`. The Gram matrices of
+`k₁` are automatically positive semidefinite: otherwise the marginal of `P₁` is a Dirac mass,
+which is not equivalent to the nondegenerate marginal of `P₀`. -/
+theorem eventually_abs_linearPredictionError_div_sub_one_le (k₀ k₁ : ℕ → ℕ → ℝ)
     (P₀ P₁ : Measure (ℕ → ℝ)) [IsProbabilityMeasure P₀] [IsProbabilityMeasure P₁]
-    (hk₀ : ∀ n, (kernelGram k₀ n).PosDef) (hk₁ : ∀ n, (kernelGram k₁ n).PosSemidef)
+    (hk₀ : ∀ n, (kernelGram k₀ n).PosDef)
     (hP₀ : ∀ n, P₀.map (fun x ↦ WithLp.toLp 2 fun i : Fin n ↦ x i) =
       multivariateGaussian 0 (kernelGram k₀ n))
     (hP₁ : ∀ n, P₁.map (fun x ↦ WithLp.toLp 2 fun i : Fin n ↦ x i) =

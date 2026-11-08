@@ -10,11 +10,23 @@ public import Statlib.Divergence.TotalVariation.Integral
 public import Statlib.Divergence.TotalVariation.Event
 
 /-!
-# Learning: Privacy
+# Differential privacy: composition and local privacy
 
-Sources: `GAPS.md`, `SYNOPSIS107.md`, and `STRUCTURE107.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Basic composition of adaptive differentially private releases, and the contraction of
+divergences under a locally private channel.
+
+## Main results
+
+* `CKSD.isDifferentiallyPrivate_compProd`: basic composition of two adaptive releases
+  (GAPS 107.65).
+* `CKSD.abs_integral_sub_integral_le_mul_totalVariationDistance`: expectations of bounded
+  functions under two laws differ by at most the bound times their total variation distance.
+* `CKSD.abs_measureReal_comp_sub_le_of_local_privacy`: event-wise multiplicative closeness of
+  the output laws of a locally private channel.
+* `CKSD.klDiv_le_ofReal_sq_of_abs_measureReal_sub_le`: a `χ²`-type bound for the
+  Kullback–Leibler divergence.
+* `CKSD.klDiv_comp_le_of_local_differential_privacy`: the KL contraction under local privacy
+  (GAPS 107.75).
 -/
 
 @[expose] public section
@@ -66,7 +78,8 @@ theorem isDifferentiallyPrivate_compProd {D Y Z : Type*} [MeasurableSpace D] [Me
     · simp only [h, min_eq_right hc]; exact h2
   have hstep2 : ∫⁻ y, g d y ∂M d ≤ ∫⁻ y, h y ∂M d + ENNReal.ofReal d₂ := by
     calc ∫⁻ y, g d y ∂M d ≤ ∫⁻ y, (h y + ENNReal.ofReal d₂) ∂M d := lintegral_mono hstep1
-      _ = _ := by rw [lintegral_add_right _ measurable_const, lintegral_const, measure_univ, mul_one]
+      _ = _ := by
+        rw [lintegral_add_right _ measurable_const, lintegral_const, measure_univ, mul_one]
   -- layer cake
   have hcake : ∀ e : D, ∫⁻ y, h y ∂M e = ∫⁻ t in Ioi 0, M e {y | t < hr y} := by
     intro e
@@ -108,25 +121,6 @@ theorem isDifferentiallyPrivate_compProd {D Y Z : Type*} [MeasurableSpace D] [Me
     _ ≤ c₁ * (c₂ * ∫⁻ y, g d' y ∂M d') + ENNReal.ofReal d₁ + ENNReal.ofReal d₂ := by gcongr
     _ = _ := by rw [mul_assoc, add_assoc]
 
-/-- Mathlib's total variation distance of probability measures (the `L¹` norm) is at most twice
-the event discrepancy `totalVariationDistance`. -/
-theorem tvDist_le_two_mul_totalVariationDistance {X : Type*} [MeasurableSpace X]
-    (P₁ P₂ : Measure X) [IsProbabilityMeasure P₁] [IsProbabilityMeasure P₂] :
-    tvDist P₁ P₂ ≤ 2 * totalVariationDistance P₁ P₂ := by
-  have hT0 : 0 ≤ totalVariationDistance P₁ P₂ :=
-    (abs_nonneg _).trans (abs_measureReal_sub_le_totalVariationDistance P₁ P₂ ∅ MeasurableSet.empty)
-  have hE : etvDist P₁ P₂ ≤ 2 * ENNReal.ofReal (totalVariationDistance P₁ P₂) := by
-    rw [etvDist_eq_two_mul_iSup_sub P₁ P₂ (by simp)]
-    gcongr
-    refine iSup₂_le fun E hE ↦ ?_
-    rw [← ofReal_measureReal (μ := P₁) (s := E), ← ofReal_measureReal (μ := P₂) (s := E),
-      ← ENNReal.ofReal_sub _ measureReal_nonneg]
-    exact ENNReal.ofReal_le_ofReal ((le_abs_self _).trans
-      (abs_measureReal_sub_le_totalVariationDistance P₁ P₂ E hE))
-  have := ENNReal.toReal_mono (by finiteness) hE
-  rw [ENNReal.toReal_mul, ENNReal.toReal_ofReal hT0] at this
-  simpa [tvDist] using this
-
 /-- A measurable function with values in `[0, c]` has expectations under two probability
 measures differing by at most `c` times their total variation distance. -/
 theorem abs_integral_sub_integral_le_mul_totalVariationDistance {X : Type*} [MeasurableSpace X]
@@ -135,7 +129,7 @@ theorem abs_integral_sub_integral_le_mul_totalVariationDistance {X : Type*} [Mea
     |∫ x, ψ x ∂P₁ - ∫ x, ψ x ∂P₂| ≤ c * totalVariationDistance P₁ P₂ := by
   obtain ⟨x₀⟩ := nonempty_of_isProbabilityMeasure P₁
   have hc0 : 0 ≤ c := (h0 x₀).trans (hc x₀)
-  have htv := tvDist_le_two_mul_totalVariationDistance P₁ P₂
+  have htv := (tvDist_eq_two_mul_totalVariationDistance P₁ P₂).le
   rcases hc0.eq_or_lt with rfl | hcpos
   · have : ψ = fun _ ↦ 0 := funext fun x ↦ le_antisymm (hc x) (h0 x)
     simp [this]
@@ -170,11 +164,21 @@ theorem abs_integral_sub_integral_le_mul_totalVariationDistance {X : Type*} [Mea
   field_simp at this
   linarith
 
+/-- A pure `ε`-locally private Markov kernel on a nonempty space has `e^ε ≥ 1`: apply the
+privacy inequality to the whole output space. -/
+theorem one_le_exp_of_local_privacy {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
+    [Nonempty X] (Q : Kernel X Y) [IsMarkovKernel Q] {ε : ℝ}
+    (hpriv : IsDifferentiallyPrivate (fun _ _ : X ↦ True) ε 0 Q) : 1 ≤ Real.exp ε := by
+  obtain ⟨x⟩ := ‹Nonempty X›
+  have h := hpriv x x trivial univ MeasurableSet.univ
+  simp only [measure_univ, mul_one, ENNReal.ofReal_zero, add_zero] at h
+  exact ENNReal.one_le_ofReal.mp h
+
 /-- For a pure `ε`-locally private Markov kernel `Q`, the output laws `Q ∘ₘ P₁` and `Q ∘ₘ P₂`
 differ on each event by at most `(e^ε - 1) · TV(P₁, P₂)` times the mass of that event under
 either output law. -/
 theorem abs_measureReal_comp_sub_le_of_local_privacy {X Y : Type*} [MeasurableSpace X]
-    [MeasurableSpace Y] (Q : Kernel X Y) [IsMarkovKernel Q] {ε : ℝ} (he : 0 ≤ ε)
+    [MeasurableSpace Y] (Q : Kernel X Y) [IsMarkovKernel Q] {ε : ℝ}
     (hpriv : IsDifferentiallyPrivate (fun _ _ : X ↦ True) ε 0 Q)
     (P₁ P₂ : Measure X) [IsProbabilityMeasure P₁] [IsProbabilityMeasure P₂] {A : Set Y}
     (hA : MeasurableSet A) :
@@ -215,9 +219,8 @@ theorem abs_measureReal_comp_sub_le_of_local_privacy {X Y : Type*} [MeasurableSp
   have hmP : ∀ P : Measure X, [IsProbabilityMeasure P] → m ≤ ∫ x, q x ∂P := fun P _ ↦ by
     have := integral_mono (integrable_const m) (hint P) hmq
     simpa using this
-  have hT0 : 0 ≤ totalVariationDistance P₁ P₂ :=
-    (abs_nonneg _).trans (abs_measureReal_sub_le_totalVariationDistance P₁ P₂ ∅ MeasurableSet.empty)
-  have he1 : 0 ≤ Real.exp ε - 1 := by linarith [Real.add_one_le_exp ε]
+  have hT0 := totalVariationDistance_nonneg P₁ P₂
+  have he1 : 0 ≤ Real.exp ε - 1 := sub_nonneg.mpr (one_le_exp_of_local_privacy Q hpriv)
   rw [hreal, hreal]
   constructor
   · calc _ ≤ (Real.exp ε - 1) * m * totalVariationDistance P₁ P₂ := hψ
@@ -280,32 +283,32 @@ theorem klDiv_le_ofReal_sq_of_abs_measureReal_sub_le {Y : Type*} [MeasurableSpac
         nlinarith
     _ = ENNReal.ofReal (δ ^ 2) := by simp
 
-/-- GAPS 107.75, the single-release KL contraction under local privacy. -/
+/-- GAPS 107.75, the single-release KL contraction under local privacy: for a pure
+`ε`-locally differentially private Markov kernel `Q`, the symmetrized Kullback–Leibler divergence
+of the output laws is at most `4 (e^ε - 1)² TV(P₁, P₂)²`. -/
 theorem klDiv_comp_le_of_local_differential_privacy
     {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
-    (Q : Kernel X Y) [IsMarkovKernel Q] (epsilon : ℝ) (he : 0 ≤ epsilon)
+    (Q : Kernel X Y) [IsMarkovKernel Q] (epsilon : ℝ)
     (hpriv : IsDifferentiallyPrivate (fun _ _ : X ↦ True) epsilon 0 Q)
     (P₁ P₂ : Measure X) [IsProbabilityMeasure P₁] [IsProbabilityMeasure P₂] :
     InformationTheory.klDiv (Q ∘ₘ P₁) (Q ∘ₘ P₂) +
       InformationTheory.klDiv (Q ∘ₘ P₂) (Q ∘ₘ P₁) ≤
       ENNReal.ofReal (4 * (Real.exp epsilon - 1) ^ 2 * totalVariationDistance P₁ P₂ ^ 2) := by
-  have hT0 : 0 ≤ totalVariationDistance P₁ P₂ :=
-    (abs_nonneg _).trans (abs_measureReal_sub_le_totalVariationDistance P₁ P₂ ∅ MeasurableSet.empty)
-  have he1 : 0 ≤ Real.exp epsilon - 1 := by linarith [Real.add_one_le_exp epsilon]
+  have hT0 := totalVariationDistance_nonneg P₁ P₂
+  have : Nonempty X := nonempty_of_isProbabilityMeasure P₁
+  have he1 : 0 ≤ Real.exp epsilon - 1 := sub_nonneg.mpr (one_le_exp_of_local_privacy Q hpriv)
   set δ := (Real.exp epsilon - 1) * totalVariationDistance P₁ P₂
   have hδ : 0 ≤ δ := mul_nonneg he1 hT0
   have h1 := klDiv_le_ofReal_sq_of_abs_measureReal_sub_le (Q ∘ₘ P₁) (Q ∘ₘ P₂) hδ fun A hA ↦
-    (abs_measureReal_comp_sub_le_of_local_privacy Q he hpriv P₁ P₂ hA).1
+    (abs_measureReal_comp_sub_le_of_local_privacy Q hpriv P₁ P₂ hA).1
   have h2 := klDiv_le_ofReal_sq_of_abs_measureReal_sub_le (Q ∘ₘ P₂) (Q ∘ₘ P₁) hδ fun A hA ↦ by
     rw [abs_sub_comm]
-    exact (abs_measureReal_comp_sub_le_of_local_privacy Q he hpriv P₁ P₂ hA).2
+    exact (abs_measureReal_comp_sub_le_of_local_privacy Q hpriv P₁ P₂ hA).2
   calc _ ≤ ENNReal.ofReal (δ ^ 2) + ENNReal.ofReal (δ ^ 2) := add_le_add h1 h2
     _ = ENNReal.ofReal (2 * δ ^ 2) := by
       rw [← ENNReal.ofReal_add (by positivity) (by positivity)]; ring_nf
     _ ≤ _ := ENNReal.ofReal_le_ofReal (by
       simp only [δ]
       nlinarith [sq_nonneg ((Real.exp epsilon - 1) * totalVariationDistance P₁ P₂)])
-
-
 
 end CKSD

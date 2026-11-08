@@ -6,12 +6,21 @@ public import CKSD.Processes.Kalman.Filter
 # The Kalman filter
 
 A time-varying linear Gaussian state-space model `x_{t+1} = F_t x_t + w_t`,
-`y_t = H_t x_t + v_t` in finite dimensions, with time indexed from `0`: the initial state is
-`x_0`, so `x_{0|-1}` and `P_{0|-1}` are its mean and covariance. The covariance recursion does
+`y_t = H_t x_t + v_t` with state and observation coordinates indexed by finite types, and time
+indexed from `0`: the initial state is `x_0`, so `x_{0|-1}` and `P_{0|-1}` are its mean and
+covariance. The covariance recursion does
 not depend on the data; the mean recursion is a function of the observation sequence, of which
 only the first `t + 1` terms enter the filtered mean at time `t`.
 
 Gaussian densities are TauCeti's `multivariateGaussianPDF`.
+
+## Main results
+
+* `CKSD.KalmanModel.kalman_filter` (GAPS 106.7): conditionally on `y_0, …, y_t`, the state
+  `x_t` is Gaussian with mean `x_{t|t}` and covariance `P_{t|t}`, and `x_{t+1}` with mean
+  `x_{t+1|t}` and covariance `P_{t+1|t}`; the innovations are independent with laws
+  `N(0, Σ_t)`; and the density of `(y_0, …, y_{n-1})` is the product of the one-step predictive
+  densities.
 
 ## Proof outline
 
@@ -39,7 +48,8 @@ Reused results: from TauCeti, the affine images, convolutions, independence crit
 densities of multivariate Gaussian laws (`TauCeti.Probability.map_affine_multivariateGaussian`,
 `TauCeti.Probability.multivariateGaussian_conv_multivariateGaussian`,
 `TauCeti.Probability.indepFun_matrix_of_hasLaw_multivariateGaussian_iff`,
-`TauCeti.Probability.multivariateGaussian_eq_withDensity`); from Mathlib, the
+`TauCeti.Probability.multivariateGaussian_eq_withDensity`) and the transport of densities
+`MeasurableEquiv.map_withDensity`; from Mathlib, the
 conditional-distribution characterization `condDistrib_ae_eq_of_measure_eq_compProd`,
 `Measure.withDensity_compProd_withDensity`, and `measurePreserving_piFinSuccAbove`.
 

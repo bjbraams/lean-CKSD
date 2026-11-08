@@ -11,7 +11,20 @@ public import Mathlib.LinearAlgebra.Matrix.ToLin
 
 Finite oriented simplicial chains, sublevel cycles and boundaries, and the rank invariant of
 persistent homology. Finite barcodes are reconstructed from rank multiplicities at filtration
-values. Sources: GAPS 108.18, 108.19, and 108.32.
+values. The filtration function `f` on simplices is arbitrary unless stated otherwise; the
+homological reading of the rank invariant needs `f` monotone on faces (`IsMonotoneOnFaces`).
+
+## Main definitions
+
+* `CKSD.simplexIncidence`, `CKSD.simplicialBoundary`: signed incidences and the boundary map.
+* `CKSD.sublevelChains`, `CKSD.sublevelCycles`, `CKSD.sublevelBoundaries`.
+* `CKSD.sublevelPersistentBetti`, `CKSD.sublevelPersistentHomology`.
+* `CKSD.IsSublevelDiagram`: a full persistence diagram of a sublevel filtration.
+
+## Main results
+
+* `CKSD.exists_isSublevelDiagram`: existence of sublevel diagrams (GAPS 108.18).
+* `CKSD.simplicialBoundary_apply_simplicialBoundary`: the boundary squares to zero.
 -/
 
 @[expose] public section
@@ -148,15 +161,17 @@ def sublevelBoundaries (K : PreAbstractSimplicialComplex ι) (f : Finset ι → 
     (b : ℝ) : Submodule 𝕜 (Finset ι → 𝕜) :=
   (sublevelChains 𝕜 K f (p + 1) b).map (simplicialBoundary 𝕜)
 
-/-- Persistent Betti number: the rank of `H_p(K_a) → H_p(K_b)`, computed as
-`dim Z_p(K_a) - dim (Z_p(K_a) ∩ B_p(K_b))`. -/
+/-- Persistent Betti number `dim Z_p(K_a) - dim (Z_p(K_a) ∩ B_p(K_b))`, where `Z_p(K_a)` and
+`B_p(K_b)` are the cycles and boundaries of the chains spanned by simplices of value at most `a`,
+respectively `b`. Monotonicity of `f` is not assumed; when `f` is `IsMonotoneOnFaces`, the sets
+`K_a` are subcomplexes and this is the rank of `H_p(K_a) → H_p(K_b)` for `a ≤ b`. -/
 def sublevelPersistentBetti (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ)
     (a b : ℝ) : ℕ :=
   finrank 𝕜 (sublevelCycles 𝕜 K f p a) -
     finrank 𝕜 ↥(sublevelCycles 𝕜 K f p a ⊓ sublevelBoundaries 𝕜 K f p b)
 
-/-- The persistent homology group in degree `p`, the image of `H_p(K_a) → H_p(K_b)`, realized
-as `Z_p(K_a) / (Z_p(K_a) ∩ B_p(K_b))`. -/
+/-- The persistent homology group `Z_p(K_a) / (Z_p(K_a) ∩ B_p(K_b))` in degree `p`. When `f` is
+`IsMonotoneOnFaces` and `a ≤ b`, it is the image of `H_p(K_a) → H_p(K_b)`. -/
 abbrev sublevelPersistentHomology (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ)
     (a b : ℝ) : Type _ :=
   ↥(sublevelCycles 𝕜 K f p a) ⧸
@@ -180,26 +195,26 @@ theorem sublevelChains_mono (K : PreAbstractSimplicialComplex ι) (f : Finset ι
   exact ⟨h1, h2, h3.trans h⟩
 
 omit [Fintype ι] [LinearOrder ι] in
-/-- Sublevel chains depend only on the sublevel set. -/
-theorem sublevelChains_congr (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (q : ℕ)
-    {a a' : ℝ} (h : ∀ σ ∈ K, f σ ≤ a ↔ f σ ≤ a') :
-    sublevelChains 𝕜 K f q a = sublevelChains 𝕜 K f q a' := by
+/-- Sublevel chains of two functions agree when the sublevel sets agree on `K`. -/
+theorem sublevelChains_congr_fun (K : PreAbstractSimplicialComplex ι) {f h : Finset ι → ℝ}
+    (q : ℕ) {a a' : ℝ} (hiff : ∀ σ ∈ K, f σ ≤ a ↔ h σ ≤ a') :
+    sublevelChains 𝕜 K f q a = sublevelChains 𝕜 K h q a' := by
   ext c
   constructor
   · intro hc σ hσ
     obtain ⟨h1, h2, h3⟩ := hc σ hσ
-    exact ⟨h1, h2, (h σ h1).mp h3⟩
+    exact ⟨h1, h2, (hiff σ h1).mp h3⟩
   · intro hc σ hσ
     obtain ⟨h1, h2, h3⟩ := hc σ hσ
-    exact ⟨h1, h2, (h σ h1).mpr h3⟩
+    exact ⟨h1, h2, (hiff σ h1).mpr h3⟩
 
-/-- Persistent Betti numbers depend only on the two sublevel sets. -/
-theorem sublevelPersistentBetti_congr (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ)
-    (p : ℕ) {a a' b b' : ℝ} (ha : ∀ σ ∈ K, f σ ≤ a ↔ f σ ≤ a')
-    (hb : ∀ σ ∈ K, f σ ≤ b ↔ f σ ≤ b') :
-    sublevelPersistentBetti 𝕜 K f p a b = sublevelPersistentBetti 𝕜 K f p a' b' := by
+/-- Persistent Betti numbers of two functions agree when the two pairs of sublevel sets agree. -/
+theorem sublevelPersistentBetti_congr_fun (K : PreAbstractSimplicialComplex ι)
+    {f h : Finset ι → ℝ} (p : ℕ) {a a' b b' : ℝ} (ha : ∀ σ ∈ K, f σ ≤ a ↔ h σ ≤ a')
+    (hb : ∀ σ ∈ K, f σ ≤ b ↔ h σ ≤ b') :
+    sublevelPersistentBetti 𝕜 K f p a b = sublevelPersistentBetti 𝕜 K h p a' b' := by
   unfold sublevelPersistentBetti sublevelCycles sublevelBoundaries
-  rw [sublevelChains_congr 𝕜 K f p ha, sublevelChains_congr 𝕜 K f (p + 1) hb]
+  rw [sublevelChains_congr_fun 𝕜 K p ha, sublevelChains_congr_fun 𝕜 K (p + 1) hb]
 
 /-- The persistent Betti number as an integer difference of dimensions. -/
 theorem sublevelPersistentBetti_cast (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ)
@@ -239,14 +254,10 @@ theorem exists_isSublevelDiagram_and_values (K : PreAbstractSimplicialComplex ι
   set T := (Finset.univ.filter (· ∈ K)).image f
   set n := T.card
   set c := T.orderEmbOfFin rfl
-  set t0 : ℝ := -(1 + ∑ v ∈ T, |v|)
   have hc_mem : ∀ s, c s ∈ T := fun s ↦ T.orderEmbOfFin_mem rfl s
-  have ht0 : ∀ s, t0 < c s := by
-    intro s
-    have h1 := Finset.single_le_sum (fun v _ ↦ abs_nonneg v) (hc_mem s)
-    have h2 := neg_abs_le (c s)
-    simp only [t0]
-    linarith
+  obtain ⟨t0, ht0⟩ : ∃ t0 : ℝ, ∀ s, t0 < c s := by
+    obtain ⟨M, hM⟩ := Finite.exists_ge c
+    exact ⟨M - 1, fun s ↦ by linarith [hM s]⟩
   have hval : ∀ σ ∈ K, ∃ s, c s = f σ := by
     intro σ hσ
     have hT : f σ ∈ T := Finset.mem_image_of_mem f (by simpa using hσ)
@@ -382,7 +393,7 @@ theorem exists_isSublevelDiagram_and_values (K : PreAbstractSimplicialComplex ι
     have hka := hk_le a
     have hkb := hk_le b
     have hkab := hk_mono a b hab
-    rw [sublevelPersistentBetti_congr 𝕜 K f p (hlevel a) (hlevel b)]
+    rw [sublevelPersistentBetti_congr_fun 𝕜 K p (hlevel a) (hlevel b)]
     have h1 : ((Finset.univ.filter fun x : (Σ q : Fin n × Fin n, Fin (M q)) ↦
         D0.birth x ≤ a ∧ b < D0.death x).card : ℤ) =
         ∑ s ∈ Finset.range (k a), ∑ t ∈ Finset.range (n - k b), m' s (k b + t) := by
@@ -450,17 +461,133 @@ theorem exists_isSublevelDiagram_and_values (K : PreAbstractSimplicialComplex ι
   · exact Finset.card_equiv σe (fun i ↦ by simp)
   · exact Finset.card_equiv τe (fun i ↦ by simp)
 
-/-- GAPS 108.18, finite sublevel form: persistence diagrams of monotone sublevel filtrations of
-finite simplicial complexes exist. This is the interval decomposition of the finite-type
-persistence module `a ↦ H_p(K_a)`, read through its rank invariant. The proof uses only that the
-chain spaces of `K_a` grow with `a`; the bars are read off from the rank function at the critical
-values by inclusion–exclusion. -/
+/-- GAPS 108.18, finite sublevel form: persistence diagrams of sublevel filtrations of finite
+simplicial complexes exist. Monotonicity of `f` is not assumed: the proof uses only that the
+chain spaces of `K_a` grow with `a`, and the bars are read off from the rank function at the
+critical values by inclusion–exclusion. For `f` monotone on faces this is the interval
+decomposition of the finite-type persistence module `a ↦ H_p(K_a)`, read through its rank
+invariant. -/
 theorem exists_isSublevelDiagram (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ)
-     (p : ℕ) :
-    ∃ (n r : ℕ) (D : FiniteDeathDiagram (Fin n)) (e : Fin r → ℝ), IsSublevelDiagram 𝕜 K f p D e := by
+    (p : ℕ) :
+    ∃ (n r : ℕ) (D : FiniteDeathDiagram (Fin n)) (e : Fin r → ℝ),
+      IsSublevelDiagram 𝕜 K f p D e := by
   obtain ⟨n, r, D, e, h, -⟩ := exists_isSublevelDiagram_and_values 𝕜 K f p
   exact ⟨n, r, D, e, h⟩
 
 end Chains
+
+section BoundarySquare
+
+attribute [-instance] Classical.propDecidable
+
+variable {ι : Type*} [LinearOrder ι] (𝕜 : Type*) [Field 𝕜]
+
+/-- The incidence number of the face obtained by deleting the vertex `x`: the sign
+`(-1)^k` where `x` is the `k`th vertex of `σ`. -/
+theorem simplexIncidence_erase {σ : Finset ι} {x : ι} (hx : x ∈ σ) (hne : (σ.erase x).Nonempty) :
+    simplexIncidence 𝕜 (σ.erase x) σ = (-1) ^ (σ.filter (· < x)).card := by
+  unfold simplexIncidence
+  rw [ite_eq_left ⟨hne, Finset.erase_subset _ _, Finset.card_erase_add_one hx⟩]
+  congr 2
+  ext w
+  simp only [Finset.mem_filter, Finset.mem_sdiff, Finset.mem_erase]
+  constructor
+  · rintro ⟨hw, v, ⟨hv, hv'⟩, hwv⟩
+    have : v = x := by by_contra h; exact hv' ⟨h, hv⟩
+    exact ⟨hw, this ▸ hwv⟩
+  · rintro ⟨hw, hwx⟩
+    exact ⟨hw, x, ⟨hx, fun h ↦ h.1 rfl⟩, hwx⟩
+
+/-- Incidence numbers vanish unless the first set is obtained by deleting one vertex. -/
+theorem simplexIncidence_eq_zero {τ σ : Finset ι} (h : ∀ x ∈ σ, τ ≠ σ.erase x) :
+    simplexIncidence 𝕜 τ σ = 0 := by
+  unfold simplexIncidence
+  rw [ite_eq_right]
+  rintro ⟨-, hsub, hcard⟩
+  have hc : (σ \ τ).card = 1 := by
+    rw [Finset.card_sdiff_of_subset hsub]
+    omega
+  obtain ⟨x, hx⟩ := Finset.card_eq_one.mp hc
+  have hxσ : x ∈ σ := (Finset.mem_sdiff.mp (hx ▸ Finset.mem_singleton_self x)).1
+  refine h x hxσ (Finset.ext fun y ↦ ⟨fun hy ↦ ?_, fun hy ↦ ?_⟩)
+  · refine Finset.mem_erase.mpr ⟨?_, hsub hy⟩
+    rintro rfl
+    exact (Finset.mem_sdiff.mp (hx ▸ Finset.mem_singleton_self y)).2 hy
+  · obtain ⟨hyx, hyσ⟩ := Finset.mem_erase.mp hy
+    by_contra hyτ
+    have : y ∈ σ \ τ := Finset.mem_sdiff.mpr ⟨hyσ, hyτ⟩
+    rw [hx] at this
+    exact hyx (Finset.mem_singleton.mp this)
+
+/-- Incidence numbers vanish when the face is empty. -/
+theorem simplexIncidence_empty_left (σ : Finset ι) : simplexIncidence 𝕜 ∅ σ = 0 := by
+  unfold simplexIncidence
+  simp
+
+/-- The boundary of a boundary vanishes: `∑_τ [ρ : τ] [τ : σ] = 0`. -/
+theorem sum_simplexIncidence_mul_simplexIncidence [Fintype ι] (ρ σ : Finset ι) :
+    ∑ τ, simplexIncidence 𝕜 ρ τ * simplexIncidence 𝕜 τ σ = 0 := by
+  have hinj : ∀ x ∈ σ, ∀ y ∈ σ, σ.erase x = σ.erase y → x = y := by
+    intro x hx y hy hxy
+    by_contra hne
+    have : y ∈ σ.erase x := Finset.mem_erase.mpr ⟨Ne.symm hne, hy⟩
+    rw [hxy] at this
+    exact (Finset.notMem_erase y σ) this
+  rw [← Finset.sum_subset (Finset.subset_univ (σ.image fun x ↦ σ.erase x))]
+  swap
+  · intro τ _ hτ
+    rw [simplexIncidence_eq_zero 𝕜 (σ := σ) (fun x hx h ↦ hτ (Finset.mem_image.mpr ⟨x, hx, h.symm⟩)),
+      mul_zero]
+  rw [Finset.sum_image hinj]
+  by_cases hA : ∃ u ∈ σ, ∃ v ∈ σ, u < v ∧ ρ = (σ.erase u).erase v
+  · obtain ⟨u, hu, v, hv, huv, rfl⟩ := hA
+    have hvu : v ∈ σ.erase u := Finset.mem_erase.mpr ⟨huv.ne', hv⟩
+    have huv' : u ∈ σ.erase v := Finset.mem_erase.mpr ⟨huv.ne, hu⟩
+    rw [← Finset.sum_subset (show ({u, v} : Finset ι) ⊆ σ from Finset.insert_subset hu
+      (Finset.singleton_subset_iff.mpr hv))]
+    swap
+    · intro x hx hxuv
+      simp only [Finset.mem_insert, Finset.mem_singleton, not_or] at hxuv
+      rw [simplexIncidence_eq_zero 𝕜, zero_mul]
+      intro y _ h
+      have : x ∈ (σ.erase u).erase v := by simp [hxuv.1, hxuv.2, hx]
+      rw [h] at this
+      simp at this
+    rw [Finset.sum_pair huv.ne]
+    by_cases hne : ((σ.erase u).erase v).Nonempty
+    · have hcomm : (σ.erase u).erase v = (σ.erase v).erase u := Finset.erase_right_comm
+      have hne1 : (σ.erase u).Nonempty := hne.mono (Finset.erase_subset _ _)
+      have hne2 : (σ.erase v).Nonempty := (hcomm ▸ hne).mono (Finset.erase_subset _ _)
+      rw [simplexIncidence_erase 𝕜 hvu hne, simplexIncidence_erase 𝕜 hu hne1, hcomm,
+        simplexIncidence_erase 𝕜 huv' (hcomm ▸ hne), simplexIncidence_erase 𝕜 hv hne2]
+      have h1 : ((σ.erase u).filter (· < v)).card + 1 = (σ.filter (· < v)).card := by
+        rw [Finset.filter_erase, Finset.card_erase_add_one (Finset.mem_filter.mpr ⟨hu, huv⟩)]
+      have h2 : ((σ.erase v).filter (· < u)).card = (σ.filter (· < u)).card := by
+        rw [Finset.filter_erase, Finset.erase_eq_of_notMem (by simp [huv.le])]
+      rw [h2, ← h1, pow_succ]
+      ring
+    · rw [Finset.not_nonempty_iff_eq_empty] at hne
+      simp [hne, simplexIncidence_empty_left]
+  · refine Finset.sum_eq_zero fun x hx ↦ ?_
+    rw [simplexIncidence_eq_zero 𝕜, zero_mul]
+    intro y hy h
+    obtain ⟨hyx, hyσ⟩ := Finset.mem_erase.mp hy
+    rcases lt_or_gt_of_ne hyx with hlt | hlt
+    · exact hA ⟨y, hyσ, x, hx, hlt, h.trans Finset.erase_right_comm⟩
+    · exact hA ⟨x, hx, y, hyσ, hlt, h⟩
+
+/-- The boundary of a boundary vanishes. -/
+theorem simplicialBoundary_apply_simplicialBoundary [Fintype ι] (c : Finset ι → 𝕜) :
+    simplicialBoundary 𝕜 (simplicialBoundary 𝕜 c) = 0 := by
+  unfold simplicialBoundary
+  simp only [Matrix.mulVecLin_apply, Matrix.mulVec_mulVec]
+  have : (Matrix.of fun τ σ : Finset ι ↦ simplexIncidence 𝕜 τ σ) *
+      (Matrix.of fun τ σ : Finset ι ↦ simplexIncidence 𝕜 τ σ) = 0 := by
+    ext ρ σ
+    simp only [Matrix.mul_apply, Matrix.of_apply, Matrix.zero_apply]
+    exact sum_simplexIncidence_mul_simplexIncidence 𝕜 ρ σ
+  rw [this, Matrix.zero_mulVec]
+
+end BoundarySquare
 
 end CKSD

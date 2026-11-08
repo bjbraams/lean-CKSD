@@ -6,7 +6,17 @@ public import CKSD.Geometry.MatrixReduction.Basic
 # Graded reductions and filtered chains
 
 Filtered chain, cycle, and boundary subspaces, together with the compatibility of column
-reductions with the grading. Source: GAPS 108.32.
+reductions with the grading (used for GAPS 108.32).
+
+## Main definitions
+
+* `CKSD.IsFilteredBoundaryMatrix`, `CKSD.filteredChains`, `CKSD.filteredCycles`,
+  `CKSD.filteredBoundaries`, `CKSD.persistentBettiOfMatrix`.
+
+## Main results
+
+* `CKSD.Matrix.rank_add_of_disjoint_supports`, `CKSD.lowerLeftRank_eq_add_dimColumnPart`.
+* `CKSD.IsColumnLow.dim_eq`, `CKSD.IsColumnLow.col_eq_zero`.
 -/
 
 @[expose] public section
@@ -61,7 +71,7 @@ def persistentBettiOfMatrix (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → �
     finrank 𝕜 ↥(filteredCycles D dim p a ⊓ filteredBoundaries D dim p b)
 
 /-- Matrices with disjoint row supports and disjoint column supports have additive rank. -/
-theorem rank_add_of_disjoint_supports {A B : Matrix (Fin m) (Fin m) 𝕜}
+theorem Matrix.rank_add_of_disjoint_supports {A B : Matrix (Fin m) (Fin m) 𝕜}
     (hcol : ∀ k l, A k l ≠ 0 → ∀ k', B k' l = 0) (hrow : ∀ k l, A k l ≠ 0 → ∀ l', B k l' = 0) :
     (A + B).rank = A.rank + B.rank := by
   classical
@@ -136,7 +146,7 @@ theorem lowerLeftRank_eq_add_dimColumnPart {D : Matrix (Fin m) (Fin m) 𝕜} {di
     simp only [lowerLeftPart, dimColumnPart, dimColumnPartCompl, of_apply]
     by_cases h1 : a ≤ k.val ∧ l.val < b <;> by_cases h2 : dim l = q <;> simp [h1, h2]
   rw [hsum]
-  apply rank_add_of_disjoint_supports
+  apply Matrix.rank_add_of_disjoint_supports
   · intro k l hkl k'
     simp only [lowerLeftPart, dimColumnPart, dimColumnPartCompl, of_apply] at hkl ⊢
     split_ifs at hkl ⊢ <;> simp_all

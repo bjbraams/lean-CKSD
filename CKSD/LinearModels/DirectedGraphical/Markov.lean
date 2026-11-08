@@ -3,11 +3,27 @@ module
 public import CKSD.LinearModels.DirectedGraphical.Interventions
 
 /-!
-# Directed Markov properties and intervention identification
+# Directed Markov properties and back-door and front-door identification
 
-Local and global Markov properties for discrete directed factorizations, back-door and
-front-door identification, and the first two rules of do-calculus.
-Sources: GAPS 105.62, 105.63, and 105.64.
+For a mass function on the configurations of the vertices of a directed acyclic graph, the
+recursive factorization, the local directed Markov property, and the global directed Markov
+property are equivalent; an interventional mass is identified by the back-door and front-door
+adjustment formulas.
+
+## Main results
+
+* `CKSD.CausalGraph.recursivelyFactorizes_tfae`: equivalence of recursive factorization, the
+  local directed Markov property, and the global directed Markov property.
+* `CKSD.doMarginalMass_eq_backdoor`: the back-door adjustment formula
+  `P(y | do(x)) = ∑_z P(y | x, z) P(z)` for a set `Z` satisfying the back-door criterion.
+* `CKSD.doMarginalMass_eq_frontdoor`: the front-door adjustment formula.
+
+## References
+
+* S. L. Lauritzen, *Graphical Models*, Oxford University Press, 1996, §3.2.
+* J. Pearl, *Causality*, 2nd ed., Cambridge University Press, 2009, §3.3.
+
+Sources: GAPS 105.62 and 105.63.
 -/
 
 @[expose] public section
@@ -279,8 +295,7 @@ the global (d-separation) Markov property are equivalent. Discrete-variable form
 with respect to counting measure on a finite product. -/
 theorem CausalGraph.recursivelyFactorizes_tfae [Fintype V] [Fintype S] (G : CausalGraph V)
     (p : (V → S) → ℝ) (hp : IsProbabilityMass p) :
-    (G.RecursivelyFactorizes p ↔ G.IsLocalDirectedMarkov p) ∧
-      (G.IsLocalDirectedMarkov p ↔ G.IsGlobalDirectedMarkov p) := by
+    [G.RecursivelyFactorizes p, G.IsLocalDirectedMarkov p, G.IsGlobalDirectedMarkov p].TFAE := by
   have hRF_GM : G.RecursivelyFactorizes p → G.IsGlobalDirectedMarkov p := by
     intro hRF A B C hAB hAC hBC hsep
     obtain ⟨loc, hloc, hpar, rfl⟩ := G.exists_localMass_of_recursivelyFactorizes hp hRF
@@ -309,7 +324,10 @@ theorem CausalGraph.recursivelyFactorizes_tfae [Fintype V] [Fintype S] (G : Caus
         (by simp [hq0]) (by simp) hq
   have hLM_RF : G.IsLocalDirectedMarkov p → G.RecursivelyFactorizes p :=
     G.recursivelyFactorizes_of_isLocalDirectedMarkov hp
-  exact ⟨⟨fun h ↦ hGM_LM (hRF_GM h), hLM_RF⟩, ⟨fun h ↦ hRF_GM (hLM_RF h), hGM_LM⟩⟩
+  tfae_have 1 → 3 := hRF_GM
+  tfae_have 3 → 2 := hGM_LM
+  tfae_have 2 → 1 := hLM_RF
+  tfae_finish
 
 /-- GAPS 105.63, back-door formula for discrete variables: if `Z` satisfies the back-door
 criterion relative to `(X, Y)`, then `P(y | do(x)) = ∑_z P(y | x, z) P(z)` for the law
@@ -346,7 +364,7 @@ theorem doMarginalMass_eq_backdoor [Fintype V] [Fintype S] (G : CausalGraph V)
     doMarginalMass_eq_marginalMass_of_nonDescendant G localMass hloc hpar X Z b c hX
   have hposZm : 0 < marginalMass (directedFactorizationMass localMass) Z c :=
     lt_of_lt_of_le (hposZ z) (marginalMass_anti hp0 Finset.subset_union_right c)
-  have hrule := condDoMass_union_eq_of_dSeparated G localMass hloc hpar ∅ Y X Z
+  have hrule := condDoMass_rule_two G localMass hloc hpar ∅ Y X Z
     ⟨Finset.disjoint_empty_left _, Finset.disjoint_empty_left _, Finset.disjoint_empty_left _,
       hXY.symm, hYZ, hXZ⟩ hsep c (by
       change 0 < marginalMass (interventionMass localMass ∅ c) (X ∪ Z) c
@@ -406,7 +424,7 @@ theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
       exact G.dSeparated_removeOutgoing_of_blocksBackdoorPaths
         (G.removeIncoming ∅) (fun u v h ↦ h.1)
         (Finset.disjoint_coe.2 hXZ) hbXZ
-    have hrule := condDoMass_union_eq_of_dSeparated G localMass hloc hpar ∅ Z X ∅
+    have hrule := condDoMass_rule_two G localMass hloc hpar ∅ Z X ∅
       ⟨Finset.disjoint_empty_left _, Finset.disjoint_empty_left _,
         Finset.disjoint_empty_left _, hXZ.symm, Finset.disjoint_empty_right _,
         Finset.disjoint_empty_right _⟩ hsep1 c (by
@@ -436,7 +454,7 @@ theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
       exact G.dSeparated_removeOutgoing_of_blocksBackdoorPaths (G.removeIncoming ↑X)
         (fun u v h ↦ h.1)
         (Finset.disjoint_coe.2 hYZ.symm) hbZY
-    have hrule := condDoMass_union_eq_of_dSeparated G localMass hloc hpar X Y Z ∅
+    have hrule := condDoMass_rule_two G localMass hloc hpar X Y Z ∅
       ⟨hXY, hXZ, Finset.disjoint_empty_right _, hYZ, Finset.disjoint_empty_right _,
         Finset.disjoint_empty_right _⟩ hsep2 c (by
         change 0 < marginalMass (interventionMass localMass X c) (Z ∪ ∅) c
@@ -474,41 +492,5 @@ theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
       exact hposXZ x' z
   rw [← h1, ← div_mul_cancel₀ (marginalMass (interventionMass localMass X b) (Y ∪ Z) c)
     hposZdo.ne', h2, h3, h4, mul_comm, Finset.union_comm Z X]
-
-/-- GAPS 105.64, rule 1 of the do-calculus (insertion and deletion of observations):
-if `Y` and `Z` are d-separated by `X ∪ W` in `G_{\bar X}`, then
-`P(y | do(x), z, w) = P(y | do(x), w)`. The conditioning event `{Z = z, W = w}` has positive
-interventional probability. -/
-theorem condDoMass_rule_one [Fintype V] [Fintype S] (G : CausalGraph V)
-    (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
-    (hpar : G.RespectsParents localMass) (X Y Z W : Finset V)
-    (hdisj : Disjoint X Y ∧ Disjoint X Z ∧ Disjoint X W ∧ Disjoint Y Z ∧ Disjoint Y W ∧
-      Disjoint Z W)
-    (hsep : (G.removeIncoming X).DSeparated Y Z ↑(X ∪ W)) (b : V → S)
-    (hpos : 0 < doMarginalMass localMass X b (Z ∪ W) b) :
-    condDoMass localMass X Y (Z ∪ W) b = condDoMass localMass X Y W b := by
-  obtain ⟨hXY, hXZ, hXW, hYZ, hYW, hZW⟩ := hdisj
-  have hci := condIndepMass_directedFactorizationMass_of_dSeparated (G.removeIncoming ↑X)
-    (intervenedLocalMass localMass X b) (isLocalMassFamily_intervenedLocalMass hloc X b)
-    (respectsParents_intervenedLocalMass G hpar X b) Y Z (X ∪ W)
-    (Finset.disjoint_union_right.2 ⟨hXY.symm, hYW⟩)
-    (Finset.disjoint_union_right.2 ⟨hXZ.symm, hZW⟩) hsep
-  rw [directedFactorizationMass_intervenedLocalMass] at hci
-  exact div_eq_div_of_condIndepMass (interventionMass_nonneg hloc X b)
-    (fun y hy ↦ interventionMass_support hy) hci hpos
-
-/-- GAPS 105.64, rule 2 of the do-calculus (action/observation exchange):
-if `Y` and `Z` are d-separated by `X ∪ W` in `G_{\bar X \underline Z}`, then
-`P(y | do(x), do(z), w) = P(y | do(x), z, w)`. The event `(z,w)` has positive
-probability under `do(x)`. -/
-theorem condDoMass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
-    (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
-    (hpar : G.RespectsParents localMass) (X Y Z W : Finset V)
-    (hdisj : Disjoint X Y ∧ Disjoint X Z ∧ Disjoint X W ∧ Disjoint Y Z ∧ Disjoint Y W ∧
-      Disjoint Z W)
-    (hsep : ((G.removeIncoming X).removeOutgoing Z).DSeparated Y Z ↑(X ∪ W)) (b : V → S)
-    (hpos : 0 < doMarginalMass localMass X b (Z ∪ W) b) :
-    condDoMass localMass (X ∪ Z) Y W b = condDoMass localMass X Y (Z ∪ W) b := by
-  exact condDoMass_union_eq_of_dSeparated G localMass hloc hpar X Y Z W hdisj hsep b hpos
 
 end CKSD

@@ -19,6 +19,22 @@ functions with `sup |g| + sup_{x ≠ y} |g x - g y| / ‖x - y‖_∞^β ≤ K`;
 Vectors in `Fin d → ℝ` carry the sup norm. Gaussian laws are Mathlib's `gaussianReal` and
 `multivariateGaussian`; convergence in distribution is Mathlib's `TendstoInDistribution`.
 
+## Main definitions
+
+* `CKSD.DenseNetParams`, `CKSD.denseActivation`, `CKSD.denseNetOutput`: dense networks.
+* `CKSD.IsInHolderBall`, `CKSD.compositionalHolderClass`: Hölder balls and the compositional
+  Hölder class of Schmidt-Hieber.
+
+## Main results
+
+* `CKSD.card_le_of_shatters_denseSignClass`: VC dimension of network sign classes (GAPS 107.35).
+* `CKSD.empiricalRademacherComplexity_biasFree_le`: norm-based capacity (GAPS 107.35).
+* `CKSD.relu_depth_lower_bound`, `CKSD.relu_eldan_shamir_separation`: depth lower bounds and
+  depth separation (GAPS 107.37).
+* `CKSD.compositionalHolder_minimax_lower_bound`: the minimax lower bound (GAPS 107.29).
+* `CKSD.tendstoInDistribution_wide_network_gaussian`: the Gaussian-process limit
+  (GAPS 107.39).
+
 Sources: GAPS 107.29, 107.35, 107.37, and 107.39.
 -/
 
@@ -86,26 +102,18 @@ theorem card_le_of_shatters_denseSignClass (σ : ℝ → ℝ) (hσ : IsPiecewise
       (S.card : ℝ) ≤ c * (P * L * Real.log P + P * L ^ 2) := by
   sorry
 
-/-- Empirical Rademacher complexity of an arbitrary class of real functions. -/
-def empiricalRademacherComplexityOfSet {X : Type*} (n : ℕ) (F : Set (X → ℝ))
-    (x : Fin n → X) : ℝ :=
-  (2 : ℝ)⁻¹ ^ n * ∑ s : Fin n → Bool,
-    sSup ((fun f ↦ (∑ i, (if s i then (1 : ℝ) else -1) * f (x i)) / n) '' F)
-
-/-- Squared Frobenius norm of a real matrix. -/
-def frobeniusSq {m n : ℕ} (A : Matrix (Fin m) (Fin n) ℝ) : ℝ := ∑ i, ∑ j, A i j ^ 2
-
 /-- GAPS 107.35, norm-based capacity: bias-free networks of depth `L = H + 1` on the unit ball,
 with a `1`-Lipschitz positively homogeneous activation and all weight matrices of Frobenius
-norm at most `C`, have empirical Rademacher complexity at most `2^{L-1} C^L / √n`,
-independently of the widths. -/
+norm at most `C` (the squared Frobenius norm `∑ᵢ ∑ⱼ Wᵢⱼ²` being at most `C²`), have empirical
+Rademacher complexity at most `2^{L-1} C^L / √n`, independently of the widths. (For `n = 0`
+both sides vanish.) -/
 theorem empiricalRademacherComplexity_biasFree_le (σ : ℝ → ℝ) (hσ : LipschitzWith 1 σ)
     (hhom : ∀ a ≥ (0 : ℝ), ∀ u, σ (a * u) = a * σ u) (w : ℕ → ℕ) (H : ℕ) (C : ℝ) (hC : 0 ≤ C)
-    (n : ℕ) (hn : 0 < n) (x : Fin n → Fin (w 0) → ℝ) (hx : ∀ i, ∑ j, x i j ^ 2 ≤ 1) :
+    (n : ℕ) (x : Fin n → Fin (w 0) → ℝ) (hx : ∀ i, ∑ j, x i j ^ 2 ≤ 1) :
     empiricalRademacherComplexityOfSet n
       ((fun θ : DenseNetParams w H ↦ denseNetOutput σ θ) ''
         {θ | (∀ ℓ, θ.bias ℓ = 0) ∧ θ.outBias = 0 ∧
-          (∀ ℓ < H, frobeniusSq (θ.weight ℓ) ≤ C ^ 2) ∧ ∑ j, θ.outWeight j ^ 2 ≤ C ^ 2}) x ≤
+          (∀ ℓ < H, ∑ i, ∑ j, θ.weight ℓ i j ^ 2 ≤ C ^ 2) ∧ ∑ j, θ.outWeight j ^ 2 ≤ C ^ 2}) x ≤
       2 ^ H * C ^ (H + 1) / Real.sqrt n := by
   sorry
 
@@ -130,7 +138,8 @@ theorem relu_depth_lower_bound (d : ℕ) (g : (Fin d → ℝ) → ℝ)
 probability measure on `ℝ^d` and a function bounded by `2` computed by a two-hidden-layer ReLU
 network of width at most `C d⁵` and parameters at most `C d^C` in absolute value, at squared
 `L²` distance at least `c` from every one-hidden-layer ReLU network of width at most
-`c e^{cd}`. The logistic and Heaviside cases are not formalized. -/
+`c e^{cd}` (the squared distance is an extended nonnegative integral, so no integrability is
+presupposed). The logistic and Heaviside cases are not formalized. -/
 theorem relu_eldan_shamir_separation :
     ∃ c > (0 : ℝ), ∃ C > (0 : ℝ), ∀ d : ℕ, C ≤ d →
       ∃ μ : Measure (Fin d → ℝ), IsProbabilityMeasure μ ∧
@@ -141,12 +150,14 @@ theorem relu_eldan_shamir_separation :
         (∀ x : Fin d → ℝ, |denseNetOutput relu θ (fun j ↦ x (Fin.cast hw j))| ≤ 2) ∧
         ∀ (w' : ℕ → ℕ) (hw' : w' 0 = d), (w' 1 : ℝ) ≤ c * Real.exp (c * d) →
           ∀ θ' : DenseNetParams w' 1,
-            c ≤ ∫ x, (denseNetOutput relu θ' (fun j ↦ x (Fin.cast hw' j)) -
-              denseNetOutput relu θ (fun j ↦ x (Fin.cast hw j))) ^ 2 ∂μ := by
+            ENNReal.ofReal c ≤ ∫⁻ x, ENNReal.ofReal ((denseNetOutput relu θ'
+              (fun j ↦ x (Fin.cast hw' j)) - denseNetOutput relu θ (fun j ↦ x (Fin.cast hw j))) ^ 2)
+              ∂μ := by
   sorry
 
-/-- Membership in the Hölder ball of smoothness `β ∈ (0,1]` and radius `K` on a domain. -/
-def IsInCompositionHolderBall {S : Type*} [Fintype S] (β K : ℝ) (D : Set (S → ℝ)) (g : (S → ℝ) → ℝ) :
+/-- Membership in the Hölder ball of smoothness `β ∈ (0,1]` and radius `K` on a domain `D`:
+`sup_D |g| + sup_{x ≠ y} |g x - g y| / ‖x - y‖^β ≤ K`, with the sup norm on `S → ℝ`. -/
+def IsInHolderBall {S : Type*} [Fintype S] (β K : ℝ) (D : Set (S → ℝ)) (g : (S → ℝ) → ℝ) :
     Prop :=
   ∃ A ≥ (0 : ℝ), ∃ B ≥ (0 : ℝ), A + B ≤ K ∧ (∀ x ∈ D, |g x| ≤ A) ∧
     ∀ x ∈ D, ∀ y ∈ D, |g x - g y| ≤ B * ‖x - y‖ ^ β
@@ -169,7 +180,7 @@ def compositionalHolderClass (q : ℕ) (d t : ℕ → ℕ) (hd : d (q + 1) = 1) 
     ∀ i ≤ q, ∀ x ∈ Icc (fun _ ↦ a i) (fun _ ↦ b i),
       g i x ∈ Icc (fun _ ↦ a (i + 1)) (fun _ ↦ b (i + 1)) ∧
       ∀ j, ∃ s : Finset (Fin (d i)), s.card ≤ t i ∧ ∃ h : (s → ℝ) → ℝ,
-        IsInCompositionHolderBall (β i) K (Icc (fun _ ↦ a i) (fun _ ↦ b i)) h ∧
+        IsInHolderBall (β i) K (Icc (fun _ ↦ a i) (fun _ ↦ b i)) h ∧
         ∀ y ∈ Icc (fun _ ↦ a i) (fun _ ↦ b i), g i y j = h fun k ↦ y k}
 
 /-- Law of one observation `(X, f X + ε)` with `X` uniform on `[0,1]^d` and standard normal
@@ -220,7 +231,7 @@ infinity, to the centered Gaussian vector with covariance
 `K²(x,x') = C_b + C_W 𝔼[σ(U)σ(U')]`, where `(U,U')` is the pair of preactivations of one
 first-layer unit at `x, x'`, centered Gaussian with covariance
 `K¹(x,x') = C_b + C_W ⟨x,x'⟩/d`. Deeper networks iterate this step. -/
-theorem tendstoInDistribution_wide_network_gaussian (d m : ℕ) (hd : 0 < d) (Cb CW : ℝ)
+theorem tendstoInDistribution_wide_network_gaussian (d m : ℕ) (Cb CW : ℝ)
     (hCb : 0 ≤ Cb) (hCW : 0 ≤ CW) (σ : ℝ → ℝ) (hσ : Continuous σ) (A B : ℝ)
     (hgrowth : ∀ u, |σ u| ≤ A + B * |u|) (x : Fin m → Fin d → ℝ) :
     let unitLaw := Measure.pi fun _ : Fin d ⊕ Unit ↦ gaussianReal 0 1

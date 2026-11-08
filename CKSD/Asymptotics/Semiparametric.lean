@@ -88,11 +88,9 @@ theorem exists_convolution_of_isRegularAlongPaths
       ⇑(A 1) =ᵐ[P] ⇑(∑ j, i.1 j • ℓ j + (i.2 : Lp ℝ 2 P)))
     (hI : (efficientInformationMatrix P (G : Set (Lp ℝ 2 P)) ℓ).PosDef)
     (T : ∀ n, (Fin n → X) → EuclideanSpace ℝ (Fin k))
-    (L : Measure (EuclideanSpace ℝ (Fin k))) [IsProbabilityMeasure L]
-    (hreg : IsRegularAlongPaths Q Prod.fst θ T L) :
+    (L : Measure (EuclideanSpace ℝ (Fin k))) (hreg : IsRegularAlongPaths Q Prod.fst θ T L) :
     ∃ M : Measure (EuclideanSpace ℝ (Fin k)), IsProbabilityMeasure M ∧
-      L = convolutionLaw
-        (multivariateGaussian 0 (efficientInformationMatrix P (G : Set (Lp ℝ 2 P)) ℓ)⁻¹) M := by
+      L = (multivariateGaussian 0 (efficientInformationMatrix P (G : Set (Lp ℝ 2 P)) ℓ)⁻¹).conv M := by
   sorry
 
 /-- GAPS 102.34, efficiency part, in the setting of

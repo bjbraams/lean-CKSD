@@ -16,7 +16,22 @@ public import Statlib.ForMathlib.InformationTheory.KullbackLeibler.Bernoulli
 
 Neighbouring data sets differ in at most one coordinate. Clipping and Laplace perturbation
 yield central and noninteractive local mechanisms for laws supported on `[-1,1]`.
-Laplace laws and moments use TauCeti. Source: GAPS 107.66.
+Laplace laws and moments use TauCeti.
+
+## Main definitions
+
+* `CKSD.IsHammingNeighbor`: data sets at Hamming distance at most one.
+* `CKSD.clipUnit`, `CKSD.clippedMean`: clipping to `[-1,1]` and the clipped sample mean.
+* `CKSD.laplaceMeanMechanism`: the clipped Laplace mean mechanism.
+* `CKSD.centralMeanRisk`, `CKSD.localMeanRisk`: mean squared errors as lower integrals.
+
+## Main results
+
+* `CKSD.isDifferentiallyPrivate_of_eq_laplaceMeasure`: privacy of Laplace mechanisms.
+* `CKSD.isDifferentiallyPrivate_laplaceMeanMechanism`: privacy of the clipped Laplace mean
+  (GAPS 107.66).
+* `CKSD.centralMeanRisk_laplaceMeanMechanism_le`: its risk bound `1/n + 8/(nε)²` (GAPS 107.66).
+* `CKSD.exists_centralMeanRisk_le`: the central minimax upper bound (GAPS 107.66).
 -/
 
 @[expose] public section
@@ -30,12 +45,29 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- Data sets in `ℝⁿ` are neighbouring when they differ in at most one coordinate. -/
+/-- Data sets in `ℝⁿ` are neighbouring when they differ in at most one coordinate, that is,
+when their Hamming distance is at most `1`. -/
 def IsHammingNeighbor {n : ℕ} (d d' : Fin n → ℝ) : Prop :=
-  (Finset.univ.filter fun i ↦ d i ≠ d' i).card ≤ 1
+  hammingDist d d' ≤ 1
 
-/-- Clipping to `[-1,1]`. -/
-def clipUnit (x : ℝ) : ℝ := max (-1) (min 1 x)
+/-- Clipping to `[-1,1]`: the projection `Set.projIcc` onto the interval, as a real number. -/
+def clipUnit (x : ℝ) : ℝ := Set.projIcc (-1 : ℝ) 1 (by norm_num) x
+
+/-- Clipped values lie in `[-1,1]`. -/
+theorem clipUnit_mem_Icc (x : ℝ) : clipUnit x ∈ Icc (-1 : ℝ) 1 :=
+  (Set.projIcc (-1 : ℝ) 1 (by norm_num) x).2
+
+/-- Clipping is the identity on `[-1,1]`. -/
+theorem clipUnit_of_mem {x : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1) : clipUnit x = x :=
+  congrArg Subtype.val (Set.projIcc_of_mem _ hx)
+
+/-- Clipping is continuous. -/
+theorem continuous_clipUnit : Continuous clipUnit :=
+  continuous_subtype_val.comp continuous_projIcc
+
+/-- Clipping is measurable. -/
+theorem measurable_clipUnit : Measurable clipUnit :=
+  continuous_clipUnit.measurable
 
 /-- Mean of a data set clipped to `[-1,1]`. -/
 def clippedMean {n : ℕ} (d : Fin n → ℝ) : ℝ := (∑ i, clipUnit (d i)) / n
@@ -44,9 +76,9 @@ def clippedMean {n : ℕ} (d : Fin n → ℝ) : ℝ := (∑ i, clipUnit (d i)) /
 def laplaceMeanMechanism (n : ℕ) (ε : ℝ) : Kernel (Fin n → ℝ) ℝ where
   toFun d := TauCeti.Probability.laplaceMeasure (clippedMean d) (2 / (n * ε))
   measurable' := by
-    have hc : Measurable fun d : Fin n → ℝ ↦ clippedMean d := by
-      unfold clippedMean clipUnit
-      fun_prop
+    have hc : Measurable fun d : Fin n → ℝ ↦ clippedMean d :=
+      (Finset.measurable_sum _ fun i _ ↦
+        measurable_clipUnit.comp (measurable_pi_apply i)).div_const _
     exact TauCeti.Probability.measurable_laplaceMeasure.comp (hc.prodMk measurable_const)
 
 /-- Mean squared error of a central mechanism for the mean of `P`, from `n` observations.
@@ -66,8 +98,7 @@ theorem abs_clippedMean_sub_le {n : ℕ} {d d' : Fin n → ℝ} (h : IsHammingNe
     |clippedMean d - clippedMean d'| ≤ 2 / n := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · simp [clippedMean]
-  have hclip : ∀ x, clipUnit x ∈ Icc (-1 : ℝ) 1 := fun x ↦
-    ⟨le_max_left _ _, max_le (by norm_num) (min_le_left _ _)⟩
+  have hclip := clipUnit_mem_Icc
   have hnr : (0 : ℝ) < n := Nat.cast_pos.mpr hn
   have hsum : |∑ i, (clipUnit (d i) - clipUnit (d' i))| ≤ 2 := by
     let S := Finset.univ.filter fun i ↦ d i ≠ d' i
@@ -82,7 +113,7 @@ theorem abs_clippedMean_sub_le {n : ℕ} {d d' : Fin n → ℝ} (h : IsHammingNe
         rw [abs_le]; constructor <;> linarith [h1.1, h1.2, h2.1, h2.2]
       _ = 2 * S.card := by rw [Finset.sum_const, nsmul_eq_mul]; ring
       _ ≤ 2 * 1 := by
-        have : (S.card : ℝ) ≤ 1 := by exact_mod_cast h
+        have : (S.card : ℝ) ≤ 1 := by exact_mod_cast (show S.card ≤ 1 from h)
         linarith
       _ = 2 := by norm_num
   unfold clippedMean
@@ -110,29 +141,30 @@ theorem laplacePDF_le_exp_mul {b : ℝ} (hb : 0 < b) (m m' x : ℝ) :
         mul_le_mul_of_nonneg_left hexp h2b
     _ = _ := by ring
 
+/-- A Laplace mechanism `d ↦ Laplace(f d, b)` is `ε`-differentially private for a relation `R`
+along which `f` moves by at most `ε b`. -/
+theorem isDifferentiallyPrivate_of_eq_laplaceMeasure {D : Type*} [MeasurableSpace D]
+    (R : D → D → Prop) (M : Kernel D ℝ) (f : D → ℝ) {b ε : ℝ} (hb : 0 < b)
+    (hM : ∀ d, M d = TauCeti.Probability.laplaceMeasure (f d) b)
+    (hf : ∀ d d', R d d' → |f d - f d'| ≤ ε * b) : IsDifferentiallyPrivate R ε 0 M := by
+  intro d d' hdd' A _
+  have hk : ∀ e, M e = volume.withDensity (TauCeti.Probability.laplacePDF (f e) b) := fun e ↦
+    (hM e).trans (TauCeti.Probability.laplaceMeasure_eq_withDensity _ _)
+  rw [ENNReal.ofReal_zero, add_zero, hk, hk, withDensity_apply' _ A, withDensity_apply' _ A,
+    ← lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
+  refine lintegral_mono fun x ↦ (laplacePDF_le_exp_mul hb (f d) (f d') x).trans ?_
+  gcongr
+  rw [div_le_iff₀ hb]
+  exact hf d d' hdd'
+
 /-- GAPS 107.66: the clipped Laplace mean mechanism is `ε`-differentially private. -/
 theorem isDifferentiallyPrivate_laplaceMeanMechanism (n : ℕ) (hn : 0 < n) (ε : ℝ)
     (hε : 0 < ε) :
     IsDifferentiallyPrivate IsHammingNeighbor ε 0 (laplaceMeanMechanism n ε) := by
-  intro d d' hdd' A _
   have hnr : (0 : ℝ) < n := Nat.cast_pos.mpr hn
-  set b : ℝ := 2 / (n * ε) with hb_def
-  have hb : 0 < b := by positivity
-  have hratio : |clippedMean d - clippedMean d'| / b ≤ ε := by
-    rw [div_le_iff₀ hb, hb_def]
-    calc |clippedMean d - clippedMean d'| ≤ 2 / n := abs_clippedMean_sub_le hdd'
-      _ = ε * (2 / (n * ε)) := by field_simp
-  have hk : ∀ e : Fin n → ℝ, laplaceMeanMechanism n ε e =
-      volume.withDensity (TauCeti.Probability.laplacePDF (clippedMean e) b) := fun e ↦
-    TauCeti.Probability.laplaceMeasure_eq_withDensity _ _
-  rw [ENNReal.ofReal_zero, add_zero, hk, hk, withDensity_apply' _ A, withDensity_apply' _ A,
-    ← lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
-  refine lintegral_mono fun x ↦ ?_
-  calc TauCeti.Probability.laplacePDF (clippedMean d) b x
-      ≤ ENNReal.ofReal (Real.exp (|clippedMean d - clippedMean d'| / b)) *
-          TauCeti.Probability.laplacePDF (clippedMean d') b x := laplacePDF_le_exp_mul hb _ _ x
-    _ ≤ ENNReal.ofReal (Real.exp ε) * TauCeti.Probability.laplacePDF (clippedMean d') b x := by
-      gcongr
+  refine isDifferentiallyPrivate_of_eq_laplaceMeasure _ _ clippedMean (by positivity)
+    (fun _ ↦ rfl) fun d d' hdd' ↦ (abs_clippedMean_sub_le hdd').trans_eq ?_
+  field_simp
 
 /-- Mean squared deviation of a Laplace law from a point: squared bias plus variance `2b²`. -/
 theorem integral_sq_sub_laplaceMeasure {b : ℝ} (hb : 0 < b) (m θ : ℝ) :
@@ -172,14 +204,13 @@ theorem integral_clippedMean_sub_sq_le (n : ℕ) (hn : 0 < n) (P : Measure ℝ)
     ∫ d, (clippedMean d - ∫ x, x ∂P) ^ 2 ∂Measure.pi (fun _ : Fin n ↦ P) ≤ 1 / n := by
   set π : Measure (Fin n → ℝ) := Measure.pi fun _ : Fin n ↦ P
   have hnr : (0 : ℝ) < n := Nat.cast_pos.mpr hn
-  have hclipm : Measurable clipUnit := by unfold clipUnit; fun_prop
-  have hclip : ∀ x, clipUnit x ∈ Icc (-1 : ℝ) 1 := fun x ↦
-    ⟨le_max_left _ _, max_le (by norm_num) (min_le_left _ _)⟩
+  have hclipm := measurable_clipUnit
+  have hclip := clipUnit_mem_Icc
   have hae : ∀ᵐ x ∂P, clipUnit x = x := by
     have hmem : ∀ᵐ x ∂P, x ∈ Icc (-1 : ℝ) 1 := measure_eq_zero_iff_ae_notMem.mp hP |>.mono
       fun x hx ↦ by simpa using hx
     filter_upwards [hmem] with x hx
-    simp only [clipUnit, min_eq_right hx.2, max_eq_right hx.1]
+    exact clipUnit_of_mem hx
   have hθ : ∫ x, clipUnit x ∂P = ∫ x, x ∂P := integral_congr_ae hae
   set Y : Fin n → (Fin n → ℝ) → ℝ := fun i d ↦ clipUnit (d i)
   have hYm : ∀ i, Measurable (Y i) := fun i ↦ hclipm.comp (measurable_pi_apply i)
@@ -205,13 +236,15 @@ theorem integral_clippedMean_sub_sq_le (n : ℕ) (hn : 0 < n) (P : Measure ℝ)
     rw [integral_finsetSum _ fun i _ ↦ (hYL i).integrable one_le_two]
     simp only [hYint, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
     field_simp
-  have hvar_eq : ∫ d, (clippedMean d - ∫ x, x ∂P) ^ 2 ∂π = ProbabilityTheory.variance (fun d ↦ clippedMean d) π := by
+  have hvar_eq : ∫ d, (clippedMean d - ∫ x, x ∂P) ^ 2 ∂π =
+      ProbabilityTheory.variance (fun d ↦ clippedMean d) π := by
     rw [variance_eq_integral (by rw [hmean_eq]; exact (hsumL.aemeasurable.const_mul _)), hEmean]
   have hindep : Set.Pairwise (↑(Finset.univ : Finset (Fin n))) fun i j ↦ Y i ⟂ᵢ[π] Y j := by
     intro i _ j _ hij
     exact (iIndepFun_pi (X := fun _ : Fin n ↦ clipUnit)
       (fun _ ↦ hclipm.aemeasurable)).indepFun hij
-  have hvsum : ProbabilityTheory.variance (∑ i, Y i) π = ∑ i, ProbabilityTheory.variance (Y i) π :=
+  have hvsum : ProbabilityTheory.variance (∑ i, Y i) π =
+      ∑ i, ProbabilityTheory.variance (Y i) π :=
     IndepFun.variance_sum (fun i _ ↦ hYL i) hindep
   have hvY : ∀ i, ProbabilityTheory.variance (Y i) π ≤ 1 := by
     intro i
@@ -220,7 +253,8 @@ theorem integral_clippedMean_sub_sq_le (n : ℕ) (hn : 0 < n) (P : Measure ℝ)
     norm_num at this
     exact this
   rw [hvar_eq, hmean_eq, variance_const_mul, hvsum]
-  calc ((n : ℝ)⁻¹) ^ 2 * ∑ i, ProbabilityTheory.variance (Y i) π ≤ ((n : ℝ)⁻¹) ^ 2 * ∑ _i : Fin n, (1 : ℝ) :=
+  calc ((n : ℝ)⁻¹) ^ 2 * ∑ i, ProbabilityTheory.variance (Y i) π ≤
+        ((n : ℝ)⁻¹) ^ 2 * ∑ _i : Fin n, (1 : ℝ) :=
         mul_le_mul_of_nonneg_left (Finset.sum_le_sum fun i _ ↦ hvY i) (by positivity)
     _ = 1 / n := by
         simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, mul_one]
@@ -237,18 +271,15 @@ theorem centralMeanRisk_laplaceMeanMechanism_le (n : ℕ) (hn : 0 < n) (ε : ℝ
   have hinner : ∀ d : Fin n → ℝ, ∫ y, (y - ∫ x, x ∂P) ^ 2 ∂laplaceMeanMechanism n ε d =
       (clippedMean d - ∫ x, x ∂P) ^ 2 + 2 * b ^ 2 := fun d ↦
     integral_sq_sub_laplaceMeasure hb _ _
-  have hclipm : Measurable clipUnit := by unfold clipUnit; fun_prop
-  have hcm : Measurable fun d : Fin n → ℝ ↦ clippedMean d := by
-    unfold clippedMean; fun_prop
+  have hcm : Measurable fun d : Fin n → ℝ ↦ clippedMean d :=
+    (Finset.measurable_sum _ fun i _ ↦ measurable_clipUnit.comp (measurable_pi_apply i)).div_const _
   have hbdd : ∀ d : Fin n → ℝ, ‖(clippedMean d - ∫ x, x ∂P) ^ 2‖ ≤ (1 + |∫ x, x ∂P|) ^ 2 := by
     intro d
     have hc : |clippedMean d| ≤ 1 := by
       unfold clippedMean
       rw [abs_div, abs_of_pos hnr, div_le_one hnr]
       calc |∑ i, clipUnit (d i)| ≤ ∑ i, |clipUnit (d i)| := Finset.abs_sum_le_sum_abs _ _
-        _ ≤ ∑ _i : Fin n, (1 : ℝ) := Finset.sum_le_sum fun i _ ↦ by
-          rw [abs_le]
-          exact ⟨le_max_left _ _, max_le (by norm_num) (min_le_left _ _)⟩
+        _ ≤ ∑ _i : Fin n, (1 : ℝ) := Finset.sum_le_sum fun i _ ↦ abs_le.mpr (clipUnit_mem_Icc _)
         _ = n := by simp
     rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]
     have := abs_sub (clippedMean d) (∫ x, x ∂P)
@@ -291,10 +322,11 @@ theorem abs_integral_le_one_of_support (P : Measure ℝ) [IsProbabilityMeasure P
     rw [Real.norm_eq_abs, abs_le]; exact hx)
   simpa [Real.norm_eq_abs] using h
 
-/-- GAPS 107.66, central minimax upper bound: for `0 < ε ≤ 1` some `ε`-differentially private
-mechanism (the clipped Laplace mean, or the constant release `0` when `1` is the smaller
-rate) has mean squared error at most `8 min(1, 1/n + 1/(nε)²)` for every law on `[-1,1]`. -/
-theorem exists_centralMeanRisk_le (n : ℕ) (hn : 0 < n) (ε : ℝ) (hε : ε ∈ Ioc (0 : ℝ) 1) :
+/-- GAPS 107.66, central minimax upper bound: for every `ε > 0` (in particular `0 < ε ≤ 1`)
+some `ε`-differentially private mechanism (the clipped Laplace mean, or the constant release
+`0` when `1` is the smaller rate) has mean squared error at most `8 min(1, 1/n + 1/(nε)²)` for
+every law on `[-1,1]`. -/
+theorem exists_centralMeanRisk_le (n : ℕ) (hn : 0 < n) (ε : ℝ) (hε : 0 < ε) :
     ∃ M : Kernel (Fin n → ℝ) ℝ, IsMarkovKernel M ∧
       IsDifferentiallyPrivate IsHammingNeighbor ε 0 M ∧
       ∀ P : Measure ℝ, IsProbabilityMeasure P → P (Icc (-1) 1)ᶜ = 0 →
@@ -308,7 +340,7 @@ theorem exists_centralMeanRisk_le (n : ℕ) (hn : 0 < n) (ε : ℝ) (hε : ε �
         _ ≤ ENNReal.ofReal (Real.exp ε) * (Measure.dirac (0 : ℝ)) A := by
           gcongr
           rw [← ENNReal.ofReal_one]
-          exact ENNReal.ofReal_le_ofReal (Real.one_le_exp hε.1.le)
+          exact ENNReal.ofReal_le_ofReal (Real.one_le_exp hε.le)
     · rw [min_eq_left hsmall]
       unfold centralMeanRisk
       simp only [Kernel.const_apply, lintegral_dirac, zero_sub, even_two, Even.neg_pow,
@@ -317,10 +349,10 @@ theorem exists_centralMeanRisk_le (n : ℕ) (hn : 0 < n) (ε : ℝ) (hε : ε �
       have := abs_integral_le_one_of_support P hP
       nlinarith [abs_nonneg (∫ x, x ∂P), sq_abs (∫ x, x ∂P)]
   · push Not at hsmall
-    refine ⟨laplaceMeanMechanism n ε, isMarkovKernel_laplaceMeanMechanism n hn ε hε.1,
-      isDifferentiallyPrivate_laplaceMeanMechanism n hn ε hε.1, fun P hP1 hP ↦ ?_⟩
+    refine ⟨laplaceMeanMechanism n ε, isMarkovKernel_laplaceMeanMechanism n hn ε hε,
+      isDifferentiallyPrivate_laplaceMeanMechanism n hn ε hε, fun P hP1 hP ↦ ?_⟩
     rw [min_eq_right hsmall.le]
-    refine (centralMeanRisk_laplaceMeanMechanism_le n hn ε hε.1 P hP).trans
+    refine (centralMeanRisk_laplaceMeanMechanism_le n hn ε hε P hP).trans
       (ENNReal.ofReal_le_ofReal ?_)
     have h8 : 8 / (n * ε) ^ 2 = 8 * (1 / (n * ε) ^ 2) := by ring
     have hpos : 0 ≤ 1 / (n : ℝ) := by positivity

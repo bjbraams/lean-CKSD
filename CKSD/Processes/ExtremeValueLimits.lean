@@ -9,10 +9,32 @@ public import TauCeti.Probability.Distributions.GeneralizedPareto.Threshold
 /-!
 # Threshold excesses and the Hill estimator
 
+The Pickands–Balkema–de Haan theorem characterizes the extreme-value domain of attraction by
+generalized Pareto approximation of the excesses over high thresholds, and the Hill estimator of
+a positive extreme-value index is asymptotically normal under second-order regular variation.
+
 The generalized extreme-value and Pareto laws and the finite-sample order statistic are TauCeti
-constructions. The domain-of-attraction and second-order tail conditions below are new statistical
-interfaces. The upper endpoint is extended-real, so both finite and infinite endpoints are allowed.
-Sources: GAPS 106.47 and GAPS 106.49.
+constructions. The upper endpoint is extended-real, so both finite and infinite endpoints are
+allowed.
+
+## Main definitions
+
+* `CKSD.distributionUpperEndpoint`: the right endpoint `sup {t | F(t) < 1}` in `EReal`.
+* `CKSD.thresholdExcessLaw`: the law of `X - u` given `X > u`.
+* `CKSD.HasExtremeValueDomainOfAttraction`: `F^n(a_n x + b_n) → G_γ(x)` for the unit-scale
+  generalized extreme-value law `G_γ`.
+* `CKSD.thresholdParetoDiscrepancy`: the uniform distance between the excess law and a
+  generalized Pareto law.
+* `CKSD.HasSecondOrderTailQuantile`: second-order regular variation of the tail quantile.
+* `CKSD.hillEstimator`: `k⁻¹ ∑_{i<k} log X_{(n-i)} - log X_{(n-k)}`.
+
+## Main results
+
+* `CKSD.hasExtremeValueDomainOfAttraction_iff_pareto_excesses` (GAPS 106.47).
+* `CKSD.tendstoInDistribution_hillEstimator` (GAPS 106.49):
+  `√k (γ̂ - γ) ⇒ N(b / (1 - ρ), γ²)`, `b = lim √k A(n/k)`.
+* `CKSD.thresholdExcessLaw_generalizedPareto`: threshold stability of the generalized Pareto
+  laws, from TauCeti.
 -/
 
 @[expose] public section
@@ -47,7 +69,10 @@ def thresholdParetoDiscrepancy (P : Measure ℝ) (γ scale threshold : ℝ) : �
     r = |cdf (thresholdExcessLaw P threshold) y -
       cdf (TauCeti.Probability.generalizedParetoMeasure scale γ) y|}
 
-/-- GAPS 106.47: Pickands–Balkema–de Haan equivalence, allowing finite upper endpoints. -/
+/-- GAPS 106.47: Pickands–Balkema–de Haan theorem. `F` lies in the domain of attraction of the
+generalized extreme-value law with index `γ` if and only if there is a positive scale function
+`σ(u)` such that the excess law over `u` is uniformly approximated by the generalized Pareto law
+with scale `σ(u)` and shape `γ` as `u` increases to the upper endpoint, finite or infinite. -/
 theorem hasExtremeValueDomainOfAttraction_iff_pareto_excesses
     (P : Measure ℝ) [IsProbabilityMeasure P] (γ : ℝ) :
     HasExtremeValueDomainOfAttraction P γ ↔
@@ -56,49 +81,47 @@ theorem hasExtremeValueDomainOfAttraction_iff_pareto_excesses
           (Filter.comap (fun u : ℝ ↦ (u : EReal)) (𝓝[<] distributionUpperEndpoint P)) (𝓝 0) := by
   sorry
 
-/-- Tail quantile of order `1-1/t`, used for `t>1`. -/
-def tailQuantile (P : Measure ℝ) (t : ℝ) : ℝ :=
-  sInf {x : ℝ | 1 - 1 / t ≤ cdf P x}
-
-/-- Positive regularly varying tail of index `-1/γ`. -/
-def HasRegularlyVaryingTail (P : Measure ℝ) (γ : ℝ) : Prop :=
-  (∀ t : ℝ, cdf P t < 1) ∧ ∀ x > 0,
-    Tendsto (fun t ↦ (1 - cdf P (t * x)) / (1 - cdf P t)) atTop
-      (𝓝 (Real.rpow x (-1 / γ)))
-
-/-- Second-order regular variation of the tail quantile, with an eventually constant-sign remainder. -/
+/-- Second-order regular variation of the tail quantile `U` with index `γ`, second-order
+parameter `ρ` and auxiliary function `A`: `A(t) → 0` with eventually constant sign, and
+`(U(tx)/U(t) - x^γ) / A(t) → x^γ (x^ρ - 1) / ρ` for every `x > 0`. -/
 def HasSecondOrderTailQuantile (P : Measure ℝ) (γ ρ : ℝ) (A : ℝ → ℝ) : Prop :=
   Tendsto A atTop (𝓝 0) ∧
     ((∀ᶠ t in atTop, 0 < A t) ∨ (∀ᶠ t in atTop, A t < 0)) ∧
     ∀ x > 0, Tendsto (fun t ↦ (tailQuantile P (t * x) / tailQuantile P t - Real.rpow x γ) / A t)
       atTop (𝓝 (Real.rpow x γ * (Real.rpow x ρ - 1) / ρ))
 
-/-- Hill estimator from the largest `k` observations. It is zero outside `1≤k<n`. -/
+/-- The Hill estimator `k⁻¹ ∑_{i<k} log X_{(n-i)} - log X_{(n-k)}` from the `k + 1` largest
+order statistics of `x`; it is defined to be zero unless `1 ≤ k < n`. -/
 def hillEstimator {n : ℕ} (k : ℕ) (x : Fin n → ℝ) : ℝ :=
   if h : 0 < k ∧ k < n then
     (∑ i : Fin k, Real.log (TauCeti.orderStatistic ⟨n - i.val - 1, by omega⟩ x)) / k -
       Real.log (TauCeti.orderStatistic ⟨n - k - 1, by omega⟩ x)
   else 0
 
-/-- GAPS 106.49: Hill central limit theorem under second-order regular variation. -/
+/-- GAPS 106.49: Hill central limit theorem. For iid positive observations whose tail quantile
+is second-order regularly varying with index `γ > 0` and parameter `ρ < 0`, and intermediate
+sequences `k_n → ∞`, `k_n / n → 0` with `√k_n A(n / k_n) → b`,
+`√k_n (γ̂_n - γ) ⇒ N(b / (1 - ρ), γ²)`. Regular variation of the tail `1 - F` with index
+`-1/γ` follows from the second-order condition and is not assumed separately. -/
 theorem tendstoInDistribution_hillEstimator {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P)
-    (hpositive : P (Ioi 0) = 1) (γ ρ : ℝ) (hγ : 0 < γ) (hρ : ρ < 0)
-    (htail : HasRegularlyVaryingTail P γ) (A : ℝ → ℝ)
+    (hpositive : P (Ioi 0) = 1) (γ ρ : ℝ) (hγ : 0 < γ) (hρ : ρ < 0) (A : ℝ → ℝ)
     (hsecond : HasSecondOrderTailQuantile P γ ρ A) (k : ℕ → ℕ)
     (hklim : Tendsto k atTop atTop) (hkn : Tendsto (fun n ↦ (k n : ℝ) / n) atTop (𝓝 0))
-    (lambda : ℝ) (hA : Tendsto (fun n ↦ Real.sqrt (k n) * A ((n : ℝ) / k n)) atTop (𝓝 lambda)) :
+    (b : ℝ) (hA : Tendsto (fun n ↦ Real.sqrt (k n) * A ((n : ℝ) / k n)) atTop (𝓝 b)) :
     TendstoInDistribution μ (fun n ω ↦ Real.sqrt (k n) *
       (hillEstimator (k n) (fun i : Fin n ↦ X i.val ω) - γ))
-      (gaussianReal (lambda / (1 - ρ)) (Real.toNNReal (γ ^ 2))) := by
+      (gaussianReal (b / (1 - ρ)) (Real.toNNReal (γ ^ 2))) := by
   sorry
 
 /-- The Hill estimator of order zero uses the explicitly specified zero convention. -/
 @[simp] theorem hillEstimator_zero {n : ℕ} (x : Fin n → ℝ) : hillEstimator 0 x = 0 := by
   simp [hillEstimator]
 
-/-- TauCeti's exact Pareto threshold stability in the excess-law interface. -/
+/-- Threshold stability of the generalized Pareto laws: the excess law over `u ≥ 0` of the
+generalized Pareto law with scale `s` and shape `γ` is generalized Pareto with scale `s + γ u`
+and the same shape (TauCeti's `map_sub_cond_generalizedParetoMeasure`). -/
 theorem thresholdExcessLaw_generalizedPareto (s γ u : ℝ) (hs : 0 < s) (hu : 0 ≤ u)
     (hscale : 0 < s + γ * u) :
     thresholdExcessLaw (TauCeti.Probability.generalizedParetoMeasure s γ) u =

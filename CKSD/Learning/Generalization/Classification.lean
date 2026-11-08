@@ -6,7 +6,16 @@ public import CKSD.Learning.Generalization.Concentration
 # Classification lower bounds and convex calibration
 
 Label-flip lower bounds, Bayes classification risk, plug-in excess risk, and the sign of
-minimizers of convex surrogate risks. Sources: GAPS 107.7, 107.8, and 107.11.
+minimizers of convex surrogate risks.
+
+## Main results
+
+* `CKSD.exists_labelling_le_average_error`: the no-free-lunch lower bound (GAPS 107.7).
+* `CKSD.classificationRisk_sub_bayes_risk_eq`: the excess Bayes risk identity (GAPS 107.8).
+* `CKSD.classificationRisk_plugin_sub_bayes_risk_le`: the plug-in excess risk bound
+  (GAPS 107.8).
+* `CKSD.surrogate_minimizer_sign_of_convex`: classification calibration of convex surrogates
+  (GAPS 107.11).
 -/
 
 @[expose] public section
@@ -45,8 +54,10 @@ theorem sum_flip_ne {m : ℕ} (j : Fin m) (g : (Fin m → Bool) → Bool)
   linarith
 
 /-- GAPS 107.7, finite-support no-free-lunch bound; taking arbitrarily large `m`
-gives the infinite-feature-space assertion. -/
-theorem no_free_lunch_lower_bound (n m : ℕ) (hm : 0 < m)
+gives the infinite-feature-space assertion. For any learning rule trained on `n` labelled
+points drawn uniformly from `m` features, some labelling makes its expected error (averaged over
+samples and test points) at least `(1 - n / m) / 2`. -/
+theorem exists_labelling_le_average_error (n m : ℕ) (hm : 0 < m)
     (learn : (Fin n → Fin m × Bool) → Fin m → Bool) :
     ∃ label : Fin m → Bool,
       (1 - (n : ℝ) / m) / 2 ≤
@@ -133,7 +144,16 @@ theorem integrable_classificationLoss {X : Type*} [MeasurableSpace X]
   apply abs_le.mpr
   split_ifs <;> constructor <;> linarith [(hrange x).1, (hrange x).2]
 
-/-- GAPS 107.8: the exact excess Bayes classification risk identity. -/
+/-- The plug-in rule `x ↦ (1/2 ≤ a x)` of a measurable function is measurable. -/
+theorem measurable_decide_half_le {X : Type*} [MeasurableSpace X] {a : X → ℝ}
+    (ha : Measurable a) : Measurable fun x ↦ decide ((1 / 2 : ℝ) ≤ a x) := by
+  apply measurable_to_bool
+  change MeasurableSet {x | decide ((1 / 2 : ℝ) ≤ a x) = true}
+  simpa only [decide_eq_true_eq] using (measurableSet_le measurable_const ha)
+
+/-- GAPS 107.8: the exact excess Bayes classification risk identity. For a regression function
+`η` with values in `[0,1]` and any measurable classifier `g`, the excess risk of `g` over the
+Bayes classifier `g⋆(x) = (1/2 ≤ η x)` is `∫_{g ≠ g⋆} |2η - 1| dP`. -/
 theorem classificationRisk_sub_bayes_risk_eq {X : Type*} [MeasurableSpace X]
     (P : Measure X) [IsProbabilityMeasure P] (η : X → ℝ) (hη : Measurable η)
     (hrange : ∀ x, η x ∈ Icc 0 1) (g : X → Bool) (hg : Measurable g) :
@@ -142,10 +162,7 @@ theorem classificationRisk_sub_bayes_risk_eq {X : Type*} [MeasurableSpace X]
       ∫ x, if g x ≠ star x then |2 * η x - 1| else 0 ∂P := by
   dsimp only
   let star : X → Bool := fun x ↦ decide ((1 / 2 : ℝ) ≤ η x)
-  have hstar : Measurable star := by
-    apply measurable_to_bool
-    change MeasurableSet {x | decide ((1 / 2 : ℝ) ≤ η x) = true}
-    simpa only [decide_eq_true_eq] using (measurableSet_le measurable_const hη)
+  have hstar : Measurable star := measurable_decide_half_le hη
   change (∫ x, (if g x then 1 - η x else η x) ∂P) -
       (∫ x, (if star x then 1 - η x else η x) ∂P) =
     ∫ x, if g x ≠ star x then |2 * η x - 1| else 0 ∂P
@@ -161,7 +178,9 @@ theorem classificationRisk_sub_bayes_risk_eq {X : Type*} [MeasurableSpace X]
       simp [star, abs_of_nonpos (by linarith : 2 * η x - 1 ≤ 0)] <;>
         split_ifs <;> linarith
 
-/-- GAPS 107.8: the plugin classification risk bound. -/
+/-- GAPS 107.8: the plugin classification risk bound. The plug-in classifier `x ↦ (1/2 ≤ a x)`
+built from an integrable estimate `a` of the regression function `η` has excess risk at most
+`2 ∫ |a - η| dP`. -/
 theorem classificationRisk_plugin_sub_bayes_risk_le {X : Type*} [MeasurableSpace X]
     (P : Measure X) [IsProbabilityMeasure P] (η a : X → ℝ)
     (hη : Measurable η) (ha : Measurable a) (hi : Integrable a P)
@@ -171,14 +190,8 @@ theorem classificationRisk_plugin_sub_bayes_risk_le {X : Type*} [MeasurableSpace
         2 * ∫ x, |a x - η x| ∂P := by
   let ga : X → Bool := fun x ↦ decide ((1 / 2 : ℝ) ≤ a x)
   let star : X → Bool := fun x ↦ decide ((1 / 2 : ℝ) ≤ η x)
-  have hga : Measurable ga := by
-    apply measurable_to_bool
-    change MeasurableSet {x | decide ((1 / 2 : ℝ) ≤ a x) = true}
-    simpa only [decide_eq_true_eq] using (measurableSet_le measurable_const ha)
-  have hstar : Measurable star := by
-    apply measurable_to_bool
-    change MeasurableSet {x | decide ((1 / 2 : ℝ) ≤ η x) = true}
-    simpa only [decide_eq_true_eq] using (measurableSet_le measurable_const hη)
+  have hga : Measurable ga := measurable_decide_half_le ha
+  have hstar : Measurable star := measurable_decide_half_le hη
   have hiη : Integrable η P := by
     simpa only [Bool.false_eq_true, ite_false] using
       integrable_classificationLoss P η hη hrange (fun _ ↦ false) measurable_const
@@ -197,7 +210,9 @@ theorem classificationRisk_plugin_sub_bayes_risk_le {X : Type*} [MeasurableSpace
   have hhi := le_abs_self (a x - η x)
   split_ifs <;> linarith [abs_nonneg (a x - η x)]
 
-/-- GAPS 107.11, pointwise classification calibration of a convex surrogate. -/
+/-- GAPS 107.11, pointwise classification calibration of a convex surrogate. If `φ` is convex
+and differentiable at `0` with `φ'(0) > 0`, then for `η ∈ [0,1]`, `η ≠ 1/2`, every minimizer `u`
+of the conditional surrogate risk `η φ(-u) + (1 - η) φ(u)` has the sign of `η - 1/2`. -/
 theorem surrogate_minimizer_sign_of_convex (phi : ℝ → ℝ) (hc : ConvexOn ℝ univ phi)
     (d : ℝ) (hd : HasDerivAt phi d 0) (hdpos : 0 < d)
     (eta : ℝ) (he : eta ∈ Icc 0 1) (hne : eta ≠ 1 / 2)

@@ -6,13 +6,42 @@ public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.MeasureTheory.Integral.Pi
 public import Mathlib.MeasureTheory.Measure.FiniteMeasureProd
 public import Mathlib.MeasureTheory.Measure.Prokhorov
+public import TauCeti.Analysis.PositiveDefinite.Kernel.MeanEmbedding
+public import TauCeti.Probability.Moments.Covariance
 
 /-!
-# Geometry: Kernels
+# Kernel discrepancies: MMD, energy distance, HSIC, Stein identities, random features
 
-Sources: `GAPS.md`, `SYNOPSIS108.md`, and `STRUCTURE108.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Statements about the squared maximum mean discrepancy `CKSD.squaredMMD` and the kernels built
+from distances, together with random Fourier features.
+
+## Main results
+
+* `CKSD.squaredMMD_eq_norm_kernelMeanEmbedding_sub_sq`: for a positive semidefinite kernel the
+  squared MMD is the squared distance of TauCeti's kernel mean embeddings.
+* `CKSD.tendstoInDistribution_unbiasedSquaredMMD_null`,
+  `CKSD.tendstoInDistribution_unbiasedSquaredMMD_alternative`: null and alternative limit laws of
+  the unbiased MMD estimator for a bounded finite-dimensional feature map (GAPS 108.61).
+* `CKSD.energy_distance_nonneg_eq_zero_iff_and_eq_squaredMMD`,
+  `CKSD.distance_covariance_nonneg_eq_zero_iff_and_eq_squaredMMD`: energy distance and distance
+  covariance (GAPS 108.62).
+* `CKSD.squaredMMD_joint_prod_eq_zero_iff_indepFun`: the HSIC independence criterion (GAPS 108.63).
+* `CKSD.isCharacteristicKernel_iff_spectral_measure_full_support`,
+  `CKSD.squaredMMD_quadratic_polynomial_eq`: criteria for characteristic kernels (GAPS 108.68).
+* `CKSD.tendstoWeakly_iff_tendsto_squaredMMD_of_tight`: MMD metrizes weak convergence along tight
+  sequences (GAPS 108.70).
+* `CKSD.integral_langevin_stein_operator_eq_zero`: the scalar Langevin Stein identity
+  (GAPS 108.71).
+* `CKSD.integral_randomFourierFeatureKernel`,
+  `CKSD.measureReal_abs_randomFourierFeatureKernel_sub_ge_le`,
+  `CKSD.measure_uniform_randomFourierFeatureKernel_error_le`,
+  `CKSD.abs_squaredMMD_sub_le_of_uniform_kernel_error`: random Fourier features (GAPS 108.74).
+
+## References
+
+* A. Gretton, K. M. Borgwardt, M. J. Rasch, B. Schölkopf and A. Smola, *A kernel two-sample test*,
+  J. Mach. Learn. Res. 13 (2012).
+* A. Rahimi and B. Recht, *Random features for large-scale kernel machines*, NIPS 2007.
 -/
 
 @[expose] public section
@@ -26,16 +55,51 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- GAPS 108.61, the null limit of MMD for a bounded finite-dimensional feature map. -/
-theorem tendstoInDistribution_squaredMMD_null_finite_features
+/-- A bounded kernel that is measurable on the product space is integrable against every finite
+measure on the product. -/
+theorem integrable_kernel_of_bounded {X : Type*} [MeasurableSpace X] {k : X → X → ℝ}
+    (hkm : Measurable fun z : X × X ↦ k z.1 z.2) (hb : ∃ C, ∀ x y, |k x y| ≤ C)
+    (μ : Measure (X × X)) [IsFiniteMeasure μ] : Integrable (fun z : X × X ↦ k z.1 z.2) μ := by
+  obtain ⟨C, hC⟩ := hb
+  exact Integrable.of_bound hkm.aestronglyMeasurable C
+    (ae_of_all _ fun z ↦ by rw [Real.norm_eq_abs]; exact hC z.1 z.2)
+
+/-- For a bounded measurable characteristic kernel, the squared MMD of two probability laws
+vanishes exactly when the laws are equal. -/
+theorem IsCharacteristicKernel.squaredMMD_eq_zero_iff {X : Type*} [MeasurableSpace X]
+    {k : X → X → ℝ} (hk : IsCharacteristicKernel k) (hkm : Measurable fun z : X × X ↦ k z.1 z.2)
+    (hb : ∃ C, ∀ x y, |k x y| ≤ C) (P Q : Measure X) [IsProbabilityMeasure P]
+    [IsProbabilityMeasure Q] : squaredMMD k P Q = 0 ↔ P = Q :=
+  hk P Q inferInstance inferInstance (integrable_kernel_of_bounded hkm hb _)
+    (integrable_kernel_of_bounded hkm hb _) (integrable_kernel_of_bounded hkm hb _)
+
+/-- For a positive semidefinite kernel `k` whose feature map is integrable for `P` and `Q`, and
+which is integrable against the three product measures, the squared MMD is the squared distance
+`‖m_P - m_Q‖²` of TauCeti's kernel mean embeddings. -/
+theorem squaredMMD_eq_norm_kernelMeanEmbedding_sub_sq {X : Type*} [MeasurableSpace X]
+    {k : X → X → ℝ} (hk : Matrix.PosSemidef k) {P Q : Measure X} [SFinite P] [SFinite Q]
+    (hP : Integrable hk.kolmogorovFeature P) (hQ : Integrable hk.kolmogorovFeature Q)
+    (hPP : Integrable (fun z : X × X ↦ k z.1 z.2) (P.prod P))
+    (hQQ : Integrable (fun z : X × X ↦ k z.1 z.2) (Q.prod Q))
+    (hPQ : Integrable (fun z : X × X ↦ k z.1 z.2) (P.prod Q)) :
+    squaredMMD k P Q = ‖hk.kernelMeanEmbedding P - hk.kernelMeanEmbedding Q‖ ^ 2 := by
+  rw [hk.norm_kernelMeanEmbedding_sub_sq hP hQ, squaredMMD, integral_prod_symm _ hPP,
+    integral_prod_symm _ hQQ, integral_prod_symm _ hPQ]
+  ring
+
+/-- GAPS 108.61, the null limit of MMD for a bounded finite-dimensional feature map. Let
+`φ : X → ℝ^d` be bounded and measurable, `k(x, y) = ⟨φ x, φ y⟩`, and let the pairs `(X_i, Y_i)` be
+independent with law `P ⊗ P`. With `C` the covariance matrix of `φ(X_1)`, the scaled unbiased
+estimator `n MMD_u²` converges in distribution to `2 (‖Z‖² - tr C)` and the scaled plug-in estimator
+`n ‖φ̄_X - φ̄_Y‖²` to `2 ‖Z‖²`, where `Z ∼ N(0, C)`. -/
+theorem tendstoInDistribution_unbiasedSquaredMMD_null
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X) [IsProbabilityMeasure P]
     (Xn Yn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ (fun i ω ↦ (Xn i ω, Yn i ω))
       (P.prod P))
     (phi : X → EuclideanSpace ℝ (Fin d)) (hm : Measurable phi)
     (hb : ∃ C, ∀ x, ‖phi x‖ ≤ C) :
-    let m := ∫ x, phi x ∂P;
-    let C := Matrix.of fun i j ↦ ∫ x, (phi x i - m i) * (phi x j - m j) ∂P;
+    let C := TauCeti.covMatrix (P.map phi);
     let k := fun x y ↦ inner ℝ (phi x) (phi y);
     TendstoInDistribution μ (fun n ω ↦ (n : ℝ) * unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω)
       (fun i ↦ Yn i.val ω))
@@ -46,8 +110,11 @@ theorem tendstoInDistribution_squaredMMD_null_finite_features
         ((multivariateGaussian 0 C).map (fun z ↦ 2 * ‖z‖ ^ 2)) := by
   sorry
 
-/-- GAPS 108.61, alternative MMD CLT for a bounded finite-dimensional feature map. -/
-theorem tendstoInDistribution_squaredMMD_alternative_finite_features
+/-- GAPS 108.61, alternative MMD CLT for a bounded finite-dimensional feature map. Let the pairs
+`(X_i, Y_i)` be independent with law `P ⊗ Q` and `δ = E φ(X) - E φ(Y)`. Then
+`√n (MMD_u² - ‖δ‖²)` converges in distribution to the centered normal law with variance
+`4 Var_P ⟨φ, δ⟩ + 4 Var_Q ⟨φ, δ⟩`. -/
+theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P Q : Measure X)
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
@@ -64,7 +131,9 @@ theorem tendstoInDistribution_squaredMMD_alternative_finite_features
           4 * variance Q (fun x ↦ inner ℝ (phi x) delta)))) := by
   sorry
 
-/-- GAPS 108.62: nonnegativity, separation, and the kernel form of energy distance. -/
+/-- GAPS 108.62: for laws `P, Q` on `ℝ^d` with finite first moments, the energy distance
+`D = 2 E‖X - Y‖ - E‖X - X'‖ - E‖Y - Y'‖` is nonnegative, vanishes exactly when `P = Q`, and equals
+twice the squared MMD of the distance kernel `CKSD.distanceKernel`. -/
 theorem energy_distance_nonneg_eq_zero_iff_and_eq_squaredMMD
     {d : ℕ} (P Q : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
@@ -74,7 +143,10 @@ theorem energy_distance_nonneg_eq_zero_iff_and_eq_squaredMMD
     0 ≤ D ∧ (D = 0 ↔ P = Q) ∧ D = 2 * squaredMMD distanceKernel P Q := by
   sorry
 
-/-- GAPS 108.62: distance covariance detects independence and equals four times HSIC. -/
+/-- GAPS 108.62: for a law `P` on `ℝ^d × ℝ^e` with finite second moments and marginals `μ, ν`, the
+squared distance covariance `V = E[A(X, X') B(Y, Y')]` of the doubly centered distances is
+nonnegative, vanishes exactly when `P = μ ⊗ ν`, and equals four times the squared MMD (the HSIC) of
+the product of the two distance kernels between `P` and `μ ⊗ ν`. -/
 theorem distance_covariance_nonneg_eq_zero_iff_and_eq_squaredMMD {d e : ℕ}
     (P : Measure (EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin e)))
     [IsProbabilityMeasure P] (h2 : MemLp id 2 P) :
@@ -86,19 +158,25 @@ theorem distance_covariance_nonneg_eq_zero_iff_and_eq_squaredMMD {d e : ℕ}
     0 ≤ V ∧ (V = 0 ↔ P = mu.prod nu) ∧ V = 4 * squaredMMD k P (mu.prod nu) := by
   sorry
 
-/-- GAPS 108.63, independence criterion for a characteristic product-space kernel. -/
+/-- GAPS 108.63, independence criterion for a characteristic product-space kernel: for a bounded
+measurable characteristic kernel `k` on `X × Y` and a law `P` of a pair, the HSIC
+`MMD²(P, P_X ⊗ P_Y)` vanishes exactly when the two coordinates are independent under `P`. -/
 theorem squaredMMD_joint_prod_eq_zero_iff_indepFun
     {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
     (P : Measure (X × Y)) [IsProbabilityMeasure P] (k : (X × Y) → (X × Y) → ℝ)
-    (hk : IsCharacteristicKernel k) :
+    (hk : IsCharacteristicKernel k) (hkm : Measurable fun z : (X × Y) × (X × Y) ↦ k z.1 z.2)
+    (hb : ∃ C, ∀ x y, |k x y| ≤ C) :
     squaredMMD k P ((P.map Prod.fst).prod (P.map Prod.snd)) = 0 ↔
       IndepFun Prod.fst Prod.snd P := by
-  rw [hk P ((P.map Prod.fst).prod (P.map Prod.snd)) inferInstance inferInstance]
+  rw [hk.squaredMMD_eq_zero_iff hkm hb]
   have h := indepFun_iff_map_prod_eq_prod_map_map
     (μ := P) measurable_fst.aemeasurable measurable_snd.aemeasurable
   simpa only [Prod.mk.eta, Measure.map_id'] using h.symm
 
-/-- GAPS 108.68(c), characteristicness iff the symmetric spectral measure has full support. -/
+/-- GAPS 108.68(c), characteristicness iff the symmetric spectral measure has full support: for a
+symmetric finite measure `L` on `ℝ^d`, `d ≥ 1`, the translation-invariant kernel
+`k(x, y) = ∫ cos ⟨w, x - y⟩ dL(w)` is characteristic exactly when every open ball has positive
+`L`-measure. -/
 theorem isCharacteristicKernel_iff_spectral_measure_full_support {d : ℕ} (hd : 0 < d)
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsFiniteMeasure L]
     (hsym : L.map (fun x ↦ -x) = L) :
@@ -108,7 +186,6 @@ theorem isCharacteristicKernel_iff_spectral_measure_full_support {d : ℕ} (hd :
 
 /-- Products of two coordinates are integrable under a law with finite second moments. -/
 theorem integrable_coord_mul_coord {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
-
     (h2 : MemLp id 2 P) (i j : Fin d) : Integrable (fun x ↦ x i * x j) P := by
   have hsq : Integrable (fun x : EuclideanSpace ℝ (Fin d) ↦ ‖x‖ ^ 2) P := h2.norm.integrable_sq
   refine hsq.mono' (by fun_prop) (ae_of_all _ fun x ↦ ?_)
@@ -176,22 +253,23 @@ theorem integral_quadratic_kernel_prod {d : ℕ} (P Q : Measure (EuclideanSpace 
   rw [h1, h2]
   simp
 
-/-- GAPS 108.68(d), quadratic-polynomial MMD depends only on the first two moments. -/
+/-- GAPS 108.68(d), quadratic-polynomial MMD depends only on the first two moments: for laws with
+finite second moments, the squared MMD of the kernel `(1 + ⟨x, y⟩)²` is
+`2 ‖m_P - m_Q‖² + ∑_{i,j} (E_P[x_i x_j] - E_Q[x_i x_j])²`. In particular this kernel is not
+characteristic. -/
 theorem squaredMMD_quadratic_polynomial_eq {d : ℕ} (P Q : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
-    (hP : MemLp id 4 P) (hQ : MemLp id 4 Q) :
+    (hP : MemLp id 2 P) (hQ : MemLp id 2 Q) :
     let m := (∫ x, x ∂P) - ∫ x, x ∂Q;
     squaredMMD (fun x y ↦ (1 + inner ℝ x y) ^ 2) P Q =
       2 * ‖m‖ ^ 2 + ∑ i, ∑ j,
         ((∫ x, x i * x j ∂P) - ∫ x, x i * x j ∂Q) ^ 2 := by
   intro m
-  have hP2 : MemLp id 2 P := hP.mono_exponent (by norm_num)
-  have hQ2 : MemLp id 2 Q := hQ.mono_exponent (by norm_num)
-  have hP1 : Integrable id P := hP2.integrable one_le_two
-  have hQ1 : Integrable id Q := hQ2.integrable one_le_two
+  have hP1 : Integrable id P := hP.integrable one_le_two
+  have hQ1 : Integrable id Q := hQ.integrable one_le_two
   unfold squaredMMD
-  rw [integral_quadratic_kernel_prod P P hP2 hP2, integral_quadratic_kernel_prod Q Q hQ2 hQ2,
-    integral_quadratic_kernel_prod P Q hP2 hQ2, EuclideanSpace.norm_sq_eq]
+  rw [integral_quadratic_kernel_prod P P hP hP, integral_quadratic_kernel_prod Q Q hQ hQ,
+    integral_quadratic_kernel_prod P Q hP hQ, EuclideanSpace.norm_sq_eq]
   have hm : ∀ i, m i = (∫ x, x i ∂P) - ∫ x, x i ∂Q := fun i ↦ by
     simp only [m, PiLp.sub_apply, integral_coord P hP1, integral_coord Q hQ1]
   simp only [hm, Real.norm_eq_abs, sq_abs]
@@ -219,7 +297,9 @@ theorem continuous_squaredMMD_probabilityMeasure {X : Type*} [MetricSpace X]
   exact ((heval.comp hPP).add continuous_const).sub
     (continuous_const.mul (heval.comp hPQ))
 
-/-- GAPS 108.70, MMD metrizes weak convergence along uniformly tight sequences. -/
+/-- GAPS 108.70, MMD metrizes weak convergence along uniformly tight sequences: for a bounded
+continuous characteristic kernel on a separable metric space and a uniformly tight sequence of
+probability laws `P n`, `P n → Q` weakly exactly when `MMD²(P n, Q) → 0`. -/
 theorem tendstoWeakly_iff_tendsto_squaredMMD_of_tight {X : Type*} [MetricSpace X]
     [SecondCountableTopology X] [MeasurableSpace X] [BorelSpace X]
     (P : ℕ → Measure X) (Q : Measure X) (hP : ∀ n, IsProbabilityMeasure (P n))
@@ -229,7 +309,7 @@ theorem tendstoWeakly_iff_tendsto_squaredMMD_of_tight {X : Type*} [MetricSpace X
     (htight : ∀ epsilon > 0, ∃ K : Set X, IsCompact K ∧
       ∀ n, (P n) Kᶜ ≤ ENNReal.ofReal epsilon) :
     TendstoWeakly P Q ↔ Tendsto (fun n ↦ squaredMMD k (P n) Q) atTop (𝓝 0) := by
-  letI : ∀ n, IsProbabilityMeasure (P n) := hP
+  have : ∀ n, IsProbabilityMeasure (P n) := hP
   let Ps : ℕ → ProbabilityMeasure X := fun n ↦ ⟨P n, hP n⟩
   let Qs : ProbabilityMeasure X := ⟨Q, inferInstance⟩
   let F : ProbabilityMeasure X → ℝ := fun R ↦ squaredMMD k R Q
@@ -270,9 +350,11 @@ theorem tendstoWeakly_iff_tendsto_squaredMMD_of_tight {X : Type*} [MetricSpace X
       Filter.tendsto_iff_comap.2 inf_le_right
     have hFR : F R = 0 := tendsto_nhds_unique
       (hF.continuousAt.tendsto.comp hconv) (hzero.mono_left inf_le_left)
-    exact Subtype.ext ((hchar R Q inferInstance inferInstance).mp hFR)
+    exact Subtype.ext ((hchar.squaredMMD_eq_zero_iff hk.measurable hb R Q).mp hFR)
 
-/-- GAPS 108.71, scalar Langevin Stein identity for bounded continuously differentiable tests. -/
+/-- GAPS 108.71, scalar Langevin Stein identity for bounded continuously differentiable tests: if
+`P` has a positive `C¹` density `p` with integrable score `p'/p`, then
+`E_P[g (p'/p) + g'] = 0` for every bounded `C¹` function `g` with integrable derivative. -/
 theorem integral_langevin_stein_operator_eq_zero
     (P : Measure ℝ) [IsProbabilityMeasure P] (p g : ℝ → ℝ)
     (hp : HasDensity P volume p) (hpos : ∀ x, 0 < p x)
@@ -342,11 +424,6 @@ theorem integral_cos_add_two_mul_uniformPhase (phase : Measure ℝ)
   rw [this]
   simp
 
-/-- The random-feature summand `2 cos(⟨w, x⟩ + b) cos(⟨w, y⟩ + b)`. -/
-noncomputable def randomFourierFeatureTerm {d : ℕ} (x y : EuclideanSpace ℝ (Fin d))
-    (s : EuclideanSpace ℝ (Fin d) × ℝ) : ℝ :=
-  2 * Real.cos (inner ℝ s.1 x + s.2) * Real.cos (inner ℝ s.1 y + s.2)
-
 /-- The random-feature summand is continuous in the frequency and phase. -/
 theorem continuous_randomFourierFeatureTerm {d : ℕ} (x y : EuclideanSpace ℝ (Fin d)) :
     Continuous (randomFourierFeatureTerm x y) := by
@@ -396,18 +473,19 @@ theorem integral_randomFourierFeatureTerm {d : ℕ}
     rw [Real.norm_eq_abs]; exact Real.abs_cos_le_one _)
 
 /-- Hoeffding's inequality for a sample of `D` independent copies of a variable with values in
-`[-2, 2]`: the sum of the centered copies exceeds `D ε` with probability at most
-`exp (-D ε² / 8)`. -/
+`[a, b]`: the sum of the centered copies exceeds `D ε` with probability at most
+`exp (-2 D ε² / (b - a)²)`. -/
 theorem measureReal_pi_sum_sub_integral_ge_le {Y : Type*} [MeasurableSpace Y] (D : ℕ)
-    (μ : Measure Y) [IsProbabilityMeasure μ] {g : Y → ℝ} (hg : Measurable g)
-    (hb : ∀ s, g s ∈ Icc (-2 : ℝ) 2) {ε : ℝ} (hε : 0 ≤ ε) :
+    (μ : Measure Y) [IsProbabilityMeasure μ] {g : Y → ℝ} (hg : Measurable g) {a b : ℝ}
+    (hb : ∀ s, g s ∈ Icc a b) {ε : ℝ} (hε : 0 ≤ ε) :
     (Measure.pi fun _ : Fin D ↦ μ).real
-        {s | D * ε ≤ ∑ j, (g (s j) - ∫ t, g t ∂μ)} ≤ Real.exp (-(D : ℝ) * ε ^ 2 / 8) := by
+        {s | D * ε ≤ ∑ j, (g (s j) - ∫ t, g t ∂μ)} ≤
+      Real.exp (-2 * (D : ℝ) * ε ^ 2 / (b - a) ^ 2) := by
   set P := Measure.pi fun _ : Fin D ↦ μ
   have hindep : iIndepFun (fun (j : Fin D) (s : Fin D → Y) ↦ g (s j) - ∫ t, g t ∂μ) P :=
     iIndepFun_pi (X := fun _ t ↦ g t - ∫ t, g t ∂μ) fun _ ↦ (hg.sub_const _).aemeasurable
   have hsub : ∀ j : Fin D, HasSubgaussianMGF (fun s : Fin D → Y ↦ g (s j) - ∫ t, g t ∂μ)
-      ((‖(2 : ℝ) - (-2)‖₊ / 2) ^ 2) P := by
+      ((‖b - a‖₊ / 2) ^ 2) P := by
     intro j
     have hm : AEMeasurable (fun s : Fin D → Y ↦ g (s j)) P :=
       (hg.comp (measurable_pi_apply j)).aemeasurable
@@ -415,116 +493,133 @@ theorem measureReal_pi_sum_sub_integral_ge_le {Y : Type*} [MeasurableSpace Y] (D
     have hint : ∫ s, g (s j) ∂P = ∫ t, g t ∂μ :=
       integral_comp_eval (μ := fun _ : Fin D ↦ μ) hg.aestronglyMeasurable
     simpa only [hint] using h
-  have hc : ((‖(2 : ℝ) - (-2)‖₊ / 2) ^ 2 : ℝ≥0) = 4 := by
-    ext
-    simp only [NNReal.coe_pow, NNReal.coe_div, coe_nnnorm, Real.norm_eq_abs]
-    norm_num
-  rw [hc] at hsub
-  have h := HasSubgaussianMGF.measure_sum_ge_le_of_iIndepFun hindep (c := fun _ ↦ 4) (s := Finset.univ)
+  have h := HasSubgaussianMGF.measure_sum_ge_le_of_iIndepFun hindep (s := Finset.univ)
     (fun j _ ↦ hsub j) (ε := D * ε) (by positivity)
   refine h.trans_eq ?_
   congr 1
-  simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+  have hc : (((‖b - a‖₊ / 2) ^ 2 : ℝ≥0) : ℝ) = (b - a) ^ 2 / 4 := by
+    simp only [NNReal.coe_pow, NNReal.coe_div, coe_nnnorm, Real.norm_eq_abs]
+    rw [div_pow, sq_abs]
+    norm_num
+  simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, NNReal.coe_mul,
+    NNReal.coe_natCast, hc]
   rcases Nat.eq_zero_or_pos D with hD | hD
   · subst hD; simp
+  rcases eq_or_ne (b - a) 0 with hab | hab
+  · simp [hab]
   · have : (D : ℝ) ≠ 0 := by exact_mod_cast hD.ne'
-    push_cast
     field_simp
     ring
 
-/-- The random-feature kernel is the sample mean of the random-feature summands. -/
-theorem randomFourierFeatureKernel_eq_mean {d D : ℕ}
-    (sample : Fin D → EuclideanSpace ℝ (Fin d) × ℝ) (x y : EuclideanSpace ℝ (Fin d)) :
-    randomFourierFeatureKernel sample x y =
-      (D : ℝ)⁻¹ * ∑ j, randomFourierFeatureTerm x y (sample j) := by
-  unfold randomFourierFeatureKernel randomFourierFeatureTerm
-  rw [Finset.mul_sum, Finset.mul_sum]
-  refine Finset.sum_congr rfl fun j _ ↦ ?_
-  ring
+/-- GAPS 108.74: random Fourier features are unbiased. The random Fourier feature kernel of an
+independent sample of frequencies `w_j ∼ L` and uniform phases `b_j ∈ [0, 2π]` has mean
+`k(x, y) = ∫ cos ⟨w, x - y⟩ dL(w)`. -/
+theorem integral_randomFourierFeatureKernel {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
+    (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
+    (phase : Measure ℝ) [IsProbabilityMeasure phase]
+    (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
+    (x y : EuclideanSpace ℝ (Fin d)) :
+    ∫ sample, randomFourierFeatureKernel sample x y ∂(Measure.pi fun _ : Fin D ↦ L.prod phase) =
+      ∫ w, Real.cos (inner ℝ w (x - y)) ∂L := by
+  have hmeas : Measurable (randomFourierFeatureTerm x y) :=
+    (continuous_randomFourierFeatureTerm x y).measurable
+  have hcoord : ∀ j : Fin D, ∫ s, randomFourierFeatureTerm x y (s j)
+      ∂(Measure.pi fun _ : Fin D ↦ L.prod phase) = ∫ w, Real.cos (inner ℝ w (x - y)) ∂L :=
+    fun j ↦ by
+      rw [← integral_randomFourierFeatureTerm L phase hphase x y]
+      exact integral_comp_eval (μ := fun _ : Fin D ↦ L.prod phase) hmeas.aestronglyMeasurable
+  have hintj : ∀ j : Fin D, Integrable (fun s : Fin D → _ ↦ randomFourierFeatureTerm x y (s j))
+      (Measure.pi fun _ : Fin D ↦ L.prod phase) :=
+    fun j ↦ Integrable.of_bound (C := 2)
+      (hmeas.comp (measurable_pi_apply j)).aestronglyMeasurable
+      (ae_of_all _ fun s ↦ by
+        rw [Real.norm_eq_abs, abs_le]; exact randomFourierFeatureTerm_mem_Icc x y (s j))
+  have hDpos : (D : ℝ) ≠ 0 := by exact_mod_cast (show 0 < D by omega).ne'
+  simp only [randomFourierFeatureKernel]
+  rw [integral_const_mul, integral_finsetSum _ fun j _ ↦ hintj j]
+  simp only [hcoord, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+  field_simp
 
-/-- GAPS 108.74: unbiased random Fourier features and their pointwise Hoeffding bound. -/
-theorem randomFourierFeatureKernel_unbiased_and_concentration {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
+/-- GAPS 108.74: the pointwise Hoeffding bound for random Fourier features. For an independent
+sample of `D ≥ 1` frequencies `w_j ∼ L` and uniform phases, the random-feature kernel deviates from
+`k(x, y) = ∫ cos ⟨w, x - y⟩ dL(w)` by at least `ε > 0` with probability at most
+`2 exp(-D ε² / 8)`. Its unbiasedness is `CKSD.integral_randomFourierFeatureKernel`. -/
+theorem measureReal_abs_randomFourierFeatureKernel_sub_ge_le {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
     (phase : Measure ℝ) [IsProbabilityMeasure phase]
     (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
     (x y : EuclideanSpace ℝ (Fin d)) (epsilon : ℝ) (he : 0 < epsilon) :
-    let P := Measure.pi (fun _ : Fin D ↦ L.prod phase);
-    let k := ∫ w, Real.cos (inner ℝ w (x - y)) ∂L;
-    (∫ sample, randomFourierFeatureKernel sample x y ∂P) = k ∧
-      P.real {sample | epsilon ≤ |randomFourierFeatureKernel sample x y - k|} ≤
-        2 * Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) := by
-  intro P k
+    (Measure.pi fun _ : Fin D ↦ L.prod phase).real
+        {sample | epsilon ≤ |randomFourierFeatureKernel sample x y -
+          ∫ w, Real.cos (inner ℝ w (x - y)) ∂L|} ≤
+      2 * Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) := by
+  set P := Measure.pi fun _ : Fin D ↦ L.prod phase
+  set k := ∫ w, Real.cos (inner ℝ w (x - y)) ∂L
   have hDpos : (0 : ℝ) < D := by exact_mod_cast hD
   have hmeas : Measurable (randomFourierFeatureTerm x y) :=
     (continuous_randomFourierFeatureTerm x y).measurable
   have hk : ∫ s, randomFourierFeatureTerm x y s ∂L.prod phase = k :=
     integral_randomFourierFeatureTerm L phase hphase x y
-  have hcoord : ∀ j : Fin D, ∫ s, randomFourierFeatureTerm x y (s j) ∂P = k := fun j ↦ by
-    rw [← hk]
-    exact integral_comp_eval (μ := fun _ : Fin D ↦ L.prod phase) hmeas.aestronglyMeasurable
-  have hintj : ∀ j : Fin D, Integrable (fun s : Fin D → _ ↦ randomFourierFeatureTerm x y (s j)) P :=
-    fun j ↦ Integrable.of_bound (C := 2)
-      (hmeas.comp (measurable_pi_apply j)).aestronglyMeasurable
-      (ae_of_all _ fun s ↦ by
-        rw [Real.norm_eq_abs, abs_le]; exact randomFourierFeatureTerm_mem_Icc x y (s j))
-  refine ⟨?_, ?_⟩
-  · simp_rw [randomFourierFeatureKernel_eq_mean]
-    rw [integral_const_mul, integral_finsetSum _ fun j _ ↦ hintj j]
-    simp only [hcoord, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+  have hcenter : ∀ s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ,
+      randomFourierFeatureKernel s x y - k =
+        (D : ℝ)⁻¹ * ∑ j, (randomFourierFeatureTerm x y (s j) - k) := by
+    intro s
+    rw [randomFourierFeatureKernel, Finset.sum_sub_distrib]
+    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
     field_simp
-  · have hcenter : ∀ s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ,
-        randomFourierFeatureKernel s x y - k =
-          (D : ℝ)⁻¹ * ∑ j, (randomFourierFeatureTerm x y (s j) - k) := by
-      intro s
-      rw [randomFourierFeatureKernel_eq_mean, Finset.sum_sub_distrib]
-      simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
-      field_simp
-    have hup := measureReal_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas
-      (randomFourierFeatureTerm_mem_Icc x y) he.le
-    have hlo := measureReal_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas.neg
-      (fun s ↦ by
-        have := randomFourierFeatureTerm_mem_Icc x y s
-        exact ⟨by simp only [Pi.neg_apply]; linarith [this.2],
-          by simp only [Pi.neg_apply]; linarith [this.1]⟩) he.le
-    rw [hk] at hup
-    simp only [Pi.neg_apply, integral_neg, hk] at hlo
-    have hsub : {sample | epsilon ≤ |randomFourierFeatureKernel sample x y - k|} ⊆
-        {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ | (D : ℝ) * epsilon ≤ ∑ j, (randomFourierFeatureTerm x y (s j) - k)} ∪
-          {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ | (D : ℝ) * epsilon ≤ ∑ j, (-randomFourierFeatureTerm x y (s j) - -k)} := by
-      intro s hs
-      simp only [mem_ofPred_eq, hcenter] at hs
-      simp only [mem_union, mem_ofPred_eq]
-      have hsum : ∑ j, (-randomFourierFeatureTerm x y (s j) - -k) =
-          -∑ j, (randomFourierFeatureTerm x y (s j) - k) := by
-        rw [← Finset.sum_neg_distrib]
-        exact Finset.sum_congr rfl fun j _ ↦ by ring
-      rw [hsum]
-      rcases le_abs'.mp hs with h | h
-      · right
-        have := mul_le_mul_of_nonneg_left h hDpos.le
-        rw [← mul_assoc, mul_inv_cancel₀ hDpos.ne', one_mul] at this
-        linarith
-      · left
-        have := mul_le_mul_of_nonneg_left h hDpos.le
-        rwa [← mul_assoc, mul_inv_cancel₀ hDpos.ne', one_mul] at this
-    calc P.real {sample | epsilon ≤ |randomFourierFeatureKernel sample x y - k|}
-        ≤ P.real ({s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ | (D : ℝ) * epsilon ≤ ∑ j, (randomFourierFeatureTerm x y (s j) - k)} ∪
-          {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ | (D : ℝ) * epsilon ≤ ∑ j, (-randomFourierFeatureTerm x y (s j) - -k)}) :=
-          measureReal_mono hsub
-      _ ≤ _ := measureReal_union_le _ _
-      _ ≤ Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) + Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) :=
-          add_le_add hup hlo
-      _ = 2 * Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) := by ring
+  have hexp : Real.exp (-2 * (D : ℝ) * epsilon ^ 2 / (2 - -2) ^ 2) =
+      Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) := by
+    congr 1; ring
+  have hup := measureReal_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas
+    (randomFourierFeatureTerm_mem_Icc x y) he.le
+  have hlo := measureReal_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas.neg (a := -2) (b := 2)
+    (fun s ↦ by
+      have := randomFourierFeatureTerm_mem_Icc x y s
+      exact ⟨by simp only [Pi.neg_apply]; linarith [this.2],
+        by simp only [Pi.neg_apply]; linarith [this.1]⟩) he.le
+  rw [hk, hexp] at hup
+  simp only [Pi.neg_apply, integral_neg, hk] at hlo
+  rw [hexp] at hlo
+  set A := {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ |
+    (D : ℝ) * epsilon ≤ ∑ j, (randomFourierFeatureTerm x y (s j) - k)}
+  set B := {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ |
+    (D : ℝ) * epsilon ≤ ∑ j, (-randomFourierFeatureTerm x y (s j) - -k)}
+  have hsub : {sample | epsilon ≤ |randomFourierFeatureKernel sample x y - k|} ⊆ A ∪ B := by
+    intro s hs
+    simp only [mem_ofPred_eq, hcenter] at hs
+    simp only [A, B, mem_union, mem_ofPred_eq]
+    have hsum : ∑ j, (-randomFourierFeatureTerm x y (s j) - -k) =
+        -∑ j, (randomFourierFeatureTerm x y (s j) - k) := by
+      rw [← Finset.sum_neg_distrib]
+      exact Finset.sum_congr rfl fun j _ ↦ by ring
+    rw [hsum]
+    rcases le_abs'.mp hs with h | h
+    · right
+      have := mul_le_mul_of_nonneg_left h hDpos.le
+      rw [← mul_assoc, mul_inv_cancel₀ hDpos.ne', one_mul] at this
+      linarith
+    · left
+      have := mul_le_mul_of_nonneg_left h hDpos.le
+      rwa [← mul_assoc, mul_inv_cancel₀ hDpos.ne', one_mul] at this
+  calc P.real {sample | epsilon ≤ |randomFourierFeatureKernel sample x y - k|}
+      ≤ P.real (A ∪ B) := measureReal_mono hsub
+    _ ≤ P.real A + P.real B := measureReal_union_le _ _
+    _ ≤ Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) + Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) :=
+        add_le_add hup hlo
+    _ = 2 * Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) := by ring
 
-/-- GAPS 108.74: the uniform compact-set random-feature bound. -/
+/-- GAPS 108.74: the uniform compact-set random-feature bound. For a compact set `M ⊆ ℝ^d`, a
+frequency law `L` with finite second moment `σ² = E ‖w‖²`, and `ε ≤ σ diam M`, the probability that
+the random-feature kernel of `D` features deviates from `k` by at least `ε` somewhere on `M × M` is
+at most `98 (σ diam M / ε)² exp(-D ε² / (32 (d + 1)))`. -/
 theorem measure_uniform_randomFourierFeatureKernel_error_le {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L] (hL2 : MemLp id 2 L)
     (phase : Measure ℝ) [IsProbabilityMeasure phase]
     (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
     (M : Set (EuclideanSpace ℝ (Fin d))) (hM : IsCompact M)
-    (epsilon : ℝ) (he : 0 < epsilon) :
+    (epsilon : ℝ) (he : 0 < epsilon)
+    (hscale : epsilon ≤ Real.sqrt (∫ w, ‖w‖ ^ 2 ∂L) * Metric.diam M) :
     let sigma := Real.sqrt (∫ w, ‖w‖ ^ 2 ∂L);
-    ∀ (hscale : epsilon ≤ sigma * Metric.diam M),
     let k := fun x y ↦ ∫ w, Real.cos (inner ℝ w (x - y)) ∂L;
     let P := Measure.pi (fun _ : Fin D ↦ L.prod phase);
     P.real {sample | ∃ x ∈ M, ∃ y ∈ M, epsilon ≤ |randomFourierFeatureKernel sample x y - k x y|} ≤
@@ -558,7 +653,9 @@ theorem integrable_of_continuousOn_compact_prod
     simp
   exact Integrable.of_bound hmeas.aestronglyMeasurable C (ae_of_all _ fun z ↦ hC z z.2)
 
-/-- GAPS 108.74, deterministic transfer of a uniform kernel error to squared MMD. -/
+/-- GAPS 108.74, deterministic transfer of a uniform kernel error to squared MMD: if two continuous
+kernels differ by at most `ε` on `M × M` for a compact `M` carrying both laws, their squared MMDs
+differ by at most `4 ε`. -/
 theorem abs_squaredMMD_sub_le_of_uniform_kernel_error
     {X : Type*} [MetricSpace X] [MeasurableSpace X] [BorelSpace X]
     (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]

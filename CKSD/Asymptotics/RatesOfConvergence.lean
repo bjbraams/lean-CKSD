@@ -49,7 +49,7 @@ quadratic separation `M θ - M θ₀ ≤ -c d(θ,θ₀)²` near `θ₀`, and tha
 most `C φₙ(δ)/√n` with a constant `C ≥ 0`, where `δ ↦ φₙ(δ)/δ^a` is decreasing on `(0,∞)` for
 a fixed `a < 2`. If `rₙ² φₙ(1/rₙ) ≤ √n`, the estimator maximizes `Mₙ` up to `O_P(rₙ⁻²)`, and it
 is consistent in outer probability, then `rₙ d(Tₙ, θ₀) = O_P(1)`. -/
-theorem isBoundedInProbability_rate_m_estimator {Ω Θ : Type*} [MeasurableSpace Ω]
+theorem isBoundedInProbability_rate_mEstimator {Ω Θ : Type*} [MeasurableSpace Ω]
     [PseudoMetricSpace Θ] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (M : Θ → ℝ) (Mn : ℕ → Ω → Θ → ℝ) (θ₀ : Θ)
     (c η : ℝ) (hc : 0 < c) (hη : 0 < η)

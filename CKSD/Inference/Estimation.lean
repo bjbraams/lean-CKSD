@@ -1,19 +1,28 @@
 module
 
 public import CKSD.Inference.Moments
+public import CKSD.Inference.Model
 public import CKSD.Inference.Sufficiency
 public import Mathlib.Algebra.QuadraticDiscriminant
 
 /-!
 # Unbiased estimation and risk improvement
 
-Rao–Blackwell reduction for parameter-dependent convex losses, uniqueness for complete
-statistics, Basu independence, the centered score-moment information inequality, and the
-covariance characterization of minimum-variance unbiasedness. Sufficient statistics are
-represented by a common disintegrating Markov kernel.
-Sources: GAPS 101.7–101.12, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
--/
+## Main results
 
+* `CKSD.exists_rao_blackwell_estimator`: Rao–Blackwell improvement by conditioning on a
+  sufficient statistic, for convex losses that may depend on the parameter (GAPS 101.7).
+* `CKSD.ae_eq_of_isCompleteStatistic_of_isUnbiasedEstimator`: uniqueness of unbiased functions of a
+  complete statistic (Lehmann–Scheffé, GAPS 101.8).
+* `CKSD.indepFun_of_isSufficientStatistic_of_isBoundedlyCompleteStatistic`: Basu's theorem
+  (GAPS 101.9).
+* `CKSD.sq_div_information_le_variance`: the information (Cramér–Rao) inequality in score-moment
+  form (GAPS 101.10).
+* `CKSD.isMinimumVarianceUnbiasedEstimator_iff_covariance_eq_zero`: UMVU estimators are those
+  uncorrelated with every unbiased estimator of zero (GAPS 101.12).
+
+Sufficient statistics are represented by a common disintegrating Markov kernel.
+-/
 @[expose] public section
 
 noncomputable section
@@ -109,13 +118,14 @@ theorem ae_eq_of_isCompleteStatistic_of_isUnbiasedEstimator
       integral_sub (hua.2 θ).1 (hub.2 θ).1
     _ = 0 := by rw [(hua.2 θ).2, (hub.2 θ).2, sub_self]
 
-/-- GAPS 101.9: Basu's theorem. -/
+/-- GAPS 101.9: Basu's theorem. A boundedly complete sufficient statistic `T` is independent of
+every ancillary statistic `A` under every `P θ`. -/
 theorem indepFun_of_isSufficientStatistic_of_isBoundedlyCompleteStatistic
     (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
-    (T : X → S) (A : X → V) (hA : Measurable A)
-    (hs : IsSufficientStatistic P T) (hc : IsBoundedlyCompleteStatistic P T)
-    (ha : ∀ θ θ', (P θ).map A = (P θ').map A) (θ : Θ) :
+    (T : X → S) (A : X → V) (hs : IsSufficientStatistic P T)
+    (hc : IsBoundedlyCompleteStatistic P T) (ha : IsAncillaryStatistic P A) (θ : Θ) :
     IndepFun T A (P θ) := by
+  obtain ⟨hA, ha⟩ := ha
   obtain ⟨hT, K, hKm, hK⟩ := hs
   rw [indepFun_iff_measure_inter_preimage_eq_mul]
   intro C B hC hB
@@ -186,17 +196,19 @@ theorem sq_div_information_le_variance (P : Measure X) [IsProbabilityMeasure P]
     g' ^ 2 / (∫ x, score x ^ 2 ∂P) = a * g' := by dsimp [a]; ring
     _ ≤ variance P W := by rw [ha2] at hnonneg; linarith
 
-/-- GAPS 101.12: covariance characterization of uniformly minimum variance unbiasedness. -/
-theorem is_minimum_variance_unbiased_iff_covariance_eq_zero
+/-- GAPS 101.12: the covariance characterization of uniformly minimum variance unbiased
+estimators. A square-integrable unbiased estimator `W` of `g` is UMVU if and only if it is
+uncorrelated, under every `P θ`, with every square-integrable unbiased estimator of zero. -/
+theorem isMinimumVarianceUnbiasedEstimator_iff_covariance_eq_zero
     (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
     (W : X → ℝ) (g : Θ → ℝ) (hW : IsUnbiasedEstimator P W g)
     (hW2 : ∀ θ, MemLp W 2 (P θ)) :
-    (∀ W', IsUnbiasedEstimator P W' g → (∀ θ, MemLp W' 2 (P θ)) →
-      ∀ θ, variance (P θ) W ≤ variance (P θ) W') ↔
+    IsMinimumVarianceUnbiasedEstimator P W g ↔
     (∀ U, IsUnbiasedEstimator P U (fun _ ↦ 0) → (∀ θ, MemLp U 2 (P θ)) →
       ∀ θ, covariance (P θ) W U = 0) := by
-  constructor
-  · intro hmin U hU hU2 θ
+  refine ⟨fun h ↦ ?_, fun h ↦ ⟨hW, hW2, ?_⟩⟩
+  · have hmin := h.2.2
+    intro U hU hU2 θ
     have := hP θ
     have hquad (a : ℝ) :
         0 ≤ ProbabilityTheory.variance U (P θ) * (a * a) +
@@ -218,7 +230,8 @@ theorem is_minimum_variance_unbiased_iff_covariance_eq_zero
     have hd := discrim_le_zero hquad
     simp only [discrim, mul_zero, sub_zero] at hd
     nlinarith [sq_nonneg (covariance (P θ) W U)]
-  · intro hcov W' hW' hW'2 θ
+  · have hcov := h
+    intro W' hW' hW'2 θ
     have := hP θ
     let U : X → ℝ := fun x ↦ W' x - W x
     have hU : IsUnbiasedEstimator P U (fun _ ↦ 0) := by

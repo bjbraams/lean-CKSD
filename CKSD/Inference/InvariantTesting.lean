@@ -1,19 +1,35 @@
 module
 
-public import CKSD.Inference.Basic
+public import CKSD.Inference.Model
+public import CKSD.Inference.NeymanPearson
 public import CKSD.Inference.Sufficiency
-public import CKSD.Inference.Density
 
 /-!
-# Unbiased tests and maximal invariants
+# Unbiased tests, Neyman structure, and maximal invariants
 
-Generalized Neyman–Pearson comparison with signed multipliers, exponential-integral
-differentiation, the two-tail moment-constraint UMPU theorem, Neyman structure under bounded
-completeness, and algebraic factorization through a maximal invariant. The last result uses
-Mathlib's `Function.FactorsThrough`; it asserts no unproved measurable quotient property.
-Sources: GAPS 101.45, 101.47, 101.49 and 101.55, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
+The two-sided uniformly most powerful unbiased test in a one-parameter exponential family,
+Neyman structure of similar tests under bounded completeness, and maximal invariants.
+
+## Main results
+
+* `CKSD.isUniformlyMostPowerfulUnbiasedTest_of_two_tail_moment_constraints`: the two-tailed test
+  in the natural statistic whose size and first moment match `α` at `η₀` is UMPU for `η = η₀`
+  against `η ≠ η₀` (GAPS 101.45).
+* `CKSD.hasDerivAt_integral_mul_exp`: differentiation of exponential-family integrals in the
+  natural parameter.
+* `CKSD.condExp_eq_const_of_isSimilarTest`: similar tests have Neyman structure (GAPS 101.49).
+* `CKSD.invariant_iff_factors_through_maximal_invariant` (GAPS 101.55) and
+  `CKSD.mean_scale_ratio_eq_iff` (GAPS 101.56).
+
+## Implementation notes
+
+Maximal invariants use Mathlib's `Function.FactorsThrough`; no measurable quotient structure is
+asserted.
+
+## References
+
+* E. L. Lehmann and J. P. Romano, *Testing Statistical Hypotheses*, Sections 4.2, 4.3 and 6.2.
 -/
-
 @[expose] public section
 
 noncomputable section
@@ -27,67 +43,6 @@ attribute [local instance] Classical.propDecidable
 
 variable {Θ X S V : Type*} [MeasurableSpace X] [MeasurableSpace S]
   [MeasurableSpace V]
-
-/-- GAPS 101.47: generalized Neyman–Pearson comparison, with signed multipliers. -/
-theorem integral_le_of_generalized_neyman_pearson {m : ℕ} (μ : Measure X) (f₀ : X → ℝ)
-    (f : Fin m → X → ℝ) (k : Fin m → ℝ) (hf₀ : Integrable f₀ μ)
-    (hf : ∀ i, Integrable (f i) μ) (φ ψ : X → ℝ)
-    (hφ : IsStatisticalTest φ) (hψ : IsStatisticalTest ψ)
-    (hthreshold : ∀ᵐ x ∂μ, ((∑ i, k i * f i x) < f₀ x → φ x = 1) ∧
-      (f₀ x < (∑ i, k i * f i x) → φ x = 0))
-    (hconstraints : ∀ i, k i * (∫ x, ψ x * f i x ∂μ) ≤
-      k i * (∫ x, φ x * f i x ∂μ)) :
-    (∫ x, ψ x * f₀ x ∂μ) ≤ ∫ x, φ x * f₀ x ∂μ := by
-  have hmul (g : X → ℝ) (hg : Integrable g μ) (a : X → ℝ)
-      (ha : IsStatisticalTest a) : Integrable (fun x ↦ a x * g x) μ := by
-    apply hg.bdd_mul (c := 1) ha.1.aestronglyMeasurable
-    exact ae_of_all μ fun x ↦ by
-      rw [Real.norm_eq_abs, abs_le]
-      exact ⟨by linarith [(ha.2 x).1], (ha.2 x).2⟩
-  have hiφ₀ := hmul f₀ hf₀ φ hφ
-  have hiψ₀ := hmul f₀ hf₀ ψ hψ
-  have hiφ (i : Fin m) := hmul (f i) (hf i) φ hφ
-  have hiψ (i : Fin m) := hmul (f i) (hf i) ψ hψ
-  have hi (i : Fin m) : Integrable (fun x ↦ k i * (ψ x * f i x - φ x * f i x)) μ :=
-    ((hiψ i).sub (hiφ i)).const_mul (k i)
-  have hpoint : ∀ᵐ x ∂μ, ψ x * f₀ x - φ x * f₀ x ≤
-      ∑ i, k i * (ψ x * f i x - φ x * f i x) := by
-    filter_upwards [hthreshold] with x ht
-    have hprod : (ψ x - φ x) * (f₀ x - ∑ i, k i * f i x) ≤ 0 := by
-      rcases lt_trichotomy (∑ i, k i * f i x) (f₀ x) with h | h | h
-      · rw [ht.1 h]
-        exact mul_nonpos_of_nonpos_of_nonneg (by linarith [(hψ.2 x).2]) (by linarith)
-      · simp [h]
-      · rw [ht.2 h]
-        exact mul_nonpos_of_nonneg_of_nonpos (by simpa using (hψ.2 x).1) (by linarith)
-    have hsum : (∑ i, k i * (ψ x * f i x - φ x * f i x)) =
-        (ψ x - φ x) * ∑ i, k i * f i x := by
-      rw [Finset.mul_sum]
-      apply Finset.sum_congr rfl
-      intro i _
-      ring
-    rw [hsum]
-    nlinarith [hprod]
-  have hmono := integral_mono_ae (hiψ₀.sub hiφ₀)
-    (integrable_finsetSum Finset.univ (fun i _ ↦ hi i)) hpoint
-  have hleft : (∫ x, ψ x * f₀ x - φ x * f₀ x ∂μ) =
-      (∫ x, ψ x * f₀ x ∂μ) - ∫ x, φ x * f₀ x ∂μ := by
-    simpa only [Pi.sub_apply] using integral_sub hiψ₀ hiφ₀
-  have hterm (i : Fin m) :
-      (∫ x, k i * (ψ x * f i x - φ x * f i x) ∂μ) =
-        k i * ((∫ x, ψ x * f i x ∂μ) - ∫ x, φ x * f i x ∂μ) := by
-    rw [integral_const_mul]
-    congr 1
-    simpa only [Pi.sub_apply] using integral_sub (hiψ i) (hiφ i)
-  have hright : (∫ x, ∑ i, k i * (ψ x * f i x - φ x * f i x) ∂μ) ≤ 0 := by
-    rw [integral_finsetSum Finset.univ (fun i _ ↦ hi i)]
-    simp_rw [hterm]
-    apply Finset.sum_nonpos
-    intro i _
-    nlinarith [hconstraints i]
-  simp only [Pi.sub_apply] at hmono
-  rw [hleft] at hmono
-  linarith
 
 /-- On `|η - η₀| < ε`, the derivative factor `|t| e^{η t}` is dominated by the two exponentials at
 `η₀ ± 2ε`. -/
@@ -343,14 +298,13 @@ theorem isUniformlyMostPowerfulUnbiasedTest_of_two_tail_moment_constraints
     rw [mem_singleton_iff] at hθ
     rw [hθ, hφsize]
   · intro θ _
-    have hconst : IsStatisticalTest (fun _ : X ↦ α) :=
-      ⟨measurable_const, fun _ ↦ ⟨hα.1.le, hα.2.le⟩⟩
+    have hconst : IsStatisticalTest (fun _ : X ↦ α) := IsStatisticalTest.const ⟨hα.1.le, hα.2.le⟩
     have := hcomp θ (fun _ ↦ α) hconst (by simp) (by rw [integral_mul_const, mul_comm])
     have hPθ := hP θ
     simpa using this
   · intro ψ hψ hlev hunb θ _
-    have hψb : ∀ x, |ψ x| ≤ 1 := fun x ↦ abs_le.2 ⟨by linarith [(hψ.2 x).1], (hψ.2 x).2⟩
-    obtain ⟨-, hM⟩ := hasDerivAt_integral_mul_exp μ T h ψ hT hh hpos hψ.1 hψb U hU hexpint
+    obtain ⟨-, hM⟩ := hasDerivAt_integral_mul_exp μ T h ψ hT hh hpos hψ.1 hψ.abs_le_one U hU
+      hexpint
       η₀ η₀.2
     obtain ⟨-, hZd⟩ := hasDerivAt_integral_mul_exp μ T h (fun _ ↦ 1) hT hh hpos measurable_const
       (fun _ ↦ by simp) U hU hexpint η₀ η₀.2
@@ -400,19 +354,22 @@ theorem isUniformlyMostPowerfulUnbiasedTest_of_two_tail_moment_constraints
       rw [e1, e2, hM']
       ring
 
-/-- GAPS 101.49: similar tests have Neyman structure under bounded completeness. -/
-theorem condExp_eq_const_of_similar_test (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
+/-- GAPS 101.49: similar tests have Neyman structure. If `T` is sufficient and boundedly
+complete, every test `φ` that is similar of size `α` (its power is `α` at every parameter) has
+conditional rejection probability `E_θ[φ | T] = α` almost surely for every `θ`. -/
+theorem condExp_eq_const_of_isSimilarTest (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
     (T : X → S) (hs : IsSufficientStatistic P T) (hc : IsBoundedlyCompleteStatistic P T)
-    (φ : X → ℝ) (hφ : IsStatisticalTest φ) (α : ℝ)
-    (hsim : ∀ θ, (∫ x, φ x ∂P θ) = α) (θ : Θ) :
+    (φ : X → ℝ) (α : ℝ) (hsim' : IsSimilarTest P univ α φ) (θ : Θ) :
     (P θ)[φ | (inferInstance : MeasurableSpace S).comap T] =ᵐ[P θ] fun _ ↦ α := by
   obtain ⟨hT, K, hKm, hK⟩ := hs
-  have hφb : ∀ x, |φ x| ≤ 1 := fun x ↦ abs_le.2 ⟨by linarith [(hφ.2 x).1], (hφ.2 x).2⟩
+  obtain ⟨hφ, hsim⟩ := hsim'
+  replace hsim : ∀ θ, (∫ x, φ x ∂P θ) = α := fun θ ↦ hsim θ (mem_univ θ)
+  have hφb : ∀ x, |φ x| ≤ 1 := hφ.abs_le_one
   have hzero := ae_integral_kernel_eq_of_isBoundedlyCompleteStatistic P hP hT hc K hK hφ.1 hφb
     α hsim θ
   have := hP θ
   refine (ae_eq_condExp_of_forall_setIntegral_eq hT.comap_le
-    (integrable_of_measurable_of_abs_le _ hφ.1 hφb)
+    (hφ.integrable _)
     (fun _ _ _ ↦ integrableOn_const) (fun s hs' _ ↦ ?_) aestronglyMeasurable_const).symm
   obtain ⟨B, hB, rfl⟩ := hs'
   rw [setIntegral_preimage_eq_integral_indicator_mul _ hT hB,
@@ -422,8 +379,9 @@ theorem condExp_eq_const_of_similar_test (P : Θ → Measure X) (hP : ∀ θ, Is
   simp only
   rw [hx]
 
-/-- GAPS 101.55, algebraic part: invariant functions factor through a maximal invariant.
-No measurability of the factor is asserted without a measurable quotient hypothesis. -/
+/-- GAPS 101.55, algebraic part: if `M` is a maximal invariant for a group action (invariant, and
+`M x = M y` only when `y` is in the orbit of `x`), a function is invariant if and only if it
+factors through `M`. No measurability of the factor is asserted. -/
 theorem invariant_iff_factors_through_maximal_invariant
     {G A B C : Type*} [Group G] [MulAction G A] [Nonempty C]
     (M : A → B) (hM : ∀ (g : G) x, M (g • x) = M x)
@@ -437,6 +395,20 @@ theorem invariant_iff_factors_through_maximal_invariant
   · intro hf g x
     exact hf (hM g x)
 
-
+/-- GAPS 101.56: under the scale group `(x, s) ↦ (c x, c s)`, `c > 0`, acting on pairs of a mean
+and a positive scale, the ratio `x / s` is a maximal invariant: `x / s = y / t` if and only if
+`(y, t) = (c x, c s)` for some `c > 0`. -/
+theorem mean_scale_ratio_eq_iff (x y s t : ℝ) (hs : 0 < s) (ht : 0 < t) :
+    x / s = y / t ↔ ∃ c > 0, y = c * x ∧ t = c * s := by
+  constructor
+  · intro h
+    refine ⟨t / s, div_pos ht hs, ?_, ?_⟩
+    · have hcross := (div_eq_div_iff (ne_of_gt hs) (ne_of_gt ht)).mp h
+      rw [div_mul_eq_mul_div]
+      apply (eq_div_iff (ne_of_gt hs)).mpr
+      nlinarith
+    · exact (div_mul_cancel₀ t (ne_of_gt hs)).symm
+  · rintro ⟨c, hc, rfl, rfl⟩
+    field_simp
 
 end CKSD

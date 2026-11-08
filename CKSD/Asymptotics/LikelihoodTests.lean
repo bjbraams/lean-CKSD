@@ -25,7 +25,7 @@ The proofs realize the sample as the first `n` coordinates of Mathlib's infinite
 limit theorem through the adapters of `CKSD.Asymptotics.Estimators`, and a second-order Taylor expansion
 of the sample log likelihood. All three statistics reduce to `Zₙ² / I(θ₀)` for the normalized
 score `Zₙ`. Under local alternatives, the joint law of a statistic and the log likelihood ratio is
-transported by Le Cam's third lemma `tendstoWeakly_of_log_likelihood_ratio_dependent`
+transported by Le Cam's third lemma `tendstoWeakly_of_log_likelihood_ratio`
 (GAPS 102.14); the product densities use TauCeti's `TauCeti.pi_withDensity`, and the limit is
 identified by TauCeti's `TauCeti.Probability.gaussianReal_map_sq_noncentral`.
 -/
@@ -51,7 +51,7 @@ def scalarScoreStatistic {E : Type*} (f : ℝ → E → ℝ) (I : ℝ → ℝ) {
   deriv (sampleLogLikelihood f x) θ₀ ^ 2 / (n * I θ₀)
 
 /-- The coordinate process of the infinite product of a probability law is iid with that law. -/
-theorem iid_infinitePi_eval {E : Type*} [MeasurableSpace E] (P : Measure E)
+theorem isIndependentIdenticallyDistributed_infinitePi_eval {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P] :
     IsIndependentIdenticallyDistributed (Measure.infinitePi fun _ : ℕ ↦ P) (fun i ω ↦ ω i) P :=
   ⟨fun i ↦ measurable_pi_apply i,
@@ -559,7 +559,7 @@ theorem likelihood_tests_sub_score_sq_infinitePi
   intro I μ Z LR W S
   have hP0 := hP θ₀
   set X : ℕ → (ℕ → E) → E := fun i ω ↦ ω i with hX
-  have hiid : IsIndependentIdenticallyDistributed μ X (P θ₀) := iid_infinitePi_eval (P θ₀)
+  have hiid : IsIndependentIdenticallyDistributed μ X (P θ₀) := isIndependentIdenticallyDistributed_infinitePi_eval (P θ₀)
   have hρm : ∀ n, Measurable (fun ω : ℕ → E ↦ fun i : Fin n ↦ X i ω) := fun n ↦
     measurable_pi_iff.2 fun i : Fin n ↦ hiid.1 i
   set ell : ℝ → E → ℝ := fun θ x ↦ Real.log (f θ x) with hell
@@ -691,7 +691,7 @@ theorem tendstoWeakly_likelihoodRatio_wald_score_chiSquared
       hscore hmean hhess hinfo T hT hcons hmax
   set μ : Measure (ℕ → E) := Measure.infinitePi fun _ : ℕ ↦ P θ₀ with hμ
   have hiid : IsIndependentIdenticallyDistributed μ (fun i ω ↦ ω i) (P θ₀) :=
-    iid_infinitePi_eval (P θ₀)
+    isIndependentIdenticallyDistributed_infinitePi_eval (P θ₀)
   have hρm : ∀ n, Measurable (fun ω : ℕ → E ↦ fun i : Fin n ↦ ω i) := fun n ↦
     measurable_pi_iff.2 fun i : Fin n ↦ hiid.1 i
   set Z := fun (n : ℕ) (ω : ℕ → E) ↦
@@ -769,7 +769,7 @@ theorem tendstoWeakly_likelihoodRatio_wald_score_noncentralChiSquared
       hscore hmean hhess hinfo T hT hcons hmax
   set μ : Measure (ℕ → E) := Measure.infinitePi fun _ : ℕ ↦ P θ₀ with hμ
   have hiid : IsIndependentIdenticallyDistributed μ (fun i ω ↦ ω i) (P θ₀) :=
-    iid_infinitePi_eval (P θ₀)
+    isIndependentIdenticallyDistributed_infinitePi_eval (P θ₀)
   have hρm : ∀ n, Measurable (fun ω : ℕ → E ↦ fun i : Fin n ↦ ω i) := fun n ↦
     measurable_pi_iff.2 fun i : Fin n ↦ hiid.1 i
   set Z := fun (n : ℕ) (ω : ℕ → E) ↦
@@ -803,7 +803,7 @@ theorem tendstoWeakly_likelihoodRatio_wald_score_noncentralChiSquared
       simp only [ψ, Λ, Prod.mk_sub_mk, Function.comp_apply, I]
     have hpi := tendstoWeakly_pi_of_tendstoInDistribution μ (P θ₀) _ hiid
       (fun n x ↦ (V n x, Λ n x)) (fun n ↦ (hV n).prodMk (hΛm n)) ν₂ hjoint
-    have := tendstoWeakly_of_log_likelihood_ratio_dependent
+    have := tendstoWeakly_of_log_likelihood_ratio
       (fun n ↦ Measure.pi fun _ : Fin n ↦ P θ₀) Q (fun n ↦ inferInstance) hQ V Λ hV hΛm hrn ν₂
       hpi hmean1
     rwa [hlaw] at this

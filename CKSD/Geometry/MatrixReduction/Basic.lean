@@ -8,7 +8,18 @@ public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 # Column reductions of finite matrices
 
 Column lows, reduced matrices, and the invariance of lower-left ranks under upper-triangular
-column operations. These algebraic constructions allow empty index types. Source: GAPS 108.32.
+column operations. These algebraic constructions allow empty index types.
+
+## Main definitions
+
+* `CKSD.IsColumnLow`, `CKSD.IsReducedMatrix`, `CKSD.IsMatrixReduction`.
+* `CKSD.lowerLeftPart`, `CKSD.lowerLeftRank`, `CKSD.pairingRankCombination`.
+
+## Main results
+
+* `CKSD.lowerLeftRank_eq_of_isMatrixReduction`: lower-left ranks are invariant under reduction.
+* `CKSD.isColumnLow_iff_pairingRankCombination_eq_one`: the pairing lemma (GAPS 108.32).
+* `CKSD.isColumnLow_iff_of_isMatrixReduction`: independence of the reduction (GAPS 108.32).
 -/
 
 @[expose] public section
@@ -126,7 +137,7 @@ theorem lowerLeftRank_eq_of_isMatrixReduction {D R V : Matrix (Fin m) (Fin m) �
     exact lowerLeftRank_mul_le R V⁻¹ hinv a b
 
 /-- The rank of a reduced matrix is the number of its nonzero columns. -/
-theorem rank_eq_card_of_isReducedMatrix [DecidableEq (Fin m)] {M : Matrix (Fin m) (Fin m) 𝕜}
+theorem rank_eq_card_of_isReducedMatrix {M : Matrix (Fin m) (Fin m) 𝕜}
     (hM : IsReducedMatrix M) :
     M.rank = Fintype.card {l : Fin m // ∃ i, IsColumnLow M i l} := by
   classical
@@ -284,14 +295,16 @@ of lower-left submatrices of `D` equals `1`. In particular the pairing does not 
 reduction (`isColumnLow_iff_of_isMatrixReduction`). The statement holds for every square matrix,
 so it covers boundary matrices over `ℤ/2` and signed boundary matrices over any field. Indices
 start at `0`; the homological reading of the pairs is
-`persistentBettiOfMatrix_eq_card_bars`. -/
+`CKSD.IsColumnLow.dim_eq_and_persistentBettiOfMatrix_eq` and
+`CKSD.persistentBettiOfMatrix_eq_card`. -/
 theorem isColumnLow_iff_pairingRankCombination_eq_one {D R V : Matrix (Fin m) (Fin m) 𝕜}
     (h : IsMatrixReduction D R V) (i j : Fin m) :
     IsColumnLow R i j ↔ pairingRankCombination D i j = 1 := by
   rw [pairingRankCombination_eq_ite h]
   split_ifs with hlow <;> simp [hlow]
 
-/-- GAPS 108.32: the pairing is independent of the chosen reduction. -/
+/-- GAPS 108.32: the pairing is independent of the chosen reduction: for two column reductions
+`R = D V` and `R' = D V'` of the same matrix, `R` and `R'` have the same column lows. -/
 theorem isColumnLow_iff_of_isMatrixReduction {D R V R' V' : Matrix (Fin m) (Fin m) 𝕜}
     (h : IsMatrixReduction D R V) (h' : IsMatrixReduction D R' V') (i j : Fin m) :
     IsColumnLow R i j ↔ IsColumnLow R' i j := by

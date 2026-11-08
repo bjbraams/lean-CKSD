@@ -6,7 +6,19 @@ public import CKSD.Learning.Generalization.Concentration
 # Conformal coverage from exchangeable ranks
 
 Strict ranks with arbitrary ties yield finite-sample prediction coverage under exchangeability.
-Source: GAPS 107.6.
+
+## Main definitions
+
+* `CKSD.conformalRank`: the strict rank of a coordinate of a real vector.
+* `CKSD.conformalEvent`: the event that the last of `n + 1` scores has fewer than `k` strictly
+  smaller scores among the others.
+
+## Main results
+
+* `CKSD.div_le_measureReal_conformalEvent`: coverage at least `k / (n + 1)`, ties allowed
+  (GAPS 107.6).
+* `CKSD.measureReal_conformalEvent_eq_div`: exact coverage `k / (n + 1)` for almost surely
+  distinct scores (GAPS 107.6).
 -/
 
 @[expose] public section
@@ -107,28 +119,45 @@ theorem measurable_conformalRank_cast {m : ℕ} (i : Fin m) :
   refine Finset.measurable_sum _ fun j _ ↦ Measurable.ite ?_ measurable_const measurable_const
   exact measurableSet_lt (measurable_pi_apply j) (measurable_pi_apply i)
 
-/-- GAPS 107.6: the exchangeable-rank coverage assertion, with ties allowed. -/
-theorem conformal_coverage_ge {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) [IsProbabilityMeasure P] (n : ℕ)
+/-- The number of coordinates of strict rank below `k` is a measurable function of the
+vector. -/
+theorem measurable_card_conformalRank_lt {m : ℕ} (k : ℕ) :
+    Measurable fun v : Fin m → ℝ ↦
+      ((Finset.univ.filter fun i ↦ conformalRank v i < k).card : ℝ) := by
+  simp_rw [Finset.natCast_card_filter]
+  refine Finset.measurable_sum _ fun i _ ↦ Measurable.ite ?_ measurable_const measurable_const
+  have := (measurable_conformalRank_cast i) (measurableSet_Iio : MeasurableSet (Iio (k : ℝ)))
+  convert this using 1
+  ext v
+  simp
+
+/-- The conformal event `{ω | #{i < n : Sᵢ(ω) < Sₙ(ω)} < k}` for the last of `n + 1` scores
+`S₀, …, Sₙ`. -/
+def conformalEvent {Ω : Type*} {n : ℕ} (S : Fin (n + 1) → Ω → ℝ) (k : ℕ) : Set Ω :=
+  {ω | ((Finset.univ : Finset (Fin n)).filter
+    (fun i ↦ S i.castSucc ω < S (Fin.last n) ω)).card < k}
+
+/-- Under exchangeability of the scores, `(n + 1)` times the probability of the conformal event
+is the expected number of coordinates of strict rank below `k`. -/
+theorem natCast_add_one_mul_measureReal_conformalEvent {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P] {n : ℕ}
     (S : Fin (n + 1) → Ω → ℝ) (hS : ∀ i, Measurable (S i))
     (hex : ∀ σ : Equiv.Perm (Fin (n + 1)),
-      P.map (fun ω i ↦ S (σ i) ω) = P.map (fun ω i ↦ S i ω))
-    (k : ℕ) (hkn : k ≤ n + 1) :
-    let C := {ω | ((Finset.univ : Finset (Fin n)).filter
-      (fun i ↦ S i.castSucc ω < S (Fin.last n) ω)).card < k};
-    (k : ℝ) / (n + 1) ≤ P.real C ∧
-      ((∀ᵐ ω ∂P, Function.Injective (fun i ↦ S i ω)) → P.real C = (k : ℝ) / (n + 1)) := by
-  intro C
+      P.map (fun ω i ↦ S (σ i) ω) = P.map (fun ω i ↦ S i ω)) (k : ℕ) :
+    (n + 1) * P.real (conformalEvent S k) = ∫ ω,
+      ((Finset.univ.filter fun i ↦ conformalRank (fun j ↦ S j ω) i < k).card : ℝ) ∂P := by
+  set C := conformalEvent S k
   set V : Ω → Fin (n + 1) → ℝ := fun ω i ↦ S i ω
   have hV : Measurable V := measurable_pi_iff.mpr hS
   set A : Fin (n + 1) → Set Ω := fun i ↦ {ω | conformalRank (V ω) i < k}
   have hAm : ∀ i, MeasurableSet (A i) := fun i ↦ by
-    have := ((measurable_conformalRank_cast i).comp hV) (measurableSet_Iio : MeasurableSet (Iio (k : ℝ)))
+    have := ((measurable_conformalRank_cast i).comp hV)
+      (measurableSet_Iio : MeasurableSet (Iio (k : ℝ)))
     convert this using 1
     ext ω; simp [A]
   have hCA : C = A (Fin.last n) := by
     ext ω
-    simp only [C, A, mem_ofPred_eq]
+    simp only [C, conformalEvent, A, mem_ofPred_eq]
     unfold conformalRank
     have : (Finset.univ.filter fun j : Fin (n + 1) ↦ V ω j < V ω (Fin.last n)) =
         (Finset.univ.filter fun i : Fin n ↦ S i.castSucc ω < S (Fin.last n) ω).map
@@ -173,19 +202,45 @@ theorem conformal_coverage_ge {Ω : Type*} [MeasurableSpace Ω]
   have hsumC : ∑ i, P.real (A i) = (n + 1) * P.real C := by
     simp only [hAeq, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
     push_cast; ring
-  constructor
-  · rw [div_le_iff₀' hn1, ← hsumC, hsum]
-    calc (k : ℝ) = ∫ _ω, (k : ℝ) ∂P := by simp
-      _ ≤ _ := integral_mono (integrable_const _)
-          (integrable_finsetSum _ fun i _ ↦ hint i)
-          fun ω ↦ by rw [hcount]; exact_mod_cast le_card_conformalRank_lt (V ω) k hkn
-  · intro hinj
-    rw [eq_div_iff hn1.ne', mul_comm, ← hsumC, hsum]
-    calc ∫ ω, ∑ i, (A i).indicator (1 : Ω → ℝ) ω ∂P = ∫ _ω, (k : ℝ) ∂P := by
-          refine integral_congr_ae (hinj.mono fun ω hω ↦ ?_)
+  rw [← hsumC, hsum]
+  exact integral_congr_ae (ae_of_all _ hcount)
+
+/-- GAPS 107.6, the exchangeable-rank coverage assertion, with ties allowed: for exchangeable
+scores `S₀, …, Sₙ` and `k ≤ n + 1`, the last score has fewer than `k` strictly smaller scores
+among the others with probability at least `k / (n + 1)`. -/
+theorem div_le_measureReal_conformalEvent {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P] (n : ℕ)
+    (S : Fin (n + 1) → Ω → ℝ) (hS : ∀ i, Measurable (S i))
+    (hex : ∀ σ : Equiv.Perm (Fin (n + 1)),
+      P.map (fun ω i ↦ S (σ i) ω) = P.map (fun ω i ↦ S i ω))
+    {k : ℕ} (hkn : k ≤ n + 1) :
+    (k : ℝ) / (n + 1) ≤ P.real (conformalEvent S k) := by
+  rw [div_le_iff₀' (by positivity), natCast_add_one_mul_measureReal_conformalEvent P S hS hex k]
+  have hm : Measurable fun ω ↦
+      ((Finset.univ.filter fun i ↦ conformalRank (fun j ↦ S j ω) i < k).card : ℝ) :=
+    (measurable_card_conformalRank_lt k).comp (measurable_pi_iff.mpr hS)
+  have hb : ∀ ω, ((Finset.univ.filter fun i ↦ conformalRank (fun j ↦ S j ω) i < k).card : ℝ) ∈
+      Icc 0 ((n : ℝ) + 1) := fun ω ↦
+    ⟨Nat.cast_nonneg _, by exact_mod_cast (Finset.card_filter_le _ _).trans (by simp)⟩
+  calc (k : ℝ) = ∫ _ω, (k : ℝ) ∂P := by simp
+    _ ≤ _ := integral_mono (integrable_const _)
+        (Integrable.of_mem_Icc 0 ((n : ℝ) + 1) hm.aemeasurable (ae_of_all _ hb))
+        fun ω ↦ by exact_mod_cast le_card_conformalRank_lt _ k hkn
+
+/-- GAPS 107.6, the exchangeable-rank coverage assertion, without ties: if the scores are almost
+surely distinct, the coverage probability is exactly `k / (n + 1)`. -/
+theorem measureReal_conformalEvent_eq_div {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P] (n : ℕ)
+    (S : Fin (n + 1) → Ω → ℝ) (hS : ∀ i, Measurable (S i))
+    (hex : ∀ σ : Equiv.Perm (Fin (n + 1)),
+      P.map (fun ω i ↦ S (σ i) ω) = P.map (fun ω i ↦ S i ω))
+    {k : ℕ} (hkn : k ≤ n + 1) (hinj : ∀ᵐ ω ∂P, Function.Injective (fun i ↦ S i ω)) :
+    P.real (conformalEvent S k) = (k : ℝ) / (n + 1) := by
+  rw [eq_div_iff (by positivity), mul_comm,
+    natCast_add_one_mul_measureReal_conformalEvent P S hS hex k]
+  calc _ = ∫ _ω, (k : ℝ) ∂P := integral_congr_ae (hinj.mono fun ω hω ↦ by
           dsimp only
-          rw [hcount]
-          exact_mod_cast card_conformalRank_lt_of_injective (V ω) hω k hkn
-      _ = k := by simp
+          exact_mod_cast card_conformalRank_lt_of_injective _ hω k hkn)
+    _ = k := by simp
 
 end CKSD

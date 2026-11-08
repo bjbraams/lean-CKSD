@@ -1,12 +1,28 @@
 module
 
-public import CKSD.Bayes.ParticleAndDiffusion
+public import CKSD.Bayes.ParticleFilter
 
 /-!
 # Feynman–Kac semigroups and particle fluctuations
 
-The backwards operator includes potentials from time `p` through time `p+m-1`.
-Thus the terminal case is the identity, matching the normalization of the existing filtering laws.
+Central limit theorems and uniform-in-time error bounds for the bootstrap particle filter of a
+Feynman–Kac model. The backwards operator over `m` transitions from time `p` includes the
+potentials from time `p` through time `p + m - 1`, so that the zero-step operator is the identity,
+matching the normalization of the filtering laws of `CKSD.FeynmanKacModel`.
+
+## Main definitions
+
+* `CKSD.FeynmanKacModel.backwardOperator`: the backwards Feynman–Kac operator.
+* `CKSD.FeynmanKacModel.particleAverageAsymptoticVariance`,
+  `CKSD.FeynmanKacModel.particleLikelihoodAsymptoticVariance`: the asymptotic variances of the
+  particle average and of the normalized likelihood estimate.
+
+## Main results
+
+* `CKSD.tendstoInDistribution_particle_average`,
+  `CKSD.tendstoInDistribution_particle_likelihood`: fixed-time central limit theorems.
+* `CKSD.exists_uniform_particle_moment_bound`: a uniform-in-time `Lᵖ` bound under mixing.
+
 Sources: GAPS 104.59 and GAPS 104.60.
 -/
 
@@ -26,7 +42,9 @@ def FeynmanKacModel.backwardOperator {X : Type*} [MeasurableSpace X]
   | m + 1, f => fun x ↦ M.potential p x *
       ∫ y, M.backwardOperator (p + 1) m f y ∂M.transition p x
 
-/-- Asymptotic variance of a normalized bootstrap particle average. -/
+/-- Asymptotic variance of the bootstrap particle average of `f` at time `n`:
+`∑_{p ≤ n} 𝛈ₚ((Q_{p,n}(f - 𝛈ₙ f))²) / 𝛈ₚ(Q_{p,n} 1)²`, with `𝛈ₚ` the filtering law and `Q_{p,n}`
+the backwards operator over `n - p` transitions from time `p`. -/
 def FeynmanKacModel.particleAverageAsymptoticVariance {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) (f : X → ℝ) : ℝ :=
   let centered := fun x ↦ f x - ∫ y, f y ∂M.filterLaw n
@@ -34,7 +52,8 @@ def FeynmanKacModel.particleAverageAsymptoticVariance {X : Type*} [MeasurableSpa
     (∫ x, (M.backwardOperator p (n - p) centered x) ^ 2 ∂M.filterLaw p) /
       (∫ x, M.backwardOperator p (n - p) (fun _ ↦ 1) x ∂M.filterLaw p) ^ 2
 
-/-- Asymptotic variance of the normalized likelihood estimate. -/
+/-- Asymptotic variance of the particle likelihood estimate at time `n`, normalized by the true
+likelihood: `∑_{p ≤ n} (𝛈ₚ((Q_{p,n} 1)²) / 𝛈ₚ(Q_{p,n} 1)² - 1)`. -/
 def FeynmanKacModel.particleLikelihoodAsymptoticVariance {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) : ℝ :=
   ∑ p ∈ Finset.range (n + 1),
@@ -50,7 +69,7 @@ theorem FeynmanKacModel.backwardOperator_one_of_potential_eq_one
   | zero => rfl
   | succ m ih =>
     funext x
-    haveI := M.isMarkov_transition p
+    have := M.isMarkov_transition p
     simp [FeynmanKacModel.backwardOperator, ih, hpotential]
 
 /-- At time zero the likelihood estimate is deterministic and its asymptotic variance is zero. -/
@@ -67,7 +86,9 @@ theorem FeynmanKacModel.particleLikelihoodAsymptoticVariance_eq_zero_of_potentia
   simp [FeynmanKacModel.particleLikelihoodAsymptoticVariance,
     M.backwardOperator_one_of_potential_eq_one hpotential]
 
-/-- GAPS 104.59: bootstrap-particle central limit theorem at a fixed time. -/
+/-- GAPS 104.59: central limit theorem for the bootstrap particle filter at a fixed time `n`.
+For a bounded measurable `f`, `√N (N⁻¹ ∑ᵢ f(ξᵢ) - 𝛈ₙ f)` converges in distribution to the centred
+normal law with variance `particleAverageAsymptoticVariance n f`. -/
 theorem tendstoInDistribution_particle_average {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
@@ -80,7 +101,9 @@ theorem tendstoInDistribution_particle_average {Ω X : Type*} [MeasurableSpace �
       (gaussianReal 0 (Real.toNNReal (M.particleAverageAsymptoticVariance n f))) := by
   sorry
 
-/-- GAPS 104.59: bootstrap-particle likelihood central limit theorem at a fixed time. -/
+/-- GAPS 104.59: central limit theorem for the particle likelihood estimate at a fixed time `n`.
+The relative error `√N (Ẑₙ / Zₙ - 1)` converges in distribution to the centred normal law with
+variance `particleLikelihoodAsymptoticVariance n`. -/
 theorem tendstoInDistribution_particle_likelihood {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)

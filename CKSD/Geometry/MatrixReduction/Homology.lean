@@ -7,7 +7,13 @@ public import CKSD.Geometry.FiniteCombinatorics
 # Persistent Betti numbers from a reduced boundary matrix
 
 Rank-nullity identifies persistent homology ranks with the pairs of column lows in a reduced
-filtered boundary matrix, including the unpaired essential classes. Source: GAPS 108.32.
+filtered boundary matrix, including the unpaired essential classes.
+
+## Main results
+
+* `CKSD.persistentBettiOfMatrix_eq_card`: persistent Betti numbers count bars (GAPS 108.32).
+* `CKSD.IsColumnLow.dim_eq_and_persistentBettiOfMatrix_eq`: the homological meaning of a pair
+  (GAPS 108.32).
 -/
 
 @[expose] public section
@@ -23,7 +29,7 @@ attribute [local instance] Classical.propDecidable
 variable {𝕜 : Type*} [Field 𝕜] {m : ℕ}
 
 /-- Rank–nullity for the restriction of a linear map to a subspace. -/
-theorem finrank_map_add_finrank_inf_ker {V W : Type*} [AddCommGroup V] [Module 𝕜 V]
+theorem Submodule.finrank_map_add_finrank_inf_ker {V W : Type*} [AddCommGroup V] [Module 𝕜 V]
     [FiniteDimensional 𝕜 V] [AddCommGroup W] [Module 𝕜 W] (f : V →ₗ[𝕜] W) (p : Submodule 𝕜 V) :
     finrank 𝕜 (p.map f) + finrank 𝕜 ↥(p ⊓ LinearMap.ker f) = finrank 𝕜 p := by
   have h := LinearMap.finrank_range_add_finrank_ker (f.domRestrict p)
@@ -79,7 +85,7 @@ theorem finrank_filteredCycles_add (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin 
     (p a : ℕ) :
     finrank 𝕜 (filteredCycles D dim p a) + lowerLeftRank (dimColumnPart D dim p) 0 a =
       (Finset.univ.filter fun k : Fin m ↦ k.val < a ∧ dim k = p).card := by
-  have h := finrank_map_add_finrank_inf_ker D.mulVecLin (filteredChains (𝕜 := 𝕜) dim p a)
+  have h := Submodule.finrank_map_add_finrank_inf_ker D.mulVecLin (filteredChains (𝕜 := 𝕜) dim p a)
   rw [map_filteredChains_eq_range] at h
   have h2 : filteredCycles D dim p a = filteredChains dim p a ⊓ LinearMap.ker D.mulVecLin := rfl
   rw [← finrank_filteredChains (𝕜 := 𝕜), h2]
@@ -124,7 +130,7 @@ theorem finrank_filteredCycles_inf_filteredBoundaries_add {D : Matrix (Fin m) (F
         exact hk this
       · simp only [Matrix.mulVecLin_apply, mulVec_mulVec,
           hD.mul_self_eq_zero, zero_mulVec]
-  have h := finrank_map_add_finrank_inf_ker Pa.mulVecLin B
+  have h := Submodule.finrank_map_add_finrank_inf_ker Pa.mulVecLin B
   rw [← hinf] at h
   have hmap : B.map Pa.mulVecLin =
       LinearMap.range (lowerLeftPart (dimColumnPart D dim (p + 1)) a b).mulVecLin := by
@@ -269,27 +275,19 @@ consists of the first `a` simplices). If `low_R(j) = i`, then `σ_j` has dimensi
 `σ_i`, adding `σ_i` raises the Betti number in its dimension (`σ_i` is positive) and adding `σ_j`
 lowers the Betti number one dimension below its own (`σ_j` is negative). The bars are the pairs
 `[i, j)` with `low_R(j) = i` and the essential intervals `[j, ∞)` for zero columns `j` that are
-the low of no column: for `a ≤ b` the persistent Betti number in degree `p` counts exactly the
-bars of degree `p` that contain `[a - 1, b - 1]`, that is, born at an index below `a` and dying at
-an index of at least `b`. The restatement for monotone functions on simplices, with bars
-`[f(σ_i), f(σ_j))`, is a relabelling and is not stated separately. -/
-theorem persistentBettiOfMatrix_eq_card_bars {D R V : Matrix (Fin m) (Fin m) 𝕜}
-    {dim : Fin m → ℕ} (hD : IsFilteredBoundaryMatrix D dim) (h : IsMatrixReduction D R V) :
-    (∀ i j, IsColumnLow R i j →
-      dim j = dim i + 1 ∧
+the low of no column; the count of bars by persistent Betti numbers is
+`CKSD.persistentBettiOfMatrix_eq_card`. The restatement for monotone functions on simplices, with
+bars `[f(σ_i), f(σ_j))`, is a relabelling and is not stated separately. -/
+theorem IsColumnLow.dim_eq_and_persistentBettiOfMatrix_eq {D R V : Matrix (Fin m) (Fin m) 𝕜}
+    {dim : Fin m → ℕ} (hD : IsFilteredBoundaryMatrix D dim) (h : IsMatrixReduction D R V)
+    {i j : Fin m} (hij : IsColumnLow R i j) :
+    dim j = dim i + 1 ∧
       persistentBettiOfMatrix D dim (dim i) (i.val + 1) (i.val + 1) =
         persistentBettiOfMatrix D dim (dim i) i.val i.val + 1 ∧
       persistentBettiOfMatrix D dim (dim i) (j.val + 1) (j.val + 1) + 1 =
-        persistentBettiOfMatrix D dim (dim i) j.val j.val) ∧
-    ∀ p a b, a ≤ b →
-      persistentBettiOfMatrix D dim p a b =
-        (Finset.univ.filter fun j : Fin m ↦
-          ∃ i, IsColumnLow R i j ∧ dim i = p ∧ i.val < a ∧ b ≤ j.val).card +
-        (Finset.univ.filter fun j : Fin m ↦
-          (∀ k, R k j = 0) ∧ (∀ l, ¬ IsColumnLow R j l) ∧ dim j = p ∧ j.val < a).card := by
+        persistentBettiOfMatrix D dim (dim i) j.val j.val := by
   have hdD : ∀ i j, D i j ≠ 0 → dim i + 1 = dim j := fun i j h ↦ (hD.lt_and_dim_of_ne_zero i j h).2
   have hlt : ∀ i j, D i j ≠ 0 → i < j := fun i j h ↦ (hD.lt_and_dim_of_ne_zero i j h).1
-  refine ⟨fun i j hij ↦ ?_, fun p a b _ ↦ persistentBettiOfMatrix_eq_card hD h p a b⟩
   have hdim := hij.dim_eq hdD h
   have hij' : i < j := hij.lt hlt h
   have hzi := hij.col_eq_zero hD.mul_self_eq_zero h

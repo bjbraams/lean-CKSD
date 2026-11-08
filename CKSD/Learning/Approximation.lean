@@ -13,8 +13,23 @@ Fourier transforms and logistic activation are Mathlib constructions. A finite n
 one-hidden-layer realization already defined in `CKSD.Learning.Algorithms`, with an output bias.
 The Barron statement covers the logistic activation. The ReLU statement is a distinct elementary
 one-dimensional interpolation scope and does not assert the full multivariate Sobolev theorem.
-Sources: GAPS 107.28 and 107.36.
 The feature-sampling argument uses TauCeti's Hilbert-space sample-mean variance theorem.
+
+## Main definitions
+
+* `CKSD.barronFourierMoment`: the first absolute Fourier moment.
+* `CKSD.logisticNetwork`: one-hidden-layer logistic networks.
+* `CKSD.reluLinearInterpolant`: the fixed-grid ReLU interpolant.
+
+## Main results
+
+* `CKSD.exists_logisticNetwork_sq_error_le_barron_moment`: Barron's approximation rate
+  (GAPS 107.28).
+* `CKSD.exists_feature_average_sq_error_le`: the feature-sampling (Maurey) step.
+* `CKSD.abs_reluLinearInterpolant_sub_le`: uniform `N⁻²` ReLU approximation of `C²` functions
+  on `[0,1]` (GAPS 107.36).
+
+Sources: GAPS 107.28 and 107.36.
 -/
 
 @[expose] public section
@@ -38,9 +53,10 @@ def logisticNetwork {d N : ℕ} (a : Fin N → ℝ)
 
 /-- GAPS 107.28: Barron's `N⁻¹/²` logistic approximation rate on the unit ball.
 The squared-error form uses a universal constant and the first absolute Fourier moment.
-The target is continuous on the whole space, which fixes its representative on singular laws. -/
+The target is continuous on the whole space, which fixes its representative on singular laws.
+(For `d = 0` the space is a point and constants are exact.) -/
 theorem exists_logisticNetwork_sq_error_le_barron_moment :
-    ∃ C > (0 : ℝ), ∀ d N : ℕ, 0 < d → 0 < N →
+    ∃ C > (0 : ℝ), ∀ d N : ℕ, 0 < N →
       ∀ μ : Measure (EuclideanSpace ℝ (Fin d)), IsProbabilityMeasure μ →
       μ (Metric.closedBall 0 1) = 1 →
       ∀ f : EuclideanSpace ℝ (Fin d) → ℝ, Continuous f → Integrable f volume →
@@ -130,11 +146,10 @@ def reluLinearInterpolant (f : ℝ → ℝ) (N : ℕ) (x : ℝ) : ℝ :=
     ∑ j ∈ Finset.range (N - 1), (uniformGridSlope f N (j + 1) - uniformGridSlope f N j) *
       relu (x - ((j + 1 : ℕ) : ℝ) / N)
 
-/-- One-sided chord bound: if `f` is `C²` with `f'' ≥ -B` on `[0,1]`, then on a subinterval
-`[u, v]` the function exceeds its chord by at most `B (x - u)(v - x) / 2`. -/
-theorem sub_chord_le_of_deriv2_ge (f : ℝ → ℝ) (hf : ContDiff ℝ 2 f) (B : ℝ)
-    (hlow : ∀ x ∈ Icc (0 : ℝ) 1, -B ≤ deriv (deriv f) x) {u v x : ℝ} (hu : 0 ≤ u)
-    (huv : u < v) (hv : v ≤ 1) (hx : x ∈ Icc u v) :
+/-- One-sided chord bound: if `f` is `C²` with `f'' ≥ -B` on `[u, v]`, then on `[u, v]` the
+function exceeds its chord by at most `B (x - u)(v - x) / 2`. -/
+theorem sub_chord_le_of_deriv2_ge (f : ℝ → ℝ) (hf : ContDiff ℝ 2 f) (B : ℝ) {u v x : ℝ}
+    (hlow : ∀ y ∈ Icc u v, -B ≤ deriv (deriv f) y) (huv : u < v) (hx : x ∈ Icc u v) :
     f x - (f u + (f v - f u) / (v - u) * (x - u)) ≤ B / 2 * ((x - u) * (v - x)) := by
   have hdf : Differentiable ℝ f := hf.differentiable (by norm_num)
   have hdf' : Differentiable ℝ (deriv f) := by
@@ -148,8 +163,8 @@ theorem sub_chord_le_of_deriv2_ge (f : ℝ → ℝ) (hf : ContDiff ℝ 2 f) (B :
     refine h.trans ?_
     simp only [Nat.cast_ofNat]
     ring
-  have hconv : ConvexOn ℝ (Icc 0 1) g := by
-    refine convexOn_of_deriv2_nonneg' (convex_Icc 0 1) ?_ ?_ fun y hy ↦ ?_
+  have hconv : ConvexOn ℝ (Icc u v) g := by
+    refine convexOn_of_deriv2_nonneg' (convex_Icc u v) ?_ ?_ fun y hy ↦ ?_
     · exact (hdf.add (by fun_prop)).differentiableOn
     · rw [hdg]
       exact (hdf'.add (by fun_prop)).differentiableOn
@@ -169,8 +184,7 @@ theorem sub_chord_le_of_deriv2_ge (f : ℝ → ℝ) (hf : ContDiff ℝ 2 f) (B :
     simp only [smul_eq_mul, hθ]
     field_simp
     ring
-  have h := hconv.2 (⟨hu, huv.le.trans hv⟩ : u ∈ Icc (0 : ℝ) 1)
-    (⟨hu.trans huv.le, hv⟩ : v ∈ Icc (0 : ℝ) 1) hθ0 hθ1 (by ring)
+  have h := hconv.2 (left_mem_Icc.2 huv.le) (right_mem_Icc.2 huv.le) hθ0 hθ1 (by ring)
   rw [hxθ] at h
   simp only [smul_eq_mul, hg_def] at h
   have hθ' : 1 - θ = (x - u) / (v - u) := by
@@ -184,20 +198,18 @@ theorem sub_chord_le_of_deriv2_ge (f : ℝ → ℝ) (hf : ContDiff ℝ 2 f) (B :
     ring
   linarith
 
-/-- Linear interpolation error on a subinterval of `[0,1]` for a `C²` function with
-`|f''| ≤ B` there: `|chord(x) - f(x)| ≤ B (v - u)² / 8`. -/
-theorem abs_chord_sub_le (f : ℝ → ℝ) (hf : ContDiff ℝ 2 f) {B : ℝ} (hB : 0 ≤ B)
-    (hbound : ∀ x ∈ Icc (0 : ℝ) 1, |deriv (deriv f) x| ≤ B) {u v x : ℝ} (hu : 0 ≤ u)
-    (huv : u < v) (hv : v ≤ 1) (hx : x ∈ Icc u v) :
+/-- Linear interpolation error on an interval `[u, v]` for a `C²` function with `|f''| ≤ B`
+there: `|chord(x) - f(x)| ≤ B (v - u)² / 8`. -/
+theorem abs_chord_sub_le (f : ℝ → ℝ) (hf : ContDiff ℝ 2 f) {B : ℝ} (hB : 0 ≤ B) {u v x : ℝ}
+    (hbound : ∀ y ∈ Icc u v, |deriv (deriv f) y| ≤ B) (huv : u < v) (hx : x ∈ Icc u v) :
     |f u + (f v - f u) / (v - u) * (x - u) - f x| ≤ B * (v - u) ^ 2 / 8 := by
-  have h1 := sub_chord_le_of_deriv2_ge f hf B (fun y hy ↦ (abs_le.mp (hbound y hy)).1)
-    hu huv hv hx
+  have h1 := sub_chord_le_of_deriv2_ge f hf B (fun y hy ↦ (abs_le.mp (hbound y hy)).1) huv hx
   have hnf : ContDiff ℝ 2 (-f) := hf.neg
   have hdd : ∀ y, deriv (deriv (-f)) y = -deriv (deriv f) y := fun y ↦ by
     rw [deriv.neg']
     exact deriv.neg (f := deriv f)
   have h2 := sub_chord_le_of_deriv2_ge (-f) hnf B
-    (fun y hy ↦ by rw [hdd]; linarith [(abs_le.mp (hbound y hy)).2]) hu huv hv hx
+    (fun y hy ↦ by rw [hdd]; linarith [(abs_le.mp (hbound y hy)).2]) huv hx
   simp only [Pi.neg_apply] at h2
   have hq : (x - u) * (v - x) ≤ (v - u) ^ 2 / 4 := by nlinarith [sq_nonneg (2 * x - u - v)]
   have hq' : B / 2 * ((x - u) * (v - x)) ≤ B * (v - u) ^ 2 / 8 := by
@@ -284,7 +296,8 @@ theorem abs_reluLinearInterpolant_sub_le (f : ℝ → ℝ) (hf : ContDiff ℝ 2 
     div_lt_div_of_pos_right (by exact_mod_cast Nat.lt_succ_self j) hNr
   have hv : ((j + 1 : ℕ) : ℝ) / N ≤ 1 := by
     rw [div_le_one hNr]; exact_mod_cast hjN
-  have h := abs_chord_sub_le f hf hB hbound hu huv hv hxj
+  have h := abs_chord_sub_le f hf hB
+    (fun y hy ↦ hbound y ⟨hu.trans hy.1, hy.2.trans hv⟩) huv hxj
   have hlen : ((j + 1 : ℕ) : ℝ) / N - (j : ℝ) / N = 1 / N := by
     push_cast; ring
   have hslope : (f (((j + 1 : ℕ) : ℝ) / N) - f ((j : ℝ) / N)) /

@@ -1,19 +1,33 @@
 module
 
 public import CKSD.Inference.Density
+public import CKSD.Inference.Model
 public import TauCeti.Probability.Distributions.Gaussian.Density
 public import Mathlib.Analysis.Calculus.LineDeriv.IntegrationByParts
 public import Mathlib.Analysis.InnerProductSpace.Calculus
 public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 
 /-!
-# Inference: Gaussian
+# Gaussian models: Stein's identity, James–Stein, exponential-family MLE, Scheffé
 
-Sources: `GAPS.md`, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Results of Section 101 on Gaussian and natural exponential families.
+
+## Main results
+
+* `CKSD.gaussian_integration_by_parts`: Stein's identity for `N(θ, v I)` (GAPS 101.64).
+* `CKSD.james_stein_risk_eq_and_lt`: the risk of the James–Stein estimator (GAPS 101.57).
+* `CKSD.exists_isMaxOn_logLikelihood_iff_mem_interior_convexHull_support` and
+  `CKSD.hasFDerivAt_logPartition_and_eq_of_isMaxOn`: existence, the likelihood equation, and
+  uniqueness of the maximum likelihood estimator in a regular minimal natural exponential family
+  (GAPS 101.69).
+* `CKSD.scheffe_contrast_supremum`: the contrast supremum behind Scheffé's method (GAPS 101.60).
+
+## References
+
+The integration by parts writes the Gaussian law as a density against Lebesgue measure
+(TauCeti's `multivariateGaussian_eq_withDensity`) and uses Mathlib's
+`integral_mul_fderiv_eq_neg_fderiv_mul_of_integrable`.
 -/
-
 @[expose] public section
 
 noncomputable section
@@ -28,7 +42,8 @@ attribute [local instance] Classical.propDecidable
 variable {Θ X S V : Type*} [MeasurableSpace X] [MeasurableSpace S]
   [MeasurableSpace V]
 
-/-- GAPS 101.57, strict James–Stein improvement in dimension at least three. -/
+/-- GAPS 101.57: the James–Stein estimator `δ(x) = (1 - (p - 2) / ‖x‖²) x` for `X ~ N(θ, I)` in
+dimension `p ≥ 3` has risk `p - (p - 2)² E‖X‖⁻²`, strictly smaller than the risk `p` of `X`. -/
 theorem james_stein_risk_eq_and_lt {p : ℕ} (hp : 3 ≤ p) (θ : EuclideanSpace ℝ (Fin p)) :
     let P := multivariateGaussian θ (1 : Matrix (Fin p) (Fin p) ℝ);
     let δ := fun x : EuclideanSpace ℝ (Fin p) ↦ (1 - ((p : ℝ) - 2) / ‖x‖ ^ 2) • x;
@@ -55,21 +70,23 @@ theorem multivariateGaussianPDFReal_smul_one {p : ℕ} (θ : EuclideanSpace ℝ 
     real_inner_self_eq_norm_sq]
 
 
-/-- GAPS 101.64: Gaussian integration by parts, in the continuously differentiable scope.
+/-- GAPS 101.64: Gaussian integration by parts (Stein's identity) for `X ~ N(θ, v I)` and a
+continuously differentiable `g` with `g ∈ L²` and integrable partial derivatives:
+`E[(Xᵢ - θᵢ) gᵢ(X)] = v E[∂ᵢ gᵢ(X)]`.
 The proof writes the law as a density against Lebesgue measure
 (TauCeti's `multivariateGaussian_eq_withDensity`) and applies Mathlib's
 `integral_mul_fderiv_eq_neg_fderiv_mul_of_integrable`. -/
 theorem gaussian_integration_by_parts {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) (v : ℝ≥0)
     (hv : 0 < v) (g : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p))
-    (hg : ContDiff ℝ 1 g) :
-    let P := multivariateGaussian θ ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ));
-    ∀ (hL2 : MemLp g 2 P),
-    ∀ (hder : ∀ i, Integrable
-      (fun x ↦ (fderiv ℝ g x (EuclideanSpace.single i 1)) i) P),
-    ∀ (i : Fin p),
-    (∫ x, (x i - θ i) * g x i ∂P) =
-      (v : ℝ) * ∫ x, (fderiv ℝ g x (EuclideanSpace.single i 1)) i ∂P := by
-  intro P hL2 hder i
+    (hg : ContDiff ℝ 1 g)
+    (hL2 : MemLp g 2 (multivariateGaussian θ ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ))))
+    (hder : ∀ i, Integrable (fun x ↦ (fderiv ℝ g x (EuclideanSpace.single i 1)) i)
+      (multivariateGaussian θ ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)))) (i : Fin p) :
+    (∫ x, (x i - θ i) * g x i
+        ∂multivariateGaussian θ ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ))) =
+      (v : ℝ) * ∫ x, (fderiv ℝ g x (EuclideanSpace.single i 1)) i
+        ∂multivariateGaussian θ ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)) := by
+  set P := multivariateGaussian θ ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)) with hPdef
   have hv' : (v : ℝ) ≠ 0 := (NNReal.coe_pos.2 hv).ne'
   have hS : ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)).PosDef :=
     Matrix.PosDef.one.smul (NNReal.coe_pos.2 hv)
@@ -143,46 +160,40 @@ theorem gaussian_integration_by_parts {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)
   field_simp
   ring
 
-/-- GAPS 101.69: existence and uniqueness of a regular natural-exponential-family maximum.
-The domain is the full Laplace-integrability domain, not an arbitrary open
-subset of it. The criterion is the per-observation log likelihood. -/
-theorem exists_exponential_family_mle_iff_mem_interior_convex_support
-    {d : ℕ} (nu : Measure (EuclideanSpace ℝ (Fin d))) [SigmaFinite nu]
-    (hne : nu ≠ 0)
-    (hminimal : ∀ u : EuclideanSpace ℝ (Fin d), u ≠ 0 → ∀ c : ℝ,
-      ¬ (∀ᵐ x ∂nu, inner ℝ u x = c)) :
-    let N := {eta : EuclideanSpace ℝ (Fin d) |
-      Integrable (fun x ↦ Real.exp (inner ℝ eta x)) nu};
-    ∀ (hN : IsOpen N),
-    ∀ (hNne : N.Nonempty),
-    let A := fun eta : EuclideanSpace ℝ (Fin d) ↦
-      Real.log (∫ x, Real.exp (inner ℝ eta x) ∂nu);
-    ∀ (t : EuclideanSpace ℝ (Fin d)),
-    (∃ eta ∈ N, ∀ zeta ∈ N, inner ℝ zeta t - A zeta ≤ inner ℝ eta t - A eta) ↔
-      t ∈ interior (convexHull ℝ nu.support) := by
+/-- GAPS 101.69: existence of the maximum likelihood estimator in a regular minimal natural
+exponential family. For the family with base measure `ν` on `E` and statistic the identity,
+whose natural parameter space `N` is open and nonempty, the log likelihood
+`η ↦ ⟪η, t⟫ - logPartition ν id η` of an observation `t` attains its maximum on `N` if and only
+if `t` lies in the interior of the convex hull of the support of `ν`. -/
+theorem exists_isMaxOn_logLikelihood_iff_mem_interior_convexHull_support
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+    [MeasurableSpace E] [BorelSpace E] (ν : Measure E) [SigmaFinite ν] (hne : ν ≠ 0)
+    (hminimal : IsMinimalExponentialFamily ν id) (hN : IsOpen (naturalParameterSpace ν id))
+    (hNne : (naturalParameterSpace ν id).Nonempty) (t : E) :
+    (∃ η ∈ naturalParameterSpace ν id,
+        IsMaxOn (fun ζ ↦ inner ℝ ζ t - logPartition ν id ζ) (naturalParameterSpace ν id) η) ↔
+      t ∈ interior (convexHull ℝ ν.support) := by
   sorry
 
-/-- GAPS 101.69: a natural-family maximizer is unique and solves the mean equation. -/
-theorem exponential_family_mle_unique_and_mean_eq
-    {d : ℕ} (nu : Measure (EuclideanSpace ℝ (Fin d))) [SigmaFinite nu]
-    (hne : nu ≠ 0)
-    (hminimal : ∀ u : EuclideanSpace ℝ (Fin d), u ≠ 0 → ∀ c : ℝ,
-      ¬ (∀ᵐ x ∂nu, inner ℝ u x = c)) :
-    let N := {eta : EuclideanSpace ℝ (Fin d) |
-      Integrable (fun x ↦ Real.exp (inner ℝ eta x)) nu};
-    ∀ (hN : IsOpen N),
-    let A := fun eta : EuclideanSpace ℝ (Fin d) ↦
-      Real.log (∫ x, Real.exp (inner ℝ eta x) ∂nu);
-    ∀ (t eta : EuclideanSpace ℝ (Fin d)),
-    ∀ (heta : eta ∈ N),
-    ∀ (hmax : ∀ zeta ∈ N, inner ℝ zeta t - A zeta ≤ inner ℝ eta t - A eta),
-    HasFDerivAt A (innerSL ℝ t) eta ∧
-      ∀ zeta ∈ N, inner ℝ zeta t - A zeta = inner ℝ eta t - A eta → zeta = eta := by
+/-- GAPS 101.69: in a regular minimal natural exponential family with open natural parameter
+space `N`, a maximizer `η ∈ N` of the log likelihood `ζ ↦ ⟪ζ, t⟫ - logPartition ν id ζ` solves the
+likelihood equation `∇ logPartition ν id η = t` (the mean of the law at `η` is `t`), and it is the
+unique maximizer on `N`. -/
+theorem hasFDerivAt_logPartition_and_eq_of_isMaxOn
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+    [MeasurableSpace E] [BorelSpace E] (ν : Measure E) [SigmaFinite ν] (hne : ν ≠ 0)
+    (hminimal : IsMinimalExponentialFamily ν id) (hN : IsOpen (naturalParameterSpace ν id))
+    {t η : E} (hη : η ∈ naturalParameterSpace ν id)
+    (hmax : IsMaxOn (fun ζ ↦ inner ℝ ζ t - logPartition ν id ζ) (naturalParameterSpace ν id) η) :
+    HasFDerivAt (logPartition ν id) (innerSL ℝ t) η ∧
+      ∀ ζ ∈ naturalParameterSpace ν id,
+        inner ℝ ζ t - logPartition ν id ζ = inner ℝ η t - logPartition ν id η → ζ = η := by
   sorry
 
 
-/-- GAPS 101.60: the simultaneous-contrast supremum underlying Scheffé's method.
-This is the geometric identity; its Gaussian pivot uses the projection sampling laws. -/
+/-- GAPS 101.60: the simultaneous-contrast supremum underlying Scheffé's method: for `v` in a
+subspace `S`, `sup_{u ∈ S, u ≠ 0} ⟪u, v⟫² / (s² ‖u‖²) = ‖v‖² / s²` (the supremum is attained at
+`u = v`; for `v = 0` it is `0`). The Gaussian pivot of the method is not included. -/
 theorem scheffe_contrast_supremum {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H]
     (S : Submodule ℝ H) (v : H) (hv : v ∈ S) (s : ℝ) (hs : 0 < s) :
     sSup {r : ℝ | ∃ u ∈ S, u ≠ 0 ∧ r = inner ℝ u v ^ 2 / (s ^ 2 * ‖u‖ ^ 2)} =

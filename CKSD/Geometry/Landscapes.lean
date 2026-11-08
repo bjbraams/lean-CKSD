@@ -9,7 +9,17 @@ public import Mathlib.Probability.StrongLaw
 The strong law is a specialization of Mathlib's Banach-space strong law. A landscape is represented
 as an element of `Lp` on counting measure times Lebesgue measure; the theorem applies to all random
 `Lp` elements, and the geometric construction need not be repeated in its probabilistic proof.
-Source: GAPS 108.23, strong-law scope of GAPS_EASY 108.23.
+The strong law covers the scope of GAPS_EASY 108.23; the identification of
+`CKSD.persistenceLandscape` with an element of `CKSD.LandscapeLp p` is not formalized.
+
+## Main definitions
+
+* `CKSD.landscapeMeasure`: counting measure on levels times Lebesgue measure.
+* `CKSD.LandscapeLp`: the Banach space `Lp` carrying landscapes.
+
+## Main results
+
+* `CKSD.LandscapeLp.ae_tendsto_sampleAverage`: the strong law (GAPS 108.23).
 -/
 
 @[expose] public section
@@ -35,9 +45,11 @@ local instance landscapeMeasurableSpace (p : ℝ≥0∞) [Fact (1 ≤ p)] :
 local instance landscapeBorelSpace (p : ℝ≥0∞) [Fact (1 ≤ p)] :
     BorelSpace (LandscapeLp p) := ⟨rfl⟩
 
-/-- GAPS 108.23: strong law for integrable independent identically distributed landscapes.
-Pairwise independence is sufficient, as in Mathlib's Etemadi strong law. -/
-theorem ae_tendsto_landscape_sampleAverage {Ω : Type*} [MeasurableSpace Ω]
+/-- GAPS 108.23: strong law for integrable independent identically distributed landscapes: the
+sample averages of pairwise independent, identically distributed, integrable random elements of
+`LandscapeLp p` converge almost surely to the mean. Pairwise independence is sufficient, as in
+Mathlib's Etemadi strong law. -/
+theorem LandscapeLp.ae_tendsto_sampleAverage {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (p : ℝ≥0∞) [Fact (1 ≤ p)]
     (X : ℕ → Ω → LandscapeLp p) (hint : Integrable (X 0) μ)
     (hind : Pairwise (fun i j ↦ IndepFun (X i) (X j) μ))

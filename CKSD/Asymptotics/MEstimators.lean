@@ -308,7 +308,7 @@ theorem tendstoInProbabilityConst_mle_of_compact
 /-- GAPS 102.24: local asymptotic linearity and normality of multivariate M-estimators.
 The negative-definite matrix `V` is the Hessian of the population criterion through its
 quadratic little-o expansion. The empirical optimization error is `o_P(1/n)`. -/
-theorem m_estimator_asymptotic_linearization_and_normality
+theorem mEstimator_asymptotic_linearization_and_normality
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X) [IsProbabilityMeasure P]
     (Xn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ Xn P)
@@ -353,7 +353,7 @@ def fixedDesignGramMatrix {d : ℕ} (x : ℕ → EuclideanSpace ℝ (Fin d))
 /-- GAPS 102.48: asymptotic linearization and normality of fixed-design convex M-estimators.
 The right derivative of `ρ` is `ψ`. The `L²` continuity of shifted scores is expressed by
 nonnegative extended integrals, so nonintegrable remainders cannot be assigned value zero. -/
-theorem regression_m_estimator_asymptotic_linearization_and_normality
+theorem regression_mEstimator_asymptotic_linearization_and_normality
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (ε : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ ε P)

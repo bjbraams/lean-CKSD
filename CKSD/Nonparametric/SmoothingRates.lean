@@ -1,14 +1,39 @@
 module
 
 public import CKSD.Nonparametric.Models
+public import Mathlib.Topology.MetricSpace.Holder
 
 /-!
 # Regression smoothers and one-dimensional Hölder rates
 
-The Hölder interfaces in this file have order in `(0,1]`. The fixed-design model samples at
-`(i+1)/n`, so it uses the same endpoint convention as GAPS 103.22. All minimax risks are
-nonnegative extended-real integrals over measurable estimators. Sources: GAPS 103.7, 103.22,
-and 103.26. The higher-order local-polynomial and Sobolev parts are outside these statements.
+Stone's consistency theorem for the Nadaraya–Watson estimator, and the minimax rates
+`n^(-2β/(2β+1))` for fixed-design regression and pointwise density estimation over Hölder
+classes of order `β ∈ (0, 1]`, with the upper bounds attained by box-kernel local averaging and
+by kernel density estimation. The fixed design samples at `(i + 1) / n`. Minimax risks are
+infima over measurable estimators of suprema of `ℝ≥0∞`-valued risks. The higher-order
+local-polynomial and Sobolev parts of the catalogue entries are outside these statements.
+
+## Main definitions
+
+* `CKSD.holderRegressionClass β L`, `CKSD.holderDensityClass β L`: measurable functions with
+  `|f x - f y| ≤ L |x - y|^β` on `[0, 1]`, and probability densities with this bound on `ℝ`;
+  `CKSD.mem_holderRegressionClass_iff` and `CKSD.mem_holderDensityClass_iff` identify them with
+  Mathlib's `HolderOnWith` and `HolderWith`.
+* `CKSD.fixedDesignRegressionLaw`, `CKSD.fixedDesignRegressionRisk`,
+  `CKSD.holderRegressionMinimaxRisk`: the Gaussian fixed-design regression experiment, the mean
+  integrated squared error, and its minimax value.
+* `CKSD.fixedDesignLocalConstant`: the box-kernel local average.
+* `CKSD.densityLaw`, `CKSD.holderDensityPointwiseMinimaxRisk`: the law with a given density
+  and the pointwise minimax squared risk.
+
+## Main results
+
+* `CKSD.tendsto_nadarayaWatson_prediction_error_probability` (Stone's theorem).
+* `CKSD.holderRegressionMinimaxRisk_bounds`, `CKSD.fixedDesignLocalConstant_risk_le`.
+* `CKSD.finiteKernelDensityEstimator_risk_le`,
+  `CKSD.holderDensityPointwiseMinimaxRisk_lower_bound`.
+
+Sources: GAPS 103.7, 103.22, and 103.26.
 -/
 
 @[expose] public section
@@ -53,11 +78,27 @@ theorem tendsto_nadarayaWatson_prediction_error_probability
         (nadarayaWatsonSample K (h n) (fun i : Fin n ↦ X i.val ω))}) atTop (𝓝 0) := by
   sorry
 
-/-- Measurable functions on the line with a Hölder increment bound on the unit interval.
-There is no bound on an additive constant. -/
+/-- Measurable functions on the line with the Hölder bound `|f x - f y| ≤ L |x - y|^β` on the
+unit interval. There is no bound on an additive constant. -/
 def holderRegressionClass (β L : ℝ) : Set (ℝ → ℝ) :=
   {f | Measurable f ∧ ∀ x ∈ Icc (0 : ℝ) 1, ∀ y ∈ Icc (0 : ℝ) 1,
     |f x - f y| ≤ L * Real.rpow |x - y| β}
+
+/-- Mathlib's Hölder condition for real functions on a set of reals, in terms of absolute
+values. -/
+theorem holderOnWith_iff_abs_sub_le {C r : ℝ≥0} {f : ℝ → ℝ} {s : Set ℝ} :
+    HolderOnWith C r f s ↔ ∀ x ∈ s, ∀ y ∈ s, |f x - f y| ≤ C * |x - y| ^ (r : ℝ) := by
+  refine ⟨fun h x hx y hy ↦ by simpa [Real.dist_eq] using h.dist_le hx hy, fun h x hx y hy ↦ ?_⟩
+  rw [edist_dist, edist_dist, Real.dist_eq, Real.dist_eq,
+    ENNReal.ofReal_rpow_of_nonneg (abs_nonneg _) r.coe_nonneg, ← ENNReal.ofReal_coe_nnreal,
+    ← ENNReal.ofReal_mul C.coe_nonneg]
+  exact ENNReal.ofReal_le_ofReal (h x hx y hy)
+
+/-- For nonnegative parameters, the Hölder regression class consists of the measurable
+functions satisfying Mathlib's `HolderOnWith L β` on `[0, 1]`. -/
+theorem mem_holderRegressionClass_iff {β L : ℝ≥0} {f : ℝ → ℝ} :
+    f ∈ holderRegressionClass β L ↔ Measurable f ∧ HolderOnWith L β f (Icc 0 1) := by
+  simp only [holderRegressionClass, mem_ofPred_eq, Real.rpow_eq_pow, holderOnWith_iff_abs_sub_le]
 
 /-- Fixed-design Gaussian regression law with noise standard deviation `σ`. -/
 def fixedDesignRegressionLaw (n : ℕ) (f : ℝ → ℝ) (σ : ℝ) : Measure (Fin n → ℝ) :=
@@ -198,6 +239,32 @@ theorem card_fixedDesign_window_ge {n : ℕ} (hn : 0 < n) {h t : ℝ} (hh : 1 / 
     linarith
   exact this.trans (by exact_mod_cast hcard)
 
+/-- The bandwidth `n^(-1/(2β+1))` balances the variance `1/(n h)` against the rate
+`n^(-2β/(2β+1))`: `n · n^(-1/(2β+1)) · n^(-2β/(2β+1)) = 1`. -/
+private theorem natCast_mul_rpow_mul_rpow_eq_one {n : ℕ} (hn : 0 < n) {β : ℝ} (hβ : 0 < β) :
+    (n : ℝ) * (n : ℝ) ^ (-1 / (2 * β + 1)) * (n : ℝ) ^ (-2 * β / (2 * β + 1)) = 1 := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hden : (2 * β + 1) ≠ 0 := by linarith
+  have h3 : (n : ℝ) * (n : ℝ) ^ (-1 / (2 * β + 1)) * (n : ℝ) ^ (-2 * β / (2 * β + 1)) =
+      (n : ℝ) ^ ((1 : ℝ) + -1 / (2 * β + 1) + -2 * β / (2 * β + 1)) := by
+    rw [Real.rpow_add hnR, Real.rpow_add hnR, Real.rpow_one]
+  rw [h3, show (1 : ℝ) + -1 / (2 * β + 1) + -2 * β / (2 * β + 1) = 0 by field_simp; ring,
+    Real.rpow_zero]
+
+/-- The squared bias `(h^β)²` of the bandwidth `h = c n^(-1/(2β+1))` is
+`c^(2β) n^(-2β/(2β+1))`. -/
+private theorem mul_rpow_rpow_sq_eq {n : ℕ} (hn : 0 < n) {β c : ℝ} (hβ : 0 < β) (hc : 0 < c) :
+    ((c * (n : ℝ) ^ (-1 / (2 * β + 1))) ^ β) ^ 2 =
+      c ^ (2 * β) * (n : ℝ) ^ (-2 * β / (2 * β + 1)) := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hden : (2 * β + 1) ≠ 0 := by linarith
+  rw [Real.mul_rpow hc.le (Real.rpow_nonneg hnR.le _), mul_pow, ← Real.rpow_mul hnR.le,
+    ← Real.rpow_natCast, ← Real.rpow_natCast (_ ^ _), ← Real.rpow_mul hc.le,
+    ← Real.rpow_mul hnR.le]
+  congr 2
+  · push_cast; ring
+  · push_cast; field_simp
+
 /-- GAPS 103.22: a box-kernel local-constant estimator attains the `L²` rate for `0<β≤1`. -/
 theorem fixedDesignLocalConstant_risk_le (β L σ c : ℝ)
     (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) (hσ : 0 < σ) (hc : 1 ≤ c) :
@@ -222,20 +289,8 @@ theorem fixedDesignLocalConstant_risk_le (β L σ c : ℝ)
   have hh0 : 0 < h := mul_pos hc0 he0
   have hden : (2 * β + 1) ≠ 0 := by linarith
   have hden' : 0 < 2 * β + 1 := by linarith
-  have hner : (n : ℝ) * e * r = 1 := by
-    rw [he, hr]
-    have h3 : (n : ℝ) * (n : ℝ) ^ (-1 / (2 * β + 1)) * (n : ℝ) ^ (-2 * β / (2 * β + 1)) =
-        (n : ℝ) ^ ((1 : ℝ) + -1 / (2 * β + 1) + -2 * β / (2 * β + 1)) := by
-      rw [Real.rpow_add hnR, Real.rpow_add hnR, Real.rpow_one]
-    rw [h3, show (1 : ℝ) + -1 / (2 * β + 1) + -2 * β / (2 * β + 1) = 0 by field_simp; ring,
-      Real.rpow_zero]
-  have hpow : (h ^ β) ^ 2 = c ^ (2 * β) * r := by
-    rw [hh, Real.mul_rpow hc0.le he0.le, mul_pow, he, ← Real.rpow_mul hnR.le, hr,
-      ← Real.rpow_natCast, ← Real.rpow_natCast (_ ^ _), ← Real.rpow_mul hc0.le,
-      ← Real.rpow_mul hnR.le]
-    congr 2
-    · push_cast; ring
-    · push_cast; field_simp
+  have hner : (n : ℝ) * e * r = 1 := natCast_mul_rpow_mul_rpow_eq_one hn hβ0
+  have hpow : (h ^ β) ^ 2 = c ^ (2 * β) * r := mul_rpow_rpow_sq_eq hn hβ0 hc0
   have hrn : 1 / (n : ℝ) ≤ r := by
     rw [hr, one_div, ← Real.rpow_neg_one]
     refine Real.rpow_le_rpow_of_exponent_le hn1 ?_
@@ -347,26 +402,36 @@ theorem fixedDesignLocalConstant_risk_le (β L σ c : ℝ)
   have : IsProbabilityMeasure (fixedDesignRegressionLaw n f σ) := by
     unfold fixedDesignRegressionLaw; infer_instance
   unfold fixedDesignRegressionRisk
-  rw [lintegral_lintegral_swap (((hmeasT.sub (hfm.comp measurable_snd)).pow_const 2).ennreal_ofReal.aemeasurable)]
+  rw [lintegral_lintegral_swap
+    (((hmeasT.sub (hfm.comp measurable_snd)).pow_const 2).ennreal_ofReal.aemeasurable)]
   calc ∫⁻ t in Icc (0 : ℝ) 1, ∫⁻ y, ENNReal.ofReal ((fixedDesignLocalConstant h y t - f t) ^ 2)
         ∂fixedDesignRegressionLaw n f σ
       ≤ ∫⁻ _t in Icc (0 : ℝ) 1, ENNReal.ofReal (Bd * r) := setLIntegral_mono' measurableSet_Icc hpt
     _ = ENNReal.ofReal (Bd * r) := by
         rw [setLIntegral_const, Real.volume_Icc, sub_zero, ENNReal.ofReal_one, mul_one]
 
-/-- Hölder probability density class on the line, for smoothness orders at most one. -/
+/-- Probability densities on the line with the Hölder bound `|f x - f y| ≤ L |x - y|^β`.
+Integrability is implied by `∫ f = 1`. -/
 def holderDensityClass (β L : ℝ) : Set (ℝ → ℝ) :=
-  {f | Measurable f ∧ (∀ x, 0 ≤ f x) ∧ Integrable f volume ∧ (∫ x, f x) = 1 ∧
+  {f | Measurable f ∧ (∀ x, 0 ≤ f x) ∧ (∫ x, f x) = 1 ∧
     ∀ x y, |f x - f y| ≤ L * Real.rpow |x - y| β}
+
+/-- A member of the Hölder density class is integrable. -/
+theorem integrable_of_mem_holderDensityClass {β L : ℝ} {f : ℝ → ℝ}
+    (hf : f ∈ holderDensityClass β L) : Integrable f volume :=
+  Integrable.of_integral_ne_zero (by rw [hf.2.2.1]; norm_num)
+
+/-- For nonnegative parameters, the Hölder density class consists of the measurable
+probability densities satisfying Mathlib's `HolderWith L β`. -/
+theorem mem_holderDensityClass_iff {β L : ℝ≥0} {f : ℝ → ℝ} :
+    f ∈ holderDensityClass β L ↔
+      Measurable f ∧ (∀ x, 0 ≤ f x) ∧ (∫ x, f x) = 1 ∧ HolderWith L β f := by
+  simp only [holderDensityClass, mem_ofPred_eq, Real.rpow_eq_pow, ← holderOnWith_univ,
+    holderOnWith_iff_abs_sub_le, mem_univ, true_imp_iff]
 
 /-- The probability law represented by a real density. -/
 def densityLaw (f : ℝ → ℝ) : Measure ℝ :=
   volume.withDensity (fun x ↦ ENNReal.ofReal (f x))
-
-/-- A finite-sample kernel density estimator at a specified point. -/
-def finiteKernelDensityEstimator {n : ℕ} (K : ℝ → ℝ) (h : ℝ)
-    (sample : Fin n → ℝ) (t : ℝ) : ℝ :=
-  (∑ i, K ((t - sample i) / h)) / ((n : ℝ) * h)
 
 /-- Pointwise minimax risk for density estimation on a Hölder class. -/
 def holderDensityPointwiseMinimaxRisk (n : ℕ) (β L x : ℝ) : ℝ≥0∞ :=
@@ -414,7 +479,8 @@ theorem integral_sq_sampleMean_sub_le {P : Measure ℝ} [IsProbabilityMeasure P]
     · ext ω; simp
     · simp
   have hVW : Var[fun ω : Fin n → ℝ ↦ (∑ i, g (ω i)) / n - a; μ] = Var[g; P] / n := by
-    rw [variance_sub_const ((hS.const_mul (1 / (n : ℝ))).aestronglyMeasurable.congr (Filter.Eventually.of_forall fun ω ↦ by simp only; ring))]
+    rw [variance_sub_const ((hS.const_mul (1 / (n : ℝ))).aestronglyMeasurable.congr
+      (Filter.Eventually.of_forall fun ω ↦ by simp only; ring))]
     have : (fun ω : Fin n → ℝ ↦ (∑ i, g (ω i)) / n) =
         fun ω ↦ (1 / (n : ℝ)) * ∑ i, g (ω i) := by ext ω; ring
     rw [this, variance_const_mul, hVS]
@@ -437,7 +503,8 @@ theorem integral_sq_sampleMean_sub_le {P : Measure ℝ} [IsProbabilityMeasure P]
 /-- A Hölder probability density of order `β ∈ (0, 1]` is bounded by `1 / 2 + L`. -/
 theorem le_of_mem_holderDensityClass {β L : ℝ} (hβ : 0 < β) {f : ℝ → ℝ}
     (hf : f ∈ holderDensityClass β L) (x : ℝ) : f x ≤ 1 / 2 + L := by
-  obtain ⟨hfm, hf0, hfi, hf1, hfh⟩ := hf
+  have hfi := integrable_of_mem_holderDensityClass hf
+  obtain ⟨hfm, hf0, hf1, hfh⟩ := hf
   have hle : ∀ y ∈ Icc (x - 1) (x + 1), f x - L ≤ f y := by
     intro y hy
     have h1 : |x - y| ≤ 1 := abs_le.mpr ⟨by linarith [hy.2], by linarith [hy.1]⟩
@@ -497,8 +564,7 @@ theorem integral_comp_sub_div {h : ℝ} (hh : 0 < h) (x : ℝ) (ψ : ℝ → ℝ
 The moment condition is the order-zero kernel condition appropriate in this range. -/
 theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
     (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) (hc : 0 < c)
-    (K : ℝ → ℝ) (hK : Measurable K) (hKi : Integrable K volume)
-    (hK1 : (∫ x, K x) = 1) (hK2 : MemLp K 2 volume)
+    (K : ℝ → ℝ) (hK : Measurable K) (hK1 : (∫ x, K x) = 1) (hK2 : MemLp K 2 volume)
     (hKm : Integrable (fun x ↦ Real.rpow |x| β * |K x|) volume) :
     ∃ C > (0 : ℝ), ∀ n : ℕ, 0 < n → ∀ f ∈ holderDensityClass β L, ∀ x : ℝ,
       (∫⁻ sample, ENNReal.ofReal
@@ -506,6 +572,7 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
           f x) ^ 2) ∂(Measure.pi fun _ : Fin n ↦ densityLaw f)) ≤
       ENNReal.ofReal (C * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1))) := by
   obtain ⟨hβ0, -⟩ := hβ
+  have hKi : Integrable K volume := Integrable.of_integral_ne_zero (by rw [hK1]; norm_num)
   simp only [Real.rpow_eq_pow] at hKm ⊢
   set MK := ∫ u, |u| ^ β * |K u| with hMK
   set K2 := ∫ u, K u ^ 2 with hK2def
@@ -518,7 +585,8 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
   refine ⟨L ^ 2 * c ^ (2 * β) * MK ^ 2 + B * K2 / c + 1, by positivity, ?_⟩
   intro n hn f hf x
   have hfB : ∀ y, f y ≤ B := le_of_mem_holderDensityClass hβ0 hf
-  obtain ⟨hfm, hf0, hfi, hf1, hfh⟩ := hf
+  have hfi := integrable_of_mem_holderDensityClass hf
+  obtain ⟨hfm, hf0, hf1, hfh⟩ := hf
   simp only [Real.rpow_eq_pow] at hfh
   have := isProbabilityMeasure_densityLaw hf0 hfi hf1
   have hnR : (0 : ℝ) < n := by exact_mod_cast hn
@@ -557,7 +625,8 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
     exact hg2int
   -- bias
   have hψ : Integrable (fun u ↦ f (x - h * u) * K u) volume :=
-    hKi.bdd_mul (hfm.comp (measurable_const.sub (measurable_const.mul measurable_id))).aestronglyMeasurable
+    hKi.bdd_mul
+      (hfm.comp (measurable_const.sub (measurable_const.mul measurable_id))).aestronglyMeasurable
       (c := B) (Filter.Eventually.of_forall fun u ↦ by
         rw [Real.norm_eq_abs, abs_of_nonneg (hf0 _)]; exact hfB _)
   have hmean : ∫ y, g y ∂densityLaw f = ∫ u, f (x - h * u) * K u := by
@@ -606,22 +675,8 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
   rw [integral_densityLaw hfm hf0 (fun y ↦ g y ^ 2)]
   have hb2 : (∫ y, g y ∂densityLaw f - f x) ^ 2 ≤ (L * h ^ β * MK) ^ 2 := by
     rw [← sq_abs]; exact pow_le_pow_left₀ (abs_nonneg _) hbias 2
-  have hpow : (h ^ β) ^ 2 = c ^ (2 * β) * r := by
-    rw [hh, Real.mul_rpow hc.le he0.le, mul_pow, he, ← Real.rpow_mul hnR.le, hr,
-      ← Real.rpow_natCast, ← Real.rpow_natCast (_ ^ _), ← Real.rpow_mul hc.le,
-      ← Real.rpow_mul hnR.le]
-    congr 2
-    · push_cast; ring
-    · push_cast; field_simp
-  have hner : (n : ℝ) * e * r = 1 := by
-    rw [he, hr]
-    have h3 : (n : ℝ) * (n : ℝ) ^ (-1 / (2 * β + 1)) * (n : ℝ) ^ (-2 * β / (2 * β + 1)) =
-        (n : ℝ) ^ ((1 : ℝ) + -1 / (2 * β + 1) + -2 * β / (2 * β + 1)) := by
-      rw [Real.rpow_add hnR, Real.rpow_add hnR, Real.rpow_one]
-    rw [h3]
-    have hden : (2 * β + 1) ≠ 0 := by linarith
-    rw [show (1 : ℝ) + -1 / (2 * β + 1) + -2 * β / (2 * β + 1) = 0 by field_simp; ring,
-      Real.rpow_zero]
+  have hpow : (h ^ β) ^ 2 = c ^ (2 * β) * r := mul_rpow_rpow_sq_eq hn hβ0 hc
+  have hner : (n : ℝ) * e * r = 1 := natCast_mul_rpow_mul_rpow_eq_one hn hβ0
   have hvar : (∫ y, f y * g y ^ 2) / n ≤ B * K2 / c * r := by
     have hr' : r = 1 / (n * e) := by
       rw [eq_div_iff (by positivity)]; linarith [hner]

@@ -1,16 +1,6 @@
 module
 
 public import CKSD.Processes.Basic
-public import CKSD.Asymptotics.Basic
-public import CKSD.Nonparametric.Basic
-public import CKSD.Processes.Dependence
-public import Mathlib.Analysis.Normed.Group.Tannery
-public import Mathlib.MeasureTheory.Constructions.KolmogorovExtension
-public import Mathlib.Probability.Distributions.Gaussian.Multivariate
-public import Mathlib.Probability.Distributions.Gaussian.CharFun
-public import Mathlib.Probability.Distributions.Gaussian.Fernique
-public import Mathlib.Probability.Independence.Integration
-public import Mathlib.MeasureTheory.Constructions.Polish.Basic
 public import Mathlib.Analysis.Normed.Operator.Extend
 public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
 public import TauCeti.Analysis.InnerProductSpace.LinearCombination
@@ -18,8 +8,31 @@ public import TauCeti.Analysis.InnerProductSpace.LinearCombination
 /-!
 # Hilbert-space Wold decomposition
 
-Closed past subspaces, shift isometries, orthogonal innovations and the Wold decomposition
-for a weakly stationary Hilbert-space sequence. Source: GAPS 106.10.
+For a weakly stationary sequence `X : ℤ → H` in a real Hilbert space, with closed pasts
+`past X t = closure (span {X s : s ≤ t})`, orthogonal projections `P t` onto them, and
+innovations `e t = X t - P (t - 1) (X t)` with `e 0 ≠ 0`, the sequence decomposes as
+`X t = ∑_{j ≥ 0} a_j e (t - j) + V t` with `a 0 = 1`, `∑ a_j² < ∞`, and `V` in the remote past
+`⋂_s past X s` and orthogonal to all innovations. Applied to `L²` random variables this is the
+Wold decomposition of a weakly stationary process.
+
+The proof constructs the shift `X t ↦ X (t + 1)` as a linear isometry of the closed span (by
+extension from finite linear combinations), shows that it commutes with the projections, so
+that the innovations are shifts of each other and have constant norm, and expands
+`X t - P (t - k) (X t)` in the orthogonal innovations.
+
+## Main definitions
+
+* `CKSD.Wold.past`, `CKSD.Wold.hull`: the closed pasts and the closed span.
+* `CKSD.Wold.shiftIsometry`, `CKSD.Wold.shift`: the shift of a weakly stationary sequence.
+* `CKSD.Wold.innov`: the innovations `X t - P (t - 1) (X t)`.
+
+## Main results
+
+* `CKSD.Wold.wold`: the decomposition in terms of the innovations.
+* `CKSD.exists_wold_decomposition` (GAPS 106.2): the decomposition for a weakly stationary
+  sequence (`CKSD.IsWeaklyStationary`).
+
+The causal autoregression part of GAPS 106.2 is not covered.
 -/
 
 @[expose] public section
@@ -27,32 +40,12 @@ for a weakly stationary Hilbert-space sequence. Source: GAPS 106.10.
 noncomputable section
 
 open MeasureTheory ProbabilityTheory Filter Set
-open scoped ENNReal NNReal Topology BigOperators MatrixOrder Matrix.Norms.L2Operator
+open scoped ENNReal NNReal Topology BigOperators
 open scoped RealInnerProductSpace
 
 namespace CKSD
 
 attribute [local instance] Classical.propDecidable
-
-attribute [local instance] Classical.propDecidable
-
-/-- GAPS 106.1: triangular-array martingale central limit theorem. -/
-theorem tendstoInDistribution_martingale_array_sum {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) [IsProbabilityMeasure μ]
-    (F : ℕ → Filtration ℕ (inferInstance : MeasurableSpace Ω))
-    (X : ℕ → ℕ → Ω → ℝ) (k : ℕ → ℕ)
-    (ha : ∀ n j, Measurable[F n (j + 1)] (X n j))
-    (h2 : ∀ n j, MemLp (X n j) 2 μ)
-    (h0 : ∀ n j, μ[X n j | F n j] =ᵐ[μ] fun _ ↦ 0)
-    (v : ℝ) (hv : 0 ≤ v)
-    (hvar : TendstoInProbabilityConst μ (fun n ω ↦
-      ∑ j ∈ Finset.range (k n), μ[(fun ω ↦ X n j ω ^ 2) | F n j] ω) v)
-    (hlin : ∀ ε > 0, TendstoInProbabilityConst μ (fun n ω ↦
-      ∑ j ∈ Finset.range (k n),
-        μ[(fun ω ↦ if ε < |X n j ω| then X n j ω ^ 2 else 0) | F n j] ω) 0) :
-    TendstoInDistribution μ (fun n ω ↦ ∑ j ∈ Finset.range (k n), X n j ω)
-      (gaussianReal 0 (Real.toNNReal v)) := by
-  sorry
 
 namespace Wold
 
@@ -115,20 +108,21 @@ variable [CompleteSpace H]
 instance : CompleteSpace (hull X) := (isClosed_hull X).completeSpace_coe
 
 /-- The coefficient map `c ↦ ∑ c_t X_t` into the closed span. -/
-def canon : (ℤ →₀ ℝ) →ₗ[ℝ] hull X :=
+def coeffMap : (ℤ →₀ ℝ) →ₗ[ℝ] hull X :=
   Finsupp.linearCombination ℝ fun t ↦ (⟨X t, mem_hull X t⟩ : hull X)
 
 /-- The shifted coefficient map `c ↦ ∑ c_t X_{t+1}` into the closed span. -/
-def shiftedCanon : (ℤ →₀ ℝ) →ₗ[ℝ] hull X :=
+def shiftedCoeffMap : (ℤ →₀ ℝ) →ₗ[ℝ] hull X :=
   Finsupp.linearCombination ℝ fun t ↦ (⟨X (t + 1), mem_hull X (t + 1)⟩ : hull X)
 
 omit [CompleteSpace H] in
 /-- The finite linear combinations of the `X_t` are dense in the closed span. -/
-theorem denseRange_canon : DenseRange (canon X) := by
+theorem denseRange_coeffMap : DenseRange (coeffMap X) := by
   intro k
   rw [Topology.IsInducing.subtypeVal.closure_eq_preimage_closure_image, Set.mem_preimage]
-  have himage : Subtype.val '' Set.range (canon X) = (Submodule.span ℝ (Set.range X) : Set H) := by
-    have h1 : ∀ f, ((canon X f : hull X) : H) = Finsupp.linearCombination ℝ X f := by
+  have himage :
+      Subtype.val '' Set.range (coeffMap X) = (Submodule.span ℝ (Set.range X) : Set H) := by
+    have h1 : ∀ f, ((coeffMap X f : hull X) : H) = Finsupp.linearCombination ℝ X f := by
       intro f
       change (hull X).subtype (Finsupp.linearCombination ℝ _ f) = _
       rw [Finsupp.apply_linearCombination]
@@ -145,8 +139,8 @@ variable {X}
 
 omit [CompleteSpace H] in
 /-- Under a stationary Gram matrix, shifting the coefficients preserves norms. -/
-theorem norm_shiftedCanon (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (f : ℤ →₀ ℝ) :
-    ‖shiftedCanon X f‖ = ‖canon X f‖ :=
+theorem norm_shiftedCoeffMap (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (f : ℤ →₀ ℝ) :
+    ‖shiftedCoeffMap X f‖ = ‖coeffMap X f‖ :=
   f.norm_linearCombination_eq_of_inner_eq fun a b ↦ by
     change ⟪X (a + 1), X (b + 1)⟫ = ⟪X a, X b⟫
     rw [hstat, hstat a b]
@@ -155,30 +149,30 @@ theorem norm_shiftedCanon (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0�
 
 omit [CompleteSpace H] in
 /-- The shifted coefficient map is bounded by the coefficient map. -/
-theorem exists_bound_shiftedCanon (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) :
-    ∃ C, ∀ f, ‖shiftedCanon X f‖ ≤ C * ‖canon X f‖ :=
-  ⟨1, fun f ↦ by rw [norm_shiftedCanon hstat f, one_mul]⟩
+theorem exists_bound_shiftedCoeffMap (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) :
+    ∃ C, ∀ f, ‖shiftedCoeffMap X f‖ ≤ C * ‖coeffMap X f‖ :=
+  ⟨1, fun f ↦ by rw [norm_shiftedCoeffMap hstat f, one_mul]⟩
 
 /-- With a stationary Gram matrix, the shift `X_t ↦ X_{t+1}` is a linear isometry of the
 closed span. -/
 def shiftIsometry (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) : hull X →ₗᵢ[ℝ] hull X :=
-  LinearIsometry.mk ((shiftedCanon X).extendOfNorm (canon X)).toLinearMap fun x ↦ by
-    refine (denseRange_canon X).induction_on x
-      (isClosed_eq ((shiftedCanon X).extendOfNorm (canon X)).continuous.norm
+  LinearIsometry.mk ((shiftedCoeffMap X).extendOfNorm (coeffMap X)).toLinearMap fun x ↦ by
+    refine (denseRange_coeffMap X).induction_on x
+      (isClosed_eq ((shiftedCoeffMap X).extendOfNorm (coeffMap X)).continuous.norm
         continuous_norm) ?_
     intro f
     exact calc
-      ‖(shiftedCanon X).extendOfNorm (canon X) (canon X f)‖ = ‖shiftedCanon X f‖ :=
-        congrArg norm (LinearMap.extendOfNorm_eq (denseRange_canon X)
-          (exists_bound_shiftedCanon hstat) f)
-      _ = ‖canon X f‖ := norm_shiftedCanon hstat f
+      ‖(shiftedCoeffMap X).extendOfNorm (coeffMap X) (coeffMap X f)‖ = ‖shiftedCoeffMap X f‖ :=
+        congrArg norm (LinearMap.extendOfNorm_eq (denseRange_coeffMap X)
+          (exists_bound_shiftedCoeffMap hstat) f)
+      _ = ‖coeffMap X f‖ := norm_shiftedCoeffMap hstat f
 
 /-- The shift isometry sends `X_t` to `X_{t+1}`. -/
 theorem shiftIsometry_apply (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (t : ℤ) :
     shiftIsometry hstat ⟨X t, mem_hull X t⟩ = ⟨X (t + 1), mem_hull X (t + 1)⟩ := by
-  have h := LinearMap.extendOfNorm_eq (denseRange_canon X) (exists_bound_shiftedCanon hstat)
+  have h := LinearMap.extendOfNorm_eq (denseRange_coeffMap X) (exists_bound_shiftedCoeffMap hstat)
     (Finsupp.single t 1)
-  simp only [canon, shiftedCanon, Finsupp.linearCombination_single, one_smul] at h
+  simp only [coeffMap, shiftedCoeffMap, Finsupp.linearCombination_single, one_smul] at h
   exact h
 
 /-- The shift extended by zero on the orthogonal complement of the closed span. -/
@@ -234,7 +228,7 @@ variable {X} (P : ℤ → H →L[ℝ] H)
 include hproj
 
 /-- The orthogonal projection is characterized by membership and orthogonality. -/
-theorem proj_eq_of {t : ℤ} {x y : H} (hy : y ∈ past X t)
+theorem proj_eq_of_mem_of_inner_eq_zero {t : ℤ} {x y : H} (hy : y ∈ past X t)
     (h : ∀ z ∈ past X t, ⟪x - y, z⟫ = 0) : P t x = y := by
   have hd : P t x - y ∈ past X t := sub_mem (hproj t x).1 hy
   have hsplit : P t x - y = (x - y) - (x - P t x) := by abel
@@ -245,11 +239,11 @@ theorem proj_eq_of {t : ℤ} {x y : H} (hy : y ∈ past X t)
 
 /-- The projection fixes the closed past. -/
 theorem proj_of_mem {t : ℤ} {x : H} (hx : x ∈ past X t) : P t x = x :=
-  proj_eq_of P hproj hx fun z _ ↦ by simp
+  proj_eq_of_mem_of_inner_eq_zero P hproj hx fun z _ ↦ by simp
 
 /-- Tower property of the projections onto the closed pasts. -/
 theorem proj_proj {s t : ℤ} (hst : s ≤ t) (x : H) : P s (P t x) = P s x := by
-  refine proj_eq_of P hproj (hproj s x).1 fun z hz ↦ ?_
+  refine proj_eq_of_mem_of_inner_eq_zero P hproj (hproj s x).1 fun z hz ↦ ?_
   have hsplit : P t x - P s x = (x - P s x) - (x - P t x) := by abel
   rw [hsplit, inner_sub_left, (hproj s x).2 z hz, (hproj t x).2 z (past_mono X hst hz),
     sub_zero]
@@ -336,7 +330,7 @@ include hstat hproj
 /-- The projections onto the closed pasts commute with the shift. -/
 theorem proj_shift {s : ℤ} {x : H} (hx : x ∈ hull X) :
     P (s + 1) (shift hstat x) = shift hstat (P s x) := by
-  refine proj_eq_of P hproj (shift_mem_past hstat (hproj s x).1) fun z hz ↦ ?_
+  refine proj_eq_of_mem_of_inner_eq_zero P hproj (shift_mem_past hstat (hproj s x).1) fun z hz ↦ ?_
   rw [← map_sub]
   exact inner_shift_eq_zero hstat (sub_mem hx (past_le_hull X s (hproj s x).1))
     (hproj s x).2 z hz
@@ -487,29 +481,19 @@ end Innovations
 
 end Wold
 
-/-- GAPS 106.2, Wold decomposition of a stationary sequence in a real Hilbert space. -/
+/-- GAPS 106.2, Wold decomposition of a weakly stationary sequence `X` in a real Hilbert space.
+Let `P t` be the orthogonal projections onto the closed pasts `past X t` and
+`e t = X t - P (t - 1) (X t)` the innovations, with `e 0 ≠ 0`. There are coefficients `a` with
+`a 0 = 1` and `∑ a_j² < ∞`, and a sequence `V` lying in every closed past (the remote past) and
+orthogonal to every innovation, such that `X t = ∑_j a_j e (t - j) + V t`. -/
 theorem exists_wold_decomposition {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H]
-    [CompleteSpace H] (X : ℤ → H)
-    (hstat : ∀ s t, inner ℝ (X s) (X t) = inner ℝ (X (s - t)) (X 0)) :
-    let past := fun t ↦ (Submodule.span ℝ {x | ∃ s : ℤ, s ≤ t ∧ x = X s}).topologicalClosure;
-    ∀ (P : ℤ → H →L[ℝ] H),
-    ∀ (hproj : ∀ t x, P t x ∈ past t ∧ ∀ y ∈ past t, inner ℝ (x - P t x) y = 0),
-    let e := fun t ↦ X t - P (t - 1) (X t);
-    ∀ (he : 0 < ‖e 0‖),
+    [CompleteSpace H] (X : ℤ → H) (hstat : IsWeaklyStationary ℝ X) (P : ℤ → H →L[ℝ] H)
+    (hproj : ∀ t x, P t x ∈ Wold.past X t ∧ ∀ y ∈ Wold.past X t, inner ℝ (x - P t x) y = 0)
+    (he : 0 < ‖Wold.innov P X 0‖) :
     ∃ (a : ℕ → ℝ) (V : ℤ → H), a 0 = 1 ∧ Summable (fun j ↦ a j ^ 2) ∧
-      (∀ t s, V t ∈ past s) ∧ (∀ t s, inner ℝ (V t) (e s) = 0) ∧
-      ∀ t, Tendsto (fun n ↦ (∑ j ∈ Finset.range n, a j • e (t - j)) + V t) atTop (𝓝 (X t)) := by
-  intro past P hproj e he
-  exact Wold.wold hstat P hproj he
-
-/-- GAPS 106.4, independent-observation special case of Bartlett's theorem. -/
-theorem tendstoInDistribution_sample_autocorrelations {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
-    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (h2 : MemLp id 2 P)
-    (hv : 0 < variance P id) (m : ℕ) :
-    TendstoInDistribution μ (fun n ω ↦ (WithLp.toLp 2 fun i : Fin m ↦
-      Real.sqrt n * sampleAutocovariance X (i.val + 1) n ω / sampleAutocovariance X 0 n ω))
-      (stdGaussian (EuclideanSpace ℝ (Fin m))) := by
-  sorry
+      (∀ t s, V t ∈ Wold.past X s) ∧ (∀ t s, inner ℝ (V t) (Wold.innov P X s) = 0) ∧
+      ∀ t, Tendsto (fun n ↦ (∑ j ∈ Finset.range n, a j • Wold.innov P X (t - j)) + V t) atTop
+        (𝓝 (X t)) :=
+  Wold.wold (fun s t ↦ hstat.inner_eq_inner_sub_zero s t) P hproj he
 
 end CKSD

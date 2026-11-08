@@ -16,7 +16,9 @@ TauCeti's compactness of optimal plans, Brenier uniqueness and the equivalence o
 weak convergence of graph plans with convergence in measure. TauCeti's moment-tail
 criterion and Mathlib's Vitali theorem upgrade this convergence to mean square.
 
-Source: GAPS 108.42 and SYNOPSIS108.42.
+## Main results
+
+* `CKSD.tendsto_integral_sq_optimal_map_sub`: `L²` stability of optimal maps (GAPS 108.42).
 -/
 
 @[expose] public section
@@ -230,10 +232,13 @@ lemma isOptimalCoupling_graphPlan_of_integral_norm_sq_eq
   rw [← TauCeti.WassersteinSpace.edist_def]
   exact edist_ne_top μ ν
 
-/-- GAPS 108.42: L2 stability of optimal maps with a fixed absolutely continuous source. -/
+/-- GAPS 108.42: L2 stability of optimal maps with a fixed absolutely continuous source. Let `μ`
+be an absolutely continuous law with finite second moment, `T` and `Tₙ` measurable optimal maps
+from `μ` to laws `ν` and `νₙ` with finite second moments. If `W₂(νₙ, ν) → 0`, then
+`∫ ‖Tₙ - T‖² dμ → 0`. The laws `νₙ = (Tₙ)_# μ` are probability measures automatically. -/
 theorem tendsto_integral_sq_optimal_map_sub {d : ℕ}
     (μ ν : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
-    (νn : ℕ → Measure (EuclideanSpace ℝ (Fin d))) (hνn : ∀ n, IsProbabilityMeasure (νn n))
+    (νn : ℕ → Measure (EuclideanSpace ℝ (Fin d)))
     (hac : μ ≪ volume) (hμ2 : MemLp id 2 μ) (hν2 : MemLp id 2 ν)
     (hνn2 : ∀ n, MemLp id 2 (νn n))
     (T : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
@@ -246,7 +251,8 @@ theorem tendsto_integral_sq_optimal_map_sub {d : ℕ}
     (hconv : Tendsto (fun n ↦ (TauCeti.wassersteinEDist 2 (νn n) ν).toReal) atTop (𝓝 0)) :
     Tendsto (fun n ↦ ∫ x, ‖Tn n x - T x‖ ^ 2 ∂μ) atTop (𝓝 0) := by
   let E := EuclideanSpace ℝ (Fin d)
-  let : ∀ n, IsProbabilityMeasure (νn n) := hνn
+  have : ∀ n, IsProbabilityMeasure (νn n) :=
+    fun n ↦ hpushn n ▸ inferInstance
   let μw : TauCeti.WassersteinSpace 2 E := TauCeti.WassersteinSpace.mk ⟨μ, inferInstance⟩
     (TauCeti.hasFiniteMoment_def.2 ⟨0, by simpa [edist_eq_enorm_sub] using hμ2.enorm⟩)
   let νw : TauCeti.WassersteinSpace 2 E := TauCeti.WassersteinSpace.mk ⟨ν, inferInstance⟩

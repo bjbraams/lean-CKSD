@@ -6,8 +6,20 @@ public import TauCeti.MeasureTheory.OptimalTransport.Entropic.SinkhornDivergence
 /-!
 # Real-valued entropic costs
 
-A real cost is shifted by a specified lower bound before conversion to TauCeti's nonnegative
-extended-real cost. The debiasing cancels the shift. Sources: GAPS 108.44 and its short derivation.
+A real cost bounded below is shifted by a specified lower bound before conversion to TauCeti's
+nonnegative extended-real cost; the debiasing of the Sinkhorn divergence cancels the shift.
+
+## Main definitions
+
+* `CKSD.shiftedEntropicCost`: the nonnegative cost `c - lower`.
+* `CKSD.realSinkhornDivergence`: the debiased Sinkhorn divergence of a real cost.
+
+## Main results
+
+* `CKSD.realSinkhornDivergence_independent_lower_bound`: the divergence does not depend on the
+  lower bound (GAPS 108.44).
+* `CKSD.realSinkhornDivergence_nonneg`: nonnegativity for a positive semidefinite continuous Gibbs
+  kernel on a compact space (GAPS 108.44).
 -/
 
 @[expose] public section
@@ -30,7 +42,7 @@ def realSinkhornDivergence {X : Type*} [MeasurableSpace X] (c : X × X → ℝ)
 
 /-- Lowering the shift by `b - a` raises every entropic cost by `b - a`. -/
 theorem entropicTransportCost_shiftedEntropicCost_eq_add
-    {X : Type*} [MeasurableSpace X] (c : X × X → ℝ) (hc : Measurable c)
+    {X : Type*} [MeasurableSpace X] (c : X × X → ℝ)
     (a b : ℝ) (hab : a ≤ b) (hb : ∀ z, b ≤ c z) (ε : ℝ≥0) (P Q : Measure X)
     [IsProbabilityMeasure P] :
     TauCeti.entropicTransportCost (shiftedEntropicCost c a) ε P Q =
@@ -42,8 +54,6 @@ theorem entropicTransportCost_shiftedEntropicCost_eq_add
     rw [← ENNReal.ofReal_add (by linarith [hb z]) (by linarith)]
     congr 1
     ring
-  have hmeas : Measurable (shiftedEntropicCost c b) := by
-    unfold shiftedEntropicCost; fun_prop
   rw [TauCeti.entropicTransportCost_def, TauCeti.entropicTransportCost_def, ENNReal.iInf_add]
   refine iInf_congr fun π ↦ ?_
   rw [ENNReal.iInf_add]
@@ -68,9 +78,11 @@ theorem entropicTransportCost_shiftedEntropicCost_ne_top
   · rw [TauCeti.entropicTransportCost_def]
     exact iInf₂_le (P.prod Q) (TauCeti.isCoupling_prod P Q)
 
-/-- GAPS 108.44: the debiased divergence does not depend on the chosen valid lower bound. -/
+/-- GAPS 108.44: the debiased divergence does not depend on the chosen valid lower bound. For a
+bounded real cost `c` with lower bounds `a` and `b`, the shifted Sinkhorn divergences agree for
+probability measures `P, Q`. -/
 theorem realSinkhornDivergence_independent_lower_bound
-    {X : Type*} [MeasurableSpace X] (c : X × X → ℝ) (hc : Measurable c)
+    {X : Type*} [MeasurableSpace X] (c : X × X → ℝ)
     (a b C : ℝ) (ha : ∀ z, a ≤ c z) (hb : ∀ z, b ≤ c z) (hC : ∀ z, c z ≤ C)
     (ε : ℝ≥0) (P Q : Measure X)
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q] :
@@ -80,9 +92,9 @@ theorem realSinkhornDivergence_independent_lower_bound
     intro a b hab hb
     unfold realSinkhornDivergence
     rw [TauCeti.sinkhornDivergence_def, TauCeti.sinkhornDivergence_def,
-      entropicTransportCost_shiftedEntropicCost_eq_add c hc a b hab hb ε P Q,
-      entropicTransportCost_shiftedEntropicCost_eq_add c hc a b hab hb ε P P,
-      entropicTransportCost_shiftedEntropicCost_eq_add c hc a b hab hb ε Q Q,
+      entropicTransportCost_shiftedEntropicCost_eq_add c a b hab hb ε P Q,
+      entropicTransportCost_shiftedEntropicCost_eq_add c a b hab hb ε P P,
+      entropicTransportCost_shiftedEntropicCost_eq_add c a b hab hb ε Q Q,
       ENNReal.toReal_add (entropicTransportCost_shiftedEntropicCost_ne_top c b C hC ε P Q)
         ENNReal.ofReal_ne_top,
       ENNReal.toReal_add (entropicTransportCost_shiftedEntropicCost_ne_top c b C hC ε P P)
@@ -94,7 +106,9 @@ theorem realSinkhornDivergence_independent_lower_bound
   · exact key a b h hb
   · exact (key b a h ha).symm
 
-/-- GAPS 108.44: nonnegativity of a shifted real-cost Sinkhorn divergence, using TauCeti. -/
+/-- GAPS 108.44: nonnegativity of a shifted real-cost Sinkhorn divergence, using TauCeti: on a
+compact space, if the shifted cost is bounded and its Gibbs kernel `exp(-c/ε)` is positive
+semidefinite and continuous, then the divergence is nonnegative for all probability laws. -/
 theorem realSinkhornDivergence_nonneg {X : Type*} [MeasurableSpace X] [TopologicalSpace X]
     [CompactSpace X] [OpensMeasurableSpace X] (c : X × X → ℝ) (lower : ℝ)
     (hc : Measurable c) (C : ℝ≥0) (hbound : ∀ z, shiftedEntropicCost c lower z ≤ C)

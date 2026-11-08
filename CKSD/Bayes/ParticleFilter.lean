@@ -1,16 +1,35 @@
 module
 
 public import CKSD.Bayes.Basic
-public import CKSD.Asymptotics.Basic
 
 /-!
-# Particle filters and weak diffusion equations
+# Feynman–Kac models and the bootstrap particle filter
 
-A Feynman–Kac specification consists of Markov transitions and positive bounded potentials.
-Its unnormalized laws and bootstrap proposal laws are explicit measure constructions. Weak
-Fokker–Planck solutions are specified by their integral identity on smooth compactly supported tests;
-this definition does not assert existence of an SDE solution or supply a stochastic integral.
-Sources: GAPS 104.37–104.60, 104.63, and 104.75–104.76.
+A Feynman–Kac model consists of an initial law, Markov transitions, and measurable potentials
+bounded above and below by positive constants; fixed observations are encoded in the potentials.
+Its unnormalized measures `γₙ` satisfy `γₙ₊₁(φ) = γₙ(Gₙ Qₙ φ)` and the filtering laws are
+`ηₙ = γₙ / γₙ(1)`. The bootstrap particle filter with `N` particles is specified as a sampling
+protocol: conditionally on the past, the next generation consists of `N` independent draws from the
+potential-weighted mixture of the transitions from the current particles (multinomial resampling).
+
+## Main definitions
+
+* `CKSD.FeynmanKacModel`, `CKSD.FeynmanKacModel.unnormalizedLaw`,
+  `CKSD.FeynmanKacModel.filterLaw`: the model, its unnormalized measures, and its filtering laws.
+* `CKSD.FeynmanKacModel.particlePredictionLaw`, `CKSD.FeynmanKacModel.particleLikelihood`: the
+  resampling-and-mutation law of the bootstrap filter and its likelihood estimate.
+* `CKSD.IsBootstrapParticleSystem`: the bootstrap sampling protocol.
+
+## Main results
+
+* `CKSD.lintegral_bootstrapWeight_mul_average`: unbiasedness of the particle approximation of the
+  unnormalized measures.
+* `CKSD.integral_particleLikelihood_eq`: the particle likelihood estimate is unbiased
+  (GAPS 104.58).
+* `CKSD.exists_integral_sq_particle_average_sub_le`: the mean-square error of the particle
+  average at a fixed time is `O(1/N)`, uniformly over test functions bounded by a constant.
+* `CKSD.tendstoInProbabilityConst_particle_average`: fixed-time consistency of the bootstrap
+  filter (GAPS 104.55).
 -/
 
 @[expose] public section
@@ -259,60 +278,6 @@ theorem integral_particleLikelihood_eq {Ω X : Type*} [MeasurableSpace Ω]
   refine Finset.prod_congr rfl fun p _ ↦ ?_
   rw [ENNReal.ofReal_div_of_pos hNr, ENNReal.ofReal_sum_of_nonneg fun i _ ↦
     (M.potential_pos p _).le, ENNReal.ofReal_natCast]
-
-/-- Gibbs law normalized by its partition integral. Use under finite positive normalizer
-hypotheses. -/
-def gibbsMeasure {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ) :
-    Measure (EuclideanSpace ℝ (Fin d)) :=
-  let Z := ∫ x, Real.exp (-V x)
-  volume.withDensity (fun x ↦ ENNReal.ofReal (Real.exp (-V x) / Z))
-
-/-- Diffusion generator in Euclidean coordinates for drift `b` and infinitesimal covariance `A`. -/
-def diffusionGenerator {d : ℕ}
-    (b : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (A : ℝ → EuclideanSpace ℝ (Fin d) → Matrix (Fin d) (Fin d) ℝ)
-    (f : EuclideanSpace ℝ (Fin d) → ℝ) (t : ℝ) (x : EuclideanSpace ℝ (Fin d)) : ℝ :=
-  fderiv ℝ f x (b t x) + (1 / 2 : ℝ) *
-    ∑ i, ∑ j, A t x i j *
-      fderiv ℝ (fderiv ℝ f) x (EuclideanSpace.single i 1) (EuclideanSpace.single j 1)
-
-/-- Weak integral formulation of the Fokker–Planck equation on `[0,T]`. -/
-def IsFokkerPlanckSolution {d : ℕ}
-    (μ : ℝ → Measure (EuclideanSpace ℝ (Fin d)))
-    (b : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (A : ℝ → EuclideanSpace ℝ (Fin d) → Matrix (Fin d) (Fin d) ℝ) (T : ℝ) : Prop :=
-  (∀ t ∈ Icc 0 T, IsProbabilityMeasure (μ t)) ∧
-    ∀ f : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ ⊤ f → HasCompactSupport f →
-      ∀ t ∈ Icc 0 T,
-        Integrable (diffusionGenerator b A f t) (μ t) ∧
-        IntervalIntegrable (fun s ↦ ∫ x, diffusionGenerator b A f s x ∂μ s) volume 0 t ∧
-        (∫ x, f x ∂μ t) = (∫ x, f x ∂μ 0) +
-          ∫ s in (0 : ℝ)..t, ∫ x, diffusionGenerator b A f s x ∂μ s
-
-/-- Euler–Maruyama step with an already sampled standard Gaussian increment. -/
-def eulerMaruyamaStep {d : ℕ}
-    (b : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (σ : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d))
-    (h : ℝ) (x z : EuclideanSpace ℝ (Fin d)) : EuclideanSpace ℝ (Fin d) :=
-  x + h • b x + Real.sqrt h • σ z
-
-/-- Unadjusted Langevin one-step law, with noise variance `2h`. -/
-def langevinStepLaw {d : ℕ} (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (h : ℝ) (P : Measure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)) :=
-  (P.prod (stdGaussian (EuclideanSpace ℝ (Fin d)))).map
-    (fun z ↦ z.1 - h • gradV z.1 + Real.sqrt (2 * h) • z.2)
-
-/-- Acceptance probability of Metropolis-adjusted Langevin with proposal variance `2h`. -/
-def malaAcceptance {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
-    (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (h : ℝ) (x y : EuclideanSpace ℝ (Fin d)) : ℝ :=
-  min 1 (Real.exp (V x - V y +
-    (‖y - x + h • gradV x‖ ^ 2 - ‖x - y + h • gradV y‖ ^ 2) / (4 * h)))
-
-/-- DDPM update for variance-exploding Brownian noising, using the remaining time `t`. -/
-def ddpmStep {d : ℕ} (score : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (t h : ℝ) (x z : EuclideanSpace ℝ (Fin d)) : EuclideanSpace ℝ (Fin d) :=
-  x + h • score x + Real.sqrt ((t - h) * h / t) • z
 
 /-- Feynman–Kac normalization starts from the specified prior law. -/
 @[simp] theorem FeynmanKacModel.unnormalizedLaw_zero {X : Type*} [MeasurableSpace X]
@@ -577,6 +542,155 @@ theorem sq_div_sub_div_le {a u v u' v' C : ℝ} (ha : 0 < a) (hv : a ≤ v) (hv'
   exact div_le_div₀ (by positivity) h1 (by positivity)
     (pow_le_pow_left₀ ha.le hv 2)
 
+/-- Induction step of the mean-square bound for the bootstrap particle filter. If at time `n`
+the particle average of every measurable `f` with `|f| ≤ C` has mean-square error at most
+`K C² / (N + 1)`, and `a ≤ Gₙ ≤ b` with `a > 0`, then at time `n + 1` the mean-square error is at
+most `(2 + 8 K b² / a²) C² / (N + 1)`. -/
+theorem integral_sq_particle_average_succ_sub_le {Ω X : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
+    (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
+    (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
+    (hξ : ∀ N, IsBootstrapParticleSystem P M (N + 1) (ξ N)) (n : ℕ) (K : ℝ)
+    (hK : ∀ f : X → ℝ, Measurable f → ∀ C : ℝ, (∀ x, |f x| ≤ C) → ∀ N : ℕ,
+      ∫ ω, ((∑ i, f (ξ N n ω i)) / (N + 1) - ∫ x, f x ∂M.filterLaw n) ^ 2 ∂P ≤
+        K * C ^ 2 / (N + 1))
+    {a b : ℝ} (ha : 0 < a) (hab : ∀ x, M.potential n x ∈ Icc a b)
+    (f : X → ℝ) (hf : Measurable f) (C : ℝ) (hC : ∀ x, |f x| ≤ C) (N : ℕ) :
+    ∫ ω, ((∑ i, f (ξ N (n + 1) ω i)) / (N + 1) - ∫ x, f x ∂M.filterLaw (n + 1)) ^ 2 ∂P ≤
+      (2 + 8 * K * b ^ 2 / a ^ 2) * C ^ 2 / (N + 1) := by
+  have hsum (N : ℕ) (h : X → ℝ) (D : ℝ) (hD : ∀ x, |h x| ≤ D) (z : Fin (N + 1) → X) :
+      |∑ i, h (z i)| ≤ (N + 1) * D := by
+    refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+    simpa using Finset.sum_le_sum fun i (_ : i ∈ Finset.univ) ↦ hD (z i)
+  have hsq (p : Ω → ℝ) (hp : Measurable p) (D : ℝ) (hD : ∀ ω, |p ω| ≤ D) :
+      Integrable (fun ω ↦ p ω ^ 2) P :=
+    (MemLp.of_bound hp.aestronglyMeasurable D
+      (ae_of_all _ fun ω ↦ by simpa [Real.norm_eq_abs] using hD ω)).integrable_sq
+  have := M.isMarkov_transition n
+  have hb : 0 < b := ha.trans_le ((hab (Classical.arbitrary X)).1.trans (hab _).2)
+  have hC0 : 0 ≤ C := (abs_nonneg _).trans (hC (Classical.arbitrary X))
+  have hN' : (0 : ℝ) < N + 1 := by positivity
+  set G := M.potential n with hGdef
+  have hGm : Measurable G := M.measurable_potential n
+  have hGb (x : X) : |G x| ≤ b := by
+    rw [abs_of_pos (M.potential_pos n x)]; exact (hab x).2
+  set Q : X → ℝ := fun x ↦ ∫ y, f y ∂M.transition n x with hQdef
+  have hQm : Measurable Q :=
+    (hf.stronglyMeasurable.integral_kernel (κ := M.transition n)).measurable
+  have hQb (x : X) : |Q x| ≤ C := by
+    have := norm_integral_le_of_norm_le_const (μ := M.transition n x) (f := f) (C := C)
+      (ae_of_all _ fun y ↦ by simpa [Real.norm_eq_abs] using hC y)
+    simpa [Real.norm_eq_abs] using this
+  set g : X → ℝ := fun x ↦ G x * Q x with hgdef
+  have hgm : Measurable g := hGm.mul hQm
+  have hgb (x : X) : |g x| ≤ b * C := by
+    rw [abs_mul]; exact mul_le_mul (hGb x) (hQb x) (abs_nonneg _) hb.le
+  have hmeas := (hξ N).1
+  set A : Ω → ℝ := fun ω ↦ (∑ i, f (ξ N (n + 1) ω i)) / (N + 1) with hA
+  set B : Ω → ℝ := fun ω ↦ ∫ y, f y ∂M.particlePredictionLaw n (ξ N n ω) with hBdef
+  set u : Ω → ℝ := fun ω ↦ (∑ i, g (ξ N n ω i)) / (N + 1) with hu
+  set v : Ω → ℝ := fun ω ↦ (∑ i, G (ξ N n ω i)) / (N + 1) with hv
+  set u' := ∫ x, g x ∂M.filterLaw n with hu'
+  set v' := ∫ x, G x ∂M.filterLaw n with hv'
+  have hT : ∫ x, f x ∂M.filterLaw (n + 1) = u' / v' := M.integral_filterLaw_succ n hf hC
+  have hB (ω : Ω) : B ω = u ω / v ω := by
+    simp only [hBdef, hu, hv]
+    rw [M.integral_particlePredictionLaw n _ hf hC, div_div_div_cancel_right₀ hN'.ne']
+  have hum : Measurable u :=
+    (Finset.measurable_sum _ fun i _ ↦ hgm.comp ((measurable_pi_apply i).comp (hmeas n))).div_const _
+  have hvm : Measurable v :=
+    (Finset.measurable_sum _ fun i _ ↦ hGm.comp ((measurable_pi_apply i).comp (hmeas n))).div_const _
+  have hBm : Measurable B := by
+    have : B = fun ω ↦ u ω / v ω := funext hB
+    rw [this]; exact hum.div hvm
+  have hSm : Measurable fun ω ↦ ∑ i, f (ξ N (n + 1) ω i) :=
+    Finset.measurable_sum _ fun i _ ↦ hf.comp ((measurable_pi_apply i).comp (hmeas (n + 1)))
+  have hBb (ω : Ω) : |B ω| ≤ C := by
+    have := M.isProbabilityMeasure_particlePredictionLaw (N.succ_pos) n (ξ N n ω)
+    have := norm_integral_le_of_norm_le_const (μ := M.particlePredictionLaw n (ξ N n ω))
+      (f := f) (C := C) (ae_of_all _ fun y ↦ by simpa [Real.norm_eq_abs] using hC y)
+    simpa [Real.norm_eq_abs] using this
+  have hvlow (ω : Ω) : a ≤ v ω := by
+    simp only [hv]
+    rw [le_div_iff₀ hN']
+    calc a * (N + 1) = ∑ _i : Fin (N + 1), a := by simp [mul_comm]
+      _ ≤ _ := Finset.sum_le_sum fun i _ ↦ (hab _).1
+  have hGi : Integrable G (M.filterLaw n) := Integrable.of_bound hGm.aestronglyMeasurable b
+    (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using hGb x)
+  have hgi : Integrable g (M.filterLaw n) := Integrable.of_bound hgm.aestronglyMeasurable (b * C)
+    (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using hgb x)
+  have hvlow' : a ≤ v' := by
+    calc a = ∫ _, a ∂M.filterLaw n := by simp
+      _ ≤ v' := integral_mono (integrable_const _) hGi fun x ↦ (hab x).1
+  have hu'b : |u'| ≤ C * v' := by
+    calc |u'| ≤ ∫ x, |g x| ∂M.filterLaw n := abs_integral_le_integral_abs
+      _ ≤ ∫ x, C * G x ∂M.filterLaw n :=
+          integral_mono hgi.abs (hGi.const_mul C) fun x ↦ by
+            simp only [hgdef]
+            rw [abs_mul, abs_of_pos (M.potential_pos n x), mul_comm]
+            exact mul_le_mul_of_nonneg_right (hQb x) (M.potential_pos n x).le
+      _ = C * v' := integral_const_mul _ _
+  -- pointwise bound
+  have hpt (ω : Ω) : (A ω - u' / v') ^ 2 ≤
+      2 / (N + 1) ^ 2 * (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2 +
+        (4 / a ^ 2 * (u ω - u') ^ 2 + 4 * C ^ 2 / a ^ 2 * (v ω - v') ^ 2) := by
+    have h1 : A ω - B ω = (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) / (N + 1) := by
+      simp only [hA]; field_simp
+    have h2 := sq_div_sub_div_le ha (hvlow ω) hvlow' hu'b (u := u ω)
+    rw [← hB] at h2
+    have h3 : (A ω - u' / v') ^ 2 ≤ 2 * (A ω - B ω) ^ 2 + 2 * (B ω - u' / v') ^ 2 := by
+      nlinarith [sq_nonneg (A ω - B ω - (B ω - u' / v'))]
+    rw [h1, div_pow] at h3
+    calc _ ≤ _ := h3
+      _ = 2 / (N + 1) ^ 2 * (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2 +
+          2 * (B ω - u' / v') ^ 2 := by ring
+      _ ≤ _ := by
+        gcongr
+        calc 2 * (B ω - u' / v') ^ 2 ≤ 2 * (2 * ((u ω - u') ^ 2 + C ^ 2 * (v ω - v') ^ 2) / a ^ 2) := by
+              gcongr
+          _ = _ := by ring
+  -- integrability
+  have hI1 : Integrable (fun ω ↦ (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2) P :=
+    hsq _ (hSm.sub (measurable_const.mul hBm)) ((N + 1) * C + (N + 1) * C) fun ω ↦ by
+      refine (abs_sub _ _).trans (add_le_add (hsum N f C hC _) ?_)
+      rw [abs_mul, abs_of_pos hN']; exact mul_le_mul_of_nonneg_left (hBb ω) hN'.le
+  have hI2 : Integrable (fun ω ↦ (u ω - u') ^ 2) P :=
+    hsq _ (hum.sub measurable_const) (b * C + |u'|) fun ω ↦ by
+      refine (abs_sub _ _).trans (add_le_add ?_ le_rfl)
+      simp only [hu]; rw [abs_div, abs_of_pos hN', div_le_iff₀ hN', mul_comm]
+      exact hsum N g _ hgb _
+  have hI3 : Integrable (fun ω ↦ (v ω - v') ^ 2) P :=
+    hsq _ (hvm.sub measurable_const) (b + |v'|) fun ω ↦ by
+      refine (abs_sub _ _).trans (add_le_add ?_ le_rfl)
+      simp only [hv]; rw [abs_div, abs_of_pos hN', div_le_iff₀ hN', mul_comm]
+      exact hsum N G _ hGb _
+  have hL1 := integral_sq_sum_bootstrap_succ_sub_le P M (N + 1) N.succ_pos (ξ N) (hξ N) n hf hC
+  push_cast at hL1
+  have hL2 := hK g hgm (b * C) hgb N
+  have hL3 := hK G hGm b hGb N
+  rw [hT]
+  calc ∫ ω, (A ω - u' / v') ^ 2 ∂P
+      ≤ ∫ ω, (2 / (N + 1) ^ 2 * (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2 +
+        (4 / a ^ 2 * (u ω - u') ^ 2 + 4 * C ^ 2 / a ^ 2 * (v ω - v') ^ 2)) ∂P :=
+        integral_mono_of_nonneg (ae_of_all _ fun _ ↦ sq_nonneg _)
+          ((hI1.const_mul _).add ((hI2.const_mul _).add (hI3.const_mul _))) (ae_of_all _ hpt)
+    _ = 2 / (N + 1) ^ 2 * ∫ ω, (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2 ∂P +
+        (4 / a ^ 2 * ∫ ω, (u ω - u') ^ 2 ∂P + 4 * C ^ 2 / a ^ 2 * ∫ ω, (v ω - v') ^ 2 ∂P) := by
+        have j1 : Integrable (fun ω ↦ 2 / ((N : ℝ) + 1) ^ 2 *
+            (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2) P := hI1.const_mul _
+        have j2 : Integrable (fun ω ↦ 4 / a ^ 2 * (u ω - u') ^ 2) P := hI2.const_mul _
+        have j3 : Integrable (fun ω ↦ 4 * C ^ 2 / a ^ 2 * (v ω - v') ^ 2) P := hI3.const_mul _
+        have j23 : Integrable (fun ω ↦ 4 / a ^ 2 * (u ω - u') ^ 2 +
+            4 * C ^ 2 / a ^ 2 * (v ω - v') ^ 2) P := j2.add j3
+        rw [integral_add j1 j23, integral_add j2 j3, integral_const_mul,
+          integral_const_mul, integral_const_mul]
+    _ ≤ 2 / (N + 1) ^ 2 * ((N + 1) * C ^ 2) +
+        (4 / a ^ 2 * (K * (b * C) ^ 2 / (N + 1)) + 4 * C ^ 2 / a ^ 2 * (K * b ^ 2 / (N + 1))) := by
+        gcongr
+    _ = (2 + 8 * K * b ^ 2 / a ^ 2) * C ^ 2 / (N + 1) := by
+        field_simp; ring
+
+
 /-- Mean-square error bound for the bootstrap particle filter: at each fixed time `n` there is
 a constant `K` such that `𝔼[(ηᴺₙ(f) - ηₙ(f))²] ≤ K C² / (N + 1)` for all `N` and all measurable
 `f` with `|f| ≤ C`, where `N + 1` is the number of particles. -/
@@ -588,14 +702,6 @@ theorem exists_integral_sq_particle_average_sub_le {Ω X : Type*} [MeasurableSpa
     ∃ K : ℝ, 0 ≤ K ∧ ∀ f : X → ℝ, Measurable f → ∀ C : ℝ, (∀ x, |f x| ≤ C) → ∀ N : ℕ,
       ∫ ω, ((∑ i, f (ξ N n ω i)) / (N + 1) - ∫ x, f x ∂M.filterLaw n) ^ 2 ∂P ≤
         K * C ^ 2 / (N + 1) := by
-  have hsum (N : ℕ) (h : X → ℝ) (D : ℝ) (hD : ∀ x, |h x| ≤ D) (z : Fin (N + 1) → X) :
-      |∑ i, h (z i)| ≤ (N + 1) * D := by
-    refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
-    simpa using Finset.sum_le_sum fun i (_ : i ∈ Finset.univ) ↦ hD (z i)
-  have hsq (p : Ω → ℝ) (hp : Measurable p) (D : ℝ) (hD : ∀ ω, |p ω| ≤ D) :
-      Integrable (fun ω ↦ p ω ^ 2) P :=
-    (MemLp.of_bound hp.aestronglyMeasurable D
-      (ae_of_all _ fun ω ↦ by simpa [Real.norm_eq_abs] using hD ω)).integrable_sq
   induction n with
   | zero =>
     refine ⟨1, zero_le_one, fun f hf C hC N ↦ ?_⟩
@@ -622,131 +728,8 @@ theorem exists_integral_sq_particle_average_sub_le {Ω X : Type*} [MeasurableSpa
   | succ n ih =>
     obtain ⟨K, hK0, hK⟩ := ih
     obtain ⟨a, b, ha, hab⟩ := M.potential_bounds n
-    have hb : 0 < b := ha.trans_le ((hab (Classical.arbitrary X)).1.trans (hab _).2)
     refine ⟨2 + 8 * K * b ^ 2 / a ^ 2, by positivity, fun f hf C hC N ↦ ?_⟩
-    have := M.isMarkov_transition n
-    have hC0 : 0 ≤ C := (abs_nonneg _).trans (hC (Classical.arbitrary X))
-    have hN' : (0 : ℝ) < N + 1 := by positivity
-    set G := M.potential n with hGdef
-    have hGm : Measurable G := M.measurable_potential n
-    have hGb (x : X) : |G x| ≤ b := by
-      rw [abs_of_pos (M.potential_pos n x)]; exact (hab x).2
-    set Q : X → ℝ := fun x ↦ ∫ y, f y ∂M.transition n x with hQdef
-    have hQm : Measurable Q :=
-      (hf.stronglyMeasurable.integral_kernel (κ := M.transition n)).measurable
-    have hQb (x : X) : |Q x| ≤ C := by
-      have := norm_integral_le_of_norm_le_const (μ := M.transition n x) (f := f) (C := C)
-        (ae_of_all _ fun y ↦ by simpa [Real.norm_eq_abs] using hC y)
-      simpa [Real.norm_eq_abs] using this
-    set g : X → ℝ := fun x ↦ G x * Q x with hgdef
-    have hgm : Measurable g := hGm.mul hQm
-    have hgb (x : X) : |g x| ≤ b * C := by
-      rw [abs_mul]; exact mul_le_mul (hGb x) (hQb x) (abs_nonneg _) hb.le
-    have hmeas := (hξ N).1
-    set A : Ω → ℝ := fun ω ↦ (∑ i, f (ξ N (n + 1) ω i)) / (N + 1) with hA
-    set B : Ω → ℝ := fun ω ↦ ∫ y, f y ∂M.particlePredictionLaw n (ξ N n ω) with hBdef
-    set u : Ω → ℝ := fun ω ↦ (∑ i, g (ξ N n ω i)) / (N + 1) with hu
-    set v : Ω → ℝ := fun ω ↦ (∑ i, G (ξ N n ω i)) / (N + 1) with hv
-    set u' := ∫ x, g x ∂M.filterLaw n with hu'
-    set v' := ∫ x, G x ∂M.filterLaw n with hv'
-    have hT : ∫ x, f x ∂M.filterLaw (n + 1) = u' / v' := M.integral_filterLaw_succ n hf hC
-    have hB (ω : Ω) : B ω = u ω / v ω := by
-      simp only [hBdef, hu, hv]
-      rw [M.integral_particlePredictionLaw n _ hf hC, div_div_div_cancel_right₀ hN'.ne']
-    have hum : Measurable u :=
-      (Finset.measurable_sum _ fun i _ ↦ hgm.comp ((measurable_pi_apply i).comp (hmeas n))).div_const _
-    have hvm : Measurable v :=
-      (Finset.measurable_sum _ fun i _ ↦ hGm.comp ((measurable_pi_apply i).comp (hmeas n))).div_const _
-    have hBm : Measurable B := by
-      have : B = fun ω ↦ u ω / v ω := funext hB
-      rw [this]; exact hum.div hvm
-    have hSm : Measurable fun ω ↦ ∑ i, f (ξ N (n + 1) ω i) :=
-      Finset.measurable_sum _ fun i _ ↦ hf.comp ((measurable_pi_apply i).comp (hmeas (n + 1)))
-    have hBb (ω : Ω) : |B ω| ≤ C := by
-      have := M.isProbabilityMeasure_particlePredictionLaw (N.succ_pos) n (ξ N n ω)
-      have := norm_integral_le_of_norm_le_const (μ := M.particlePredictionLaw n (ξ N n ω))
-        (f := f) (C := C) (ae_of_all _ fun y ↦ by simpa [Real.norm_eq_abs] using hC y)
-      simpa [Real.norm_eq_abs] using this
-    have hvlow (ω : Ω) : a ≤ v ω := by
-      simp only [hv]
-      rw [le_div_iff₀ hN']
-      calc a * (N + 1) = ∑ _i : Fin (N + 1), a := by simp [mul_comm]
-        _ ≤ _ := Finset.sum_le_sum fun i _ ↦ (hab _).1
-    have hGi : Integrable G (M.filterLaw n) := Integrable.of_bound hGm.aestronglyMeasurable b
-      (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using hGb x)
-    have hgi : Integrable g (M.filterLaw n) := Integrable.of_bound hgm.aestronglyMeasurable (b * C)
-      (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using hgb x)
-    have hvlow' : a ≤ v' := by
-      calc a = ∫ _, a ∂M.filterLaw n := by simp
-        _ ≤ v' := integral_mono (integrable_const _) hGi fun x ↦ (hab x).1
-    have hu'b : |u'| ≤ C * v' := by
-      calc |u'| ≤ ∫ x, |g x| ∂M.filterLaw n := abs_integral_le_integral_abs
-        _ ≤ ∫ x, C * G x ∂M.filterLaw n :=
-            integral_mono hgi.abs (hGi.const_mul C) fun x ↦ by
-              simp only [hgdef]
-              rw [abs_mul, abs_of_pos (M.potential_pos n x), mul_comm]
-              exact mul_le_mul_of_nonneg_right (hQb x) (M.potential_pos n x).le
-        _ = C * v' := integral_const_mul _ _
-    -- pointwise bound
-    have hpt (ω : Ω) : (A ω - u' / v') ^ 2 ≤
-        2 / (N + 1) ^ 2 * (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2 +
-          (4 / a ^ 2 * (u ω - u') ^ 2 + 4 * C ^ 2 / a ^ 2 * (v ω - v') ^ 2) := by
-      have h1 : A ω - B ω = (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) / (N + 1) := by
-        simp only [hA]; field_simp
-      have h2 := sq_div_sub_div_le ha (hvlow ω) hvlow' hu'b (u := u ω)
-      rw [← hB] at h2
-      have h3 : (A ω - u' / v') ^ 2 ≤ 2 * (A ω - B ω) ^ 2 + 2 * (B ω - u' / v') ^ 2 := by
-        nlinarith [sq_nonneg (A ω - B ω - (B ω - u' / v'))]
-      rw [h1, div_pow] at h3
-      calc _ ≤ _ := h3
-        _ = 2 / (N + 1) ^ 2 * (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2 +
-            2 * (B ω - u' / v') ^ 2 := by ring
-        _ ≤ _ := by
-          gcongr
-          calc 2 * (B ω - u' / v') ^ 2 ≤ 2 * (2 * ((u ω - u') ^ 2 + C ^ 2 * (v ω - v') ^ 2) / a ^ 2) := by
-                gcongr
-            _ = _ := by ring
-    -- integrability
-    have hI1 : Integrable (fun ω ↦ (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2) P :=
-      hsq _ (hSm.sub (measurable_const.mul hBm)) ((N + 1) * C + (N + 1) * C) fun ω ↦ by
-        refine (abs_sub _ _).trans (add_le_add (hsum N f C hC _) ?_)
-        rw [abs_mul, abs_of_pos hN']; exact mul_le_mul_of_nonneg_left (hBb ω) hN'.le
-    have hI2 : Integrable (fun ω ↦ (u ω - u') ^ 2) P :=
-      hsq _ (hum.sub measurable_const) (b * C + |u'|) fun ω ↦ by
-        refine (abs_sub _ _).trans (add_le_add ?_ le_rfl)
-        simp only [hu]; rw [abs_div, abs_of_pos hN', div_le_iff₀ hN', mul_comm]
-        exact hsum N g _ hgb _
-    have hI3 : Integrable (fun ω ↦ (v ω - v') ^ 2) P :=
-      hsq _ (hvm.sub measurable_const) (b + |v'|) fun ω ↦ by
-        refine (abs_sub _ _).trans (add_le_add ?_ le_rfl)
-        simp only [hv]; rw [abs_div, abs_of_pos hN', div_le_iff₀ hN', mul_comm]
-        exact hsum N G _ hGb _
-    have hL1 := integral_sq_sum_bootstrap_succ_sub_le P M (N + 1) N.succ_pos (ξ N) (hξ N) n hf hC
-    push_cast at hL1
-    have hL2 := hK g hgm (b * C) hgb N
-    have hL3 := hK G hGm b hGb N
-    rw [hT]
-    calc ∫ ω, (A ω - u' / v') ^ 2 ∂P
-        ≤ ∫ ω, (2 / (N + 1) ^ 2 * (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2 +
-          (4 / a ^ 2 * (u ω - u') ^ 2 + 4 * C ^ 2 / a ^ 2 * (v ω - v') ^ 2)) ∂P :=
-          integral_mono_of_nonneg (ae_of_all _ fun _ ↦ sq_nonneg _)
-            ((hI1.const_mul _).add ((hI2.const_mul _).add (hI3.const_mul _))) (ae_of_all _ hpt)
-      _ = 2 / (N + 1) ^ 2 * ∫ ω, (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2 ∂P +
-          (4 / a ^ 2 * ∫ ω, (u ω - u') ^ 2 ∂P + 4 * C ^ 2 / a ^ 2 * ∫ ω, (v ω - v') ^ 2 ∂P) := by
-          have j1 : Integrable (fun ω ↦ 2 / ((N : ℝ) + 1) ^ 2 *
-              (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2) P := hI1.const_mul _
-          have j2 : Integrable (fun ω ↦ 4 / a ^ 2 * (u ω - u') ^ 2) P := hI2.const_mul _
-          have j3 : Integrable (fun ω ↦ 4 * C ^ 2 / a ^ 2 * (v ω - v') ^ 2) P := hI3.const_mul _
-          have j23 : Integrable (fun ω ↦ 4 / a ^ 2 * (u ω - u') ^ 2 +
-              4 * C ^ 2 / a ^ 2 * (v ω - v') ^ 2) P := j2.add j3
-          rw [integral_add j1 j23, integral_add j2 j3, integral_const_mul,
-            integral_const_mul, integral_const_mul]
-      _ ≤ 2 / (N + 1) ^ 2 * ((N + 1) * C ^ 2) +
-          (4 / a ^ 2 * (K * (b * C) ^ 2 / (N + 1)) + 4 * C ^ 2 / a ^ 2 * (K * b ^ 2 / (N + 1))) := by
-          gcongr
-      _ = (2 + 8 * K * b ^ 2 / a ^ 2) * C ^ 2 / (N + 1) := by
-          field_simp; ring
-
+    exact integral_sq_particle_average_succ_sub_le P M ξ hξ n K hK ha hab f hf C hC N
 
 /-- GAPS 104.55: fixed-time consistency of the multinomial bootstrap particle filter. The proof
 combines the mean-square bound `exists_integral_sq_particle_average_sub_le` with Markov's

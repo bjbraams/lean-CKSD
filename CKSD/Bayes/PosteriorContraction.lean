@@ -7,11 +7,25 @@ public import Statlib.Divergence.Hellinger.Basic
 /-!
 # Dominated posteriors and posterior contraction
 
-The posterior is normalized from the prior and the product likelihood. Its value at samples
-with zero evidence follows the zero-measure normalization convention; the consistency theorems
-control its value under the true sampling law. Hellinger distance reuses Statlib's `sqHellinger`,
-with a factor two to obtain the convention in `GAPS.md`.
-Sources: GAPS 104.18 and GAPS 104.19.
+For a dominated model with densities `f θ`, the posterior after `n` observations is the prior
+reweighted by the product likelihood and normalized. Its value at samples with zero evidence
+follows the zero-measure normalization convention; the consistency theorems only control it
+under the true sampling law. Hellinger distance reuses Statlib's `sqHellinger`, with a factor
+two to obtain the convention `h² = ∫ (√p - √q)²` of `GAPS.md`.
+
+## Main definitions
+
+* `CKSD.dominatedPosterior`: the posterior of a dominated model.
+* `CKSD.statisticalHellingerDistance`: Hellinger distance in the convention `h² = ∫ (√p - √q)²`.
+* `CKSD.HasUniformlyConsistentTests`, `CKSD.HasHellingerSieveCover`: uniformly consistent tests
+  and finite Hellinger covers of sieves with an entropy bound.
+
+## Main results
+
+* `CKSD.tendstoInProbabilityConst_posterior_compl_of_kl_support`: Schwartz's posterior
+  consistency theorem (GAPS 104.18).
+* `CKSD.exists_posterior_hellinger_contraction`: the Ghosal–Ghosh–van der Vaart contraction
+  theorem in Hellinger distance (GAPS 104.19).
 -/
 
 @[expose] public section
@@ -44,13 +58,15 @@ def HasUniformlyConsistentTests {Θ X : Type*} [MeasurableSpace X]
     ∀ ε > 0, ∀ᶠ n in atTop, ∀ θ ∈ A,
       (∫ x, 1 - φ n x ∂(Measure.pi fun _ : Fin n ↦ P θ)) ≤ ε
 
-/-- GAPS 104.18: Schwartz posterior consistency for a specified measurable neighborhood.
-Uniformly consistent tests and positive prior mass in each KL neighborhood are explicit. -/
+/-- GAPS 104.18: Schwartz's posterior consistency theorem. If the prior charges every
+Kullback–Leibler neighbourhood `{θ | KL(P θ₀ ‖ P θ) < ε}` of the true parameter and there are
+uniformly consistent tests of `θ₀` against `Uᶜ`, then the posterior mass of `Uᶜ` tends to zero in
+probability under the true law. -/
 theorem tendstoInProbabilityConst_posterior_compl_of_kl_support
     {Θ X : Type*} [MeasurableSpace Θ] [StandardBorelSpace Θ]
     [MeasurableSpace X] [StandardBorelSpace X]
     (π : Measure Θ) [IsProbabilityMeasure π] (μ : Measure X) [SigmaFinite μ]
-    (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
+    (P : Θ → Measure X) [∀ θ, IsProbabilityMeasure (P θ)]
     (f : Θ → X → ℝ) (hf : Measurable (Function.uncurry f))
     (hdensity : ∀ θ, HasDensity (P θ) μ (f θ)) (θ₀ : Θ)
     (hKLmeas : ∀ ε > 0, MeasurableSet {θ | klDiv (P θ₀) (P θ) < ENNReal.ofReal ε})
@@ -68,13 +84,17 @@ def HasHellingerSieveCover {Θ X : Type*} [MeasurableSpace X]
     (∀ i, center i ∈ sieve) ∧ ∀ θ ∈ sieve,
       ∃ i, statisticalHellingerDistance (P θ) (P (center i)) ≤ ε
 
-/-- GAPS 104.19: posterior contraction under the Ghosal–Ghosh–van der Vaart sieve conditions.
-The finite-cover condition spells out the entropy bound without imposing a metric on labels. -/
+/-- GAPS 104.19: the Ghosal–Ghosh–van der Vaart theorem. Suppose `εₙ → 0` with `n εₙ² → ∞`, the
+sieves `Θₙ` have `εₙ/2`-Hellinger covers of cardinality at most `e^{n εₙ²}`, the prior mass outside
+`Θₙ` is at most `e^{-(C+4) n εₙ²}`, and the prior mass of the Kullback–Leibler neighbourhood
+`{KL ≤ εₙ², V₂ ≤ εₙ²}` is at least `e^{-C n εₙ²}`. Then the posterior contracts at rate `εₙ` in
+Hellinger distance. The finite-cover condition spells out the entropy bound without imposing a
+metric on parameter labels. -/
 theorem exists_posterior_hellinger_contraction
     {Θ X : Type*} [MeasurableSpace Θ] [StandardBorelSpace Θ]
     [MeasurableSpace X] [StandardBorelSpace X]
     (π : Measure Θ) [IsProbabilityMeasure π] (μ : Measure X) [SigmaFinite μ]
-    (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
+    (P : Θ → Measure X) [∀ θ, IsProbabilityMeasure (P θ)]
     (f : Θ → X → ℝ) (hf : Measurable (Function.uncurry f))
     (hdensity : ∀ θ, HasDensity (P θ) μ (f θ)) (θ₀ : Θ)
     (ε : ℕ → ℝ) (hε : ∀ n : ℕ, 0 < ε n) (hεlim : Tendsto ε atTop (𝓝 0))
@@ -88,10 +108,9 @@ theorem exists_posterior_hellinger_contraction
       π {θ | klDiv (P θ₀) (P θ) ≤ ENNReal.ofReal (ε n ^ 2) ∧
         logLikelihoodRatioSecondMoment (P θ₀) (P θ) ≤ ENNReal.ofReal (ε n ^ 2)})
     (hHmeas : Measurable (fun θ ↦ statisticalHellingerDistance (P θ) (P θ₀))) :
-    ∃ M₀ > 0, ∀ M ≥ M₀,
-      TendstoInProbabilityConst (Measure.infinitePi fun _ : ℕ ↦ P θ₀)
-        (fun n x ↦ (dominatedPosterior π f (fun i : Fin n ↦ x i.val)).real
-          {θ | M * ε n ≤ statisticalHellingerDistance (P θ) (P θ₀)}) 0 := by
+    HasPosteriorContractionRate (Measure.infinitePi fun _ : ℕ ↦ P θ₀)
+      (fun n x ↦ dominatedPosterior π f (fun i : Fin n ↦ x i.val))
+      (fun θ ↦ statisticalHellingerDistance (P θ) (P θ₀)) ε := by
   sorry
 
 /-- Statistical Hellinger distance is nonnegative by its definition. -/

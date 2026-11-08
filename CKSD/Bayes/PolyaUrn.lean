@@ -9,7 +9,23 @@ public import Mathlib.Analysis.PSeries
 
 The urn is specified by its conditional next-observation law given the complete finite past.
 For an atomless base measure, the distinct-count theorems describe the Chinese restaurant
-counting process. Sources: GAPS 104.16.
+counting process.
+
+## Main definitions
+
+* `CKSD.IsPolyaUrnProcess P α Xn`: `Xn` follows the Pólya urn with base measure `α`.
+* `CKSD.distinctObservationCount Xn n ω`: the number of distinct values among the first `n`
+  observations.
+
+## Main results
+
+* `CKSD.integral_distinctObservationCount_polya`: the expected number of distinct values is
+  `∑_{i<n} θ / (θ + i)`, with `θ = α(X)`.
+* `CKSD.integral_sq_distinctObservationCount_sub_le_polya`: its variance is at most its mean.
+* `CKSD.ae_tendsto_distinctObservationCount_div_log_polya`: the number of distinct values grows
+  like `θ log n` almost surely.
+
+Sources: GAPS 104.16.
 -/
 
 @[expose] public section
@@ -317,50 +333,6 @@ theorem integral_sq_distinctObservationCount_sub_le_polya {Ω X : Type*} [Measur
     have := hD2
     simp only [hp] at this ih' ⊢
     linarith
-
-/-- If `∑ₖ 𝔼[Zₖ²] / bₖ² < ∞`, then `Zₖ / bₖ → 0` almost surely, by Chebyshev's inequality and the
-Borel–Cantelli lemma. -/
-theorem ae_tendsto_div_of_summable_integral_sq_div {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (Z : ℕ → Ω → ℝ) (b : ℕ → ℝ) (hb : ∀ k, 0 < b k)
-    (hint : ∀ k, Integrable (fun ω ↦ Z k ω ^ 2) μ)
-    (hsum : Summable fun k ↦ (∫ ω, Z k ω ^ 2 ∂μ) / b k ^ 2) :
-    ∀ᵐ ω ∂μ, Tendsto (fun k ↦ Z k ω / b k) atTop (𝓝 0) := by
-  have key (j : ℕ) : ∀ᵐ ω ∂μ, ∀ᶠ k in atTop, |Z k ω / b k| < 1 / ((j : ℝ) + 1) := by
-    set δ : ℝ := 1 / ((j : ℝ) + 1) with hδ
-    have hδ0 : 0 < δ := by positivity
-    set A : ℕ → Set Ω := fun k ↦ {ω | δ ^ 2 * b k ^ 2 ≤ Z k ω ^ 2} with hA
-    set v : ℕ → ℝ := fun k ↦ (∫ ω, Z k ω ^ 2 ∂μ) / b k ^ 2 with hv
-    have hv0 (k : ℕ) : 0 ≤ v k :=
-      div_nonneg (integral_nonneg fun ω ↦ sq_nonneg _) (sq_nonneg _)
-    have hAb (k : ℕ) : μ (A k) ≤ ENNReal.ofReal (v k / δ ^ 2) := by
-      rw [← ofReal_measureReal]
-      refine ENNReal.ofReal_le_ofReal ?_
-      have hε : 0 < δ ^ 2 * b k ^ 2 := by have := hb k; positivity
-      have hm := mul_meas_ge_le_integral_of_nonneg (ae_of_all _ fun ω ↦ sq_nonneg _)
-        (hint k) (δ ^ 2 * b k ^ 2)
-      rw [show v k / δ ^ 2 = (∫ ω, Z k ω ^ 2 ∂μ) / (δ ^ 2 * b k ^ 2) by
-        simp only [hv]; field_simp, le_div_iff₀ hε, mul_comm]
-      exact hm
-    have htsum : ∑' k, μ (A k) ≠ ∞ := by
-      refine ne_top_of_le_ne_top ?_
-        (CompleteLattice.summable.tsum_le_tsum hAb CompleteLattice.summable)
-      rw [← ENNReal.ofReal_tsum_of_nonneg (fun k ↦ div_nonneg (hv0 k) (sq_nonneg _))
-        (hsum.div_const _)]
-      exact ENNReal.ofReal_ne_top
-    filter_upwards [ae_eventually_notMem htsum] with ω hω
-    filter_upwards [hω] with k hk
-    simp only [hA, mem_ofPred_eq, not_le] at hk
-    have hbk := hb k
-    rw [abs_div, abs_of_pos hbk, div_lt_iff₀ hbk]
-    have : |Z k ω| ^ 2 < (δ * b k) ^ 2 := by rw [sq_abs, mul_pow]; exact hk
-    exact (pow_lt_pow_iff_left₀ (abs_nonneg _) (by positivity) two_ne_zero).1 this
-  rw [← ae_all_iff] at key
-  filter_upwards [key] with ω hω
-  rw [Metric.tendsto_atTop]
-  intro ε hε
-  obtain ⟨j, hj⟩ := exists_nat_one_div_lt hε
-  obtain ⟨K, hK⟩ := (hω j).exists_forall_of_atTop
-  exact ⟨K, fun k hk ↦ by rw [Real.dist_eq, sub_zero]; exact (hK k hk).trans hj⟩
 
 /-- Monotone interpolation: if `u ≥ 0` and `L` are monotone, `u / L → l` along a strictly
 increasing sequence `sₖ`, and `L(sₖ₊₁) / L(sₖ) → 1`, then `u / L → l`. -/

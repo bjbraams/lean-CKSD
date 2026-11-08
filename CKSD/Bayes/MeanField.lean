@@ -18,6 +18,22 @@ systems are indexed by `ℕ`, the `N`-particle system using its first `N` partic
 first `k` particles make sense for every `N`. Paths on `[0, T]` live in `C([0, T], ℝᵈ)` with
 Mathlib's Borel σ-algebra. The mean-field gradient flow is a system of ordinary differential
 equations, and its limit is a solution of TauCeti's continuity equation.
+
+## Main definitions
+
+* `CKSD.IsMcKeanVlasovSolution`, `CKSD.IsParticleSystem`: the McKean–Vlasov equation and its
+  `N`-particle approximation, driven by the same Brownian motions.
+* `CKSD.meanFieldRisk`, `CKSD.meanFieldVelocity`: the population risk of a two-layer network in
+  mean-field parametrization and the velocity field of its gradient flow.
+
+## Main results
+
+* `CKSD.exists_unique_mcKeanVlasov_and_particleSystem`: well-posedness.
+* `CKSD.tendstoWeakly_particle_paths`: propagation of chaos.
+* `CKSD.exists_lintegral_sup_particle_sub_le`: quantitative propagation of chaos.
+* `CKSD.meanFieldRisk_eq`, `CKSD.exists_meanField_limit`: the quadratic expansion of the risk and
+  the mean-field limit of network training.
+
 Sources: GAPS 104.51, 104.53, and 104.56.
 -/
 

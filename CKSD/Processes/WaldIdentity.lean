@@ -1,19 +1,27 @@
 module
 
-public import CKSD.Processes.Models
-public import TauCeti.Analysis.Bochner.BochnerTheorem
+public import CKSD.Processes.Independence
 public import Mathlib.Probability.Independence.Integration
 
 /-!
-# Spectral random fields and stopped likelihood identities
+# Wald's fundamental identity
 
-The random-field construction uses a random frequency drawn from the normalized spectral
-measure and an independent phase uniform on `{0, π}`. The stopped
-exponential identity uses an explicitly specified first-exit time of an iid random walk. Its
-proof shows by induction, using the independence of each increment from the past, that the
+For an iid random walk `S_k = Z_0 + ⋯ + Z_(k-1)` and its first exit time `N` from an interval
+`(a, b)`, the stopped exponential `exp (t S_N) / m(t)^N` has mean one whenever the moment
+generating value `m(t) = 𝔼 exp (t Z_0)` is finite and at least one.
+
+The proof shows by induction, using the independence of each increment from the past, that the
 stopped exponential process has mean one at every finite horizon, and passes to the limit by
 monotone convergence on the stopped part and boundedness of the process before exit.
-Sources: GAPS 106.24 and 106.41, in the scopes of `GAPS_EASY.md`.
+
+## Main definitions
+
+* `CKSD.rangePartialSum`: truncated partial sums of a vector indexed by `Finset.range n`.
+
+## Main results
+
+* `CKSD.integral_stopped_exponential_eq_one` (GAPS 106.41): Wald's fundamental identity at a
+  first exit time.
 -/
 
 @[expose] public section
@@ -24,153 +32,6 @@ open MeasureTheory ProbabilityTheory Filter Set
 open scoped NNReal ENNReal Topology BigOperators
 
 namespace CKSD
-
-/-- Spectral random-phase field for a spectral measure of total real mass `mass`. -/
-def spectralRandomField {d : ℕ} (mass : ℝ) (x : EuclideanSpace ℝ (Fin d))
-    (ω : EuclideanSpace ℝ (Fin d) × ℝ) : ℂ :=
-  (Real.sqrt mass : ℂ) * Complex.exp ((inner ℝ ω.1 x + ω.2) * Complex.I)
-
-/-- The phase law of the random field, uniform on the two points `{0, π}`; its first circular
-moment `𝔼 e^{iφ}` vanishes. -/
-def twoPointPhaseLaw : Measure ℝ :=
-  (2 : ℝ≥0∞)⁻¹ • (Measure.dirac 0 + Measure.dirac Real.pi)
-
-/-- The two-point phase law is a probability measure. -/
-instance : IsProbabilityMeasure twoPointPhaseLaw := by
-  constructor
-  simp only [twoPointPhaseLaw, smul_apply, add_apply, measure_univ, smul_eq_mul]
-  rw [one_add_one_eq_two, ENNReal.inv_mul_cancel (by norm_num) (by norm_num)]
-
-/-- The first circular moment of the two-point phase law vanishes. -/
-theorem integral_exp_twoPointPhaseLaw :
-    ∫ φ, Complex.exp ((φ : ℂ) * Complex.I) ∂twoPointPhaseLaw = 0 := by
-  rw [twoPointPhaseLaw, integral_smul_measure, integral_add_measure]
-  · simp [Complex.exp_pi_mul_I]
-  · exact integrable_dirac (by simp)
-  · exact integrable_dirac (by simp)
-
-/-- The spectral measure normalized to a probability measure, with the Dirac mass at the origin
-for the zero measure. -/
-def normalizedSpectralMeasure {d : ℕ} (F : Measure (EuclideanSpace ℝ (Fin d))) :
-    Measure (EuclideanSpace ℝ (Fin d)) :=
-  if F univ = 0 then Measure.dirac 0 else (F univ)⁻¹ • F
-
-/-- The normalized spectral measure is a probability measure. -/
-instance {d : ℕ} (F : Measure (EuclideanSpace ℝ (Fin d))) [IsFiniteMeasure F] :
-    IsProbabilityMeasure (normalizedSpectralMeasure F) := by
-  unfold normalizedSpectralMeasure
-  split_ifs with h
-  · infer_instance
-  · constructor
-    simp [ENNReal.inv_mul_cancel h (measure_ne_top F univ)]
-
-/-- Integrating against the spectral measure is the total mass times integrating against the
-normalized spectral measure. -/
-theorem real_mul_integral_normalizedSpectralMeasure {d : ℕ}
-    (F : Measure (EuclideanSpace ℝ (Fin d))) [IsFiniteMeasure F]
-    (g : EuclideanSpace ℝ (Fin d) → ℂ) :
-    (F.real univ : ℂ) * ∫ w, g w ∂normalizedSpectralMeasure F = ∫ w, g w ∂F := by
-  unfold normalizedSpectralMeasure
-  split_ifs with h
-  · rw [Measure.measure_univ_eq_zero.1 h]; simp
-  · rw [integral_smul_measure, Complex.real_smul, ← mul_assoc]
-    have h' : (F univ).toReal ≠ 0 := ENNReal.toReal_ne_zero.2 ⟨h, measure_ne_top F univ⟩
-    have : (F.real univ : ℂ) * ((F univ)⁻¹.toReal : ℂ) = 1 := by
-      rw [ENNReal.toReal_inv, measureReal_def]
-      push_cast
-      exact div_self (by exact_mod_cast h')
-    rw [this, one_mul]
-
-
-/-- The random-phase field factors into a frequency part and a phase part. -/
-theorem spectralRandomField_eq {d : ℕ} (m : ℝ) (x : EuclideanSpace ℝ (Fin d))
-    (ω : EuclideanSpace ℝ (Fin d) × ℝ) :
-    spectralRandomField m x ω = (Real.sqrt m : ℂ) *
-      (Complex.exp ((inner ℝ ω.1 x : ℝ) * Complex.I) * Complex.exp ((ω.2 : ℂ) * Complex.I)) := by
-  rw [spectralRandomField, ← Complex.exp_add]
-  congr 2
-  ring
-
-/-- The random-phase field has constant modulus `√mass`. -/
-theorem norm_spectralRandomField {d : ℕ} (m : ℝ) (x : EuclideanSpace ℝ (Fin d))
-    (ω : EuclideanSpace ℝ (Fin d) × ℝ) :
-    ‖spectralRandomField m x ω‖ = Real.sqrt m := by
-  rw [spectralRandomField_eq, norm_mul, norm_mul, Complex.norm_exp_ofReal_mul_I,
-    Complex.norm_exp_ofReal_mul_I, Complex.norm_real, Real.norm_of_nonneg (Real.sqrt_nonneg _)]
-  ring
-
-/-- The random-phase field is jointly continuous in location and randomness. -/
-theorem continuous_spectralRandomField {d : ℕ} (m : ℝ) :
-    Continuous fun p : EuclideanSpace ℝ (Fin d) × (EuclideanSpace ℝ (Fin d) × ℝ) ↦
-      spectralRandomField m p.1 p.2 := by
-  unfold spectralRandomField
-  fun_prop
-
-/-- The product `f(x) f(y)^*` of the random-phase field depends only on the frequency and on
-`x - y`. -/
-theorem spectralRandomField_mul_star {d : ℕ} {m : ℝ} (hm : 0 ≤ m)
-    (x y : EuclideanSpace ℝ (Fin d)) (ω : EuclideanSpace ℝ (Fin d) × ℝ) :
-    spectralRandomField m x ω * star (spectralRandomField m y ω) =
-      (m : ℂ) * Complex.exp ((inner ℝ ω.1 (x - y) : ℝ) * Complex.I) := by
-  rw [spectralRandomField, spectralRandomField, Complex.star_def, map_mul, Complex.conj_ofReal,
-    ← Complex.exp_conj, map_mul, map_add, Complex.conj_ofReal, Complex.conj_ofReal, Complex.conj_I,
-    mul_mul_mul_comm, ← Complex.exp_add, ← Complex.ofReal_mul, Real.mul_self_sqrt hm,
-    inner_sub_right]
-  congr 2
-  push_cast
-  ring
-
-/-- GAPS 106.24: a finite spectral measure is realized by a mean-square continuous stationary field.
-This concerns the Fourier/random-field assertion, not Matérn differentiability. -/
-theorem exists_stationary_field_of_spectral_measure {d : ℕ}
-    (F : Measure (EuclideanSpace ℝ (Fin d))) [IsFiniteMeasure F] :
-    ∃ P : Measure (EuclideanSpace ℝ (Fin d) × ℝ), IsProbabilityMeasure P ∧
-      (∀ x, MemLp (spectralRandomField (F.real univ) x) 2 P) ∧
-      (∀ x, (∫ ω, spectralRandomField (F.real univ) x ω ∂P) = 0) ∧
-      (∀ x y, (∫ ω, spectralRandomField (F.real univ) x ω *
-        star (spectralRandomField (F.real univ) y ω) ∂P) =
-          ∫ w, Complex.exp ((inner ℝ w (x - y) : ℂ) * Complex.I) ∂F) ∧
-      ∀ x, Tendsto (fun y ↦ ∫ ω, ‖spectralRandomField (F.real univ) y ω -
-        spectralRandomField (F.real univ) x ω‖ ^ 2 ∂P) (𝓝 x) (𝓝 0) := by
-  have hm : 0 ≤ F.real univ := measureReal_nonneg
-  let P := (normalizedSpectralMeasure F).prod twoPointPhaseLaw
-  have hcont : ∀ x, Continuous (spectralRandomField (d := d) (F.real univ) x) := fun x ↦ by
-    unfold spectralRandomField; fun_prop
-  refine ⟨P, inferInstance, fun x ↦ ?_, fun x ↦ ?_, fun x y ↦ ?_, fun x ↦ ?_⟩
-
-  · exact MemLp.of_bound (hcont x).aestronglyMeasurable (Real.sqrt (F.real univ))
-      (ae_of_all _ fun ω ↦ (norm_spectralRandomField _ x ω).le)
-  · simp_rw [spectralRandomField_eq]
-    rw [integral_const_mul]
-    simp only [P]
-    rw [integral_prod_mul (fun w ↦ Complex.exp ((inner ℝ w x : ℝ) * Complex.I))
-      (fun φ : ℝ ↦ Complex.exp ((φ : ℂ) * Complex.I)), integral_exp_twoPointPhaseLaw]
-    simp
-  · simp_rw [spectralRandomField_mul_star hm]
-    rw [integral_const_mul]
-    simp only [P]
-    rw [integral_fun_fst (fun w ↦ Complex.exp ((inner ℝ w (x - y) : ℝ) * Complex.I)),
-      probReal_univ (μ := twoPointPhaseLaw), one_smul, real_mul_integral_normalizedSpectralMeasure]
-  · have hlim : (0 : ℝ) = ∫ ω, ‖spectralRandomField (F.real univ) x ω - spectralRandomField (F.real univ) x ω‖ ^ 2 ∂P := by
-      simp
-    rw [hlim]
-    refine tendsto_integral_filter_of_dominated_convergence (fun _ ↦ (2 * Real.sqrt (F.real univ)) ^ 2)
-      (Eventually.of_forall fun y ↦ (((hcont y).sub (hcont x)).norm.pow 2).aestronglyMeasurable)
-      (Eventually.of_forall fun y ↦ ae_of_all _ fun ω ↦ ?_) (integrable_const _)
-      (ae_of_all _ fun ω ↦ ?_)
-    · rw [Real.norm_of_nonneg (by positivity)]
-      gcongr
-      calc ‖spectralRandomField (F.real univ) y ω - spectralRandomField (F.real univ) x ω‖
-          ≤ ‖spectralRandomField (F.real univ) y ω‖ + ‖spectralRandomField (F.real univ) x ω‖ := norm_sub_le _ _
-        _ = 2 * Real.sqrt (F.real univ) := by rw [norm_spectralRandomField, norm_spectralRandomField]; ring
-    · have : Continuous fun y ↦
-          ‖spectralRandomField (F.real univ) y ω - spectralRandomField (F.real univ) x ω‖ ^ 2 := by
-        unfold spectralRandomField; fun_prop
-      exact this.tendsto x
-
-/-- Partial sums of iid log-likelihood increments. -/
-def logLikelihoodPartialSum {Ω : Type*} (Z : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω) : ℝ :=
-  ∑ i ∈ Finset.range n, Z i ω
 
 /-- Partial sums of a finite coordinate vector indexed by `range n`, truncated at `k`. -/
 def rangePartialSum {n : ℕ} (v : Finset.range n → ℝ) (k : ℕ) : ℝ :=
@@ -188,8 +49,8 @@ theorem measurable_rangePartialSum (n k : ℕ) :
 /-- Up to the length of the vector, truncated partial sums of the restriction of a sequence are
 its partial sums. -/
 theorem rangePartialSum_restrict {Ω : Type*} (Z : ℕ → Ω → ℝ) (ω : Ω) {n k : ℕ} (hk : k ≤ n) :
-    rangePartialSum (fun i : Finset.range n ↦ Z i ω) k = logLikelihoodPartialSum Z k ω := by
-  unfold rangePartialSum logLikelihoodPartialSum
+    rangePartialSum (fun i : Finset.range n ↦ Z i ω) k = ∑ i ∈ Finset.range k, Z i ω := by
+  unfold rangePartialSum
   rw [Finset.sum_coe_sort (Finset.range n) (fun i ↦ if i < k then Z i ω else 0),
     ← Finset.sum_filter]
   congr 1
@@ -197,27 +58,30 @@ theorem rangePartialSum_restrict {Ω : Type*} (Z : ℕ → Ω → ℝ) (ω : Ω)
   simp only [Finset.mem_filter, Finset.mem_range]
   omega
 
-
 /-- GAPS 106.41: Wald's fundamental stopped exponential identity at a first exit time.
-The finite-valued time `N` is a measurable version of the almost surely finite first exit.
-Its existence is a hypothesis; no separate increment-sign or boundary-sign assumptions are needed. -/
+Let `Z` be iid with law `law`, `S_k = ∑_{i < k} Z_i`, and let `t` be such that `exp (t z)` is
+`law`-integrable with mean `m(t) ≥ 1`. If `N` is a measurable, finite-valued first exit time of
+`S` from the open interval `(a, b)` (almost surely `S_k ∈ (a, b)` for `k < N` and
+`S_N ∉ (a, b)`), then `exp (t S_N) / m(t)^N` is integrable with mean one.
+The finite-valued time `N` is a measurable version of the almost surely finite first exit;
+its existence is a hypothesis. -/
 theorem integral_stopped_exponential_eq_one {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (law : Measure ℝ)
     (Z : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed P Z law)
-    (hexp : ∀ t : ℝ, Integrable (fun z ↦ Real.exp (t * z)) law)
     (a b : ℝ) (N : Ω → ℕ) (hN : Measurable N)
     (hstop : ∀ᵐ ω ∂P,
-      (logLikelihoodPartialSum Z (N ω) ω ≤ a ∨ b ≤ logLikelihoodPartialSum Z (N ω) ω) ∧
-        ∀ k < N ω, a < logLikelihoodPartialSum Z k ω ∧ logLikelihoodPartialSum Z k ω < b)
-    (t : ℝ) (hmgf : 1 ≤ ∫ z, Real.exp (t * z) ∂law) :
-    Integrable (fun ω ↦ Real.exp (t * logLikelihoodPartialSum Z (N ω) ω) /
+      (∑ i ∈ Finset.range (N ω), Z i ω ≤ a ∨ b ≤ ∑ i ∈ Finset.range (N ω), Z i ω) ∧
+        ∀ k < N ω, a < ∑ i ∈ Finset.range k, Z i ω ∧ ∑ i ∈ Finset.range k, Z i ω < b)
+    (t : ℝ) (hexp : Integrable (fun z ↦ Real.exp (t * z)) law)
+    (hmgf : 1 ≤ ∫ z, Real.exp (t * z) ∂law) :
+    Integrable (fun ω ↦ Real.exp (t * ∑ i ∈ Finset.range (N ω), Z i ω) /
       (∫ z, Real.exp (t * z) ∂law) ^ N ω) P ∧
-    (∫ ω, Real.exp (t * logLikelihoodPartialSum Z (N ω) ω) /
+    (∫ ω, Real.exp (t * ∑ i ∈ Finset.range (N ω), Z i ω) /
       (∫ z, Real.exp (t * z) ∂law) ^ N ω ∂P) = 1 := by
   obtain ⟨hZm, hind, hlaw⟩ := hiid
   set m := ∫ z, Real.exp (t * z) ∂law with hm_def
   have hm0 : 0 < m := one_pos.trans_le hmgf
-  set S := logLikelihoodPartialSum Z with hS_def
+  set S : ℕ → Ω → ℝ := fun k ω ↦ ∑ i ∈ Finset.range k, Z i ω with hS_def
   let G : ℕ → Ω → ℝ := fun k ω ↦ Real.exp (t * S k ω) / m ^ k
   let A : ℕ → Set Ω := fun n ↦ {ω | ∀ k ≤ n, a < S k ω ∧ S k ω < b}
   have hS_meas : ∀ k, Measurable (S k) := fun k ↦ by
@@ -259,7 +123,7 @@ theorem integral_stopped_exponential_eq_one {Ω : Type*} [MeasurableSpace Ω]
       _ ≤ Real.exp (t * S n ω) := div_le_self (Real.exp_pos _).le h1
       _ ≤ C := h2
   have hE_int : ∀ n, Integrable (fun ω ↦ Real.exp (t * Z n ω)) P := fun n ↦ by
-    have := hexp t
+    have := hexp
     rw [← hlaw n] at this
     exact (integrable_map_measure (by fun_prop) (hZm n).aemeasurable).1 this
   have hE_mean : ∀ n, ∫ ω, Real.exp (t * Z n ω) ∂P = m := fun n ↦ by
@@ -320,7 +184,7 @@ theorem integral_stopped_exponential_eq_one {Ω : Type*} [MeasurableSpace Ω]
   have hIA_nonneg : ∀ n ω, 0 ≤ (A n).indicator (G n) ω := fun n ω ↦
     Set.indicator_nonneg (fun ω h ↦ (hGA_bdd n ω h).1) ω
   have hS_succ : ∀ n ω, S (n + 1) ω = S n ω + Z n ω := fun n ω ↦ by
-    simp only [hS_def, logLikelihoodPartialSum, Finset.sum_range_succ]
+    simp only [hS_def, Finset.sum_range_succ]
   let Y : ℕ → Ω → ℝ := fun n ω ↦ G (min (N ω) n) ω
   have hYrec : ∀ n, Y (n + 1) =ᵐ[P] fun ω ↦
       Y n ω + (A n).indicator (G n) ω * (Real.exp (t * Z n ω) / m - 1) := by
@@ -342,7 +206,7 @@ theorem integral_stopped_exponential_eq_one {Ω : Type*} [MeasurableSpace Ω]
     | zero =>
       have : Y 0 = fun _ ↦ 1 := by
         funext ω
-        simp [Y, G, hS_def, logLikelihoodPartialSum]
+        simp [Y, G, hS_def]
       rw [this]
       exact ⟨integrable_const _, by simp⟩
     | succ n ih =>
@@ -353,11 +217,7 @@ theorem integral_stopped_exponential_eq_one {Ω : Type*} [MeasurableSpace Ω]
       refine ⟨(ih.1.add hinc).congr (hYrec n).symm, ?_⟩
       rw [integral_congr_ae (hYrec n), integral_add ih.1 hinc, ih.2, hkey n, add_zero]
   let GN : Ω → ℝ := fun ω ↦ G (N ω) ω
-  have hGN_meas : Measurable GN := by
-    have : Measurable fun q : ℕ × Ω ↦ G q.1 q.2 :=
-      measurable_from_prod_countable_right fun k ↦ hG_meas k
-    exact Measurable.comp (g := fun q : ℕ × Ω ↦ G q.1 q.2) (f := fun ω ↦ (N ω, ω)) this
-      (hN.prodMk measurable_id)
+  have hGN_meas : Measurable GN := measurable_randomIndex hG_meas hN
   have hGN_nonneg : ∀ ω, 0 ≤ GN ω := fun ω ↦ by positivity
   let f : ℕ → Ω → ℝ := fun n ↦ {ω | N ω ≤ n}.indicator GN
   have hdecomp : ∀ n, Y n =ᵐ[P] fun ω ↦ f n ω + (A n).indicator (G n) ω := by
@@ -426,7 +286,8 @@ theorem integral_stopped_exponential_eq_one {Ω : Type*} [MeasurableSpace Ω]
   have hlin : ∫⁻ ω, ENNReal.ofReal (GN ω) ∂P = 1 := tendsto_nhds_unique hlin_lim hlin_lim'
   have hint : Integrable GN P :=
     ⟨hGN_meas.aestronglyMeasurable,
-      (hasFiniteIntegral_iff_ofReal (ae_of_all _ hGN_nonneg)).2 (by rw [hlin]; exact ENNReal.one_lt_top)⟩
+      (hasFiniteIntegral_iff_ofReal (ae_of_all _ hGN_nonneg)).2
+        (by rw [hlin]; exact ENNReal.one_lt_top)⟩
   refine ⟨hint, ?_⟩
   change ∫ ω, GN ω ∂P = 1
   rw [integral_eq_lintegral_of_nonneg_ae (ae_of_all _ hGN_nonneg) hGN_meas.aestronglyMeasurable,
