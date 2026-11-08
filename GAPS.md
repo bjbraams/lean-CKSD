@@ -1208,7 +1208,8 @@ $m_0(x)=\mathbb E[Y\mid X=x]$, $\mu=\mathbb EY$, and
 $\varphi_{m,\pi}=RY/\pi(X)-(R-\pi(X))m(X)/\pi(X)$.
 
 * **102.39. Cross-fitted estimation of a missing mean.** Split the sample
-  into a fixed number of folds of sizes proportional to $n$, evaluate
+  into a fixed number of folds, with every fold of size at least $cn$
+  for some $c>0$ and all sufficiently large $n$. Evaluate
   $\varphi_{\hat m,\hat\pi}$ on each fold with nuisance estimates from the
   other folds, and let $\hat\mu$ be the overall average. Suppose $Y\in
   L^2$, the true and fitted response probabilities are bounded below by
@@ -3639,8 +3640,10 @@ events are assumed to have positive probability.
   densities, or Gaussian with a common variance, then $G$ is identifiable
   from the joint law. The same holds for $X_j=f_j(X_{\mathrm{pa}(j)})+N_j$
   with Gaussian noises and three times differentiable $f_j$ nonlinear in
-  each argument. Linear Gaussian models with unrestricted variances
-  identify only the Markov equivalence class. Absent from all three
+  each argument. Among linear Gaussian representations with unrestricted
+  positive noise variances that are faithful to their respective graphs,
+  two graphs carry the same joint law exactly when they are Markov equivalent.
+  Nonzero edge coefficients alone do not imply faithfulness. Absent from all three
   libraries.
 
 ## 106. Dependent data and stochastic models
@@ -4203,10 +4206,12 @@ $1+\gamma y/\sigma>0$.
 * **106.47. Excesses over high thresholds.** $F$ lies in the domain of
   attraction of $G_\gamma$ if and only if there is a positive scale
   $\sigma(u)$ with
-  $$\sup_{0\le y<x_F-u}\Bigl|
+  $$\sup_{y\ge0}\Bigl|
   \mathbb P(X-u\le y\mid X>u)-H_{\gamma,\sigma(u)}(y)\Bigr|\to0
   \qquad(u\uparrow x_F).$$
-  TauCeti defines the generalized Pareto family with distribution function
+  The comparison includes the terminal jump and all larger excesses when
+  the upper endpoint is finite; the generalized Pareto distribution function
+  is extended by one beyond its finite endpoint. TauCeti defines the generalized Pareto family with distribution function
   $H_{\gamma,\sigma}$ and proves its threshold stability: the excess over a
   threshold $v$ with $\sigma+\gamma v>0$, given exceedance, is generalized
   Pareto with scale $\sigma+\gamma v$ and the same shape. The equivalence
@@ -4642,7 +4647,8 @@ alternate affine maps and coordinatewise activations.
   $Y=f(X)+\varepsilon$, $\varepsilon$ standard normal and independent of
   $X$, and $X$ with a Lebesgue density on $[0,1]^d$ bounded above and below
   by positive constants; the risk of $\hat f$ is
-  $\mathbb E\int(\hat f-f)^2\,dP_X$. Put
+  the nonnegative extended-real expectation $\mathbb E\int(\hat f-f)^2\,dP_X$,
+  allowed to be infinite for arbitrary estimators. Put
   $\beta_i^*=\beta_i\prod_{j=i+1}^q\min(\beta_j,1)$ and
   $\phi_n=\max_{0\le i\le q}n^{-2\beta_i^*/(2\beta_i^*+t_i)}$. If
   $t_i\le\min(d_0,\ldots,d_{i-1})$ for every $i$, then for all sufficiently
@@ -4989,8 +4995,10 @@ $(TQ)(s,a)=\mathbb E[R+\gamma\max_{a'}Q(S',a')\mid S=s,A=a]$.
   $\lambda=\sigma^2/W^2$ and
   $\beta_t=\sigma^2(2+4d\log(1+tB^2W^2/(d\sigma^2))+8\log(4/\delta))$ has,
   with probability at least $1-\delta$ and for all $T$,
-  $R_T\le c\sigma\sqrt T(d\log(1+TB^2W^2/(d\sigma^2))+\log(4/\delta))$
-  with an absolute constant $c$. Conversely, there is a distribution over
+  $R_T\le c\max\{\sigma,BW\}\sqrt T(d\log(1+TB^2W^2/(d\sigma^2))+\log(4/\delta))$
+  with an absolute constant $c$, for $\sigma,B,W>0$ and $0<\delta<1$.
+  The effective scale $\max\{\sigma,BW\}$ includes initial exploration.
+  Conversely, there is a distribution over
   instances $\mu^\star$, with rewards in $[-1,1]$ and $\sigma\le1$, such that
   every algorithm has $\mathbb ER_T\ge d\sqrt T/2500$ for all
   $T\ge\max\{256,d^2/16\}$, the expectation including the draw of
@@ -5305,7 +5313,8 @@ $2r$.
 
 * **108.22. Homology from a sample.** Let $M\subset\mathbb R^D$ be a compact
   smooth $d$-dimensional submanifold without boundary with reach $\tau>0$, and
-  let $P\subset M$ be finite with $d_H(P,M)=\varepsilon<\sqrt{3/20}\,\tau$. Then for
+  let $P\subset M$ be finite and nonempty with
+  $d_H(P,M)=\varepsilon<\sqrt{3/20}\,\tau$. Then for
   every $r\in(2\varepsilon,\sqrt{3/5}\,\tau)$ the offset $P^r$ deformation
   retracts onto $M$, so the Čech complex of radius $r$ has the homotopy type of
   $M$. This radius interval is asserted for noiseless samples on $M$;
@@ -5592,13 +5601,16 @@ $\int\phi\,d\mu_n+\int\phi^*\,d\nu_n$ over a class $\Phi$ of convex
 potentials, from $n$ independent observations of each law.
 
 * **108.53. Rates for transport-map estimation.** Let $\mu,\nu$ be supported
-  in the unit ball with $\nu=(\nabla\varphi)_\#\mu$ and $\varphi\in\Phi$,
-  where the potentials of $\Phi$ are uniformly bounded there, satisfy
-  $\frac12I\preceq\nabla^2\phi\preceq2I$ in the open ball, and have
+  in concentric closed balls of radii $r$ and $1$, respectively, where
+  $0\le r<1$, with $\nu=(\nabla\varphi)_\#\mu$ and $\varphi\in\Phi$.
+  Every potential of $\Phi$ is twice continuously differentiable on a
+  neighbourhood of the closed unit ball; the potentials are uniformly
+  bounded there, satisfy $\frac12I\preceq\nabla^2\phi\preceq2I$ on the
+  closed ball, and have
   sup-norm covering numbers with
   $\log N(\varepsilon,\Phi)\lesssim\varepsilon^{-\gamma}\log(1+\varepsilon^{-1})$,
   $\gamma\in[0,1)$, where $\lesssim$ and $\asymp$ hide constants independent
-  of $n$ and $\varepsilon$. Then
+  of $n$ and $\varepsilon$ but may depend on $1-r$. Then
   $\mathbb E\|\nabla\hat\phi-\nabla\varphi\|_{L^2(\mu)}^2\lesssim n^{-1/2}$;
   if moreover $\Phi$ is convex and $\mu$ satisfies a Poincaré inequality
   $\mathop{\mathrm{Var}}_\mu(h)\le C_P\int\|\nabla h\|^2\,d\mu$ for smooth $h$,

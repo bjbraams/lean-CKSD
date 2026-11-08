@@ -199,15 +199,13 @@ theorem rangePartialSum_restrict {Ω : Type*} (Z : ℕ → Ω → ℝ) (ω : Ω)
 
 
 /-- GAPS 106.41: Wald's fundamental stopped exponential identity at a first exit time.
-The finite-valued time `N` is a version of the almost surely finite first exit. The sign
-conditions on the increments and on `a < 0 < b` guarantee that the first exit is almost surely
-finite; the proof does not use them once the finite version `N` is given. -/
+The finite-valued time `N` is a measurable version of the almost surely finite first exit.
+Its existence is a hypothesis; no separate increment-sign or boundary-sign assumptions are needed. -/
 theorem integral_stopped_exponential_eq_one {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) [IsProbabilityMeasure P] (law : Measure ℝ) [IsProbabilityMeasure law]
+    (P : Measure Ω) [IsProbabilityMeasure P] (law : Measure ℝ)
     (Z : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed P Z law)
-    (_hpos : 0 < law (Ioi 0)) (_hneg : 0 < law (Iio 0))
     (hexp : ∀ t : ℝ, Integrable (fun z ↦ Real.exp (t * z)) law)
-    (a b : ℝ) (_ha : a < 0) (_hb : 0 < b) (N : Ω → ℕ) (hN : Measurable N)
+    (a b : ℝ) (N : Ω → ℕ) (hN : Measurable N)
     (hstop : ∀ᵐ ω ∂P,
       (logLikelihoodPartialSum Z (N ω) ω ≤ a ∨ b ≤ logLikelihoodPartialSum Z (N ω) ω) ∧
         ∀ k < N ω, a < logLikelihoodPartialSum Z k ω ∧ logLikelihoodPartialSum Z k ω < b)

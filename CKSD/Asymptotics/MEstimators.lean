@@ -110,7 +110,7 @@ theorem integral_log_lt_integral_log_of_withDensity_ne {X : Type*} [MeasurableSp
 metric space and dominated by an integrable envelope, if `∫ m θ < c` then on some ball about `θ`
 the criterion is dominated by one measurable integrable function with integral below `c`. -/
 theorem exists_ball_measurable_dominating_integral_lt {X Θ : Type*} [MeasurableSpace X]
-    [MetricSpace Θ] [TopologicalSpace.SeparableSpace Θ] (P₀ : Measure X) [IsProbabilityMeasure P₀]
+    [MetricSpace Θ] [TopologicalSpace.SeparableSpace Θ] (P₀ : Measure X)
     (m : Θ → X → ℝ) (hm : ∀ θ, Measurable (m θ)) (hcont : ∀ x, Continuous fun θ ↦ m θ x)
     (B : X → ℝ) (hB : Integrable B P₀) (henv : ∀ θ x, |m θ x| ≤ B x) (θ : Θ) {c : ℝ}
     (hc : ∫ x, m θ x ∂P₀ < c) :
@@ -175,16 +175,16 @@ The log-likelihood envelope is integrable at the true law; identifiability conce
 so no irrelevant distinction between density versions is required. -/
 theorem tendstoInProbabilityConst_mle_of_compact
     {Ω X Θ : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
-    [MetricSpace Θ] [CompactSpace Θ] [MeasurableSpace Θ] [BorelSpace Θ]
+    [MetricSpace Θ] [CompactSpace Θ]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Θ → Measure X)
-    (hP : ∀ θ, IsProbabilityMeasure (P θ)) (ν : Measure X) [SigmaFinite ν]
+    (hP : ∀ θ, IsProbabilityMeasure (P θ)) (ν : Measure X)
     (f : Θ → X → ℝ) (hf : ∀ θ, HasDensity (P θ) ν (f θ))
     (hpos : ∀ θ x, 0 < f θ x) (hcont : ∀ x, Continuous (fun θ ↦ f θ x))
     (hid : Function.Injective P) (θ₀ : Θ) (Xn : ℕ → Ω → X)
     (hiid : IsIndependentIdenticallyDistributed μ Xn (P θ₀))
     (B : X → ℝ) (hB : Integrable B (P θ₀))
     (henv : ∀ θ x, |Real.log (f θ x)| ≤ B x)
-    (T : ℕ → Ω → Θ) (hT : ∀ n, Measurable (T n))
+    (T : ℕ → Ω → Θ)
     (r : ℕ → Ω → ℝ) (hr : TendstoInProbabilityConst μ r 0)
     (hopt : ∀ n : ℕ, 0 < n → ∀ᵐ ω ∂μ,
       empiricalCriterion (fun θ x ↦ Real.log (f θ x)) Xn n ω θ₀ - r n ω ≤

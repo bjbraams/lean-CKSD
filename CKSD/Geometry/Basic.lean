@@ -59,7 +59,8 @@ def squaredMMD {X : Type*} [MeasurableSpace X] (k : X → X → ℝ) (P Q : Meas
   (∫ z, k z.1 z.2 ∂P.prod P) + (∫ z, k z.1 z.2 ∂Q.prod Q) -
     2 * ∫ z, k z.1 z.2 ∂P.prod Q
 
-/-- Characteristicness expressed by vanishing squared discrepancy. -/
+/-- Separation of probability laws by vanishing squared discrepancy. Symmetry, positive
+definiteness, measurability, and integrability of the kernel are separate properties. -/
 def IsCharacteristicKernel {X : Type*} [MeasurableSpace X] (k : X → X → ℝ) : Prop :=
   ∀ P Q : Measure X, IsProbabilityMeasure P → IsProbabilityMeasure Q →
     (squaredMMD k P Q = 0 ↔ P = Q)

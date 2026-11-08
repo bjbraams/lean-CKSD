@@ -19,6 +19,33 @@ claim a new upstream definition or a new theorem.
 
 Specific proof reuse includes:
 
+- The Gaussian projection and residual independence theorem uses TauCeti's
+  `Gaussian/Projection.lean` and `Gaussian/Affine.lean`; the nested central F law
+  uses `FisherSnedecor/ChiSquared.lean`. The Wishart determinant law uses
+  `Wishart/Agreement.lean` and `Wishart/Determinant.lean`, under
+  `TauCeti/Probability/Distributions/`.
+- Strict monotonicity of the noncentral F upper tail uses TauCeti's
+  `noncentralChiSquaredMeasure_conv_noncentralChiSquaredMeasure`, support
+  theorems for central and noncentral chi-squared laws, and
+  `hasLaw_noncentralF_of_noncentralChiSquared`. The local coupling adds an
+  independent noncentral chi-squared increment and exhibits a set of positive
+  probability on which the F threshold is crossed.
+- The barycentric-velocity action bound uses TauCeti's
+  `exists_isContinuityEquation_map_smul_fst_add_smul_snd` and
+  `IsContinuityEquation.wassersteinEDist_rpow_le`, together with its continuity
+  theorem for push-forward probability laws. The passage from slice conditional
+  expectations to the product conditional expectation uses Mathlib's
+  `ae_eq_condExp_of_forall_setIntegral_eq`, Fubini's theorem, and conditional
+  Jensen inequalities.
+- The singleton-limit-set convergence lemma uses Mathlib's compactness criterion
+  `IsCompact.tendsto_nhds_of_unique_mapClusterPt`. The stochastic approximation
+  equilibrium corollary also depends on the admitted limit-set theorem, as
+  recorded by the compiled axiom inventory.
+- The MMD weak-convergence criterion uses Mathlib's continuity of product
+  probability laws, continuity of bounded continuous integrals, and Prokhorov's
+  compactness theorem for uniformly tight families. The zero-distortion isometry
+  theorem uses its measure-support and isometry APIs. The Wasserstein Karcher
+  equation follows from the local proved transport-energy descent inequality.
 - `minimizer_mem_span_of_feature_vectors` uses Mathlib's complete
   finite-dimensional span, orthogonal projection, and norm bounds.
 - `ae_tendsto_landscape_sampleAverage` specializes Mathlib's
@@ -235,3 +262,43 @@ Statlib's contiguity roadmap.
 The section-level theorem formulations use this project's `Suggested101.lean`–
 `Suggested108.lean` drafts as a source. Module headers and declaration
 docstrings identify the mathematical catalogue entry and any narrower scope.
+
+The population covariance matrix adapter uses `TauCeti.covMatrix` from
+`TauCeti/Probability/Moments/Covariance.lean`. The square-root lifting inequality
+specializes Mathlib's `Real.rpow_add_le_add_rpow`; maximal-invariant factorization
+uses Mathlib's `Function.factorsThrough_iff`. These adapters retain the upstream
+hypotheses and conventions at the pinned revisions.
+
+The Gaussian Bures formula for positive semidefinite covariances uses TauCeti's
+positive-definite formula, weak continuity of Gaussian laws and the Wasserstein
+moment criterion, together with Mathlib's continuity of the CFC square root.
+Normalized factor-loading uniqueness uses TauCeti's
+`conjTranspose_mul_self_eq_iff_exists_unitary_mul` from
+`Analysis/Matrix/GramFactorization/Uniqueness.lean` and Mathlib's uniqueness of
+strictly monotone finite enumerations. The Gaussian likelihood criterion uses
+Mathlib's spectral theorem, eigenvalue positivity and scalar logarithm inequalities.
+
+Kinetic Gibbs invariance uses TauCeti's `stdGaussian_eq_withDensity` and
+`integral_fderiv_apply_eq_zero_of_hasCompactSupport`. The proof writes the generator
+in weighted divergence form for the phase-space density and integrates each
+coordinate derivative against product Lebesgue measure.
+
+The order-two Hoeffding decomposition and exact variance use Mathlib's finite-product
+integration and law-transfer lemmas, `variance_sum_pi`, and covariance identities.
+The degenerate pair-sum calculation integrates out a coordinate that occurs in
+only one of two distinct pairs.
+
+Mean-square stability of optimal transport maps uses Mathlib's Vitali theorem and
+TauCeti's Wasserstein moment-tail criterion, stability and compactness of optimal
+plans, Brenier uniqueness, and graph-plan convergence in measure.
+
+The Euclidean central limit theorem uses Mathlib's Cramér–Wold theorem and scalar
+IID central limit theorem, with TauCeti's covariance-matrix identities. The
+finite-rank degenerate U-statistic limit combines this joint CLT with Mathlib's
+strong law for weighted score squares and the proved Slutsky adapters. The
+projected empirical-mean limit uses the same Euclidean CLT and CKSD's delta method.
+
+The exact noncentral F law uses the completed Gaussian projection/residual
+independence theorem, TauCeti's shifted standard-Gaussian norm law from
+`Probability/Distributions/NoncentralChiSquared/Gaussian.lean`, and its independent
+noncentral-chi-squared/chi-squared ratio characterization of the noncentral F law.

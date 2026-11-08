@@ -40,9 +40,10 @@ def HasExtremeValueDomainOfAttraction (P : Measure ℝ) (γ : ℝ) : Prop :=
     Tendsto (fun n ↦ cdf P (a n * x + b n) ^ n) atTop
       (𝓝 (cdf (TauCeti.Probability.generalizedExtremeValueMeasure 0 1 γ) x))
 
-/-- Uniform discrepancy between threshold excesses and a fitted generalized Pareto law. -/
+/-- Uniform discrepancy over all nonnegative excesses, including the terminal jump, against a
+fitted generalized Pareto law. -/
 def thresholdParetoDiscrepancy (P : Measure ℝ) (γ scale threshold : ℝ) : ℝ :=
-  sSup {r : ℝ | ∃ y : ℝ, 0 ≤ y ∧ (threshold + y : EReal) < distributionUpperEndpoint P ∧
+  sSup {r : ℝ | ∃ y : ℝ, 0 ≤ y ∧
     r = |cdf (thresholdExcessLaw P threshold) y -
       cdf (TauCeti.Probability.generalizedParetoMeasure scale γ) y|}
 

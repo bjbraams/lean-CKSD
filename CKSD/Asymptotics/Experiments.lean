@@ -52,7 +52,7 @@ theorem tendsto_measureReal_of_tendstoWeakly {E : Type*} [TopologicalSpace E] [M
   let ν₀ : ProbabilityMeasure E := ⟨μ, inferInstance⟩
   have hν : Tendsto ν atTop (𝓝 ν₀) := by
     rw [ProbabilityMeasure.tendsto_iff_forall_integral_tendsto]
-    exact h
+    exact h.integral_tendsto
   have := ProbabilityMeasure.tendsto_measure_of_null_frontier_of_tendsto' hν (E := A) hA
   exact (ENNReal.tendsto_toReal (measure_ne_top μ A)).comp this
 
@@ -131,7 +131,7 @@ theorem tendsto_integral_mul_of_tendstoWeakly {X : Type*} [TopologicalSpace X]
 theorem isContiguous_of_integral_likelihood_ratio_limit_eq_one {Ω : Type*} [MeasurableSpace Ω]
     (P Q : ℕ → Measure Ω) (hP : ∀ n, IsProbabilityMeasure (P n))
     (hQ : ∀ n, IsProbabilityMeasure (Q n)) (hac : ∀ n, Q n ≪ P n)
-    (ν : Measure ℝ) [IsProbabilityMeasure ν]
+    (ν : Measure ℝ)
     (hlim : TendstoWeakly (fun n ↦ (P n).map (fun ω ↦ ((Q n).rnDeriv (P n) ω).toReal)) ν)
     (hint : Integrable id ν) (hmean : (∫ x, x ∂ν) = 1) :
     IsContiguous P Q := by
@@ -218,10 +218,17 @@ theorem tendstoWeakly_of_log_likelihood_ratio_dependent {Ω : ℕ → Type*}
     (hrn : ∀ n, Q n = (P n).withDensity (fun ω ↦ ENNReal.ofReal (Real.exp (Λ n ω))))
     (ν : Measure (E × ℝ)) [IsProbabilityMeasure ν]
     (hlim : TendstoWeakly (fun n ↦ (P n).map (fun ω ↦ (S n ω, Λ n ω))) ν)
-    (_hint : Integrable (fun z ↦ Real.exp z.2) ν)
     (hmean : (∫ z, Real.exp z.2 ∂ν) = 1) :
     TendstoWeakly (fun n ↦ (Q n).map (S n))
       ((ν.withDensity fun z ↦ ENNReal.ofReal (Real.exp z.2)).map Prod.fst) := by
+  have hint : Integrable (fun z : E × ℝ ↦ Real.exp z.2) ν := by
+    by_contra hni
+    rw [integral_undef hni] at hmean
+    exact zero_ne_one hmean
+  letI : ∀ n, IsProbabilityMeasure (Q n) := hQ
+  letI : IsFiniteMeasure (ν.withDensity fun z : E × ℝ ↦ ENNReal.ofReal (Real.exp z.2)) :=
+    isFiniteMeasure_withDensity hint.lintegral_lt_top.ne
+  refine TendstoWeakly.of_forall_integral_tendsto ?_
   intro f
   have hSΛ : ∀ n, Measurable fun ω ↦ (S n ω, Λ n ω) := fun n ↦ (hS n).prodMk (hΛ n)
   have : ∀ n, IsProbabilityMeasure ((P n).map fun ω ↦ (S n ω, Λ n ω)) := fun n ↦ by
@@ -263,12 +270,11 @@ theorem tendstoWeakly_of_log_likelihood_ratio {Ω E : Type*} [MeasurableSpace Ω
     (hrn : ∀ n, Q n = (P n).withDensity (fun ω ↦ ENNReal.ofReal (Real.exp (Λ n ω))))
     (ν : Measure (E × ℝ)) [IsProbabilityMeasure ν]
     (hlim : TendstoWeakly (fun n ↦ (P n).map (fun ω ↦ (S n ω, Λ n ω))) ν)
-    (_hint : Integrable (fun z ↦ Real.exp z.2) ν)
     (hmean : (∫ z, Real.exp z.2 ∂ν) = 1) :
     TendstoWeakly (fun n ↦ (Q n).map (S n))
       ((ν.withDensity fun z ↦ ENNReal.ofReal (Real.exp z.2)).map Prod.fst) :=
   tendstoWeakly_of_log_likelihood_ratio_dependent (Ω := fun _ ↦ Ω) P Q hP hQ S Λ hS hΛ hrn ν hlim
-    _hint hmean
+    hmean
 
 /-- GAPS 102.21, local power calculation for a normal limit with mean shift. -/
 theorem tendsto_local_normal_power {Ω : Type*} [MeasurableSpace Ω]
@@ -299,7 +305,7 @@ theorem tendsto_local_normal_power {Ω : Type*} [MeasurableSpace Ω]
 /-- GAPS 102.13, scalar DQM implies LAN, with common strictly positive densities. -/
 theorem local_asymptotic_normality_of_differentiable_in_quadratic_mean
     {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
-    (mu : Measure Ω) [IsProbabilityMeasure mu] (nu : Measure E) [SigmaFinite nu]
+    (mu : Measure Ω) [IsProbabilityMeasure mu] (nu : Measure E)
     (P : ℝ → Measure E) (hP : ∀ theta, IsProbabilityMeasure (P theta))
     (f : ℝ → E → ℝ) (hf : ∀ theta, HasDensity (P theta) nu (f theta))
     (hpos : ∀ theta x, 0 < f theta x) (theta₀ : ℝ) (score : E → ℝ)

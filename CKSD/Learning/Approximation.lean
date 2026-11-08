@@ -53,7 +53,7 @@ theorem exists_logisticNetwork_sq_error_le_barron_moment :
 /-- Centering a square-integrable Hilbert-space function reduces its second moment. -/
 theorem integral_norm_sub_integral_sq_le {S H : Type*} [MeasurableSpace S]
     [NormedAddCommGroup H] [InnerProductSpace ℝ H] [CompleteSpace H]
-    [MeasurableSpace H] [BorelSpace H] (ν : Measure S) [IsProbabilityMeasure ν]
+    (ν : Measure S) [IsProbabilityMeasure ν]
     (f : S → H) (hf : MemLp f 2 ν) :
     (∫ s, ‖f s - ∫ t, f t ∂ν‖ ^ 2 ∂ν) ≤ ∫ s, ‖f s‖ ^ 2 ∂ν := by
   let m := ∫ s, f s ∂ν
@@ -81,7 +81,7 @@ theorem integral_norm_sub_integral_sq_le {S H : Type*} [MeasurableSpace S]
 with squared error bounded by its second moment divided by the number of features. -/
 theorem exists_feature_average_sq_error_le {S H : Type*} [MeasurableSpace S]
     [NormedAddCommGroup H] [InnerProductSpace ℝ H] [CompleteSpace H]
-    [MeasurableSpace H] [BorelSpace H] [SecondCountableTopology H]
+    [MeasurableSpace H] [BorelSpace H]
     (ν : Measure S) [IsProbabilityMeasure ν] (feature : S → H)
     (hf : MemLp feature 2 ν) (N : ℕ) (hN : 0 < N) :
     ∃ x : Fin N → S,

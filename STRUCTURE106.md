@@ -263,6 +263,8 @@ The Gumbel law in the maximum convention, with location \(m\) and scale \(s>0\),
 
 No relevant declarations were found.
 
+The excess-law equivalence in item 47 compares distribution functions over all nonnegative excesses, including a terminal jump at a finite endpoint. TauCeti supplies the Pareto family and threshold stability, but not this equivalence.
+
 **Synopsis entries.** Not covered: 106.46 (ingredients only: the generalized extreme-value family with its distribution function and max-stability, in TauCeti; the classification of the limits and the domain-of-attraction criteria are absent), 106.47 (ingredients only: the generalized Pareto family with its threshold stability, in TauCeti; the equivalence with the domain of attraction is absent), 106.48, 106.49.
 
 ### Exceedances and block maxima

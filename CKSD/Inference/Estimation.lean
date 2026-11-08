@@ -5,11 +5,13 @@ public import CKSD.Inference.Sufficiency
 public import Mathlib.Algebra.QuadraticDiscriminant
 
 /-!
-# Inference: Estimation
+# Unbiased estimation and risk improvement
 
-Sources: `GAPS.md`, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Rao–Blackwell reduction for parameter-dependent convex losses, uniqueness for complete
+statistics, Basu independence, the centered score-moment information inequality, and the
+covariance characterization of minimum-variance unbiasedness. Sufficient statistics are
+represented by a common disintegrating Markov kernel.
+Sources: GAPS 101.7–101.12, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
 -/
 
 @[expose] public section
@@ -149,7 +151,7 @@ theorem indepFun_of_isSufficientStatistic_of_isBoundedlyCompleteStatistic
 The derivative-under-integral assumptions give the displayed cross-moment identity. -/
 theorem sq_div_information_le_variance (P : Measure X) [IsProbabilityMeasure P]
     (W score : X → ℝ) (hW : MemLp W 2 P) (hs : MemLp score 2 P)
-    (_hs0 : (∫ x, score x ∂P) = 0) (g' : ℝ)
+    (g' : ℝ)
     (hcross : (∫ x, (W x - ∫ y, W y ∂P) * score x ∂P) = g')
     (hI : 0 < ∫ x, score x ^ 2 ∂P) :
     g' ^ 2 / (∫ x, score x ^ 2 ∂P) ≤ variance P W := by

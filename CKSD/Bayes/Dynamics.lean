@@ -6,12 +6,18 @@ public import Mathlib.Analysis.Calculus.Deriv.Support
 public import Mathlib.Analysis.InnerProductSpace.Calculus
 public import Mathlib.MeasureTheory.Integral.IntegralEqImproper
 public import CKSD.Nonparametric.Basic
+public import Mathlib.MeasureTheory.Function.ConditionalExpectation.Real
+public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.BenamouBrenier
+public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.PlanInterpolation
+public import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Map
 
 /-!
 # Bayes: Dynamics
 
 Sources: `GAPS.md`, `SYNOPSIS104.md`, and `STRUCTURE104.md`.
 Declarations adapted from this project's section drafts.
+The barycentric action bound uses TauCeti's displacement interpolation and Benamou–Brenier
+lower bound, with Mathlib's conditional-expectation uniqueness and Jensen inequality.
 The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
 -/
 
@@ -53,10 +59,11 @@ theorem integral_langevin_generator_eq_zero (V f : ℝ → ℝ) (hV : ContDiff �
   intro hZ hi
   rw [integral_div, integral_eq_zero_of_hasDerivAt_of_integrable hder hidi hiF, zero_div]
 
-/-- GAPS 104.38, pathwise synchronous contraction from a common additive forcing. -/
+/-- GAPS 104.38, pathwise synchronous exponential estimate from a common additive forcing.
+The monotonicity coefficient may be any real number; a positive coefficient gives contraction. -/
 theorem dist_synchronous_langevin_le_exp {d : ℕ}
     (b : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (hb : Continuous b)
-    (m : ℝ) (hm : 0 < m)
+    (m : ℝ)
     (hmono : ∀ x y, m * ‖x - y‖ ^ 2 ≤ inner ℝ (b x - b y) (x - y))
     (x y : ℝ → EuclideanSpace ℝ (Fin d)) (hx : Continuous x) (hy : Continuous y)
     (heq : ∀ t ≥ 0, x t - y t = x 0 - y 0 - ∫ s in (0 : ℝ)..t, b (x s) - b (y s)) :
@@ -137,8 +144,9 @@ theorem ae_tendsto_robbins_monro {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     ∀ᵐ ω ∂μ, Tendsto (fun n ↦ θ n ω) atTop (𝓝 θ₀) := by
   sorry
 
-/-- GAPS 104.41, the entropy-decay consequence of dissipation and a log-Sobolev bound. -/
-theorem entropy_le_exp_of_log_sobolev (E I : ℝ → ℝ) (m : ℝ) (hm : 0 < m)
+/-- GAPS 104.41, the exponential estimate from dissipation and a log-Sobolev bound.
+A positive coefficient gives entropy decay; the estimate also holds for real coefficients. -/
+theorem entropy_le_exp_of_log_sobolev (E I : ℝ → ℝ) (m : ℝ)
     (hE : ContinuousOn E (Ici 0))
     (hder : ∀ t > 0, HasDerivAt E (-I t) t)
     (hlsi : ∀ t > 0, 2 * m * E t ≤ I t) :
@@ -242,6 +250,58 @@ theorem score_matching_risk_identity (P : Measure ℝ) [IsProbabilityMeasure P] 
   simp only [Pi.add_apply] at hsplit
   rw [hsplit, integral_add hA hB, hcross, sub_zero]
 
+/-- Slice conditional expectations give the conditional expectation on the product space,
+when the conditioning map records the time as well as the observation. -/
+theorem condExp_prod_of_condExp_slices
+    {T Ω Y E : Type*} [MeasurableSpace T] [MeasurableSpace Ω] [MeasurableSpace Y]
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+    (ρ : Measure T) [IsFiniteMeasure ρ] (π : Measure Ω) [IsFiniteMeasure π]
+    (X : T → Ω → Y) (hX : Measurable (Function.uncurry X))
+    (v : T → Y → E) (hv : Measurable (Function.uncurry v))
+    (W : Ω → E) (hW : Integrable W π)
+    (hc : ∀ᵐ t ∂ρ, (fun ω ↦ v t (X t ω)) =ᵐ[π]
+      π[W | MeasurableSpace.comap (X t) inferInstance]) :
+    (fun q : T × Ω ↦ v q.1 (X q.1 q.2)) =ᵐ[ρ.prod π]
+      (ρ.prod π)[fun q ↦ W q.2 |
+        MeasurableSpace.comap (fun q : T × Ω ↦ (q.1, X q.1 q.2)) inferInstance] := by
+  let G : T × Ω → T × Y := fun q ↦ (q.1, X q.1 q.2)
+  have hG : Measurable G := measurable_fst.prodMk hX
+  have hU : Measurable fun q : T × Ω ↦ v q.1 (X q.1 q.2) := hv.comp hG
+  have hUint : Integrable (fun q : T × Ω ↦ v q.1 (X q.1 q.2)) (ρ.prod π) := by
+    refine (integrable_prod_iff hU.aestronglyMeasurable).2 ⟨?_, ?_⟩
+    · filter_upwards [hc] with t ht
+      exact integrable_condExp.congr ht.symm
+    · refine (integrable_const (∫ ω, ‖W ω‖ ∂π)).mono'
+        hU.norm.stronglyMeasurable.integral_prod_right.aestronglyMeasurable ?_
+      filter_upwards [hc] with t ht
+      rw [Real.norm_eq_abs, abs_of_nonneg (integral_nonneg fun _ ↦ norm_nonneg _)]
+      calc (∫ ω, ‖v t (X t ω)‖ ∂π) = ∫ ω, ‖π[W | MeasurableSpace.comap (X t) inferInstance] ω‖ ∂π :=
+          integral_congr_ae (ht.fun_comp norm)
+        _ ≤ ∫ ω, ‖W ω‖ ∂π := integral_norm_condExp_le W
+  have hGm : Measurable[MeasurableSpace.comap G inferInstance] G :=
+    Measurable.of_comap_le le_rfl
+  apply ae_eq_condExp_of_forall_setIntegral_eq hG.comap_le (hW.comp_snd ρ)
+    (fun s _ _ ↦ hUint.integrableOn) ?_
+    (hv.stronglyMeasurable.comp_measurable hGm).aestronglyMeasurable
+  intro s hs _
+  obtain ⟨A, hA, rfl⟩ := hs
+  rw [← integral_indicator (hG hA), ← integral_indicator (hG hA),
+    integral_prod _ (hUint.indicator (hG hA)),
+    integral_prod _ ((hW.comp_snd ρ).indicator (hG hA))]
+  apply integral_congr_ae
+  filter_upwards [hc] with t ht
+  have hAt : MeasurableSet[MeasurableSpace.comap (X t) inferInstance]
+      {ω | (t, X t ω) ∈ A} := by
+    exact ⟨(fun y ↦ (t, y)) ⁻¹' A, measurable_prodMk_left hA, rfl⟩
+  have hXt : Measurable (X t) := hX.comp measurable_prodMk_left
+  have hAt' := hXt.comap_le _ hAt
+  change (∫ ω, ({ω | (t, X t ω) ∈ A}.indicator (fun ω ↦ v t (X t ω))) ω ∂π) =
+    ∫ ω, ({ω | (t, X t ω) ∈ A}.indicator W) ω ∂π
+  rw [integral_indicator hAt', integral_indicator hAt',
+    setIntegral_congr_ae hAt' (ht.mono fun ω hω _ ↦ hω),
+    setIntegral_condExp hXt.comap_le hW hAt]
+
 /-- SYNOPSIS 104.72: action bounds for the barycentric velocity of an arbitrary straight coupling. -/
 theorem wasserstein_le_barycentric_velocity_action {d : ℕ}
     (π : Measure (EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d)))
@@ -258,7 +318,98 @@ theorem wasserstein_le_barycentric_velocity_action {d : ℕ}
       ∫ t in (0 : ℝ)..1, ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π ∧
     (∫ t in (0 : ℝ)..1, ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π) ≤
       ∫ z, ‖z.2 - z.1‖ ^ 2 ∂π := by
-  sorry
+  intro Xt hcond
+  let ρ := volume.restrict (Ioo (0 : ℝ) 1)
+  have : IsFiniteMeasure ρ := by dsimp [ρ]; infer_instance
+  have hXt : Measurable (Function.uncurry Xt) := by fun_prop
+  have hW2 : MemLp (fun z ↦ z.2 - z.1) 2 π := h2.snd.sub h2.fst
+  have hW : Integrable (fun z ↦ z.2 - z.1) π := hW2.integrable (by norm_num)
+  have hc : ∀ᵐ t ∂ρ, (fun z ↦ v t (Xt t z)) =ᵐ[π]
+      π[(fun z ↦ z.2 - z.1) | MeasurableSpace.comap (Xt t) inferInstance] := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioo] with t ht
+    exact hcond t ⟨ht.1.le, ht.2.le⟩
+  -- Identify the supplied slice-wise conditional velocity with TauCeti's space-time version.
+  have hprod := condExp_prod_of_condExp_slices ρ π Xt hXt v hv _ hW hc
+  obtain ⟨u, hce, hcu, _⟩ :=
+    TauCeti.exists_isContinuityEquation_map_smul_fst_add_smul_snd π
+      (by simpa only [← hasFiniteIntegral_iff_enorm] using hW.2)
+  have heq : ∀ᵐ q : ℝ × (EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d)) ∂ρ.prod π,
+      u q.1 (Xt q.1 q.2) = v q.1 (Xt q.1 q.2) := by
+    change (fun q ↦ u q.1 (Xt q.1 q.2)) =ᵐ[ρ.prod π] _
+    exact (Filter.EventuallyEq.of_eq hcu).trans hprod.symm
+  have hce' : TauCeti.IsContinuityEquation (fun t ↦ π.map (Xt t)) v 0 1 := by
+    apply hce.congr hv
+    rw [← ae_restrict_iff' measurableSet_Ioo]
+    filter_upwards [Measure.ae_ae_of_ae_prod heq] with t ht
+    exact (ae_map_iff (by fun_prop : AEMeasurable (Xt t) π)
+      (measurableSet_eq_fun (hce.measurable_velocity.comp measurable_prodMk_left)
+        (hv.comp measurable_prodMk_left))).2 ht
+  let P : ProbabilityMeasure (EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d)) :=
+    ⟨π, inferInstance⟩
+  let ν : ℝ → FiniteMeasure (EuclideanSpace ℝ (Fin d)) := fun t ↦
+    (P.map (Xt t)).toFiniteMeasure
+  have hν (t : ℝ) : (ν t : Measure (EuclideanSpace ℝ (Fin d))) = π.map (Xt t) := by
+    rw [ProbabilityMeasure.toMeasure_comp_toFiniteMeasure_eq_toMeasure,
+      ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.coe_mk]
+  -- Narrow continuity, as in TauCeti.isLeast_lintegral_isContinuityEquation.
+  have hνc : Continuous ν := ProbabilityMeasure.toFiniteMeasure_continuous.comp
+    (P.continuous_map_of_forall_continuous (fun _ ↦ by fun_prop) fun _ ↦ by fun_prop)
+  have hceν : TauCeti.IsContinuityEquation (fun t ↦ (ν t : Measure _)) v 0 1 := by
+    simpa only [hν] using hce'
+  have : IsProbabilityMeasure (ν 0 : Measure (EuclideanSpace ℝ (Fin d))) := by rw [hν]; infer_instance
+  have hlow := hceν.wassersteinEDist_rpow_le hνc.continuousOn zero_le_one
+    (p := 2) (by norm_num) (by norm_num)
+  have hsq (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
+      Integrable (fun z ↦ ‖v t (Xt t z)‖ ^ 2) π := by
+    have hCE2 : MemLp (π[(fun z ↦ z.2 - z.1) | MeasurableSpace.comap (Xt t) inferInstance]) 2 π :=
+      MemLp.condExp (by norm_num) hW2
+    exact (hCE2.ae_eq (hcond t ht).symm).integrable_norm_pow (by norm_num)
+  have hbound (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
+      ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π ≤ ∫ z, ‖z.2 - z.1‖ ^ 2 ∂π := by
+    calc (∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π) =
+        ∫ z, ‖π[(fun z ↦ z.2 - z.1) | MeasurableSpace.comap (Xt t) inferInstance] z‖ ^ 2 ∂π :=
+          integral_congr_ae ((hcond t ht).mono fun z hz ↦ by dsimp only at hz ⊢; rw [hz])
+      _ ≤ _ := by
+        exact_mod_cast integral_norm_condExp_rpow_le (m := MeasurableSpace.comap (Xt t) inferInstance)
+          (p := 2) (by norm_num) (by simpa using hW2.integrable_norm_pow (by norm_num))
+  have hAm : Measurable (fun t ↦ ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π) :=
+    ((hv.comp (measurable_fst.prodMk hXt)).norm.pow_const 2).stronglyMeasurable.integral_prod_right.measurable
+  have hAint : Integrable (fun t ↦ ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π) ρ := by
+    refine (integrable_const (∫ z, ‖z.2 - z.1‖ ^ 2 ∂π)).mono' hAm.aestronglyMeasurable ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioo] with t ht
+    rw [Real.norm_eq_abs, abs_of_nonneg (integral_nonneg fun _ ↦ by positivity)]
+    exact hbound t ⟨ht.1.le, ht.2.le⟩
+  have hact : ∫⁻ t in Ioo (0 : ℝ) 1, ∫⁻ x, ‖v t x‖ₑ ^ (2 : ℝ) ∂π.map (Xt t) =
+      ENNReal.ofReal (∫ t in Ioo (0 : ℝ) 1, ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π) := by
+    rw [ofReal_integral_eq_lintegral_ofReal hAint
+      (ae_of_all _ fun t ↦ integral_nonneg fun _ ↦ by positivity)]
+    apply setLIntegral_congr_fun measurableSet_Ioo
+    intro t ht
+    dsimp only
+    rw [lintegral_map (by fun_prop) (by fun_prop)]
+    simp_rw [ENNReal.rpow_two, ← ofReal_norm, ← ENNReal.ofReal_pow (norm_nonneg _)]
+    exact (ofReal_integral_eq_lintegral_ofReal (hsq t ⟨ht.1.le, ht.2.le⟩)
+      (ae_of_all _ fun _ ↦ by positivity)).symm
+  have hinterval : (∫ t in (0 : ℝ)..1, ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π) =
+      ∫ t in Ioo (0 : ℝ) 1, ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π := by
+    rw [intervalIntegral.integral_of_le zero_le_one, integral_Ioc_eq_integral_Ioo]
+  rw [hinterval]
+  constructor
+  · simp only [hν] at hlow
+    simp only [Xt, sub_zero, zero_smul, one_smul, add_zero, sub_self, zero_add] at hlow
+    norm_num only [ENNReal.toReal_ofNat, sub_zero, Real.one_rpow, ENNReal.ofReal_one, one_mul] at hlow
+    rw [hact, ENNReal.rpow_two] at hlow
+    have := ENNReal.toReal_mono ENNReal.ofReal_ne_top hlow
+    have hAnn : 0 ≤ (∫ t in Ioo (0 : ℝ) 1, ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π) :=
+      integral_nonneg fun _ ↦ integral_nonneg fun _ ↦ sq_nonneg _
+    simpa only [ENNReal.toReal_pow, ENNReal.toReal_ofReal hAnn] using this
+  · calc
+      (∫ t in Ioo (0 : ℝ) 1, ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π) ≤
+        (∫ _t in Ioo (0 : ℝ) 1, ∫ z, ‖z.2 - z.1‖ ^ 2 ∂π) := by
+        apply integral_mono_ae hAint (integrable_const _)
+        filter_upwards [ae_restrict_mem measurableSet_Ioo] with t ht
+        exact hbound t ⟨ht.1.le, ht.2.le⟩
+      _ = _ := by simp
 
 
 end CKSD

@@ -278,7 +278,7 @@ theorem isUniformlyMostPowerfulTest_of_monotone_likelihood_ratio (P : ℝ → Me
     (T : X → ℝ) (hT : Measurable T)
     (hmlr : ∀ a b, a < b → ∃ r : ℝ → ℝ, Monotone r ∧
       ∀ x, f b x / f a x = r (T x))
-    (θ₀ c γ α : ℝ) (hγ : γ ∈ Icc 0 1) (_hα : α ∈ Ioo 0 1)
+    (θ₀ c γ α : ℝ) (hγ : γ ∈ Icc 0 1)
     (hsize : (∫ x, (if c < T x then 1 else if T x = c then γ else 0) ∂P θ₀) = α) :
     IsUniformlyMostPowerfulTest P (Iic θ₀) (Ioi θ₀) α
       (fun x ↦ if c < T x then 1 else if T x = c then γ else 0) := by
@@ -321,7 +321,7 @@ theorem isUniformlyMostPowerfulTest_of_monotone_likelihood_ratio (P : ℝ → Me
 /-- For laws with densities, a positive density at `Pa` lets a vanishing bounded mean under `Pa`
 pass to `Pb`. -/
 theorem integral_eq_zero_of_integral_eq_zero_of_pos_density {μ Pa Pb : Measure X}
-    [IsFiniteMeasure Pa] [IsFiniteMeasure Pb] {fa fb : X → ℝ}
+    [IsFiniteMeasure Pa] {fa fb : X → ℝ}
     (ha : HasDensity Pa μ fa) (hb : HasDensity Pb μ fb) (hpos : ∀ x, 0 < fa x)
     {g : X → ℝ} (hg : Measurable g) (hg0 : ∀ x, 0 ≤ g x) (hg1 : ∀ x, g x ≤ 1)
     (h0 : (∫ x, g x ∂Pa) = 0) : (∫ x, g x ∂Pb) = 0 := by

@@ -6,11 +6,14 @@ public import CKSD.Inference.LaplaceDeterminacy
 public import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 
 /-!
-# Inference: ExponentialFamily
+# Factorization and natural exponential families
 
-Sources: `GAPS.md`, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+The sufficient-statistic factorization theorem, convexity of the natural domain, completeness
+on a nonempty open parameter set, and likelihood-ratio minimal sufficiency. Multivariate
+cumulant identities and the monotone Pitman–Koopman–Darmois characterization are stated in
+their indicated scopes. The completeness proof uses the finite-measure Laplace determinacy
+adapter and Mathlib's density and pushforward operations.
+Sources: GAPS 101.1–101.6, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
 -/
 
 @[expose] public section
@@ -27,10 +30,10 @@ attribute [local instance] Classical.propDecidable
 variable {Θ X S V : Type*} [MeasurableSpace X] [MeasurableSpace S]
   [MeasurableSpace V]
 
-/-- GAPS 101.1: factorization on standard Borel sample and statistic spaces. -/
+/-- GAPS 101.1: factorization on a standard Borel sample space and an arbitrary measurable
+statistic space. -/
 theorem isSufficientStatistic_iff_exists_factorization
-    [StandardBorelSpace X] [Nonempty X] [StandardBorelSpace S]
-    [Nonempty S] [Nonempty Θ] (P : Θ → Measure X) (μ : Measure X) [SigmaFinite μ]
+    [StandardBorelSpace X] [Nonempty X] [Nonempty Θ] (P : Θ → Measure X) (μ : Measure X) [SigmaFinite μ]
     (hP : ∀ θ, IsProbabilityMeasure (P θ)) (f : Θ → X → ℝ)
     (hf : ∀ θ, HasDensity (P θ) μ (f θ)) (T : X → S) (hT : Measurable T) :
     IsSufficientStatistic P T ↔ ∃ (g : Θ → S → ℝ) (h : X → ℝ),
@@ -41,9 +44,10 @@ theorem isSufficientStatistic_iff_exists_factorization
   rintro ⟨g, h, hg, -, -, hfac⟩
   exact isSufficientStatistic_of_factorization P μ hP f hf hT g h hg hfac
 
-/-- GAPS 101.4, convexity part: the multivariate Laplace-integrability domain is convex. -/
-theorem convex_laplace_integrability_domain {d : ℕ} (ν : Measure (EuclideanSpace ℝ (Fin d))) :
-    Convex ℝ {η : EuclideanSpace ℝ (Fin d) |
+/-- GAPS 101.4, convexity part: the Laplace-integrability domain in a real inner-product space is convex. -/
+theorem convex_laplace_integrability_domain {H : Type*} [NormedAddCommGroup H]
+    [InnerProductSpace ℝ H] [MeasurableSpace H] [BorelSpace H] (ν : Measure H) :
+    Convex ℝ {η : H |
       Integrable (fun t ↦ Real.exp (inner ℝ η t)) ν} := by
   intro η hη ζ hζ a b ha hb hab
   apply ((hη.const_mul a).add (hζ.const_mul b)).mono'
@@ -54,7 +58,7 @@ theorem convex_laplace_integrability_domain {d : ℕ} (ν : Measure (EuclideanSp
       convexOn_exp.2 (mem_univ (inner ℝ η t)) (mem_univ (inner ℝ ζ t)) ha hb hab
 
 /-- GAPS 101.5: completeness of a natural statistic over a nonempty open parameter set. -/
-theorem isCompleteStatistic_exponential_family {d : ℕ} (ν : Measure X) [SigmaFinite ν]
+theorem isCompleteStatistic_exponential_family {d : ℕ} (ν : Measure X)
     (T : X → EuclideanSpace ℝ (Fin d)) (hT : Measurable T)
     (U : Set (EuclideanSpace ℝ (Fin d))) (hU : IsOpen U) (hne : U.Nonempty)
     (Z : EuclideanSpace ℝ (Fin d) → ℝ)

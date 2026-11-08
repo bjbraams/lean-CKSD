@@ -81,7 +81,7 @@ theorem integral_sample_pair_sum {N : ℕ} (P : Measure (Finset (Fin N))) [IsFin
 /-- GAPS 105.47, finite-stratum potential-outcome identification under mean ignorability. -/
 theorem treatment_effect_identification_of_conditional_independence
     {Ω : Type*} [MeasurableSpace Ω] {k : ℕ}
-    (P : Measure Ω) [IsProbabilityMeasure P] (X : Ω → Fin k) (A : Ω → Bool)
+    (P : Measure Ω) (X : Ω → Fin k) (A : Ω → Bool)
     (hX : Measurable X) (hA : Measurable A) (Y : Bool → Ω → ℝ)
     (hY : ∀ a, Integrable (Y a) P) (a : Bool) :
     let p := fun x ↦ P.real {ω | X ω = x};

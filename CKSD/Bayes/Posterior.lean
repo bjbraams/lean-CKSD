@@ -145,9 +145,11 @@ theorem normal_posterior_mean_tweedie (π : Measure ℝ) [IsProbabilityMeasure �
   rw [hsplit]
   field_simp
 
-/-- GAPS 104.14, the Poisson posterior-mean identity. -/
-theorem poisson_posterior_mean_eq_mass_ratio (π : Measure ℝ) [IsProbabilityMeasure π]
-    (hπ : ∀ᵐ θ ∂π, 0 < θ) (x : ℕ) :
+/-- GAPS 104.14, the algebraic Poisson mass-ratio identity for any prior measure.
+For a probability prior on positive intensities with finite first moment and positive marginal
+mass, the left side is the posterior mean; the equality itself needs none of these restrictions. -/
+theorem poisson_posterior_mean_eq_mass_ratio (π : Measure ℝ)
+    (x : ℕ) :
     let m := fun j ↦ ∫ θ, poissonMass θ j ∂π;
     (∫ θ, θ * poissonMass θ x ∂π) / m x = (x + 1 : ℕ) * m (x + 1) / m x := by
   have hpoint (θ : ℝ) : θ * poissonMass θ x =
@@ -162,7 +164,7 @@ theorem poisson_posterior_mean_eq_mass_ratio (π : Measure ℝ) [IsProbabilityMe
 
 /-- GAPS 104.14, almost-sure consistency of Robbins' count-ratio estimator. -/
 theorem ae_tendsto_robbins_estimator {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℕ) [IsProbabilityMeasure P]
+    (μ : Measure Ω) (P : Measure ℕ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℕ) (hiid : IsIndependentIdenticallyDistributed μ X P) (x : ℕ) (hx : 0 < P {x}) :
     ∀ᵐ ω ∂μ, Tendsto (fun n ↦ ((x + 1 : ℕ) : ℝ) *
       ((Finset.range n).filter (fun i ↦ X i ω = x + 1)).card /

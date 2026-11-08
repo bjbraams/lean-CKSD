@@ -101,7 +101,7 @@ theorem tendsto_log_sum_exp_div_atTop {n : ℕ} (hn : 0 < n) (a : Fin n → ℝ)
     (eventually_gt_atTop 0 |>.mono hlow) (eventually_gt_atTop 0 |>.mono hup)
 
 /-- GAPS 107.30, finite-width tangent-kernel training dynamics for a differentiable model. -/
-theorem hasDerivAt_predictions_of_gradient_flow {p n : ℕ} (_hn : 0 < n)
+theorem hasDerivAt_predictions_of_gradient_flow {p n : ℕ}
     (f : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin n))
     (theta : ℝ → EuclideanSpace ℝ (Fin p)) (y : EuclideanSpace ℝ (Fin n))
     (t : ℝ) (D : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))

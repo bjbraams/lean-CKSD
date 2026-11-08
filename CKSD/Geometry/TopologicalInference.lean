@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Geometry.PersistenceModules
+public import CKSD.Geometry.SimplicialPersistence.Stability
 public import TauCeti.AlgebraicTopology.Singular.ModuleChains.Basic
 public import TauCeti.Geometry.Manifold.Morse.Index
 public import TauCeti.Geometry.Manifold.Morse.Basic
@@ -86,7 +87,7 @@ def offsetInclusion (P : Set E) {i j : ℝ} (h : i ≤ j) : C(cthickening i P, c
   ContinuousMap.inclusion (cthickening_mono h P)
 
 /-- GAPS 108.22, deformation retraction of offsets. Let `M = j(N) ⊂ ℝ^D` be a compact smooth
-`d`-dimensional submanifold without boundary with reach at least `τ > 0`, and `P ⊆ M` finite with
+`d`-dimensional submanifold without boundary with reach at least `τ > 0`, and `P ⊆ M` finite and nonempty with
 `d_H(P, M) = ε < √(3/20) τ`. For `r ∈ (2ε, √(3/5) τ)` the offset `P^r` contains `M` and strongly
 deformation retracts onto it. By the nerve theorem the Čech complex of radius `r` then has the
 homotopy type of `M`; the nerve theorem is not part of this statement. -/
@@ -95,7 +96,7 @@ theorem exists_deformationRetraction_offset_of_hausdorffDist_lt
     [IsManifold (𝓡 d) ∞ N] [CompactSpace N] {j : N → E}
     (hj : Manifold.IsSmoothEmbedding (𝓡 d) 𝓘(ℝ, E) ∞ j)
     (τ : ℝ) (hτ : 0 < τ) (hreach : ENNReal.ofReal τ ≤ reach (range j))
-    (P : Finset E) (hPM : (P : Set E) ⊆ range j) (ε : ℝ)
+    (P : Finset E) (hP : P.Nonempty) (hPM : (P : Set E) ⊆ range j) (ε : ℝ)
     (hε : hausdorffDist (P : Set E) (range j) = ε) (hετ : ε < Real.sqrt (3 / 20) * τ)
     (r : ℝ) (hr : r ∈ Ioo (2 * ε) (Real.sqrt (3 / 5) * τ)) :
     ∃ hM : range j ⊆ cthickening r (P : Set E), ∃ ρ : C(cthickening r (P : Set E), range j),

@@ -133,7 +133,7 @@ def missingDataObservation {X : Type*} (w : Bool × X × ℝ) : Bool × X × ℝ
 estimator of a missing mean. The full-data triples `(R, X, Y)` are iid with law `P`, the
 response is missing at random with propensity `π₀`, and `m₀` is the regression of `Y` on `X`,
 both expressed by their defining integral identities. The estimators `(m̂, π̂)` on fold `k`
-are computed from the observed data `(R, X, RY)` outside fold `k`. The fold sizes are at least
+are computed from the observed data `(R, X, RY)` outside fold `k`. For all sufficiently large sample sizes, the fold sizes are at least
 a fixed fraction of `n`. On each fold the `L²(P_X)` errors of `m̂` and `π̂` tend to zero in
 probability, their product is `o_P(n^{-1/2})`, and the `L²(P)` distance between the estimated
 and true scores, with the nuisance estimates held fixed, tends to zero in probability. -/
@@ -152,7 +152,8 @@ theorem crossFittedAverage_missingMean_asymptotically_linear
       (∫ w in {w : Bool × X × ℝ | w.2.1 ∈ A}, w.2.2 ∂P) =
         ∫ w in {w : Bool × X × ℝ | w.2.1 ∈ A}, m₀ w.2.1 ∂P)
     (K : ℕ) (split : ∀ n, SampleSplit n K) (c : ℝ) (hc : 0 < c)
-    (hsize : ∀ n k, c * n ≤ (Finset.univ.filter fun i ↦ (split n).fold i = k).card)
+    (hsize : ∀ᶠ n in atTop, ∀ k,
+      c * n ≤ (Finset.univ.filter fun i ↦ (split n).fold i = k).card)
     (train : ∀ n (k : Fin K), ((split n).trainingIndices k → Bool × X × ℝ) → (X → ℝ) × (X → ℝ))
     (htrain₁ : ∀ n k, Measurable fun p : ((split n).trainingIndices k → Bool × X × ℝ) × X ↦
       (train n k p.1).1 p.2)

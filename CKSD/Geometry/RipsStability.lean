@@ -634,7 +634,7 @@ theorem diam_image_le_diam_image_add {X Y V Z : Type*} [MetricSpace X] [MetricSp
 /-- The Rips filtration value of the image of a simplex under a vertex map is monotone along
 faces. -/
 theorem isMonotoneOnFaces_ripsFiltrationValue_image {V W : Type*} [PseudoMetricSpace W]
-    [Fintype W] [LinearOrder W] [DecidableEq W] (π : V → W) :
+    [DecidableEq W] (π : V → W) :
     IsMonotoneOnFaces ⊤ fun σ : Finset V ↦ ripsFiltrationValue (σ.image π) := by
   intro τ σ _ hτ hτσ
   exact isMonotoneOnFaces_ripsFiltrationValue _ _

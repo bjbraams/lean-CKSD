@@ -452,6 +452,8 @@ No relevant declarations were found.
 
 No relevant declarations were found.
 
+The Gaussian equivalence assertion in item 71 concerns representations faithful to their respective graphs; nonzero coefficients alone do not supply faithfulness. Neither this statement nor the restricted-model identifiability theorems are present.
+
 **Synopsis entries.** Not covered: 105.70, 105.71.
 
 ## Missing from all three libraries

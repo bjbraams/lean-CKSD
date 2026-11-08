@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Nonparametric.Basic
+public import TauCeti.Probability.Moments.Covariance
 
 /-!
 # Empirical covariance and simple leading principal components
@@ -9,6 +10,7 @@ The covariance uses the empirical mean and divisor `n`. The results concern a si
 component in finite-dimensional Euclidean space under a fourth-moment hypothesis; they do not
 assert the infinite-dimensional spectral expansion of GAPS 103.30. The spectral gap is specified
 by a Rayleigh bound on the orthogonal complement, without choosing an ordering of eigenbases.
+Population covariance reuses `TauCeti.covMatrix`.
 -/
 
 @[expose] public section
@@ -21,9 +23,9 @@ open scoped NNReal ENNReal Topology BigOperators Matrix.Norms.L2Operator
 namespace CKSD
 
 /-- Population covariance in Euclidean coordinates, using Mathlib's covariance adapter. -/
-def euclideanCovarianceMatrix {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d))) :
+abbrev euclideanCovarianceMatrix {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d))) :
     Matrix (Fin d) (Fin d) ℝ :=
-  fun i j ↦ covariance P (fun x ↦ x i) (fun x ↦ x j)
+  TauCeti.covMatrix P
 
 /-- The sample-centred empirical covariance matrix, with divisor `n`. -/
 def empiricalCovarianceMatrix {Ω : Type*} {d : ℕ}

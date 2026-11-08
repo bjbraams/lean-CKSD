@@ -68,7 +68,7 @@ theorem measurable_cramerVonMisesStatistic (P : Measure ℝ) [IsFiniteMeasure P]
 /-- GAPS 103.17: finite-sample distribution-freeness of the Cramér–von Mises statistic.
 The reference law `U` is the uniform probability law on the unit interval. -/
 theorem map_cramerVonMisesStatistic_eq_uniform (P : Measure ℝ) [IsProbabilityMeasure P]
-    [NullSingletonClass P] (n : ℕ) (hn : 0 < n) :
+    [NullSingletonClass P] (n : ℕ)  :
     let U := TauCeti.Probability.uniformMeasure 0 1;
     (Measure.pi fun _ : Fin n ↦ P).map (cramerVonMisesStatistic P) =
       (Measure.pi fun _ : Fin n ↦ U).map (cramerVonMisesStatistic U) := by
@@ -349,7 +349,7 @@ The probabilistic spiked-covariance bound is outside this deterministic statemen
 theorem leading_eigenvector_residual_bound {p : ℕ}
     (A E : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin p))
     (hA : IsSelfAdjoint A) (hE : IsSelfAdjoint E)
-    (v : EuclideanSpace ℝ (Fin p)) (hv : ‖v‖ = 1) (a gap : ℝ) (hgap : 0 < gap)
+    (v : EuclideanSpace ℝ (Fin p)) (hv : ‖v‖ = 1) (a gap : ℝ)
     (heig : A v = a • v)
     (hother : ∀ u, inner ℝ u v = 0 → inner ℝ u (A u) ≤ (a - gap) * ‖u‖ ^ 2)
     (hsmall : 2 * ‖E‖ < gap) :

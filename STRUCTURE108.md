@@ -119,6 +119,8 @@ No persistence module, interval module, barcode, persistence diagram, bottleneck
 
 No relevant declarations were found.
 
+The deformation-retraction statement in item 22 concerns finite nonempty noiseless samples on the manifold. Its nonemptiness convention is explicit; the theorem and sampling bound are absent.
+
 **Synopsis entries.** Not covered: 108.18, 108.19, 108.20, 108.21, 108.22, 108.23, 108.24, 108.25.
 
 ### Persistent summaries and perturbation certificates
@@ -268,6 +270,8 @@ As supporting material, Brenier's theorem gives, for the cost \(\|x-y\|^2/2\) on
 #### Statlib
 
 No relevant declarations were found.
+
+The rate statement of item 53 uses ambient smoothness and Hessian bounds on the closed conjugacy ball, a source support separated from its boundary, and constants allowed to depend on that margin. None of the pinned libraries states these statistical rates.
 
 **Synopsis entries.** Not covered: 108.52, 108.53.
 

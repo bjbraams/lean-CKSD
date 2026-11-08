@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Geometry.Basic
+public import CKSD.Asymptotics.MultivariateCLT
 public import CKSD.Bayes.Basic
 public import TauCeti.Probability.Moments.Covariance
 
@@ -277,11 +278,12 @@ theorem posSemidef_double_centering_iff_sq_euclidean_distances
     rw [hBC]
     exact Matrix.posSemidef_conjTranspose_mul_self C
 
-/-- GAPS 108.10, extrinsic means are nearest points to the Euclidean expectation.
+/-- GAPS 108.10: squared-distance comparisons over a set are equivalent to distance comparisons
+with the Euclidean expectation, for any fixed candidate point.
 Uses TauCeti's covariance-trace decomposition of the second moment about a point. -/
 theorem extrinsic_mean_iff_nearest_expectation {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure P] (h2 : MemLp id 2 P) (S : Set (EuclideanSpace ℝ (Fin d)))
-    (m : EuclideanSpace ℝ (Fin d)) (hm : m ∈ S) :
+    (m : EuclideanSpace ℝ (Fin d))  :
     (∀ p ∈ S, (∫ x, ‖x - m‖ ^ 2 ∂P) ≤ ∫ x, ‖x - p‖ ^ 2 ∂P) ↔
       ∀ p ∈ S, ‖(∫ x, x ∂P) - m‖ ≤ ‖(∫ x, x ∂P) - p‖ := by
   constructor
@@ -305,12 +307,28 @@ theorem tendstoInDistribution_projected_sampleAverage {Ω : Type*} [MeasurableSp
     let m := ∫ x, x ∂P;
     let C := Matrix.of (fun i j ↦ ∫ x, (x i - m i) * (x j - m j) ∂P);
     ∀ (proj : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)),
-    ∀ (hm : Measurable proj),
+    ∀ (_hm : Measurable proj),
     ∀ (D : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)),
-    ∀ (hd : HasFDerivAt proj D m),
+    ∀ (_hd : HasFDerivAt proj D m),
     TendstoInDistribution μ (fun n ω ↦ Real.sqrt n • (proj (sampleAverage X n ω) - proj m))
       ((multivariateGaussian 0 C).map D) := by
-  sorry
+  intro m C proj hm D hd
+  have hC : TauCeti.covMatrix P = C := by
+    ext i j
+    rw [TauCeti.covMatrix_apply]
+    dsimp only [ProbabilityTheory.covariance]
+    change (∫ x, (x i - ∫ z, z i ∂P) * (x j - ∫ z, z j ∂P) ∂P) =
+      ∫ x, (x i - m i) * (x j - m j) ∂P
+    have hmcoord : ∀ k : Fin d, (∫ z, z k ∂P) = m k := by
+      intro k
+      exact (EuclideanSpace.proj k : EuclideanSpace ℝ (Fin d) →L[ℝ] ℝ).integral_comp_id_comm
+        (h2.integrable (by norm_num))
+    simp only [hmcoord]
+  have hlim := tendstoInDistribution_sqrt_smul_sampleAverage μ P X hiid h2
+  rw [hC] at hlim
+  exact (tendstoInDistribution_delta_method μ (fun n ω ↦ sampleAverage X n ω)
+    (fun n ↦ (Finset.measurable_fun_sum _ fun i _ ↦ hiid.1 i).const_smul ((n : ℝ)⁻¹))
+    m (multivariateGaussian 0 C) proj hm D hd hlim).1
 
 
 end CKSD

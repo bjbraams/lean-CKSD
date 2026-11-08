@@ -38,8 +38,34 @@ def FeynmanKacModel.particleAverageAsymptoticVariance {X : Type*} [MeasurableSpa
 def FeynmanKacModel.particleLikelihoodAsymptoticVariance {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) : ℝ :=
   ∑ p ∈ Finset.range (n + 1),
-    (∫ x, (M.backwardOperator p (n - p) (fun _ ↦ 1) x) ^ 2 ∂M.filterLaw p) /
-      (∫ x, M.backwardOperator p (n - p) (fun _ ↦ 1) x ∂M.filterLaw p) ^ 2 - 1
+    ((∫ x, (M.backwardOperator p (n - p) (fun _ ↦ 1) x) ^ 2 ∂M.filterLaw p) /
+      (∫ x, M.backwardOperator p (n - p) (fun _ ↦ 1) x ∂M.filterLaw p) ^ 2 - 1)
+
+/-- With unit potentials, the backwards operator preserves the constant one function. -/
+theorem FeynmanKacModel.backwardOperator_one_of_potential_eq_one
+    {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X)
+    (hpotential : ∀ p x, M.potential p x = 1) (p m : ℕ) :
+    M.backwardOperator p m (fun _ ↦ 1) = fun _ ↦ 1 := by
+  induction m generalizing p with
+  | zero => rfl
+  | succ m ih =>
+    funext x
+    haveI := M.isMarkov_transition p
+    simp [FeynmanKacModel.backwardOperator, ih, hpotential]
+
+/-- At time zero the likelihood estimate is deterministic and its asymptotic variance is zero. -/
+@[simp] theorem FeynmanKacModel.particleLikelihoodAsymptoticVariance_zero
+    {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X) :
+    M.particleLikelihoodAsymptoticVariance 0 = 0 := by
+  simp [FeynmanKacModel.particleLikelihoodAsymptoticVariance, FeynmanKacModel.backwardOperator]
+
+/-- Unit observation potentials give zero likelihood-estimation asymptotic variance. -/
+theorem FeynmanKacModel.particleLikelihoodAsymptoticVariance_eq_zero_of_potential_eq_one
+    {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X)
+    (hpotential : ∀ p x, M.potential p x = 1) (n : ℕ) :
+    M.particleLikelihoodAsymptoticVariance n = 0 := by
+  simp [FeynmanKacModel.particleLikelihoodAsymptoticVariance,
+    M.backwardOperator_one_of_potential_eq_one hpotential]
 
 /-- GAPS 104.59: bootstrap-particle central limit theorem at a fixed time. -/
 theorem tendstoInDistribution_particle_average {Ω X : Type*} [MeasurableSpace Ω]

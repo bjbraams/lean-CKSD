@@ -26,10 +26,11 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- GAPS 104.22, finite-state Metropolis–Hastings: stochasticity, balance and invariance. -/
+/-- GAPS 104.22, finite-state Metropolis–Hastings: stochasticity, balance and invariance
+for positive target weights, without a normalization requirement. -/
 theorem metropolisTransition_stochastic_and_detailed_balance
     {s : ℕ} (π : Fin s → ℝ) (q : Matrix (Fin s) (Fin s) ℝ)
-    (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
+    (hπ : ∀ x, 0 < π x)
     (hq : ∀ x y, 0 ≤ q x y) (hq1 : ∀ x, ∑ y, q x y = 1) :
     (∀ x y, 0 ≤ metropolisTransition π q x y) ∧
       (∀ x, ∑ y, metropolisTransition π q x y = 1) ∧
@@ -176,7 +177,7 @@ theorem independence_sampler_totalVariationDistance_le {s : ℕ} (π g : Fin s �
       (1 - 1 / M) ^ n := by
   set q : Matrix (Fin s) (Fin s) ℝ := fun _ y ↦ g y with hq
   obtain ⟨hP0, hP1, -, hPst⟩ := metropolisTransition_stochastic_and_detailed_balance π q
-    hπ hπ1 (fun _ y ↦ (hg y).le) (fun _ ↦ hg1)
+    hπ (fun _ y ↦ (hg y).le) (fun _ ↦ hg1)
   have hMpos : 0 < M := by linarith
   have hgy (y : Fin s) : 1 / M * π y ≤ g y := by
     rw [one_div_mul_eq_div, div_le_iff₀ hMpos]
@@ -289,7 +290,7 @@ theorem eventually_abs_metropolisTransition_pow_sub_le {s : ℕ} (π : Fin s →
       |∑ y ∈ A, (metropolisTransition π q ^ n) x y - ∑ y ∈ A, π y| ≤ ε := by
   set P := metropolisTransition π q with hPdef
   obtain ⟨hP0, hP1, -, hPst⟩ :=
-    metropolisTransition_stochastic_and_detailed_balance π q hπ hπ1 hq hq1
+    metropolisTransition_stochastic_and_detailed_balance π q hπ hq hq1
   obtain ⟨x₀, y₀, hqy₀, hacc₀⟩ := hap
   have hacc_le (u z : Fin s) : metropolisAcceptance π q u z ≤ 1 := by
     unfold metropolisAcceptance
@@ -763,7 +764,7 @@ theorem ae_tendsto_sampleAverage_metropolis {Ω : Type*} [MeasurableSpace Ω]
       (𝓝 (∑ x, π x * h x)) := by
   set P := metropolisTransition π q with hPdef
   obtain ⟨hP0, hP1, -, hPst⟩ :=
-    metropolisTransition_stochastic_and_detailed_balance π q hπ hπ1 hq hq1
+    metropolisTransition_stochastic_and_detailed_balance π q hπ hq hq1
   have hoff : ∀ x y, x ≠ y → 0 < P x y := metropolisTransition_pos_of_ne π q hπ hirr
   have hstep : ∀ n : ℕ, ∀ path : ℕ → Fin s,
       μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =

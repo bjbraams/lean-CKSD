@@ -85,7 +85,7 @@ theorem card_filter_univ_fin_eq_card_filter_range (n : ℕ) (q : ℕ → Prop) [
 /-- The number of exceedances of a level among the first `n` iid observations is binomial, by
 TauCeti's Poisson-binomial law of counts of independent events. -/
 theorem hasLaw_card_exceedances_binomial {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
+    (μ : Measure Ω) (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (n : ℕ) (u : ℝ) :
     HasLaw (fun ω ↦ ((Finset.range n).filter (fun i ↦ u < X i ω)).card)
       (binomial n ⟨P.real (Ioi u), by simp⟩) μ := by
@@ -137,7 +137,7 @@ theorem cdf_sInf_setOf_le_cdf (P : Measure ℝ) [IsProbabilityMeasure P] {c : �
 /-- The probability that the first `n` iid observations do not exceed `c` is `F(c)^n`, written
 as `(1 - (1 - F(c)))^n`. -/
 theorem measureReal_forall_le_eq_pow {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
+    (μ : Measure Ω) (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (n : ℕ) (c : ℝ) :
     μ.real {ω | ∀ i < n, X i ω ≤ c} = (1 - (1 - cdf P c)) ^ n := by
   have hlaw := hasLaw_card_exceedances_binomial μ P X hiid n c
@@ -152,7 +152,7 @@ theorem measureReal_forall_le_eq_pow {Ω : Type*} [MeasurableSpace Ω]
 
 /-- GAPS 106.46, the regularly varying positive-tail sufficient condition for a Fréchet limit. -/
 theorem tendsto_maximum_of_regularly_varying_tail {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
+    (μ : Measure Ω) (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (γ : ℝ) (hγ : 0 < γ)
     (hpos : ∀ t : ℝ, cdf P t < 1)
     (hrv : ∀ x > 0, Tendsto (fun t ↦ (1 - cdf P (t * x)) / (1 - cdf P t))
@@ -249,7 +249,7 @@ theorem tendsto_maximum_and_exceedance_count_of_tail_limit {Ω : Type*} [Measura
   have hpt : Tendsto (fun n : ℕ ↦ (n : ℝ) * (p n : ℝ)) atTop (𝓝 (τ : ℝ)) := by
     simpa only [hp] using htail
   have hlaw := fun n ↦ hasLaw_card_exceedances_binomial μ P X hiid n (u n)
-  refine ⟨?_, fun f ↦ ?_⟩
+  refine ⟨?_, TendstoWeakly.of_forall_integral_tendsto (fun f ↦ ?_)⟩
   · have h0 := tendsto_choose_mul_pow_of_tendsto_mul_atTop 0 hpt
     simp only [Nat.choose_zero_right, Nat.cast_one, pow_zero, one_mul, Nat.sub_zero,
       Nat.factorial_zero, div_one, mul_one] at h0

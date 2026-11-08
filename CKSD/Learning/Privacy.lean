@@ -29,12 +29,13 @@ namespace CKSD
 attribute [local instance] Classical.propDecidable
 
 /-- GAPS 107.65, basic composition of two adaptive private releases. The proof bounds the first
-release through the layer-cake formula for the truncated second-stage probability; it does not
-use the symmetry of `R` or the signs of `e₁` and `e₂`. -/
+release through the layer-cake formula for the truncated second-stage probability. The
+relation `R` is arbitrary, the exponential parameters are real, and the additive errors are
+nonnegative. -/
 theorem isDifferentiallyPrivate_compProd {D Y Z : Type*} [MeasurableSpace D] [MeasurableSpace Y]
-    [MeasurableSpace Z] (R : D → D → Prop) (_hR : ∀ d d', R d d' → R d' d)
+    [MeasurableSpace Z] (R : D → D → Prop)
     (M : Kernel D Y) [IsMarkovKernel M] (N : Kernel (D × Y) Z) [IsMarkovKernel N]
-    (e₁ e₂ d₁ d₂ : ℝ) (_he₁ : 0 ≤ e₁) (_he₂ : 0 ≤ e₂) (hd₁ : 0 ≤ d₁) (hd₂ : 0 ≤ d₂)
+    (e₁ e₂ d₁ d₂ : ℝ) (hd₁ : 0 ≤ d₁) (hd₂ : 0 ≤ d₂)
     (hM : IsDifferentiallyPrivate R e₁ d₁ M)
     (hN : ∀ y, ∀ d d', R d d' → ∀ A : Set Z, MeasurableSet A →
       N (d,y) A ≤ ENNReal.ofReal (Real.exp e₂) * N (d',y) A + ENNReal.ofReal d₂) :

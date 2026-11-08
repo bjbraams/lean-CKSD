@@ -45,15 +45,17 @@ def TendstoInProbabilityZero {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)
     (P : ∀ n, Measure (Ω n)) (X : ∀ n, Ω n → ℝ) : Prop :=
   ∀ ε > 0, Tendsto (fun n ↦ (P n).real {ω | ε < |X n ω|}) atTop (𝓝 0)
 
-/-- Stochastic little-o with a deterministic positive scale. -/
+/-- Stochastic little-o with an eventually positive deterministic scale. -/
 def IsLittleOInProbability {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
     (μ : Measure Ω) (X : ℕ → Ω → E) (r : ℕ → ℝ) : Prop :=
-  TendstoInProbabilityConst μ (fun n ω ↦ ‖X n ω‖ / r n) 0
+  (∀ᶠ n in atTop, 0 < r n) ∧
+    TendstoInProbabilityConst μ (fun n ω ↦ ‖X n ω‖ / r n) 0
 
-/-- Stochastic big-O with a deterministic positive scale. -/
+/-- Stochastic big-O with an eventually positive deterministic scale. -/
 def IsBigOInProbability {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
     (μ : Measure Ω) (X : ℕ → Ω → E) (r : ℕ → ℝ) : Prop :=
-  IsBoundedInProbability μ (fun n ω ↦ ‖X n ω‖ / r n)
+  (∀ᶠ n in atTop, 0 < r n) ∧
+    IsBoundedInProbability μ (fun n ω ↦ ‖X n ω‖ / r n)
 
 /-- Sequential tangential Hadamard differentiability, with a continuous linear extension. -/
 def HasHadamardFDerivAt {E F : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -133,10 +135,10 @@ theorem gaussian_risk_le_local_asymptotic_minimax
 The outer version for nonmeasurable empirical processes uses `TendstoInOuterDistribution`. -/
 theorem tendstoInDistribution_of_hasHadamardFDerivAt
     {Ω E F : Type*} [MeasurableSpace Ω]
-    [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
-    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
-    [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
-    [MeasurableSpace F] [BorelSpace F] [SecondCountableTopology F]
+    [NormedAddCommGroup E] [NormedSpace ℝ E]
+    [MeasurableSpace E] [BorelSpace E]
+    [NormedAddCommGroup F] [NormedSpace ℝ F]
+    [MeasurableSpace F] [BorelSpace F]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (T : ℕ → Ω → E) (hT : ∀ n, Measurable (T n))
     (θ : E) (r : ℕ → ℝ) (hr : ∀ n, 0 < r n) (hrlim : Tendsto r atTop atTop)
     (G : Measure E) [IsProbabilityMeasure G] (D₀ : Submodule ℝ E) (hclosed : IsClosed (D₀ : Set E))
@@ -157,9 +159,10 @@ theorem tendstoInDistribution_of_hasHadamardFDerivAt
   let PG : ProbabilityMeasure E := ⟨G, inferInstance⟩
   let PGD : ProbabilityMeasure F := ⟨G.map D, inferInstance⟩
   have hZlim : Tendsto PZ atTop (𝓝 PG) :=
-    ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.2 hlim
+    ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.2 hlim.integral_tendsto
   suffices hYlim : Tendsto PY atTop (𝓝 PGD) from
-    fun f ↦ ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.1 hYlim f
+    TendstoWeakly.of_forall_integral_tendsto
+      (fun f ↦ ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.1 hYlim f)
   refine tendsto_of_forall_isClosed_limsup_le' fun Fc hFc ↦ ?_
   -- The sets of local increments mapped into `Fc` at stage `m`.
   let A : ℕ → Set E := fun m ↦

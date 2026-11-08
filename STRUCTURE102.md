@@ -135,7 +135,7 @@ No relevant declarations were found.
 
 #### Mathlib
 
-The Hilbert-space projection and Pythagorean identity above give the abstract identity \(P\phi^2=P\phi_{\mathrm{eff}}^2+P(\phi-\phi_{\mathrm{eff}})^2\) of 102.38 once \(\phi_{\mathrm{eff}}\) is identified as the projection of \(\phi\) onto the tangent space; that identification, pathwise differentiability, and the canonical gradients of the mean and of quantiles are absent. Cross-fitting (102.39) and the partially linear model (102.40) are absent.
+The Hilbert-space projection and Pythagorean identity above give the abstract identity \(P\phi^2=P\phi_{\mathrm{eff}}^2+P(\phi-\phi_{\mathrm{eff}})^2\) of 102.38 once \(\phi_{\mathrm{eff}}\) is identified as the projection of \(\phi\) onto the tangent space; that identification, pathwise differentiability, and the canonical gradients of the mean and of quantiles are absent. Cross-fitting (102.39), with fold-size bounds for sufficiently large samples, and the partially linear model (102.40) are absent.
 
 #### TauCeti
 

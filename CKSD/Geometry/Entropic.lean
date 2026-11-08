@@ -72,7 +72,7 @@ theorem entropicTransportCost_shiftedEntropicCost_ne_top
 theorem realSinkhornDivergence_independent_lower_bound
     {X : Type*} [MeasurableSpace X] (c : X × X → ℝ) (hc : Measurable c)
     (a b C : ℝ) (ha : ∀ z, a ≤ c z) (hb : ∀ z, b ≤ c z) (hC : ∀ z, c z ≤ C)
-    (ε : ℝ≥0) (hε : 0 < ε) (P Q : Measure X)
+    (ε : ℝ≥0) (P Q : Measure X)
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q] :
     realSinkhornDivergence c a ε P Q = realSinkhornDivergence c b ε P Q := by
   have key : ∀ a b : ℝ, a ≤ b → (∀ z, b ≤ c z) →

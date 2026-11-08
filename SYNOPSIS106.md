@@ -914,11 +914,13 @@ with distribution function $F$, and write $x_F=\sup\{x:F(x)<1\}$.
   $\sigma(u)$ such that
   $$\sup_y\Bigl|
   \mathbb P(X-u\le y\mid X>u)-H_{\gamma,\sigma(u)}(y)\Bigr|\to0$$
-  as $u\uparrow x_F$, where the supremum runs over $0\le y<x_F-u$ and
+  as $u\uparrow x_F$, where the supremum runs over all $y\ge0$, including
+  points at and beyond a finite excess endpoint, and
   $$H_{\gamma,\sigma}(y)
   =1-\Bigl(1+\frac{\gamma y}\sigma\Bigr)^{-1/\gamma}$$
   for $\gamma\neq0$, while $H_{0,\sigma}(y)=1-e^{-y/\sigma}$. The support is
-  the set of $y>0$ with $1+\gamma y/\sigma>0$.
+  the set of $y>0$ with $1+\gamma y/\sigma>0$. The distribution function
+  is zero for $y<0$ and, when $\gamma<0$, one for $y\ge-\sigma/\gamma$.
 
 For a strictly stationary sequence, let $M_n$ be the sample maximum and let
 $u_n$ satisfy $n(1-F(u_n))\to\tau\in(0,\infty)$.

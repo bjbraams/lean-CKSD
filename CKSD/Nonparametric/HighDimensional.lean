@@ -53,13 +53,13 @@ theorem norm_sub_sum_inner_smul_sq {E : Type*} [NormedAddCommGroup E] [InnerProd
   rw [norm_sub_sq_real, h1, h2]
   ring
 
-/-- GAPS 103.31, finite-dimensional PCA minimizes expected reconstruction error: no projection
+/-- GAPS 103.31, finite-dimensional PCA minimizes expected reconstruction error about any specified center: no projection
 onto the span of `k` orthonormal vectors has risk below the tail eigenvalue sum. Attainment by
 the leading eigenvectors, uniqueness, and the Hilbert-space case are not asserted. -/
 theorem pca_reconstruction_risk_bound {Ω : Type*} [MeasurableSpace Ω] {d k : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (X : Ω → EuclideanSpace ℝ (Fin d))
     (hX : MemLp X 2 μ) (m : EuclideanSpace ℝ (Fin d))
-    (hm : (∫ ω, X ω ∂μ) = m) (e : OrthonormalBasis (Fin d) ℝ (EuclideanSpace ℝ (Fin d)))
+     (e : OrthonormalBasis (Fin d) ℝ (EuclideanSpace ℝ (Fin d)))
     (lambda : Fin d → ℝ) (hlambda : Antitone lambda)
     (hcov : ∀ i j, (∫ ω, inner ℝ (X ω - m) (e i) * inner ℝ (X ω - m) (e j) ∂μ) =
       if i = j then lambda i else 0) (hk : k ≤ d)
@@ -421,7 +421,7 @@ theorem measurable_benjaminiHochbergCount (m : ℕ) (α : ℝ) :
 theorem benjamini_hochberg_false_discovery_rate_le {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (m : ℕ) (hm : 0 < m)
     (p : Fin m → Ω → ℝ) (hp : ∀ i, Measurable (p i))
-    (hrange : ∀ i ω, p i ω ∈ Icc 0 1) (hind : iIndepFun p μ)
+     (hind : iIndepFun p μ)
     (H₀ : Finset (Fin m)) (hvalid : ∀ i ∈ H₀, ∀ t ∈ Icc (0 : ℝ) 1,
       μ.real {ω | p i ω ≤ t} ≤ t) (α : ℝ) (hα : α ∈ Ioo 0 1) :
     (∫ ω, ((H₀.filter fun i ↦ p i ω ≤

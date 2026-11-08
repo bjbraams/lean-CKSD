@@ -21,9 +21,9 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- Finite-class empirical Rademacher complexity, using a uniform sign vector. -/
+/-- Empirical Rademacher complexity, using a uniform sign vector and the supremum of the class. -/
 def empiricalRademacherComplexity
-    {H X : Type*} [Fintype H] (n : ℕ) (f : H → X → ℝ) (x : Fin n → X) : ℝ :=
+    {H X : Type*} (n : ℕ) (f : H → X → ℝ) (x : Fin n → X) : ℝ :=
   (2 : ℝ)⁻¹ ^ n * ∑ σ : Fin n → Bool,
     sSup (range fun h ↦ (∑ i, (if σ i then (1 : ℝ) else -1) * f h (x i)) / n)
 

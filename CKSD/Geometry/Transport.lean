@@ -1,10 +1,13 @@
 module
 
 public import CKSD.Geometry.Basic
+public import CKSD.Geometry.GaussianTransport
+public import CKSD.Geometry.OptimalMapStability
 public import CKSD.Bayes.Basic
 public import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Commute
 public import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Instances
 public import Mathlib.Analysis.SpecialFunctions.ContinuousFunctionalCalculus.Rpow.Basic
+public import Mathlib.MeasureTheory.Measure.Support
 
 /-!
 # Geometry: Transport
@@ -37,42 +40,77 @@ theorem integral_empirical_wasserstein_rpow_le (d : ℕ) (p : ℝ) (hp : 1 ≤ p
           else Real.rpow n (-p / d)) := by
   sorry
 
-/-- GAPS 108.42: L2 stability of optimal maps with a fixed absolutely continuous source. -/
-theorem tendsto_integral_sq_optimal_map_sub {d : ℕ} (μ ν : Measure (EuclideanSpace ℝ (Fin d)))
-    [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] (νn : ℕ → Measure (EuclideanSpace ℝ (Fin d)))
-    (hνn : ∀ n, IsProbabilityMeasure (νn n)) (hac : μ ≪ volume)
-    (hμ2 : MemLp id 2 μ) (hν2 : MemLp id 2 ν) (hνn2 : ∀ n, MemLp id 2 (νn n))
-    (T : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (Tn : ℕ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (hT : Measurable T) (hTn : ∀ n, Measurable (Tn n))
-    (hpush : μ.map T = ν) (hpushn : ∀ n, μ.map (Tn n) = νn n)
-    (hopt : (∫ x, ‖x - T x‖ ^ 2 ∂μ) = (TauCeti.wassersteinEDist 2 μ ν).toReal ^ 2)
-    (hoptn : ∀ n, (∫ x, ‖x - Tn n x‖ ^ 2 ∂μ) = (TauCeti.wassersteinEDist 2 μ (νn n)).toReal ^ 2)
-    (hconv : Tendsto (fun n ↦ (TauCeti.wassersteinEDist 2 (νn n) ν).toReal) atTop (𝓝 0)) :
-    Tendsto (fun n ↦ ∫ x, ‖Tn n x - T x‖ ^ 2 ∂μ) atTop (𝓝 0) := by
-  sorry
+/-- A continuous map from a compact space onto a law with full support takes the support of
+the source law onto the target space. -/
+theorem exists_mem_support_preimage_of_support_eq_univ
+    {A Z : Type*} [MetricSpace A] [CompactSpace A] [MeasurableSpace A] [BorelSpace A]
+    [MetricSpace Z] [MeasurableSpace Z] [BorelSpace Z]
+    (π : Measure A) (f : A → Z) (hf : Continuous f) (ρ : Measure Z)
+    (hmap : π.map f = ρ) (hfull : ρ.support = univ) (z : Z) :
+    ∃ w ∈ π.support, f w = z := by
+  have hclosed : IsClosed (f '' π.support) := π.isClosed_support.isCompact.image hf |>.isClosed
+  have hsupport : ∀ᵐ w ∂π, w ∈ π.support := π.support_mem_ae
+  have hae : ∀ᵐ z ∂ρ, z ∈ f '' π.support := by
+    rw [← hmap]
+    apply (ae_map_iff (p := fun z ↦ z ∈ f '' π.support)
+      hf.measurable.aemeasurable hclosed.measurableSet).mpr
+    exact hsupport.mono fun w hw ↦ mem_image_of_mem f hw
+  exact ρ.support_subset_of_isClosed hclosed hae (hfull ▸ mem_univ z)
 
-/-- GAPS 108.43, the missing upgrade from a zero-distortion coupling to an isometry.
+/-- GAPS 108.43, the upgrade from a zero-distortion coupling to an isometry.
 The full-support assumption realizes the source's restriction to the supports. -/
 theorem exists_measure_preserving_isometryEquiv_of_zero_distortion
     {X Y : Type*} [MetricSpace X] [MetricSpace Y]
     [CompactSpace X] [CompactSpace Y] [MeasurableSpace X] [MeasurableSpace Y]
     [BorelSpace X] [BorelSpace Y] (μ : Measure X) (ν : Measure Y)
-    [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
+
     (hμ : ∀ x, ∀ r > 0, 0 < μ (Metric.ball x r))
     (hν : ∀ y, ∀ r > 0, 0 < ν (Metric.ball y r))
     (π : Measure (X × Y)) [IsProbabilityMeasure π]
     (hfst : π.map Prod.fst = μ) (hsnd : π.map Prod.snd = ν)
     (hdist : ∀ᵐ z ∂π.prod π, dist z.1.1 z.2.1 = dist z.1.2 z.2.2) :
     ∃ f : X ≃ᵢ Y, μ.map f = ν := by
-  sorry
-
-/-- GAPS 108.46: the Gaussian Bures formula, allowing both covariances to be singular. -/
-theorem wasserstein_multivariateGaussian_sq_eq {d : ℕ} (m n : EuclideanSpace ℝ (Fin d))
-    (A B : Matrix (Fin d) (Fin d) ℝ) (hA : A.PosSemidef) (hB : B.PosSemidef) :
-    (TauCeti.wassersteinEDist 2 (multivariateGaussian m A) (multivariateGaussian n B)).toReal ^ 2 =
-      ‖m - n‖ ^ 2 + Matrix.trace (A + B - 2 • CFC.sqrt (CFC.sqrt A * B * CFC.sqrt A)) := by
-  sorry
+  have hpair : ∀ z ∈ π.support, ∀ w ∈ π.support, dist z.1 w.1 = dist z.2 w.2 := by
+    have ha : ∀ᵐ z ∂π, ∀ w ∈ π.support, dist z.1 w.1 = dist z.2 w.2 := by
+      filter_upwards [Measure.ae_ae_of_ae_prod hdist] with z hz
+      exact π.support_subset_of_isClosed (isClosed_eq (by fun_prop) (by fun_prop)) hz
+    intro z hz w hw
+    have hb : ∀ᵐ z ∂π, dist z.1 w.1 = dist z.2 w.2 := ha.mono fun z hz ↦ hz w hw
+    exact π.support_subset_of_isClosed (isClosed_eq (by fun_prop) (by fun_prop)) hb hz
+  have hfullμ : μ.support = univ := by
+    ext x
+    simp only [mem_univ, iff_true]
+    rw [(Metric.nhds_basis_ball).mem_measureSupport]
+    exact fun r hr ↦ hμ x r hr
+  have hfullν : ν.support = univ := by
+    ext y
+    simp only [mem_univ, iff_true]
+    rw [(Metric.nhds_basis_ball).mem_measureSupport]
+    exact fun r hr ↦ hν y r hr
+  have hfstsurj := exists_mem_support_preimage_of_support_eq_univ π Prod.fst continuous_fst
+    μ hfst hfullμ
+  have hsndsurj := exists_mem_support_preimage_of_support_eq_univ π Prod.snd continuous_snd
+    ν hsnd hfullν
+  choose s hs hsx using hfstsurj
+  let f : X → Y := fun x ↦ (s x).2
+  have hiso : Isometry f := Isometry.of_dist_eq fun x x' ↦ by
+    simpa only [f, hsx] using (hpair (s x) (hs x) (s x') (hs x')).symm
+  have hgraph : ∀ z ∈ π.support, f z.1 = z.2 := by
+    intro z hz
+    have h := hpair (s z.1) (hs z.1) z hz
+    rw [hsx, dist_self] at h
+    exact dist_eq_zero.mp h.symm
+  have hfsurj : Function.Surjective f := by
+    intro y
+    obtain ⟨z, hz, hzy⟩ := hsndsurj y
+    exact ⟨z.1, (hgraph z hz).trans hzy⟩
+  let e : X ≃ᵢ Y :=
+    { Equiv.ofBijective f ⟨hiso.injective, hfsurj⟩ with isometry_toFun := hiso }
+  refine ⟨e, ?_⟩
+  change μ.map f = ν
+  rw [← hfst, Measure.map_map hiso.continuous.measurable measurable_fst, ← hsnd]
+  have hsupport : ∀ᵐ z ∂π, z ∈ π.support := π.support_mem_ae
+  exact Measure.map_congr (hsupport.mono fun z hz ↦ hgraph z hz)
 
 /-- GAPS 108.46: the covariance equation and unique Gaussian barycenter of finitely many laws. -/
 theorem exists_unique_gaussian_wasserstein_barycenter {k d : ℕ} (w : Fin k → ℝ)
@@ -239,9 +277,10 @@ theorem sum_norm_sub_smul_sub_sq {d k : ℕ} (hk : 0 < k) (x : EuclideanSpace �
   ring
 
 /-- GAPS 108.59, the energy-descent inequality for the averaged-transport update.
-Only this finite-step inequality is asserted, not the convergence of the iteration. -/
+The finite-step inequality holds for every real step size; the usual descent interpretation
+uses step sizes in `[0, 1]`. No convergence of the iteration is asserted. -/
 theorem wasserstein_energy_descent_of_averaged_transport {d k : ℕ} (hk : 0 < k)
-    (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P] (hP2 : MemLp id 2 P)
+    (P : Measure (EuclideanSpace ℝ (Fin d)))  (hP2 : MemLp id 2 P)
     (T : Fin k → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (hT : ∀ i, Measurable (T i)) (hT2 : ∀ i, MemLp (T i) 2 P)
     (hopt : ∀ i, (∫ x, ‖x - T i x‖ ^ 2 ∂P) =
@@ -249,10 +288,9 @@ theorem wasserstein_energy_descent_of_averaged_transport {d k : ℕ} (hk : 0 < k
     let g := fun x ↦ x - (k : ℝ)⁻¹ • ∑ i, T i x;
     let F := fun Q ↦ (∑ i, (TauCeti.wassersteinEDist 2 Q (P.map (T i))).toReal ^ 2) / (2 * k);
     ∀ (tau : ℝ),
-    ∀ (htau : tau ∈ Icc 0 1),
     F (P.map (fun x ↦ x - tau • g x)) - F P ≤
       -(tau - tau ^ 2 / 2) * ∫ x, ‖g x‖ ^ 2 ∂P := by
-  intro g F tau _
+  intro g F tau
   have hk' : (0 : ℝ) < k := by exact_mod_cast hk
   have hsumT : MemLp (fun x ↦ ∑ i, T i x) 2 P := memLp_finsetSum Finset.univ fun i _ ↦ hT2 i
   have hg2 : MemLp g 2 P := hP2.sub (hsumT.const_smul ((k : ℝ)⁻¹))

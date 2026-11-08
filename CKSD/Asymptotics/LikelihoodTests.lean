@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Asymptotics.Statistics
+public import CKSD.Inference.Density
 public import CKSD.Asymptotics.Estimators
 public import CKSD.Asymptotics.Experiments
 public import TauCeti.Probability.Distributions.NoncentralChiSquared.Basic
@@ -16,7 +17,7 @@ with their common chi-squared limit under the null and their common noncentral c
 limit under local alternatives. The limit laws are TauCeti's chi-squared and noncentral
 chi-squared measures. The estimators are functions of the sample of size `n`, so that the
 laws under the null and under local alternatives are product measures on `Fin n → E`.
-Sources: GAPS 102.11, with the hypotheses of GAPS 102.3 and the DQM condition of GAPS 102.13.
+Sources: GAPS 102.11, with the smoothness and envelope hypotheses of GAPS 102.3.
 
 The proofs realize the sample as the first `n` coordinates of Mathlib's infinite product measure
 `Measure.infinitePi` and use the asymptotic linearization of the likelihood root
@@ -26,8 +27,7 @@ of the sample log likelihood. All three statistics reduce to `Zₙ² / I(θ₀)`
 score `Zₙ`. Under local alternatives, the joint law of a statistic and the log likelihood ratio is
 transported by Le Cam's third lemma `tendstoWeakly_of_log_likelihood_ratio_dependent`
 (GAPS 102.14); the product densities use TauCeti's `TauCeti.pi_withDensity`, and the limit is
-identified by TauCeti's `TauCeti.Probability.gaussianReal_map_sq_noncentral`. The DQM hypothesis of
-the local-alternative theorem is implied by the smoothness and envelope hypotheses and is not used.
+identified by TauCeti's `TauCeti.Probability.gaussianReal_map_sq_noncentral`.
 -/
 
 @[expose] public section
@@ -228,15 +228,6 @@ theorem gaussianReal_withDensity_exp_eq {I : ℝ} (hI : 0 < I) (h : ℝ) :
   field_simp
   ring
 
-/-- A density on an image measure is the image of the composed density. -/
-theorem map_withDensity_eq {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
-    (μ : Measure α) {ψ : α → β} (hψ : Measurable ψ) {g : β → ℝ≥0∞} (hg : Measurable g) :
-    (μ.map ψ).withDensity g = (μ.withDensity (g ∘ ψ)).map ψ := by
-  ext s hs
-  rw [withDensity_apply _ hs, Measure.map_apply hψ hs, withDensity_apply _ (hψ hs),
-    setLIntegral_map hs hg hψ]
-  rfl
-
 /-- The joint limit law of the test statistic and the log likelihood ratio under the null,
 `(Z² / I, h Z - h² I / 2)` with `Z ~ N(0, I)`, tilted by the likelihood ratio, has the
 noncentral chi-squared first marginal of the local alternative, and the likelihood ratio has
@@ -252,7 +243,7 @@ theorem noncentral_limit_of_tilt {I : ℝ} (hI : 0 < I) (h : ℝ) :
   have hg : Measurable (fun z : ℝ × ℝ ↦ ENNReal.ofReal (Real.exp z.2)) := by fun_prop
   have htilt := gaussianReal_withDensity_exp_eq hI h
   constructor
-  · rw [map_withDensity_eq _ hψ hg, Measure.map_map measurable_fst hψ]
+  · rw [← map_withDensity_comp _ hψ hg, Measure.map_map measurable_fst hψ]
     have : ((fun z : ℝ × ℝ ↦ ENNReal.ofReal (Real.exp z.2)) ∘
         fun z : ℝ ↦ (z ^ 2 / I, h * z - h ^ 2 * I / 2)) =
         fun z ↦ ENNReal.ofReal (Real.exp (h * z - h ^ 2 * I / 2)) := rfl
@@ -293,7 +284,7 @@ plug-in Wald statistic `aₙ² J(Tₙ)` with `J` continuous at `θ₀` and `J θ
 `h Zₙ - h² I / 2 + o_P(1)`. -/
 theorem likelihood_test_expansions_of_iid
     {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
-    (mu : Measure Ω) [IsProbabilityMeasure mu] (P : Measure E) [IsProbabilityMeasure P]
+    (mu : Measure Ω) [IsProbabilityMeasure mu] (P : Measure E)
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed mu X P) (ell : ℝ → E → ℝ)
     (hm : ∀ theta, Measurable (ell theta)) (hsmooth : ∀ x, ContDiff ℝ 3 (fun theta ↦ ell theta x))
     (theta₀ I : ℝ) (hI : 0 < I) (r : ℝ) (hr : 0 < r) (M : E → ℝ)
@@ -756,9 +747,6 @@ theorem tendstoWeakly_likelihoodRatio_wald_score_noncentralChiSquared
     (hhess : Integrable (fun x ↦ deriv (deriv (fun t ↦ Real.log (f t x))) θ₀) (P θ₀))
     (hinfo : (∫ x, deriv (deriv (fun t ↦ Real.log (f t x))) θ₀ ∂P θ₀) =
       -fisherInformation P f θ₀)
-    (_hdqm : Asymptotics.IsLittleO (𝓝 0)
-      (fun h : ℝ ↦ ∫ x, (Real.sqrt (f (θ₀ + h) x) - Real.sqrt (f θ₀ x) -
-        h / 2 * likelihoodScore f θ₀ x * Real.sqrt (f θ₀ x)) ^ 2 ∂ν) (fun h : ℝ ↦ h ^ 2))
     (T : ∀ n, (Fin n → E) → ℝ) (hT : ∀ n, Measurable (T n))
     (hcons : TendstoInProbabilityZero (fun n ↦ Measure.pi fun _ : Fin n ↦ P θ₀)
       (fun n x ↦ T n x - θ₀))
@@ -791,10 +779,6 @@ theorem tendstoWeakly_likelihoodRatio_wald_score_noncentralChiSquared
   set ν₂ : Measure (ℝ × ℝ) := (gaussianReal 0 (Real.toNNReal (I θ₀))).map ψ with hν₂
   have hν₂p : IsProbabilityMeasure ν₂ := by rw [hν₂]; exact (Measure.isProbabilityMeasure_map_iff hψc.measurable.aemeasurable).2 inferInstance
   obtain ⟨hlaw, hmean1⟩ := noncentral_limit_of_tilt hI h
-  have hint : Integrable (fun z : ℝ × ℝ ↦ Real.exp z.2) ν₂ := by
-    by_contra hni
-    rw [integral_undef hni] at hmean1
-    exact zero_ne_one hmean1
   set Λ : ∀ n, (Fin n → E) → ℝ := fun n x ↦
     ∑ i, (Real.log (f (θ₀ + h / Real.sqrt n) (x i)) - Real.log (f θ₀ (x i))) with hΛdef
   have hΛm : ∀ n, Measurable (Λ n) := fun n ↦ Finset.measurable_sum _ fun i _ ↦
@@ -821,7 +805,7 @@ theorem tendstoWeakly_likelihoodRatio_wald_score_noncentralChiSquared
       (fun n x ↦ (V n x, Λ n x)) (fun n ↦ (hV n).prodMk (hΛm n)) ν₂ hjoint
     have := tendstoWeakly_of_log_likelihood_ratio_dependent
       (fun n ↦ Measure.pi fun _ : Fin n ↦ P θ₀) Q (fun n ↦ inferInstance) hQ V Λ hV hΛm hrn ν₂
-      hpi hint hmean1
+      hpi hmean1
     rwa [hlaw] at this
   exact ⟨alt LR hLRm hLRd, alt W hWm hWd, alt S hSm hSd⟩
 

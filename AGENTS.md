@@ -54,6 +54,15 @@ files support Lean projects. `STRUCTURE.md` is the index and states the classifi
 the principal results that none of the libraries proves. `GAPS_EASY.md` outlines
 short derivations from library results for some of them.
 
+Following the bibliographical work and the development of the inventories the project continues
+with the formalization of content of GAPS.md. The Lean codes for this formalization are developed
+in the subdirectory CKDS. The Lean codes created there should all live in a CKSD namespace.
+Within that namespace the naming should adhere to Mathlib standards. (I have in mind that at some
+point this becomes a TauCeti project, and then the namespace CKSD will be replaced by namespace
+TauCeti.) So one task is to go through all of GAPS.md and for the identified gaps, create code
+according to Mathlib standards in the CKSD subdirectory. At first any such code may only be
+admitted, but in time the `sorry`s should be removed.
+
 You may be asked to edit, revise or expand any of the files in the project directory or to create
 new files.
 - Keep changes narrowly related to the request.

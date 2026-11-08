@@ -1,6 +1,6 @@
 module
 
-public import CKSD.Geometry.SimplicialPersistence
+public import CKSD.Geometry.DiagramDistances
 public import Mathlib.LinearAlgebra.Basis.Defs
 
 /-!

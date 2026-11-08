@@ -525,7 +525,8 @@ than $\beta$.
 Observe $n$ independent copies of $(X,Y)$ with $Y=f(X)+\varepsilon$,
 $\varepsilon$ standard normal and independent of $X$, and $X$ with a
 Lebesgue density on $[0,1]^d$ bounded above and below by positive
-constants. The risk of $\hat f$ is $\mathbb E\int(\hat f-f)^2\,dP_X$.
+constants. The risk of $\hat f$ is the nonnegative extended-real expectation
+$\mathbb E\int(\hat f-f)^2\,dP_X$, allowed to be infinite for arbitrary estimators.
 
 * **29. Deep networks and compositional classes.** Put
   $$\beta_i^*=\beta_i\prod_{j=i+1}^q\min(\beta_j,1),\qquad
@@ -1094,9 +1095,11 @@ $\langle\hat\mu_t,x\rangle+\sqrt{\beta_t}\,(x^\top\Sigma_t^{-1}x)^{1/2}$.
   LinUCB with $\lambda=\sigma^2/W^2$ and
   $\beta_t=\sigma^2\bigl(2+4d\log(1+tB^2W^2/(d\sigma^2))+8\log(4/\delta)\bigr)$
   has, with probability at least $1-\delta$ and for all $T$,
-  $$R_T\le c\sigma\sqrt T\Bigl(d\log\bigl(1+TB^2W^2/(d\sigma^2)\bigr)
+  $$R_T\le c\max\{\sigma,BW\}\sqrt T\Bigl(d\log\bigl(1+TB^2W^2/(d\sigma^2)\bigr)
   +\log(4/\delta)\Bigr),$$
-  with an absolute constant $c$. Conversely, there is a distribution over
+  with an absolute constant $c$, for $\sigma,B,W>0$ and $0<\delta<1$.
+  The factor $\max\{\sigma,BW\}$ controls initial exploration even when
+  the noise scale is arbitrarily small. Conversely, there is a distribution over
   instances $\mu^\star$, with rewards in $[-1,1]$ and $\sigma\le1$, such
   that every algorithm has $\mathbb E R_T\ge d\sqrt T/2500$ for all
   $T\ge\max\{256,d^2/16\}$, the expectation including the draw of

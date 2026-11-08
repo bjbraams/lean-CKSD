@@ -671,7 +671,8 @@ representative in $\mathcal T$ is the **canonical gradient**.
   $(p-1_{\{x\le q_p\}})/f(q_p)$.
 
 * **39. Cross-fitted estimation of a missing mean.** Split the sample into
-  a fixed finite number of folds of sizes proportional to $n$. On each fold,
+  a fixed finite number $K$ of folds. For some $c>0$ and all sufficiently
+  large $n$, each fold has size at least $cn$. On each fold,
   evaluate the estimating function $\varphi_{\hat m,\hat\pi}$ of item 37 with
   nuisance estimates $\hat m,\hat\pi$ computed from the other folds, and let
   $\hat\mu$ be the average of these values over all observations. Suppose

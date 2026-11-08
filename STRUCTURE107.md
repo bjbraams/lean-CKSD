@@ -193,6 +193,8 @@ The Fourier transform of functions on a finite-dimensional real inner product sp
 
 The Jensen–Shannon divergence of weight \(\alpha\), \(\alpha D(\mu\|\alpha\mu+(1-\alpha)\nu)+(1-\alpha)D(\nu\|\alpha\mu+(1-\alpha)\nu)\) with natural logarithms, is defined as an \(f\)-divergence (`ProbabilityTheory.jensenShannon`, [Jensen–Shannon](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/JensenShannon/Basic.lean)); for \(\alpha=1/2\) it is the \(\mathop{\mathrm{JSD}}\) of item 32. For \(0<\alpha<1\) it vanishes on two finite measures exactly when they are equal (`ProbabilityTheory.jensenShannon_eq_zero_iff`). For probability measures it is the infimum over probability measures \(\xi\) of \(\alpha D(\mu\|\xi)+(1-\alpha)D(\nu\|\xi)\) (`ProbabilityTheory.jensenShannon_eq_iInf_klDiv`, [variational form](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/JensenShannon/Variational.lean)). These give the equality case of item 32 once the value identity is known; the optimal discriminator and the identity \(-\log4+2\mathop{\mathrm{JSD}}(p,p_g)\) are not stated.
 
+The minimax lower bound in item 29 uses a nonnegative extended-real risk for arbitrary measurable estimators, including those with infinite risk. No such compositional-class bound is stated.
+
 **Synopsis entries.** Not covered: 107.28–107.30, 107.31 (ingredients only: the inverse-Wishart mean and the Wishart law of a Gaussian Gram matrix, in TauCeti, which give the key moment of the case \(n>p+1\); the risk identities are not stated), 107.32 (ingredients only: the Jensen–Shannon divergence with its vanishing criterion, in Statlib; the optimal discriminator and the value identity are not stated).
 
 ### Probabilistic output layers and kernel prediction
@@ -392,6 +394,8 @@ The Azuma–Hoeffding inequality for bounded martingale differences is derived f
 #### Statlib
 
 The Bretagnolle–Huber inequality is proved for probability measures. Statlib's `tvDist` of probability laws is twice \(\|P-Q\|_{\mathrm{TV}}\), so the statements read \(-\log(1-\|P-Q\|_{\mathrm{TV}}^2)\le D(P\|Q)\) and, when the divergence is finite, \(e^{-D(P\|Q)}\le2-2\|P-Q\|_{\mathrm{TV}}\) ([Bretagnolle–Huber](https://github.com/stat-lib/statlib/blob/eeaac0283690efaa60c31115400cf561836baeb9/Statlib/Divergence/BretagnolleHuber.lean), `ProbabilityTheory.neg_log_one_sub_tvDist_div_two_sq_le_klDiv`, `ProbabilityTheory.exp_neg_klDiv_le_two_sub_tvDist`). Hence the two error probabilities of any test sum to at least \(\frac12e^{-D(P\|Q)}\). With the tensorization recorded above this is the two-point step of the lower bound in item 62; the bandit instances and the divergence decomposition under a policy are not stated.
+
+Item 63 allows arbitrary positive noise scale and uses the effective regret scale \(\max\{\sigma,BW\}\), which controls initial exploration. The corresponding confidence and regret statements remain absent.
 
 **Synopsis entries.** Not covered: 107.62 (ingredients only: the Bretagnolle–Huber inequality and tensorization of the divergence, in Statlib; the bandit lower-bound construction and the UCB1 bound are not stated), 107.63 (ingredients only: the Azuma–Hoeffding inequality, in Mathlib and TauCeti; the self-normalized bound and the LinUCB regret bounds are not stated).
 

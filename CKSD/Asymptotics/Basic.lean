@@ -3,11 +3,13 @@ module
 public import CKSD.Inference.Basic
 
 /-!
-# Asymptotics: definitions
+# Empirical statistics and asymptotic distances
 
-Sources: `GAPS.md`, `SYNOPSIS102.md`, and `STRUCTURE102.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Empirical distribution functions and their left quantiles, ordered-injection U-statistics,
+sequence contiguity, Kolmogorov distance and the clipped Huber score. The empirical quantile
+and U-statistic are total definitions; their statistical theorems specify admissible sample
+sizes and parameters.
+Sources: Section 102 of `GAPS.md`, `SYNOPSIS102.md`, and `STRUCTURE102.md`.
 -/
 
 @[expose] public section

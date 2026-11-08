@@ -438,7 +438,8 @@ def jkoFreeEnergy {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (ν : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d))) : EReal :=
   TauCeti.boltzmannEntropy volume (wassersteinLaw ν) + TauCeti.potentialEnergy V (wassersteinLaw ν)
 
-/-- Lebesgue density of a law in the Wasserstein space, as a real function. -/
+/-- Real Lebesgue density of the absolutely continuous part of a Wasserstein law.
+This represents the whole law when that law is absolutely continuous with respect to volume. -/
 def wassersteinDensity {d : ℕ} (ν : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d)))
     (x : EuclideanSpace ℝ (Fin d)) : ℝ :=
   ((wassersteinLaw ν).rnDeriv volume x).toReal

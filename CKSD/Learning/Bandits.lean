@@ -761,7 +761,8 @@ theorem measure_exists_selfNormalized_gt_le {Ω : Type*} [MeasurableSpace Ω]
 `Σₜ = λ I + ∑_{τ<t} x_τ x_τᵀ`, `λ = σ²/W²`; observations are `⟨μ⋆, xₜ⟩ + ηₜ` with
 `ηₜ` `𝓕ₜ₊₁`-measurable and conditionally `σ`-sub-Gaussian given `𝓕ₜ`. With probability at
 least `1 - δ`, for all `T`, the regret is at most
-`c σ √T (d log(1 + T B² W² / (d σ²)) + log(4/δ))`. The minimax lower bound `d√T/2500` is
+`c max(σ, BW) √T (d log(1 + T B² W² / (d σ²)) + log(4/δ))`. The scale `max(σ, BW)`
+accounts for initial leverage when `λ = σ²/W²`. The minimax lower bound `d√T/2500` is
 not formalized here. -/
 theorem exists_linUCB_regret_le :
     ∃ c > (0 : ℝ), ∀ {Ω : Type} [MeasurableSpace Ω] [StandardBorelSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
@@ -786,7 +787,7 @@ theorem exists_linUCB_regret_le :
       (∀ t ω, x t ω ∈ D ∧ ∀ y ∈ D, ucb t ω y ≤ ucb t ω (x t ω)) →
       1 - δ ≤ P.real {ω | ∀ T : ℕ,
         (∑ t ∈ Finset.range T, (D.sup' hD (fun y ↦ μstar ⬝ᵥ y) - μstar ⬝ᵥ x t ω)) ≤
-          c * σ * Real.sqrt T *
+          c * max (σ : ℝ) (B * W) * Real.sqrt T *
             (d * Real.log (1 + T * B ^ 2 * W ^ 2 / (d * σ ^ 2)) + Real.log (4 / δ))} := by
   sorry
 

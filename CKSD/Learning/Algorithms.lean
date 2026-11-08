@@ -68,7 +68,9 @@ def DenseLayer.affine {m n : ℕ} (L : DenseLayer m n) (x : Fin m → ℝ) : Fin
 
 /-- A finite feed-forward network, built from compatible affine layers. -/
 inductive FeedForwardNetwork (input : ℕ) : ℕ → Type
+  /-- The identity network on the input space, with no affine layers. -/
   | inputLayer : FeedForwardNetwork input input
+  /-- Append an affine layer with compatible input and output dimensions. -/
   | addLayer {m n : ℕ} : FeedForwardNetwork input m → DenseLayer m n → FeedForwardNetwork input n
 
 /-- Evaluation with a fixed activation after every affine layer. -/

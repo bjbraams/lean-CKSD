@@ -4,6 +4,8 @@ public import CKSD.Geometry.Basic
 public import CKSD.Bayes.Basic
 public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.MeasureTheory.Integral.Pi
+public import Mathlib.MeasureTheory.Measure.FiniteMeasureProd
+public import Mathlib.MeasureTheory.Measure.Prokhorov
 
 /-!
 # Geometry: Kernels
@@ -106,7 +108,7 @@ theorem isCharacteristicKernel_iff_spectral_measure_full_support {d : ℕ} (hd :
 
 /-- Products of two coordinates are integrable under a law with finite second moments. -/
 theorem integrable_coord_mul_coord {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
-    [IsFiniteMeasure P]
+
     (h2 : MemLp id 2 P) (i j : Fin d) : Integrable (fun x ↦ x i * x j) P := by
   have hsq : Integrable (fun x : EuclideanSpace ℝ (Fin d) ↦ ‖x‖ ^ 2) P := h2.norm.integrable_sq
   refine hsq.mono' (by fun_prop) (ae_of_all _ fun x ↦ ?_)
@@ -115,7 +117,7 @@ theorem integrable_coord_mul_coord {d : ℕ} (P : Measure (EuclideanSpace ℝ (F
     (abs_nonneg _) (norm_nonneg _)
 
 /-- Coordinates are integrable under a law with integrable identity. -/
-theorem integrable_coord {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d))) [IsFiniteMeasure P]
+theorem integrable_coord {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
     (h1 : Integrable id P) (i : Fin d) : Integrable (fun x ↦ x i) P :=
   (EuclideanSpace.proj i : EuclideanSpace ℝ (Fin d) →L[ℝ] ℝ).integrable_comp h1
 
@@ -198,8 +200,27 @@ theorem squaredMMD_quadratic_polynomial_eq {d : ℕ} (P Q : Measure (EuclideanSp
   simp only [← Finset.sum_mul]
   ring
 
+/-- For a bounded continuous kernel, squared MMD is continuous in its first probability law. -/
+theorem continuous_squaredMMD_probabilityMeasure {X : Type*} [MetricSpace X]
+    [SecondCountableTopology X] [MeasurableSpace X] [BorelSpace X]
+    (k : X → X → ℝ) (hk : Continuous (Function.uncurry k))
+    (hb : ∃ C, ∀ x y, |k x y| ≤ C) (Q : ProbabilityMeasure X) :
+    Continuous (fun P : ProbabilityMeasure X ↦ squaredMMD k P Q) := by
+  obtain ⟨C, hC⟩ := hb
+  let f : BoundedContinuousFunction (X × X) ℝ :=
+    ⟨⟨Function.uncurry k, hk⟩, ⟨2 * C, fun x y ↦ by
+      change |k x.1 x.2 - k y.1 y.2| ≤ 2 * C
+      exact (abs_sub _ _).trans (by linarith [hC x.1 x.2, hC y.1 y.2])⟩⟩
+  have heval := ProbabilityMeasure.continuous_integral_boundedContinuousFunction f
+  have hPP : Continuous (fun P : ProbabilityMeasure X ↦ P.prod P) :=
+    ProbabilityMeasure.continuous_prod.comp (continuous_id.prodMk continuous_id)
+  have hPQ : Continuous (fun P : ProbabilityMeasure X ↦ P.prod Q) :=
+    ProbabilityMeasure.continuous_prod.comp (continuous_id.prodMk continuous_const)
+  exact ((heval.comp hPP).add continuous_const).sub
+    (continuous_const.mul (heval.comp hPQ))
+
 /-- GAPS 108.70, MMD metrizes weak convergence along uniformly tight sequences. -/
-theorem tendstoWeakly_iff_tendsto_squaredMMD_of_tight {X : Type*} [MetricSpace X] [CompleteSpace X]
+theorem tendstoWeakly_iff_tendsto_squaredMMD_of_tight {X : Type*} [MetricSpace X]
     [SecondCountableTopology X] [MeasurableSpace X] [BorelSpace X]
     (P : ℕ → Measure X) (Q : Measure X) (hP : ∀ n, IsProbabilityMeasure (P n))
     [IsProbabilityMeasure Q] (k : X → X → ℝ)
@@ -208,7 +229,48 @@ theorem tendstoWeakly_iff_tendsto_squaredMMD_of_tight {X : Type*} [MetricSpace X
     (htight : ∀ epsilon > 0, ∃ K : Set X, IsCompact K ∧
       ∀ n, (P n) Kᶜ ≤ ENNReal.ofReal epsilon) :
     TendstoWeakly P Q ↔ Tendsto (fun n ↦ squaredMMD k (P n) Q) atTop (𝓝 0) := by
-  sorry
+  letI : ∀ n, IsProbabilityMeasure (P n) := hP
+  let Ps : ℕ → ProbabilityMeasure X := fun n ↦ ⟨P n, hP n⟩
+  let Qs : ProbabilityMeasure X := ⟨Q, inferInstance⟩
+  let F : ProbabilityMeasure X → ℝ := fun R ↦ squaredMMD k R Q
+  have hF : Continuous F := continuous_squaredMMD_probabilityMeasure k hk hb Qs
+  have hFQ : F Qs = 0 := by simp [F, Qs, squaredMMD]; ring
+  have hweak : TendstoWeakly P Q ↔ Tendsto Ps atTop (𝓝 Qs) := by
+    rw [TendstoWeakly.iff_forall_integral_tendsto]
+    simpa only [Ps, Qs, ProbabilityMeasure.coe_mk] using
+      (ProbabilityMeasure.tendsto_iff_forall_integral_tendsto (μs := Ps) (μ := Qs)).symm
+  rw [hweak]
+  constructor
+  · intro h
+    have hlim : Tendsto (fun n ↦ F (Ps n)) atTop (𝓝 (F Qs)) :=
+      hF.continuousAt.tendsto.comp h
+    rw [hFQ] at hlim
+    exact hlim.congr' (Eventually.of_forall fun n ↦ by
+      change squaredMMD k ((Ps n : ProbabilityMeasure X) : Measure X) Q = _
+      exact congrArg (fun R : Measure X ↦ squaredMMD k R Q)
+        (ProbabilityMeasure.coe_mk (P n) (hP n)))
+  · intro hzero
+    have ht : IsTightMeasureSet {((R : ProbabilityMeasure X) : Measure X) | R ∈ range Ps} := by
+      apply isTightMeasureSet_iff_exists_isCompact_measure_compl_le.mpr
+      intro ε hε
+      by_cases he : ε = ⊤
+      · exact ⟨∅, isCompact_empty, fun R hR ↦ he ▸ le_top⟩
+      obtain ⟨K, hK, hbound⟩ := htight ε.toReal (ENNReal.toReal_pos hε.ne' he)
+      refine ⟨K, hK, ?_⟩
+      rintro R ⟨S, ⟨n, rfl⟩, rfl⟩
+      exact (hbound n).trans_eq (ENNReal.ofReal_toReal he)
+    have hc := isCompact_closure_of_isTightMeasureSet ht
+    apply hc.tendsto_nhds_of_unique_mapClusterPt
+      (Eventually.of_forall fun n ↦ subset_closure (mem_range_self n))
+    intro R hR hcluster
+    have hne : (atTop ⊓ Filter.comap Ps (𝓝 R)).NeBot :=
+      Filter.neBot_inf_comap_iff_map.2
+        (by simpa only [MapClusterPt, ClusterPt, inf_comm] using hcluster)
+    have hconv : Tendsto Ps (atTop ⊓ Filter.comap Ps (𝓝 R)) (𝓝 R) :=
+      Filter.tendsto_iff_comap.2 inf_le_right
+    have hFR : F R = 0 := tendsto_nhds_unique
+      (hF.continuousAt.tendsto.comp hconv) (hzero.mono_left inf_le_left)
+    exact Subtype.ext ((hchar R Q inferInstance inferInstance).mp hFR)
 
 /-- GAPS 108.71, scalar Langevin Stein identity for bounded continuously differentiable tests. -/
 theorem integral_langevin_stein_operator_eq_zero
@@ -502,7 +564,7 @@ theorem abs_squaredMMD_sub_le_of_uniform_kernel_error
     (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (M : Set X) (hM : IsCompact M) (hP : P M = 1) (hQ : Q M = 1)
     (k l : X → X → ℝ) (hk : Continuous (Function.uncurry k)) (hl : Continuous (Function.uncurry l))
-    (epsilon : ℝ) (he : 0 ≤ epsilon) (herr : ∀ x ∈ M, ∀ y ∈ M, |k x y - l x y| ≤ epsilon) :
+    (epsilon : ℝ)  (herr : ∀ x ∈ M, ∀ y ∈ M, |k x y - l x y| ≤ epsilon) :
     |squaredMMD k P Q - squaredMMD l P Q| ≤ 4 * epsilon := by
   have hMm : MeasurableSet M := hM.isClosed.measurableSet
   have hconc : ∀ (R S : Measure X) [IsProbabilityMeasure R] [IsProbabilityMeasure S],

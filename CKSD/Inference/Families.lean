@@ -842,7 +842,7 @@ theorem exists_one_sided_test_risk_le {X : Type*} [MeasurableSpace X]
 null. The least-favorability and concentration statements are not included. -/
 theorem most_powerful_of_mixture_null {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
     (P : Kernel Θ X) [IsMarkovKernel P] (Λ : Measure Θ) [IsProbabilityMeasure Λ]
-    (Q : Measure X) [IsProbabilityMeasure Q] (α : ℝ) (φ : X → ℝ)
+    (Q : Measure X) (α : ℝ) (φ : X → ℝ)
     (hφ : IsStatisticalTest φ) (hlevel : ∀ θ, (∫ x, φ x ∂P θ) ≤ α)
     (hopt : ∀ ψ, IsStatisticalTest ψ → (∫ x, ψ x ∂P ∘ₘ Λ) ≤ α →
       (∫ x, ψ x ∂Q) ≤ ∫ x, φ x ∂Q) :

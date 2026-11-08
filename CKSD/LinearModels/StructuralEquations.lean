@@ -131,14 +131,15 @@ theorem CausalGraph.edge_eq_of_additiveNoiseLaw_eq [Fintype V] [DecidableEq V]
 /-- GAPS 105.71, linear Gaussian models with unrestricted variances identify only the Markov
 equivalence class: for a linear Gaussian model along `G` whose law is faithful to `G`, a
 directed acyclic graph `H` carries a linear Gaussian model (nonzero edge coefficients,
-positive noise variances) with the same law exactly when `H` is Markov equivalent to `G`.
-Faithfulness is the hypothesis under which the equivalence class is the precise answer. -/
+positive noise variances) with the same law faithful to `H` exactly when `H` is Markov
+equivalent to `G`. Faithfulness to both graphs makes the equivalence class the precise answer. -/
 theorem CausalGraph.exists_linearGaussianSEM_iff_markovEquivalent [Fintype V] [DecidableEq V]
     (G H : CausalGraph V) (B : Matrix V V ℝ) (hB : G.IsLinearSEMMatrix B) (m : V → ℝ)
     (σ2 : V → ℝ≥0) (hσ : ∀ j, 0 < σ2 j)
     (hfaith : G.IsFaithfulLaw (linearSEMLaw B fun j ↦ gaussianReal (m j) (σ2 j))) :
     (∃ (B' : Matrix V V ℝ) (m' : V → ℝ) (σ2' : V → ℝ≥0), H.IsLinearSEMMatrix B' ∧
         (∀ j, 0 < σ2' j) ∧
+        H.IsFaithfulLaw (linearSEMLaw B' fun j ↦ gaussianReal (m' j) (σ2' j)) ∧
         linearSEMLaw B' (fun j ↦ gaussianReal (m' j) (σ2' j)) =
           linearSEMLaw B fun j ↦ gaussianReal (m j) (σ2 j)) ↔
       H.MarkovEquivalent G := by

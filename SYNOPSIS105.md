@@ -1303,8 +1303,10 @@ regime-specific means.
   common variance, then $G$ is identifiable from the joint distribution.
   The same holds for $X_j=f_j(X_{\mathrm{pa}(j)})+N_j$ with Gaussian noises and
   three times differentiable functions $f_j$ that are nonlinear in each
-  argument. By contrast, linear Gaussian models with unrestricted variances
-  identify only the Markov equivalence class.
+  argument. Among linear Gaussian representations with unrestricted positive
+  noise variances that are faithful to their respective graphs, two graphs
+  carry the same joint law exactly when they are Markov equivalent.
+  Nonzero edge coefficients alone do not imply faithfulness.
 
 ## Reference guide
 

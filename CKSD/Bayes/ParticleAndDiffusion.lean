@@ -34,10 +34,14 @@ structure FeynmanKacModel (X : Type*) [MeasurableSpace X] where
   potential : ℕ → X → ℝ
   /-- Measurability of each potential. -/
   measurable_potential : ∀ n, Measurable (potential n)
-  /-- Strict positivity of each potential. -/
-  potential_pos : ∀ n x, 0 < potential n x
   /-- Upper and positive lower bounds, allowed to depend on the time. -/
   potential_bounds : ∀ n, ∃ a b : ℝ, 0 < a ∧ ∀ x, potential n x ∈ Icc a b
+
+/-- The positive lower potential bound implies pointwise strict positivity. -/
+theorem FeynmanKacModel.potential_pos {X : Type*} [MeasurableSpace X]
+    (M : FeynmanKacModel X) (n : ℕ) (x : X) : 0 < M.potential n x := by
+  obtain ⟨a, b, ha, hbounds⟩ := M.potential_bounds n
+  exact ha.trans_le (hbounds x).1
 
 /-- Unnormalized Feynman–Kac measure at generation `n`. -/
 def FeynmanKacModel.unnormalizedLaw {X : Type*} [MeasurableSpace X]

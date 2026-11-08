@@ -161,10 +161,9 @@ theorem integral_huberScore_sq_le (k : ℝ) (hk : 0 < k) :
     ∀ (φ : ℝ → ℝ),
     ∀ (hm : Measurable φ),
     ∀ (hbound : ∀ x, |φ x| ≤ k / a),
-    ∀ (h0 : (∫ x, φ x ∂G) = 0),
     ∀ (h1 : (∫ x, x * φ x ∂G) = 1),
     (∫ x, (huberScore k x / a) ^ 2 ∂G) ≤ ∫ x, φ x ^ 2 ∂G := by
-  intro G a φ hm hbound _ h1
+  intro G a φ hm hbound h1
   have hx : Integrable (fun x : ℝ ↦ x) G :=
     (memLp_id_gaussianReal' (μ := 0) (v := 1) 1 ENNReal.one_ne_top).integrable le_rfl
   have hhm := measurable_huberScore k

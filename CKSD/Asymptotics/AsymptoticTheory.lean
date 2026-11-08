@@ -1,17 +1,19 @@
 module
 
 public import CKSD.Asymptotics.Basic
+public import CKSD.Asymptotics.UStatistics
 public import Mathlib.Topology.Order.Compact
 public import TauCeti.Probability.Distributions.ChiSquared.Basic
 public import TauCeti.Probability.Distributions.StudentT.Basic
 public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
 
 /-!
-# Asymptotics: AsymptoticTheory
+# Consistency, argmax and multinomial asymptotics
 
-Sources: `GAPS.md`, `SYNOPSIS102.md`, and `STRUCTURE102.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Consistency from outer uniform convergence and a separated maximum, the compact deterministic
+argmax theorem, and Pearson's multinomial limit. U-statistic projection and variance interfaces
+are re-exported from `CKSD.Asymptotics.UStatistics`.
+Sources: GAPS 102.23, 102.31 and 102.33, `SYNOPSIS102.md`, and `STRUCTURE102.md`.
 -/
 
 @[expose] public section
@@ -35,10 +37,10 @@ theorem tendstoInProbabilityConst_const {Ω E : Type*} [MeasurableSpace Ω]
 
 /-- GAPS 102.23: consistency from uniform convergence and a separated maximum.
 Pointwise bounds avoid any unmentioned measurability of a supremum. -/
-theorem tendstoInProbabilityConst_m_estimator {Ω Θ : Type*} [MeasurableSpace Ω] [MeasurableSpace Θ]
+theorem tendstoInProbabilityConst_m_estimator {Ω Θ : Type*} [MeasurableSpace Ω]
     [MetricSpace Θ] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (M : Θ → ℝ) (Mn : ℕ → Ω → Θ → ℝ) (θ₀ : Θ) (T : ℕ → Ω → Θ)
-    (hT : ∀ n, Measurable (T n)) (e r : ℕ → Ω → ℝ)
+    (e r : ℕ → Ω → ℝ)
     (he : TendstoInProbabilityConst μ e 0) (hr : TendstoInProbabilityConst μ r 0)
     (hsep : ∀ ε > 0, ∃ δ > 0, ∀ θ, ε ≤ dist θ θ₀ → M θ ≤ M θ₀ - δ)
     (hunif : ∀ n, ∀ᵐ ω ∂μ, ∀ θ, |Mn n ω θ - M θ| ≤ e n ω)
@@ -70,36 +72,6 @@ theorem tendstoInProbabilityConst_m_estimator {Ω Θ : Type*} [MeasurableSpace �
   exact squeeze_zero (fun _ ↦ measureReal_nonneg) hbound
     (by simpa using he'.add hr')
 
-/-- GAPS 102.29: order-two Hoeffding decomposition, including the exact variance. -/
-theorem uStatistic_hoeffding_decomposition_and_variance {E : Type*} [MeasurableSpace E]
-    (P : Measure E) [IsProbabilityMeasure P] (h : E × E → ℝ)
-    (hm : Measurable h) (h2 : MemLp h 2 (P.prod P)) (hs : ∀ x y, h (x,y) = h (y,x))
-    (n : ℕ) (hn : 2 ≤ n) :
-    let θ := ∫ z, h z ∂P.prod P;
-    let g := fun x ↦ (∫ y, h (x,y) ∂P) - θ;
-    let q := fun z : E × E ↦ h z - θ - g z.1 - g z.2;
-    let U := fun x : Fin n → E ↦ uStatistic 2 n (fun z ↦ h (z 0, z 1)) x;
-    (∀ᵐ x ∂(Measure.pi fun _ : Fin n ↦ P),
-      U x - θ = 2 / n * (∑ i, g (x i)) +
-        uStatistic 2 n (fun z ↦ q (z 0, z 1)) x) ∧
-    variance (Measure.pi fun _ : Fin n ↦ P) U =
-      4 / n * variance P g + 2 / ((n : ℝ) * (n - 1 : ℕ)) * ∫ z, q z ^ 2 ∂P.prod P := by
-  sorry
-
-/-- GAPS 102.30: finite-rank degenerate quadratic kernels have Gaussian-chaos limits. -/
-theorem tendstoInDistribution_uStatistic_of_finite_rank_degenerate
-    {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) [IsProbabilityMeasure P]
-    (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P) (r : ℕ) (a : Fin r → ℝ)
-    (e : Fin r → E → ℝ) (he : ∀ j, MemLp (e j) 2 P)
-    (he0 : ∀ j, (∫ x, e j x ∂P) = 0)
-    (hortho : ∀ i j, (∫ x, e i x * e j x ∂P) = if i = j then 1 else 0) :
-    TendstoInDistribution μ (fun n ω ↦ (n : ℝ) * uStatistic 2 n
-      (fun z ↦ ∑ j, a j * e j (z 0) * e j (z 1)) (fun i ↦ X i.val ω))
-      ((Measure.pi fun _ : Fin r ↦ gaussianReal 0 1).map
-        (fun z ↦ ∑ j, a j * (z j ^ 2 - 1))) := by
-  sorry
-
 /-- GAPS 102.31: Pearson's test for a simple multinomial null. -/
 theorem tendstoInDistribution_pearson_statistic {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (k : ℕ) (hk : 2 ≤ k)
@@ -113,10 +85,10 @@ theorem tendstoInDistribution_pearson_statistic {Ω : Type*} [MeasurableSpace Ω
 
 /-- GAPS 102.33, compact deterministic-limit scope of the argmax theorem. -/
 theorem tendstoInProbabilityConst_argmax_of_compact
-    {Ω H : Type*} [MeasurableSpace Ω] [MeasurableSpace H]
+    {Ω H : Type*} [MeasurableSpace Ω]
     [MetricSpace H] [CompactSpace H] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (M : H → ℝ) (hc : Continuous M) (θ : H) (huniq : ∀ h, h ≠ θ → M h < M θ)
-    (Mn : ℕ → Ω → H → ℝ) (T : ℕ → Ω → H) (hT : ∀ n, Measurable (T n))
+    (Mn : ℕ → Ω → H → ℝ) (T : ℕ → Ω → H)
     (e : ℕ → Ω → ℝ) (he : TendstoInProbabilityConst μ e 0)
     (hu : ∀ n, ∀ᵐ ω ∂μ, ∀ h, |Mn n ω h - M h| ≤ e n ω)
     (ho : ∀ n, ∀ᵐ ω ∂μ, ∀ h, Mn n ω h ≤ Mn n ω (T n ω)) :
@@ -140,7 +112,7 @@ theorem tendstoInProbabilityConst_argmax_of_compact
     · refine ⟨1, zero_lt_one, ?_⟩
       intro h hh
       exact (hne ⟨h, hh⟩).elim
-  apply tendstoInProbabilityConst_m_estimator μ M Mn θ T hT e (fun _ _ ↦ 0)
+  apply tendstoInProbabilityConst_m_estimator μ M Mn θ T e (fun _ _ ↦ 0)
     he (tendstoInProbabilityConst_const μ 0) hsep hu
   intro n
   filter_upwards [ho n] with ω hω

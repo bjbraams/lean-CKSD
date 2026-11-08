@@ -49,7 +49,7 @@ theorem kiefer_wolfowitz_equivalence {s p : ℕ} (hp : 0 < p)
 
 /-- GAPS 105.38, conservative finite randomization p-values, including ties. -/
 theorem randomization_p_value_valid {s : ℕ} (w T : Fin s → ℝ)
-    (hw : ∀ i, 0 ≤ w i) (hw1 : ∑ i, w i = 1) (α : ℝ) (hα : α ∈ Icc 0 1) :
+    (hw : ∀ i, 0 ≤ w i) (α : ℝ) (hα : 0 ≤ α) :
     let p := fun i ↦ ∑ j, if T i ≤ T j then w j else 0;
     (∑ i, if p i ≤ α then w i else 0) ≤ α := by
   classical
@@ -75,12 +75,12 @@ theorem randomization_p_value_valid {s : ℕ} (w T : Fin s → ℝ)
       intro i _
       exact if_neg (fun hi ↦ hs ⟨i, hi⟩)
     rw [hz]
-    exact hα.1
+    exact hα
 
 /-- GAPS 105.42, Fisher's inequality for nontrivial balanced incomplete blocks. -/
 theorem fisher_inequality_of_balanced_incomplete_block_design
-    (v b k r ell : ℕ) (hv : 2 ≤ v) (hk : 0 < k) (hkv : k < v)
-    (hr : 0 < r) (hell : 0 < ell) (B : Fin b → Finset (Fin v))
+    (v b k r ell : ℕ) (hkv : k < v)
+    (hr : 0 < r) (B : Fin b → Finset (Fin v))
     (hsize : ∀ j, (B j).card = k)
     (hrep : ∀ i, (Finset.univ.filter fun j ↦ i ∈ B j).card = r)
     (hpair : ∀ i i', i ≠ i' → (Finset.univ.filter fun j ↦ i ∈ B j ∧ i' ∈ B j).card = ell) :

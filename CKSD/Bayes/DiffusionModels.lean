@@ -307,7 +307,7 @@ theorem isFokkerPlanckSolution_add_score_of_continuityEquation {d : ℕ}
     (m : ℝ → EuclideanSpace ℝ (Fin d) → ℝ) (hm : ∀ t, ContDiff ℝ ⊤ (m t))
     (hmpos : ∀ t x, 0 < m t x)
     (v : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (ε : ℝ → ℝ)
-    (hε : ∀ t, 0 ≤ ε t) (hεc : Continuous ε)
+
     (hCE : IsFokkerPlanckSolution (fun t ↦ volume.withDensity fun x ↦ ENNReal.ofReal (m t x))
       v (fun _ _ ↦ 0) 1) :
     IsFokkerPlanckSolution (fun t ↦ volume.withDensity fun x ↦ ENNReal.ofReal (m t x))

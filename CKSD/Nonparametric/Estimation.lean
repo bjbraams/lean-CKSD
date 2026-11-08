@@ -70,7 +70,7 @@ theorem ae_tendsto_integral_abs_kernelDensityEstimator_sub {Ω : Type*} [Measura
 /-- GAPS 103.8, representer theorem in its Hilbert feature-vector formulation. -/
 theorem minimizer_mem_span_of_feature_vectors
     {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H]
-    [CompleteSpace H] {n : ℕ} (v : Fin n → H) (y : Fin n → ℝ)
+     {n : ℕ} (v : Fin n → H) (y : Fin n → ℝ)
     (L : ℝ → ℝ → ℝ) (lambda : ℝ) (hlambda : 0 < lambda) (f : H)
     (hmin : ∀ g : H, (∑ i, L (y i) (inner ℝ f (v i))) + lambda * ‖f‖ ^ 2 ≤
       (∑ i, L (y i) (inner ℝ g (v i))) + lambda * ‖g‖ ^ 2) :

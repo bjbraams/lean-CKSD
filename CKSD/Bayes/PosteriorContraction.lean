@@ -24,12 +24,14 @@ open scoped NNReal ENNReal Topology BigOperators
 namespace CKSD
 
 /-- Posterior measure obtained by multiplying a prior by the finite-sample likelihood. -/
-def dominatedPosterior {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
+def dominatedPosterior {Θ X : Type*} [MeasurableSpace Θ]
     (π : Measure Θ) (f : Θ → X → ℝ) {n : ℕ} (x : Fin n → X) : Measure Θ :=
   let unnormalized := π.withDensity (fun θ ↦ ENNReal.ofReal (∏ i, f θ (x i)))
   (unnormalized univ)⁻¹ • unnormalized
 
-/-- Hellinger distance in the convention `h² = integral (sqrt p - sqrt q)²`. -/
+/-- Real Hellinger adapter in the convention `h² = integral (sqrt p - sqrt q)²`
+for probability measures. For arbitrary measures an infinite squared divergence is totalized to
+zero by `ENNReal.toReal`; distance interpretations require finite divergence. -/
 def statisticalHellingerDistance {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) : ℝ := Real.sqrt (2 * (ProbabilityTheory.sqHellinger P Q).toReal)
 
@@ -108,7 +110,7 @@ theorem statisticalHellingerDistance_comm {X : Type*} [MeasurableSpace X]
   simp only [statisticalHellingerDistance, ProbabilityTheory.sqHellinger_comm P Q]
 
 /-- Before any observations, a probability prior is its own dominated posterior. -/
-@[simp] theorem dominatedPosterior_empty {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
+@[simp] theorem dominatedPosterior_empty {Θ X : Type*} [MeasurableSpace Θ]
     (π : Measure Θ) [IsProbabilityMeasure π] (f : Θ → X → ℝ) (x : Fin 0 → X) :
     dominatedPosterior π f x = π := by
   simp [dominatedPosterior]

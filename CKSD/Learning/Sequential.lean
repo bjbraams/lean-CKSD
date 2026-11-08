@@ -27,7 +27,7 @@ attribute [local instance] Classical.propDecidable
 
 /-- GAPS 107.50: UCB1 regret, with prefix rewards and all tie choices explicit. -/
 theorem ucb_regret_le {Ω : Type*} [MeasurableSpace Ω]
-    (P : Measure Ω) [IsProbabilityMeasure P] (K : ℕ) (hK : 2 ≤ K)
+    (P : Measure Ω) [IsProbabilityMeasure P] (K : ℕ)
     (R : Fin K → ℕ → Ω → ℝ) (hm : ∀ i j, Measurable (R i j))
     (hb : ∀ i j ω, R i j ω ∈ Icc 0 1)
     (hind : iIndepFun (fun z : Fin K × ℕ ↦ R z.1 z.2) P)
@@ -42,11 +42,10 @@ theorem ucb_regret_le {Ω : Type*} [MeasurableSpace Ω]
       Real.sqrt (2 * Real.log t / armPlayCount A i t ω);
     ∀ (hucb : ∀ t ≥ K, ∀ ω i, index t i ω ≤ index t (A t ω) ω),
     ∀ (T : ℕ),
-    ∀ (hT : K ≤ T),
     (∫ ω, ∑ t ∈ Finset.range T, (mu star - mu (A t ω)) ∂P) ≤
       8 * (∑ i, if mu i < mu star then Real.log T / (mu star - mu i) else 0) +
         (1 + Real.pi ^ 2 / 3) * ∑ i, (mu star - mu i) := by
-  intro mu star hstar A hA hinit index hucb T _
+  intro mu star hstar A hA hinit index hucb T
   have hb' : ∀ i j, ∀ᵐ ω ∂P, R i j ω ∈ Icc 0 1 := fun i j ↦ ae_of_all _ (hb i j)
   have hpt : ∀ ω, ∑ t ∈ Finset.range T, (mu star - mu (A t ω)) =
       ∑ i, (mu star - mu i) * (armPlayCount A i T ω : ℝ) := fun ω ↦
@@ -268,7 +267,7 @@ theorem policy_value_resolvent_identity_and_error_bound {s : ℕ} (P H : Matrix 
     _ = _ := by ring
 
 /-- GAPS 107.60, deterministic projected-contraction error bound underlying TD(lambda). -/
-theorem norm_projected_fixed_point_sub_le {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H]
+theorem norm_projected_fixed_point_sub_le {H : Type*} [NormedAddCommGroup H] [NormedSpace ℝ H]
     (P : H →L[ℝ] H) (hP : ∀ x, ‖P x‖ ≤ ‖x‖)
     (gamma lambda : ℝ) (hg : gamma ∈ Ioo 0 1) (hl : lambda ∈ Icc 0 1)
     (T : H → H)

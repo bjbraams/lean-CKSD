@@ -357,7 +357,7 @@ theorem clique_factorization_of_isUndirectedGlobalMarkovMass [Fintype V] [Fintyp
 cliques, a positive probability mass function is globally Markov exactly when
 `p(x) = ∏_C p_C(x_C) / ∏_S p_S(x_S)^{ν(S)}`, written here without division. -/
 theorem isUndirectedGlobalMarkovMass_iff_clique_factorization [Fintype V] [Fintype S]
-    (G : SimpleGraph V) (_hG : IsChordalGraph G) {k : ℕ} (C : Fin k → Finset V)
+    (G : SimpleGraph V) {k : ℕ} (C : Fin k → Finset V)
     (hC : IsPerfectCliqueSequence G C) (p : (V → S) → ℝ) (hp : IsProbabilityMass p)
     (hpos : ∀ x, 0 < p x) :
     IsUndirectedGlobalMarkovMass G p ↔

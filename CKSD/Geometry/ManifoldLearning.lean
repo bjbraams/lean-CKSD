@@ -44,7 +44,8 @@ def walkLength (x : E) (l : List E) : ℝ :=
   (((x :: l).zip l).map fun p ↦ dist p.1 p.2).sum
 
 /-- Shortest-path distance in the `ε`-neighbourhood graph on `S` with Euclidean edge lengths,
-`∞` between different components. -/
+`∞` between different components. Its graph interpretation applies to endpoints in `S`;
+the definition also permits an ambient starting point outside `S`. -/
 def sampleGraphEDist (S : Finset E) (ε : ℝ) (x y : E) : ℝ≥0∞ :=
   ⨅ (l : List E) (_ : IsSampleWalk S ε x y l), ENNReal.ofReal (walkLength x l)
 

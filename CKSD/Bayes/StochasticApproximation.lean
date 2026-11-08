@@ -44,6 +44,19 @@ def IsInternallyChainTransitive {E : Type*} [NormedAddCommGroup E] (Φ : ℝ →
 def limitSet {E : Type*} [TopologicalSpace E] (u : ℕ → E) : Set E :=
   ⋂ n, closure (u '' Ici n)
 
+/-- A bounded sequence in a proper metric space converges if its limit set is a singleton. -/
+theorem tendsto_of_limitSet_eq_singleton {E : Type*} [NormedAddCommGroup E] [ProperSpace E]
+    (u : ℕ → E) (hbdd : BddAbove (range fun n ↦ ‖u n‖)) (x : E)
+    (hlim : limitSet u = {x}) : Tendsto u atTop (𝓝 x) := by
+  obtain ⟨R, hR⟩ := hbdd
+  apply (isCompact_closedBall (0 : E) R).tendsto_nhds_of_unique_mapClusterPt
+    (Eventually.of_forall fun n ↦ ?_)
+  · intro y _ hy
+    have hymem : y ∈ limitSet u :=
+      mem_iInter.2 (mapClusterPt_atTop_iff_forall_mem_closure.1 hy)
+    simpa only [hlim, mem_singleton_iff] using hymem
+  · simpa only [Metric.mem_closedBall, dist_zero_right] using hR (mem_range_self n)
+
 /-- Interpolation times `tₙ = ∑_{k<n} aₖ`. -/
 def stochasticApproxTime (a : ℕ → ℝ) (n : ℕ) : ℝ := ∑ k ∈ Finset.range n, a k
 
@@ -97,7 +110,11 @@ theorem ae_tendsto_equilibrium_of_chainTransitive {Ω : Type*} [MeasurableSpace 
     (hequil : ∀ A : Set (EuclideanSpace ℝ (Fin d)), IsCompact A → IsConnected A →
       IsInternallyChainTransitive Φ A → ∃ x, A = {x} ∧ h x = 0) :
     ∀ᵐ ω ∂μ, ∃ x, h x = 0 ∧ Tendsto (θ · ω) atTop (𝓝 x) := by
-  sorry
+  have hlimit := ae_isInternallyChainTransitive_limitSet μ F θ M hθm hMm hM2 hzero K
+    hnoise h L hL Φ hΦ a hapos ha2 haDiverges hrec hbdd
+  filter_upwards [hlimit, hbdd] with ω hω hbω
+  obtain ⟨x, hx, heq⟩ := hequil _ hω.1 hω.2.1 hω.2.2
+  exact ⟨x, heq, tendsto_of_limitSet_eq_singleton _ hbω x hx⟩
 
 /-- GAPS 104.49: the interpolated process is almost surely an asymptotic pseudotrajectory of the
 flow, uniformly on time windows of length `T`. -/

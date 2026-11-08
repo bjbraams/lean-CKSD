@@ -18,11 +18,13 @@ public import TauCeti.Probability.Distributions.StudentT.Basic
 public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
 
 /-!
-# Inference: definitions
+# Statistical models and convergence interfaces
 
-Sources: `GAPS.md`, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Finite-measure weak convergence, convergence in probability and distribution, empirical laws,
+real density and moment adapters, sufficient and complete statistics, randomized tests and
+Markov decision rules. Finiteness is recorded by weak convergence itself; real-valued risks
+and moments are used with the integrability hypotheses of theorems that apply them.
+Sources: the statistical conventions of Section 101 of `GAPS.md` and `SYNOPSIS101.md`.
 -/
 
 @[expose] public section
@@ -36,13 +38,45 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- Weak convergence of finite Borel measures, tested against bounded continuous functions. -/
-def TendstoWeakly {E : Type*} [TopologicalSpace E] [MeasurableSpace E]
-    (μ : ℕ → Measure E) (ν : Measure E) : Prop :=
-  ∀ f : BoundedContinuousFunction E ℝ, Tendsto (fun n ↦ ∫ x, f x ∂μ n) atTop (𝓝 (∫ x, f x ∂ν))
+/-- Weak convergence of finite measures, tested against bounded continuous functions.
+Finiteness is part of the predicate, so totalized Bochner integrals cannot identify an
+infinite-mass law with the zero measure. -/
+structure TendstoWeakly {E : Type*} [TopologicalSpace E] [MeasurableSpace E]
+    (μ : ℕ → Measure E) (ν : Measure E) : Prop where
+  /-- Each measure in the sequence is finite. -/
+  finite : ∀ n, IsFiniteMeasure (μ n)
+  /-- The limit measure is finite. -/
+  finite_limit : IsFiniteMeasure ν
+  /-- Integrals of bounded continuous real functions converge. -/
+  integral_tendsto : ∀ f : BoundedContinuousFunction E ℝ,
+    Tendsto (fun n ↦ ∫ x, f x ∂μ n) atTop (𝓝 (∫ x, f x ∂ν))
+
+/-- A weak-convergence hypothesis can be applied to a bounded continuous test function. -/
+instance {E : Type*} [TopologicalSpace E] [MeasurableSpace E]
+    {μ : ℕ → Measure E} {ν : Measure E} :
+    CoeFun (TendstoWeakly μ ν) (fun _ ↦ ∀ f : BoundedContinuousFunction E ℝ,
+      Tendsto (fun n ↦ ∫ x, f x ∂μ n) atTop (𝓝 (∫ x, f x ∂ν))) where
+  coe h := h.integral_tendsto
+
+/-- For finite measures, convergence of the bounded continuous integrals gives weak convergence. -/
+theorem TendstoWeakly.of_forall_integral_tendsto {E : Type*}
+    [TopologicalSpace E] [MeasurableSpace E] {μ : ℕ → Measure E} {ν : Measure E}
+    [∀ n, IsFiniteMeasure (μ n)] [IsFiniteMeasure ν]
+    (h : ∀ f : BoundedContinuousFunction E ℝ,
+      Tendsto (fun n ↦ ∫ x, f x ∂μ n) atTop (𝓝 (∫ x, f x ∂ν))) :
+    TendstoWeakly μ ν :=
+  ⟨fun _ ↦ inferInstance, inferInstance, h⟩
+
+/-- On finite measures, weak convergence is equivalent to convergence of test integrals. -/
+theorem TendstoWeakly.iff_forall_integral_tendsto {E : Type*}
+    [TopologicalSpace E] [MeasurableSpace E] {μ : ℕ → Measure E} {ν : Measure E}
+    [∀ n, IsFiniteMeasure (μ n)] [IsFiniteMeasure ν] :
+    TendstoWeakly μ ν ↔ ∀ f : BoundedContinuousFunction E ℝ,
+      Tendsto (fun n ↦ ∫ x, f x ∂μ n) atTop (𝓝 (∫ x, f x ∂ν)) :=
+  ⟨fun h ↦ h.integral_tendsto, TendstoWeakly.of_forall_integral_tendsto⟩
 
 /-- Convergence in law of a sequence of random variables on one probability space. -/
-def TendstoInDistribution {Ω E : Type*} [MeasurableSpace Ω] [TopologicalSpace E] [MeasurableSpace E]
+abbrev TendstoInDistribution {Ω E : Type*} [MeasurableSpace Ω] [TopologicalSpace E] [MeasurableSpace E]
     (μ : Measure Ω) (X : ℕ → Ω → E) (ν : Measure E) : Prop :=
   TendstoWeakly (fun n ↦ μ.map (X n)) ν
 

@@ -5,11 +5,13 @@ public import CKSD.Inference.Sufficiency
 public import CKSD.Inference.Density
 
 /-!
-# Inference: InvariantTesting
+# Unbiased tests and maximal invariants
 
-Sources: `GAPS.md`, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
-Declarations adapted from this project's section drafts.
-The docstrings specify the scope of each result; `sorry` marks unfinished proofs.
+Generalized Neyman–Pearson comparison with signed multipliers, exponential-integral
+differentiation, the two-tail moment-constraint UMPU theorem, Neyman structure under bounded
+completeness, and algebraic factorization through a maximal invariant. The last result uses
+Mathlib's `Function.FactorsThrough`; it asserts no unproved measurable quotient property.
+Sources: GAPS 101.45, 101.47, 101.49 and 101.55, `SYNOPSIS101.md`, and `STRUCTURE101.md`.
 -/
 
 @[expose] public section
@@ -219,7 +221,7 @@ constraints follow from the vanishing derivative of its power function at `η₀
 theorem isUniformlyMostPowerfulUnbiasedTest_of_two_tail_moment_constraints
     (μ : Measure X) (T h : X → ℝ) (hT : Measurable T)
     (hh : Measurable h) (hpos : ∀ x, 0 ≤ h x) (A : ℝ → ℝ)
-    (U : Set ℝ) (hU : IsOpen U) (hc : Convex ℝ U)
+    (U : Set ℝ) (hU : IsOpen U)
     (P : U → Measure X) (hP : ∀ η, IsProbabilityMeasure (P η))
     (hf : ∀ η, HasDensity (P η) μ (fun x ↦ h x * Real.exp (η.val * T x - A η.val)))
     (η₀ : U) (α c₁ c₂ : ℝ) (hα : α ∈ Ioo 0 1) (hcrit : c₁ < c₂)
@@ -423,22 +425,18 @@ theorem condExp_eq_const_of_similar_test (P : Θ → Measure X) (hP : ∀ θ, Is
 /-- GAPS 101.55, algebraic part: invariant functions factor through a maximal invariant.
 No measurability of the factor is asserted without a measurable quotient hypothesis. -/
 theorem invariant_iff_factors_through_maximal_invariant
-    {G A B : Type*} [Group G] [MulAction G A] [Nonempty B]
+    {G A B C : Type*} [Group G] [MulAction G A] [Nonempty C]
     (M : A → B) (hM : ∀ (g : G) x, M (g • x) = M x)
-    (hmax : ∀ x y, M x = M y → ∃ g : G, g • x = y) (f : A → ℝ) :
-    (∀ (g : G) x, f (g • x) = f x) ↔ ∃ q : B → ℝ, f = q ∘ M := by
+    (hmax : ∀ x y, M x = M y → ∃ g : G, g • x = y) (f : A → C) :
+    (∀ (g : G) x, f (g • x) = f x) ↔ ∃ q : B → C, f = q ∘ M := by
+  rw [← Function.factorsThrough_iff]
   constructor
-  · intro hf
-    classical
-    let q : B → ℝ := fun b ↦ if h : ∃ x, M x = b then f h.choose else 0
-    refine ⟨q, funext fun x ↦ ?_⟩
-    dsimp [q]
-    rw [dite_eq_left ⟨x, rfl⟩]
-    obtain ⟨g, hg⟩ := hmax x (Exists.choose (show ∃ y, M y = M x from ⟨x, rfl⟩))
-      (Exists.choose_spec (show ∃ y, M y = M x from ⟨x, rfl⟩)).symm
-    rw [← hg, hf]
-  · rintro ⟨q, rfl⟩ g x
-    simp [hM]
+  · intro hf x y hxy
+    obtain ⟨g, rfl⟩ := hmax x y hxy
+    exact (hf g x).symm
+  · intro hf g x
+    exact hf (hM g x)
+
 
 
 end CKSD

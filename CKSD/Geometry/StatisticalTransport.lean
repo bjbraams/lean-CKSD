@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Geometry.Entropic
+public import CKSD.Geometry.Transport
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
 
 /-!
@@ -95,12 +96,13 @@ theorem hasDerivAt_wassersteinBarycenterEnergy_displacement {d k : ℕ} (hk : 0 
       (∫ x, inner ℝ (wassersteinBarycenterGradient T x) (v x) ∂P) 0 := by
   sorry
 
-/-- GAPS 108.58: an absolutely continuous minimizing barycenter satisfies the Karcher equation. -/
+/-- GAPS 108.58: a minimizing barycenter with the supplied optimal maps satisfies the
+Karcher equation. -/
 theorem satisfiesWassersteinKarcherEquation_of_minimizer {d k : ℕ} (hk : 0 < k)
     (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
-    (hP : P ≪ volume) (hP2 : MemLp id 2 P)
+     (hP2 : MemLp id 2 P)
     (target : Fin k → Measure (EuclideanSpace ℝ (Fin d)))
-    (htarget : ∀ i, IsProbabilityMeasure (target i)) (h2 : ∀ i, MemLp id 2 (target i))
+
     (T : Fin k → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (hT : ∀ i, Measurable (T i)) (hT2 : ∀ i, MemLp (T i) 2 P)
     (hlaw : ∀ i, P.map (T i) = target i)
@@ -109,7 +111,38 @@ theorem satisfiesWassersteinKarcherEquation_of_minimizer {d k : ℕ} (hk : 0 < k
     (hmin : ∀ Q : Measure (EuclideanSpace ℝ (Fin d)), IsProbabilityMeasure Q → MemLp id 2 Q →
       wassersteinBarycenterEnergy target P ≤ wassersteinBarycenterEnergy target Q) :
     SatisfiesWassersteinKarcherEquation P T := by
-  sorry
+  let g := wassersteinBarycenterGradient T
+  have hsum : MemLp (fun x ↦ ∑ i, T i x) 2 P :=
+    memLp_finsetSum Finset.univ fun i _ ↦ hT2 i
+  have hg2 : MemLp g 2 P := hP2.sub (hsum.const_smul ((k : ℝ)⁻¹))
+  have hgm : Measurable g := measurable_id.sub
+    ((Finset.measurable_fun_sum Finset.univ fun i _ ↦ hT i).const_smul ((k : ℝ)⁻¹))
+  have hstepm : Measurable (fun x ↦ x - (1 : ℝ) • g x) :=
+    measurable_id.sub (hgm.const_smul (1 : ℝ))
+  have hstep2 : MemLp (fun x ↦ x - (1 : ℝ) • g x) 2 P :=
+    hP2.sub (hg2.const_smul (1 : ℝ))
+  have hmap2 : MemLp id 2 (P.map (fun x ↦ x - (1 : ℝ) • g x)) := by
+    rwa [memLp_map_measure_iff (by fun_prop) hstepm.aemeasurable]
+  have hopt' : ∀ i, (∫ x, ‖x - T i x‖ ^ 2 ∂P) =
+      (TauCeti.wassersteinEDist 2 P (P.map (T i))).toReal ^ 2 := by
+    intro i
+    rw [hlaw]
+    exact hopt i
+  have hdescent := wasserstein_energy_descent_of_averaged_transport hk P hP2 T hT hT2
+    hopt' 1
+  have hmin' := hmin (P.map (fun x ↦ x - (1 : ℝ) • g x))
+    inferInstance hmap2
+  simp only [wassersteinBarycenterEnergy, ← hlaw] at hmin'
+  change _ ≤ -(1 - 1 ^ 2 / 2) * ∫ x, ‖g x‖ ^ 2 ∂P at hdescent
+  have hzero : (∫ x, ‖g x‖ ^ 2 ∂P) = 0 := by
+    have hnonneg : 0 ≤ ∫ x, ‖g x‖ ^ 2 ∂P := integral_nonneg fun x ↦ sq_nonneg _
+    norm_num [g, wassersteinBarycenterGradient] at hmin' hdescent hnonneg
+    change (∫ x, ‖x - (k : ℝ)⁻¹ • ∑ i, T i x‖ ^ 2 ∂P) = 0
+    linarith
+  have hae := (integral_eq_zero_iff_of_nonneg (fun x ↦ sq_nonneg ‖g x‖)
+    (hg2.integrable_norm_pow two_ne_zero)).mp hzero
+  filter_upwards [hae] with x hx
+  exact norm_eq_zero.mp (sq_eq_zero_iff.mp hx)
 
 /-- The Karcher equation says exactly that the average optimal map is the identity almost surely. -/
 theorem satisfiesWassersteinKarcherEquation_iff {d k : ℕ}

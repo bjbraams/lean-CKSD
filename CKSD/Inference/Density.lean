@@ -23,6 +23,15 @@ namespace CKSD
 
 variable {X : Type*} [MeasurableSpace X]
 
+/-- Pushing forward a measure with a density that factors through `φ`. -/
+theorem map_withDensity_comp {Y : Type*} [MeasurableSpace Y] (ν : Measure X) {φ : X → Y}
+    (hφ : Measurable φ) {k : Y → ℝ≥0∞} (hk : Measurable k) :
+    (ν.withDensity (k ∘ φ)).map φ = (ν.map φ).withDensity k := by
+  ext s hs
+  rw [Measure.map_apply hφ hs, withDensity_apply _ (hφ hs), withDensity_apply _ hs,
+    setLIntegral_map hs hk hφ]
+  rfl
+
 /-- Integrals against a law with a density are density-weighted integrals. -/
 theorem HasDensity.integral_eq {P μ : Measure X} {f : X → ℝ} (h : HasDensity P μ f)
     (g : X → ℝ) : ∫ x, g x ∂P = ∫ x, f x * g x ∂μ := by

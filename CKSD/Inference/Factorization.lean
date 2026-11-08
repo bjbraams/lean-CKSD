@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Inference.Basic
+public import CKSD.Inference.Density
 public import Mathlib.MeasureTheory.Measure.WithDensityFinite
 public import Mathlib.Probability.Kernel.Composition.WithDensity
 public import Mathlib.Probability.Kernel.CondDistrib
@@ -33,15 +34,6 @@ open scoped ENNReal NNReal Topology
 namespace CKSD
 
 variable {Θ X S : Type*} [MeasurableSpace X] [MeasurableSpace S]
-
-/-- Pushing forward a measure with a density that factors through `φ`. -/
-theorem map_withDensity_comp {Y : Type*} [MeasurableSpace Y] (ν : Measure X) {φ : X → Y}
-    (hφ : Measurable φ) {k : Y → ℝ≥0∞} (hk : Measurable k) :
-    (ν.withDensity (k ∘ φ)).map φ = (ν.map φ).withDensity k := by
-  ext s hs
-  rw [Measure.map_apply hφ hs, withDensity_apply _ (hφ hs), withDensity_apply _ hs,
-    setLIntegral_map hs hk hφ]
-  rfl
 
 /-- The weights `2^{-(n+1)}` used for countable mixtures. -/
 def mixtureWeight (n : ℕ) : ℝ≥0∞ := (2 ^ (n + 1))⁻¹

@@ -1,6 +1,8 @@
 module
 
 public import CKSD.LinearModels.MultivariateTests
+public import Mathlib.Order.Hom.Set
+public import TauCeti.Analysis.Matrix.GramFactorization.Uniqueness
 
 /-!
 # Orthogonal factor models
@@ -8,6 +10,8 @@ public import CKSD.LinearModels.MultivariateTests
 The factor covariance and Gaussian likelihood criterion are explicit matrix functions.
 Identification below concerns the nonzero, distinct normalized-loading regime; it does not
 assert identifiability of the decomposition into common and unique covariance components.
+The sign-identification proof uses TauCeti’s Gram-factor uniqueness theorem and Mathlib’s
+uniqueness of ordered embeddings with equal ranges.
 Sources: GAPS 105.35 and SYNOPSIS105, item 35.
 -/
 
@@ -60,11 +64,87 @@ theorem factorCovariance_mul_orthogonal {p m : ℕ}
 /-- GAPS 105.35: normalized nondegenerate loadings are identified up to column signs once
 both their common covariance and the diagonal unique covariance are specified. -/
 theorem normalizedFactorLoading_eq_up_to_signs {p m : ℕ}
-    (L M : Matrix (Fin p) (Fin m) ℝ) (psi : Fin p → ℝ) (hpsi : ∀ i, 0 < psi i)
+    (L M : Matrix (Fin p) (Fin m) ℝ) (psi : Fin p → ℝ)
     (hL : IsNormalizedFactorLoading L psi) (hM : IsNormalizedFactorLoading M psi)
     (hcov : L * L.transpose = M * M.transpose) :
     ∃ s : Fin m → Bool, M = L * factorColumnSigns s := by
-  sorry
+  classical
+  obtain ⟨a, ha, _, hLa⟩ := hL
+  obtain ⟨b, hb, _, hMb⟩ := hM
+  have hgram : L.transpose.conjTranspose * L.transpose = M.transpose.conjTranspose * M.transpose := by
+    simpa only [Matrix.conjTranspose_eq_transpose_of_trivial, Matrix.transpose_transpose] using hcov
+  obtain ⟨U, hU⟩ := TauCeti.conjTranspose_mul_self_eq_iff_exists_unitary_mul.mp hgram
+  let Q : Matrix (Fin m) (Fin m) ℝ := (U : Matrix (Fin m) (Fin m) ℝ).transpose
+  have hMQ : M = L * Q := by
+    have ht := congrArg Matrix.transpose hU
+    simpa only [Matrix.transpose_transpose, Matrix.transpose_mul] using ht
+  have hQQ : Q * Q.transpose = 1 := by
+    simpa only [Q, Matrix.transpose_transpose, Matrix.star_eq_conjTranspose,
+      Matrix.conjTranspose_eq_transpose_of_trivial] using
+      (Matrix.mem_unitaryGroup_iff'.mp U.property)
+  have hQQ' : Q.transpose * Q = 1 := by
+    simpa only [Q, Matrix.transpose_transpose, Matrix.star_eq_conjTranspose,
+      Matrix.conjTranspose_eq_transpose_of_trivial] using
+      (Matrix.mem_unitaryGroup_iff.mp U.property)
+  have hab : Matrix.diagonal a * Q = Q * Matrix.diagonal b := by
+    calc
+      Matrix.diagonal a * Q = Q * (Q.transpose * Matrix.diagonal a * Q) := by
+        simp only [← Matrix.mul_assoc, hQQ, Matrix.one_mul]
+      _ = Q * Matrix.diagonal b := by
+        rw [← hLa, ← hMb, hMQ, Matrix.transpose_mul]
+        simp only [Matrix.mul_assoc]
+  have hentry : ∀ i j, Q i j ≠ 0 → a i = b j := by
+    intro i j hq
+    have he := congrArg (fun A ↦ A i j) hab
+    simp only [Matrix.diagonal_mul, Matrix.mul_diagonal] at he
+    exact (mul_right_cancel₀ hq (he.trans (mul_comm _ _)))
+  have hrow : ∀ i, ∃ j, Q i j ≠ 0 := by
+    intro i
+    by_contra! h
+    have he := congrArg (fun A ↦ A i i) hQQ
+    simp only [Matrix.mul_apply, Matrix.transpose_apply, h, zero_mul, Finset.sum_const_zero,
+      Matrix.one_apply_eq] at he
+    exact zero_ne_one he
+  have hcol : ∀ j, ∃ i, Q i j ≠ 0 := by
+    intro j
+    by_contra! h
+    have he := congrArg (fun A ↦ A j j) hQQ'
+    simp only [Matrix.mul_apply, Matrix.transpose_apply, h, zero_mul, Finset.sum_const_zero,
+      Matrix.one_apply_eq] at he
+    exact zero_ne_one he
+  have hrange : Set.range a = Set.range b := by
+    ext t
+    constructor
+    · rintro ⟨i, rfl⟩
+      obtain ⟨j, hj⟩ := hrow i
+      exact ⟨j, (hentry i j hj).symm⟩
+    · rintro ⟨j, rfl⟩
+      obtain ⟨i, hi⟩ := hcol j
+      exact ⟨i, hentry i j hi⟩
+  have heq : a = b := ha.dual_right.eq_of_range_eq hb.dual_right hrange
+  have hoff : ∀ i j, i ≠ j → Q i j = 0 := by
+    intro i j hij
+    by_contra hq
+    exact hij (ha.injective ((hentry i j hq).trans (congrFun heq j).symm))
+  have hdiag : Q = Matrix.diagonal (fun i ↦ Q i i) := by
+    ext i j
+    by_cases hij : i = j
+    · subst j; simp
+    · simp [Matrix.diagonal, hij, hoff i j hij]
+  have hsign : ∀ i, Q i i = 1 ∨ Q i i = -1 := by
+    intro i
+    have he := congrArg (fun A ↦ A i i) hQQ
+    rw [hdiag, Matrix.diagonal_transpose, Matrix.diagonal_mul_diagonal] at he
+    simp only [Matrix.diagonal_apply_eq, Matrix.one_apply_eq] at he
+    rcases mul_self_eq_one_iff.mp he with h | h
+    · exact Or.inl h
+    · exact Or.inr h
+  refine ⟨fun i ↦ decide (Q i i = 1), hMQ.trans ?_⟩
+  congr 1
+  rw [hdiag]
+  apply congrArg Matrix.diagonal
+  funext i
+  rcases hsign i with h | h <;> simp [h]
 
 /-- GAPS 105.35: consistency of factor maximum likelihood on a compact identified parameter set.
 Compactness and uniform positive unique variances are explicit restrictions of this formulation;

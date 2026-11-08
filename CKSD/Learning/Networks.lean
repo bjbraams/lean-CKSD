@@ -181,8 +181,9 @@ def uniformDesignRegressionLaw {d : ℕ} (f : (Fin d → ℝ) → ℝ) : Measure
 smoothness indices in `(0,1]` and the uniform design on `[0,1]^d` (a density bounded above and
 below). With `β*ᵢ = βᵢ ∏_{j > i} βⱼ` and `φₙ = maxᵢ n^{-2β*ᵢ/(2β*ᵢ + tᵢ)}`, if
 `tᵢ ≤ min(d₀, …, dᵢ₋₁)`, then for all large `K` every measurable estimator has risk at least
-`c φₙ` at some member of the class. The upper bound by sparse ReLU least squares is not
-formalized here. -/
+`c φₙ` at some member of the class. Risk is an extended nonnegative integral, allowing
+infinite risk for unrestricted estimators. The upper bound by sparse ReLU least squares is
+not formalized here. -/
 theorem compositionalHolder_minimax_lower_bound (q : ℕ) (d t : ℕ → ℕ) (hd : d (q + 1) = 1)
     (ht : ∀ i ≤ q, 1 ≤ t i ∧ t i ≤ d i) (hmin : ∀ i ≤ q, ∀ j < i, t i ≤ d j)
     (β : ℕ → ℝ) (hβ : ∀ i ≤ q, β i ∈ Ioc 0 1) (a b : ℕ → ℝ) (ha0 : a 0 = 0) (hb0 : b 0 = 1)
@@ -194,7 +195,9 @@ theorem compositionalHolder_minimax_lower_bound (q : ℕ) (d t : ℕ → ℕ) (h
       ∀ fhat : (Fin n → (Fin (d 0) → ℝ) × ℝ) → (Fin (d 0) → ℝ) → ℝ,
         Measurable (fun z : (Fin n → (Fin (d 0) → ℝ) × ℝ) × (Fin (d 0) → ℝ) ↦ fhat z.1 z.2) →
         ∃ f ∈ compositionalHolderClass q d t hd β a b K,
-          c * φ n ≤ ∫ z, ∫ x, (fhat z x - f x) ^ 2 ∂volume.restrict (holderUnitCube (d 0))
+          ENNReal.ofReal (c * φ n) ≤
+            ∫⁻ z, ∫⁻ x, ENNReal.ofReal ((fhat z x - f x) ^ 2)
+              ∂volume.restrict (holderUnitCube (d 0))
             ∂Measure.pi fun _ : Fin n ↦ uniformDesignRegressionLaw f := by
   sorry
 

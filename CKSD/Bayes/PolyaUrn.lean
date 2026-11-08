@@ -121,7 +121,7 @@ theorem distinctObservationCount_eq_sum_indicator {Ω X : Type*} (Xn : ℕ → �
 theorem integral_distinctObservationCount_polya {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (α : Measure X) [IsFiniteMeasure α]
-    [NullSingletonClass α] (hα : α ≠ 0) (Xn : ℕ → Ω → X)
+    [NullSingletonClass α] (Xn : ℕ → Ω → X)
     (hurn : IsPolyaUrnProcess P α Xn) (n : ℕ) :
     (∫ ω, (distinctObservationCount Xn n ω : ℝ) ∂P) =
       ∑ i ∈ Finset.range n, α.real univ / (α.real univ + i) := by

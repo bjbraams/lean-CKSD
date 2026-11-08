@@ -395,7 +395,7 @@ neighborhood.
 
 * **22. Homology from a sample.** Let $M\subset\mathbb R^D$ be a compact
   smooth $d$-dimensional submanifold without boundary and with reach
-  $\tau>0$. Let $P\subset M$ be finite with Hausdorff distance
+  $\tau>0$. Let $P\subset M$ be finite and nonempty with Hausdorff distance
   $d_H(P,M)=\varepsilon<\sqrt{3/20}\,\tau$. Then for every
   $r\in(2\varepsilon,\sqrt{3/5}\,\tau)$ the offset
   $P^r=\{x:d(x,P)\le r\}$, a union of balls, deformation retracts onto
@@ -843,13 +843,17 @@ The error is measured in $L^2(\mu)$; it bounds $W_2^2((\nabla\hat\phi)_\#\mu,\nu
   \le\|\nabla\phi-\nabla\varphi\|_{L^2(\mu)}^2.$$
 
 * **53. Rates for transport-map estimation.** Let $\mu$ and $\nu$ be
-  supported in the unit ball, and let $\nu=(\nabla\varphi)_\#\mu$ with
-  $\varphi\in\Phi$. Suppose the potentials in $\Phi$ are uniformly bounded
-  there, satisfy $\tfrac12I\preceq\nabla^2\phi\preceq2I$ in the open ball,
+  probability measures such that $\mu$ is supported in the closed ball of radius $r$ and $\nu$
+  in the closed unit ball, where $0\le r<1$. Let
+  $\nu=(\nabla\varphi)_\#\mu$ with $\varphi\in\Phi$. Suppose every potential
+  is twice continuously differentiable on a neighbourhood of the closed unit
+  ball. The potentials are uniformly bounded on that ball and satisfy
+  $\tfrac12I\preceq\nabla^2\phi\preceq2I$ at every point of the closed ball,
   and have covering numbers in the supremum norm on the ball satisfying
   $\log N(\varepsilon,\Phi)\lesssim\varepsilon^{-\gamma}\log(1+\varepsilon^{-1})$
   with $\gamma\in[0,1)$. In this item $\lesssim$ and $\asymp$ hide
-  constants independent of $n$ and $\varepsilon$. With $n$ independent
+  constants independent of $n$ and $\varepsilon$, allowed to depend on
+  the interior margin $1-r$. With $n$ independent
   observations from each law,
   the semidual estimator satisfies
   $\mathbb E\|\nabla\hat\phi-\nabla\varphi\|_{L^2(\mu)}^2\lesssim n^{-1/2}$.

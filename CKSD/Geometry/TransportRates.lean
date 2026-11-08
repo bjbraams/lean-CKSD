@@ -70,15 +70,16 @@ def ballSupCoveringNumber (Φ : Set (E → ℝ)) (ε : ℝ) : ℕ∞ :=
     |φ x - g x| ≤ ε), (G.card : ℕ∞)
 
 /-- Regularity class for transport-map estimation (Section 108.53): potentials bounded by `B` on
-the unit ball, twice differentiable in the open ball with `½ I ≤ ∇²φ ≤ 2 I`, and with sup-norm
-metric entropy `log N(ε, Φ) ≤ A ε^{-γ} log(1 + 1/ε)` for `0 < ε ≤ 1`. -/
+the closed unit ball, ambient twice continuously differentiable at each point of that ball,
+with `½ I ≤ ∇²φ ≤ 2 I` there, and with sup-norm metric entropy
+`log N(ε, Φ) ≤ A ε^{-γ} log(1 + 1/ε)` for `0 < ε ≤ 1`. -/
 structure IsRegularPotentialClass (Φ : Set (E → ℝ)) (B A γ : ℝ) : Prop where
   /-- Uniform bound on the ball. -/
   bounded : ∀ φ ∈ Φ, ∀ x ∈ Metric.closedBall (0 : E) 1, |φ x| ≤ B
-  /-- Twice differentiable in the open ball. -/
-  contDiffOn : ∀ φ ∈ Φ, ContDiffOn ℝ 2 φ (Metric.ball 0 1)
+  /-- Ambient twice continuous differentiability at every point of the closed ball. -/
+  contDiffAt : ∀ φ ∈ Φ, ∀ x ∈ Metric.closedBall (0 : E) 1, ContDiffAt ℝ 2 φ x
   /-- Hessian bounds `½ I ≤ ∇²φ ≤ 2 I`. -/
-  hessian_bounds : ∀ φ ∈ Φ, ∀ x ∈ Metric.ball (0 : E) 1, ∀ v : E,
+  hessian_bounds : ∀ φ ∈ Φ, ∀ x ∈ Metric.closedBall (0 : E) 1, ∀ v : E,
     ‖v‖ ^ 2 / 2 ≤ fderiv ℝ (fderiv ℝ φ) x v v ∧ fderiv ℝ (fderiv ℝ φ) x v v ≤ 2 * ‖v‖ ^ 2
   /-- Metric entropy bound. -/
   entropy : ∀ ε ∈ Ioc (0 : ℝ) 1, ∃ N : ℕ, ballSupCoveringNumber Φ ε ≤ N ∧
@@ -96,15 +97,16 @@ def IsSemidualEstimator (Φ : Set (E → ℝ)) (n : ℕ) (est : (Fin n → E × 
 def transportMapRisk (μ : Measure E) (φ₀ φ : E → ℝ) : ℝ≥0∞ :=
   ∫⁻ x, ENNReal.ofReal (‖gradient φ x - gradient φ₀ x‖ ^ 2) ∂μ
 
-/-- GAPS 108.53, the parametric-rate bound for semidual estimators. Let `μ, ν` be laws on the
-closed unit ball with `ν = (∇φ₀)_# μ` for some `φ₀ ∈ Φ`, where `Φ` is a regular class with entropy
-exponent `γ ∈ [0, 1)`. Then every semidual estimator from `n` independent pairs (independent
-samples of `μ` and of `ν`) satisfies `E ‖∇φ̂ - ∇φ₀‖²_{L²(μ)} ≤ K n^{-1/2}` with `K` independent
-of `n`. The expectation is the lower Lebesgue integral of the measurable risk. -/
+/-- GAPS 108.53, the parametric-rate bound for semidual estimators. Let `μ` be carried by a closed
+ball of radius `r ∈ [0, 1)` and `ν` by the closed unit ball, with `ν = (∇φ₀)_# μ` for `φ₀ ∈ Φ`.
+The regular class `Φ` has entropy exponent `γ ∈ [0, 1)`. Every semidual estimator from `n`
+independent pairs satisfies `E ‖∇φ̂ - ∇φ₀‖²_{L²(μ)} ≤ K n^{-1/2}`, where `K` is independent of `n`
+and may depend on `r`. The expectation is the lower Lebesgue integral of the measurable risk. -/
 theorem lintegral_transportMapRisk_semidualEstimator_le (Φ : Set (E → ℝ)) (B A γ : ℝ)
     (hΦ : IsRegularPotentialClass Φ B A γ) (hγ : γ ∈ Ico (0 : ℝ) 1)
     (μ ν : Measure E) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
-    (hμ : μ (Metric.closedBall 0 1)ᶜ = 0) (hν : ν (Metric.closedBall 0 1)ᶜ = 0)
+    (r : ℝ) (hr : r ∈ Ico (0 : ℝ) 1)
+    (hμ : μ (Metric.closedBall 0 r)ᶜ = 0) (hν : ν (Metric.closedBall 0 1)ᶜ = 0)
     (φ₀ : E → ℝ) (hφ₀ : φ₀ ∈ Φ) (hpush : ν = μ.map (gradient φ₀)) :
     ∃ K : ℝ, ∀ n : ℕ, 1 ≤ n → ∀ est : (Fin n → E × E) → (E → ℝ),
       IsSemidualEstimator Φ n est → Measurable (fun z ↦ transportMapRisk μ φ₀ (est z)) →
@@ -114,12 +116,14 @@ theorem lintegral_transportMapRisk_semidualEstimator_le (Φ : Set (E → ℝ)) (
 
 /-- GAPS 108.53, the fast rate: if moreover `Φ` is convex and `μ` satisfies the Poincaré
 inequality `Var_μ(h) ≤ C_P ∫ ‖∇h‖² dμ` for continuously differentiable `h`, the risk of every
-semidual estimator is at most `K (log n / n)^{2/(2+γ)}`. The minimax rate for Hölder maps and its
-wavelet estimator are not formalized. -/
+semidual estimator is at most `K (log n / n)^{2/(2+γ)}`. The source is carried by a closed ball of
+radius `r ∈ [0, 1)`; the constant may depend on this interior margin. The minimax rate for Hölder
+maps and its wavelet estimator are not formalized. -/
 theorem lintegral_transportMapRisk_semidualEstimator_le_of_poincare (Φ : Set (E → ℝ))
     (B A γ : ℝ) (hΦ : IsRegularPotentialClass Φ B A γ) (hγ : γ ∈ Ico (0 : ℝ) 1)
     (hconv : Convex ℝ Φ) (μ ν : Measure E) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
-    (hμ : μ (Metric.closedBall 0 1)ᶜ = 0) (hν : ν (Metric.closedBall 0 1)ᶜ = 0)
+    (r : ℝ) (hr : r ∈ Ico (0 : ℝ) 1)
+    (hμ : μ (Metric.closedBall 0 r)ᶜ = 0) (hν : ν (Metric.closedBall 0 1)ᶜ = 0)
     (CP : ℝ) (hpoincare : ∀ h : E → ℝ, ContDiff ℝ 1 h →
       variance μ h ≤ CP * ∫ x, ‖gradient h x‖ ^ 2 ∂μ)
     (φ₀ : E → ℝ) (hφ₀ : φ₀ ∈ Φ) (hpush : ν = μ.map (gradient φ₀)) :
