@@ -28,7 +28,7 @@ potential-weighted mixture of the transitions from the current particles (multin
   (GAPS 104.58).
 * `CKSD.exists_integral_sq_particle_average_sub_le`: the mean-square error of the particle
   average at a fixed time is `O(1/N)`, uniformly over test functions bounded by a constant.
-* `CKSD.tendstoInProbabilityConst_particle_average`: fixed-time consistency of the bootstrap
+* `CKSD.tendstoInMeasure_particle_average`: fixed-time consistency of the bootstrap
   filter (GAPS 104.55).
 -/
 
@@ -734,16 +734,18 @@ theorem exists_integral_sq_particle_average_sub_le {Ω X : Type*} [MeasurableSpa
 /-- GAPS 104.55: fixed-time consistency of the multinomial bootstrap particle filter. The proof
 combines the mean-square bound `exists_integral_sq_particle_average_sub_le` with Markov's
 inequality. -/
-theorem tendstoInProbabilityConst_particle_average {Ω X : Type*} [MeasurableSpace Ω]
+theorem tendstoInMeasure_particle_average {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
     (hξ : ∀ N, IsBootstrapParticleSystem P M (N + 1) (ξ N))
     (f : X → ℝ) (hf : Measurable f) (hb : ∃ C, ∀ x, |f x| ≤ C) (n : ℕ) :
-    TendstoInProbabilityConst P
-      (fun N ω ↦ (∑ i, f (ξ N n ω i)) / (N + 1)) (∫ x, f x ∂M.filterLaw n) := by
+    TendstoInMeasure P
+      (fun (N : ℕ) ω ↦ (∑ i, f (ξ N n ω i)) / (N + 1)) atTop
+      (fun _ ↦ ∫ x, f x ∂M.filterLaw n) := by
   obtain ⟨C, hC⟩ := hb
   obtain ⟨K, hK0, hK⟩ := exists_integral_sq_particle_average_sub_le P M ξ hξ n
+  rw [tendstoInMeasure_iff_measureReal_lt_dist]
   intro ε hε
   set c := ∫ x, f x ∂M.filterLaw n
   have hbound (N : ℕ) : P.real {ω | ε < dist ((∑ i, f (ξ N n ω i)) / (N + 1)) c} ≤

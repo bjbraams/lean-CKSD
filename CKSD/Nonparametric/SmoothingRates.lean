@@ -29,7 +29,9 @@ local-polynomial and Sobolev parts of the catalogue entries are outside these st
 ## Main results
 
 * `CKSD.tendsto_nadarayaWatson_prediction_error_probability` (Stone's theorem).
-* `CKSD.holderRegressionMinimaxRisk_bounds`, `CKSD.fixedDesignLocalConstant_risk_le`.
+* `CKSD.fixedDesignLocalConstant_risk_le`: the upper bound for the regression risk. The
+  matching lower bound and the two-sided rate `CKSD.holderRegressionMinimaxRisk_bounds` are in
+  `CKSD.Nonparametric.HolderRegressionMinimax`.
 * `CKSD.finiteKernelDensityEstimator_risk_le`,
   `CKSD.holderDensityPointwiseMinimaxRisk_lower_bound`.
 
@@ -120,17 +122,6 @@ def holderRegressionMinimaxRisk (n : ℕ) (β L σ : ℝ) : ℝ≥0∞ :=
 def fixedDesignLocalConstant {n : ℕ} (h : ℝ) (y : Fin n → ℝ) (t : ℝ) : ℝ :=
   let w := fun i : Fin n ↦ if |t - ((i.val + 1 : ℕ) : ℝ) / n| ≤ h then (1 : ℝ) else 0
   (∑ i, w i * y i) / (∑ i, w i)
-
-/-- GAPS 103.22: the fixed-design `L²` Hölder minimax rate for orders at most one.
-This states both bounds; sup-norm risk and higher local-polynomial orders are not asserted. -/
-theorem holderRegressionMinimaxRisk_bounds (β L σ : ℝ)
-    (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) (hσ : 0 < σ) :
-    ∃ c > (0 : ℝ), ∃ C > (0 : ℝ), ∀ n : ℕ, 0 < n →
-      ENNReal.ofReal (c * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1))) ≤
-        holderRegressionMinimaxRisk n β L σ ∧
-      holderRegressionMinimaxRisk n β L σ ≤
-        ENNReal.ofReal (C * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1))) := by
-  sorry
 
 /-- Mean squared error of a linear statistic of independent Gaussian observations with common
 variance `v`: the variance `v ∑ aᵢ²` plus the squared bias. -/

@@ -1,5 +1,6 @@
 module
 
+public import CKSD.Geometry.Cheeger
 public import CKSD.Geometry.GeometricStatistics
 public import CKSD.Geometry.Landscapes
 public import CKSD.Geometry.Persistence
@@ -8,6 +9,7 @@ public import CKSD.Geometry.Entropic
 public import CKSD.Geometry.StatisticalTransport
 public import CKSD.Geometry.Transport
 public import CKSD.Geometry.Kernels
+public import CKSD.Geometry.RandomFeatures
 public import CKSD.Geometry.MatrixReduction
 public import CKSD.Geometry.SimplicialPersistence
 public import CKSD.Geometry.PersistenceModules

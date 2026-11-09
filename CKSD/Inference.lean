@@ -1,7 +1,6 @@
 module
 
 public import CKSD.Inference.ExponentialFamily
-public import CKSD.Inference.Moments
 public import CKSD.Inference.Density
 public import CKSD.Inference.Factorization
 public import CKSD.Inference.LaplaceDeterminacy

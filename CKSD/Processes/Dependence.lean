@@ -27,7 +27,7 @@ of `ψ` from the first `n` coordinates computed under covariance `k` has coeffic
 * `CKSD.indepFun_of_measurable_pastSigmaAlgebra`: for an independent sequence, a function of the
   strict past `σ(ε_s : s < t)` is independent of `ε_t`; with the monotonicity and measurability
   lemmas for `pastSigmaAlgebra`.
-* `CKSD.tendstoInProbabilityConst_kolmogorovDistance_movingBlockBootstrapLaw` (GAPS 106.11):
+* `CKSD.tendstoInMeasure_kolmogorovDistance_movingBlockBootstrapLaw` (GAPS 106.11):
   consistency of the moving-block bootstrap for the mean of a strongly mixing sequence.
 * `CKSD.eventually_abs_linearPredictionError_div_sub_one_le` (GAPS 106.21): Stein's theorem on
   asymptotically efficient prediction under equivalent Gaussian laws.
@@ -102,22 +102,23 @@ stationary strongly mixing sequence with `𝔼|X|^{2+δ} < ∞` and `∑ α(k)^{
 the autocovariances are absolutely summable, `√n (X̄_n - μ) ⇒ N(0, σ²_∞)`, and the Kolmogorov
 distance between the bootstrap law and the law of `√n (X̄_n - μ)` tends to `0` in probability,
 for block lengths `b → ∞` with `b/n → 0` (so that eventually `1 ≤ b ≤ n`). -/
-theorem tendstoInProbabilityConst_kolmogorovDistance_movingBlockBootstrapLaw {Ω : Type*}
+theorem tendstoInMeasure_kolmogorovDistance_movingBlockBootstrapLaw {Ω : Type*}
     [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℤ → Ω → ℝ) (hXm : ∀ t, Measurable (X t))
     (hstat : ∀ h : ℤ, μ.map (fun ω t ↦ X (t + h) ω) = μ.map (fun ω t ↦ X t ω))
     (δ : ℝ) (hδ : 0 < δ) (hmom : MemLp (X 0) (ENNReal.ofReal (2 + δ)) μ)
     (hmix : Summable fun k : ℕ ↦ strongMixingCoefficient μ X k ^ (δ / (2 + δ)))
-    (hσ : 0 < ∑' k : ℤ, covariance μ (X k) (X 0))
+    (hσ : 0 < ∑' k : ℤ, cov[X k, X 0; μ])
     (b : ℕ → ℕ) (hb : Tendsto b atTop atTop)
     (hb' : Tendsto (fun n ↦ (b n : ℝ) / n) atTop (𝓝 0)) :
-    let σsq := ∑' k : ℤ, covariance μ (X k) (X 0)
+    let σsq := ∑' k : ℤ, cov[X k, X 0; μ]
     let S : ℕ → Ω → ℝ := fun n ω ↦
       Real.sqrt n * (sampleAverage (fun t : ℕ ↦ X t) n ω - ∫ ω', X 0 ω' ∂μ)
-    Summable (fun k : ℤ ↦ |covariance μ (X k) (X 0)|) ∧
-      TendstoInDistribution μ S (gaussianReal 0 (Real.toNNReal σsq)) ∧
-      TendstoInProbabilityConst μ (fun n ω ↦
-        kolmogorovDistance (movingBlockBootstrapLaw (fun t ↦ X t ω) n (b n)) (μ.map (S n))) 0 := by
+    Summable (fun k : ℤ ↦ |cov[X k, X 0; μ]|) ∧
+      TendstoInDistribution S atTop id (fun _ ↦ μ) (gaussianReal 0 (Real.toNNReal σsq)) ∧
+      TendstoInMeasure μ (fun (n : ℕ) ω ↦
+        kolmogorovDistance (movingBlockBootstrapLaw (fun t ↦ X t ω) n (b n)) (μ.map (S n)))
+            atTop (fun _ ↦ 0) := by
   sorry
 
 /-- The Gram matrix `(k i j)_{i,j<n}` of a covariance kernel on the first `n` indices. -/

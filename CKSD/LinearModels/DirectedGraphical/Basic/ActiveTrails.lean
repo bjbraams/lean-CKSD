@@ -1,6 +1,6 @@
 module
 
-public import CKSD.LinearModels.Causal
+public import CKSD.LinearModels.DirectedGraphical.Basic.CausalGraph
 
 /-!
 # Trails in finite causal graphs

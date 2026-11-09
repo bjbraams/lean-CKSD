@@ -34,7 +34,7 @@ laws when the Gaussian increment is integrated out.
 noncomputable section
 
 open MeasureTheory ProbabilityTheory Filter Set
-open scoped NNReal ENNReal Topology BigOperators
+open scoped NNReal ENNReal Topology BigOperators ContDiff
 
 namespace CKSD
 
@@ -75,7 +75,7 @@ def IsFokkerPlanckSolution {d : ℕ}
     (b : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (A : ℝ → EuclideanSpace ℝ (Fin d) → Matrix (Fin d) (Fin d) ℝ) (T : ℝ) : Prop :=
   (∀ t ∈ Icc 0 T, IsProbabilityMeasure (μ t)) ∧
-    ∀ f : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ ⊤ f → HasCompactSupport f →
+    ∀ f : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ ∞ f → HasCompactSupport f →
       ∀ t ∈ Icc 0 T,
         Integrable (diffusionGenerator b A f t) (μ t) ∧
         IntervalIntegrable (fun s ↦ ∫ x, diffusionGenerator b A f s x ∂μ s) volume 0 t ∧

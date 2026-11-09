@@ -1,6 +1,7 @@
 module
 
 public import CKSD.LinearModels.Basic
+public import CKSD.LinearModels.Multivariate
 public import CKSD.Asymptotics.Basic
 public import CKSD.Nonparametric.Basic
 public import TauCeti.Probability.Distributions.ChiSquared.Basic
@@ -34,8 +35,10 @@ randomization tests, balanced incomplete block designs, and mutually orthogonal 
   squares of order `s ≥ 2` exist, and `CKSD.exists_orthogonalLatinSquares_of_isPrimePow`: for a
   prime power `s` this bound is attained.
 
-The proof of Fisher's inequality uses Mathlib's rank bounds `Matrix.rank_mul_le_left` and
-`Matrix.rank_le_width`; the complete families of orthogonal Latin squares use Mathlib's
+The Kiefer–Wolfowitz theorem uses Mathlib's matrix determinant lemma
+`Matrix.det_add_replicateCol_mul_replicateRow` and the Gaussian likelihood inequality
+`CKSD.log_det_add_card_le_log_det_add_trace_mul_inv`. The proof of Fisher's inequality uses
+Mathlib's rank bounds `Matrix.rank_mul_le_left` and `Matrix.rank_le_width`; the complete families of orthogonal Latin squares use Mathlib's
 `GaloisField` and its cardinality `GaloisField.card`.
 
 ## References
@@ -65,6 +68,149 @@ def designInformationMatrix {ι : Type*} [Fintype ι] {p : ℕ} (f : ι → Eucl
     (a : ι → ℝ) : Matrix (Fin p) (Fin p) ℝ :=
   Matrix.of fun j k ↦ ∑ i, a i * f i j * f i k
 
+open Matrix in
+/-- The information matrix is the weighted sum `∑ᵢ aᵢ fᵢ fᵢᵀ` of rank-one matrices. -/
+theorem designInformationMatrix_eq_sum {ι : Type*} [Fintype ι] {p : ℕ}
+    (f : ι → EuclideanSpace ℝ (Fin p)) (a : ι → ℝ) :
+    designInformationMatrix f a = ∑ i, a i • vecMulVec (f i : Fin p → ℝ) (f i : Fin p → ℝ) := by
+  ext j k
+  simp [designInformationMatrix, Matrix.sum_apply, vecMulVec_apply, mul_assoc]
+
+open Matrix in
+/-- `tr(M(a) N) = ∑ᵢ aᵢ fᵢᵀ N fᵢ`. -/
+theorem trace_designInformationMatrix_mul {ι : Type*} [Fintype ι] {p : ℕ}
+    (f : ι → EuclideanSpace ℝ (Fin p)) (a : ι → ℝ) (N : Matrix (Fin p) (Fin p) ℝ) :
+    (designInformationMatrix f a * N).trace = ∑ i, a i * matrixQuadraticForm N (f i) := by
+  simp only [matrixQuadraticForm_eq_dotProduct, Matrix.trace, Matrix.diag, Matrix.mul_apply,
+    designInformationMatrix, Matrix.of_apply, mulVec, dotProduct, Finset.sum_mul, Finset.mul_sum]
+  conv_lhs => rw [Finset.sum_comm]; enter [2, j]; rw [Finset.sum_comm]
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl fun l _ ↦ Finset.sum_congr rfl fun j _ ↦
+    Finset.sum_congr rfl fun i _ ↦ ?_
+  ring
+
+open Matrix in
+/-- The information matrix of a design with nonnegative weights is positive semidefinite. -/
+theorem posSemidef_designInformationMatrix {ι : Type*} [Fintype ι] {p : ℕ}
+    (f : ι → EuclideanSpace ℝ (Fin p)) (a : ι → ℝ) (ha : ∀ i, 0 ≤ a i) :
+    (designInformationMatrix f a).PosSemidef := by
+  rw [designInformationMatrix_eq_sum]
+  refine posSemidef_sum _ fun i _ ↦ ?_
+  have h := posSemidef_vecMulVec_self_star (f i : Fin p → ℝ)
+  rw [star_trivial] at h
+  exact h.smul (ha i)
+
+open Matrix in
+/-- Sufficiency in the Kiefer–Wolfowitz theorem: if `fᵢᵀ M(w)⁻¹ fᵢ ≤ p` everywhere, then
+`det M(a) ≤ det M(w)` for every probability design `a`, by the Gaussian likelihood inequality
+`log det S + p ≤ log det C + tr(S C⁻¹)`. -/
+private theorem det_designInformationMatrix_le_of_forall_le {ι : Type*} [Fintype ι] {p : ℕ}
+    (f : ι → EuclideanSpace ℝ (Fin p)) (w : ι → ℝ) (hM : (designInformationMatrix f w).PosDef)
+    (hle : ∀ i, matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f i) ≤ p)
+    (a : ι → ℝ) (ha : ∀ i, 0 ≤ a i) (ha1 : ∑ i, a i = 1) :
+    (designInformationMatrix f a).det ≤ (designInformationMatrix f w).det := by
+  by_cases hdet : (designInformationMatrix f a).det = 0
+  · rw [hdet]
+    exact hM.det_pos.le
+  have hpd := (posSemidef_designInformationMatrix f a ha).posDef_iff_det_ne_zero.2 hdet
+  have h := log_det_add_card_le_log_det_add_trace_mul_inv _ _ hpd hM
+  rw [trace_designInformationMatrix_mul] at h
+  have hsum : ∑ i, a i * matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f i) ≤ p :=
+    calc _ ≤ ∑ i, a i * (p : ℝ) :=
+          Finset.sum_le_sum fun i _ ↦ mul_le_mul_of_nonneg_left (hle i) (ha i)
+      _ = p := by rw [← Finset.sum_mul, ha1, one_mul]
+  exact (Real.log_le_log_iff hpd.det_pos hM.det_pos).1 (by linarith)
+open Matrix in
+/-- Necessity in the Kiefer–Wolfowitz theorem: at a D-optimal design `w`, moving the mass `t`
+towards a design point `i` gives `det M = (1 - t)^{p-1} (1 + (q - 1) t) det M(w)` with
+`q = fᵢᵀ M(w)⁻¹ fᵢ` (matrix determinant lemma), which exceeds `det M(w)` for small `t > 0`
+unless `q ≤ p`. -/
+private theorem matrixQuadraticForm_inv_le_of_forall_det_le {ι : Type*} [Fintype ι] [DecidableEq ι] {p : ℕ}
+    (f : ι → EuclideanSpace ℝ (Fin p)) (w : ι → ℝ)
+    (hw : ∀ i, 0 ≤ w i) (hw1 : ∑ i, w i = 1) (hM : (designInformationMatrix f w).PosDef)
+    (hmax : ∀ a, (∀ i, 0 ≤ a i) → (∑ i, a i = 1) →
+        (designInformationMatrix f a).det ≤ (designInformationMatrix f w).det) (i : ι) :
+    matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f i) ≤ p := by
+  rcases Nat.eq_zero_or_pos p with rfl | hp
+  · simp [matrixQuadraticForm_eq_dotProduct]
+  set M := designInformationMatrix f w with hMdef
+  set q := matrixQuadraticForm M⁻¹ (f i) with hqdef
+  by_contra hlt
+  push Not at hlt
+  have hP1 : (1 : ℝ) ≤ p := by exact_mod_cast hp
+  set D := 2 * ((p : ℝ) - 1) * (q - 1) + 2 * (q - p) with hDdef
+  have hD : 0 < D := by nlinarith
+  set t := (q - p) / D with htdef
+  have ht0 : 0 < t := div_pos (by linarith) hD
+  have htD : t * D = q - p := div_mul_cancel₀ _ hD.ne'
+  have ht1 : t ≤ 1 / 2 := by nlinarith
+  set a : ι → ℝ := fun j ↦ (1 - t) * w j + t * (if j = i then 1 else 0) with hadef
+  have ha : ∀ j, 0 ≤ a j := by
+    intro j
+    have := hw j
+    simp only [hadef]
+    split_ifs <;> nlinarith
+  have ha1 : ∑ j, a j = 1 := by
+    simp [hadef, Finset.sum_add_distrib, ← Finset.mul_sum, hw1]
+  have hMa : designInformationMatrix f a = (1 - t) • M +
+      replicateCol Unit (t • (f i : Fin p → ℝ)) * replicateRow Unit (f i : Fin p → ℝ) := by
+    ext j k
+    simp [hMdef, designInformationMatrix, hadef, Finset.sum_add_distrib, add_mul, Finset.mul_sum,
+      Matrix.mul_apply]
+    congr 1
+    · exact Finset.sum_congr rfl fun x _ ↦ by ring
+    · ring
+  have h := hmax a ha ha1
+  have h1t : (1 - t) ≠ 0 := by linarith
+  have hMu : IsUnit M.det := hM.isUnit.map Matrix.detMonoidHom
+  have hdetA : IsUnit ((1 - t) • M).det := by
+    rw [det_smul]
+    exact (IsUnit.pow _ (Ne.isUnit h1t)).mul hMu
+  have hinv : ((1 - t) • M)⁻¹ = (1 - t)⁻¹ • M⁻¹ := by
+    refine Matrix.inv_eq_left_inv ?_
+    rw [Matrix.smul_mul, Matrix.mul_smul, smul_smul, inv_mul_cancel₀ h1t, one_smul,
+      Matrix.nonsing_inv_mul _ hMu]
+  have hq' : (f i : Fin p → ℝ) ⬝ᵥ (M⁻¹ *ᵥ (f i : Fin p → ℝ)) = q := by
+    rw [hqdef, matrixQuadraticForm_eq_dotProduct, dotProduct_comm]
+  have hdetMa : (designInformationMatrix f a).det =
+      (1 - t) ^ p * M.det * (1 + (1 - t)⁻¹ * t * q) := by
+    rw [hMa, det_add_replicateCol_mul_replicateRow hdetA, hinv, det_smul, Fintype.card_fin,
+      det_unique (n := Unit), ← hq']
+    simp only [Matrix.add_apply, Matrix.one_apply_eq, Matrix.mul_apply, replicateRow_apply,
+      replicateCol_apply, Matrix.smul_apply, smul_eq_mul, Pi.smul_apply, dotProduct, mulVec,
+      Finset.mul_sum, Finset.sum_mul]
+    rw [Finset.sum_comm]
+    congr 2
+    refine Finset.sum_congr rfl fun j _ ↦ Finset.sum_congr rfl fun k _ ↦ ?_
+    ring
+  rw [hdetMa] at h
+  have hdetpos := hM.det_pos
+  have hpow : (1 - t) ^ p = (1 - t) ^ (p - 1) * (1 - t) := by
+    rw [← pow_succ, Nat.sub_add_cancel hp]
+  have hB : 1 - ((p : ℝ) - 1) * t ≤ (1 - t) ^ (p - 1) := by
+    have hb := one_add_mul_le_pow (by linarith : (-2 : ℝ) ≤ -t) (p - 1)
+    rw [Nat.cast_sub hp, Nat.cast_one, ← sub_eq_add_neg] at hb
+    linarith
+  have hE : (1 - t) ^ p * (1 + (1 - t)⁻¹ * t * q) = (1 - t) ^ (p - 1) * (1 + (q - 1) * t) := by
+    rw [hpow]
+    field_simp
+    ring
+  have h' : (1 - t) ^ (p - 1) * (1 + (q - 1) * t) ≤ 1 := by
+    rw [← hE]
+    have := le_of_mul_le_mul_left (a := M.det) (by nlinarith) hdetpos
+    nlinarith
+  have hq1 : 0 ≤ (q - 1) * t := mul_nonneg (by linarith) ht0.le
+  have h'' : (1 - ((p : ℝ) - 1) * t) * (1 + (q - 1) * t) ≤ 1 :=
+    (mul_le_mul_of_nonneg_right hB (by linarith)).trans h'
+  have hk : ((p : ℝ) - 1) * (q - 1) * t = (q - p) * (1 / 2 - t) := by
+    rw [hDdef] at htD
+    linarith
+  have h3 : t * ((q - p) - ((p : ℝ) - 1) * (q - 1) * t) ≤ 0 := by nlinarith
+  have h4 : (q - p) - ((p : ℝ) - 1) * (q - 1) * t ≤ 0 :=
+    nonpos_of_mul_nonpos_right (by linarith) ht0
+  rw [hk] at h4
+  nlinarith
+
 /-- GAPS 105.37, Kiefer–Wolfowitz equivalence for a finite design space: a probability design
 `w` with nonsingular information matrix maximizes `det M(a)` over all probability designs if and
 only if `fᵢᵀ M(w)⁻¹ fᵢ ≤ p` at every design point, with equality at the points of positive
@@ -76,7 +222,24 @@ theorem kiefer_wolfowitz_equivalence {ι : Type*} [Fintype ι] {p : ℕ}
         (designInformationMatrix f a).det ≤ (designInformationMatrix f w).det) ↔
       (∀ i, matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f i) ≤ p) ∧
         ∀ i, 0 < w i → matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f i) = p := by
-  sorry
+  constructor
+  · intro hmax
+    have hle := matrixQuadraticForm_inv_le_of_forall_det_le f w hw hw1 hM hmax
+    refine ⟨hle, fun i hi ↦ ?_⟩
+    have htr := trace_designInformationMatrix_mul f w (designInformationMatrix f w)⁻¹
+    rw [Matrix.mul_nonsing_inv _ ((Matrix.isUnit_iff_isUnit_det _).1 hM.isUnit),
+      Matrix.trace_one, Fintype.card_fin] at htr
+    have hzero : ∑ j, w j * ((p : ℝ) -
+        matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f j)) = 0 := by
+      simp only [mul_sub, Finset.sum_sub_distrib, ← Finset.sum_mul, hw1, one_mul, ← htr,
+        sub_self]
+    have h := (Finset.sum_eq_zero_iff_of_nonneg fun j _ ↦
+      mul_nonneg (hw j) (sub_nonneg.2 (hle j))).1 hzero i (Finset.mem_univ _)
+    rcases mul_eq_zero.1 h with h | h
+    · linarith
+    · linarith
+  · rintro ⟨hle, -⟩ a ha ha1
+    exact det_designInformationMatrix_le_of_forall_le f w hM hle a ha ha1
 
 /-- The randomization p-value of arrangement `i`: the total randomization weight of the
 arrangements `j` whose statistic `T j` is at least `T i`. -/

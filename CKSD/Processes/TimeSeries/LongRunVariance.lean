@@ -123,20 +123,22 @@ mean of `X 0, …, X (n - 1)`. -/
 theorem tendsto_mul_variance_sampleAverage {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℤ → Ω → ℝ)
     (h2 : ∀ t, MemLp (X t) 2 μ) (γ : ℤ → ℝ) (hγ : Summable (fun t ↦ |γ t|))
-    (hcov : ∀ s t, covariance μ (X s) (X t) = γ (s - t)) :
-    Tendsto (fun n : ℕ ↦ (n : ℝ) * variance μ (sampleAverage (fun j ↦ X j) n))
+    (hcov : ∀ s t, cov[X s, X t; μ] = γ (s - t)) :
+    Tendsto (fun n : ℕ ↦ (n : ℝ) * Var[sampleAverage (fun j ↦ X j) n; μ])
       atTop (𝓝 (∑' h : ℤ, γ h)) := by
-  have hrepr : ∀ n : ℕ, 0 < n → (n : ℝ) * variance μ (sampleAverage (fun j ↦ X j) n) =
+  have hrepr : ∀ n : ℕ, 0 < n → (n : ℝ) * Var[sampleAverage (fun j ↦ X j) n; μ] =
       ∑' h : ℤ, lagCountWeight n h * γ h := by
     intro n hn
     rw [← sum_sum_eq_tsum_lagCountWeight]
     have havg : sampleAverage (fun j : ℕ ↦ X j) n =
         fun ω ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, X i ω := by
       funext ω; simp [sampleAverage, smul_eq_mul]
-    have hvar : variance μ (sampleAverage (fun j : ℕ ↦ X j) n) =
+    have hvar : Var[sampleAverage (fun j : ℕ ↦ X j) n; μ] =
         ProbabilityTheory.covariance (sampleAverage (fun j : ℕ ↦ X j) n)
           (sampleAverage (fun j : ℕ ↦ X j) n) μ := by
-      simp only [variance, ProbabilityTheory.covariance, sq]
+      refine (covariance_self ?_).symm
+      rw [havg]
+      exact aemeasurable_const.mul (Finset.aemeasurable_fun_sum _ fun i _ ↦ (h2 i).aemeasurable)
     rw [hvar, havg, covariance_const_mul_left, covariance_const_mul_right,
       covariance_fun_sum_fun_sum' (X := fun i : ℕ ↦ X i) (Y := fun i : ℕ ↦ X i)
       (fun i _ ↦ h2 i) (fun i _ ↦ h2 i)]

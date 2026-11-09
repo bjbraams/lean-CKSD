@@ -1,7 +1,6 @@
 module
 
 public import CKSD.Bayes.Basic
-public import CKSD.Inference.Model
 public import TauCeti.Probability.Distributions.Dirichlet.Basic
 public import Mathlib.Probability.ProductMeasure
 
@@ -111,7 +110,7 @@ def logLikelihoodRatioSecondMoment {X : Type*} [MeasurableSpace X]
 def HasPosteriorContractionRate {Ω Θ : Type*} [MeasurableSpace Ω] [MeasurableSpace Θ]
     (μ : Measure Ω) (post : ℕ → Ω → Measure Θ) (ρ : Θ → ℝ) (ε : ℕ → ℝ) : Prop :=
   ∃ M₀ > 0, ∀ M ≥ M₀,
-    TendstoInProbabilityConst μ (fun n ω ↦ (post n ω).real {θ | M * ε n ≤ ρ θ}) 0
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦ (post n ω).real {θ | M * ε n ≤ ρ θ}) atTop (fun _ ↦ 0)
 
 /-- The initial empty sample leaves the Dirichlet base measure unchanged. -/
 @[simp] theorem dirichletPosteriorBase_empty {X : Type*} [MeasurableSpace X]

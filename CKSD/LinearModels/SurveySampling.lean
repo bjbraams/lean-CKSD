@@ -1,7 +1,7 @@
 module
 
 public import CKSD.LinearModels.Basic
-public import CKSD.Inference.Moments
+public import CKSD.Inference.Basic
 
 /-!
 # Design-based inference in survey sampling and randomized experiments
@@ -118,7 +118,7 @@ private theorem horvitzThompson_aux
     (∀ i, 0 < pi i) →
     let T := fun s : Finset (Fin N) ↦ ∑ i ∈ s, y i / pi i;
     (∫ s, T s ∂P) = ∑ i, y i ∧
-      variance P T = ∑ i, ∑ j, (pij i j - pi i * pi j) * y i * y j / (pi i * pi j) := by
+      Var[T; P] = ∑ i, ∑ j, (pij i j - pi i * pi j) * y i * y j / (pi i * pi j) := by
   classical
   dsimp only
   intro hp
@@ -132,8 +132,7 @@ private theorem horvitzThompson_aux
     intro i _
     exact mul_div_cancel₀ (y i) (hp i).ne'
   refine ⟨hmean, ?_⟩
-  rw [variance_eq_mathlib P T (measurable_of_countable _).aemeasurable,
-    ProbabilityTheory.variance_eq_sub (memLp_sample P T 2), hmean]
+  rw [ProbabilityTheory.variance_eq_sub (memLp_sample P T 2), hmean]
   have hsquare : T ^ 2 =
       (fun s ↦ ∑ i ∈ s, ∑ j ∈ s, y i / pi i * (y j / pi j)) := by
     funext s
@@ -161,7 +160,7 @@ private theorem horvitzThompsonVarianceEstimator_aux
     (∀ i j, 0 < pij i j) →
     (∫ s, ∑ i ∈ s, ∑ j ∈ s,
       (pij i j - pi i * pi j) / pij i j * y i * y j / (pi i * pi j) ∂P) =
-      variance P (fun s ↦ ∑ i ∈ s, y i / pi i) := by
+      Var[fun s ↦ ∑ i ∈ s, y i / pi i; P] := by
   classical
   dsimp only
   intro hp
@@ -183,7 +182,7 @@ private theorem senYatesGrundy_aux
     let pi := fun i ↦ P.real {s | i ∈ s};
     let pij := fun i j ↦ P.real {s | i ∈ s ∧ j ∈ s};
     (∀ i, 0 < pi i) →
-    variance P (fun s ↦ ∑ i ∈ s, y i / pi i) =
+    Var[fun s ↦ ∑ i ∈ s, y i / pi i; P] =
       -(1 / 2 : ℝ) * ∑ i, ∑ j, (pij i j - pi i * pi j) * (y i / pi i - y j / pi j) ^ 2 := by
   classical
   dsimp only
@@ -248,7 +247,7 @@ private theorem senYatesGrundy_aux
     rw [hfirst, hsecond]
     simp_rw [← Finset.mul_sum]
     ring
-  have hvar : variance P (fun s ↦ ∑ i ∈ s, y i / pi i) =
+  have hvar : Var[fun s ↦ ∑ i ∈ s, y i / pi i; P] =
       ∑ i, ∑ j, c i j * w i * w j := by
     rw [(horvitzThompson_aux P y hp).2]
     apply Finset.sum_congr rfl
@@ -257,7 +256,7 @@ private theorem senYatesGrundy_aux
     intro j _
     simp only [c, w, pi, pij, div_eq_mul_inv, mul_inv_rev]
     ring
-  change variance P (fun s ↦ ∑ i ∈ s, y i / pi i) =
+  change Var[fun s ↦ ∑ i ∈ s, y i / pi i; P] =
     -(1 / 2 : ℝ) * ∑ i, ∑ j, c i j * (w i - w j) ^ 2
   rw [hvar, hdiff]
   ring
@@ -396,7 +395,7 @@ private theorem sum_sum_ite_mul_mul {N : ℕ} (d e : ℝ) (w : Fin N → ℝ) :
 private theorem simpleRandomSampleDesign_sum_aux {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
     (hnN : n ≤ N) (w : Fin N → ℝ) :
     (∫ s, ∑ i ∈ s, w i ∂simpleRandomSampleDesign N n) = n / N * ∑ i, w i ∧
-      variance (simpleRandomSampleDesign N n) (fun s ↦ ∑ i ∈ s, w i) =
+      Var[fun s ↦ ∑ i ∈ s, w i; simpleRandomSampleDesign N n] =
         n * (N - n) / N * populationVariance w := by
   have := isProbabilityMeasure_simpleRandomSampleDesign hnN
   set P := simpleRandomSampleDesign N n
@@ -442,7 +441,7 @@ private theorem simpleRandomSample_mean_aux
     (y : Fin N → ℝ) :
     let T := fun s : Finset (Fin N) ↦ (∑ i ∈ s, y i) / n;
     (∫ s, T s ∂simpleRandomSampleDesign N n) = populationMean y ∧
-      variance (simpleRandomSampleDesign N n) T = (1 - (n : ℝ) / N) * populationVariance y / n := by
+      Var[T; simpleRandomSampleDesign N n] = (1 - (n : ℝ) / N) * populationVariance y / n := by
   intro T
   have hT : T = fun s ↦ ∑ i ∈ s, y i / n := funext fun s ↦ Finset.sum_div _ _ _
   obtain ⟨h1, h2⟩ := simpleRandomSampleDesign_sum_aux hN hn hnN (fun i ↦ y i / n)
@@ -459,7 +458,7 @@ private theorem differenceInMeans_aux {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n
     (h₁ : 0 < n₁) (h₀ : 0 < n₀) (y₁ y₀ : Fin N → ℝ) :
     let T := fun s : Finset (Fin N) ↦ (∑ i ∈ s, y₁ i) / n₁ - (∑ i ∈ sᶜ, y₀ i) / n₀;
     (∫ s, T s ∂simpleRandomSampleDesign N n₁) = populationMean (y₁ - y₀) ∧
-      variance (simpleRandomSampleDesign N n₁) T =
+      Var[T; simpleRandomSampleDesign N n₁] =
         populationVariance y₁ / n₁ + populationVariance y₀ / n₀ -
           populationVariance (y₁ - y₀) / N := by
   intro T
@@ -488,9 +487,8 @@ private theorem differenceInMeans_aux {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n
     rw [hNr]
     field_simp
     ring
-  · rw [hT, variance_eq_mathlib _ _ (measurable_of_countable _).aemeasurable,
-      ProbabilityTheory.variance_sub_const (measurable_of_countable _).aestronglyMeasurable,
-      ← variance_eq_mathlib _ _ (measurable_of_countable _).aemeasurable, hv]
+  · rw [hT, ProbabilityTheory.variance_sub_const (measurable_of_countable _).aestronglyMeasurable,
+      hv]
     rw [populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega),
       populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega)]
     have e1 : (∑ i, w i ^ 2) = (∑ i, y₁ i ^ 2) / n₁ ^ 2 + (∑ i, y₀ i ^ 2) / n₀ ^ 2 +
@@ -626,7 +624,7 @@ theorem integral_horvitzThompson {N : ℕ} (P : Measure (Finset (Fin N))) [IsPro
 `Var(T) = ∑ᵢ ∑ⱼ (πᵢⱼ - πᵢ πⱼ) yᵢ yⱼ / (πᵢ πⱼ)`. -/
 theorem variance_horvitzThompson {N : ℕ} (P : Measure (Finset (Fin N))) [IsProbabilityMeasure P]
     (y : Fin N → ℝ) (hp : ∀ i, 0 < inclusionProb P i) :
-    variance P (horvitzThompson P y) = ∑ i, ∑ j,
+    Var[horvitzThompson P y; P] = ∑ i, ∑ j,
       (jointInclusionProb P i j - inclusionProb P i * inclusionProb P j) * y i * y j /
         (inclusionProb P i * inclusionProb P j) :=
   (horvitzThompson_aux P y hp).2
@@ -636,7 +634,7 @@ inclusion probabilities are positive, `horvitzThompsonVarianceEstimator` is desi
 for the variance of the Horvitz–Thompson estimator. -/
 theorem integral_horvitzThompsonVarianceEstimator {N : ℕ} (P : Measure (Finset (Fin N)))
     [IsProbabilityMeasure P] (y : Fin N → ℝ) (hp : ∀ i j, 0 < jointInclusionProb P i j) :
-    (∫ s, horvitzThompsonVarianceEstimator P y s ∂P) = variance P (horvitzThompson P y) :=
+    (∫ s, horvitzThompsonVarianceEstimator P y s ∂P) = Var[horvitzThompson P y; P] :=
   horvitzThompsonVarianceEstimator_aux P y hp
 
 /-- GAPS 105.72, Sen–Yates–Grundy identity for a fixed-size sampling design: if almost every
@@ -645,7 +643,7 @@ sample has `n` units, then
 theorem variance_horvitzThompson_eq_sen_yates_grundy {N : ℕ} (P : Measure (Finset (Fin N)))
     [IsProbabilityMeasure P] (n : ℕ) (hn : ∀ᵐ s ∂P, s.card = n) (y : Fin N → ℝ)
     (hp : ∀ i, 0 < inclusionProb P i) :
-    variance P (horvitzThompson P y) = -(1 / 2 : ℝ) * ∑ i, ∑ j,
+    Var[horvitzThompson P y; P] = -(1 / 2 : ℝ) * ∑ i, ∑ j,
       (jointInclusionProb P i j - inclusionProb P i * inclusionProb P j) *
         (y i / inclusionProb P i - y j / inclusionProb P j) ^ 2 :=
   senYatesGrundy_aux P n hn y hp
@@ -663,7 +661,7 @@ theorem integral_sum_simpleRandomSampleDesign {N n : ℕ} (hN : 2 ≤ N) (hn : 1
 `n (N - n) / N · S²`, with `S²` the population variance. -/
 theorem variance_sum_simpleRandomSampleDesign {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
     (hnN : n ≤ N) (w : Fin N → ℝ) :
-    variance (simpleRandomSampleDesign N n) (fun s ↦ ∑ i ∈ s, w i) =
+    Var[fun s ↦ ∑ i ∈ s, w i; simpleRandomSampleDesign N n] =
       n * (N - n) / N * populationVariance w :=
   (simpleRandomSampleDesign_sum_aux hN hn hnN w).2
 
@@ -678,7 +676,7 @@ theorem integral_sum_div_simpleRandomSampleDesign {N : ℕ} (hN : 2 ≤ N) (n : 
 variance of the sample mean is `(1 - n / N) S² / n`. -/
 theorem variance_sum_div_simpleRandomSampleDesign {N : ℕ} (hN : 2 ≤ N) (n : ℕ) (hn : 1 ≤ n)
     (hnN : n ≤ N) (y : Fin N → ℝ) :
-    variance (simpleRandomSampleDesign N n) (fun s ↦ (∑ i ∈ s, y i) / n) =
+    Var[fun s ↦ (∑ i ∈ s, y i) / n; simpleRandomSampleDesign N n] =
       (1 - (n : ℝ) / N) * populationVariance y / n :=
   (simpleRandomSample_mean_aux hN n hn hnN y).2
 
@@ -725,7 +723,7 @@ theorem integral_differenceInMeans {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n₀
 outcomes and of the unit-level effects. -/
 theorem variance_differenceInMeans {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n₀ = N) (h₁ : 0 < n₁)
     (h₀ : 0 < n₀) (y₁ y₀ : Fin N → ℝ) :
-    variance (simpleRandomSampleDesign N n₁) (differenceInMeans n₁ n₀ y₁ y₀) =
+    Var[differenceInMeans n₁ n₀ y₁ y₀; simpleRandomSampleDesign N n₁] =
       populationVariance y₁ / n₁ + populationVariance y₀ / n₀ -
         populationVariance (y₁ - y₀) / N :=
   (differenceInMeans_aux n₁ n₀ hn h₁ h₀ y₁ y₀).2

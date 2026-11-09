@@ -552,7 +552,7 @@ unique minimizer, and the piecewise-constant interpolations converge, weakly in 
 and strongly in `L¹((0,T) × ℝᵈ)`, to a weak solution of `∂ₜρ = Δρ + ∇·(ρ∇V)` with datum `ρ₀`.
 Uniqueness of the limiting weak solution is not part of this statement. -/
 theorem jko_scheme_tendsto_fokkerPlanck {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
-    (hV : ContDiff ℝ ⊤ V) (hV0 : ∀ x, 0 ≤ V x) (C : ℝ)
+    (hV : ContDiff ℝ ∞ V) (hV0 : ∀ x, 0 ≤ V x) (C : ℝ)
     (hgrowth : ∀ x, ‖gradient V x‖ ≤ C * (V x + 1))
     (ρ₀ : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d)))
     (hF : jkoFreeEnergy V ρ₀ ≠ ⊤) :

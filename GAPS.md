@@ -1733,9 +1733,9 @@ $\mathbb R^d$.
   $f_0\in\mathcal F_d$ and $n\ge d+1$, with $C_d$ depending only on $d$,
   $$\sup_{f_0\in\mathcal F_d}\mathbb EH^2(\hat f_n,f_0)\le C_d\cdot
   \begin{cases}n^{-4/5},&d=1,\\ n^{-2/(d+1)}\log n,&d\ge2,\end{cases}$$
-  and, for a universal $c>0$, every estimator has worst-case risk at least
-  $cn^{-4/5}$ for $d=1$
-  and $cn^{-2/(d+1)}$ for $d\ge2$. TauCeti proves the Prékopa–Leindler and
+  and, for some $c_d>0$ depending only on $d$, every estimator has
+  worst-case risk at least $c_dn^{-4/5}$ for $d=1$
+  and $c_dn^{-2/(d+1)}$ for $d\ge2$. TauCeti proves the Prékopa–Leindler and
   Brunn–Minkowski inequalities and the log-concavity of marginals of
   log-concave functions, which do not bear on the estimator. Statlib
   defines the squared Hellinger distance, normalized as $\frac12H^2$, with

@@ -6,6 +6,8 @@ public import TauCeti.Probability.Distributions.Gaussian.Density
 public import Mathlib.Analysis.Calculus.LineDeriv.IntegrationByParts
 public import Mathlib.Analysis.InnerProductSpace.Calculus
 public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
+public import TauCeti.MeasureTheory.Integral.NormRpow
+public import Mathlib.Probability.Distributions.Gaussian.Fernique
 
 /-!
 # Gaussian models: Stein's identity, James–Stein, exponential-family MLE, Scheffé
@@ -26,7 +28,10 @@ Results of Section 101 on Gaussian and natural exponential families.
 
 The integration by parts writes the Gaussian law as a density against Lebesgue measure
 (TauCeti's `multivariateGaussian_eq_withDensity`) and uses Mathlib's
-`integral_mul_fderiv_eq_neg_fderiv_mul_of_integrable`.
+`integral_mul_fderiv_eq_neg_fderiv_mul_of_integrable`. The James–Stein risk applies Stein's
+identity to the regularized fields `(‖x‖² + ε)⁻¹ x` and passes to `ε → 0` by dominated
+convergence; the integrability of `‖x‖⁻²` in dimension `p ≥ 3` uses TauCeti's
+`integrableOn_norm_rpow_ball`.
 -/
 @[expose] public section
 
@@ -41,15 +46,6 @@ attribute [local instance] Classical.propDecidable
 
 variable {Θ X S V : Type*} [MeasurableSpace X] [MeasurableSpace S]
   [MeasurableSpace V]
-
-/-- GAPS 101.57: the James–Stein estimator `δ(x) = (1 - (p - 2) / ‖x‖²) x` for `X ~ N(θ, I)` in
-dimension `p ≥ 3` has risk `p - (p - 2)² E‖X‖⁻²`, strictly smaller than the risk `p` of `X`. -/
-theorem james_stein_risk_eq_and_lt {p : ℕ} (hp : 3 ≤ p) (θ : EuclideanSpace ℝ (Fin p)) :
-    let P := multivariateGaussian θ (1 : Matrix (Fin p) (Fin p) ℝ);
-    let δ := fun x : EuclideanSpace ℝ (Fin p) ↦ (1 - ((p : ℝ) - 2) / ‖x‖ ^ 2) • x;
-    (∫ x, ‖δ x - θ‖ ^ 2 ∂P) = (p : ℝ) - ((p : ℝ) - 2) ^ 2 *
-      (∫ x, (‖x‖ ^ 2)⁻¹ ∂P) ∧ (∫ x, ‖δ x - θ‖ ^ 2 ∂P) < p := by
-  sorry
 
 /-- The isotropic Gaussian density `N(θ, v I)` in closed form: its value at `θ` times
 `exp (-‖x - θ‖² / (2v))`. Stated for TauCeti's `multivariateGaussianPDFReal`. -/
@@ -160,6 +156,362 @@ theorem gaussian_integration_by_parts {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)
   field_simp
   ring
 
+/-- The derivative of the regularized James–Stein shrinkage field `y ↦ (‖y‖² + ε)⁻¹ y`. -/
+private theorem hasFDerivAt_inv_norm_sq_add_smul {p : ℕ} {ε : ℝ} (hε : 0 < ε)
+    (x : EuclideanSpace ℝ (Fin p)) :
+    HasFDerivAt (fun y : EuclideanSpace ℝ (Fin p) ↦ (‖y‖ ^ 2 + ε)⁻¹ • y)
+      ((‖x‖ ^ 2 + ε)⁻¹ • ContinuousLinearMap.id ℝ _ +
+        ((-((‖x‖ ^ 2 + ε) ^ 2)⁻¹) •
+          (2 • (innerSL ℝ x).comp (ContinuousLinearMap.id ℝ _))).smulRight x) x := by
+  have h1 : HasFDerivAt (fun y : EuclideanSpace ℝ (Fin p) ↦ ‖y‖ ^ 2 + ε)
+      (2 • (innerSL ℝ x).comp (ContinuousLinearMap.id ℝ _)) x :=
+    ((hasFDerivAt_id x).norm_sq).add_const ε
+  have hne : ‖x‖ ^ 2 + ε ≠ 0 := by positivity
+  have h2 := (hasDerivAt_inv hne).comp_hasFDerivAt x h1
+  exact h2.smul (hasFDerivAt_id x)
+
+/-- The diagonal partial derivatives of `y ↦ (‖y‖² + ε)⁻¹ y`. -/
+private theorem fderiv_inv_norm_sq_add_smul_apply {p : ℕ} {ε : ℝ} (hε : 0 < ε)
+    (x : EuclideanSpace ℝ (Fin p)) (i : Fin p) :
+    fderiv ℝ (fun y : EuclideanSpace ℝ (Fin p) ↦ (‖y‖ ^ 2 + ε)⁻¹ • y) x
+      (EuclideanSpace.single i 1) i =
+      (‖x‖ ^ 2 + ε)⁻¹ - 2 * x i ^ 2 / (‖x‖ ^ 2 + ε) ^ 2 := by
+  rw [(hasFDerivAt_inv_norm_sq_add_smul hε x).fderiv]
+  simp [EuclideanSpace.inner_single_right]
+  ring
+
+/-- The law `N(θ, I)` has a measurable, bounded, Lebesgue-integrable density, maximal at `θ`. -/
+private theorem multivariateGaussian_one_density {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) :
+    let φ := TauCeti.Probability.multivariateGaussianPDFReal θ (1 : Matrix (Fin p) (Fin p) ℝ)
+    Measurable φ ∧ (∀ x, 0 ≤ φ x) ∧ (∀ x, φ x ≤ φ θ) ∧
+      multivariateGaussian θ 1 = volume.withDensity (fun x ↦ ENNReal.ofReal (φ x)) ∧
+      Integrable φ volume := by
+  intro φ
+  have hφm : Measurable φ := TauCeti.Probability.measurable_multivariateGaussianPDFReal _ _
+  have hφnn : ∀ x, 0 ≤ φ x := TauCeti.Probability.multivariateGaussianPDFReal_nonneg _ _
+  have hden : multivariateGaussian θ 1 = volume.withDensity (fun x ↦ ENNReal.ofReal (φ x)) := by
+    rw [TauCeti.Probability.multivariateGaussian_eq_withDensity Matrix.PosDef.one θ,
+      TauCeti.Probability.multivariateGaussianPDF_def]
+  refine ⟨hφm, hφnn, fun x ↦ ?_, hden, ?_⟩
+  · have h := multivariateGaussianPDFReal_smul_one θ 1 one_pos x
+    simp only [NNReal.coe_one, one_smul] at h
+    change φ x ≤ φ θ
+    rw [show φ x = _ from h]
+    exact mul_le_of_le_one_right (hφnn θ) (Real.exp_le_one_iff.2 (by
+      have := sq_nonneg ‖x - θ‖; simp only [inv_one, one_mul]; linarith))
+  · refine ⟨hφm.aestronglyMeasurable, ?_⟩
+    rw [hasFiniteIntegral_iff_ofReal (ae_of_all _ hφnn)]
+    have h1 : (volume.withDensity (fun x ↦ ENNReal.ofReal (φ x))) univ = 1 := by
+      rw [← hden]; exact measure_univ
+    rw [withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ] at h1
+    rw [h1]; exact ENNReal.one_lt_top
+
+/-- In dimension `p ≥ 3`, `‖x‖⁻²` is integrable under `N(θ, I)`. -/
+private theorem integrable_inv_norm_sq_multivariateGaussian_one {p : ℕ} (hp : 3 ≤ p)
+    (θ : EuclideanSpace ℝ (Fin p)) :
+    Integrable (fun x : EuclideanSpace ℝ (Fin p) ↦ (‖x‖ ^ 2)⁻¹) (multivariateGaussian θ 1) := by
+  obtain ⟨hφm, hφnn, hφle, hden, hφi⟩ := multivariateGaussian_one_density θ
+  set φ := TauCeti.Probability.multivariateGaussianPDFReal θ (1 : Matrix (Fin p) (Fin p) ℝ)
+  rw [hden, integrable_withDensity_iff_integrable_smul' hφm.ennreal_ofReal
+    (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
+  simp only [ENNReal.toReal_ofReal (hφnn _), smul_eq_mul]
+  have hball : IntegrableOn (fun x : EuclideanSpace ℝ (Fin p) ↦ ‖x‖ ^ (-2 : ℝ))
+      (Metric.ball 0 1) volume :=
+    TauCeti.integrableOn_norm_rpow_ball (by simp; omega)
+  refine Integrable.mono' (((hball.integrable_indicator measurableSet_ball).const_mul (φ θ)).add
+    hφi) (by fun_prop) (ae_of_all _ fun x ↦ ?_)
+  rw [Real.norm_of_nonneg (mul_nonneg (hφnn x) (inv_nonneg.2 (sq_nonneg _)))]
+  simp only [Pi.add_apply]
+  by_cases hx : x ∈ Metric.ball (0 : EuclideanSpace ℝ (Fin p)) 1
+  · rw [indicator_of_mem hx]
+    have : (‖x‖ ^ 2)⁻¹ = ‖x‖ ^ (-2 : ℝ) := by
+      rw [Real.rpow_neg (norm_nonneg _)]; norm_cast
+    rw [this]
+    have := mul_le_mul_of_nonneg_right (hφle x) (Real.rpow_nonneg (norm_nonneg x) (-2 : ℝ))
+    linarith [hφnn x]
+  · rw [indicator_of_notMem hx, mul_zero, zero_add]
+    have h1 : 1 ≤ ‖x‖ := by simpa using hx
+    have : (‖x‖ ^ 2)⁻¹ ≤ 1 := inv_le_one_of_one_le₀ (by nlinarith)
+    nlinarith [hφnn x]
+
+/-- A squared coordinate is at most the squared Euclidean norm. -/
+private theorem sq_apply_le_norm_sq {p : ℕ} (x : EuclideanSpace ℝ (Fin p)) (i : Fin p) :
+    x i ^ 2 ≤ ‖x‖ ^ 2 := by
+  rw [EuclideanSpace.real_norm_sq_eq]
+  exact Finset.single_le_sum (f := fun j ↦ x j ^ 2) (fun j _ ↦ sq_nonneg _) (Finset.mem_univ i)
+
+/-- Stein's identity for the regularized shrinkage field `g(x) = (‖x‖² + ε)⁻¹ x` under
+`N(θ, I)`: `E⟪X - θ, g X⟫ = E[p (‖X‖² + ε)⁻¹ - 2 ‖X‖² / (‖X‖² + ε)²]`. -/
+private theorem integral_inner_inv_norm_sq_add_smul {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) {ε : ℝ}
+    (hε : 0 < ε) :
+    ∫ x, inner ℝ (x - θ) ((‖x‖ ^ 2 + ε)⁻¹ • x) ∂(multivariateGaussian θ 1) =
+      ∫ x, ((p : ℝ) * (‖x‖ ^ 2 + ε)⁻¹ - 2 * ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε) ^ 2)
+        ∂(multivariateGaussian θ 1) := by
+  set P := multivariateGaussian θ (1 : Matrix (Fin p) (Fin p) ℝ) with hPdef
+  have hP : multivariateGaussian θ (((1 : ℝ≥0) : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)) = P := by
+    simp [hPdef]
+  set g : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p) := fun y ↦ (‖y‖ ^ 2 + ε)⁻¹ • y
+    with hg
+  have hpos : ∀ x : EuclideanSpace ℝ (Fin p), 0 < ‖x‖ ^ 2 + ε := fun x ↦ by positivity
+  have hgc : ContDiff ℝ 1 g := by
+    have h1 : ContDiff ℝ 1 fun y : EuclideanSpace ℝ (Fin p) ↦ (‖y‖ ^ 2 + ε)⁻¹ :=
+      ((contDiff_norm_sq ℝ).add contDiff_const).inv fun x ↦ (hpos x).ne'
+    exact h1.smul contDiff_id
+  have hgm : Measurable g := by fun_prop
+  have hgL2 : MemLp g 2 P := by
+    refine MemLp.of_le ((IsGaussian.memLp_two_id (μ := P)).const_smul ε⁻¹)
+      hgm.aestronglyMeasurable (ae_of_all _ fun x ↦ ?_)
+    simp only [g, norm_smul, Pi.smul_apply, id, Real.norm_eq_abs,
+      abs_of_pos (inv_pos.2 (hpos x)), abs_of_pos (inv_pos.2 hε)]
+    exact mul_le_mul_of_nonneg_right (inv_anti₀ hε (by linarith [sq_nonneg ‖x‖])) (norm_nonneg _)
+  have hfd : ∀ (i : Fin p) (x : EuclideanSpace ℝ (Fin p)),
+      fderiv ℝ g x (EuclideanSpace.single i 1) i =
+        (‖x‖ ^ 2 + ε)⁻¹ - 2 * x i ^ 2 / (‖x‖ ^ 2 + ε) ^ 2 :=
+    fun i x ↦ fderiv_inv_norm_sq_add_smul_apply hε x i
+  have hdbound : ∀ (i : Fin p) (x : EuclideanSpace ℝ (Fin p)),
+      |(‖x‖ ^ 2 + ε)⁻¹ - 2 * x i ^ 2 / (‖x‖ ^ 2 + ε) ^ 2| ≤ 3 / ε := by
+    intro i x
+    have h1 := sq_apply_le_norm_sq x i
+    have h2 := hpos x
+    have ha : (‖x‖ ^ 2 + ε)⁻¹ ≤ 1 / ε := by
+      rw [one_div]; exact inv_anti₀ hε (by nlinarith [sq_nonneg ‖x‖])
+    have hb : 2 * x i ^ 2 / (‖x‖ ^ 2 + ε) ^ 2 ≤ 2 / ε := by
+      rw [div_le_div_iff₀ (by positivity) hε]
+      nlinarith [sq_nonneg (x i), sq_nonneg ‖x‖]
+    have hb0 : 0 ≤ 2 * x i ^ 2 / (‖x‖ ^ 2 + ε) ^ 2 := by positivity
+    have ha0 : 0 ≤ (‖x‖ ^ 2 + ε)⁻¹ := (inv_pos.2 h2).le
+    rw [abs_le]; constructor <;> [skip; skip] <;>
+      · have : 3 / ε = 1 / ε + 2 / ε := by ring
+        linarith
+  have hdint : ∀ i, Integrable (fun x : EuclideanSpace ℝ (Fin p) ↦
+      (‖x‖ ^ 2 + ε)⁻¹ - 2 * x i ^ 2 / (‖x‖ ^ 2 + ε) ^ 2) P := fun i ↦
+    Integrable.of_bound (by fun_prop) (3 / ε) (ae_of_all _ fun x ↦ by
+      rw [Real.norm_eq_abs]; exact hdbound i x)
+  have hder : ∀ i, Integrable (fun x ↦ (fderiv ℝ g x (EuclideanSpace.single i 1)) i)
+      (multivariateGaussian θ (((1 : ℝ≥0) : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ))) := by
+    intro i; rw [hP]; simp_rw [hfd]; exact hdint i
+  have hstein := fun i ↦ gaussian_integration_by_parts θ 1 one_pos g hgc (hP ▸ hgL2) hder i
+  simp only [NNReal.coe_one, one_smul, one_mul, hfd] at hstein
+  have hxi : ∀ i, MemLp (fun x : EuclideanSpace ℝ (Fin p) ↦ x i - θ i) 2 P := fun i ↦
+    (IsGaussian.memLp_dual P (EuclideanSpace.proj i) 2 (by simp)).sub (memLp_const _)
+  have hgi : ∀ i, MemLp (fun x ↦ g x i) 2 P := fun i ↦
+    (EuclideanSpace.proj (𝕜 := ℝ) (ι := Fin p) i).comp_memLp' hgL2
+  have hlhs : ∀ x : EuclideanSpace ℝ (Fin p), inner ℝ (x - θ) (g x) = ∑ i, (x i - θ i) * g x i :=
+    fun x ↦ by simp [PiLp.inner_apply, mul_comm]
+  have hrhs : ∀ x : EuclideanSpace ℝ (Fin p),
+      (p : ℝ) * (‖x‖ ^ 2 + ε)⁻¹ - 2 * ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε) ^ 2 =
+        ∑ i, ((‖x‖ ^ 2 + ε)⁻¹ - 2 * x i ^ 2 / (‖x‖ ^ 2 + ε) ^ 2) := fun x ↦ by
+    rw [Finset.sum_sub_distrib, ← Finset.sum_div, ← Finset.mul_sum,
+      ← EuclideanSpace.real_norm_sq_eq]
+    simp
+  change ∫ x, inner ℝ (x - θ) (g x) ∂P = _
+  simp_rw [hlhs, hrhs]
+  rw [integral_finsetSum (f := fun i x ↦ (x i - θ i) * g x i) _
+      fun i _ ↦ (hxi i).integrable_mul (hgi i),
+    integral_finsetSum _ fun i _ ↦ hdint i]
+  exact Finset.sum_congr rfl fun i _ ↦ hstein i
+
+/-- The risk of `X` itself: `E‖X - θ‖² = p` under `N(θ, I)`. -/
+private theorem integral_norm_sub_sq_multivariateGaussian_one {p : ℕ}
+    (θ : EuclideanSpace ℝ (Fin p)) :
+    ∫ x, ‖x - θ‖ ^ 2 ∂(multivariateGaussian θ 1) = p := by
+  have hmean : ∀ i, ∫ x, x i ∂(multivariateGaussian θ (1 : Matrix (Fin p) (Fin p) ℝ)) = θ i :=
+    fun i ↦ by
+      simp
+  have hvar : ∀ i, ∫ x, (x i - θ i) ^ 2 ∂(multivariateGaussian θ (1 : Matrix (Fin p) (Fin p) ℝ))
+      = 1 := fun i ↦ by
+    have h := variance_eval_multivariateGaussian (μ := θ) Matrix.PosSemidef.one i
+    rw [variance_eq_integral (by fun_prop), hmean] at h
+    simpa using h
+  simp_rw [EuclideanSpace.real_norm_sq_eq, PiLp.sub_apply]
+  rw [integral_finsetSum _ fun i _ ↦ ?_]
+  · simp [hvar]
+  · exact ((IsGaussian.memLp_dual _ (EuclideanSpace.proj i) 2 (by simp)).sub
+      (memLp_const _)).integrable_sq
+
+/-- The risk of the regularized James–Stein rule `x - c (‖x‖² + ε)⁻¹ x` under `N(θ, I)`. -/
+private theorem integral_norm_sub_sub_smul_inv_norm_sq_add_smul_sq {p : ℕ}
+    (θ : EuclideanSpace ℝ (Fin p)) {ε : ℝ} (hε : 0 < ε) (c : ℝ) :
+    ∫ x, ‖x - θ - c • ((‖x‖ ^ 2 + ε)⁻¹ • x)‖ ^ 2 ∂(multivariateGaussian θ 1) =
+      p - 2 * c * ∫ x, ((p : ℝ) * (‖x‖ ^ 2 + ε)⁻¹ - 2 * ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε) ^ 2)
+        ∂(multivariateGaussian θ 1) +
+      c ^ 2 * ∫ x, ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε) ^ 2 ∂(multivariateGaussian θ 1) := by
+  set P := multivariateGaussian θ (1 : Matrix (Fin p) (Fin p) ℝ) with hPdef
+  have hpos : ∀ x : EuclideanSpace ℝ (Fin p), 0 < ‖x‖ ^ 2 + ε := fun x ↦ by positivity
+  have hid : MemLp (fun x : EuclideanSpace ℝ (Fin p) ↦ x) 2 P := IsGaussian.memLp_two_id
+  have hsub : MemLp (fun x : EuclideanSpace ℝ (Fin p) ↦ x - θ) 2 P := hid.sub (memLp_const _)
+  have hgle : ∀ x : EuclideanSpace ℝ (Fin p), ‖(‖x‖ ^ 2 + ε)⁻¹ • x‖ ≤ ε⁻¹ * ‖x‖ := fun x ↦ by
+    rw [norm_smul, Real.norm_eq_abs, abs_of_pos (inv_pos.2 (hpos x))]
+    exact mul_le_mul_of_nonneg_right (inv_anti₀ hε (by linarith [sq_nonneg ‖x‖])) (norm_nonneg _)
+  have hq : ∀ x : EuclideanSpace ℝ (Fin p), ‖(‖x‖ ^ 2 + ε)⁻¹ • x‖ ^ 2 =
+      ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε) ^ 2 := fun x ↦ by
+    rw [norm_smul, Real.norm_eq_abs, abs_of_pos (inv_pos.2 (hpos x)), mul_pow, inv_pow,
+      div_eq_mul_inv, mul_comm]
+  have hqb : ∀ x : EuclideanSpace ℝ (Fin p), ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε) ^ 2 ≤ 1 / ε := fun x ↦ by
+    rw [div_le_div_iff₀ (by positivity) hε]; nlinarith [sq_nonneg ‖x‖, hpos x]
+  have hqint : Integrable (fun x : EuclideanSpace ℝ (Fin p) ↦ ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε) ^ 2) P :=
+    Integrable.of_bound (Measurable.aestronglyMeasurable (by fun_prop)) (1 / ε)
+      (ae_of_all _ fun x ↦ by rw [Real.norm_of_nonneg (by positivity)]; exact hqb x)
+  have hinner : Integrable (fun x : EuclideanSpace ℝ (Fin p) ↦
+      inner ℝ (x - θ) ((‖x‖ ^ 2 + ε)⁻¹ • x)) P := by
+    refine Integrable.mono' (((hsub.norm.integrable_mul hid.norm)).const_mul ε⁻¹)
+      (by fun_prop) (ae_of_all _ fun x ↦ ?_)
+    refine (norm_inner_le_norm _ _).trans ?_
+    have := mul_le_mul_of_nonneg_left (hgle x) (norm_nonneg (x - θ))
+    simp only [Pi.mul_apply]
+    linarith [this]
+  have hexp : ∀ x : EuclideanSpace ℝ (Fin p), ‖x - θ - c • ((‖x‖ ^ 2 + ε)⁻¹ • x)‖ ^ 2 =
+      ‖x - θ‖ ^ 2 - 2 * c * inner ℝ (x - θ) ((‖x‖ ^ 2 + ε)⁻¹ • x) +
+        c ^ 2 * (‖x‖ ^ 2 / (‖x‖ ^ 2 + ε) ^ 2) := fun x ↦ by
+    rw [@norm_sub_sq_real, norm_smul, mul_pow, Real.norm_eq_abs, sq_abs, hq, inner_smul_right]
+    ring
+  have hsq : Integrable (fun x : EuclideanSpace ℝ (Fin p) ↦ ‖x - θ‖ ^ 2) P :=
+    hsub.integrable_norm_pow (by norm_num)
+  simp_rw [hexp]
+  have h1 : Integrable (fun x : EuclideanSpace ℝ (Fin p) ↦
+      ‖x - θ‖ ^ 2 - 2 * c * inner ℝ (x - θ) ((‖x‖ ^ 2 + ε)⁻¹ • x)) P := hsq.sub (hinner.const_mul _)
+  rw [integral_add h1 (hqint.const_mul _),
+    integral_sub hsq (hinner.const_mul _), integral_const_mul,
+    integral_const_mul, integral_norm_sub_sq_multivariateGaussian_one,
+    integral_inner_inv_norm_sq_add_smul θ hε]
+
+/-- GAPS 101.57: the James–Stein estimator `δ(x) = (1 - (p - 2) / ‖x‖²) x` for `X ~ N(θ, I)` in
+dimension `p ≥ 3` has risk `p - (p - 2)² E‖X‖⁻²`, strictly smaller than the risk `p` of `X`. -/
+theorem james_stein_risk_eq_and_lt {p : ℕ} (hp : 3 ≤ p) (θ : EuclideanSpace ℝ (Fin p)) :
+    let P := multivariateGaussian θ (1 : Matrix (Fin p) (Fin p) ℝ);
+    let δ := fun x : EuclideanSpace ℝ (Fin p) ↦ (1 - ((p : ℝ) - 2) / ‖x‖ ^ 2) • x;
+    (∫ x, ‖δ x - θ‖ ^ 2 ∂P) = (p : ℝ) - ((p : ℝ) - 2) ^ 2 *
+      (∫ x, (‖x‖ ^ 2)⁻¹ ∂P) ∧ (∫ x, ‖δ x - θ‖ ^ 2 ∂P) < p := by
+  intro P δ
+  set c : ℝ := (p : ℝ) - 2 with hc
+  set J := ∫ x, (‖x‖ ^ 2)⁻¹ ∂P with hJ
+  have hJi : Integrable (fun x : EuclideanSpace ℝ (Fin p) ↦ (‖x‖ ^ 2)⁻¹) P :=
+    integrable_inv_norm_sq_multivariateGaussian_one hp θ
+  -- almost every point is nonzero
+  have hne : ∀ᵐ x ∂P, x ≠ 0 := by
+    obtain ⟨-, -, -, hden, -⟩ := multivariateGaussian_one_density θ
+    have hac : P ≪ volume := by
+      rw [show P = _ from hden]; exact withDensity_absolutelyContinuous _ _
+    have : NeZero p := ⟨by omega⟩
+    exact hac (by simp)
+  have hsq : Integrable (fun x : EuclideanSpace ℝ (Fin p) ↦ ‖x - θ‖ ^ 2) P :=
+    ((IsGaussian.memLp_two_id (μ := P)).sub (memLp_const θ)).integrable_norm_pow (by norm_num)
+  set ε : ℕ → ℝ := fun n ↦ 1 / ((n : ℝ) + 1) with hεdef
+  have hε0 : ∀ n, 0 < ε n := fun n ↦ by positivity
+  have hεlim : Tendsto ε atTop (𝓝 0) := tendsto_one_div_add_atTop_nhds_zero_nat
+  -- pointwise limit of `(‖x‖² + ε)⁻¹`
+  have hinvlim : ∀ x : EuclideanSpace ℝ (Fin p), x ≠ 0 →
+      Tendsto (fun n ↦ (‖x‖ ^ 2 + ε n)⁻¹) atTop (𝓝 (‖x‖ ^ 2)⁻¹) := fun x hx ↦ by
+    have h := (tendsto_const_nhds (x := ‖x‖ ^ 2)).add hεlim
+    rw [add_zero] at h
+    exact h.inv₀ (by positivity)
+  have hinvle : ∀ (n : ℕ) (x : EuclideanSpace ℝ (Fin p)), x ≠ 0 →
+      (‖x‖ ^ 2 + ε n)⁻¹ ≤ (‖x‖ ^ 2)⁻¹ := fun n x hx ↦
+    inv_anti₀ (by positivity) (by linarith [hε0 n])
+  -- the regularized risks
+  set R : ℕ → ℝ := fun n ↦ ∫ x, ‖x - θ - c • ((‖x‖ ^ 2 + ε n)⁻¹ • x)‖ ^ 2 ∂P with hR
+  have hRlim : Tendsto R atTop (𝓝 (∫ x, ‖δ x - θ‖ ^ 2 ∂P)) := by
+    refine tendsto_integral_of_dominated_convergence
+      (fun x ↦ 2 * ‖x - θ‖ ^ 2 + 2 * c ^ 2 * (‖x‖ ^ 2)⁻¹)
+      (fun n ↦ Measurable.aestronglyMeasurable (by fun_prop))
+      ((hsq.const_mul 2).add (hJi.const_mul _)) (fun n ↦ ?_) ?_
+    · filter_upwards [hne] with x hx
+      have hx2 : 0 < ‖x‖ ^ 2 := by positivity
+      rw [Real.norm_of_nonneg (sq_nonneg _)]
+      have hg : ‖c • ((‖x‖ ^ 2 + ε n)⁻¹ • x)‖ ^ 2 ≤ c ^ 2 * (‖x‖ ^ 2)⁻¹ := by
+        rw [norm_smul, norm_smul, Real.norm_eq_abs, Real.norm_eq_abs,
+          abs_of_pos (inv_pos.2 (by linarith [hε0 n] : (0 : ℝ) < ‖x‖ ^ 2 + ε n)), mul_pow,
+          mul_pow, sq_abs]
+        refine mul_le_mul_of_nonneg_left ?_ (sq_nonneg _)
+        have h1 := hinvle n x hx
+        have h2 : (‖x‖ ^ 2 + ε n)⁻¹ ^ 2 * ‖x‖ ^ 2 ≤ (‖x‖ ^ 2)⁻¹ ^ 2 * ‖x‖ ^ 2 :=
+          mul_le_mul_of_nonneg_right (pow_le_pow_left₀ (by positivity) h1 2) hx2.le
+        calc (‖x‖ ^ 2 + ε n)⁻¹ ^ 2 * ‖x‖ ^ 2 ≤ (‖x‖ ^ 2)⁻¹ ^ 2 * ‖x‖ ^ 2 := h2
+          _ = (‖x‖ ^ 2)⁻¹ := by field_simp
+      have h1 := norm_sub_le (x - θ) (c • ((‖x‖ ^ 2 + ε n)⁻¹ • x))
+      have h2 := norm_nonneg (x - θ - c • ((‖x‖ ^ 2 + ε n)⁻¹ • x))
+      have h5 := pow_le_pow_left₀ h2 h1 2
+      nlinarith [sq_nonneg (‖x - θ‖ - ‖c • ((‖x‖ ^ 2 + ε n)⁻¹ • x)‖)]
+    · filter_upwards [hne] with x hx
+      have h := ((hinvlim x hx).smul_const x).const_smul c
+      have h2 := (tendsto_const_nhds (x := x - θ)).sub h
+      have h3 := (continuous_norm.tendsto _).comp h2 |>.pow 2
+      have hδ : δ x - θ = x - θ - c • ((‖x‖ ^ 2)⁻¹ • x) := by
+        change (1 - ((p : ℝ) - 2) / ‖x‖ ^ 2) • x - θ = _
+        rw [sub_smul, one_smul, div_eq_mul_inv, mul_smul]
+        abel
+      rw [hδ]
+      exact h3
+  have hqle : ∀ (n : ℕ) (x : EuclideanSpace ℝ (Fin p)), x ≠ 0 →
+      ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε n) ^ 2 ≤ (‖x‖ ^ 2)⁻¹ := fun n x hx ↦ by
+    have hx2 : 0 < ‖x‖ ^ 2 := by positivity
+    rw [div_le_iff₀ (by positivity), inv_mul_eq_div, le_div_iff₀ hx2]
+    nlinarith [hε0 n]
+  have hqeq : ∀ (n : ℕ) (x : EuclideanSpace ℝ (Fin p)),
+      ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε n) ^ 2 = ‖x‖ ^ 2 * (‖x‖ ^ 2 + ε n)⁻¹ ^ 2 := fun n x ↦ by
+    rw [div_eq_mul_inv, inv_pow]
+  have hqlim : ∀ x : EuclideanSpace ℝ (Fin p), x ≠ 0 →
+      Tendsto (fun n ↦ ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε n) ^ 2) atTop (𝓝 (‖x‖ ^ 2)⁻¹) := fun x hx ↦ by
+    have hx2 : 0 < ‖x‖ ^ 2 := by positivity
+    simp_rw [hqeq]
+    convert ((hinvlim x hx).pow 2).const_mul (‖x‖ ^ 2) using 2
+    field_simp
+  have hB : Tendsto (fun n ↦ ∫ x, ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε n) ^ 2 ∂P) atTop (𝓝 J) :=
+    tendsto_integral_of_dominated_convergence _
+      (fun n ↦ Measurable.aestronglyMeasurable (by fun_prop)) hJi
+      (fun n ↦ by
+        filter_upwards [hne] with x hx
+        rw [Real.norm_of_nonneg (by positivity)]
+        exact hqle n x hx)
+      (by filter_upwards [hne] with x hx; exact hqlim x hx)
+  have hA : Tendsto (fun n ↦ ∫ x, ((p : ℝ) * (‖x‖ ^ 2 + ε n)⁻¹ - 2 * ‖x‖ ^ 2 /
+      (‖x‖ ^ 2 + ε n) ^ 2) ∂P) atTop (𝓝 (c * J)) := by
+    rw [hJ, ← integral_const_mul]
+    refine tendsto_integral_of_dominated_convergence (fun x ↦ ((p : ℝ) + 2) * (‖x‖ ^ 2)⁻¹)
+      (fun n ↦ Measurable.aestronglyMeasurable (by fun_prop)) (hJi.const_mul _)
+      (fun n ↦ ?_) ?_
+    · filter_upwards [hne] with x hx
+      have h1 := hinvle n x hx
+      have h2 := hqle n x hx
+      have h3 : 0 ≤ (‖x‖ ^ 2 + ε n)⁻¹ := (inv_pos.2 (by linarith [hε0 n, sq_nonneg ‖x‖])).le
+      have h4 : 0 ≤ ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε n) ^ 2 := by positivity
+      have hp0 : (0 : ℝ) ≤ p := Nat.cast_nonneg p
+      have h5 : 2 * ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε n) ^ 2 = 2 * (‖x‖ ^ 2 / (‖x‖ ^ 2 + ε n) ^ 2) :=
+        mul_div_assoc _ _ _
+      have h6 : 0 ≤ (‖x‖ ^ 2)⁻¹ := inv_nonneg.2 (sq_nonneg _)
+      have h7 := mul_le_mul_of_nonneg_left h1 hp0
+      have h8 := mul_nonneg hp0 h3
+      rw [Real.norm_eq_abs, abs_le, h5]
+      constructor <;> nlinarith
+    · filter_upwards [hne] with x hx
+      have h := ((hinvlim x hx).const_mul (p : ℝ)).sub ((hqlim x hx).const_mul 2)
+      convert h using 1
+      · funext n; ring
+      · rw [hc, sub_mul]
+  have hRform : ∀ n, R n = p - 2 * c * (∫ x, ((p : ℝ) * (‖x‖ ^ 2 + ε n)⁻¹ - 2 * ‖x‖ ^ 2 /
+      (‖x‖ ^ 2 + ε n) ^ 2) ∂P) + c ^ 2 * ∫ x, ‖x‖ ^ 2 / (‖x‖ ^ 2 + ε n) ^ 2 ∂P :=
+    fun n ↦ integral_norm_sub_sub_smul_inv_norm_sq_add_smul_sq θ (hε0 n) c
+  have hRlim' : Tendsto R atTop (𝓝 ((p : ℝ) - 2 * c * (c * J) + c ^ 2 * J)) := by
+    rw [show R = _ from funext hRform]
+    exact (tendsto_const_nhds.sub (hA.const_mul _)).add (hB.const_mul _)
+  have heq := tendsto_nhds_unique hRlim hRlim'
+  have hJpos : 0 < J := by
+    have hJ0 : 0 ≤ J := integral_nonneg fun x ↦ inv_nonneg.2 (sq_nonneg _)
+    refine lt_of_le_of_ne hJ0 fun h ↦ ?_
+    have h0 := (integral_eq_zero_iff_of_nonneg (fun x ↦ inv_nonneg.2 (sq_nonneg _)) hJi).1 h.symm
+    have : ∀ᵐ x ∂P, False := by
+      filter_upwards [h0, hne] with x hx hx'
+      have : 0 < (‖x‖ ^ 2)⁻¹ := by positivity
+      simp only [Pi.zero_apply] at hx
+      linarith
+    exact this.exists.elim fun _ h ↦ h
+  have hc1 : 1 ≤ c := by
+    simp only [c]; have : (3 : ℝ) ≤ p := by exact_mod_cast hp
+    linarith
+  refine ⟨by rw [heq]; ring, ?_⟩
+  rw [heq]
+  nlinarith [mul_pos (by nlinarith : 0 < c ^ 2) hJpos]
+
 /-- GAPS 101.69: existence of the maximum likelihood estimator in a regular minimal natural
 exponential family. For the family with base measure `ν` on `E` and statistic the identity,
 whose natural parameter space `N` is open and nonempty, the log likelihood
@@ -175,6 +527,206 @@ theorem exists_isMaxOn_logLikelihood_iff_mem_interior_convexHull_support
       t ∈ interior (convexHull ℝ ν.support) := by
   sorry
 
+/-- The norm is at most the sum of the absolute coordinates in an orthonormal basis. -/
+private theorem norm_le_sum_abs_inner {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+    {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ E) (x : E) :
+    ‖x‖ ≤ ∑ i, |inner ℝ (b i) x| := by
+  conv_lhs => rw [← b.sum_repr' x]
+  refine (norm_sum_le _ _).trans (le_of_eq (Finset.sum_congr rfl fun i _ ↦ ?_))
+  rw [norm_smul, b.orthonormal.1 i, mul_one, Real.norm_eq_abs]
+
+/-- Near an interior point `η` of the natural parameter set, `‖x‖ exp ⟪ζ, x⟫` has an integrable
+bound uniform in `ζ`; it uses the parameters `η ± K bᵢ` along an orthonormal basis. -/
+private theorem exists_integrable_bound_norm_mul_exp_inner
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+    [MeasurableSpace E] [BorelSpace E] (ν : Measure E) {N : Set E}
+    (hNint : ∀ ζ ∈ N, Integrable (fun x ↦ Real.exp (inner ℝ ζ x)) ν) {η : E} (hη : N ∈ 𝓝 η) :
+    ∃ r > 0, Metric.ball η r ⊆ N ∧ ∃ B : E → ℝ, Integrable B ν ∧
+      ∀ x, ∀ ζ ∈ Metric.ball η r, ‖x‖ * Real.exp (inner ℝ ζ x) ≤ B x := by
+  obtain ⟨ρ, hρ, hball⟩ := Metric.mem_nhds_iff.1 hη
+  set d := Module.finrank ℝ E
+  let b := stdOrthonormalBasis ℝ E
+  set r : ℝ := ρ / (4 * (d + 1)) with hr
+  have hr0 : 0 < r := by positivity
+  set K : ℝ := 2 * r * (d + 1) with hK
+  have hKρ : K < ρ := by
+    rw [hK, hr]; field_simp; linarith
+  have hK0 : 0 < K := by positivity
+  have hmem : ∀ i (s : ℝ), |s| = 1 → η + (s * K) • b i ∈ N := fun i s hs ↦ hball (by
+    rw [Metric.mem_ball, dist_eq_norm, add_sub_cancel_left, norm_smul, b.orthonormal.1 i,
+      mul_one, Real.norm_eq_abs, abs_mul, hs, one_mul, abs_of_pos hK0]
+    exact hKρ)
+  refine ⟨r, hr0, fun ζ hζ ↦ hball (Metric.ball_subset_ball (by
+    rw [hr]; apply div_le_self hρ.le; norm_cast; omega) hζ), fun x ↦ r⁻¹ * ∑ i,
+      (Real.exp (inner ℝ (η + (1 * K) • b i) x) + Real.exp (inner ℝ (η + (-1 * K) • b i) x)),
+    ?_, ?_⟩
+  · have hi : ∀ i ∈ (Finset.univ : Finset (Fin d)), Integrable (fun x ↦
+        Real.exp (inner ℝ (η + (1 * K) • b i) x) +
+          Real.exp (inner ℝ (η + (-1 * K) • b i) x)) ν := fun i _ ↦
+      (hNint _ (hmem i 1 (by simp))).add (hNint _ (hmem i (-1) (by simp)))
+    have := (integrable_finsetSum Finset.univ hi).const_mul r⁻¹
+    exact this
+  intro x ζ hζ
+  have hBnn : 0 ≤ ∑ i, (Real.exp (inner ℝ (η + (1 * K) • b i) x) +
+      Real.exp (inner ℝ (η + (-1 * K) • b i) x)) :=
+    Finset.sum_nonneg fun i _ ↦ by positivity
+  rcases isEmpty_or_nonempty (Fin d) with hd | hd
+  · have hx : ‖x‖ = 0 := le_antisymm (by simpa using norm_le_sum_abs_inner b x) (norm_nonneg _)
+    rw [hx, zero_mul]
+    exact mul_nonneg (inv_nonneg.2 hr0.le) hBnn
+  have h1 : inner ℝ ζ x ≤ inner ℝ η x + r * ‖x‖ := by
+    have : inner ℝ ζ x - inner ℝ η x ≤ r * ‖x‖ := by
+      rw [← inner_sub_left]
+      refine (real_inner_le_norm _ _).trans (mul_le_mul_of_nonneg_right ?_ (norm_nonneg _))
+      rw [← dist_eq_norm]; exact (Metric.mem_ball.1 hζ).le
+    linarith
+  have h2 : ‖x‖ ≤ r⁻¹ * Real.exp (r * ‖x‖) := by
+    rw [le_inv_mul_iff₀ hr0]
+    linarith [Real.add_one_le_exp (r * ‖x‖)]
+  have h12 : ‖x‖ * Real.exp (inner ℝ ζ x) ≤ r⁻¹ * Real.exp (inner ℝ η x + 2 * r * ‖x‖) := by
+    calc ‖x‖ * Real.exp (inner ℝ ζ x) ≤ (r⁻¹ * Real.exp (r * ‖x‖)) *
+          Real.exp (inner ℝ η x + r * ‖x‖) :=
+          mul_le_mul h2 (Real.exp_le_exp.2 h1) (by positivity) (by positivity)
+      _ = r⁻¹ * Real.exp (inner ℝ η x + 2 * r * ‖x‖) := by
+          rw [mul_assoc, ← Real.exp_add]; ring_nf
+  refine h12.trans (mul_le_mul_of_nonneg_left ?_ (inv_nonneg.2 hr0.le))
+  obtain ⟨j, -, hj⟩ := Finset.exists_max_image Finset.univ (fun i ↦ |inner ℝ (b i) x|)
+    Finset.univ_nonempty
+  have h3 : 2 * r * ‖x‖ ≤ K * |inner ℝ (b j) x| := by
+    have h4 := (norm_le_sum_abs_inner b x).trans (Finset.sum_le_card_nsmul _ _ _
+      fun i hi ↦ hj i hi)
+    simp only [Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at h4
+    have h5 : (d : ℝ) * |inner ℝ (b j) x| ≤ (d + 1) * |inner ℝ (b j) x| := by
+      nlinarith [abs_nonneg (inner ℝ (b j) x)]
+    rw [hK]; nlinarith
+  have hj1 : inner ℝ (η + (1 * K) • b j) x = inner ℝ η x + K * inner ℝ (b j) x := by
+    rw [inner_add_left, inner_smul_left]; simp
+  have hj2 : inner ℝ (η + (-1 * K) • b j) x = inner ℝ η x - K * inner ℝ (b j) x := by
+    rw [inner_add_left, inner_smul_left]; simp; ring
+  refine le_trans ?_ (Finset.single_le_sum (f := fun i ↦ Real.exp (inner ℝ (η + (1 * K) • b i) x)
+    + Real.exp (inner ℝ (η + (-1 * K) • b i) x)) (fun i _ ↦ by positivity) (Finset.mem_univ j))
+  simp only [hj1, hj2]
+  rcases le_total 0 (inner ℝ (b j) x) with h | h
+  · rw [abs_of_nonneg h] at h3
+    have := Real.exp_le_exp.2 (by linarith : inner ℝ η x + 2 * r * ‖x‖ ≤
+      inner ℝ η x + K * inner ℝ (b j) x)
+    linarith [Real.exp_pos (inner ℝ η x - K * inner ℝ (b j) x)]
+  · rw [abs_of_nonpos h] at h3
+    have := Real.exp_le_exp.2 (by linarith : inner ℝ η x + 2 * r * ‖x‖ ≤
+      inner ℝ η x - K * inner ℝ (b j) x)
+    linarith [Real.exp_pos (inner ℝ η x + K * inner ℝ (b j) x)]
+
+/-- The log partition function is Fréchet differentiable at interior points of the natural
+parameter space, by differentiation under the integral sign. -/
+private theorem exists_hasFDerivAt_logPartition
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+    [MeasurableSpace E] [BorelSpace E] (ν : Measure E) (hne : ν ≠ 0) {η : E}
+    (hη : naturalParameterSpace ν id ∈ 𝓝 η) :
+    ∃ A' : E →L[ℝ] ℝ, HasFDerivAt (logPartition ν id) A' η := by
+  have hNint : ∀ ζ ∈ naturalParameterSpace ν id,
+      Integrable (fun x ↦ Real.exp (inner ℝ ζ x)) ν := fun ζ hζ ↦ hζ
+  obtain ⟨r, hr0, -, B, hBi, hB⟩ := exists_integrable_bound_norm_mul_exp_inner ν hNint hη
+  have hd : ∀ x ζ, HasFDerivAt (fun ζ : E ↦ Real.exp (inner ℝ ζ x))
+      (Real.exp (inner ℝ ζ x) • innerSL ℝ x) ζ := fun x ζ ↦ by
+    have h : HasFDerivAt (fun ζ : E ↦ inner ℝ ζ x) (innerSL ℝ x) ζ :=
+      (innerSL ℝ x).hasFDerivAt.congr_of_eventuallyEq
+        (Eventually.of_forall fun ζ ↦ by simp [real_inner_comm])
+    exact h.exp
+  have hZ : HasFDerivAt (fun ζ : E ↦ ∫ x, Real.exp (inner ℝ ζ x) ∂ν)
+      (∫ x, Real.exp (inner ℝ η x) • innerSL ℝ x ∂ν) η := by
+    refine hasFDerivAt_integral_of_dominated_of_fderiv_le (Metric.ball_mem_nhds η hr0)
+      (Eventually.of_forall fun ζ ↦ (by fun_prop : Continuous fun x : E ↦
+        Real.exp (inner ℝ ζ x)).aestronglyMeasurable)
+      (hNint η (mem_of_mem_nhds hη))
+      ((by fun_prop : Continuous fun x : E ↦
+        Real.exp (inner ℝ η x) • innerSL ℝ x).aestronglyMeasurable)
+      (ae_of_all _ fun x ζ hζ ↦ ?_) hBi (ae_of_all _ fun x ζ _ ↦ hd x ζ)
+    rw [norm_smul, innerSL_apply_norm, Real.norm_of_nonneg (Real.exp_pos _).le, mul_comm]
+    exact hB x ζ hζ
+  have : NeZero ν := ⟨hne⟩
+  have hpos : 0 < ∫ x, Real.exp (inner ℝ η x) ∂ν := integral_exp_pos (hNint η (mem_of_mem_nhds hη))
+  exact ⟨_, hZ.log hpos.ne'⟩
+
+/-- Strict midpoint convexity of the log partition function in a minimal family: the midpoint of
+two distinct natural parameters is a natural parameter, and the log partition function there lies
+strictly below the average. The proof is the equality case of the Cauchy–Schwarz inequality. -/
+private theorem logPartition_midpoint_lt
+    {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+    [MeasurableSpace E] [OpensMeasurableSpace E] (ν : Measure E) (hne : ν ≠ 0)
+    (hminimal : IsMinimalExponentialFamily ν id) {ζ η : E}
+    (hζ : ζ ∈ naturalParameterSpace ν id) (hη : η ∈ naturalParameterSpace ν id) (hζη : ζ ≠ η) :
+    (2⁻¹ : ℝ) • (ζ + η) ∈ naturalParameterSpace ν id ∧
+      logPartition ν id ((2⁻¹ : ℝ) • (ζ + η)) <
+        (logPartition ν id ζ + logPartition ν id η) / 2 := by
+  set m : E := (2⁻¹ : ℝ) • (ζ + η) with hm
+  have hζi : Integrable (fun x ↦ Real.exp (inner ℝ ζ x)) ν := hζ
+  have hηi : Integrable (fun x ↦ Real.exp (inner ℝ η x)) ν := hη
+  set f : E → ℝ := fun x ↦ Real.exp (inner ℝ ζ x / 2) with hf
+  set g : E → ℝ := fun x ↦ Real.exp (inner ℝ η x / 2) with hg
+  have hf2 : ∀ x, f x ^ 2 = Real.exp (inner ℝ ζ x) := fun x ↦ by
+    rw [hf, ← Real.exp_nat_mul]; congr 1; push_cast; ring
+  have hg2 : ∀ x, g x ^ 2 = Real.exp (inner ℝ η x) := fun x ↦ by
+    rw [hg, ← Real.exp_nat_mul]; congr 1; push_cast; ring
+  have hfg : ∀ x, f x * g x = Real.exp (inner ℝ m x) := fun x ↦ by
+    rw [hf, hg, ← Real.exp_add, hm, inner_smul_left, inner_add_left]; congr 1; simp; ring
+  have hmi : Integrable (fun x ↦ Real.exp (inner ℝ m x)) ν := by
+    refine Integrable.mono' ((hζi.add hηi).div_const 2) (by fun_prop) (ae_of_all _ fun x ↦ ?_)
+    rw [Real.norm_of_nonneg (Real.exp_pos _).le, ← hfg]
+    simp only [Pi.add_apply, ← hf2, ← hg2]
+    nlinarith [sq_nonneg (f x - g x)]
+  refine ⟨hmi, ?_⟩
+  have : NeZero ν := ⟨hne⟩
+  set Zζ := ∫ x, Real.exp (inner ℝ ζ x) ∂ν with hZζ
+  set Zη := ∫ x, Real.exp (inner ℝ η x) ∂ν with hZη
+  set Zm := ∫ x, Real.exp (inner ℝ m x) ∂ν with hZm
+  have hZζp : 0 < Zζ := integral_exp_pos hζi
+  have hZηp : 0 < Zη := integral_exp_pos hηi
+  have hZmp : 0 < Zm := integral_exp_pos hmi
+  set a := Real.sqrt Zζ with ha
+  set c := Real.sqrt Zη with hc
+  have ha0 : 0 < a := Real.sqrt_pos.2 hZζp
+  have hc0 : 0 < c := Real.sqrt_pos.2 hZηp
+  have ha2 : a ^ 2 = Zζ := Real.sq_sqrt hZζp.le
+  have hc2 : c ^ 2 = Zη := Real.sq_sqrt hZηp.le
+  -- the strict Cauchy–Schwarz inequality `Zm < a c`
+  have hsq : ∀ x, (f x - a / c * g x) ^ 2 = Real.exp (inner ℝ ζ x) -
+      2 * (a / c) * Real.exp (inner ℝ m x) + (a / c) ^ 2 * Real.exp (inner ℝ η x) := fun x ↦ by
+    rw [← hf2, ← hg2, ← hfg]; ring
+  have hint : Integrable (fun x ↦ (f x - a / c * g x) ^ 2) ν := by
+    simp_rw [hsq]
+    exact (hζi.sub (hmi.const_mul _)).add (hηi.const_mul _)
+  have hI : ∫ x, (f x - a / c * g x) ^ 2 ∂ν = 2 * a ^ 2 - 2 * (a / c) * Zm := by
+    simp_rw [hsq]
+    have h1 : Integrable (fun x ↦ Real.exp (inner ℝ ζ x) - 2 * (a / c) * Real.exp (inner ℝ m x))
+        ν := hζi.sub (hmi.const_mul _)
+    rw [integral_add h1 (hηi.const_mul _),
+      integral_sub hζi (hmi.const_mul _), integral_const_mul, integral_const_mul, ← hZζ, ← hZη,
+      ← hZm, ← ha2, ← hc2]
+    field_simp
+    ring
+  have hIpos : 0 < ∫ x, (f x - a / c * g x) ^ 2 ∂ν := by
+    refine lt_of_le_of_ne (integral_nonneg fun x ↦ sq_nonneg _) fun h ↦ ?_
+    have h0 := (integral_eq_zero_iff_of_nonneg (fun x ↦ sq_nonneg _) hint).1 h.symm
+    refine hminimal (ζ - η) (sub_ne_zero.2 hζη) (2 * Real.log (a / c)) ?_
+    filter_upwards [h0] with x hx
+    simp only [Pi.zero_apply, pow_eq_zero_iff two_ne_zero, sub_eq_zero] at hx
+    have hl := congrArg Real.log hx
+    rw [hf, Real.log_exp, Real.log_mul (div_pos ha0 hc0).ne' (Real.exp_pos _).ne',
+      Real.log_exp] at hl
+    simp only [id, inner_sub_left]
+    linarith
+  have hlt : Zm < a * c := by
+    rw [hI] at hIpos
+    have : (a / c) * Zm < a ^ 2 := by linarith
+    rw [div_mul_eq_mul_div, div_lt_iff₀ hc0] at this
+    nlinarith
+  have hlog : Real.log Zm < (Real.log Zζ + Real.log Zη) / 2 := by
+    have h1 := Real.log_lt_log hZmp hlt
+    rw [Real.log_mul ha0.ne' hc0.ne', ← ha2, ← hc2, Real.log_pow, Real.log_pow] at *
+    push_cast at *
+    linarith
+  exact hlog
+
 /-- GAPS 101.69: in a regular minimal natural exponential family with open natural parameter
 space `N`, a maximizer `η ∈ N` of the log likelihood `ζ ↦ ⟪ζ, t⟫ - logPartition ν id ζ` solves the
 likelihood equation `∇ logPartition ν id η = t` (the mean of the law at `η` is `t`), and it is the
@@ -188,7 +740,19 @@ theorem hasFDerivAt_logPartition_and_eq_of_isMaxOn
     HasFDerivAt (logPartition ν id) (innerSL ℝ t) η ∧
       ∀ ζ ∈ naturalParameterSpace ν id,
         inner ℝ ζ t - logPartition ν id ζ = inner ℝ η t - logPartition ν id η → ζ = η := by
-  sorry
+  refine ⟨?_, fun ζ hζ heq ↦ ?_⟩
+  · obtain ⟨A', hA⟩ := exists_hasFDerivAt_logPartition ν hne (hN.mem_nhds hη)
+    have hlin : HasFDerivAt (fun ζ : E ↦ inner ℝ ζ t) (innerSL ℝ t) η :=
+      (innerSL ℝ t).hasFDerivAt.congr_of_eventuallyEq
+        (Eventually.of_forall fun ζ ↦ by simp [real_inner_comm])
+    have h0 := (hmax.isLocalMax (hN.mem_nhds hη)).hasFDerivAt_eq_zero (hlin.sub hA)
+    rwa [← sub_eq_zero.1 h0] at hA
+  · by_contra hζη
+    obtain ⟨hmN, hlt⟩ := logPartition_midpoint_lt ν hne hminimal hζ hη hζη
+    have h1 : inner ℝ ((2⁻¹ : ℝ) • (ζ + η)) t - logPartition ν id ((2⁻¹ : ℝ) • (ζ + η)) ≤
+        inner ℝ η t - logPartition ν id η := hmax hmN
+    rw [real_inner_smul_left, inner_add_left] at h1
+    linarith
 
 
 /-- GAPS 101.60: the simultaneous-contrast supremum underlying Scheffé's method: for `v` in a

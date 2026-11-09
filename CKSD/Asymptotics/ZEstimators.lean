@@ -9,7 +9,7 @@ An elementary dyadic chaining estimate controls the centered empirical process o
 Lipschitz parameter family. It yields stochastic equicontinuity and the asymptotically linear
 expansion and normal limit of a consistent approximate estimating-equation root.
 Sources: GAPS 102.4 and van der Vaart, *Asymptotic Statistics*, Theorem 5.21. The argument uses
-Chebyshev's inequality and the convergence adapters in `CKSD.Asymptotics.Convergence`.
+Chebyshev's inequality and the convergence adapters in `CKSD.Asymptotics.Basic`.
 -/
 
 @[expose] public section
@@ -318,17 +318,18 @@ square-integrable Lipschitz envelope: evaluated at a consistent random parameter
 normalised centred partial-sum increment `n^{-1/2} ∑ᵢ (ψ_{Tₙ} - ψ_{θ₀})(Xᵢ) - √n (P ψ_{Tₙ} - P ψ_{θ₀})`
 tends to `0` in probability. The proof is a dyadic chaining argument with Chebyshev's inequality
 at each level. -/
-theorem tendstoInProbabilityConst_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableSpace Ω]
+theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
     [IsProbabilityMeasure P] (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
     (psi : ℝ → E → ℝ) (hm : Measurable (Function.uncurry psi)) (theta₀ r : ℝ) (hr : 0 < r)
     (M : E → ℝ) (hM : MemLp M 2 P) (hpsi : MemLp (psi theta₀) 2 P)
     (hlip : ∀ x a b, |a - theta₀| < r → |b - theta₀| < r →
       |psi a x - psi b x| ≤ M x * |a - b|)
-    (T : ℕ → Ω → ℝ) (hcons : TendstoInProbabilityConst μ T theta₀) :
-    TendstoInProbabilityConst μ (fun n ω ↦ (Real.sqrt n)⁻¹ *
+    (T : ℕ → Ω → ℝ) (hcons : TendstoInMeasure μ T atTop (fun _ ↦ theta₀)) :
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦ (Real.sqrt n)⁻¹ *
       ((∑ i ∈ Finset.range n, psi (T n ω) (X i ω) - n * ∫ x, psi (T n ω) x ∂P) -
-        (∑ i ∈ Finset.range n, psi theta₀ (X i ω) - n * ∫ x, psi theta₀ x ∂P))) 0 := by
+        (∑ i ∈ Finset.range n, psi theta₀ (X i ω) - n * ∫ x, psi theta₀ x ∂P)))
+            atTop (fun _ ↦ 0) := by
   obtain ⟨hXm, hind, hlaw⟩ := hiid
   have hiid : IsIndependentIdenticallyDistributed μ X P := ⟨hXm, hind, hlaw⟩
   set S : ℕ → ℝ → Ω → ℝ := fun n θ ω ↦
@@ -361,9 +362,10 @@ theorem tendstoInProbabilityConst_centredSum_sub_of_lipschitz {Ω E : Type*} [Me
   have hsm : Measurable s := hM'm.add measurable_const
   set V : ℕ → Ω → ℝ := fun n w ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, s (X i w) with hV
   have hVb : IsBoundedInProbability μ V :=
-    isBoundedInProbability_of_tendstoInProbabilityConst μ V _
-      (tendstoInProbabilityConst_sampleMean_of_iid μ P X hiid s hsm
+    isBoundedInProbability_of_tendstoInMeasure μ V _
+      (tendstoInMeasure_sampleMean_of_iid μ P X hiid s hsm
         (hM'i.add (integrable_const _)))
+  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hcons ⊢
   intro ε hε
   refine tendsto_zero_of_forall_eventually_le (fun n ↦ measureReal_nonneg) fun η hη ↦ ?_
   have htδ : Tendsto (fun δ : ℝ ↦ 1200 * K * δ ^ 2 / ε ^ 2) (𝓝[>] 0) (𝓝 0) := by
@@ -389,8 +391,9 @@ theorem tendstoInProbabilityConst_centredSum_sub_of_lipschitz {Ω E : Type*} [Me
       have := Real.sqrt_le_sqrt h1
       rw [Real.sqrt_one] at this
       nlinarith [Real.mul_self_sqrt (Nat.cast_nonneg (α := ℝ) n)]
-  have hR := tendstoInProbabilityConst_mul_zero_of_isBoundedInProbability μ V (fun n _ ↦ u n) hVb
-    (tendstoInProbabilityConst_const_of_tendsto μ u hulim)
+  have hR := tendstoInMeasure_mul_zero_of_isBoundedInProbability μ V (fun n _ ↦ u n) hVb
+    (tendstoInMeasure_const_of_tendsto μ u hulim)
+  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hR
   filter_upwards [eventually_ge_atTop 1,
     (hcons (δ / 2) (half_pos hδ0)).eventually (eventually_le_nhds (by positivity : 0 < η / 3)),
     (hR (ε / 4) (by positivity)).eventually (eventually_le_nhds (by positivity : 0 < η / 3))]
@@ -472,13 +475,14 @@ theorem zEstimator_asymptotic_linearization_and_normality
     (r : ℝ) (hr : 0 < r) (M : E → ℝ) (hM : MemLp M 2 P)
     (hlip : ∀ x a b, |a - theta₀| < r → |b - theta₀| < r →
       |psi a x - psi b x| ≤ M x * |a - b|)
-    (T : ℕ → Ω → ℝ) (hT : ∀ n, Measurable (T n)) (hcons : TendstoInProbabilityConst mu T theta₀)
-    (hroot : TendstoInProbabilityConst mu (fun n w ↦ (Real.sqrt n)⁻¹ *
-      ∑ i ∈ Finset.range n, psi (T n w) (X i w)) 0) :
-    TendstoInProbabilityConst mu (fun n w ↦ Real.sqrt n * (T n w - theta₀) +
-      (D * Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, psi theta₀ (X i w)) 0 ∧
-      TendstoInDistribution mu (fun n w ↦ Real.sqrt n * (T n w - theta₀))
-        (gaussianReal 0 (Real.toNNReal (variance P (psi theta₀) / D ^ 2))) := by
+    (T : ℕ → Ω → ℝ) (hT : ∀ n, Measurable (T n))
+    (hcons : TendstoInMeasure mu T atTop (fun _ ↦ theta₀))
+    (hroot : TendstoInMeasure mu (fun (n : ℕ) w ↦ (Real.sqrt n)⁻¹ *
+      ∑ i ∈ Finset.range n, psi (T n w) (X i w)) atTop (fun _ ↦ 0)) :
+    TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt n * (T n w - theta₀) +
+      (D * Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, psi theta₀ (X i w)) atTop (fun _ ↦ 0) ∧
+      TendstoInDistribution (fun (n : ℕ) w ↦ Real.sqrt n * (T n w - theta₀)) atTop id (fun _ ↦ mu)
+        (gaussianReal 0 (Real.toNNReal (Var[psi theta₀; P] / D ^ 2))) := by
   have hXm := hiid.1
   have hmeas : ∀ t, Measurable (psi t) := fun t ↦
     hm.comp (measurable_const.prodMk measurable_id)
@@ -487,19 +491,20 @@ theorem zEstimator_asymptotic_linearization_and_normality
     with hZ
   have hZm : ∀ n, Measurable (Z n) := fun n ↦
     (Finset.measurable_fun_sum _ fun i _ ↦ (hmeas theta₀).comp (hXm i)).const_mul _
-  have hZlim : TendstoInDistribution mu Z
+  have hZlim : TendstoInDistribution Z atTop id (fun _ ↦ mu)
       (gaussianReal 0 (Real.toNNReal (∫ x, psi theta₀ x ^ 2 ∂P))) :=
     tendstoInDistribution_inv_sqrt_mul_sum_of_iid mu P X hiid _ (hmeas theta₀) hpsi h0
   have hZb : IsBoundedInProbability mu Z :=
-    isBoundedInProbability_of_tendstoInDistribution mu Z hZm _ hZlim
+    isBoundedInProbability_of_tendstoInDistribution mu Z hZlim
   have hsn : ∀ n : ℕ, (Real.sqrt n)⁻¹ * n = Real.sqrt n := fun n ↦ by
     rw [inv_mul_eq_div, Real.div_sqrt]
-  have hSE := tendstoInProbabilityConst_centredSum_sub_of_lipschitz mu P X hiid psi hm theta₀ r hr
+  have hSE := tendstoInMeasure_centredSum_sub_of_lipschitz mu P X hiid psi hm theta₀ r hr
     M hM hpsi hlip T hcons
   -- `√n F(Tₙ) + Zₙ → 0`
-  have hE1 : TendstoInProbabilityConst mu (fun n w ↦ Real.sqrt n * F (T n w) + Z n w) 0 := by
-    have := tendstoInProbabilityConst_add_zero mu _ _ hroot
-      (tendstoInProbabilityConst_const_mul_zero mu _ (-1) hSE)
+  have hE1 : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt n * F (T n w) + Z n w)
+      atTop (fun _ ↦ 0) := by
+    have := tendstoInMeasure_add_zero mu _ _ hroot
+      (tendstoInMeasure_const_mul_zero mu _ (-1) hSE)
     convert this using 3 with n w
     simp only [hZ, hF]
     rw [h0]
@@ -512,8 +517,8 @@ theorem zEstimator_asymptotic_linearization_and_normality
     have := (hasDerivAt_iff_tendsto_slope.1 hd).sub_const D
     simpa using this
   have hρ0 : ρ theta₀ = 0 := by simp [hρ]
-  have hρT : TendstoInProbabilityConst mu (fun n w ↦ ρ (T n w)) 0 := by
-    have := tendstoInProbabilityConst_comp_of_continuousAt mu T theta₀ ρ hρc hcons
+  have hρT : TendstoInMeasure mu (fun (n : ℕ) w ↦ ρ (T n w)) atTop (fun _ ↦ 0) := by
+    have := tendstoInMeasure_comp_of_continuousAt mu T theta₀ ρ hρc hcons
     rwa [hρ0] at this
   set W : ℕ → Ω → ℝ := fun n w ↦ Real.sqrt n * (T n w - theta₀) with hW
   have hF0 : F theta₀ = 0 := h0
@@ -529,11 +534,12 @@ theorem zEstimator_asymptotic_linearization_and_normality
       field_simp
       ring
   set Ev : ℕ → Ω → ℝ := fun n w ↦ D * W n w + W n w * ρ (T n w) + Z n w with hEv
-  have hE : TendstoInProbabilityConst mu Ev 0 := by
+  have hE : TendstoInMeasure mu Ev atTop (fun _ ↦ 0) := by
     convert hE1 using 3 with n w
     simp only [hEv]
     rw [hid]
   have hWb : IsBoundedInProbability mu W := by
+    rw [tendstoInMeasure_iff_measureReal_lt_dist] at hE hρT
     intro ε hε
     obtain ⟨C₁, hC₁, hZev⟩ := hZb (ε / 3) (by positivity)
     have hDp : 0 < |D| := abs_pos.2 hD
@@ -564,36 +570,36 @@ theorem zEstimator_asymptotic_linearization_and_normality
         refine (measureReal_union_le _ _).trans (add_le_add ?_ h3)
         exact (measureReal_union_le _ _).trans (add_le_add h1 h2)
       _ = ε := by ring
-  have hWρ := tendstoInProbabilityConst_mul_zero_of_isBoundedInProbability mu W _ hWb hρT
-  have hDWZ : TendstoInProbabilityConst mu (fun n w ↦ D * W n w + Z n w) 0 := by
-    have := tendstoInProbabilityConst_add_zero mu _ _ hE
-      (tendstoInProbabilityConst_const_mul_zero mu _ (-1) hWρ)
+  have hWρ := tendstoInMeasure_mul_zero_of_isBoundedInProbability mu W _ hWb hρT
+  have hDWZ : TendstoInMeasure mu (fun (n : ℕ) w ↦ D * W n w + Z n w) atTop (fun _ ↦ 0) := by
+    have := tendstoInMeasure_add_zero mu _ _ hE
+      (tendstoInMeasure_const_mul_zero mu _ (-1) hWρ)
     convert this using 3 with n w
     simp only [hEv]; ring
-  have hrem : TendstoInProbabilityConst mu (fun n w ↦ Real.sqrt n * (T n w - theta₀) +
-      (D * Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, psi theta₀ (X i w)) 0 := by
-    have := tendstoInProbabilityConst_const_mul_zero mu _ D⁻¹ hDWZ
+  have hrem : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt n * (T n w - theta₀) +
+      (D * Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, psi theta₀ (X i w)) atTop (fun _ ↦ 0) := by
+    have := tendstoInMeasure_const_mul_zero mu _ D⁻¹ hDWZ
     convert this using 3 with n w
     simp only [hW, hZ]
     rw [mul_inv]
     field_simp
   refine ⟨hrem, ?_⟩
-  have hvar : variance P (psi theta₀) = ∫ x, psi theta₀ x ^ 2 ∂P := by
-    simp only [variance, h0, sub_zero]
-  have hX' : TendstoInDistribution mu (fun n w ↦ -D⁻¹ * Z n w)
-      (gaussianReal 0 (Real.toNNReal (variance P (psi theta₀) / D ^ 2))) := by
-    have := tendstoInDistribution_comp_of_continuous mu Z hZm _ (fun x ↦ -D⁻¹ * x)
-      (continuous_const.mul continuous_id) hZlim
-    convert this using 1
-    rw [gaussianReal_map_const_mul, mul_zero]
+  have hvar : Var[psi theta₀; P] = ∫ x, psi theta₀ x ^ 2 ∂P := by
+    rw [variance_eq_integral (hmeas theta₀).aemeasurable]
+    simp only [h0, sub_zero]
+  have hX' : TendstoInDistribution (fun (n : ℕ) w ↦ -D⁻¹ * Z n w) atTop id (fun _ ↦ mu)
+      (gaussianReal 0 (Real.toNNReal (Var[psi theta₀; P] / D ^ 2))) := by
+    refine tendstoInDistribution_of_map_eq (hZlim.continuous_comp (g := fun x ↦ -D⁻¹ * x)
+      (continuous_const.mul continuous_id)) aemeasurable_id ?_
+    rw [Measure.map_id, Function.comp_id, gaussianReal_map_const_mul, mul_zero]
     congr 1
     ext
     have hI0 : 0 ≤ ∫ x, psi theta₀ x ^ 2 ∂P := integral_nonneg fun x ↦ sq_nonneg _
     simp only [NNReal.coe_mul, NNReal.coe_mk, hvar, Real.coe_toNNReal _ hI0,
       Real.coe_toNNReal _ (div_nonneg hI0 (sq_nonneg D))]
     field_simp
-  refine tendstoInDistribution_of_tendstoInProbabilityConst_sub mu _ _
-    (fun n ↦ (hZm n).const_mul _) (fun n ↦ ((hT n).sub_const _).const_mul _) _ hX' ?_
+  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable mu _ _
+    (fun n ↦ (hZm n).const_mul _) (fun n ↦ ((hT n).sub_const _).const_mul _) hX' ?_
   convert hrem using 3 with n w
   simp only [hZ]
   rw [mul_inv]

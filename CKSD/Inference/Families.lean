@@ -1,6 +1,7 @@
 module
 
-public import CKSD.Inference.Moments
+public import CKSD.Inference.Basic
+public import Mathlib.Probability.CDF
 public import CKSD.Inference.Sufficiency
 public import TauCeti.Probability.Distributions.OrderStatistic.Joint
 public import TauCeti.Probability.Distributions.OrderStatistic.Basic
@@ -144,7 +145,7 @@ theorem map_orderStatistic_eq_withDensity {n : ℕ} (j : Fin n) (P : Measure ℝ
   let c : ℝ := (n.factorial : ℝ) / (j.val.factorial * (n - j.val - 1).factorial)
   let h : ℝ → ℝ := fun u ↦ c * u ^ j.val * (1 - u) ^ (n - j.val - 1)
   let F : ℝ → ℝ := fun x ↦ ProbabilityTheory.cdf P x
-  have hFeq : ∀ x, cdf P x = F x := fun x ↦ (ProbabilityTheory.cdf_eq_real P x).symm
+  have hFeq : ∀ x, cdf P x = F x := fun x ↦ rfl
   have hFm : Measurable F := (ProbabilityTheory.cdf P).mono.measurable
   have hhm : Measurable h := by fun_prop
   have hc : 0 ≤ c := by positivity

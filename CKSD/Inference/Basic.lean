@@ -4,8 +4,10 @@ public import Mathlib.Algebra.Category.ModuleCat.Basic
 public import Mathlib.Analysis.LocallyConvex.AbsConvexOpen
 public import Mathlib.Analysis.Matrix.Order
 public import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
+public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
 public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 public import Mathlib.MeasureTheory.Measure.Support
+public import Mathlib.MeasureTheory.Measure.TightNormed
 public import Mathlib.Order.CompletePartialOrder
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import Mathlib.Probability.Distributions.Poisson.Basic
@@ -20,26 +22,21 @@ public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
 /-!
 # Statistical models and convergence interfaces
 
-Basic vocabulary of the CKSD formalization: weak convergence of finite measures, convergence in
-law and in probability, empirical measures and averages, i.i.d. sequences, real densities,
-moments, sufficient and complete statistics, randomized tests, and randomized decision rules.
+Basic vocabulary of the CKSD formalization: convergence in law and in probability, boundedness
+in probability, empirical measures and averages, i.i.d. sequences, real densities,
+sufficient and complete statistics, randomized tests, and randomized decision rules. Variances,
+covariances, and distribution functions are Mathlib's `ProbabilityTheory.variance`,
+`ProbabilityTheory.covariance`, and `ProbabilityTheory.cdf`. Convergence in law of random
+variables is Mathlib's `MeasureTheory.TendstoInDistribution`; a sequence `X n` on one probability
+space `μ` converging in law to a probability measure `ν` is written
+`TendstoInDistribution X atTop id (fun _ ↦ μ) ν`. Weak convergence of probability measures that
+are not presented as laws is convergence in Mathlib's `MeasureTheory.ProbabilityMeasure`
+topology, characterized by `MeasureTheory.ProbabilityMeasure.tendsto_iff_forall_integral_tendsto`.
 
 ## Main definitions
 
-* `CKSD.TendstoWeakly μ ν`: finite measures `μ n` converge weakly to a finite measure `ν`, i.e.
-  `∫ f dμ n → ∫ f dν` for every bounded continuous real `f`. For finite measures this is
-  convergence in Mathlib's `MeasureTheory.FiniteMeasure` topology
-  (`MeasureTheory.FiniteMeasure.tendsto_iff_forall_integral_tendsto`).
-* `CKSD.TendstoInDistribution μ X ν`: the laws `μ.map (X n)` converge weakly to `ν`. Mathlib's
-  `MeasureTheory.TendstoInDistribution` is the same notion for almost everywhere measurable
-  random variables, phrased with `ProbabilityMeasure` and allowing different probability spaces.
-* `CKSD.TendstoInProbabilityConst μ X c`: `μ {ε < dist (X n) c} → 0` for every `ε > 0`. For a
-  finite measure it is Mathlib's `MeasureTheory.TendstoInMeasure` to the constant `c`
-  (`CKSD.tendstoInProbabilityConst_iff_tendstoInMeasure`).
-* `CKSD.cdf P t = P.real (Iic t)`; for a probability measure it is `ProbabilityTheory.cdf P t`.
-* `CKSD.variance P f = ∫ (f - ∫ f dP) ^ 2 dP`, the measure-first form of
-  `ProbabilityTheory.variance f P` (they agree for almost everywhere measurable `f`, see
-  `CKSD.variance_eq_mathlib`); `CKSD.covariance P f g` is `ProbabilityTheory.covariance f g P`.
+* `CKSD.IsBoundedInProbability μ X`: a real sequence is bounded in probability (uniformly
+  tight), measured by the outer measure so that no measurability is required.
 * `CKSD.IsStatisticalTest φ`: a measurable randomized test `φ : X → [0, 1]`;
   `CKSD.thresholdTest T c γ` is the one-sided test rejecting when `c < T`, with randomization
   `γ` on `T = c`.
@@ -49,15 +46,24 @@ moments, sufficient and complete statistics, randomized tests, and randomized de
 
 ## Main results
 
-* `CKSD.TendstoWeakly.isProbabilityMeasure`: a weak limit of probability measures is a
-  probability measure.
-* `CKSD.tendstoInProbabilityConst_iff_tendstoInMeasure`.
+* `CKSD.isBoundedInProbability_iff_isTightMeasureSet`: for almost everywhere measurable
+  sequences, boundedness in probability is tightness (Mathlib's `MeasureTheory.IsTightMeasureSet`)
+  of the set of laws.
+* `CKSD.tendstoInDistribution_id_iff`: convergence in distribution to a law, with the identity
+  as limit random variable, is convergence in the `ProbabilityMeasure` topology.
+* `CKSD.tendstoInDistribution_of_map_eq`: the limit random variable of convergence in
+  distribution matters only through its law.
+* `CKSD.tendstoInMeasure_iff_measureReal_lt_dist`: for a finite measure, convergence in
+  measure (Mathlib's `MeasureTheory.TendstoInMeasure`) with strict inequalities and real-valued
+  measures.
 * `CKSD.IsStatisticalTest.integrable`, `CKSD.IsStatisticalTest.integral_mem_Icc`: a test is
   integrable for every finite measure, with mean in `[0, 1]` under a probability measure.
 
 ## Conventions
 
-Real-valued integrals, risks, and moments are Bochner integrals; theorems using them carry the
+Convergence in probability of `X n` to a constant `c` is Mathlib's
+`TendstoInMeasure μ X atTop (fun _ ↦ c)`.
+Real-valued integrals and risks are Bochner integrals; theorems using them carry the
 integrability hypotheses that exclude the junk value `0` of a nonintegrable function.
 -/
 @[expose] public section
@@ -71,63 +77,104 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- Weak convergence of finite measures: `∫ f dμ n → ∫ f dν` for every bounded continuous real
-function `f`. Finiteness of all measures is part of the predicate, so totalized Bochner integrals
-cannot identify an infinite-mass law with the zero measure. For finite measures this is
-convergence in Mathlib's `FiniteMeasure` topology. -/
-structure TendstoWeakly {E : Type*} [TopologicalSpace E] [MeasurableSpace E]
-    (μ : ℕ → Measure E) (ν : Measure E) : Prop where
-  /-- Each measure in the sequence is finite. -/
-  finite : ∀ n, IsFiniteMeasure (μ n)
-  /-- The limit measure is finite. -/
-  finite_limit : IsFiniteMeasure ν
-  /-- Integrals of bounded continuous real functions converge. -/
-  integral_tendsto : ∀ f : BoundedContinuousFunction E ℝ,
-    Tendsto (fun n ↦ ∫ x, f x ∂μ n) atTop (𝓝 (∫ x, f x ∂ν))
+/-- Convergence in distribution depends on the limit random variable only through its law. -/
+theorem tendstoInDistribution_of_map_eq {ι Ω' Ω'' E : Type*} {Ω : ι → Type*}
+    [∀ i, MeasurableSpace (Ω i)] [MeasurableSpace Ω'] [MeasurableSpace Ω'']
+    [TopologicalSpace E] [MeasurableSpace E] [OpensMeasurableSpace E]
+    {μ : (i : ι) → Measure (Ω i)} [∀ i, IsProbabilityMeasure (μ i)]
+    {μ' : Measure Ω'} [IsProbabilityMeasure μ'] {μ'' : Measure Ω''} [IsProbabilityMeasure μ'']
+    {X : (i : ι) → Ω i → E} {l : Filter ι} {Z : Ω' → E} {W : Ω'' → E}
+    (h : TendstoInDistribution X l Z μ μ') (hW : AEMeasurable W μ'')
+    (hWZ : μ''.map W = μ'.map Z) :
+    TendstoInDistribution X l W μ μ'' where
+  forall_aemeasurable := h.forall_aemeasurable
+  aemeasurable_limit := hW
+  tendsto := by
+    have hP : (⟨μ''.map W, inferInstance⟩ : ProbabilityMeasure E) = ⟨μ'.map Z, inferInstance⟩ :=
+      Subtype.ext hWZ
+    rw [hP]
+    exact h.tendsto
 
-/-- A weak-convergence hypothesis can be applied to a bounded continuous test function. -/
-instance {E : Type*} [TopologicalSpace E] [MeasurableSpace E]
-    {μ : ℕ → Measure E} {ν : Measure E} :
-    CoeFun (TendstoWeakly μ ν) (fun _ ↦ ∀ f : BoundedContinuousFunction E ℝ,
-      Tendsto (fun n ↦ ∫ x, f x ∂μ n) atTop (𝓝 (∫ x, f x ∂ν))) where
-  coe h := h.integral_tendsto
+/-- Convergence in distribution to a law `ν`, with the identity as limit random variable, is
+convergence of the laws to `ν` in Mathlib's `ProbabilityMeasure` topology. -/
+theorem tendstoInDistribution_id_iff {ι E : Type*} {Ω : ι → Type*}
+    [∀ i, MeasurableSpace (Ω i)] [TopologicalSpace E] [MeasurableSpace E] [OpensMeasurableSpace E]
+    {μ : (i : ι) → Measure (Ω i)} [∀ i, IsProbabilityMeasure (μ i)] {ν : Measure E}
+    [IsProbabilityMeasure ν] {X : (i : ι) → Ω i → E} {l : Filter ι} :
+    TendstoInDistribution X l id μ ν ↔ (∀ i, AEMeasurable (X i) (μ i)) ∧
+      Tendsto (β := ProbabilityMeasure E) (fun i ↦ ⟨(μ i).map (X i), inferInstance⟩) l
+        (𝓝 ⟨ν, inferInstance⟩) := by
+  have hν : (⟨ν.map id, inferInstance⟩ : ProbabilityMeasure E) = ⟨ν, inferInstance⟩ :=
+    Subtype.ext Measure.map_id
+  constructor
+  · intro h
+    have h' := h.tendsto
+    rw [hν] at h'
+    exact ⟨h.forall_aemeasurable, h'⟩
+  · rintro ⟨hX, h⟩
+    refine ⟨hX, aemeasurable_id, ?_⟩
+    rw [hν]
+    exact h
 
-/-- For finite measures, convergence of the bounded continuous integrals gives weak convergence. -/
-theorem TendstoWeakly.of_forall_integral_tendsto {E : Type*}
-    [TopologicalSpace E] [MeasurableSpace E] {μ : ℕ → Measure E} {ν : Measure E}
-    [∀ n, IsFiniteMeasure (μ n)] [IsFiniteMeasure ν]
-    (h : ∀ f : BoundedContinuousFunction E ℝ,
-      Tendsto (fun n ↦ ∫ x, f x ∂μ n) atTop (𝓝 (∫ x, f x ∂ν))) :
-    TendstoWeakly μ ν :=
-  ⟨fun _ ↦ inferInstance, inferInstance, h⟩
+/-- Chi-squared laws with natural-number degrees of freedom are probability measures; this
+instance lets them serve as limits in `MeasureTheory.TendstoInDistribution`. -/
+instance isProbabilityMeasure_chiSquaredMeasure_natCast (k : ℕ) :
+    IsProbabilityMeasure (TauCeti.Probability.chiSquaredMeasure (k : ℝ)) :=
+  TauCeti.Probability.isProbabilityMeasure_chiSquaredMeasure k.cast_nonneg
 
-/-- On finite measures, weak convergence is equivalent to convergence of test integrals. -/
-theorem TendstoWeakly.iff_forall_integral_tendsto {E : Type*}
-    [TopologicalSpace E] [MeasurableSpace E] {μ : ℕ → Measure E} {ν : Measure E}
-    [∀ n, IsFiniteMeasure (μ n)] [IsFiniteMeasure ν] :
-    TendstoWeakly μ ν ↔ ∀ f : BoundedContinuousFunction E ℝ,
-      Tendsto (fun n ↦ ∫ x, f x ∂μ n) atTop (𝓝 (∫ x, f x ∂ν)) :=
-  ⟨fun h ↦ h.integral_tendsto, TendstoWeakly.of_forall_integral_tendsto⟩
-
-/-- Convergence in law of random variables `X n` on one probability space: the image laws
-`μ.map (X n)` converge weakly to `ν`. This is the measure-level counterpart of Mathlib's
-`MeasureTheory.TendstoInDistribution`, which uses `ProbabilityMeasure` values. -/
-abbrev TendstoInDistribution {Ω E : Type*} [MeasurableSpace Ω] [TopologicalSpace E] [MeasurableSpace E]
-    (μ : Measure Ω) (X : ℕ → Ω → E) (ν : Measure E) : Prop :=
-  TendstoWeakly (fun n ↦ μ.map (X n)) ν
-
-/-- Convergence in probability to a constant: `μ {ω | ε < dist (X n ω) x} → 0` for every
-`ε > 0`. For a finite measure this is Mathlib's `TendstoInMeasure μ X atTop (fun _ ↦ x)`
-(`tendstoInProbabilityConst_iff_tendstoInMeasure`). -/
-def TendstoInProbabilityConst {Ω E : Type*} [MeasurableSpace Ω] [PseudoMetricSpace E]
-    (μ : Measure Ω) (X : ℕ → Ω → E) (x : E) : Prop :=
-  ∀ ε > 0, Tendsto (fun n ↦ μ.real {ω | ε < dist (X n ω) x}) atTop (𝓝 0)
+/-- The chi-squared law with one degree of freedom is a probability measure. -/
+instance isProbabilityMeasure_chiSquaredMeasure_one :
+    IsProbabilityMeasure (TauCeti.Probability.chiSquaredMeasure 1) :=
+  TauCeti.Probability.isProbabilityMeasure_chiSquaredMeasure zero_le_one
 
 /-- Boundedness in probability (uniform tightness) of a real sequence: for every `ε > 0` there is
-`C > 0` with `μ {C < |X n|} ≤ ε` for all large `n`. -/
+`C > 0` with `μ {C < |X n|} ≤ ε` for all large `n`. The sets `{C < |X n|}` are measured by the
+outer measure, so no measurability of `X n` is required; this serves the stochastic `O_P` algebra
+of possibly nonmeasurable sequences. For almost everywhere measurable `X n` and finite `μ` it is
+tightness of the laws, Mathlib's `IsTightMeasureSet (range fun n ↦ μ.map (X n))`
+(`CKSD.isBoundedInProbability_iff_isTightMeasureSet`). -/
 def IsBoundedInProbability {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : ℕ → Ω → ℝ) : Prop :=
   ∀ ε > 0, ∃ C > 0, ∀ᶠ n in atTop, μ.real {ω | C < |X n ω|} ≤ ε
+
+/-- For almost everywhere measurable real random variables under a finite measure, boundedness in
+probability is tightness of the set of their laws (Mathlib's `MeasureTheory.IsTightMeasureSet`).
+Eventual bounds suffice for tightness of the whole sequence since each finite measure on `ℝ` is
+tight. -/
+theorem isBoundedInProbability_iff_isTightMeasureSet {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → ℝ} (hX : ∀ n, AEMeasurable (X n) μ) :
+    IsBoundedInProbability μ X ↔ IsTightMeasureSet (range fun n ↦ μ.map (X n)) := by
+  rw [isTightMeasureSet_range_iff_tendsto_limsup_measure_norm_gt]
+  have hmap : ∀ (r : ℝ) n, μ.map (X n) {x | r < ‖x‖} = μ {ω | r < |X n ω|} := fun r n ↦ by
+    rw [Measure.map_apply_of_aemeasurable (hX n)
+      (measurableSet_lt measurable_const measurable_norm)]
+    simp only [preimage_ofPred_eq, Real.norm_eq_abs]
+  simp_rw [hmap]
+  have hanti : ∀ n, Antitone fun r : ℝ ↦ μ {ω | r < |X n ω|} := fun n r s hrs ↦
+    measure_mono fun ω (hω : s < |X n ω|) ↦ (lt_of_le_of_lt hrs hω : r < |X n ω|)
+  constructor
+  · intro h
+    rw [ENNReal.tendsto_nhds_zero]
+    intro ε hε
+    rcases eq_or_ne ε ⊤ with rfl | hεt
+    · exact Eventually.of_forall fun _ ↦ le_top
+    obtain ⟨C, -, hC⟩ := h ε.toReal (ENNReal.toReal_pos hε.ne' hεt)
+    filter_upwards [eventually_ge_atTop C] with r hr
+    refine limsup_le_of_le (by isBoundedDefault) ?_
+    filter_upwards [hC] with n hn
+    calc μ {ω | r < |X n ω|} ≤ μ {ω | C < |X n ω|} := hanti n hr
+      _ = ENNReal.ofReal (μ.real {ω | C < |X n ω|}) :=
+        (ofReal_measureReal (measure_ne_top _ _)).symm
+      _ ≤ ENNReal.ofReal ε.toReal := ENNReal.ofReal_le_ofReal hn
+      _ = ε := ENNReal.ofReal_toReal hεt
+  · intro h ε hε
+    have hev := (ENNReal.tendsto_nhds_zero.1 h) (ENNReal.ofReal (ε / 2)) (by positivity)
+    obtain ⟨C, hCle, hC⟩ := (hev.and (eventually_gt_atTop 0)).exists
+    refine ⟨C, hC, ?_⟩
+    have hlt : limsup (fun n ↦ μ {ω | C < |X n ω|}) atTop < ENNReal.ofReal ε :=
+      hCle.trans_lt ((ENNReal.ofReal_lt_ofReal_iff hε).2 (half_lt_self hε))
+    filter_upwards [eventually_lt_of_limsup_lt hlt] with n hn
+    exact ENNReal.toReal_le_of_le_ofReal hε.le hn.le
 
 /-- The empirical measure; the empty sample gives the zero measure. -/
 def empiricalMeasure {E : Type*} [MeasurableSpace E] (n : ℕ) (x : Fin n → E) : Measure E :=
@@ -143,26 +190,11 @@ def IsIndependentIdenticallyDistributed {Ω E : Type*} [MeasurableSpace Ω] [Mea
     (μ : Measure Ω) (X : ℕ → Ω → E) (P : Measure E) : Prop :=
   (∀ i, Measurable (X i)) ∧ iIndepFun X μ ∧ ∀ i, μ.map (X i) = P
 
-/-- The distribution function `t ↦ P (-∞, t]` of a finite measure on the line. For a probability
-measure it is Mathlib's `ProbabilityTheory.cdf P` (`CKSD.cdf_eq_mathlib`). -/
-def cdf (P : Measure ℝ) (t : ℝ) : ℝ := P.real (Iic t)
-
 /-- `f` is a real density of `P` with respect to `μ`: `f` is measurable, `μ`-almost everywhere
 nonnegative, and `P = μ.withDensity (ofReal ∘ f)`. -/
 def HasDensity {X : Type*} [MeasurableSpace X]
     (P μ : Measure X) (f : X → ℝ) : Prop :=
   Measurable f ∧ (∀ᵐ x ∂μ, 0 ≤ f x) ∧ P = μ.withDensity (fun x ↦ ENNReal.ofReal (f x))
-
-/-- The centred second moment `∫ (f - ∫ f dP) ^ 2 dP`, with the measure first. It is Mathlib's
-`ProbabilityTheory.variance f P` for almost everywhere measurable `f` (`CKSD.variance_eq_mathlib`);
-it is used with second-moment hypotheses. -/
-def variance {X : Type*} [MeasurableSpace X] (P : Measure X) (f : X → ℝ) : ℝ :=
-  ∫ x, (f x - ∫ y, f y ∂P) ^ 2 ∂P
-
-/-- Mathlib's `ProbabilityTheory.covariance f g P`, with the measure first. -/
-abbrev covariance {X : Type*} [MeasurableSpace X]
-    (P : Measure X) (f g : X → ℝ) : ℝ :=
-  ProbabilityTheory.covariance f g P
 
 /-- A randomized test: a measurable function `φ : X → [0, 1]`, the probability of rejection at
 each observation. -/
@@ -230,30 +262,22 @@ def risk {Θ X A : Type*} [MeasurableSpace X] [MeasurableSpace A]
     (P : Θ → Measure X) (L : Θ → A → ℝ) (δ : RandomizedDecisionRule X A) (θ : Θ) : ℝ :=
   ∫ x, ∫ a, L θ a ∂δ.val x ∂P θ
 
-/-- A weak limit of probability measures is a probability measure. -/
-theorem TendstoWeakly.isProbabilityMeasure {E : Type*} [TopologicalSpace E] [MeasurableSpace E]
-    {μ : ℕ → Measure E} {ν : Measure E} (h : TendstoWeakly μ ν)
-    [∀ n, IsProbabilityMeasure (μ n)] : IsProbabilityMeasure ν := by
-  have := h.finite_limit
-  have h1 := h (BoundedContinuousFunction.const E 1)
-  simp only [BoundedContinuousFunction.const_apply, integral_const, probReal_univ, smul_eq_mul,
-    mul_one] at h1
-  have hν : ν.real univ = 1 := tendsto_nhds_unique h1 tendsto_const_nhds
-  refine ⟨?_⟩
-  rw [← ENNReal.ofReal_toReal (measure_ne_top ν univ), ← measureReal_def, hν, ENNReal.ofReal_one]
-
-/-- For a finite measure, convergence in probability to a constant is Mathlib's convergence in
-measure to the constant function. -/
-theorem tendstoInProbabilityConst_iff_tendstoInMeasure {Ω E : Type*} [MeasurableSpace Ω]
-    [PseudoMetricSpace E] {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → E} {c : E} :
-    TendstoInProbabilityConst μ X c ↔ TendstoInMeasure μ X atTop (fun _ ↦ c) := by
+/-- For a finite measure, convergence in measure is the vanishing of the real-valued measures of
+the sets `{ε < dist (f i) (g)}`, with strict inequality; compare Mathlib's
+`MeasureTheory.tendstoInMeasure_iff_measureReal_dist`. -/
+theorem tendstoInMeasure_iff_measureReal_lt_dist {ι Ω E : Type*} [MeasurableSpace Ω]
+    [PseudoMetricSpace E] {μ : Measure Ω} [IsFiniteMeasure μ] {l : Filter ι} {f : ι → Ω → E}
+    {g : Ω → E} :
+    TendstoInMeasure μ f l g ↔
+      ∀ ε, 0 < ε → Tendsto (fun i ↦ μ.real {x | ε < dist (f i x) (g x)}) l (𝓝 0) := by
   rw [tendstoInMeasure_iff_measureReal_dist]
   refine ⟨fun h ε hε ↦ ?_, fun h ε hε ↦ ?_⟩
   · exact squeeze_zero (fun _ ↦ measureReal_nonneg)
-      (fun n ↦ measureReal_mono fun ω (hω : ε ≤ dist (X n ω) c) ↦
-        (show ε / 2 < dist (X n ω) c by linarith)) (h (ε / 2) (half_pos hε))
+      (fun n ↦ measureReal_mono fun ω (hω : ε < dist (f n ω) (g ω)) ↦ (le_of_lt hω : ε ≤ _))
+      (h ε hε)
   · exact squeeze_zero (fun _ ↦ measureReal_nonneg)
-      (fun n ↦ measureReal_mono fun ω (hω : ε < dist (X n ω) c) ↦ (le_of_lt hω : ε ≤ _)) (h ε hε)
+      (fun n ↦ measureReal_mono fun ω (hω : ε ≤ dist (f n ω) (g ω)) ↦
+        (show ε / 2 < dist (f n ω) (g ω) by linarith)) (h (ε / 2) (half_pos hε))
 
 namespace IsStatisticalTest
 

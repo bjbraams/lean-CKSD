@@ -69,6 +69,20 @@ new files.
 - Preserve unrelated user changes.
 - Do not commit changes unless explicitly requested.
 
+## File length
+
+A Lean file of about 1000 lines is a candidate for splitting along a natural mathematical seam;
+1500 lines is the hard limit, and a longer file must be split.
+
+## Imports between statistics sections
+
+Sections 101–106 are the statistics sections: Foundations (`CKSD/Inference`), Asymptotics,
+Nonparametric, Bayes, LinearModels and Processes. A file in one of these sections may import
+any module of Foundations. From another of Sections 102–106 it may import only `Basic.lean`
+files (`CKSD/<Section>/Basic.lean` or a `Basic.lean` in one of its subdirectories). Material
+that other sections need therefore belongs in a `Basic.lean` file of its section. Sections 107
+and 108 are not covered by this rule.
+
 ## Documentation consistency
 
 - Describe the present mathematical content and coverage. Do not include

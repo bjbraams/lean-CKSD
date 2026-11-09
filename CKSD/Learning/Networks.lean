@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Learning.Algorithms
+public import CKSD.Learning.Generalization.Contraction
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
 public import Mathlib.Analysis.Calculus.ContDiff.Basic
@@ -102,6 +103,416 @@ theorem card_le_of_shatters_denseSignClass (σ : ℝ → ℝ) (hσ : IsPiecewise
       (S.card : ℝ) ≤ c * (P * L * Real.log P + P * L ^ 2) := by
   sorry
 
+section Rademacher
+
+variable {w : ℕ → ℕ} {H : ℕ}
+
+/-- The sign `±1` of a Boolean. -/
+private def sgnR {n : ℕ} (s : Fin n → Bool) (i : Fin n) : ℝ := if s i then 1 else -1
+
+/-- Hidden activations as Euclidean vectors. -/
+private def actE (σ : ℝ → ℝ) (θ : DenseNetParams w H) (y : Fin (w 0) → ℝ) (ℓ : ℕ) :
+    EuclideanSpace ℝ (Fin (w ℓ)) :=
+  WithLp.toLp 2 (denseActivation σ θ y ℓ)
+
+/-- A `1`-Lipschitz positively homogeneous activation vanishes at `0` and is bounded by the
+absolute value. -/
+private theorem abs_le_of_lipschitz_hom {σ : ℝ → ℝ} (hσ : LipschitzWith 1 σ)
+    (hhom : ∀ a ≥ (0 : ℝ), ∀ u, σ (a * u) = a * σ u) (z : ℝ) : |σ z| ≤ |z| := by
+  have h0 : σ 0 = 0 := by simpa using hhom 0 le_rfl 0
+  have := hσ.dist_le_mul z 0
+  simpa [Real.dist_eq, h0] using this
+
+/-- One bias-free layer with Frobenius norm at most `C` multiplies Euclidean norms by at most
+`C`. -/
+private theorem norm_actE_succ_le {σ : ℝ → ℝ} (hσ : LipschitzWith 1 σ)
+    (hhom : ∀ a ≥ (0 : ℝ), ∀ u, σ (a * u) = a * σ u) {C : ℝ} (hC : 0 ≤ C)
+    (θ : DenseNetParams w H) (ℓ : ℕ) (hb : θ.bias ℓ = 0)
+    (hW : ∑ i, ∑ j, θ.weight ℓ i j ^ 2 ≤ C ^ 2) (y : Fin (w 0) → ℝ) :
+    ‖actE σ θ y (ℓ + 1)‖ ≤ C * ‖actE σ θ y ℓ‖ := by
+  rw [← sq_le_sq₀ (norm_nonneg _) (by positivity), mul_pow, EuclideanSpace.real_norm_sq_eq,
+    EuclideanSpace.real_norm_sq_eq]
+  simp only [actE, PiLp.toLp_apply, denseActivation, hb, Pi.zero_apply, add_zero]
+  calc ∑ i, σ ((θ.weight ℓ *ᵥ denseActivation σ θ y ℓ) i) ^ 2
+      ≤ ∑ i, ((θ.weight ℓ *ᵥ denseActivation σ θ y ℓ) i) ^ 2 :=
+        Finset.sum_le_sum fun i _ ↦ sq_le_sq.mpr (abs_le_of_lipschitz_hom hσ hhom _)
+    _ ≤ ∑ i, (∑ j, θ.weight ℓ i j ^ 2) * ∑ j, denseActivation σ θ y ℓ j ^ 2 :=
+        Finset.sum_le_sum fun i _ ↦ by
+          rw [Matrix.mulVec, dotProduct]; exact Finset.sum_mul_sq_le_sq_mul_sq _ _ _
+    _ = (∑ i, ∑ j, θ.weight ℓ i j ^ 2) * ∑ j, denseActivation σ θ y ℓ j ^ 2 :=
+        (Finset.sum_mul _ _ _).symm
+    _ ≤ C ^ 2 * ∑ j, denseActivation σ θ y ℓ j ^ 2 :=
+        mul_le_mul_of_nonneg_right hW (Finset.sum_nonneg fun _ _ ↦ sq_nonneg _)
+
+
+/-- The bias-free parameter set with Frobenius-norm constraints of the capacity bound. -/
+private def biasFreeSet (w : ℕ → ℕ) (H : ℕ) (C : ℝ) : Set (DenseNetParams w H) :=
+  {θ | (∀ ℓ, θ.bias ℓ = 0) ∧ θ.outBias = 0 ∧
+    (∀ ℓ < H, ∑ i, ∑ j, θ.weight ℓ i j ^ 2 ≤ C ^ 2) ∧ ∑ j, θ.outWeight j ^ 2 ≤ C ^ 2}
+
+/-- The zero network lies in the bias-free parameter set. -/
+private theorem zero_mem_biasFreeSet {C : ℝ} :
+    (⟨fun _ ↦ 0, fun _ ↦ 0, 0, 0⟩ : DenseNetParams w H) ∈ biasFreeSet w H C := by
+  refine ⟨fun _ ↦ rfl, rfl, fun ℓ _ ↦ ?_, ?_⟩ <;> simp [sq_nonneg]
+
+/-- Hidden activations of a constrained network grow by at most `C` per layer. -/
+private theorem norm_actE_le {σ : ℝ → ℝ} (hσ : LipschitzWith 1 σ)
+    (hhom : ∀ a ≥ (0 : ℝ), ∀ u, σ (a * u) = a * σ u) {C : ℝ} (hC : 0 ≤ C)
+    {θ : DenseNetParams w H} (hθ : θ ∈ biasFreeSet w H C) (y : Fin (w 0) → ℝ) :
+    ∀ ℓ ≤ H, ‖actE σ θ y ℓ‖ ≤ C ^ ℓ * ‖actE σ θ y 0‖ := by
+  intro ℓ hℓ
+  induction ℓ with
+  | zero => simp
+  | succ ℓ ih =>
+    calc ‖actE σ θ y (ℓ + 1)‖ ≤ C * ‖actE σ θ y ℓ‖ :=
+          norm_actE_succ_le hσ hhom hC θ ℓ (hθ.1 ℓ) (hθ.2.2.1 ℓ (by omega)) y
+      _ ≤ C * (C ^ ℓ * ‖actE σ θ y 0‖) := mul_le_mul_of_nonneg_left (ih (by omega)) hC
+      _ = C ^ (ℓ + 1) * ‖actE σ θ y 0‖ := by ring
+
+/-- Signed sum of the hidden activations at layer `ℓ` over the sample. -/
+private def sumAct (σ : ℝ → ℝ) {n : ℕ} (x : Fin n → Fin (w 0) → ℝ) (ℓ : ℕ)
+    (θ : DenseNetParams w H) (s : Fin n → Bool) : EuclideanSpace ℝ (Fin (w ℓ)) :=
+  ∑ i, sgnR s i • actE σ θ (x i) ℓ
+
+/-- Supremum over the constrained networks of the norm of the signed activation sum. -/
+private def layerSup (σ : ℝ → ℝ) {n : ℕ} (x : Fin n → Fin (w 0) → ℝ) (C : ℝ) (ℓ : ℕ)
+    (s : Fin n → Bool) : ℝ :=
+  sSup ((fun θ ↦ ‖sumAct (H := H) σ x ℓ θ s‖) '' biasFreeSet w H C)
+
+/-- Signs have absolute value one. -/
+private theorem abs_sgnR {n : ℕ} (s : Fin n → Bool) (i : Fin n) : |sgnR s i| = 1 := by
+  unfold sgnR; split_ifs <;> simp
+
+/-- The norms of the signed activation sums are bounded over the constrained networks. -/
+private theorem bddAbove_layerSup {σ : ℝ → ℝ} (hσ : LipschitzWith 1 σ)
+    (hhom : ∀ a ≥ (0 : ℝ), ∀ u, σ (a * u) = a * σ u) {C : ℝ} (hC : 0 ≤ C) {n : ℕ}
+    (x : Fin n → Fin (w 0) → ℝ) {ℓ : ℕ} (hℓ : ℓ ≤ H) (s : Fin n → Bool) :
+    BddAbove ((fun θ ↦ ‖sumAct (H := H) σ x ℓ θ s‖) '' biasFreeSet w H C) := by
+  refine ⟨∑ i, C ^ ℓ * ‖actE σ (⟨fun _ ↦ 0, fun _ ↦ 0, 0, 0⟩ : DenseNetParams w H) (x i) 0‖, ?_⟩
+  rintro _ ⟨θ, hθ, rfl⟩
+  refine (norm_sum_le _ _).trans (Finset.sum_le_sum fun i _ ↦ ?_)
+  rw [norm_smul, Real.norm_eq_abs, abs_sgnR, one_mul]
+  exact (norm_actE_le hσ hhom hC hθ (x i) ℓ hℓ).trans_eq rfl
+
+/-- Each constrained network is dominated by the layer supremum. -/
+private theorem le_layerSup {σ : ℝ → ℝ} (hσ : LipschitzWith 1 σ)
+    (hhom : ∀ a ≥ (0 : ℝ), ∀ u, σ (a * u) = a * σ u) {C : ℝ} (hC : 0 ≤ C) {n : ℕ}
+    (x : Fin n → Fin (w 0) → ℝ) {ℓ : ℕ} (hℓ : ℓ ≤ H) (s : Fin n → Bool)
+    {θ : DenseNetParams w H} (hθ : θ ∈ biasFreeSet w H C) :
+    ‖sumAct σ x ℓ θ s‖ ≤ layerSup (H := H) σ x C ℓ s :=
+  le_csSup (bddAbove_layerSup hσ hhom hC x hℓ s) ⟨θ, hθ, rfl⟩
+
+/-- Layer suprema are nonnegative. -/
+private theorem layerSup_nonneg {σ : ℝ → ℝ} (hσ : LipschitzWith 1 σ)
+    (hhom : ∀ a ≥ (0 : ℝ), ∀ u, σ (a * u) = a * σ u) {C : ℝ} (hC : 0 ≤ C) {n : ℕ}
+    (x : Fin n → Fin (w 0) → ℝ) {ℓ : ℕ} (hℓ : ℓ ≤ H) (s : Fin n → Bool) :
+    0 ≤ layerSup (H := H) σ x C ℓ s :=
+  (norm_nonneg _).trans (le_layerSup hσ hhom hC x hℓ s zero_mem_biasFreeSet)
+
+
+/-- Coordinates of the signed activation sum. -/
+private theorem sumAct_apply (σ : ℝ → ℝ) {n : ℕ} (x : Fin n → Fin (w 0) → ℝ) (ℓ : ℕ)
+    (θ : DenseNetParams w H) (s : Fin n → Bool) (k : Fin (w ℓ)) :
+    sumAct σ x ℓ θ s k = ∑ i, sgnR s i * denseActivation σ θ (x i) ℓ k := by
+  simp [sumAct, actE]
+
+/-- The Euclidean norm of the signed activation sum in coordinates. -/
+private theorem norm_sumAct (σ : ℝ → ℝ) {n : ℕ} (x : Fin n → Fin (w 0) → ℝ) (ℓ : ℕ)
+    (θ : DenseNetParams w H) (s : Fin n → Bool) :
+    ‖sumAct σ x ℓ θ s‖ = Real.sqrt (∑ k, (∑ i, sgnR s i * denseActivation σ θ (x i) ℓ k) ^ 2) := by
+  rw [EuclideanSpace.norm_eq]
+  simp_rw [sumAct_apply, Real.norm_eq_abs, sq_abs]
+
+/-- Cauchy–Schwarz against a vector of Euclidean norm at most one. -/
+private theorem sum_mul_le_sqrt {ι : Type*} [Fintype ι] (u v : ι → ℝ) (hu : ∑ k, u k ^ 2 ≤ 1) :
+    ∑ k, u k * v k ≤ Real.sqrt (∑ k, v k ^ 2) := by
+  have hv : 0 ≤ ∑ k, v k ^ 2 := Finset.sum_nonneg fun _ _ ↦ sq_nonneg _
+  calc ∑ k, u k * v k ≤ |∑ k, u k * v k| := le_abs_self _
+    _ = Real.sqrt ((∑ k, u k * v k) ^ 2) := (Real.sqrt_sq_eq_abs _).symm
+    _ ≤ Real.sqrt ((∑ k, u k ^ 2) * ∑ k, v k ^ 2) :=
+        Real.sqrt_le_sqrt (Finset.sum_mul_sq_le_sq_mul_sq _ _ _)
+    _ ≤ Real.sqrt (1 * ∑ k, v k ^ 2) :=
+        Real.sqrt_le_sqrt (mul_le_mul_of_nonneg_right hu hv)
+    _ = Real.sqrt (∑ k, v k ^ 2) := by rw [one_mul]
+
+/-- A real row normalized by its Euclidean norm (zero rows stay zero). -/
+private def unitRow {κ : Type*} [Fintype κ] (a : κ → ℝ) (k : κ) : ℝ :=
+  a k / Real.sqrt (∑ k, a k ^ 2)
+
+/-- A normalized row has Euclidean norm at most one. -/
+private theorem sum_unitRow_sq_le {κ : Type*} [Fintype κ] (a : κ → ℝ) :
+    ∑ k, unitRow a k ^ 2 ≤ 1 := by
+  unfold unitRow
+  simp_rw [div_pow]
+  rw [← Finset.sum_div, Real.sq_sqrt (Finset.sum_nonneg fun _ _ ↦ sq_nonneg _)]
+  exact div_self_le_one _
+
+/-- A row acts as its Euclidean norm times its normalized row. -/
+private theorem sum_mul_eq_sqrt_mul_unitRow {κ : Type*} [Fintype κ] (a h : κ → ℝ) :
+    ∑ k, a k * h k = Real.sqrt (∑ k, a k ^ 2) * ∑ k, unitRow a k * h k := by
+  unfold unitRow
+  by_cases h0 : Real.sqrt (∑ k, a k ^ 2) = 0
+  · have hz : ∀ k, a k = 0 := by
+      intro k
+      rw [Real.sqrt_eq_zero (Finset.sum_nonneg fun _ _ ↦ sq_nonneg _)] at h0
+      have := (Finset.sum_eq_zero_iff_of_nonneg fun _ _ ↦ sq_nonneg _).mp h0 k
+        (Finset.mem_univ _)
+      exact pow_eq_zero_iff (n := 2) (by norm_num) |>.mp this
+    simp [hz]
+  · rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun k _ ↦ ?_
+    field_simp
+
+/-- Suprema of a finite range commute with division by a positive constant. -/
+private theorem sSup_range_div {ι : Type*} [Finite ι] [Nonempty ι] (f : ι → ℝ) {c : ℝ}
+    (hc : 0 < c) : sSup (range fun h ↦ f h / c) = sSup (range f) / c := by
+  apply le_antisymm
+  · refine csSup_le (range_nonempty _) ?_
+    rintro _ ⟨h, rfl⟩
+    exact div_le_div_of_nonneg_right (le_csSup (finite_range f).bddAbove ⟨h, rfl⟩) hc.le
+  · rw [div_le_iff₀ hc]
+    refine csSup_le (range_nonempty _) ?_
+    rintro _ ⟨h, rfl⟩
+    rw [← div_le_iff₀ hc]
+    exact le_csSup (finite_range (fun h ↦ f h / c)).bddAbove ⟨h, rfl⟩
+
+
+/-- Peeling one layer: the summed layer suprema grow by at most `2C` per bias-free layer. This
+combines the Frobenius bound on a layer, the symmetrization of absolute values, and the
+Ledoux–Talagrand contraction inequality for finite classes, applied to a finite family of
+near-maximizers. -/
+private theorem sum_layerSup_succ_le {σ : ℝ → ℝ} (hσ : LipschitzWith 1 σ)
+    (hhom : ∀ a ≥ (0 : ℝ), ∀ u, σ (a * u) = a * σ u) {C : ℝ} (hC : 0 ≤ C) {n : ℕ}
+    (hn : 0 < n) (x : Fin n → Fin (w 0) → ℝ) {ℓ : ℕ} (hℓ : ℓ < H) :
+    ∑ s, layerSup (H := H) σ x C (ℓ + 1) s ≤ 2 * C * ∑ s, layerSup (H := H) σ x C ℓ s := by
+  have hσ0 : σ 0 = 0 := by simpa using hhom 0 le_rfl 0
+  have hcard : (Finset.univ : Finset (Fin n → Bool)).card = 2 ^ n := by simp
+  refine le_of_forall_pos_le_add fun ε hε ↦ ?_
+  set δ : ℝ := ε / 2 ^ n
+  have hδ : 0 < δ := by positivity
+  have hchoose : ∀ s, ∃ θ ∈ biasFreeSet w H C,
+      layerSup (H := H) σ x C (ℓ + 1) s - δ < ‖sumAct σ x (ℓ + 1) θ s‖ := by
+    intro s
+    obtain ⟨_, ⟨θ, hθ, rfl⟩, hlt⟩ := exists_lt_of_lt_csSup
+      (Set.Nonempty.image _ ⟨_, zero_mem_biasFreeSet⟩) (sub_lt_self _ hδ)
+    exact ⟨θ, hθ, hlt⟩
+  choose θs hθs hlt using hchoose
+  let t : Option ((Fin n → Bool) × Fin (w (ℓ + 1))) → Fin n → ℝ := fun h i ↦
+    h.elim 0 fun p ↦ ∑ k, unitRow ((θs p.1).weight ℓ p.2) k *
+      denseActivation σ (θs p.1) (x i) ℓ k
+  let A : (Fin n → Bool) → Option ((Fin n → Bool) × Fin (w (ℓ + 1))) → ℝ :=
+    fun s h ↦ ∑ i, sgnR s i * σ (t h i)
+  let B : (Fin n → Bool) → Option ((Fin n → Bool) × Fin (w (ℓ + 1))) → ℝ :=
+    fun s h ↦ ∑ i, sgnR s i * t h i
+  have hA0 : ∀ s, A s none = 0 := fun s ↦ by simp [A, t, hσ0]
+  -- (a) one layer against the finite family
+  have ha : ∀ s, ‖sumAct σ x (ℓ + 1) (θs s) s‖ ≤ C * sSup (range fun h ↦ |A s h|) := by
+    intro s
+    set M := sSup (range fun h ↦ |A s h|)
+    have hM : ∀ h, |A s h| ≤ M := fun h ↦ le_csSup (finite_range _).bddAbove ⟨h, rfl⟩
+    have hM0 : 0 ≤ M := (abs_nonneg _).trans (hM none)
+    have hcoord : ∀ r, (∑ i, sgnR s i * denseActivation σ (θs s) (x i) (ℓ + 1) r) =
+        Real.sqrt (∑ k, (θs s).weight ℓ r k ^ 2) * A s (some (s, r)) := by
+      intro r
+      simp only [A, t, Option.elim, denseActivation, (hθs s).1 ℓ, Pi.zero_apply, add_zero,
+        Matrix.mulVec, dotProduct]
+      rw [Finset.mul_sum]
+      refine Finset.sum_congr rfl fun i _ ↦ ?_
+      rw [sum_mul_eq_sqrt_mul_unitRow, hhom _ (Real.sqrt_nonneg _)]
+      ring
+    rw [norm_sumAct]
+    simp_rw [hcoord]
+    calc Real.sqrt (∑ r, (Real.sqrt (∑ k, (θs s).weight ℓ r k ^ 2) * A s (some (s, r))) ^ 2)
+        ≤ Real.sqrt (C ^ 2 * M ^ 2) := by
+          apply Real.sqrt_le_sqrt
+          calc ∑ r, (Real.sqrt (∑ k, (θs s).weight ℓ r k ^ 2) * A s (some (s, r))) ^ 2
+              ≤ ∑ r, (∑ k, (θs s).weight ℓ r k ^ 2) * M ^ 2 := by
+                refine Finset.sum_le_sum fun r _ ↦ ?_
+                rw [mul_pow, Real.sq_sqrt (Finset.sum_nonneg fun _ _ ↦ sq_nonneg _)]
+                exact mul_le_mul_of_nonneg_left (sq_le_sq' (abs_le.mp (hM _)).1
+                  (abs_le.mp (hM _)).2) (Finset.sum_nonneg fun _ _ ↦ sq_nonneg _)
+            _ = (∑ r, ∑ k, (θs s).weight ℓ r k ^ 2) * M ^ 2 := (Finset.sum_mul _ _ _).symm
+            _ ≤ C ^ 2 * M ^ 2 :=
+                mul_le_mul_of_nonneg_right ((hθs s).2.2.1 ℓ hℓ) (sq_nonneg _)
+      _ = C * M := by
+          rw [← mul_pow, Real.sqrt_sq (mul_nonneg hC hM0)]
+  -- (b) absolute values by symmetrization
+  let fl : (Fin n → Bool) → (Fin n → Bool) := fun s i ↦ !s i
+  have hfl : Function.Involutive fl := fun s ↦ by funext i; simp [fl]
+  have hAfl : ∀ s h, A (fl s) h = -A s h := by
+    intro s h
+    simp only [A, sgnR, fl, ← Finset.sum_neg_distrib]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    by_cases hsi : s i <;> simp [hsi]
+  have hb : ∀ s, sSup (range fun h ↦ |A s h|) ≤
+      sSup (range (A s)) + sSup (range (A (fl s))) := by
+    intro s
+    have h1 : ∀ h, A s h ≤ sSup (range (A s)) := fun h ↦
+      le_csSup (finite_range _).bddAbove ⟨h, rfl⟩
+    have h2 : ∀ h, A (fl s) h ≤ sSup (range (A (fl s))) := fun h ↦
+      le_csSup (finite_range _).bddAbove ⟨h, rfl⟩
+    have h10 := h1 none; have h20 := h2 none
+    rw [hA0] at h10 h20
+    refine csSup_le (range_nonempty _) ?_
+    rintro _ ⟨h, rfl⟩
+    show |A s h| ≤ _
+    rcases abs_cases (A s h) with ⟨he, -⟩ | ⟨he, -⟩
+    · rw [he]; linarith [h1 h]
+    · rw [he, ← hAfl]; linarith [h2 h]
+  have hc : ∑ s, sSup (range (A (fl s))) = ∑ s, sSup (range (A s)) :=
+    Fintype.sum_equiv (hfl.toPerm fl) _ _ fun s ↦ rfl
+  -- (d) contraction
+  have hd : ∑ s, sSup (range (A s)) ≤ ∑ s, sSup (range (B s)) := by
+    have hlip : ∀ a b, |σ a - σ b| ≤ 1 * |a - b| := fun a b ↦ by
+      simpa [Real.dist_eq] using hσ.dist_le_mul a b
+    have := sum_sSup_rademacher_comp_le n t σ zero_le_one hlip
+    have hn' : (0 : ℝ) < n := Nat.cast_pos.mpr hn
+    have e1 : ∀ s : Fin n → Bool, sSup (range fun h ↦
+        (∑ i, (if s i then (1 : ℝ) else -1) * σ (t h i)) / n) = sSup (range (A s)) / n :=
+      fun s ↦ sSup_range_div (A s) hn'
+    have e2 : ∀ s : Fin n → Bool, sSup (range fun h ↦
+        (∑ i, (if s i then (1 : ℝ) else -1) * t h i) / n) = sSup (range (B s)) / n :=
+      fun s ↦ sSup_range_div (B s) hn'
+    simp_rw [e1, e2, one_mul, ← Finset.sum_div] at this
+    exact (div_le_div_iff_of_pos_right hn').mp this
+  -- (e) back to the previous layer
+  have he : ∀ s, sSup (range (B s)) ≤ layerSup (H := H) σ x C ℓ s := by
+    intro s
+    refine csSup_le (range_nonempty _) ?_
+    rintro _ ⟨h, rfl⟩
+    cases h with
+    | none => simpa [B, t] using layerSup_nonneg hσ hhom hC x hℓ.le s
+    | some p =>
+      obtain ⟨s', r⟩ := p
+      refine le_trans ?_ (le_layerSup hσ hhom hC x hℓ.le s (hθs s'))
+      rw [norm_sumAct]
+      show ∑ i, sgnR s i * ∑ k, unitRow ((θs s').weight ℓ r) k *
+        denseActivation σ (θs s') (x i) ℓ k ≤ _
+      have hre : ∑ i, sgnR s i * ∑ k, unitRow ((θs s').weight ℓ r) k *
+          denseActivation σ (θs s') (x i) ℓ k = ∑ k, unitRow ((θs s').weight ℓ r) k *
+          ∑ i, sgnR s i * denseActivation σ (θs s') (x i) ℓ k := by
+        simp_rw [Finset.mul_sum]
+        rw [Finset.sum_comm]
+        exact Finset.sum_congr rfl fun _ _ ↦ Finset.sum_congr rfl fun _ _ ↦ by ring
+      rw [hre]
+      exact sum_mul_le_sqrt _ _ (sum_unitRow_sq_le _)
+  calc ∑ s, layerSup (H := H) σ x C (ℓ + 1) s
+      ≤ ∑ s, (‖sumAct σ x (ℓ + 1) (θs s) s‖ + δ) :=
+        Finset.sum_le_sum fun s _ ↦ by linarith [hlt s]
+    _ = ∑ s, ‖sumAct σ x (ℓ + 1) (θs s) s‖ + ε := by
+        rw [Finset.sum_add_distrib, Finset.sum_const, hcard, nsmul_eq_mul]
+        simp only [δ]; push_cast; field_simp
+    _ ≤ ∑ s, C * (sSup (range (A s)) + sSup (range (A (fl s)))) + ε := by
+        gcongr with s
+        exact (ha s).trans (mul_le_mul_of_nonneg_left (hb s) hC)
+    _ = 2 * C * ∑ s, sSup (range (A s)) + ε := by
+        rw [← Finset.mul_sum, Finset.sum_add_distrib, hc]; ring
+    _ ≤ 2 * C * ∑ s, layerSup (H := H) σ x C ℓ s + ε :=
+        add_le_add_left (mul_le_mul_of_nonneg_left
+          (hd.trans (Finset.sum_le_sum fun s _ ↦ he s)) (by positivity)) _
+
+
+/-- Products of distinct Rademacher signs average to zero. -/
+private theorem sum_sgnR_mul_sgnR {n : ℕ} (i i' : Fin n) :
+    ∑ s : Fin n → Bool, sgnR s i * sgnR s i' = if i = i' then 2 ^ n else 0 := by
+  split_ifs with h
+  · subst h
+    have : ∀ s : Fin n → Bool, sgnR s i * sgnR s i = 1 := fun s ↦ by
+      unfold sgnR; split_ifs <;> norm_num
+    simp [this]
+  · let fl : (Fin n → Bool) → (Fin n → Bool) := fun s ↦ Function.update s i (!s i)
+    have hfl : Function.Involutive fl := fun s ↦ by
+      funext k
+      by_cases hk : k = i
+      · subst hk; simp [fl]
+      · simp [fl, Function.update_of_ne hk]
+    have hneg : ∀ s, sgnR (fl s) i * sgnR (fl s) i' = -(sgnR s i * sgnR s i') := by
+      intro s
+      simp only [sgnR, fl, Function.update_self, Function.update_of_ne (Ne.symm h)]
+      cases s i <;> cases s i' <;> norm_num
+    have := Fintype.sum_equiv (hfl.toPerm fl) (fun s ↦ sgnR (fl s) i * sgnR (fl s) i')
+      (fun s ↦ sgnR s i * sgnR s i') fun s ↦ by simp
+    simp_rw [hneg, Finset.sum_neg_distrib] at this
+    linarith
+
+/-- Cauchy–Schwarz for finite real sums. -/
+private theorem sum_mul_le_sqrt_mul_sqrt {ι : Type*} [Fintype ι] (u v : ι → ℝ) :
+    ∑ k, u k * v k ≤ Real.sqrt (∑ k, u k ^ 2) * Real.sqrt (∑ k, v k ^ 2) := by
+  rw [← Real.sqrt_mul (Finset.sum_nonneg fun _ _ ↦ sq_nonneg _)]
+  calc ∑ k, u k * v k ≤ |∑ k, u k * v k| := le_abs_self _
+    _ = Real.sqrt ((∑ k, u k * v k) ^ 2) := (Real.sqrt_sq_eq_abs _).symm
+    _ ≤ _ := Real.sqrt_le_sqrt (Finset.sum_mul_sq_le_sq_mul_sq _ _ _)
+
+/-- The input layer: summed over sign patterns, the norm of the signed sum of `n` points of the
+unit ball is at most `2ⁿ √n`. -/
+private theorem sum_layerSup_zero_le (σ : ℝ → ℝ) {C : ℝ} {n : ℕ} (x : Fin n → Fin (w 0) → ℝ)
+    (hx : ∀ i, ∑ j, x i j ^ 2 ≤ 1) :
+    ∑ s, layerSup (H := H) σ x C 0 s ≤ 2 ^ n * Real.sqrt n := by
+  have hconst : ∀ s, layerSup (H := H) σ x C 0 s =
+      Real.sqrt (∑ k, (∑ i, sgnR s i * x i k) ^ 2) := by
+    intro s
+    unfold layerSup
+    have : (fun θ : DenseNetParams w H ↦ ‖sumAct σ x 0 θ s‖) =
+        fun _ ↦ Real.sqrt (∑ k, (∑ i, sgnR s i * x i k) ^ 2) := by
+      funext θ; rw [norm_sumAct]; rfl
+    rw [this, Set.Nonempty.image_const ⟨_, zero_mem_biasFreeSet⟩, csSup_singleton]
+  simp_rw [hconst]
+  set a : (Fin n → Bool) → ℝ := fun s ↦ Real.sqrt (∑ k, (∑ i, sgnR s i * x i k) ^ 2)
+  have ha2 : ∑ s, a s ^ 2 = 2 ^ n * ∑ i, ∑ k, x i k ^ 2 := by
+    simp only [a]
+    simp_rw [Real.sq_sqrt (Finset.sum_nonneg fun _ _ ↦ sq_nonneg _), sq, Finset.sum_mul_sum]
+    rw [Finset.sum_comm]
+    simp_rw [Finset.sum_comm (γ := Fin n → Bool) (s := Finset.univ)]
+    have : ∀ k (i i' : Fin n), ∑ s : Fin n → Bool, sgnR s i * x i k * (sgnR s i' * x i' k) =
+        x i k * x i' k * if i = i' then 2 ^ n else 0 := by
+      intro k i i'
+      rw [← sum_sgnR_mul_sgnR i i', Finset.mul_sum]
+      exact Finset.sum_congr rfl fun _ _ ↦ by ring
+    simp_rw [this]
+    simp only [mul_ite, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ↓reduceIte]
+    rw [Finset.mul_sum, Finset.sum_comm]
+    exact Finset.sum_congr rfl fun _ _ ↦ by rw [Finset.mul_sum]; ring_nf
+  have hsum : ∑ i, ∑ k, x i k ^ 2 ≤ n := by
+    calc ∑ i, ∑ k, x i k ^ 2 ≤ ∑ _i : Fin n, (1 : ℝ) := Finset.sum_le_sum fun i _ ↦ hx i
+      _ = n := by simp
+  have hcs : (∑ s, a s) ^ 2 ≤ 2 ^ n * ∑ s, a s ^ 2 := by
+    have := Finset.sum_mul_sq_le_sq_mul_sq (Finset.univ : Finset (Fin n → Bool))
+      (fun _ ↦ (1 : ℝ)) a
+    simpa using this
+  rw [ha2] at hcs
+  have hnn : 0 ≤ ∑ s, a s := Finset.sum_nonneg fun _ _ ↦ Real.sqrt_nonneg _
+  rw [← Real.sqrt_sq hnn, show (2 : ℝ) ^ n * Real.sqrt n = Real.sqrt ((2 ^ n) ^ 2 * n) by
+    rw [Real.sqrt_mul (by positivity), Real.sqrt_sq (by positivity)]]
+  refine Real.sqrt_le_sqrt (hcs.trans ?_)
+  calc (2 : ℝ) ^ n * (2 ^ n * ∑ i, ∑ k, x i k ^ 2) ≤ 2 ^ n * (2 ^ n * n) := by gcongr
+    _ = (2 ^ n) ^ 2 * n := by ring
+
+
+/-- The output layer: a signed empirical average of a constrained bias-free network is at most
+`C` times the last layer supremum divided by `n`. -/
+private theorem sSup_output_le {σ : ℝ → ℝ} (hσ : LipschitzWith 1 σ)
+    (hhom : ∀ a ≥ (0 : ℝ), ∀ u, σ (a * u) = a * σ u) {C : ℝ} (hC : 0 ≤ C) {n : ℕ}
+    (x : Fin n → Fin (w 0) → ℝ) (s : Fin n → Bool) :
+    sSup ((fun f ↦ (∑ i, (if s i then (1 : ℝ) else -1) * f (x i)) / n) ''
+      ((fun θ : DenseNetParams w H ↦ denseNetOutput σ θ) '' biasFreeSet w H C)) ≤
+      C * layerSup (H := H) σ x C H s / n := by
+  refine csSup_le ((Set.Nonempty.image _ ⟨_, zero_mem_biasFreeSet⟩).image _) ?_
+  rintro _ ⟨_, ⟨θ, hθ, rfl⟩, rfl⟩
+  refine div_le_div_of_nonneg_right ?_ (Nat.cast_nonneg n)
+  have hre : ∑ i, (if s i then (1 : ℝ) else -1) * denseNetOutput σ θ (x i) =
+      ∑ j, θ.outWeight j * ∑ i, sgnR s i * denseActivation σ θ (x i) H j := by
+    simp only [denseNetOutput, hθ.2.1, add_zero, dotProduct, Finset.mul_sum]
+    rw [Finset.sum_comm]
+    exact Finset.sum_congr rfl fun _ _ ↦ Finset.sum_congr rfl fun _ _ ↦ by simp [sgnR]
+  rw [hre]
+  refine (sum_mul_le_sqrt_mul_sqrt _ _).trans ?_
+  rw [← norm_sumAct]
+  refine mul_le_mul ?_ (le_layerSup hσ hhom hC x le_rfl s hθ) (norm_nonneg _) hC
+  rw [← Real.sqrt_sq hC]
+  exact Real.sqrt_le_sqrt hθ.2.2.2
+
+end Rademacher
+
 /-- GAPS 107.35, norm-based capacity: bias-free networks of depth `L = H + 1` on the unit ball,
 with a `1`-Lipschitz positively homogeneous activation and all weight matrices of Frobenius
 norm at most `C` (the squared Frobenius norm `∑ᵢ ∑ⱼ Wᵢⱼ²` being at most `C²`), have empirical
@@ -115,7 +526,48 @@ theorem empiricalRademacherComplexity_biasFree_le (σ : ℝ → ℝ) (hσ : Lips
         {θ | (∀ ℓ, θ.bias ℓ = 0) ∧ θ.outBias = 0 ∧
           (∀ ℓ < H, ∑ i, ∑ j, θ.weight ℓ i j ^ 2 ≤ C ^ 2) ∧ ∑ j, θ.outWeight j ^ 2 ≤ C ^ 2}) x ≤
       2 ^ H * C ^ (H + 1) / Real.sqrt n := by
-  sorry
+  change empiricalRademacherComplexityOfSet n
+    ((fun θ : DenseNetParams w H ↦ denseNetOutput σ θ) '' biasFreeSet w H C) x ≤ _
+  unfold empiricalRademacherComplexityOfSet
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · simp only [Nat.cast_zero, div_zero, Real.sqrt_zero]
+    refine mul_nonpos_of_nonneg_of_nonpos (by positivity) (Finset.sum_nonpos fun s _ ↦ ?_)
+    exact Real.sSup_nonpos fun _ ⟨_, _, h⟩ ↦ h ▸ le_rfl
+  have hn' : (0 : ℝ) < n := Nat.cast_pos.mpr hn
+  have hiter : ∀ ℓ ≤ H, ∑ s, layerSup (H := H) σ x C ℓ s ≤
+      (2 * C) ^ ℓ * ∑ s, layerSup (H := H) σ x C 0 s := by
+    intro ℓ hℓ
+    induction ℓ with
+    | zero => simp
+    | succ ℓ ih =>
+      calc ∑ s, layerSup (H := H) σ x C (ℓ + 1) s
+          ≤ 2 * C * ∑ s, layerSup (H := H) σ x C ℓ s :=
+            sum_layerSup_succ_le hσ hhom hC hn x (by omega)
+        _ ≤ 2 * C * ((2 * C) ^ ℓ * ∑ s, layerSup (H := H) σ x C 0 s) :=
+            mul_le_mul_of_nonneg_left (ih (by omega)) (by positivity)
+        _ = (2 * C) ^ (ℓ + 1) * ∑ s, layerSup (H := H) σ x C 0 s := by ring
+  calc (2 : ℝ)⁻¹ ^ n * ∑ s : Fin n → Bool, sSup ((fun f ↦
+        (∑ i, (if s i then (1 : ℝ) else -1) * f (x i)) / n) ''
+          ((fun θ : DenseNetParams w H ↦ denseNetOutput σ θ) '' biasFreeSet w H C))
+      ≤ (2 : ℝ)⁻¹ ^ n * ∑ s, C * layerSup (H := H) σ x C H s / n :=
+        mul_le_mul_of_nonneg_left (Finset.sum_le_sum fun s _ ↦
+          sSup_output_le hσ hhom hC x s) (by positivity)
+    _ = (2 : ℝ)⁻¹ ^ n * (C / n) * ∑ s, layerSup (H := H) σ x C H s := by
+        rw [Finset.mul_sum, Finset.mul_sum]
+        exact Finset.sum_congr rfl fun _ _ ↦ by ring
+    _ ≤ (2 : ℝ)⁻¹ ^ n * (C / n) * ((2 * C) ^ H * (2 ^ n * Real.sqrt n)) := by
+        refine mul_le_mul_of_nonneg_left ((hiter H le_rfl).trans ?_) (by positivity)
+        exact mul_le_mul_of_nonneg_left (sum_layerSup_zero_le σ x hx) (by positivity)
+    _ = 2 ^ H * C ^ (H + 1) / Real.sqrt n := by
+        have hs : Real.sqrt n ≠ 0 := (Real.sqrt_pos.mpr hn').ne'
+        have hsq : Real.sqrt n ^ 2 = n := Real.sq_sqrt hn'.le
+        have h2 : (2 : ℝ)⁻¹ ^ n * 2 ^ n = 1 := by
+          rw [← mul_pow, inv_mul_cancel₀ two_ne_zero, one_pow]
+        rw [eq_div_iff hs]
+        calc (2 : ℝ)⁻¹ ^ n * (C / n) * ((2 * C) ^ H * (2 ^ n * Real.sqrt n)) * Real.sqrt n
+            = ((2 : ℝ)⁻¹ ^ n * 2 ^ n) * (C * (2 * C) ^ H) * (Real.sqrt n ^ 2 / n) := by ring
+          _ = 2 ^ H * C ^ (H + 1) := by
+            rw [h2, hsq, div_self hn'.ne', mul_pow]; ring
 
 /-- The unit cube `[0,1]^d` in `Fin d → ℝ`. -/
 def holderUnitCube (d : ℕ) : Set (Fin d → ℝ) := Icc 0 1
@@ -238,7 +690,7 @@ theorem tendstoInDistribution_wide_network_gaussian (d m : ℕ) (Cb CW : ℝ)
     let K2 : Matrix (Fin m) (Fin m) ℝ := fun i j ↦ Cb + CW *
       ∫ θ, σ (gpFirstLayerPreactivation Cb CW θ (x i)) *
         σ (gpFirstLayerPreactivation Cb CW θ (x j)) ∂unitLaw
-    MeasureTheory.TendstoInDistribution
+    TendstoInDistribution
       (fun (N : ℕ) (θ : (Fin N × (Fin d ⊕ Unit)) ⊕ (Fin N ⊕ Unit) → ℝ) ↦
         WithLp.toLp 2 fun i ↦ gpSecondLayerPreactivation N Cb CW σ θ (x i))
       atTop id (fun N ↦ Measure.pi fun _ ↦ gaussianReal 0 1)

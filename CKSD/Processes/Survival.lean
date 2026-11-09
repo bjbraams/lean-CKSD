@@ -60,7 +60,8 @@ theorem tendstoInDistribution_nelsonAalenEstimator {Ω : Type*} [MeasurableSpace
     (t : ℝ) (ht : 0 ≤ t) (hrisk : 0 < F (Ici t) * C₀ (Ici t)) :
     let Λ := ∫ s in (0 : ℝ)..t, f s / (1 - cdf F s);
     let v := ∫ s in (0 : ℝ)..t, f s / ((1 - cdf F s) ^ 2 * C₀.real (Ici s));
-    TendstoInDistribution μ (fun n ω ↦ Real.sqrt n * (nelsonAalenEstimator T C n ω t - Λ))
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n * (nelsonAalenEstimator T C n ω t - Λ))
+      atTop id (fun _ ↦ μ)
       (gaussianReal 0 (Real.toNNReal v)) := by
   sorry
 
@@ -75,7 +76,8 @@ theorem tendstoInDistribution_kaplanMeierEstimator {Ω : Type*} [MeasurableSpace
     (t : ℝ) (ht : 0 ≤ t) (hrisk : 0 < F (Ici t) * C₀ (Ici t)) :
     let S := 1 - cdf F t;
     let v := S ^ 2 * ∫ s in (0 : ℝ)..t, f s / ((1 - cdf F s) ^ 2 * C₀.real (Ici s));
-    TendstoInDistribution μ (fun n ω ↦ Real.sqrt n * (kaplanMeierEstimator T C n ω t - S))
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n * (kaplanMeierEstimator T C n ω t - S))
+      atTop id (fun _ ↦ μ)
       (gaussianReal 0 (Real.toNNReal v)) := by
   sorry
 

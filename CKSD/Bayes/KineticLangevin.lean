@@ -20,7 +20,9 @@ of a function on `ℝᵈ × ℝᵈ`.
 The Gibbs law has a smooth phase-space density. Invariance follows by writing the kinetic
 generator in weighted divergence form and using TauCeti
 `integral_fderiv_apply_eq_zero_of_hasCompactSupport` for each coordinate. The Gaussian density
-is TauCeti's `stdGaussian_eq_withDensity`.
+is TauCeti's `stdGaussian_eq_withDensity`. The contraction of synchronous coupling combines the
+Baillon–Haddad co-coercivity of `∇V - α id`, derived from two-sided quadratic bounds on the
+Bregman divergence of `V`, with a Grönwall argument for the twisted norm.
 
 ## Main definitions
 
@@ -46,7 +48,7 @@ Source: GAPS 104.48.
 noncomputable section
 
 open MeasureTheory ProbabilityTheory Filter Set InformationTheory
-open scoped ENNReal NNReal Topology BigOperators RealInnerProductSpace
+open scoped ENNReal NNReal Topology BigOperators RealInnerProductSpace ContDiff
 
 namespace CKSD
 
@@ -68,7 +70,7 @@ def IsKineticFokkerPlanckSolution {d : ℕ}
     (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (γ : ℝ)
     (ν : ℝ → Measure (EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d))) : Prop :=
   (∀ t ≥ 0, IsProbabilityMeasure (ν t)) ∧
-    ∀ f : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ ⊤ f →
+    ∀ f : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ ∞ f →
       HasCompactSupport f → ∀ t ≥ 0,
         Integrable (kineticGenerator gradV γ f) (ν t) ∧
         IntervalIntegrable (fun s ↦ ∫ z, kineticGenerator gradV γ f z ∂ν s) volume 0 t ∧
@@ -273,7 +275,7 @@ supported `f`. -/
 theorem integral_kineticGenerator_eq_zero {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (β γ : ℝ)
     (hV : IsSamplingPotential V gradV β)
-    (f : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) → ℝ) (hf : ContDiff ℝ ⊤ f)
+    (f : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) → ℝ) (hf : ContDiff ℝ ∞ f)
     (hfc : HasCompactSupport f) :
     ∫ z, kineticGenerator gradV γ f z ∂kineticGibbsMeasure V = 0 := by
   obtain ⟨ρ, hden, hρ, hρder⟩ := exists_hasDensity_kineticGibbsMeasure V gradV β hV
@@ -293,10 +295,310 @@ theorem exists_kineticGenerator_not_symmetric {d : ℕ} (hd : 0 < d)
     (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (β γ : ℝ)
     (hV : IsSamplingPotential V gradV β) :
     ∃ f g : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) → ℝ,
-      ContDiff ℝ ⊤ f ∧ HasCompactSupport f ∧ ContDiff ℝ ⊤ g ∧ HasCompactSupport g ∧
+      ContDiff ℝ ∞ f ∧ HasCompactSupport f ∧ ContDiff ℝ ∞ g ∧ HasCompactSupport g ∧
       ∫ z, f z * kineticGenerator gradV γ g z ∂kineticGibbsMeasure V ≠
         ∫ z, g z * kineticGenerator gradV γ f z ∂kineticGibbsMeasure V := by
   sorry
+
+section Coupling
+
+variable {d : ℕ}
+
+local notation "E" => EuclideanSpace ℝ (Fin d)
+
+/-- Derivative of a potential along the segment `t ↦ x + t • u`. -/
+private theorem hasDerivAt_comp_add_smul {V : E → ℝ} {gradV : E → E}
+    (hgrad : ∀ x, HasGradientAt V (gradV x) x) (x u : E) (t : ℝ) :
+    HasDerivAt (fun s : ℝ ↦ V (x + s • u)) ⟪gradV (x + t • u), u⟫ t := by
+  have hl : HasDerivAt (fun s : ℝ ↦ x + s • u) u t := by
+    simpa using ((hasDerivAt_id t).smul_const u).const_add x
+  have := (hgrad (x + t • u)).hasFDerivAt.comp_hasDerivAt t hl
+  simp only [InnerProductSpace.toDual_apply_apply] at this
+  exact this
+
+/-- Two-sided quadratic bounds on the Bregman divergence of a potential with a `β`-Lipschitz,
+`α`-strongly monotone gradient:
+`(α/2)‖y - x‖² ≤ V y - V x - ⟪∇V(x), y - x⟫ ≤ (β/2)‖y - x‖²`. -/
+private theorem bregman_bounds {V : E → ℝ} {gradV : E → E} {α β : ℝ}
+    (hgrad : ∀ x, HasGradientAt V (gradV x) x)
+    (hlip : ∀ x y, ‖gradV x - gradV y‖ ≤ β * ‖x - y‖)
+    (hmono : IsStronglyMonotoneGradient gradV α) (x y : E) :
+    α / 2 * ‖y - x‖ ^ 2 ≤ V y - V x - ⟪gradV x, y - x⟫ ∧
+      V y - V x - ⟪gradV x, y - x⟫ ≤ β / 2 * ‖y - x‖ ^ 2 := by
+  set u := y - x with hu
+  have hy : x + (1 : ℝ) • u = y := by simp [hu]
+  have hx : x + (0 : ℝ) • u = x := by simp
+  set φ : ℝ → ℝ := fun t ↦ V (x + t • u) - t * ⟪gradV x, u⟫ with hφ
+  have hd (t : ℝ) : HasDerivAt φ (⟪gradV (x + t • u), u⟫ - ⟪gradV x, u⟫) t := by
+    have := (hasDerivAt_comp_add_smul hgrad x u t).sub ((hasDerivAt_id t).mul_const ⟪gradV x, u⟫)
+    simp only [id, one_mul] at this
+    exact this
+  have hcont : Continuous φ := continuous_iff_continuousAt.2 fun t ↦ (hd t).continuousAt
+  constructor
+  · set ψ : ℝ → ℝ := fun t ↦ φ t - α / 2 * t ^ 2 * ‖u‖ ^ 2
+    have hψ (t : ℝ) : HasDerivAt ψ (⟪gradV (x + t • u), u⟫ - ⟪gradV x, u⟫ - α * t * ‖u‖ ^ 2) t := by
+      have := (hd t).sub (((hasDerivAt_pow 2 t).const_mul (α / 2)).mul_const (‖u‖ ^ 2))
+      convert this using 1
+      simp only [Nat.cast_ofNat]
+      ring
+    have hmon : MonotoneOn ψ (Ici 0) := by
+      refine monotoneOn_of_hasDerivWithinAt_nonneg (convex_Ici 0)
+        (fun t _ ↦ (hψ t).continuousAt.continuousWithinAt) (fun t _ ↦ (hψ t).hasDerivWithinAt) ?_
+      intro t ht
+      rw [interior_Ici, mem_Ioi] at ht
+      have h := hmono (x + t • u) x
+      rw [add_sub_cancel_left, norm_smul, Real.norm_eq_abs, abs_of_pos ht, real_inner_smul_right,
+        inner_sub_left] at h
+      have : α * t * ‖u‖ ^ 2 ≤ ⟪gradV (x + t • u), u⟫ - ⟪gradV x, u⟫ := by
+        refine le_of_mul_le_mul_left ?_ ht
+        nlinarith
+      linarith
+    have h01 := hmon (mem_Ici.2 le_rfl) (mem_Ici.2 zero_le_one) zero_le_one
+    simp only [ψ, hφ, hx, hy] at h01
+    norm_num at h01
+    linarith
+  · set ψ : ℝ → ℝ := fun t ↦ φ t - β / 2 * t ^ 2 * ‖u‖ ^ 2
+    have hψ (t : ℝ) : HasDerivAt ψ (⟪gradV (x + t • u), u⟫ - ⟪gradV x, u⟫ - β * t * ‖u‖ ^ 2) t := by
+      have := (hd t).sub (((hasDerivAt_pow 2 t).const_mul (β / 2)).mul_const (‖u‖ ^ 2))
+      convert this using 1
+      simp only [Nat.cast_ofNat]
+      ring
+    have hant : AntitoneOn ψ (Ici 0) := by
+      refine antitoneOn_of_hasDerivWithinAt_nonpos (convex_Ici 0)
+        (fun t _ ↦ (hψ t).continuousAt.continuousWithinAt) (fun t _ ↦ (hψ t).hasDerivWithinAt) ?_
+      intro t ht
+      rw [interior_Ici, mem_Ioi] at ht
+      have h := hlip (x + t • u) x
+      rw [add_sub_cancel_left, norm_smul, Real.norm_eq_abs, abs_of_pos ht] at h
+      have h2 : ⟪gradV (x + t • u), u⟫ - ⟪gradV x, u⟫ ≤ ‖gradV (x + t • u) - gradV x‖ * ‖u‖ := by
+        rw [← inner_sub_left]; exact real_inner_le_norm _ _
+      have h3 := mul_le_mul_of_nonneg_right h (norm_nonneg u)
+      nlinarith
+    have h01 := hant (mem_Ici.2 le_rfl) (mem_Ici.2 zero_le_one) zero_le_one
+    simp only [ψ, hφ, hx, hy] at h01
+    norm_num at h01
+    linarith
+
+
+/-- Baillon–Haddad co-coercivity for the convex part `V - (α/2)‖·‖²` of a potential with a
+`β`-Lipschitz, `α`-strongly monotone gradient: with `F z = ∇V(z) - α z` and `L ≥ β - α`, `L > 0`,
+`‖F y - F x‖² ≤ L ⟪F y - F x, y - x⟫`. -/
+private theorem norm_sq_le_mul_inner_of_bregman {V : E → ℝ} {gradV : E → E} {α β : ℝ}
+    (hgrad : ∀ x, HasGradientAt V (gradV x) x)
+    (hlip : ∀ x y, ‖gradV x - gradV y‖ ≤ β * ‖x - y‖)
+    (hmono : IsStronglyMonotoneGradient gradV α) {L : ℝ} (hL : 0 < L) (hβL : β ≤ L + α)
+    (x y : E) :
+    ‖(gradV y - α • y) - (gradV x - α • x)‖ ^ 2 ≤
+      L * ⟪(gradV y - α • y) - (gradV x - α • x), y - x⟫ := by
+  set f : E → ℝ := fun z ↦ V z - α / 2 * ‖z‖ ^ 2 with hf
+  set F : E → E := fun z ↦ gradV z - α • z with hF
+  have hid (z w : E) : f w - f z - ⟪F z, w - z⟫ =
+      (V w - V z - ⟪gradV z, w - z⟫) - α / 2 * ‖w - z‖ ^ 2 := by
+    simp only [hf, hF]
+    rw [inner_sub_left, real_inner_smul_left, norm_sub_sq_real]
+    simp only [inner_sub_right, real_inner_self_eq_norm_sq]
+    rw [real_inner_comm z w]
+    ring
+  have hlow (z w : E) : f z + ⟪F z, w - z⟫ ≤ f w := by
+    have := (bregman_bounds hgrad hlip hmono z w).1
+    linarith [hid z w]
+  have hup (z w : E) : f w ≤ f z + ⟪F z, w - z⟫ + L / 2 * ‖w - z‖ ^ 2 := by
+    have := (bregman_bounds hgrad hlip hmono z w).2
+    have h2 : β / 2 * ‖w - z‖ ^ 2 ≤ (L + α) / 2 * ‖w - z‖ ^ 2 := by gcongr
+    linarith [hid z w]
+  set a : E := F y - F x with ha
+  set u : E := y - x with hu
+  have h1 := hlow x (y - L⁻¹ • a)
+  have h2 := hup y (y - L⁻¹ • a)
+  have h3 := hlow y (x + L⁻¹ • a)
+  have h4 := hup x (x + L⁻¹ • a)
+  have e1 : y - L⁻¹ • a - x = u - L⁻¹ • a := by rw [hu]; abel
+  have e2 : y - L⁻¹ • a - y = -(L⁻¹ • a) := by abel
+  have e3 : x + L⁻¹ • a - y = -u + L⁻¹ • a := by rw [hu]; abel
+  have e4 : x + L⁻¹ • a - x = L⁻¹ • a := by abel
+  rw [e1] at h1
+  rw [e2] at h2
+  rw [e3] at h3
+  rw [e4] at h4
+  simp only [inner_sub_right, inner_add_right, inner_neg_right, real_inner_smul_right,
+    norm_neg, norm_smul, Real.norm_eq_abs, abs_inv, abs_of_pos hL, mul_pow] at h1 h2 h3 h4
+  have hFa : ⟪F y, a⟫ - ⟪F x, a⟫ = ‖a‖ ^ 2 := by
+    rw [← inner_sub_left, ← ha, real_inner_self_eq_norm_sq]
+  have hFu : ⟪F y, u⟫ - ⟪F x, u⟫ = ⟪a, u⟫ := by rw [← inner_sub_left]
+  have key : L⁻¹ * ‖a‖ ^ 2 ≤ ⟪a, u⟫ := by
+    have hsum := add_le_add (h1.trans h2) (h3.trans h4)
+    have : L / 2 * (L⁻¹ ^ 2 * ‖a‖ ^ 2) = L⁻¹ * ‖a‖ ^ 2 / 2 := by field_simp
+    have hFa' : L⁻¹ * ⟪F y, a⟫ - L⁻¹ * ⟪F x, a⟫ = L⁻¹ * ‖a‖ ^ 2 := by
+      rw [← mul_sub, hFa]
+    linarith
+  have := mul_le_mul_of_nonneg_left key hL.le
+  rwa [← mul_assoc, mul_inv_cancel₀ hL.ne', one_mul] at this
+
+
+/-- The key estimate of synchronous coupling: for `γ² ≥ 2β`,
+`‖γ (y - x) - (2/γ)(∇V(y) - ∇V(x))‖ ≤ (γ - 2α/γ) ‖y - x‖`. -/
+private theorem norm_smul_sub_smul_gradV_sub_le {V : E → ℝ} {gradV : E → E} {α β γ : ℝ}
+    (hgrad : ∀ x, HasGradientAt V (gradV x) x)
+    (hlip : ∀ x y, ‖gradV x - gradV y‖ ≤ β * ‖x - y‖)
+    (hmono : IsStronglyMonotoneGradient gradV α) (hα : 0 < α) (hγ : 0 < γ)
+    (hγβ : 2 * β ≤ γ ^ 2) (x y : E) :
+    ‖γ • (y - x) - (2 / γ) • (gradV y - gradV x)‖ ≤ (γ - 2 * α / γ) * ‖y - x‖ := by
+  set u := y - x with hu
+  set g := gradV y - gradV x with hg
+  have hP : α * ‖u‖ ^ 2 ≤ ⟪g, u⟫ := hmono y x
+  have hG : ‖g‖ ≤ β * ‖u‖ := hlip y x
+  by_cases hu0 : u = 0
+  · have : g = 0 := by
+      rw [hu0, norm_zero, mul_zero] at hG
+      exact norm_le_zero_iff.1 hG
+    simp [hu0, this]
+  have hU : 0 < ‖u‖ := norm_pos_iff.2 hu0
+  have hαβ : α ≤ β := by
+    have h1 : ⟪g, u⟫ ≤ ‖g‖ * ‖u‖ := real_inner_le_norm _ _
+    have h2 := mul_le_mul_of_nonneg_right hG hU.le
+    have : α * ‖u‖ ^ 2 ≤ β * ‖u‖ ^ 2 := by nlinarith
+    exact le_of_mul_le_mul_right this (by positivity)
+  -- Co-coercivity of `∇V - α id` in the form `‖g - α u‖² ≤ L (⟪g, u⟫ - α ‖u‖²)`.
+  obtain ⟨L, hL0, hLγ, hco⟩ : ∃ L : ℝ, 0 ≤ L ∧ L + 2 * α ≤ γ ^ 2 ∧
+      ‖g - α • u‖ ^ 2 ≤ L * (⟪g, u⟫ - α * ‖u‖ ^ 2) := by
+    rcases hαβ.eq_or_lt with heq | hlt
+    · refine ⟨0, le_rfl, by linarith, ?_⟩
+      rw [zero_mul, norm_sub_sq_real, real_inner_smul_right, norm_smul, Real.norm_eq_abs,
+        abs_of_pos hα]
+      have : ‖g‖ ^ 2 ≤ (β * ‖u‖) ^ 2 := pow_le_pow_left₀ (norm_nonneg _) hG 2
+      rw [← heq] at this
+      nlinarith
+    · refine ⟨2 * (β - α), by linarith, by linarith, ?_⟩
+      have h := norm_sq_le_mul_inner_of_bregman hgrad hlip hmono (L := 2 * (β - α))
+        (by linarith) (by linarith) x y
+      have e : (gradV y - α • y) - (gradV x - α • x) = g - α • u := by
+        rw [hg, hu, smul_sub]; abel
+      rw [e, inner_sub_left, real_inner_smul_left, real_inner_self_eq_norm_sq] at h
+      exact h
+  have hc : 0 ≤ γ - 2 * α / γ := by
+    rw [sub_nonneg, div_le_iff₀ hγ]
+    nlinarith
+  rw [← abs_of_nonneg (norm_nonneg _), ← abs_of_nonneg (mul_nonneg hc (norm_nonneg u))]
+  refine sq_le_sq.1 ?_
+  rw [norm_sub_sq_real, norm_smul, norm_smul, real_inner_smul_left, real_inner_smul_right,
+    Real.norm_eq_abs, Real.norm_eq_abs, abs_of_pos hγ, abs_of_pos (by positivity : 0 < 2 / γ),
+    mul_pow]
+  rw [norm_sub_sq_real, real_inner_smul_right, norm_smul, Real.norm_eq_abs, abs_of_pos hα]
+    at hco
+  have hgu : ⟪u, g⟫ = ⟪g, u⟫ := real_inner_comm _ _
+  rw [hgu]
+  have key : α * (γ ^ 2 - α) * ‖u‖ ^ 2 ≤ γ ^ 2 * ⟪g, u⟫ - ‖g‖ ^ 2 := by
+    nlinarith
+  have hγ2 : 0 < γ ^ 2 := by positivity
+  rw [← sub_nonneg]
+  have : ((γ - 2 * α / γ) * ‖u‖) ^ 2 -
+      (γ ^ 2 * ‖u‖ ^ 2 - 2 * (γ * (2 / γ * ⟪g, u⟫)) + (2 / γ * ‖g‖) ^ 2) =
+      4 / γ ^ 2 * (γ ^ 2 * ⟪g, u⟫ - ‖g‖ ^ 2 - α * (γ ^ 2 - α) * ‖u‖ ^ 2) := by
+    field_simp
+    ring
+  rw [this]
+  exact mul_nonneg (by positivity) (by linarith)
+
+
+/-- Pointwise derivative bound for the squared twisted norm along the noiseless difference
+dynamics `u' = w`, `w' = -(g + γ w)`, given `‖γ u - (2/γ) g‖ ≤ c ‖u‖`. -/
+private theorem coupling_deriv_le (u w g : E) {γ c : ℝ} (hγ : 0 < γ) (hc : 0 ≤ c)
+    (hb : ‖γ • u - (2 / γ) • g‖ ≤ c * ‖u‖) :
+    2 * ⟪u, w⟫ + 2 * ⟪u + (2 / γ) • w, w + (2 / γ) • -(g + γ • w)⟫ ≤
+      (c - γ) * (‖u‖ ^ 2 + ‖u + (2 / γ) • w‖ ^ 2) := by
+  set z := u + (2 / γ) • w with hz
+  set v := γ • u - (2 / γ) • g with hv
+  have hzv : ⟪z, v⟫ ≤ c / 2 * (‖z‖ ^ 2 + ‖u‖ ^ 2) := by
+    have h1 : ⟪z, v⟫ ≤ ‖z‖ * ‖v‖ := real_inner_le_norm _ _
+    have h2 := mul_le_mul_of_nonneg_left hb (norm_nonneg z)
+    nlinarith [sq_nonneg (‖z‖ - ‖u‖), mul_nonneg hc (sq_nonneg (‖z‖ - ‖u‖))]
+  have hid : 2 * ⟪u, w⟫ + 2 * ⟪z, w + (2 / γ) • -(g + γ • w)⟫ =
+      -γ * (‖u‖ ^ 2 + ‖z‖ ^ 2) + 2 * ⟪z, v⟫ := by
+    have hz2 : ‖z‖ ^ 2 = ‖u‖ ^ 2 + 2 * ((2 / γ) * ⟪u, w⟫) + (2 / γ) ^ 2 * ‖w‖ ^ 2 := by
+      rw [hz, norm_add_sq_real, real_inner_smul_right, norm_smul, Real.norm_eq_abs,
+        abs_of_pos (by positivity : 0 < 2 / γ), mul_pow]
+    rw [hz2, hz, hv]
+    simp only [inner_add_left, inner_add_right, inner_sub_right, inner_neg_right,
+      real_inner_smul_left, real_inner_smul_right, real_inner_self_eq_norm_sq]
+    rw [real_inner_comm w u, real_inner_comm g w, real_inner_comm g u]
+    field_simp
+    ring
+  rw [hid]
+  nlinarith
+
+
+/-- Exponential decay of the squared twisted norm along the noiseless difference dynamics
+`u' = w`, `w' = -(g + γ w)` (in integral form on `[0, ∞)`), given the pointwise estimate
+`‖γ u - (2/γ) g‖ ≤ c ‖u‖` with `c ≥ 0`. -/
+private theorem twisted_norm_sq_le_of_integral_eq {u w g : ℝ → E} {γ c : ℝ} (hγ : 0 < γ)
+    (hc : 0 ≤ c) (huc : Continuous u) (hwc : Continuous w) (hgc : Continuous g)
+    (hu : ∀ t ≥ 0, u t = u 0 + ∫ s in (0 : ℝ)..t, w s)
+    (hw : ∀ t ≥ 0, w t = w 0 - ∫ s in (0 : ℝ)..t, g s + γ • w s)
+    (hb : ∀ t, ‖γ • u t - (2 / γ) • g t‖ ≤ c * ‖u t‖) :
+    ∀ t ≥ 0, ‖u t‖ ^ 2 + ‖u t + (2 / γ) • w t‖ ^ 2 ≤
+      Real.exp ((c - γ) * t) * (‖u 0‖ ^ 2 + ‖u 0 + (2 / γ) • w 0‖ ^ 2) := by
+  have hFc : Continuous fun s ↦ g s + γ • w s := hgc.add (hwc.const_smul γ)
+  have hu' (t : ℝ) (ht : 0 < t) : HasDerivAt u (w t) t := by
+    have h1 : HasDerivAt (fun s ↦ u 0 + ∫ r in (0 : ℝ)..s, w r) (w t) t :=
+      ((hwc.integral_hasStrictDerivAt 0 t).hasDerivAt).const_add _
+    refine h1.congr_of_eventuallyEq ?_
+    filter_upwards [lt_mem_nhds ht] with s hs
+    exact hu s hs.le
+  have hw' (t : ℝ) (ht : 0 < t) : HasDerivAt w (-(g t + γ • w t)) t := by
+    have h1 : HasDerivAt (fun s ↦ w 0 - ∫ r in (0 : ℝ)..s, g r + γ • w r)
+        (-(g t + γ • w t)) t := by
+      have := ((hFc.integral_hasStrictDerivAt 0 t).hasDerivAt).const_sub (w 0)
+      exact this
+    refine h1.congr_of_eventuallyEq ?_
+    filter_upwards [lt_mem_nhds ht] with s hs
+    exact hw s hs.le
+  set N2 : ℝ → ℝ := fun t ↦ ‖u t‖ ^ 2 + ‖u t + (2 / γ) • w t‖ ^ 2 with hN2
+  have hN2c : Continuous N2 := by
+    simp only [hN2]
+    fun_prop
+  have hN2' (t : ℝ) (ht : 0 < t) : HasDerivAt N2
+      (2 * ⟪u t, w t⟫ + 2 * ⟪u t + (2 / γ) • w t, w t + (2 / γ) • -(g t + γ • w t)⟫) t :=
+    (hu' t ht).norm_sq.add (((hu' t ht).add ((hw' t ht).const_smul (2 / γ))).norm_sq)
+  set Φ : ℝ → ℝ := fun t ↦ Real.exp (-((c - γ) * t)) * N2 t with hΦ
+  have hΦc : Continuous Φ := (Real.continuous_exp.comp (by fun_prop)).mul hN2c
+  have hΦ' (t : ℝ) (ht : 0 < t) : HasDerivAt Φ (Real.exp (-((c - γ) * t)) * (-(c - γ)) * N2 t +
+      Real.exp (-((c - γ) * t)) *
+        (2 * ⟪u t, w t⟫ + 2 * ⟪u t + (2 / γ) • w t, w t + (2 / γ) • -(g t + γ • w t)⟫)) t := by
+    have h1 : HasDerivAt (fun s : ℝ ↦ Real.exp (-((c - γ) * s)))
+        (Real.exp (-((c - γ) * t)) * (-(c - γ))) t := by
+      have := ((hasDerivAt_id t).const_mul (c - γ)).neg.exp
+      simpa using this
+    exact h1.mul (hN2' t ht)
+  have hanti : AntitoneOn Φ (Ici 0) := by
+    refine antitoneOn_of_hasDerivWithinAt_nonpos (convex_Ici 0) hΦc.continuousOn
+      (f' := fun t ↦ Real.exp (-((c - γ) * t)) * (-(c - γ)) * N2 t +
+        Real.exp (-((c - γ) * t)) *
+          (2 * ⟪u t, w t⟫ + 2 * ⟪u t + (2 / γ) • w t, w t + (2 / γ) • -(g t + γ • w t)⟫))
+      (fun t ht ↦ ?_) (fun t ht ↦ ?_)
+    · rw [interior_Ici, mem_Ioi] at ht
+      exact (hΦ' t ht).hasDerivWithinAt
+    · rw [interior_Ici, mem_Ioi] at ht
+      have hd := coupling_deriv_le (u t) (w t) (g t) hγ hc (hb t)
+      have he := Real.exp_pos (-((c - γ) * t))
+      have : Real.exp (-((c - γ) * t)) * (-(c - γ)) * N2 t +
+          Real.exp (-((c - γ) * t)) *
+            (2 * ⟪u t, w t⟫ + 2 * ⟪u t + (2 / γ) • w t, w t + (2 / γ) • -(g t + γ • w t)⟫) =
+          Real.exp (-((c - γ) * t)) *
+            ((2 * ⟪u t, w t⟫ + 2 * ⟪u t + (2 / γ) • w t, w t + (2 / γ) • -(g t + γ • w t)⟫) -
+              (c - γ) * N2 t) := by ring
+      rw [this]
+      exact mul_nonpos_of_nonneg_of_nonpos he.le (by simp only [hN2]; linarith)
+  intro t ht
+  have h := hanti (mem_Ici.2 le_rfl) (mem_Ici.2 ht) ht
+  simp only [hΦ, mul_zero, neg_zero, Real.exp_zero, one_mul] at h
+  have hexp : Real.exp ((c - γ) * t) * Real.exp (-((c - γ) * t)) = 1 := by
+    rw [← Real.exp_add]; simp
+  calc N2 t = Real.exp ((c - γ) * t) * (Real.exp (-((c - γ) * t)) * N2 t) := by
+        rw [← mul_assoc, hexp, one_mul]
+    _ ≤ Real.exp ((c - γ) * t) * N2 0 :=
+        mul_le_mul_of_nonneg_left h (Real.exp_pos _).le
+
+end Coupling
 
 /-- GAPS 104.48: contraction of synchronous coupling in the twisted norm at rate `α/γ`, for
 `αI ⪯ ∇²V ⪯ βI` and `γ ≥ √(2β)`. The differences of two copies driven by one Brownian motion
@@ -312,7 +614,50 @@ theorem kineticCouplingNorm_synchronous_le {d : ℕ} (V : EuclideanSpace ℝ (Fi
       ∫ s in (0 : ℝ)..t, (gradV (x s) - gradV (y s)) + γ • (p s - q s)) :
     ∀ t ≥ 0, kineticCouplingNorm γ (x t - y t) (p t - q t) ≤
       Real.exp (-(α * t / γ)) * kineticCouplingNorm γ (x 0 - y 0) (p 0 - q 0) := by
-  sorry
+  have hγ2 : 2 * β ≤ γ ^ 2 := by
+    by_cases hβ0 : 0 ≤ 2 * β
+    · have h := Real.sq_sqrt hβ0
+      nlinarith [Real.sqrt_nonneg (2 * β)]
+    · nlinarith [sq_nonneg γ]
+  rcases Nat.eq_zero_or_pos d with rfl | hd
+  · intro t _
+    have h0 (v : EuclideanSpace ℝ (Fin 0)) : v = 0 := Subsingleton.elim _ _
+    rw [h0 (x t - y t), h0 (p t - q t), h0 (x 0 - y 0), h0 (p 0 - q 0)]
+    simp [kineticCouplingNorm]
+  have hαβ : α ≤ β := by
+    set e : EuclideanSpace ℝ (Fin d) := EuclideanSpace.single ⟨0, hd⟩ 1
+    have he : ‖e‖ = 1 := by simp [e]
+    have h1 := hmono e 0
+    have h2 := hV.lipschitz e 0
+    have h3 := real_inner_le_norm (gradV e - gradV 0) (e - 0)
+    rw [sub_zero, he] at h1 h2 h3
+    nlinarith
+  have hgc : Continuous gradV := by
+    have heq : gradV = gradient V := funext fun z ↦ (hV.hasGradientAt z).gradient.symm
+    have hb : ContDiff ℝ 1 gradV := by
+      rw [heq]
+      exact (InnerProductSpace.toDual ℝ (EuclideanSpace ℝ (Fin d))).symm.contDiff.comp
+        (hV.contDiff.fderiv_right (by norm_num))
+    exact hb.continuous
+  have hc : 0 ≤ γ - 2 * α / γ := by
+    rw [sub_nonneg, div_le_iff₀ hγ]
+    nlinarith
+  have key := twisted_norm_sq_le_of_integral_eq (u := fun t ↦ x t - y t) (w := fun t ↦ p t - q t)
+    (g := fun t ↦ gradV (x t) - gradV (y t)) hγ hc (hx.sub hy) (hp.sub hq)
+    ((hgc.comp hx).sub (hgc.comp hy)) hdx hdp
+    (fun t ↦ norm_smul_sub_smul_gradV_sub_le hV.hasGradientAt hV.lipschitz hmono hα hγ hγ2
+      (y t) (x t))
+  intro t ht
+  have h := key t ht
+  have hexp : Real.exp ((γ - 2 * α / γ - γ) * t) = Real.exp (-(α * t / γ)) ^ 2 := by
+    rw [← Real.exp_nat_mul]
+    congr 1
+    field_simp
+    ring
+  rw [hexp] at h
+  unfold kineticCouplingNorm
+  rw [← Real.sqrt_sq (Real.exp_pos _).le, ← Real.sqrt_mul (sq_nonneg _)]
+  exact Real.sqrt_le_sqrt h
 
 /-- GAPS 104.48: `L²` hypocoercivity under a Poincaré inequality with constant `1/α` and
 `β`-smoothness, with friction `γ = c₀√β`. The relative density `fₜ = d𝛑ₜ/d𝛑 - 1` is assumed

@@ -9,7 +9,7 @@ A consistent measurable root of the score equation has an asymptotically linear 
 a normal limit under local third-derivative domination and the information identities.
 Sources: GAPS 102.3 and `SYNOPSIS102.md`. The proof uses the integral and Taylor estimates in
 `CKSD.Asymptotics.LikelihoodSupport` and Mathlib's strong law and central limit theorem through
-the adapters in `CKSD.Asymptotics.Convergence`.
+the adapters in `CKSD.Asymptotics.Basic`.
 -/
 
 @[expose] public section
@@ -40,13 +40,14 @@ theorem mle_asymptotic_linearization_and_normality
     (hvar : (∫ x, deriv (fun t ↦ ell t x) theta₀ ^ 2 ∂P) = I)
     (hhess : Integrable (fun x ↦ deriv (deriv (fun t ↦ ell t x)) theta₀) P)
     (hinfo : (∫ x, deriv (deriv (fun t ↦ ell t x)) theta₀ ∂P) = -I)
-    (T : ℕ → Ω → ℝ) (hT : ∀ n, Measurable (T n)) (hcons : TendstoInProbabilityConst mu T theta₀)
+    (T : ℕ → Ω → ℝ) (hT : ∀ n, Measurable (T n))
+    (hcons : TendstoInMeasure mu T atTop (fun _ ↦ theta₀))
     (hroot : ∀ n : ℕ, 1 ≤ n → ∀ᵐ w ∂mu,
       (∑ i ∈ Finset.range n, deriv (fun t ↦ ell t (X i w)) (T n w)) = 0) :
-    TendstoInProbabilityConst mu (fun n w ↦ Real.sqrt n * (T n w - theta₀) -
+    TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt n * (T n w - theta₀) -
       (I * Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n,
-        deriv (fun t ↦ ell t (X i w)) theta₀) 0 ∧
-      TendstoInDistribution mu (fun n w ↦ Real.sqrt n * (T n w - theta₀))
+        deriv (fun t ↦ ell t (X i w)) theta₀) atTop (fun _ ↦ 0) ∧
+      TendstoInDistribution (fun (n : ℕ) w ↦ Real.sqrt n * (T n w - theta₀)) atTop id (fun _ ↦ mu)
         (gaussianReal 0 (Real.toNNReal I⁻¹)) := by
   obtain ⟨hXm, hind, hlaw⟩ := hiid
   have hc3 : ∀ x, ContDiff ℝ (2 + 1) (fun t ↦ ell t x) := hsmooth
@@ -75,23 +76,25 @@ theorem mle_asymptotic_linearization_and_normality
   set A : ℕ → Ω → ℝ := fun n w ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, M' (X i w) with hA
   have hZm : ∀ n, Measurable (Z n) := fun n ↦
     (Finset.measurable_fun_sum _ fun i _ ↦ hSm.comp (hXm i)).const_mul _
-  have hZlim : TendstoInDistribution mu Z (gaussianReal 0 (Real.toNNReal I)) := by
+  have hZlim : TendstoInDistribution Z atTop id (fun _ ↦ mu)
+      (gaussianReal 0 (Real.toNNReal I)) := by
     have := tendstoInDistribution_inv_sqrt_mul_sum_of_iid mu P X ⟨hXm, hind, hlaw⟩ S hSm
       hscore hmean
     rwa [hvar] at this
-  have hBlim : TendstoInProbabilityConst mu B (-I) := by
-    have := tendstoInProbabilityConst_sampleMean_of_iid mu P X ⟨hXm, hind, hlaw⟩ H hHm hhess
+  have hBlim : TendstoInMeasure mu B atTop (fun _ ↦ -I) := by
+    have := tendstoInMeasure_sampleMean_of_iid mu P X ⟨hXm, hind, hlaw⟩ H hHm hhess
     rwa [hinfo] at this
-  have hAlim : TendstoInProbabilityConst mu A (∫ x, M' x ∂P) :=
-    tendstoInProbabilityConst_sampleMean_of_iid mu P X ⟨hXm, hind, hlaw⟩ M' hM'm hM'i
+  have hAlim : TendstoInMeasure mu A atTop (fun _ ↦ ∫ x, M' x ∂P) :=
+    tendstoInMeasure_sampleMean_of_iid mu P X ⟨hXm, hind, hlaw⟩ M' hM'm hM'i
   set m : ℝ := ∫ x, M' x ∂P with hmdef
-  have hrem : TendstoInProbabilityConst mu (fun n w ↦ Real.sqrt n * (T n w - theta₀) -
-      (I * Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, S (X i w)) 0 := by
+  have hrem : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt n * (T n w - theta₀) -
+      (I * Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, S (X i w)) atTop (fun _ ↦ 0) := by
+    rw [tendstoInMeasure_iff_measureReal_lt_dist] at hcons hBlim hAlim ⊢
     intro ε hε
     refine tendsto_zero_of_forall_eventually_le (fun n ↦ measureReal_nonneg) fun η hη ↦ ?_
     have hη5 : 0 < η / 5 := by positivity
     obtain ⟨K, hK, hZev⟩ :=
-      exists_measureReal_lt_norm_le_of_tendstoInDistribution mu Z hZm _ hZlim hη5
+      exists_measureReal_lt_norm_le_of_tendstoInDistribution mu Z hZlim hη5
     set κ : ℝ := min (I / 4) (ε * I ^ 2 / (8 * K)) with hκ
     have hκpos : 0 < κ := lt_min (by positivity) (by positivity)
     have hκI : κ ≤ I / 4 := min_le_left _ _
@@ -198,19 +201,18 @@ theorem mle_asymptotic_linearization_and_normality
         gcongr
       _ = η := by ring
   refine ⟨hrem, ?_⟩
-  have hX' : TendstoInDistribution mu (fun n w ↦ I⁻¹ * Z n w)
+  have hX' : TendstoInDistribution (fun (n : ℕ) w ↦ I⁻¹ * Z n w) atTop id (fun _ ↦ mu)
       (gaussianReal 0 (Real.toNNReal I⁻¹)) := by
-    have := tendstoInDistribution_comp_of_continuous mu Z hZm _ (fun x ↦ I⁻¹ * x)
-      (continuous_const.mul continuous_id) hZlim
-    convert this using 1
-    rw [gaussianReal_map_const_mul, mul_zero]
+    refine tendstoInDistribution_of_map_eq (hZlim.continuous_comp (g := fun x ↦ I⁻¹ * x)
+      (continuous_const.mul continuous_id)) aemeasurable_id ?_
+    rw [Measure.map_id, Function.comp_id, gaussianReal_map_const_mul, mul_zero]
     congr 1
     ext
     simp only [NNReal.coe_mul, NNReal.coe_mk, Real.coe_toNNReal _ hI.le,
       Real.coe_toNNReal _ (inv_nonneg.2 hI.le)]
     field_simp
-  refine tendstoInDistribution_of_tendstoInProbabilityConst_sub mu _ _
-    (fun n ↦ (hZm n).const_mul _) (fun n ↦ ((hT n).sub_const _).const_mul _) _ hX' ?_
+  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable mu _ _
+    (fun n ↦ (hZm n).const_mul _) (fun n ↦ ((hT n).sub_const _).const_mul _) hX' ?_
   convert hrem using 3 with n w
   simp only [hZ]
   rw [mul_inv]

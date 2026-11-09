@@ -2,6 +2,8 @@ module
 
 public import CKSD.Nonparametric.Models
 public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
+public import CKSD.Nonparametric.LowerBounds.Testing
+public import CKSD.Nonparametric.LowerBounds.Gaussian
 
 /-!
 # Isotonic regression and penalized model selection
@@ -26,8 +28,10 @@ least-squares selection among countably many linear models with orthogonal-proje
 * `CKSD.existsUnique_isIsotonicRegressionEstimator`: existence and uniqueness of the fit.
 * `CKSD.IsIsotonicRegressionEstimator.sum_mul_sub_nonpos`: the variational inequality.
 * `CKSD.isIsotonicRegressionEstimator_isotonicLeastSquares`: the max–min formula.
-* `CKSD.isotonicGaussianRisk_le`, `CKSD.isotonicGaussianMinimaxRisk_lower_bound`: the
-  `n^{-2/3}` adaptive upper bound and minimax lower bound (stated).
+* `CKSD.isotonicGaussianRisk_le`: the `n^{-2/3}` adaptive upper bound (stated).
+* `CKSD.isotonicGaussianMinimaxRisk_lower_bound`: the matching minimax lower bound, by Assouad's
+  lemma over a hypercube of block-constant monotone vectors, with the Gaussian total variation
+  bound `CKSD.totalVariationDistance_pi_gaussianReal_le`.
 * `CKSD.selectedProjectionRisk_oracle_bound`: the oracle inequality for penalized model
   selection (stated).
 
@@ -340,6 +344,319 @@ theorem isotonicGaussianRisk_le :
           Real.log (Real.exp 1 * n) / n)) := by
   sorry
 
+section IsotonicLowerBound
+
+open InformationTheory Real
+
+/-- The block of indices `i < m³` with `i / m² = j` has exactly `m²` elements. -/
+private theorem card_block {n m : ℕ} (hmn : m ^ 3 ≤ n) (j : Fin m) :
+    (Finset.univ.filter fun i : Fin n ↦ i.val < m ^ 3 ∧ i.val / m ^ 2 = j.val).card = m ^ 2 := by
+  have hm : 0 < m := j.pos
+  have hm2 : 0 < m ^ 2 := by positivity
+  rw [Finset.card_filter, Fin.sum_univ_eq_sum_range
+    (fun i ↦ if i < m ^ 3 ∧ i / m ^ 2 = j.val then 1 else 0) n, ← Finset.card_filter]
+  have hj : (j.val + 1) * m ^ 2 ≤ m ^ 3 := by
+    calc (j.val + 1) * m ^ 2 ≤ m * m ^ 2 := Nat.mul_le_mul_right _ j.isLt
+      _ = m ^ 3 := by ring
+  have : (Finset.range n).filter (fun i ↦ i < m ^ 3 ∧ i / m ^ 2 = j.val) =
+      Finset.Ico (j.val * m ^ 2) ((j.val + 1) * m ^ 2) := by
+    ext k
+    simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
+    rw [Nat.eq_iff_le_and_ge, Nat.le_div_iff_mul_le hm2, ← Nat.lt_succ_iff,
+      Nat.div_lt_iff_lt_mul hm2]
+    constructor
+    · rintro ⟨-, -, h1, h2⟩; exact ⟨h2, h1⟩
+    · rintro ⟨h1, h2⟩; exact ⟨by omega, by omega, h2, h1⟩
+  rw [this, Nat.card_Ico]
+  rw [add_mul, one_mul]; omega
+
+/-- An index below `m³` lies in one of the `m` blocks of length `m²`. -/
+private theorem div_sq_lt_of_lt_cube {m i : ℕ} (h : i < m ^ 3) : i / m ^ 2 < m := by
+  have hm : 0 < m := by
+    rcases Nat.eq_zero_or_pos m with rfl | hm
+    · simp at h
+    · exact hm
+  rw [Nat.div_lt_iff_lt_mul (by positivity)]
+  calc i < m ^ 3 := h
+    _ = m * m ^ 2 := by ring
+
+/-- The level `-1 + (2j + b) / m` of block `j` of the isotonic lower-bound construction, with
+the binary perturbation `b`. -/
+private def isoLevel (m : ℕ) (j : ℕ) (b : Bool) : ℝ :=
+  -1 + (2 * (j : ℝ) + (if b then 1 else 0)) / m
+
+/-- The nondecreasing vector of the isotonic lower-bound hypercube indexed by `w ∈ {0,1}^m`:
+constant `isoLevel m j (w j)` on the `j`-th block of length `m²`, and `1` beyond `m³`. -/
+private def isoVertex (n m : ℕ) (w : Fin m → Bool) (i : Fin n) : ℝ :=
+  if h : i.val < m ^ 3 then isoLevel m (i.val / m ^ 2) (w ⟨i.val / m ^ 2, div_sq_lt_of_lt_cube h⟩)
+  else 1
+
+/-- Levels of distinct blocks are ordered as the blocks, whatever the perturbations. -/
+private theorem isoLevel_le_isoLevel {m j j' : ℕ} (hm : 0 < m) (hj : j < j') (b b' : Bool) :
+    isoLevel m j b ≤ isoLevel m j' b' := by
+  unfold isoLevel
+  have hjj : (j : ℝ) + 1 ≤ j' := by exact_mod_cast hj
+  have : (2 * (j : ℝ) + (if b then 1 else 0)) ≤ 2 * (j' : ℝ) + (if b' then 1 else 0) := by
+    split_ifs <;> linarith
+  have hmR : (0 : ℝ) < m := by exact_mod_cast hm
+  linarith [div_le_div_of_nonneg_right this hmR.le]
+
+/-- Block levels are at most `1`. -/
+private theorem isoLevel_le_one {m j : ℕ} (hj : j < m) (b : Bool) : isoLevel m j b ≤ 1 := by
+  unfold isoLevel
+  have hm : (0 : ℝ) < m := by exact_mod_cast (Nat.zero_lt_of_lt hj)
+  have hjj : (j : ℝ) + 1 ≤ m := by exact_mod_cast hj
+  have : (2 * (j : ℝ) + (if b then 1 else 0)) / m ≤ 2 := by
+    rw [div_le_iff₀ hm]; split_ifs <;> linarith
+  linarith
+
+/-- Block levels are at least `-1`. -/
+private theorem neg_one_le_isoLevel (m j : ℕ) (b : Bool) : -1 ≤ isoLevel m j b := by
+  unfold isoLevel
+  have : 0 ≤ (2 * (j : ℝ) + (if b then 1 else 0)) / m := by
+    apply div_nonneg _ (Nat.cast_nonneg _); split_ifs <;> positivity
+  linarith
+
+/-- Every vertex of the isotonic lower-bound hypercube is nondecreasing. -/
+private theorem monotone_isoVertex (n m : ℕ) (w : Fin m → Bool) : Monotone (isoVertex n m w) := by
+  intro i i' hii
+  unfold isoVertex
+  by_cases h' : i'.val < m ^ 3
+  · have h : i.val < m ^ 3 := lt_of_le_of_lt hii h'
+    simp only [h, h', ↓reduceDIte]
+    have hm : 0 < m := Nat.zero_lt_of_lt (div_sq_lt_of_lt_cube h)
+    have hdiv : i.val / m ^ 2 ≤ i'.val / m ^ 2 := Nat.div_le_div_right hii
+    rcases hdiv.lt_or_eq with hlt | heq
+    · exact isoLevel_le_isoLevel hm hlt _ _
+    · have : (⟨i.val / m ^ 2, div_sq_lt_of_lt_cube h⟩ : Fin m) =
+          ⟨i'.val / m ^ 2, div_sq_lt_of_lt_cube h'⟩ := Fin.ext heq
+      rw [this, heq]
+  · simp only [h', ↓reduceDIte]
+    split_ifs with h
+    · exact isoLevel_le_one (div_sq_lt_of_lt_cube h) _
+    · exact le_rfl
+
+/-- Every vertex of the isotonic lower-bound hypercube has entries in `[-1, 1]`. -/
+private theorem abs_isoVertex_le (n m : ℕ) (w : Fin m → Bool) (i : Fin n) :
+    |isoVertex n m w i| ≤ 1 := by
+  unfold isoVertex
+  split_ifs with h
+  · exact abs_le.mpr ⟨neg_one_le_isoLevel _ _ _, isoLevel_le_one (div_sq_lt_of_lt_cube h) _⟩
+  · simp
+
+/-- The `j`-th block of indices, `{i < m³ | i / m² = j}`. -/
+private def isoBlock (n m : ℕ) (j : Fin m) : Finset (Fin n) :=
+  Finset.univ.filter fun i : Fin n ↦ i.val < m ^ 3 ∧ i.val / m ^ 2 = j.val
+
+/-- On the `j`-th block a vertex takes the value `isoLevel m j (w j)`. -/
+private theorem isoVertex_of_mem_isoBlock {n m : ℕ} (w : Fin m → Bool) {j : Fin m} {i : Fin n}
+    (hi : i ∈ isoBlock n m j) : isoVertex n m w i = isoLevel m j (w j) := by
+  simp only [isoBlock, Finset.mem_filter, Finset.mem_univ, true_and] at hi
+  simp only [isoVertex, hi.1, ↓reduceDIte, hi.2]
+
+/-- The two perturbations of a block level differ by at most `1 / m`. -/
+private theorem isoLevel_sub_isoLevel_sq_le (m j : ℕ) (b b' : Bool) :
+    (isoLevel m j b' - isoLevel m j b) ^ 2 ≤ 1 / (m : ℝ) ^ 2 := by
+  unfold isoLevel
+  rcases Nat.eq_zero_or_pos m with rfl | hm
+  · simp
+  have hmR : (0 : ℝ) < m := by exact_mod_cast hm
+  rw [show -1 + (2 * (j : ℝ) + (if b' then 1 else 0)) / m - (-1 + (2 * (j : ℝ) +
+    (if b then 1 else 0)) / m) = ((if b' then 1 else 0) - (if b then 1 else 0)) / m by
+    field_simp; ring, div_pow]
+  apply div_le_div_of_nonneg_right _ (by positivity)
+  split_ifs <;> norm_num
+
+/-- Neighbouring vertices of the hypercube are at squared Euclidean distance at most `1`. -/
+private theorem sum_sq_isoVertex_sub_le {n m : ℕ} (hmn : m ^ 3 ≤ n) (w w' : Fin m → Bool)
+    (hww : hammingDist w w' = 1) :
+    ∑ i, (isoVertex n m w' i - isoVertex n m w i) ^ 2 ≤ 1 := by
+  obtain ⟨j₀, hj₀⟩ := Finset.card_eq_one.mp hww
+  have hdiff : ∀ j, j ≠ j₀ → w j = w' j := by
+    intro j hj
+    by_contra h
+    have : j ∈ (Finset.univ.filter fun i ↦ w i ≠ w' i) := by simp [h]
+    rw [show (Finset.univ.filter fun i ↦ w i ≠ w' i) = {j₀} from hj₀] at this
+    exact hj (Finset.mem_singleton.mp this)
+  have hpt : ∀ i : Fin n, (isoVertex n m w' i - isoVertex n m w i) ^ 2 ≤
+      if i ∈ isoBlock n m j₀ then 1 / (m : ℝ) ^ 2 else 0 := by
+    intro i
+    by_cases h : i.val < m ^ 3
+    · set j : Fin m := ⟨i.val / m ^ 2, div_sq_lt_of_lt_cube h⟩
+      have hij : i ∈ isoBlock n m j := by simp [isoBlock, h, j]
+      rw [isoVertex_of_mem_isoBlock w hij, isoVertex_of_mem_isoBlock w' hij]
+      by_cases hj : j = j₀
+      · simp only [← hj, hij, ↓reduceIte]; exact isoLevel_sub_isoLevel_sq_le _ _ _ _
+      · have : i ∉ isoBlock n m j₀ := by
+          intro h'
+          simp only [isoBlock, Finset.mem_filter, Finset.mem_univ, true_and] at h'
+          exact hj (Fin.ext h'.2)
+        simp only [this, ↓reduceIte, hdiff j hj]; simp
+    · have : i ∉ isoBlock n m j₀ := by simp [isoBlock, h]
+      simp [isoVertex, h, this]
+  refine (Finset.sum_le_sum fun i _ ↦ hpt i).trans (le_of_eq ?_)
+  rw [Finset.sum_ite_mem, Finset.univ_inter, Finset.sum_const, nsmul_eq_mul, isoBlock,
+    card_block hmn]
+  have hm : (0 : ℝ) < m := by exact_mod_cast j₀.pos
+  push_cast
+  field_simp
+
+/-- The hypercube vertex decoded from a vector `t`: on each block, the nearer of the two levels
+in squared distance. -/
+private def isoDecode (n m : ℕ) (t : Fin n → ℝ) (j : Fin m) : Bool :=
+  decide (∑ i ∈ isoBlock n m j, (t i - isoLevel m j true) ^ 2 <
+    ∑ i ∈ isoBlock n m j, (t i - isoLevel m j false) ^ 2)
+
+/-- A wrongly decoded block contributes at least `1 / 4` to the squared loss. -/
+private theorem le_sum_isoBlock {n m : ℕ} (hmn : m ^ 3 ≤ n) (t : Fin n → ℝ) (w : Fin m → Bool)
+    (j : Fin m) :
+    (if isoDecode n m t j ≠ w j then (1 / 4 : ℝ) else 0) ≤
+      ∑ i ∈ isoBlock n m j, (t i - isoVertex n m w i) ^ 2 := by
+  rw [Finset.sum_congr rfl fun i hi ↦ by rw [isoVertex_of_mem_isoBlock w hi]]
+  set A := ∑ i ∈ isoBlock n m j, (t i - isoLevel m j true) ^ 2
+  set Z := ∑ i ∈ isoBlock n m j, (t i - isoLevel m j false) ^ 2
+  have hA : 0 ≤ A := Finset.sum_nonneg fun _ _ ↦ sq_nonneg _
+  have hZ : 0 ≤ Z := Finset.sum_nonneg fun _ _ ↦ sq_nonneg _
+  have hm : (0 : ℝ) < m := by exact_mod_cast j.pos
+  have hlev : (isoLevel m j true - isoLevel m j false) ^ 2 = 1 / (m : ℝ) ^ 2 := by
+    unfold isoLevel; simp only [↓reduceIte, Bool.false_eq_true]; field_simp; ring
+  have hsum : (1 : ℝ) ≤ 2 * A + 2 * Z := by
+    have : ∑ i ∈ isoBlock n m j, (isoLevel m j true - isoLevel m j false) ^ 2 = 1 := by
+      rw [Finset.sum_const, nsmul_eq_mul, isoBlock, card_block hmn, hlev]
+      push_cast; field_simp
+    have h2 : ∑ i ∈ isoBlock n m j, (isoLevel m j true - isoLevel m j false) ^ 2 ≤
+        ∑ i ∈ isoBlock n m j, (2 * (t i - isoLevel m j true) ^ 2 +
+          2 * (t i - isoLevel m j false) ^ 2) :=
+      Finset.sum_le_sum fun i _ ↦ by nlinarith [sq_nonneg (t i - isoLevel m j true +
+        (t i - isoLevel m j false))]
+    rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.mul_sum, this] at h2
+    exact h2
+  by_cases hAZ : A < Z
+  · have hd : isoDecode n m t j = true := decide_eq_true hAZ
+    rw [hd]
+    cases w j
+    · simp only [ne_eq, Bool.true_eq_false, not_false_eq_true, ↓reduceIte]; linarith
+    · simp only [ne_eq, not_true_eq_false, ↓reduceIte]; exact hA
+  · have hd : isoDecode n m t j = false := decide_eq_false hAZ
+    rw [hd]
+    cases w j
+    · simp only [ne_eq, not_true_eq_false, ↓reduceIte]; exact hZ
+    · simp only [ne_eq, Bool.false_eq_true, not_false_eq_true, ↓reduceIte]; linarith
+
+/-- The squared loss of `t` at a vertex `w` dominates a quarter of the Hamming distance
+between the decoded vertex and `w`. -/
+private theorem hammingDist_isoDecode_div_four_le {n m : ℕ} (hmn : m ^ 3 ≤ n) (t : Fin n → ℝ)
+    (w : Fin m → Bool) :
+    (hammingDist (isoDecode n m t) w : ℝ) / 4 ≤ ∑ i, (t i - isoVertex n m w i) ^ 2 := by
+  have hdisj : ((Finset.univ : Finset (Fin m)) : Set (Fin m)).PairwiseDisjoint (isoBlock n m) := by
+    intro j _ j' _ hjj
+    rw [Function.onFun, Finset.disjoint_left]
+    intro i hi hi'
+    simp only [isoBlock, Finset.mem_filter, Finset.mem_univ, true_and] at hi hi'
+    exact hjj (Fin.ext (hi.2.symm.trans hi'.2))
+  have hham : (hammingDist (isoDecode n m t) w : ℝ) / 4 =
+      ∑ j, (if isoDecode n m t j ≠ w j then (1 / 4 : ℝ) else 0) := by
+    rw [hammingDist, Finset.card_filter, Nat.cast_sum, Finset.sum_div]
+    refine Finset.sum_congr rfl fun j _ ↦ ?_
+    split_ifs <;> norm_num
+  rw [hham]
+  calc ∑ j, (if isoDecode n m t j ≠ w j then (1 / 4 : ℝ) else 0)
+      ≤ ∑ j, ∑ i ∈ isoBlock n m j, (t i - isoVertex n m w i) ^ 2 :=
+        Finset.sum_le_sum fun j _ ↦ le_sum_isoBlock hmn t w j
+    _ = ∑ i ∈ Finset.univ.biUnion (isoBlock n m), (t i - isoVertex n m w i) ^ 2 :=
+        (Finset.sum_biUnion hdisj).symm
+    _ ≤ ∑ i, (t i - isoVertex n m w i) ^ 2 :=
+        Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
+          fun _ _ _ ↦ sq_nonneg _
+
+/-- The decoding map is measurable. -/
+private theorem measurable_isoDecode (n m : ℕ) : Measurable (isoDecode n m) := by
+  rw [measurable_pi_iff]
+  intro j
+  apply measurable_to_bool
+  show MeasurableSet {t | isoDecode n m t j = true}
+  simp only [isoDecode, decide_eq_true_eq]
+  exact measurableSet_lt (by fun_prop) (by fun_prop)
+
+/-- Assouad's bound for isotonic regression: with `m³ ≤ n`, every measurable estimator has
+worst-case risk at least `m / (16 n)` on the bounded monotone class. -/
+private theorem ofReal_le_iSup_isotonicGaussianRisk {n m : ℕ} (hm : 1 ≤ m) (hmn : m ^ 3 ≤ n)
+    (T : (Fin n → ℝ) → (Fin n → ℝ)) (hT : Measurable T) :
+    ENNReal.ofReal (m / (16 * n)) ≤ ⨆ θ : isotonicUnitBall n, isotonicGaussianRisk θ.val T := by
+  have hn : (0 : ℝ) < n := by
+    have : 1 ≤ m ^ 3 := Nat.one_le_pow _ _ hm
+    exact_mod_cast (lt_of_lt_of_le this hmn)
+  set P : (Fin m → Bool) → Measure (Fin n → ℝ) :=
+    fun w ↦ Measure.pi fun i ↦ gaussianReal (isoVertex n m w i) 1 with hP
+  have hnear : ∀ w w', hammingDist w w' = 1 → totalVariationDistance (P w) (P w') ≤ 1 / 2 := by
+    intro w w' hww
+    refine (totalVariationDistance_pi_gaussianReal_le _ _ one_ne_zero).trans ?_
+    rw [show (1 / 2 : ℝ) = Real.sqrt (1 / 4) by
+      rw [show (1 / 4 : ℝ) = (1 / 2) ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]]
+    apply Real.sqrt_le_sqrt
+    have := sum_sq_isoVertex_sub_le hmn w w' hww
+    push_cast
+    linarith
+  set D : (Fin n → ℝ) → (Fin m → Bool) := fun y ↦ isoDecode n m (T y)
+  have hD : Measurable D := (measurable_isoDecode n m).comp hT
+  have hA := mul_one_sub_div_two_le_sSup_integral_hammingDist m P (1 / 2) hnear D hD
+  obtain ⟨w₀, hw₀⟩ := (Set.range_nonempty fun w ↦ ∫ x, (hammingDist (D x) w : ℝ) ∂P w).csSup_mem
+    (Set.finite_range _)
+  rw [← hw₀] at hA
+  set θ : Fin n → ℝ := isoVertex n m w₀
+  have hθ : θ ∈ isotonicUnitBall n := ⟨monotone_isoVertex n m w₀, abs_isoVertex_le n m w₀⟩
+  refine le_trans ?_ (le_iSup (fun θ : isotonicUnitBall n ↦ isotonicGaussianRisk θ.val T)
+    ⟨θ, hθ⟩)
+  have hint : Integrable (fun x ↦ (hammingDist (D x) w₀ : ℝ) / (4 * n)) (P w₀) := by
+    refine Integrable.of_bound (C := m / (4 * n)) ?_ (Filter.Eventually.of_forall fun x ↦ ?_)
+    · exact (((measurable_of_countable (fun v ↦ (hammingDist v w₀ : ℝ))).comp hD)
+        |>.div_const _).aestronglyMeasurable
+    · rw [Real.norm_eq_abs, abs_of_nonneg (by positivity)]
+      apply div_le_div_of_nonneg_right _ (by positivity)
+      exact_mod_cast hammingDist_le_card_fintype.trans (by simp)
+  calc ENNReal.ofReal (m / (16 * n))
+      ≤ ENNReal.ofReal (∫ x, (hammingDist (D x) w₀ : ℝ) / (4 * n) ∂P w₀) := by
+        apply ENNReal.ofReal_le_ofReal
+        rw [integral_div]
+        rw [le_div_iff₀ (by positivity)]
+        have : (m : ℝ) / (16 * n) * (4 * n) = m * (1 - 1 / 2) / 2 := by field_simp; ring
+        rw [this]; exact hA
+    _ = ∫⁻ x, ENNReal.ofReal ((hammingDist (D x) w₀ : ℝ) / (4 * n)) ∂P w₀ :=
+        ofReal_integral_eq_lintegral_ofReal hint (Filter.Eventually.of_forall fun _ ↦ by positivity)
+    _ ≤ isotonicGaussianRisk θ T := by
+        unfold isotonicGaussianRisk
+        refine lintegral_mono fun y ↦ ENNReal.ofReal_le_ofReal ?_
+        rw [div_le_div_iff₀ (by positivity) hn]
+        have := hammingDist_isoDecode_div_four_le hmn (T y) w₀
+        have h4 : (hammingDist (D y) w₀ : ℝ) * n = (hammingDist (D y) w₀ : ℝ) / 4 * (4 * n) := by
+          ring
+        rw [h4]
+        exact mul_le_mul_of_nonneg_right this (by positivity) |>.trans_eq (by ring)
+
+/-- If `n < (m + 1)³` then `n^(-2/3) / 32 ≤ m / (16 n)`. -/
+private theorem rpow_neg_two_thirds_le {n m : ℕ} (hn : 0 < n) (hm : 1 ≤ m) (hlt : n < (m + 1) ^ 3) :
+    (1 / 32) * Real.rpow (n : ℝ) (-2 / 3 : ℝ) ≤ m / (16 * n) := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hcube : ((n : ℝ) ^ (1 / 3 : ℝ)) ^ (3 : ℕ) = n := by
+    rw [← Real.rpow_natCast, ← Real.rpow_mul hnR.le]; norm_num
+  have hroot : (n : ℝ) ^ (1 / 3 : ℝ) < m + 1 := by
+    by_contra h
+    push Not at h
+    have := pow_le_pow_left₀ (by positivity) h 3
+    rw [hcube] at this
+    have : ((m + 1 : ℕ) : ℝ) ^ 3 ≤ n := by push_cast; linarith
+    exact absurd (by exact_mod_cast this : (m + 1) ^ 3 ≤ n) (not_le.mpr hlt)
+  have hsplit : Real.rpow (n : ℝ) (-2 / 3 : ℝ) = (n : ℝ) ^ (1 / 3 : ℝ) / n := by
+    rw [Real.rpow_eq_pow, show (-2 / 3 : ℝ) = 1 / 3 + (-1 : ℤ) by norm_num,
+      Real.rpow_add hnR, Real.rpow_intCast, zpow_neg_one, ← div_eq_mul_inv]
+  have hmR : (1 : ℝ) ≤ m := by exact_mod_cast hm
+  rw [hsplit, show 1 / 32 * ((n : ℝ) ^ (1 / 3 : ℝ) / n) = ((n : ℝ) ^ (1 / 3 : ℝ) / 2) /
+    (16 * n) by field_simp; ring]
+  apply div_le_div_of_nonneg_right _ (by positivity)
+  linarith
+
+end IsotonicLowerBound
+
 /-- GAPS 103.27: no estimator improves the Gaussian bounded-isotonic minimax rate. There is a
 universal `c > 0` such that the minimax risk `inf_T sup_θ E[n⁻¹ ‖T(y) - θ‖²]`, over measurable
 estimators and nondecreasing `θ` with `|θᵢ| ≤ 1`, is at least `c n^{-2/3}`. -/
@@ -347,7 +664,20 @@ theorem isotonicGaussianMinimaxRisk_lower_bound :
     ∃ c > (0 : ℝ), ∀ n : ℕ, 0 < n →
       ENNReal.ofReal (c * Real.rpow (n : ℝ) (-2 / 3 : ℝ)) ≤
         isotonicGaussianMinimaxRisk n := by
-  sorry
+  refine ⟨1 / 32, by norm_num, fun n hn ↦ ?_⟩
+  set m := Nat.findGreatest (fun k ↦ k ^ 3 ≤ n) n
+  have hm : 1 ≤ m := Nat.le_findGreatest hn (by simpa using Nat.one_le_iff_ne_zero.mpr hn.ne')
+  have hmn : m ^ 3 ≤ n := Nat.findGreatest_spec (P := fun k ↦ k ^ 3 ≤ n) (m := 1) hn
+    (by simpa using Nat.one_le_iff_ne_zero.mpr hn.ne')
+  have hlt : n < (m + 1) ^ 3 := by
+    by_contra h
+    push Not at h
+    have hle : m + 1 ≤ n := le_trans (Nat.le_self_pow (by norm_num) _) h
+    exact Nat.findGreatest_is_greatest (Nat.lt_succ_self m) hle h
+  unfold isotonicGaussianMinimaxRisk
+  refine le_iInf fun T ↦ ?_
+  exact (ENNReal.ofReal_le_ofReal (rpow_neg_two_thirds_le hn hm hlt)).trans
+    (ofReal_le_iSup_isotonicGaussianRisk hm hmn T.val T.property)
 
 /-- Orthogonal least-squares fit within a selected linear model. -/
 def projectionModelFit {M : Type*} {n : ℕ}

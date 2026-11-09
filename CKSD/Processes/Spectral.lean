@@ -103,9 +103,10 @@ theorem tendstoInDistribution_periodogram_div_spectralDensity {Ω : Type*} [Meas
     (hZ : IsIIDNoise μ Z σsq) (ψ : ℤ → ℝ) (hψ : Summable fun j ↦ |ψ j|)
     (m : ℕ) (x : Fin m → ℝ) (hx : StrictMono x) (hx0 : ∀ j, 0 < x j)
     (hxπ : ∀ j, x j < Real.pi) (hf : ∀ j, 0 < linearProcessSpectralDensity σsq ψ (x j)) :
-    TendstoInDistribution μ (fun n ω ↦ WithLp.toLp 2 fun j : Fin m ↦
+    haveI := isProbabilityMeasure_expMeasure (r := 1) zero_lt_one
+    TendstoInDistribution (fun (n : ℕ) ω ↦ WithLp.toLp 2 fun j : Fin m ↦
       periodogram (fun t ↦ linearProcess ψ Z t) n ω (nearestFourierFrequency n (x j)) /
-        linearProcessSpectralDensity σsq ψ (x j))
+        linearProcessSpectralDensity σsq ψ (x j)) atTop id (fun _ ↦ μ)
       ((Measure.pi fun _ : Fin m ↦ expMeasure 1).map (WithLp.toLp 2)) := by
   sorry
 
@@ -125,7 +126,7 @@ theorem tendsto_lagWindowEstimator_moments {Ω : Type*} [MeasurableSpace Ω]
     let f := linearProcessSpectralDensity σsq ψ x
     let c : ℝ := if x = 0 ∨ x = Real.pi then 2 else 1
     Tendsto (fun n ↦ ∫ ω, lagWindowEstimator X w (r n) n ω x ∂μ) atTop (𝓝 f) ∧
-      Tendsto (fun n : ℕ ↦ (n : ℝ) / r n * variance μ (fun ω ↦ lagWindowEstimator X w (r n) n ω x))
+      Tendsto (fun n : ℕ ↦ (n : ℝ) / r n * Var[fun ω ↦ lagWindowEstimator X w (r n) n ω x; μ])
         atTop (𝓝 (c * f ^ 2 * ∫ u in (-1 : ℝ)..1, w u ^ 2)) ∧
       Tendsto (fun n ↦ ∫ ω, (lagWindowEstimator X w (r n) n ω x - f) ^ 2 ∂μ) atTop (𝓝 0) := by
   sorry
@@ -216,7 +217,7 @@ theorem tendsto_whittleEstimator {Ω : Type*} [MeasurableSpace Ω]
     (∀ᵐ ω ∂μ, Tendsto (fun n ↦ βhat n ω) atTop (𝓝 β)) ∧
       (∀ᵐ ω ∂μ, Tendsto (fun n ↦ 2 * Real.pi * whittleObjective (fun t ↦ X t) n (βhat n ω) ω)
         atTop (𝓝 σsq)) ∧
-      TendstoInDistribution μ (fun n ω ↦ Real.sqrt n • (βhat n ω - β))
+      TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n • (βhat n ω - β)) atTop id (fun _ ↦ μ)
         (multivariateGaussian 0 (armaAsymptoticInformation β)⁻¹) := by
   sorry
 

@@ -1,6 +1,6 @@
 module
 
-public import CKSD.Inference.Moments
+public import CKSD.Inference.Basic
 public import CKSD.Inference.Model
 public import CKSD.Inference.Sufficiency
 public import Mathlib.Algebra.QuadraticDiscriminant
@@ -164,7 +164,7 @@ theorem sq_div_information_le_variance (P : Measure X) [IsProbabilityMeasure P]
     (g' : ℝ)
     (hcross : (∫ x, (W x - ∫ y, W y ∂P) * score x ∂P) = g')
     (hI : 0 < ∫ x, score x ^ 2 ∂P) :
-    g' ^ 2 / (∫ x, score x ^ 2 ∂P) ≤ variance P W := by
+    g' ^ 2 / (∫ x, score x ^ 2 ∂P) ≤ Var[W; P] := by
   let c := ∫ x, W x ∂P
   let a := g' / (∫ x, score x ^ 2 ∂P)
   have hWc : MemLp (fun x ↦ W x - c) 2 P := hW.sub (memLp_const c)
@@ -172,7 +172,7 @@ theorem sq_div_information_le_variance (P : Measure X) [IsProbabilityMeasure P]
   have hnonneg : 0 ≤ ∫ x, ((W x - c) - a * score x) ^ 2 ∂P :=
     integral_nonneg fun _ ↦ sq_nonneg _
   have hexpand : (∫ x, ((W x - c) - a * score x) ^ 2 ∂P) =
-      variance P W - 2 * a * g' + a ^ 2 * (∫ x, score x ^ 2 ∂P) := by
+      Var[W; P] - 2 * a * g' + a ^ 2 * (∫ x, score x ^ 2 ∂P) := by
     have heq : (fun x ↦ ((W x - c) - a * score x) ^ 2) =
         (fun x ↦ ((W x - c) ^ 2 - (2 * a) * ((W x - c) * score x)) +
           a ^ 2 * score x ^ 2) := by funext x; ring
@@ -182,10 +182,9 @@ theorem sq_div_information_le_variance (P : Measure X) [IsProbabilityMeasure P]
     have hadd := integral_add (hWc.integrable_sq.sub hlin) hsq
     have hsub := integral_sub hWc.integrable_sq hlin
     simp only [Pi.sub_apply] at hadd hsub
-    rw [heq, hadd, hsub]
+    rw [variance_eq_integral hW.aemeasurable, heq, hadd, hsub]
     simp only [integral_const_mul]
     rw [show (∫ x, (W x - c) * score x ∂P) = g' from hcross]
-    rfl
   rw [hexpand] at hnonneg
   have ha : a * (∫ x, score x ^ 2 ∂P) = g' := div_mul_cancel₀ _ hI.ne'
   have ha2 : a ^ 2 * (∫ x, score x ^ 2 ∂P) = a * g' := by
@@ -194,7 +193,7 @@ theorem sq_div_information_le_variance (P : Measure X) [IsProbabilityMeasure P]
       _ = a * g' := by rw [ha]
   calc
     g' ^ 2 / (∫ x, score x ^ 2 ∂P) = a * g' := by dsimp [a]; ring
-    _ ≤ variance P W := by rw [ha2] at hnonneg; linarith
+    _ ≤ Var[W; P] := by rw [ha2] at hnonneg; linarith
 
 /-- GAPS 101.12: the covariance characterization of uniformly minimum variance unbiased
 estimators. A square-integrable unbiased estimator `W` of `g` is UMVU if and only if it is
@@ -205,14 +204,14 @@ theorem isMinimumVarianceUnbiasedEstimator_iff_covariance_eq_zero
     (hW2 : ∀ θ, MemLp W 2 (P θ)) :
     IsMinimumVarianceUnbiasedEstimator P W g ↔
     (∀ U, IsUnbiasedEstimator P U (fun _ ↦ 0) → (∀ θ, MemLp U 2 (P θ)) →
-      ∀ θ, covariance (P θ) W U = 0) := by
+      ∀ θ, cov[W, U; P θ] = 0) := by
   refine ⟨fun h ↦ ?_, fun h ↦ ⟨hW, hW2, ?_⟩⟩
   · have hmin := h.2.2
     intro U hU hU2 θ
     have := hP θ
     have hquad (a : ℝ) :
         0 ≤ ProbabilityTheory.variance U (P θ) * (a * a) +
-          (2 * covariance (P θ) W U) * a + 0 := by
+          (2 * cov[W, U; P θ]) * a + 0 := by
       have hWa : IsUnbiasedEstimator P (fun x ↦ W x + a * U x) g := by
         refine ⟨hW.1.add (measurable_const.mul hU.1), fun t ↦ ?_⟩
         refine ⟨(hW.2 t).1.add ((hU.2 t).1.const_mul a), ?_⟩
@@ -221,15 +220,13 @@ theorem isMinimumVarianceUnbiasedEstimator_iff_covariance_eq_zero
       have hWa2 (t : Θ) : MemLp (fun x ↦ W x + a * U x) 2 (P t) :=
         (hW2 t).add ((hU2 t).const_mul a)
       have h := hmin _ hWa hWa2 θ
-      rw [variance_eq_mathlib _ _ (hW2 θ).aemeasurable,
-        variance_eq_mathlib _ _ (hWa2 θ).aemeasurable,
-        ProbabilityTheory.variance_fun_add (hW2 θ) ((hU2 θ).const_mul a),
+      rw [ProbabilityTheory.variance_fun_add (hW2 θ) ((hU2 θ).const_mul a),
         ProbabilityTheory.covariance_const_mul_right,
         ProbabilityTheory.variance_const_mul] at h
       nlinarith
     have hd := discrim_le_zero hquad
     simp only [discrim, mul_zero, sub_zero] at hd
-    nlinarith [sq_nonneg (covariance (P θ) W U)]
+    nlinarith [sq_nonneg (cov[W, U; P θ])]
   · have hcov := h
     intro W' hW' hW'2 θ
     have := hP θ
@@ -248,8 +245,7 @@ theorem isMinimumVarianceUnbiasedEstimator_iff_covariance_eq_zero
       dsimp [U]
       ring
     rw [hid, hzero, mul_zero, add_zero] at hadd
-    rw [variance_eq_mathlib _ _ (hW2 θ).aemeasurable,
-      variance_eq_mathlib _ _ (hW'2 θ).aemeasurable, hadd]
+    rw [hadd]
     exact le_add_of_nonneg_right (ProbabilityTheory.variance_nonneg U (P θ))
 
 

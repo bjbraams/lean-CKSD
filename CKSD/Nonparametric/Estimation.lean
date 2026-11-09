@@ -71,9 +71,9 @@ theorem tendstoInDistribution_kernelDensityEstimator {Ω : Type*} [MeasurableSpa
     (hnh : Tendsto (fun n : ℕ ↦ (n : ℝ) * h n) atTop atTop)
     (hnh5 : ∃ C, ∀ᶠ n : ℕ in atTop, (n : ℝ) * h n ^ 5 ≤ C)
     (t : ℝ) (ht : 0 < f t) :
-    TendstoInDistribution μ (fun n ω ↦ Real.sqrt ((n : ℝ) * h n) *
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt ((n : ℝ) * h n) *
       (kernelDensityEstimator X K h n ω t - f t - h n ^ 2 / 2 *
-        (∫ u, u ^ 2 * K u) * deriv (deriv f) t))
+        (∫ u, u ^ 2 * K u) * deriv (deriv f) t)) atTop id (fun _ ↦ μ)
       (gaussianReal 0 (Real.toNNReal ((∫ u, K u ^ 2) * f t))) := by
   sorry
 
@@ -186,7 +186,7 @@ private theorem integral_and_variance_linearRankStatistic (n : ℕ) (hn : 2 ≤ 
     let cbar := (∑ i, c i) / n;
     let T := linearRankStatistic a c;
     (∫ σ, T σ ∂P) = (n : ℝ) * abar * cbar ∧
-      variance P T = (∑ i, (c i - cbar) ^ 2) *
+      Var[T; P] = (∑ i, (c i - cbar) ^ 2) *
         (∑ i, (a i - abar) ^ 2) / (n - 1 : ℕ) := by
   intro P abar cbar T
   have : MeasurableSingletonClass (Equiv.Perm (Fin n)) :=
@@ -257,8 +257,8 @@ private theorem integral_and_variance_linearRankStatistic (n : ℕ) (hn : 2 ≤ 
       rw [Finset.sum_mul]; simp only [sq]
     rw [h1, h2]
     ring
-  have hvar : variance P T = (n.factorial : ℝ)⁻¹ * ∑ σ, T σ ^ 2 - (A * C / n) ^ 2 := by
-    unfold variance
+  have hvar : Var[T; P] = (n.factorial : ℝ)⁻¹ * ∑ σ, T σ ^ 2 - (A * C / n) ^ 2 := by
+    rw [variance_eq_integral (measurable_of_countable T).aemeasurable]
     rw [hmean, hint]
     have hexp : ∀ σ, (T σ - A * C / n) ^ 2 =
         T σ ^ 2 - 2 * (A * C / n) * T σ + (A * C / n) ^ 2 := fun σ ↦ by ring
@@ -302,7 +302,7 @@ theorem integral_linearRankStatistic (n : ℕ) (hn : 2 ≤ n) (a c : Fin n → �
 /-- GAPS 103.14: the variance of a linear rank statistic under uniform ranks,
 `Var T_N = (N - 1)⁻¹ ∑ᵢ (cᵢ - c̄)² ∑ᵢ (a(i) - ā)²`. -/
 theorem variance_linearRankStatistic (n : ℕ) (hn : 2 ≤ n) (a c : Fin n → ℝ) :
-    variance (uniformPermMeasure n) (linearRankStatistic a c) =
+    Var[linearRankStatistic a c; uniformPermMeasure n] =
       (∑ i, (c i - (∑ i, c i) / n) ^ 2) * (∑ i, (a i - (∑ i, a i) / n) ^ 2) / (n - 1 : ℕ) :=
   (integral_and_variance_linearRankStatistic n hn a c).2
 

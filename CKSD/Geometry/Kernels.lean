@@ -8,12 +8,13 @@ public import Mathlib.MeasureTheory.Measure.FiniteMeasureProd
 public import Mathlib.MeasureTheory.Measure.Prokhorov
 public import TauCeti.Analysis.PositiveDefinite.Kernel.MeanEmbedding
 public import TauCeti.Probability.Moments.Covariance
+public import CKSD.Asymptotics.MultivariateCLT
 
 /-!
-# Kernel discrepancies: MMD, energy distance, HSIC, Stein identities, random features
+# Kernel discrepancies: MMD, energy distance, HSIC, Stein identities
 
 Statements about the squared maximum mean discrepancy `CKSD.squaredMMD` and the kernels built
-from distances, together with random Fourier features.
+from distances. Random Fourier features (GAPS 108.74) are in `CKSD.Geometry.RandomFeatures`.
 
 ## Main results
 
@@ -28,20 +29,15 @@ from distances, together with random Fourier features.
 * `CKSD.squaredMMD_joint_prod_eq_zero_iff_indepFun`: the HSIC independence criterion (GAPS 108.63).
 * `CKSD.isCharacteristicKernel_iff_spectral_measure_full_support`,
   `CKSD.squaredMMD_quadratic_polynomial_eq`: criteria for characteristic kernels (GAPS 108.68).
-* `CKSD.tendstoWeakly_iff_tendsto_squaredMMD_of_tight`: MMD metrizes weak convergence along tight
-  sequences (GAPS 108.70).
+* `CKSD.tendsto_probabilityMeasure_iff_tendsto_squaredMMD_of_tight`: MMD metrizes weak
+  convergence along tight sequences (GAPS 108.70).
 * `CKSD.integral_langevin_stein_operator_eq_zero`: the scalar Langevin Stein identity
   (GAPS 108.71).
-* `CKSD.integral_randomFourierFeatureKernel`,
-  `CKSD.measureReal_abs_randomFourierFeatureKernel_sub_ge_le`,
-  `CKSD.measure_uniform_randomFourierFeatureKernel_error_le`,
-  `CKSD.abs_squaredMMD_sub_le_of_uniform_kernel_error`: random Fourier features (GAPS 108.74).
 
 ## References
 
 * A. Gretton, K. M. Borgwardt, M. J. Rasch, B. Schölkopf and A. Smola, *A kernel two-sample test*,
   J. Mach. Learn. Res. 13 (2012).
-* A. Rahimi and B. Recht, *Random features for large-scale kernel machines*, NIPS 2007.
 -/
 
 @[expose] public section
@@ -101,14 +97,192 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_null
     (hb : ∃ C, ∀ x, ‖phi x‖ ≤ C) :
     let C := TauCeti.covMatrix (P.map phi);
     let k := fun x y ↦ inner ℝ (phi x) (phi y);
-    TendstoInDistribution μ (fun n ω ↦ (n : ℝ) * unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω)
-      (fun i ↦ Yn i.val ω))
+    TendstoInDistribution (fun (n : ℕ) ω ↦ (n : ℝ) * unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω)
+      (fun i ↦ Yn i.val ω)) atTop id (fun _ ↦ μ)
       ((multivariateGaussian 0 C).map (fun z ↦ 2 * (‖z‖ ^ 2 - Matrix.trace C))) ∧
-      TendstoInDistribution μ (fun n ω ↦ (n : ℝ) *
+      TendstoInDistribution (fun (n : ℕ) ω ↦ (n : ℝ) *
         ‖sampleAverage (fun i ω ↦ phi (Xn i ω)) n ω - sampleAverage (fun i ω ↦ phi
-          (Yn i ω)) n ω‖ ^ 2)
+          (Yn i ω)) n ω‖ ^ 2) atTop id (fun _ ↦ μ)
         ((multivariateGaussian 0 C).map (fun z ↦ 2 * ‖z‖ ^ 2)) := by
   sorry
+
+/-- The unbiased squared MMD of an inner-product feature kernel, in terms of the two feature means
+`A = n⁻¹ ∑ φ(x_i)` and `B = n⁻¹ ∑ φ(y_i)`: for `n ≥ 2` it is `‖A - B‖²` plus the correction
+`(‖A‖² + ‖B‖² - n⁻¹ ∑ (‖φ(x_i)‖² + ‖φ(y_i)‖²)) / (n - 1)`. -/
+theorem unbiasedSquaredMMD_inner_eq {X E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+    (phi : X → E) {n : ℕ} (hn : 2 ≤ n) (x y : Fin n → X) :
+    let A := (n : ℝ)⁻¹ • ∑ i, phi (x i)
+    let B := (n : ℝ)⁻¹ • ∑ i, phi (y i)
+    unbiasedSquaredMMD (fun x y ↦ inner ℝ (phi x) (phi y)) n x y =
+      ‖A - B‖ ^ 2 + (‖A‖ ^ 2 + ‖B‖ ^ 2 -
+        (n : ℝ)⁻¹ * ∑ i, (‖phi (x i)‖ ^ 2 + ‖phi (y i)‖ ^ 2)) / (n - 1) := by
+  intro A B
+  have hnR : (2 : ℝ) ≤ n := by exact_mod_cast hn
+  have hcast : ((n - 1 : ℕ) : ℝ) = n - 1 := by rw [Nat.cast_sub (by omega)]; simp
+  set SA := ∑ i, phi (x i)
+  set SB := ∑ i, phi (y i)
+  have hdiag : ∀ (a : Fin n → E), ∑ i, ∑ j, (if i ≠ j then inner ℝ (a i) (a j) else 0) =
+      ‖∑ i, a i‖ ^ 2 - ∑ i, ‖a i‖ ^ 2 := by
+    intro a
+    have h1 : ∑ i, ∑ j, inner ℝ (a i) (a j) = ‖∑ i, a i‖ ^ 2 := by
+      rw [← real_inner_self_eq_norm_sq, sum_inner]
+      exact Finset.sum_congr rfl fun i _ ↦ (inner_sum _ _ _).symm
+    have h2 : ∀ i, ∑ j, (if i ≠ j then inner ℝ (a i) (a j) else 0) =
+        ∑ j, inner ℝ (a i) (a j) - ‖a i‖ ^ 2 := by
+      intro i
+      rw [← real_inner_self_eq_norm_sq, ← Finset.sum_erase_add _ _ (Finset.mem_univ i),
+        ← Finset.sum_erase_add (s := Finset.univ) (a := i) (fun j ↦ inner ℝ (a i) (a j))
+          (Finset.mem_univ i)]
+      simp only [ne_eq, not_true_eq_false, ite_false, add_zero, add_sub_cancel_right]
+      exact Finset.sum_congr rfl fun j hj ↦ by
+        rw [ite_eq_left_iff.mpr fun h ↦ absurd (Ne.symm (Finset.ne_of_mem_erase hj)) h]
+    simp only [h2, Finset.sum_sub_distrib, h1]
+  have hsplit : ∑ i, ∑ j, (if i ≠ j then inner ℝ (phi (x i)) (phi (x j)) +
+      inner ℝ (phi (y i)) (phi (y j)) else 0) =
+      (‖SA‖ ^ 2 - ∑ i, ‖phi (x i)‖ ^ 2) + (‖SB‖ ^ 2 - ∑ i, ‖phi (y i)‖ ^ 2) := by
+    rw [← hdiag (fun i ↦ phi (x i)), ← hdiag (fun i ↦ phi (y i)), ← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun j _ ↦ by split_ifs <;> simp
+  have hcross : ∑ i, ∑ j, inner ℝ (phi (x i)) (phi (y j)) = inner ℝ SA SB := by
+    rw [sum_inner]
+    exact Finset.sum_congr rfl fun i _ ↦ (inner_sum _ _ _).symm
+  rw [unbiasedSquaredMMD, hsplit, hcross, hcast]
+  have hA : A = (n : ℝ)⁻¹ • SA := rfl
+  have hB : B = (n : ℝ)⁻¹ • SB := rfl
+  rw [hA, hB, ← smul_sub, norm_smul, norm_smul, norm_smul, Real.norm_eq_abs,
+    abs_of_pos (by positivity), mul_pow, mul_pow, mul_pow, norm_sub_sq_real,
+    Finset.sum_add_distrib]
+  have hn0 : (n : ℝ) ≠ 0 := by positivity
+  have hn1 : (n : ℝ) - 1 ≠ 0 := by linarith
+  field_simp
+  ring
+
+/-- The linear term of the alternative MMD central limit theorem: for a bounded measurable feature
+map `φ` into `ℝ^d`, `δ = E_P φ - E_Q φ` and `s(x, y) = 2 ⟨φ x - φ y - δ, δ⟩`, the statistic `s`
+is centered under `P ⊗ Q` and its second moment is `4 Var_P ⟨φ, δ⟩ + 4 Var_Q ⟨φ, δ⟩`. -/
+theorem integral_mmdLinearTerm {X : Type*} [MeasurableSpace X] {d : ℕ}
+    (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
+    (phi : X → EuclideanSpace ℝ (Fin d)) (hm : Measurable phi) (C : ℝ)
+    (hC : ∀ x, ‖phi x‖ ≤ C) :
+    let δ := (∫ x, phi x ∂P) - ∫ x, phi x ∂Q
+    let s := fun z : X × X ↦ 2 * inner ℝ (phi z.1 - phi z.2 - δ) δ
+    (∫ z, s z ∂(P.prod Q)) = 0 ∧ (∫ z, s z ^ 2 ∂(P.prod Q)) =
+      4 * Var[fun x ↦ inner ℝ (phi x) δ; P] + 4 * Var[fun x ↦ inner ℝ (phi x) δ; Q] := by
+  intro δ s
+  have hint : ∀ R : Measure X, IsProbabilityMeasure R → Integrable phi R := fun R _ ↦
+    Integrable.of_bound hm.aestronglyMeasurable C (ae_of_all _ hC)
+  set g : X → ℝ := fun x ↦ inner ℝ (phi x) δ
+  have hg : Measurable g := by fun_prop
+  have hgb : ∀ x, |g x| ≤ C * ‖δ‖ := fun x ↦
+    (abs_real_inner_le_norm _ _).trans (mul_le_mul_of_nonneg_right (hC x) (norm_nonneg _))
+  set mP := ∫ x, g x ∂P
+  set mQ := ∫ x, g x ∂Q
+  have hδδ : inner ℝ δ δ = mP - mQ := by
+    have e : ∀ R : Measure X, IsProbabilityMeasure R →
+        ∫ x, inner ℝ (phi x) δ ∂R = inner ℝ δ (∫ x, phi x ∂R) := fun R hR ↦ by
+      simp_rw [real_inner_comm δ]
+      exact integral_inner (hint R hR) δ
+    change _ = (∫ x, inner ℝ (phi x) δ ∂P) - ∫ x, inner ℝ (phi x) δ ∂Q
+    rw [e P inferInstance, e Q inferInstance, ← inner_sub_right]
+  set a : X → ℝ := fun x ↦ g x - mP
+  set b : X → ℝ := fun x ↦ g x - mQ
+  have hs : ∀ z, s z = 2 * (a z.1 - b z.2) := fun z ↦ by
+    simp only [s, a, b, g, inner_sub_left, hδδ]; ring
+  have hgi : ∀ R : Measure X, IsProbabilityMeasure R → Integrable g R := fun R _ ↦
+    Integrable.of_bound hg.aestronglyMeasurable (C * ‖δ‖) (ae_of_all _ fun x ↦ hgb x)
+  have hcen : ∀ (R : Measure X) [IsProbabilityMeasure R],
+      ∫ x, (g x - ∫ y, g y ∂R) ∂R = 0 := fun R _ ↦ by
+    rw [integral_sub (hgi R inferInstance) (integrable_const _), integral_const, probReal_univ,
+      one_smul, sub_self]
+  have hsq : ∀ (R : Measure X) [IsProbabilityMeasure R],
+      Integrable (fun x ↦ (g x - ∫ y, g y ∂R) ^ 2) R :=
+    fun R _ ↦ Integrable.of_bound (by fun_prop) ((C * ‖δ‖ + |∫ y, g y ∂R|) ^ 2)
+      (ae_of_all _ fun x ↦ by
+        rw [Real.norm_eq_abs, abs_pow]
+        exact pow_le_pow_left₀ (abs_nonneg _) ((abs_sub _ _).trans (add_le_add (hgb x) le_rfl)) 2)
+  have hai : Integrable a P := (hgi P inferInstance).sub (integrable_const _)
+  have hbi : Integrable b Q := (hgi Q inferInstance).sub (integrable_const _)
+  refine ⟨?_, ?_⟩
+  · simp only [hs]
+    rw [integral_const_mul, integral_sub (hai.comp_fst Q) (hbi.comp_snd P), integral_fun_fst a,
+      integral_fun_snd b, hcen P, hcen Q]
+    simp
+  · have hpt : ∀ z : X × X, s z ^ 2 = 4 * a z.1 ^ 2 - 8 * (a z.1 * b z.2) + 4 * b z.2 ^ 2 :=
+      fun z ↦ by rw [hs]; ring
+    simp only [hpt]
+    have h1 : Integrable (fun z : X × X ↦ 4 * a z.1 ^ 2) (P.prod Q) :=
+      ((hsq P).comp_fst Q).const_mul 4
+    have h2 : Integrable (fun z : X × X ↦ 8 * (a z.1 * b z.2)) (P.prod Q) :=
+      (hai.mul_prod hbi).const_mul 8
+    have h3 : Integrable (fun z : X × X ↦ 4 * b z.2 ^ 2) (P.prod Q) :=
+      ((hsq Q).comp_snd P).const_mul 4
+    have h12 : Integrable (fun z : X × X ↦ 4 * a z.1 ^ 2 - 8 * (a z.1 * b z.2)) (P.prod Q) :=
+      h1.sub h2
+    rw [integral_add h12 h3, integral_sub h1 h2, integral_const_mul, integral_const_mul,
+      integral_const_mul, integral_fun_fst (fun x ↦ a x ^ 2), integral_fun_snd (fun y ↦ b y ^ 2),
+      integral_prod_mul a b, hcen P, variance_eq_integral hg.aemeasurable,
+      variance_eq_integral hg.aemeasurable]
+    simp [a, b, mP, mQ]
+
+/-- The correction term of the unbiased MMD estimator is bounded: for a feature map bounded by `C`,
+`|‖A‖² + ‖B‖² - n⁻¹ ∑ (‖φ(x_i)‖² + ‖φ(y_i)‖²)| ≤ 2 C²` with `A, B` the two feature means. -/
+private theorem abs_unbiasedMMD_correction_le {X E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] (phi : X → E) {C : ℝ} (hC0 : 0 ≤ C) (hC : ∀ x, ‖phi x‖ ≤ C)
+    (n : ℕ) (x y : Fin n → X) :
+    |‖(n : ℝ)⁻¹ • ∑ i, phi (x i)‖ ^ 2 + ‖(n : ℝ)⁻¹ • ∑ i, phi (y i)‖ ^ 2 -
+      (n : ℝ)⁻¹ * ∑ i, (‖phi (x i)‖ ^ 2 + ‖phi (y i)‖ ^ 2)| ≤ 2 * C ^ 2 := by
+  have hn1 : (n : ℝ)⁻¹ * n ≤ 1 := by
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · simp
+    · rw [inv_mul_cancel₀ (by positivity)]
+  have havg : ∀ w : Fin n → X, ‖(n : ℝ)⁻¹ • ∑ i, phi (w i)‖ ≤ C := by
+    intro w
+    rw [norm_smul, Real.norm_eq_abs, abs_inv, Nat.abs_cast]
+    calc (n : ℝ)⁻¹ * ‖∑ i, phi (w i)‖ ≤ (n : ℝ)⁻¹ * (n * C) := by
+          gcongr
+          refine (norm_sum_le _ _).trans ?_
+          exact (Finset.sum_le_sum fun (i : Fin n) (_ : i ∈ Finset.univ) ↦ hC (w i)).trans_eq
+            (by simp)
+      _ ≤ C := by nlinarith
+  have hsum : 0 ≤ (n : ℝ)⁻¹ * ∑ i : Fin n, (‖phi (x i)‖ ^ 2 + ‖phi (y i)‖ ^ 2) ∧
+      (n : ℝ)⁻¹ * ∑ i : Fin n, (‖phi (x i)‖ ^ 2 + ‖phi (y i)‖ ^ 2) ≤ 2 * C ^ 2 := by
+    refine ⟨by positivity, ?_⟩
+    calc (n : ℝ)⁻¹ * ∑ i : Fin n, (‖phi (x i)‖ ^ 2 + ‖phi (y i)‖ ^ 2)
+        ≤ (n : ℝ)⁻¹ * (n * (2 * C ^ 2)) := by
+          gcongr
+          refine (Finset.sum_le_sum fun (i : Fin n) (_ : i ∈ Finset.univ) ↦ show
+            ‖phi (x i)‖ ^ 2 + ‖phi (y i)‖ ^ 2 ≤ 2 * C ^ 2 by
+              nlinarith [hC (x i), hC (y i), norm_nonneg (phi (x i)),
+                norm_nonneg (phi (y i))]).trans_eq (by simp)
+      _ ≤ 2 * C ^ 2 := by nlinarith [sq_nonneg C]
+  have h1 := havg x
+  have h2 := havg y
+  have h1' := pow_le_pow_left₀ (norm_nonneg _) h1 2
+  have h2' := pow_le_pow_left₀ (norm_nonneg _) h2 2
+  rw [abs_le]
+  constructor <;> nlinarith [sq_nonneg ‖(n : ℝ)⁻¹ • ∑ i : Fin n, phi (x i)‖,
+    sq_nonneg ‖(n : ℝ)⁻¹ • ∑ i : Fin n, phi (y i)‖]
+
+/-- `√n / (n - 1) → 0`. -/
+private theorem tendsto_sqrt_div_sub_one :
+    Tendsto (fun n : ℕ ↦ Real.sqrt n / (n - 1)) atTop (𝓝 0) := by
+  refine squeeze_zero' (Eventually.of_forall fun n ↦ ?_) ?_
+    (by simpa using (tendsto_inv_atTop_zero.comp
+      (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop)).const_mul 2)
+  · rcases Nat.lt_or_ge n 1 with h | h
+    · simp [Nat.lt_one_iff.mp h]
+    · exact div_nonneg (Real.sqrt_nonneg _) (by
+        have : (1 : ℝ) ≤ n := by exact_mod_cast h
+        linarith)
+  · filter_upwards [eventually_ge_atTop 2] with n hn
+    have hnR : (2 : ℝ) ≤ n := by exact_mod_cast hn
+    have hs : 0 < Real.sqrt n := Real.sqrt_pos.mpr (by linarith)
+    have hss : Real.sqrt n * Real.sqrt n = n := Real.mul_self_sqrt (by linarith)
+    rw [div_le_iff₀ (by linarith),
+      show 2 * (Real.sqrt n)⁻¹ * ((n : ℝ) - 1) = 2 * (n - 1) / Real.sqrt n by ring,
+      le_div_iff₀ hs]
+    nlinarith
 
 /-- GAPS 108.61, alternative MMD CLT for a bounded finite-dimensional feature map. Let the pairs
 `(X_i, Y_i)` be independent with law `P ⊗ Q` and `δ = E φ(X) - E φ(Y)`. Then
@@ -124,12 +298,139 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
     (hb : ∃ C, ∀ x, ‖phi x‖ ≤ C) :
     let delta := (∫ x, phi x ∂P) - ∫ x, phi x ∂Q;
     let k := fun x y ↦ inner ℝ (phi x) (phi y);
-    TendstoInDistribution μ (fun n ω ↦ Real.sqrt n *
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n *
       (unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω) (fun i ↦ Yn i.val ω) - ‖delta‖ ^ 2))
+      atTop id (fun _ ↦ μ)
       (gaussianReal 0 (Real.toNNReal
-        (4 * variance P (fun x ↦ inner ℝ (phi x) delta) +
-          4 * variance Q (fun x ↦ inner ℝ (phi x) delta)))) := by
-  sorry
+        (4 * Var[fun x ↦ inner ℝ (phi x) delta; P] +
+          4 * Var[fun x ↦ inner ℝ (phi x) delta; Q]))) := by
+  intro delta k
+  obtain ⟨C₀, hC₀⟩ := hb
+  set C := max C₀ 0
+  have hC : ∀ x, ‖phi x‖ ≤ C := fun x ↦ (hC₀ x).trans (le_max_left _ _)
+  have hC0 : 0 ≤ C := le_max_right _ _
+  have hXm : ∀ i, Measurable (Xn i) := fun i ↦ (hiid.1 i).fst
+  have hYm : ∀ i, Measurable (Yn i) := fun i ↦ (hiid.1 i).snd
+  -- the vector sequence `V i = φ(X_i) - φ(Y_i)` and its central limit theorem
+  set v : X × X → EuclideanSpace ℝ (Fin d) := fun z ↦ phi z.1 - phi z.2
+  have hv : Measurable v := by fun_prop
+  set Z : ℕ → Ω → X × X := fun i ω ↦ (Xn i ω, Yn i ω)
+  set V : ℕ → Ω → EuclideanSpace ℝ (Fin d) := fun i ω ↦ v (Z i ω)
+  set L := (P.prod Q).map v
+  have hiidV : IsIndependentIdenticallyDistributed μ V L :=
+    ⟨fun i ↦ hv.comp (hiid.1 i), hiid.2.1.comp (fun _ ↦ v) (fun _ ↦ hv),
+      fun i ↦ by rw [show V i = v ∘ Z i from rfl, ← Measure.map_map hv (hiid.1 i), hiid.2.2 i]⟩
+  have hint : ∀ R : Measure X, IsProbabilityMeasure R → Integrable phi R := fun R _ ↦
+    Integrable.of_bound hm.aestronglyMeasurable C (ae_of_all _ hC)
+  have hL2 : MemLp id 2 L := by
+    rw [memLp_map_measure_iff aestronglyMeasurable_id hv.aemeasurable]
+    refine MemLp.of_bound hv.aestronglyMeasurable (2 * C) (ae_of_all _ fun z ↦ ?_)
+    exact (norm_sub_le _ _).trans (by linarith [hC z.1, hC z.2])
+  have hLmean : ∫ x, x ∂L = delta := by
+    change ∫ x, id x ∂((P.prod Q).map v) = delta
+    rw [integral_map hv.aemeasurable aestronglyMeasurable_id]
+    simp only [v, id]
+    rw [integral_sub ((hint P inferInstance).comp_fst Q) ((hint Q inferInstance).comp_snd P),
+      integral_fun_fst phi, integral_fun_snd phi]
+    simp [delta]
+  have hclt := tendstoInDistribution_sqrt_smul_sampleAverage μ L V hiidV hL2
+  rw [hLmean] at hclt
+  set U : ℕ → Ω → ℝ := fun n ω ↦ ‖Real.sqrt n • (sampleAverage V n ω - delta)‖
+  have hUb : IsBoundedInProbability μ U :=
+    isBoundedInProbability_of_tendstoInDistribution μ U (hclt.continuous_comp continuous_norm)
+  have hinv : Tendsto (fun n : ℕ ↦ (Real.sqrt n)⁻¹) atTop (𝓝 0) :=
+    tendsto_inv_atTop_zero.comp (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop)
+  have hT1 : TendstoInMeasure μ (fun (n : ℕ) ω ↦ U n ω * (U n ω * (Real.sqrt n)⁻¹)) atTop
+      (fun _ ↦ 0) :=
+    tendstoInMeasure_mul_zero_of_isBoundedInProbability μ U _ hUb
+      (tendstoInMeasure_mul_zero_of_isBoundedInProbability μ U _ hUb
+        (tendstoInMeasure_const_of_tendsto μ _ hinv))
+  -- the bounded correction term of the unbiased estimator
+  set R : ℕ → Ω → ℝ := fun n ω ↦
+    ‖(n : ℝ)⁻¹ • ∑ i : Fin n, phi (Xn i ω)‖ ^ 2 + ‖(n : ℝ)⁻¹ • ∑ i : Fin n, phi (Yn i ω)‖ ^ 2 -
+      (n : ℝ)⁻¹ * ∑ i : Fin n, (‖phi (Xn i ω)‖ ^ 2 + ‖phi (Yn i ω)‖ ^ 2)
+  have hRb : ∀ n ω, |R n ω| ≤ 2 * C ^ 2 := fun n ω ↦
+    abs_unbiasedMMD_correction_le phi hC0 hC n (fun i ↦ Xn i ω) (fun i ↦ Yn i ω)
+  have hRB : IsBoundedInProbability μ R := by
+    intro ε hε
+    refine ⟨2 * C ^ 2 + 1, by positivity, Eventually.of_forall fun n ↦ ?_⟩
+    have : {ω | 2 * C ^ 2 + 1 < |R n ω|} = ∅ :=
+      eq_empty_of_forall_notMem fun ω hω ↦ by
+        have := hRb n ω
+        simp only [mem_ofPred_eq] at hω
+        linarith
+    rw [this, measureReal_empty]
+    exact hε.le
+  have hT2 : TendstoInMeasure μ (fun (n : ℕ) ω ↦ R n ω * (Real.sqrt n / (n - 1))) atTop
+      (fun _ ↦ 0) :=
+    tendstoInMeasure_mul_zero_of_isBoundedInProbability μ R _ hRB
+      (tendstoInMeasure_const_of_tendsto μ _ tendsto_sqrt_div_sub_one)
+  -- the linear term and its central limit theorem
+  set s : X × X → ℝ := fun z ↦ 2 * inner ℝ (v z - delta) delta
+  have hs : Measurable s := by fun_prop
+  obtain ⟨hs0, hs2⟩ := integral_mmdLinearTerm P Q phi hm C hC
+  have h2s : MemLp s 2 (P.prod Q) := by
+    refine MemLp.of_bound hs.aestronglyMeasurable (2 * ((2 * C + ‖delta‖) * ‖delta‖))
+      (ae_of_all _ fun z ↦ ?_)
+    rw [Real.norm_eq_abs, abs_mul, abs_two]
+    gcongr
+    refine (abs_real_inner_le_norm _ _).trans ?_
+    gcongr
+    refine (norm_sub_le _ _).trans ?_
+    gcongr
+    exact (norm_sub_le _ _).trans (by linarith [hC z.1, hC z.2])
+  have hS := tendstoInDistribution_inv_sqrt_mul_sum_of_iid μ (P.prod Q) Z hiid s hs h2s hs0
+  rw [hs2] at hS
+  -- Slutsky
+  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _ (fun n ↦ ?_)
+    (fun n ↦ ?_) hS ((tendstoInMeasure_add_zero μ _ _ hT1 hT2).congr' ?_ EventuallyEq.rfl)
+  · exact (Finset.measurable_sum _ fun i _ ↦ hs.comp (hiid.1 i)).const_mul _
+  · refine (Measurable.sub ?_ measurable_const).const_mul _
+    simp only [unbiasedSquaredMMD, k]
+    refine Measurable.sub (Measurable.div_const ?_ _) (Measurable.const_mul ?_ _)
+    · exact Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ by
+        split_ifs <;> fun_prop
+    · exact Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ by fun_prop
+  filter_upwards [eventually_ge_atTop 2] with n hn
+  refine ae_of_all _ fun ω ↦ ?_
+  have hnR : (2 : ℝ) ≤ n := by exact_mod_cast hn
+  have hmmd := unbiasedSquaredMMD_inner_eq phi hn (fun i ↦ Xn i.val ω) (fun i ↦ Yn i.val ω)
+  simp only at hmmd
+  set A := (n : ℝ)⁻¹ • ∑ i : Fin n, phi (Xn i ω)
+  set B := (n : ℝ)⁻¹ • ∑ i : Fin n, phi (Yn i ω)
+  have hw : sampleAverage V n ω = A - B := by
+    simp only [sampleAverage, V, v, Z, A, B, ← smul_sub, Finset.sum_sub_distrib]
+    rw [Fin.sum_univ_eq_sum_range (fun i ↦ phi (Xn i ω)),
+      Fin.sum_univ_eq_sum_range (fun i ↦ phi (Yn i ω))]
+  have hsumV : ∑ i ∈ Finset.range n, V i ω = (n : ℝ) • (A - B) := by
+    rw [← hw, sampleAverage, smul_smul, mul_inv_cancel₀ (by positivity), one_smul]
+  have hsS : ∑ i ∈ Finset.range n, s (Z i ω) = 2 * n * inner ℝ (A - B - delta) delta := by
+    simp only [s]
+    rw [← Finset.mul_sum, ← sum_inner, Finset.sum_sub_distrib]
+    change 2 * inner ℝ (∑ i ∈ Finset.range n, V i ω - ∑ _i ∈ Finset.range n, delta) delta = _
+    rw [hsumV, Finset.sum_const, Finset.card_range, ← Nat.cast_smul_eq_nsmul ℝ, ← smul_sub,
+      real_inner_smul_left]
+    ring
+  have hU : U n ω = Real.sqrt n * ‖A - B - delta‖ := by
+    simp only [U, hw, norm_smul, Real.norm_eq_abs, abs_of_nonneg (Real.sqrt_nonneg _)]
+  have hss : Real.sqrt n * Real.sqrt n = n := Real.mul_self_sqrt (by linarith)
+  have hsp : 0 < Real.sqrt n := Real.sqrt_pos.mpr (by linarith)
+  have hnorm : ‖A - B‖ ^ 2 = ‖A - B - delta‖ ^ 2 + 2 * inner ℝ (A - B - delta) delta +
+      ‖delta‖ ^ 2 := by
+    have := norm_add_sq_real (A - B - delta) delta
+    rw [sub_add_cancel] at this
+    rw [this]
+  show U n ω * (U n ω * (Real.sqrt n)⁻¹) + R n ω * (Real.sqrt n / (n - 1)) =
+    Real.sqrt n * (unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω) (fun i ↦ Yn i.val ω) -
+      ‖delta‖ ^ 2) - (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, s (Z i ω)
+  rw [hU, hsS, show unbiasedSquaredMMD k n _ _ = _ from hmmd, hnorm]
+  generalize ‖A - B - delta‖ = a
+  generalize inner ℝ (A - B - delta) delta = ip
+  simp only [R, A, B]
+  have hn1 : (n : ℝ) - 1 ≠ 0 := by linarith
+  field_simp
+  rw [show (Real.sqrt n) ^ 2 = n by rw [sq, hss]]
+  ring
 
 /-- GAPS 108.62: for laws `P, Q` on `ℝ^d` with finite first moments, the energy distance
 `D = 2 E‖X - Y‖ - E‖X - X'‖ - E‖Y - Y'‖` is nonnegative, vanishes exactly when `P = Q`, and equals
@@ -299,8 +600,9 @@ theorem continuous_squaredMMD_probabilityMeasure {X : Type*} [MetricSpace X]
 
 /-- GAPS 108.70, MMD metrizes weak convergence along uniformly tight sequences: for a bounded
 continuous characteristic kernel on a separable metric space and a uniformly tight sequence of
-probability laws `P n`, `P n → Q` weakly exactly when `MMD²(P n, Q) → 0`. -/
-theorem tendstoWeakly_iff_tendsto_squaredMMD_of_tight {X : Type*} [MetricSpace X]
+probability laws `P n`, `P n → Q` weakly (in Mathlib's `ProbabilityMeasure` topology) exactly when
+`MMD²(P n, Q) → 0`. -/
+theorem tendsto_probabilityMeasure_iff_tendsto_squaredMMD_of_tight {X : Type*} [MetricSpace X]
     [SecondCountableTopology X] [MeasurableSpace X] [BorelSpace X]
     (P : ℕ → Measure X) (Q : Measure X) (hP : ∀ n, IsProbabilityMeasure (P n))
     [IsProbabilityMeasure Q] (k : X → X → ℝ)
@@ -308,18 +610,14 @@ theorem tendstoWeakly_iff_tendsto_squaredMMD_of_tight {X : Type*} [MetricSpace X
     (hchar : IsCharacteristicKernel k)
     (htight : ∀ epsilon > 0, ∃ K : Set X, IsCompact K ∧
       ∀ n, (P n) Kᶜ ≤ ENNReal.ofReal epsilon) :
-    TendstoWeakly P Q ↔ Tendsto (fun n ↦ squaredMMD k (P n) Q) atTop (𝓝 0) := by
-  have : ∀ n, IsProbabilityMeasure (P n) := hP
+    Tendsto (β := ProbabilityMeasure X) (fun n ↦ ⟨P n, hP n⟩) atTop (𝓝 ⟨Q, inferInstance⟩) ↔
+      Tendsto (fun n ↦ squaredMMD k (P n) Q) atTop (𝓝 0) := by
   let Ps : ℕ → ProbabilityMeasure X := fun n ↦ ⟨P n, hP n⟩
   let Qs : ProbabilityMeasure X := ⟨Q, inferInstance⟩
   let F : ProbabilityMeasure X → ℝ := fun R ↦ squaredMMD k R Q
   have hF : Continuous F := continuous_squaredMMD_probabilityMeasure k hk hb Qs
   have hFQ : F Qs = 0 := by simp [F, Qs, squaredMMD]; ring
-  have hweak : TendstoWeakly P Q ↔ Tendsto Ps atTop (𝓝 Qs) := by
-    rw [TendstoWeakly.iff_forall_integral_tendsto]
-    simpa only [Ps, Qs, ProbabilityMeasure.coe_mk] using
-      (ProbabilityMeasure.tendsto_iff_forall_integral_tendsto (μs := Ps) (μ := Qs)).symm
-  rw [hweak]
+  change Tendsto Ps atTop (𝓝 Qs) ↔ _
   constructor
   · intro h
     have hlim : Tendsto (fun n ↦ F (Ps n)) atTop (𝓝 (F Qs)) :=
@@ -403,293 +701,5 @@ theorem integral_langevin_stein_operator_eq_zero
     rw [Real.norm_eq_abs, abs_mul, abs_of_pos (hpos x)]
     exact mul_le_mul_of_nonneg_right (hC x) (hpos x).le
   exact integral_eq_zero_of_hasDerivAt_of_integrable (fun x ↦ (hdg x).mul (hdp x)) hsum hgp
-
-/-- Over a uniformly distributed phase on `[0, 2π]`, `cos (c + 2b)` has mean zero. -/
-theorem integral_cos_add_two_mul_uniformPhase (phase : Measure ℝ)
-    (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
-    (c : ℝ) : ∫ b, Real.cos (c + 2 * b) ∂phase = 0 := by
-  rw [hphase, integral_smul_measure, integral_Icc_eq_integral_Ioc,
-    ← intervalIntegral.integral_of_le (by positivity)]
-  have hderiv : ∀ b ∈ uIcc 0 (2 * Real.pi),
-      HasDerivAt (fun b ↦ Real.sin (c + 2 * b) / 2) (Real.cos (c + 2 * b)) b := by
-    intro b _
-    have := ((hasDerivAt_id' b).const_mul 2).const_add c |>.sin
-    convert this.div_const 2 using 1
-    ring
-  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt hderiv
-    (by apply Continuous.intervalIntegrable; fun_prop)]
-  have : Real.sin (c + 2 * (2 * Real.pi)) = Real.sin c := by
-    rw [show c + 2 * (2 * Real.pi) = c + ((2 : ℕ) : ℝ) * (2 * Real.pi) by push_cast; ring]
-    exact Real.sin_add_nat_mul_two_pi c 2
-  rw [this]
-  simp
-
-/-- The random-feature summand is continuous in the frequency and phase. -/
-theorem continuous_randomFourierFeatureTerm {d : ℕ} (x y : EuclideanSpace ℝ (Fin d)) :
-    Continuous (randomFourierFeatureTerm x y) := by
-  unfold randomFourierFeatureTerm; fun_prop
-
-/-- The random-feature summand takes values in `[-2, 2]`. -/
-theorem randomFourierFeatureTerm_mem_Icc {d : ℕ} (x y : EuclideanSpace ℝ (Fin d))
-    (s : EuclideanSpace ℝ (Fin d) × ℝ) : randomFourierFeatureTerm x y s ∈ Icc (-2 : ℝ) 2 := by
-  unfold randomFourierFeatureTerm
-  have h1 := Real.abs_cos_le_one (inner ℝ s.1 x + s.2)
-  have h2 := Real.abs_cos_le_one (inner ℝ s.1 y + s.2)
-  have : |2 * Real.cos (inner ℝ s.1 x + s.2) * Real.cos (inner ℝ s.1 y + s.2)| ≤ 2 := by
-    rw [abs_mul, abs_mul, abs_two]
-    nlinarith [abs_nonneg (Real.cos (inner ℝ s.1 x + s.2)),
-      abs_nonneg (Real.cos (inner ℝ s.1 y + s.2))]
-  exact abs_le.mp this
-
-/-- The random-feature summand is unbiased for the translation-invariant kernel. -/
-theorem integral_randomFourierFeatureTerm {d : ℕ}
-    (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
-    (phase : Measure ℝ) [IsProbabilityMeasure phase]
-    (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
-    (x y : EuclideanSpace ℝ (Fin d)) :
-    ∫ s, randomFourierFeatureTerm x y s ∂L.prod phase = ∫ w, Real.cos (inner ℝ w (x - y)) ∂L := by
-  have hint : Integrable (randomFourierFeatureTerm x y) (L.prod phase) := by
-    refine Integrable.of_bound (C := 2)
-      (continuous_randomFourierFeatureTerm x y).measurable.aestronglyMeasurable
-      (ae_of_all _ fun s ↦ ?_)
-    rw [Real.norm_eq_abs, abs_le]
-    exact randomFourierFeatureTerm_mem_Icc x y s
-  rw [integral_prod _ hint]
-  refine integral_congr_ae (ae_of_all _ fun w ↦ ?_)
-  have hpt : ∀ b, randomFourierFeatureTerm x y (w, b) =
-      Real.cos (inner ℝ w (x - y)) + Real.cos ((inner ℝ w x + inner ℝ w y) + 2 * b) := by
-    intro b
-    have e1 : inner ℝ w (x - y) = (inner ℝ w x + b) - (inner ℝ w y + b) := by
-      rw [inner_sub_right]; ring
-    have e2 : inner ℝ w x + inner ℝ w y + 2 * b = (inner ℝ w x + b) + (inner ℝ w y + b) := by
-      ring
-    rw [e1, e2, Real.cos_sub (inner ℝ w x + b), Real.cos_add (inner ℝ w x + b) (inner ℝ w y + b)]
-    simp only [randomFourierFeatureTerm]
-    ring
-  simp_rw [hpt]
-  rw [integral_add (integrable_const _) ?_, integral_const, probReal_univ, one_smul,
-    integral_cos_add_two_mul_uniformPhase phase hphase, add_zero]
-  exact Integrable.of_bound (C := 1) (by fun_prop) (ae_of_all _ fun b ↦ by
-    rw [Real.norm_eq_abs]; exact Real.abs_cos_le_one _)
-
-/-- Hoeffding's inequality for a sample of `D` independent copies of a variable with values in
-`[a, b]`: the sum of the centered copies exceeds `D ε` with probability at most
-`exp (-2 D ε² / (b - a)²)`. -/
-theorem measureReal_pi_sum_sub_integral_ge_le {Y : Type*} [MeasurableSpace Y] (D : ℕ)
-    (μ : Measure Y) [IsProbabilityMeasure μ] {g : Y → ℝ} (hg : Measurable g) {a b : ℝ}
-    (hb : ∀ s, g s ∈ Icc a b) {ε : ℝ} (hε : 0 ≤ ε) :
-    (Measure.pi fun _ : Fin D ↦ μ).real
-        {s | D * ε ≤ ∑ j, (g (s j) - ∫ t, g t ∂μ)} ≤
-      Real.exp (-2 * (D : ℝ) * ε ^ 2 / (b - a) ^ 2) := by
-  set P := Measure.pi fun _ : Fin D ↦ μ
-  have hindep : iIndepFun (fun (j : Fin D) (s : Fin D → Y) ↦ g (s j) - ∫ t, g t ∂μ) P :=
-    iIndepFun_pi (X := fun _ t ↦ g t - ∫ t, g t ∂μ) fun _ ↦ (hg.sub_const _).aemeasurable
-  have hsub : ∀ j : Fin D, HasSubgaussianMGF (fun s : Fin D → Y ↦ g (s j) - ∫ t, g t ∂μ)
-      ((‖b - a‖₊ / 2) ^ 2) P := by
-    intro j
-    have hm : AEMeasurable (fun s : Fin D → Y ↦ g (s j)) P :=
-      (hg.comp (measurable_pi_apply j)).aemeasurable
-    have h := hasSubgaussianMGF_of_mem_Icc hm (ae_of_all _ fun s ↦ hb (s j))
-    have hint : ∫ s, g (s j) ∂P = ∫ t, g t ∂μ :=
-      integral_comp_eval (μ := fun _ : Fin D ↦ μ) hg.aestronglyMeasurable
-    simpa only [hint] using h
-  have h := HasSubgaussianMGF.measure_sum_ge_le_of_iIndepFun hindep (s := Finset.univ)
-    (fun j _ ↦ hsub j) (ε := D * ε) (by positivity)
-  refine h.trans_eq ?_
-  congr 1
-  have hc : (((‖b - a‖₊ / 2) ^ 2 : ℝ≥0) : ℝ) = (b - a) ^ 2 / 4 := by
-    simp only [NNReal.coe_pow, NNReal.coe_div, coe_nnnorm, Real.norm_eq_abs]
-    rw [div_pow, sq_abs]
-    norm_num
-  simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, NNReal.coe_mul,
-    NNReal.coe_natCast, hc]
-  rcases Nat.eq_zero_or_pos D with hD | hD
-  · subst hD; simp
-  rcases eq_or_ne (b - a) 0 with hab | hab
-  · simp [hab]
-  · have : (D : ℝ) ≠ 0 := by exact_mod_cast hD.ne'
-    field_simp
-    ring
-
-/-- GAPS 108.74: random Fourier features are unbiased. The random Fourier feature kernel of an
-independent sample of frequencies `w_j ∼ L` and uniform phases `b_j ∈ [0, 2π]` has mean
-`k(x, y) = ∫ cos ⟨w, x - y⟩ dL(w)`. -/
-theorem integral_randomFourierFeatureKernel {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
-    (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
-    (phase : Measure ℝ) [IsProbabilityMeasure phase]
-    (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
-    (x y : EuclideanSpace ℝ (Fin d)) :
-    ∫ sample, randomFourierFeatureKernel sample x y ∂(Measure.pi fun _ : Fin D ↦ L.prod phase) =
-      ∫ w, Real.cos (inner ℝ w (x - y)) ∂L := by
-  have hmeas : Measurable (randomFourierFeatureTerm x y) :=
-    (continuous_randomFourierFeatureTerm x y).measurable
-  have hcoord : ∀ j : Fin D, ∫ s, randomFourierFeatureTerm x y (s j)
-      ∂(Measure.pi fun _ : Fin D ↦ L.prod phase) = ∫ w, Real.cos (inner ℝ w (x - y)) ∂L :=
-    fun j ↦ by
-      rw [← integral_randomFourierFeatureTerm L phase hphase x y]
-      exact integral_comp_eval (μ := fun _ : Fin D ↦ L.prod phase) hmeas.aestronglyMeasurable
-  have hintj : ∀ j : Fin D, Integrable (fun s : Fin D → _ ↦ randomFourierFeatureTerm x y (s j))
-      (Measure.pi fun _ : Fin D ↦ L.prod phase) :=
-    fun j ↦ Integrable.of_bound (C := 2)
-      (hmeas.comp (measurable_pi_apply j)).aestronglyMeasurable
-      (ae_of_all _ fun s ↦ by
-        rw [Real.norm_eq_abs, abs_le]; exact randomFourierFeatureTerm_mem_Icc x y (s j))
-  have hDpos : (D : ℝ) ≠ 0 := by exact_mod_cast (show 0 < D by omega).ne'
-  simp only [randomFourierFeatureKernel]
-  rw [integral_const_mul, integral_finsetSum _ fun j _ ↦ hintj j]
-  simp only [hcoord, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
-  field_simp
-
-/-- GAPS 108.74: the pointwise Hoeffding bound for random Fourier features. For an independent
-sample of `D ≥ 1` frequencies `w_j ∼ L` and uniform phases, the random-feature kernel deviates from
-`k(x, y) = ∫ cos ⟨w, x - y⟩ dL(w)` by at least `ε > 0` with probability at most
-`2 exp(-D ε² / 8)`. Its unbiasedness is `CKSD.integral_randomFourierFeatureKernel`. -/
-theorem measureReal_abs_randomFourierFeatureKernel_sub_ge_le {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
-    (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
-    (phase : Measure ℝ) [IsProbabilityMeasure phase]
-    (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
-    (x y : EuclideanSpace ℝ (Fin d)) (epsilon : ℝ) (he : 0 < epsilon) :
-    (Measure.pi fun _ : Fin D ↦ L.prod phase).real
-        {sample | epsilon ≤ |randomFourierFeatureKernel sample x y -
-          ∫ w, Real.cos (inner ℝ w (x - y)) ∂L|} ≤
-      2 * Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) := by
-  set P := Measure.pi fun _ : Fin D ↦ L.prod phase
-  set k := ∫ w, Real.cos (inner ℝ w (x - y)) ∂L
-  have hDpos : (0 : ℝ) < D := by exact_mod_cast hD
-  have hmeas : Measurable (randomFourierFeatureTerm x y) :=
-    (continuous_randomFourierFeatureTerm x y).measurable
-  have hk : ∫ s, randomFourierFeatureTerm x y s ∂L.prod phase = k :=
-    integral_randomFourierFeatureTerm L phase hphase x y
-  have hcenter : ∀ s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ,
-      randomFourierFeatureKernel s x y - k =
-        (D : ℝ)⁻¹ * ∑ j, (randomFourierFeatureTerm x y (s j) - k) := by
-    intro s
-    rw [randomFourierFeatureKernel, Finset.sum_sub_distrib]
-    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
-    field_simp
-  have hexp : Real.exp (-2 * (D : ℝ) * epsilon ^ 2 / (2 - -2) ^ 2) =
-      Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) := by
-    congr 1; ring
-  have hup := measureReal_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas
-    (randomFourierFeatureTerm_mem_Icc x y) he.le
-  have hlo := measureReal_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas.neg (a := -2) (b := 2)
-    (fun s ↦ by
-      have := randomFourierFeatureTerm_mem_Icc x y s
-      exact ⟨by simp only [Pi.neg_apply]; linarith [this.2],
-        by simp only [Pi.neg_apply]; linarith [this.1]⟩) he.le
-  rw [hk, hexp] at hup
-  simp only [Pi.neg_apply, integral_neg, hk] at hlo
-  rw [hexp] at hlo
-  set A := {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ |
-    (D : ℝ) * epsilon ≤ ∑ j, (randomFourierFeatureTerm x y (s j) - k)}
-  set B := {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ |
-    (D : ℝ) * epsilon ≤ ∑ j, (-randomFourierFeatureTerm x y (s j) - -k)}
-  have hsub : {sample | epsilon ≤ |randomFourierFeatureKernel sample x y - k|} ⊆ A ∪ B := by
-    intro s hs
-    simp only [mem_ofPred_eq, hcenter] at hs
-    simp only [A, B, mem_union, mem_ofPred_eq]
-    have hsum : ∑ j, (-randomFourierFeatureTerm x y (s j) - -k) =
-        -∑ j, (randomFourierFeatureTerm x y (s j) - k) := by
-      rw [← Finset.sum_neg_distrib]
-      exact Finset.sum_congr rfl fun j _ ↦ by ring
-    rw [hsum]
-    rcases le_abs'.mp hs with h | h
-    · right
-      have := mul_le_mul_of_nonneg_left h hDpos.le
-      rw [← mul_assoc, mul_inv_cancel₀ hDpos.ne', one_mul] at this
-      linarith
-    · left
-      have := mul_le_mul_of_nonneg_left h hDpos.le
-      rwa [← mul_assoc, mul_inv_cancel₀ hDpos.ne', one_mul] at this
-  calc P.real {sample | epsilon ≤ |randomFourierFeatureKernel sample x y - k|}
-      ≤ P.real (A ∪ B) := measureReal_mono hsub
-    _ ≤ P.real A + P.real B := measureReal_union_le _ _
-    _ ≤ Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) + Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) :=
-        add_le_add hup hlo
-    _ = 2 * Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) := by ring
-
-/-- GAPS 108.74: the uniform compact-set random-feature bound. For a compact set `M ⊆ ℝ^d`, a
-frequency law `L` with finite second moment `σ² = E ‖w‖²`, and `ε ≤ σ diam M`, the probability that
-the random-feature kernel of `D` features deviates from `k` by at least `ε` somewhere on `M × M` is
-at most `98 (σ diam M / ε)² exp(-D ε² / (32 (d + 1)))`. -/
-theorem measure_uniform_randomFourierFeatureKernel_error_le {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
-    (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L] (hL2 : MemLp id 2 L)
-    (phase : Measure ℝ) [IsProbabilityMeasure phase]
-    (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
-    (M : Set (EuclideanSpace ℝ (Fin d))) (hM : IsCompact M)
-    (epsilon : ℝ) (he : 0 < epsilon)
-    (hscale : epsilon ≤ Real.sqrt (∫ w, ‖w‖ ^ 2 ∂L) * Metric.diam M) :
-    let sigma := Real.sqrt (∫ w, ‖w‖ ^ 2 ∂L);
-    let k := fun x y ↦ ∫ w, Real.cos (inner ℝ w (x - y)) ∂L;
-    let P := Measure.pi (fun _ : Fin D ↦ L.prod phase);
-    P.real {sample | ∃ x ∈ M, ∃ y ∈ M, epsilon ≤ |randomFourierFeatureKernel sample x y - k x y|} ≤
-      98 * (sigma * Metric.diam M / epsilon) ^ 2 *
-        Real.exp (-(D : ℝ) * epsilon ^ 2 / (32 * (d + 1))) := by
-  sorry
-
-/-- A function continuous on `M × M`, for a compact `M`, is integrable for every finite measure
-concentrated on `M × M`. No second countability of the ambient space is needed. -/
-theorem integrable_of_continuousOn_compact_prod
-    {X : Type*} [MetricSpace X] [MeasurableSpace X] [BorelSpace X]
-    {M : Set X} (hM : IsCompact M) (ρ : Measure (X × X)) [IsFiniteMeasure ρ]
-    (hρ : ρ (M ×ˢ M)ᶜ = 0) {g : X × X → ℝ} (hg : ContinuousOn g (M ×ˢ M)) :
-    Integrable g ρ := by
-  have hMm : MeasurableSet M := hM.isClosed.measurableSet
-  have hs : MeasurableSet (M ×ˢ M) := hMm.prod hMm
-  have hρs : ρ.restrict (M ×ˢ M) = ρ :=
-    Measure.restrict_eq_self_of_ae_mem (mem_ae_iff.mpr hρ)
-  rw [← hρs, ← map_comap_subtype_coe hs, (MeasurableEmbedding.subtype_coe hs).integrable_map_iff]
-  have : CompactSpace M := isCompact_iff_compactSpace.mp hM
-  let G : M × M → ℝ := fun p ↦ g (p.1, p.2)
-  have hG : Continuous G := by
-    have : Continuous (fun p : M × M ↦ ((p.1 : X), (p.2 : X))) := by fun_prop
-    exact hg.comp_continuous this fun p ↦ ⟨p.1.2, p.2.2⟩
-  have hmeas : Measurable (g ∘ ((↑) : ↥(M ×ˢ M) → X × X)) :=
-    hG.measurable.comp (MeasurableEquiv.Set.prod M M).measurable
-  obtain ⟨C, hC⟩ := hM.prod hM |>.exists_bound_of_continuousOn hg
-  have : IsFiniteMeasure (Measure.comap ((↑) : ↥(M ×ˢ M) → X × X) ρ) := by
-    constructor
-    rw [(MeasurableEmbedding.subtype_coe hs).comap_apply]
-    simp
-  exact Integrable.of_bound hmeas.aestronglyMeasurable C (ae_of_all _ fun z ↦ hC z z.2)
-
-/-- GAPS 108.74, deterministic transfer of a uniform kernel error to squared MMD: if two continuous
-kernels differ by at most `ε` on `M × M` for a compact `M` carrying both laws, their squared MMDs
-differ by at most `4 ε`. -/
-theorem abs_squaredMMD_sub_le_of_uniform_kernel_error
-    {X : Type*} [MetricSpace X] [MeasurableSpace X] [BorelSpace X]
-    (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
-    (M : Set X) (hM : IsCompact M) (hP : P M = 1) (hQ : Q M = 1)
-    (k l : X → X → ℝ) (hk : Continuous (Function.uncurry k)) (hl : Continuous (Function.uncurry l))
-    (epsilon : ℝ)  (herr : ∀ x ∈ M, ∀ y ∈ M, |k x y - l x y| ≤ epsilon) :
-    |squaredMMD k P Q - squaredMMD l P Q| ≤ 4 * epsilon := by
-  have hMm : MeasurableSet M := hM.isClosed.measurableSet
-  have hconc : ∀ (R S : Measure X) [IsProbabilityMeasure R] [IsProbabilityMeasure S],
-      R M = 1 → S M = 1 → (R.prod S) (M ×ˢ M)ᶜ = 0 := by
-    intro R S _ _ hR hS
-    rw [prob_compl_eq_zero_iff (hMm.prod hMm), Measure.prod_prod, hR, hS, one_mul]
-  have hk' := hk.continuousOn (s := M ×ˢ M)
-  have hl' := hl.continuousOn (s := M ×ˢ M)
-  -- each of the three double integrals moves by at most `epsilon`
-  have hpiece : ∀ (R S : Measure X) [IsProbabilityMeasure R] [IsProbabilityMeasure S],
-      R M = 1 → S M = 1 →
-      |(∫ z, k z.1 z.2 ∂R.prod S) - ∫ z, l z.1 z.2 ∂R.prod S| ≤ epsilon := by
-    intro R S _ _ hR hS
-    have hρ := hconc R S hR hS
-    rw [← integral_sub
-      (integrable_of_continuousOn_compact_prod (g := fun z : X × X ↦ k z.1 z.2) hM _ hρ hk')
-      (integrable_of_continuousOn_compact_prod (g := fun z : X × X ↦ l z.1 z.2) hM _ hρ hl')]
-    have hb := norm_integral_le_of_norm_le_const (μ := R.prod S)
-      (f := fun z : X × X ↦ k z.1 z.2 - l z.1 z.2) (C := epsilon)
-      (Filter.Eventually.mono (p := fun z ↦ z ∈ M ×ˢ M) (mem_ae_iff.mpr hρ)
-        fun z hz ↦ herr z.1 hz.1 z.2 hz.2)
-    simpa using hb
-  have h1 := hpiece P P hP hP
-  have h2 := hpiece Q Q hQ hQ
-  have h3 := hpiece P Q hP hQ
-  unfold squaredMMD
-  rw [abs_le] at h1 h2 h3 ⊢
-  constructor <;> linarith [h1.1, h1.2, h2.1, h2.2, h3.1, h3.2]
-
 
 end CKSD

@@ -306,8 +306,12 @@ noncentral-chi-squared/chi-squared ratio characterization of the noncentral F la
 Upstream definitions replace local duplicates, with bridge lemmas where CKSD keeps a
 statistical adapter:
 
-- Mathlib: `Measure.conv` for convolution laws; `TendstoInMeasure` through
-  `tendstoInProbabilityConst_iff_tendstoInMeasure`; `tvDist` through
+- Mathlib: `Measure.conv` for convolution laws; `TendstoInDistribution` and
+  `TendstoInMeasure` for convergence in distribution and in probability, with the
+  portmanteau theorem, the Lipschitz-function criterion and the continuous-mapping and
+  Slutsky lemmas; convergence in `ProbabilityMeasure` for weak convergence of laws;
+  `IsTightMeasureSet` through `isBoundedInProbability_iff_isTightMeasureSet`; `variance`,
+  `covariance` and `ProbabilityTheory.cdf`; `tvDist` through
   `tvDist_eq_two_mul_totalVariationDistance`; `Matrix.rowStochastic` for Markov
   transition matrices; `poissonMeasure` through `poissonMass_coe`; `bernoulliMeasure` for
   Bernoulli bandit arms; `HolderOnWith` and `HolderWith` for Hölder classes; `hammingDist`
@@ -331,3 +335,30 @@ statistical adapter:
   `klDiv_fitLaw` and `eq_fitLaw_of_klDiv_le` in the Schrödinger-bridge half steps.
 - Statlib: `InformationTheory.klBerReal` for Bernoulli divergences in bandit lower bounds,
   and `etvDist_eq_two_mul_iSup_sub` for the total-variation bridge.
+
+Proofs of the classical limit and lower-bound theorems rest on the following upstream results.
+
+- Mathlib: the strong law (`strong_law_ae`, `strong_law_ae_real`); Lévy's continuity theorem
+  (`ProbabilityMeasure.tendsto_iff_tendsto_charFun`), `charFun_multivariateGaussian` and
+  `Measure.ext_of_charFun`; the Cramér–Wold device (`TendstoInDistribution.of_inner`); the
+  portmanteau theorem (`ProbabilityMeasure.tendsto_measure_of_null_frontier_of_tendsto'`);
+  martingale convergence (`Submartingale.ae_tendsto_limitProcess`,
+  `supermartingale_of_setIntegral_succ_le`) for the Robbins–Siegmund argument; conditional
+  expectation (`condExp_condExp_of_le`, `condExp_mul_of_aestronglyMeasurable_left`,
+  `condExp_bilin_of_aestronglyMeasurable_left`,
+  `condIndepFun_iff_condExp_inter_preimage_eq_mul`) for propensity scores;
+  `hasFDerivAt_integral_of_dominated_of_fderiv_le` and `IsLocalMax.hasFDerivAt_eq_zero` for
+  exponential-family likelihood equations; `det_add_replicateCol_mul_replicateRow` for the
+  Kiefer–Wolfowitz theorem; `integral_gaussian`, `mgf_id_gaussianReal` and
+  `integral_llr_tilted_right` for Gaussian computations; tree lemmas
+  (`SimpleGraph.IsTree.dist_eq_dist_add_one_of_adj`, `IsAcyclic.eq_penultimate_of_adj_end`,
+  `IsAcyclic.mem_support_of_ne_mem_support_of_adj_of_isPath`) for belief propagation and
+  junction trees; `Real.volume_pi_ball` and `Real.volume_Icc_pi` for quantization bounds.
+- TauCeti: `stdGaussian_map_norm_sq` for the chi-squared limit of Pearson's statistic;
+  `map_inner_multivariateGaussian` in two-stage least squares; `gaussianReal_tilted_mul` and
+  Pinsker's inequality `two_mul_sq_measureReal_sub_le_klDiv` in Gaussian lower bounds;
+  `Measure.continuous_cdf_of_noAtoms` in bootstrap consistency; the Wasserstein rearrangement,
+  pushforward and quantization results (`wassersteinEDist_eq_eLpNorm_quantile_sub`,
+  `wassersteinEDist_map_le_mul`, `hasFiniteMoment_iff_memLp_quantile`,
+  `eLpNorm_infEDist_le_wassersteinEDist`) for distance-to-measure stability and quantization.
+- Statlib: `klDiv_pi` for divergences of product laws.

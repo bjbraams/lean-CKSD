@@ -61,15 +61,17 @@ def efficientInfluence {X : Type*} [MeasurableSpace X] {k : ℕ} (P : Measure X)
     (WithLp.toLp 2 fun i ↦ efficientScore P scores (ℓ i) x)
 
 /-- Regularity of an estimator sequence along a family of one-dimensional submodels
-`t ↦ Q i t` whose parameter moves in direction `dir i`: under the product law at
-`t = 1/√n`, the law of `√n (Tₙ - (θ + dir i / √n))` converges to the same `L` for every `i`. -/
+`t ↦ Q i t` of probability measures whose parameter moves in direction `dir i`: under the
+product law at `t = 1/√n`, `√n (Tₙ - (θ + dir i / √n))` converges in law to the same `L` for
+every `i`. -/
 def IsRegularAlongPaths {X ι : Type*} [MeasurableSpace X] {k : ℕ}
-    (Q : ι → ℝ → Measure X) (dir : ι → EuclideanSpace ℝ (Fin k)) (θ : EuclideanSpace ℝ (Fin k))
+    (Q : ι → ℝ → Measure X) [∀ i t, IsProbabilityMeasure (Q i t)]
+    (dir : ι → EuclideanSpace ℝ (Fin k)) (θ : EuclideanSpace ℝ (Fin k))
     (T : ∀ n, (Fin n → X) → EuclideanSpace ℝ (Fin k))
-    (L : Measure (EuclideanSpace ℝ (Fin k))) : Prop :=
-  (∀ n, Measurable (T n)) ∧ ∀ i, TendstoWeakly
-    (fun n ↦ (Measure.pi fun _ : Fin n ↦ Q i (Real.sqrt n)⁻¹).map
-      (fun x ↦ Real.sqrt n • (T n x - (θ + (Real.sqrt n)⁻¹ • dir i)))) L
+    (L : Measure (EuclideanSpace ℝ (Fin k))) [IsProbabilityMeasure L] : Prop :=
+  (∀ n, Measurable (T n)) ∧ ∀ i, TendstoInDistribution
+    (fun (n : ℕ) x ↦ Real.sqrt n • (T n x - (θ + (Real.sqrt n)⁻¹ • dir i))) atTop id
+    (fun n ↦ Measure.pi fun _ : Fin n ↦ Q i (Real.sqrt n)⁻¹) L
 
 /-- GAPS 102.34, convolution part. For every direction `a ∈ ℝᵏ` and nuisance score `g` in a
 linear space `G ⊆ L²(P)`, the submodel `t ↦ Q (a, g) t` passes through `P` at `t = 0`, has
@@ -88,7 +90,8 @@ theorem exists_convolution_of_isRegularAlongPaths
       ⇑(A 1) =ᵐ[P] ⇑(∑ j, i.1 j • ℓ j + (i.2 : Lp ℝ 2 P)))
     (hI : (efficientInformationMatrix P (G : Set (Lp ℝ 2 P)) ℓ).PosDef)
     (T : ∀ n, (Fin n → X) → EuclideanSpace ℝ (Fin k))
-    (L : Measure (EuclideanSpace ℝ (Fin k))) (hreg : IsRegularAlongPaths Q Prod.fst θ T L) :
+    (L : Measure (EuclideanSpace ℝ (Fin k))) [IsProbabilityMeasure L]
+    (hreg : IsRegularAlongPaths Q Prod.fst θ T L) :
     ∃ M : Measure (EuclideanSpace ℝ (Fin k)), IsProbabilityMeasure M ∧
       L = (multivariateGaussian 0 (efficientInformationMatrix P (G : Set (Lp ℝ 2 P)) ℓ)⁻¹).conv M := by
   sorry
@@ -173,10 +176,10 @@ theorem crossFittedAverage_missingMean_asymptotically_linear
           eLpNorm (fun x ↦ (fit n k ω).2 x - π₀ x) 2 PX) →
     (∀ k : Fin K, TendstoInProbabilityZeroENNReal μ fun n ω ↦
         eLpNorm (fun w ↦ score (fit n k ω) w - score (m₀, π₀) w) 2 P) →
-    TendstoInProbabilityConst μ (fun n ω ↦
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦
       Real.sqrt n * (crossFittedAverage (split n) (train n) score
         (fun i ↦ missingDataObservation (W i ω)) - mean) -
-      (Real.sqrt n)⁻¹ * ∑ i : Fin n, (score (m₀, π₀) (W i ω) - mean)) 0 := by
+      (Real.sqrt n)⁻¹ * ∑ i : Fin n, (score (m₀, π₀) (W i ω) - mean)) atTop (fun _ ↦ 0) := by
   sorry
 
 /-! ### Adaptive estimation of a center of symmetry -/
@@ -214,6 +217,21 @@ structure IsSymmetricFiniteInformationDensity (η η' : ℝ → ℝ) : Prop wher
   eq_integral_deriv : ∀ x, η x = η 0 + ∫ t in (0 : ℝ)..x, η' t
   /-- Finite Fisher information for location. -/
   integrable_fisher : Integrable fun x ↦ η' x ^ 2 / η x
+
+/-- The location laws of a symmetric finite-information density are probability measures. -/
+theorem IsSymmetricFiniteInformationDensity.isProbabilityMeasure_locationLaw {η η' : ℝ → ℝ}
+    (hη : IsSymmetricFiniteInformationDensity η η') (θ : ℝ) :
+    IsProbabilityMeasure (locationLaw η θ) := by
+  have hint : Integrable η := by
+    by_contra hni
+    have h1 := hη.integral_eq_one
+    rw [integral_undef hni] at h1
+    exact zero_ne_one h1
+  have hshift := lintegral_sub_right_eq_self (μ := volume) (fun x ↦ ENNReal.ofReal (η x)) θ
+  constructor
+  rw [locationLaw, withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ, hshift,
+    ← ofReal_integral_eq_lintegral_ofReal hint (ae_of_all _ hη.nonneg), hη.integral_eq_one,
+    ENNReal.ofReal_one]
 
 /-- Scores of symmetric nuisance perturbations at `P` about the centre `θ`: mean-zero `L²`
 functions that are even about `θ`. -/
@@ -298,13 +316,17 @@ theorem efficientScore_locationScore_eq {η η' : ℝ → ℝ}
 /-- GAPS 102.41, adaptation part: there are measurable estimators, not depending on the
 symmetric density, that are asymptotically normal with the efficient variance `I_η⁻¹` at every
 symmetric density of finite Fisher information, regularly along local location alternatives
-`θ + h/√n`. Regularity along symmetric nuisance perturbations is outside this scope. -/
+`θ + h/√n`. The location laws are probability measures by
+`IsSymmetricFiniteInformationDensity.isProbabilityMeasure_locationLaw`; the instance binder only
+makes them available to the statement. Regularity along symmetric nuisance perturbations is
+outside this scope. -/
 theorem exists_adaptive_estimator_center_of_symmetry :
     ∃ T : ∀ n, (Fin n → ℝ) → ℝ, (∀ n, Measurable (T n)) ∧
-      ∀ η η' : ℝ → ℝ, IsSymmetricFiniteInformationDensity η η' → ∀ θ h : ℝ,
-        TendstoWeakly (fun n ↦
-          (Measure.pi fun _ : Fin n ↦ locationLaw η (θ + h / Real.sqrt n)).map
-            (fun x ↦ Real.sqrt n * (T n x - (θ + h / Real.sqrt n))))
+      ∀ η η' : ℝ → ℝ, IsSymmetricFiniteInformationDensity η η' →
+        ∀ [∀ θ, IsProbabilityMeasure (locationLaw η θ)], ∀ θ h : ℝ,
+        TendstoInDistribution (fun (n : ℕ) x ↦ Real.sqrt n * (T n x - (θ + h / Real.sqrt n)))
+          atTop id
+          (fun n ↦ Measure.pi fun _ : Fin n ↦ locationLaw η (θ + h / Real.sqrt n))
           (gaussianReal 0 (Real.toNNReal (locationFisherInformation η η')⁻¹)) := by
   sorry
 

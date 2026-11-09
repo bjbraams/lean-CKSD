@@ -14,7 +14,7 @@ All variables take values in one finite state type `S`, and a law on the configu
 finite sums and quotients, with Lean's convention `x / 0 = 0`; whenever a conditional
 probability appears in a formula, the conditioning event is assumed to have positive
 probability. The graph-theoretic notions (`CausalGraph`, active paths, d-separation, skeleton,
-unshielded colliders, truncated factorization) are those of `CKSD.LinearModels.Causal`.
+unshielded colliders, truncated factorization) are those of `CKSD.LinearModels.DirectedGraphical.Basic.CausalGraph`.
 
 A single configuration `b : V → S` carries the values of all variables that appear in a query;
 for disjoint vertex sets `X`, `Y`, `Z` the values `x`, `y`, `z` are its restrictions.
@@ -28,7 +28,7 @@ of local masses satisfies the global directed Markov property. Its proof follows
 `A ∪ B ∪ C` are summed out, and the remaining product splits into a factor depending on the
 vertices reachable from `A` by trails whose noncolliders avoid `C` and whose colliders lie in
 that ancestral closure, and a factor depending on the other vertices; the graph-theoretic
-steps are in `CKSD.LinearModels.ActiveTrails`. The rules of the do-calculus are derived from it:
+steps are in `CKSD.LinearModels.DirectedGraphical.Basic.ActiveTrails`. The rules of the do-calculus are derived from it:
 rule 1 directly, rule 2 by comparing with the mass in which the children of `Z` read fixed
 values of `Z`, and rule 3 by Pearl's augmentation of the graph with an intervention indicator
 (Pearl, *Causality*, 2009, §3.4). The back-door and front-door formulae follow from rule 2 and

@@ -11,7 +11,7 @@ quality of the empirical optimization. Sources: GAPS 102.2, 102.24, and 102.48. 
 is stated with continuous positive densities and an integrable envelope of their log likelihoods;
 the more general upper-semicontinuous formulation is outside that scope. The Wald proof combines a
 strict Gibbs inequality, local integrable majorants on balls, and the weak law of large numbers
-`tendstoInProbabilityConst_sampleMean_of_iid` (from Mathlib's strong law).
+`tendstoInMeasure_sampleMean_of_iid` (from Mathlib's strong law).
 -/
 
 @[expose] public section
@@ -173,7 +173,7 @@ theorem exists_ball_measurable_dominating_integral_lt {X Θ : Type*} [Measurable
 /-- GAPS 102.2: Wald consistency with continuous positive densities on a compact parameter space.
 The log-likelihood envelope is integrable at the true law; identifiability concerns the laws,
 so no irrelevant distinction between density versions is required. -/
-theorem tendstoInProbabilityConst_mle_of_compact
+theorem tendstoInMeasure_mle_of_compact
     {Ω X Θ : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
     [MetricSpace Θ] [CompactSpace Θ]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Θ → Measure X)
@@ -185,11 +185,11 @@ theorem tendstoInProbabilityConst_mle_of_compact
     (B : X → ℝ) (hB : Integrable B (P θ₀))
     (henv : ∀ θ x, |Real.log (f θ x)| ≤ B x)
     (T : ℕ → Ω → Θ)
-    (r : ℕ → Ω → ℝ) (hr : TendstoInProbabilityConst μ r 0)
+    (r : ℕ → Ω → ℝ) (hr : TendstoInMeasure μ r atTop (fun _ ↦ 0))
     (hopt : ∀ n : ℕ, 0 < n → ∀ᵐ ω ∂μ,
       empiricalCriterion (fun θ x ↦ Real.log (f θ x)) Xn n ω θ₀ - r n ω ≤
         empiricalCriterion (fun θ x ↦ Real.log (f θ x)) Xn n ω (T n ω)) :
-    TendstoInProbabilityConst μ T θ₀ := by
+    TendstoInMeasure μ T atTop (fun _ ↦ θ₀) := by
   set P₀ := P θ₀ with hP₀
   have := hP θ₀
   set m : Θ → X → ℝ := fun θ x ↦ Real.log (f θ x) with hmdef
@@ -227,6 +227,7 @@ theorem tendstoInProbabilityConst_mle_of_compact
         hmc B hB henv θ (hgibbs θ hθ)
       exact ⟨ρ, hρ, w, h1, h2, h3, fun _ ↦ h4⟩
   choose ρ hρ w hwm hwi hwup hwlt using hloc
+  rw [tendstoInMeasure_iff_measureReal_lt_dist]
   intro ε hε
   set K : Set Θ := {θ | ε ≤ dist θ θ₀} with hK
   have hKc : IsCompact K :=
@@ -243,14 +244,15 @@ theorem tendstoInProbabilityConst_mle_of_compact
   -- Laws of large numbers for the finitely many statistics involved.
   set Wn : Θ → ℕ → Ω → ℝ := fun θ n ω ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, w θ (Xn i ω)
   set Mn0 : ℕ → Ω → ℝ := fun n ω ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, m θ₀ (Xn i ω)
-  have hW : ∀ θ, TendstoInProbabilityConst μ (Wn θ) (∫ x, w θ x ∂P₀) := fun θ ↦
-    tendstoInProbabilityConst_sampleMean_of_iid μ P₀ Xn hiid (w θ) (hwm θ) (hwi θ)
-  have hM0 : TendstoInProbabilityConst μ Mn0 (Mpop θ₀) :=
-    tendstoInProbabilityConst_sampleMean_of_iid μ P₀ Xn hiid (m θ₀) (hmm θ₀) (hmi θ₀)
+  have hW : ∀ θ, TendstoInMeasure μ (Wn θ) atTop (fun _ ↦ ∫ x, w θ x ∂P₀) := fun θ ↦
+    tendstoInMeasure_sampleMean_of_iid μ P₀ Xn hiid (w θ) (hwm θ) (hwi θ)
+  have hM0 : TendstoInMeasure μ Mn0 atTop (fun _ ↦ Mpop θ₀) :=
+    tendstoInMeasure_sampleMean_of_iid μ P₀ Xn hiid (m θ₀) (hmm θ₀) (hmi θ₀)
   set bound : ℕ → ℝ := fun n ↦ ∑ θ ∈ t, (μ.real {ω | γ θ / 4 < dist (Wn θ n ω) (∫ x, w θ x ∂P₀)} +
     μ.real {ω | γ θ / 4 < dist (Mn0 n ω) (Mpop θ₀)} + μ.real {ω | γ θ / 4 < dist (r n ω) 0})
     with hbound
   have hbound0 : Tendsto bound atTop (𝓝 0) := by
+    simp only [tendstoInMeasure_iff_measureReal_lt_dist] at hW hM0 hr
     have : Tendsto bound atTop (𝓝 (∑ θ ∈ t, ((0 : ℝ) + 0 + 0))) :=
       tendsto_finsetSum _ fun θ hθ ↦
         ((hW θ _ (by linarith [hγpos θ hθ])).add (hM0 _ (by linarith [hγpos θ hθ]))).add
@@ -327,15 +329,15 @@ theorem mEstimator_asymptotic_linearization_and_normality
           inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) / 2)
       (fun h : EuclideanSpace ℝ (Fin d) ↦ ‖h‖ ^ 2))
     (T : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (hT : ∀ n, Measurable (T n))
-    (hcons : TendstoInProbabilityConst μ T θ₀)
+    (hcons : TendstoInMeasure μ T atTop (fun _ ↦ θ₀))
     (r : ℕ → Ω → ℝ)
-    (hr : TendstoInProbabilityConst μ (fun n ω ↦ (n : ℝ) * r n ω) 0)
+    (hr : TendstoInMeasure μ (fun (n : ℕ) ω ↦ (n : ℝ) * r n ω) atTop (fun _ ↦ 0))
     (hopt : ∀ n : ℕ, 0 < n → ∀ᵐ ω ∂μ, ∀ θ,
       empiricalCriterion m Xn n ω θ - r n ω ≤ empiricalCriterion m Xn n ω (T n ω)) :
-    TendstoInProbabilityConst μ (fun n ω ↦ Real.sqrt n • (T n ω - θ₀) +
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦ Real.sqrt n • (T n ω - θ₀) +
       Matrix.toEuclideanCLM (𝕜 := ℝ) V⁻¹
-        ((Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, score (Xn i ω))) 0 ∧
-      TendstoInDistribution μ (fun n ω ↦ Real.sqrt n • (T n ω - θ₀))
+        ((Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, score (Xn i ω))) atTop (fun _ ↦ 0) ∧
+      TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n • (T n ω - θ₀)) atTop id (fun _ ↦ μ)
         (multivariateGaussian 0
           (V⁻¹ * fisherInformationMatrix P score * (V⁻¹).transpose)) := by
   sorry
@@ -373,10 +375,10 @@ theorem regression_mEstimator_asymptotic_linearization_and_normality
     (hmin : ∀ n : ℕ, 0 < n → ∀ᵐ ω ∂μ, ∀ b,
       regressionMObjective ρ x (fun i ↦ inner ℝ (x i) β + ε i ω) n (T n ω) ≤
         regressionMObjective ρ x (fun i ↦ inner ℝ (x i) β + ε i ω) n b) :
-    TendstoInProbabilityConst μ (fun n ω ↦ Real.sqrt n • (T n ω - β) -
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦ Real.sqrt n • (T n ω - β) -
       (γ * Real.sqrt n)⁻¹ • Matrix.toEuclideanCLM (𝕜 := ℝ) Q⁻¹
-        (∑ i ∈ Finset.range n, ψ (ε i ω) • x i)) 0 ∧
-    TendstoInDistribution μ (fun n ω ↦ Real.sqrt n • (T n ω - β))
+        (∑ i ∈ Finset.range n, ψ (ε i ω) • x i)) atTop (fun _ ↦ 0) ∧
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n • (T n ω - β)) atTop id (fun _ ↦ μ)
       (multivariateGaussian 0 (((∫ z, ψ z ^ 2 ∂P) / γ ^ 2) • Q⁻¹)) := by
   sorry
 

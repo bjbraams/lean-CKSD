@@ -77,9 +77,9 @@ theorem IsStarProjection.starProjection_range_apply {E : Type*} [NormedAddCommGr
 theorem variance_inner_of_covariance_eq {Ω : Type*} [MeasurableSpace Ω] {n : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (Y : Ω → EuclideanSpace ℝ (Fin n))
     (hY : MemLp Y 2 μ) (v : ℝ)
-    (hcov : ∀ i j, covariance μ (fun ω ↦ Y ω i) (fun ω ↦ Y ω j) = if i = j then v else 0)
+    (hcov : ∀ i j, cov[fun ω ↦ Y ω i, fun ω ↦ Y ω j; μ] = if i = j then v else 0)
     (b : EuclideanSpace ℝ (Fin n)) :
-    variance μ (fun ω ↦ inner ℝ b (Y ω)) = v * ‖b‖ ^ 2 := by
+    Var[fun ω ↦ inner ℝ b (Y ω); μ] = v * ‖b‖ ^ 2 := by
   have hYi : ∀ i, MemLp (fun ω ↦ Y ω i) 2 μ := fun i ↦
     ContinuousLinearMap.comp_memLp' (EuclideanSpace.proj i : EuclideanSpace ℝ (Fin n) →L[ℝ] ℝ) hY
   have hbY : ∀ i, MemLp (fun ω ↦ b i * Y ω i) 2 μ := fun i ↦ (hYi i).const_mul (b i)
@@ -88,15 +88,10 @@ theorem variance_inner_of_covariance_eq {Ω : Type*} [MeasurableSpace Ω] {n : �
     simp [PiLp.inner_apply, mul_comm]
   have hmeas : AEMeasurable (fun ω ↦ inner ℝ b (Y ω)) μ := by
     exact (aestronglyMeasurable_const.inner hY.aestronglyMeasurable).aemeasurable
-  have hvar : variance μ (fun ω ↦ inner ℝ b (Y ω)) =
-      ProbabilityTheory.variance (fun ω ↦ inner ℝ b (Y ω)) μ :=
-    (ProbabilityTheory.variance_eq_integral hmeas).symm
-  rw [hvar, ← covariance_self hmeas, hinner,
+  rw [← covariance_self hmeas, hinner,
     covariance_fun_sum_fun_sum hbY hbY]
   simp_rw [covariance_const_mul_left, covariance_const_mul_right]
-  have := hcov
-  simp only [covariance] at this
-  simp_rw [this, mul_ite, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ite_true,
+  simp_rw [hcov, mul_ite, mul_zero, Finset.sum_ite_eq, Finset.mem_univ, ite_true,
     EuclideanSpace.norm_sq_eq, Real.norm_eq_abs, sq_abs, Finset.mul_sum]
   refine Finset.sum_congr rfl fun i _ ↦ ?_
   ring
@@ -118,10 +113,10 @@ a linear unbiased estimator onto the model space does not increase its variance.
 theorem variance_inner_map_le {Ω : Type*} [MeasurableSpace Ω] {n : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (Y : Ω → EuclideanSpace ℝ (Fin n))
     (hY : MemLp Y 2 μ) (v : ℝ) (hv : 0 ≤ v)
-    (hcov : ∀ i j, covariance μ (fun ω ↦ Y ω i) (fun ω ↦ Y ω j) = if i = j then v else 0)
+    (hcov : ∀ i j, cov[fun ω ↦ Y ω i, fun ω ↦ Y ω j; μ] = if i = j then v else 0)
     (P : EuclideanSpace ℝ (Fin n) →L[ℝ] EuclideanSpace ℝ (Fin n)) (hP : IsStarProjection P)
     (a : EuclideanSpace ℝ (Fin n)) :
-    variance μ (fun ω ↦ inner ℝ (P a) (Y ω)) ≤ variance μ (fun ω ↦ inner ℝ a (Y ω)) := by
+    Var[fun ω ↦ inner ℝ (P a) (Y ω); μ] ≤ Var[fun ω ↦ inner ℝ a (Y ω); μ] := by
   rw [variance_inner_of_covariance_eq μ Y hY v hcov, variance_inner_of_covariance_eq μ Y hY v hcov]
   refine mul_le_mul_of_nonneg_left ?_ hv
   have horth : inner ℝ (P a) (a - P a) = 0 := by

@@ -554,10 +554,10 @@ $H^2(f,g)=\int(\sqrt f-\sqrt g)^2$.
   from $f_0\in\mathcal F_d$ and $n\ge d+1$,
   $$\sup_{f_0\in\mathcal F_d}\mathbb E H^2(\hat f_n,f_0)\le C_d\cdot
   \begin{cases}n^{-4/5},&d=1,\\ n^{-2/(d+1)}\log n,&d\ge2,\end{cases}$$
-  with $C_d$ depending only on $d$, and there is a universal $c>0$ such that
-  every estimator $\tilde f_n$ satisfies
-  $\sup_{f_0\in\mathcal F_d}\mathbb E H^2(\tilde f_n,f_0)\ge c\,n^{-4/5}$ for
-  $d=1$ and $\ge c\,n^{-2/(d+1)}$ for $d\ge2$.
+  with $C_d$ depending only on $d$, and there is $c_d>0$, depending only on
+  $d$, such that every estimator $\tilde f_n$ satisfies
+  $\sup_{f_0\in\mathcal F_d}\mathbb E H^2(\tilde f_n,f_0)\ge c_d\,n^{-4/5}$ for
+  $d=1$ and $\ge c_d\,n^{-2/(d+1)}$ for $d\ge2$.
 
 ### Functional data analysis
 

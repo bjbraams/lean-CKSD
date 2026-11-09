@@ -20,10 +20,13 @@ closed form of GAPS 108.71 under its integrability hypotheses.
 
 ## Main results
 
-* `CKSD.tendstoWeakly_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero`: the inverse
+* `CKSD.tendsto_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero`: the inverse
   multiquadric KSD controls weak convergence (GAPS 108.72(b)).
-* `CKSD.exists_not_tendstoWeakly_of_kernelSteinDiscrepancySq_tendsto_zero`: fast-decaying kernels
-  fail to detect non-convergence for `d ≥ 3` (GAPS 108.72(d)).
+* `CKSD.exists_not_tendsto_of_kernelSteinDiscrepancySq_tendsto_zero`: fast-decaying kernels fail
+  to detect non-convergence for `d ≥ 3` (GAPS 108.72(d)).
+
+Weak convergence of laws is convergence in Mathlib's `MeasureTheory.ProbabilityMeasure`
+topology.
 -/
 
 @[expose] public section
@@ -64,7 +67,7 @@ def inverseMultiquadricKernel (c β : ℝ) (x y : E) : ℝ := (c ^ 2 + ‖x - y�
 `b = ∇ log p` that is Lipschitz and distantly dissipative. For the inverse multiquadric kernel
 with `c > 0` and `β ∈ (-1, 0)`, every sequence of laws with square-integrable score whose kernel
 Stein discrepancy tends to zero converges weakly to `P`. -/
-theorem tendstoWeakly_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero
+theorem tendsto_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero
     (P : Measure E) [IsProbabilityMeasure P] (p : E → ℝ) (hp : HasDensity P volume p)
     (hpos : ∀ x, 0 < p x) (hp1 : ContDiff ℝ 1 p) (b : E → E)
     (hb : ∀ x, b x = gradient (fun z ↦ Real.log (p z)) x) (L : ℝ≥0) (hlip : LipschitzWith L b)
@@ -73,7 +76,7 @@ theorem tendstoWeakly_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_ze
     (hμb : ∀ m, Integrable (fun x ↦ ‖b x‖ ^ 2) (μ m))
     (hksd : Tendsto (fun m ↦
       kernelSteinDiscrepancySq b (inverseMultiquadricKernel c β) (μ m)) atTop (𝓝 0)) :
-    TendstoWeakly μ P := by
+    Tendsto (β := ProbabilityMeasure E) (fun m ↦ ⟨μ m, hμ m⟩) atTop (𝓝 ⟨P, inferInstance⟩) := by
   sorry
 
 /-- GAPS 108.72(d): for `d ≥ 3` and the standard Gaussian target (score `b x = -x`), let `k` be a
@@ -84,17 +87,18 @@ kernel Stein discrepancy tending to zero without converging weakly to the standa
 This covers the Gaussian, Matérn and Wendland kernels. The `C²` hypothesis strengthens the
 source's continuity requirement on the listed derivatives. Clauses (a) and (c) are not
 formalized. -/
-theorem exists_not_tendstoWeakly_of_kernelSteinDiscrepancySq_tendsto_zero (hd : 3 ≤ d)
+theorem exists_not_tendsto_of_kernelSteinDiscrepancySq_tendsto_zero (hd : 3 ≤ d)
     (k : E → E → ℝ) (hk : ContDiff ℝ 2 (Function.uncurry k))
     (hbdd : ∃ C, ∀ x y, |k x y| ≤ C ∧ ‖gradient (fun x' ↦ k x' y) x‖ ≤ C ∧
       ‖gradient (k x) y‖ ≤ C ∧ |mixedKernelDivergence k x y| ≤ C)
     (hdecay : ∀ ε > 0, ∃ R : ℝ, ∀ x y, R ≤ ‖x - y‖ →
       max |k x y| (max ‖gradient (fun x' ↦ k x' y) x‖ |mixedKernelDivergence k x y|) ≤
         ε * ‖x - y‖ ^ (-(1 / 2 - 1 / (d : ℝ))⁻¹)) :
-    ∃ μ : ℕ → Measure E, (∀ m, IsProbabilityMeasure (μ m)) ∧
+    ∃ (μ : ℕ → Measure E) (hμ : ∀ m, IsProbabilityMeasure (μ m)),
       (∀ m, Integrable (fun x ↦ ‖x‖ ^ 2) (μ m)) ∧
       Tendsto (fun m ↦ kernelSteinDiscrepancySq (fun x ↦ -x) k (μ m)) atTop (𝓝 0) ∧
-      ¬ TendstoWeakly μ (multivariateGaussian 0 (1 : Matrix (Fin d) (Fin d) ℝ)) := by
+      ¬ Tendsto (β := ProbabilityMeasure E) (fun m ↦ ⟨μ m, hμ m⟩) atTop
+        (𝓝 ⟨multivariateGaussian 0 (1 : Matrix (Fin d) (Fin d) ℝ), inferInstance⟩) := by
   sorry
 
 end CKSD

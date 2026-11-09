@@ -342,7 +342,7 @@ theorem integral_fderiv_gradient_add_mul_laplacian_eq_zero {d : ℕ}
 solve the Fokker–Planck equation of `dX = (v + ε∇ log μ)(X) dt + √(2ε) dW`, for every continuous
 `ε ≥ 0`. Both equations are taken in the weak integral form on `[0, 1]`. -/
 theorem isFokkerPlanckSolution_add_score_of_continuityEquation {d : ℕ}
-    (m : ℝ → EuclideanSpace ℝ (Fin d) → ℝ) (hm : ∀ t, ContDiff ℝ ⊤ (m t))
+    (m : ℝ → EuclideanSpace ℝ (Fin d) → ℝ) (hm : ∀ t, ContDiff ℝ (⊤ : ℕ∞) (m t))
     (hmpos : ∀ t x, 0 < m t x)
     (v : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (ε : ℝ → ℝ)
 
@@ -373,7 +373,7 @@ theorem isFokkerPlanckSolution_add_score_of_continuityEquation {d : ℕ}
     exact Finset.sum_congr rfl fun i _ ↦ by ring
   have hf2 : ContDiff ℝ 2 f := hf.of_le (by norm_num)
   have hXc (s : ℝ) : Continuous (X s) := by
-    have hlog : ContDiff ℝ ⊤ fun y ↦ Real.log (m s y) :=
+    have hlog : ContDiff ℝ (⊤ : ℕ∞) fun y ↦ Real.log (m s y) :=
       (hm s).log fun y ↦ (hmpos s y).ne'
     have hgc : Continuous fun x ↦ gradient (fun y ↦ Real.log (m s y)) x := by
       simp only [gradient]
@@ -434,7 +434,7 @@ in `t ∈ [0, 1]` and `∫₀¹ ∫ ‖bₜ‖ dμₜ dt < ∞`, a solution of `
 with `X₀ ∼ μ₀` independent of the Brownian motion has law `μₜ` for every `t ∈ [0, 1]`. -/
 theorem map_marginalPreservingDiffusion {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
-    (m : ℝ → EuclideanSpace ℝ (Fin d) → ℝ) (hm : ∀ t, ContDiff ℝ ⊤ (m t))
+    (m : ℝ → EuclideanSpace ℝ (Fin d) → ℝ) (hm : ∀ t, ContDiff ℝ (⊤ : ℕ∞) (m t))
     (hmpos : ∀ t x, 0 < m t x)
     (v : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (ε : ℝ) (hε : 0 ≤ ε)
     (hCE : IsFokkerPlanckSolution (fun t ↦ volume.withDensity fun x ↦ ENNReal.ofReal (m t x))
@@ -478,14 +478,14 @@ theorem stochasticInterpolant_score_and_velocity {Ω : Type*} [MeasurableSpace �
     (hdγ2 : ∫⁻ t in Icc (0 : ℝ) 1, ‖dγ t‖ₑ ^ 2 < ∞) :
     let X := fun t ω ↦ I t (X₀ ω) (X₁ ω) + γ t • Z ω
     ∀ t ∈ Ioo (0 : ℝ) 1,
-      (∃ mt : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ ⊤ mt ∧ (∀ x, 0 < mt x) ∧
+      (∃ mt : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ (⊤ : ℕ∞) mt ∧ (∀ x, 0 < mt x) ∧
         P.map (X t) = volume.withDensity (fun x ↦ ENNReal.ofReal (mt x)) ∧
         (fun ω ↦ gradient (fun y ↦ Real.log (mt y)) (X t ω)) =ᵐ[P]
           fun ω ↦ -(γ t)⁻¹ • P[Z | MeasurableSpace.comap (X t) inferInstance] ω) ∧
       ∀ vt : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d),
         (fun ω ↦ vt (X t ω)) =ᵐ[P] P[fun ω ↦ dI t (X₀ ω) (X₁ ω) + dγ t • Z ω |
           MeasurableSpace.comap (X t) inferInstance] →
-        ∀ φ : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ ⊤ φ → HasCompactSupport φ →
+        ∀ φ : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ (⊤ : ℕ∞) φ → HasCompactSupport φ →
           HasDerivAt (fun s ↦ ∫ ω, φ (X s ω) ∂P)
             (∫ ω, fderiv ℝ φ (X t ω) (vt (X t ω)) ∂P) t := by
   sorry

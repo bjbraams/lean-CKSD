@@ -101,8 +101,8 @@ theorem tendsto_coxPartialLikelihoodMaximizer {Ω : Type*} [MeasurableSpace Ω]
     (hmax : ∀ n ω, (∃ b, ∀ b', coxSampleLogLikelihood τ D n ω b' ≤
         coxSampleLogLikelihood τ D n ω b) →
       ∀ b', coxSampleLogLikelihood τ D n ω b' ≤ coxSampleLogLikelihood τ D n ω (βhat n ω)) :
-    TendstoInProbabilityConst μ βhat β ∧
-      TendstoInDistribution μ (fun n ω ↦ Real.sqrt n • (βhat n ω - β))
+    TendstoInMeasure μ βhat atTop (fun _ ↦ β) ∧
+      TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n • (βhat n ω - β)) atTop id (fun _ ↦ μ)
         (multivariateGaussian 0 (coxInformation L β τ)⁻¹) := by
   sorry
 
@@ -157,16 +157,17 @@ theorem tendstoInDistribution_countingMartingaleTransform {Ω : Type*} [Measurab
     (hHpred : ∀ n j h, Measurable[(F n).predictable] fun q : ℝ≥0 × Ω ↦ H n j h q.1 q.2)
     (hHbdd : ∀ n j h ω (t : ℝ≥0), BddAbove ((fun s ↦ |H n j h s ω|) '' Iic t))
     (τ : ℝ≥0) (V : ℝ≥0 → Matrix (Fin k) (Fin k) ℝ) (hVc : ContinuousOn V (Iic τ))
-    (hvar : ∀ t ≤ τ, ∀ j j', TendstoInProbabilityConst μ (fun n ω ↦ ∑ h,
+    (hvar : ∀ t ≤ τ, ∀ j j', TendstoInMeasure μ (fun (n : ℕ) ω ↦ ∑ h,
       ∫ s in (0 : ℝ)..(t : ℝ), H n j h (Real.toNNReal s) ω * H n j' h (Real.toNNReal s) ω *
-        intensity n h (Real.toNNReal s) ω) (V t j j'))
-    (hlind : ∀ t ≤ τ, ∀ j, ∀ ε > 0, TendstoInProbabilityConst μ (fun n ω ↦ ∑ h,
+        intensity n h (Real.toNNReal s) ω) atTop (fun _ ↦ V t j j'))
+    (hlind : ∀ t ≤ τ, ∀ j, ∀ ε > 0, TendstoInMeasure μ (fun (n : ℕ) ω ↦ ∑ h,
       ∫ s in (0 : ℝ)..(t : ℝ), (if ε < |H n j h (Real.toNNReal s) ω| then
-        H n j h (Real.toNNReal s) ω ^ 2 else 0) * intensity n h (Real.toNNReal s) ω) 0)
+        H n j h (Real.toNNReal s) ω ^ 2 else 0) * intensity n h (Real.toNNReal s) ω)
+            atTop (fun _ ↦ 0))
     (m : ℕ) (t : Fin m → ℝ≥0) (ht : ∀ i, t i ≤ τ) :
-    TendstoInDistribution μ
-      (fun n ω ↦ WithLp.toLp 2 fun a : Fin m × Fin k ↦
-        countingMartingaleTransform (N n) (intensity n) (H n) a.2 (t a.1) ω)
+    TendstoInDistribution
+      (fun (n : ℕ) ω ↦ WithLp.toLp 2 fun a : Fin m × Fin k ↦
+        countingMartingaleTransform (N n) (intensity n) (H n) a.2 (t a.1) ω) atTop id (fun _ ↦ μ)
       (multivariateGaussian 0 (Matrix.of fun a b : Fin m × Fin k ↦
         V (min (t a.1) (t b.1)) a.2 b.2)) := by
   sorry

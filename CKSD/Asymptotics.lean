@@ -21,7 +21,7 @@ Entry module for the CKSD formalization of Section 102.
 * `CKSD.Asymptotics.Basic`, `CKSD.Asymptotics.Framework`, `CKSD.Asymptotics.Statistics`:
   empirical statistics, contiguity, stochastic orders, local experiments, and statistical
   functionals.
-* `CKSD.Asymptotics.Convergence`, `CKSD.Asymptotics.MultivariateCLT`: weak convergence, stochastic
+* `CKSD.Asymptotics.Basic`, `CKSD.Asymptotics.MultivariateCLT`: weak convergence, stochastic
   algebra, laws of large numbers, and central limit theorems.
 * `CKSD.Asymptotics.Estimators` and its parts (`MaximumLikelihood`, `ZEstimators`, `Quantiles`,
   `UStatistics`, `LikelihoodSupport`), `CKSD.Asymptotics.MEstimators`,

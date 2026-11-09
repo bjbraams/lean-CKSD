@@ -90,16 +90,16 @@ theorem tendstoInDistribution_canonicalGLM_root {Ω : Type*} [MeasurableSpace Ω
     (hiid : IsIndependentIdenticallyDistributed P (fun i ω ↦ (X i ω, Y i ω)) (Px ⊗ₘ κ))
     (hJ : (canonicalGLMInformation Px b β).PosDef)
     (βhat : ℕ → Ω → EuclideanSpace ℝ (Fin p)) (hβm : ∀ n, Measurable (βhat n))
-    (hcons : TendstoInProbabilityConst P βhat β)
+    (hcons : TendstoInMeasure P βhat atTop (fun _ ↦ β))
     (hroot : ∀ n, 1 ≤ n → ∀ᵐ ω ∂P,
       IsCanonicalGLMRoot b n (fun i ↦ X i ω) (fun i ↦ Y i ω) (βhat n ω))
     (φhat : ℕ → Ω → ℝ) (hφm : ∀ n, Measurable (φhat n))
-    (hφcons : TendstoInProbabilityConst P φhat φ) :
-    TendstoInDistribution P (fun n ω ↦ Real.sqrt n • (βhat n ω - β))
+    (hφcons : TendstoInMeasure P φhat atTop (fun _ ↦ φ)) :
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n • (βhat n ω - β)) atTop id (fun _ ↦ P)
         (multivariateGaussian 0 (φ • (canonicalGLMInformation Px b β)⁻¹)) ∧
-      TendstoInDistribution P (fun n ω ↦ (Real.sqrt (φhat n ω))⁻¹ •
+      TendstoInDistribution (fun (n : ℕ) ω ↦ (Real.sqrt (φhat n ω))⁻¹ •
           Matrix.toEuclideanLin (CFC.sqrt (canonicalGLMInformation Px b β))
-            (Real.sqrt n • (βhat n ω - β)))
+            (Real.sqrt n • (βhat n ω - β))) atTop id (fun _ ↦ P)
         (multivariateGaussian 0 1) := by
   sorry
 
@@ -122,15 +122,17 @@ theorem tendstoInDistribution_canonicalGLM_deviance {Ω : Type*} [MeasurableSpac
     (hJ : (canonicalGLMInformation Px b β).PosDef)
     (βhat βtilde : ℕ → Ω → EuclideanSpace ℝ (Fin p))
     (hβm : ∀ n, Measurable (βhat n)) (hβm' : ∀ n, Measurable (βtilde n))
-    (hcons : TendstoInProbabilityConst P βhat β) (hcons' : TendstoInProbabilityConst P βtilde β)
+    (hcons : TendstoInMeasure P βhat atTop (fun _ ↦ β))
+    (hcons' : TendstoInMeasure P βtilde atTop (fun _ ↦ β))
     (hroot : ∀ n, 1 ≤ n → ∀ᵐ ω ∂P,
       IsCanonicalGLMRoot b n (fun i ↦ X i ω) (fun i ↦ Y i ω) (βhat n ω))
     (hmax : ∀ n, ∀ᵐ ω ∂P, βtilde n ω ∈ L ∧ ∀ γ ∈ L,
       canonicalGLMLogLikelihood b φ n (fun i ↦ X i ω) (fun i ↦ Y i ω) γ ≤
         canonicalGLMLogLikelihood b φ n (fun i ↦ X i ω) (fun i ↦ Y i ω) (βtilde n ω)) :
-    TendstoInDistribution P (fun n ω ↦
+    TendstoInDistribution (fun (n : ℕ) ω ↦
         2 * (canonicalGLMLogLikelihood b φ n (fun i ↦ X i ω) (fun i ↦ Y i ω) (βhat n ω) -
           canonicalGLMLogLikelihood b φ n (fun i ↦ X i ω) (fun i ↦ Y i ω) (βtilde n ω)))
+      atTop id (fun _ ↦ P)
       (TauCeti.Probability.chiSquaredMeasure (p - Module.finrank ℝ L : ℕ)) := by
   sorry
 

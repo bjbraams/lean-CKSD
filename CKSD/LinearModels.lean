@@ -1,6 +1,6 @@
 module
 
-public import CKSD.LinearModels.Causal
+public import CKSD.LinearModels.DirectedGraphical.Basic.CausalGraph
 public import CKSD.LinearModels.CausalEfficiency
 public import CKSD.LinearModels.GaussianGraphical
 public import CKSD.LinearModels.Regression
@@ -14,7 +14,7 @@ public import CKSD.LinearModels.CausalAndSurvey
 public import CKSD.LinearModels.SurveySampling
 public import CKSD.LinearModels.CanonicalCorrelation
 public import CKSD.LinearModels.Decomposable
-public import CKSD.LinearModels.ActiveTrails
+public import CKSD.LinearModels.DirectedGraphical.Basic.ActiveTrails
 public import CKSD.LinearModels.DirectedGraphical
 public import CKSD.LinearModels.FTest
 public import CKSD.LinearModels.GFormula

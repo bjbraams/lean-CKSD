@@ -6,12 +6,12 @@ public import CKSD.Bayes.Basic
 public import TauCeti.Probability.Moments.Covariance
 
 /-!
-# Geometric statistics: graphs, Fréchet means, sampling, and multidimensional scaling
+# Geometric statistics: Fréchet means, sampling, and multidimensional scaling
+
+Cheeger's inequalities for weighted graphs (GAPS 108.1) are in `CKSD.Geometry.Cheeger`.
 
 ## Main results
 
-* `CKSD.spectralGap_cheegerConstant_bounds`: Cheeger's inequalities for the normalized Laplacian
-  of a connected weighted graph (GAPS 108.1).
 * `CKSD.existsUnique_frechet_mean_of_midpoint_inequality`: existence and uniqueness of the
   Fréchet mean in a complete space satisfying the CAT(0) midpoint inequality (GAPS 108.5).
 * `CKSD.isBoundedInProbability_hausdorff_sampling_error`: the Hausdorff sampling rate of a support
@@ -31,24 +31,13 @@ public import TauCeti.Probability.Moments.Covariance
 
 noncomputable section
 
-open MeasureTheory ProbabilityTheory Filter Set
 open scoped ENNReal NNReal Topology BigOperators MatrixOrder Matrix Matrix.Norms.L2Operator
 
 namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- GAPS 108.1: Cheeger's inequalities for a finite weighted connected graph. For a symmetric
-nonnegative weight matrix without loops on `n ≥ 2` vertices in which every nonempty proper cut has
-positive weight, the spectral gap `λ₁` of the normalized Laplacian and the conductance `h` satisfy
-`λ₁ / 2 ≤ h ≤ √(2 λ₁)` and `1 - √(1 - h²) ≤ λ₁`. Under these hypotheses the sets defining `λ₁`
-and `h` are nonempty and bounded below, so no junk values occur. -/
-theorem spectralGap_cheegerConstant_bounds {n : ℕ} (hn : 2 ≤ n) (W : Matrix (Fin n) (Fin n) ℝ)
-    (hsym : W.IsSymm) (hpos : ∀ i j, 0 ≤ W i j) (hdiag : ∀ i, W i i = 0)
-    (hconn : ∀ S : Finset (Fin n), S.Nonempty → S ≠ Finset.univ → 0 < cutWeight W S) :
-    spectralGap W / 2 ≤ cheegerConstant W ∧ cheegerConstant W ≤ Real.sqrt (2 * spectralGap W) ∧
-      1 - Real.sqrt (1 - cheegerConstant W ^ 2) ≤ spectralGap W := by
-  sorry
+open MeasureTheory ProbabilityTheory Filter Set
 
 /-- Squared distances to any point are integrable once they are integrable for one point. -/
 theorem integrable_dist_sq_of_integrable_dist_sq
@@ -152,7 +141,8 @@ theorem existsUnique_frechet_mean_of_midpoint_inequality
       refine integral_mono (hint m) (((hint _).const_mul _).add (integrable_const _)) fun x ↦ ?_
       have htri : dist m x ≤ δ + dist (u n) x := dist_triangle _ _ _
       have ha : 0 ≤ dist (u n) x := dist_nonneg
-      have h2a : 2 * dist (u n) x ≤ dist (u n) x ^ 2 + 1 := by nlinarith [sq_nonneg (dist (u n) x - 1)]
+      have h2a : 2 * dist (u n) x ≤ dist (u n) x ^ 2 + 1 := by
+        nlinarith [sq_nonneg (dist (u n) x - 1)]
       have : dist m x ^ 2 ≤ (δ + dist (u n) x) ^ 2 :=
         pow_le_pow_left₀ dist_nonneg htri 2
       nlinarith
@@ -174,6 +164,79 @@ theorem existsUnique_frechet_mean_of_midpoint_inequality
   have : dist m' m = 0 := by nlinarith [dist_nonneg (x := m') (y := m)]
   exact dist_eq_zero.mp this
 
+/-- A packing bound for nets: if every open ball of radius `s > 0` centered in `K` has
+`P`-mass at least `a > 0` under a probability measure `P`, then a finite subset `F ⊆ K` with
+`|F| a ≤ 1` is a `2s`-net of `K`. -/
+private theorem exists_finset_net_of_le_measure_ball {X : Type*} [MetricSpace X] [MeasurableSpace X]
+    [OpensMeasurableSpace X] (P : Measure X) [IsProbabilityMeasure P] (K : Set X) {s a : ℝ}
+    (hs : 0 < s) (ha : 0 < a) (hball : ∀ x ∈ K, ENNReal.ofReal a ≤ P (Metric.ball x s)) :
+    ∃ F : Finset X, (F : Set X) ⊆ K ∧ (F.card : ℝ) * a ≤ 1 ∧
+      ∀ y ∈ K, ∃ z ∈ F, dist y z < 2 * s := by
+  classical
+  have hsmall : ∀ F : Finset X, (F : Set X) ⊆ K →
+      (F : Set X).Pairwise (fun x y ↦ 2 * s ≤ dist x y) → (F.card : ℝ) * a ≤ 1 := by
+    intro F hFK hsep
+    have hdisj : (F : Set X).PairwiseDisjoint (fun x ↦ Metric.ball x s) := by
+      intro x hx y hy hxy
+      rw [Function.onFun, Set.disjoint_left]
+      intro z hzx hzy
+      have h1 := hsep hx hy hxy
+      rw [Metric.mem_ball] at hzx hzy
+      have h2 := dist_triangle_left x y z
+      linarith
+    have hU := measure_biUnion_finset (μ := P) hdisj (fun x _ ↦ measurableSet_ball)
+    have hle : ∑ x ∈ F, P (Metric.ball x s) ≤ 1 := hU ▸ prob_le_one
+    have h : ∑ _x ∈ F, ENNReal.ofReal a ≤ 1 :=
+      (Finset.sum_le_sum fun x hx ↦ hball x (hFK hx)).trans hle
+    rw [Finset.sum_const, nsmul_eq_mul, ← ENNReal.ofReal_natCast,
+      ← ENNReal.ofReal_mul (by positivity)] at h
+    exact ENNReal.ofReal_le_one.mp h
+  by_contra hno
+  push Not at hno
+  have hbuild : ∀ k : ℕ, ∃ F : Finset X, (F : Set X) ⊆ K ∧
+      (F : Set X).Pairwise (fun x y ↦ 2 * s ≤ dist x y) ∧ F.card = k := by
+    intro k
+    induction k with
+    | zero => exact ⟨∅, by simp, by simp, rfl⟩
+    | succ k ih =>
+      obtain ⟨F, hFK, hsep, hcard⟩ := ih
+      obtain ⟨y, hyK, hy⟩ := hno F hFK (hsmall F hFK hsep)
+      have hyF : y ∉ F := fun h ↦ by
+        have := hy y h
+        rw [dist_self] at this
+        linarith
+      refine ⟨insert y F, ?_, ?_, ?_⟩
+      · rw [Finset.coe_insert]; exact insert_subset hyK hFK
+      · rw [Finset.coe_insert]
+        refine Set.pairwise_insert.2 ⟨hsep, fun b hb _ ↦ ⟨hy b hb, ?_⟩⟩
+        rw [dist_comm]; exact hy b hb
+      · rw [Finset.card_insert_of_notMem hyF, hcard]
+  obtain ⟨F, hFK, hsep, hcard⟩ := hbuild (⌈1 / a⌉₊ + 1)
+  have h := hsmall F hFK hsep
+  rw [hcard] at h
+  have h1 : 1 / a < ((⌈1 / a⌉₊ + 1 : ℕ) : ℝ) := by
+    push_cast
+    exact lt_of_le_of_lt (Nat.le_ceil _) (lt_add_one _)
+  rw [div_lt_iff₀ ha] at h1
+  linarith
+
+/-- For an i.i.d. sequence with law `P` and a measurable set `B`, the probability that none of
+the first `n` observations falls in `B` is `(1 - P(B))^n`. -/
+private theorem measureReal_forall_lt_notMem_eq_pow {Ω X : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace X] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X)
+    [IsProbabilityMeasure P] (Xn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ Xn P)
+    {B : Set X} (hB : MeasurableSet B) (n : ℕ) :
+    μ.real {ω | ∀ i < n, Xn i ω ∉ B} = (1 - P.real B) ^ n := by
+  have hset : {ω | ∀ i < n, Xn i ω ∉ B} = ⋂ i ∈ Finset.range n, Xn i ⁻¹' (fun _ ↦ Bᶜ) i := by
+    ext ω; simp
+  rw [hset, measureReal_def, hiid.2.1.measure_inter_preimage_eq_mul (Finset.range n)
+    (fun i _ ↦ hB.compl), ENNReal.toReal_prod]
+  have h : ∀ i, (μ (Xn i ⁻¹' Bᶜ)).toReal = 1 - P.real B := by
+    intro i
+    rw [← Measure.map_apply (hiid.1 i) hB.compl, hiid.2.2 i, ← measureReal_def,
+      probReal_compl_eq_one_sub hB]
+  exact (Finset.prod_congr rfl fun i _ ↦ h i).trans (by simp)
+
 /-- GAPS 108.7, noiseless Hausdorff sampling rate from a uniform small-ball lower bound: if a
 law `P` is carried by a compact set `K` and gives every ball of radius `r < r₀` centered in `K`
 mass at least `c r^d`, then the Hausdorff distance between `K` and an i.i.d. sample of size `n` is
@@ -190,7 +253,128 @@ theorem isBoundedInProbability_hausdorff_sampling_error
     IsBoundedInProbability μ (fun n ω ↦
       Metric.hausdorffDist (range fun i : Fin n ↦ Xn i.val ω) K /
         Real.rpow (Real.log (n + 1) / n) (1 / d)) := by
-  sorry
+  -- a packing net of `K` at scale `t = C r_n` and a union bound over its balls
+  intro ε hε
+  set r : ℕ → ℝ := fun n ↦ Real.rpow (Real.log (n + 1) / n) (1 / d) with hr_def
+  -- the constant
+  set C := 2 * (2 / c) ^ (1 / d) with hC_def
+  have hCpos : 0 < C := by positivity
+  have hC2 : c * (C / 2) ^ d = 2 := by
+    rw [hC_def, mul_div_cancel_left₀ _ (two_ne_zero), one_div,
+      Real.rpow_inv_rpow (by positivity) hd.ne']
+    field_simp
+  refine ⟨C, hCpos, ?_⟩
+  -- `r n → 0`
+  have hlog : Tendsto (fun n : ℕ ↦ Real.log (n + 1) / n) atTop (𝓝 0) := by
+    have h := (Real.tendsto_pow_log_div_mul_add_atTop 1 (-1) 1 one_ne_zero).comp
+      (tendsto_natCast_atTop_atTop.atTop_add (tendsto_const_nhds (x := (1 : ℝ))))
+    exact h.congr fun n ↦ by simp
+  have hr0 : Tendsto r atTop (𝓝 0) := by
+    have h := hlog.rpow_const (p := 1 / d) (Or.inr (by positivity))
+    rwa [Real.zero_rpow (by positivity)] at h
+  have hsmallr : ∀ᶠ n in atTop, C * r n < r₀ :=
+    (hr0.const_mul C).eventually (gt_mem_nhds (show C * 0 < r₀ by rw [mul_zero]; exact hr₀))
+  -- the final numerical bound
+  set K₀ := 1 / (c * (C / 4) ^ d) with hK₀
+  have hK₀pos : 0 < K₀ := by positivity
+  obtain ⟨N, hN⟩ := exists_nat_gt (K₀ / (ε * Real.log 2))
+  filter_upwards [hsmallr, eventually_ge_atTop (max N 1)] with n hn hnN
+  have hn1 : 1 ≤ n := le_of_max_le_right hnN
+  have hnN' : N ≤ n := le_of_max_le_left hnN
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn1
+  have hL : 0 < Real.log (n + 1) := Real.log_pos (by linarith)
+  have hrn : 0 < r n := Real.rpow_pos_of_pos (div_pos hL hnR) _
+  have hrd : r n ^ d = Real.log (n + 1) / n := by
+    change ((Real.log (n + 1) / n) ^ (1 / d)) ^ d = _
+    rw [one_div, Real.rpow_inv_rpow (div_pos hL hnR).le hd.ne']
+  set t := C * r n with ht_def
+  have ht : 0 < t := mul_pos hCpos hrn
+  -- a net of `K` from the packing bound
+  have hball4 : ∀ x ∈ K, ENNReal.ofReal (c * (t / 4) ^ d) ≤ P (Metric.ball x (t / 4)) :=
+    fun x hx ↦ hlower x hx _ ⟨by positivity, by linarith⟩
+  obtain ⟨F, hFK, hFcard, hFnet⟩ := exists_finset_net_of_le_measure_ball P K (s := t / 4)
+    (by positivity) (by positivity) hball4
+  set p := c * (t / 2) ^ d with hp_def
+  have hball2 : ∀ z ∈ F, p ≤ P.real (Metric.ball z (t / 2)) := fun z hz ↦
+    (ENNReal.ofReal_le_iff_le_toReal (measure_ne_top _ _)).1
+      (hlower z (hFK hz) (t / 2) ⟨by positivity, by linarith⟩)
+  -- inclusion of events
+  set A := ⋃ i ∈ Finset.range n, Xn i ⁻¹' Kᶜ
+  set B := ⋃ z ∈ F, {ω | ∀ i < n, Xn i ω ∉ Metric.ball z (t / 2)}
+  have hsub : {ω | C < |Metric.hausdorffDist (range fun i : Fin n ↦ Xn i.val ω) K / r n|} ⊆
+      A ∪ B := by
+    intro ω hω
+    simp only [mem_ofPred_eq] at hω
+    rw [abs_of_nonneg (div_nonneg Metric.hausdorffDist_nonneg hrn.le), lt_div_iff₀ hrn] at hω
+    by_contra hnot
+    simp only [A, B, mem_union, mem_iUnion, mem_preimage, mem_compl_iff, Finset.mem_range,
+      mem_ofPred_eq, not_or, not_exists, not_forall, not_not] at hnot
+    obtain ⟨hK', hB'⟩ := hnot
+    refine absurd (Metric.hausdorffDist_le_of_mem_dist ht.le ?_ ?_) (not_le.mpr hω)
+    · rintro _ ⟨i, rfl⟩
+      exact ⟨_, hK' i i.2, by rw [dist_self]; exact ht.le⟩
+    · intro y hy
+      obtain ⟨z, hzF, hyz⟩ := hFnet y hy
+      obtain ⟨i, hi, hiz⟩ := hB' z hzF
+      refine ⟨_, ⟨⟨i, hi⟩, rfl⟩, ?_⟩
+      rw [Metric.mem_ball] at hiz
+      linarith [dist_triangle y z (Xn i ω), dist_comm z (Xn i ω)]
+  have hKm : MeasurableSet K := hK.isClosed.measurableSet
+  have hA : μ.real A = 0 := by
+    refine le_antisymm ((measureReal_biUnion_finset_le _ _).trans ?_) measureReal_nonneg
+    refine (Finset.sum_eq_zero fun i _ ↦ ?_).le
+    rw [measureReal_def, ← Measure.map_apply (hiid.1 i) hKm.compl, hiid.2.2 i,
+      (prob_compl_eq_zero_iff hKm).mpr hsupp, ENNReal.toReal_zero]
+  have hB : μ.real B ≤ F.card * Real.exp (-(p * n)) := by
+    refine (measureReal_biUnion_finset_le _ _).trans ?_
+    rw [← nsmul_eq_mul, ← Finset.sum_const]
+    refine Finset.sum_le_sum fun z hz ↦ ?_
+    rw [measureReal_forall_lt_notMem_eq_pow μ P Xn hiid measurableSet_ball]
+    set q := P.real (Metric.ball z (t / 2))
+    have hq1 : q ≤ 1 := measureReal_le_one
+    calc (1 - q) ^ n ≤ Real.exp (-q) ^ n :=
+          pow_le_pow_left₀ (by linarith) (by linarith [Real.add_one_le_exp (-q)]) n
+      _ = Real.exp (-(q * n)) := by rw [← Real.exp_nat_mul]; ring_nf
+      _ ≤ Real.exp (-(p * n)) := Real.exp_le_exp.mpr (by nlinarith [hball2 z hz])
+  -- the numerical estimate
+  have hpn : p * n = 2 * Real.log (n + 1) := by
+    rw [hp_def, ht_def, mul_div_right_comm, Real.mul_rpow (by positivity) hrn.le, hrd,
+      ← mul_assoc, hC2]
+    field_simp
+  have hFb : (F.card : ℝ) ≤ K₀ * (n / Real.log (n + 1)) := by
+    have h2 : c * (t / 4) ^ d = c * (C / 4) ^ d * (Real.log (n + 1) / n) := by
+      rw [ht_def, mul_div_right_comm, Real.mul_rpow (by positivity) hrn.le, hrd, mul_assoc]
+    refine ((le_div_iff₀ (by positivity)).2 hFcard).trans_eq ?_
+    rw [h2, hK₀]
+    field_simp
+  calc μ.real {ω | C < |Metric.hausdorffDist (range fun i : Fin n ↦ Xn i.val ω) K / r n|}
+      ≤ μ.real (A ∪ B) := measureReal_mono hsub
+    _ ≤ μ.real A + μ.real B := measureReal_union_le _ _
+    _ ≤ 0 + F.card * Real.exp (-(p * n)) := by rw [hA, zero_add, zero_add]; exact hB
+    _ ≤ K₀ * (n / Real.log (n + 1)) * Real.exp (-(2 * Real.log (n + 1))) := by
+        rw [zero_add, hpn]
+        exact mul_le_mul_of_nonneg_right hFb (Real.exp_pos _).le
+    _ ≤ ε := by
+        have he : Real.exp (-(2 * Real.log (n + 1))) = ((n : ℝ) + 1)⁻¹ ^ 2 := by
+          rw [← Real.log_rpow (by positivity) 2, ← Real.log_inv, Real.exp_log (by positivity)]
+          norm_num
+        rw [he]
+        have hn1R : (1 : ℝ) ≤ n := by exact_mod_cast hn1
+        have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+        have hNn : K₀ / (ε * Real.log 2) < n + 1 := by
+          linarith [show (N : ℝ) ≤ n by exact_mod_cast hnN']
+        rw [div_lt_iff₀ (by positivity)] at hNn
+        have key : K₀ * (n / Real.log (n + 1)) * ((n : ℝ) + 1)⁻¹ ^ 2 ≤
+            K₀ / (Real.log 2 * (n + 1)) := by
+          have h1 : (n : ℝ) / Real.log (n + 1) ≤ (n + 1) / Real.log 2 :=
+            div_le_div₀ (by positivity) (by linarith) hl2
+              (Real.log_le_log (by norm_num) (by linarith))
+          calc K₀ * (n / Real.log (n + 1)) * ((n : ℝ) + 1)⁻¹ ^ 2
+              ≤ K₀ * ((n + 1) / Real.log 2) * ((n : ℝ) + 1)⁻¹ ^ 2 := by gcongr
+            _ = K₀ / (Real.log 2 * (n + 1)) := by field_simp
+        refine key.trans ?_
+        rw [div_le_iff₀ (by positivity)]
+        nlinarith
 
 /-- The centering matrix `J = I - 11ᵀ/n`. -/
 noncomputable def centeringMatrix (n : ℕ) : Matrix (Fin n) (Fin n) ℝ :=
@@ -329,11 +513,13 @@ theorem tendstoInDistribution_projected_sampleAverage {Ω : Type*} [MeasurableSp
     (h2 : MemLp id 2 P) (proj : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (hm : Measurable proj) (D : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d))
     (hd : HasFDerivAt proj D (∫ x, x ∂P)) :
-    TendstoInDistribution μ
-      (fun n ω ↦ Real.sqrt n • (proj (sampleAverage X n ω) - proj (∫ x, x ∂P)))
-      ((multivariateGaussian 0 (TauCeti.covMatrix P)).map D) :=
-  (tendstoInDistribution_delta_method μ (fun n ω ↦ sampleAverage X n ω)
-    (fun n ↦ (Finset.measurable_fun_sum _ fun i _ ↦ hiid.1 i).const_smul ((n : ℝ)⁻¹))
-    _ _ proj hm D hd (tendstoInDistribution_sqrt_smul_sampleAverage μ P X hiid h2)).1
+    TendstoInDistribution
+      (fun (n : ℕ) ω ↦ Real.sqrt n • (proj (sampleAverage X n ω) - proj (∫ x, x ∂P))) atTop id
+      (fun _ ↦ μ) ((multivariateGaussian 0 (TauCeti.covMatrix P)).map D) :=
+  tendstoInDistribution_of_map_eq
+    (tendstoInDistribution_delta_method μ (fun n ω ↦ sampleAverage X n ω)
+      (fun n ↦ (Finset.measurable_fun_sum _ fun i _ ↦ hiid.1 i).const_smul ((n : ℝ)⁻¹))
+      _ proj hm D hd (tendstoInDistribution_sqrt_smul_sampleAverage μ P X hiid h2)).1
+    aemeasurable_id (by rw [Measure.map_id]; rfl)
 
 end CKSD

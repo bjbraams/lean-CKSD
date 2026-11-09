@@ -95,9 +95,9 @@ theorem tendstoInDistribution_particle_average {Ω X : Type*} [MeasurableSpace �
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
     (hξ : ∀ N, IsBootstrapParticleSystem P M (N + 1) (ξ N))
     (f : X → ℝ) (hf : Measurable f) (hb : ∃ C, ∀ x, |f x| ≤ C) (n : ℕ) :
-    TendstoInDistribution P
-      (fun N ω ↦ Real.sqrt (N + 1) *
-        ((∑ i, f (ξ N n ω i)) / (N + 1) - ∫ x, f x ∂M.filterLaw n))
+    TendstoInDistribution
+      (fun (N : ℕ) ω ↦ Real.sqrt (N + 1) *
+        ((∑ i, f (ξ N n ω i)) / (N + 1) - ∫ x, f x ∂M.filterLaw n)) atTop id (fun _ ↦ P)
       (gaussianReal 0 (Real.toNNReal (M.particleAverageAsymptoticVariance n f))) := by
   sorry
 
@@ -109,9 +109,10 @@ theorem tendstoInDistribution_particle_likelihood {Ω X : Type*} [MeasurableSpac
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
     (hξ : ∀ N, IsBootstrapParticleSystem P M (N + 1) (ξ N)) (n : ℕ) :
-    TendstoInDistribution P
-      (fun N ω ↦ Real.sqrt (N + 1) *
+    TendstoInDistribution
+      (fun (N : ℕ) ω ↦ Real.sqrt (N + 1) *
         (M.particleLikelihood (fun p ↦ ξ N p ω) n / (M.unnormalizedLaw n).real univ - 1))
+      atTop id (fun _ ↦ P)
       (gaussianReal 0 (Real.toNNReal (M.particleLikelihoodAsymptoticVariance n))) := by
   sorry
 

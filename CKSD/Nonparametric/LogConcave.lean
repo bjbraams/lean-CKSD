@@ -112,10 +112,11 @@ theorem logConcaveMLE_hellingerRisk_le (d : ℕ) (hd : 1 ≤ d) :
   sorry
 
 /-- GAPS 103.28: the minimax lower bound for log-concave density estimation in squared
-Hellinger distance, with a constant independent of the dimension. Estimators are jointly
-measurable functions of the sample and the evaluation point. -/
-theorem logConcave_minimax_hellingerRisk_lower_bound :
-    ∃ c > (0 : ℝ), ∀ d : ℕ, 1 ≤ d → ∀ n : ℕ, d + 1 ≤ n →
+Hellinger distance, with a constant `c_d` depending only on the dimension (Kim and Samworth,
+2016, Theorem 1). Estimators are jointly measurable functions of the sample and the evaluation
+point. -/
+theorem logConcave_minimax_hellingerRisk_lower_bound (d : ℕ) (hd : 1 ≤ d) :
+    ∃ c > (0 : ℝ), ∀ n : ℕ, d + 1 ≤ n →
       ∀ T : (Fin n → EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d) → ℝ,
       Measurable (fun q : (Fin n → EuclideanSpace ℝ (Fin d)) × EuclideanSpace ℝ (Fin d) ↦
         T q.1 q.2) →

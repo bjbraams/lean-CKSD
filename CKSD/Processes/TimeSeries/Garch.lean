@@ -292,7 +292,7 @@ theorem memLp_garchProcess (hε : IsIIDNoise μ ε 1) (ha₀ : 0 ≤ a₀) (ha :
 `a₀ / (1 - a - b)`: `Cov(X_s, X_t) = a₀ / (1 - a - b)` if `s = t` and `0` otherwise. -/
 theorem covariance_garchProcess (hε : IsIIDNoise μ ε 1) (ha₀ : 0 ≤ a₀) (ha : 0 ≤ a) (hb : 0 ≤ b)
     (hab : a + b < 1) (s t : ℤ) :
-    covariance μ (garchProcess a₀ a b ε s) (garchProcess a₀ a b ε t) =
+    cov[garchProcess a₀ a b ε s, garchProcess a₀ a b ε t; μ] =
       if s = t then a₀ / (1 - a - b) else 0 := by
   set V := garchVariance a₀ a b ε
   set X := garchProcess a₀ a b ε

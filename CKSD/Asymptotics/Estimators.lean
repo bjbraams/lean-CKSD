@@ -1,6 +1,6 @@
 module
 
-public import CKSD.Asymptotics.Convergence
+public import CKSD.Asymptotics.Basic
 public import CKSD.Asymptotics.LikelihoodSupport
 public import CKSD.Asymptotics.MaximumLikelihood
 public import CKSD.Asymptotics.Quantiles

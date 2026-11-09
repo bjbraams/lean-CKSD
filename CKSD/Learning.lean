@@ -2,6 +2,7 @@ module
 
 public import CKSD.Learning.MarginsAndBandits
 public import CKSD.Learning.Algorithms
+public import CKSD.Learning.CoordinateSum
 public import CKSD.Learning.GraphicalModels
 public import CKSD.Learning.KernelAndClustering
 public import CKSD.Learning.Approximation
@@ -36,6 +37,8 @@ learning models).
   squares.
 * `CKSD.Learning.KernelAndClustering`, `CKSD.Learning.LocalAveraging`: kernel ridge regression,
   `k`-means, and nearest-neighbour rules.
+* `CKSD.Learning.CoordinateSum`: partial sums of functions of finite configurations over sets
+  of coordinates.
 * `CKSD.Learning.GraphicalModels`, `CKSD.Learning.JunctionTree`, `CKSD.Learning.RandomGraphs`:
   pairwise graphical models, junction trees, and exchangeable random graphs.
 * `CKSD.Learning.UCBAnalysis`, `CKSD.Learning.Bandits`, `CKSD.Learning.MarginsAndBandits`,

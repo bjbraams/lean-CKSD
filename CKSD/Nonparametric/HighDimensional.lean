@@ -52,10 +52,11 @@ theorem tendstoInDistribution_hilbert_sampleAverage {Ω H : Type*} [MeasurableSp
     [MeasurableSpace H] [BorelSpace H] [SecondCountableTopology H]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure H) [IsProbabilityMeasure P]
     (X : ℕ → Ω → H) (hiid : IsIndependentIdenticallyDistributed μ X P) (h2 : MemLp id 2 P) :
-    ∃ G : Measure H, IsProbabilityMeasure G ∧
+    ∃ (G : Measure H) (_ : IsProbabilityMeasure G),
       (∀ u : H, G.map (fun x ↦ inner ℝ u x) =
         gaussianReal 0 (Real.toNNReal (∫ x, (inner ℝ u (x - ∫ z, z ∂P)) ^ 2 ∂P))) ∧
-      TendstoInDistribution μ (fun n ω ↦ Real.sqrt n • (sampleAverage X n ω - ∫ z, z ∂P)) G := by
+      TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n • (sampleAverage X n ω - ∫ z, z ∂P))
+        atTop id (fun _ ↦ μ) G := by
   sorry
 
 /-- Pythagoras for the projection onto the span of an orthonormal family. -/

@@ -3,6 +3,7 @@ module
 public import CKSD.Bayes.Basic
 public import Mathlib.Probability.BrownianMotion.Basic
 public import Mathlib.MeasureTheory.Constructions.BorelSpace.ContinuousMap
+public import Mathlib.Topology.ContinuousMap.SecondCountableSpace
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 public import Mathlib.Analysis.Calculus.Gradient.Basic
 public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.Basic
@@ -29,7 +30,8 @@ equations, and its limit is a solution of TauCeti's continuity equation.
 ## Main results
 
 * `CKSD.exists_unique_mcKeanVlasov_and_particleSystem`: well-posedness.
-* `CKSD.tendstoWeakly_particle_paths`: propagation of chaos.
+* `CKSD.tendsto_particle_paths`: propagation of chaos, as weak convergence of path laws in
+  Mathlib's `MeasureTheory.ProbabilityMeasure` topology.
 * `CKSD.exists_lintegral_sup_particle_sub_le`: quantitative propagation of chaos.
 * `CKSD.meanFieldRisk_eq`, `CKSD.exists_meanField_limit`: the quadratic expansion of the risk and
   the mean-field limit of network training.
@@ -119,8 +121,10 @@ theorem exists_unique_mcKeanVlasov_and_particleSystem {Ω : Type*} [MeasurableSp
 
 /-- GAPS 104.51: propagation of chaos. For every horizon `T` and every `k`, the joint path law on
 `[0, T]` of the first `k` particles converges weakly to the `k`-fold product of the
-McKean–Vlasov path law. -/
-theorem tendstoWeakly_particle_paths {Ω : Type*} [MeasurableSpace Ω]
+McKean–Vlasov path law. The hypotheses do not make the path maps measurable (particles of index
+at least `N` are unconstrained), so the statement is convergence of the image measures in the
+`ProbabilityMeasure` topology rather than `TendstoInDistribution`. -/
+theorem tendsto_particle_paths {Ω : Type*} [MeasurableSpace Ω]
     {d : ℕ} (P : Measure Ω) [IsProbabilityMeasure P]
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) →
       EuclideanSpace ℝ (Fin d)) (L : ℝ) (hb : IsWassersteinLipschitzDrift b L)
@@ -131,8 +135,9 @@ theorem tendstoWeakly_particle_paths {Ω : Type*} [MeasurableSpace Ω]
     (hX : ∀ N, IsParticleSystem b X₀ W N (X N) P)
     (Y : ℝ → Ω → EuclideanSpace ℝ (Fin d)) (hY : IsMcKeanVlasovSolution b (X₀ 0) (W 0) Y P)
     (T : ℝ) (hT : 0 < T) (k : ℕ) :
-    TendstoWeakly (fun N ↦ P.map fun ω (i : Fin k) ↦ pathOn T fun t ↦ X N i t ω)
-      (Measure.pi fun _ : Fin k ↦ P.map fun ω ↦ pathOn T fun t ↦ Y t ω) := by
+    Tendsto (β := ProbabilityMeasure (Fin k → C(Icc (0 : ℝ) T, EuclideanSpace ℝ (Fin d))))
+      (fun N ↦ ⟨P.map fun ω (i : Fin k) ↦ pathOn T fun t ↦ X N i t ω, inferInstance⟩) atTop
+      (𝓝 ⟨Measure.pi fun _ : Fin k ↦ P.map fun ω ↦ pathOn T fun t ↦ Y t ω, inferInstance⟩) := by
   sorry
 
 /-- Drift `b₀(x) + ∫ K(x, y) μ(dy)` of an interaction model. -/

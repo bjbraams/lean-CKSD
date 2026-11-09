@@ -133,11 +133,11 @@ theorem tendstoInDistribution_finite_markov_chain_sum {Ω : Type*} [MeasurableSp
         ∏ i ∈ Finset.range n, K (path i) (path (i + 1)))
     (f : ι → ℝ) :
     let m := ∑ x, π x * f x;
-    let sigmaSq := variance μ (f ∘ X 0) +
-      2 * ∑' k : ℕ, covariance μ (f ∘ X 0) (f ∘ X (k + 1));
-    Summable (fun k : ℕ ↦ |covariance μ (f ∘ X 0) (f ∘ X (k + 1))|) ∧
-      TendstoInDistribution μ (fun n ω ↦ Real.sqrt n * (sampleAverage (fun i ω ↦ f
-        (X i ω)) n ω - m))
+    let sigmaSq := Var[f ∘ X 0; μ] +
+      2 * ∑' k : ℕ, cov[f ∘ X 0, f ∘ X (k + 1); μ];
+    Summable (fun k : ℕ ↦ |cov[f ∘ X 0, f ∘ X (k + 1); μ]|) ∧
+      TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n * (sampleAverage (fun i ω ↦ f
+        (X i ω)) n ω - m)) atTop id (fun _ ↦ μ)
         (gaussianReal 0 (Real.toNNReal sigmaSq)) := by
   sorry
 

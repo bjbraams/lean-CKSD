@@ -1,6 +1,6 @@
 module
 
-public import CKSD.Asymptotics.Convergence
+public import CKSD.Asymptotics.Basic
 public import Mathlib.Probability.CramerWold
 public import TauCeti.Probability.Distributions.Gaussian.Transforms
 public import TauCeti.Probability.Moments.Covariance
@@ -28,7 +28,7 @@ theorem tendstoInDistribution_inv_sqrt_smul_sum_sub_of_iid {Ω : Type*} [Measura
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (h2 : MemLp (X 0) 2 μ)
     (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
-    MeasureTheory.TendstoInDistribution
+    TendstoInDistribution
       (fun (n : ℕ) ω ↦ (Real.sqrt n)⁻¹ •
         ((∑ i ∈ Finset.range n, X i ω) - (n : ℝ) • ∫ ω, X 0 ω ∂μ))
       atTop id (fun _ ↦ μ)
@@ -85,16 +85,17 @@ theorem tendstoInDistribution_inv_sqrt_smul_sum_sub_of_iid {Ω : Type*} [Measura
     rw [hmean]
   · rfl
 
-/-- The Euclidean sample-mean central limit theorem in CKSD's weak-convergence convention,
-with the population covariance matrix as the limiting Gaussian covariance. -/
+/-- The Euclidean sample-mean central limit theorem for an i.i.d. sequence with law `P`, with the
+population covariance matrix as the limiting Gaussian covariance. -/
 theorem tendstoInDistribution_sqrt_smul_sampleAverage
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (P : Measure (EuclideanSpace ℝ (Fin d)))
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d))
     (hiid : IsIndependentIdenticallyDistributed μ X P) (h2 : MemLp id 2 P) :
-    TendstoInDistribution μ (fun n ω ↦ Real.sqrt n •
-      (sampleAverage X n ω - ∫ x, x ∂P)) (multivariateGaussian 0 (TauCeti.covMatrix P)) := by
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n •
+      (sampleAverage X n ω - ∫ x, x ∂P))
+      atTop id (fun _ ↦ μ) (multivariateGaussian 0 (TauCeti.covMatrix P)) := by
   let E := EuclideanSpace ℝ (Fin d)
   have h2X : MemLp (X 0) 2 μ := by
     have h : MemLp id 2 (μ.map (X 0)) := (hiid.2.2 0).symm ▸ h2
@@ -121,11 +122,7 @@ theorem tendstoInDistribution_sqrt_smul_sampleAverage
     have hs2 := Real.sq_sqrt (Nat.cast_nonneg n : (0 : ℝ) ≤ n)
     simp only [smul_sub, smul_smul, sampleAverage]
     congr 1 <;> congr 1 <;> field_simp <;> nlinarith
-  have hc' := hc.congr (fun n ↦ ae_of_all _ fun ω ↦ congrFun (heq n) ω) (ae_of_all _ fun _ ↦ rfl)
-  exact (tendstoInDistribution_iff_mathlib μ _ _ (fun n ↦ by
-    apply Measurable.aemeasurable
-    exact ((Finset.measurable_fun_sum _ fun i _ ↦ hiid.1 i).const_smul ((n : ℝ)⁻¹)).sub
-      measurable_const |>.const_smul (Real.sqrt n))).mpr hc'
+  exact hc.congr (fun n ↦ ae_of_all _ fun ω ↦ congrFun (heq n) ω) (ae_of_all _ fun _ ↦ rfl)
 
 end
 end CKSD

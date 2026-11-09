@@ -5,6 +5,9 @@ public import CKSD.Bayes.Basic
 public import Mathlib.Analysis.LocallyConvex.Separation
 public import Mathlib.Analysis.Convex.Topology
 public import Mathlib.Analysis.InnerProductSpace.Dual
+public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Rearrangement
+public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Pushforward
+public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Quantile.Isometry
 
 /-!
 # Čech and Rips inclusions and the distance to a measure
@@ -21,6 +24,14 @@ minimal enclosing ball, and the Wasserstein stability of the distance to a measu
 * `CKSD.cech_rips_inclusions`: the Čech/Rips inclusions (GAPS 108.21).
 * `CKSD.abs_distanceToMeasure_sub_le_wasserstein`: stability of the distance to a measure
   (GAPS 108.24).
+
+## Implementation notes
+
+The mass radius `δ_{P,u}(x)` is the quantile function of the law of `y ↦ d(x, y)`, so `d_{P,m}(x)`
+is an `L²(0, m)` norm of a quantile function. The stability bound then follows from Minkowski's
+inequality, TauCeti's one-dimensional quantile formula for `W₂`
+(`TauCeti.wassersteinEDist_eq_eLpNorm_quantile_sub`) and its contraction of `W₂` under Lipschitz
+pushforward (`TauCeti.wassersteinEDist_map_le_mul`).
 -/
 
 @[expose] public section
@@ -157,6 +168,44 @@ theorem cech_rips_inclusions {E : Type*} [NormedAddCommGroup E] [InnerProductSpa
     _ ≤ r + r := add_le_add (hc x hx) (by simpa [dist_comm] using hc y hy)
     _ = 2 * r := by ring
 
+/-- On a probability space, the mass radius `δ_{P,u}(x)` at a level `u ≥ 0` is the quantile at
+level `u` of the law of the distance `y ↦ d(x, y)`. -/
+theorem massRadius_eq_quantile_map_dist {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X]
+    [OpensMeasurableSpace X] (P : Measure X) [IsProbabilityMeasure P] (x : X) {u : ℝ}
+    (hu : 0 ≤ u) : massRadius P u x = (P.map fun y ↦ dist x y).quantile u := by
+  rcases hu.eq_or_lt with rfl | hu
+  · rw [Measure.quantile_of_nonpos _ le_rfl, massRadius]
+    have : {r : ℝ | 0 ≤ r ∧ ENNReal.ofReal 0 ≤ P (Metric.closedBall x r)} = Ici 0 := by
+      ext r; simp
+    rw [this, csInf_Ici]
+  have hm : Measurable fun y ↦ dist x y := (continuous_const.dist continuous_id).measurable
+  rw [massRadius, Measure.quantile_def]
+  congr 1
+  ext r
+  simp only [mem_ofPred_eq]
+  rw [cdf_eq_real, measureReal_def, Measure.map_apply hm measurableSet_Iic]
+  have hpre : (fun y ↦ dist x y) ⁻¹' Iic r = Metric.closedBall x r := by
+    ext y; simp [dist_comm]
+  rw [hpre, ENNReal.ofReal_le_iff_le_toReal (measure_ne_top _ _)]
+  constructor
+  · exact fun h ↦ h.2
+  · intro h
+    refine ⟨?_, h⟩
+    by_contra hr
+    have : Metric.closedBall x r = ∅ := Metric.closedBall_eq_empty.mpr (not_le.mp hr)
+    rw [this, measure_empty, ENNReal.toReal_zero] at h
+    linarith
+
+/-- For an `L²` function, the real `L²` seminorm is the square root of the integral of the
+square. -/
+private theorem toReal_eLpNorm_two_eq_sqrt_integral {α : Type*} [MeasurableSpace α] {μ : Measure α}
+    {f : α → ℝ} (hf : MemLp f 2 μ) :
+    (eLpNorm f 2 μ).toReal = Real.sqrt (∫ a, f a ^ 2 ∂μ) := by
+  rw [hf.eLpNorm_eq_integral_rpow_norm two_ne_zero ENNReal.ofNat_ne_top,
+    ENNReal.toReal_ofReal (by positivity), Real.sqrt_eq_rpow]
+  simp only [ENNReal.toReal_ofNat, Real.norm_eq_abs, Real.rpow_two, sq_abs]
+  norm_num
+
 /-- GAPS 108.24: stability of distance to a measure. For laws `P, Q` on `ℝ^d` with finite second
 moments and a mass parameter `m ∈ (0, 1]`, the distance functions satisfy
 `|d_{P,m}(x) - d_{Q,m}(x)| ≤ W₂(P, Q) / √m` at every point `x`. -/
@@ -167,6 +216,60 @@ theorem abs_distanceToMeasure_sub_le_wasserstein {d : ℕ}
     (x : EuclideanSpace ℝ (Fin d)) :
     |distanceToMeasure P m x - distanceToMeasure Q m x| ≤
       (TauCeti.wassersteinEDist 2 P Q).toReal / Real.sqrt m := by
-  sorry
+  set f : EuclideanSpace ℝ (Fin d) → ℝ := fun y ↦ dist x y
+  have hfm : Measurable f := (continuous_const.dist continuous_id).measurable
+  have hflip : LipschitzWith 1 f := LipschitzWith.dist_right x
+  set νP := P.map f
+  set νQ := Q.map f
+  -- finite second moments
+  have hmom : ∀ (R : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure R],
+      MemLp id 2 R → TauCeti.HasFiniteMoment 2 R := by
+    intro R _ hR
+    refine TauCeti.hasFiniteMoment_def.2
+      ⟨0, (TauCeti.memLp_dist_iff_memLp_edist (by fun_prop)).1 ?_⟩
+    simpa [dist_zero_right] using hR.norm
+  have hPm := hmom P hP
+  have hQm := hmom Q hQ
+  have hWne : TauCeti.wassersteinEDist 2 P Q ≠ ∞ :=
+    (TauCeti.hasFiniteMoment_iff_wassersteinEDist_ne_top_of_hasFiniteMoment
+      measurable_edist hPm).1 hQm
+  have hνPm : TauCeti.HasFiniteMoment 2 νP :=
+    hPm.map (fun _ ↦ measurable_edist_right) hfm hflip
+  have hνQm : TauCeti.HasFiniteMoment 2 νQ :=
+    hQm.map (fun _ ↦ measurable_edist_right) hfm hflip
+  have hqP := (TauCeti.hasFiniteMoment_iff_memLp_quantile νP).1 hνPm
+  have hqQ := (TauCeti.hasFiniteMoment_iff_memLp_quantile νQ).1 hνQm
+  -- the restricted measure on `(0, m]`
+  set μm := volume.restrict (Ioc (0 : ℝ) m)
+  have hle : μm ≤ volume.restrict (Ioo (0 : ℝ) 1) := by
+    refine Measure.restrict_mono_ae ?_
+    refine (Filter.EventuallyLE.trans ?_ Ioo_ae_eq_Ioc.symm.le)
+    exact Eventually.of_forall (Ioc_subset_Ioc_right hm.2)
+  have hqPm : MemLp νP.quantile 2 μm := hqP.mono_measure hle
+  have hqQm : MemLp νQ.quantile 2 μm := hqQ.mono_measure hle
+  -- the distances to the measures as `L²` norms
+  have hdtm : ∀ (R : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure R],
+      MemLp (R.map f).quantile 2 μm →
+      distanceToMeasure R m x = (eLpNorm (R.map f).quantile 2 μm).toReal / Real.sqrt m := by
+    intro R _ hR
+    rw [distanceToMeasure, toReal_eLpNorm_two_eq_sqrt_integral hR,
+      intervalIntegral.integral_of_le hm.1.le, ← Real.sqrt_div' _ hm.1.le]
+    congr 2
+    refine setIntegral_congr_fun measurableSet_Ioc fun u hu ↦ ?_
+    show massRadius R u x ^ 2 = (R.map f).quantile u ^ 2
+    rw [massRadius_eq_quantile_map_dist R x hu.1.le]
+  rw [hdtm P hqPm, hdtm Q hqQm, ← sub_div, abs_div, abs_of_pos (Real.sqrt_pos.mpr hm.1)]
+  gcongr
+  -- Minkowski, restriction, the quantile formula and the contraction
+  have hmink : |(eLpNorm νP.quantile 2 μm).toReal - (eLpNorm νQ.quantile 2 μm).toReal| ≤
+      (eLpNorm (νP.quantile - νQ.quantile) 2 μm).toReal := by
+    have h := abs_norm_sub_norm_le (hqPm.toLp _) (hqQm.toLp _)
+    rwa [Lp.norm_toLp, Lp.norm_toLp, ← MemLp.toLp_sub, Lp.norm_toLp] at h
+  refine hmink.trans ?_
+  have hW1 : TauCeti.wassersteinEDist 2 νP νQ ≤ TauCeti.wassersteinEDist 2 P Q := by
+    simpa using TauCeti.wassersteinEDist_map_le_mul (p := 2) measurable_edist hfm hflip P Q
+  rw [TauCeti.wassersteinEDist_eq_eLpNorm_quantile_sub one_le_two] at hW1
+  refine ENNReal.toReal_mono hWne ((eLpNorm_mono_measure _ hle).trans ?_)
+  exact hW1
 
 end CKSD

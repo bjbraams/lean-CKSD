@@ -8,6 +8,7 @@ public import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Commute
 public import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Instances
 public import Mathlib.Analysis.SpecialFunctions.ContinuousFunctionalCalculus.Rpow.Basic
 public import Mathlib.MeasureTheory.Measure.Support
+public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Quantization
 
 /-!
 # Statistical optimal transport
@@ -160,6 +161,36 @@ theorem exists_unique_gaussian_wasserstein_barycenter {k d : ℕ} (w : Fin k →
             P = multivariateGaussian (∑ i, w i • m i) S) := by
   sorry
 
+/-- The Lebesgue measure of a Euclidean ball of radius `t > 0` in `ℝ^d` is at most `(2t)^d`, the
+volume of the circumscribed cube. -/
+private theorem volume_euclideanBall_le {d : ℕ} (c : EuclideanSpace ℝ (Fin d)) {t : ℝ}
+    (ht : 0 < t) :
+    volume (Metric.ball c t) ≤ ENNReal.ofReal ((2 * t) ^ d) := by
+  have hmp := PiLp.volume_preserving_ofLp (Fin d)
+  have hsub : Metric.ball c t ⊆ (WithLp.ofLp) ⁻¹' Metric.ball (WithLp.ofLp c) t := by
+    intro z hz
+    simp only [mem_preimage, Metric.mem_ball] at hz ⊢
+    rw [dist_pi_lt_iff ht]
+    intro i
+    refine lt_of_le_of_lt ?_ hz
+    rw [dist_eq_norm, dist_eq_norm]
+    simpa using PiLp.norm_apply_le (z - c) i
+  calc volume (Metric.ball c t) ≤ volume ((WithLp.ofLp) ⁻¹' Metric.ball (WithLp.ofLp c) t) :=
+        measure_mono hsub
+    _ = volume (Metric.ball (WithLp.ofLp c) t) :=
+        hmp.measure_preimage measurableSet_ball.nullMeasurableSet
+    _ = ENNReal.ofReal ((2 * t) ^ d) := by rw [Real.volume_pi_ball _ ht, Fintype.card_fin]
+
+/-- The unit cube `[0, 1]^d` of `ℝ^d` has volume one. -/
+private theorem volume_euclidean_unitCube {d : ℕ} :
+    volume {z : EuclideanSpace ℝ (Fin d) | ∀ i, z i ∈ Icc (0 : ℝ) 1} = 1 := by
+  have hmp := PiLp.volume_preserving_ofLp (Fin d)
+  have : {z : EuclideanSpace ℝ (Fin d) | ∀ i, z i ∈ Icc (0 : ℝ) 1} =
+      (WithLp.ofLp) ⁻¹' Icc (0 : Fin d → ℝ) 1 := by
+    ext z; simp [Pi.le_def, forall_and]
+  rw [this, hmp.measure_preimage measurableSet_Icc.nullMeasurableSet, Real.volume_Icc_pi]
+  simp
+
 /-- GAPS 108.50, quantization lower bound for the uniform unit cube: for `d ≥ 3`, every law `Q`
 carried by at most `n` points is at `W₁`-distance at least `n^{-1/d} / (108 d)` from the uniform law
 on `[0, 1]^d`. (`n ≥ 1` is implied by `Q (range x) = 1`.) -/
@@ -169,7 +200,111 @@ theorem rpow_div_le_wassersteinEDist_volume_cube {d : ℕ} (hd : 3 ≤ d) (n : �
     let cube := {z : EuclideanSpace ℝ (Fin d) | ∀ i, z i ∈ Icc (0 : ℝ) 1};
     Real.rpow n (-(1 / (d : ℝ))) / (108 * d) ≤
       (TauCeti.wassersteinEDist 1 (volume.restrict cube) Q).toReal := by
-  sorry
+  -- TauCeti's lower bound `W₁(U, Q) ≥ ∫ d(z, supp Q) dU(z)` and a volume count of the balls of
+  -- radius `n^{-1/d}/4` around the atoms
+  intro cube
+  have hcubem : MeasurableSet cube := by
+    have : cube = ⋂ i, (fun z : EuclideanSpace ℝ (Fin d) ↦ z i) ⁻¹' Icc 0 1 := by
+      ext z; simp [cube]
+    rw [this]
+    exact MeasurableSet.iInter fun i ↦ (measurable_pi_apply i |>.comp
+      (PiLp.continuous_ofLp 2 _).measurable) measurableSet_Icc
+  set U := volume.restrict cube
+  have hU1 : U univ = 1 := by
+    rw [Measure.restrict_apply_univ]; exact volume_euclidean_unitCube
+  have : IsProbabilityMeasure U := ⟨hU1⟩
+  have hn : 0 < n := by
+    rcases Nat.eq_zero_or_pos n with rfl | h
+    · simp at hsupp
+    · exact h
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
+  have hdR : (0 : ℝ) < d := by exact_mod_cast (by omega : 0 < d)
+  have hrange : MeasurableSet (range x) := (finite_range x).measurableSet
+  have hQae : ∀ᵐ y ∂Q, y ∈ range x := by
+    rw [ae_iff]
+    have := (prob_compl_eq_zero_iff hrange).mpr hsupp
+    simpa [compl_def] using this
+  -- finiteness of the distance
+  have hUm : TauCeti.HasFiniteMoment 1 U := by
+    refine TauCeti.hasFiniteMoment_of_ae_mem_of_isBounded (s := cube) 0 ?_ ?_
+    · refine (Metric.isBounded_iff_subset_closedBall 0).2 ⟨Real.sqrt d, fun z hz ↦ ?_⟩
+      rw [Metric.mem_closedBall, dist_zero_right, EuclideanSpace.norm_eq]
+      refine Real.sqrt_le_sqrt ?_
+      calc ∑ i, ‖z i‖ ^ 2 ≤ ∑ _i : Fin d, (1 : ℝ) := by
+            refine Finset.sum_le_sum fun i _ ↦ ?_
+            have := hz i
+            rw [Real.norm_eq_abs, sq_abs]
+            nlinarith [this.1, this.2]
+        _ = d := by simp
+    · exact ae_restrict_mem hcubem
+  have hQm : TauCeti.HasFiniteMoment 1 Q :=
+    TauCeti.hasFiniteMoment_of_ae_mem_of_isBounded 0 (finite_range x).isBounded hQae
+  have hWne : TauCeti.wassersteinEDist 1 U Q ≠ ∞ :=
+    (TauCeti.hasFiniteMoment_iff_wassersteinEDist_ne_top_of_hasFiniteMoment
+      measurable_edist hUm).1 hQm
+  -- the lower bound through the distance to the support of `Q`
+  have hlow := TauCeti.eLpNorm_infEDist_le_wassersteinEDist (μ := U) hQae 1
+  rw [eLpNorm_one_eq_lintegral_enorm Metric.continuous_infEDist.measurable.aestronglyMeasurable]
+    at hlow
+  simp only [enorm_eq_self] at hlow
+  have hr : 0 < Real.rpow n (-(1 / (d : ℝ))) := Real.rpow_pos_of_pos hnR _
+  set t := Real.rpow n (-(1 / (d : ℝ))) / 4
+  have ht : 0 < t := by positivity
+  set g : EuclideanSpace ℝ (Fin d) → ℝ≥0∞ := fun z ↦ Metric.infEDist z (range x)
+  have hg : Measurable g := Metric.continuous_infEDist.measurable
+  -- small set: points within `t` of the sample
+  have hsmall : U {z | g z < ENNReal.ofReal t} ≤ ENNReal.ofReal (1 / 8) := by
+    have hsub : {z | g z < ENNReal.ofReal t} ⊆ ⋃ i, Metric.ball (x i) t := by
+      intro z hz
+      obtain ⟨_, ⟨i, rfl⟩, hi⟩ := Metric.infEDist_lt_iff.mp hz
+      exact mem_iUnion.2 ⟨i, by
+        rw [Metric.mem_ball, ← edist_lt_ofReal]; exact hi⟩
+    have hpow : (n : ℝ) * (2 * t) ^ d = (1 / 2) ^ d := by
+      have h1 : (Real.rpow n (-(1 / (d : ℝ)))) ^ d = (n : ℝ)⁻¹ := by
+        change ((n : ℝ) ^ (-(1 / (d : ℝ)))) ^ d = _
+        rw [← Real.rpow_mul_natCast hnR.le, show -(1 / (d : ℝ)) * d = -1 by field_simp,
+          Real.rpow_neg_one]
+      have : 2 * t = Real.rpow n (-(1 / (d : ℝ))) * (1 / 2) := by simp only [t]; ring
+      rw [this, mul_pow, h1, ← mul_assoc, mul_inv_cancel₀ hnR.ne', one_mul]
+    calc U {z | g z < ENNReal.ofReal t} ≤ U (⋃ i, Metric.ball (x i) t) := measure_mono hsub
+      _ ≤ ∑ i, U (Metric.ball (x i) t) := measure_iUnion_fintype_le _ _
+      _ ≤ ∑ _i : Fin n, ENNReal.ofReal ((2 * t) ^ d) := by
+          refine Finset.sum_le_sum fun i _ ↦ ?_
+          exact (Measure.restrict_apply_le _ _).trans (volume_euclideanBall_le _ ht)
+      _ = ENNReal.ofReal (n * (2 * t) ^ d) := by
+          rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul,
+            ENNReal.ofReal_mul (by positivity), ENNReal.ofReal_natCast]
+      _ ≤ ENNReal.ofReal (1 / 8) := by
+          rw [hpow]
+          refine ENNReal.ofReal_le_ofReal ?_
+          calc ((1 : ℝ) / 2) ^ d ≤ (1 / 2) ^ 3 := pow_le_pow_of_le_one (by norm_num)
+                (by norm_num) hd
+            _ = 1 / 8 := by norm_num
+  have hlarge : ENNReal.ofReal (7 / 8) ≤ U {z | ENNReal.ofReal t ≤ g z} := by
+    have hsplit := measure_add_measure_compl (μ := U)
+      (measurableSet_le measurable_const hg : MeasurableSet {z | ENNReal.ofReal t ≤ g z})
+    have hc : {z | ENNReal.ofReal t ≤ g z}ᶜ = {z | g z < ENNReal.ofReal t} := by
+      ext z; simp
+    rw [hc, hU1] at hsplit
+    have hfin : U {z | ENNReal.ofReal t ≤ g z} ≠ ∞ := measure_ne_top _ _
+    have h1 : (1 : ℝ≥0∞) ≤ U {z | ENNReal.ofReal t ≤ g z} + ENNReal.ofReal (1 / 8) :=
+      hsplit.symm.le.trans (add_le_add_right hsmall _)
+    have h2 : ENNReal.ofReal (7 / 8) + ENNReal.ofReal (1 / 8) = 1 := by
+      rw [← ENNReal.ofReal_add (by norm_num) (by norm_num)]; norm_num
+    rw [← h2] at h1
+    exact (ENNReal.add_le_add_iff_right ENNReal.ofReal_ne_top).mp h1
+  have hint : ENNReal.ofReal (7 / 8 * t) ≤ ∫⁻ z, g z ∂U := by
+    calc ENNReal.ofReal (7 / 8 * t) = ENNReal.ofReal t * ENNReal.ofReal (7 / 8) := by
+          rw [← ENNReal.ofReal_mul ht.le, mul_comm]
+      _ ≤ ENNReal.ofReal t * U {z | ENNReal.ofReal t ≤ g z} := by gcongr
+      _ ≤ ∫⁻ z, g z ∂U := mul_meas_ge_le_lintegral hg _
+  have hmain : 7 / 8 * t ≤ (TauCeti.wassersteinEDist 1 U Q).toReal :=
+    (ENNReal.ofReal_le_iff_le_toReal hWne).1 (hint.trans hlow)
+  refine le_trans ?_ hmain
+  simp only [t]
+  rw [div_le_iff₀ (by positivity)]
+  have : (3 : ℝ) ≤ d := by exact_mod_cast hd
+  nlinarith
 
 /-- GAPS 108.51, the parametric rate of Gaussian-smoothed empirical W1 on a bounded cube: for
 `σ > 0` there is `C > 0` such that for every law `P` on `[-1, 1]^d` and `n ≥ 1`, the expected `W₁`

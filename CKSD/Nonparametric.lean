@@ -4,6 +4,7 @@ public import CKSD.Nonparametric.GoodnessOfFit
 public import CKSD.Nonparametric.EmpiricalCovariance
 public import CKSD.Nonparametric.ShapeAndSelection
 public import CKSD.Nonparametric.SmoothingRates
+public import CKSD.Nonparametric.HolderRegressionMinimax
 public import CKSD.Nonparametric.Models
 public import CKSD.Nonparametric.Estimation
 public import CKSD.Nonparametric.HighDimensional
@@ -18,7 +19,7 @@ public import CKSD.Nonparametric.GraphicalModels
 
 Entry module for the CKSD formalization of Section 103 of the synopsis: density and regression
 estimation by kernels and smoothing (`CKSD.Nonparametric.Estimation`,
-`CKSD.Nonparametric.SmoothingRates`), rank statistics and distribution-free goodness-of-fit
+`CKSD.Nonparametric.SmoothingRates`, `CKSD.Nonparametric.HolderRegressionMinimax`), rank statistics and distribution-free goodness-of-fit
 tests (`CKSD.Nonparametric.GoodnessOfFit`), shape-constrained estimation
 (`CKSD.Nonparametric.Grenander`, `CKSD.Nonparametric.ShapeAndSelection`,
 `CKSD.Nonparametric.LogConcave`), high-dimensional estimation and testing

@@ -13,15 +13,14 @@ import CKSD.Asymptotics.Estimators
 
 ## Main results
 
-* `CKSD.tendsto_measureReal_of_tendstoWeakly`, `CKSD.tendsto_integral_mul_of_tendstoWeakly`:
-  portmanteau and weighted weak convergence for `CKSD.TendstoWeakly`.
+* `CKSD.tendsto_integral_mul_of_tendsto`: weighted weak convergence of probability measures.
 * `CKSD.isContiguous_of_integral_likelihood_ratio_limit_eq_one`: Le Cam's first lemma
   (GAPS 102.12).
-* `CKSD.tendstoWeakly_of_log_likelihood_ratio`: Le Cam's third lemma, for observation spaces
+* `CKSD.tendstoInDistribution_of_log_likelihood_ratio`: Le Cam's third lemma, for observation spaces
   depending on the sample size (GAPS 102.14).
 * `CKSD.tendsto_local_normal_power`: local power under a normal limit (GAPS 102.21).
 * `CKSD.memLp_and_tendsto_sqrt_likelihood_ratio_of_dqm`,
-  `CKSD.tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm`, and
+  `CKSD.tendstoInMeasure_log_likelihood_ratio_sub_of_dqm`, and
   `CKSD.tendstoInDistribution_score_and_log_likelihood_ratio_expansion_of_dqm`: differentiability
   in quadratic mean implies local asymptotic normality (GAPS 102.13).
 
@@ -29,7 +28,7 @@ import CKSD.Asymptotics.Estimators
 
 The LAN expansion follows van der Vaart, *Asymptotic Statistics*, Theorem 7.2: the root density
 ratios are controlled by Chebyshev's and Markov's inequalities for i.i.d. sums, Mathlib's weak law
-and central limit theorem (through the adapters of `CKSD.Asymptotics.Convergence`), and Mathlib's
+and central limit theorem (through the adapters of `CKSD.Asymptotics.Basic`), and Mathlib's
 logarithmic Taylor bound `Real.abs_log_sub_add_sum_range_le`.
 -/
 @[expose] public section
@@ -52,31 +51,21 @@ def clipBCF (k : ℝ) (hk : 0 ≤ k) : BoundedContinuousFunction ℝ ℝ :=
     have h2 : 0 ≤ max 0 (min y k) ∧ max 0 (min y k) ≤ k := ⟨le_max_left _ _, max_le hk (min_le_right _ _)⟩
     rw [abs_le]; constructor <;> linarith [h1.1, h1.2, h2.1, h2.2])
 
-/-- Portmanteau for the CKSD weak-convergence predicate: probabilities of sets whose frontier is
-null under the limit law converge. -/
-theorem tendsto_measureReal_of_tendstoWeakly {E : Type*} [TopologicalSpace E] [MeasurableSpace E]
-    [OpensMeasurableSpace E] [HasOuterApproxClosed E]
-    (μs : ℕ → Measure E) [∀ n, IsProbabilityMeasure (μs n)] (μ : Measure E) [IsProbabilityMeasure μ]
-    (h : TendstoWeakly μs μ) (A : Set E) (hA : μ (frontier A) = 0) :
-    Tendsto (fun n ↦ (μs n).real A) atTop (𝓝 (μ.real A)) := by
-  let ν : ℕ → ProbabilityMeasure E := fun n ↦ ⟨μs n, inferInstance⟩
-  let ν₀ : ProbabilityMeasure E := ⟨μ, inferInstance⟩
-  have hν : Tendsto ν atTop (𝓝 ν₀) := by
-    rw [ProbabilityMeasure.tendsto_iff_forall_integral_tendsto]
-    exact h.integral_tendsto
-  have := ProbabilityMeasure.tendsto_measure_of_null_frontier_of_tendsto' hν (E := A) hA
-  exact (ENNReal.tendsto_toReal (measure_ne_top μ A)).comp this
-
-
-/-- Weighted weak convergence: if `μₙ ⇒ ν` and a continuous nonnegative weight `w` has integral
-one under every `μₙ` and under `ν`, then `∫ w f dμₙ → ∫ w f dν` for bounded continuous `f`. -/
-theorem tendsto_integral_mul_of_tendstoWeakly {X : Type*} [TopologicalSpace X]
+/-- Weighted weak convergence: if probability measures `μₙ` converge weakly to `ν` and a
+continuous nonnegative weight `w` has integral one under every `μₙ` and under `ν`, then
+`∫ w f dμₙ → ∫ w f dν` for bounded continuous `f`. -/
+theorem tendsto_integral_mul_of_tendsto {X : Type*} [TopologicalSpace X]
     [MeasurableSpace X] [OpensMeasurableSpace X]
     (μs : ℕ → Measure X) [∀ n, IsProbabilityMeasure (μs n)] (ν : Measure X)
-    [IsProbabilityMeasure ν] (h : TendstoWeakly μs ν) (w : X → ℝ) (hw : Continuous w)
+    [IsProbabilityMeasure ν]
+    (h : Tendsto (β := ProbabilityMeasure X) (fun n ↦ ⟨μs n, inferInstance⟩) atTop
+      (𝓝 ⟨ν, inferInstance⟩))
+    (w : X → ℝ) (hw : Continuous w)
     (hw0 : ∀ x, 0 ≤ w x) (hμw : ∀ n, ∫ x, w x ∂μs n = 1) (hνw : ∫ x, w x ∂ν = 1)
     (f : BoundedContinuousFunction X ℝ) :
     Tendsto (fun n ↦ ∫ x, w x * f x ∂μs n) atTop (𝓝 (∫ x, w x * f x ∂ν)) := by
+  have h := ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.1 h
+  simp only [ProbabilityMeasure.coe_mk] at h
   have hwint : ∀ n, Integrable w (μs n) := fun n ↦ by
     by_contra hni; have := hμw n; rw [integral_undef hni] at this; exact zero_ne_one this
   have hνint : Integrable w ν := by
@@ -144,10 +133,13 @@ then `Q n` is contiguous with respect to `P n`: `P n (A n) → 0` implies `Q n (
 theorem isContiguous_of_integral_likelihood_ratio_limit_eq_one {Ω : Type*} [MeasurableSpace Ω]
     (P Q : ℕ → Measure Ω) (hP : ∀ n, IsProbabilityMeasure (P n))
     (hQ : ∀ n, IsProbabilityMeasure (Q n)) (hac : ∀ n, Q n ≪ P n)
-    (ν : Measure ℝ)
-    (hlim : TendstoWeakly (fun n ↦ (P n).map (fun ω ↦ ((Q n).rnDeriv (P n) ω).toReal)) ν)
+    (ν : Measure ℝ) [IsProbabilityMeasure ν]
+    (hlim : TendstoInDistribution (fun n ω ↦ ((Q n).rnDeriv (P n) ω).toReal) atTop id P ν)
     (hmean : (∫ x, x ∂ν) = 1) :
     IsContiguous P Q := by
+  have hlimI := ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.1
+    (tendstoInDistribution_id_iff.1 hlim).2
+  simp only [ProbabilityMeasure.coe_mk] at hlimI
   have hint : Integrable id ν := by
     by_contra hni
     have hni' : ¬ Integrable (fun x : ℝ ↦ x) ν := hni
@@ -216,7 +208,7 @@ theorem isContiguous_of_integral_likelihood_ratio_limit_eq_one {Ω : Type*} [Mea
     ha.trans_le measureReal_nonneg, fun ε hε ↦ ?_⟩
   obtain ⟨k, hk⟩ := (hlimk.eventually (lt_mem_nhds (show 1 - ε / 3 < ∫ x, max 0 x ∂ν by
     linarith))).exists
-  have hk' := (hlim (clipBCF k (Nat.cast_nonneg k))).eventually
+  have hk' := (hlimI (clipBCF k (Nat.cast_nonneg k))).eventually
     (lt_mem_nhds (show 1 - 2 * ε / 3 < ∫ x, clipBCF k (Nat.cast_nonneg k) x ∂ν by linarith))
   have hPk := (hPA.const_mul (k : ℝ)).eventually (gt_mem_nhds (show (k : ℝ) * 0 < ε / 3 by
     rw [mul_zero]; positivity))
@@ -226,25 +218,23 @@ theorem isContiguous_of_integral_likelihood_ratio_limit_eq_one {Ω : Type*} [Mea
   linarith
 
 /-- GAPS 102.14: Le Cam's third lemma in change-of-law form, for observation spaces `Ω n`
-depending on the sample size. If `Q n = exp (Λ n) · P n` and the joint laws of `(S n, Λ n)` under
-`P n` converge weakly to `ν` with `∫ exp z₂ dν(z) = 1`, then the laws of `S n` under `Q n` converge
-weakly to the first marginal of `exp z₂ · ν`. Taking a joint Gaussian limit gives the mean shift
-stated in GAPS. -/
-theorem tendstoWeakly_of_log_likelihood_ratio {Ω : ℕ → Type*}
+depending on the sample size. If `Q n = exp (Λ n) · P n` and `(S n, Λ n)` under `P n` converges
+in law to `ν` with `∫ exp z₂ dν(z) = 1`, then `S n` under `Q n` converges in law to the first
+marginal `L` of `exp z₂ · ν` (a probability measure by the mean condition, supplied as `L` with
+its instance). Taking a joint Gaussian limit gives the mean shift stated in GAPS. -/
+theorem tendstoInDistribution_of_log_likelihood_ratio {Ω : ℕ → Type*}
     [∀ n, MeasurableSpace (Ω n)] {E : Type*}
     [MeasurableSpace E] [MetricSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P Q : ∀ n, Measure (Ω n)) (hP : ∀ n, IsProbabilityMeasure (P n))
     (hQ : ∀ n, IsProbabilityMeasure (Q n)) (S : ∀ n, Ω n → E) (Λ : ∀ n, Ω n → ℝ)
     (hS : ∀ n, Measurable (S n)) (hΛ : ∀ n, Measurable (Λ n))
     (hrn : ∀ n, Q n = (P n).withDensity (fun ω ↦ ENNReal.ofReal (Real.exp (Λ n ω))))
-    (ν : Measure (E × ℝ))
-    (hlim : TendstoWeakly (fun n ↦ (P n).map (fun ω ↦ (S n ω, Λ n ω))) ν)
-    (hmean : (∫ z, Real.exp z.2 ∂ν) = 1) :
-    TendstoWeakly (fun n ↦ (Q n).map (S n))
-      ((ν.withDensity fun z ↦ ENNReal.ofReal (Real.exp z.2)).map Prod.fst) := by
-  have : ∀ n, IsProbabilityMeasure ((P n).map fun ω ↦ (S n ω, Λ n ω)) := fun n ↦ by
-    have := hP n; infer_instance
-  have : IsProbabilityMeasure ν := hlim.isProbabilityMeasure
+    (ν : Measure (E × ℝ)) [IsProbabilityMeasure ν]
+    (hlim : TendstoInDistribution (fun n ω ↦ (S n ω, Λ n ω)) atTop id P ν)
+    (hmean : (∫ z, Real.exp z.2 ∂ν) = 1) (L : Measure E) [IsProbabilityMeasure L]
+    (hL : (ν.withDensity fun z ↦ ENNReal.ofReal (Real.exp z.2)).map Prod.fst = L) :
+    TendstoInDistribution S atTop id Q L := by
+  subst hL
   have hint : Integrable (fun z : E × ℝ ↦ Real.exp z.2) ν := by
     by_contra hni
     rw [integral_undef hni] at hmean
@@ -252,8 +242,9 @@ theorem tendstoWeakly_of_log_likelihood_ratio {Ω : ℕ → Type*}
   have : ∀ n, IsProbabilityMeasure (Q n) := hQ
   have : IsFiniteMeasure (ν.withDensity fun z : E × ℝ ↦ ENNReal.ofReal (Real.exp z.2)) :=
     isFiniteMeasure_withDensity hint.lintegral_lt_top.ne
-  refine TendstoWeakly.of_forall_integral_tendsto ?_
-  intro f
+  refine (tendstoInDistribution_id_iff.2 ⟨fun n ↦ (hS n).aemeasurable,
+    ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.2 fun f ↦ ?_⟩)
+  simp only [ProbabilityMeasure.coe_mk]
   have hSΛ : ∀ n, Measurable fun ω ↦ (S n ω, Λ n ω) := fun n ↦ (hS n).prodMk (hΛ n)
   have : ∀ n, IsProbabilityMeasure ((P n).map fun ω ↦ (S n ω, Λ n ω)) := fun n ↦ by
     have := hP n; infer_instance
@@ -262,7 +253,8 @@ theorem tendstoWeakly_of_log_likelihood_ratio {Ω : ℕ → Type*}
   have hdenν : Measurable fun z : E × ℝ ↦ ENNReal.ofReal (Real.exp z.2) :=
     ENNReal.measurable_ofReal.comp (Real.measurable_exp.comp measurable_snd)
   let F : BoundedContinuousFunction (E × ℝ) ℝ := f.compContinuous ⟨Prod.fst, continuous_fst⟩
-  have key := tendsto_integral_mul_of_tendstoWeakly _ ν hlim (fun z ↦ Real.exp z.2)
+  have key := tendsto_integral_mul_of_tendsto _ ν (tendstoInDistribution_id_iff.1 hlim).2
+    (fun z ↦ Real.exp z.2)
     (by fun_prop) (fun z ↦ (Real.exp_pos _).le) ?_ hmean F
   · convert key using 1
     · funext n
@@ -289,7 +281,7 @@ under the alternatives `P n`, the power `P n {T n > z}` tends to `1 - Φ(z - a)`
 theorem tendsto_local_normal_power {Ω : Type*} [MeasurableSpace Ω]
     (P : ℕ → Measure Ω) (hP : ∀ n, IsProbabilityMeasure (P n))
     (T : ℕ → Ω → ℝ) (hT : ∀ n, Measurable (T n)) (a z : ℝ)
-    (hlim : TendstoWeakly (fun n ↦ (P n).map (T n)) (gaussianReal a 1)) :
+    (hlim : TendstoInDistribution T atTop id P (gaussianReal a 1)) :
     Tendsto (fun n ↦ (P n).real {ω | z < T n ω}) atTop
       (𝓝 (1 - cdf (gaussianReal 0 1) (z - a))) := by
   have : ∀ n, IsProbabilityMeasure ((P n).map (T n)) := fun n ↦ by
@@ -297,14 +289,18 @@ theorem tendsto_local_normal_power {Ω : Type*} [MeasurableSpace Ω]
   have hfr : gaussianReal a 1 (frontier (Ioi z)) = 0 := by
     have := nullSingletonClass_gaussianReal (μ := a) (v := 1) one_ne_zero
     rw [frontier_Ioi]; exact measure_singleton z
-  have key := tendsto_measureReal_of_tendstoWeakly _ _ hlim (Ioi z) hfr
+  have key : Tendsto (fun n ↦ ((P n).map (T n)).real (Ioi z)) atTop
+      (𝓝 ((gaussianReal a 1).real (Ioi z))) :=
+    (ENNReal.tendsto_toReal (measure_ne_top _ _)).comp
+      (ProbabilityMeasure.tendsto_measure_of_null_frontier_of_tendsto'
+        (tendstoInDistribution_id_iff.1 hlim).2 hfr)
   have heq : ∀ n, (P n).real {ω | z < T n ω} = ((P n).map (T n)).real (Ioi z) := by
     intro n
     rw [map_measureReal_apply (hT n) measurableSet_Ioi]; rfl
   simp_rw [heq]
   convert key using 2
   have hcdf : cdf (gaussianReal 0 1) (z - a) = (gaussianReal a 1).real (Iic z) := by
-    rw [cdf, show gaussianReal a 1 = (gaussianReal 0 1).map (· + a) by
+    rw [cdf_eq_real, show gaussianReal a 1 = (gaussianReal 0 1).map (· + a) by
         rw [gaussianReal_map_add_const, zero_add],
       map_measureReal_apply (measurable_add_const a) measurableSet_Iic]
     congr 1
@@ -517,7 +513,7 @@ quadratic mean at `θ₀` with score `ℓ̇` (centred, square-integrable) and `I
 i.i.d. sample from `P θ₀` and every `h`, the log likelihood ratio of `θ₀ + h / √n` against `θ₀`
 satisfies `∑ log (f (θ₀ + h/√n) (Xᵢ) / f θ₀ (Xᵢ)) = (h / √n) ∑ ℓ̇(Xᵢ) - h² I / 2 + o_P(1)`.
 The proof follows van der Vaart, *Asymptotic Statistics*, Theorem 7.2. -/
-theorem tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm
+theorem tendstoInMeasure_log_likelihood_ratio_sub_of_dqm
     {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
     (mu : Measure Ω) [IsProbabilityMeasure mu] (nu : Measure E)
     (P : ℝ → Measure E) (hP : ∀ theta, IsProbabilityMeasure (P theta))
@@ -529,10 +525,10 @@ theorem tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm
       (fun h : ℝ ↦ ∫ x, (Real.sqrt (f (theta₀ + h) x) - Real.sqrt (f theta₀ x) -
         h / 2 * score x * Real.sqrt (f theta₀ x)) ^ 2 ∂nu) (fun h : ℝ ↦ h ^ 2))
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed mu X (P theta₀)) (h : ℝ) :
-    TendstoInProbabilityConst mu (fun n w ↦
+    TendstoInMeasure mu (fun (n : ℕ) w ↦
       (∑ i ∈ Finset.range n, Real.log (f (theta₀ + h / Real.sqrt n) (X i w) / f theta₀ (X i w))) -
         h / Real.sqrt n * (∑ i ∈ Finset.range n, score (X i w)) +
-          h ^ 2 * (∫ x, score x ^ 2 ∂P theta₀) / 2) 0 := by
+          h ^ 2 * (∫ x, score x ^ 2 ∂P theta₀) / 2) atTop (fun _ ↦ 0) := by
   have hP0 := hP theta₀
   set I := ∫ x, score x ^ 2 ∂P theta₀ with hI
   obtain ⟨hXm, hind, hlaw⟩ := hiid
@@ -573,13 +569,13 @@ theorem tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm
     simp only [hu]
     rw [integral_sub (hgi n) (hs1.const_mul _), integral_const_mul, hs0, mul_zero, sub_zero]
   have hnDu := hnDu'
-  have hF2 : TendstoInProbabilityConst mu
-      (fun n w ↦ G1 n w - h / 2 * Z n w + h ^ 2 * I / 8) 0 := by
-    have h1 := tendstoInProbabilityConst_sum_sub_of_iid mu (P theta₀) X hiid' u hum hu2' hnDu
-    have h2 := tendstoInProbabilityConst_const_of_tendsto mu
+  have hF2 : TendstoInMeasure mu
+      (fun (n : ℕ) w ↦ G1 n w - h / 2 * Z n w + h ^ 2 * I / 8) atTop (fun _ ↦ 0) := by
+    have h1 := tendstoInMeasure_sum_sub_of_iid mu (P theta₀) X hiid' u hum hu2' hnDu
+    have h2 := tendstoInMeasure_const_of_tendsto mu
       (fun n : ℕ ↦ n * ∫ x, g n x ∂P theta₀ + h ^ 2 * I / 8)
       (by convert hgmean.add_const (h ^ 2 * I / 8) using 2; ring)
-    have := tendstoInProbabilityConst_add_zero mu _ _ h1 h2
+    have := tendstoInMeasure_add_zero mu _ _ h1 h2
     convert this using 3 with n w
     have hsplit : G1 n w = ∑ i ∈ Finset.range n, u n (X i w) +
         t n / 2 * ∑ i ∈ Finset.range n, score (X i w) := by
@@ -591,34 +587,35 @@ theorem tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm
   -- the sum of squares
   have hsqm : Measurable (fun x ↦ score x ^ 2) := hs.pow_const 2
   set B2 : ℕ → Ω → ℝ := fun n w ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, score (X i w) ^ 2 with hB2
-  have hB2lim : TendstoInProbabilityConst mu B2 I :=
-    tendstoInProbabilityConst_sampleMean_of_iid mu (P theta₀) X hiid' (fun x ↦ score x ^ 2) hsqm
+  have hB2lim : TendstoInMeasure mu B2 atTop (fun _ ↦ I) :=
+    tendstoInMeasure_sampleMean_of_iid mu (P theta₀) X hiid' (fun x ↦ score x ^ 2) hsqm
       hs2P
   set U2 : ℕ → Ω → ℝ := fun n w ↦ ∑ i ∈ Finset.range n, u n (X i w) ^ 2 with hU2
-  have hU2lim : TendstoInProbabilityConst mu U2 0 :=
-    tendstoInProbabilityConst_sum_sq_of_iid mu (P theta₀) X hiid' u hum hu2 hnDu
+  have hU2lim : TendstoInMeasure mu U2 atTop (fun _ ↦ 0) :=
+    tendstoInMeasure_sum_sq_of_iid mu (P theta₀) X hiid' u hum hu2 hnDu
   have ht2 : ∀ n : ℕ, t n ^ 2 = h ^ 2 * (n : ℝ)⁻¹ := fun n ↦ by
     simp only [ht, div_pow, Real.sq_sqrt (Nat.cast_nonneg _)]
     ring
-  have hF3 : TendstoInProbabilityConst mu (fun n w ↦ G2 n w - h ^ 2 * I / 4) 0 := by
-    have hA : TendstoInProbabilityConst mu (fun n w ↦ h ^ 2 / 4 * (B2 n w - I)) 0 :=
-      tendstoInProbabilityConst_const_mul_zero mu _ _ (by
+  have hF3 : TendstoInMeasure mu (fun (n : ℕ) w ↦ G2 n w - h ^ 2 * I / 4) atTop (fun _ ↦ 0) := by
+    have hA : TendstoInMeasure mu (fun (n : ℕ) w ↦ h ^ 2 / 4 * (B2 n w - I)) atTop (fun _ ↦ 0) :=
+      tendstoInMeasure_const_mul_zero mu _ _ (by
+        rw [tendstoInMeasure_iff_measureReal_lt_dist] at hB2lim ⊢
         intro ε hε; simpa [Real.dist_eq] using hB2lim ε hε)
-    have hsq1 : TendstoInProbabilityConst mu (fun n w ↦ Real.sqrt (h ^ 2 * B2 n w))
-        (Real.sqrt (h ^ 2 * I)) :=
-      tendstoInProbabilityConst_comp_of_continuousAt mu B2 I (fun y ↦ Real.sqrt (h ^ 2 * y))
+    have hsq1 : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt (h ^ 2 * B2 n w))
+        atTop (fun _ ↦ Real.sqrt (h ^ 2 * I)) :=
+      tendstoInMeasure_comp_of_continuousAt mu B2 I (fun y ↦ Real.sqrt (h ^ 2 * y))
         (Real.continuous_sqrt.comp (continuous_const.mul continuous_id)).continuousAt hB2lim
-    have hsq2 : TendstoInProbabilityConst mu (fun n w ↦ Real.sqrt (U2 n w)) 0 := by
-      have := tendstoInProbabilityConst_comp_of_continuousAt mu U2 0 Real.sqrt
+    have hsq2 : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt (U2 n w)) atTop (fun _ ↦ 0) := by
+      have := tendstoInMeasure_comp_of_continuousAt mu U2 0 Real.sqrt
         Real.continuous_sqrt.continuousAt hU2lim
       simpa using this
-    have hX := tendstoInProbabilityConst_mul_zero_of_isBoundedInProbability mu _ _
-      (isBoundedInProbability_of_tendstoInProbabilityConst mu _ _ hsq1) hsq2
-    have hC : TendstoInProbabilityConst mu (fun n w ↦
-        t n * ∑ i ∈ Finset.range n, score (X i w) * u n (X i w)) 0 := by
-      refine tendstoInProbabilityConst_zero_of_abs_le mu _ _ (fun _ _ ↦ (0 : ℝ)) one_pos
+    have hX := tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _
+      (isBoundedInProbability_of_tendstoInMeasure mu _ _ hsq1) hsq2
+    have hC : TendstoInMeasure mu (fun (n : ℕ) w ↦
+        t n * ∑ i ∈ Finset.range n, score (X i w) * u n (X i w)) atTop (fun _ ↦ 0) := by
+      refine tendstoInMeasure_zero_of_abs_le mu _ _ (fun _ _ ↦ (0 : ℝ)) one_pos
         (Eventually.of_forall fun n ↦ ae_of_all _ fun w _ ↦ ?_) hX
-        (tendstoInProbabilityConst_const_of_tendsto mu _ tendsto_const_nhds)
+        (tendstoInMeasure_const_of_tendsto mu _ tendsto_const_nhds)
       have hcs := Finset.sum_mul_sq_le_sq_mul_sq (Finset.range n) (fun i ↦ score (X i w))
         (fun i ↦ u n (X i w))
       have hB2e : h ^ 2 * B2 n w = t n ^ 2 * ∑ i ∈ Finset.range n, score (X i w) ^ 2 := by
@@ -635,8 +632,8 @@ theorem tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm
           mul_le_mul_of_nonneg_left hcs (sq_nonneg _)
         _ = t n ^ 2 * (∑ i ∈ Finset.range n, score (X i w) ^ 2) * U2 n w := by
           simp only [hU2]; ring
-    have := tendstoInProbabilityConst_add_zero mu _ _
-      (tendstoInProbabilityConst_add_zero mu _ _ hU2lim hC) hA
+    have := tendstoInMeasure_add_zero mu _ _
+      (tendstoInMeasure_add_zero mu _ _ hU2lim hC) hA
     convert this using 3 with n w
     have hG2e : G2 n w = U2 n w + t n * ∑ i ∈ Finset.range n, score (X i w) * u n (X i w) +
         t n ^ 2 / 4 * ∑ i ∈ Finset.range n, score (X i w) ^ 2 := by
@@ -701,7 +698,8 @@ theorem tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm
             n * (∫ x, u n x ^ 2 ∂P theta₀) / (ε / 2) ^ 2 := by
           rw [mul_add, mul_div_assoc]
           gcongr
-  have hF4 : TendstoInProbabilityConst mu M 0 := by
+  have hF4 : TendstoInMeasure mu M atTop (fun _ ↦ 0) := by
+    rw [tendstoInMeasure_iff_measureReal_lt_dist]
     intro ε hε
     refine squeeze_zero (fun _ ↦ measureReal_nonneg) (fun n ↦ ?_) (hgtail ε hε)
     calc mu.real {w | ε < dist (M n w) 0}
@@ -729,15 +727,16 @@ theorem tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm
               rfl
           simp [this]
   -- the logarithmic remainder
-  have hG2lim : TendstoInProbabilityConst mu G2 (h ^ 2 * I / 4) := by
+  have hG2lim : TendstoInMeasure mu G2 atTop (fun _ ↦ h ^ 2 * I / 4) := by
+    rw [tendstoInMeasure_iff_measureReal_lt_dist] at hF3 ⊢
     intro ε hε; simpa [Real.dist_eq] using hF3 ε hε
   set R : ℕ → Ω → ℝ := fun n w ↦
     ∑ i ∈ Finset.range n, Real.log (q n (X i w) / p₀ (X i w)) - (2 * G1 n w - G2 n w) with hR
-  have hR0 : TendstoInProbabilityConst mu R 0 := by
-    have hX := tendstoInProbabilityConst_mul_zero_of_isBoundedInProbability mu _ _
-      (isBoundedInProbability_of_tendstoInProbabilityConst mu _ _ hG2lim)
-      (tendstoInProbabilityConst_const_mul_zero mu M 4 hF4)
-    refine tendstoInProbabilityConst_zero_of_abs_le mu _ _ M (by norm_num : (0 : ℝ) < 1 / 2)
+  have hR0 : TendstoInMeasure mu R atTop (fun _ ↦ 0) := by
+    have hX := tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _
+      (isBoundedInProbability_of_tendstoInMeasure mu _ _ hG2lim)
+      (tendstoInMeasure_const_mul_zero mu M 4 hF4)
+    refine tendstoInMeasure_zero_of_abs_le mu _ _ M (by norm_num : (0 : ℝ) < 1 / 2)
       (Eventually.of_forall fun n ↦ ae_of_all _ fun w hMw ↦ ?_) hX hF4
     rw [abs_of_nonneg (hM0 n w)] at hMw
     have hlog : ∀ i, Real.log (q n (X i w) / p₀ (X i w)) = 2 * Real.log (1 + g n (X i w)) := by
@@ -768,9 +767,9 @@ theorem tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm
           have h2 := abs_nonneg (g n (X i w))
           nlinarith [mul_le_mul_of_nonneg_left h1 (sq_nonneg |g n (X i w)|)]
       _ = G2 n w * (4 * M n w) := by simp only [hG2, Finset.sum_mul]
-  have := tendstoInProbabilityConst_add_zero mu _ _
-    (tendstoInProbabilityConst_add_zero mu _ _ hR0 (tendstoInProbabilityConst_const_mul_zero mu _ 2 hF2))
-    (tendstoInProbabilityConst_const_mul_zero mu _ (-1) hF3)
+  have := tendstoInMeasure_add_zero mu _ _
+    (tendstoInMeasure_add_zero mu _ _ hR0 (tendstoInMeasure_const_mul_zero mu _ 2 hF2))
+    (tendstoInMeasure_const_mul_zero mu _ (-1) hF3)
   convert this using 3 with n w
   simp only [hR, hZ]
   ring
@@ -778,7 +777,7 @@ theorem tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm
 /-- GAPS 102.13: local asymptotic normality from differentiability in quadratic mean, with the
 central sequence: the normalized score sum `n^{-1/2} ∑ ℓ̇(Xᵢ)` converges in law to `N(0, I)`, and
 the log likelihood ratio has the expansion of
-`tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm`. -/
+`tendstoInMeasure_log_likelihood_ratio_sub_of_dqm`. -/
 theorem tendstoInDistribution_score_and_log_likelihood_ratio_expansion_of_dqm
     {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
     (mu : Measure Ω) [IsProbabilityMeasure mu] (nu : Measure E)
@@ -791,15 +790,16 @@ theorem tendstoInDistribution_score_and_log_likelihood_ratio_expansion_of_dqm
       (fun h : ℝ ↦ ∫ x, (Real.sqrt (f (theta₀ + h) x) - Real.sqrt (f theta₀ x) -
         h / 2 * score x * Real.sqrt (f theta₀ x)) ^ 2 ∂nu) (fun h : ℝ ↦ h ^ 2))
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed mu X (P theta₀)) :
-    TendstoInDistribution mu (fun n w ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, score (X i w))
+    TendstoInDistribution (fun (n : ℕ) w ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, score (X i w))
+      atTop id (fun _ ↦ mu)
         (gaussianReal 0 (Real.toNNReal (∫ x, score x ^ 2 ∂P theta₀))) ∧
-      ∀ h : ℝ, TendstoInProbabilityConst mu (fun n w ↦
+      ∀ h : ℝ, TendstoInMeasure mu (fun (n : ℕ) w ↦
         (∑ i ∈ Finset.range n, Real.log (f (theta₀ + h / Real.sqrt n) (X i w) / f theta₀ (X i w))) -
           h / Real.sqrt n * (∑ i ∈ Finset.range n, score (X i w)) +
-            h ^ 2 * (∫ x, score x ^ 2 ∂P theta₀) / 2) 0 :=
+            h ^ 2 * (∫ x, score x ^ 2 ∂P theta₀) / 2) atTop (fun _ ↦ 0) :=
   have := hP theta₀
   ⟨tendstoInDistribution_inv_sqrt_mul_sum_of_iid mu (P theta₀) X hiid score hs hs2 hs0,
-    tendstoInProbabilityConst_log_likelihood_ratio_sub_of_dqm mu nu P hP f hf hpos theta₀ score hs
+    tendstoInMeasure_log_likelihood_ratio_sub_of_dqm mu nu P hP f hf hpos theta₀ score hs
       hs2 hs0 hdqm X hiid⟩
 
 end CKSD

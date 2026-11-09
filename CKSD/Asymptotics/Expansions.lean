@@ -46,8 +46,8 @@ theorem exists_edgeworth_expansion_smooth_function_of_means
     (A : EuclideanSpace ℝ (Fin d) → ℝ)
     (hA : ∃ U ∈ 𝓝 (∫ x, x ∂P), ContDiffOn ℝ (j + 2 : ℕ) A U)
     (hA0 : A (∫ x, x ∂P) = 0)
-    (hσ : 0 < variance P (fun x ↦ fderiv ℝ A (∫ y, y ∂P) x)) :
-    let σ := Real.sqrt (variance P (fun x ↦ fderiv ℝ A (∫ y, y ∂P) x));
+    (hσ : 0 < Var[fun x ↦ fderiv ℝ A (∫ y, y ∂P) x; P]) :
+    let σ := Real.sqrt (Var[fun x ↦ fderiv ℝ A (∫ y, y ∂P) x; P]);
     ∃ p : ℕ → Polynomial ℝ,
       (∀ r, 1 ≤ r → r ≤ j → (p r).natDegree ≤ 3 * r - 1 ∧
         ∀ x, (p r).eval (-x) = (-1) ^ (r + 1) * (p r).eval x) ∧

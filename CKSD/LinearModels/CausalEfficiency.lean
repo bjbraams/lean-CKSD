@@ -74,6 +74,66 @@ theorem measurable_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [Measurab
     Measurable (propensityScore P A X) :=
   (stronglyMeasurable_condExp.measurable).mono hX.comap_le le_rfl
 
+/-- Tower-and-pull-out step behind the balancing property of the propensity score. -/
+private theorem condExp_mul_ae_eq_of_le {Ω : Type*} {G F mΩ : MeasurableSpace Ω}
+    (hGF : G ≤ F) (hF : F ≤ mΩ) (μ : Measure[mΩ] Ω) [IsFiniteMeasure μ]
+    {U V : Ω → ℝ}
+    (hUF : AEStronglyMeasurable[G] (μ[U | F]) μ)
+    (hind : μ[U * V | F] =ᵐ[μ] μ[U | F] * μ[V | F]) :
+    μ[U * V | G] =ᵐ[μ] μ[U | G] * μ[V | G] := by
+  have hUG : μ[U | G] =ᵐ[μ] μ[U | F] :=
+    (condExp_condExp_of_le (f := U) (μ := μ) hGF hF).symm.trans
+      (condExp_of_aestronglyMeasurable' (hGF.trans hF) hUF integrable_condExp)
+  have hint : Integrable (μ[U | F] * μ[V | F]) μ :=
+    integrable_condExp.congr hind
+  calc μ[U * V | G] =ᵐ[μ] μ[μ[U * V | F] | G] := (condExp_condExp_of_le hGF hF).symm
+    _ =ᵐ[μ] μ[μ[U | F] * μ[V | F] | G] := condExp_congr_ae hind
+    _ =ᵐ[μ] μ[U | F] * μ[μ[V | F] | G] :=
+        condExp_mul_of_aestronglyMeasurable_left hUF hint integrable_condExp
+    _ =ᵐ[μ] μ[U | G] * μ[V | G] := by
+        filter_upwards [hUG, condExp_condExp_of_le (f := V) (μ := μ) hGF hF] with ω h1 h2
+        simp only [Pi.mul_apply, h1, h2]
+
+/-- The conditional probability given the covariates of any event of the treatment is a function
+of the propensity score. -/
+private theorem aestronglyMeasurable_condExp_indicator_treatment {Ω S : Type*}
+    [MeasurableSpace Ω] [MeasurableSpace S] (P : Measure Ω) [IsProbabilityMeasure P]
+    {A : Ω → Bool} (hA : Measurable A) {X : Ω → S} (hX : Measurable X) (s : Set Bool) :
+    AEStronglyMeasurable[(inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X)]
+      (P[(A ⁻¹' s).indicator (fun _ ↦ (1 : ℝ)) | (inferInstance : MeasurableSpace S).comap X])
+      P := by
+  set c₀ : ℝ := s.indicator (fun _ ↦ (1 : ℝ)) false
+  set c₁ : ℝ := s.indicator (fun _ ↦ (1 : ℝ)) true
+  have hfun : (A ⁻¹' s).indicator (fun _ ↦ (1 : ℝ)) =
+      (fun _ ↦ c₀) + (c₁ - c₀) • fun ω ↦ if A ω then (1 : ℝ) else 0 := by
+    funext ω
+    cases h : A ω <;> by_cases h0 : false ∈ s <;> by_cases h1 : true ∈ s <;>
+      simp [Set.indicator, h, h0, h1, c₀, c₁]
+  have hae : P[(A ⁻¹' s).indicator (fun _ ↦ (1 : ℝ)) | (inferInstance : MeasurableSpace S).comap X]
+      =ᵐ[P] fun ω ↦ c₀ + (c₁ - c₀) * propensityScore P A X ω := by
+    rw [hfun]
+    have hint : Integrable (fun ω ↦ if A ω then (1 : ℝ) else 0) P := by
+      refine Integrable.of_bound (C := 1) ?_ (ae_of_all _ fun ω ↦ ?_)
+      · exact (measurable_const.ite (hA (measurableSet_singleton true))
+          measurable_const).aestronglyMeasurable
+      · split_ifs <;> simp
+    filter_upwards [condExp_add (integrable_const c₀) (hint.smul (c₁ - c₀))
+      ((inferInstance : MeasurableSpace S).comap X),
+      condExp_smul (μ := P) (c₁ - c₀) (fun ω ↦ if A ω then (1 : ℝ) else 0)
+        ((inferInstance : MeasurableSpace S).comap X)] with ω h1 h2
+    rw [h1, Pi.add_apply, h2, condExp_const hX.comap_le]
+    rfl
+  refine AEStronglyMeasurable.congr ?_ hae.symm
+  refine Measurable.aestronglyMeasurable ?_
+  exact measurable_const.add (measurable_const.mul (comap_measurable _))
+
+/-- Indicator of a set as a real function, multiplied out over an intersection. -/
+private theorem indicator_inter_one {Ω : Type*} (s t : Set Ω) :
+    (s ∩ t).indicator (fun _ ↦ (1 : ℝ)) =
+      s.indicator (fun _ ↦ (1 : ℝ)) * t.indicator (fun _ ↦ (1 : ℝ)) := by
+  funext ω
+  by_cases hs : ω ∈ s <;> by_cases ht : ω ∈ t <;> simp [Set.indicator, hs, ht]
+
 /-- GAPS 105.48: the propensity score is a balancing score, `A ⫫ X | e(X)`, in the standard
 Borel setting. -/
 theorem condIndepFun_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [StandardBorelSpace Ω]
@@ -81,7 +141,28 @@ theorem condIndepFun_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [Standa
     (A : Ω → Bool) (hA : Measurable A) (X : Ω → S) (hX : Measurable X) :
     CondIndepFun ((inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X))
       (measurable_propensityScore P A hX).comap_le A X P := by
-  sorry
+  have hGF : (inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X) ≤
+      (inferInstance : MeasurableSpace S).comap X :=
+    (stronglyMeasurable_condExp (μ := P)).measurable.comap_le
+  rw [condIndepFun_iff_condExp_inter_preimage_eq_mul hA hX]
+  intro s t hs ht
+  have hVF : StronglyMeasurable[(inferInstance : MeasurableSpace S).comap X]
+      ((X ⁻¹' t).indicator fun _ ↦ (1 : ℝ)) :=
+    stronglyMeasurable_const.indicator ⟨t, ht, rfl⟩
+  have hU : Integrable ((A ⁻¹' s).indicator fun _ ↦ (1 : ℝ)) P :=
+    (integrable_const 1).indicator (hA hs)
+  have hV : Integrable ((X ⁻¹' t).indicator fun _ ↦ (1 : ℝ)) P :=
+    (integrable_const 1).indicator (hX ht)
+  have hUV : Integrable (((A ⁻¹' s).indicator fun _ ↦ (1 : ℝ)) *
+      (X ⁻¹' t).indicator fun _ ↦ (1 : ℝ)) P := by
+    rw [← indicator_inter_one]
+    exact (integrable_const 1).indicator ((hA hs).inter (hX ht))
+  change P[(A ⁻¹' s ∩ X ⁻¹' t).indicator fun _ ↦ (1 : ℝ) | _] =ᵐ[P] _
+  rw [indicator_inter_one]
+  refine condExp_mul_ae_eq_of_le hGF hX.comap_le P
+    (aestronglyMeasurable_condExp_indicator_treatment P hA hX s) ?_
+  rw [condExp_of_stronglyMeasurable hX.comap_le hVF hV]
+  exact condExp_mul_of_stronglyMeasurable_right hVF hUV hU
 
 /-- GAPS 105.48: ignorability descends from the covariates to their propensity score: if
 `Y ⫫ A | X`, then `Y ⫫ A | e(X)`. -/
@@ -92,7 +173,23 @@ theorem condIndepFun_of_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [Sta
     (hind : CondIndepFun ((inferInstance : MeasurableSpace S).comap X) hX.comap_le Y A P) :
     CondIndepFun ((inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X))
       (measurable_propensityScore P A hX).comap_le Y A P := by
-  sorry
+  have hGF : (inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X) ≤
+      (inferInstance : MeasurableSpace S).comap X :=
+    (stronglyMeasurable_condExp (μ := P)).measurable.comap_le
+  rw [condIndepFun_iff_condExp_inter_preimage_eq_mul hY hA] at hind ⊢
+  intro t s ht hs
+  have h := condExp_mul_ae_eq_of_le hGF hX.comap_le P
+    (aestronglyMeasurable_condExp_indicator_treatment P hA hX s)
+    (V := (Y ⁻¹' t).indicator fun _ ↦ (1 : ℝ)) (by
+      have h' := hind t s ht hs
+      change P[(Y ⁻¹' t ∩ A ⁻¹' s).indicator fun _ ↦ (1 : ℝ) | _] =ᵐ[P] _ at h'
+      rw [indicator_inter_one, mul_comm] at h'
+      filter_upwards [h'] with ω hω
+      rw [hω, Pi.mul_apply, mul_comm])
+  change P[(Y ⁻¹' t ∩ A ⁻¹' s).indicator fun _ ↦ (1 : ℝ) | _] =ᵐ[P] _
+  rw [indicator_inter_one, mul_comm]
+  filter_upwards [h] with ω hω
+  rw [hω, Pi.mul_apply, mul_comm]
 
 /-- The joint covariate-stratum and treatment event `{X = x, A = a}`. -/
 def treatmentStratum {Ω : Type*} {ι : Type*} (X : Ω → ι) (A : Ω → Bool)
@@ -242,9 +339,9 @@ private theorem integral_and_variance_finiteStrataTreatmentInfluence
     (hX : Measurable X) (hA : Measurable A) (Y : Ω → ℝ) (hY : MemLp Y 2 P)
     (hpos : ∀ x a, 0 < P.real (treatmentStratum X A x a)) :
     (∫ ω, finiteStrataTreatmentInfluence P X A Y ω ∂P) = 0 ∧
-      variance P (finiteStrataTreatmentInfluence P X A Y) =
-        variance P (fun ω ↦ stratumOutcomeMean P X A Y (X ω) true -
-          stratumOutcomeMean P X A Y (X ω) false) +
+      Var[finiteStrataTreatmentInfluence P X A Y; P] =
+        Var[fun ω ↦ stratumOutcomeMean P X A Y (X ω) true -
+          stratumOutcomeMean P X A Y (X ω) false; P] +
           ∫ ω, stratumOutcomeVariance P X A Y (X ω) true / stratumPropensity P X A (X ω) +
             stratumOutcomeVariance P X A Y (X ω) false /
               (1 - stratumPropensity P X A (X ω)) ∂P := by
@@ -318,16 +415,26 @@ private theorem integral_and_variance_finiteStrataTreatmentInfluence
     rw [this, ← hate, hsum]
     ring
   refine ⟨hmean, ?_⟩
-  have hvarφ : variance P φ = ∑ x, ∑ a, (c x ^ 2 * p x a + d x a ^ 2 * (v x a * p x a)) := by
-    unfold variance
+  have hφm : AEMeasurable φ P := by
+    have hF : Measurable (fun q : ℝ × (ι × Bool) ↦ treatmentEffectInfluence
+        (fun x ↦ m x false) (fun x ↦ m x true) e ate q.2.1 q.2.2 q.1) :=
+      measurable_from_prod_countable_left fun xa ↦ by
+        obtain ⟨x, a⟩ := xa
+        unfold treatmentEffectInfluence
+        cases a <;> simp only [Bool.false_eq_true, ↓reduceIte] <;> fun_prop
+    exact hF.comp_aemeasurable (hY.aemeasurable.prodMk (hX.prodMk hA).aemeasurable)
+  have hvarφ : Var[φ; P] = ∑ x, ∑ a, (c x ^ 2 * p x a + d x a ^ 2 * (v x a * p x a)) := by
+    rw [variance_eq_integral hφm]
     rw [hmean]
     simp only [sub_zero]
     rw [integral_eq_sum_treatmentStratum P hX hA _ fun x a ↦
       (hYS2 x a).congr_fun (fun ω hω ↦ by simp only [heq x a hω]) (hmeas x a)]
     exact Finset.sum_congr rfl fun x _ ↦ Finset.sum_congr rfl fun a _ ↦ hφint2 x a
-  have hvarg : variance P (fun ω ↦ m (X ω) true - m (X ω) false) =
+  have hvarg : Var[fun ω ↦ m (X ω) true - m (X ω) false; P] =
       ∑ x, ∑ a, c x ^ 2 * p x a := by
-    unfold variance
+    have hgm : AEMeasurable (fun ω ↦ m (X ω) true - m (X ω) false) P :=
+      ((measurable_of_finite fun x ↦ m x true - m x false).comp hX).aemeasurable
+    rw [variance_eq_integral hgm]
     have : (∫ ω, m (X ω) true - m (X ω) false ∂P) = ate := rfl
     rw [this]
     exact hlabel (fun x _ ↦ (m x true - m x false - ate) ^ 2)
@@ -365,9 +472,9 @@ theorem variance_finiteStrataTreatmentInfluence
     (P : Measure Ω) [IsProbabilityMeasure P] (X : Ω → ι) (A : Ω → Bool)
     (hX : Measurable X) (hA : Measurable A) (Y : Ω → ℝ) (hY : MemLp Y 2 P)
     (hpos : ∀ x a, 0 < P.real (treatmentStratum X A x a)) :
-    variance P (finiteStrataTreatmentInfluence P X A Y) =
-      variance P (fun ω ↦ stratumOutcomeMean P X A Y (X ω) true -
-        stratumOutcomeMean P X A Y (X ω) false) +
+    Var[finiteStrataTreatmentInfluence P X A Y; P] =
+      Var[fun ω ↦ stratumOutcomeMean P X A Y (X ω) true -
+        stratumOutcomeMean P X A Y (X ω) false; P] +
         ∫ ω, stratumOutcomeVariance P X A Y (X ω) true / stratumPropensity P X A (X ω) +
           stratumOutcomeVariance P X A Y (X ω) false /
             (1 - stratumPropensity P X A (X ω)) ∂P :=

@@ -54,9 +54,10 @@ theorem tendstoInDistribution_mul_wasserstein_sq_empiricalMeasure
     (c : ℝ) (hc : 0 < c) (hfb : ∀ x ∈ Icc a b, c ≤ f x)
     (X : ℕ → Ω → ℝ) (hX : IsIndependentIdenticallyDistributed P X μ)
     (P' : Measure Ω') [IsProbabilityMeasure P'] (W : ℝ≥0 → Ω' → ℝ) (hW : IsBrownianReal W P') :
-    TendstoInDistribution P
-      (fun n ω ↦ (n : ℝ) *
+    TendstoInDistribution
+      (fun (n : ℕ) ω ↦ (n : ℝ) *
         (TauCeti.wassersteinEDist 2 (empiricalMeasure n fun i : Fin n ↦ X i ω) μ).toReal ^ 2)
+      atTop id (fun _ ↦ P)
       (P'.map fun ω' ↦ ∫ u in (0 : ℝ)..1,
         (W u.toNNReal ω' - u * W 1 ω') ^ 2 / f (μ.quantile u) ^ 2) ∧
     IsBoundedInProbability P (fun n ω ↦ Real.sqrt n *
@@ -138,7 +139,7 @@ theorem lintegral_transportMapRisk_semidualEstimator_le_of_poincare (Φ : Set (E
     (r : ℝ) (hr : r ∈ Ico (0 : ℝ) 1)
     (hμ : μ (Metric.closedBall 0 r)ᶜ = 0) (hν : ν (Metric.closedBall 0 1)ᶜ = 0)
     (CP : ℝ) (hpoincare : ∀ h : E → ℝ, ContDiff ℝ 1 h →
-      variance μ h ≤ CP * ∫ x, ‖gradient h x‖ ^ 2 ∂μ)
+      Var[h; μ] ≤ CP * ∫ x, ‖gradient h x‖ ^ 2 ∂μ)
     (φ₀ : E → ℝ) (hφ₀ : φ₀ ∈ Φ) (hpush : ν = μ.map (gradient φ₀)) :
     ∃ K : ℝ, ∀ n : ℕ, 2 ≤ n → ∀ est : (Fin n → E × E) → (E → ℝ),
       IsSemidualEstimator Φ n est → Measurable (fun z ↦ transportMapRisk μ φ₀ (est z)) →

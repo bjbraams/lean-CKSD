@@ -113,7 +113,8 @@ end IsIIDNoise
 integrand `(x - 𝔼x)²` to be integrable, since a Bochner integral of a non-integrable function
 is `0`. -/
 theorem memLp_id_two_of_variance_pos {P : Measure ℝ} [IsProbabilityMeasure P]
-    (hv : 0 < variance P id) : MemLp id 2 P := by
+    (hv : 0 < Var[id; P]) : MemLp id 2 P := by
+  rw [variance_eq_integral aemeasurable_id] at hv
   have hint : Integrable (fun x : ℝ ↦ (x - ∫ y, id y ∂P) ^ 2) P :=
     Integrable.of_integral_ne_zero hv.ne'
   have h : MemLp (fun x : ℝ ↦ x - ∫ y, id y ∂P) 2 P :=

@@ -36,10 +36,11 @@ theorem tendstoInDistribution_cusumBridgeStatistic {Ω Ω' : Type*}
     [MeasurableSpace Ω] [MeasurableSpace Ω']
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P)
-    (hv : 0 < variance P id)
+    (hv : 0 < Var[id; P])
     (ν : Measure Ω') [IsProbabilityMeasure ν] (B : ℝ≥0 → Ω' → ℝ)
     (hB : IsBrownianReal B ν) :
-    TendstoInDistribution μ (fun n ω ↦ cusumBridgeStatistic X (Real.sqrt (variance P id)) n ω)
+    TendstoInDistribution (fun (n : ℕ) ω ↦ cusumBridgeStatistic X (Real.sqrt (Var[id; P])) n ω)
+      atTop id (fun _ ↦ μ)
       (ν.map (brownianBridgeSupremum B)) := by
   sorry
 

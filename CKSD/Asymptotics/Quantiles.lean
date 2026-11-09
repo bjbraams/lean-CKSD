@@ -120,13 +120,13 @@ theorem measurable_sampleQuantile {Ω : Type*} [MeasurableSpace Ω] (X : ℕ →
   exact MeasurableSet.iUnion fun a ↦ MeasurableSet.iUnion fun _ ↦
     measurableSet_le measurable_const (measurable_empiricalCDF X hX n a)
 
-/-- The integral of the indicator of `(-∞, a]` is the distribution function at `a`. -/
-theorem integral_ite_le_eq_cdf (P : Measure ℝ) (a : ℝ) :
-    ∫ x, (if x ≤ a then (1 : ℝ) else 0) ∂P = cdf P a := by
+/-- The integral of the indicator of `(-∞, a]` is the mass `P (-∞, a]`; for a probability measure
+this is the distribution function at `a` (`ProbabilityTheory.cdf_eq_real`). -/
+theorem integral_ite_le_eq_measureReal_Iic (P : Measure ℝ) (a : ℝ) :
+    ∫ x, (if x ≤ a then (1 : ℝ) else 0) ∂P = P.real (Iic a) := by
   have : (fun x : ℝ ↦ if x ≤ a then (1 : ℝ) else 0) = (Iic a).indicator 1 := by
     ext x; simp [indicator, mem_Iic]
   rw [this, integral_indicator_one measurableSet_Iic]
-  rfl
 
 /-- `√n / n = 1 / √n`, in the form used for normalised sums. -/
 theorem sqrt_mul_inv_natCast (n : ℕ) : Real.sqrt n * (n : ℝ)⁻¹ = (Real.sqrt n)⁻¹ := by
@@ -157,12 +157,12 @@ theorem tendsto_sqrt_mul_cdf_sub (P : Measure ℝ) (q f t : ℝ)
 
 /-- The local empirical process at `q`: `√n (Fₙ(q + t/√n) - Fₙ(q)) → f t` in probability when the
 distribution function is differentiable at `q` with derivative `f`. -/
-theorem tendstoInProbabilityConst_sqrt_mul_empiricalCDF_sub {Ω : Type*} [MeasurableSpace Ω]
+theorem tendstoInMeasure_sqrt_mul_empiricalCDF_sub {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (q f t : ℝ)
     (hd : HasDerivAt (cdf P) f q) :
-    TendstoInProbabilityConst μ (fun n ω ↦ Real.sqrt n *
-      (empiricalCDF X n ω (q + t / Real.sqrt n) - empiricalCDF X n ω q)) (f * t) := by
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦ Real.sqrt n *
+      (empiricalCDF X n ω (q + t / Real.sqrt n) - empiricalCDF X n ω q)) atTop (fun _ ↦ f * t) := by
   set a : ℕ → ℝ := fun n ↦ q + t / Real.sqrt n with ha
   set ind : ℝ → ℝ → ℝ := fun b x ↦ if x ≤ b then (1 : ℝ) else 0 with hind
   have hindm : ∀ b, Measurable (ind b) := fun b ↦
@@ -203,13 +203,14 @@ theorem tendstoInProbabilityConst_sqrt_mul_empiricalCDF_sub {Ω : Type*} [Measur
     rw [integral_const_mul, integral_sub (f := fun x ↦ ind (a n) x + ind q x)
       (g := fun x ↦ 2 * ind (min (a n) q) x) ((hint _).add (hint _)) ((hint _).const_mul 2),
       integral_add (hint _) (hint _), integral_const_mul]
-    simp only [hind, integral_ite_le_eq_cdf]
+    simp only [hind, integral_ite_le_eq_measureReal_Iic, ← cdf_eq_real]
     rw [inv_pow, hs2]
     field_simp
-  have hW := tendstoInProbabilityConst_sum_sub_of_iid μ P X hiid φ hφm hφ2 hlim
-  have hD := tendstoInProbabilityConst_const_of_tendsto μ _
+  have hW := tendstoInMeasure_sum_sub_of_iid μ P X hiid φ hφm hφ2 hlim
+  have hD := tendstoInMeasure_const_of_tendsto μ _
     (by simpa using (tendsto_sqrt_mul_cdf_sub P q f t hd).sub_const (f * t))
-  have hsum := tendstoInProbabilityConst_add_zero μ _ _ hW hD
+  have hsum := tendstoInMeasure_add_zero μ _ _ hW hD
+  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hsum ⊢
   intro ε hε
   refine (hsum ε hε).congr fun n ↦ ?_
   congr 1
@@ -218,7 +219,7 @@ theorem tendstoInProbabilityConst_sqrt_mul_empiricalCDF_sub {Ω : Type*} [Measur
   rw [empiricalCDF_eq_sum, empiricalCDF_eq_sum]
   simp only [hφ, integral_const_mul]
   rw [integral_sub (hint _) (hint _)]
-  simp only [hind, integral_ite_le_eq_cdf, ← Finset.mul_sum, Finset.sum_sub_distrib, ha]
+  simp only [hind, integral_ite_le_eq_measureReal_Iic, ← cdf_eq_real, ← Finset.mul_sum, Finset.sum_sub_distrib, ha]
   have e1 : (n : ℝ) * (Real.sqrt n)⁻¹ = Real.sqrt n := by
     rw [mul_comm, inv_mul_eq_div, Real.div_sqrt]
   have e2 := sqrt_mul_inv_natCast n
@@ -234,8 +235,8 @@ theorem tendstoInDistribution_sqrt_mul_sub_empiricalCDF {Ω : Type*} [Measurable
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (p q f : ℝ)
     (hq : cdf P q = p) (hf : 0 < f) :
-    TendstoInDistribution μ (fun n ω ↦ Real.sqrt n * (p - empiricalCDF X n ω q) / f)
-      (gaussianReal 0 (Real.toNNReal (p * (1 - p) / f ^ 2))) := by
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n * (p - empiricalCDF X n ω q) / f)
+      atTop id (fun _ ↦ μ) (gaussianReal 0 (Real.toNNReal (p * (1 - p) / f ^ 2))) := by
   set ind : ℝ → ℝ := fun x ↦ if x ≤ q then (1 : ℝ) else 0 with hind
   have hindm : Measurable ind := Measurable.ite measurableSet_Iic measurable_const measurable_const
   have hinti : Integrable ind P := (integrable_const (1 : ℝ)).mono hindm.aestronglyMeasurable
@@ -250,50 +251,51 @@ theorem tendstoInDistribution_sqrt_mul_sub_empiricalCDF {Ω : Type*} [Measurable
       split_ifs <;> norm_num)
   have hs0 : ∫ x, s x ∂P = 0 := by
     simp only [hs]
-    rw [integral_sub hinti (integrable_const p), hind, integral_ite_le_eq_cdf, hq]
+    rw [integral_sub hinti (integrable_const p), hind, integral_ite_le_eq_measureReal_Iic,
+      ← cdf_eq_real, hq]
     simp
   have hsq : ∫ x, s x ^ 2 ∂P = p * (1 - p) := by
     have : ∀ x, s x ^ 2 = (1 - 2 * p) * ind x + p ^ 2 := fun x ↦ by
       simp only [hs, hind]; split_ifs <;> ring
     simp_rw [this]
     rw [integral_add (hinti.const_mul _) (integrable_const _), integral_const_mul, hind,
-      integral_ite_le_eq_cdf, hq]
+      integral_ite_le_eq_measureReal_Iic, ← cdf_eq_real, hq]
     simp; ring
   have hclt := tendstoInDistribution_inv_sqrt_mul_sum_of_iid μ P X hiid s hsm hs2 hs0
   rw [hsq] at hclt
-  have hZm : ∀ n : ℕ, Measurable fun ω ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, s (X i ω) :=
-    fun n ↦ (Finset.measurable_sum _ fun i _ ↦ hsm.comp (hiid.1 i)).const_mul _
-  have := tendstoInDistribution_comp_of_continuous μ _ hZm _ (fun x ↦ -f⁻¹ * x)
-    (continuous_const.mul continuous_id) hclt
   have hpp : 0 ≤ p * (1 - p) := by
-    have h0 : 0 ≤ p := by rw [← hq]; exact measureReal_nonneg
-    have h1 : p ≤ 1 := by rw [← hq]; exact measureReal_le_one
+    have h0 : 0 ≤ p := hq ▸ cdf_nonneg P q
+    have h1 : p ≤ 1 := hq ▸ cdf_le_one P q
     nlinarith
+  have := tendstoInDistribution_of_map_eq
+    (hclt.continuous_comp (g := fun x ↦ -f⁻¹ * x) (continuous_const.mul continuous_id))
+    (μ'' := gaussianReal 0 (Real.toNNReal (p * (1 - p) / f ^ 2))) aemeasurable_id (by
+      rw [Measure.map_id, Function.comp_id, gaussianReal_map_const_mul, mul_zero]
+      congr 1
+      ext
+      simp only [NNReal.coe_mul, NNReal.coe_mk, Real.coe_toNNReal _ hpp,
+        Real.coe_toNNReal _ (div_nonneg hpp (sq_nonneg f))]
+      field_simp)
   convert this using 1
-  · funext n ω
-    simp only [hs, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul,
-      empiricalCDF_eq_sum, hind]
-    have e1 : (Real.sqrt n)⁻¹ * ((n : ℝ) * p) = Real.sqrt n * p := by
-      rw [← mul_assoc, mul_comm _ (n : ℝ), ← div_eq_mul_inv, Real.div_sqrt]
-    have e2 := sqrt_mul_inv_natCast n
-    rw [div_eq_mul_inv]
-    linear_combination (-f⁻¹ * ∑ i ∈ Finset.range n, if X i ω ≤ q then (1 : ℝ) else 0) * e2 -
-      f⁻¹ * e1
-  · rw [gaussianReal_map_const_mul, mul_zero]
-    congr 1
-    ext
-    simp only [NNReal.coe_mul, NNReal.coe_mk, Real.coe_toNNReal _ hpp,
-      Real.coe_toNNReal _ (div_nonneg hpp (sq_nonneg f))]
-    field_simp
+  funext n ω
+  simp only [Function.comp_apply, hs, Finset.sum_sub_distrib, Finset.sum_const,
+    Finset.card_range, nsmul_eq_mul, empiricalCDF_eq_sum, hind]
+  have e1 : (Real.sqrt n)⁻¹ * ((n : ℝ) * p) = Real.sqrt n * p := by
+    rw [← mul_assoc, mul_comm _ (n : ℝ), ← div_eq_mul_inv, Real.div_sqrt]
+  have e2 := sqrt_mul_inv_natCast n
+  rw [div_eq_mul_inv]
+  linear_combination (-f⁻¹ * ∑ i ∈ Finset.range n, if X i ω ≤ q then (1 : ℝ) else 0) * e2 -
+    f⁻¹ * e1
 
 /-- Ghosh's crossing lemma: if `Wₙ` is bounded in probability and, for all `t` and `ε > 0`, the
 probabilities of the crossing events `{Vₙ ≤ t, Wₙ ≥ t + ε}` and `{Vₙ ≥ t + ε, Wₙ ≤ t}` tend to `0`,
 then `Vₙ - Wₙ → 0` in probability. -/
-theorem tendstoInProbabilityConst_sub_of_crossing {Ω : Type*} [MeasurableSpace Ω]
+theorem tendstoInMeasure_sub_of_crossing {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsFiniteMeasure μ] (V W : ℕ → Ω → ℝ) (hW : IsBoundedInProbability μ W)
     (h1 : ∀ t ε, 0 < ε → Tendsto (fun n ↦ μ.real {ω | V n ω ≤ t ∧ t + ε ≤ W n ω}) atTop (𝓝 0))
     (h2 : ∀ t ε, 0 < ε → Tendsto (fun n ↦ μ.real {ω | t + ε ≤ V n ω ∧ W n ω ≤ t}) atTop (𝓝 0)) :
-    TendstoInProbabilityConst μ (fun n ω ↦ V n ω - W n ω) 0 := by
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦ V n ω - W n ω) atTop (fun _ ↦ 0) := by
+  rw [tendstoInMeasure_iff_measureReal_lt_dist]
   intro ε hε
   refine tendsto_zero_of_forall_eventually_le (fun _ ↦ measureReal_nonneg) fun η hη ↦ ?_
   obtain ⟨C, hC, hev⟩ := hW (η / 2) (half_pos hη)
@@ -347,22 +349,20 @@ theorem tendstoInProbabilityConst_sub_of_crossing {Ω : Type*} [MeasurableSpace 
 /-- GAPS 102.7: the Bahadur representation of a sample quantile. If the distribution function `F`
 is differentiable at the `p`-quantile `q` with `F'(q) = f > 0`, then
 `√n (ξ̂ₙ,ₚ - q - (p - Fₙ(q)) / f) → 0` in probability. -/
-theorem tendstoInProbabilityConst_bahadur_remainder {Ω : Type*} [MeasurableSpace Ω]
+theorem tendstoInMeasure_bahadur_remainder {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (p q f : ℝ)
     (hp : p ∈ Ioo 0 1) (hq : cdf P q = p) (hf : 0 < f)
     (hd : HasDerivAt (cdf P) f q) :
-    TendstoInProbabilityConst μ (fun n ω ↦ Real.sqrt n *
-      (sampleQuantile X n ω p - q - (p - empiricalCDF X n ω q) / f)) 0 := by
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦ Real.sqrt n *
+      (sampleQuantile X n ω p - q - (p - empiricalCDF X n ω q) / f)) atTop (fun _ ↦ 0) := by
   obtain ⟨hp0, hp1⟩ := hp
   set V : ℕ → Ω → ℝ := fun n ω ↦ Real.sqrt n * (sampleQuantile X n ω p - q) with hV
   set W : ℕ → Ω → ℝ := fun n ω ↦ Real.sqrt n * (p - empiricalCDF X n ω q) / f with hW
   set G : ℕ → Ω → ℝ → ℝ := fun n ω s ↦ Real.sqrt n *
     (empiricalCDF X n ω (q + s / Real.sqrt n) - empiricalCDF X n ω q) with hG
-  have hWm : ∀ n, Measurable (W n) := fun n ↦
-    ((measurable_const.sub (measurable_empiricalCDF X hiid.1 n q)).const_mul _).div_const _
   have hWb : IsBoundedInProbability μ W :=
-    isBoundedInProbability_of_tendstoInDistribution μ W hWm _
+    isBoundedInProbability_of_tendstoInDistribution μ W
       (tendstoInDistribution_sqrt_mul_sub_empiricalCDF μ P X hiid p q f hq hf)
   have key : ∀ n : ℕ, 1 ≤ n → ∀ ω, ∀ t s, (V n ω ≤ t → t < s → f * W n ω ≤ G n ω s) ∧
       (s < t → t ≤ V n ω → G n ω s < f * W n ω) := by
@@ -391,16 +391,16 @@ theorem tendstoInProbabilityConst_bahadur_remainder {Ω : Type*} [MeasurableSpac
       have := hgt _ this
       simp only [hG]
       gcongr
-  have hGlim : ∀ s, TendstoInProbabilityConst μ (fun n ω ↦ G n ω s) (f * s) := fun s ↦
-    tendstoInProbabilityConst_sqrt_mul_empiricalCDF_sub μ P X hiid q f s hd
-  have hmain := tendstoInProbabilityConst_sub_of_crossing μ V W hWb (fun t ε hε ↦ ?_)
+  have hGlim : ∀ s, TendstoInMeasure μ (fun (n : ℕ) ω ↦ G n ω s) atTop (fun _ ↦ f * s) := fun s ↦
+    tendstoInMeasure_sqrt_mul_empiricalCDF_sub μ P X hiid q f s hd
+  have hmain := tendstoInMeasure_sub_of_crossing μ V W hWb (fun t ε hε ↦ ?_)
     (fun t ε hε ↦ ?_)
   · convert hmain using 3 with n ω
     simp only [hV, hW]
     ring
   · have hc : 0 < f * ε / 4 := by positivity
     refine squeeze_zero' (Eventually.of_forall fun _ ↦ measureReal_nonneg) ?_
-      (hGlim (t + ε / 2) _ hc)
+      (tendstoInMeasure_iff_measureReal_lt_dist.1 (hGlim (t + ε / 2)) _ hc)
     filter_upwards [eventually_ge_atTop 1] with n hn
     refine measureReal_mono fun ω hω ↦ ?_
     obtain ⟨h1, h2⟩ := hω
@@ -412,7 +412,7 @@ theorem tendstoInProbabilityConst_bahadur_remainder {Ω : Type*} [MeasurableSpac
     nlinarith
   · have hc : 0 < f * ε / 4 := by positivity
     refine squeeze_zero' (Eventually.of_forall fun _ ↦ measureReal_nonneg) ?_
-      (hGlim (t + ε / 2) _ hc)
+      (tendstoInMeasure_iff_measureReal_lt_dist.1 (hGlim (t + ε / 2)) _ hc)
     filter_upwards [eventually_ge_atTop 1] with n hn
     refine measureReal_mono fun ω hω ↦ ?_
     obtain ⟨h1, h2⟩ := hω
@@ -431,15 +431,15 @@ theorem tendstoInDistribution_sampleQuantile {Ω : Type*} [MeasurableSpace Ω]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (p q f : ℝ)
     (hp : p ∈ Ioo 0 1) (hq : cdf P q = p) (hf : 0 < f)
     (hd : HasDerivAt (cdf P) f q) :
-    TendstoInDistribution μ (fun n ω ↦ Real.sqrt n * (sampleQuantile X n ω p - q))
-      (gaussianReal 0 (Real.toNNReal (p * (1 - p) / f ^ 2))) := by
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n * (sampleQuantile X n ω p - q))
+      atTop id (fun _ ↦ μ) (gaussianReal 0 (Real.toNNReal (p * (1 - p) / f ^ 2))) := by
   have hWm : ∀ n : ℕ, Measurable fun ω ↦ Real.sqrt n * (p - empiricalCDF X n ω q) / f :=
     fun n ↦ ((measurable_const.sub (measurable_empiricalCDF X hiid.1 n q)).const_mul _).div_const _
   have hVm : ∀ n : ℕ, Measurable fun ω ↦ Real.sqrt n * (sampleQuantile X n ω p - q) := fun n ↦
     ((measurable_sampleQuantile X hiid.1 n hp.1 hp.2.le).sub_const _).const_mul _
-  refine tendstoInDistribution_of_tendstoInProbabilityConst_sub μ _ _ hWm hVm _
+  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _ hWm hVm
     (tendstoInDistribution_sqrt_mul_sub_empiricalCDF μ P X hiid p q f hq hf) ?_
-  convert tendstoInProbabilityConst_bahadur_remainder μ P X hiid p q f hp hq hf hd using 3 with n ω
+  convert tendstoInMeasure_bahadur_remainder μ P X hiid p q f hp hq hf hd using 3 with n ω
   ring
 
 end CKSD

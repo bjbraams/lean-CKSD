@@ -39,12 +39,12 @@ theorem tendstoInDistribution_martingale_array_sum {Ω : Type*} [MeasurableSpace
     (ha : ∀ n j, Measurable[F n (j + 1)] (X n j))
     (h2 : ∀ n j, MemLp (X n j) 2 μ)
     (h0 : ∀ n j, μ[X n j | F n j] =ᵐ[μ] fun _ ↦ 0) (v : ℝ)
-    (hvar : TendstoInProbabilityConst μ (fun n ω ↦
-      ∑ j ∈ Finset.range (k n), μ[(fun ω ↦ X n j ω ^ 2) | F n j] ω) v)
-    (hlin : ∀ ε > 0, TendstoInProbabilityConst μ (fun n ω ↦
+    (hvar : TendstoInMeasure μ (fun (n : ℕ) ω ↦
+      ∑ j ∈ Finset.range (k n), μ[(fun ω ↦ X n j ω ^ 2) | F n j] ω) atTop (fun _ ↦ v))
+    (hlin : ∀ ε > 0, TendstoInMeasure μ (fun (n : ℕ) ω ↦
       ∑ j ∈ Finset.range (k n),
-        μ[(fun ω ↦ if ε < |X n j ω| then X n j ω ^ 2 else 0) | F n j] ω) 0) :
-    TendstoInDistribution μ (fun n ω ↦ ∑ j ∈ Finset.range (k n), X n j ω)
+        μ[(fun ω ↦ if ε < |X n j ω| then X n j ω ^ 2 else 0) | F n j] ω) atTop (fun _ ↦ 0)) :
+    TendstoInDistribution (fun (n : ℕ) ω ↦ ∑ j ∈ Finset.range (k n), X n j ω) atTop id (fun _ ↦ μ)
       (gaussianReal 0 (Real.toNNReal v)) := by
   sorry
 
@@ -56,9 +56,10 @@ standard normal variables. Finite variance follows from `0 < Var`
 theorem tendstoInDistribution_sample_autocorrelations {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P)
-    (hv : 0 < variance P id) (m : ℕ) :
-    TendstoInDistribution μ (fun n ω ↦ (WithLp.toLp 2 fun i : Fin m ↦
+    (hv : 0 < Var[id; P]) (m : ℕ) :
+    TendstoInDistribution (fun (n : ℕ) ω ↦ (WithLp.toLp 2 fun i : Fin m ↦
       Real.sqrt n * sampleAutocovariance X (i.val + 1) n ω / sampleAutocovariance X 0 n ω))
+      atTop id (fun _ ↦ μ)
       (stdGaussian (EuclideanSpace ℝ (Fin m))) := by
   sorry
 

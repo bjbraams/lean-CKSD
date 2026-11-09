@@ -86,12 +86,12 @@ theorem studentized_bootstrap_mean_second_order_accuracy
     {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (P : Measure ℝ) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
     (hiid : IsIndependentIdenticallyDistributed μ X P)
-    (hmom : ∀ k : ℕ, Integrable (fun x ↦ |x| ^ k) P) (hv : 0 < variance P id)
+    (hmom : ∀ k : ℕ, Integrable (fun x ↦ |x| ^ k) P) (hv : 0 < Var[id; P])
     (hcramer : SatisfiesCramerCondition
       (P.map fun x ↦ (WithLp.toLp 2 ![x, x ^ 2] : EuclideanSpace ℝ (Fin 2))))
     (α : ℝ) (hα : α ∈ Ioo 0 (1 / 2)) :
     let m := ∫ x, x ∂P;
-    let γ := (∫ x, (x - m) ^ 3 ∂P) / Real.sqrt (variance P id) ^ 3;
+    let γ := (∫ x, (x - m) ^ 3 ∂P) / Real.sqrt (Var[id; P]) ^ 3;
     let sample := fun (n : ℕ) (ω : Ω) (i : Fin n) ↦ X i ω;
     let T := fun (n : ℕ) (ω : Ω) ↦
       studentizedStatistic n (finiteSampleMean (sample n ω)) m (finiteSampleSD (sample n ω));

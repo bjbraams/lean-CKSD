@@ -65,8 +65,9 @@ theorem isBoundedInProbability_rate_mEstimator {Ω Θ : Type*} [MeasurableSpace 
     (T : ℕ → Ω → Θ) (R : ℕ → Ω → ℝ)
     (hR : IsBoundedInProbability μ (fun n ω ↦ r n ^ 2 * R n ω))
     (hopt : ∀ n ω, Mn n ω θ₀ - R n ω ≤ Mn n ω (T n ω))
-    (hcons : TendstoInProbabilityConst μ T θ₀) :
+    (hcons : TendstoInMeasure μ T atTop (fun _ ↦ θ₀)) :
     IsBoundedInProbability μ (fun n ω ↦ r n * dist (T n ω) θ₀) := by
+  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hcons
   intro ε hε
   have hε3 : 0 < ε / 3 := by positivity
   obtain ⟨K, hK, hKev⟩ := hR (ε / 3) hε3

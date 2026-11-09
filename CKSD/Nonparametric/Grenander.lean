@@ -829,8 +829,9 @@ theorem tendstoInDistribution_grenanderEstimator {Ω : Type*} [MeasurableSpace �
     (hanti : AntitoneOn f (Ici 0)) (x₀ f' : ℝ) (hx₀ : 0 < x₀) (hderiv : HasDerivAt f f' x₀)
     (hf' : f' < 0) {Ω' : Type*} [MeasurableSpace Ω'] (ν : Measure Ω') [IsProbabilityMeasure ν]
     (B₁ B₂ : ℝ≥0 → Ω' → ℝ) (Z : Ω' → ℝ) (hZ : IsChernoffArgmax ν B₁ B₂ Z) :
-    TendstoInDistribution μ
-      (fun n ω ↦ (n : ℝ) ^ (1 / 3 : ℝ) * (grenanderEstimator X n ω x₀ - f x₀))
+    TendstoInDistribution
+      (fun (n : ℕ) ω ↦ (n : ℝ) ^ (1 / 3 : ℝ) * (grenanderEstimator X n ω x₀ - f x₀))
+      atTop id (fun _ ↦ μ)
       (ν.map fun ω ↦ |4 * f x₀ * f'| ^ (1 / 3 : ℝ) * Z ω) := by
   sorry
 

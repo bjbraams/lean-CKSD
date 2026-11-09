@@ -45,9 +45,9 @@ theorem tendstoInDistribution_uStatistic_of_nondegenerate
     (h2 : MemLp h 2 (Measure.pi fun _ : Fin (m + 1) ↦ P)) :
     let θ := ∫ x, h x ∂(Measure.pi fun _ : Fin (m + 1) ↦ P);
     let g := fun x ↦ (∫ y, h (Fin.cases x y) ∂(Measure.pi fun _ : Fin m ↦ P)) - θ;
-    TendstoInDistribution μ (fun n ω ↦ Real.sqrt n *
-      (uStatistic (m + 1) n h (fun i ↦ X i.val ω) - θ))
-      (gaussianReal 0 (Real.toNNReal (((m + 1 : ℕ) : ℝ) ^ 2 * variance P g))) := by
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n *
+      (uStatistic (m + 1) n h (fun i ↦ X i.val ω) - θ)) atTop id (fun _ ↦ μ)
+      (gaussianReal 0 (Real.toNNReal (((m + 1 : ℕ) : ℝ) ^ 2 * Var[g; P]))) := by
   sorry
 
 
@@ -450,8 +450,8 @@ theorem uStatistic_hoeffding_decomposition_and_variance {E : Type*} [MeasurableS
     (∀ᵐ x ∂(Measure.pi fun _ : Fin n ↦ P),
       U x - θ = 2 / n * (∑ i, g (x i)) +
         uStatistic 2 n (fun z ↦ q (z 0, z 1)) x) ∧
-    variance (Measure.pi fun _ : Fin n ↦ P) U =
-      4 / n * variance P g + 2 / ((n : ℝ) * (n - 1 : ℕ)) * ∫ z, q z ^ 2 ∂P.prod P := by
+    Var[U; Measure.pi fun _ : Fin n ↦ P] =
+      4 / n * Var[g; P] + 2 / ((n : ℝ) * (n - 1 : ℕ)) * ∫ z, q z ^ 2 ∂P.prod P := by
   classical
   let θ := ∫ z, h z ∂P.prod P
   let g := fun x ↦ (∫ y, h (x,y) ∂P) - θ
@@ -464,7 +464,6 @@ theorem uStatistic_hoeffding_decomposition_and_variance {E : Type*} [MeasurableS
   let G := fun x : Fin n → E ↦ ∑ i, g (x i)
   let S := fun x : Fin n → E ↦ ∑ i, ∑ j, if i = j then 0 else q (x i, x j)
   let c : ℝ := (n : ℝ)⁻¹ * ((n - 1 : ℕ) : ℝ)⁻¹
-  have hgm : Measurable g := hm.stronglyMeasurable.integral_prod_right'.measurable.sub_const θ
   have hg : MemLp g 2 P := (memLp_integral_kernel P h hm h2).sub (memLp_const θ)
   have hq : MemLp q 2 (P.prod P) :=
     ((h2.sub (memLp_const θ)).sub (hg.comp_measurePreserving measurePreserving_fst)).sub
@@ -486,14 +485,12 @@ theorem uStatistic_hoeffding_decomposition_and_variance {E : Type*} [MeasurableS
     change (∫ x, S x * G x ∂μ) - (∫ x, S x ∂μ) * (∫ x, G x ∂μ) = 0
     rw [hS0, zero_mul, sub_zero]
     exact integral_sum_pairs_mul_sum_eq_zero P q hq hqs hq0 g hg n
-  have hGvar : ProbabilityTheory.variance G μ = n * variance P g := by
+  have hGvar : ProbabilityTheory.variance G μ = n * Var[g; P] := by
     calc ProbabilityTheory.variance G μ = ∑ i : Fin n, ProbabilityTheory.variance g P := by
           rw [show G = ∑ i : Fin n, (fun x : Fin n → E ↦ g (x i)) by funext x; simp [G]]
           exact ProbabilityTheory.variance_sum_pi (μ := fun _ : Fin n ↦ P) (X := fun _ ↦ g) (fun _ ↦ hg)
-      _ = n * variance P g := by
+      _ = n * Var[g; P] := by
         simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
-        rw [ProbabilityTheory.variance_eq_integral hgm.aemeasurable]
-        rfl
   have hU : U = fun x ↦ ((2 / n) * G x + c * S x) + θ := by
     funext x
     have hd := uStatistic_two_sub_eq hn h g θ x
@@ -503,9 +500,7 @@ theorem uStatistic_hoeffding_decomposition_and_variance {E : Type*} [MeasurableS
     change U x - θ = 2 / n * G x + c * S x at hd
     linarith
   have hU2 : MemLp U 2 μ := by rw [hU]; exact ((hG.const_mul _).add (hS.const_mul _)).add (memLp_const θ)
-  change variance μ U = _
-  rw [show variance μ U = ProbabilityTheory.variance U μ by
-    rw [ProbabilityTheory.variance_eq_integral hU2.aemeasurable]; rfl]
+  change Var[U; μ] = _
   have hshift := ProbabilityTheory.variance_add_const
     (X := fun x ↦ (2 / n) * G x + c * S x)
     ((hG.const_mul (2 / n)).add (hS.const_mul c)).aestronglyMeasurable θ
@@ -582,11 +577,11 @@ theorem tendstoInDistribution_uStatistic_finite_rank_of_scores
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
     (r : ℕ) (a : Fin r → ℝ) (e : Fin r → E → ℝ) (he : ∀ j, MemLp (e j) 2 P)
     (hesq : ∀ j, (∫ x, e j x ^ 2 ∂P) = 1)
-    (hscore : MeasureTheory.TendstoInDistribution
+    (hscore : TendstoInDistribution
       (fun (n : ℕ) ω ↦ WithLp.toLp 2 (fun j ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, e j (X i ω)))
       atTop id (fun _ ↦ μ) (stdGaussian (EuclideanSpace ℝ (Fin r)))) :
-    TendstoInDistribution μ (fun n ω ↦ (n : ℝ) * uStatistic 2 n
-      (fun z ↦ ∑ j, a j * e j (z 0) * e j (z 1)) (fun i ↦ X i.val ω))
+    TendstoInDistribution (fun (n : ℕ) ω ↦ (n : ℝ) * uStatistic 2 n
+      (fun z ↦ ∑ j, a j * e j (z 0) * e j (z 1)) (fun i ↦ X i.val ω)) atTop id (fun _ ↦ μ)
       ((Measure.pi fun _ : Fin r ↦ gaussianReal 0 1).map
         (fun z ↦ ∑ j, a j * (z j ^ 2 - 1))) := by
   classical
@@ -653,19 +648,13 @@ theorem tendstoInDistribution_uStatistic_finite_rank_of_scores
         ∑ i ∈ Finset.range n, ∑ j, a j * e j (X i ω) ^ 2 :=
       Fin.sum_univ_eq_sum_range (fun i ↦ ∑ j, a j * e j (X i ω) ^ 2) n
     simpa only [heq, hes] using h.symm
-  have hlimit : MeasureTheory.TendstoInDistribution Y atTop
+  have hlimit : TendstoInDistribution Y atTop
       (fun z : EuclideanSpace ℝ (Fin r) ↦ φ z - b) (fun _ ↦ μ)
       (stdGaussian (EuclideanSpace ℝ (Fin r))) :=
     hscaled.congr (fun n ↦ ae_of_all _ fun ω ↦ congrFun (hYe n) ω)
       (ae_of_all _ fun z ↦ by simp only [Function.comp_apply, id_eq, one_mul])
-  have hYmeas := hlimit.forall_aemeasurable
-  have hweak := (tendstoInDistribution_iff_mathlib μ Y
-    ((stdGaussian (EuclideanSpace ℝ (Fin r))).map (fun z ↦ φ z - b)) hYmeas).2
-    { forall_aemeasurable := hYmeas
-      aemeasurable_limit := aemeasurable_id
-      tendsto := by simpa using hlimit.tendsto }
-  convert hweak using 1
-  rw [← map_pi_eq_stdGaussian, Measure.map_map (by fun_prop) (by fun_prop)]
+  refine tendstoInDistribution_of_map_eq hlimit aemeasurable_id ?_
+  rw [Measure.map_id, ← map_pi_eq_stdGaussian, Measure.map_map (by fun_prop) (by fun_prop)]
   congr 1
   funext z
   dsimp only [φ, b, Function.comp_apply]
@@ -680,8 +669,8 @@ theorem tendstoInDistribution_uStatistic_of_finite_rank_degenerate
     (e : Fin r → E → ℝ) (he : ∀ j, MemLp (e j) 2 P)
     (he0 : ∀ j, (∫ x, e j x ∂P) = 0)
     (hortho : ∀ i j, (∫ x, e i x * e j x ∂P) = if i = j then 1 else 0) :
-    TendstoInDistribution μ (fun n ω ↦ (n : ℝ) * uStatistic 2 n
-      (fun z ↦ ∑ j, a j * e j (z 0) * e j (z 1)) (fun i ↦ X i.val ω))
+    TendstoInDistribution (fun (n : ℕ) ω ↦ (n : ℝ) * uStatistic 2 n
+      (fun z ↦ ∑ j, a j * e j (z 0) * e j (z 1)) (fun i ↦ X i.val ω)) atTop id (fun _ ↦ μ)
       ((Measure.pi fun _ : Fin r ↦ gaussianReal 0 1).map
         (fun z ↦ ∑ j, a j * (z j ^ 2 - 1))) := by
   classical

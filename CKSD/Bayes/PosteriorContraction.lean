@@ -22,7 +22,7 @@ two to obtain the convention `h² = ∫ (√p - √q)²` of `GAPS.md`.
 
 ## Main results
 
-* `CKSD.tendstoInProbabilityConst_posterior_compl_of_kl_support`: Schwartz's posterior
+* `CKSD.tendstoInMeasure_posterior_compl_of_kl_support`: Schwartz's posterior
   consistency theorem (GAPS 104.18).
 * `CKSD.exists_posterior_hellinger_contraction`: the Ghosal–Ghosh–van der Vaart contraction
   theorem in Hellinger distance (GAPS 104.19).
@@ -62,7 +62,7 @@ def HasUniformlyConsistentTests {Θ X : Type*} [MeasurableSpace X]
 Kullback–Leibler neighbourhood `{θ | KL(P θ₀ ‖ P θ) < ε}` of the true parameter and there are
 uniformly consistent tests of `θ₀` against `Uᶜ`, then the posterior mass of `Uᶜ` tends to zero in
 probability under the true law. -/
-theorem tendstoInProbabilityConst_posterior_compl_of_kl_support
+theorem tendstoInMeasure_posterior_compl_of_kl_support
     {Θ X : Type*} [MeasurableSpace Θ] [StandardBorelSpace Θ]
     [MeasurableSpace X] [StandardBorelSpace X]
     (π : Measure Θ) [IsProbabilityMeasure π] (μ : Measure X) [SigmaFinite μ]
@@ -73,8 +73,9 @@ theorem tendstoInProbabilityConst_posterior_compl_of_kl_support
     (hKL : ∀ ε > 0, 0 < π {θ | klDiv (P θ₀) (P θ) < ENNReal.ofReal ε})
     (U : Set Θ) (hU : MeasurableSet U)
     (htests : HasUniformlyConsistentTests P θ₀ Uᶜ) :
-    TendstoInProbabilityConst (Measure.infinitePi fun _ : ℕ ↦ P θ₀)
-      (fun n x ↦ (dominatedPosterior π f (fun i : Fin n ↦ x i.val)).real Uᶜ) 0 := by
+    TendstoInMeasure (Measure.infinitePi fun _ : ℕ ↦ P θ₀)
+      (fun (n : ℕ) x ↦ (dominatedPosterior π f (fun i : Fin n ↦ x i.val)).real Uᶜ)
+          atTop (fun _ ↦ 0) := by
   sorry
 
 /-- Finite internal Hellinger cover of a sieve, with an explicit entropy cardinality bound. -/

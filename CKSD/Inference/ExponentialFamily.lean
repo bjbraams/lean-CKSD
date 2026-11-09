@@ -279,8 +279,8 @@ theorem analyticOnNhd_logPartition_and_fderiv_eq_moments
         HasFDerivAt (logPartition ν id)
           (innerSL ℝ (∫ x, x ∂exponentialFamilyMeasure ν id η)) η ∧
         ∀ u v : E, fderiv ℝ (fderiv ℝ (logPartition ν id)) η u v =
-          covariance (exponentialFamilyMeasure ν id η) (fun x ↦ inner ℝ u x)
-            (fun x ↦ inner ℝ v x) := by
+          cov[fun x ↦ inner ℝ u x, fun x ↦ inner ℝ v x;
+            exponentialFamilyMeasure ν id η] := by
   sorry
 
 /-- A regular scalar natural exponential family: laws `exp (η T - A(η)) · base` for natural

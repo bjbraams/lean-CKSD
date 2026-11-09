@@ -69,7 +69,7 @@ def TendstoInOuterDistribution {Ω E : Type*} [MeasurableSpace Ω]
 
 /-- Convergence to zero in probability, `P n {ε < |X n|} → 0` for every `ε > 0`, for observation
 spaces and laws varying with `n`. On a fixed probability space it is
-`TendstoInProbabilityConst μ X 0`. -/
+`TendstoInMeasure μ X atTop (fun _ ↦ 0)`. -/
 def TendstoInProbabilityZero {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
     (P : ∀ n, Measure (Ω n)) (X : ∀ n, Ω n → ℝ) : Prop :=
   ∀ ε > 0, Tendsto (fun n ↦ (P n).real {ω | ε < |X n ω|}) atTop (𝓝 0)
@@ -78,7 +78,7 @@ def TendstoInProbabilityZero {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)
 def IsLittleOInProbability {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
     (μ : Measure Ω) (X : ℕ → Ω → E) (r : ℕ → ℝ) : Prop :=
   (∀ᶠ n in atTop, 0 < r n) ∧
-    TendstoInProbabilityConst μ (fun n ω ↦ ‖X n ω‖ / r n) 0
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦ ‖X n ω‖ / r n) atTop (fun _ ↦ 0)
 
 /-- Stochastic big-O with an eventually positive deterministic scale. -/
 def IsBigOInProbability {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
@@ -104,18 +104,19 @@ def IsLocallyAsymptoticallyNormal {d : ℕ} {Ω : ℕ → Type*} [∀ n, Measura
     (P : LocalExperiment d Ω) (I : Matrix (Fin d) (Fin d) ℝ)
     (Δ : ∀ n, Ω n → EuclideanSpace ℝ (Fin d)) : Prop :=
   I.PosDef ∧ (∀ n, Measurable (Δ n)) ∧
-    TendstoWeakly (fun n ↦ (P n 0 : Measure (Ω n)).map (Δ n)) (multivariateGaussian 0 I) ∧
+    TendstoInDistribution Δ atTop id (fun n ↦ (P n 0 : Measure (Ω n)))
+      (multivariateGaussian 0 I) ∧
     ∀ h, TendstoInProbabilityZero (fun n ↦ (P n 0 : Measure (Ω n)))
       (fun n ω ↦ Real.log (((P n h : Measure (Ω n)).rnDeriv (P n 0) ω).toReal) -
         inner ℝ h (Δ n ω) + inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h) / 2)
 
-/-- Regularity of a locally scaled estimator: its centred limit is independent of the local
-parameter. -/
+/-- Regularity of a locally scaled estimator: its centred limit law `L` is independent of the
+local parameter. -/
 def IsRegularEstimator {d : ℕ} {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
     (P : LocalExperiment d Ω) (T : ∀ n, Ω n → EuclideanSpace ℝ (Fin d))
-    (L : Measure (EuclideanSpace ℝ (Fin d))) : Prop :=
+    (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L] : Prop :=
   (∀ n, Measurable (T n)) ∧ ∀ h,
-    TendstoWeakly (fun n ↦ (P n h : Measure (Ω n)).map (fun ω ↦ T n ω - h)) L
+    TendstoInDistribution (fun n ω ↦ T n ω - h) atTop id (fun n ↦ (P n h : Measure (Ω n))) L
 
 /-- GAPS 102.15: the asymptotic representation theorem. In a LAN experiment with information `I`,
 if statistics `T n` with values in a Polish space have limit laws `L h` under every local
@@ -128,8 +129,8 @@ theorem exists_gaussian_shift_kernel_of_local_limits
     (P : LocalExperiment d Ω) (I : Matrix (Fin d) (Fin d) ℝ)
     (Δ : ∀ n, Ω n → EuclideanSpace ℝ (Fin d)) (hLAN : IsLocallyAsymptoticallyNormal P I Δ)
     (T : ∀ n, Ω n → S) (hT : ∀ n, Measurable (T n))
-    (L : EuclideanSpace ℝ (Fin d) → Measure S)
-    (hlim : ∀ h, TendstoWeakly (fun n ↦ (P n h : Measure (Ω n)).map (T n)) (L h)) :
+    (L : EuclideanSpace ℝ (Fin d) → Measure S) [∀ h, IsProbabilityMeasure (L h)]
+    (hlim : ∀ h, TendstoInDistribution T atTop id (fun n ↦ (P n h : Measure (Ω n))) (L h)) :
     ∃ K : Kernel (EuclideanSpace ℝ (Fin d)) S, IsMarkovKernel K ∧
       ∀ h, L h = K ∘ₘ multivariateGaussian h I⁻¹ := by
   sorry
@@ -142,7 +143,8 @@ theorem exists_convolution_of_isRegularEstimator
     (P : LocalExperiment d Ω) (I : Matrix (Fin d) (Fin d) ℝ)
     (Δ : ∀ n, Ω n → EuclideanSpace ℝ (Fin d)) (hLAN : IsLocallyAsymptoticallyNormal P I Δ)
     (T : ∀ n, Ω n → EuclideanSpace ℝ (Fin d))
-    (L : Measure (EuclideanSpace ℝ (Fin d))) (hreg : IsRegularEstimator P T L) :
+    (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
+    (hreg : IsRegularEstimator P T L) :
     ∃ M : Measure (EuclideanSpace ℝ (Fin d)), IsProbabilityMeasure M ∧
       L = (multivariateGaussian 0 I⁻¹).conv M := by
   sorry
@@ -176,8 +178,9 @@ theorem tendstoInDistribution_of_hasHadamardFDerivAt
     (hsupp : G D₀ = 1) (g : E → F) (hg : Measurable g) (domain : Set E)
     (hdomain : ∀ n ω, T n ω ∈ domain) (D : E →L[ℝ] F)
     (hd : HasHadamardFDerivAt g domain D₀ D θ)
-    (hlim : TendstoInDistribution μ (fun n ω ↦ r n • (T n ω - θ)) G) :
-    TendstoInDistribution μ (fun n ω ↦ r n • (g (T n ω) - g θ)) (G.map D) := by
+    (hlim : TendstoInDistribution (fun (n : ℕ) ω ↦ r n • (T n ω - θ)) atTop id (fun _ ↦ μ) G) :
+    TendstoInDistribution (fun (n : ℕ) ω ↦ r n • (g (T n ω) - g θ)) atTop id (fun _ ↦ μ)
+      (G.map D) := by
   set Z : ℕ → Ω → E := fun n ω ↦ r n • (T n ω - θ) with hZ
   set Y : ℕ → Ω → F := fun n ω ↦ r n • (g (T n ω) - g θ) with hY
   have hZm : ∀ n, Measurable (Z n) := fun n ↦
@@ -189,11 +192,9 @@ theorem tendstoInDistribution_of_hasHadamardFDerivAt
   let PY : ℕ → ProbabilityMeasure F := fun n ↦ ⟨μ.map (Y n), inferInstance⟩
   let PG : ProbabilityMeasure E := ⟨G, inferInstance⟩
   let PGD : ProbabilityMeasure F := ⟨G.map D, inferInstance⟩
-  have hZlim : Tendsto PZ atTop (𝓝 PG) :=
-    ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.2 hlim.integral_tendsto
+  have hZlim : Tendsto PZ atTop (𝓝 PG) := (tendstoInDistribution_id_iff.1 hlim).2
   suffices hYlim : Tendsto PY atTop (𝓝 PGD) from
-    TendstoWeakly.of_forall_integral_tendsto
-      (fun f ↦ ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.1 hYlim f)
+    tendstoInDistribution_id_iff.2 ⟨fun n ↦ (hYm n).aemeasurable, hYlim⟩
   refine tendsto_of_forall_isClosed_limsup_le' fun Fc hFc ↦ ?_
   -- The sets of local increments mapped into `Fc` at stage `m`.
   let A : ℕ → Set E := fun m ↦

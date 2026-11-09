@@ -1,6 +1,6 @@
 module
 
-public import CKSD.LinearModels.ActiveTrails
+public import CKSD.LinearModels.DirectedGraphical.Basic.ActiveTrails
 
 /-!
 # Discrete directed factorization and the global Markov property
@@ -8,6 +8,11 @@ public import CKSD.LinearModels.ActiveTrails
 Laws of discrete variables indexed by the vertices of a directed acyclic graph, given by mass
 functions on the configurations `V → S`, with the directed Markov properties, interventional
 masses, and the graphical criteria (back-door, front-door) used in causal identification.
+
+This file and the files below `DirectedGraphical/Basic/` form the foundational layer of the
+directed graphical theory: `CKSD.LinearModels.DirectedGraphical.Basic.CausalGraph` holds the
+directed acyclic graph structure, active paths, d-separation and Markov equivalence, and
+`CKSD.LinearModels.DirectedGraphical.Basic.ActiveTrails` the trail form of d-separation.
 
 ## Main definitions
 
@@ -26,7 +31,7 @@ masses, and the graphical criteria (back-door, front-door) used in causal identi
   masses respecting the parents satisfies the global directed Markov property. The proof sums
   out the coordinates outside the ancestral closure of `A ∪ B ∪ C` and splits the remaining
   product according to reachability from `A` by trails whose noncolliders avoid `C`; the
-  graph-theoretic steps are in `CKSD.LinearModels.ActiveTrails`.
+  graph-theoretic steps are in `CKSD.LinearModels.DirectedGraphical.Basic.ActiveTrails`.
 
 ## References
 

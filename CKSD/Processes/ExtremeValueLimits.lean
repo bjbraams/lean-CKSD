@@ -110,8 +110,8 @@ theorem tendstoInDistribution_hillEstimator {Ω : Type*} [MeasurableSpace Ω]
     (hsecond : HasSecondOrderTailQuantile P γ ρ A) (k : ℕ → ℕ)
     (hklim : Tendsto k atTop atTop) (hkn : Tendsto (fun n ↦ (k n : ℝ) / n) atTop (𝓝 0))
     (b : ℝ) (hA : Tendsto (fun n ↦ Real.sqrt (k n) * A ((n : ℝ) / k n)) atTop (𝓝 b)) :
-    TendstoInDistribution μ (fun n ω ↦ Real.sqrt (k n) *
-      (hillEstimator (k n) (fun i : Fin n ↦ X i.val ω) - γ))
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt (k n) *
+      (hillEstimator (k n) (fun i : Fin n ↦ X i.val ω) - γ)) atTop id (fun _ ↦ μ)
       (gaussianReal (b / (1 - ρ)) (Real.toNNReal (γ ^ 2))) := by
   sorry
 

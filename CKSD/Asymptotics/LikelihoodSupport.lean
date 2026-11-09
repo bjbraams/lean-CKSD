@@ -1,6 +1,6 @@
 module
 
-public import CKSD.Asymptotics.Convergence
+public import CKSD.Asymptotics.Basic
 
 /-!
 # Integral and Taylor estimates for likelihood asymptotics
@@ -141,13 +141,15 @@ theorem measureReal_le_abs_sum_sub_le_of_iid {Ω E : Type*} [MeasurableSpace Ω]
 
 /-- A triangular-array weak law: if `n ∫ φₙ² dP → 0`, then the centred sums
 `∑_{i<n} (φₙ(Xᵢ) - ∫ φₙ dP)` of an iid sequence tend to zero in probability. -/
-theorem tendstoInProbabilityConst_sum_sub_of_iid {Ω E : Type*} [MeasurableSpace Ω]
+theorem tendstoInMeasure_sum_sub_of_iid {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
     (φ : ℕ → E → ℝ) (hφ : ∀ n, Measurable (φ n)) (h2 : ∀ n, MemLp (φ n) 2 P)
     (hlim : Tendsto (fun n : ℕ ↦ n * ∫ x, φ n x ^ 2 ∂P) atTop (𝓝 0)) :
-    TendstoInProbabilityConst μ
-      (fun n ω ↦ ∑ i ∈ Finset.range n, φ n (X i ω) - n * ∫ x, φ n x ∂P) 0 := by
+    TendstoInMeasure μ
+      (fun (n : ℕ) ω ↦ ∑ i ∈ Finset.range n, φ n (X i ω) - n * ∫ x, φ n x ∂P)
+          atTop (fun _ ↦ 0) := by
+  rw [tendstoInMeasure_iff_measureReal_lt_dist]
   intro ε hε
   have hb : Tendsto (fun n : ℕ ↦ n * (∫ x, φ n x ^ 2 ∂P) / ε ^ 2) atTop (𝓝 0) := by
     simpa using hlim.div_const (ε ^ 2)
@@ -159,12 +161,14 @@ theorem tendstoInProbabilityConst_sum_sub_of_iid {Ω E : Type*} [MeasurableSpace
 
 /-- Markov's inequality for sums of squares: if `n ∫ φₙ² dP → 0`, then `∑_{i<n} φₙ(Xᵢ)²` tends to
 zero in probability. -/
-theorem tendstoInProbabilityConst_sum_sq_of_iid {Ω E : Type*} [MeasurableSpace Ω]
+theorem tendstoInMeasure_sum_sq_of_iid {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
     (φ : ℕ → E → ℝ) (hφ : ∀ n, Measurable (φ n)) (h2 : ∀ n, Integrable (fun x ↦ φ n x ^ 2) P)
     (hlim : Tendsto (fun n : ℕ ↦ n * ∫ x, φ n x ^ 2 ∂P) atTop (𝓝 0)) :
-    TendstoInProbabilityConst μ (fun n ω ↦ ∑ i ∈ Finset.range n, φ n (X i ω) ^ 2) 0 := by
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦ ∑ i ∈ Finset.range n, φ n (X i ω) ^ 2)
+        atTop (fun _ ↦ 0) := by
+  rw [tendstoInMeasure_iff_measureReal_lt_dist]
   intro ε hε
   have hm := hiid.1
   have hb : Tendsto (fun n : ℕ ↦ n * (∫ x, φ n x ^ 2 ∂P) / ε) atTop (𝓝 0) := by

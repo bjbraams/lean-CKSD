@@ -129,9 +129,9 @@ theorem tendstoInDistribution_gaussian_sample_covariance_eigenvalue
     (j : Fin p)
     (hsimple : ∀ i : Fin p, i ≠ j →
       symmetricMatrixEigenvalues Sigma i ≠ symmetricMatrixEigenvalues Sigma j) :
-    TendstoInDistribution P (fun n ω ↦ Real.sqrt n *
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n *
       (symmetricMatrixEigenvalues (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω)) j -
-        symmetricMatrixEigenvalues Sigma j))
+        symmetricMatrixEigenvalues Sigma j)) atTop id (fun _ ↦ P)
       (gaussianReal 0 (Real.toNNReal (2 * symmetricMatrixEigenvalues Sigma j ^ 2))) := by
   sorry
 
@@ -145,8 +145,8 @@ theorem tendstoInDistribution_sphericity_likelihood_ratio
     (v : ℝ≥0) (hv : 0 < v) (X : ℕ → Ω → EuclideanSpace ℝ (Fin p))
     (hiid : IsIndependentIdenticallyDistributed P X
       (multivariateGaussian m ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)))) :
-    TendstoInDistribution P (fun n ω ↦ -(n : ℝ) * Real.log
-      (sphericityRatio (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω))))
+    TendstoInDistribution (fun (n : ℕ) ω ↦ -(n : ℝ) * Real.log
+      (sphericityRatio (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω)))) atTop id (fun _ ↦ P)
       (TauCeti.Probability.chiSquaredMeasure (p * (p + 1) / 2 - 1 : ℕ)) := by
   sorry
 
@@ -160,8 +160,9 @@ theorem tendstoInDistribution_block_independence_likelihood_ratio
     (hblock : ∀ i : Fin p, ∀ j : Fin q, Sigma (Fin.castAdd q i) (Fin.natAdd p j) = 0)
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin (p + q)))
     (hiid : IsIndependentIdenticallyDistributed P X (multivariateGaussian m Sigma)) :
-    TendstoInDistribution P (fun n ω ↦ -(n : ℝ) * Real.log
+    TendstoInDistribution (fun (n : ℕ) ω ↦ -(n : ℝ) * Real.log
       (blockIndependenceRatio (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω))))
+      atTop id (fun _ ↦ P)
       (TauCeti.Probability.chiSquaredMeasure (p * q : ℕ)) := by
   sorry
 

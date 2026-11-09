@@ -66,7 +66,7 @@ def IsMinimumVarianceUnbiasedEstimator {Θ X : Type*} [MeasurableSpace X]
     (P : Θ → Measure X) (W : X → ℝ) (g : Θ → ℝ) : Prop :=
   IsUnbiasedEstimator P W g ∧ (∀ θ, MemLp W 2 (P θ)) ∧
     ∀ W', IsUnbiasedEstimator P W' g → (∀ θ, MemLp W' 2 (P θ)) →
-      ∀ θ, variance (P θ) W ≤ variance (P θ) W'
+      ∀ θ, Var[W; P θ] ≤ Var[W'; P θ]
 
 /-- The power `θ ↦ ∫ φ dP θ` of a randomized test `φ`. -/
 def testPower {Θ X : Type*} [MeasurableSpace X]

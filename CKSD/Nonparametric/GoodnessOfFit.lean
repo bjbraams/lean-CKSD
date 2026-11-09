@@ -113,11 +113,6 @@ theorem ae_forall_mem_Ioo_pi_restrict (k : ℕ) :
   exact (measurePreserving_eval (fun _ : Fin k ↦ volume.restrict (Ioo (0 : ℝ) 1)) i)
     |>.quasiMeasurePreserving.ae (ae_restrict_mem measurableSet_Ioo)
 
-/-- The distribution function `t ↦ P (-∞, t]` of a finite measure is measurable. -/
-theorem measurable_cdf_of_isFiniteMeasure (P : Measure ℝ) [IsFiniteMeasure P] :
-    Measurable (cdf P) :=
-  Monotone.measurable fun _ _ h ↦ measureReal_mono (Iic_subset_Iic.mpr h)
-
 /-- The Cramér–von Mises statistic is a measurable function of the sample. -/
 theorem measurable_cramerVonMisesStatistic (P : Measure ℝ) [IsFiniteMeasure P] (n : ℕ) :
     Measurable (cramerVonMisesStatistic (n := n) P) := by
@@ -125,7 +120,7 @@ theorem measurable_cramerVonMisesStatistic (P : Measure ℝ) [IsFiniteMeasure P]
   refine measurable_const.mul ?_
   have h : Measurable fun z : (Fin n → ℝ) × ℝ ↦ (finiteEmpiricalCDF z.1 z.2 - cdf P z.2) ^ 2 :=
     ((measurable_finiteEmpiricalCDF_uncurry n).sub
-      ((measurable_cdf_of_isFiniteMeasure P).comp measurable_snd)).pow_const 2
+      ((cdf P).mono.measurable.comp measurable_snd)).pow_const 2
   exact (h.stronglyMeasurable.integral_prod_right' (ν := P)).measurable
 
 /-- GAPS 103.17: finite-sample distribution-freeness of the Cramér–von Mises statistic. For a
@@ -142,8 +137,7 @@ theorem map_cramerVonMisesStatistic_eq_uniform (P : Measure ℝ) [IsProbabilityM
   have hUV : U = V := uniformMeasure_zero_one_eq_restrict_Ioo
   have hcdfV : ∀ s ∈ Ioo (0 : ℝ) 1, cdf V s = s := by
     intro s hs
-    have : cdf V s = ProbabilityTheory.cdf V s := (ProbabilityTheory.cdf_eq_real (μ := V) s).symm
-    rw [this, ← hUV, TauCeti.Probability.cdf_uniformMeasure zero_lt_one,
+    rw [← hUV, TauCeti.Probability.cdf_uniformMeasure zero_lt_one,
       ite_eq_right (not_le.mpr hs.1), ite_eq_right (not_le.mpr hs.2)]
     simp
   set Q := P.quantile with hQ
@@ -158,7 +152,7 @@ theorem map_cramerVonMisesStatistic_eq_uniform (P : Measure ℝ) [IsProbabilityM
     congr 1
     have hg : Measurable fun t ↦ (finiteEmpiricalCDF (fun i ↦ Q (u i)) t - cdf P t) ^ 2 :=
       (((measurable_finiteEmpiricalCDF_uncurry n).comp (measurable_const.prodMk measurable_id)).sub
-        (measurable_cdf_of_isFiniteMeasure P)).pow_const 2
+        (cdf P).mono.measurable).pow_const 2
     calc ∫ t, (finiteEmpiricalCDF (fun i ↦ Q (u i)) t - cdf P t) ^ 2 ∂P
         = ∫ t, (finiteEmpiricalCDF (fun i ↦ Q (u i)) t - cdf P t) ^ 2 ∂(V.map Q) := by
           rw [hmap]
@@ -167,16 +161,14 @@ theorem map_cramerVonMisesStatistic_eq_uniform (P : Measure ℝ) [IsProbabilityM
       _ = ∫ s, (finiteEmpiricalCDF u s - cdf V s) ^ 2 ∂V := by
           refine integral_congr_ae ?_
           filter_upwards [ae_restrict_mem measurableSet_Ioo] with s hs
-          have hFQ' : ProbabilityTheory.cdf P (Q s) = s := Measure.cdf_quantile P hcont hs.1 hs.2
-          have hFQ : cdf P (Q s) = s :=
-            (ProbabilityTheory.cdf_eq_real (μ := P) (Q s)).symm.trans hFQ'
+          have hFQ : cdf P (Q s) = s := Measure.cdf_quantile P hcont hs.1 hs.2
           rw [hFQ, hcdfV s hs]
           congr 2
           unfold finiteEmpiricalCDF
           congr 2
           refine congrArg Finset.card (Finset.filter_congr fun i _ ↦ ?_)
           show Q (u i) ≤ Q s ↔ u i ≤ s
-          rw [hQ, Measure.quantile_le_iff P (hu i).1 (hu i).2, ← hQ, hFQ']
+          rw [hQ, Measure.quantile_le_iff P (hu i).1 (hu i).2, ← hQ, hFQ]
   -- assemble
   rw [pi_eq_map_pi_quantile P n, Measure.map_map (measurable_cramerVonMisesStatistic P n)
     (measurable_pi_quantile P n), hUV]

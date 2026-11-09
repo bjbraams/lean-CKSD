@@ -128,7 +128,7 @@ theorem hasLaw_card_exceedances_binomial {Ω : Type*} [MeasurableSpace Ω]
 `1 - F(c) = P(c, ∞)`. -/
 theorem one_sub_cdf_eq_measureReal_Ioi (P : Measure ℝ) [IsProbabilityMeasure P] (c : ℝ) :
     1 - cdf P c = P.real (Ioi c) := by
-  rw [cdf, ← compl_Iic, probReal_compl_eq_one_sub measurableSet_Iic]
+  rw [cdf_eq_real, ← compl_Iic, probReal_compl_eq_one_sub measurableSet_Iic]
 
 /-- The probability that the first `n` iid observations do not exceed `c` is `F(c)^n`, written
 as `(1 - (1 - F(c)))^n`. -/
@@ -167,8 +167,7 @@ theorem one_sub_cdf_tailQuantile_le (P : Measure ℝ) [IsProbabilityMeasure P] {
     (ht : 1 < t) : 1 - cdf P (tailQuantile P t) ≤ t⁻¹ := by
   have h1 : 1 - 1 / t < 1 := sub_lt_self 1 (by positivity)
   have h := P.le_cdf_quantile h1
-  rw [cdf_eq_real] at h
-  rw [tailQuantile, cdf, ← one_div]
+  rw [tailQuantile, ← one_div]
   linarith
 
 /-- Below the tail quantile the tail mass exceeds `1/t`. -/
@@ -177,8 +176,7 @@ theorem lt_one_sub_cdf_of_lt_tailQuantile (P : Measure ℝ) [IsProbabilityMeasur
   have h0 : 0 < 1 - 1 / t := by
     rw [sub_pos, div_lt_one (by linarith)]; exact ht
   have h := (P.lt_quantile_iff h0 (sub_lt_self 1 (by positivity))).1 hx
-  rw [cdf_eq_real, one_div] at h
-  rw [cdf]
+  rw [one_div] at h
   linarith
 
 /-- The tail `1 - F` is positive everywhere (the upper endpoint is infinite) and regularly
@@ -199,8 +197,7 @@ theorem tendsto_tailQuantile_atTop (P : Measure ℝ) [IsProbabilityMeasure P]
   by_contra h
   have h1 := one_sub_cdf_tailQuantile_le P (t := n) (by exact_mod_cast hn)
   have h2 : cdf P (tailQuantile P n) ≤ cdf P M := by
-    rw [cdf, cdf]
-    exact measureReal_mono (Iic_subset_Iic.2 (not_le.1 h).le)
+    exact monotone_cdf P (not_le.1 h).le
   linarith
 
 /-- If `1 - F` is regularly varying with index `-1/γ`, `γ > 0`, then `n (1 - F(U(n))) → 1`. -/
@@ -273,13 +270,16 @@ theorem tendstoInDistribution_card_exceedances {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (u : ℕ → ℝ) (τ : ℝ≥0)
     (htail : Tendsto (fun n : ℕ ↦ (n : ℝ) * (1 - cdf P (u n))) atTop (𝓝 (τ : ℝ))) :
-    TendstoInDistribution μ (fun n ω ↦ ((Finset.range n).filter (fun i ↦ u n < X i ω)).card)
-      (poissonMeasure τ) := by
+    TendstoInDistribution
+      (fun (n : ℕ) ω ↦ ((Finset.range n).filter (fun i ↦ u n < X i ω)).card) atTop id
+      (fun _ ↦ μ) (poissonMeasure τ) := by
   let p : ℕ → I := fun n ↦ ⟨P.real (Ioi (u n)), by simp⟩
   have hpt : Tendsto (fun n : ℕ ↦ (n : ℝ) * (p n : ℝ)) atTop (𝓝 (τ : ℝ)) := by
     simpa only [one_sub_cdf_eq_measureReal_Ioi] using htail
   have hlaw := fun n ↦ hasLaw_card_exceedances_binomial μ P X hiid n (u n)
-  refine TendstoWeakly.of_forall_integral_tendsto (fun f ↦ ?_)
+  refine tendstoInDistribution_id_iff.2 ⟨fun n ↦ (hlaw n).aemeasurable,
+    ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.2 fun f ↦ ?_⟩
+  simp only [ProbabilityMeasure.coe_mk]
   simp_rw [fun n ↦ (hlaw n).map_eq]
   exact tendsto_integral_binomial_poissonMeasure p τ hpt f ⟨‖f‖, fun k ↦ by
     simpa [Real.norm_eq_abs] using f.norm_coe_le_norm k⟩
