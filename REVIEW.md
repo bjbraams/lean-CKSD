@@ -1,10 +1,10 @@
 # Mathlib-style assessment of CKSD
 
-The project contains 229 Lean modules under `CKSD/` and 2649 inventoried declarations:
-795 definitions, abbreviations, structures and inductive types, and 1854 theorem statements
-(1737 proved, two conditional on admitted results, and 115 admitted). Every file is at or below the
-1000-line splitting threshold (1500 lines is the hard limit); the largest is
-[DirichletConjugacy.lean](CKSD/Bayes/DirichletConjugacy.lean) at 1001 lines. All modules use
+The project contains 239 Lean modules under `CKSD/` and 2740 inventoried declarations:
+802 definitions, abbreviations, structures and inductive types, and 1938 theorem statements
+(1827 proved, two conditional on admitted results, and 109 admitted). The largest module is
+[GLMAsymptotics.lean](CKSD/LinearModels/GLMAsymptotics.lean) at 1070 lines, below the
+1500-line hard limit. Modules near 1000 lines are candidates for splitting at a natural mathematical seam. All modules use
 the module system and have Mathlib-style module documentation with the mathematical scope, main definitions and main results. All authored definitions, abbreviations,
 structures, inductive types and theorem statements have formal docstrings, as do all 136 structure
 fields. Theorem docstrings state the mathematics together with the `GAPS ddd.k` tag of the
@@ -21,6 +21,12 @@ The dependency baseline is Lean `v4.36.0-rc2`, Mathlib
 
 The following scoped catalogue statements have complete proofs with no admitted dependencies:
 
+- [Finite statistical minimax and a least-favourable prior](CKSD/Inference/Decision.lean#L54) (GAPS 101.32).
+- [Hellinger posterior contraction under entropy and KL prior-mass bounds](CKSD/Bayes/PosteriorContraction.lean#L639) (GAPS 104.19).
+- [Stochastic-interpolant score identity](CKSD/Bayes/DiffusionModels.lean#L464) (GAPS 104.76).
+- [Finite Gaussian-mixture identifiability up to relabeling](CKSD/LinearModels/Mixtures.lean#L103) (GAPS 105.6).
+- [Canonical GLM chi-squared deviance limit](CKSD/LinearModels/GLMAsymptotics.lean#L897) (GAPS 105.3).
+- [Characteristic translation-invariant kernels and full spectral support](CKSD/Geometry/Kernels.lean#L749) (GAPS 108.68).
 - [Gaussian likelihood minimum](CKSD/LinearModels/Multivariate.lean#L396) and [uniqueness](CKSD/LinearModels/Multivariate.lean#L406) (GAPS 105.28).
 - [Invariance of the kinetic Gibbs law against smooth compactly supported tests](CKSD/Bayes/KineticLangevin.lean#L276) (GAPS 104.48).
 - [Exact noncentral F law for nested Gaussian projections](CKSD/LinearModels/FTest.lean#L97) and its [central case](CKSD/LinearModels/FTest.lean#L206) (GAPS 105.16).
@@ -41,7 +47,7 @@ supply Slutsky's lemma, tightness, the delta method and the IID central-limit ad
 `IsTightMeasureSet` for the laws.
 
 The two conditional theorems have complete proofs from admitted results:
-[Poincaré inequality under bounded perturbation](CKSD/Bayes/FunctionalInequalities.lean#L515)
+[Poincaré inequality under bounded perturbation](CKSD/Bayes/FunctionalInequalities.lean#L521)
 (from the admitted logarithmic Sobolev half) and the
 [stochastic-approximation equilibrium corollary](CKSD/Bayes/StochasticApproximation.lean#L544).
 
@@ -56,7 +62,7 @@ The two conditional theorems have complete proofs from admitted results:
 - [Gaussian SEM equivalence](CKSD/LinearModels/StructuralEquations.lean#L365) compares representations faithful to their respective graphs. Nonzero edge coefficients alone do not supply faithfulness. The theorem remains admitted; see [SYNOPSIS105](SYNOPSIS105.md), item 71.
 - [Active paths](CKSD/LinearModels/DirectedGraphical/Basic/CausalGraph.lean#L82) constrain only interior vertices, and [d-separation](CKSD/LinearModels/DirectedGraphical/Basic/CausalGraph.lean#L97) does not require disjoint vertex sets. For an endpoint `a ∈ Z`, the paths active given `Z` are those active given `(Z \ {a}) ∪ {a'}` after adding a leaf `a → a'`. Such leaves preserve skeletons and unshielded colliders, so Markov equivalence over all triples agrees with the classical notion over disjoint triples (SYNOPSIS105, item 67).
 - [Bayes rules](CKSD/Inference/Model.lean#L101) have integrable risk and are compared with rules of integrable risk; [minimax rules](CKSD/Inference/Model.lean#L108) have risk bounded above and are compared with rules of bounded risk. Totalized integrals and real suprema therefore cannot assign the value `0` to a non-integrable or unbounded risk.
-- [Characteristic kernels](CKSD/Geometry/Basic.lean#L103) quantify over probability laws against which the kernel is integrable, so the Bochner convention cannot make the squared MMD vanish for the wrong reason. The [squared MMD](CKSD/Geometry/Kernels.lean#L76) equals the squared distance of TauCeti kernel mean embeddings.
+- [Characteristic kernels](CKSD/Geometry/Basic.lean#L103) quantify over probability laws against which the kernel is integrable, so the Bochner convention cannot make the squared MMD vanish for the wrong reason. The [squared MMD](CKSD/Geometry/Kernels.lean#L77) equals the squared distance of TauCeti kernel mean embeddings.
 - [Compositional-class minimax risk](CKSD/Learning/Networks.lean#L652) and the [Eldan–Shamir depth separation](CKSD/Learning/Networks.lean#L597) use extended nonnegative integrals. Infinite squared loss is allowed and cannot become zero through the nonintegrable Bochner-integral convention. Both lower bounds remain admitted; see [SYNOPSIS107](SYNOPSIS107.md), items 29 and 37.
 - [LinUCB regret](CKSD/Learning/Bandits.lean#L761) uses the scale `max σ (B * W)` with the stated positive parameters and ridge regularization. It accounts for initial exploration even with arbitrarily small noise. The statistical confidence and regret theorems remain admitted; see [SYNOPSIS107](SYNOPSIS107.md), item 63.
 - [Stochastic little-o](CKSD/Asymptotics/Framework.lean#L78) and [stochastic big-O](CKSD/Asymptotics/Framework.lean#L84) require an eventually positive deterministic scale. In particular, an identically zero scale cannot satisfy either predicate.

@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Bayes.LangevinSampling
+public import CKSD.Bayes.BoundedPerturbation
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Resolvent
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.InternalEnergy.Basic
@@ -507,6 +508,11 @@ theorem logSobolevInequality_gibbsMeasure_of_bounded_perturbation {d : ℕ}
     (hconv : IsStronglyMonotoneGradient gradV₀ m) (hψ : Measurable ψ)
     (hab : ∀ x, ψ x ∈ Icc a b) :
     (gibbsMeasure (V₀ + ψ)).LogSobolevInequality (Real.exp (b - a) / m) := by
+  have hint := integrable_exp_neg_of_isStronglyMonotoneGradient hgrad hconv hm
+  rw [div_eq_mul_inv]
+  refine logSobolevInequality_gibbsMeasure_add hint hV₀.continuous.measurable hψ hab
+    (inv_nonneg.2 hm.le) ?_
+  -- The remaining step is the Bakry–Émery inequality for the unperturbed potential.
   sorry
 
 /-- GAPS 104.44: under the hypotheses of the Bakry–Émery and Holley–Stroock theorem, the Gibbs law

@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Geometry.Basic
+public import CKSD.Geometry.SpectralKernels
 public import CKSD.Bayes.Basic
 public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.MeasureTheory.Integral.Pi
@@ -750,7 +751,8 @@ theorem isCharacteristicKernel_iff_spectral_measure_full_support {d : ℕ} (hd :
     (hsym : L.map (fun x ↦ -x) = L) :
     let k := fun x y ↦ ∫ w, Real.cos (inner ℝ w (x - y)) ∂L;
     IsCharacteristicKernel k ↔ ∀ x, ∀ r > 0, 0 < L (Metric.ball x r) := by
-  sorry
+  have : Nonempty (Fin d) := ⟨⟨0, hd⟩⟩
+  exact isCharacteristicKernel_spectral_iff L hsym
 
 /-- Products of two coordinates are integrable under a law with finite second moments. -/
 theorem integrable_coord_mul_coord {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))

@@ -444,3 +444,47 @@ Nonparametric Bayesian Inference* (2017), Ch. 4. They use TauCeti's Dirichlet la
 `map_euclideanFiberSum_dirichletMeasure`, `dirichletMeasure_eq_map_withDensity_dirichletChartPDF`)
 and Mathlib's `Kernel.ae_eq_of_compProd_eq`, `memPartition` and `natGeneratingSequence` for
 countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
+
+
+## Decision, smoothing, testing, and likelihood proofs
+
+- Finite statistical minimax uses Mathlib's real `L²` spaces, Radon–Nikodym integration,
+  Markov kernels, compact extreme-value theorem, and `geometric_hahn_banach_open`.
+  `CKSD/Inference/FiniteDecision.lean` uses TauCeti's
+  `surjective_inclusionInDoubleDual_of_uniformConvexSpace` and
+  `isCompact_toWeakSpace_of_isClosed_of_convex_of_isBounded` for weak compactness of
+  randomized action probabilities. `CKSD/Inference/ConvexGames.lean` supplies the
+  finite-dimensional separation argument.
+- Gaussian smoothing and the stochastic-interpolant score identity use Mathlib's
+  Schwartz seminorm bounds, differentiation under the integral, and characterization
+  of conditional expectation by set integrals. `CKSD/Bayes/GaussianSmoothing.lean`
+  uses TauCeti's `SchwartzMap.gaussian`, `stdGaussian_eq_withDensity_norm`, and
+  `Measure.map_affine_withDensity` for the Gaussian density and affine change of variables.
+- The Holley–Stroock comparison in `CKSD/Bayes/BoundedPerturbation.lean` uses
+  Mathlib's measure domination and Bochner integrals, with TauCeti's entropy and
+  logarithmic Sobolev predicates. The sharp factor is `exp (b - a)`. The
+  unperturbed Bakry–Émery inequality remains admitted in
+  `CKSD/Bayes/FunctionalInequalities.lean`.
+- Quantitative evidence concentration uses Mathlib's `variance_sum_pi` and
+  `meas_ge_le_variance_div_sq`, together with Tonelli's theorem and change of
+  density. The shrinking-ball estimate is in `CKSD/Bayes/EvidenceConcentration.lean`.
+- Hellinger geometry uses Statlib's Radon–Nikodym affinity formula for
+  `sqHellinger`, Mathlib's Radon–Nikodym chain rules, and the Cauchy–Schwarz
+  inequality for integrals. Robust Hellinger-ball testing uses TauCeti's Bernstein
+  inequality `iIndepFun.measureReal_sum_ge_le_of_ae_le`. The posterior-contraction
+  proof combines these tests with finite sieve covers, the evidence estimate,
+  and a change-of-measure bound on the tested posterior numerator.
+- Gaussian-mixture identifiability uses TauCeti's
+  `mgf_inner_multivariateGaussianMixtureMeasure`. The local linear-independence
+  proof uses Mathlib's `MvPolynomial.funext`, symmetric linear maps, finite-support
+  coefficients, and real exponential limits to separate Gaussian parameter pairs.
+- The spectral characterization of characteristic kernels uses Mathlib's
+  `Measure.ext_of_charFun`, `continuous_charFun`, Schwartz Fourier inversion,
+  and `ContDiffBump`, with TauCeti's
+  `fourierInv_eq_re_of_map_neg_eq_conj` and
+  `Probability.integral_withDensity_ofReal`. The spectral-gap direction constructs
+  two distinct probability laws from a real even Fourier bump.
+- Canonical GLM deviance asymptotics use the local convex quadratic approximation
+  and minimum-value convergence, Mathlib's central limit theorem and orthogonal
+  projections, and TauCeti's Gaussian projection and chi-squared laws. The generic
+  convex-likelihood argument is in `CKSD/LinearModels/ConvexLikelihood.lean`.

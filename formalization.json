@@ -2,9 +2,9 @@
   "schema_version": 1,
   "scope_rule": "A tagged theorem represents only its stated hypotheses and conclusions. Presence of a statement does not assert full coverage of a catalogue family.",
   "counts": {
-    "proved": 1737,
-    "definition": 795,
-    "admitted": 115,
+    "proved": 1827,
+    "definition": 802,
+    "admitted": 109,
     "conditional": 2,
     "gaps": 296,
     "easy_entries": 110,
@@ -4582,6 +4582,181 @@
       "proof": "proved"
     },
     {
+      "name": "CKSD.entropyIntegrand",
+      "kind": "def",
+      "file": "CKSD/Bayes/BoundedPerturbation.lean",
+      "line": 31,
+      "doc": "The nonnegative integrand in the variational formula for entropy.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "31d3f1c6353c622beccb82d2266fa38c398f3f79499e7bebc7ec98cbca6f16d1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.entropyIntegrand_nonneg",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BoundedPerturbation.lean",
+      "line": 35,
+      "doc": "The entropy integrand is nonnegative for a nonnegative value and a positive reference.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "31d3f1c6353c622beccb82d2266fa38c398f3f79499e7bebc7ec98cbca6f16d1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integrable_entropyIntegrand",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BoundedPerturbation.lean",
+      "line": 47,
+      "doc": "Integrability of the entropy integrand follows from integrability of its two moments.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "31d3f1c6353c622beccb82d2266fa38c398f3f79499e7bebc7ec98cbca6f16d1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_entropyIntegrand",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BoundedPerturbation.lean",
+      "line": 54,
+      "doc": "The integral of the entropy integrand differs from entropy by its value at the mean.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "31d3f1c6353c622beccb82d2266fa38c398f3f79499e7bebc7ec98cbca6f16d1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.entropy_le_integral_entropyIntegrand",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BoundedPerturbation.lean",
+      "line": 70,
+      "doc": "Every positive reference value gives an upper bound on entropy.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "31d3f1c6353c622beccb82d2266fa38c398f3f79499e7bebc7ec98cbca6f16d1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_entropyIntegrand_mean",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BoundedPerturbation.lean",
+      "line": 79,
+      "doc": "Choosing the mean as reference recovers entropy exactly.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "31d3f1c6353c622beccb82d2266fa38c398f3f79499e7bebc7ec98cbca6f16d1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.entropy_congr_ae",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BoundedPerturbation.lean",
+      "line": 87,
+      "doc": "Entropy respects almost-everywhere equality.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "31d3f1c6353c622beccb82d2266fa38c398f3f79499e7bebc7ec98cbca6f16d1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.entropy_le_mul_of_measure_le_smul",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BoundedPerturbation.lean",
+      "line": 94,
+      "doc": "Domination of probability measures gives the same domination of nonnegative entropies.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "31d3f1c6353c622beccb82d2266fa38c398f3f79499e7bebc7ec98cbca6f16d1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.logSobolevInequality_of_measure_le_smul",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BoundedPerturbation.lean",
+      "line": 120,
+      "doc": "A logarithmic Sobolev inequality transfers between probability measures whose densities are bounded above and below. The constant is multiplied by the ratio of the bounds.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "31d3f1c6353c622beccb82d2266fa38c398f3f79499e7bebc7ec98cbca6f16d1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.gibbsMeasure_le_smul_of_sub_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BoundedPerturbation.lean",
+      "line": 150,
+      "doc": "A lower bound on a change of potential bounds the ratio of the corresponding Gibbs laws.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "31d3f1c6353c622beccb82d2266fa38c398f3f79499e7bebc7ec98cbca6f16d1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.logSobolevInequality_gibbsMeasure_add",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BoundedPerturbation.lean",
+      "line": 179,
+      "doc": "Holley–Stroock bounded perturbation: adding a bounded measurable potential multiplies a logarithmic Sobolev constant by at most the exponential of the potential's oscillation.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "31d3f1c6353c622beccb82d2266fa38c398f3f79499e7bebc7ec98cbca6f16d1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.bridgeIterate",
       "kind": "def",
       "file": "CKSD/Bayes/Bridges.lean",
@@ -4755,11 +4930,11 @@
       "name": "CKSD.probabilityFlowVelocity",
       "kind": "def",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 57,
+      "line": 60,
       "doc": "Velocity `-f(T-t,x) + ½ g gᵀ(T-t) ∇ log p_{T-t}(x)` of the probability flow on `[0, T)`, and `0` outside.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4770,13 +4945,13 @@
       "name": "CKSD.probabilityFlow_isContinuityEquation_and_map",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 71,
+      "line": 74,
       "doc": "GAPS 104.63, probability-flow part: the time-reversed marginals `qₜ = p_{T-t}` of a diffusion with positive `C¹` densities solve the continuity equation with the probability-flow velocity on every `(0, T')`, `T' < T`, and when that velocity is Lipschitz the flow started from `p_T` has law `p_{T-t}`. The forward marginals are a weak Fokker–Planck solution with a finite initial second moment; the reverse-time stochastic equation is not part of this statement.",
       "gaps": [
         "104.63"
       ],
       "admitted": true,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "sorryAx",
@@ -4789,11 +4964,11 @@
       "name": "CKSD.varianceExplodingLaw",
       "kind": "def",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 99,
+      "line": 102,
       "doc": "The law `π * N(0, tI)` of `Y + √t ξ` with `Y ∼ π` and independent standard normal `ξ`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4804,11 +4979,11 @@
       "name": "CKSD.varianceExplodingScore",
       "kind": "def",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 105,
+      "line": 108,
       "doc": "Score `∇ log (π * N(0, tI))(x)`, written by Tweedie's formula as the ratio `∫ (y - x)/t · e^{-‖x-y‖²/2t} π(dy) / ∫ e^{-‖x-y‖²/2t} π(dy)`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4819,11 +4994,11 @@
       "name": "CKSD.ddpmLaw",
       "kind": "def",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 111,
+      "line": 114,
       "doc": "Law of the DDPM sampler after `n` steps along the times `τ`, started from `N(0, TI)`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4834,13 +5009,13 @@
       "name": "CKSD.klDiv_ddpmLaw_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 121,
+      "line": 124,
       "doc": "GAPS 104.75: relative-entropy bound for the DDPM sampler under only a finite second moment, for steps `hₙ ≤ h̄(T - τₙ)` with `h̄ ≤ 1/2`, early stopping `δ = T - τ_N`, and the accumulated score error `ε²_sc = ∑ hₙ 𝔼_{π_{T-τₙ}} ‖ŝ_{T-τₙ} - ∇ log π_{T-τₙ}‖²`.",
       "gaps": [
         "104.75"
       ],
       "admitted": true,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "sorryAx",
@@ -4853,13 +5028,13 @@
       "name": "CKSD.exists_ddpm_geometric_schedule",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 140,
+      "line": 143,
       "doc": "GAPS 104.75: the geometric step schedule. With `N` least such that `(1 - h̄)ᴺ T ≤ δ`, the times `τₙ = T - (1 - h̄)ⁿ T` for `n < N` and `τ_N = T - δ` satisfy the step hypothesis, and `N ≤ 1 + h̄⁻¹ log(T/δ)`.",
       "gaps": [
         "104.75"
       ],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4871,13 +5046,13 @@
       "name": "CKSD.ddpmStepRatio",
       "kind": "def",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 204,
+      "line": 207,
       "doc": "Step ratio `h̄ = ε² / (2d(1 + log(T/δ)))` of the DDPM parameter choice of GAPS 104.75.",
       "gaps": [
         "104.75"
       ],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4888,13 +5063,13 @@
       "name": "CKSD.ddpmStepRatio_pos",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 208,
+      "line": 211,
       "doc": "GAPS 104.75: the parameter choice `h̄ = ε²/(2d(1 + log(T/δ)))` is positive for `0 < ε² ≤ d` and `0 < δ < T`.",
       "gaps": [
         "104.75"
       ],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4906,13 +5081,13 @@
       "name": "CKSD.ddpmStepRatio_le_half",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 217,
+      "line": 220,
       "doc": "GAPS 104.75: the parameter choice `h̄ = ε²/(2d(1 + log(T/δ)))` is admissible, `h̄ ≤ 1/2`, for `0 < ε² ≤ d` and `0 < δ < T`.",
       "gaps": [
         "104.75"
       ],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4924,13 +5099,13 @@
       "name": "CKSD.div_two_mul_add_two_mul_ddpmStepRatio_eq",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 227,
+      "line": 230,
       "doc": "GAPS 104.75: with `T = m₂²/ε²` and `h̄ = ε²/(2d(1 + log(T/δ)))`, the deterministic part `m₂²/(2T) + 2h̄d(1 + log(T/δ))` of the KL bound equals `3ε²/2`.",
       "gaps": [
         "104.75"
       ],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4942,13 +5117,13 @@
       "name": "CKSD.one_add_inv_ddpmStepRatio_mul_log",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 250,
+      "line": 253,
       "doc": "GAPS 104.75: with `h̄ = ε²/(2d(1 + log(T/δ)))`, the schedule bound `1 + h̄⁻¹ log(T/δ)` on the number of steps equals `1 + 2dε⁻²(1 + log(T/δ)) log(T/δ)`.",
       "gaps": [
         "104.75"
       ],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4960,11 +5135,11 @@
       "name": "CKSD.clm_apply_gradient_eq_sum",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 257,
+      "line": 260,
       "doc": "A linear functional applied to a gradient, in Euclidean coordinates.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4976,11 +5151,11 @@
       "name": "CKSD.gradient_log_eq_inv_smul",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 272,
+      "line": 275,
       "doc": "The gradient of `log m` is `∇m / m` where `m` is differentiable and nonzero.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -4992,11 +5167,11 @@
       "name": "CKSD.integral_fderiv_gradient_add_mul_laplacian_eq_zero",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 278,
+      "line": 281,
       "doc": "Integration by parts on `ℝᵈ`: `∫ (∇f · ∇m + m Δf) = 0` for compactly supported `f`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5008,13 +5183,13 @@
       "name": "CKSD.isFokkerPlanckSolution_add_score_of_continuityEquation",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 346,
+      "line": 349,
       "doc": "GAPS 104.76: smooth positive densities solving the continuity equation with velocity `v` also solve the Fokker–Planck equation of `dX = (v + ε∇ log μ)(X) dt + √(2ε) dW`, for every continuous `ε ≥ 0`. Both equations are taken in the weak integral form on `[0, 1]`.",
       "gaps": [
         "104.76"
       ],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5026,13 +5201,13 @@
       "name": "CKSD.map_marginalPreservingDiffusion",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 437,
+      "line": 440,
       "doc": "GAPS 104.76, constant noise level: if the drift `bₜ = vₜ + ε∇ log μₜ` is Lipschitz uniformly in `t ∈ [0, 1]` and `∫₀¹ ∫ ‖bₜ‖ dμₜ dt < ∞`, a solution of `Xₜ = X₀ + ∫₀ᵗ bₛ(Xₛ) ds + √(2ε) Wₜ` with `X₀ ∼ μ₀` independent of the Brownian motion has law `μₜ` for every `t ∈ [0, 1]`.",
       "gaps": [
         "104.76"
       ],
       "admitted": true,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "sorryAx",
@@ -5045,32 +5220,31 @@
       "name": "CKSD.stochasticInterpolant_score",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 461,
+      "line": 464,
       "doc": "GAPS 104.76: the score of a stochastic interpolant. For `Xₜ = Iₜ(X₀, X₁) + γₜ Z` with standard normal `Z` independent of the coupling and `γₜ > 0`, the law of `Xₜ` has a smooth positive density `mₜ` and `∇ log mₜ(Xₜ) = -γₜ⁻¹ 𝔼[Z | Xₜ]` almost surely.",
       "gaps": [
         "104.76"
       ],
-      "admitted": true,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "admitted": false,
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.stochasticInterpolant_integral_sub_eq_integral_velocity",
       "kind": "theorem",
       "file": "CKSD/Bayes/DiffusionModels.lean",
-      "line": 485,
+      "line": 536,
       "doc": "GAPS 104.76: the velocity of a stochastic interpolant, in the weak form of the continuity equation. Let `Xₜ = Iₜ(X₀, X₁) + γₜ Z` with `I` and `γ` continuously differentiable in `t`, and `∫₀¹ 𝔼‖∂ₜIₜ(X₀, X₁)‖² dt < ∞` (continuity of `γ̇` makes a bound on `∫₀¹ γ̇ₜ² dt` unnecessary), and let `vₜ(Xₜ)` be, for every `t ∈ (0, 1)`, a version of `𝔼[∂ₜIₜ + γ̇ₜ Z | Xₜ]`. Then for every smooth compactly supported `φ` and `0 < a ≤ b < 1`, `𝔼 φ(X_b) - 𝔼 φ(X_a) = ∫ₐᵇ 𝔼[∇φ(Xₜ) · vₜ(Xₜ)] dt`. The square-integrability in `t` does not make `∂ₜIₜ` integrable at every fixed `t`, so the identity is stated in integrated form.",
       "gaps": [
         "104.76"
       ],
       "admitted": false,
-      "source_sha256": "94f7847f8771f412c648e6f97f3b454a775b4d5dfc0340951ba7818b883939d3",
+      "source_sha256": "19af97a0978c4e1f476aacb42e0c778c6e3af918fba80deddfc901bca737d823",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5650,7 +5824,7 @@
       "doc": "A law with real density `p` gives no mass to the set where `p ≤ 0`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "cb5f195f30b3b7f107ee42cba0bf79c83d3e368abb28181e35aac79c4ead44db",
+      "source_sha256": "a4e57e7ca3d8e022b7e8939520dbcfc83dc2a593545141f939d4f206c69232f5",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5666,7 +5840,7 @@
       "doc": "Under a law with density `p`, the density is almost surely positive.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "cb5f195f30b3b7f107ee42cba0bf79c83d3e368abb28181e35aac79c4ead44db",
+      "source_sha256": "a4e57e7ca3d8e022b7e8939520dbcfc83dc2a593545141f939d4f206c69232f5",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5682,7 +5856,7 @@
       "doc": "For laws `P = p · μ` and `Q = q · μ` with `P ≪ Q`, the log-likelihood ratio `log (dP/dQ)` is `P`-almost surely `log p - log q`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "cb5f195f30b3b7f107ee42cba0bf79c83d3e368abb28181e35aac79c4ead44db",
+      "source_sha256": "a4e57e7ca3d8e022b7e8939520dbcfc83dc2a593545141f939d4f206c69232f5",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5698,7 +5872,23 @@
       "doc": "For probability laws `P = p · μ`, `Q = q · μ` with finite Kullback–Leibler divergence `KL(P ‖ Q)`, the function `log q - log p` is `P`-integrable with integral `-KL(P ‖ Q)`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "cb5f195f30b3b7f107ee42cba0bf79c83d3e368abb28181e35aac79c4ead44db",
+      "source_sha256": "a4e57e7ca3d8e022b7e8939520dbcfc83dc2a593545141f939d4f206c69232f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.prod_mul_exp_le_prod",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/EvidenceBounds.lean",
+      "line": 95,
+      "doc": "If `a` and `b` are positive and `∑ (log bᵢ - log aᵢ) ≥ -γ n`, then `(∏ aᵢ) e^{-γ n} ≤ ∏ bᵢ`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "a4e57e7ca3d8e022b7e8939520dbcfc83dc2a593545141f939d4f206c69232f5",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5714,7 +5904,87 @@
       "doc": "**Evidence lower bound.** Let `P θ = f θ · μ` and let `B` be a measurable set of parameters with `KL(P θ₀ ‖ P θ) < γ` for `θ ∈ B`. Under the true i.i.d. law `P θ₀^∞`, the probability that the evidence `∫ ∏_{i<n} f θ (ωᵢ) dπ(θ)` is below `π(B)/2 · ∏_{i<n} f θ₀ (ωᵢ) · e^{-γ n}` tends to zero.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "cb5f195f30b3b7f107ee42cba0bf79c83d3e368abb28181e35aac79c4ead44db",
+      "source_sha256": "a4e57e7ca3d8e022b7e8939520dbcfc83dc2a593545141f939d4f206c69232f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measure_sum_lt_neg_two_mul_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/EvidenceConcentration.lean",
+      "line": 38,
+      "doc": "Chebyshev bound for the sum of independent copies of a real variable with mean at least `-δ` and second moment at most `δ`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d6c0471d274930b91592ff9c05b37f67257224d4ebc851f29502747c606bcb6b",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.memLp_log_sub_log_of_secondMoment",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/EvidenceConcentration.lean",
+      "line": 87,
+      "doc": "The log-density ratio has a finite second moment when the likelihood-ratio second moment used in the posterior contraction hypotheses is finite.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d6c0471d274930b91592ff9c05b37f67257224d4ebc851f29502747c606bcb6b",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measure_sum_log_ratio_lt_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/EvidenceConcentration.lean",
+      "line": 106,
+      "doc": "The probability that the log likelihood of an alternative in a KL and second-moment ball falls below `-2 n δ` is at most `1/(n δ)`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d6c0471d274930b91592ff9c05b37f67257224d4ebc851f29502747c606bcb6b",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measure_infinitePi_evidence_lt_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/EvidenceConcentration.lean",
+      "line": 149,
+      "doc": "Quantitative evidence lower bound on a KL and log-likelihood second-moment ball. For `n > 0`, the evidence is at least half the prior mass of the ball times the true likelihood and `exp (-2 n δ)`, except on a set of probability at most `2/(n δ)`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d6c0471d274930b91592ff9c05b37f67257224d4ebc851f29502747c606bcb6b",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_infinitePi_evidence_lt_of_secondMoment",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/EvidenceConcentration.lean",
+      "line": 288,
+      "doc": "The evidence lower bound holds with probability tending to one for varying KL and second-moment balls of radius `δ n`, provided `n δ n → ∞`. The prior mass of each ball may vanish, and no lower bound on that mass is needed for this relative evidence estimate.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d6c0471d274930b91592ff9c05b37f67257224d4ebc851f29502747c606bcb6b",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5833,11 +6103,11 @@
       "name": "CKSD.IsLangevinFlow",
       "kind": "def",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 55,
+      "line": 56,
       "doc": "The flow of laws of the overdamped Langevin diffusion: a weak Fokker–Planck solution with drift `-gradV` and covariance `2I` on `[0, T]` for every `T ≥ 0`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5848,11 +6118,11 @@
       "name": "CKSD.chiSqDiv",
       "kind": "def",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 60,
+      "line": 61,
       "doc": "Chi-squared divergence `∫ (dμ/dν - 1)² dν` for `μ ≪ ν`, and `∞` otherwise.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5863,13 +6133,13 @@
       "name": "CKSD.poincareInequality_iff_chiSqDiv_langevin_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 65,
+      "line": 66,
       "doc": "GAPS 104.44: the Poincaré inequality with constant `C` is equivalent to exponential decay at rate `2/C` of the chi-squared divergence along every Langevin flow.",
       "gaps": [
         "104.44"
       ],
       "admitted": true,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "sorryAx",
@@ -5882,13 +6152,13 @@
       "name": "CKSD.logSobolevInequality_iff_klDiv_langevin_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 77,
+      "line": 78,
       "doc": "GAPS 104.44: the logarithmic Sobolev inequality with constant `C` is equivalent to exponential decay at rate `2/C` of the relative entropy along every Langevin flow.",
       "gaps": [
         "104.44"
       ],
       "admitted": true,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "sorryAx",
@@ -5901,13 +6171,13 @@
       "name": "CKSD.wasserstein_sq_langevin_le_of_logSobolev",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 89,
+      "line": 90,
       "doc": "GAPS 104.44: under a logarithmic Sobolev inequality, the Otto–Villani inequality gives `W₂²(μₜ, π) ≤ 2C e^{-2t/C} KL(μ₀‖π)` along every Langevin flow.",
       "gaps": [
         "104.44"
       ],
       "admitted": true,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "sorryAx",
@@ -5920,11 +6190,11 @@
       "name": "CKSD.abs_one_add_mul_log_one_add_sub_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 102,
+      "line": 103,
       "doc": "Second-order Taylor bound for `y log y` at `y = 1`: `|(1+s) log(1+s) - s - s²/2| ≤ 4|s|³` for `|s| ≤ 1/2`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5936,11 +6206,11 @@
       "name": "CKSD.integrable_comp_of_abs_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 131,
+      "line": 132,
       "doc": "A continuous function of a bounded continuous real function is integrable under a finite measure.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5952,11 +6222,11 @@
       "name": "CKSD.variance_le_of_logSobolevInequality_of_abs_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 143,
+      "line": 144,
       "doc": "A logarithmic Sobolev inequality with constant `C` gives the Poincaré bound with constant `C` for bounded smooth test functions: apply it to `1 + εg` and expand the entropy to second order in `ε`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5968,11 +6238,11 @@
       "name": "CKSD.tendsto_mul_arctan_inv_mul",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 311,
+      "line": 312,
       "doc": "The truncations `R arctan(s/R)`, `R = n + 1`, converge to `s`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5984,13 +6254,13 @@
       "name": "CKSD.poincareInequality_of_logSobolevInequality",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 336,
+      "line": 337,
       "doc": "GAPS 104.44: a logarithmic Sobolev inequality implies the Poincaré inequality with the same constant, for every probability measure on a real normed space. Unbounded test functions are reduced to the bounded case `variance_le_of_logSobolevInequality_of_abs_le` through the truncations `R arctan(f/R)` and dominated convergence.",
       "gaps": [
         "104.44"
       ],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6002,11 +6272,11 @@
       "name": "CKSD.add_inner_add_le_of_isStronglyMonotoneGradient",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 433,
+      "line": 434,
       "doc": "Quadratic lower bound from a strongly monotone gradient: `V x ≥ V 0 + ⟪∇V(0), x⟫ + (α/2) ‖x‖²`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6018,11 +6288,11 @@
       "name": "CKSD.integrable_exp_neg_of_isStronglyMonotoneGradient",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 474,
+      "line": 475,
       "doc": "For a potential with a strongly monotone gradient (`∇²V ⪰ αI` with `α > 0`), the Gibbs density `e^{-V}` is integrable, by the quadratic lower bound `add_inner_add_le_of_isStronglyMonotoneGradient` and Gaussian integrability.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6034,13 +6304,13 @@
       "name": "CKSD.logSobolevInequality_gibbsMeasure_of_bounded_perturbation",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 503,
+      "line": 504,
       "doc": "GAPS 104.44: Bakry–Émery and Holley–Stroock. If `V = V₀ + ψ` with `∇²V₀ ⪰ mI`, `m > 0`, and `a ≤ ψ ≤ b`, then the Gibbs law satisfies the logarithmic Sobolev inequality with constant `e^{b-a}/m`.",
       "gaps": [
         "104.44"
       ],
       "admitted": true,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "sorryAx",
@@ -6053,13 +6323,13 @@
       "name": "CKSD.poincareInequality_gibbsMeasure_of_bounded_perturbation",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 515,
+      "line": 521,
       "doc": "GAPS 104.44: under the hypotheses of the Bakry–Émery and Holley–Stroock theorem, the Gibbs law of `V₀ + ψ` satisfies the Poincaré inequality with constant `e^{b-a}/m`. It follows from the logarithmic Sobolev inequality `logSobolevInequality_gibbsMeasure_of_bounded_perturbation`.",
       "gaps": [
         "104.44"
       ],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "sorryAx",
@@ -6072,11 +6342,11 @@
       "name": "CKSD.wassersteinLaw",
       "kind": "def",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 534,
+      "line": 540,
       "doc": "The underlying measure of a law in the Wasserstein space `P₂(ℝᵈ)`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6087,11 +6357,11 @@
       "name": "CKSD.jkoFreeEnergy",
       "kind": "def",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 540,
+      "line": 546,
       "doc": "Free energy `∫ ρ log ρ + ∫ V dρ` on the Wasserstein space, with the entropy relative to Lebesgue measure; it is `⊤` for laws without a density.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6102,11 +6372,11 @@
       "name": "CKSD.wassersteinDensity",
       "kind": "def",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 546,
+      "line": 552,
       "doc": "Real Lebesgue density of the absolutely continuous part of a Wasserstein law. This represents the whole law when that law is absolutely continuous with respect to volume.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6117,13 +6387,13 @@
       "name": "CKSD.jko_scheme_tendsto_fokkerPlanck",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 554,
+      "line": 560,
       "doc": "GAPS 104.43: the Jordan–Kinderlehrer–Otto theorem. Every JKO step for the free energy has a unique minimizer, and the piecewise-constant interpolations converge, weakly in `L¹` at every time and strongly in `L¹((0,T) × ℝᵈ)`, to a weak solution of `∂ₜρ = Δρ + ∇·(ρ∇V)` with datum `ρ₀`. Uniqueness of the limiting weak solution is not part of this statement.",
       "gaps": [
         "104.43"
       ],
       "admitted": true,
-      "source_sha256": "dd2e72fc7dfed7904045d0566fd5638143148910da6fb1cb4a73e102ee26a6b5",
+      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
       "axioms": [
         "propext",
         "sorryAx",
@@ -6131,6 +6401,547 @@
         "Quot.sound"
       ],
       "proof": "admitted"
+    },
+    {
+      "name": "CKSD.integrable_schwartz_sub",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 39,
+      "doc": "A translate of a Schwartz function is integrable under every finite measure.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.hasFDerivAt_integral_schwartz_sub",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 46,
+      "doc": "Differentiation commutes with averaging translates of a Schwartz function under a finite measure.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.contDiff_integral_schwartz_sub_nat",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 67,
+      "doc": "A finite-measure average of Schwartz translates has derivatives of every finite order.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.contDiff_integral_schwartz_sub",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 86,
+      "doc": "A finite-measure average of translates of a Schwartz function is smooth.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.gaussianSmoothingKernel",
+      "kind": "def",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 98,
+      "doc": "The Lebesgue density of the centered isotropic Gaussian with standard deviation `σ`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.exists_schwartz_gaussianSmoothingKernel",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 104,
+      "doc": "At positive scale the isotropic Gaussian density is a Schwartz function, using TauCeti's Gaussian.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_affine_stdGaussian_eq_withDensity",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 123,
+      "doc": "An affine image of the standard Gaussian has the translated isotropic Gaussian density. The change of variables uses TauCeti's `Measure.map_affine_withDensity`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.gaussianSmoothingKernel_pos",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 160,
+      "doc": "The isotropic Gaussian density is strictly positive at positive scale.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.contDiff_gaussianSmoothingKernel",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 167,
+      "doc": "The isotropic Gaussian density is smooth at positive scale.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.smooth_positive_gaussianSmoothing",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 175,
+      "doc": "Convolving any probability measure with a nondegenerate isotropic Gaussian gives a smooth strictly positive density.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_add_gaussian_eq_withDensity",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 192,
+      "doc": "The law of the sum of independent signals and Gaussian noise has the averaged Gaussian density.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.condExp_of_joint_density",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 228,
+      "doc": "Conditional expectation from a joint density: divide the density-weighted numerator by the positive marginal density. The observation space needs no topological structure.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.fderiv_gaussianSmoothingKernel",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 296,
+      "doc": "The derivative of the isotropic Gaussian density is its density times the linear score.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.gradient_gaussianSmoothing",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 320,
+      "doc": "The gradient of a Gaussian convolution is the average of the Gaussian density gradients.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_pair_add_gaussian_eq_withDensity",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/GaussianSmoothing.lean",
+      "line": 352,
+      "doc": "The joint law of a signal and its sum with independent Gaussian noise has the Gaussian likelihood density relative to signal law times Lebesgue measure.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "90f51392b923270f6e192736cc6cbb14a9cb55c7a08127c2b24c6f2bd2f67b7c",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.statisticalHellingerDistance",
+      "kind": "def",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 32,
+      "doc": "Real Hellinger adapter in the convention `h² = integral (sqrt p - sqrt q)²` for probability measures. For arbitrary measures an infinite squared divergence is totalized to zero by `ENNReal.toReal`; distance interpretations require finite divergence.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.integral_sqrt_rnDeriv_eq_integral_sqrt_density_mul",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 36,
+      "doc": "Hellinger affinity in terms of densities relative to a common dominating measure.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.HasDensity.memLp_sqrt",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 75,
+      "doc": "The square root of an integrable nonnegative density belongs to `L²`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.statisticalHellingerDistance_sq_eq_integral",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 82,
+      "doc": "Hellinger distance is the `L²` distance between square roots of densities.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.hellingerScore",
+      "kind": "def",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 104,
+      "doc": "Bounded Hellinger score separating a null density `p` from an alternative density `q`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.measurable_hellingerScore",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 108,
+      "doc": "The Hellinger score is measurable.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.abs_hellingerScore_le_one",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 113,
+      "doc": "The Hellinger score takes values in `[-1,1]`, including points where both densities vanish.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.mul_hellingerScore_sq_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 124,
+      "doc": "A density-weighted squared Hellinger score is at most the squared square-root difference.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.sub_mul_hellingerScore_eq",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 148,
+      "doc": "The mean separation identity for the Hellinger score.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.abs_integral_mul_le_sqrt",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 163,
+      "doc": "Cauchy–Schwarz for real `L²` functions, in square-root moment form.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.memLp_hellingerScore",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 175,
+      "doc": "The bounded Hellinger score belongs to every `Lᵖ` under a finite measure.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_hellingerScore_sub_eq",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 182,
+      "doc": "The difference between the alternative and null score means is the squared Hellinger distance.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_hellingerScore_sq_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 197,
+      "doc": "The squared score has expectation at most the squared Hellinger distance under its alternative.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.hellingerScore_swap",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 209,
+      "doc": "Exchanging the densities negates the Hellinger score.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.abs_integral_sub_le_hellinger",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 218,
+      "doc": "Changing a law by Hellinger distance `ρ` changes the mean of a bounded score by at most `2 ρ a + ρ²`, when the score's second moment under the reference law is at most `a²`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_sq_le_of_hellinger",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 281,
+      "doc": "A bounded score's second moment under a perturbed law is at most twice its reference second moment plus twice the squared Hellinger distance.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.statisticalHellingerDistance_triangle_of_hasDensity",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerGeometry.lean",
+      "line": 314,
+      "doc": "Triangle inequality for Hellinger distance among laws with a common dominating measure.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ff07701f85e045fccd7e0fe903a3f50468638e7a68f68798ce886303468cf278",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measureReal_centered_hellingerScore_sum_ge_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerTests.lean",
+      "line": 30,
+      "doc": "A Bernstein bound for an iid bounded score with second moment at most `3h²`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "88b5cc93027498437a1b3fbdc65b83038eee3b4af80a1fc6e6db3968f671e090",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_hellinger_ball_test",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/HellingerTests.lean",
+      "line": 88,
+      "doc": "Exponentially accurate tests of a law against a Hellinger ball around an alternative. The score test is uniform over all dominated laws in the ball of radius `h(P,Q)/8`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "88b5cc93027498437a1b3fbdc65b83038eee3b4af80a1fc6e6db3968f671e090",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
     },
     {
       "name": "CKSD.seqDistSq",
@@ -9184,26 +9995,11 @@
       "name": "CKSD.dominatedPosterior",
       "kind": "def",
       "file": "CKSD/Bayes/PosteriorContraction.lean",
-      "line": 44,
+      "line": 46,
       "doc": "Posterior measure obtained by multiplying a prior by the finite-sample likelihood.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "3587f95ca21a0813b28ed06b2ff895fd3c4e0a3648b64d4fe7150109affc84b0",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ]
-    },
-    {
-      "name": "CKSD.statisticalHellingerDistance",
-      "kind": "def",
-      "file": "CKSD/Bayes/PosteriorContraction.lean",
-      "line": 52,
-      "doc": "Real Hellinger adapter in the convention `h² = integral (sqrt p - sqrt q)²` for probability measures. For arbitrary measures an infinite squared divergence is totalized to zero by `ENNReal.toReal`; distance interpretations require finite divergence.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "3587f95ca21a0813b28ed06b2ff895fd3c4e0a3648b64d4fe7150109affc84b0",
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -9214,11 +10010,11 @@
       "name": "CKSD.HasUniformlyConsistentTests",
       "kind": "def",
       "file": "CKSD/Bayes/PosteriorContraction.lean",
-      "line": 56,
+      "line": 52,
       "doc": "Existence of uniformly consistent tests against a fixed parameter set.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "3587f95ca21a0813b28ed06b2ff895fd3c4e0a3648b64d4fe7150109affc84b0",
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -9226,16 +10022,48 @@
       ]
     },
     {
+      "name": "CKSD.lintegral_tested_numerator_le_add_prior_compl",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/PosteriorContraction.lean",
+      "line": 89,
+      "doc": "A test with type II error at most `b` on an exceptional set inside a sieve bounds the expected tested likelihood numerator by `b` plus the prior mass outside the sieve.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendstoInMeasure_posterior_of_testedNumerator",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/PosteriorContraction.lean",
+      "line": 186,
+      "doc": "Vanishing test error and a tested likelihood numerator small relative to an evidence lower bound imply vanishing posterior mass for varying measurable exceptional sets.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.tendstoInMeasure_posterior_compl_of_kl_support",
       "kind": "theorem",
       "file": "CKSD/Bayes/PosteriorContraction.lean",
-      "line": 159,
+      "line": 350,
       "doc": "GAPS 104.18: Schwartz's posterior consistency theorem. If the prior charges every Kullback–Leibler neighbourhood `{θ | KL(P θ₀ ‖ P θ) < ε}` of the true parameter and there are uniformly consistent tests of `θ₀` against `Uᶜ`, then the posterior mass of `Uᶜ` tends to zero in probability under the true law.",
       "gaps": [
         "104.18"
       ],
       "admitted": false,
-      "source_sha256": "3587f95ca21a0813b28ed06b2ff895fd3c4e0a3648b64d4fe7150109affc84b0",
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -9247,11 +10075,11 @@
       "name": "CKSD.HasHellingerSieveCover",
       "kind": "def",
       "file": "CKSD/Bayes/PosteriorContraction.lean",
-      "line": 332,
+      "line": 414,
       "doc": "Finite internal Hellinger cover of a sieve, with an explicit entropy cardinality bound.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "3587f95ca21a0813b28ed06b2ff895fd3c4e0a3648b64d4fe7150109affc84b0",
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -9259,33 +10087,64 @@
       ]
     },
     {
+      "name": "CKSD.hasPosteriorContractionRate_of_sieve_tests",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/PosteriorContraction.lean",
+      "line": 423,
+      "doc": "Exponentially small type II errors on a sieve, small prior tails, and KL/second-moment prior mass imply posterior contraction. The test construction is separated from the evidence and likelihood-ratio argument.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_hellinger_sieve_tests_of_ball_tests",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/PosteriorContraction.lean",
+      "line": 515,
+      "doc": "Robust tests of Hellinger balls and finite sieve covers give exponentially consistent sieve tests at a sufficiently large multiple of the covering radius.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.exists_posterior_hellinger_contraction",
       "kind": "theorem",
       "file": "CKSD/Bayes/PosteriorContraction.lean",
-      "line": 344,
+      "line": 639,
       "doc": "GAPS 104.19: the Ghosal–Ghosh–van der Vaart theorem. Suppose `εₙ → 0` with `n εₙ² → ∞`, the sieves `Θₙ` have `εₙ/2`-Hellinger covers of cardinality at most `e^{n εₙ²}`, the prior mass outside `Θₙ` is at most `e^{-(C+4) n εₙ²}`, and the prior mass of the Kullback–Leibler neighbourhood `{KL ≤ εₙ², V₂ ≤ εₙ²}` is at least `e^{-C n εₙ²}`. Then the posterior contracts at rate `εₙ` in Hellinger distance. The finite-cover condition spells out the entropy bound without imposing a metric on parameter labels.",
       "gaps": [
         "104.19"
       ],
-      "admitted": true,
-      "source_sha256": "3587f95ca21a0813b28ed06b2ff895fd3c4e0a3648b64d4fe7150109affc84b0",
+      "admitted": false,
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.statisticalHellingerDistance_nonneg",
       "kind": "theorem",
       "file": "CKSD/Bayes/PosteriorContraction.lean",
-      "line": 368,
+      "line": 683,
       "doc": "Statistical Hellinger distance is nonnegative by its definition.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "3587f95ca21a0813b28ed06b2ff895fd3c4e0a3648b64d4fe7150109affc84b0",
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -9297,11 +10156,11 @@
       "name": "CKSD.statisticalHellingerDistance_self",
       "kind": "theorem",
       "file": "CKSD/Bayes/PosteriorContraction.lean",
-      "line": 372,
+      "line": 687,
       "doc": "The Hellinger adapter vanishes when its two laws agree, by Statlib.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "3587f95ca21a0813b28ed06b2ff895fd3c4e0a3648b64d4fe7150109affc84b0",
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -9313,11 +10172,11 @@
       "name": "CKSD.statisticalHellingerDistance_comm",
       "kind": "theorem",
       "file": "CKSD/Bayes/PosteriorContraction.lean",
-      "line": 377,
+      "line": 692,
       "doc": "Symmetry of the Hellinger adapter follows from Statlib's symmetry theorem.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "3587f95ca21a0813b28ed06b2ff895fd3c4e0a3648b64d4fe7150109affc84b0",
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -9329,11 +10188,11 @@
       "name": "CKSD.dominatedPosterior_empty",
       "kind": "theorem",
       "file": "CKSD/Bayes/PosteriorContraction.lean",
-      "line": 383,
+      "line": 698,
       "doc": "Before any observations, a probability prior is its own dominated posterior.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "3587f95ca21a0813b28ed06b2ff895fd3c4e0a3648b64d4fe7150109affc84b0",
+      "source_sha256": "21f35ffad58a372137b90d7b6f9bd2393cea6cf2aebafc787b17e121e9221f7e",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -10962,11 +11821,11 @@
       "name": "CKSD.integrable_kernel_of_bounded",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 57,
+      "line": 58,
       "doc": "A bounded kernel that is measurable on the product space is integrable against every finite measure on the product.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -10978,11 +11837,11 @@
       "name": "CKSD.IsCharacteristicKernel.squaredMMD_eq_zero_iff",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 66,
+      "line": 67,
       "doc": "For a bounded measurable characteristic kernel, the squared MMD of two probability laws vanishes exactly when the laws are equal.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -10994,11 +11853,11 @@
       "name": "CKSD.squaredMMD_eq_norm_kernelMeanEmbedding_sub_sq",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 76,
+      "line": 77,
       "doc": "For a positive semidefinite kernel `k` whose feature map is integrable for `P` and `Q`, and which is integrable against the three product measures, the squared MMD is the squared distance `‖m_P - m_Q‖²` of TauCeti's kernel mean embeddings.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11010,11 +11869,11 @@
       "name": "CKSD.unbiasedSquaredMMD_inner_eq",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 90,
+      "line": 91,
       "doc": "The unbiased squared MMD of an inner-product feature kernel, in terms of the two feature means `A = n⁻¹ ∑ φ(x_i)` and `B = n⁻¹ ∑ φ(y_i)`: for `n ≥ 2` it is `‖A - B‖²` plus the correction `(‖A‖² + ‖B‖² - n⁻¹ ∑ (‖φ(x_i)‖² + ‖φ(y_i)‖²)) / (n - 1)`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11026,11 +11885,11 @@
       "name": "CKSD.tendstoInDistribution_sqrt_smul_sampleAverage_feature_sub",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 236,
+      "line": 237,
       "doc": "The central limit theorem behind the null limit of MMD: for a bounded measurable feature map `φ` and independent pairs `(X_i, Y_i)` with law `P ⊗ P`, the scaled mean difference `√n (φ̄_X - φ̄_Y)` converges in distribution to `N(0, 2C)`, `C` the covariance matrix of `φ(X_1)`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11042,13 +11901,13 @@
       "name": "CKSD.tendstoInDistribution_unbiasedSquaredMMD_null",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 285,
+      "line": 286,
       "doc": "GAPS 108.61, the null limit of MMD for a bounded finite-dimensional feature map. Let `φ : X → ℝ^d` be bounded and measurable, `k(x, y) = ⟨φ x, φ y⟩`, and let the pairs `(X_i, Y_i)` be independent with law `P ⊗ P`. With `C` the covariance matrix of `φ(X_1)`, the scaled unbiased estimator `n MMD_u²` converges in distribution to `2 (‖Z‖² - tr C)` and the scaled plug-in estimator `n ‖φ̄_X - φ̄_Y‖²` to `2 ‖Z‖²`, where `Z ∼ N(0, C)`.",
       "gaps": [
         "108.61"
       ],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11060,11 +11919,11 @@
       "name": "CKSD.integral_mmdLinearTerm",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 431,
+      "line": 432,
       "doc": "The linear term of the alternative MMD central limit theorem: for a bounded measurable feature map `φ` into `ℝ^d`, `δ = E_P φ - E_Q φ` and `s(x, y) = 2 ⟨φ x - φ y - δ, δ⟩`, the statistic `s` is centered under `P ⊗ Q` and its second moment is `4 Var_P ⟨φ, δ⟩ + 4 Var_Q ⟨φ, δ⟩`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11076,13 +11935,13 @@
       "name": "CKSD.tendstoInDistribution_unbiasedSquaredMMD_alternative",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 558,
+      "line": 559,
       "doc": "GAPS 108.61, alternative MMD CLT for a bounded finite-dimensional feature map. Let the pairs `(X_i, Y_i)` be independent with law `P ⊗ Q` and `δ = E φ(X) - E φ(Y)`. Then `√n (MMD_u² - ‖δ‖²)` converges in distribution to the centered normal law with variance `4 Var_P ⟨φ, δ⟩ + 4 Var_Q ⟨φ, δ⟩`.",
       "gaps": [
         "108.61"
       ],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11094,13 +11953,13 @@
       "name": "CKSD.energy_distance_nonneg_eq_zero_iff_and_eq_squaredMMD",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 705,
+      "line": 706,
       "doc": "GAPS 108.62: for laws `P, Q` on `ℝ^d` with finite first moments, the energy distance `D = 2 E‖X - Y‖ - E‖X - X'‖ - E‖Y - Y'‖` is nonnegative, vanishes exactly when `P = Q`, and equals twice the squared MMD of the distance kernel `CKSD.distanceKernel`.",
       "gaps": [
         "108.62"
       ],
       "admitted": true,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "sorryAx",
@@ -11113,13 +11972,13 @@
       "name": "CKSD.distance_covariance_nonneg_eq_zero_iff_and_eq_squaredMMD",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 718,
+      "line": 719,
       "doc": "GAPS 108.62: for a law `P` on `ℝ^d × ℝ^e` with finite second moments and marginals `μ, ν`, the squared distance covariance `V = E[A(X, X') B(Y, Y')]` of the doubly centered distances is nonnegative, vanishes exactly when `P = μ ⊗ ν`, and equals four times the squared MMD (the HSIC) of the product of the two distance kernels between `P` and `μ ⊗ ν`.",
       "gaps": [
         "108.62"
       ],
       "admitted": true,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "sorryAx",
@@ -11132,13 +11991,13 @@
       "name": "CKSD.squaredMMD_joint_prod_eq_zero_iff_indepFun",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 732,
+      "line": 733,
       "doc": "GAPS 108.63, independence criterion for a characteristic product-space kernel: for a bounded measurable characteristic kernel `k` on `X × Y` and a law `P` of a pair, the HSIC `MMD²(P, P_X ⊗ P_Y)` vanishes exactly when the two coordinates are independent under `P`.",
       "gaps": [
         "108.63"
       ],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11150,30 +12009,29 @@
       "name": "CKSD.isCharacteristicKernel_iff_spectral_measure_full_support",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 748,
+      "line": 749,
       "doc": "GAPS 108.68(c), characteristicness iff the symmetric spectral measure has full support: for a symmetric finite measure `L` on `ℝ^d`, `d ≥ 1`, the translation-invariant kernel `k(x, y) = ∫ cos ⟨w, x - y⟩ dL(w)` is characteristic exactly when every open ball has positive `L`-measure.",
       "gaps": [
         "108.68"
       ],
-      "admitted": true,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "admitted": false,
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.integrable_coord_mul_coord",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 756,
+      "line": 758,
       "doc": "Products of two coordinates are integrable under a law with finite second moments.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11185,11 +12043,11 @@
       "name": "CKSD.integrable_coord",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 765,
+      "line": 767,
       "doc": "Coordinates are integrable under a law with integrable identity.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11201,11 +12059,11 @@
       "name": "CKSD.integral_coord",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 770,
+      "line": 772,
       "doc": "The coordinates of the mean are the means of the coordinates.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11217,11 +12075,11 @@
       "name": "CKSD.integral_quadratic_kernel_prod",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 777,
+      "line": 779,
       "doc": "The product-measure integral of the quadratic polynomial kernel `(1 + ⟨x, y⟩)²` in terms of first and second moments.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11233,13 +12091,13 @@
       "name": "CKSD.squaredMMD_quadratic_polynomial_eq",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 828,
+      "line": 830,
       "doc": "GAPS 108.68(d), quadratic-polynomial MMD depends only on the first two moments: for laws with finite second moments, the squared MMD of the kernel `(1 + ⟨x, y⟩)²` is `2 ‖m_P - m_Q‖² + ∑_{i,j} (E_P[x_i x_j] - E_Q[x_i x_j])²`. In particular this kernel is not characteristic.",
       "gaps": [
         "108.68"
       ],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11251,11 +12109,11 @@
       "name": "CKSD.continuous_squaredMMD_probabilityMeasure",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 850,
+      "line": 852,
       "doc": "For a bounded continuous kernel, squared MMD is continuous in its first probability law.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11267,13 +12125,13 @@
       "name": "CKSD.tendsto_probabilityMeasure_iff_tendsto_squaredMMD_of_tight",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 872,
+      "line": 874,
       "doc": "GAPS 108.70, MMD metrizes weak convergence along uniformly tight sequences: for a bounded continuous characteristic kernel on a separable metric space and a uniformly tight sequence of probability laws `P n`, `P n → Q` weakly (in Mathlib's `ProbabilityMeasure` topology) exactly when `MMD²(P n, Q) → 0`.",
       "gaps": [
         "108.70"
       ],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11285,13 +12143,13 @@
       "name": "CKSD.integral_langevin_stein_operator_eq_zero",
       "kind": "theorem",
       "file": "CKSD/Geometry/Kernels.lean",
-      "line": 923,
+      "line": 925,
       "doc": "GAPS 108.71, scalar Langevin Stein identity for bounded continuously differentiable tests: if `P` has a positive `C¹` density `p` with integrable score `p'/p`, then `E_P[g (p'/p) + g'] = 0` for every bounded `C¹` function `g` with integrable derivative.",
       "gaps": [
         "108.71"
       ],
       "admitted": false,
-      "source_sha256": "740a5d5da2b20e06e37b0580897375772ba6c71c77d30764b0484ef61eda405f",
+      "source_sha256": "be9c5ee35114e0015a6b7fe7cbe22ffc28c1035eb1253112f11b538a0cde80ac",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -15495,6 +16353,166 @@
       "proof": "proved"
     },
     {
+      "name": "CKSD.integral_cos_inner_eq_re_charFun",
+      "kind": "theorem",
+      "file": "CKSD/Geometry/SpectralKernels.lean",
+      "line": 43,
+      "doc": "The cosine moment is the real part of the characteristic function.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d25d3127b3e20ad4e1e3af05dbccae740a1dc31abd27b8ecf0ebb507dd7deb71",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_sin_inner_eq_im_charFun",
+      "kind": "theorem",
+      "file": "CKSD/Geometry/SpectralKernels.lean",
+      "line": 57,
+      "doc": "The sine moment is the imaginary part of the characteristic function.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d25d3127b3e20ad4e1e3af05dbccae740a1dc31abd27b8ecf0ebb507dd7deb71",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integrable_cos_inner_sub_prod",
+      "kind": "theorem",
+      "file": "CKSD/Geometry/SpectralKernels.lean",
+      "line": 70,
+      "doc": "The cosine of a projected difference is integrable under every finite product law.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d25d3127b3e20ad4e1e3af05dbccae740a1dc31abd27b8ecf0ebb507dd7deb71",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_cos_inner_sub_prod",
+      "kind": "theorem",
+      "file": "CKSD/Geometry/SpectralKernels.lean",
+      "line": 77,
+      "doc": "The product-law cosine moment is the Euclidean pairing of characteristic functions.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d25d3127b3e20ad4e1e3af05dbccae740a1dc31abd27b8ecf0ebb507dd7deb71",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_spectralKernel_prod",
+      "kind": "theorem",
+      "file": "CKSD/Geometry/SpectralKernels.lean",
+      "line": 97,
+      "doc": "Integrating a translation-invariant spectral kernel against a product law interchanges its spectral and observation integrals.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d25d3127b3e20ad4e1e3af05dbccae740a1dc31abd27b8ecf0ebb507dd7deb71",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.squaredMMD_spectralKernel_eq_integral",
+      "kind": "theorem",
+      "file": "CKSD/Geometry/SpectralKernels.lean",
+      "line": 111,
+      "doc": "The spectral expression for squared MMD is the weighted squared distance between characteristic functions.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d25d3127b3e20ad4e1e3af05dbccae740a1dc31abd27b8ecf0ebb507dd7deb71",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.isCharacteristicKernel_spectral_of_full_support",
+      "kind": "theorem",
+      "file": "CKSD/Geometry/SpectralKernels.lean",
+      "line": 149,
+      "doc": "A spectral measure charging every ball produces a characteristic translation-invariant kernel, by uniqueness of characteristic functions.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d25d3127b3e20ad4e1e3af05dbccae740a1dc31abd27b8ecf0ebb507dd7deb71",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_probabilityMeasures_charFun_sub_eq_of_even_bump",
+      "kind": "theorem",
+      "file": "CKSD/Geometry/SpectralKernels.lean",
+      "line": 183,
+      "doc": "A nonzero even smooth Fourier perturbation vanishing at the origin is the difference of two probability characteristic functions up to a positive normalization.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d25d3127b3e20ad4e1e3af05dbccae740a1dc31abd27b8ecf0ebb507dd7deb71",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_even_smooth_bump_of_spectral_gap",
+      "kind": "theorem",
+      "file": "CKSD/Geometry/SpectralKernels.lean",
+      "line": 303,
+      "doc": "A ball missing from a symmetric spectral measure contains the support of a nonzero even smooth Fourier perturbation which vanishes at the origin.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d25d3127b3e20ad4e1e3af05dbccae740a1dc31abd27b8ecf0ebb507dd7deb71",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.isCharacteristicKernel_spectral_iff",
+      "kind": "theorem",
+      "file": "CKSD/Geometry/SpectralKernels.lean",
+      "line": 355,
+      "doc": "A translation-invariant kernel with a finite symmetric spectral measure is characteristic exactly when the spectral measure charges every open ball.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "d25d3127b3e20ad4e1e3af05dbccae740a1dc31abd27b8ecf0ebb507dd7deb71",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.quadraticEntropicCost",
       "kind": "def",
       "file": "CKSD/Geometry/StatisticalTransport.lean",
@@ -17162,35 +18180,50 @@
       "proof": "admitted"
     },
     {
+      "name": "CKSD.exists_compact_convex_game_saddle_point",
+      "kind": "theorem",
+      "file": "CKSD/Inference/ConvexGames.lean",
+      "line": 29,
+      "doc": "A compact convex family of finite risk vectors has a least-favourable probability vector and a risk vector forming a saddle point for weighted risk.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "84dc3d3aa450e2071c140fd4fd2f026606ef342d518b62b08aefbb8e6f451aa4",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.exists_statistical_game_saddle_point",
       "kind": "theorem",
       "file": "CKSD/Inference/Decision.lean",
-      "line": 52,
+      "line": 54,
       "doc": "GAPS 101.32: the minimax theorem for statistical games with finitely many parameters and actions. There are a randomized rule `δ` and a prior `π` such that `δ` is a Bayes rule for `π` and the risk of `δ` at every parameter is at most its Bayes risk; hence `δ` is minimax, `π` is least favorable, and the minimax and maximin values agree.",
       "gaps": [
         "101.32"
       ],
-      "admitted": true,
-      "source_sha256": "3a2e330245dd4eafa1c01fb9529ed254e32a59549a456f69174bf87bbc138ce8",
+      "admitted": false,
+      "source_sha256": "d4fd881f5d9cbc5eee0a7a16cac28425d0bbf3d867567ac2484319d51dda99df",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.exists_admissible_bayes_risk_le_of_closed_convex",
       "kind": "theorem",
       "file": "CKSD/Inference/Decision.lean",
-      "line": 65,
+      "line": 102,
       "doc": "GAPS 101.37: the complete class theorem for a finite parameter set, in risk-set form. Let `C` be a closed convex set of risk vectors in `ℝ^d`, `d > 0`, bounded below. Every `x ∈ C` is dominated by an admissible point `y ∈ C` (no point of `C` is at most `y` coordinatewise and strictly smaller somewhere) that is Bayes for some prior `w` on the `d` parameter values.",
       "gaps": [
         "101.37"
       ],
       "admitted": false,
-      "source_sha256": "3a2e330245dd4eafa1c01fb9529ed254e32a59549a456f69174bf87bbc138ce8",
+      "source_sha256": "d4fd881f5d9cbc5eee0a7a16cac28425d0bbf3d867567ac2484319d51dda99df",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -17202,13 +18235,13 @@
       "name": "CKSD.exists_equivariant_rule_risk_eq_average",
       "kind": "theorem",
       "file": "CKSD/Inference/Decision.lean",
-      "line": 159,
+      "line": 196,
       "doc": "GAPS 101.39: the averaging (Hunt–Stein) construction for a finite group with its uniform Haar measure. In an invariant decision problem with bounded measurable invariant loss, every randomized rule `δ` has an equivariant rule `bar` whose risk at `θ` is the average of the risks of `δ` over the orbit of `θ`. The minimax consequences are not included.",
       "gaps": [
         "101.39"
       ],
       "admitted": false,
-      "source_sha256": "3a2e330245dd4eafa1c01fb9529ed254e32a59549a456f69174bf87bbc138ce8",
+      "source_sha256": "d4fd881f5d9cbc5eee0a7a16cac28425d0bbf3d867567ac2484319d51dda99df",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -17220,13 +18253,13 @@
       "name": "CKSD.exists_analytic_inverse_exponential_family_mean",
       "kind": "theorem",
       "file": "CKSD/Inference/Decision.lean",
-      "line": 238,
+      "line": 275,
       "doc": "GAPS 101.42: the mean parametrization of a regular minimal natural exponential family. For a nonzero σ-finite base measure `ν` on a finite-dimensional real inner product space `E` whose natural parameter space `N` is open and nonempty, the mean map `η ↦ ∫ x d(P η)(x)` is real analytic on `N` and is a bijection of `N` onto the interior `K` of the convex hull of the support of `ν`, with real analytic inverse on `K`.",
       "gaps": [
         "101.42"
       ],
       "admitted": false,
-      "source_sha256": "3a2e330245dd4eafa1c01fb9529ed254e32a59549a456f69174bf87bbc138ce8",
+      "source_sha256": "d4fd881f5d9cbc5eee0a7a16cac28425d0bbf3d867567ac2484319d51dda99df",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -17238,13 +18271,13 @@
       "name": "CKSD.isAdmissibleRisk_of_blyth",
       "kind": "theorem",
       "file": "CKSD/Inference/Decision.lean",
-      "line": 305,
+      "line": 342,
       "doc": "GAPS 101.58: Blyth's method. Let `Θ` be a convex subset of Euclidean space with nonempty interior and let the rules `δ` in a class `D` have continuous risk functions `R δ`. Suppose there are finite measures `π n` on `Θ` with Bayes rules `δ n`, giving uniformly positive mass to every convex subset with nonempty interior for large `n`, such that the Bayes risk excess `∫ R δ₀ dπ n - ∫ R (δ n) dπ n` of `δ₀` tends to zero. Then `δ₀` is admissible.",
       "gaps": [
         "101.58"
       ],
       "admitted": false,
-      "source_sha256": "3a2e330245dd4eafa1c01fb9529ed254e32a59549a456f69174bf87bbc138ce8",
+      "source_sha256": "d4fd881f5d9cbc5eee0a7a16cac28425d0bbf3d867567ac2484319d51dda99df",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -17256,11 +18289,11 @@
       "name": "CKSD.IsMoreInformative",
       "kind": "def",
       "file": "CKSD/Inference/Decision.lean",
-      "line": 366,
+      "line": 403,
       "doc": "The experiment `P` is more informative than `Q` (Blackwell): for every finite decision problem with bounded loss, every randomized rule based on `Q` is matched, at every parameter, by a rule based on `P` with risk at most its risk.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "3a2e330245dd4eafa1c01fb9529ed254e32a59549a456f69174bf87bbc138ce8",
+      "source_sha256": "d4fd881f5d9cbc5eee0a7a16cac28425d0bbf3d867567ac2484319d51dda99df",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -17271,13 +18304,13 @@
       "name": "CKSD.isMoreInformative_iff_isGarbling",
       "kind": "theorem",
       "file": "CKSD/Inference/Decision.lean",
-      "line": 376,
+      "line": 413,
       "doc": "GAPS 101.62: Blackwell's comparison theorem for a finite parameter set. A family of probability laws `P` is more informative than `Q`, whose sample space is standard Borel, if and only if `Q` is a garbling of `P`. Both families are dominated, by `∑ θ, P θ` and `∑ θ, Q θ`, since the parameter set is finite.",
       "gaps": [
         "101.62"
       ],
       "admitted": true,
-      "source_sha256": "3a2e330245dd4eafa1c01fb9529ed254e32a59549a456f69174bf87bbc138ce8",
+      "source_sha256": "d4fd881f5d9cbc5eee0a7a16cac28425d0bbf3d867567ac2484319d51dda99df",
       "axioms": [
         "propext",
         "sorryAx",
@@ -18302,6 +19335,243 @@
       ],
       "admitted": false,
       "source_sha256": "a40caba87612b120f2396840cf16f3222d1ee87e22f90c627be2b87d3fa9dbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.convex_l2OrderInterval",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 37,
+      "doc": "The nonnegative order interval in real `L²` is convex.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.isCompact_weak_l2OrderInterval",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 56,
+      "doc": "Nonnegative order intervals in real `L²` are weakly compact, by reflexivity.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.continuous_weak_l2Inner",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 69,
+      "doc": "Evaluation of an `L²` inner product is weakly continuous in its second argument.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.l2Const_one_nonneg",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 74,
+      "doc": "The constant-one element of real `L²` is nonnegative.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.weakDecisionSimplex",
+      "kind": "def",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 87,
+      "doc": "A probability decision rule represented in weak `L²` coordinates.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.isCompact_weakDecisionSimplex",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 92,
+      "doc": "Weak compactness of finite randomized action probabilities.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.convex_weakDecisionSimplex",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 99,
+      "doc": "The finite decision simplex is convex in the product weak topology.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.memLp_decision_weight",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 118,
+      "doc": "Each action probability of a decision rule is square integrable under a finite measure.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.decisionWeights",
+      "kind": "def",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 128,
+      "doc": "The weak `L²` coordinates of the action probabilities of a randomized decision rule.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.decisionWeights_mem_weakDecisionSimplex",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 132,
+      "doc": "A decision rule has weak `L²` action probabilities in the simplex.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_decisionRule_of_weakDecisionSimplex",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 166,
+      "doc": "Every weak `L²` point of the decision simplex is represented by a Markov kernel.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.memLp_rnDeriv_of_le",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 231,
+      "doc": "The density of a measure bounded by a finite measure is in `L²`, with values in `[0,1]`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.l2DominatedDensity",
+      "kind": "def",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 239,
+      "doc": "The `L²` Radon–Nikodym density of a measure dominated by a finite measure.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.risk_eq_sum_l2Inner",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 243,
+      "doc": "Risk for a finite action space is a finite sum of `L²` pairings with model densities.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.isCompact_convex_range_risk",
+      "kind": "theorem",
+      "file": "CKSD/Inference/FiniteDecision.lean",
+      "line": 282,
+      "doc": "Finite-action risk vectors form a compact convex set when a finite measure dominates all model laws with bounded densities. The compactness uses weak `L²` randomizations.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "43dc2f9c78285ebffdb46c0a56d2f270d4714b1379e224011870917cb82bfbab",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -27519,6 +28789,70 @@
       "proof": "proved"
     },
     {
+      "name": "CKSD.tendstoInMeasure_eval_of_uniform_on_balls",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/ConvexLikelihood.lean",
+      "line": 35,
+      "doc": "Uniform convergence in probability on every norm ball may be evaluated at random points whose norms are bounded in probability.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "e73edadd1109313b9c15e6b49f9484cc05721926d699f0892a1fbd41116f0702",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendstoInMeasure_convex_minValue",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/ConvexLikelihood.lean",
+      "line": 71,
+      "doc": "For random convex functions with identity quadratic limit and tight random linear score, their minimum values are asymptotically minus one half of the squared score norm.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "e73edadd1109313b9c15e6b49f9484cc05721926d699f0892a1fbd41116f0702",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendstoInDistribution_convex_deviance",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/ConvexLikelihood.lean",
+      "line": 142,
+      "doc": "A convex likelihood process with an identity quadratic approximation and asymptotically standard Gaussian score has chi-squared deviance between its full and subspace-constrained minima, with degrees of freedom equal to the codimension of the subspace.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "e73edadd1109313b9c15e6b49f9484cc05721926d699f0892a1fbd41116f0702",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_glm_whitening",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/ConvexLikelihood.lean",
+      "line": 205,
+      "doc": "A positive definite information matrix and positive dispersion admit an invertible linear whitening change of coordinates, with the corresponding score and quadratic identities.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "e73edadd1109313b9c15e6b49f9484cc05721926d699f0892a1fbd41116f0702",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.IsChordalGraph",
       "kind": "def",
       "file": "CKSD/LinearModels/Decomposable.lean",
@@ -30433,11 +31767,11 @@
       "name": "CKSD.exponentialDispersionLaw",
       "kind": "def",
       "file": "CKSD/LinearModels/GLMAsymptotics.lean",
-      "line": 58,
+      "line": 62,
       "doc": "The exponential dispersion law with cumulant `b`, dispersion `φ`, and natural parameter `θ`, relative to the dominating measure `ν`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dc322c9fad342639ec27e7ad107c4749763ddae350b61e2ab10bbcf5db229435",
+      "source_sha256": "bcd6c630584ef50c20cee85f282947bc8fb90fca074c2abc9a0af49f25f54b74",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30448,11 +31782,11 @@
       "name": "CKSD.canonicalGLMInformation",
       "kind": "def",
       "file": "CKSD/LinearModels/GLMAsymptotics.lean",
-      "line": 62,
+      "line": 66,
       "doc": "The canonical-link information matrix `J = E[x xᵀ b''(⟪x, β⟫)]` of one covariate draw.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dc322c9fad342639ec27e7ad107c4749763ddae350b61e2ab10bbcf5db229435",
+      "source_sha256": "bcd6c630584ef50c20cee85f282947bc8fb90fca074c2abc9a0af49f25f54b74",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30463,11 +31797,11 @@
       "name": "CKSD.canonicalGLMLogLikelihood",
       "kind": "def",
       "file": "CKSD/LinearModels/GLMAsymptotics.lean",
-      "line": 68,
+      "line": 72,
       "doc": "The canonical-link log likelihood of the first `n` observations, up to terms free of `β`, with the dispersion kept.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dc322c9fad342639ec27e7ad107c4749763ddae350b61e2ab10bbcf5db229435",
+      "source_sha256": "bcd6c630584ef50c20cee85f282947bc8fb90fca074c2abc9a0af49f25f54b74",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30478,11 +31812,11 @@
       "name": "CKSD.IsCanonicalGLMRoot",
       "kind": "def",
       "file": "CKSD/LinearModels/GLMAsymptotics.lean",
-      "line": 73,
+      "line": 77,
       "doc": "`β` solves the canonical-link likelihood equations for the first `n` observations.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "dc322c9fad342639ec27e7ad107c4749763ddae350b61e2ab10bbcf5db229435",
+      "source_sha256": "bcd6c630584ef50c20cee85f282947bc8fb90fca074c2abc9a0af49f25f54b74",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30493,13 +31827,13 @@
       "name": "CKSD.tendstoInDistribution_canonicalGLM_root",
       "kind": "theorem",
       "file": "CKSD/LinearModels/GLMAsymptotics.lean",
-      "line": 710,
+      "line": 761,
       "doc": "GAPS 105.3, canonical-link form: for independent and identically distributed pairs `(xᵢ, Yᵢ)` whose response given the covariate is exponential-dispersion with natural parameter `⟪x, β⟫`, with covariates bounded by `R`, smooth cumulant function, natural parameter space all of `ℝ`, and nonsingular `J = E[x xᵀ b''(⟪x, β⟫)]`, every measurable root `β̂` of the likelihood equations satisfies `√n (β̂ - β) ⇒ N(0, φ J⁻¹)`, and `φ̂^{-1/2} J^{1/2} √n (β̂ - β) ⇒ N(0, I_p)` for every consistent `φ̂`. Restrictions of scope: canonical link (`g = (b')⁻¹`), bounded covariates, and natural parameter space `ℝ`; the general twice-differentiable link is not covered. Consistency of `β̂` is not assumed: the log likelihood is concave, so every root is a maximizer, and the argument goes through the convexity lemma `CKSD.tendstoInMeasure_sub_of_convexOn_of_isMinOn`.",
       "gaps": [
         "105.3"
       ],
       "admitted": false,
-      "source_sha256": "dc322c9fad342639ec27e7ad107c4749763ddae350b61e2ab10bbcf5db229435",
+      "source_sha256": "bcd6c630584ef50c20cee85f282947bc8fb90fca074c2abc9a0af49f25f54b74",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30511,20 +31845,19 @@
       "name": "CKSD.tendstoInDistribution_canonicalGLM_deviance",
       "kind": "theorem",
       "file": "CKSD/LinearModels/GLMAsymptotics.lean",
-      "line": 861,
+      "line": 897,
       "doc": "GAPS 105.3, deviance test for nested canonical-link models with known dispersion: if the true coefficient lies in a subspace `L`, `β̂` is a consistent root of the full likelihood equations and `β̃` a consistent maximizer of the likelihood over `L`, then the scaled deviance difference `2 (ℓₙ(β̂) - ℓₙ(β̃))` converges in distribution to chi-squared on `p - dim L` degrees of freedom. Hypotheses as in `tendstoInDistribution_canonicalGLM_root`.",
       "gaps": [
         "105.3"
       ],
-      "admitted": true,
-      "source_sha256": "dc322c9fad342639ec27e7ad107c4749763ddae350b61e2ab10bbcf5db229435",
+      "admitted": false,
+      "source_sha256": "bcd6c630584ef50c20cee85f282947bc8fb90fca074c2abc9a0af49f25f54b74",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.condIndepFun_iff_ae_eq_prod_of_condDistrib_ae_eq",
@@ -30686,6 +32019,117 @@
       ]
     },
     {
+      "name": "CKSD.tendsto_exp_quadratic_atTop_zero",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/GaussianMixtureIdentifiability.lean",
+      "line": 32,
+      "doc": "A quadratic exponential tends to zero when its coefficient pair is lexicographically negative.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "061b6055d8e1ca777e2a92e49a3258f4cbde0159f7cd7313eaf0fee6a99637e3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.coefficients_eq_zero_of_sum_exp_quadratic_eq_zero",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/GaussianMixtureIdentifiability.lean",
+      "line": 47,
+      "doc": "Distinct quadratic exponentials are linearly independent: normalize by the largest lexicographic exponent among the nonzero coefficients and take the limit at infinity.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "061b6055d8e1ca777e2a92e49a3258f4cbde0159f7cd7313eaf0fee6a99637e3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.gaussianParameterPolynomial",
+      "kind": "def",
+      "file": "CKSD/LinearModels/GaussianMixtureIdentifiability.lean",
+      "line": 101,
+      "doc": "The polynomial recording the linear mean term and the quadratic covariance term.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "061b6055d8e1ca777e2a92e49a3258f4cbde0159f7cd7313eaf0fee6a99637e3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.eval_gaussianParameterPolynomial",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/GaussianMixtureIdentifiability.lean",
+      "line": 107,
+      "doc": "Evaluating the Gaussian parameter polynomial gives its mean and covariance quadratic form.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "061b6055d8e1ca777e2a92e49a3258f4cbde0159f7cd7313eaf0fee6a99637e3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.gaussianParameterPolynomial_injective",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/GaussianMixtureIdentifiability.lean",
+      "line": 129,
+      "doc": "The parameter polynomial determines the mean and every Hermitian covariance matrix. The odd part determines the mean, and polarization determines the covariance.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "061b6055d8e1ca777e2a92e49a3258f4cbde0159f7cd7313eaf0fee6a99637e3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_injective_eval_mvPolynomial",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/GaussianMixtureIdentifiability.lean",
+      "line": 168,
+      "doc": "A finite family of distinct real multivariate polynomials has an evaluation at which all values are distinct, since the product of their nonzero pairwise differences is nonzero.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "061b6055d8e1ca777e2a92e49a3258f4cbde0159f7cd7313eaf0fee6a99637e3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.linearIndependent_gaussianExponents",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/GaussianMixtureIdentifiability.lean",
+      "line": 201,
+      "doc": "Distinct means and Hermitian covariance matrices give linearly independent Gaussian exponentials. A polynomial evaluation selects a separating line, and quadratic exponential growth proves linear independence on that line.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "061b6055d8e1ca777e2a92e49a3258f4cbde0159f7cd7313eaf0fee6a99637e3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.InstrumentalVariableObservation",
       "kind": "abbrev",
       "file": "CKSD/LinearModels/InstrumentalVariables.lean",
@@ -30815,11 +32259,11 @@
       "name": "CKSD.GaussianMixtureModel",
       "kind": "structure",
       "file": "CKSD/LinearModels/Mixtures.lean",
-      "line": 45,
+      "line": 49,
       "doc": "Parameters of a reduced finite Gaussian mixture: all components are nondegenerate, distinct, and have positive weight. Laws and densities use the upstream TauCeti construction.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bbe8f94aee670af3284a6e84405b04eb864187fe6fdceefc0083e9fc4f4b320d",
+      "source_sha256": "39d4e846fd19cb8cef5cf7b9c57e0ff5190706da4cb66beec54e36fa11dfeabb",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30830,11 +32274,11 @@
       "name": "CKSD.GaussianMixtureModel.law",
       "kind": "def",
       "file": "CKSD/LinearModels/Mixtures.lean",
-      "line": 60,
+      "line": 64,
       "doc": "Probability law of a reduced Gaussian mixture, using TauCeti's finite mixture.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bbe8f94aee670af3284a6e84405b04eb864187fe6fdceefc0083e9fc4f4b320d",
+      "source_sha256": "39d4e846fd19cb8cef5cf7b9c57e0ff5190706da4cb66beec54e36fa11dfeabb",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30845,11 +32289,11 @@
       "name": "CKSD.GaussianMixtureModel.density",
       "kind": "def",
       "file": "CKSD/LinearModels/Mixtures.lean",
-      "line": 65,
+      "line": 69,
       "doc": "Real Gaussian-mixture density, using TauCeti's canonical continuous density.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bbe8f94aee670af3284a6e84405b04eb864187fe6fdceefc0083e9fc4f4b320d",
+      "source_sha256": "39d4e846fd19cb8cef5cf7b9c57e0ff5190706da4cb66beec54e36fa11dfeabb",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30860,11 +32304,11 @@
       "name": "CKSD.GaussianMixtureModel.logLikelihood",
       "kind": "def",
       "file": "CKSD/LinearModels/Mixtures.lean",
-      "line": 70,
+      "line": 74,
       "doc": "Log likelihood of a reduced Gaussian mixture at a finite observed sample.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bbe8f94aee670af3284a6e84405b04eb864187fe6fdceefc0083e9fc4f4b320d",
+      "source_sha256": "39d4e846fd19cb8cef5cf7b9c57e0ff5190706da4cb66beec54e36fa11dfeabb",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30875,11 +32319,11 @@
       "name": "CKSD.GaussianMixtureModel.density_nonneg",
       "kind": "theorem",
       "file": "CKSD/LinearModels/Mixtures.lean",
-      "line": 81,
+      "line": 85,
       "doc": "The canonical mixture density is nonnegative, by TauCeti.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bbe8f94aee670af3284a6e84405b04eb864187fe6fdceefc0083e9fc4f4b320d",
+      "source_sha256": "39d4e846fd19cb8cef5cf7b9c57e0ff5190706da4cb66beec54e36fa11dfeabb",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30891,11 +32335,11 @@
       "name": "CKSD.GaussianMixtureModel.hasDensity",
       "kind": "theorem",
       "file": "CKSD/LinearModels/Mixtures.lean",
-      "line": 86,
+      "line": 90,
       "doc": "The mixture's real density agrees with its law in CKSD's density interface, using TauCeti.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bbe8f94aee670af3284a6e84405b04eb864187fe6fdceefc0083e9fc4f4b320d",
+      "source_sha256": "39d4e846fd19cb8cef5cf7b9c57e0ff5190706da4cb66beec54e36fa11dfeabb",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30907,32 +32351,31 @@
       "name": "CKSD.GaussianMixtureModel.exists_equiv_of_law_eq",
       "kind": "theorem",
       "file": "CKSD/LinearModels/Mixtures.lean",
-      "line": 99,
+      "line": 103,
       "doc": "GAPS 105.6: finite nondegenerate Gaussian mixtures are identifiable up to relabeling: two reduced mixtures with the same law have the same number of components, and a bijection of the components matches their weights, means and covariances.",
       "gaps": [
         "105.6"
       ],
-      "admitted": true,
-      "source_sha256": "bbe8f94aee670af3284a6e84405b04eb864187fe6fdceefc0083e9fc4f4b320d",
+      "admitted": false,
+      "source_sha256": "39d4e846fd19cb8cef5cf7b9c57e0ff5190706da4cb66beec54e36fa11dfeabb",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.GaussianMixtureModel.not_bddAbove_logLikelihood",
       "kind": "theorem",
       "file": "CKSD/LinearModels/Mixtures.lean",
-      "line": 109,
+      "line": 179,
       "doc": "GAPS 105.6: two Gaussian components already give an unbounded likelihood when their covariances are unconstrained: on a nonempty sample in positive dimension, the log-likelihoods of the two-component reduced mixtures are not bounded above.",
       "gaps": [
         "105.6"
       ],
       "admitted": false,
-      "source_sha256": "bbe8f94aee670af3284a6e84405b04eb864187fe6fdceefc0083e9fc4f4b320d",
+      "source_sha256": "39d4e846fd19cb8cef5cf7b9c57e0ff5190706da4cb66beec54e36fa11dfeabb",
       "axioms": [
         "propext",
         "Classical.choice",

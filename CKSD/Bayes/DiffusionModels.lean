@@ -2,6 +2,7 @@ module
 
 public import CKSD.Bayes.MeanField
 public import CKSD.Bayes.Diffusion
+public import CKSD.Bayes.GaussianSmoothing
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
 public import Mathlib.Analysis.Calculus.LineDeriv.IntegrationByParts
 public import Mathlib.Probability.Distributions.Gaussian.Fernique
@@ -16,7 +17,9 @@ Haussmann–Pardoux needs stochastic integration and is not stated. For the vari
 process, the smoothed law `π * N(0, tI)` is an explicit push-forward and its score is written by
 the Tweedie formula `∇ log πₜ(x) = 𝔼[(Y - x)/t | Y + √t ξ = x]` as a ratio of Gaussian integrals.
 The DDPM sampler is iterated on laws through `ddpmStep`. Diffusions with prescribed marginals are
-stated with a constant noise level, for which the equation is pathwise.
+stated with a constant noise level, for which the equation is pathwise. Gaussian smoothing and
+the conditional score identity use `CKSD.Bayes.GaussianSmoothing`, which averages TauCeti's
+Schwartz Gaussian and applies the conditional-expectation identity for joint densities.
 
 ## Main definitions
 
@@ -472,7 +475,55 @@ theorem stochasticInterpolant_score {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
       P.map X = volume.withDensity (fun x ↦ ENNReal.ofReal (mt x)) ∧
       (fun ω ↦ gradient (fun y ↦ Real.log (mt y)) (X ω)) =ᵐ[P]
         fun ω ↦ -(γ t)⁻¹ • P[Z | MeasurableSpace.comap X inferInstance] ω := by
-  sorry
+  intro X
+  let Y := fun w ↦ I t (X₀ w) (X₁ w)
+  let ν := P.map Y
+  let σ := γ t
+  have hσ : 0 < σ := hγt
+  have hY : Measurable Y := (hIm t).comp (hX₀.prodMk hX₁)
+  have hXm : Measurable X := hY.add (hZ.const_smul σ)
+  have hind' : IndepFun Y Z P := by
+    simpa [Y, Function.comp_def] using hind.comp (hIm t) measurable_id
+  have hYZ : P.map (fun w ↦ (Y w, Z w)) = ν.prod (stdGaussian _) := by
+    rw [hind'.map_prod_eq_prod_map_map hY.aemeasurable hZ.aemeasurable, hZlaw]
+  let m := fun x ↦ ∫ y, gaussianSmoothingKernel σ (x - y) ∂ν
+  obtain ⟨hms, hmpos⟩ := smooth_positive_gaussianSmoothing ν hσ
+  have hXmLaw : P.map X = volume.withDensity (fun x ↦ ENNReal.ofReal (m x)) := by
+    calc _ = (P.map (fun w ↦ (Y w, Z w))).map (fun p ↦ p.1 + σ • p.2) := by
+            rw [Measure.map_map (by fun_prop) (hY.prodMk hZ)]
+            rfl
+      _ = _ := by rw [hYZ, map_add_gaussian_eq_withDensity ν hσ]
+  refine ⟨m, hms, hmpos, hXmLaw, ?_⟩
+  have hYX : P.map (fun w ↦ (Y w, X w)) = (ν.prod volume).withDensity
+      (fun p ↦ ENNReal.ofReal (gaussianSmoothingKernel σ (p.2 - p.1))) := by
+    calc _ = (P.map (fun w ↦ (Y w, Z w))).map (fun p ↦ (p.1, p.1 + σ • p.2)) := by
+            rw [Measure.map_map (by fun_prop) (hY.prodMk hZ)]
+            rfl
+      _ = _ := by rw [hYZ, map_pair_add_gaussian_eq_withDensity ν hσ]
+  let H : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d) :=
+    fun p ↦ σ⁻¹ • (p.2 - p.1)
+  have hH : Measurable H := by fun_prop
+  have hHcomp : (fun w ↦ H (Y w, X w)) = Z := by
+    funext w
+    simp [H, X, Y, σ, smul_smul, hγt.ne']
+  have hZi : Integrable Z P := by
+    have hi : Integrable id (P.map Z) := by rw [hZlaw]; exact IsGaussian.integrable_id
+    exact hi.comp_measurable hZ
+  have hC := condExp_of_joint_density P ν volume Y X hY hXm
+    (fun p ↦ gaussianSmoothingKernel σ (p.2 - p.1))
+    ((contDiff_gaussianSmoothingKernel hσ).continuous.measurable.comp
+      (measurable_snd.sub measurable_fst))
+    (fun p ↦ (gaussianSmoothingKernel_pos hσ _).le) m hms.continuous.measurable hmpos
+    hYX hXmLaw H hH (hHcomp ▸ hZi)
+  rw [hHcomp] at hC
+  filter_upwards [hC] with w hw
+  rw [← hw, gradient_log_eq_inv_smul m (X w) (hms.differentiable (by simp) _) (hmpos _).ne',
+    gradient_gaussianSmoothing ν hσ]
+  change (m (X w))⁻¹ • (-(σ ^ 2)⁻¹ • ∫ y, gaussianSmoothingKernel σ (X w - y) • (X w - y) ∂ν) =
+    -σ⁻¹ • ((m (X w))⁻¹ • ∫ y, gaussianSmoothingKernel σ (X w - y) • (σ⁻¹ • (X w-y)) ∂ν)
+  simp_rw [smul_comm (gaussianSmoothingKernel σ _) σ⁻¹, integral_smul, smul_smul]
+  congr 1
+  field_simp
 
 /-- GAPS 104.76: the velocity of a stochastic interpolant, in the weak form of the continuity
 equation. Let `Xₜ = Iₜ(X₀, X₁) + γₜ Z` with `I` and `γ` continuously differentiable in `t`,

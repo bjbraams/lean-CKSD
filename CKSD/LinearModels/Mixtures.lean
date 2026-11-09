@@ -1,6 +1,7 @@
 module
 
 public import CKSD.LinearModels.Basic
+public import CKSD.LinearModels.GaussianMixtureIdentifiability
 public import TauCeti.Probability.Distributions.Gaussian.Mixture.Multivariate
 
 /-!
@@ -8,7 +9,10 @@ public import TauCeti.Probability.Distributions.Gaussian.Mixture.Multivariate
 
 A reduced finite Gaussian mixture on `ℝ^d` has `k` components with positive weights, distinct
 (mean, covariance) pairs, and positive definite covariances. Laws and densities are TauCeti's
-finite multivariate Gaussian-mixture constructions.
+finite multivariate Gaussian-mixture constructions. Identifiability follows from TauCeti's
+moment-generating function formula and linear independence of the Gaussian exponentials, proved
+in `CKSD.LinearModels.GaussianMixtureIdentifiability` by polynomial separation and growth at
+infinity.
 
 ## Main definitions
 
@@ -36,7 +40,7 @@ Sources: GAPS 105.6 and SYNOPSIS105, item 6.
 noncomputable section
 
 open MeasureTheory ProbabilityTheory Convexity
-open scoped NNReal ENNReal BigOperators Matrix.Norms.L2Operator
+open scoped NNReal ENNReal BigOperators Matrix.Norms.L2Operator RealInnerProductSpace
 
 namespace CKSD
 
@@ -101,7 +105,73 @@ theorem GaussianMixtureModel.exists_equiv_of_law_eq {d k l : ℕ}
     ∃ e : Fin k ≃ Fin l, ∀ i,
       M.weights.weights i = N.weights.weights (e i) ∧
         M.mean i = N.mean (e i) ∧ M.covariance i = N.covariance (e i) := by
-  sorry
+  classical
+  let Params := {p : EuclideanSpace ℝ (Fin d) × Matrix (Fin d) (Fin d) ℝ // p.2.IsHermitian}
+  let f : Params → EuclideanSpace ℝ (Fin d) → ℝ := fun p v ↦
+    Real.exp (⟪v,p.val.1⟫ + ⟪v,p.val.2.toEuclideanLin v⟫ / 2)
+  have hlin : LinearIndependent ℝ f := linearIndependent_gaussianExponents
+    (fun p : Params ↦ p.val.1) (fun p ↦ p.val.2) (fun p ↦ p.property)
+    (fun p q h ↦ Subtype.ext h)
+  let eM : Fin k ↪ Params := ⟨fun i ↦ ⟨(M.mean i,M.covariance i),
+    (M.covariance_posDef i).isHermitian⟩, fun i j he ↦ M.distinct (congrArg Subtype.val he)⟩
+  let eN : Fin l ↪ Params := ⟨fun j ↦ ⟨(N.mean j,N.covariance j),
+    (N.covariance_posDef j).isHermitian⟩, fun i j he ↦ N.distinct (congrArg Subtype.val he)⟩
+  let cM : Params →₀ ℝ := ∑ i, Finsupp.single (eM i) (M.weights.weights i : ℝ)
+  let cN : Params →₀ ℝ := ∑ j, Finsupp.single (eN j) (N.weights.weights j : ℝ)
+  have hcf : cM = cN := by
+    apply hlin.finsuppLinearCombination_injective
+    funext v
+    have ht := congrArg (fun μ ↦ mgf (fun x ↦ ⟪v,x⟫) μ 1) h
+    change mgf (fun x ↦ ⟪v,x⟫) (TauCeti.Probability.multivariateGaussianMixtureMeasure
+        M.weights M.mean M.covariance) 1 =
+      mgf (fun x ↦ ⟪v,x⟫) (TauCeti.Probability.multivariateGaussianMixtureMeasure
+        N.weights N.mean N.covariance) 1 at ht
+    rw [TauCeti.Probability.mgf_inner_multivariateGaussianMixtureMeasure
+      (fun i _ ↦ (M.covariance_posDef i).posSemidef),
+      TauCeti.Probability.mgf_inner_multivariateGaussianMixtureMeasure
+      (fun j _ ↦ (N.covariance_posDef j).posSemidef)] at ht
+    simp only [cM,cN,map_sum,Finsupp.linearCombination_single,Finset.sum_apply,
+      Pi.smul_apply,smul_eq_mul]
+    have hfM (i : Fin k) : f (eM i) v =
+        Real.exp (⟪v,M.mean i⟫ + ⟪v,(M.covariance i).toEuclideanLin v⟫ / 2) := rfl
+    have hfN (j : Fin l) : f (eN j) v =
+        Real.exp (⟪v,N.mean j⟫ + ⟪v,(N.covariance j).toEuclideanLin v⟫ / 2) := rfl
+    simp_rw [hfM,hfN]
+    simpa only [one_mul,one_pow,div_eq_mul_inv,mul_comm (2:ℝ)⁻¹] using ht
+
+  have hMi (i : Fin k) : cM (eM i) = (M.weights.weights i : ℝ) := by
+    simp [cM,Finsupp.single_apply,eM.injective.eq_iff]
+  have hNi (i : Fin l) : cN (eN i) = (N.weights.weights i : ℝ) := by
+    simp [cN,Finsupp.single_apply,eN.injective.eq_iff]
+  have hexM (i : Fin k) : ∃ j : Fin l, eN j = eM i := by
+    by_contra hno
+    push Not at hno
+    have hn0 : cN (eM i) = 0 := by simp [cN,hno]
+    have hw0 : (M.weights.weights i : ℝ) = 0 := by rw [← hMi,hcf,hn0]
+    have hpos : 0 < (M.weights.weights i : ℝ) := by exact_mod_cast M.weight_pos i
+    linarith
+  have hexN (j : Fin l) : ∃ i : Fin k, eM i = eN j := by
+    by_contra hno
+    push Not at hno
+    have hm0 : cM (eN j) = 0 := by simp [cM,hno]
+    have hw0 : (N.weights.weights j : ℝ) = 0 := by rw [← hNi,← hcf,hm0]
+    have hpos : 0 < (N.weights.weights j : ℝ) := by exact_mod_cast N.weight_pos j
+    linarith
+  let g : Fin k → Fin l := fun i ↦ Classical.choose (hexM i)
+  have hg (i : Fin k) : eN (g i) = eM i := Classical.choose_spec (hexM i)
+  have hginj : Function.Injective g := by
+    intro i j hij
+    apply eM.injective
+    rw [← hg i,← hg j,hij]
+  have hgsur : Function.Surjective g := by
+    intro j
+    obtain ⟨i,hi⟩ := hexN j
+    exact ⟨i,eN.injective ((hg i).trans hi)⟩
+  refine ⟨Equiv.ofBijective g ⟨hginj,hgsur⟩,fun i ↦ ?_⟩
+  have hpar := congrArg Subtype.val (hg i)
+  have hw : (M.weights.weights i : ℝ) = (N.weights.weights (g i) : ℝ) := by
+    rw [← hMi,hcf,← hg i,hNi]
+  exact ⟨NNReal.coe_injective hw,(congrArg Prod.fst hpar).symm,(congrArg Prod.snd hpar).symm⟩
 
 /-- GAPS 105.6: two Gaussian components already give an unbounded likelihood when their
 covariances are unconstrained: on a nonempty sample in positive dimension, the log-likelihoods of

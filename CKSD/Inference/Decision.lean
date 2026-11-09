@@ -1,6 +1,8 @@
 module
 
 public import CKSD.Inference.Model
+public import CKSD.Inference.FiniteDecision
+public import CKSD.Inference.ConvexGames
 public import CKSD.Inference.Sufficiency
 public import CKSD.Inference.MeanParametrization
 public import CKSD.Inference.ExponentialFamilyMLE
@@ -56,7 +58,42 @@ theorem exists_statistical_game_saddle_point [Fintype Θ] [Nonempty Θ] [Measura
     ∃ δ : RandomizedDecisionRule X A, ∃ π : ProbabilityMeasure Θ,
       IsBayesRule (risk P L) (π : Measure Θ) δ ∧
       ∀ θ, risk P L δ θ ≤ ∫ θ', risk P L δ θ' ∂(π : Measure Θ) := by
-  sorry
+  classical
+  let μ : Measure X := ∑ θ, P θ
+  have hμ : IsFiniteMeasure μ := by dsimp [μ]; infer_instance
+  let := hμ
+  have hdom (θ : Θ) : P θ ≤ μ := by
+    intro s
+    change P θ s ≤ (∑ θ', P θ') s
+    simp only [FunLike.coe_sum, Finset.sum_apply]
+    exact Finset.single_le_sum (f := fun θ' : Θ ↦ P θ' s)
+      (fun _ _ ↦ (zero_le : (0 : ℝ≥0∞) ≤ _)) (Finset.mem_univ θ)
+  obtain ⟨hcompact, hconv⟩ := isCompact_convex_range_risk μ P hdom L
+  let a₀ : A := Classical.choice inferInstance
+  let δ₀ : RandomizedDecisionRule X A := ⟨Kernel.const X (Measure.dirac a₀), inferInstance⟩
+  obtain ⟨y, ⟨δ, hδ⟩, w, hwn, hws, hwmin, hwmax⟩ :=
+    exists_compact_convex_game_saddle_point hcompact hconv ⟨risk P L δ₀, δ₀, rfl⟩
+  let ν : Measure Θ := ∑ θ, ENNReal.ofReal (w θ) • Measure.dirac θ
+  have hν : IsProbabilityMeasure ν := ⟨by
+    change (∑ θ, ENNReal.ofReal (w θ) • Measure.dirac θ) univ = 1
+    simp only [FunLike.coe_sum, Finset.sum_apply, smul_apply, measure_univ, smul_eq_mul, mul_one]
+    rw [← ENNReal.ofReal_sum_of_nonneg (fun θ _ ↦ hwn θ), hws, ENNReal.ofReal_one]⟩
+  let := hν
+  have hint (r : Θ → ℝ) : Integrable r ν :=
+    ⟨(measurable_of_countable r).aestronglyMeasurable, HasFiniteIntegral.of_finite⟩
+  have hint_eq (r : Θ → ℝ) : (∫ θ, r θ ∂ν) = ∑ θ, w θ * r θ := by
+    change (∫ θ, r θ ∂(∑ θ, ENNReal.ofReal (w θ) • Measure.dirac θ)) = _
+    rw [integral_finsetSum_measure fun θ _ ↦
+      (integrable_dirac (by finiteness)).smul_measure ENNReal.ofReal_ne_top]
+    simp only [integral_smul_measure, ENNReal.toReal_ofReal (hwn _), integral_dirac,
+      smul_eq_mul]
+  refine ⟨δ, ⟨ν, hν⟩, ⟨hint _, fun δ' _ ↦ ?_⟩, fun θ ↦ ?_⟩
+  · change (∫ θ, risk P L δ θ ∂ν) ≤ ∫ θ, risk P L δ' θ ∂ν
+    rw [hint_eq, hint_eq, hδ]
+    exact hwmin _ ⟨δ', rfl⟩
+  · change risk P L δ θ ≤ ∫ θ', risk P L δ θ' ∂ν
+    rw [hint_eq, hδ]
+    exact hwmax θ
 
 /-- GAPS 101.37: the complete class theorem for a finite parameter set, in risk-set form. Let `C`
 be a closed convex set of risk vectors in `ℝ^d`, `d > 0`, bounded below. Every `x ∈ C` is

@@ -92,7 +92,7 @@ theorem integral_log_sub_log_eq_neg_toReal_klDiv {P Q μ : Measure X} [SigmaFini
 
 /-- If `a` and `b` are positive and `∑ (log bᵢ - log aᵢ) ≥ -γ n`, then
 `(∏ aᵢ) e^{-γ n} ≤ ∏ bᵢ`. -/
-private theorem prod_mul_exp_le_prod {n : ℕ} {a b : Fin n → ℝ} (ha : ∀ i, 0 < a i)
+theorem prod_mul_exp_le_prod {n : ℕ} {a b : Fin n → ℝ} (ha : ∀ i, 0 < a i)
     (hb : ∀ i, 0 < b i) {γ : ℝ} (h : -(γ * n) ≤ ∑ i, (Real.log (b i) - Real.log (a i))) :
     (∏ i, a i) * Real.exp (-γ * n) ≤ ∏ i, b i := by
   have hA : ∏ i, a i = Real.exp (∑ i, Real.log (a i)) := by
