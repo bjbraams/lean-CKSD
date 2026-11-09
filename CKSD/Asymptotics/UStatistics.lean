@@ -2,6 +2,7 @@ module
 
 public import CKSD.Asymptotics.Basic
 public import CKSD.Asymptotics.MultivariateCLT
+public import CKSD.Asymptotics.UStatisticsProjection
 public import Mathlib.MeasureTheory.SpecificCodomains.WithLp
 public import Mathlib.Probability.HasLaw
 public import Mathlib.Probability.Moments.Covariance
@@ -13,6 +14,10 @@ The nondegenerate central limit theorem uses the first Hoeffding projection; ord
 kernels have an exact decomposition and variance, and finite-rank degenerate kernels have
 Gaussian-chaos limits. Sources: GAPS 102.8, 102.29 and 102.30, and `SYNOPSIS102.md`.
 The normalization is the ordered-injection convention of `CKSD.uStatistic`.
+The general-order central limit theorem combines the `O(n⁻²)` second-moment bound for the
+remainder of the Hájek projection (`CKSD.exists_integral_sq_uStatistic_sub_projection_le` in
+`CKSD.Asymptotics.UStatisticsProjection`), Chebyshev's inequality, the iid central limit theorem
+`CKSD.tendstoInDistribution_inv_sqrt_mul_sum_of_iid` and Slutsky's lemma.
 The order-two proof uses Mathlib's finite-product `HasLaw` and integration adapters,
 `variance_sum_pi`, and the variance and covariance identities. Distinct degenerate kernel
 terms are orthogonal by integrating out a coordinate occurring in only one term.
@@ -48,7 +53,94 @@ theorem tendstoInDistribution_uStatistic_of_nondegenerate
     TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n *
       (uStatistic (m + 1) n h (fun i ↦ X i.val ω) - θ)) atTop id (fun _ ↦ μ)
       (gaussianReal 0 (Real.toNNReal (((m + 1 : ℕ) : ℝ) ^ 2 * Var[g; P]))) := by
-  sorry
+  intro θ g
+  obtain ⟨C, hC⟩ := exists_integral_sq_uStatistic_sub_projection_le P h hmeas hsym h2 θ rfl g
+    fun _ ↦ rfl
+  obtain ⟨hgm, hg2, hg0, -⟩ := uStatistic_projection_spec P h hmeas h2 θ rfl g fun _ ↦ rfl
+  set k : ℝ := ((m + 1 : ℕ) : ℝ) with hk
+  -- the law of the first `n` observations
+  have hlaw : ∀ n : ℕ, MeasurePreserving (fun ω (i : Fin n) ↦ X i.val ω) μ
+      (Measure.pi fun _ ↦ P) := fun n ↦ by
+    have hind : iIndepFun (fun (i : Fin n) ω ↦ X i.val ω) μ :=
+      hiid.2.1.precomp Fin.val_injective
+    refine ⟨Measurable.of_eval fun i ↦ hiid.1 i.val, ?_⟩
+    refine ((iIndepFun_iff_map_fun_eq_pi_map (fun i : Fin n ↦ (hiid.1 i.val).aemeasurable)).1
+      hind).trans ?_
+    congr 1
+    funext i
+    exact hiid.2.2 i
+  -- the central limit theorem for the projection
+  have hclt := (tendstoInDistribution_inv_sqrt_mul_sum_of_iid μ P X hiid g hgm hg2
+    hg0).continuous_comp (g := fun z ↦ k * z) (by fun_prop)
+  have hlim : TendstoInDistribution (fun (n : ℕ) ω ↦ k * ((Real.sqrt n)⁻¹ *
+      ∑ i ∈ Finset.range n, g (X i ω))) atTop id (fun _ ↦ μ)
+      (gaussianReal 0 (Real.toNNReal (k ^ 2 * Var[g; P]))) := by
+    refine tendstoInDistribution_of_map_eq hclt aemeasurable_id ?_
+    rw [Measure.map_id, Function.comp_id, gaussianReal_map_const_mul, mul_zero,
+      variance_of_integral_eq_zero hgm.aemeasurable hg0,
+      Real.toNNReal_mul (sq_nonneg k), Real.toNNReal_of_nonneg (sq_nonneg k)]
+  -- measurability
+  have hUm : ∀ n : ℕ, Measurable (fun x : Fin n → E ↦ uStatistic (m + 1) n h x) := fun n ↦
+    (Finset.measurable_sum _ fun f _ ↦ hmeas.comp
+      (Measurable.of_eval fun j ↦ measurable_pi_apply (f j))).const_mul _
+  have hXm : ∀ n : ℕ, Measurable (fun ω ↦ k * ((Real.sqrt n)⁻¹ *
+      ∑ i ∈ Finset.range n, g (X i ω))) := fun n ↦
+    ((Finset.measurable_sum _ fun i _ ↦ hgm.comp (hiid.1 i)).const_mul _).const_mul _
+  have hYm : ∀ n : ℕ, Measurable (fun ω ↦ Real.sqrt n *
+      (uStatistic (m + 1) n h (fun i ↦ X i.val ω) - θ)) := fun n ↦
+    (((hUm n).comp (hlaw n).measurable).sub_const _).const_mul _
+  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _ hXm hYm hlim ?_
+  -- the remainder tends to zero in probability
+  set R : (n : ℕ) → (Fin n → E) → ℝ := fun n x ↦ uStatistic (m + 1) n h x - θ -
+    k / n * ∑ i, g (x i) with hR
+  have hdiff : ∀ (n : ℕ) ω, Real.sqrt n * (uStatistic (m + 1) n h (fun i ↦ X i.val ω) - θ) -
+      k * ((Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, g (X i ω)) =
+      Real.sqrt n * R n (fun i ↦ X i.val ω) := by
+    intro n ω
+    have hs : (∑ i : Fin n, g (X i.val ω)) = ∑ i ∈ Finset.range n, g (X i ω) :=
+      Fin.sum_univ_eq_sum_range (fun i ↦ g (X i ω)) n
+    have hsq : Real.sqrt n * (k / n) = k * (Real.sqrt n)⁻¹ := by
+      rw [mul_div_assoc', mul_comm, mul_div_assoc, Real.sqrt_div_self', one_div]
+    simp only [R, hs]
+    linear_combination (∑ i ∈ Finset.range n, g (X i ω)) * hsq
+  simp_rw [hdiff]
+  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  intro ε hε
+  refine squeeze_zero' (Eventually.of_forall fun _ ↦ measureReal_nonneg)
+    ((eventually_ge_atTop (2 * (m + 1))).mono fun n hn ↦ ?_)
+    (tendsto_const_div_atTop_nhds_zero_nat (C / ε ^ 2))
+  have hn0 : (0 : ℝ) < n := by exact_mod_cast (show 0 < n by omega)
+  have hRL2 := (memLp_uStatistic_sub_projection P h h2 θ hg2 n).comp_measurePreserving (hlaw n)
+  have hint : Integrable (fun ω ↦ (Real.sqrt n * R n (fun i ↦ X i.val ω)) ^ 2) μ := by
+    simp_rw [mul_pow]
+    exact hRL2.integrable_sq.const_mul _
+  have hmom : ∫ ω, (Real.sqrt n * R n (fun i ↦ X i.val ω)) ^ 2 ∂μ =
+      n * ∫ x, R n x ^ 2 ∂(Measure.pi fun _ ↦ P) := by
+    simp_rw [mul_pow, Real.sq_sqrt hn0.le]
+    rw [integral_const_mul]
+    congr 1
+    have := integral_map (μ := μ) (hlaw n).measurable.aemeasurable (f := fun x ↦ R n x ^ 2)
+      (by rw [(hlaw n).map_eq]
+          exact (memLp_uStatistic_sub_projection P h h2 θ hg2 n).aestronglyMeasurable.pow 2)
+    rw [(hlaw n).map_eq] at this
+    exact this.symm
+  have hcheb := mul_meas_ge_le_integral_of_nonneg (Eventually.of_forall fun ω ↦ sq_nonneg _)
+    hint (ε ^ 2)
+  rw [hmom] at hcheb
+  have hsub : {ω | ε < dist (Real.sqrt n * R n (fun i ↦ X i.val ω)) 0} ⊆
+      {ω | ε ^ 2 ≤ (Real.sqrt n * R n (fun i ↦ X i.val ω)) ^ 2} := by
+    intro ω hω
+    simp only [mem_ofPred_eq, Real.dist_eq, sub_zero] at hω ⊢
+    rw [← sq_abs (√_ * _)]
+    exact pow_le_pow_left₀ hε.le hω.le 2
+  have hCn := hC n hn
+  calc μ.real {ω | ε < dist (Real.sqrt n * R n (fun i ↦ X i.val ω)) 0}
+      ≤ μ.real {ω | ε ^ 2 ≤ (Real.sqrt n * R n (fun i ↦ X i.val ω)) ^ 2} :=
+        measureReal_mono hsub
+    _ ≤ n * (∫ x, R n x ^ 2 ∂(Measure.pi fun _ ↦ P)) / ε ^ 2 := by
+        rw [le_div_iff₀ (by positivity), mul_comm]; exact hcheb
+    _ ≤ n * (C / n ^ 2) / ε ^ 2 := by gcongr
+    _ = C / ε ^ 2 / n := by field_simp
 
 
 /-- The order-two ordered-injection sum is the sum over distinct ordered pairs. -/

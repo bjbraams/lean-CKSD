@@ -5,6 +5,9 @@ public import CKSD.LinearModels.GaussianGraphical
 public import Mathlib.Combinatorics.SimpleGraph.Clique
 public import Mathlib.Combinatorics.SimpleGraph.Paths
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
+public import CKSD.LinearModels.Multivariate
+import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Order
+import Mathlib.Analysis.Matrix.Order
 
 /-!
 # Decomposable graphical models
@@ -36,6 +39,14 @@ so the results below are stated for a perfect sequence only.
 * `CKSD.isConcentrationMLE_decomposableConcentrationMLE` and
   `CKSD.existsUnique_isConcentrationMLE_inv`: the Gaussian maximum likelihood estimate of the
   concentration matrix for a decomposable and for a general graph.
+* `CKSD.isConcentrationMLE_inv_of_apply_eq`: a positive definite `Σ` that agrees with `ssd / n`
+  on the diagonal and the edges and whose inverse vanishes off the edges gives the estimate.
+
+The general-graph estimate is obtained by maximizing `det Σ` over the compact convex set of
+positive semidefinite completions of the observed entries of `ssd / n`; the first-order condition
+along the non-edge directions shows that the maximizer has inverse in the concentration model,
+and the strict inequality `log det S + dim < log det C + tr(S C⁻¹)` for `C ≠ S` gives strict
+optimality of the likelihood.
 
 ## References
 
@@ -449,6 +460,258 @@ theorem isConcentrationMLE_decomposableConcentrationMLE (G : SimpleGraph ι) {k 
     IsConcentrationMLE G n ssd (decomposableConcentrationMLE C n ssd) := by
   sorry
 
+/-- Strict form of the Gaussian covariance criterion on a general finite index type: for positive
+definite `S ≠ C`, `log det S + dim < log det C + tr(S C⁻¹)`. -/
+theorem log_det_add_card_lt_log_det_add_trace_mul_inv {S C : Matrix ι ι ℝ} (hS : S.PosDef)
+    (hC : C.PosDef) (hne : C ≠ S) :
+    Real.log S.det + Fintype.card ι < Real.log C.det + (S * C⁻¹).trace := by
+  let e := Fintype.equivFin ι
+  have hS' : (reindex e e S).PosDef := hS.submatrix e.symm.injective
+  have hC' : (reindex e e C).PosDef := hC.submatrix e.symm.injective
+  have hle := log_det_add_card_le_log_det_add_trace_mul_inv _ _ hS' hC'
+  have hiff := log_det_add_card_eq_log_det_add_trace_mul_inv_iff _ _ hS' hC'
+  have htr : (reindex e e S * (reindex e e C)⁻¹).trace = (S * C⁻¹).trace := by
+    rw [inv_reindex, reindex_apply, reindex_apply, submatrix_mul_equiv]
+    simp only [trace]
+    exact Equiv.sum_comp e.symm (fun i ↦ (S * C⁻¹) i i)
+  rw [det_reindex_self, det_reindex_self, htr] at hle hiff
+  have hne' : reindex e e C ≠ reindex e e S := fun h ↦ hne ((reindex e e).injective h)
+  exact lt_of_le_of_ne hle fun h ↦ hne' (hiff.1 h)
+
+/-- Sufficiency of the likelihood equations: if `Σ` is positive definite, agrees with `ssd / n` on
+the diagonal and on the edges of `G`, and `Σ⁻¹` vanishes off the edges, then `Σ⁻¹` is the
+maximum likelihood estimate of the concentration matrix. -/
+theorem isConcentrationMLE_inv_of_apply_eq (G : SimpleGraph ι) {n : ℕ}
+    (ssd Sig : Matrix ι ι ℝ) (hSig : Sig.PosDef)
+    (hmatch : ∀ i j, (i = j ∨ G.Adj i j) → Sig i j = ssd i j / n)
+    (hzero : ∀ i j, i ≠ j → ¬ G.Adj i j → Sig⁻¹ i j = 0) :
+    IsConcentrationMLE G n ssd Sig⁻¹ := by
+  have hmem : Sig⁻¹ ∈ concentrationModel G := ⟨hSig.inv, hzero⟩
+  have htr : ∀ K ∈ concentrationModel G, trace (K * ssd) / n = trace (K * Sig) := by
+    intro K hK
+    simp only [trace, diag_apply, Matrix.mul_apply, Finset.sum_div]
+    refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
+    by_cases h : i = j ∨ G.Adj i j
+    · rw [hmatch j i (h.imp Eq.symm fun hij ↦ hij.symm)]
+      ring
+    · push Not at h
+      rw [hK.2 i j h.1 h.2]
+      simp
+  refine ⟨hmem, fun K' hK' hne ↦ ?_⟩
+  have hdet (A : Matrix ι ι ℝ) (hA : A.PosDef) : Real.log A⁻¹.det = - Real.log A.det := by
+    rw [det_nonsing_inv, Ring.inverse_eq_inv', Real.log_inv]
+  have hne' : K'⁻¹ ≠ Sig := fun h ↦
+    hne (by rw [← h, nonsing_inv_nonsing_inv _ hK'.1.det_pos.ne'.isUnit])
+  have key := log_det_add_card_lt_log_det_add_trace_mul_inv hSig hK'.1.inv hne'
+  rw [nonsing_inv_nonsing_inv _ hK'.1.det_pos.ne'.isUnit, hdet K' hK'.1, trace_mul_comm] at key
+  unfold gaussianConcentrationLogLikelihood
+  rw [htr K' hK', htr _ hmem, nonsing_inv_mul _ hSig.det_pos.ne'.isUnit, trace_one,
+    hdet Sig hSig]
+  linarith
+
+open scoped MatrixOrder in
+/-- A positive definite matrix dominates a positive multiple of the identity. -/
+theorem exists_pos_posSemidef_sub_smul_one {Sig : Matrix ι ι ℝ} [Nonempty ι] (hSig : Sig.PosDef) :
+    ∃ c : ℝ, 0 < c ∧ (Sig - c • (1 : Matrix ι ι ℝ)).PosSemidef := by
+  obtain ⟨r, hr, hle⟩ := (CFC.exists_pos_algebraMap_le_iff Sig hSig.isHermitian.isSelfAdjoint).2
+    fun x hx ↦ hSig.isStrictlyPositive.spectrum_pos hx
+  refine ⟨r, hr, ?_⟩
+  rw [← Matrix.le_iff]
+  simpa [Algebra.algebraMap_eq_smul_one] using hle
+
+/-- The symmetric matrix with ones at `(i, j)` and `(j, i)`. -/
+private def symmSingle (i j : ι) : Matrix ι ι ℝ := single i j 1 + single j i 1
+
+/-- `(E_{ij} + E_{ji}) x = x_j eᵢ + x_i eⱼ`. -/
+private theorem symmSingle_mulVec (i j : ι) (x : ι → ℝ) :
+    symmSingle i j *ᵥ x = Pi.single i (x j) + Pi.single j (x i) := by
+  simp [symmSingle, add_mulVec, single_mulVec]
+  rfl
+
+/-- A small symmetric perturbation at `(i, j)` and `(j, i)` keeps a positive definite matrix
+positive semidefinite. -/
+private theorem posSemidef_add_smul_symmSingle {Sig : Matrix ι ι ℝ} (hSig : Sig.PosDef) {i j : ι}
+    (hij : i ≠ j) : ∃ δ > 0, ∀ t : ℝ, |t| ≤ δ → (Sig + t • symmSingle i j).PosSemidef := by
+  have : Nonempty ι := ⟨i⟩
+  obtain ⟨c, hc, hpsd⟩ := exists_pos_posSemidef_sub_smul_one hSig
+  refine ⟨c, hc, fun t ht ↦ ?_⟩
+  have hE : (symmSingle i j).IsHermitian := by
+    rw [IsHermitian, conjTranspose_eq_transpose_of_trivial, symmSingle, transpose_add,
+      transpose_single, transpose_single, add_comm]
+  have h2 : (c • (1 : Matrix ι ι ℝ) + t • symmSingle i j).PosSemidef := by
+    have hH : (c • (1 : Matrix ι ι ℝ) + t • symmSingle i j).IsHermitian := by
+      rw [IsHermitian, conjTranspose_add, conjTranspose_smul, conjTranspose_smul,
+        conjTranspose_one, hE.eq]
+      simp
+    refine PosSemidef.of_dotProduct_mulVec_nonneg hH fun x ↦ ?_
+    have hsq : x i * x i + x j * x j ≤ x ⬝ᵥ x := by
+      have := Finset.sum_le_sum_of_subset_of_nonneg (f := fun k ↦ x k * x k)
+        (Finset.subset_univ {i, j}) fun k _ _ ↦ mul_self_nonneg (x k)
+      simpa [dotProduct, Finset.sum_pair hij] using this
+    simp only [star_trivial, add_mulVec, smul_mulVec, one_mulVec, symmSingle_mulVec,
+      dotProduct_add, dotProduct_smul, dotProduct_single, smul_eq_mul]
+    have h1 : -(c * (x i * x i + x j * x j)) ≤ t * (x i * x j + x j * x i) := by
+      have habs : |t * (x i * x j + x j * x i)| ≤ c * (x i * x i + x j * x j) := by
+        rw [abs_mul]
+        have : |x i * x j + x j * x i| ≤ x i * x i + x j * x j := by
+          rw [abs_le]
+          constructor <;> nlinarith [sq_nonneg (x i + x j), sq_nonneg (x i - x j)]
+        calc |t| * |x i * x j + x j * x i| ≤ c * |x i * x j + x j * x i| :=
+              mul_le_mul_of_nonneg_right ht (abs_nonneg _)
+          _ ≤ c * (x i * x i + x j * x j) := mul_le_mul_of_nonneg_left this hc.le
+      exact (abs_le.1 habs).1
+    nlinarith [mul_le_mul_of_nonneg_left hsq hc.le]
+  have := hpsd.add h2
+  rwa [show Sig - c • 1 + (c • 1 + t • symmSingle i j) = Sig + t • symmSingle i j by abel]
+    at this
+
+/-- The determinant along the line `Σ + t (E_{ij} + E_{ji})`, by the matrix determinant lemma:
+`det Σ · ((1 + t K_{ji})(1 + t K_{ij}) - t² K_{jj} K_{ii})` with `K = Σ⁻¹`. -/
+private theorem det_add_smul_symmSingle {Sig : Matrix ι ι ℝ} (hSig : Sig.PosDef) {i j : ι}
+    (hij : i ≠ j) (t : ℝ) : (Sig + t • symmSingle i j).det = Sig.det *
+      ((1 + t * Sig⁻¹ j i) * (1 + t * Sig⁻¹ i j) - t * Sig⁻¹ j j * (t * Sig⁻¹ i i)) := by
+  let U : Matrix ι (Fin 2) ℝ := t • (1 : Matrix ι ι ℝ).submatrix id ![i, j]
+  let V : Matrix (Fin 2) ι ℝ := (1 : Matrix ι ι ℝ).submatrix ![j, i] id
+  have hUV : U * V = t • symmSingle i j := by
+    simp only [U, V, Matrix.smul_mul]
+    congr 1
+    ext k l
+    simp only [Matrix.mul_apply, Fin.sum_univ_two, submatrix_apply, id, symmSingle,
+      Matrix.one_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
+    by_cases h1 : k = i <;> by_cases h2 : k = j <;> by_cases h3 : l = i <;>
+      by_cases h4 : l = j <;> simp_all [Ne.symm hij, eq_comm]
+  have hVKU : V * Sig⁻¹ * U = t • Sig⁻¹.submatrix ![j, i] ![i, j] := by
+    simp only [U, V, Matrix.mul_smul]
+    congr 1
+    have hV : (1 : Matrix ι ι ℝ).submatrix ![j, i] id * Sig⁻¹ = Sig⁻¹.submatrix ![j, i] id :=
+      one_submatrix_mul ![j, i] (Equiv.refl ι) Sig⁻¹
+    rw [hV]
+    exact mul_submatrix_one (Equiv.refl ι) ![i, j] _
+  have h2 : (1 : Matrix (Fin 2) (Fin 2) ℝ) + V * Sig⁻¹ * U =
+      !![1 + t * Sig⁻¹ j i, t * Sig⁻¹ j j; t * Sig⁻¹ i i, 1 + t * Sig⁻¹ i j] := by
+    rw [hVKU]
+    ext a b
+    simp only [Matrix.add_apply, Matrix.smul_apply, Matrix.submatrix_apply, smul_eq_mul]
+    fin_cases a <;> fin_cases b <;> simp
+  rw [← hUV, det_add_mul U V hSig.det_pos.ne'.isUnit, h2, det_fin_two_of]
+
+/-- An entry of a positive semidefinite matrix is bounded by the mean of the two diagonal
+entries. -/
+private theorem abs_apply_le_of_posSemidef {S : Matrix ι ι ℝ} (hS : S.PosSemidef) (i j : ι) :
+    |S i j| ≤ (S i i + S j j) / 2 := by
+  by_cases hij : i = j
+  · subst hij
+    rw [abs_of_nonneg (hS.diag_nonneg)]
+    linarith
+  have hsymm : S j i = S i j := by
+    simpa using (hS.isHermitian.apply j i).symm
+  have h1 := hS.dotProduct_mulVec_nonneg (Pi.single i 1 + Pi.single j 1)
+  have h2 := hS.dotProduct_mulVec_nonneg (Pi.single i 1 - Pi.single j 1)
+  simp [mulVec_add, mulVec_sub, add_dotProduct, dotProduct_add, sub_dotProduct, dotProduct_sub,
+    mulVec_single, single_dotProduct, hsymm] at h1 h2
+  rw [abs_le]
+  constructor <;> linarith
+
+/-- Existence of the solution of the likelihood equations: maximizing `det Σ` over the compact
+set of positive semidefinite `Σ` that agree with `ssd / n` on the diagonal and on the edges gives
+a positive definite `Σ` whose inverse vanishes off the edges, by the first-order condition along
+each direction `E_{ij} + E_{ji}` for a non-edge `{i, j}`. -/
+private theorem exists_posDef_apply_eq_of_inv_apply_eq_zero (G : SimpleGraph ι) {n : ℕ}
+    (hn : 0 < n) (ssd : Matrix ι ι ℝ) (hssd : ssd.PosDef) :
+    ∃ Sig : Matrix ι ι ℝ, Sig.PosDef ∧
+      (∀ i j, (i = j ∨ G.Adj i j) → Sig i j = ssd i j / n) ∧
+      ∀ i j, i ≠ j → ¬ G.Adj i j → Sig⁻¹ i j = 0 := by
+  let F : Set (Matrix ι ι ℝ) :=
+    {S | S.PosSemidef ∧ ∀ i j, (i = j ∨ G.Adj i j) → S i j = ssd i j / n}
+  have hn' : (0 : ℝ) < n := Nat.cast_pos.2 hn
+  let T : Matrix ι ι ℝ := (n : ℝ)⁻¹ • ssd
+  have hT : T.PosDef := hssd.smul (inv_pos.2 hn')
+  have hTF : T ∈ F := ⟨hT.posSemidef, fun i j _ ↦ by simp [T, div_eq_inv_mul]⟩
+  have hclosed : IsClosed F := by
+    have hF : F = {S : Matrix ι ι ℝ | S.PosSemidef} ∩
+        ⋂ i, ⋂ j, {S : Matrix ι ι ℝ | (i = j ∨ G.Adj i j) → S i j = ssd i j / n} := by
+      ext S
+      simp [F]
+    rw [hF]
+    refine isClosed_setOfPred_posSemidef.inter
+      (isClosed_iInter fun i ↦ isClosed_iInter fun j ↦ ?_)
+    by_cases h : i = j ∨ G.Adj i j
+    · simp only [h, true_implies]
+      exact isClosed_eq ((continuous_apply j).comp (continuous_apply i)) continuous_const
+    · simp [h]
+  let R : ℝ := ∑ k, |ssd k k / n|
+  have hR (k : ι) : |ssd k k / n| ≤ R :=
+    Finset.single_le_sum (f := fun k ↦ |ssd k k / n|) (fun _ _ ↦ abs_nonneg _)
+      (Finset.mem_univ k)
+  have hsub : F ⊆ Set.pi univ fun _ : ι ↦ Set.pi univ fun _ : ι ↦ Icc (-R) R := by
+    intro S hS i _ j _
+    have h := abs_apply_le_of_posSemidef hS.1 i j
+    rw [hS.2 i i (Or.inl rfl), hS.2 j j (Or.inl rfl)] at h
+    have := (le_abs_self (ssd i i / n)).trans (hR i)
+    have := (le_abs_self (ssd j j / n)).trans (hR j)
+    exact abs_le.1 (h.trans (by linarith))
+  have hcompact : IsCompact F :=
+    (isCompact_univ_pi fun _ ↦ isCompact_univ_pi fun _ ↦ isCompact_Icc).of_isClosed_subset
+      hclosed hsub
+  obtain ⟨S, hSF, hmax⟩ := hcompact.exists_isMaxOn ⟨T, hTF⟩
+    (continuous_id.matrix_det).continuousOn
+  have hdetS : 0 < S.det := hT.det_pos.trans_le (hmax hTF)
+  have hS : S.PosDef := hSF.1.posDef_iff_isUnit.2
+    ((isUnit_iff_isUnit_det S).2 hdetS.ne'.isUnit)
+  refine ⟨S, hS, hSF.2, fun i j hij hadj ↦ ?_⟩
+  by_contra hq
+  obtain ⟨δ, hδ, hpsd⟩ := posSemidef_add_smul_symmSingle hS hij
+  set q := S⁻¹ i j with hqdef
+  have hqji : S⁻¹ j i = q := by
+    simpa using (hS.inv.isHermitian.apply i j)
+  set D := q ^ 2 - S⁻¹ i i * S⁻¹ j j with hD
+  have hq' : 0 < |q| := abs_pos.2 hq
+  set s := min (δ / |q|) (1 / (|D| + 1)) with hsdef
+  have hs : 0 < s := lt_min (div_pos hδ hq') (div_pos one_pos (by positivity))
+  have hs1 : s ≤ δ / |q| := min_le_left _ _
+  have hs2 : s ≤ 1 / (|D| + 1) := min_le_right _ _
+  have ht : |s * q| ≤ δ := by
+    rw [abs_mul, abs_of_pos hs]
+    calc s * |q| ≤ δ / |q| * |q| := mul_le_mul_of_nonneg_right hs1 hq'.le
+      _ = δ := div_mul_cancel₀ δ hq'.ne'
+  have hmem : S + (s * q) • symmSingle i j ∈ F := by
+    refine ⟨hpsd _ ht, fun a b hab ↦ ?_⟩
+    have hE : symmSingle i j a b = 0 := by
+      simp only [symmSingle, Matrix.add_apply, single_apply]
+      have h1 : ¬ (i = a ∧ j = b) := by
+        rintro ⟨rfl, rfl⟩
+        rcases hab with h | h
+        · exact hij h
+        · exact hadj h
+      have h2 : ¬ (j = a ∧ i = b) := by
+        rintro ⟨rfl, rfl⟩
+        rcases hab with h | h
+        · exact hij h.symm
+        · exact hadj h.symm
+      simp [h1, h2]
+    simp [Matrix.add_apply, Matrix.smul_apply, hE, hSF.2 a b hab]
+  have hle : (S + (s * q) • symmSingle i j).det ≤ S.det := hmax hmem
+  rw [det_add_smul_symmSingle hS hij, hqji, ← hqdef] at hle
+  have hsD : -1 < s * D := by
+    have h1 : s * |D| < 1 := by
+      calc s * |D| ≤ 1 / (|D| + 1) * |D| := mul_le_mul_of_nonneg_right hs2 (abs_nonneg _)
+        _ < 1 := by
+          rw [div_mul_eq_mul_div, one_mul, div_lt_one (by positivity)]
+          linarith
+    have := neg_abs_le D
+    nlinarith
+  have hf : 1 < (1 + s * q * q) * (1 + s * q * q) - s * q * S⁻¹ j j * (s * q * S⁻¹ i i) := by
+    have : (1 + s * q * q) * (1 + s * q * q) - s * q * S⁻¹ j j * (s * q * S⁻¹ i i) =
+        1 + s * q ^ 2 * (2 + s * D) := by
+      rw [hD]
+      ring
+    rw [this]
+    have : 0 < s * q ^ 2 * (2 + s * D) := by
+      have : 0 < q ^ 2 := by positivity
+      exact mul_pos (mul_pos hs this) (by linarith)
+    linarith
+  nlinarith
+
 /-- GAPS 105.36, general graph: if `ssd` is positive definite and `n > 0`, there is a unique
 positive definite `Σ̂` that agrees with `ssd / n` on the diagonal and on the edges and whose
 inverse is the maximum likelihood estimate of the concentration matrix (in particular `Σ̂⁻¹`
@@ -458,7 +721,17 @@ theorem existsUnique_isConcentrationMLE_inv (G : SimpleGraph ι) (n : ℕ) (hn :
     ∃! Sig : Matrix ι ι ℝ, Sig.PosDef ∧
       (∀ i j, (i = j ∨ G.Adj i j) → Sig i j = ssd i j / n) ∧
       IsConcentrationMLE G n ssd Sig⁻¹ := by
-  sorry
+  obtain ⟨Sig, hpd, hmatch, hzero⟩ := exists_posDef_apply_eq_of_inv_apply_eq_zero G hn ssd hssd
+  have hMLE := isConcentrationMLE_inv_of_apply_eq G ssd Sig hpd hmatch hzero
+  refine ⟨Sig, ⟨hpd, hmatch, hMLE⟩, ?_⟩
+  rintro Sig' ⟨hpd', -, hMLE'⟩
+  by_contra hne
+  have hne' : Sig'⁻¹ ≠ Sig⁻¹ := fun h ↦ hne (by
+    rw [← nonsing_inv_nonsing_inv Sig' hpd'.det_pos.ne'.isUnit, h,
+      nonsing_inv_nonsing_inv Sig hpd.det_pos.ne'.isUnit])
+  have h1 := hMLE.2 _ hMLE'.1 hne'
+  have h2 := hMLE'.2 _ hMLE.1 hne'.symm
+  linarith
 
 end Gaussian
 

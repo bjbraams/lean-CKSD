@@ -4,6 +4,7 @@ public import CKSD.Bayes.LangevinSampling
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 public import CKSD.Inference.Density
 public import Mathlib.Analysis.InnerProductSpace.Calculus
+public import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
 public import TauCeti.Analysis.Calculus.LineDeriv.IntegrationByParts
 public import TauCeti.Probability.Distributions.Gaussian.Density
 
@@ -288,6 +289,217 @@ theorem integral_kineticGenerator_eq_zero {d : ℕ} (V : EuclideanSpace ℝ (Fin
   exact integral_mul_kineticGenerator_eq_zero_of_fderiv_density gradV hb γ ρ hρ hρder f
     (hf.of_le (by simp)) hfc
 
+section Irreversibility
+
+variable {d : ℕ}
+
+local notation "E" => EuclideanSpace ℝ (Fin d)
+
+/-- For a differentiable family of linear forms, `DF(z) w v = D(F(·) v)(z) w`. -/
+private theorem fderiv_apply_comm {F : E × E → (E × E →L[ℝ] ℝ)} {z : E × E}
+    (hF : DifferentiableAt ℝ F z) (v w : E × E) :
+    fderiv ℝ F z w v = fderiv ℝ (fun y ↦ F y v) z w := by
+  rw [fderiv_clm_apply hF (differentiableAt_const v)]
+  simp
+
+/-- The derivative of a function of position only, `D(c ∘ fst)(y) v = Dc(y₁) v₁`. -/
+private theorem fderiv_comp_fst_apply {c : E → ℝ} (hc : Differentiable ℝ c) (y v : E × E) :
+    fderiv ℝ (fun z : E × E ↦ c z.1) y v = fderiv ℝ c y.1 v.1 := by
+  rw [show (fun z : E × E ↦ c z.1) = c ∘ Prod.fst from rfl,
+    ((hc y.1).hasFDerivAt.comp y hasFDerivAt_fst).fderiv]
+  rfl
+
+/-- Product rule for the kinetic generator with a factor depending on position only:
+`L(f·(c ∘ fst)) = f·(p·∇c) + c·Lf`, since the factor has no momentum derivatives. -/
+private theorem kineticGenerator_mul_comp_fst (gradV : E → E) (γ : ℝ) {c : E → ℝ}
+    (hc : ContDiff ℝ 2 c) {f : E × E → ℝ} (hf : ContDiff ℝ 2 f) (z : E × E) :
+    kineticGenerator gradV γ (fun z ↦ f z * c z.1) z =
+      f z * fderiv ℝ c z.1 z.2 + c z.1 * kineticGenerator gradV γ f z := by
+  have hc1 : Differentiable ℝ c := hc.differentiable two_ne_zero
+  have hg : ContDiff ℝ 2 (fun z : E × E ↦ c z.1) := hc.comp contDiff_fst
+  have hf1 : Differentiable ℝ f := hf.differentiable two_ne_zero
+  have hg1 : Differentiable ℝ (fun z : E × E ↦ c z.1) := hg.differentiable two_ne_zero
+  have hDf : Differentiable ℝ (fderiv ℝ f) :=
+    (hf.fderiv_right (m := 1) (by norm_num)).differentiable one_ne_zero
+  have hD : ∀ y, fderiv ℝ (fun z ↦ f z * c z.1) y =
+      f y • fderiv ℝ (fun z : E × E ↦ c z.1) y + c y.1 • fderiv ℝ f y := fun y ↦
+    fderiv_fun_mul (hf1 y) (hg1 y)
+  have hDD : Differentiable ℝ (fderiv ℝ (fun z ↦ f z * c z.1)) :=
+    ((hf.mul hg).fderiv_right (m := 1) (by norm_num)).differentiable one_ne_zero
+  have h2 : ∀ i : Fin d, fderiv ℝ (fderiv ℝ (fun z ↦ f z * c z.1)) z
+      (0, EuclideanSpace.single i 1) (0, EuclideanSpace.single i 1) =
+      c z.1 * fderiv ℝ (fderiv ℝ f) z
+      (0, EuclideanSpace.single i 1) (0, EuclideanSpace.single i 1) := by
+    intro i
+    set v : E × E := (0, EuclideanSpace.single i 1)
+    rw [fderiv_apply_comm (hDD z), fderiv_apply_comm (hDf z)]
+    have : (fun y ↦ fderiv ℝ (fun z ↦ f z * c z.1) y v) =
+        fun y ↦ c y.1 * fderiv ℝ f y v := by
+      funext y
+      rw [hD y]
+      simp [fderiv_comp_fst_apply hc1, v]
+    rw [this, fderiv_fun_mul (hg1 z) ((hDf z).clm_apply (differentiableAt_const v))]
+    simp [fderiv_comp_fst_apply hc1, v]
+  simp only [kineticGenerator, hD, h2, ← Finset.mul_sum]
+  simp [fderiv_comp_fst_apply hc1]
+  ring
+
+
+/-- The kinetic generator is a local operator. -/
+private theorem kineticGenerator_congr {gradV : E → E} {γ : ℝ} {f₁ f₂ : E × E → ℝ} {z : E × E}
+    (h : f₁ =ᶠ[nhds z] f₂) : kineticGenerator gradV γ f₁ z = kineticGenerator gradV γ f₂ z := by
+  simp only [kineticGenerator, h.fderiv_eq, h.fderiv.fderiv_eq]
+
+/-- The kinetic generator of a `C²` function is continuous when `∇V` is continuous. -/
+private theorem continuous_kineticGenerator {gradV : E → E} (hb : Continuous gradV) (γ : ℝ)
+    {f : E × E → ℝ} (hf : ContDiff ℝ 2 f) : Continuous (kineticGenerator gradV γ f) := by
+  have h1 : Continuous (fderiv ℝ f) := hf.continuous_fderiv two_ne_zero
+  have h2 : Continuous (fderiv ℝ (fderiv ℝ f)) :=
+    (hf.fderiv_right (m := 1) (by norm_num)).continuous_fderiv one_ne_zero
+  have hs : Continuous fun z ↦ ∑ i : Fin d, fderiv ℝ (fderiv ℝ f) z
+      (0, EuclideanSpace.single i 1) (0, EuclideanSpace.single i 1) :=
+    continuous_finsetSum _ fun i _ ↦ (h2.clm_apply continuous_const).clm_apply continuous_const
+  exact (h1.clm_apply (by fun_prop)).add (continuous_const.mul hs)
+
+/-- The kinetic Gibbs law charges every nonempty open set: both factors have everywhere positive
+densities. -/
+private theorem isOpenPosMeasure_kineticGibbsMeasure {V : E → ℝ}
+    (hV : Continuous V) (hint : Integrable (fun x ↦ Real.exp (-V x))) :
+    (kineticGibbsMeasure V).IsOpenPosMeasure := by
+  have hZ : 0 < ∫ x, Real.exp (-V x) :=
+    integral_exp_pos hint
+  have h1 : (gibbsMeasure V).IsOpenPosMeasure := by
+    refine (withDensity_absolutelyContinuous' ?_ (ae_of_all _ fun x ↦ ?_)).isOpenPosMeasure
+    · exact ((Real.continuous_exp.comp hV.neg).div_const _).measurable.ennreal_ofReal.aemeasurable
+    · simpa using div_pos (Real.exp_pos (-V x)) hZ
+  have h2 : (stdGaussian E).IsOpenPosMeasure := by
+    rw [TauCeti.Probability.stdGaussian_eq_withDensity]
+    refine (withDensity_absolutelyContinuous' ?_ (ae_of_all _ fun x ↦ ?_)).isOpenPosMeasure
+    · exact (by fun_prop : Measurable fun x : E ↦
+        (2 * Real.pi) ^ (-(Fintype.card (Fin d) : ℝ) / 2) *
+          Real.exp (-‖x‖ ^ 2 / 2)).ennreal_ofReal.aemeasurable
+    · simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]
+      exact mul_pos (Real.rpow_pos_of_pos (by positivity) _) (Real.exp_pos _)
+  unfold kineticGibbsMeasure
+  infer_instance
+
+/-- Non-reversibility of the kinetic generator, with explicit test functions: for a bump `c` in
+position, `g ≈ c(x)` and `f = (p·∇c(x)) χ` with a bump `χ`, the product rule and invariance give
+`∫ g Lf = -∫ f Lg`, while `∫ f Lg = ∫ (p·∇c)² χ > 0`. -/
+private theorem exists_kineticGenerator_not_symmetric_aux (hd : 0 < d) (V : E → ℝ)
+    (gradV : E → E) (β γ : ℝ) (hV : IsSamplingPotential V gradV β) :
+    ∃ f g : E × E → ℝ,
+      ContDiff ℝ ∞ f ∧ HasCompactSupport f ∧ ContDiff ℝ ∞ g ∧ HasCompactSupport g ∧
+      ∫ z, f z * kineticGenerator gradV γ g z ∂kineticGibbsMeasure V ≠
+        ∫ z, g z * kineticGenerator gradV γ f z ∂kineticGibbsMeasure V := by
+  have hb : Continuous gradV := by
+    have heq : gradV = gradient V := funext fun x ↦ (hV.hasGradientAt x).gradient.symm
+    rw [heq]
+    exact (InnerProductSpace.toDual ℝ E).symm.continuous.comp
+      (hV.contDiff.continuous_fderiv two_ne_zero)
+  have := isProbabilityMeasure_gibbsMeasure hV.integrable
+  have : IsProbabilityMeasure (kineticGibbsMeasure V) := by
+    unfold kineticGibbsMeasure
+    infer_instance
+  have := isOpenPosMeasure_kineticGibbsMeasure hV.contDiff.continuous hV.integrable
+  -- the position bump `c` and a point where its derivative does not vanish
+  let bc : ContDiffBump (0 : E) := ⟨1, 2, one_pos, one_lt_two⟩
+  set c : E → ℝ := ⇑bc with hc_def
+  have hc : ContDiff ℝ ∞ c := bc.contDiff
+  have hc2 : ContDiff ℝ 2 c := bc.contDiff
+  obtain ⟨x₀, hx₀⟩ : ∃ x₀, fderiv ℝ c x₀ ≠ 0 := by
+    by_contra! h
+    have h1 := is_const_of_fderiv_eq_zero (hc2.differentiable two_ne_zero) h 0
+      (EuclideanSpace.single ⟨0, hd⟩ 3)
+    rw [hc_def, bc.one_of_mem_closedBall (by simp [bc]),
+      bc.zero_of_le_dist (by simp [bc]; norm_num)] at h1
+    exact one_ne_zero h1
+  obtain ⟨p₀, hp₀⟩ : ∃ p₀, fderiv ℝ c x₀ p₀ ≠ 0 := by
+    by_contra! h
+    exact hx₀ (ContinuousLinearMap.ext h)
+  -- the phase-space bumps
+  let bχ : ContDiffBump ((x₀, p₀) : E × E) := ⟨1, 2, one_pos, one_lt_two⟩
+  let bη : ContDiffBump p₀ := ⟨3, 4, by norm_num, by norm_num⟩
+  let G : E × E → ℝ := fun z ↦ c z.1
+  let f : E × E → ℝ := fun z ↦ fderiv ℝ c z.1 z.2 * bχ z
+  let g : E × E → ℝ := fun z ↦ c z.1 * bη z.2
+  have hf : ContDiff ℝ ∞ f :=
+    (((hc.fderiv_right (m := ∞) le_rfl).comp contDiff_fst).clm_apply contDiff_snd).mul bχ.contDiff
+  have hf2 : ContDiff ℝ 2 f := hf.of_le (by simp)
+  have hfc : HasCompactSupport f := bχ.hasCompactSupport.mul_left
+  have hg : ContDiff ℝ ∞ g := (hc.comp contDiff_fst).mul (bη.contDiff.comp contDiff_snd)
+  have hgc : HasCompactSupport g := by
+    refine HasCompactSupport.intro ((isCompact_closedBall (0 : E) 2).prod
+      (isCompact_closedBall p₀ 4)) fun z hz ↦ ?_
+    rw [Set.mem_prod, not_and_or, Metric.mem_closedBall, Metric.mem_closedBall] at hz
+    rcases hz with hz | hz
+    · have : c z.1 = 0 := bc.zero_of_le_dist (show (2 : ℝ) ≤ _ from (not_le.mp hz).le)
+      simp only [g, this, zero_mul]
+    · have : bη z.2 = 0 := bη.zero_of_le_dist (show (4 : ℝ) ≤ _ from (not_le.mp hz).le)
+      simp only [g, this, mul_zero]
+  -- `g` agrees with `G` near the support of `f`
+  have hU : ∀ z ∈ tsupport f, g =ᶠ[nhds z] G := by
+    intro z hz
+    have hz' : z ∈ Metric.closedBall ((x₀, p₀) : E × E) 2 := by
+      rw [← show bχ.rOut = 2 from rfl, ← bχ.tsupport_eq]
+      exact tsupport_mul_subset_right hz
+    filter_upwards [Metric.isOpen_ball.mem_nhds (show z ∈ Metric.ball ((x₀, p₀) : E × E) 3 from
+      lt_of_le_of_lt (Metric.mem_closedBall.mp hz') (by norm_num : (2 : ℝ) < 3))] with y hy
+    have hy2 : dist y.2 p₀ ≤ 3 := by
+      rw [Metric.mem_ball, Prod.dist_eq] at hy
+      exact (le_max_right _ _).trans hy.le
+    simp only [g, G, bη.one_of_mem_closedBall (Metric.mem_closedBall.mpr hy2), mul_one]
+  have hfz : ∀ z ∉ tsupport f, f =ᶠ[nhds z] 0 := fun z hz ↦
+    notMem_tsupport_iff_eventuallyEq.mp hz
+  have hLG : ∀ z, kineticGenerator gradV γ G z = fderiv ℝ c z.1 z.2 := by
+    intro z
+    have := kineticGenerator_mul_comp_fst gradV γ hc2 (contDiff_const (c := (1 : ℝ))) z
+    simpa [G, kineticGenerator] using this
+  have hfLg : ∀ z, f z * kineticGenerator gradV γ g z = fderiv ℝ c z.1 z.2 ^ 2 * bχ z := by
+    intro z
+    by_cases hz : z ∈ tsupport f
+    · rw [kineticGenerator_congr (hU z hz), hLG]
+      simp only [f]
+      ring
+    · have h0 : f z = 0 := (hfz z hz).eq_of_nhds
+      rw [h0, zero_mul]
+      simp only [f, mul_eq_zero] at h0
+      rcases h0 with h0 | h0 <;> simp [h0]
+  have hkey : ∀ z, f z * kineticGenerator gradV γ g z + g z * kineticGenerator gradV γ f z =
+      kineticGenerator gradV γ (fun z ↦ f z * c z.1) z := by
+    intro z
+    by_cases hz : z ∈ tsupport f
+    · rw [kineticGenerator_congr (hU z hz), (hU z hz).eq_of_nhds, hLG,
+        kineticGenerator_mul_comp_fst gradV γ hc2 hf2]
+    · have e := hfz z hz
+      have e2 : (fun z ↦ f z * c z.1) =ᶠ[nhds z] 0 := e.mono fun y hy ↦ by simp [hy]
+      rw [kineticGenerator_congr e, kineticGenerator_congr e2, e.eq_of_nhds]
+      simp [kineticGenerator]
+  have hFc : Continuous fun z : E × E ↦ fderiv ℝ c z.1 z.2 ^ 2 * bχ z :=
+    ((((hc2.continuous_fderiv two_ne_zero).comp continuous_fst).clm_apply continuous_snd).pow 2).mul
+      bχ.continuous
+  have hFs : HasCompactSupport fun z : E × E ↦ fderiv ℝ c z.1 z.2 ^ 2 * bχ z :=
+    bχ.hasCompactSupport.mul_left
+  have hpos : 0 < ∫ z, f z * kineticGenerator gradV γ g z ∂kineticGibbsMeasure V := by
+    simp_rw [hfLg]
+    refine hFc.integral_pos_of_hasCompactSupport_nonneg_ne_zero hFs
+      (fun z ↦ mul_nonneg (sq_nonneg _) (bχ.nonneg' z)) (x := (x₀, p₀)) ?_
+    simp [bχ.one_of_mem_closedBall (Metric.mem_closedBall_self zero_le_one), hp₀]
+  have hint1 : Integrable (fun z ↦ f z * kineticGenerator gradV γ g z) (kineticGibbsMeasure V) := by
+    simp_rw [hfLg]
+    exact hFc.integrable_of_hasCompactSupport hFs
+  have hint2 : Integrable (fun z ↦ g z * kineticGenerator gradV γ f z) (kineticGibbsMeasure V) :=
+    (hg.continuous.mul (continuous_kineticGenerator hb γ hf2)).integrable_of_hasCompactSupport
+      hgc.mul_right
+  have hsum := integral_add hint1 hint2
+  simp_rw [hkey] at hsum
+  rw [integral_kineticGenerator_eq_zero V gradV β γ hV (fun z ↦ f z * c z.1)
+    (hf.mul (hc.comp contDiff_fst)) hfc.mul_right] at hsum
+  refine ⟨f, g, hf, hfc, hg, hgc, ?_⟩
+  linarith
+
+end Irreversibility
+
 /-- GAPS 104.48: the kinetic Langevin diffusion is not reversible: its generator is not symmetric
 in `L²(𝛑)` on smooth compactly supported functions, in every positive dimension. -/
 theorem exists_kineticGenerator_not_symmetric {d : ℕ} (hd : 0 < d)
@@ -297,8 +509,8 @@ theorem exists_kineticGenerator_not_symmetric {d : ℕ} (hd : 0 < d)
     ∃ f g : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) → ℝ,
       ContDiff ℝ ∞ f ∧ HasCompactSupport f ∧ ContDiff ℝ ∞ g ∧ HasCompactSupport g ∧
       ∫ z, f z * kineticGenerator gradV γ g z ∂kineticGibbsMeasure V ≠
-        ∫ z, g z * kineticGenerator gradV γ f z ∂kineticGibbsMeasure V := by
-  sorry
+        ∫ z, g z * kineticGenerator gradV γ f z ∂kineticGibbsMeasure V :=
+  exists_kineticGenerator_not_symmetric_aux hd V gradV β γ hV
 
 section Coupling
 

@@ -2,29 +2,28 @@ module
 
 public import CKSD.Nonparametric.Models
 public import Mathlib.Topology.MetricSpace.Holder
+public import Mathlib.Analysis.Real.Pi.Bounds
+public import CKSD.Nonparametric.LowerBounds.Testing
+public import CKSD.Nonparametric.LowerBounds.Gaussian
 
 /-!
 # Regression smoothers and one-dimensional Hölder rates
 
-Stone's consistency theorem for the Nadaraya–Watson estimator, and the minimax rates
-`n^(-2β/(2β+1))` for fixed-design regression and pointwise density estimation over Hölder
-classes of order `β ∈ (0, 1]`, with the upper bounds attained by box-kernel local averaging and
-by kernel density estimation. The fixed design samples at `(i + 1) / n`. Minimax risks are
-infima over measurable estimators of suprema of `ℝ≥0∞`-valued risks. The higher-order
-local-polynomial and Sobolev parts of the catalogue entries are outside these statements.
+Stone's consistency theorem for the Nadaraya–Watson estimator, and the upper bound
+`n^(-2β/(2β+1))` for fixed-design regression over Hölder classes of order `β ∈ (0, 1]`,
+attained by box-kernel local averaging. The fixed design samples at `(i + 1) / n`. Minimax
+risks are infima over measurable estimators of suprema of `ℝ≥0∞`-valued risks. The
+higher-order local-polynomial and Sobolev parts of the catalogue entries are outside these
+statements. Pointwise density estimation is in `CKSD.Nonparametric.HolderDensityMinimax`.
 
 ## Main definitions
 
-* `CKSD.holderRegressionClass β L`, `CKSD.holderDensityClass β L`: measurable functions with
-  `|f x - f y| ≤ L |x - y|^β` on `[0, 1]`, and probability densities with this bound on `ℝ`;
-  `CKSD.mem_holderRegressionClass_iff` and `CKSD.mem_holderDensityClass_iff` identify them with
-  Mathlib's `HolderOnWith` and `HolderWith`.
+* `CKSD.holderRegressionClass β L`: measurable functions with `|f x - f y| ≤ L |x - y|^β` on
+  `[0, 1]`; `CKSD.mem_holderRegressionClass_iff` identifies it with Mathlib's `HolderOnWith`.
 * `CKSD.fixedDesignRegressionLaw`, `CKSD.fixedDesignRegressionRisk`,
   `CKSD.holderRegressionMinimaxRisk`: the Gaussian fixed-design regression experiment, the mean
   integrated squared error, and its minimax value.
 * `CKSD.fixedDesignLocalConstant`: the box-kernel local average.
-* `CKSD.densityLaw`, `CKSD.holderDensityPointwiseMinimaxRisk`: the law with a given density
-  and the pointwise minimax squared risk.
 
 ## Main results
 
@@ -32,10 +31,10 @@ local-polynomial and Sobolev parts of the catalogue entries are outside these st
 * `CKSD.fixedDesignLocalConstant_risk_le`: the upper bound for the regression risk. The
   matching lower bound and the two-sided rate `CKSD.holderRegressionMinimaxRisk_bounds` are in
   `CKSD.Nonparametric.HolderRegressionMinimax`.
-* `CKSD.finiteKernelDensityEstimator_risk_le`,
-  `CKSD.holderDensityPointwiseMinimaxRisk_lower_bound`.
+* `CKSD.natCast_mul_bandwidth_mul_rate_eq_one`, `CKSD.sq_bandwidth_rpow_eq`: the bandwidth
+  `n^(-1/(2β+1))` balances variance and squared bias.
 
-Sources: GAPS 103.7, 103.22, and 103.26.
+Sources: GAPS 103.7 and 103.22.
 -/
 
 @[expose] public section
@@ -232,7 +231,7 @@ theorem card_fixedDesign_window_ge {n : ℕ} (hn : 0 < n) {h t : ℝ} (hh : 1 / 
 
 /-- The bandwidth `n^(-1/(2β+1))` balances the variance `1/(n h)` against the rate
 `n^(-2β/(2β+1))`: `n · n^(-1/(2β+1)) · n^(-2β/(2β+1)) = 1`. -/
-private theorem natCast_mul_rpow_mul_rpow_eq_one {n : ℕ} (hn : 0 < n) {β : ℝ} (hβ : 0 < β) :
+theorem natCast_mul_bandwidth_mul_rate_eq_one {n : ℕ} (hn : 0 < n) {β : ℝ} (hβ : 0 < β) :
     (n : ℝ) * (n : ℝ) ^ (-1 / (2 * β + 1)) * (n : ℝ) ^ (-2 * β / (2 * β + 1)) = 1 := by
   have hnR : (0 : ℝ) < n := by exact_mod_cast hn
   have hden : (2 * β + 1) ≠ 0 := by linarith
@@ -244,7 +243,7 @@ private theorem natCast_mul_rpow_mul_rpow_eq_one {n : ℕ} (hn : 0 < n) {β : �
 
 /-- The squared bias `(h^β)²` of the bandwidth `h = c n^(-1/(2β+1))` is
 `c^(2β) n^(-2β/(2β+1))`. -/
-private theorem mul_rpow_rpow_sq_eq {n : ℕ} (hn : 0 < n) {β c : ℝ} (hβ : 0 < β) (hc : 0 < c) :
+theorem sq_bandwidth_rpow_eq {n : ℕ} (hn : 0 < n) {β c : ℝ} (hβ : 0 < β) (hc : 0 < c) :
     ((c * (n : ℝ) ^ (-1 / (2 * β + 1))) ^ β) ^ 2 =
       c ^ (2 * β) * (n : ℝ) ^ (-2 * β / (2 * β + 1)) := by
   have hnR : (0 : ℝ) < n := by exact_mod_cast hn
@@ -280,8 +279,8 @@ theorem fixedDesignLocalConstant_risk_le (β L σ c : ℝ)
   have hh0 : 0 < h := mul_pos hc0 he0
   have hden : (2 * β + 1) ≠ 0 := by linarith
   have hden' : 0 < 2 * β + 1 := by linarith
-  have hner : (n : ℝ) * e * r = 1 := natCast_mul_rpow_mul_rpow_eq_one hn hβ0
-  have hpow : (h ^ β) ^ 2 = c ^ (2 * β) * r := mul_rpow_rpow_sq_eq hn hβ0 hc0
+  have hner : (n : ℝ) * e * r = 1 := natCast_mul_bandwidth_mul_rate_eq_one hn hβ0
+  have hpow : (h ^ β) ^ 2 = c ^ (2 * β) * r := sq_bandwidth_rpow_eq hn hβ0 hc0
   have hrn : 1 / (n : ℝ) ≤ r := by
     rw [hr, one_div, ← Real.rpow_neg_one]
     refine Real.rpow_le_rpow_of_exponent_le hn1 ?_
@@ -401,296 +400,6 @@ theorem fixedDesignLocalConstant_risk_le (β L σ c : ℝ)
     _ = ENNReal.ofReal (Bd * r) := by
         rw [setLIntegral_const, Real.volume_Icc, sub_zero, ENNReal.ofReal_one, mul_one]
 
-/-- Probability densities on the line with the Hölder bound `|f x - f y| ≤ L |x - y|^β`.
-Integrability is implied by `∫ f = 1`. -/
-def holderDensityClass (β L : ℝ) : Set (ℝ → ℝ) :=
-  {f | Measurable f ∧ (∀ x, 0 ≤ f x) ∧ (∫ x, f x) = 1 ∧
-    ∀ x y, |f x - f y| ≤ L * Real.rpow |x - y| β}
-
-/-- A member of the Hölder density class is integrable. -/
-theorem integrable_of_mem_holderDensityClass {β L : ℝ} {f : ℝ → ℝ}
-    (hf : f ∈ holderDensityClass β L) : Integrable f volume :=
-  Integrable.of_integral_ne_zero (by rw [hf.2.2.1]; norm_num)
-
-/-- For nonnegative parameters, the Hölder density class consists of the measurable
-probability densities satisfying Mathlib's `HolderWith L β`. -/
-theorem mem_holderDensityClass_iff {β L : ℝ≥0} {f : ℝ → ℝ} :
-    f ∈ holderDensityClass β L ↔
-      Measurable f ∧ (∀ x, 0 ≤ f x) ∧ (∫ x, f x) = 1 ∧ HolderWith L β f := by
-  simp only [holderDensityClass, mem_ofPred_eq, Real.rpow_eq_pow, ← holderOnWith_univ,
-    holderOnWith_iff_abs_sub_le, mem_univ, true_imp_iff]
-
-/-- The probability law represented by a real density. -/
-def densityLaw (f : ℝ → ℝ) : Measure ℝ :=
-  volume.withDensity (fun x ↦ ENNReal.ofReal (f x))
-
-/-- Pointwise minimax risk for density estimation on a Hölder class. -/
-def holderDensityPointwiseMinimaxRisk (n : ℕ) (β L x : ℝ) : ℝ≥0∞ :=
-  ⨅ T : {T : (Fin n → ℝ) → ℝ // Measurable T},
-    ⨆ f : holderDensityClass β L,
-      ∫⁻ sample, ENNReal.ofReal ((T.val sample - f.val x) ^ 2)
-        ∂(Measure.pi fun _ : Fin n ↦ densityLaw f.val)
-
-/-- Mean squared error of a sample mean under a product law: bias squared plus at most the
-second moment divided by the sample size. -/
-theorem integral_sq_sampleMean_sub_le {P : Measure ℝ} [IsProbabilityMeasure P] {n : ℕ}
-    (hn : 0 < n) {g : ℝ → ℝ} (hg : MemLp g 2 P) (a : ℝ) :
-    MemLp (fun ω : Fin n → ℝ ↦ (∑ i, g (ω i)) / n - a) 2 (Measure.pi fun _ ↦ P) ∧
-    ∫ ω, ((∑ i, g (ω i)) / n - a) ^ 2 ∂(Measure.pi fun _ : Fin n ↦ P) ≤
-      (∫ y, g y ∂P - a) ^ 2 + (∫ y, g y ^ 2 ∂P) / n := by
-  set μ := Measure.pi fun _ : Fin n ↦ P with hμ
-  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
-  have hXi : ∀ i : Fin n, MemLp (fun ω : Fin n → ℝ ↦ g (ω i)) 2 μ := fun i ↦
-    hg.comp_measurePreserving (measurePreserving_eval _ i)
-  have hS : MemLp (fun ω : Fin n → ℝ ↦ ∑ i, g (ω i)) 2 μ := memLp_finsetSum _ fun i _ ↦ hXi i
-  have hW : MemLp (fun ω : Fin n → ℝ ↦ (∑ i, g (ω i)) / n - a) 2 μ := by
-    have e : (fun ω : Fin n → ℝ ↦ (∑ i, g (ω i)) / n - a) =
-        fun ω ↦ (1 / (n : ℝ)) * (∑ i, g (ω i)) - a := by funext ω; ring
-    rw [e]
-    exact (hS.const_mul _).sub (memLp_const a)
-  refine ⟨hW, ?_⟩
-  have hEi : ∀ i : Fin n, ∫ ω, g (ω i) ∂μ = ∫ y, g y ∂P := fun i ↦ by
-    have hmap := (measurePreserving_eval (fun _ : Fin n ↦ P) i).map_eq
-    calc ∫ ω, g (ω i) ∂μ = ∫ y, g y ∂(μ.map (fun ω ↦ ω i)) :=
-          (integral_map (measurable_pi_apply i).aemeasurable
-            (by rw [hμ, hmap]; exact hg.aestronglyMeasurable)).symm
-      _ = _ := by rw [hμ, hmap]
-  have hES : ∫ ω, (∑ i, g (ω i)) ∂μ = n * ∫ y, g y ∂P := by
-    rw [integral_finsetSum _ fun i _ ↦ (hXi i).integrable one_le_two]
-    simp [hEi]
-  have hEW : ∫ ω, ((∑ i, g (ω i)) / n - a) ∂μ = ∫ y, g y ∂P - a := by
-    rw [integral_sub ((hS.integrable one_le_two).div_const _) (integrable_const a), integral_div,
-      hES, integral_const]
-    simp only [probReal_univ, smul_eq_mul, one_mul]
-    field_simp
-  have hVS : Var[fun ω : Fin n → ℝ ↦ ∑ i, g (ω i); μ] = n * Var[g; P] := by
-    have := variance_sum_pi (μ := fun _ : Fin n ↦ P) (X := fun _ ↦ g) (fun _ ↦ hg)
-    rw [hμ]
-    convert this using 2
-    · ext ω; simp
-    · simp
-  have hVW : Var[fun ω : Fin n → ℝ ↦ (∑ i, g (ω i)) / n - a; μ] = Var[g; P] / n := by
-    rw [variance_sub_const ((hS.const_mul (1 / (n : ℝ))).aestronglyMeasurable.congr
-      (Filter.Eventually.of_forall fun ω ↦ by simp only; ring))]
-    have : (fun ω : Fin n → ℝ ↦ (∑ i, g (ω i)) / n) =
-        fun ω ↦ (1 / (n : ℝ)) * ∑ i, g (ω i) := by ext ω; ring
-    rw [this, variance_const_mul, hVS]
-    field_simp
-  have hV := variance_eq_sub hW
-  rw [hVW] at hV
-  have hle := variance_le_expectation_sq hg.aestronglyMeasurable
-  have e : ∫ ω, ((∑ i, g (ω i)) / n - a) ^ 2 ∂μ =
-      Var[g; P] / n + (∫ y, g y ∂P - a) ^ 2 := by
-    rw [← hEW]
-    have : μ[(fun ω : Fin n → ℝ ↦ (∑ i, g (ω i)) / n - a) ^ 2] =
-        ∫ ω, ((∑ i, g (ω i)) / n - a) ^ 2 ∂μ := rfl
-    linarith
-  rw [e]
-  have : Var[g; P] / n ≤ (∫ y, g y ^ 2 ∂P) / n := by
-    apply div_le_div_of_nonneg_right _ hnR.le
-    exact hle
-  linarith
-
-/-- A Hölder probability density of order `β ∈ (0, 1]` is bounded by `1 / 2 + L`. -/
-theorem le_of_mem_holderDensityClass {β L : ℝ} (hβ : 0 < β) {f : ℝ → ℝ}
-    (hf : f ∈ holderDensityClass β L) (x : ℝ) : f x ≤ 1 / 2 + L := by
-  have hfi := integrable_of_mem_holderDensityClass hf
-  obtain ⟨hfm, hf0, hf1, hfh⟩ := hf
-  have hle : ∀ y ∈ Icc (x - 1) (x + 1), f x - L ≤ f y := by
-    intro y hy
-    have h1 : |x - y| ≤ 1 := abs_le.mpr ⟨by linarith [hy.2], by linarith [hy.1]⟩
-    have h2 : Real.rpow |x - y| β ≤ 1 := Real.rpow_le_one (abs_nonneg _) h1 hβ.le
-    have h3 := hfh x y
-    have hL : 0 ≤ L := by
-      have := hfh x (x + 1)
-      have h0 : (0 : ℝ) < Real.rpow |x - (x + 1)| β := by
-        simp only [sub_add_cancel_left, abs_neg, abs_one]; norm_num
-      by_contra hneg; push Not at hneg
-      have : L * Real.rpow |x - (x + 1)| β < 0 := mul_neg_of_neg_of_pos hneg h0
-      linarith [abs_nonneg (f x - f (x + 1))]
-    have := abs_le.mp h3
-    nlinarith [this.1]
-  have hmono := intervalIntegral.integral_mono_on (by linarith : x - 1 ≤ x + 1)
-    (intervalIntegrable_const (c := f x - L)) hfi.intervalIntegrable hle
-  rw [intervalIntegral.integral_const, smul_eq_mul,
-    intervalIntegral.integral_of_le (by linarith : x - 1 ≤ x + 1)] at hmono
-  have hint : ∫ y in Ioc (x - 1) (x + 1), f y ≤ ∫ y, f y :=
-    setIntegral_le_integral hfi (Filter.Eventually.of_forall hf0)
-  rw [hf1] at hint
-  have : x + 1 - (x - 1) = 2 := by ring
-  rw [this] at hmono
-  linarith
-
-/-- The law with a probability density is a probability measure. -/
-theorem isProbabilityMeasure_densityLaw {f : ℝ → ℝ} (hf0 : ∀ x, 0 ≤ f x)
-    (hfi : Integrable f volume) (hf1 : ∫ x, f x = 1) : IsProbabilityMeasure (densityLaw f) := by
-  refine ⟨?_⟩
-  rw [densityLaw, withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ,
-    ← ofReal_integral_eq_lintegral_ofReal hfi (Filter.Eventually.of_forall hf0), hf1,
-    ENNReal.ofReal_one]
-
-/-- Integrals against a density law. -/
-theorem integral_densityLaw {f : ℝ → ℝ} (hfm : Measurable f) (hf0 : ∀ x, 0 ≤ f x)
-    (φ : ℝ → ℝ) : ∫ y, φ y ∂densityLaw f = ∫ y, f y * φ y := by
-  rw [densityLaw, integral_withDensity_eq_integral_toReal_smul hfm.ennreal_ofReal
-    (Filter.Eventually.of_forall fun _ ↦ ENNReal.ofReal_lt_top)]
-  refine integral_congr_ae (Filter.Eventually.of_forall fun y ↦ ?_)
-  simp only [ENNReal.toReal_ofReal (hf0 y), smul_eq_mul]
-
-/-- Integrability against a density law. -/
-theorem integrable_densityLaw_iff {f : ℝ → ℝ} (hfm : Measurable f) (hf0 : ∀ x, 0 ≤ f x)
-    (φ : ℝ → ℝ) : Integrable φ (densityLaw f) ↔ Integrable (fun y ↦ f y * φ y) := by
-  rw [densityLaw, integrable_withDensity_iff_integrable_smul' hfm.ennreal_ofReal
-    (Filter.Eventually.of_forall fun _ ↦ ENNReal.ofReal_lt_top)]
-  refine integrable_congr (Filter.Eventually.of_forall fun y ↦ ?_)
-  simp only [ENNReal.toReal_ofReal (hf0 y), smul_eq_mul]
-
-/-- Change of variables `u = (x - y) / h` on the line. -/
-theorem integral_comp_sub_div {h : ℝ} (hh : 0 < h) (x : ℝ) (ψ : ℝ → ℝ) :
-    ∫ y, ψ ((x - y) / h) = h * ∫ u, ψ u := by
-  rw [integral_sub_left_eq_self (fun z ↦ ψ (z / h)) volume x, Measure.integral_comp_div ψ h,
-    abs_of_pos hh, smul_eq_mul]
-
-/-- GAPS 103.26: the kernel upper bound for pointwise Hölder density risk with `0<β≤1`.
-The moment condition is the order-zero kernel condition appropriate in this range. -/
-theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
-    (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) (hc : 0 < c)
-    (K : ℝ → ℝ) (hK : Measurable K) (hK1 : (∫ x, K x) = 1) (hK2 : MemLp K 2 volume)
-    (hKm : Integrable (fun x ↦ Real.rpow |x| β * |K x|) volume) :
-    ∃ C > (0 : ℝ), ∀ n : ℕ, 0 < n → ∀ f ∈ holderDensityClass β L, ∀ x : ℝ,
-      (∫⁻ sample, ENNReal.ofReal
-        ((finiteKernelDensityEstimator K (c * Real.rpow (n : ℝ) (-1 / (2 * β + 1))) sample x -
-          f x) ^ 2) ∂(Measure.pi fun _ : Fin n ↦ densityLaw f)) ≤
-      ENNReal.ofReal (C * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1))) := by
-  obtain ⟨hβ0, -⟩ := hβ
-  have hKi : Integrable K volume := Integrable.of_integral_ne_zero (by rw [hK1]; norm_num)
-  simp only [Real.rpow_eq_pow] at hKm ⊢
-  set MK := ∫ u, |u| ^ β * |K u| with hMK
-  set K2 := ∫ u, K u ^ 2 with hK2def
-  set B := 1 / 2 + L with hB
-  have hMK0 : 0 ≤ MK :=
-    integral_nonneg fun u ↦ mul_nonneg (Real.rpow_nonneg (abs_nonneg u) β) (abs_nonneg _)
-  have hK20 : 0 ≤ K2 := integral_nonneg fun u ↦ sq_nonneg _
-  have hB0 : 0 < B := by linarith
-  have hKsq : Integrable (fun u ↦ K u ^ 2) volume := hK2.integrable_sq
-  refine ⟨L ^ 2 * c ^ (2 * β) * MK ^ 2 + B * K2 / c + 1, by positivity, ?_⟩
-  intro n hn f hf x
-  have hfB : ∀ y, f y ≤ B := le_of_mem_holderDensityClass hβ0 hf
-  have hfi := integrable_of_mem_holderDensityClass hf
-  obtain ⟨hfm, hf0, hf1, hfh⟩ := hf
-  simp only [Real.rpow_eq_pow] at hfh
-  have := isProbabilityMeasure_densityLaw hf0 hfi hf1
-  have hnR : (0 : ℝ) < n := by exact_mod_cast hn
-  set e := (n : ℝ) ^ (-1 / (2 * β + 1)) with he
-  set r := (n : ℝ) ^ (-2 * β / (2 * β + 1)) with hr
-  have he0 : 0 < e := Real.rpow_pos_of_pos hnR _
-  have hr0 : 0 < r := Real.rpow_pos_of_pos hnR _
-  set h := c * e with hh
-  have hh0 : 0 < h := mul_pos hc he0
-  set g : ℝ → ℝ := fun y ↦ K ((x - y) / h) / h with hg
-  have hgm : Measurable g :=
-    (hK.comp ((measurable_const.sub measurable_id).div_const h)).div_const h
-  -- second moment
-  have hR : Integrable (fun y ↦ K ((x - y) / h) ^ 2) volume :=
-    (hKsq.comp_div hh0.ne').comp_sub_left x
-  have hbound2 : ∀ y, f y * g y ^ 2 ≤ B / h ^ 2 * K ((x - y) / h) ^ 2 := by
-    intro y
-    simp only [hg, div_pow]
-    rw [mul_div_assoc', div_mul_eq_mul_div]
-    exact div_le_div_of_nonneg_right (mul_le_mul_of_nonneg_right (hfB y) (sq_nonneg _))
-      (by positivity)
-  have hg2int : Integrable (fun y ↦ f y * g y ^ 2) volume := by
-    refine (hR.const_mul (B / h ^ 2)).mono' (hfm.mul (hgm.pow_const 2)).aestronglyMeasurable
-      (Filter.Eventually.of_forall fun y ↦ ?_)
-    rw [Real.norm_eq_abs, abs_of_nonneg (mul_nonneg (hf0 y) (sq_nonneg _))]
-    exact hbound2 y
-  have hg2le : ∫ y, f y * g y ^ 2 ≤ B * K2 / h := by
-    calc ∫ y, f y * g y ^ 2 ≤ ∫ y, B / h ^ 2 * K ((x - y) / h) ^ 2 :=
-          integral_mono hg2int (hR.const_mul _) hbound2
-      _ = B / h ^ 2 * (h * K2) := by
-          rw [integral_const_mul, integral_comp_sub_div hh0 x (fun u ↦ K u ^ 2)]
-      _ = B * K2 / h := by field_simp
-  have hgL2 : MemLp g 2 (densityLaw f) := by
-    rw [memLp_two_iff_integrable_sq hgm.aestronglyMeasurable,
-      integrable_densityLaw_iff hfm hf0]
-    exact hg2int
-  -- bias
-  have hψ : Integrable (fun u ↦ f (x - h * u) * K u) volume :=
-    hKi.bdd_mul
-      (hfm.comp (measurable_const.sub (measurable_const.mul measurable_id))).aestronglyMeasurable
-      (c := B) (Filter.Eventually.of_forall fun u ↦ by
-        rw [Real.norm_eq_abs, abs_of_nonneg (hf0 _)]; exact hfB _)
-  have hmean : ∫ y, g y ∂densityLaw f = ∫ u, f (x - h * u) * K u := by
-    rw [integral_densityLaw hfm hf0]
-    have e1 : ∀ y, f y * g y = 1 / h * (fun u ↦ f (x - h * u) * K u) ((x - y) / h) := by
-      intro y
-      simp only [hg]
-      have : x - h * ((x - y) / h) = y := by field_simp; ring
-      rw [this]; ring
-    simp_rw [e1]
-    have hcv := integral_comp_sub_div hh0 x (fun u ↦ f (x - h * u) * K u)
-    rw [integral_const_mul, hcv]
-    field_simp
-  have hbias : |∫ y, g y ∂densityLaw f - f x| ≤ L * h ^ β * MK := by
-    rw [hmean]
-    have e2 : (∫ u, f (x - h * u) * K u) - f x = ∫ u, (f (x - h * u) - f x) * K u := by
-      have h3 : ∫ u, (f (x - h * u) - f x) * K u =
-          (∫ u, f (x - h * u) * K u) - ∫ u, f x * K u := by
-        rw [← integral_sub hψ (hKi.const_mul (f x))]; congr 1; ext u; ring
-      rw [h3, integral_const_mul, hK1, mul_one]
-    rw [e2]
-    have hb : ∀ u, ‖(f (x - h * u) - f x) * K u‖ ≤ L * h ^ β * (|u| ^ β * |K u|) := by
-      intro u
-      rw [Real.norm_eq_abs, abs_mul]
-      have h1 := hfh (x - h * u) x
-      have h2 : |x - h * u - x| = h * |u| := by
-        rw [show x - h * u - x = -(h * u) by ring, abs_neg, abs_mul, abs_of_pos hh0]
-      rw [h2, Real.mul_rpow hh0.le (abs_nonneg u)] at h1
-      calc |f (x - h * u) - f x| * |K u| ≤ L * (h ^ β * |u| ^ β) * |K u| :=
-            mul_le_mul_of_nonneg_right h1 (abs_nonneg _)
-        _ = _ := by ring
-    calc |∫ u, (f (x - h * u) - f x) * K u| ≤ ∫ u, L * h ^ β * (|u| ^ β * |K u|) :=
-          norm_integral_le_of_norm_le (hKm.const_mul _) (Filter.Eventually.of_forall hb)
-      _ = L * h ^ β * MK := integral_const_mul _ _
-  obtain ⟨hWL2, hmse⟩ := integral_sq_sampleMean_sub_le hn hgL2 (f x)
-  have hest : ∀ sample : Fin n → ℝ,
-      finiteKernelDensityEstimator K h sample x = (∑ i, g (sample i)) / n := by
-    intro sample
-    simp only [finiteKernelDensityEstimator, hg]
-    rw [← Finset.sum_div]
-    field_simp
-  simp_rw [hest]
-  rw [← ofReal_integral_eq_lintegral_ofReal hWL2.integrable_sq
-    (Filter.Eventually.of_forall fun _ ↦ sq_nonneg _)]
-  refine ENNReal.ofReal_le_ofReal (hmse.trans ?_)
-  rw [integral_densityLaw hfm hf0 (fun y ↦ g y ^ 2)]
-  have hb2 : (∫ y, g y ∂densityLaw f - f x) ^ 2 ≤ (L * h ^ β * MK) ^ 2 := by
-    rw [← sq_abs]; exact pow_le_pow_left₀ (abs_nonneg _) hbias 2
-  have hpow : (h ^ β) ^ 2 = c ^ (2 * β) * r := mul_rpow_rpow_sq_eq hn hβ0 hc
-  have hner : (n : ℝ) * e * r = 1 := natCast_mul_rpow_mul_rpow_eq_one hn hβ0
-  have hvar : (∫ y, f y * g y ^ 2) / n ≤ B * K2 / c * r := by
-    have hr' : r = 1 / (n * e) := by
-      rw [eq_div_iff (by positivity)]; linarith [hner]
-    have : B * K2 / h / n = B * K2 / c * r := by
-      rw [hr', hh]
-      field_simp
-    calc (∫ y, f y * g y ^ 2) / n ≤ B * K2 / h / n :=
-          div_le_div_of_nonneg_right hg2le hnR.le
-      _ = _ := this
-  calc (∫ y, g y ∂densityLaw f - f x) ^ 2 + (∫ y, f y * g y ^ 2) / n
-      ≤ (L * h ^ β * MK) ^ 2 + B * K2 / c * r := add_le_add hb2 hvar
-    _ = (L ^ 2 * c ^ (2 * β) * MK ^ 2 + B * K2 / c) * r := by
-        rw [mul_pow, mul_pow, hpow]; ring
-    _ ≤ (L ^ 2 * c ^ (2 * β) * MK ^ 2 + B * K2 / c + 1) * r := by
-        nlinarith
-
-/-- GAPS 103.26: the matching pointwise minimax lower bound for Hölder orders at most one. -/
-theorem holderDensityPointwiseMinimaxRisk_lower_bound (β L : ℝ)
-    (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) :
-    ∃ c > (0 : ℝ), ∀ n : ℕ, 0 < n → ∀ x : ℝ,
-      ENNReal.ofReal (c * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1))) ≤
-        holderDensityPointwiseMinimaxRisk n β L x := by
-  sorry
 
 /-- A Nadaraya–Watson predictor is nonnegative when observations and weights are nonnegative. -/
 theorem nadarayaWatson_nonneg {d n : ℕ} (K : EuclideanSpace ℝ (Fin d) → ℝ)

@@ -63,6 +63,225 @@ theorem exists_intervalBasis_of_isPointwiseFiniteDimensional {K : Type*} [Field 
     ∃ ι : Type, Nonempty (IntervalBasis V ι) := by
   sorry
 
+section Uniqueness
+
+variable {K : Type*} [Field K] {M : Type*} [AddCommGroup M] [Module K M] {κ : Type*}
+
+/-- Membership in the span of a set of basis vectors, in terms of the coordinates. -/
+private theorem mem_span_basis_image (b : Module.Basis κ K M) {S : Set κ} {v : M} :
+    v ∈ Submodule.span K (b '' S) ↔ ∀ i, b.repr v i ≠ 0 → i ∈ S := by
+  rw [b.mem_span_image]
+  exact ⟨fun h i hi ↦ h (Finsupp.mem_support_iff.mpr hi),
+    fun h i hi ↦ h i (Finsupp.mem_support_iff.mp hi)⟩
+
+/-- An intersection of spans of sets of basis vectors is the span of the intersection. -/
+private theorem iInf_span_basis_image (b : Module.Basis κ K M) {α : Sort*} (S : α → Set κ) :
+    ⨅ a, Submodule.span K (b '' S a) = Submodule.span K (b '' ⋂ a, S a) := by
+  ext v
+  simp only [Submodule.mem_iInf, mem_span_basis_image, mem_iInter]
+  exact ⟨fun h i hi a ↦ h a i hi, fun h a i hi ↦ h i hi a⟩
+
+/-- A supremum of spans of sets of basis vectors is the span of the union. -/
+private theorem iSup_span_basis_image (b : Module.Basis κ K M) {α : Sort*} (S : α → Set κ) :
+    ⨆ a, Submodule.span K (b '' S a) = Submodule.span K (b '' ⋃ a, S a) := by
+  rw [image_iUnion, Submodule.span_iUnion]
+
+/-- The meet of the spans of two sets of basis vectors is the span of the intersection. -/
+private theorem inf_span_basis_image (b : Module.Basis κ K M) (S T : Set κ) :
+    Submodule.span K (b '' S) ⊓ Submodule.span K (b '' T) = Submodule.span K (b '' (S ∩ T)) := by
+  ext v
+  simp only [Submodule.mem_inf, mem_span_basis_image, mem_inter_iff]
+  exact ⟨fun h i hi ↦ ⟨h.1 i hi, h.2 i hi⟩, fun h ↦ ⟨fun i hi ↦ (h i hi).1, fun i hi ↦ (h i hi).2⟩⟩
+
+/-- The join of the spans of two sets of basis vectors is the span of the union. -/
+private theorem sup_span_basis_image (b : Module.Basis κ K M) (S T : Set κ) :
+    Submodule.span K (b '' S) ⊔ Submodule.span K (b '' T) = Submodule.span K (b '' (S ∪ T)) := by
+  rw [image_union, Submodule.span_union]
+
+/-- The subquotient `span(b_S) / (span(b_S) ∩ span(b_T))` of spans of basis vectors has a basis
+indexed by `S \ T`. -/
+private theorem nonempty_basis_quotient_span (b : Module.Basis κ K M) {S T : Set κ}
+    {X Y : Submodule K M} (hX : X = Submodule.span K (b '' S))
+    (hY : Y = Submodule.span K (b '' T)) :
+    Nonempty (Module.Basis ↥(S \ T) K (X ⧸ Submodule.comap X.subtype Y)) := by
+  let f : X →ₗ[K] ↥(S \ T) →₀ K :=
+    Finsupp.lsubtypeDomain (S \ T) ∘ₗ b.repr.toLinearMap ∘ₗ X.subtype
+  have hf : ∀ v : X, ∀ i : ↥(S \ T), f v i = b.repr v i := fun _ _ ↦ rfl
+  have hsurj : Function.Surjective f := by
+    rw [← LinearMap.range_eq_top, eq_top_iff,
+      ← (Finsupp.basisSingleOne (R := K) (ι := ↥(S \ T))).span_eq, Submodule.span_le]
+    rintro _ ⟨i, rfl⟩
+    have hi : b i.1 ∈ X := hX ▸ Submodule.subset_span (mem_image_of_mem b i.2.1)
+    refine ⟨⟨b i.1, hi⟩, ?_⟩
+    ext l
+    rw [hf, Finsupp.coe_basisSingleOne, b.repr_self, Finsupp.single_apply, Finsupp.single_apply]
+    simp only [Subtype.ext_iff]
+  have hker : LinearMap.ker f = Submodule.comap X.subtype Y := by
+    ext ⟨v, hv⟩
+    have hv' : ∀ i, b.repr v i ≠ 0 → i ∈ S := (mem_span_basis_image b).mp (hX ▸ hv)
+    rw [LinearMap.mem_ker, Submodule.mem_comap, Submodule.subtype_apply, hY,
+      mem_span_basis_image]
+    constructor
+    · intro h i hi
+      by_contra hT
+      have := hf ⟨v, hv⟩ ⟨i, hv' i hi, hT⟩
+      rw [h, Finsupp.zero_apply] at this
+      exact hi this.symm
+    · intro h
+      ext ⟨i, hiS, hiT⟩
+      rw [hf, Finsupp.zero_apply]
+      by_contra hne
+      exact hiT (h i hne)
+  exact ⟨Finsupp.basisSingleOne.map ((Submodule.quotEquivOfEq _ _ hker.symm).trans
+    (f.quotKerEquivOfSurjective hsurj)).symm⟩
+
+end Uniqueness
+
+/-- Coordinates of the image of a vector under a structure map, in an interval basis: the
+coordinate of a bar alive at `u` is its coordinate at `t` if it is alive at `t`, and zero
+otherwise. -/
+theorem IntervalBasis.repr_map_apply {K : Type*} [Field K] {V : PersistenceModule K} {ι : Type*}
+    (B : IntervalBasis V ι) {t u : ℝ} (h : t ≤ u) (v : V.obj t) (j : {j // u ∈ B.support j}) :
+    (B.basis u).repr ((V.map (homOfLE h)).hom v) j =
+      if ht : t ∈ B.support j.1 then (B.basis t).repr v ⟨j.1, ht⟩ else 0 := by
+  by_cases ht : t ∈ B.support j.1
+  · rw [dite_eq_left ht]
+    have key : Finsupp.lapply j ∘ₗ (B.basis u).repr.toLinearMap ∘ₗ (V.map (homOfLE h)).hom =
+        Finsupp.lapply ⟨j.1, ht⟩ ∘ₗ (B.basis t).repr.toLinearMap := by
+      refine (B.basis t).ext fun i ↦ ?_
+      simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, Finsupp.lapply_apply,
+        Module.Basis.repr_self]
+      rw [B.map_basis]
+      by_cases hu : u ∈ B.support i.1
+      · rw [dite_eq_left hu, Module.Basis.repr_self, Finsupp.single_apply, Finsupp.single_apply]
+        simp only [Subtype.ext_iff]
+      · rw [dite_eq_right hu, map_zero, Finsupp.zero_apply, Finsupp.single_apply, ite_eq_right]
+        rintro rfl
+        exact hu j.2
+    exact LinearMap.congr_fun key v
+  · rw [dite_eq_right ht]
+    have key : Finsupp.lapply j ∘ₗ (B.basis u).repr.toLinearMap ∘ₗ (V.map (homOfLE h)).hom =
+        0 := by
+      refine (B.basis t).ext fun i ↦ ?_
+      simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, Finsupp.lapply_apply,
+        LinearMap.zero_apply]
+      rw [B.map_basis]
+      by_cases hu : u ∈ B.support i.1
+      · rw [dite_eq_left hu, Module.Basis.repr_self, Finsupp.single_apply, ite_eq_right]
+        intro hij
+        exact ht (by rw [← hij]; exact i.2)
+      · rw [dite_eq_right hu, map_zero, Finsupp.zero_apply]
+    exact LinearMap.congr_fun key v
+
+/-- In an interval basis, the image of a structure map `V_s → V_t` is spanned by the bars alive at
+`s` and at `t`. -/
+theorem IntervalBasis.range_map {K : Type*} [Field K] {V : PersistenceModule K} {ι : Type*}
+    (B : IntervalBasis V ι) {s t : ℝ} (h : s ≤ t) :
+    LinearMap.range (V.map (homOfLE h)).hom =
+      Submodule.span K (B.basis t '' {j | s ∈ B.support j.1}) := by
+  rw [LinearMap.range_eq_map, ← (B.basis s).span_eq, Submodule.map_span, ← range_comp]
+  refine le_antisymm (Submodule.span_le.mpr ?_) (Submodule.span_le.mpr ?_)
+  · rintro _ ⟨j, rfl⟩
+    simp only [Function.comp_apply, B.map_basis]
+    split_ifs with ht
+    · exact Submodule.subset_span ⟨⟨j.1, ht⟩, j.2, rfl⟩
+    · exact zero_mem _
+  · rintro _ ⟨j, hj, rfl⟩
+    refine Submodule.subset_span ⟨⟨j.1, hj⟩, ?_⟩
+    simp only [Function.comp_apply, B.map_basis, dite_eq_left j.2]
+
+/-- In an interval basis, the kernel of a structure map `V_t → V_u` is spanned by the bars alive
+at `t` and dead at `u`. -/
+theorem IntervalBasis.ker_map {K : Type*} [Field K] {V : PersistenceModule K} {ι : Type*}
+    (B : IntervalBasis V ι) {t u : ℝ} (h : t ≤ u) :
+    LinearMap.ker (V.map (homOfLE h)).hom =
+      Submodule.span K (B.basis t '' {j | u ∉ B.support j.1}) := by
+  ext v
+  rw [LinearMap.mem_ker, mem_span_basis_image]
+  constructor
+  · intro hv j hj hu
+    have := B.repr_map_apply h v ⟨j.1, hu⟩
+    rw [hv, map_zero, Finsupp.zero_apply, dite_eq_left j.2] at this
+    exact hj this.symm
+  · intro hv
+    apply (B.basis u).repr.injective
+    ext j
+    rw [B.repr_map_apply, map_zero, Finsupp.zero_apply]
+    split_ifs with ht
+    · by_contra hne
+      exact hv _ hne j.2
+    · rfl
+
+/-- The numerator of the multiplicity subquotient of an interval `I` at `t ∈ I`: the vectors of
+`V_t` coming from every time of `I` before `t` and dying at every time after `t` outside `I`. -/
+private def intervalNumerator {K : Type*} [Field K] (V : PersistenceModule K) (I : Set ℝ)
+    (t : ℝ) : Submodule K (V.obj t) :=
+  (⨅ s : {s // s ∈ I ∧ s ≤ t}, LinearMap.range (V.map (homOfLE s.2.2)).hom) ⊓
+    ⨅ u : {u // u ∉ I ∧ t ≤ u}, LinearMap.ker (V.map (homOfLE u.2.2)).hom
+
+/-- The denominator of the multiplicity subquotient of an interval `I` at `t ∈ I`: the vectors of
+`V_t` coming from some time before `t` outside `I`, plus those dying at some time after `t` in
+`I`. -/
+private def intervalDenominator {K : Type*} [Field K] (V : PersistenceModule K) (I : Set ℝ)
+    (t : ℝ) : Submodule K (V.obj t) :=
+  (⨆ s : {s // s ∉ I ∧ s ≤ t}, LinearMap.range (V.map (homOfLE s.2.2)).hom) ⊔
+    ⨆ u : {u // u ∈ I ∧ t ≤ u}, LinearMap.ker (V.map (homOfLE u.2.2)).hom
+
+/-- The multiplicity subquotient of an interval `I` at a point `t ∈ I` has a basis indexed by the
+bars of an interval basis with support `I`. -/
+private theorem IntervalBasis.nonempty_basis_quotient {K : Type*} [Field K]
+    {V : PersistenceModule K} {ι : Type*} (B : IntervalBasis V ι) {I : Set ℝ} {t : ℝ}
+    (ht : t ∈ I) :
+    Nonempty (Module.Basis {j : {j // t ∈ B.support j} // B.support j.1 = I} K
+      (intervalNumerator V I t ⧸ Submodule.comap (intervalNumerator V I t).subtype
+        (intervalDenominator V I t))) := by
+  have hX : intervalNumerator V I t = Submodule.span K (B.basis t ''
+      ((⋂ s : {s // s ∈ I ∧ s ≤ t}, {j | s.1 ∈ B.support j.1}) ∩
+        ⋂ u : {u // u ∉ I ∧ t ≤ u}, {j | u.1 ∉ B.support j.1})) := by
+    simp only [intervalNumerator, B.range_map, B.ker_map]
+    rw [iInf_span_basis_image, iInf_span_basis_image, inf_span_basis_image]
+  have hY : intervalDenominator V I t = Submodule.span K (B.basis t ''
+      ((⋃ s : {s // s ∉ I ∧ s ≤ t}, {j | s.1 ∈ B.support j.1}) ∪
+        ⋃ u : {u // u ∈ I ∧ t ≤ u}, {j | u.1 ∉ B.support j.1})) := by
+    simp only [intervalDenominator, B.range_map, B.ker_map]
+    rw [iSup_span_basis_image, iSup_span_basis_image, sup_span_basis_image]
+  obtain ⟨β⟩ := nonempty_basis_quotient_span (B.basis t) hX hY
+  refine ⟨β.reindex (Equiv.subtypeEquivRight fun j ↦ ?_)⟩
+  constructor
+  · rintro ⟨⟨h1, h2⟩, h3⟩
+    have h1' : ∀ s, s ∈ I → s ≤ t → s ∈ B.support j.1 := fun s hs hst ↦
+      mem_iInter.mp h1 ⟨s, hs, hst⟩
+    have h2' : ∀ u, u ∉ I → t ≤ u → u ∉ B.support j.1 := fun u hu htu ↦
+      mem_iInter.mp h2 ⟨u, hu, htu⟩
+    have h3' : ∀ s, s ∉ I → s ≤ t → s ∉ B.support j.1 := fun s hs hst hj ↦
+      h3 (Or.inl (mem_iUnion.mpr ⟨⟨s, hs, hst⟩, hj⟩))
+    have h4' : ∀ u, u ∈ I → t ≤ u → u ∈ B.support j.1 := fun u hu htu ↦
+      by_contra fun hj ↦ h3 (Or.inr (mem_iUnion.mpr ⟨⟨u, hu, htu⟩, hj⟩))
+    ext x
+    rcases le_total x t with hx | hx
+    · exact ⟨fun hJ ↦ by_contra fun hI ↦ h3' x hI hx hJ, fun hI ↦ h1' x hI hx⟩
+    · exact ⟨fun hJ ↦ by_contra fun hI ↦ h2' x hI hx hJ, fun hI ↦ h4' x hI hx⟩
+  · intro hj
+    refine ⟨⟨mem_iInter.mpr fun s ↦ ?_, mem_iInter.mpr fun u ↦ ?_⟩, ?_⟩
+    · show s.1 ∈ B.support j.1
+      rw [hj]
+      exact s.2.1
+    · show u.1 ∉ B.support j.1
+      rw [hj]
+      exact u.2.1
+    · rintro (h | h) <;> obtain ⟨x, hx⟩ := mem_iUnion.mp h
+      · exact x.2.1 (hj ▸ hx)
+      · exact hx (hj ▸ x.2.1)
+
+/-- The bars with support `I` of an interval basis, as bars alive at a point `t ∈ I`. -/
+private def IntervalBasis.fiberEquiv {K : Type*} [Field K] {V : PersistenceModule K} {ι : Type*}
+    (B : IntervalBasis V ι) {I : Set ℝ} {t : ℝ} (ht : t ∈ I) :
+    {j // B.support j = I} ≃ {j : {j // t ∈ B.support j} // B.support j.1 = I} where
+  toFun j := ⟨⟨j.1, by rw [j.2]; exact ht⟩, j.2⟩
+  invFun j := ⟨j.1.1, j.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
 /-- GAPS 108.18, uniqueness: the multiset of intervals of an interval decomposition of a
 persistence module over `ℝ` is unique, that is, any two interval bases are related by a
 support-preserving bijection of their index sets. Pointwise finite dimensionality is not needed:
@@ -71,7 +290,19 @@ applies to arbitrary direct sums of them. -/
 theorem IntervalBasis.exists_equiv_support_eq {K : Type*} [Field K] {V : PersistenceModule K}
     {ι ι' : Type*} (B : IntervalBasis V ι)
     (B' : IntervalBasis V ι') : ∃ e : ι ≃ ι', ∀ j, B'.support (e j) = B.support j := by
-  sorry
+  have hE : ∀ I : Set ℝ, Nonempty ({j // B.support j = I} ≃ {j' // B'.support j' = I}) := by
+    intro I
+    rcases I.eq_empty_or_nonempty with rfl | ⟨t, ht⟩
+    · have : IsEmpty {j // B.support j = ∅} := ⟨fun j ↦ (B.support_nonempty j.1).ne_empty j.2⟩
+      have : IsEmpty {j' // B'.support j' = ∅} :=
+        ⟨fun j ↦ (B'.support_nonempty j.1).ne_empty j.2⟩
+      exact ⟨Equiv.equivOfIsEmpty _ _⟩
+    · obtain ⟨β⟩ := B.nonempty_basis_quotient ht
+      obtain ⟨β'⟩ := B'.nonempty_basis_quotient ht
+      exact ⟨(B.fiberEquiv ht).trans ((β.indexEquiv β').trans (B'.fiberEquiv ht).symm)⟩
+  refine ⟨(Equiv.sigmaFiberEquiv B.support).symm.trans ((Equiv.sigmaCongrRight
+    fun I ↦ (hE I).some).trans (Equiv.sigmaFiberEquiv B'.support)), fun j ↦ ?_⟩
+  exact ((hE (B.support j)).some ⟨j, rfl⟩).2
 
 namespace IntervalBasis
 

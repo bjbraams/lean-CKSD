@@ -2,6 +2,8 @@ module
 
 public import CKSD.Bayes.Basic
 public import Mathlib.Probability.ProductMeasure
+public import Mathlib.Probability.Independence.InfinitePi
+public import TauCeti.Probability.Independence.DisjointBlocks
 
 /-!
 # Linear inverse problems in sequence space
@@ -12,6 +14,12 @@ indexed from `0`, the coordinate `j` standing for the index `j + 1` of the singu
 Squared `ℓ²` distances are taken in `ℝ≥0∞`, so that the risks and the Sobolev ellipsoid are
 meaningful for arbitrary sequences. The Gaussian-prior posterior is written in its conjugate
 closed form, coordinatewise independent normal.
+
+The minimax upper bound uses the posterior mean. The lower bound is Assouad's argument over a
+hypercube on the coordinates `J, …, 2J - 1`, `J ≍ ε^{-2/(2β+2a+1)}`: coordinate `j` of the
+infinite product is split off with the block independence of TauCeti's
+`indepFun_of_measurable_blockSigma`, and two normal laws whose means differ by at most `ε` have
+overlap at least `2e^{-2}/√(2π)`.
 
 ## Main definitions
 
@@ -66,24 +74,6 @@ def gaussianSeqPosterior (κ : ℕ → ℝ) (β ε : ℝ) (y : ℕ → ℝ) : Me
 /-- Polynomially decaying singular values: `c₀⁻¹ j^{-a} ≤ κⱼ ≤ c₀ j^{-a}`, `j ≥ 1`. -/
 def HasPolynomialSingularValues (κ : ℕ → ℝ) (a c₀ : ℝ) : Prop :=
   ∀ j : ℕ, c₀⁻¹ * ((j : ℝ) + 1) ^ (-a) ≤ κ j ∧ κ j ≤ c₀ * ((j : ℝ) + 1) ^ (-a)
-
-/-- GAPS 104.20: the minimax `ℓ²` rate over a Sobolev ellipsoid in a mildly ill-posed linear
-inverse problem is `ε^r` with `r = 2β/(2β+2a+1)`. There are constants `0 < c ≤ C`, depending only
-on `a`, `β`, `R`, and `c₀`, such that for every operator with polynomially decaying singular values
-and every noise level `ε ∈ (0, 1]` some measurable estimator has worst-case squared risk at most
-`(C ε^r)²` and every measurable estimator has worst-case squared risk at least `(c ε^r)²`. -/
-theorem exists_minimax_rate_inverseProblem (a β R c₀ : ℝ) (ha : 0 ≤ a) (hβ : 0 < β)
-    (hR : 0 < R) (hc₀ : 1 ≤ c₀) :
-    let r := 2 * β / (2 * β + 2 * a + 1)
-    ∃ c C : ℝ, 0 < c ∧ c ≤ C ∧ ∀ κ : ℕ → ℝ, HasPolynomialSingularValues κ a c₀ →
-      ∀ ε ∈ Ioc (0 : ℝ) 1,
-        (∃ fhat : (ℕ → ℝ) → ℕ → ℝ, Measurable fhat ∧
-          ⨆ f ∈ inverseProblemSobolevBall β R, inverseProblemRisk κ ε fhat f ≤
-            ENNReal.ofReal ((C * ε ^ r) ^ 2)) ∧
-        ∀ fhat : (ℕ → ℝ) → ℕ → ℝ, Measurable fhat →
-          ENNReal.ofReal ((c * ε ^ r) ^ 2) ≤
-            ⨆ f ∈ inverseProblemSobolevBall β R, inverseProblemRisk κ ε fhat f := by
-  sorry
 
 /-- Second moment of an affine function under a normal law, in `ℝ≥0∞`:
 `∫⁻ ((c X - d)² + s) = (cμ - d)² + c² v + s` for `X ∼ N(μ, v)` and `s ≥ 0`. -/
@@ -470,5 +460,454 @@ theorem tendsto_gaussianSeqPosterior_contraction (a β R c₀ : ℝ) (ha : 0 ≤
     simpa using ENNReal.tendsto_ofReal h
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hlim
     (Eventually.of_forall fun _ ↦ zero_le) hbound
+
+/-- Under an infinite product of probability measures on `ℝ`, coordinate `j` and the remaining
+coordinates are independent: their joint law is `μ j ⊗ ∏_{i ≠ j} μ i`. The argument follows
+TauCeti's `infinitePi_map_none_some`. -/
+private theorem map_infinitePi_eval_restrict_ne (μ : ℕ → Measure ℝ)
+    [∀ i, IsProbabilityMeasure (μ i)] (j : ℕ) :
+    (Measure.infinitePi μ).map (fun x ↦ (x j, fun i : {i // i ≠ j} ↦ x i)) =
+      (μ j).prod (Measure.infinitePi fun i : {i // i ≠ j} ↦ μ i) := by
+  have hind : IndepFun (fun x : ℕ → ℝ ↦ x j) (fun x (i : {i // i ≠ j}) ↦ x i)
+      (Measure.infinitePi μ) :=
+    TauCeti.Probability.indepFun_of_measurable_blockSigma (S := {j}) (T := {i | i ≠ j})
+      (Z := fun i (x : ℕ → ℝ) ↦ x i)
+      ((iIndepFun_infinitePi (X := fun _ y ↦ y) fun _ ↦ measurable_id).precomp
+        Subtype.val_injective)
+      (fun i _ ↦ measurable_pi_apply i)
+      (Set.disjoint_singleton_left.mpr fun h ↦ h rfl)
+      (TauCeti.Probability.measurable_blockSigma_of_mem (Z := fun i (x : ℕ → ℝ) ↦ x i)
+        (S := {j}) (i := j) rfl)
+      (@Measurable.of_eval _ _ _ (TauCeti.Probability.blockSigma _ _) _ _ fun i ↦
+        TauCeti.Probability.measurable_blockSigma_of_mem (Z := fun i (x : ℕ → ℝ) ↦ x i)
+          (i := i.1) i.2)
+  rw [hind.map_prod_eq_prod_map_map (measurable_pi_apply _).aemeasurable
+      (Measurable.of_eval fun i ↦ measurable_pi_apply _).aemeasurable,
+    Measure.infinitePi_map_eval, Measure.map_infinitePi_infinitePi_of_inj Subtype.val_injective]
+
+/-- Reassemble a sequence from its coordinate `j` and the remaining coordinates. -/
+private def joinAt (j : ℕ) (y : ℝ) (r : {i // i ≠ j} → ℝ) : ℕ → ℝ :=
+  fun i ↦ if h : i = j then y else r ⟨i, h⟩
+
+/-- Reassembling a sequence from coordinate `j` and the remaining coordinates is measurable. -/
+private theorem measurable_joinAt (j : ℕ) :
+    Measurable fun z : ℝ × ({i // i ≠ j} → ℝ) ↦ joinAt j z.1 z.2 := by
+  refine measurable_pi_iff.mpr fun i ↦ ?_
+  by_cases h : i = j
+  · simp only [joinAt, h, ↓reduceDIte]; exact measurable_fst
+  · simp only [joinAt, h, ↓reduceDIte]; exact (measurable_pi_apply _).comp measurable_snd
+
+/-- Tonelli over an infinite product, integrating coordinate `j` innermost. -/
+private theorem lintegral_infinitePi_eq_lintegral_joinAt (μ : ℕ → Measure ℝ)
+    [∀ i, IsProbabilityMeasure (μ i)] (j : ℕ) {F : (ℕ → ℝ) → ℝ≥0∞} (hF : Measurable F) :
+    ∫⁻ x, F x ∂Measure.infinitePi μ =
+      ∫⁻ r, ∫⁻ y, F (joinAt j y r) ∂μ j ∂Measure.infinitePi fun i : {i // i ≠ j} ↦ μ i := by
+  have hsplit : Measurable fun x : ℕ → ℝ ↦ (x j, fun i : {i // i ≠ j} ↦ x i) :=
+    (measurable_pi_apply j).prodMk (Measurable.of_eval fun i ↦ measurable_pi_apply _)
+  have hj : ∀ x : ℕ → ℝ, joinAt j (x j) (fun i : {i // i ≠ j} ↦ x i) = x := by
+    intro x; funext i; by_cases h : i = j
+    · subst h; simp [joinAt]
+    · simp [joinAt, h]
+  calc ∫⁻ x, F x ∂Measure.infinitePi μ
+      = ∫⁻ x, F (joinAt j (x j) (fun i : {i // i ≠ j} ↦ x i)) ∂Measure.infinitePi μ := by
+        simp_rw [hj]
+    _ = ∫⁻ z, F (joinAt j z.1 z.2) ∂(Measure.infinitePi μ).map
+          (fun x ↦ (x j, fun i : {i // i ≠ j} ↦ x i)) :=
+        (lintegral_map (hF.comp (measurable_joinAt j)) hsplit).symm
+    _ = _ := by
+        rw [map_infinitePi_eval_restrict_ne]
+        exact lintegral_prod_symm (fun z ↦ F (joinAt j z.1 z.2))
+          (hF.comp (measurable_joinAt j)).aemeasurable
+
+
+/-- Lower bound for the normal density on `[m - ε, m + ε]` when `|m - m'| ≤ ε`. -/
+private theorem le_gaussianPDFReal_of_mem_Icc {m m' ε y : ℝ} (hε : 0 < ε) (hm : |m - m'| ≤ ε)
+    (hy : y ∈ Icc (m - ε) (m + ε)) :
+    (√(2 * Real.pi * (ε ^ 2).toNNReal))⁻¹ * Real.exp (-2) ≤
+      gaussianPDFReal m' (ε ^ 2).toNNReal y := by
+  rw [gaussianPDFReal]
+  gcongr
+  rw [Real.coe_toNNReal _ (sq_nonneg ε), le_div_iff₀ (by positivity)]
+  have h1 : |y - m'| ≤ 2 * ε := by
+    have : |y - m| ≤ ε := abs_le.mpr ⟨by linarith [hy.1], by linarith [hy.2]⟩
+    calc |y - m'| = |(y - m) + (m - m')| := by ring_nf
+      _ ≤ |y - m| + |m - m'| := abs_add_le _ _
+      _ ≤ 2 * ε := by linarith
+  have h2 : (y - m') ^ 2 ≤ (2 * ε) ^ 2 := by
+    rw [← sq_abs]; exact pow_le_pow_left₀ (abs_nonneg _) h1 2
+  nlinarith
+
+/-- Two-point lower bound in the one-dimensional normal location model with variance `ε²`:
+for means at distance at most `ε`, the sum of the squared risks of `u` for the targets `c` and
+`c'` under the two laws is at least `(c - c')²/2 · 2e^{-2}/√(2π)`. -/
+private theorem le_lintegral_add_lintegral_gaussianReal {m m' ε : ℝ} (hε : 0 < ε)
+    (hm : |m - m'| ≤ ε) {u : ℝ → ℝ} (hu : Measurable u) (c c' : ℝ) :
+    ENNReal.ofReal ((c - c') ^ 2 / 2 * (2 * Real.exp (-2) / √(2 * Real.pi))) ≤
+      ∫⁻ y, ENNReal.ofReal ((u y - c) ^ 2) ∂gaussianReal m (ε ^ 2).toNNReal +
+        ∫⁻ y, ENNReal.ofReal ((u y - c') ^ 2) ∂gaussianReal m' (ε ^ 2).toNNReal := by
+  have hv : (ε ^ 2).toNNReal ≠ 0 := by
+    rw [ne_eq, Real.toNNReal_eq_zero, not_le]; positivity
+  set K : ℝ := (√(2 * Real.pi * (ε ^ 2).toNNReal))⁻¹ * Real.exp (-2) with hK
+  have hK0 : 0 ≤ K := by positivity
+  set I := Icc (m - ε) (m + ε) with hI
+  have hmm : |m - m| ≤ ε := by simpa using hε.le
+  rw [gaussianReal_of_var_ne_zero _ hv, gaussianReal_of_var_ne_zero _ hv,
+    lintegral_withDensity_eq_lintegral_mul _ (measurable_gaussianPDF _ _) (by fun_prop),
+    lintegral_withDensity_eq_lintegral_mul _ (measurable_gaussianPDF _ _) (by fun_prop),
+    ← lintegral_add_left ((measurable_gaussianPDF _ _).mul (by fun_prop))]
+  calc ENNReal.ofReal ((c - c') ^ 2 / 2 * (2 * Real.exp (-2) / √(2 * Real.pi)))
+      = ∫⁻ _ in I, ENNReal.ofReal (K * ((c - c') ^ 2 / 2)) := by
+        rw [setLIntegral_const, Real.volume_Icc, ← ENNReal.ofReal_mul (by positivity)]
+        congr 1
+        rw [hK, Real.coe_toNNReal _ (sq_nonneg ε), Real.sqrt_mul' _ (sq_nonneg ε),
+          Real.sqrt_sq hε.le]
+        field_simp
+        ring
+    _ ≤ ∫⁻ y in I, ((gaussianPDF m (ε ^ 2).toNNReal * fun y ↦ ENNReal.ofReal ((u y - c) ^ 2)) +
+          (gaussianPDF m' (ε ^ 2).toNNReal * fun y ↦ ENNReal.ofReal ((u y - c') ^ 2))) y := by
+        refine setLIntegral_mono' measurableSet_Icc fun y hy ↦ ?_
+        simp only [Pi.add_apply, Pi.mul_apply, gaussianPDF]
+        rw [← ENNReal.ofReal_mul (gaussianPDFReal_nonneg _ _ _),
+          ← ENNReal.ofReal_mul (gaussianPDFReal_nonneg _ _ _),
+          ← ENNReal.ofReal_add (mul_nonneg (gaussianPDFReal_nonneg _ _ _) (sq_nonneg _))
+            (mul_nonneg (gaussianPDFReal_nonneg _ _ _) (sq_nonneg _))]
+        refine ENNReal.ofReal_le_ofReal ?_
+        have h1 := le_gaussianPDFReal_of_mem_Icc hε hmm hy
+        have h2 := le_gaussianPDFReal_of_mem_Icc hε hm hy
+        have h3 : (c - c') ^ 2 / 2 ≤ (u y - c) ^ 2 + (u y - c') ^ 2 := by
+          nlinarith [sq_nonneg (2 * u y - c - c')]
+        nlinarith [sq_nonneg (u y - c), sq_nonneg (u y - c'), mul_le_mul_of_nonneg_left h3 hK0]
+    _ ≤ _ := setLIntegral_le_lintegral _ _
+
+
+/-- Two-point lower bound in the Gaussian sequence model: if the truths `f` and `f'` differ only
+in coordinate `j` and the means of that coordinate are at distance at most `ε`, every estimator
+`h` of coordinate `j` has summed squared risks at least `(f_j - f'_j)²/2 · 2e^{-2}/√(2π)`. -/
+private theorem le_lintegral_add_lintegral_inverseProblemLaw (κ : ℕ → ℝ) {ε : ℝ} (hε : 0 < ε)
+    (j : ℕ) {f f' : ℕ → ℝ} (hoff : ∀ i ≠ j, f i = f' i)
+    (hshift : |κ j * f j - κ j * f' j| ≤ ε) {h : (ℕ → ℝ) → ℝ} (hh : Measurable h) :
+    ENNReal.ofReal ((f j - f' j) ^ 2 / 2 * (2 * Real.exp (-2) / √(2 * Real.pi))) ≤
+      ∫⁻ y, ENNReal.ofReal ((h y - f j) ^ 2) ∂inverseProblemLaw κ ε f +
+        ∫⁻ y, ENNReal.ofReal ((h y - f' j) ^ 2) ∂inverseProblemLaw κ ε f' := by
+  have hrest : (fun i : {i // i ≠ j} ↦ gaussianReal (κ i * f' i) (ε ^ 2).toNNReal) =
+      fun i : {i // i ≠ j} ↦ gaussianReal (κ i * f i) (ε ^ 2).toNNReal := by
+    funext i; rw [hoff i i.2]
+  have hF (c : ℝ) : Measurable fun y : ℕ → ℝ ↦ ENNReal.ofReal ((h y - c) ^ 2) := by fun_prop
+  have hG (c : ℝ) : Measurable fun z : ℝ × ({i // i ≠ j} → ℝ) ↦
+      ENNReal.ofReal ((h (joinAt j z.1 z.2) - c) ^ 2) := (hF c).comp (measurable_joinAt j)
+  rw [inverseProblemLaw, inverseProblemLaw,
+    lintegral_infinitePi_eq_lintegral_joinAt _ j (hF _),
+    lintegral_infinitePi_eq_lintegral_joinAt _ j (hF _), hrest,
+    ← lintegral_add_left ((hG _).lintegral_prod_left')]
+  calc ENNReal.ofReal ((f j - f' j) ^ 2 / 2 * (2 * Real.exp (-2) / √(2 * Real.pi)))
+      = ∫⁻ _, ENNReal.ofReal ((f j - f' j) ^ 2 / 2 * (2 * Real.exp (-2) / √(2 * Real.pi)))
+          ∂Measure.infinitePi fun i : {i // i ≠ j} ↦ gaussianReal (κ i * f i) (ε ^ 2).toNNReal := by
+        rw [lintegral_const, measure_univ, mul_one]
+    _ ≤ _ := lintegral_mono fun r ↦
+        le_lintegral_add_lintegral_gaussianReal hε hshift
+          (hh.comp ((measurable_joinAt j).comp (measurable_id.prodMk measurable_const))) _ _
+
+
+/-- The hypercube of sequences supported on the coordinates `J, …, 2J - 1`, with value `δ` or `0`
+at `J + k` according to `ω k`. -/
+private def hypercubeSeq (J : ℕ) (δ : ℝ) (ω : Fin J → Bool) : ℕ → ℝ :=
+  fun i ↦ if h : J ≤ i ∧ i < 2 * J then (if ω ⟨i - J, by omega⟩ then δ else 0) else 0
+
+/-- The hypercube sequence at coordinate `J + k` is `δ` or `0` according to `ω k`. -/
+private theorem hypercubeSeq_add (J : ℕ) (δ : ℝ) (ω : Fin J → Bool) (k : Fin J) :
+    hypercubeSeq J δ ω (J + k) = if ω k then δ else 0 := by
+  have h : J ≤ J + k.val ∧ J + k.val < 2 * J := ⟨by omega, by omega⟩
+  have hk : (⟨J + k.val - J, by omega⟩ : Fin J) = k := Fin.ext (by simp)
+  simp only [hypercubeSeq, h, and_self, ↓reduceDIte, hk]
+
+/-- Flipping the bit `k` changes the hypercube sequence only in coordinate `J + k`. -/
+private theorem hypercubeSeq_update_of_ne (J : ℕ) (δ : ℝ) (ω : Fin J → Bool) (k : Fin J)
+    (b : Bool) {i : ℕ} (hi : i ≠ J + k) :
+    hypercubeSeq J δ ω i = hypercubeSeq J δ (Function.update ω k b) i := by
+  unfold hypercubeSeq
+  by_cases h : J ≤ i ∧ i < 2 * J
+  · have hne : (⟨i - J, by omega⟩ : Fin J) ≠ k := by
+      intro e; apply hi; rw [← e]; simp only; omega
+    simp only [h, and_self, ↓reduceDIte, Function.update_of_ne hne]
+  · simp only [h, ↓reduceDIte]
+
+/-- Averaging over the hypercube: if every pair `ω`, `ω` with bit `k` flipped has summed values
+at least `D`, the sum over the hypercube is at least `2^J D / 2`. -/
+private theorem pow_mul_le_two_mul_sum {J : ℕ} (k : Fin J) (g : (Fin J → Bool) → ℝ≥0∞)
+    (D : ℝ≥0∞) (h : ∀ ω, D ≤ g ω + g (Function.update ω k (!ω k))) :
+    2 ^ J * D ≤ 2 * ∑ ω, g ω := by
+  let e : (Fin J → Bool) ≃ (Fin J → Bool) :=
+    { toFun := fun ω ↦ Function.update ω k (!ω k)
+      invFun := fun ω ↦ Function.update ω k (!ω k)
+      left_inv := fun ω ↦ by simp
+      right_inv := fun ω ↦ by simp }
+  have hsum : ∑ ω, g (Function.update ω k (!ω k)) = ∑ ω, g ω := Fintype.sum_equiv e _ _ fun _ ↦ rfl
+  calc 2 ^ J * D = ∑ _ω : Fin J → Bool, D := by
+        rw [Finset.sum_const, Finset.card_univ, Fintype.card_fun, Fintype.card_bool,
+          Fintype.card_fin, nsmul_eq_mul]
+        norm_cast
+    _ ≤ ∑ ω, (g ω + g (Function.update ω k (!ω k))) := Finset.sum_le_sum fun ω _ ↦ h ω
+    _ = 2 * ∑ ω, g ω := by rw [Finset.sum_add_distrib, hsum, two_mul]
+
+
+/-- Assouad's lower bound over the hypercube `hypercubeSeq J δ` in the Gaussian sequence model:
+if the hypercube lies in the Sobolev ellipsoid and each flip moves a mean by at most `ε`, every
+measurable estimator has worst-case squared risk at least `J δ²/4 · 2e^{-2}/√(2π)`. -/
+private theorem le_iSup_inverseProblemRisk_of_hypercube (κ : ℕ → ℝ) {ε : ℝ} (hε : 0 < ε)
+    (β R : ℝ) (J : ℕ) (δ : ℝ) (hshift : ∀ k : Fin J, |κ (J + k) * δ| ≤ ε)
+    (hball : ∀ ω, hypercubeSeq J δ ω ∈ inverseProblemSobolevBall β R)
+    {fhat : (ℕ → ℝ) → ℕ → ℝ} (hfhat : Measurable fhat) :
+    ENNReal.ofReal (J * (δ ^ 2 / 2 * (2 * Real.exp (-2) / √(2 * Real.pi))) / 2) ≤
+      ⨆ f ∈ inverseProblemSobolevBall β R, inverseProblemRisk κ ε fhat f := by
+  set S := ⨆ f ∈ inverseProblemSobolevBall β R, inverseProblemRisk κ ε fhat f with hS
+  set A₀ : ℝ := 2 * Real.exp (-2) / √(2 * Real.pi) with hA₀
+  have hA₀0 : 0 ≤ A₀ := by positivity
+  set D := ENNReal.ofReal (δ ^ 2 / 2 * A₀) with hD
+  let g : Fin J → (Fin J → Bool) → ℝ≥0∞ := fun k ω ↦
+    ∫⁻ y, ENNReal.ofReal ((fhat y (J + k) - hypercubeSeq J δ ω (J + k)) ^ 2)
+      ∂inverseProblemLaw κ ε (hypercubeSeq J δ ω)
+  have hpair (k : Fin J) (ω : Fin J → Bool) : D ≤ g k ω + g k (Function.update ω k (!ω k)) := by
+    have h := le_lintegral_add_lintegral_inverseProblemLaw κ hε (J + k)
+      (f := hypercubeSeq J δ ω) (f' := hypercubeSeq J δ (Function.update ω k (!ω k)))
+      (fun i hi ↦ hypercubeSeq_update_of_ne J δ ω k _ hi)
+      (by
+        rw [hypercubeSeq_add, hypercubeSeq_add, Function.update_self]
+        cases ω k <;> simpa [abs_mul] using hshift k)
+      ((measurable_pi_apply (J + k.val)).comp hfhat)
+    have e : (hypercubeSeq J δ ω (J + k) -
+        hypercubeSeq J δ (Function.update ω k (!ω k)) (J + k)) ^ 2 = δ ^ 2 := by
+      rw [hypercubeSeq_add, hypercubeSeq_add, Function.update_self]
+      cases ω k <;> simp
+    rw [e] at h
+    exact h
+  have hrisk (ω : Fin J → Bool) :
+      ∑ k, g k ω ≤ inverseProblemRisk κ ε fhat (hypercubeSeq J δ ω) := by
+    rw [inverseProblemRisk, ← lintegral_finsetSum _ fun k _ ↦ by fun_prop]
+    refine lintegral_mono fun y ↦ ?_
+    rw [seqDistSq]
+    calc ∑ k : Fin J, ENNReal.ofReal ((fhat y (J + k) - hypercubeSeq J δ ω (J + k)) ^ 2)
+        = ∑' k : Fin J, ENNReal.ofReal ((fhat y (J + k) - hypercubeSeq J δ ω (J + k)) ^ 2) :=
+          (tsum_fintype _).symm
+      _ ≤ _ := tsum_comp_le_tsum_of_injective (f := fun k : Fin J ↦ J + k.val)
+          (fun a b hab ↦ Fin.ext (by simpa using hab))
+          (fun i ↦ ENNReal.ofReal ((fhat y i - hypercubeSeq J δ ω i) ^ 2))
+  have hle (ω : Fin J → Bool) : inverseProblemRisk κ ε fhat (hypercubeSeq J δ ω) ≤ S :=
+    le_iSup₂ (f := fun f _ ↦ inverseProblemRisk κ ε fhat f) (hypercubeSeq J δ ω) (hball ω)
+  have hmain : 2 ^ J * (J * D) ≤ 2 ^ J * (2 * S) := by
+    calc 2 ^ J * (J * D) = ∑ _k : Fin J, 2 ^ J * D := by
+          rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]; ring
+      _ ≤ ∑ k : Fin J, 2 * ∑ ω, g k ω :=
+          Finset.sum_le_sum fun k _ ↦ pow_mul_le_two_mul_sum k (g k) D (hpair k)
+      _ = 2 * ∑ ω, ∑ k, g k ω := by rw [← Finset.mul_sum, Finset.sum_comm]
+      _ ≤ 2 * ∑ _ω : Fin J → Bool, S := by
+          gcongr with ω; exact (hrisk ω).trans (hle ω)
+      _ = 2 ^ J * (2 * S) := by
+          rw [Finset.sum_const, Finset.card_univ, Fintype.card_fun, Fintype.card_bool,
+            Fintype.card_fin, nsmul_eq_mul]
+          push_cast; ring
+  have h2 : (J : ℝ≥0∞) * D ≤ 2 * S :=
+    (ENNReal.mul_le_mul_iff_right (pow_ne_zero _ two_ne_zero)
+      (ENNReal.pow_ne_top ENNReal.ofNat_ne_top)).mp hmain
+  rw [ENNReal.ofReal_div_of_pos two_pos, ENNReal.ofReal_mul (Nat.cast_nonneg _),
+    ENNReal.ofReal_natCast, ← hD, ENNReal.ofReal_ofNat]
+  exact ENNReal.div_le_of_le_mul (by rwa [mul_comm S])
+
+
+/-- The posterior mean `λⱼκⱼYⱼ / (κⱼ²λⱼ + ε²)` under the prior `fⱼ ∼ N(0, j^{-1-2β})`. -/
+private def gaussianSeqPosteriorMean (κ : ℕ → ℝ) (β ε : ℝ) (y : ℕ → ℝ) : ℕ → ℝ :=
+  fun j ↦ ((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j /
+    (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2) * y j
+
+/-- The risk of the posterior mean is the sum of squared biases and variances, and so is at most
+the expected posterior squared distance. -/
+private theorem inverseProblemRisk_gaussianSeqPosteriorMean_le (κ : ℕ → ℝ) (β : ℝ) {ε : ℝ}
+    (hε : 0 < ε) (f₀ : ℕ → ℝ) :
+    inverseProblemRisk κ ε (gaussianSeqPosteriorMean κ β ε) f₀ ≤
+      ∑' j : ℕ, ENNReal.ofReal
+        ((((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j / (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2) *
+            (κ j * f₀ j) - f₀ j) ^ 2 +
+          (((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j /
+            (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2)) ^ 2 * ε ^ 2 +
+          ((j : ℝ) + 1) ^ (-1 - 2 * β) * ε ^ 2 /
+            (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2)) := by
+  set m : ℕ → ℝ := fun j ↦ ((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j /
+    (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2) with hm
+  simp only [inverseProblemRisk, seqDistSq]
+  rw [lintegral_tsum fun j ↦ Measurable.aemeasurable (by
+    simp only [gaussianSeqPosteriorMean]; fun_prop)]
+  refine tsum_le_tsum fun j ↦ ?_
+  have hg : Measurable fun x : ℝ ↦ ENNReal.ofReal ((m j * x - f₀ j) ^ 2 + 0) := by fun_prop
+  have := (measurePreserving_eval_infinitePi (fun i : ℕ ↦
+    gaussianReal (κ i * f₀ i) (ε ^ 2).toNNReal) j).lintegral_comp hg
+  simp only [add_zero, Function.eval] at this
+  simp only [gaussianSeqPosteriorMean]
+  rw [inverseProblemLaw, this]
+  have h2 := lintegral_ofReal_sq_add_gaussianReal (m j) (f₀ j) (κ j * f₀ j) (ε ^ 2).toNNReal
+    le_rfl
+  simp only [add_zero] at h2
+  rw [h2, Real.coe_toNNReal _ (sq_nonneg ε)]
+  refine ENNReal.ofReal_le_ofReal ?_
+  have : 0 ≤ ((j : ℝ) + 1) ^ (-1 - 2 * β) * ε ^ 2 /
+      (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2) := by
+    have := Real.rpow_nonneg (by positivity : (0 : ℝ) ≤ (j : ℝ) + 1) (-1 - 2 * β)
+    positivity
+  simp only [hm]
+  linarith
+
+/-- The posterior mean is a measurable estimator. -/
+private theorem measurable_gaussianSeqPosteriorMean (κ : ℕ → ℝ) (β ε : ℝ) :
+    Measurable (gaussianSeqPosteriorMean κ β ε) :=
+  Measurable.of_eval fun j ↦ (measurable_pi_apply j).const_mul _
+
+/-- GAPS 104.20: the minimax `ℓ²` rate over a Sobolev ellipsoid in a mildly ill-posed linear
+inverse problem is `ε^r` with `r = 2β/(2β+2a+1)`. There are constants `0 < c ≤ C`, depending only
+on `a`, `β`, `R`, and `c₀`, such that for every operator with polynomially decaying singular values
+and every noise level `ε ∈ (0, 1]` some measurable estimator has worst-case squared risk at most
+`(C ε^r)²` and every measurable estimator has worst-case squared risk at least `(c ε^r)²`. -/
+theorem exists_minimax_rate_inverseProblem (a β R c₀ : ℝ) (ha : 0 ≤ a) (hβ : 0 < β)
+    (hR : 0 < R) (hc₀ : 1 ≤ c₀) :
+    let r := 2 * β / (2 * β + 2 * a + 1)
+    ∃ c C : ℝ, 0 < c ∧ c ≤ C ∧ ∀ κ : ℕ → ℝ, HasPolynomialSingularValues κ a c₀ →
+      ∀ ε ∈ Ioc (0 : ℝ) 1,
+        (∃ fhat : (ℕ → ℝ) → ℕ → ℝ, Measurable fhat ∧
+          ⨆ f ∈ inverseProblemSobolevBall β R, inverseProblemRisk κ ε fhat f ≤
+            ENNReal.ofReal ((C * ε ^ r) ^ 2)) ∧
+        ∀ fhat : (ℕ → ℝ) → ℕ → ℝ, Measurable fhat →
+          ENNReal.ofReal ((c * ε ^ r) ^ 2) ≤
+            ⨆ f ∈ inverseProblemSobolevBall β R, inverseProblemRisk κ ε fhat f := by
+  intro r
+  set p := 2 * β + 2 * a + 1 with hp
+  have hp0 : 0 < p := by positivity
+  set C₁ := c₀ ^ 2 * R ^ 2 + c₀ ^ 2 * 2 ^ (1 + 2 * β) / β with hC₁
+  set A₀ : ℝ := 2 * Real.exp (-2) / √(2 * Real.pi) with hA₀
+  have hA₀0 : 0 < A₀ := by positivity
+  set η : ℝ := min (R * 2 ^ (-β)) c₀⁻¹ with hη
+  have hc₀0 : 0 < c₀ := one_pos.trans_le hc₀
+  have hη0 : 0 < η := lt_min (by positivity) (by positivity)
+  set c : ℝ := √(A₀ * η ^ 2 * 2 ^ (-2 * β) / 4) with hc
+  have hc0 : 0 < c := Real.sqrt_pos.mpr (by positivity)
+  refine ⟨c, max c √C₁, hc0, le_max_left _ _, fun κ hκ ε hε ↦ ⟨?_, ?_⟩⟩
+  · refine ⟨gaussianSeqPosteriorMean κ β ε, measurable_gaussianSeqPosteriorMean κ β ε, ?_⟩
+    refine iSup₂_le fun f hf ↦ ?_
+    refine (inverseProblemRisk_gaussianSeqPosteriorMean_le κ β hε.1 f).trans
+      ((tsum_gaussianSeqPosterior_risk_le ha hβ hc₀ hκ hε.1 hf).trans ?_)
+    refine ENNReal.ofReal_le_ofReal ?_
+    have hεr : (ε ^ 2) ^ r = (ε ^ r) ^ 2 := by
+      rw [← Real.rpow_natCast, ← Real.rpow_natCast, ← Real.rpow_mul hε.1.le,
+        ← Real.rpow_mul hε.1.le, mul_comm]
+    have hC₁0 : 0 ≤ C₁ := by positivity
+    rw [hεr, mul_pow]
+    gcongr
+    calc C₁ = √C₁ ^ 2 := (Real.sq_sqrt hC₁0).symm
+      _ ≤ _ := by gcongr; exact le_max_right _ _
+  · intro fhat hfhat
+    have hε0 := hε.1
+    set t : ℝ := ε ^ (-2 / p) with ht
+    have ht1 : 1 ≤ t := Real.one_le_rpow_of_pos_of_le_one_of_nonpos hε0 hε.2
+      (div_nonpos_of_nonpos_of_nonneg (by norm_num) hp0.le)
+    have ht0 : 0 < t := one_pos.trans_le ht1
+    set J : ℕ := ⌈t⌉₊ with hJ
+    have htJ : t ≤ J := Nat.le_ceil t
+    have hJt : (J : ℝ) ≤ 2 * t := by
+      have := Nat.ceil_lt_add_one ht0.le; linarith
+    have hJ0 : (0 : ℝ) < J := ht0.trans_le htJ
+    set δ : ℝ := η * (J : ℝ) ^ (-(1 + 2 * β) / 2) with hδ
+    have hδ0 : 0 < δ := by positivity
+    have hδsq : δ ^ 2 = η ^ 2 * (J : ℝ) ^ (-(1 + 2 * β)) := by
+      rw [hδ, mul_pow, ← Real.rpow_natCast ((J : ℝ) ^ _), ← Real.rpow_mul hJ0.le]
+      norm_num
+    have hJδ : (J : ℝ) * δ ^ 2 = η ^ 2 * (J : ℝ) ^ (-(2 * β)) := by
+      rw [hδsq, mul_left_comm, ← Real.rpow_one_add' hJ0.le (by
+        have : (1 : ℝ) + -(1 + 2 * β) = -(2 * β) := by ring
+        rw [this]; exact neg_ne_zero.mpr (by positivity))]
+      ring_nf
+    have hshift : ∀ k : Fin J, |κ (J + k) * δ| ≤ ε := by
+      intro k
+      obtain ⟨hlo, hhi⟩ := hκ (J + k)
+      have hκ0 : 0 < κ (J + k) := lt_of_lt_of_le (by positivity) hlo
+      have hJj : (J : ℝ) ≤ ((J + k : ℕ) : ℝ) + 1 := by
+        push_cast; linarith [k.val.cast_nonneg (α := ℝ)]
+      rw [abs_of_pos (mul_pos hκ0 hδ0)]
+      calc κ (J + k) * δ ≤ c₀ * (J : ℝ) ^ (-a) * δ := by
+            have hpow : (((J + k : ℕ) : ℝ) + 1) ^ (-a) ≤ (J : ℝ) ^ (-a) :=
+              Real.rpow_le_rpow_of_nonpos hJ0 hJj (by linarith)
+            exact mul_le_mul_of_nonneg_right (hhi.trans (mul_le_mul_of_nonneg_left hpow hc₀0.le))
+              hδ0.le
+        _ = (c₀ * η) * (J : ℝ) ^ (-p / 2) := by
+            rw [hδ, hp, show -(2 * β + 2 * a + 1) / 2 = -a + -(1 + 2 * β) / 2 by ring,
+              Real.rpow_add hJ0]
+            ring
+        _ ≤ 1 * t ^ (-p / 2) := by
+            have hcη : c₀ * η ≤ 1 := by
+              calc c₀ * η ≤ c₀ * c₀⁻¹ := by gcongr; exact min_le_right _ _
+                _ = 1 := mul_inv_cancel₀ hc₀0.ne'
+            exact mul_le_mul hcη (Real.rpow_le_rpow_of_nonpos ht0 htJ
+                (div_nonpos_of_nonpos_of_nonneg (neg_nonpos.mpr hp0.le) zero_le_two))
+              (by positivity) zero_le_one
+        _ = ε := by
+            rw [one_mul, ht, ← Real.rpow_mul hε0.le]
+            rw [show -2 / p * (-p / 2) = 1 by field_simp, Real.rpow_one]
+    have hball : ∀ ω, hypercubeSeq J δ ω ∈ inverseProblemSobolevBall β R := by
+      intro ω
+      have hzero : ∀ i ∉ Finset.Ico J (2 * J),
+          ENNReal.ofReal (((i : ℝ) + 1) ^ (2 * β) * hypercubeSeq J δ ω i ^ 2) = 0 := by
+        intro i hi
+        rw [Finset.mem_Ico] at hi
+        simp [hypercubeSeq, hi]
+      have hterm : ∀ i ∈ Finset.Ico J (2 * J),
+          ENNReal.ofReal (((i : ℝ) + 1) ^ (2 * β) * hypercubeSeq J δ ω i ^ 2) ≤
+            ENNReal.ofReal ((2 * J : ℝ) ^ (2 * β) * δ ^ 2) := by
+        intro i hi
+        rw [Finset.mem_Ico] at hi
+        refine ENNReal.ofReal_le_ofReal ?_
+        have hsq : hypercubeSeq J δ ω i ^ 2 ≤ δ ^ 2 := by
+          unfold hypercubeSeq; split_ifs <;> simp [sq_nonneg]
+        have hi2 : (i : ℝ) + 1 ≤ 2 * J := by
+          have : i + 1 ≤ 2 * J := hi.2
+          exact_mod_cast this
+        exact mul_le_mul (Real.rpow_le_rpow (by positivity) hi2 (by positivity)) hsq
+          (sq_nonneg _) (by positivity)
+      simp only [inverseProblemSobolevBall, Set.mem_ofPred_eq]
+      rw [tsum_eq_sum (s := Finset.Ico J (2 * J)) hzero]
+      refine (Finset.sum_le_card_nsmul _ _ _ hterm).trans ?_
+      rw [Nat.card_Ico, nsmul_eq_mul, show 2 * J - J = J by omega, ← ENNReal.ofReal_natCast,
+        ← ENNReal.ofReal_mul (Nat.cast_nonneg _)]
+      refine ENNReal.ofReal_le_ofReal ?_
+      have hJJ : (J : ℝ) * (J : ℝ) ^ (2 * β) * (J : ℝ) ^ (-(1 + 2 * β)) = 1 := by
+        rw [← Real.rpow_one_add' hJ0.le (by positivity), ← Real.rpow_add hJ0]
+        norm_num
+      have hval : (J : ℝ) * ((2 * J : ℝ) ^ (2 * β) * δ ^ 2) = 2 ^ (2 * β) * η ^ 2 := by
+        rw [Real.mul_rpow (by norm_num) hJ0.le, hδsq]
+        calc _ = 2 ^ (2 * β) * η ^ 2 *
+              ((J : ℝ) * (J : ℝ) ^ (2 * β) * (J : ℝ) ^ (-(1 + 2 * β))) := by ring
+          _ = _ := by rw [hJJ, mul_one]
+      rw [hval]
+      have hηR : η ≤ R * 2 ^ (-β) := min_le_left _ _
+      calc 2 ^ (2 * β) * η ^ 2 ≤ 2 ^ (2 * β) * (R * 2 ^ (-β)) ^ 2 := by gcongr
+        _ = R ^ 2 := by
+          rw [mul_pow, ← Real.rpow_natCast ((2 : ℝ) ^ (-β)), ← Real.rpow_mul (by norm_num),
+            mul_left_comm, ← Real.rpow_add (by norm_num),
+            show 2 * β + -β * ((2 : ℕ) : ℝ) = 0 by push_cast; ring, Real.rpow_zero, mul_one]
+    refine le_trans ?_ (le_iSup_inverseProblemRisk_of_hypercube κ hε0 β R J δ hshift hball hfhat)
+    refine ENNReal.ofReal_le_ofReal ?_
+    have hrhs : (J : ℝ) * (δ ^ 2 / 2 * A₀) / 2 = A₀ * η ^ 2 / 4 * (J : ℝ) ^ (-(2 * β)) := by
+      have := hJδ
+      calc (J : ℝ) * (δ ^ 2 / 2 * A₀) / 2 = A₀ / 4 * ((J : ℝ) * δ ^ 2) := by ring
+        _ = _ := by rw [this]; ring
+    rw [← hA₀, hrhs, mul_pow, hc, Real.sq_sqrt (by positivity)]
+    have hεr : (ε ^ r) ^ 2 = t ^ (-(2 * β)) := by
+      rw [ht, ← Real.rpow_mul hε0.le, ← Real.rpow_natCast, ← Real.rpow_mul hε0.le]
+      congr 1
+      simp only [r, hp]; push_cast; field_simp
+    rw [hεr]
+    have h2t : (J : ℝ) ^ (-(2 * β)) ≥ (2 * t) ^ (-(2 * β)) :=
+      Real.rpow_le_rpow_of_nonpos hJ0 hJt (by linarith)
+    rw [Real.mul_rpow (by norm_num) ht0.le] at h2t
+    have : (2 : ℝ) ^ (-2 * β) = 2 ^ (-(2 * β)) := by ring_nf
+    rw [this]
+    have h0 : 0 ≤ A₀ * η ^ 2 / 4 := by positivity
+    calc A₀ * η ^ 2 * 2 ^ (-(2 * β)) / 4 * t ^ (-(2 * β))
+        = A₀ * η ^ 2 / 4 * (2 ^ (-(2 * β)) * t ^ (-(2 * β))) := by ring
+      _ ≤ _ := mul_le_mul_of_nonneg_left h2t h0
 
 end CKSD

@@ -3,6 +3,7 @@ module
 public import CKSD.Geometry.Basic
 public import CKSD.Geometry.GaussianTransport
 public import CKSD.Geometry.OptimalMapStability
+public import CKSD.Geometry.SemidiscreteTransport
 public import CKSD.Bayes.Basic
 public import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Commute
 public import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Instances
@@ -338,7 +339,14 @@ theorem semidiscreteTransportDual_concave_differentiable_and_attains_max {d k : 
       ∃ g, (∀ h, E h ≤ E g) ∧
         E g = (TauCeti.wassersteinEDist 2 P (∑ j, ENNReal.ofReal (b j) • Measure.dirac
           (y j))).toReal ^ 2 := by
-  sorry
+  intro E
+  obtain ⟨g, hg⟩ := exists_isMax_semidiscreteTransportDual hk hP h2 hy hb hb1
+  exact ⟨concaveOn_semidiscreteTransportDual hk h2 y b,
+    contDiff_semidiscreteTransportDual hk hP h2 hy b,
+    hasFDerivAt_semidiscreteTransportDual hk hP h2 hy b,
+    semidiscreteTransportDual_isMax_iff hk hP h2 hy b, g, hg,
+    semidiscreteTransportDual_eq_wassersteinEDist_sq hk hP h2 hy
+      ((semidiscreteTransportDual_isMax_iff hk hP h2 hy b g).mp hg)⟩
 
 /-- A matrix commuting with `B` commutes with its square root `CFC.sqrt B`. -/
 theorem commute_cfcSqrt_right {d : ℕ} {A B : Matrix (Fin d) (Fin d) ℝ} (h : Commute A B) :

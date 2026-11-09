@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Learning.Basic
+public import CKSD.Learning.ChordalGraphs
 public import CKSD.Learning.CoordinateSum
 public import Mathlib.Combinatorics.SimpleGraph.Acyclic
 public import Mathlib.Combinatorics.SimpleGraph.Clique
@@ -66,8 +67,9 @@ def HasJunctionTree {V : Type*} (G : SimpleGraph V) : Prop :=
 
 /-- GAPS 107.27: a finite graph has a junction tree if and only if it is triangulated. -/
 theorem hasJunctionTree_iff_isTriangulated {V : Type*} [Fintype V] (G : SimpleGraph V) :
-    HasJunctionTree G ↔ IsTriangulatedGraph G := by
-  sorry
+    HasJunctionTree G ↔ IsTriangulatedGraph G :=
+  ⟨fun ⟨_, c, T, _, hmax, hcov, hT, hrip⟩ ↦ chordal_of_junctionTree G c T hmax hcov hT hrip,
+    fun h ↦ exists_junctionTree_of_chordal G h⟩
 
 /-- Marginal table of a joint configuration mass on a finite set of vertices. -/
 def jointMarginal {V S : Type*} [Fintype V] [Fintype S] (p : (V → S) → ℝ) (C : Finset V)

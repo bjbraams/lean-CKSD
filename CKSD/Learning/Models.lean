@@ -3,6 +3,11 @@ module
 public import CKSD.Learning.Basic
 public import CKSD.Asymptotics.Basic
 public import CKSD.Nonparametric.Basic
+public import TauCeti.Probability.Distributions.Wishart.Inverse.Moments
+public import TauCeti.Probability.Distributions.Wishart.Agreement
+public import TauCeti.Probability.Distributions.Gaussian.L2
+public import TauCeti.Probability.Distributions.Gaussian.Multivariate
+public import TauCeti.Analysis.Matrix.MeasurableSpace
 
 /-!
 # Log partition functions, tangent-kernel dynamics and least squares
@@ -32,7 +37,7 @@ estimator, and the implicit bias of gradient descent on least squares.
 noncomputable section
 
 open MeasureTheory ProbabilityTheory Filter Set
-open scoped ENNReal NNReal Topology BigOperators MatrixOrder Matrix.Norms.L2Operator
+open scoped ENNReal NNReal Topology BigOperators Matrix MatrixOrder Matrix.Norms.L2Operator
 
 namespace CKSD
 
@@ -140,6 +145,176 @@ theorem hasDerivAt_predictions_of_gradient_flow {E F : Type*} [NormedAddCommGrou
     HasDerivAt (f ∘ theta) (-((n : ℝ)⁻¹) • D (D.adjoint (f (theta t) - y))) t := by
   simpa only [map_smul] using hf.comp_hasDerivAt t hflow
 
+/-- The standard Gaussian on `ℝᵖ` is the centred multivariate Gaussian with identity covariance. -/
+private theorem stdGaussian_eq_multivariateGaussian (p : ℕ) :
+    stdGaussian (EuclideanSpace ℝ (Fin p)) = multivariateGaussian 0 1 := by
+  rw [TauCeti.Probability.multivariateGaussian_zero_eq_map_stdGaussian_sqrt, CFC.sqrt_one]
+  have : (Matrix.toEuclideanCLM (𝕜 := ℝ) (1 : Matrix (Fin p) (Fin p) ℝ) :
+      EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p)) = id := by
+    funext x; simp
+  rw [this, Measure.map_id]
+
+/-- The Gram matrix `XᵀX` of the rows of a design. -/
+private theorem coe_wishartGram_eq {n p : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin p)) :
+    (TauCeti.Probability.wishartGram x : Matrix (Fin p) (Fin p) ℝ) =
+      (Matrix.of fun i j ↦ x i j)ᵀ * Matrix.of fun i j ↦ x i j := by
+  ext i j
+  simp [TauCeti.Probability.coe_wishartGram, Matrix.sum_apply, Matrix.vecMulVec_apply,
+    Matrix.mul_apply]
+
+/-- The trace on the symmetric-matrix subspace, as a continuous linear functional. -/
+private def symmetricTraceCLM (p : ℕ) :
+    selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) →L[ℝ] ℝ :=
+  LinearMap.toContinuousLinearMap
+    ((Matrix.traceLinearMap (Fin p) ℝ ℝ) ∘ₗ (selfAdjoint.submodule ℝ _).subtype)
+
+/-- Evaluation of the trace functional. -/
+private theorem symmetricTraceCLM_apply {p : ℕ}
+    (B : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) :
+    symmetricTraceCLM p B = (B : Matrix (Fin p) (Fin p) ℝ).trace :=
+  rfl
+
+/-- The law of the inverse Gram matrix of a standard Gaussian design with `n ≥ p` rows is the
+inverse-Wishart law of degree `n` and identity scale. -/
+private theorem map_inv_gram_eq_inverseWishartMeasure {n p : ℕ} (hn : p ≤ n) :
+    (Measure.pi fun _ : Fin n ↦ stdGaussian (EuclideanSpace ℝ (Fin p))).map
+        (fun x ↦ TauCeti.symmetricInv (TauCeti.Probability.wishartGram x)) =
+      TauCeti.Probability.inverseWishartMeasure (n : ℝ) 1 := by
+  rw [show (fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦
+      TauCeti.symmetricInv (TauCeti.Probability.wishartGram x)) =
+      TauCeti.symmetricInv ∘ TauCeti.Probability.wishartGram from rfl,
+    ← Measure.map_map TauCeti.measurable_symmetricInv
+      TauCeti.Probability.measurable_wishartGram, stdGaussian_eq_multivariateGaussian,
+    ← TauCeti.Probability.wishartGramMeasure_eq_map_pi,
+    TauCeti.Probability.wishartGramMeasure_eq_nonsingularWishartMeasure Matrix.PosDef.one hn,
+    TauCeti.Probability.inverseWishartMeasure_def, inv_one]
+
+/-- The mean trace of the inverse Gram matrix of a standard Gaussian design: integrability and
+the value `p / (n - p - 1)`. The inverse-Wishart mean is TauCeti's
+`TauCeti.Probability.integral_id_inverseWishartMeasure`. -/
+private theorem integrable_and_integral_trace_inv_gram {n p : ℕ} (hn : p + 1 < n) :
+    Integrable (fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦
+        (((Matrix.of fun i j ↦ x i j)ᵀ * Matrix.of fun i j ↦ x i j)⁻¹).trace)
+        (Measure.pi fun _ : Fin n ↦ stdGaussian (EuclideanSpace ℝ (Fin p))) ∧
+      ∫ x : Fin n → EuclideanSpace ℝ (Fin p),
+        (((Matrix.of fun i j ↦ x i j)ᵀ * Matrix.of fun i j ↦ x i j)⁻¹).trace
+          ∂(Measure.pi fun _ : Fin n ↦ stdGaussian (EuclideanSpace ℝ (Fin p))) =
+        p / (n - p - 1 : ℕ) := by
+  set μ := Measure.pi fun _ : Fin n ↦ stdGaussian (EuclideanSpace ℝ (Fin p))
+  set φ := fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦
+    TauCeti.symmetricInv (TauCeti.Probability.wishartGram x)
+  have hφ : Measurable φ :=
+    TauCeti.measurable_symmetricInv.comp TauCeti.Probability.measurable_wishartGram
+  have hf : (fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦
+      (((Matrix.of fun i j ↦ x i j)ᵀ * Matrix.of fun i j ↦ x i j)⁻¹).trace) =
+      fun x ↦ symmetricTraceCLM p (φ x) := by
+    funext x
+    rw [symmetricTraceCLM_apply, TauCeti.coe_symmetricInv, coe_wishartGram_eq]
+  have hn' : (p : ℝ) + 1 < (n : ℝ) := by exact_mod_cast hn
+  have hmap := map_inv_gram_eq_inverseWishartMeasure (n := n) (p := p) (by omega)
+  have hint := TauCeti.Probability.integrable_id_inverseWishartMeasure Matrix.PosDef.one hn'
+  rw [hf]
+  constructor
+  · have := (symmetricTraceCLM p).integrable_comp hint
+    rw [← hmap] at this
+    exact (integrable_map_measure this.aestronglyMeasurable hφ.aemeasurable).mp this
+  · rw [← integral_map hφ.aemeasurable (symmetricTraceCLM p).continuous.aestronglyMeasurable,
+      hmap, (symmetricTraceCLM p).integral_comp_comm hint,
+      TauCeti.Probability.integral_id_inverseWishartMeasure Matrix.PosDef.one hn', map_smul,
+      symmetricTraceCLM_apply]
+    simp only [Matrix.trace_one, Fintype.card_fin, smul_eq_mul]
+    rw [Nat.cast_sub (by omega), Nat.cast_sub (by omega), Nat.cast_one]
+    field_simp
+
+/-- The squared norm of a matrix image is the sum of the squared inner products with the rows. -/
+private theorem norm_sq_toEuclideanLin {m p : ℕ} (M : Matrix (Fin m) (Fin p) ℝ)
+    (e : EuclideanSpace ℝ (Fin p)) :
+    ‖Matrix.toEuclideanLin M e‖ ^ 2 = ∑ i, (inner ℝ (WithLp.toLp 2 (M i)) e) ^ 2 := by
+  rw [EuclideanSpace.norm_sq_eq]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  rw [Real.norm_eq_abs, sq_abs]
+  congr 1
+  simp [Matrix.toLpLin_apply, Matrix.mulVec, dotProduct, PiLp.inner_apply, mul_comm]
+
+/-- The second moment of a matrix image of a standard Gaussian vector is the squared Frobenius
+norm of the matrix. -/
+private theorem integrable_and_integral_norm_sq_toEuclideanLin {m p : ℕ}
+    (M : Matrix (Fin m) (Fin p) ℝ) :
+    Integrable (fun e ↦ ‖Matrix.toEuclideanLin M e‖ ^ 2)
+        (stdGaussian (EuclideanSpace ℝ (Fin p))) ∧
+      ∫ e, ‖Matrix.toEuclideanLin M e‖ ^ 2 ∂stdGaussian (EuclideanSpace ℝ (Fin p)) =
+        ∑ i, ∑ j, M i j ^ 2 := by
+  have hint : ∀ i, Integrable (fun e ↦ (inner ℝ (WithLp.toLp 2 (M i)) e) ^ 2)
+      (stdGaussian (EuclideanSpace ℝ (Fin p))) := fun i ↦
+    (TauCeti.Probability.memLp_inner_stdGaussian _ 2 (by simp)).integrable_sq
+  simp_rw [norm_sq_toEuclideanLin]
+  refine ⟨integrable_finsetSum _ fun i _ ↦ hint i, ?_⟩
+  rw [integral_finsetSum _ fun i _ ↦ hint i]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  rw [TauCeti.Probability.integral_sq_inner_stdGaussian, EuclideanSpace.norm_sq_eq]
+  simp [Real.norm_eq_abs, sq_abs]
+
+/-- With an invertible Gram matrix the least-squares error is a linear image of the noise. -/
+private theorem leastSquares_sub_eq {n p : ℕ} (A : Matrix (Fin n) (Fin p) ℝ)
+    (hA : (Aᵀ * A).det ≠ 0) (beta : EuclideanSpace ℝ (Fin p)) (c : ℝ)
+    (e : EuclideanSpace ℝ (Fin n)) :
+    Matrix.toEuclideanLin (𝕜 := ℝ) (Aᵀ * A)⁻¹ (Matrix.toEuclideanLin (𝕜 := ℝ) Aᵀ
+        (Matrix.toEuclideanLin (𝕜 := ℝ) A beta + c • e)) - beta =
+      c • Matrix.toEuclideanLin (𝕜 := ℝ) ((Aᵀ * A)⁻¹ * Aᵀ) e := by
+  have h1 : (Aᵀ * A)⁻¹ * (Aᵀ * A) = 1 := Matrix.nonsing_inv_mul _ hA.isUnit
+  ext i
+  simp only [PiLp.sub_apply, PiLp.smul_apply, Matrix.toLpLin_apply, Matrix.mulVec_mulVec,
+    WithLp.ofLp_add, WithLp.ofLp_smul, Matrix.mulVec_add, Matrix.mulVec_smul]
+  rw [h1, Matrix.one_mulVec]
+  simp
+
+/-- The squared Frobenius norm of `(AᵀA)⁻¹Aᵀ` is the trace of `(AᵀA)⁻¹`. -/
+private theorem sum_sq_inv_mul_transpose {n p : ℕ} (A : Matrix (Fin n) (Fin p) ℝ)
+    (hA : (Aᵀ * A).det ≠ 0) :
+    ∑ i, ∑ j, ((Aᵀ * A)⁻¹ * Aᵀ) i j ^ 2 = ((Aᵀ * A)⁻¹).trace := by
+  have h1 : (Aᵀ * A)⁻¹ * (Aᵀ * A) = 1 := Matrix.nonsing_inv_mul _ hA.isUnit
+  have h2 : ((Aᵀ * A)⁻¹ * Aᵀ) * ((Aᵀ * A)⁻¹ * Aᵀ)ᵀ = ((Aᵀ * A)⁻¹)ᵀ := by
+    rw [Matrix.transpose_mul, Matrix.transpose_transpose, Matrix.mul_assoc,
+      ← Matrix.mul_assoc Aᵀ, ← Matrix.mul_assoc, h1, Matrix.one_mul]
+  rw [← Matrix.trace_transpose ((Aᵀ * A)⁻¹), ← h2]
+  simp only [Matrix.trace, Matrix.diag, Matrix.mul_apply, Matrix.transpose_apply, sq]
+
+/-- The squared error of the least-squares fit is measurable in the design and the noise. -/
+private theorem measurable_norm_sq_leastSquares_sub {n p : ℕ} (beta : EuclideanSpace ℝ (Fin p))
+    (v : ℝ≥0) :
+    Measurable fun z : (Fin n → EuclideanSpace ℝ (Fin p)) × EuclideanSpace ℝ (Fin n) ↦
+      ‖Matrix.toEuclideanLin (𝕜 := ℝ) (((Matrix.of (fun i j ↦ z.1 i j)).transpose) *
+          Matrix.of (fun i j ↦ z.1 i j))⁻¹
+        (Matrix.toEuclideanLin (𝕜 := ℝ) ((Matrix.of (fun i j ↦ z.1 i j)).transpose)
+          (Matrix.toEuclideanLin (𝕜 := ℝ) (Matrix.of (fun i j ↦ z.1 i j)) beta +
+            Real.sqrt v • z.2)) - beta‖ ^ 2 := by
+  have hW : Measurable fun z : (Fin n → EuclideanSpace ℝ (Fin p)) × EuclideanSpace ℝ (Fin n) ↦
+      (((Matrix.of (fun i j ↦ z.1 i j)).transpose) * Matrix.of (fun i j ↦ z.1 i j))⁻¹ := by
+    refine TauCeti.measurable_matrix_inv.comp ?_
+    rw [Matrix.measurable_iff]
+    intro i j
+    simp only [Matrix.mul_apply, Matrix.transpose_apply, Matrix.of_apply]
+    fun_prop
+  simp_rw [EuclideanSpace.norm_sq_eq, Real.norm_eq_abs, sq_abs]
+  refine Finset.measurable_sum _ fun i _ ↦ ?_
+  simp only [PiLp.sub_apply, Matrix.toLpLin_apply, Matrix.mulVec, dotProduct, PiLp.add_apply,
+    PiLp.smul_apply, Matrix.transpose_apply, Matrix.of_apply, smul_eq_mul]
+  have := fun k ↦ (Matrix.measurable_iff.mp hW) i k
+  fun_prop
+
+
+/-- A standard Gaussian design with `n ≥ p` rows has an almost surely invertible Gram matrix. -/
+private theorem ae_det_gram_ne_zero {n p : ℕ} (hn : p ≤ n) :
+    ∀ᵐ x ∂(Measure.pi fun _ : Fin n ↦ stdGaussian (EuclideanSpace ℝ (Fin p))),
+      ((Matrix.of fun i j ↦ x i j)ᵀ * Matrix.of fun i j ↦ x i j).det ≠ 0 := by
+  have h := TauCeti.Probability.ae_posDef_wishartGramMeasure (ν := n) Matrix.PosDef.one hn
+  rw [TauCeti.Probability.wishartGramMeasure_eq_map_pi,
+    ← stdGaussian_eq_multivariateGaussian] at h
+  filter_upwards [ae_of_ae_map TauCeti.Probability.measurable_wishartGram.aemeasurable h]
+    with x hx
+  rw [coe_wishartGram_eq] at hx
+  exact hx.det_pos.ne'
+
 /-- GAPS 107.31, the underparameterized ridgeless risk with Gaussian noise. -/
 theorem ridgeless_gaussian_risk_eq {n p : ℕ} (hn : p + 1 < n)
     (beta : EuclideanSpace ℝ (Fin p)) (v : ℝ≥0) :
@@ -151,7 +326,33 @@ theorem ridgeless_gaussian_risk_eq {n p : ℕ} (hn : p + 1 < n)
         (Matrix.toEuclideanLin (𝕜 := ℝ) ((A z.1).transpose)
           (Matrix.toEuclideanLin (𝕜 := ℝ) (A z.1) beta + Real.sqrt v • z.2));
     (∫ z, ‖fit z - beta‖ ^ 2 ∂P) = (v : ℝ) * p / (n - p - 1 : ℕ) := by
-  sorry
+  intro P A fit
+  obtain ⟨hTint, hTval⟩ := integrable_and_integral_trace_inv_gram hn
+  have hae := ae_det_gram_ne_zero (n := n) (p := p) (by omega)
+  have hsec : ∀ x, ((A x)ᵀ * A x).det ≠ 0 →
+      Integrable (fun e ↦ ‖fit (x, e) - beta‖ ^ 2) (stdGaussian (EuclideanSpace ℝ (Fin n))) ∧
+        ∫ e, ‖fit (x, e) - beta‖ ^ 2 ∂stdGaussian (EuclideanSpace ℝ (Fin n)) =
+          v * (((A x)ᵀ * A x)⁻¹).trace := by
+    intro x hx
+    have hfun : (fun e ↦ ‖fit (x, e) - beta‖ ^ 2) = fun e ↦
+        (v : ℝ) * ‖Matrix.toEuclideanLin (𝕜 := ℝ) (((A x)ᵀ * A x)⁻¹ * (A x)ᵀ) e‖ ^ 2 := by
+      funext e
+      simp only [fit]
+      rw [leastSquares_sub_eq _ hx, norm_smul, mul_pow, Real.norm_eq_abs, sq_abs,
+        Real.sq_sqrt (NNReal.coe_nonneg v)]
+    obtain ⟨h1, h2⟩ := integrable_and_integral_norm_sq_toEuclideanLin
+      (((A x)ᵀ * A x)⁻¹ * (A x)ᵀ)
+    rw [hfun, integral_const_mul, h2, sum_sq_inv_mul_transpose _ hx]
+    exact ⟨h1.const_mul _, rfl⟩
+  have hmeas := measurable_norm_sq_leastSquares_sub (n := n) beta v
+  have hint : Integrable (fun z ↦ ‖fit z - beta‖ ^ 2) P := by
+    rw [integrable_prod_iff hmeas.aestronglyMeasurable]
+    refine ⟨hae.mono fun x hx ↦ (hsec x hx).1, (hTint.const_mul (v : ℝ)).congr ?_⟩
+    filter_upwards [hae] with x hx
+    simp_rw [norm_pow, norm_norm]
+    exact ((hsec x hx).2).symm
+  rw [integral_prod _ hint, integral_congr_ae (hae.mono fun x hx ↦ (hsec x hx).2),
+    integral_const_mul, hTval, mul_div_assoc]
 
 /-- GAPS 107.40, least-squares gradient descent and the preserved nullspace component: for a
 step `0 < η < 2 / ‖A‖²`, the iterates `θ ↦ θ - η Aᵀ(Aθ - y)` converge to a solution `θ*` of the

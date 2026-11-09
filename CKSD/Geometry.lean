@@ -8,6 +8,7 @@ public import CKSD.Geometry.Topology
 public import CKSD.Geometry.Entropic
 public import CKSD.Geometry.StatisticalTransport
 public import CKSD.Geometry.Transport
+public import CKSD.Geometry.SemidiscreteTransport
 public import CKSD.Geometry.Kernels
 public import CKSD.Geometry.RandomFeatures
 public import CKSD.Geometry.MatrixReduction

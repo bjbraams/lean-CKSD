@@ -362,3 +362,36 @@ Proofs of the classical limit and lower-bound theorems rest on the following ups
   `wassersteinEDist_map_le_mul`, `hasFiniteMoment_iff_memLp_quantile`,
   `eLpNorm_infEDist_le_wassersteinEDist`) for distance-to-measure stability and quantization.
 - Statlib: `klDiv_pi` for divergences of product laws.
+
+The triangular-array and martingale central limit theorems
+(`CKSD/Asymptotics/Lindeberg/Basic.lean`, `CKSD/Asymptotics/MartingaleCLT/Basic.lean`) follow
+Billingsley's characteristic-function proof of the Lindeberg–Feller theorem and B. M. Brown,
+*Martingale central limit theorems*, Ann. Math. Statist. 42 (1971), with Hall and Heyde,
+*Martingale Limit Theory and Its Application* (1980), §3.2. Further proofs use these upstream
+results.
+
+- Mathlib: Lévy's continuity theorem (`TendstoInDistribution.of_tendsto_charFun`) and
+  `taylor_isLittleO_univ`; the conditional-expectation pull-out
+  `condExp_stronglyMeasurable_bilin_of_bound`; conditional laws
+  (`condIndepFun_iff_map_prod_eq_prod_condDistrib_prod_condDistrib`,
+  `condDistrib_ae_eq_of_measure_eq_compProd`, `Kernel.compProd_eq_iff`); Lévy's upward theorem
+  `Integrable.tendsto_ae_condExp` and `exists_measurableEmbedding_real` in Doob's consistency
+  theorem; `geometric_hahn_banach_of_nonempty_interior_point`,
+  `Convex.interior_nonempty_iff_affineSpan_eq_top` and `LowerSemicontinuousOn.exists_isMinOn`
+  for maximum-likelihood existence; `Matrix.det_add_mul`, `Polynomial.eq_of_infinite_eval_eq` and
+  `IsHermitian.roots_charpoly_eq_eigenvalues` for the Craig–Sakamoto theorem;
+  `hasFDerivAt_integral_of_dominated_loc_of_lip'` and `Measure.addHaar_affineSubspace` for
+  semidiscrete transport; `Module.Basis.indexEquiv` for uniqueness of interval decompositions;
+  `ContDiffBump` for test functions; the `SimpleGraph` tree and walk API for chordal graphs.
+- TauCeti: Bernstein's inequality `iIndepFun.measureReal_abs_sum_ge_le_of_abs_le` for chaining;
+  `indepFun_matrix_multivariateGaussian_iff` and
+  `mgf_inner_toEuclideanLin_multivariateGaussian_sqrt` for Gaussian quadratic forms; the
+  inverse-Wishart mean `integral_id_inverseWishartMeasure` for ridgeless regression;
+  `mgf_sum_mul_sq_pi_gaussianReal` for chi-squared tails; `indepFun_of_measurable_blockSigma` and
+  `strong_law_ae_infinitePi` for infinite product models;
+  `exists_finset_isCover_of_subset_closedBall` for random features;
+  `wassersteinEDist_rpow_eq_transportCost` and `le_transportCost` for semidiscrete transport;
+  `norm_prod_sub_prod_le_sum_norm_sub` for products of characteristic functions;
+  `abs_sub_taylorWithinEval_le` for kernel-density bias.
+- Statlib: `MeasureTheory.lintegral_fintype_prod_eq_prod` and `klDiv_pi_const` in sparse minimax
+  bounds.

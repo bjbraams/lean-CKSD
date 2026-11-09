@@ -9,6 +9,7 @@ public import Mathlib.MeasureTheory.Measure.Prokhorov
 public import TauCeti.Analysis.PositiveDefinite.Kernel.MeanEmbedding
 public import TauCeti.Probability.Moments.Covariance
 public import CKSD.Asymptotics.MultivariateCLT
+public import TauCeti.Probability.Distributions.Gaussian.Affine
 
 /-!
 # Kernel discrepancies: MMD, energy distance, HSIC, Stein identities
@@ -83,29 +84,6 @@ theorem squaredMMD_eq_norm_kernelMeanEmbedding_sub_sq {X : Type*} [MeasurableSpa
     integral_prod_symm _ hQQ, integral_prod_symm _ hPQ]
   ring
 
-/-- GAPS 108.61, the null limit of MMD for a bounded finite-dimensional feature map. Let
-`φ : X → ℝ^d` be bounded and measurable, `k(x, y) = ⟨φ x, φ y⟩`, and let the pairs `(X_i, Y_i)` be
-independent with law `P ⊗ P`. With `C` the covariance matrix of `φ(X_1)`, the scaled unbiased
-estimator `n MMD_u²` converges in distribution to `2 (‖Z‖² - tr C)` and the scaled plug-in estimator
-`n ‖φ̄_X - φ̄_Y‖²` to `2 ‖Z‖²`, where `Z ∼ N(0, C)`. -/
-theorem tendstoInDistribution_unbiasedSquaredMMD_null
-    {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] {d : ℕ}
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X) [IsProbabilityMeasure P]
-    (Xn Yn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ (fun i ω ↦ (Xn i ω, Yn i ω))
-      (P.prod P))
-    (phi : X → EuclideanSpace ℝ (Fin d)) (hm : Measurable phi)
-    (hb : ∃ C, ∀ x, ‖phi x‖ ≤ C) :
-    let C := TauCeti.covMatrix (P.map phi);
-    let k := fun x y ↦ inner ℝ (phi x) (phi y);
-    TendstoInDistribution (fun (n : ℕ) ω ↦ (n : ℝ) * unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω)
-      (fun i ↦ Yn i.val ω)) atTop id (fun _ ↦ μ)
-      ((multivariateGaussian 0 C).map (fun z ↦ 2 * (‖z‖ ^ 2 - Matrix.trace C))) ∧
-      TendstoInDistribution (fun (n : ℕ) ω ↦ (n : ℝ) *
-        ‖sampleAverage (fun i ω ↦ phi (Xn i ω)) n ω - sampleAverage (fun i ω ↦ phi
-          (Yn i ω)) n ω‖ ^ 2) atTop id (fun _ ↦ μ)
-        ((multivariateGaussian 0 C).map (fun z ↦ 2 * ‖z‖ ^ 2)) := by
-  sorry
-
 /-- The unbiased squared MMD of an inner-product feature kernel, in terms of the two feature means
 `A = n⁻¹ ∑ φ(x_i)` and `B = n⁻¹ ∑ φ(y_i)`: for `n ≥ 2` it is `‖A - B‖²` plus the correction
 `(‖A‖² + ‖B‖² - n⁻¹ ∑ (‖φ(x_i)‖² + ‖φ(y_i)‖²)) / (n - 1)`. -/
@@ -157,6 +135,295 @@ theorem unbiasedSquaredMMD_inner_eq {X E : Type*} [NormedAddCommGroup E] [InnerP
   have hn1 : (n : ℝ) - 1 ≠ 0 := by linarith
   field_simp
   ring
+
+/-- For square-integrable `a, b` and independent copies `x, x'` with law `P`, the covariance of
+`a(x) - a(x')` and `b(x) - b(x')` is `2 Cov_P(a, b)`. -/
+private theorem covariance_sub_prod_self {X : Type*} [MeasurableSpace X] (P : Measure X)
+    [IsProbabilityMeasure P] (a b : X → ℝ) (ha : MemLp a 2 P) (hb : MemLp b 2 P) :
+    cov[fun z : X × X ↦ a z.1 - a z.2, fun z ↦ b z.1 - b z.2; P.prod P] = 2 * cov[a, b; P] := by
+  have ha1 : MemLp (fun z : X × X ↦ a z.1) 2 (P.prod P) := ha.comp_fst P
+  have ha2 : MemLp (fun z : X × X ↦ a z.2) 2 (P.prod P) := ha.comp_snd P
+  have hb1 : MemLp (fun z : X × X ↦ b z.1) 2 (P.prod P) := hb.comp_fst P
+  have hb2 : MemLp (fun z : X × X ↦ b z.2) 2 (P.prod P) := hb.comp_snd P
+  have hai : Integrable a P := ha.integrable one_le_two
+  have hbi : Integrable b P := hb.integrable one_le_two
+  have hab : Integrable (a * b) P := ha.integrable_mul hb
+  have hX2 : MemLp (fun z : X × X ↦ a z.1 - a z.2) 2 (P.prod P) := ha1.sub ha2
+  have hY2 : MemLp (fun z : X × X ↦ b z.1 - b z.2) 2 (P.prod P) := hb1.sub hb2
+  rw [covariance_eq_sub hX2 hY2, covariance_eq_sub ha hb]
+  have hX : ∫ z, (fun z : X × X ↦ a z.1 - a z.2) z ∂(P.prod P) = 0 := by
+    simp only
+    rw [integral_sub (hai.comp_fst P) (hai.comp_snd P), integral_fun_fst a, integral_fun_snd a,
+      sub_self]
+  simp only [Pi.mul_apply] at hX ⊢
+  rw [hX, zero_mul, sub_zero]
+  have hpt : ∀ z : X × X, (a z.1 - a z.2) * (b z.1 - b z.2) =
+      (a z.1 * b z.1 - a z.1 * b z.2) - (a z.2 * b z.1 - a z.2 * b z.2) := fun z ↦ by ring
+  simp_rw [hpt]
+  have h11 : Integrable (fun z : X × X ↦ a z.1 * b z.1) (P.prod P) := hab.comp_fst P
+  have h22 : Integrable (fun z : X × X ↦ a z.2 * b z.2) (P.prod P) := hab.comp_snd P
+  have h12 : Integrable (fun z : X × X ↦ a z.1 * b z.2) (P.prod P) := hai.mul_prod hbi
+  have h21 : Integrable (fun z : X × X ↦ a z.2 * b z.1) (P.prod P) := by
+    have := hbi.mul_prod hai
+    simpa only [mul_comm] using this
+  have hI1 : Integrable (fun z : X × X ↦ a z.1 * b z.1 - a z.1 * b z.2) (P.prod P) := h11.sub h12
+  have hI2 : Integrable (fun z : X × X ↦ a z.2 * b z.1 - a z.2 * b z.2) (P.prod P) := h21.sub h22
+  rw [integral_sub hI1 hI2, integral_sub h11 h12, integral_sub h21 h22,
+    integral_fun_fst (fun x ↦ a x * b x), integral_fun_snd (fun x ↦ a x * b x),
+    integral_prod_mul a b]
+  have : ∫ z : X × X, a z.2 * b z.1 ∂(P.prod P) = (∫ x, a x ∂P) * ∫ x, b x ∂P := by
+    simp_rw [mul_comm (a _)]
+    rw [integral_prod_mul b a, mul_comm]
+  rw [this, probReal_univ]
+  ring
+
+
+/-- Strong law of large numbers for a measurable integrable statistic `f` of an i.i.d.
+sequence with law `P`: almost surely `n⁻¹ ∑_{i<n} f(Z_i) → ∫ f dP`. -/
+private theorem ae_tendsto_average_comp_of_iid {Ω E F : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace E] [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
+    [MeasurableSpace F] [BorelSpace F] [SecondCountableTopology F]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) (Z : ℕ → Ω → E)
+    (hiid : IsIndependentIdenticallyDistributed μ Z P) (f : E → F) (hf : Measurable f)
+    (hint : Integrable f P) :
+    ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ ↦ (n : ℝ)⁻¹ • ∑ i ∈ Finset.range n, f (Z i ω)) atTop
+      (𝓝 (∫ x, f x ∂P)) := by
+  obtain ⟨hm, hind, hlaw⟩ := hiid
+  have hident : ∀ i, IdentDistrib (f ∘ Z i) (f ∘ Z 0) μ μ := fun i ↦
+    ⟨(hf.comp (hm i)).aemeasurable, (hf.comp (hm 0)).aemeasurable, by
+      rw [← Measure.map_map hf (hm i), ← Measure.map_map hf (hm 0), hlaw i, hlaw 0]⟩
+  have hint0 : Integrable (f ∘ Z 0) μ := by
+    rw [← hlaw 0] at hint; exact hint.comp_measurable (hm 0)
+  have h := strong_law_ae (fun i ↦ f ∘ Z i) hint0
+    (fun i j hij ↦ (hind.comp (fun _ ↦ f) (fun _ ↦ hf)).indepFun hij) hident
+  have hmean : μ[f ∘ Z 0] = ∫ x, f x ∂P := by
+    rw [← hlaw 0, integral_map (hm 0).aemeasurable hf.aestronglyMeasurable]; rfl
+  rw [hmean] at h
+  exact h
+
+/-- The trace of the covariance matrix of a bounded measurable feature vector `φ(X)` is
+`E ‖φ(X)‖² - ‖E φ(X)‖²`. -/
+private theorem trace_covMatrix_map_eq {X : Type*} [MeasurableSpace X] {d : ℕ} (P : Measure X)
+    [IsProbabilityMeasure P] (phi : X → EuclideanSpace ℝ (Fin d)) (hm : Measurable phi)
+    (C : ℝ) (hC : ∀ x, ‖phi x‖ ≤ C) :
+    Matrix.trace (TauCeti.covMatrix (P.map phi)) =
+      (∫ x, ‖phi x‖ ^ 2 ∂P) - ‖∫ x, phi x ∂P‖ ^ 2 := by
+  have hj : ∀ j, MemLp (fun x ↦ phi x j) 2 P := fun j ↦
+    MemLp.of_bound (by fun_prop) C (ae_of_all _ fun x ↦
+      (by simpa using PiLp.norm_apply_le (phi x) j : ‖phi x j‖ ≤ ‖phi x‖).trans (hC x))
+  have hint : Integrable phi P := Integrable.of_bound hm.aestronglyMeasurable C (ae_of_all _ hC)
+  have hdiag : ∀ j, TauCeti.covMatrix (P.map phi) j j =
+      (∫ x, phi x j ^ 2 ∂P) - (∫ x, phi x j ∂P) ^ 2 := fun j ↦ by
+    rw [TauCeti.covMatrix_apply, covariance_map_fun (by fun_prop) (by fun_prop) hm.aemeasurable,
+      covariance_eq_sub (hj j) (hj j)]
+    simp only [Pi.mul_apply, sq]
+  rw [Matrix.trace]
+  simp only [Matrix.diag]
+  rw [Finset.sum_congr rfl fun j _ ↦ hdiag j, Finset.sum_sub_distrib,
+    EuclideanSpace.norm_sq_eq]
+  congr 1
+  · rw [← integral_finsetSum _ fun j _ ↦ (hj j).integrable_sq]
+    exact integral_congr_ae (ae_of_all _ fun x ↦ by
+      simp only [EuclideanSpace.norm_sq_eq, Real.norm_eq_abs, sq_abs])
+  · refine Finset.sum_congr rfl fun j _ ↦ ?_
+    rw [Real.norm_eq_abs, sq_abs, eval_integral_piLp (fun j ↦ (hj j).integrable one_le_two)]
+
+
+/-- The central limit theorem behind the null limit of MMD: for a bounded measurable feature map
+`φ` and independent pairs `(X_i, Y_i)` with law `P ⊗ P`, the scaled mean difference
+`√n (φ̄_X - φ̄_Y)` converges in distribution to `N(0, 2C)`, `C` the covariance matrix of
+`φ(X_1)`. -/
+theorem tendstoInDistribution_sqrt_smul_sampleAverage_feature_sub
+    {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] {d : ℕ}
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X) [IsProbabilityMeasure P]
+    (Xn Yn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ (fun i ω ↦ (Xn i ω, Yn i ω))
+      (P.prod P))
+    (phi : X → EuclideanSpace ℝ (Fin d)) (hm : Measurable phi) (B : ℝ)
+    (hB : ∀ x, ‖phi x‖ ≤ B) :
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n •
+      sampleAverage (fun i ω ↦ phi (Xn i ω) - phi (Yn i ω)) n ω) atTop id (fun _ ↦ μ)
+      (multivariateGaussian 0 ((2 : ℝ) • TauCeti.covMatrix (P.map phi))) := by
+  set C := TauCeti.covMatrix (P.map phi)
+  set v : X × X → EuclideanSpace ℝ (Fin d) := fun z ↦ phi z.1 - phi z.2
+  have hv : Measurable v := by fun_prop
+  set Z : ℕ → Ω → X × X := fun i ω ↦ (Xn i ω, Yn i ω)
+  set V : ℕ → Ω → EuclideanSpace ℝ (Fin d) := fun i ω ↦ v (Z i ω)
+  set L := (P.prod P).map v
+  have hiidV : IsIndependentIdenticallyDistributed μ V L :=
+    ⟨fun i ↦ hv.comp (hiid.1 i), hiid.2.1.comp (fun _ ↦ v) (fun _ ↦ hv),
+      fun i ↦ by rw [show V i = v ∘ Z i from rfl, ← Measure.map_map hv (hiid.1 i), hiid.2.2 i]⟩
+  have hint : Integrable phi P := Integrable.of_bound hm.aestronglyMeasurable B (ae_of_all _ hB)
+  have hL2 : MemLp id 2 L := by
+    rw [memLp_map_measure_iff aestronglyMeasurable_id hv.aemeasurable]
+    refine MemLp.of_bound hv.aestronglyMeasurable (2 * B) (ae_of_all _ fun z ↦ ?_)
+    exact (norm_sub_le _ _).trans (by linarith [hB z.1, hB z.2])
+  have hLmean : ∫ x, x ∂L = 0 := by
+    change ∫ x, id x ∂((P.prod P).map v) = 0
+    rw [integral_map hv.aemeasurable aestronglyMeasurable_id]
+    simp only [v, id]
+    rw [integral_sub (hint.comp_fst P) (hint.comp_snd P), integral_fun_fst phi,
+      integral_fun_snd phi]
+    simp
+  have hj : ∀ j, MemLp (fun x ↦ phi x j) 2 P := fun j ↦
+    MemLp.of_bound (by fun_prop) B (ae_of_all _ fun x ↦
+      (by simpa using PiLp.norm_apply_le (phi x) j : ‖phi x j‖ ≤ ‖phi x‖).trans (hB x))
+  have hcovL : TauCeti.covMatrix L = (2 : ℝ) • C := by
+    ext i j
+    rw [TauCeti.covMatrix_apply, covariance_map_fun (by fun_prop) (by fun_prop) hv.aemeasurable]
+    simp only [Matrix.smul_apply, C, TauCeti.covMatrix_apply, smul_eq_mul]
+    rw [covariance_map_fun (by fun_prop) (by fun_prop) hm.aemeasurable]
+    simpa only [v, PiLp.sub_apply] using covariance_sub_prod_self P _ _ (hj i) (hj j)
+  have hclt := tendstoInDistribution_sqrt_smul_sampleAverage μ L V hiidV hL2
+  simp only [hLmean, hcovL, sub_zero] at hclt
+  exact hclt
+
+/-- GAPS 108.61, the null limit of MMD for a bounded finite-dimensional feature map. Let
+`φ : X → ℝ^d` be bounded and measurable, `k(x, y) = ⟨φ x, φ y⟩`, and let the pairs `(X_i, Y_i)` be
+independent with law `P ⊗ P`. With `C` the covariance matrix of `φ(X_1)`, the scaled unbiased
+estimator `n MMD_u²` converges in distribution to `2 (‖Z‖² - tr C)` and the scaled plug-in estimator
+`n ‖φ̄_X - φ̄_Y‖²` to `2 ‖Z‖²`, where `Z ∼ N(0, C)`. -/
+theorem tendstoInDistribution_unbiasedSquaredMMD_null
+    {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] {d : ℕ}
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X) [IsProbabilityMeasure P]
+    (Xn Yn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ (fun i ω ↦ (Xn i ω, Yn i ω))
+      (P.prod P))
+    (phi : X → EuclideanSpace ℝ (Fin d)) (hm : Measurable phi)
+    (hb : ∃ C, ∀ x, ‖phi x‖ ≤ C) :
+    let C := TauCeti.covMatrix (P.map phi);
+    let k := fun x y ↦ inner ℝ (phi x) (phi y);
+    TendstoInDistribution (fun (n : ℕ) ω ↦ (n : ℝ) * unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω)
+      (fun i ↦ Yn i.val ω)) atTop id (fun _ ↦ μ)
+      ((multivariateGaussian 0 C).map (fun z ↦ 2 * (‖z‖ ^ 2 - Matrix.trace C))) ∧
+      TendstoInDistribution (fun (n : ℕ) ω ↦ (n : ℝ) *
+        ‖sampleAverage (fun i ω ↦ phi (Xn i ω)) n ω - sampleAverage (fun i ω ↦ phi
+          (Yn i ω)) n ω‖ ^ 2) atTop id (fun _ ↦ μ)
+        ((multivariateGaussian 0 C).map (fun z ↦ 2 * ‖z‖ ^ 2)) := by
+  intro C k
+  obtain ⟨B₀, hB₀⟩ := hb
+  set B := max B₀ 0
+  have hB : ∀ x, ‖phi x‖ ≤ B := fun x ↦ (hB₀ x).trans (le_max_left _ _)
+  have hXm : ∀ i, Measurable (Xn i) := fun i ↦ (hiid.1 i).fst
+  have hYm : ∀ i, Measurable (Yn i) := fun i ↦ (hiid.1 i).snd
+  have hint : Integrable phi P := Integrable.of_bound hm.aestronglyMeasurable B (ae_of_all _ hB)
+  have hphi2 : MemLp id 2 (P.map phi) := by
+    rw [memLp_map_measure_iff aestronglyMeasurable_id hm.aemeasurable]
+    exact MemLp.of_bound hm.aestronglyMeasurable B (ae_of_all _ hB)
+  have hCpsd : C.PosSemidef := TauCeti.posSemidef_covMatrix _ hphi2
+  have hG : multivariateGaussian 0 ((2 : ℝ) • C) =
+      (multivariateGaussian 0 C).map (fun z ↦ Real.sqrt 2 • z) := by
+    have := TauCeti.Probability.map_add_smul_multivariateGaussian 0 hCpsd 0 (Real.sqrt 2)
+    simp only [zero_add, smul_zero, Real.sq_sqrt (show (0 : ℝ) ≤ 2 by norm_num)] at this
+    exact this.symm
+  -- the central limit theorem for `V i = φ(X_i) - φ(Y_i)`
+  set Z : ℕ → Ω → X × X := fun i ω ↦ (Xn i ω, Yn i ω)
+  set V : ℕ → Ω → EuclideanSpace ℝ (Fin d) := fun i ω ↦ phi (Xn i ω) - phi (Yn i ω)
+  have hVm : ∀ i, Measurable (V i) := fun i ↦ (hm.comp (hXm i)).sub (hm.comp (hYm i))
+  have hclt := tendstoInDistribution_sqrt_smul_sampleAverage_feature_sub μ P Xn Yn hiid phi hm B hB
+  set W : ℕ → Ω → EuclideanSpace ℝ (Fin d) := fun n ω ↦ Real.sqrt n • sampleAverage V n ω
+  have hsa : ∀ n ω, sampleAverage (fun i ω ↦ phi (Xn i ω)) n ω -
+      sampleAverage (fun i ω ↦ phi (Yn i ω)) n ω = sampleAverage V n ω := fun n ω ↦ by
+    simp only [sampleAverage, V, ← smul_sub, Finset.sum_sub_distrib]
+  have hnorm : ∀ (n : ℕ) ω, (n : ℝ) * ‖sampleAverage V n ω‖ ^ 2 = ‖W n ω‖ ^ 2 := fun n ω ↦ by
+    simp only [W, norm_smul, Real.norm_eq_abs, abs_of_nonneg (Real.sqrt_nonneg _), mul_pow,
+      Real.sq_sqrt (Nat.cast_nonneg n)]
+  have hWm : ∀ n, Measurable (W n) := fun n ↦ by
+    have := Finset.measurable_fun_sum (Finset.range n) fun i _ ↦ hVm i
+    exact (this.const_smul ((n : ℝ)⁻¹)).const_smul (Real.sqrt n)
+  have hmapG : ∀ c : ℝ, (multivariateGaussian 0 ((2 : ℝ) • C)).map (fun w ↦ ‖w‖ ^ 2 + c) =
+      (multivariateGaussian 0 C).map (fun z ↦ 2 * ‖z‖ ^ 2 + c) := by
+    intro c
+    rw [hG, Measure.map_map (by fun_prop) (by fun_prop)]
+    congr 1
+    funext z
+    simp only [Function.comp_apply, norm_smul, Real.norm_eq_abs,
+      abs_of_nonneg (Real.sqrt_nonneg _), mul_pow, Real.sq_sqrt (show (0 : ℝ) ≤ 2 by norm_num)]
+  have hmmdm : ∀ n, Measurable (fun ω ↦ unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω)
+      (fun i ↦ Yn i.val ω)) := by
+    intro n
+    simp only [unbiasedSquaredMMD, k]
+    refine Measurable.sub (Measurable.div_const ?_ _) (Measurable.const_mul ?_ _)
+    · exact Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ by
+        split_ifs <;> fun_prop
+    · exact Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ by fun_prop
+  -- the remainder `n MMD_u² - n ‖φ̄_X - φ̄_Y‖²` and its almost sure limit `-2 tr C`
+  set Y : ℕ → Ω → ℝ := fun n ω ↦ (n : ℝ) * unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω)
+    (fun i ↦ Yn i.val ω) - ‖W n ω‖ ^ 2
+  have hYm' : ∀ n, Measurable (Y n) := fun n ↦
+    ((hmmdm n).const_mul _).sub ((hWm n).norm.pow_const 2)
+  have hsq2 : Integrable (fun x ↦ ‖phi x‖ ^ 2) P :=
+    Integrable.of_bound (by fun_prop) (B ^ 2) (ae_of_all _ fun x ↦ by
+      rw [Real.norm_eq_abs, abs_pow, abs_norm]
+      exact pow_le_pow_left₀ (norm_nonneg _) (hB x) 2)
+  have hA := ae_tendsto_average_comp_of_iid μ (P.prod P) Z hiid (fun z ↦ phi z.1)
+    (by fun_prop) (hint.comp_fst P)
+  have hB' := ae_tendsto_average_comp_of_iid μ (P.prod P) Z hiid (fun z ↦ phi z.2)
+    (by fun_prop) (hint.comp_snd P)
+  have hS := ae_tendsto_average_comp_of_iid μ (P.prod P) Z hiid
+    (fun z ↦ ‖phi z.1‖ ^ 2 + ‖phi z.2‖ ^ 2) (by fun_prop)
+    ((hsq2.comp_fst P).add (hsq2.comp_snd P))
+  rw [integral_fun_fst phi] at hA
+  rw [integral_fun_snd phi] at hB'
+  rw [integral_add (hsq2.comp_fst P) (hsq2.comp_snd P), integral_fun_fst (fun x ↦ ‖phi x‖ ^ 2),
+    integral_fun_snd (fun x ↦ ‖phi x‖ ^ 2)] at hS
+  simp only [probReal_univ, one_smul] at hA hB' hS
+  have htr := trace_covMatrix_map_eq P phi hm B hB
+  have hinv : Tendsto (fun n : ℕ ↦ ((n : ℝ) - 1)⁻¹) atTop (𝓝 0) := by
+    refine tendsto_inv_atTop_zero.comp ?_
+    simpa only [sub_eq_add_neg] using
+      tendsto_atTop_add_const_right _ (-1) tendsto_natCast_atTop_atTop
+  have hYlim : TendstoInMeasure μ Y atTop (fun _ ↦ -2 * Matrix.trace C) := by
+    refine tendstoInMeasure_of_tendsto_ae (fun n ↦ (hYm' n).aestronglyMeasurable) ?_
+    filter_upwards [hA, hB', hS] with ω hAω hBω hSω
+    have hR := (((hAω.norm.pow 2).add (hBω.norm.pow 2)).sub hSω).mul
+      ((tendsto_const_nhds (x := (1 : ℝ))).add hinv)
+    have hval : (‖∫ x, phi x ∂P‖ ^ 2 + ‖∫ x, phi x ∂P‖ ^ 2 -
+        ((∫ x, ‖phi x‖ ^ 2 ∂P) + ∫ x, ‖phi x‖ ^ 2 ∂P)) * (1 + 0) = -2 * Matrix.trace C := by
+      rw [htr]; ring
+    rw [hval] at hR
+    refine hR.congr' ?_
+    filter_upwards [eventually_ge_atTop 2] with n hn
+    have hnR : (2 : ℝ) ≤ n := by exact_mod_cast hn
+    have hmmd := unbiasedSquaredMMD_inner_eq phi hn (fun i ↦ Xn i.val ω) (fun i ↦ Yn i.val ω)
+    simp only at hmmd
+    rw [Fin.sum_univ_eq_sum_range (fun i ↦ phi (Xn i ω)),
+      Fin.sum_univ_eq_sum_range (fun i ↦ phi (Yn i ω)),
+      Fin.sum_univ_eq_sum_range (fun i ↦ ‖phi (Xn i ω)‖ ^ 2 + ‖phi (Yn i ω)‖ ^ 2)] at hmmd
+    simp only [Y, k]
+    rw [hmmd, ← hnorm, ← hsa]
+    simp only [sampleAverage, smul_eq_mul]
+    generalize ∑ i ∈ Finset.range n, phi (Xn i ω) = SX
+    generalize ∑ i ∈ Finset.range n, phi (Yn i ω) = SY
+    generalize ∑ i ∈ Finset.range n, (‖phi (Xn i ω)‖ ^ 2 + ‖phi (Yn i ω)‖ ^ 2) = SS
+    have hn1 : (n : ℝ) - 1 ≠ 0 := by linarith
+    field_simp
+    ring
+  refine ⟨?_, ?_⟩
+  · have hsl := hclt.continuous_comp_prodMk_of_tendstoInMeasure_const
+      (g := fun p : EuclideanSpace ℝ (Fin d) × ℝ ↦ ‖p.1‖ ^ 2 + p.2) (by fun_prop) hYlim
+      (fun n ↦ (hYm' n).aemeasurable)
+    have e1 : (fun (n : ℕ) ω ↦ (n : ℝ) * unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω)
+        (fun i ↦ Yn i.val ω)) = fun n ω ↦ ‖W n ω‖ ^ 2 + Y n ω := by
+      funext n ω; simp only [Y]; ring
+    rw [e1]
+    refine tendstoInDistribution_of_map_eq hsl aemeasurable_id ?_
+    rw [Measure.map_id]
+    change _ = (multivariateGaussian 0 ((2 : ℝ) • C)).map
+      (fun w ↦ ‖w‖ ^ 2 + -2 * Matrix.trace C)
+    rw [hmapG]
+    congr 1
+    funext z
+    ring
+  · have h2 := hclt.continuous_comp (g := fun w : EuclideanSpace ℝ (Fin d) ↦ ‖w‖ ^ 2)
+      (by fun_prop)
+    have e2 : (fun (n : ℕ) ω ↦ (n : ℝ) * ‖sampleAverage (fun i ω ↦ phi (Xn i ω)) n ω -
+        sampleAverage (fun i ω ↦ phi (Yn i ω)) n ω‖ ^ 2) =
+        fun n ↦ (fun w ↦ ‖w‖ ^ 2) ∘ W n := by
+      funext n ω
+      simp only [Function.comp_apply, hsa, hnorm]
+    rw [e2]
+    refine tendstoInDistribution_of_map_eq h2 aemeasurable_id ?_
+    rw [Measure.map_id, Function.comp_id]
+    simpa only [add_zero] using (hmapG 0).symm
 
 /-- The linear term of the alternative MMD central limit theorem: for a bounded measurable feature
 map `φ` into `ℝ^d`, `δ = E_P φ - E_Q φ` and `s(x, y) = 2 ⟨φ x - φ y - δ, δ⟩`, the statistic `s`

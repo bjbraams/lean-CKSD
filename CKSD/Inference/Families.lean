@@ -3,6 +3,7 @@ module
 public import CKSD.Inference.Basic
 public import Mathlib.Probability.CDF
 public import CKSD.Inference.Sufficiency
+public import CKSD.Inference.SymmetricCompleteness
 public import TauCeti.Probability.Distributions.OrderStatistic.Joint
 public import TauCeti.Probability.Distributions.OrderStatistic.Basic
 public import TauCeti.Probability.Distributions.Beta.Cdf
@@ -32,6 +33,9 @@ public import TauCeti.MeasureTheory.Measure.PiWithDensity
   squared-error risk among location-equivariant estimators (GAPS 101.40).
 
 ## Implementation notes
+
+The completeness of symmetric statistics (GAPS 101.13) is
+`CKSD.ae_eq_zero_pi_of_isCompleteStatistic_of_convex` in `CKSD.Inference.SymmetricCompleteness`.
 
 Order statistics and sorting are TauCeti's `TauCeti.orderStatistic` and Mathlib's `Tuple.sort`;
 the densities use TauCeti's chamber formula `TauCeti.Probability.map_orderStatistics_pi`, its
@@ -69,7 +73,10 @@ theorem isSymmetricallyComplete_of_complete_convex_family
       ∃ R ∈ C, (R : Measure X) = (a : ℝ≥0∞) • (P : Measure X) +
         ((1 - a : ℝ≥0) : ℝ≥0∞) • (Q : Measure X)) (n : ℕ) :
     IsSymmetricallyComplete (fun P : C ↦ (P.val : Measure X)) n := by
-  sorry
+  intro g hgm hsym hint θ
+  refine ae_eq_zero_pi_of_isCompleteStatistic_of_convex (fun f hf hf0 P hP ↦ ?_) hconv g hgm
+    hsym (fun P hP ↦ hint ⟨P, hP⟩) θ.1 θ.2
+  exact hc f hf (fun θ' ↦ hf0 θ'.1 θ'.2) ⟨P, hP⟩
 
 /-- GAPS 101.21: joint order-statistic density for an absolutely continuous law.
 The proof combines TauCeti's chamber formula `TauCeti.Probability.map_orderStatistics_pi` with

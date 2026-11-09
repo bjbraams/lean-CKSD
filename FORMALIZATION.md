@@ -4,10 +4,10 @@ The public entry point is [CKSD.lean](CKSD.lean). Every project declaration is i
 `namespace CKSD` or one of its subnamespaces. The module names follow topics, while
 the stable identifiers of [GAPS.md](GAPS.md) connect code to the mathematical catalogue.
 
-There are **751 definitions, abbreviations, structures, and inductive types**
-and **1475 theorem statements**: **1304 proved**,
-**3 conditional** (the proof is complete but uses an admitted result), and
-**168 admitted**. Definitions contain no admissions. A compiled axiom audit
+There are **762 definitions, abbreviations, structures, and inductive types**
+and **1601 theorem statements**: **1455 proved**,
+**2 conditional** (the proof is complete but uses an admitted result), and
+**144 admitted**. Definitions contain no admissions. A compiled axiom audit
 checks that proved results do not depend on `sorryAx`; only the usual Lean classical
 axioms occur in their dependency closures.
 
@@ -92,7 +92,7 @@ checks every project Lean module with both implicit-variable options disabled.
 - **101.12 Characterization of UMVU estimators.**
   [CKSD.isMinimumVarianceUnbiasedEstimator_iff_covariance_eq_zero](CKSD/Inference/Estimation.lean#L201) (proved; scope in docstring).
 - **101.13 Completeness of the order statistic.**
-  [CKSD.isSymmetricallyComplete_of_complete_convex_family](CKSD/Inference/Families.lean#L65) (admitted; scope in docstring).
+  [CKSD.isSymmetricallyComplete_of_complete_convex_family](CKSD/Inference/Families.lean#L69) (proved; scope in docstring).
 - **101.14 Neyman–Pearson lemma.**
   [CKSD.exists_neyman_pearson_test](CKSD/Inference/NeymanPearson.lean#L106) (proved; scope in docstring).
 - **101.15 Karlin–Rubin theorem.**
@@ -100,9 +100,9 @@ checks every project Lean module with both implicit-variable options disabled.
 - **101.17 Gaussian sampling distributions.**
   [CKSD.gaussian_sample_mean_residual_laws](CKSD/Inference/Testing.lean#L126) (proved; scope in docstring).
 - **101.21 Distribution of order statistics.**
-  [CKSD.map_orderStatistics_eq_withDensity](CKSD/Inference/Families.lean#L77) (proved; scope in docstring).
-  [CKSD.map_orderStatistic_eq_withDensity](CKSD/Inference/Families.lean#L136) (proved; scope in docstring).
-  [CKSD.map_sort_eq_and_indepFun_orderStatistics](CKSD/Inference/Families.lean#L245) (proved; scope in docstring).
+  [CKSD.map_orderStatistics_eq_withDensity](CKSD/Inference/Families.lean#L84) (proved; scope in docstring).
+  [CKSD.map_orderStatistic_eq_withDensity](CKSD/Inference/Families.lean#L143) (proved; scope in docstring).
+  [CKSD.map_sort_eq_and_indepFun_orderStatistics](CKSD/Inference/Families.lean#L252) (proved; scope in docstring).
 - **101.32 Value of a finite statistical game.**
   [CKSD.exists_statistical_game_saddle_point](CKSD/Inference/Decision.lean#L49) (admitted; scope in docstring).
 - **101.37 Complete classes.**
@@ -110,8 +110,8 @@ checks every project Lean module with both implicit-variable options disabled.
 - **101.39 Hunt–Stein theorem, compact form.**
   [CKSD.exists_equivariant_rule_risk_eq_average](CKSD/Inference/Decision.lean#L156) (proved; scope in docstring).
 - **101.40 Pitman estimator of location.**
-  [CKSD.pitmanEstimator_minimum_equivariant_risk_of_nonneg](CKSD/Inference/Families.lean#L545) (proved; scope in docstring).
-  [CKSD.pitmanEstimator_minimum_equivariant_risk](CKSD/Inference/Families.lean#L634) (proved; scope in docstring).
+  [CKSD.pitmanEstimator_minimum_equivariant_risk_of_nonneg](CKSD/Inference/Families.lean#L552) (proved; scope in docstring).
+  [CKSD.pitmanEstimator_minimum_equivariant_risk](CKSD/Inference/Families.lean#L641) (proved; scope in docstring).
 - **101.42 Mean parameterization.**
   [CKSD.exists_analytic_inverse_exponential_family_mean](CKSD/Inference/Decision.lean#L235) (admitted; scope in docstring).
 - **101.43 Conditional exponential families.**
@@ -136,25 +136,25 @@ checks every project Lean module with both implicit-variable options disabled.
 - **101.56 Normal tests as uniformly most powerful invariant tests.**
   [CKSD.mean_scale_ratio_eq_iff](CKSD/Inference/InvariantTesting.lean#L401) (proved; scope in docstring).
 - **101.57 Estimation of a normal mean.**
-  [CKSD.james_stein_risk_eq_and_lt](CKSD/Inference/Gaussian.lean#L380) (proved; scope in docstring).
+  [CKSD.james_stein_risk_eq_and_lt](CKSD/Inference/Gaussian.lean#L377) (proved; scope in docstring).
 - **101.58 Blyth's method.**
   [CKSD.isAdmissibleRisk_of_blyth](CKSD/Inference/Decision.lean#L256) (proved; scope in docstring).
 - **101.60 Scheffé's method.**
-  [CKSD.scheffe_contrast_supremum](CKSD/Inference/Gaussian.lean#L761) (proved; scope in docstring).
+  [CKSD.scheffe_contrast_supremum](CKSD/Inference/Gaussian.lean#L515) (proved; scope in docstring).
 - **101.62 Blackwell's theorem.**
   [CKSD.isMoreInformative_iff_isGarbling](CKSD/Inference/Decision.lean#L327) (admitted; scope in docstring).
 - **101.64 Stein's identity and unbiased risk estimation.**
-  [CKSD.gaussian_integration_by_parts](CKSD/Inference/Gaussian.lean#L75) (proved; scope in docstring).
+  [CKSD.gaussian_integration_by_parts](CKSD/Inference/Gaussian.lean#L72) (proved; scope in docstring).
 - **101.69 Existence of an exponential-family maximum.**
-  [CKSD.exists_isMaxOn_logLikelihood_iff_mem_interior_convexHull_support](CKSD/Inference/Gaussian.lean#L520) (admitted; scope in docstring).
-  [CKSD.hasFDerivAt_logPartition_and_eq_of_isMaxOn](CKSD/Inference/Gaussian.lean#L734) (proved; scope in docstring).
+  [CKSD.exists_isMaxOn_logLikelihood_iff_mem_interior_convexHull_support](CKSD/Inference/ExponentialFamilyMLE.lean#L346) (proved; scope in docstring).
+  [CKSD.hasFDerivAt_logPartition_and_eq_of_isMaxOn](CKSD/Inference/ExponentialFamilyMLE.lean#L553) (proved; scope in docstring).
 
 ### Section 102
 
 - **102.1 Delta method.**
   [CKSD.tendstoInDistribution_delta_method](CKSD/Asymptotics/Basic.lean#L313) (proved; scope in docstring).
 - **102.2 Consistency of maximum likelihood.**
-  [CKSD.tendstoInMeasure_mle_of_compact](CKSD/Asymptotics/MEstimators.lean#L176) (proved; scope in docstring).
+  [CKSD.tendstoInMeasure_mle_of_compact](CKSD/Asymptotics/MEstimators.lean#L188) (proved; scope in docstring).
 - **102.3 Asymptotic normality of maximum likelihood.**
   [CKSD.mle_asymptotic_linearization_and_normality](CKSD/Asymptotics/MaximumLikelihood.lean#L29) (proved; scope in docstring).
 - **102.4 Z-estimators.**
@@ -164,7 +164,7 @@ checks every project Lean module with both implicit-variable options disabled.
 - **102.7 Bahadur representation of sample quantiles.**
   [CKSD.tendstoInMeasure_bahadur_remainder](CKSD/Asymptotics/Quantiles.lean#L352) (proved; scope in docstring).
 - **102.8 Nondegenerate $U$-statistics.**
-  [CKSD.tendstoInDistribution_uStatistic_of_nondegenerate](CKSD/Asymptotics/UStatistics.lean#L39) (admitted; scope in docstring).
+  [CKSD.tendstoInDistribution_uStatistic_of_nondegenerate](CKSD/Asymptotics/UStatistics.lean#L44) (proved; scope in docstring).
 - **102.11 Likelihood-ratio, Wald, and score tests.**
   [CKSD.tendstoInDistribution_likelihoodRatio_wald_score_chiSquared](CKSD/Asymptotics/LikelihoodTests.lean#L681) (proved; scope in docstring).
   [CKSD.tendstoInDistribution_likelihoodRatio_wald_score_noncentralChiSquared](CKSD/Asymptotics/LikelihoodTests.lean#L767) (proved; scope in docstring).
@@ -186,31 +186,31 @@ checks every project Lean module with both implicit-variable options disabled.
 - **102.23 Consistency of $M$-estimators.**
   [CKSD.tendstoInMeasure_mEstimator](CKSD/Asymptotics/AsymptoticTheory.lean#L45) (proved; scope in docstring).
 - **102.24 Asymptotic normality of $M$-estimators.**
-  [CKSD.mEstimator_asymptotic_linearization_and_normality](CKSD/Asymptotics/MEstimators.lean#L313) (admitted; scope in docstring).
+  [CKSD.mEstimator_asymptotic_linearization_and_normality](CKSD/Asymptotics/MEstimatorNormality.lean#L775) (proved; scope in docstring).
 - **102.25 Rate of convergence of $M$-estimators.**
   [CKSD.isBoundedInProbability_rate_mEstimator](CKSD/Asymptotics/RatesOfConvergence.lean#L52) (proved; scope in docstring).
 - **102.28 Functional delta method.**
   [CKSD.tendstoInDistribution_of_hasHadamardFDerivAt](CKSD/Asymptotics/Framework.lean#L169) (proved; scope in docstring).
 - **102.29 Hoeffding decomposition.**
-  [CKSD.uStatistic_hoeffding_decomposition_and_variance](CKSD/Asymptotics/UStatistics.lean#L442) (proved; scope in docstring).
+  [CKSD.uStatistic_hoeffding_decomposition_and_variance](CKSD/Asymptotics/UStatistics.lean#L534) (proved; scope in docstring).
 - **102.30 Degenerate quadratic $U$-statistics.**
-  [CKSD.tendstoInDistribution_uStatistic_of_finite_rank_degenerate](CKSD/Asymptotics/UStatistics.lean#L665) (proved; scope in docstring).
+  [CKSD.tendstoInDistribution_uStatistic_of_finite_rank_degenerate](CKSD/Asymptotics/UStatistics.lean#L757) (proved; scope in docstring).
 - **102.31 Pearson's multinomial tests.**
   [CKSD.tendstoInDistribution_pearson_statistic](CKSD/Asymptotics/AsymptoticTheory.lean#L163) (proved; scope in docstring).
 - **102.33 Argmax theorem.**
   [CKSD.tendstoInMeasure_argmax_of_compact](CKSD/Asymptotics/AsymptoticTheory.lean#L266) (proved; scope in docstring).
 - **102.34 Semiparametric convolution bound.**
-  [CKSD.exists_convolution_of_isRegularAlongPaths](CKSD/Asymptotics/Semiparametric.lean#L82) (admitted; scope in docstring).
-  [CKSD.isRegularAlongPaths_gaussian_iff_asymptotically_linear](CKSD/Asymptotics/Semiparametric.lean#L103) (admitted; scope in docstring).
+  [CKSD.exists_convolution_of_isRegularAlongPaths](CKSD/Asymptotics/Semiparametric.lean#L79) (admitted; scope in docstring).
+  [CKSD.isRegularAlongPaths_gaussian_iff_asymptotically_linear](CKSD/Asymptotics/Semiparametric.lean#L101) (admitted; scope in docstring).
 - **102.39 Cross-fitted estimation of a missing mean.**
-  [CKSD.crossFittedAverage_missingMean_asymptotically_linear](CKSD/Asymptotics/Semiparametric.lean#L141) (admitted; scope in docstring).
+  [CKSD.crossFittedAverage_missingMean_asymptotically_linear](CKSD/Asymptotics/CrossFitting.lean#L918) (proved; scope in docstring).
 - **102.41 Adaptive estimation of a center of symmetry.**
-  [CKSD.efficientScore_locationScore_eq](CKSD/Asymptotics/Semiparametric.lean#L261) (proved; scope in docstring).
-  [CKSD.exists_adaptive_estimator_center_of_symmetry](CKSD/Asymptotics/Semiparametric.lean#L323) (admitted; scope in docstring).
+  [CKSD.efficientScore_locationScore_eq](CKSD/Asymptotics/Semiparametric.lean#L195) (proved; scope in docstring).
+  [CKSD.exists_adaptive_estimator_center_of_symmetry](CKSD/Asymptotics/Semiparametric.lean#L257) (admitted; scope in docstring).
 - **102.44 $M$-estimators and the Huber minimax property.**
   [CKSD.integral_huberScore_sq_le](CKSD/Asymptotics/HigherOrder.lean#L186) (proved; scope in docstring).
 - **102.48 Asymptotics of regression $M$-estimators.**
-  [CKSD.regression_mEstimator_asymptotic_linearization_and_normality](CKSD/Asymptotics/MEstimators.lean#L358) (admitted; scope in docstring).
+  [CKSD.regression_mEstimator_asymptotic_linearization_and_normality](CKSD/Asymptotics/MEstimatorNormality.lean#L933) (admitted; scope in docstring).
 - **102.49 One-term Edgeworth expansion.**
   [CKSD.exists_uniform_edgeworth_expansion](CKSD/Asymptotics/HigherOrder.lean#L285) (admitted; scope in docstring).
 - **102.50 Edgeworth expansion for smooth functions of means.**
@@ -229,23 +229,23 @@ checks every project Lean module with both implicit-variable options disabled.
 ### Section 103
 
 - **103.1 Kolmogorov–Smirnov statistic.**
-  [CKSD.measure_kolmogorovSmirnovStatistic_gt_le](CKSD/Nonparametric/Estimation.lean#L49) (admitted; scope in docstring).
+  [CKSD.measure_kolmogorovSmirnovStatistic_gt_le](CKSD/Nonparametric/Estimation.lean#L60) (admitted; scope in docstring).
 - **103.4 Kernel density asymptotics.**
-  [CKSD.tendstoInDistribution_kernelDensityEstimator](CKSD/Nonparametric/Estimation.lean#L62) (admitted; scope in docstring).
+  [CKSD.tendstoInDistribution_kernelDensityEstimator](CKSD/Nonparametric/Estimation.lean#L248) (proved; scope in docstring).
 - **103.5 Universal $L^1$ consistency.**
-  [CKSD.ae_tendsto_integral_abs_kernelDensityEstimator_sub](CKSD/Nonparametric/Estimation.lean#L83) (admitted; scope in docstring).
+  [CKSD.ae_tendsto_integral_abs_kernelDensityEstimator_sub](CKSD/Nonparametric/Estimation.lean#L430) (admitted; scope in docstring).
 - **103.7 Stone's theorem.**
-  [CKSD.tendsto_nadarayaWatson_prediction_error_probability](CKSD/Nonparametric/SmoothingRates.lean#L60) (admitted; scope in docstring).
+  [CKSD.tendsto_nadarayaWatson_prediction_error_probability](CKSD/Nonparametric/SmoothingRates.lean#L59) (admitted; scope in docstring).
 - **103.8 Representer theorem.**
-  [CKSD.minimizer_mem_span_of_feature_vectors](CKSD/Nonparametric/Estimation.lean#L97) (proved; scope in docstring).
+  [CKSD.minimizer_mem_span_of_feature_vectors](CKSD/Nonparametric/Estimation.lean#L444) (proved; scope in docstring).
 - **103.9 Pinsker's theorem and the Sobolev rate.**
-  [CKSD.tendsto_gaussianSequenceMinimaxRisk_div_linear](CKSD/Nonparametric/Models.lean#L77) (admitted; scope in docstring).
+  [CKSD.tendsto_gaussianSequenceMinimaxRisk_div_linear](CKSD/Nonparametric/Models.lean#L93) (admitted; scope in docstring).
 - **103.11 Grenander estimator.**
   [CKSD.grenanderEstimator_isMaximumLikelihood](CKSD/Nonparametric/Grenander.lean#L452) (proved; scope in docstring).
   [CKSD.tendstoInDistribution_grenanderEstimator](CKSD/Nonparametric/Grenander.lean#L825) (admitted; scope in docstring).
 - **103.14 Score-generating functions and locally most powerful rank tests.**
-  [CKSD.integral_linearRankStatistic](CKSD/Nonparametric/Estimation.lean#L297) (proved; scope in docstring).
-  [CKSD.variance_linearRankStatistic](CKSD/Nonparametric/Estimation.lean#L304) (proved; scope in docstring).
+  [CKSD.integral_linearRankStatistic](CKSD/Nonparametric/Estimation.lean#L644) (proved; scope in docstring).
+  [CKSD.variance_linearRankStatistic](CKSD/Nonparametric/Estimation.lean#L651) (proved; scope in docstring).
 - **103.17 Cramér–von Mises and two-sample Kolmogorov–Smirnov limits.**
   [CKSD.map_cramerVonMisesStatistic_eq_uniform](CKSD/Nonparametric/GoodnessOfFit.lean#L129) (proved; scope in docstring).
   [CKSD.map_twoSampleKolmogorovSmirnovStatistic_eq_uniform](CKSD/Nonparametric/GoodnessOfFit.lean#L269) (proved; scope in docstring).
@@ -253,15 +253,15 @@ checks every project Lean module with both implicit-variable options disabled.
   [CKSD.holderRegressionMinimaxRisk_le](CKSD/Nonparametric/HolderRegressionMinimax.lean#L64) (proved; scope in docstring).
   [CKSD.holderRegressionMinimaxRisk_ge](CKSD/Nonparametric/HolderRegressionMinimax.lean#L531) (proved; scope in docstring).
   [CKSD.holderRegressionMinimaxRisk_bounds](CKSD/Nonparametric/HolderRegressionMinimax.lean#L630) (proved; scope in docstring).
-  [CKSD.fixedDesignLocalConstant_risk_le](CKSD/Nonparametric/SmoothingRates.lean#L260) (proved; scope in docstring).
+  [CKSD.fixedDesignLocalConstant_risk_le](CKSD/Nonparametric/SmoothingRates.lean#L259) (proved; scope in docstring).
 - **103.26 Minimax rates of density estimation.**
-  [CKSD.finiteKernelDensityEstimator_risk_le](CKSD/Nonparametric/SmoothingRates.lean#L556) (proved; scope in docstring).
-  [CKSD.holderDensityPointwiseMinimaxRisk_lower_bound](CKSD/Nonparametric/SmoothingRates.lean#L688) (admitted; scope in docstring).
+  [CKSD.finiteKernelDensityEstimator_risk_le](CKSD/Nonparametric/HolderDensityMinimax.lean#L194) (proved; scope in docstring).
+  [CKSD.holderDensityPointwiseMinimaxRisk_lower_bound](CKSD/Nonparametric/HolderDensityMinimax.lean#L739) (proved; scope in docstring).
 - **103.27 Risk of isotonic regression.**
-  [CKSD.existsUnique_isIsotonicRegressionEstimator](CKSD/Nonparametric/ShapeAndSelection.lean#L89) (proved; scope in docstring).
-  [CKSD.isIsotonicRegressionEstimator_isotonicLeastSquares](CKSD/Nonparametric/ShapeAndSelection.lean#L220) (proved; scope in docstring).
-  [CKSD.isotonicGaussianRisk_le](CKSD/Nonparametric/ShapeAndSelection.lean#L338) (admitted; scope in docstring).
-  [CKSD.isotonicGaussianMinimaxRisk_lower_bound](CKSD/Nonparametric/ShapeAndSelection.lean#L663) (proved; scope in docstring).
+  [CKSD.existsUnique_isIsotonicRegressionEstimator](CKSD/Nonparametric/ShapeAndSelection.lean#L95) (proved; scope in docstring).
+  [CKSD.isIsotonicRegressionEstimator_isotonicLeastSquares](CKSD/Nonparametric/ShapeAndSelection.lean#L226) (proved; scope in docstring).
+  [CKSD.isotonicGaussianRisk_le](CKSD/Nonparametric/ShapeAndSelection.lean#L344) (admitted; scope in docstring).
+  [CKSD.isotonicGaussianMinimaxRisk_lower_bound](CKSD/Nonparametric/ShapeAndSelection.lean#L669) (proved; scope in docstring).
 - **103.28 Log-concave maximum likelihood.**
   [CKSD.existsUnique_isLogConcaveProjection](CKSD/Nonparametric/LogConcave.lean#L81) (admitted; scope in docstring).
   [CKSD.existsUnique_logConcaveMLE_tent](CKSD/Nonparametric/LogConcave.lean#L95) (admitted; scope in docstring).
@@ -275,13 +275,13 @@ checks every project Lean module with both implicit-variable options disabled.
 - **103.31 Optimality of functional principal components.**
   [CKSD.sum_ite_le_integral_norm_sub_sum_inner_smul_sq](CKSD/Nonparametric/HighDimensional.lean#L82) (proved; scope in docstring).
 - **103.33 Sparse minimax rate.**
-  [CKSD.sparseGaussianMinimaxRisk_bounds](CKSD/Nonparametric/Models.lean#L136) (admitted; scope in docstring).
+  [CKSD.sparseGaussianMinimaxRisk_bounds](CKSD/Nonparametric/Models.lean#L816) (proved; scope in docstring).
 - **103.34 Lasso under compatibility.**
   [CKSD.IsLassoEstimator.restrictedL1Norm_compl_sub_le](CKSD/Nonparametric/HighDimensional.lean#L305) (proved; scope in docstring).
   [CKSD.IsLassoEstimator.norm_apply_sub_sq_div_le_of_hasCompatibility](CKSD/Nonparametric/HighDimensional.lean#L349) (proved; scope in docstring).
   [CKSD.IsLassoEstimator.restrictedL1Norm_sub_le](CKSD/Nonparametric/HighDimensional.lean#L367) (proved; scope in docstring).
 - **103.35 Penalized model selection.**
-  [CKSD.selectedProjectionRisk_oracle_bound](CKSD/Nonparametric/ShapeAndSelection.lean#L708) (admitted; scope in docstring).
+  [CKSD.selectedProjectionRisk_oracle_bound](CKSD/Nonparametric/ShapeAndSelection.lean#L832) (proved; scope in docstring).
 - **103.37 Benjamini–Hochberg procedure.**
   [CKSD.integral_benjaminiHochbergFalseDiscoveryProportion_le](CKSD/Nonparametric/HighDimensional.lean#L535) (proved; scope in docstring).
 - **103.38 Tracy–Widom law and spiked covariance.**
@@ -330,14 +330,14 @@ checks every project Lean module with both implicit-variable options disabled.
   [CKSD.integral_distinctObservationCount_polya](CKSD/Bayes/PolyaUrn.lean#L137) (proved; scope in docstring).
   [CKSD.ae_tendsto_distinctObservationCount_div_log_polya](CKSD/Bayes/PolyaUrn.lean#L445) (proved; scope in docstring).
 - **104.17 Doob's consistency theorem.**
-  [CKSD.ae_isPosteriorConsistent_of_identifiable](CKSD/Bayes/Nonparametric.lean#L88) (admitted; scope in docstring).
+  [CKSD.ae_isPosteriorConsistent_of_identifiable](CKSD/Bayes/Nonparametric.lean#L317) (proved; scope in docstring).
 - **104.18 Schwartz's theorem.**
   [CKSD.tendstoInMeasure_posterior_compl_of_kl_support](CKSD/Bayes/PosteriorContraction.lean#L65) (admitted; scope in docstring).
 - **104.19 Contraction rate of Ghosal, Ghosh, and van der Vaart.**
   [CKSD.exists_posterior_hellinger_contraction](CKSD/Bayes/PosteriorContraction.lean#L94) (admitted; scope in docstring).
 - **104.20 Linear inverse problems.**
-  [CKSD.exists_minimax_rate_inverseProblem](CKSD/Bayes/InverseProblems.lean#L75) (admitted; scope in docstring).
-  [CKSD.tendsto_gaussianSeqPosterior_contraction](CKSD/Bayes/InverseProblems.lean#L422) (proved; scope in docstring).
+  [CKSD.tendsto_gaussianSeqPosterior_contraction](CKSD/Bayes/InverseProblems.lean#L412) (proved; scope in docstring).
+  [CKSD.exists_minimax_rate_inverseProblem](CKSD/Bayes/InverseProblems.lean#L767) (proved; scope in docstring).
 - **104.22 Metropolis–Hastings.**
   [CKSD.metropolisTransition_mem_rowStochastic](CKSD/Bayes/MonteCarlo.lean#L79) (proved; scope in docstring).
   [CKSD.metropolisTransition_detailedBalance](CKSD/Bayes/MonteCarlo.lean#L95) (proved; scope in docstring).
@@ -378,11 +378,11 @@ checks every project Lean module with both implicit-variable options disabled.
   [CKSD.exists_mala_mixing_time_le](CKSD/Bayes/LangevinSampling.lean#L156) (admitted; scope in docstring).
   [CKSD.exists_mala_mixing_time_ge](CKSD/Bayes/LangevinSampling.lean#L173) (admitted; scope in docstring).
 - **104.48 Invariance, contraction, and hypocoercivity.**
-  [CKSD.integral_kineticGenerator_eq_zero](CKSD/Bayes/KineticLangevin.lean#L275) (proved; scope in docstring).
-  [CKSD.exists_kineticGenerator_not_symmetric](CKSD/Bayes/KineticLangevin.lean#L293) (admitted; scope in docstring).
-  [CKSD.kineticCouplingNorm_synchronous_le](CKSD/Bayes/KineticLangevin.lean#L606) (proved; scope in docstring).
-  [CKSD.exists_kinetic_hypocoercive_decay_of_poincare](CKSD/Bayes/KineticLangevin.lean#L665) (admitted; scope in docstring).
-  [CKSD.exists_kinetic_entropic_hypocoercive_decay](CKSD/Bayes/KineticLangevin.lean#L686) (admitted; scope in docstring).
+  [CKSD.integral_kineticGenerator_eq_zero](CKSD/Bayes/KineticLangevin.lean#L276) (proved; scope in docstring).
+  [CKSD.exists_kineticGenerator_not_symmetric](CKSD/Bayes/KineticLangevin.lean#L505) (proved; scope in docstring).
+  [CKSD.kineticCouplingNorm_synchronous_le](CKSD/Bayes/KineticLangevin.lean#L818) (proved; scope in docstring).
+  [CKSD.exists_kinetic_hypocoercive_decay_of_poincare](CKSD/Bayes/KineticLangevin.lean#L877) (admitted; scope in docstring).
+  [CKSD.exists_kinetic_entropic_hypocoercive_decay](CKSD/Bayes/KineticLangevin.lean#L898) (admitted; scope in docstring).
 - **104.49 Benaïm's limit-set theorem.**
   [CKSD.ae_isInternallyChainTransitive_limitSet](CKSD/Bayes/StochasticApproximation.lean#L533) (admitted; scope in docstring).
   [CKSD.ae_tendsto_equilibrium_of_chainTransitive](CKSD/Bayes/StochasticApproximation.lean#L544) (conditional; scope in docstring).
@@ -405,33 +405,34 @@ checks every project Lean module with both implicit-variable options disabled.
 - **104.60 Uniform-in-time particle approximation.**
   [CKSD.exists_uniform_particle_moment_bound](CKSD/Bayes/ParticleLimits.lean#L122) (admitted; scope in docstring).
 - **104.63 Anderson's time reversal and the probability-flow equation.**
-  [CKSD.probabilityFlow_isContinuityEquation_and_map](CKSD/Bayes/DiffusionModels.lean#L69) (admitted; scope in docstring).
+  [CKSD.probabilityFlow_isContinuityEquation_and_map](CKSD/Bayes/DiffusionModels.lean#L71) (admitted; scope in docstring).
 - **104.64 Score matching.**
   [CKSD.integral_sq_sub_score_div_two_eq](CKSD/Bayes/Dynamics.lean#L182) (proved; scope in docstring).
 - **104.68 Score error and total variation.**
   [CKSD.totalVariationDistance_map_le_sqrt_klDiv](CKSD/Bayes/TestingBounds.lean#L28) (proved; scope in docstring).
 - **104.75 Convergence of diffusion sampling under a second-moment assumption.**
-  [CKSD.klDiv_ddpmLaw_le](CKSD/Bayes/DiffusionModels.lean#L119) (admitted; scope in docstring).
-  [CKSD.exists_ddpm_geometric_schedule](CKSD/Bayes/DiffusionModels.lean#L138) (proved; scope in docstring).
-  [CKSD.ddpmStepRatio_pos](CKSD/Bayes/DiffusionModels.lean#L206) (proved; scope in docstring).
-  [CKSD.ddpmStepRatio_le_half](CKSD/Bayes/DiffusionModels.lean#L215) (proved; scope in docstring).
-  [CKSD.div_two_mul_add_two_mul_ddpmStepRatio_eq](CKSD/Bayes/DiffusionModels.lean#L225) (proved; scope in docstring).
-  [CKSD.one_add_inv_ddpmStepRatio_mul_log](CKSD/Bayes/DiffusionModels.lean#L248) (proved; scope in docstring).
+  [CKSD.klDiv_ddpmLaw_le](CKSD/Bayes/DiffusionModels.lean#L121) (admitted; scope in docstring).
+  [CKSD.exists_ddpm_geometric_schedule](CKSD/Bayes/DiffusionModels.lean#L140) (proved; scope in docstring).
+  [CKSD.ddpmStepRatio_pos](CKSD/Bayes/DiffusionModels.lean#L208) (proved; scope in docstring).
+  [CKSD.ddpmStepRatio_le_half](CKSD/Bayes/DiffusionModels.lean#L217) (proved; scope in docstring).
+  [CKSD.div_two_mul_add_two_mul_ddpmStepRatio_eq](CKSD/Bayes/DiffusionModels.lean#L227) (proved; scope in docstring).
+  [CKSD.one_add_inv_ddpmStepRatio_mul_log](CKSD/Bayes/DiffusionModels.lean#L250) (proved; scope in docstring).
 - **104.76 A family of diffusions with prescribed marginals.**
-  [CKSD.isFokkerPlanckSolution_add_score_of_continuityEquation](CKSD/Bayes/DiffusionModels.lean#L344) (proved; scope in docstring).
-  [CKSD.map_marginalPreservingDiffusion](CKSD/Bayes/DiffusionModels.lean#L435) (admitted; scope in docstring).
-  [CKSD.stochasticInterpolant_score_and_velocity](CKSD/Bayes/DiffusionModels.lean#L461) (admitted; scope in docstring).
+  [CKSD.isFokkerPlanckSolution_add_score_of_continuityEquation](CKSD/Bayes/DiffusionModels.lean#L346) (proved; scope in docstring).
+  [CKSD.map_marginalPreservingDiffusion](CKSD/Bayes/DiffusionModels.lean#L437) (admitted; scope in docstring).
+  [CKSD.stochasticInterpolant_score](CKSD/Bayes/DiffusionModels.lean#L461) (admitted; scope in docstring).
+  [CKSD.stochasticInterpolant_integral_sub_eq_integral_velocity](CKSD/Bayes/DiffusionModels.lean#L485) (proved; scope in docstring).
 - **104.77 Half-bridges and iterative proportional fitting.**
   [CKSD.klDiv_bridgeIterate_step](CKSD/Bayes/Bridges.lean#L56) (proved; scope in docstring).
 
 ### Section 105
 
 - **105.1 Gauss–Markov theorem.**
-  [CKSD.integral_inner_map_eq_of_map_integral_eq](CKSD/LinearModels/Regression.lean#L101) (proved; scope in docstring).
-  [CKSD.variance_inner_map_le](CKSD/LinearModels/Regression.lean#L113) (proved; scope in docstring).
+  [CKSD.integral_inner_map_eq_of_map_integral_eq](CKSD/LinearModels/Regression.lean#L105) (proved; scope in docstring).
+  [CKSD.variance_inner_map_le](CKSD/LinearModels/Regression.lean#L117) (proved; scope in docstring).
 - **105.2 Normal sampling theory.**
-  [CKSD.map_norm_sq_sub_div_eq_chiSquared](CKSD/LinearModels/Regression.lean#L159) (proved; scope in docstring).
-  [CKSD.indepFun_map_norm_sq_sub](CKSD/LinearModels/Regression.lean#L186) (proved; scope in docstring).
+  [CKSD.map_norm_sq_sub_div_eq_chiSquared](CKSD/LinearModels/Regression.lean#L163) (proved; scope in docstring).
+  [CKSD.indepFun_map_norm_sq_sub](CKSD/LinearModels/Regression.lean#L190) (proved; scope in docstring).
 - **105.3 Asymptotics of the generalised linear model.**
   [CKSD.tendstoInDistribution_canonicalGLM_root](CKSD/LinearModels/GLMAsymptotics.lean#L80) (admitted; scope in docstring).
   [CKSD.tendstoInDistribution_canonicalGLM_deviance](CKSD/LinearModels/GLMAsymptotics.lean#L111) (admitted; scope in docstring).
@@ -444,7 +445,7 @@ checks every project Lean module with both implicit-variable options disabled.
 - **105.10 Exact tests of nested linear models.**
   [CKSD.map_nestedFStatistic_eq_fisherSnedecor](CKSD/LinearModels/FTest.lean#L206) (proved; scope in docstring).
 - **105.15 Distribution of quadratic forms.**
-  [CKSD.indepFun_matrixQuadraticForm_iff](CKSD/LinearModels/Regression.lean#L232) (admitted; scope in docstring).
+  [CKSD.indepFun_matrixQuadraticForm_iff](CKSD/LinearModels/Regression.lean#L513) (proved; scope in docstring).
 - **105.16 Optimality of the $F$ test.**
   [CKSD.map_nestedFStatistic_eq_noncentralF](CKSD/LinearModels/FTest.lean#L97) (proved; scope in docstring).
   [CKSD.strictMono_noncentralF_upper_tail](CKSD/LinearModels/FTest.lean#L231) (proved; scope in docstring).
@@ -456,8 +457,8 @@ checks every project Lean module with both implicit-variable options disabled.
 - **105.24 Principal component eigenvalues.**
   [CKSD.tendstoInDistribution_gaussian_sample_covariance_eigenvalue](CKSD/LinearModels/MultivariateTests.lean#L123) (admitted; scope in docstring).
 - **105.26 Undirected graphical models.**
-  [CKSD.condIndepFun_multivariateGaussian_iff_inv_apply_eq_zero](CKSD/LinearModels/GaussianGraphical.lean#L77) (admitted; scope in docstring).
-  [CKSD.hasGaussianPairwiseMarkovProperty_iff_inv_mem_concentrationModel](CKSD/LinearModels/GaussianGraphical.lean#L89) (conditional; scope in docstring).
+  [CKSD.condIndepFun_multivariateGaussian_iff_inv_apply_eq_zero](CKSD/LinearModels/GaussianGraphical.lean#L251) (proved; scope in docstring).
+  [CKSD.hasGaussianPairwiseMarkovProperty_iff_inv_mem_concentrationModel](CKSD/LinearModels/GaussianGraphical.lean#L347) (proved; scope in docstring).
 - **105.28 Gaussian covariance likelihood.**
   [CKSD.gaussianNegLogLikelihood_sampleMean_le](CKSD/LinearModels/Multivariate.lean#L302) (proved; scope in docstring).
   [CKSD.gaussianNegLogLikelihood_eq_iff](CKSD/LinearModels/Multivariate.lean#L312) (proved; scope in docstring).
@@ -480,9 +481,9 @@ checks every project Lean module with both implicit-variable options disabled.
   [CKSD.IsNormalizedFactorLoading.exists_eq_mul_factorColumnSigns](CKSD/LinearModels/FactorAnalysis.lean#L101) (proved; scope in docstring).
   [CKSD.tendstoInMeasure_factor_mle_of_compact](CKSD/LinearModels/FactorAnalysis.lean#L326) (proved; scope in docstring).
 - **105.36 Decomposable models.**
-  [CKSD.isUndirectedGlobalMarkovMass_iff_clique_factorization](CKSD/LinearModels/Decomposable.lean#L377) (proved; scope in docstring).
-  [CKSD.isConcentrationMLE_decomposableConcentrationMLE](CKSD/LinearModels/Decomposable.lean#L446) (admitted; scope in docstring).
-  [CKSD.existsUnique_isConcentrationMLE_inv](CKSD/LinearModels/Decomposable.lean#L456) (admitted; scope in docstring).
+  [CKSD.isUndirectedGlobalMarkovMass_iff_clique_factorization](CKSD/LinearModels/Decomposable.lean#L388) (proved; scope in docstring).
+  [CKSD.isConcentrationMLE_decomposableConcentrationMLE](CKSD/LinearModels/Decomposable.lean#L457) (admitted; scope in docstring).
+  [CKSD.existsUnique_isConcentrationMLE_inv](CKSD/LinearModels/Decomposable.lean#L719) (proved; scope in docstring).
 - **105.37 Kiefer–Wolfowitz equivalence.**
   [CKSD.kiefer_wolfowitz_equivalence](CKSD/LinearModels/Design.lean#L218) (proved; scope in docstring).
 - **105.38 Randomization test.**
@@ -552,11 +553,11 @@ checks every project Lean module with both implicit-variable options disabled.
 ### Section 106
 
 - **106.1 Martingale central limit theorem.**
-  [CKSD.tendstoInDistribution_martingale_array_sum](CKSD/Processes/TimeSeries/CentralLimit.lean#L35) (admitted; scope in docstring).
+  [CKSD.tendstoInDistribution_martingale_array_sum](CKSD/Processes/TimeSeries/CentralLimit.lean#L79) (proved; scope in docstring).
 - **106.2 Wold decomposition and causal autoregression.**
   [CKSD.exists_wold_decomposition](CKSD/Processes/TimeSeries/Wold.lean#L489) (proved; scope in docstring).
 - **106.4 Bartlett's theorem.**
-  [CKSD.tendstoInDistribution_sample_autocorrelations](CKSD/Processes/TimeSeries/CentralLimit.lean#L56) (admitted; scope in docstring).
+  [CKSD.tendstoInDistribution_sample_autocorrelations](CKSD/Processes/TimeSeries/CentralLimit.lean#L219) (admitted; scope in docstring).
 - **106.6 Periodogram and lag-window estimation.**
   [CKSD.tendstoInDistribution_periodogram_div_spectralDensity](CKSD/Processes/Spectral.lean#L101) (admitted; scope in docstring).
   [CKSD.tendsto_lagWindowEstimator_moments](CKSD/Processes/Spectral.lean#L119) (admitted; scope in docstring).
@@ -637,41 +638,41 @@ checks every project Lean module with both implicit-variable options disabled.
 - **107.12 Generalization of stable algorithms.**
   [CKSD.measureReal_sum_div_add_lt_integral_le_of_stable](CKSD/Learning/Generalization/Stability.lean#L193) (proved; scope in docstring).
 - **107.13 Rate of kernel ridge regression.**
-  [CKSD.ridgePrediction_oracle_bounds](CKSD/Learning/KernelAndClustering.lean#L57) (admitted; scope in docstring).
+  [CKSD.ridgePrediction_oracle_bounds](CKSD/Learning/KernelAndClustering.lean#L310) (proved; scope in docstring).
 - **107.14 Asymptotics of nearest-neighbour rules.**
   [CKSD.tendsto_oneNN_expectedError](CKSD/Learning/LocalAveraging.lean#L79) (admitted; scope in docstring).
   [CKSD.bayesRisk_le_nnRisk_le](CKSD/Learning/LocalAveraging.lean#L87) (proved; scope in docstring).
   [CKSD.exists_tendsto_knn_expectedError](CKSD/Learning/LocalAveraging.lean#L131) (admitted; scope in docstring).
   [CKSD.tendsto_knn_expectedError_bayesRisk](CKSD/Learning/LocalAveraging.lean#L142) (admitted; scope in docstring).
 - **107.16 Consistency of $k$-means.**
-  [CKSD.ae_tendsto_kmeans_centers_of_compact](CKSD/Learning/KernelAndClustering.lean#L86) (admitted; scope in docstring).
+  [CKSD.ae_tendsto_kmeans_centers_of_compact](CKSD/Learning/KernelAndClustering.lean#L430) (admitted; scope in docstring).
 - **107.19 Belief propagation and the Bethe free energy.**
-  [CKSD.isBetheStationary_iff_exists_beliefPropagationFixedPoint](CKSD/Learning/GraphicalModels.lean#L350) (admitted; scope in docstring).
+  [CKSD.isBetheStationary_iff_exists_beliefPropagationFixedPoint](CKSD/Learning/GraphicalModels.lean#L673) (proved; scope in docstring).
 - **107.20 Consistency of response-independent forests.**
   [CKSD.tendsto_localAveraging_sq_error](CKSD/Learning/LocalAveraging.lean#L156) (admitted; scope in docstring).
 - **107.23 Exact belief propagation on a tree.**
-  [CKSD.exists_beliefPropagation_exact_on_tree](CKSD/Learning/GraphicalModels.lean#L686) (proved; scope in docstring).
-  [CKSD.beliefPropagation_tree_unique_up_to_scale](CKSD/Learning/GraphicalModels.lean#L754) (proved; scope in docstring).
+  [CKSD.exists_beliefPropagation_exact_on_tree](CKSD/Learning/BeliefPropagationTree.lean#L557) (proved; scope in docstring).
+  [CKSD.beliefPropagation_tree_unique_up_to_scale](CKSD/Learning/BeliefPropagationTree.lean#L625) (proved; scope in docstring).
 - **107.24 AdaBoost: training error and margins.**
   [CKSD.training_error_le_exponential_loss](CKSD/Learning/Algorithms.lean#L98) (proved; scope in docstring).
 - **107.26 Variational representation of the cumulant function.**
-  [CKSD.sum_mul_sub_mul_log_le_log_sum_exp](CKSD/Learning/Models.lean#L47) (proved; scope in docstring).
-  [CKSD.sum_softmax_mul_sub_mul_log_eq_log_sum_exp](CKSD/Learning/Models.lean#L75) (proved; scope in docstring).
-  [CKSD.tendsto_log_sum_exp_div_atTop](CKSD/Learning/Models.lean#L92) (proved; scope in docstring).
+  [CKSD.sum_mul_sub_mul_log_le_log_sum_exp](CKSD/Learning/Models.lean#L52) (proved; scope in docstring).
+  [CKSD.sum_softmax_mul_sub_mul_log_eq_log_sum_exp](CKSD/Learning/Models.lean#L80) (proved; scope in docstring).
+  [CKSD.tendsto_log_sum_exp_div_atTop](CKSD/Learning/Models.lean#L97) (proved; scope in docstring).
 - **107.27 Junction-tree exactness.**
-  [CKSD.hasJunctionTree_iff_isTriangulated](CKSD/Learning/JunctionTree.lean#L68) (admitted; scope in docstring).
-  [CKSD.sum_eq_one_and_tableMarginal_eq_of_jointMarginal](CKSD/Learning/JunctionTree.lean#L425) (proved; scope in docstring).
-  [CKSD.junctionTreeProduct_isJointLaw](CKSD/Learning/JunctionTree.lean#L438) (proved; scope in docstring).
-  [CKSD.exists_joint_with_clique_marginals_iff](CKSD/Learning/JunctionTree.lean#L544) (proved; scope in docstring).
+  [CKSD.hasJunctionTree_iff_isTriangulated](CKSD/Learning/JunctionTree.lean#L69) (proved; scope in docstring).
+  [CKSD.sum_eq_one_and_tableMarginal_eq_of_jointMarginal](CKSD/Learning/JunctionTree.lean#L427) (proved; scope in docstring).
+  [CKSD.junctionTreeProduct_isJointLaw](CKSD/Learning/JunctionTree.lean#L440) (proved; scope in docstring).
+  [CKSD.exists_joint_with_clique_marginals_iff](CKSD/Learning/JunctionTree.lean#L546) (proved; scope in docstring).
 - **107.28 Barron's rate.**
   [CKSD.exists_logisticNetwork_sq_error_le_barron_moment](CKSD/Learning/Approximation.lean#L58) (admitted; scope in docstring).
   [CKSD.exists_feature_average_sq_error_le](CKSD/Learning/Approximation.lean#L98) (proved; scope in docstring).
 - **107.29 Deep networks and compositional classes.**
   [CKSD.compositionalHolder_minimax_lower_bound](CKSD/Learning/Networks.lean#L650) (admitted; scope in docstring).
 - **107.30 Neural tangent kernel.**
-  [CKSD.hasDerivAt_predictions_of_gradient_flow](CKSD/Learning/Models.lean#L135) (proved; scope in docstring).
+  [CKSD.hasDerivAt_predictions_of_gradient_flow](CKSD/Learning/Models.lean#L140) (proved; scope in docstring).
 - **107.31 Ridgeless least squares.**
-  [CKSD.ridgeless_gaussian_risk_eq](CKSD/Learning/Models.lean#L144) (admitted; scope in docstring).
+  [CKSD.ridgeless_gaussian_risk_eq](CKSD/Learning/Models.lean#L319) (proved; scope in docstring).
 - **107.35 Capacity of network classes.**
   [CKSD.card_le_of_shatters_denseSignClass](CKSD/Learning/Networks.lean#L96) (admitted; scope in docstring).
   [CKSD.empiricalRademacherComplexity_biasFree_le](CKSD/Learning/Networks.lean#L521) (proved; scope in docstring).
@@ -683,7 +684,7 @@ checks every project Lean module with both implicit-variable options disabled.
 - **107.39 Gaussian-process limit at initialization.**
   [CKSD.tendstoInDistribution_wide_network_gaussian](CKSD/Learning/Networks.lean#L686) (admitted; scope in docstring).
 - **107.40 Implicit bias of gradient descent.**
-  [CKSD.tendsto_least_squares_gradient_descent](CKSD/Learning/Models.lean#L161) (proved; scope in docstring).
+  [CKSD.tendsto_least_squares_gradient_descent](CKSD/Learning/Models.lean#L362) (proved; scope in docstring).
 - **107.41 Exact recovery.**
   [CKSD.exists_exactRecovery_iff](CKSD/Learning/RandomGraphs.lean#L80) (admitted; scope in docstring).
   [CKSD.exists_exactRecovery_iff_of_zero](CKSD/Learning/RandomGraphs.lean#L87) (admitted; scope in docstring).
@@ -765,13 +766,13 @@ checks every project Lean module with both implicit-variable options disabled.
 - **108.15 Barycentric equation.** — theorem formulation pending.
 - **108.18 Interval decomposition.**
   [CKSD.exists_intervalBasis_of_isPointwiseFiniteDimensional](CKSD/Geometry/PersistenceModules.lean#L61) (admitted; scope in docstring).
-  [CKSD.IntervalBasis.exists_equiv_support_eq](CKSD/Geometry/PersistenceModules.lean#L71) (admitted; scope in docstring).
+  [CKSD.IntervalBasis.exists_equiv_support_eq](CKSD/Geometry/PersistenceModules.lean#L290) (proved; scope in docstring).
   [CKSD.exists_isSublevelDiagram](CKSD/Geometry/SimplicialPersistence/Chains.lean#L470) (proved; scope in docstring).
 - **108.19 Bottleneck stability.**
   [CKSD.fullBottleneckEDist_le_of_isSublevelDiagram](CKSD/Geometry/SimplicialPersistence/Stability.lean#L315) (proved; scope in docstring).
 - **108.20 Isometry theorem.**
-  [CKSD.interleavingEDist_le_fullBottleneckEDist](CKSD/Geometry/PersistenceModules.lean#L220) (proved; scope in docstring).
-  [CKSD.interleavingEDist_eq_fullBottleneckEDist](CKSD/Geometry/PersistenceModules.lean#L316) (admitted; scope in docstring).
+  [CKSD.interleavingEDist_le_fullBottleneckEDist](CKSD/Geometry/PersistenceModules.lean#L451) (proved; scope in docstring).
+  [CKSD.interleavingEDist_eq_fullBottleneckEDist](CKSD/Geometry/PersistenceModules.lean#L547) (admitted; scope in docstring).
 - **108.21 Čech, Rips, and the nerve.**
   [CKSD.IsCechSimplex.isRipsSimplex](CKSD/Geometry/Persistence.lean#L133) (proved; scope in docstring).
   [CKSD.cech_rips_inclusions](CKSD/Geometry/Topology.lean#L161) (proved; scope in docstring).
@@ -797,57 +798,67 @@ checks every project Lean module with both implicit-variable options disabled.
   [CKSD.nonempty_range_offsetHomology_equiv_of_weakFeatureSize](CKSD/Geometry/TopologicalInference.lean#L133) (admitted; scope in docstring).
   [CKSD.nonempty_ripsPersistentHomology_equiv_of_weakFeatureSize](CKSD/Geometry/TopologicalInference.lean#L153) (admitted; scope in docstring).
 - **108.40 Empirical Wasserstein bounds.**
-  [CKSD.integral_empirical_wasserstein_rpow_le](CKSD/Geometry/Transport.lean#L62) (admitted; scope in docstring).
+  [CKSD.integral_empirical_wasserstein_rpow_le](CKSD/Geometry/Transport.lean#L63) (admitted; scope in docstring).
 - **108.42 Consistency of Brenier maps.**
   [CKSD.tendsto_integral_sq_optimal_map_sub](CKSD/Geometry/OptimalMapStability.lean#L239) (proved; scope in docstring).
 - **108.43 Gromov–Wasserstein distance.**
-  [CKSD.exists_measure_preserving_isometryEquiv_of_zero_distortion](CKSD/Geometry/Transport.lean#L101) (proved; scope in docstring).
+  [CKSD.exists_measure_preserving_isometryEquiv_of_zero_distortion](CKSD/Geometry/Transport.lean#L102) (proved; scope in docstring).
 - **108.44 Debiased Sinkhorn divergence.**
   [CKSD.realSinkhornDivergence_independent_lower_bound](CKSD/Geometry/Entropic.lean#L84) (proved; scope in docstring).
   [CKSD.realSinkhornDivergence_nonneg](CKSD/Geometry/Entropic.lean#L112) (proved; scope in docstring).
 - **108.46 Gaussian transport and barycenters.**
   [CKSD.wasserstein_multivariateGaussian_sq_eq](CKSD/Geometry/GaussianTransport.lean#L103) (proved; scope in docstring).
-  [CKSD.exists_unique_gaussian_wasserstein_barycenter](CKSD/Geometry/Transport.lean#L150) (admitted; scope in docstring).
+  [CKSD.exists_unique_gaussian_wasserstein_barycenter](CKSD/Geometry/Transport.lean#L151) (admitted; scope in docstring).
 - **108.47 One-dimensional empirical transport limit.**
   [CKSD.tendstoInDistribution_mul_wasserstein_sq_empiricalMeasure](CKSD/Geometry/TransportRates.lean#L50) (admitted; scope in docstring).
 - **108.50 Minimax lower bounds for transport estimation.**
-  [CKSD.rpow_div_le_wassersteinEDist_volume_cube](CKSD/Geometry/Transport.lean#L197) (proved; scope in docstring).
+  [CKSD.rpow_div_le_wassersteinEDist_volume_cube](CKSD/Geometry/Transport.lean#L198) (proved; scope in docstring).
 - **108.51 Smooth laws and smoothed distances.**
-  [CKSD.integral_wasserstein_gaussianSmoothing_empiricalMeasure_le](CKSD/Geometry/Transport.lean#L313) (admitted; scope in docstring).
+  [CKSD.integral_wasserstein_gaussianSmoothing_empiricalMeasure_le](CKSD/Geometry/Transport.lean#L314) (admitted; scope in docstring).
 - **108.53 Rates for transport-map estimation.**
   [CKSD.lintegral_transportMapRisk_semidualEstimator_le](CKSD/Geometry/TransportRates.lean#L119) (admitted; scope in docstring).
   [CKSD.lintegral_transportMapRisk_semidualEstimator_le_of_poincare](CKSD/Geometry/TransportRates.lean#L136) (admitted; scope in docstring).
 - **108.55 Dimension-free sample complexity of entropic transport.**
   [CKSD.quadraticEntropicTransport_empirical_bounds](CKSD/Geometry/StatisticalTransport.lean#L64) (admitted; scope in docstring).
 - **108.56 Semidiscrete dual.**
-  [CKSD.semidiscreteTransportDual_concave_differentiable_and_attains_max](CKSD/Geometry/Transport.lean#L327) (admitted; scope in docstring).
+  [CKSD.hasFDerivAt_integral_semidiscretePotential](CKSD/Geometry/SemidiscreteTransport.lean#L286) (proved; scope in docstring).
+  [CKSD.hasFDerivAt_semidiscreteTransportDual](CKSD/Geometry/SemidiscreteTransport.lean#L354) (proved; scope in docstring).
+  [CKSD.contDiff_semidiscreteTransportDual](CKSD/Geometry/SemidiscreteTransport.lean#L384) (proved; scope in docstring).
+  [CKSD.concaveOn_semidiscreteTransportDual](CKSD/Geometry/SemidiscreteTransport.lean#L395) (proved; scope in docstring).
+  [CKSD.semidiscreteTransportDual_isMax_iff](CKSD/Geometry/SemidiscreteTransport.lean#L511) (proved; scope in docstring).
+  [CKSD.exists_isMax_semidiscreteTransportDual](CKSD/Geometry/SemidiscreteTransport.lean#L537) (proved; scope in docstring).
+  [CKSD.map_semidiscreteTransportMap](CKSD/Geometry/SemidiscreteTransport.lean#L655) (proved; scope in docstring).
+  [CKSD.integral_norm_sub_semidiscreteTransportMap_sq](CKSD/Geometry/SemidiscreteTransport.lean#L683) (proved; scope in docstring).
+  [CKSD.ofReal_semidiscreteTransportDual_le_lintegral](CKSD/Geometry/SemidiscreteTransport.lean#L711) (proved; scope in docstring).
+  [CKSD.semidiscreteTransportDual_eq_wassersteinEDist_sq](CKSD/Geometry/SemidiscreteTransport.lean#L779) (proved; scope in docstring).
+  [CKSD.semidiscreteTransportDual_concave_differentiable_and_attains_max](CKSD/Geometry/Transport.lean#L328) (proved; scope in docstring).
 - **108.57 Tangent-space linearization.**
-  [CKSD.optimalMap_eq_cfcSqrt_mul_inv_iff_commute](CKSD/Geometry/Transport.lean#L354) (proved; scope in docstring).
+  [CKSD.optimalMap_eq_cfcSqrt_mul_inv_iff_commute](CKSD/Geometry/Transport.lean#L362) (proved; scope in docstring).
 - **108.58 First-order conditions for barycenters.**
   [CKSD.hasDerivAt_wassersteinBarycenterEnergy_displacement](CKSD/Geometry/StatisticalTransport.lean#L94) (admitted; scope in docstring).
   [CKSD.satisfiesWassersteinKarcherEquation_of_minimizer](CKSD/Geometry/StatisticalTransport.lean#L111) (proved; scope in docstring).
 - **108.59 Procrustes iteration for barycenters.**
-  [CKSD.wassersteinBarycenterEnergy_map_sub_le](CKSD/Geometry/Transport.lean#L479) (proved; scope in docstring).
+  [CKSD.wassersteinBarycenterEnergy_map_sub_le](CKSD/Geometry/Transport.lean#L487) (proved; scope in docstring).
 - **108.61 Limits of the empirical discrepancy.**
-  [CKSD.tendstoInDistribution_unbiasedSquaredMMD_null](CKSD/Geometry/Kernels.lean#L91) (admitted; scope in docstring).
-  [CKSD.tendstoInDistribution_unbiasedSquaredMMD_alternative](CKSD/Geometry/Kernels.lean#L291) (proved; scope in docstring).
+  [CKSD.tendstoInDistribution_unbiasedSquaredMMD_null](CKSD/Geometry/Kernels.lean#L285) (proved; scope in docstring).
+  [CKSD.tendstoInDistribution_unbiasedSquaredMMD_alternative](CKSD/Geometry/Kernels.lean#L558) (proved; scope in docstring).
 - **108.62 Energy distance and independence.**
-  [CKSD.energy_distance_nonneg_eq_zero_iff_and_eq_squaredMMD](CKSD/Geometry/Kernels.lean#L438) (admitted; scope in docstring).
-  [CKSD.distance_covariance_nonneg_eq_zero_iff_and_eq_squaredMMD](CKSD/Geometry/Kernels.lean#L451) (admitted; scope in docstring).
+  [CKSD.energy_distance_nonneg_eq_zero_iff_and_eq_squaredMMD](CKSD/Geometry/Kernels.lean#L705) (admitted; scope in docstring).
+  [CKSD.distance_covariance_nonneg_eq_zero_iff_and_eq_squaredMMD](CKSD/Geometry/Kernels.lean#L718) (admitted; scope in docstring).
 - **108.63 Hilbert–Schmidt independence criterion.**
-  [CKSD.squaredMMD_joint_prod_eq_zero_iff_indepFun](CKSD/Geometry/Kernels.lean#L465) (proved; scope in docstring).
+  [CKSD.squaredMMD_joint_prod_eq_zero_iff_indepFun](CKSD/Geometry/Kernels.lean#L732) (proved; scope in docstring).
 - **108.68 Criteria for characteristic kernels.**
-  [CKSD.isCharacteristicKernel_iff_spectral_measure_full_support](CKSD/Geometry/Kernels.lean#L481) (admitted; scope in docstring).
-  [CKSD.squaredMMD_quadratic_polynomial_eq](CKSD/Geometry/Kernels.lean#L561) (proved; scope in docstring).
+  [CKSD.isCharacteristicKernel_iff_spectral_measure_full_support](CKSD/Geometry/Kernels.lean#L748) (admitted; scope in docstring).
+  [CKSD.squaredMMD_quadratic_polynomial_eq](CKSD/Geometry/Kernels.lean#L828) (proved; scope in docstring).
 - **108.70 Metrization of weak convergence.**
-  [CKSD.tendsto_probabilityMeasure_iff_tendsto_squaredMMD_of_tight](CKSD/Geometry/Kernels.lean#L605) (proved; scope in docstring).
+  [CKSD.tendsto_probabilityMeasure_iff_tendsto_squaredMMD_of_tight](CKSD/Geometry/Kernels.lean#L872) (proved; scope in docstring).
 - **108.71 Kernel Stein discrepancy.**
-  [CKSD.integral_langevin_stein_operator_eq_zero](CKSD/Geometry/Kernels.lean#L656) (proved; scope in docstring).
+  [CKSD.integral_langevin_stein_operator_eq_zero](CKSD/Geometry/Kernels.lean#L923) (proved; scope in docstring).
 - **108.72 Convergence control by kernel Stein discrepancies.**
   [CKSD.tendsto_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero](CKSD/Geometry/SteinDiscrepancy.lean#L70) (admitted; scope in docstring).
   [CKSD.exists_not_tendsto_of_kernelSteinDiscrepancySq_tendsto_zero](CKSD/Geometry/SteinDiscrepancy.lean#L90) (admitted; scope in docstring).
 - **108.74 Random Fourier features.**
-  [CKSD.integral_randomFourierFeatureKernel](CKSD/Geometry/RandomFeatures.lean#L149) (proved; scope in docstring).
-  [CKSD.measureReal_abs_randomFourierFeatureKernel_sub_ge_le](CKSD/Geometry/RandomFeatures.lean#L179) (proved; scope in docstring).
-  [CKSD.measure_uniform_randomFourierFeatureKernel_error_le](CKSD/Geometry/RandomFeatures.lean#L247) (admitted; scope in docstring).
-  [CKSD.abs_squaredMMD_sub_le_of_uniform_kernel_error](CKSD/Geometry/RandomFeatures.lean#L291) (proved; scope in docstring).
+  [CKSD.integral_randomFourierFeatureKernel](CKSD/Geometry/RandomFeatures.lean#L151) (proved; scope in docstring).
+  [CKSD.measureReal_abs_randomFourierFeatureKernel_sub_ge_le](CKSD/Geometry/RandomFeatures.lean#L181) (proved; scope in docstring).
+  [CKSD.measure_uniform_randomFourierFeatureKernel_error_le](CKSD/Geometry/RandomFeatures.lean#L535) (proved; scope in docstring).
+  [CKSD.abs_squaredMMD_sub_le_of_uniform_kernel_error](CKSD/Geometry/RandomFeatures.lean#L678) (proved; scope in docstring).

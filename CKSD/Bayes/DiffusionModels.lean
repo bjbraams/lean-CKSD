@@ -4,6 +4,7 @@ public import CKSD.Bayes.MeanField
 public import CKSD.Bayes.Diffusion
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
 public import Mathlib.Analysis.Calculus.LineDeriv.IntegrationByParts
+public import Mathlib.Probability.Distributions.Gaussian.Fernique
 
 /-!
 # Time reversal, diffusion sampling, and marginal-preserving dynamics
@@ -35,8 +36,9 @@ stated with a constant noise level, for which the equation is pathwise.
   and noise of level `√(2ε)` preserves the marginals (GAPS 104.76).
 * `CKSD.map_marginalPreservingDiffusion`: the pathwise version at a constant noise level
   (GAPS 104.76).
-* `CKSD.stochasticInterpolant_score_and_velocity`: score and velocity of stochastic interpolants
-  (GAPS 104.76).
+* `CKSD.stochasticInterpolant_score`,
+  `CKSD.stochasticInterpolant_integral_sub_eq_integral_velocity`: score and velocity of stochastic
+  interpolants (GAPS 104.76).
 -/
 
 @[expose] public section
@@ -453,41 +455,160 @@ theorem map_marginalPreservingDiffusion {Ω : Type*} [MeasurableSpace Ω] {d : �
     ∀ t ∈ Icc (0 : ℝ) 1, P.map (X t) = volume.withDensity fun x ↦ ENNReal.ofReal (m t x) := by
   sorry
 
-/-- GAPS 104.76: stochastic interpolants. For `Xₜ = Iₜ(X₀, X₁) + γₜ Z` with standard normal `Z`
-independent of the coupling, at each `t ∈ (0, 1)` the law of `Xₜ` has a smooth positive density
-`mₜ` with `∇ log mₜ(Xₜ) = -γₜ⁻¹ 𝔼[Z | Xₜ]`, and `t ↦ 𝔼 φ(Xₜ)` has derivative
-`𝔼[∇φ(Xₜ) · vₜ(Xₜ)]` for every version `vₜ(Xₜ) = 𝔼[∂ₜIₜ + γ̇ₜ Z | Xₜ]` of the velocity, which is
-the weak form of the continuity equation. -/
-theorem stochasticInterpolant_score_and_velocity {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
+/-- GAPS 104.76: the score of a stochastic interpolant. For `Xₜ = Iₜ(X₀, X₁) + γₜ Z` with standard
+normal `Z` independent of the coupling and `γₜ > 0`, the law of `Xₜ` has a smooth positive density
+`mₜ` and `∇ log mₜ(Xₜ) = -γₜ⁻¹ 𝔼[Z | Xₜ]` almost surely. -/
+theorem stochasticInterpolant_score {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
+    (I : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
+    (γ : ℝ → ℝ)
+    (hIm : ∀ t, Measurable fun w : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) ↦
+      I t w.1 w.2)
+    (X₀ X₁ Z : Ω → EuclideanSpace ℝ (Fin d)) (hX₀ : Measurable X₀) (hX₁ : Measurable X₁)
+    (hZ : Measurable Z) (hZlaw : P.map Z = stdGaussian (EuclideanSpace ℝ (Fin d)))
+    (hind : IndepFun (fun ω ↦ (X₀ ω, X₁ ω)) Z P) (t : ℝ) (hγt : 0 < γ t) :
+    let X := fun ω ↦ I t (X₀ ω) (X₁ ω) + γ t • Z ω
+    ∃ mt : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ (⊤ : ℕ∞) mt ∧ (∀ x, 0 < mt x) ∧
+      P.map X = volume.withDensity (fun x ↦ ENNReal.ofReal (mt x)) ∧
+      (fun ω ↦ gradient (fun y ↦ Real.log (mt y)) (X ω)) =ᵐ[P]
+        fun ω ↦ -(γ t)⁻¹ • P[Z | MeasurableSpace.comap X inferInstance] ω := by
+  sorry
+
+/-- GAPS 104.76: the velocity of a stochastic interpolant, in the weak form of the continuity
+equation. Let `Xₜ = Iₜ(X₀, X₁) + γₜ Z` with `I` and `γ` continuously differentiable in `t`,
+and `∫₀¹ 𝔼‖∂ₜIₜ(X₀, X₁)‖² dt < ∞` (continuity of `γ̇` makes a bound on `∫₀¹ γ̇ₜ² dt`
+unnecessary), and let `vₜ(Xₜ)` be, for every
+`t ∈ (0, 1)`, a version of `𝔼[∂ₜIₜ + γ̇ₜ Z | Xₜ]`. Then for every smooth compactly supported `φ`
+and `0 < a ≤ b < 1`, `𝔼 φ(X_b) - 𝔼 φ(X_a) = ∫ₐᵇ 𝔼[∇φ(Xₜ) · vₜ(Xₜ)] dt`. The square-integrability
+in `t` does not make `∂ₜIₜ` integrable at every fixed `t`, so the identity is stated in
+integrated form. -/
+theorem stochasticInterpolant_integral_sub_eq_integral_velocity {Ω : Type*} [MeasurableSpace Ω]
+    {d : ℕ} (P : Measure Ω) [IsProbabilityMeasure P]
     (I dI : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (γ dγ : ℝ → ℝ)
-    (hI : ∀ x₀ x₁, I 0 x₀ x₁ = x₀ ∧ I 1 x₀ x₁ = x₁)
     (hdI : ∀ t x₀ x₁, HasDerivAt (fun s ↦ I s x₀ x₁) (dI t x₀ x₁) t)
     (hdIc : ∀ x₀ x₁, Continuous fun t ↦ dI t x₀ x₁)
     (hIm : ∀ t, Measurable fun w : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) ↦
       I t w.1 w.2)
     (hdIm : ∀ t, Measurable fun w : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) ↦
       dI t w.1 w.2)
-    (hγ01 : γ 0 = 0 ∧ γ 1 = 0) (hγpos : ∀ t ∈ Ioo (0 : ℝ) 1, 0 < γ t)
     (hdγ : ∀ t, HasDerivAt γ (dγ t) t) (hdγc : Continuous dγ)
     (X₀ X₁ Z : Ω → EuclideanSpace ℝ (Fin d)) (hX₀ : Measurable X₀) (hX₁ : Measurable X₁)
     (hZ : Measurable Z) (hZlaw : P.map Z = stdGaussian (EuclideanSpace ℝ (Fin d)))
-    (hind : IndepFun (fun ω ↦ (X₀ ω, X₁ ω)) Z P)
-    (hdI2 : ∫⁻ t in Icc (0 : ℝ) 1, ∫⁻ ω, ‖dI t (X₀ ω) (X₁ ω)‖ₑ ^ 2 ∂P < ∞)
-    (hdγ2 : ∫⁻ t in Icc (0 : ℝ) 1, ‖dγ t‖ₑ ^ 2 < ∞) :
+    (hdI2 : ∫⁻ t in Icc (0 : ℝ) 1, ∫⁻ ω, ‖dI t (X₀ ω) (X₁ ω)‖ₑ ^ 2 ∂P < ∞) :
     let X := fun t ω ↦ I t (X₀ ω) (X₁ ω) + γ t • Z ω
-    ∀ t ∈ Ioo (0 : ℝ) 1,
-      (∃ mt : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ (⊤ : ℕ∞) mt ∧ (∀ x, 0 < mt x) ∧
-        P.map (X t) = volume.withDensity (fun x ↦ ENNReal.ofReal (mt x)) ∧
-        (fun ω ↦ gradient (fun y ↦ Real.log (mt y)) (X t ω)) =ᵐ[P]
-          fun ω ↦ -(γ t)⁻¹ • P[Z | MeasurableSpace.comap (X t) inferInstance] ω) ∧
-      ∀ vt : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d),
-        (fun ω ↦ vt (X t ω)) =ᵐ[P] P[fun ω ↦ dI t (X₀ ω) (X₁ ω) + dγ t • Z ω |
-          MeasurableSpace.comap (X t) inferInstance] →
-        ∀ φ : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ (⊤ : ℕ∞) φ → HasCompactSupport φ →
-          HasDerivAt (fun s ↦ ∫ ω, φ (X s ω) ∂P)
-            (∫ ω, fderiv ℝ φ (X t ω) (vt (X t ω)) ∂P) t := by
-  sorry
+    ∀ v : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d),
+      (∀ t ∈ Ioo (0 : ℝ) 1, (fun ω ↦ v t (X t ω)) =ᵐ[P]
+        P[fun ω ↦ dI t (X₀ ω) (X₁ ω) + dγ t • Z ω | MeasurableSpace.comap (X t) inferInstance]) →
+      ∀ φ : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ (⊤ : ℕ∞) φ → HasCompactSupport φ →
+        ∀ a ∈ Ioo (0 : ℝ) 1, ∀ b ∈ Ioo (0 : ℝ) 1, a ≤ b →
+          ∫ ω, φ (X b ω) ∂P - ∫ ω, φ (X a ω) ∂P =
+            ∫ t in a..b, ∫ ω, fderiv ℝ φ (X t ω) (v t (X t ω)) ∂P := by
+  intro X v hv φ hφ hφc a ha b hb hab
+  set W : ℝ → Ω → EuclideanSpace ℝ (Fin d) := fun t ω ↦ dI t (X₀ ω) (X₁ ω) + dγ t • Z ω with hW
+  set F : ℝ → Ω → ℝ := fun t ω ↦ fderiv ℝ φ (X t ω) (W t ω) with hF
+  set μ : Measure ℝ := volume.restrict (Ioc a b) with hμ
+  have hφd : Differentiable ℝ φ := hφ.differentiable (by simp)
+  have hφ'c : Continuous (fderiv ℝ φ) := hφ.continuous_fderiv (by simp)
+  obtain ⟨M, hM⟩ := hφ'c.bounded_above_of_compact_support (hφc.fderiv (𝕜 := ℝ))
+  obtain ⟨Mφ, hMφ⟩ := hφ.continuous.bounded_above_of_compact_support hφc
+  -- pathwise calculus
+  have hXd (ω : Ω) (t : ℝ) : HasDerivAt (fun s ↦ X s ω) (W t ω) t :=
+    (hdI t _ _).add ((hdγ t).smul_const (Z ω))
+  have hXc (ω : Ω) : Continuous fun t ↦ X t ω :=
+    continuous_iff_continuousAt.2 fun t ↦ (hXd ω t).continuousAt
+  have hWc (ω : Ω) : Continuous fun t ↦ W t ω := (hdIc _ _).add (hdγc.smul continuous_const)
+  have hFc (ω : Ω) : Continuous fun t ↦ F t ω :=
+    (hφ'c.comp (hXc ω)).clm_apply (hWc ω)
+  have hFTC (ω : Ω) : φ (X b ω) - φ (X a ω) = ∫ t in a..b, F t ω := by
+    refine (intervalIntegral.integral_eq_sub_of_hasDerivAt (f := fun s ↦ φ (X s ω))
+      (fun t _ ↦ ?_) ((hFc ω).intervalIntegrable a b)).symm
+    exact (hφd _).hasFDerivAt.comp_hasDerivAt t (hXd ω t)
+  -- measurability
+  have hXm (t : ℝ) : Measurable (X t) :=
+    ((hIm t).comp (hX₀.prodMk hX₁)).add (hZ.const_smul (γ t))
+  have hdIm' (t : ℝ) : Measurable fun ω ↦ dI t (X₀ ω) (X₁ ω) := (hdIm t).comp (hX₀.prodMk hX₁)
+  have hWm (t : ℝ) : Measurable (W t) := (hdIm' t).add (hZ.const_smul (dγ t))
+  have hFm (t : ℝ) : Measurable (F t) :=
+    (continuous_fst.clm_apply continuous_snd).measurable.comp
+      ((hφ'c.measurable.comp (hXm t)).prodMk (hWm t))
+  have hFjm : Measurable (Function.uncurry F) :=
+    measurable_uncurry_of_continuous_of_measurable hFc hFm
+  have hdIjm : Measurable (Function.uncurry fun t ω ↦ dI t (X₀ ω) (X₁ ω)) :=
+    measurable_uncurry_of_continuous_of_measurable (fun ω ↦ hdIc _ _) hdIm'
+  -- integrability of the drift of the interpolation
+  have hdIint : Integrable (fun p : ℝ × Ω ↦ dI p.1 (X₀ p.2) (X₁ p.2)) (μ.prod P) := by
+    refine ⟨hdIjm.aestronglyMeasurable, ?_⟩
+    rw [HasFiniteIntegral, lintegral_prod (f := fun p : ℝ × Ω ↦ ‖dI p.1 (X₀ p.2) (X₁ p.2)‖ₑ)
+      hdIjm.enorm.aemeasurable]
+    have hpt (x : EuclideanSpace ℝ (Fin d)) : ‖x‖ₑ ≤ 1 + ‖x‖ₑ ^ 2 := by
+      by_cases h : ‖x‖ₑ ≤ 1
+      · exact le_add_right h
+      · exact (le_self_pow₀ (not_le.1 h).le two_ne_zero).trans le_add_self
+    calc ∫⁻ t, ∫⁻ ω, ‖dI t (X₀ ω) (X₁ ω)‖ₑ ∂P ∂μ
+        ≤ ∫⁻ t in Icc (0 : ℝ) 1, ∫⁻ ω, ‖dI t (X₀ ω) (X₁ ω)‖ₑ ∂P :=
+          lintegral_mono_set (Ioc_subset_Icc_self.trans (Icc_subset_Icc ha.1.le hb.2.le))
+      _ ≤ ∫⁻ t in Icc (0 : ℝ) 1, (1 + ∫⁻ ω, ‖dI t (X₀ ω) (X₁ ω)‖ₑ ^ 2 ∂P) := by
+          refine lintegral_mono fun t ↦ ?_
+          calc ∫⁻ ω, ‖dI t (X₀ ω) (X₁ ω)‖ₑ ∂P ≤ ∫⁻ ω, (1 + ‖dI t (X₀ ω) (X₁ ω)‖ₑ ^ 2) ∂P :=
+                lintegral_mono fun ω ↦ hpt _
+            _ = _ := by
+                rw [lintegral_add_left measurable_const, lintegral_const, measure_univ, one_mul]
+      _ < ∞ := by
+          rw [lintegral_add_left measurable_const, lintegral_const]
+          exact ENNReal.add_lt_top.2 ⟨by simp, hdI2⟩
+  have hZint : Integrable Z P := by
+    have := (IsGaussian.memLp_id (stdGaussian (EuclideanSpace ℝ (Fin d))) 1
+      (by simp)).integrable le_rfl
+    rw [← hZlaw, integrable_map_measure this.aestronglyMeasurable hZ.aemeasurable] at this
+    exact this
+  have hdγint : Integrable dγ μ :=
+    (hdγc.integrableOn_Icc (a := a) (b := b)).mono_set Ioc_subset_Icc_self
+  have hFint : Integrable (Function.uncurry F) (μ.prod P) := by
+    refine Integrable.mono' ((hdIint.norm.add (hdγint.norm.mul_prod hZint.norm)).const_mul M)
+      hFjm.aestronglyMeasurable (ae_of_all _ fun p ↦ ?_)
+    simp only [Function.uncurry, hF, hW]
+    calc ‖fderiv ℝ φ (X p.1 p.2) (dI p.1 (X₀ p.2) (X₁ p.2) + dγ p.1 • Z p.2)‖
+        ≤ M * ‖dI p.1 (X₀ p.2) (X₁ p.2) + dγ p.1 • Z p.2‖ :=
+          ((fderiv ℝ φ _).le_opNorm _).trans
+            (mul_le_mul_of_nonneg_right (hM _) (norm_nonneg _))
+      _ ≤ M * (‖dI p.1 (X₀ p.2) (X₁ p.2)‖ + ‖dγ p.1‖ * ‖Z p.2‖) := by
+          have hM0 : 0 ≤ M := (norm_nonneg _).trans (hM 0)
+          gcongr
+          exact (norm_add_le _ _).trans_eq (by rw [norm_smul])
+  -- Fubini
+  have hφint (t : ℝ) : Integrable (fun ω ↦ φ (X t ω)) P :=
+    Integrable.of_bound (hφ.continuous.measurable.comp (hXm t)).aestronglyMeasurable Mφ
+      (ae_of_all _ fun ω ↦ hMφ _)
+  have hlhs : ∫ ω, φ (X b ω) ∂P - ∫ ω, φ (X a ω) ∂P = ∫ t in a..b, ∫ ω, F t ω ∂P := by
+    rw [← integral_sub (hφint b) (hφint a)]
+    simp_rw [hFTC, intervalIntegral.integral_of_le hab]
+    exact integral_integral_swap (f := fun ω t ↦ F t ω) hFint.swap
+  rw [hlhs]
+  -- conditioning for almost every time
+  refine intervalIntegral.integral_congr_ae ?_
+  have hae : ∀ᵐ t ∂μ, Integrable (fun ω ↦ dI t (X₀ ω) (X₁ ω)) P := hdIint.prod_right_ae
+  rw [hμ, ae_restrict_iff' measurableSet_Ioc] at hae
+  filter_upwards [hae] with t ht htab
+  rw [uIoc_of_le hab] at htab
+  have ht01 : t ∈ Ioo (0 : ℝ) 1 := ⟨ha.1.trans htab.1, htab.2.trans_lt hb.2⟩
+  have hWint : Integrable (W t) P := (ht htab).add (Integrable.smul (dγ t) hZint)
+  have hmle : MeasurableSpace.comap (X t) inferInstance ≤ ‹MeasurableSpace Ω› :=
+    (hXm t).comap_le
+  have hDm : StronglyMeasurable[MeasurableSpace.comap (X t) inferInstance]
+      fun ω ↦ fderiv ℝ φ (X t ω) :=
+    (hφ'c.measurable.comp (comap_measurable (X t))).stronglyMeasurable
+  have hpull := condExp_stronglyMeasurable_bilin_of_bound
+    (ContinuousLinearMap.id ℝ (EuclideanSpace ℝ (Fin d) →L[ℝ] ℝ)) hmle hDm hWint M
+    (ae_of_all _ fun ω ↦ hM _)
+  calc ∫ ω, F t ω ∂P = ∫ ω, (P[fun ω ↦
+        (ContinuousLinearMap.id ℝ (EuclideanSpace ℝ (Fin d) →L[ℝ] ℝ)) (fderiv ℝ φ (X t ω))
+          (W t ω) | MeasurableSpace.comap (X t) inferInstance]) ω ∂P :=
+        (integral_condExp hmle).symm
+    _ = ∫ ω, fderiv ℝ φ (X t ω) (v t (X t ω)) ∂P := by
+        refine integral_congr_ae ?_
+        filter_upwards [hpull, hv t ht01] with ω h1 h2
+        rw [h1, ← h2]
+        rfl
 
 end CKSD

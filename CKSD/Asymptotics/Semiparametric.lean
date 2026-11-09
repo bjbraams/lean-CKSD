@@ -3,7 +3,7 @@ module
 public import CKSD.Asymptotics.Statistics
 
 /-!
-# Semiparametric efficiency, cross-fitting, and adaptation
+# Semiparametric efficiency and adaptation
 
 The semiparametric convolution bound is stated for a family of one-dimensional submodels
 through a fixed law `P`, indexed by a parametric direction and a nuisance score taken from a
@@ -11,12 +11,9 @@ linear space `G` of `L²(P)` scores. Quadratic-mean differentiability is Statlib
 (through the adapter `HasQuadraticMeanDerivAt`), relative to a dominating measure. Efficient
 scores use the orthogonal projection of `efficientScore`.
 
-Cross-fitting uses `SampleSplit`, `crossFittedAverage`, and `missingMeanScore`. Rate
-conditions on norms are expressed for `ℝ≥0∞`-valued `L²` norms (`eLpNorm`), so that an
-infinite norm cannot be replaced by a junk real value.
-
 The center-of-symmetry results use a location family with an absolutely continuous symmetric
-density. Sources: GAPS 102.34, 102.39, and 102.41.
+density. Sources: GAPS 102.34 and 102.41. Cross-fitted estimation of a missing mean
+(GAPS 102.39) is in `CKSD.Asymptotics.CrossFitting`.
 -/
 
 @[expose] public section
@@ -93,7 +90,8 @@ theorem exists_convolution_of_isRegularAlongPaths
     (L : Measure (EuclideanSpace ℝ (Fin k))) [IsProbabilityMeasure L]
     (hreg : IsRegularAlongPaths Q Prod.fst θ T L) :
     ∃ M : Measure (EuclideanSpace ℝ (Fin k)), IsProbabilityMeasure M ∧
-      L = (multivariateGaussian 0 (efficientInformationMatrix P (G : Set (Lp ℝ 2 P)) ℓ)⁻¹).conv M := by
+      L = (multivariateGaussian 0
+        (efficientInformationMatrix P (G : Set (Lp ℝ 2 P)) ℓ)⁻¹).conv M := by
   sorry
 
 /-- GAPS 102.34, efficiency part, in the setting of
@@ -116,70 +114,6 @@ theorem isRegularAlongPaths_gaussian_iff_asymptotically_linear
       TendstoInProbabilityZero (fun n ↦ Measure.pi fun _ : Fin n ↦ P)
         (fun n x ↦ ‖Real.sqrt n • (T n x - θ) - (Real.sqrt n)⁻¹ •
           ∑ i, efficientInfluence P (G : Set (Lp ℝ 2 P)) ℓ (x i)‖) := by
-  sorry
-
-/-! ### Cross-fitted estimation of a missing mean -/
-
-/-- Convergence to zero in (outer) probability of nonnegative extended-real random quantities.
-An infinite value counts as exceeding every threshold. -/
-def TendstoInProbabilityZeroENNReal {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
-    (Y : ℕ → Ω → ℝ≥0∞) : Prop :=
-  ∀ ε : ℝ, 0 < ε → Tendsto (fun n ↦ μ {ω | ENNReal.ofReal ε < Y n ω}) atTop (𝓝 0)
-
-/-- Observed part `(R, X, R Y)` of a full-data triple `(R, X, Y)`. -/
-def missingDataObservation {X : Type*} (w : Bool × X × ℝ) : Bool × X × ℝ :=
-  (w.1, w.2.1, if w.1 then w.2.2 else 0)
-
-/-- GAPS 102.39: asymptotic linearity of the cross-fitted augmented inverse-probability
-estimator of a missing mean. The full-data triples `(R, X, Y)` are iid with law `P`, the
-response is missing at random with propensity `π₀`, and `m₀` is the regression of `Y` on `X`,
-both expressed by their defining integral identities. The estimators `(m̂, π̂)` on fold `k`
-are computed from the observed data `(R, X, RY)` outside fold `k`. For all sufficiently large sample sizes, the fold sizes are at least
-a fixed fraction of `n`. On each fold the `L²(P_X)` errors of `m̂` and `π̂` tend to zero in
-probability, their product is `o_P(n^{-1/2})`, and the `L²(P)` distance between the estimated
-and true scores, with the nuisance estimates held fixed, tends to zero in probability. -/
-theorem crossFittedAverage_missingMean_asymptotically_linear
-    {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure (Bool × X × ℝ))
-    [IsProbabilityMeasure P] (W : ℕ → Ω → Bool × X × ℝ)
-    (hiid : IsIndependentIdenticallyDistributed μ W P)
-    (hY : MemLp (fun w : Bool × X × ℝ ↦ w.2.2) 2 P)
-    (π₀ m₀ : X → ℝ) (hπ₀m : Measurable π₀) (hm₀m : Measurable m₀) (δ : ℝ) (hδ : 0 < δ)
-    (hπ₀ : ∀ x, δ ≤ π₀ x)
-    (hmar : ∀ A B, MeasurableSet A → MeasurableSet B →
-      P.real {w | w.1 = true ∧ w.2.1 ∈ A ∧ w.2.2 ∈ B} =
-        ∫ w in {w : Bool × X × ℝ | w.2.1 ∈ A ∧ w.2.2 ∈ B}, π₀ w.2.1 ∂P)
-    (hreg : ∀ A, MeasurableSet A →
-      (∫ w in {w : Bool × X × ℝ | w.2.1 ∈ A}, w.2.2 ∂P) =
-        ∫ w in {w : Bool × X × ℝ | w.2.1 ∈ A}, m₀ w.2.1 ∂P)
-    (K : ℕ) (split : ∀ n, SampleSplit n K) (c : ℝ) (hc : 0 < c)
-    (hsize : ∀ᶠ n in atTop, ∀ k,
-      c * n ≤ (Finset.univ.filter fun i ↦ (split n).fold i = k).card)
-    (train : ∀ n (k : Fin K), ((split n).trainingIndices k → Bool × X × ℝ) → (X → ℝ) × (X → ℝ))
-    (htrain₁ : ∀ n k, Measurable fun p : ((split n).trainingIndices k → Bool × X × ℝ) × X ↦
-      (train n k p.1).1 p.2)
-    (htrain₂ : ∀ n k, Measurable fun p : ((split n).trainingIndices k → Bool × X × ℝ) × X ↦
-      (train n k p.1).2 p.2)
-    (hπhat : ∀ n k z x, δ ≤ (train n k z).2 x) :
-    let PX := P.map fun w ↦ w.2.1;
-    let mean := ∫ w, w.2.2 ∂P;
-    let fit := fun n (k : Fin K) (ω : Ω) ↦
-      train n k fun j ↦ missingDataObservation (W j.val ω);
-    let score := fun (h : (X → ℝ) × (X → ℝ)) (w : Bool × X × ℝ) ↦
-      missingMeanScore h.1 h.2 w.2.1 w.1 w.2.2;
-    (∀ k : Fin K, TendstoInProbabilityZeroENNReal μ fun n ω ↦
-        eLpNorm (fun x ↦ (fit n k ω).1 x - m₀ x) 2 PX) →
-    (∀ k : Fin K, TendstoInProbabilityZeroENNReal μ fun n ω ↦
-        eLpNorm (fun x ↦ (fit n k ω).2 x - π₀ x) 2 PX) →
-    (∀ k : Fin K, TendstoInProbabilityZeroENNReal μ fun n ω ↦
-        ENNReal.ofReal (Real.sqrt n) * eLpNorm (fun x ↦ (fit n k ω).1 x - m₀ x) 2 PX *
-          eLpNorm (fun x ↦ (fit n k ω).2 x - π₀ x) 2 PX) →
-    (∀ k : Fin K, TendstoInProbabilityZeroENNReal μ fun n ω ↦
-        eLpNorm (fun w ↦ score (fit n k ω) w - score (m₀, π₀) w) 2 P) →
-    TendstoInMeasure μ (fun (n : ℕ) ω ↦
-      Real.sqrt n * (crossFittedAverage (split n) (train n) score
-        (fun i ↦ missingDataObservation (W i ω)) - mean) -
-      (Real.sqrt n)⁻¹ * ∑ i : Fin n, (score (m₀, π₀) (W i ω) - mean)) atTop (fun _ ↦ 0) := by
   sorry
 
 /-! ### Adaptive estimation of a center of symmetry -/
