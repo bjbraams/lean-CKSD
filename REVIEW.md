@@ -1,10 +1,10 @@
 # Mathlib-style assessment of CKSD
 
-The project contains 227 Lean modules under `CKSD/` and 2610 inventoried declarations:
-790 definitions, abbreviations, structures and inductive types, and 1820 theorem statements
-(1701 proved, two conditional on admitted results, and 117 admitted). Every file is below the
+The project contains 229 Lean modules under `CKSD/` and 2649 inventoried declarations:
+795 definitions, abbreviations, structures and inductive types, and 1854 theorem statements
+(1737 proved, two conditional on admitted results, and 115 admitted). Every file is at or below the
 1000-line splitting threshold (1500 lines is the hard limit); the largest is
-[CrossFitting.lean](CKSD/Asymptotics/CrossFitting.lean) at 988 lines. All modules use
+[DirichletConjugacy.lean](CKSD/Bayes/DirichletConjugacy.lean) at 1001 lines. All modules use
 the module system and have Mathlib-style module documentation with the mathematical scope, main definitions and main results. All authored definitions, abbreviations,
 structures, inductive types and theorem statements have formal docstrings, as do all 136 structure
 fields. Theorem docstrings state the mathematics together with the `GAPS ddd.k` tag of the
@@ -157,7 +157,7 @@ Project-specific namespace and module requirements remain authoritative.
 
 ## Validation
 
-The ordinary full build completes successfully with 11273 jobs and no warnings from CKSD files
+The ordinary full build completes successfully with 11291 jobs and no warnings from CKSD files
 other than admitted declarations. The inventory checker `scripts/check_formalization.py` audits
 compiled axiom dependencies, docstring adjacency and source hashes. Individual module checks
 (`scripts/check_lean_files.py`) use both `autoImplicit=false` and `relaxedAutoImplicit=false`

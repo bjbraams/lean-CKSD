@@ -16,6 +16,8 @@ public import CKSD.Bayes.Posterior
 public import CKSD.Bayes.MonteCarlo
 public import CKSD.Bayes.MarkovChainCLT
 public import CKSD.Bayes.Dynamics
+public import CKSD.Bayes.StickBreaking
+public import CKSD.Bayes.DirichletConjugacy
 public import CKSD.Bayes.DirichletProcess
 public import CKSD.Bayes.InverseProblems
 public import CKSD.Bayes.LangevinSampling

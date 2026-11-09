@@ -435,3 +435,12 @@ Further proofs use these upstream results.
   `map_sum_sq_pi_gaussianReal` and `chiSquaredMeasure_two` for periodogram limits;
   `abs_prod_sub_prod_le_sum_abs_sub` for the Kaplan–Meier product; `strong_law_ae_infinitePi` and
   `pi_withDensity` for evidence bounds; `map_affine_multivariateGaussian` for convex regression.
+
+The Dirichlet-process results (`CKSD/Bayes/StickBreaking.lean`,
+`CKSD/Bayes/DirichletConjugacy.lean`) follow Sethuraman, *A constructive definition of
+Dirichlet priors*, Statist. Sinica 4 (1994), and Ghosal and van der Vaart, *Fundamentals of
+Nonparametric Bayesian Inference* (2017), Ch. 4. They use TauCeti's Dirichlet laws
+(`dirichletMeasure`, `map_dirichletStickInsert_prod_betaMeasure_dirichletMeasure`,
+`map_euclideanFiberSum_dirichletMeasure`, `dirichletMeasure_eq_map_withDensity_dirichletChartPDF`)
+and Mathlib's `Kernel.ae_eq_of_compProd_eq`, `memPartition` and `natGeneratingSequence` for
+countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.

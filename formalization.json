@@ -2,9 +2,9 @@
   "schema_version": 1,
   "scope_rule": "A tagged theorem represents only its stated hypotheses and conclusions. Presence of a statement does not assert full coverage of a catalogue family.",
   "counts": {
-    "proved": 1701,
-    "definition": 790,
-    "admitted": 117,
+    "proved": 1737,
+    "definition": 795,
+    "admitted": 115,
     "conditional": 2,
     "gaps": 296,
     "easy_entries": 110,
@@ -5079,14 +5079,373 @@
       "proof": "proved"
     },
     {
+      "name": "CKSD.cellCount",
+      "kind": "def",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 63,
+      "doc": "The cell counts `#{l | jₗ = i}` of an assignment of `n` observations to cells, as reals.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.cellCount_nonneg",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 68,
+      "doc": "Cell counts are nonnegative.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.cellCount_succ",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 73,
+      "doc": "Splitting off the first observation adds one to the count of its cell.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_prod_mul_dirichletMeasure",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 81,
+      "doc": "**Multinomial–Dirichlet conjugacy.** Weighting the Dirichlet law `Dir(a)` by the likelihood `∏ₗ y_{jₗ}` of an assignment `j` of `n` observations to cells gives, after normalization, the Dirichlet law `Dir(a + counts(j))`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_cells_eq_dirichletMeasure",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 125,
+      "doc": "The Dirichlet marginal of a Dirichlet process on a partition indexed by any finite type: `IsDirichletProcess` states it for partitions indexed by `Fin k`, and the Dirichlet laws are compatible with reindexing (TauCeti's aggregation law along a bijection).",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measurable_toLp_measureReal",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 253,
+      "doc": "The vector of cell masses of a measurable random measure is measurable.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_mul_prod_measureReal_of_isDirichletProcess",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 263,
+      "doc": "**Size-biased expansion over a partition.** For a Dirichlet process `P` with base `α`, a partition `R` into cells of positive mass, and an assignment `p` of `n` observations to cells, weighting by the likelihood `∏ₗ P(R (p l))` turns the law of the cell masses into the Dirichlet law with parameters `α(R k)` plus the counts of `p`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_mul_prod_measureReal_of_subset",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 315,
+      "doc": "**Expansion over a refined partition.** For a Dirichlet process `P` with base `α`, a partition `A` into cells of positive mass, and sets `B l ⊆ A (c l)`, weighting by the likelihood `∏ₗ P(B l)` turns the law of the cell masses of `A` into the Dirichlet law with parameters `α(A i)` plus the counts of `c`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.sampleCount",
+      "kind": "def",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 465,
+      "doc": "The number of the observations `x l` lying in a set `A`, as a real number.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.sampleCount_nonneg",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 470,
+      "doc": "Sample counts are nonnegative.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measurable_sampleCount",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 474,
+      "doc": "The sample count of a measurable set is a measurable function of the sample.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.sampleCount_eq_cellCount",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 481,
+      "doc": "If each observation `x l` lies in the cell `A (c l)` of a disjoint family, the sample counts of the cells are the cell counts of `c`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.subcellSets",
+      "kind": "def",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 491,
+      "doc": "The measurable sets contained in a cell of `A` or in the complement of its union.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": []
+    },
+    {
+      "name": "CKSD.isPiSystem_subcellSets",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 495,
+      "doc": "The sets contained in a cell form a π-system.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.generateFrom_subcellSets",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 503,
+      "doc": "The sets contained in a cell of a measurable family generate the σ-algebra.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.isCountablySpanning_subcellSets",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 520,
+      "doc": "The sets contained in a cell of a finite family are countably spanning.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.ae_map_posterior_eq_dirichletMeasure",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 547,
+      "doc": "**Posterior cell masses of a Dirichlet process.** Let the prior be the law of a Dirichlet process with base `α`, let the data be an i.i.d. sample of size `n` from the random measure, and let `post` be a posterior kernel. For a partition `A` into cells of positive `α`-mass whose union has `α`-null complement, for almost every sample `x` the posterior law of the cell masses is the Dirichlet law with parameters `α(A i)` plus the number of observations in `A i`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.memPartitionMasses",
+      "kind": "def",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 709,
+      "doc": "The masses that a probability measure gives to the cells of the `m`-th finite partition generated by a sequence of sets `t`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.memPartitionMassesSpace",
+      "kind": "abbrev",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 715,
+      "doc": "The σ-algebra on probability measures generated by the cell masses of the `m`-th partition generated by `t`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.measurable_memPartitionMasses",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 720,
+      "doc": "The cell masses of a finite partition into measurable cells depend measurably on the probability measure.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.ext_of_map_memPartitionMasses",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 753,
+      "doc": "**Uniqueness of laws of random measures.** Two laws of random probability measures on a space whose σ-algebra is generated by a sequence of measurable sets `t` agree as soon as they give the same laws to the cell masses of every finite partition `memPartition t m`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measureReal_dirichletPosteriorBase",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 806,
+      "doc": "The posterior base measure of a measurable set is its prior mass plus its sample count.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.ae_isDirichletProcess_posterior",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletConjugacy.lean",
+      "line": 868,
+      "doc": "**Conjugacy of the Dirichlet process.** Let the prior be the law of a Dirichlet process with base `α ≠ 0` on a countably generated space, let the data be an i.i.d. sample of size `n` from the random measure, and let `post` be a posterior kernel. If a Dirichlet process law exists for each posterior base measure `α + ∑ₗ δ_{x l}`, then for almost every sample the posterior is the Dirichlet process law with that base measure.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "3740ae703f8c13260f7c654c89c50387aeb71386a6996671a95eb9323e611610",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.IsDirichletProcessLaw",
       "kind": "def",
       "file": "CKSD/Bayes/DirichletProcess.lean",
-      "line": 36,
+      "line": 46,
       "doc": "A law on probability measures is the law of a Dirichlet process with base measure `α`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "4ae9504645b39a6860973ea8ba39075a6ef415e676358dfaf0fb9b6fc26433e4",
+      "source_sha256": "615a0336cd7350ad8961a20bdcb68cd90f855cceb3d2edc1af725b6a2fccfad7",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5097,48 +5456,11 @@
       "name": "CKSD.integral_measureReal_of_isDirichletProcess",
       "kind": "theorem",
       "file": "CKSD/Bayes/DirichletProcess.lean",
-      "line": 42,
+      "line": 52,
       "doc": "The mean of a cell of a Dirichlet process is its share of the base measure. TauCeti's Dirichlet mean is applied to the two-cell partition `{A, Aᶜ}`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "4ae9504645b39a6860973ea8ba39075a6ef415e676358dfaf0fb9b6fc26433e4",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ],
-      "proof": "proved"
-    },
-    {
-      "name": "CKSD.ae_isDirichletProcessLaw_posterior",
-      "kind": "theorem",
-      "file": "CKSD/Bayes/DirichletProcess.lean",
-      "line": 109,
-      "doc": "GAPS 104.15: conjugacy of the Dirichlet process. For every version of the posterior given `n` conditionally independent observations, the posterior is a.s. a Dirichlet process with base `α + ∑ δ_{xᵢ}`.",
-      "gaps": [
-        "104.15"
-      ],
-      "admitted": true,
-      "source_sha256": "4ae9504645b39a6860973ea8ba39075a6ef415e676358dfaf0fb9b6fc26433e4",
-      "axioms": [
-        "propext",
-        "sorryAx",
-        "Classical.choice",
-        "Quot.sound"
-      ],
-      "proof": "admitted"
-    },
-    {
-      "name": "CKSD.ae_integral_posterior_eq_polyaPredictiveLaw",
-      "kind": "theorem",
-      "file": "CKSD/Bayes/DirichletProcess.lean",
-      "line": 121,
-      "doc": "GAPS 104.15: the Blackwell–MacQueen predictive law is the posterior mean of the random measure, granted posterior conjugacy (`ae_isDirichletProcessLaw_posterior`).",
-      "gaps": [
-        "104.15"
-      ],
-      "admitted": false,
-      "source_sha256": "4ae9504645b39a6860973ea8ba39075a6ef415e676358dfaf0fb9b6fc26433e4",
+      "source_sha256": "615a0336cd7350ad8961a20bdcb68cd90f855cceb3d2edc1af725b6a2fccfad7",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -5150,20 +5472,71 @@
       "name": "CKSD.isDirichletProcess_stickBreaking",
       "kind": "theorem",
       "file": "CKSD/Bayes/DirichletProcess.lean",
-      "line": 149,
+      "line": 119,
       "doc": "GAPS 104.15: Sethuraman's stick-breaking representation. With independent `Beta(1, |α|)` fractions and independent atoms of law `α / |α|`, independent of each other, every measurable random probability measure agreeing a.s. with `∑ πₖ δ_{θₖ}` is a Dirichlet process.",
       "gaps": [
         "104.15"
       ],
-      "admitted": true,
-      "source_sha256": "4ae9504645b39a6860973ea8ba39075a6ef415e676358dfaf0fb9b6fc26433e4",
+      "admitted": false,
+      "source_sha256": "615a0336cd7350ad8961a20bdcb68cd90f855cceb3d2edc1af725b6a2fccfad7",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_isDirichletProcessLaw",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletProcess.lean",
+      "line": 168,
+      "doc": "**Existence of the Dirichlet process.** For every finite nonzero base measure there is a law of a Dirichlet process: the law of Sethuraman's stick-breaking measure on the product of the i.i.d. fraction and atom spaces, where the stick-breaking measure is almost surely a probability measure (`CKSD.ae_tsum_stickBreakingWeight_eq_one`).",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "615a0336cd7350ad8961a20bdcb68cd90f855cceb3d2edc1af725b6a2fccfad7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.ae_isDirichletProcessLaw_posterior",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletProcess.lean",
+      "line": 269,
+      "doc": "GAPS 104.15: conjugacy of the Dirichlet process. For every version of the posterior given `n` conditionally independent observations, the posterior is a.s. a Dirichlet process with base `α + ∑ δ_{xᵢ}`.",
+      "gaps": [
+        "104.15"
+      ],
+      "admitted": false,
+      "source_sha256": "615a0336cd7350ad8961a20bdcb68cd90f855cceb3d2edc1af725b6a2fccfad7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.ae_integral_posterior_eq_polyaPredictiveLaw",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/DirichletProcess.lean",
+      "line": 288,
+      "doc": "GAPS 104.15: the Blackwell–MacQueen predictive law is the posterior mean of the random measure, granted posterior conjugacy (`ae_isDirichletProcessLaw_posterior`).",
+      "gaps": [
+        "104.15"
+      ],
+      "admitted": false,
+      "source_sha256": "615a0336cd7350ad8961a20bdcb68cd90f855cceb3d2edc1af725b6a2fccfad7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
     },
     {
       "name": "CKSD.integral_langevin_generator_eq_zero",
@@ -8961,6 +9334,246 @@
       "gaps": [],
       "admitted": false,
       "source_sha256": "3587f95ca21a0813b28ed06b2ff895fd3c4e0a3648b64d4fe7150109affc84b0",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.eq_of_affine_fixedPoint",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 162,
+      "doc": "**Uniqueness for the affine distributional fixed-point equation** `Y =ᵈ b(S) + c(S) Y`, with `S ~ ρ` independent of `Y`, in integrated form on bounded Lipschitz test functions. If `c(S) ≥ 0` and `E c(S) < 1`, then the equation has at most one solution among probability laws concentrated on a bounded set. The proof iterates the contraction of Lipschitz means by the factor `E c(S)` and identifies the laws by the bounded Lipschitz criterion `MeasureTheory.tendsto_iff_forall_lipschitz_integral_tendsto`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_dirichletMeasure_add_single",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 234,
+      "doc": "**Tilting of the Dirichlet law.** Raising the `j`-th concentration parameter by one tilts the Dirichlet law by its `j`-th coordinate: `Dir(a + eⱼ) = (∑ aᵢ / aⱼ) yⱼ · Dir(a)`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_prod_betaMeasure_dirichletMeasure_eq_add_single",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 263,
+      "doc": "**Stick insertion into a fixed cell.** If `x ~ Beta(1, ∑ aᵢ)` and `y ~ Dir(a)` are independent, then `x eⱼ + (1 - x) y ~ Dir(a + eⱼ)`. This combines TauCeti's stick insertion `map_dirichletStickInsert_prod_betaMeasure_dirichletMeasure` with the aggregation law `map_euclideanFiberSum_dirichletMeasure`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.sum_integral_stickInsert_dirichletMeasure",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 298,
+      "doc": "**The Dirichlet law solves the stick-breaking equation.** If `J` has law `(aⱼ / ∑ aᵢ)ⱼ`, `x ~ Beta(1, ∑ aᵢ)` and `y ~ Dir(a)` are independent, then `x e_J + (1 - x) y ~ Dir(a)`; this is stated in integrated form for bounded measurable test functions. Each cell contributes the tilted law `Dir(a + eⱼ)`, and the tilts sum to one on the simplex.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_head_tail_infinitePi",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 397,
+      "doc": "**Head and tail of an i.i.d. sequence.** Under the infinite product of a probability measure `ν`, the first coordinate and the shifted sequence are independent, with laws `ν` and the infinite product itself.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_prodProdProdComm_prod",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 425,
+      "doc": "Exchanging the middle factors of a fourfold product of finite measures.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.stickBreakingWeight_succ",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 454,
+      "doc": "Removing the first stick: the `(k + 1)`-st weight is `1 - V₀` times the `k`-th weight of the shifted fractions.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.sum_range_stickBreakingWeight",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 460,
+      "doc": "The first `n` stick-breaking weights total `1 - ∏_{j < n} (1 - Vⱼ)`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.stickBreakingWeight_nonneg",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 469,
+      "doc": "Stick-breaking weights are nonnegative when the fractions lie in `[0, 1]`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.stickBreakingMeasure_univ_le_one",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 474,
+      "doc": "With fractions in `[0, 1]` the stick-breaking measure has total mass at most one.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.isFiniteMeasure_stickBreakingMeasure",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 485,
+      "doc": "With fractions in `[0, 1]` the stick-breaking measure is finite.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.stickBreakingMeasure_eq_add",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 491,
+      "doc": "**The stick-breaking recursion.** Breaking off the first stick, the stick-breaking measure is `V₀ δ_{θ₀} + (1 - V₀) P'`, where `P'` is the stick-breaking measure of the shifted sequences.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.ae_tsum_stickBreakingWeight_eq_one",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 532,
+      "doc": "**The sticks exhaust the unit mass.** For i.i.d. fractions in `[0, 1]` with `E(1 - V) < 1`, the stick-breaking weights sum to one almost surely.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measurable_stickBreakingMeasure_apply",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 661,
+      "doc": "The mass that the stick-breaking measure gives to a measurable set depends measurably on the fractions and the atoms.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_stickBreakingMeasure_cells_eq_dirichletMeasure",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StickBreaking.lean",
+      "line": 836,
+      "doc": "**Sethuraman's theorem on the canonical space.** Let `V` and `θ` be independent i.i.d. sequences with laws `Beta(1, |α|)` and `α / |α|`, realized as coordinates on the product space. For a measurable partition `A₁, …, A_k` of a set of full `α`-mass into cells of positive mass, the masses of the stick-breaking measure `∑ πₖ δ_{θₖ}` on the cells have the Dirichlet law `Dir(α(A₁), …, α(A_k))`. Both laws solve the distributional equation `p = V e(θ) + (1 - V) p'` with `(V, θ)` independent of `p'`, and that equation has a unique bounded solution (`eq_of_affine_fixedPoint`).",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "466ae4d2cc3a415abb29595cad885999cde6f068f4f744e4c2ac5eef4c4a1a3d",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -42768,9 +43381,9 @@
       "title": "Dirichlet process.",
       "easy": false,
       "theorems": [
+        "CKSD.isDirichletProcess_stickBreaking",
         "CKSD.ae_isDirichletProcessLaw_posterior",
-        "CKSD.ae_integral_posterior_eq_polyaPredictiveLaw",
-        "CKSD.isDirichletProcess_stickBreaking"
+        "CKSD.ae_integral_posterior_eq_polyaPredictiveLaw"
       ]
     },
     {
