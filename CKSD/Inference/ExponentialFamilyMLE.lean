@@ -19,6 +19,8 @@ product space `E` and statistic the identity (GAPS 101.69).
   lies in the interior of the convex hull of the support of `ν`.
 * `CKSD.hasFDerivAt_logPartition_and_eq_of_isMaxOn`: a maximizer solves the likelihood equation
   `∇ logPartition ν id η = t` and is unique.
+* `CKSD.exists_ne_zero_forall_inner_le_of_notMem_interior`: a point outside the interior of a
+  nonempty convex set is weakly separated from it.
 
 ## Implementation notes
 
@@ -54,7 +56,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 /-- A point outside the interior of a convex set `C` of a finite-dimensional inner product space
 is weakly separated from `C`: some `u ≠ 0` has `⟪u, x⟫ ≤ ⟪u, t⟫` for all `x ∈ C`. If `C` has
 empty interior it lies in a hyperplane `⟪u, ·⟫ = c`, and `±u` works. -/
-private theorem exists_ne_zero_forall_inner_le_of_notMem_interior [FiniteDimensional ℝ E]
+theorem exists_ne_zero_forall_inner_le_of_notMem_interior [FiniteDimensional ℝ E]
     {C : Set E} (hC : Convex ℝ C) (hCne : C.Nonempty) {t : E} (ht : t ∉ interior C) :
     ∃ u : E, u ≠ 0 ∧ ∀ x ∈ C, inner ℝ u x ≤ inner ℝ u t := by
   rcases (interior C).eq_empty_or_nonempty with hint | hint

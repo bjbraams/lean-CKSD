@@ -4,6 +4,7 @@ public import CKSD.Inference.Model
 public import CKSD.Inference.Factorization
 public import CKSD.Inference.LaplaceDeterminacy
 public import Mathlib.Analysis.Convex.SpecificFunctions.Basic
+public import CKSD.Inference.LogPartition
 
 /-!
 # Sufficiency and natural exponential families
@@ -30,6 +31,9 @@ public import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 
 The completeness proof uses Laplace determinacy (`CKSD.measure_eq_of_integral_exp_inner_eq`)
 and Mathlib's density and pushforward operations.
+
+The analyticity and moment identities of the log partition function are proved in
+`CKSD.Inference.LogPartition`.
 -/
 @[expose] public section
 
@@ -281,7 +285,8 @@ theorem analyticOnNhd_logPartition_and_fderiv_eq_moments
         ∀ u v : E, fderiv ℝ (fderiv ℝ (logPartition ν id)) η u v =
           cov[fun x ↦ inner ℝ u x, fun x ↦ inner ℝ v x;
             exponentialFamilyMeasure ν id η] := by
-  sorry
+  exact ⟨analyticOnNhd_logPartition ν hne, fun η hη ↦
+    ⟨hasFDerivAt_logPartition ν hne hη, fderiv_fderiv_logPartition_apply ν hne hη⟩⟩
 
 /-- A regular scalar natural exponential family: laws `exp (η T - A(η)) · base` for natural
 parameters `η` in an open interval `domain` on which `exp (η T)` is `base`-integrable, with a

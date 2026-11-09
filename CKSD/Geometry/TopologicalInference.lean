@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Geometry.PersistenceModules
+public import CKSD.Geometry.ManifoldSampling
 public import CKSD.Geometry.SimplicialPersistence.Stability
 public import TauCeti.AlgebraicTopology.Singular.ModuleChains.Basic
 public import TauCeti.Geometry.Manifold.Morse.Index
@@ -121,7 +122,78 @@ theorem exists_sample_size_hausdorffDist_le
         C * ε ^ (-(d : ℝ)) * (Real.log (1 / ε) + Real.log (1 / δ)) ≤ n →
         1 - δ ≤ (Measure.pi fun _ : Fin n ↦ μ).real
           {x | hausdorffDist (range x) (range j) ≤ ε} := by
-  sorry
+  -- small balls on `M` have Hausdorff measure `≥ α r^d`, hence `μ`-mass `≥ c α r^d`
+  obtain ⟨α, hα, r₀, hr₀, hloc⟩ :=
+    exists_hausdorffMeasure_ball_inter_range_ge_of_isImmersion hj.isImmersion
+  set β := c * α
+  have hβ : 0 < β := mul_pos hc hα
+  set γ := β / 4 ^ d
+  have hγ : 0 < γ := by positivity
+  set κ := (d : ℝ) + 1 + |Real.log γ|
+  have hκ : 1 ≤ κ := by
+    have := abs_nonneg (Real.log γ)
+    have : (0 : ℝ) ≤ d := d.cast_nonneg
+    linarith
+  refine ⟨κ / γ, by positivity, min r₀ (Real.exp (-1)), lt_min hr₀ (Real.exp_pos _), ?_⟩
+  intro μ hμ hμM hdens ε hε δ hδ n hn
+  have hMm : MeasurableSet (range j) :=
+    (isCompact_range hj.isEmbedding.continuous).isClosed.measurableSet
+  obtain ⟨hε0, hε₀⟩ := hε
+  have hεr : ε < r₀ := hε₀.trans_le (min_le_left _ _)
+  have hεe : ε < Real.exp (-1) := hε₀.trans_le (min_le_right _ _)
+  have hball : ∀ x ∈ range j, ∀ s ∈ Ioc 0 (ε / 2),
+      ENNReal.ofReal (β * s ^ d) ≤ μ (ball x s) := by
+    rintro _ ⟨y, rfl⟩ s ⟨hs0, hs⟩
+    rw [mul_assoc, ENNReal.ofReal_mul hc.le]
+    exact (mul_le_mul_right (hloc y s ⟨hs0, by linarith⟩) _).trans (hdens _ measurableSet_ball)
+  have hP := one_sub_le_measureReal_pi_hausdorffDist_le μ hMm hμM hε0 hβ d n hball
+  -- the numerical estimate
+  set t := β * (ε / 4) ^ d
+  have ht : t = γ * ε ^ d := by simp only [t, γ, div_pow]; ring
+  have htpos : 0 < t := by positivity
+  set Lε := Real.log (1 / ε)
+  set Lδ := Real.log (1 / δ)
+  have hLε : 1 ≤ Lε := by
+    have h1 : Real.log ε < -1 := by
+      rw [← Real.log_exp (-1)]; exact Real.log_lt_log hε0 hεe
+    simp only [Lε, one_div, Real.log_inv]; linarith
+  have hLδ : 0 ≤ Lδ := Real.log_nonneg (by rw [le_div_iff₀ hδ.1]; linarith [hδ.2])
+  have hεd : 0 < ε ^ d := by positivity
+  have hrpow : ε ^ (-(d : ℝ)) = (ε ^ d)⁻¹ := by
+    rw [Real.rpow_neg hε0.le, Real.rpow_natCast]
+  have htn : κ * (Lε + Lδ) ≤ t * n := by
+    rw [hrpow] at hn
+    have h := mul_le_mul_of_nonneg_left hn htpos.le
+    calc κ * (Lε + Lδ) = t * (κ / γ * (ε ^ d)⁻¹ * (Lε + Lδ)) := by
+          rw [ht]; field_simp
+      _ ≤ t * n := h
+  have hpt : t ≤ β * (ε / 2) ^ d := by
+    have : (ε / 4) ^ d ≤ (ε / 2) ^ d := pow_le_pow_left₀ (by positivity) (by linarith) d
+    exact mul_le_mul_of_nonneg_left this hβ.le
+  have hlogt : Real.log t = Real.log γ - d * Lε := by
+    rw [ht, Real.log_mul hγ.ne' hεd.ne', Real.log_pow]
+    simp only [Lε, one_div, Real.log_inv]; ring
+  have hbound : t⁻¹ * Real.exp (-(β * (ε / 2) ^ d * n)) ≤ δ := by
+    have he1 : Real.exp (-(β * (ε / 2) ^ d * n)) ≤ Real.exp (-(κ * (Lε + Lδ))) := by
+      rw [Real.exp_le_exp]
+      nlinarith [mul_le_mul_of_nonneg_right hpt (Nat.cast_nonneg (α := ℝ) n)]
+    have hti : t⁻¹ = Real.exp (-Real.log t) := by rw [Real.exp_neg, Real.exp_log htpos]
+    have hδe : δ = Real.exp (-Lδ) := by
+      simp only [Lδ, one_div, Real.log_inv, neg_neg, Real.exp_log hδ.1]
+    calc t⁻¹ * Real.exp (-(β * (ε / 2) ^ d * n))
+        ≤ t⁻¹ * Real.exp (-(κ * (Lε + Lδ))) :=
+          mul_le_mul_of_nonneg_left he1 (inv_nonneg.2 htpos.le)
+      _ = Real.exp (-Real.log t - κ * (Lε + Lδ)) := by rw [hti, ← Real.exp_add]; ring_nf
+      _ ≤ Real.exp (-Lδ) := by
+          rw [Real.exp_le_exp, hlogt]
+          have hab : -Real.log γ ≤ |Real.log γ| := neg_le_abs _
+          have : (1 + |Real.log γ|) * 1 ≤ (1 + |Real.log γ|) * Lε :=
+            mul_le_mul_of_nonneg_left hLε (by positivity)
+          have : 1 * Lδ ≤ κ * Lδ := mul_le_mul_of_nonneg_right hκ hLδ
+          simp only [κ] at *
+          nlinarith
+      _ = δ := hδe.symm
+  linarith
 
 /-- GAPS 108.37, offsets: let `K ⊂ ℝ^D` be compact and nonempty with weak feature size at least
 `τ > 0`, and `P` finite and nonempty with `d_H(K, P) = ε`. If `ε < i` and `i + 2ε ≤ j < τ - ε`

@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Processes.Basic
+public import CKSD.Processes.FilteredPeriodogram
 public import Mathlib.Probability.Distributions.Exponential
 public import Mathlib.Analysis.Calculus.Gradient.Basic
 
@@ -108,7 +109,12 @@ theorem tendstoInDistribution_periodogram_div_spectralDensity {Ω : Type*} [Meas
       periodogram (fun t ↦ linearProcess ψ Z t) n ω (nearestFourierFrequency n (x j)) /
         linearProcessSpectralDensity σsq ψ (x j)) atTop id (fun _ ↦ μ)
       ((Measure.pi fun _ : Fin m ↦ expMeasure 1).map (WithLp.toLp 2)) := by
-  sorry
+  obtain ⟨hk, hkx⟩ := eventually_round_fourier hx.injective hx0 hxπ
+  have hT : ∀ j, transferFunction ψ (x j) ≠ 0 := fun j h ↦ by
+    have := hf j
+    simp [linearProcessSpectralDensity, h] at this
+  exact hZ.tendstoInDistribution_periodogram_filter_div hψ
+    (fun n j ↦ round ((n : ℝ) * x j / (2 * Real.pi))) hk x hkx hT
 
 /-- GAPS 106.6: asymptotic mean and variance, and mean-square consistency, of a lag-window
 spectral estimator for a linear process with `∑ |ψ_j| |j|^{1/2} < ∞` and iid innovations with

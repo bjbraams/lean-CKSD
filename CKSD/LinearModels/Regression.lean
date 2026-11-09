@@ -373,12 +373,6 @@ private theorem matrixQuadraticForm_eq_comp {n : ℕ} {A P : Matrix (Fin n) (Fin
         rw [← dotProduct_mulVec, mulVec_mulVec, mulVec_mulVec, Matrix.mul_assoc]
     _ = _ := by rw [← hAx, dotProduct_comm]
 
-/-- A quadratic form `x ↦ xᵀ P x` is measurable. -/
-theorem measurable_matrixQuadraticForm {n : ℕ} (P : Matrix (Fin n) (Fin n) ℝ) :
-    Measurable (matrixQuadraticForm P) := by
-  unfold matrixQuadraticForm
-  exact (continuous_id.inner (Matrix.toEuclideanCLM (𝕜 := ℝ) P).continuous).measurable
-
 /-- The sufficiency half of Craig–Sakamoto: if `A Σ B = 0`, then `A Y` and `B Y` are
 independent, hence so are the quadratic forms, which factor through them. -/
 private theorem indepFun_matrixQuadraticForm_of_mul_mul_eq_zero {n : ℕ}

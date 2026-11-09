@@ -5,6 +5,8 @@ public import CKSD.Learning.Generalization.Contraction
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
 public import Mathlib.Analysis.Calculus.ContDiff.Basic
+public import CKSD.Learning.Networks.GaussianLimit
+public import Mathlib.MeasureTheory.Measure.LevyConvergence
 
 /-!
 # Dense networks: estimation, capacity, depth, and wide limits
@@ -693,8 +695,113 @@ theorem tendstoInDistribution_wide_network_gaussian (d m : ℕ) (Cb CW : ℝ)
     TendstoInDistribution
       (fun (N : ℕ) (θ : (Fin N × (Fin d ⊕ Unit)) ⊕ (Fin N ⊕ Unit) → ℝ) ↦
         WithLp.toLp 2 fun i ↦ gpSecondLayerPreactivation N Cb CW σ θ (x i))
-      atTop id (fun N ↦ Measure.pi fun _ ↦ gaussianReal 0 1)
+      atTop id (fun _ ↦ Measure.pi fun _ ↦ gaussianReal 0 1)
       (multivariateGaussian 0 K2) := by
-  sorry
+  intro unitLaw K2
+  have hσm : Measurable σ := hσ.measurable
+  set F : Fin m → (Fin d ⊕ Unit → ℝ) → ℝ :=
+    fun i θ ↦ σ (gpFirstLayerPreactivation Cb CW θ (x i)) with hFdef
+  have hFm : ∀ i, Measurable (F i) := fun i ↦ by
+    simp only [hFdef, gpFirstLayerPreactivation]; fun_prop
+  have hcoord : ∀ j, MemLp (fun θ : Fin d ⊕ Unit → ℝ ↦ θ j) 2 unitLaw := fun j ↦
+    (memLp_id_gaussianReal 2).comp_measurePreserving (measurePreserving_eval _ j)
+  have hFL2 : ∀ i, MemLp (F i) 2 unitLaw := by
+    intro i
+    have hL : MemLp (fun θ ↦ gpFirstLayerPreactivation Cb CW θ (x i)) 2 unitLaw := by
+      have hs : MemLp (fun θ : Fin d ⊕ Unit → ℝ ↦ ∑ j, θ (Sum.inl j) * x i j) 2 unitLaw :=
+        memLp_finsetSum _ fun j _ ↦ by
+          simpa only [mul_comm] using (hcoord (Sum.inl j)).const_mul (x i j)
+      have h1 : MemLp (fun θ : Fin d ⊕ Unit → ℝ ↦ Real.sqrt Cb * θ (Sum.inr ())) 2 unitLaw :=
+        (hcoord _).const_mul _
+      exact h1.add (hs.const_mul (Real.sqrt (CW / d)))
+    refine ((memLp_const A).add (hL.norm.const_mul B)).mono (hFm i).aestronglyMeasurable
+      (Eventually.of_forall fun θ ↦ ?_)
+    have := hgrowth (gpFirstLayerPreactivation Cb CW θ (x i))
+    simp only [hFdef, Real.norm_eq_abs, Pi.add_apply]
+    rw [abs_of_nonneg ((abs_nonneg _).trans this)]
+    exact this
+  have hint : ∀ i j, Integrable (fun θ ↦ F i θ * F j θ) unitLaw := fun i j ↦
+    (hFL2 i).integrable_mul (hFL2 j)
+  have hE : ∀ t : Fin m → ℝ, ∫ θ, (∑ i, t i * F i θ) ^ 2 ∂unitLaw =
+      ∑ i, ∑ j, t i * t j * ∫ θ, F i θ * F j θ ∂unitLaw := by
+    intro t
+    simp_rw [sq, Finset.sum_mul_sum]
+    rw [integral_finsetSum _ fun i _ ↦ integrable_finsetSum _ fun j _ ↦
+      ((hint i j).const_mul (t i * t j)).congr (Eventually.of_forall fun θ ↦ by ring)]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [integral_finsetSum _ fun j _ ↦
+      ((hint i j).const_mul (t i * t j)).congr (Eventually.of_forall fun θ ↦ by ring)]
+    refine Finset.sum_congr rfl fun j _ ↦ ?_
+    rw [← integral_const_mul]
+    exact integral_congr_ae (Eventually.of_forall fun θ ↦ by ring)
+  have hquad : ∀ t : Fin m → ℝ, t ⬝ᵥ K2 *ᵥ t =
+      Cb * (∑ i, t i) ^ 2 + CW * ∫ θ, (∑ i, t i * F i θ) ^ 2 ∂unitLaw := by
+    intro t
+    rw [hE]
+    simp only [dotProduct, Matrix.mulVec, K2, hFdef, sq, Finset.sum_mul, Finset.mul_sum,
+      ← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
+    ring
+  have hK2 : K2.PosSemidef := by
+    rw [Matrix.posSemidef_iff_dotProduct_mulVec]
+    refine ⟨?_, fun t ↦ ?_⟩
+    · refine Matrix.IsHermitian.ext fun i j ↦ ?_
+      simp only [star_trivial, K2]
+      congr 2
+      exact integral_congr_ae (Eventually.of_forall fun θ ↦ mul_comm (σ _) (σ _))
+    · rw [star_trivial, hquad]
+      exact add_nonneg (mul_nonneg hCb (sq_nonneg _))
+        (mul_nonneg hCW (integral_nonneg fun _ ↦ sq_nonneg _))
+  have hXm : ∀ N : ℕ, Measurable fun θ : (Fin N × (Fin d ⊕ Unit)) ⊕ (Fin N ⊕ Unit) → ℝ ↦
+      WithLp.toLp 2 fun i ↦ gpSecondLayerPreactivation N Cb CW σ θ (x i) := by
+    intro N
+    simp only [gpSecondLayerPreactivation, gpFirstLayerPreactivation]
+    fun_prop
+  refine TendstoInDistribution.of_tendsto_charFun (fun N ↦ (hXm N).aemeasurable)
+    aemeasurable_id fun t ↦ ?_
+  rw [Measure.map_id, charFun_multivariateGaussian hK2]
+  simp_rw [charFun_apply]
+  let g : (Fin d ⊕ Unit → ℝ) → ℝ := fun u ↦ ∑ i, t i * F i u
+  have hg : Measurable g := Finset.measurable_sum _ fun i _ ↦ (hFm i).const_mul _
+  have hinner : ∀ (N : ℕ) (θ : (Fin N × (Fin d ⊕ Unit)) ⊕ (Fin N ⊕ Unit) → ℝ),
+      inner ℝ (WithLp.toLp 2 fun i ↦ gpSecondLayerPreactivation N Cb CW σ θ (x i)) t =
+        Real.sqrt Cb * (∑ i, t i) * θ (Sum.inr (Sum.inr ())) + Real.sqrt (CW / N) *
+          ∑ k, θ (Sum.inr (Sum.inl k)) * g (fun i ↦ θ (Sum.inl (k, i))) := by
+    intro N θ
+    simp only [PiLp.inner_apply, RCLike.inner_apply, conj_trivial, gpSecondLayerPreactivation, g,
+      hFdef]
+    simp only [mul_add, Finset.sum_add_distrib, Finset.mul_sum, Finset.sum_mul]
+    congr 1
+    · exact Finset.sum_congr rfl fun _ _ ↦ by ring
+    · rw [Finset.sum_comm]
+      exact Finset.sum_congr rfl fun _ _ ↦ Finset.sum_congr rfl fun _ _ ↦ by ring
+  have hgsq : Integrable (fun u ↦ CW / 2 * g u ^ 2) unitLaw := by
+    have : MemLp g 2 unitLaw := memLp_finsetSum _ fun i _ ↦ (hFL2 i).const_mul (t i)
+    exact this.integrable_sq.const_mul _
+  have hlim := tendsto_integral_exp_neg_div_pow unitLaw hgsq
+    (fun u ↦ mul_nonneg (div_nonneg hCW zero_le_two) (sq_nonneg _))
+  have hlimC := ((Complex.continuous_ofReal.tendsto _).comp hlim).const_mul
+    (↑(Real.exp (-((Real.sqrt Cb * ∑ i, t i) ^ 2 / 2))) : ℂ)
+  refine hlimC.congr' (Eventually.of_forall fun N ↦ ?_) |>.trans_eq ?_
+  · rw [integral_map (hXm N).aemeasurable (by fun_prop)]
+    simp_rw [hinner]
+    have hX : ∫ u, Real.exp (-(Real.sqrt (CW / N) ^ 2 * g u ^ 2 / 2)) ∂unitLaw =
+        ∫ u, Real.exp (-(CW / 2 * g u ^ 2 / N)) ∂unitLaw := by
+      refine integral_congr_ae (Eventually.of_forall fun u ↦ ?_)
+      dsimp only
+      rw [Real.sq_sqrt (div_nonneg hCW N.cast_nonneg)]
+      congr 1
+      ring
+    rw [integral_cexp_wideLayer N g hg]
+    change _ = _ * (↑(∫ u, Real.exp (-(Real.sqrt (CW / N) ^ 2 * g u ^ 2 / 2)) ∂unitLaw) : ℂ) ^ N
+    rw [hX, Function.comp_apply, Complex.ofReal_pow]
+  · have hIg : ∫ ω, g ω ^ 2 ∂unitLaw = ∫ θ, (∑ i, t i * F i θ) ^ 2 ∂unitLaw := rfl
+    have harg : (↑(inner ℝ t 0) * Complex.I - ↑(t.ofLp ⬝ᵥ K2 *ᵥ t.ofLp) / 2 : ℂ) =
+        ((-((Real.sqrt Cb * ∑ i, t i) ^ 2 / 2) +
+          -(CW / 2 * ∫ θ, (∑ i, t i * F i θ) ^ 2 ∂unitLaw) : ℝ) : ℂ) := by
+      rw [inner_zero_right, hquad, mul_pow, Real.sq_sqrt hCb]
+      push_cast
+      ring
+    rw [harg, ← Complex.ofReal_exp, Real.exp_add, Complex.ofReal_mul, integral_const_mul, hIg]
 
 end CKSD

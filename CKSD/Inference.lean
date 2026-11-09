@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Inference.ExponentialFamily
+public import CKSD.Inference.LogPartition
 public import CKSD.Inference.Density
 public import CKSD.Inference.Factorization
 public import CKSD.Inference.LaplaceDeterminacy
@@ -11,10 +12,12 @@ public import CKSD.Inference.SymmetricCompleteness
 public import CKSD.Inference.Estimation
 public import CKSD.Inference.NeymanPearson
 public import CKSD.Inference.Testing
+public import CKSD.Inference.IntervalTestConstruction
 public import CKSD.Inference.Decision
 public import CKSD.Inference.InvariantTesting
 public import CKSD.Inference.Gaussian
 public import CKSD.Inference.ExponentialFamilyMLE
+public import CKSD.Inference.MeanParametrization
 public import CKSD.Inference.ConditionalExponentialFamily
 
 /-!
@@ -22,17 +25,17 @@ public import CKSD.Inference.ConditionalExponentialFamily
 
 Entry module for the CKSD formalization of Section 101 (core statistical inference).
 
-* `CKSD.Inference.Basic`, `CKSD.Inference.Model`: models, convergence interfaces, tests,
-  estimators, decision rules, and the classical optimality criteria.
+* `CKSD.Inference.Basic`, `CKSD.Inference.Model`: models, convergence interfaces, tests, estimators,
+  decision rules, and the classical optimality criteria.
 * `CKSD.Inference.Factorization`, `CKSD.Inference.Sufficiency`, `CKSD.Inference.ExponentialFamily`,
-  `CKSD.Inference.ConditionalExponentialFamily`: sufficiency, completeness, and exponential
-  families (GAPS 101.1–101.6, 101.43, 101.46).
-* `CKSD.Inference.Estimation`, `CKSD.Inference.Families`,
-  `CKSD.Inference.SymmetricCompleteness`: unbiased estimation, order statistics,
-  and equivariant estimation (GAPS 101.7–101.13, 101.21, 101.40).
-* `CKSD.Inference.NeymanPearson`, `CKSD.Inference.Testing`, `CKSD.Inference.InvariantTesting`:
-  optimal tests (GAPS 101.14–101.17, 101.45–101.56).
-* `CKSD.Inference.Decision`, `CKSD.Inference.Gaussian`, `CKSD.Inference.ExponentialFamilyMLE`:
-  decision theory, comparison of experiments, Gaussian models, and maximum likelihood in natural
-  exponential families (GAPS 101.32–101.42, 101.57–101.69).
+  `CKSD.Inference.ConditionalExponentialFamily`, `CKSD.Inference.LogPartition`: sufficiency,
+  completeness, and exponential families (GAPS 101.1–101.6, 101.43, 101.46).
+* `CKSD.Inference.Estimation`, `CKSD.Inference.Families`, `CKSD.Inference.SymmetricCompleteness`:
+  unbiased estimation, order statistics, and equivariant estimation (GAPS 101.7–101.13, 101.21,
+  101.40).
+* `CKSD.Inference.NeymanPearson`, `CKSD.Inference.Testing`, `CKSD.Inference.InvariantTesting`,
+  `CKSD.Inference.IntervalTestConstruction`: optimal tests (GAPS 101.14–101.17, 101.45–101.56).
+* `CKSD.Inference.Decision`, `CKSD.Inference.Gaussian`, `CKSD.Inference.ExponentialFamilyMLE`,
+  `CKSD.Inference.MeanParametrization`: decision theory, comparison of experiments, Gaussian models,
+  and maximum likelihood in natural exponential families (GAPS 101.32–101.42, 101.57–101.69).
 -/

@@ -400,13 +400,6 @@ private theorem tendsto_kolmogorovDistance_of_tendsto_cdf (ν : ℕ → Measure 
   rw [Real.dist_eq, sub_zero, abs_of_nonneg hKD0]
   exact hKD.trans_lt hMε
 
-/-- The empirical measure of a nonempty sample is a probability measure. -/
-private theorem isProbabilityMeasure_empiricalMeasure {n : ℕ} (hn : 0 < n) (x : Fin n → ℝ) :
-    IsProbabilityMeasure (empiricalMeasure n x) := by
-  constructor
-  simp [empiricalMeasure]
-  exact ENNReal.inv_mul_cancel (by exact_mod_cast hn.ne') (ENNReal.natCast_ne_top n)
-
 /-- The integral against the empirical measure is the sample average. -/
 private theorem integral_empiricalMeasure_fin {n : ℕ} (x : Fin n → ℝ) {F : Type*} [NormedAddCommGroup F]
     [NormedSpace ℝ F] [CompleteSpace F] (f : ℝ → F) :

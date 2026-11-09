@@ -6,14 +6,17 @@ public import CKSD.LinearModels.GaussianGraphical
 public import CKSD.LinearModels.Regression
 public import CKSD.LinearModels.Mixtures
 public import CKSD.LinearModels.Multivariate
+public import CKSD.LinearModels.MultivariateSampleLaws
 public import CKSD.LinearModels.MultivariateTests
 public import CKSD.LinearModels.FactorAnalysis
 public import CKSD.LinearModels.RegressionLimits
+public import CKSD.LinearModels.InstrumentalVariables
 public import CKSD.LinearModels.Design
 public import CKSD.LinearModels.CausalAndSurvey
 public import CKSD.LinearModels.SurveySampling
 public import CKSD.LinearModels.CanonicalCorrelation
 public import CKSD.LinearModels.Decomposable
+public import CKSD.LinearModels.DecomposableGaussian
 public import CKSD.LinearModels.DirectedGraphical.Basic.ActiveTrails
 public import CKSD.LinearModels.DirectedGraphical
 public import CKSD.LinearModels.FTest
@@ -28,11 +31,11 @@ Entry module for the CKSD formalization of Section 105. It imports:
 
 * Gaussian linear models: Gauss–Markov, residual laws, the F test and its optimality
   (`Regression`, `FTest`), quantile regression and instrumental variables
-  (`RegressionLimits`), generalized linear models (`GLMAsymptotics`);
+  (`RegressionLimits`, `InstrumentalVariables`), generalized linear models (`GLMAsymptotics`);
 * multivariate analysis: Wishart and Hotelling statistics, canonical correlations, factor
   analysis, mixtures (`Multivariate`, `MultivariateTests`, `CanonicalCorrelation`,
   `FactorAnalysis`, `Mixtures`), Gaussian graphical and decomposable models
-  (`GaussianGraphical`, `Decomposable`);
+  (`GaussianGraphical`, `Decomposable`, `DecomposableGaussian`);
 * experimental design and survey sampling (`Design`, `SurveySampling`);
 * causal inference: potential outcomes, propensity scores, and efficient influence functions
   (`CausalEfficiency`, `CausalAndSurvey`, `GFormula`), causal graphs and d-separation (`Causal`, `ActiveTrails`),

@@ -2,6 +2,7 @@ module
 
 public import CKSD.Bayes.Basic
 public import CKSD.Nonparametric.Basic
+public import CKSD.Asymptotics.MartingaleCLT.Basic
 public import Mathlib.Dynamics.Ergodic.MeasurePreserving
 public import Mathlib.LinearAlgebra.Matrix.Stochastic
 public import Mathlib.MeasureTheory.Group.Prod
@@ -31,9 +32,10 @@ uniform over events `A`.
 * `CKSD.eventually_abs_metropolisTransition_pow_sub_le`: total-variation convergence of an
   irreducible aperiodic Metropolis–Hastings chain (GAPS 104.31).
 * `CKSD.ae_tendsto_sampleAverage_metropolis`: the ergodic theorem for such a chain, via the
-  Poisson equation `CKSD.exists_sub_mulVec_eq_of_offDiag_pos` (GAPS 104.31).
-* `CKSD.tendstoInDistribution_finite_markov_chain_sum`: the central limit theorem for a
-  stationary chain with a positive transition matrix (GAPS 104.24).
+  Poisson equation `CKSD.exists_sub_mulVec_eq_of_offDiag_pos` and the general
+  `CKSD.ae_tendsto_sampleAverage_of_sub_mulVec_eq` (GAPS 104.31).
+
+The central limit theorem for such chains is in `CKSD.Bayes.MarkovChainCLT`.
 -/
 
 @[expose] public section
@@ -115,31 +117,6 @@ theorem sum_mul_metropolisTransition {π : ι → ℝ} {q : Matrix ι ι ℝ}
     ∑ x, π x * metropolisTransition π q x y = π y := by
   simp_rw [metropolisTransition_detailedBalance hπ hq _ y]
   rw [← Finset.mul_sum, sum_metropolisTransition, mul_one]
-
-/-- GAPS 104.24: central limit theorem for a stationary Markov chain on a finite space with a
-positive transition matrix `K` and invariant law `π`. The series of autocovariances of `f(Xₖ)`
-converges absolutely, and `√n (n⁻¹ ∑_{i<n} f(Xᵢ) - π f)` converges in law to the centred normal
-law with variance `σ² = Var f(X₀) + 2 ∑_{k ≥ 1} Cov(f(X₀), f(Xₖ))`. -/
-theorem tendstoInDistribution_finite_markov_chain_sum {Ω : Type*} [MeasurableSpace Ω]
-    [MeasurableSpace ι] [MeasurableSingletonClass ι]
-    (μ : Measure Ω) [IsProbabilityMeasure μ]
-    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
-    (π : ι → ℝ) (K : Matrix ι ι ℝ)
-    (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
-    (hK : ∀ x y, 0 < K x y) (hK1 : ∀ x, ∑ y, K x y = 1)
-    (hstat : ∀ y, (∑ x, π x * K x y) = π y)
-    (hlaw : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n, X i ω = path i} = π (path 0) *
-        ∏ i ∈ Finset.range n, K (path i) (path (i + 1)))
-    (f : ι → ℝ) :
-    let m := ∑ x, π x * f x;
-    let sigmaSq := Var[f ∘ X 0; μ] +
-      2 * ∑' k : ℕ, cov[f ∘ X 0, f ∘ X (k + 1); μ];
-    Summable (fun k : ℕ ↦ |cov[f ∘ X 0, f ∘ X (k + 1); μ]|) ∧
-      TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n * (sampleAverage (fun i ω ↦ f
-        (X i ω)) n ω - m)) atTop id (fun _ ↦ μ)
-        (gaussianReal 0 (Real.toNNReal sigmaSq)) := by
-  sorry
 
 /-- An invariant law of a square matrix is invariant for all of its powers. -/
 theorem sum_mul_pow_eq_of_stationary {π : ι → ℝ} {K : Matrix ι ι ℝ}
@@ -729,56 +706,22 @@ theorem tendsto_avg_of_tendsto_sum_sq_div {a : ℕ → ℝ} {H l : ℝ} (ha : �
   field_simp
   ring
 
-/-- Off-diagonal entries of the Metropolis transition are positive when the target is positive
-and the proposal is positive off the diagonal. -/
-theorem metropolisTransition_pos_of_ne (π : ι → ℝ)
-    (q : Matrix (ι) (ι) ℝ) (hπ : ∀ x, 0 < π x)
-    (hirr : ∀ x y, x ≠ y → 0 < q x y) (x y : ι) (hxy : x ≠ y) :
-    0 < metropolisTransition π q x y := by
-  have hacc : 0 < metropolisAcceptance π q x y := by
-    unfold metropolisAcceptance
-    split_ifs with h0
-    · exact one_pos
-    · exact lt_min one_pos (div_pos (mul_pos (hπ y) (hirr y x (Ne.symm hxy)))
-        (mul_pos (hπ x) (hirr x y hxy)))
-  simp only [metropolisTransition, hxy, ↓reduceIte, add_zero]
-  exact mul_pos (hirr x y hxy) hacc
-
-/-- GAPS 104.31, finite-state ergodic theorem for Metropolis–Hastings from a fixed initial state.
-The chain is specified by its finite-dimensional path probabilities; irreducibility is taken in the
-sufficient form `q x y > 0` for `x ≠ y`. On a finite space every function is `π`-integrable. -/
-theorem ae_tendsto_sampleAverage_metropolis {Ω : Type*} [MeasurableSpace Ω]
+omit [DecidableEq ι] in
+/-- Ergodic theorem for a finite-state chain from a solution of the Poisson equation: if the
+chain has transition matrix `P` and `u - P u = h - m`, then the sample averages of `h(Xᵢ)`
+converge almost surely to `m`. The proof writes the centred partial sums as a martingale with
+orthogonal bounded increments plus a bounded remainder, and applies Chebyshev's inequality and
+the Borel–Cantelli lemma along the squares. -/
+theorem ae_tendsto_sampleAverage_of_sub_mulVec_eq {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (π : ι → ℝ)
-    (q : Matrix (ι) (ι) ℝ) (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
-    (hq : q ∈ Matrix.rowStochastic ℝ ι)
-    (hirr : ∀ x y, x ≠ y → 0 < q x y)
-    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n)) (x₀ : ι)
-    (hlaw : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n, X i ω = path i} = (if path 0 = x₀ then 1 else 0) *
-        ∏ i ∈ Finset.range n, metropolisTransition π q (path i) (path (i + 1)))
-    (h : ι → ℝ) :
-    ∀ᵐ ω ∂μ, Tendsto (fun n ↦ sampleAverage (fun i ω ↦ h (X i ω)) n ω) atTop
-      (𝓝 (∑ x, π x * h x)) := by
-  set P := metropolisTransition π q with hPdef
-  have hPmem : P ∈ Matrix.rowStochastic ℝ ι :=
-    metropolisTransition_mem_rowStochastic (fun x ↦ (hπ x).le) hq
-  have hP0 (x y : ι) : 0 ≤ P x y := Matrix.nonneg_of_mem_rowStochastic hPmem
-  have hP1 : ∀ x, ∑ y, P x y = 1 := sum_metropolisTransition π q
-  have hPst := sum_mul_metropolisTransition (fun x ↦ (hπ x).le)
-    (fun x y ↦ Matrix.nonneg_of_mem_rowStochastic hq (i := x) (j := y))
-  have hoff : ∀ x y, x ≠ y → 0 < P x y := metropolisTransition_pos_of_ne π q hπ hirr
-  have hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Matrix ι ι ℝ)
+    (hP0 : ∀ x y, 0 ≤ P x y) (hP1 : ∀ x, ∑ y, P x y = 1)
+    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
+    (hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
       μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
-        μ.real {ω | ∀ i ≤ n, X i ω = path i} * P (path n) (path (n + 1)) := by
-    intro n path
-    rw [hlaw, hlaw, Finset.prod_range_succ, mul_assoc]
-  set m := ∑ x, π x * h x with hm
-  set g : ι → ℝ := fun x ↦ h x - m with hg
-  have hgc : ∑ x, π x * g x = 0 := by
-    simp only [hg, mul_sub, Finset.sum_sub_distrib, ← Finset.sum_mul, hπ1, one_mul, hm,
-      sub_self]
-  obtain ⟨u, hu⟩ := exists_sub_mulVec_eq_of_offDiag_pos π P hπ hπ1 hPmem hPst hoff g hgc
+        μ.real {ω | ∀ i ≤ n, X i ω = path i} * P (path n) (path (n + 1)))
+    (h : ι → ℝ) (m : ℝ) (u : ι → ℝ) (hu : ∀ x, u x - Matrix.mulVec P u x = h x - m) :
+    ∀ᵐ ω ∂μ, Tendsto (fun n ↦ sampleAverage (fun i ω ↦ h (X i ω)) n ω) atTop (𝓝 m) := by
   set U := ∑ y, |u y| with hU
   have hu_le (y : ι) : |u y| ≤ U :=
     Finset.single_le_sum (f := fun y ↦ |u y|) (fun _ _ ↦ abs_nonneg _) (Finset.mem_univ y)
@@ -798,7 +741,6 @@ theorem ae_tendsto_sampleAverage_metropolis {Ω : Type*} [MeasurableSpace Ω]
     have hi (i : ℕ) : h (X i ω) - m = (u (X i ω) - u (X (i + 1) ω)) +
         (u (X (i + 1) ω) - Matrix.mulVec P u (X i ω)) := by
       have := hu (X i ω)
-      simp only [hg] at this
       linarith
     simp only [hSdef, hMdef]
     simp_rw [hi, Finset.sum_add_distrib, Finset.sum_range_sub']
@@ -865,6 +807,58 @@ theorem ae_tendsto_sampleAverage_metropolis {Ω : Type*} [MeasurableSpace Ω]
     Finset.single_le_sum (f := fun x ↦ |h x|) (fun _ _ ↦ abs_nonneg _) (Finset.mem_univ _)
   have := tendsto_avg_of_tendsto_sum_sq_div (a := fun i ↦ h (X i ω)) (l := m) hH hω
   simpa [sampleAverage, smul_eq_mul] using this
+
+/-- Off-diagonal entries of the Metropolis transition are positive when the target is positive
+and the proposal is positive off the diagonal. -/
+theorem metropolisTransition_pos_of_ne (π : ι → ℝ)
+    (q : Matrix (ι) (ι) ℝ) (hπ : ∀ x, 0 < π x)
+    (hirr : ∀ x y, x ≠ y → 0 < q x y) (x y : ι) (hxy : x ≠ y) :
+    0 < metropolisTransition π q x y := by
+  have hacc : 0 < metropolisAcceptance π q x y := by
+    unfold metropolisAcceptance
+    split_ifs with h0
+    · exact one_pos
+    · exact lt_min one_pos (div_pos (mul_pos (hπ y) (hirr y x (Ne.symm hxy)))
+        (mul_pos (hπ x) (hirr x y hxy)))
+  simp only [metropolisTransition, hxy, ↓reduceIte, add_zero]
+  exact mul_pos (hirr x y hxy) hacc
+
+/-- GAPS 104.31, finite-state ergodic theorem for Metropolis–Hastings from a fixed initial state.
+The chain is specified by its finite-dimensional path probabilities; irreducibility is taken in the
+sufficient form `q x y > 0` for `x ≠ y`. On a finite space every function is `π`-integrable. -/
+theorem ae_tendsto_sampleAverage_metropolis {Ω : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (π : ι → ℝ)
+    (q : Matrix (ι) (ι) ℝ) (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
+    (hq : q ∈ Matrix.rowStochastic ℝ ι)
+    (hirr : ∀ x y, x ≠ y → 0 < q x y)
+    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n)) (x₀ : ι)
+    (hlaw : ∀ n : ℕ, ∀ path : ℕ → ι,
+      μ.real {ω | ∀ i ≤ n, X i ω = path i} = (if path 0 = x₀ then 1 else 0) *
+        ∏ i ∈ Finset.range n, metropolisTransition π q (path i) (path (i + 1)))
+    (h : ι → ℝ) :
+    ∀ᵐ ω ∂μ, Tendsto (fun n ↦ sampleAverage (fun i ω ↦ h (X i ω)) n ω) atTop
+      (𝓝 (∑ x, π x * h x)) := by
+  set P := metropolisTransition π q with hPdef
+  have hPmem : P ∈ Matrix.rowStochastic ℝ ι :=
+    metropolisTransition_mem_rowStochastic (fun x ↦ (hπ x).le) hq
+  have hP0 (x y : ι) : 0 ≤ P x y := Matrix.nonneg_of_mem_rowStochastic hPmem
+  have hP1 : ∀ x, ∑ y, P x y = 1 := sum_metropolisTransition π q
+  have hPst := sum_mul_metropolisTransition (fun x ↦ (hπ x).le)
+    (fun x y ↦ Matrix.nonneg_of_mem_rowStochastic hq (i := x) (j := y))
+  have hoff : ∀ x y, x ≠ y → 0 < P x y := metropolisTransition_pos_of_ne π q hπ hirr
+  have hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
+      μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
+        μ.real {ω | ∀ i ≤ n, X i ω = path i} * P (path n) (path (n + 1)) := by
+    intro n path
+    rw [hlaw, hlaw, Finset.prod_range_succ, mul_assoc]
+  set m := ∑ x, π x * h x with hm
+  set g : ι → ℝ := fun x ↦ h x - m with hg
+  have hgc : ∑ x, π x * g x = 0 := by
+    simp only [hg, mul_sub, Finset.sum_sub_distrib, ← Finset.sum_mul, hπ1, one_mul, hm,
+      sub_self]
+  obtain ⟨u, hu⟩ := exists_sub_mulVec_eq_of_offDiag_pos π P hπ hπ1 hPmem hPst hoff g hgc
+  exact ae_tendsto_sampleAverage_of_sub_mulVec_eq μ P hP0 hP1 X hX hstep h m u hu
 
 end Ergodic
 

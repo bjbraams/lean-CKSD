@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Inference.NeymanPearson
+public import CKSD.Inference.IntervalTestConstruction
 public import CKSD.Inference.Model
 public import CKSD.Inference.ExponentialFamily
 public import CKSD.Inference.Sufficiency
@@ -36,6 +37,11 @@ exponential families, least favorable mixtures, and the Gaussian sample laws beh
 * The Gaussian sample laws use TauCeti's `HasLaw.iIndepFun_orthogonalProjectionOnto_stdGaussian`,
   `HasLaw.norm_sq_orthogonalProjectionOnto_stdGaussian`, and
   `TauCeti.Probability.hasLaw_studentT_of_gaussian_chiSquared`.
+* The interval tests of GAPS 101.50 follow Lehmann–Romano, Theorem 3.7.1: the sizes at `η₁` and
+  `η₂` come from a window of quantile levels (`CKSD.Inference.IntervalTestConstruction`, built on
+  TauCeti's inverse transform sampling `MeasureTheory.Measure.measurePreserving_quantile`), and
+  optimality and the level from the generalized Neyman–Pearson lemma
+  `CKSD.integral_le_of_generalized_neyman_pearson` with exponential-sum thresholds.
 -/
 @[expose] public section
 
@@ -249,6 +255,236 @@ with probability `γ₁` at `T = c₁` and `γ₂` at `T = c₂`, and accept oth
 def intervalTest (T : ℝ) (c₁ c₂ γ₁ γ₂ : ℝ) : ℝ :=
   if c₁ < T ∧ T < c₂ then 1 else if T = c₁ then γ₁ else if T = c₂ then γ₂ else 0
 
+/-- The interval test is measurable in the statistic value. -/
+private theorem measurable_intervalTest (c₁ c₂ γ₁ γ₂ : ℝ) :
+    Measurable fun t ↦ intervalTest t c₁ c₂ γ₁ γ₂ := by
+  unfold intervalTest
+  refine Measurable.ite ?_ measurable_const (Measurable.ite ?_ measurable_const
+    (Measurable.ite ?_ measurable_const measurable_const))
+  · exact measurableSet_Ioo
+  · exact measurableSet_singleton _
+  · exact measurableSet_singleton _
+
+/-- With randomizations in `[0, 1]` the interval test takes values in `[0, 1]`. -/
+private theorem intervalTest_mem_Icc {c₁ c₂ γ₁ γ₂ : ℝ} (hγ₁ : γ₁ ∈ Icc (0 : ℝ) 1)
+    (hγ₂ : γ₂ ∈ Icc (0 : ℝ) 1) (t : ℝ) : intervalTest t c₁ c₂ γ₁ γ₂ ∈ Icc (0 : ℝ) 1 := by
+  unfold intervalTest
+  split_ifs
+  · exact ⟨zero_le_one, le_rfl⟩
+  · exact hγ₁
+  · exact hγ₂
+  · exact ⟨le_rfl, zero_le_one⟩
+
+/-- The interval test rejects strictly inside the interval. -/
+private theorem intervalTest_of_mem_Ioo {c₁ c₂ γ₁ γ₂ t : ℝ} (ht : t ∈ Ioo c₁ c₂) :
+    intervalTest t c₁ c₂ γ₁ γ₂ = 1 := by
+  simp [intervalTest, ht.1, ht.2]
+
+/-- The interval test accepts outside the closed interval. -/
+private theorem intervalTest_of_notMem_Icc {c₁ c₂ γ₁ γ₂ t : ℝ} (hc : c₁ ≤ c₂)
+    (ht : t ∉ Icc c₁ c₂) : intervalTest t c₁ c₂ γ₁ γ₂ = 0 := by
+  simp only [mem_Icc, not_and_or, not_le] at ht
+  rcases ht with ht | ht
+  · simp [intervalTest, ht.ne, (ht.trans_le hc).ne, not_lt.2 ht.le]
+  · simp [intervalTest, ht.ne', (hc.trans_lt ht).ne', not_lt.2 ht.le]
+
+namespace RealExponentialFamily
+
+variable {X : Type*} [MeasurableSpace X] (F : RealExponentialFamily X)
+
+/-- The partition function `∫ e^{θ T} d base` is positive on the parameter domain. -/
+private theorem integral_exp_mul_pos {θ : ℝ} (hθ : θ ∈ F.domain) :
+    0 < ∫ x, Real.exp (θ * F.statistic x) ∂F.base := by
+  have : NeZero F.base := ⟨F.base_ne_zero⟩
+  exact integral_exp_pos (F.integrable_exp θ hθ)
+
+/-- The density `e^{θ T - A(θ)}` is the normalized exponential tilt. -/
+private theorem exp_mul_sub_cumulant {θ : ℝ} (hθ : θ ∈ F.domain) (x : X) :
+    Real.exp (θ * F.statistic x - F.cumulant θ) =
+      (∫ x, Real.exp (θ * F.statistic x) ∂F.base)⁻¹ * Real.exp (θ * F.statistic x) := by
+  rw [Real.exp_sub, cumulant, Real.exp_log (F.integral_exp_mul_pos hθ), div_eq_inv_mul]
+
+/-- The density `e^{θ T - A(θ)}` is integrable. -/
+private theorem integrable_density {θ : ℝ} (hθ : θ ∈ F.domain) :
+    Integrable (fun x ↦ Real.exp (θ * F.statistic x - F.cumulant θ)) F.base := by
+  simp_rw [F.exp_mul_sub_cumulant hθ]
+  exact (F.integrable_exp θ hθ).const_mul _
+
+/-- The density `e^{θ T - A(θ)}` integrates to one. -/
+private theorem integral_density {θ : ℝ} (hθ : θ ∈ F.domain) :
+    ∫ x, Real.exp (θ * F.statistic x - F.cumulant θ) ∂F.base = 1 := by
+  simp_rw [F.exp_mul_sub_cumulant hθ]
+  rw [integral_const_mul, inv_mul_cancel₀ (F.integral_exp_mul_pos hθ).ne']
+
+/-- Measurability of the density `e^{θ T - A(θ)}`. -/
+private theorem measurable_density (θ : ℝ) :
+    Measurable fun x ↦ Real.exp (θ * F.statistic x - F.cumulant θ) := by
+  have := F.measurable_statistic
+  fun_prop
+
+/-- Integrals against the law at `η` are integrals against the base measure with density. -/
+private theorem integral_law (η : F.domain) (φ : X → ℝ) :
+    ∫ x, φ x ∂F.law η = ∫ x, Real.exp (η.val * F.statistic x - F.cumulant η.val) * φ x ∂F.base :=
+  integral_withDensity_ofReal F.base (F.measurable_density η.val) (fun _ ↦ (Real.exp_pos _).le) φ
+
+/-- Integrability against the law at `η`. -/
+private theorem integrable_law_iff (η : F.domain) (φ : X → ℝ) :
+    Integrable φ (F.law η) ↔
+      Integrable (fun x ↦ Real.exp (η.val * F.statistic x - F.cumulant η.val) * φ x) F.base :=
+  integrable_withDensity_ofReal_iff F.base (F.measurable_density η.val)
+    (fun _ ↦ (Real.exp_pos _).le) φ
+
+/-- The laws of a regular scalar exponential family are probability measures. -/
+private theorem isProbabilityMeasure_law (η : F.domain) : IsProbabilityMeasure (F.law η) := by
+  constructor
+  rw [law, withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ,
+    ← ofReal_integral_eq_lintegral_ofReal (F.integrable_density η.2)
+      (ae_of_all _ fun _ ↦ (Real.exp_pos _).le), F.integral_density η.2, ENNReal.ofReal_one]
+
+/-- Change of reference parameter for the densities. -/
+private theorem mul_exp_mul_density (θ ζ K : ℝ) (x : X) :
+    K * Real.exp (F.cumulant ζ - F.cumulant θ) * Real.exp (ζ * F.statistic x - F.cumulant ζ) =
+      Real.exp (θ * F.statistic x - F.cumulant θ) *
+        (K * Real.exp ((ζ - θ) * F.statistic x)) := by
+  rw [mul_assoc, ← Real.exp_add, mul_left_comm, ← Real.exp_add]
+  ring_nf
+
+/-- **Generalized Neyman–Pearson comparison in a scalar exponential family.** If `φ` rejects
+where `K₁ e^{(ζ₁ - θ) T} + K₂ e^{(ζ₂ - θ) T} < 1` and accepts where it exceeds `1`, and `ψ`
+satisfies the side conditions `Kᵢ E_{ζᵢ} ψ ≤ Kᵢ E_{ζᵢ} φ`, then `E_θ ψ ≤ E_θ φ`. -/
+private theorem integral_le_of_exp_threshold (θ ζ₁ ζ₂ : F.domain) (K₁ K₂ : ℝ) {φ ψ : X → ℝ}
+    (hφ : IsStatisticalTest φ) (hψ : IsStatisticalTest ψ)
+    (hthr : ∀ x, (K₁ * Real.exp ((ζ₁.val - θ.val) * F.statistic x) +
+        K₂ * Real.exp ((ζ₂.val - θ.val) * F.statistic x) < 1 → φ x = 1) ∧
+      (1 < K₁ * Real.exp ((ζ₁.val - θ.val) * F.statistic x) +
+        K₂ * Real.exp ((ζ₂.val - θ.val) * F.statistic x) → φ x = 0))
+    (h₁ : K₁ * ∫ x, ψ x ∂F.law ζ₁ ≤ K₁ * ∫ x, φ x ∂F.law ζ₁)
+    (h₂ : K₂ * ∫ x, ψ x ∂F.law ζ₂ ≤ K₂ * ∫ x, φ x ∂F.law ζ₂) :
+    ∫ x, ψ x ∂F.law θ ≤ ∫ x, φ x ∂F.law θ := by
+  set p : ℝ → X → ℝ := fun s x ↦ Real.exp (s * F.statistic x - F.cumulant s) with hp
+  have hcomm : ∀ (s : F.domain) (χ : X → ℝ), ∫ x, χ x ∂F.law s = ∫ x, χ x * p s.val x ∂F.base :=
+    fun s χ ↦ by rw [F.integral_law]; simp_rw [mul_comm]; rfl
+  have key := integral_le_of_generalized_neyman_pearson (m := 2) F.base (p θ.val)
+    ![p ζ₁.val, p ζ₂.val]
+    ![K₁ * Real.exp (F.cumulant ζ₁.val - F.cumulant θ.val),
+      K₂ * Real.exp (F.cumulant ζ₂.val - F.cumulant θ.val)]
+    (F.integrable_density θ.2) (fun i ↦ by
+      fin_cases i
+      · exact F.integrable_density ζ₁.2
+      · exact F.integrable_density ζ₂.2) φ ψ hφ hψ (ae_of_all _ fun x ↦ ?_) (fun i ↦ ?_)
+  · rw [hcomm, hcomm]; exact key
+  · simp only [Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one, p,
+      F.mul_exp_mul_density θ.val, ← mul_add]
+    have hpos := Real.exp_pos (θ.val * F.statistic x - F.cumulant θ.val)
+    refine ⟨fun h ↦ (hthr x).1 ?_, fun h ↦ (hthr x).2 ?_⟩
+    · simpa using (mul_lt_iff_lt_one_right hpos).1 h
+    · simpa using (lt_mul_iff_one_lt_right hpos).1 h
+  · fin_cases i
+    · simp only [Fin.zero_eta, Matrix.cons_val_zero]
+      rw [← hcomm, ← hcomm, mul_comm K₁, mul_assoc, mul_assoc]
+      exact mul_le_mul_of_nonneg_left h₁ (Real.exp_pos _).le
+    · simp only [Fin.mk_one, Matrix.cons_val_one, Matrix.cons_val_zero]
+      rw [← hcomm, ← hcomm, mul_comm K₂, mul_assoc, mul_assoc]
+      exact mul_le_mul_of_nonneg_left h₂ (Real.exp_pos _).le
+
+
+/-- The flipped comparison: if `φ` has size `α` at `ζ₁` and `ζ₂`, accepts where
+`K₁ e^{(ζ₁ - θ) T} + K₂ e^{(ζ₂ - θ) T} < 1` and rejects where it exceeds `1`, then
+`E_θ φ ≤ α`. This is `integral_le_of_exp_threshold` for `1 - φ` against the constant test
+`1 - α`. -/
+private theorem integral_le_of_exp_threshold_flip (θ ζ₁ ζ₂ : F.domain) (K₁ K₂ : ℝ) {α : ℝ}
+    (hα : α ∈ Icc (0 : ℝ) 1) {φ : X → ℝ} (hφ : IsStatisticalTest φ)
+    (h₁ : ∫ x, φ x ∂F.law ζ₁ = α) (h₂ : ∫ x, φ x ∂F.law ζ₂ = α)
+    (hthr : ∀ x, (K₁ * Real.exp ((ζ₁.val - θ.val) * F.statistic x) +
+        K₂ * Real.exp ((ζ₂.val - θ.val) * F.statistic x) < 1 → φ x = 0) ∧
+      (1 < K₁ * Real.exp ((ζ₁.val - θ.val) * F.statistic x) +
+        K₂ * Real.exp ((ζ₂.val - θ.val) * F.statistic x) → φ x = 1)) :
+    ∫ x, φ x ∂F.law θ ≤ α := by
+  have hconst : IsStatisticalTest (fun _ : X ↦ 1 - α) :=
+    ⟨measurable_const, fun _ ↦ ⟨by linarith [hα.2], by linarith [hα.1]⟩⟩
+  have hside : ∀ (ζ : F.domain), ∫ x, φ x ∂F.law ζ = α → ∀ K : ℝ,
+      K * ∫ x, (1 - α) ∂F.law ζ ≤ K * ∫ x, (1 - φ x) ∂F.law ζ := fun ζ hζ K ↦ by
+    have := F.isProbabilityMeasure_law ζ
+    rw [hφ.integral_one_sub, hζ, integral_const, probReal_univ, one_smul]
+  have key := F.integral_le_of_exp_threshold θ ζ₁ ζ₂ K₁ K₂ hφ.one_sub hconst
+    (fun x ↦ ⟨fun h ↦ by rw [(hthr x).1 h, sub_zero], fun h ↦ by rw [(hthr x).2 h, sub_self]⟩)
+    (hside ζ₁ h₁ _) (hside ζ₂ h₂ _)
+  have := F.isProbabilityMeasure_law θ
+  rw [hφ.integral_one_sub, integral_const, probReal_univ, one_smul] at key
+  linarith
+
+/-- **Two-point size construction.** In a regular scalar exponential family, for `η₁ < η₂` and
+`α ∈ (0, 1)` some interval test in the natural statistic has size exactly `α` at `η₁` and at
+`η₂`. Its window of quantile levels of the law of `T` under `η₁` is chosen by the intermediate
+value theorem applied to the likelihood ratio `dP_{η₂} / dP_{η₁}`, a strictly increasing
+function of `T`. -/
+private theorem exists_intervalTest_integral_eq (η₁ η₂ : F.domain) (hη : η₁.val < η₂.val)
+    {α : ℝ} (hα : α ∈ Ioo 0 1) :
+    ∃ c₁ c₂ γ₁ γ₂ : ℝ, c₁ ≤ c₂ ∧ γ₁ ∈ Icc 0 1 ∧ γ₂ ∈ Icc 0 1 ∧
+      ∫ x, intervalTest (F.statistic x) c₁ c₂ γ₁ γ₂ ∂F.law η₁ = α ∧
+      ∫ x, intervalTest (F.statistic x) c₁ c₂ γ₁ γ₂ ∂F.law η₂ = α := by
+  have hTm : Measurable F.statistic := F.measurable_statistic
+  have := F.isProbabilityMeasure_law η₁
+  set μ₁ := (F.law η₁).map F.statistic with hμ₁
+  have : IsProbabilityMeasure μ₁ :=
+    (Measure.isProbabilityMeasure_map_iff hTm.aemeasurable).2 inferInstance
+  -- The likelihood ratio `dP_{η₂} / dP_{η₁}` as a function of the statistic.
+  set L : ℝ → ℝ := fun t ↦
+    Real.exp ((η₂.val - η₁.val) * t + (F.cumulant η₁.val - F.cumulant η₂.val)) with hL
+  have hLmono : StrictMono L := fun s t hst ↦ Real.exp_lt_exp.2 (by nlinarith [sub_pos.2 hη])
+  have hLm : Measurable L := hLmono.monotone.measurable
+  have hp₂ : ∀ x, Real.exp (η₂.val * F.statistic x - F.cumulant η₂.val) =
+      Real.exp (η₁.val * F.statistic x - F.cumulant η₁.val) * L (F.statistic x) := fun x ↦ by
+    simp only [hL]; rw [← Real.exp_add]; ring_nf
+  have hmapint : ∀ g : ℝ → ℝ, Measurable g →
+      ∫ t, g t ∂μ₁ = ∫ x, g (F.statistic x) ∂F.law η₁ :=
+    fun g hg ↦ integral_map hTm.aemeasurable hg.aestronglyMeasurable
+  have hLi : Integrable L μ₁ := by
+    rw [integrable_map_measure hLm.aestronglyMeasurable hTm.aemeasurable, F.integrable_law_iff]
+    exact (F.integrable_density η₂.2).congr (ae_of_all _ fun x ↦ hp₂ x)
+  have hL1 : ∫ t, L t ∂μ₁ = 1 := by
+    rw [hmapint L hLm, F.integral_law]
+    simp_rw [← hp₂]
+    exact F.integral_density η₂.2
+  have hnc : ¬ ∃ c, ∀ᵐ t ∂μ₁, L t = c := by
+    rintro ⟨c, hc⟩
+    rw [ae_map_iff hTm.aemeasurable (p := fun t ↦ L t = c) (hLm (measurableSet_singleton c))]
+      at hc
+    obtain ⟨x₀, hx₀⟩ := hc.exists
+    have hT : ∀ᵐ x ∂F.law η₁, F.statistic x = F.statistic x₀ :=
+      hc.mono fun x hx ↦ hLmono.injective (hx.trans hx₀.symm)
+    have hac : F.base ≪ F.law η₁ := withDensity_absolutelyContinuous'
+      (F.measurable_density η₁.val).ennreal_ofReal.aemeasurable
+      (ae_of_all _ fun x ↦ by simp [Real.exp_pos])
+    exact F.nonconstant (F.statistic x₀) (hac.ae_le hT)
+  -- The two-point size construction.
+  obtain ⟨a, ha0, ha1, ha⟩ := exists_setIntegral_comp_quantile_eq_mul μ₁ hLmono.monotone hLi
+    hnc hα
+  rw [hL1, mul_one] at ha
+  obtain ⟨c₁, c₂, γ₁, γ₂, hc, hγ₁, hγ₂, hW⟩ :=
+    exists_intervalWeight_integral_eq_setIntegral_quantile μ₁ ha0 (by linarith [hα.1]) ha1
+  have hW' : ∀ ψ : ℝ → ℝ, Integrable ψ μ₁ →
+      ∫ t, intervalTest t c₁ c₂ γ₁ γ₂ * ψ t ∂μ₁ = ∫ v in Ioo a (a + α), ψ (μ₁.quantile v) :=
+    fun ψ hψ ↦ by
+      rw [← hW ψ hψ]
+      congr 1
+  have hImeas := measurable_intervalTest c₁ c₂ γ₁ γ₂
+  set φ : X → ℝ := fun x ↦ intervalTest (F.statistic x) c₁ c₂ γ₁ γ₂ with hφdef
+  have hsize₁ : ∫ x, φ x ∂F.law η₁ = α := by
+    have h := hW' (fun _ ↦ 1) (integrable_const _)
+    simp only [mul_one, setIntegral_const, smul_eq_mul,
+      Real.volume_real_Ioo_of_le (by linarith [hα.1] : a ≤ a + α), add_sub_cancel_left] at h
+    rw [← h, hmapint _ hImeas]
+  have hsize₂ : ∫ x, φ x ∂F.law η₂ = α := by
+    rw [F.integral_law]
+    simp_rw [hp₂, mul_assoc]
+    rw [← F.integral_law η₁ (fun x ↦ L (F.statistic x) * φ x),
+      ← hmapint (fun t ↦ L t * intervalTest t c₁ c₂ γ₁ γ₂) (hLm.mul hImeas), ← ha, ← hW' L hLi]
+    simp_rw [mul_comm]
+  exact ⟨c₁, c₂, γ₁, γ₂, hc, hγ₁, hγ₂, hsize₁, hsize₂⟩
+
+end RealExponentialFamily
+
 /-- GAPS 101.50: in a regular scalar natural exponential family, for `η₁ < η₂` and `α ∈ (0, 1)`
 there is an interval test in the natural statistic with size exactly `α` at `η₁` and at `η₂`; it
 is uniformly most powerful of level `α` for `η ≤ η₁ or η ≥ η₂` against `η₁ < η < η₂`. -/
@@ -261,7 +497,87 @@ theorem exists_ump_interval_test {X : Type*} [MeasurableSpace X]
       IsUniformlyMostPowerfulTest F.law {η | η.val ≤ η₁.val ∨ η₂.val ≤ η.val}
         {η | η₁.val < η.val ∧ η.val < η₂.val} α
         (fun x ↦ intervalTest (F.statistic x) c₁ c₂ γ₁ γ₂) := by
-  sorry
+  obtain ⟨c₁, c₂, γ₁, γ₂, hc, hγ₁, hγ₂, hsize₁, hsize₂⟩ :=
+    F.exists_intervalTest_integral_eq η₁ η₂ hη hα
+  have hIin : ∀ t ∈ Ioo c₁ c₂, intervalTest t c₁ c₂ γ₁ γ₂ = 1 := fun t ht ↦
+    intervalTest_of_mem_Ioo ht
+  have hIout : ∀ t ∉ Icc c₁ c₂, intervalTest t c₁ c₂ γ₁ γ₂ = 0 := fun t ht ↦
+    intervalTest_of_notMem_Icc hc ht
+  set φ : X → ℝ := fun x ↦ intervalTest (F.statistic x) c₁ c₂ γ₁ γ₂ with hφdef
+  have hφ : IsStatisticalTest φ :=
+    ⟨(measurable_intervalTest c₁ c₂ γ₁ γ₂).comp F.measurable_statistic,
+      fun x ↦ intervalTest_mem_Icc hγ₁ hγ₂ _⟩
+  refine ⟨c₁, c₂, γ₁, γ₂, hc, hγ₁, hγ₂, hsize₁, hsize₂, hφ, ?_, ?_⟩
+  · -- Level `α` on the two-sided null hypothesis.
+    have hα' : α ∈ Icc (0 : ℝ) 1 := ⟨hα.1.le, hα.2.le⟩
+    intro θ hθ
+    change ∫ x, φ x ∂F.law θ ≤ α
+    rcases hθ with h | h
+    · rcases h.lt_or_eq with h | h
+      · -- `θ < η₁`: `e^{(η₁ - θ) t} (1 - h t) / A` with `h = A e^{(θ - η₁) t} + B e^{(η₂ - η₁) t}`.
+        obtain ⟨A, B, hA, hB, hAB⟩ := exists_mul_exp_add_mul_exp_le_one_iff
+          (sub_neg.2 h) (sub_pos.2 hη) hc
+        refine F.integral_le_of_exp_threshold_flip θ η₁ η₂ A⁻¹ (-(B * A⁻¹)) hα' hφ hsize₁ hsize₂
+          fun x ↦ ?_
+        simp only [hφdef]
+        generalize F.statistic x = t
+        have e1 : Real.exp ((η₁.val - θ.val) * t) * Real.exp ((θ.val - η₁.val) * t) = 1 := by
+          rw [← Real.exp_add]; ring_nf; exact Real.exp_zero
+        have e2 : Real.exp ((η₁.val - θ.val) * t) * Real.exp ((η₂.val - η₁.val) * t) =
+            Real.exp ((η₂.val - θ.val) * t) := by rw [← Real.exp_add]; ring_nf
+        have hAinv : A⁻¹ * A = 1 := inv_mul_cancel₀ hA.ne'
+        have hG : A⁻¹ * Real.exp ((η₁.val - θ.val) * t) +
+            -(B * A⁻¹) * Real.exp ((η₂.val - θ.val) * t) - 1 =
+            Real.exp ((η₁.val - θ.val) * t) * A⁻¹ * (1 - (A * Real.exp ((θ.val - η₁.val) * t) +
+              B * Real.exp ((η₂.val - η₁.val) * t))) := by
+          linear_combination e1 + Real.exp ((η₁.val - θ.val) * t) *
+            Real.exp ((θ.val - η₁.val) * t) * hAinv + B * A⁻¹ * e2
+        have hw : 0 < Real.exp ((η₁.val - θ.val) * t) * A⁻¹ := by positivity
+        refine ⟨fun hlt ↦ hIout t fun hm ↦ ?_, fun hgt ↦ hIin t ?_⟩
+        · have := (hAB t).1 hm
+          nlinarith [mul_nonneg hw.le (sub_nonneg.2 this)]
+        · by_contra hn
+          have := (hAB t).2 hn
+          nlinarith [mul_nonneg hw.le (sub_nonneg.2 this)]
+      · rw [Subtype.ext h]; exact hsize₁.le
+    · rcases h.lt_or_eq with h | h
+      · -- `η₂ < θ`: `e^{(η₂ - θ) t} (1 - h t) / B` with `h = A e^{(η₁ - η₂) t} + B e^{(θ - η₂) t}`.
+        obtain ⟨A, B, hA, hB, hAB⟩ := exists_mul_exp_add_mul_exp_le_one_iff
+          (sub_neg.2 hη) (sub_pos.2 h) hc
+        refine F.integral_le_of_exp_threshold_flip θ η₁ η₂ (-(A * B⁻¹)) B⁻¹ hα' hφ hsize₁ hsize₂
+          fun x ↦ ?_
+        simp only [hφdef]
+        generalize F.statistic x = t
+        have e1 : Real.exp ((η₂.val - θ.val) * t) * Real.exp ((θ.val - η₂.val) * t) = 1 := by
+          rw [← Real.exp_add]; ring_nf; exact Real.exp_zero
+        have e2 : Real.exp ((η₂.val - θ.val) * t) * Real.exp ((η₁.val - η₂.val) * t) =
+            Real.exp ((η₁.val - θ.val) * t) := by rw [← Real.exp_add]; ring_nf
+        have hBinv : B⁻¹ * B = 1 := inv_mul_cancel₀ hB.ne'
+        have hG : -(A * B⁻¹) * Real.exp ((η₁.val - θ.val) * t) +
+            B⁻¹ * Real.exp ((η₂.val - θ.val) * t) - 1 =
+            Real.exp ((η₂.val - θ.val) * t) * B⁻¹ * (1 - (A * Real.exp ((η₁.val - η₂.val) * t) +
+              B * Real.exp ((θ.val - η₂.val) * t))) := by
+          linear_combination e1 + Real.exp ((η₂.val - θ.val) * t) *
+            Real.exp ((θ.val - η₂.val) * t) * hBinv + A * B⁻¹ * e2
+        have hw : 0 < Real.exp ((η₂.val - θ.val) * t) * B⁻¹ := by positivity
+        refine ⟨fun hlt ↦ hIout t fun hm ↦ ?_, fun hgt ↦ hIin t ?_⟩
+        · have := (hAB t).1 hm
+          nlinarith [mul_nonneg hw.le (sub_nonneg.2 this)]
+        · by_contra hn
+          have := (hAB t).2 hn
+          nlinarith [mul_nonneg hw.le (sub_nonneg.2 this)]
+      · rw [← Subtype.ext h]; exact hsize₂.le
+  · -- Most powerful against every alternative between `η₁` and `η₂`.
+    intro ψ hψ hψlev θ hθ
+    obtain ⟨A, B, hA, hB, hAB⟩ := exists_mul_exp_add_mul_exp_le_one_iff
+      (sub_neg.2 hθ.1) (sub_pos.2 hθ.2) hc
+    refine F.integral_le_of_exp_threshold θ η₁ η₂ A B hφ hψ (fun x ↦ ⟨fun hlt ↦ ?_, fun hgt ↦ ?_⟩)
+      (mul_le_mul_of_nonneg_left (hsize₁ ▸ hψlev η₁ (Or.inl le_rfl)) hA.le)
+      (mul_le_mul_of_nonneg_left (hsize₂ ▸ hψlev η₂ (Or.inr le_rfl)) hB.le)
+    · refine hIin _ ?_
+      by_contra hn
+      exact absurd ((hAB (F.statistic x)).2 hn) (not_le.2 hlt)
+    · exact hIout _ fun hm ↦ absurd ((hAB (F.statistic x)).1 hm) (not_le.2 hgt)
 
 /-- GAPS 101.53: one-sided tests form an essentially complete class for two-decision problems in
 a family with monotone likelihood ratio. The densities are everywhere positive (so the laws are

@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Geometry.Basic
+public import CKSD.Geometry.ManifoldSampling
 public import CKSD.Asymptotics.MultivariateCLT
 public import CKSD.Bayes.Basic
 public import TauCeti.Probability.Moments.Covariance
@@ -163,62 +164,6 @@ theorem existsUnique_frechet_mean_of_midpoint_inequality
   have : dist m' m ^ 2 ≤ 0 := by simp only [F] at *; linarith
   have : dist m' m = 0 := by nlinarith [dist_nonneg (x := m') (y := m)]
   exact dist_eq_zero.mp this
-
-/-- A packing bound for nets: if every open ball of radius `s > 0` centered in `K` has
-`P`-mass at least `a > 0` under a probability measure `P`, then a finite subset `F ⊆ K` with
-`|F| a ≤ 1` is a `2s`-net of `K`. -/
-private theorem exists_finset_net_of_le_measure_ball {X : Type*} [MetricSpace X] [MeasurableSpace X]
-    [OpensMeasurableSpace X] (P : Measure X) [IsProbabilityMeasure P] (K : Set X) {s a : ℝ}
-    (hs : 0 < s) (ha : 0 < a) (hball : ∀ x ∈ K, ENNReal.ofReal a ≤ P (Metric.ball x s)) :
-    ∃ F : Finset X, (F : Set X) ⊆ K ∧ (F.card : ℝ) * a ≤ 1 ∧
-      ∀ y ∈ K, ∃ z ∈ F, dist y z < 2 * s := by
-  classical
-  have hsmall : ∀ F : Finset X, (F : Set X) ⊆ K →
-      (F : Set X).Pairwise (fun x y ↦ 2 * s ≤ dist x y) → (F.card : ℝ) * a ≤ 1 := by
-    intro F hFK hsep
-    have hdisj : (F : Set X).PairwiseDisjoint (fun x ↦ Metric.ball x s) := by
-      intro x hx y hy hxy
-      rw [Function.onFun, Set.disjoint_left]
-      intro z hzx hzy
-      have h1 := hsep hx hy hxy
-      rw [Metric.mem_ball] at hzx hzy
-      have h2 := dist_triangle_left x y z
-      linarith
-    have hU := measure_biUnion_finset (μ := P) hdisj (fun x _ ↦ measurableSet_ball)
-    have hle : ∑ x ∈ F, P (Metric.ball x s) ≤ 1 := hU ▸ prob_le_one
-    have h : ∑ _x ∈ F, ENNReal.ofReal a ≤ 1 :=
-      (Finset.sum_le_sum fun x hx ↦ hball x (hFK hx)).trans hle
-    rw [Finset.sum_const, nsmul_eq_mul, ← ENNReal.ofReal_natCast,
-      ← ENNReal.ofReal_mul (by positivity)] at h
-    exact ENNReal.ofReal_le_one.mp h
-  by_contra hno
-  push Not at hno
-  have hbuild : ∀ k : ℕ, ∃ F : Finset X, (F : Set X) ⊆ K ∧
-      (F : Set X).Pairwise (fun x y ↦ 2 * s ≤ dist x y) ∧ F.card = k := by
-    intro k
-    induction k with
-    | zero => exact ⟨∅, by simp, by simp, rfl⟩
-    | succ k ih =>
-      obtain ⟨F, hFK, hsep, hcard⟩ := ih
-      obtain ⟨y, hyK, hy⟩ := hno F hFK (hsmall F hFK hsep)
-      have hyF : y ∉ F := fun h ↦ by
-        have := hy y h
-        rw [dist_self] at this
-        linarith
-      refine ⟨insert y F, ?_, ?_, ?_⟩
-      · rw [Finset.coe_insert]; exact insert_subset hyK hFK
-      · rw [Finset.coe_insert]
-        refine Set.pairwise_insert.2 ⟨hsep, fun b hb _ ↦ ⟨hy b hb, ?_⟩⟩
-        rw [dist_comm]; exact hy b hb
-      · rw [Finset.card_insert_of_notMem hyF, hcard]
-  obtain ⟨F, hFK, hsep, hcard⟩ := hbuild (⌈1 / a⌉₊ + 1)
-  have h := hsmall F hFK hsep
-  rw [hcard] at h
-  have h1 : 1 / a < ((⌈1 / a⌉₊ + 1 : ℕ) : ℝ) := by
-    push_cast
-    exact lt_of_le_of_lt (Nat.le_ceil _) (lt_add_one _)
-  rw [div_lt_iff₀ ha] at h1
-  linarith
 
 /-- For an i.i.d. sequence with law `P` and a measurable set `B`, the probability that none of
 the first `n` observations falls in `B` is `(1 - P(B))^n`. -/

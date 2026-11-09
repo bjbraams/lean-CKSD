@@ -3,12 +3,15 @@ module
 public import CKSD.Processes.Models
 public import CKSD.Processes.TimeSeries
 public import CKSD.Processes.Survival
+public import CKSD.Processes.RiskSetExpansion
 public import CKSD.Processes.Sequential
 public import CKSD.Processes.WaldIdentity
 public import CKSD.Processes.ExtremeValueLimits
 public import CKSD.Processes.BridgeLimits
 public import CKSD.Processes.Extremes
 public import CKSD.Processes.Spectral
+public import CKSD.Processes.PeriodogramLimits
+public import CKSD.Processes.FilteredPeriodogram
 public import CKSD.Processes.Kalman
 public import CKSD.Processes.Dependence
 public import CKSD.Processes.CountingProcesses

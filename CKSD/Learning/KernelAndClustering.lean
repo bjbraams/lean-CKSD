@@ -423,6 +423,110 @@ def kmeansSampleRisk {X : Type*} [PseudoMetricSpace X] {n k : ℕ}
     (x : Fin n → X) (centers : Fin k → X) : ℝ :=
   (∑ i, sInf (range fun j ↦ dist (x i) (centers j) ^ 2)) / n
 
+/-- Infima of two finite families differ by at most a uniform bound on their pointwise
+differences. -/
+private theorem abs_ciInf_sub_ciInf_le {ι : Type*} [Nonempty ι] [Finite ι] {f g : ι → ℝ}
+    {ε : ℝ} (h : ∀ j, |f j - g j| ≤ ε) : |(⨅ j, f j) - ⨅ j, g j| ≤ ε := by
+  have hf := (Set.finite_range f).bddBelow
+  have hg := (Set.finite_range g).bddBelow
+  have h1 : (⨅ j, f j) - ε ≤ ⨅ j, g j := le_ciInf fun j ↦ by
+    linarith [ciInf_le hf j, (abs_sub_le_iff.mp (h j)).1]
+  have h2 : (⨅ j, g j) - ε ≤ ⨅ j, f j := le_ciInf fun j ↦ by
+    linarith [ciInf_le hg j, (abs_sub_le_iff.mp (h j)).2]
+  rw [abs_sub_le_iff]
+  constructor <;> linarith
+
+/-- On a bounded set `K` of diameter `D`, the squared distance to a point is `2D`-Lipschitz in
+that point: `|d(x,a)² - d(x,b)²| ≤ 2D d(a,b)` for `x, a, b ∈ K`. -/
+private theorem abs_dist_sq_sub_dist_sq_le {E : Type*} [PseudoMetricSpace E] {K : Set E}
+    (hK : Bornology.IsBounded K) {x a b : E} (hx : x ∈ K) (ha : a ∈ K) (hb : b ∈ K) :
+    |dist x a ^ 2 - dist x b ^ 2| ≤ 2 * Metric.diam K * dist a b := by
+  have h1 := Metric.dist_le_diam_of_mem hK hx ha
+  have h2 := Metric.dist_le_diam_of_mem hK hx hb
+  have h3 : |dist x a - dist x b| ≤ dist a b := by
+    rw [dist_comm x a, dist_comm x b]; exact abs_dist_sub_le a b x
+  rw [sq_sub_sq, abs_mul, abs_of_nonneg (add_nonneg dist_nonneg dist_nonneg)]
+  nlinarith [abs_nonneg (dist x a - dist x b), dist_nonneg (x := x) (y := a),
+    dist_nonneg (x := x) (y := b), dist_nonneg (x := a) (y := b)]
+
+/-- Averages of two families whose terms differ by at most `L ≥ 0` differ by at most `L`. -/
+private theorem abs_sum_div_sub_sum_div_le {n : ℕ} {a b : ℕ → ℝ} {L : ℝ} (hL : 0 ≤ L)
+    (h : ∀ i, |a i - b i| ≤ L) :
+    |(∑ i ∈ Finset.range n, a i) / n - (∑ i ∈ Finset.range n, b i) / n| ≤ L := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · simpa using hL
+  have hn' : (0 : ℝ) < n := by exact_mod_cast hn
+  rw [← sub_div, ← Finset.sum_sub_distrib, abs_div, abs_of_pos hn', div_le_iff₀ hn']
+  calc |∑ i ∈ Finset.range n, (a i - b i)| ≤ ∑ i ∈ Finset.range n, |a i - b i| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ _i ∈ Finset.range n, L := Finset.sum_le_sum fun i _ ↦ h i
+    _ = L * n := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_comm]
+
+/-- If functions `Sₙ` and `R` are `L`-Lipschitz and `Sₙ c → R c` on a dense set of points `c`,
+then `Sₙ c → R c` everywhere. -/
+private theorem tendsto_of_lipschitz_of_dense {X : Type*} [PseudoMetricSpace X] {S : Set X}
+    (hSd : Dense S) {Sn : ℕ → X → ℝ} {R : X → ℝ} {L : ℝ} (hL0 : 0 < L)
+    (hSnlip : ∀ n c c', |Sn n c - Sn n c'| ≤ L * dist c c')
+    (hRlip : ∀ c c', |R c - R c'| ≤ L * dist c c')
+    (hS : ∀ c ∈ S, Tendsto (fun n ↦ Sn n c) atTop (𝓝 (R c))) (c : X) :
+    Tendsto (fun n ↦ Sn n c) atTop (𝓝 (R c)) := by
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨c', hc'S, hcc'⟩ := hSd.exists_dist_lt c (show 0 < ε / (4 * L) by positivity)
+  obtain ⟨N, hN⟩ := Metric.tendsto_atTop.mp (hS c' hc'S) (ε / 2) (by positivity)
+  refine ⟨N, fun n hn ↦ ?_⟩
+  have h1 := hSnlip n c c'
+  have h2 := hRlip c c'
+  have h3 := hN n hn
+  have h4 : L * dist c c' < ε / 4 := by
+    calc L * dist c c' < L * (ε / (4 * L)) := mul_lt_mul_of_pos_left hcc' hL0
+      _ = ε / 4 := by field_simp
+  rw [Real.dist_eq] at h3 ⊢
+  calc |Sn n c - R c| ≤ |Sn n c - Sn n c'| + |Sn n c' - R c'| + |R c' - R c| := by
+        have := abs_sub_le (Sn n c) (Sn n c') (R c)
+        have := abs_sub_le (Sn n c') (R c') (R c)
+        linarith
+    _ < ε := by rw [abs_sub_comm (R c')]; linarith
+
+/-- In a compact set `K`, if every subsequential limit of a sequence of `k`-tuples of points has
+the same range as a fixed tuple `star`, then the ranges converge to that of `star` in Hausdorff
+distance. -/
+private theorem tendsto_hausdorffDist_range_of_forall_tendsto_subseq {E : Type*} [MetricSpace E]
+    {K : Set E} [CompactSpace K] {k : ℕ} (C : ℕ → Fin k → K) (star : Fin k → K)
+    (hlimit : ∀ (c : Fin k → K) (ψ : ℕ → ℕ), StrictMono ψ →
+      Tendsto (fun j ↦ C (ψ j)) atTop (𝓝 c) →
+        range (fun i ↦ (c i).val) = range (fun i ↦ (star i).val)) :
+    Tendsto (fun n ↦ Metric.hausdorffDist (range fun j ↦ (C n j).val)
+      (range fun j ↦ (star j).val)) atTop (𝓝 0) := by
+  by_contra hne
+  rw [Metric.tendsto_atTop] at hne
+  push Not at hne
+  obtain ⟨ε, hε, hfreq⟩ := hne
+  have hfreq' : ∃ᶠ n in atTop, ε ≤ Metric.hausdorffDist (range fun j ↦ (C n j).val)
+      (range fun j ↦ (star j).val) := by
+    rw [Filter.frequently_atTop]
+    intro N
+    obtain ⟨n, hn, h⟩ := hfreq N
+    refine ⟨n, hn, ?_⟩
+    rwa [Real.dist_eq, sub_zero, abs_of_nonneg Metric.hausdorffDist_nonneg] at h
+  obtain ⟨ψ₁, hψ₁, hψ₁ε⟩ := Filter.extraction_of_frequently_atTop hfreq'
+  obtain ⟨c, ψ₂, hψ₂, hc⟩ := CompactSpace.tendsto_subseq fun j ↦ C (ψ₁ j)
+  have hrange := hlimit c (ψ₁ ∘ ψ₂) (hψ₁.comp hψ₂) hc
+  obtain ⟨j, hj⟩ := (Metric.tendsto_atTop.mp hc ε hε).imp fun N h ↦ h N le_rfl
+  have hHle : Metric.hausdorffDist (range fun i ↦ (C (ψ₁ (ψ₂ j)) i).val)
+      (range fun i ↦ (star i).val) ≤ dist (C (ψ₁ (ψ₂ j))) c := by
+    rw [← hrange]
+    refine Metric.hausdorffDist_le_of_mem_dist dist_nonneg ?_ ?_
+    · rintro _ ⟨i, rfl⟩
+      refine ⟨(c i).val, ⟨i, rfl⟩, ?_⟩
+      rw [← Subtype.dist_eq]; exact dist_le_pi_dist _ _ i
+    · rintro _ ⟨i, rfl⟩
+      refine ⟨(C (ψ₁ (ψ₂ j)) i).val, ⟨i, rfl⟩, ?_⟩
+      rw [← Subtype.dist_eq, dist_comm]; exact dist_le_pi_dist _ _ i
+  have := hψ₁ε (ψ₂ j)
+  simp only [Function.comp_apply] at hj
+  linarith
+
 /-- GAPS 107.16: almost-sure consistency of compactly constrained empirical `k`-means minimizers.
 This scope assumes a fixed compact support containing all centers. The unbounded-support theorem
 under only a second moment requires an additional localization argument. (For `k = 0` all center
@@ -439,13 +543,132 @@ theorem ae_tendsto_kmeans_centers_of_compact
     (hunique : ∀ c : Fin k → K, kmeansRisk P (fun i ↦ (c i).val) =
       kmeansRisk P (fun i ↦ (star i).val) →
         range (fun i ↦ (c i).val) = range (fun i ↦ (star i).val))
-    (C : ℕ → Ω → Fin k → K) (hC : ∀ n, Measurable (C n))
+    (C : ℕ → Ω → Fin k → K)
     (hopt : ∀ n : ℕ, 0 < n → ∀ᵐ ω ∂μ, ∀ c : Fin k → K,
       kmeansSampleRisk (fun i : Fin n ↦ X i.val ω) (fun j ↦ (C n ω j).val) ≤
         kmeansSampleRisk (fun i : Fin n ↦ X i.val ω) (fun j ↦ (c j).val)) :
     ∀ᵐ ω ∂μ, Tendsto (fun n ↦ Metric.hausdorffDist
       (range fun j ↦ (C n ω j).val) (range fun j ↦ (star j).val)) atTop (𝓝 0) := by
-  sorry
+  classical
+  rcases Nat.eq_zero_or_pos k with rfl | hk
+  · refine Eventually.of_forall fun ω ↦ ?_
+    simp only [Set.range_eq_empty, Metric.hausdorffDist_empty]
+    exact tendsto_const_nhds
+  have : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
+  have : CompactSpace K := isCompact_iff_compactSpace.mp hK
+  -- the loss `φ x c = minⱼ ‖x - cⱼ‖²` and its Lipschitz constant on `K`
+  set φ : EuclideanSpace ℝ (Fin d) → (Fin k → K) → ℝ := fun x c ↦
+    ⨅ j, dist x (c j : EuclideanSpace ℝ (Fin d)) ^ 2 with hφ
+  set L : ℝ := 2 * Metric.diam K + 1 with hL
+  have hKb := hK.isBounded
+  have hD0 : 0 ≤ Metric.diam K := Metric.diam_nonneg
+  have hL0 : 0 < L := by rw [hL]; linarith
+  have hlip : ∀ x ∈ K, ∀ c c' : Fin k → K, |φ x c - φ x c'| ≤ L * dist c c' := by
+    intro x hx c c'
+    refine abs_ciInf_sub_ciInf_le fun j ↦ ?_
+    refine (abs_dist_sq_sub_dist_sq_le hKb hx (c j).2 (c' j).2).trans ?_
+    have hj : dist (c j : EuclideanSpace ℝ (Fin d)) (c' j : EuclideanSpace ℝ (Fin d)) ≤ dist c c' := by
+      rw [← Subtype.dist_eq]; exact dist_le_pi_dist c c' j
+    have := dist_nonneg (x := c) (y := c')
+    nlinarith
+  have hbound : ∀ x ∈ K, ∀ c : Fin k → K, |φ x c| ≤ Metric.diam K ^ 2 := by
+    intro x hx c
+    have h0 : 0 ≤ φ x c := le_ciInf fun j ↦ sq_nonneg _
+    have h1 : φ x c ≤ dist x (c ⟨0, hk⟩ : EuclideanSpace ℝ (Fin d)) ^ 2 :=
+      ciInf_le (Set.finite_range _).bddBelow _
+    have h2 := Metric.dist_le_diam_of_mem hKb hx (c ⟨0, hk⟩).2
+    rw [abs_of_nonneg h0]
+    nlinarith [dist_nonneg (x := x) (y := (c ⟨0, hk⟩ : EuclideanSpace ℝ (Fin d)))]
+  have hmeas : ∀ c, Measurable fun x ↦ φ x c := fun c ↦
+    Measurable.iInf fun j ↦ ((continuous_id.dist continuous_const).pow 2).measurable
+  have hKm : MeasurableSet K := hK.isClosed.measurableSet
+  have hPK : ∀ᵐ x ∂P, x ∈ K := by
+    rw [ae_iff]
+    have : P Kᶜ = 0 := (prob_compl_eq_zero_iff hKm).mpr hsupp
+    simpa [Set.compl_def] using this
+  have hint : ∀ c, Integrable (fun x ↦ φ x c) P := fun c ↦
+    Integrable.of_bound (hmeas c).aestronglyMeasurable (Metric.diam K ^ 2)
+      (hPK.mono fun x hx ↦ by rw [Real.norm_eq_abs]; exact hbound x hx c)
+  set R : (Fin k → K) → ℝ := fun c ↦ ∫ x, φ x c ∂P with hR
+  have hRdef : ∀ c : Fin k → K, kmeansRisk P (fun i ↦ (c i).val) = R c := fun c ↦ rfl
+  have hRlip : ∀ c c' : Fin k → K, |R c - R c'| ≤ L * dist c c' := by
+    intro c c'
+    rw [hR, ← integral_sub (hint c) (hint c')]
+    refine (abs_integral_le_integral_abs).trans ?_
+    calc ∫ x, |φ x c - φ x c'| ∂P ≤ ∫ _x, L * dist c c' ∂P :=
+          integral_mono_ae ((hint c).sub (hint c')).abs (integrable_const _)
+            (hPK.mono fun x hx ↦ hlip x hx c c')
+      _ = L * dist c c' := by simp
+  -- almost sure events
+  have hXK : ∀ᵐ ω ∂μ, ∀ i, X i ω ∈ K := ae_all_iff.mpr fun i ↦ by
+    have h := hPK
+    rw [← hiid.2.2 i] at h
+    exact ae_of_ae_map (hiid.1 i).aemeasurable h
+  obtain ⟨S, hSc, hSd⟩ := TopologicalSpace.exists_countable_dense (Fin k → K)
+  have hslln : ∀ c : Fin k → K, ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ ↦
+      (∑ i ∈ Finset.range n, φ (X i ω) c) / n) atTop (𝓝 (R c)) := by
+    intro c
+    have hlaw : μ.map (X 0) = P := hiid.2.2 0
+    have hint0 : Integrable ((fun x ↦ φ x c) ∘ X 0) μ := by
+      have := hint c
+      rw [← hlaw] at this
+      exact this.comp_measurable (hiid.1 0)
+    have h := strong_law_ae (fun i ω ↦ φ (X i ω) c) hint0
+      (hiid.pairwise_indepFun_comp (hmeas c)) (hiid.identDistrib_comp (hmeas c))
+    have hmean : ∫ ω, φ (X 0 ω) c ∂μ = R c := by
+      rw [hR]
+      simp only
+      rw [← hlaw, integral_map (hiid.1 0).aemeasurable (hmeas c).aestronglyMeasurable]
+    filter_upwards [h] with ω hω
+    rw [hmean] at hω
+    simpa [smul_eq_mul, div_eq_inv_mul] using hω
+  have hallS : ∀ᵐ ω ∂μ, ∀ c ∈ S, Tendsto (fun n : ℕ ↦
+      (∑ i ∈ Finset.range n, φ (X i ω) c) / n) atTop (𝓝 (R c)) :=
+    (ae_ball_iff hSc).mpr fun c _ ↦ hslln c
+  have hopt' : ∀ᵐ ω ∂μ, ∀ n : ℕ, 0 < n → ∀ c : Fin k → K,
+      kmeansSampleRisk (fun i : Fin n ↦ X i.val ω) (fun j ↦ (C n ω j).val) ≤
+        kmeansSampleRisk (fun i : Fin n ↦ X i.val ω) (fun j ↦ (c j).val) := by
+    refine ae_all_iff.mpr fun n ↦ ?_
+    by_cases hn : 0 < n
+    · exact (hopt n hn).mono fun ω h _ ↦ h
+    · exact Eventually.of_forall fun ω h ↦ absurd h hn
+  filter_upwards [hXK, hallS, hopt'] with ω hXω hSω hoptω
+  -- the sample risk at `ω`
+  set Sn : ℕ → (Fin k → K) → ℝ := fun n c ↦ (∑ i ∈ Finset.range n, φ (X i ω) c) / n with hSn
+  have hSndef : ∀ n (c : Fin k → K),
+      kmeansSampleRisk (fun i : Fin n ↦ X i.val ω) (fun j ↦ (c j).val) = Sn n c := by
+    intro n c
+    simp only [kmeansSampleRisk, hSn]
+    congr 1
+    exact Fin.sum_univ_eq_sum_range (fun i ↦ φ (X i ω) c) n
+  have hSnlip : ∀ n (c c' : Fin k → K), |Sn n c - Sn n c'| ≤ L * dist c c' := fun n c c' ↦
+    abs_sum_div_sub_sum_div_le (by positivity) fun i ↦ hlip _ (hXω i) c c'
+  have hconv : ∀ c, Tendsto (fun n ↦ Sn n c) atTop (𝓝 (R c)) :=
+    tendsto_of_lipschitz_of_dense hSd hL0 hSnlip hRlip hSω
+  -- limit points of the empirical minimizers have the optimal center set
+  have hlimit : ∀ (c : Fin k → K) (ψ : ℕ → ℕ), StrictMono ψ →
+      Tendsto (fun j ↦ C (ψ j) ω) atTop (𝓝 c) →
+        range (fun i ↦ (c i).val) = range (fun i ↦ (star i).val) := by
+    intro c ψ hψ hC
+    have hψt := hψ.tendsto_atTop
+    have h1 : Tendsto (fun j ↦ Sn (ψ j) (C (ψ j) ω)) atTop (𝓝 (R c)) := by
+      refine ((hconv c).comp hψt).congr_dist (squeeze_zero (fun _ ↦ dist_nonneg)
+        (fun j ↦ ?_) (?_ : Tendsto (fun j ↦ L * dist (C (ψ j) ω) c) atTop (𝓝 0)))
+      · rw [Real.dist_eq, abs_sub_comm]; exact hSnlip _ _ _
+      · simpa using (tendsto_iff_dist_tendsto_zero.mp hC).const_mul L
+    have h2 := (hconv star).comp hψt
+    have hle : R c ≤ R star := by
+      refine le_of_tendsto_of_tendsto h1 h2 ?_
+      filter_upwards [eventually_ge_atTop 1] with j hj
+      have hpos : 0 < ψ j := lt_of_lt_of_le hj (hψ.id_le j)
+      have := hoptω (ψ j) hpos star
+      rwa [hSndef, hSndef] at this
+    have heq : kmeansRisk P (fun i ↦ (c i).val) = kmeansRisk P (fun i ↦ (star i).val) := by
+      rw [hRdef, hRdef]
+      exact le_antisymm hle (by rw [← hRdef, ← hRdef]; exact hmin c)
+    exact hunique c heq
+  -- conclusion by compactness
+  exact tendsto_hausdorffDist_range_of_forall_tendsto_subseq (fun n ↦ C n ω) star hlimit
 
 /-- Permuting center labels leaves the population distortion unchanged. -/
 theorem kmeansRisk_comp_perm {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X]

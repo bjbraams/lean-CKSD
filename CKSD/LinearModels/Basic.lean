@@ -22,6 +22,11 @@ survey sampling (Section 105).
   divisor `N - 1`.
 * `CKSD.IsLatinSquare`, `CKSD.OrthogonalLatinSquares`: Latin squares of order `s` and their
   orthogonality.
+
+## Main results
+
+* `CKSD.measurable_matrixQuadraticForm`: quadratic forms are measurable.
+* `CKSD.matrix_inv_smul_of_ne_zero`: `(c • A)⁻¹ = c⁻¹ • A⁻¹` for `c ≠ 0`.
 -/
 
 @[expose] public section
@@ -43,6 +48,13 @@ scoped instance finiteSampleMeasurableSpace (N : ℕ) : MeasurableSpace (Finset 
 /-- Quadratic form of a real matrix on Euclidean space. -/
 def matrixQuadraticForm {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ) (x : EuclideanSpace ℝ (Fin d)) : ℝ :=
   inner ℝ x (Matrix.toEuclideanCLM (𝕜 := ℝ) A x)
+
+/-- A quadratic form `x ↦ xᵀ P x` is measurable. -/
+@[fun_prop]
+theorem measurable_matrixQuadraticForm {n : ℕ} (P : Matrix (Fin n) (Fin n) ℝ) :
+    Measurable (matrixQuadraticForm P) := by
+  unfold matrixQuadraticForm
+  exact (continuous_id.inner (Matrix.toEuclideanCLM (𝕜 := ℝ) P).continuous).measurable
 
 /-- Mean of a finite Euclidean sample. -/
 def sampleMean {n d : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin d)) : EuclideanSpace ℝ (Fin d) :=
@@ -79,5 +91,16 @@ exactly once. -/
 def OrthogonalLatinSquares {s : ℕ} (L M : Fin s → Fin s → Fin s) : Prop :=
   Function.Injective (fun z : Fin s × Fin s ↦ (L z.1 z.2, M z.1 z.2))
 
+/-- Inversion commutes with nonzero real scalar multiplication, `(c • A)⁻¹ = c⁻¹ • A⁻¹`, for
+invertible and singular matrices alike. -/
+theorem matrix_inv_smul_of_ne_zero {n : Type*} [Fintype n] [DecidableEq n] {c : ℝ} (hc : c ≠ 0)
+    (A : Matrix n n ℝ) : (c • A)⁻¹ = c⁻¹ • A⁻¹ := by
+  by_cases h : IsUnit A.det
+  · exact Matrix.inv_smul' A (Units.mk0 c hc) h
+  · have h' : ¬ IsUnit (c • A).det := by
+      rw [Matrix.det_smul, isUnit_iff_ne_zero] at *
+      simpa [hc] using h
+    rw [Matrix.nonsing_inv_apply_not_isUnit _ h, Matrix.nonsing_inv_apply_not_isUnit _ h',
+      smul_zero]
 
 end CKSD

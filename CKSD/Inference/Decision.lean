@@ -2,6 +2,9 @@ module
 
 public import CKSD.Inference.Model
 public import CKSD.Inference.Sufficiency
+public import CKSD.Inference.MeanParametrization
+public import CKSD.Inference.ExponentialFamilyMLE
+public import Mathlib.Analysis.Calculus.InverseFunctionTheorem.FDeriv
 
 /-!
 # Decision theory: minimax, complete classes, admissibility, and comparison of experiments
@@ -246,7 +249,53 @@ theorem exists_analytic_inverse_exponential_family_mean
             g (∫ x, x ∂exponentialFamilyMeasure ν id η) = η) ∧
         ∀ m ∈ interior (convexHull ℝ ν.support),
           g m ∈ naturalParameterSpace ν id ∧ (∫ x, x ∂exponentialFamilyMeasure ν id (g m)) = m := by
-  sorry
+  set N := naturalParameterSpace ν id
+  set M : E → E := fun η ↦ ∫ x, x ∂exponentialFamilyMeasure ν id η with hMdef
+  set K := interior (convexHull ℝ ν.support)
+  have hMan : AnalyticOnNhd ℝ M N := analyticOnNhd_mean_exponentialFamilyMeasure ν hne hN
+  have hinj : InjOn M N := injOn_mean_exponentialFamilyMeasure ν hne hminimal hN
+  -- Every interior point of the convex hull is a mean (existence of the MLE).
+  have hsurj : ∀ m ∈ K, ∃ η ∈ N, M η = m := by
+    intro m hm
+    obtain ⟨η, hη, hmax⟩ :=
+      (exists_isMaxOn_logLikelihood_iff_mem_interior_convexHull_support ν hne hminimal hNne m).2 hm
+    have h2 := (hasFDerivAt_logPartition_and_eq_of_isMaxOn ν hne hminimal hN hη hmax).1.unique
+      (hasFDerivAt_logPartition ν hne (hN.interior_eq.symm ▸ hη))
+    refine ⟨η, hη, ?_⟩
+    have := congrArg (fun f : E →L[ℝ] ℝ ↦ f (m - M η)) h2
+    simp only [innerSL_apply_apply] at this
+    have h3 : inner ℝ (m - M η) (m - M η) = 0 := by rw [inner_sub_left, this, sub_self]
+    exact (sub_eq_zero.1 (inner_self_eq_zero.1 h3)).symm
+  set g : E → E := fun m ↦ if h : ∃ η ∈ N, M η = m then h.choose else 0
+  have hg : ∀ m ∈ K, g m ∈ N ∧ M (g m) = m := fun m hm ↦ by
+    have h := hsurj m hm
+    simp only [g, h, ↓reduceDIte]
+    exact h.choose_spec
+  have hmemK : ∀ η ∈ N, M η ∈ K := fun η hη ↦
+    mean_exponentialFamilyMeasure_mem_interior_convexHull_support ν hne hminimal hN hη
+  have hgM : ∀ η ∈ N, g (M η) = η := fun η hη ↦
+    hinj (hg _ (hmemK η hη)).1 hη (hg _ (hmemK η hη)).2
+  refine ⟨g, hMan, fun m hm ↦ ?_, fun η hη ↦ ⟨hmemK η hη, hgM η hη⟩, hg⟩
+  -- Analytic inverse function theorem at `η = g m`.
+  obtain ⟨hη, hMη⟩ := hg m hm
+  set η := g m
+  obtain ⟨i, hfd, hstrict⟩ :=
+    exists_hasStrictFDerivAt_mean_exponentialFamilyMeasure ν hne hminimal hN hη
+  set R := hstrict.toOpenPartialHomeomorph M
+  have h0 : η ∈ R.source := hstrict.mem_toOpenPartialHomeomorph_source
+  have hRcoe : ⇑R = M := hstrict.toOpenPartialHomeomorph_coe
+  have hRη : R η = m := by rw [hRcoe]; exact hMη
+  have han : AnalyticAt ℝ R.symm (R η) := R.analyticAt_symm' h0
+    (by rw [hRcoe]; exact hMan η hη) (by rw [hRcoe]; exact hfd)
+  rw [hRη] at han
+  refine han.congr ?_
+  have hc : ContinuousAt R.symm m := hRη ▸ R.continuousAt_symm (R.map_source h0)
+  have hsymm : R.symm m = η := by rw [← hRη, R.left_inv h0]
+  filter_upwards [hc.preimage_mem_nhds (hsymm.symm ▸ hN.mem_nhds hη),
+    R.open_target.mem_nhds (hRη ▸ R.map_source h0), isOpen_interior.mem_nhds hm]
+    with m' h1 h2 h3
+  have h4 : M (R.symm m') = m' := by rw [← hRcoe]; exact R.right_inv h2
+  exact hinj h1 (hg m' h3).1 (h4.trans (hg m' h3).2.symm)
 
 /-- GAPS 101.58: Blyth's method. Let `Θ` be a convex subset of Euclidean space with nonempty
 interior and let the rules `δ` in a class `D` have continuous risk functions `R δ`. Suppose there

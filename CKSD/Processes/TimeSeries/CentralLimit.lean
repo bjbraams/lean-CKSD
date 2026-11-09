@@ -3,26 +3,25 @@ module
 public import CKSD.Processes.Basic
 public import CKSD.Asymptotics.MartingaleCLT.Basic
 public import Mathlib.Probability.Martingale.Basic
+public import Mathlib.Probability.ConditionalExpectation
+public import Mathlib.Probability.CramerWold
+public import Mathlib.Probability.Independence.Integration
 
 /-!
-# Central limit theorems for dependent data and sample autocorrelations
+# The martingale central limit theorem for triangular arrays
 
 ## Main results
 
 * `CKSD.tendstoInDistribution_martingale_array_sum` (GAPS 106.1): the martingale central limit
   theorem for triangular arrays of square-integrable martingale differences under convergence
   of the conditional variances and the conditional Lindeberg condition.
-* `CKSD.tendstoInDistribution_sample_autocorrelations` (GAPS 106.4, independent case of
-  Bartlett's theorem): for iid observations with finite positive variance,
-  `√n (ρ̂(1), …, ρ̂(m)) ⇒ N(0, I_m)`.
 
-The martingale central limit theorem is proved by the characteristic-function argument of
-B. M. Brown (1971): each row is truncated at the first index where the summed conditional
-variances exceed `v + 1`, the bounded case `CKSD.tendstoInDistribution_sum_of_sum_condVar_le`
-of `CKSD.Asymptotics.MartingaleCLT.Basic` applies to the truncated rows, and Slutsky's lemma
-removes the truncation, which only acts on events of vanishing probability.
-
-The general linear-process form of Bartlett's theorem is not covered.
+The proof is the characteristic-function argument of B. M. Brown (1971): each row is truncated
+at the first index where the summed conditional variances exceed `v + 1`, the bounded case
+`CKSD.tendstoInDistribution_sum_of_sum_condVar_le` of `CKSD.Asymptotics.MartingaleCLT.Basic`
+applies to the truncated rows, and Slutsky's lemma removes the truncation, which only acts on
+events of vanishing probability. The application to sample autocorrelations is in
+`CKSD.Processes.TimeSeries.SampleAutocorrelation`.
 
 ## References
 
@@ -209,21 +208,5 @@ theorem tendstoInDistribution_martingale_array_sum {Ω : Type*} [MeasurableSpace
   exact tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ S' S
     (fun n ↦ Finset.measurable_fun_sum _ fun j _ ↦ ((hX'm n j).mono ((F n).le _)).measurable)
     (fun n ↦ Finset.measurable_fun_sum _ fun j _ ↦ (ha n j).mono ((F n).le _) le_rfl) hS' hSS'
-
-
-/-- GAPS 106.4, independent-observation case of Bartlett's theorem: for iid observations with
-finite positive variance, the normalized sample autocorrelations
-`√n ρ̂(h) = √n γ̂(h) / γ̂(0)` at lags `h = 1, …, m` converge jointly in law to independent
-standard normal variables. Finite variance follows from `0 < Var`
-(`memLp_id_two_of_variance_pos`). -/
-theorem tendstoInDistribution_sample_autocorrelations {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
-    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P)
-    (hv : 0 < Var[id; P]) (m : ℕ) :
-    TendstoInDistribution (fun (n : ℕ) ω ↦ (WithLp.toLp 2 fun i : Fin m ↦
-      Real.sqrt n * sampleAutocovariance X (i.val + 1) n ω / sampleAutocovariance X 0 n ω))
-      atTop id (fun _ ↦ μ)
-      (stdGaussian (EuclideanSpace ℝ (Fin m))) := by
-  sorry
 
 end CKSD

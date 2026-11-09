@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Asymptotics.MEstimators
+import CKSD.Asymptotics.ConvexRegression.Basic
 import CKSD.Asymptotics.LipschitzExpansion
 import CKSD.Asymptotics.MultivariateCLT
 import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Order
@@ -11,20 +12,14 @@ import TauCeti.Probability.Distributions.Gaussian.Affine
 # Rate and local normality of M-estimators
 
 Asymptotic linearization and normality of M-estimators with a Lipschitz-in-parameter criterion
-(GAPS 102.24) and of fixed-design convex regression M-estimators (GAPS 102.48). The formulations
-separate measurable sample criteria, deterministic local curvature, and the quality of the
-empirical optimization.
-
-## Main definitions
-
-* `CKSD.regressionMObjective`, `CKSD.fixedDesignGramMatrix`.
+(GAPS 102.24). The formulation separates measurable sample criteria, deterministic local
+curvature, and the quality of the empirical optimization. The fixed-design convex regression case
+(GAPS 102.48) is in `CKSD.Asymptotics.RegressionMEstimators`.
 
 ## Main results
 
 * `CKSD.mEstimator_asymptotic_linearization_and_normality`: asymptotic linearization and
   normality of M-estimators (GAPS 102.24).
-* `CKSD.regression_mEstimator_asymptotic_linearization_and_normality`: the fixed-design convex
-  regression case (GAPS 102.48).
 
 ## References
 
@@ -916,50 +911,5 @@ theorem mEstimator_asymptotic_linearization_and_normality
     rfl
 
 end MEstimatorNormality
-
-/-- Fixed-design convex regression objective. -/
-def regressionMObjective {d : ℕ} (ρ : ℝ → ℝ) (x : ℕ → EuclideanSpace ℝ (Fin d))
-    (y : ℕ → ℝ) (n : ℕ) (β : EuclideanSpace ℝ (Fin d)) : ℝ :=
-  ∑ i ∈ Finset.range n, ρ (y i - inner ℝ (x i) β)
-
-/-- Empirical Gram matrix of the first `n` fixed-design rows. -/
-def fixedDesignGramMatrix {d : ℕ} (x : ℕ → EuclideanSpace ℝ (Fin d))
-    (n : ℕ) : Matrix (Fin d) (Fin d) ℝ :=
-  fun i j ↦ (∑ k ∈ Finset.range n, x k i * x k j) / n
-
-/-- GAPS 102.48: asymptotic linearization and normality of fixed-design convex M-estimators.
-The right derivative of `ρ` is `ψ`. The `L²` continuity of shifted scores is expressed by
-nonnegative extended integrals, so nonintegrable remainders cannot be assigned value zero. -/
-theorem regression_mEstimator_asymptotic_linearization_and_normality
-    {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
-    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
-    (ε : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ ε P)
-    (x : ℕ → EuclideanSpace ℝ (Fin d)) (Q : Matrix (Fin d) (Fin d) ℝ) (hQ : Q.PosDef)
-    (hgram : Tendsto (fixedDesignGramMatrix x) atTop (𝓝 Q))
-    (hleverage : Tendsto (fun n : ℕ ↦
-      sSup (range fun i : Fin n ↦ ‖x i.val‖) / Real.sqrt n) atTop (𝓝 0))
-    (ρ ψ : ℝ → ℝ) (hconv : ConvexOn ℝ univ ρ) (hψ : Measurable ψ)
-    (hder : ∀ u, HasDerivWithinAt ρ (ψ u) (Ici u) u)
-    (hψ2 : MemLp ψ 2 P) (hψ0 : (∫ z, ψ z ∂P) = 0)
-    (hcont : Tendsto (fun t : ℝ ↦ ∫⁻ z, ENNReal.ofReal ((ψ (z - t) - ψ z) ^ 2) ∂P)
-      (𝓝 0) (𝓝 0))
-    (γ : ℝ) (hγ : 0 < γ)
-    (hmean : HasDerivAt (fun t ↦ ∫ z, ψ (z - t) ∂P) (-γ) 0)
-    (β : EuclideanSpace ℝ (Fin d)) (T : ℕ → Ω → EuclideanSpace ℝ (Fin d))
-    (hT : ∀ n, Measurable (T n))
-    (hmin : ∀ n : ℕ, 0 < n → ∀ᵐ ω ∂μ, ∀ b,
-      regressionMObjective ρ x (fun i ↦ inner ℝ (x i) β + ε i ω) n (T n ω) ≤
-        regressionMObjective ρ x (fun i ↦ inner ℝ (x i) β + ε i ω) n b) :
-    TendstoInMeasure μ (fun (n : ℕ) ω ↦ Real.sqrt n • (T n ω - β) -
-      (γ * Real.sqrt n)⁻¹ • Matrix.toEuclideanCLM (𝕜 := ℝ) Q⁻¹
-        (∑ i ∈ Finset.range n, ψ (ε i ω) • x i)) atTop (fun _ ↦ 0) ∧
-    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n • (T n ω - β)) atTop id (fun _ ↦ μ)
-      (multivariateGaussian 0 (((∫ z, ψ z ^ 2 ∂P) / γ ^ 2) • Q⁻¹)) := by
-  sorry
-
-/-- The zero-sample convex regression objective has value zero. -/
-@[simp] theorem regressionMObjective_zero {d : ℕ} (ρ : ℝ → ℝ)
-    (x : ℕ → EuclideanSpace ℝ (Fin d)) (y : ℕ → ℝ) (β : EuclideanSpace ℝ (Fin d)) :
-    regressionMObjective ρ x y 0 β = 0 := by simp [regressionMObjective]
 
 end CKSD

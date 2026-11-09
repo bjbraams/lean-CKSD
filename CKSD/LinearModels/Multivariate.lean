@@ -10,6 +10,8 @@ public import TauCeti.Probability.Distributions.StudentT.Basic
 public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
 public import TauCeti.Probability.Distributions.Wishart.Agreement
 public import TauCeti.Probability.Distributions.Wishart.Determinant
+public import CKSD.Inference.Testing
+public import CKSD.LinearModels.MultivariateSampleLaws
 
 /-!
 # Multivariate normal samples: Wishart and Hotelling laws, covariance likelihood
@@ -34,6 +36,19 @@ Exact distribution theory for samples from `N_p(μ, Σ)` and the Gaussian covari
   TauCeti's Wishart agreement and determinant theorems.
 * `CKSD.gaussian_sample_correlation_student_law`: under independence, the sample correlation
   `r` satisfies `√(N-2) r / √(1-r²) ∼ t_{N-2}`.
+
+The sampling laws of 105.22 use the Helmert decomposition
+`CKSD.exists_helmert_decomposition` and Hotelling's law
+`CKSD.map_hotelling_multivariateGaussian_wishartGramMeasure` from
+`CKSD.LinearModels.MultivariateSampleLaws`.
+
+The correlation law conditions on the second sample: for a fixed non-constant second sample,
+the statistic is `Z / √(V / (N - 2))` with `Z` the inner product of the first sample with the
+normalized centered second sample and `V` the squared length of the projection onto the
+orthogonal complement of that vector and the constants. It uses TauCeti's
+`HasLaw.iIndepFun_orthogonalProjectionOnto_stdGaussian`,
+`HasLaw.norm_sq_orthogonalProjectionOnto_stdGaussian` and
+`TauCeti.Probability.hasLaw_studentT_of_gaussian_chiSquared`.
 
 The likelihood results use Mathlib's spectral theorem for Hermitian matrices and the inequality
 `Real.log_le_sub_one_of_pos` together with its strict case.
@@ -77,7 +92,86 @@ theorem gaussian_sampleMean_scatterMatrix_wishart_and_hotelling
       P.map (fun x ↦ ((n - p : ℕ) : ℝ) / (((n - 1 : ℕ) : ℝ) * p) *
         ((n : ℝ) * matrixQuadraticForm (S x)⁻¹ (sampleMean x - m))) =
         TauCeti.Probability.fisherSnedecorMeasure p (n - p : ℕ) := by
-  sorry
+  intro P S
+  obtain ⟨Y, U, hY, hU, hlaw, hmean, hscat⟩ :=
+    exists_helmert_decomposition (by omega : 0 < n) m hS.posSemidef
+  have : IsProbabilityMeasure (multivariateGaussian (0 : EuclideanSpace ℝ (Fin p)) Sigma) :=
+    inferInstance
+  have : IsProbabilityMeasure
+      (Measure.pi fun _ : Fin (n - 1) ↦
+        multivariateGaussian (0 : EuclideanSpace ℝ (Fin p)) Sigma) :=
+    inferInstance
+  have : SFinite
+      (Measure.pi fun _ : Fin (n - 1) ↦
+        multivariateGaussian (0 : EuclideanSpace ℝ (Fin p)) Sigma) :=
+    inferInstance
+  have hpm : Measurable fun x ↦ (Y x, U x) := hY.prodMk hU
+  have hYlaw : P.map Y = Measure.pi fun _ : Fin (n - 1) ↦ multivariateGaussian 0 Sigma := by
+    have h := congrArg (Measure.map Prod.fst) hlaw
+    rwa [Measure.map_map measurable_fst hpm, Measure.map_fst_prod, measure_univ, one_smul] at h
+  have hUlaw : P.map U = multivariateGaussian 0 Sigma := by
+    have h := congrArg (Measure.map Prod.snd) hlaw
+    rwa [Measure.map_map measurable_snd hpm, Measure.map_snd_prod, measure_univ, one_smul] at h
+  have hind : IndepFun U Y P := by
+    have : IsProbabilityMeasure P := inferInstance
+    rw [indepFun_iff_map_prod_eq_prod_map_map hU.aemeasurable hY.aemeasurable, hYlaw, hUlaw,
+      ← Measure.prod_swap, hlaw.symm, Measure.map_map measurable_swap hpm]
+    rfl
+  have hWm : Measurable fun x ↦ TauCeti.Probability.wishartGram (Y x) :=
+    TauCeti.Probability.measurable_wishartGram.comp hY
+  refine ⟨?_, ?_, ?_⟩
+  · have h := hind.comp (φ := fun u ↦ m + (Real.sqrt n)⁻¹ • u)
+      (ψ := fun y ↦ (TauCeti.Probability.wishartGram y : Matrix (Fin p) (Fin p) ℝ))
+      (by fun_prop) (measurable_subtype_coe.comp TauCeti.Probability.measurable_wishartGram)
+    convert h using 1
+    · exact funext hmean
+    · exact funext hscat
+  · rw [show scatterMatrix = fun x ↦ (TauCeti.Probability.wishartGram (Y x) :
+        Matrix (Fin p) (Fin p) ℝ) from funext hscat,
+      TauCeti.Probability.wishartGramMeasure_eq_map_pi,
+      ← hYlaw, Measure.map_map TauCeti.Probability.measurable_wishartGram hY,
+      Measure.map_map measurable_subtype_coe (TauCeti.Probability.measurable_wishartGram.comp hY)]
+    rfl
+  · have hn0 : (n : ℝ) ≠ 0 := by
+      have : 0 < n := by omega
+      positivity
+    have hν0 : ((n - 1 : ℕ) : ℝ) ≠ 0 := by
+      have : 0 < n - 1 := by omega
+      positivity
+    have hp0 : (p : ℝ) ≠ 0 := by positivity
+    have hstat : (fun x ↦ ((n - p : ℕ) : ℝ) / (((n - 1 : ℕ) : ℝ) * p) *
+        ((n : ℝ) * matrixQuadraticForm (S x)⁻¹ (sampleMean x - m))) =
+        (fun z : EuclideanSpace ℝ (Fin p) × selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦
+          ((n - 1 - p + 1 : ℕ) : ℝ) / p *
+            matrixQuadraticForm (z.2 : Matrix (Fin p) (Fin p) ℝ)⁻¹ z.1) ∘
+          (fun x ↦ (U x, TauCeti.Probability.wishartGram (Y x))) := by
+      funext x
+      have hsq : ((Real.sqrt n)⁻¹) ^ 2 = (n : ℝ)⁻¹ := by
+        rw [inv_pow, Real.sq_sqrt (Nat.cast_nonneg n)]
+      simp only [Function.comp_apply, S, hmean x, hscat x, add_sub_cancel_left,
+        matrix_inv_smul_of_ne_zero (inv_ne_zero hν0), inv_inv, matrixQuadraticForm_smul_smul, hsq,
+        show n - 1 - p + 1 = n - p by omega]
+      field_simp
+    have hjoint : P.map (fun x ↦ (U x, TauCeti.Probability.wishartGram (Y x))) =
+        (multivariateGaussian 0 Sigma).prod
+          (TauCeti.Probability.wishartGramMeasure (n - 1) Sigma) := by
+      have hg : Measurable fun z : (Fin (n - 1) → EuclideanSpace ℝ (Fin p)) ×
+          EuclideanSpace ℝ (Fin p) ↦ (z.2, TauCeti.Probability.wishartGram z.1) :=
+        measurable_snd.prodMk (TauCeti.Probability.measurable_wishartGram.comp measurable_fst)
+      rw [show (fun x ↦ (U x, TauCeti.Probability.wishartGram (Y x))) =
+          (fun z : (Fin (n - 1) → EuclideanSpace ℝ (Fin p)) × EuclideanSpace ℝ (Fin p) ↦
+            (z.2, TauCeti.Probability.wishartGram z.1)) ∘ (fun x ↦ (Y x, U x)) from rfl,
+        ← Measure.map_map hg hpm, hlaw, TauCeti.Probability.wishartGramMeasure_eq_map_pi]
+      have h2 := Measure.map_prod_map (multivariateGaussian (0 : EuclideanSpace ℝ (Fin p)) Sigma)
+        (Measure.pi fun _ : Fin (n - 1) ↦ multivariateGaussian 0 Sigma) measurable_id
+        TauCeti.Probability.measurable_wishartGram
+      rw [Measure.map_id] at h2
+      rw [h2, ← Measure.prod_swap, Measure.map_map hg measurable_swap]
+      rfl
+    rw [hstat, ← Measure.map_map (by exact (measurable_const.mul
+        measurable_matrixQuadraticForm_inv)) (hU.prodMk hWm), hjoint,
+      map_hotelling_multivariateGaussian_wishartGramMeasure hp (by omega) hS,
+      show n - 1 - p + 1 = n - p by omega]
 
 /-- The spectral inequality `log det A ≤ tr A - dim` for a positive-definite real matrix,
 together with its equality case `A = 1`. -/
@@ -333,6 +427,269 @@ theorem wishart_determinant_law {p : ℕ} (n : ℕ) (hn : p ≤ n)
     fun i ↦ Nat.cast_sub (by omega)
   simpa only [hcast] using TauCeti.Probability.map_det_nonsingularWishartMeasure hS hdeg
 
+/-- The sample correlation statistic `√(N - 2) r / √(1 - r²)` of paired samples `x`, `y`. -/
+private noncomputable def correlationStat (N : ℕ) (x y : Fin N → ℝ) : ℝ :=
+  let a := (∑ i, x i) / N
+  let b := (∑ i, y i) / N
+  let r := (∑ i, (x i - a) * (y i - b)) /
+    Real.sqrt ((∑ i, (x i - a) ^ 2) * (∑ i, (y i - b) ^ 2))
+  Real.sqrt (N - 2 : ℕ) * r / Real.sqrt (1 - r ^ 2)
+
+/-- The sample correlation statistic is jointly measurable in the two samples. -/
+private theorem measurable_correlationStat (N : ℕ) :
+    Measurable (fun z : (Fin N → ℝ) × (Fin N → ℝ) ↦ correlationStat N z.1 z.2) := by
+  unfold correlationStat
+  fun_prop
+
+/-- The sample correlation statistic is measurable in the first sample. -/
+private theorem measurable_correlationStat_left (N : ℕ) (y : Fin N → ℝ) :
+    Measurable (fun x ↦ correlationStat N x y) := by
+  unfold correlationStat
+  fun_prop
+
+/-- The Euclidean inner product in coordinates. -/
+private theorem inner_toLp_eq_sum {N : ℕ} (f g : Fin N → ℝ) :
+    inner ℝ (WithLp.toLp 2 f : EuclideanSpace ℝ (Fin N)) (WithLp.toLp 2 g) = ∑ i, f i * g i := by
+  rw [EuclideanSpace.inner_toLp_toLp]
+  simp [dotProduct, mul_comm]
+
+/-- The algebraic core: with `Z = ⟨u, x⟩` and `V = ∑ (xᵢ - x̄)² - Z²`, the statistic equals
+`Z / √(V / (N - 2))`. -/
+private theorem correlationStat_eq {N : ℕ} (x y : Fin N → ℝ) (s Z V : ℝ) (hs : 0 < s)
+    (hyy : ∑ i, (y i - (∑ j, y j) / N) ^ 2 = s ^ 2)
+    (hxy : ∑ i, (x i - (∑ j, x j) / N) * (y i - (∑ j, y j) / N) = s * Z)
+    (hV : V = ∑ i, (x i - (∑ j, x j) / N) ^ 2 - Z ^ 2) (hV0 : 0 ≤ V) :
+    correlationStat N x y = Z / Real.sqrt (V / (N - 2 : ℕ)) := by
+  unfold correlationStat
+  simp only
+  set Sxx := ∑ i, (x i - (∑ j, x j) / N) ^ 2 with hSxx
+  rw [hyy, hxy]
+  have hS0 : 0 ≤ Sxx := Finset.sum_nonneg fun i _ ↦ sq_nonneg _
+  rw [Real.sqrt_mul hS0, Real.sqrt_sq hs.le]
+  rcases hS0.eq_or_lt with h0 | hpos
+  · have hZ : Z = 0 := by nlinarith [sq_nonneg Z]
+    simp [hZ]
+  set q := Real.sqrt Sxx with hq
+  have hq0 : 0 < q := Real.sqrt_pos.2 hpos
+  have hqq : q ^ 2 = Sxx := Real.sq_sqrt hS0
+  have hr : s * Z / (q * s) = Z / q := by field_simp
+  rw [hr]
+  have h1 : 1 - (Z / q) ^ 2 = V / q ^ 2 := by
+    rw [hV, ← hqq]
+    field_simp
+  rw [h1, Real.sqrt_div hV0, Real.sqrt_sq hq0.le]
+  rcases hV0.eq_or_lt with hV0' | hVpos
+  · simp [← hV0']
+  have hk : (0 : ℝ) ≤ ((N - 2 : ℕ) : ℝ) := Nat.cast_nonneg _
+  rw [Real.sqrt_div hV0]
+  rcases hk.eq_or_lt with hk0 | hkpos
+  · rw [← hk0]
+    simp
+  have hsv : 0 < Real.sqrt V := Real.sqrt_pos.2 hVpos
+  have hsk : 0 < Real.sqrt ((N - 2 : ℕ) : ℝ) := Real.sqrt_pos.2 hkpos
+  field_simp
+
+
+/-- For a fixed non-constant second sample `y`, the statistic of a standard Gaussian first
+sample has Student's law with `N - 2` degrees of freedom. -/
+private theorem map_correlationStat_left {N : ℕ} (hN : 2 < N) (y : Fin N → ℝ)
+    (hy : (fun i ↦ y i - (∑ j, y j) / N) ≠ 0) :
+    (Measure.pi fun _ : Fin N ↦ gaussianReal 0 1).map (fun x ↦ correlationStat N x y) =
+      TauCeti.Probability.studentTMeasure (N - 2 : ℕ) := by
+  set μ := Measure.pi fun _ : Fin N ↦ gaussianReal 0 1
+  set yc : Fin N → ℝ := fun i ↦ y i - (∑ j, y j) / N with hyc
+  have hN0 : (N : ℝ) ≠ 0 := by positivity
+  have hsum_yc : ∑ i, yc i = 0 := by
+    simp only [yc, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
+      nsmul_eq_mul]
+    field_simp
+    ring
+  set s := Real.sqrt (∑ i, yc i ^ 2) with hsdef
+  have hss : 0 < ∑ i, yc i ^ 2 := by
+    obtain ⟨i, hi⟩ := Function.ne_iff.1 hy
+    have hi' : yc i ≠ 0 := by simpa [yc] using hi
+    exact lt_of_lt_of_le (by positivity) (Finset.single_le_sum (f := fun i ↦ yc i ^ 2)
+      (fun _ _ ↦ sq_nonneg _) (Finset.mem_univ i))
+  have hs : 0 < s := Real.sqrt_pos.2 hss
+  have hs2 : s ^ 2 = ∑ i, yc i ^ 2 := Real.sq_sqrt hss.le
+  let E := EuclideanSpace ℝ (Fin N)
+  let e1 : E := WithLp.toLp 2 fun _ ↦ (Real.sqrt N)⁻¹
+  let u : E := WithLp.toLp 2 fun i ↦ s⁻¹ * yc i
+  have hsN : Real.sqrt N ^ 2 = N := Real.sq_sqrt (by positivity)
+  have hsN0 : Real.sqrt N ≠ 0 := (Real.sqrt_pos.2 (by positivity)).ne'
+  have he1 : inner ℝ e1 e1 = 1 := by
+    rw [inner_toLp_eq_sum]
+    simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    field_simp
+    exact hsN.symm
+  have hu : inner ℝ u u = 1 := by
+    rw [inner_toLp_eq_sum]
+    have : ∑ i, s⁻¹ * yc i * (s⁻¹ * yc i) = (∑ i, yc i ^ 2) / s ^ 2 := by
+      rw [Finset.sum_div]
+      refine Finset.sum_congr rfl fun i _ ↦ ?_
+      field_simp
+    rw [this, hs2, div_self hss.ne']
+  have he1u : inner ℝ e1 u = 0 := by
+    rw [inner_toLp_eq_sum, ← Finset.mul_sum, ← Finset.mul_sum, hsum_yc]
+    simp
+  -- the subspaces `span {u}` and `span {e₁, u}ᗮ`
+  let S2 : Submodule ℝ E := Submodule.span ℝ {e1, u}
+  let K : Submodule ℝ E := Submodule.span ℝ {u}
+  let L : Submodule ℝ E := S2ᗮ
+  have hKS : K ≤ S2 := Submodule.span_mono (by simp)
+  have hKL : K ⟂ L := (Submodule.isOrtho_orthogonal_right S2).mono_left hKS
+  have hne1 : ‖e1‖ = 1 := by
+    have h := real_inner_self_eq_norm_sq e1
+    rw [he1] at h
+    exact ((pow_eq_one_iff_of_nonneg (norm_nonneg _) two_ne_zero).1 h.symm)
+  have hnu : ‖u‖ = 1 := by
+    have h := real_inner_self_eq_norm_sq u
+    rw [hu] at h
+    exact ((pow_eq_one_iff_of_nonneg (norm_nonneg _) two_ne_zero).1 h.symm)
+  have hON : Orthonormal ℝ ![e1, u] := by
+    rw [orthonormal_iff_ite]
+    intro i j
+    fin_cases i <;> fin_cases j <;> simp [hne1, hnu, he1u, real_inner_comm]
+  have hfin2 : Module.finrank ℝ S2 = 2 := by
+    have := finrank_span_eq_card hON.linearIndependent
+    have hr : Set.range ![e1, u] = {e1, u} := by
+      rw [Matrix.range_cons, Matrix.range_cons, Matrix.range_empty, Set.union_empty,
+        Set.singleton_union]
+    rw [hr] at this
+    simpa using this
+  have hfinL : Module.finrank ℝ L = N - 2 := by
+    show Module.finrank ℝ S2ᗮ = N - 2
+    have := Submodule.finrank_add_finrank_orthogonal S2
+    rw [hfin2, finrank_euclideanSpace_fin] at this
+    omega
+  have hproj : ∀ X : E, L.starProjection X = X - inner ℝ e1 X • e1 - inner ℝ u X • u := by
+    intro X
+    refine Submodule.eq_starProjection_of_mem_of_inner_eq_zero ?_ fun w hw ↦ ?_
+    · rw [Submodule.mem_orthogonal]
+      intro v hv
+      obtain ⟨α, β, rfl⟩ := Submodule.mem_span_pair.1 hv
+      simp only [inner_add_left, inner_smul_left, inner_sub_right, inner_smul_right, he1, hu,
+        he1u, real_inner_comm e1 u, RCLike.conj_to_real]
+      ring
+    · have hmem : inner ℝ e1 X • e1 + inner ℝ u X • u ∈ S2 :=
+        S2.add_mem (S2.smul_mem _ (Submodule.subset_span (by simp)))
+          (S2.smul_mem _ (Submodule.subset_span (by simp)))
+      rw [show X - (X - inner ℝ e1 X • e1 - inner ℝ u X • u) =
+        inner ℝ e1 X • e1 + inner ℝ u X • u by abel]
+      exact Submodule.inner_right_of_mem_orthogonal hmem hw
+  have hnormL : ∀ X : E, ‖L.orthogonalProjectionOnto X‖ ^ 2 =
+      inner ℝ X X - inner ℝ e1 X ^ 2 - inner ℝ u X ^ 2 := by
+    intro X
+    rw [← Submodule.norm_coe, ← Submodule.starProjection_apply, hproj, ← real_inner_self_eq_norm_sq]
+    simp only [inner_sub_left, inner_sub_right, inner_smul_left, inner_smul_right, he1, hu,
+      he1u, real_inner_comm e1 u, real_inner_comm X e1, real_inner_comm X u, RCLike.conj_to_real]
+    ring
+  -- the standardized sample and the two independent pieces
+  let Y : (Fin N → ℝ) → E := fun x ↦ WithLp.toLp 2 x
+  have hY : HasLaw Y (stdGaussian E) μ := by
+    have h := hasLaw_standardize_pi_gaussianReal N 0 1 one_pos
+    have hf : (fun x : Fin N → ℝ ↦ (WithLp.toLp 2 (fun i ↦ (x i - 0) / Real.sqrt ((1 : ℝ≥0) : ℝ)) :
+        EuclideanSpace ℝ (Fin N))) = Y := by
+      funext x
+      simp [Y]
+    rwa [hf] at h
+  let Zf : (Fin N → ℝ) → ℝ := fun x ↦ inner ℝ u (Y x)
+  let Vf : (Fin N → ℝ) → ℝ := fun x ↦ ‖L.orthogonalProjectionOnto (Y x)‖ ^ 2
+  have hZ : HasLaw Zf (gaussianReal 0 1) μ :=
+    HasLaw.comp ⟨by fun_prop, stdGaussian_map_inner_of_norm_eq_one u hnu⟩ hY
+  have hV : HasLaw Vf (TauCeti.Probability.chiSquaredMeasure (N - 2 : ℕ)) μ := by
+    have := hY.norm_sq_orthogonalProjectionOnto_stdGaussian L
+    rwa [hfinL] at this
+  have hK2 : Pairwise fun i j : Bool ↦ (bif i then K else L) ⟂ (bif j then K else L) := by
+    intro i j hij
+    cases i <;> cases j
+    · exact absurd rfl hij
+    · exact hKL.symm
+    · exact hKL
+    · exact absurd rfl hij
+  have hTF : IndepFun (fun x ↦ K.orthogonalProjectionOnto (Y x))
+      (fun x ↦ L.orthogonalProjectionOnto (Y x)) μ :=
+    (hY.iIndepFun_orthogonalProjectionOnto_stdGaussian (fun b ↦ bif b then K else L) hK2).indepFun
+      (i := true) (j := false) (by decide)
+  have hZV : IndepFun Zf Vf μ := by
+    have := hTF.comp (φ := fun z : K ↦ inner ℝ u (z : E)) (ψ := fun z : L ↦ ‖z‖ ^ 2)
+      (by fun_prop) (by fun_prop)
+    convert this using 1
+    · funext x
+      simp only [Function.comp_apply, Zf]
+      rw [Submodule.coe_orthogonalProjectionOnto_apply,
+        ← Submodule.inner_starProjection_left_eq_right,
+        Submodule.starProjection_eq_self_iff.2 (Submodule.mem_span_singleton_self u)]
+    · rfl
+  have hν : (0 : ℝ) < ((N - 2 : ℕ) : ℝ) := by
+    have : 1 ≤ N - 2 := by omega
+    exact_mod_cast this
+  rw [← (TauCeti.Probability.hasLaw_studentT_of_gaussian_chiSquared hν hZV hZ hV).map_eq]
+  congr 1
+  funext x
+  have hZx : Zf x = ∑ i, s⁻¹ * yc i * x i := inner_toLp_eq_sum _ _
+  have hxx : inner ℝ (Y x) (Y x) = ∑ i, x i * x i := inner_toLp_eq_sum _ _
+  have he1x : inner ℝ e1 (Y x) = ∑ i, (Real.sqrt N)⁻¹ * x i := inner_toLp_eq_sum _ _
+  refine correlationStat_eq x y s (Zf x) (Vf x) hs hs2.symm ?_ ?_ (by positivity)
+  · show ∑ i, (x i - (∑ j, x j) / N) * yc i = _
+    rw [hZx, Finset.mul_sum]
+    have : ∀ i, (x i - (∑ j, x j) / N) * yc i = s * (s⁻¹ * yc i * x i) -
+        (∑ j, x j) / N * yc i := fun i ↦ by
+      rw [← mul_assoc s, ← mul_assoc s, mul_inv_cancel₀ hs.ne', one_mul]
+      ring
+    simp only [this, Finset.sum_sub_distrib, ← Finset.mul_sum, hsum_yc, mul_zero, sub_zero]
+  · simp only [Vf, hnormL, hxx, he1x, ← Finset.mul_sum, sub_sq, Finset.sum_add_distrib,
+      Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    rw [← Finset.sum_mul, ← Finset.mul_sum]
+    field_simp
+    rw [hsN]
+    ring
+
+/-- A standard Gaussian sample of size `N ≥ 2` is almost surely non-constant. -/
+private theorem ae_sub_mean_ne_zero {N : ℕ} (hN : 2 ≤ N) :
+    ∀ᵐ y ∂(Measure.pi fun _ : Fin N ↦ gaussianReal 0 1),
+      (fun i ↦ y i - (∑ j, y j) / (N : ℝ)) ≠ 0 := by
+  set μ := Measure.pi fun _ : Fin N ↦ gaussianReal 0 1
+  let i0 : Fin N := ⟨0, by omega⟩
+  let i1 : Fin N := ⟨1, by omega⟩
+  let E := EuclideanSpace ℝ (Fin N)
+  let w : E := (Real.sqrt 2)⁻¹ • (EuclideanSpace.single i0 1 - EuclideanSpace.single i1 1)
+  have h01 : i0 ≠ i1 := by simp [i0, i1, Fin.ext_iff]
+  have hw : ‖w‖ = 1 := by
+    have h2 : ‖EuclideanSpace.single i0 (1 : ℝ) - EuclideanSpace.single i1 1‖ = Real.sqrt 2 := by
+      rw [EuclideanSpace.norm_eq]
+      congr 1
+      rw [Fintype.sum_eq_add_sum_compl i0, Finset.sum_eq_single i1]
+      · simp [h01, h01.symm]
+        norm_num
+      · intro j _ hj
+        have hj0 : j ≠ i0 := Finset.notMem_singleton.1 (Finset.mem_compl.1 ‹_›)
+        simp [hj, hj0]
+      · simp [h01.symm]
+    rw [norm_smul, h2, norm_inv, Real.norm_eq_abs, abs_of_pos (by positivity),
+      inv_mul_cancel₀ (by positivity)]
+  have hY := hasLaw_standardize_pi_gaussianReal N 0 1 one_pos
+  have hf : (fun x : Fin N → ℝ ↦ (WithLp.toLp 2 (fun i ↦ (x i - 0) / Real.sqrt ((1 : ℝ≥0) : ℝ)) :
+      EuclideanSpace ℝ (Fin N))) = fun x ↦ WithLp.toLp 2 x := by
+    funext x
+    simp
+  rw [hf] at hY
+  have hZ : HasLaw (fun x : Fin N → ℝ ↦ inner ℝ w (WithLp.toLp 2 x : E)) (gaussianReal 0 1) μ :=
+    HasLaw.comp ⟨by fun_prop, stdGaussian_map_inner_of_norm_eq_one w hw⟩ hY
+  have h0 : μ ((fun x : Fin N → ℝ ↦ inner ℝ w (WithLp.toLp 2 x : E)) ⁻¹' {0}) = 0 := by
+    rw [← Measure.map_apply_of_aemeasurable hZ.aemeasurable (measurableSet_singleton 0),
+      hZ.map_eq]
+    have := nullSingletonClass_gaussianReal (μ := 0) (v := 1) one_ne_zero
+    exact measure_singleton 0
+  refine measure_mono_null (fun y hy ↦ ?_) h0
+  have hy' : (fun i ↦ y i - (∑ j, y j) / (N : ℝ)) = 0 := not_not.1 hy
+  have h1 := congrFun hy' i0
+  have h2 := congrFun hy' i1
+  simp only [Pi.zero_apply, sub_eq_zero] at h1 h2
+  simp only [Set.mem_preimage, Set.mem_singleton_iff, w, inner_smul_left, inner_sub_left]
+  rw [EuclideanSpace.inner_single_left, EuclideanSpace.inner_single_left]
+  simp [h1, h2]
+
 /-- GAPS 105.32: for `N > 2` independent pairs of independent standard normal variables, the
 sample correlation coefficient `r` satisfies `√(N - 2) r / √(1 - r²) ∼ t_{N-2}`. -/
 theorem gaussian_sample_correlation_student_law (N : ℕ) (hN : 2 < N) :
@@ -344,6 +701,24 @@ theorem gaussian_sample_correlation_student_law (N : ℕ) (hN : 2 < N) :
         Real.sqrt ((∑ i, ((x i).1 - a x) ^ 2) * (∑ i, ((x i).2 - b x) ^ 2));
     P.map (fun x ↦ Real.sqrt (N - 2 : ℕ) * r x / Real.sqrt (1 - r x ^ 2)) =
       TauCeti.Probability.studentTMeasure (N - 2 : ℕ) := by
-  sorry
+  intro P a b r
+  set μ := Measure.pi fun _ : Fin N ↦ gaussianReal 0 1
+  let e := MeasurableEquiv.arrowProdEquivProdArrow ℝ ℝ (Fin N)
+  let F : (Fin N → ℝ) × (Fin N → ℝ) → ℝ := fun z ↦ correlationStat N z.1 z.2
+  have hF : Measurable F := measurable_correlationStat N
+  have hfun : (fun x ↦ Real.sqrt (N - 2 : ℕ) * r x / Real.sqrt (1 - r x ^ 2)) = F ∘ e := rfl
+  have he : P.map e = μ.prod μ :=
+    (measurePreserving_arrowProdEquivProdArrow ℝ ℝ (Fin N) (fun _ ↦ gaussianReal 0 1)
+      (fun _ ↦ gaussianReal 0 1)).map_eq
+  rw [hfun, ← Measure.map_map hF e.measurable, he]
+  ext s hs
+  rw [Measure.map_apply hF hs, Measure.prod_apply_symm (hF hs)]
+  have hae : ∀ᵐ y ∂μ, μ ((fun x ↦ (x, y)) ⁻¹' (F ⁻¹' s)) =
+      TauCeti.Probability.studentTMeasure (N - 2 : ℕ) s := by
+    filter_upwards [ae_sub_mean_ne_zero hN.le] with y hy
+    rw [← map_correlationStat_left hN y hy,
+      Measure.map_apply (measurable_correlationStat_left N y) hs]
+    rfl
+  rw [lintegral_congr_ae hae, lintegral_const, measure_univ, mul_one]
 
 end CKSD

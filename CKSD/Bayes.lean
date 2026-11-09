@@ -7,9 +7,14 @@ public import CKSD.Bayes.ParticleFilter
 public import CKSD.Bayes.Diffusion
 public import CKSD.Bayes.PolyaUrn
 public import CKSD.Bayes.PosteriorContraction
+public import CKSD.Bayes.ExponentialTests
+public import CKSD.Bayes.EvidenceBounds
 public import CKSD.Bayes.ParticleLimits
+public import CKSD.Bayes.ParticleFluctuations
+public import CKSD.Bayes.ParticleCentralLimit
 public import CKSD.Bayes.Posterior
 public import CKSD.Bayes.MonteCarlo
+public import CKSD.Bayes.MarkovChainCLT
 public import CKSD.Bayes.Dynamics
 public import CKSD.Bayes.DirichletProcess
 public import CKSD.Bayes.InverseProblems

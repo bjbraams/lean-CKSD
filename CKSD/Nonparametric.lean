@@ -9,6 +9,7 @@ public import CKSD.Nonparametric.HolderRegressionMinimax
 public import CKSD.Nonparametric.HolderDensityMinimax
 public import CKSD.Nonparametric.Models
 public import CKSD.Nonparametric.Estimation
+public import CKSD.Nonparametric.KernelDensityL1
 public import CKSD.Nonparametric.HighDimensional
 public import CKSD.Nonparametric.LowerBounds
 public import CKSD.Nonparametric.Grenander
@@ -21,13 +22,13 @@ public import CKSD.Nonparametric.GraphicalModels
 
 Entry module for the CKSD formalization of Section 103 of the synopsis: density and regression
 estimation by kernels and smoothing (`CKSD.Nonparametric.Estimation`,
-`CKSD.Nonparametric.SmoothingRates`, `CKSD.Nonparametric.HolderRegressionMinimax`,
-`CKSD.Nonparametric.HolderDensityMinimax`), rank
-statistics and distribution-free goodness-of-fit tests (`CKSD.Nonparametric.GoodnessOfFit`), shape-constrained estimation
-(`CKSD.Nonparametric.Grenander`, `CKSD.Nonparametric.ShapeAndSelection` with the Gaussian
-projection tools of `CKSD.Nonparametric.GaussianProjection`,
+`CKSD.Nonparametric.KernelDensityL1`, `CKSD.Nonparametric.SmoothingRates`,
+`CKSD.Nonparametric.HolderRegressionMinimax`, `CKSD.Nonparametric.HolderDensityMinimax`), rank
+statistics and distribution-free goodness-of-fit tests (`CKSD.Nonparametric.GoodnessOfFit`),
+shape-constrained estimation (`CKSD.Nonparametric.Grenander`, `CKSD.Nonparametric.ShapeAndSelection`
+with the Gaussian projection tools of `CKSD.Nonparametric.GaussianProjection`,
 `CKSD.Nonparametric.LogConcave`), high-dimensional estimation and testing
 (`CKSD.Nonparametric.HighDimensional`, `CKSD.Nonparametric.EmpiricalCovariance`,
-`CKSD.Nonparametric.TracyWidom`, `CKSD.Nonparametric.GraphicalModels`), and minimax lower
-bounds, sparse recovery, and covariance thresholding (`CKSD.Nonparametric.LowerBounds`).
+`CKSD.Nonparametric.TracyWidom`, `CKSD.Nonparametric.GraphicalModels`), and minimax lower bounds,
+sparse recovery, and covariance thresholding (`CKSD.Nonparametric.LowerBounds`).
 -/

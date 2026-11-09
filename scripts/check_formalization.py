@@ -86,18 +86,19 @@ def read_declarations():
 
 def audit_axioms(declarations):
     """Lean checks every expected declaration and audits its transitive axiom closure."""
-    names = ',\n    '.join('`' + d['name'] for d in declarations)
-    source = '''import CKSD
-import Lean.Util.CollectAxioms
-open Lean Elab Command
-run_cmd do
+    block = '''run_cmd do
   let env ← getEnv
   let names : List Name := [NAMES]
   for name in names do
     unless env.contains name do throwError "Missing declaration: {name}"
     let axioms ← collectAxioms name
     logInfo m!"CKSD_AXIOMS {name}: {axioms.toList}"
-'''.replace('NAMES', names)
+'''
+    # One `run_cmd` per chunk: a single very long list literal exceeds the code generator's
+    # recursion limit.
+    chunks = [declarations[i:i + 400] for i in range(0, len(declarations), 400)]
+    source = 'import CKSD\nimport Lean.Util.CollectAxioms\nopen Lean Elab Command\n' + ''.join(
+        block.replace('NAMES', ',\n    '.join('`' + d['name'] for d in chunk)) for chunk in chunks)
     with tempfile.TemporaryDirectory(prefix='cksd-axioms-') as folder:
         path = Path(folder) / 'Audit.lean'
         path.write_text(source)

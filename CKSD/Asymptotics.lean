@@ -2,6 +2,7 @@ module
 
 public import CKSD.Asymptotics.MEstimators
 public import CKSD.Asymptotics.MEstimatorNormality
+public import CKSD.Asymptotics.RegressionMEstimators
 public import CKSD.Asymptotics.Statistics
 public import CKSD.Asymptotics.Framework
 public import CKSD.Asymptotics.Estimators
@@ -16,6 +17,8 @@ public import CKSD.Asymptotics.Expansions
 public import CKSD.Asymptotics.Bootstrap
 public import CKSD.Asymptotics.Lindeberg.Basic
 public import CKSD.Asymptotics.MartingaleCLT.Basic
+public import CKSD.Asymptotics.ConvexArgmin.Basic
+public import CKSD.Asymptotics.ConvexRegression.Basic
 public import CKSD.Asymptotics.UStatisticsProjection
 public import CKSD.Asymptotics.LipschitzChaining
 public import CKSD.Asymptotics.LipschitzExpansion
@@ -35,7 +38,7 @@ Entry module for the CKSD formalization of Section 102.
   bounded conditional variances.
 * `CKSD.Asymptotics.Estimators` and its parts (`MaximumLikelihood`, `ZEstimators`, `Quantiles`,
   `UStatistics`, `UStatisticsProjection`, `LikelihoodSupport`), `CKSD.Asymptotics.MEstimators`,
-  `CKSD.Asymptotics.MEstimatorNormality`
+  `CKSD.Asymptotics.MEstimatorNormality`, `CKSD.Asymptotics.RegressionMEstimators`
   with the chaining bounds of `CKSD.Asymptotics.LipschitzChaining` and
   `CKSD.Asymptotics.LipschitzExpansion`,
   `CKSD.Asymptotics.RatesOfConvergence`, `CKSD.Asymptotics.AsymptoticTheory`: consistency, rates,

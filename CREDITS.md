@@ -61,6 +61,12 @@ Specific proof reuse includes:
   `TauCeti/InformationTheory/KullbackLeibler/Pinsker.lean`.
 - `realSinkhornDivergence_nonneg` uses TauCeti's nonnegativity theorem in
   `TauCeti/MeasureTheory/OptimalTransport/Entropic/SinkhornDivergence.lean`.
+- The two-stage least-squares limit theorems use TauCeti's `TauCeti.measurable_matrix_inv` and
+  `TauCeti.measurable_matrix_mul` from `TauCeti/Analysis/Matrix/MeasurableSpace.lean`.
+- The connectivity estimates for the binomial random graph use TauCeti's measurable-singleton
+  instance on simple graphs from `TauCeti/Combinatorics/SimpleGraph/Measurable.lean`, which with
+  Mathlib's measurable space on `SimpleGraph V` makes every set of graphs on a finite vertex type
+  measurable.
 - The Gaussian-mixture model reuses TauCeti's general finite multivariate
   Gaussian mixture law, density, probability instance, and density theorem
   from `TauCeti/Probability/Distributions/Gaussian/Mixture/Multivariate.lean`.
@@ -395,3 +401,37 @@ results.
   `abs_sub_taylorWithinEval_le` for kernel-density bias.
 - Statlib: `MeasureTheory.lintegral_fintype_prod_eq_prod` and `klDiv_pi_const` in sparse minimax
   bounds.
+
+Further proofs use these upstream results.
+
+- Mathlib: analytic functions and `fderiv` of parametric integrals and the covariance API for
+  analyticity of the log-partition function; the mean value theorem for the inverse of the mean
+  parametrization; `ProbabilityTheory.strong_law_ae`, the iid CLT
+  `tendstoInDistribution_inv_sqrt_mul_sum_sub`, the Cramér–Wold device
+  `TendstoInDistribution.of_inner` and Slutsky's lemma
+  (`TendstoInDistribution.continuous_comp_prodMk_of_tendstoInMeasure_const`) throughout; Lévy's
+  continuity theorem with `charFun_gaussianReal` and `charFun_multivariateGaussian` for the
+  wide-network Gaussian limit and the particle-filter CLTs; `SimpleGraph.binomialRandom`,
+  `ProbabilityTheory.tendsto_choose_mul_pow_atTop` and
+  `Int.alternating_sum_range_choose_eq_choose` for random-graph thresholds; Hoeffding's
+  inequality `HasSubgaussianMGF.measure_sum_range_ge_le_of_iIndepFun` and
+  `toReal_klDiv_of_measure_eq` for Schwartz consistency; the cumulant calculus
+  `analyticOnNhd_cgf` and `iteratedDeriv_two_cgf_eq_integral` for canonical GLMs;
+  `ConvexOn.lipschitzOnWith_of_abs_le` and
+  `Convex.exists_subset_interior_convexHull_finset_of_isCompact` for the convexity lemma;
+  absolutely continuous functions and Lebesgue differentiation
+  (`AbsolutelyContinuousOnInterval.const_of_ae_hasDerivAt_zero`,
+  `IntervalIntegrable.ae_hasDerivAt_integral`) for the Kaplan–Meier estimator;
+  `condExp_indep_eq` and `indep_iSup_of_disjoint` for sample autocorrelations;
+  `tendsto_tsum_of_dominated_convergence` for the periodogram; manifold immersions and Haar
+  measure for sampling on submanifolds; `Metric.hausdorffDist_le_of_mem_dist` for k-means.
+- TauCeti: McDiarmid's inequality and continuity of translation in `L¹` for the Devroye $L^1$
+  theorem; quantiles for the UMP interval test; the matrix functional calculus and the Brouwer
+  fixed-point theorem for the Gaussian Wasserstein barycenter; the Kantorovich–Rubinstein duality
+  and Gaussian densities for smoothed empirical measures; matrix normal and Wishart laws
+  (`map_mul_mul_add_matrixNormalMeasure`, `wishartGramMeasure_eq_nonsingularWishartMeasure`),
+  `hasLaw_studentT_of_gaussian_chiSquared`, `hasLaw_fisherSnedecor_of_chiSquared` and
+  `HasLaw.iIndepFun_orthogonalProjectionOnto_stdGaussian` for multivariate sample laws;
+  `map_sum_sq_pi_gaussianReal` and `chiSquaredMeasure_two` for periodogram limits;
+  `abs_prod_sub_prod_le_sum_abs_sub` for the Kaplan–Meier product; `strong_law_ae_infinitePi` and
+  `pi_withDensity` for evidence bounds; `map_affine_multivariateGaussian` for convex regression.

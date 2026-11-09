@@ -1,6 +1,8 @@
 module
 
 public import CKSD.Learning.Basic
+public import CKSD.Learning.RandomGraphs.Subcritical
+public import CKSD.Learning.RandomGraphs.ConnectivityThreshold
 public import Mathlib.Probability.Combinatorics.BinomialRandomGraph.Defs
 public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 public import TauCeti.Combinatorics.DenseGraphLimits.ExchangeableGraphLaw.Infinite.Mixture
@@ -122,8 +124,8 @@ most `C log n` vertices with probability tending to one. -/
 theorem exists_tendsto_binomialRandom_components_le_log (c : ℝ) (hc0 : 0 ≤ c) (hc : c < 1) :
     ∃ C > (0 : ℝ), Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
       (clampUnitInterval (c / n))).real {G | ∀ v, (componentSize G v : ℝ) ≤ C * Real.log n})
-      atTop (𝓝 1) := by
-  sorry
+      atTop (𝓝 1) :=
+  exists_tendsto_binomialRandom_components_le_log' c hc0 hc
 
 /-- GAPS 107.47, supercritical phase: for `p = c/n` with `c > 1`, the largest component has
 size `ζ n + o(n)` in probability, with `ζ ∈ (0,1)` the root of `1 - ζ = e^{-cζ}`, and any two
@@ -153,8 +155,10 @@ theorem binomialRandom_connectivity_threshold :
         atTop (𝓝 1)) ∧
     ∀ x : ℝ, Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
         (clampUnitInterval ((Real.log n + x) / n))).real {G | G.Connected})
-        atTop (𝓝 (Real.exp (-Real.exp (-x)))) := by
-  sorry
+        atTop (𝓝 (Real.exp (-Real.exp (-x)))) :=
+  ⟨tendsto_binomialRandom_connected_of_tendsto_atTop,
+    tendsto_binomialRandom_exists_isolated_of_tendsto_atBot,
+    tendsto_binomialRandom_connected_threshold⟩
 
 /-! ### Exchangeable random graphs on `ℕ` -/
 

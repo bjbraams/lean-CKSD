@@ -15,7 +15,11 @@ public import CKSD.Learning.Privacy
 public import CKSD.Learning.LocalAveraging
 public import CKSD.Learning.JunctionTree
 public import CKSD.Learning.Networks
+public import CKSD.Learning.Networks.GaussianLimit
 public import CKSD.Learning.RandomGraphs
+public import CKSD.Learning.RandomGraphs.Connectivity
+public import CKSD.Learning.RandomGraphs.ConnectivityThreshold
+public import CKSD.Learning.RandomGraphs.Subcritical
 public import CKSD.Learning.Bandits
 public import CKSD.Learning.Policies
 public import CKSD.Learning.ChordalGraphs

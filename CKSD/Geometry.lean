@@ -2,12 +2,15 @@ module
 
 public import CKSD.Geometry.Cheeger
 public import CKSD.Geometry.GeometricStatistics
+public import CKSD.Geometry.ManifoldSampling
 public import CKSD.Geometry.Landscapes
 public import CKSD.Geometry.Persistence
 public import CKSD.Geometry.Topology
 public import CKSD.Geometry.Entropic
 public import CKSD.Geometry.StatisticalTransport
 public import CKSD.Geometry.Transport
+public import CKSD.Geometry.BuresFixedPoint
+public import CKSD.Geometry.SmoothedWasserstein
 public import CKSD.Geometry.SemidiscreteTransport
 public import CKSD.Geometry.Kernels
 public import CKSD.Geometry.RandomFeatures

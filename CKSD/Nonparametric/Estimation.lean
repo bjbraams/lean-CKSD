@@ -4,6 +4,7 @@ public import CKSD.Nonparametric.Basic
 public import CKSD.Inference.Density
 public import CKSD.Asymptotics.Lindeberg.Basic
 public import TauCeti.Analysis.Calculus.Taylor
+public import CKSD.Nonparametric.KernelDensityL1
 
 /-!
 # Empirical distribution functions, kernel density estimation, and rank statistics
@@ -35,6 +36,12 @@ convergence theorem and Taylor expansions (Mathlib's `taylor_isLittleO_univ`, Ta
 `TauCeti.abs_sub_taylorWithinEval_le`), and Slutsky's lemma
 `CKSD.tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable` removes the deterministic
 bias term.
+
+The universal `L¹` consistency combines the expectation bound
+`CKSD.tendsto_integral_integral_abs_finiteKernelDensityEstimator_sub` and the McDiarmid
+concentration bound `CKSD.measureReal_le_integral_abs_finiteKernelDensityEstimator_sub_le` of
+`CKSD.Nonparametric.KernelDensityL1` with Mathlib's Borel–Cantelli lemma
+`MeasureTheory.ae_eventually_notMem`.
 
 Sources: GAPS 103.1, 103.4, 103.5, 103.8, and 103.14.
 -/
@@ -436,7 +443,99 @@ theorem ae_tendsto_integral_abs_kernelDensityEstimator_sub {Ω : Type*} [Measura
     (h : ℕ → ℝ) (hh : ∀ n : ℕ, 0 < h n) (hh0 : Tendsto h atTop (𝓝 0))
     (hnh : Tendsto (fun n : ℕ ↦ (n : ℝ) * h n) atTop atTop) :
     ∀ᵐ ω ∂μ, Tendsto (fun n ↦ ∫ t, |kernelDensityEstimator X K h n ω t - f t|) atTop (𝓝 0) := by
-  sorry
+  obtain ⟨hfm, hf0ae, hPf⟩ := hf
+  obtain ⟨C, hC⟩ := hKb
+  obtain ⟨R, hR, hKc'⟩ := hKc
+  -- replace `f` by its positive part, which agrees with it almost everywhere
+  set g : ℝ → ℝ := fun x ↦ max (f x) 0 with hgdef
+  have hgm : Measurable g := hfm.max measurable_const
+  have hg0 : ∀ x, 0 ≤ g x := fun x ↦ le_max_right _ _
+  have hfg : f =ᵐ[volume] g := hf0ae.mono fun x hx ↦ (max_eq_left hx).symm
+  have hPg : P = volume.withDensity fun x ↦ ENNReal.ofReal (g x) := by
+    rw [hPf]
+    congr 1
+    funext x
+    rcases le_total 0 (f x) with hx | hx
+    · simp [g, max_eq_left hx]
+    · simp [g, max_eq_right hx, ENNReal.ofReal_of_nonpos hx]
+  have hgint : Integrable g := by
+    refine ⟨hgm.aestronglyMeasurable, (hasFiniteIntegral_iff_ofReal (ae_of_all _ hg0)).2 ?_⟩
+    have h1 : (volume.withDensity fun x ↦ ENNReal.ofReal (g x)) univ = 1 := by
+      rw [← hPg]; exact measure_univ
+    rw [withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ] at h1
+    rw [h1]; exact ENNReal.one_lt_top
+  have hK := integrable_of_abs_le_of_eq_zero hKm hC hKc'
+  set κ := ∫ u, |K u| with hκdef
+  have hκ : 0 < κ := by
+    have : (1 : ℝ) ≤ κ := hK1 ▸ (le_abs_self _).trans abs_integral_le_integral_abs
+    linarith
+  have hJ : ∀ n ω, ∫ t, |kernelDensityEstimator X K h n ω t - f t| =
+      ∫ t, |finiteKernelDensityEstimator K (h n) (fun i : Fin n ↦ X i ω) t - g t| :=
+    fun n ω ↦ integral_congr_ae (hfg.mono fun t ht ↦ by simp [kernelDensityEstimator, ht])
+  simp_rw [hJ]
+  set J : (n : ℕ) → (Fin n → ℝ) → ℝ :=
+    fun n x ↦ ∫ t, |finiteKernelDensityEstimator K (h n) x t - g t| with hJdef
+  set E : ℕ → ℝ := fun n ↦ ∫ x, J n x ∂(Measure.pi fun _ : Fin n ↦ P) with hEdef
+  have hE : Tendsto E atTop (𝓝 0) :=
+    tendsto_integral_integral_abs_finiteKernelDensityEstimator_sub hKm hC hR hKc' hK1 hgm hg0
+      hgint P hPg hh hh0 hnh
+  -- the law of the first `n` observations is the product law
+  have hmeasX : ∀ n, Measurable fun ω (i : Fin n) ↦ X i ω := fun n ↦
+    measurable_pi_iff.2 fun i ↦ hiid.1 i
+  have hlaw : ∀ n, μ.map (fun ω (i : Fin n) ↦ X i ω) = Measure.pi fun _ : Fin n ↦ P := by
+    intro n
+    have hind : iIndepFun (fun (i : Fin n) ω ↦ X i ω) μ := hiid.2.1.precomp Fin.val_injective
+    rw [hind.map_fun_eq_pi_map (fun (i : Fin n) ↦ (hiid.1 i).aemeasurable)]
+    simp [hiid.2.2]
+  -- exponential tail bounds
+  have htail : ∀ (k n : ℕ), μ {ω | 1 / ((k : ℝ) + 1) ≤ J n (fun i ↦ X i ω) - E n} ≤
+      ENNReal.ofReal (Real.exp (-((1 / ((k : ℝ) + 1)) ^ 2 / (2 * κ ^ 2)) * n)) := by
+    intro k n
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · simp only [Nat.cast_zero, mul_zero, Real.exp_zero, ENNReal.ofReal_one]
+      exact prob_le_one
+    have hmeasJ := measurable_integral_abs_finiteKernelDensityEstimator_sub hKm hgm n (h n)
+    have hS : MeasurableSet {x : Fin n → ℝ | 1 / ((k : ℝ) + 1) ≤ J n x - E n} :=
+      measurableSet_le measurable_const (hmeasJ.sub_const _)
+    have heq : μ {ω | 1 / ((k : ℝ) + 1) ≤ J n (fun i ↦ X i ω) - E n} =
+        (Measure.pi fun _ : Fin n ↦ P) {x | 1 / ((k : ℝ) + 1) ≤ J n x - E n} := by
+      rw [← hlaw n, Measure.map_apply (hmeasX n) hS]
+      rfl
+    rw [heq, ← ofReal_measureReal]
+    have hconc := measureReal_le_integral_abs_finiteKernelDensityEstimator_sub_le
+      hKm hK hgm hgint hn (hh n) P (by positivity : (0 : ℝ) ≤ 1 / ((k : ℝ) + 1))
+    refine ENNReal.ofReal_le_ofReal (hconc.trans_eq ?_)
+    congr 1
+    ring
+  have hsum : ∀ k : ℕ, ∑' n, μ {ω | 1 / ((k : ℝ) + 1) ≤ J n (fun i ↦ X i ω) - E n} ≠ ⊤ := by
+    intro k
+    set c : ℝ := (1 / ((k : ℝ) + 1)) ^ 2 / (2 * κ ^ 2) with hc
+    have hc0 : 0 < c := by positivity
+    have hgeom : Summable fun n : ℕ ↦ Real.exp (-c * n) := by
+      have := summable_geometric_of_lt_one (Real.exp_pos (-c)).le
+        (Real.exp_lt_one_iff.2 (by linarith))
+      refine this.congr fun n ↦ ?_
+      rw [← Real.exp_nat_mul]; ring_nf
+    refine ne_top_of_le_ne_top ?_ (tsum_le_tsum fun n ↦ htail k n)
+    rw [← ENNReal.ofReal_tsum_of_nonneg (fun n ↦ (Real.exp_pos _).le) hgeom]
+    exact ENNReal.ofReal_ne_top
+  have hae : ∀ᵐ ω ∂μ, ∀ k : ℕ, ∀ᶠ n in atTop, J n (fun i ↦ X i ω) - E n < 1 / ((k : ℝ) + 1) := by
+    rw [ae_all_iff]
+    intro k
+    filter_upwards [ae_eventually_notMem (hsum k)] with ω hω
+    filter_upwards [hω] with n hn
+    simpa using hn
+  filter_upwards [hae] with ω hω
+  have hJ0 : ∀ n, 0 ≤ J n (fun i ↦ X i ω) := fun n ↦ integral_nonneg fun _ ↦ abs_nonneg _
+  rw [Metric.tendsto_atTop]
+  intro δ hδ
+  obtain ⟨k, hk⟩ := exists_nat_one_div_lt (half_pos hδ)
+  obtain ⟨N, hN⟩ := eventually_atTop.1 ((hω k).and
+    (hE.eventually (gt_mem_nhds (half_pos hδ))))
+  refine ⟨N, fun n hn ↦ ?_⟩
+  obtain ⟨h1, h2⟩ := hN n hn
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (hJ0 n)]
+  linarith
 
 /-- GAPS 103.8: the representer theorem, in its Hilbert feature-vector formulation. A
 minimizer `f` of `∑ᵢ L(yᵢ, ⟪f, vᵢ⟫) + λ ‖f‖²` with `λ > 0` lies in the span of the feature

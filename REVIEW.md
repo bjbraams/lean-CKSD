@@ -1,10 +1,10 @@
 # Mathlib-style assessment of CKSD
 
-The project contains 201 Lean modules under `CKSD/` and 2363 inventoried declarations:
-762 definitions, abbreviations, structures and inductive types, and 1601 theorem statements
-(1455 proved, two conditional on admitted results, and 144 admitted). Every file is below the
+The project contains 227 Lean modules under `CKSD/` and 2610 inventoried declarations:
+790 definitions, abbreviations, structures and inductive types, and 1820 theorem statements
+(1701 proved, two conditional on admitted results, and 117 admitted). Every file is below the
 1000-line splitting threshold (1500 lines is the hard limit); the largest is
-[RegressionLimits.lean](CKSD/LinearModels/RegressionLimits.lean) at 997 lines. All modules use
+[CrossFitting.lean](CKSD/Asymptotics/CrossFitting.lean) at 988 lines. All modules use
 the module system and have Mathlib-style module documentation with the mathematical scope, main definitions and main results. All authored definitions, abbreviations,
 structures, inductive types and theorem statements have formal docstrings, as do all 136 structure
 fields. Theorem docstrings state the mathematics together with the `GAPS ddd.k` tag of the
@@ -21,15 +21,15 @@ The dependency baseline is Lean `v4.36.0-rc2`, Mathlib
 
 The following scoped catalogue statements have complete proofs with no admitted dependencies:
 
-- [Gaussian likelihood minimum](CKSD/LinearModels/Multivariate.lean#L299) and [uniqueness](CKSD/LinearModels/Multivariate.lean#L309) (GAPS 105.28).
-- [Invariance of the kinetic Gibbs law against smooth compactly supported tests](CKSD/Bayes/KineticLangevin.lean#L274) (GAPS 104.48).
-- [Exact noncentral F law for nested Gaussian projections](CKSD/LinearModels/FTest.lean#L93) and its [central case](CKSD/LinearModels/FTest.lean#L200) (GAPS 105.16).
-- [Normalized factor-loading uniqueness up to column signs](CKSD/LinearModels/FactorAnalysis.lean#L98) (GAPS 105.35).
-- [Projected empirical-mean central limit theorem](CKSD/Geometry/GeometricStatistics.lean#L505) (GAPS 108.10).
-- [Finite-rank degenerate U-statistic Gaussian-chaos limit](CKSD/Asymptotics/UStatistics.lean#L756) (GAPS 102.30).
-- [Mean-square stability of optimal transport maps](CKSD/Geometry/OptimalMapStability.lean#L235) (GAPS 108.42).
-- [Order-two Hoeffding decomposition and exact variance](CKSD/Asymptotics/UStatistics.lean#L533) (GAPS 102.29).
-- [Gaussian Bures formula with singular covariances](CKSD/Geometry/GaussianTransport.lean#L100) (GAPS 108.46).
+- [Gaussian likelihood minimum](CKSD/LinearModels/Multivariate.lean#L396) and [uniqueness](CKSD/LinearModels/Multivariate.lean#L406) (GAPS 105.28).
+- [Invariance of the kinetic Gibbs law against smooth compactly supported tests](CKSD/Bayes/KineticLangevin.lean#L276) (GAPS 104.48).
+- [Exact noncentral F law for nested Gaussian projections](CKSD/LinearModels/FTest.lean#L97) and its [central case](CKSD/LinearModels/FTest.lean#L206) (GAPS 105.16).
+- [Normalized factor-loading uniqueness up to column signs](CKSD/LinearModels/FactorAnalysis.lean#L101) (GAPS 105.35).
+- [Projected empirical-mean central limit theorem](CKSD/Geometry/GeometricStatistics.lean#L454) (GAPS 108.10).
+- [Finite-rank degenerate U-statistic Gaussian-chaos limit](CKSD/Asymptotics/UStatistics.lean#L757) (GAPS 102.30).
+- [Mean-square stability of optimal transport maps](CKSD/Geometry/OptimalMapStability.lean#L239) (GAPS 108.42).
+- [Order-two Hoeffding decomposition and exact variance](CKSD/Asymptotics/UStatistics.lean#L534) (GAPS 102.29).
+- [Gaussian Bures formula with singular covariances](CKSD/Geometry/GaussianTransport.lean#L103) (GAPS 108.46).
 
 The general [Euclidean central limit theorem](CKSD/Asymptotics/MultivariateCLT.lean) permits
 singular covariance matrices and almost-everywhere measurable IID observations. Convergence in distribution, convergence in probability and weak convergence of laws are
@@ -37,31 +37,31 @@ Mathlib's `TendstoInDistribution`, `TendstoInMeasure` and convergence in the top
 `ProbabilityMeasure`; variances, covariances and distribution functions are Mathlib's `Var[·]`,
 `cov[·, ·]` and `ProbabilityTheory.cdf`. The [asymptotic foundations](CKSD/Asymptotics/Basic.lean)
 supply Slutsky's lemma, tightness, the delta method and the IID central-limit adapter, and
-[boundedness in probability](CKSD/Inference/Basic.lean#L130) is equivalent to Mathlib's
+[boundedness in probability](CKSD/Inference/Basic.lean#L138) is equivalent to Mathlib's
 `IsTightMeasureSet` for the laws.
 
 The two conditional theorems have complete proofs from admitted results:
-[Poincaré inequality under bounded perturbation](CKSD/Bayes/FunctionalInequalities.lean#L512)
+[Poincaré inequality under bounded perturbation](CKSD/Bayes/FunctionalInequalities.lean#L515)
 (from the admitted logarithmic Sobolev half) and the
-[stochastic-approximation equilibrium corollary](CKSD/Bayes/StochasticApproximation.lean#L542).
+[stochastic-approximation equilibrium corollary](CKSD/Bayes/StochasticApproximation.lean#L544).
 
 ## Mathematical domains and conventions
 
 - Test functions in weak formulations of Fokker–Planck and kinetic equations, and smoothness hypotheses on potentials and densities, are `ContDiff ℝ ∞` (infinitely differentiable). In Mathlib `ContDiff ℝ ⊤` means analytic, and an analytic function with compact support on a Euclidean space of positive dimension vanishes.
-- [Particle likelihood asymptotic variance](CKSD/Bayes/ParticleLimits.lean#L55) sums the centred second-moment ratios, with the subtraction of one inside each summand. The time-zero identity and the zero-variance identity for unit potentials are proved. The particle central limit theorems remain admitted; their catalogue source is [SYNOPSIS104](SYNOPSIS104.md), item 59.
-- [Threshold-excess discrepancy](CKSD/Processes/ExtremeValueLimits.lean#L65) takes its supremum over every nonnegative excess, including points at and beyond a terminal atom. The generalized Pareto distribution function is extended across its endpoint. The domain-of-attraction equivalence remains admitted; see [SYNOPSIS106](SYNOPSIS106.md), item 47.
-- [Offset deformation retraction](CKSD/Geometry/TopologicalInference.lean#L89) requires a finite nonempty sample on the manifold. This excludes the empty/nonempty real-Hausdorff-distance degeneracy. The retraction theorem remains admitted; see [SYNOPSIS108](SYNOPSIS108.md), item 22.
-- [Offset homology inference](CKSD/Geometry/TopologicalInference.lean#L126) uses closed offsets (`cthickening`). With `d_H(K, P) = ε` for a compact `K` and a finite `P`, the closed interleavings `K^a ⊆ P^{a+ε}` and `P^a ⊆ K^{a+ε}` hold, so the boundary case `j = i + 2ε` of [SYNOPSIS108](SYNOPSIS108.md), item 37, is included. The theorem remains admitted.
-- [Regular transport potentials](CKSD/Geometry/TransportRates.lean#L86) have ambient twice continuous differentiability at every point of the closed conjugacy ball and Hessian bounds there. Both statistical map-rate statements require the source to be supported in a smaller concentric closed ball of radius `r < 1`; constants may depend on the interior margin. This controls gradients where risk is evaluated and prevents constrained-conjugacy boundary ties. Both rate statements remain admitted; see [SYNOPSIS108](SYNOPSIS108.md), item 53.
-- [Gaussian SEM equivalence](CKSD/LinearModels/StructuralEquations.lean#L131) compares representations faithful to their respective graphs. Nonzero edge coefficients alone do not supply faithfulness. The theorem remains admitted; see [SYNOPSIS105](SYNOPSIS105.md), item 71.
-- [Active paths](CKSD/LinearModels/DirectedGraphical/Basic/CausalGraph.lean#L79) constrain only interior vertices, and [d-separation](CKSD/LinearModels/DirectedGraphical/Basic/CausalGraph.lean#L94) does not require disjoint vertex sets. For an endpoint `a ∈ Z`, the paths active given `Z` are those active given `(Z \ {a}) ∪ {a'}` after adding a leaf `a → a'`. Such leaves preserve skeletons and unshielded colliders, so Markov equivalence over all triples agrees with the classical notion over disjoint triples (SYNOPSIS105, item 67).
-- [Bayes rules](CKSD/Inference/Model.lean#L98) have integrable risk and are compared with rules of integrable risk; [minimax rules](CKSD/Inference/Model.lean#L105) have risk bounded above and are compared with rules of bounded risk. Totalized integrals and real suprema therefore cannot assign the value `0` to a non-integrable or unbounded risk.
-- [Characteristic kernels](CKSD/Geometry/Basic.lean#L98) quantify over probability laws against which the kernel is integrable, so the Bochner convention cannot make the squared MMD vanish for the wrong reason. The [squared MMD](CKSD/Geometry/Kernels.lean#L73) equals the squared distance of TauCeti kernel mean embeddings.
-- [Compositional-class minimax risk](CKSD/Learning/Networks.lean#L643) and the [Eldan–Shamir depth separation](CKSD/Learning/Networks.lean#L589) use extended nonnegative integrals. Infinite squared loss is allowed and cannot become zero through the nonintegrable Bochner-integral convention. Both lower bounds remain admitted; see [SYNOPSIS107](SYNOPSIS107.md), items 29 and 37.
-- [LinUCB regret](CKSD/Learning/Bandits.lean#L753) uses the scale `max σ (B * W)` with the stated positive parameters and ridge regularization. It accounts for initial exploration even with arbitrarily small noise. The statistical confidence and regret theorems remain admitted; see [SYNOPSIS107](SYNOPSIS107.md), item 63.
-- [Stochastic little-o](CKSD/Asymptotics/Framework.lean#L77) and [stochastic big-O](CKSD/Asymptotics/Framework.lean#L83) require an eventually positive deterministic scale. In particular, an identically zero scale cannot satisfy either predicate.
-- The [ULA bound under a logarithmic Sobolev inequality](CKSD/Bayes/LangevinSampling.lean#L121) uses Vempala and Wibisono's step-size range `h ≤ α/(4β²)` (SYNOPSIS104, item 45).
-- The [Grenander limit law](CKSD/Nonparametric/Grenander.lean#L819) assumes a density vanishing on the negative half-line and nonincreasing on `[0, ∞)`; positivity at `x₀` follows from `f'(x₀) < 0` (SYNOPSIS103, item 11).
+- [Particle likelihood asymptotic variance](CKSD/Bayes/ParticleLimits.lean#L64) sums the centred second-moment ratios, with the subtraction of one inside each summand. The time-zero identity and the zero-variance identity for unit potentials are proved. The particle central limit theorems remain admitted; their catalogue source is [SYNOPSIS104](SYNOPSIS104.md), item 59.
+- [Threshold-excess discrepancy](CKSD/Processes/ExtremeValueLimits.lean#L67) takes its supremum over every nonnegative excess, including points at and beyond a terminal atom. The generalized Pareto distribution function is extended across its endpoint. The domain-of-attraction equivalence remains admitted; see [SYNOPSIS106](SYNOPSIS106.md), item 47.
+- [Offset deformation retraction](CKSD/Geometry/TopologicalInference.lean#L95) requires a finite nonempty sample on the manifold. This excludes the empty/nonempty real-Hausdorff-distance degeneracy. The retraction theorem remains admitted; see [SYNOPSIS108](SYNOPSIS108.md), item 22.
+- [Offset homology inference](CKSD/Geometry/TopologicalInference.lean#L205) uses closed offsets (`cthickening`). With `d_H(K, P) = ε` for a compact `K` and a finite `P`, the closed interleavings `K^a ⊆ P^{a+ε}` and `P^a ⊆ K^{a+ε}` hold, so the boundary case `j = i + 2ε` of [SYNOPSIS108](SYNOPSIS108.md), item 37, is included. The theorem remains admitted.
+- [Regular transport potentials](CKSD/Geometry/TransportRates.lean#L90) have ambient twice continuous differentiability at every point of the closed conjugacy ball and Hessian bounds there. Both statistical map-rate statements require the source to be supported in a smaller concentric closed ball of radius `r < 1`; constants may depend on the interior margin. This controls gradients where risk is evaluated and prevents constrained-conjugacy boundary ties. Both rate statements remain admitted; see [SYNOPSIS108](SYNOPSIS108.md), item 53.
+- [Gaussian SEM equivalence](CKSD/LinearModels/StructuralEquations.lean#L365) compares representations faithful to their respective graphs. Nonzero edge coefficients alone do not supply faithfulness. The theorem remains admitted; see [SYNOPSIS105](SYNOPSIS105.md), item 71.
+- [Active paths](CKSD/LinearModels/DirectedGraphical/Basic/CausalGraph.lean#L82) constrain only interior vertices, and [d-separation](CKSD/LinearModels/DirectedGraphical/Basic/CausalGraph.lean#L97) does not require disjoint vertex sets. For an endpoint `a ∈ Z`, the paths active given `Z` are those active given `(Z \ {a}) ∪ {a'}` after adding a leaf `a → a'`. Such leaves preserve skeletons and unshielded colliders, so Markov equivalence over all triples agrees with the classical notion over disjoint triples (SYNOPSIS105, item 67).
+- [Bayes rules](CKSD/Inference/Model.lean#L101) have integrable risk and are compared with rules of integrable risk; [minimax rules](CKSD/Inference/Model.lean#L108) have risk bounded above and are compared with rules of bounded risk. Totalized integrals and real suprema therefore cannot assign the value `0` to a non-integrable or unbounded risk.
+- [Characteristic kernels](CKSD/Geometry/Basic.lean#L103) quantify over probability laws against which the kernel is integrable, so the Bochner convention cannot make the squared MMD vanish for the wrong reason. The [squared MMD](CKSD/Geometry/Kernels.lean#L76) equals the squared distance of TauCeti kernel mean embeddings.
+- [Compositional-class minimax risk](CKSD/Learning/Networks.lean#L652) and the [Eldan–Shamir depth separation](CKSD/Learning/Networks.lean#L597) use extended nonnegative integrals. Infinite squared loss is allowed and cannot become zero through the nonintegrable Bochner-integral convention. Both lower bounds remain admitted; see [SYNOPSIS107](SYNOPSIS107.md), items 29 and 37.
+- [LinUCB regret](CKSD/Learning/Bandits.lean#L761) uses the scale `max σ (B * W)` with the stated positive parameters and ridge regularization. It accounts for initial exploration even with arbitrarily small noise. The statistical confidence and regret theorems remain admitted; see [SYNOPSIS107](SYNOPSIS107.md), item 63.
+- [Stochastic little-o](CKSD/Asymptotics/Framework.lean#L78) and [stochastic big-O](CKSD/Asymptotics/Framework.lean#L84) require an eventually positive deterministic scale. In particular, an identically zero scale cannot satisfy either predicate.
+- The [ULA bound under a logarithmic Sobolev inequality](CKSD/Bayes/LangevinSampling.lean#L125) uses Vempala and Wibisono's step-size range `h ≤ α/(4β²)` (SYNOPSIS104, item 45).
+- The [Grenander limit law](CKSD/Nonparametric/Grenander.lean#L825) assumes a density vanishing on the negative half-line and nonincreasing on `[0, ∞)`; positivity at `x₀` follows from `f'(x₀) < 0` (SYNOPSIS103, item 11).
 
 The corresponding SYNOPSIS statements are the mathematical source for GAPS and STRUCTURE.
 Their domains and risk conventions agree across these files. The pinned-library coverage rule
@@ -71,7 +71,7 @@ Local CKSD results do not change the coverage classifications of the pinned depe
 
 ## Cross-fitting
 
-The [cross-fitted missing-mean statement](CKSD/Asymptotics/CrossFitting.lean#L910)
+The [cross-fitted missing-mean statement](CKSD/Asymptotics/CrossFitting.lean#L918)
 uses a fixed finite number of folds and requires a common positive lower bound on fold
 proportions only for sufficiently large sample sizes:
 
@@ -157,7 +157,7 @@ Project-specific namespace and module requirements remain authoritative.
 
 ## Validation
 
-The ordinary full build completes successfully with 10805 jobs and no warnings from CKSD files
+The ordinary full build completes successfully with 11273 jobs and no warnings from CKSD files
 other than admitted declarations. The inventory checker `scripts/check_formalization.py` audits
 compiled axiom dependencies, docstring adjacency and source hashes. Individual module checks
 (`scripts/check_lean_files.py`) use both `autoImplicit=false` and `relaxedAutoImplicit=false`

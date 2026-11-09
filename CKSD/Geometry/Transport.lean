@@ -10,6 +10,9 @@ public import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Instanc
 public import Mathlib.Analysis.SpecialFunctions.ContinuousFunctionalCalculus.Rpow.Basic
 public import Mathlib.MeasureTheory.Measure.Support
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Quantization
+public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Gaussian.FixedPoint
+public import CKSD.Geometry.BuresFixedPoint
+public import CKSD.Geometry.SmoothedWasserstein
 
 /-!
 # Statistical optimal transport
@@ -160,7 +163,84 @@ theorem exists_unique_gaussian_wasserstein_barycenter {k d : ℕ} (w : Fin k →
         F (multivariateGaussian (∑ i, w i • m i) S) ≤ F P ∧
           (F (multivariateGaussian (∑ i, w i • m i) S) = F P ↔
             P = multivariateGaussian (∑ i, w i • m i) S) := by
-  sorry
+  intro F
+  obtain ⟨S, hS, hfix⟩ := exists_posDef_eq_sum_smul_sqrt_mul_mul_sqrt w hw hw1 A hA
+  refine ⟨S, hS, hfix, ?_⟩
+  intro P hP hPL
+  set w' : Fin k → ℝ≥0 := fun i ↦ ⟨w i, hw i⟩
+  have hw' : ∑ i, w' i = 1 := NNReal.coe_injective (by rw [NNReal.coe_sum]; exact hw1)
+  have hfix' : S = ∑ i, (w' i : ℝ) • CFC.sqrt (CFC.sqrt S * A i * CFC.sqrt S) := hfix
+  set mbar := ∑ i, w i • m i
+  set N := multivariateGaussian mbar S
+  set μ : Fin k → Measure (EuclideanSpace ℝ (Fin d)) := fun i ↦ multivariateGaussian (m i) (A i)
+  have hfm : ∀ (Q : Measure (EuclideanSpace ℝ (Fin d))), MemLp id 2 Q →
+      TauCeti.HasFiniteMoment 2 Q := fun Q hQ ↦
+    TauCeti.hasFiniteMoment_def.2 ⟨0, by simpa [edist_eq_enorm_sub] using hQ.enorm⟩
+  have hfin : ∀ (Q : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure Q],
+      MemLp id 2 Q → ∀ i, TauCeti.wassersteinEDist 2 Q (μ i) ≠ ⊤ := fun Q _ hQ i ↦
+    (TauCeti.hasFiniteMoment_iff_wassersteinEDist_ne_top_of_hasFiniteMoment measurable_edist
+      (hfm Q hQ)).1 (hfm _ IsGaussian.memLp_two_id)
+  -- the cost in `ℝ≥0∞`
+  set G : Measure (EuclideanSpace ℝ (Fin d)) → ℝ≥0∞ := fun Q ↦
+    ∑ i, (w' i : ℝ≥0∞) * TauCeti.wassersteinEDist 2 Q (μ i) ^ 2
+  have hFG : ∀ (Q : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure Q],
+      MemLp id 2 Q → F Q = (G Q).toReal := fun Q _ hQ ↦ by
+    simp only [F, G, μ]
+    rw [ENNReal.toReal_sum fun i _ ↦ ENNReal.mul_ne_top ENNReal.coe_ne_top
+      (ENNReal.pow_ne_top (hfin Q hQ i))]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [ENNReal.toReal_mul, ENNReal.toReal_pow]; rfl
+  have hGtop : ∀ (Q : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure Q],
+      MemLp id 2 Q → G Q ≠ ⊤ := fun Q _ hQ ↦
+    ENNReal.sum_ne_top.2 fun i _ ↦ ENNReal.mul_ne_top ENNReal.coe_ne_top
+      (ENNReal.pow_ne_top (hfin Q hQ i))
+  have hNL : MemLp id 2 N := IsGaussian.memLp_two_id
+  -- the Gaussian lower bound, attained at `N`
+  have hlow : ∀ (Q : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure Q], G N ≤ G Q := by
+    intro Q _
+    have key := TauCeti.sum_mul_ofReal_gaussianWassersteinSq_le (μ := μ) hw'
+      (fun j ↦ IsGaussian.memLp_two_id) hS
+      (by simpa only [μ, TauCeti.Probability.covMatrix_multivariateGaussian _ (hA _).posSemidef]
+        using hfix') Q
+    simp only [μ, integral_id_multivariateGaussian,
+      TauCeti.Probability.covMatrix_multivariateGaussian _ (hA _).posSemidef] at key
+    refine le_of_eq_of_le (Finset.sum_congr rfl fun j _ ↦ ?_) key
+    rw [← ENNReal.rpow_two, TauCeti.wassersteinEDist_two_multivariateGaussian_rpow_two hS
+      (hA j).posSemidef]
+    rfl
+  have hle : F N ≤ F P := by
+    rw [hFG N hNL, hFG P hPL]
+    exact ENNReal.toReal_mono (hGtop P hPL) (hlow P)
+  refine ⟨hle, ⟨fun heq ↦ ?_, fun h ↦ h ▸ rfl⟩⟩
+  -- equality forces `P` to be a barycenter, hence the Gaussian one
+  have hGeq : G P = G N := by
+    rw [hFG N hNL, hFG P hPL] at heq
+    exact ((ENNReal.toReal_eq_toReal_iff' (hGtop N hNL) (hGtop P hPL)).1 heq).symm
+  set z : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d)) :=
+    TauCeti.WassersteinSpace.mk ⟨P, hP⟩ (hfm P hPL)
+  have hzP : ((z.toProbabilityMeasure : ProbabilityMeasure _) : Measure _) = P := by
+    exact congrArg (fun Q : ProbabilityMeasure (EuclideanSpace ℝ (Fin d)) ↦ Q.toMeasure)
+      (TauCeti.WassersteinSpace.coe_mk _ _)
+  set L : Fin k → TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d)) := fun i ↦
+    TauCeti.Probability.gaussianWassersteinLaw (m i) (A i)
+  have : Fact ((1 : ℝ≥0∞) ≤ 2) := ⟨by norm_num⟩
+  have hbar : TauCeti.IsFrechetBarycenter 2 (∑ j, w' j • Measure.dirac (L j)) z := by
+    rw [TauCeti.WassersteinSpace.isFrechetBarycenter_sum_smul_dirac_iff_isMinOn
+      ENNReal.ofNat_ne_top, isMinOn_univ_iff]
+    intro y
+    simp only [L, TauCeti.Probability.gaussianWassersteinLaw_coe, hzP, ENNReal.toReal_ofNat,
+      ENNReal.rpow_two]
+    exact hGeq.trans_le (hlow _)
+  obtain ⟨j₀, -, hj₀⟩ := Finset.exists_ne_zero_of_sum_ne_zero (hw'.trans_ne one_ne_zero)
+  have huniq := TauCeti.Probability.frechetBarycenters_sum_smul_dirac_multivariateGaussian hw' m
+    (fun j ↦ (hA j).posSemidef) hj₀ (hA j₀) hS hfix'
+  have hz : z = TauCeti.Probability.gaussianWassersteinLaw (∑ j, (w' j : ℝ) • m j) S := by
+    have : z ∈ TauCeti.frechetBarycenters 2 (∑ j, w' j • Measure.dirac (L j)) :=
+      TauCeti.mem_frechetBarycenters.2 hbar
+    rw [huniq] at this
+    exact this
+  rw [← hzP, hz, TauCeti.Probability.gaussianWassersteinLaw_coe]
+  rfl
 
 /-- The Lebesgue measure of a Euclidean ball of radius `t > 0` in `ℝ^d` is at most `(2t)^d`, the
 volume of the circumscribed cube. -/
@@ -318,7 +398,10 @@ theorem integral_wasserstein_gaussianSmoothing_empiricalMeasure_le
       (∫ x, (TauCeti.wassersteinEDist 1 (gaussianSmoothing sigma (empiricalMeasure n x))
         (gaussianSmoothing sigma P)).toReal
         ∂(Measure.pi fun _ : Fin n ↦ P)) ≤ C / Real.sqrt n := by
-  sorry
+  refine ⟨smoothingMoment d sigma + 1, by linarith [smoothingMoment_nonneg (d := d) hs.ne'], ?_⟩
+  intro P hP hPQ n hn
+  exact (integral_wassersteinEDist_gaussianSmoothing_le hs.ne' P hPQ hn).trans
+    (div_le_div_of_nonneg_right (by linarith) (Real.sqrt_nonneg _))
 
 /-- GAPS 108.56: smooth semidiscrete dual, cell-mass equations and dual attainment. For an
 absolutely continuous law `P` with finite second moment and a discrete target with positive masses

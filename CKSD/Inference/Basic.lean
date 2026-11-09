@@ -58,6 +58,8 @@ topology, characterized by `MeasureTheory.ProbabilityMeasure.tendsto_iff_forall_
   measures.
 * `CKSD.IsStatisticalTest.integrable`, `CKSD.IsStatisticalTest.integral_mem_Icc`: a test is
   integrable for every finite measure, with mean in `[0, 1]` under a probability measure.
+* `CKSD.isProbabilityMeasure_empiricalMeasure`, `CKSD.integrable_of_hasDensity`: the empirical
+  measure of a nonempty sample is a probability measure, and a real density is integrable.
 
 ## Conventions
 
@@ -180,6 +182,13 @@ theorem isBoundedInProbability_iff_isTightMeasureSet {Ω : Type*} [MeasurableSpa
 def empiricalMeasure {E : Type*} [MeasurableSpace E] (n : ℕ) (x : Fin n → E) : Measure E :=
   (n : ℝ≥0∞)⁻¹ • ∑ i, Measure.dirac (x i)
 
+/-- The empirical measure of a nonempty sample is a probability measure. -/
+theorem isProbabilityMeasure_empiricalMeasure {E : Type*} [MeasurableSpace E] {n : ℕ}
+    (hn : 0 < n) (x : Fin n → E) : IsProbabilityMeasure (empiricalMeasure n x) := by
+  constructor
+  simp [empiricalMeasure]
+  exact ENNReal.inv_mul_cancel (by exact_mod_cast hn.ne') (ENNReal.natCast_ne_top n)
+
 /-- The empirical average of the first `n` observations of a sequence. -/
 def sampleAverage {Ω E : Type*} [AddCommMonoid E] [Module ℝ E]
     (X : ℕ → Ω → E) (n : ℕ) (ω : Ω) : E :=
@@ -195,6 +204,13 @@ nonnegative, and `P = μ.withDensity (ofReal ∘ f)`. -/
 def HasDensity {X : Type*} [MeasurableSpace X]
     (P μ : Measure X) (f : X → ℝ) : Prop :=
   Measurable f ∧ (∀ᵐ x ∂μ, 0 ≤ f x) ∧ P = μ.withDensity (fun x ↦ ENNReal.ofReal (f x))
+
+/-- A density of a probability law on `ℝ` is integrable. -/
+theorem integrable_of_hasDensity (F : Measure ℝ) [IsProbabilityMeasure F] (f : ℝ → ℝ)
+    (hf : HasDensity F volume f) : Integrable f := by
+  refine ⟨hf.1.aestronglyMeasurable, (hasFiniteIntegral_iff_ofReal hf.2.1).2 ?_⟩
+  rw [← setLIntegral_univ, ← withDensity_apply _ MeasurableSet.univ, ← hf.2.2]
+  simp
 
 /-- A randomized test: a measurable function `φ : X → [0, 1]`, the probability of rejection at
 each observation. -/
