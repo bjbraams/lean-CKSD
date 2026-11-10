@@ -488,3 +488,33 @@ countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
   and minimum-value convergence, Mathlib's central limit theorem and orthogonal
   projections, and TauCeti's Gaussian projection and chi-squared laws. The generic
   convex-likelihood argument is in `CKSD/LinearModels/ConvexLikelihood.lean`.
+
+- The simple covariance-eigenvalue central limit law combines TauCeti's operator Weyl
+  inequality and population-gap eigenvector alignment from
+  `TauCeti/Analysis/InnerProductSpace/YuWangSamworth/Eigenvector.lean`, following
+  Yu, Wang and Samworth, *Biometrika* 102 (2015), Corollary 1. That imported module
+  records its Kitware implementation provenance. Local entrywise covariance estimates
+  and Mathlib's scalar central limit theorem give the first-order stochastic expansion;
+  TauCeti's Gaussian centered fourth moment gives the variance `2 λ²`.
+- The stochastic-approximation APT proof uses Mathlib's square-integrable martingale
+  convergence theorem, conditional expectations, summable `L²` increments, and integral
+  Gronwall estimates. Predictable clipping localizes the noise without an initial
+  second-moment assumption. The local interpolation and approximate-ODE estimates are
+  in `CKSD/Bayes/StochasticApproximationPath.lean`.
+- Mean-field coupling uniqueness uses Mathlib's Fubini theorem and TauCeti's integral
+  Gronwall estimate. The continuous-path forcing-map inverse uses Mathlib's measurable
+  embedding theorem for continuous injective maps between Polish spaces. Countable
+  Brownian-coordinate laws use Mathlib's Brownian finite-dimensional distribution API.
+  Quantitative interaction fluctuations use TauCeti's Hilbert-space Bienaymé identity
+  `integral_norm_sum_sq_of_pairwise_indepFun` from `Probability/Moments/SampleMean.lean`,
+  separating the self-interaction term. Deterministic averaged coupling, Fubini, and
+  extended-integral bounds give the uniform mean-square estimate.
+- Energy distance uses TauCeti's layer-cake integral and Gaussian absolute first moment,
+  with Mathlib's CDF right continuity, Fubini theorem, and uniqueness of characteristic
+  functions. Gaussian projection averaging reduces finite-dimensional norm distances
+  to the one-dimensional CDF identity, including zero-dimensional spaces.
+- Distance covariance uses TauCeti's positive definite kernel feature maps and kernel
+  mean embeddings. Local double-centering algebra uses Mathlib's product integrals and
+  square-integrable products. Separation with fixed marginals follows from bounded
+  weighted marginal measures, the energy-distance criterion, and measure equality on
+  rectangles.

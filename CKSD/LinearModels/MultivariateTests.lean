@@ -1,6 +1,7 @@
 module
 
 public import CKSD.LinearModels.Basic
+public import CKSD.LinearModels.CovarianceEigenvalues
 public import CKSD.Asymptotics.Basic
 public import Mathlib.Analysis.Matrix.Spectrum
 public import TauCeti.Probability.Distributions.Beta.Basic
@@ -52,7 +53,7 @@ Gaussian-Gram laws, which also cover singular scale matrices.
 
 noncomputable section
 
-open MeasureTheory ProbabilityTheory Filter Set
+open MeasureTheory ProbabilityTheory Filter Set Module
 open scoped NNReal ENNReal Topology BigOperators MatrixOrder Matrix.Norms.L2Operator
 
 namespace CKSD
@@ -62,10 +63,6 @@ attribute [local instance] Classical.propDecidable
 /-- Sample covariance with the maximum-likelihood divisor `n`. -/
 def sampleCovarianceMatrix {n p : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin p)) :
     Matrix (Fin p) (Fin p) ℝ := (n : ℝ)⁻¹ • scatterMatrix x
-
-/-- Ordered Hermitian eigenvalues, with an explicit zero convention outside the Hermitian locus. -/
-def symmetricMatrixEigenvalues {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ) (j : Fin p) : ℝ :=
-  if h : A.IsHermitian then h.eigenvalues₀ ⟨j.val, by simp⟩ else 0
 
 /-- Wilks's determinant ratio for error and hypothesis scatter matrices. -/
 def wilksLambda {p : ℕ} (E H : Matrix (Fin p) (Fin p) ℝ) : ℝ := E.det / (E + H).det
@@ -116,6 +113,21 @@ theorem map_wilksLambda_wishart_eq_beta_product {p : ℕ}
         (((e : ℝ) - i.val) / 2) ((h : ℝ) / 2)).map (fun v ↦ ∏ i, v i) := by
   sorry
 
+/-- The sequence and finite-sample covariance conventions agree. -/
+theorem sampleCovarianceMatrix_eq_empirical {Ω : Type*} {p n : ℕ}
+    (X : ℕ → Ω → EuclideanSpace ℝ (Fin p)) (ω : Ω) :
+    sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω) = empiricalCovarianceMatrix X n ω := by
+  have hm : sampleMean (fun i : Fin n ↦ X i.val ω) = sampleAverage X n ω := by
+    simp only [sampleMean, sampleAverage]
+    congr 1
+    exact Fin.sum_univ_eq_sum_range (fun i ↦ X i ω) n
+  ext i k
+  simp only [sampleCovarianceMatrix, scatterMatrix, Matrix.smul_apply, smul_eq_mul,
+    hm, empiricalCovarianceMatrix]
+  rw [Fin.sum_univ_eq_sum_range (fun x ↦
+    (X x ω i - sampleAverage X n ω i) * (X x ω k - sampleAverage X n ω k)) n]
+  ring
+
 /-- GAPS 105.24: central limit theorem for a simple eigenvalue: for an i.i.d. sample from
 `N_p(m, Σ)` with `Σ` positive definite and a simple eigenvalue `λ_j` of `Σ`, the `j`-th largest
 eigenvalue `λ̂_j` of the sample covariance (divisor `n`) satisfies
@@ -133,7 +145,45 @@ theorem tendstoInDistribution_gaussian_sample_covariance_eigenvalue
       (symmetricMatrixEigenvalues (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω)) j -
         symmetricMatrixEigenvalues Sigma j)) atTop id (fun _ ↦ P)
       (gaussianReal 0 (Real.toNNReal (2 * symmetricMatrixEigenvalues Sigma j ^ 2))) := by
-  sorry
+  classical
+  have hS := hSigma.isHermitian
+  let T := Matrix.toEuclideanCLM (𝕜 := ℝ) Sigma
+  have hT : LinearMap.IsSymmetric
+      (T : EuclideanSpace ℝ (Fin p) →ₗ[ℝ] EuclideanSpace ℝ (Fin p)) :=
+    Matrix.isSymmetric_toEuclideanLin_iff.2 hS
+  let e : Fin p ≃ Fin (Fintype.card (Fin p)) := finCongr (Fintype.card_fin p).symm
+  let v := hT.eigenvectorBasis finrank_euclideanSpace (e j)
+  have hv : ‖v‖ = 1 := (hT.eigenvectorBasis finrank_euclideanSpace).orthonormal.norm_eq_one _
+  have hlam : hT.eigenvalues finrank_euclideanSpace (e j) = symmetricMatrixEigenvalues Sigma j := by
+    simp only [symmetricMatrixEigenvalues, dite_eq_left hS, Matrix.IsHermitian.eigenvalues₀]
+    rfl
+  have heig : T v = symmetricMatrixEigenvalues Sigma j • v := by
+    rw [← hlam]
+    exact hT.apply_eigenvectorBasis finrank_euclideanSpace (e j)
+  have hcov : euclideanCovarianceMatrix (multivariateGaussian m Sigma) = Sigma := by
+    ext i k
+    rw [euclideanCovarianceMatrix, TauCeti.covMatrix_apply]
+    exact covariance_eval_multivariateGaussian hSigma.posSemidef i k
+  let f : Fin p → ℝ := fun k ↦ if k = j then 1 else
+    |symmetricMatrixEigenvalues Sigma j - symmetricMatrixEigenvalues Sigma k|
+  have hf (k : Fin p) : 0 < f k := by
+    dsimp [f]
+    split_ifs with hk
+    · norm_num
+    · exact abs_pos.mpr (sub_ne_zero.mpr (Ne.symm (hsimple k hk)))
+  obtain ⟨k, _, hmin⟩ := Finset.exists_min_image Finset.univ f ⟨j, Finset.mem_univ j⟩
+  have hsep (i : Fin p) (hi : i ≠ j) : f k ≤
+      |symmetricMatrixEigenvalues Sigma j - symmetricMatrixEigenvalues Sigma i| := by
+    simpa only [f, ite_eq_right hi] using hmin i (Finset.mem_univ i)
+  have heig' : Matrix.toEuclideanCLM (𝕜 := ℝ)
+      (euclideanCovarianceMatrix (multivariateGaussian m Sigma)) v =
+      symmetricMatrixEigenvalues Sigma j • v := by rw [hcov]; exact heig
+  have h := simple_empirical_covariance_eigenvalue_asymptotics P
+    (multivariateGaussian m Sigma) X hiid (IsGaussian.memLp_id _ 4 (by simp)) j v hv
+    (symmetricMatrixEigenvalues Sigma j) (f k) (hf k) (by rw [hcov]) heig'
+    (by simpa only [hcov] using hsep)
+  rw [variance_sq_inner_gaussian_eigenvector _ v hv _ heig'] at h
+  simpa only [sampleCovarianceMatrix_eq_empirical] using h
 
 /-- GAPS 105.33: Wilks's chi-squared limit for sphericity in fixed dimension `p ≥ 2`: under
 `N_p(m, v I)` with `v > 0`, the likelihood-ratio statistic `-n log(det S / (tr S / p)^p)` converges

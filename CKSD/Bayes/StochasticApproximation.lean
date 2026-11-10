@@ -1,6 +1,8 @@
 module
 
-public import CKSD.Bayes.Basic
+public import CKSD.Bayes.StochasticApproximation.Basic
+public import CKSD.Bayes.StochasticApproximationPath
+public import CKSD.Bayes.MartingaleSeries
 public import Mathlib.Probability.Martingale.Basic
 public import Mathlib.Probability.Martingale.Convergence
 public import Mathlib.Analysis.InnerProductSpace.Basic
@@ -38,6 +40,11 @@ The proof of `CKSD.ae_tendsto_robbins_monro` is the Robbins–Siegmund argument:
 squared distance to the root plus accumulated drift is a supermartingale bounded below, and
 Mathlib's almost-everywhere martingale convergence theorem
 (`MeasureTheory.Submartingale.ae_tendsto_limitProcess`) applies.
+
+For the ODE method, predictable clipping and martingale convergence show convergence of the
+accumulated weighted noise. Correcting the affine interpolation by that noise gives an
+approximate ODE solution, controlled by the deterministic results in
+`CKSD.Bayes.StochasticApproximationPath`.
 -/
 
 @[expose] public section
@@ -48,76 +55,6 @@ open MeasureTheory ProbabilityTheory Filter Set
 open scoped ENNReal NNReal Topology BigOperators
 
 namespace CKSD
-
-/-- `Φ` is the flow of `θ' = -h(θ)`. -/
-def IsFlowOf {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (h : E → E)
-    (Φ : ℝ → E → E) : Prop :=
-  ∀ x, Φ 0 x = x ∧ ∀ t, HasDerivAt (fun s ↦ Φ s x) (-h (Φ t x)) t
-
-/-- A set invariant under the flow for all real times, `Φₜ(A) = A`. -/
-def IsInvariantSet {E : Type*} (Φ : ℝ → E → E) (A : Set E) : Prop :=
-  ∀ t, Φ t '' A = A
-
-/-- Internally chain transitive invariant set: any two points of `A` are joined by `(ε, T)`-chains
-of points of `A`, each flowing for time at least `T` to within `ε` of the next. -/
-def IsInternallyChainTransitive {E : Type*} [NormedAddCommGroup E] (Φ : ℝ → E → E)
-    (A : Set E) : Prop :=
-  IsInvariantSet Φ A ∧ ∀ x ∈ A, ∀ y ∈ A, ∀ ε > 0, ∀ T > 0, ∃ n : ℕ, 0 < n ∧
-    ∃ z : ℕ → E, (∀ i ≤ n, z i ∈ A) ∧ ‖z 0 - x‖ < ε ∧ z n = y ∧
-      ∀ i < n, ∃ t ≥ T, ‖Φ t (z i) - z (i + 1)‖ < ε
-
-/-- Limit set of a sequence: the set of its cluster points. -/
-def limitSet {E : Type*} [TopologicalSpace E] (u : ℕ → E) : Set E :=
-  ⋂ n, closure (u '' Ici n)
-
-/-- A bounded sequence in a proper metric space converges if its limit set is a singleton. -/
-theorem tendsto_of_limitSet_eq_singleton {E : Type*} [NormedAddCommGroup E] [ProperSpace E]
-    (u : ℕ → E) (hbdd : BddAbove (range fun n ↦ ‖u n‖)) (x : E)
-    (hlim : limitSet u = {x}) : Tendsto u atTop (𝓝 x) := by
-  obtain ⟨R, hR⟩ := hbdd
-  apply (isCompact_closedBall (0 : E) R).tendsto_nhds_of_unique_mapClusterPt
-    (Eventually.of_forall fun n ↦ ?_)
-  · intro y _ hy
-    have hymem : y ∈ limitSet u :=
-      mem_iInter.2 (mapClusterPt_atTop_iff_forall_mem_closure.1 hy)
-    simpa only [hlim, mem_singleton_iff] using hymem
-  · simpa only [Metric.mem_closedBall, dist_zero_right] using hR (mem_range_self n)
-
-/-- Interpolation times `tₙ = ∑_{k<n} aₖ`. -/
-def stochasticApproxTime (a : ℕ → ℝ) (n : ℕ) : ℝ := ∑ k ∈ Finset.range n, a k
-
-/-- Piecewise-linear interpolation of the iterates, linear on each `[tₙ, tₙ₊₁]`. -/
-def stochasticApproxInterp {E : Type*} [AddCommGroup E] [Module ℝ E] (a : ℕ → ℝ)
-    (θ : ℕ → E) (s : ℝ) : E :=
-  let n := sSup {n : ℕ | stochasticApproxTime a n ≤ s}
-  θ n + ((s - stochasticApproxTime a n) / a n) • (θ (n + 1) - θ n)
-
-/-- Standing hypotheses of the Robbins–Monro recursion `θₙ₊₁ = θₙ - aₙ(h(θₙ) + Mₙ₊₁)`: the iterates
-and the noise are adapted to the filtration `F`, the noise is a square-integrable martingale
-difference sequence whose conditional second moment given `Fₙ` is at most `σ²(θₙ)`, and the steps
-satisfy the Robbins–Monro conditions. -/
-structure IsRobbinsMonroScheme {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
-    [InnerProductSpace ℝ E] [CompleteSpace E] [MeasurableSpace E]
-    (μ : Measure Ω) (F : Filtration ℕ (inferInstance : MeasurableSpace Ω)) (h : E → E)
-    (a : ℕ → ℝ) (σ2 : E → ℝ) (θ M : ℕ → Ω → E) : Prop where
-  /-- The iterates are adapted. -/
-  measurable_iterate : ∀ n, Measurable[F n] (θ n)
-  /-- The noise is adapted. -/
-  measurable_noise : ∀ n, Measurable[F n] (M n)
-  /-- The noise is square integrable. -/
-  memLp_noise : ∀ n, MemLp (M n) 2 μ
-  /-- The noise is a martingale difference sequence. -/
-  condExp_noise : ∀ n, μ[M (n + 1) | F n] =ᵐ[μ] fun _ ↦ 0
-  /-- Conditional second-moment bound `𝔼[‖Mₙ₊₁‖² | Fₙ] ≤ σ²(θₙ)`. -/
-  condExp_sq_noise_le : ∀ n, μ[(fun ω ↦ ‖M (n + 1) ω‖ ^ 2) | F n] ≤ᵐ[μ] fun ω ↦ σ2 (θ n ω)
-  /-- The steps are positive. -/
-  step_pos : ∀ n, 0 < a n
-  /-- The squared steps are summable. -/
-  summable_sq_step : Summable fun n ↦ a n ^ 2
-  /-- The steps are not summable. -/
-  tendsto_sum_step : Tendsto (fun n ↦ ∑ k ∈ Finset.range n, a k) atTop atTop
-  /-- The recursion holds almost surely. -/
-  recursion : ∀ n, ∀ᵐ ω ∂μ, θ (n + 1) ω = θ n ω - a n • (h (θ n ω) + M (n + 1) ω)
 
 /-- Deterministic core of the Robbins–Siegmund argument: if `Vₙ/Pₙ + ∑_{k<n} c aₖ Vₖ/Pₖ₊₁ - Sₙ`
 converges, `Sₙ` converges, `1 ≤ Pₙ ≤ Pmax`, `aₙ > 0` and `∑ aₙ = ∞`, then `Vₙ → 0`. -/
@@ -398,6 +335,130 @@ section Robbins
 variable {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E] [InnerProductSpace ℝ E]
   [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
 
+/-- Predictable clipping of bounded iterates gives almost-sure convergence of each continuous
+linear projection of the accumulated Robbins–Monro noise. -/
+theorem IsRobbinsMonroScheme.ae_exists_tendsto_sum_noise_proj
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (F : Filtration ℕ (inferInstance : MeasurableSpace Ω)) (h : E → E) (a : ℕ → ℝ) (K : ℝ)
+    (θ M : ℕ → Ω → E) (hRM : IsRobbinsMonroScheme μ F h a (fun x ↦ K * (1 + ‖x‖ ^ 2)) θ M)
+    (hbdd : ∀ᵐ ω ∂μ, BddAbove (range fun n ↦ ‖θ n ω‖)) (L : E →L[ℝ] ℝ) :
+    ∀ᵐ ω ∂μ, ∃ c, Tendsto (fun n ↦ ∑ k ∈ Finset.range n, a k * L (M (k + 1) ω))
+      atTop (𝓝 c) := by
+  classical
+  let A : ℕ → ℕ → Set Ω := fun R n ↦ {ω | ‖θ n ω‖ ≤ R}
+  have hA (R n : ℕ) : MeasurableSet[F n] (A R n) := by
+    have hm := hRM.measurable_iterate n
+    let _ : MeasurableSpace Ω := F n
+    exact measurableSet_le hm.norm measurable_const
+  have hP (R n : ℕ) : MeasurableSet (A R n) := F.le n _ (hA R n)
+  have hL2 (n : ℕ) : MemLp (L ∘ M (n + 1)) 2 μ := L.comp_memLp' (hRM.memLp_noise _)
+  have hLc (n : ℕ) : μ[L ∘ M (n + 1) | F n] =ᵐ[μ] fun _ ↦ 0 := by
+    have hh := L.comp_condExp_comm ((hRM.memLp_noise (n + 1)).integrable one_le_two)
+      (m := F n)
+    filter_upwards [hh, hRM.condExp_noise n] with ω hω hzero
+    simpa [Function.comp_def, hzero] using hω.symm
+  let D : ℕ → ℕ → Ω → ℝ := fun R n ↦ (A R n).indicator
+    (fun ω ↦ a n * L (M (n + 1) ω))
+  have hD2 (R n : ℕ) : MemLp (D R n) 2 μ :=
+    ((hL2 n).const_mul (a n)).indicator (hP R n).nullMeasurableSet
+  have hDm (R n : ℕ) : StronglyMeasurable[F (n + 1)] (D R n) := by
+    apply StronglyMeasurable.indicator _ (F.mono (Nat.le_succ n) _ (hA R n))
+    exact (L.continuous.stronglyMeasurable.comp_measurable
+      (hRM.measurable_noise (n + 1))).const_mul (a n)
+  have hDc (R n : ℕ) : μ[D R n | F n] =ᵐ[μ] fun _ ↦ 0 := by
+    have hmul : μ[(fun ω ↦ a n * L (M (n + 1) ω)) | F n] =ᵐ[μ] fun _ ↦ 0 := by
+      have hh := condExp_smul (μ := μ) (a n) (L ∘ M (n + 1)) (F n)
+      change μ[(a n) • (L ∘ M (n + 1)) | F n] =ᵐ[μ] fun _ ↦ 0
+      filter_upwards [hh, hLc n] with ω hω hzero
+      simpa only [Pi.smul_apply, smul_eq_mul, hzero, mul_zero] using hω
+    have hh := condExp_indicator (((hL2 n).integrable one_le_two).const_mul (a n)) (hA R n)
+    filter_upwards [hh, hmul] with ω hω hzero
+    change μ[(A R n).indicator (fun x ↦ a n * (L ∘ M (n + 1)) x) | F n] ω = 0
+    rw [hω]
+    by_cases hmem : ω ∈ A R n <;> simp [hmem, hzero]
+  have hsecond (R n : ℕ) : (∫ ω, D R n ω ^ 2 ∂μ) ≤
+      (a n) ^ 2 * ‖L‖ ^ 2 * (|K| * (1 + (R : ℝ) ^ 2)) := by
+    have hN : Integrable (fun ω ↦ ‖M (n + 1) ω‖ ^ 2) μ :=
+      (memLp_two_iff_integrable_sq_norm (hRM.memLp_noise _).aestronglyMeasurable).1
+        (hRM.memLp_noise _)
+    have hNbound : (∫ ω in A R n, ‖M (n + 1) ω‖ ^ 2 ∂μ) ≤
+        |K| * (1 + (R : ℝ) ^ 2) := by
+      rw [← setIntegral_condExp (F.le n) hN (hA R n)]
+      calc _ ≤ ∫ ω in A R n, |K| * (1 + (R : ℝ) ^ 2) ∂μ := by
+              apply setIntegral_mono_ae_restrict integrable_condExp.integrableOn
+                (integrable_const _).integrableOn
+              filter_upwards [ae_restrict_of_ae (hRM.condExp_sq_noise_le n),
+                ae_restrict_mem (hP R n)] with ω hω hmem
+              have hnorm : ‖θ n ω‖ ≤ (R : ℝ) := hmem
+              have hsquare : ‖θ n ω‖ ^ 2 ≤ (R : ℝ) ^ 2 :=
+                sq_le_sq₀ (norm_nonneg _) (Nat.cast_nonneg _) |>.2 hnorm
+              calc _ ≤ K * (1 + ‖θ n ω‖ ^ 2) := hω
+                _ ≤ |K| * (1 + ‖θ n ω‖ ^ 2) :=
+                  mul_le_mul_of_nonneg_right (le_abs_self K) (by positivity)
+                _ ≤ |K| * (1 + (R : ℝ) ^ 2) := by gcongr
+        _ ≤ |K| * (1 + (R : ℝ) ^ 2) := by
+          rw [setIntegral_const, smul_eq_mul]
+          exact mul_le_of_le_one_left (by positivity) measureReal_le_one
+    have hid : (fun ω ↦ D R n ω ^ 2) = (A R n).indicator
+        (fun ω ↦ (a n * L (M (n + 1) ω)) ^ 2) := by
+      funext ω
+      by_cases hmem : ω ∈ A R n <;> simp [D, hmem]
+    rw [hid, integral_indicator (hP R n)]
+    calc _ ≤ ∫ ω in A R n, (a n) ^ 2 * ‖L‖ ^ 2 * ‖M (n + 1) ω‖ ^ 2 ∂μ := by
+            apply integral_mono (((hL2 n).const_mul (a n)).integrable_sq.integrableOn)
+              ((hN.const_mul _).integrableOn)
+            intro ω
+            change (a n * L (M (n + 1) ω)) ^ 2 ≤
+              (a n) ^ 2 * ‖L‖ ^ 2 * ‖M (n + 1) ω‖ ^ 2
+            have hh := L.le_opNorm (M (n + 1) ω)
+            have hsquare : |L (M (n + 1) ω)| ^ 2 ≤ (‖L‖ * ‖M (n + 1) ω‖) ^ 2 := by
+              exact (sq_le_sq₀ (abs_nonneg _) (by positivity)).2 (by simpa using hh)
+            rw [sq_abs, mul_pow] at hsquare
+            nlinarith [sq_nonneg (a n), mul_le_mul_of_nonneg_left hsquare (sq_nonneg (a n))]
+      _ = (a n) ^ 2 * ‖L‖ ^ 2 * ∫ ω in A R n, ‖M (n + 1) ω‖ ^ 2 ∂μ :=
+        integral_const_mul _ _
+      _ ≤ _ := mul_le_mul_of_nonneg_left hNbound (by positivity)
+  have hsum (R : ℕ) : Summable fun n ↦ ∫ ω, D R n ω ^ 2 ∂μ :=
+    Summable.of_nonneg_of_le (fun _ ↦ integral_nonneg fun _ ↦ sq_nonneg _)
+      (hsecond R) ((hRM.summable_sq_step.mul_right (‖L‖ ^ 2)).mul_right _)
+  have hconv : ∀ R : ℕ, ∀ᵐ ω ∂μ, ∃ c,
+      Tendsto (fun n ↦ ∑ k ∈ Finset.range n, D R k ω) atTop (𝓝 c) := fun R ↦
+    ae_exists_tendsto_sum_martingaleDifference μ F (D R) (hDm R) (hD2 R) (hDc R) (hsum R)
+  filter_upwards [ae_all_iff.2 hconv, hbdd] with ω hω hbω
+  obtain ⟨B, hB⟩ := hbω
+  obtain ⟨R, hR⟩ := exists_nat_ge B
+  obtain ⟨c, hc⟩ := hω R
+  refine ⟨c, hc.congr fun n ↦ Finset.sum_congr rfl fun k hk ↦ ?_⟩
+  have hmem : ω ∈ A R k := (hB (mem_range_self k)).trans hR
+  simp [D, hmem]
+
+
+/-- For almost-surely bounded Robbins–Monro iterates in finite dimension, the accumulated
+weighted martingale noise converges almost surely. -/
+theorem IsRobbinsMonroScheme.ae_exists_tendsto_sum_noise
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (F : Filtration ℕ (inferInstance : MeasurableSpace Ω)) (h : E → E) (a : ℕ → ℝ) (K : ℝ)
+    (θ M : ℕ → Ω → E) (hRM : IsRobbinsMonroScheme μ F h a (fun x ↦ K * (1 + ‖x‖ ^ 2)) θ M)
+    (hbdd : ∀ᵐ ω ∂μ, BddAbove (range fun n ↦ ‖θ n ω‖)) :
+    ∀ᵐ ω ∂μ, ∃ c, Tendsto (fun n ↦ ∑ k ∈ Finset.range n, a k • M (k + 1) ω)
+      atTop (𝓝 c) := by
+  classical
+  let e := (Module.finBasis ℝ E).equivFunL
+  let L (i : Fin (Module.finrank ℝ E)) : E →L[ℝ] ℝ :=
+    (ContinuousLinearMap.proj i).comp e.toContinuousLinearMap
+  have hproj (i : Fin (Module.finrank ℝ E)) :=
+    hRM.ae_exists_tendsto_sum_noise_proj μ F h a K θ M hbdd (L i)
+  filter_upwards [ae_all_iff.2 hproj] with ω hω
+  choose c hc using hω
+  have hconv : Tendsto (fun n i ↦ ∑ k ∈ Finset.range n, a k * L i (M (k + 1) ω))
+      atTop (𝓝 c) := tendsto_pi_nhds.2 hc
+  have hh := e.symm.continuous.continuousAt.tendsto.comp hconv
+  refine ⟨e.symm c, hh.congr fun n ↦ ?_⟩
+  apply e.injective
+  simp only [Function.comp_apply, ContinuousLinearEquiv.apply_symm_apply]
+  ext i
+  simp [L, map_sum, map_smul]
+
 /-- GAPS 104.40: almost-sure convergence of the Robbins–Monro recursion. If `h` is Lipschitz with
 `h θ⋆ = 0` and `⟪θ - θ⋆, h θ⟫ ≥ m ‖θ - θ⋆‖²` for some `m > 0`, the initial state is square
 integrable, and the conditional noise variance is bounded by a constant `K`, then `θₙ → θ⋆`
@@ -564,7 +625,22 @@ theorem ae_asymptotic_pseudotrajectory (μ : Measure Ω) [IsProbabilityMeasure �
     ∀ᵐ ω ∂μ, ∀ ε > 0, ∀ᶠ s in atTop, ∀ u ∈ Icc 0 T,
       ‖stochasticApproxInterp a (θ · ω) (s + u) -
         Φ u (stochasticApproxInterp a (θ · ω) s)‖ ≤ ε := by
-  sorry
+  have ha0 : Tendsto a atTop (𝓝 0) := by
+    have hh := hRM.summable_sq_step.tendsto_atTop_zero.sqrt
+    rw [Real.sqrt_zero] at hh
+    exact hh.congr fun n ↦ Real.sqrt_sq (hRM.step_pos n).le
+  filter_upwards [hRM.ae_exists_tendsto_sum_noise μ F h a K θ M hbdd,
+    hbdd, ae_all_iff.2 hRM.recursion] with ω hnoise hbω hrecω
+  obtain ⟨c, hc⟩ := hnoise
+  let S : ℕ → E := fun n ↦ ∑ k ∈ Finset.range n, a k • M (k + 1) ω
+  have hSsucc (n : ℕ) : S (n + 1) - S n = a n • M (n + 1) ω := by
+    dsimp [S]
+    rw [Finset.sum_range_succ, add_sub_cancel_left]
+  apply asymptotic_pseudotrajectory_stochasticApproxInterp hRM.step_pos ha0
+    hRM.tendsto_sum_step h L hL Φ hΦ (θ · ω) S hc hbω _ T hT
+  intro n
+  rw [hrecω n, hSsucc, smul_add]
+  abel
 
 end Robbins
 

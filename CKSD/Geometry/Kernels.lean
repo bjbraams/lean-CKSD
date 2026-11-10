@@ -1,6 +1,10 @@
 module
 
 public import CKSD.Geometry.Basic
+public import CKSD.Geometry.EnergyDistance
+public import CKSD.Geometry.DistanceKernel
+public import CKSD.Geometry.DistanceProductSeparation
+public import CKSD.Geometry.DistanceCovarianceCentering
 public import CKSD.Geometry.SpectralKernels
 public import CKSD.Bayes.Basic
 public import Mathlib.Probability.Moments.SubGaussian
@@ -70,20 +74,6 @@ theorem IsCharacteristicKernel.squaredMMD_eq_zero_iff {X : Type*} [MeasurableSpa
     [IsProbabilityMeasure Q] : squaredMMD k P Q = 0 ↔ P = Q :=
   hk P Q inferInstance inferInstance (integrable_kernel_of_bounded hkm hb _)
     (integrable_kernel_of_bounded hkm hb _) (integrable_kernel_of_bounded hkm hb _)
-
-/-- For a positive semidefinite kernel `k` whose feature map is integrable for `P` and `Q`, and
-which is integrable against the three product measures, the squared MMD is the squared distance
-`‖m_P - m_Q‖²` of TauCeti's kernel mean embeddings. -/
-theorem squaredMMD_eq_norm_kernelMeanEmbedding_sub_sq {X : Type*} [MeasurableSpace X]
-    {k : X → X → ℝ} (hk : Matrix.PosSemidef k) {P Q : Measure X} [SFinite P] [SFinite Q]
-    (hP : Integrable hk.kolmogorovFeature P) (hQ : Integrable hk.kolmogorovFeature Q)
-    (hPP : Integrable (fun z : X × X ↦ k z.1 z.2) (P.prod P))
-    (hQQ : Integrable (fun z : X × X ↦ k z.1 z.2) (Q.prod Q))
-    (hPQ : Integrable (fun z : X × X ↦ k z.1 z.2) (P.prod Q)) :
-    squaredMMD k P Q = ‖hk.kernelMeanEmbedding P - hk.kernelMeanEmbedding Q‖ ^ 2 := by
-  rw [hk.norm_kernelMeanEmbedding_sub_sq hP hQ, squaredMMD, integral_prod_symm _ hPP,
-    integral_prod_symm _ hQQ, integral_prod_symm _ hPQ]
-  ring
 
 /-- The unbiased squared MMD of an inner-product feature kernel, in terms of the two feature means
 `A = n⁻¹ ∑ φ(x_i)` and `B = n⁻¹ ∑ φ(y_i)`: for `n ≥ 2` it is `‖A - B‖²` plus the correction
@@ -710,7 +700,8 @@ theorem energy_distance_nonneg_eq_zero_iff_and_eq_squaredMMD
     let D := 2 * (∫ z, ‖z.1 - z.2‖ ∂P.prod Q) - (∫ z, ‖z.1 - z.2‖ ∂P.prod P) -
       ∫ z, ‖z.1 - z.2‖ ∂Q.prod Q;
     0 ≤ D ∧ (D = 0 ↔ P = Q) ∧ D = 2 * squaredMMD distanceKernel P Q := by
-  sorry
+  obtain ⟨hnonneg, hzero⟩ := energyDistance_nonneg_eq_zero_iff P Q hP hQ
+  exact ⟨hnonneg, hzero, energyDistance_eq_two_mul_squaredMMD P Q hP hQ⟩
 
 /-- GAPS 108.62: for a law `P` on `ℝ^d × ℝ^e` with finite second moments and marginals `μ, ν`, the
 squared distance covariance `V = E[A(X, X') B(Y, Y')]` of the doubly centered distances is
@@ -725,7 +716,21 @@ theorem distance_covariance_nonneg_eq_zero_iff_and_eq_squaredMMD {d e : ℕ}
     let k := fun x y : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin e) ↦
       distanceKernel x.1 y.1 * distanceKernel x.2 y.2;
     0 ≤ V ∧ (V = 0 ↔ P = mu.prod nu) ∧ V = 4 * squaredMMD k P (mu.prod nu) := by
-  sorry
+  dsimp only
+  have hP : Integrable (fun z ↦ ‖z‖) P := (h2.integrable (by norm_num)).norm
+  have hQ := integrable_norm_prod_marginals P hP
+  have hfst : P.map Prod.fst =
+      ((P.map Prod.fst).prod (P.map Prod.snd)).map Prod.fst := by simp
+  have hsnd : P.map Prod.snd =
+      ((P.map Prod.fst).prod (P.map Prod.snd)).map Prod.snd := by simp
+  obtain ⟨hnonneg, hzero⟩ := distanceProductKernel_squaredMMD_nonneg_eq_zero_iff
+    P ((P.map Prod.fst).prod (P.map Prod.snd)) hP hQ hfst hsnd
+  have hV := integral_centeredDistance_mul_eq_four_mul_squaredMMD P h2
+  change _ = 4 * squaredMMD distanceProductKernel P _ at hV
+  change 0 ≤ _ ∧ (_ = 0 ↔ _) ∧ _ = 4 * squaredMMD distanceProductKernel P _
+  rw [hV]
+  exact ⟨mul_nonneg (by norm_num) hnonneg, by simpa only [mul_eq_zero, OfNat.ofNat_ne_zero,
+    false_or] using hzero, rfl⟩
 
 /-- GAPS 108.63, independence criterion for a characteristic product-space kernel: for a bounded
 measurable characteristic kernel `k` on `X × Y` and a law `P` of a pair, the HSIC
