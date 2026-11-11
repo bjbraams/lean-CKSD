@@ -38,9 +38,10 @@ Specific proof reuse includes:
   `ae_eq_condExp_of_forall_setIntegral_eq`, Fubini's theorem, and conditional
   Jensen inequalities.
 - The singleton-limit-set convergence lemma uses Mathlib's compactness criterion
-  `IsCompact.tendsto_nhds_of_unique_mapClusterPt`. The stochastic approximation
-  equilibrium corollary also depends on the admitted limit-set theorem, as
-  recorded by the compiled axiom inventory.
+  `IsCompact.tendsto_nhds_of_unique_mapClusterPt`. The stochastic-approximation
+  limit-set theorem uses TauCeti's preconnected omega-limit sets, Mathlib's
+  Grönwall estimates, and local compactness arguments to construct internal
+  chains of the limiting flow. Its equilibrium corollary has no admitted dependencies.
 - The MMD weak-convergence criterion uses Mathlib's continuity of product
   probability laws, continuity of bounded continuous integrals, and Prokhorov's
   compactness theorem for uniformly tight families. The zero-distortion isometry
@@ -463,8 +464,10 @@ countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
 - The Holley–Stroock comparison in `CKSD/Bayes/BoundedPerturbation.lean` uses
   Mathlib's measure domination and Bochner integrals, with TauCeti's entropy and
   logarithmic Sobolev predicates. The sharp factor is `exp (b - a)`. The
-  unperturbed Bakry–Émery inequality remains admitted in
-  `CKSD/Bayes/FunctionalInequalities.lean`.
+  unperturbed Bakry–Émery inequality uses TauCeti's Prékopa–Leindler theorem,
+  Mathlib's differentiation under the integral, and dominated convergence.
+  Logarithmic regularization and smooth cutoffs extend the interpolation
+  inequality to the stated smooth test functions; the sharp constant is `1/m`.
 - Quantitative evidence concentration uses Mathlib's `variance_sum_pi` and
   `meas_ge_le_variance_div_sq`, together with Tonelli's theorem and change of
   density. The shrinking-ball estimate is in `CKSD/Bayes/EvidenceConcentration.lean`.
@@ -518,3 +521,52 @@ countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
   square-integrable products. Separation with fixed marginals follows from bounded
   weighted marginal measures, the energy-distance criterion, and measure equality on
   rectangles.
+
+- Exact Wilks determinant-ratio laws use TauCeti's Wishart density agreement,
+  convolution and determinant moments, its Beta moments, and
+  `TauCeti.Measure.ext_of_forall_integral_pow_eq_of_support` from
+  `TauCeti/Probability/Moments/CompactDeterminacy.lean`. The local determinant
+  tilt changes the first Wishart degree by twice the natural moment order.
+- The nonlinear path-space construction uses Mathlib's complete Bochner `L¹`
+  spaces, continuous-map norms and Banach fixed points. The deterministic
+  Picard argument adapts Mathlib's Picard–Lindelöf factorial estimates and
+  TauCeti's Carathéodory iteration argument; stability and uniqueness use
+  TauCeti's integral Grönwall theorem and first-Wasserstein coupling bounds.
+  Countable rational-coordinate reconstruction gives measurable continuous
+  path versions and consistent compact paths glue to a global process.
+  Integrable Brownian forcing bounds use TauCeti's geometric Brownian
+  running-maximum estimates applied to the positive and negative exponentials.
+- Growing-shape Beta limits use Mathlib's log-convexity and recurrence of Gamma,
+  TauCeti's compact moment convergence theorem, and Mathlib's CDF criterion
+  for weak convergence. Natural-shift Gamma multiplication uses TauCeti's
+  `Real.prod_range_add_mul_Gamma` and Mathlib's finite-product equivalence
+  `finProdFinEquiv`.
+- Spherical Wishart trace laws use TauCeti's matrix moment-generating function,
+  Gamma transform, and `TauCeti.Measure.ext_of_mgf`. Mathlib's finite AM–GM
+  inequality bounds the determinant-to-trace ratio. Determinant tilting,
+  inverse Gamma moments, and the natural-shift Gamma multiplication identity
+  identify its Beta-product moments, including the scale normalization.
+- General propagation of chaos uses TauCeti's
+  `tendsto_wassersteinEDist_empiricalMeasure_ae` from
+  `TauCeti/MeasureTheory/OptimalTransport/Wasserstein/Empirical.lean` on the
+  space of continuous paths. Mathlib supplies convergence of laws under
+  almost-sure convergence and independence of finite coordinate families.
+  The local synchronous coupling estimate bounds every particle path by the
+  empirical first-Wasserstein discrepancy of independent nonlinear paths.
+- The Gaussian block-independence likelihood-ratio proof follows Muirhead,
+  *Aspects of Multivariate Statistical Theory*, Theorems 11.2.3–11.2.4,
+  printed pp. 532–534 (physical PDF pp. 558–560 in the local 2005 copy).
+  A natural determinant tilt, independent Wishart diagonal blocks, and
+  inverse determinant moments identify the Beta-product law. Anderson,
+  *An Introduction to Multivariate Statistical Analysis*, third edition,
+  Theorems 9.3.1–9.3.3, printed pp. 387–388 (PDF pp. 405–406), supplies
+  a complementary regression interpretation. TauCeti supplies Gaussian
+  block independence, Wishart moments, compact moment determinacy, and
+  multivariate Gamma identities.
+- The conditional-kernel step of the LAN representation argument follows
+  van der Vaart, *Asymptotic Statistics*, Theorem 7.10 and its proof,
+  printed pp. 98–99 (PDF pp. 114–115). The local
+  `Asymptotics/RepresentationKernel.lean` proves the common randomization
+  kernel for a family of tilted joint laws using Mathlib's conditional
+  kernels, disintegration and weighted kernel products. The full LAN
+  representation theorem remains admitted.

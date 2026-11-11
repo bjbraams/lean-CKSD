@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Asymptotics.Basic
+public import CKSD.Asymptotics.RepresentationKernel
 public import CKSD.Inference.Model
 public import Mathlib.MeasureTheory.Group.Convolution
 public import Statlib.Contiguity.Def

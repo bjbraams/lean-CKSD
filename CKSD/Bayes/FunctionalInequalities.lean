@@ -2,6 +2,7 @@ module
 
 public import CKSD.Bayes.LangevinSampling
 public import CKSD.Bayes.BoundedPerturbation
+public import CKSD.Bayes.BakryEmeryCutoff
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Resolvent
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.InternalEnergy.Basic
@@ -437,37 +438,7 @@ theorem add_inner_add_le_of_isStronglyMonotoneGradient {d : ℕ}
     (hgrad : ∀ x, HasGradientAt V (gradV x) x) (hα : IsStronglyMonotoneGradient gradV α)
     (x : EuclideanSpace ℝ (Fin d)) :
     V 0 + inner ℝ (gradV 0) x + α / 2 * ‖x‖ ^ 2 ≤ V x := by
-  set φ : ℝ → ℝ := fun t ↦
-    V (t • x) - V 0 - t * inner ℝ (gradV 0) x - α / 2 * t ^ 2 * ‖x‖ ^ 2 with hφ
-  have hd (t : ℝ) : HasDerivAt φ
-      (inner ℝ (gradV (t • x)) x - inner ℝ (gradV 0) x - α * t * ‖x‖ ^ 2) t := by
-    have h1 : HasDerivAt (fun s : ℝ ↦ V (s • x)) (inner ℝ (gradV (t • x)) x) t := by
-      have := (hgrad (t • x)).hasFDerivAt.comp_hasDerivAt t ((hasDerivAt_id t).smul_const x)
-      simp only [id, one_smul, InnerProductSpace.toDual_apply_apply] at this
-      exact this
-    have h2 := ((h1.sub_const (V 0)).sub ((hasDerivAt_id t).mul_const (inner ℝ (gradV 0) x))).sub
-      (((hasDerivAt_pow 2 t).const_mul (α / 2)).mul_const (‖x‖ ^ 2))
-    refine (h2.congr_deriv ?_).congr_of_eventuallyEq (Eventually.of_forall fun s ↦ rfl)
-    simp only [Nat.cast_ofNat, Nat.add_one_sub_one, pow_one, one_mul]
-    ring
-  have hmono : MonotoneOn φ (Ici 0) := by
-    refine monotoneOn_of_hasDerivWithinAt_nonneg (convex_Ici 0)
-      (fun t _ ↦ (hd t).continuousAt.continuousWithinAt) (fun t _ ↦ (hd t).hasDerivWithinAt) ?_
-    intro t ht
-    rw [interior_Ici, mem_Ioi] at ht
-    have h := hα (t • x) 0
-    simp only [sub_zero] at h
-    rw [real_inner_smul_right, norm_smul, Real.norm_eq_abs, abs_of_pos ht,
-      mul_pow, inner_sub_left] at h
-    have : α * t * ‖x‖ ^ 2 ≤ inner ℝ (gradV (t • x)) x - inner ℝ (gradV 0) x := by
-      refine le_of_mul_le_mul_left ?_ ht
-      calc t * (α * t * ‖x‖ ^ 2) = α * (t ^ 2 * ‖x‖ ^ 2) := by ring
-        _ ≤ _ := h
-    linarith
-  have h01 := hmono (mem_Ici.2 le_rfl) (mem_Ici.2 zero_le_one) zero_le_one
-  simp only [hφ, zero_smul, zero_mul, one_smul, one_mul, sub_self, one_pow,
-    ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow] at h01
-  linarith
+  simpa only [sub_zero] using potential_add_inner_add_le V gradV α hgrad hα 0 x
 
 /-- For a potential with a strongly monotone gradient (`∇²V ⪰ αI` with `α > 0`), the Gibbs
 density `e^{-V}` is integrable, by the quadratic lower bound
@@ -512,8 +483,8 @@ theorem logSobolevInequality_gibbsMeasure_of_bounded_perturbation {d : ℕ}
   rw [div_eq_mul_inv]
   refine logSobolevInequality_gibbsMeasure_add hint hV₀.continuous.measurable hψ hab
     (inv_nonneg.2 hm.le) ?_
-  -- The remaining step is the Bakry–Émery inequality for the unperturbed potential.
-  sorry
+  simpa only [one_div] using
+    logSobolevInequality_gibbsMeasure_of_stronglyMonotoneGradient V₀ gradV₀ m hm hgrad hconv hint
 
 /-- GAPS 104.44: under the hypotheses of the Bakry–Émery and Holley–Stroock theorem, the Gibbs law
 of `V₀ + ψ` satisfies the Poincaré inequality with constant `e^{b-a}/m`. It follows from the

@@ -2,10 +2,10 @@
   "schema_version": 1,
   "scope_rule": "A tagged theorem represents only its stated hypotheses and conclusions. Presence of a statement does not assert full coverage of a catalogue family.",
   "counts": {
-    "proved": 1971,
-    "definition": 816,
-    "admitted": 104,
-    "conditional": 2,
+    "proved": 2164,
+    "definition": 824,
+    "admitted": 97,
+    "conditional": 0,
     "gaps": 296,
     "easy_entries": 110,
     "gaps_with_statements": 294,
@@ -1007,11 +1007,11 @@
       "name": "CKSD.outerExpectation",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 57,
+      "line": 58,
       "doc": "Outer expectation of a nonnegative function, as the infimum over measurable majorants.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1022,11 +1022,11 @@
       "name": "CKSD.TendstoInOuterDistribution",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 63,
+      "line": 64,
       "doc": "Weak convergence in the outer-expectation sense, allowing nonmeasurable random elements. Shifting a bounded continuous test by its norm makes the integrand nonnegative.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1037,11 +1037,11 @@
       "name": "CKSD.TendstoInProbabilityZero",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 73,
+      "line": 74,
       "doc": "Convergence to zero in probability, `P n {ε < |X n|} → 0` for every `ε > 0`, for observation spaces and laws varying with `n`. On a fixed probability space it is `TendstoInMeasure μ X atTop (fun _ ↦ 0)`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1052,11 +1052,11 @@
       "name": "CKSD.IsLittleOInProbability",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 78,
+      "line": 79,
       "doc": "Stochastic little-o with an eventually positive deterministic scale.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1067,11 +1067,11 @@
       "name": "CKSD.IsBigOInProbability",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 84,
+      "line": 85,
       "doc": "Stochastic big-O with an eventually positive deterministic scale.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1082,11 +1082,11 @@
       "name": "CKSD.HasHadamardFDerivAt",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 90,
+      "line": 91,
       "doc": "Sequential tangential Hadamard differentiability, with a continuous linear extension.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1097,11 +1097,11 @@
       "name": "CKSD.LocalExperiment",
       "kind": "abbrev",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 99,
+      "line": 100,
       "doc": "A local experiment with observation space depending on sample size.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1112,11 +1112,11 @@
       "name": "CKSD.IsLocallyAsymptoticallyNormal",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 103,
+      "line": 104,
       "doc": "Local asymptotic normality: Gaussian central sequence and log-likelihood expansion.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1127,11 +1127,11 @@
       "name": "CKSD.IsRegularEstimator",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 115,
+      "line": 116,
       "doc": "Regularity of a locally scaled estimator: its centred limit law `L` is independent of the local parameter.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1142,13 +1142,13 @@
       "name": "CKSD.exists_gaussian_shift_kernel_of_local_limits",
       "kind": "theorem",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 125,
+      "line": 126,
       "doc": "GAPS 102.15: the asymptotic representation theorem. In a LAN experiment with information `I`, if statistics `T n` with values in a Polish space have limit laws `L h` under every local parameter `h`, there is a Markov kernel `K` with `L h = K ∘ₘ N(h, I⁻¹)` for all `h`, i.e. the limit is a randomized statistic in the Gaussian shift experiment.",
       "gaps": [
         "102.15"
       ],
       "admitted": true,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "sorryAx",
@@ -1161,13 +1161,13 @@
       "name": "CKSD.exists_convolution_of_isRegularEstimator",
       "kind": "theorem",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 141,
+      "line": 142,
       "doc": "GAPS 102.16: Hájek's convolution theorem. In a LAN experiment with information `I`, the limit law `L` of a regular estimator sequence is the convolution of `N(0, I⁻¹)` with a probability measure `M`.",
       "gaps": [
         "102.16"
       ],
       "admitted": true,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "sorryAx",
@@ -1180,13 +1180,13 @@
       "name": "CKSD.gaussian_risk_le_local_asymptotic_minimax",
       "kind": "theorem",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 155,
+      "line": 156,
       "doc": "GAPS 102.17: the local asymptotic minimax theorem. In a LAN experiment with information `I`, for a lower semicontinuous, symmetric, quasiconvex (bowl-shaped) loss `ℓ ≥ 0`, every estimator sequence satisfies `E ℓ(N(0, I⁻¹)) ≤ sup_c liminf_n sup_{‖h‖ ≤ c} E_h ℓ(T n - h)`.",
       "gaps": [
         "102.17"
       ],
       "admitted": true,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "sorryAx",
@@ -1199,13 +1199,13 @@
       "name": "CKSD.tendstoInDistribution_of_hasHadamardFDerivAt",
       "kind": "theorem",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 169,
+      "line": 170,
       "doc": "GAPS 102.28: functional delta method for measurable maps and a closed tangent space. The outer version for nonmeasurable empirical processes uses `TendstoInOuterDistribution`.",
       "gaps": [
         "102.28"
       ],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1217,11 +1217,11 @@
       "name": "CKSD.fisherRaoMetric",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 267,
+      "line": 268,
       "doc": "Fisher–Rao bilinear form on the open finite probability simplex.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1232,11 +1232,11 @@
       "name": "CKSD.amariChentsovTensor",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 270,
+      "line": 271,
       "doc": "Amari–Chentsov symmetric cubic tensor on the open probability simplex.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1247,11 +1247,11 @@
       "name": "CKSD.openProbabilitySimplex",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 274,
+      "line": 275,
       "doc": "The open probability simplex.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1262,11 +1262,11 @@
       "name": "CKSD.simplexTangentSpace",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 278,
+      "line": 279,
       "doc": "Tangent space of the probability simplex, represented by zero-sum vectors.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1277,22 +1277,22 @@
       "name": "CKSD.CongruentSimplexEmbedding",
       "kind": "structure",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 294,
+      "line": 295,
       "doc": "A congruent embedding splits each input category into a nonempty block of output categories.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": []
     },
     {
       "name": "CKSD.CongruentSimplexEmbedding.map",
       "kind": "def",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 308,
+      "line": 309,
       "doc": "The map `p ↦ (p (block j) · weight j)ⱼ` of a congruent simplex embedding; it is the restriction of a linear map, and so is its own derivative.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1303,13 +1303,13 @@
       "name": "CKSD.fisherRaoMetric_congruent_embedding",
       "kind": "theorem",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 313,
+      "line": 314,
       "doc": "GAPS 102.58: the Fisher–Rao metric `∑ uᵢ vᵢ / pᵢ` on the open simplex is invariant under congruent embeddings (Chentsov's defining invariance).",
       "gaps": [
         "102.58"
       ],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -1321,11 +1321,11 @@
       "name": "CKSD.isContiguous_iff_contiguous5",
       "kind": "theorem",
       "file": "CKSD/Asymptotics/Framework.lean",
-      "line": 335,
+      "line": 336,
       "doc": "For probability measures, `CKSD.IsContiguous` is Statlib's direct set formulation `Contiguous5` of contiguity.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "a145158a5ae6e72c8eab7d94b69d054d5f65c878e32991d868164adc97202c08",
+      "source_sha256": "3a50c3d2d1ba2fb9f7a710d369cf32d8e41b2f702bf756fc06bfae14b3ed69f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -3328,6 +3328,70 @@
       "proof": "proved"
     },
     {
+      "name": "CKSD.condKernel_comp_withDensity_eq_snd",
+      "kind": "theorem",
+      "file": "CKSD/Asymptotics/RepresentationKernel.lean",
+      "line": 31,
+      "doc": "A tilt depending only on the conditioning coordinate preserves the conditional kernel.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "636ffd7aa134e3e47a95a9c464674303209bcdfbda3615873e573920222c2aae",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_markovKernel_of_tilted_joint_laws",
+      "kind": "theorem",
+      "file": "CKSD/Asymptotics/RepresentationKernel.lean",
+      "line": 38,
+      "doc": "A family obtained by tilting one joint law in its first coordinate has one common Markov randomization for all its second marginal laws.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "636ffd7aa134e3e47a95a9c464674303209bcdfbda3615873e573920222c2aae",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_markovKernel_of_tilted_event_probabilities",
+      "kind": "theorem",
+      "file": "CKSD/Asymptotics/RepresentationKernel.lean",
+      "line": 50,
+      "doc": "Equality of tilted event probabilities suffices to construct a common randomization kernel. This form applies directly to the limiting likelihood-ratio identity.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "636ffd7aa134e3e47a95a9c464674303209bcdfbda3615873e573920222c2aae",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_markovKernel_of_map_eq_tilted_joint_laws",
+      "kind": "theorem",
+      "file": "CKSD/Asymptotics/RepresentationKernel.lean",
+      "line": 69,
+      "doc": "A measurable change of observation coordinates pulls the common randomization back to the original observation laws, without needing an inverse coordinate map.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "636ffd7aa134e3e47a95a9c464674303209bcdfbda3615873e573920222c2aae",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.efficientScore_eq_self_of_inner_eq_zero",
       "kind": "theorem",
       "file": "CKSD/Asymptotics/Semiparametric.lean",
@@ -4424,6 +4488,358 @@
       ],
       "admitted": false,
       "source_sha256": "89acbc5a8febff3fd26295cf96c05d339638bc7943964541a1da91877b89b72f",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.abs_sq_mul_log_sq_mul_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryCutoff.lean",
+      "line": 22,
+      "doc": "Multiplication by a scalar in the unit interval preserves an integrable entropy bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "7cb4a310c0377777370fa69bc4b7b8970706e3f288aa0cfe2a7e631c27792288",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_expanding_smooth_cutoffs",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryCutoff.lean",
+      "line": 47,
+      "doc": "Smooth expanding radial cutoffs can be chosen with a common Lipschitz bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "7cb4a310c0377777370fa69bc4b7b8970706e3f288aa0cfe2a7e631c27792288",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.logSobolevInequality_of_hasCompactSupport",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryCutoff.lean",
+      "line": 75,
+      "doc": "A logarithmic Sobolev bound on smooth compactly supported tests extends to all admissible tests.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "7cb4a310c0377777370fa69bc4b7b8970706e3f288aa0cfe2a7e631c27792288",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.logSobolevInequality_gibbsMeasure_of_stronglyMonotoneGradient",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryCutoff.lean",
+      "line": 146,
+      "doc": "Bakry–Émery: a strongly convex smooth potential has logarithmic Sobolev constant `1/m`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "7cb4a310c0377777370fa69bc4b7b8970706e3f288aa0cfe2a7e631c27792288",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.potential_add_inner_add_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryInterpolation.lean",
+      "line": 25,
+      "doc": "A strongly monotone gradient gives a lower tangent paraboloid at every base point.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "33b2114e0a67230f23d51f3e621efd53768461e7eec9e6de2e599d4967346254",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.potential_interpolation_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryInterpolation.lean",
+      "line": 61,
+      "doc": "Tangent paraboloids imply the strong convexity interpolation inequality.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "33b2114e0a67230f23d51f3e621efd53768461e7eec9e6de2e599d4967346254",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.two_mul_le_mul_sq_add_div",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryInterpolation.lean",
+      "line": 80,
+      "doc": "A scalar Young inequality with an arbitrary positive quadratic coefficient.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "33b2114e0a67230f23d51f3e621efd53768461e7eec9e6de2e599d4967346254",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exponential_interpolation_exponent_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryInterpolation.lean",
+      "line": 87,
+      "doc": "The pointwise exponential comparison used in the Prékopa–Leindler proof of LSI.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "33b2114e0a67230f23d51f3e621efd53768461e7eec9e6de2e599d4967346254",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_exponential_interpolation_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryInterpolation.lean",
+      "line": 117,
+      "doc": "The Prékopa–Leindler interpolation estimate for a smooth log-density perturbation.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "33b2114e0a67230f23d51f3e621efd53768461e7eec9e6de2e599d4967346254",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.hasDerivAt_integral_exponential_perturbation",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryInterpolation.lean",
+      "line": 162,
+      "doc": "Differentiate a bounded exponential perturbation under a finite-density integral.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "33b2114e0a67230f23d51f3e621efd53768461e7eec9e6de2e599d4967346254",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.hasDerivAt_le_of_eventually_le_right",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryInterpolation.lean",
+      "line": 219,
+      "doc": "Right-hand comparison of differentiable functions compares derivatives at a contact point.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "33b2114e0a67230f23d51f3e621efd53768461e7eec9e6de2e599d4967346254",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.entropy_exponential_le_of_quadratic_upper_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryInterpolation.lean",
+      "line": 231,
+      "doc": "Sharp entropy-energy inequality for bounded log-density perturbations with bounded derivative and a global quadratic upper Taylor bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "33b2114e0a67230f23d51f3e621efd53768461e7eec9e6de2e599d4967346254",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.quadratic_upper_bound_of_lipschitz_fderiv",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryRegularization.lean",
+      "line": 25,
+      "doc": "A Lipschitz derivative gives a global quadratic upper Taylor bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c6681a567c009609e004e241f4cc7f9d46a6e51fcbb63e478098c4d17dea6bb6",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_gibbsMeasure",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryRegularization.lean",
+      "line": 48,
+      "doc": "Integration against the Gibbs law is normalized weighted Lebesgue integration.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c6681a567c009609e004e241f4cc7f9d46a6e51fcbb63e478098c4d17dea6bb6",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.entropy_gibbs_exponential_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryRegularization.lean",
+      "line": 63,
+      "doc": "Bounded logarithmic perturbations satisfy the Gibbs entropy-energy bound with sharp constant.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c6681a567c009609e004e241f4cc7f9d46a6e51fcbb63e478098c4d17dea6bb6",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_bounded_quadratic_upper_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryRegularization.lean",
+      "line": 108,
+      "doc": "A smooth function constant off a compact set has bounded derivative and a quadratic upper bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c6681a567c009609e004e241f4cc7f9d46a6e51fcbb63e478098c4d17dea6bb6",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_log_regularization_bounds",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryRegularization.lean",
+      "line": 145,
+      "doc": "The logarithm of a regularized smooth compactly supported square is an admissible bounded perturbation in the sharp entropy estimate.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c6681a567c009609e004e241f4cc7f9d46a6e51fcbb63e478098c4d17dea6bb6",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_entropy_of_dominated_convergence",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryRegularization.lean",
+      "line": 160,
+      "doc": "Dominated convergence of both entropy moments gives convergence of entropy.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c6681a567c009609e004e241f4cc7f9d46a6e51fcbb63e478098c4d17dea6bb6",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.regularized_log_gradient_energy_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryRegularization.lean",
+      "line": 174,
+      "doc": "Regularization of a square preserves the sharp gradient-energy upper bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c6681a567c009609e004e241f4cc7f9d46a6e51fcbb63e478098c4d17dea6bb6",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.entropy_gibbs_regularized_sq_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryRegularization.lean",
+      "line": 194,
+      "doc": "A regularized compactly supported square satisfies the sharp logarithmic Sobolev bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c6681a567c009609e004e241f4cc7f9d46a6e51fcbb63e478098c4d17dea6bb6",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_entropy_add_inv",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryRegularization.lean",
+      "line": 231,
+      "doc": "Adding positive constants tending to zero preserves the entropy of a bounded nonnegative function.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c6681a567c009609e004e241f4cc7f9d46a6e51fcbb63e478098c4d17dea6bb6",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.entropy_gibbs_sq_le_of_hasCompactSupport",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/BakryEmeryRegularization.lean",
+      "line": 254,
+      "doc": "Smooth compactly supported tests satisfy the sharp Bakry–Émery logarithmic Sobolev bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c6681a567c009609e004e241f4cc7f9d46a6e51fcbb63e478098c4d17dea6bb6",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6103,11 +6519,11 @@
       "name": "CKSD.IsLangevinFlow",
       "kind": "def",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 56,
+      "line": 57,
       "doc": "The flow of laws of the overdamped Langevin diffusion: a weak Fokker–Planck solution with drift `-gradV` and covariance `2I` on `[0, T]` for every `T ≥ 0`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6118,11 +6534,11 @@
       "name": "CKSD.chiSqDiv",
       "kind": "def",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 61,
+      "line": 62,
       "doc": "Chi-squared divergence `∫ (dμ/dν - 1)² dν` for `μ ≪ ν`, and `∞` otherwise.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6133,13 +6549,13 @@
       "name": "CKSD.poincareInequality_iff_chiSqDiv_langevin_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 66,
+      "line": 67,
       "doc": "GAPS 104.44: the Poincaré inequality with constant `C` is equivalent to exponential decay at rate `2/C` of the chi-squared divergence along every Langevin flow.",
       "gaps": [
         "104.44"
       ],
       "admitted": true,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "sorryAx",
@@ -6152,13 +6568,13 @@
       "name": "CKSD.logSobolevInequality_iff_klDiv_langevin_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 78,
+      "line": 79,
       "doc": "GAPS 104.44: the logarithmic Sobolev inequality with constant `C` is equivalent to exponential decay at rate `2/C` of the relative entropy along every Langevin flow.",
       "gaps": [
         "104.44"
       ],
       "admitted": true,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "sorryAx",
@@ -6171,13 +6587,13 @@
       "name": "CKSD.wasserstein_sq_langevin_le_of_logSobolev",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 90,
+      "line": 91,
       "doc": "GAPS 104.44: under a logarithmic Sobolev inequality, the Otto–Villani inequality gives `W₂²(μₜ, π) ≤ 2C e^{-2t/C} KL(μ₀‖π)` along every Langevin flow.",
       "gaps": [
         "104.44"
       ],
       "admitted": true,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "sorryAx",
@@ -6190,11 +6606,11 @@
       "name": "CKSD.abs_one_add_mul_log_one_add_sub_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 103,
+      "line": 104,
       "doc": "Second-order Taylor bound for `y log y` at `y = 1`: `|(1+s) log(1+s) - s - s²/2| ≤ 4|s|³` for `|s| ≤ 1/2`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6206,11 +6622,11 @@
       "name": "CKSD.integrable_comp_of_abs_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 132,
+      "line": 133,
       "doc": "A continuous function of a bounded continuous real function is integrable under a finite measure.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6222,11 +6638,11 @@
       "name": "CKSD.variance_le_of_logSobolevInequality_of_abs_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 144,
+      "line": 145,
       "doc": "A logarithmic Sobolev inequality with constant `C` gives the Poincaré bound with constant `C` for bounded smooth test functions: apply it to `1 + εg` and expand the entropy to second order in `ε`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6238,11 +6654,11 @@
       "name": "CKSD.tendsto_mul_arctan_inv_mul",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 312,
+      "line": 313,
       "doc": "The truncations `R arctan(s/R)`, `R = n + 1`, converge to `s`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6254,13 +6670,13 @@
       "name": "CKSD.poincareInequality_of_logSobolevInequality",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 337,
+      "line": 338,
       "doc": "GAPS 104.44: a logarithmic Sobolev inequality implies the Poincaré inequality with the same constant, for every probability measure on a real normed space. Unbounded test functions are reduced to the bounded case `variance_le_of_logSobolevInequality_of_abs_le` through the truncations `R arctan(f/R)` and dominated convergence.",
       "gaps": [
         "104.44"
       ],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6272,11 +6688,11 @@
       "name": "CKSD.add_inner_add_le_of_isStronglyMonotoneGradient",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 434,
+      "line": 435,
       "doc": "Quadratic lower bound from a strongly monotone gradient: `V x ≥ V 0 + ⟪∇V(0), x⟫ + (α/2) ‖x‖²`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6288,11 +6704,11 @@
       "name": "CKSD.integrable_exp_neg_of_isStronglyMonotoneGradient",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 475,
+      "line": 446,
       "doc": "For a potential with a strongly monotone gradient (`∇²V ⪰ αI` with `α > 0`), the Gibbs density `e^{-V}` is integrable, by the quadratic lower bound `add_inner_add_le_of_isStronglyMonotoneGradient` and Gaussian integrability.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6304,49 +6720,47 @@
       "name": "CKSD.logSobolevInequality_gibbsMeasure_of_bounded_perturbation",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 504,
+      "line": 475,
       "doc": "GAPS 104.44: Bakry–Émery and Holley–Stroock. If `V = V₀ + ψ` with `∇²V₀ ⪰ mI`, `m > 0`, and `a ≤ ψ ≤ b`, then the Gibbs law satisfies the logarithmic Sobolev inequality with constant `e^{b-a}/m`.",
       "gaps": [
         "104.44"
       ],
-      "admitted": true,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "admitted": false,
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.poincareInequality_gibbsMeasure_of_bounded_perturbation",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 521,
+      "line": 492,
       "doc": "GAPS 104.44: under the hypotheses of the Bakry–Émery and Holley–Stroock theorem, the Gibbs law of `V₀ + ψ` satisfies the Poincaré inequality with constant `e^{b-a}/m`. It follows from the logarithmic Sobolev inequality `logSobolevInequality_gibbsMeasure_of_bounded_perturbation`.",
       "gaps": [
         "104.44"
       ],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "conditional"
+      "proof": "proved"
     },
     {
       "name": "CKSD.wassersteinLaw",
       "kind": "def",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 540,
+      "line": 511,
       "doc": "The underlying measure of a law in the Wasserstein space `P₂(ℝᵈ)`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6357,11 +6771,11 @@
       "name": "CKSD.jkoFreeEnergy",
       "kind": "def",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 546,
+      "line": 517,
       "doc": "Free energy `∫ ρ log ρ + ∫ V dρ` on the Wasserstein space, with the entropy relative to Lebesgue measure; it is `⊤` for laws without a density.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6372,11 +6786,11 @@
       "name": "CKSD.wassersteinDensity",
       "kind": "def",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 552,
+      "line": 523,
       "doc": "Real Lebesgue density of the absolutely continuous part of a Wasserstein law. This represents the whole law when that law is absolutely continuous with respect to volume.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -6387,13 +6801,13 @@
       "name": "CKSD.jko_scheme_tendsto_fokkerPlanck",
       "kind": "theorem",
       "file": "CKSD/Bayes/FunctionalInequalities.lean",
-      "line": 560,
+      "line": 531,
       "doc": "GAPS 104.43: the Jordan–Kinderlehrer–Otto theorem. Every JKO step for the free energy has a unique minimizer, and the piecewise-constant interpolations converge, weakly in `L¹` at every time and strongly in `L¹((0,T) × ℝᵈ)`, to a weak solution of `∂ₜρ = Δρ + ∇·(ρ∇V)` with datum `ρ₀`. Uniqueness of the limiting weak solution is not part of this statement.",
       "gaps": [
         "104.43"
       ],
       "admitted": true,
-      "source_sha256": "337a88393d043d0d8541e84b62597b65e432be653c7f746cdae00731ac3a440f",
+      "source_sha256": "aec4c9e25977a7867b7aef339646002884a8b44d5ce3c6e30faf511d09329269",
       "axioms": [
         "propext",
         "sorryAx",
@@ -7695,253 +8109,50 @@
       "proof": "proved"
     },
     {
-      "name": "CKSD.IsBrownianEuclidean",
-      "kind": "def",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 64,
-      "doc": "A standard Brownian motion in `ℝᵈ`: independent coordinates, each a real Brownian motion.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ]
-    },
-    {
-      "name": "CKSD.pathOn",
-      "kind": "def",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 69,
-      "doc": "The path of `x` on `[0, T]`, as a continuous map, or `0` if `x` is not continuous there.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ]
-    },
-    {
-      "name": "CKSD.IsWassersteinLipschitzDrift",
-      "kind": "def",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 75,
-      "doc": "Lipschitz continuity of a drift in position and in `W₁` of the measure, on probability measures with a finite first moment.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ]
-    },
-    {
-      "name": "CKSD.IsIIDInitialAndDrivers",
-      "kind": "def",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 84,
-      "doc": "Independent identically distributed initial states and Brownian drivers, the initial states independent of the drivers.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ]
-    },
-    {
-      "name": "CKSD.identDistrib_countable_evals_of_isPreBrownianReal",
-      "kind": "theorem",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 92,
-      "doc": "Countable collections of evaluations of two real Brownian motions have the same law.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ],
-      "proof": "proved"
-    },
-    {
-      "name": "CKSD.IsBrownianEuclidean.identDistrib_countable_evals",
-      "kind": "theorem",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 110,
-      "doc": "Countable evaluations of Euclidean Brownian drivers have a law independent of the chosen Brownian realization.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ],
-      "proof": "proved"
-    },
-    {
-      "name": "CKSD.IsIIDInitialAndDrivers.identDistrib_forcing_evals",
-      "kind": "theorem",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 134,
-      "doc": "Countably many evaluations of the initial state plus its Brownian driver are identically distributed across the independent input particles.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ],
-      "proof": "proved"
-    },
-    {
-      "name": "CKSD.IsIIDInitialAndDrivers.iIndepFun_forcing_evals",
-      "kind": "theorem",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 157,
-      "doc": "Countably sampled additive forcings are independent across the input particles.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ],
-      "proof": "proved"
-    },
-    {
-      "name": "CKSD.IsParticleSystem",
-      "kind": "def",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 173,
-      "doc": "The `N`-particle system: particles `i < N` solve `Xⁱₜ = X₀ⁱ + ∫₀ᵗ b(Xⁱₛ, μᴺₛ) ds + Wⁱₜ` with continuous paths, `μᴺₛ` the empirical measure of the first `N` particles.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ]
-    },
-    {
-      "name": "CKSD.IsMcKeanVlasovSolution",
-      "kind": "def",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 185,
-      "doc": "A solution of the McKean–Vlasov equation `Yₜ = ξ + ∫₀ᵗ b(Yₛ, Law(Yₛ)) ds + Bₜ` with continuous paths.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ]
-    },
-    {
       "name": "CKSD.exists_unique_mcKeanVlasov_and_particleSystem",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 197,
+      "line": 88,
       "doc": "GAPS 104.51: well-posedness. Under a Lipschitz drift, the McKean–Vlasov equation has a solution, unique up to indistinguishability among solutions with integrable marginals, and every particle system has a pathwise unique solution.",
       "gaps": [
         "104.51"
       ],
-      "admitted": true,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "admitted": false,
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.tendsto_particle_paths",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 215,
+      "line": 118,
       "doc": "GAPS 104.51: propagation of chaos. For every horizon `T` and every `k`, the joint path law on `[0, T]` of the first `k` particles converges weakly to the `k`-fold product of the McKean–Vlasov path law. The hypotheses do not make the path maps measurable (particles of index at least `N` are unconstrained), so the statement is convergence of the image measures in the `ProbabilityMeasure` topology rather than `TendstoInDistribution`.",
       "gaps": [
         "104.51"
       ],
-      "admitted": true,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "admitted": false,
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
-    },
-    {
-      "name": "CKSD.interactionDrift",
-      "kind": "def",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 232,
-      "doc": "Drift `b₀(x) + ∫ K(x, y) μ(dy)` of an interaction model.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ]
+      "proof": "proved"
     },
     {
       "name": "CKSD.IsMcKeanVlasovSolution.ae_eq_of_interactionDrift",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 240,
+      "line": 178,
       "doc": "With a bounded Lipschitz interaction, nonlinear solutions sharing the initial condition and Brownian forcing are indistinguishable; the Brownian property itself is not needed.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ],
-      "proof": "proved"
-    },
-    {
-      "name": "CKSD.exists_iid_paths_of_forcing_coordinates",
-      "kind": "theorem",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 296,
-      "doc": "A measurable inverse solution map transports one solution path to an iid family of input forcings, giving iid solution paths and retaining the forcing equations.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ],
-      "proof": "proved"
-    },
-    {
-      "name": "CKSD.IsBrownianEuclidean.ae_continuous_toNNReal",
-      "kind": "theorem",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 345,
-      "doc": "Euclidean Brownian paths remain almost surely continuous after the nonnegative-time projection.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -7953,59 +8164,11 @@
       "name": "CKSD.lipschitzWith_integral_interaction",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 356,
+      "line": 233,
       "doc": "Averaging a bounded Lipschitz interaction preserves its Lipschitz constant in position.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ],
-      "proof": "proved"
-    },
-    {
-      "name": "CKSD.eq_integral_of_forcing_coordinates",
-      "kind": "theorem",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 370,
-      "doc": "Equality of the forcing at projected rational times yields the whole pathwise integral equation.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ],
-      "proof": "proved"
-    },
-    {
-      "name": "CKSD.pathOn_apply_of_continuousOn",
-      "kind": "theorem",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 391,
-      "doc": "On a continuous path, the continuous-map path constructor agrees with evaluation.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ],
-      "proof": "proved"
-    },
-    {
-      "name": "CKSD.pathOn_IccExtend_of_continuousOn",
-      "kind": "theorem",
-      "file": "CKSD/Bayes/MeanField.lean",
-      "line": 398,
-      "doc": "Extending a constructed continuous path agrees with the original path on its interval.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8017,11 +8180,11 @@
       "name": "CKSD.exists_iid_nonlinear_copies_on_Icc",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 406,
+      "line": 248,
       "doc": "One nonlinear solution can be transported along the iid input forcings to iid continuous solution paths with the same marginal laws, on any fixed bounded time interval.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8033,11 +8196,11 @@
       "name": "CKSD.IsMcKeanVlasovSolution.iIndepFun_interactionDrift",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 486,
+      "line": 328,
       "doc": "For bounded Lipschitz interactions, separately given nonlinear solutions with iid initial conditions and Brownian drivers are independent and identically distributed at each time.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8049,11 +8212,11 @@
       "name": "CKSD.integrable_integral_sq_interactionFluctuation_le_of_solutions",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 547,
+      "line": 389,
       "doc": "Integrability and mean bound for time-integrated interaction fluctuations of nonlinear solutions driven by iid initial conditions and Brownian motions.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8065,11 +8228,11 @@
       "name": "CKSD.integral_empiricalMeasure_vector",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 577,
+      "line": 419,
       "doc": "Integration of a vector-valued function against the empirical measure.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8081,11 +8244,11 @@
       "name": "CKSD.IsParticleSystem.ae_residual_integral_eq",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 587,
+      "line": 429,
       "doc": "Same-forcing particle and nonlinear solutions satisfy the residual coupling equation.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8097,13 +8260,13 @@
       "name": "CKSD.exists_lintegral_sup_particle_sub_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 664,
+      "line": 506,
       "doc": "GAPS 104.56: quantitative propagation of chaos for a bounded Lipschitz interaction, by synchronous coupling with independent nonlinear copies driven by the same initial values and Brownian motions. The constant depends only on `T`, the Lipschitz constants, and `sup |K|`.",
       "gaps": [
         "104.56"
       ],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8115,11 +8278,11 @@
       "name": "CKSD.meanFieldV",
       "kind": "def",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 717,
+      "line": 559,
       "doc": "Correlation `V(θ) = 𝔼[Y φ(X, θ)]` of a feature with the response.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8130,11 +8293,11 @@
       "name": "CKSD.meanFieldU",
       "kind": "def",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 722,
+      "line": 564,
       "doc": "Feature kernel `U(θ, θ') = 𝔼[φ(X, θ) φ(X, θ')]`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8145,11 +8308,11 @@
       "name": "CKSD.meanFieldRisk",
       "kind": "def",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 727,
+      "line": 569,
       "doc": "Population risk `½ 𝔼(Y - f_ρ(X))²` of the mean-field predictor `f_ρ = ∫ φ(·, θ) ρ(dθ)`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8160,11 +8323,11 @@
       "name": "CKSD.meanFieldVelocity",
       "kind": "def",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 732,
+      "line": 574,
       "doc": "Velocity `-∇_θΨ(θ; ρ) = ∇V(θ) - ∫ ∇_θU(θ, θ') ρ(dθ')` of the mean-field gradient flow.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8175,13 +8338,13 @@
       "name": "CKSD.meanFieldRisk_eq",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 740,
+      "line": 582,
       "doc": "GAPS 104.53: the elementary expansion `R(ρ) = ½𝔼Y² - ∫ V dρ + ½ ∫∫ U dρ dρ` for a bounded measurable feature map.",
       "gaps": [
         "104.53"
       ],
       "admitted": false,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8193,13 +8356,13 @@
       "name": "CKSD.exists_meanField_limit",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanField.lean",
-      "line": 821,
+      "line": 663,
       "doc": "GAPS 104.53: mean-field limit of two-layer network training. With bounded Lipschitz gradients of `V` and `U`, the nonlinear continuity equation `∂ₜρ = ∇·(ρ∇_θΨ(·; ρ))` has a unique narrowly continuous probability solution with datum `ρ₀`, and the empirical measures of the time-scaled gradient flow from independent `ρ₀`-distributed initial particles converge to it in `W₁`, almost surely and uniformly on bounded time intervals.",
       "gaps": [
         "104.53"
       ],
       "admitted": true,
-      "source_sha256": "045fd1287c654609b26089358523fb6493b65fa0a0e721c646ecc373e4b91a90",
+      "source_sha256": "a0dabb621fa87d7d7cc871f851bb35416ba1a0d0b6f55d9985ed613369458398",
       "axioms": [
         "propext",
         "sorryAx",
@@ -8209,6 +8372,431 @@
       "proof": "admitted"
     },
     {
+      "name": "CKSD.exists_stronglyMeasurable_version_of_ae_continuous",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldBrownianBound.lean",
+      "line": 24,
+      "doc": "An a.s. continuous process with a.e. strongly measurable sections on a separable first-countable time space has a sectionwise strongly measurable indistinguishable version.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "eb4150c9d98509f5ac069d1cdc3b4ddfee51f4d15102b5cb5f211e3e9badc537",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsBrownianReal.exists_integrable_uniform_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldBrownianBound.lean",
+      "line": 52,
+      "doc": "A real Brownian motion has an integrable random bound uniform on a compact time interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "eb4150c9d98509f5ac069d1cdc3b4ddfee51f4d15102b5cb5f211e3e9badc537",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_integrable_uniform_bound_brownianEuclidean",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldBrownianBound.lean",
+      "line": 103,
+      "doc": "Coordinatewise Brownian motion has an integrable random bound uniform on compact intervals.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "eb4150c9d98509f5ac069d1cdc3b4ddfee51f4d15102b5cb5f211e3e9badc537",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_integrable_uniform_bound_add_brownianEuclidean",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldBrownianBound.lean",
+      "line": 120,
+      "doc": "An integrable initial vector plus Brownian motion admits a uniform integrable random bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "eb4150c9d98509f5ac069d1cdc3b4ddfee51f4d15102b5cb5f211e3e9badc537",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.norm_particle_path_sub_le_empirical_wasserstein",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldChaosCoupling.lean",
+      "line": 26,
+      "doc": "A whole-path empirical Wasserstein discrepancy controls every particle path in a synchronous coupling, with a constant independent of the particle count.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "9f6befed392fef53f94e51bcf1122eb202dd0c92cdc1bf0a3d57b678663e75d8",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsParticleSystem.ae_coupled_vector_integral_eq_on_Icc",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldChaosEquations.lean",
+      "line": 27,
+      "doc": "Same-input particle systems and identically distributed nonlinear paths satisfy the finite vector integral equations used by the synchronous propagation-of-chaos estimate.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "5177975e2c46813ac6f5916c2c879493c3b2d33001c07fd33fc7d8d42e8ad93a",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.norm_sub_le_exp_mul_integral_of_forced_eq_on_path",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldChaosStability.lean",
+      "line": 26,
+      "doc": "Common forcing stability needs the drift perturbation only along the reference solution.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "e67ac307d8b6f5e3e0afa45e56c1c9f459ab8247f43f6792c58d22c593b91dc9",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integrable_norm_empiricalMeasure",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldChaosStability.lean",
+      "line": 51,
+      "doc": "Empirical laws have integrable norm.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "e67ac307d8b6f5e3e0afa45e56c1c9f459ab8247f43f6792c58d22c593b91dc9",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.norm_sub_le_of_particle_integral_eq",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldChaosStability.lean",
+      "line": 61,
+      "doc": "Common-forcing particle paths are controlled by the discrepancy of the reference empirical marginals from their prescribed law. The norm of a configuration is its maximum particle norm.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "e67ac307d8b6f5e3e0afa45e56c1c9f459ab8247f43f6792c58d22c593b91dc9",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_empiricalMeasure",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldChaosStability.lean",
+      "line": 112,
+      "doc": "Pushforward of an empirical law is the empirical law of the mapped atoms.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "e67ac307d8b6f5e3e0afa45e56c1c9f459ab8247f43f6792c58d22c593b91dc9",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.wassersteinEDist_one_IccExtend_map_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldChaosStability.lean",
+      "line": 122,
+      "doc": "Evaluation at any projected time cannot increase first-Wasserstein distance of path laws.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "e67ac307d8b6f5e3e0afa45e56c1c9f459ab8247f43f6792c58d22c593b91dc9",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.wassersteinEDist_one_empirical_IccExtend_toReal_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldChaosStability.lean",
+      "line": 140,
+      "doc": "Empirical marginal Wasserstein discrepancy is uniformly bounded by the discrepancy of path laws, whenever the latter is finite.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "e67ac307d8b6f5e3e0afa45e56c1c9f459ab8247f43f6792c58d22c593b91dc9",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_iid_mcKeanVlasov_paths_on_Icc",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldCopies.lean",
+      "line": 29,
+      "doc": "One nonlinear solution supplies iid nonlinear path copies driven by the original iid initial states and Brownian motions, for a general Wasserstein-Lipschitz drift.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "bea522ae376b78e59ae2b761f037d89a1b1aa96b2ec79ce24866324e77a04d67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsBrownianEuclidean",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 31,
+      "doc": "A standard Brownian motion in `ℝᵈ`: independent coordinates, each a real Brownian motion.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.pathOn",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 36,
+      "doc": "The path of `x` on `[0, T]`, as a continuous map, or `0` if `x` is not continuous there.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.IsWassersteinLipschitzDrift",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 42,
+      "doc": "Lipschitz continuity of a drift in position and in `W₁` of the measure, on probability measures with a finite first moment.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.IsIIDInitialAndDrivers",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 51,
+      "doc": "Independent identically distributed initial states and Brownian drivers, the initial states independent of the drivers.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.identDistrib_countable_evals_of_isPreBrownianReal",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 59,
+      "doc": "Countable collections of evaluations of two real Brownian motions have the same law.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsBrownianEuclidean.identDistrib_countable_evals",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 77,
+      "doc": "Countable evaluations of Euclidean Brownian drivers have a law independent of the chosen Brownian realization.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsIIDInitialAndDrivers.identDistrib_forcing_evals",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 101,
+      "doc": "Countably many evaluations of the initial state plus its Brownian driver are identically distributed across the independent input particles.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsIIDInitialAndDrivers.iIndepFun_forcing_evals",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 124,
+      "doc": "Countably sampled additive forcings are independent across the input particles.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsParticleSystem",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 140,
+      "doc": "The `N`-particle system: particles `i < N` solve `Xⁱₜ = X₀ⁱ + ∫₀ᵗ b(Xⁱₛ, μᴺₛ) ds + Wⁱₜ` with continuous paths, `μᴺₛ` the empirical measure of the first `N` particles.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.IsMcKeanVlasovSolution",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 152,
+      "doc": "A solution of the McKean–Vlasov equation `Yₜ = ξ + ∫₀ᵗ b(Yₛ, Law(Yₛ)) ds + Bₜ` with continuous paths.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.interactionDrift",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 162,
+      "doc": "Drift `b₀(x) + ∫ K(x, y) μ(dy)` of an interaction model.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.IsBrownianEuclidean.ae_continuous_toNNReal",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 169,
+      "doc": "Euclidean Brownian paths remain almost surely continuous after the nonnegative-time projection.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.pathOn_apply_of_continuousOn",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 180,
+      "doc": "On a continuous path, the continuous-map path constructor agrees with evaluation.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.pathOn_IccExtend_of_continuousOn",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldCore.lean",
+      "line": 187,
+      "doc": "Extending a constructed continuous path agrees with the original path on its interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c4f42221c770d069dc51c67bc61b983831eb623e916fd82c7c9ecedfd5e289d7",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.continuous_integral_interaction",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanFieldCoupling.lean",
@@ -8216,7 +8804,7 @@
       "doc": "Averaging a bounded continuous interaction against a continuous process gives a continuous time-position drift, with no moment condition on the process.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bcb0a318ef603f34449e1c4b3b049de4c4d29d4b87e3868043fb322d3aeda5b9",
+      "source_sha256": "4bf8634c985e176c84536c15b240c77f9730170d9f3ca6af931d4c3f65077436",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8232,7 +8820,7 @@
       "doc": "The norm of the mean of a bounded interaction is bounded by the same constant.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bcb0a318ef603f34449e1c4b3b049de4c4d29d4b87e3868043fb322d3aeda5b9",
+      "source_sha256": "4bf8634c985e176c84536c15b240c77f9730170d9f3ca6af931d4c3f65077436",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8248,7 +8836,7 @@
       "doc": "Two integral equations with the same additive forcing and bounded interaction terms differ by a deterministic bound, independent of their initial data and the forcing.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bcb0a318ef603f34449e1c4b3b049de4c4d29d4b87e3868043fb322d3aeda5b9",
+      "source_sha256": "4bf8634c985e176c84536c15b240c77f9730170d9f3ca6af931d4c3f65077436",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8264,7 +8852,7 @@
       "doc": "Two integral equations with the same additive forcing and bounded interaction terms differ by a deterministic bound, independent of their initial data and the forcing.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bcb0a318ef603f34449e1c4b3b049de4c4d29d4b87e3868043fb322d3aeda5b9",
+      "source_sha256": "4bf8634c985e176c84536c15b240c77f9730170d9f3ca6af931d4c3f65077436",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8280,7 +8868,7 @@
       "doc": "Coupling the variables inside the interaction bounds the difference of their averaged interactions by their mean distance.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bcb0a318ef603f34449e1c4b3b049de4c4d29d4b87e3868043fb322d3aeda5b9",
+      "source_sha256": "4bf8634c985e176c84536c15b240c77f9730170d9f3ca6af931d4c3f65077436",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8296,7 +8884,23 @@
       "doc": "A process with measurable time sections and almost surely continuous paths is jointly almost everywhere strongly measurable on every product with a time measure.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bcb0a318ef603f34449e1c4b3b049de4c4d29d4b87e3868043fb322d3aeda5b9",
+      "source_sha256": "4bf8634c985e176c84536c15b240c77f9730170d9f3ca6af931d4c3f65077436",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.ae_eq_zero_of_le_integral_add_integral_mean_of_integrable_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldCoupling.lean",
+      "line": 184,
+      "doc": "An integrable random envelope suffices for the stochastic integral Grönwall zero criterion.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "4bf8634c985e176c84536c15b240c77f9730170d9f3ca6af931d4c3f65077436",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8308,11 +8912,11 @@
       "name": "CKSD.ae_eq_zero_of_le_integral_add_integral_mean",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanFieldCoupling.lean",
-      "line": 185,
+      "line": 255,
       "doc": "A nonnegative continuous process bounded on a time interval vanishes if its pathwise bound is an integral of itself plus an integral of its mean, both starting from zero.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bcb0a318ef603f34449e1c4b3b049de4c4d29d4b87e3868043fb322d3aeda5b9",
+      "source_sha256": "4bf8634c985e176c84536c15b240c77f9730170d9f3ca6af931d4c3f65077436",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8324,11 +8928,11 @@
       "name": "CKSD.ae_eq_of_interaction_integral_eq_on_Icc",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanFieldCoupling.lean",
-      "line": 255,
+      "line": 269,
       "doc": "Nonlinear same-forcing uniqueness for a bounded Lipschitz interaction. Neither independence nor any assumption on the law of the common forcing is needed.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bcb0a318ef603f34449e1c4b3b049de4c4d29d4b87e3868043fb322d3aeda5b9",
+      "source_sha256": "4bf8634c985e176c84536c15b240c77f9730170d9f3ca6af931d4c3f65077436",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8340,11 +8944,171 @@
       "name": "CKSD.ae_eq_on_Icc_of_interaction_integral_eq",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanFieldCoupling.lean",
-      "line": 344,
+      "line": 358,
       "doc": "Nonlinear same-forcing uniqueness for a bounded Lipschitz interaction. Neither independence nor any assumption on the law of the common forcing is needed.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "bcb0a318ef603f34449e1c4b3b049de4c4d29d4b87e3868043fb322d3aeda5b9",
+      "source_sha256": "4bf8634c985e176c84536c15b240c77f9730170d9f3ca6af931d4c3f65077436",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.empiricalMeasure_succ_eq_tauCeti",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldEmpirical.lean",
+      "line": 24,
+      "doc": "The finite-index empirical law agrees with TauCeti's offset sequence convention.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "283cdc5ae8400dcb7300801e867021447899ded2146a020f52346b4d9b908440",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_probabilityMeasure_map_of_eventually_aemeasurable_of_ae_tendsto",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldEmpirical.lean",
+      "line": 33,
+      "doc": "Eventual measurability suffices for weak convergence of image laws under almost sure pointwise convergence.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "283cdc5ae8400dcb7300801e867021447899ded2146a020f52346b4d9b908440",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.ae_tendsto_empirical_wasserstein_one",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldEmpirical.lean",
+      "line": 56,
+      "doc": "Iid integrable random paths have almost surely consistent empirical first-Wasserstein laws.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "283cdc5ae8400dcb7300801e867021447899ded2146a020f52346b4d9b908440",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.hasFiniteMoment_one_empiricalMeasure",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldEmpirical.lean",
+      "line": 85,
+      "doc": "Finite empirical laws have finite first moment.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "283cdc5ae8400dcb7300801e867021447899ded2146a020f52346b4d9b908440",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.wassersteinEDist_one_empirical_map_ne_top",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldEmpirical.lean",
+      "line": 97,
+      "doc": "A finite empirical law and an integrable image law are at finite first-Wasserstein distance.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "283cdc5ae8400dcb7300801e867021447899ded2146a020f52346b4d9b908440",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.aemeasurable_pathOn_of_ae_continuous",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldEmpirical.lean",
+      "line": 108,
+      "doc": "Continuous process paths give an almost-everywhere measurable compact-path constructor.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "283cdc5ae8400dcb7300801e867021447899ded2146a020f52346b4d9b908440",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_joint_image_laws_of_ae_uniform_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldEmpirical.lean",
+      "line": 124,
+      "doc": "Vanishing uniform coupling errors imply weak convergence of every fixed finite set of particle laws. Only eventual measurability is required for the particle vectors.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "283cdc5ae8400dcb7300801e867021447899ded2146a020f52346b4d9b908440",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.auxiliary_distance_iterate_le_pow_div_factorial",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldFactorial.lean",
+      "line": 19,
+      "doc": "Iterated Volterra estimates give a factorial bound for a time-dependent distance.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "2ec693d5e7d97dce6b2f3a1f971cb692c6cb7d12ed334b5da400d90edf8f61df",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.dist_iterate_le_pow_div_factorial_of_integral_estimates",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldFactorial.lean",
+      "line": 51,
+      "doc": "The endpoint integral estimate turns the auxiliary factorial bound into a metric bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "2ec693d5e7d97dce6b2f3a1f971cb692c6cb7d12ed334b5da400d90edf8f61df",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_contractingWith_iterate_of_integral_estimates",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldFactorial.lean",
+      "line": 84,
+      "doc": "A Volterra estimate yields a contracting iterate on every finite time interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "2ec693d5e7d97dce6b2f3a1f971cb692c6cb7d12ed334b5da400d90edf8f61df",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8424,6 +9188,532 @@
       "gaps": [],
       "admitted": false,
       "source_sha256": "275c01d2ceadc8aea9c2b4cea4e6d55443eb64be08a3e0c907f662428ad487b1",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_integrable_measurable_continuousPath_version",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldForcing.lean",
+      "line": 20,
+      "doc": "Integrably bounded continuous forcing admits an integrable measurable continuous-path version.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "94772561ddb8fe3a522f9ce79c8e9a2caf3635442d04ac995634ce3645455909",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_integrable_brownian_forcing_path",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldForcing.lean",
+      "line": 38,
+      "doc": "An integrable initial vector and Euclidean Brownian driver give a measurable integrable forcing path on every compact nonnegative time interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "94772561ddb8fe3a522f9ce79c8e9a2caf3635442d04ac995634ce3645455909",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_measurable_continuousPath_version",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldGlobal.lean",
+      "line": 27,
+      "doc": "An almost-surely continuous process with almost-everywhere measurable sections has a measurable continuous-path version on every compact interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "2c549e7d45c2a825dd6a3abe68d4fc7508e5002b94548b92133fec8d2a0045fb",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.eqOn_of_forced_integral_eq",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldGlobal.lean",
+      "line": 52,
+      "doc": "Two continuous paths with a common additive forcing and Lipschitz drift coincide.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "2c549e7d45c2a825dd6a3abe68d4fc7508e5002b94548b92133fec8d2a0045fb",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_measurable_process_of_consistent_paths",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldGlobal.lean",
+      "line": 78,
+      "doc": "Consistent measurable compact paths glue to an almost-surely continuous process with measurable sections.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "2c549e7d45c2a825dd6a3abe68d4fc7508e5002b94548b92133fec8d2a0045fb",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_global_solution_of_continuous_forcing",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldGlobal.lean",
+      "line": 120,
+      "doc": "Globally Lipschitz drifts admit measurable solutions for almost-surely continuous additive forcings.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "2c549e7d45c2a825dd6a3abe68d4fc7508e5002b94548b92133fec8d2a0045fb",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_particleSystem_of_wassersteinLipschitz",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldGlobal.lean",
+      "line": 175,
+      "doc": "General finite particle systems exist for iid initial states and Brownian forcings.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "2c549e7d45c2a825dd6a3abe68d4fc7508e5002b94548b92133fec8d2a0045fb",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_mcKeanVlasovSolution_of_compact_solutions",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldGlue.lean",
+      "line": 20,
+      "doc": "Integrable nonlinear solutions on every compact interval yield a global solution.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "7301bcb7dace36f8c165f55927699e8a26f5b59d9d9ba0a5cf61387c6a2cbc48",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.continuous_probabilityMeasure_map_of_ae_continuous",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldLaw.lean",
+      "line": 27,
+      "doc": "Almost sure path continuity implies weak continuity of the marginal laws, without moment bounds.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "0dfe4ab10a4ecf8e3e709aa6587bcc81770c33a208c429be46e4caa23bfdd1e3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsWassersteinLipschitzDrift.lipschitzWith_position",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldLaw.lean",
+      "line": 48,
+      "doc": "Fixing a finite-first-moment probability law preserves the spatial Lipschitz bound of a Wasserstein-Lipschitz drift.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "0dfe4ab10a4ecf8e3e709aa6587bcc81770c33a208c429be46e4caa23bfdd1e3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsWassersteinLipschitzDrift.lipschitzWith_lift",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldLaw.lean",
+      "line": 63,
+      "doc": "A Wasserstein-Lipschitz drift is a globally Lipschitz function of position and its finite-first-moment law, with the product metric.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "0dfe4ab10a4ecf8e3e709aa6587bcc81770c33a208c429be46e4caa23bfdd1e3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsWassersteinLipschitzDrift.aestronglyMeasurable_drift_of_ae_continuous",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldLaw.lean",
+      "line": 90,
+      "doc": "A Wasserstein-Lipschitz drift is measurable in time along continuous paths and marginal laws with finite first moments, even when no locally uniform moment bound has been assumed.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "0dfe4ab10a4ecf8e3e709aa6587bcc81770c33a208c429be46e4caa23bfdd1e3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.norm_sub_le_of_spatially_lipschitz_integral_eq",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldLocalMoments.lean",
+      "line": 33,
+      "doc": "Continuous integral-equation paths with a common spatially Lipschitz drift satisfy the forcing-dependent Grönwall bound, assuming time measurability of their drift integrands. Their drift integrability is simultaneous because the difference is integrable.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "36fb5561056a4384f649a1b84396c3fcea6fabafc1c6ec29b7cc4793b2bcf461",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_integrable_uniform_bound_of_spatially_lipschitz_integral_eq",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldLocalMoments.lean",
+      "line": 102,
+      "doc": "Continuous paths solving an integral equation with a common spatially Lipschitz drift and integrably bounded forcing admit an integrable bound uniform on a compact time interval. Only time measurability of the drift integrands is assumed before deriving this bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "36fb5561056a4384f649a1b84396c3fcea6fabafc1c6ec29b7cc4793b2bcf461",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsWassersteinLipschitzDrift.lipschitzWith_particleDrift",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldParticles.lean",
+      "line": 25,
+      "doc": "A Wasserstein-Lipschitz drift induces a globally Lipschitz finite-particle vector field.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "40ccaeb2aab829a04344d4c04364c77110c330d4775078b22ab5a9d2ac326f2b",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsParticleSystem.ae_eq_of_wassersteinLipschitz",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldParticles.lean",
+      "line": 56,
+      "doc": "Under a Wasserstein-Lipschitz drift, two finite particle systems with the same additive inputs are indistinguishable on nonnegative time, without assumptions on the input law.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "40ccaeb2aab829a04344d4c04364c77110c330d4775078b22ab5a9d2ac326f2b",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.meanPathDistance",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 31,
+      "doc": "The mean pointwise distance of two random continuous paths, evaluated at projected time.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.meanPathDistance_nonneg",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 36,
+      "doc": "Mean path distance is nonnegative.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.continuous_meanPathDistance_of_integrable",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 41,
+      "doc": "Mean path distance varies continuously with real time for integrable random paths.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.continuous_meanPathDistance",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 60,
+      "doc": "Measurable integrable random paths have a continuous mean pointwise distance.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.continuous_meanPathDistance_L1",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 66,
+      "doc": "For two L¹ random continuous paths, mean path distance is a continuous function of time.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.meanPathDistance_le_norm_sub",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 71,
+      "doc": "Mean path distance at any time is bounded by the L¹ distance of the random paths.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.norm_sub_L1_eq_integral_norm",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 91,
+      "doc": "The L¹ distance between random paths is the mean of their uniform distances.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.meanPathDistance_le_of_ae_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 100,
+      "doc": "An almost sure scalar bound on the pointwise distance also bounds its expectation.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.norm_sub_L1_le_of_ae_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 119,
+      "doc": "A uniform almost sure bound on pointwise distances bounds the L¹ path norm.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.meanPathDistance_le_integral_of_ae_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 140,
+      "doc": "An almost sure integral stability estimate implies the corresponding mean-distance bound.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.norm_sub_L1_le_integral_of_ae_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 150,
+      "doc": "For nonnegative continuous input, integral stability bounds the whole L¹ path distance.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.dist_L1_le_integral_of_ae_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathDistance.lean",
+      "line": 168,
+      "doc": "The integral stability estimate controls the metric distance between L¹ paths.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "cc34d200d90c565e002a4e23348b6fc861cedde6850a3e56b2c68776a39088f5",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integrable_IccExtend_eval",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathLaws.lean",
+      "line": 30,
+      "doc": "Integrable random continuous paths have integrable evaluation at every projected time.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6d1b8aab8f471c1df52c0f9d6147284d3a1a6a8d52c829aadbb2ff24bf2911f2",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.hasFiniteMoment_one_map_of_integrable",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathLaws.lean",
+      "line": 40,
+      "doc": "The law of an integrable random variable has finite first moment.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6d1b8aab8f471c1df52c0f9d6147284d3a1a6a8d52c829aadbb2ff24bf2911f2",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.pathMarginalLaw",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldPathLaws.lean",
+      "line": 50,
+      "doc": "First-Wasserstein marginal law of an integrable random continuous path.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6d1b8aab8f471c1df52c0f9d6147284d3a1a6a8d52c829aadbb2ff24bf2911f2",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.pathMarginalLaw_toMeasure",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathLaws.lean",
+      "line": 60,
+      "doc": "The underlying marginal measure is the pushforward under projected evaluation.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6d1b8aab8f471c1df52c0f9d6147284d3a1a6a8d52c829aadbb2ff24bf2911f2",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.continuous_pathMarginalLaw",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPathLaws.lean",
+      "line": 68,
+      "doc": "Integrability of the uniform path norm makes the marginal laws continuous in first Wasserstein distance.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6d1b8aab8f471c1df52c0f9d6147284d3a1a6a8d52c829aadbb2ff24bf2911f2",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -8573,6 +9863,385 @@
       "proof": "proved"
     },
     {
+      "name": "CKSD.forcedPicardMap",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldPicard.lean",
+      "line": 29,
+      "doc": "The Picard map for an equation with a prescribed continuous additive forcing.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "184fdb56b4e46e6d298539dbaab5a70f48b43c2013a5bb20c26766245f092f47",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.forcedPicardMap_apply",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicard.lean",
+      "line": 34,
+      "doc": "Evaluation of the Picard map is the forcing plus the integrated drift.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "184fdb56b4e46e6d298539dbaab5a70f48b43c2013a5bb20c26766245f092f47",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.dist_iterate_forcedPicardMap_apply_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicard.lean",
+      "line": 41,
+      "doc": "The factorial Picard estimate holds for arbitrary continuous additive forcings.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "184fdb56b4e46e6d298539dbaab5a70f48b43c2013a5bb20c26766245f092f47",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_contractingWith_iterate_forcedPicardMap",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicard.lean",
+      "line": 80,
+      "doc": "Some iterate of the forced Picard map is a contraction on the whole continuous path space.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "184fdb56b4e46e6d298539dbaab5a70f48b43c2013a5bb20c26766245f092f47",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.surjective_pathForcingMap",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicard.lean",
+      "line": 100,
+      "doc": "Every continuous forcing admits a unique continuous solution of a uniformly Lipschitz nonautonomous integral equation on a bounded interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "184fdb56b4e46e6d298539dbaab5a70f48b43c2013a5bb20c26766245f092f47",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.dist_le_exp_mul_dist_pathForcingMap",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicard.lean",
+      "line": 112,
+      "doc": "A solution's uniform distance is controlled exponentially by the uniform distance between its additive forcings.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "184fdb56b4e46e6d298539dbaab5a70f48b43c2013a5bb20c26766245f092f47",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.pathForcingEquiv",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldPicard.lean",
+      "line": 171,
+      "doc": "The forcing map is a bijection on continuous paths for uniformly Lipschitz drifts.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "184fdb56b4e46e6d298539dbaab5a70f48b43c2013a5bb20c26766245f092f47",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.lipschitzWith_pathForcingEquiv_symm",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicard.lean",
+      "line": 178,
+      "doc": "Solving a forced Lipschitz integral equation is a Lipschitz map of the forcing path.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "184fdb56b4e46e6d298539dbaab5a70f48b43c2013a5bb20c26766245f092f47",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.pathForcingEquiv_symm_apply_eq",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicard.lean",
+      "line": 191,
+      "doc": "The inverse forcing map satisfies the prescribed integral equation at every time.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "184fdb56b4e46e6d298539dbaab5a70f48b43c2013a5bb20c26766245f092f47",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.dist_pathMarginalLaw_le_meanPathDistance",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardComparison.lean",
+      "line": 27,
+      "doc": "A common-source coupling bounds the distance between random-path marginal laws.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "935686ca5dd0d95b372934982e89191b2bd2c504a3b0430b85ae57a6dbd17ec0",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.norm_sub_nonlinearFrozenDrift_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardComparison.lean",
+      "line": 38,
+      "doc": "Frozen drifts differ by the mean distance between the underlying path marginals.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "935686ca5dd0d95b372934982e89191b2bd2c504a3b0430b85ae57a6dbd17ec0",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.norm_sub_frozenPathSolutionMap_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardComparison.lean",
+      "line": 58,
+      "doc": "With the same additive forcing, frozen-law solutions are controlled by the integrated mean pointwise distance between their input random paths.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "935686ca5dd0d95b372934982e89191b2bd2c504a3b0430b85ae57a6dbd17ec0",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.nonlinearPathPicard_ae_norm_sub_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardComparison.lean",
+      "line": 94,
+      "doc": "Picard representatives obey the same pointwise comparison almost surely for whole paths.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "935686ca5dd0d95b372934982e89191b2bd2c504a3b0430b85ae57a6dbd17ec0",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_nonlinear_path_solution",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardExistence.lean",
+      "line": 30,
+      "doc": "Integrable random continuous forcings admit a nonlinear McKean–Vlasov solution on every bounded time interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f2177a4df3804e37e2c5b6c66ae485717fb3193cc0de95736d3a9dd33ce40336",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_nonlinear_brownian_path_solution",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardExistence.lean",
+      "line": 70,
+      "doc": "An integrable initial condition and Brownian forcing admit nonlinear solution paths on any bounded interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f2177a4df3804e37e2c5b6c66ae485717fb3193cc0de95736d3a9dd33ce40336",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.nonlinearFrozenDrift",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldPicardLaw.lean",
+      "line": 27,
+      "doc": "The drift obtained by freezing the marginal laws of an integrable random path.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c0deabddb33a866cfbfb3a6fccb04389dfcf67f3630bf8f396753dda83dc346a",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.continuous_nonlinearFrozenDrift",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardLaw.lean",
+      "line": 33,
+      "doc": "Frozen marginal laws give a jointly continuous drift.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c0deabddb33a866cfbfb3a6fccb04389dfcf67f3630bf8f396753dda83dc346a",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.lipschitzWith_nonlinearFrozenDrift",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardLaw.lean",
+      "line": 42,
+      "doc": "Freezing a path law retains the spatial Lipschitz constant.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c0deabddb33a866cfbfb3a6fccb04389dfcf67f3630bf8f396753dda83dc346a",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.frozenPathSolutionMap",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldPicardLaw.lean",
+      "line": 53,
+      "doc": "Solve the pathwise equation with the marginal laws of a prescribed random path.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c0deabddb33a866cfbfb3a6fccb04389dfcf67f3630bf8f396753dda83dc346a",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.lipschitzWith_frozenPathSolutionMap",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardLaw.lean",
+      "line": 62,
+      "doc": "Frozen-law solutions depend Lipschitz continuously on their additive forcing.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c0deabddb33a866cfbfb3a6fccb04389dfcf67f3630bf8f396753dda83dc346a",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integrable_frozenPathSolutionMap_comp",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardLaw.lean",
+      "line": 72,
+      "doc": "Integrable random forcings give integrable frozen-law solution paths.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c0deabddb33a866cfbfb3a6fccb04389dfcf67f3630bf8f396753dda83dc346a",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.nonlinearPathPicard",
+      "kind": "def",
+      "file": "CKSD/Bayes/MeanFieldPicardLaw.lean",
+      "line": 92,
+      "doc": "The frozen-law Picard operator on integrable random continuous paths.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c0deabddb33a866cfbfb3a6fccb04389dfcf67f3630bf8f396753dda83dc346a",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.frozenPathSolutionMap_apply_eq",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardLaw.lean",
+      "line": 100,
+      "doc": "Frozen-law solutions satisfy their pathwise integral equation at every time.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c0deabddb33a866cfbfb3a6fccb04389dfcf67f3630bf8f396753dda83dc346a",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.nonlinearPathPicard_ae_eq",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldPicardLaw.lean",
+      "line": 110,
+      "doc": "The integrable path representative of the Picard operator is its pathwise frozen-law solution almost everywhere, as an equality of whole continuous paths.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c0deabddb33a866cfbfb3a6fccb04389dfcf67f3630bf8f396753dda83dc346a",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.finite_coupling_gronwall",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanFieldQuantitative.lean",
@@ -8685,6 +10354,150 @@
       "proof": "proved"
     },
     {
+      "name": "CKSD.norm_sub_le_exp_mul_integral_of_forced_eq",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldStability.lean",
+      "line": 17,
+      "doc": "Stability under a time-dependent perturbation of the drift and a common additive forcing.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "1365b5234d48275e0762613da12d0d1a1f3145ba67ca0062eeac00ae3632807b",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.exists_iid_paths_of_forcing_coordinates",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldTransport.lean",
+      "line": 27,
+      "doc": "A measurable inverse solution map transports one solution path to an iid family of input forcings, giving iid solution paths and retaining the forcing equations.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "04a4562af23adae83c7757c8e38ba662f3a6a22c354274cb84b8c6f195201c4e",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.eq_integral_of_forcing_coordinates",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldTransport.lean",
+      "line": 76,
+      "doc": "Equality of the forcing at projected rational times yields the whole pathwise integral equation.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "04a4562af23adae83c7757c8e38ba662f3a6a22c354274cb84b8c6f195201c4e",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsMcKeanVlasovSolution.exists_integrable_uniform_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldUniqueness.lean",
+      "line": 39,
+      "doc": "A solution with integrable initial state and Brownian forcing admits an integrable random bound uniform on each compact time interval, under exactly the pointwise moment solution predicate.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "be43e161d32a1719a919f11b664ac450fb5343f9af3cc393fc126517e6180002",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.ae_intervalIntegrable_wasserstein_drift_of_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldUniqueness.lean",
+      "line": 75,
+      "doc": "A time-measurable Wasserstein-Lipschitz drift along an integrably bounded process is interval-integrable on compact time intervals, by comparison with the drift at the origin.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "be43e161d32a1719a919f11b664ac450fb5343f9af3cc393fc126517e6180002",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsMcKeanVlasovSolution.ae_intervalIntegrable_drift_of_bound",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldUniqueness.lean",
+      "line": 127,
+      "doc": "A local integrable envelope makes a nonlinear solution drift interval-integrable.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "be43e161d32a1719a919f11b664ac450fb5343f9af3cc393fc126517e6180002",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.ae_eq_of_wasserstein_integral_eq_on_Icc",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldUniqueness.lean",
+      "line": 149,
+      "doc": "Two locally integrably bounded nonlinear integral equations with the same additive forcing and a Wasserstein-Lipschitz drift agree almost surely on their common compact time interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "be43e161d32a1719a919f11b664ac450fb5343f9af3cc393fc126517e6180002",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsMcKeanVlasovSolution.ae_eq_on_Icc",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldUniqueness.lean",
+      "line": 252,
+      "doc": "Nonlinear solutions with the same integrable initial state and Brownian forcing agree almost surely on every compact nonnegative time interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "be43e161d32a1719a919f11b664ac450fb5343f9af3cc393fc126517e6180002",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsMcKeanVlasovSolution.ae_eq",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldUniqueness.lean",
+      "line": 286,
+      "doc": "Nonlinear solutions with the same integrable initial state and Brownian forcing are indistinguishable on nonnegative times.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "be43e161d32a1719a919f11b664ac450fb5343f9af3cc393fc126517e6180002",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.integral_norm_sum_centeredInteraction_sq_le",
       "kind": "theorem",
       "file": "CKSD/Bayes/MeanFieldVariance.lean",
@@ -8709,6 +10522,38 @@
       "gaps": [],
       "admitted": false,
       "source_sha256": "7479266b0108035be34371a9cb38fe90c03d98418e1d92f558f61d9883540f4b",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.wassersteinEDist_one_map_toReal_le_integral_norm_sub",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldWasserstein.lean",
+      "line": 25,
+      "doc": "The common-source coupling bounds first Wasserstein distance by mean pointwise distance.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c5d2d9bce77048c0ee6821338f37fff11e2b811ec4a2f16392fbf987a813886f",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.wassersteinEDist_one_empirical_toReal_le_norm_sub",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/MeanFieldWasserstein.lean",
+      "line": 47,
+      "doc": "Pairing equal-index atoms controls empirical first Wasserstein distance in the uniform configuration norm.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c5d2d9bce77048c0ee6821338f37fff11e2b811ec4a2f16392fbf987a813886f",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11340,11 +13185,11 @@
       "name": "CKSD.IsRobbinsMonroScheme.ae_exists_tendsto_sum_noise_proj",
       "kind": "theorem",
       "file": "CKSD/Bayes/StochasticApproximation.lean",
-      "line": 340,
+      "line": 343,
       "doc": "Predictable clipping of bounded iterates gives almost-sure convergence of each continuous linear projection of the accumulated Robbins–Monro noise.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "c24a2686091db0f833e86747477d7bc1910fd41561d3fb0fa7c97d26b72897cf",
+      "source_sha256": "e933a71d5b174f4b741a674bd4f910f9a56111e0fe71d3ace5f5fd71e55756e8",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11356,11 +13201,11 @@
       "name": "CKSD.IsRobbinsMonroScheme.ae_exists_tendsto_sum_noise",
       "kind": "theorem",
       "file": "CKSD/Bayes/StochasticApproximation.lean",
-      "line": 438,
+      "line": 441,
       "doc": "For almost-surely bounded Robbins–Monro iterates in finite dimension, the accumulated weighted martingale noise converges almost surely.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "c24a2686091db0f833e86747477d7bc1910fd41561d3fb0fa7c97d26b72897cf",
+      "source_sha256": "e933a71d5b174f4b741a674bd4f910f9a56111e0fe71d3ace5f5fd71e55756e8",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11372,13 +13217,13 @@
       "name": "CKSD.ae_tendsto_robbins_monro",
       "kind": "theorem",
       "file": "CKSD/Bayes/StochasticApproximation.lean",
-      "line": 466,
+      "line": 469,
       "doc": "GAPS 104.40: almost-sure convergence of the Robbins–Monro recursion. If `h` is Lipschitz with `h θ⋆ = 0` and `⟪θ - θ⋆, h θ⟫ ≥ m ‖θ - θ⋆‖²` for some `m > 0`, the initial state is square integrable, and the conditional noise variance is bounded by a constant `K`, then `θₙ → θ⋆` almost surely.",
       "gaps": [
         "104.40"
       ],
       "admitted": false,
-      "source_sha256": "c24a2686091db0f833e86747477d7bc1910fd41561d3fb0fa7c97d26b72897cf",
+      "source_sha256": "e933a71d5b174f4b741a674bd4f910f9a56111e0fe71d3ace5f5fd71e55756e8",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11390,51 +13235,49 @@
       "name": "CKSD.ae_isInternallyChainTransitive_limitSet",
       "kind": "theorem",
       "file": "CKSD/Bayes/StochasticApproximation.lean",
-      "line": 594,
+      "line": 597,
       "doc": "GAPS 104.49: Benaïm's limit-set theorem. Under Robbins–Monro steps, martingale-difference noise with conditional second moment at most `K(1 + ‖θₙ‖²)`, a Lipschitz field, and a.s. bounded iterates, the limit set is a.s. a compact connected internally chain transitive invariant set of the flow of `θ' = -h(θ)`.",
       "gaps": [
         "104.49"
       ],
-      "admitted": true,
-      "source_sha256": "c24a2686091db0f833e86747477d7bc1910fd41561d3fb0fa7c97d26b72897cf",
+      "admitted": false,
+      "source_sha256": "e933a71d5b174f4b741a674bd4f910f9a56111e0fe71d3ace5f5fd71e55756e8",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.ae_tendsto_equilibrium_of_chainTransitive",
       "kind": "theorem",
       "file": "CKSD/Bayes/StochasticApproximation.lean",
-      "line": 605,
+      "line": 623,
       "doc": "GAPS 104.49: if the only compact connected internally chain transitive invariant sets are equilibria, the iterates converge almost surely to a possibly random equilibrium.",
       "gaps": [
         "104.49"
       ],
       "admitted": false,
-      "source_sha256": "c24a2686091db0f833e86747477d7bc1910fd41561d3fb0fa7c97d26b72897cf",
+      "source_sha256": "e933a71d5b174f4b741a674bd4f910f9a56111e0fe71d3ace5f5fd71e55756e8",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "conditional"
+      "proof": "proved"
     },
     {
       "name": "CKSD.ae_asymptotic_pseudotrajectory",
       "kind": "theorem",
       "file": "CKSD/Bayes/StochasticApproximation.lean",
-      "line": 620,
+      "line": 638,
       "doc": "GAPS 104.49: the interpolated process is almost surely an asymptotic pseudotrajectory of the flow: `sup_{0 ≤ u ≤ T} ‖θ̄(s + u) - Φᵤ(θ̄(s))‖ → 0` as `s → ∞`, for every `T > 0`.",
       "gaps": [
         "104.49"
       ],
       "admitted": false,
-      "source_sha256": "c24a2686091db0f833e86747477d7bc1910fd41561d3fb0fa7c97d26b72897cf",
+      "source_sha256": "e933a71d5b174f4b741a674bd4f910f9a56111e0fe71d3ace5f5fd71e55756e8",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -11446,11 +13289,251 @@
       "name": "CKSD.stochasticApproxTime_zero",
       "kind": "theorem",
       "file": "CKSD/Bayes/StochasticApproximation.lean",
-      "line": 648,
+      "line": 666,
       "doc": "The interpolation times start at zero.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "c24a2686091db0f833e86747477d7bc1910fd41561d3fb0fa7c97d26b72897cf",
+      "source_sha256": "e933a71d5b174f4b741a674bd4f910f9a56111e0fe71d3ace5f5fd71e55756e8",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.dist_le_exp_of_global_trajectories",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 37,
+      "doc": "Two global trajectories of a Lipschitz autonomous field differ by at most the usual exponential factor in either time direction.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsFlowOf.map_add",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 62,
+      "doc": "A globally defined solution family of a Lipschitz autonomous ODE satisfies the flow law.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsFlowOf.norm_sub_le_exp",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 74,
+      "doc": "A Lipschitz autonomous flow has an exponential bound on dependence on its initial point.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.IsFlowOf.continuous_apply",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 81,
+      "doc": "At every fixed time, a Lipschitz autonomous flow is continuous in its initial point.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.mapClusterPt_of_tendsto_sub",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 98,
+      "doc": "Functions whose difference tends to zero have the same cluster points along a countably generated filter.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_shift_sub_flow_of_apt",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 113,
+      "doc": "Forward asymptotic tracking of a globally defined Lipschitz flow also gives tracking at each fixed negative time.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.isInvariantSet_clusterSet_of_apt",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 136,
+      "doc": "The cluster set at infinity of an asymptotic pseudotrajectory is invariant under the flow for every real time.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.isCompact_isConnected_clusterSet_of_mapsTo",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 163,
+      "doc": "A continuous curve confined to a compact set has a compact connected cluster set at infinity.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.eventually_exists_clusterPoint_near",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 181,
+      "doc": "A curve confined eventually to a compact set approaches its cluster set at infinity.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.isInternallyChainTransitive_clusterSet_of_apt",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 203,
+      "doc": "The cluster set at infinity of a confined asymptotic pseudotrajectory is internally chain transitive. Long late curve segments give chains with flight times between `T` and `2T`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.stochasticApproxInterp_time",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 305,
+      "doc": "The affine stochastic-approximation interpolation recovers the sequence at each grid time.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.limitSet_eq_clusterSet_stochasticApproxInterp",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 313,
+      "doc": "For vanishing increments, the discrete limit set equals the interpolation cluster set.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.norm_stochasticApproxInterp_le",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 331,
+      "doc": "A bounded sequence gives a bounded affine interpolation on nonnegative times.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.limitSet_properties_of_stochasticApproxInterp",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 343,
+      "doc": "A bounded affine interpolation that is an asymptotic pseudotrajectory has a compact connected internally chain transitive discrete limit set when its increments vanish.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.limitSet_properties_of_stochasticApproximation",
+      "kind": "theorem",
+      "file": "CKSD/Bayes/StochasticApproximationLimitSet.lean",
+      "line": 365,
+      "doc": "Bounded stochastic-approximation iterates with vanishing steps and convergent cumulative noise have a compact connected internally chain transitive limit set.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "475f2115491683913018fe7ad785263731c48c0e8ae9afdc33933a6d06611b67",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -30016,6 +32099,453 @@
       "proof": "proved"
     },
     {
+      "name": "CKSD.integral_rpow_betaMeasure",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BetaLogLimit.lean",
+      "line": 28,
+      "doc": "The positive real-power moment of a Beta variable.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "a33f804d56ffe2126f31ff6ff9e65ddf769f33adb169aff2380572fdf310a5b3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_integral_beta_rpow_pow",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BetaLogLimit.lean",
+      "line": 40,
+      "doc": "A growing-shape Beta variable raised to its first shape has the moments of an exponentiated negative Gamma variable in the limit.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "a33f804d56ffe2126f31ff6ff9e65ddf769f33adb169aff2380572fdf310a5b3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendstoInDistribution_beta_rpow",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BetaLogLimit.lean",
+      "line": 74,
+      "doc": "The transformed growing-shape Beta variables converge weakly to an exponentiated Gamma law.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "a33f804d56ffe2126f31ff6ff9e65ddf769f33adb169aff2380572fdf310a5b3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendstoInDistribution_of_exp_neg_gamma",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BetaLogLimit.lean",
+      "line": 125,
+      "doc": "Convergence of exponentiated negative variables to an exponentiated Gamma law implies convergence of the variables themselves; positive closed tails handle the logarithmic endpoint.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "a33f804d56ffe2126f31ff6ff9e65ddf769f33adb169aff2380572fdf310a5b3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendstoInDistribution_neg_mul_log_beta",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BetaLogLimit.lean",
+      "line": 171,
+      "doc": "Growing-shape Beta logarithms have a Gamma limit with the exact unit rate.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "a33f804d56ffe2126f31ff6ff9e65ddf769f33adb169aff2380572fdf310a5b3",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_integral_beta_rpow_pow_of_ratio",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BetaProductLimit.lean",
+      "line": 24,
+      "doc": "The growing-shape Beta power moment limit permits any asymptotically equal power scale.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "b25d3d67df405eb63fa018d1f3b3b9e9db950af0b700a30ed7ddfd94e54d50c9",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.isProbabilityMeasure_pi_beta",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BetaProductLimit.lean",
+      "line": 67,
+      "doc": "Positive Beta factors give a probability measure on their finite product.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "b25d3d67df405eb63fa018d1f3b3b9e9db950af0b700a30ed7ddfd94e54d50c9",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendstoInDistribution_beta_product_rpow",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BetaProductLimit.lean",
+      "line": 74,
+      "doc": "Finite products of asymptotically equal-scale Beta powers have an exponentiated Gamma limit.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "b25d3d67df405eb63fa018d1f3b3b9e9db950af0b700a30ed7ddfd94e54d50c9",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendstoInDistribution_neg_mul_log_beta_product",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BetaProductLimit.lean",
+      "line": 152,
+      "doc": "The logarithm of a finite independent Beta product converges to a Gamma law when the first shapes share a growing common scale; the limiting shape is the sum of second shapes.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "b25d3d67df405eb63fa018d1f3b3b9e9db950af0b700a30ed7ddfd94e54d50c9",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.blockIndependenceRatio",
+      "kind": "def",
+      "file": "CKSD/LinearModels/BlockIndependenceBasic.lean",
+      "line": 23,
+      "doc": "The determinant ratio for independence of two consecutive coordinate blocks.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f68bf5581800b021c4c5ce2a875101d83d38af2a6ecb09e9b27edfd9c8ed4389",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.submatrix_finSumFinEquiv_eq_fromBlocks",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceBasic.lean",
+      "line": 27,
+      "doc": "A Hermitian matrix reindexed as a sum is the matrix of its two principal blocks.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f68bf5581800b021c4c5ce2a875101d83d38af2a6ecb09e9b27edfd9c8ed4389",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.det_eq_mul_det_principalBlocks_of_zero",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceBasic.lean",
+      "line": 37,
+      "doc": "The determinant of a Hermitian block-diagonal matrix factors into its block determinants.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f68bf5581800b021c4c5ce2a875101d83d38af2a6ecb09e9b27edfd9c8ed4389",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.blockIndependenceRatio_mem_Ioc",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceBasic.lean",
+      "line": 46,
+      "doc": "The positive-definite block determinant ratio lies in the unit interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f68bf5581800b021c4c5ce2a875101d83d38af2a6ecb09e9b27edfd9c8ed4389",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.blockIndependenceRatio_smul",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceBasic.lean",
+      "line": 68,
+      "doc": "Nonzero rescaling leaves the block determinant ratio invariant.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f68bf5581800b021c4c5ce2a875101d83d38af2a6ecb09e9b27edfd9c8ed4389",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measurable_blockIndependenceRatio",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceBasic.lean",
+      "line": 77,
+      "doc": "The block determinant ratio is a Borel measurable matrix statistic.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f68bf5581800b021c4c5ce2a875101d83d38af2a6ecb09e9b27edfd9c8ed4389",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_blockIndependenceRatio_sampleCovarianceMatrix_eq_wishart",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceBasic.lean",
+      "line": 82,
+      "doc": "The block determinant ratio of Gaussian sample covariance has its scatter Wishart law.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f68bf5581800b021c4c5ce2a875101d83d38af2a6ecb09e9b27edfd9c8ed4389",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_blockIndependenceRatio_wishart_eq_beta_product",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceLaw.lean",
+      "line": 24,
+      "doc": "The block-independence Wishart determinant ratio has a finite independent Beta-product law.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "2a31a01e5789598ae7f6ee03657cfb21b41fe7996915c0560591eabd00cc83fa",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendstoInDistribution_block_independence_of_beta_product_laws",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceLimit.lean",
+      "line": 22,
+      "doc": "A block determinant-ratio Beta law gives its chi-squared likelihood-ratio limit.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "608ad04ea3f730e6fc5179ca681b5b48dacca542559bbc4a182875e0f9597417",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_blockIndependenceRatio_pow_wishartGramMeasure",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceMoments.lean",
+      "line": 22,
+      "doc": "A block-ratio moment is a product of inverse block moments after a determinant tilt.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "450943febd6477adfe76f4b4b3b8de2646cc1fffa1f98215be3d36bc7a3e9871",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_negative_natCast_det_shift_wishartGramMeasure",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceMoments.lean",
+      "line": 93,
+      "doc": "The shifted inverse determinant moment is valid for every natural tilt order.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "450943febd6477adfe76f4b4b3b8de2646cc1fffa1f98215be3d36bc7a3e9871",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_blockIndependenceRatio_pow_wishartGramMeasure_eq_gamma",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceMoments.lean",
+      "line": 115,
+      "doc": "The natural moments of the block determinant ratio are the shifted Wilks Gamma quotient.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "450943febd6477adfe76f4b4b3b8de2646cc1fffa1f98215be3d36bc7a3e9871",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_blockIndependence_beta_product_pow_eq_gamma",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockIndependenceMoments.lean",
+      "line": 142,
+      "doc": "The Beta product with block-independence shapes has the same Gamma quotient.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "450943febd6477adfe76f4b4b3b8de2646cc1fffa1f98215be3d36bc7a3e9871",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_pair_symmetricCongruenceLinearMap_wishartGramMeasure",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockWishart.lean",
+      "line": 25,
+      "doc": "Orthogonal Gaussian coordinate groups give independent Wishart congruence images.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ef16808390fd41ee118887af15a966269fa8c364e717189c5da64dce74456b99",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.coe_symmetricCongruenceLinearMap_submatrix_one",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockWishart.lean",
+      "line": 74,
+      "doc": "Congruence by selected identity rows reads off the corresponding principal submatrix.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ef16808390fd41ee118887af15a966269fa8c364e717189c5da64dce74456b99",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_pair_principalBlocks_wishartGramMeasure",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockWishart.lean",
+      "line": 82,
+      "doc": "Distinct uncorrelated groups of coordinates have independent principal Wishart blocks.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "ef16808390fd41ee118887af15a966269fa8c364e717189c5da64dce74456b99",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.multivariateGamma_block_ratio",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockWishartGamma.lean",
+      "line": 20,
+      "doc": "The Gamma quotient for a block determinant ratio reduces to a shifted Wilks quotient.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f655232f5f56e1ce730dcd21c8bea802ccd0c3dafd3533f0f644eb329cfd1e73",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.wishartNormalizer_shift_ratio",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockWishartGamma.lean",
+      "line": 36,
+      "doc": "The determinant tilt normalizer separates into its scalar, scale and Gamma factors.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f655232f5f56e1ce730dcd21c8bea802ccd0c3dafd3533f0f644eb329cfd1e73",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.wishartNormalizer_block_ratio_mul_negative_moments",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/BlockWishartGamma.lean",
+      "line": 49,
+      "doc": "Block-diagonal scale factors cancel against the shifted inverse determinant moments.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "f655232f5f56e1ce730dcd21c8bea802ccd0c3dafd3533f0f644eb329cfd1e73",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.linearCombinationCorrelation",
       "kind": "def",
       "file": "CKSD/LinearModels/CanonicalCorrelation.lean",
@@ -33911,6 +36441,70 @@
       "proof": "proved"
     },
     {
+      "name": "CKSD.gamma_add_nat_div_eq_prod_fin",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/GammaIntegerMultiplication.lean",
+      "line": 18,
+      "doc": "Positive Gamma quotients with natural shift are finite products.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "46574f8190c6163191816e0c77d943b07bb7e77517ff77f527792c39cf67fd31",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.gamma_mul_add_nat_mul_div",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/GammaIntegerMultiplication.lean",
+      "line": 23,
+      "doc": "The integer multiplication identity for Gamma quotients with natural shifts.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "46574f8190c6163191816e0c77d943b07bb7e77517ff77f527792c39cf67fd31",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_log_Gamma_add_sub_log_Gamma_sub_mul_log",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/GammaRatioAsymptotics.lean",
+      "line": 21,
+      "doc": "The logarithmic Gamma increment is asymptotic to the shift times the logarithm.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "0be551dd860cf2ed7d034f47c53f37c9337ad0d53c09f62dcb9c7816c14af2ce",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_Gamma_add_div_mul_rpow",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/GammaRatioAsymptotics.lean",
+      "line": 86,
+      "doc": "The Gamma ratio has its standard power asymptotic along arbitrary positive real arguments.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "0be551dd860cf2ed7d034f47c53f37c9337ad0d53c09f62dcb9c7816c14af2ce",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
       "name": "CKSD.condIndepFun_iff_ae_eq_prod_of_condDistrib_ae_eq",
       "kind": "theorem",
       "file": "CKSD/LinearModels/GaussianGraphical.lean",
@@ -34987,59 +37581,14 @@
       "proof": "proved"
     },
     {
-      "name": "CKSD.sampleCovarianceMatrix",
-      "kind": "def",
-      "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 64,
-      "doc": "Sample covariance with the maximum-likelihood divisor `n`.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ]
-    },
-    {
       "name": "CKSD.wilksLambda",
       "kind": "def",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 68,
+      "line": 74,
       "doc": "Wilks's determinant ratio for error and hypothesis scatter matrices.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ]
-    },
-    {
-      "name": "CKSD.sphericityRatio",
-      "kind": "def",
-      "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 71,
-      "doc": "The sphericity likelihood ratio before taking its sample-size power.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
-      "axioms": [
-        "propext",
-        "Classical.choice",
-        "Quot.sound"
-      ]
-    },
-    {
-      "name": "CKSD.blockIndependenceRatio",
-      "kind": "def",
-      "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 75,
-      "doc": "The determinant ratio for independence of two consecutive coordinate blocks.",
-      "gaps": [],
-      "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35050,11 +37599,11 @@
       "name": "CKSD.multivariateHypothesisRoots",
       "kind": "def",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 80,
+      "line": 77,
       "doc": "Roots of a positive-error multivariate hypothesis, computed after symmetric whitening.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35065,11 +37614,11 @@
       "name": "CKSD.lawleyHotellingTrace",
       "kind": "def",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 84,
+      "line": 81,
       "doc": "Lawley–Hotelling trace statistic.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35080,11 +37629,11 @@
       "name": "CKSD.pillaiTrace",
       "kind": "def",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 88,
+      "line": 85,
       "doc": "Pillai trace statistic.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35095,11 +37644,11 @@
       "name": "CKSD.royLargestRoot",
       "kind": "def",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 92,
+      "line": 89,
       "doc": "Roy's largest root, with the value zero for a zero-dimensional response space.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35110,11 +37659,11 @@
       "name": "CKSD.sampleCovarianceMatrix_isHermitian",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 96,
+      "line": 93,
       "doc": "Sample covariance is Hermitian, including an empty sample.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35126,30 +37675,29 @@
       "name": "CKSD.map_wilksLambda_wishart_eq_beta_product",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 106,
+      "line": 103,
       "doc": "GAPS 105.23: for independent Wishart matrices `E ∼ W_p(e, Σ)` and `H ∼ W_p(h, Σ)` with `p ≤ e`, `0 < h` and `Σ` positive definite, Wilks's `Λ = det E / det(E + H)` has the law of a product `∏_{i<p} Bᵢ` of independent `Bᵢ ∼ Beta((e - i)/2, h/2)`. This is the distributional core; the linear-model projection reduction and the Bartlett correction are not stated.",
       "gaps": [
         "105.23"
       ],
-      "admitted": true,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "admitted": false,
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.sampleCovarianceMatrix_eq_empirical",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 117,
+      "line": 157,
       "doc": "The sequence and finite-sample covariance conventions agree.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35161,13 +37709,13 @@
       "name": "CKSD.tendstoInDistribution_gaussian_sample_covariance_eigenvalue",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 135,
+      "line": 175,
       "doc": "GAPS 105.24: central limit theorem for a simple eigenvalue: for an i.i.d. sample from `N_p(m, Σ)` with `Σ` positive definite and a simple eigenvalue `λ_j` of `Σ`, the `j`-th largest eigenvalue `λ̂_j` of the sample covariance (divisor `n`) satisfies `√n (λ̂_j - λ_j) ⇒ N(0, 2 λ_j²)`. Multiplicities of the other eigenvalues are allowed.",
       "gaps": [
         "105.24"
       ],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35179,49 +37727,47 @@
       "name": "CKSD.tendstoInDistribution_sphericity_likelihood_ratio",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 192,
+      "line": 232,
       "doc": "GAPS 105.33: Wilks's chi-squared limit for sphericity in fixed dimension `p ≥ 2`: under `N_p(m, v I)` with `v > 0`, the likelihood-ratio statistic `-n log(det S / (tr S / p)^p)` converges in distribution to `χ²` with `p(p+1)/2 - 1` degrees of freedom. The second-order Bartlett approximation is not stated.",
       "gaps": [
         "105.33"
       ],
-      "admitted": true,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "admitted": false,
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.tendstoInDistribution_block_independence_likelihood_ratio",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 206,
+      "line": 304,
       "doc": "GAPS 105.33: under `N_{p+q}(m, Σ)` with `Σ` positive definite and block diagonal, the likelihood-ratio statistic `-n log(det S / (det S₁₁ det S₂₂))` for independence of the two blocks converges in distribution to `χ²` with `p q` degrees of freedom.",
       "gaps": [
         "105.33"
       ],
-      "admitted": true,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "admitted": false,
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
-        "sorryAx",
         "Classical.choice",
         "Quot.sound"
       ],
-      "proof": "admitted"
+      "proof": "proved"
     },
     {
       "name": "CKSD.isHermitian_eigenvalues₀_eq_iff",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 225,
+      "line": 341,
       "doc": "Two real symmetric matrices have the same ordered eigenvalues exactly when they have the same characteristic polynomial.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35233,11 +37779,11 @@
       "name": "CKSD.multivariateHypothesisRoots_eq_iff_charpoly_eq",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 240,
+      "line": 356,
       "doc": "When the whitened hypothesis matrices `E^{-1/2} H E^{-1/2}` are symmetric, two pairs have the same generalized roots exactly when these matrices have the same characteristic polynomial.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35249,13 +37795,13 @@
       "name": "CKSD.multivariateHypothesisRoots_eq_iff_congruent",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 274,
+      "line": 390,
       "doc": "GAPS 105.34: generalized roots classify scatter-matrix pairs under simultaneous congruence: for `E`, `E'` positive definite and `H`, `H'` positive semidefinite, the pairs `(E, H)` and `(E', H')` have the same generalized roots exactly when `E' = Aᵀ E A` and `H' = Aᵀ H A` for some invertible `A`. This is the algebraic maximal-invariant assertion for response transformations.",
       "gaps": [
         "105.34"
       ],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35267,11 +37813,11 @@
       "name": "CKSD.isHermitian_det_one_add_eq_prod",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 371,
+      "line": 487,
       "doc": "For a real symmetric matrix `M`, `det (1 + M) = ∏ᵢ (1 + λᵢ)` over its eigenvalues `λᵢ`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35283,11 +37829,11 @@
       "name": "CKSD.isHermitian_trace_mul_inv_one_add_eq_sum",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 389,
+      "line": 505,
       "doc": "For a real symmetric matrix `M` with nonnegative eigenvalues `λᵢ`, `tr (M (1 + M)⁻¹) = ∑ᵢ λᵢ / (1 + λᵢ)`.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35299,11 +37845,11 @@
       "name": "CKSD.isHermitian_sum_eigenvalues₀_eq",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 428,
+      "line": 544,
       "doc": "Sums over the ordered eigenvalues agree with sums over the matrix-indexed eigenvalues.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35315,11 +37861,11 @@
       "name": "CKSD.isHermitian_prod_eigenvalues₀_eq",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 439,
+      "line": 555,
       "doc": "Products over the ordered eigenvalues agree with products over the matrix-indexed eigenvalues.",
       "gaps": [],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35331,13 +37877,13 @@
       "name": "CKSD.multivariate_test_statistics_eq_roots",
       "kind": "theorem",
       "file": "CKSD/LinearModels/MultivariateTests.lean",
-      "line": 451,
+      "line": 567,
       "doc": "GAPS 105.34: in terms of the generalized roots `λᵢ` of a positive definite `E` and a positive semidefinite `H`, Wilks's `Λ = ∏ (1 + λᵢ)⁻¹`, the Lawley–Hotelling trace is `∑ λᵢ`, and Pillai's trace is `∑ λᵢ / (1 + λᵢ)`.",
       "gaps": [
         "105.34"
       ],
       "admitted": false,
-      "source_sha256": "e585efa6b98588a0450de8c06d4ea0e0d61f1e3588bb01e27d033e387a7226fc",
+      "source_sha256": "a0c2b0737c54f33a374f326fc2bd72d7cff577d806a283a020db59eb43094a10",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -35778,6 +38324,372 @@
       ],
       "admitted": false,
       "source_sha256": "2934116b230a738bac01b0760707290e2a89204f1874c10c1be6d0adb0af3374",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.sampleCovarianceMatrix",
+      "kind": "def",
+      "file": "CKSD/LinearModels/SphericityBasic.lean",
+      "line": 17,
+      "doc": "Sample covariance with the maximum-likelihood divisor `n`.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6db6469a953d3033db0a10a3f1e435ee25962d6438d1ead68e9cefdde3ea3981",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.sphericityRatio",
+      "kind": "def",
+      "file": "CKSD/LinearModels/SphericityBasic.lean",
+      "line": 20,
+      "doc": "The sphericity likelihood ratio before taking its sample-size power.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6db6469a953d3033db0a10a3f1e435ee25962d6438d1ead68e9cefdde3ea3981",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.sphericityRatio_smul",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityBasic.lean",
+      "line": 23,
+      "doc": "Nonzero rescaling leaves the sphericity determinant ratio invariant.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6db6469a953d3033db0a10a3f1e435ee25962d6438d1ead68e9cefdde3ea3981",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measurable_sphericityRatio",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityBasic.lean",
+      "line": 29,
+      "doc": "The sphericity ratio is a Borel measurable function of the matrix.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6db6469a953d3033db0a10a3f1e435ee25962d6438d1ead68e9cefdde3ea3981",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measurable_sampleMean",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityBasic.lean",
+      "line": 34,
+      "doc": "The finite Euclidean sample mean is Borel measurable.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6db6469a953d3033db0a10a3f1e435ee25962d6438d1ead68e9cefdde3ea3981",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measurable_scatterMatrix",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityBasic.lean",
+      "line": 39,
+      "doc": "The finite centered scatter matrix is Borel measurable.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6db6469a953d3033db0a10a3f1e435ee25962d6438d1ead68e9cefdde3ea3981",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.measurable_sampleCovarianceMatrix",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityBasic.lean",
+      "line": 53,
+      "doc": "The sample covariance with divisor `n` is Borel measurable, including an empty sample.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6db6469a953d3033db0a10a3f1e435ee25962d6438d1ead68e9cefdde3ea3981",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_sphericityRatio_sampleCovarianceMatrix_eq_wishart",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityBasic.lean",
+      "line": 60,
+      "doc": "Gaussian sample covariance and the Wishart scatter have the same sphericity ratio law.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6db6469a953d3033db0a10a3f1e435ee25962d6438d1ead68e9cefdde3ea3981",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.sphericity_gamma_moment_eq_product",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityBetaMoments.lean",
+      "line": 23,
+      "doc": "Spherical determinant-to-trace moments agree with a product of Beta moments.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6f14b612683664480fd4b1bf12e5b2099d3e4cf139e9c21403b054a78dc6a8d6",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_sphericity_beta_product_pow_eq_gamma",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityBetaMoments.lean",
+      "line": 66,
+      "doc": "Independent Beta-product moments equal the spherical Wishart Gamma quotient.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "6f14b612683664480fd4b1bf12e5b2099d3e4cf139e9c21403b054a78dc6a8d6",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_sphericityRatio_wishart_eq_beta_product",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityLaw.lean",
+      "line": 19,
+      "doc": "The exact spherical Wishart sphericity law is a product of independent Beta factors.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "c09b8b2e580350a8d1424451837d92490c459b621c00d6bd8694ff305cb47021",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendstoInDistribution_of_eventually_map_eq",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityLimit.lean",
+      "line": 19,
+      "doc": "Convergence in distribution transfers across eventually equal laws.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "725aa0a456ea93bd4a023b5f6aa958f0a35de7e7f393278036fa0c956bfa7083",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_max_one_natCast_sub_div_two",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityLimit.lean",
+      "line": 35,
+      "doc": "A lower truncation of an affine growing Beta shape tends to infinity.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "725aa0a456ea93bd4a023b5f6aa958f0a35de7e7f393278036fa0c956bfa7083",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendsto_max_one_natCast_div_two_ratio",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityLimit.lean",
+      "line": 44,
+      "doc": "Two affine shape sequences with the same leading scale have asymptotic ratio one.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "725aa0a456ea93bd4a023b5f6aa958f0a35de7e7f393278036fa0c956bfa7083",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.tendstoInDistribution_neg_natCast_mul_log_of_beta_product_law",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityLimit.lean",
+      "line": 64,
+      "doc": "A statistic with the growing-shape Beta-product law has the corresponding logarithmic Gamma limit; only eventual equality of laws is needed.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "725aa0a456ea93bd4a023b5f6aa958f0a35de7e7f393278036fa0c956bfa7083",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.sum_sphericity_beta_second_shape",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityLimit.lean",
+      "line": 120,
+      "doc": "The sum of the spherical Beta second shapes equals half the dimension deficit.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "725aa0a456ea93bd4a023b5f6aa958f0a35de7e7f393278036fa0c956bfa7083",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.map_trace_wishartGramMeasure_smul_one",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityMoments.lean",
+      "line": 22,
+      "doc": "The trace of a spherical Gaussian-Gram Wishart matrix has the corresponding Gamma law.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "dd94473d9ed14732794fec620a5681522f8500540d0d10449b6cd53c571722ef",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.det_le_trace_div_pow_of_posDef",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityMoments.lean",
+      "line": 75,
+      "doc": "Matrix AM-GM bounds the determinant by the dimension-th power of the mean eigenvalue.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "dd94473d9ed14732794fec620a5681522f8500540d0d10449b6cd53c571722ef",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.det_trace_ratio_mem_Ioc",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityMoments.lean",
+      "line": 93,
+      "doc": "The sphericity determinant ratio of a positive definite matrix lies in the unit interval.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "dd94473d9ed14732794fec620a5681522f8500540d0d10449b6cd53c571722ef",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.wishartNormalizer_smul_one",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityMoments.lean",
+      "line": 102,
+      "doc": "Spherical Wishart normalizers combine the two scalar scales into their product.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "dd94473d9ed14732794fec620a5681522f8500540d0d10449b6cd53c571722ef",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_det_trace_ratio_pow_wishartGramMeasure",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityMoments.lean",
+      "line": 110,
+      "doc": "Determinant tilting reduces sphericity moments to an inverse trace moment.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "dd94473d9ed14732794fec620a5681522f8500540d0d10449b6cd53c571722ef",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.wishartNormalizer_spherical_shift_ratio_mul_rate_pow",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityMoments.lean",
+      "line": 173,
+      "doc": "The scale in a spherical determinant tilt cancels against the inverse trace-moment scale.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "dd94473d9ed14732794fec620a5681522f8500540d0d10449b6cd53c571722ef",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_det_trace_ratio_pow_wishartGram_eq_gamma",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/SphericityMoments.lean",
+      "line": 187,
+      "doc": "Exact natural moments of the spherical Wishart sphericity ratio.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "dd94473d9ed14732794fec620a5681522f8500540d0d10449b6cd53c571722ef",
       "axioms": [
         "propext",
         "Classical.choice",
@@ -36452,6 +39364,149 @@
       ],
       "admitted": false,
       "source_sha256": "98e792f3754509d4fdfee48b2fe8498ffd5b6c9e020fbfad9bb132fe89083549",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.withDensity_det_pow_wishartGramMeasure",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/WishartRatioMoments.lean",
+      "line": 25,
+      "doc": "A natural determinant tilt of a nonsingular Gaussian-Gram Wishart law.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "b120102753b25b8fcece845671c823a2288c1ed6b35dc3df976717127b9065ed",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_det_ratio_pow_wishartGram_prod",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/WishartRatioMoments.lean",
+      "line": 38,
+      "doc": "Determinant-ratio moments reduce to one shifted Wishart determinant moment.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "b120102753b25b8fcece845671c823a2288c1ed6b35dc3df976717127b9065ed",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.wishart_normalizer_ratio_mul_negative_moment",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/WishartRatioMoments.lean",
+      "line": 92,
+      "doc": "Wishart normalizers cancel against the shifted negative determinant moment.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "b120102753b25b8fcece845671c823a2288c1ed6b35dc3df976717127b9065ed",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_det_ratio_pow_wishartGram_prod_eq_gamma",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/WishartRatioMoments.lean",
+      "line": 113,
+      "doc": "The natural moments of a Wishart determinant ratio are a quotient of multivariate Gamma values.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "b120102753b25b8fcece845671c823a2288c1ed6b35dc3df976717127b9065ed",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.integral_beta_product_pow_eq_gamma",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/WishartRatioMoments.lean",
+      "line": 138,
+      "doc": "The moments of the independent Beta product agree with the Wishart ratio moments.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "b120102753b25b8fcece845671c823a2288c1ed6b35dc3df976717127b9065ed",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.wishartNormalizer",
+      "kind": "def",
+      "file": "CKSD/LinearModels/WishartTilt.lean",
+      "line": 21,
+      "doc": "The normalizing denominator of a nonsingular Wishart density.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "a94a27bf2e1d2b0f8e3e3bf8b4c030ba8e794fdb41b27aa836c9734e2d329a0f",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ]
+    },
+    {
+      "name": "CKSD.wishartNormalizer_pos",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/WishartTilt.lean",
+      "line": 24,
+      "doc": "A valid Wishart normalizer is strictly positive.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "a94a27bf2e1d2b0f8e3e3bf8b4c030ba8e794fdb41b27aa836c9734e2d329a0f",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.det_pow_mul_wishartPDFReal",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/WishartTilt.lean",
+      "line": 29,
+      "doc": "Multiplication by a determinant power shifts the Wishart density's degree.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "a94a27bf2e1d2b0f8e3e3bf8b4c030ba8e794fdb41b27aa836c9734e2d329a0f",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "proof": "proved"
+    },
+    {
+      "name": "CKSD.withDensity_det_pow_nonsingularWishartMeasure",
+      "kind": "theorem",
+      "file": "CKSD/LinearModels/WishartTilt.lean",
+      "line": 50,
+      "doc": "Determinant tilting of a valid Wishart law gives a scaled law with shifted degree.",
+      "gaps": [],
+      "admitted": false,
+      "source_sha256": "a94a27bf2e1d2b0f8e3e3bf8b4c030ba8e794fdb41b27aa836c9734e2d329a0f",
       "axioms": [
         "propext",
         "Classical.choice",

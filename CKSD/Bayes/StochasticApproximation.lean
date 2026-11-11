@@ -2,6 +2,7 @@ module
 
 public import CKSD.Bayes.StochasticApproximation.Basic
 public import CKSD.Bayes.StochasticApproximationPath
+public import CKSD.Bayes.StochasticApproximationLimitSet
 public import CKSD.Bayes.MartingaleSeries
 public import Mathlib.Probability.Martingale.Basic
 public import Mathlib.Probability.Martingale.Convergence
@@ -44,7 +45,9 @@ Mathlib's almost-everywhere martingale convergence theorem
 For the ODE method, predictable clipping and martingale convergence show convergence of the
 accumulated weighted noise. Correcting the affine interpolation by that noise gives an
 approximate ODE solution, controlled by the deterministic results in
-`CKSD.Bayes.StochasticApproximationPath`.
+`CKSD.Bayes.StochasticApproximationPath`. The limit-set theorem in
+`CKSD.Bayes.StochasticApproximationLimitSet` identifies the discrete limit set with the compact
+connected cluster set of the interpolation and constructs chains inside it.
 -/
 
 @[expose] public section
@@ -598,7 +601,22 @@ theorem ae_isInternallyChainTransitive_limitSet (μ : Measure Ω) [IsProbability
     (hbdd : ∀ᵐ ω ∂μ, BddAbove (range fun n ↦ ‖θ n ω‖)) :
     ∀ᵐ ω ∂μ, IsCompact (limitSet (θ · ω)) ∧ IsConnected (limitSet (θ · ω)) ∧
       IsInternallyChainTransitive Φ (limitSet (θ · ω)) := by
-  sorry
+  have ha0 : Tendsto a atTop (𝓝 0) := by
+    have hh := hRM.summable_sq_step.tendsto_atTop_zero.sqrt
+    rw [Real.sqrt_zero] at hh
+    exact hh.congr fun n ↦ Real.sqrt_sq (hRM.step_pos n).le
+  filter_upwards [hRM.ae_exists_tendsto_sum_noise μ F h a K θ M hbdd,
+    hbdd, ae_all_iff.2 hRM.recursion] with ω hnoise hbω hrecω
+  obtain ⟨c, hc⟩ := hnoise
+  let S : ℕ → E := fun n ↦ ∑ k ∈ Finset.range n, a k • M (k + 1) ω
+  have hSsucc (n : ℕ) : S (n + 1) - S n = a n • M (n + 1) ω := by
+    dsimp [S]
+    rw [Finset.sum_range_succ, add_sub_cancel_left]
+  apply limitSet_properties_of_stochasticApproximation hRM.step_pos ha0
+    hRM.tendsto_sum_step h L hL Φ hΦ (θ · ω) S hc hbω
+  intro n
+  rw [hrecω n, hSsucc, smul_add]
+  abel
 
 /-- GAPS 104.49: if the only compact connected internally chain transitive invariant sets are
 equilibria, the iterates converge almost surely to a possibly random equilibrium. -/

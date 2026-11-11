@@ -1,6 +1,16 @@
 module
 
 public import CKSD.LinearModels.Basic
+public import CKSD.LinearModels.BlockWishart
+public import CKSD.LinearModels.BlockIndependenceBasic
+public import CKSD.LinearModels.BlockIndependenceLaw
+public import CKSD.LinearModels.BlockIndependenceLimit
+public import CKSD.LinearModels.BlockWishartGamma
+public import CKSD.LinearModels.SphericityBasic
+public import CKSD.LinearModels.SphericityLimit
+public import CKSD.LinearModels.SphericityLaw
+public import TauCeti.Probability.Moments.CompactDeterminacy
+public import CKSD.LinearModels.WishartRatioMoments
 public import CKSD.LinearModels.CovarianceEigenvalues
 public import CKSD.Asymptotics.Basic
 public import Mathlib.Analysis.Matrix.Spectrum
@@ -60,21 +70,8 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- Sample covariance with the maximum-likelihood divisor `n`. -/
-def sampleCovarianceMatrix {n p : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin p)) :
-    Matrix (Fin p) (Fin p) ℝ := (n : ℝ)⁻¹ • scatterMatrix x
-
 /-- Wilks's determinant ratio for error and hypothesis scatter matrices. -/
 def wilksLambda {p : ℕ} (E H : Matrix (Fin p) (Fin p) ℝ) : ℝ := E.det / (E + H).det
-
-/-- The sphericity likelihood ratio before taking its sample-size power. -/
-def sphericityRatio {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ) : ℝ :=
-  A.det / (Matrix.trace A / p) ^ p
-
-/-- The determinant ratio for independence of two consecutive coordinate blocks. -/
-def blockIndependenceRatio {p q : ℕ} (A : Matrix (Fin (p + q)) (Fin (p + q)) ℝ) : ℝ :=
-  A.det / ((A.submatrix (Fin.castAdd q) (Fin.castAdd q)).det *
-    (A.submatrix (Fin.natAdd p) (Fin.natAdd p)).det)
 
 /-- Roots of a positive-error multivariate hypothesis, computed after symmetric whitening. -/
 def multivariateHypothesisRoots {p : ℕ} (E H : Matrix (Fin p) (Fin p) ℝ) : Fin p → ℝ :=
@@ -111,7 +108,50 @@ theorem map_wilksLambda_wishart_eq_beta_product {p : ℕ}
       (fun z ↦ wilksLambda z.1.val z.2.val) =
       (Measure.pi fun i : Fin p ↦ ProbabilityTheory.betaMeasure
         (((e : ℝ) - i.val) / 2) ((h : ℝ) / 2)).map (fun v ↦ ∏ i, v i) := by
-  sorry
+  classical
+  have ha (i : Fin p) : 0 < ((e:ℝ)-i.val)/2 := by
+    have hi : (i.val:ℝ) < e := by exact_mod_cast (lt_of_lt_of_le i.isLt he)
+    linarith
+  have hb : 0 < (h:ℝ)/2 := by positivity
+  let _ (i : Fin p) : IsProbabilityMeasure (betaMeasure (((e:ℝ)-i.val)/2) ((h:ℝ)/2)) :=
+    isProbabilityMeasureBeta (ha i) hb
+  let E := selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)
+  let f : E × E → ℝ := fun z ↦ (z.1 : Matrix (Fin p) (Fin p) ℝ).det /
+    ((z.1+z.2 : E) : Matrix (Fin p) (Fin p) ℝ).det
+  let g : (Fin p → ℝ) → ℝ := fun v ↦ ∏ i, v i
+  have hd1 : Measurable (fun z : E × E ↦ (z.1 : Matrix (Fin p) (Fin p) ℝ).det) :=
+    continuous_id.matrix_det.measurable.comp (measurable_subtype_coe.comp measurable_fst)
+  have hd2 : Measurable (fun z : E × E ↦ ((z.1+z.2 : E) : Matrix (Fin p) (Fin p) ℝ).det) :=
+    continuous_id.matrix_det.measurable.comp (measurable_subtype_coe.comp
+      (measurable_fst.add measurable_snd))
+  have hf : Measurable f := by
+    simpa only [Function.comp_def, f] using measurable_div.comp (hd1.prodMk hd2)
+  have hg : Measurable g := Finset.measurable_fun_prod _ fun i _ ↦ measurable_pi_apply i
+  change ((TauCeti.Probability.wishartGramMeasure e Sigma).prod
+    (TauCeti.Probability.wishartGramMeasure h Sigma)).map f =
+    (Measure.pi fun i : Fin p ↦ betaMeasure (((e:ℝ)-i.val)/2) ((h:ℝ)/2)).map g
+  apply TauCeti.Measure.ext_of_forall_integral_pow_eq_of_support (K := Icc (0:ℝ) 1) isCompact_Icc
+  · change ∀ᵐ x ∂_, x ∈ Icc (0:ℝ) 1
+    apply (ae_map_iff hf.aemeasurable measurableSet_Icc).2
+    apply (Measure.ae_prod_iff_ae_ae (hf measurableSet_Icc)).2
+    filter_upwards [TauCeti.Probability.ae_posDef_wishartGramMeasure hSigma he] with A hA
+    filter_upwards [TauCeti.Probability.ae_posSemidef_wishartGramMeasure h Sigma] with B hB
+    dsimp [f]
+    exact ⟨div_nonneg hA.det_pos.le (hA.add_posSemidef hB).det_pos.le,
+      (div_le_one (hA.add_posSemidef hB).det_pos).2 (hA.posSemidef.det_le_det_add hB)⟩
+  · change ∀ᵐ x ∂_, x ∈ Icc (0:ℝ) 1
+    apply (ae_map_iff hg.aemeasurable measurableSet_Icc).2
+    have hv : ∀ᵐ v ∂Measure.pi (fun i : Fin p ↦ betaMeasure (((e:ℝ)-i.val)/2) ((h:ℝ)/2)),
+        ∀ i, v i ∈ Icc (0:ℝ) 1 :=
+      ae_all_iff.2 fun i ↦ Measure.tendsto_eval_ae_ae.eventually
+        (TauCeti.Probability.ae_mem_Icc_betaMeasure _ _)
+    filter_upwards [hv] with v hv
+    exact ⟨Finset.prod_nonneg fun i _ ↦ (hv i).1,
+      Finset.prod_le_one₀ (fun i _ ↦ (hv i).1) (fun i _ ↦ (hv i).2)⟩
+  · intro k
+    rw [integral_map hf.aemeasurable (by fun_prop), integral_map hg.aemeasurable (by fun_prop)]
+    exact (integral_det_ratio_pow_wishartGram_prod_eq_gamma hSigma he k).trans
+      (integral_beta_product_pow_eq_gamma he hh k).symm
 
 /-- The sequence and finite-sample covariance conventions agree. -/
 theorem sampleCovarianceMatrix_eq_empirical {Ω : Type*} {p n : ℕ}
@@ -198,7 +238,65 @@ theorem tendstoInDistribution_sphericity_likelihood_ratio
     TendstoInDistribution (fun (n : ℕ) ω ↦ -(n : ℝ) * Real.log
       (sphericityRatio (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω)))) atTop id (fun _ ↦ P)
       (TauCeti.Probability.chiSquaredMeasure (p * (p + 1) / 2 - 1 : ℕ)) := by
-  sorry
+  have hp0 : 0 < p := by omega
+  let : Nonempty (Fin (p-1)) := Fin.pos_iff_nonempty.1 (by omega)
+  let c : Fin (p-1) → ℝ := fun i ↦ (i.val : ℝ) + 2
+  let b : Fin (p-1) → ℝ := fun i ↦ ((i.val : ℝ) + 1) / 2 + ((i.val : ℝ) + 1) / p
+  let Z : ℕ → Ω → ℝ := fun n ω ↦ sphericityRatio
+    (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω))
+  have hb (i : Fin (p-1)) : 0 < b i := by dsimp [b]; positivity
+  have hZm (n : ℕ) : Measurable (Z n) :=
+    (measurable_sphericityRatio p).comp
+      ((measurable_sampleCovarianceMatrix (n := n) (p := p)).comp
+        (Measurable.of_eval fun i ↦ hiid.1 i.val))
+  have hlaw (n : ℕ) : P.map (fun ω (i : Fin n) ↦ X i.val ω) =
+      Measure.pi (fun _ : Fin n ↦ multivariateGaussian m ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ))) := by
+    have hind : iIndepFun (fun (i : Fin n) ω ↦ X i.val ω) P := hiid.2.1.precomp Fin.val_injective
+    refine ((iIndepFun_iff_map_fun_eq_pi_map (fun i : Fin n ↦ (hiid.1 i.val).aemeasurable)).1 hind).trans ?_
+    congr 1
+    funext i
+    exact hiid.2.2 i
+  have hmap : ∀ᶠ n in atTop, P.map (Z n) =
+      (Measure.pi fun i : Fin (p-1) ↦ betaMeasure (max 1 (((n : ℝ) - c i) / 2)) (b i)).map
+        (fun x : Fin (p-1) → ℝ ↦ ∏ i, x i) := by
+    filter_upwards [eventually_ge_atTop (p+3)] with n hn
+    have hn0 : p+1 ≤ n := by omega
+    have hS : ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)).PosDef := Matrix.PosDef.one.smul hv
+    have harray : Measurable (fun ω (i : Fin n) ↦ X i.val ω) := Measurable.of_eval fun i ↦ hiid.1 i.val
+    have hratio : Measurable (fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦
+        sphericityRatio (sampleCovarianceMatrix x)) :=
+      (measurable_sphericityRatio p).comp measurable_sampleCovarianceMatrix
+    change P.map ((fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦
+      sphericityRatio (sampleCovarianceMatrix x)) ∘ (fun ω (i : Fin n) ↦ X i.val ω)) = _
+    rw [← Measure.map_map hratio harray, hlaw,
+      map_sphericityRatio_sampleCovarianceMatrix_eq_wishart hp0 hn0 m _ hS,
+      map_sphericityRatio_wishart_eq_beta_product hp0 (by omega : p ≤ n-1) v hv]
+    congr 1
+    congr 1
+    funext i
+    dsimp only [c, b]
+    have hiR : (i.val : ℝ) + 4 ≤ n := by exact_mod_cast (by omega : i.val + 4 ≤ n)
+    rw [max_eq_right (by linarith : (1 : ℝ) ≤ ((n : ℝ) - ((i.val : ℝ) + 2)) / 2),
+      Nat.cast_sub (by omega : 1 ≤ n), Nat.cast_one]
+    congr 2
+    ring
+  let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) (1 / 2)) :=
+    isProbabilityMeasure_gammaMeasure (Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty) (by norm_num)
+  have hlim := tendstoInDistribution_neg_natCast_mul_log_of_beta_product_law P c b hb Z hZm hmap
+  have hGamma : gammaMeasure (∑ i, b i) (1 / 2) =
+      TauCeti.Probability.chiSquaredMeasure (p * (p+1)/2-1 : ℕ) := by
+    have hnat : 2 * (p * (p + 1) / 2) = p * (p + 1) := Nat.mul_div_cancel' p.two_dvd_mul_add_one
+    have hq : 2 ≤ p * (p+1)/2 := by nlinarith
+    have hd : 0 < (p * (p+1)/2-1 : ℕ) := by omega
+    rw [TauCeti.Probability.chiSquaredMeasure_eq_gammaMeasure (by exact_mod_cast hd)]
+    rw [show (∑ i, b i) = ((p * (p+1)/2-1 : ℕ) : ℝ)/2 from sum_sphericity_beta_second_shape hp]
+  refine ⟨hlim.forall_aemeasurable, measurable_id.aemeasurable, ?_⟩
+  have hlimitP : (⟨(gammaMeasure (∑ i, b i) (1 / 2)).map id, inferInstance⟩ : ProbabilityMeasure ℝ) =
+      ⟨(TauCeti.Probability.chiSquaredMeasure (p * (p+1)/2-1 : ℕ)).map id, inferInstance⟩ :=
+    Subtype.ext (congrArg (Measure.map id) hGamma)
+  have ht := hlim.tendsto
+  rw [hlimitP] at ht
+  exact ht
 
 /-- GAPS 105.33: under `N_{p+q}(m, Σ)` with `Σ` positive definite and block diagonal, the
 likelihood-ratio statistic `-n log(det S / (det S₁₁ det S₂₂))` for independence of the two
@@ -214,7 +312,25 @@ theorem tendstoInDistribution_block_independence_likelihood_ratio
       (blockIndependenceRatio (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω))))
       atTop id (fun _ ↦ P)
       (TauCeti.Probability.chiSquaredMeasure (p * q : ℕ)) := by
-  sorry
+  apply tendstoInDistribution_block_independence_of_beta_product_laws hp hq P X hiid.1
+  intro n hn
+  have harray : Measurable (fun ω (i : Fin n) ↦ X i.val ω) := Measurable.of_eval fun i ↦ hiid.1 i.val
+  have hlaw : P.map (fun ω (i : Fin n) ↦ X i.val ω) =
+      Measure.pi (fun _ : Fin n ↦ multivariateGaussian m Sigma) := by
+    have hind : iIndepFun (fun i : Fin n ↦ X i.val) P := hiid.2.1.precomp Fin.val_injective
+    refine ((iIndepFun_iff_map_fun_eq_pi_map (fun i : Fin n ↦ (hiid.1 i.val).aemeasurable)).1 hind).trans ?_
+    congr 1
+    funext i
+    exact hiid.2.2 i
+  have hratio : Measurable (fun x : Fin n → EuclideanSpace ℝ (Fin (p+q)) ↦
+      blockIndependenceRatio (sampleCovarianceMatrix x)) :=
+    (measurable_blockIndependenceRatio p q).comp measurable_sampleCovarianceMatrix
+  change P.map ((fun x : Fin n → EuclideanSpace ℝ (Fin (p+q)) ↦
+    blockIndependenceRatio (sampleCovarianceMatrix x)) ∘ (fun ω (i : Fin n) ↦ X i.val ω)) = _
+  rw [← Measure.map_map hratio harray, hlaw,
+    map_blockIndependenceRatio_sampleCovarianceMatrix_eq_wishart (by omega : 0<p+q) hn m Sigma hSigma,
+    map_blockIndependenceRatio_wishart_eq_beta_product hq (by omega : p+q≤n-1) Sigma hSigma
+      (by ext i j; exact hblock i j)]
 
 section RootStatistics
 

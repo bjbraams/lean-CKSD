@@ -1,8 +1,8 @@
 # Mathlib-style assessment of CKSD
 
-The project contains 255 Lean modules under `CKSD/` and 2893 inventoried declarations:
-816 definitions, abbreviations, structures and inductive types, and 2077 theorem statements
-(1971 proved, two conditional on admitted results, and 104 admitted). The largest module is
+The project contains 301 Lean modules under `CKSD/` and 3085 inventoried declarations:
+824 definitions, abbreviations, structures and inductive types, and 2261 theorem statements
+(2164 proved, no conditional results, and 97 admitted). The largest module is
 [GLMAsymptotics.lean](CKSD/LinearModels/GLMAsymptotics.lean) at 1070 lines, below the
 1500-line hard limit. Modules near 1000 lines are candidates for splitting at a natural mathematical seam. All modules use
 the module system and have Mathlib-style module documentation with the mathematical scope, main definitions and main results. All authored definitions, abbreviations,
@@ -21,9 +21,16 @@ The dependency baseline is Lean `v4.36.0-rc2`, Mathlib
 
 The following scoped catalogue statements have complete proofs with no admitted dependencies:
 
-- [Stochastic-approximation asymptotic pseudotrajectory](CKSD/Bayes/StochasticApproximation.lean#L620) (GAPS 104.49).
-- [Quantitative synchronous propagation of chaos](CKSD/Bayes/MeanField.lean#L664) (GAPS 104.56).
-- [Gaussian simple covariance-eigenvalue central limit theorem](CKSD/LinearModels/MultivariateTests.lean#L135) (GAPS 105.24).
+- [Gaussian block-independence likelihood-ratio chi-squared limit](CKSD/LinearModels/MultivariateTests.lean#L304) (GAPS 105.33).
+- [Benaïm stochastic-approximation limit-set theorem](CKSD/Bayes/StochasticApproximation.lean#L597) (GAPS 104.49).
+- [Bounded-perturbation logarithmic Sobolev inequality](CKSD/Bayes/FunctionalInequalities.lean#L475) (GAPS 104.44).
+- [McKean–Vlasov and finite-particle well-posedness](CKSD/Bayes/MeanField.lean#L88) (GAPS 104.51).
+- [General propagation of chaos on continuous path spaces](CKSD/Bayes/MeanField.lean#L118) (GAPS 104.51).
+- [Exact Wilks determinant-ratio Beta-product law](CKSD/LinearModels/MultivariateTests.lean#L103) (GAPS 105.23).
+- [Gaussian sphericity likelihood-ratio chi-squared limit](CKSD/LinearModels/MultivariateTests.lean#L232) (GAPS 105.33).
+- [Stochastic-approximation asymptotic pseudotrajectory](CKSD/Bayes/StochasticApproximation.lean#L638) (GAPS 104.49).
+- [Quantitative synchronous propagation of chaos](CKSD/Bayes/MeanField.lean#L506) (GAPS 104.56).
+- [Gaussian simple covariance-eigenvalue central limit theorem](CKSD/LinearModels/MultivariateTests.lean#L175) (GAPS 105.24).
 - [Energy-distance positivity and separation](CKSD/Geometry/Kernels.lean#L696) (GAPS 108.62).
 - [Distance-covariance positivity and independence criterion](CKSD/Geometry/Kernels.lean#L710) (GAPS 108.62).
 - [Finite statistical minimax and a least-favourable prior](CKSD/Inference/Decision.lean#L54) (GAPS 101.32).
@@ -51,15 +58,14 @@ supply Slutsky's lemma, tightness, the delta method and the IID central-limit ad
 [boundedness in probability](CKSD/Inference/Basic.lean#L138) is equivalent to Mathlib's
 `IsTightMeasureSet` for the laws.
 
-The two conditional theorems have complete proofs from admitted results:
-[Poincaré inequality under bounded perturbation](CKSD/Bayes/FunctionalInequalities.lean#L521)
-(from the admitted logarithmic Sobolev half) and the
-[stochastic-approximation equilibrium corollary](CKSD/Bayes/StochasticApproximation.lean#L605).
+The [Poincaré inequality under bounded perturbation](CKSD/Bayes/FunctionalInequalities.lean#L492)
+and the [stochastic-approximation equilibrium corollary](CKSD/Bayes/StochasticApproximation.lean#L623)
+have complete proofs with no admitted dependencies.
 
 ## Mathematical domains and conventions
 
 - Test functions in weak formulations of Fokker–Planck and kinetic equations, and smoothness hypotheses on potentials and densities, are `ContDiff ℝ ∞` (infinitely differentiable). In Mathlib `ContDiff ℝ ⊤` means analytic, and an analytic function with compact support on a Euclidean space of positive dimension vanishes.
-- [Particle likelihood asymptotic variance](CKSD/Bayes/ParticleLimits.lean#L64) sums the centred second-moment ratios, with the subtraction of one inside each summand. The time-zero identity and the zero-variance identity for unit potentials are proved. The particle central limit theorems remain admitted; their catalogue source is [SYNOPSIS104](SYNOPSIS104.md), item 59.
+- [Particle likelihood asymptotic variance](CKSD/Bayes/ParticleLimits.lean#L64) sums the centred second-moment ratios, with the subtraction of one inside each summand. The time-zero identity and the zero-variance identity for unit potentials are proved. The particle central limit theorems are proved; the uniform-in-time particle error bound remains admitted. Their catalogue source is [SYNOPSIS104](SYNOPSIS104.md), item 59.
 - [Threshold-excess discrepancy](CKSD/Processes/ExtremeValueLimits.lean#L67) takes its supremum over every nonnegative excess, including points at and beyond a terminal atom. The generalized Pareto distribution function is extended across its endpoint. The domain-of-attraction equivalence remains admitted; see [SYNOPSIS106](SYNOPSIS106.md), item 47.
 - [Offset deformation retraction](CKSD/Geometry/TopologicalInference.lean#L95) requires a finite nonempty sample on the manifold. This excludes the empty/nonempty real-Hausdorff-distance degeneracy. The retraction theorem remains admitted; see [SYNOPSIS108](SYNOPSIS108.md), item 22.
 - [Offset homology inference](CKSD/Geometry/TopologicalInference.lean#L205) uses closed offsets (`cthickening`). With `d_H(K, P) = ε` for a compact `K` and a finite `P`, the closed interleavings `K^a ⊆ P^{a+ε}` and `P^a ⊆ K^{a+ε}` hold, so the boundary case `j = i + 2ε` of [SYNOPSIS108](SYNOPSIS108.md), item 37, is included. The theorem remains admitted.
@@ -70,7 +76,7 @@ The two conditional theorems have complete proofs from admitted results:
 - [Characteristic kernels](CKSD/Geometry/Basic.lean#L103) quantify over probability laws against which the kernel is integrable, so the Bochner convention cannot make the squared MMD vanish for the wrong reason. The [squared MMD](CKSD/Geometry/DistanceKernel.lean#L256) equals the squared distance of TauCeti kernel mean embeddings.
 - [Compositional-class minimax risk](CKSD/Learning/Networks.lean#L652) and the [Eldan–Shamir depth separation](CKSD/Learning/Networks.lean#L597) use extended nonnegative integrals. Infinite squared loss is allowed and cannot become zero through the nonintegrable Bochner-integral convention. Both lower bounds remain admitted; see [SYNOPSIS107](SYNOPSIS107.md), items 29 and 37.
 - [LinUCB regret](CKSD/Learning/Bandits.lean#L761) uses the scale `max σ (B * W)` with the stated positive parameters and ridge regularization. It accounts for initial exploration even with arbitrarily small noise. The statistical confidence and regret theorems remain admitted; see [SYNOPSIS107](SYNOPSIS107.md), item 63.
-- [Stochastic little-o](CKSD/Asymptotics/Framework.lean#L78) and [stochastic big-O](CKSD/Asymptotics/Framework.lean#L84) require an eventually positive deterministic scale. In particular, an identically zero scale cannot satisfy either predicate.
+- [Stochastic little-o](CKSD/Asymptotics/Framework.lean#L79) and [stochastic big-O](CKSD/Asymptotics/Framework.lean#L85) require an eventually positive deterministic scale. In particular, an identically zero scale cannot satisfy either predicate.
 - The [ULA bound under a logarithmic Sobolev inequality](CKSD/Bayes/LangevinSampling.lean#L125) uses Vempala and Wibisono's step-size range `h ≤ α/(4β²)` (SYNOPSIS104, item 45).
 - The [Grenander limit law](CKSD/Nonparametric/Grenander.lean#L825) assumes a density vanishing on the negative half-line and nonincreasing on `[0, ∞)`; positivity at `x₀` follows from `f'(x₀) < 0` (SYNOPSIS103, item 11).
 
@@ -155,6 +161,17 @@ The principal remaining requirement is full proofs of the admitted results. Subs
 statistical hypotheses and constants still need proof-level validation; compilation of an
 admission is not evidence of mathematical correctness.
 
+The 97 direct admissions comprise 22 in Learning, 16 in Bayes, 15 in Geometry,
+14 in Nonparametric, 11 in Asymptotics, 10 in Processes, 5 in LinearModels, and
+4 in Inference. Sections 101–106 contain 60 admissions. There are no theorem
+proofs conditional on admitted dependencies.
+
+The Bayesian admissions concern diffusion identities and marginal laws, Langevin discretization
+and hypocoercivity, transport and gradient-flow inequalities, uniform-in-time particle-filter
+error bounds, and the mean-field neural-network limit. Other recurring themes are nonregular
+and resampling asymptotics, nonparametric shape constraints and random-matrix limits, statistical
+learning rates, and geometric regularity and topological inference.
+
 - `IsContiguous` is not yet reconciled with Statlib's contiguity predicates.
 - The admitted marginal-preserving diffusion statement in `CKSD/Bayes/DiffusionModels.lean`
   requires a time-measurability review. Its weak Fokker–Planck predicate controls the
@@ -176,11 +193,23 @@ The [Mathlib naming](https://leanprover-community.github.io/contribute/naming.ht
 [documentation](https://mathlib.org/contribute/doc.html) guides provide the upstream conventions.
 Project-specific namespace and module requirements remain authoritative.
 
+## Proof-source support
+
+[proof_sources.json](proof_sources.json) identifies local PDF proof passages by filename,
+checksum, printed page and physical PDF page. Each target records a paraphrased argument,
+comparison with the Lean hypotheses, and the remaining formal prerequisites. A source proof
+outline, a deferred exercise, and a completed Lean proof have distinct roles in this index.
+
+The Gaussian block-independence likelihood-ratio proof uses Muirhead's determinant tilt and
+Beta-product law, together with local Gamma cancellation and the logarithmic Beta-product limit.
+The LAN representation theorem has a proved common conditional-kernel construction for tilted
+joint laws; joint-limit extraction and likelihood transfer remain necessary for the full theorem.
+
 ## Validation
 
-The ordinary full build completes successfully with 11493 jobs and no warnings from CKSD files
-other than admitted declarations. The inventory checker `scripts/check_formalization.py` audits
-compiled axiom dependencies, docstring adjacency and source hashes. Individual module checks
+The ordinary full build completes successfully with 11685 jobs and no warnings from CKSD files
+other than admitted declarations. All 310 individual Lean file checks pass. The inventory
+checker `scripts/check_formalization.py` audits compiled axiom dependencies, docstring adjacency and source hashes. Individual module checks
 (`scripts/check_lean_files.py`) use both `autoImplicit=false` and `relaxedAutoImplicit=false`
 after building their imports. These checks do not turn the remaining statistical admissions
 into proofs.

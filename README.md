@@ -30,6 +30,8 @@ The local Lean library is in [CKSD/](CKSD/), with public entry point
 available theorem formulations and records proofs, admissions, and work
 still needing a statement. Definitions contain no admissions. The remaining
 theorem proofs may use explicit `sorry`.
+[proof_sources.json](proof_sources.json) records exact local-PDF passages, proof routes,
+hypothesis comparisons, and Lean prerequisites for selected formalization targets.
 
 The coverage inventories describe the pinned external libraries; local
 statements and proofs are tracked separately. Mathlib provides models and

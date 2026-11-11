@@ -1,8 +1,30 @@
 module
 
-public import CKSD.Bayes.Basic
+public import CKSD.Bayes.MeanFieldCore
+public import CKSD.Bayes.MeanFieldParticles
+public import CKSD.Bayes.MeanFieldGlobal
+public import CKSD.Bayes.MeanFieldForcing
+public import CKSD.Bayes.MeanFieldStability
+public import CKSD.Bayes.MeanFieldChaosStability
+public import CKSD.Bayes.MeanFieldChaosCoupling
+public import CKSD.Bayes.MeanFieldChaosEquations
+public import CKSD.Bayes.MeanFieldLaw
+public import CKSD.Bayes.MeanFieldPathLaws
+public import CKSD.Bayes.MeanFieldPathDistance
+public import CKSD.Bayes.MeanFieldPicardLaw
+public import CKSD.Bayes.MeanFieldPicardComparison
+public import CKSD.Bayes.MeanFieldPicardExistence
+public import CKSD.Bayes.MeanFieldGlue
+public import CKSD.Bayes.MeanFieldFactorial
+public import CKSD.Bayes.MeanFieldLocalMoments
+public import CKSD.Bayes.MeanFieldBrownianBound
+public import CKSD.Bayes.MeanFieldUniqueness
 public import CKSD.Bayes.MeanFieldCoupling
-public import CKSD.Bayes.MeanFieldPathMap
+public import CKSD.Bayes.MeanFieldPicard
+public import CKSD.Bayes.MeanFieldTransport
+public import CKSD.Bayes.MeanFieldCopies
+public import CKSD.Bayes.MeanFieldEmpirical
+public import CKSD.Bayes.MeanFieldWasserstein
 public import CKSD.Bayes.MeanFieldFluctuation
 public import CKSD.Bayes.MeanFieldVariance
 public import CKSD.Bayes.MeanFieldQuantitative
@@ -60,137 +82,6 @@ universe u
 
 attribute [local instance] Classical.propDecidable
 
-/-- A standard Brownian motion in `ℝᵈ`: independent coordinates, each a real Brownian motion. -/
-def IsBrownianEuclidean {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
-    (W : ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d)) (P : Measure Ω) : Prop :=
-  (∀ j, IsBrownianReal (fun t ω ↦ W t ω j) P) ∧ iIndepFun (fun j ω t ↦ W t ω j) P
-
-/-- The path of `x` on `[0, T]`, as a continuous map, or `0` if `x` is not continuous there. -/
-def pathOn {F : Type*} [TopologicalSpace F] [Zero F] (T : ℝ) (x : ℝ → F) :
-    C(Icc (0 : ℝ) T, F) :=
-  if h : ContinuousOn x (Icc 0 T) then ⟨fun t ↦ x t, h.domRestrict⟩ else 0
-
-/-- Lipschitz continuity of a drift in position and in `W₁` of the measure, on probability
-measures with a finite first moment. -/
-def IsWassersteinLipschitzDrift {d : ℕ}
-    (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) →
-      EuclideanSpace ℝ (Fin d)) (L : ℝ) : Prop :=
-  ∀ x y μ ν, IsProbabilityMeasure μ → IsProbabilityMeasure ν →
-    Integrable (fun z ↦ ‖z‖) μ → Integrable (fun z ↦ ‖z‖) ν →
-    ‖b x μ - b y ν‖ ≤ L * (‖x - y‖ + (TauCeti.wassersteinEDist 1 μ ν).toReal)
-
-/-- Independent identically distributed initial states and Brownian drivers, the initial states
-independent of the drivers. -/
-def IsIIDInitialAndDrivers {Ω : Type*} [MeasurableSpace Ω] {d : ℕ} (P : Measure Ω)
-    (X₀ : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (W : ℕ → ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d))
-    (μ₀ : Measure (EuclideanSpace ℝ (Fin d))) : Prop :=
-  (∀ i, Measurable (X₀ i)) ∧ (∀ i, P.map (X₀ i) = μ₀) ∧ (∀ i, IsBrownianEuclidean (W i) P) ∧
-    (∀ i, IndepFun (X₀ i) (fun ω t ↦ W i t ω) P) ∧
-    iIndepFun (fun i ω ↦ (X₀ i ω, fun t ↦ W i t ω)) P
-
-/-- Countable collections of evaluations of two real Brownian motions have the same law. -/
-theorem identDistrib_countable_evals_of_isPreBrownianReal {Ω I : Type*} [MeasurableSpace Ω]
-    [Countable I] (P : Measure Ω) [IsProbabilityMeasure P]
-    (B C : ℝ≥0 → Ω → ℝ) (hB : IsPreBrownianReal B P) (hC : IsPreBrownianReal C P)
-    (t : I → ℝ≥0) :
-    IdentDistrib (fun ω i ↦ B (t i) ω) (fun ω i ↦ C (t i) ω) P P := by
-  apply (identDistrib_iff_forall_finset_identDistrib
-    (AEMeasurable.of_eval fun i ↦ hB.aemeasurable (t i))
-    (AEMeasurable.of_eval fun i ↦ hC.aemeasurable (t i))).2
-  intro J
-  classical
-  let K := J.image t
-  let g : (K → ℝ) → (J → ℝ) := fun x i ↦ x ⟨t i, Finset.mem_image_of_mem _ i.2⟩
-  have hg : Measurable g := measurable_pi_iff.2 fun i ↦ measurable_pi_apply _
-  simpa only [g, K, Function.comp_def, Finset.restrict_def] using
-    ((hB.hasLaw K).identDistrib (hC.hasLaw K)).comp hg
-
-/-- Countable evaluations of Euclidean Brownian drivers have a law independent of the chosen
-Brownian realization. -/
-theorem IsBrownianEuclidean.identDistrib_countable_evals {Ω I : Type*} [MeasurableSpace Ω]
-    [Countable I] {d : ℕ} (P : Measure Ω) [IsProbabilityMeasure P]
-    (B C : ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d))
-    (hB : IsBrownianEuclidean B P) (hC : IsBrownianEuclidean C P) (t : I → ℝ≥0) :
-    IdentDistrib (fun ω i ↦ B (t i) ω) (fun ω i ↦ C (t i) ω) P P := by
-  have hcoord (j : Fin d) : IdentDistrib (fun ω i ↦ B (t i) ω j) (fun ω i ↦ C (t i) ω j) P P :=
-    identDistrib_countable_evals_of_isPreBrownianReal P _ _ (hB.1 j).toIsPreBrownianReal
-      (hC.1 j).toIsPreBrownianReal t
-  have hpost : Measurable (fun z : ℝ≥0 → ℝ ↦ fun i ↦ z (t i)) :=
-    measurable_pi_iff.2 fun i ↦ measurable_pi_apply _
-  have hindB := hB.2.comp (fun _ z i ↦ z (t i)) (fun _ ↦ hpost)
-  have hindC := hC.2.comp (fun _ z i ↦ z (t i)) (fun _ ↦ hpost)
-  have hpair := IdentDistrib.pi hcoord hindB hindC
-  let F : (Fin d → I → ℝ) → (I → EuclideanSpace ℝ (Fin d)) :=
-    fun z i ↦ WithLp.toLp 2 (fun j ↦ z j i)
-  have hF : Measurable F := by
-    apply measurable_pi_iff.2
-    intro i
-    exact (PiLp.continuous_toLp 2 _).measurable.comp (measurable_pi_iff.2 fun j ↦
-      (measurable_pi_apply i).comp (measurable_pi_apply j))
-  convert hpair.comp hF using 1 <;> ext ω i j <;> rfl
-
-/-- Countably many evaluations of the initial state plus its Brownian driver are identically
-distributed across the independent input particles. -/
-theorem IsIIDInitialAndDrivers.identDistrib_forcing_evals
-    {Ω I : Type*} [MeasurableSpace Ω] [Countable I] {d : ℕ}
-    (P : Measure Ω) [IsProbabilityMeasure P]
-    (X₀ : ℕ → Ω → EuclideanSpace ℝ (Fin d))
-    (W : ℕ → ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d))
-    (μ₀ : Measure (EuclideanSpace ℝ (Fin d)))
-    (hiid : IsIIDInitialAndDrivers P X₀ W μ₀) (t : I → ℝ≥0) (i j : ℕ) :
-    IdentDistrib (fun ω q ↦ X₀ i ω + W i (t q) ω) (fun ω q ↦ X₀ j ω + W j (t q) ω) P P := by
-  have hinit : IdentDistrib (X₀ i) (X₀ j) P P :=
-    ⟨(hiid.1 i).aemeasurable, (hiid.1 j).aemeasurable, (hiid.2.1 i).trans (hiid.2.1 j).symm⟩
-  have hdriver := IsBrownianEuclidean.identDistrib_countable_evals P (W i) (W j)
-    (hiid.2.2.1 i) (hiid.2.2.1 j) t
-  have hpost : Measurable (fun z : ℝ≥0 → EuclideanSpace ℝ (Fin d) ↦ fun q ↦ z (t q)) :=
-    measurable_pi_iff.2 fun q ↦ measurable_pi_apply _
-  have hind (k : ℕ) : IndepFun (X₀ k) (fun ω q ↦ W k (t q) ω) P :=
-    (hiid.2.2.2.1 k).comp measurable_id hpost
-  have hpair := hinit.prodMk hdriver (hind i) (hind j)
-  have hsum : Measurable (fun p : EuclideanSpace ℝ (Fin d) × (I → EuclideanSpace ℝ (Fin d)) ↦
-      fun q ↦ p.1 + p.2 q) := measurable_pi_iff.2 fun q ↦
-    measurable_fst.add ((measurable_pi_apply q).comp measurable_snd)
-  exact hpair.comp hsum
-
-/-- Countably sampled additive forcings are independent across the input particles. -/
-theorem IsIIDInitialAndDrivers.iIndepFun_forcing_evals
-    {Ω I : Type*} [MeasurableSpace Ω] [Countable I] {d : ℕ}
-    (P : Measure Ω) [IsProbabilityMeasure P]
-    (X₀ : ℕ → Ω → EuclideanSpace ℝ (Fin d))
-    (W : ℕ → ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d))
-    (μ₀ : Measure (EuclideanSpace ℝ (Fin d)))
-    (hiid : IsIIDInitialAndDrivers P X₀ W μ₀) (t : I → ℝ≥0) :
-    iIndepFun (fun i ω q ↦ X₀ i ω + W i (t q) ω) P := by
-  have hpost : Measurable (fun p : EuclideanSpace ℝ (Fin d) × (ℝ≥0 → EuclideanSpace ℝ (Fin d)) ↦
-      fun q ↦ p.1 + p.2 (t q)) := measurable_pi_iff.2 fun q ↦
-    measurable_fst.add ((measurable_pi_apply _).comp measurable_snd)
-  exact hiid.2.2.2.2.comp (fun _ p q ↦ p.1 + p.2 (t q)) (fun _ ↦ hpost)
-
-
-/-- The `N`-particle system: particles `i < N` solve `Xⁱₜ = X₀ⁱ + ∫₀ᵗ b(Xⁱₛ, μᴺₛ) ds + Wⁱₜ`
-with continuous paths, `μᴺₛ` the empirical measure of the first `N` particles. -/
-def IsParticleSystem {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
-    (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) →
-      EuclideanSpace ℝ (Fin d))
-    (X₀ : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (W : ℕ → ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d))
-    (N : ℕ) (X : ℕ → ℝ → Ω → EuclideanSpace ℝ (Fin d)) (P : Measure Ω) : Prop :=
-  (∀ i t, Measurable (X i t)) ∧ ∀ i < N, ∀ᵐ ω ∂P, Continuous (fun t ↦ X i t ω) ∧
-    ∀ t ≥ 0, X i t ω = X₀ i ω +
-      (∫ s in (0 : ℝ)..t, b (X i s ω) (empiricalMeasure N fun j : Fin N ↦ X j s ω)) +
-        W i t.toNNReal ω
-
-/-- A solution of the McKean–Vlasov equation `Yₜ = ξ + ∫₀ᵗ b(Yₛ, Law(Yₛ)) ds + Bₜ` with
-continuous paths. -/
-def IsMcKeanVlasovSolution {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
-    (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) →
-      EuclideanSpace ℝ (Fin d))
-    (ξ : Ω → EuclideanSpace ℝ (Fin d)) (B : ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d))
-    (Y : ℝ → Ω → EuclideanSpace ℝ (Fin d)) (P : Measure Ω) : Prop :=
-  (∀ t, Measurable (Y t)) ∧ (∀ t ≥ 0, Integrable (fun ω ↦ ‖Y t ω‖) P) ∧
-    ∀ᵐ ω ∂P, Continuous (fun t ↦ Y t ω) ∧
-      ∀ t ≥ 0, Y t ω = ξ ω + (∫ s in (0 : ℝ)..t, b (Y s ω) (P.map (Y s))) + B t.toNNReal ω
-
 /-- GAPS 104.51: well-posedness. Under a Lipschitz drift, the McKean–Vlasov equation has a solution,
 unique up to indistinguishability among solutions with integrable marginals, and every particle
 system has a pathwise unique solution. -/
@@ -205,7 +96,19 @@ theorem exists_unique_mcKeanVlasov_and_particleSystem {Ω : Type*} [MeasurableSp
       ∀ Y', IsMcKeanVlasovSolution b (X₀ i) (W i) Y' P → ∀ᵐ ω ∂P, ∀ t ≥ 0, Y' t ω = Y t ω) ∧
     ∀ N, ∃ X, IsParticleSystem b X₀ W N X P ∧
       ∀ X', IsParticleSystem b X₀ W N X' P → ∀ i < N, ∀ᵐ ω ∂P, ∀ t ≥ 0, X' i t ω = X i t ω := by
-  sorry
+  have hξ (i : ℕ) : Integrable (X₀ i) P := by
+    have hid : IdentDistrib (X₀ i) (X₀ 0) P P :=
+      ⟨(hiid.1 i).aemeasurable, (hiid.1 0).aemeasurable, (hiid.2.1 i).trans (hiid.2.1 0).symm⟩
+    exact hid.integrable_iff.mpr (h2.integrable (by norm_num))
+  constructor
+  · intro i
+    obtain ⟨Y, hY⟩ := exists_mcKeanVlasovSolution_of_compact_solutions P b hb (X₀ i) (W i)
+      (fun T hT ↦ exists_nonlinear_brownian_path_solution P hT b hb (X₀ i) (hξ i) (W i) (hiid.2.2.1 i))
+    refine ⟨Y, hY, fun Y' hY' ↦ ?_⟩
+    exact IsMcKeanVlasovSolution.ae_eq P b hb (X₀ i) (hξ i) (W i) (hiid.2.2.1 i) Y' Y hY' hY
+  · intro N
+    obtain ⟨X, hX⟩ := exists_particleSystem_of_wassersteinLipschitz P b hb X₀ W μ₀ hiid N
+    exact ⟨X, hX, fun X' hX' ↦ IsParticleSystem.ae_eq_of_wassersteinLipschitz P b hb X₀ W X' X hX' hX⟩
 
 /-- GAPS 104.51: propagation of chaos. For every horizon `T` and every `k`, the joint path law on
 `[0, T]` of the first `k` particles converges weakly to the `k`-fold product of the
@@ -226,14 +129,49 @@ theorem tendsto_particle_paths {Ω : Type*} [MeasurableSpace Ω]
     Tendsto (β := ProbabilityMeasure (Fin k → C(Icc (0 : ℝ) T, EuclideanSpace ℝ (Fin d))))
       (fun N ↦ ⟨P.map fun ω (i : Fin k) ↦ pathOn T fun t ↦ X N i t ω, inferInstance⟩) atTop
       (𝓝 ⟨Measure.pi fun _ : Fin k ↦ P.map fun ω ↦ pathOn T fun t ↦ Y t ω, inferInstance⟩) := by
-  sorry
 
-/-- Drift `b₀(x) + ∫ K(x, y) μ(dy)` of an interaction model. -/
-def interactionDrift {d : ℕ} (b₀ : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (K : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (x : EuclideanSpace ℝ (Fin d)) (μ : Measure (EuclideanSpace ℝ (Fin d))) :
-    EuclideanSpace ℝ (Fin d) :=
-  b₀ x + ∫ y, K x y ∂μ
+  have hξ : Integrable (X₀ 0) P := h2.integrable (by norm_num)
+  obtain ⟨Z, hZm, hZi, hind, hidY, hZeq⟩ := exists_iid_mcKeanVlasov_paths_on_Icc
+    P b hb X₀ W μ₀ hiid hξ Y hY hT.le
+  have hid (i : ℕ) : IdentDistrib (Z i) (Z 0) P P := (hidY i).trans (hidY 0).symm
+  let r : ℕ → Ω → ℝ := fun N ω ↦
+    (TauCeti.wassersteinEDist 1 (empiricalMeasure N (fun j ↦ Z j ω)) (P.map (Z 0))).toReal
+  let C := (Real.toNNReal L : ℝ) * T * Real.exp (2 * (Real.toNNReal L : ℝ) * T)
+  have hr : ∀ᵐ ω ∂P, Tendsto (fun N ↦ r N ω) atTop (𝓝 0) :=
+    ae_tendsto_empirical_wasserstein_one P Z hZm (hZi 0) hind hid
+  have hbound (N : ℕ) (hN : 0 < N) : ∀ᵐ ω ∂P, ∀ i : Fin N,
+      ‖pathOn T (fun t ↦ X N i t ω) - Z i ω‖ ≤ C * r N ω := by
+    filter_upwards [(hX N).ae_coupled_vector_integral_eq_on_Icc P hT.le hN b hb
+      X₀ W (X N) Z hZm (hZi 0) hid hZeq] with ω hω
+    intro i
+    exact norm_particle_path_sub_le_empirical_wasserstein P hT.le hN b hb
+      (Z 0) (hZm 0) (hZi 0) (fun j : Fin N ↦ Z j ω)
+      (fun t j ↦ X N j t ω) (fun t j ↦ X₀ j ω + W j t.toNNReal ω)
+      hω.1 hω.2.2.1 hω.2.2.2 i
+  have hXm : ∀ᶠ N in atTop, AEMeasurable
+      (fun ω (i : Fin k) ↦ pathOn T (fun t ↦ X N i t ω)) P := by
+    filter_upwards [eventually_ge_atTop k] with N hN
+    apply AEMeasurable.of_eval
+    intro i
+    exact aemeasurable_pathOn_of_ae_continuous P (X N i)
+      (fun t ↦ ((hX N).1 i t).aemeasurable)
+      (((hX N).2 i (lt_of_lt_of_le i.isLt hN)).mono fun _ hω ↦ hω.1) hT.le
+  have ht := tendsto_joint_image_laws_of_ae_uniform_bound P
+    (fun N i ω ↦ pathOn T (fun t ↦ X N i t ω)) Z k hXm
+    (fun i ↦ (hZm i).aemeasurable) r C hr hbound
+  have hprod : P.map (fun ω (i : Fin k) ↦ Z i ω) =
+      Measure.pi (fun _ : Fin k ↦ P.map (fun ω ↦ pathOn T (fun t ↦ Y t ω))) := by
+    rw [iIndepFun.map_fun_eq_pi_map (fun i : Fin k ↦ (hZm i).aemeasurable)
+      (hind.precomp Fin.val_injective)]
+    congr 1
+    funext i
+    exact (hidY i).map_eq
+  have heq : (⟨P.map (fun ω (i : Fin k) ↦ Z i ω), inferInstance⟩ :
+      ProbabilityMeasure (Fin k → C(Icc (0 : ℝ) T, EuclideanSpace ℝ (Fin d)))) =
+      ⟨Measure.pi (fun _ : Fin k ↦ P.map (fun ω ↦ pathOn T (fun t ↦ Y t ω))), inferInstance⟩ :=
+    Subtype.ext hprod
+  rw [heq] at ht
+  exact ht
 
 /-- With a bounded Lipschitz interaction, nonlinear solutions sharing the initial condition
 and Brownian forcing are indistinguishable; the Brownian property itself is not needed. -/
@@ -291,67 +229,6 @@ theorem IsMcKeanVlasovSolution.ae_eq_of_interactionDrift
 
 
 
-/-- A measurable inverse solution map transports one solution path to an iid family of input
-forcings, giving iid solution paths and retaining the forcing equations. -/
-theorem exists_iid_paths_of_forcing_coordinates {Ω E : Type*} [MeasurableSpace Ω]
-    [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
-    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
-    (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0 ≤ T)
-    (v : ℝ → E → E) (hv : Continuous (Function.uncurry v)) {L : ℝ≥0}
-    (hvL : ∀ s, LipschitzWith L (v s))
-    (U : ℕ → Ω → ℚ → E) (hUind : iIndepFun U P)
-    (hUid : ∀ i, IdentDistrib (U 0) (U i) P P)
-    (Y₀ : Ω → C(Icc (0 : ℝ) T, E))
-    (hU₀ : (fun ω ↦ pathRationalCoordinates hT (pathForcingMap hT v hv (Y₀ ω))) =ᵐ[P] U 0) :
-    ∃ Z : ℕ → Ω → C(Icc (0 : ℝ) T, E),
-      (∀ i, Measurable (Z i)) ∧ iIndepFun Z P ∧ (∀ i, IdentDistrib (Z i) Y₀ P P) ∧
-        ∀ i, (fun ω ↦ pathRationalCoordinates hT (pathForcingMap hT v hv (Z i ω))) =ᵐ[P] U i := by
-  let emb := measurableEmbedding_pathForcingMap hT v hv hvL
-  let S : (ℚ → E) → C(Icc (0 : ℝ) T, E) := fun u ↦ emb.invFun (pathOfRationalCoordinates hT u)
-  have hS : Measurable S := emb.measurable_invFun.comp (measurable_pathOfRationalCoordinates hT)
-  let R : ℕ → Ω → C(Icc (0 : ℝ) T, E) := fun i ω ↦ S (U i ω)
-  have hR (i : ℕ) : AEMeasurable (R i) P := hS.comp_aemeasurable (hUid i).aemeasurable_snd
-  have hR₀ : R 0 =ᵐ[P] Y₀ := by
-    filter_upwards [hU₀] with ω hω
-    dsimp [R, S]
-    rw [← hω, pathOfRationalCoordinates_apply]
-    exact emb.leftInverse_invFun (Y₀ ω)
-  let Z : ℕ → Ω → C(Icc (0 : ℝ) T, E) := fun i ↦ (hR i).mk (R i)
-  have hZ (i : ℕ) : Measurable (Z i) := (hR i).measurable_mk
-  have hZae (i : ℕ) : R i =ᵐ[P] Z i := (hR i).ae_eq_mk
-  have hindR : iIndepFun R P := hUind.comp (fun _ ↦ S) (fun _ ↦ hS)
-  have hindZ : iIndepFun Z P := hindR.congr hZae
-  have hZid (i : ℕ) : IdentDistrib (Z i) Y₀ P P := by
-    have hRi : IdentDistrib (R 0) (R i) P P := (hUid i).comp hS
-    exact (IdentDistrib.of_ae_eq (hR i) (hZae i)).symm.trans
-      (hRi.symm.trans (IdentDistrib.of_ae_eq (hR 0) hR₀))
-  have hCoords : Measurable (pathRationalCoordinates (E := E) hT) :=
-    (measurableEmbedding_pathRationalCoordinates hT).measurable
-  have hΦ : Measurable (pathForcingMap hT v hv) := emb.measurable
-  have hGood : MeasurableSet {u : ℚ → E | pathRationalCoordinates hT (pathForcingMap hT v hv (S u)) = u} :=
-    measurableSet_eq_fun (hCoords.comp (hΦ.comp hS)) measurable_id
-  have hGood₀ : ∀ᵐ ω ∂P, pathRationalCoordinates hT (pathForcingMap hT v hv (S (U 0 ω))) = U 0 ω := by
-    filter_upwards [hR₀, hU₀] with ω hω hUω
-    change pathRationalCoordinates hT (pathForcingMap hT v hv (R 0 ω)) = U 0 ω
-    rw [hω]
-    exact hUω
-  refine ⟨Z, hZ, hindZ, hZid, fun i ↦ ?_⟩
-  have hGoodi := (hUid i).ae_snd hGood hGood₀
-  filter_upwards [hGoodi, hZae i] with ω hω hZω
-  rw [← hZω]
-  exact hω
-
-/-- Euclidean Brownian paths remain almost surely continuous after the nonnegative-time projection. -/
-theorem IsBrownianEuclidean.ae_continuous_toNNReal {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
-    {P : Measure Ω} {B : ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d)} (hB : IsBrownianEuclidean B P) :
-    ∀ᵐ ω ∂P, Continuous (fun t : ℝ ↦ B t.toNNReal ω) := by
-  filter_upwards [ae_all_iff.2 (fun j : Fin d ↦ (hB.1 j).cont)] with ω hω
-  have hc : Continuous (fun t : ℝ ↦ fun j : Fin d ↦ B t.toNNReal ω j) :=
-    continuous_pi fun j ↦ (hω j).comp continuous_real_toNNReal
-  convert (PiLp.continuous_toLp 2 _).comp hc using 1
-  ext t j
-  rfl
-
 /-- Averaging a bounded Lipschitz interaction preserves its Lipschitz constant in position. -/
 theorem lipschitzWith_integral_interaction {Ω E : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
@@ -365,41 +242,6 @@ theorem lipschitzWith_integral_interaction {Ω E : Type*} [MeasurableSpace Ω]
   simpa only [dist_eq_norm, sub_self, norm_zero, integral_zero, add_zero] using
     norm_integral_interaction_sub_le P K hK hKb Y Y hY hY
       (by simpa only [sub_self, norm_zero] using (integrable_const (0 : ℝ) : Integrable (fun _ : Ω ↦ (0 : ℝ)) P)) x y
-
-/-- Equality of the forcing at projected rational times yields the whole pathwise integral equation. -/
-theorem eq_integral_of_forcing_coordinates {E : Type*}
-    [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
-    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
-    {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E) (hv : Continuous (Function.uncurry v))
-    (f : C(Icc (0 : ℝ) T, E)) (ξ : E) (B : ℝ → E) (hB : Continuous B)
-    (heq : pathRationalCoordinates hT (pathForcingMap hT v hv f) =
-      fun q : ℚ ↦ ξ + B (Set.projIcc 0 T hT q)) :
-    ∀ t ∈ Icc (0 : ℝ) T, (f.IccExtend hT) t =
-      ξ + (∫ s in (0 : ℝ)..t, v s ((f.IccExtend hT) s)) + B t := by
-  let g : C(Icc (0 : ℝ) T, E) := ⟨fun t ↦ ξ + B t, continuous_const.add (hB.comp continuous_subtype_val)⟩
-  have hΦ : pathForcingMap hT v hv f = g :=
-    (measurableEmbedding_pathRationalCoordinates hT).injective heq
-  intro t ht
-  have hpoint := congrArg (fun z : C(Icc (0 : ℝ) T, E) ↦ z ⟨t, ht⟩) hΦ
-  change f ⟨t, ht⟩ - (∫ s in (0 : ℝ)..t, v s ((f.IccExtend hT) s)) = ξ + B t at hpoint
-  rw [ContinuousMap.coe_IccExtend, Set.IccExtend_of_mem (h := hT) (fun z ↦ f z) ht]
-  have h := sub_eq_iff_eq_add.mp hpoint
-  rw [h]
-  abel
-
-/-- On a continuous path, the continuous-map path constructor agrees with evaluation. -/
-theorem pathOn_apply_of_continuousOn {E : Type*} [TopologicalSpace E] [Zero E]
-    (T : ℝ) (f : ℝ → E) (hf : ContinuousOn f (Icc 0 T)) (t : Icc (0 : ℝ) T) :
-    pathOn T f t = f t := by
-  simp only [pathOn, dite_eq_left hf]
-  rfl
-
-/-- Extending a constructed continuous path agrees with the original path on its interval. -/
-theorem pathOn_IccExtend_of_continuousOn {E : Type*} [TopologicalSpace E] [Zero E]
-    {T : ℝ} (hT : 0 ≤ T) (f : ℝ → E) (hf : ContinuousOn f (Icc 0 T))
-    (t : ℝ) (ht : t ∈ Icc 0 T) : (pathOn T f).IccExtend hT t = f t := by
-  rw [ContinuousMap.coe_IccExtend, Set.IccExtend_of_mem (h := hT) (fun z ↦ pathOn T f z) ht]
-  exact pathOn_apply_of_continuousOn T f hf ⟨t, ht⟩
 
 /-- One nonlinear solution can be transported along the iid input forcings to iid continuous
 solution paths with the same marginal laws, on any fixed bounded time interval. -/

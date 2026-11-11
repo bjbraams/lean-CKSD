@@ -1,0 +1,1794 @@
+{
+  "schema_version": 1,
+  "purpose": "Exact local-PDF locators and paraphrased proof routes supporting CKSD formalization. Source correspondence is distinguished from a completed Lean proof.",
+  "page_convention": "PDF page numbers are one-based physical pages. A pair denotes an inclusive range; printed_pages records book page labels.",
+  "source_policy": [
+    "Original PDFs remain in the sibling References and ReferencesSuppl directories.",
+    "This index stores bibliographic metadata and original paraphrases, not full-book text.",
+    "A source proof is used only after its hypotheses, conventions and scope have been compared with the Lean statement.",
+    "Source passages, including proof outlines and deferred exercises, are not themselves certified Lean proofs."
+  ],
+  "lean_baseline": {
+    "toolchain": "leanprover/lean4:v4.36.0-rc2",
+    "libraries": {
+      "Statlib": {
+        "url": "https://github.com/stat-lib/statlib",
+        "rev": "eeaac0283690efaa60c31115400cf561836baeb9"
+      },
+      "TauCeti": {
+        "url": "https://github.com/TauCetiProject/TauCeti",
+        "rev": "afa08a3ed16fb167e35de371afb1eb03fbc5913a"
+      },
+      "mathlib": {
+        "url": "https://github.com/leanprover-community/mathlib4",
+        "rev": "6135ffb78e8bcd3fcc8ec02f3f82ea0b0737358b"
+      }
+    }
+  },
+  "text_extraction": {
+    "command": [
+      "pdftotext",
+      "-layout",
+      "SOURCE.pdf",
+      "OUTPUT.txt"
+    ],
+    "cache_location": "Temporary files outside the project; PDF filenames and checksums in this index identify the durable source.",
+    "scanned_pages": "OCR text and mathematical displays should be checked against rendered PDF pages when notation, constants or hypotheses are unclear."
+  },
+  "sources": [
+    {
+      "id": "anderson2003",
+      "path": "../lean-CKMA/References/Anderson2003IntroductionMultivariateStatisticalAnalysis3rdEd-WileySerProbStat.pdf",
+      "title": "An Introduction to Multivariate Statistical Analysis",
+      "edition": "3rd, 2003",
+      "sha256": "43f5ea46521c63955beae63c34261c647aa59adfc649c9c799a7d5787641188b",
+      "pdf_page_count": 739,
+      "project_bibliography": "CKSD-bib.md#cks-105"
+    },
+    {
+      "id": "bgl2014",
+      "path": "../lean-CKMA/References/BakryGentilLedoux2014AnalysisGeometryMarkovDiffusionOperators-SpringerGL348.pdf",
+      "title": "Analysis and Geometry of Markov Diffusion Operators",
+      "edition": "Springer Grundlehren 348, 2014",
+      "pdf_page_count": 555,
+      "sha256": "19e3a629cededc135c8ba39ab24b2b67c316a79720d24046887f5fb41b6bf998",
+      "project_bibliography": "CKSD-bib.md#cks-104"
+    },
+    {
+      "id": "bgl2014_alias",
+      "path": "../lean-CKMA/References/BakriGentilLedoux2014AnalysisGeometryMarkovDiffusionOperators-Springer.GL348.pdf",
+      "title": "Analysis and Geometry of Markov Diffusion Operators",
+      "edition": "Byte-identical alias of bgl2014; Springer Grundlehren 348, 2014",
+      "pdf_page_count": 555,
+      "sha256": "19e3a629cededc135c8ba39ab24b2b67c316a79720d24046887f5fb41b6bf998",
+      "project_bibliography": "CKSD-bib.md#cks-104",
+      "duplicate_of": "bgl2014"
+    },
+    {
+      "id": "bkrw1993",
+      "path": "../lean-CKMA/References/BickelKlaassenRitovWellner1993EfficientAdaptiveEstimationSemiparametricModels-JohnsHopkins.MathSci.pdf",
+      "title": "P. J. Bickel, C. A. J. Klaassen, Y. Ritov and J. A. Wellner, Efficient and Adaptive Estimation for Semiparametric Models (1993)",
+      "sha256": "45bd71bc5fd57d24288dbd7727ef2c924a105d3a8ab5f2c4d4bc7138fcdb0f21",
+      "pdf_page_count": 592,
+      "project_bibliography": "CKSD-bib.md#cks-102"
+    },
+    {
+      "id": "blackwellgirshick1979",
+      "path": "../lean-CKMA/References/BlackwellGirshick1979TheoryGamesStatisticalDecisions-Dover.pdf",
+      "title": "D. Blackwell and M. A. Girshick, Theory of Games and Statistical Decisions (Dover reprint, 1979)",
+      "sha256": "dd4648e1fb1c70d1db35e04e84ec96ef5b5b42020ed7503eb05b4f1ddccc7aad",
+      "pdf_page_count": 388,
+      "project_bibliography": "CKSD-bib.md#cks-101"
+    },
+    {
+      "id": "chewi2026",
+      "path": "../lean-CKMA/References/Chewi2026LogConcaveSampling-AuthorManuscript.pdf",
+      "title": "Log-Concave Sampling",
+      "edition": "Author manuscript; title page: This Version: August 20, 2026",
+      "pdf_page_count": 333,
+      "sha256": "8818e8fb40c07bd70651bafe10e8ec4500197c836928330b90025ca47da52fae",
+      "project_bibliography": "CKSD-bib.md#cks-104"
+    },
+    {
+      "id": "del-moral-2004",
+      "path": "../lean-CKMA/ReferencesSuppl/Moral2004FeynmanKacFormulaeGenealogicalInteractingParticleSystemsApplications-Springer.PIA.pdf",
+      "title": "Feynman–Kac Formulae: Genealogical and Interacting Particle Systems with Applications",
+      "authors": [
+        "Pierre Del Moral"
+      ],
+      "year": 2004,
+      "sha256": "e8e2c285d16cfed3c882e60b18df61511ae7a4f9f293d700d25d21e39e96d78d",
+      "pdf_page_count": 567,
+      "project_bibliography": "SYNOPSIS104.md#source-comparisons-and-local-copies",
+      "bibliography_note": "Supplementary proof source cited in SYNOPSIS104; the 2013 Del Moral monograph is listed in CKSD-bib."
+    },
+    {
+      "id": "muirhead2005",
+      "path": "../lean-CKMA/References/Muirhead2005AspectsMultivariateStatisticalTheory-Wiley.pdf",
+      "title": "Aspects of Multivariate Statistical Theory",
+      "edition": "local 2005 Wiley reprint",
+      "sha256": "1d627b2c5b91dd66a6aaf96673fa3d4fdb2188d3879468c4aca4ceacdb4f65cc",
+      "pdf_page_count": 698,
+      "project_bibliography": "CKSD-bib.md#cks-105"
+    },
+    {
+      "id": "pavliotis2014",
+      "path": "../lean-CKMA/References/Pavliotis2014StochasticProcessesApplications-SpringerTAM.pdf",
+      "title": "Stochastic Processes and Applications",
+      "edition": "Springer Texts in Applied Mathematics 60, 2014",
+      "pdf_page_count": 345,
+      "sha256": "70f0e42aac1274f62fbf21c489bb8bdadc79101a644cfe169d5ec3815cfd71a2",
+      "project_bibliography": "CKSD-bib.md#cks-104"
+    },
+    {
+      "id": "santambrogio2015",
+      "path": "../lean-CKMA/References/Santambrogio2015OptimalTransportAppliedMathematiciansCalculusVariationsPDEsModeling-Birkhäuser.PNDE87.pdf",
+      "title": "Optimal Transport for Applied Mathematicians",
+      "edition": "Birkhäuser Progress in Nonlinear Differential Equations and Their Applications 87, 2015",
+      "pdf_page_count": 376,
+      "sha256": "7820e876d4312d7355f0a1549b2af2186594eebef8d411d651c6235b8c119b68",
+      "project_bibliography": "CKSD-bib.md#cks-108"
+    },
+    {
+      "id": "vandervaart1998",
+      "path": "../lean-CKMA/References/VanDerVaart1998AsymptoticStatistics-CambridgeSerStatProbMath03.pdf",
+      "title": "A. W. van der Vaart, Asymptotic Statistics (1998)",
+      "sha256": "209f3a8d44777d60293cf1363131736b3e7eb26b3167879462aa9f5aebd866b1",
+      "pdf_page_count": 459,
+      "project_bibliography": "CKSD-bib.md#cks-102"
+    },
+    {
+      "id": "villani2009",
+      "path": "../lean-CKMA/References/Villani2009OptimalTransportOldNew-SpringerGL338.pdf",
+      "title": "Optimal Transport: Old and New",
+      "edition": "Springer Grundlehren 338, 2009",
+      "pdf_page_count": 970,
+      "sha256": "c9f0469bfa07c9cdd6c0c0a9870bfdd384f564de08daf5ea9dd07a10195024da",
+      "project_bibliography": "CKSD-bib.md#cks-108"
+    }
+  ],
+  "targets": [
+    {
+      "gaps": [
+        "101.62"
+      ],
+      "lean_targets": [
+        "CKSD.isMoreInformative_iff_isGarbling"
+      ],
+      "citations": [
+        {
+          "source_id": "blackwellgirshick1979",
+          "locator": "Section 12.1, explicit finite-outcome restriction",
+          "printed_pages": [
+            325,
+            326
+          ],
+          "pdf_pages": [
+            339,
+            340
+          ]
+        },
+        {
+          "source_id": "blackwellgirshick1979",
+          "locator": "Theorem 12.2.2, equivalent comparisons; minimax proof of (3) implies (2)",
+          "printed_pages": [
+            328,
+            329,
+            330
+          ],
+          "pdf_pages": [
+            342,
+            343,
+            344
+          ]
+        }
+      ],
+      "proof_route": [
+        "For finite outcome spaces, form the compact convex set of stochastic matrices M. If no garbling exists, apply finite-dimensional bilinear minimax/separation to the payoff trace((PM-Q)C).",
+        "The decision comparison makes the game value nonpositive. A minimizing matrix M then has every coordinate of PM-Q nonpositive; row sums equal zero, hence PM=Q.",
+        "For the current arbitrary measurable X and standard-Borel Y, first pass to dominated likelihood/posterior simplex laws. General measurable randomization then needs a compactness/separation argument or a convex-order martingale coupling followed by conditional disintegration."
+      ],
+      "assumption_comparison": [
+        "The cited theorem assumes both experiments have finitely many outcomes; the current Lean theorem assumes only finite parameter type. The matrix theorem alone does not prove the Lean statement.",
+        "The finite parameter family is dominated by the finite sum of its laws. No standard-Borel hypothesis on X should be introduced; Y is already nonempty standard Borel.",
+        "A posterior-prior construction must handle empty parameter type separately before normalizing a uniform prior."
+      ],
+      "lean_obligations": [
+        "General dominated-experiment randomization/separation, beyond the finite stochastic-matrix game.",
+        "Composition of a proposed garbling kernel with finite-action rules and the corresponding risk identity.",
+        "Posterior-simplex convex-order coupling and measurable disintegration if following that route."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "CKSD.exists_compact_convex_game_saddle_point",
+          "source": "CKSD/Inference/ConvexGames.lean",
+          "verification": "source declaration inspected; existing project theorem"
+        },
+        {
+          "name": "MeasureTheory.Measure.condKernel",
+          "source": "Mathlib/Probability/Kernel/Disintegration/StandardBorel.lean",
+          "verification": "strict Lean #check succeeded"
+        },
+        {
+          "name": "MeasureTheory.Measure.disintegrate",
+          "source": "Mathlib/Probability/Kernel/Disintegration/Basic.lean",
+          "verification": "strict Lean #check succeeded"
+        }
+      ],
+      "lean_status": {
+        "CKSD.isMoreInformative_iff_isGarbling": "admitted"
+      },
+      "lean_files": {
+        "CKSD.isMoreInformative_iff_isGarbling": "CKSD/Inference/Decision.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "102.15"
+      ],
+      "lean_targets": [
+        "CKSD.exists_gaussian_shift_kernel_of_local_limits"
+      ],
+      "citations": [
+        {
+          "source_id": "vandervaart1998",
+          "locator": "Theorem 7.10, joint subsequence and conditional-law representation; Lemma 7.11",
+          "printed_pages": [
+            98,
+            99,
+            100
+          ],
+          "pdf_pages": [
+            114,
+            115,
+            116
+          ]
+        },
+        {
+          "source_id": "vandervaart1998",
+          "locator": "Theorem 9.3 and Theorem 9.4, general experiment representation and LAN limit experiments",
+          "printed_pages": [
+            127,
+            128
+          ],
+          "pdf_pages": [
+            143,
+            144
+          ]
+        },
+        {
+          "source_id": "vandervaart1998",
+          "locator": "Theorem 8.3, estimator representation consequence",
+          "printed_pages": [
+            111,
+            112
+          ],
+          "pdf_pages": [
+            127,
+            128
+          ]
+        }
+      ],
+      "proof_route": [
+        "Use convergence of T_n and the central sequence under parameter zero to extract one joint limiting law rho for (Delta_n,T_n).",
+        "For each fixed h, combine the same joint subsequence with the LAN expansion and Le Cam's third lemma. This gives L_h(B)=integral 1_B(s) exp(inner(h,z)-inner(h,Ih)/2) d rho(z,s). No uncountable diagonal subsequence is needed: the joint subsequence is fixed at parameter zero, and each h is treated afterward.",
+        "Disintegrate rho with respect to its Gaussian observation marginal. Tilting rho only in the observation coordinate preserves this single conditional kernel.",
+        "Identify the tilted Gaussian marginal as N(Ih,I), then pull the kernel back along x maps to I*x to obtain the requested N(h,I inverse) input experiment."
+      ],
+      "assumption_comparison": [
+        "Theorem 7.10 is stated for iid QMD experiments and Euclidean-valued statistics. The current Lean theorem starts directly from LAN and permits nonempty Polish Borel statistic spaces. The proof uses only LAN, tightness and standard-Borel disintegration, so those are legitimate extensions requiring explicit Lean adapters.",
+        "Theorem 9.3 assumes a dominated limit experiment; the nonsingular Gaussian shift satisfies this. The book omits its general proof, but gives the needed LAN special-case proof in Theorem 7.10.",
+        "No tightness assumption on T_n must be added: convergence under h=0 already supplies tightness in this target.",
+        "The newly proved kernel bridge requires only a finite joint base measure, measurable nonnegative extended densities and a nonempty standard-Borel output space. It does not require a measurable parameter space or an inverse coordinate map."
+      ],
+      "lean_obligations": [
+        "Joint tightness and subsequence extraction for statistic/central-sequence laws on Polish product spaces.",
+        "General measurable-output Le Cam third-lemma transfer for the joint subsequence. Existing CKSD log-likelihood transfer is real-valued, so its interface needs a product/Polish-output form.",
+        "Multivariate Gaussian exponential-density tilt and the covariance/linear-map identity involving I and I inverse.",
+        "Connect those inputs to the proved tilted-event-probability common-kernel constructor."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "isCompact_closure_of_isTightMeasureSet",
+          "source": "Mathlib/MeasureTheory/Measure/Prokhorov.lean",
+          "verification": "strict Lean #check succeeded"
+        },
+        {
+          "name": "MeasureTheory.Measure.condKernel",
+          "source": "Mathlib/Probability/Kernel/Disintegration/StandardBorel.lean",
+          "verification": "strict Lean #check and actual proof use succeeded"
+        },
+        {
+          "name": "MeasureTheory.Measure.disintegrate",
+          "source": "Mathlib/Probability/Kernel/Disintegration/Basic.lean",
+          "verification": "strict Lean #check and actual proof use succeeded"
+        },
+        {
+          "name": "MeasureTheory.Measure.withDensity_compProd",
+          "source": "Mathlib/Probability/Kernel/Composition/WithDensity.lean",
+          "verification": "strict Lean #check and actual proof use succeeded"
+        },
+        {
+          "name": "MeasureTheory.Measure.snd_compProd",
+          "source": "Mathlib/Probability/Kernel/Composition/MeasureComp.lean",
+          "verification": "strict Lean #check and actual proof use succeeded"
+        },
+        {
+          "name": "ProbabilityTheory.Kernel.comp_deterministic_eq_comap",
+          "source": "Mathlib/Probability/Kernel/Composition/CompMap.lean",
+          "verification": "strict Lean #check and actual proof use succeeded"
+        },
+        {
+          "name": "TauCeti.Probability.gaussianReal_tilted_mul",
+          "source": "TauCeti/Probability/Distributions/Tilted.lean",
+          "verification": "strict Lean #check succeeded; scalar Gaussian only"
+        },
+        {
+          "name": "CKSD.tendstoInDistribution_of_log_likelihood_ratio",
+          "source": "CKSD/Asymptotics/Experiments.lean",
+          "verification": "source declaration inspected; existing project theorem"
+        }
+      ],
+      "lean_status": {
+        "CKSD.exists_gaussian_shift_kernel_of_local_limits": "admitted"
+      },
+      "lean_files": {
+        "CKSD.exists_gaussian_shift_kernel_of_local_limits": "CKSD/Asymptotics/Framework.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route",
+      "lean_support": {
+        "file": "CKSD/Asymptotics/RepresentationKernel.lean",
+        "imported_by": "CKSD/Asymptotics/Framework.lean",
+        "theorems": [
+          "CKSD.condKernel_comp_withDensity_eq_snd",
+          "CKSD.exists_markovKernel_of_tilted_joint_laws",
+          "CKSD.exists_markovKernel_of_tilted_event_probabilities",
+          "CKSD.exists_markovKernel_of_map_eq_tilted_joint_laws"
+        ],
+        "role": "The common conditional-kernel and measurable coordinate-pullback steps in the representation proof.",
+        "validation": "Lean-checked with transitive axiom closures limited to propext, Classical.choice and Quot.sound.",
+        "limitations": "This does not prove the original asymptotic representation theorem: joint-limit extraction, likelihood transfer and multivariate Gaussian tilt remain."
+      }
+    },
+    {
+      "gaps": [
+        "102.16"
+      ],
+      "lean_targets": [
+        "CKSD.exists_convolution_of_isRegularEstimator"
+      ],
+      "citations": [
+        {
+          "source_id": "vandervaart1998",
+          "locator": "Proposition 8.4, equivariant-in-law Gaussian estimator convolution; Bayesian proof",
+          "printed_pages": [
+            113,
+            114
+          ],
+          "pdf_pages": [
+            129,
+            130
+          ]
+        },
+        {
+          "source_id": "vandervaart1998",
+          "locator": "Theorem 8.8, convolution theorem",
+          "printed_pages": [
+            115
+          ],
+          "pdf_pages": [
+            131
+          ]
+        }
+      ],
+      "proof_route": [
+        "First prove the representation theorem. Regularity makes its randomized Gaussian-limit estimator equivariant in law.",
+        "Introduce a Gaussian prior on the shift and decompose the error into an independent Gaussian posterior residual and a remainder. Send the prior covariance to infinity.",
+        "The error law remains L; divide characteristic functions by the positive Gaussian factor, use a continuity/existence theorem to obtain a limiting remainder law, and identify convolution by characteristic-function uniqueness."
+      ],
+      "assumption_comparison": [
+        "The source QMD/iid assumptions are used to reach the representation theorem; the subsequent Gaussian equivariance proposition is a finite-sample Gaussian statement matching the needed LAN conclusion.",
+        "A finite covariance of L is not needed for convolution existence. It is needed only for the separate covariance-bound conclusion in the source, which is absent from the Lean theorem.",
+        "Do not impose pointwise equivariance on the kernel: regularity gives equivariance in law only."
+      ],
+      "lean_obligations": [
+        "Complete 102.15 or give an equivalent direct joint-limit argument.",
+        "Prove the Gaussian equivariant-in-law convolution proposition for Markov kernels.",
+        "Gaussian-prior posterior/residual independence, covariance convergence, tightness or Levy continuity to produce a remainder measure, and characteristic-function convolution identification."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "TauCeti.Probability.condDistrib_multivariateGaussian",
+          "source": "TauCeti/Probability/Distributions/Gaussian/Conditional/Basic.lean",
+          "verification": "strict Lean #check succeeded"
+        },
+        {
+          "name": "TauCeti.Probability.continuous_multivariateGaussian",
+          "source": "TauCeti/Probability/Distributions/Gaussian/Continuity.lean",
+          "verification": "strict Lean #check succeeded"
+        },
+        {
+          "name": "ProbabilityTheory.charFun_multivariateGaussian",
+          "source": "Mathlib/Probability/Distributions/Gaussian/Multivariate.lean",
+          "verification": "strict Lean #check succeeded"
+        },
+        {
+          "name": "MeasureTheory.Measure.ext_of_charFun",
+          "source": "Mathlib/MeasureTheory/Measure/CharacteristicFunction/Basic.lean",
+          "verification": "strict Lean #check succeeded"
+        }
+      ],
+      "lean_status": {
+        "CKSD.exists_convolution_of_isRegularEstimator": "admitted"
+      },
+      "lean_files": {
+        "CKSD.exists_convolution_of_isRegularEstimator": "CKSD/Asymptotics/Framework.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "102.17"
+      ],
+      "lean_targets": [
+        "CKSD.gaussian_risk_le_local_asymptotic_minimax"
+      ],
+      "citations": [
+        {
+          "source_id": "vandervaart1998",
+          "locator": "Lemma 8.5 and Proposition 8.6, Gaussian concentration/minimax",
+          "printed_pages": [
+            113,
+            114
+          ],
+          "pdf_pages": [
+            129,
+            130
+          ]
+        },
+        {
+          "source_id": "vandervaart1998",
+          "locator": "Theorem 8.11 and displayed proof, including tightness restriction and compactification footnote",
+          "printed_pages": [
+            118,
+            119
+          ],
+          "pdf_pages": [
+            134,
+            135
+          ]
+        }
+      ],
+      "proof_route": [
+        "Choose subsequences realizing minimax liminf bounds on successively larger finite rational local-parameter sets.",
+        "Extract a joint estimator/score limit, transfer it to a randomized estimator in the Gaussian experiment, and use portmanteau for nonnegative lower-semicontinuous loss.",
+        "Apply the Gaussian minimax risk bound; lower semicontinuity extends the rational-parameter supremum to all local parameters.",
+        "For unrestricted estimator sequences, add a compactification device before joint-limit extraction, rather than assuming tightness."
+      ],
+      "assumption_comparison": [
+        "Theorem 8.11 states the full minimax result but its supplied proof explicitly assumes tightness of the scaled estimator at the base parameter and lower-semicontinuity of loss. Its footnote refers elsewhere for the compactification argument removing tightness.",
+        "The current Lean theorem already assumes lower-semicontinuous symmetric quasiconvex ENNReal loss, but does not assume estimator tightness. The displayed proof alone is therefore insufficient.",
+        "The source uses a supremum over finite parameter subsets; the Lean bound uses expanding balls, which dominate every finite subset. Extended nonnegative losses require truncation/monotone convergence around the bounded-loss argument.",
+        "Anderson's Gaussian concentration inequality is a separate missing prerequisite; it must not be treated as an immediate consequence of covariance comparison."
+      ],
+      "lean_obligations": [
+        "Gaussian Anderson inequality for symmetric convex sets, then the associated nonnegative bowl-shaped-loss integral inequality.",
+        "Finite-experiment minimax/portmanteau subsequence argument and l.s.c Gaussian-shift risk.",
+        "Compactification or another argument valid without base-parameter estimator tightness."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "isCompact_closure_of_isTightMeasureSet",
+          "source": "Mathlib/MeasureTheory/Measure/Prokhorov.lean",
+          "verification": "strict Lean #check succeeded"
+        }
+      ],
+      "lean_status": {
+        "CKSD.gaussian_risk_le_local_asymptotic_minimax": "admitted"
+      },
+      "lean_files": {
+        "CKSD.gaussian_risk_le_local_asymptotic_minimax": "CKSD/Asymptotics/Framework.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "102.34"
+      ],
+      "lean_targets": [
+        "CKSD.exists_convolution_of_isRegularAlongPaths",
+        "CKSD.isRegularAlongPaths_gaussian_iff_asymptotically_linear"
+      ],
+      "citations": [
+        {
+          "source_id": "vandervaart1998",
+          "locator": "Lemma 25.14, QMD one-dimensional paths and their LAN expansions",
+          "printed_pages": [
+            363
+          ],
+          "pdf_pages": [
+            379
+          ]
+        },
+        {
+          "source_id": "vandervaart1998",
+          "locator": "Theorem 25.20, convolution, and its finite-dimensional tangent-subspace proof",
+          "printed_pages": [
+            366,
+            367
+          ],
+          "pdf_pages": [
+            382,
+            383
+          ]
+        },
+        {
+          "source_id": "vandervaart1998",
+          "locator": "Lemma 25.23, efficient regularity iff asymptotic linearity",
+          "printed_pages": [
+            367,
+            368
+          ],
+          "pdf_pages": [
+            383,
+            384
+          ]
+        },
+        {
+          "source_id": "bkrw1993",
+          "locator": "Section 3.3, condition (iii), Theorem 3.3.2 A/B and proof",
+          "printed_pages": [
+            62,
+            63,
+            64,
+            65
+          ],
+          "pdf_pages": [
+            88,
+            89,
+            90,
+            91
+          ]
+        },
+        {
+          "source_id": "bkrw1993",
+          "locator": "Proposition 3.3.1, regular asymptotically-linear estimators and efficient influence functions",
+          "printed_pages": [
+            65,
+            66,
+            67
+          ],
+          "pdf_pages": [
+            91,
+            92,
+            93
+          ]
+        },
+        {
+          "source_id": "bkrw1993",
+          "locator": "Section 3.4, Proposition 3.4.1 and Corollary 3.4.1, nuisance projection and inverse-information influence function",
+          "printed_pages": [
+            71,
+            72
+          ],
+          "pdf_pages": [
+            97,
+            98
+          ]
+        }
+      ],
+      "proof_route": [
+        "Use the score family a dot ell + g, with g in the linear nuisance space, to identify the closed tangent linear space. Project ell orthogonally off the nuisance closure and show the inverse efficient-information score is the canonical gradient.",
+        "Apply the parametric Gaussian representation/convolution argument on finite-dimensional tangent subspaces. Approximate the efficient influence coordinates in L2 and send the projected covariance matrices to the efficient covariance.",
+        "Alternatively, BKRW Theorem 3.3.2 gives an explicit joint characteristic-function factorization: approximate linear combinations of efficient influence coordinates and arbitrary tangent scores by actual submodel scores, then identify an independent remainder.",
+        "For the efficiency equivalence, asymptotic linearity implies regularity through QMD local likelihood transfer; necessity follows by jointly representing the efficient influence sample sum and the estimator, whose Gaussian projection residual vanishes at the information bound."
+      ],
+      "assumption_comparison": [
+        "The source requires pathwise differentiability and regularity along the tangent paths. The Lean hypotheses encode a linear score family with exact parameter derivative a; the corresponding canonical-gradient identities still need proof.",
+        "BKRW condition (iii) is a tangent-richness/approximability assumption on the efficient gradient coordinates. The current score family contains every (a,g) and G is linear, so the needed approximability should be derived from the closure of span(ell)+G, not added as a new hypothesis.",
+        "The Lean paths need only QMD at zero. BKRW printedp67/PDF93 explicitly notes that its proof remains valid under differentiability at zero instead of continuous differentiability of submodels.",
+        "The current IsRegularAlongPaths definition tests t=1/sqrt(n) for every selected score direction; reduction to all local scalar shifts on a fixed submodel requires an asymptotic equivalence argument for QMD paths with the same scaled score. This must be established explicitly.",
+        "The nuisance space is linear, so the source linear-tangent proof applies; the extra cone complications of van der Vaart's broader theorem need not be formalized for this target."
+      ],
+      "lean_obligations": [
+        "Mean-zero scores, the canonical-gradient pairing identities, and efficient influence covariance equal to inverse efficient information.",
+        "QMD local-product-law equivalence for two selected paths with the same first-order score; finite-dimensional LAN assembly from the indexed one-dimensional paths.",
+        "Complete the parametric representation/convolution backbone and then prove closure stability of Gaussian convolution factors.",
+        "Joint weak convergence and characteristic-function/independence factorization; efficient regularity to asymptotic linearity."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "MeasureTheory.Measure.ext_of_charFun",
+          "source": "Mathlib/MeasureTheory/Measure/CharacteristicFunction/Basic.lean",
+          "verification": "strict Lean #check succeeded"
+        },
+        {
+          "name": "TauCeti.Probability.continuous_multivariateGaussian",
+          "source": "TauCeti/Probability/Distributions/Gaussian/Continuity.lean",
+          "verification": "strict Lean #check succeeded"
+        },
+        {
+          "name": "CKSD.tendstoInDistribution_score_and_log_likelihood_ratio_expansion_of_dqm",
+          "source": "CKSD/Asymptotics/Experiments.lean",
+          "verification": "source declaration inspected; existing project theorem"
+        }
+      ],
+      "lean_status": {
+        "CKSD.exists_convolution_of_isRegularAlongPaths": "admitted",
+        "CKSD.isRegularAlongPaths_gaussian_iff_asymptotically_linear": "admitted"
+      },
+      "lean_files": {
+        "CKSD.exists_convolution_of_isRegularAlongPaths": "CKSD/Asymptotics/Semiparametric.lean",
+        "CKSD.isRegularAlongPaths_gaussian_iff_asymptotically_linear": "CKSD/Asymptotics/Semiparametric.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.39"
+      ],
+      "lean_targets": [
+        "CKSD.exists_ula_iteration_complexity"
+      ],
+      "citations": [
+        {
+          "source_id": "chewi2026",
+          "locator": "Lemma 4.3.4 (EVI with error), Theorem 4.3.6(ii) and proof",
+          "printed_pages": [
+            132,
+            133,
+            134
+          ],
+          "pdf_pages": [
+            144,
+            145,
+            146
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        }
+      ],
+      "proof_route": [
+        "Prove the one-step EVI 2*h*KL(mu_(n+1),pi) <= (1-alpha*h)*W2(mu_n,pi)^2 - W2(mu_(n+1),pi)^2 + 2*beta*d*h^2.",
+        "Split one ULA step into deterministic gradient descent and Gaussian heat convolution. The gradient descent energy inequality and Gaussian energy increment are elementary smoothness/coupling estimates. The entropy decrease part is the heat-flow Wasserstein EVI.",
+        "Iterate the scalar recurrence to get last-iterate W2 convergence. Telescope over n=N,...,2N-1 and apply convexity of KL to get the mixture-of-laws bound.",
+        "Choose universal numerical c,C and h=c*epsilon^2/(beta*d), convert geometric factors to exponentials, and verify the given logarithmic iteration threshold."
+      ],
+      "assumption_comparison": [
+        "Exact match to the strongly convex part of Theorem4.3.6: the output is the mixture N^(-1)*sum_{j=N+1}^{2N} mu_j, not the law of an arithmetic average of positions.",
+        "The book controls sqrt(KL) by epsilon; the Lean target correctly controls KL by epsilon^2. The W2 normalization is sqrt(alpha)*W2 <= epsilon.",
+        "The book assumes finite initial W2 for its coupling proof; the target MemLp id 2 mu0 and strong convexity give this after proving Gibbs has second moment.",
+        "The d=0 case is vacuous under 0<epsilon<=sqrt(d); do not divide by d before eliminating it."
+      ],
+      "lean_obligations": [
+        "Heat-flow entropy EVI on measures, including singular initial laws; relative entropy/free energy change of reference.",
+        "Convexity of KL for a finite mixture with its exact ENNReal normalization.",
+        "Finite-moment Gaussian convolution and the discrete EVI; remaining recurrence/iteration arithmetic is comparatively small."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "TauCeti.heatSemigroup_sub_eq_integral",
+          "module": "TauCeti.Analysis.PDE.HeatKernel.Generator",
+          "role": "Heat-only Lp Duhamel identity for compactly supported C2 tests; does not construct the Langevin semigroup with drift",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.wassersteinEDist_map_prod_le",
+          "module": "TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Pushforward",
+          "role": "Common random nonexpansive maps contract Wasserstein distance; same-Gaussian Euler updates fit this interface once deterministic contraction is proved",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.wassersteinEDist_map_le_mul",
+          "module": "TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Pushforward",
+          "role": "Lipschitz deterministic pushforwards; includes zero constant for probability measures",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "discrete_gronwall",
+          "module": "Mathlib.Analysis.ODE.DiscreteGronwall",
+          "role": "Scalar recurrence estimates after proving the one-step EVI",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        }
+      ],
+      "feasibility": "Best proof seam is the one-step EVI; proving only synchronous contraction does not recover the sharper kappa*d complexity.",
+      "lean_status": {
+        "CKSD.exists_ula_iteration_complexity": "admitted"
+      },
+      "lean_files": {
+        "CKSD.exists_ula_iteration_complexity": "CKSD/Bayes/LangevinSampling.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.43"
+      ],
+      "lean_targets": [
+        "CKSD.jko_scheme_tendsto_fokkerPlanck"
+      ],
+      "citations": [
+        {
+          "source_id": "santambrogio2015",
+          "locator": "Section 8.3 scope; Proposition 8.5 (unique discrete minimizer), Lemma 8.6 and Proposition 8.7 (Euler-Lagrange condition)",
+          "printed_pages": [
+            293,
+            294,
+            295,
+            296
+          ],
+          "pdf_pages": [
+            317,
+            318,
+            319,
+            320
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "santambrogio2015",
+          "locator": "Proposition 8.8 (action bound), Lemma 8.9 (two momenta have the same limit), Proposition 8.10 and Box 8.2",
+          "printed_pages": [
+            297,
+            298,
+            299,
+            300,
+            301
+          ],
+          "pdf_pages": [
+            321,
+            322,
+            323,
+            324,
+            325
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "villani2009",
+          "locator": "Chapter 23 bibliographical notes: JKO discussion and three discrete estimates; points to his 2003 book Section 8.4",
+          "printed_pages": [
+            684
+          ],
+          "pdf_pages": [
+            687
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "villani2009",
+          "locator": "Theorem 24.2 and Particular Case 24.3: formal/regularized energy and information identities",
+          "printed_pages": [
+            694,
+            695
+          ],
+          "pdf_pages": [
+            697,
+            698
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        }
+      ],
+      "proof_route": [
+        "Prove existence of the free-energy resolvent by a narrowly lower-semicontinuous direct method with Gaussian entropy lower bounds and second-moment control.",
+        "Prove uniqueness using strict convexity of entropy along ordinary mixtures: potential energy is linear and squared Wasserstein distance to a fixed measure is mixture-convex. This argument does not require V to be convex.",
+        "Establish the entropy-plus-potential first variation for compactly supported vector-field perturbations, giving the full JKO Euler-Lagrange equation.",
+        "Derive finite-horizon moment, entropy and summed squared-increment bounds; construct constant and transport interpolations and prove their fluxes have the same weak limit.",
+        "Identify the weak FP equation by testing the discrete Euler-Lagrange relation and passing to the limit. Upgrade subsequences to full convergence using weak-PDE uniqueness, even though uniqueness is not explicitly part of the target conclusion.",
+        "For the stated strong space-time L1 convergence, add spatial compactness/Fisher-information or translation estimates and time-translation control. Weak L1 compactness alone does not imply this conclusion."
+      ],
+      "assumption_comparison": [
+        "Santambrogio Section 8.3 assumes a compact domain Omega and Lipschitz V. CKSD works on all R^d with V smooth, nonnegative, and norm(gradient V) <= C*(V+1). This is not a direct instance of Proposition 8.10.",
+        "On a compact domain entropy is uniformly bounded below; for the allowed CKSD example V=0 on R^d the free energy is unbounded below. Use Gaussian moment compensation and finite-horizon estimates, not Proposition 8.8 with a finite global infimum.",
+        "The inspected Santambrogio argument establishes narrow/uniform W2 subsequential convergence and weak L1 through equi-integrability. It does not by itself state the stronger global space-time L1 convergence required by the CKSD theorem.",
+        "Villani2009 discusses the discrete JKO proof but refers the full proof to his 2003 volume Section 8.4; Theorem24.2 explicitly assumes much stronger regularity and decay, so it cannot silently justify the present weak-solution theorem.",
+        "No counterexample to CKSD was found; the verified mismatch is between the inspected proof scope and the target scope, not a conclusion that the target is false."
+      ],
+      "lean_obligations": [
+        "Properness, narrow lower semicontinuity along W2-bounded sequences, Gaussian entropy coercivity and all-time-step resolvent existence for the sum energy.",
+        "Mixture strict entropy convexity and mixture Wasserstein squared-cost convexity for uniqueness without geodesic convexity of V.",
+        "Entropy first variation under vector-field pushforwards; upstream Euler-Lagrange potential-only theorem does not provide this.",
+        "Finite-horizon compactness and flux identification; global L1 space-time compactness; uniqueness of the weak FP equation under the stated growth assumption."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "TauCeti.WassersteinSpace.moreauYosidaResolvent_nonempty_of_properSpace",
+          "module": "TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Resolvent",
+          "role": "Abstract JKO step existence; energy lsc/coercivity hypotheses still need discharge",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.WassersteinSpace.boltzmannEntropy_eq_klDiv_tilted_add",
+          "module": "TauCeti.MeasureTheory.OptimalTransport.Wasserstein.BoltzmannEntropy",
+          "role": "Gaussian change of reference for entropy/moment control",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.WassersteinSpace.boltzmannEntropy_ne_bot",
+          "module": "TauCeti.MeasureTheory.OptimalTransport.Wasserstein.BoltzmannEntropy",
+          "role": "Entropy of an individual P2 law is not minus infinity; not a uniform lower bound over P2",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.integral_inner_eq_neg_mul_of_mem_moreauYosidaResolvent",
+          "module": "TauCeti.MeasureTheory.OptimalTransport.Wasserstein.EulerLagrange",
+          "role": "Abstract first-order condition once the full free-energy directional derivative has been proved",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.GeneralizedGeodesicallyConvex.subsingleton_moreauYosidaResolvent",
+          "module": "TauCeti.MeasureTheory.OptimalTransport.Wasserstein.GeneralizedGeodesic.Convex",
+          "role": "Not directly applicable: current V need not be geodesically convex",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        }
+      ],
+      "feasibility": "Large analytic development. A complete discrete minimizer theorem is a realistic first milestone; full convergence needs additional compactness theory.",
+      "lean_status": {
+        "CKSD.jko_scheme_tendsto_fokkerPlanck": "admitted"
+      },
+      "lean_files": {
+        "CKSD.jko_scheme_tendsto_fokkerPlanck": "CKSD/Bayes/FunctionalInequalities.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.44"
+      ],
+      "lean_targets": [
+        "CKSD.logSobolevInequality_iff_klDiv_langevin_le"
+      ],
+      "citations": [
+        {
+          "source_id": "bgl2014",
+          "locator": "Theorem 5.2.1 and Proposition 5.2.2 (de Bruijn identity), equation (5.2.3)",
+          "printed_pages": [
+            244,
+            245
+          ],
+          "pdf_pages": [
+            259,
+            260
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "chewi2026",
+          "locator": "Equation (1.2.24), Definition 1.2.25, Theorem 1.2.26 and Example 1.2.27",
+          "printed_pages": [
+            18
+          ],
+          "pdf_pages": [
+            30
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "pavliotis2014",
+          "locator": "Theorem 4.6, Section 4.10",
+          "printed_pages": [
+            132,
+            133
+          ],
+          "pdf_pages": [
+            144,
+            145
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        }
+      ],
+      "proof_route": [
+        "After the same weak-FP/semigroup identification, regularize a positive density r and prove d/dt Ent_pi(P_t r) = -integral norm(gradient(P_t r))^2/(P_t r).",
+        "Apply LSI in the square-root-density form to obtain FI >= 2*KL/C, then integrate the scalar inequality.",
+        "For the reverse implication differentiate entropy decay at t=0 for smooth bounded densities bounded away from zero, then approximate square tests to recover the full current LSI predicate.",
+        "Treat infinite initial KL separately, and pass finite-entropy but non-L2 densities by truncation, positivity regularization, and lower semicontinuity."
+      ],
+      "assumption_comparison": [
+        "BGL LS(C), Chewi C_LSI and CKSD LogSobolevInequality C all mean Ent(f^2) <= 2*C*integral norm(gradient f)^2, hence KL <= C*FI/2. There is no missing factor of two.",
+        "Pavliotis writes the spectral/LSI rate as lambda; lambda=1/C here, and inverse temperature is 1. His stated theorem additionally invokes a smooth Bakry-Emery potential; BGL/Chewi supply the more general LSI equivalence actually needed.",
+        "CKSD only assumes V is C2 with Lipschitz gradient and its flow is weak. The book differentiations require generator-domain/regularized solutions. Do not add classical-solution hypotheses to the original target to fit those computations."
+      ],
+      "lean_obligations": [
+        "All representation/uniqueness obligations from chiSq equivalence.",
+        "A relative Fisher-information definition and its square-root-density identity; Gibbs entropy chain rule with justified time differentiation.",
+        "Density regularization, weighted Sobolev approximation, lower semicontinuity and finite/infinite entropy bookkeeping."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "MeasureTheory.Measure.LogSobolevInequality.apply",
+          "module": "TauCeti.Probability.Concentration.PoincareLogSobolev",
+          "role": "Exact convention Ent(f^2) <= 2*C*DirichletEnergy; for density r this is KL <= C*FI/2",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "le_gronwallBound_of_liminf_deriv_right_le",
+          "module": "Mathlib.Analysis.ODE.Gronwall",
+          "role": "Scalar differential comparison after the required dissipation derivative has been established",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.lowerSemicontinuous_klDiv_probabilityMeasure",
+          "module": "TauCeti.InformationTheory.KullbackLeibler.Variational",
+          "role": "Narrow lower semicontinuity for approximation arguments",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        }
+      ],
+      "feasibility": "The main obstacle is analytic, not scalar Gronwall.",
+      "lean_status": {
+        "CKSD.logSobolevInequality_iff_klDiv_langevin_le": "admitted"
+      },
+      "lean_files": {
+        "CKSD.logSobolevInequality_iff_klDiv_langevin_le": "CKSD/Bayes/FunctionalInequalities.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.44"
+      ],
+      "lean_targets": [
+        "CKSD.poincareInequality_iff_chiSqDiv_langevin_le"
+      ],
+      "citations": [
+        {
+          "source_id": "bgl2014",
+          "locator": "Theorem 4.2.5 and identity (4.2.2), Section 4.2.2",
+          "printed_pages": [
+            183,
+            184
+          ],
+          "pdf_pages": [
+            199,
+            200
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "chewi2026",
+          "locator": "Theorems 1.2.21 and 1.2.22; preceding Lemma 1.2.20",
+          "printed_pages": [
+            16,
+            17
+          ],
+          "pdf_pages": [
+            28,
+            29
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "pavliotis2014",
+          "locator": "Theorem 4.4 and identity (4.74)",
+          "printed_pages": [
+            112,
+            114
+          ],
+          "pdf_pages": [
+            124,
+            126
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        }
+      ],
+      "proof_route": [
+        "Construct the reversible Langevin Markov semigroup P_t with generator Delta minus gradV dot grad, and prove every CKSD weak probability-valued Fokker-Planck flow is its forward law.",
+        "For a density r0 in L2(pi), identify the evolved density with P_t r0 and chiSq with the variance of P_t r0. Gibbs integration by parts gives d/dt Var(P_t r0) = -2*integral norm(gradient(P_t r0))^2. Apply PI and scalar comparison.",
+        "For the converse, use bounded smooth mean-zero f and initial density 1+epsilon*f, differentiate the assumed decay at time zero, cancel epsilon squared, then use cutoff/truncation density to reach all tests in the current PI predicate.",
+        "If initial chiSq is infinite the bound is automatic because exp(-2*t/C) is strictly positive; isolate this extended-value case before any toReal conversion."
+      ],
+      "assumption_comparison": [
+        "The normalization matches exactly: Pavliotis inverse temperature is set to 1, BGL Dirichlet energy is integral norm(gradient)^2, and CKSD covariance 2I gives the same generator. The decay rate is 2/C.",
+        "BGL and Chewi quantify over the constructed semigroup, not arbitrary weak solutions. CKSD IsLangevinFlow provides compact-test integral identities only. Representation/uniqueness must be proved rather than silently assumed.",
+        "BGL works on the closed Dirichlet-form domain; pinned TauCeti defines PI on C-infinity admissible tests. This is a real Lean domain-extension obligation, not evidence that the mathematical CKSD statement is false."
+      ],
+      "lean_obligations": [
+        "Gibbs weighted integration by parts; closed symmetric generator/Dirichlet form or an alternative explicit additive-noise construction.",
+        "Weak FP uniqueness and semigroup representation for the globally Lipschitz C1 drift, for arbitrary initial probability laws.",
+        "L2 density transport, time differentiability of variance, approximation at t=0, and extension from smooth compact functions to the form domain."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "MeasureTheory.Measure.PoincareInequality.apply",
+          "module": "TauCeti.Probability.Concentration.PoincareLogSobolev",
+          "role": "Applies PI to C-infinity tests with function and derivative in L2; extending to form-domain/semigroup solutions remains necessary",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "le_gronwallBound_of_liminf_deriv_right_le",
+          "module": "Mathlib.Analysis.ODE.Gronwall",
+          "role": "Scalar differential comparison after the required dissipation derivative has been established",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.heatSemigroup_sub_eq_integral",
+          "module": "TauCeti.Analysis.PDE.HeatKernel.Generator",
+          "role": "Heat-only Lp Duhamel identity for compactly supported C2 tests; does not construct the Langevin semigroup with drift",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        }
+      ],
+      "feasibility": "Not a short corollary of current definitions: the semigroup/weak-solution bridge is the substantial missing theory.",
+      "lean_status": {
+        "CKSD.poincareInequality_iff_chiSqDiv_langevin_le": "admitted"
+      },
+      "lean_files": {
+        "CKSD.poincareInequality_iff_chiSqDiv_langevin_le": "CKSD/Bayes/FunctionalInequalities.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.44"
+      ],
+      "lean_targets": [
+        "CKSD.wasserstein_sq_langevin_le_of_logSobolev"
+      ],
+      "citations": [
+        {
+          "source_id": "bgl2014",
+          "locator": "Theorem 9.6.1 (Otto-Villani); Theorem 9.5.1 (Hamilton-Jacobi hypercontractivity)",
+          "printed_pages": [
+            455,
+            458
+          ],
+          "pdf_pages": [
+            465,
+            468
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "bgl2014",
+          "locator": "Section 9.2 transportation normalization, Theorem 9.2.1",
+          "printed_pages": [
+            438
+          ],
+          "pdf_pages": [
+            448
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "villani2009",
+          "locator": "Theorem 22.17(i) and its Hopf-Lax proof",
+          "printed_pages": [
+            585,
+            586,
+            587,
+            588
+          ],
+          "pdf_pages": [
+            588,
+            589,
+            590,
+            591
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        }
+      ],
+      "proof_route": [
+        "Prove a static Otto-Villani transport-entropy inequality W2(mu,pi)^2 <= 2*C*KL(mu,pi). The source-supported route avoiding a new diffusion construction uses the Hopf-Lax infimum convolution Q_t f.",
+        "Establish almost-everywhere Hamilton-Jacobi differentiation for bounded Lipschitz data, apply LSI to exponential tests, and show t -> log(integral exp(t*Q_t f/C))/t is nonincreasing.",
+        "Combine the resulting exponential infimum-convolution estimate with entropy variational duality and full quadratic transport duality; extend by truncation/moment approximation.",
+        "Compose static transport-entropy with the original KL flow-decay theorem. This last composition is elementary once both prerequisites have genuine proofs."
+      ],
+      "assumption_comparison": [
+        "BGL T2(C) means W2^2 <= 2*C*KL, matching CKSD factor 2*C exactly. Villani uses K=1/C.",
+        "Villani explicitly assumes the reference law belongs to P2. CKSD has no separate P2 hypothesis on Gibbs pi: derive finite second moments from LSI or use a truncation formulation that proves the extended-distance statement.",
+        "BGL Hamilton-Jacobi proof assumes a complete connected Riemannian manifold and reference density absolutely continuous to Riemannian volume; Euclidean Gibbs laws meet those structural hypotheses. Their almost-everywhere nonsmooth calculus is not supplied merely by C-infinity LSI tests."
+      ],
+      "lean_obligations": [
+        "Hopf-Lax infimum convolution on Euclidean space, Lipschitz bounds, almost-everywhere Hamilton-Jacobi derivative, and smooth approximation compatible with the current LSI predicate.",
+        "Moment/concentration consequences of LSI and finite-KL moment transfer, or an extended-cost approximation scheme.",
+        "A quadratic transport duality interface on noncompact Euclidean space; do not apply the compact-space LowerSemicontinuous duality theorem directly."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "MeasureTheory.Measure.LogSobolevInequality.apply",
+          "module": "TauCeti.Probability.Concentration.PoincareLogSobolev",
+          "role": "Exact convention Ent(f^2) <= 2*C*DirichletEnergy; for density r this is KL <= C*FI/2",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.ofReal_integral_sub_log_integral_exp_le_klDiv",
+          "module": "TauCeti.InformationTheory.KullbackLeibler.Variational",
+          "role": "Entropy variational bound used after a Hopf-Lax exponential estimate",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.transportCostBddBelow_eq_sSup_kantorovichDualValue",
+          "module": "TauCeti.MeasureTheory.OptimalTransport.Duality.BoundedBelow",
+          "role": "Polish-space real bounded-below cost duality; still needs the exact squared-distance and integrability adapter",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        }
+      ],
+      "feasibility": "Independent static target worth isolating, but Hopf-Lax differentiation and approximation remain substantial.",
+      "lean_status": {
+        "CKSD.wasserstein_sq_langevin_le_of_logSobolev": "admitted"
+      },
+      "lean_files": {
+        "CKSD.wasserstein_sq_langevin_le_of_logSobolev": "CKSD/Bayes/FunctionalInequalities.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.45"
+      ],
+      "lean_targets": [
+        "CKSD.exists_klDiv_ula_le_of_logSobolev"
+      ],
+      "citations": [
+        {
+          "source_id": "chewi2026",
+          "locator": "Interpolation (4.2.3), Proposition4.2.4, Corollary4.2.5, Lemma4.2.6, Theorem4.2.7",
+          "printed_pages": [
+            128,
+            129,
+            130
+          ],
+          "pdf_pages": [
+            140,
+            141,
+            142
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        }
+      ],
+      "proof_route": [
+        "Use the Gaussian interpolation inside a ULA step and identify its weak drift as a conditional expectation of the frozen gradient.",
+        "Prove the relative entropy derivative bound -3*FI/4 plus the gradient interpolation error; conditional Jensen controls the conditional expectation.",
+        "Prove Lemma4.2.6: integral norm(gradV)^2 dmu <= FI(mu|pi)+2*beta*d using weighted Gibbs integration by parts and Young.",
+        "For h<=1/(4*beta), bound the interpolation error by FI/4+6*beta^2*d*h. LSI then gives d/dt KL <= -alpha*KL+6*beta^2*d*h. Integrating yields a valid universal constant C=6 in the corresponding extended-value estimate.",
+        "Approximate arbitrary initial laws with finite KL; if initial KL is infinite the positive exponential multiple is infinite, and the original estimate is immediate."
+      ],
+      "assumption_comparison": [
+        "Chewi4.2.7 states h<=1/(4*beta), while CKSD uses the more restrictive alpha/(4*beta^2). To apply this book version, prove alpha<=beta for nonzero dimension under LSI and beta-smoothness; the book invokes Exercise3.12 for this fact. Dimension zero must be separate.",
+        "No convexity is required. C2 and Lipschitz gradient match the target; differentiating raw densities needs smoothing/approximation not assumed in the original statement.",
+        "The target KL convention and covariance2hI match the interpolation exactly; a source using noise sqrt(h) would need a time/temperature conversion."
+      ],
+      "lean_obligations": [
+        "Gaussian smoothing of arbitrary input laws, conditional drift representation and entropy chain rule.",
+        "Weighted Fisher/gradient moment inequality, including finite-energy approximation and unbounded test V.",
+        "LSI domain extension, alpha<=beta, relative-density regularization and extended-value treatment."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "MeasureTheory.Measure.LogSobolevInequality.apply",
+          "module": "TauCeti.Probability.Concentration.PoincareLogSobolev",
+          "role": "Exact convention Ent(f^2) <= 2*C*DirichletEnergy; for density r this is KL <= C*FI/2",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "le_gronwallBound_of_liminf_deriv_right_le",
+          "module": "Mathlib.Analysis.ODE.Gronwall",
+          "role": "Scalar differential comparison after the required dissipation derivative has been established",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.heatSemigroup_sub_eq_integral",
+          "module": "TauCeti.Analysis.PDE.HeatKernel.Generator",
+          "role": "Heat-only Lp Duhamel identity for compactly supported C2 tests; does not construct the Langevin semigroup with drift",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "MeasureTheory.norm_condExp_le",
+          "module": "Mathlib.MeasureTheory.Function.ConditionalExpectation.CondJensen",
+          "role": "Conditional Jensen for the norm; square-norm conditional Jensen or the L2 contraction is still needed for the displayed quadratic bound",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        }
+      ],
+      "feasibility": "Strong source-supported decomposition, but entropy differentiation along Gaussian interpolation is the main missing bridge.",
+      "lean_status": {
+        "CKSD.exists_klDiv_ula_le_of_logSobolev": "admitted"
+      },
+      "lean_files": {
+        "CKSD.exists_klDiv_ula_le_of_logSobolev": "CKSD/Bayes/LangevinSampling.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.45"
+      ],
+      "lean_targets": [
+        "CKSD.exists_wasserstein_ula_le_of_stronglyConvex"
+      ],
+      "citations": [
+        {
+          "source_id": "chewi2026",
+          "locator": "Theorem4.1.2, its two-stage coupling proof; Lemma4.1.8; Lemma4.0.1(2)",
+          "printed_pages": [
+            123,
+            124,
+            125,
+            126,
+            127
+          ],
+          "pdf_pages": [
+            135,
+            136,
+            137,
+            138,
+            139
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        }
+      ],
+      "proof_route": [
+        "Construct a stationary continuous-time Langevin process and couple it with ULA by a common Brownian increment, initialized by an optimal coupling of mu_n and pi.",
+        "Prove the movement estimate E norm(X_t-X_0)^2 <= 8*t^2*E norm(gradV(X_0))^2+8*d*t for t<=1/(3*beta).",
+        "Prove one-step strong discretization error <=3*beta^2*h^4*E norm(gradV(X_0))^2+4*beta^2*d*h^3, and stationary gradient moment <=beta*d.",
+        "Combine continuous-time synchronous contraction with discretization error. Absorb the beta^2*h^2 distance contribution when h<=c*alpha/beta^2 to get W_(n+1)<=exp(-alpha*h/2)*W_n+C*beta*sqrt(d)*h^(3/2).",
+        "Sum the geometric recurrence to get the original bias C*beta*sqrt(d*h)/alpha; handle infinite initial W2 immediately in ENNReal."
+      ],
+      "assumption_comparison": [
+        "Theorem4.1.2 matches the Lean target step restriction h<<1/(beta*kappa), exponential alpha/2 and bias beta*sqrt(d*h)/alpha.",
+        "The target allows arbitrary initial probability measures with possibly infinite W2; the book coupling calculation concerns finite W2. Split the infinite case, rather than adding a moment assumption to the target.",
+        "The book uses stationarity and an SDE. CKSD currently defines ULA explicitly but has no constructed Langevin SDE/semigroup in this file."
+      ],
+      "lean_obligations": [
+        "Additive-noise Langevin process construction and Gibbs stationarity, or a fully deterministic heat-kernel/diffusion-kernel alternative.",
+        "Weighted integration by parts extended to V for stationary gradient moments; strong-convexity Gaussian domination yields the necessary tail integrability.",
+        "Random-map Wasserstein coupling and a deterministic pathwise discretization estimate; geometric recurrence and constants."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "TauCeti.wassersteinEDist_map_prod_le",
+          "module": "TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Pushforward",
+          "role": "Common random nonexpansive maps contract Wasserstein distance; same-Gaussian Euler updates fit this interface once deterministic contraction is proved",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.wassersteinEDist_map_le_mul",
+          "module": "TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Pushforward",
+          "role": "Lipschitz deterministic pushforwards; includes zero constant for probability measures",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.wassersteinEDist_map_le_eLpNorm",
+          "module": "TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Pushforward",
+          "role": "Converts an explicit common-noise coupling into a Wasserstein bound",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "le_gronwallBound_of_liminf_deriv_right_le",
+          "module": "Mathlib.Analysis.ODE.Gronwall",
+          "role": "Scalar differential comparison after the required dissipation derivative has been established",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        }
+      ],
+      "feasibility": "Most accessible full remaining sampling admission if the canonical additive-noise/stationarity bridge is developed first. A random-map contraction adapter alone is short upstream reuse, not the whole result.",
+      "lean_status": {
+        "CKSD.exists_wasserstein_ula_le_of_stronglyConvex": "admitted"
+      },
+      "lean_files": {
+        "CKSD.exists_wasserstein_ula_le_of_stronglyConvex": "CKSD/Bayes/LangevinSampling.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.47"
+      ],
+      "lean_targets": [
+        "CKSD.exists_mala_mixing_time_ge"
+      ],
+      "citations": [
+        {
+          "source_id": "chewi2026",
+          "locator": "Theorem7.6.5 (Wu et al.2022), with bibliographical clarification",
+          "printed_pages": [
+            210,
+            211
+          ],
+          "pdf_pages": [
+            222,
+            223
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        }
+      ],
+      "proof_route": [
+        "Inspect the exact Wu2022 construction cited by SYNOPSIS104, including its dimension/condition-number range and bounded-density warm initialization.",
+        "Formalize the hard smooth strongly convex potential and show slow escape or low conductance for each step-size regime.",
+        "Prove a TV obstruction from the chosen initialization and convert it into the displayed kappa*sqrt(d)/log^3 lower bound."
+      ],
+      "assumption_comparison": [
+        "Chewi only states an O-tilde lower bound with chiSq-warm initialization. CKSD has explicit quantifiers kappa<=a*d^b, every M>=12, and displayed log powers and epsilon dependence. Those details are not verified by the book summary alone.",
+        "A bounded-density M-warm start implies a chiSq bound, but the converse is false in general; the hard initialization must be shown to satisfy the stronger current condition.",
+        "No theorem change is proposed; the precise original paper remains the necessary source for these quantifiers."
+      ],
+      "lean_obligations": [
+        "Explicit hard-instance potential, Hessian bounds, normalization and initialization density-ratio estimate.",
+        "Step-size regime split and TV lower-bound mechanism."
+      ],
+      "upstream_verified_names": [],
+      "feasibility": "Low short-term feasibility; this is a hard-instance construction, not a corollary of upper-bound coupling.",
+      "lean_status": {
+        "CKSD.exists_mala_mixing_time_ge": "admitted"
+      },
+      "lean_files": {
+        "CKSD.exists_mala_mixing_time_ge": "CKSD/Bayes/LangevinSampling.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.47"
+      ],
+      "lean_targets": [
+        "CKSD.exists_mala_mixing_time_le"
+      ],
+      "citations": [
+        {
+          "source_id": "chewi2026",
+          "locator": "Theorem7.3.5(1); Section7.6 proof and bibliographical notes",
+          "printed_pages": [
+            197,
+            207,
+            208,
+            209,
+            210,
+            211
+          ],
+          "pdf_pages": [
+            209,
+            219,
+            220,
+            221,
+            222,
+            223
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "chewi2026",
+          "locator": "Theorem7.4.7 and Lemma7.4.8 (s-conductance mixing and overlap)",
+          "printed_pages": [
+            203,
+            204
+          ],
+          "pdf_pages": [
+            215,
+            216
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        }
+      ],
+      "proof_route": [
+        "Express the explicit lazy accept-reject map as a reversible Markov kernel, prove Gibbs invariance and preservation of a bounded density ratio.",
+        "Prove proposal overlap, acceptance/rejection control on a high-probability stationary set, and an isoperimetric-to-s-conductance lower bound.",
+        "Apply a lazy-chain s-conductance mixing theorem and choose the stated h and Lambda to produce the exact logarithmic powers.",
+        "For the precise M-warmness and Lambda^3 assertion, use the underlying Wu-Schmidler-Chen2022 theorem cited in SYNOPSIS104, rather than treating the book O-tilde summary as the full explicit statement."
+      ],
+      "assumption_comparison": [
+        "Chewi7.3.5 states chiSq(mu0|pi)=O(1) and suppresses logarithmic factors; CKSD quantifies over every M-warm bounded-density start and displays Lambda, Lambda^2 and Lambda^3 explicitly. The inspected book statement alone does not establish those exact powers.",
+        "The current chain is one-half lazy and the sharp Wu2022 result cited in project notes uses the same convention. Chewi7.3.4 is the cold Gaussian start theorem and must not be substituted for this warm-start target.",
+        "No Hessian-Lipschitz hypothesis belongs to MALA here; that extra condition in Theorem7.3.5(2) is for MHMC."
+      ],
+      "lean_obligations": [
+        "General reversible accept-reject kernel calculus, detailed balance and warmness propagation.",
+        "Conductance/s-conductance, Cheeger overlap theorem, isoperimetry from strong convexity, and high-probability rejection estimates.",
+        "Obtain and inspect the original explicit Wu2022 theorem before claiming the precise constants/logarithms verified."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "TauCeti.tvDist_pow_comp_le_of_isCoupling",
+          "module": "TauCeti.Probability.MarkovChain.Coupling",
+          "role": "Coupling-based TV bound only; not the required conductance mixing theorem",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        }
+      ],
+      "feasibility": "Substantial new Markov-chain mixing/isoperimetry infrastructure; no direct pinned theorem was found.",
+      "lean_status": {
+        "CKSD.exists_mala_mixing_time_le": "admitted"
+      },
+      "lean_files": {
+        "CKSD.exists_mala_mixing_time_le": "CKSD/Bayes/LangevinSampling.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.48"
+      ],
+      "lean_targets": [
+        "CKSD.exists_kinetic_entropic_hypocoercive_decay"
+      ],
+      "citations": [
+        {
+          "source_id": "chewi2026",
+          "locator": "Theorem5.3.15; Exercise5.15 is identified as the proof task",
+          "printed_pages": [
+            159,
+            172
+          ],
+          "pdf_pages": [
+            171,
+            184
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "pavliotis2014",
+          "locator": "Section6.2.2 provides the L2 mechanism, not the entropic twisted-Fisher theorem",
+          "printed_pages": [
+            189,
+            190,
+            191,
+            192,
+            193,
+            194,
+            195
+          ],
+          "pdf_pages": [
+            199,
+            200,
+            201,
+            202,
+            203,
+            204,
+            205
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        }
+      ],
+      "proof_route": [
+        "For h=log(dnu/dpi), differentiate entropy plus integral of a positive definite matrix-weighted norm of grad(h).",
+        "Use the kinetic commutators and weighted integration by parts to control the degenerate momentum dissipation and create position-gradient dissipation through the mixed term.",
+        "Choose positive coefficients with b^2<a*c1, combine the spatial LSI with the Gaussian momentum LSI and derive the rate alpha/sqrt(beta).",
+        "Prove positivity/regularization, time-energy chain rules and approximation from smooth positive finite-Fisher densities to the original C1 weak solutions."
+      ],
+      "assumption_comparison": [
+        "The coefficient matrix in Chewi5.3.15 is exactly [[a/beta,b/sqrt(beta)],[b/sqrt(beta),c]], matching the CKSD functional after renaming c to c1.",
+        "The book calls c-prime universal, while the surrounding setting allows arbitrary friction multiplier c0. CKSD correctly allows its existential constants to depend on c0; one should not infer uniformity as c0 tends to zero.",
+        "Theorem5.3.15 is stated, but its proof is deferred to a challenge exercise; this manuscript is not a complete worked proof source for the entropic case. The inspected Pavliotis section proves the L2 analogue only."
+      ],
+      "lean_obligations": [
+        "Entropy/Fisher chain rules for the kinetic weak equation; positivity and operator-domain approximation.",
+        "Product LSI tensorization and a positive-definite matrix Fisher-energy calculus.",
+        "An independently complete proof of the entropic commutator estimate, rather than treating an exercise statement as a checked derivation."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "MeasureTheory.Measure.LogSobolevInequality.apply",
+          "module": "TauCeti.Probability.Concentration.PoincareLogSobolev",
+          "role": "Exact convention Ent(f^2) <= 2*C*DirichletEnergy; for density r this is KL <= C*FI/2",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "le_gronwallBound_of_liminf_deriv_right_le",
+          "module": "Mathlib.Analysis.ODE.Gronwall",
+          "role": "Scalar differential comparison after the required dissipation derivative has been established",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        }
+      ],
+      "feasibility": "Harder than the L2 target; source provides the correct functional and rate but not a worked proof.",
+      "lean_status": {
+        "CKSD.exists_kinetic_entropic_hypocoercive_decay": "admitted"
+      },
+      "lean_files": {
+        "CKSD.exists_kinetic_entropic_hypocoercive_decay": "CKSD/Bayes/KineticLangevin.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.48"
+      ],
+      "lean_targets": [
+        "CKSD.exists_kinetic_hypocoercive_decay_of_poincare"
+      ],
+      "citations": [
+        {
+          "source_id": "chewi2026",
+          "locator": "Theorem5.3.14, commutators (Com), modified energy and dissipation calculation",
+          "printed_pages": [
+            157,
+            158,
+            159
+          ],
+          "pdf_pages": [
+            169,
+            170,
+            171
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        },
+        {
+          "source_id": "pavliotis2014",
+          "locator": "Theorems6.2 and6.3; commutators(6.21),(6.23),(6.37),(6.38); Assumptions6.5,6.6",
+          "printed_pages": [
+            185,
+            191,
+            192,
+            193,
+            194,
+            195
+          ],
+          "pdf_pages": [
+            195,
+            201,
+            202,
+            203,
+            204,
+            205
+          ],
+          "page_numbering": "PDF pages are 1-based physical pages; printed page labels checked in extracted page text"
+        }
+      ],
+      "proof_route": [
+        "Prove weighted kinetic generator adjoint and commutator identities for A=grad_p, B=minus Hamiltonian transport, C=[A,B]=minus grad_x.",
+        "For smooth finite-energy densities, differentiate the twisted H1 energy norm(f)^2+a*norm(Af)^2-2*b/sqrt(beta)*inner(Af,Cf)+c/beta*norm(Cf)^2.",
+        "Choose a,b,c depending only on c0 so the corrected two-block dissipation quadratic form is coercive; combine with the spatial PI and Gaussian momentum PI.",
+        "Prove equivalence of the twisted norm with kineticH1Energy and use scalar comparison to obtain C*exp(-c*alpha*t/sqrt(beta)).",
+        "Extend from a smooth core to the current C1 density/weak-FP class by generator-domain approximation and identify every weak solution with the semigroup."
+      ],
+      "assumption_comparison": [
+        "Chewi5.3.14 matches the weighted norm beta^(-1)*norm(grad_x)^2+norm(grad_p)^2 and friction c0*sqrt(beta), with constants depending only on c0.",
+        "Pavliotis6.3 is a qualitative one-dimensional result after setting friction and inverse temperature to1, with smooth V and a relative Hessian bound. It does not by itself prove dimension-free or alpha,beta dependence of the CKSD theorem.",
+        "CKSD only assumes C2 potential and C1 spatial relative densities. The displayed book computations use second derivatives and operator-domain operations; these must be justified by approximation, not added as target assumptions.",
+        "The product PI and comparison of alpha and beta must be established; zero dimension and infinite initial energy require separate easy cases."
+      ],
+      "source_cautions": [
+        {
+          "kind": "suspected proof omission, not a false CKSD statement",
+          "source_id": "chewi2026",
+          "printed_pages": [
+            158,
+            159
+          ],
+          "pdf_pages": [
+            170,
+            171
+          ],
+          "details": "The displayed II_A estimate on printed158 contains -(2*b*gamma/sqrt(beta))*inner(Af,Cf). Under gamma=c0*sqrt(beta) and normalized u=norm(Af),v=norm(Cf)/sqrt(beta), this contributes -2*b*c0*sqrt(beta)*u*v. The displayed Sigma on printed159 has upper mixed coefficient -2*a-2*c and appears to omit -2*b*c0. The rendered PDF page171 was inspected to rule out text-extraction loss.",
+          "repair": "Carry the coefficient -2*a-2*c-2*b*c0 in the first quadratic block and choose sufficiently small a,c,b depending on c0. This preserves the existential target constants; do not formalize the printed matrix verbatim."
+        }
+      ],
+      "lean_obligations": [
+        "Weighted Sobolev/operator core, adjoint/commutator calculus and time differentiation of kinetic energies.",
+        "Product Poincare tensorization in the required weighted norm and constant tracking.",
+        "Corrected finite-dimensional algebraic coercivity; this is a feasible small independent helper, but it does not replace the missing PDE/semigroup justification."
+      ],
+      "upstream_verified_names": [
+        {
+          "name": "MeasureTheory.Measure.PoincareInequality.apply",
+          "module": "TauCeti.Probability.Concentration.PoincareLogSobolev",
+          "role": "Applies PI to C-infinity tests with function and derivative in L2; extending to form-domain/semigroup solutions remains necessary",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "le_gronwallBound_of_liminf_deriv_right_le",
+          "module": "Mathlib.Analysis.ODE.Gronwall",
+          "role": "Scalar differential comparison after the required dissipation derivative has been established",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "TauCeti.integral_fderiv_apply_eq_zero_of_hasCompactSupport",
+          "module": "TauCeti.Analysis.Calculus.LineDeriv.IntegrationByParts",
+          "role": "Weighted integration-by-parts foundation already used by local kinetic invariance",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        },
+        {
+          "name": "CKSD.integral_mul_kineticGenerator_eq_zero_of_fderiv_density",
+          "module": "CKSD.Bayes.KineticLangevin",
+          "role": "Existing local weighted generator calculation can support the required adjoint identities",
+          "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
+        }
+      ],
+      "feasibility": "Coefficient selection and commutator identities are feasible foundations; full original theorem still needs weak-solution/operator-domain infrastructure.",
+      "lean_status": {
+        "CKSD.exists_kinetic_hypocoercive_decay_of_poincare": "admitted"
+      },
+      "lean_files": {
+        "CKSD.exists_kinetic_hypocoercive_decay_of_poincare": "CKSD/Bayes/KineticLangevin.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "gaps": [
+        "104.60"
+      ],
+      "lean_targets": [
+        "CKSD.exists_uniform_particle_moment_bound"
+      ],
+      "citations": [
+        {
+          "source_id": "del-moral-2004",
+          "locator": "Section 3.5.2, conditions (G) and (M)_m",
+          "printed_pages": "115–116",
+          "pdf_pages": [
+            130,
+            131
+          ]
+        },
+        {
+          "source_id": "del-moral-2004",
+          "locator": "Proposition 4.3.3 and Corollary 4.3.3, normalized Feynman–Kac contraction",
+          "printed_pages": "140–142",
+          "pdf_pages": [
+            154,
+            156
+          ]
+        },
+        {
+          "source_id": "del-moral-2004",
+          "locator": "Lemma 7.3.3, centered independent-sample moment bound",
+          "printed_pages": "223–225",
+          "pdf_pages": [
+            236,
+            238
+          ]
+        },
+        {
+          "source_id": "del-moral-2004",
+          "locator": "Equations (7.24)–(7.26) and Theorem 7.4.4",
+          "printed_pages": "244–246",
+          "pdf_pages": [
+            257,
+            259
+          ]
+        }
+      ],
+      "proof_route": [
+        "Use the normalized Feynman–Kac semigroup to telescope the particle discrepancy into local one-step sampling discrepancies.",
+        "Condition on the entire particle past and apply the independent empirical-mean L^p bound to each centered local discrepancy.",
+        "Bound each transported discrepancy by its normalized potential ratio r_{q,n} times the Dobrushin coefficient of the transported Markov kernel.",
+        "For m=1, the potential and transition comparisons bound r_{q,n} by 1/(epsilon_M*epsilon_G) and the Dobrushin coefficient by (1-epsilon_M^2)^(n-q).",
+        "Apply the L^p triangle inequality and sum the geometric series to obtain a bound uniform in time and particle count."
+      ],
+      "assumption_comparison": [
+        "The current hpotential is condition (G) with a uniform epsilon_G. The current htransition is condition (M)_m with m=1 and a uniform epsilon_M.",
+        "The local bootstrap definition conditions on the entire past and gives a product prediction law, matching the conditional independence used in the proof.",
+        "The printed source bound at m=1 has denominator epsilon_M^3*epsilon_G. The Lean statement displays epsilon_M^2*epsilon_G, but its existential C is allowed to depend on the fixed model and mixing constants, so the additional factor 1/epsilon_M may be absorbed into C. This source does not justify a model-independent C with the displayed denominator.",
+        "The source constants are described at integer moment orders. For arbitrary real p>=1 in Lean, use the bound at an integer order at least p and monotonicity of L^p norms on a probability space."
+      ],
+      "lean_obligations": [
+        "Normalized Feynman–Kac kernels and their semigroup identities.",
+        "Dobrushin oscillation contraction for the normalized transition kernels.",
+        "Conditional empirical-mean L^p bounds uniform over functions of oscillation at most one.",
+        "A telescoping identity for normalized filtering discrepancies; the existing unnormalized likelihood telescoping identity is not yet this statement.",
+        "L^p triangle inequality and geometric summation with actual integrability."
+      ],
+      "upstream": [
+        "Mathlib.MeasureTheory.Function.LpSpace.Basic",
+        "CKSD.Bayes.ParticleFilter",
+        "CKSD.Bayes.ParticleFluctuations",
+        "CKSD.Bayes.ParticleLimits"
+      ],
+      "lean_status": {
+        "CKSD.exists_uniform_particle_moment_bound": "admitted"
+      },
+      "lean_files": {
+        "CKSD.exists_uniform_particle_moment_bound": "CKSD/Bayes/ParticleLimits.lean"
+      },
+      "formalization_status": "admitted; source-supported proof route"
+    },
+    {
+      "citations": [
+        {
+          "printed_pages": [
+            532
+          ],
+          "pdf_pages": [
+            558
+          ],
+          "content": "Natural moments of W=det(A)/product det(A_ii), n=N-1. A determinant tilt changes Wishart degree n to n+2h; diagonal blocks are independent Wishart under the null. The two inverse determinant moments give a multivariate-Gamma quotient.",
+          "source_id": "muirhead2005",
+          "locator": "Section11.2.2, Theorem11.2.3, equation(9)"
+        },
+        {
+          "printed_pages": [
+            533,
+            534
+          ],
+          "pdf_pages": [
+            559,
+            560
+          ],
+          "content": "Compact-supported moment identification gives independent Beta product. For block sizes p,q and N observations, W has product over i=0,...,p-1 of Beta((N-q-1-i)/2,q/2).",
+          "source_id": "muirhead2005",
+          "locator": "Section11.2.3, Theorem11.2.4 and specialization k=2, equation(10)"
+        },
+        {
+          "printed_pages": [
+            535,
+            536
+          ],
+          "pdf_pages": [
+            561,
+            562
+          ],
+          "content": "Chi-squared limiting degrees of freedom are half(m^2-sum m_i^2), equal pq for two blocks. The reference gives higher-order Bartlett expansion; target only requires uncorrected weak limit.",
+          "source_id": "muirhead2005",
+          "locator": "Section11.2.4, equations(12)-(16), Theorem11.2.5"
+        },
+        {
+          "printed_pages": [
+            387,
+            388
+          ],
+          "pdf_pages": [
+            405,
+            406
+          ],
+          "content": "Alternative conditional Gaussian regression/Schur determinant route reduces two-block statistic to Wilks U_{q,p,n-p}; product of Beta factors follows Theorem8.4.1.",
+          "source_id": "anderson2003",
+          "locator": "Section9.3.1, Theorems9.3.1-9.3.3"
+        },
+        {
+          "printed_pages": [
+            390
+          ],
+          "pdf_pages": [
+            408
+          ],
+          "content": "Chi-squared asymptotic expansion for -k log V; leading degrees of freedom pq in two-block case.",
+          "source_id": "anderson2003",
+          "locator": "Section9.4, equation(6)"
+        }
+      ],
+      "normalizations": {
+        "book_N": "number of observations",
+        "book_n": "N-1, degrees of freedom of centered scatter A",
+        "book_covariance": "Muirhead S=A/(N-1), A centered scatter; Anderson also uses centered scatter",
+        "lean_sample_size": "n observations",
+        "lean_covariance": "sampleCovarianceMatrix=scatter/n; determinant ratio is invariant under nonzero scalar rescaling",
+        "lean_wishart_df": "n-1",
+        "test_statistic": "-n log W=-2 log(W^(n/2)), uncorrected likelihood ratio"
+      },
+      "hypothesis_mapping": [
+        "hSigma: positive-definite real covariance, matching nonsingular Gaussian model; its principal blocks are positive definite.",
+        "hblock zero upper-right cross covariance; symmetry gives zero lower-left, and Gaussian block independence follows.",
+        "hp,hq positive block dimensions; source chooses an ordering for presentation but the moment proof and Lean target require none.",
+        "iid normal observations with arbitrary mean; existing sample scatter law removes unknown mean and costs one degree of freedom.",
+        "Only sufficiently large samples are used for exact Beta law (n-1>=p+q); early singular/empty samples are covered by eventual-law transfer."
+      ],
+      "proof_route": [
+        "Use TauCeti Gaussian rectangular-image independence and Mathlib finite product regrouping to prove independent Wishart principal blocks for block-diagonal scale.",
+        "Use existing CKSD determinant-density tilt to shift full Wishart df by twice natural moment order.",
+        "Factor shifted inverse principal-determinant moment using the joint block law; evaluate via TauCeti negative real determinant moments.",
+        "Cancel scale and scalar powers using block determinant factorization; split multivariate Gamma dimensions into the Wilks quotient (root helper BlockWishartGamma).",
+        "Use TauCeti compact moment determinacy on [0,1] and the Beta product moment identity to obtain exact finite-sample law.",
+        "Transfer centered-scatter Wishart law to sample covariance by scalar invariance.",
+        "Apply existing logarithmic Beta-product limit with c_i=q+1+i and b_i=q/2; sum b_i=pq/2 identifies chi-squared(pq)."
+      ],
+      "lean_modules": [
+        "CKSD.LinearModels.BlockWishart",
+        "CKSD.LinearModels.BlockIndependenceBasic",
+        "CKSD.LinearModels.BlockWishartGamma",
+        "CKSD.LinearModels.BlockIndependenceMoments",
+        "CKSD.LinearModels.BlockIndependenceLaw",
+        "CKSD.LinearModels.BlockIndependenceLimit"
+      ],
+      "key_lean_declarations": [
+        "CKSD.map_pair_symmetricCongruenceLinearMap_wishartGramMeasure",
+        "CKSD.map_pair_principalBlocks_wishartGramMeasure",
+        "CKSD.integral_blockIndependenceRatio_pow_wishartGramMeasure_eq_gamma",
+        "CKSD.map_blockIndependenceRatio_wishart_eq_beta_product",
+        "CKSD.map_blockIndependenceRatio_sampleCovarianceMatrix_eq_wishart"
+      ],
+      "gaps": [
+        "105.33"
+      ],
+      "lean_targets": [
+        "CKSD.tendstoInDistribution_block_independence_likelihood_ratio"
+      ],
+      "lean_status": {
+        "CKSD.tendstoInDistribution_block_independence_likelihood_ratio": "proved"
+      },
+      "lean_files": {
+        "CKSD.tendstoInDistribution_block_independence_likelihood_ratio": "CKSD/LinearModels/MultivariateTests.lean"
+      },
+      "formalization_status": "proved",
+      "proof_components": [
+        "All finite-product measurability and pushforward identities",
+        "Hadamard-Fischer determinant bound for compact support",
+        "Natural determinant tilt and inverse determinant integrals",
+        "No new independence assumptions, degree ordering, or admission",
+        "Exact original target statement retained"
+      ]
+    }
+  ]
+}

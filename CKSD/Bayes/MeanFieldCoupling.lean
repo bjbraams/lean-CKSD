@@ -180,40 +180,40 @@ theorem aestronglyMeasurable_uncurry_of_ae_continuous {Ω E : Type*} [Measurable
   filter_upwards [(Measure.quasiMeasurePreserving_snd (μ := ν)).ae hnotN] with p hp
   simp [Function.uncurry, Z, hp]
 
-/-- A nonnegative continuous process bounded on a time interval vanishes if its pathwise bound
-is an integral of itself plus an integral of its mean, both starting from zero. -/
-theorem ae_eq_zero_of_le_integral_add_integral_mean {Ω : Type*} [MeasurableSpace Ω]
+/-- An integrable random envelope suffices for the stochastic integral Grönwall zero criterion. -/
+theorem ae_eq_zero_of_le_integral_add_integral_mean_of_integrable_bound {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : ℝ → Ω → ℝ)
     (hX : ∀ t, Measurable (X t)) (hX0 : ∀ t ω, 0 ≤ X t ω)
     (hcont : ∀ᵐ ω ∂P, Continuous (fun t ↦ X t ω))
-    {T D A B : ℝ} (hT : 0 ≤ T) (hA : 0 ≤ A) (hB : 0 ≤ B)
-    (hbound : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T, X t ω ≤ D)
+    (D : Ω → ℝ) (hD : Integrable D P)
+    {T A B : ℝ} (hT : 0 ≤ T) (hA : 0 ≤ A) (hB : 0 ≤ B)
+    (hbound : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T, X t ω ≤ D ω)
     (hineq : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T,
       X t ω ≤ A * (∫ s in (0 : ℝ)..t, X s ω) + B * (∫ s in (0 : ℝ)..t, ∫ z, X s z ∂P)) :
     ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T, X t ω = 0 := by
   let F : ℝ → ℝ := fun t ↦ ∫ ω, X t ω ∂P
   have hInt (t : ℝ) (ht : t ∈ Icc 0 T) : Integrable (X t) P :=
-    Integrable.of_bound (hX t).aestronglyMeasurable D (hbound.mono fun ω hω ↦ by
+    hD.mono' (hX t).aestronglyMeasurable (hbound.mono fun ω hω ↦ by
       rw [Real.norm_eq_abs, abs_of_nonneg (hX0 t ω)]
       exact hω t ht)
   have hF : ContinuousOn F (Icc 0 T) := by
-    apply continuousOn_of_dominated (bound := fun _ ↦ D)
+    apply continuousOn_of_dominated (bound := D)
     · intro t ht
       exact (hX t).aestronglyMeasurable
     · intro t ht
       filter_upwards [hbound] with ω hω
       rw [Real.norm_eq_abs, abs_of_nonneg (hX0 t ω)]
       exact hω t ht
-    · exact integrable_const _
+    · exact hD
     · exact hcont.mono fun ω hω ↦ hω.continuousOn
   have hmean (t : ℝ) (ht : t ∈ Icc 0 T) : F t ≤ (A + B) * ∫ s in (0 : ℝ)..t, F s := by
     let ν := volume.restrict (Ioc (0 : ℝ) t)
     have hprod : Integrable (Function.uncurry X) (ν.prod P) := by
-      apply Integrable.of_bound (aestronglyMeasurable_uncurry_of_ae_continuous P ν X hX hcont) D
+      apply (hD.comp_snd ν).mono' (aestronglyMeasurable_uncurry_of_ae_continuous P ν X hX hcont)
       have htime : ∀ᵐ s ∂ν, s ∈ Ioc (0 : ℝ) t := ae_restrict_mem measurableSet_Ioc
       filter_upwards [(Measure.quasiMeasurePreserving_fst (ν := P)).ae htime,
         (Measure.quasiMeasurePreserving_snd (μ := ν)).ae hbound] with z hz hω
-      change |X z.1 z.2| ≤ D
+      change |X z.1 z.2| ≤ D z.2
       rw [abs_of_nonneg (hX0 z.1 z.2)]
       exact hω z.1 ⟨hz.1.le, hz.2.trans ht.2⟩
     have hinner : Integrable (fun ω ↦ ∫ s in (0 : ℝ)..t, X s ω) P := by
@@ -249,6 +249,20 @@ theorem ae_eq_zero_of_le_integral_add_integral_mean {Ω : Type*} [MeasurableSpac
   intro t ht
   have h := congrFun heq t
   rwa [hcfix t ht] at h
+
+/-- A nonnegative continuous process bounded on a time interval vanishes if its pathwise bound
+is an integral of itself plus an integral of its mean, both starting from zero. -/
+theorem ae_eq_zero_of_le_integral_add_integral_mean {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P] (X : ℝ → Ω → ℝ)
+    (hX : ∀ t, Measurable (X t)) (hX0 : ∀ t ω, 0 ≤ X t ω)
+    (hcont : ∀ᵐ ω ∂P, Continuous (fun t ↦ X t ω))
+    {T D A B : ℝ} (hT : 0 ≤ T) (hA : 0 ≤ A) (hB : 0 ≤ B)
+    (hbound : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T, X t ω ≤ D)
+    (hineq : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T,
+      X t ω ≤ A * (∫ s in (0 : ℝ)..t, X s ω) + B * (∫ s in (0 : ℝ)..t, ∫ z, X s z ∂P)) :
+    ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T, X t ω = 0  := by
+  exact ae_eq_zero_of_le_integral_add_integral_mean_of_integrable_bound P X hX hX0 hcont
+    (fun _ ↦ D) (integrable_const _) hT hA hB hbound hineq
 
 /-- Nonlinear same-forcing uniqueness for a bounded Lipschitz interaction. Neither independence
 nor any assumption on the law of the common forcing is needed. -/
