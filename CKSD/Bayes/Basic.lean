@@ -143,4 +143,14 @@ theorem ae_tendsto_div_of_summable_integral_sq_div {Ω : Type*} [MeasurableSpace
   obtain ⟨K, hK⟩ := (hω j).exists_forall_of_atTop
   exact ⟨K, fun k hk ↦ by rw [Real.dist_eq, sub_zero]; exact (hK k hk).trans hj⟩
 
+/-- Integration of a vector-valued function against the empirical measure. -/
+theorem integral_empiricalMeasure_vector {E F : Type*} [MeasurableSpace E]
+    [MeasurableSingletonClass E] [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
+    {N : ℕ} (x : Fin N → E) (f : E → F) :
+    (∫ y, f y ∂empiricalMeasure N x) = (N : ℝ)⁻¹ • ∑ j, f (x j) := by
+  rw [empiricalMeasure, integral_smul_measure, integral_finsetSum_measure]
+  · simp
+  · intro j _
+    exact integrable_dirac (by finiteness)
+
 end CKSD

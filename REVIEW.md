@@ -1,8 +1,8 @@
 # Mathlib-style assessment of CKSD
 
-The project contains 301 Lean modules under `CKSD/` and 3085 inventoried declarations:
-824 definitions, abbreviations, structures and inductive types, and 2261 theorem statements
-(2164 proved, no conditional results, and 97 admitted). The largest module is
+The project contains 356 Lean modules under `CKSD/` and 3351 inventoried declarations:
+841 definitions, abbreviations, structures and inductive types, and 2510 theorem statements
+(2421 proved, no conditional results, and 89 admitted). The largest module is
 [GLMAsymptotics.lean](CKSD/LinearModels/GLMAsymptotics.lean) at 1070 lines, below the
 1500-line hard limit. Modules near 1000 lines are candidates for splitting at a natural mathematical seam. All modules use
 the module system and have Mathlib-style module documentation with the mathematical scope, main definitions and main results. All authored definitions, abbreviations,
@@ -21,11 +21,20 @@ The dependency baseline is Lean `v4.36.0-rc2`, Mathlib
 
 The following scoped catalogue statements have complete proofs with no admitted dependencies:
 
+- [Blackwell comparison theorem for finite parameter sets](CKSD/Inference/Decision.lean#L437) (GAPS 101.62).
+- [MALA lower bound with curvature chosen after the step size](CKSD/Bayes/LangevinSampling.lean#L240) (GAPS 104.47).
+- [Wasserstein barycenter directional first variation](CKSD/Geometry/StatisticalTransport.lean#L137) (GAPS 108.58).
+- [LAN representation of local limit laws by a Gaussian-shift kernel](CKSD/Asymptotics/Framework.lean#L133) (GAPS 102.15).
+- [Hájek convolution theorem for regular estimators](CKSD/Asymptotics/Framework.lean#L250) (GAPS 102.16).
+- [Existence and uniqueness of every discrete JKO step](CKSD/Bayes/FunctionalInequalities.lean#L515) (the discrete part of GAPS 104.43).
+- [Strongly convex ULA Wasserstein convergence bound](CKSD/Bayes/LangevinSampling.lean#L142) (GAPS 104.45).
+- [Uniform-in-time particle-filter moment bound](CKSD/Bayes/ParticleLimits.lean#L26) (GAPS 104.60).
+- [Mean-field training limit with almost-sure uniform empirical convergence](CKSD/Bayes/MeanField.lean#L656) (GAPS 104.53).
 - [Gaussian block-independence likelihood-ratio chi-squared limit](CKSD/LinearModels/MultivariateTests.lean#L304) (GAPS 105.33).
 - [Benaïm stochastic-approximation limit-set theorem](CKSD/Bayes/StochasticApproximation.lean#L597) (GAPS 104.49).
-- [Bounded-perturbation logarithmic Sobolev inequality](CKSD/Bayes/FunctionalInequalities.lean#L475) (GAPS 104.44).
-- [McKean–Vlasov and finite-particle well-posedness](CKSD/Bayes/MeanField.lean#L88) (GAPS 104.51).
-- [General propagation of chaos on continuous path spaces](CKSD/Bayes/MeanField.lean#L118) (GAPS 104.51).
+- [Bounded-perturbation logarithmic Sobolev inequality](CKSD/Bayes/FunctionalInequalities.lean#L478) (GAPS 104.44).
+- [McKean–Vlasov and finite-particle well-posedness](CKSD/Bayes/MeanField.lean#L98) (GAPS 104.51).
+- [General propagation of chaos on continuous path spaces](CKSD/Bayes/MeanField.lean#L128) (GAPS 104.51).
 - [Exact Wilks determinant-ratio Beta-product law](CKSD/LinearModels/MultivariateTests.lean#L103) (GAPS 105.23).
 - [Gaussian sphericity likelihood-ratio chi-squared limit](CKSD/LinearModels/MultivariateTests.lean#L232) (GAPS 105.33).
 - [Stochastic-approximation asymptotic pseudotrajectory](CKSD/Bayes/StochasticApproximation.lean#L638) (GAPS 104.49).
@@ -33,9 +42,9 @@ The following scoped catalogue statements have complete proofs with no admitted 
 - [Gaussian simple covariance-eigenvalue central limit theorem](CKSD/LinearModels/MultivariateTests.lean#L175) (GAPS 105.24).
 - [Energy-distance positivity and separation](CKSD/Geometry/Kernels.lean#L696) (GAPS 108.62).
 - [Distance-covariance positivity and independence criterion](CKSD/Geometry/Kernels.lean#L710) (GAPS 108.62).
-- [Finite statistical minimax and a least-favourable prior](CKSD/Inference/Decision.lean#L54) (GAPS 101.32).
+- [Finite statistical minimax and a least-favourable prior](CKSD/Inference/Decision.lean#L60) (GAPS 101.32).
 - [Hellinger posterior contraction under entropy and KL prior-mass bounds](CKSD/Bayes/PosteriorContraction.lean#L639) (GAPS 104.19).
-- [Stochastic-interpolant score identity](CKSD/Bayes/DiffusionModels.lean#L464) (GAPS 104.76).
+- [Stochastic-interpolant score identity](CKSD/Bayes/DiffusionModels.lean#L473) (GAPS 104.76).
 - [Finite Gaussian-mixture identifiability up to relabeling](CKSD/LinearModels/Mixtures.lean#L103) (GAPS 105.6).
 - [Canonical GLM chi-squared deviance limit](CKSD/LinearModels/GLMAsymptotics.lean#L897) (GAPS 105.3).
 - [Characteristic translation-invariant kernels and full spectral support](CKSD/Geometry/Kernels.lean#L754) (GAPS 108.68).
@@ -58,14 +67,14 @@ supply Slutsky's lemma, tightness, the delta method and the IID central-limit ad
 [boundedness in probability](CKSD/Inference/Basic.lean#L138) is equivalent to Mathlib's
 `IsTightMeasureSet` for the laws.
 
-The [Poincaré inequality under bounded perturbation](CKSD/Bayes/FunctionalInequalities.lean#L492)
+The [Poincaré inequality under bounded perturbation](CKSD/Bayes/FunctionalInequalities.lean#L495)
 and the [stochastic-approximation equilibrium corollary](CKSD/Bayes/StochasticApproximation.lean#L623)
 have complete proofs with no admitted dependencies.
 
 ## Mathematical domains and conventions
 
 - Test functions in weak formulations of Fokker–Planck and kinetic equations, and smoothness hypotheses on potentials and densities, are `ContDiff ℝ ∞` (infinitely differentiable). In Mathlib `ContDiff ℝ ⊤` means analytic, and an analytic function with compact support on a Euclidean space of positive dimension vanishes.
-- [Particle likelihood asymptotic variance](CKSD/Bayes/ParticleLimits.lean#L64) sums the centred second-moment ratios, with the subtraction of one inside each summand. The time-zero identity and the zero-variance identity for unit potentials are proved. The particle central limit theorems are proved; the uniform-in-time particle error bound remains admitted. Their catalogue source is [SYNOPSIS104](SYNOPSIS104.md), item 59.
+- [Particle likelihood asymptotic variance](CKSD/Bayes/ParticleLimitCore.lean#L63) sums the centred second-moment ratios, with the subtraction of one inside each summand. The time-zero identity and the zero-variance identity for unit potentials are proved. The particle central limit theorems and the uniform-in-time particle error bound are proved. Their catalogue source is [SYNOPSIS104](SYNOPSIS104.md), items 59–60.
 - [Threshold-excess discrepancy](CKSD/Processes/ExtremeValueLimits.lean#L67) takes its supremum over every nonnegative excess, including points at and beyond a terminal atom. The generalized Pareto distribution function is extended across its endpoint. The domain-of-attraction equivalence remains admitted; see [SYNOPSIS106](SYNOPSIS106.md), item 47.
 - [Offset deformation retraction](CKSD/Geometry/TopologicalInference.lean#L95) requires a finite nonempty sample on the manifold. This excludes the empty/nonempty real-Hausdorff-distance degeneracy. The retraction theorem remains admitted; see [SYNOPSIS108](SYNOPSIS108.md), item 22.
 - [Offset homology inference](CKSD/Geometry/TopologicalInference.lean#L205) uses closed offsets (`cthickening`). With `d_H(K, P) = ε` for a compact `K` and a finite `P`, the closed interleavings `K^a ⊆ P^{a+ε}` and `P^a ⊆ K^{a+ε}` hold, so the boundary case `j = i + 2ε` of [SYNOPSIS108](SYNOPSIS108.md), item 37, is included. The theorem remains admitted.
@@ -76,8 +85,8 @@ have complete proofs with no admitted dependencies.
 - [Characteristic kernels](CKSD/Geometry/Basic.lean#L103) quantify over probability laws against which the kernel is integrable, so the Bochner convention cannot make the squared MMD vanish for the wrong reason. The [squared MMD](CKSD/Geometry/DistanceKernel.lean#L256) equals the squared distance of TauCeti kernel mean embeddings.
 - [Compositional-class minimax risk](CKSD/Learning/Networks.lean#L652) and the [Eldan–Shamir depth separation](CKSD/Learning/Networks.lean#L597) use extended nonnegative integrals. Infinite squared loss is allowed and cannot become zero through the nonintegrable Bochner-integral convention. Both lower bounds remain admitted; see [SYNOPSIS107](SYNOPSIS107.md), items 29 and 37.
 - [LinUCB regret](CKSD/Learning/Bandits.lean#L761) uses the scale `max σ (B * W)` with the stated positive parameters and ridge regularization. It accounts for initial exploration even with arbitrarily small noise. The statistical confidence and regret theorems remain admitted; see [SYNOPSIS107](SYNOPSIS107.md), item 63.
-- [Stochastic little-o](CKSD/Asymptotics/Framework.lean#L79) and [stochastic big-O](CKSD/Asymptotics/Framework.lean#L85) require an eventually positive deterministic scale. In particular, an identically zero scale cannot satisfy either predicate.
-- The [ULA bound under a logarithmic Sobolev inequality](CKSD/Bayes/LangevinSampling.lean#L125) uses Vempala and Wibisono's step-size range `h ≤ α/(4β²)` (SYNOPSIS104, item 45).
+- [Stochastic little-o](CKSD/Asymptotics/Framework.lean#L86) and [stochastic big-O](CKSD/Asymptotics/Framework.lean#L92) require an eventually positive deterministic scale. In particular, an identically zero scale cannot satisfy either predicate.
+- The [ULA bound under a logarithmic Sobolev inequality](CKSD/Bayes/LangevinSampling.lean#L126) uses Vempala and Wibisono's step-size range `h ≤ α/(4β²)` (SYNOPSIS104, item 45).
 - The [Grenander limit law](CKSD/Nonparametric/Grenander.lean#L825) assumes a density vanishing on the negative half-line and nonincreasing on `[0, ∞)`; positivity at `x₀` follows from `f'(x₀) < 0` (SYNOPSIS103, item 11).
 
 The corresponding SYNOPSIS statements are the mathematical source for GAPS and STRUCTURE.
@@ -161,25 +170,26 @@ The principal remaining requirement is full proofs of the admitted results. Subs
 statistical hypotheses and constants still need proof-level validation; compilation of an
 admission is not evidence of mathematical correctness.
 
-The 97 direct admissions comprise 22 in Learning, 16 in Bayes, 15 in Geometry,
-14 in Nonparametric, 11 in Asymptotics, 10 in Processes, 5 in LinearModels, and
-4 in Inference. Sections 101–106 contain 60 admissions. There are no theorem
+The 89 direct admissions comprise 22 in Learning, 14 in Geometry, 14 in Nonparametric,
+12 in Bayes, 10 in Processes, 9 in Asymptotics, 5 in LinearModels, and
+3 in Inference. Sections 101–106 contain 53 admissions. There are no theorem
 proofs conditional on admitted dependencies.
 
-The Bayesian admissions concern diffusion identities and marginal laws, Langevin discretization
-and hypocoercivity, transport and gradient-flow inequalities, uniform-in-time particle-filter
-error bounds, and the mean-field neural-network limit. Other recurring themes are nonregular
+The Bayesian admissions concern diffusion identities and marginal laws, entropy bounds for
+Langevin discretizations, Metropolis-adjusted Langevin mixing, hypocoercivity, and transport
+and gradient-flow inequalities. Other recurring themes are nonregular
 and resampling asymptotics, nonparametric shape constraints and random-matrix limits, statistical
 learning rates, and geometric regularity and topological inference.
 
-- `IsContiguous` is not yet reconciled with Statlib's contiguity predicates.
-- The admitted marginal-preserving diffusion statement in `CKSD/Bayes/DiffusionModels.lean`
-  requires a time-measurability review. Its weak Fokker–Planck predicate controls the
-  time integrals of spatially averaged generators, while its path equation does not
-  explicitly require interval integrability of the drift along paths. Uniform spatial
-  Lipschitz continuity and finite integrated action alone do not provide that missing
-  measurability. The totalized Bochner integral in the path equation therefore needs
-  an additional guard before this statement can certify the intended diffusion law.
+- The two semiparametric efficiency statements require a common sigma-finite dominating
+  measure. With uncountable counting measure, atomless path laws can have chosen
+  Radon–Nikodym derivative zero, making the bare QMD remainder vacuous. Generic
+  reference-measure obstruction lemmas are proved; both efficiency statements remain admitted.
+- The probability-flow statement in `CKSD/Bayes/DiffusionModels.lean` uses continuous
+  trajectories in addition to right derivatives. A fixed-time jump can have zero right
+  derivative everywhere. The prescribed-marginal diffusion statement uses joint drift
+  measurability on the time interval and pathwise interval integrability. These guards
+  give the intended ODE/SDE meaning; the marginal identification proofs remain admitted.
 - Several long proofs have natural factoring opportunities: the Grenander maximum-likelihood characterization, Wald's fundamental identity, Exp3 regret, the Kalman filter laws, rule three of the do-calculus, the sublevel-diagram construction and the ordered Wasserstein stability step, and the Laplace approximation. Some repeated proof steps remain in the persistence modules (discordant pairs, `U`/`V`-symmetric interleaving blocks) and in the private-estimation variance computations.
 - Some admitted statements remain conjunctions or carry `let` bindings in their statements, because a split would multiply admissions; these should be split as they are proved. A few helper names (`hedge_regret_le`, `surrogate_minimizer_sign_of_convex`, `bayesRisk_le_nnRisk_le`) and ASCII Greek identifiers (`mu`, `theta`, …) in Inference and Asymptotics do not yet follow Mathlib conventions.
 - Parallel constructions without bridge lemmas remain for sublevel chains versus filtered boundary matrices, and for the Bayes classification risk versus the risk of the plug-in rule. `CausalGraph` is a local directed-acyclic-graph structure, not Mathlib's `Digraph`.
@@ -202,13 +212,45 @@ outline, a deferred exercise, and a completed Lean proof have distinct roles in 
 
 The Gaussian block-independence likelihood-ratio proof uses Muirhead's determinant tilt and
 Beta-product law, together with local Gamma cancellation and the logarithmic Beta-product limit.
-The LAN representation theorem has a proved common conditional-kernel construction for tilted
-joint laws; joint-limit extraction and likelihood transfer remain necessary for the full theorem.
+The ULA Wasserstein proof combines the sampling reference's coupling argument with an
+invariant Hamiltonian comparison trajectory, retaining arbitrary initial probability laws.
+The uniform particle moment proof uses Del Moral's normalized telescoping and mixing argument,
+conditional empirical moments, and geometric summation for every real moment order at least one.
+The mean-field training limit uses bounded Lipschitz characteristic representation proved by
+backward transport tests. Comparison-curve moments are derived from continuity-equation action,
+and the empirical limit does not require measurability of the supplied particle paths.
+The LAN representation theorem combines joint-limit extraction, likelihood transfer and a
+common conditional-kernel construction for tilted joint laws. The proof allows varying sample
+spaces and arbitrary nonempty Polish Borel outputs, and controls singular alternatives without
+assuming finite-sample absolute continuity. Gaussian tilting also gives completeness of the
+Gaussian location family.
+Hájek's convolution theorem identifies a regular estimator's limit law as a Gaussian
+convolved with an independent residual law. Gaussian completeness identifies the kernel
+almost everywhere; translation invariance makes its residual law constant almost everywhere.
+Gaussian Anderson concentration and the associated risk comparisons for measurable symmetric
+bowl-shaped losses allow singular covariance and infinite loss. The separate local asymptotic
+minimax theorem for arbitrary estimator sequences remains admitted.
+Every positive discrete JKO step has a unique minimizer for a continuous nonnegative potential.
+Gaussian entropy compensation supplies the Euclidean direct method, and strict convexity along
+ordinary mixtures gives uniqueness without convexity of the potential. The continuous-time
+convergence and strong space-time L1 conclusion remain admitted.
+
+Blackwell comparison for finite parameter sets is proved by exact finite-action simulation,
+compact likelihood-vector approximation and standard-Borel disintegration. The source space
+remains arbitrary measurable. The MALA lower-bound declaration permits the curvature scale
+to depend on the step size and accuracy; its Gaussian construction does not establish the
+normalized-curvature minimax lower bound from the reference. The Wasserstein barycenter
+first variation permits arbitrary measurable square-integrable displacement fields.
+
+The proof-source index covers every remaining admitted statement across Sections 101–108.
+Its 49 local PDFs have exact page locators and checksums; worked proofs, outlines, statements,
+source-hypothesis mismatches and unavailable primary papers are distinguished explicitly.
 
 ## Validation
 
-The ordinary full build completes successfully with 11685 jobs and no warnings from CKSD files
-other than admitted declarations. All 310 individual Lean file checks pass. The inventory
+The ordinary full build completes successfully with 11927 jobs. The remaining admitted
+declarations generate expected warnings. All 365 individual Lean files pass strict checks (364 in the broad check and the later
+transport module checked separately). The inventory
 checker `scripts/check_formalization.py` audits compiled axiom dependencies, docstring adjacency and source hashes. Individual module checks
 (`scripts/check_lean_files.py`) use both `autoImplicit=false` and `relaxedAutoImplicit=false`
 after building their imports. These checks do not turn the remaining statistical admissions

@@ -570,3 +570,114 @@ countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
   kernel for a family of tilted joint laws using Mathlib's conditional
   kernels, disintegration and weighted kernel products. The full LAN
   representation theorem remains admitted.
+
+- The strongly convex ULA Wasserstein bound uses the coupling principle in
+  Chewi, *Log-Concave Sampling*, August 20, 2026, Theorem 4.1.2, with the
+  invariant mechanical Hamiltonian comparison of Section 5.2.1, printed
+  p. 147 (PDF p. 159), and Exercise 5.5, printed p. 170 (PDF p. 182).
+  TauCeti supplies Hamiltonian flows and their symplectic variation,
+  determinant one for alternating-form isometries, Gaussian densities and
+  moments, and Wasserstein push-forward bounds. Mathlib supplies Jacobian
+  change of variables, integral inequalities, and exponential estimates.
+  The proof has universal constants `c = 1/4`, `C = 12`, treats infinite
+  initial Wasserstein distances, and adds no moment assumptions.
+- Particle oscillation contraction, normalized semigroup telescoping and
+  conditional sampling estimates follow Del Moral, *Feynman–Kac Formulae*
+  (2004), Proposition 4.3.3, Lemma 7.3.3 and Theorem 7.4.4, printed
+  pp. 140–142, 223–225 and 244–246. Mathlib supplies Hoeffding's
+  sub-Gaussian bound, independent sums, product integration, and real
+  `lpNorm` inequalities. An exponential domination estimate controls
+  arbitrary real moment orders with an explicit factorial constant.
+- Mean-field comparison uses TauCeti's continuity-equation endpoint identity,
+  first-Wasserstein action bound, globally Lipschitz ODE flows and smooth
+  Lipschitz approximation. Smooth approximate backward tests identify
+  narrowly continuous weak solutions without assuming moments of the
+  comparison curve. Mathlib supplies characteristic-function uniqueness,
+  Hahn–Banach supporting functionals and Bochner integration; TauCeti's
+  Kantorovich–Rubinstein weak duality gives the vector-valued expectation
+  bound used for the interaction drift.
+  The characteristic interpretation follows Carmona–Delarue, *Probabilistic
+  Theory of Mean Field Games with Applications*, Volume I, Theorem 6.49,
+  printed pp. 608–609 (PDF pp. 626–627). Its general measurable-velocity
+  superposition theorem is not asserted locally: the bounded Lipschitz
+  representation needed here is proved through backward transport tests.
+  Iid bounded-speed characteristic paths and synchronous particle coupling,
+  followed by a countable intersection of integer horizons, give the training
+  empirical limit simultaneously on every compact nonnegative time interval.
+
+- The LAN representation theorem follows van der Vaart, *Asymptotic Statistics*,
+  Theorem 7.10, printed pp. 98–99 (PDF pp. 114–115). Joint weak-limit extraction
+  uses Mathlib and TauCeti tightness and compactness. Gaussian likelihood tilts
+  use TauCeti's density, affine image, and moment-generating-function formulas.
+  The likelihood-transfer proof retains singular alternatives: its normalized
+  limit forces the missing Radon–Nikodym mass to vanish. The metric Slutsky
+  adapter for varying spaces and laws adapts Rémy Degenne's Mathlib
+  `MeasureTheory.tendstoInDistribution_of_tendstoInMeasure_sub`, retaining its
+  Apache 2.0 attribution in `Asymptotics/LANApproximation.lean`.
+- Each discrete JKO step for a continuous nonnegative potential has a unique
+  minimizer. The direct method and ordinary-mixture uniqueness follow the
+  argument of Santambrogio, *Optimal Transport for Applied Mathematicians*,
+  Proposition 8.5, printed p. 294 (PDF p. 318). That passage uses a compact
+  domain; on Euclidean space the local proof uses Gaussian entropy reference
+  measures and narrow lower semicontinuity along second-moment-bounded
+  families. TauCeti supplies abstract resolvent existence, entropy change of
+  reference, strict KL mixture convexity, and Wasserstein mixture convexity.
+  This discrete-step result does not assert convergence of the full JKO scheme.
+- Gaussian location completeness reuses the project's proved exponential-family
+  completeness and TauCeti's Gaussian tilt formulas. The kernel convolution
+  result is van der Vaart, Proposition 8.4 and Theorem 8.8, printed
+  pp. 113–115 (PDF pp. 129–131). That reference gives a Bayesian argument;
+  the local proof uses completeness and almost-everywhere kernel identification.
+  The local translation-invariance argument is
+  the Fubini argument behind Mathlib's regular ergodic group action;
+  probability-measure-valued kernels use TauCeti's Giry/Borel and separability
+  results. TauCeti's probability-measure extensionality theorem converts
+  almost-everywhere equality of fixed-set evaluations to equality of kernels.
+- Gaussian Anderson concentration and bowl-shaped-loss domination correspond to
+  van der Vaart, Lemma 8.5 and Proposition 8.6, printed pp. 113–114
+  (PDF pp. 129–130). The local proof applies TauCeti's Prékopa–Leindler
+  central-slice theorem to Gaussian measures, using log-concavity and the
+  covariance square-root map. Mathlib's layer-cake formula treats unbounded
+  and infinite-valued losses. The convolution-risk corollary averages the
+  shift-risk inequality; it does not assume finite moments of the residual law.
+- The diffusion regularity lemmas use Mathlib's one-sided derivative and
+  undefined-Bochner-integral conventions. They isolate jump trajectories
+  with zero right derivatives and scalar components recovering a nonmeasurable
+  time coefficient. They are obstruction lemmas, rather than formal
+  constructions of complete Gaussian stochastic counterexamples.
+- Blackwell's finite-parameter comparison theorem uses the finite-matrix
+  separation idea of Blackwell–Girshick, *Theory of Games and Statistical
+  Decisions*, Theorem 12.2.2, printed pp. 328–330 (PDF pp. 342–344).
+  The general observation-space argument uses bounded likelihood vectors,
+  finite quantization and a compact joint-law limit, followed by Mathlib's
+  standard-Borel disintegration. Mathlib supplies compactness of finite laws
+  of fixed mass on a compact space; TauCeti supplies the weak compactness
+  used for finite decision rules. Strasser, *Mathematical Theory of Statistics*,
+  Section 55, printed pp. 278–283 (PDF pp. 290–295), distinguishes operator
+  randomizations from stochastic-kernel representations. The local proof
+  retains an arbitrary measurable source and a standard-Borel target.
+- The MALA lower-bound declaration permits choosing the curvature scale
+  after the step size and requested accuracy. Its Gaussian construction
+  uses an exact acceptance-ratio calculation, a bounded Gaussian noise
+  event and a finite-time mass-retention estimate. Conditioning on an
+  upper-quartile halfspace gives a four-warm initial law. Gaussian Gibbs
+  normalization reuses the local smoothing density and TauCeti's Gaussian
+  quantiles. Chewi, *Log-Concave Sampling*, Theorem 7.6.5, printed p. 210
+  (PDF p. 222), concerns normalized curvature; that stronger normalization
+  is not asserted by this local declaration.
+- The semiparametric quadratic-mean hypotheses use a common sigma-finite
+  dominating measure, ensuring that the Radon–Nikodym terms represent the
+  probability densities. The reference-measure diagnostic lemmas use
+  Mathlib's totalized `rnDeriv` and Statlib's displayed QMD definition:
+  an atomless law has zero derivative relative to uncountable counting
+  measure, and identically zero chosen densities make the bare remainder
+  condition vacuous. Only these generic obstructions are formalized;
+  the complete Gaussian-path statistical counterexample is not packaged
+  as a Lean theorem.
+- Wasserstein barycenter first variation follows Panaretos–Zemel, *An Invitation
+  to Statistics in Wasserstein Space*, Theorem 3.1.14, printed p. 67
+  (PDF p. 78). The local proof differentiates a compact coupling minimum,
+  using a quadratic-envelope lemma, coupling lift through measurable maps,
+  and Brenier uniqueness. TauCeti supplies optimal plans, gluing, coupling
+  compactness and lower semicontinuity under common Lusin sets. This retains
+  measurable square-integrable displacement fields without imposing continuity.

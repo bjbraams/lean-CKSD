@@ -1,6 +1,8 @@
 module
 
 public import CKSD.Bayes.MeanField
+public import CKSD.Bayes.DiffusionPathRegularity
+public import CKSD.Bayes.DiffusionIntegralRegularity
 public import CKSD.Bayes.Diffusion
 public import CKSD.Bayes.GaussianSmoothing
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
@@ -68,7 +70,7 @@ def probabilityFlowVelocity {d : ℕ} (T : ℝ)
 
 /-- GAPS 104.63, probability-flow part: the time-reversed marginals `qₜ = p_{T-t}` of a diffusion
 with positive `C¹` densities solve the continuity equation with the probability-flow velocity on
-every `(0, T')`, `T' < T`, and when that velocity is Lipschitz the flow started from `p_T` has
+every `(0, T')`, `T' < T`, and when that velocity is Lipschitz the continuous flow started from `p_T` has
 law `p_{T-t}`. The forward marginals are a weak Fokker–Planck solution with a finite initial second
 moment; the reverse-time stochastic equation is not part of this statement. -/
 theorem probabilityFlow_isContinuityEquation_and_map {d : ℕ} (T : ℝ) (hT : 0 < T)
@@ -93,6 +95,7 @@ theorem probabilityFlow_isContinuityEquation_and_map {d : ℕ} (T : ℝ) (hT : 0
         LipschitzWith K (probabilityFlowVelocity T f g p t)) →
       ∀ Z : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d),
         (∀ z, Z 0 z = z) →
+        (∀ z, ContinuousOn (fun t ↦ Z t z) (Ico 0 T)) →
         (∀ z, ∀ t ∈ Ico 0 T, HasDerivWithinAt (fun s ↦ Z s z)
           (probabilityFlowVelocity T f g p t (Z t z)) (Ici t) t) →
         ∀ t ∈ Ico 0 T, (μ T).map (Z t) = μ (T - t)) := by
@@ -434,8 +437,9 @@ theorem isFokkerPlanckSolution_add_score_of_continuityEquation {d : ℕ}
     congr 1
     exact intervalIntegral.integral_congr fun s hs ↦ (hcongr s (hsub s hs)).symm
 
-/-- GAPS 104.76, constant noise level: if the drift `bₜ = vₜ + ε∇ log μₜ` is Lipschitz uniformly
-in `t ∈ [0, 1]` and `∫₀¹ ∫ ‖bₜ‖ dμₜ dt < ∞`, a solution of `Xₜ = X₀ + ∫₀ᵗ bₛ(Xₛ) ds + √(2ε) Wₜ`
+/-- GAPS 104.76, constant noise level: if the jointly Borel drift `bₜ = vₜ + ε∇ log μₜ` is
+Lipschitz uniformly in `t ∈ [0, 1]` and `∫₀¹ ∫ ‖bₜ‖ dμₜ dt < ∞`, a continuous solution with
+interval-integrable pathwise drift of `Xₜ = X₀ + ∫₀ᵗ bₛ(Xₛ) ds + √(2ε) Wₜ`
 with `X₀ ∼ μ₀` independent of the Brownian motion has law `μₜ` for every `t ∈ [0, 1]`. -/
 theorem map_marginalPreservingDiffusion {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
@@ -444,6 +448,8 @@ theorem map_marginalPreservingDiffusion {Ω : Type*} [MeasurableSpace Ω] {d : �
     (v : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (ε : ℝ) (hε : 0 ≤ ε)
     (hCE : IsFokkerPlanckSolution (fun t ↦ volume.withDensity fun x ↦ ENNReal.ofReal (m t x))
       v (fun _ _ ↦ 0) 1)
+    (hbm : Measurable (fun q : Icc (0 : ℝ) 1 × EuclideanSpace ℝ (Fin d) ↦
+      v q.1 q.2 + ε • gradient (fun y ↦ Real.log (m q.1 y)) q.2))
     (K : ℝ≥0) (hLip : ∀ t ∈ Icc (0 : ℝ) 1,
       LipschitzWith K fun x ↦ v t x + ε • gradient (fun y ↦ Real.log (m t y)) x)
     (hint : ∫⁻ t in Icc (0 : ℝ) 1, ∫⁻ x,
@@ -452,6 +458,9 @@ theorem map_marginalPreservingDiffusion {Ω : Type*} [MeasurableSpace Ω] {d : �
     (X : ℝ → Ω → EuclideanSpace ℝ (Fin d)) (hXm : ∀ t, Measurable (X t))
     (hind : IndepFun (X 0) (fun ω t ↦ W t ω) P)
     (hX0 : P.map (X 0) = volume.withDensity fun x ↦ ENNReal.ofReal (m 0 x))
+    (hXi : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) 1,
+      IntervalIntegrable (fun s ↦ v s (X s ω) +
+        ε • gradient (fun y ↦ Real.log (m s y)) (X s ω)) volume 0 t)
     (hX : ∀ᵐ ω ∂P, Continuous (fun t ↦ X t ω) ∧ ∀ t ∈ Icc (0 : ℝ) 1, X t ω = X 0 ω +
       (∫ s in (0 : ℝ)..t, v s (X s ω) + ε • gradient (fun y ↦ Real.log (m s y)) (X s ω)) +
         Real.sqrt (2 * ε) • W t.toNNReal ω) :

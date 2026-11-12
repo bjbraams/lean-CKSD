@@ -1,6 +1,9 @@
 module
 
 public import CKSD.Bayes.LangevinSampling
+public import CKSD.Bayes.JKOEnergy
+public import CKSD.Bayes.JKOStepExistence
+public import CKSD.Bayes.JKOStepUniqueness
 public import CKSD.Bayes.BoundedPerturbation
 public import CKSD.Bayes.BakryEmeryCutoff
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
@@ -507,22 +510,16 @@ theorem poincareInequality_gibbsMeasure_of_bounded_perturbation {d : ℕ}
     (logSobolevInequality_gibbsMeasure_of_bounded_perturbation V₀ ψ gradV₀ m a b hm hV₀ hgrad
       hconv hψ hab)
 
-/-- The underlying measure of a law in the Wasserstein space `P₂(ℝᵈ)`. -/
-def wassersteinLaw {d : ℕ} (ν : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d))) :
-    Measure (EuclideanSpace ℝ (Fin d)) :=
-  ((ν : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))
-
-/-- Free energy `∫ ρ log ρ + ∫ V dρ` on the Wasserstein space, with the entropy relative to
-Lebesgue measure; it is `⊤` for laws without a density. -/
-def jkoFreeEnergy {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
-    (ν : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d))) : EReal :=
-  TauCeti.boltzmannEntropy volume (wassersteinLaw ν) + TauCeti.potentialEnergy V (wassersteinLaw ν)
-
-/-- Real Lebesgue density of the absolutely continuous part of a Wasserstein law.
-This represents the whole law when that law is absolutely continuous with respect to volume. -/
-def wassersteinDensity {d : ℕ} (ν : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d)))
-    (x : EuclideanSpace ℝ (Fin d)) : ℝ :=
-  ((wassersteinLaw ν).rnDeriv volume x).toReal
+/-- Every positive JKO step has a unique minimizer for a continuous nonnegative potential and
+one finite-energy comparison law. -/
+theorem existsUnique_mem_moreauYosidaResolvent_jkoFreeEnergy {d : ℕ}
+    (V : EuclideanSpace ℝ (Fin d) → ℝ) (hVc : Continuous V) (hV : ∀ x,0≤V x)
+    (ρ₀ : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d))) (hF : jkoFreeEnergy V ρ₀ ≠ ⊤)
+    (τ : ℝ≥0) (hτ : 0<τ) (μ : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d))) :
+    ∃! ν,ν ∈ TauCeti.moreauYosidaResolvent (jkoFreeEnergy V) τ μ := by
+  obtain ⟨ν,hν⟩ := nonempty_moreauYosidaResolvent_jkoFreeEnergy V hVc hV τ hτ μ
+  refine ⟨ν,hν,fun η hη ↦ ?_⟩
+  exact subsingleton_moreauYosidaResolvent_jkoFreeEnergy V hVc hV ρ₀ hF τ hτ μ hη hν
 
 /-- GAPS 104.43: the Jordan–Kinderlehrer–Otto theorem. Every JKO step for the free energy has a
 unique minimizer, and the piecewise-constant interpolations converge, weakly in `L¹` at every time
@@ -549,6 +546,10 @@ theorem jko_scheme_tendsto_fokkerPlanck {d : ℕ} (V : EuclideanSpace ℝ (Fin d
           ∀ T : ℝ, 0 < T → Tendsto (fun τ : ℝ≥0 ↦ ∫⁻ t in Ioo (0 : ℝ) T, ∫⁻ x,
               ENNReal.ofReal |wassersteinDensity (seq τ ⌊t / (τ : ℝ)⌋₊) x - ρ t x|)
             (𝓝[>] 0) (𝓝 0) := by
-  sorry
+  constructor
+  · intro τ hτ μ
+    exact existsUnique_mem_moreauYosidaResolvent_jkoFreeEnergy V hV.continuous hV0 ρ₀ hF τ hτ μ
+  ·
+    sorry
 
 end CKSD

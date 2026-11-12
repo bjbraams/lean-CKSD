@@ -1,6 +1,18 @@
 module
 
+public import CKSD.Bayes.GaussianGibbs
+
+public import CKSD.Bayes.MALABasic
+public import CKSD.Bayes.MALAGaussianRejection
+public import CKSD.Bayes.MALAGaussianLowerBound
+
 public import CKSD.Bayes.Diffusion
+public import CKSD.Bayes.HamiltonianSampling
+public import CKSD.Bayes.ULAContraction
+public import CKSD.Bayes.ULAHamiltonianError
+public import CKSD.Bayes.ULATransport
+public import CKSD.Bayes.HamiltonianInvariant
+import CKSD.Bayes.JKOEnergy
 public import CKSD.Nonparametric.Basic
 public import Mathlib.Analysis.Calculus.Gradient.Basic
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
@@ -43,8 +55,9 @@ variable accepts `y` with probability `malaAcceptance`.
   logarithmic Sobolev inequality, for step sizes `h ≤ α / (4β²)` (GAPS 104.45).
 * `CKSD.exists_wasserstein_ula_le_of_stronglyConvex`: geometric `W₂` convergence of ULA up to a
   bias of order `β √(dh) / α` (GAPS 104.45).
-* `CKSD.exists_mala_mixing_time_le`, `CKSD.exists_mala_mixing_time_ge`: matching upper and lower
-  bounds `κ √d` (up to logarithms) for the mixing time of MALA from a warm start (GAPS 104.47).
+* `CKSD.exists_mala_mixing_time_le`: the warm-start MALA upper bound (GAPS 104.47).
+* `CKSD.exists_mala_mixing_time_ge`: a lower bound with the target and curvature scale chosen
+  after the step size and accuracy, and `κ` the ratio of permitted curvature bounds.
 
 ## References
 
@@ -86,18 +99,6 @@ def IsStronglyMonotoneGradient {d : ℕ}
 def ulaLaw {d : ℕ} (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (h : ℝ)
     (μ₀ : Measure (EuclideanSpace ℝ (Fin d))) (n : ℕ) : Measure (EuclideanSpace ℝ (Fin d)) :=
   (langevinStepLaw gradV h)^[n] μ₀
-
-/-- One step of the `1/2`-lazy Metropolis-adjusted Langevin algorithm acting on laws: the image
-of `μ ⊗ N(0, I) ⊗ U(0,1) ⊗ U(0,1)` under the lazy accept–reject map. -/
-def malaStepLaw {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
-    (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (h : ℝ)
-    (μ : Measure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)) :=
-  (((μ.prod (stdGaussian (EuclideanSpace ℝ (Fin d)))).prod
-      (TauCeti.Probability.uniformMeasure 0 1)).prod (TauCeti.Probability.uniformMeasure 0 1)).map
-    fun w ↦
-      let x := w.1.1.1
-      let y := x - h • gradV x + Real.sqrt (2 * h) • w.1.1.2
-      if w.2 ≤ 1 / 2 then x else if w.1.2 ≤ malaAcceptance V gradV h x y then y else x
 
 /-- GAPS 104.39: iteration complexity of the unadjusted Langevin algorithm under
 `αI ⪯ ∇²V ⪯ βI`, both in `W₂` at the last iterate and in relative entropy for the average of the
@@ -149,7 +150,45 @@ theorem exists_wasserstein_ula_le_of_stronglyConvex :
             ENNReal.ofReal (Real.exp (-(α * N * h / 2))) *
                 TauCeti.wassersteinEDist 2 μ₀ (gibbsMeasure V) +
               ENNReal.ofReal (C * β * Real.sqrt (d * h) / α) := by
-  sorry
+  refine ⟨1/4, 12, by norm_num, by norm_num, ?_⟩
+  intro d V G α β hα hV hmono μ hμ h hh hsize N
+  have := hμ
+  have := isProbabilityMeasure_gibbsMeasure hV.integrable
+  have hprob (k : ℕ) : IsProbabilityMeasure (ulaLaw G h μ k) := by
+    induction k with
+    | zero => simpa [ulaLaw] using hμ
+    | succ k ih =>
+      change IsProbabilityMeasure ((langevinStepLaw G h)^[k+1] μ)
+      rw [Function.iterate_succ_apply']
+      have : IsProbabilityMeasure ((langevinStepLaw G h)^[k] μ) := by simpa only [ulaLaw] using ih
+      exact isProbabilityMeasure_langevinStepLaw G h _
+  by_cases hd : d = 0
+  · subst d
+    have := hprob N
+    rw [wassersteinEDist_eq_zero_of_subsingleton (ulaLaw G h μ N) (gibbsMeasure V)]
+    exact zero_le
+  have : NeZero d := ⟨hd⟩
+  have hab : α ≤ β := monotonicity_le_lipschitz hV.lipschitz hmono
+  have hβ : 0 < β := hα.trans_le hab
+  have hG : LipschitzWith (Real.toNNReal β) G := by
+    apply LipschitzWith.of_dist_le_mul
+    intro x y
+    simpa only [dist_eq_norm, Real.coe_toNNReal _ hβ.le] using hV.lipschitz x y
+  have hid : (1/4 : ℝ)/(β*(β/α)) = α/(4*β^2) := by
+    field_simp [hα.ne', hβ.ne']
+  rw [hid] at hsize
+  have hsize' := (le_div_iff₀ (by positivity : 0 < 4*β^2)).1 hsize
+  have hstep : h*β^2 ≤ α := by nlinarith
+  have hsquare : α^2 ≤ β^2 := by nlinarith
+  have hmul := mul_le_mul_of_nonneg_left hsquare hh.le
+  have hαh : α*h ≤ 1 := by
+    apply (mul_le_mul_iff_right₀ hα).1
+    nlinarith
+  have hInv := measurePreserving_mechanicalFlow_gibbsMeasure V G hV.contDiff hV.hasGradientAt hG
+  have hrate := wassersteinEDist_iterate_langevinStepLaw_le (gibbsMeasure V) G hG hInv hα hmono hh.le
+    (by simpa only [Real.coe_toNNReal _ hβ.le] using hstep) hαh μ N
+  simpa only [ulaLaw, Real.coe_toNNReal _ hβ.le] using hrate
+
 
 /-- GAPS 104.47: mixing-time upper bound for the `1/2`-lazy Metropolis-adjusted Langevin
 algorithm from an `M`-warm start (`μ₀ ≤ Mπ`), with `Λ = log max {κ, d, M/ε, c₂}`. -/
@@ -167,9 +206,37 @@ theorem exists_mala_mixing_time_le :
             totalVariationDistance ((malaStepLaw V gradV h)^[n] μ₀) (gibbsMeasure V) ≤ ε := by
   sorry
 
-/-- GAPS 104.47: matching lower bound for the `1/2`-lazy Metropolis-adjusted Langevin algorithm:
-in high dimension, for every step size some target of condition number `κ` and some `M`-warm
-start need `c₃ κ √d (max {log κ, log d})⁻³ log(c₄/ε)` steps. -/
+variable {d : ℕ}
+local notation "E" => EuclideanSpace ℝ (Fin d)
+
+/-- Positive isotropic Gaussian precision gives the sampling hypotheses with every permitted
+curvature ratio at least one. The intrinsic Gaussian condition number remains one. -/
+theorem isSamplingPotential_and_stronglyMonotone_gaussianPrecision {α κ : ℝ}
+    (hα : 0 < α) (hκ : 1 ≤ κ) :
+    IsSamplingPotential (d:=d) (gaussianPrecisionPotential α) (gaussianPrecisionGradient α) (κ*α) ∧
+      IsStronglyMonotoneGradient (d:=d) (gaussianPrecisionGradient α) α := by
+  constructor
+  · constructor
+    · change ContDiff ℝ 2 (fun x:E ↦ α/2*‖x‖^2)
+      exact contDiff_const.mul (contDiff_norm_sq ℝ)
+    · exact hasGradientAt_gaussianPrecisionPotential α
+    · intro x y
+      change ‖α • x-α • y‖≤κ*α*‖x-y‖
+      rw [← smul_sub,norm_smul,Real.norm_eq_abs,abs_of_pos hα]
+      have hm := mul_nonneg (sub_nonneg.mpr hκ) (mul_nonneg hα.le (norm_nonneg (x-y)))
+      nlinarith
+    · change Integrable (fun x:E ↦ Real.exp (-(α/2*‖x‖^2)))
+      exact integrable_exp_neg_mul_norm_sq (by positivity)
+  · intro x y
+    change α*‖x-y‖^2 ≤ inner ℝ (α • x-α • y) (x-y)
+    rw [← smul_sub,real_inner_smul_left,real_inner_self_eq_norm_sq]
+
+/-- GAPS 104.47: a scale-adaptive lower bound for lazy MALA. For each step size `h` and
+accuracy `ε`, the target, curvature scale `α`, and warm initialization may be chosen afterwards.
+Here `κ` is the ratio of permitted upper and lower curvature bounds; the target need not attain
+that intrinsic condition number. A sufficiently concentrated isotropic Gaussian supplies the
+bound. This quantifier scope does not assert one fixed normalized target is hard for every
+step size. -/
 theorem exists_mala_mixing_time_ge :
     ∃ c₃ c₄ : ℝ, 0 < c₃ ∧ 0 < c₄ ∧ ∀ a b : ℝ, 0 < a → 0 < b → ∃ N₀ : ℕ,
       ∀ d : ℕ, N₀ < d → ∀ κ : ℝ, 3 ≤ κ → κ ≤ a * (d : ℝ) ^ b → ∀ M : ℝ, 12 ≤ M →
@@ -182,6 +249,41 @@ theorem exists_mala_mixing_time_ge :
             ∀ n : ℕ, (n : ℝ) < c₃ * κ * Real.sqrt d *
                 (max (Real.log κ) (Real.log d)) ^ (-3 : ℤ) * Real.log (c₄ / ε) →
               ε < totalVariationDistance ((malaStepLaw V gradV h)^[n] μ₀) (gibbsMeasure V) := by
-  sorry
+  refine ⟨1,1/4,by norm_num,by norm_num,?_⟩
+  intro a b _ _
+  refine ⟨0,?_⟩
+  intro d hd κ hκ _ M hM h hh ε hε
+  obtain ⟨q,hq,hqa⟩ := exists_pos_gaussianReal_tail_eq_quarter
+  let R : ℝ := κ*Real.sqrt d*(max (Real.log κ) (Real.log d))^(-3:ℤ)*Real.log ((1/4)/ε)
+  let N : ℕ := ⌈R⌉₊
+  obtain ⟨σ,hσ,μ,hμ,hμwarm,hfar⟩ := exists_scaled_gaussian_mala_far hq hqa hh
+    (⟨0,hd⟩ : Fin d) N
+  have hα : 0 < (σ⁻¹)^2 := by positivity
+  obtain ⟨hV, hG⟩ := isSamplingPotential_and_stronglyMonotone_gaussianPrecision
+    (κ := κ) hα (by linarith)
+  refine ⟨gaussianPrecisionPotential ((σ⁻¹)^2), gaussianPrecisionGradient ((σ⁻¹)^2),
+    (σ⁻¹)^2, hα, hV, hG, μ, hμ, ?_, ?_⟩
+  · apply hμwarm.trans
+    have h4 : (4:ℝ≥0∞)≤ENNReal.ofReal M := by
+      simpa only [ENNReal.ofReal_ofNat] using
+        ENNReal.ofReal_le_ofReal (by linarith : (4:ℝ)≤M)
+    intro s
+    change (4:ℝ≥0∞)*_≤ENNReal.ofReal M*_
+    gcongr
+  · intro n hn
+    have hnR : (n:ℝ)<R := by simpa only [one_mul] using hn
+    have hnN : n≤N := by exact_mod_cast (hnR.le.trans (Nat.le_ceil R))
+    have hlog : 0<Real.log ((1/4)/ε) := by
+      have hcoef : 0≤κ*Real.sqrt d*(max (Real.log κ) (Real.log d))^(-3:ℤ) := by
+        apply mul_nonneg (mul_nonneg (by linarith) (Real.sqrt_nonneg _))
+        apply zpow_nonneg
+        exact le_max_of_le_left (Real.log_nonneg (by linarith))
+      by_contra hnot
+      have hR : R≤0 := mul_nonpos_of_nonneg_of_nonpos hcoef (le_of_not_gt hnot)
+      exact (not_lt_of_ge (Nat.cast_nonneg n)) (hnR.trans_le hR)
+    have hεq : ε<1/4 := by
+      have hratio : 1<(1/4)/ε := (Real.log_pos_iff (div_pos (by norm_num) hε.1).le).mp hlog
+      simpa only [one_mul] using (lt_div_iff₀ hε.1).mp hratio
+    exact hεq.trans_le ((by norm_num : (1/4:ℝ)≤3/8).trans (hfar n hnN))
 
 end CKSD

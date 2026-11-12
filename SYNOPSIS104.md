@@ -1134,7 +1134,9 @@ reversal** is $Y_t=X_{T-t}$.
   drift above with a factor $\tfrac12$ on the score term. If $u_t$ is
   globally Lipschitz in $x$, uniformly for $t\in[0,T']$, for every $T'<T$,
   and $X_0$ has finite second moment, then the solution of the probability-flow equation $\dot Z_t=u_t(Z_t)$
-  with $Z_0\sim p_T$ has law $p_{T-t}$ for every $t<T$.
+  with $Z_0\sim p_T$ has law $p_{T-t}$ for every $t<T$. The ODE solution
+  has continuous trajectories on $[0,T)$ and satisfies the equation on
+  each compact subinterval.
 
 For a smooth positive density $q_\theta$ with the same support as a data
 density $p$, the **Hyvärinen objective** is
@@ -1374,10 +1376,13 @@ item 69 on each step.
   $$dX_t=\bigl(v_t+\epsilon_t\nabla\log\mu_t\bigr)(X_t)\,dt
   +\sqrt{2\epsilon_t}\,dW_t,$$
   because $\epsilon_t\nabla\cdot(\mu_t\nabla\log\mu_t)=\epsilon_t\Delta\mu_t$.
-  If the drift $b_t=v_t+\epsilon_t\nabla\log\mu_t$ is globally Lipschitz
-  in $x$, uniformly in $t\in[0,1]$, and
-  $\int_0^1\int\|b_t\|\,d\mu_t\,dt<\infty$, then $X_0\sim\mu_0$ gives
-  $X_t\sim\mu_t$ for all $t$; the same holds in reverse time with drift
+  If the drift $b_t=v_t+\epsilon_t\nabla\log\mu_t$ is jointly Borel
+  measurable on $[0,1]\times\mathbb R^d$, globally Lipschitz in $x$,
+  uniformly in $t\in[0,1]$, and
+  $\int_0^1\int\|b_t\|\,d\mu_t\,dt<\infty$, then a continuous solution of
+  the displayed SDE with $\int_0^1\|b_t(X_t)\|\,dt<\infty$ almost surely
+  and $X_0\sim\mu_0$ has $X_t\sim\mu_t$ for all $t$; the same holds in
+  reverse time with drift
   $v_t-\epsilon_t\nabla\log\mu_t$ under the same hypotheses on that drift.
   For a
   forward diffusion with scalar $g$, the choices $\epsilon=0$ and

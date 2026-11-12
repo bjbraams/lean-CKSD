@@ -1,6 +1,9 @@
 module
 
 public import CKSD.Geometry.Entropic
+import CKSD.Geometry.TransportFirstVariation
+import Mathlib.Analysis.Calculus.Deriv.Mul
+import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Pushforward
 public import CKSD.Geometry.Transport
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
 
@@ -86,6 +89,46 @@ def displacementLaw {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
     (v : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (t : ℝ) :
     Measure (EuclideanSpace ℝ (Fin d)) := P.map (fun x ↦ x + t • v x)
 
+/-- Finite sums of quadratic transport first variations give the equal - weight barycenter
+  derivative. -/
+theorem barycenter_derivative_of_component_derivatives {d k : ℕ} (hk : 0 < k)
+    (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
+    (hP2 : MemLp id 2 P)
+    (target : Fin k → Measure (EuclideanSpace ℝ (Fin d)))
+    (T : Fin k → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
+    (hT2 : ∀ i, MemLp (T i) 2 P)
+    (v : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (hv2 : MemLp v 2 P)
+    (hder : ∀ i, HasDerivAt (fun t : ℝ ↦
+        (TauCeti.wassersteinEDist 2 (P.map fun x ↦ x + t • v x) (target i)).toReal ^ 2)
+      (2*∫ x, inner ℝ (x - T i x) (v x) ∂P) 0) :
+    HasDerivAt (fun t ↦ wassersteinBarycenterEnergy target (displacementLaw P v t))
+      (∫ x, inner ℝ (wassersteinBarycenterGradient T x) (v x) ∂P) 0 := by
+  have hd := (HasDerivAt.sum (u := Finset.univ) (fun i _ ↦ hder i)).div_const (2 * (k:ℝ))
+  have hi (i : Fin k) : Integrable (fun x ↦ inner ℝ (x - T i x) (v x)) P := by
+    have hsub : MemLp (fun x ↦ x - T i x) 2 P := hP2.sub (hT2 i)
+    refine ((hsub.integrable_norm_pow two_ne_zero).add
+      (hv2.integrable_norm_pow two_ne_zero)).mono'
+        (hsub.aestronglyMeasurable.inner hv2.aestronglyMeasurable) (.of_forall fun x ↦ ?_)
+    simp only [Pi.add_apply, Real.norm_eq_abs]
+    have hinner := abs_real_inner_le_norm (x - T i x) (v x)
+    nlinarith [sq_nonneg (‖x - T i x‖-‖v x‖)]
+  have he : (∑i : Fin k, 2*∫ x, inner ℝ (x - T i x) (v x) ∂P) / (2 * (k:ℝ)) =
+      ∫ x, inner ℝ (wassersteinBarycenterGradient T x) (v x) ∂P := by
+    rw [← Finset.mul_sum, ← integral_finsetSum _ (fun i _ ↦ hi i)]
+    have he (x : EuclideanSpace ℝ (Fin d)) :
+        ∑i : Fin k, inner ℝ (x - T i x) (v x) =
+          (k:ℝ) * inner ℝ (wassersteinBarycenterGradient T x) (v x) := by
+      simp only [inner_sub_left, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ,
+        Fintype.card_fin, nsmul_eq_mul, wassersteinBarycenterGradient, real_inner_smul_left,
+        sum_inner]
+      field_simp
+    simp_rw [he]
+    rw [integral_const_mul]
+    have hk0 : (k:ℝ)≠ 0 := by exact_mod_cast hk.ne'
+    field_simp
+  rw [he] at hd
+  simpa only [wassersteinBarycenterEnergy, displacementLaw, Finset.sum_apply] using hd
+
 /-- GAPS 108.58, directional first variation of the equal-weight barycenter energy. For an
 absolutely continuous law `P` with finite second moment and square-integrable maps `T_i` that are
 optimal from `P` to the targets, the energy along the displacement `x ↦ x + t v(x)` has derivative
@@ -104,7 +147,24 @@ theorem hasDerivAt_wassersteinBarycenterEnergy_displacement {d k : ℕ} (hk : 0 
     (hv : Measurable v) (hv2 : MemLp v 2 P) :
     HasDerivAt (fun t ↦ wassersteinBarycenterEnergy target (displacementLaw P v t))
       (∫ x, inner ℝ (wassersteinBarycenterGradient T x) (v x) ∂P) 0 := by
-  sorry
+  let pp : ProbabilityMeasure (EuclideanSpace ℝ (Fin d)) := ⟨P, inferInstance⟩
+  obtain ⟨μ, hμ⟩ := TauCeti.exists_coe_eq_map_of_memLp (ν := pp) hP2
+  have hμ' : ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure _) = P :=
+    hμ.trans Measure.map_id
+  choose ν hν using fun i ↦ TauCeti.exists_coe_eq_map_of_memLp (ν := pp) (hT2 i)
+  have hν' (i : Fin k) : ((ν i : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure _) =
+    target i :=
+    (hν i).trans (hlaw i)
+  have hder (i : Fin k) : HasDerivAt (fun t : ℝ ↦
+        (TauCeti.wassersteinEDist 2 (P.map fun x ↦ x + t • v x) (target i)).toReal ^ 2)
+      (2*∫ x, inner ℝ (x - T i x) (v x) ∂P) 0 := by
+    have hd := hasDerivAt_wasserstein_sq_displacement μ (ν i) (by simpa only [hμ'] using hP) (T i)
+      (hT i)
+      (by simpa only [hμ', hν'] using hlaw i)
+      (by simpa only [hμ', hν'] using hopt i) v hv
+      (by simpa only [hμ'] using hv2)
+    simpa only [hμ', hν'] using hd
+  exact barycenter_derivative_of_component_derivatives hk P hP2 target T hT2 v hv2 hder
 
 /-- GAPS 108.58: a minimizing barycenter with the supplied optimal maps satisfies the
 Karcher equation. -/

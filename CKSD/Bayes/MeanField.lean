@@ -1,6 +1,16 @@
 module
+public import CKSD.Bayes.MeanFieldTrainingEvolution
 
 public import CKSD.Bayes.MeanFieldCore
+public import CKSD.Bayes.MeanFieldTrainingEmpirical
+public import CKSD.Bayes.MeanFieldTrainingParticles
+public import CKSD.Bayes.MeanFieldTrainingDrift
+public import CKSD.Bayes.MeanFieldContinuityMoments
+public import CKSD.Bayes.MeanFieldContinuityCurves
+public import CKSD.Bayes.MeanFieldBackwardTest
+public import CKSD.Bayes.MeanFieldContinuityUniqueness
+public import CKSD.Bayes.MeanFieldFlowRepresentation
+public import CKSD.Bayes.MeanFieldZeroNoise
 public import CKSD.Bayes.MeanFieldParticles
 public import CKSD.Bayes.MeanFieldGlobal
 public import CKSD.Bayes.MeanFieldForcing
@@ -415,16 +425,6 @@ theorem integrable_integral_sq_interactionFluctuation_le_of_solutions {Ω : Type
       (hK.continuous.measurable.comp (measurable_const.prodMk measurable_id)).aestronglyMeasurable
   simpa only [interactionFluctuation, hmap] using hvar
 
-/-- Integration of a vector-valued function against the empirical measure. -/
-theorem integral_empiricalMeasure_vector {E F : Type*} [MeasurableSpace E]
-    [MeasurableSingletonClass E] [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
-    {N : ℕ} (x : Fin N → E) (f : E → F) :
-    (∫ y, f y ∂empiricalMeasure N x) = (N : ℝ)⁻¹ • ∑ j, f (x j) := by
-  rw [empiricalMeasure, integral_smul_measure, integral_finsetSum_measure]
-  · simp
-  · intro j _
-    exact integrable_dirac (by finiteness)
-
 /-- Same-forcing particle and nonlinear solutions satisfy the residual coupling equation. -/
 theorem IsParticleSystem.ae_residual_integral_eq
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
@@ -570,13 +570,6 @@ def meanFieldRisk {Z Θ : Type*} [MeasurableSpace Z] [MeasurableSpace Θ]
     (ν : Measure (Z × ℝ)) (φ : Z → Θ → ℝ) (ρ : Measure Θ) : ℝ :=
   (1 / 2 : ℝ) * ∫ w, (w.2 - ∫ θ, φ w.1 θ ∂ρ) ^ 2 ∂ν
 
-/-- Velocity `-∇_θΨ(θ; ρ) = ∇V(θ) - ∫ ∇_θU(θ, θ') ρ(dθ')` of the mean-field gradient flow. -/
-def meanFieldVelocity {p : ℕ} (gradV : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p))
-    (gradU : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p))
-    (ρ : Measure (EuclideanSpace ℝ (Fin p))) (θ : EuclideanSpace ℝ (Fin p)) :
-    EuclideanSpace ℝ (Fin p) :=
-  gradV θ - ∫ θ', gradU θ θ' ∂ρ
-
 /-- GAPS 104.53: the elementary expansion
 `R(ρ) = ½𝔼Y² - ∫ V dρ + ½ ∫∫ U dρ dρ` for a bounded measurable feature map. -/
 theorem meanFieldRisk_eq {Z Θ : Type*} [MeasurableSpace Z] [MeasurableSpace Θ]
@@ -688,6 +681,35 @@ theorem exists_meanField_limit {Z : Type*} [MeasurableSpace Z] {p : ℕ}
           ∀ᵐ ω ∂P, ∀ T > 0, Tendsto (fun N ↦ ⨆ t ∈ Icc 0 T,
             TauCeti.wassersteinEDist 1 (empiricalMeasure N fun j : Fin N ↦ θ N j t ω) (ρ t))
             atTop (𝓝 0) := by
-  sorry
+  let b := fun x μ ↦ meanFieldVelocity gradV gradU μ x
+  have hb := isWassersteinLipschitzDrift_meanFieldVelocity gradV gradU B L hVb hUb hVl hUl
+  have hL : 0 ≤ 2 * (Real.toNNReal L : ℝ) := mul_nonneg (by norm_num) (Real.toNNReal L).coe_nonneg
+  let M := Real.toNNReal (2 * B)
+  have hM (μ : Measure (EuclideanSpace ℝ (Fin p))) (hμ : IsProbabilityMeasure μ) (x) :
+      ‖b x μ‖ ≤ (M : ℝ) := by
+    have := hμ
+    exact (norm_meanFieldVelocity_le gradV gradU B hVb hUb μ x).trans (Real.le_coe_toNNReal _)
+  obtain ⟨ρ,v,K,γ,hρ,huniq,hv,hvM,hγ,hγ0,hγd,hρlaw,hvρ⟩ :=
+    exists_unique_nonlinear_continuity_solution_of_bound ρ₀ hρ₀ b hb hL M hM
+  refine ⟨ρ,hρ,huniq,?_⟩
+  intro Ω _ P _ ξ hiid θ hθ
+  have hγL (x) : LipschitzWith M (γ x) := by
+    apply lipschitzWith_of_nnnorm_deriv_le (fun t ↦ (hγd x t).differentiableAt)
+    intro t
+    rw [(hγd x t).deriv]
+    exact hvM _
+  have hvEq (t : ℝ) (ht : 0 ≤ t) (x) : v (t,x) = b x (ρ₀.map (fun y ↦ γ y t)) := by
+    rw [hvρ t ht x,hρlaw t ht]
+  filter_upwards [ae_tendsto_iSup_empirical_training_laws P ρ₀ hρ₀ ξ hiid b hb γ hγ hγ0 hγL
+    v hv.continuous hγd hvEq θ hθ] with ω hω
+  intro T hT
+  convert hω T hT using 1
+  funext N
+  apply iSup_congr
+  intro t
+  apply iSup_congr
+  intro ht
+  rw [hρlaw t ht.1]
+
 
 end CKSD

@@ -117,7 +117,7 @@ No relevant declarations were found.
 
 #### Mathlib
 
-No semiparametric model, tangent space, efficient score, or missing-data structure is defined. Supporting material: orthogonal projection onto a closed subspace of a Hilbert space, with the Pythagorean identity \(\|x\|^2=\|P_Sx\|^2+\|P_{S^\perp}x\|^2\) (`norm_sq_eq_add_norm_sq_projection`, `Analysis/InnerProductSpace/Projection/Basic.lean`), which is the operation that defines the efficient score; conditional expectation with the pull-out property and the tower property (`condExp_condExp_of_le`, `MeasureTheory/Function/ConditionalExpectation/Basic.lean`), from which the unbiasedness computation in 102.37 follows; Gibbs' inequality for KL divergence, which is the analytic core of the monotonicity of EM (102.36). None of 102.34–102.37 is stated.
+No semiparametric model, tangent space, efficient score, or missing-data structure is defined. Item 34 concerns submodels with densities relative to a common \(\sigma\)-finite measure. Supporting material: orthogonal projection onto a closed subspace of a Hilbert space, with the Pythagorean identity \(\|x\|^2=\|P_Sx\|^2+\|P_{S^\perp}x\|^2\) (`norm_sq_eq_add_norm_sq_projection`, `Analysis/InnerProductSpace/Projection/Basic.lean`), which is the operation that defines the efficient score; conditional expectation with the pull-out property and the tower property (`condExp_condExp_of_le`, `MeasureTheory/Function/ConditionalExpectation/Basic.lean`), from which the unbiasedness computation in 102.37 follows; Gibbs' inequality for KL divergence, which is the analytic core of the monotonicity of EM (102.36). None of 102.34–102.37 is stated.
 
 #### TauCeti
 

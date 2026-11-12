@@ -2,6 +2,12 @@ module
 
 public import CKSD.Inference.Model
 public import CKSD.Inference.FiniteDecision
+import CKSD.Inference.BlackwellFinite
+import CKSD.Inference.BlackwellPosterior
+import CKSD.Inference.BlackwellApproximation
+import CKSD.Inference.BlackwellCoupling
+import CKSD.Inference.BlackwellJoint
+import CKSD.Inference.KernelDisintegration
 public import CKSD.Inference.ConvexGames
 public import CKSD.Inference.Sufficiency
 public import CKSD.Inference.MeanParametrization
@@ -406,6 +412,24 @@ def IsMoreInformative {Θ X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
     ∀ δ : RandomizedDecisionRule Y (Fin n), ∃ δ' : RandomizedDecisionRule X (Fin n),
       ∀ θ, risk P L δ' θ ≤ risk Q L δ θ
 
+/-- Garbling cannot improve any finite-action bounded-loss decision problem. -/
+theorem isMoreInformative_of_isGarbling
+    {Θ X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
+    (P : Θ → Measure X) (Q : Θ → Measure Y)
+    [∀ θ, IsProbabilityMeasure (P θ)] [∀ θ, IsProbabilityMeasure (Q θ)]
+    (h : IsGarbling P Q) : IsMoreInformative P Q := by
+  obtain ⟨K, hK, hPQ⟩ := h
+  have := hK
+  intro n L _ δ
+  have := δ.property
+  let δP : RandomizedDecisionRule X (Fin n) := ⟨δ.val ∘ₖ K, inferInstance⟩
+  refine ⟨δP, fun θ ↦ le_of_eq ?_⟩
+  have hcomp : δP.val ∘ₘ P θ = δ.val ∘ₘ Q θ := by
+    -- Unpack the composed decision kernel before associating measure composition.
+    change (δ.val ∘ₖ K) ∘ₘ P θ = δ.val ∘ₘ Q θ
+    rw [← Measure.comp_assoc, ← hPQ θ]
+  rw [risk_eq_sum_actionLaw P L δP θ, risk_eq_sum_actionLaw Q L δ θ, hcomp]
+
 /-- GAPS 101.62: Blackwell's comparison theorem for a finite parameter set. A family of
 probability laws `P` is more informative than `Q`, whose sample space is standard Borel, if and
 only if `Q` is a garbling of `P`. Both families are dominated, by `∑ θ, P θ` and `∑ θ, Q θ`,
@@ -415,6 +439,49 @@ theorem isMoreInformative_iff_isGarbling {Θ X Y : Type*} [Fintype Θ]
     (P : Θ → Measure X) (Q : Θ → Measure Y)
     [∀ θ, IsProbabilityMeasure (P θ)] [∀ θ, IsProbabilityMeasure (Q θ)] :
     IsMoreInformative P Q ↔ IsGarbling P Q := by
-  sorry
+  constructor
+  · intro hmore
+    classical
+    rcases isEmpty_or_nonempty Θ with hΘ | hΘ
+    · exact ⟨Kernel.const X (Measure.dirac (Classical.choice (inferInstance : Nonempty Y))),
+        inferInstance, fun θ ↦ (hΘ.false θ).elim⟩
+    have : Nonempty Θ := hΘ
+    let C := finiteLikelihoodCube Θ
+    have : Nonempty C := ⟨⟨0, le_rfl, fun _ ↦ zero_le_one⟩⟩
+    let μ := finiteDominatingMeasure P
+    have : IsFiniteMeasure μ := inferInstance
+    let u : X → C := finiteLikelihoodMap P
+    let v : Y → C := finiteLikelihoodMap Q
+    have hu : Measurable u := measurable_finiteLikelihoodMap P
+    have hv : Measurable v := measurable_finiteLikelihoodMap Q
+    let w : Θ → BoundedContinuousFunction C ℝ := fun θ ↦
+      BoundedContinuousFunction.mkOfCompact
+        (⟨fun z ↦ z.val θ, (continuous_apply θ).comp continuous_subtype_val⟩ : C(C, ℝ))
+    have hw (θ : Θ) (z : C) : 0 ≤ w θ z := z.property.1 θ
+    have hP (θ : Θ) : P θ = μ.withDensity (fun x ↦ ENNReal.ofReal (w θ (u x))) :=
+      (hasDensity_finiteLikelihoodMap P θ).2.2
+    have hfinite (n : ℕ) (hn : 0 < n) (q : Y → Fin n) (hq : Measurable q) :
+        ∃ δ : RandomizedDecisionRule X (Fin n), ∀ θ, δ.val ∘ₘ P θ = (Q θ).map q := by
+      let δQ : RandomizedDecisionRule Y (Fin n) := ⟨Kernel.deterministic q hq, inferInstance⟩
+      obtain ⟨δ, hδ⟩ := exists_finite_randomization_of_risk_dominance P Q n hn (hmore n) δQ
+      refine ⟨δ, fun θ ↦ ?_⟩
+      rw [hδ θ]
+      exact Measure.deterministic_comp_eq_map hq
+    obtain ⟨ρ, hfst, hweighted⟩ :=
+      exists_joint_of_finite_randomizations μ P Q u hu v hv w hw hP hfinite
+    obtain ⟨K, hK, hKmodel⟩ := exists_markovKernel_of_map_eq_tilted_joint_laws
+      (ρ : Measure (C × C)) (fun θ z ↦ ENNReal.ofReal (w θ z)) (fun θ ↦ by fun_prop)
+      u hu P (fun θ ↦ (Q θ).map v)
+      (fun θ ↦ by rw [hfst]; exact map_finiteLikelihood_eq_withDensity P θ)
+      (fun θ ↦ (hweighted θ).symm)
+    have := hK
+    obtain ⟨J, hJ, hJmodel⟩ := isGarbling_of_finiteLikelihoodMap Q
+    have := hJ
+    refine ⟨J ∘ₖ K, inferInstance, fun θ ↦ ?_⟩
+    calc
+      Q θ = J ∘ₘ (Q θ).map v := hJmodel θ
+      _ = J ∘ₘ (K ∘ₘ P θ) := by rw [hKmodel θ]
+      _ = (J ∘ₖ K) ∘ₘ P θ := Measure.comp_assoc
+  · exact isMoreInformative_of_isGarbling P Q
 
 end CKSD

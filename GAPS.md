@@ -1185,7 +1185,9 @@ for $\theta$ after projection onto it, and the **efficient information** is
 $\tilde I(\theta)=\mathbb E\tilde\ell_\theta\tilde\ell_\theta^\top$.
 
 * **102.34. Semiparametric convolution bound.** Fix
-  $P=P_{\theta,\eta}$. Suppose that for every $a\in\mathbb R^k$ and every
+  $P=P_{\theta,\eta}$, and suppose the submodels below have densities
+  relative to a common $\sigma$-finite measure. Suppose that for every
+  $a\in\mathbb R^k$ and every
   nuisance submodel $\eta_t$ in a given class, $t\mapsto
   P_{\theta+ta,\eta_t}$ is DQM at $0$ with score $a^\top\dot\ell_\theta+g$,
   the nuisance scores $g$ forming a linear space whose closure is the
@@ -2714,7 +2716,9 @@ its time reversal.
   $u_t=-f(T-t,\cdot)+\frac12gg^\top(T-t)\nabla\log p_{T-t}$, and if $u_t$ is
   globally Lipschitz in $x$, uniformly on $[0,T']$ for every $T'<T$, and
   $X_0$ has finite second moment, the flow $\dot Z_t=u_t(Z_t)$ with
-  $Z_0\sim p_T$ has law $p_{T-t}$ for $t<T$. Stochastic calculus and time
+  $Z_0\sim p_T$ has law $p_{T-t}$ for $t<T$. The ODE trajectories are
+  continuous on $[0,T)$ and solve the equation on each compact subinterval.
+  Stochastic calculus and time
   reversal of diffusions are absent from all three libraries; TauCeti's
   continuity equation is the only supporting material.
 
@@ -2798,10 +2802,13 @@ endpoint law, with terminal law $\mu_T$ and with initial law $\mu_0$.
   $\partial_t\mu_t+\nabla\cdot(\mu_tv_t)=0$, and let $\epsilon_t\ge0$ be
   continuous. Then $\mu_t$ solves the Fokker–Planck equation of
   $dX_t=(v_t+\epsilon_t\nabla\log\mu_t)(X_t)\,dt+\sqrt{2\epsilon_t}\,dW_t$.
-  If the drift $b_t=v_t+\epsilon_t\nabla\log\mu_t$ is globally Lipschitz in
-  $x$, uniformly in $t\in[0,1]$, and
-  $\int_0^1\int\|b_t\|\,d\mu_t\,dt<\infty$, then $X_0\sim\mu_0$ gives
-  $X_t\sim\mu_t$ for all $t$; the same holds in reverse time with drift
+  If the drift $b_t=v_t+\epsilon_t\nabla\log\mu_t$ is jointly Borel
+  measurable on $[0,1]\times\mathbb R^d$, globally Lipschitz in $x$,
+  uniformly in $t\in[0,1]$, and
+  $\int_0^1\int\|b_t\|\,d\mu_t\,dt<\infty$, then a continuous solution of
+  the displayed SDE with $\int_0^1\|b_t(X_t)\|\,dt<\infty$ almost surely
+  and $X_0\sim\mu_0$ has $X_t\sim\mu_t$ for all $t$; the same holds in
+  reverse time with drift
   $v_t-\epsilon_t\nabla\log\mu_t$ under the same hypotheses on that drift.
   For a stochastic interpolant $X_t=I_t(X_0,X_1)+\gamma_tZ$ with
   $I_0(x_0,x_1)=x_0$, $I_1(x_0,x_1)=x_1$, $\gamma_0=\gamma_1=0$, $\gamma_t>0$

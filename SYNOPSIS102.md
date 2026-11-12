@@ -593,8 +593,10 @@ is the residual of the ordinary score for $\theta$ after orthogonal projection
 onto that tangent space, and the **efficient information** is
 $\tilde I(\theta)=\mathbb E[\tilde\ell_\theta\tilde\ell_\theta^\top]$.
 
-* **34. Semiparametric convolution bound.** Fix $P=P_{\theta,\eta}$. Suppose
-  that for every $a\in\mathbb R^k$ and every nuisance submodel $\eta_t$ in a
+* **34. Semiparametric convolution bound.** Fix $P=P_{\theta,\eta}$, and
+  suppose the submodels below have densities relative to a common
+  $\sigma$-finite measure. Suppose that for every $a\in\mathbb R^k$ and
+  every nuisance submodel $\eta_t$ in a
   given class, the submodel $t\mapsto P_{\theta+ta,\eta_t}$ is differentiable
   in quadratic mean at $t=0$ with score $a^\top\dot\ell_\theta+g$, where the
   nuisance scores $g$ form a linear space whose closure is the nuisance

@@ -1,6 +1,6 @@
 module
 
-public import CKSD.Asymptotics.Statistics
+public import CKSD.Asymptotics.QMDReference
 
 /-!
 # Semiparametric efficiency and adaptation
@@ -8,7 +8,9 @@ public import CKSD.Asymptotics.Statistics
 The semiparametric convolution bound is stated for a family of one-dimensional submodels
 through a fixed law `P`, indexed by a parametric direction and a nuisance score taken from a
 linear space `G` of `L²(P)` scores. Quadratic-mean differentiability is Statlib's
-(through the adapter `HasQuadraticMeanDerivAt`), relative to a dominating measure. Efficient
+(through the adapter `HasQuadraticMeanDerivAt`), relative to a sigma-finite dominating measure.
+This ensures that the Radon–Nikodym expressions represent the actual path laws; absolute
+continuity alone does not suffice for an arbitrary nonsigma-finite reference measure. Efficient
 scores use the orthogonal projection of `efficientScore`.
 
 The center-of-symmetry results use a location family with an absolutely continuous symmetric
@@ -75,10 +77,11 @@ linear space `G ⊆ L²(P)`, the submodel `t ↦ Q (a, g) t` passes through `P` 
 parameter `θ + t a`, is dominated by `ν`, and is QMD at `0` with score `a ⬝ ℓ̇ + g`. The
 nuisance tangent space is the closure of `G`. If the efficient information matrix is positive
 definite, the limit law of every estimator sequence regular along these submodels is the
-convolution of `N(0, Ĩ⁻¹)` with a probability measure. -/
+convolution of `N(0, Ĩ⁻¹)` with a probability measure. The common reference measure `ν` is
+sigma-finite, so its Radon–Nikodym densities represent every dominated path law. -/
 theorem exists_convolution_of_isRegularAlongPaths
     {X : Type*} [MeasurableSpace X] {k : ℕ} (P : Measure X) [IsProbabilityMeasure P]
-    (ν : Measure X) (θ : EuclideanSpace ℝ (Fin k)) (ℓ : Fin k → Lp ℝ 2 P)
+    (ν : Measure X) [SigmaFinite ν] (θ : EuclideanSpace ℝ (Fin k)) (ℓ : Fin k → Lp ℝ 2 P)
     (G : Submodule ℝ (Lp ℝ 2 P))
     (Q : EuclideanSpace ℝ (Fin k) × G → ℝ → Measure X)
     (hQ : ∀ i t, IsProbabilityMeasure (Q i t)) (hQ0 : ∀ i, Q i 0 = P)
@@ -97,10 +100,10 @@ theorem exists_convolution_of_isRegularAlongPaths
 /-- GAPS 102.34, efficiency part, in the setting of
 `exists_convolution_of_isRegularAlongPaths`. A measurable estimator sequence is regular along
 all submodels with limit `N(0, Ĩ⁻¹)` if and only if it is asymptotically linear in the efficient
-influence function under `P`. -/
+influence function under `P`. The common dominating reference measure `ν` is sigma-finite. -/
 theorem isRegularAlongPaths_gaussian_iff_asymptotically_linear
     {X : Type*} [MeasurableSpace X] {k : ℕ} (P : Measure X) [IsProbabilityMeasure P]
-    (ν : Measure X) (θ : EuclideanSpace ℝ (Fin k)) (ℓ : Fin k → Lp ℝ 2 P)
+    (ν : Measure X) [SigmaFinite ν] (θ : EuclideanSpace ℝ (Fin k)) (ℓ : Fin k → Lp ℝ 2 P)
     (G : Submodule ℝ (Lp ℝ 2 P))
     (Q : EuclideanSpace ℝ (Fin k) × G → ℝ → Measure X)
     (hQ : ∀ i t, IsProbabilityMeasure (Q i t)) (hQ0 : ∀ i, Q i 0 = P)
