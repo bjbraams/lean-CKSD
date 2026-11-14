@@ -3,6 +3,7 @@ module
 public import CKSD.Geometry.Persistence
 public import CKSD.Geometry.FiniteCombinatorics
 
+
 /-!
 # Distances between full persistence diagrams
 
@@ -18,7 +19,7 @@ inequalities; Wasserstein composition uses Mathlib `ENNReal.Lp_add_le`.
 
 ## Main results
 
-* `CKSD.fullBottleneckEDist_triangle`, `CKSD.diagramWassersteinEDist_triangle`: triangle
+* `CKSD.full_bottleneck_e_dist_triangle`, `CKSD.diagram_wasserstein_e_dist_triangle`: triangle
   inequalities.
 * `CKSD.exists_equiv_of_card_eq`: rank counts determine a full diagram up to reindexing.
 -/
@@ -63,7 +64,7 @@ def diagramWassersteinCost {α β κ κ' : Type*} [Fintype α] [Fintype β] [Fin
 /-- The `q`-Wasserstein distance between full persistence diagrams, `∞` when the numbers of
 essential bars differ. The definition is made for every real `q`; it satisfies the triangle
 inequality, and so is an extended pseudometric on diagrams, for `1 ≤ q`
-(`CKSD.diagramWassersteinEDist_triangle`). -/
+(`CKSD.diagram_wasserstein_e_dist_triangle`). -/
 def diagramWassersteinEDist {α β κ κ' : Type*} [Fintype α] [Fintype β] [Fintype κ] (q : ℝ)
     (D : FiniteDeathDiagram α) (e : κ → ℝ) (E : FiniteDeathDiagram β) (e' : κ' → ℝ) : ℝ≥0∞ :=
   ⨅ M : DiagramMatching α β, ⨅ σ : κ ≃ κ', diagramWassersteinCost q M σ D e E e' ^ (1 / q)
@@ -74,7 +75,7 @@ variable {α β γ : Type*} (M : DiagramMatching α β) (D : FiniteDeathDiagram 
   (E : FiniteDeathDiagram β)
 
 /-- The cost of a matching bounds the distance of each matched pair. -/
-theorem ofReal_le_cost_of_relates {i : α} {j : β} (h : M.relates i j) :
+theorem of_real_le_cost_of_relates {i : α} {j : β} (h : M.relates i j) :
     ENNReal.ofReal (max |D.birth i - E.birth j| |D.death i - E.death j|) ≤ M.cost D E := by
   have hex : ∃ j, M.relates i j := ⟨j, h⟩
   have hc : hex.choose = j := M.left_unique _ _ _ hex.choose_spec h
@@ -83,14 +84,14 @@ theorem ofReal_le_cost_of_relates {i : α} {j : β} (h : M.relates i j) :
   rw [dite_eq_left hex, hc]
 
 /-- The cost of a matching bounds the diagonal distance of each unmatched left point. -/
-theorem ofReal_le_cost_of_not_left {i : α} (h : ¬ ∃ j, M.relates i j) :
+theorem of_real_le_cost_of_not_left {i : α} (h : ¬ ∃ j, M.relates i j) :
     ENNReal.ofReal ((D.death i - D.birth i) / 2) ≤ M.cost D E := by
   refine le_trans ?_ (le_max_left _ _)
   refine le_iSup_of_le i ?_
   rw [dite_eq_right h]
 
 /-- The cost of a matching bounds the diagonal distance of each unmatched right point. -/
-theorem ofReal_le_cost_of_not_right {j : β} (h : ¬ ∃ i, M.relates i j) :
+theorem of_real_le_cost_of_not_right {j : β} (h : ¬ ∃ i, M.relates i j) :
     ENNReal.ofReal ((E.death j - E.birth j) / 2) ≤ M.cost D E := by
   refine le_trans ?_ (le_max_right _ _)
   refine le_iSup_of_le j ?_
@@ -113,7 +114,7 @@ theorem cost_le {c : ℝ≥0∞}
     · exact h3 j h
 
 /-- A partial matching is a bi-unique relation in the sense of Mathlib's `Relator`. -/
-theorem biUnique : Relator.BiUnique M.relates :=
+theorem bi_unique : Relator.BiUnique M.relates :=
   ⟨fun _ _ _ h h' ↦ M.right_unique _ _ _ h h', fun _ _ _ h h' ↦ M.left_unique _ _ _ h h'⟩
 
 /-- The composite of two partial matchings. -/
@@ -133,8 +134,8 @@ theorem cost_trans_le (N : DiagramMatching β γ) (F : FiniteDeathDiagram γ) :
     (M.trans N).cost D F ≤ M.cost D E + N.cost E F := by
   refine cost_le _ _ _ ?_ ?_ ?_
   · rintro i k ⟨j, h1, h2⟩
-    have hM := M.ofReal_le_cost_of_relates D E h1
-    have hN := N.ofReal_le_cost_of_relates E F h2
+    have hM := M.of_real_le_cost_of_relates D E h1
+    have hN := N.of_real_le_cost_of_relates E F h2
     refine le_trans ?_ (add_le_add hM hN)
     rw [← ENNReal.ofReal_add (by positivity) (by positivity)]
     refine ENNReal.ofReal_le_ofReal (max_le ?_ ?_)
@@ -146,8 +147,8 @@ theorem cost_trans_le (N : DiagramMatching β γ) (F : FiniteDeathDiagram γ) :
     by_cases hj : ∃ j, M.relates i j
     · obtain ⟨j, hij⟩ := hj
       have hjN : ¬ ∃ k, N.relates j k := fun ⟨k, hk⟩ ↦ hi ⟨k, j, hij, hk⟩
-      have hM := M.ofReal_le_cost_of_relates D E hij
-      have hN := N.ofReal_le_cost_of_not_left E F hjN
+      have hM := M.of_real_le_cost_of_relates D E hij
+      have hN := N.of_real_le_cost_of_not_left E F hjN
       refine le_trans ?_ (add_le_add hM hN)
       rw [← ENNReal.ofReal_add (by positivity) (le_of_lt (by linarith [E.birth_lt_death j]))]
       refine ENNReal.ofReal_le_ofReal ?_
@@ -156,13 +157,13 @@ theorem cost_trans_le (N : DiagramMatching β γ) (F : FiniteDeathDiagram γ) :
       have h3 := le_max_left |D.birth i - E.birth j| |D.death i - E.death j|
       have h4 := le_max_right |D.birth i - E.birth j| |D.death i - E.death j|
       linarith
-    · exact (M.ofReal_le_cost_of_not_left D E hj).trans le_self_add
+    · exact (M.of_real_le_cost_of_not_left D E hj).trans le_self_add
   · intro k hk
     by_cases hj : ∃ j, N.relates j k
     · obtain ⟨j, hjk⟩ := hj
       have hjM : ¬ ∃ i, M.relates i j := fun ⟨i, hi⟩ ↦ hk ⟨i, j, hi, hjk⟩
-      have hM := M.ofReal_le_cost_of_not_right D E hjM
-      have hN := N.ofReal_le_cost_of_relates E F hjk
+      have hM := M.of_real_le_cost_of_not_right D E hjM
+      have hN := N.of_real_le_cost_of_relates E F hjk
       refine le_trans ?_ (add_le_add hM hN)
       rw [← ENNReal.ofReal_add (le_of_lt (by linarith [E.birth_lt_death j])) (by positivity)]
       refine ENNReal.ofReal_le_ofReal ?_
@@ -171,19 +172,19 @@ theorem cost_trans_le (N : DiagramMatching β γ) (F : FiniteDeathDiagram γ) :
       have h3 := le_max_left |E.birth j - F.birth k| |E.death j - F.death k|
       have h4 := le_max_right |E.birth j - F.birth k| |E.death j - F.death k|
       linarith
-    · exact (N.ofReal_le_cost_of_not_right E F hj).trans le_add_self
+    · exact (N.of_real_le_cost_of_not_right E F hj).trans le_add_self
 
 end DiagramMatching
 
 /-- The triangle inequality for the bottleneck distance of finite-death diagrams. -/
-theorem bottleneckEDist_triangle {α β γ : Type*} (D : FiniteDeathDiagram α)
+theorem bottleneck_e_dist_triangle {α β γ : Type*} (D : FiniteDeathDiagram α)
     (E : FiniteDeathDiagram β) (F : FiniteDeathDiagram γ) :
     bottleneckEDist D F ≤ bottleneckEDist D E + bottleneckEDist E F := by
   unfold bottleneckEDist
   exact ENNReal.le_iInf_add_iInf fun M N ↦ (iInf_le _ (M.trans N)).trans (M.cost_trans_le D E N F)
 
 /-- The triangle inequality for the bottleneck distance of essential parts. -/
-theorem essentialBottleneckEDist_triangle {κ κ' κ'' : Type*} (e : κ → ℝ) (e' : κ' → ℝ)
+theorem essential_bottleneck_e_dist_triangle {κ κ' κ'' : Type*} (e : κ → ℝ) (e' : κ' → ℝ)
     (e'' : κ'' → ℝ) :
     essentialBottleneckEDist e e'' ≤ essentialBottleneckEDist e e' +
       essentialBottleneckEDist e' e'' := by
@@ -194,14 +195,14 @@ theorem essentialBottleneckEDist_triangle {κ κ' κ'' : Type*} (e : κ → ℝ)
   exact ENNReal.ofReal_le_ofReal (abs_sub_le _ _ _)
 
 /-- The triangle inequality for the bottleneck distance of full diagrams. -/
-theorem fullBottleneckEDist_triangle {α β γ κ κ' κ'' : Type*} (D : FiniteDeathDiagram α)
+theorem full_bottleneck_e_dist_triangle {α β γ κ κ' κ'' : Type*} (D : FiniteDeathDiagram α)
     (e : κ → ℝ) (E : FiniteDeathDiagram β) (e' : κ' → ℝ) (F : FiniteDeathDiagram γ)
     (e'' : κ'' → ℝ) :
     fullBottleneckEDist D e F e'' ≤ fullBottleneckEDist D e E e' + fullBottleneckEDist E e' F e'' := by
   unfold fullBottleneckEDist
-  refine max_le ((bottleneckEDist_triangle D E F).trans
+  refine max_le ((bottleneck_e_dist_triangle D E F).trans
     (add_le_add (le_max_left _ _) (le_max_left _ _))) ?_
-  exact (essentialBottleneckEDist_triangle e e' e'').trans
+  exact (essential_bottleneck_e_dist_triangle e e' e'').trans
     (add_le_add (le_max_right _ _) (le_max_right _ _))
 
 /-- Below a level `x` and above `z < x`, there is a level `y` such that the values of a finite
@@ -385,7 +386,7 @@ theorem exists_equiv_of_card_eq {α β κ κ' : Type*} [Fintype α] [Fintype β]
 
 /-- Full diagrams with the same counts of bars containing each interval `[a, b]` are at
 bottleneck distance zero. -/
-theorem fullBottleneckEDist_eq_zero_of_card_eq {α β κ κ' : Type*} [Fintype α] [Fintype β]
+theorem full_bottleneck_e_dist_eq_zero_of_card_eq {α β κ κ' : Type*} [Fintype α] [Fintype β]
     [Fintype κ] [Fintype κ'] (D : FiniteDeathDiagram α) (e : κ → ℝ) (E : FiniteDeathDiagram β)
     (e' : κ' → ℝ)
     (h : ∀ a b, a ≤ b →
@@ -427,30 +428,30 @@ def rightCost (j : β) : ℝ≥0∞ :=
   if ∃ i, M.relates i j then 0 else ENNReal.ofReal ((E.death j - E.birth j) / 2)
 
 /-- The left term of a matched point is its distance to the partner. -/
-theorem leftCost_of_relates {i : α} {j : β} (h : M.relates i j) :
+theorem left_cost_of_relates {i : α} {j : β} (h : M.relates i j) :
     M.leftCost D E i = ENNReal.ofReal (max |D.birth i - E.birth j| |D.death i - E.death j|) := by
   have hex : ∃ j, M.relates i j := ⟨j, h⟩
   have hc : hex.choose = j := M.left_unique _ _ _ hex.choose_spec h
   rw [leftCost, dite_eq_left hex, hc]
 
 /-- The left term of an unmatched point is its distance to the diagonal. -/
-theorem leftCost_of_not {i : α} (h : ¬ ∃ j, M.relates i j) :
+theorem left_cost_of_not {i : α} (h : ¬ ∃ j, M.relates i j) :
     M.leftCost D E i = ENNReal.ofReal ((D.death i - D.birth i) / 2) := by
   rw [leftCost, dite_eq_right h]
 
 /-- The right term of a matched point is zero. -/
-theorem rightCost_of_relates {i : α} {j : β} (h : M.relates i j) : M.rightCost E j = 0 := by
+theorem right_cost_of_relates {i : α} {j : β} (h : M.relates i j) : M.rightCost E j = 0 := by
   rw [rightCost, ite_eq_left ⟨i, h⟩]
 
 /-- The right term of an unmatched point is its distance to the diagonal. -/
-theorem rightCost_of_not {j : β} (h : ¬ ∃ i, M.relates i j) :
+theorem right_cost_of_not {j : β} (h : ¬ ∃ i, M.relates i j) :
     M.rightCost E j = ENNReal.ofReal ((E.death j - E.birth j) / 2) := by
   rw [rightCost, ite_eq_right h]
 
 end DiagramMatching
 
 /-- The `q`-Wasserstein cost as a sum of left terms, right terms, and essential terms. -/
-theorem diagramWassersteinCost_eq {α β κ κ' : Type*} [Fintype α] [Fintype β] [Fintype κ] (q : ℝ)
+theorem diagram_wasserstein_cost_eq {α β κ κ' : Type*} [Fintype α] [Fintype β] [Fintype κ] (q : ℝ)
     (M : DiagramMatching α β) (σ : κ ≃ κ') (D : FiniteDeathDiagram α) (e : κ → ℝ)
     (E : FiniteDeathDiagram β) (e' : κ' → ℝ) :
     diagramWassersteinCost q M σ D e E e' = ∑ i, M.leftCost D E i ^ q +
@@ -499,7 +500,7 @@ private theorem dite_rpow_eq {p : Prop} [Decidable p] {q : ℝ} (hq : 0 < q) (x 
 
 /-- The cost of a composite matching, to the power `1/q`, is at most the sum of the costs of the
 two matchings, to the power `1/q` (Minkowski's inequality). -/
-theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fintype α] [Fintype β]
+theorem diagram_wasserstein_cost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fintype α] [Fintype β]
     [Fintype γ] [Fintype κ] [Fintype κ'] {q : ℝ} (hq : 1 ≤ q) (M : DiagramMatching α β)
     (N : DiagramMatching β γ) (σ : κ ≃ κ') (τ : κ' ≃ κ'') (D : FiniteDeathDiagram α)
     (e : κ → ℝ) (E : FiniteDeathDiagram β) (e' : κ' → ℝ) (F : FiniteDeathDiagram γ)
@@ -519,7 +520,7 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
           (if ∃ i, M.relates i h.choose then 0 else N.leftCost E F h.choose)
         else N.rightCost F k) (fun k ↦ ENNReal.ofReal |e' (σ k) - e'' (τ (σ k))|))
   have hcost : diagramWassersteinCost q (M.trans N) (σ.trans τ) D e F e'' = ∑ x, T x ^ q := by
-    rw [diagramWassersteinCost_eq, Fintype.sum_sum_type, Fintype.sum_sum_type, add_assoc]
+    rw [diagram_wasserstein_cost_eq, Fintype.sum_sum_type, Fintype.sum_sum_type, add_assoc]
     rfl
   have hTAB : ∀ x, T x ≤ A x + B x := by
     rintro (i | k | k)
@@ -527,10 +528,10 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
         (if h : ∃ j, M.relates i j then N.leftCost E F h.choose else 0)
       by_cases hi : ∃ j, M.relates i j
       · have hij : M.relates i hi.choose := hi.choose_spec
-        rw [dite_eq_left hi, M.leftCost_of_relates D E hij]
+        rw [dite_eq_left hi, M.left_cost_of_relates D E hij]
         by_cases hj : ∃ k, N.relates hi.choose k
         · obtain ⟨k, hjk⟩ := hj
-          rw [(M.trans N).leftCost_of_relates D F ⟨_, hij, hjk⟩, N.leftCost_of_relates E F hjk,
+          rw [(M.trans N).left_cost_of_relates D F ⟨_, hij, hjk⟩, N.left_cost_of_relates E F hjk,
             ← ENNReal.ofReal_add (by positivity) (by positivity)]
           refine ENNReal.ofReal_le_ofReal (max_le ?_ ?_)
           · exact (abs_sub_le _ (E.birth hi.choose) _).trans
@@ -542,7 +543,7 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
             obtain rfl := M.left_unique _ _ _ hij h1
             exact hj ⟨k, h2⟩
           have hlt := E.birth_lt_death hi.choose
-          rw [(M.trans N).leftCost_of_not D F hnot, N.leftCost_of_not E F hj,
+          rw [(M.trans N).left_cost_of_not D F hnot, N.left_cost_of_not E F hj,
             ← ENNReal.ofReal_add (by positivity) (by linarith)]
           refine ENNReal.ofReal_le_ofReal ?_
           have h1 := le_abs_self (D.death i - E.death hi.choose)
@@ -553,8 +554,8 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
       · have hnot : ¬ ∃ k, (M.trans N).relates i k := by
           rintro ⟨k, j', h1, -⟩
           exact hi ⟨j', h1⟩
-        rw [dite_eq_right hi, add_zero, (M.trans N).leftCost_of_not D F hnot,
-          M.leftCost_of_not D E hi]
+        rw [dite_eq_right hi, add_zero, (M.trans N).left_cost_of_not D F hnot,
+          M.left_cost_of_not D E hi]
     · change (M.trans N).rightCost F k ≤
         (if h : ∃ j, N.relates j k then M.rightCost E h.choose else 0) +
         (if h : ∃ j, N.relates j k then
@@ -565,15 +566,15 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
         rw [dite_eq_left hk, dite_eq_left hk]
         by_cases hj : ∃ i, M.relates i hk.choose
         · obtain ⟨i, hij⟩ := hj
-          rw [(M.trans N).rightCost_of_relates F (i := i) ⟨_, hij, hjk⟩]
+          rw [(M.trans N).right_cost_of_relates F (i := i) ⟨_, hij, hjk⟩]
           exact bot_le
         · have hnot : ¬ ∃ i, (M.trans N).relates i k := by
             rintro ⟨i, j', h1, h2⟩
             obtain rfl := N.right_unique _ _ _ h2 hjk
             exact hj ⟨i, h1⟩
           have hlt := E.birth_lt_death hk.choose
-          rw [ite_eq_right hj, M.rightCost_of_not E hj, N.leftCost_of_relates E F hjk,
-            (M.trans N).rightCost_of_not F hnot, ← ENNReal.ofReal_add (by linarith) (by positivity)]
+          rw [ite_eq_right hj, M.right_cost_of_not E hj, N.left_cost_of_relates E F hjk,
+            (M.trans N).right_cost_of_not F hnot, ← ENNReal.ofReal_add (by linarith) (by positivity)]
           refine ENNReal.ofReal_le_ofReal ?_
           have h1 := neg_abs_le (E.death hk.choose - F.death k)
           have h2 := le_abs_self (E.birth hk.choose - F.birth k)
@@ -583,14 +584,14 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
       · have hnot : ¬ ∃ i, (M.trans N).relates i k := by
           rintro ⟨i, j', -, h2⟩
           exact hk ⟨j', h2⟩
-        rw [dite_eq_right hk, dite_eq_right hk, zero_add, (M.trans N).rightCost_of_not F hnot,
-          N.rightCost_of_not F hk]
+        rw [dite_eq_right hk, dite_eq_right hk, zero_add, (M.trans N).right_cost_of_not F hnot,
+          N.right_cost_of_not F hk]
     · change ENNReal.ofReal |e k - e'' (τ (σ k))| ≤ ENNReal.ofReal |e k - e' (σ k)| +
         ENNReal.ofReal |e' (σ k) - e'' (τ (σ k))|
       rw [← ENNReal.ofReal_add (abs_nonneg _) (abs_nonneg _)]
       exact ENNReal.ofReal_le_ofReal (abs_sub_le _ _ _)
   have hA : ∑ x, A x ^ q ≤ diagramWassersteinCost q M σ D e E e' := by
-    rw [diagramWassersteinCost_eq, Fintype.sum_sum_type, Fintype.sum_sum_type, ← add_assoc]
+    rw [diagram_wasserstein_cost_eq, Fintype.sum_sum_type, Fintype.sum_sum_type, ← add_assoc]
     refine add_le_add (add_le_add le_rfl ?_) le_rfl
     change ∑ k, (if h : ∃ j, N.relates j k then M.rightCost E h.choose else 0) ^ q ≤ _
     simp_rw [dite_rpow_eq hq0]
@@ -598,7 +599,7 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
       (fun k k' j h h' ↦ N.left_unique _ _ _ h h') (fun j ↦ M.rightCost E j ^ q)]
     exact Finset.sum_le_sum fun j _ ↦ by split_ifs <;> simp
   have hB : ∑ x, B x ^ q ≤ diagramWassersteinCost q N τ E e' F e'' := by
-    rw [diagramWassersteinCost_eq, Fintype.sum_sum_type, Fintype.sum_sum_type]
+    rw [diagram_wasserstein_cost_eq, Fintype.sum_sum_type, Fintype.sum_sum_type]
     have h1 : ∑ i, B (.inl i) ^ q =
         ∑ j, (if ∃ i, M.relates i j then N.leftCost E F j ^ q else 0) := by
       change ∑ i, (if h : ∃ j, M.relates i j then N.leftCost E F h.choose else 0) ^ q = _
@@ -646,7 +647,7 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
         (ENNReal.rpow_le_rpow hB (by positivity))
 
 /-- The triangle inequality for the `q`-Wasserstein distance of full diagrams, `1 ≤ q`. -/
-theorem diagramWassersteinEDist_triangle {α β γ κ κ' κ'' : Type*} [Fintype α] [Fintype β]
+theorem diagram_wasserstein_e_dist_triangle {α β γ κ κ' κ'' : Type*} [Fintype α] [Fintype β]
     [Fintype γ] [Fintype κ] [Fintype κ'] {q : ℝ} (hq : 1 ≤ q) (D : FiniteDeathDiagram α)
     (e : κ → ℝ) (E : FiniteDeathDiagram β) (e' : κ' → ℝ) (F : FiniteDeathDiagram γ)
     (e'' : κ'' → ℝ) :
@@ -655,7 +656,7 @@ theorem diagramWassersteinEDist_triangle {α β γ κ κ' κ'' : Type*} [Fintype
   unfold diagramWassersteinEDist
   refine ENNReal.le_iInf_add_iInf fun M N ↦ ENNReal.le_iInf_add_iInf fun σ τ ↦ ?_
   exact (iInf_le_of_le (M.trans N) (iInf_le _ (σ.trans τ))).trans
-    (diagramWassersteinCost_trans_rpow_le hq M N σ τ D e E e' F e'')
+    (diagram_wasserstein_cost_trans_rpow_le hq M N σ τ D e E e' F e'')
 
 end Distances
 

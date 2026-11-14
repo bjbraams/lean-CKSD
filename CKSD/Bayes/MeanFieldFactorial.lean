@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldPicard
 /-!
 # Factorial contraction from time-integrated distance estimates
@@ -81,7 +82,7 @@ theorem dist_iterate_le_pow_div_factorial_of_integral_estimates
         field_simp
         ring
 /-- A Volterra estimate yields a contracting iterate on every finite time interval. -/
-theorem exists_contractingWith_iterate_of_integral_estimates
+theorem exists_contracting_with_iterate_of_integral_estimates
     (G : X → X) (q : X → X → ℝ → ℝ) {a T : ℝ} (ha : 0 ≤ a) (hT : 0 ≤ T)
     (hq : ∀ x y, Continuous (q x y))
     (hbase : ∀ x y t, t ∈ Icc (0 : ℝ) T → q x y t ≤ dist x y)

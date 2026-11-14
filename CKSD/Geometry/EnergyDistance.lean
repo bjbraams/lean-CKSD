@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Geometry.Basic
 public import Mathlib.Probability.CDF
 public import Mathlib.MeasureTheory.Measure.OpenPos
@@ -43,7 +44,7 @@ theorem integrable_norm_sub_prod {E : Type*} [NormedAddCommGroup E]
   simpa only [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _), Pi.add_apply] using norm_sub_le z.1 z.2
 
 /-- The probability that two independent real observations lie on opposite sides of a cutoff. -/
-theorem measure_symmDiff_real_prod_eq_cdf (P Q : Measure ℝ)
+theorem measure_symm_diff_real_prod_eq_cdf (P Q : Measure ℝ)
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q] (t : ℝ) :
     (P.prod Q) ({z : ℝ × ℝ | z.1 ≤ t} ∆ {z : ℝ × ℝ | z.2 ≤ t}) =
       ENNReal.ofReal (cdf P t * (1 - cdf Q t) + (1 - cdf P t) * cdf Q t) := by
@@ -81,7 +82,7 @@ theorem integral_abs_sub_prod_eq_integral_cdf (P Q : Measure ℝ)
       ((measurable_const.sub (cdf P).mono.measurable).mul (cdf Q).mono.measurable)
   have hl := TauCeti.lintegral_enorm_sub_eq_lintegral_measure_symmDiff (P.prod Q)
     measurable_fst.aemeasurable measurable_snd.aemeasurable
-  simp_rw [Real.enorm_eq_ofReal_abs, measure_symmDiff_real_prod_eq_cdf] at hl
+  simp_rw [Real.enorm_eq_ofReal_abs, measure_symm_diff_real_prod_eq_cdf] at hl
   have hfi : Integrable (fun t ↦ cdf P t * (1 - cdf Q t) + (1 - cdf P t) * cdf Q t) := by
     refine ⟨hm.aestronglyMeasurable, (hasFiniteIntegral_iff_ofReal (ae_of_all _ hnon)).2 ?_⟩
     rw [← hl]
@@ -93,7 +94,7 @@ theorem integral_abs_sub_prod_eq_integral_cdf (P Q : Measure ℝ)
   exact hreal
 
 /-- Right-continuous monotone real functions which agree almost everywhere agree everywhere. -/
-theorem stieltjesFunction_eq_of_ae_eq (f g : StieltjesFunction ℝ)
+theorem stieltjes_function_eq_of_ae_eq (f g : StieltjesFunction ℝ)
     (hae : (f : ℝ → ℝ) =ᵐ[volume] (g : ℝ → ℝ)) : f = g := by
   have hle (f g : StieltjesFunction ℝ)
       (hae : (f : ℝ → ℝ) =ᵐ[volume] (g : ℝ → ℝ)) (x : ℝ) : f x ≤ g x := by
@@ -117,7 +118,7 @@ theorem stieltjesFunction_eq_of_ae_eq (f g : StieltjesFunction ℝ)
   exact le_antisymm (hle f g hae x) (hle g f hae.symm x)
 
 /-- Real energy distance is twice the integrated squared difference of distribution functions. -/
-theorem real_energyDistance_eq_integral_cdf_sq (P Q : Measure ℝ)
+theorem real_energy_distance_eq_integral_cdf_sq (P Q : Measure ℝ)
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (hP : Integrable (fun x ↦ |x|) P) (hQ : Integrable (fun x ↦ |x|) Q) :
     Integrable (fun t ↦ (cdf P t - cdf Q t) ^ 2) ∧
@@ -146,14 +147,14 @@ theorem real_energyDistance_eq_integral_cdf_sq (P Q : Measure ℝ)
   exact integral_congr_ae (ae_of_all _ heq)
 
 /-- Real energy distance is nonnegative and vanishes precisely for equal laws. -/
-theorem real_energyDistance_nonneg_eq_zero_iff (P Q : Measure ℝ)
+theorem real_energy_distance_nonneg_eq_zero_iff (P Q : Measure ℝ)
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (hP : Integrable (fun x ↦ |x|) P) (hQ : Integrable (fun x ↦ |x|) Q) :
     let D := 2 * (∫ z : ℝ × ℝ, |z.1 - z.2| ∂P.prod Q) -
       (∫ z : ℝ × ℝ, |z.1 - z.2| ∂P.prod P) -
         (∫ z : ℝ × ℝ, |z.1 - z.2| ∂Q.prod Q)
     0 ≤ D ∧ (D = 0 ↔ P = Q) := by
-  obtain ⟨hint, heq⟩ := real_energyDistance_eq_integral_cdf_sq P Q hP hQ
+  obtain ⟨hint, heq⟩ := real_energy_distance_eq_integral_cdf_sq P Q hP hQ
   dsimp only
   rw [heq]
   refine ⟨mul_nonneg (by norm_num) (integral_nonneg fun t ↦ sq_nonneg _), ?_⟩
@@ -162,7 +163,7 @@ theorem real_energyDistance_nonneg_eq_zero_iff (P Q : Measure ℝ)
     have h0 : (∫ t, (cdf P t - cdf Q t) ^ 2) = 0 := by linarith
     have hae := (integral_eq_zero_iff_of_nonneg (fun t ↦ sq_nonneg _) hint).1 h0
     apply Measure.eq_of_cdf
-    apply stieltjesFunction_eq_of_ae_eq
+    apply stieltjes_function_eq_of_ae_eq
     filter_upwards [hae] with t ht
     exact sub_eq_zero.1 (sq_eq_zero_iff.1 ht)
   · intro hPQ
@@ -176,7 +177,7 @@ def energyDistance {E : Type*} [NormedAddCommGroup E] [MeasurableSpace E]
     (∫ z : E × E, ‖z.1 - z.2‖ ∂P.prod P) - (∫ z : E × E, ‖z.1 - z.2‖ ∂Q.prod Q)
 
 /-- Gaussian averaging of absolute projections recovers the Euclidean norm. -/
-theorem integral_abs_inner_stdGaussian {E : Type*} [NormedAddCommGroup E]
+theorem integral_abs_inner_std_gaussian {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     (v : E) :
     (∫ w, |inner ℝ w v| ∂stdGaussian E) = Real.sqrt (2 / Real.pi) * ‖v‖ := by
@@ -213,11 +214,11 @@ theorem integral_gaussian_projected_distance {E : Type*} [NormedAddCommGroup E]
     simpa only [Real.norm_eq_abs, abs_abs] using abs_real_inner_le_norm p.1 (p.2.1 - p.2.2)
   refine ⟨hint.integral_prod_left, ?_⟩
   rw [integral_integral_swap hint]
-  simp_rw [integral_abs_inner_stdGaussian]
+  simp_rw [integral_abs_inner_std_gaussian]
   rw [integral_const_mul]
 
 /-- The standard Gaussian has positive mass on every nonempty open subset. -/
-theorem isOpenPosMeasure_stdGaussian {E : Type*} [NormedAddCommGroup E]
+theorem is_open_pos_measure_std_gaussian {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] :
     (stdGaussian E).IsOpenPosMeasure := by
   rw [TauCeti.Probability.stdGaussian_eq_withDensity_norm E]
@@ -248,7 +249,7 @@ theorem integral_abs_sub_map_inner_prod {E : Type*} [NormedAddCommGroup E]
 
 /-- Energy distance on a finite-dimensional real inner product space is nonnegative and
 vanishes only for equal probability laws with finite first moments. -/
-theorem energyDistance_nonneg_eq_zero_iff {E : Type*} [NormedAddCommGroup E]
+theorem energy_distance_nonneg_eq_zero_iff {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     (P Q : Measure E) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (hP : Integrable (fun x ↦ ‖x‖) P) (hQ : Integrable (fun x ↦ ‖x‖) Q) :
@@ -273,7 +274,7 @@ theorem energyDistance_nonneg_eq_zero_iff {E : Type*} [NormedAddCommGroup E]
     ring
   have hreal (w : E) : 0 ≤ D w ∧
       (D w = 0 ↔ P.map (fun x ↦ inner ℝ w x) = Q.map (fun x ↦ inner ℝ w x)) := by
-    have h := real_energyDistance_nonneg_eq_zero_iff
+    have h := real_energy_distance_nonneg_eq_zero_iff
       (P.map (fun x ↦ inner ℝ w x)) (Q.map (fun x ↦ inner ℝ w x))
       (integrable_abs_map_inner P hP w) (integrable_abs_map_inner Q hQ w)
     dsimp only at h
@@ -297,7 +298,7 @@ theorem energyDistance_nonneg_eq_zero_iff {E : Type*} [NormedAddCommGroup E]
       filter_upwards [hae] with w hw
       have heq := congrArg (fun ν : Measure ℝ ↦ charFun ν (1 : ℝ)) ((hreal w).2.1 hw)
       simpa only [hchar] using heq
-    have := isOpenPosMeasure_stdGaussian (E := E)
+    have := is_open_pos_measure_std_gaussian (E := E)
     exact Measure.ext_of_charFun (Measure.eq_of_ae_eq hcf continuous_charFun continuous_charFun)
   · intro hPQ
     subst Q
@@ -305,7 +306,7 @@ theorem energyDistance_nonneg_eq_zero_iff {E : Type*} [NormedAddCommGroup E]
     ring
 
 /-- The mean of a distance-induced kernel is expressed by the first moments and mean distance. -/
-theorem integral_distanceKernel_prod {E : Type*} [NormedAddCommGroup E]
+theorem integral_distance_kernel_prod {E : Type*} [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P Q : Measure E) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (hP : Integrable (fun x ↦ ‖x‖) P) (hQ : Integrable (fun x ↦ ‖x‖) Q) :
@@ -319,13 +320,13 @@ theorem integral_distanceKernel_prod {E : Type*} [NormedAddCommGroup E]
   simp
 
 /-- The energy distance is twice the squared maximum mean discrepancy of the distance kernel. -/
-theorem energyDistance_eq_two_mul_squaredMMD {E : Type*} [NormedAddCommGroup E]
+theorem energy_distance_eq_two_mul_squared_mmd {E : Type*} [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P Q : Measure E) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (hP : Integrable (fun x ↦ ‖x‖) P) (hQ : Integrable (fun x ↦ ‖x‖) Q) :
     energyDistance P Q = 2 * squaredMMD distanceKernel P Q := by
-  rw [squaredMMD, integral_distanceKernel_prod P P hP hP,
-    integral_distanceKernel_prod Q Q hQ hQ, integral_distanceKernel_prod P Q hP hQ]
+  rw [squaredMMD, integral_distance_kernel_prod P P hP hP,
+    integral_distance_kernel_prod Q Q hQ hQ, integral_distance_kernel_prod P Q hP hQ]
   unfold energyDistance
   ring
 

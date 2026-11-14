@@ -2,6 +2,7 @@ module
 
 public import CKSD.Nonparametric.Basic
 
+
 /-!
 # Deterministic covariance thresholding bounds
 
@@ -12,7 +13,7 @@ the hard-thresholded matrix `T_λ(S)` satisfies `‖T_λ(S) - Σ‖ ≤ 2 s λ` 
 
 ## Main results
 
-* `CKSD.norm_toEuclideanCLM_le_of_rowSum_le`: the Schur test for symmetric matrices.
+* `CKSD.norm_to_euclidean_clm_le_of_row_sum_le`: the Schur test for symmetric matrices.
 * `CKSD.norm_thresholded_covariance_sub_le`: the deterministic thresholding bound.
 
 Source: GAPS 103.52.
@@ -30,7 +31,7 @@ namespace CKSD
 
 /-- Schur test for a symmetric matrix: the Euclidean operator norm is at most any bound on
 the absolute row sums. -/
-theorem norm_toEuclideanCLM_le_of_rowSum_le {ι : Type*} [Fintype ι] [DecidableEq ι]
+theorem norm_to_euclidean_clm_le_of_row_sum_le {ι : Type*} [Fintype ι] [DecidableEq ι]
     (D : Matrix ι ι ℝ)
     (hD : D.IsSymm) (R : ℝ) (hR : 0 ≤ R) (hrow : ∀ i, ∑ j, |D i j| ≤ R) :
     ‖Matrix.toEuclideanCLM (𝕜 := ℝ) D‖ ≤ R := by
@@ -96,7 +97,7 @@ theorem norm_thresholded_covariance_sub_le {ι : Type*} [Fintype ι] [DecidableE
         have h1 := abs_sub_abs_le_abs_sub (Sigma i j) (S i j)
         rw [abs_sub_comm] at h1
         linarith [not_lt.mp ht]
-  refine norm_toEuclideanCLM_le_of_rowSum_le D hDsymm _ (by positivity) fun i ↦ ?_
+  refine norm_to_euclidean_clm_le_of_row_sum_le D hDsymm _ (by positivity) fun i ↦ ?_
   calc ∑ j, |D i j| ≤ ∑ j, (if Sigma i j ≠ 0 then 2 * lambda else 0) :=
         Finset.sum_le_sum fun j _ ↦ hentry i j
     _ = (Finset.univ.filter fun j ↦ Sigma i j ≠ 0).card * (2 * lambda) := by

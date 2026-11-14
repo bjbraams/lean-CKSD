@@ -7,6 +7,7 @@ public import CKSD.Nonparametric.LowerBounds.Testing
 public import CKSD.Nonparametric.LowerBounds.Gaussian
 public import TauCeti.Probability.Distributions.Gaussian.Affine
 
+
 /-!
 # Gaussian sequence, regression, and sparse estimation models
 
@@ -31,20 +32,20 @@ minimax risks are infima over measurable estimators of suprema of such risks.
 
 ## Main results
 
-* `CKSD.tendsto_gaussianSequenceMinimaxRisk_div_linear` (Pinsker): on an ellipsoid the minimax
+* `CKSD.tendsto_gaussian_sequence_minimax_risk_div_linear` (Pinsker): on an ellipsoid the minimax
   risk is asymptotically equivalent to the linear minimax risk as `ε → 0`.
-* `CKSD.sparseGaussianMinimaxRisk_bounds`: the minimax risk over `s`-sparse means is of order
+* `CKSD.sparse_gaussian_minimax_risk_bounds`: the minimax risk over `s`-sparse means is of order
   `σ² s log(p / s)`, with constants `c = 1 / 512` and `C = 17`. The upper bound is attained by
   soft thresholding at `σ √(2 log (p / s))`; the lower bound places one spike in each of `s`
   disjoint blocks of `m = ⌊p / s⌋` coordinates and combines an averaged Fano inequality (for
   `m ≥ 1024`) or a two-point bound (otherwise) in each block with averaging over the product of
   the block hypotheses.
-* `CKSD.sparseGaussianLaw_eq_map_pi`: `N(θ, σ² I_p)` is the product of its coordinate laws, from
+* `CKSD.sparse_gaussian_law_eq_map_pi`: `N(θ, σ² I_p)` is the product of its coordinate laws, from
   TauCeti's `TauCeti.Probability.map_affine_multivariateGaussian` and
   `TauCeti.Probability.multivariateGaussian_one_eq_map_pi`.
-* `CKSD.sum_measureReal_le_of_klDiv_le`: Fano's inequality in averaged form,
+* `CKSD.sum_measure_real_le_of_kl_div_le`: Fano's inequality in averaged form,
   `∑_j P_j(A_j) ≤ m / 4 + m (K + log 2) / log (m / 4)` for disjoint events.
-* `CKSD.lintegral_softThreshold_sub_sq_le`, `CKSD.lintegral_softThreshold_sq_le`: the Gaussian
+* `CKSD.lintegral_soft_threshold_sub_sq_le`, `CKSD.lintegral_soft_threshold_sq_le`: the Gaussian
   risk of soft thresholding at a nonzero and at a zero mean.
 
 Sources: GAPS 103.7, 103.9, 103.21, 103.33, and 103.34.
@@ -90,7 +91,7 @@ def gaussianSequenceLinearMinimaxRisk (Θ : Set (ℕ → ℝ)) (ε : ℝ) : ℝ�
 /-- GAPS 103.9: Pinsker's theorem. On the ellipsoid `∑ (a_j θ_j)² ≤ R` with positive
 nondecreasing `a_j → ∞`, the ratio of the minimax squared risk to the linear minimax squared
 risk tends to `1` as the noise level `ε` decreases to `0`. -/
-theorem tendsto_gaussianSequenceMinimaxRisk_div_linear (a : ℕ → ℝ)
+theorem tendsto_gaussian_sequence_minimax_risk_div_linear (a : ℕ → ℝ)
     (ha : ∀ j, 0 < a j) (hmono : Monotone a) (hlim : Tendsto a atTop atTop)
     (R : ℝ) (hR : 0 < R) :
     Tendsto (fun ε ↦
@@ -152,7 +153,7 @@ variable {p s m : ℕ}
 
 /-- The sparse Gaussian law `N(θ, σ² I_p)` is the product of the coordinate laws
 `N(θ_i, σ²)`, transported to Euclidean space. -/
-theorem sparseGaussianLaw_eq_map_pi {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) (σ : ℝ) :
+theorem sparse_gaussian_law_eq_map_pi {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) (σ : ℝ) :
     sparseGaussianLaw θ σ =
       (Measure.pi fun i ↦ gaussianReal (θ i) (Real.toNNReal (σ ^ 2))).map (WithLp.toLp 2) := by
   have haff := TauCeti.Probability.map_affine_multivariateGaussian (0 : EuclideanSpace ℝ (Fin p))
@@ -187,7 +188,7 @@ private def blockIndex (h : s * m ≤ p) (b : Fin s) (j : Fin m) : Fin p :=
   Fin.castLE h (finProdFinEquiv (b, j))
 
 /-- Distinct block positions are distinct coordinates. -/
-private theorem blockIndex_inj (h : s * m ≤ p) {b b' : Fin s} {j j' : Fin m} :
+private theorem block_index_inj (h : s * m ≤ p) {b b' : Fin s} {j j' : Fin m} :
     blockIndex h b j = blockIndex h b' j' ↔ b = b' ∧ j = j' := by
   constructor
   · intro hb
@@ -200,16 +201,16 @@ private def blockMean (h : s * m ≤ p) (a : ℝ) (J : Fin s → Fin m) : Fin p 
   fun i ↦ ∑ b, if blockIndex h b (J b) = i then a else 0
 
 /-- Block `b` of the spike mean is the spike `a e_{J b}`. -/
-private theorem blockMean_blockIndex (h : s * m ≤ p) (a : ℝ) (J : Fin s → Fin m) (b : Fin s)
+private theorem block_mean_block_index (h : s * m ≤ p) (a : ℝ) (J : Fin s → Fin m) (b : Fin s)
     (j : Fin m) :
     blockMean h a J (blockIndex h b j) = if J b = j then a else 0 := by
   rw [blockMean, Finset.sum_eq_single b]
-  · simp [blockIndex_inj]
-  · intro b' _ hb'; simp [blockIndex_inj, hb']
+  · simp [block_index_inj]
+  · intro b' _ hb'; simp [block_index_inj, hb']
   · simp
 
 /-- A spike mean with one spike per block is `s`-sparse. -/
-private theorem sparsity_blockMean_le (h : s * m ≤ p) (a : ℝ) (J : Fin s → Fin m) :
+private theorem sparsity_block_mean_le (h : s * m ≤ p) (a : ℝ) (J : Fin s → Fin m) :
     sparsity (WithLp.toLp 2 (blockMean h a J)) ≤ s := by
   unfold sparsity
   calc (Finset.univ.filter fun i ↦ (WithLp.toLp 2 (blockMean h a J)) i ≠ 0).card
@@ -224,7 +225,7 @@ private theorem sparsity_blockMean_le (h : s * m ≤ p) (a : ℝ) (J : Fin s →
     _ ≤ s := Finset.card_image_le.trans (by simp)
 
 /-- Two spike means that differ only in block `b` differ by `a (e_{(b, j)} - e_{(b, k)})`. -/
-private theorem blockMean_update_sub (h : s * m ≤ p) (a : ℝ) (J : Fin s → Fin m) (b : Fin s)
+private theorem block_mean_update_sub (h : s * m ≤ p) (a : ℝ) (J : Fin s → Fin m) (b : Fin s)
     (j k : Fin m) (i : Fin p) :
     blockMean h a (Function.update J b j) i - blockMean h a (Function.update J b k) i =
       (if blockIndex h b j = i then a else 0) - (if blockIndex h b k = i then a else 0) := by
@@ -234,11 +235,11 @@ private theorem blockMean_update_sub (h : s * m ≤ p) (a : ℝ) (J : Fin s → 
   · simp
 
 /-- Two spike means that differ only in block `b` are at squared distance at most `2 a²`. -/
-private theorem sum_sq_blockMean_update_sub_le (h : s * m ≤ p) (a : ℝ) (J : Fin s → Fin m)
+private theorem sum_sq_block_mean_update_sub_le (h : s * m ≤ p) (a : ℝ) (J : Fin s → Fin m)
     (b : Fin s) (j k : Fin m) :
     ∑ i, (blockMean h a (Function.update J b j) i -
       blockMean h a (Function.update J b k) i) ^ 2 ≤ 2 * a ^ 2 := by
-  simp_rw [blockMean_update_sub]
+  simp_rw [block_mean_update_sub]
   have hpt : ∀ i, ((if blockIndex h b j = i then a else 0) -
       (if blockIndex h b k = i then a else 0)) ^ 2 ≤
       (if blockIndex h b j = i then a ^ 2 else 0) +
@@ -252,7 +253,7 @@ private theorem sum_sq_blockMean_update_sub_le (h : s * m ≤ p) (a : ℝ) (J : 
 /-- Averaging over the product of block hypotheses: if, in each block and for each choice of the
 other blocks, the success probabilities sum to at most `β m`, some hypothesis has at least
 `s (1 - β)` expected block failures. -/
-private theorem exists_mul_one_sub_le_sum_measureReal_compl {X : Type*} [MeasurableSpace X]
+private theorem exists_mul_one_sub_le_sum_measure_real_compl {X : Type*} [MeasurableSpace X]
     [NeZero m]
     (P : (Fin s → Fin m) → Measure X) [∀ J, IsProbabilityMeasure (P J)]
     (A : Fin s → Fin m → Set X) (hA : ∀ b j, MeasurableSet (A b j)) (β : ℝ)
@@ -302,12 +303,12 @@ private theorem exists_mul_one_sub_le_sum_measureReal_compl {X : Type*} [Measura
 
 /-- Two-point bound on success probabilities: for disjoint events,
 `P₀(A₀) + P₁(A₁) ≤ 1 + TV(P₀, P₁)`. -/
-theorem sum_measureReal_le_one_add_totalVariationDistance {X : Type*} [MeasurableSpace X]
+theorem sum_measure_real_le_one_add_total_variation_distance {X : Type*} [MeasurableSpace X]
     (P : Fin 2 → Measure X) [∀ j, IsProbabilityMeasure (P j)] (A : Fin 2 → Set X)
     (hA : ∀ j, MeasurableSet (A j)) (hdisj : Disjoint (A 0) (A 1)) :
     ∑ j, (P j).real (A j) ≤ 1 + totalVariationDistance (P 0) (P 1) := by
   rw [Fin.sum_univ_two]
-  have h1 := abs_measureReal_sub_le_totalVariationDistance (P 0) (P 1) (A 1) (hA 1)
+  have h1 := abs_measure_real_sub_le_total_variation_distance (P 0) (P 1) (A 1) (hA 1)
   have h2 : (P 0).real (A 0) + (P 0).real (A 1) ≤ 1 := by
     rw [← measureReal_union hdisj (hA 1)]; exact measureReal_le_one
   have := neg_abs_le ((P 0).real (A 1) - (P 1).real (A 1))
@@ -316,7 +317,7 @@ theorem sum_measureReal_le_one_add_totalVariationDistance {X : Type*} [Measurabl
 /-- Fano's inequality in averaged form: for `m > 4` laws at Kullback–Leibler divergence at most
 `K` from a reference law `Q` and pairwise disjoint events, the success probabilities satisfy
 `∑_j P_j(A_j) ≤ m / 4 + m (K + log 2) / log (m / 4)`. -/
-theorem sum_measureReal_le_of_klDiv_le {X : Type*} [MeasurableSpace X] (hm : 4 < m)
+theorem sum_measure_real_le_of_kl_div_le {X : Type*} [MeasurableSpace X] (hm : 4 < m)
     (P : Fin m → Measure X) [∀ j, IsProbabilityMeasure (P j)] (Q : Measure X)
     [IsProbabilityMeasure Q] (K : ℝ) (hKL : ∀ j, InformationTheory.klDiv (P j) Q ≠ ∞)
     (hK : ∀ j, (InformationTheory.klDiv (P j) Q).toReal ≤ K) (A : Fin m → Set X)
@@ -362,7 +363,7 @@ theorem sum_measureReal_le_of_klDiv_le {X : Type*} [MeasurableSpace X] (hm : 4 <
         rw [← ofReal_measureReal (measure_ne_top Q _), ← hq, ENNReal.ofReal_zero]
       have hP0 : (P j).real (A j) = 0 := by simp [Measure.real, hac hQ0]
       rw [hP0, zero_mul]; positivity
-    have hev := measureReal_mul_neg_log_sub_log_two_le_klDiv (P j) Q (hKL j) (A j) (hA j)
+    have hev := measure_real_mul_neg_log_sub_log_two_le_kl_div (P j) Q (hKL j) (A j) (hA j)
     have hlq : Real.log (m / 4) ≤ -Real.log (Q.real (A j)) := by
       rw [← Real.log_inv]
       apply Real.log_le_log (by positivity)
@@ -384,7 +385,7 @@ private def blockSpike (a : ℝ) (j : Fin m) : EuclideanSpace ℝ (Fin m) :=
   WithLp.toLp 2 fun j' ↦ if j = j' then a else 0
 
 /-- Distinct spikes of height `a ≥ 0` are at distance at least `a`. -/
-private theorem le_dist_blockSpike {a : ℝ} (ha : 0 ≤ a) {j k : Fin m} (hjk : j ≠ k) :
+private theorem le_dist_block_spike {a : ℝ} (ha : 0 ≤ a) {j k : Fin m} (hjk : j ≠ k) :
     a ≤ dist (blockSpike a j) (blockSpike a k) := by
   rw [dist_eq_norm]
   have := PiLp.norm_apply_le (blockSpike a j - blockSpike a k) j
@@ -396,7 +397,7 @@ private def blockEstimate (h : s * m ≤ p) (T : EuclideanSpace ℝ (Fin p) → 
   WithLp.toLp 2 fun j ↦ T (WithLp.toLp 2 x) (blockIndex h b j)
 
 /-- The block coordinates of a measurable estimate are measurable. -/
-private theorem measurable_blockEstimate (h : s * m ≤ p)
+private theorem measurable_block_estimate (h : s * m ≤ p)
     {T : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p)} (hT : Measurable T) (b : Fin s) :
     Measurable (blockEstimate h T b) := by
   have h1 : Measurable fun x : Fin p → ℝ ↦ T (WithLp.toLp 2 x) :=
@@ -405,7 +406,7 @@ private theorem measurable_blockEstimate (h : s * m ≤ p)
     (by fun_prop : Measurable fun z : EuclideanSpace ℝ (Fin p) ↦ z (blockIndex h b j)).comp h1)
 
 /-- The squared error dominates the sum over blocks of the squared block errors. -/
-private theorem sum_dist_blockEstimate_sq_le (h : s * m ≤ p) (a : ℝ)
+private theorem sum_dist_block_estimate_sq_le (h : s * m ≤ p) (a : ℝ)
     (T : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p)) (J : Fin s → Fin m)
     (x : Fin p → ℝ) :
     ∑ b, dist (blockEstimate h T b x) (blockSpike a (J b)) ^ 2 ≤
@@ -415,14 +416,14 @@ private theorem sum_dist_blockEstimate_sq_le (h : s * m ≤ p) (a : ℝ)
     intro b
     rw [EuclideanSpace.dist_eq, Real.sq_sqrt (Finset.sum_nonneg fun _ _ ↦ sq_nonneg _)]
     refine Finset.sum_congr rfl fun j _ ↦ ?_
-    rw [blockMean_blockIndex]
+    rw [block_mean_block_index]
     simp only [blockEstimate, blockSpike, Real.dist_eq, sq_abs, eq_comm (a := J b)]
   simp_rw [hb]
   rw [EuclideanSpace.real_norm_sq_eq]
   have hinj : Set.InjOn (fun q : Fin s × Fin m ↦ blockIndex h q.1 q.2)
       (Finset.univ : Finset (Fin s × Fin m)) := by
     intro q _ q' _ hq
-    have := (blockIndex_inj h).mp hq
+    have := (block_index_inj h).mp hq
     exact Prod.ext this.1 this.2
   set g : Fin p → ℝ := fun i ↦ (T (WithLp.toLp 2 x) i - blockMean h a J i) ^ 2 with hg
   change ∑ b, ∑ j, g (blockIndex h b j) ≤ ∑ i, g i
@@ -448,13 +449,13 @@ private def blockEvent (h : s * m ≤ p) (T : EuclideanSpace ℝ (Fin p) → Euc
   {x | dist (blockEstimate h T b x) (blockSpike a j) < a / 2}
 
 /-- The block success events of a measurable estimator are measurable. -/
-private theorem measurableSet_blockEvent (h : s * m ≤ p)
+private theorem measurable_set_block_event (h : s * m ≤ p)
     {T : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p)} (hT : Measurable T) (a : ℝ)
     (b : Fin s) (j : Fin m) : MeasurableSet (blockEvent h T a b j) :=
-  measurableSet_lt ((measurable_blockEstimate h hT b).dist measurable_const) measurable_const
+  measurableSet_lt ((measurable_block_estimate h hT b).dist measurable_const) measurable_const
 
 /-- The success events of one block are pairwise disjoint, the spikes being `a`-separated. -/
-private theorem pairwise_disjoint_blockEvent (h : s * m ≤ p)
+private theorem pairwise_disjoint_block_event (h : s * m ≤ p)
     (T : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p)) {a : ℝ} (ha : 0 ≤ a) (b : Fin s) :
     Pairwise (Function.onFun Disjoint (blockEvent h T a b)) := by
   intro j k hjk
@@ -462,12 +463,12 @@ private theorem pairwise_disjoint_blockEvent (h : s * m ≤ p)
   have h1 : dist (blockEstimate h T b x) (blockSpike a j) < a / 2 := hj
   have h2 : dist (blockEstimate h T b x) (blockSpike a k) < a / 2 := hk
   have := dist_triangle_left (blockSpike a j) (blockSpike a k) (blockEstimate h T b x)
-  have := le_dist_blockSpike ha hjk
+  have := le_dist_block_spike ha hjk
   linarith
 
 /-- The risk at a block hypothesis dominates `a² / 4` times the expected number of failed
 blocks. -/
-private theorem ofReal_mul_sum_le_lintegral_blockMean (h : s * m ≤ p) {a : ℝ} (ha : 0 ≤ a)
+private theorem of_real_mul_sum_le_lintegral_block_mean (h : s * m ≤ p) {a : ℝ} (ha : 0 ≤ a)
     (σ : ℝ)
     {T : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p)} (hT : Measurable T)
     (J : Fin s → Fin m) :
@@ -476,7 +477,7 @@ private theorem ofReal_mul_sum_le_lintegral_blockMean (h : s * m ≤ p) {a : ℝ
         ∂sparseGaussianLaw (WithLp.toLp 2 (blockMean h a J)) σ := by
   have hlaw : sparseGaussianLaw (WithLp.toLp 2 (blockMean h a J)) σ =
       (blockLaw h a σ J).map (WithLp.toLp 2) := by
-    rw [sparseGaussianLaw_eq_map_pi]; rfl
+    rw [sparse_gaussian_law_eq_map_pi]; rfl
   have hF : Measurable fun y : EuclideanSpace ℝ (Fin p) ↦
       ENNReal.ofReal (‖T y - WithLp.toLp 2 (blockMean h a J)‖ ^ 2) := by
     fun_prop
@@ -485,7 +486,7 @@ private theorem ofReal_mul_sum_le_lintegral_blockMean (h : s * m ≤ p) {a : ℝ
       (fun _ ↦ ENNReal.ofReal (a ^ 2 / 4)) x ≤
       ENNReal.ofReal (‖T (WithLp.toLp 2 x) - WithLp.toLp 2 (blockMean h a J)‖ ^ 2) := by
     intro x
-    refine le_trans ?_ (ENNReal.ofReal_le_ofReal (sum_dist_blockEstimate_sq_le h a T J x))
+    refine le_trans ?_ (ENNReal.ofReal_le_ofReal (sum_dist_block_estimate_sq_le h a T J x))
     rw [ENNReal.ofReal_sum_of_nonneg fun b _ ↦ sq_nonneg _]
     refine Finset.sum_le_sum fun b _ ↦ ?_
     by_cases hx : x ∈ (blockEvent h T a b (J b))ᶜ
@@ -497,15 +498,15 @@ private theorem ofReal_mul_sum_le_lintegral_blockMean (h : s * m ≤ p) {a : ℝ
     · rw [Set.indicator_of_notMem hx]; positivity
   refine le_trans (le_of_eq ?_) (lintegral_mono hpt)
   rw [lintegral_finsetSum _ fun b _ ↦ (measurable_const.indicator
-    (measurableSet_blockEvent h hT a b (J b)).compl)]
-  simp_rw [lintegral_indicator_const (measurableSet_blockEvent h hT a _ _).compl]
+    (measurable_set_block_event h hT a b (J b)).compl)]
+  simp_rw [lintegral_indicator_const (measurable_set_block_event h hT a _ _).compl]
   rw [Finset.mul_sum, ENNReal.ofReal_sum_of_nonneg fun b _ ↦ by positivity]
   refine Finset.sum_congr rfl fun b _ ↦ ?_
   rw [ENNReal.ofReal_mul (by positivity), ofReal_measureReal (measure_ne_top _ _)]
 
 /-- Block lower bound: if every block's success probabilities sum to at most `β m`, the minimax
 risk over `s`-sparse means is at least `s (1 - β) a² / 4`. -/
-private theorem ofReal_le_iSup_lintegral_of_block (h : s * m ≤ p) [NeZero m] {a : ℝ}
+private theorem of_real_le_i_sup_lintegral_of_block (h : s * m ≤ p) [NeZero m] {a : ℝ}
     (ha : 0 ≤ a)
     (σ β : ℝ) (hH : ∀ (b : Fin s) (J : Fin s → Fin m) (A : Fin m → Set (Fin p → ℝ)),
       (∀ j, MeasurableSet (A j)) → Pairwise (Function.onFun Disjoint A) →
@@ -514,53 +515,53 @@ private theorem ofReal_le_iSup_lintegral_of_block (h : s * m ≤ p) [NeZero m] {
     ENNReal.ofReal (s * (1 - β) * (a ^ 2 / 4)) ≤
       ⨆ θ : {θ : EuclideanSpace ℝ (Fin p) // sparsity θ ≤ s},
         ∫⁻ y, ENNReal.ofReal (‖T y - θ.val‖ ^ 2) ∂sparseGaussianLaw θ.val σ := by
-  obtain ⟨J, hJ⟩ := exists_mul_one_sub_le_sum_measureReal_compl (blockLaw h a σ)
-    (blockEvent h T a) (measurableSet_blockEvent h hT a) β fun b J ↦
-      hH b J _ (measurableSet_blockEvent h hT a b) (pairwise_disjoint_blockEvent h T ha b)
-  refine le_iSup_of_le ⟨WithLp.toLp 2 (blockMean h a J), sparsity_blockMean_le h a J⟩ ?_
-  refine le_trans ?_ (ofReal_mul_sum_le_lintegral_blockMean h ha σ hT J)
+  obtain ⟨J, hJ⟩ := exists_mul_one_sub_le_sum_measure_real_compl (blockLaw h a σ)
+    (blockEvent h T a) (measurable_set_block_event h hT a) β fun b J ↦
+      hH b J _ (measurable_set_block_event h hT a b) (pairwise_disjoint_block_event h T ha b)
+  refine le_iSup_of_le ⟨WithLp.toLp 2 (blockMean h a J), sparsity_block_mean_le h a J⟩ ?_
+  refine le_trans ?_ (of_real_mul_sum_le_lintegral_block_mean h ha σ hT J)
   apply ENNReal.ofReal_le_ofReal
   have : 0 ≤ a ^ 2 / 4 := by positivity
   nlinarith
 
 /-- Squared mean differences between neighbouring block hypotheses, in units of the
 variance, are at most `2 a² / σ²`. -/
-private theorem sum_sq_blockMean_sub_div_le (h : s * m ≤ p) {a σ : ℝ} (hσ : 0 < σ)
+private theorem sum_sq_block_mean_sub_div_le (h : s * m ≤ p) {a σ : ℝ} (hσ : 0 < σ)
     (J : Fin s → Fin m)
     (b : Fin s) (j k : Fin m) :
     (∑ i, (blockMean h a (Function.update J b j) i -
       blockMean h a (Function.update J b k) i) ^ 2) / (Real.toNNReal (σ ^ 2) : ℝ) ≤
       2 * a ^ 2 / σ ^ 2 := by
   rw [Real.coe_toNNReal _ (sq_nonneg σ)]
-  exact div_le_div_of_nonneg_right (sum_sq_blockMean_update_sub_le h a J b j k) (by positivity)
+  exact div_le_div_of_nonneg_right (sum_sq_block_mean_update_sub_le h a J b j k) (by positivity)
 
 /-- Small-ratio regime: two spikes per block of height `σ / 2` give the bound `s σ² / 64`. -/
-private theorem ofReal_le_iSup_lintegral_two (h : s * 2 ≤ p) {σ : ℝ} (hσ : 0 < σ)
+private theorem of_real_le_i_sup_lintegral_two (h : s * 2 ≤ p) {σ : ℝ} (hσ : 0 < σ)
     {T : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p)} (hT : Measurable T) :
     ENNReal.ofReal (s * σ ^ 2 / 64) ≤
       ⨆ θ : {θ : EuclideanSpace ℝ (Fin p) // sparsity θ ≤ s},
         ∫⁻ y, ENNReal.ofReal (‖T y - θ.val‖ ^ 2) ∂sparseGaussianLaw θ.val σ := by
   have hv : Real.toNNReal (σ ^ 2) ≠ 0 := by simp [hσ.ne']
-  have key := ofReal_le_iSup_lintegral_of_block h (a := σ / 2) (by positivity) σ (3 / 4) ?_ hT
+  have key := of_real_le_i_sup_lintegral_of_block h (a := σ / 2) (by positivity) σ (3 / 4) ?_ hT
   · refine le_trans (le_of_eq ?_) key
     congr 1; ring
   intro b J A hA hdisj
   have htv : totalVariationDistance (blockLaw h (σ / 2) σ (Function.update J b 0))
       (blockLaw h (σ / 2) σ (Function.update J b 1)) ≤ 1 / 2 := by
-    refine (totalVariationDistance_pi_gaussianReal_le _ _ hv).trans ?_
+    refine (total_variation_distance_pi_gaussian_real_le _ _ hv).trans ?_
     rw [Real.sqrt_le_left (by norm_num)]
-    have := sum_sq_blockMean_sub_div_le h (a := σ / 2) hσ J b 1 0
+    have := sum_sq_block_mean_sub_div_le h (a := σ / 2) hσ J b 1 0
     rw [mul_comm (4 : ℝ), ← div_div]
     calc _ ≤ 2 * (σ / 2) ^ 2 / σ ^ 2 / 4 := by gcongr
       _ ≤ (1 / 2) ^ 2 := by field_simp; norm_num
-  have := sum_measureReal_le_one_add_totalVariationDistance
+  have := sum_measure_real_le_one_add_total_variation_distance
     (fun j ↦ blockLaw h (σ / 2) σ (Function.update J b j)) A hA (hdisj (by decide))
   push_cast
   linarith
 
 /-- Large-ratio regime: for `m ≥ 1024`, `m` spikes per block of height
 `σ √(log (m / 4) / 8)` give the bound `s σ² log (m / 4) / 64`. -/
-private theorem ofReal_le_iSup_lintegral_many (hm : 1024 ≤ m) (h : s * m ≤ p) {σ : ℝ}
+private theorem of_real_le_i_sup_lintegral_many (hm : 1024 ≤ m) (h : s * m ≤ p) {σ : ℝ}
     (hσ : 0 < σ)
     {T : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p)} (hT : Measurable T) :
     ENNReal.ofReal (s * σ ^ 2 * Real.log ((m : ℝ) / 4) / 64) ≤
@@ -578,7 +579,7 @@ private theorem ofReal_le_iSup_lintegral_many (hm : 1024 ≤ m) (h : s * m ≤ p
   have hL0 : 0 < L := by linarith
   set a := σ * Real.sqrt (L / 8) with ha
   have ha2 : a ^ 2 = σ ^ 2 * (L / 8) := by rw [ha, mul_pow, Real.sq_sqrt (by positivity)]
-  have key := ofReal_le_iSup_lintegral_of_block h (a := a) (by positivity) σ (1 / 2) ?_ hT
+  have key := of_real_le_i_sup_lintegral_of_block h (a := a) (by positivity) σ (1 / 2) ?_ hT
   · refine le_trans (le_of_eq ?_) key
     congr 1; rw [ha2]; ring
   intro b J A hA hdisj
@@ -586,7 +587,7 @@ private theorem ofReal_le_iSup_lintegral_many (hm : 1024 ≤ m) (h : s * m ≤ p
       (blockLaw h a σ (Function.update J b 0)) =
       ∑ i, ENNReal.ofReal ((blockMean h a (Function.update J b 0) i -
         blockMean h a (Function.update J b j) i) ^ 2 / (2 * (Real.toNNReal (σ ^ 2) : ℝ))) :=
-    fun j ↦ klDiv_pi_gaussianReal _ _ hv
+    fun j ↦ kl_div_pi_gaussian_real _ _ hv
   have hfin : ∀ j, InformationTheory.klDiv (blockLaw h a σ (Function.update J b j))
       (blockLaw h a σ (Function.update J b 0)) ≠ ∞ := by
     intro j; rw [hKL]; exact ENNReal.sum_ne_top.mpr fun i _ ↦ ENNReal.ofReal_ne_top
@@ -596,10 +597,10 @@ private theorem ofReal_le_iSup_lintegral_many (hm : 1024 ≤ m) (h : s * m ≤ p
     rw [hKL, ENNReal.toReal_sum fun i _ ↦ ENNReal.ofReal_ne_top]
     rw [Finset.sum_congr rfl fun i _ ↦ ENNReal.toReal_ofReal (by positivity), ← Finset.sum_div,
       mul_comm (2 : ℝ), ← div_div]
-    have := sum_sq_blockMean_sub_div_le h (a := a) hσ J b 0 j
+    have := sum_sq_block_mean_sub_div_le h (a := a) hσ J b 0 j
     calc _ ≤ 2 * a ^ 2 / σ ^ 2 / 2 := by gcongr
       _ = L / 8 := by rw [ha2]; field_simp
-  have hF := sum_measureReal_le_of_klDiv_le (by omega)
+  have hF := sum_measure_real_le_of_kl_div_le (by omega)
     (fun j ↦ blockLaw h a σ (Function.update J b j)) (blockLaw h a σ (Function.update J b 0))
     (L / 8) hfin hK A hA hdisj
   refine hF.trans ?_
@@ -617,17 +618,17 @@ for `λ ≥ 0`. -/
 def softThreshold (l y : ℝ) : ℝ := y - max (-l) (min l y)
 
 /-- Soft thresholding is continuous. -/
-theorem continuous_softThreshold (l : ℝ) : Continuous (softThreshold l) := by
+theorem continuous_soft_threshold (l : ℝ) : Continuous (softThreshold l) := by
   unfold softThreshold; fun_prop
 
 /-- Soft thresholding at level `λ ≥ 0` moves each point by at most `λ`. -/
-theorem abs_softThreshold_sub_le {l : ℝ} (hl : 0 ≤ l) (y : ℝ) : |softThreshold l y - y| ≤ l := by
+theorem abs_soft_threshold_sub_le {l : ℝ} (hl : 0 ≤ l) (y : ℝ) : |softThreshold l y - y| ≤ l := by
   unfold softThreshold
   rw [sub_sub_cancel_left, abs_neg, abs_le]
   exact ⟨le_max_left _ _, max_le (by linarith) (min_le_left _ _)⟩
 
 /-- Soft thresholding at level `λ ≥ 0` satisfies `|η_λ(y)| ≤ (|y| - λ)₊`. -/
-theorem abs_softThreshold_le {l : ℝ} (hl : 0 ≤ l) (y : ℝ) :
+theorem abs_soft_threshold_le {l : ℝ} (hl : 0 ≤ l) (y : ℝ) :
     |softThreshold l y| ≤ max (|y| - l) 0 := by
   unfold softThreshold
   rcases le_total l y with h | h
@@ -642,12 +643,12 @@ theorem abs_softThreshold_le {l : ℝ} (hl : 0 ≤ l) (y : ℝ) :
     exact le_max_right _ _
 
 /-- Risk of soft thresholding at a nonzero mean. -/
-theorem lintegral_softThreshold_sub_sq_le {l : ℝ} (hl : 0 ≤ l) (μ : ℝ) (v : ℝ≥0) :
+theorem lintegral_soft_threshold_sub_sq_le {l : ℝ} (hl : 0 ≤ l) (μ : ℝ) (v : ℝ≥0) :
     ∫⁻ y, ENNReal.ofReal ((softThreshold l y - μ) ^ 2) ∂gaussianReal μ v ≤
       ENNReal.ofReal (2 * l ^ 2 + 2 * v) := by
   have hpt : ∀ y, (softThreshold l y - μ) ^ 2 ≤ 2 * l ^ 2 + 2 * (y - μ) ^ 2 := by
     intro y
-    have h1 := abs_softThreshold_sub_le hl y
+    have h1 := abs_soft_threshold_sub_le hl y
     have h2 : (softThreshold l y - y) ^ 2 ≤ l ^ 2 := by
       rw [← sq_abs]; exact pow_le_pow_left₀ (abs_nonneg _) h1 2
     nlinarith [sq_nonneg (softThreshold l y - y - (y - μ))]
@@ -667,7 +668,7 @@ theorem lintegral_softThreshold_sub_sq_le {l : ℝ} (hl : 0 ≤ l) (μ : ℝ) (v
         rw [integral_const_mul (2 : ℝ) (fun a ↦ (a - μ) ^ 2), hv]; simp
 
 /-- Risk of soft thresholding at the level `t σ` at a zero mean: `≤ 4 σ² e^{1/2 - t²/2}`. -/
-theorem lintegral_softThreshold_sq_le {σ t : ℝ} (hσ : 0 < σ) (ht : 0 ≤ t) :
+theorem lintegral_soft_threshold_sq_le {σ t : ℝ} (hσ : 0 < σ) (ht : 0 ≤ t) :
     ∫⁻ y, ENNReal.ofReal (softThreshold (t * σ) y ^ 2) ∂gaussianReal 0 (Real.toNNReal (σ ^ 2)) ≤
       ENNReal.ofReal (4 * σ ^ 2 * Real.exp (1 / 2 - t ^ 2 / 2)) := by
   set c := (1 + t) / σ with hc
@@ -675,7 +676,7 @@ theorem lintegral_softThreshold_sq_le {σ t : ℝ} (hσ : 0 < σ) (ht : 0 ≤ t)
   have hpt : ∀ y, softThreshold (t * σ) y ^ 2 ≤
       K * (Real.exp (c * y) + Real.exp ((-c) * y)) := by
     intro y
-    have h0 := abs_softThreshold_le (by positivity : 0 ≤ t * σ) y
+    have h0 := abs_soft_threshold_le (by positivity : 0 ≤ t * σ) y
     have hKpos : 0 ≤ K := by positivity
     rcases le_total (|y| - t * σ) 0 with hy | hy
     · rw [max_eq_right hy] at h0
@@ -735,7 +736,7 @@ private theorem exp_one_half_le : Real.exp (1 / 2) ≤ 7 / 4 := by
 
 /-- Soft thresholding at `σ √(2 log (p / s))` has risk at most `17 σ² s log (p / s)` at every
 `s`-sparse mean. -/
-private theorem lintegral_softThreshold_risk_le {p s : ℕ} (hs : 1 ≤ s) (hsp : 2 * s ≤ p)
+private theorem lintegral_soft_threshold_risk_le {p s : ℕ} (hs : 1 ≤ s) (hsp : 2 * s ≤ p)
     {σ : ℝ}
     (hσ : 0 < σ) (θ : EuclideanSpace ℝ (Fin p)) (hθ : sparsity θ ≤ s) :
     ∫⁻ y, ENNReal.ofReal (‖WithLp.toLp 2 (fun i ↦ softThreshold
@@ -768,13 +769,13 @@ private theorem lintegral_softThreshold_risk_le {p s : ℕ} (hs : 1 ≤ s) (hsp 
     rw [hii] at hmp
     have hmeas : Measurable fun x : ℝ ↦ ENNReal.ofReal ((softThreshold l x - θ i) ^ 2) :=
       ENNReal.measurable_ofReal.comp
-        (((continuous_softThreshold l).sub continuous_const).pow 2).measurable
+        (((continuous_soft_threshold l).sub continuous_const).pow 2).measurable
     rw [sparseGaussianLaw, hmp.lintegral_comp hmeas]
     split_ifs with h0
     · rw [h0]
       simp only [sub_zero]
-      exact lintegral_softThreshold_sq_le hσ ht0
-    · refine (lintegral_softThreshold_sub_sq_le hl0 (θ i) _).trans ?_
+      exact lintegral_soft_threshold_sq_le hσ ht0
+    · refine (lintegral_soft_threshold_sub_sq_le hl0 (θ i) _).trans ?_
       rw [Real.coe_toNNReal _ (sq_nonneg σ)]
   have hnorm : ∀ y : EuclideanSpace ℝ (Fin p),
       ENNReal.ofReal (‖WithLp.toLp 2 (fun i ↦ softThreshold l (y i)) - θ‖ ^ 2) =
@@ -785,7 +786,7 @@ private theorem lintegral_softThreshold_risk_le {p s : ℕ} (hs : 1 ≤ s) (hsp 
   simp_rw [hnorm]
   rw [lintegral_finsetSum _ fun i _ ↦ by
     have : Continuous fun y : EuclideanSpace ℝ (Fin p) ↦ (softThreshold l (y i) - θ i) ^ 2 := by
-      have := continuous_softThreshold l; fun_prop
+      have := continuous_soft_threshold l; fun_prop
     exact ENNReal.measurable_ofReal.comp this.measurable]
   refine (Finset.sum_le_sum fun i _ ↦ hcoord i).trans ?_
   have hB0n : 0 ≤ B0 := by positivity
@@ -813,7 +814,7 @@ private theorem lintegral_softThreshold_risk_le {p s : ℕ} (hs : 1 ≤ s) (hsp 
 /-- GAPS 103.33: the sparse minimax rate. There are universal constants `0 < c ≤ C` such that
 for `1 ≤ s` and `2 s ≤ p` the minimax squared risk over `s`-sparse means in `N(θ, σ² I_p)` lies
 between `c σ² s log(p / s)` and `C σ² s log(p / s)`. -/
-theorem sparseGaussianMinimaxRisk_bounds :
+theorem sparse_gaussian_minimax_risk_bounds :
     ∃ c > (0 : ℝ), ∃ C > (0 : ℝ), ∀ p s : ℕ, 1 ≤ s → 2 * s ≤ p → ∀ σ : ℝ, 0 < σ →
       ENNReal.ofReal (c * σ ^ 2 * s * Real.log ((p : ℝ) / s)) ≤ sparseGaussianMinimaxRisk p s σ ∧
       sparseGaussianMinimaxRisk p s σ ≤
@@ -839,7 +840,7 @@ theorem sparseGaussianMinimaxRisk_bounds :
       positivity
     have hlogle : Real.log ((p : ℝ) / s) ≤ Real.log (2 * m) := Real.log_le_log hps hlt
     rcases le_or_gt 1024 m with hbig | hsmall
-    · refine le_trans ?_ (ofReal_le_iSup_lintegral_many hbig (Nat.mul_div_le p s) hσ T.2)
+    · refine le_trans ?_ (of_real_le_i_sup_lintegral_many hbig (Nat.mul_div_le p s) hσ T.2)
       apply ENNReal.ofReal_le_ofReal
       have hm0 : (0 : ℝ) < m := by exact_mod_cast (show 0 < m by omega)
       have h2m : Real.log (2 * m) = Real.log 8 + Real.log ((m : ℝ) / 4) := by
@@ -853,7 +854,7 @@ theorem sparseGaussianMinimaxRisk_bounds :
         exact Real.log_le_log (by positivity) (by norm_num; linarith)
       have hσ2 : 0 < σ ^ 2 * s := by positivity
       nlinarith
-    · refine le_trans ?_ (ofReal_le_iSup_lintegral_two (by omega) hσ T.2)
+    · refine le_trans ?_ (of_real_le_i_sup_lintegral_two (by omega) hσ T.2)
       apply ENNReal.ofReal_le_ofReal
       have hm' : (2 * m : ℝ) ≤ 2 ^ 11 := by
         have : (m : ℝ) ≤ 1024 := by exact_mod_cast hsmall.le
@@ -868,19 +869,19 @@ theorem sparseGaussianMinimaxRisk_bounds :
   · have hTm : Measurable fun y : EuclideanSpace ℝ (Fin p) ↦ WithLp.toLp 2 (fun i ↦
         softThreshold (Real.sqrt (2 * Real.log ((p : ℝ) / s)) * σ) (y i)) :=
       ((PiLp.continuous_toLp 2 _).comp (continuous_pi fun i ↦
-        (continuous_softThreshold _).comp (EuclideanSpace.proj (𝕜 := ℝ) i).continuous)).measurable
+        (continuous_soft_threshold _).comp (EuclideanSpace.proj (𝕜 := ℝ) i).continuous)).measurable
     unfold sparseGaussianMinimaxRisk
     refine iInf_le_of_le ⟨_, hTm⟩ (iSup_le fun θ ↦ ?_)
-    exact lintegral_softThreshold_risk_le hs hsp hσ θ.val θ.2
+    exact lintegral_soft_threshold_risk_le hs hsp hσ θ.val θ.2
 
 end SparseMinimax
 
 /-- Any sequence has zero squared error against itself, including nonsummable sequences. -/
-@[simp] theorem sequenceSquaredError_self (θ : ℕ → ℝ) : sequenceSquaredError θ θ = 0 := by
+@[simp] theorem sequence_squared_error_self (θ : ℕ → ℝ) : sequenceSquaredError θ θ = 0 := by
   simp [sequenceSquaredError]
 
 /-- A zero bandwidth gives the unweighted mean when the kernel is nonzero at the origin. -/
-theorem nadarayaWatson_zero_bandwidth {d n : ℕ} (K : EuclideanSpace ℝ (Fin d) → ℝ)
+theorem nadaraya_watson_zero_bandwidth {d n : ℕ} (K : EuclideanSpace ℝ (Fin d) → ℝ)
     (hK : K 0 ≠ 0) (x : Fin n → EuclideanSpace ℝ (Fin d)) (y : Fin n → ℝ)
     (t : EuclideanSpace ℝ (Fin d)) :
     nadarayaWatson K 0 x y t = (∑ i, y i) / n := by

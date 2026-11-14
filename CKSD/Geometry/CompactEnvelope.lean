@@ -1,4 +1,5 @@
 module
+
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Topology.Bases
 public import Mathlib.Topology.Compactness.Compact
@@ -22,7 +23,7 @@ minimizers. The quadratic remainder then vanishes in the difference quotient.
 ## Main results
 
 * `CKSD.tendsto_coefficient_of_compact_minimization`: convergence of minimizing coefficients.
-* `CKSD.hasDerivAt_compact_quadratic_minimum`: differentiation of the quadratic envelope.
+* `CKSD.has_deriv_at_compact_quadratic_minimum`: differentiation of the quadratic envelope.
 -/
 
 public section
@@ -32,7 +33,7 @@ namespace CKSD
 
 /-- A lower semicontinuous function is bounded above at a sequential limit by the limit of its
   values. -/
-lemma lowerSemicontinuousOn_le_of_tendsto {X : Type*} [TopologicalSpace X]
+lemma lower_semicontinuous_on_le_of_tendsto {X : Type*} [TopologicalSpace X]
     {S : Set X} {f : X → ℝ} (hf : LowerSemicontinuousOn f S)
     {q : ℕ → X} {x : X} {b : ℝ} (hx : x ∈ S) (hq : ∀ n, q n ∈ S)
     (hqx : Tendsto q atTop (𝓝 x)) (hb : Tendsto (fun n ↦ f (q n)) atTop (𝓝 b)) :
@@ -89,10 +90,10 @@ theorem tendsto_coefficient_of_compact_minimization {X I : Type*} [TopologicalSp
     hAlim.comp (hns.comp hms.tendsto_atTop)
   have hqmem : ∀ n, q (ns (ms n)) ∈ S := fun n ↦ hq _
   have hax : A x = a := le_antisymm
-    (lowerSemicontinuousOn_le_of_tendsto hA hxb.1 hqmem hxlim halim) (ha x hxb.1)
-  have hp := lowerSemicontinuousOn_le_of_tendsto hAp hxb.1 hqmem hxlim
+    (lower_semicontinuous_on_le_of_tendsto hA hxb.1 hqmem hxlim halim) (ha x hxb.1)
+  have hp := lower_semicontinuous_on_le_of_tendsto hAp hxb.1 hqmem hxlim
     (halim.add hblim)
-  have hm := lowerSemicontinuousOn_le_of_tendsto hAm hxb.1 hqmem hxlim
+  have hm := lower_semicontinuous_on_le_of_tendsto hAm hxb.1 hqmem hxlim
     (halim.sub hblim)
   have hbx : B x = b := by linarith
   have hbD : b = D := hbx.symm.trans (hD x hxb.1 hax)
@@ -100,7 +101,7 @@ theorem tendsto_coefficient_of_compact_minimization {X I : Type*} [TopologicalSp
 
 /-- A compact quadratic-envelope differentiation rule. The first-order coefficient need only
 be uniquely determined among minimizers; the minimizing point itself may not be unique. -/
-theorem hasDerivAt_compact_quadratic_minimum {X : Type*} [TopologicalSpace X]
+theorem has_deriv_at_compact_quadratic_minimum {X : Type*} [TopologicalSpace X]
     [FirstCountableTopology X] {S : Set X} (hS : IsCompact S) (A B : X → ℝ)
     (hA : LowerSemicontinuousOn A S)
     (hAp : LowerSemicontinuousOn (fun x ↦ A x + B x) S)

@@ -2,6 +2,7 @@ module
 
 public import CKSD.LinearModels.DirectedGraphical.Basic.ActiveTrails
 
+
 /-!
 # Discrete directed factorization and the global Markov property
 
@@ -27,7 +28,7 @@ directed acyclic graph structure, active paths, d-separation and Markov equivale
 
 ## Main results
 
-* `CKSD.condIndepMass_directedFactorizationMass_of_dSeparated`: a recursive product of local
+* `CKSD.cond_indep_mass_directed_factorization_mass_of_d_separated`: a recursive product of local
   masses respecting the parents satisfies the global directed Markov property. The proof sums
   out the coordinates outside the ancestral closure of `A ∪ B ∪ C` and splits the remaining
   product according to reachability from `A` by trails whose noncolliders avoid `C`; the
@@ -171,7 +172,7 @@ theorem CausalGraph.Adjacent.symm {G : CausalGraph V} {u v : V} (h : G.Adjacent 
   Or.symm h
 
 /-- Adjacent vertices are joined by an active path of length one, whatever is conditioned on. -/
-theorem CausalGraph.Adjacent.not_dSeparated {G : CausalGraph V} {u v : V} (h : G.Adjacent u v)
+theorem CausalGraph.Adjacent.not_d_separated {G : CausalGraph V} {u v : V} (h : G.Adjacent u v)
     (Z : Set V) : ¬ G.DSeparated {u} {v} Z := by
   intro hsep
   refine hsep 1 ![u, v] rfl rfl ⟨?_, ?_, fun i ↦ i.elim0⟩
@@ -210,7 +211,7 @@ theorem CausalGraph.DSeparated.symm {G : CausalGraph V} {A B Z : Set V}
 
 /-- A path leaving `u` along an outgoing arrow and active given the parents of `u` is a
 directed path out of `u`. -/
-theorem CausalGraph.isDescendant_of_isActivePath_parents (G : CausalGraph V) {u : V}
+theorem CausalGraph.is_descendant_of_is_active_path_parents (G : CausalGraph V) {u : V}
     {n : ℕ} {p : Fin (n + 1) → V} (hp : G.IsActivePath (G.parents u) p) (h0 : p 0 = u)
     (hn : 0 < n) (hlast : ¬ G.edge (p (Fin.last n)) u) :
     G.IsDescendant u (p (Fin.last n)) := by
@@ -268,14 +269,14 @@ theorem CausalGraph.isDescendant_of_isActivePath_parents (G : CausalGraph V) {u 
 
 /-- A vertex `u` is d-separated by its parents from every other vertex that is neither a parent
 nor a descendant of `u`. -/
-theorem CausalGraph.dSeparated_parents_of_not_isDescendant (G : CausalGraph V) {u v : V}
+theorem CausalGraph.d_separated_parents_of_not_is_descendant (G : CausalGraph V) {u v : V}
     (huv : u ≠ v) (hpar : ¬ G.edge v u) (hdesc : ¬ G.IsDescendant u v) :
     G.DSeparated {u} {v} (G.parents u) := by
   intro n p h0 hn hp
   rw [mem_singleton_iff] at h0 hn
   rcases Nat.eq_zero_or_pos n with rfl | hpos
   · exact huv (h0.symm.trans hn)
-  · exact hdesc (hn ▸ G.isDescendant_of_isActivePath_parents hp h0 hpos (hn ▸ hpar))
+  · exact hdesc (hn ▸ G.is_descendant_of_is_active_path_parents hp h0 hpos (hn ▸ hpar))
 
 
 /-- Splitting a sum over configurations according to the value at one coordinate. -/
@@ -469,7 +470,7 @@ theorem sum_ite_mul_sum_ite_of_factor [Fintype V] [Fintype S] (g F H : (V → S)
 
 /-- Marginalizing a recursive product onto a set `E` inside an ancestral set `D` (closed under
 parents): the coordinates outside `D` may be frozen at those of `x` and their factors dropped. -/
-theorem marginalMass_directedFactorizationMass_eq_of_isAncestral [Fintype V] [Fintype S]
+theorem marginal_mass_directed_factorization_mass_eq_of_is_ancestral [Fintype V] [Fintype S]
     (G : CausalGraph V) (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (x : V → S) {D E : Finset V}
     (hD : ∀ v ∈ D, ∀ u, G.edge u v → u ∈ D) (hE : E ⊆ D) :
@@ -488,7 +489,7 @@ theorem marginalMass_directedFactorizationMass_eq_of_isAncestral [Fintype V] [Fi
 /-- GAPS 105.62 (core step): a mass function that factorizes recursively along a directed
 acyclic graph, with local masses respecting the parents, satisfies the global directed Markov
 property: d-separation of disjoint sets implies conditional independence. -/
-theorem condIndepMass_directedFactorizationMass_of_dSeparated [Fintype V] [Fintype S]
+theorem cond_indep_mass_directed_factorization_mass_of_d_separated [Fintype V] [Fintype S]
     (G : CausalGraph V) (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (A B C : Finset V)
     (hAC : Disjoint A C) (hBC : Disjoint B C) (hsep : G.DSeparated ↑A ↑B ↑C) :
@@ -511,7 +512,7 @@ theorem condIndepMass_directedFactorizationMass_of_dSeparated [Fintype V] [Finty
       marginalMass (directedFactorizationMass localMass) E x =
         ∑ y, if ∀ v ∈ E, y v = x v then g y else 0 := by
     intro E hE
-    exact marginalMass_directedFactorizationMass_eq_of_isAncestral G localMass hloc hpar x hDpar
+    exact marginal_mass_directed_factorization_mass_eq_of_is_ancestral G localMass hloc hpar x hDpar
       (hE.trans hABCD)
   -- the vertices reachable from `A` by trails with noncolliders outside `C`, colliders in `D`
   let R : Finset V := Finset.univ.filter fun w ↦ w ∈ D ∧ w ∉ C ∧
@@ -586,7 +587,7 @@ theorem condIndepMass_directedFactorizationMass_of_dSeparated [Fintype V] [Finty
   have hBR : Disjoint B R := by
     refine Finset.disjoint_left.2 fun b hb hbR ↦ ?_
     obtain ⟨-, -, n, q, hq, h0, hn⟩ := (Finset.mem_filter.1 hbR).2
-    refine G.false_of_dSeparated_of_semiActiveTrail (A := ↑A) (B := ↑B) (C := ↑C) (D := ↑D)
+    refine G.false_of_d_separated_of_semi_active_trail (A := ↑A) (B := ↑B) (C := ↑C) (D := ↑D)
       hsep (fun a ha ↦ Finset.disjoint_left.1 hAC ha) (fun b hb ↦ Finset.disjoint_left.1 hBC hb)
       ?_ hq h0 (by rw [hn]; exact hb)
     intro v hv hcl

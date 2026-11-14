@@ -14,6 +14,7 @@ public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Gaussian.FixedP
 public import CKSD.Geometry.BuresFixedPoint
 public import CKSD.Geometry.SmoothedWasserstein
 
+
 /-!
 # Statistical optimal transport
 
@@ -32,19 +33,19 @@ step for Wasserstein barycenters. Wasserstein distances are TauCeti's `TauCeti.w
 
 * `CKSD.integral_empirical_wasserstein_rpow_le`: empirical `W_p^p` rates on the unit ball
   (GAPS 108.40).
-* `CKSD.exists_measure_preserving_isometryEquiv_of_zero_distortion`: a coupling of zero distortion
+* `CKSD.exists_measure_preserving_isometry_equiv_of_zero_distortion`: a coupling of zero distortion
   between fully supported laws on compact spaces comes from a measure-preserving isometry
   (GAPS 108.43).
 * `CKSD.exists_unique_gaussian_wasserstein_barycenter`: Gaussian barycenters (GAPS 108.46).
-* `CKSD.rpow_div_le_wassersteinEDist_volume_cube`: the quantization lower bound for the uniform
+* `CKSD.rpow_div_le_wasserstein_e_dist_volume_cube`: the quantization lower bound for the uniform
   cube (GAPS 108.50).
-* `CKSD.integral_wasserstein_gaussianSmoothing_empiricalMeasure_le`: the parametric rate of
+* `CKSD.integral_wasserstein_gaussian_smoothing_empirical_measure_le`: the parametric rate of
   Gaussian-smoothed empirical `W₁` (GAPS 108.51).
-* `CKSD.semidiscreteTransportDual_concave_differentiable_and_attains_max`: semidiscrete duality
+* `CKSD.semidiscrete_transport_dual_concave_differentiable_and_attains_max`: semidiscrete duality
   (GAPS 108.56).
-* `CKSD.optimalMap_eq_cfcSqrt_mul_inv_iff_commute`: compatibility of Gaussian optimal maps
+* `CKSD.optimal_map_eq_cfc_sqrt_mul_inv_iff_commute`: compatibility of Gaussian optimal maps
   (GAPS 108.57).
-* `CKSD.wassersteinBarycenterEnergy_map_sub_le`: the descent inequality for the averaged-transport
+* `CKSD.wasserstein_barycenter_energy_map_sub_le`: the descent inequality for the averaged-transport
   update (GAPS 108.59).
 -/
 
@@ -102,7 +103,7 @@ compact metric spaces that charge every open ball, and `π` a coupling of them w
 `d(x, x') = d(y, y')` for `π ⊗ π`-almost every pair of pairs. Then some isometry `f : X ≃ᵢ Y`
 pushes `μ` to `ν`. The full-support assumption realizes the source's restriction to the
 supports. -/
-theorem exists_measure_preserving_isometryEquiv_of_zero_distortion
+theorem exists_measure_preserving_isometry_equiv_of_zero_distortion
     {X Y : Type*} [MetricSpace X] [MetricSpace Y]
     [CompactSpace X] [CompactSpace Y] [MeasurableSpace X] [MeasurableSpace Y]
     [BorelSpace X] [BorelSpace Y] (μ : Measure X) (ν : Measure Y)
@@ -164,7 +165,7 @@ theorem exists_unique_gaussian_wasserstein_barycenter {k d : ℕ} (w : Fin k →
           (F (multivariateGaussian (∑ i, w i • m i) S) = F P ↔
             P = multivariateGaussian (∑ i, w i • m i) S) := by
   intro F
-  obtain ⟨S, hS, hfix⟩ := exists_posDef_eq_sum_smul_sqrt_mul_mul_sqrt w hw hw1 A hA
+  obtain ⟨S, hS, hfix⟩ := exists_pos_def_eq_sum_smul_sqrt_mul_mul_sqrt w hw hw1 A hA
   refine ⟨S, hS, hfix, ?_⟩
   intro P hP hPL
   set w' : Fin k → ℝ≥0 := fun i ↦ ⟨w i, hw i⟩
@@ -244,7 +245,7 @@ theorem exists_unique_gaussian_wasserstein_barycenter {k d : ℕ} (w : Fin k →
 
 /-- The Lebesgue measure of a Euclidean ball of radius `t > 0` in `ℝ^d` is at most `(2t)^d`, the
 volume of the circumscribed cube. -/
-private theorem volume_euclideanBall_le {d : ℕ} (c : EuclideanSpace ℝ (Fin d)) {t : ℝ}
+private theorem volume_euclidean_ball_le {d : ℕ} (c : EuclideanSpace ℝ (Fin d)) {t : ℝ}
     (ht : 0 < t) :
     volume (Metric.ball c t) ≤ ENNReal.ofReal ((2 * t) ^ d) := by
   have hmp := PiLp.volume_preserving_ofLp (Fin d)
@@ -263,7 +264,7 @@ private theorem volume_euclideanBall_le {d : ℕ} (c : EuclideanSpace ℝ (Fin d
     _ = ENNReal.ofReal ((2 * t) ^ d) := by rw [Real.volume_pi_ball _ ht, Fintype.card_fin]
 
 /-- The unit cube `[0, 1]^d` of `ℝ^d` has volume one. -/
-private theorem volume_euclidean_unitCube {d : ℕ} :
+private theorem volume_euclidean_unit_cube {d : ℕ} :
     volume {z : EuclideanSpace ℝ (Fin d) | ∀ i, z i ∈ Icc (0 : ℝ) 1} = 1 := by
   have hmp := PiLp.volume_preserving_ofLp (Fin d)
   have : {z : EuclideanSpace ℝ (Fin d) | ∀ i, z i ∈ Icc (0 : ℝ) 1} =
@@ -275,7 +276,7 @@ private theorem volume_euclidean_unitCube {d : ℕ} :
 /-- GAPS 108.50, quantization lower bound for the uniform unit cube: for `d ≥ 3`, every law `Q`
 carried by at most `n` points is at `W₁`-distance at least `n^{-1/d} / (108 d)` from the uniform law
 on `[0, 1]^d`. (`n ≥ 1` is implied by `Q (range x) = 1`.) -/
-theorem rpow_div_le_wassersteinEDist_volume_cube {d : ℕ} (hd : 3 ≤ d) (n : ℕ)
+theorem rpow_div_le_wasserstein_e_dist_volume_cube {d : ℕ} (hd : 3 ≤ d) (n : ℕ)
     (Q : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure Q]
     (x : Fin n → EuclideanSpace ℝ (Fin d)) (hsupp : Q (range x) = 1) :
     let cube := {z : EuclideanSpace ℝ (Fin d) | ∀ i, z i ∈ Icc (0 : ℝ) 1};
@@ -292,7 +293,7 @@ theorem rpow_div_le_wassersteinEDist_volume_cube {d : ℕ} (hd : 3 ≤ d) (n : �
       (PiLp.continuous_ofLp 2 _).measurable) measurableSet_Icc
   set U := volume.restrict cube
   have hU1 : U univ = 1 := by
-    rw [Measure.restrict_apply_univ]; exact volume_euclidean_unitCube
+    rw [Measure.restrict_apply_univ]; exact volume_euclidean_unit_cube
   have : IsProbabilityMeasure U := ⟨hU1⟩
   have hn : 0 < n := by
     rcases Nat.eq_zero_or_pos n with rfl | h
@@ -351,7 +352,7 @@ theorem rpow_div_le_wassersteinEDist_volume_cube {d : ℕ} (hd : 3 ≤ d) (n : �
       _ ≤ ∑ i, U (Metric.ball (x i) t) := measure_iUnion_fintype_le _ _
       _ ≤ ∑ _i : Fin n, ENNReal.ofReal ((2 * t) ^ d) := by
           refine Finset.sum_le_sum fun i _ ↦ ?_
-          exact (Measure.restrict_apply_le _ _).trans (volume_euclideanBall_le _ ht)
+          exact (Measure.restrict_apply_le _ _).trans (volume_euclidean_ball_le _ ht)
       _ = ENNReal.ofReal (n * (2 * t) ^ d) := by
           rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul,
             ENNReal.ofReal_mul (by positivity), ENNReal.ofReal_natCast]
@@ -391,16 +392,16 @@ theorem rpow_div_le_wassersteinEDist_volume_cube {d : ℕ} (hd : 3 ≤ d) (n : �
 `σ > 0` there is `C > 0` such that for every law `P` on `[-1, 1]^d` and `n ≥ 1`, the expected `W₁`
 distance between the Gaussian smoothings of the empirical measure and of `P` is at most
 `C / √n`. -/
-theorem integral_wasserstein_gaussianSmoothing_empiricalMeasure_le
+theorem integral_wasserstein_gaussian_smoothing_empirical_measure_le
     (d : ℕ) (sigma : ℝ) (hs : 0 < sigma) :
     ∃ C > 0, ∀ P : Measure (EuclideanSpace ℝ (Fin d)), IsProbabilityMeasure P →
       P {x | ∀ i, x i ∈ Icc (-1 : ℝ) 1} = 1 → ∀ n : ℕ, 1 ≤ n →
       (∫ x, (TauCeti.wassersteinEDist 1 (gaussianSmoothing sigma (empiricalMeasure n x))
         (gaussianSmoothing sigma P)).toReal
         ∂(Measure.pi fun _ : Fin n ↦ P)) ≤ C / Real.sqrt n := by
-  refine ⟨smoothingMoment d sigma + 1, by linarith [smoothingMoment_nonneg (d := d) hs.ne'], ?_⟩
+  refine ⟨smoothingMoment d sigma + 1, by linarith [smoothing_moment_nonneg (d := d) hs.ne'], ?_⟩
   intro P hP hPQ n hn
-  exact (integral_wassersteinEDist_gaussianSmoothing_le hs.ne' P hPQ hn).trans
+  exact (integral_wasserstein_e_dist_gaussian_smoothing_le hs.ne' P hPQ hn).trans
     (div_le_div_of_nonneg_right (by linarith) (Real.sqrt_nonneg _))
 
 /-- GAPS 108.56: smooth semidiscrete dual, cell-mass equations and dual attainment. For an
@@ -408,7 +409,7 @@ absolutely continuous law `P` with finite second moment and a discrete target wi
 `b_j` at distinct sites `y_j`, the dual functional `E(g)` is concave and `C¹` with gradient
 `b_j - P(Laguerre cell j)`; its maximizers are exactly the weights whose Laguerre cells have masses
 `b_j`; and a maximizer exists, with value `W₂²(P, ∑ b_j δ_{y_j})`. -/
-theorem semidiscreteTransportDual_concave_differentiable_and_attains_max {d k : ℕ} (hk : 0 < k)
+theorem semidiscrete_transport_dual_concave_differentiable_and_attains_max {d k : ℕ} (hk : 0 < k)
     (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
     (hP : P ≪ volume) (h2 : MemLp id 2 P)
     (y : Fin k → EuclideanSpace ℝ (Fin d)) (hy : Function.Injective y)
@@ -423,16 +424,16 @@ theorem semidiscreteTransportDual_concave_differentiable_and_attains_max {d k : 
         E g = (TauCeti.wassersteinEDist 2 P (∑ j, ENNReal.ofReal (b j) • Measure.dirac
           (y j))).toReal ^ 2 := by
   intro E
-  obtain ⟨g, hg⟩ := exists_isMax_semidiscreteTransportDual hk hP h2 hy hb hb1
-  exact ⟨concaveOn_semidiscreteTransportDual hk h2 y b,
-    contDiff_semidiscreteTransportDual hk hP h2 hy b,
-    hasFDerivAt_semidiscreteTransportDual hk hP h2 hy b,
-    semidiscreteTransportDual_isMax_iff hk hP h2 hy b, g, hg,
-    semidiscreteTransportDual_eq_wassersteinEDist_sq hk hP h2 hy
-      ((semidiscreteTransportDual_isMax_iff hk hP h2 hy b g).mp hg)⟩
+  obtain ⟨g, hg⟩ := exists_is_max_semidiscrete_transport_dual hk hP h2 hy hb hb1
+  exact ⟨concave_on_semidiscrete_transport_dual hk h2 y b,
+    cont_diff_semidiscrete_transport_dual hk hP h2 hy b,
+    has_f_deriv_at_semidiscrete_transport_dual hk hP h2 hy b,
+    semidiscrete_transport_dual_is_max_iff hk hP h2 hy b, g, hg,
+    semidiscrete_transport_dual_eq_wasserstein_e_dist_sq hk hP h2 hy
+      ((semidiscrete_transport_dual_is_max_iff hk hP h2 hy b g).mp hg)⟩
 
 /-- A matrix commuting with `B` commutes with its square root `CFC.sqrt B`. -/
-theorem commute_cfcSqrt_right {d : ℕ} {A B : Matrix (Fin d) (Fin d) ℝ} (h : Commute A B) :
+theorem commute_cfc_sqrt_right {d : ℕ} {A B : Matrix (Fin d) (Fin d) ℝ} (h : Commute A B) :
     Commute A (CFC.sqrt B) := by
   rw [CFC.sqrt_eq_cfc]
   exact (h.symm.cfc_nnreal _).symm
@@ -442,7 +443,7 @@ Gaussian. For `A` positive definite and `B` positive semidefinite, the optimal m
 `A^{-1/2} (A^{1/2} B A^{1/2})^{1/2} A^{-1/2}` from `N(0, A)` to `N(0, B)` equals the composite
 `B^{1/2} A^{-1/2}` of the optimal maps through the standard Gaussian exactly when `A` and `B`
 commute. -/
-theorem optimalMap_eq_cfcSqrt_mul_inv_iff_commute
+theorem optimal_map_eq_cfc_sqrt_mul_inv_iff_commute
     {d : ℕ} (A B : Matrix (Fin d) (Fin d) ℝ)
     (hA : A.PosDef) (hB : B.PosSemidef) :
     CFC.sqrt B * (CFC.sqrt A)⁻¹ =
@@ -484,8 +485,8 @@ theorem optimalMap_eq_cfcSqrt_mul_inv_iff_commute
       rwa [hSS] at this
     exact hAB.eq
   · intro h
-    have hSB : Commute S B := commute_cfcSqrt_right (h.symm : Commute B A) |>.symm
-    have hSR : Commute S R := commute_cfcSqrt_right hSB
+    have hSB : Commute S B := commute_cfc_sqrt_right (h.symm : Commute B A) |>.symm
+    have hSR : Commute S R := commute_cfc_sqrt_right hSB
     have hM : CFC.sqrt (S * B * S) = S * R := by
       refine CFC.sqrt_unique ?_ (hSR.mul_nonneg hS0 hR0 |> fun h ↦ ?_)
       · calc S * R * (S * R) = S * S * (R * R) := by
@@ -515,7 +516,7 @@ def wassersteinBarycenterGradient {k : ℕ} (T : Fin k → E → E) (x : E) : E 
 omit [InnerProductSpace ℝ E] in
 /-- The squared `2`-Wasserstein distance between the laws of `S` and `T` under `P` is at most
 the mean squared distance `∫ ‖S x - T x‖² dP`, by the coupling `(S, T)_# P`. -/
-theorem wassersteinEDist_two_map_toReal_sq_le (P : Measure E) {S T : E → E} (hS : Measurable S)
+theorem wasserstein_e_dist_two_map_to_real_sq_le (P : Measure E) {S T : E → E} (hS : Measurable S)
     (hT : Measurable T) (h : MemLp (fun x ↦ S x - T x) 2 P) :
     (TauCeti.wassersteinEDist 2 (P.map S) (P.map T)).toReal ^ 2 ≤ ∫ x, ‖S x - T x‖ ^ 2 ∂P := by
   have hc := TauCeti.isCoupling_map_prodMk_of_aemeasurable (γ := P) hS.aemeasurable
@@ -567,7 +568,7 @@ finite second moment, let `T_i` be square-integrable maps that are optimal from 
 size `τ` the update `x ↦ x - τ g(x)` lowers the barycenter energy by at least
 `(τ - τ²/2) ∫ ‖g‖² dP`. The usual descent interpretation uses `τ ∈ [0, 1]`; no convergence of the
 iteration is asserted. -/
-theorem wassersteinBarycenterEnergy_map_sub_le {k : ℕ} (hk : 0 < k) (P : Measure E)
+theorem wasserstein_barycenter_energy_map_sub_le {k : ℕ} (hk : 0 < k) (P : Measure E)
     (hP2 : MemLp id 2 P) (T : Fin k → E → E) (hT : ∀ i, Measurable (T i))
     (hT2 : ∀ i, MemLp (T i) 2 P)
     (hopt : ∀ i, (∫ x, ‖x - T i x‖ ^ 2 ∂P) =
@@ -592,7 +593,7 @@ theorem wassersteinBarycenterEnergy_map_sub_le {k : ℕ} (hk : 0 < k) (P : Measu
   -- each new squared distance is bounded by the cost of the coupling through `P`
   have hbound : ∀ i, (TauCeti.wassersteinEDist 2 (P.map fun x ↦ x - tau • g x)
       (P.map (T i))).toReal ^ 2 ≤ ∫ x, ‖x - tau • g x - T i x‖ ^ 2 ∂P :=
-    fun i ↦ wassersteinEDist_two_map_toReal_sq_le P hSm (hT i) (hdiff i)
+    fun i ↦ wasserstein_e_dist_two_map_to_real_sq_le P hSm (hT i) (hdiff i)
   have hnew : F (P.map fun x ↦ x - tau • g x) ≤
       (∑ i, ∫ x, ‖x - tau • g x - T i x‖ ^ 2 ∂P) / (2 * k) := by
     simp only [F, wassersteinBarycenterEnergy]

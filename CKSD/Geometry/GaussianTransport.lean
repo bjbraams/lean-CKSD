@@ -5,6 +5,7 @@ public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Moment
 public import TauCeti.Probability.Distributions.Gaussian.Continuity
 public import Mathlib.Analysis.SpecialFunctions.ContinuousFunctionalCalculus.Rpow.Isometric
 
+
 /-!
 # Quadratic transport between Gaussian laws
 
@@ -16,7 +17,7 @@ Continuity of the matrix square root is Mathlib's continuous functional calculus
 
 ## Main results
 
-* `CKSD.wasserstein_multivariateGaussian_sq_eq`: the Bures formula
+* `CKSD.wasserstein_multivariate_gaussian_sq_eq`: the Bures formula
   `W₂²(N(m, A), N(n, B)) = ‖m - n‖² + tr (A + B - 2 (A^{1/2} B A^{1/2})^{1/2})` (GAPS 108.46).
 -/
 
@@ -33,7 +34,7 @@ local notation "M" => Matrix (Fin d) (Fin d) ℝ
 
 /-- The second radial moment of a Gaussian law is the squared norm of its mean
 plus the trace of its covariance. -/
-lemma lintegral_edist_zero_rpow_two_multivariateGaussian (m : E) (A : M) (hA : A.PosSemidef) :
+lemma lintegral_edist_zero_rpow_two_multivariate_gaussian (m : E) (A : M) (hA : A.PosSemidef) :
     ∫⁻ x, edist (0 : E) x ^ (2 : ℝ≥0∞).toReal ∂multivariateGaussian m A =
       ENNReal.ofReal (‖m‖ ^ 2 + Matrix.trace A) := by
   have hi : Integrable (fun x : E ↦ ‖x‖ ^ 2) (multivariateGaussian m A) :=
@@ -49,7 +50,7 @@ lemma lintegral_edist_zero_rpow_two_multivariateGaussian (m : E) (A : M) (hA : A
   rw [hpt, ← ofReal_integral_eq_lintegral_ofReal hi (ae_of_all _ fun x ↦ sq_nonneg _), hm]
 
 /-- The probability measure underlying the bundled quadratic-Wasserstein Gaussian law. -/
-lemma gaussianWassersteinLaw_toProbabilityMeasure (m : E) (A : M) :
+lemma gaussian_wasserstein_law_to_probability_measure (m : E) (A : M) :
     (TauCeti.Probability.gaussianWassersteinLaw m A).toProbabilityMeasure =
       (multivariateGaussian m A).toProbabilityMeasure := by
   apply ProbabilityMeasure.toMeasure_injective
@@ -57,7 +58,7 @@ lemma gaussianWassersteinLaw_toProbabilityMeasure (m : E) (A : M) :
 
 /-- Gaussian laws depend continuously on their positive semidefinite covariance
 in quadratic Wasserstein distance, with the mean fixed. -/
-lemma continuous_gaussianWassersteinLaw (m : E) :
+lemma continuous_gaussian_wasserstein_law (m : E) :
     Continuous (fun A : {A : M // A.PosSemidef} ↦
       TauCeti.Probability.gaussianWassersteinLaw m A.1) := by
   apply continuous_iff_continuousAt.mpr
@@ -65,11 +66,11 @@ lemma continuous_gaussianWassersteinLaw (m : E) :
   apply (TauCeti.WassersteinSpace.tendsto_iff_tendsto_toProbabilityMeasure_and_lintegral
     (by norm_num : (2 : ℝ≥0∞) ≠ ⊤) (0 : E)).mpr
   constructor
-  · simp only [gaussianWassersteinLaw_toProbabilityMeasure]
+  · simp only [gaussian_wasserstein_law_to_probability_measure]
     have hc := TauCeti.Probability.continuous_multivariateGaussian (ι := Fin d)
     exact (hc.comp (continuous_const.prodMk continuous_id)).continuousAt
   · simp only [TauCeti.Probability.gaussianWassersteinLaw_coe]
-    simp_rw [lintegral_edist_zero_rpow_two_multivariateGaussian _ _ (Subtype.property _)]
+    simp_rw [lintegral_edist_zero_rpow_two_multivariate_gaussian _ _ (Subtype.property _)]
     exact (ENNReal.continuous_ofReal.comp
       (continuous_const.add continuous_subtype_val.matrix_trace)).continuousAt
 
@@ -100,7 +101,7 @@ lemma continuous_gaussian_bures_expression (m n : E) (B : M) (hB : B.PosSemidef)
 /-- GAPS 108.46: the Gaussian Bures formula, allowing both covariances to be singular: for
 positive semidefinite `A, B`,
 `W₂²(N(m, A), N(n, B)) = ‖m - n‖² + tr (A + B - 2 (A^{1/2} B A^{1/2})^{1/2})`. -/
-theorem wasserstein_multivariateGaussian_sq_eq (m n : E) (A B : M)
+theorem wasserstein_multivariate_gaussian_sq_eq (m n : E) (A B : M)
     (hA : A.PosSemidef) (hB : B.PosSemidef) :
     (TauCeti.wassersteinEDist 2 (multivariateGaussian m A) (multivariateGaussian n B)).toReal ^ 2 =
       ‖m - n‖ ^ 2 + Matrix.trace (A + B - 2 • CFC.sqrt (CFC.sqrt A * B * CFC.sqrt A)) := by
@@ -113,7 +114,7 @@ theorem wasserstein_multivariateGaussian_sq_eq (m n : E) (A B : M)
     simpa only [As, zero_smul, add_zero] using
       tendsto_const_nhds.add (h0.smul (tendsto_const_nhds (x := (1 : M))))
   have hSs : Tendsto Ss atTop (𝓝 ⟨A, hA⟩) := tendsto_subtype_rng.mpr hAslim
-  have hW := (continuous_gaussianWassersteinLaw m).continuousAt.tendsto.comp hSs
+  have hW := (continuous_gaussian_wasserstein_law m).continuousAt.tendsto.comp hSs
   have hD := (hW.dist (tendsto_const_nhds
     (x := TauCeti.Probability.gaussianWassersteinLaw n B))).pow 2
   have hR := (continuous_gaussian_bures_expression m n B hB).continuousAt.tendsto.comp hSs

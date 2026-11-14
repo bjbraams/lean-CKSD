@@ -7,6 +7,7 @@ public import Mathlib.Probability.Combinatorics.BinomialRandomGraph.Defs
 public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 public import TauCeti.Combinatorics.DenseGraphLimits.ExchangeableGraphLaw.Infinite.Mixture
 
+
 /-!
 # Block models, binomial random graphs, and exchangeable graphs
 
@@ -79,14 +80,14 @@ def weakRecoveryProbability {n : ℕ} (p q ε : ℝ) (est : SimpleGraph (Fin n) 
 /-- GAPS 107.41: the exact-recovery threshold of the logarithmic-degree two-group block model,
 for `a, b > 0`. Recovery up to a global flip with probability tending to one is possible
 exactly when `(√a - √b)² ≥ 2`. The polynomial-time achievability claim is not formalized. -/
-theorem exists_exactRecovery_iff (a b : ℝ) (ha : 0 < a) (hb : 0 < b) :
+theorem exists_exact_recovery_iff (a b : ℝ) (ha : 0 < a) (hb : 0 < b) :
     (∃ est : ∀ n, SimpleGraph (Fin n) → Fin n → Bool,
       Tendsto (fun n : ℕ ↦ exactRecoveryProbability (a * Real.log n / n) (b * Real.log n / n)
         (est n)) atTop (𝓝 1)) ↔ 2 ≤ (Real.sqrt a - Real.sqrt b) ^ 2 := by
   sorry
 
 /-- GAPS 107.41, the case `b = 0`: exact recovery is possible exactly when `a > 2`. -/
-theorem exists_exactRecovery_iff_of_zero (a : ℝ) (ha : 0 < a) :
+theorem exists_exact_recovery_iff_of_zero (a : ℝ) (ha : 0 < a) :
     (∃ est : ∀ n, SimpleGraph (Fin n) → Fin n → Bool,
       Tendsto (fun n : ℕ ↦ exactRecoveryProbability (a * Real.log n / n) 0 (est n))
         atTop (𝓝 1)) ↔ 2 < a := by
@@ -94,7 +95,7 @@ theorem exists_exactRecovery_iff_of_zero (a : ℝ) (ha : 0 < a) :
 
 /-- GAPS 107.42: the Kesten–Stigum threshold for weak recovery in the sparse two-group block
 model with `p = a/n`, `q = b/n`, `a, b > 0`. The efficiency claim is not formalized. -/
-theorem exists_weakRecovery_iff (a b : ℝ) (ha : 0 < a) (hb : 0 < b) :
+theorem exists_weak_recovery_iff (a b : ℝ) (ha : 0 < a) (hb : 0 < b) :
     (∃ ε > (0 : ℝ), ∃ est : ∀ n, SimpleGraph (Fin n) → Fin n → Bool,
       Tendsto (fun n : ℕ ↦ weakRecoveryProbability (a / n) (b / n) ε (est n)) atTop (𝓝 1)) ↔
       2 * (a + b) < (a - b) ^ 2 := by
@@ -103,7 +104,7 @@ theorem exists_weakRecovery_iff (a b : ℝ) (ha : 0 < a) (hb : 0 < b) :
 /-- GAPS 107.42: below the Kesten–Stigum threshold the sparse block model and the binomial
 random graph with the same average degree are mutually contiguous, stated directly on
 sequences of events (every set of graphs on `Fin n` is measurable). -/
-theorem blockModel_binomialRandom_mutually_contiguous (a b : ℝ) (ha : 0 < a) (hb : 0 < b)
+theorem block_model_binomial_random_mutually_contiguous (a b : ℝ) (ha : 0 < a) (hb : 0 < b)
     (hbelow : (a - b) ^ 2 < 2 * (a + b))
     (A : ∀ n : ℕ, Set (SimpleGraph (Fin n))) :
     Tendsto (fun n : ℕ ↦ blockModelGraphLaw n (a / n) (b / n) (A n)) atTop (𝓝 0) ↔
@@ -121,7 +122,7 @@ def largestComponentSize {n : ℕ} (G : SimpleGraph (Fin n)) : ℕ :=
 
 /-- GAPS 107.47, subcritical phase: for `p = c/n` with `0 ≤ c < 1`, all components have at
 most `C log n` vertices with probability tending to one. -/
-theorem exists_tendsto_binomialRandom_components_le_log (c : ℝ) (hc0 : 0 ≤ c) (hc : c < 1) :
+theorem exists_tendsto_binomial_random_components_le_log (c : ℝ) (hc0 : 0 ≤ c) (hc : c < 1) :
     ∃ C > (0 : ℝ), Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
       (clampUnitInterval (c / n))).real {G | ∀ v, (componentSize G v : ℝ) ≤ C * Real.log n})
       atTop (𝓝 1) :=
@@ -131,7 +132,7 @@ theorem exists_tendsto_binomialRandom_components_le_log (c : ℝ) (hc0 : 0 ≤ c
 size `ζ n + o(n)` in probability, with `ζ ∈ (0,1)` the root of `1 - ζ = e^{-cζ}`, and any two
 distinct components have the smaller one of size at most `C log n` with probability tending
 to one. -/
-theorem binomialRandom_giant_component (c : ℝ) (hc : 1 < c) (ζ : ℝ) (hζ : ζ ∈ Ioo 0 1)
+theorem binomial_random_giant_component (c : ℝ) (hc : 1 < c) (ζ : ℝ) (hζ : ζ ∈ Ioo 0 1)
     (hroot : 1 - ζ = Real.exp (-c * ζ)) :
     (∀ δ > (0 : ℝ), Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
       (clampUnitInterval (c / n))).real {G | δ < |(largestComponentSize G : ℝ) / n - ζ|})
@@ -145,7 +146,7 @@ theorem binomialRandom_giant_component (c : ℝ) (hc : 1 < c) (ζ : ℝ) (hζ : 
 /-- GAPS 107.47, connectivity threshold: for `p = (log n + xₙ)/n`, connectivity has probability
 tending to one if `xₙ → ∞`, isolated vertices have probability tending to one if `xₙ → -∞`,
 and for constant `xₙ = x` the probability of connectivity tends to `exp(-e^{-x})`. -/
-theorem binomialRandom_connectivity_threshold :
+theorem binomial_random_connectivity_threshold :
     (∀ x : ℕ → ℝ, Tendsto x atTop atTop →
       Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
         (clampUnitInterval ((Real.log n + x n) / n))).real {G | G.Connected}) atTop (𝓝 1)) ∧
@@ -156,9 +157,9 @@ theorem binomialRandom_connectivity_threshold :
     ∀ x : ℝ, Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
         (clampUnitInterval ((Real.log n + x) / n))).real {G | G.Connected})
         atTop (𝓝 (Real.exp (-Real.exp (-x)))) :=
-  ⟨tendsto_binomialRandom_connected_of_tendsto_atTop,
-    tendsto_binomialRandom_exists_isolated_of_tendsto_atBot,
-    tendsto_binomialRandom_connected_threshold⟩
+  ⟨tendsto_binomial_random_connected_of_tendsto_at_top,
+    tendsto_binomial_random_exists_isolated_of_tendsto_at_bot,
+    tendsto_binomial_random_connected_threshold⟩
 
 /-! ### Exchangeable random graphs on `ℕ` -/
 
@@ -168,7 +169,7 @@ def finitePermOfFin {n : ℕ} (σ : Equiv.Perm (Fin n)) : Equiv.Perm ℕ :=
 
 /-- Every permutation of `ℕ` agrees on the first `n` labels with a permutation moving only
 finitely many labels. -/
-theorem exists_finitePermOfFin_eq_on (σ : Equiv.Perm ℕ) (n : ℕ) :
+theorem exists_finite_perm_of_fin_eq_on (σ : Equiv.Perm ℕ) (n : ℕ) :
     ∃ (m : ℕ) (τ : Equiv.Perm (Fin m)), ∀ a < n, finitePermOfFin τ a = σ a := by
   let m := (Finset.range n).sup σ + n + 1
   have hσm : ∀ a < n, σ a < m := fun a ha ↦ by
@@ -197,13 +198,13 @@ theorem exists_finitePermOfFin_eq_on (σ : Equiv.Perm ℕ) (n : ℕ) :
 
 /-- A law on graphs on `ℕ` invariant under every permutation of finitely many labels is
 invariant under every permutation of `ℕ`. -/
-theorem map_comap_eq_of_finitePerm_invariant (law : Measure (SimpleGraph ℕ))
+theorem map_comap_eq_of_finite_perm_invariant (law : Measure (SimpleGraph ℕ))
     [IsProbabilityMeasure law]
     (hinv : ∀ n (σ : Equiv.Perm (Fin n)),
       law.map (SimpleGraph.comap ⇑(finitePermOfFin σ)) = law)
     (σ : Equiv.Perm ℕ) : law.map (SimpleGraph.comap ⇑σ) = law := by
   refine (SimpleGraph.measure_ext_of_map_restrictFin fun n ↦ ?_).symm
-  obtain ⟨m, τ, hτ⟩ := exists_finitePermOfFin_eq_on σ n
+  obtain ⟨m, τ, hτ⟩ := exists_finite_perm_of_fin_eq_on σ n
   have hfun : (fun G : SimpleGraph ℕ ↦ G.restrictFin n) ∘ SimpleGraph.comap ⇑σ =
       (fun G : SimpleGraph ℕ ↦ G.restrictFin n) ∘ SimpleGraph.comap ⇑(finitePermOfFin τ) := by
     funext G
@@ -225,7 +226,7 @@ theorem map_comap_eq_of_finitePerm_invariant (law : Measure (SimpleGraph ℕ))
 a mixture of graphon models, with a unique mixing measure on TauCeti's unit-interval graphon
 space (graphons modulo cut distance zero). The all-permutations case is TauCeti's
 `InfiniteExchangeableGraphLaw.existsUnique_bind_infiniteSampleLawOnSpace`. -/
-theorem existsUnique_graphonMixture_of_finitePerm_invariant (law : Measure (SimpleGraph ℕ))
+theorem exists_unique_graphon_mixture_of_finite_perm_invariant (law : Measure (SimpleGraph ℕ))
     [IsProbabilityMeasure law]
     (hinv : ∀ n (σ : Equiv.Perm (Fin n)),
       law.map (SimpleGraph.comap ⇑(finitePermOfFin σ)) = law) :
@@ -233,12 +234,12 @@ theorem existsUnique_graphonMixture_of_finitePerm_invariant (law : Measure (Simp
       (P : Measure TauCeti.DenseGraphLimits.GraphonSpaceI).bind
         TauCeti.DenseGraphLimits.infiniteSampleLawOnSpace = law :=
   TauCeti.DenseGraphLimits.InfiniteExchangeableGraphLaw.existsUnique_bind_infiniteSampleLawOnSpace
-    ⟨law, inferInstance, map_comap_eq_of_finitePerm_invariant law hinv⟩
+    ⟨law, inferInstance, map_comap_eq_of_finite_perm_invariant law hinv⟩
 
 /-- GAPS 107.43, uniqueness in the attained form (Borgs–Chayes–Lovász): two graphons on the
 unit interval have the same joint sampling law exactly when they have almost everywhere equal
 pullbacks under two measure-preserving self-maps of the unit interval. -/
-theorem infiniteSampleLaw_eq_iff_exists_measurePreserving
+theorem infinite_sample_law_eq_iff_exists_measure_preserving
     (U W : TauCeti.DenseGraphLimits.Graphon unitInterval volume) :
     TauCeti.DenseGraphLimits.infiniteSampleLaw U =
         TauCeti.DenseGraphLimits.infiniteSampleLaw W ↔

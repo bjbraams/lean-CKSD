@@ -3,6 +3,7 @@ module
 public import CKSD.Bayes.MeanFieldPicard
 public import Mathlib.Probability.IdentDistribIndep
 
+
 /-!
 # Transporting solutions along iid continuous forcings
 
@@ -37,15 +38,15 @@ theorem exists_iid_paths_of_forcing_coordinates {Ω E : Type*} [MeasurableSpace 
     ∃ Z : ℕ → Ω → C(Icc (0 : ℝ) T, E),
       (∀ i, Measurable (Z i)) ∧ iIndepFun Z P ∧ (∀ i, IdentDistrib (Z i) Y₀ P P) ∧
         ∀ i, (fun ω ↦ pathRationalCoordinates hT (pathForcingMap hT v hv (Z i ω))) =ᵐ[P] U i := by
-  let emb := measurableEmbedding_pathForcingMap hT v hv hvL
+  let emb := measurable_embedding_path_forcing_map hT v hv hvL
   let S : (ℚ → E) → C(Icc (0 : ℝ) T, E) := fun u ↦ emb.invFun (pathOfRationalCoordinates hT u)
-  have hS : Measurable S := emb.measurable_invFun.comp (measurable_pathOfRationalCoordinates hT)
+  have hS : Measurable S := emb.measurable_invFun.comp (measurable_path_of_rational_coordinates hT)
   let R : ℕ → Ω → C(Icc (0 : ℝ) T, E) := fun i ω ↦ S (U i ω)
   have hR (i : ℕ) : AEMeasurable (R i) P := hS.comp_aemeasurable (hUid i).aemeasurable_snd
   have hR₀ : R 0 =ᵐ[P] Y₀ := by
     filter_upwards [hU₀] with ω hω
     dsimp [R, S]
-    rw [← hω, pathOfRationalCoordinates_apply]
+    rw [← hω, path_of_rational_coordinates_apply]
     exact emb.leftInverse_invFun (Y₀ ω)
   let Z : ℕ → Ω → C(Icc (0 : ℝ) T, E) := fun i ↦ (hR i).mk (R i)
   have hZ (i : ℕ) : Measurable (Z i) := (hR i).measurable_mk
@@ -57,7 +58,7 @@ theorem exists_iid_paths_of_forcing_coordinates {Ω E : Type*} [MeasurableSpace 
     exact (IdentDistrib.of_ae_eq (hR i) (hZae i)).symm.trans
       (hRi.symm.trans (IdentDistrib.of_ae_eq (hR 0) hR₀))
   have hCoords : Measurable (pathRationalCoordinates (E := E) hT) :=
-    (measurableEmbedding_pathRationalCoordinates hT).measurable
+    (measurable_embedding_path_rational_coordinates hT).measurable
   have hΦ : Measurable (pathForcingMap hT v hv) := emb.measurable
   have hGood : MeasurableSet {u : ℚ → E | pathRationalCoordinates hT (pathForcingMap hT v hv (S u)) = u} :=
     measurableSet_eq_fun (hCoords.comp (hΦ.comp hS)) measurable_id
@@ -84,7 +85,7 @@ theorem eq_integral_of_forcing_coordinates {E : Type*}
       ξ + (∫ s in (0 : ℝ)..t, v s ((f.IccExtend hT) s)) + B t := by
   let g : C(Icc (0 : ℝ) T, E) := ⟨fun t ↦ ξ + B t, continuous_const.add (hB.comp continuous_subtype_val)⟩
   have hΦ : pathForcingMap hT v hv f = g :=
-    (measurableEmbedding_pathRationalCoordinates hT).injective heq
+    (measurable_embedding_path_rational_coordinates hT).injective heq
   intro t ht
   have hpoint := congrArg (fun z : C(Icc (0 : ℝ) T, E) ↦ z ⟨t, ht⟩) hΦ
   change f ⟨t, ht⟩ - (∫ s in (0 : ℝ)..t, v s ((f.IccExtend hT) s)) = ξ + B t at hpoint

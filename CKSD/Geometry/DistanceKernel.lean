@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Geometry.EnergyDistance
 public import TauCeti.Analysis.PositiveDefinite.Kernel.MeanEmbedding
 public import Mathlib.MeasureTheory.Integral.FinMeasAdditive
@@ -19,7 +20,7 @@ open scoped ENNReal NNReal Topology BigOperators MatrixOrder
 namespace CKSD
 
 /-- Distance-kernel sections are nonnegative and bounded by either endpoint's norm. -/
-theorem distanceKernel_nonneg_le {E : Type*} [SeminormedAddCommGroup E] (x y : E) :
+theorem distance_kernel_nonneg_le {E : Type*} [SeminormedAddCommGroup E] (x y : E) :
     0 ≤ distanceKernel x y ∧ distanceKernel x y ≤ ‖x‖ ∧ distanceKernel x y ≤ ‖y‖ := by
   have hxy := norm_sub_le x y
   have hx := norm_sub_le (x - y) (-y)
@@ -61,7 +62,7 @@ theorem integral_finite_atomic_prod {E ι κ : Type*} [MeasurableSpace E] [Measu
   rw [Fintype.sum_prod_type]
 
 /-- A finite atomic mixture with nonnegative weights summing to one is a probability measure. -/
-theorem isProbabilityMeasure_finite_atomic {E ι : Type*} [MeasurableSpace E]
+theorem is_probability_measure_finite_atomic {E ι : Type*} [MeasurableSpace E]
     [Fintype ι] (x : ι → E) (a : ι → ℝ) (ha : ∀ i, 0 ≤ a i) (hsum : (∑ i, a i) = 1) :
     IsProbabilityMeasure (∑ i, ENNReal.ofReal (a i) • Measure.dirac (x i)) := by
   constructor
@@ -69,7 +70,7 @@ theorem isProbabilityMeasure_finite_atomic {E ι : Type*} [MeasurableSpace E]
   rw [← ENNReal.ofReal_sum_of_nonneg (fun i _ ↦ ha i), hsum, ENNReal.ofReal_one]
 
 /-- Zero-sum finite coefficient families have nonnegative quadratic distance-kernel energy. -/
-theorem distanceKernel_sum_nonneg_of_sum_eq_zero {E ι : Type*} [NormedAddCommGroup E]
+theorem distance_kernel_sum_nonneg_of_sum_eq_zero {E ι : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     [Fintype ι] (x : ι → E) (c : ι → ℝ) (hc0 : (∑ i, c i) = 0) :
     0 ≤ ∑ i, ∑ j, c i * c j * distanceKernel (x i) (x j) := by
@@ -106,13 +107,13 @@ theorem distanceKernel_sum_nonneg_of_sum_eq_zero {E ι : Type*} [NormedAddCommGr
   have hsb : (∑ i, bn i) = 1 := by rw [← Finset.sum_div, hba]; exact div_self hA.ne'
   let P := ∑ i, ENNReal.ofReal (an i) • Measure.dirac (x i)
   let Q := ∑ i, ENNReal.ofReal (bn i) • Measure.dirac (x i)
-  have := isProbabilityMeasure_finite_atomic x an han hsa
-  have := isProbabilityMeasure_finite_atomic x bn hbn hsb
+  have := is_probability_measure_finite_atomic x an han hsa
+  have := is_probability_measure_finite_atomic x bn hbn hsb
   have hPi : Integrable (fun y ↦ ‖y‖) P := integrable_finite_atomic x an _
   have hQi : Integrable (fun y ↦ ‖y‖) Q := integrable_finite_atomic x bn _
   have hMMD : 0 ≤ squaredMMD distanceKernel P Q := by
-    have h := (energyDistance_nonneg_eq_zero_iff P Q hPi hQi).1
-    rw [energyDistance_eq_two_mul_squaredMMD P Q hPi hQi] at h
+    have h := (energy_distance_nonneg_eq_zero_iff P Q hPi hQi).1
+    rw [energy_distance_eq_two_mul_squared_mmd P Q hPi hQi] at h
     linarith
   let B (u v : ι → ℝ) := ∑ i, ∑ j, u i * v j * distanceKernel (x i) (x j)
   have hsymm : B b a = B a b := by
@@ -158,7 +159,7 @@ theorem distanceKernel_sum_nonneg_of_sum_eq_zero {E ι : Type*} [NormedAddCommGr
   exact mul_nonneg (sq_nonneg _) hMMD
 
 /-- The Euclidean distance-induced kernel is positive semidefinite. -/
-theorem posSemidef_distanceKernel {E : Type*} [NormedAddCommGroup E]
+theorem pos_semidef_distance_kernel {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] :
     Matrix.PosSemidef (distanceKernel : E → E → ℝ) := by
   rw [TauCeti.posSemidef_iff_finite_sum.{0, _, 0}]
@@ -169,38 +170,38 @@ theorem posSemidef_distanceKernel {E : Type*} [NormedAddCommGroup E]
     let y : Option ι → E := fun i ↦ i.elim 0 x
     let d : Option ι → ℝ := fun i ↦ i.elim (-(∑ j, c j)) c
     have hd : (∑ i, d i) = 0 := by simp [d, Fintype.sum_option]
-    have h := distanceKernel_sum_nonneg_of_sum_eq_zero y d hd
+    have h := distance_kernel_sum_nonneg_of_sum_eq_zero y d hd
     simpa [y, d, Fintype.sum_option, distanceKernel, mul_comm, mul_left_comm, mul_assoc] using h
 
 /-- The distance-induced kernel is symmetric. -/
-theorem distanceKernel_comm {E : Type*} [SeminormedAddCommGroup E] (x y : E) :
+theorem distance_kernel_comm {E : Type*} [SeminormedAddCommGroup E] (x y : E) :
     distanceKernel x y = distanceKernel y x := by simp [distanceKernel, norm_sub_rev, add_comm]
 
 /-- A distance-kernel product integral is finite when its first law has a finite first moment. -/
-theorem integrable_distanceKernel_prod {E : Type*} [NormedAddCommGroup E]
+theorem integrable_distance_kernel_prod {E : Type*} [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P Q : Measure E) [IsFiniteMeasure P] [IsFiniteMeasure Q]
     (hP : Integrable (fun x ↦ ‖x‖) P) :
     Integrable (fun z : E × E ↦ distanceKernel z.1 z.2) (P.prod Q) := by
   refine (hP.comp_fst Q).mono' (by unfold distanceKernel; fun_prop) (ae_of_all _ fun z ↦ ?_)
-  rw [Real.norm_eq_abs, abs_of_nonneg (distanceKernel_nonneg_le z.1 z.2).1]
-  exact (distanceKernel_nonneg_le z.1 z.2).2.1
+  rw [Real.norm_eq_abs, abs_of_nonneg (distance_kernel_nonneg_le z.1 z.2).1]
+  exact (distance_kernel_nonneg_le z.1 z.2).2.1
 
 /-- Distance-kernel product integrals are symmetric in their two laws. -/
-theorem integral_distanceKernel_prod_comm {E : Type*} [NormedAddCommGroup E]
+theorem integral_distance_kernel_prod_comm {E : Type*} [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P Q : Measure E) [IsFiniteMeasure P] [IsFiniteMeasure Q]
     (hP : Integrable (fun x ↦ ‖x‖) P) (hQ : Integrable (fun x ↦ ‖x‖) Q) :
     (∫ z : E × E, distanceKernel z.1 z.2 ∂P.prod Q) =
       ∫ z : E × E, distanceKernel z.1 z.2 ∂Q.prod P := by
-  rw [integral_prod _ (integrable_distanceKernel_prod P Q hP),
-    integral_prod_symm _ (integrable_distanceKernel_prod Q P hQ)]
+  rw [integral_prod _ (integrable_distance_kernel_prod P Q hP),
+    integral_prod_symm _ (integrable_distance_kernel_prod Q P hQ)]
   apply integral_congr_ae
-  exact ae_of_all _ fun x ↦ integral_congr_ae (ae_of_all _ fun y ↦ distanceKernel_comm x y)
+  exact ae_of_all _ fun x ↦ integral_congr_ae (ae_of_all _ fun y ↦ distance_kernel_comm x y)
 
 /-- The sections of the distance kernel determine finite equal-mass laws with finite first
 moments. This extends the probability energy-distance criterion by normalization. -/
-theorem measure_eq_of_integral_distanceKernel_eq {E : Type*} [NormedAddCommGroup E]
+theorem measure_eq_of_integral_distance_kernel_eq {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     (P Q : Measure E) [IsFiniteMeasure P] [IsFiniteMeasure Q]
     (hmass : P univ = Q univ) (hP : Integrable (fun x ↦ ‖x‖) P)
@@ -232,28 +233,28 @@ theorem measure_eq_of_integral_distanceKernel_eq {E : Type*} [NormedAddCommGroup
     simp only [P', Q', integral_smul_measure, hsec x]
   have hPP : (∫ z : E × E, distanceKernel z.1 z.2 ∂P'.prod P') =
       ∫ z : E × E, distanceKernel z.1 z.2 ∂P'.prod Q' := by
-    rw [integral_prod _ (integrable_distanceKernel_prod P' P' hPi),
-      integral_prod _ (integrable_distanceKernel_prod P' Q' hPi)]
+    rw [integral_prod _ (integrable_distance_kernel_prod P' P' hPi),
+      integral_prod _ (integrable_distance_kernel_prod P' Q' hPi)]
     exact integral_congr_ae (ae_of_all _ hsec')
   have hQQ : (∫ z : E × E, distanceKernel z.1 z.2 ∂Q'.prod Q') =
       ∫ z : E × E, distanceKernel z.1 z.2 ∂P'.prod Q' := by
-    rw [integral_prod _ (integrable_distanceKernel_prod Q' Q' hQi),
-      integral_distanceKernel_prod_comm P' Q' hPi hQi,
-      integral_prod _ (integrable_distanceKernel_prod Q' P' hQi)]
+    rw [integral_prod _ (integrable_distance_kernel_prod Q' Q' hQi),
+      integral_distance_kernel_prod_comm P' Q' hPi hQi,
+      integral_prod _ (integrable_distance_kernel_prod Q' P' hQi)]
     exact integral_congr_ae (ae_of_all _ fun x ↦ (hsec' x).symm)
   have hMMD : squaredMMD distanceKernel P' Q' = 0 := by
     rw [squaredMMD, hPP, hQQ]
     ring
   have hE : energyDistance P' Q' = 0 := by
-    rw [energyDistance_eq_two_mul_squaredMMD P' Q' hPi hQi, hMMD, mul_zero]
-  have hnorm := (energyDistance_nonneg_eq_zero_iff P' Q' hPi hQi).2.1 hE
+    rw [energy_distance_eq_two_mul_squared_mmd P' Q' hPi hQi, hMMD, mul_zero]
+  have hnorm := (energy_distance_nonneg_eq_zero_iff P' Q' hPi hQi).2.1 hE
   have h := congrArg (fun μ : Measure E ↦ c • μ) hnorm
   simpa only [P', Q', smul_smul, ENNReal.mul_inv_cancel hc hctop, one_smul] using h
 
 /-- For a positive semidefinite kernel `k` whose feature map is integrable for `P` and `Q`, and
 which is integrable against the three product measures, the squared MMD is the squared distance
 `‖m_P - m_Q‖²` of TauCeti's kernel mean embeddings. -/
-theorem squaredMMD_eq_norm_kernelMeanEmbedding_sub_sq {X : Type*} [MeasurableSpace X]
+theorem squared_mmd_eq_norm_kernel_mean_embedding_sub_sq {X : Type*} [MeasurableSpace X]
     {k : X → X → ℝ} (hk : Matrix.PosSemidef k) {P Q : Measure X} [SFinite P] [SFinite Q]
     (hP : Integrable hk.kolmogorovFeature P) (hQ : Integrable hk.kolmogorovFeature Q)
     (hPP : Integrable (fun z : X × X ↦ k z.1 z.2) (P.prod P))
@@ -270,27 +271,27 @@ def distanceProductKernel {E F : Type*} [SeminormedAddCommGroup E] [SeminormedAd
     (x y : E × F) : ℝ := distanceKernel x.1 y.1 * distanceKernel x.2 y.2
 
 /-- The product of distance-induced kernels is positive semidefinite. -/
-theorem posSemidef_distanceProductKernel {E F : Type*} [NormedAddCommGroup E]
+theorem pos_semidef_distance_product_kernel {E F : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     [NormedAddCommGroup F] [InnerProductSpace ℝ F] [FiniteDimensional ℝ F]
     [MeasurableSpace F] [BorelSpace F] :
     Matrix.PosSemidef (distanceProductKernel : (E × F) → (E × F) → ℝ) := by
-  exact ((posSemidef_distanceKernel (E := E)).submatrix Prod.fst).hadamard
-    ((posSemidef_distanceKernel (E := F)).submatrix Prod.snd)
+  exact ((pos_semidef_distance_kernel (E := E)).submatrix Prod.fst).hadamard
+    ((pos_semidef_distance_kernel (E := F)).submatrix Prod.snd)
 
 /-- Product distance-kernel values are nonnegative and bounded by the product of the two
 observation norms. -/
-theorem distanceProductKernel_nonneg_le {E F : Type*} [SeminormedAddCommGroup E]
+theorem distance_product_kernel_nonneg_le {E F : Type*} [SeminormedAddCommGroup E]
     [SeminormedAddCommGroup F] (z w : E × F) :
     0 ≤ distanceProductKernel z w ∧ distanceProductKernel z w ≤ ‖z‖ * ‖w‖ := by
-  have hx := distanceKernel_nonneg_le z.1 w.1
-  have hy := distanceKernel_nonneg_le z.2 w.2
+  have hx := distance_kernel_nonneg_le z.1 w.1
+  have hy := distance_kernel_nonneg_le z.2 w.2
   refine ⟨mul_nonneg hx.1 hy.1, ?_⟩
   exact mul_le_mul (hx.2.1.trans (norm_fst_le z)) (hy.2.2.trans (norm_snd_le w))
     hy.1 (norm_nonneg z)
 
 /-- The product distance kernel is integrable against product laws with finite first moments. -/
-theorem integrable_distanceProductKernel_prod {E F : Type*} [NormedAddCommGroup E]
+theorem integrable_distance_product_kernel_prod {E F : Type*} [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     [NormedAddCommGroup F] [MeasurableSpace F] [BorelSpace F] [SecondCountableTopology F]
     (P Q : Measure (E × F)) [IsFiniteMeasure P] [IsFiniteMeasure Q]
@@ -298,18 +299,18 @@ theorem integrable_distanceProductKernel_prod {E F : Type*} [NormedAddCommGroup 
     Integrable (fun z : (E × F) × (E × F) ↦ distanceProductKernel z.1 z.2) (P.prod Q) := by
   refine (hP.mul_prod hQ).mono' (by unfold distanceProductKernel distanceKernel; fun_prop)
     (ae_of_all _ fun z ↦ ?_)
-  rw [Real.norm_eq_abs, abs_of_nonneg (distanceProductKernel_nonneg_le z.1 z.2).1]
-  exact (distanceProductKernel_nonneg_le z.1 z.2).2
+  rw [Real.norm_eq_abs, abs_of_nonneg (distance_product_kernel_nonneg_le z.1 z.2).1]
+  exact (distance_product_kernel_nonneg_le z.1 z.2).2
 
 /-- The canonical feature map of the product distance kernel is integrable under every law
 with a finite first moment. -/
-theorem integrable_distanceProductFeature {E F : Type*} [NormedAddCommGroup E]
+theorem integrable_distance_product_feature {E F : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     [NormedAddCommGroup F] [InnerProductSpace ℝ F] [FiniteDimensional ℝ F]
     [MeasurableSpace F] [BorelSpace F] (P : Measure (E × F))
     (hP : Integrable (fun x ↦ ‖x‖) P) :
-    Integrable (posSemidef_distanceProductKernel (E := E) (F := F)).kolmogorovFeature P := by
-  let hk := posSemidef_distanceProductKernel (E := E) (F := F)
+    Integrable (pos_semidef_distance_product_kernel (E := E) (F := F)).kolmogorovFeature P := by
+  let hk := pos_semidef_distance_product_kernel (E := E) (F := F)
   have hkc : Continuous (Function.uncurry (distanceProductKernel : (E × F) → (E × F) → ℝ)) := by
     unfold distanceProductKernel distanceKernel
     fun_prop
@@ -321,7 +322,7 @@ theorem integrable_distanceProductFeature {E F : Type*} [NormedAddCommGroup E]
   nlinarith [norm_nonneg (hk.kolmogorovFeature z), norm_nonneg z]
 
 /-- Vanishing product-kernel MMD gives equality of every product-kernel section integral. -/
-theorem integral_distanceProductKernel_eq_of_squaredMMD_eq_zero {E F : Type*}
+theorem integral_distance_product_kernel_eq_of_squared_mmd_eq_zero {E F : Type*}
     [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
     [MeasurableSpace E] [BorelSpace E]
     [NormedAddCommGroup F] [InnerProductSpace ℝ F] [FiniteDimensional ℝ F]
@@ -330,13 +331,13 @@ theorem integral_distanceProductKernel_eq_of_squaredMMD_eq_zero {E F : Type*}
     (hP : Integrable (fun x ↦ ‖x‖) P) (hQ : Integrable (fun x ↦ ‖x‖) Q)
     (hzero : squaredMMD distanceProductKernel P Q = 0) (z : E × F) :
     (∫ w, distanceProductKernel z w ∂P) = ∫ w, distanceProductKernel z w ∂Q := by
-  let hk := posSemidef_distanceProductKernel (E := E) (F := F)
-  have hPi := integrable_distanceProductFeature P hP
-  have hQi := integrable_distanceProductFeature Q hQ
-  have hnorm := squaredMMD_eq_norm_kernelMeanEmbedding_sub_sq hk hPi hQi
-    (integrable_distanceProductKernel_prod P P hP hP)
-    (integrable_distanceProductKernel_prod Q Q hQ hQ)
-    (integrable_distanceProductKernel_prod P Q hP hQ)
+  let hk := pos_semidef_distance_product_kernel (E := E) (F := F)
+  have hPi := integrable_distance_product_feature P hP
+  have hQi := integrable_distance_product_feature Q hQ
+  have hnorm := squared_mmd_eq_norm_kernel_mean_embedding_sub_sq hk hPi hQi
+    (integrable_distance_product_kernel_prod P P hP hP)
+    (integrable_distance_product_kernel_prod Q Q hQ hQ)
+    (integrable_distance_product_kernel_prod P Q hP hQ)
   rw [hzero] at hnorm
   have heq : hk.kernelMeanEmbedding P = hk.kernelMeanEmbedding Q :=
     sub_eq_zero.1 (norm_eq_zero.1 (sq_eq_zero_iff.1 hnorm.symm))

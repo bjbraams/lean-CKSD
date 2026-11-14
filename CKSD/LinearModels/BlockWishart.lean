@@ -1,4 +1,5 @@
 module
+
 public import CKSD.LinearModels.WishartRatioMoments
 public import TauCeti.Probability.Distributions.Gaussian.Independence
 public import TauCeti.Probability.Distributions.Wishart.Marginal
@@ -22,7 +23,7 @@ open MeasureTheory ProbabilityTheory Set
 open scoped ENNReal NNReal Topology MatrixOrder BigOperators
 namespace CKSD
 /-- Orthogonal Gaussian coordinate groups give independent Wishart congruence images. -/
-theorem map_pair_symmetricCongruenceLinearMap_wishartGramMeasure
+theorem map_pair_symmetric_congruence_linear_map_wishart_gram_measure
     {d p q : ℕ} (ν : ℕ) {S : Matrix (Fin d) (Fin d) ℝ} (hS : S.PosSemidef)
     (L : Matrix (Fin p) (Fin d) ℝ) (R : Matrix (Fin q) (Fin d) ℝ)
     (hcross : L * S * R.transpose = 0) :
@@ -71,7 +72,7 @@ theorem map_pair_symmetricCongruenceLinearMap_wishartGramMeasure
   exact (Measure.map_prod_map _ _ TauCeti.Probability.measurable_wishartGram
     TauCeti.Probability.measurable_wishartGram).symm
 /-- Congruence by selected identity rows reads off the corresponding principal submatrix. -/
-theorem coe_symmetricCongruenceLinearMap_submatrix_one {d p : ℕ}
+theorem coe_symmetric_congruence_linear_map_submatrix_one {d p : ℕ}
     (f : Fin p → Fin d) (A : selfAdjoint.submodule ℝ (Matrix (Fin d) (Fin d) ℝ)) :
     ((Matrix.symmetricCongruenceLinearMap
       ((1 : Matrix (Fin d) (Fin d) ℝ).submatrix f id) A) : Matrix (Fin p) (Fin p) ℝ) =
@@ -79,7 +80,7 @@ theorem coe_symmetricCongruenceLinearMap_submatrix_one {d p : ℕ}
   rw [Matrix.coe_symmetricCongruenceLinearMap_apply, Matrix.transpose_submatrix,
     Matrix.transpose_one, Matrix.submatrix_one_mul_mul_submatrix_one]
 /-- Distinct uncorrelated groups of coordinates have independent principal Wishart blocks. -/
-theorem map_pair_principalBlocks_wishartGramMeasure
+theorem map_pair_principal_blocks_wishart_gram_measure
     {d p q : ℕ} (ν : ℕ) {S : Matrix (Fin d) (Fin d) ℝ} (hS : S.PosSemidef)
     (f : Fin p → Fin d) (g : Fin q → Fin d)
     (hcross : S.submatrix f g = 0) :
@@ -99,7 +100,7 @@ theorem map_pair_principalBlocks_wishartGramMeasure
         exact Matrix.one_submatrix_mul f (Equiv.refl _) S
       _ = S.submatrix f g := Matrix.mul_submatrix_one (Equiv.refl _) g _
       _ = 0 := hcross
-  have h := map_pair_symmetricCongruenceLinearMap_wishartGramMeasure ν hS
+  have h := map_pair_symmetric_congruence_linear_map_wishart_gram_measure ν hS
     ((1 : Matrix (Fin d) (Fin d) ℝ).submatrix f id)
     ((1 : Matrix (Fin d) (Fin d) ℝ).submatrix g id) hcross'
   simpa only [Matrix.transpose_submatrix, Matrix.transpose_one,

@@ -5,6 +5,7 @@ public import Mathlib.Probability.CramerWold
 public import TauCeti.Probability.Distributions.Gaussian.Transforms
 public import TauCeti.Probability.Moments.Covariance
 
+
 /-!
 # Euclidean central limit theorem
 
@@ -24,7 +25,7 @@ noncomputable section
 /-- The multivariate central limit theorem for IID Euclidean random vectors with finite
 second moment, centered by their common expectation and scaled by the square root of
 the sample size. The limiting covariance may be singular. -/
-theorem tendstoInDistribution_inv_sqrt_smul_sum_sub_of_iid {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
+theorem tendsto_in_distribution_inv_sqrt_smul_sum_sub_of_iid {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (h2 : MemLp (X 0) 2 μ)
     (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
@@ -87,7 +88,7 @@ theorem tendstoInDistribution_inv_sqrt_smul_sum_sub_of_iid {Ω : Type*} [Measura
 
 /-- The Euclidean sample-mean central limit theorem for an i.i.d. sequence with law `P`, with the
 population covariance matrix as the limiting Gaussian covariance. -/
-theorem tendstoInDistribution_sqrt_smul_sampleAverage
+theorem tendsto_in_distribution_sqrt_smul_sample_average
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (P : Measure (EuclideanSpace ℝ (Fin d)))
@@ -103,7 +104,7 @@ theorem tendstoInDistribution_sqrt_smul_sampleAverage
   have hid : ∀ i, IdentDistrib (X i) (X 0) μ μ := fun i ↦
     ⟨(hiid.1 i).aemeasurable, (hiid.1 0).aemeasurable,
       (hiid.2.2 i).trans (hiid.2.2 0).symm⟩
-  have hc := tendstoInDistribution_inv_sqrt_smul_sum_sub_of_iid μ X h2X hiid.2.1 hid
+  have hc := tendsto_in_distribution_inv_sqrt_smul_sum_sub_of_iid μ X h2X hiid.2.1 hid
   rw [hiid.2.2 0] at hc
   have hm : (∫ ω, X 0 ω ∂μ) = ∫ x, x ∂P := by
     rw [← hiid.2.2 0]

@@ -5,6 +5,7 @@ public import TauCeti.Probability.McDiarmid
 public import TauCeti.MeasureTheory.Function.Lp.Translation
 public import TauCeti.Probability.Moments.SampleMean
 
+
 /-!
 # `L¹` consistency of the kernel density estimator
 
@@ -26,9 +27,9 @@ exponential concentration bound around the mean.
 * `CKSD.tendsto_integral_abs_integral_mul_comp_sub_mul_sub`: the approximate identity
   `∫ |∫ K(u) f(t - h u) du - f(t)| dt → 0` as `h → 0` for integrable `f` and bounded
   integrable `K` with `∫ K = 1`.
-* `CKSD.tendsto_integral_integral_abs_finiteKernelDensityEstimator_sub`: the expected `L¹`
+* `CKSD.tendsto_integral_integral_abs_finite_kernel_density_estimator_sub`: the expected `L¹`
   error tends to `0` when `h_n → 0` and `n h_n → ∞`.
-* `CKSD.measureReal_le_integral_abs_finiteKernelDensityEstimator_sub_le`: the `L¹` error
+* `CKSD.measure_real_le_integral_abs_finite_kernel_density_estimator_sub_le`: the `L¹` error
   exceeds its mean by `ε` with probability at most `exp (-n ε² / (2 (∫ |K|)²))`.
 
 ## References
@@ -164,7 +165,7 @@ private lemma integral_comp_eval_pi {n : ℕ} {P : Measure ℝ} [IsProbabilityMe
 
 /-- Variance of a sample mean on a product space: for `n ≥ 1` and bounded measurable `φ`,
 `E (n⁻¹ ∑ φ(xᵢ) - ∫ φ dP)² ≤ n⁻¹ ∫ φ² dP`. -/
-private lemma integral_sampleMean_sub_sq_le {n : ℕ} (hn : 0 < n) {P : Measure ℝ}
+private lemma integral_sample_mean_sub_sq_le {n : ℕ} (hn : 0 < n) {P : Measure ℝ}
     [IsProbabilityMeasure P] {φ : ℝ → ℝ} (hφ : Measurable φ) {B : ℝ} (hB : ∀ y, |φ y| ≤ B) :
     ∫ x, ((n : ℝ)⁻¹ * ∑ i, φ (x i) - ∫ y, φ y ∂P) ^ 2 ∂(Measure.pi fun _ : Fin n ↦ P) ≤
       (n : ℝ)⁻¹ * ∫ y, φ y ^ 2 ∂P := by
@@ -213,7 +214,7 @@ private lemma integral_sampleMean_sub_sq_le {n : ℕ} (hn : 0 < n) {P : Measure 
 
 /-- Mean absolute deviation of a sample mean, crude bound: for `n ≥ 1` and bounded measurable
 `φ`, `E |n⁻¹ ∑ φ(xᵢ) - ∫ φ dP| ≤ 2 ∫ |φ| dP`. -/
-private lemma integral_abs_sampleMean_sub_le_two_mul {n : ℕ} (hn : 0 < n) {P : Measure ℝ}
+private lemma integral_abs_sample_mean_sub_le_two_mul {n : ℕ} (hn : 0 < n) {P : Measure ℝ}
     [IsProbabilityMeasure P] {φ : ℝ → ℝ} (hφ : Measurable φ) {B : ℝ} (hB : ∀ y, |φ y| ≤ B) :
     ∫ x, |(n : ℝ)⁻¹ * ∑ i, φ (x i) - ∫ y, φ y ∂P| ∂(Measure.pi fun _ : Fin n ↦ P) ≤
       2 * ∫ y, |φ y| ∂P := by
@@ -248,7 +249,7 @@ private lemma integral_abs_sampleMean_sub_le_two_mul {n : ℕ} (hn : 0 < n) {P :
 
 /-- Mean absolute deviation of a sample mean, variance bound: for `λ > 0`,
 `E |n⁻¹ ∑ φ(xᵢ) - ∫ φ dP| ≤ (n⁻¹ ∫ φ² dP) / (2λ) + λ / 2`. -/
-private lemma integral_abs_sampleMean_sub_le_div {n : ℕ} (hn : 0 < n) {P : Measure ℝ}
+private lemma integral_abs_sample_mean_sub_le_div {n : ℕ} (hn : 0 < n) {P : Measure ℝ}
     [IsProbabilityMeasure P] {φ : ℝ → ℝ} (hφ : Measurable φ) {B : ℝ} (hB : ∀ y, |φ y| ≤ B)
     {lam : ℝ} (hlam : 0 < lam) :
     ∫ x, |(n : ℝ)⁻¹ * ∑ i, φ (x i) - ∫ y, φ y ∂P| ∂(Measure.pi fun _ : Fin n ↦ P) ≤
@@ -288,7 +289,7 @@ private lemma integral_abs_sampleMean_sub_le_div {n : ℕ} (hn : 0 < n) {P : Mea
       field_simp; rw [← h2]; ring
     have h4 : 0 ≤ (|Z x| - lam) ^ 2 / (2 * lam) := by positivity
     linarith
-  have hV : ∫ x, Z x ^ 2 ∂π ≤ (n : ℝ)⁻¹ * ∫ y, φ y ^ 2 ∂P := integral_sampleMean_sub_sq_le hn hφ hB
+  have hV : ∫ x, Z x ^ 2 ∂π ≤ (n : ℝ)⁻¹ * ∫ y, φ y ^ 2 ∂P := integral_sample_mean_sub_sq_le hn hφ hB
   have hI : Integrable (fun x ↦ Z x ^ 2 / (2 * lam) + lam / 2) π :=
     (hZ2.div_const _).add (integrable_const _)
   have step1 : ∫ x, |Z x| ∂π ≤ ∫ x, (Z x ^ 2 / (2 * lam) + lam / 2) ∂π :=
@@ -330,7 +331,7 @@ private lemma integral_abs_comp_sub_div_div (K : ℝ → ℝ) (y : ℝ) {h : ℝ
 
 /-- The kernel density estimator of a sample is the sample mean of the rescaled kernel
 translates. -/
-private lemma finiteKernelDensityEstimator_eq_mean {n : ℕ} (K : ℝ → ℝ) (h : ℝ)
+private lemma finite_kernel_density_estimator_eq_mean {n : ℕ} (K : ℝ → ℝ) (h : ℝ)
     (x : Fin n → ℝ) (t : ℝ) :
     finiteKernelDensityEstimator K h x t = (n : ℝ)⁻¹ * ∑ i, K ((t - x i) / h) / h := by
   rw [finiteKernelDensityEstimator, ← Finset.sum_div, mul_comm, div_mul_eq_div_div,
@@ -352,7 +353,7 @@ private lemma integrable_prod_comp_sub_div_div {K : ℝ → ℝ} (hKm : Measurab
 /-- Away from `[-M, M]`, the averaged rescaled kernel has small mass: if `K` vanishes outside
 `[-R, R]` and `0 < h ≤ 1`, then
 `∫_{|t| > M} ∫ |K((t - y)/h)/h| dP(y) dt ≤ ∫ |K| · P(|y| > M - R)`. -/
-private lemma setIntegral_compl_Icc_integral_abs_le {K : ℝ → ℝ} (hKm : Measurable K)
+private lemma set_integral_compl_icc_integral_abs_le {K : ℝ → ℝ} (hKm : Measurable K)
     (hK : Integrable K) {R : ℝ} (hR : 0 < R) (hKc : ∀ x, R < |x| → K x = 0) {h : ℝ}
     (hh : 0 < h) (hh1 : h ≤ 1) (P : Measure ℝ) [IsProbabilityMeasure P] (M : ℝ) :
     ∫ t in (Icc (-M) M)ᶜ, ∫ y, |K ((t - y) / h) / h| ∂P ≤
@@ -394,14 +395,14 @@ private lemma setIntegral_compl_Icc_integral_abs_le {K : ℝ → ℝ} (hKm : Mea
   simp
 
 /-- The kernel density estimator of a sample is integrable in `t`. -/
-private lemma integrable_finiteKernelDensityEstimator {K : ℝ → ℝ} (hK : Integrable K) {n : ℕ}
+private lemma integrable_finite_kernel_density_estimator {K : ℝ → ℝ} (hK : Integrable K) {n : ℕ}
     {h : ℝ} (hh : 0 < h) (x : Fin n → ℝ) :
     Integrable fun t ↦ finiteKernelDensityEstimator K h x t := by
-  simp_rw [finiteKernelDensityEstimator_eq_mean]
+  simp_rw [finite_kernel_density_estimator_eq_mean]
   exact (integrable_finsetSum _ fun i _ ↦ integrable_comp_sub_div_div hK (x i) hh).const_mul _
 
 /-- The kernel density estimator has `L¹` norm at most `∫ |K|`. -/
-private lemma integral_abs_finiteKernelDensityEstimator_le {K : ℝ → ℝ} (hK : Integrable K)
+private lemma integral_abs_finite_kernel_density_estimator_le {K : ℝ → ℝ} (hK : Integrable K)
     {n : ℕ} {h : ℝ} (hh : 0 < h) (x : Fin n → ℝ) :
     ∫ t, |finiteKernelDensityEstimator K h x t| ≤ ∫ u, |K u| := by
   rcases Nat.eq_zero_or_pos n with rfl | hn
@@ -413,7 +414,7 @@ private lemma integral_abs_finiteKernelDensityEstimator_le {K : ℝ → ℝ} (hK
         refine integral_mono_of_nonneg (ae_of_all _ fun _ ↦ abs_nonneg _)
           ((integrable_finsetSum _ fun i _ ↦ hI i).const_mul _) (ae_of_all _ fun t ↦ ?_)
         dsimp only
-        rw [finiteKernelDensityEstimator_eq_mean, abs_mul, abs_of_nonneg (by positivity)]
+        rw [finite_kernel_density_estimator_eq_mean, abs_mul, abs_of_nonneg (by positivity)]
         exact mul_le_mul_of_nonneg_left (Finset.abs_sum_le_sum_abs _ _) (by positivity)
     _ = ∫ u, |K u| := by
         rw [integral_const_mul, integral_finsetSum _ fun i _ ↦ hI i]
@@ -424,7 +425,7 @@ private lemma integral_abs_finiteKernelDensityEstimator_le {K : ℝ → ℝ} (hK
 /-- **Expectation bound for the `L¹` error of the kernel density estimator.** For `n ≥ 1`
 observations from `P`, `0 < h ≤ 1`, `λ > 0` and `M ≥ 0`, with `g(t) = ∫ K((t - y)/h)/h dP(y)`,
 `E ∫ |f̂_n - f| ≤ ∫ |g - f| + C ∫|K| / (2 λ n h) + λ M + 2 ∫|K| · P(|y| > M - R)`. -/
-private lemma integral_integral_abs_finiteKernelDensityEstimator_sub_le {K f : ℝ → ℝ}
+private lemma integral_integral_abs_finite_kernel_density_estimator_sub_le {K f : ℝ → ℝ}
     (hKm : Measurable K) {C R : ℝ} (hKb : ∀ x, |K x| ≤ C) (hR : 0 < R)
     (hKc : ∀ x, R < |x| → K x = 0) (hfm : Measurable f) (hf : Integrable f)
     {n : ℕ} (hn : 0 < n) {h : ℝ} (hh : 0 < h) (hh1 : h ≤ 1)
@@ -446,15 +447,15 @@ private lemma integral_integral_abs_finiteKernelDensityEstimator_sub_le {K f : �
     rw [abs_div, abs_of_pos hh]
     exact div_le_div_of_nonneg_right (hKb _) hh.le
   have hfk : ∀ x t, finiteKernelDensityEstimator K h x t =
-      (n : ℝ)⁻¹ * ∑ i, K ((t - x i) / h) / h := finiteKernelDensityEstimator_eq_mean K h
+      (n : ℝ)⁻¹ * ∑ i, K ((t - x i) / h) / h := finite_kernel_density_estimator_eq_mean K h
   -- pointwise bounds on the mean absolute deviation
   have hD1 : ∀ t, ∫ x, |finiteKernelDensityEstimator K h x t - g t| ∂π ≤ 2 * a t := fun t ↦ by
     simp_rw [hfk]
-    exact integral_abs_sampleMean_sub_le_two_mul hn (hφm t) (hφb t)
+    exact integral_abs_sample_mean_sub_le_two_mul hn (hφm t) (hφb t)
   have hD2 : ∀ t, ∫ x, |finiteKernelDensityEstimator K h x t - g t| ∂π ≤
       (C / (n * h) * a t) / (2 * lam) + lam / 2 := fun t ↦ by
     simp_rw [hfk]
-    refine (integral_abs_sampleMean_sub_le_div hn (hφm t) (hφb t) hlam).trans
+    refine (integral_abs_sample_mean_sub_le_div hn (hφm t) (hφb t) hlam).trans
       (add_le_add_left (div_le_div_of_nonneg_right ?_ (by positivity)) _)
     have hsq : ∫ y, (K ((t - y) / h) / h) ^ 2 ∂P ≤ ∫ y, C / h * |K ((t - y) / h) / h| ∂P := by
       refine integral_mono_of_nonneg (ae_of_all _ fun _ ↦ sq_nonneg _)
@@ -522,7 +523,7 @@ private lemma integral_integral_abs_finiteKernelDensityEstimator_sub_le {K f : �
     have hIcc : ∫ t in Icc (-M) M, a t ≤ ∫ u, |K u| := by
       rw [← hamass]
       exact setIntegral_le_integral haint (ae_of_all _ ha0)
-    have hcompl := setIntegral_compl_Icc_integral_abs_le hKm hK hR hKc hh hh1 P M
+    have hcompl := set_integral_compl_icc_integral_abs_le hKm hK hR hKc hh hh1 P M
     have hc0 : 0 ≤ C / (n * h) := by
       have : 0 ≤ C := (abs_nonneg _).trans (hKb 0)
       positivity
@@ -541,7 +542,7 @@ private lemma integral_integral_abs_finiteKernelDensityEstimator_sub_le {K f : �
       simp_rw [hfk]
       fun_prop
     refine (integrable_prod_iff hFm.aestronglyMeasurable).2 ⟨ae_of_all _ fun x ↦
-      ((integrable_finiteKernelDensityEstimator hK hh x).sub hf).abs, ?_⟩
+      ((integrable_finite_kernel_density_estimator hK hh x).sub hf).abs, ?_⟩
     refine Integrable.of_bound
       (hFm.norm.stronglyMeasurable.integral_prod_right' (ν := volume)).aestronglyMeasurable
       ((∫ u, |K u|) + ∫ t, |f t|) (ae_of_all _ fun x ↦ ?_)
@@ -549,13 +550,13 @@ private lemma integral_integral_abs_finiteKernelDensityEstimator_sub_le {K f : �
     rw [abs_of_nonneg (integral_nonneg fun _ ↦ abs_nonneg _)]
     calc ∫ t, |finiteKernelDensityEstimator K h x t - f t|
         ≤ ∫ t, (|finiteKernelDensityEstimator K h x t| + |f t|) :=
-          integral_mono ((integrable_finiteKernelDensityEstimator hK hh x).sub hf).abs
-            ((integrable_finiteKernelDensityEstimator hK hh x).abs.add hf.abs)
+          integral_mono ((integrable_finite_kernel_density_estimator hK hh x).sub hf).abs
+            ((integrable_finite_kernel_density_estimator hK hh x).abs.add hf.abs)
             fun t ↦ abs_sub _ _
       _ = (∫ t, |finiteKernelDensityEstimator K h x t|) + ∫ t, |f t| :=
-          integral_add (integrable_finiteKernelDensityEstimator hK hh x).abs hf.abs
+          integral_add (integrable_finite_kernel_density_estimator hK hh x).abs hf.abs
       _ ≤ (∫ u, |K u|) + ∫ t, |f t| :=
-          add_le_add_left (integral_abs_finiteKernelDensityEstimator_le hK hh x) _
+          add_le_add_left (integral_abs_finite_kernel_density_estimator_le hK hh x) _
   rw [integral_integral_swap hFint]
   have hmain : ∫ t, ∫ x, |finiteKernelDensityEstimator K h x t - f t| ∂π ≤
       ∫ t, (|g t - f t| + U t) :=
@@ -569,7 +570,7 @@ private lemma integral_integral_abs_finiteKernelDensityEstimator_sub_le {K f : �
 
 /-- For a law `P` with nonnegative density `f`, the expected rescaled kernel is the smoothed
 density: `∫ K((t - y)/h)/h dP(y) = ∫ K(u) f(t - h u) du` for `h > 0`. -/
-private lemma integral_comp_sub_div_div_withDensity {K f : ℝ → ℝ} (hfm : Measurable f)
+private lemma integral_comp_sub_div_div_with_density {K f : ℝ → ℝ} (hfm : Measurable f)
     (hf0 : ∀ x, 0 ≤ f x) (t : ℝ) {h : ℝ} (hh : 0 < h) :
     ∫ y, K ((t - y) / h) / h ∂(volume.withDensity fun x ↦ ENNReal.ofReal (f x)) =
       ∫ u, K u * f (t - h * u) := by
@@ -587,7 +588,7 @@ private lemma integral_comp_sub_div_div_withDensity {K f : ℝ → ℝ} (hfm : M
   simp only [hG]; field_simp
 
 /-- The tail probabilities `P(|y| > r)` of a probability measure on `ℝ` tend to `0`. -/
-private lemma tendsto_measureReal_lt_abs (P : Measure ℝ) [IsProbabilityMeasure P] :
+private lemma tendsto_measure_real_lt_abs (P : Measure ℝ) [IsProbabilityMeasure P] :
     Tendsto (fun r : ℝ ↦ P.real {y | r < |y|}) atTop (𝓝 0) := by
   have h := tendsto_measure_norm_gt_of_isTightMeasureSet
     (isTightMeasureSet_singleton (μ := P))
@@ -599,7 +600,7 @@ private lemma tendsto_measureReal_lt_abs (P : Measure ℝ) [IsProbabilityMeasure
 kernel vanishing outside `[-R, R]` with `∫ K = 1`, a law `P` with density `f ≥ 0`, and
 bandwidths `h_n > 0` with `h_n → 0` and `n h_n → ∞`, the expected `L¹` error
 `E ∫ |f̂_n - f|` of the kernel density estimator from `n` i.i.d. observations tends to `0`. -/
-theorem tendsto_integral_integral_abs_finiteKernelDensityEstimator_sub {K f : ℝ → ℝ}
+theorem tendsto_integral_integral_abs_finite_kernel_density_estimator_sub {K f : ℝ → ℝ}
     (hKm : Measurable K) {C R : ℝ} (hKb : ∀ x, |K x| ≤ C) (hR : 0 < R)
     (hKc : ∀ x, R < |x| → K x = 0) (hK1 : ∫ x, K x = 1)
     (hfm : Measurable f) (hf0 : ∀ x, 0 ≤ f x) (hf : Integrable f)
@@ -616,7 +617,7 @@ theorem tendsto_integral_integral_abs_finiteKernelDensityEstimator_sub {K f : �
   intro ε hε
   -- the truncation level `M`
   have htail : Tendsto (fun M : ℝ ↦ 2 * κ * P.real {y | M - R < |y|}) atTop (𝓝 0) := by
-    have h1 := (tendsto_measureReal_lt_abs P).comp (tendsto_atTop_add_const_right _ (-R) tendsto_id)
+    have h1 := (tendsto_measure_real_lt_abs P).comp (tendsto_atTop_add_const_right _ (-R) tendsto_id)
     simpa [Function.comp_def, sub_eq_add_neg] using h1.const_mul (2 * κ)
   obtain ⟨M, hM, hM0⟩ :=
     ((htail.eventually (gt_mem_nhds (by linarith : (0 : ℝ) < ε / 4))).and
@@ -641,10 +642,10 @@ theorem tendsto_integral_integral_abs_finiteKernelDensityEstimator_sub {K f : �
         ((hh0.eventually (eventually_le_nhds one_pos)).and (eventually_ge_atTop 1))))
   refine ⟨N, fun n hn ↦ ?_⟩
   obtain ⟨hb, hv, hh1, hn1⟩ := hN n hn
-  have hbound := integral_integral_abs_finiteKernelDensityEstimator_sub_le hKm hKb hR hKc hfm hf
+  have hbound := integral_integral_abs_finite_kernel_density_estimator_sub_le hKm hKb hR hKc hfm hf
     (by omega : 0 < n) (hh n) hh1 P hlam hM0
   have hg : ∀ t, ∫ y, K ((t - y) / h n) / h n ∂P = ∫ u, K u * f (t - h n * u) := fun t ↦ by
-    rw [hP]; exact integral_comp_sub_div_div_withDensity hfm hf0 t (hh n)
+    rw [hP]; exact integral_comp_sub_div_div_with_density hfm hf0 t (hh n)
   simp_rw [hg] at hbound
   have h0 : 0 ≤ ∫ x, (∫ t, |finiteKernelDensityEstimator K (h n) x t - f t|)
       ∂(Measure.pi fun _ : Fin n ↦ P) :=
@@ -655,12 +656,12 @@ theorem tendsto_integral_integral_abs_finiteKernelDensityEstimator_sub {K f : �
 
 /-- Replacing one observation changes the kernel density estimator by a rescaled difference of
 two kernel translates. -/
-private lemma finiteKernelDensityEstimator_update_sub {n : ℕ} (K : ℝ → ℝ) (h : ℝ)
+private lemma finite_kernel_density_estimator_update_sub {n : ℕ} (K : ℝ → ℝ) (h : ℝ)
     (x : Fin n → ℝ) (i : Fin n) (b t : ℝ) :
     finiteKernelDensityEstimator K h (Function.update x i b) t -
         finiteKernelDensityEstimator K h x t =
       (n : ℝ)⁻¹ * (K ((t - b) / h) / h - K ((t - x i) / h) / h) := by
-  simp only [finiteKernelDensityEstimator_eq_mean]
+  simp only [finite_kernel_density_estimator_eq_mean]
   rw [Fintype.sum_eq_add_sum_compl i,
     Fintype.sum_eq_add_sum_compl i (fun j ↦ K ((t - x j) / h) / h)]
   have : ∑ j ∈ {i}ᶜ, K ((t - Function.update x i b j) / h) / h =
@@ -672,16 +673,16 @@ private lemma finiteKernelDensityEstimator_update_sub {n : ℕ} (K : ℝ → ℝ
 
 /-- **Bounded differences** for the `L¹` error of the kernel density estimator: replacing one
 of `n` observations changes `∫ |f̂_n - f|` by at most `2 ∫ |K| / n`. -/
-private lemma abs_integral_abs_finiteKernelDensityEstimator_update_sub_le {K f : ℝ → ℝ}
+private lemma abs_integral_abs_finite_kernel_density_estimator_update_sub_le {K f : ℝ → ℝ}
     (hK : Integrable K) (hf : Integrable f) {n : ℕ} {h : ℝ} (hh : 0 < h) (x : Fin n → ℝ)
     (i : Fin n) (b : ℝ) :
     |(∫ t, |finiteKernelDensityEstimator K h (Function.update x i b) t - f t|) -
         (∫ t, |finiteKernelDensityEstimator K h x t - f t|)| ≤ 2 * (∫ u, |K u|) / n := by
   have hA : Integrable fun t ↦
       |finiteKernelDensityEstimator K h (Function.update x i b) t - f t| :=
-    ((integrable_finiteKernelDensityEstimator hK hh (Function.update x i b)).sub hf).abs
+    ((integrable_finite_kernel_density_estimator hK hh (Function.update x i b)).sub hf).abs
   have hB : Integrable fun t ↦ |finiteKernelDensityEstimator K h x t - f t| :=
-    ((integrable_finiteKernelDensityEstimator hK hh x).sub hf).abs
+    ((integrable_finite_kernel_density_estimator hK hh x).sub hf).abs
   have hb := (integrable_comp_sub_div_div hK b hh).abs
   have hxi := (integrable_comp_sub_div_div hK (x i) hh).abs
   rw [← integral_sub hA hB]
@@ -692,7 +693,7 @@ private lemma abs_integral_abs_finiteKernelDensityEstimator_update_sub_le {K f :
         refine integral_mono_of_nonneg (ae_of_all _ fun _ ↦ abs_nonneg _)
           ((hb.add hxi).const_mul _) (ae_of_all _ fun t ↦ ?_)
         refine (abs_abs_sub_abs_le_abs_sub _ _).trans ?_
-        rw [sub_sub_sub_cancel_right, finiteKernelDensityEstimator_update_sub, abs_mul,
+        rw [sub_sub_sub_cancel_right, finite_kernel_density_estimator_update_sub, abs_mul,
           abs_of_nonneg (by positivity)]
         exact mul_le_mul_of_nonneg_left (abs_sub _ _) (by positivity)
     _ = 2 * (∫ u, |K u|) / n := by
@@ -702,20 +703,20 @@ private lemma abs_integral_abs_finiteKernelDensityEstimator_update_sub_le {K f :
 
 /-- Measurability of the `L¹` error of the kernel density estimator as a function of the
 sample. -/
-theorem measurable_integral_abs_finiteKernelDensityEstimator_sub {K f : ℝ → ℝ}
+theorem measurable_integral_abs_finite_kernel_density_estimator_sub {K f : ℝ → ℝ}
     (hKm : Measurable K) (hfm : Measurable f) (n : ℕ) (h : ℝ) :
     Measurable fun x : Fin n → ℝ ↦ ∫ t, |finiteKernelDensityEstimator K h x t - f t| := by
   have hFm : Measurable (Function.uncurry fun (x : Fin n → ℝ) (t : ℝ) ↦
       |finiteKernelDensityEstimator K h x t - f t|) := by
     simp only [Function.uncurry_def]
-    simp_rw [finiteKernelDensityEstimator_eq_mean]
+    simp_rw [finite_kernel_density_estimator_eq_mean]
     fun_prop
   exact (hFm.stronglyMeasurable.integral_prod_right (ν := volume)).measurable
 
 /-- **Concentration of the `L¹` error** (Devroye): by McDiarmid's inequality, for `n ≥ 1`
 i.i.d. observations from `P` and `ε ≥ 0`, the `L¹` error of the kernel density estimator
 exceeds its mean by `ε` with probability at most `exp (-n ε² / (2 (∫ |K|)²))`. -/
-theorem measureReal_le_integral_abs_finiteKernelDensityEstimator_sub_le {K f : ℝ → ℝ}
+theorem measure_real_le_integral_abs_finite_kernel_density_estimator_sub_le {K f : ℝ → ℝ}
     (hKm : Measurable K) (hK : Integrable K) (hfm : Measurable f) (hf : Integrable f)
     {n : ℕ} (hn : 0 < n) {h : ℝ} (hh : 0 < h) (P : Measure ℝ) [IsProbabilityMeasure P]
     {ε : ℝ} (hε : 0 ≤ ε) :
@@ -726,9 +727,9 @@ theorem measureReal_le_integral_abs_finiteKernelDensityEstimator_sub_le {K f : �
   have hκ : 0 ≤ ∫ u, |K u| := integral_nonneg fun _ ↦ abs_nonneg _
   have hsub := TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences_fin P
     (fun x : Fin n → ℝ ↦ ∫ t, |finiteKernelDensityEstimator K h x t - f t|)
-    (measurable_integral_abs_finiteKernelDensityEstimator_sub hKm hfm n h)
+    (measurable_integral_abs_finite_kernel_density_estimator_sub hKm hfm n h)
     (2 * (∫ u, |K u|) / n)
-    (fun x i b ↦ abs_integral_abs_finiteKernelDensityEstimator_update_sub_le hK hf hh x i b)
+    (fun x i b ↦ abs_integral_abs_finite_kernel_density_estimator_update_sub_le hK hf hh x i b)
   refine (hsub.measure_ge_le hε).trans_eq ?_
   congr 1
   have hc : (((n : ℝ≥0) * ((2 * (∫ u, |K u|) / n).toNNReal / 2) ^ 2 : ℝ≥0) : ℝ) =

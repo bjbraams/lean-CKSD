@@ -10,6 +10,7 @@ import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Order
 import Mathlib.Analysis.Matrix.Order
 public import CKSD.LinearModels.Decomposable
 
+
 /-!
 # Gaussian decomposable graphical models
 
@@ -25,10 +26,10 @@ cliques (`CKSD.IsPerfectCliqueSequence`).
 
 ## Main results
 
-* `CKSD.isConcentrationMLE_decomposableConcentrationMLE` and
-  `CKSD.existsUnique_isConcentrationMLE_inv`: the Gaussian maximum likelihood estimate of the
+* `CKSD.is_concentration_mle_decomposable_concentration_mle` and
+  `CKSD.exists_unique_is_concentration_mle_inv`: the Gaussian maximum likelihood estimate of the
   concentration matrix for a decomposable and for a general graph.
-* `CKSD.isConcentrationMLE_inv_of_apply_eq`: a positive definite `Σ` that agrees with `ssd / n`
+* `CKSD.is_concentration_mle_inv_of_apply_eq`: a positive definite `Σ` that agrees with `ssd / n`
   on the diagonal and the edges and whose inverse vanishes off the edges gives the estimate.
 
 The general-graph estimate is obtained by maximizing `det Σ` over the compact convex set of
@@ -105,7 +106,7 @@ theorem log_det_add_card_lt_log_det_add_trace_mul_inv {S C : Matrix ι ι ℝ} (
 /-- Sufficiency of the likelihood equations: if `Σ` is positive definite, agrees with `ssd / n` on
 the diagonal and on the edges of `G`, and `Σ⁻¹` vanishes off the edges, then `Σ⁻¹` is the
 maximum likelihood estimate of the concentration matrix. -/
-theorem isConcentrationMLE_inv_of_apply_eq (G : SimpleGraph ι) {n : ℕ}
+theorem is_concentration_mle_inv_of_apply_eq (G : SimpleGraph ι) {n : ℕ}
     (ssd Sig : Matrix ι ι ℝ) (hSig : Sig.PosDef)
     (hmatch : ∀ i j, (i = j ∨ G.Adj i j) → Sig i j = ssd i j / n)
     (hzero : ∀ i j, i ≠ j → ¬ G.Adj i j → Sig⁻¹ i j = 0) :
@@ -135,7 +136,7 @@ theorem isConcentrationMLE_inv_of_apply_eq (G : SimpleGraph ι) {n : ℕ}
 
 open scoped MatrixOrder in
 /-- A positive definite matrix dominates a positive multiple of the identity. -/
-theorem exists_pos_posSemidef_sub_smul_one {Sig : Matrix ι ι ℝ} [Nonempty ι] (hSig : Sig.PosDef) :
+theorem exists_pos_pos_semidef_sub_smul_one {Sig : Matrix ι ι ℝ} [Nonempty ι] (hSig : Sig.PosDef) :
     ∃ c : ℝ, 0 < c ∧ (Sig - c • (1 : Matrix ι ι ℝ)).PosSemidef := by
   obtain ⟨r, hr, hle⟩ := (CFC.exists_pos_algebraMap_le_iff Sig hSig.isHermitian.isSelfAdjoint).2
     fun x hx ↦ hSig.isStrictlyPositive.spectrum_pos hx
@@ -147,17 +148,17 @@ theorem exists_pos_posSemidef_sub_smul_one {Sig : Matrix ι ι ℝ} [Nonempty ι
 private def symmSingle (i j : ι) : Matrix ι ι ℝ := single i j 1 + single j i 1
 
 /-- `(E_{ij} + E_{ji}) x = x_j eᵢ + x_i eⱼ`. -/
-private theorem symmSingle_mulVec (i j : ι) (x : ι → ℝ) :
+private theorem symm_single_mul_vec (i j : ι) (x : ι → ℝ) :
     symmSingle i j *ᵥ x = Pi.single i (x j) + Pi.single j (x i) := by
   simp [symmSingle, add_mulVec, single_mulVec]
   rfl
 
 /-- A small symmetric perturbation at `(i, j)` and `(j, i)` keeps a positive definite matrix
 positive semidefinite. -/
-private theorem posSemidef_add_smul_symmSingle {Sig : Matrix ι ι ℝ} (hSig : Sig.PosDef) {i j : ι}
+private theorem pos_semidef_add_smul_symm_single {Sig : Matrix ι ι ℝ} (hSig : Sig.PosDef) {i j : ι}
     (hij : i ≠ j) : ∃ δ > 0, ∀ t : ℝ, |t| ≤ δ → (Sig + t • symmSingle i j).PosSemidef := by
   have : Nonempty ι := ⟨i⟩
-  obtain ⟨c, hc, hpsd⟩ := exists_pos_posSemidef_sub_smul_one hSig
+  obtain ⟨c, hc, hpsd⟩ := exists_pos_pos_semidef_sub_smul_one hSig
   refine ⟨c, hc, fun t ht ↦ ?_⟩
   have hE : (symmSingle i j).IsHermitian := by
     rw [IsHermitian, conjTranspose_eq_transpose_of_trivial, symmSingle, transpose_add,
@@ -172,7 +173,7 @@ private theorem posSemidef_add_smul_symmSingle {Sig : Matrix ι ι ℝ} (hSig : 
       have := Finset.sum_le_sum_of_subset_of_nonneg (f := fun k ↦ x k * x k)
         (Finset.subset_univ {i, j}) fun k _ _ ↦ mul_self_nonneg (x k)
       simpa [dotProduct, Finset.sum_pair hij] using this
-    simp only [star_trivial, add_mulVec, smul_mulVec, one_mulVec, symmSingle_mulVec,
+    simp only [star_trivial, add_mulVec, smul_mulVec, one_mulVec, symm_single_mul_vec,
       dotProduct_add, dotProduct_smul, dotProduct_single, smul_eq_mul]
     have h1 : -(c * (x i * x i + x j * x j)) ≤ t * (x i * x j + x j * x i) := by
       have habs : |t * (x i * x j + x j * x i)| ≤ c * (x i * x i + x j * x j) := by
@@ -191,7 +192,7 @@ private theorem posSemidef_add_smul_symmSingle {Sig : Matrix ι ι ℝ} (hSig : 
 
 /-- The determinant along the line `Σ + t (E_{ij} + E_{ji})`, by the matrix determinant lemma:
 `det Σ · ((1 + t K_{ji})(1 + t K_{ij}) - t² K_{jj} K_{ii})` with `K = Σ⁻¹`. -/
-private theorem det_add_smul_symmSingle {Sig : Matrix ι ι ℝ} (hSig : Sig.PosDef) {i j : ι}
+private theorem det_add_smul_symm_single {Sig : Matrix ι ι ℝ} (hSig : Sig.PosDef) {i j : ι}
     (hij : i ≠ j) (t : ℝ) : (Sig + t • symmSingle i j).det = Sig.det *
       ((1 + t * Sig⁻¹ j i) * (1 + t * Sig⁻¹ i j) - t * Sig⁻¹ j j * (t * Sig⁻¹ i i)) := by
   let U : Matrix ι (Fin 2) ℝ := t • (1 : Matrix ι ι ℝ).submatrix id ![i, j]
@@ -221,7 +222,7 @@ private theorem det_add_smul_symmSingle {Sig : Matrix ι ι ℝ} (hSig : Sig.Pos
 
 /-- An entry of a positive semidefinite matrix is bounded by the mean of the two diagonal
 entries. -/
-private theorem abs_apply_le_of_posSemidef {S : Matrix ι ι ℝ} (hS : S.PosSemidef) (i j : ι) :
+private theorem abs_apply_le_of_pos_semidef {S : Matrix ι ι ℝ} (hS : S.PosSemidef) (i j : ι) :
     |S i j| ≤ (S i i + S j j) / 2 := by
   by_cases hij : i = j
   · subst hij
@@ -240,7 +241,7 @@ private theorem abs_apply_le_of_posSemidef {S : Matrix ι ι ℝ} (hS : S.PosSem
 set of positive semidefinite `Σ` that agree with `ssd / n` on the diagonal and on the edges gives
 a positive definite `Σ` whose inverse vanishes off the edges, by the first-order condition along
 each direction `E_{ij} + E_{ji}` for a non-edge `{i, j}`. -/
-private theorem exists_posDef_apply_eq_of_inv_apply_eq_zero (G : SimpleGraph ι) {n : ℕ}
+private theorem exists_pos_def_apply_eq_of_inv_apply_eq_zero (G : SimpleGraph ι) {n : ℕ}
     (hn : 0 < n) (ssd : Matrix ι ι ℝ) (hssd : ssd.PosDef) :
     ∃ Sig : Matrix ι ι ℝ, Sig.PosDef ∧
       (∀ i j, (i = j ∨ G.Adj i j) → Sig i j = ssd i j / n) ∧
@@ -269,7 +270,7 @@ private theorem exists_posDef_apply_eq_of_inv_apply_eq_zero (G : SimpleGraph ι)
       (Finset.mem_univ k)
   have hsub : F ⊆ Set.pi univ fun _ : ι ↦ Set.pi univ fun _ : ι ↦ Icc (-R) R := by
     intro S hS i _ j _
-    have h := abs_apply_le_of_posSemidef hS.1 i j
+    have h := abs_apply_le_of_pos_semidef hS.1 i j
     rw [hS.2 i i (Or.inl rfl), hS.2 j j (Or.inl rfl)] at h
     have := (le_abs_self (ssd i i / n)).trans (hR i)
     have := (le_abs_self (ssd j j / n)).trans (hR j)
@@ -284,7 +285,7 @@ private theorem exists_posDef_apply_eq_of_inv_apply_eq_zero (G : SimpleGraph ι)
     ((isUnit_iff_isUnit_det S).2 hdetS.ne'.isUnit)
   refine ⟨S, hS, hSF.2, fun i j hij hadj ↦ ?_⟩
   by_contra hq
-  obtain ⟨δ, hδ, hpsd⟩ := posSemidef_add_smul_symmSingle hS hij
+  obtain ⟨δ, hδ, hpsd⟩ := pos_semidef_add_smul_symm_single hS hij
   set q := S⁻¹ i j with hqdef
   have hqji : S⁻¹ j i = q := by
     simpa using (hS.inv.isHermitian.apply i j)
@@ -315,7 +316,7 @@ private theorem exists_posDef_apply_eq_of_inv_apply_eq_zero (G : SimpleGraph ι)
       simp [h1, h2]
     simp [Matrix.add_apply, Matrix.smul_apply, hE, hSF.2 a b hab]
   have hle : (S + (s * q) • symmSingle i j).det ≤ S.det := hmax hmem
-  rw [det_add_smul_symmSingle hS hij, hqji, ← hqdef] at hle
+  rw [det_add_smul_symm_single hS hij, hqji, ← hqdef] at hle
   have hsD : -1 < s * D := by
     have h1 : s * |D| < 1 := by
       calc s * |D| ≤ 1 / (|D| + 1) * |D| := mul_le_mul_of_nonneg_right hs2 (abs_nonneg _)
@@ -340,13 +341,13 @@ private theorem exists_posDef_apply_eq_of_inv_apply_eq_zero (G : SimpleGraph ι)
 positive definite `Σ̂` that agrees with `ssd / n` on the diagonal and on the edges and whose
 inverse is the maximum likelihood estimate of the concentration matrix (in particular `Σ̂⁻¹`
 vanishes off the edges). Convergence of iterative proportional scaling is not stated. -/
-theorem existsUnique_isConcentrationMLE_inv (G : SimpleGraph ι) (n : ℕ) (hn : 0 < n)
+theorem exists_unique_is_concentration_mle_inv (G : SimpleGraph ι) (n : ℕ) (hn : 0 < n)
     (ssd : Matrix ι ι ℝ) (hssd : ssd.PosDef) :
     ∃! Sig : Matrix ι ι ℝ, Sig.PosDef ∧
       (∀ i j, (i = j ∨ G.Adj i j) → Sig i j = ssd i j / n) ∧
       IsConcentrationMLE G n ssd Sig⁻¹ := by
-  obtain ⟨Sig, hpd, hmatch, hzero⟩ := exists_posDef_apply_eq_of_inv_apply_eq_zero G hn ssd hssd
-  have hMLE := isConcentrationMLE_inv_of_apply_eq G ssd Sig hpd hmatch hzero
+  obtain ⟨Sig, hpd, hmatch, hzero⟩ := exists_pos_def_apply_eq_of_inv_apply_eq_zero G hn ssd hssd
+  have hMLE := is_concentration_mle_inv_of_apply_eq G ssd Sig hpd hmatch hzero
   refine ⟨Sig, ⟨hpd, hmatch, hMLE⟩, ?_⟩
   rintro Sig' ⟨hpd', -, hMLE'⟩
   by_contra hne
@@ -369,21 +370,21 @@ private theorem sum_subtype_eq {D : Finset ι} (f : ι → ℝ) (hf : ∀ i ∉ 
 
 omit [DecidableEq ι] in
 /-- `x_U ⬝ y_U = x ⬝ y` when `x` vanishes off `U`. -/
-private theorem dotProduct_res {U : Finset ι} (a b : ι → ℝ) (ha : ∀ i ∉ U, a i = 0) :
+private theorem dot_product_res {U : Finset ι} (a b : ι → ℝ) (ha : ∀ i ∉ U, a i = 0) :
     res U a ⬝ᵥ res U b = a ⬝ᵥ b := by
   simp only [dotProduct, res]
   exact sum_subtype_eq (fun i ↦ a i * b i) fun i hi ↦ by simp [ha i hi]
 
 omit [DecidableEq ι] in
 /-- `M_U y_U = (M y)_U` when `y` vanishes off `U`. -/
-private theorem mulVec_res (M : Matrix ι ι ℝ) {U : Finset ι} (b : ι → ℝ)
+private theorem mul_vec_res (M : Matrix ι ι ℝ) {U : Finset ι} (b : ι → ℝ)
     (hb : ∀ i ∉ U, b i = 0) : principalBlock M U *ᵥ res U b = res U (M *ᵥ b) := by
   ext u
   simp only [mulVec, dotProduct, res, principalBlock, submatrix_apply]
   exact sum_subtype_eq (fun v ↦ M u v * b v) fun i hi ↦ by simp [hb i hi]
 
 /-- The quadratic form of `[B]^V` at `x` is the quadratic form of `B` at `x_D`. -/
-private theorem dotProduct_mulVec_padBlock (D : Finset ι) (B : Matrix D D ℝ) (x : ι → ℝ) :
+private theorem dot_product_mul_vec_pad_block (D : Finset ι) (B : Matrix D D ℝ) (x : ι → ℝ) :
     x ⬝ᵥ padBlock D B *ᵥ x = res D x ⬝ᵥ B *ᵥ res D x := by
   simp only [dotProduct, mulVec, res]
   rw [← sum_subtype_eq (D := D)]
@@ -399,7 +400,7 @@ private theorem dotProduct_mulVec_padBlock (D : Finset ι) (B : Matrix D D ℝ) 
 
 /-- Variational form of the inverse: for positive definite `B`,
 `2 z ⬝ w - z ⬝ B z ≤ w ⬝ B⁻¹ w`, with equality at `z = B⁻¹ w`. -/
-private theorem two_dotProduct_sub_le {T : Type*} [Fintype T] [DecidableEq T] {B : Matrix T T ℝ}
+private theorem two_dot_product_sub_le {T : Type*} [Fintype T] [DecidableEq T] {B : Matrix T T ℝ}
     (hB : B.PosDef) (w z : T → ℝ) :
     2 * (z ⬝ᵥ w) - z ⬝ᵥ B *ᵥ z ≤ w ⬝ᵥ B⁻¹ *ᵥ w := by
   have hBt : Bᵀ = B := by simpa using hB.isHermitian.eq
@@ -420,7 +421,7 @@ private noncomputable def qf (D : Finset ι) (M : Matrix ι ι ℝ) (x : ι → 
 
 omit [Fintype ι] [DecidableEq ι] in
 /-- A principal block of a positive definite principal block is positive definite. -/
-private theorem posDef_principalBlock_of_subset {M : Matrix ι ι ℝ} {D U : Finset ι}
+private theorem pos_def_principal_block_of_subset {M : Matrix ι ι ℝ} {D U : Finset ι}
     (hM : (principalBlock M U).PosDef) (hDU : D ⊆ U) : (principalBlock M D).PosDef := by
   exact hM.submatrix (e := fun i : D ↦ (⟨i.1, hDU i.2⟩ : U)) fun a b h ↦
     Subtype.ext (congrArg (fun u : U ↦ u.1) h)
@@ -444,7 +445,7 @@ equality for a suitable change of `x` off `D`. -/
 private theorem qf_le_qf {M : Matrix ι ι ℝ} {D U : Finset ι} (hM : (principalBlock M U).PosDef)
     (hDU : D ⊆ U) (x : ι → ℝ) :
     qf D M x ≤ qf U M x ∧ ∃ y : ι → ℝ, (∀ i ∈ D, y i = x i) ∧ qf U M y = qf D M x := by
-  have hMD := posDef_principalBlock_of_subset hM hDU
+  have hMD := pos_def_principal_block_of_subset hM hDU
   have huD : IsUnit (principalBlock M D).det := hMD.det_pos.ne'.isUnit
   have huU : IsUnit (principalBlock M U).det := hM.det_pos.ne'.isUnit
   set B := principalBlock M D
@@ -457,23 +458,23 @@ private theorem qf_le_qf {M : Matrix ι ι ℝ} {D U : Finset ι} (hM : (princip
   -- the value `qf D M x = z₀ ⬝ B z₀ = z ⬝ M z`
   have hval : qf D M x = z ⬝ᵥ M *ᵥ z := by
     have h1 : z ⬝ᵥ M *ᵥ z = z₀ ⬝ᵥ B *ᵥ z₀ := by
-      rw [← dotProduct_res (U := D) _ _ hz0, ← mulVec_res M _ hz0, res_ext0]
+      rw [← dot_product_res (U := D) _ _ hz0, ← mul_vec_res M _ hz0, res_ext0]
     rw [h1, hBz, qf]
     exact dotProduct_comm _ _
   have hxz : z ⬝ᵥ x = qf D M x := by
-    rw [← dotProduct_res (U := D) _ _ hz0, res_ext0, qf, dotProduct_comm]
+    rw [← dot_product_res (U := D) _ _ hz0, res_ext0, qf, dotProduct_comm]
   have hzMz : res U z ⬝ᵥ principalBlock M U *ᵥ res U z = z ⬝ᵥ M *ᵥ z := by
-    rw [mulVec_res M _ hzU, dotProduct_res _ _ hzU]
+    rw [mul_vec_res M _ hzU, dot_product_res _ _ hzU]
   constructor
-  · have := two_dotProduct_sub_le hM (res U x) (res U z)
-    rw [dotProduct_res _ _ hzU, hzMz, hxz, ← hval] at this
+  · have := two_dot_product_sub_le hM (res U x) (res U z)
+    rw [dot_product_res _ _ hzU, hzMz, hxz, ← hval] at this
     unfold qf at this ⊢
     linarith
   · refine ⟨M *ᵥ z, fun i hi ↦ ?_, ?_⟩
     · have := congrFun hBz ⟨i, hi⟩
-      rw [← res_ext0 D z₀, mulVec_res M _ hz0] at this
+      rw [← res_ext0 D z₀, mul_vec_res M _ hz0] at this
       exact this
-    · rw [qf, ← mulVec_res M _ hzU, mulVec_mulVec, nonsing_inv_mul _ huU, one_mulVec,
+    · rw [qf, ← mul_vec_res M _ hzU, mulVec_mulVec, nonsing_inv_mul _ huU, one_mulVec,
         dotProduct_comm, hzMz, hval]
 
 
@@ -495,7 +496,7 @@ private theorem res_eq_zero_of_qf_eq_zero {D : Finset ι} {X : Matrix ι ι ℝ}
 
 omit [Fintype ι] in
 /-- The `D`-block of `[B]^V` is `B`. -/
-private theorem principalBlock_padBlock (D : Finset ι) (B : Matrix D D ℝ) :
+private theorem principal_block_pad_block (D : Finset ι) (B : Matrix D D ℝ) :
     principalBlock (padBlock D B) D = B := by
   ext i j
   simp [principalBlock, padBlock, i.2, j.2]
@@ -503,7 +504,7 @@ private theorem principalBlock_padBlock (D : Finset ι) (B : Matrix D D ℝ) :
 omit [Fintype ι] in
 /-- If `X_D` and `Y_D` are positive definite and `(X_D)⁻¹`, `(Y_D)⁻¹` have the same quadratic
 form, then `X_D = Y_D`. -/
-private theorem principalBlock_eq_of_qf_eq {D : Finset ι} {X Y : Matrix ι ι ℝ}
+private theorem principal_block_eq_of_qf_eq {D : Finset ι} {X Y : Matrix ι ι ℝ}
     (hX : (principalBlock X D).PosDef) (hY : (principalBlock Y D).PosDef)
     (h : ∀ x, qf D X x = qf D Y x) : principalBlock X D = principalBlock Y D := by
   set A := (principalBlock X D)⁻¹ - (principalBlock Y D)⁻¹
@@ -525,12 +526,12 @@ private theorem principalBlock_eq_of_qf_eq {D : Finset ι} {X Y : Matrix ι ι �
 /-- Identification of a block of `Σ` by marginal precisions: if `Σ_W` is positive definite,
 `D ⊆ W`, and `qf W Σ = qf D X + R` with `R ≥ 0` vanishing for a suitable change of any vector
 off `D`, then `Σ_D = X_D`. -/
-private theorem principalBlock_eq_of_qf_eq_add {Sig X : Matrix ι ι ℝ} {D W : Finset ι}
+private theorem principal_block_eq_of_qf_eq_add {Sig X : Matrix ι ι ℝ} {D W : Finset ι}
     (hSig : (principalBlock Sig W).PosDef) (hDW : D ⊆ W) (hX : (principalBlock X D).PosDef)
     (R : (ι → ℝ) → ℝ) (hE : ∀ y, qf W Sig y = qf D X y + R y) (hR : ∀ y, 0 ≤ R y)
     (hR0 : ∀ x : ι → ℝ, ∃ y : ι → ℝ, (∀ i ∈ D, y i = x i) ∧ R y = 0) :
     principalBlock Sig D = principalBlock X D := by
-  refine principalBlock_eq_of_qf_eq (posDef_principalBlock_of_subset hSig hDW) hX fun x ↦ ?_
+  refine principal_block_eq_of_qf_eq (pos_def_principal_block_of_subset hSig hDW) hX fun x ↦ ?_
   refine le_antisymm ?_ ?_
   · obtain ⟨y, hy, hRy⟩ := hR0 x
     have h1 := (qf_le_qf hSig hDW y).1
@@ -559,13 +560,13 @@ private noncomputable def padInv (D : Finset ι) (X : Matrix ι ι ℝ) : Matrix
   padBlock D (principalBlock X D)⁻¹
 
 /-- The quadratic form of `[(X_D)⁻¹]^V` is `qf D X`. -/
-private theorem dotProduct_mulVec_padInv (D : Finset ι) (X : Matrix ι ι ℝ) (x : ι → ℝ) :
+private theorem dot_product_mul_vec_pad_inv (D : Finset ι) (X : Matrix ι ι ℝ) (x : ι → ℝ) :
     x ⬝ᵥ padInv D X *ᵥ x = qf D X x :=
-  dotProduct_mulVec_padBlock D _ x
+  dot_product_mul_vec_pad_block D _ x
 
 omit [Fintype ι] in
 /-- `[(X_D)⁻¹]^V` is symmetric when `X_D` is positive definite. -/
-private theorem transpose_padInv {D : Finset ι} {X : Matrix ι ι ℝ}
+private theorem transpose_pad_inv {D : Finset ι} {X : Matrix ι ι ℝ}
     (hX : (principalBlock X D).PosDef) : (padInv D X)ᵀ = padInv D X := by
   have ht : ((principalBlock X D)⁻¹)ᵀ = (principalBlock X D)⁻¹ := by
     simpa using hX.inv.isHermitian.eq
@@ -592,25 +593,25 @@ private theorem glue {P Q N : Matrix ι ι ℝ} {H C : Finset ι} (hP : (princip
   have hSH : S ⊆ H := Finset.inter_subset_right
   have hHW : H ⊆ W := Finset.subset_union_left
   have hCW : C ⊆ W := Finset.subset_union_right
-  have hQS : (principalBlock Q S).PosDef := posDef_principalBlock_of_subset hQ hSC
-  have hPS : (principalBlock P S).PosDef := posDef_principalBlock_of_subset hP hSH
+  have hQS : (principalBlock Q S).PosDef := pos_def_principal_block_of_subset hQ hSC
+  have hPS : (principalBlock P S).PosDef := pos_def_principal_block_of_subset hP hSH
   have hPQS : principalBlock P S = principalBlock Q S := by
     ext a b
     exact hPQ a a.2 b b.2
   have hqfS : ∀ x, qf S P x = qf S Q x := fun x ↦ by simp only [qf, hPQS]
   have hform : ∀ x, x ⬝ᵥ N *ᵥ x = qf H P x + qf C Q x - qf S Q x := fun x ↦ by
     simp only [hN, add_mulVec, sub_mulVec, dotProduct_add, dotProduct_sub,
-      dotProduct_mulVec_padInv]
+      dot_product_mul_vec_pad_inv]
   have hCS : ∀ x, qf S Q x ≤ qf C Q x := fun x ↦ (qf_le_qf hQ hSC x).1
   have hHS : ∀ x, qf S Q x ≤ qf H P x := fun x ↦ hqfS x ▸ (qf_le_qf hP hSH x).1
   have hNt : Nᵀ = N := by
-    rw [hN, transpose_sub, transpose_add, transpose_padInv hP, transpose_padInv hQ,
-      transpose_padInv hQS]
+    rw [hN, transpose_sub, transpose_add, transpose_pad_inv hP, transpose_pad_inv hQ,
+      transpose_pad_inv hQS]
   -- the form of `N` on `W`
   have hformW : ∀ y, res W y ⬝ᵥ principalBlock N W *ᵥ res W y =
       qf H P y + qf C Q y - qf S Q y := fun y ↦ by
     have hz := ext0_eq_zero (subset_refl W) (res W y)
-    rw [← res_ext0 W (res W y), mulVec_res N _ hz, dotProduct_res _ _ hz, hform]
+    rw [← res_ext0 W (res W y), mul_vec_res N _ hz, dot_product_res _ _ hz, hform]
     have hag : ∀ i ∈ W, ext0 W (res W y) i = y i := fun i hi ↦ by simp [ext0, res, hi]
     rw [qf_congr H P fun i hi ↦ hag i (hHW hi), qf_congr C Q fun i hi ↦ hag i (hCW hi),
       qf_congr S Q fun i hi ↦ hag i (hCW (hSC hi))]
@@ -641,17 +642,17 @@ private theorem glue {P Q N : Matrix ι ι ℝ} {H C : Finset ι} (hP : (princip
       · exact congrFun hxH ⟨i.1, h⟩
       · exact congrFun hxC ⟨i.1, h⟩
   set Sig := padBlock W (principalBlock N W)⁻¹
-  have hSigW : principalBlock Sig W = (principalBlock N W)⁻¹ := principalBlock_padBlock _ _
+  have hSigW : principalBlock Sig W = (principalBlock N W)⁻¹ := principal_block_pad_block _ _
   have hSig : (principalBlock Sig W).PosDef := hSigW ▸ hNW.inv
   have hE : ∀ y, qf W Sig y = qf H P y + qf C Q y - qf S Q y := fun y ↦ by
     rw [qf, hSigW, nonsing_inv_nonsing_inv _ hNW.det_pos.ne'.isUnit, hformW]
   refine ⟨hNW, ?_, ?_⟩
-  · refine principalBlock_eq_of_qf_eq_add hSig hHW hP (fun y ↦ qf C Q y - qf S Q y)
+  · refine principal_block_eq_of_qf_eq_add hSig hHW hP (fun y ↦ qf C Q y - qf S Q y)
       (fun y ↦ by rw [hE]; ring) (fun y ↦ by linarith [hCS y]) fun x ↦ ?_
     obtain ⟨y, hy, heq⟩ := exists_qf_eq_of_subset hQ hSC hSH
       (fun i hi hiH ↦ Finset.mem_inter.2 ⟨hi, hiH⟩) x
     exact ⟨y, hy, by rw [heq, sub_self]⟩
-  · refine principalBlock_eq_of_qf_eq_add hSig hCW hQ (fun y ↦ qf H P y - qf S P y)
+  · refine principal_block_eq_of_qf_eq_add hSig hCW hQ (fun y ↦ qf H P y - qf S P y)
       (fun y ↦ by rw [hE, hqfS]; ring) (fun y ↦ by linarith [(qf_le_qf hP hSH y).1])
       fun x ↦ ?_
     obtain ⟨y, hy, heq⟩ := exists_qf_eq_of_subset hP hSH hSC
@@ -661,18 +662,18 @@ private theorem glue {P Q N : Matrix ι ι ℝ} {H C : Finset ι} (hP : (princip
 
 omit [Fintype ι] [DecidableEq ι] in
 /-- Entries of a principal block. -/
-private theorem principalBlock_apply (X : Matrix ι ι ℝ) (D : Finset ι) (a b : ι) (ha : a ∈ D)
+private theorem principal_block_apply (X : Matrix ι ι ℝ) (D : Finset ι) (a b : ι) (ha : a ∈ D)
     (hb : b ∈ D) : principalBlock X D ⟨a, ha⟩ ⟨b, hb⟩ = X a b := rfl
 
 omit [Fintype ι] in
 /-- `[(X_D)⁻¹]^V` vanishes outside `D × D`. -/
-private theorem padInv_apply_eq_zero {D : Finset ι} (X : Matrix ι ι ℝ) {a b : ι}
+private theorem pad_inv_apply_eq_zero {D : Finset ι} (X : Matrix ι ι ℝ) {a b : ι}
     (h : ¬ (a ∈ D ∧ b ∈ D)) : padInv D X a b = 0 := by
   simp [padInv, padBlock, h]
 
 omit [Fintype ι] in
 /-- A matrix vanishing outside `D × D` is the padding of its `D`-block. -/
-private theorem padBlock_principalBlock {D : Finset ι} {X : Matrix ι ι ℝ}
+private theorem pad_block_principal_block {D : Finset ι} {X : Matrix ι ι ℝ}
     (h : ∀ a b, ¬ (a ∈ D ∧ b ∈ D) → X a b = 0) : padBlock D (principalBlock X D) = X := by
   ext a b
   by_cases hab : a ∈ D ∧ b ∈ D
@@ -681,7 +682,7 @@ private theorem padBlock_principalBlock {D : Finset ι} {X : Matrix ι ι ℝ}
 
 omit [Fintype ι] [DecidableEq ι] in
 /-- The empty block is positive definite. -/
-private theorem posDef_principalBlock_empty (X : Matrix ι ι ℝ) :
+private theorem pos_def_principal_block_empty (X : Matrix ι ι ℝ) :
     (principalBlock X ∅).PosDef := by
   refine PosDef.of_dotProduct_mulVec_pos ?_ fun v hv ↦
     (hv (funext fun i ↦ (Finset.notMem_empty _ i.2).elim)).elim
@@ -691,7 +692,7 @@ private theorem posDef_principalBlock_empty (X : Matrix ι ι ℝ) :
 /-- Induction over a perfect sequence: the partial estimate on the first `m` cliques is the
 inverse of a positive definite block on `C₀ ∪ ⋯ ∪ C_{m-1}` that agrees with `ssd` on each of these
 cliques. -/
-private theorem exists_padInv_cliqueHistory_eq (G : SimpleGraph ι) {k : ℕ}
+private theorem exists_pad_inv_clique_history_eq (G : SimpleGraph ι) {k : ℕ}
     (C : Fin k → Finset ι) (hC : IsPerfectCliqueSequence G C) (ssd : Matrix ι ι ℝ)
     (hblock : ∀ j, (principalBlock ssd (C j)).PosDef) :
     ∀ m ≤ k, ∃ Sig : Matrix ι ι ℝ, (principalBlock Sig (cliqueHistory C m)).PosDef ∧
@@ -703,7 +704,7 @@ private theorem exists_padInv_cliqueHistory_eq (G : SimpleGraph ι) {k : ℕ}
   | zero =>
     intro _
     have h0 : cliqueHistory C 0 = ∅ := by simp [cliqueHistory]
-    refine ⟨0, h0 ▸ posDef_principalBlock_empty 0, ?_, fun j hj ↦ absurd hj (Nat.not_lt_zero _)⟩
+    refine ⟨0, h0 ▸ pos_def_principal_block_empty 0, ?_, fun j hj ↦ absurd hj (Nat.not_lt_zero _)⟩
     rw [h0]
     ext a b
     simp [padInv, padBlock]
@@ -752,26 +753,26 @@ private theorem exists_padInv_cliqueHistory_eq (G : SimpleGraph ι) {k : ℕ}
     have hNsupp : ∀ a b, ¬ (a ∈ W ∧ b ∈ W) → N a b = 0 := by
       intro a b hab
       have h3 : ∀ E : Finset ι, E ⊆ W → ∀ X : Matrix ι ι ℝ, padInv E X a b = 0 :=
-        fun E hE X ↦ padInv_apply_eq_zero X fun h ↦ hab ⟨hE h.1, hE h.2⟩
+        fun E hE X ↦ pad_inv_apply_eq_zero X fun h ↦ hab ⟨hE h.1, hE h.2⟩
       simp only [hNdef, Matrix.sub_apply, Matrix.add_apply]
       rw [h3 _ Finset.subset_union_left, h3 _ Finset.subset_union_right,
         h3 _ (Finset.inter_subset_left.trans Finset.subset_union_right)]
       ring
     refine ⟨padBlock W (principalBlock N W)⁻¹, ?_, ?_, ?_⟩
-    · rw [hH, principalBlock_padBlock]
+    · rw [hH, principal_block_pad_block]
       exact hNW.inv
-    · rw [hH, padInv, principalBlock_padBlock, nonsing_inv_nonsing_inv _ hNW.det_pos.ne'.isUnit,
-        padBlock_principalBlock hNsupp, hfil, Finset.sum_insert hjn, ← hK, hNdef, ← hsepj]
+    · rw [hH, padInv, principal_block_pad_block, nonsing_inv_nonsing_inv _ hNW.det_pos.ne'.isUnit,
+        pad_block_principal_block hNsupp, hfil, Finset.sum_insert hjn, ← hK, hNdef, ← hsepj]
       abel
     · intro i hi a ha b hb
       rcases Nat.lt_succ_iff_lt_or_eq.1 hi with hi | hi
       · have := congrFun (congrFun h1 ⟨a, hsub i hi ha⟩) ⟨b, hsub i hi hb⟩
-        rw [principalBlock_apply, principalBlock_apply] at this
+        rw [principal_block_apply, principal_block_apply] at this
         rw [this, hag i hi a ha b hb]
       · have hij : i = j := Fin.ext hi
         subst hij
         have := congrFun (congrFun h2 ⟨a, ha⟩) ⟨b, hb⟩
-        rwa [principalBlock_apply, principalBlock_apply] at this
+        rwa [principal_block_apply, principal_block_apply] at this
 
 
 /-- GAPS 105.36, Gaussian decomposable model: for a perfect sequence `C` of the maximal cliques
@@ -782,14 +783,14 @@ matrix exists, is unique, and equals `n (∑_C [(ssd_C)⁻¹]^V - ∑_S ν(S) [(
 The likelihood involves `ssd` only through its clique blocks, so no condition on `ssd` outside
 them is needed. The almost-sure existence criterion `n > max_C |C|` as a necessary condition
 is not stated. -/
-theorem isConcentrationMLE_decomposableConcentrationMLE (G : SimpleGraph ι) {k : ℕ}
+theorem is_concentration_mle_decomposable_concentration_mle (G : SimpleGraph ι) {k : ℕ}
     (C : Fin k → Finset ι) (hC : IsPerfectCliqueSequence G C) (n : ℕ) (hn : 0 < n)
     (ssd : Matrix ι ι ℝ) (hblock : ∀ j, (principalBlock ssd (C j)).PosDef) :
     IsConcentrationMLE G n ssd (decomposableConcentrationMLE C n ssd) := by
-  obtain ⟨Sig, hSig, hK, hag⟩ := exists_padInv_cliqueHistory_eq G C hC ssd hblock k le_rfl
+  obtain ⟨Sig, hSig, hK, hag⟩ := exists_pad_inv_clique_history_eq G C hC ssd hblock k le_rfl
   have hall : cliqueHistory C k = Finset.univ := by
     refine Finset.eq_univ_of_forall fun v ↦ ?_
-    obtain ⟨D, hD, hDmax⟩ := exists_maximal_isClique_superset G (T := {v}) (by simp)
+    obtain ⟨D, hD, hDmax⟩ := exists_maximal_is_clique_superset G (T := {v}) (by simp)
     obtain ⟨m, rfl⟩ := hC.2.2.1 D hDmax
     simp only [cliqueHistory, Finset.mem_biUnion, Finset.mem_filter, Finset.mem_univ, true_and]
     exact ⟨m, m.isLt, hD (by simp)⟩
@@ -828,12 +829,12 @@ theorem isConcentrationMLE_decomposableConcentrationMLE (G : SimpleGraph ι) {k 
     refine inv_eq_left_inv ?_
     rw [smul_mul_smul, mul_inv_cancel₀ hn', one_smul, nonsing_inv_mul _ hu]
   rw [hMLE, ← hSinv]
-  refine isConcentrationMLE_inv_of_apply_eq G ssd _ (hSigPD.smul (inv_pos.2 (by positivity)))
+  refine is_concentration_mle_inv_of_apply_eq G ssd _ (hSigPD.smul (inv_pos.2 (by positivity)))
     (fun a b hab ↦ ?_) (fun a b hab hadj ↦ ?_)
   · have hpair : G.IsClique (({a, b} : Finset ι) : Set ι) := by
       rw [Finset.coe_pair]
       exact SimpleGraph.isClique_pair.2 fun hne ↦ hab.resolve_left hne
-    obtain ⟨D, hD, hDmax⟩ := exists_maximal_isClique_superset G hpair
+    obtain ⟨D, hD, hDmax⟩ := exists_maximal_is_clique_superset G hpair
     obtain ⟨m, rfl⟩ := hC.2.2.1 D hDmax
     rw [Matrix.smul_apply, hag' m a (hD (by simp)) b (hD (by simp)), smul_eq_mul, div_eq_inv_mul]
   · rw [hSinv, ← hinv, hK, Matrix.smul_apply, Matrix.sum_apply]
@@ -843,8 +844,8 @@ theorem isConcentrationMLE_decomposableConcentrationMLE (G : SimpleGraph ι) {k 
     have hsep : ∀ v ∈ cliqueSeparator C j, v ∈ C j := fun v hv ↦ by
       simp only [cliqueSeparator, Finset.mem_inter] at hv
       exact hv.1
-    rw [Matrix.sub_apply, padInv_apply_eq_zero _ hnot,
-      padInv_apply_eq_zero (D := cliqueSeparator C j) _ fun h ↦ hnot ⟨hsep a h.1, hsep b h.2⟩,
+    rw [Matrix.sub_apply, pad_inv_apply_eq_zero _ hnot,
+      pad_inv_apply_eq_zero (D := cliqueSeparator C j) _ fun h ↦ hnot ⟨hsep a h.1, hsep b h.2⟩,
       sub_zero]
 
 end Gaussian

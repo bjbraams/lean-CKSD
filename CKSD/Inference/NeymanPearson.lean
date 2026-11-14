@@ -3,6 +3,7 @@ module
 public import CKSD.Inference.Density
 public import TauCeti.Probability.Quantile
 
+
 /-!
 # The Neyman–Pearson lemma and threshold tests
 
@@ -17,10 +18,10 @@ statistic attain every size in `(0, 1)`.
   (GAPS 101.47).
 * `CKSD.exists_neyman_pearson_test`: existence and optimality of a most powerful test of a simple
   hypothesis against a simple alternative (GAPS 101.14).
-* `CKSD.integral_le_integral_thresholdTest_of_monotone_likelihood_ratio` and
-  `CKSD.integral_thresholdTest_le_of_monotone_likelihood_ratio`: the two Neyman–Pearson
+* `CKSD.integral_le_integral_threshold_test_of_monotone_likelihood_ratio` and
+  `CKSD.integral_threshold_test_le_of_monotone_likelihood_ratio`: the two Neyman–Pearson
   comparisons for a monotone likelihood ratio.
-* `CKSD.integral_thresholdTest`, `CKSD.exists_integral_thresholdTest_eq`: sizes of threshold
+* `CKSD.integral_threshold_test`, `CKSD.exists_integral_threshold_test_eq`: sizes of threshold
   tests.
 
 ## References
@@ -303,7 +304,7 @@ theorem exists_neyman_pearson_test (P₀ P₁ μ : Measure X) [IsProbabilityMeas
 /-- The Neyman–Pearson step of the Karlin–Rubin theorem: for laws `Pa`, `Pb` with positive
 densities whose ratio `fb / fa` is a nondecreasing function of `T`, the threshold test in `T` is
 at least as powerful under `Pb` as every test whose size under `Pa` does not exceed its own. -/
-theorem integral_le_integral_thresholdTest_of_monotone_likelihood_ratio (μ : Measure X)
+theorem integral_le_integral_threshold_test_of_monotone_likelihood_ratio (μ : Measure X)
     (Pa Pb : Measure X) [IsProbabilityMeasure Pa] [IsProbabilityMeasure Pb] (fa fb : X → ℝ)
     (ha : HasDensity Pa μ fa) (hb : HasDensity Pb μ fb) (hpos : ∀ x, 0 < fa x) (hposb : ∀ x, 0 < fb x)
     (T : X → ℝ) (r : ℝ → ℝ) (hr : Monotone r) (hratio : ∀ x, fb x / fa x = r (T x))
@@ -366,7 +367,7 @@ theorem integral_eq_zero_of_integral_eq_zero_of_pos_density {μ Pa Pb : Measure 
 /-- The reversed Neyman–Pearson step of the Karlin–Rubin theorem: if the density ratio `fb / fa`
 of positive densities is a nondecreasing function of `T`, a threshold test in `T` whose power
 under `Pb` is at most that of a test `ψ` also has size at most that of `ψ` under `Pa`. -/
-theorem integral_thresholdTest_le_of_monotone_likelihood_ratio (μ : Measure X)
+theorem integral_threshold_test_le_of_monotone_likelihood_ratio (μ : Measure X)
     (Pa Pb : Measure X) [IsProbabilityMeasure Pa] [IsProbabilityMeasure Pb] (fa fb : X → ℝ)
     (ha : HasDensity Pa μ fa) (hb : HasDensity Pb μ fb) (hpos : ∀ x, 0 < fa x)
     (hposb : ∀ x, 0 < fb x)
@@ -438,7 +439,7 @@ theorem integral_thresholdTest_le_of_monotone_likelihood_ratio (μ : Measure X)
 
 
 /-- The size `P {c < T} + γ P {T = c}` of a threshold test in a real statistic. -/
-theorem integral_thresholdTest (P : Measure X) [IsProbabilityMeasure P] {T : X → ℝ}
+theorem integral_threshold_test (P : Measure X) [IsProbabilityMeasure P] {T : X → ℝ}
     (hT : Measurable T) (c γ : ℝ) :
     (∫ x, thresholdTest T c γ x ∂P) = P.real {x | c < T x} + γ * P.real {x | T x = c} := by
   unfold thresholdTest
@@ -460,7 +461,7 @@ theorem integral_thresholdTest (P : Measure X) [IsProbabilityMeasure P] {T : X �
 
 /-- Every size `β ∈ (0, 1)` is attained by a threshold test in a real statistic `T`, with the
 threshold the `(1 - β)`-quantile of the law of `T` (TauCeti's `Measure.quantile`). -/
-theorem exists_integral_thresholdTest_eq (P : Measure X) [IsProbabilityMeasure P] {T : X → ℝ}
+theorem exists_integral_threshold_test_eq (P : Measure X) [IsProbabilityMeasure P] {T : X → ℝ}
     (hT : Measurable T) {β : ℝ} (hβ : β ∈ Ioo 0 1) :
     ∃ c γ : ℝ, γ ∈ Icc 0 1 ∧ (∫ x, thresholdTest T c γ x ∂P) = β := by
   set ν := P.map T
@@ -491,14 +492,14 @@ theorem exists_integral_thresholdTest_eq (P : Measure X) [IsProbabilityMeasure P
   have hB : β ≤ pg + pe := by linarith
   by_cases hpe : pe = 0
   · refine ⟨c, 0, ⟨le_rfl, zero_le_one⟩, ?_⟩
-    rw [integral_thresholdTest P hT]
+    rw [integral_threshold_test P hT]
     simp only [zero_mul, add_zero]
     rw [hpe] at hB
     linarith
   · have hpe0 : 0 < pe := lt_of_le_of_ne measureReal_nonneg (Ne.symm hpe)
     refine ⟨c, (β - pg) / pe, ⟨div_nonneg (by linarith) hpe0.le, ?_⟩, ?_⟩
     · rw [div_le_one hpe0]; linarith
-    · rw [integral_thresholdTest P hT]
+    · rw [integral_threshold_test P hT]
       field_simp
       ring
 

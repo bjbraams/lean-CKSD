@@ -3,6 +3,7 @@ module
 public import CKSD.Bayes.StochasticApproximation.Basic
 public import Mathlib.Analysis.ODE.Gronwall
 
+
 /-!
 # The deterministic ODE method for stochastic approximation
 
@@ -29,20 +30,20 @@ def stochasticApproxIndex (a : ℕ → ℝ) (s : ℝ) : ℕ :=
   sSup {n : ℕ | stochasticApproxTime a n ≤ s}
 
 /-- The next interpolation time is the previous time plus the current step. -/
-theorem stochasticApproxTime_succ (a : ℕ → ℝ) (n : ℕ) :
+theorem stochastic_approx_time_succ (a : ℕ → ℝ) (n : ℕ) :
     stochasticApproxTime a (n + 1) = stochasticApproxTime a n + a n :=
   Finset.sum_range_succ _ _
 
 /-- Positive steps give strictly increasing interpolation times. -/
-theorem strictMono_stochasticApproxTime {a : ℕ → ℝ} (ha : ∀ n, 0 < a n) :
+theorem strict_mono_stochastic_approx_time {a : ℕ → ℝ} (ha : ∀ n, 0 < a n) :
     StrictMono (stochasticApproxTime a) := by
   apply strictMono_nat_of_lt_succ
   intro n
-  rw [stochasticApproxTime_succ]
+  rw [stochastic_approx_time_succ]
   exact lt_add_of_pos_right _ (ha n)
 
 /-- Divergence of the interpolation times bounds every time sublevel in the natural numbers. -/
-theorem bddAbove_stochasticApproxTime_sublevel {a : ℕ → ℝ} (_ha : ∀ n, 0 < a n)
+theorem bdd_above_stochastic_approx_time_sublevel {a : ℕ → ℝ} (_ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (s : ℝ) :
     BddAbove {n : ℕ | stochasticApproxTime a n ≤ s} := by
   obtain ⟨N, hN⟩ := eventually_atTop.1 (ht.eventually (eventually_gt_atTop s))
@@ -51,7 +52,7 @@ theorem bddAbove_stochasticApproxTime_sublevel {a : ℕ → ℝ} (_ha : ∀ n, 0
   exact (not_lt_of_ge hn) (hN n (by omega))
 
 /-- Inside a half-open interpolation interval, its index is the corresponding natural number. -/
-theorem stochasticApproxIndex_eq {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem stochastic_approx_index_eq {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) {s : ℝ} {n : ℕ}
     (hs : s ∈ Ico (stochasticApproxTime a n) (stochasticApproxTime a (n + 1))) :
     stochasticApproxIndex a s = n := by
@@ -60,28 +61,28 @@ theorem stochasticApproxIndex_eq {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     intro k hk
     by_contra h
     have hnk : n + 1 ≤ k := by omega
-    exact (not_lt_of_ge ((strictMono_stochasticApproxTime ha).monotone hnk |>.trans hk)) hs.2
-  · exact le_csSup (bddAbove_stochasticApproxTime_sublevel ha ht s) hs.1
+    exact (not_lt_of_ge ((strict_mono_stochastic_approx_time ha).monotone hnk |>.trans hk)) hs.2
+  · exact le_csSup (bdd_above_stochastic_approx_time_sublevel ha ht s) hs.1
 
 /-- The left endpoint of the interpolation interval is at most the given nonnegative time. -/
-theorem stochasticApproxTime_index_le {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem stochastic_approx_time_index_le {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) {s : ℝ} (hs : 0 ≤ s) :
     stochasticApproxTime a (stochasticApproxIndex a s) ≤ s := by
   have hne : ({n : ℕ | stochasticApproxTime a n ≤ s} : Set ℕ).Nonempty := by
     exact ⟨0, by simpa [stochasticApproxTime] using hs⟩
-  exact hne.csSup_mem (bddAbove_stochasticApproxTime_sublevel ha ht s).finite
+  exact hne.csSup_mem (bdd_above_stochastic_approx_time_sublevel ha ht s).finite
 
 /-- A time lies strictly below the right endpoint of its interpolation interval. -/
-theorem lt_stochasticApproxTime_index_succ {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem lt_stochastic_approx_time_index_succ {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (s : ℝ) :
     s < stochasticApproxTime a (stochasticApproxIndex a s + 1) := by
   by_contra h
   have hh : stochasticApproxIndex a s + 1 ≤ stochasticApproxIndex a s :=
-    le_csSup (bddAbove_stochasticApproxTime_sublevel ha ht s) (not_lt.1 h)
+    le_csSup (bdd_above_stochastic_approx_time_sublevel ha ht s) (not_lt.1 h)
   omega
 
 /-- The interpolation agrees with its affine formula on each closed interpolation interval. -/
-theorem stochasticApproxInterp_eq_of_mem_Icc {E : Type*} [AddCommGroup E] [Module ℝ E]
+theorem stochastic_approx_interp_eq_of_mem_icc {E : Type*} [AddCommGroup E] [Module ℝ E]
     {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (x : ℕ → E) {s : ℝ} {n : ℕ}
     (hs : s ∈ Icc (stochasticApproxTime a n) (stochasticApproxTime a (n + 1))) :
@@ -89,17 +90,17 @@ theorem stochasticApproxInterp_eq_of_mem_Icc {E : Type*} [AddCommGroup E] [Modul
       x n + ((s - stochasticApproxTime a n) / a n) • (x (n + 1) - x n) := by
   by_cases htop : s = stochasticApproxTime a (n + 1)
   · subst s
-    have hi := stochasticApproxIndex_eq ha ht (n := n + 1)
-      (s := stochasticApproxTime a (n + 1)) ⟨le_rfl, strictMono_stochasticApproxTime ha (Nat.lt_succ_self _)⟩
+    have hi := stochastic_approx_index_eq ha ht (n := n + 1)
+      (s := stochasticApproxTime a (n + 1)) ⟨le_rfl, strict_mono_stochastic_approx_time ha (Nat.lt_succ_self _)⟩
     change x (stochasticApproxIndex a (stochasticApproxTime a (n + 1))) +
       ((stochasticApproxTime a (n + 1) -
           stochasticApproxTime a (stochasticApproxIndex a (stochasticApproxTime a (n + 1)))) /
           a (stochasticApproxIndex a (stochasticApproxTime a (n + 1)))) •
         (x (stochasticApproxIndex a (stochasticApproxTime a (n + 1)) + 1) -
           x (stochasticApproxIndex a (stochasticApproxTime a (n + 1)))) = _
-    rw [hi, sub_self, zero_div, zero_smul, add_zero, stochasticApproxTime_succ,
+    rw [hi, sub_self, zero_div, zero_smul, add_zero, stochastic_approx_time_succ,
       add_sub_cancel_left, div_self (ha n).ne', one_smul, add_sub_cancel]
-  · have hi := stochasticApproxIndex_eq ha ht ⟨hs.1, lt_of_le_of_ne hs.2 htop⟩
+  · have hi := stochastic_approx_index_eq ha ht ⟨hs.1, lt_of_le_of_ne hs.2 htop⟩
     change x (stochasticApproxIndex a s) +
       ((s - stochasticApproxTime a (stochasticApproxIndex a s)) / a (stochasticApproxIndex a s)) •
       (x (stochasticApproxIndex a s + 1) - x (stochasticApproxIndex a s)) = _
@@ -107,18 +108,18 @@ theorem stochasticApproxInterp_eq_of_mem_Icc {E : Type*} [AddCommGroup E] [Modul
 
 
 /-- The interpolation index tends to infinity with time. -/
-theorem tendsto_stochasticApproxIndex {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem tendsto_stochastic_approx_index {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) :
     Tendsto (stochasticApproxIndex a) atTop atTop := by
   apply tendsto_atTop.2
   intro n
   filter_upwards [eventually_ge_atTop (stochasticApproxTime a n)] with s hs
-  exact le_csSup (bddAbove_stochasticApproxTime_sublevel ha ht s) hs
+  exact le_csSup (bdd_above_stochastic_approx_time_sublevel ha ht s) hs
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-- The interpolation is continuous up to each interpolation time. -/
-theorem continuousOn_stochasticApproxInterp_Icc {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem continuous_on_stochastic_approx_interp_icc {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (x : ℕ → E) (n : ℕ) :
     ContinuousOn (stochasticApproxInterp a x) (Icc 0 (stochasticApproxTime a n)) := by
   have hcell (k : ℕ) : ContinuousOn (stochasticApproxInterp a x)
@@ -126,37 +127,37 @@ theorem continuousOn_stochasticApproxInterp_Icc {a : ℕ → ℝ} (ha : ∀ n, 0
     have hh : Continuous (fun s : ℝ ↦ x k +
         ((s - stochasticApproxTime a k) / a k) • (x (k + 1) - x k)) :=
       continuous_const.add ((continuous_id.sub continuous_const).div_const _ |>.smul continuous_const)
-    exact hh.continuousOn.congr fun s hs ↦ stochasticApproxInterp_eq_of_mem_Icc ha ht x hs
+    exact hh.continuousOn.congr fun s hs ↦ stochastic_approx_interp_eq_of_mem_icc ha ht x hs
   induction n with
   | zero => simp [stochasticApproxTime]
   | succ n ih =>
     have h0 : 0 ≤ stochasticApproxTime a n :=
       Finset.sum_nonneg fun k _ ↦ (ha k).le
-    rw [← Icc_union_Icc_eq_Icc h0 ((strictMono_stochasticApproxTime ha).monotone (Nat.le_succ n))]
+    rw [← Icc_union_Icc_eq_Icc h0 ((strict_mono_stochastic_approx_time ha).monotone (Nat.le_succ n))]
     exact ih.union_of_isClosed (hcell n) isClosed_Icc isClosed_Icc
 
 /-- The interpolation is continuous on the nonnegative real line. -/
-theorem continuousOn_stochasticApproxInterp {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem continuous_on_stochastic_approx_interp {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (x : ℕ → E) :
     ContinuousOn (stochasticApproxInterp a x) (Ici 0) := by
   intro s hs
   obtain ⟨N, hN⟩ := eventually_atTop.1 (ht.eventually (eventually_gt_atTop s))
   have hN' : s < stochasticApproxTime a N := hN N le_rfl
-  have hcont := continuousOn_stochasticApproxInterp_Icc ha ht x N s ⟨hs, hN'.le⟩
+  have hcont := continuous_on_stochastic_approx_interp_icc ha ht x N s ⟨hs, hN'.le⟩
   apply hcont.mono_of_mem_nhdsWithin
   have heq : Icc 0 (stochasticApproxTime a N) = Ici 0 ∩ Iic (stochasticApproxTime a N) := rfl
   rw [heq]
   exact inter_mem self_mem_nhdsWithin (nhdsWithin_le_nhds (Iic_mem_nhds hN'))
 
 /-- The right derivative of the interpolation is its slope on the current interval. -/
-theorem hasDerivWithinAt_stochasticApproxInterp {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem has_deriv_within_at_stochastic_approx_interp {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (x : ℕ → E) {s : ℝ} (hs : 0 ≤ s) :
     HasDerivWithinAt (stochasticApproxInterp a x)
       ((a (stochasticApproxIndex a s))⁻¹ •
         (x (stochasticApproxIndex a s + 1) - x (stochasticApproxIndex a s))) (Ici s) s := by
   let n := stochasticApproxIndex a s
-  have hlo : stochasticApproxTime a n ≤ s := stochasticApproxTime_index_le ha ht hs
-  have hhi : s < stochasticApproxTime a (n + 1) := lt_stochasticApproxTime_index_succ ha ht s
+  have hlo : stochasticApproxTime a n ≤ s := stochastic_approx_time_index_le ha ht hs
+  have hhi : s < stochasticApproxTime a (n + 1) := lt_stochastic_approx_time_index_succ ha ht s
   have hd : HasDerivAt (fun r : ℝ ↦ x n +
       ((r - stochasticApproxTime a n) / a n) • (x (n + 1) - x n))
       ((a n)⁻¹ • (x (n + 1) - x n)) s := by
@@ -164,50 +165,50 @@ theorem hasDerivWithinAt_stochasticApproxInterp {a : ℕ → ℝ} (ha : ∀ n, 0
       (x (n + 1) - x n) |>.const_add (x n) using 1 <;> simp
   apply hd.hasDerivWithinAt.congr_of_eventuallyEq_of_mem _ (by exact le_rfl)
   filter_upwards [nhdsWithin_le_nhds (Iio_mem_nhds hhi), self_mem_nhdsWithin] with r hr hrs
-  exact stochasticApproxInterp_eq_of_mem_Icc ha ht x ⟨hlo.trans hrs, hr.le⟩
+  exact stochastic_approx_interp_eq_of_mem_icc ha ht x ⟨hlo.trans hrs, hr.le⟩
 
 
 /-- The distance from an interpolation value to its left node is bounded by the node increment. -/
-theorem norm_stochasticApproxInterp_sub_node_le {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem norm_stochastic_approx_interp_sub_node_le {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (x : ℕ → E) {s : ℝ} (hs : 0 ≤ s) :
     ‖stochasticApproxInterp a x s - x (stochasticApproxIndex a s)‖ ≤
       ‖x (stochasticApproxIndex a s + 1) - x (stochasticApproxIndex a s)‖ := by
   let n := stochasticApproxIndex a s
-  have hlo := stochasticApproxTime_index_le ha ht hs
-  have hhi := lt_stochasticApproxTime_index_succ ha ht s
+  have hlo := stochastic_approx_time_index_le ha ht hs
+  have hhi := lt_stochastic_approx_time_index_succ ha ht s
   have hα : 0 ≤ (s - stochasticApproxTime a n) / a n :=
     div_nonneg (sub_nonneg.2 hlo) (ha n).le
-  rw [stochasticApproxInterp_eq_of_mem_Icc ha ht x ⟨hlo, hhi.le⟩,
+  rw [stochastic_approx_interp_eq_of_mem_icc ha ht x ⟨hlo, hhi.le⟩,
     add_sub_cancel_left, norm_smul, Real.norm_eq_abs, abs_of_nonneg hα]
   apply mul_le_of_le_one_left (norm_nonneg _)
   rw [div_le_one (ha n)]
-  rw [stochasticApproxTime_succ] at hhi
+  rw [stochastic_approx_time_succ] at hhi
   linarith
 
 /-- Vanishing node increments make interpolation values approach their left nodes. -/
-theorem tendsto_stochasticApproxInterp_sub_node {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem tendsto_stochastic_approx_interp_sub_node {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (x : ℕ → E)
     (hx : Tendsto (fun n ↦ x (n + 1) - x n) atTop (𝓝 0)) :
     Tendsto (fun s ↦ stochasticApproxInterp a x s - x (stochasticApproxIndex a s))
       atTop (𝓝 0) := by
   apply squeeze_zero_norm'
     (by filter_upwards [eventually_ge_atTop (0 : ℝ)] with s hs using
-      norm_stochasticApproxInterp_sub_node_le ha ht x hs)
-  simpa only [norm_zero, Function.comp_def] using hx.norm.comp (tendsto_stochasticApproxIndex ha ht)
+      norm_stochastic_approx_interp_sub_node_le ha ht x hs)
+  simpa only [norm_zero, Function.comp_def] using hx.norm.comp (tendsto_stochastic_approx_index ha ht)
 
 /-- Interpolation preserves the limit of a convergent sequence. -/
-theorem tendsto_stochasticApproxInterp {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem tendsto_stochastic_approx_interp {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (x : ℕ → E) {c : E}
     (hx : Tendsto x atTop (𝓝 c)) :
     Tendsto (stochasticApproxInterp a x) atTop (𝓝 c) := by
   have hinc : Tendsto (fun n ↦ x (n + 1) - x n) atTop (𝓝 0) := by
     simpa using (hx.comp (tendsto_add_atTop_nat 1)).sub hx
-  have hh := (tendsto_stochasticApproxInterp_sub_node ha ht x hinc).add
-    (hx.comp (tendsto_stochasticApproxIndex ha ht))
+  have hh := (tendsto_stochastic_approx_interp_sub_node ha ht x hinc).add
+    (hx.comp (tendsto_stochastic_approx_index ha ht))
   simpa using hh
 
 /-- Interpolation commutes with addition of sequences. -/
-theorem stochasticApproxInterp_add (a : ℕ → ℝ) (x y : ℕ → E) (s : ℝ) :
+theorem stochastic_approx_interp_add (a : ℕ → ℝ) (x y : ℕ → E) (s : ℝ) :
     stochasticApproxInterp a (fun n ↦ x n + y n) s =
       stochasticApproxInterp a x s + stochasticApproxInterp a y s := by
   simp only [stochasticApproxInterp, add_sub_add_comm, smul_add]
@@ -282,7 +283,7 @@ theorem asymptotic_pseudotrajectory_of_approx_ode
 
 /-- Bounded stochastic-approximation iterates with vanishing steps and convergent cumulative
 noise have an interpolated path that is an asymptotic pseudotrajectory of the limiting flow. -/
-theorem asymptotic_pseudotrajectory_stochasticApproxInterp
+theorem asymptotic_pseudotrajectory_stochastic_approx_interp
     {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ha0 : Tendsto a atTop (𝓝 0)) (ht : Tendsto (stochasticApproxTime a) atTop atTop)
     (h : E → E) (L : ℝ≥0) (hL : LipschitzWith L h) (Φ : ℝ → E → E) (hΦ : IsFlowOf h Φ)
@@ -324,24 +325,24 @@ theorem asymptotic_pseudotrajectory_stochasticApproxInterp
     abel
   let q : ℝ → E := fun s ↦ stochasticApproxInterp a z s - c
   have hq : ContinuousOn q (Ici 0) :=
-    (continuousOn_stochasticApproxInterp ha ht z).sub continuousOn_const
+    (continuous_on_stochastic_approx_interp ha ht z).sub continuousOn_const
   have hxq : Tendsto (fun s ↦ stochasticApproxInterp a x s - q s) atTop (𝓝 0) := by
     have hh : Tendsto (fun s : ℝ ↦ c - stochasticApproxInterp a S s) atTop (𝓝 (c - c)) :=
-      tendsto_const_nhds.sub (tendsto_stochasticApproxInterp ha ht S hS)
+      tendsto_const_nhds.sub (tendsto_stochastic_approx_interp ha ht S hS)
     have hh0 : Tendsto (fun s ↦ c - stochasticApproxInterp a S s) atTop (𝓝 0) := by
       simpa using hh
     refine hh0.congr fun s ↦ ?_
     dsimp [q, z]
-    rw [stochasticApproxInterp_add]
+    rw [stochastic_approx_interp_add]
     abel
   have hqn : Tendsto (fun s ↦ q s - x (stochasticApproxIndex a s)) atTop (𝓝 0) := by
-    convert hxq.neg.add (tendsto_stochasticApproxInterp_sub_node ha ht x hxinc) using 1
+    convert hxq.neg.add (tendsto_stochastic_approx_interp_sub_node ha ht x hxinc) using 1
     · funext s
       abel
     · simp
   let v : ℝ → E := fun s ↦ -h (x (stochasticApproxIndex a s))
   have hd (s : ℝ) (hs : 0 ≤ s) : HasDerivWithinAt q (v s) (Ici s) s := by
-    have hh := (hasDerivWithinAt_stochasticApproxInterp ha ht z hs).sub_const c
+    have hh := (has_deriv_within_at_stochastic_approx_interp ha ht z hs).sub_const c
     have heq : (a (stochasticApproxIndex a s))⁻¹ •
         (z (stochasticApproxIndex a s + 1) - z (stochasticApproxIndex a s)) = v s := by
       rw [hzinc, smul_smul]

@@ -3,6 +3,7 @@ module
 public import CKSD.LinearModels.CausalEfficiency
 public import Mathlib.Probability.Independence.Integration
 
+
 /-!
 # Identification of causal effects from observational and instrumental data
 
@@ -16,11 +17,11 @@ conditional means and probabilities given a covariate stratum are quotients of i
 
 ## Main results
 
-* `CKSD.integral_potentialOutcome_eq_sum_stratumOutcomeMean`,
-  `CKSD.integral_potentialOutcome_eq_integral_div_propensity`: under mean ignorability and
+* `CKSD.integral_potential_outcome_eq_sum_stratum_outcome_mean`,
+  `CKSD.integral_potential_outcome_eq_integral_div_propensity`: under mean ignorability and
   overlap, the mean potential outcome is given by the adjustment formula and by inverse
   propensity weighting (GAPS 105.47).
-* `CKSD.integral_treatmentEffectInfluence_sub_eq_sum_mul`: the bias of the augmented inverse
+* `CKSD.integral_treatment_effect_influence_sub_eq_sum_mul`: the bias of the augmented inverse
   probability weighted functional is a product of the outcome-regression and propensity errors
   (double robustness, GAPS 105.49).
 * `CKSD.wald_ratio_eq_complier_average_effect`: under instrument independence and
@@ -46,7 +47,7 @@ namespace CKSD
 
 /-- Identification of a potential-outcome mean in finite strata, with the stratum masses,
 propensities and outcome means as local definitions (both conclusions together). -/
-private theorem integral_potentialOutcome_aux
+private theorem integral_potential_outcome_aux
     {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
     [MeasurableSingletonClass ι]
     (P : Measure Ω) (X : Ω → ι) (A : Ω → Bool)
@@ -105,7 +106,7 @@ private theorem integral_potentialOutcome_aux
 
 /-- The double-robustness bias identity in finite strata, with the stratum masses and
 propensities as local definitions. -/
-private theorem integral_treatmentEffectInfluence_aux {Ω : Type*} [MeasurableSpace Ω]
+private theorem integral_treatment_effect_influence_aux {Ω : Type*} [MeasurableSpace Ω]
     {ι : Type*} [Fintype ι] [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : Ω → ι) (A : Ω → Bool)
     (hX : Measurable X) (hA : Measurable A) (Y : Ω → ℝ) (hY : Integrable Y P)
@@ -301,7 +302,7 @@ private theorem wald_ratio_aux {Ω : Type*} [MeasurableSpace Ω]
 if every covariate stratum and every treatment stratum `{X = x, A = a}` has positive
 probability and `E[Y(a) | X = x, A = a] = E[Y(a) | X = x]` (written without division), then
 `E[Y(a)] = ∑ₓ P(X = x) E[Y(a) | X = x, A = a]` (the adjustment formula). -/
-theorem integral_potentialOutcome_eq_sum_stratumOutcomeMean
+theorem integral_potential_outcome_eq_sum_stratum_outcome_mean
     {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
     [MeasurableSingletonClass ι]
     (P : Measure Ω) (X : Ω → ι) (A : Ω → Bool)
@@ -313,7 +314,7 @@ theorem integral_potentialOutcome_eq_sum_stratumOutcomeMean
       P.real (treatmentStratum X A x a) / P.real {ω | X ω = x} *
         ∫ ω in {ω | X ω = x}, Y a ω ∂P) :
     (∫ ω, Y a ω ∂P) = ∑ x, P.real {ω | X ω = x} * stratumOutcomeMean P X A (Y a) x a := by
-  rw [(integral_potentialOutcome_aux P X A hX hA Y hY a hp
+  rw [(integral_potential_outcome_aux P X A hX hA Y hY a hp
     (fun x ↦ div_pos (he x) (hp x)) hign).1]
   refine Finset.sum_congr rfl fun x _ ↦ ?_
   have h₁ := (hp x).ne'
@@ -322,10 +323,10 @@ theorem integral_potentialOutcome_eq_sum_stratumOutcomeMean
   field_simp
 
 /-- GAPS 105.47, inverse-propensity weighting: under the hypotheses of
-`integral_potentialOutcome_eq_sum_stratumOutcomeMean`, `E[Y(a)] = E[1{A = a} Y / e_a(X)]`
+`integral_potential_outcome_eq_sum_stratum_outcome_mean`, `E[Y(a)] = E[1{A = a} Y / e_a(X)]`
 with the observed outcome `Y = Y(A)` and the stratum propensity
 `e_a(x) = P(A = a | X = x)`. -/
-theorem integral_potentialOutcome_eq_integral_div_propensity
+theorem integral_potential_outcome_eq_integral_div_propensity
     {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
     [MeasurableSingletonClass ι]
     (P : Measure Ω) (X : Ω → ι) (A : Ω → Bool)
@@ -338,7 +339,7 @@ theorem integral_potentialOutcome_eq_integral_div_propensity
         ∫ ω in {ω | X ω = x}, Y a ω ∂P) :
     (∫ ω, Y a ω ∂P) = ∫ ω, (if A ω = a then Y (A ω) ω else 0) /
       (P.real (treatmentStratum X A (X ω) a) / P.real {ω' | X ω' = X ω}) ∂P :=
-  (integral_potentialOutcome_aux P X A hX hA Y hY a hp
+  (integral_potential_outcome_aux P X A hX hA Y hY a hp
     (fun x ↦ div_pos (he x) (hp x)) hign).2
 
 /-- GAPS 105.49, finite-stratum double-robustness bias identity.
@@ -349,7 +350,7 @@ stratum outcome means `m₁`, `m₀` and true propensity `e₀ = stratumPropensi
 of the augmented inverse-probability-weighted functional is
 `∑ₓ P(X = x) (e(x) - e₀(x)) ((a₁ - m₁)(x) / e(x) + (a₀ - m₀)(x) / (1 - e(x)))`; it vanishes
 when either the outcome regressions or the propensity are correct. -/
-theorem integral_treatmentEffectInfluence_sub_eq_sum_mul
+theorem integral_treatment_effect_influence_sub_eq_sum_mul
     {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
     [MeasurableSingletonClass ι]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : Ω → ι) (A : Ω → Bool)
@@ -365,7 +366,7 @@ theorem integral_treatmentEffectInfluence_sub_eq_sum_mul
       ∑ x, P.real {ω | X ω = x} * (e x - stratumPropensity P X A x) *
         ((a₁ x - m₁ x) / e x + (a₀ x - m₀ x) / (1 - e x)) := by
   simpa only [treatmentEffectInfluence, sub_zero, stratumPropensity, treatmentStratum] using
-    integral_treatmentEffectInfluence_aux P X A hX hA Y hY m₁ m₀ a₁ a₀ e hp he hcond₁ hcond₀
+    integral_treatment_effect_influence_aux P X A hX hA Y hY m₁ m₀ a₁ a₀ e hp he hcond₁ hcond₀
 
 /-- The mean of `f` on the instrument stratum `{Z = z}`. -/
 def instrumentStratumMean {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) (Z : Ω → Bool)

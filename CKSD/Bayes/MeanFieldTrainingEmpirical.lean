@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldTrainingParticles
 /-!
 # Almost-sure empirical training limits on all compact horizons
@@ -22,7 +23,7 @@ variable {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 /-- Iid initial states and bounded-speed characteristic paths give uniform empirical
 mean-field convergence on each fixed compact interval. -/
-theorem ae_tendsto_iSup_empirical_training_laws_on_Icc
+theorem ae_tendsto_i_sup_empirical_training_laws_on_icc
     (P : Measure Ω) [IsProbabilityMeasure P] (ρ₀ : Measure E)
     (hρ : Integrable (fun x : E ↦ ‖x‖) ρ₀)
     (ξ : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed P ξ ρ₀)
@@ -39,7 +40,7 @@ theorem ae_tendsto_iSup_empirical_training_laws_on_Icc
     ∀ᵐ ω ∂P, Tendsto (fun N ↦ ⨆ t∈Icc (0:ℝ) T, TauCeti.wassersteinEDist 1
       (empiricalMeasure N (fun j : Fin N ↦ θ N j t ω)) (ρ₀.map (fun y ↦ γ y t))) atTop (𝓝 0) := by
   obtain ⟨Z,hZdef,hZm,hZi,hind,hid,hZmap,hZeval⟩ :=
-    exists_iid_training_paths_on_Icc P ρ₀ hρ ξ hiid.1 hiid.2.1 hiid.2.2 hT γ hγ hγL hzero
+    exists_iid_training_paths_on_icc P ρ₀ hρ ξ hiid.1 hiid.2.1 hiid.2.2 hT γ hγ hγL hzero
   have hZe (i : ℕ) (ω : Ω) (t : Icc (0:ℝ) T) : Z i ω t = ξ i ω + ∫ s in (0:ℝ)..t,
       b ((Z i ω).IccExtend hT s) (P.map (fun z ↦ (Z 0 z).IccExtend hT s)) := by
     have h := training_path_integral_eq P ρ₀ ξ hT γ v hv hd hzero b hvEq Z hZeval
@@ -47,7 +48,7 @@ theorem ae_tendsto_iSup_empirical_training_laws_on_Icc
     have hzt : (Z i ω).IccExtend hT t = Z i ω t :=
       Set.IccExtend_of_mem (h := hT) (fun u ↦ Z i ω u) t.2
     rwa [hzt] at h
-  filter_upwards [ae_tendsto_iSup_empirical_particle_marginals P hT b hb Z hZm (hZi 0)
+  filter_upwards [ae_tendsto_i_sup_empirical_particle_marginals P hT b hb Z hZm (hZi 0)
     hind hid ξ hZe θ hθ] with ω hω
   convert hω using 1
   funext N
@@ -58,7 +59,7 @@ theorem ae_tendsto_iSup_empirical_training_laws_on_Icc
   rw [hZmap 0 t ht]
 /-- A countable family of compact-horizon estimates gives almost-sure uniform empirical
 convergence on every bounded nonnegative time interval, without particle measurability. -/
-theorem ae_tendsto_iSup_empirical_training_laws
+theorem ae_tendsto_i_sup_empirical_training_laws
     (P : Measure Ω) [IsProbabilityMeasure P] (ρ₀ : Measure E)
     (hρ : Integrable (fun x : E ↦ ‖x‖) ρ₀)
     (ξ : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed P ξ ρ₀)
@@ -76,7 +77,7 @@ theorem ae_tendsto_iSup_empirical_training_laws
   have hall (n : ℕ) : ∀ᵐ ω ∂P, Tendsto (fun N ↦ ⨆ t∈Icc (0:ℝ) ((n:ℝ)+1),
       TauCeti.wassersteinEDist 1 (empiricalMeasure N (fun j : Fin N ↦ θ N j t ω))
         (ρ₀.map (fun y ↦ γ y t))) atTop (𝓝 0) :=
-    ae_tendsto_iSup_empirical_training_laws_on_Icc P ρ₀ hρ ξ hiid b hb γ hγ hzero hγL
+    ae_tendsto_i_sup_empirical_training_laws_on_icc P ρ₀ hρ ξ hiid b hb γ hγ hzero hγL
       v hv hd hvEq θ hθ (by positivity)
   filter_upwards [ae_all_iff.mpr hall] with ω hω
   intro T hT

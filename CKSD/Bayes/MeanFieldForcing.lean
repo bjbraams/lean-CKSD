@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldGlobal
 public import CKSD.Bayes.MeanFieldBrownianBound
 public import Mathlib.Topology.ContinuousMap.SecondCountableSpace
@@ -17,7 +18,7 @@ open MeasureTheory ProbabilityTheory Set Filter Function
 open scoped NNReal ENNReal Topology
 namespace CKSD
 /-- Integrably bounded continuous forcing admits an integrable measurable continuous-path version. -/
-theorem exists_integrable_measurable_continuousPath_version
+theorem exists_integrable_measurable_continuous_path_version
     {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
     [CompleteSpace E] [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure Ω) (F : ℝ → Ω → E)
@@ -26,7 +27,7 @@ theorem exists_integrable_measurable_continuousPath_version
     (hD : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T, ‖F t ω‖ ≤ D ω) :
     ∃ G : Ω → C(Icc (0 : ℝ) T, E), Measurable G ∧ Integrable G P ∧
       ∀ᵐ ω ∂P, ∀ t : Icc (0 : ℝ) T, G ω t = F t ω := by
-  obtain ⟨G, hGm, hG⟩ := exists_measurable_continuousPath_version P F hFm hFc hT
+  obtain ⟨G, hGm, hG⟩ := exists_measurable_continuous_path_version P F hFm hFc hT
   refine ⟨G, hGm, hDi.mono' hGm.aestronglyMeasurable ?_, hG⟩
   filter_upwards [hG, hD] with ω heq hb
   apply (ContinuousMap.norm_le _ ((norm_nonneg (F 0 ω)).trans (hb 0 ⟨le_rfl, hT⟩))).2
@@ -51,9 +52,9 @@ theorem exists_integrable_brownian_forcing_path
     funext ω
     ext j
     rfl
-  obtain ⟨D, hDi, hD⟩ := exists_integrable_uniform_bound_add_brownianEuclidean P ξ hξ W hW.1 T
-  exact exists_integrable_measurable_continuousPath_version P
+  obtain ⟨D, hDi, hD⟩ := exists_integrable_uniform_bound_add_brownian_euclidean P ξ hξ W hW.1 T
+  exact exists_integrable_measurable_continuous_path_version P
     (fun t ω ↦ ξ ω + W t.toNNReal ω)
     (fun t ↦ hξ.aemeasurable.add (hWm t.toNNReal))
-    (hW.ae_continuous_toNNReal.mono fun ω hc ↦ continuous_const.add hc) hT D hDi hD
+    (hW.ae_continuous_to_nn_real.mono fun ω hc ↦ continuous_const.add hc) hT D hDi hD
 end CKSD

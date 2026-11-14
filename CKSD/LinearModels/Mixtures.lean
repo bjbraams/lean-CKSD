@@ -4,6 +4,7 @@ public import CKSD.LinearModels.Basic
 public import CKSD.LinearModels.GaussianMixtureIdentifiability
 public import TauCeti.Probability.Distributions.Gaussian.Mixture.Multivariate
 
+
 /-!
 # Identifiable finite Gaussian mixtures
 
@@ -24,7 +25,7 @@ infinity.
 
 * `CKSD.GaussianMixtureModel.exists_equiv_of_law_eq`: reduced Gaussian mixtures are identifiable
   up to relabeling of the components, including the number of components.
-* `CKSD.GaussianMixtureModel.not_bddAbove_logLikelihood`: with unconstrained covariances the
+* `CKSD.GaussianMixtureModel.not_bdd_above_log_likelihood`: with unconstrained covariances the
   likelihood of a two-component mixture is unbounded on every nonempty sample.
 
 Sources: GAPS 105.6 and SYNOPSIS105, item 6.
@@ -76,7 +77,7 @@ def GaussianMixtureModel.logLikelihood {d k n : ℕ} (M : GaussianMixtureModel d
   ∑ i, Real.log (M.density (x i))
 
 /-- The mixture law is a probability measure by TauCeti's mixture instance. -/
-instance GaussianMixtureModel.isProbabilityMeasure_law {d k : ℕ}
+instance GaussianMixtureModel.is_probability_measure_law {d k : ℕ}
     (M : GaussianMixtureModel d k) : IsProbabilityMeasure M.law :=
   inferInstanceAs (IsProbabilityMeasure
     (TauCeti.Probability.multivariateGaussianMixtureMeasure M.weights M.mean M.covariance))
@@ -87,7 +88,7 @@ theorem GaussianMixtureModel.density_nonneg {d k : ℕ} (M : GaussianMixtureMode
   TauCeti.Probability.multivariateGaussianMixturePDFReal_nonneg _ _ _ _
 
 /-- The mixture's real density agrees with its law in CKSD's density interface, using TauCeti. -/
-theorem GaussianMixtureModel.hasDensity {d k : ℕ} (M : GaussianMixtureModel d k) :
+theorem GaussianMixtureModel.has_density {d k : ℕ} (M : GaussianMixtureModel d k) :
     HasDensity M.law volume M.density := by
   refine ⟨TauCeti.Probability.measurable_multivariateGaussianMixturePDFReal _ _ _,
     Filter.Eventually.of_forall M.density_nonneg, ?_⟩
@@ -109,7 +110,7 @@ theorem GaussianMixtureModel.exists_equiv_of_law_eq {d k l : ℕ}
   let Params := {p : EuclideanSpace ℝ (Fin d) × Matrix (Fin d) (Fin d) ℝ // p.2.IsHermitian}
   let f : Params → EuclideanSpace ℝ (Fin d) → ℝ := fun p v ↦
     Real.exp (⟪v,p.val.1⟫ + ⟪v,p.val.2.toEuclideanLin v⟫ / 2)
-  have hlin : LinearIndependent ℝ f := linearIndependent_gaussianExponents
+  have hlin : LinearIndependent ℝ f := linear_independent_gaussian_exponents
     (fun p : Params ↦ p.val.1) (fun p ↦ p.val.2) (fun p ↦ p.property)
     (fun p q h ↦ Subtype.ext h)
   let eM : Fin k ↪ Params := ⟨fun i ↦ ⟨(M.mean i,M.covariance i),
@@ -176,7 +177,7 @@ theorem GaussianMixtureModel.exists_equiv_of_law_eq {d k l : ℕ}
 /-- GAPS 105.6: two Gaussian components already give an unbounded likelihood when their
 covariances are unconstrained: on a nonempty sample in positive dimension, the log-likelihoods of
 the two-component reduced mixtures are not bounded above. -/
-theorem GaussianMixtureModel.not_bddAbove_logLikelihood {d n : ℕ} (hd : 0 < d) (hn : 0 < n)
+theorem GaussianMixtureModel.not_bdd_above_log_likelihood {d n : ℕ} (hd : 0 < d) (hn : 0 < n)
     (x : Fin n → EuclideanSpace ℝ (Fin d)) :
     ¬ BddAbove (Set.range fun M : GaussianMixtureModel d 2 ↦ M.logLikelihood x) := by
   rw [not_bddAbove_iff]

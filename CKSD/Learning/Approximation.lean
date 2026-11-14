@@ -6,6 +6,7 @@ public import Mathlib.Analysis.SpecialFunctions.Sigmoid
 public import Mathlib.MeasureTheory.Integral.Average
 public import TauCeti.Probability.Moments.SampleMean
 
+
 /-!
 # Neural approximation and Fourier moment classes
 
@@ -23,10 +24,10 @@ The feature-sampling argument uses TauCeti's Hilbert-space sample-mean variance 
 
 ## Main results
 
-* `CKSD.exists_logisticNetwork_sq_error_le_barron_moment`: Barron's approximation rate
+* `CKSD.exists_logistic_network_sq_error_le_barron_moment`: Barron's approximation rate
   (GAPS 107.28).
 * `CKSD.exists_feature_average_sq_error_le`: the feature-sampling (Maurey) step.
-* `CKSD.abs_reluLinearInterpolant_sub_le`: uniform `N⁻²` ReLU approximation of `C²` functions
+* `CKSD.abs_relu_linear_interpolant_sub_le`: uniform `N⁻²` ReLU approximation of `C²` functions
   on `[0,1]` (GAPS 107.36).
 
 Sources: GAPS 107.28 and 107.36.
@@ -55,7 +56,7 @@ def logisticNetwork {d N : ℕ} (a : Fin N → ℝ)
 The squared-error form uses a universal constant and the first absolute Fourier moment.
 The target is continuous on the whole space, which fixes its representative on singular laws.
 (For `d = 0` the space is a point and constants are exact.) -/
-theorem exists_logisticNetwork_sq_error_le_barron_moment :
+theorem exists_logistic_network_sq_error_le_barron_moment :
     ∃ C > (0 : ℝ), ∀ d N : ℕ, 0 < N →
       ∀ μ : Measure (EuclideanSpace ℝ (Fin d)), IsProbabilityMeasure μ →
       μ (Metric.closedBall 0 1) = 1 →
@@ -243,7 +244,7 @@ theorem affine_add_sum_hinge_eq (f : ℝ → ℝ) {N : ℕ} (hN : 0 < N) (x : �
     ring
 
 /-- On the grid cell `[j/N, (j+1)/N]`, `j < N`, the ReLU interpolant is the chord of `f`. -/
-theorem reluLinearInterpolant_eq_of_mem (f : ℝ → ℝ) {N : ℕ} (hN : 0 < N) {j : ℕ} (hj : j < N)
+theorem relu_linear_interpolant_eq_of_mem (f : ℝ → ℝ) {N : ℕ} (hN : 0 < N) {j : ℕ} (hj : j < N)
     {x : ℝ} (hx : x ∈ Icc ((j : ℝ) / N) (((j + 1 : ℕ) : ℝ) / N)) :
     reluLinearInterpolant f N x =
       f ((j : ℝ) / N) + uniformGridSlope f N j * (x - (j : ℝ) / N) := by
@@ -269,7 +270,7 @@ theorem reluLinearInterpolant_eq_of_mem (f : ℝ → ℝ) {N : ℕ} (hN : 0 < N)
 /-- GAPS 107.36, one-dimensional `C²` scope: a fixed-grid ReLU network has uniform `N⁻²` error.
 The architecture has `N-1` hinges plus an affine term. General Sobolev spaces, dimensions, and
 fractional target smoothness require additional approximation theory. -/
-theorem abs_reluLinearInterpolant_sub_le (f : ℝ → ℝ) (hf : ContDiff ℝ 2 f)
+theorem abs_relu_linear_interpolant_sub_le (f : ℝ → ℝ) (hf : ContDiff ℝ 2 f)
     (B : ℝ) (hB : 0 ≤ B) (hbound : ∀ x ∈ Icc (0 : ℝ) 1, |deriv (deriv f) x| ≤ B)
     (N : ℕ) (hN : 0 < N) (x : ℝ) (hx : x ∈ Icc 0 1) :
     |reluLinearInterpolant f N x - f x| ≤ B / (8 * (N : ℝ) ^ 2) := by
@@ -290,7 +291,7 @@ theorem abs_reluLinearInterpolant_sub_le (f : ℝ → ℝ) (hf : ContDiff ℝ 2 
           rw [Nat.sub_add_cancel hN]
         rw [this]
         nlinarith [hx.2]
-  rw [reluLinearInterpolant_eq_of_mem f hN hjN hxj]
+  rw [relu_linear_interpolant_eq_of_mem f hN hjN hxj]
   have hu : (0 : ℝ) ≤ (j : ℝ) / N := by positivity
   have huv : (j : ℝ) / N < ((j + 1 : ℕ) : ℝ) / N :=
     div_lt_div_of_pos_right (by exact_mod_cast Nat.lt_succ_self j) hNr
@@ -309,12 +310,12 @@ theorem abs_reluLinearInterpolant_sub_le (f : ℝ → ℝ) (hf : ContDiff ℝ 2 
     _ = B / (8 * (N : ℝ) ^ 2) := by field_simp
 
 /-- Fourier moment integrands are nonnegative, independently of integrability. -/
-theorem barronFourierMoment_nonneg {d : ℕ} (f : EuclideanSpace ℝ (Fin d) → ℝ) :
+theorem barron_fourier_moment_nonneg {d : ℕ} (f : EuclideanSpace ℝ (Fin d) → ℝ) :
     0 ≤ barronFourierMoment f :=
   integral_nonneg fun _ ↦ mul_nonneg (norm_nonneg _) (norm_nonneg _)
 
 /-- The ReLU interpolant agrees with the target at the left endpoint of the grid. -/
-@[simp] theorem reluLinearInterpolant_zero (f : ℝ → ℝ) (N : ℕ) :
+@[simp] theorem relu_linear_interpolant_zero (f : ℝ → ℝ) (N : ℕ) :
     reluLinearInterpolant f N 0 = f 0 := by
   unfold reluLinearInterpolant
   simp only [mul_zero, add_zero]

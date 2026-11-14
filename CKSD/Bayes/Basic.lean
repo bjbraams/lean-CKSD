@@ -3,6 +3,7 @@ module
 public import CKSD.Inference.Basic
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
 
+
 /-!
 # Basic objects for Bayesian computation
 
@@ -24,8 +25,8 @@ It also contains two general probabilistic lemmas used by several strong-law arg
 
 ## Main results
 
-* `CKSD.poissonMass_coe`: `poissonMass` agrees with Mathlib's `poissonMeasure` on singletons.
-* `CKSD.integral_comp_eq_sum_measureReal`: the integral of a function of a finitely-valued random
+* `CKSD.poisson_mass_coe`: `poissonMass` agrees with Mathlib's `poissonMeasure` on singletons.
+* `CKSD.integral_comp_eq_sum_measure_real`: the integral of a function of a finitely-valued random
   variable is the sum of its values weighted by their probabilities.
 * `CKSD.ae_tendsto_div_of_summable_integral_sq_div`: if `∑ₖ 𝔼[Zₖ²] / bₖ² < ∞`, then
   `Zₖ / bₖ → 0` almost surely (Chebyshev and Borel–Cantelli).
@@ -41,12 +42,12 @@ open scoped ENNReal NNReal Topology BigOperators
 namespace CKSD
 
 /-- Poisson likelihood `e^{-θ} θ^x / x!` as a real number. For `θ ≥ 0` it is the Poisson mass of
-`x` (`poissonMass_coe`); it is defined for every real `θ`, so that it can be integrated against an
+`x` (`poisson_mass_coe`); it is defined for every real `θ`, so that it can be integrated against an
 arbitrary prior on `ℝ`. -/
 def poissonMass (θ : ℝ) (x : ℕ) : ℝ := Real.exp (-θ) * θ ^ x / Nat.factorial x
 
 /-- For a nonnegative intensity, `poissonMass` is the mass of Mathlib's Poisson law. -/
-theorem poissonMass_coe (r : ℝ≥0) (x : ℕ) :
+theorem poisson_mass_coe (r : ℝ≥0) (x : ℕ) :
     poissonMass r x = (poissonMeasure r).real {x} :=
   (poissonMeasure_real_singleton r x).symm
 
@@ -84,7 +85,7 @@ def normalPosterior (prior : ℝ → ℝ) (v : ℝ≥0) (n : ℕ) (mean : ℝ) :
 
 /-- The integral of a function of a random variable with finitely many values is the sum of the
 values weighted by their probabilities. -/
-theorem integral_comp_eq_sum_measureReal {Ω β : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+theorem integral_comp_eq_sum_measure_real {Ω β : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsFiniteMeasure μ] [Fintype β] [MeasurableSpace β] [MeasurableSingletonClass β]
     (Y : Ω → β) (hY : Measurable Y) (F : β → ℝ) :
     ∫ ω, F (Y ω) ∂μ = ∑ b, μ.real (Y ⁻¹' {b}) * F b := by
@@ -144,7 +145,7 @@ theorem ae_tendsto_div_of_summable_integral_sq_div {Ω : Type*} [MeasurableSpace
   exact ⟨K, fun k hk ↦ by rw [Real.dist_eq, sub_zero]; exact (hK k hk).trans hj⟩
 
 /-- Integration of a vector-valued function against the empirical measure. -/
-theorem integral_empiricalMeasure_vector {E F : Type*} [MeasurableSpace E]
+theorem integral_empirical_measure_vector {E F : Type*} [MeasurableSpace E]
     [MeasurableSingletonClass E] [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
     {N : ℕ} (x : Fin N → E) (f : E → F) :
     (∫ y, f y ∂empiricalMeasure N x) = (N : ℝ)⁻¹ • ∑ j, f (x j) := by

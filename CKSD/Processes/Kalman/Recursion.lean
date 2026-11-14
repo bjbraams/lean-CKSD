@@ -3,6 +3,7 @@ module
 public import CKSD.Processes.Kalman.Model
 public import CKSD.Processes.GaussianConditioning
 
+
 /-!
 # Kalman covariance and error identities
 
@@ -23,7 +24,7 @@ namespace CKSD
 section Deterministic
 
 /-- A zero-extended observation record is measurable in each coordinate. -/
-theorem measurable_extendObservations_apply {E : Type*} [Zero E] [MeasurableSpace E] {n : ℕ}
+theorem measurable_extend_observations_apply {E : Type*} [Zero E] [MeasurableSpace E] {n : ℕ}
     (i : ℕ) : Measurable fun ys : Fin n → E ↦ extendObservations ys i := by
   unfold extendObservations
   split_ifs with h
@@ -32,7 +33,7 @@ theorem measurable_extendObservations_apply {E : Type*} [Zero E] [MeasurableSpac
 
 /-- The zero extension of a finite record returns the recorded values. -/
 @[simp]
-theorem extendObservations_of_lt {E : Type*} [Zero E] {n : ℕ} (ys : Fin n → E) {i : ℕ}
+theorem extend_observations_of_lt {E : Type*} [Zero E] {n : ℕ} (ys : Fin n → E) {i : ℕ}
     (h : i < n) : extendObservations ys i = ys ⟨i, h⟩ := by
   simp [extendObservations, h]
 
@@ -43,7 +44,7 @@ variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq
   (M : KalmanModel ι κ)
 
 /-- The predicted mean at time `t` depends only on the observations before time `t`. -/
-theorem predMean_congr {y y' : ℕ → EuclideanSpace ℝ κ} {t : ℕ}
+theorem pred_mean_congr {y y' : ℕ → EuclideanSpace ℝ κ} {t : ℕ}
     (h : ∀ i < t, y i = y' i) : M.predMean y t = M.predMean y' t := by
   induction t with
   | zero => rfl
@@ -52,18 +53,18 @@ theorem predMean_congr {y y' : ℕ → EuclideanSpace ℝ κ} {t : ℕ}
     simp only [predMean, ih', h t (Nat.lt_succ_self t)]
 
 /-- The filtered mean at time `t` depends only on the observations up to time `t`. -/
-theorem filtMean_congr {y y' : ℕ → EuclideanSpace ℝ κ} {t : ℕ}
+theorem filt_mean_congr {y y' : ℕ → EuclideanSpace ℝ κ} {t : ℕ}
     (h : ∀ i ≤ t, y i = y' i) : M.filtMean y t = M.filtMean y' t := by
-  have hp := M.predMean_congr (t := t) fun i hi ↦ h i hi.le
+  have hp := M.pred_mean_congr (t := t) fun i hi ↦ h i hi.le
   simp only [filtMean, hp, h t le_rfl]
 
 /-- The time update of the mean: `x_{t+1|t} = F_t x_{t|t}`. -/
-theorem predMean_succ (y : ℕ → EuclideanSpace ℝ κ) (t : ℕ) :
+theorem pred_mean_succ (y : ℕ → EuclideanSpace ℝ κ) (t : ℕ) :
     M.predMean y (t + 1) = Matrix.toEuclideanLin (M.transition t) (M.filtMean y t) := rfl
 
 /-- The predicted mean is a measurable function of a measurably parametrized observation
 sequence. -/
-theorem measurable_predMean {β : Type*} [MeasurableSpace β]
+theorem measurable_pred_mean {β : Type*} [MeasurableSpace β]
     {y : ℕ → β → EuclideanSpace ℝ κ} (hy : ∀ i, Measurable (y i)) (t : ℕ) :
     Measurable fun b ↦ M.predMean (fun i ↦ y i b) t := by
   induction t with
@@ -81,12 +82,12 @@ theorem measurable_predMean {β : Type*} [MeasurableSpace β]
 
 /-- The filtered mean is a measurable function of a measurably parametrized observation
 sequence. -/
-theorem measurable_filtMean {β : Type*} [MeasurableSpace β]
+theorem measurable_filt_mean {β : Type*} [MeasurableSpace β]
     {y : ℕ → β → EuclideanSpace ℝ κ} (hy : ∀ i, Measurable (y i)) (t : ℕ) :
     Measurable fun b ↦ M.filtMean (fun i ↦ y i b) t := by
   have hF : Measurable fun b ↦ M.filtMean (fun i ↦ y i b) t := by
     unfold filtMean
-    have h1 := M.measurable_predMean hy t
+    have h1 := M.measurable_pred_mean hy t
     have h2 : Measurable fun b ↦ Matrix.toEuclideanLin (M.observation t)
         (M.predMean (fun i ↦ y i b) t) :=
       (by fun_prop : Measurable fun z : EuclideanSpace ℝ ι ↦
@@ -121,7 +122,7 @@ theorem measurable_state {Ω : Type*} [MeasurableSpace Ω] {x₀ : Ω → Euclid
 
 omit [DecidableEq κ] in
 /-- The observation process is measurable when the state and the observation noise are. -/
-theorem measurable_observationProcess {Ω : Type*} [MeasurableSpace Ω]
+theorem measurable_observation_process {Ω : Type*} [MeasurableSpace Ω]
     {x : ℕ → Ω → EuclideanSpace ℝ ι} {v : ℕ → Ω → EuclideanSpace ℝ κ}
     (hx : ∀ i, Measurable (x i)) (hv : ∀ i, Measurable (v i)) (s : ℕ) :
     Measurable (M.observationProcess x v s) :=
@@ -132,10 +133,10 @@ end KalmanModel
 
 /-- Appending a value to a finite record does not change its zero extension below the old
 length. -/
-theorem extendObservations_snoc {E : Type*} [Zero E] {n : ℕ} (ys : Fin n → E) (y : E) {j : ℕ}
+theorem extend_observations_snoc {E : Type*} [Zero E] {n : ℕ} (ys : Fin n → E) (y : E) {j : ℕ}
     (hj : j < n) :
     extendObservations (Fin.snoc ys y : Fin (n + 1) → E) j = extendObservations ys j := by
-  rw [extendObservations_of_lt _ (Nat.lt_succ_of_lt hj), extendObservations_of_lt _ hj]
+  rw [extend_observations_of_lt _ (Nat.lt_succ_of_lt hj), extend_observations_of_lt _ hj]
   exact Fin.snoc_castSucc (α := fun _ ↦ E) (p := ys) (x := y) ⟨j, hj⟩
 
 namespace KalmanModel
@@ -151,41 +152,41 @@ def innovDensity (n : ℕ) (ys : Fin n → EuclideanSpace ℝ κ) : ℝ≥0∞ :
     (M.innovCov i) (ys i)
 
 /-- The predicted mean computed from a zero-extended record is measurable in the record. -/
-theorem measurable_predMean_extendObservations (n t : ℕ) :
+theorem measurable_pred_mean_extend_observations (n t : ℕ) :
     Measurable fun ys : Fin n → EuclideanSpace ℝ κ ↦
       M.predMean (extendObservations ys) t :=
-  M.measurable_predMean (y := fun i ys ↦ extendObservations ys i)
-    (fun i ↦ measurable_extendObservations_apply i) t
+  M.measurable_pred_mean (y := fun i ys ↦ extendObservations ys i)
+    (fun i ↦ measurable_extend_observations_apply i) t
 
 /-- The filtered mean computed from a zero-extended record is measurable in the record. -/
-theorem measurable_filtMean_extendObservations (n t : ℕ) :
+theorem measurable_filt_mean_extend_observations (n t : ℕ) :
     Measurable fun ys : Fin n → EuclideanSpace ℝ κ ↦
       M.filtMean (extendObservations ys) t :=
-  M.measurable_filtMean (y := fun i ys ↦ extendObservations ys i)
-    (fun i ↦ measurable_extendObservations_apply i) t
+  M.measurable_filt_mean (y := fun i ys ↦ extendObservations ys i)
+    (fun i ↦ measurable_extend_observations_apply i) t
 
 /-- Each one-step predictive density factor is measurable in the record. -/
-theorem measurable_innovDensity_factor (n : ℕ) (i : Fin n) :
+theorem measurable_innov_density_factor (n : ℕ) (i : Fin n) :
     Measurable fun ys : Fin n → EuclideanSpace ℝ κ ↦
       TauCeti.Probability.multivariateGaussianPDF
         (Matrix.toEuclideanLin (M.observation i) (M.predMean (extendObservations ys) i))
         (M.innovCov i) (ys i) := by
-  have h₁ := M.measurable_predMean_extendObservations n i
+  have h₁ := M.measurable_pred_mean_extend_observations n i
   have h₂ : Measurable fun z : EuclideanSpace ℝ ι ↦
       Matrix.toEuclideanLin (M.observation i) z := by fun_prop
   have hq : Measurable fun ys : Fin n → EuclideanSpace ℝ κ ↦
       (Matrix.toEuclideanLin (M.observation i) (M.predMean (extendObservations ys) i), ys i) :=
     (h₂.comp h₁).prodMk (measurable_pi_apply i)
-  have := (measurable_multivariateGaussianPDF_uncurry (M.innovCov i)).comp hq
+  have := (measurable_multivariate_gaussian_pdf_uncurry (M.innovCov i)).comp hq
   exact this
 
 /-- The product of predictive densities is measurable. -/
-theorem measurable_innovDensity (n : ℕ) : Measurable (M.innovDensity n) := by
+theorem measurable_innov_density (n : ℕ) : Measurable (M.innovDensity n) := by
   unfold innovDensity
-  exact Finset.measurable_prod _ fun i _ ↦ M.measurable_innovDensity_factor n i
+  exact Finset.measurable_prod _ fun i _ ↦ M.measurable_innov_density_factor n i
 
 /-- The product of predictive densities factors over the last observation. -/
-theorem innovDensity_snoc (n : ℕ) (ys : Fin n → EuclideanSpace ℝ κ)
+theorem innov_density_snoc (n : ℕ) (ys : Fin n → EuclideanSpace ℝ κ)
     (y : EuclideanSpace ℝ κ) :
     M.innovDensity (n + 1) (Fin.snoc ys y) = M.innovDensity n ys *
       TauCeti.Probability.multivariateGaussianPDF
@@ -195,9 +196,9 @@ theorem innovDensity_snoc (n : ℕ) (ys : Fin n → EuclideanSpace ℝ κ)
   rw [Fin.prod_univ_castSucc]
   refine congrArg₂ (· * ·) ?_ ?_
   · refine Finset.prod_congr rfl fun i _ ↦ ?_
-    rw [Fin.snoc_castSucc, Fin.val_castSucc, M.predMean_congr fun j hj ↦
-      extendObservations_snoc ys y (hj.trans i.2)]
-  · rw [Fin.snoc_last, Fin.val_last, M.predMean_congr fun j hj ↦ extendObservations_snoc ys y hj]
+    rw [Fin.snoc_castSucc, Fin.val_castSucc, M.pred_mean_congr fun j hj ↦
+      extend_observations_snoc ys y (hj.trans i.2)]
+  · rw [Fin.snoc_last, Fin.val_last, M.pred_mean_congr fun j hj ↦ extend_observations_snoc ys y hj]
 
 end KalmanModel
 
@@ -214,17 +215,17 @@ section Covariance
 
 omit [DecidableEq ι] in
 /-- With a nonsingular innovation covariance, `K_t Σ_t = P_{t|t-1} H_tᵀ`. -/
-theorem gain_mul_innovCov {t : ℕ} (hdet : (M.innovCov t).det ≠ 0) :
+theorem gain_mul_innov_cov {t : ℕ} (hdet : (M.innovCov t).det ≠ 0) :
     M.gain t * M.innovCov t = M.predCov t * (M.observation t).transpose := by
   simp only [gain, gainOf]
   rw [Matrix.mul_assoc, ← innovCov, Matrix.nonsing_inv_mul _ hdet.isUnit, Matrix.mul_one]
 
 /-- The cross-covariance of the filtered error and the innovation vanishes:
 `(I - K_t H_t) P_{t|t-1} H_tᵀ - K_t R_t = 0`. -/
-theorem filtErr_innovation_cross {t : ℕ} (hdet : (M.innovCov t).det ≠ 0) :
+theorem filt_err_innovation_cross {t : ℕ} (hdet : (M.innovCov t).det ≠ 0) :
     (1 - M.gain t * M.observation t) * M.predCov t * (M.observation t).transpose +
       (-M.gain t) * M.obsCov t * (1 : Matrix κ κ ℝ).transpose = 0 := by
-  have h := M.gain_mul_innovCov hdet
+  have h := M.gain_mul_innov_cov hdet
   simp only [innovCov, innovCovOf] at h
   calc _ = M.predCov t * (M.observation t).transpose - M.gain t *
         (M.observation t * M.predCov t * (M.observation t).transpose + M.obsCov t) := by
@@ -235,11 +236,11 @@ theorem filtErr_innovation_cross {t : ℕ} (hdet : (M.innovCov t).det ≠ 0) :
 
 /-- Joseph form of the filtered covariance: with a nonsingular innovation covariance,
 `(I - K_t H_t) P (I - K_t H_t)ᵀ + K_t R_t K_tᵀ = P - K_t H_t P`. -/
-theorem filtCov_eq_joseph {t : ℕ} (hdet : (M.innovCov t).det ≠ 0) :
+theorem filt_cov_eq_joseph {t : ℕ} (hdet : (M.innovCov t).det ≠ 0) :
     (1 - M.gain t * M.observation t) * M.predCov t *
         (1 - M.gain t * M.observation t).transpose +
       (-M.gain t) * M.obsCov t * (-M.gain t).transpose = M.filtCov t := by
-  have h := M.gain_mul_innovCov hdet
+  have h := M.gain_mul_innov_cov hdet
   simp only [innovCov, innovCovOf] at h
   set K := M.gain t
   set H := M.observation t
@@ -256,33 +257,33 @@ theorem filtCov_eq_joseph {t : ℕ} (hdet : (M.innovCov t).det ≠ 0) :
 
 /-- Under positive-semidefinite noise and initial covariances and nonsingular innovation
 covariances, every predicted covariance is positive semidefinite. -/
-theorem predCov_posSemidef (hQ : ∀ t, (M.stateCov t).PosSemidef)
+theorem pred_cov_pos_semidef (hQ : ∀ t, (M.stateCov t).PosSemidef)
     (hR : ∀ t, (M.obsCov t).PosSemidef) (hP₀ : M.initCov.PosSemidef)
     (hinnov : ∀ t, (M.innovCov t).det ≠ 0) (t : ℕ) : (M.predCov t).PosSemidef := by
   induction t with
   | zero => exact hP₀
   | succ t ih =>
     have hf : (M.filtCov t).PosSemidef := by
-      rw [← M.filtCov_eq_joseph (hinnov t)]
-      exact (posSemidef_mul_mul_transpose ih _).add (posSemidef_mul_mul_transpose (hR t) _)
-    exact (posSemidef_mul_mul_transpose hf (M.transition t)).add (hQ t)
+      rw [← M.filt_cov_eq_joseph (hinnov t)]
+      exact (pos_semidef_mul_mul_transpose ih _).add (pos_semidef_mul_mul_transpose (hR t) _)
+    exact (pos_semidef_mul_mul_transpose hf (M.transition t)).add (hQ t)
 
-/-- Under the hypotheses of `predCov_posSemidef`, every filtered covariance is positive
+/-- Under the hypotheses of `pred_cov_pos_semidef`, every filtered covariance is positive
 semidefinite. -/
-theorem filtCov_posSemidef (hQ : ∀ t, (M.stateCov t).PosSemidef)
+theorem filt_cov_pos_semidef (hQ : ∀ t, (M.stateCov t).PosSemidef)
     (hR : ∀ t, (M.obsCov t).PosSemidef) (hP₀ : M.initCov.PosSemidef)
     (hinnov : ∀ t, (M.innovCov t).det ≠ 0) (t : ℕ) : (M.filtCov t).PosSemidef := by
-  rw [← M.filtCov_eq_joseph (hinnov t)]
-  exact (posSemidef_mul_mul_transpose (M.predCov_posSemidef hQ hR hP₀ hinnov t) _).add
-    (posSemidef_mul_mul_transpose (hR t) _)
+  rw [← M.filt_cov_eq_joseph (hinnov t)]
+  exact (pos_semidef_mul_mul_transpose (M.pred_cov_pos_semidef hQ hR hP₀ hinnov t) _).add
+    (pos_semidef_mul_mul_transpose (hR t) _)
 
-/-- Under the hypotheses of `predCov_posSemidef`, every innovation covariance is positive
+/-- Under the hypotheses of `pred_cov_pos_semidef`, every innovation covariance is positive
 definite. -/
-theorem innovCov_posDef (hQ : ∀ t, (M.stateCov t).PosSemidef)
+theorem innov_cov_pos_def (hQ : ∀ t, (M.stateCov t).PosSemidef)
     (hR : ∀ t, (M.obsCov t).PosSemidef) (hP₀ : M.initCov.PosSemidef)
     (hinnov : ∀ t, (M.innovCov t).det ≠ 0) (t : ℕ) : (M.innovCov t).PosDef := by
   have h : (M.innovCov t).PosSemidef :=
-    (posSemidef_mul_mul_transpose (M.predCov_posSemidef hQ hR hP₀ hinnov t) _).add (hR t)
+    (pos_semidef_mul_mul_transpose (M.pred_cov_pos_semidef hQ hR hP₀ hinnov t) _).add (hR t)
   exact h.posDef_iff_isUnit.mpr ((Matrix.isUnit_iff_isUnit_det _).mpr (hinnov t).isUnit)
 
 end Covariance
@@ -320,7 +321,7 @@ theorem innovation_eq (t : ℕ) (ω : Ω) :
   abel
 
 /-- The filtering error is `(I - K_t H_t)(x_t - x_{t|t-1}) - K_t v_t`. -/
-theorem filtErr_eq (t : ℕ) (ω : Ω) :
+theorem filt_err_eq (t : ℕ) (ω : Ω) :
     M.filtErr x₀ w v t ω =
       Matrix.toEuclideanLin (1 - M.gain t * M.observation t) (M.predErr x₀ w v t ω) +
         Matrix.toEuclideanLin (-M.gain t) (v t ω) := by
@@ -334,15 +335,15 @@ theorem filtErr_eq (t : ℕ) (ω : Ω) :
   abel
 
 /-- The prediction error at time `t + 1` is `F_t (x_t - x_{t|t}) + w_t`. -/
-theorem predErr_succ (t : ℕ) (ω : Ω) :
+theorem pred_err_succ (t : ℕ) (ω : Ω) :
     M.predErr x₀ w v (t + 1) ω =
       Matrix.toEuclideanLin (M.transition t) (M.filtErr x₀ w v t ω) + w t ω := by
-  simp only [predErr, filtErr, state, predMean_succ, map_sub]
+  simp only [predErr, filtErr, state, pred_mean_succ, map_sub]
   abel
 
 /-- The observation record up to time `t` is obtained from the record before time `t` and the
 innovation at time `t` by appending `e_t + H_t x_{t|t-1}`. -/
-theorem obsPrefix_succ_eq (t : ℕ) (ω : Ω) :
+theorem obs_prefix_succ_eq (t : ℕ) (ω : Ω) :
     M.obsPrefix x₀ w v (t + 1) ω =
       (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ κ) (Fin.last t)).symm
         (M.innovation x₀ w v t ω + Matrix.toEuclideanLin (M.observation t)
@@ -350,7 +351,7 @@ theorem obsPrefix_succ_eq (t : ℕ) (ω : Ω) :
           M.obsPrefix x₀ w v t ω) := by
   have hpm : M.predMean (extendObservations (M.obsPrefix x₀ w v t ω)) t =
       M.predMean (fun i ↦ M.obsProc x₀ w v i ω) t :=
-    M.predMean_congr fun i hi ↦ by simp [extendObservations_of_lt _ hi, obsPrefix]
+    M.pred_mean_congr fun i hi ↦ by simp [extend_observations_of_lt _ hi, obsPrefix]
   rw [MeasurableEquiv.piFinSuccAbove_symm_apply, Fin.insertNthEquiv_apply, Fin.insertNth_last',
     hpm]
   funext j
@@ -371,33 +372,33 @@ variable {Ω Ω' : Type*} (f : Ω → Ω') {x₀ : Ω → EuclideanSpace ℝ ι}
 omit [Fintype κ] [DecidableEq κ] in
 /-- Observations up to time `s` are unchanged by a change of sample space that preserves the
 initial state, the state noises before time `s`, and the observation noise at time `s`. -/
-theorem obsProc_congr (h₀ : ∀ ω, x₀ ω = x₀' (f ω)) {s : ℕ}
+theorem obs_proc_congr (h₀ : ∀ ω, x₀ ω = x₀' (f ω)) {s : ℕ}
     (hw : ∀ i < s, ∀ ω, w i ω = w' i (f ω)) (hv : ∀ ω, v s ω = v' s (f ω)) (ω : Ω) :
     M.obsProc x₀ w v s ω = M.obsProc x₀' w' v' s (f ω) := by
   simp only [obsProc, observationProcess, M.state_congr f h₀ hw, hv]
 
 /-- The prediction error and the observation record at time `t` are unchanged by a change of
 sample space that preserves the initial state and the noises before time `t`. -/
-theorem predErr_obsPrefix_congr (h₀ : ∀ ω, x₀ ω = x₀' (f ω)) {t : ℕ}
+theorem pred_err_obs_prefix_congr (h₀ : ∀ ω, x₀ ω = x₀' (f ω)) {t : ℕ}
     (hw : ∀ i < t, ∀ ω, w i ω = w' i (f ω)) (hv : ∀ i < t, ∀ ω, v i ω = v' i (f ω)) (ω : Ω) :
     M.predErr x₀ w v t ω = M.predErr x₀' w' v' t (f ω) ∧
       M.obsPrefix x₀ w v t ω = M.obsPrefix x₀' w' v' t (f ω) := by
   have hy : ∀ i < t, M.obsProc x₀ w v i ω = M.obsProc x₀' w' v' i (f ω) := fun i hi ↦
-    M.obsProc_congr f h₀ (fun j hj ↦ hw j (hj.trans hi)) (hv i hi) ω
+    M.obs_proc_congr f h₀ (fun j hj ↦ hw j (hj.trans hi)) (hv i hi) ω
   refine ⟨?_, funext fun i ↦ hy i i.2⟩
-  simp only [predErr, M.state_congr f h₀ hw, M.predMean_congr hy]
+  simp only [predErr, M.state_congr f h₀ hw, M.pred_mean_congr hy]
 
 /-- The filtering error at time `t` and the observation record up to time `t` are unchanged
 by a change of sample space that preserves the initial state, the state noises before time `t`,
 and the observation noises up to time `t`. -/
-theorem filtErr_obsPrefix_congr (h₀ : ∀ ω, x₀ ω = x₀' (f ω)) {t : ℕ}
+theorem filt_err_obs_prefix_congr (h₀ : ∀ ω, x₀ ω = x₀' (f ω)) {t : ℕ}
     (hw : ∀ i < t, ∀ ω, w i ω = w' i (f ω)) (hv : ∀ i ≤ t, ∀ ω, v i ω = v' i (f ω)) (ω : Ω) :
     M.filtErr x₀ w v t ω = M.filtErr x₀' w' v' t (f ω) ∧
       M.obsPrefix x₀ w v (t + 1) ω = M.obsPrefix x₀' w' v' (t + 1) (f ω) := by
   have hy : ∀ i ≤ t, M.obsProc x₀ w v i ω = M.obsProc x₀' w' v' i (f ω) := fun i hi ↦
-    M.obsProc_congr f h₀ (fun j hj ↦ hw j (lt_of_lt_of_le hj hi)) (hv i hi) ω
+    M.obs_proc_congr f h₀ (fun j hj ↦ hw j (lt_of_lt_of_le hj hi)) (hv i hi) ω
   refine ⟨?_, funext fun i ↦ hy i (Nat.lt_succ_iff.mp i.2)⟩
-  simp only [filtErr, M.state_congr f h₀ hw, M.filtMean_congr hy]
+  simp only [filtErr, M.state_congr f h₀ hw, M.filt_mean_congr hy]
 
 end Congr
 
@@ -408,33 +409,33 @@ variable {Ω : Type*} [MeasurableSpace Ω] {x₀ : Ω → EuclideanSpace ℝ ι}
 
 omit [DecidableEq κ] in
 /-- The observation process is measurable for measurable inputs. -/
-theorem measurable_obsProc (h₀ : Measurable x₀) (hw : ∀ i, Measurable (w i))
+theorem measurable_obs_proc (h₀ : Measurable x₀) (hw : ∀ i, Measurable (w i))
     (hv : ∀ i, Measurable (v i)) (s : ℕ) : Measurable (M.obsProc x₀ w v s) :=
-  M.measurable_observationProcess (M.measurable_state h₀ hw) hv s
+  M.measurable_observation_process (M.measurable_state h₀ hw) hv s
 
 omit [DecidableEq κ] in
 /-- The observation record is measurable for measurable inputs. -/
-theorem measurable_obsPrefix (h₀ : Measurable x₀) (hw : ∀ i, Measurable (w i))
+theorem measurable_obs_prefix (h₀ : Measurable x₀) (hw : ∀ i, Measurable (w i))
     (hv : ∀ i, Measurable (v i)) (n : ℕ) : Measurable (M.obsPrefix x₀ w v n) :=
-  measurable_pi_iff.mpr fun i ↦ M.measurable_obsProc h₀ hw hv i
+  measurable_pi_iff.mpr fun i ↦ M.measurable_obs_proc h₀ hw hv i
 
 /-- The prediction error is measurable for measurable inputs. -/
-theorem measurable_predErr (h₀ : Measurable x₀) (hw : ∀ i, Measurable (w i))
+theorem measurable_pred_err (h₀ : Measurable x₀) (hw : ∀ i, Measurable (w i))
     (hv : ∀ i, Measurable (v i)) (t : ℕ) : Measurable (M.predErr x₀ w v t) :=
   (M.measurable_state h₀ hw t).sub
-    (M.measurable_predMean (M.measurable_obsProc h₀ hw hv) t)
+    (M.measurable_pred_mean (M.measurable_obs_proc h₀ hw hv) t)
 
 /-- The filtering error is measurable for measurable inputs. -/
-theorem measurable_filtErr (h₀ : Measurable x₀) (hw : ∀ i, Measurable (w i))
+theorem measurable_filt_err (h₀ : Measurable x₀) (hw : ∀ i, Measurable (w i))
     (hv : ∀ i, Measurable (v i)) (t : ℕ) : Measurable (M.filtErr x₀ w v t) :=
   (M.measurable_state h₀ hw t).sub
-    (M.measurable_filtMean (M.measurable_obsProc h₀ hw hv) t)
+    (M.measurable_filt_mean (M.measurable_obs_proc h₀ hw hv) t)
 
 end Measurability
 
 /-- The prediction error and the observation record at time `t` are a measurable function of
 the initial state, the state noises, and the observation noises before time `t`. -/
-theorem exists_predErr_obsPrefix_eq_comp {Ω : Type*} (x₀ : Ω → EuclideanSpace ℝ ι)
+theorem exists_pred_err_obs_prefix_eq_comp {Ω : Type*} (x₀ : Ω → EuclideanSpace ℝ ι)
     (w : ℕ → Ω → EuclideanSpace ℝ ι) (v : ℕ → Ω → EuclideanSpace ℝ κ) (t : ℕ) :
     ∃ G : EuclideanSpace ℝ ι × (ℕ → EuclideanSpace ℝ ι) ×
         (Fin t → EuclideanSpace ℝ κ) → EuclideanSpace ℝ ι ×
@@ -452,20 +453,20 @@ theorem exists_predErr_obsPrefix_eq_comp {Ω : Type*} (x₀ : Ω → EuclideanSp
   have hw : ∀ i, Measurable (w' i) := fun i ↦
     (measurable_pi_apply i).comp (measurable_fst.comp measurable_snd)
   have hv : ∀ i, Measurable (v' i) := fun i ↦
-    (measurable_extendObservations_apply i).comp (measurable_snd.comp measurable_snd)
+    (measurable_extend_observations_apply i).comp (measurable_snd.comp measurable_snd)
   refine ⟨fun b ↦ (M.predErr x₀' w' v' t b, M.obsPrefix x₀' w' v' t b),
-    (M.measurable_predErr h₀ hw hv t).prodMk (M.measurable_obsPrefix h₀ hw hv t),
+    (M.measurable_pred_err h₀ hw hv t).prodMk (M.measurable_obs_prefix h₀ hw hv t),
     fun ω ↦ ?_⟩
-  obtain ⟨h1, h2⟩ := M.predErr_obsPrefix_congr
+  obtain ⟨h1, h2⟩ := M.pred_err_obs_prefix_congr
     (fun ω ↦ (x₀ ω, (fun i ↦ w i ω), fun i : Fin t ↦ v i ω)) (x₀ := x₀) (w := w) (v := v) (t := t)
     (x₀' := x₀') (w' := w') (v' := v')
     (fun _ ↦ rfl) (fun _ _ _ ↦ rfl)
-    (fun i hi ω ↦ by simp [v', extendObservations_of_lt _ hi]) ω
+    (fun i hi ω ↦ by simp [v', extend_observations_of_lt _ hi]) ω
   rw [h1, h2]
 
 /-- The filtering error at time `t` and the observation record up to time `t` are a measurable
 function of the initial state, the state noises before time `t`, and the observation noises. -/
-theorem exists_filtErr_obsPrefix_eq_comp {Ω : Type*} (x₀ : Ω → EuclideanSpace ℝ ι)
+theorem exists_filt_err_obs_prefix_eq_comp {Ω : Type*} (x₀ : Ω → EuclideanSpace ℝ ι)
     (w : ℕ → Ω → EuclideanSpace ℝ ι) (v : ℕ → Ω → EuclideanSpace ℝ κ) (t : ℕ) :
     ∃ G : EuclideanSpace ℝ ι × (Fin t → EuclideanSpace ℝ ι) ×
         (ℕ → EuclideanSpace ℝ κ) → EuclideanSpace ℝ ι ×
@@ -481,16 +482,16 @@ theorem exists_filtErr_obsPrefix_eq_comp {Ω : Type*} (x₀ : Ω → EuclideanSp
       (ℕ → EuclideanSpace ℝ κ) → EuclideanSpace ℝ κ := fun i b ↦ b.2.2 i
   have h₀ : Measurable x₀' := measurable_fst
   have hw : ∀ i, Measurable (w' i) := fun i ↦
-    (measurable_extendObservations_apply i).comp (measurable_fst.comp measurable_snd)
+    (measurable_extend_observations_apply i).comp (measurable_fst.comp measurable_snd)
   have hv : ∀ i, Measurable (v' i) := fun i ↦
     (measurable_pi_apply i).comp (measurable_snd.comp measurable_snd)
   refine ⟨fun b ↦ (M.filtErr x₀' w' v' t b, M.obsPrefix x₀' w' v' (t + 1) b),
-    (M.measurable_filtErr h₀ hw hv t).prodMk (M.measurable_obsPrefix h₀ hw hv (t + 1)),
+    (M.measurable_filt_err h₀ hw hv t).prodMk (M.measurable_obs_prefix h₀ hw hv (t + 1)),
     fun ω ↦ ?_⟩
-  obtain ⟨h1, h2⟩ := M.filtErr_obsPrefix_congr
+  obtain ⟨h1, h2⟩ := M.filt_err_obs_prefix_congr
     (fun ω ↦ (x₀ ω, (fun i : Fin t ↦ w i ω), fun i ↦ v i ω)) (x₀ := x₀) (w := w) (v := v) (t := t)
     (x₀' := x₀') (w' := w') (v' := v')
-    (fun _ ↦ rfl) (fun i hi ω ↦ by simp [w', extendObservations_of_lt _ hi])
+    (fun _ ↦ rfl) (fun i hi ω ↦ by simp [w', extend_observations_of_lt _ hi])
     (fun _ _ _ ↦ rfl) ω
   rw [h1, h2]
 

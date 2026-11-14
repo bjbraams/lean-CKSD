@@ -6,6 +6,7 @@ public import CKSD.Bayes.DirichletConjugacy
 public import Mathlib.Probability.Distributions.Beta
 public import TauCeti.Probability.Distributions.Dirichlet.Moments
 
+
 /-!
 # Dirichlet process: conjugacy, prediction, and stick breaking
 
@@ -17,18 +18,18 @@ every version of the posterior. The mean of a partition cell uses TauCeti's
 
 ## Main results
 
-* `CKSD.integral_measureReal_of_isDirichletProcess`: the mean of `P(A)` is `α(A) / α(X)`.
-* `CKSD.ae_isDirichletProcessLaw_posterior`: conjugacy.
-* `CKSD.ae_integral_posterior_eq_polyaPredictiveLaw`: the Blackwell–MacQueen predictive law.
-* `CKSD.isDirichletProcess_stickBreaking`: Sethuraman's stick-breaking representation.
+* `CKSD.integral_measure_real_of_is_dirichlet_process`: the mean of `P(A)` is `α(A) / α(X)`.
+* `CKSD.ae_is_dirichlet_process_law_posterior`: conjugacy.
+* `CKSD.ae_integral_posterior_eq_polya_predictive_law`: the Blackwell–MacQueen predictive law.
+* `CKSD.is_dirichlet_process_stick_breaking`: Sethuraman's stick-breaking representation.
 
 Sethuraman's theorem is reduced to its canonical-space form
-`CKSD.map_stickBreakingMeasure_cells_eq_dirichletMeasure` in `CKSD.Bayes.StickBreaking`: the
+`CKSD.map_stick_breaking_measure_cells_eq_dirichlet_measure` in `CKSD.Bayes.StickBreaking`: the
 independent i.i.d. fraction and atom sequences have the law of the product of two infinite
 product measures (`ProbabilityTheory.iIndepFun.map_fun_eq_infinitePi_map`). The canonical
 construction also yields the existence of Dirichlet process laws
-(`CKSD.exists_isDirichletProcessLaw`), which completes the conjugacy theorem
-`CKSD.ae_isDirichletProcess_posterior` of `CKSD.Bayes.DirichletConjugacy`.
+(`CKSD.exists_is_dirichlet_process_law`), which completes the conjugacy theorem
+`CKSD.ae_is_dirichlet_process_posterior` of `CKSD.Bayes.DirichletConjugacy`.
 
 Sources: GAPS 104.15.
 -/
@@ -49,7 +50,7 @@ def IsDirichletProcessLaw {X : Type*} [MeasurableSpace X]
 
 /-- The mean of a cell of a Dirichlet process is its share of the base measure.
 TauCeti's Dirichlet mean is applied to the two-cell partition `{A, Aᶜ}`. -/
-theorem integral_measureReal_of_isDirichletProcess {Ω X : Type*} [MeasurableSpace Ω]
+theorem integral_measure_real_of_is_dirichlet_process {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Ω → ProbabilityMeasure X)
     (α : Measure X) [IsFiniteMeasure α] (hα : α ≠ 0) (hP : IsDirichletProcess μ P α)
     (A : Set X) (hA : MeasurableSet A) :
@@ -116,7 +117,7 @@ theorem integral_measureReal_of_isDirichletProcess {Ω X : Type*} [MeasurableSpa
 /-- GAPS 104.15: Sethuraman's stick-breaking representation. With independent `Beta(1, |α|)`
 fractions and independent atoms of law `α / |α|`, independent of each other, every measurable
 random probability measure agreeing a.s. with `∑ πₖ δ_{θₖ}` is a Dirichlet process. -/
-theorem isDirichletProcess_stickBreaking {Ω X : Type*} [MeasurableSpace Ω]
+theorem is_dirichlet_process_stick_breaking {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (α : Measure X) [IsFiniteMeasure α] (hα : α ≠ 0) (V : ℕ → Ω → ℝ) (θ : ℕ → Ω → X)
     (hV : IsIndependentIdenticallyDistributed μ V (betaMeasure 1 (α.real univ)))
@@ -149,7 +150,7 @@ theorem isDirichletProcess_stickBreaking {Ω X : Type*} [MeasurableSpace Ω]
     have hΦm : Measurable fun w : (ℕ → ℝ) × (ℕ → X) ↦
         WithLp.toLp 2 fun i ↦ (stickBreakingMeasure w.1 w.2).real (A i) :=
       (WithLp.measurable_toLp 2 _).comp (measurable_pi_iff.mpr fun i ↦
-        (measurable_stickBreakingMeasure_apply (hAm i)).ennreal_toReal)
+        (measurable_stick_breaking_measure_apply (hAm i)).ennreal_toReal)
     calc μ.map (fun ω ↦ WithLp.toLp 2 fun i ↦ (P ω : Measure X).real (A i))
         = μ.map ((fun w : (ℕ → ℝ) × (ℕ → X) ↦
             WithLp.toLp 2 fun i ↦ (stickBreakingMeasure w.1 w.2).real (A i)) ∘ W) :=
@@ -159,13 +160,13 @@ theorem isDirichletProcess_stickBreaking {Ω X : Type*} [MeasurableSpace Ω]
           (Measure.map_map hΦm (hVm'.prodMk hθm')).symm
       _ = _ := by
           rw [hW]
-          exact map_stickBreakingMeasure_cells_eq_dirichletMeasure α hα hk hAm hAd hAc hApos
+          exact map_stick_breaking_measure_cells_eq_dirichlet_measure α hα hk hAm hAd hAc hApos
 
 /-- **Existence of the Dirichlet process.** For every finite nonzero base measure there is a law of
 a Dirichlet process: the law of Sethuraman's stick-breaking measure on the product of the
 i.i.d. fraction and atom spaces, where the stick-breaking measure is almost surely a probability
-measure (`CKSD.ae_tsum_stickBreakingWeight_eq_one`). -/
-theorem exists_isDirichletProcessLaw {X : Type*} [MeasurableSpace X] [StandardBorelSpace X]
+measure (`CKSD.ae_tsum_stick_breaking_weight_eq_one`). -/
+theorem exists_is_dirichlet_process_law {X : Type*} [MeasurableSpace X] [StandardBorelSpace X]
     (α : Measure X) [IsFiniteMeasure α] (hα : α ≠ 0) :
     ∃ Q : Measure (ProbabilityMeasure X), IsProbabilityMeasure Q ∧ IsDirichletProcessLaw Q α := by
   have : NeZero α := ⟨hα⟩
@@ -192,7 +193,7 @@ theorem exists_isDirichletProcessLaw {X : Type*} [MeasurableSpace X] [StandardBo
     linarith
   have hmass : ∀ᵐ w ∂M, stickBreakingMeasure w.1 w.2 univ = 1 := by
     filter_upwards [Measure.quasiMeasurePreserving_fst.ae
-      (ae_tsum_stickBreakingWeight_eq_one β hβ hq)] with w hw
+      (ae_tsum_stick_breaking_weight_eq_one β hβ hq)] with w hw
     simpa [stickBreakingMeasure, Measure.sum_apply _ MeasurableSet.univ] using hw
   classical
   set P : (ℕ → ℝ) × (ℕ → X) → ProbabilityMeasure X := fun w ↦
@@ -207,8 +208,8 @@ theorem exists_isDirichletProcessLaw {X : Type*} [MeasurableSpace X] [StandardBo
       by_cases h : stickBreakingMeasure w.1 w.2 univ = 1 <;> simp [P, h]
     rw [this]
     exact Measurable.ite (measurableSet_eq_fun
-      (measurable_stickBreakingMeasure_apply MeasurableSet.univ) measurable_const)
-      (measurable_stickBreakingMeasure_apply hA) measurable_const
+      (measurable_stick_breaking_measure_apply MeasurableSet.univ) measurable_const)
+      (measurable_stick_breaking_measure_apply hA) measurable_const
   have hPmeas : Measurable P := by
     have h' : Measurable fun w ↦ (P w : Measure X) := Measure.measurable_of_measurable_coe _ hPm
     exact h'.subtype_mk
@@ -247,7 +248,7 @@ theorem exists_isDirichletProcessLaw {X : Type*} [MeasurableSpace X] [StandardBo
       measurable_snd.aemeasurable).mpr (by
         change M.map id = (M.map Prod.fst).prod (M.map Prod.snd)
         rw [Measure.map_id, hfst, hsnd])
-  have hDP := isDirichletProcess_stickBreaking M α hα _ _ hV hθ hind P hPm hP
+  have hDP := is_dirichlet_process_stick_breaking M α hα _ _ hV hθ hind P hPm hP
   have hcoe : ∀ A, MeasurableSet A →
       Measurable fun θ : ProbabilityMeasure X ↦ (θ : Measure X) A := fun A hA ↦
     (Measure.measurable_coe hA).comp measurable_subtype_coe
@@ -266,7 +267,7 @@ theorem exists_isDirichletProcessLaw {X : Type*} [MeasurableSpace X] [StandardBo
 /-- GAPS 104.15: conjugacy of the Dirichlet process. For every version of the posterior given `n`
 conditionally independent observations, the posterior is a.s. a Dirichlet process with base
 `α + ∑ δ_{xᵢ}`. -/
-theorem ae_isDirichletProcessLaw_posterior {X : Type*} [MeasurableSpace X]
+theorem ae_is_dirichlet_process_law_posterior {X : Type*} [MeasurableSpace X]
     [StandardBorelSpace X] (α : Measure X) [IsFiniteMeasure α] (hα : α ≠ 0)
     (prior : Measure (ProbabilityMeasure X)) [IsProbabilityMeasure prior]
     (hprior : IsDirichletProcessLaw prior α) (n : ℕ)
@@ -274,18 +275,18 @@ theorem ae_isDirichletProcessLaw_posterior {X : Type*} [MeasurableSpace X]
     (hQ : ∀ θ, Q θ = Measure.pi fun _ : Fin n ↦ (θ : Measure X))
     (post : Kernel (Fin n → X) (ProbabilityMeasure X)) (hpost : IsPosteriorKernel prior Q post) :
     ∀ᵐ x ∂(Q ∘ₘ prior), IsDirichletProcessLaw (post x) (dirichletPosteriorBase α x) := by
-  refine ae_isDirichletProcess_posterior α hα prior hprior Q hQ post hpost fun x ↦ ?_
+  refine ae_is_dirichlet_process_posterior α hα prior hprior Q hQ post hpost fun x ↦ ?_
   have : IsFiniteMeasure (dirichletPosteriorBase α x) := by
     unfold dirichletPosteriorBase
     infer_instance
-  refine exists_isDirichletProcessLaw _ fun h ↦ hα ?_
+  refine exists_is_dirichlet_process_law _ fun h ↦ hα ?_
   have : α ≤ dirichletPosteriorBase α x := Measure.le_add_right le_rfl
   rw [h] at this
   exact le_antisymm this (Measure.zero_le _)
 
 /-- GAPS 104.15: the Blackwell–MacQueen predictive law is the posterior mean of the random
-measure, granted posterior conjugacy (`ae_isDirichletProcessLaw_posterior`). -/
-theorem ae_integral_posterior_eq_polyaPredictiveLaw {X : Type*} [MeasurableSpace X]
+measure, granted posterior conjugacy (`ae_is_dirichlet_process_law_posterior`). -/
+theorem ae_integral_posterior_eq_polya_predictive_law {X : Type*} [MeasurableSpace X]
     (α : Measure X) [IsFiniteMeasure α] (hα : α ≠ 0) {n : ℕ}
     (post : Kernel (Fin n → X) (ProbabilityMeasure X)) [IsMarkovKernel post]
     (ν : Measure (Fin n → X))
@@ -301,7 +302,7 @@ theorem ae_integral_posterior_eq_polyaPredictiveLaw {X : Type*} [MeasurableSpace
     exact le_antisymm this (Measure.zero_le _)
   have hfin : IsFiniteMeasure (dirichletPosteriorBase α x) := by
     unfold dirichletPosteriorBase; infer_instance
-  have hmean := integral_measureReal_of_isDirichletProcess (post x) id _ hβne hx A hA
+  have hmean := integral_measure_real_of_is_dirichlet_process (post x) id _ hβne hx A hA
   simp only [id] at hmean
   rw [hmean]
   have hu : dirichletPosteriorBase α x univ = α univ + n := by

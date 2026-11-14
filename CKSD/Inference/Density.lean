@@ -2,6 +2,7 @@ module
 
 public import CKSD.Inference.Basic
 
+
 /-!
 # Integrals against laws with a real density
 
@@ -15,7 +16,7 @@ integrability under `P` are those of `f · g` under `μ`. These are adapters to 
   is `P`-integrable iff `f g` is `μ`-integrable.
 * `CKSD.HasDensity.integrable`, `CKSD.HasDensity.integral_eq_one`: the density of a finite
   (probability) law is integrable (with integral one).
-* `CKSD.integral_withDensity_ofReal`, `CKSD.integral_map_withDensity_ofReal` and their
+* `CKSD.integral_with_density_of_real`, `CKSD.integral_map_with_density_of_real` and their
   integrability counterparts, for everywhere nonnegative densities.
 -/
 @[expose] public section
@@ -30,7 +31,7 @@ namespace CKSD
 variable {X : Type*} [MeasurableSpace X]
 
 /-- Pushing forward a measure with a density that factors through `φ`. -/
-theorem map_withDensity_comp {Y : Type*} [MeasurableSpace Y] (ν : Measure X) {φ : X → Y}
+theorem map_with_density_comp {Y : Type*} [MeasurableSpace Y] (ν : Measure X) {φ : X → Y}
     (hφ : Measurable φ) {k : Y → ℝ≥0∞} (hk : Measurable k) :
     (ν.withDensity (k ∘ φ)).map φ = (ν.map φ).withDensity k := by
   ext s hs
@@ -72,38 +73,38 @@ theorem HasDensity.integral_eq_one {P μ : Measure X} {f : X → ℝ} (h : HasDe
   exact this.symm
 
 /-- A measurable everywhere nonnegative `h` is a density of `ν.withDensity (ofReal ∘ h)`. -/
-theorem hasDensity_withDensity_ofReal (ν : Measure X) {h : X → ℝ} (hh : Measurable h)
+theorem has_density_with_density_of_real (ν : Measure X) {h : X → ℝ} (hh : Measurable h)
     (hh0 : ∀ x, 0 ≤ h x) : HasDensity (ν.withDensity fun x ↦ ENNReal.ofReal (h x)) ν h :=
   ⟨hh, ae_of_all _ hh0, rfl⟩
 
 /-- Integrals against a measure with a nonnegative real density `h`. -/
-theorem integral_withDensity_ofReal (ν : Measure X) {h : X → ℝ} (hh : Measurable h)
+theorem integral_with_density_of_real (ν : Measure X) {h : X → ℝ} (hh : Measurable h)
     (hh0 : ∀ x, 0 ≤ h x) (F : X → ℝ) :
     ∫ x, F x ∂(ν.withDensity fun x ↦ ENNReal.ofReal (h x)) = ∫ x, h x * F x ∂ν :=
-  (hasDensity_withDensity_ofReal ν hh hh0).integral_eq F
+  (has_density_with_density_of_real ν hh hh0).integral_eq F
 
 /-- Integrability against a measure with a nonnegative real density `h`. -/
-theorem integrable_withDensity_ofReal_iff (ν : Measure X) {h : X → ℝ} (hh : Measurable h)
+theorem integrable_with_density_of_real_iff (ν : Measure X) {h : X → ℝ} (hh : Measurable h)
     (hh0 : ∀ x, 0 ≤ h x) (F : X → ℝ) :
     Integrable F (ν.withDensity fun x ↦ ENNReal.ofReal (h x)) ↔
       Integrable (fun x ↦ h x * F x) ν :=
-  (hasDensity_withDensity_ofReal ν hh hh0).integrable_iff F
+  (has_density_with_density_of_real ν hh hh0).integrable_iff F
 
 /-- Integrals against the image under `T` of a measure with a nonnegative real density `h`. -/
-theorem integral_map_withDensity_ofReal {E : Type*} [MeasurableSpace E] (ν : Measure X)
+theorem integral_map_with_density_of_real {E : Type*} [MeasurableSpace E] (ν : Measure X)
     {T : X → E} (hT : Measurable T) {h : X → ℝ} (hh : Measurable h) (hh0 : ∀ x, 0 ≤ h x)
     {F : E → ℝ} (hF : Measurable F) :
     ∫ t, F t ∂(ν.withDensity fun x ↦ ENNReal.ofReal (h x)).map T = ∫ x, h x * F (T x) ∂ν := by
   rw [integral_map hT.aemeasurable hF.aestronglyMeasurable]
-  exact integral_withDensity_ofReal ν hh hh0 _
+  exact integral_with_density_of_real ν hh hh0 _
 
 /-- Integrability against the image under `T` of a measure with a nonnegative real density. -/
-theorem integrable_map_withDensity_ofReal_iff {E : Type*} [MeasurableSpace E] (ν : Measure X)
+theorem integrable_map_with_density_of_real_iff {E : Type*} [MeasurableSpace E] (ν : Measure X)
     {T : X → E} (hT : Measurable T) {h : X → ℝ} (hh : Measurable h) (hh0 : ∀ x, 0 ≤ h x)
     {F : E → ℝ} (hF : Measurable F) :
     Integrable F ((ν.withDensity fun x ↦ ENNReal.ofReal (h x)).map T) ↔
       Integrable (fun x ↦ h x * F (T x)) ν := by
   rw [integrable_map_measure hF.aestronglyMeasurable hT.aemeasurable]
-  exact integrable_withDensity_ofReal_iff ν hh hh0 _
+  exact integrable_with_density_of_real_iff ν hh hh0 _
 
 end CKSD

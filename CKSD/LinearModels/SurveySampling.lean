@@ -3,6 +3,7 @@ module
 public import CKSD.LinearModels.Basic
 public import CKSD.Inference.Basic
 
+
 /-!
 # Design-based inference in survey sampling and randomized experiments
 
@@ -21,17 +22,17 @@ comes from the design. This file proves the classical design-based moment identi
 
 ## Main results
 
-* `CKSD.integral_horvitzThompson`, `CKSD.variance_horvitzThompson`,
-  `CKSD.integral_horvitzThompsonVarianceEstimator`,
-  `CKSD.variance_horvitzThompson_eq_sen_yates_grundy`: unbiasedness and design variance of the
+* `CKSD.integral_horvitz_thompson`, `CKSD.variance_horvitz_thompson`,
+  `CKSD.integral_horvitz_thompson_variance_estimator`,
+  `CKSD.variance_horvitz_thompson_eq_sen_yates_grundy`: unbiasedness and design variance of the
   Horvitz–Thompson estimator, unbiased variance estimation, and the Sen–Yates–Grundy form for
   fixed-size designs (GAPS 105.72).
-* `CKSD.integral_sum_div_simpleRandomSampleDesign`,
-  `CKSD.variance_sum_div_simpleRandomSampleDesign`: the sample mean under simple random sampling
+* `CKSD.integral_sum_div_simple_random_sample_design`,
+  `CKSD.variance_sum_div_simple_random_sample_design`: the sample mean under simple random sampling
   is unbiased with variance `(1 - n/N) S² / n` (finite-population correction, GAPS 105.73).
 * `CKSD.sq_sum_div_le_sum_sq_div_of_sum_eq`, `CKSD.sq_sum_div_eq_sum_sq_div_iff`: Neyman
   allocation minimizes `∑ₕ aₕ² / nₕ` subject to `∑ₕ nₕ = n` (GAPS 105.73).
-* `CKSD.integral_differenceInMeans`, `CKSD.variance_differenceInMeans`: Neyman's unbiasedness
+* `CKSD.integral_difference_in_means`, `CKSD.variance_difference_in_means`: Neyman's unbiasedness
   and exact variance `S₁²/n₁ + S₀²/n₀ - S²_{τ}/N` for the difference in means (GAPS 105.46).
 
 The moment identities use Mathlib's indicator and finite-sum integrals and its second-moment
@@ -63,13 +64,13 @@ attribute [local instance] Classical.propDecidable
 attribute [local instance] finiteSampleMeasurableSpace
 
 /-- Every real statistic on the finite sample space has finite moments under a finite design. -/
-private theorem memLp_sample {N : ℕ} (P : Measure (Finset (Fin N))) [IsFiniteMeasure P]
+private theorem mem_lp_sample {N : ℕ} (P : Measure (Finset (Fin N))) [IsFiniteMeasure P]
     (f : Finset (Fin N) → ℝ) (p : ℝ≥0∞) : MemLp f p P := by
   exact eLpNorm_lt_top_of_finite (measurable_of_countable f).aestronglyMeasurable
 
 /-- The mean of a sum over a random sample is the sum of the summands weighted by their
 first-order inclusion probabilities. -/
-theorem integral_sum_mem_eq_sum_measureReal {N : ℕ} (P : Measure (Finset (Fin N)))
+theorem integral_sum_mem_eq_sum_measure_real {N : ℕ} (P : Measure (Finset (Fin N)))
     [IsFiniteMeasure P]
     (b : Fin N → ℝ) :
     (∫ s, ∑ i ∈ s, b i ∂P) = ∑ i, P.real {s | i ∈ s} * b i := by
@@ -78,7 +79,7 @@ theorem integral_sum_mem_eq_sum_measureReal {N : ℕ} (P : Measure (Finset (Fin 
       (fun s ↦ ∑ i, if i ∈ s then b i else 0) := by
     funext s
     simp
-  rw [hfun, integral_finsetSum _ (fun i _ ↦ (memLp_sample P _ 1).integrable le_rfl)]
+  rw [hfun, integral_finsetSum _ (fun i _ ↦ (mem_lp_sample P _ 1).integrable le_rfl)]
   apply Finset.sum_congr rfl
   intro i _
   simpa only [Set.indicator, mem_ofPred_eq, smul_eq_mul] using
@@ -87,7 +88,7 @@ theorem integral_sum_mem_eq_sum_measureReal {N : ℕ} (P : Measure (Finset (Fin 
 
 /-- The mean of a double sum over a random sample is the double sum of the summands weighted
 by their joint inclusion probabilities. -/
-theorem integral_sum_sum_mem_eq_sum_sum_measureReal {N : ℕ} (P : Measure (Finset (Fin N)))
+theorem integral_sum_sum_mem_eq_sum_sum_measure_real {N : ℕ} (P : Measure (Finset (Fin N)))
     [IsFiniteMeasure P]
     (b : Fin N → Fin N → ℝ) :
     (∫ s, ∑ i ∈ s, ∑ j ∈ s, b i j ∂P) =
@@ -98,10 +99,10 @@ theorem integral_sum_sum_mem_eq_sum_sum_measureReal {N : ℕ} (P : Measure (Fins
     funext s
     simp only [ite_and]
     simp
-  rw [hfun, integral_finsetSum _ (fun i _ ↦ (memLp_sample P _ 1).integrable le_rfl)]
+  rw [hfun, integral_finsetSum _ (fun i _ ↦ (mem_lp_sample P _ 1).integrable le_rfl)]
   apply Finset.sum_congr rfl
   intro i _
-  rw [integral_finsetSum _ (fun j _ ↦ (memLp_sample P _ 1).integrable le_rfl)]
+  rw [integral_finsetSum _ (fun j _ ↦ (mem_lp_sample P _ 1).integrable le_rfl)]
   apply Finset.sum_congr rfl
   intro j _
   simpa only [Set.indicator, mem_ofPred_eq, smul_eq_mul] using
@@ -110,7 +111,7 @@ theorem integral_sum_sum_mem_eq_sum_sum_measureReal {N : ℕ} (P : Measure (Fins
 
 /-- Mean and design variance of the Horvitz–Thompson estimator, with the inclusion
 probabilities as local definitions. -/
-private theorem horvitzThompson_aux
+private theorem horvitz_thompson_aux
     {N : ℕ} (P : Measure (Finset (Fin N))) [IsProbabilityMeasure P]
     (y : Fin N → ℝ) :
     let pi := fun i ↦ P.real {s | i ∈ s};
@@ -127,17 +128,17 @@ private theorem horvitzThompson_aux
   have hpi0 : ∀ i, pi i ≠ 0 := fun i ↦ (hp i).ne'
   let T := fun s : Finset (Fin N) ↦ ∑ i ∈ s, y i / pi i
   have hmean : (∫ s, T s ∂P) = ∑ i, y i := by
-    rw [integral_sum_mem_eq_sum_measureReal]
+    rw [integral_sum_mem_eq_sum_measure_real]
     apply Finset.sum_congr rfl
     intro i _
     exact mul_div_cancel₀ (y i) (hp i).ne'
   refine ⟨hmean, ?_⟩
-  rw [ProbabilityTheory.variance_eq_sub (memLp_sample P T 2), hmean]
+  rw [ProbabilityTheory.variance_eq_sub (mem_lp_sample P T 2), hmean]
   have hsquare : T ^ 2 =
       (fun s ↦ ∑ i ∈ s, ∑ j ∈ s, y i / pi i * (y j / pi j)) := by
     funext s
     simp only [T, pow_two, Pi.mul_apply, Finset.sum_mul_sum]
-  rw [hsquare, integral_sum_sum_mem_eq_sum_sum_measureReal]
+  rw [hsquare, integral_sum_sum_mem_eq_sum_sum_measure_real]
   have hpop : (∑ i, y i) ^ 2 = ∑ i, ∑ j, y i * y j := by
     simp only [pow_two, Finset.sum_mul_sum]
   rw [hpop, ← Finset.sum_sub_distrib]
@@ -152,7 +153,7 @@ private theorem horvitzThompson_aux
 
 /-- Unbiasedness of the Horvitz–Thompson variance estimator, with the inclusion probabilities
 as local definitions. -/
-private theorem horvitzThompsonVarianceEstimator_aux
+private theorem horvitz_thompson_variance_estimator_aux
     {N : ℕ} (P : Measure (Finset (Fin N))) [IsProbabilityMeasure P]
     (y : Fin N → ℝ) :
     let pi := fun i ↦ P.real {s | i ∈ s};
@@ -167,7 +168,7 @@ private theorem horvitzThompsonVarianceEstimator_aux
   have hpi : ∀ i, 0 < P.real {s : Finset (Fin N) | i ∈ s} := by
     intro i
     simpa only [and_self] using hp i i
-  rw [integral_sum_sum_mem_eq_sum_sum_measureReal, (horvitzThompson_aux P y hpi).2]
+  rw [integral_sum_sum_mem_eq_sum_sum_measure_real, (horvitz_thompson_aux P y hpi).2]
   apply Finset.sum_congr rfl
   intro i _
   apply Finset.sum_congr rfl
@@ -176,7 +177,7 @@ private theorem horvitzThompsonVarianceEstimator_aux
 
 /-- The Sen–Yates–Grundy form of the Horvitz–Thompson variance, with the inclusion
 probabilities as local definitions. -/
-private theorem senYatesGrundy_aux
+private theorem sen_yates_grundy_aux
     {N : ℕ} (P : Measure (Finset (Fin N))) [IsProbabilityMeasure P]
     (n : ℕ) (hn : ∀ᵐ s ∂P, s.card = n) (y : Fin N → ℝ) :
     let pi := fun i ↦ P.real {s | i ∈ s};
@@ -194,7 +195,7 @@ private theorem senYatesGrundy_aux
   have htotal : ∑ i, pi i = (n : ℝ) := by
     calc
       _ = ∫ s, ∑ i ∈ s, (1 : ℝ) ∂P := by
-        simpa only [mul_one] using (integral_sum_mem_eq_sum_measureReal P (fun _ ↦ (1 : ℝ))).symm
+        simpa only [mul_one] using (integral_sum_mem_eq_sum_measure_real P (fun _ ↦ (1 : ℝ))).symm
       _ = ∫ _, (n : ℝ) ∂P := by
         apply integral_congr_ae
         filter_upwards [hn] with s hs
@@ -205,7 +206,7 @@ private theorem senYatesGrundy_aux
     calc
       _ = ∫ s, ∑ j : Fin N, if i ∈ s ∧ j ∈ s then (1 : ℝ) else 0 ∂P := by
         rw [integral_finsetSum _
-          (fun j _ ↦ (memLp_sample P _ 1).integrable le_rfl)]
+          (fun j _ ↦ (mem_lp_sample P _ 1).integrable le_rfl)]
         apply Finset.sum_congr rfl
         intro j _
         simpa only [Set.indicator, mem_ofPred_eq, smul_eq_mul, mul_one] using
@@ -249,7 +250,7 @@ private theorem senYatesGrundy_aux
     ring
   have hvar : Var[fun s ↦ ∑ i ∈ s, y i / pi i; P] =
       ∑ i, ∑ j, c i j * w i * w j := by
-    rw [(horvitzThompson_aux P y hp).2]
+    rw [(horvitz_thompson_aux P y hp).2]
     apply Finset.sum_congr rfl
     intro i _
     apply Finset.sum_congr rfl
@@ -263,7 +264,7 @@ private theorem senYatesGrundy_aux
 
 /-- Under simple random sampling of `n` units, the probability that the sample contains a given
 set `B` of at most `n` units is `C(N - |B|, n - |B|) / C(N, n)`. -/
-theorem simpleRandomSampleDesign_real_superset {N n : ℕ} (B : Finset (Fin N))
+theorem simple_random_sample_design_real_superset {N n : ℕ} (B : Finset (Fin N))
     (hB : B.card ≤ n) :
     (simpleRandomSampleDesign N n).real {s | B ⊆ s} =
       (Nat.choose (N - B.card) (n - B.card) : ℝ) / Nat.choose N n := by
@@ -280,7 +281,7 @@ theorem simpleRandomSampleDesign_real_superset {N n : ℕ} (B : Finset (Fin N))
   simp [div_eq_mul_inv, mul_comm]
 
 /-- Simple random sampling of `n ≤ N` units is a probability measure. -/
-theorem isProbabilityMeasure_simpleRandomSampleDesign {N n : ℕ} (h : n ≤ N) :
+theorem is_probability_measure_simple_random_sample_design {N n : ℕ} (h : n ≤ N) :
     IsProbabilityMeasure (simpleRandomSampleDesign N n) := by
   constructor
   have hset : {s : Finset (Fin N) | s.card = n} =
@@ -294,7 +295,7 @@ theorem isProbabilityMeasure_simpleRandomSampleDesign {N n : ℕ} (h : n ≤ N) 
 
 /-- Under simple random sampling, the probability that the sample contains `B` is the
 proportion of `n`-subsets containing `B`. -/
-theorem simpleRandomSampleDesign_real_superset_eq_card {N n : ℕ} (B : Finset (Fin N)) :
+theorem simple_random_sample_design_real_superset_eq_card {N n : ℕ} (B : Finset (Fin N)) :
     (simpleRandomSampleDesign N n).real {s | B ⊆ s} =
       (((Finset.univ.powersetCard n).filter (B ⊆ ·)).card : ℝ) / Nat.choose N n := by
   have hset : ({s : Finset (Fin N) | B ⊆ s} ∩ {s | s.card = n}) =
@@ -308,9 +309,9 @@ theorem simpleRandomSampleDesign_real_superset_eq_card {N n : ℕ} (B : Finset (
   simp [div_eq_mul_inv, mul_comm]
 
 /-- First-order inclusion probabilities of simple random sampling. -/
-theorem simpleRandomSampleDesign_real_mem {N n : ℕ} (hn : 1 ≤ n) (hnN : n ≤ N) (i : Fin N) :
+theorem simple_random_sample_design_real_mem {N n : ℕ} (hn : 1 ≤ n) (hnN : n ≤ N) (i : Fin N) :
     (simpleRandomSampleDesign N n).real {s | i ∈ s} = n / N := by
-  have := simpleRandomSampleDesign_real_superset (N := N) (n := n) {i} (by simpa using hn)
+  have := simple_random_sample_design_real_superset (N := N) (n := n) {i} (by simpa using hn)
   simp only [Finset.singleton_subset_iff, Finset.card_singleton] at this
   rw [this]
   obtain ⟨M, rfl⟩ : ∃ M, N = M + 1 := ⟨N - 1, by omega⟩
@@ -326,7 +327,7 @@ theorem simpleRandomSampleDesign_real_mem {N n : ℕ} (hn : 1 ≤ n) (hnN : n �
   linarith
 
 /-- Second-order inclusion probabilities of simple random sampling for distinct units. -/
-theorem simpleRandomSampleDesign_real_mem_mem {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
+theorem simple_random_sample_design_real_mem_mem {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
     (hnN : n ≤ N) {i j : Fin N} (hij : i ≠ j) :
     (simpleRandomSampleDesign N n).real {s | i ∈ s ∧ j ∈ s} =
       n * (n - 1) / (N * (N - 1)) := by
@@ -337,7 +338,7 @@ theorem simpleRandomSampleDesign_real_mem_mem {N n : ℕ} (hN : 2 ≤ N) (hn : 1
   rcases Nat.lt_or_ge n 2 with h1 | h2
   · have hn1 : n = 1 := by omega
     subst hn1
-    rw [simpleRandomSampleDesign_real_superset_eq_card]
+    rw [simple_random_sample_design_real_superset_eq_card]
     have : (Finset.univ.powersetCard 1).filter (({i, j} : Finset (Fin N)) ⊆ ·) = ∅ := by
       ext s
       simp only [Finset.mem_filter, Finset.mem_powersetCard_univ, Finset.notMem_empty,
@@ -346,7 +347,7 @@ theorem simpleRandomSampleDesign_real_mem_mem {N n : ℕ} (hN : 2 ≤ N) (hn : 1
       have := Finset.card_le_card hsub
       omega
     simp [this]
-  · rw [simpleRandomSampleDesign_real_superset {i, j} (by omega), hcard]
+  · rw [simple_random_sample_design_real_superset {i, j} (by omega), hcard]
     obtain ⟨M, rfl⟩ : ∃ M, N = M + 2 := ⟨N - 2, by omega⟩
     obtain ⟨k, rfl⟩ : ∃ k, n = k + 2 := ⟨n - 2, by omega⟩
     have h₁ := Nat.add_one_mul_choose_eq (M + 1) (k + 1)
@@ -363,7 +364,7 @@ theorem simpleRandomSampleDesign_real_mem_mem {N n : ℕ} (hN : 2 ≤ N) (hn : 1
     linear_combination (↑k + 1 : ℝ) * h₁' + ((M : ℝ) + 2) * h₂'
 
 /-- The finite-population variance as a difference of sums. -/
-theorem populationVariance_eq_sum_sq {N : ℕ} (hN : 1 ≤ N) (y : Fin N → ℝ) :
+theorem population_variance_eq_sum_sq {N : ℕ} (hN : 1 ≤ N) (y : Fin N → ℝ) :
     populationVariance y = ((∑ i, y i ^ 2) - (∑ i, y i) ^ 2 / N) / (N - 1) := by
   have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
   unfold populationVariance populationMean
@@ -392,22 +393,22 @@ private theorem sum_sum_ite_mul_mul {N : ℕ} (d e : ℝ) (w : Fin N → ℝ) :
   ring
 
 /-- Mean and design variance of a sample total under simple random sampling. -/
-private theorem simpleRandomSampleDesign_sum_aux {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
+private theorem simple_random_sample_design_sum_aux {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
     (hnN : n ≤ N) (w : Fin N → ℝ) :
     (∫ s, ∑ i ∈ s, w i ∂simpleRandomSampleDesign N n) = n / N * ∑ i, w i ∧
       Var[fun s ↦ ∑ i ∈ s, w i; simpleRandomSampleDesign N n] =
         n * (N - n) / N * populationVariance w := by
-  have := isProbabilityMeasure_simpleRandomSampleDesign hnN
+  have := is_probability_measure_simple_random_sample_design hnN
   set P := simpleRandomSampleDesign N n
   have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
   have hN1 : (N : ℝ) - 1 ≠ 0 := by
     have : (2 : ℝ) ≤ N := by exact_mod_cast hN
     linarith
   have hn0 : (n : ℝ) ≠ 0 := by exact_mod_cast (show n ≠ 0 by omega)
-  have hpi : ∀ i, P.real {s | i ∈ s} = n / N := simpleRandomSampleDesign_real_mem hn hnN
+  have hpi : ∀ i, P.real {s | i ∈ s} = n / N := simple_random_sample_design_real_mem hn hnN
   have hpos : ∀ i, 0 < P.real {s | i ∈ s} := fun i ↦ by
     rw [hpi]; exact div_pos (by positivity) (by positivity)
-  have hHT := horvitzThompson_aux P (fun i ↦ n / N * w i) hpos
+  have hHT := horvitz_thompson_aux P (fun i ↦ n / N * w i) hpos
   have hT : (fun s : Finset (Fin N) ↦ ∑ i ∈ s, (n / N * w i) / P.real {s | i ∈ s}) =
       fun s ↦ ∑ i ∈ s, w i := by
     funext s
@@ -422,7 +423,7 @@ private theorem simpleRandomSampleDesign_sum_aux {N n : ℕ} (hN : 2 ≤ N) (hn 
     intro i j
     split_ifs with hij
     · subst hij; simpa using hpi i
-    · exact simpleRandomSampleDesign_real_mem_mem hN hn hnN hij
+    · exact simple_random_sample_design_real_mem_mem hN hn hnN hij
   have hterm : ∀ i j, (P.real {s | i ∈ s ∧ j ∈ s} - P.real {s | i ∈ s} * P.real {s | j ∈ s}) *
       (n / N * w i) * (n / N * w j) / (P.real {s | i ∈ s} * P.real {s | j ∈ s}) =
       (if i = j then (n / N - (n / N) ^ 2 : ℝ) else n * (n - 1) / (N * (N - 1)) - (n / N) ^ 2) *
@@ -431,12 +432,12 @@ private theorem simpleRandomSampleDesign_sum_aux {N n : ℕ} (hN : 2 ≤ N) (hn 
     rw [hpij, hpi, hpi]
     split_ifs <;> field_simp
   simp_rw [hterm]
-  rw [sum_sum_ite_mul_mul, populationVariance_eq_sum_sq (by omega)]
+  rw [sum_sum_ite_mul_mul, population_variance_eq_sum_sq (by omega)]
   field_simp
   ring
 
 /-- Mean and design variance of the sample mean under simple random sampling. -/
-private theorem simpleRandomSample_mean_aux
+private theorem simple_random_sample_mean_aux
     {N : ℕ} (hN : 2 ≤ N) (n : ℕ) (hn : 1 ≤ n) (hnN : n ≤ N)
     (y : Fin N → ℝ) :
     let T := fun s : Finset (Fin N) ↦ (∑ i ∈ s, y i) / n;
@@ -444,17 +445,17 @@ private theorem simpleRandomSample_mean_aux
       Var[T; simpleRandomSampleDesign N n] = (1 - (n : ℝ) / N) * populationVariance y / n := by
   intro T
   have hT : T = fun s ↦ ∑ i ∈ s, y i / n := funext fun s ↦ Finset.sum_div _ _ _
-  obtain ⟨h1, h2⟩ := simpleRandomSampleDesign_sum_aux hN hn hnN (fun i ↦ y i / n)
+  obtain ⟨h1, h2⟩ := simple_random_sample_design_sum_aux hN hn hnN (fun i ↦ y i / n)
   have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
   have hn0 : (n : ℝ) ≠ 0 := by exact_mod_cast (show n ≠ 0 by omega)
-  rw [hT, h1, h2, populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega)]
+  rw [hT, h1, h2, population_variance_eq_sum_sq (by omega), population_variance_eq_sum_sq (by omega)]
   simp only [div_pow, ← Finset.sum_div, populationMean]
   refine ⟨by field_simp, ?_⟩
   field_simp
 
 /-- Mean and design variance of the difference in means of a completely randomized
 experiment. -/
-private theorem differenceInMeans_aux {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n₀ = N)
+private theorem difference_in_means_aux {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n₀ = N)
     (h₁ : 0 < n₁) (h₀ : 0 < n₀) (y₁ y₀ : Fin N → ℝ) :
     let T := fun s : Finset (Fin N) ↦ (∑ i ∈ s, y₁ i) / n₁ - (∑ i ∈ sᶜ, y₀ i) / n₀;
     (∫ s, T s ∂simpleRandomSampleDesign N n₁) = populationMean (y₁ - y₀) ∧
@@ -463,7 +464,7 @@ private theorem differenceInMeans_aux {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n
           populationVariance (y₁ - y₀) / N := by
   intro T
   have hnN : n₁ ≤ N := by omega
-  have := isProbabilityMeasure_simpleRandomSampleDesign hnN
+  have := is_probability_measure_simple_random_sample_design hnN
   let w := fun i ↦ y₁ i / n₁ + y₀ i / n₀
   let c := (∑ i, y₀ i) / n₀
   have hT : T = fun s ↦ (∑ i ∈ s, w i) - c := by
@@ -471,14 +472,14 @@ private theorem differenceInMeans_aux {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n
     simp only [T, w, c, Finset.sum_add_distrib, ← Finset.sum_div]
     rw [← Finset.sum_compl_add_sum s y₀]
     ring
-  obtain ⟨hm, hv⟩ := simpleRandomSampleDesign_sum_aux (by omega) h₁ hnN w
+  obtain ⟨hm, hv⟩ := simple_random_sample_design_sum_aux (by omega) h₁ hnN w
   have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
   have hn₁ : (n₁ : ℝ) ≠ 0 := by exact_mod_cast h₁.ne'
   have hn₀ : (n₀ : ℝ) ≠ 0 := by exact_mod_cast h₀.ne'
   have hNr : (N : ℝ) = n₁ + n₀ := by exact_mod_cast hn.symm
   have hint : Integrable (fun s : Finset (Fin N) ↦ ∑ i ∈ s, w i)
       (simpleRandomSampleDesign N n₁) :=
-    (memLp_sample _ _ 1).integrable le_rfl
+    (mem_lp_sample _ _ 1).integrable le_rfl
   constructor
   · rw [hT, integral_sub hint (integrable_const c), hm, integral_const, smul_eq_mul,
       probReal_univ, one_mul]
@@ -489,8 +490,8 @@ private theorem differenceInMeans_aux {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n
     ring
   · rw [hT, ProbabilityTheory.variance_sub_const (measurable_of_countable _).aestronglyMeasurable,
       hv]
-    rw [populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega),
-      populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega)]
+    rw [population_variance_eq_sum_sq (by omega), population_variance_eq_sum_sq (by omega),
+      population_variance_eq_sum_sq (by omega), population_variance_eq_sum_sq (by omega)]
     have e1 : (∑ i, w i ^ 2) = (∑ i, y₁ i ^ 2) / n₁ ^ 2 + (∑ i, y₀ i ^ 2) / n₀ ^ 2 +
         2 * (∑ i, y₁ i * y₀ i) / (n₁ * n₀) := by
       have h : ∀ i, w i ^ 2 = y₁ i ^ 2 / n₁ ^ 2 + y₀ i ^ 2 / n₀ ^ 2 +
@@ -521,7 +522,7 @@ private theorem differenceInMeans_aux {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n
     ring
 
 /-- The Neyman allocation bound and its equality case, with a positive sample size. -/
-private theorem neymanAllocation_aux {ι : Type*} [Fintype ι] (a : ι → ℝ) (ha : ∀ i, 0 < a i)
+private theorem neyman_allocation_aux {ι : Type*} [Fintype ι] (a : ι → ℝ) (ha : ∀ i, 0 < a i)
     (n : ℝ) (hn : 0 < n) (x : ι → ℝ) (hx : ∀ i, 0 < x i)
     (hxsum : ∑ i, x i = n) :
     (∑ i, a i) ^ 2 / n ≤ ∑ i, a i ^ 2 / x i ∧
@@ -615,70 +616,70 @@ def horvitzThompsonVarianceEstimator {N : ℕ} (P : Measure (Finset (Fin N))) (y
 
 /-- GAPS 105.72, Horvitz–Thompson unbiasedness: when every unit has positive inclusion
 probability, the Horvitz–Thompson estimator is design-unbiased for the population total. -/
-theorem integral_horvitzThompson {N : ℕ} (P : Measure (Finset (Fin N))) [IsProbabilityMeasure P]
+theorem integral_horvitz_thompson {N : ℕ} (P : Measure (Finset (Fin N))) [IsProbabilityMeasure P]
     (y : Fin N → ℝ) (hp : ∀ i, 0 < inclusionProb P i) :
     (∫ s, horvitzThompson P y s ∂P) = ∑ i, y i :=
-  (horvitzThompson_aux P y hp).1
+  (horvitz_thompson_aux P y hp).1
 
 /-- GAPS 105.72, exact design variance of the Horvitz–Thompson estimator:
 `Var(T) = ∑ᵢ ∑ⱼ (πᵢⱼ - πᵢ πⱼ) yᵢ yⱼ / (πᵢ πⱼ)`. -/
-theorem variance_horvitzThompson {N : ℕ} (P : Measure (Finset (Fin N))) [IsProbabilityMeasure P]
+theorem variance_horvitz_thompson {N : ℕ} (P : Measure (Finset (Fin N))) [IsProbabilityMeasure P]
     (y : Fin N → ℝ) (hp : ∀ i, 0 < inclusionProb P i) :
     Var[horvitzThompson P y; P] = ∑ i, ∑ j,
       (jointInclusionProb P i j - inclusionProb P i * inclusionProb P j) * y i * y j /
         (inclusionProb P i * inclusionProb P j) :=
-  (horvitzThompson_aux P y hp).2
+  (horvitz_thompson_aux P y hp).2
 
 /-- GAPS 105.72, unbiased estimation of the Horvitz–Thompson design variance: when all joint
 inclusion probabilities are positive, `horvitzThompsonVarianceEstimator` is design-unbiased
 for the variance of the Horvitz–Thompson estimator. -/
-theorem integral_horvitzThompsonVarianceEstimator {N : ℕ} (P : Measure (Finset (Fin N)))
+theorem integral_horvitz_thompson_variance_estimator {N : ℕ} (P : Measure (Finset (Fin N)))
     [IsProbabilityMeasure P] (y : Fin N → ℝ) (hp : ∀ i j, 0 < jointInclusionProb P i j) :
     (∫ s, horvitzThompsonVarianceEstimator P y s ∂P) = Var[horvitzThompson P y; P] :=
-  horvitzThompsonVarianceEstimator_aux P y hp
+  horvitz_thompson_variance_estimator_aux P y hp
 
 /-- GAPS 105.72, Sen–Yates–Grundy identity for a fixed-size sampling design: if almost every
 sample has `n` units, then
 `Var(T) = -(1/2) ∑ᵢ ∑ⱼ (πᵢⱼ - πᵢ πⱼ) (yᵢ / πᵢ - yⱼ / πⱼ)²`. -/
-theorem variance_horvitzThompson_eq_sen_yates_grundy {N : ℕ} (P : Measure (Finset (Fin N)))
+theorem variance_horvitz_thompson_eq_sen_yates_grundy {N : ℕ} (P : Measure (Finset (Fin N)))
     [IsProbabilityMeasure P] (n : ℕ) (hn : ∀ᵐ s ∂P, s.card = n) (y : Fin N → ℝ)
     (hp : ∀ i, 0 < inclusionProb P i) :
     Var[horvitzThompson P y; P] = -(1 / 2 : ℝ) * ∑ i, ∑ j,
       (jointInclusionProb P i j - inclusionProb P i * inclusionProb P j) *
         (y i / inclusionProb P i - y j / inclusionProb P j) ^ 2 :=
-  senYatesGrundy_aux P n hn y hp
+  sen_yates_grundy_aux P n hn y hp
 
 /-! ### Simple random sampling -/
 
 /-- The mean of a sample total under simple random sampling of `1 ≤ n ≤ N` units is
 `(n / N) ∑ᵢ wᵢ`. -/
-theorem integral_sum_simpleRandomSampleDesign {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
+theorem integral_sum_simple_random_sample_design {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
     (hnN : n ≤ N) (w : Fin N → ℝ) :
     (∫ s, ∑ i ∈ s, w i ∂simpleRandomSampleDesign N n) = n / N * ∑ i, w i :=
-  (simpleRandomSampleDesign_sum_aux hN hn hnN w).1
+  (simple_random_sample_design_sum_aux hN hn hnN w).1
 
 /-- The design variance of a sample total under simple random sampling of `1 ≤ n ≤ N` units is
 `n (N - n) / N · S²`, with `S²` the population variance. -/
-theorem variance_sum_simpleRandomSampleDesign {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
+theorem variance_sum_simple_random_sample_design {N n : ℕ} (hN : 2 ≤ N) (hn : 1 ≤ n)
     (hnN : n ≤ N) (w : Fin N → ℝ) :
     Var[fun s ↦ ∑ i ∈ s, w i; simpleRandomSampleDesign N n] =
       n * (N - n) / N * populationVariance w :=
-  (simpleRandomSampleDesign_sum_aux hN hn hnN w).2
+  (simple_random_sample_design_sum_aux hN hn hnN w).2
 
 /-- GAPS 105.73, finite-population correction for a simple random sample mean: the sample mean
 is design-unbiased for the population mean. -/
-theorem integral_sum_div_simpleRandomSampleDesign {N : ℕ} (hN : 2 ≤ N) (n : ℕ) (hn : 1 ≤ n)
+theorem integral_sum_div_simple_random_sample_design {N : ℕ} (hN : 2 ≤ N) (n : ℕ) (hn : 1 ≤ n)
     (hnN : n ≤ N) (y : Fin N → ℝ) :
     (∫ s, (∑ i ∈ s, y i) / n ∂simpleRandomSampleDesign N n) = populationMean y :=
-  (simpleRandomSample_mean_aux hN n hn hnN y).1
+  (simple_random_sample_mean_aux hN n hn hnN y).1
 
 /-- GAPS 105.73, finite-population correction for a simple random sample mean: the design
 variance of the sample mean is `(1 - n / N) S² / n`. -/
-theorem variance_sum_div_simpleRandomSampleDesign {N : ℕ} (hN : 2 ≤ N) (n : ℕ) (hn : 1 ≤ n)
+theorem variance_sum_div_simple_random_sample_design {N : ℕ} (hN : 2 ≤ N) (n : ℕ) (hn : 1 ≤ n)
     (hnN : n ≤ N) (y : Fin N → ℝ) :
     Var[fun s ↦ (∑ i ∈ s, y i) / n; simpleRandomSampleDesign N n] =
       (1 - (n : ℝ) / N) * populationVariance y / n :=
-  (simpleRandomSample_mean_aux hN n hn hnN y).2
+  (simple_random_sample_mean_aux hN n hn hnN y).2
 
 /-! ### Neyman allocation -/
 
@@ -700,7 +701,7 @@ theorem sq_sum_div_eq_sum_sq_div_iff {ι : Type*} [Fintype ι] (a : ι → ℝ) 
   rcases isEmpty_or_nonempty ι with hι | hι
   · simp
   · have hn : 0 < n := hxsum ▸ Finset.sum_pos (fun i _ ↦ hx i) Finset.univ_nonempty
-    exact (neymanAllocation_aux a ha n hn x hx hxsum).2
+    exact (neyman_allocation_aux a ha n hn x hx hxsum).2
 
 /-! ### Completely randomized experiments -/
 
@@ -712,20 +713,20 @@ def differenceInMeans {N : ℕ} (n₁ n₀ : ℕ) (y₁ y₀ : Fin N → ℝ) (s
 /-- GAPS 105.46, Neyman's unbiasedness in a completely randomized experiment: when `n₁ > 0`
 units drawn by simple random sampling are treated and the `n₀ > 0` others are controls, the
 difference in means is unbiased for the average treatment effect. -/
-theorem integral_differenceInMeans {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n₀ = N) (h₁ : 0 < n₁)
+theorem integral_difference_in_means {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n₀ = N) (h₁ : 0 < n₁)
     (h₀ : 0 < n₀) (y₁ y₀ : Fin N → ℝ) :
     (∫ s, differenceInMeans n₁ n₀ y₁ y₀ s ∂simpleRandomSampleDesign N n₁) =
       populationMean (y₁ - y₀) :=
-  (differenceInMeans_aux n₁ n₀ hn h₁ h₀ y₁ y₀).1
+  (difference_in_means_aux n₁ n₀ hn h₁ h₀ y₁ y₀).1
 
 /-- GAPS 105.46, Neyman's exact design variance in a completely randomized experiment:
 `Var = S₁² / n₁ + S₀² / n₀ - S²_{y₁ - y₀} / N`, with the population variances of the potential
 outcomes and of the unit-level effects. -/
-theorem variance_differenceInMeans {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n₀ = N) (h₁ : 0 < n₁)
+theorem variance_difference_in_means {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n₀ = N) (h₁ : 0 < n₁)
     (h₀ : 0 < n₀) (y₁ y₀ : Fin N → ℝ) :
     Var[differenceInMeans n₁ n₀ y₁ y₀; simpleRandomSampleDesign N n₁] =
       populationVariance y₁ / n₁ + populationVariance y₀ / n₀ -
         populationVariance (y₁ - y₀) / N :=
-  (differenceInMeans_aux n₁ n₀ hn h₁ h₀ y₁ y₀).2
+  (difference_in_means_aux n₁ n₀ hn h₁ h₀ y₁ y₀).2
 
 end CKSD

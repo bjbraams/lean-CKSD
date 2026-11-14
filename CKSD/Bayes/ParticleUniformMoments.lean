@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.ParticleConditionalMoments
 public import Mathlib.Algebra.Ring.GeomSum
 /-!
@@ -53,7 +54,7 @@ theorem sum_range_pow_sub_le_geometric {ρ : ℝ} (hρ : ρ ∈ Ico 0 1) (n : �
   linarith [pow_nonneg hρ.1 (n+1)]
 /-- Mixing and conditional iid sampling give an error bound uniform in time and test
 functions for the normalized bootstrap approximation. -/
-theorem exists_uniform_particle_lpNorm_bound
+theorem exists_uniform_particle_lp_norm_bound
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     {εG εM : ℝ} (hG : εG ∈ Ioc 0 1) (hM : εM ∈ Ioc 0 1)
@@ -66,7 +67,7 @@ theorem exists_uniform_particle_lpNorm_bound
       (∀ x y, |f x-f y| ≤ 1) →
       lpNorm (fun ω ↦ (∑ i,f (ξ n ω i))/(N:ℝ)-∫ x,f x ∂M.filterLaw n)
         (ENNReal.ofReal p) P ≤ C/Real.sqrt N := by
-  obtain ⟨K,hK,hKbase⟩ := exists_iid_empirical_mean_lpNorm_bound (X := X) p hp
+  obtain ⟨K,hK,hKbase⟩ := exists_iid_empirical_mean_lp_norm_bound (X := X) p hp
   let α := εM*εG
   let ρ := 1-εM^2
   have hα : 0 < α := mul_pos hM.1 hG.1
@@ -89,7 +90,7 @@ theorem exists_uniform_particle_lpNorm_bound
     dsimp [C₀]
     linarith [hosc x x₀]
   choose a g v hgm hvm hgb hvb hrep using fun q : ℕ ↦
-    M.exists_normalizedTransport_test_pair hG hM hpotential htransition q (n-q) hf hC₀ hfb hosc
+    M.exists_normalized_transport_test_pair hG hM hpotential htransition q (n-q) hf hC₀ hfb hosc
   let d : ℕ → ℝ := fun q ↦ ρ^(n-q)
   have hd (q : ℕ) : 0 ≤ d q := pow_nonneg hρ.1 _
   have hGabs (q : ℕ) (x : X) : |g q x| ≤ 1/α := by
@@ -114,12 +115,12 @@ theorem exists_uniform_particle_lpNorm_bound
   have hMvb (q : ℕ) : MemLp (fun ω ↦ |E (v q) q ω|) (ENNReal.ofReal p) P := by
     simpa only [Real.norm_eq_abs] using (hMv q).norm
   have hEglp (q : ℕ) : lpNorm (E (g q) q) (ENNReal.ofReal p) P ≤ K*(1/α)/Real.sqrt N := by
-    exact lpNorm_particle_sampling_error_le P M hN ξ hξ hp (hgm q)
+    exact lp_norm_particle_sampling_error_le P M hN ξ hξ hp (hgm q)
       (by positivity) (hGabs q) (by positivity)
       (fun ν hν ↦ hKbase ν hν hN (hgm q) (by positivity) (hGabs q)) q
   have hEvlp (q : ℕ) : lpNorm (E (v q) q) (ENNReal.ofReal p) P ≤ K*(d q/α)/Real.sqrt N := by
     have hdq := hd q
-    exact lpNorm_particle_sampling_error_le P M hN ξ hξ hp (hvm q)
+    exact lp_norm_particle_sampling_error_le P M hN ξ hξ hp (hvm q)
       (by positivity) (hVabs q) (by positivity)
       (fun ν hν ↦ hKbase ν hν hN (hvm q) (by positivity) (hVabs q)) q
   let G : ℕ → Ω → ℝ := fun q ω ↦ (1/α)*(|E (v q) q ω|+d q*|E (g q) q ω|)
@@ -158,8 +159,8 @@ theorem exists_uniform_particle_lpNorm_bound
         M.normalizedTransport q (n-q) (M.pathPredictionLaw (fun r ↦ ξ r ω) q) f| ≤ G q ω := by
     let μ := empiricalMeasure N (ξ q ω)
     let ν := M.pathPredictionLaw (fun r ↦ ξ r ω) q
-    let _ : IsProbabilityMeasure μ := isProbabilityMeasure_empiricalMeasure hN _
-    let _ : IsProbabilityMeasure ν := M.isProbabilityMeasure_pathPredictionLaw hN _ _
+    let _ : IsProbabilityMeasure μ := is_probability_measure_empirical_measure hN _
+    let _ : IsProbabilityMeasure ν := M.is_probability_measure_path_prediction_law hN _ _
     change |M.normalizedTransport q (n-q) μ f-M.normalizedTransport q (n-q) ν f| ≤ _
     rw [hrep q μ inferInstance,hrep q ν inferInstance]
     simp only [add_sub_add_left_eq_sub]
@@ -168,13 +169,13 @@ theorem exists_uniform_particle_lpNorm_bound
       |(∫ x,v q x ∂μ)/(∫ x,g q x ∂μ)-(∫ x,v q x ∂ν)/(∫ x,g q x ∂ν)| ≤
           (1/α)*(|(∫ x,v q x ∂μ)-(∫ x,v q x ∂ν)|+d q*|(∫ x,g q x ∂μ)-(∫ x,g q x ∂ν)|) := h
       _ = G q ω := by
-        simp only [G,E,μ,ν,integral_empiricalMeasure_vector,FeynmanKacModel.integral_pathPredictionLaw,
+        simp only [G,E,μ,ν,integral_empirical_measure_vector,FeynmanKacModel.integral_path_prediction_law,
           smul_eq_mul,div_eq_mul_inv,mul_comm]
   have hsumMem : MemLp (fun ω ↦ ∑ q ∈ Finset.range (n+1),G q ω) (ENNReal.ofReal p) P :=
     memLp_finsetSum _ (fun q _ ↦ hMG q)
   have hbound (ω : Ω) : ‖(∑ i,f (ξ n ω i))/(N:ℝ)-∫ x,f x ∂M.filterLaw n‖ ≤
       ∑ q ∈ Finset.range (n+1),G q ω := by
-    rw [Real.norm_eq_abs,M.particle_average_sub_filter_eq_sum_normalizedTransport hN (fun r ↦ ξ r ω) n hf hfb]
+    rw [Real.norm_eq_abs,M.particle_average_sub_filter_eq_sum_normalized_transport hN (fun r ↦ ξ r ω) n hf hfb]
     exact (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum (fun q _ ↦ hlocal q ω))
   have hgeo : (∑ q ∈ Finset.range (n+1),d q) ≤ 1/(1-ρ) := sum_range_pow_sub_le_geometric hρ n
   calc

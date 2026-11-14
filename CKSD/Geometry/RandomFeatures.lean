@@ -4,6 +4,7 @@ public import CKSD.Geometry.Kernels
 public import Mathlib.Algebra.Order.Chebyshev
 public import TauCeti.Analysis.Normed.Module.CoveringNumber
 
+
 /-!
 # Random Fourier features
 
@@ -15,9 +16,9 @@ error controls the error of the squared maximum mean discrepancy.
 
 ## Main results
 
-* `CKSD.integral_randomFourierFeatureKernel`: unbiasedness of the random feature kernel.
-* `CKSD.measureReal_abs_randomFourierFeatureKernel_sub_ge_le`: pointwise Hoeffding bound.
-* `CKSD.measure_uniform_randomFourierFeatureKernel_error_le`: the uniform error bound over a
+* `CKSD.integral_random_fourier_feature_kernel`: unbiasedness of the random feature kernel.
+* `CKSD.measure_real_abs_random_fourier_feature_kernel_sub_ge_le`: pointwise Hoeffding bound.
+* `CKSD.measure_uniform_random_fourier_feature_kernel_error_le`: the uniform error bound over a
   compact set (GAPS 108.74).
 * `CKSD.abs_squaredMMD_sub_le_of_uniform_kernel_error`: a uniform kernel error bounds the error
   of the squared MMD (GAPS 108.74).
@@ -39,7 +40,7 @@ namespace CKSD
 attribute [local instance] Classical.propDecidable
 
 /-- Over a uniformly distributed phase on `[0, 2π]`, `cos (c + 2b)` has mean zero. -/
-theorem integral_cos_add_two_mul_uniformPhase (phase : Measure ℝ)
+theorem integral_cos_add_two_mul_uniform_phase (phase : Measure ℝ)
     (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
     (c : ℝ) : ∫ b, Real.cos (c + 2 * b) ∂phase = 0 := by
   rw [hphase, integral_smul_measure, integral_Icc_eq_integral_Ioc,
@@ -59,12 +60,12 @@ theorem integral_cos_add_two_mul_uniformPhase (phase : Measure ℝ)
   simp
 
 /-- The random-feature summand is continuous in the frequency and phase. -/
-theorem continuous_randomFourierFeatureTerm {d : ℕ} (x y : EuclideanSpace ℝ (Fin d)) :
+theorem continuous_random_fourier_feature_term {d : ℕ} (x y : EuclideanSpace ℝ (Fin d)) :
     Continuous (randomFourierFeatureTerm x y) := by
   unfold randomFourierFeatureTerm; fun_prop
 
 /-- The random-feature summand takes values in `[-2, 2]`. -/
-theorem randomFourierFeatureTerm_mem_Icc {d : ℕ} (x y : EuclideanSpace ℝ (Fin d))
+theorem random_fourier_feature_term_mem_icc {d : ℕ} (x y : EuclideanSpace ℝ (Fin d))
     (s : EuclideanSpace ℝ (Fin d) × ℝ) : randomFourierFeatureTerm x y s ∈ Icc (-2 : ℝ) 2 := by
   unfold randomFourierFeatureTerm
   have h1 := Real.abs_cos_le_one (inner ℝ s.1 x + s.2)
@@ -76,7 +77,7 @@ theorem randomFourierFeatureTerm_mem_Icc {d : ℕ} (x y : EuclideanSpace ℝ (Fi
   exact abs_le.mp this
 
 /-- The random-feature summand is unbiased for the translation-invariant kernel. -/
-theorem integral_randomFourierFeatureTerm {d : ℕ}
+theorem integral_random_fourier_feature_term {d : ℕ}
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
     (phase : Measure ℝ) [IsProbabilityMeasure phase]
     (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
@@ -84,10 +85,10 @@ theorem integral_randomFourierFeatureTerm {d : ℕ}
     ∫ s, randomFourierFeatureTerm x y s ∂L.prod phase = ∫ w, Real.cos (inner ℝ w (x - y)) ∂L := by
   have hint : Integrable (randomFourierFeatureTerm x y) (L.prod phase) := by
     refine Integrable.of_bound (C := 2)
-      (continuous_randomFourierFeatureTerm x y).measurable.aestronglyMeasurable
+      (continuous_random_fourier_feature_term x y).measurable.aestronglyMeasurable
       (ae_of_all _ fun s ↦ ?_)
     rw [Real.norm_eq_abs, abs_le]
-    exact randomFourierFeatureTerm_mem_Icc x y s
+    exact random_fourier_feature_term_mem_icc x y s
   rw [integral_prod _ hint]
   refine integral_congr_ae (ae_of_all _ fun w ↦ ?_)
   have hpt : ∀ b, randomFourierFeatureTerm x y (w, b) =
@@ -102,14 +103,14 @@ theorem integral_randomFourierFeatureTerm {d : ℕ}
     ring
   simp_rw [hpt]
   rw [integral_add (integrable_const _) ?_, integral_const, probReal_univ, one_smul,
-    integral_cos_add_two_mul_uniformPhase phase hphase, add_zero]
+    integral_cos_add_two_mul_uniform_phase phase hphase, add_zero]
   exact Integrable.of_bound (C := 1) (by fun_prop) (ae_of_all _ fun b ↦ by
     rw [Real.norm_eq_abs]; exact Real.abs_cos_le_one _)
 
 /-- Hoeffding's inequality for a sample of `D` independent copies of a variable with values in
 `[a, b]`: the sum of the centered copies exceeds `D ε` with probability at most
 `exp (-2 D ε² / (b - a)²)`. -/
-theorem measureReal_pi_sum_sub_integral_ge_le {Y : Type*} [MeasurableSpace Y] (D : ℕ)
+theorem measure_real_pi_sum_sub_integral_ge_le {Y : Type*} [MeasurableSpace Y] (D : ℕ)
     (μ : Measure Y) [IsProbabilityMeasure μ] {g : Y → ℝ} (hg : Measurable g) {a b : ℝ}
     (hb : ∀ s, g s ∈ Icc a b) {ε : ℝ} (hε : 0 ≤ ε) :
     (Measure.pi fun _ : Fin D ↦ μ).real
@@ -148,7 +149,7 @@ theorem measureReal_pi_sum_sub_integral_ge_le {Y : Type*} [MeasurableSpace Y] (D
 /-- GAPS 108.74: random Fourier features are unbiased. The random Fourier feature kernel of an
 independent sample of frequencies `w_j ∼ L` and uniform phases `b_j ∈ [0, 2π]` has mean
 `k(x, y) = ∫ cos ⟨w, x - y⟩ dL(w)`. -/
-theorem integral_randomFourierFeatureKernel {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
+theorem integral_random_fourier_feature_kernel {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
     (phase : Measure ℝ) [IsProbabilityMeasure phase]
     (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
@@ -156,18 +157,18 @@ theorem integral_randomFourierFeatureKernel {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
     ∫ sample, randomFourierFeatureKernel sample x y ∂(Measure.pi fun _ : Fin D ↦ L.prod phase) =
       ∫ w, Real.cos (inner ℝ w (x - y)) ∂L := by
   have hmeas : Measurable (randomFourierFeatureTerm x y) :=
-    (continuous_randomFourierFeatureTerm x y).measurable
+    (continuous_random_fourier_feature_term x y).measurable
   have hcoord : ∀ j : Fin D, ∫ s, randomFourierFeatureTerm x y (s j)
       ∂(Measure.pi fun _ : Fin D ↦ L.prod phase) = ∫ w, Real.cos (inner ℝ w (x - y)) ∂L :=
     fun j ↦ by
-      rw [← integral_randomFourierFeatureTerm L phase hphase x y]
+      rw [← integral_random_fourier_feature_term L phase hphase x y]
       exact integral_comp_eval (μ := fun _ : Fin D ↦ L.prod phase) hmeas.aestronglyMeasurable
   have hintj : ∀ j : Fin D, Integrable (fun s : Fin D → _ ↦ randomFourierFeatureTerm x y (s j))
       (Measure.pi fun _ : Fin D ↦ L.prod phase) :=
     fun j ↦ Integrable.of_bound (C := 2)
       (hmeas.comp (measurable_pi_apply j)).aestronglyMeasurable
       (ae_of_all _ fun s ↦ by
-        rw [Real.norm_eq_abs, abs_le]; exact randomFourierFeatureTerm_mem_Icc x y (s j))
+        rw [Real.norm_eq_abs, abs_le]; exact random_fourier_feature_term_mem_icc x y (s j))
   have hDpos : (D : ℝ) ≠ 0 := by exact_mod_cast (show 0 < D by omega).ne'
   simp only [randomFourierFeatureKernel]
   rw [integral_const_mul, integral_finsetSum _ fun j _ ↦ hintj j]
@@ -177,8 +178,8 @@ theorem integral_randomFourierFeatureKernel {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
 /-- GAPS 108.74: the pointwise Hoeffding bound for random Fourier features. For an independent
 sample of `D ≥ 1` frequencies `w_j ∼ L` and uniform phases, the random-feature kernel deviates from
 `k(x, y) = ∫ cos ⟨w, x - y⟩ dL(w)` by at least `ε > 0` with probability at most
-`2 exp(-D ε² / 8)`. Its unbiasedness is `CKSD.integral_randomFourierFeatureKernel`. -/
-theorem measureReal_abs_randomFourierFeatureKernel_sub_ge_le {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
+`2 exp(-D ε² / 8)`. Its unbiasedness is `CKSD.integral_random_fourier_feature_kernel`. -/
+theorem measure_real_abs_random_fourier_feature_kernel_sub_ge_le {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
     (phase : Measure ℝ) [IsProbabilityMeasure phase]
     (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
@@ -191,9 +192,9 @@ theorem measureReal_abs_randomFourierFeatureKernel_sub_ge_le {d : ℕ} (D : ℕ)
   set k := ∫ w, Real.cos (inner ℝ w (x - y)) ∂L
   have hDpos : (0 : ℝ) < D := by exact_mod_cast hD
   have hmeas : Measurable (randomFourierFeatureTerm x y) :=
-    (continuous_randomFourierFeatureTerm x y).measurable
+    (continuous_random_fourier_feature_term x y).measurable
   have hk : ∫ s, randomFourierFeatureTerm x y s ∂L.prod phase = k :=
-    integral_randomFourierFeatureTerm L phase hphase x y
+    integral_random_fourier_feature_term L phase hphase x y
   have hcenter : ∀ s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ,
       randomFourierFeatureKernel s x y - k =
         (D : ℝ)⁻¹ * ∑ j, (randomFourierFeatureTerm x y (s j) - k) := by
@@ -204,11 +205,11 @@ theorem measureReal_abs_randomFourierFeatureKernel_sub_ge_le {d : ℕ} (D : ℕ)
   have hexp : Real.exp (-2 * (D : ℝ) * epsilon ^ 2 / (2 - -2) ^ 2) =
       Real.exp (-(D : ℝ) * epsilon ^ 2 / 8) := by
     congr 1; ring
-  have hup := measureReal_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas
-    (randomFourierFeatureTerm_mem_Icc x y) he.le
-  have hlo := measureReal_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas.neg (a := -2) (b := 2)
+  have hup := measure_real_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas
+    (random_fourier_feature_term_mem_icc x y) he.le
+  have hlo := measure_real_pi_sum_sub_integral_ge_le D (L.prod phase) hmeas.neg (a := -2) (b := 2)
     (fun s ↦ by
-      have := randomFourierFeatureTerm_mem_Icc x y s
+      have := random_fourier_feature_term_mem_icc x y s
       exact ⟨by simp only [Pi.neg_apply]; linarith [this.2],
         by simp only [Pi.neg_apply]; linarith [this.1]⟩) he.le
   rw [hk, hexp] at hup
@@ -244,7 +245,7 @@ theorem measureReal_abs_randomFourierFeatureKernel_sub_ge_le {d : ℕ} (D : ℕ)
 
 /-- The random-feature summand is Lipschitz in the pair of points: at the frequency-phase pair
 `(w, b)` it moves by at most `2 ‖w‖ (‖x - x'‖ + ‖y - y'‖)`. -/
-theorem abs_randomFourierFeatureTerm_sub_le {d : ℕ} (x y x' y' : EuclideanSpace ℝ (Fin d))
+theorem abs_random_fourier_feature_term_sub_le {d : ℕ} (x y x' y' : EuclideanSpace ℝ (Fin d))
     (s : EuclideanSpace ℝ (Fin d) × ℝ) :
     |randomFourierFeatureTerm x y s - randomFourierFeatureTerm x' y' s| ≤
       2 * ‖s.1‖ * (‖x - x'‖ + ‖y - y'‖) := by
@@ -326,7 +327,7 @@ theorem abs_integral_cos_inner_sub_le {d : ℕ} (L : Measure (EuclideanSpace ℝ
 
 /-- The random-feature error `D⁻¹ ∑ⱼ 2 cos(⟨wⱼ, x⟩ + bⱼ) cos(⟨wⱼ, y⟩ + bⱼ) - k(x, y)` is
 Lipschitz in the pair of points with the random constant `2 D⁻¹ ∑ⱼ ‖wⱼ‖ + σ`. -/
-theorem abs_randomFourierFeatureError_sub_le {d D : ℕ} (L : Measure (EuclideanSpace ℝ (Fin d)))
+theorem abs_random_fourier_feature_error_sub_le {d D : ℕ} (L : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure L] (hL2 : MemLp id 2 L)
     (hσ : 0 < Real.sqrt (∫ w, ‖w‖ ^ 2 ∂L))
     (sample : Fin D → EuclideanSpace ℝ (Fin d) × ℝ) (x y x' y' : EuclideanSpace ℝ (Fin d)) :
@@ -344,7 +345,7 @@ theorem abs_randomFourierFeatureError_sub_le {d D : ℕ} (L : Measure (Euclidean
         ≤ (D : ℝ)⁻¹ * ∑ j, 2 * ‖(sample j).1‖ * (‖x - x'‖ + ‖y - y'‖) := by
           gcongr
           exact (Finset.abs_sum_le_sum_abs _ _).trans
-            (Finset.sum_le_sum fun j _ ↦ abs_randomFourierFeatureTerm_sub_le x y x' y' _)
+            (Finset.sum_le_sum fun j _ ↦ abs_random_fourier_feature_term_sub_le x y x' y' _)
       _ = _ := by rw [← Finset.sum_mul, ← Finset.mul_sum]; ring
   calc _ = |(randomFourierFeatureKernel sample x y - randomFourierFeatureKernel sample x' y') -
         ((∫ w, Real.cos (inner ℝ w (x - y)) ∂L) - ∫ w, Real.cos (inner ℝ w (x' - y')) ∂L)| := by
@@ -432,7 +433,7 @@ private theorem exists_finset_cover_card_sq_le {d : ℕ} {M : Set (EuclideanSpac
 second moment `D⁻¹ ∑ⱼ ‖wⱼ‖²` of the frequencies, the probability that the random Lipschitz
 constant `2 D⁻¹ ∑ⱼ ‖wⱼ‖ + σ` times `r` reaches `ε / 4` is at most `80 u`, when
 `ε² / (16 r²) = σ² / (8 u)` and `u < 1 / 98`. -/
-private theorem measureReal_lipschitz_bad_le {d D : ℕ} (hD : 1 ≤ D)
+private theorem measure_real_lipschitz_bad_le {d D : ℕ} (hD : 1 ≤ D)
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L] (hL2 : MemLp id 2 L)
     (phase : Measure ℝ) [IsProbabilityMeasure phase] {epsilon r u : ℝ} (he : 0 < epsilon)
     (hr : 0 < r) (hu0 : 0 < u) (hu : u < 1 / 98) (hσ : 0 < Real.sqrt (∫ w, ‖w‖ ^ 2 ∂L))
@@ -532,7 +533,7 @@ private theorem le_abs_of_le_abs_of_abs_sub_le {e₁ e₂ t ε : ℝ} (h₁ : ε
 frequency law `L` with finite second moment `σ² = E ‖w‖²`, and `ε ≤ σ diam M`, the probability that
 the random-feature kernel of `D` features deviates from `k` by at least `ε` somewhere on `M × M` is
 at most `98 (σ diam M / ε)² exp(-D ε² / (32 (d + 1)))`. -/
-theorem measure_uniform_randomFourierFeatureKernel_error_le {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
+theorem measure_uniform_random_fourier_feature_kernel_error_le {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L] (hL2 : MemLp id 2 L)
     (phase : Measure ℝ) [IsProbabilityMeasure phase]
     (hphase : phase = (ENNReal.ofReal (2 * Real.pi))⁻¹ • volume.restrict (Icc 0 (2 * Real.pi)))
@@ -599,13 +600,13 @@ theorem measure_uniform_randomFourierFeatureKernel_error_le {d : ℕ} (D : ℕ) 
     ring
   set Bad := {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ | epsilon / 4 ≤ (2 * S s + sigma) * r}
   have hBad : P.real Bad ≤ 80 * u :=
-    measureReal_lipschitz_bad_le hD L hL2 phase he hr hu0 hu hσ hq
+    measure_real_lipschitz_bad_le hD L hL2 phase he hr hu0 hu hσ hq
   -- the events at the pairs of centres of the net
   set Ctr : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) →
       Set (Fin D → EuclideanSpace ℝ (Fin d) × ℝ) := fun c ↦
     {s | 3 * epsilon / 4 ≤ |randomFourierFeatureKernel s c.1 c.2 - k c.1 c.2|}
   have hCtr : ∀ c, P.real (Ctr c) ≤ 2 * Real.exp (-(D : ℝ) * (3 * epsilon / 4) ^ 2 / 8) :=
-    fun c ↦ measureReal_abs_randomFourierFeatureKernel_sub_ge_le D hD L phase hphase c.1 c.2 _
+    fun c ↦ measure_real_abs_random_fourier_feature_kernel_sub_ge_le D hD L phase hphase c.1 c.2 _
       (by positivity)
   have hsub : {sample | ∃ x ∈ M, ∃ y ∈ M,
       epsilon ≤ |randomFourierFeatureKernel sample x y - k x y|} ⊆
@@ -619,7 +620,7 @@ theorem measure_uniform_randomFourierFeatureKernel_error_le {d : ℕ} (D : ℕ) 
     simp only [mem_iUnion]
     refine ⟨(a, b), Finset.mem_product.mpr ⟨ha, hb⟩, ?_⟩
     simp only [Bad, mem_ofPred_eq, not_le] at hs
-    have hlip := abs_randomFourierFeatureError_sub_le L hL2 hσ s x y a b
+    have hlip := abs_random_fourier_feature_error_sub_le L hL2 hσ s x y a b
     have hδ : ‖x - a‖ + ‖y - b‖ ≤ r := by
       have := add_le_add hxa hyb
       rwa [add_halves] at this
@@ -648,7 +649,7 @@ theorem measure_uniform_randomFourierFeatureKernel_error_le {d : ℕ} (D : ℕ) 
 
 /-- A function continuous on `M × M`, for a compact `M`, is integrable for every finite measure
 concentrated on `M × M`. No second countability of the ambient space is needed. -/
-theorem integrable_of_continuousOn_compact_prod
+theorem integrable_of_continuous_on_compact_prod
     {X : Type*} [MetricSpace X] [MeasurableSpace X] [BorelSpace X]
     {M : Set X} (hM : IsCompact M) (ρ : Measure (X × X)) [IsFiniteMeasure ρ]
     (hρ : ρ (M ×ˢ M)ᶜ = 0) {g : X × X → ℝ} (hg : ContinuousOn g (M ×ˢ M)) :
@@ -696,8 +697,8 @@ theorem abs_squaredMMD_sub_le_of_uniform_kernel_error
     intro R S _ _ hR hS
     have hρ := hconc R S hR hS
     rw [← integral_sub
-      (integrable_of_continuousOn_compact_prod (g := fun z : X × X ↦ k z.1 z.2) hM _ hρ hk')
-      (integrable_of_continuousOn_compact_prod (g := fun z : X × X ↦ l z.1 z.2) hM _ hρ hl')]
+      (integrable_of_continuous_on_compact_prod (g := fun z : X × X ↦ k z.1 z.2) hM _ hρ hk')
+      (integrable_of_continuous_on_compact_prod (g := fun z : X × X ↦ l z.1 z.2) hM _ hρ hl')]
     have hb := norm_integral_le_of_norm_le_const (μ := R.prod S)
       (f := fun z : X × X ↦ k z.1 z.2 - l z.1 z.2) (C := epsilon)
       (Filter.Eventually.mono (p := fun z ↦ z ∈ M ×ˢ M) (mem_ae_iff.mpr hρ)

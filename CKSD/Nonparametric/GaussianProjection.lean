@@ -6,6 +6,7 @@ public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
 public import TauCeti.Probability.Distributions.Gaussian.Affine
 public import Statlib.ForMathlib.MeasureTheory.Integral.Pi
 
+
 /-!
 # Projections of isotropic Gaussian vectors
 
@@ -17,16 +18,16 @@ orthogonal-projection fits.
 
 ## Main results
 
-* `CKSD.multivariateGaussian_smul_one_eq_map_pi`: `N(m, σ² I)` is the product of its coordinate
+* `CKSD.multivariate_gaussian_smul_one_eq_map_pi`: `N(m, σ² I)` is the product of its coordinate
   laws, from TauCeti's `TauCeti.Probability.map_affine_multivariateGaussian` and
   `TauCeti.Probability.multivariateGaussian_one_eq_map_pi`.
-* `CKSD.lintegral_exp_sq_div_gaussianReal`: `E exp(Z² / (4σ²)) = √2` for `Z ~ N(0, σ²)`.
-* `CKSD.lintegral_exp_sum_sq_inner_multivariateGaussian`: for an orthonormal family `v`,
+* `CKSD.lintegral_exp_sq_div_gaussian_real`: `E exp(Z² / (4σ²)) = √2` for `Z ~ N(0, σ²)`.
+* `CKSD.lintegral_exp_sum_sq_inner_multivariate_gaussian`: for an orthonormal family `v`,
   `E exp(∑ᵢ ⟪vᵢ, ε⟫² / (4σ²)) = √2 ^ |ι|`, using Statlib's Tonelli theorem for products.
-* `CKSD.lintegral_exp_norm_starProjection_sq_le`: the same bound for `‖Π_K ε‖²` plus the square
+* `CKSD.lintegral_exp_norm_star_projection_sq_le`: the same bound for `‖Π_K ε‖²` plus the square
   of one coordinate orthogonal to `K`.
-* `CKSD.norm_sub_starProjection_add_sq`, `CKSD.norm_starProjection_add_sub_sq`,
-  `CKSD.norm_starProjection_sq_eq_sum`: residual, risk, and Parseval identities for projections.
+* `CKSD.norm_sub_star_projection_add_sq`, `CKSD.norm_star_projection_add_sub_sq`,
+  `CKSD.norm_star_projection_sq_eq_sum`: residual, risk, and Parseval identities for projections.
 
 Source: GAPS 103.35.
 -/
@@ -44,7 +45,7 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 /-- The isotropic Gaussian `N(m, σ² I)` on `ℝ^ι` is the product of its coordinate laws
 `N(m_i, σ²)`, transported to Euclidean space. -/
-theorem multivariateGaussian_smul_one_eq_map_pi (m : EuclideanSpace ℝ ι) (σ : ℝ) :
+theorem multivariate_gaussian_smul_one_eq_map_pi (m : EuclideanSpace ℝ ι) (σ : ℝ) :
     multivariateGaussian m (σ ^ 2 • (1 : Matrix ι ι ℝ)) =
       (Measure.pi fun i ↦ gaussianReal (m i) (Real.toNNReal (σ ^ 2))).map (WithLp.toLp 2) := by
   have haff := TauCeti.Probability.map_affine_multivariateGaussian (0 : EuclideanSpace ℝ ι)
@@ -75,7 +76,7 @@ theorem multivariateGaussian_smul_one_eq_map_pi (m : EuclideanSpace ℝ ι) (σ 
 
 /-- The exponential moment `E exp(Z² / 4) = √2` of a centered Gaussian `Z` of variance `σ²`,
 written with `Z² / (4 σ²)`. -/
-theorem lintegral_exp_sq_div_gaussianReal {σ : ℝ} (hσ : σ ≠ 0) :
+theorem lintegral_exp_sq_div_gaussian_real {σ : ℝ} (hσ : σ ≠ 0) :
     ∫⁻ w, ENNReal.ofReal (Real.exp (w ^ 2 / (4 * σ ^ 2))) ∂gaussianReal 0 (Real.toNNReal (σ ^ 2)) =
       ENNReal.ofReal (Real.sqrt 2) := by
   have hv : Real.toNNReal (σ ^ 2) ≠ 0 := by simp [hσ]
@@ -104,7 +105,7 @@ theorem lintegral_exp_sq_div_gaussianReal {σ : ℝ} (hσ : σ ≠ 0) :
 
 /-- For an orthonormal family `v` and `ε ~ N(0, σ² I)`, the coordinates `⟪v i, ε⟫` are
 independent `N(0, σ²)`, so `E exp(∑ᵢ ⟪v i, ε⟫² / (4σ²)) = √2 ^ |ι|`. -/
-theorem lintegral_exp_sum_sq_inner_multivariateGaussian {n : ℕ} (v : ι → EuclideanSpace ℝ (Fin n))
+theorem lintegral_exp_sum_sq_inner_multivariate_gaussian {n : ℕ} (v : ι → EuclideanSpace ℝ (Fin n))
     (hv : Orthonormal ℝ v) {σ : ℝ} (hσ : σ ≠ 0) :
     ∫⁻ ε, ENNReal.ofReal (Real.exp ((∑ i, ⟪v i, ε⟫ ^ 2) / (4 * σ ^ 2)))
         ∂multivariateGaussian 0 (σ ^ 2 • (1 : Matrix (Fin n) (Fin n) ℝ)) =
@@ -139,7 +140,7 @@ theorem lintegral_exp_sum_sq_inner_multivariateGaussian {n : ℕ} (v : ι → Eu
   rw [hlhs]
   change ∫⁻ ε, F (L.toEuclideanLin ε)
     ∂(multivariateGaussian 0 (σ ^ 2 • (1 : Matrix (Fin n) (Fin n) ℝ))) = _
-  rw [← lintegral_map hFm (by fun_prop), hmap, multivariateGaussian_smul_one_eq_map_pi,
+  rw [← lintegral_map hFm (by fun_prop), hmap, multivariate_gaussian_smul_one_eq_map_pi,
     lintegral_map hFm (by fun_prop)]
   have hprod : ∀ x : ι → ℝ, F (WithLp.toLp 2 x) =
       ∏ i, ENNReal.ofReal (Real.exp (x i ^ 2 / (4 * σ ^ 2))) := by
@@ -149,7 +150,7 @@ theorem lintegral_exp_sum_sq_inner_multivariateGaussian {n : ℕ} (v : ι → Eu
   simp_rw [hprod]
   rw [lintegral_fintype_prod_eq_prod
     (f := fun _ (w : ℝ) ↦ ENNReal.ofReal (Real.exp (w ^ 2 / (4 * σ ^ 2)))) fun i ↦ by fun_prop]
-  simp only [PiLp.zero_apply, lintegral_exp_sq_div_gaussianReal hσ, Finset.prod_const,
+  simp only [PiLp.zero_apply, lintegral_exp_sq_div_gaussian_real hσ, Finset.prod_const,
     Finset.card_univ]
 
 section Projection
@@ -159,7 +160,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] (K : Submo
 
 /-- Residual expansion for an observation `f + ε`:
 `‖(f + ε) - Π(f + ε)‖² = ‖f - Πf‖² + 2⟪f - Πf, ε⟫ + ‖ε‖² - ‖Πε‖²`. -/
-theorem norm_sub_starProjection_add_sq (f ε : E) :
+theorem norm_sub_star_projection_add_sq (f ε : E) :
     ‖(f + ε) - K.starProjection (f + ε)‖ ^ 2 =
       ‖f - K.starProjection f‖ ^ 2 + 2 * ⟪f - K.starProjection f, ε⟫ + ‖ε‖ ^ 2 -
         ‖K.starProjection ε‖ ^ 2 := by
@@ -178,7 +179,7 @@ theorem norm_sub_starProjection_add_sq (f ε : E) :
   linarith
 
 /-- Risk expansion for an observation `f + ε`: `‖Π(f + ε) - f‖² = ‖f - Πf‖² + ‖Πε‖²`. -/
-theorem norm_starProjection_add_sub_sq (f ε : E) :
+theorem norm_star_projection_add_sub_sq (f ε : E) :
     ‖K.starProjection (f + ε) - f‖ ^ 2 =
       ‖f - K.starProjection f‖ ^ 2 + ‖K.starProjection ε‖ ^ 2 := by
   have h1 : K.starProjection (f + ε) - f = K.starProjection ε - (f - K.starProjection f) := by
@@ -189,7 +190,7 @@ theorem norm_starProjection_add_sub_sq (f ε : E) :
   rw [h1, norm_sub_sq_real, h2]; ring
 
 /-- Parseval for a projection: `‖Πε‖² = ∑ₖ ⟪bₖ, ε⟫²` for an orthonormal basis `b` of `K`. -/
-theorem norm_starProjection_sq_eq_sum {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ K)
+theorem norm_star_projection_sq_eq_sum {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ K)
     (ε : E) : ‖K.starProjection ε‖ ^ 2 = ∑ k, ⟪(b k : E), ε⟫ ^ 2 := by
   rw [← Submodule.coe_orthogonalProjectionOnto_apply, Submodule.norm_coe,
     ← b.sum_sq_inner_right]
@@ -202,7 +203,7 @@ end Projection
 
 /-- Exponential moment of a projected isotropic Gaussian vector together with one orthogonal
 direction: for `g ⊥ K`, `E exp((‖Π_K ε‖² + ⟪g, ε⟫² / ‖g‖²) / (4σ²)) ≤ √2 ^ (dim K + 1)`. -/
-theorem lintegral_exp_norm_starProjection_sq_le {n : ℕ}
+theorem lintegral_exp_norm_star_projection_sq_le {n : ℕ}
     (K : Submodule ℝ (EuclideanSpace ℝ (Fin n))) (g : EuclideanSpace ℝ (Fin n)) (hg : g ∈ Kᗮ)
     {σ : ℝ} (hσ : σ ≠ 0) :
     ∫⁻ ε, ENNReal.ofReal (Real.exp ((‖K.starProjection ε‖ ^ 2 + ⟪g, ε⟫ ^ 2 / ‖g‖ ^ 2) /
@@ -216,9 +217,9 @@ theorem lintegral_exp_norm_starProjection_sq_le {n : ℕ}
     exact ENNReal.ofReal_le_ofReal (Real.one_le_sqrt.mpr (by norm_num))
   by_cases hg0 : g = 0
   · subst hg0
-    have := lintegral_exp_sum_sq_inner_multivariateGaussian e heo hσ
+    have := lintegral_exp_sum_sq_inner_multivariate_gaussian e heo hσ
     simp only [inner_zero_left, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
-      zero_div, add_zero, norm_starProjection_sq_eq_sum K b]
+      zero_div, add_zero, norm_star_projection_sq_eq_sum K b]
     rw [this, Fintype.card_fin, pow_succ]
     exact le_mul_of_one_le_right' hsqrt
   set u := ‖g‖⁻¹ • g with hu
@@ -238,12 +239,12 @@ theorem lintegral_exp_norm_starProjection_sq_le {n : ℕ}
     · simpa [hv] using hue j
     · simpa [hv, real_inner_comm] using hue i
     · simpa [hv] using (orthonormal_iff_ite.mp heo) i j
-  have := lintegral_exp_sum_sq_inner_multivariateGaussian v hvo hσ
+  have := lintegral_exp_sum_sq_inner_multivariate_gaussian v hvo hσ
   rw [Fintype.card_option, Fintype.card_fin] at this
   refine le_of_eq (Eq.trans ?_ this)
   refine lintegral_congr fun ε ↦ ?_
   congr 3
-  rw [Fintype.sum_option, norm_starProjection_sq_eq_sum K b, add_comm]
+  rw [Fintype.sum_option, norm_star_projection_sq_eq_sum K b, add_comm]
   simp only [hv, Option.elim, hu, real_inner_smul_left, he]
   congr 1
   field_simp

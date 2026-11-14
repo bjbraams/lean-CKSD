@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.ParticleEmpiricalMoments
 public import CKSD.Bayes.ParticleTransport
 /-!
@@ -53,7 +54,7 @@ theorem measurable_particle_sampling_error
     Measurable (fun ω ↦ (∑ i,f (ξ n ω i))/(N:ℝ)-M.pathPredMean (fun q ↦ ξ q ω) n f) := by
   have hpath : Measurable (fun ω (q : ℕ) ↦ ξ q ω) := measurable_pi_iff.2 hξ
   exact ((Finset.measurable_fun_sum _ fun i _ ↦ hf.comp ((measurable_pi_apply i).comp (hξ n))).div_const _).sub
-    ((M.measurable_pathPredMean n hf hfb).comp hpath)
+    ((M.measurable_path_pred_mean n hf hfb).comp hpath)
 
 /-- Local sampling errors are bounded independently of the particle path. -/
 theorem abs_particle_sampling_error_le
@@ -61,14 +62,14 @@ theorem abs_particle_sampling_error_le
     (x : ℕ → Fin N → X) (n : ℕ) {f : X → ℝ} (hf : Measurable f)
     {B : ℝ} (hfb : ∀ y, |f y| ≤ B) :
     |(∑ i,f (x n i))/(N:ℝ)-M.pathPredMean x n f| ≤ 2*B := by
-  have := M.isProbabilityMeasure_pathPredictionLaw hN x n
+  have := M.is_probability_measure_path_prediction_law hN x n
   have hp : |M.pathPredMean x n f| ≤ B := by
-    rw [← M.integral_pathPredictionLaw x n f]
+    rw [← M.integral_path_prediction_law x n f]
     exact abs_integral_le_of_abs_le hf hfb
   exact (abs_sub _ _).trans (by linarith [abs_finite_average_le hN (x n) hfb])
 
 /-- A probability-uniform iid `Lᵖ` bound passes to every conditional bootstrap sampling step. -/
-theorem lpNorm_particle_sampling_error_le
+theorem lp_norm_particle_sampling_error_le
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     {N : ℕ} (hN : 0 < N) (ξ : ℕ → Ω → Fin N → X) (hξ : IsBootstrapParticleSystem P M N ξ)
@@ -90,7 +91,7 @@ theorem lpNorm_particle_sampling_error_le
     have h := Real.rpow_le_rpow (lpNorm_nonneg (f := fun z : Fin N → X ↦
       (∑ i,f (z i))/(N:ℝ)-∫ x,f x ∂ν) (p := ENNReal.ofReal p) (μ := Measure.pi (fun _ : Fin N ↦ ν)))
       (hlocal ν hν) hp0.le
-    rw [lpNorm_ofReal_eq_integral_abs_rpow _ hp0 hm.aestronglyMeasurable,
+    rw [lp_norm_of_real_eq_integral_abs_rpow _ hp0 hm.aestronglyMeasurable,
       ← Real.rpow_mul (integral_nonneg fun _ ↦ Real.rpow_nonneg (abs_nonneg _) _),
       one_div,inv_mul_cancel₀ hp0.ne',Real.rpow_one] at h
     exact h
@@ -105,7 +106,7 @@ theorem lpNorm_particle_sampling_error_le
       exact hpow M.initial inferInstance
     | succ n =>
       let c : (Fin N → X) → ℝ := fun x ↦ ∫ y,f y ∂M.particlePredictionLaw n x
-      have hcm : Measurable c := M.measurable_integral_particlePredictionLaw n hf hfb
+      have hcm : Measurable c := M.measurable_integral_particle_prediction_law n hf hfb
       let H : (Fin (n+1) → Fin N → X) × (Fin N → X) → ℝ :=
         fun z ↦ |(∑ i,f (z.2 i))/(N:ℝ)-c (z.1 (Fin.last n))|^p
       have hHm : Measurable H := by
@@ -116,7 +117,7 @@ theorem lpNorm_particle_sampling_error_le
         exact (continuous_abs.measurable.comp
           (hs.sub (hcm.comp ((measurable_pi_apply _).comp measurable_fst)))).pow_const p
       have hHb (z : (Fin (n+1) → Fin N → X) × (Fin N → X)) : |H z| ≤ (2*B)^p := by
-        have := M.isProbabilityMeasure_particlePredictionLaw hN n (z.1 (Fin.last n))
+        have := M.is_probability_measure_particle_prediction_law hN n (z.1 (Fin.last n))
         have hcp : |c (z.1 (Fin.last n))| ≤ B := abs_integral_le_of_abs_le hf hfb
         dsimp only [H]
         rw [abs_of_nonneg (Real.rpow_nonneg (abs_nonneg _) _)]
@@ -132,9 +133,9 @@ theorem lpNorm_particle_sampling_error_le
             (ae_of_all _ fun ω ↦ integral_nonneg fun z ↦ Real.rpow_nonneg (abs_nonneg _) _)
             (integrable_const _)
           exact ae_of_all _ fun ω ↦ hpow (M.particlePredictionLaw n (ξ n ω))
-            (M.isProbabilityMeasure_particlePredictionLaw hN n (ξ n ω))
+            (M.is_probability_measure_particle_prediction_law hN n (ξ n ω))
         _ = L^p := by simp
-  rw [lpNorm_ofReal_eq_integral_abs_rpow P hp0
+  rw [lp_norm_of_real_eq_integral_abs_rpow P hp0
     (measurable_particle_sampling_error M ξ hξ.1 n hf hfb).aestronglyMeasurable]
   have h := Real.rpow_le_rpow (integral_nonneg fun _ ↦ Real.rpow_nonneg (abs_nonneg _) _) hmoment
     (by positivity : 0 ≤ 1/p)

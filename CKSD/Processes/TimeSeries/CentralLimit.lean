@@ -7,18 +7,19 @@ public import Mathlib.Probability.ConditionalExpectation
 public import Mathlib.Probability.CramerWold
 public import Mathlib.Probability.Independence.Integration
 
+
 /-!
 # The martingale central limit theorem for triangular arrays
 
 ## Main results
 
-* `CKSD.tendstoInDistribution_martingale_array_sum` (GAPS 106.1): the martingale central limit
+* `CKSD.tendsto_in_distribution_martingale_array_sum` (GAPS 106.1): the martingale central limit
   theorem for triangular arrays of square-integrable martingale differences under convergence
   of the conditional variances and the conditional Lindeberg condition.
 
 The proof is the characteristic-function argument of B. M. Brown (1971): each row is truncated
 at the first index where the summed conditional variances exceed `v + 1`, the bounded case
-`CKSD.tendstoInDistribution_sum_of_sum_condVar_le` of `CKSD.Asymptotics.MartingaleCLT.Basic`
+`CKSD.tendsto_in_distribution_sum_of_sum_cond_var_le` of `CKSD.Asymptotics.MartingaleCLT.Basic`
 applies to the truncated rows, and Slutsky's lemma removes the truncation, which only acts on
 events of vanishing probability. The application to sample autocorrelations is in
 `CKSD.Processes.TimeSeries.SampleAutocorrelation`.
@@ -75,7 +76,7 @@ private theorem sum_range_succ_le_of_sum_le {σ : ℕ → ℝ} (hσ : ∀ i, 0 �
 (`X n j` is `F n (j + 1)`-measurable with `𝔼[X n j | F n j] = 0`). If
 `∑_j 𝔼[X_{n,j}² | F n j] → v` and `∑_j 𝔼[X_{n,j}² 1{|X_{n,j}| > ε} | F n j] → 0` in probability
 for every `ε > 0`, then `∑_j X_{n,j} ⇒ N(0, v)`. The limit `v` is automatically nonnegative. -/
-theorem tendstoInDistribution_martingale_array_sum {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_martingale_array_sum {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (F : ℕ → Filtration ℕ (inferInstance : MeasurableSpace Ω))
     (X : ℕ → ℕ → Ω → ℝ) (k : ℕ → ℕ)
@@ -96,7 +97,7 @@ theorem tendstoInDistribution_martingale_array_sum {Ω : Type*} [MeasurableSpace
     condExp_nonneg (ae_of_all _ fun ω ↦ sq_nonneg _)
   have hσ0' : ∀ n, ∀ᵐ ω ∂μ, ∀ j, 0 ≤ σ2 n j ω := fun n ↦ ae_all_iff.2 (hσ0 n)
   have hσm : ∀ n j, StronglyMeasurable[F n j] (σ2 n j) := fun n j ↦ stronglyMeasurable_condExp
-  have hv0 : 0 ≤ v := nonneg_of_tendstoInMeasure_of_nonneg (fun n ↦ by
+  have hv0 : 0 ≤ v := nonneg_of_tendsto_in_measure_of_nonneg (fun n ↦ by
     filter_upwards [hσ0' n] with ω hω
     exact Finset.sum_nonneg fun j _ ↦ hω j) hvar
   set B : ℝ := v + 1 with hB
@@ -115,7 +116,7 @@ theorem tendstoInDistribution_martingale_array_sum {Ω : Type*} [MeasurableSpace
   set X' : ℕ → ℕ → Ω → ℝ := fun n j ω ↦ ind n j ω * X n j ω with hX'
   set σ2' : ℕ → ℕ → Ω → ℝ := fun n j ω ↦ ind n j ω * σ2 n j ω with hσ2'
   set ℓ' : ℝ → ℕ → ℕ → Ω → ℝ := fun ε n j ω ↦ ind n j ω * ℓ ε n j ω with hℓ'
-  have htr := fun n j ↦ mul_zero_or_one_martingaleDifference ((F n).mono (Nat.le_succ j))
+  have htr := fun n j ↦ mul_zero_or_one_martingale_difference ((F n).mono (Nat.le_succ j))
     ((F n).le (j + 1)) (hindm n j) (hind01 n j) (ha n j).stronglyMeasurable (h2 n j) (h0 n j)
   have hX'm : ∀ n j, StronglyMeasurable[F n (j + 1)] (X' n j) := fun n j ↦ (htr n j).1
   have h2' : ∀ n j, MemLp (X' n j) 2 μ := fun n j ↦ (htr n j).2.1
@@ -149,14 +150,14 @@ theorem tendstoInDistribution_martingale_array_sum {Ω : Type*} [MeasurableSpace
     have hc := sum_range_succ_le_of_sum_le hω hVB hj
     simp only [hind, hc, ↓reduceIte]
   have hSS' : TendstoInMeasure μ (fun n ω ↦ S n ω - S' n ω) atTop (fun _ ↦ 0) := by
-    refine tendstoInMeasure_of_ae_eq_of_measure_tendsto_zero (Z := fun _ _ ↦ 0) E hEt
-      (fun n ↦ ?_) (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
+    refine tendsto_in_measure_of_ae_eq_of_measure_tendsto_zero (Z := fun _ _ ↦ 0) E hEt
+      (fun n ↦ ?_) (tendsto_in_measure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
     filter_upwards [hoff n] with ω hω hωE
     rw [sub_eq_zero]
     exact Finset.sum_congr rfl fun j hj ↦ by
       simp only [hX', hω hωE j (Finset.mem_range.mp hj), one_mul]
   have hV'v : TendstoInMeasure μ V' atTop (fun _ ↦ v) := by
-    refine tendstoInMeasure_of_ae_eq_of_measure_tendsto_zero E hEt (fun n ↦ ?_) hvar
+    refine tendsto_in_measure_of_ae_eq_of_measure_tendsto_zero E hEt (fun n ↦ ?_) hvar
     filter_upwards [hoff n] with ω hω hωE
     exact Finset.sum_congr rfl fun j hj ↦ by
       simp only [hσ2', hω hωE j (Finset.mem_range.mp hj), one_mul]
@@ -186,7 +187,7 @@ theorem tendstoInDistribution_martingale_array_sum {Ω : Type*} [MeasurableSpace
       Finset.measurable_fun_sum _ fun j _ ↦
         ((stronglyMeasurable_condExp (μ := μ) (m := F n j)
           (f := fun ω ↦ if ε < |X n j ω| then X n j ω ^ 2 else 0)).mono ((F n).le j)).measurable
-    refine tendsto_integral_of_le_of_tendstoInMeasure (B := B) hYi hLm (fun n ↦ ?_)
+    refine tendsto_integral_of_le_of_tendsto_in_measure (B := B) hYi hLm (fun n ↦ ?_)
       (fun n ↦ ?_) (fun n ↦ ?_) (hlin ε hε)
     · filter_upwards [ae_all_iff.2 (hℓ0 ε n)] with ω hω
       exact Finset.sum_nonneg fun j _ ↦ by
@@ -203,9 +204,9 @@ theorem tendstoInDistribution_martingale_array_sum {Ω : Type*} [MeasurableSpace
       rcases hind01 n j ω with h | h
       · simp only [hℓ', h, zero_mul]; exact hω j
       · simp [hℓ', h]
-  have hS' := tendstoInDistribution_sum_of_sum_condVar_le μ F X' σ2' ℓ' k hX'm h2' h0' hσ'm hσ'
+  have hS' := tendsto_in_distribution_sum_of_sum_cond_var_le μ F X' σ2' ℓ' k hX'm h2' h0' hσ'm hσ'
     hℓ'eq hσ0'' hv0 hB' hV'v hEL
-  exact tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ S' S
+  exact tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ S' S
     (fun n ↦ Finset.measurable_fun_sum _ fun j _ ↦ ((hX'm n j).mono ((F n).le _)).measurable)
     (fun n ↦ Finset.measurable_fun_sum _ fun j _ ↦ (ha n j).mono ((F n).le _) le_rfl) hS' hSS'
 

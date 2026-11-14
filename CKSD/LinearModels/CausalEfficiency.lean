@@ -3,6 +3,7 @@ module
 public import CKSD.LinearModels.Basic
 public import Mathlib.Probability.Independence.Conditional
 
+
 /-!
 # Propensity scores and the efficient influence function of the average treatment effect
 
@@ -25,13 +26,13 @@ treatment effect is
 
 ## Main results
 
-* `CKSD.condIndepFun_propensityScore`, `CKSD.condIndepFun_of_propensityScore`: the propensity
+* `CKSD.cond_indep_fun_propensity_score`, `CKSD.cond_indep_fun_of_propensity_score`: the propensity
   score is a balancing score, and ignorability given `X` implies ignorability given `e(X)`
   (Rosenbaum–Rubin, GAPS 105.48).
-* `CKSD.integral_finiteStrataTreatmentInfluence`, `CKSD.variance_finiteStrataTreatmentInfluence`:
+* `CKSD.integral_finite_strata_treatment_influence`, `CKSD.variance_finite_strata_treatment_influence`:
   the influence function has mean zero and variance equal to the semiparametric efficiency
   bound (GAPS 105.56).
-* `CKSD.hasDerivAt_finiteStrataTreatmentEffect_score_tilt`: the influence function represents
+* `CKSD.has_deriv_at_finite_strata_treatment_effect_score_tilt`: the influence function represents
   the derivative of the functional along bounded score tilts of the observed law (pathwise
   differentiability, GAPS 105.56).
 
@@ -69,13 +70,13 @@ def propensityScore {Ω S : Type*} [MeasurableSpace Ω] [MeasurableSpace S]
   P[(fun ω ↦ if A ω then (1 : ℝ) else 0) | (inferInstance : MeasurableSpace S).comap X]
 
 /-- The propensity score of a measurable covariate is measurable. -/
-theorem measurable_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [MeasurableSpace S]
+theorem measurable_propensity_score {Ω S : Type*} [MeasurableSpace Ω] [MeasurableSpace S]
     (P : Measure Ω) (A : Ω → Bool) {X : Ω → S} (hX : Measurable X) :
     Measurable (propensityScore P A X) :=
   (stronglyMeasurable_condExp.measurable).mono hX.comap_le le_rfl
 
 /-- Tower-and-pull-out step behind the balancing property of the propensity score. -/
-private theorem condExp_mul_ae_eq_of_le {Ω : Type*} {G F mΩ : MeasurableSpace Ω}
+private theorem cond_exp_mul_ae_eq_of_le {Ω : Type*} {G F mΩ : MeasurableSpace Ω}
     (hGF : G ≤ F) (hF : F ≤ mΩ) (μ : Measure[mΩ] Ω) [IsFiniteMeasure μ]
     {U V : Ω → ℝ}
     (hUF : AEStronglyMeasurable[G] (μ[U | F]) μ)
@@ -96,7 +97,7 @@ private theorem condExp_mul_ae_eq_of_le {Ω : Type*} {G F mΩ : MeasurableSpace 
 
 /-- The conditional probability given the covariates of any event of the treatment is a function
 of the propensity score. -/
-private theorem aestronglyMeasurable_condExp_indicator_treatment {Ω S : Type*}
+private theorem aestrongly_measurable_cond_exp_indicator_treatment {Ω S : Type*}
     [MeasurableSpace Ω] [MeasurableSpace S] (P : Measure Ω) [IsProbabilityMeasure P]
     {A : Ω → Bool} (hA : Measurable A) {X : Ω → S} (hX : Measurable X) (s : Set Bool) :
     AEStronglyMeasurable[(inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X)]
@@ -136,11 +137,11 @@ private theorem indicator_inter_one {Ω : Type*} (s t : Set Ω) :
 
 /-- GAPS 105.48: the propensity score is a balancing score, `A ⫫ X | e(X)`, in the standard
 Borel setting. -/
-theorem condIndepFun_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [StandardBorelSpace Ω]
+theorem cond_indep_fun_propensity_score {Ω S : Type*} [MeasurableSpace Ω] [StandardBorelSpace Ω]
     [MeasurableSpace S] (P : Measure Ω) [IsProbabilityMeasure P]
     (A : Ω → Bool) (hA : Measurable A) (X : Ω → S) (hX : Measurable X) :
     CondIndepFun ((inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X))
-      (measurable_propensityScore P A hX).comap_le A X P := by
+      (measurable_propensity_score P A hX).comap_le A X P := by
   have hGF : (inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X) ≤
       (inferInstance : MeasurableSpace S).comap X :=
     (stronglyMeasurable_condExp (μ := P)).measurable.comap_le
@@ -159,27 +160,27 @@ theorem condIndepFun_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [Standa
     exact (integrable_const 1).indicator ((hA hs).inter (hX ht))
   change P[(A ⁻¹' s ∩ X ⁻¹' t).indicator fun _ ↦ (1 : ℝ) | _] =ᵐ[P] _
   rw [indicator_inter_one]
-  refine condExp_mul_ae_eq_of_le hGF hX.comap_le P
-    (aestronglyMeasurable_condExp_indicator_treatment P hA hX s) ?_
+  refine cond_exp_mul_ae_eq_of_le hGF hX.comap_le P
+    (aestrongly_measurable_cond_exp_indicator_treatment P hA hX s) ?_
   rw [condExp_of_stronglyMeasurable hX.comap_le hVF hV]
   exact condExp_mul_of_stronglyMeasurable_right hVF hUV hU
 
 /-- GAPS 105.48: ignorability descends from the covariates to their propensity score: if
 `Y ⫫ A | X`, then `Y ⫫ A | e(X)`. -/
-theorem condIndepFun_of_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [StandardBorelSpace Ω]
+theorem cond_indep_fun_of_propensity_score {Ω S : Type*} [MeasurableSpace Ω] [StandardBorelSpace Ω]
     [MeasurableSpace S] (P : Measure Ω) [IsProbabilityMeasure P]
     (A : Ω → Bool) (hA : Measurable A) (X : Ω → S) (hX : Measurable X)
     (Y : Ω → ℝ) (hY : Measurable Y)
     (hind : CondIndepFun ((inferInstance : MeasurableSpace S).comap X) hX.comap_le Y A P) :
     CondIndepFun ((inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X))
-      (measurable_propensityScore P A hX).comap_le Y A P := by
+      (measurable_propensity_score P A hX).comap_le Y A P := by
   have hGF : (inferInstance : MeasurableSpace ℝ).comap (propensityScore P A X) ≤
       (inferInstance : MeasurableSpace S).comap X :=
     (stronglyMeasurable_condExp (μ := P)).measurable.comap_le
   rw [condIndepFun_iff_condExp_inter_preimage_eq_mul hY hA] at hind ⊢
   intro t s ht hs
-  have h := condExp_mul_ae_eq_of_le hGF hX.comap_le P
-    (aestronglyMeasurable_condExp_indicator_treatment P hA hX s)
+  have h := cond_exp_mul_ae_eq_of_le hGF hX.comap_le P
+    (aestrongly_measurable_cond_exp_indicator_treatment P hA hX s)
     (V := (Y ⁻¹' t).indicator fun _ ↦ (1 : ℝ)) (by
       have h' := hind t s ht hs
       change P[(Y ⁻¹' t ∩ A ⁻¹' s).indicator fun _ ↦ (1 : ℝ) | _] =ᵐ[P] _ at h'
@@ -232,12 +233,12 @@ variable {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [MeasurableSpace ι]
   [MeasurableSingletonClass ι]
 
 /-- Treatment strata are measurable. -/
-theorem measurableSet_treatmentStratum {X : Ω → ι} {A : Ω → Bool} (hX : Measurable X)
+theorem measurable_set_treatment_stratum {X : Ω → ι} {A : Ω → Bool} (hX : Measurable X)
     (hA : Measurable A) (x : ι) (a : Bool) : MeasurableSet (treatmentStratum X A x a) :=
   (hX (measurableSet_singleton x)).inter (hA (measurableSet_singleton a))
 
 /-- An integral splits over the finite partition into treatment strata. -/
-theorem integral_eq_sum_treatmentStratum [Fintype ι] (P : Measure Ω) {X : Ω → ι} {A : Ω → Bool}
+theorem integral_eq_sum_treatment_stratum [Fintype ι] (P : Measure Ω) {X : Ω → ι} {A : Ω → Bool}
     (hX : Measurable X) (hA : Measurable A) (h : Ω → ℝ)
     (hh : ∀ x a, IntegrableOn h (treatmentStratum X A x a) P) :
     (∫ ω, h ω ∂P) = ∑ x, ∑ a, ∫ ω in treatmentStratum X A x a, h ω ∂P := by
@@ -253,7 +254,7 @@ theorem integral_eq_sum_treatmentStratum [Fintype ι] (P : Measure Ω) {X : Ω �
       refine Finset.sum_eq_zero fun a _ ↦ ?_
       rw [indicator_of_notMem]; exact fun h ↦ hx h.1.symm
     · simp
-  have hmeas := measurableSet_treatmentStratum hX hA
+  have hmeas := measurable_set_treatment_stratum hX hA
   rw [show (∫ ω, h ω ∂P) = ∫ ω, ∑ x, ∑ a, (treatmentStratum X A x a).indicator h ω ∂P from
     integral_congr_ae (Filter.Eventually.of_forall fun ω ↦ congrFun hpt ω)]
   rw [integral_finsetSum _ fun x _ ↦ integrable_finsetSum _ fun a _ ↦
@@ -264,7 +265,7 @@ theorem integral_eq_sum_treatmentStratum [Fintype ι] (P : Measure Ω) {X : Ω �
 
 /-- Within one stratum, an affine function of the centred outcome integrates to its constant
 part, and its square to the constant part plus the scaled within-stratum variance. -/
-private theorem setIntegral_affine_centred (P : Measure Ω) [IsFiniteMeasure P] {S : Set Ω}
+private theorem set_integral_affine_centred (P : Measure Ω) [IsFiniteMeasure P] {S : Set Ω}
     {Y : Ω → ℝ} (hY : MemLp Y 2 P) (hpos : 0 < P.real S)
     (c d : ℝ) :
     let m := (∫ ω in S, Y ω ∂P) / P.real S;
@@ -299,21 +300,21 @@ private theorem setIntegral_affine_centred (P : Measure Ω) [IsFiniteMeasure P] 
     ring
 
 /-- Integral of a function of the stratum labels. -/
-theorem integral_comp_treatmentStratum [Fintype ι] (P : Measure Ω) [IsFiniteMeasure P] {X : Ω → ι}
+theorem integral_comp_treatment_stratum [Fintype ι] (P : Measure Ω) [IsFiniteMeasure P] {X : Ω → ι}
     {A : Ω → Bool} (hX : Measurable X) (hA : Measurable A) (F : ι → Bool → ℝ) :
     (∫ ω, F (X ω) (A ω) ∂P) = ∑ x, ∑ a, F x a * P.real (treatmentStratum X A x a) := by
-  have hmeas := measurableSet_treatmentStratum hX hA
+  have hmeas := measurable_set_treatment_stratum hX hA
   have hEq : ∀ x a, EqOn (fun ω ↦ F (X ω) (A ω)) (fun _ ↦ F x a) (treatmentStratum X A x a) :=
     fun x a ω hω ↦ by
       obtain ⟨h₁, h₂⟩ := hω
       simp only [h₁, h₂]
-  rw [integral_eq_sum_treatmentStratum P hX hA _ fun x a ↦
+  rw [integral_eq_sum_treatment_stratum P hX hA _ fun x a ↦
     (integrableOn_const (measure_ne_top _ _)).congr_fun (hEq x a).symm (hmeas x a)]
   refine Finset.sum_congr rfl fun x _ ↦ Finset.sum_congr rfl fun a _ ↦ ?_
   rw [setIntegral_congr_fun (hmeas x a) (hEq x a), setIntegral_const, smul_eq_mul, mul_comm]
 
 /-- The covariate stratum splits into its two treatment strata. -/
-theorem measureReal_covariateStratum_eq_add (P : Measure Ω) [IsFiniteMeasure P]
+theorem measure_real_covariate_stratum_eq_add (P : Measure Ω) [IsFiniteMeasure P]
     {X : Ω → ι} {A : Ω → Bool} (hX : Measurable X) (hA : Measurable A) (x : ι) :
     P.real {ω | X ω = x} =
       P.real (treatmentStratum X A x true) + P.real (treatmentStratum X A x false) := by
@@ -321,7 +322,7 @@ theorem measureReal_covariateStratum_eq_add (P : Measure Ω) [IsFiniteMeasure P]
     ext ω
     simp only [treatmentStratum, mem_union, mem_ofPred_eq]
     cases A ω <;> simp
-  rw [hU, measureReal_union _ (measurableSet_treatmentStratum hX hA x false)]
+  rw [hU, measureReal_union _ (measurable_set_treatment_stratum hX hA x false)]
   rw [Set.disjoint_left]
   rintro ω ⟨-, h₁⟩ ⟨-, h₂⟩
   rw [h₁] at h₂
@@ -330,9 +331,9 @@ theorem measureReal_covariateStratum_eq_add (P : Measure Ω) [IsFiniteMeasure P]
 end StrataIntegrals
 
 /-- Mean zero and the variance formula for the treatment-effect influence function in finite
-strata (both statements together; see `integral_finiteStrataTreatmentInfluence` and
-`variance_finiteStrataTreatmentInfluence`). -/
-private theorem integral_and_variance_finiteStrataTreatmentInfluence
+strata (both statements together; see `integral_finite_strata_treatment_influence` and
+`variance_finite_strata_treatment_influence`). -/
+private theorem integral_and_variance_finite_strata_treatment_influence
     {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
     [MeasurableSingletonClass ι]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : Ω → ι) (A : Ω → Bool)
@@ -352,11 +353,11 @@ private theorem integral_and_variance_finiteStrataTreatmentInfluence
   set e := stratumPropensity P X A with hedef
   set ate := finiteStrataTreatmentEffect P X A Y with hatedef
   set φ := finiteStrataTreatmentInfluence P X A Y with hφdef
-  have hmeas := measurableSet_treatmentStratum hX hA
+  have hmeas := measurable_set_treatment_stratum hX hA
   have hmem : ∀ x a ω, ω ∈ S x a → X ω = x ∧ A ω = a := fun x a ω h ↦ h
   -- stratum sizes
   have hq : ∀ x, P.real {ω | X ω = x} = p x true + p x false :=
-    measureReal_covariateStratum_eq_add P hX hA
+    measure_real_covariate_stratum_eq_add P hX hA
   have he : ∀ x, e x = p x true / (p x true + p x false) := fun x ↦ by
     rw [← hq]; rfl
   have he' : ∀ x, 1 - e x = p x false / (p x true + p x false) := fun x ↦ by
@@ -367,7 +368,7 @@ private theorem integral_and_variance_finiteStrataTreatmentInfluence
     ring
   have hlabel : ∀ F : ι → Bool → ℝ,
       (∫ ω, F (X ω) (A ω) ∂P) = ∑ x, ∑ a, F x a * p x a :=
-    integral_comp_treatmentStratum P hX hA
+    integral_comp_treatment_stratum P hX hA
   have hsum : ∑ x, ∑ a, p x a = 1 := by
     have := hlabel (fun _ _ ↦ 1)
     simp only [integral_const, probReal_univ, smul_eq_mul, one_mul] at this
@@ -394,19 +395,19 @@ private theorem integral_and_variance_finiteStrataTreatmentInfluence
   have hφint : ∀ x a, (∫ ω in S x a, φ ω ∂P) = (m x true - m x false - ate) * p x a := by
     intro x a
     rw [setIntegral_congr_fun (hmeas x a) (heq x a)]
-    exact (setIntegral_affine_centred P hY (hpos x a) (c x) (d x a)).1
+    exact (set_integral_affine_centred P hY (hpos x a) (c x) (d x a)).1
   have hφint2 : ∀ x a, (∫ ω in S x a, φ ω ^ 2 ∂P) =
       c x ^ 2 * p x a + d x a ^ 2 * (v x a * p x a) := by
     intro x a
     rw [setIntegral_congr_fun (hmeas x a)
       (g := fun ω ↦ (c x + d x a * (Y ω - m x a)) ^ 2) (fun ω hω ↦ by rw [heq x a hω])]
-    refine Eq.trans (setIntegral_affine_centred P hY (hpos x a) (c x) (d x a)).2 ?_
+    refine Eq.trans (set_integral_affine_centred P hY (hpos x a) (c x) (d x a)).2 ?_
     congr 2
     show _ = (∫ ω in S x a, (Y ω - m x a) ^ 2 ∂P) / P.real (S x a) * P.real (S x a)
     rw [div_mul_cancel₀ _ (hpos x a).ne']
     rfl
   have hmean : (∫ ω, φ ω ∂P) = 0 := by
-    rw [integral_eq_sum_treatmentStratum P hX hA _ fun x a ↦
+    rw [integral_eq_sum_treatment_stratum P hX hA _ fun x a ↦
       (hYS x a).congr_fun (heq x a).symm (hmeas x a)]
     rw [Finset.sum_congr rfl fun x _ ↦ Finset.sum_congr rfl fun a _ ↦ hφint x a]
     have : (∑ x, ∑ a, (m x true - m x false - ate) * p x a) =
@@ -427,7 +428,7 @@ private theorem integral_and_variance_finiteStrataTreatmentInfluence
     rw [variance_eq_integral hφm]
     rw [hmean]
     simp only [sub_zero]
-    rw [integral_eq_sum_treatmentStratum P hX hA _ fun x a ↦
+    rw [integral_eq_sum_treatment_stratum P hX hA _ fun x a ↦
       (hYS2 x a).congr_fun (fun ω hω ↦ by simp only [heq x a hω]) (hmeas x a)]
     exact Finset.sum_congr rfl fun x _ ↦ Finset.sum_congr rfl fun a _ ↦ hφint2 x a
   have hvarg : Var[fun ω ↦ m (X ω) true - m (X ω) false; P] =
@@ -452,21 +453,21 @@ private theorem integral_and_variance_finiteStrataTreatmentInfluence
 
 /-- GAPS 105.56: the treatment-effect influence function in finite strata has mean zero.
 Positive joint stratum masses express overlap explicitly. -/
-theorem integral_finiteStrataTreatmentInfluence
+theorem integral_finite_strata_treatment_influence
     {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
     [MeasurableSingletonClass ι]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : Ω → ι) (A : Ω → Bool)
     (hX : Measurable X) (hA : Measurable A) (Y : Ω → ℝ) (hY : MemLp Y 2 P)
     (hpos : ∀ x a, 0 < P.real (treatmentStratum X A x a)) :
     (∫ ω, finiteStrataTreatmentInfluence P X A Y ω ∂P) = 0 :=
-  (integral_and_variance_finiteStrataTreatmentInfluence P X A hX hA Y hY hpos).1
+  (integral_and_variance_finite_strata_treatment_influence P X A hX hA Y hY hpos).1
 
 /-- GAPS 105.56: the variance of the treatment-effect influence function in finite strata (the
 semiparametric efficiency bound) is
 `Var(m₁(X) - m₀(X)) + E[σ₁²(X) / e(X) + σ₀²(X) / (1 - e(X))]`, with `mₐ`, `σₐ²` the stratum
 outcome means and variances and `e` the stratum propensity. Positive joint stratum masses
 express overlap explicitly. -/
-theorem variance_finiteStrataTreatmentInfluence
+theorem variance_finite_strata_treatment_influence
     {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
     [MeasurableSingletonClass ι]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : Ω → ι) (A : Ω → Bool)
@@ -478,7 +479,7 @@ theorem variance_finiteStrataTreatmentInfluence
         ∫ ω, stratumOutcomeVariance P X A Y (X ω) true / stratumPropensity P X A (X ω) +
           stratumOutcomeVariance P X A Y (X ω) false /
             (1 - stratumPropensity P X A (X ω)) ∂P :=
-  (integral_and_variance_finiteStrataTreatmentInfluence P X A hX hA Y hY hpos).2
+  (integral_and_variance_finite_strata_treatment_influence P X A hX hA Y hY hpos).2
 
 section ScoreTilt
 
@@ -487,7 +488,7 @@ open Filter
 variable {Ω : Type*} [MeasurableSpace Ω]
 
 /-- Set integrals against a nonnegative linear score tilt of a measure. -/
-theorem setIntegral_withDensity_score_tilt (P : Measure Ω) {s : Ω → ℝ} (hs : Measurable s)
+theorem set_integral_with_density_score_tilt (P : Measure Ω) {s : Ω → ℝ} (hs : Measurable s)
     {t : ℝ} (ht : ∀ ω, 0 ≤ 1 + t * s ω) {B : Set Ω} (hB : MeasurableSet B) (g : Ω → ℝ) :
     (∫ ω in B, g ω ∂P.withDensity (fun ω ↦ ENNReal.ofReal (1 + t * s ω))) =
       ∫ ω in B, (1 + t * s ω) * g ω ∂P := by
@@ -497,7 +498,7 @@ theorem setIntegral_withDensity_score_tilt (P : Measure Ω) {s : Ω → ℝ} (hs
   simp only [smul_eq_mul, ENNReal.toReal_ofReal (ht ω)]
 
 /-- On each treatment stratum the influence function is affine in the outcome. -/
-theorem finiteStrataTreatmentInfluence_eqOn {ι : Type*} (P : Measure Ω) (X : Ω → ι)
+theorem finite_strata_treatment_influence_eq_on {ι : Type*} (P : Measure Ω) (X : Ω → ι)
     (A : Ω → Bool) (Y : Ω → ℝ) (x : ι) (a : Bool) :
     EqOn (finiteStrataTreatmentInfluence P X A Y)
       (fun ω ↦ (stratumOutcomeMean P X A Y x true - stratumOutcomeMean P X A Y x false -
@@ -521,7 +522,7 @@ open scoped Topology
 mean-zero score tilts of the observed law: for a bounded measurable score `s` with `E[s] = 0`
 and the tilted laws `dP_t = (1 + t s) dP`, the functional `t ↦ τ(P_t)` has derivative
 `E[φ s]` at `t = 0`. The semiparametric convolution bound is not included. -/
-theorem hasDerivAt_finiteStrataTreatmentEffect_score_tilt
+theorem has_deriv_at_finite_strata_treatment_effect_score_tilt
     {Ω : Type*} [MeasurableSpace Ω] {ι : Type*} [Fintype ι] [MeasurableSpace ι]
     [MeasurableSingletonClass ι]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : Ω → ι) (A : Ω → Bool)
@@ -533,7 +534,7 @@ theorem hasDerivAt_finiteStrataTreatmentEffect_score_tilt
       (P.withDensity (fun ω ↦ ENNReal.ofReal (1 + t * s ω))) X A Y)
       (∫ ω, finiteStrataTreatmentInfluence P X A Y ω * s ω ∂P) 0 := by
   obtain ⟨C, hC⟩ := hbound
-  have hmeas := measurableSet_treatmentStratum hX hA
+  have hmeas := measurable_set_treatment_stratum hX hA
   have hYi : Integrable Y P := hY
   have hsb : ∀ᵐ ω ∂P, ‖s ω‖ ≤ C := Eventually.of_forall fun ω ↦ by
     rw [Real.norm_eq_abs]; exact hC ω
@@ -569,7 +570,7 @@ theorem hasDerivAt_finiteStrataTreatmentEffect_score_tilt
     have : IsFiniteMeasure Pt := isFiniteMeasure_withDensity_ofReal hdens.hasFiniteIntegral
     have hD : ∀ x a, Pt.real (S x a) = D x a t := by
       intro x a
-      have h := setIntegral_withDensity_score_tilt P hs htpos (hmeas x a) (fun _ ↦ (1 : ℝ))
+      have h := set_integral_with_density_score_tilt P hs htpos (hmeas x a) (fun _ ↦ (1 : ℝ))
       rw [setIntegral_const, smul_eq_mul, mul_one] at h
       rw [h]
       simp only [mul_one]
@@ -577,12 +578,12 @@ theorem hasDerivAt_finiteStrataTreatmentEffect_score_tilt
         setIntegral_const, integral_const_mul, smul_eq_mul, mul_one]
     have hN : ∀ x a, (∫ ω in S x a, Y ω ∂Pt) = N x a t := by
       intro x a
-      rw [setIntegral_withDensity_score_tilt P hs htpos (hmeas x a)]
+      rw [set_integral_with_density_score_tilt P hs htpos (hmeas x a)]
       have : (fun ω ↦ (1 + t * s ω) * Y ω) = fun ω ↦ Y ω + t * (Y ω * s ω) := by
         funext ω; ring
       rw [this, integral_add hYi.integrableOn (hYs.integrableOn.const_mul t), integral_const_mul]
     unfold finiteStrataTreatmentEffect
-    rw [integral_comp_treatmentStratum Pt hX hA
+    rw [integral_comp_treatment_stratum Pt hX hA
       (fun x _ ↦ stratumOutcomeMean Pt X A Y x true - stratumOutcomeMean Pt X A Y x false)]
     simp only [stratumOutcomeMean, ← hSdef, hN, hD]
     rfl
@@ -611,12 +612,12 @@ theorem hasDerivAt_finiteStrataTreatmentEffect_score_tilt
   let d : ι → Bool → ℝ := fun x a ↦ if a then 1 / e x else -1 / (1 - e x)
   have hm : ∀ x a, m x a = n x a / p x a := fun x a ↦ rfl
   have he : ∀ x, e x = p x true / (p x true + p x false) := fun x ↦ by
-    rw [hedef, stratumPropensity, measureReal_covariateStratum_eq_add P hX hA]
+    rw [hedef, stratumPropensity, measure_real_covariate_stratum_eq_add P hX hA]
   have hpiece : ∀ x a, EqOn (fun ω ↦ finiteStrataTreatmentInfluence P X A Y ω * s ω)
       (fun ω ↦ (m x true - m x false - ate - d x a * m x a) * s ω + d x a * (Y ω * s ω))
       (S x a) := by
     intro x a ω hω
-    simp only [finiteStrataTreatmentInfluence_eqOn P X A Y x a hω, d]
+    simp only [finite_strata_treatment_influence_eq_on P X A Y x a hω, d]
     ring
   have hpieceI : ∀ x a, IntegrableOn
       (fun ω ↦ (m x true - m x false - ate - d x a * m x a) * s ω + d x a * (Y ω * s ω))
@@ -625,14 +626,14 @@ theorem hasDerivAt_finiteStrataTreatmentEffect_score_tilt
   have hφs : (∫ ω, finiteStrataTreatmentInfluence P X A Y ω * s ω ∂P) =
       ∑ x, ∑ a, ((m x true - m x false - ate - d x a * m x a) * p' x a +
         d x a * n' x a) := by
-    rw [integral_eq_sum_treatmentStratum P hX hA _ fun x a ↦
+    rw [integral_eq_sum_treatment_stratum P hX hA _ fun x a ↦
       (hpieceI x a).congr_fun (hpiece x a).symm (hmeas x a)]
     refine Finset.sum_congr rfl fun x _ ↦ Finset.sum_congr rfl fun a _ ↦ ?_
     rw [setIntegral_congr_fun (hmeas x a) (hpiece x a),
       integral_add (hsi.integrableOn.const_mul _) (hYs.integrableOn.const_mul _),
       integral_const_mul, integral_const_mul]
   have hsum' : ∑ x, ∑ a, p' x a = 0 := by
-    rw [← hmean, integral_eq_sum_treatmentStratum P hX hA _ fun x a ↦ hsi.integrableOn]
+    rw [← hmean, integral_eq_sum_treatment_stratum P hX hA _ fun x a ↦ hsi.integrableOn]
   have hsplit : (∑ x, ∑ a, ((m x true - m x false - ate - d x a * m x a) * p' x a +
         d x a * n' x a)) =
       (∑ x, ∑ a, ((m x true - m x false - d x a * m x a) * p' x a + d x a * n' x a)) -

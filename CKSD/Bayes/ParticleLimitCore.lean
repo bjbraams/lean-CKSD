@@ -2,6 +2,7 @@ module
 
 public import CKSD.Bayes.ParticleCentralLimit
 
+
 /-!
 # Fixed-time Feynman–Kac semigroups and particle fluctuations
 
@@ -19,15 +20,15 @@ matching the normalization of the filtering laws of `CKSD.FeynmanKacModel`.
 
 ## Main results
 
-* `CKSD.FeynmanKacModel.integral_backwardOperator`: the semigroup identity
+* `CKSD.FeynmanKacModel.integral_backward_operator`: the semigroup identity
   `γₚ(Q_{p,p+m} f) = γ_{p+m}(f)`.
-* `CKSD.sqrt_mul_particleLikelihood_mul_average_sub`: the telescoping decomposition of the
+* `CKSD.sqrt_mul_particle_likelihood_mul_average_sub`: the telescoping decomposition of the
   particle error into local errors.
-* `CKSD.tendstoInDistribution_particle_average`,
-  `CKSD.tendstoInDistribution_particle_likelihood`: fixed-time central limit theorems.
+* `CKSD.tendsto_in_distribution_particle_average`,
+  `CKSD.tendsto_in_distribution_particle_likelihood`: fixed-time central limit theorems.
 
 The central limit theorems follow from the telescoping decomposition, the central limit theorem
-`CKSD.tendstoInDistribution_sum_localError` for the summed local errors, and Slutsky's theorem.
+`CKSD.tendsto_in_distribution_sum_local_error` for the summed local errors, and Slutsky's theorem.
 
 Source: GAPS 104.59.
 -/
@@ -67,7 +68,7 @@ def FeynmanKacModel.particleLikelihoodAsymptoticVariance {X : Type*} [Measurable
       (∫ x, M.backwardOperator p (n - p) (fun _ ↦ 1) x ∂M.filterLaw p) ^ 2 - 1)
 
 /-- With unit potentials, the backwards operator preserves the constant one function. -/
-theorem FeynmanKacModel.backwardOperator_one_of_potential_eq_one
+theorem FeynmanKacModel.backward_operator_one_of_potential_eq_one
     {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X)
     (hpotential : ∀ p x, M.potential p x = 1) (p m : ℕ) :
     M.backwardOperator p m (fun _ ↦ 1) = fun _ ↦ 1 := by
@@ -79,18 +80,18 @@ theorem FeynmanKacModel.backwardOperator_one_of_potential_eq_one
     simp [FeynmanKacModel.backwardOperator, ih, hpotential]
 
 /-- At time zero the likelihood estimate is deterministic and its asymptotic variance is zero. -/
-@[simp] theorem FeynmanKacModel.particleLikelihoodAsymptoticVariance_zero
+@[simp] theorem FeynmanKacModel.particle_likelihood_asymptotic_variance_zero
     {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X) :
     M.particleLikelihoodAsymptoticVariance 0 = 0 := by
   simp [FeynmanKacModel.particleLikelihoodAsymptoticVariance, FeynmanKacModel.backwardOperator]
 
 /-- Unit observation potentials give zero likelihood-estimation asymptotic variance. -/
-theorem FeynmanKacModel.particleLikelihoodAsymptoticVariance_eq_zero_of_potential_eq_one
+theorem FeynmanKacModel.particle_likelihood_asymptotic_variance_eq_zero_of_potential_eq_one
     {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X)
     (hpotential : ∀ p x, M.potential p x = 1) (n : ℕ) :
     M.particleLikelihoodAsymptoticVariance n = 0 := by
   simp [FeynmanKacModel.particleLikelihoodAsymptoticVariance,
-    M.backwardOperator_one_of_potential_eq_one hpotential]
+    M.backward_operator_one_of_potential_eq_one hpotential]
 
 section Telescoping
 
@@ -99,7 +100,7 @@ variable {X : Type*} [MeasurableSpace X]
 namespace FeynmanKacModel
 
 /-- The backwards operator maps bounded measurable functions to bounded measurable functions. -/
-private theorem measurable_and_bounded_backwardOperator (M : FeynmanKacModel X) (p m : ℕ)
+private theorem measurable_and_bounded_backward_operator (M : FeynmanKacModel X) (p m : ℕ)
     {f : X → ℝ} (hf : Measurable f) {C : ℝ} (hC : ∀ x, |f x| ≤ C) :
     Measurable (M.backwardOperator p m f) ∧ ∃ K, ∀ x, |M.backwardOperator p m f x| ≤ K := by
   induction m generalizing p with
@@ -116,15 +117,15 @@ private theorem measurable_and_bounded_backwardOperator (M : FeynmanKacModel X) 
       ((ha.trans_le (hab x).1).le.trans (hab x).2)
 
 /-- Semigroup property of the backwards operator: `γₚ(Q_{p,p+m} f) = γ_{p+m}(f)`. -/
-theorem integral_backwardOperator (M : FeynmanKacModel X) (p m : ℕ) {f : X → ℝ}
+theorem integral_backward_operator (M : FeynmanKacModel X) (p m : ℕ) {f : X → ℝ}
     (hf : Measurable f) {C : ℝ} (hC : ∀ x, |f x| ≤ C) :
     ∫ x, M.backwardOperator p m f x ∂M.unnormalizedLaw p = ∫ x, f x ∂M.unnormalizedLaw (p + m) := by
   induction m generalizing p with
   | zero => rfl
   | succ m ih =>
-    obtain ⟨hm, K, hK⟩ := M.measurable_and_bounded_backwardOperator (p + 1) m hf hC
+    obtain ⟨hm, K, hK⟩ := M.measurable_and_bounded_backward_operator (p + 1) m hf hC
     rw [show p + (m + 1) = p + 1 + m by omega, ← ih (p + 1),
-      M.integral_unnormalizedLaw_succ p hm hK]
+      M.integral_unnormalized_law_succ p hm hK]
     rfl
 
 end FeynmanKacModel
@@ -141,7 +142,7 @@ private theorem sum_range_sub_eq_of_succ_eq (a b : ℕ → ℝ) (n : ℕ)
 /-- Telescoping decomposition of the particle error along a path: the scaled error
 `√N (γᴺₙ(h) - γₙ(h))` of the particle approximation of the unnormalized measure is the sum of the
 local errors of the generations `p ≤ n` in the directions `Q_{p,n} h`. -/
-theorem sqrt_mul_particleLikelihood_mul_average_sub (M : FeynmanKacModel X) {N : ℕ}
+theorem sqrt_mul_particle_likelihood_mul_average_sub (M : FeynmanKacModel X) {N : ℕ}
     (x : ℕ → Fin (N + 1) → X) (n : ℕ) {h : X → ℝ} (hh : Measurable h) {C : ℝ}
     (hC : ∀ y, |h y| ≤ C) :
     Real.sqrt (N + 1) * (M.particleLikelihood x n * ((∑ i, h (x n i)) / (N + 1)) -
@@ -166,17 +167,17 @@ theorem sqrt_mul_particleLikelihood_mul_average_sub (M : FeynmanKacModel X) {N :
     ring
   rw [Finset.sum_congr rfl fun p _ ↦ hloc p, ← Finset.mul_sum, sum_range_sub_eq_of_succ_eq]
   · congr 1
-    rw [Nat.sub_self, Nat.sub_zero, FeynmanKacModel.particleLikelihood_zero, one_mul]
+    rw [Nat.sub_self, Nat.sub_zero, FeynmanKacModel.particle_likelihood_zero, one_mul]
     congr 1
-    have := M.integral_backwardOperator 0 n hh hC
+    have := M.integral_backward_operator 0 n hh hC
     rw [zero_add] at this
     exact this.symm
   · intro p hp
     have hn : n - p = n - (p + 1) + 1 := by omega
-    obtain ⟨hm, K, hK⟩ := M.measurable_and_bounded_backwardOperator (p + 1) (n - (p + 1)) hh hC
+    obtain ⟨hm, K, hK⟩ := M.measurable_and_bounded_backward_operator (p + 1) (n - (p + 1)) hh hC
     have hG : 0 < ∑ i, M.potential p (x p i) :=
       Finset.sum_pos (fun i _ ↦ M.potential_pos p _) Finset.univ_nonempty
-    rw [hn, FeynmanKacModel.pathPredMean_succ, M.integral_particlePredictionLaw p (x p) hm hK]
+    rw [hn, FeynmanKacModel.path_pred_mean_succ, M.integral_particle_prediction_law p (x p) hm hK]
     simp only [FeynmanKacModel.particleLikelihood, Finset.prod_range_succ,
       FeynmanKacModel.backwardOperator]
     push_cast
@@ -189,10 +190,10 @@ section Limits
 variable {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
 
 /-- The functions `Q_{p,n} h`, `p ∈ ℕ`, are uniformly bounded. -/
-private theorem exists_abs_backwardOperator_sub_le (M : FeynmanKacModel X) (n : ℕ) {h : X → ℝ}
+private theorem exists_abs_backward_operator_sub_le (M : FeynmanKacModel X) (n : ℕ) {h : X → ℝ}
     (hh : Measurable h) {C : ℝ} (hC : ∀ x, |h x| ≤ C) :
     ∃ B, ∀ p x, |M.backwardOperator p (n - p) h x| ≤ B := by
-  choose _ K hK using fun p ↦ M.measurable_and_bounded_backwardOperator p (n - p) hh hC
+  choose _ K hK using fun p ↦ M.measurable_and_bounded_backward_operator p (n - p) hh hC
   refine ⟨|C| + ∑ p ∈ Finset.range n, |K p|, fun p x ↦ ?_⟩
   rcases lt_or_ge p n with hp | hp
   · refine (hK p x).trans ((le_abs_self _).trans ?_)
@@ -204,20 +205,20 @@ private theorem exists_abs_backwardOperator_sub_le (M : FeynmanKacModel X) (n : 
     exact (hC x).trans (by linarith [le_abs_self C])
 
 /-- The total masses of the unnormalized Feynman–Kac measures are positive. -/
-private theorem unnormalizedLaw_real_univ_pos (M : FeynmanKacModel X) (p : ℕ) :
+private theorem unnormalized_law_real_univ_pos (M : FeynmanKacModel X) (p : ℕ) :
     0 < (M.unnormalizedLaw p).real univ :=
-  ENNReal.toReal_pos (M.unnormalizedLaw_univ_ne_zero p) (measure_ne_top _ _)
+  ENNReal.toReal_pos (M.unnormalized_law_univ_ne_zero p) (measure_ne_top _ _)
 
 /-- `𝛈ₚ(Q_{p,n} h) = γₙ(h) / γₚ(1)` for `p ≤ n`. -/
-private theorem integral_backwardOperator_filterLaw (M : FeynmanKacModel X) {p n : ℕ}
+private theorem integral_backward_operator_filter_law (M : FeynmanKacModel X) {p n : ℕ}
     (hpn : p ≤ n) {h : X → ℝ} (hh : Measurable h) {C : ℝ} (hC : ∀ x, |h x| ≤ C) :
     ∫ x, M.backwardOperator p (n - p) h x ∂M.filterLaw p =
       ((M.unnormalizedLaw p).real univ)⁻¹ * ∫ x, h x ∂M.unnormalizedLaw n := by
-  rw [M.integral_filterLaw, M.integral_backwardOperator p (n - p) hh hC, Nat.add_sub_cancel' hpn]
+  rw [M.integral_filter_law, M.integral_backward_operator p (n - p) hh hC, Nat.add_sub_cancel' hpn]
 
 /-- Convergence in distribution to the identity under a given law, from convergence in
 distribution to a variable with that law. -/
-private theorem tendstoInDistribution_id_of_map_eq {Y Y' : ℕ → Ω → ℝ} {P : Measure Ω}
+private theorem tendsto_in_distribution_id_of_map_eq {Y Y' : ℕ → Ω → ℝ} {P : Measure Ω}
     [IsProbabilityMeasure P] {Ω' : Type*} [MeasurableSpace Ω'] {μ' : Measure Ω'}
     [IsProbabilityMeasure μ'] {Z : Ω' → ℝ} (h : TendstoInDistribution Y atTop Z (fun _ ↦ P) μ')
     (hY : Y = Y') {ν : Measure ℝ} [IsProbabilityMeasure ν] (hν : μ'.map Z = ν) :
@@ -230,12 +231,12 @@ private theorem tendstoInDistribution_id_of_map_eq {Y Y' : ℕ → Ω → ℝ} {
   exact h.tendsto
 
 /-- Convergence in probability from mean-absolute convergence. -/
-private theorem tendstoInMeasure_of_tendsto_integral_abs_sub {Ω : Type*} [MeasurableSpace Ω]
+private theorem tendsto_in_measure_of_tendsto_integral_abs_sub {Ω : Type*} [MeasurableSpace Ω]
     {P : Measure Ω} [IsProbabilityMeasure P] {Y : ℕ → Ω → ℝ} {c K : ℝ}
     (hm : ∀ N, Measurable (Y N)) (hK : ∀ N ω, |Y N ω| ≤ K)
     (h : Tendsto (fun N ↦ ∫ ω, |Y N ω - c| ∂P) atTop (𝓝 0)) :
     TendstoInMeasure P Y atTop (fun _ ↦ c) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  rw [tendsto_in_measure_iff_measure_real_lt_dist]
   intro ε hε
   refine squeeze_zero (fun _ ↦ measureReal_nonneg) (fun N ↦ ?_) (by simpa using h.div_const ε)
   have hi : Integrable (fun ω ↦ |Y N ω - c|) P :=
@@ -253,7 +254,7 @@ end Limits
 /-- GAPS 104.59: central limit theorem for the bootstrap particle filter at a fixed time `n`.
 For a bounded measurable `f`, `√N (N⁻¹ ∑ᵢ f(ξᵢ) - 𝛈ₙ f)` converges in distribution to the centred
 normal law with variance `particleAverageAsymptoticVariance n f`. -/
-theorem tendstoInDistribution_particle_average {Ω X : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_particle_average {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
@@ -267,11 +268,11 @@ theorem tendstoInDistribution_particle_average {Ω X : Type*} [MeasurableSpace �
   set c := ∫ x, f x ∂M.filterLaw n with hc
   have hh : Measurable fun x ↦ f x - c := hf.sub measurable_const
   have hhC : ∀ x, |f x - c| ≤ C + |c| := fun x ↦ (abs_sub _ _).trans (by linarith [hC x])
-  obtain ⟨B, hB⟩ := exists_abs_backwardOperator_sub_le M n hh hhC
+  obtain ⟨B, hB⟩ := exists_abs_backward_operator_sub_le M n hh hhC
   have hφ : ∀ p, Measurable (M.backwardOperator p (n - p) fun x ↦ f x - c) := fun p ↦
-    (M.measurable_and_bounded_backwardOperator p (n - p) hh hhC).1
+    (M.measurable_and_bounded_backward_operator p (n - p) hh hhC).1
   set Γ := (M.unnormalizedLaw n).real univ with hΓ
-  have hΓ0 : 0 < Γ := unnormalizedLaw_real_univ_pos M n
+  have hΓ0 : 0 < Γ := unnormalized_law_real_univ_pos M n
   have hpath : ∀ N, Measurable fun ω (q : ℕ) ↦ ξ N q ω := fun N ↦
     measurable_pi_iff.2 fun q ↦ (hξ N).1 q
   -- a positive lower bound for the likelihood estimates
@@ -283,25 +284,25 @@ theorem tendstoInDistribution_particle_average {Ω X : Type*} [MeasurableSpace �
       rw [le_div_iff₀ (by positivity)]
       simpa [mul_comm] using Finset.sum_le_sum
         fun i (_ : i ∈ (Finset.univ : Finset (Fin (N + 1)))) ↦ (hab q (ξ N q ω i)).1)
-  obtain ⟨⟨K, hK⟩, hL1⟩ := tendsto_integral_abs_particleLikelihood_sub P M ξ hξ n
-  have hY := tendstoInMeasure_of_tendsto_integral_abs_sub
-    (fun N ↦ (M.measurable_particleLikelihood n).comp (hpath N)) hK hL1
+  obtain ⟨⟨K, hK⟩, hL1⟩ := tendsto_integral_abs_particle_likelihood_sub P M ξ hξ n
+  have hY := tendsto_in_measure_of_tendsto_integral_abs_sub
+    (fun N ↦ (M.measurable_particle_likelihood n).comp (hpath N)) hK hL1
   have hgc : Continuous fun z : ℝ × ℝ ↦ z.1 / max z.2 c0 :=
     continuous_fst.div (continuous_snd.max continuous_const) fun z ↦
       (lt_max_of_lt_right hc0).ne'
-  have hS := (tendstoInDistribution_sum_localError P M ξ hξ _ hφ hB
+  have hS := (tendsto_in_distribution_sum_local_error P M ξ hξ _ hφ hB
     n).continuous_comp_prodMk_of_tendstoInMeasure_const hgc hY
-    fun N ↦ ((M.measurable_particleLikelihood n).comp (hpath N)).aemeasurable
+    fun N ↦ ((M.measurable_particle_likelihood n).comp (hpath N)).aemeasurable
   have hint0 : ∫ x, (f x - c) ∂M.unnormalizedLaw n = 0 := by
     have hfi : Integrable f (M.unnormalizedLaw n) := Integrable.of_bound hf.aestronglyMeasurable C
       (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using hC x)
     rw [integral_sub hfi (integrable_const c), integral_const, smul_eq_mul, ← hΓ, hc,
-      M.integral_filterLaw, ← hΓ]
+      M.integral_filter_law, ← hΓ]
     field_simp
     ring
-  refine tendstoInDistribution_id_of_map_eq hS ?_ ?_
+  refine tendsto_in_distribution_id_of_map_eq hS ?_ ?_
   · funext N ω
-    have := sqrt_mul_particleLikelihood_mul_average_sub M (fun p ↦ ξ N p ω) n hh hhC
+    have := sqrt_mul_particle_likelihood_mul_average_sub M (fun p ↦ ξ N p ω) n hh hhC
     have hL := hLlow N ω
     rw [hint0] at this
     simp only [← this, Function.comp_apply, max_eq_left hL, Finset.sum_sub_distrib,
@@ -324,10 +325,10 @@ theorem tendstoInDistribution_particle_average {Ω X : Type*} [MeasurableSpace �
       rw [Finset.mul_sum, FeynmanKacModel.particleAverageAsymptoticVariance]
       refine Finset.sum_congr rfl fun p hp ↦ ?_
       have hpn : p ≤ n := Nat.lt_succ_iff.1 (Finset.mem_range.1 hp)
-      have hΓp := unnormalizedLaw_real_univ_pos M p
+      have hΓp := unnormalized_law_real_univ_pos M p
       simp only [FeynmanKacModel.localVariance]
-      rw [integral_backwardOperator_filterLaw M hpn hh hhC, hint0, mul_zero,
-        integral_backwardOperator_filterLaw M hpn measurable_const hone]
+      rw [integral_backward_operator_filter_law M hpn hh hhC, hint0, mul_zero,
+        integral_backward_operator_filter_law M hpn measurable_const hone]
       simp only [sub_zero, integral_const, smul_eq_mul, mul_one, ← hΓ, ← hc]
       field_simp
     ext
@@ -337,7 +338,7 @@ theorem tendstoInDistribution_particle_average {Ω X : Type*} [MeasurableSpace �
 /-- GAPS 104.59: central limit theorem for the particle likelihood estimate at a fixed time `n`.
 The relative error `√N (Ẑₙ / Zₙ - 1)` converges in distribution to the centred normal law with
 variance `particleLikelihoodAsymptoticVariance n`. -/
-theorem tendstoInDistribution_particle_likelihood {Ω X : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_particle_likelihood {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
@@ -348,16 +349,16 @@ theorem tendstoInDistribution_particle_likelihood {Ω X : Type*} [MeasurableSpac
       atTop id (fun _ ↦ P)
       (gaussianReal 0 (Real.toNNReal (M.particleLikelihoodAsymptoticVariance n))) := by
   have hone : ∀ x : X, |(fun _ ↦ (1 : ℝ)) x| ≤ 1 := fun _ ↦ by simp
-  obtain ⟨B, hB⟩ := exists_abs_backwardOperator_sub_le M n measurable_const hone
+  obtain ⟨B, hB⟩ := exists_abs_backward_operator_sub_le M n measurable_const hone
   have hφ : ∀ p, Measurable (M.backwardOperator p (n - p) fun _ ↦ (1 : ℝ)) := fun p ↦
-    (M.measurable_and_bounded_backwardOperator p (n - p) measurable_const hone).1
+    (M.measurable_and_bounded_backward_operator p (n - p) measurable_const hone).1
   set Γ := (M.unnormalizedLaw n).real univ with hΓ
-  have hΓ0 : 0 < Γ := unnormalizedLaw_real_univ_pos M n
-  have hS := (tendstoInDistribution_sum_localError P M ξ hξ _ hφ hB n).continuous_comp
+  have hΓ0 : 0 < Γ := unnormalized_law_real_univ_pos M n
+  have hS := (tendsto_in_distribution_sum_local_error P M ξ hξ _ hφ hB n).continuous_comp
     (g := fun y ↦ Γ⁻¹ * y) (continuous_const.mul continuous_id)
-  refine tendstoInDistribution_id_of_map_eq hS ?_ ?_
+  refine tendsto_in_distribution_id_of_map_eq hS ?_ ?_
   · funext N ω
-    have := sqrt_mul_particleLikelihood_mul_average_sub M (fun p ↦ ξ N p ω) n
+    have := sqrt_mul_particle_likelihood_mul_average_sub M (fun p ↦ ξ N p ω) n
       measurable_const hone
     simp only [Function.comp_apply, ← this, Finset.sum_const, Finset.card_univ, Fintype.card_fin,
       nsmul_eq_mul, mul_one, integral_const, smul_eq_mul, ← hΓ]
@@ -375,12 +376,12 @@ theorem tendstoInDistribution_particle_likelihood {Ω X : Type*} [MeasurableSpac
       rw [Finset.mul_sum, FeynmanKacModel.particleLikelihoodAsymptoticVariance]
       refine Finset.sum_congr rfl fun p hp ↦ ?_
       have hpn : p ≤ n := Nat.lt_succ_iff.1 (Finset.mem_range.1 hp)
-      obtain ⟨hm, K, hK⟩ := M.measurable_and_bounded_backwardOperator p (n - p)
+      obtain ⟨hm, K, hK⟩ := M.measurable_and_bounded_backward_operator p (n - p)
         measurable_const hone
-      have hΓp := unnormalizedLaw_real_univ_pos M p
+      have hΓp := unnormalized_law_real_univ_pos M p
       simp only [FeynmanKacModel.localVariance]
       rw [integral_sub_integral_sq hm hK,
-        integral_backwardOperator_filterLaw M hpn measurable_const hone]
+        integral_backward_operator_filter_law M hpn measurable_const hone]
       simp only [integral_const, smul_eq_mul, mul_one, ← hΓ]
       field_simp
     ext
@@ -388,11 +389,11 @@ theorem tendstoInDistribution_particle_likelihood {Ω X : Type*} [MeasurableSpac
     rw [Real.coe_toNNReal _ (hvar ▸ mul_nonneg (sq_nonneg _) hV0), ← hvar, inv_pow]
 
 /-- A zero-step backwards operator is the identity. -/
-@[simp] theorem FeynmanKacModel.backwardOperator_zero {X : Type*} [MeasurableSpace X]
+@[simp] theorem FeynmanKacModel.backward_operator_zero {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (p : ℕ) (f : X → ℝ) : M.backwardOperator p 0 f = f := rfl
 
 /-- Each particle-average asymptotic variance is nonnegative. -/
-theorem FeynmanKacModel.particleAverageAsymptoticVariance_nonneg
+theorem FeynmanKacModel.particle_average_asymptotic_variance_nonneg
     {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X) (n : ℕ) (f : X → ℝ) :
     0 ≤ M.particleAverageAsymptoticVariance n f := by
   apply Finset.sum_nonneg

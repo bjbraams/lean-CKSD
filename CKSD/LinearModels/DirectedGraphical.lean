@@ -6,6 +6,9 @@ public import CKSD.LinearModels.DirectedGraphical.Markov
 public import CKSD.LinearModels.DirectedGraphical.DoCalculus
 public import CKSD.LinearModels.DirectedGraphical.Discovery
 
+
+namespace CKSD
+
 /-!
 # Directed Markov properties, interventions, and causal discovery for discrete variables
 
@@ -22,7 +25,7 @@ Sums over the values of a set `B` of variables run over `B → S` and overwrite 
 
 Sources: GAPS 105.62, 105.63, 105.64, and 105.70 (discrete-variable forms).
 
-The central step is `condIndepMass_directedFactorizationMass_of_dSeparated`: a recursive product
+The central step is `cond_indep_mass_directed_factorization_mass_of_d_separated`: a recursive product
 of local masses satisfies the global directed Markov property. Its proof follows Lauritzen
 (*Graphical Models*, 1996, §3.2): the coordinates outside the ancestral closure of
 `A ∪ B ∪ C` are summed out, and the remaining product splits into a factor depending on the
@@ -34,3 +37,6 @@ values of `Z`, and rule 3 by Pearl's augmentation of the graph with an intervent
 (Pearl, *Causality*, 2009, §3.4). The back-door and front-door formulae follow from rule 2 and
 the invariance of the marginal law of nondescendants under intervention.
 -/
+
+
+end CKSD

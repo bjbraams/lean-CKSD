@@ -2,6 +2,7 @@ module
 
 public import CKSD.LinearModels.DirectedGraphical.Interventions
 
+
 /-!
 # Directed Markov properties and back-door and front-door identification
 
@@ -12,11 +13,11 @@ adjustment formulas.
 
 ## Main results
 
-* `CKSD.CausalGraph.recursivelyFactorizes_tfae`: equivalence of recursive factorization, the
+* `CKSD.CausalGraph.recursively_factorizes_tfae`: equivalence of recursive factorization, the
   local directed Markov property, and the global directed Markov property.
-* `CKSD.doMarginalMass_eq_backdoor`: the back-door adjustment formula
+* `CKSD.do_marginal_mass_eq_backdoor`: the back-door adjustment formula
   `P(y | do(x)) = ∑_z P(y | x, z) P(z)` for a set `Z` satisfying the back-door criterion.
-* `CKSD.doMarginalMass_eq_frontdoor`: the front-door adjustment formula.
+* `CKSD.do_marginal_mass_eq_frontdoor`: the front-door adjustment formula.
 
 ## References
 
@@ -42,7 +43,7 @@ variable {V S : Type*}
 /-! ### Directed Markov properties -/
 
 /-- The marginal mass on all variables is the mass itself. -/
-theorem marginalMass_univ [Fintype V] [Fintype S] (p : (V → S) → ℝ) (x : V → S) :
+theorem marginal_mass_univ [Fintype V] [Fintype S] (p : (V → S) → ℝ) (x : V → S) :
     marginalMass p Finset.univ x = p x := by
   unfold marginalMass
   have : ∀ y : V → S, (∀ v ∈ Finset.univ, y v = x v) ↔ y = x := fun y ↦ by simp [funext_iff]
@@ -79,14 +80,14 @@ theorem CondIndepMass.mono_right [Fintype V] [Fintype S] {p : (V → S) → ℝ}
     have := @hB' v
     simp only [Finset.mem_union, Finset.mem_sdiff]
     tauto
-  rw [marginalMass_eq_sum_overwriteOn p hZ1 x, marginalMass_eq_sum_overwriteOn p hZ2 x, e1, e2,
+  rw [marginal_mass_eq_sum_overwrite_on p hZ1 x, marginal_mass_eq_sum_overwrite_on p hZ2 x, e1, e2,
     Finset.sum_mul, Finset.mul_sum]
   refine Finset.sum_congr rfl fun z _ ↦ ?_
   have hC : marginalMass p C (overwriteOn (B \ B') z x) = marginalMass p C x :=
-    marginalMass_congr_point p C fun v hv ↦ overwriteOn_of_notMem _ _ fun hvZ ↦
+    marginal_mass_congr_point p C fun v hv ↦ overwrite_on_of_not_mem _ _ fun hvZ ↦
       Finset.disjoint_left.1 hZ2 (Finset.mem_union_right _ hv) hvZ
   have hAC : marginalMass p (A ∪ C) (overwriteOn (B \ B') z x) = marginalMass p (A ∪ C) x :=
-    marginalMass_congr_point p _ fun v hv ↦ overwriteOn_of_notMem _ _ fun hvZ ↦ by
+    marginal_mass_congr_point p _ fun v hv ↦ overwrite_on_of_not_mem _ _ fun hvZ ↦ by
       rcases Finset.mem_union.1 hv with hv | hv
       · exact Finset.disjoint_left.1 hZ1 (by simp [hv]) hvZ
       · exact Finset.disjoint_left.1 hZ1 (by simp [hv]) hvZ
@@ -95,7 +96,7 @@ theorem CondIndepMass.mono_right [Fintype V] [Fintype S] {p : (V → S) → ℝ}
   exact this
 
 /-- Summing the marginal mass of `insert v C` over the values of `v`. -/
-theorem sum_marginalMass_insert_update [Fintype V] [Fintype S] (p : (V → S) → ℝ) {v : V}
+theorem sum_marginal_mass_insert_update [Fintype V] [Fintype S] (p : (V → S) → ℝ) {v : V}
     {C : Finset V} (hv : v ∉ C) (y : V → S) :
     ∑ s, marginalMass p (insert v C) (Function.update y v s) = marginalMass p C y := by
   unfold marginalMass
@@ -119,7 +120,7 @@ theorem sum_marginalMass_insert_update [Fintype V] [Fintype S] (p : (V → S) �
 
 /-- Under the local directed Markov property, the marginal mass of an ancestral set is the
 product of the conditional masses of its vertices given their parents. -/
-theorem CausalGraph.marginalMass_eq_prod_condMass_of_isLocalDirectedMarkov [Fintype V]
+theorem CausalGraph.marginal_mass_eq_prod_cond_mass_of_is_local_directed_markov [Fintype V]
     [Fintype S] (G : CausalGraph V) {p : (V → S) → ℝ} (hp : IsProbabilityMass p)
     (hLM : G.IsLocalDirectedMarkov p) :
     ∀ D : Finset V, (∀ v ∈ D, ∀ u, G.edge u v → u ∈ D) → ∀ x,
@@ -195,26 +196,26 @@ theorem CausalGraph.marginalMass_eq_prod_condMass_of_isLocalDirectedMarkov [Fint
     unfold condMass
     by_cases hz : marginalMass p pa x = 0
     · have h0 : marginalMass p D x = 0 := by
-        refine le_antisymm ?_ (marginalMass_nonneg hp.1 D x)
+        refine le_antisymm ?_ (marginal_mass_nonneg hp.1 D x)
         calc marginalMass p D x ≤ marginalMass p pa x :=
-              marginalMass_anti hp.1 (hpaD'.trans (Finset.erase_subset _ _)) x
+              marginal_mass_anti hp.1 (hpaD'.trans (Finset.erase_subset _ _)) x
           _ = 0 := hz
       rw [h0, hz, div_zero, zero_mul]
     · rw [div_mul_eq_mul_div, eq_div_iff hz, ← hci]
   rw [hstep, ih D' (Finset.erase_ssubset hvD) hD'cl x, ← Finset.mul_prod_erase D _ hvD]
 
 /-- The local directed Markov property implies recursive factorization. -/
-theorem CausalGraph.recursivelyFactorizes_of_isLocalDirectedMarkov [Fintype V] [Fintype S]
+theorem CausalGraph.recursively_factorizes_of_is_local_directed_markov [Fintype V] [Fintype S]
     (G : CausalGraph V) {p : (V → S) → ℝ} (hp : IsProbabilityMass p)
     (hLM : G.IsLocalDirectedMarkov p) : G.RecursivelyFactorizes p := by
   intro x
-  rw [← marginalMass_univ p x]
-  exact G.marginalMass_eq_prod_condMass_of_isLocalDirectedMarkov hp hLM Finset.univ
+  rw [← marginal_mass_univ p x]
+  exact G.marginal_mass_eq_prod_cond_mass_of_is_local_directed_markov hp hLM Finset.univ
     (fun _ _ _ _ ↦ Finset.mem_univ _) x
 
 /-- A recursively factorizing probability mass function is the recursive product of a local
 mass family respecting the parents. -/
-theorem CausalGraph.exists_localMass_of_recursivelyFactorizes [Fintype V] [Fintype S]
+theorem CausalGraph.exists_local_mass_of_recursively_factorizes [Fintype V] [Fintype S]
     (G : CausalGraph V) {p : (V → S) → ℝ} (hp : IsProbabilityMass p)
     (hRF : G.RecursivelyFactorizes p) :
     ∃ localMass : V → (V → S) → S → ℝ, IsLocalMassFamily localMass ∧
@@ -229,18 +230,18 @@ theorem CausalGraph.exists_localMass_of_recursivelyFactorizes [Fintype V] [Finty
     refine ⟨fun v y s ↦ ?_, fun v y ↦ ?_⟩
     · simp only [loc]
       split_ifs
-      · exact div_nonneg (marginalMass_nonneg hp.1 _ _) (marginalMass_nonneg hp.1 _ _)
+      · exact div_nonneg (marginal_mass_nonneg hp.1 _ _) (marginal_mass_nonneg hp.1 _ _)
       · positivity
     · simp only [loc]
       split_ifs with hpos
       · unfold condMass
         have hden : ∀ s, marginalMass p (G.parentFinset v) (Function.update y v s) =
             marginalMass p (G.parentFinset v) y := fun s ↦
-          marginalMass_congr_point p _ fun u hu ↦
+          marginal_mass_congr_point p _ fun u hu ↦
             Function.update_of_ne (show u ≠ v by rintro rfl; exact hvpa u hu) _ _
         simp only [hden, ← Finset.sum_div]
         rw [show ({v} : Finset V) ∪ G.parentFinset v = insert v (G.parentFinset v) from
-          (Finset.insert_eq _ _).symm, sum_marginalMass_insert_update p (hvpa v) y,
+          (Finset.insert_eq _ _).symm, sum_marginal_mass_insert_update p (hvpa v) y,
           div_self hpos.ne']
       · have : 0 < Fintype.card S := Fintype.card_pos_iff.2 ⟨y v⟩
         simp only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
@@ -261,26 +262,26 @@ theorem CausalGraph.exists_localMass_of_recursivelyFactorizes [Fintype V] [Finty
     have hc : condMass p {v} (G.parentFinset v) (Function.update y v s) =
         condMass p {v} (G.parentFinset v) (Function.update y' v s) := by
       unfold condMass
-      rw [marginalMass_congr_point p _ hupd,
-        marginalMass_congr_point p _ fun u hu ↦ hupd u (Finset.mem_union_right _ hu)]
-    simp only [loc, marginalMass_congr_point p _ hpa, hc]
+      rw [marginal_mass_congr_point p _ hupd,
+        marginal_mass_congr_point p _ fun u hu ↦ hupd u (Finset.mem_union_right _ hu)]
+    simp only [loc, marginal_mass_congr_point p _ hpa, hc]
   refine ⟨loc, hloc, hpar, funext fun x ↦ ?_⟩
   have hle : ∀ y, p y ≤ directedFactorizationMass loc y := by
     intro y
     by_cases hy : p y = 0
     · rw [hy]
-      exact directedFactorizationMass_nonneg hloc y
+      exact directed_factorization_mass_nonneg hloc y
     · have hpos : 0 < p y := lt_of_le_of_ne (hp.1 y) (Ne.symm hy)
       refine le_of_eq ?_
       rw [hRF y]
       unfold directedFactorizationMass
       refine Finset.prod_congr rfl fun v _ ↦ ?_
       have : 0 < marginalMass p (G.parentFinset v) y := lt_of_lt_of_le hpos (by
-        rw [← marginalMass_univ p y]
-        exact marginalMass_anti hp.1 (Finset.subset_univ _) y)
+        rw [← marginal_mass_univ p y]
+        exact marginal_mass_anti hp.1 (Finset.subset_univ _) y)
       simp only [loc, ite_eq_left this, Function.update_eq_self]
   have h1 : ∑ y, directedFactorizationMass loc y = 1 := by
-    have := marginalMass_empty_directedFactorizationMass G hloc hpar x
+    have := marginal_mass_empty_directed_factorization_mass G hloc hpar x
     unfold marginalMass at this
     simpa using this
   have hsum : ∑ y, (directedFactorizationMass loc y - p y) = 0 := by
@@ -293,13 +294,13 @@ theorem CausalGraph.exists_localMass_of_recursivelyFactorizes [Fintype V] [Finty
 recursive factorization along a directed acyclic graph, the local directed Markov property, and
 the global (d-separation) Markov property are equivalent. Discrete-variable form: densities
 with respect to counting measure on a finite product. -/
-theorem CausalGraph.recursivelyFactorizes_tfae [Fintype V] [Fintype S] (G : CausalGraph V)
+theorem CausalGraph.recursively_factorizes_tfae [Fintype V] [Fintype S] (G : CausalGraph V)
     (p : (V → S) → ℝ) (hp : IsProbabilityMass p) :
     [G.RecursivelyFactorizes p, G.IsLocalDirectedMarkov p, G.IsGlobalDirectedMarkov p].TFAE := by
   have hRF_GM : G.RecursivelyFactorizes p → G.IsGlobalDirectedMarkov p := by
     intro hRF A B C hAB hAC hBC hsep
-    obtain ⟨loc, hloc, hpar, rfl⟩ := G.exists_localMass_of_recursivelyFactorizes hp hRF
-    exact condIndepMass_directedFactorizationMass_of_dSeparated G loc hloc hpar A B C hAC
+    obtain ⟨loc, hloc, hpar, rfl⟩ := G.exists_local_mass_of_recursively_factorizes hp hRF
+    exact cond_indep_mass_directed_factorization_mass_of_d_separated G loc hloc hpar A B C hAC
       hBC hsep
   have hGM_LM : G.IsGlobalDirectedMarkov p → G.IsLocalDirectedMarkov p := by
     intro hGM v
@@ -320,10 +321,10 @@ theorem CausalGraph.recursivelyFactorizes_tfae [Fintype V] [Fintype S] (G : Caus
         ext u
         simp [CausalGraph.parentFinset, CausalGraph.parents]
       rw [hcoe] at hq
-      exact G.dSeparated_parents_of_not_isDescendant (Ne.symm hnd.1) hnd.2.2 hnd.2.1 n q
+      exact G.d_separated_parents_of_not_is_descendant (Ne.symm hnd.1) hnd.2.2 hnd.2.1 n q
         (by simp [hq0]) (by simp) hq
   have hLM_RF : G.IsLocalDirectedMarkov p → G.RecursivelyFactorizes p :=
-    G.recursivelyFactorizes_of_isLocalDirectedMarkov hp
+    G.recursively_factorizes_of_is_local_directed_markov hp
   tfae_have 1 → 3 := hRF_GM
   tfae_have 3 → 2 := hGM_LM
   tfae_have 2 → 1 := hLM_RF
@@ -333,7 +334,7 @@ theorem CausalGraph.recursivelyFactorizes_tfae [Fintype V] [Fintype S] (G : Caus
 criterion relative to `(X, Y)`, then `P(y | do(x)) = ∑_z P(y | x, z) P(z)` for the law
 factorizing recursively along `G` with local masses `localMass`. The conditioning events
 `{X = x, Z = z}` are assumed to have positive probability. -/
-theorem doMarginalMass_eq_backdoor [Fintype V] [Fintype S] (G : CausalGraph V)
+theorem do_marginal_mass_eq_backdoor [Fintype V] [Fintype S] (G : CausalGraph V)
     (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (X Y Z : Finset V) (hXY : Disjoint X Y)
     (hXZ : Disjoint X Z) (hYZ : Disjoint Y Z) (hbd : G.IsBackdoorSet X Y Z) (b : V → S)
@@ -348,34 +349,34 @@ theorem doMarginalMass_eq_backdoor [Fintype V] [Fintype S] (G : CausalGraph V)
   have hsep : ((G.removeIncoming ↑(∅ : Finset V)).removeOutgoing ↑X).DSeparated ↑Y ↑X
       ↑((∅ : Finset V) ∪ Z) := by
     rw [Finset.empty_union]
-    exact G.dSeparated_removeOutgoing_of_blocksBackdoorPaths (G.removeIncoming ↑(∅ : Finset V))
+    exact G.d_separated_remove_outgoing_of_blocks_backdoor_paths (G.removeIncoming ↑(∅ : Finset V))
       (fun u v h ↦ h.1)
       (Finset.disjoint_coe.2 hXY) hbd.2
   have hp0 : ∀ y, 0 ≤ directedFactorizationMass localMass y :=
-    directedFactorizationMass_nonneg hloc
+    directed_factorization_mass_nonneg hloc
   change marginalMass (interventionMass localMass X b) Y b = _
-  rw [marginalMass_eq_sum_overwriteOn _ hYZ]
+  rw [marginal_mass_eq_sum_overwrite_on _ hYZ]
   refine Finset.sum_congr rfl fun z _ ↦ ?_
   set c := overwriteOn Z z b with hc
   have hcX : ∀ v ∈ X, c v = b v := fun v hv ↦
-    overwriteOn_of_notMem _ _ (Finset.disjoint_left.1 hXZ hv)
+    overwrite_on_of_not_mem _ _ (Finset.disjoint_left.1 hXZ hv)
   have hZm : marginalMass (interventionMass localMass X b) Z c =
       marginalMass (directedFactorizationMass localMass) Z c :=
-    doMarginalMass_eq_marginalMass_of_nonDescendant G localMass hloc hpar X Z b c hX
+    do_marginal_mass_eq_marginal_mass_of_non_descendant G localMass hloc hpar X Z b c hX
   have hposZm : 0 < marginalMass (directedFactorizationMass localMass) Z c :=
-    lt_of_lt_of_le (hposZ z) (marginalMass_anti hp0 Finset.subset_union_right c)
-  have hrule := condDoMass_rule_two G localMass hloc hpar ∅ Y X Z
+    lt_of_lt_of_le (hposZ z) (marginal_mass_anti hp0 Finset.subset_union_right c)
+  have hrule := cond_do_mass_rule_two G localMass hloc hpar ∅ Y X Z
     ⟨Finset.disjoint_empty_left _, Finset.disjoint_empty_left _, Finset.disjoint_empty_left _,
       hXY.symm, hYZ, hXZ⟩ hsep c (by
       change 0 < marginalMass (interventionMass localMass ∅ c) (X ∪ Z) c
-      rw [interventionMass_empty]
+      rw [intervention_mass_empty]
       exact hposZ z)
   unfold condDoMass at hrule
   change marginalMass (interventionMass localMass (∅ ∪ X) c) (Y ∪ Z) c /
       marginalMass (interventionMass localMass (∅ ∪ X) c) Z c =
     marginalMass (interventionMass localMass ∅ c) (Y ∪ (X ∪ Z)) c /
       marginalMass (interventionMass localMass ∅ c) (X ∪ Z) c at hrule
-  rw [Finset.empty_union, interventionMass_empty, interventionMass_congr localMass X hcX,
+  rw [Finset.empty_union, intervention_mass_empty, intervention_mass_congr localMass X hcX,
     hZm] at hrule
   unfold condMass
   rw [← hrule, div_mul_cancel₀ _ hposZm.ne']
@@ -384,7 +385,7 @@ theorem doMarginalMass_eq_backdoor [Fintype V] [Fintype S] (G : CausalGraph V)
 criterion relative to `(X, Y)`, then
 `P(y | do(x)) = ∑_z P(z | x) ∑_{x'} P(y | x', z) P(x')`. The conditioning events `{X = x}` and
 `{X = x', Z = z}` are assumed to have positive probability. -/
-theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
+theorem do_marginal_mass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
     (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (X Y Z : Finset V) (hXY : Disjoint X Y)
     (hXZ : Disjoint X Z) (hYZ : Disjoint Y Z) (hfd : G.IsFrontdoorSet X Y Z) (b : V → S)
@@ -402,34 +403,34 @@ theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
                 (overwriteOn X x' (overwriteOn Z z b)) := by
   obtain ⟨hint, hbXZ, hbZY⟩ := hfd
   have hp0 : ∀ y, 0 ≤ directedFactorizationMass localMass y :=
-    directedFactorizationMass_nonneg hloc
+    directed_factorization_mass_nonneg hloc
   change marginalMass (interventionMass localMass X b) Y b = _
-  rw [marginalMass_eq_sum_overwriteOn _ hYZ]
+  rw [marginal_mass_eq_sum_overwrite_on _ hYZ]
   refine Finset.sum_congr rfl fun z _ ↦ ?_
   set c := overwriteOn Z z b with hc
   have hcX : ∀ v ∈ X, c v = b v := fun v hv ↦
-    overwriteOn_of_notMem _ _ (Finset.disjoint_left.1 hXZ hv)
+    overwrite_on_of_not_mem _ _ (Finset.disjoint_left.1 hXZ hv)
   have hposXc : 0 < marginalMass (directedFactorizationMass localMass) X c := by
-    rw [marginalMass_congr_point _ X hcX]
+    rw [marginal_mass_congr_point _ X hcX]
     exact hposX
   have hposXZc : 0 < marginalMass (directedFactorizationMass localMass) (X ∪ Z) c := by
     have := hposXZ (fun v ↦ c v) z
-    rwa [← hc, overwriteOn_self] at this
+    rwa [← hc, overwrite_on_self] at this
   -- `P(z | do(x)) = P(z | x)`
   have h1 : marginalMass (interventionMass localMass X b) Z c =
       condMass (directedFactorizationMass localMass) Z X c := by
     have hsep1 : ((G.removeIncoming ↑(∅ : Finset V)).removeOutgoing ↑X).DSeparated ↑Z ↑X
         ↑((∅ : Finset V) ∪ ∅) := by
       rw [Finset.empty_union, Finset.coe_empty]
-      exact G.dSeparated_removeOutgoing_of_blocksBackdoorPaths
+      exact G.d_separated_remove_outgoing_of_blocks_backdoor_paths
         (G.removeIncoming ∅) (fun u v h ↦ h.1)
         (Finset.disjoint_coe.2 hXZ) hbXZ
-    have hrule := condDoMass_rule_two G localMass hloc hpar ∅ Z X ∅
+    have hrule := cond_do_mass_rule_two G localMass hloc hpar ∅ Z X ∅
       ⟨Finset.disjoint_empty_left _, Finset.disjoint_empty_left _,
         Finset.disjoint_empty_left _, hXZ.symm, Finset.disjoint_empty_right _,
         Finset.disjoint_empty_right _⟩ hsep1 c (by
         change 0 < marginalMass (interventionMass localMass ∅ c) (X ∪ ∅) c
-        rw [interventionMass_empty, Finset.union_empty]
+        rw [intervention_mass_empty, Finset.union_empty]
         exact hposXc)
     unfold condDoMass at hrule
     change marginalMass (interventionMass localMass (∅ ∪ X) c) (Z ∪ ∅) c /
@@ -437,8 +438,8 @@ theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
       marginalMass (interventionMass localMass ∅ c) (Z ∪ (X ∪ ∅)) c /
         marginalMass (interventionMass localMass ∅ c) (X ∪ ∅) c at hrule
     simp only [Finset.empty_union, Finset.union_empty] at hrule
-    rw [marginalMass_empty_interventionMass G hloc hpar, div_one, interventionMass_empty,
-      interventionMass_congr localMass X hcX] at hrule
+    rw [marginal_mass_empty_intervention_mass G hloc hpar, div_one, intervention_mass_empty,
+      intervention_mass_congr localMass X hcX] at hrule
     rw [hrule]
     rfl
   have hposZdo : 0 < marginalMass (interventionMass localMass X b) Z c := by
@@ -451,14 +452,14 @@ theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
         marginalMass (interventionMass localMass (X ∪ Z) c) Y c := by
     have hsep2 : ((G.removeIncoming ↑X).removeOutgoing ↑Z).DSeparated ↑Y ↑Z ↑(X ∪ ∅) := by
       rw [Finset.union_empty]
-      exact G.dSeparated_removeOutgoing_of_blocksBackdoorPaths (G.removeIncoming ↑X)
+      exact G.d_separated_remove_outgoing_of_blocks_backdoor_paths (G.removeIncoming ↑X)
         (fun u v h ↦ h.1)
         (Finset.disjoint_coe.2 hYZ.symm) hbZY
-    have hrule := condDoMass_rule_two G localMass hloc hpar X Y Z ∅
+    have hrule := cond_do_mass_rule_two G localMass hloc hpar X Y Z ∅
       ⟨hXY, hXZ, Finset.disjoint_empty_right _, hYZ, Finset.disjoint_empty_right _,
         Finset.disjoint_empty_right _⟩ hsep2 c (by
         change 0 < marginalMass (interventionMass localMass X c) (Z ∪ ∅) c
-        rw [Finset.union_empty, interventionMass_congr localMass X hcX]
+        rw [Finset.union_empty, intervention_mass_congr localMass X hcX]
         exact hposZdo)
     unfold condDoMass at hrule
     change marginalMass (interventionMass localMass (X ∪ Z) c) (Y ∪ ∅) c /
@@ -466,27 +467,27 @@ theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
       marginalMass (interventionMass localMass X c) (Y ∪ (Z ∪ ∅)) c /
         marginalMass (interventionMass localMass X c) (Z ∪ ∅) c at hrule
     simp only [Finset.union_empty] at hrule
-    rw [marginalMass_empty_interventionMass G hloc hpar, div_one,
-      interventionMass_congr localMass X hcX] at hrule
+    rw [marginal_mass_empty_intervention_mass G hloc hpar, div_one,
+      intervention_mass_congr localMass X hcX] at hrule
     exact hrule.symm
   -- `P(y | do(x), do(z)) = P(y | do(z))`
   have h3 : marginalMass (interventionMass localMass (X ∪ Z) c) Y c =
       doMarginalMass localMass Z c Y c := by
-    have := doMarginalMass_eq_marginalMass_of_nonDescendant (G.removeIncoming ↑Z)
-      (intervenedLocalMass localMass Z c) (isLocalMassFamily_intervenedLocalMass hloc Z c)
-      (respectsParents_intervenedLocalMass G hpar Z c) X Y c c fun v hv ↦
+    have := do_marginal_mass_eq_marginal_mass_of_non_descendant (G.removeIncoming ↑Z)
+      (intervenedLocalMass localMass Z c) (is_local_mass_family_intervened_local_mass hloc Z c)
+      (respects_parents_intervened_local_mass G hpar Z c) X Y c c fun v hv ↦
         ⟨fun h ↦ Finset.disjoint_left.1 hXY h hv, fun u hu ↦
-          G.not_isDescendant_removeIncoming_of_intercepts (Finset.disjoint_coe.2 hXZ) hint
+          G.not_is_descendant_remove_incoming_of_intercepts (Finset.disjoint_coe.2 hXZ) hint
             v hv u hu⟩
     change marginalMass (interventionMass (intervenedLocalMass localMass Z c) X c) Y c =
       marginalMass (directedFactorizationMass (intervenedLocalMass localMass Z c)) Y c at this
-    rw [interventionMass_intervenedLocalMass, directedFactorizationMass_intervenedLocalMass]
+    rw [intervention_mass_intervened_local_mass, directed_factorization_mass_intervened_local_mass]
       at this
     exact this
   -- back-door adjustment for the effect of `Z` on `Y`, adjusting for `X`
   have hbd : G.IsBackdoorSet ↑Z ↑Y ↑X :=
-    ⟨fun z hz x hx ↦ G.not_isDescendant_of_blocksBackdoorPaths hbXZ z hz x hx, hbZY⟩
-  have h4 := doMarginalMass_eq_backdoor G localMass hloc hpar Z Y X hYZ.symm hXZ.symm
+    ⟨fun z hz x hx ↦ G.not_is_descendant_of_blocks_backdoor_paths hbXZ z hz x hx, hbZY⟩
+  have h4 := do_marginal_mass_eq_backdoor G localMass hloc hpar Z Y X hYZ.symm hXZ.symm
     hXY.symm hbd c fun x' ↦ by
       rw [Finset.union_comm]
       exact hposXZ x' z

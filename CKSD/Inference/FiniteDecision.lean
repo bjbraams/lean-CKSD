@@ -8,6 +8,7 @@ public import Mathlib.MeasureTheory.Function.LpSpace.Indicator
 public import TauCeti.Analysis.Convex.Uniform.Basic
 public import TauCeti.Analysis.Normed.Module.Dual.Reflexive.WeakCompact
 
+
 /-!
 # Compact risk sets for finite decision problems
 
@@ -34,7 +35,7 @@ variable {X : Type*} [MeasurableSpace X] (μ : Measure X) [IsFiniteMeasure μ]
 
 omit [IsFiniteMeasure μ] in
 /-- The nonnegative order interval in real `L²` is convex. -/
-theorem convex_l2OrderInterval (u : Lp ℝ 2 μ) : Convex ℝ (Icc 0 u) := by
+theorem convex_l2_order_interval (u : Lp ℝ 2 μ) : Convex ℝ (Icc 0 u) := by
   intro f hf g hg a b ha hb hab
   rw [mem_Icc, ← Lp.coeFn_nonneg, ← Lp.coeFn_le]
   change (∀ᵐ x ∂μ, 0 ≤ (a • f + b • g) x) ∧
@@ -53,11 +54,11 @@ theorem convex_l2OrderInterval (u : Lp ℝ 2 μ) : Convex ℝ (Icc 0 u) := by
 
 omit [IsFiniteMeasure μ] in
 /-- Nonnegative order intervals in real `L²` are weakly compact, by reflexivity. -/
-theorem isCompact_weak_l2OrderInterval (u : Lp ℝ 2 μ) (hu : 0 ≤ u) :
+theorem is_compact_weak_l2_order_interval (u : Lp ℝ 2 μ) (hu : 0 ≤ u) :
     IsCompact (toWeakSpace ℝ (Lp ℝ 2 μ) '' Icc 0 u) := by
   apply TauCeti.isCompact_toWeakSpace_of_isClosed_of_convex_of_isBounded
     (TauCeti.surjective_inclusionInDoubleDual_of_uniformConvexSpace (𝕜 := ℝ))
-    isClosed_Icc (convex_l2OrderInterval μ u)
+    isClosed_Icc (convex_l2_order_interval μ u)
   apply Metric.isBounded_iff_subset_closedBall (0 : Lp ℝ 2 μ) |>.2
   refine ⟨‖u‖, fun f hf ↦ ?_⟩
   rw [Metric.mem_closedBall, dist_zero_right]
@@ -66,12 +67,12 @@ theorem isCompact_weak_l2OrderInterval (u : Lp ℝ 2 μ) (hu : 0 ≤ u) :
 
 omit [IsFiniteMeasure μ] in
 /-- Evaluation of an `L²` inner product is weakly continuous in its second argument. -/
-theorem continuous_weak_l2Inner (z : Lp ℝ 2 μ) :
+theorem continuous_weak_l2_inner (z : Lp ℝ 2 μ) :
     Continuous (fun f : WeakSpace ℝ (Lp ℝ 2 μ) ↦ inner ℝ z ((toWeakSpace ℝ _).symm f)) := by
   exact WeakBilin.eval_continuous (topDualPairing ℝ (Lp ℝ 2 μ)).flip (innerSL ℝ z)
 
 /-- The constant-one element of real `L²` is nonnegative. -/
-theorem l2Const_one_nonneg : 0 ≤ Lp.const 2 μ (1 : ℝ) := by
+theorem l2_const_one_nonneg : 0 ≤ Lp.const 2 μ (1 : ℝ) := by
   rw [← Lp.coeFn_nonneg]
   change ∀ᵐ x ∂μ, 0 ≤ (Lp.const 2 μ (1 : ℝ)) x
   filter_upwards [Lp.coeFn_const 2 μ (1 : ℝ)] with x hx
@@ -89,18 +90,18 @@ def weakDecisionSimplex : Set (A → WeakSpace ℝ (Lp ℝ 2 μ)) :=
     {f | ∑ a, f a = toWeakSpace ℝ _ (Lp.const 2 μ (1 : ℝ))}
 
 /-- Weak compactness of finite randomized action probabilities. -/
-theorem isCompact_weakDecisionSimplex {A : Type*} [Fintype A] :
+theorem is_compact_weak_decision_simplex {A : Type*} [Fintype A] :
     IsCompact (weakDecisionSimplex (A := A) μ) := by
   exact (isCompact_pi_infinite fun _ ↦
-    isCompact_weak_l2OrderInterval μ _ (l2Const_one_nonneg μ)).inter_right
+    is_compact_weak_l2_order_interval μ _ (l2_const_one_nonneg μ)).inter_right
       (isClosed_eq (by fun_prop) continuous_const)
 
 /-- The finite decision simplex is convex in the product weak topology. -/
-theorem convex_weakDecisionSimplex {A : Type*} [Fintype A] :
+theorem convex_weak_decision_simplex {A : Type*} [Fintype A] :
     Convex ℝ (weakDecisionSimplex (A := A) μ) := by
   apply Convex.inter
   · intro f hf g hg a b ha hb hab i
-    exact ((convex_l2OrderInterval μ (Lp.const 2 μ (1 : ℝ))).linear_image
+    exact ((convex_l2_order_interval μ (Lp.const 2 μ (1 : ℝ))).linear_image
       (toWeakSpace ℝ (Lp ℝ 2 μ)).toLinearMap) (hf i) (hg i) ha hb hab
   · intro f hf g hg a b ha hb hab
     change ∑ i, (a • f i + b • g i) = _
@@ -115,7 +116,7 @@ variable {X A : Type*} [MeasurableSpace X] (μ : Measure X) [IsFiniteMeasure μ]
 
 omit [Fintype A] in
 /-- Each action probability of a decision rule is square integrable under a finite measure. -/
-theorem memLp_decision_weight (δ : RandomizedDecisionRule X A) (a : A) :
+theorem mem_lp_decision_weight (δ : RandomizedDecisionRule X A) (a : A) :
     MemLp (fun x ↦ (δ.val x).real {a}) 2 μ := by
   let := δ.property
   apply MemLp.of_bound
@@ -126,31 +127,31 @@ theorem memLp_decision_weight (δ : RandomizedDecisionRule X A) (a : A) :
 
 /-- The weak `L²` coordinates of the action probabilities of a randomized decision rule. -/
 def decisionWeights (δ : RandomizedDecisionRule X A) : A → WeakSpace ℝ (Lp ℝ 2 μ) :=
-  fun a ↦ toWeakSpace ℝ _ ((memLp_decision_weight μ δ a).toLp (fun x ↦ (δ.val x).real {a}))
+  fun a ↦ toWeakSpace ℝ _ ((mem_lp_decision_weight μ δ a).toLp (fun x ↦ (δ.val x).real {a}))
 
 /-- A decision rule has weak `L²` action probabilities in the simplex. -/
-theorem decisionWeights_mem_weakDecisionSimplex (δ : RandomizedDecisionRule X A) :
+theorem decision_weights_mem_weak_decision_simplex (δ : RandomizedDecisionRule X A) :
     decisionWeights μ δ ∈ weakDecisionSimplex μ := by
   let := δ.property
   constructor
   · intro a
     refine ⟨_, ⟨?_, ?_⟩, rfl⟩
     · rw [← Lp.coeFn_nonneg]
-      change ∀ᵐ x ∂μ, 0 ≤ ((memLp_decision_weight μ δ a).toLp _) x
-      filter_upwards [MemLp.coeFn_toLp (memLp_decision_weight μ δ a)] with x hx
+      change ∀ᵐ x ∂μ, 0 ≤ ((mem_lp_decision_weight μ δ a).toLp _) x
+      filter_upwards [MemLp.coeFn_toLp (mem_lp_decision_weight μ δ a)] with x hx
       rw [hx]
       exact measureReal_nonneg
     · rw [← Lp.coeFn_le]
-      change ∀ᵐ x ∂μ, ((memLp_decision_weight μ δ a).toLp _) x ≤ (Lp.const 2 μ (1 : ℝ)) x
-      filter_upwards [MemLp.coeFn_toLp (memLp_decision_weight μ δ a), Lp.coeFn_const 2 μ (1 : ℝ)] with x hx hy
+      change ∀ᵐ x ∂μ, ((mem_lp_decision_weight μ δ a).toLp _) x ≤ (Lp.const 2 μ (1 : ℝ)) x
+      filter_upwards [MemLp.coeFn_toLp (mem_lp_decision_weight μ δ a), Lp.coeFn_const 2 μ (1 : ℝ)] with x hx hy
       rw [hx, hy]
       exact measureReal_le_one
   · change ∑ a, toWeakSpace ℝ _ _ = _
     rw [← map_sum]
     congr 1
     apply Lp.ext
-    filter_upwards [Lp.coeFn_finsetSum Finset.univ (fun a ↦ (memLp_decision_weight μ δ a).toLp _),
-      (ae_all_iff.2 fun a ↦ MemLp.coeFn_toLp (memLp_decision_weight μ δ a)),
+    filter_upwards [Lp.coeFn_finsetSum Finset.univ (fun a ↦ (mem_lp_decision_weight μ δ a).toLp _),
+      (ae_all_iff.2 fun a ↦ MemLp.coeFn_toLp (mem_lp_decision_weight μ δ a)),
       Lp.coeFn_const 2 μ (1 : ℝ)] with x hsum heq hc
     rw [hsum, hc]
     simp only [Finset.sum_apply, heq]
@@ -163,7 +164,7 @@ variable {X A : Type*} [MeasurableSpace X] (μ : Measure X) [IsFiniteMeasure μ]
   [Fintype A] [Nonempty A] [MeasurableSpace A] [MeasurableSingletonClass A]
 
 /-- Every weak `L²` point of the decision simplex is represented by a Markov kernel. -/
-theorem exists_decisionRule_of_weakDecisionSimplex (f : A → WeakSpace ℝ (Lp ℝ 2 μ)) (hf : f ∈ weakDecisionSimplex μ) :
+theorem exists_decision_rule_of_weak_decision_simplex (f : A → WeakSpace ℝ (Lp ℝ 2 μ)) (hf : f ∈ weakDecisionSimplex μ) :
     ∃ δ : RandomizedDecisionRule X A, decisionWeights μ δ = f := by
   classical
   let g : A → Lp ℝ 2 μ := fun a ↦ (toWeakSpace ℝ _).symm (f a)
@@ -216,9 +217,9 @@ theorem exists_decisionRule_of_weakDecisionSimplex (f : A → WeakSpace ℝ (Lp 
     simp [Pi.single_apply, mul_ite, ENNReal.toReal_ofReal (hwn x a)]
   refine ⟨⟨K, hK⟩, funext fun a ↦ ?_⟩
   apply (toWeakSpace ℝ _).symm.injective
-  change (memLp_decision_weight μ ⟨K, hK⟩ a).toLp _ = g a
+  change (mem_lp_decision_weight μ ⟨K, hK⟩ a).toLp _ = g a
   apply Lp.ext
-  filter_upwards [MemLp.coeFn_toLp (memLp_decision_weight μ ⟨K, hK⟩ a), hEae] with x hx hE
+  filter_upwards [MemLp.coeFn_toLp (mem_lp_decision_weight μ ⟨K, hK⟩ a), hEae] with x hx hE
   rw [hx, hweight]
   exact ite_eq_left hE
 
@@ -228,7 +229,7 @@ namespace CKSD
 variable {X : Type*} [MeasurableSpace X] (μ : Measure X) [IsFiniteMeasure μ]
 
 /-- The density of a measure bounded by a finite measure is in `L²`, with values in `[0,1]`. -/
-theorem memLp_rnDeriv_of_le (P : Measure X) (hP : P ≤ μ) :
+theorem mem_lp_rn_deriv_of_le (P : Measure X) (hP : P ≤ μ) :
     MemLp (fun x ↦ (P.rnDeriv μ x).toReal) 2 μ := by
   apply MemLp.of_bound (P.measurable_rnDeriv μ).ennreal_toReal.aestronglyMeasurable 1
   filter_upwards [Measure.rnDeriv_le_one_of_le hP] with x hx
@@ -237,17 +238,17 @@ theorem memLp_rnDeriv_of_le (P : Measure X) (hP : P ≤ μ) :
 
 /-- The `L²` Radon–Nikodym density of a measure dominated by a finite measure. -/
 def l2DominatedDensity (P : Measure X) (hP : P ≤ μ) : Lp ℝ 2 μ :=
-  (memLp_rnDeriv_of_le μ P hP).toLp (fun x ↦ (P.rnDeriv μ x).toReal)
+  (mem_lp_rn_deriv_of_le μ P hP).toLp (fun x ↦ (P.rnDeriv μ x).toReal)
 
 /-- Risk for a finite action space is a finite sum of `L²` pairings with model densities. -/
-theorem risk_eq_sum_l2Inner {Θ A : Type*} [Fintype A] [MeasurableSpace A]
+theorem risk_eq_sum_l2_inner {Θ A : Type*} [Fintype A] [MeasurableSpace A]
     [MeasurableSingletonClass A] (P : Θ → Measure X) [∀ θ, IsFiniteMeasure (P θ)]
     (hP : ∀ θ, P θ ≤ μ) (L : Θ → A → ℝ) (δ : RandomizedDecisionRule X A) (θ : Θ) :
     risk P L δ θ = ∑ a, L θ a * inner ℝ (l2DominatedDensity μ (P θ) (hP θ))
       ((toWeakSpace ℝ _).symm (decisionWeights μ δ a)) := by
   let := δ.property
   have hi (a : A) : Integrable (fun x ↦ (δ.val x).real {a}) (P θ) :=
-    (memLp_decision_weight (P θ) δ a).integrable one_le_two
+    (mem_lp_decision_weight (P θ) δ a).integrable one_le_two
   have hin (x : X) : (∫ a, L θ a ∂δ.val x) = ∑ a, L θ a * (δ.val x).real {a} := by
     have hint : Integrable (L θ) (δ.val x) :=
       ⟨(measurable_of_countable (L θ)).aestronglyMeasurable, HasFiniteIntegral.of_finite⟩
@@ -260,14 +261,14 @@ theorem risk_eq_sum_l2Inner {Θ A : Type*} [Fintype A] [MeasurableSpace A]
   rw [integral_const_mul]
   congr 1
   change (∫ x, (δ.val x).real {a} ∂P θ) = inner ℝ (l2DominatedDensity μ (P θ) (hP θ))
-    ((memLp_decision_weight μ δ a).toLp _)
+    ((mem_lp_decision_weight μ δ a).toLp _)
   rw [L2.inner_def]
   have hcong : (∫ x, inner ℝ ((l2DominatedDensity μ (P θ) (hP θ)) x)
-      (((memLp_decision_weight μ δ a).toLp _) x) ∂μ) =
+      (((mem_lp_decision_weight μ δ a).toLp _) x) ∂μ) =
       ∫ x, ((P θ).rnDeriv μ x).toReal * (δ.val x).real {a} ∂μ := by
     apply integral_congr_ae
-    filter_upwards [MemLp.coeFn_toLp (memLp_rnDeriv_of_le μ (P θ) (hP θ)),
-      MemLp.coeFn_toLp (memLp_decision_weight μ δ a)] with x h1 h2
+    filter_upwards [MemLp.coeFn_toLp (mem_lp_rn_deriv_of_le μ (P θ) (hP θ)),
+      MemLp.coeFn_toLp (mem_lp_decision_weight μ δ a)] with x h1 h2
     rw [show (l2DominatedDensity μ (P θ) (hP θ)) x = _ from h1, h2]
     simp only [RCLike.inner_apply, conj_trivial, mul_comm]
   rw [hcong, integral_toReal_rnDeriv_mul (Measure.absolutelyContinuous_of_le (hP θ))]
@@ -279,7 +280,7 @@ variable {X : Type*} [MeasurableSpace X] (μ : Measure X) [IsFiniteMeasure μ]
 
 /-- Finite-action risk vectors form a compact convex set when a finite measure dominates
 all model laws with bounded densities. The compactness uses weak `L²` randomizations. -/
-theorem isCompact_convex_range_risk {Θ A : Type*} [Fintype A] [Nonempty A]
+theorem is_compact_convex_range_risk {Θ A : Type*} [Fintype A] [Nonempty A]
     [MeasurableSpace A] [MeasurableSingletonClass A]
     (P : Θ → Measure X) [∀ θ, IsFiniteMeasure (P θ)] (hP : ∀ θ, P θ ≤ μ)
     (L : Θ → A → ℝ) :
@@ -303,21 +304,21 @@ theorem isCompact_convex_range_risk {Θ A : Type*} [Fintype A] [Nonempty A]
     apply continuous_pi
     intro θ
     exact continuous_finsetSum _ fun a _ ↦
-      ((continuous_weak_l2Inner μ (ρ θ)).comp (continuous_apply a)).const_mul (L θ a)
+      ((continuous_weak_l2_inner μ (ρ θ)).comp (continuous_apply a)).const_mul (L θ a)
   have himage : R '' weakDecisionSimplex μ = range (risk P L) := by
     ext r
     constructor
     · rintro ⟨f, hf, rfl⟩
-      obtain ⟨δ, hδ⟩ := exists_decisionRule_of_weakDecisionSimplex μ f hf
+      obtain ⟨δ, hδ⟩ := exists_decision_rule_of_weak_decision_simplex μ f hf
       refine ⟨δ, funext fun θ ↦ ?_⟩
-      rw [risk_eq_sum_l2Inner μ P hP L δ θ, hδ]
+      rw [risk_eq_sum_l2_inner μ P hP L δ θ, hδ]
       rfl
     · rintro ⟨δ, rfl⟩
-      refine ⟨decisionWeights μ δ, decisionWeights_mem_weakDecisionSimplex μ δ,
+      refine ⟨decisionWeights μ δ, decision_weights_mem_weak_decision_simplex μ δ,
         funext fun θ ↦ ?_⟩
-      exact (risk_eq_sum_l2Inner μ P hP L δ θ).symm
+      exact (risk_eq_sum_l2_inner μ P hP L δ θ).symm
   rw [← himage]
-  exact ⟨(isCompact_weakDecisionSimplex μ).image hR,
-    (convex_weakDecisionSimplex μ).linear_image R⟩
+  exact ⟨(is_compact_weak_decision_simplex μ).image hR,
+    (convex_weak_decision_simplex μ).linear_image R⟩
 
 end CKSD

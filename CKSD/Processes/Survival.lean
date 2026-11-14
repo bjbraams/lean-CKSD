@@ -5,6 +5,7 @@ public import Mathlib.MeasureTheory.Integral.IntervalIntegral.AbsolutelyContinuo
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.LebesgueDifferentiationThm
 public import TauCeti.Algebra.Order.BigOperators.ProdSubProd
 
+
 /-!
 # Nelson–Aalen and Kaplan–Meier estimators under random censoring
 
@@ -21,20 +22,20 @@ probability is `y(s) = P(min(T, C) ≥ s) = (1 - F(s)) C₀[s, ∞)`.
 
 ## Main results
 
-* `CKSD.tendstoInDistribution_nelsonAalenEstimator` (GAPS 106.28):
+* `CKSD.tendsto_in_distribution_nelson_aalen_estimator` (GAPS 106.28):
   `√n (Λ̂_n(t) - Λ(t)) ⇒ N(0, ∫_0^t dΛ / y)`.
-* `CKSD.tendstoInDistribution_kaplanMeierEstimator` (GAPS 106.29):
+* `CKSD.tendsto_in_distribution_kaplan_meier_estimator` (GAPS 106.29):
   `√n (Ŝ_n(t) - S(t)) ⇒ N(0, S(t)² ∫_0^t dΛ / y)`.
 
-Auxiliary results on laws with a density: `CKSD.one_sub_cdf_eq_measureReal_Ici_of_hasDensity`,
-`CKSD.cdf_eq_intervalIntegral_of_hasDensity`, and
-`CKSD.one_sub_cdf_eq_exp_neg_integral_of_hasDensity` (`1 - F(t) = exp (-Λ(t))`, by the
+Auxiliary results on laws with a density: `CKSD.one_sub_cdf_eq_measure_real_ici_of_has_density`,
+`CKSD.cdf_eq_interval_integral_of_has_density`, and
+`CKSD.one_sub_cdf_eq_exp_neg_integral_of_has_density` (`1 - F(t) = exp (-Λ(t))`, by the
 fundamental theorem of calculus for absolutely continuous functions).
 
 ## Implementation notes
 
 The Nelson–Aalen estimator is a risk-set sum `∑ A(Zᵢ) / #{j : x(Zⱼ) ≥ x(Zᵢ)}`, and its
-central limit theorem is `CKSD.tendstoInDistribution_sqrt_mul_riskSetSum_sub` (a Hájek
+central limit theorem is `CKSD.tendsto_in_distribution_sqrt_mul_risk_set_sum_sub` (a Hájek
 expansion); the work here identifies the centring constant with `Λ(t)` and the variance of the
 influence function with `∫_0^t dΛ / y`. The Kaplan–Meier theorem follows by the delta method
 for `u ↦ exp (-u)`, since `|Ŝ_n(t) - exp (-Λ̂_n(t))| ≤ n / #{j : min(T j, C j) ≥ t}²`, which is
@@ -66,7 +67,7 @@ structure IsRandomCensoringModel {Ω : Type*} [MeasurableSpace Ω] (μ : Measure
   censoring_nonneg : C₀ (Ici 0) = 1
 
 /-- A law with a Lebesgue density has no atoms, so `1 - F(s) = F[s, ∞)`. -/
-theorem one_sub_cdf_eq_measureReal_Ici_of_hasDensity (F : Measure ℝ) [IsProbabilityMeasure F]
+theorem one_sub_cdf_eq_measure_real_ici_of_has_density (F : Measure ℝ) [IsProbabilityMeasure F]
     (f : ℝ → ℝ) (hf : HasDensity F volume f) (s : ℝ) : 1 - cdf F s = F.real (Ici s) := by
   have hsing : F {s} = 0 := by
     rw [hf.2.2, withDensity_apply _ (measurableSet_singleton s), Measure.restrict_singleton]
@@ -80,7 +81,7 @@ theorem one_sub_cdf_eq_measureReal_Ici_of_hasDensity (F : Measure ℝ) [IsProbab
   linarith
 
 /-- Integration against a law with a real density `f`: `∫ g dF = ∫ f g`. -/
-theorem integral_eq_integral_mul_of_hasDensity (F : Measure ℝ) (f : ℝ → ℝ)
+theorem integral_eq_integral_mul_of_has_density (F : Measure ℝ) (f : ℝ → ℝ)
     (hf : HasDensity F volume f) (g : ℝ → ℝ) : ∫ s, g s ∂F = ∫ s, f s * g s := by
   rw [hf.2.2, integral_withDensity_eq_integral_toReal_smul hf.1.ennreal_ofReal
     (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
@@ -110,11 +111,11 @@ theorem integral_ite_fst_le_snd_prod (F C₀ : Measure ℝ) [IsProbabilityMeasur
       funext c; simp [Set.indicator_apply]
     rw [this, integral_indicator_const _ measurableSet_Ici, smul_eq_mul, mul_comm]
   simp_rw [hinner]
-  exact integral_eq_integral_mul_of_hasDensity F f hf _
+  exact integral_eq_integral_mul_of_has_density F f hf _
 
 /-- The at-risk probability under random censoring:
 `P(min(T, C) ≥ s) = F[s, ∞) C₀[s, ∞)`. -/
-theorem measureReal_le_min_prod (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
+theorem measure_real_le_min_prod (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
     [IsProbabilityMeasure C₀] (s : ℝ) :
     (F.prod C₀).real {z | s ≤ min z.1 z.2} = F.real (Ici s) * C₀.real (Ici s) := by
   have : {z : ℝ × ℝ | s ≤ min z.1 z.2} = Ici s ×ˢ Ici s := by
@@ -122,7 +123,7 @@ theorem measureReal_le_min_prod (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
   rw [this, measureReal_prod_prod]
 
 /-- A density of a law concentrated on `[0, ∞)` vanishes almost everywhere on `(-∞, 0)`. -/
-theorem ae_eq_zero_of_hasDensity_of_measure_Ici (F : Measure ℝ) [IsProbabilityMeasure F]
+theorem ae_eq_zero_of_has_density_of_measure_ici (F : Measure ℝ) [IsProbabilityMeasure F]
     (f : ℝ → ℝ) (hf : HasDensity F volume f) (hF : F (Ici 0) = 1) :
     ∀ᵐ s, s < 0 → f s = 0 := by
   have hIio : F (Iio 0) = 0 := by
@@ -271,12 +272,12 @@ theorem integral_sq_integral_mul_ite_le {E : Type*} [MeasurableSpace E] (P : Mea
 
 /-- For a density `f` of a law on `[0, ∞)` and `t ≥ 0`,
 `∫ 1{s ≤ t} f(s) G(s) ds = ∫_0^t f G`. -/
-theorem integral_ite_le_mul_eq_intervalIntegral (F : Measure ℝ) [IsProbabilityMeasure F]
+theorem integral_ite_le_mul_eq_interval_integral (F : Measure ℝ) [IsProbabilityMeasure F]
     (f : ℝ → ℝ) (hf : HasDensity F volume f) (hF : F (Ici 0) = 1) (G : ℝ → ℝ) (t : ℝ)
     (ht : 0 ≤ t) :
     ∫ s, (if s ≤ t then f s * G s else 0) = ∫ s in (0 : ℝ)..t, f s * G s := by
   rw [intervalIntegral.integral_of_le ht, ← integral_indicator measurableSet_Ioc]
-  have h0 := ae_eq_zero_of_hasDensity_of_measure_Ici F f hf hF
+  have h0 := ae_eq_zero_of_has_density_of_measure_ici F f hf hF
   have hne : ∀ᵐ s : ℝ, s ≠ 0 := by simp [ae_iff]
   refine integral_congr_ae ?_
   filter_upwards [h0, hne] with s hs hs0
@@ -288,7 +289,7 @@ theorem integral_ite_le_mul_eq_intervalIntegral (F : Measure ℝ) [IsProbability
   · simp [hst]
 /-- Positivity and monotonicity of the at-risk probabilities `F[s, ∞)`, `C₀[s, ∞)` and of
 `y(s) = F[s, ∞) C₀[s, ∞)` up to a time `t` with `F[t, ∞) C₀[t, ∞) > 0`. -/
-private theorem atRisk_bounds (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
+private theorem at_risk_bounds (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
     [IsProbabilityMeasure C₀] {t : ℝ} (hrisk : 0 < F (Ici t) * C₀ (Ici t)) :
     0 < F.real (Ici t) * C₀.real (Ici t) ∧ ∀ s ≤ t, 0 < F.real (Ici s) ∧ 0 < C₀.real (Ici s) ∧
       F.real (Ici t) * C₀.real (Ici t) ≤ F.real (Ici s) * C₀.real (Ici s) := by
@@ -303,7 +304,7 @@ private theorem atRisk_bounds (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
 /-- In the random censoring model, integrals of `A(z) Φ(min(z₁, z₂))`, with `A` the indicator
 of an observed failure by time `t`, are integrals against the failure density:
 `∫ A Φ(x) d(F ⊗ C₀) = ∫ f(s) 1{s ≤ t} Φ(s) C₀[s, ∞) ds` for `Φ` bounded on `(-∞, t]`. -/
-private theorem integral_failureIndicator_mul (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
+private theorem integral_failure_indicator_mul (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
     [IsProbabilityMeasure C₀] (f : ℝ → ℝ) (hf : HasDensity F volume f) (t : ℝ) (Φ : ℝ → ℝ)
     (hΦ : Measurable Φ) (M : ℝ) (hM : ∀ s, s ≤ t → |Φ s| ≤ M) :
     ∫ z, (if z.1 ≤ z.2 ∧ z.1 ≤ t then (1 : ℝ) else 0) * Φ (min z.1 z.2) ∂(F.prod C₀) =
@@ -324,16 +325,16 @@ private theorem integral_failureIndicator_mul (F C₀ : Measure ℝ) [IsProbabil
 
 /-- The kernel `f(s) 1{s ≤ t} C₀[s, ∞) / y(s)²` of the Nelson–Aalen variance, with
 `y(s) = F[s, ∞) C₀[s, ∞)` and `y(t) > 0`, is integrable. -/
-private theorem integrable_atRiskKernel (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
+private theorem integrable_at_risk_kernel (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
     [IsProbabilityMeasure C₀] (f : ℝ → ℝ) (hf : HasDensity F volume f) {t : ℝ}
     (hrisk : 0 < F (Ici t) * C₀ (Ici t))
     (hm : AEStronglyMeasurable (fun s ↦ f s * ((if s ≤ t then
       ((F.real (Ici s) * C₀.real (Ici s)) ^ 2)⁻¹ else 0) * C₀.real (Ici s))) volume) :
     Integrable fun s ↦ f s * ((if s ≤ t then
       ((F.real (Ici s) * C₀.real (Ici s)) ^ 2)⁻¹ else 0) * C₀.real (Ici s)) := by
-  obtain ⟨hyt, hbd⟩ := atRisk_bounds F C₀ hrisk
+  obtain ⟨hyt, hbd⟩ := at_risk_bounds F C₀ hrisk
   set yt := F.real (Ici t) * C₀.real (Ici t)
-  refine ((integrable_of_hasDensity F f hf).mul_const (1 / yt ^ 2)).mono' hm ?_
+  refine ((integrable_of_has_density F f hf).mul_const (1 / yt ^ 2)).mono' hm ?_
   filter_upwards [hf.2.1] with s hs
   have hC1 : C₀.real (Ici s) ≤ 1 := measureReal_le_one
   have hC0 : 0 ≤ C₀.real (Ici s) := measureReal_nonneg
@@ -349,20 +350,20 @@ private theorem integrable_atRiskKernel (F C₀ : Measure ℝ) [IsProbabilityMea
 
 /-- The Nelson–Aalen variance `∫_0^t f / ((1 - F)² C₀[s, ∞))` as the integral of the kernel
 `f(s) 1{s ≤ t} C₀[s, ∞) / y(s)²` with `y(s) = F[s, ∞) C₀[s, ∞)`. -/
-private theorem intervalIntegral_eq_integral_atRiskKernel (F C₀ : Measure ℝ)
+private theorem interval_integral_eq_integral_at_risk_kernel (F C₀ : Measure ℝ)
     [IsProbabilityMeasure F] [IsProbabilityMeasure C₀] (f : ℝ → ℝ) (hf : HasDensity F volume f)
     (hF : F (Ici 0) = 1) {t : ℝ} (ht : 0 ≤ t) (hrisk : 0 < F (Ici t) * C₀ (Ici t)) :
     ∫ s in (0 : ℝ)..t, f s / ((1 - cdf F s) ^ 2 * C₀.real (Ici s)) =
       ∫ s, f s * ((if s ≤ t then ((F.real (Ici s) * C₀.real (Ici s)) ^ 2)⁻¹ else 0) *
         C₀.real (Ici s)) := by
-  obtain ⟨-, hbd⟩ := atRisk_bounds F C₀ hrisk
+  obtain ⟨-, hbd⟩ := at_risk_bounds F C₀ hrisk
   simp only [div_eq_mul_inv]
-  rw [← integral_ite_le_mul_eq_intervalIntegral F f hf hF _ t ht]
+  rw [← integral_ite_le_mul_eq_interval_integral F f hf hF _ t ht]
   refine integral_congr_ae (ae_of_all _ fun s ↦ ?_)
   by_cases hs : s ≤ t
   · have := (hbd s hs).1
     have := (hbd s hs).2.1
-    simp only [hs, ↓reduceIte, one_sub_cdf_eq_measureReal_Ici_of_hasDensity F f hf s]
+    simp only [hs, ↓reduceIte, one_sub_cdf_eq_measure_real_ici_of_has_density F f hf s]
     field_simp
   · simp [hs]
 
@@ -371,7 +372,7 @@ with observed time `x = min(T, C)`, failure-by-`t` indicator `A`, and at-risk pr
 `y(s) = F[s, ∞) C₀[s, ∞)`, the variance `∫ ψ²` of the influence function
 `ψ(z) = A(z) / y(x z) - θ - ∫ A(z₁) / y(x z₁)² (1{x z₁ ≤ x z} - y(x z₁)) dP(z₁)` equals
 `∫_0^t f / ((1 - F)² C₀[s, ∞))`. -/
-private theorem nelsonAalenVariance_eq_integral_sq (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
+private theorem nelson_aalen_variance_eq_integral_sq (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
     [IsProbabilityMeasure C₀] (f : ℝ → ℝ) (hf : HasDensity F volume f) (hF : F (Ici 0) = 1)
     (t : ℝ) (ht : 0 ≤ t) (hrisk : 0 < F (Ici t) * C₀ (Ici t)) :
     let x : ℝ × ℝ → ℝ := fun z ↦ min z.1 z.2
@@ -394,8 +395,8 @@ private theorem nelsonAalenVariance_eq_integral_sq (F C₀ : Measure ℝ) [IsPro
   have hAt (z : ℝ × ℝ) (hz : A z ≠ 0) : x z ≤ t := by
     simp only [hAdef, ne_eq, ite_eq_right_iff, one_ne_zero, imp_false, not_not] at hz
     exact (min_le_left _ _).trans hz.2
-  have hy (s : ℝ) : y s = P.real {z | s ≤ x z} := (measureReal_le_min_prod F C₀ s).symm
-  obtain ⟨hyt', hbd⟩ := atRisk_bounds F C₀ hrisk
+  have hy (s : ℝ) : y s = P.real {z | s ≤ x z} := (measure_real_le_min_prod F C₀ s).symm
+  obtain ⟨hyt', hbd⟩ := at_risk_bounds F C₀ hrisk
   have hyt : 0 < y t := hyt'
   have hFanti : Antitone fun s ↦ F.real (Ici s) := fun s s' h ↦
     measureReal_mono (Ici_subset_Ici.2 h)
@@ -406,13 +407,13 @@ private theorem nelsonAalenVariance_eq_integral_sq (F C₀ : Measure ℝ) [IsPro
   have hyspos (s : ℝ) (hs : s ≤ t) : 0 < y s := hyt.trans_le (hys s hs)
   have hAx (Φ : ℝ → ℝ) (hΦ : Measurable Φ) (M : ℝ) (hM : ∀ s, s ≤ t → |Φ s| ≤ M) :
       ∫ z, A z * Φ (x z) ∂P = ∫ s, f s * ((if s ≤ t then Φ s else 0) * C₀.real (Ici s)) :=
-    integral_failureIndicator_mul F C₀ f hf t Φ hΦ M hM
+    integral_failure_indicator_mul F C₀ f hf t Φ hΦ M hM
   set kt : ℝ → ℝ := fun s ↦ f s * ((if s ≤ t then (y s ^ 2)⁻¹ else 0) * C₀.real (Ici s))
     with hkt
   have hktm : Measurable kt := hf.1.mul ((Measurable.ite (measurableSet_le measurable_id
     measurable_const) (hym.pow_const 2).inv measurable_const).mul hCanti.measurable)
   have hktint : Integrable kt :=
-    integrable_atRiskKernel F C₀ f hf hrisk hktm.aestronglyMeasurable
+    integrable_at_risk_kernel F C₀ f hf hrisk hktm.aestronglyMeasurable
   set c : ℝ → ℝ := fun u ↦ ∫ s, kt s * (if s ≤ u then 1 else 0) with hc
   have hcm : Measurable c := by
     have hm : Measurable fun p : ℝ × ℝ ↦ kt p.2 * (if p.2 ≤ p.1 then (1 : ℝ) else 0) :=
@@ -526,7 +527,7 @@ private theorem nelsonAalenVariance_eq_integral_sq (F C₀ : Measure ℝ) [IsPro
     have h := integral_sq_integral_mul_ite_le P x hx kt hktm hktint
     simp_rw [← hy] at h
     exact h
-  have hT0 : v = ∫ s, kt s := intervalIntegral_eq_integral_atRiskKernel F C₀ f hf hF ht hrisk
+  have hT0 : v = ∫ s, kt s := interval_integral_eq_integral_at_risk_kernel F C₀ f hf hF ht hrisk
   rw [hT1, hT2, hT3, hT0]
   ring
 
@@ -534,7 +535,7 @@ private theorem nelsonAalenVariance_eq_integral_sq (F C₀ : Measure ℝ) [IsPro
 with a failure law `F` of density `f` and `P(min(T, C) ≥ t) > 0`,
 `√n (Λ̂_n(t) - Λ(t)) ⇒ N(0, v)` with `Λ(t) = ∫_0^t f / (1 - F)` and
 `v = ∫_0^t f / ((1 - F)² C₀[s, ∞))`. -/
-theorem tendstoInDistribution_nelsonAalenEstimator {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_nelson_aalen_estimator {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (F C₀ : Measure ℝ)
     [IsProbabilityMeasure F] [IsProbabilityMeasure C₀]
     (T C : ℕ → Ω → ℝ) (hcens : IsRandomCensoringModel μ F C₀ T C)
@@ -558,12 +559,12 @@ theorem tendstoInDistribution_nelsonAalenEstimator {Ω : Type*} [MeasurableSpace
     simp only [hAdef, ne_eq, ite_eq_right_iff, one_ne_zero, imp_false, not_not] at hz
     exact (min_le_left _ _).trans hz.2
   set y : ℝ → ℝ := fun s ↦ F.real (Ici s) * C₀.real (Ici s) with hydef
-  have hy (s : ℝ) : y s = P.real {z | s ≤ x z} := (measureReal_le_min_prod F C₀ s).symm
+  have hy (s : ℝ) : y s = P.real {z | s ≤ x z} := (measure_real_le_min_prod F C₀ s).symm
   have hyt : 0 < y t := by
     rcases ENNReal.mul_pos_iff.1 hrisk with ⟨h1, h2⟩
     exact mul_pos (ENNReal.toReal_pos h1.ne' (measure_ne_top _ _))
       (ENNReal.toReal_pos h2.ne' (measure_ne_top _ _))
-  have hmain := tendstoInDistribution_sqrt_mul_riskSetSum_sub μ P (fun i ω ↦ (T i ω, C i ω))
+  have hmain := tendsto_in_distribution_sqrt_mul_risk_set_sum_sub μ P (fun i ω ↦ (T i ω, C i ω))
     hcens.iid x hx A hA hA0 hA1 t hAt y hy hyt
   simp only at hmain
   -- properties of the at-risk probability
@@ -583,7 +584,7 @@ theorem tendstoInDistribution_nelsonAalenEstimator {Ω : Type*} [MeasurableSpace
   have hys (s : ℝ) (hs : s ≤ t) : y t ≤ y s :=
     mul_le_mul (hFanti hs) (hCanti hs) hCt.le measureReal_nonneg
   have hcdf (s : ℝ) : 1 - cdf F s = F.real (Ici s) :=
-    one_sub_cdf_eq_measureReal_Ici_of_hasDensity F f hf s
+    one_sub_cdf_eq_measure_real_ici_of_has_density F f hf s
   -- the centring constant
   have hθ : ∫ z, A z / y (x z) ∂P = Λ := by
     have hpt : (fun z ↦ A z / y (x z)) = fun z : ℝ × ℝ ↦
@@ -604,7 +605,7 @@ theorem tendstoInDistribution_nelsonAalenEstimator {Ω : Type*} [MeasurableSpace
     rw [hpt, integral_ite_fst_le_snd_prod F C₀ f hf _ hφm (1 / y t) hφb]
     have hΛ : Λ = ∫ s in (0 : ℝ)..t, f s * (1 - cdf F s)⁻¹ := by
       simp only [Λ, div_eq_mul_inv]
-    rw [hΛ, ← integral_ite_le_mul_eq_intervalIntegral F f hf hcens.failure_nonneg _ t ht]
+    rw [hΛ, ← integral_ite_le_mul_eq_interval_integral F f hf hcens.failure_nonneg _ t ht]
     refine integral_congr_ae (ae_of_all _ fun s ↦ ?_)
     by_cases hs : s ≤ t
     · simp only [hs, ↓reduceIte, hcdf, hydef]
@@ -626,31 +627,31 @@ theorem tendstoInDistribution_nelsonAalenEstimator {Ω : Type*} [MeasurableSpace
     funext n ω; rw [hNA, hθ]
   rw [hfun]
   convert hmain using 3
-  exact nelsonAalenVariance_eq_integral_sq F C₀ f hf hcens.failure_nonneg t ht hrisk
+  exact nelson_aalen_variance_eq_integral_sq F C₀ f hf hcens.failure_nonneg t ht hrisk
 
 /-- For a law on `[0, ∞)` with density `f`, `F(s) = ∫_0^s f` for `s ≥ 0`. -/
-theorem cdf_eq_intervalIntegral_of_hasDensity (F : Measure ℝ) [IsProbabilityMeasure F]
+theorem cdf_eq_interval_integral_of_has_density (F : Measure ℝ) [IsProbabilityMeasure F]
     (f : ℝ → ℝ) (hf : HasDensity F volume f) (hF : F (Ici 0) = 1) (s : ℝ) (hs : 0 ≤ s) :
     cdf F s = ∫ u in (0 : ℝ)..s, f u := by
-  have h := integral_ite_le_mul_eq_intervalIntegral F f hf hF (fun _ ↦ 1) s hs
+  have h := integral_ite_le_mul_eq_interval_integral F f hf hF (fun _ ↦ 1) s hs
   simp only [mul_one] at h
   rw [← h, cdf_eq_real, ← integral_indicator_one measurableSet_Iic,
-    integral_eq_integral_mul_of_hasDensity F f hf]
+    integral_eq_integral_mul_of_has_density F f hf]
   refine integral_congr_ae (ae_of_all _ fun u ↦ ?_)
   by_cases hu : u ≤ s <;> simp [hu]
 
 /-- For a law on `[0, ∞)` with density `f` and `F(t) < 1`, the survival function is the
 exponential of minus the cumulative hazard: `1 - F(t) = exp (-∫_0^t f / (1 - F))`. -/
-theorem one_sub_cdf_eq_exp_neg_integral_of_hasDensity (F : Measure ℝ) [IsProbabilityMeasure F]
+theorem one_sub_cdf_eq_exp_neg_integral_of_has_density (F : Measure ℝ) [IsProbabilityMeasure F]
     (f : ℝ → ℝ) (hf : HasDensity F volume f) (hF : F (Ici 0) = 1) (t : ℝ) (ht : 0 ≤ t)
     (hpos : 0 < 1 - cdf F t) :
     1 - cdf F t = Real.exp (-∫ s in (0 : ℝ)..t, f s / (1 - cdf F s)) := by
   set Φ : ℝ → ℝ := fun s ↦ ∫ u in (0 : ℝ)..s, f u with hΦ
-  have hfi : Integrable f := integrable_of_hasDensity F f hf
+  have hfi : Integrable f := integrable_of_has_density F f hf
   have hut : uIcc 0 t = Icc 0 t := uIcc_of_le ht
   have hcdfΦ (s : ℝ) (hs : s ∈ uIcc 0 t) : cdf F s = Φ s := by
     rw [hut] at hs
-    exact cdf_eq_intervalIntegral_of_hasDensity F f hf hF s hs.1
+    exact cdf_eq_interval_integral_of_has_density F f hf hF s hs.1
   have hle (s : ℝ) (hs : s ∈ uIcc 0 t) : Φ s ≤ cdf F t := by
     rw [← hcdfΦ s hs]
     rw [hut] at hs
@@ -716,7 +717,7 @@ theorem one_sub_cdf_eq_exp_neg_integral_of_hasDensity (F : Measure ℝ) [IsProba
 /-- The Kaplan–Meier estimator is close to the exponential of minus the Nelson–Aalen estimator:
 `|Ŝ(t) - exp (-Λ̂(t))| ≤ n / K²` with `K = max(1, #{j < n : min(T j, C j) ≥ t})`, since every
 risk set of an observed failure by time `t` has at least `K` members. -/
-private theorem abs_kaplanMeierEstimator_sub_exp_neg_le {Ω : Type*} (T C : ℕ → Ω → ℝ) (n : ℕ)
+private theorem abs_kaplan_meier_estimator_sub_exp_neg_le {Ω : Type*} (T C : ℕ → Ω → ℝ) (n : ℕ)
     (ω : Ω) (t : ℝ) :
     |kaplanMeierEstimator T C n ω t - Real.exp (-nelsonAalenEstimator T C n ω t)| ≤
       n * (((max ((Finset.range n).filter fun j ↦ t ≤ min (T j ω) (C j ω)).card 1 : ℕ) : ℝ)⁻¹)
@@ -774,7 +775,7 @@ private theorem abs_kaplanMeierEstimator_sub_exp_neg_le {Ω : Type*} (T C : ℕ 
 
 /-- In the random censoring model, the risk-set sizes, the Nelson–Aalen estimator and the
 Kaplan–Meier estimator are measurable functions of the sample. -/
-private theorem measurable_nelsonAalenEstimator_kaplanMeierEstimator {Ω : Type*}
+private theorem measurable_nelson_aalen_estimator_kaplan_meier_estimator {Ω : Type*}
     [MeasurableSpace Ω] {μ : Measure Ω} {F C₀ : Measure ℝ} {T C : ℕ → Ω → ℝ}
     (hcens : IsRandomCensoringModel μ F C₀ T C) (n : ℕ) (t : ℝ) :
     Measurable (fun ω ↦ nelsonAalenEstimator T C n ω t) ∧
@@ -801,9 +802,9 @@ private theorem measurable_nelsonAalenEstimator_kaplanMeierEstimator {Ω : Type*
       (measurable_const.sub (hR i).inv) measurable_const
 
 /-- GAPS 106.29, fixed-time Kaplan–Meier central limit theorem: under the assumptions of
-`tendstoInDistribution_nelsonAalenEstimator`, `√n (Ŝ_n(t) - S(t)) ⇒ N(0, S(t)² v)` with
+`tendsto_in_distribution_nelson_aalen_estimator`, `√n (Ŝ_n(t) - S(t)) ⇒ N(0, S(t)² v)` with
 `S(t) = 1 - F(t)` and `v` the Nelson–Aalen asymptotic variance (Greenwood's formula). -/
-theorem tendstoInDistribution_kaplanMeierEstimator {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_kaplan_meier_estimator {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (F C₀ : Measure ℝ)
     [IsProbabilityMeasure F] [IsProbabilityMeasure C₀]
     (T C : ℕ → Ω → ℝ) (hcens : IsRandomCensoringModel μ F C₀ T C)
@@ -817,7 +818,7 @@ theorem tendstoInDistribution_kaplanMeierEstimator {Ω : Type*} [MeasurableSpace
   intro S v
   set Λ := ∫ s in (0 : ℝ)..t, f s / (1 - cdf F s) with hΛ
   set w := ∫ s in (0 : ℝ)..t, f s / ((1 - cdf F s) ^ 2 * C₀.real (Ici s)) with hw
-  have hNA := tendstoInDistribution_nelsonAalenEstimator μ F C₀ T C hcens f hf t ht hrisk
+  have hNA := tendsto_in_distribution_nelson_aalen_estimator μ F C₀ T C hcens f hf t ht hrisk
   simp only at hNA
   rw [← hΛ, ← hw] at hNA
   have hFt : 0 < F.real (Ici t) := by
@@ -827,14 +828,14 @@ theorem tendstoInDistribution_kaplanMeierEstimator {Ω : Type*} [MeasurableSpace
     rcases ENNReal.mul_pos_iff.1 hrisk with ⟨-, h2⟩
     exact ENNReal.toReal_pos h2.ne' (measure_ne_top _ _)
   have hSpos : 0 < S := by
-    simp only [S, one_sub_cdf_eq_measureReal_Ici_of_hasDensity F f hf]; exact hFt
+    simp only [S, one_sub_cdf_eq_measure_real_ici_of_has_density F f hf]; exact hFt
   have hS : S = Real.exp (-Λ) :=
-    one_sub_cdf_eq_exp_neg_integral_of_hasDensity F f hf hcens.failure_nonneg t ht hSpos
-  have hmeas := measurable_nelsonAalenEstimator_kaplanMeierEstimator hcens
+    one_sub_cdf_eq_exp_neg_integral_of_has_density F f hf hcens.failure_nonneg t ht hSpos
+  have hmeas := measurable_nelson_aalen_estimator_kaplan_meier_estimator hcens
   -- delta method for `u ↦ exp (-u)`
   have hd : HasDerivAt (fun u : ℝ ↦ Real.exp (-u)) (-Real.exp (-Λ)) Λ := by
     simpa using (hasDerivAt_neg Λ).exp
-  have hdelta := (tendstoInDistribution_delta_method μ (fun n ω ↦ nelsonAalenEstimator T C n ω t)
+  have hdelta := (tendsto_in_distribution_delta_method μ (fun n ω ↦ nelsonAalenEstimator T C n ω t)
     (fun n ↦ (hmeas n t).1) Λ (fun u : ℝ ↦ Real.exp (-u)) (by fun_prop)
     (ContinuousLinearMap.smulRight (1 : ℝ →L[ℝ] ℝ) (-Real.exp (-Λ))) hd.hasFDerivAt
     (by simpa only [smul_eq_mul] using hNA)).1
@@ -849,8 +850,8 @@ theorem tendstoInDistribution_kaplanMeierEstimator {Ω : Type*} [MeasurableSpace
     congr 1
     ext
     simp [hS, sq_nonneg]
-  have hX := tendstoInDistribution_of_map_eq hdelta aemeasurable_id hlaw
-  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _
+  have hX := tendsto_in_distribution_of_map_eq hdelta aemeasurable_id hlaw
+  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ _ _
     (fun n ↦ (((hmeas n t).1.neg.exp).sub_const _).const_mul _)
     (fun n ↦ ((hmeas n t).2.sub_const _).const_mul _) hX ?_
   -- the at-risk proportion at `t` obeys the law of large numbers
@@ -867,8 +868,8 @@ theorem tendstoInDistribution_kaplanMeierEstimator {Ω : Type*} [MeasurableSpace
       funext z; simp [hrdef, Set.indicator_apply]
     rw [this, integral_indicator_one
       (measurableSet_le measurable_const (measurable_fst.min measurable_snd)),
-      measureReal_le_min_prod]
-  have hW := tendstoInMeasure_sampleMean_of_iid μ (F.prod C₀) (fun i ω ↦ (T i ω, C i ω))
+      measure_real_le_min_prod]
+  have hW := tendsto_in_measure_sample_mean_of_iid μ (F.prod C₀) (fun i ω ↦ (T i ω, C i ω))
     hcens.iid r hrm hri
   have hU : TendstoInMeasure μ (fun (n : ℕ) ω ↦
       (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, r (T i ω, C i ω) - y) atTop (fun _ ↦ 0) := by
@@ -878,8 +879,8 @@ theorem tendstoInDistribution_kaplanMeierEstimator {Ω : Type*} [MeasurableSpace
   have hlim : Tendsto (fun n : ℕ ↦ 4 / (y ^ 2 * Real.sqrt n)) atTop (𝓝 0) :=
     tendsto_const_nhds.div_atTop ((Real.tendsto_sqrt_atTop.comp
       tendsto_natCast_atTop_atTop).const_mul_atTop (by positivity))
-  refine tendstoInMeasure_zero_of_abs_le μ (fun n _ ↦ 4 / (y ^ 2 * Real.sqrt n)) _ _
-    (half_pos hy) ?_ (tendstoInMeasure_const_of_tendsto μ _ hlim) hU
+  refine tendsto_in_measure_zero_of_abs_le μ (fun n _ ↦ 4 / (y ^ 2 * Real.sqrt n)) _ _
+    (half_pos hy) ?_ (tendsto_in_measure_const_of_tendsto μ _ hlim) hU
   filter_upwards [eventually_ge_atTop 1] with n hn
   refine ae_of_all _ fun ω hω ↦ ?_
   have hn' : (0 : ℝ) < n := by exact_mod_cast hn
@@ -891,7 +892,7 @@ theorem tendstoInDistribution_kaplanMeierEstimator {Ω : Type*} [MeasurableSpace
     have h2 : y / 2 < (n : ℝ)⁻¹ * M := by rw [hMcast]; linarith
     rwa [inv_mul_eq_div, lt_div_iff₀ hn'] at h2
   have hK : (M : ℝ) ≤ ((max M 1 : ℕ) : ℝ) := by exact_mod_cast le_max_left _ _
-  have hb := abs_kaplanMeierEstimator_sub_exp_neg_le T C n ω t
+  have hb := abs_kaplan_meier_estimator_sub_exp_neg_le T C n ω t
   rw [← hMdef] at hb
   have hr0 : 0 < Real.sqrt n := Real.sqrt_pos.2 hn'
   have hr2 : Real.sqrt n ^ 2 = n := Real.sq_sqrt hn'.le

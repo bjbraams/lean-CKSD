@@ -4,6 +4,7 @@ public import CKSD.Nonparametric.SmoothingRates
 public import CKSD.Nonparametric.LowerBounds.Testing
 public import CKSD.Nonparametric.LowerBounds.Gaussian
 
+
 /-!
 # The fixed-design Hölder regression minimax rate
 
@@ -12,20 +13,20 @@ Gaussian regression over the Hölder class `CKSD.holderRegressionClass β L` is 
 `n^(-2β/(2β+1))`.
 
 The upper bound is attained by the box-kernel local average `CKSD.fixedDesignLocalConstant`
-with bandwidth `n^(-1/(2β+1))` (`CKSD.fixedDesignLocalConstant_risk_le`). The lower bound is
-Assouad's lemma (`CKSD.mul_one_sub_div_two_le_sSup_integral_hammingDist`) applied to the
+with bandwidth `n^(-1/(2β+1))` (`CKSD.fixed_design_local_constant_risk_le`). The lower bound is
+Assouad's lemma (`CKSD.mul_one_sub_div_two_le_s_sup_integral_hamming_dist`) applied to the
 hypercube of alternatives `t ↦ L dist(t, S_w)^β`, sums of Hölder tents over a subfamily of the
 `m ≍ n^(1/(2β+1))` cells `(j/m, (j + 1)/m)`. Neighbouring alternatives are compared by the
-Gaussian total variation bound `CKSD.totalVariationDistance_pi_gaussianReal_le`, and estimates
+Gaussian total variation bound `CKSD.total_variation_distance_pi_gaussian_real_le`, and estimates
 are reduced to sign patterns by a cellwise minimum-distance decoder.
 
 ## Main results
 
-* `CKSD.measurable_uncurry_fixedDesignLocalConstant`: the local average is an admissible
+* `CKSD.measurable_uncurry_fixed_design_local_constant`: the local average is an admissible
   (jointly measurable) estimator.
-* `CKSD.holderRegressionMinimaxRisk_le`, `CKSD.holderRegressionMinimaxRisk_ge`: the upper and
+* `CKSD.holder_regression_minimax_risk_le`, `CKSD.holder_regression_minimax_risk_ge`: the upper and
   lower bounds.
-* `CKSD.holderRegressionMinimaxRisk_bounds`: both bounds together.
+* `CKSD.holder_regression_minimax_risk_bounds`: both bounds together.
 
 Sources: GAPS 103.22.
 -/
@@ -44,7 +45,7 @@ attribute [local instance] Classical.propDecidable
 /-- The box-kernel local average `(y, t) ↦ fixedDesignLocalConstant h y t` is jointly measurable
 in the observations and the evaluation point, so it is an admissible estimator in
 `CKSD.holderRegressionMinimaxRisk`. -/
-theorem measurable_uncurry_fixedDesignLocalConstant (n : ℕ) (h : ℝ) :
+theorem measurable_uncurry_fixed_design_local_constant (n : ℕ) (h : ℝ) :
     Measurable (Function.uncurry (fixedDesignLocalConstant (n := n) h)) := by
   have hw : ∀ i : Fin n, Measurable fun p : (Fin n → ℝ) × ℝ ↦
       if |p.2 - ((i.val + 1 : ℕ) : ℝ) / n| ≤ h then (1 : ℝ) else 0 := fun i ↦
@@ -60,16 +61,16 @@ theorem measurable_uncurry_fixedDesignLocalConstant (n : ℕ) (h : ℝ) :
 
 /-- Upper half of GAPS 103.22: for `0 < β ≤ 1`, the fixed-design Hölder minimax mean integrated
 squared risk is at most `C n^(-2β/(2β+1))`, attained by the box-kernel local average with
-bandwidth `n^(-1/(2β+1))` (`CKSD.fixedDesignLocalConstant_risk_le`). -/
-theorem holderRegressionMinimaxRisk_le (β L σ : ℝ)
+bandwidth `n^(-1/(2β+1))` (`CKSD.fixed_design_local_constant_risk_le`). -/
+theorem holder_regression_minimax_risk_le (β L σ : ℝ)
     (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) (hσ : 0 < σ) :
     ∃ C > (0 : ℝ), ∀ n : ℕ, 0 < n →
       holderRegressionMinimaxRisk n β L σ ≤
         ENNReal.ofReal (C * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1))) := by
-  obtain ⟨C, hC, hrisk⟩ := fixedDesignLocalConstant_risk_le β L σ 1 hβ hL hσ le_rfl
+  obtain ⟨C, hC, hrisk⟩ := fixed_design_local_constant_risk_le β L σ 1 hβ hL hσ le_rfl
   refine ⟨C, hC, fun n hn ↦ ?_⟩
   unfold holderRegressionMinimaxRisk
-  refine iInf_le_of_le ⟨_, measurable_uncurry_fixedDesignLocalConstant n
+  refine iInf_le_of_le ⟨_, measurable_uncurry_fixed_design_local_constant n
     (1 * Real.rpow (n : ℝ) (-1 / (2 * β + 1)))⟩ ?_
   exact iSup_le fun f ↦ hrisk n hn f.val f.property
 
@@ -88,7 +89,7 @@ private def tentFun (β L : ℝ) (m j : ℕ) (t : ℝ) : ℝ :=
   L * min (t - j / m) ((j + 1) / m - t) ^ β
 
 /-- Every grid point `k / m` lies in `bumpSet m w`, since no open cell contains it. -/
-private theorem natCast_div_mem_bumpSet {m : ℕ} (hm : 0 < m) (w : Fin m → Bool) (k : ℕ) :
+private theorem nat_cast_div_mem_bump_set {m : ℕ} (hm : 0 < m) (w : Fin m → Bool) (k : ℕ) :
     (k : ℝ) / m ∈ bumpSet m w := by
   intro j _ ⟨h1, h2⟩
   have hmR : (0 : ℝ) < m := by exact_mod_cast hm
@@ -99,7 +100,7 @@ private theorem natCast_div_mem_bumpSet {m : ℕ} (hm : 0 < m) (w : Fin m → Bo
 
 /-- The open cells `(j/m, (j + 1)/m)` are pairwise disjoint: a point in two of them determines
 the cell index. -/
-private theorem eq_of_mem_Ioo_of_mem_Ioo {m j k : ℕ} {t : ℝ}
+private theorem eq_of_mem_ioo_of_mem_ioo {m j k : ℕ} {t : ℝ}
     (hj : t ∈ Ioo ((j : ℝ) / m) ((j + 1 : ℝ) / m)) (hk : t ∈ Ioo ((k : ℝ) / m) ((k + 1 : ℝ) / m)) :
     j = k := by
   rcases Nat.eq_zero_or_pos m with rfl | hm
@@ -128,9 +129,9 @@ private theorem abs_rpow_sub_rpow_le {a b β : ℝ} (ha : 0 ≤ a) (hb : 0 ≤ b
 
 /-- Each hypercube alternative lies in the Hölder class: `x ↦ dist(x, S)` is `1`-Lipschitz and
 `x ↦ x^β` is `β`-Hölder with constant one, so `L dist(·, S)^β` satisfies the `(β, L)` bound. -/
-private theorem bumpFun_mem_holderRegressionClass {β L : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 ≤ L)
+private theorem bump_fun_mem_holder_regression_class {β L : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 ≤ L)
     {m : ℕ} (hm : 0 < m) (w : Fin m → Bool) : bumpFun β L m w ∈ holderRegressionClass β L := by
-  have hne : (bumpSet m w).Nonempty := ⟨_, natCast_div_mem_bumpSet hm w 0⟩
+  have hne : (bumpSet m w).Nonempty := ⟨_, nat_cast_div_mem_bump_set hm w 0⟩
   refine ⟨?_, fun x _ y _ ↦ ?_⟩
   · unfold bumpFun
     exact (measurable_const.mul ((Metric.continuous_infDist_pt _).rpow_const
@@ -149,7 +150,7 @@ private theorem bumpFun_mem_holderRegressionClass {β L : ℝ} (hβ : β ∈ Ioc
 
 /-- On the cell `(j/m, (j + 1)/m)`, the alternative equals the tent when `w j = true` and
 vanishes otherwise. -/
-private theorem bumpFun_of_mem_Ioo {β L : ℝ} (hβ : 0 < β) {m : ℕ} (w : Fin m → Bool) {j : Fin m}
+private theorem bump_fun_of_mem_ioo {β L : ℝ} (hβ : 0 < β) {m : ℕ} (w : Fin m → Bool) {j : Fin m}
     {t : ℝ}
     (ht : t ∈ Ioo ((j : ℝ) / m) ((j + 1 : ℝ) / m)) :
     bumpFun β L m w t = if w j then tentFun β L m j t else 0 := by
@@ -158,9 +159,9 @@ private theorem bumpFun_of_mem_Ioo {β L : ℝ} (hβ : 0 < β) {m : ℕ} (w : Fi
   split_ifs with hw
   · unfold tentFun
     congr 2
-    have hne : (bumpSet m w).Nonempty := ⟨_, natCast_div_mem_bumpSet hm w 0⟩
-    have hl : ((j : ℕ) : ℝ) / m ∈ bumpSet m w := natCast_div_mem_bumpSet hm w j
-    have hr : (((j : ℕ) + 1 : ℕ) : ℝ) / m ∈ bumpSet m w := natCast_div_mem_bumpSet hm w (j + 1)
+    have hne : (bumpSet m w).Nonempty := ⟨_, nat_cast_div_mem_bump_set hm w 0⟩
+    have hl : ((j : ℕ) : ℝ) / m ∈ bumpSet m w := nat_cast_div_mem_bump_set hm w j
+    have hr : (((j : ℕ) + 1 : ℕ) : ℝ) / m ∈ bumpSet m w := nat_cast_div_mem_bump_set hm w (j + 1)
     push_cast at hr
     refine le_antisymm (le_min ?_ ?_) ((Metric.le_infDist hne).mpr fun y hy ↦ ?_)
     · refine (Metric.infDist_le_dist_of_mem hl).trans_eq ?_
@@ -176,14 +177,14 @@ private theorem bumpFun_of_mem_Ioo {β L : ℝ} (hβ : 0 < β) {m : ℕ} (w : Fi
           rw [abs_of_neg (by linarith [ht.2])]; linarith)
   · have hmem : t ∈ bumpSet m w := by
       intro k hk htk
-      have := eq_of_mem_Ioo_of_mem_Ioo ht htk
+      have := eq_of_mem_ioo_of_mem_ioo ht htk
       rw [Fin.ext this] at hw
       exact hw hk
     rw [Metric.infDist_zero_of_mem hmem, Real.zero_rpow hβ.ne', mul_zero]
 
 /-- Every point of `[0, 1]` is either a grid point `k / m` or lies in one of the open cells
 `(j/m, (j + 1)/m)` with `j < m`. -/
-private theorem grid_or_mem_Ioo {m : ℕ} (hm : 0 < m) {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 1) :
+private theorem grid_or_mem_ioo {m : ℕ} (hm : 0 < m) {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 1) :
     (∃ k : ℕ, t = k / m) ∨ ∃ j : Fin m, t ∈ Ioo ((j : ℝ) / m) ((j + 1 : ℝ) / m) := by
   have hmR : (0 : ℝ) < m := by exact_mod_cast hm
   set k := ⌊t * m⌋₊ with hk
@@ -201,13 +202,13 @@ private theorem grid_or_mem_Ioo {m : ℕ} (hm : 0 < m) {t : ℝ} (ht : t ∈ Icc
     exact ⟨k, by rw [h]; field_simp⟩
 
 /-- The hypercube alternatives vanish at every grid point `k / m`. -/
-private theorem bumpFun_natCast_div {β L : ℝ} (hβ : 0 < β) {m : ℕ} (hm : 0 < m) (w : Fin m → Bool)
+private theorem bump_fun_nat_cast_div {β L : ℝ} (hβ : 0 < β) {m : ℕ} (hm : 0 < m) (w : Fin m → Bool)
     (k : ℕ) : bumpFun β L m w (k / m) = 0 := by
-  rw [bumpFun, Metric.infDist_zero_of_mem (natCast_div_mem_bumpSet hm w k),
+  rw [bumpFun, Metric.infDist_zero_of_mem (nat_cast_div_mem_bump_set hm w k),
     Real.zero_rpow hβ.ne', mul_zero]
 
 /-- On its cell the tent takes values in `[0, L (1/m)^β]`. -/
-private theorem tentFun_nonneg_le {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L) {m : ℕ} (hm : 0 < m) {j : ℕ}
+private theorem tent_fun_nonneg_le {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L) {m : ℕ} (hm : 0 < m) {j : ℕ}
     {t : ℝ} (ht : t ∈ Ioo ((j : ℝ) / m) ((j + 1 : ℝ) / m)) :
     0 ≤ tentFun β L m j t ∧ tentFun β L m j t ≤ L * (1 / (m : ℝ)) ^ β := by
   have hmR : (0 : ℝ) < m := by exact_mod_cast hm
@@ -223,7 +224,7 @@ private theorem tentFun_nonneg_le {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L) {m 
 
 /-- Lower bound for the squared `L²` mass of a tent: on the middle half of its cell the tent is
 at least `L (1/(4m))^β`, so `∫ tent² ≥ L² (1/(4m))^(2β) / (2m)`. -/
-private theorem ofReal_le_lintegral_tentFun_sq {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L) {m : ℕ}
+private theorem of_real_le_lintegral_tent_fun_sq {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L) {m : ℕ}
     (hm : 0 < m) (j : ℕ) :
     ENNReal.ofReal (L ^ 2 * ((1 / (4 * m : ℝ)) ^ β) ^ 2 * (1 / (2 * m))) ≤
       ∫⁻ t in Ioo ((j : ℝ) / m) ((j + 1 : ℝ) / m), ENNReal.ofReal (tentFun β L m j t ^ 2) := by
@@ -276,7 +277,7 @@ private def bumpLoss (β L : ℝ) (m : ℕ) : ℝ≥0∞ :=
 /-- If the decoder errs on cell `j`, the squared `L²` error of `g` on that cell against the
 alternative `bumpFun w` is at least `bumpLoss`; this is the triangle inequality
 `∫ tent² ≤ 2 ∫ (g - tent)² + 2 ∫ g²` applied to the closer of the two candidates. -/
-private theorem bumpLoss_le_of_regDecode_ne {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L) {m : ℕ}
+private theorem bump_loss_le_of_reg_decode_ne {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L) {m : ℕ}
     {g : ℝ → ℝ} (hg : Measurable g) (w : Fin m → Bool) (j : Fin m)
     (hne : regDecode β L m g j ≠ w j) :
     bumpLoss β L m ≤ ∫⁻ t in bumpIoo m j, ENNReal.ofReal ((g t - bumpFun β L m w t) ^ 2) := by
@@ -285,7 +286,7 @@ private theorem bumpLoss_le_of_regDecode_ne {β L : ℝ} (hβ : 0 < β) (hL : 0 
   set Z := ∫⁻ t in bumpIoo m j, ENNReal.ofReal (g t ^ 2)
   have hB : ENNReal.ofReal (L ^ 2 * ((1 / (4 * m : ℝ)) ^ β) ^ 2 * (1 / (2 * m))) ≤
       2 * A + 2 * Z := by
-    refine (ofReal_le_lintegral_tentFun_sq hβ hL hm j).trans ?_
+    refine (of_real_le_lintegral_tent_fun_sq hβ hL hm j).trans ?_
     calc ∫⁻ t in bumpIoo m j, ENNReal.ofReal (tentFun β L m j t ^ 2)
         ≤ ∫⁻ t in bumpIoo m j, (2 * ENNReal.ofReal ((g t - tentFun β L m j t) ^ 2) +
             2 * ENNReal.ofReal (g t ^ 2)) := by
@@ -307,9 +308,9 @@ private theorem bumpLoss_le_of_regDecode_ne {β L : ℝ} (hβ : 0 < β) (hL : 0 
       if w j then A else Z := by
     split_ifs with hw
     · exact setLIntegral_congr_fun measurableSet_Ioo fun t ht ↦ by
-        simp only [bumpFun_of_mem_Ioo hβ w ht, hw, ↓reduceIte]
+        simp only [bump_fun_of_mem_ioo hβ w ht, hw, ↓reduceIte]
     · exact setLIntegral_congr_fun measurableSet_Ioo fun t ht ↦ by
-        simp only [bumpFun_of_mem_Ioo hβ w ht, hw, ↓reduceIte, sub_zero, Bool.false_eq_true]
+        simp only [bump_fun_of_mem_ioo hβ w ht, hw, ↓reduceIte, sub_zero, Bool.false_eq_true]
   rw [hcongr, bumpLoss]
   apply ENNReal.div_le_of_le_mul
   by_cases hAZ : A < Z
@@ -331,7 +332,7 @@ private theorem bumpLoss_le_of_regDecode_ne {β L : ℝ} (hβ : 0 < β) (hL : 0 
 
 /-- Reduction of estimation to Hamming loss: the `L²[0, 1]` error of `g` against `bumpFun w`
 is at least `bumpLoss` times the Hamming distance between the decoded pattern and `w`. -/
-private theorem hammingDist_regDecode_mul_le {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L) {m : ℕ}
+private theorem hamming_dist_reg_decode_mul_le {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L) {m : ℕ}
     {g : ℝ → ℝ} (hg : Measurable g) (w : Fin m → Bool) :
     (hammingDist (regDecode β L m g) w : ℝ≥0∞) * bumpLoss β L m ≤
       ∫⁻ t in Icc (0 : ℝ) 1, ENNReal.ofReal ((g t - bumpFun β L m w t) ^ 2) := by
@@ -340,7 +341,7 @@ private theorem hammingDist_regDecode_mul_le {β L : ℝ} (hβ : 0 < β) (hL : 0
     intro j _ k _ hjk
     rw [Function.onFun, Set.disjoint_left]
     intro t htj htk
-    exact hjk (Fin.ext (eq_of_mem_Ioo_of_mem_Ioo htj htk))
+    exact hjk (Fin.ext (eq_of_mem_ioo_of_mem_ioo htj htk))
   have hsub : (⋃ j ∈ (Finset.univ : Finset (Fin m)), bumpIoo m j) ⊆ Icc (0 : ℝ) 1 := by
     intro t ht
     simp only [Finset.mem_univ, iUnion_true, mem_iUnion] at ht
@@ -359,7 +360,7 @@ private theorem hammingDist_regDecode_mul_le {β L : ℝ} (hβ : 0 < β) (hL : 0
       ≤ ∑ j : Fin m, ∫⁻ t in bumpIoo m j, ENNReal.ofReal ((g t - bumpFun β L m w t) ^ 2) := by
         refine Finset.sum_le_sum fun j _ ↦ ?_
         split_ifs with h
-        · exact bumpLoss_le_of_regDecode_ne hβ hL hg w j h
+        · exact bump_loss_le_of_reg_decode_ne hβ hL hg w j h
         · exact zero_le
     _ = ∫⁻ t in ⋃ j ∈ (Finset.univ : Finset (Fin m)), bumpIoo m j,
           ENNReal.ofReal ((g t - bumpFun β L m w t) ^ 2) :=
@@ -368,7 +369,7 @@ private theorem hammingDist_regDecode_mul_le {β L : ℝ} (hβ : 0 < β) (hL : 0
 
 /-- For a jointly measurable estimator `T`, the decoded pattern `y ↦ regDecode (T y)` is a
 measurable function of the observations. -/
-private theorem measurable_regDecode_comp {β L : ℝ} (hβ : 0 < β) {m n : ℕ}
+private theorem measurable_reg_decode_comp {β L : ℝ} (hβ : 0 < β) {m n : ℕ}
     {T : (Fin n → ℝ) → ℝ → ℝ} (hT : Measurable (Function.uncurry T)) :
     Measurable fun y ↦ regDecode β L m (T y) := by
   have htent : ∀ j : ℕ, Measurable (tentFun β L m j) := fun j ↦ by
@@ -389,7 +390,7 @@ private theorem measurable_regDecode_comp {β L : ℝ} (hβ : 0 < β) {m n : ℕ
     exact ENNReal.measurable_ofReal.comp (hT.pow_const 2)
 
 /-- At most `n/m + 1` design points `(i + 1)/n` fall in a cell `(j/m, (j + 1)/m)`. -/
-private theorem card_design_mem_bumpIoo_le {n m : ℕ} (hn : 0 < n) (hm : 0 < m) (j : ℕ) :
+private theorem card_design_mem_bump_ioo_le {n m : ℕ} (hn : 0 < n) (hm : 0 < m) (j : ℕ) :
     ((Finset.univ.filter fun i : Fin n ↦ ((i.val + 1 : ℕ) : ℝ) / n ∈ bumpIoo m j).card : ℝ) ≤
       n / m + 1 := by
   have hnR : (0 : ℝ) < n := by exact_mod_cast hn
@@ -424,7 +425,7 @@ private theorem card_design_mem_bumpIoo_le {n m : ℕ} (hn : 0 < n) (hm : 0 < m)
 /-- For neighbouring patterns `w, w'` (Hamming distance one), the squared Euclidean distance
 between the regression means on the design is at most `(n/m + 1) (L (1/m)^β)²`: they differ on
 the design points in one cell only, by at most the tent height. -/
-private theorem sum_sq_bumpFun_sub_le {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L) {n m : ℕ} (hn : 0 < n)
+private theorem sum_sq_bump_fun_sub_le {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L) {n m : ℕ} (hn : 0 < n)
     (hm : 0 < m) (w w' : Fin m → Bool) (hww : hammingDist w w' = 1) :
     ∑ i : Fin n, (bumpFun β L m w' (((i.val + 1 : ℕ) : ℝ) / n) -
       bumpFun β L m w (((i.val + 1 : ℕ) : ℝ) / n)) ^ 2 ≤
@@ -446,29 +447,29 @@ private theorem sum_sq_bumpFun_sub_le {β L : ℝ} (hβ : 0 < β) (hL : 0 ≤ L)
     have hx : x ∈ Icc (0 : ℝ) 1 := by
       refine ⟨by positivity, ?_⟩
       rw [div_le_one hnR]; exact_mod_cast i.isLt
-    rcases grid_or_mem_Ioo hm hx with ⟨k, hk⟩ | ⟨j, hj⟩
-    · rw [hk, bumpFun_natCast_div hβ hm, bumpFun_natCast_div hβ hm]
+    rcases grid_or_mem_ioo hm hx with ⟨k, hk⟩ | ⟨j, hj⟩
+    · rw [hk, bump_fun_nat_cast_div hβ hm, bump_fun_nat_cast_div hβ hm]
       split_ifs <;> simp [B]; positivity
-    · rw [bumpFun_of_mem_Ioo hβ w hj, bumpFun_of_mem_Ioo hβ w' hj]
+    · rw [bump_fun_of_mem_ioo hβ w hj, bump_fun_of_mem_ioo hβ w' hj]
       by_cases hjj : j = j₀
       · subst hjj
         have hmem : x ∈ bumpIoo m j := hj
         simp only [hmem, ↓reduceIte]
-        obtain ⟨h0, h1⟩ := tentFun_nonneg_le hβ hL hm hj
+        obtain ⟨h0, h1⟩ := tent_fun_nonneg_le hβ hL hm hj
         have hB0 : 0 ≤ L * (1 / (m : ℝ)) ^ β := h0.trans h1
         split_ifs <;> simp only [sub_self, sub_zero, zero_sub, neg_sq] <;>
           first | exact pow_le_pow_left₀ h0 h1 2 | (rw [zero_pow two_ne_zero]; exact sq_nonneg _)
       · rw [hdiff j hjj, sub_self]
-        have : x ∉ bumpIoo m j₀ := fun h ↦ hjj (Fin.ext (eq_of_mem_Ioo_of_mem_Ioo hj h))
+        have : x ∉ bumpIoo m j₀ := fun h ↦ hjj (Fin.ext (eq_of_mem_ioo_of_mem_ioo hj h))
         simp [this]
   refine (Finset.sum_le_sum fun i _ ↦ hpt i).trans ?_
   rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul]
-  exact mul_le_mul_of_nonneg_right (card_design_mem_bumpIoo_le hn hm j₀) (sq_nonneg _)
+  exact mul_le_mul_of_nonneg_right (card_design_mem_bump_ioo_le hn hm j₀) (sq_nonneg _)
 
 /-- Assouad's bound for the Hölder hypercube: if `(n/m + 1) (L (1/m)^β)² ≤ σ²`, neighbouring
 Gaussian laws are at total variation at most `1/2`, and every jointly measurable estimator has
 worst-case risk over the Hölder class at least `(m/4) bumpLoss`. -/
-private theorem bumpLoss_mul_le_iSup_risk {β L σ : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 ≤ L)
+private theorem bump_loss_mul_le_i_sup_risk {β L σ : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 ≤ L)
     (hσ : 0 < σ) {n m : ℕ} (hn : 0 < n) (hm : 0 < m)
     (hTV : (n / m + 1) * (L * (1 / (m : ℝ)) ^ β) ^ 2 ≤ σ ^ 2)
     (T : (Fin n → ℝ) → ℝ → ℝ) (hT : Measurable (Function.uncurry T)) :
@@ -486,16 +487,16 @@ private theorem bumpLoss_mul_le_iSup_risk {β L σ : ℝ} (hβ : β ∈ Ioc (0 :
   have hnear : ∀ w w', hammingDist w w' = 1 → totalVariationDistance (P w) (P w') ≤ 1 / 2 := by
     intro w w' hww
     rw [hP, hP]
-    refine (totalVariationDistance_pi_gaussianReal_le _ _ hv0).trans ?_
+    refine (total_variation_distance_pi_gaussian_real_le _ _ hv0).trans ?_
     rw [show (1 / 2 : ℝ) = Real.sqrt (1 / 4) by
       rw [show (1 / 4 : ℝ) = (1 / 2) ^ 2 by norm_num, Real.sqrt_sq (by norm_num)]]
     apply Real.sqrt_le_sqrt
-    have := (sum_sq_bumpFun_sub_le hβ.1 hL hn hm w w' hww).trans hTV
+    have := (sum_sq_bump_fun_sub_le hβ.1 hL hn hm w w' hww).trans hTV
     rw [hv, div_le_iff₀ (by positivity)]
     linarith
   set D : (Fin n → ℝ) → (Fin m → Bool) := fun y ↦ regDecode β L m (T y)
-  have hD : Measurable D := measurable_regDecode_comp hβ.1 hT
-  have hA := mul_one_sub_div_two_le_sSup_integral_hammingDist m P (1 / 2) hnear D hD
+  have hD : Measurable D := measurable_reg_decode_comp hβ.1 hT
+  have hA := mul_one_sub_div_two_le_s_sup_integral_hamming_dist m P (1 / 2) hnear D hD
   obtain ⟨w₀, hw₀⟩ := (Set.range_nonempty fun w ↦ ∫ x, (hammingDist (D x) w : ℝ) ∂P w).csSup_mem
     (Set.finite_range _)
   rw [← hw₀] at hA
@@ -507,7 +508,7 @@ private theorem bumpLoss_mul_le_iSup_risk {β L σ : ℝ} (hβ : β ∈ Ioc (0 :
     rw [Real.norm_eq_abs, abs_of_nonneg (by positivity)]
     exact_mod_cast hammingDist_le_card_fintype.trans (by simp)
   refine le_trans ?_ (le_iSup (fun f : holderRegressionClass β L ↦
-    fixedDesignRegressionRisk f.val σ T) ⟨_, bumpFun_mem_holderRegressionClass hβ hL hm w₀⟩)
+    fixedDesignRegressionRisk f.val σ T) ⟨_, bump_fun_mem_holder_regression_class hβ hL hm w₀⟩)
   calc ENNReal.ofReal (m / 4) * bumpLoss β L m
       ≤ ENNReal.ofReal (∫ y, (hammingDist (D y) w₀ : ℝ) ∂P w₀) * bumpLoss β L m := by
         gcongr
@@ -522,13 +523,13 @@ private theorem bumpLoss_mul_le_iSup_risk {β L σ : ℝ} (hβ : β ∈ Ioc (0 :
         simp only [ENNReal.ofReal_natCast]
     _ ≤ fixedDesignRegressionRisk (bumpFun β L m w₀) σ T := by
         unfold fixedDesignRegressionRisk
-        exact lintegral_mono fun y ↦ hammingDist_regDecode_mul_le hβ.1 hL
+        exact lintegral_mono fun y ↦ hamming_dist_reg_decode_mul_le hβ.1 hL
           (hT.comp measurable_prodMk_left) w₀
 
 /-- Lower half of GAPS 103.22: for `0 < β ≤ 1`, the fixed-design Hölder minimax mean integrated
 squared risk is at least `c n^(-2β/(2β+1))`. The proof applies Assouad's lemma to
 `m ≍ n^(1/(2β+1))` Hölder tents with Gaussian total variation bounds. -/
-theorem holderRegressionMinimaxRisk_ge (β L σ : ℝ)
+theorem holder_regression_minimax_risk_ge (β L σ : ℝ)
     (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) (hσ : 0 < σ) :
     ∃ c > (0 : ℝ), ∀ n : ℕ, 0 < n →
       ENNReal.ofReal (c * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1))) ≤
@@ -595,7 +596,7 @@ theorem holderRegressionMinimaxRisk_ge (β L σ : ℝ)
       _ = 2 * L ^ 2 / A ^ (2 * β) := by ring
       _ ≤ σ ^ 2 := by rw [div_le_iff₀ hApos]; exact hA2'
   unfold holderRegressionMinimaxRisk
-  refine le_iInf fun T ↦ le_trans ?_ (bumpLoss_mul_le_iSup_risk ⟨hβ0, hβ1⟩ hL.le hσ hn hm hTV
+  refine le_iInf fun T ↦ le_trans ?_ (bump_loss_mul_le_i_sup_risk ⟨hβ0, hβ1⟩ hL.le hσ hn hm hTV
     T.val T.property)
   rw [bumpLoss, ENNReal.div_eq_inv_mul, show (4 : ℝ≥0∞)⁻¹ = ENNReal.ofReal 4⁻¹ by
       rw [ENNReal.ofReal_inv_of_pos (by norm_num)]; simp,
@@ -627,15 +628,15 @@ theorem holderRegressionMinimaxRisk_ge (β L σ : ℝ)
 
 /-- GAPS 103.22: the fixed-design `L²` Hölder minimax rate for orders at most one.
 This states both bounds; sup-norm risk and higher local-polynomial orders are not asserted. -/
-theorem holderRegressionMinimaxRisk_bounds (β L σ : ℝ)
+theorem holder_regression_minimax_risk_bounds (β L σ : ℝ)
     (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) (hσ : 0 < σ) :
     ∃ c > (0 : ℝ), ∃ C > (0 : ℝ), ∀ n : ℕ, 0 < n →
       ENNReal.ofReal (c * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1))) ≤
         holderRegressionMinimaxRisk n β L σ ∧
       holderRegressionMinimaxRisk n β L σ ≤
         ENNReal.ofReal (C * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1))) := by
-  obtain ⟨c, hc, hlow⟩ := holderRegressionMinimaxRisk_ge β L σ hβ hL hσ
-  obtain ⟨C, hC, hup⟩ := holderRegressionMinimaxRisk_le β L σ hβ hL hσ
+  obtain ⟨c, hc, hlow⟩ := holder_regression_minimax_risk_ge β L σ hβ hL hσ
+  obtain ⟨C, hC, hup⟩ := holder_regression_minimax_risk_le β L σ hβ hL hσ
   exact ⟨c, hc, C, hC, fun n hn ↦ ⟨hlow n hn, hup n hn⟩⟩
 
 end CKSD

@@ -1,4 +1,5 @@
 module
+
 public import Mathlib.Analysis.SpecialFunctions.Gamma.BohrMollerup
 public import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 /-!
@@ -18,7 +19,7 @@ open scoped Topology BigOperators
 namespace CKSD
 
 /-- The logarithmic Gamma increment is asymptotic to the shift times the logarithm. -/
-theorem tendsto_log_Gamma_add_sub_log_Gamma_sub_mul_log {b : ℝ} (hb : 0 < b) :
+theorem tendsto_log_gamma_add_sub_log_gamma_sub_mul_log {b : ℝ} (hb : 0 < b) :
     Tendsto (fun x : ℝ ↦ Real.log (Real.Gamma (x + b)) - Real.log (Real.Gamma x) - b * Real.log x)
       atTop (𝓝 0) := by
   obtain ⟨N, hNb⟩ := exists_nat_gt b
@@ -83,9 +84,9 @@ theorem tendsto_log_Gamma_add_sub_log_Gamma_sub_mul_log {b : ℝ} (hb : 0 < b) :
     exact (hbds x hx).2
 
 /-- The Gamma ratio has its standard power asymptotic along arbitrary positive real arguments. -/
-theorem tendsto_Gamma_add_div_mul_rpow {b : ℝ} (hb : 0 < b) :
+theorem tendsto_gamma_add_div_mul_rpow {b : ℝ} (hb : 0 < b) :
     Tendsto (fun x : ℝ ↦ Real.Gamma (x + b) / (Real.Gamma x * x ^ b)) atTop (𝓝 1) := by
-  have h := Real.continuous_exp.tendsto 0 |>.comp (tendsto_log_Gamma_add_sub_log_Gamma_sub_mul_log hb)
+  have h := Real.continuous_exp.tendsto 0 |>.comp (tendsto_log_gamma_add_sub_log_gamma_sub_mul_log hb)
   simp only [Real.exp_zero] at h
   apply h.congr'
   filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx

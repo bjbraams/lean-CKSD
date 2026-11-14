@@ -2,6 +2,7 @@ module
 
 public import CKSD.Bayes.MeanFieldCoupling
 
+
 /-!
 # Empirical interaction fluctuations
 
@@ -29,7 +30,7 @@ theorem integrable_integral_and_integral_le_mul_of_bounded_process
       (∫ ω, (∫ t in (0 : ℝ)..T, f t ω) ∂P) ≤ T * B := by
   let ν := volume.restrict (Ioc (0 : ℝ) T)
   have hprod : Integrable (Function.uncurry f) (ν.prod P) := by
-    apply Integrable.of_bound (aestronglyMeasurable_uncurry_of_ae_continuous P ν f hf hfc) D
+    apply Integrable.of_bound (aestrongly_measurable_uncurry_of_ae_continuous P ν f hf hfc) D
     have htime : ∀ᵐ t ∂ν, t ∈ Ioc (0 : ℝ) T := ae_restrict_mem measurableSet_Ioc
     filter_upwards [(Measure.quasiMeasurePreserving_fst (ν := P)).ae htime,
       (Measure.quasiMeasurePreserving_snd (μ := ν)).ae hbound] with z hz hω
@@ -59,7 +60,7 @@ def interactionFluctuation {Ω E : Type*} [MeasurableSpace Ω]
 
 /-- Empirical interaction fluctuations have measurable sections and almost surely continuous
 paths whenever the nonlinear copies do and the interaction is bounded and continuous. -/
-theorem interactionFluctuation_measurable_ae_continuous {Ω E : Type*} [MeasurableSpace Ω]
+theorem interaction_fluctuation_measurable_ae_continuous {Ω E : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure Ω) [IsProbabilityMeasure P] (K : E → E → E)
@@ -85,7 +86,7 @@ theorem interactionFluctuation_measurable_ae_continuous {Ω E : Type*} [Measurab
 
 /-- A bounded interaction gives an absolute bound on the empirical fluctuation, independent
 of the sample size and configuration. -/
-theorem norm_interactionFluctuation_le {Ω E : Type*} [MeasurableSpace Ω]
+theorem norm_interaction_fluctuation_le {Ω E : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     (P : Measure Ω) [IsProbabilityMeasure P] (K : E → E → E)
     {κ : ℝ} (hKb : ∀ x y, ‖K x y‖ ≤ κ)
@@ -106,7 +107,7 @@ theorem norm_interactionFluctuation_le {Ω E : Type*} [MeasurableSpace Ω]
 
 /-- Pointwise mean-square fluctuation bounds integrate over bounded time intervals, with
 integrability justified by bounded interactions and continuous nonlinear paths. -/
-theorem integrable_integral_sq_interactionFluctuation_le {Ω E : Type*} [MeasurableSpace Ω]
+theorem integrable_integral_sq_interaction_fluctuation_le {Ω E : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure Ω) [IsProbabilityMeasure P] (K : E → E → E)
@@ -117,13 +118,13 @@ theorem integrable_integral_sq_interactionFluctuation_le {Ω E : Type*} [Measura
     (hmean : ∀ t ∈ Icc (0 : ℝ) T, (∫ ω, ‖interactionFluctuation P K Y N i t ω‖ ^ 2 ∂P) ≤ B) :
     Integrable (fun ω ↦ ∫ t in (0 : ℝ)..T, ‖interactionFluctuation P K Y N i t ω‖ ^ 2) P ∧
       (∫ ω, (∫ t in (0 : ℝ)..T, ‖interactionFluctuation P K Y N i t ω‖ ^ 2) ∂P) ≤ T * B := by
-  have hm := interactionFluctuation_measurable_ae_continuous P K hK hKb Y hYm hYc N
+  have hm := interaction_fluctuation_measurable_ae_continuous P K hK hKb Y hYm hYc N
   apply integrable_integral_and_integral_le_mul_of_bounded_process P
     (fun t ω ↦ ‖interactionFluctuation P K Y N i t ω‖ ^ 2)
     (fun t ↦ (hm.1 i t).norm.pow_const 2) (fun _ _ ↦ sq_nonneg _)
     ((hm.2 i).mono fun ω hω ↦ hω.norm.pow 2) hT (D := (2 * κ) ^ 2) _ hmean
   exact ae_of_all _ fun ω t _ ↦ by
-    have hb := norm_interactionFluctuation_le P K hKb Y hN i t ω
+    have hb := norm_interaction_fluctuation_le P K hKb Y hN i t ω
     have hb0 : 0 ≤ 2 * κ := (norm_nonneg _).trans hb
     exact pow_le_pow_left₀ (norm_nonneg _) hb 2
 

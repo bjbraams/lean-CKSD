@@ -4,6 +4,7 @@ public import CKSD.Bayes.MeanFieldPicardComparison
 public import CKSD.Bayes.MeanFieldFactorial
 public import CKSD.Bayes.MeanFieldForcing
 
+
 /-!
 # Finite-horizon McKean–Vlasov existence by path-space Picard iteration
 
@@ -42,28 +43,28 @@ theorem exists_nonlinear_path_solution (P : Measure Ω) [IsProbabilityMeasure P]
   have hbound (U V : Lp C(Icc (0 : ℝ) T, E) 1 P) :
       ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T,
         ‖(G U ω).IccExtend hT t - (G V ω).IccExtend hT t‖ ≤ a * ∫ s in (0 : ℝ)..t, q U V s :=
-    nonlinearPathPicard_ae_norm_sub_le P hT b hb F hFm hFi U V
-  obtain ⟨n, C, hC⟩ := exists_contractingWith_iterate_of_integral_estimates G q ha hT
-    (fun U V ↦ continuous_meanPathDistance_L1 P hT U V)
-    (fun U V t _ ↦ by simpa only [dist_eq_norm] using meanPathDistance_le_norm_sub P hT U V t)
-    (fun U V t ht ↦ meanPathDistance_le_integral_of_ae_bound P hT (G U) (G V) a (q U V) (hbound U V) t ht)
+    nonlinear_path_picard_ae_norm_sub_le P hT b hb F hFm hFi U V
+  obtain ⟨n, C, hC⟩ := exists_contracting_with_iterate_of_integral_estimates G q ha hT
+    (fun U V ↦ continuous_mean_path_distance_l1 P hT U V)
+    (fun U V t _ ↦ by simpa only [dist_eq_norm] using mean_path_distance_le_norm_sub P hT U V t)
+    (fun U V t ht ↦ mean_path_distance_le_integral_of_ae_bound P hT (G U) (G V) a (q U V) (hbound U V) t ht)
     (fun U V ↦ dist_L1_le_integral_of_ae_bound P hT (G U) (G V) a ha (q U V)
-      (continuous_meanPathDistance_L1 P hT U V) (fun s _ ↦ meanPathDistance_nonneg P hT U V s) (hbound U V))
+      (continuous_mean_path_distance_l1 P hT U V) (fun s _ ↦ mean_path_distance_nonneg P hT U V s) (hbound U V))
   obtain ⟨U, hU⟩ : ∃ U, Function.IsFixedPt G U := ⟨_, hC.isFixedPt_fixedPoint_iterate⟩
   change G U = U at hU
   have hraw : (U : Ω → C(Icc (0 : ℝ) T, E)) =ᵐ[P]
       fun ω ↦ frozenPathSolutionMap P hT b hb U (Lp.stronglyMeasurable U).measurable
         (L1.integrable_coeFn U) (F ω) := by
-    have h := nonlinearPathPicard_ae_eq P hT b hb F hFm hFi U
+    have h := nonlinear_path_picard_ae_eq P hT b hb F hFm hFi U
     change (G U : Ω → C(Icc (0 : ℝ) T, E)) =ᵐ[P] _ at h
     rwa [hU] at h
   refine ⟨U, (Lp.stronglyMeasurable U).measurable, L1.integrable_coeFn U, ?_⟩
   filter_upwards [hraw] with ω hω
   intro t
-  have heq := frozenPathSolutionMap_apply_eq P hT b hb U (Lp.stronglyMeasurable U).measurable
+  have heq := frozen_path_solution_map_apply_eq P hT b hb U (Lp.stronglyMeasurable U).measurable
     (L1.integrable_coeFn U) (F ω) t
   rw [← hω] at heq
-  simpa only [nonlinearFrozenDrift, pathMarginalLaw_toMeasure] using heq
+  simpa only [nonlinearFrozenDrift, path_marginal_law_to_measure] using heq
 
 /-- An integrable initial condition and Brownian forcing admit nonlinear solution paths on any
 bounded interval. -/

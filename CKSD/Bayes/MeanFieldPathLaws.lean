@@ -4,6 +4,7 @@ public import CKSD.Bayes.MeanFieldLaw
 public import CKSD.Bayes.MeanFieldWasserstein
 public import Mathlib.MeasureTheory.Function.L1Space.AEEqFun
 
+
 /-!
 # First-Wasserstein continuity of random path marginals
 
@@ -27,7 +28,7 @@ variable {Ω E : Type*} [MeasurableSpace Ω]
 
 omit [NormedSpace ℝ E] [CompleteSpace E] in
 /-- Integrable random continuous paths have integrable evaluation at every projected time. -/
-theorem integrable_IccExtend_eval (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
+theorem integrable_icc_extend_eval (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
     (U : Ω → C(Icc (0 : ℝ) T, E)) (hUm : Measurable U) (hUi : Integrable U P) (t : ℝ) :
     Integrable (fun ω ↦ (U ω).IccExtend hT t) P := by
   have hm : Measurable (fun f : C(Icc (0 : ℝ) T, E) ↦ f.IccExtend hT t) :=
@@ -37,7 +38,7 @@ theorem integrable_IccExtend_eval (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
 
 omit [NormedSpace ℝ E] [CompleteSpace E] in
 /-- The law of an integrable random variable has finite first moment. -/
-theorem hasFiniteMoment_one_map_of_integrable (P : Measure Ω) (U : Ω → E)
+theorem has_finite_moment_one_map_of_integrable (P : Measure Ω) (U : Ω → E)
     (hUm : Measurable U) (hUi : Integrable U P) : TauCeti.HasFiniteMoment 1 (P.map U) := by
   have hm : Integrable (id : E → E) (P.map U) :=
     (integrable_map_measure aestronglyMeasurable_id hUm.aemeasurable).mpr hUi
@@ -52,12 +53,12 @@ def pathMarginalLaw (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0 
     TauCeti.WassersteinSpace 1 E :=
   TauCeti.WassersteinSpace.mk
     (ProbabilityMeasure.map (⟨P, inferInstance⟩ : ProbabilityMeasure Ω) (fun ω ↦ (U ω).IccExtend hT t))
-    (hasFiniteMoment_one_map_of_integrable P _ ((ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)).comp hUm)
-      (integrable_IccExtend_eval P hT U hUm hUi t))
+    (has_finite_moment_one_map_of_integrable P _ ((ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)).comp hUm)
+      (integrable_icc_extend_eval P hT U hUm hUi t))
 
 omit [NormedSpace ℝ E] [CompleteSpace E] in
 /-- The underlying marginal measure is the pushforward under projected evaluation. -/
-theorem pathMarginalLaw_toMeasure (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0 ≤ T)
+theorem path_marginal_law_to_measure (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0 ≤ T)
     (U : Ω → C(Icc (0 : ℝ) T, E)) (hUm : Measurable U) (hUi : Integrable U P) (t : ℝ) :
     ((pathMarginalLaw P hT U hUm hUi t : ProbabilityMeasure E) : Measure E) =
       P.map (fun ω ↦ (U ω).IccExtend hT t) := by
@@ -65,7 +66,7 @@ theorem pathMarginalLaw_toMeasure (P : Measure Ω) [IsProbabilityMeasure P] {T :
 
 /-- Integrability of the uniform path norm makes the marginal laws continuous in first
 Wasserstein distance. -/
-theorem continuous_pathMarginalLaw (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0 ≤ T)
+theorem continuous_path_marginal_law (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0 ≤ T)
     (U : Ω → C(Icc (0 : ℝ) T, E)) (hUm : Measurable U) (hUi : Integrable U P) :
     Continuous (pathMarginalLaw P hT U hUm hUi) := by
   let Y : ℝ → Ω → E := fun t ω ↦ (U ω).IccExtend hT t
@@ -86,10 +87,10 @@ theorem continuous_pathMarginalLaw (P : Measure Ω) [IsProbabilityMeasure P] {T 
     · exact ae_of_all _ fun ω ↦ (((U ω).IccExtend hT).continuous.comp continuous_fst |>.sub
         (((U ω).IccExtend hT).continuous.comp continuous_snd)).norm
   have hW (s t : ℝ) : dist (pathMarginalLaw P hT U hUm hUi s) (pathMarginalLaw P hT U hUm hUi t) ≤ D (s, t) := by
-    rw [TauCeti.WassersteinSpace.dist_def, pathMarginalLaw_toMeasure, pathMarginalLaw_toMeasure]
-    exact wassersteinEDist_one_map_toReal_le_integral_norm_sub P (hYm s).aestronglyMeasurable
-      (hYm t).aestronglyMeasurable ((integrable_IccExtend_eval P hT U hUm hUi s).sub
-        (integrable_IccExtend_eval P hT U hUm hUi t))
+    rw [TauCeti.WassersteinSpace.dist_def, path_marginal_law_to_measure, path_marginal_law_to_measure]
+    exact wasserstein_e_dist_one_map_to_real_le_integral_norm_sub P (hYm s).aestronglyMeasurable
+      (hYm t).aestronglyMeasurable ((integrable_icc_extend_eval P hT U hUm hUi s).sub
+        (integrable_icc_extend_eval P hT U hUm hUi t))
   apply continuous_iff_continuousAt.mpr
   intro t
   apply Metric.tendsto_nhds.mpr

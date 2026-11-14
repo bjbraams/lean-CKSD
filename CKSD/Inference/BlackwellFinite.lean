@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Inference.Basic
 public import Mathlib.Analysis.Convex.Basic
 import CKSD.Inference.FiniteDecision
@@ -24,14 +25,14 @@ open scoped ENNReal Topology BigOperators
 namespace CKSD
 
 /-- Risk with finite actions is the loss paired with the randomized action-law masses. -/
-theorem risk_eq_sum_actionLaw {Θ X A : Type* } [MeasurableSpace X]
+theorem risk_eq_sum_action_law {Θ X A : Type* } [MeasurableSpace X]
     [Fintype A] [MeasurableSpace A] [MeasurableSingletonClass A]
     (P : Θ → Measure X) [∀ θ, IsFiniteMeasure (P θ)]
     (L : Θ → A → ℝ) (δ : RandomizedDecisionRule X A) (θ : Θ) :
     risk P L δ θ = ∑ a, L θ a * (δ.val ∘ₘ P θ).real {a} := by
   let := δ.property
   have hi (a : A) : Integrable (fun x ↦ (δ.val x).real {a}) (P θ) :=
-    (memLp_decision_weight (P θ) δ a).integrable one_le_two
+    (mem_lp_decision_weight (P θ) δ a).integrable one_le_two
   have he (x : X) : (∫ a, L θ a ∂δ.val x) = ∑ a, L θ a * (δ.val x).real {a} := by
     have hint : Integrable (L θ) (δ.val x) :=
       ⟨(measurable_of_countable (L θ)).aestronglyMeasurable, HasFiniteIntegral.of_finite⟩
@@ -44,7 +45,7 @@ theorem risk_eq_sum_actionLaw {Θ X A : Type* } [MeasurableSpace X]
   rw [integral_const_mul, integral_kernel_real_apply _ _ (measurableSet_singleton a)]
 
 /-- A finite experiment's attainable action-probability matrices form a compact convex set. -/
-theorem isCompact_convex_range_actionLaw {Θ X A : Type* } [Fintype Θ]
+theorem is_compact_convex_range_action_law {Θ X A : Type* } [Fintype Θ]
     [MeasurableSpace X] [Fintype A] [Nonempty A]
     [MeasurableSpace A] [MeasurableSingletonClass A]
     (P : Θ → Measure X) [∀ θ, IsProbabilityMeasure (P θ)] :
@@ -68,10 +69,10 @@ theorem isCompact_convex_range_actionLaw {Θ X A : Type* } [Fintype Θ]
   have he : risk PP loss = fun δ : RandomizedDecisionRule X A ↦
       fun p : Θ × A ↦ (δ.val ∘ₘ P p.1).real {p.2} := by
     funext δ p
-    rw [risk_eq_sum_actionLaw]
+    rw [risk_eq_sum_action_law]
     simp [loss, PP]
   rw [← he]
-  exact isCompact_convex_range_risk μ PP hdom loss
+  exact is_compact_convex_range_risk μ PP hdom loss
 
 /-- Finite-action risk comparison forces exact simulation of any finite-action rule. -/
 theorem exists_finite_randomization_of_risk_dominance
@@ -89,7 +90,7 @@ theorem exists_finite_randomization_of_risk_dominance
   let R : RandomizedDecisionRule X (Fin n) → (Θ × Fin n → ℝ) :=
     fun δ' p ↦ (δ'.val ∘ₘ P p.1).real {p.2}
   let q : Θ × Fin n → ℝ := fun p ↦ (δ.val ∘ₘ Q p.1).real {p.2}
-  obtain ⟨hcompact, hconv⟩ := isCompact_convex_range_actionLaw (A := Fin n) P
+  obtain ⟨hcompact, hconv⟩ := is_compact_convex_range_action_law (A := Fin n) P
   have hq : q ∈ range R := by
     by_contra hnot
     obtain ⟨f, u, hfu, huf⟩ := geometric_hahn_banach_point_closed hconv hcompact.isClosed hnot
@@ -116,7 +117,7 @@ theorem exists_finite_randomization_of_risk_dominance
       rw [hf, hf, Fintype.sum_prod_type, Fintype.sum_prod_type]
       apply Finset.sum_le_sum
       intro θ _
-      simpa only [risk_eq_sum_actionLaw, L, R, q] using hδ' θ
+      simpa only [risk_eq_sum_action_law, L, R, q] using hδ' θ
     exact (not_lt_of_ge hle) (hfu.trans (huf _ ⟨δ', rfl⟩))
   obtain ⟨δ', hδ'⟩ := hq
   refine ⟨δ', fun θ ↦ ?_⟩

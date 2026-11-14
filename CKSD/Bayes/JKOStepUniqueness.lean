@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.JKOEnergy
 public import TauCeti.InformationTheory.KullbackLeibler.Convex
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Mixture.Basic
@@ -56,7 +57,7 @@ theorem integral_wasserstein_half_mixture (ν η ζ : P₂)
   ring
 
 /-- The free energy is strictly convex along ordinary half mixtures of distinct finite-energy laws. -/
-theorem jkoFreeEnergy_toReal_half_mixture_lt
+theorem jko_free_energy_to_real_half_mixture_lt
     (V : E → ℝ) (hVc : Continuous V) (hV : ∀ x, 0 ≤ V x)
     (ν η ζ : P₂) (hν : jkoFreeEnergy V ν ≠ ⊤) (hη : jkoFreeEnergy V η ≠ ⊤)
     (hne : ν ≠ η)
@@ -67,8 +68,8 @@ theorem jkoFreeEnergy_toReal_half_mixture_lt
   let G : Measure E := volume.tilted (fun x : E ↦ -((1 : ℝ)*‖x‖^2))
   have hG := integrable_exp_neg_mul_norm_sq (d := d) zero_lt_one
   have : IsProbabilityMeasure G := isProbabilityMeasure_tilted hG
-  have hνK := ((jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential V hV zero_lt_one ν).1 hν).1
-  have hηK := ((jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential V hV zero_lt_one η).1 hη).1
+  have hνK := ((jko_free_energy_ne_top_iff_kl_div_gaussian_and_potential V hV zero_lt_one ν).1 hν).1
+  have hηK := ((jko_free_energy_ne_top_iff_kl_div_gaussian_and_potential V hV zero_lt_one η).1 hη).1
   change klDiv (wassersteinLaw ν) G ≠ ∞ at hνK
   change klDiv (wassersteinLaw η) G ≠ ∞ at hηK
   have hnm : wassersteinLaw ν ≠ wassersteinLaw η := fun he ↦ hne
@@ -87,13 +88,13 @@ theorem jkoFreeEnergy_toReal_half_mixture_lt
   have hKreal := ENNReal.toReal_strict_mono (by finiteness) hh
   rw [ENNReal.toReal_add (by finiteness) (by finiteness)] at hKreal
   simp only [ENNReal.toReal_mul, ENNReal.coe_toReal] at hKreal
-  have hνV := integrable_potential_of_jkoFreeEnergy_ne_top V hVc hV ν hν
-  have hηV := integrable_potential_of_jkoFreeEnergy_ne_top V hVc hV η hη
+  have hνV := integrable_potential_of_jko_free_energy_ne_top V hVc hV ν hν
+  have hηV := integrable_potential_of_jko_free_energy_ne_top V hVc hV η hη
   have hζV : Integrable V (wassersteinLaw ζ) := by
     rw [hζ]
     exact (hνV.smul_measure (by finiteness)).add_measure (hηV.smul_measure (by finiteness))
   have hζF : jkoFreeEnergy V ζ ≠ ⊤ :=
-    (jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential V hV zero_lt_one ζ).2
+    (jko_free_energy_ne_top_iff_kl_div_gaussian_and_potential V hV zero_lt_one ζ).2
       ⟨hζK, by rw [TauCeti.potentialEnergy_of_integrable hζV]; exact EReal.coe_ne_top _⟩
   refine ⟨hζF, ?_⟩
   have hmi (μ : P₂) : Integrable (fun x : E ↦ ‖x‖^2) (wassersteinLaw μ) := by
@@ -106,7 +107,7 @@ theorem jkoFreeEnergy_toReal_half_mixture_lt
       (jkoFreeEnergy V μ).toReal = (klDiv (wassersteinLaw μ) G).toReal +
         (∫ x, V x ∂wassersteinLaw μ) - (∫ x, ‖x‖^2 ∂wassersteinLaw μ) -
         Real.log (∫ x : E, Real.exp (-((1:ℝ)*‖x‖^2))) := by
-    rw [jkoFreeEnergy_eq_klDiv_gaussian_add V zero_lt_one μ,
+    rw [jko_free_energy_eq_kl_div_gaussian_add V zero_lt_one μ,
       TauCeti.potentialEnergy_of_integrable hμV,← EReal.coe_ennreal_toReal hμK]
     simp only [← EReal.coe_add,EReal.toReal_coe,one_mul]
     ring
@@ -116,7 +117,7 @@ theorem jkoFreeEnergy_toReal_half_mixture_lt
   linarith
 /-- A nonnegative continuous-potential JKO step has at most one minimizer, by ordinary-mixture
 strict entropy convexity. No convexity assumption on the potential is needed. -/
-theorem subsingleton_moreauYosidaResolvent_jkoFreeEnergy
+theorem subsingleton_moreau_yosida_resolvent_jko_free_energy
     (V : E → ℝ) (hVc : Continuous V) (hV : ∀ x, 0 ≤ V x)
     (ρ₀ : P₂) (hF : jkoFreeEnergy V ρ₀ ≠ ⊤)
     (τ : ℝ≥0) (hτ : 0 < τ) (μ : P₂) :
@@ -134,11 +135,11 @@ theorem subsingleton_moreauYosidaResolvent_jkoFreeEnergy
     (a := (1/2 : ℝ≥0∞)) (b := (1/2 : ℝ≥0∞))
     (by simpa only [one_div] using ENNReal.inv_two_add_inv_two) ν η
   change wassersteinLaw ζ = (1/2 : ℝ≥0∞) • wassersteinLaw ν + (1/2 : ℝ≥0∞) • wassersteinLaw η at hζ
-  obtain ⟨hζF,hstrict⟩ := jkoFreeEnergy_toReal_half_mixture_lt V hVc hV ν η ζ hνF hηF hne hζ
+  obtain ⟨hζF,hstrict⟩ := jko_free_energy_to_real_half_mixture_lt V hVc hV ν η ζ hνF hηF hne hζ
   have hcost := wasserstein_dist_sq_le_half_add_half μ ν η ζ hζ
   have hreal (ξ : P₂) (hξ : jkoFreeEnergy V ξ ≠ ⊤) :
       jkoFreeEnergy V ξ = ((jkoFreeEnergy V ξ).toReal : EReal) :=
-    (EReal.coe_toReal hξ (jkoFreeEnergy_ne_bot V hV ξ)).symm
+    (EReal.coe_toReal hξ (jko_free_energy_ne_bot V hV ξ)).symm
   have hn := TauCeti.add_toReal_sq_div_le_of_mem_moreauYosidaResolvent hτ hν (z := ζ)
     (edist_ne_top _ _) (hreal ν hνF) (hreal ζ hζF)
   have he := TauCeti.add_toReal_sq_div_le_of_mem_moreauYosidaResolvent hτ hη (z := ζ)

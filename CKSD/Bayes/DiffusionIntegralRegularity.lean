@@ -1,4 +1,5 @@
 module
+
 public import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 public import Mathlib.Analysis.InnerProductSpace.PiL2
@@ -26,7 +27,7 @@ open scoped NNReal ENNReal Topology
 namespace CKSD
 /-- A nonmeasurable time coefficient forces a vector-valued integral to vanish under the
 Bochner convention whenever one fixed scalar component recovers that coefficient. -/
-theorem intervalIntegral_eq_zero_of_nonmeasurable_component
+theorem interval_integral_eq_zero_of_nonmeasurable_component
     {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     (a : ℝ → ℝ) {t : ℝ} (ht : 0 ≤ t)
     (ha : ¬ AEStronglyMeasurable a (volume.restrict (Ioc (0 : ℝ) t)))
@@ -48,13 +49,13 @@ theorem intervalIntegral_eq_zero_of_nonmeasurable_component
   exact ha ha'.aestronglyMeasurable
 /-- The planar translating/rotating drift has a scalar component that recovers its time
 coefficient whenever the second coordinate of the frozen state is nonzero. -/
-theorem intervalIntegral_translating_rotation_eq_zero
+theorem interval_integral_translating_rotation_eq_zero
     (a : ℝ → ℝ) {t : ℝ} (ht : 0 ≤ t)
     (ha : ¬ AEStronglyMeasurable a (volume.restrict (Ioc (0 : ℝ) t)))
     (x : EuclideanSpace ℝ (Fin 2)) (hx : x 1 ≠ 0) :
     (∫ s in (0 : ℝ)..t, (WithLp.toLp 2 ![1 - a s * x 1, a s * (x 0 - s)] :
       EuclideanSpace ℝ (Fin 2))) = 0 := by
-  apply intervalIntegral_eq_zero_of_nonmeasurable_component a ht ha _
+  apply interval_integral_eq_zero_of_nonmeasurable_component a ht ha _
     (PiLp.proj 2 (fun _ : Fin 2 ↦ ℝ) (0 : Fin 2)) 1 (-x 1) (neg_ne_zero.mpr hx)
   intro s
   change 1 - a s * x 1 = 1 + a s * -x 1

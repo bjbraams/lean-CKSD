@@ -3,6 +3,7 @@ module
 public import CKSD.Geometry.SimplicialPersistence.Chains
 public import CKSD.Geometry.DiagramDistances
 
+
 /-!
 # Stability of finite simplicial persistence diagrams
 
@@ -17,9 +18,9 @@ filtration uses the diameter divided by two.
 
 ## Main results
 
-* `CKSD.fullBottleneckEDist_le_of_isSublevelDiagram`: bottleneck stability (GAPS 108.19).
-* `CKSD.diagramWassersteinEDist_le_of_isSublevelDiagram`: Wasserstein stability (GAPS 108.35).
-* `CKSD.ripsFiltrationValue_le_iff`: Rips filtration values and `CKSD.IsRipsSimplex`.
+* `CKSD.full_bottleneck_e_dist_le_of_is_sublevel_diagram`: bottleneck stability (GAPS 108.19).
+* `CKSD.diagram_wasserstein_e_dist_le_of_is_sublevel_diagram`: Wasserstein stability (GAPS 108.35).
+* `CKSD.rips_filtration_value_le_iff`: Rips filtration values and `CKSD.IsRipsSimplex`.
 -/
 
 @[expose] public section
@@ -87,7 +88,7 @@ theorem IsSublevelDiagram.relabel {K : PreAbstractSimplicialComplex ι} {f h : F
     IsSublevelDiagram 𝕜 K f p (relabelDiagram f sb sd) (fun k ↦ f (se k)) := by
   intro a b hab
   obtain ⟨a', b', hab', ha', hb'⟩ := exists_le_forall_le_iff_le_of_ordered K hfh hab
-  rw [sublevelPersistentBetti_congr_fun 𝕜 K p ha' hb', hD a' b' hab']
+  rw [sublevel_persistent_betti_congr_fun 𝕜 K p ha' hb', hD a' b' hab']
   congr 1
   · symm
     refine Finset.card_bij (fun i _ ↦ i.1) (fun i hi ↦ ?_) (fun i _ j _ hij ↦ Subtype.ext hij)
@@ -114,7 +115,7 @@ theorem IsSublevelDiagram.relabel {K : PreAbstractSimplicialComplex ι} {f h : F
 /-- Bottleneck stability when the two functions are ordered by a common monotone function `h`.
 The diagrams of `f` and `g` are both relabellings of one diagram of `h`, and matching the bars
 with the same label costs at most `δ`. -/
-theorem fullBottleneckEDist_le_of_ordered (K : PreAbstractSimplicialComplex ι)
+theorem full_bottleneck_e_dist_le_of_ordered (K : PreAbstractSimplicialComplex ι)
     {f g h : Finset ι → ℝ} (hfh : ∀ σ ∈ K, ∀ τ ∈ K, h σ ≤ h τ → f σ ≤ f τ)
     (hgh : ∀ σ ∈ K, ∀ τ ∈ K, h σ ≤ h τ → g σ ≤ g τ) (p : ℕ) {δ : ℝ}
     (hδ : ∀ σ ∈ K, |f σ - g σ| ≤ δ)
@@ -122,17 +123,17 @@ theorem fullBottleneckEDist_le_of_ordered (K : PreAbstractSimplicialComplex ι)
     {D : FiniteDeathDiagram α} {e : κ → ℝ} {E : FiniteDeathDiagram β} {e' : κ' → ℝ}
     (hD : IsSublevelDiagram 𝕜 K f p D e) (hE : IsSublevelDiagram 𝕜 K g p E e') :
     fullBottleneckEDist D e E e' ≤ ENNReal.ofReal δ := by
-  obtain ⟨n, r, Dh, eh, hDh, hb, hd, he⟩ := exists_isSublevelDiagram_and_values 𝕜 K h p
+  obtain ⟨n, r, Dh, eh, hDh, hb, hd, he⟩ := exists_is_sublevel_diagram_and_values 𝕜 K h p
   choose sb hsbK hsb using hb
   choose sd hsdK hsd using hd
   choose se hseK hse using he
   have hDf := hDh.relabel 𝕜 hfh sb sd se hsbK hsb hsdK hsd hseK hse
   have hDg := hDh.relabel 𝕜 hgh sb sd se hsbK hsb hsdK hsd hseK hse
   have h1 : fullBottleneckEDist D e (relabelDiagram f sb sd) (fun k ↦ f (se k)) = 0 :=
-    fullBottleneckEDist_eq_zero_of_card_eq _ _ _ _ fun a b hab ↦ by
+    full_bottleneck_e_dist_eq_zero_of_card_eq _ _ _ _ fun a b hab ↦ by
       rw [← hD a b hab, ← hDf a b hab]
   have h3 : fullBottleneckEDist (relabelDiagram g sb sd) (fun k ↦ g (se k)) E e' = 0 :=
-    fullBottleneckEDist_eq_zero_of_card_eq _ _ _ _ fun a b hab ↦ by
+    full_bottleneck_e_dist_eq_zero_of_card_eq _ _ _ _ fun a b hab ↦ by
       rw [← hDg a b hab, ← hE a b hab]
   have hle : ∀ i, g (sb i) ≤ g (sd i) := fun i ↦
     hgh _ (hsbK i) _ (hsdK i) (by rw [hsb, hsd]; exact (Dh.birth_lt_death i).le)
@@ -168,12 +169,12 @@ theorem fullBottleneckEDist_le_of_ordered (K : PreAbstractSimplicialComplex ι)
   calc fullBottleneckEDist D e E e'
       ≤ fullBottleneckEDist D e (relabelDiagram f sb sd) (fun k ↦ f (se k)) +
           fullBottleneckEDist (relabelDiagram f sb sd) (fun k ↦ f (se k)) E e' :=
-        fullBottleneckEDist_triangle _ _ _ _ _ _
+        full_bottleneck_e_dist_triangle _ _ _ _ _ _
     _ ≤ 0 + (fullBottleneckEDist (relabelDiagram f sb sd) (fun k ↦ f (se k))
           (relabelDiagram g sb sd) (fun k ↦ g (se k)) +
         fullBottleneckEDist (relabelDiagram g sb sd) (fun k ↦ g (se k)) E e') := by
         rw [h1]
-        exact add_le_add le_rfl (fullBottleneckEDist_triangle _ _ _ _ _ _)
+        exact add_le_add le_rfl (full_bottleneck_e_dist_triangle _ _ _ _ _ _)
     _ ≤ ENNReal.ofReal δ := by rw [h3, zero_add, add_zero]; exact h2
 
 
@@ -185,7 +186,7 @@ def discordantPairs (K : PreAbstractSimplicialComplex ι) (f g : Finset ι → �
 
 omit [Fintype ι] [LinearOrder ι] in
 /-- A convex combination of functions monotone along faces is monotone along faces. -/
-theorem IsMonotoneOnFaces.convexComb {K : PreAbstractSimplicialComplex ι} {f g : Finset ι → ℝ}
+theorem IsMonotoneOnFaces.convex_comb {K : PreAbstractSimplicialComplex ι} {f g : Finset ι → ℝ}
     (hf : IsMonotoneOnFaces K f) (hg : IsMonotoneOnFaces K g) {t : ℝ} (ht0 : 0 ≤ t)
     (ht1 : t ≤ 1) : IsMonotoneOnFaces K fun ρ ↦ (1 - t) * f ρ + t * g ρ := by
   intro τ σ hσ hτ hτσ
@@ -199,7 +200,7 @@ theorem IsMonotoneOnFaces.convexComb {K : PreAbstractSimplicialComplex ι} {f g 
 discordant pairs: without discordant pairs, `f` and `g` are both ordered by `f + g`; otherwise an
 intermediate convex combination `m` resolves one discordant pair and has fewer discordant pairs with
 both `f` and `g`. -/
-theorem fullBottleneckEDist_le_of_card_discordantPairs_le (K : PreAbstractSimplicialComplex ι)
+theorem full_bottleneck_e_dist_le_of_card_discordant_pairs_le (K : PreAbstractSimplicialComplex ι)
     (p N : ℕ) : ∀ f g : Finset ι → ℝ, IsMonotoneOnFaces K f → IsMonotoneOnFaces K g →
       (discordantPairs K f g).card ≤ N → ∀ δ : ℝ, (∀ σ ∈ K, |f σ - g σ| ≤ δ) →
       ∀ (n r n' r' : ℕ) (D : FiniteDeathDiagram (Fin n)) (e : Fin r → ℝ)
@@ -215,7 +216,7 @@ theorem fullBottleneckEDist_le_of_card_discordantPairs_le (K : PreAbstractSimpli
       have : (σ, τ) ∈ discordantPairs K f g := by
         simp [discordantPairs, hσ, hτ, hc.1, hc.2]
       simp [h0] at this
-    refine fullBottleneckEDist_le_of_ordered 𝕜 K (h := fun ρ ↦ f ρ + g ρ) ?_ ?_ p hδ hD hE
+    refine full_bottleneck_e_dist_le_of_ordered 𝕜 K (h := fun ρ ↦ f ρ + g ρ) ?_ ?_ p hδ hD hE
     · intro σ hσ τ hτ hle
       by_contra hc
       have := hnot τ hτ σ hσ
@@ -246,7 +247,7 @@ theorem fullBottleneckEDist_le_of_card_discordantPairs_le (K : PreAbstractSimpli
       field_simp
       ring
     set m : Finset ι → ℝ := fun ρ ↦ (1 - t) * f ρ + t * g ρ
-    have hm : IsMonotoneOnFaces K m := hf.convexComb hg ht0.le ht1.le
+    have hm : IsMonotoneOnFaces K m := hf.convex_comb hg ht0.le ht1.le
     have hδ0 : 0 ≤ δ := (abs_nonneg _).trans (hδ σ hσ)
     have hst : (σ, τ) ∈ discordantPairs K f g := by
       simp [discordantPairs, hσ, hτ, hf0, hg0]
@@ -293,12 +294,12 @@ theorem fullBottleneckEDist_le_of_card_discordantPairs_le (K : PreAbstractSimpli
       have : m ρ - g ρ = (1 - t) * (f ρ - g ρ) := by simp only [m]; ring
       rw [this, abs_mul, abs_of_pos (sub_pos.mpr ht1)]
       exact mul_le_mul_of_nonneg_left (hδ ρ hρ) (sub_pos.mpr ht1).le
-    obtain ⟨n0, r0, Dm, em, hDm⟩ := exists_isSublevelDiagram_and_values 𝕜 K m p
+    obtain ⟨n0, r0, Dm, em, hDm⟩ := exists_is_sublevel_diagram_and_values 𝕜 K m p
     have hlt1 := (Finset.card_lt_card hfm).trans_le hN
     have hlt2 := (Finset.card_lt_card hmg).trans_le hN
     calc fullBottleneckEDist D e E e'
         ≤ fullBottleneckEDist D e Dm em + fullBottleneckEDist Dm em E e' :=
-          fullBottleneckEDist_triangle _ _ _ _ _ _
+          full_bottleneck_e_dist_triangle _ _ _ _ _ _
       _ ≤ ENNReal.ofReal (t * δ) + ENNReal.ofReal ((1 - t) * δ) :=
           add_le_add (ih _ hlt1 f m hf hm le_rfl _ hδfm _ _ _ _ D e Dm em hD hDm.1)
             (ih _ hlt2 m g hm hg le_rfl _ hδmg _ _ _ _ Dm em E e' hDm.1 hE)
@@ -312,36 +313,36 @@ simplicial complex, the degree-`p` persistence diagrams of the sublevel filtrati
 essential parts) are within bottleneck distance `‖f - g‖_∞ = max_{σ ∈ K} |f σ - g σ|`. The
 statement for tame functions on triangulable spaces, with singular homology of sublevel sets,
 is not formalized; for piecewise-linear functions it reduces to this case. -/
-theorem fullBottleneckEDist_le_of_isSublevelDiagram (K : PreAbstractSimplicialComplex ι)
+theorem full_bottleneck_e_dist_le_of_is_sublevel_diagram (K : PreAbstractSimplicialComplex ι)
     (f g : Finset ι → ℝ) (hf : IsMonotoneOnFaces K f) (hg : IsMonotoneOnFaces K g) (p : ℕ)
     (δ : ℝ) (hδ : ∀ σ ∈ K, |f σ - g σ| ≤ δ)
     {α β κ κ' : Type*} [Fintype α] [Fintype β] [Fintype κ] [Fintype κ']
     (D : FiniteDeathDiagram α) (e : κ → ℝ) (E : FiniteDeathDiagram β) (e' : κ' → ℝ)
     (hD : IsSublevelDiagram 𝕜 K f p D e) (hE : IsSublevelDiagram 𝕜 K g p E e') :
     fullBottleneckEDist D e E e' ≤ ENNReal.ofReal δ := by
-  obtain ⟨n, r, D0, e0, hD0, -⟩ := exists_isSublevelDiagram_and_values 𝕜 K f p
-  obtain ⟨n', r', E0, e0', hE0, -⟩ := exists_isSublevelDiagram_and_values 𝕜 K g p
+  obtain ⟨n, r, D0, e0, hD0, -⟩ := exists_is_sublevel_diagram_and_values 𝕜 K f p
+  obtain ⟨n', r', E0, e0', hE0, -⟩ := exists_is_sublevel_diagram_and_values 𝕜 K g p
   have h1 : fullBottleneckEDist D e D0 e0 = 0 :=
-    fullBottleneckEDist_eq_zero_of_card_eq _ _ _ _ fun a b hab ↦ by
+    full_bottleneck_e_dist_eq_zero_of_card_eq _ _ _ _ fun a b hab ↦ by
       rw [← hD a b hab, ← hD0 a b hab]
   have h3 : fullBottleneckEDist E0 e0' E e' = 0 :=
-    fullBottleneckEDist_eq_zero_of_card_eq _ _ _ _ fun a b hab ↦ by
+    full_bottleneck_e_dist_eq_zero_of_card_eq _ _ _ _ fun a b hab ↦ by
       rw [← hE0 a b hab, ← hE a b hab]
-  have h2 := fullBottleneckEDist_le_of_card_discordantPairs_le 𝕜 K p _ f g hf hg le_rfl δ hδ
+  have h2 := full_bottleneck_e_dist_le_of_card_discordant_pairs_le 𝕜 K p _ f g hf hg le_rfl δ hδ
     n r n' r' D0 e0 E0 e0' hD0 hE0
   calc fullBottleneckEDist D e E e'
       ≤ fullBottleneckEDist D e D0 e0 + fullBottleneckEDist D0 e0 E e' :=
-        fullBottleneckEDist_triangle _ _ _ _ _ _
+        full_bottleneck_e_dist_triangle _ _ _ _ _ _
     _ ≤ 0 + (fullBottleneckEDist D0 e0 E0 e0' + fullBottleneckEDist E0 e0' E e') := by
         rw [h1]
-        exact add_le_add le_rfl (fullBottleneckEDist_triangle _ _ _ _ _ _)
+        exact add_le_add le_rfl (full_bottleneck_e_dist_triangle _ _ _ _ _ _)
     _ ≤ ENNReal.ofReal δ := by rw [h3, zero_add, add_zero]; exact h2
 
 omit [LinearOrder ι] in
 /-- For `h` injective on `K`, passing from the level just below `h σ` to `h σ` adds at most the
 simplex `σ`, and only in dimension `σ.card - 1`; so the image of the chains under any linear map
 grows in dimension by at most one, and not at all in other dimensions. -/
-theorem finrank_map_sublevelChains_le (K : PreAbstractSimplicialComplex ι) {h : Finset ι → ℝ}
+theorem finrank_map_sublevel_chains_le (K : PreAbstractSimplicialComplex ι) {h : Finset ι → ℝ}
     (hinj : ∀ σ ∈ K, ∀ τ ∈ K, h σ = h τ → σ = τ) (φ : (Finset ι → 𝕜) →ₗ[𝕜] (Finset ι → 𝕜))
     (q : ℕ) {σ : Finset ι} (hσ : σ ∈ K) {x : ℝ} (hx : ∀ τ ∈ K, h τ < h σ ↔ h τ ≤ x) :
     finrank 𝕜 ((sublevelChains 𝕜 K h q (h σ)).map φ) ≤
@@ -377,14 +378,14 @@ theorem finrank_map_sublevelChains_le (K : PreAbstractSimplicialComplex ι) {h :
     simpa using Submodule.finrank_mono (Submodule.map_mono (f := φ) hle)
 
 /-- Sublevel cycles grow with the level. -/
-theorem sublevelCycles_mono (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ)
+theorem sublevel_cycles_mono (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ)
     {a a' : ℝ} (h : a ≤ a') : sublevelCycles 𝕜 K f p a ≤ sublevelCycles 𝕜 K f p a' :=
-  inf_le_inf_right _ (sublevelChains_mono 𝕜 K f p h)
+  inf_le_inf_right _ (sublevel_chains_mono 𝕜 K f p h)
 
 /-- Boundaries grow with the level. -/
-theorem sublevelBoundaries_mono (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ)
+theorem sublevel_boundaries_mono (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ)
     {b b' : ℝ} (h : b ≤ b') : sublevelBoundaries 𝕜 K f p b ≤ sublevelBoundaries 𝕜 K f p b' :=
-  Submodule.map_mono (sublevelChains_mono 𝕜 K f (p + 1) h)
+  Submodule.map_mono (sublevel_chains_mono 𝕜 K f (p + 1) h)
 
 /-- For `h` injective on `K`, a diagram of `h` in degree `p` has at most one bar (finite or
 essential) born at `h σ`, and none unless `σ` is a `p`-simplex. -/
@@ -413,14 +414,14 @@ theorem card_birth_add_card_essential_le (K : PreAbstractSimplicialComplex ι)
     (fun k hQ hS ↦ by have := (he k).mpr hQ; rw [hS] at this; exact lt_irrefl _ this)
   have hPB1 := hD x x le_rfl
   have hPB2 := hD x' x hx'x.le
-  have hc1 := sublevelPersistentBetti_cast 𝕜 K h p x x
-  have hc2 := sublevelPersistentBetti_cast 𝕜 K h p x' x
-  have hZ := sublevelCycles_mono 𝕜 K h p hx'x.le
+  have hc1 := sublevel_persistent_betti_cast 𝕜 K h p x x
+  have hc2 := sublevel_persistent_betti_cast 𝕜 K h p x' x
+  have hZ := sublevel_cycles_mono 𝕜 K h p hx'x.le
   have I1 := finrank_add_finrank_inf_le (U := sublevelBoundaries 𝕜 K h p x) hZ
   have I1' := Submodule.finrank_mono (inf_le_inf_right (sublevelBoundaries 𝕜 K h p x) hZ)
   have I2 := finrank_add_finrank_inf_le (U := LinearMap.ker (simplicialBoundary 𝕜))
-    (sublevelChains_mono 𝕜 K h p hx'x.le)
-  have I3 := finrank_map_sublevelChains_le 𝕜 K hinj LinearMap.id p hσ hK
+    (sublevel_chains_mono 𝕜 K h p hx'x.le)
+  have I3 := finrank_map_sublevel_chains_le 𝕜 K hinj LinearMap.id p hσ hK
   rw [← hxdef] at I3
   have e1 : (sublevelChains 𝕜 K h p x).map LinearMap.id = sublevelChains 𝕜 K h p x :=
     Submodule.map_id _
@@ -460,18 +461,18 @@ theorem card_death_le (K : PreAbstractSimplicialComplex ι)
     (fun i hQ hS ↦ by rw [hS] at hQ; exact lt_irrefl _ hQ.2)
   have hPB1 := hD y' y' le_rfl
   have hPB2 := hD y' y hy'y.le
-  have hc1 := sublevelPersistentBetti_cast 𝕜 K h p y' y'
-  have hc2 := sublevelPersistentBetti_cast 𝕜 K h p y' y
-  have hB := sublevelBoundaries_mono 𝕜 K h p hy'y.le
+  have hc1 := sublevel_persistent_betti_cast 𝕜 K h p y' y'
+  have hc2 := sublevel_persistent_betti_cast 𝕜 K h p y' y
+  have hB := sublevel_boundaries_mono 𝕜 K h p hy'y.le
   have I1 := finrank_add_finrank_inf_le (U := sublevelCycles 𝕜 K h p y') hB
   rw [inf_comm (sublevelBoundaries 𝕜 K h p y), inf_comm (sublevelBoundaries 𝕜 K h p y')] at I1
-  have I3 := finrank_map_sublevelChains_le 𝕜 K hinj (simplicialBoundary 𝕜) (p + 1) hσ hK
+  have I3 := finrank_map_sublevel_chains_le 𝕜 K hinj (simplicialBoundary 𝕜) (p + 1) hσ hK
   rw [← hydef] at I3
   unfold sublevelBoundaries at hc1 hc2 hB I1
   split_ifs at I3 ⊢ <;> omega
 
 /-- Diagrams related by bijections preserving all points are at `q`-Wasserstein distance zero. -/
-theorem diagramWassersteinEDist_eq_zero_of_equiv {α β κ κ' : Type*} [Fintype α] [Fintype β]
+theorem diagram_wasserstein_e_dist_eq_zero_of_equiv {α β κ κ' : Type*} [Fintype α] [Fintype β]
     [Fintype κ] {q : ℝ} (hq : 0 < q) {D : FiniteDeathDiagram α} {e : κ → ℝ}
     {E : FiniteDeathDiagram β} {e' : κ' → ℝ} (σ : α ≃ β)
     (hσ : ∀ i, E.birth (σ i) = D.birth i ∧ E.death (σ i) = D.death i) (τ : κ ≃ κ')
@@ -481,28 +482,28 @@ theorem diagramWassersteinEDist_eq_zero_of_equiv {α β κ κ' : Type*} [Fintype
       left_unique := fun i j k hj hk ↦ hj.trans hk.symm
       right_unique := fun i j k hi hj ↦ σ.injective (hi.symm.trans hj) }
   refine le_antisymm ((iInf_le_of_le M (iInf_le _ τ)).trans (le_of_eq ?_)) bot_le
-  rw [diagramWassersteinCost_eq]
+  rw [diagram_wasserstein_cost_eq]
   have h1 : ∀ i, M.leftCost D E i = 0 := fun i ↦ by
-    rw [M.leftCost_of_relates D E (j := σ i) rfl, (hσ i).1, (hσ i).2]
+    rw [M.left_cost_of_relates D E (j := σ i) rfl, (hσ i).1, (hσ i).2]
     simp
   have h2 : ∀ j, M.rightCost E j = 0 := fun j ↦
-    M.rightCost_of_relates E (i := σ.symm j) (by simp [M])
+    M.right_cost_of_relates E (i := σ.symm j) (by simp [M])
   simp [h1, h2, hτ, ENNReal.zero_rpow_of_pos hq, hq]
 
 /-- Diagrams of the same function are at `q`-Wasserstein distance zero. -/
-theorem diagramWassersteinEDist_eq_zero_of_isSublevelDiagram {K : PreAbstractSimplicialComplex ι}
+theorem diagram_wasserstein_e_dist_eq_zero_of_is_sublevel_diagram {K : PreAbstractSimplicialComplex ι}
     {f : Finset ι → ℝ} {p : ℕ} {α β κ κ' : Type*} [Fintype α] [Fintype β] [Fintype κ]
     [Fintype κ'] {q : ℝ} (hq : 0 < q) {D : FiniteDeathDiagram α} {e : κ → ℝ}
     {E : FiniteDeathDiagram β} {e' : κ' → ℝ} (hD : IsSublevelDiagram 𝕜 K f p D e)
     (hE : IsSublevelDiagram 𝕜 K f p E e') : diagramWassersteinEDist q D e E e' = 0 := by
   obtain ⟨σ, hσ, τ, hτ⟩ := exists_equiv_of_card_eq D e E e' fun a b hab ↦ by
     rw [← hD a b hab, ← hE a b hab]
-  exact diagramWassersteinEDist_eq_zero_of_equiv hq σ hσ τ hτ
+  exact diagram_wasserstein_e_dist_eq_zero_of_equiv hq σ hσ τ hτ
 
 /-- `q`-Wasserstein stability when the two functions are ordered by a common function `h` that is
 injective on `K`. The bars of the diagram of `h` have distinct endpoint simplices, and matching
 the relabelled bars with the same label costs at most `∑_{σ ∈ K} |f σ - g σ|^q`. -/
-theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex ι)
+theorem diagram_wasserstein_e_dist_le_of_ordered (K : PreAbstractSimplicialComplex ι)
     {f g h : Finset ι → ℝ} (hinj : ∀ σ ∈ K, ∀ τ ∈ K, h σ = h τ → σ = τ)
     (hfh : ∀ σ ∈ K, ∀ τ ∈ K, h σ ≤ h τ → f σ ≤ f τ)
     (hgh : ∀ σ ∈ K, ∀ τ ∈ K, h σ ≤ h τ → g σ ≤ g τ) (p : ℕ) {q : ℝ} (hq : 1 ≤ q)
@@ -512,7 +513,7 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
     diagramWassersteinEDist q D e E e' ≤
       (∑ σ ∈ Finset.univ.filter (· ∈ K), ENNReal.ofReal |f σ - g σ| ^ q) ^ (1 / q) := by
   have hq0 : 0 < q := by linarith
-  obtain ⟨n, r, Dh, eh, hDh, hb, hd, he⟩ := exists_isSublevelDiagram_and_values 𝕜 K h p
+  obtain ⟨n, r, Dh, eh, hDh, hb, hd, he⟩ := exists_is_sublevel_diagram_and_values 𝕜 K h p
   choose sb hsbK hsb using hb
   choose sd hsdK hsd using hd
   choose se hseK hse using he
@@ -564,8 +565,8 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
   -- the relabelled diagrams
   have hDf := hDh.relabel 𝕜 hfh sb sd se hsbK hsb hsdK hsd hseK hse
   have hDg := hDh.relabel 𝕜 hgh sb sd se hsbK hsb hsdK hsd hseK hse
-  have h1 := diagramWassersteinEDist_eq_zero_of_isSublevelDiagram 𝕜 hq0 hD hDf
-  have h3 := diagramWassersteinEDist_eq_zero_of_isSublevelDiagram 𝕜 hq0 hDg hE
+  have h1 := diagram_wasserstein_e_dist_eq_zero_of_is_sublevel_diagram 𝕜 hq0 hD hDf
+  have h3 := diagram_wasserstein_e_dist_eq_zero_of_is_sublevel_diagram 𝕜 hq0 hDg hE
   set G : Finset ι → ℝ≥0∞ := fun σ ↦ ENNReal.ofReal |f σ - g σ| ^ q
   set U : Fin n → ℝ≥0∞ := fun i ↦ G (sb i) + G (sd i)
   have hle : ∀ i, g (sb i) ≤ g (sd i) := fun i ↦
@@ -585,11 +586,11 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
     rintro ⟨i, hi⟩
     refine le_trans (ENNReal.rpow_le_rpow ?_ hq0.le) (hW i)
     by_cases hgi : g (sb i) < g (sd i)
-    · rw [M.leftCost_of_relates _ _ (j := ⟨i, hgi⟩) rfl]
+    · rw [M.left_cost_of_relates _ _ (j := ⟨i, hgi⟩) rfl]
       rfl
     · have hnot : ¬ ∃ y, M.relates ⟨i, hi⟩ y := fun ⟨y, hy⟩ ↦ hgi (by
         have := y.2; rw [← show i = y.1 from hy] at this; exact this)
-      rw [M.leftCost_of_not _ _ hnot]
+      rw [M.left_cost_of_not _ _ hnot]
       refine ENNReal.ofReal_le_ofReal ?_
       have h2 := le_max_left |f (sb i) - g (sb i)| |f (sd i) - g (sd i)|
       have h3 := le_max_right |f (sb i) - g (sb i)| |f (sd i) - g (sd i)|
@@ -601,11 +602,11 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
       if f (sb y.1) < f (sd y.1) then 0 else U y.1 := by
     rintro ⟨i, hi⟩
     by_cases hfi : f (sb i) < f (sd i)
-    · rw [M.rightCost_of_relates _ (i := ⟨i, hfi⟩) rfl, ite_eq_left hfi,
+    · rw [M.right_cost_of_relates _ (i := ⟨i, hfi⟩) rfl, ite_eq_left hfi,
         ENNReal.zero_rpow_of_pos hq0]
     · have hnot : ¬ ∃ x, M.relates x ⟨i, hi⟩ := fun ⟨x, hx⟩ ↦ hfi (by
         have := x.2; rw [show x.1 = i from hx] at this; exact this)
-      rw [M.rightCost_of_not _ hnot, ite_eq_right hfi]
+      rw [M.right_cost_of_not _ hnot, ite_eq_right hfi]
       refine le_trans (ENNReal.rpow_le_rpow (ENNReal.ofReal_le_ofReal ?_) hq0.le) (hW i)
       have h2 := le_max_left |f (sb i) - g (sb i)| |f (sd i) - g (sd i)|
       have h3 := le_max_right |f (sb i) - g (sb i)| |f (sd i) - g (sd i)|
@@ -620,7 +621,7 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
   have hcost : diagramWassersteinCost q M (Equiv.refl _) (relabelDiagram f sb sd)
       (fun k ↦ f (se k)) (relabelDiagram g sb sd) (fun k ↦ g (se k)) ≤
       ∑ σ ∈ Finset.univ.filter (· ∈ K), G σ := by
-    rw [diagramWassersteinCost_eq]
+    rw [diagram_wasserstein_cost_eq]
     have hA : ∑ x, M.leftCost (relabelDiagram f sb sd) (relabelDiagram g sb sd) x ^ q +
         ∑ y, M.rightCost (relabelDiagram g sb sd) y ^ q ≤ ∑ i, U i := by
       refine (add_le_add (Finset.sum_le_sum fun x _ ↦ hL x)
@@ -661,12 +662,12 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
   calc diagramWassersteinEDist q D e E e'
       ≤ diagramWassersteinEDist q D e (relabelDiagram f sb sd) (fun k ↦ f (se k)) +
           diagramWassersteinEDist q (relabelDiagram f sb sd) (fun k ↦ f (se k)) E e' :=
-        diagramWassersteinEDist_triangle hq _ _ _ _ _ _
+        diagram_wasserstein_e_dist_triangle hq _ _ _ _ _ _
     _ ≤ 0 + (diagramWassersteinEDist q (relabelDiagram f sb sd) (fun k ↦ f (se k))
           (relabelDiagram g sb sd) (fun k ↦ g (se k)) +
         diagramWassersteinEDist q (relabelDiagram g sb sd) (fun k ↦ g (se k)) E e') := by
         rw [h1]
-        exact add_le_add le_rfl (diagramWassersteinEDist_triangle hq _ _ _ _ _ _)
+        exact add_le_add le_rfl (diagram_wasserstein_e_dist_triangle hq _ _ _ _ _ _)
     _ ≤ _ := by rw [h3, zero_add, add_zero]; exact h2
 
 omit [LinearOrder ι] in
@@ -706,7 +707,7 @@ theorem exists_injective_ordered (K : PreAbstractSimplicialComplex ι) (h : Fins
 
 /-- `q`-Wasserstein stability for `Fin`-indexed diagrams, by strong induction on the number of
 discordant pairs, as for the bottleneck distance. -/
-theorem diagramWassersteinEDist_le_of_card_discordantPairs_le (K : PreAbstractSimplicialComplex ι)
+theorem diagram_wasserstein_e_dist_le_of_card_discordant_pairs_le (K : PreAbstractSimplicialComplex ι)
     (p : ℕ) {q : ℝ} (hq : 1 ≤ q) (N : ℕ) : ∀ f g : Finset ι → ℝ, IsMonotoneOnFaces K f →
       IsMonotoneOnFaces K g → (discordantPairs K f g).card ≤ N →
       ∀ (n r n' r' : ℕ) (D : FiniteDeathDiagram (Fin n)) (e : Fin r → ℝ)
@@ -725,7 +726,7 @@ theorem diagramWassersteinEDist_le_of_card_discordantPairs_le (K : PreAbstractSi
         simp [discordantPairs, hσ, hτ, hc.1, hc.2]
       simp [h0] at this
     obtain ⟨h', hinj, hord⟩ := exists_injective_ordered K (fun ρ ↦ f ρ + g ρ)
-    refine diagramWassersteinEDist_le_of_ordered 𝕜 K hinj ?_ ?_ p hq hD hE
+    refine diagram_wasserstein_e_dist_le_of_ordered 𝕜 K hinj ?_ ?_ p hq hD hE
     · intro σ hσ τ hτ hle
       have hle' := hord σ hσ τ hτ hle
       by_contra hc
@@ -758,7 +759,7 @@ theorem diagramWassersteinEDist_le_of_card_discordantPairs_le (K : PreAbstractSi
       field_simp
       ring
     set m : Finset ι → ℝ := fun ρ ↦ (1 - t) * f ρ + t * g ρ
-    have hm : IsMonotoneOnFaces K m := hf.convexComb hg ht0.le ht1.le
+    have hm : IsMonotoneOnFaces K m := hf.convex_comb hg ht0.le ht1.le
     have hst : (σ, τ) ∈ discordantPairs K f g := by
       simp [discordantPairs, hσ, hτ, hf0, hg0]
     have hmστ : m σ = m τ := by
@@ -808,12 +809,12 @@ theorem diagramWassersteinEDist_le_of_card_discordantPairs_le (K : PreAbstractSi
     have hSfm := hscale t ht0.le (fun ρ ↦ f ρ - m ρ) (fun ρ ↦ by simp only [m]; ring)
     have hSmg := hscale (1 - t) (sub_pos.mpr ht1).le (fun ρ ↦ m ρ - g ρ)
       (fun ρ ↦ by simp only [m]; ring)
-    obtain ⟨n0, r0, Dm, em, hDm⟩ := exists_isSublevelDiagram_and_values 𝕜 K m p
+    obtain ⟨n0, r0, Dm, em, hDm⟩ := exists_is_sublevel_diagram_and_values 𝕜 K m p
     have hlt1 := (Finset.card_lt_card hfm).trans_le hN
     have hlt2 := (Finset.card_lt_card hmg).trans_le hN
     calc diagramWassersteinEDist q D e E e'
         ≤ diagramWassersteinEDist q D e Dm em + diagramWassersteinEDist q Dm em E e' :=
-          diagramWassersteinEDist_triangle hq _ _ _ _ _ _
+          diagram_wasserstein_e_dist_triangle hq _ _ _ _ _ _
       _ ≤ ENNReal.ofReal t * S ^ (1 / q) + ENNReal.ofReal (1 - t) * S ^ (1 / q) := by
           rw [← hSfm, ← hSmg]
           exact add_le_add (ih _ hlt1 f m hf hm le_rfl _ _ _ _ D e Dm em hD hDm.1)
@@ -826,7 +827,7 @@ theorem diagramWassersteinEDist_le_of_card_discordantPairs_le (K : PreAbstractSi
 finite simplicial complex `K` and `1 ≤ q < ∞`, the `q`-Wasserstein distance between the full
 degree-`p` diagrams is at most `(∑_{σ ∈ K} |f σ - g σ|^q)^{1/q}`. The clauses for tame Lipschitz
 functions on triangulable spaces with polynomially growing triangulations are not formalized. -/
-theorem diagramWassersteinEDist_le_of_isSublevelDiagram
+theorem diagram_wasserstein_e_dist_le_of_is_sublevel_diagram
     (K : PreAbstractSimplicialComplex ι)
     (f g : Finset ι → ℝ) (hf : IsMonotoneOnFaces K f) (hg : IsMonotoneOnFaces K g) (p : ℕ)
     (q : ℝ) (hq : 1 ≤ q)
@@ -836,18 +837,18 @@ theorem diagramWassersteinEDist_le_of_isSublevelDiagram
     diagramWassersteinEDist q D e E e' ≤
       (∑ σ ∈ Finset.univ.filter (· ∈ K), ENNReal.ofReal |f σ - g σ| ^ q) ^ (1 / q) := by
   have hq0 : 0 < q := by linarith
-  obtain ⟨n, r, D0, e0, hD0, -⟩ := exists_isSublevelDiagram_and_values 𝕜 K f p
-  obtain ⟨n', r', E0, e0', hE0, -⟩ := exists_isSublevelDiagram_and_values 𝕜 K g p
-  have h1 := diagramWassersteinEDist_eq_zero_of_isSublevelDiagram 𝕜 hq0 hD hD0
-  have h3 := diagramWassersteinEDist_eq_zero_of_isSublevelDiagram 𝕜 hq0 hE0 hE
-  have h2 := diagramWassersteinEDist_le_of_card_discordantPairs_le 𝕜 K p hq _ f g hf hg le_rfl
+  obtain ⟨n, r, D0, e0, hD0, -⟩ := exists_is_sublevel_diagram_and_values 𝕜 K f p
+  obtain ⟨n', r', E0, e0', hE0, -⟩ := exists_is_sublevel_diagram_and_values 𝕜 K g p
+  have h1 := diagram_wasserstein_e_dist_eq_zero_of_is_sublevel_diagram 𝕜 hq0 hD hD0
+  have h3 := diagram_wasserstein_e_dist_eq_zero_of_is_sublevel_diagram 𝕜 hq0 hE0 hE
+  have h2 := diagram_wasserstein_e_dist_le_of_card_discordant_pairs_le 𝕜 K p hq _ f g hf hg le_rfl
     n r n' r' D0 e0 E0 e0' hD0 hE0
   calc diagramWassersteinEDist q D e E e'
       ≤ diagramWassersteinEDist q D e D0 e0 + diagramWassersteinEDist q D0 e0 E e' :=
-        diagramWassersteinEDist_triangle hq _ _ _ _ _ _
+        diagram_wasserstein_e_dist_triangle hq _ _ _ _ _ _
     _ ≤ 0 + (diagramWassersteinEDist q D0 e0 E0 e0' + diagramWassersteinEDist q E0 e0' E e') := by
         rw [h1]
-        exact add_le_add le_rfl (diagramWassersteinEDist_triangle hq _ _ _ _ _ _)
+        exact add_le_add le_rfl (diagram_wasserstein_e_dist_triangle hq _ _ _ _ _ _)
     _ ≤ _ := by rw [h3, zero_add, add_zero]; exact h2
 
 /-- The Rips filtration value of a simplex in the diameter-`2r` convention: `σ ∈ Rips(r)` exactly
@@ -856,7 +857,7 @@ def ripsFiltrationValue {X : Type*} [PseudoMetricSpace X] (σ : Finset X) : ℝ 
   Metric.diam (σ : Set X) / 2
 
 /-- Diameters are monotone, so the Rips filtration is a monotone filtration of the full simplex. -/
-theorem isMonotoneOnFaces_ripsFiltrationValue {X : Type*} [PseudoMetricSpace X] :
+theorem is_monotone_on_faces_rips_filtration_value {X : Type*} [PseudoMetricSpace X] :
     IsMonotoneOnFaces (⊤ : PreAbstractSimplicialComplex X) (ripsFiltrationValue (X := X)) := by
   intro τ σ _ _ hτσ
   unfold ripsFiltrationValue
@@ -865,7 +866,7 @@ theorem isMonotoneOnFaces_ripsFiltrationValue {X : Type*} [PseudoMetricSpace X] 
 
 /-- A nonempty simplex has Rips filtration value at most `r` exactly when it is a Rips simplex of
 parameter `r`, that is, when all its pairwise distances are at most `2r`. -/
-theorem ripsFiltrationValue_le_iff {X : Type*} [PseudoMetricSpace X] {σ : Finset X}
+theorem rips_filtration_value_le_iff {X : Type*} [PseudoMetricSpace X] {σ : Finset X}
     (hσ : σ.Nonempty) {r : ℝ} : ripsFiltrationValue σ ≤ r ↔ IsRipsSimplex r σ := by
   unfold ripsFiltrationValue IsRipsSimplex
   rw [div_le_iff₀ two_pos, mul_comm]

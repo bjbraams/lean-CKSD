@@ -7,6 +7,7 @@ public import Mathlib.Probability.Martingale.OptionalStopping
 public import Mathlib.Probability.Independence.Integration
 public import CKSD.Asymptotics.Basic
 
+
 /-!
 # Sequential analysis: Wald's identity, Ville's inequality and Anscombe's theorem
 
@@ -17,11 +18,11 @@ public import CKSD.Asymptotics.Basic
   each independent of the event `{i < N}`. The proof uses Rémy Degenne's general stopped-sum
   theorem in `Statlib.Testing.Sequential.Wald`, with a zero term prepended to account for the
   convention of summing over `range N`.
-* `CKSD.measure_iSup_supermartingale_ge_le` (GAPS 106.38): Ville's inequality
+* `CKSD.measure_i_sup_supermartingale_ge_le` (GAPS 106.38): Ville's inequality
   `P(sup_n M_n ≥ 1/α) ≤ α` for a nonnegative supermartingale with `M_0 ≤ 1`, by optional
   stopping of the submartingale `-M` at the hitting time of a level capped at a finite horizon.
-* `CKSD.sq_mul_measureReal_exists_le_abs_sum_le`: Kolmogorov's maximal inequality.
-* `CKSD.tendstoInDistribution_random_sampleAverage` (GAPS 106.42): Anscombe's theorem. The
+* `CKSD.sq_mul_measure_real_exists_le_abs_sum_le`: Kolmogorov's maximal inequality.
+* `CKSD.tendsto_in_distribution_random_sample_average` (GAPS 106.42): Anscombe's theorem. The
   proof standardizes the observations, applies the central limit theorem along `⌈k n⌉`,
   controls the random-index fluctuation with Kolmogorov's maximal inequality, and concludes
   with Slutsky's lemma from `CKSD.Asymptotics.Estimators`.
@@ -135,7 +136,7 @@ theorem integral_stopped_sum_eq {Ω : Type*} [MeasurableSpace Ω]
 
 /-- Finite-horizon maximal bound `c · P(max_{k ≤ n} M_k ≥ c) ≤ 1` for a nonnegative supermartingale
 with `M_0 ≤ 1`, by optional stopping at the capped hitting time of `[c, ∞)`. -/
-theorem ofReal_mul_measure_exists_le_supermartingale_le_one {Ω : Type*} [MeasurableSpace Ω]
+theorem of_real_mul_measure_exists_le_supermartingale_le_one {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (F : Filtration ℕ (inferInstance : MeasurableSpace Ω)) (M : ℕ → Ω → ℝ)
     (hsuper : Supermartingale M F μ) (hpos : ∀ n, ∀ᵐ ω ∂μ, 0 ≤ M n ω)
@@ -178,7 +179,7 @@ theorem ofReal_mul_measure_exists_le_supermartingale_le_one {Ω : Type*} [Measur
 /-- GAPS 106.38: infinite-horizon Ville inequality, including a supremum not attained. For a
 nonnegative supermartingale `M` with `M 0 ≤ 1` and every `α > 0`,
 `P(sup_n M_n ≥ 1/α) ≤ α`; the bound is trivial for `α ≥ 1`. -/
-theorem measure_iSup_supermartingale_ge_le {Ω : Type*} [MeasurableSpace Ω]
+theorem measure_i_sup_supermartingale_ge_le {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (F : Filtration ℕ (inferInstance : MeasurableSpace Ω)) (M : ℕ → Ω → ℝ)
     (hsuper : Supermartingale M F μ) (hpos : ∀ n, ∀ᵐ ω ∂μ, 0 ≤ M n ω)
@@ -201,7 +202,7 @@ theorem measure_iSup_supermartingale_ge_le {Ω : Type*} [MeasurableSpace Ω]
       _ ≤ ENNReal.ofReal (1 / c) := by
         refine iSup_le fun n ↦ ?_
         rw [one_div, ENNReal.ofReal_inv_of_pos hc, ENNReal.le_inv_iff_mul_le, mul_comm]
-        exact ofReal_mul_measure_exists_le_supermartingale_le_one μ F M hsuper hpos hinit hc n
+        exact of_real_mul_measure_exists_le_supermartingale_le_one μ F M hsuper hpos hinit hc n
   refine ENNReal.le_of_forall_pos_le_add fun ε hε _ ↦ ?_
   have hαε : 0 < α + ε := by positivity
   calc μ S ≤ ENNReal.ofReal (1 / (1 / (α + ε))) :=
@@ -210,7 +211,7 @@ theorem measure_iSup_supermartingale_ge_le {Ω : Type*} [MeasurableSpace Ω]
         rw [one_div_one_div, ENNReal.ofReal_add hα.le ε.coe_nonneg, ENNReal.ofReal_coe_nnreal]
 
 /-- **Kolmogorov's maximal inequality** for independent, centred, square-integrable variables. -/
-theorem sq_mul_measureReal_exists_le_abs_sum_le {Ω : Type*} [MeasurableSpace Ω]
+theorem sq_mul_measure_real_exists_le_abs_sum_le {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (Y : ℕ → Ω → ℝ) (hm : ∀ i, Measurable (Y i))
     (hind : iIndepFun Y μ) (h2 : ∀ i, MemLp (Y i) 2 μ) (h0 : ∀ i, ∫ ω, Y i ω ∂μ = 0)
     (r : ℕ) {c : ℝ} (hc : 0 < c) :
@@ -261,17 +262,17 @@ theorem sq_mul_measureReal_exists_le_abs_sum_le {Ω : Type*} [MeasurableSpace Ω
         rw [this]
         have hSm' : ∀ j ≤ k, Measurable[⨆ i ∈ {i | i < k},
             MeasurableSpace.comap (Y i) inferInstance] (S j) := fun j hj ↦
-          measurable_biSup_sum _ fun i hi ↦ by simp at hi ⊢; omega
+          measurable_bi_sup_sum _ fun i hi ↦ by simp at hi ⊢; omega
         exact (measurableSet_le measurable_const
           (continuous_abs.measurable.comp (hSm' k le_rfl))).inter
           (Finset.measurableSet_biInter _ fun i hi ↦ measurableSet_lt
             (continuous_abs.measurable.comp (hSm' i (Finset.mem_range.1 hi).le)) measurable_const)
-      exact (measurable_biSup_sum (S := {i | i < k}) (Y := Y) (Finset.range k)
+      exact (measurable_bi_sup_sum (S := {i | i < k}) (Y := Y) (Finset.range k)
         fun i hi ↦ by simpa using hi).indicator hA'
     have hDm : Measurable[⨆ i ∈ {i | k ≤ i}, MeasurableSpace.comap (Y i) inferInstance] D := by
       rw [hD]
-      exact measurable_biSup_sum _ fun i hi ↦ by simp at hi ⊢; omega
-    have hUD : IndepFun U D μ := indepFun_of_measurable_biSup hm hind
+      exact measurable_bi_sup_sum _ fun i hi ↦ by simp at hi ⊢; omega
+    have hUD : IndepFun U D μ := indep_fun_of_measurable_bi_sup hm hind
       (Set.disjoint_left.2 fun i (hi : i < k) (hi' : k ≤ i) ↦ by omega) hUm hDm
     have hcross : ∫ ω, U ω * D ω ∂μ = 0 := by
       have := IndepFun.integral_mul_eq_mul_integral hUD hU2.aestronglyMeasurable
@@ -353,19 +354,19 @@ theorem integral_sq_sum_shift {Ω : Type*} [MeasurableSpace Ω]
   simpa only [Finset.sum_apply] using hvar
 
 /-- Kolmogorov's maximal inequality for a block of `r` standardized independent variables. -/
-theorem sq_mul_measureReal_exists_le_abs_sum_shift_le {Ω : Type*} [MeasurableSpace Ω]
+theorem sq_mul_measure_real_exists_le_abs_sum_shift_le {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ] {Y : ℕ → Ω → ℝ} (hm : ∀ i, Measurable (Y i))
     (hind : iIndepFun Y μ) (h2 : ∀ i, MemLp (Y i) 2 μ) (h0 : ∀ i, ∫ ω, Y i ω ∂μ = 0)
     (h1 : ∀ i, ∫ ω, Y i ω ^ 2 ∂μ = 1) (a r : ℕ) {c : ℝ} (hc : 0 < c) :
     c ^ 2 * μ.real {ω | ∃ j ≤ r, c ≤ |∑ i ∈ Finset.range j, Y (a + i) ω|} ≤ r := by
-  have := sq_mul_measureReal_exists_le_abs_sum_le μ (fun i ↦ Y (a + i)) (fun i ↦ hm _)
+  have := sq_mul_measure_real_exists_le_abs_sum_le μ (fun i ↦ Y (a + i)) (fun i ↦ hm _)
     (hind.precomp (add_right_injective a)) (fun i ↦ h2 _) (fun i ↦ h0 _) r hc
   rwa [integral_sq_sum_shift hm hind h2 h0 h1 a r] at this
 
 
 /-- Anscombe's comparison: when `N n / n → k` in probability, the partial sum at the random
 index `N n` differs from the partial sum at `⌈k n⌉` by `o_P(√⌈k n⌉)`. -/
-theorem tendstoInMeasure_sum_randomIndex_sub {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_sum_random_index_sub {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ] {Y : ℕ → Ω → ℝ} (hm : ∀ i, Measurable (Y i))
     (hind : iIndepFun Y μ) (h2 : ∀ i, MemLp (Y i) 2 μ) (h0 : ∀ i, ∫ ω, Y i ω ∂μ = 0)
     (h1 : ∀ i, ∫ ω, Y i ω ^ 2 ∂μ = 1) (N : ℕ → Ω → ℕ) (k : ℝ) (hk : 0 < k)
@@ -373,7 +374,7 @@ theorem tendstoInMeasure_sum_randomIndex_sub {Ω : Type*} [MeasurableSpace Ω]
     TendstoInMeasure μ (fun (n : ℕ) ω ↦
       ((∑ i ∈ Finset.range (N n ω), Y i ω) - ∑ i ∈ Finset.range ⌈k * n⌉₊, Y i ω) /
         Real.sqrt ⌈k * n⌉₊) atTop (fun _ ↦ 0) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hratio ⊢
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hratio ⊢
   intro ε hε
   refine tendsto_zero_of_forall_eventually_le (fun n ↦ measureReal_nonneg) fun η hη ↦ ?_
   set δ : ℝ := min (η * ε ^ 2 / 16) 1 with hδ
@@ -448,7 +449,7 @@ theorem tendstoInMeasure_sum_randomIndex_sub {Ω : Type*} [MeasurableSpace Ω]
       have : (0 : ℝ) < k * n := by positivity
       linarith [hMge n]
     have hc : 0 < ε * Real.sqrt (M n) / 2 := by positivity
-    have hK := sq_mul_measureReal_exists_le_abs_sum_shift_le hm hind h2 h0 h1 (a n)
+    have hK := sq_mul_measure_real_exists_le_abs_sum_shift_le hm hind h2 h0 h1 (a n)
       (2 * r n) hc
     have hc2 : (ε * Real.sqrt (M n) / 2) ^ 2 = ε ^ 2 * M n / 4 := by
       rw [div_pow, mul_pow, Real.sq_sqrt hMpos.le]; norm_num
@@ -498,16 +499,16 @@ theorem tendstoInMeasure_sum_randomIndex_sub {Ω : Type*} [MeasurableSpace Ω]
 
 /-- If `W n` converges in law and `R n → 1` in probability, then `R n W n - W n → 0` in
 probability. -/
-theorem tendstoInMeasure_mul_sub_self {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_mul_sub_self {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (W : ℕ → Ω → ℝ)
     (ν : Measure ℝ) [IsProbabilityMeasure ν] (hWν : TendstoInDistribution W atTop id (fun _ ↦ μ) ν)
     (R : ℕ → Ω → ℝ) (hR : TendstoInMeasure μ R atTop (fun _ ↦ 1)) :
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ R n ω * W n ω - W n ω) atTop (fun _ ↦ 0) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hR ⊢
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hR ⊢
   intro ε hε
   refine tendsto_zero_of_forall_eventually_le (fun n ↦ measureReal_nonneg) fun η hη ↦ ?_
   obtain ⟨K, hK, hev⟩ :=
-    exists_measureReal_lt_norm_le_of_tendstoInDistribution μ W hWν (half_pos hη)
+    exists_measure_real_lt_norm_le_of_tendsto_in_distribution μ W hWν (half_pos hη)
   have hR' := (hR (ε / K) (div_pos hε hK)).eventually (gt_mem_nhds (half_pos hη))
   filter_upwards [hev, hR'] with n h1 h2
   calc μ.real {ω | ε < dist (R n ω * W n ω - W n ω) 0}
@@ -527,11 +528,11 @@ theorem tendstoInMeasure_mul_sub_self {Ω : Type*} [MeasurableSpace Ω]
     _ ≤ η := by linarith
 
 /-- If `N n / n → k > 0` in probability, then `√(⌈k n⌉ / N n) → 1` in probability. -/
-theorem tendstoInMeasure_sqrt_ceil_div {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_sqrt_ceil_div {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (N : ℕ → Ω → ℕ) (k : ℝ) (hk : 0 < k)
     (hratio : TendstoInMeasure μ (fun (n : ℕ) ω ↦ (N n ω : ℝ) / n) atTop (fun _ ↦ k)) :
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ Real.sqrt ((⌈k * n⌉₊ : ℝ) / N n ω)) atTop (fun _ ↦ 1) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hratio ⊢
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hratio ⊢
   intro ε hε
   have hcont : ContinuousAt (fun p : ℝ × ℝ ↦ Real.sqrt (p.1 / p.2)) (k, k) :=
     (continuousAt_fst.div continuousAt_snd hk.ne').sqrt
@@ -568,7 +569,7 @@ theorem tendstoInMeasure_sqrt_ceil_div {Ω : Type*} [MeasurableSpace Ω]
 
 
 /-- The standardized sample average at a fixed sample size is measurable. -/
-theorem measurable_sqrt_mul_sampleAverage_sub {Ω : Type*} [MeasurableSpace Ω]
+theorem measurable_sqrt_mul_sample_average_sub {Ω : Type*} [MeasurableSpace Ω]
     {X : ℕ → Ω → ℝ} (hX : ∀ i, Measurable (X i)) (j : ℕ) (m σ : ℝ) :
     Measurable fun ω ↦ Real.sqrt j * (sampleAverage X j ω - m) / σ := by
   have : Measurable fun ω ↦ ∑ i ∈ Finset.range j, X i ω := Finset.measurable_sum _ fun i _ ↦ hX i
@@ -580,7 +581,7 @@ theorem measurable_sqrt_mul_sampleAverage_sub {Ω : Type*} [MeasurableSpace Ω]
 observations with positive (hence finite) variance `σ²` and random sample sizes `N n` with
 `N n / n → k > 0` in probability, `√(N n) (X̄_{N n} - m) / σ ⇒ N(0, 1)`. No independence between
 `N n` and the observations is assumed. On the event `N n = 0` the statistic is `0`. -/
-theorem tendstoInDistribution_random_sampleAverage {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_random_sample_average {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P)
     (hv : 0 < Var[id; P]) (N : ℕ → Ω → ℕ) (hN : ∀ n, Measurable (N n)) (k : ℝ) (hk : 0 < k)
@@ -588,7 +589,7 @@ theorem tendstoInDistribution_random_sampleAverage {Ω : Type*} [MeasurableSpace
     TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt (N n ω) *
       (sampleAverage X (N n ω) ω - ∫ x, x ∂P) / Real.sqrt (Var[id; P]))
       atTop id (fun _ ↦ μ) (gaussianReal 0 1) := by
-  have h2 : MemLp id 2 P := memLp_id_two_of_variance_pos hv
+  have h2 : MemLp id 2 P := mem_lp_id_two_of_variance_pos hv
   set m : ℝ := ∫ x, x ∂P with hmdef
   set σ : ℝ := Real.sqrt (Var[id; P]) with hσdef
   have hσ : 0 < σ := Real.sqrt_pos.2 hv
@@ -617,7 +618,7 @@ theorem tendstoInDistribution_random_sampleAverage {Ω : Type*} [MeasurableSpace
     rw [← hs0, ← hiid.2.2 i, integral_map (hiid.1 i).aemeasurable hs.aestronglyMeasurable]
   have hY1 : ∀ i, ∫ ω, Y i ω ^ 2 ∂μ = 1 := fun i ↦ by
     rw [← hs1, ← hiid.2.2 i, integral_map (hiid.1 i).aemeasurable (by fun_prop)]
-  have hclt := tendstoInDistribution_inv_sqrt_mul_sum_of_iid μ P X hiid s hs hs2 hs0
+  have hclt := tendsto_in_distribution_inv_sqrt_mul_sum_of_iid μ P X hiid s hs hs2 hs0
   rw [hs1, Real.toNNReal_one] at hclt
   set M : ℕ → ℕ := fun n ↦ ⌈k * n⌉₊ with hMdef
   have hMtop : Tendsto M atTop atTop :=
@@ -631,20 +632,20 @@ theorem tendstoInDistribution_random_sampleAverage {Ω : Type*} [MeasurableSpace
   set W : ℕ → Ω → ℝ := fun n ω ↦
     (Real.sqrt (M n))⁻¹ * ∑ i ∈ Finset.range (N n ω), Y i ω
   have hWm : ∀ n, Measurable (W n) := fun n ↦
-    (measurable_randomIndex (g := fun j ω ↦ ∑ i ∈ Finset.range j, Y i ω) hSm (hN n)).const_mul _
+    (measurable_random_index (g := fun j ω ↦ ∑ i ∈ Finset.range j, Y i ω) hSm (hN n)).const_mul _
   have hW : TendstoInDistribution W atTop id (fun _ ↦ μ) (gaussianReal 0 1) := by
-    refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ Z W hZm hWm hZ ?_
-    have hcore := tendstoInMeasure_sum_randomIndex_sub hYm hYind hY2 hY0 hY1 N k hk hratio
+    refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ Z W hZm hWm hZ ?_
+    have hcore := tendsto_in_measure_sum_random_index_sub hYm hYind hY2 hY0 hY1 N k hk hratio
     convert hcore using 3 with n ω
     simp only [W, Z, M]
     ring
-  have hRW := tendstoInMeasure_mul_sub_self μ W _ hW _
-    (tendstoInMeasure_sqrt_ceil_div μ N k hk hratio)
-  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ W _ hWm (fun n ↦ ?_) hW ?_
-  · exact measurable_randomIndex
+  have hRW := tendsto_in_measure_mul_sub_self μ W _ hW _
+    (tendsto_in_measure_sqrt_ceil_div μ N k hk hratio)
+  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ W _ hWm (fun n ↦ ?_) hW ?_
+  · exact measurable_random_index
       (g := fun j ω ↦ Real.sqrt j * (sampleAverage X j ω - m) / σ)
-      (fun j ↦ measurable_sqrt_mul_sampleAverage_sub hiid.1 j m σ) (hN n)
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hRW ⊢
+      (fun j ↦ measurable_sqrt_mul_sample_average_sub hiid.1 j m σ) (hN n)
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hRW ⊢
   intro ε hε
   refine (hRW ε hε).congr' ?_
   filter_upwards [eventually_gt_atTop 0] with n hn

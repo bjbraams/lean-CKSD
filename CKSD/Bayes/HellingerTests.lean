@@ -3,6 +3,7 @@ module
 public import CKSD.Bayes.HellingerGeometry
 public import TauCeti.Probability.Moments.Bernstein
 
+
 /-!
 # Robust Hellinger tests
 
@@ -27,7 +28,7 @@ open scoped NNReal ENNReal Topology BigOperators
 namespace CKSD
 
 /-- A Bernstein bound for an iid bounded score with second moment at most `3h²`. -/
-theorem measureReal_centered_hellingerScore_sum_ge_le {X : Type*} [MeasurableSpace X]
+theorem measure_real_centered_hellinger_score_sum_ge_le {X : Type*} [MeasurableSpace X]
     (P : Measure X) [IsProbabilityMeasure P] (g : X → ℝ) (hg : Measurable g)
     (hgb : ∀ x, |g x| ≤ 1) (h : ℝ) (hh : 0 < h)
     (hsecond : ∫ x, g x ^ 2 ∂P ≤ 3 * h ^ 2) (n : ℕ) :
@@ -102,15 +103,15 @@ theorem exists_hellinger_ball_test {X : Type*} [MeasurableSpace X]
   let mP := ∫ x, T x ∂P
   let mQ := ∫ x, T x ∂Q
   let A : Set (Fin n → X) := {x | (n : ℝ) * (mP + h ^ 2 / 2) ≤ ∑ i, T (x i)}
-  have hTm : Measurable T := measurable_hellingerScore hP.1 hQ.1
-  have hTb : ∀ x, |T x| ≤ 1 := abs_hellingerScore_le_one p q
+  have hTm : Measurable T := measurable_hellinger_score hP.1 hQ.1
+  have hTb : ∀ x, |T x| ≤ 1 := abs_hellinger_score_le_one p q
   have hAm : MeasurableSet A := measurableSet_le measurable_const
     (Finset.measurable_sum _ fun i _ ↦ hTm.comp (measurable_pi_apply i))
-  have hmean : mQ - mP = h ^ 2 := integral_hellingerScore_sub_eq hP hQ
-  have hsecondQ : ∫ x, T x ^ 2 ∂Q ≤ h ^ 2 := integral_hellingerScore_sq_le hP hQ
+  have hmean : mQ - mP = h ^ 2 := integral_hellinger_score_sub_eq hP hQ
+  have hsecondQ : ∫ x, T x ^ 2 ∂Q ≤ h ^ 2 := integral_hellinger_score_sq_le hP hQ
   have hsecondP : ∫ x, T x ^ 2 ∂P ≤ h ^ 2 := by
-    have hv := integral_hellingerScore_sq_le hQ hP
-    rw [hellingerScore_swap] at hv
+    have hv := integral_hellinger_score_sq_le hQ hP
+    rw [hellinger_score_swap] at hv
     simp only [neg_sq] at hv
     simpa only [T, h, statisticalHellingerDistance, ProbabilityTheory.sqHellinger_comm Q P] using hv
   refine ⟨A.indicator 1, ⟨measurable_one.indicator hAm, fun x ↦ ?_⟩, ?_, ?_⟩
@@ -124,7 +125,7 @@ theorem exists_hellinger_ball_test {X : Type*} [MeasurableSpace X]
         Fintype.card_fin, nsmul_eq_mul]
       change (n : ℝ) * h ^ 2 / 5 ≤ (∑ i, T (x i)) - n * mP
       nlinarith [mul_nonneg (Nat.cast_nonneg n) (sq_nonneg h)]
-    · exact measureReal_centered_hellingerScore_sum_ge_le P T hTm hTb h hpos
+    · exact measure_real_centered_hellinger_score_sum_ge_le P T hTm hTb h hpos
         (by nlinarith [sq_nonneg h]) n
   intro R r hRprob hR hclose
   let : IsProbabilityMeasure R := hRprob
@@ -159,7 +160,7 @@ theorem exists_hellinger_ball_test {X : Type*} [MeasurableSpace X]
     change (n : ℝ) * h ^ 2 / 5 ≤ -(∑ i, T (x i)) + n * mR
     have := mul_le_mul_of_nonneg_left hmeanR (Nat.cast_nonneg n)
     nlinarith
-  · exact measureReal_centered_hellingerScore_sum_ge_le R (fun x ↦ -T x) hTm.neg
+  · exact measure_real_centered_hellinger_score_sum_ge_le R (fun x ↦ -T x) hTm.neg
       (fun x ↦ by simpa only [abs_neg] using hTb x) h hpos
       (by simpa only [neg_sq] using hsecondR) n
 

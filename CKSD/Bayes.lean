@@ -27,6 +27,9 @@ public import CKSD.Bayes.StochasticApproximation
 public import CKSD.Bayes.MeanField
 public import CKSD.Bayes.DiffusionModels
 
+
+namespace CKSD
+
 /-!
 # Section 104: Bayesian statistics and computation
 
@@ -36,3 +39,6 @@ Markov chain and sequential Monte Carlo, Langevin and kinetic Langevin sampling 
 inequalities, stochastic approximation, mean-field limits, diffusion models, and Schrödinger
 half-bridges.
 -/
+
+
+end CKSD

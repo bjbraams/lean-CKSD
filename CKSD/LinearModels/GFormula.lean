@@ -3,6 +3,7 @@ module
 public import Mathlib.MeasureTheory.Integral.Bochner.Set
 public import Mathlib.Data.Fin.Tuple.Basic
 
+
 /-!
 # The longitudinal g-formula for discrete covariates
 
@@ -22,9 +23,9 @@ and then telescopes the weights into the sequential factorization of the g-formu
 
 ## Main results
 
-* `CKSD.integral_eq_sum_gInverseWeight`: the inverse-probability-weighted representation of
+* `CKSD.integral_eq_sum_g_inverse_weight`: the inverse-probability-weighted representation of
   the mean of a potential outcome.
-* `CKSD.integral_potentialOutcome_eq_gFormula`: Robins' g-formula for the mean of the
+* `CKSD.integral_potential_outcome_eq_g_formula`: Robins' g-formula for the mean of the
   potential outcome under a static treatment regime (GAPS 105.65).
 
 ## References
@@ -62,7 +63,7 @@ section Events
 variable (L : ℕ → Ω → 𝓛) (A : ℕ → Ω → 𝓐) (a : ℕ → 𝓐)
 
 /-- History events depend only on the recorded covariates up to the current time. -/
-theorem gHistoryEvent_congr {m m' : ℕ} (l : Fin m → 𝓛) (l' : Fin m' → 𝓛) (k : ℕ)
+theorem g_history_event_congr {m m' : ℕ} (l : Fin m → 𝓛) (l' : Fin m' → 𝓛) (k : ℕ)
     (hm : k < m) (hm' : k < m')
     (hl : ∀ i (hi : i < k + 1), l ⟨i, by omega⟩ = l' ⟨i, by omega⟩) :
     gHistoryEvent L A a l k = gHistoryEvent L A a l' k := by
@@ -79,7 +80,7 @@ theorem gHistoryEvent_congr {m m' : ℕ} (l : Fin m → 𝓛) (l' : Fin m' → �
     exact this
 
 /-- Regime-adherent pasts depend only on the recorded covariates before the current time. -/
-theorem gRegimeEvent_congr {m m' : ℕ} (l : Fin m → 𝓛) (l' : Fin m' → 𝓛) (k : ℕ)
+theorem g_regime_event_congr {m m' : ℕ} (l : Fin m → 𝓛) (l' : Fin m' → 𝓛) (k : ℕ)
     (hm : k ≤ m) (hm' : k ≤ m')
     (hl : ∀ i (hi : i < k), l ⟨i, by omega⟩ = l' ⟨i, by omega⟩) :
     gRegimeEvent L A a l k = gRegimeEvent L A a l' k := by
@@ -96,13 +97,13 @@ theorem gRegimeEvent_congr {m m' : ℕ} (l : Fin m → 𝓛) (l' : Fin m' → �
     exact this
 
 /-- The history event at time `k` is contained in the regime-adherent past before `k`. -/
-theorem gHistoryEvent_subset_gRegimeEvent {m : ℕ} (l : Fin m → 𝓛) (k : ℕ) :
+theorem g_history_event_subset_g_regime_event {m : ℕ} (l : Fin m → 𝓛) (k : ℕ) :
     gHistoryEvent L A a l k ⊆ gRegimeEvent L A a l k := by
   intro ω h s hs
   exact ⟨(h s (by omega)).1, (h s (by omega)).2 hs⟩
 
 /-- Appending the next covariate value splits the regime-adherent past. -/
-theorem gHistoryEvent_snoc {n : ℕ} (l : Fin n → 𝓛) (x : 𝓛) :
+theorem g_history_event_snoc {n : ℕ} (l : Fin n → 𝓛) (x : 𝓛) :
     gHistoryEvent L A a (Fin.snoc l x : Fin (n + 1) → 𝓛) n =
       gRegimeEvent L A a l n ∩ {ω | L n ω = x} := by
   ext ω
@@ -119,7 +120,7 @@ theorem gHistoryEvent_snoc {n : ℕ} (l : Fin n → 𝓛) (x : 𝓛) :
 variable {L A} [MeasurableSpace Ω]
 
 /-- History events are measurable when the coordinate events are. -/
-theorem measurableSet_gHistoryEvent (hL : ∀ t x, MeasurableSet {ω | L t ω = x})
+theorem measurable_set_g_history_event (hL : ∀ t x, MeasurableSet {ω | L t ω = x})
     (hA : ∀ t x, MeasurableSet {ω | A t ω = x}) {m : ℕ} (l : Fin m → 𝓛) (k : ℕ) :
     MeasurableSet (gHistoryEvent L A a l k) := by
   simp only [gHistoryEvent, ofPred_forall]
@@ -131,7 +132,7 @@ theorem measurableSet_gHistoryEvent (hL : ∀ t x, MeasurableSet {ω | L t ω = 
   · simp [h₁]
 
 /-- Regime-adherent pasts are measurable when the coordinate events are. -/
-theorem measurableSet_gRegimeEvent (hL : ∀ t x, MeasurableSet {ω | L t ω = x})
+theorem measurable_set_g_regime_event (hL : ∀ t x, MeasurableSet {ω | L t ω = x})
     (hA : ∀ t x, MeasurableSet {ω | A t ω = x}) {m : ℕ} (l : Fin m → 𝓛) (k : ℕ) :
     MeasurableSet (gRegimeEvent L A a l k) := by
   simp only [gRegimeEvent, ofPred_forall]
@@ -166,7 +167,7 @@ time `k < N` the potential outcome is mean-exchangeable with the treatment given
 history, and regime-adherent continuations of histories of positive probability have positive
 probability, then for `n ≤ N` the mean of `Ya` is the sum over covariate records of the
 inverse treatment weights times the integral of `Ya` over the regime-adherent event. -/
-theorem integral_eq_sum_gInverseWeight [MeasurableSpace Ω] [Fintype 𝓛] (P : Measure Ω)
+theorem integral_eq_sum_g_inverse_weight [MeasurableSpace Ω] [Fintype 𝓛] (P : Measure Ω)
     [IsFiniteMeasure P] (L : ℕ → Ω → 𝓛) (A : ℕ → Ω → 𝓐) (a : ℕ → 𝓐)
     (hL : ∀ t x, MeasurableSet {ω | L t ω = x}) (hA : ∀ t x, MeasurableSet {ω | A t ω = x})
     (Ya : Ω → ℝ) (hYa : Integrable Ya P) (N : ℕ)
@@ -197,12 +198,12 @@ theorem integral_eq_sum_gInverseWeight [MeasurableSpace Ω] [Fintype 𝓛] (P : 
     have hpart : gRegimeEvent L A a l n =
         ⋃ x, gHistoryEvent L A a (Fin.snoc l x : Fin (n + 1) → 𝓛) n := by
       ext ω
-      simp only [gHistoryEvent_snoc, mem_iUnion, mem_inter_iff, mem_ofPred_eq]
+      simp only [g_history_event_snoc, mem_iUnion, mem_inter_iff, mem_ofPred_eq]
       exact ⟨fun h ↦ ⟨L n ω, h, rfl⟩, fun ⟨_, h, _⟩ ↦ h⟩
     rw [hpart, integral_iUnion_fintype
-      (fun x ↦ measurableSet_gHistoryEvent a hL hA _ n)
+      (fun x ↦ measurable_set_g_history_event a hL hA _ n)
       (fun x y hxy ↦ by
-        rw [Function.onFun, gHistoryEvent_snoc, gHistoryEvent_snoc]
+        rw [Function.onFun, g_history_event_snoc, g_history_event_snoc]
         exact Disjoint.inter_left' _ (Disjoint.inter_right' _
           (disjoint_left.2 fun ω hx hy ↦ hxy (hx.symm.trans hy))))
       (fun x ↦ hYa.integrableOn), Finset.mul_sum]
@@ -213,10 +214,10 @@ theorem integral_eq_sum_gInverseWeight [MeasurableSpace Ω] [Fintype 𝓛] (P : 
           P.real (gHistoryEvent L A a l k) / P.real (gRegimeEvent L A a l (k + 1)) := by
       intro k hk
       rw [Finset.mem_range] at hk
-      rw [gHistoryEvent_congr L A a l' l k (by omega) hk (fun i hi ↦ by
+      rw [g_history_event_congr L A a l' l k (by omega) hk (fun i hi ↦ by
           simp only [l']
           exact Fin.snoc_castSucc (α := fun _ ↦ 𝓛) (p := l) (x := x) (i := ⟨i, by omega⟩)),
-        gRegimeEvent_congr L A a l' l (k + 1) (by omega) hk (fun i hi ↦ by
+        g_regime_event_congr L A a l' l (k + 1) (by omega) hk (fun i hi ↦ by
           simp only [l']
           exact Fin.snoc_castSucc (α := fun _ ↦ 𝓛) (p := l) (x := x) (i := ⟨i, by omega⟩))]
     rw [Finset.prod_range_succ, Finset.prod_congr rfl hprod, mul_assoc]
@@ -245,7 +246,7 @@ probabilities). The
 `t = 0` factor of the product is `P(L_0 = l_0)`, since the regime-adherent past before time
 `0` is the whole space. The iterated-conditional-expectation form and the general kernel form
 are not stated. -/
-theorem integral_potentialOutcome_eq_gFormula [MeasurableSpace Ω] [Fintype 𝓛] (P : Measure Ω)
+theorem integral_potential_outcome_eq_g_formula [MeasurableSpace Ω] [Fintype 𝓛] (P : Measure Ω)
     [IsProbabilityMeasure P] (T : ℕ) (L : ℕ → Ω → 𝓛) (A : ℕ → Ω → 𝓐) (a : ℕ → 𝓐)
     (hL : ∀ t x, MeasurableSet {ω | L t ω = x}) (hA : ∀ t x, MeasurableSet {ω | A t ω = x})
     (Y Ya : Ω → ℝ) (hYa : Integrable Ya P)
@@ -265,9 +266,9 @@ theorem integral_potentialOutcome_eq_gFormula [MeasurableSpace Ω] [Fintype 𝓛
         gRegimeEvent L A a l (n + 1) = gRegimeEvent L A a l' (n + 1) := by
     intro n hn l
     refine ⟨fun s ↦ if h : (s : ℕ) < n + 1 then l ⟨s, h⟩ else l 0, ?_, ?_⟩
-    · exact gHistoryEvent_congr L A a _ _ n (by omega) (by omega) fun i hi ↦ by simp [hi]
-    · exact gRegimeEvent_congr L A a _ _ (n + 1) le_rfl (by omega) fun i hi ↦ by simp [hi]
-  have hipw := integral_eq_sum_gInverseWeight P L A a hL hA Ya hYa (T + 1)
+    · exact g_history_event_congr L A a _ _ n (by omega) (by omega) fun i hi ↦ by simp [hi]
+    · exact g_regime_event_congr L A a _ _ (n + 1) le_rfl (by omega) fun i hi ↦ by simp [hi]
+  have hipw := integral_eq_sum_g_inverse_weight P L A a hL hA Ya hYa (T + 1)
     (fun n hn l ↦ by
       obtain ⟨l', h₁, h₂⟩ := hext n (by omega) l
       rw [h₁, h₂]; exact hexch n (by omega) l')
@@ -277,7 +278,7 @@ theorem integral_potentialOutcome_eq_gFormula [MeasurableSpace Ω] [Fintype 𝓛
     (T + 1) le_rfl
   rw [hipw]
   refine Finset.sum_congr rfl fun l _ ↦ ?_
-  have hmeas := measurableSet_gRegimeEvent a hL hA l (T + 1)
+  have hmeas := measurable_set_g_regime_event a hL hA l (T + 1)
   have hY : (∫ ω in gRegimeEvent L A a l (T + 1), Y ω ∂P) =
       ∫ ω in gRegimeEvent L A a l (T + 1), Ya ω ∂P :=
     setIntegral_congr_fun hmeas fun ω hω ↦ hcons ω fun t ht ↦ (hω ⟨t, by omega⟩ (by simp; omega)).2
@@ -286,7 +287,7 @@ theorem integral_potentialOutcome_eq_gFormula [MeasurableSpace Ω] [Fintype 𝓛
     (fun k ↦ P.real (gRegimeEvent L A a l k)) (T + 1)
     (by simp [gRegimeEvent])
     (fun k hk ↦ le_antisymm (hk ▸ measureReal_mono
-      (gHistoryEvent_subset_gRegimeEvent L A a l k)) measureReal_nonneg)
+      (g_history_event_subset_g_regime_event L A a l k)) measureReal_nonneg)
     (fun k hk ↦ hpos k (by omega) l) (T + 1) le_rfl
   rw [← htel]
   by_cases h0 : P.real (gRegimeEvent L A a l (T + 1)) = 0

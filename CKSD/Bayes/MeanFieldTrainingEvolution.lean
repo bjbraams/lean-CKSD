@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldZeroNoise
 public import CKSD.Bayes.MeanFieldFlowRepresentation
 /-!
@@ -26,7 +27,7 @@ namespace CKSD
 variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 /-- Bounded continuous characteristics with their own marginal drift are nonlinear integral solutions. -/
-theorem isMcKeanVlasovSolution_of_bounded_characteristics
+theorem is_mc_kean_vlasov_solution_of_bounded_characteristics
     (P : Measure E) [IsProbabilityMeasure P] (hi : Integrable (fun x ↦ ‖x‖) P)
     (b : E → Measure E → E) (v : ℝ × E → E) (hv : Continuous v)
     (M : ℝ≥0) (hM : ∀ q, ‖v q‖₊ ≤ M)
@@ -121,15 +122,15 @@ theorem exists_unique_nonlinear_continuity_solution_of_bound
       (∀ t ≥ 0, ρ t = P.map (fun x ↦ γ x t)) ∧
       (∀ t ≥ 0, ∀ x, v (t,x) = b x (ρ t)) := by
   have hid : Integrable (id : E → E) P := (integrable_norm_iff aestronglyMeasurable_id).1 hi
-  obtain ⟨Y,hY⟩ := exists_mcKeanVlasovSolution_zero_forcing P b hb id measurable_id hid
+  obtain ⟨Y,hY⟩ := exists_mc_kean_vlasov_solution_zero_forcing P b hb id measurable_id hid
   let μ : ℝ → Measure E := fun t ↦ P.map (Y t)
   have hμp (t : ℝ) (_ht : 0 ≤ t) : IsProbabilityMeasure (μ t) := inferInstance
   have hμi (t : ℝ) (ht : 0 ≤ t) : Integrable (fun x ↦ ‖x‖) (μ t) :=
     (integrable_map_measure continuous_norm.aestronglyMeasurable (hY.1 t).aemeasurable).2 (hY.2.1 t ht)
   let v : ℝ × E → E := fun q ↦ b q.2 (μ (max 0 q.1))
-  have hv := hb.lipschitzWith_nonneg_marginalDrift_of_wasserstein_bound b hL μ hμp hμi
+  have hv := hb.lipschitz_with_nonneg_marginal_drift_of_wasserstein_bound b hL μ hμp hμi
     M M.coe_nonneg (fun s hs t ht ↦
-      hY.wassersteinEDist_toReal_le_of_zero_forcing_of_bound P b hb id Y M hM s hs t ht)
+      hY.wasserstein_e_dist_to_real_le_of_zero_forcing_of_bound P b hb id Y M hM s hs t ht)
   have hvM (q : ℝ × E) : ‖v q‖₊ ≤ M := by
     exact_mod_cast hM (μ (max 0 q.1)) inferInstance q.2
   obtain ⟨γ,hγ,hγ0,hγd,hγce,hγc,_⟩ :=
@@ -147,13 +148,13 @@ theorem exists_unique_nonlinear_continuity_solution_of_bound
     rw [hμγ _ (le_max_left _ _)]
   have hvγ (t : ℝ) (ht : 0 ≤ t) (x : E) : v (t,x) = b x (P.map (fun z ↦ γ z t)) := by
     rw [hvμ t ht x,hμγ t ht]
-  have hγMV := isMcKeanVlasovSolution_of_bounded_characteristics P hi b v hv.continuous M hvM
+  have hγMV := is_mc_kean_vlasov_solution_of_bounded_characteristics P hi b v hv.continuous M hvM
     γ hγ hγ0 hγd hvγ
   have hρm : Measurable ρ :=
     (hγce 1 zero_lt_one).measurable.comp (continuous_const.max continuous_id).measurable
   have hρce (T : ℝ) (hT : 0 < T) :
       TauCeti.IsContinuityEquation ρ (fun t x ↦ b x (ρ t)) 0 T := by
-    have hh := isContinuityEquation_congr_measure_on_Ioo (hγce T hT) hρm
+    have hh := is_continuity_equation_congr_measure_on_ioo (hγce T hT) hρm
       (fun t ht ↦ hρlaw t ht.1.le)
     simpa only [hvρall] using hh
   have hρc (g : BoundedContinuousFunction E ℝ) :
@@ -165,7 +166,7 @@ theorem exists_unique_nonlinear_continuity_solution_of_bound
   · intro σ hσ t ht
     have hσi0 : Integrable (fun x ↦ ‖x‖) (σ 0) := by rw [hσ.2.1]; exact hi
     let w : ℝ × E → E := fun q ↦ b q.2 (σ (max 0 q.1))
-    have hw := hb.lipschitzWith_nonneg_marginalDrift b hL σ hσ.1 hσ.2.2.1 hσ.2.2.2
+    have hw := hb.lipschitz_with_nonneg_marginal_drift b hL σ hσ.1 hσ.2.2.1 hσ.2.2.2
       hσi0 M M.coe_nonneg (fun t ht x ↦ hM (σ t) (hσ.1 t ht) x)
     have hwM (q : ℝ × E) : ‖w q‖₊ ≤ M := by
       exact_mod_cast hM (σ (max 0 q.1)) (hσ.1 _ (le_max_left _ _)) q.2
@@ -180,7 +181,7 @@ theorem exists_unique_nonlinear_continuity_solution_of_bound
     have hσlaw := hησ σ hσ.1 hσ.2.2.1 hσce hσ.2.1
     have hwη (s : ℝ) (hs : 0 ≤ s) (x : E) : w (s,x) = b x (P.map (fun z ↦ η z s)) := by
       rw [hwσ s hs x,hσlaw s hs]
-    have hηMV := isMcKeanVlasovSolution_of_bounded_characteristics P hi b w hw.continuous M hwM
+    have hηMV := is_mc_kean_vlasov_solution_of_bounded_characteristics P hi b w hw.continuous M hwM
       η hη hη0 hηd hwη
     have he := hγMV.ae_eq_of_zero_forcing_of_bound P b hb id hid
       (fun t x ↦ γ x t) (fun t x ↦ η x t) hηMV M hM

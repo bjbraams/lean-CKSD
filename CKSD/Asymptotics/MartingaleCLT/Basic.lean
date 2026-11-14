@@ -4,11 +4,12 @@ public import CKSD.Asymptotics.Basic
 public import CKSD.Asymptotics.Lindeberg.Basic
 public import Mathlib.Probability.Martingale.Basic
 
+
 /-!
 # Martingale central limit theorem: bounded conditional variances
 
 Infrastructure for the martingale central limit theorem for triangular arrays of
-martingale differences (GAPS 106.1, `CKSD.tendstoInDistribution_martingale_array_sum`).
+martingale differences (GAPS 106.1, `CKSD.tendsto_in_distribution_martingale_array_sum`).
 
 The proof follows B. M. Brown (1971). For a row of martingale differences `Xⱼ` with conditional
 variances `σⱼ²` and partial sums `Sₖ`, `Vₖ = ∑_{j<k} σⱼ²`, the products
@@ -20,14 +21,14 @@ condition, and then `𝔼 exp (i t S_k) → exp (-t² v / 2)`.
 
 ## Main results
 
-* `CKSD.integral_mul_ofReal_condExp`: `∫ W g = ∫ W 𝔼[g | m]` for bounded `m`-measurable `W`.
-* `CKSD.condExp_sq_le_sq_add_condExp_ite`: `𝔼[Y² | m] ≤ ε² + 𝔼[Y² 1{|Y| > ε} | m]`.
-* `CKSD.tendsto_integral_of_le_of_tendstoInMeasure`: bounded convergence in probability.
-* `CKSD.tendstoInMeasure_of_ae_eq_of_measure_tendsto_zero`: convergence in probability is
+* `CKSD.integral_mul_of_real_cond_exp`: `∫ W g = ∫ W 𝔼[g | m]` for bounded `m`-measurable `W`.
+* `CKSD.cond_exp_sq_le_sq_add_cond_exp_ite`: `𝔼[Y² | m] ≤ ε² + 𝔼[Y² 1{|Y| > ε} | m]`.
+* `CKSD.tendsto_integral_of_le_of_tendsto_in_measure`: bounded convergence in probability.
+* `CKSD.tendsto_in_measure_of_ae_eq_of_measure_tendsto_zero`: convergence in probability is
   unaffected by changes on events of vanishing probability.
-* `CKSD.tendstoInDistribution_sum_of_sum_condVar_le`: the martingale central limit theorem for
+* `CKSD.tendsto_in_distribution_sum_of_sum_cond_var_le`: the martingale central limit theorem for
   rows whose summed conditional variances are bounded.
-* `CKSD.mul_zero_or_one_martingaleDifference`: truncation by predictable `{0, 1}` factors.
+* `CKSD.mul_zero_or_one_martingale_difference`: truncation by predictable `{0, 1}` factors.
 
 ## References
 
@@ -48,7 +49,7 @@ namespace CKSD
 
 /-- Pulling a bounded `m`-measurable complex factor through a real conditional expectation:
 `∫ W g = ∫ W 𝔼[g | m]`. -/
-theorem integral_mul_ofReal_condExp {Ω : Type*} {m mΩ : MeasurableSpace Ω} {μ : Measure Ω}
+theorem integral_mul_of_real_cond_exp {Ω : Type*} {m mΩ : MeasurableSpace Ω} {μ : Measure Ω}
     [IsFiniteMeasure μ] (hm : m ≤ mΩ) {W : Ω → ℂ} (hW : StronglyMeasurable[m] W) {c : ℝ}
     (hWb : ∀ᵐ ω ∂μ, ‖W ω‖ ≤ c) {g : Ω → ℝ} (hg : Integrable g μ) :
     ∫ ω, W ω * (g ω : ℂ) ∂μ = ∫ ω, W ω * ((μ[g | m]) ω : ℂ) ∂μ := by
@@ -62,7 +63,7 @@ theorem integral_mul_ofReal_condExp {Ω : Type*} {m mΩ : MeasurableSpace Ω} {�
     _ = _ := by simp_rw [hB]
 
 /-- Complex coercion preserves integrability. -/
-private theorem integrable_ofReal_complex {Ω : Type*} {mΩ : MeasurableSpace Ω} {μ : Measure Ω}
+private theorem integrable_of_real_complex {Ω : Type*} {mΩ : MeasurableSpace Ω} {μ : Measure Ω}
     {g : Ω → ℝ} (hg : Integrable g μ) : Integrable (fun ω ↦ (g ω : ℂ)) μ := hg.ofReal
 
 /-- The conditional Taylor estimate behind one step of the martingale telescoping argument.
@@ -97,16 +98,16 @@ private theorem norm_integral_mul_cexp_sub_le {Ω : Type*} {𝓕 mΩ : Measurabl
     exact pow_le_pow_left₀ (by have := hω.1; positivity)
       (mul_le_mul_of_nonneg_left hω.2 (by positivity)) 2
   have hWint : ∀ {g : Ω → ℝ}, Integrable g μ → Integrable (fun ω ↦ W ω * (g ω : ℂ)) μ :=
-    fun hg ↦ (integrable_ofReal_complex hg).bdd_mul hWae hWb
+    fun hg ↦ (integrable_of_real_complex hg).bdd_mul hWae hWb
   have hWi : Integrable W μ := Integrable.of_bound hWae c hWb
   -- the martingale-difference and conditional-variance identities
   have hEX : ∫ ω, W ω * (Y ω : ℂ) ∂μ = 0 := by
-    rw [integral_mul_ofReal_condExp hFm hWm hWb hX1]
+    rw [integral_mul_of_real_cond_exp hFm hWm hWb hX1]
     have h0' : (fun ω ↦ W ω * ((μ[Y | 𝓕]) ω : ℂ)) =ᵐ[μ] fun _ ↦ 0 :=
       h0.mono fun ω hω ↦ by simp only [hω, Pi.zero_apply, ofReal_zero, mul_zero]
     rw [integral_congr_ae h0', integral_zero]
   have hEX2 : ∫ ω, W ω * ((Y ω ^ 2 : ℝ) : ℂ) ∂μ = ∫ ω, W ω * (σ ω : ℂ) ∂μ := by
-    rw [integral_mul_ofReal_condExp hFm hWm hWb hX2]
+    rw [integral_mul_of_real_cond_exp hFm hWm hWb hX2]
     have hσ' : (fun ω ↦ W ω * ((μ[fun ω ↦ Y ω ^ 2 | 𝓕]) ω : ℂ)) =ᵐ[μ]
         fun ω ↦ W ω * (σ ω : ℂ) := hσ.mono fun ω hω ↦ by simp only [hω]
     exact integral_congr_ae hσ'
@@ -120,7 +121,7 @@ private theorem norm_integral_mul_cexp_sub_le {Ω : Type*} {𝓕 mΩ : Measurabl
     exact hcont.comp_aestronglyMeasurable hXae
   have hρi : Integrable ρ μ := by
     refine (hX2.const_mul (2 * t ^ 2)).mono' hρae (ae_of_all _ fun ω ↦ ?_)
-    have := (norm_cexp_ofReal_mul_I_sub_le (t * Y ω)).2
+    have := (norm_cexp_of_real_mul_i_sub_le (t * Y ω)).2
     rw [mul_pow] at this
     simp only [hρ]
     linarith
@@ -177,7 +178,7 @@ private theorem norm_integral_mul_cexp_sub_le {Ω : Type*} {𝓕 mΩ : Measurabl
     refine norm_integral_le_of_norm_le (((hX2.const_mul _).add (hT.const_mul _)).const_mul c) ?_
     filter_upwards [hWb] with ω hω
     rw [norm_mul]
-    exact mul_le_mul hω (norm_cexp_ofReal_mul_I_sub_le_lindeberg hε t (Y ω)) (norm_nonneg _)
+    exact mul_le_mul hω (norm_cexp_of_real_mul_i_sub_le_lindeberg hε t (Y ω)) (norm_nonneg _)
       ((norm_nonneg _).trans hω)
   have hσint : ∫ ω, Y ω ^ 2 ∂μ = ∫ ω, σ ω ∂μ := by
     rw [integral_congr_ae hσ, integral_condExp hFm]
@@ -251,7 +252,7 @@ private theorem norm_integral_mdsZ_succ_sub_le {Ω : Type*} {mΩ : MeasurableSpa
   exact norm_integral_mul_cexp_sub_le hFm hWm hWb h2 h0 (hσm m) hσ hε hℓ hσB t
 
 /-- A conditional variance is at most `ε²` plus the conditional truncated second moment. -/
-theorem condExp_sq_le_sq_add_condExp_ite {Ω : Type*} {m mΩ : MeasurableSpace Ω}
+theorem cond_exp_sq_le_sq_add_cond_exp_ite {Ω : Type*} {m mΩ : MeasurableSpace Ω}
     {μ : Measure Ω} [IsFiniteMeasure μ] (hm : m ≤ mΩ) {Y : Ω → ℝ} (hY : MemLp Y 2 μ) (ε : ℝ) :
     μ[fun ω ↦ Y ω ^ 2 | m] ≤ᵐ[μ]
       fun ω ↦ ε ^ 2 + (μ[fun ω ↦ if ε < |Y ω| then Y ω ^ 2 else 0 | m]) ω := by
@@ -297,7 +298,7 @@ private theorem norm_integral_mdsZ_sub_one_le {Ω : Type*} {mΩ : MeasurableSpac
         simp only [Pi.zero_apply]; split_ifs <;> positivity)] with ω h1 h2
     rw [h1]; exact h2
   have hσℓ : ∀ᵐ ω ∂μ, ∀ i, σ2 i ω ≤ ε ^ 2 + ℓ i ω := ae_all_iff.2 fun i ↦ by
-    filter_upwards [hσ i, hℓ i, condExp_sq_le_sq_add_condExp_ite (F.le i) (h2 i) ε]
+    filter_upwards [hσ i, hℓ i, cond_exp_sq_le_sq_add_cond_exp_ite (F.le i) (h2 i) ε]
       with ω h1 h2 h3
     rw [h1, h2]; exact h3
   have hBm : ∀ m < k, ∀ᵐ ω ∂μ, ∑ i ∈ Finset.range (m + 1), σ2 i ω ≤ B := fun m hm ↦ by
@@ -363,7 +364,7 @@ private theorem norm_integral_mdsZ_sub_one_le {Ω : Type*} {mΩ : MeasurableSpac
 
 /-- Bounded convergence in probability: if `0 ≤ Yₙ ≤ B` and `Yₙ ≤ Lₙ` almost surely with
 `Lₙ → 0` in probability, then `𝔼 Yₙ → 0`. -/
-theorem tendsto_integral_of_le_of_tendstoInMeasure {Ω : Type*} {mΩ : MeasurableSpace Ω}
+theorem tendsto_integral_of_le_of_tendsto_in_measure {Ω : Type*} {mΩ : MeasurableSpace Ω}
     {μ : Measure Ω} [IsProbabilityMeasure μ] {Y L : ℕ → Ω → ℝ} {B : ℝ}
     (hY : ∀ n, Integrable (Y n) μ) (hLm : ∀ n, Measurable (L n))
     (hY0 : ∀ n, 0 ≤ᵐ[μ] Y n) (hYB : ∀ n, ∀ᵐ ω ∂μ, Y n ω ≤ B) (hYL : ∀ n, Y n ≤ᵐ[μ] L n)
@@ -405,7 +406,7 @@ theorem tendsto_integral_of_le_of_tendstoInMeasure {Ω : Type*} {mΩ : Measurabl
 
 /-- Convergence in probability transfers to sequences that agree with the original one outside
 events whose probabilities tend to zero. -/
-theorem tendstoInMeasure_of_ae_eq_of_measure_tendsto_zero {Ω : Type*} {mΩ : MeasurableSpace Ω}
+theorem tendsto_in_measure_of_ae_eq_of_measure_tendsto_zero {Ω : Type*} {mΩ : MeasurableSpace Ω}
     {μ : Measure Ω} {Y Z : ℕ → Ω → ℝ} {g : Ω → ℝ} (E : ℕ → Set Ω)
     (hE : Tendsto (fun n ↦ μ (E n)) atTop (𝓝 0))
     (hYZ : ∀ n, ∀ᵐ ω ∂μ, ω ∉ E n → Y n ω = Z n ω) (hZ : TendstoInMeasure μ Z atTop g) :
@@ -423,7 +424,7 @@ theorem tendstoInMeasure_of_ae_eq_of_measure_tendsto_zero {Ω : Type*} {mΩ : Me
     rw [← hω h]; exact hmem
 
 /-- If `Vₙ ≥ 0` almost surely and `Vₙ → v` in probability, then `v ≥ 0`. -/
-theorem nonneg_of_tendstoInMeasure_of_nonneg {Ω : Type*} {mΩ : MeasurableSpace Ω}
+theorem nonneg_of_tendsto_in_measure_of_nonneg {Ω : Type*} {mΩ : MeasurableSpace Ω}
     {μ : Measure Ω} [IsProbabilityMeasure μ] {V : ℕ → Ω → ℝ} {v : ℝ}
     (hV0 : ∀ n, 0 ≤ᵐ[μ] V n) (hV : TendstoInMeasure μ V atTop fun _ ↦ v) : 0 ≤ v := by
   by_contra hv
@@ -448,7 +449,7 @@ variances `V n ≤ B` converge in probability to `v ≥ 0`, and whose summed con
 second moments tend to zero in mean, have row sums converging in distribution to `N(0, v)`.
 The proof compares `𝔼 exp (i t Sₙ)` with `exp (-t² v / 2)` through the telescoping estimate
 `norm_integral_mdsZ_sub_one_le`. -/
-theorem tendstoInDistribution_sum_of_sum_condVar_le {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_sum_of_sum_cond_var_le {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (F : ℕ → Filtration ℕ (inferInstance : MeasurableSpace Ω))
     (X σ2 : ℕ → ℕ → Ω → ℝ) (ℓ : ℝ → ℕ → ℕ → Ω → ℝ) (k : ℕ → ℕ)
@@ -516,10 +517,10 @@ theorem tendstoInDistribution_sum_of_sum_condVar_le {Ω : Type*} [MeasurableSpac
       rw [Real.dist_eq, sub_zero, abs_of_nonneg (norm_nonneg _)]
       exact (hrow n ε hε0' t).trans_lt hn
     have hW : Tendsto (fun n ↦ ∫ ω, |Real.exp (t ^ 2 / 2 * V n ω) - e| ∂μ) atTop (𝓝 0) := by
-      have hJ := tendstoInMeasure_comp_of_continuousAt μ V v
+      have hJ := tendsto_in_measure_comp_of_continuous_at μ V v
         (fun x ↦ |Real.exp (t ^ 2 / 2 * x) - e|) (by fun_prop) hV
       simp only [he, sub_self, abs_zero] at hJ
-      refine tendsto_integral_of_le_of_tendstoInMeasure (B := c + e) (fun n ↦ ?_)
+      refine tendsto_integral_of_le_of_tendsto_in_measure (B := c + e) (fun n ↦ ?_)
         (fun n ↦ by fun_prop) (fun n ↦ ae_of_all _ fun ω ↦ abs_nonneg _) (fun n ↦ ?_)
         (fun n ↦ ae_of_all _ fun ω ↦ le_rfl) hJ
       · refine Integrable.of_bound (by fun_prop) (c + e) ?_
@@ -575,7 +576,7 @@ theorem tendstoInDistribution_sum_of_sum_condVar_le {Ω : Type*} [MeasurableSpac
 `𝓖`-measurable with `𝔼[Y | 𝓕] = 0`) by an `𝓕`-measurable `{0, 1}`-valued factor `ι` gives a
 square-integrable martingale difference whose conditional variance and conditional truncated
 second moments are those of `Y` multiplied by `ι`. -/
-theorem mul_zero_or_one_martingaleDifference {Ω : Type*} {𝓕 𝓖 mΩ : MeasurableSpace Ω}
+theorem mul_zero_or_one_martingale_difference {Ω : Type*} {𝓕 𝓖 mΩ : MeasurableSpace Ω}
     {μ : Measure Ω} [IsProbabilityMeasure μ] (h𝓕𝓖 : 𝓕 ≤ 𝓖) (h𝓖 : 𝓖 ≤ mΩ) {ι Y : Ω → ℝ}
     (hι : StronglyMeasurable[𝓕] ι) (hι01 : ∀ ω, ι ω = 0 ∨ ι ω = 1)
     (hY : StronglyMeasurable[𝓖] Y) (h2 : MemLp Y 2 μ) (h0 : μ[Y | 𝓕] =ᵐ[μ] 0) :

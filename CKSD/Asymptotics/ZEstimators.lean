@@ -2,6 +2,7 @@ module
 
 public import CKSD.Asymptotics.LikelihoodSupport
 
+
 /-!
 # Lipschitz empirical processes and Z-estimator normality
 
@@ -25,7 +26,7 @@ attribute [local instance] Classical.propDecidable
 
 /-- Square integrability of a parameter family with a square-integrable Lipschitz envelope, at
 parameters within the Lipschitz radius. -/
-theorem memLp_two_of_lipschitz_envelope {E : Type*} [MeasurableSpace E] (P : Measure E)
+theorem mem_lp_two_of_lipschitz_envelope {E : Type*} [MeasurableSpace E] (P : Measure E)
     (psi : ℝ → E → ℝ) (hm : Measurable (Function.uncurry psi)) (theta₀ r : ℝ) (hr : 0 < r)
     (M : E → ℝ) (hM : MemLp M 2 P) (hpsi : MemLp (psi theta₀) 2 P)
     (hlip : ∀ x a b, |a - theta₀| < r → |b - theta₀| < r →
@@ -60,7 +61,7 @@ theorem memLp_two_of_lipschitz_envelope {E : Type*} [MeasurableSpace E] (P : Mea
 
 /-- Chebyshev's inequality for the increments of the centred partial-sum process of a parameter
 family with a square-integrable Lipschitz envelope. -/
-theorem measureReal_le_abs_centredSum_sub_le {Ω E : Type*} [MeasurableSpace Ω]
+theorem measure_real_le_abs_centred_sum_sub_le {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
     [IsProbabilityMeasure P] (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
     (psi : ℝ → E → ℝ) (hm : Measurable (Function.uncurry psi)) (theta₀ r : ℝ) (hr : 0 < r)
@@ -73,11 +74,11 @@ theorem measureReal_le_abs_centredSum_sub_le {Ω E : Type*} [MeasurableSpace Ω]
       n * (∫ x, M x ^ 2 ∂P) * (a - b) ^ 2 / c ^ 2 := by
   have hmeas : ∀ t, Measurable (psi t) := fun t ↦
     hm.comp (measurable_const.prodMk measurable_id)
-  obtain ⟨hd, ha2, hK⟩ := memLp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
+  obtain ⟨hd, ha2, hK⟩ := mem_lp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
     a b ha hb
-  have hb2 := (memLp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
+  have hb2 := (mem_lp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
     b a hb ha).2.1
-  have hcheb := measureReal_le_abs_sum_sub_le_of_iid μ P X hiid _ ((hmeas a).sub (hmeas b))
+  have hcheb := measure_real_le_abs_sum_sub_le_of_iid μ P X hiid _ ((hmeas a).sub (hmeas b))
     hd n hc
   have hint : ∫ x, (psi a x - psi b x) ∂P = ∫ x, psi a x ∂P - ∫ x, psi b x ∂P :=
     integral_sub (ha2.integrable one_le_two) (hb2.integrable one_le_two)
@@ -95,7 +96,7 @@ theorem measureReal_le_abs_centredSum_sub_le {Ω E : Type*} [MeasurableSpace Ω]
   gcongr
 
 /-- Deterministic Lipschitz bound for the increments of the centred partial-sum process. -/
-theorem abs_centredSum_sub_le {E : Type*} [MeasurableSpace E] (P : Measure E)
+theorem abs_centred_sum_sub_le {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P]
     (psi : ℝ → E → ℝ) (hm : Measurable (Function.uncurry psi)) (theta₀ r : ℝ) (hr : 0 < r)
     (M : E → ℝ) (hM : MemLp M 2 P) (hpsi : MemLp (psi theta₀) 2 P)
@@ -105,9 +106,9 @@ theorem abs_centredSum_sub_le {E : Type*} [MeasurableSpace E] (P : Measure E)
     |(∑ i ∈ Finset.range n, psi a (y i) - n * ∫ x, psi a x ∂P) -
       (∑ i ∈ Finset.range n, psi b (y i) - n * ∫ x, psi b x ∂P)| ≤
       |a - b| * (∑ i ∈ Finset.range n, M (y i) + n * ∫ x, M x ∂P) := by
-  have ha2 := (memLp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
+  have ha2 := (mem_lp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
     a b ha hb).2.1
-  have hb2 := (memLp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
+  have hb2 := (mem_lp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
     b a hb ha).2.1
   have hMi : Integrable M P := hM.integrable one_le_two
   have hI : |∫ x, psi a x ∂P - ∫ x, psi b x ∂P| ≤ |a - b| * ∫ x, M x ∂P := by
@@ -139,7 +140,7 @@ def dyadicGridPoint (θ₀ δ : ℝ) (j : ℕ) (t : ℝ) : ℝ :=
   θ₀ + ⌊(t - θ₀) * 2 ^ j / δ⌋ * (δ / 2 ^ j)
 
 /-- The dyadic cell index of a point within `δ` of the anchor lies in `[-2 ^ j, 2 ^ j)`. -/
-theorem dyadicGridPoint_index_mem {θ₀ δ t : ℝ} (hδ : 0 < δ) (ht : |t - θ₀| < δ) (j : ℕ) :
+theorem dyadic_grid_point_index_mem {θ₀ δ t : ℝ} (hδ : 0 < δ) (ht : |t - θ₀| < δ) (j : ℕ) :
     ⌊(t - θ₀) * 2 ^ j / δ⌋ ∈ Finset.Ico (-(2 : ℤ) ^ j) (2 ^ j) := by
   rw [abs_lt] at ht
   have h1 : -1 < (t - θ₀) / δ := by rw [lt_div_iff₀ hδ]; linarith
@@ -163,7 +164,7 @@ theorem abs_dyadic_sub_le {θ₀ δ : ℝ} (hδ : 0 < δ) {j : ℕ} {k : ℤ}
   constructor <;> rw [abs_le] <;> constructor <;> nlinarith
 
 /-- A point is within one cell width of its dyadic grid point. -/
-theorem abs_sub_dyadicGridPoint_le {θ₀ δ : ℝ} (hδ : 0 < δ) (j : ℕ) (t : ℝ) :
+theorem abs_sub_dyadic_grid_point_le {θ₀ δ : ℝ} (hδ : 0 < δ) (j : ℕ) (t : ℝ) :
     |t - dyadicGridPoint θ₀ δ j t| ≤ δ / 2 ^ j := by
   have hp : (0 : ℝ) < 2 ^ j := by positivity
   have hh : 0 < δ / 2 ^ j := div_pos hδ hp
@@ -177,7 +178,7 @@ theorem abs_sub_dyadicGridPoint_le {θ₀ δ : ℝ} (hδ : 0 < δ) (j : ℕ) (t 
 
 /-- Consecutive dyadic levels: the finer grid point is the coarser one or the midpoint of its
 cell. -/
-theorem dyadicGridPoint_succ (θ₀ δ : ℝ) (j : ℕ) (t : ℝ) :
+theorem dyadic_grid_point_succ (θ₀ δ : ℝ) (j : ℕ) (t : ℝ) :
     dyadicGridPoint θ₀ δ (j + 1) t = dyadicGridPoint θ₀ δ j t ∨
       dyadicGridPoint θ₀ δ (j + 1) t = dyadicGridPoint θ₀ δ j t + δ / 2 ^ j / 2 := by
   set x := (t - θ₀) * 2 ^ j / δ with hxdef
@@ -194,9 +195,9 @@ theorem dyadicGridPoint_succ (θ₀ δ : ℝ) (j : ℕ) (t : ℝ) :
   · right; rw [h]; push_cast; ring
 
 /-- The level-zero dyadic grid point of a point within `δ` of the anchor is `θ₀ - δ` or `θ₀`. -/
-theorem dyadicGridPoint_zero {θ₀ δ t : ℝ} (hδ : 0 < δ) (ht : |t - θ₀| < δ) :
+theorem dyadic_grid_point_zero {θ₀ δ t : ℝ} (hδ : 0 < δ) (ht : |t - θ₀| < δ) :
     dyadicGridPoint θ₀ δ 0 t = θ₀ - δ ∨ dyadicGridPoint θ₀ δ 0 t = θ₀ := by
-  have hk := dyadicGridPoint_index_mem hδ ht 0
+  have hk := dyadic_grid_point_index_mem hδ ht 0
   simp only [pow_zero, mul_one, Finset.mem_Ico] at hk
   unfold dyadicGridPoint
   simp only [pow_zero, mul_one, div_one]
@@ -208,7 +209,7 @@ theorem dyadicGridPoint_zero {θ₀ δ t : ℝ} (hδ : 0 < δ) (ht : |t - θ₀|
 satisfy the Chebyshev bound `P(c ≤ |S a - S b|) ≤ L (a - b)² / c²`, then for any random
 parameter `t` the process at the dyadic grid point of `t` of any level stays within `c` of its value
 at `θ₀`, except on an event of probability at most `300 L δ² / c²` or where `|t - θ₀| ≥ δ`. -/
-theorem measureReal_dyadic_chain_le {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+theorem measure_real_dyadic_chain_le {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsFiniteMeasure μ] (S : ℝ → Ω → ℝ) (θ₀ δ L : ℝ) (hδ : 0 < δ) (hL : 0 ≤ L)
     (hS : ∀ a b, |a - θ₀| ≤ δ → |b - θ₀| ≤ δ → ∀ c, 0 < c →
       μ.real {ω | c ≤ |S a ω - S b ω|} ≤ L * (a - b) ^ 2 / c ^ 2)
@@ -239,13 +240,13 @@ theorem measureReal_dyadic_chain_le {Ω : Type*} [MeasurableSpace Ω] (μ : Meas
     obtain ⟨hA, hBn⟩ := hn
     set π : ℕ → ℝ := fun j ↦ dyadicGridPoint θ₀ δ j (t ω) with hπ
     have h0 : |S (π 0) ω - S θ₀ ω| < c / 2 := by
-      rcases dyadicGridPoint_zero hδ h1 with h | h
+      rcases dyadic_grid_point_zero hδ h1 with h | h
       · simpa [hπ, h] using hA
       · simp only [hπ, h, sub_self, abs_zero]; positivity
     have hstep : ∀ j < J, |S (π (j + 1)) ω - S (π j) ω| < thr j := fun j hj ↦ by
-      rcases dyadicGridPoint_succ θ₀ δ j (t ω) with h | h
+      rcases dyadic_grid_point_succ θ₀ δ j (t ω) with h | h
       · simp only [hπ, h, sub_self, abs_zero]; exact hthr0 j
-      · have := hBn j hj _ (dyadicGridPoint_index_mem hδ h1 j)
+      · have := hBn j hj _ (dyadic_grid_point_index_mem hδ h1 j)
         simp only [hπ, h]
         exact this
     have htel : S (π J) ω - S θ₀ ω = (S (π 0) ω - S θ₀ ω) +
@@ -318,7 +319,7 @@ square-integrable Lipschitz envelope: evaluated at a consistent random parameter
 normalised centred partial-sum increment `n^{-1/2} ∑ᵢ (ψ_{Tₙ} - ψ_{θ₀})(Xᵢ) - √n (P ψ_{Tₙ} - P ψ_{θ₀})`
 tends to `0` in probability. The proof is a dyadic chaining argument with Chebyshev's inequality
 at each level. -/
-theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_centred_sum_sub_of_lipschitz {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
     [IsProbabilityMeasure P] (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
     (psi : ℝ → E → ℝ) (hm : Measurable (Function.uncurry psi)) (theta₀ r : ℝ) (hr : 0 < r)
@@ -362,10 +363,10 @@ theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableS
   have hsm : Measurable s := hM'm.add measurable_const
   set V : ℕ → Ω → ℝ := fun n w ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, s (X i w) with hV
   have hVb : IsBoundedInProbability μ V :=
-    isBoundedInProbability_of_tendstoInMeasure μ V _
-      (tendstoInMeasure_sampleMean_of_iid μ P X hiid s hsm
+    is_bounded_in_probability_of_tendsto_in_measure μ V _
+      (tendsto_in_measure_sample_mean_of_iid μ P X hiid s hsm
         (hM'i.add (integrable_const _)))
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hcons ⊢
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hcons ⊢
   intro ε hε
   refine tendsto_zero_of_forall_eventually_le (fun n ↦ measureReal_nonneg) fun η hη ↦ ?_
   have htδ : Tendsto (fun δ : ℝ ↦ 1200 * K * δ ^ 2 / ε ^ 2) (𝓝[>] 0) (𝓝 0) := by
@@ -391,9 +392,9 @@ theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableS
       have := Real.sqrt_le_sqrt h1
       rw [Real.sqrt_one] at this
       nlinarith [Real.mul_self_sqrt (Nat.cast_nonneg (α := ℝ) n)]
-  have hR := tendstoInMeasure_mul_zero_of_isBoundedInProbability μ V (fun n _ ↦ u n) hVb
-    (tendstoInMeasure_const_of_tendsto μ u hulim)
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hR
+  have hR := tendsto_in_measure_mul_zero_of_is_bounded_in_probability μ V (fun n _ ↦ u n) hVb
+    (tendsto_in_measure_const_of_tendsto μ u hulim)
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hR
   filter_upwards [eventually_ge_atTop 1,
     (hcons (δ / 2) (half_pos hδ0)).eventually (eventually_le_nhds (by positivity : 0 < η / 3)),
     (hR (ε / 4) (by positivity)).eventually (eventually_le_nhds (by positivity : 0 < η / 3))]
@@ -401,8 +402,8 @@ theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableS
   have hsqn : 0 < Real.sqrt n := Real.sqrt_pos.2 (by exact_mod_cast hn1)
   have hsq : Real.sqrt n ^ 2 = n := Real.sq_sqrt (Nat.cast_nonneg _)
   have hc : 0 < ε * Real.sqrt n / 2 := by positivity
-  have hchain := measureReal_dyadic_chain_le μ (S n) theta₀ δ (n * K) hδ0 (by positivity)
-    (fun a b ha hb c hc ↦ measureReal_le_abs_centredSum_sub_le μ P X hiid psi hm theta₀ r hr M hM
+  have hchain := measure_real_dyadic_chain_le μ (S n) theta₀ δ (n * K) hδ0 (by positivity)
+    (fun a b ha hb c hc ↦ measure_real_le_abs_centred_sum_sub_le μ P X hiid psi hm theta₀ r hr M hM
       hpsi hlip n a b (by linarith) (by linarith) hc) (T n) n hc
   have hcb : 300 * (n * K) * δ ^ 2 / (ε * Real.sqrt n / 2) ^ 2 = 1200 * K * δ ^ 2 / ε ^ 2 := by
     rw [div_pow, mul_pow, hsq]
@@ -429,13 +430,13 @@ theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableS
     rw [Real.dist_eq, sub_zero] at h3
     set πT := dyadicGridPoint theta₀ δ n (T n ω)
     have hπ : |πT - theta₀| ≤ δ :=
-      (abs_dyadic_sub_le (θ₀ := theta₀) hδ0 (dyadicGridPoint_index_mem hδ0 hT n)).1
-    have hres := abs_centredSum_sub_le P psi hm theta₀ r hr M hM hpsi hlip n (fun i ↦ X i ω)
+      (abs_dyadic_sub_le (θ₀ := theta₀) hδ0 (dyadic_grid_point_index_mem hδ0 hT n)).1
+    have hres := abs_centred_sum_sub_le P psi hm theta₀ r hr M hM hpsi hlip n (fun i ↦ X i ω)
       (T n ω) πT (by linarith) (by linarith)
     have hQ : 0 ≤ ∑ i ∈ Finset.range n, M (X i ω) + n * ∫ x, M x ∂P :=
       add_nonneg (Finset.sum_nonneg fun i _ ↦ hMnn _)
         (mul_nonneg (Nat.cast_nonneg _) (integral_nonneg hMnn))
-    have hd := abs_sub_dyadicGridPoint_le (θ₀ := theta₀) hδ0 n (T n ω)
+    have hd := abs_sub_dyadic_grid_point_le (θ₀ := theta₀) hδ0 n (T n ω)
     have hVu : δ / 2 ^ n * (∑ i ∈ Finset.range n, M (X i ω) + n * ∫ x, M x ∂P) =
         Real.sqrt n * (V n ω * u n) := by
       have h4' : ∀ i, M (X i ω) = M' (X i ω) := h4
@@ -465,7 +466,7 @@ theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableS
     _ ≤ η := by rw [hGc]; linarith
 
 /-- GAPS 102.4, the scalar Z-estimator theorem under a square-integrable Lipschitz envelope. -/
-theorem zEstimator_asymptotic_linearization_and_normality
+theorem z_estimator_asymptotic_linearization_and_normality
     {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
     (mu : Measure Ω) [IsProbabilityMeasure mu] (P : Measure E) [IsProbabilityMeasure P]
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed mu X P) (psi : ℝ → E → ℝ)
@@ -493,18 +494,18 @@ theorem zEstimator_asymptotic_linearization_and_normality
     (Finset.measurable_fun_sum _ fun i _ ↦ (hmeas theta₀).comp (hXm i)).const_mul _
   have hZlim : TendstoInDistribution Z atTop id (fun _ ↦ mu)
       (gaussianReal 0 (Real.toNNReal (∫ x, psi theta₀ x ^ 2 ∂P))) :=
-    tendstoInDistribution_inv_sqrt_mul_sum_of_iid mu P X hiid _ (hmeas theta₀) hpsi h0
+    tendsto_in_distribution_inv_sqrt_mul_sum_of_iid mu P X hiid _ (hmeas theta₀) hpsi h0
   have hZb : IsBoundedInProbability mu Z :=
-    isBoundedInProbability_of_tendstoInDistribution mu Z hZlim
+    is_bounded_in_probability_of_tendsto_in_distribution mu Z hZlim
   have hsn : ∀ n : ℕ, (Real.sqrt n)⁻¹ * n = Real.sqrt n := fun n ↦ by
     rw [inv_mul_eq_div, Real.div_sqrt]
-  have hSE := tendstoInMeasure_centredSum_sub_of_lipschitz mu P X hiid psi hm theta₀ r hr
+  have hSE := tendsto_in_measure_centred_sum_sub_of_lipschitz mu P X hiid psi hm theta₀ r hr
     M hM hpsi hlip T hcons
   -- `√n F(Tₙ) + Zₙ → 0`
   have hE1 : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt n * F (T n w) + Z n w)
       atTop (fun _ ↦ 0) := by
-    have := tendstoInMeasure_add_zero mu _ _ hroot
-      (tendstoInMeasure_const_mul_zero mu _ (-1) hSE)
+    have := tendsto_in_measure_add_zero mu _ _ hroot
+      (tendsto_in_measure_const_mul_zero mu _ (-1) hSE)
     convert this using 3 with n w
     simp only [hZ, hF]
     rw [h0]
@@ -518,7 +519,7 @@ theorem zEstimator_asymptotic_linearization_and_normality
     simpa using this
   have hρ0 : ρ theta₀ = 0 := by simp [hρ]
   have hρT : TendstoInMeasure mu (fun (n : ℕ) w ↦ ρ (T n w)) atTop (fun _ ↦ 0) := by
-    have := tendstoInMeasure_comp_of_continuousAt mu T theta₀ ρ hρc hcons
+    have := tendsto_in_measure_comp_of_continuous_at mu T theta₀ ρ hρc hcons
     rwa [hρ0] at this
   set W : ℕ → Ω → ℝ := fun n w ↦ Real.sqrt n * (T n w - theta₀) with hW
   have hF0 : F theta₀ = 0 := h0
@@ -539,7 +540,7 @@ theorem zEstimator_asymptotic_linearization_and_normality
     simp only [hEv]
     rw [hid]
   have hWb : IsBoundedInProbability mu W := by
-    rw [tendstoInMeasure_iff_measureReal_lt_dist] at hE hρT
+    rw [tendsto_in_measure_iff_measure_real_lt_dist] at hE hρT
     intro ε hε
     obtain ⟨C₁, hC₁, hZev⟩ := hZb (ε / 3) (by positivity)
     have hDp : 0 < |D| := abs_pos.2 hD
@@ -570,15 +571,15 @@ theorem zEstimator_asymptotic_linearization_and_normality
         refine (measureReal_union_le _ _).trans (add_le_add ?_ h3)
         exact (measureReal_union_le _ _).trans (add_le_add h1 h2)
       _ = ε := by ring
-  have hWρ := tendstoInMeasure_mul_zero_of_isBoundedInProbability mu W _ hWb hρT
+  have hWρ := tendsto_in_measure_mul_zero_of_is_bounded_in_probability mu W _ hWb hρT
   have hDWZ : TendstoInMeasure mu (fun (n : ℕ) w ↦ D * W n w + Z n w) atTop (fun _ ↦ 0) := by
-    have := tendstoInMeasure_add_zero mu _ _ hE
-      (tendstoInMeasure_const_mul_zero mu _ (-1) hWρ)
+    have := tendsto_in_measure_add_zero mu _ _ hE
+      (tendsto_in_measure_const_mul_zero mu _ (-1) hWρ)
     convert this using 3 with n w
     simp only [hEv]; ring
   have hrem : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt n * (T n w - theta₀) +
       (D * Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, psi theta₀ (X i w)) atTop (fun _ ↦ 0) := by
-    have := tendstoInMeasure_const_mul_zero mu _ D⁻¹ hDWZ
+    have := tendsto_in_measure_const_mul_zero mu _ D⁻¹ hDWZ
     convert this using 3 with n w
     simp only [hW, hZ]
     rw [mul_inv]
@@ -589,7 +590,7 @@ theorem zEstimator_asymptotic_linearization_and_normality
     simp only [h0, sub_zero]
   have hX' : TendstoInDistribution (fun (n : ℕ) w ↦ -D⁻¹ * Z n w) atTop id (fun _ ↦ mu)
       (gaussianReal 0 (Real.toNNReal (Var[psi theta₀; P] / D ^ 2))) := by
-    refine tendstoInDistribution_of_map_eq (hZlim.continuous_comp (g := fun x ↦ -D⁻¹ * x)
+    refine tendsto_in_distribution_of_map_eq (hZlim.continuous_comp (g := fun x ↦ -D⁻¹ * x)
       (continuous_const.mul continuous_id)) aemeasurable_id ?_
     rw [Measure.map_id, Function.comp_id, gaussianReal_map_const_mul, mul_zero]
     congr 1
@@ -598,7 +599,7 @@ theorem zEstimator_asymptotic_linearization_and_normality
     simp only [NNReal.coe_mul, NNReal.coe_mk, hvar, Real.coe_toNNReal _ hI0,
       Real.coe_toNNReal _ (div_nonneg hI0 (sq_nonneg D))]
     field_simp
-  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable mu _ _
+  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable mu _ _
     (fun n ↦ (hZm n).const_mul _) (fun n ↦ ((hT n).sub_const _).const_mul _) hX' ?_
   convert hrem using 3 with n w
   simp only [hZ]

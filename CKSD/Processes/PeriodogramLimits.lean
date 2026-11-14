@@ -11,6 +11,7 @@ public import TauCeti.Probability.Distributions.Gaussian.ChiSquared
 public import TauCeti.Probability.Distributions.ChiSquared.Basic
 public import TauCeti.Probability.Distributions.Exponential.Basic
 
+
 /-!
 # Limit laws of the periodogram of a linear process
 
@@ -33,15 +34,15 @@ Slutsky's lemma combine the two.
 * `CKSD.sum_range_cos_mul_cos_fourier`, `CKSD.sum_range_sin_mul_sin_fourier`,
   `CKSD.sum_range_cos_mul_sin_fourier`: orthogonality of the trigonometric functions at the
   Fourier frequencies `2πk/n`, `0 < k < n/2`.
-* `CKSD.tendstoInDistribution_fourierTrig_sum`: joint asymptotic normality of the cosine and
+* `CKSD.tendsto_in_distribution_fourier_trig_sum`: joint asymptotic normality of the cosine and
   sine sums of iid noise at distinct Fourier frequencies.
-* `CKSD.map_stdGaussian_half_sum_sq`: halved squared lengths of coordinate pairs of a standard
+* `CKSD.map_std_gaussian_half_sum_sq`: halved squared lengths of coordinate pairs of a standard
   Gaussian vector are independent standard exponential variables.
-* `CKSD.IsIIDNoise.tendstoInMeasure_dft_filter_sub`: the linear-process approximation of the
+* `CKSD.IsIIDNoise.tendsto_in_measure_dft_filter_sub`: the linear-process approximation of the
   discrete Fourier transform.
 
 The limit law of the normalized periodogram at Fourier frequencies,
-`CKSD.IsIIDNoise.tendstoInDistribution_periodogram_filter_div`, is in
+`CKSD.IsIIDNoise.tendsto_in_distribution_periodogram_filter_div`, is in
 `CKSD.Processes.FilteredPeriodogram`.
 -/
 
@@ -185,14 +186,14 @@ def fourierTrig (i : Fin 2) (θ : ℝ) : ℝ :=
   if i = 0 then Real.cos θ else Real.sin θ
 
 /-- The trigonometric coordinate functions are bounded by one. -/
-theorem abs_fourierTrig_le_one (i : Fin 2) (θ : ℝ) : |fourierTrig i θ| ≤ 1 := by
+theorem abs_fourier_trig_le_one (i : Fin 2) (θ : ℝ) : |fourierTrig i θ| ≤ 1 := by
   unfold fourierTrig; split_ifs
   · exact Real.abs_cos_le_one θ
   · exact Real.abs_sin_le_one θ
 
 /-- Discrete orthogonality of the cosine and sine vectors at distinct Fourier frequencies
 `2π k_j / n`, `0 < k_j < n/2`: `∑_{t < n} φ_p(t) φ_{p'}(t) = (n/2) 1{p = p'}`. -/
-theorem sum_range_fourierTrig_mul {m n : ℕ} {k : Fin m → ℤ} (hk : ∀ j, 0 < 2 * k j ∧ 2 * k j < n)
+theorem sum_range_fourier_trig_mul {m n : ℕ} {k : Fin m → ℤ} (hk : ∀ j, 0 < 2 * k j ∧ 2 * k j < n)
     (hinj : Function.Injective k) (p p' : Fin m × Fin 2) :
     ∑ t ∈ Finset.range n, fourierTrig p.2 (2 * Real.pi * k p.1 * t / n) *
       fourierTrig p'.2 (2 * Real.pi * k p'.1 * t / n) = if p = p' then (n : ℝ) / 2 else 0 := by
@@ -209,7 +210,7 @@ theorem sum_range_fourierTrig_mul {m n : ℕ} {k : Fin m → ℤ} (hk : ∀ j, 0
   · rw [sum_range_sin_mul_sin_fourier (hk j) (hk j')]; simp only [hjj]
 
 /-- The scalar projection `z ↦ ⟪z, s⟫` of the standard Gaussian law is `N(0, ‖s‖²)`. -/
-theorem map_inner_stdGaussian {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+theorem map_inner_std_gaussian {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] (s : E) :
     (stdGaussian E).map (fun z ↦ inner ℝ z s) = gaussianReal 0 (‖s‖ ^ 2).toNNReal := by
   have h1 : (fun z : E ↦ inner ℝ z s) = ⇑(innerSL ℝ s) := by
@@ -221,7 +222,7 @@ theorem map_inner_stdGaussian {E : Type*} [NormedAddCommGroup E] [InnerProductSp
 frequencies: if eventually `0 < k_n(j) < n/2` with distinct `k_n(j)`, the normalized cosine and
 sine sums `√(2/(nσ²)) ∑_{t<n} Z_t φ_i(2π k_n(j) t / n)` converge jointly in law to independent
 standard normal variables. -/
-theorem tendstoInDistribution_fourierTrig_sum {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_fourier_trig_sum {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ] {Z : ℤ → Ω → ℝ} {σsq : ℝ}
     (hZ : IsIIDNoise μ Z σsq) {m : ℕ} (k : ℕ → Fin m → ℤ)
     (hk : ∀ᶠ n in atTop, (∀ j, 0 < 2 * k n j ∧ 2 * k n j < n) ∧ Function.Injective (k n)) :
@@ -253,7 +254,7 @@ theorem tendstoInDistribution_fourierTrig_sum {Ω : Type*} [MeasurableSpace Ω]
   have hsq : ∀ᶠ n in atTop, ∑ t ∈ Finset.range n, a n t ^ 2 = ‖s‖ ^ 2 / σsq := by
     filter_upwards [hk, eventually_gt_atTop 0] with n ⟨hkn, hinj⟩ hn
     have hn' : (0 : ℝ) < n := by exact_mod_cast hn
-    have horth := sum_range_fourierTrig_mul hkn hinj
+    have horth := sum_range_fourier_trig_mul hkn hinj
     calc ∑ t ∈ Finset.range n, a n t ^ 2
         = c n ^ 2 * ∑ p, ∑ p', s p * s p' *
             ∑ t ∈ Finset.range n, φ n p t * φ n p' t := by
@@ -269,17 +270,17 @@ theorem tendstoInDistribution_fourierTrig_sum {Ω : Type*} [MeasurableSpace Ω]
           rw [EuclideanSpace.real_norm_sq_eq, ← Finset.sum_mul, hc, Real.sq_sqrt (by positivity)]
           field_simp
   -- the Lindeberg theorem for the weighted sums
-  have hclt := tendstoInDistribution_sum_of_lindeberg_of_iIndepFun μ
+  have hclt := tendsto_in_distribution_sum_of_lindeberg_of_i_indep_fun μ
     (fun n t ω ↦ a n t * Z t ω) (fun n ↦ n)
-    (fun n t ↦ (hZ.memLp_two t).const_mul _)
+    (fun n t ↦ (hZ.mem_lp_two t).const_mul _)
     (fun n t ↦ by rw [integral_const_mul, hZ.integral_eq_zero', mul_zero])
     (fun n ↦ (hZ.iIndepFun.precomp Nat.cast_injective).comp (fun t x ↦ a n t * x)
       fun t ↦ measurable_const.mul measurable_id)
     (‖s‖ ^ 2) ?_ ?_
-  · refine (tendstoInDistribution_of_map_eq hclt (by fun_prop) ?_).congr
+  · refine (tendsto_in_distribution_of_map_eq hclt (by fun_prop) ?_).congr
       (fun n ↦ ae_of_all _ fun ω ↦ (hinner n ω).symm) (ae_of_all _ fun _ ↦ rfl)
     rw [Measure.map_id]
-    exact map_inner_stdGaussian s
+    exact map_inner_std_gaussian s
   · refine tendsto_const_nhds.congr' ?_
     filter_upwards [hsq] with n hn
     simp_rw [mul_pow, integral_const_mul, hZ.integral_sq', ← Finset.sum_mul, hn]
@@ -295,7 +296,7 @@ theorem tendstoInDistribution_fourierTrig_sum {Ω : Type*} [MeasurableSpace Ω]
       refine mul_le_mul_of_nonneg_left ?_ hc0
       refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun p _ ↦ ?_)
       rw [abs_mul]
-      exact mul_le_of_le_one_right (abs_nonneg _) (abs_fourierTrig_le_one _ _)
+      exact mul_le_of_le_one_right (abs_nonneg _) (abs_fourier_trig_le_one _ _)
     have hterm : ∀ n, 0 < n → ∀ t, ∫ ω, (if ε < |a n t * Z t ω| then (a n t * Z t ω) ^ 2
         else 0) ∂μ ≤ a n t ^ 2 * g (τ n) := fun n hn t ↦ by
       have hn' : (0 : ℝ) < n := by exact_mod_cast hn
@@ -304,11 +305,11 @@ theorem tendstoInDistribution_fourierTrig_sum {Ω : Type*} [MeasurableSpace Ω]
         have hf : Measurable fun x : ℝ ↦ if τ n < |x| then x ^ 2 else 0 :=
           Measurable.ite (measurableSet_lt measurable_const continuous_abs.measurable)
             (measurable_id.pow_const 2) measurable_const
-        exact ((hZ.identDistrib t).comp hf).integral_eq
+        exact ((hZ.ident_distrib t).comp hf).integral_eq
       rw [← hid, ← integral_const_mul]
       refine integral_mono_of_nonneg (ae_of_all _ fun ω ↦ by
           simp only [Pi.zero_apply]; split_ifs <;> positivity)
-        (((hZ.memLp_two t).integrable_sq.mono' (Measurable.ite (measurableSet_lt
+        (((hZ.mem_lp_two t).integrable_sq.mono' (Measurable.ite (measurableSet_lt
           measurable_const (continuous_abs.measurable.comp (hZ.measurable t)))
           ((hZ.measurable t).pow_const 2) measurable_const).aestronglyMeasurable
           (ae_of_all _ fun ω ↦ by
@@ -354,7 +355,7 @@ theorem tendstoInDistribution_fourierTrig_sum {Ω : Type*} [MeasurableSpace Ω]
           measurable_const).aestronglyMeasurable)
         (Eventually.of_forall fun n ↦ ae_of_all _ fun ω ↦ by
           split_ifs <;> simp [sq_nonneg])
-        (hZ.memLp_two 0).integrable_sq
+        (hZ.mem_lp_two 0).integrable_sq
         (ae_of_all _ fun ω ↦ tendsto_const_nhds.congr' (by
           filter_upwards [hτ.eventually_gt_atTop |Z 0 ω|] with n hn
           simp only [ite_eq_right (not_lt.2 hn.le)]))
@@ -368,7 +369,7 @@ theorem tendstoInDistribution_fourierTrig_sum {Ω : Type*} [MeasurableSpace Ω]
 
 /-- Half the squared norm of two independent standard normal variables is standard
 exponential: `(Z₀² + Z₁²)/2 ∼ Exp(1)`, from `χ²₂ = Exp(1/2)`. -/
-theorem map_half_sum_sq_pi_gaussianReal :
+theorem map_half_sum_sq_pi_gaussian_real :
     (Measure.pi fun _ : Fin 2 ↦ gaussianReal 0 1).map (fun z ↦ (z 0 ^ 2 + z 1 ^ 2) / 2) =
       expMeasure 1 := by
   have h := TauCeti.Probability.map_sum_sq_pi_gaussianReal (ι := Fin 2) 1
@@ -383,7 +384,7 @@ theorem map_half_sum_sq_pi_gaussianReal :
 
 /-- The halved squared lengths of the coordinate pairs of a standard Gaussian vector on
 `Fin m × Fin 2` are independent standard exponential variables. -/
-theorem map_stdGaussian_half_sum_sq (m : ℕ) :
+theorem map_std_gaussian_half_sum_sq (m : ℕ) :
     (stdGaussian (EuclideanSpace ℝ (Fin m × Fin 2))).map (fun u ↦
       (WithLp.toLp 2 fun j : Fin m ↦ (u (j, 0) ^ 2 + u (j, 1) ^ 2) / 2 :
         EuclideanSpace ℝ (Fin m))) =
@@ -406,7 +407,7 @@ theorem map_stdGaussian_half_sum_sq (m : ℕ) :
     ← Measure.map_map (by fun_prop) (MeasurableEquiv.measurable _), hcurry,
     Measure.pi_map_pi (f := fun (_ : Fin m) (z : Fin 2 → ℝ) ↦ (z 0 ^ 2 + z 1 ^ 2) / 2)
       (fun _ ↦ by fun_prop)]
-  simp_rw [map_half_sum_sq_pi_gaussianReal]
+  simp_rw [map_half_sum_sq_pi_gaussian_real]
 
 /-- Second moments of weighted sums of iid noise at distinct times:
 `𝔼[(∑_{t<n} a_t Z_{s(t)})²] = σ² ∑_{t<n} a_t²` for injective `s`. -/
@@ -416,7 +417,7 @@ theorem IsIIDNoise.integral_sq_sum_mul {Ω : Type*} [MeasurableSpace Ω]
     ∫ ω, (∑ t ∈ Finset.range n, a t * Z (s t) ω) ^ 2 ∂μ =
       σsq * ∑ t ∈ Finset.range n, a t ^ 2 := by
   have hint : ∀ t u, Integrable (fun ω ↦ a t * Z (s t) ω * (a u * Z (s u) ω)) μ := fun t u ↦
-    ((hZ.memLp_two _).const_mul _).integrable_mul ((hZ.memLp_two _).const_mul _)
+    ((hZ.mem_lp_two _).const_mul _).integrable_mul ((hZ.mem_lp_two _).const_mul _)
   have hcross : ∀ t u, ∫ ω, a t * Z (s t) ω * (a u * Z (s u) ω) ∂μ =
       if t = u then σsq * a t ^ 2 else 0 := fun t u ↦ by
     split_ifs with htu
@@ -464,7 +465,7 @@ theorem IsIIDNoise.integral_norm_sum_mul_le {Ω : Type*} [MeasurableSpace Ω]
   have hpart : ∀ a : ℕ → ℝ, (∀ t, |a t| ≤ 1) →
       ∫ ω, |∑ t ∈ Finset.range n, a t * Z (s t) ω| ∂μ ≤ Real.sqrt (σsq * n) := fun a ha ↦ by
     have hm : MemLp (fun ω ↦ ∑ t ∈ Finset.range n, a t * Z (s t) ω) 2 μ :=
-      memLp_finsetSum _ fun t _ ↦ (hZ.memLp_two _).const_mul _
+      memLp_finsetSum _ fun t _ ↦ (hZ.mem_lp_two _).const_mul _
     refine (integral_abs_le_sqrt_integral_sq hm).trans (Real.sqrt_le_sqrt ?_)
     rw [hZ.integral_sq_sum_mul hs]
     refine mul_le_mul_of_nonneg_left ?_ hZ.pos.le
@@ -476,7 +477,7 @@ theorem IsIIDNoise.integral_norm_sum_mul_le {Ω : Type*} [MeasurableSpace Ω]
   have him := hpart (fun t ↦ (c t).im) fun t ↦ (Complex.abs_im_le_norm _).trans (hc t)
   have hint : ∀ a : ℕ → ℝ, Integrable (fun ω ↦ |∑ t ∈ Finset.range n, a t * Z (s t) ω|) μ :=
     fun a ↦ (integrable_finsetSum _ fun t _ ↦
-      ((hZ.memLp_two _).integrable one_le_two).const_mul _).abs
+      ((hZ.mem_lp_two _).integrable one_le_two).const_mul _).abs
   calc ∫ ω, ‖∑ t ∈ Finset.range n, (Z (s t) ω : ℂ) * c t‖ ∂μ
       ≤ ∫ ω, (|∑ t ∈ Finset.range n, (c t).re * Z (s t) ω| +
           |∑ t ∈ Finset.range n, (c t).im * Z (s t) ω|) ∂μ := by
@@ -619,7 +620,7 @@ private theorem norm_dft_filter_sub_le (ψ : ℤ → ℝ) (hψ : Summable fun j 
 theorem IsIIDNoise.integral_abs_le_sqrt {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
     [IsProbabilityMeasure μ] {Z : ℤ → Ω → ℝ} {σsq : ℝ} (hZ : IsIIDNoise μ Z σsq) (t : ℤ) :
     ∫ ω, |Z t ω| ∂μ ≤ Real.sqrt σsq :=
-  (integral_abs_le_sqrt_integral_sq (hZ.memLp_two t)).trans_eq (by rw [hZ.integral_sq' t])
+  (integral_abs_le_sqrt_integral_sq (hZ.mem_lp_two t)).trans_eq (by rw [hZ.integral_sq' t])
 
 /-- For iid noise and an absolutely summable filter, almost surely
 `∑_j |ψ_j| |Z_{s-j}| < ∞` for every `s`. -/
@@ -629,7 +630,7 @@ theorem IsIIDNoise.ae_summable_abs_mul {Ω : Type*} [MeasurableSpace Ω] {μ : M
     ∀ᵐ ω ∂μ, ∀ s : ℤ, Summable fun j ↦ |ψ j| * |Z (s - j) ω| := by
   rw [ae_all_iff]; intro s
   have hE : ∀ u, ∫⁻ ω, ‖Z u ω‖ₑ ∂μ ≤ ENNReal.ofReal (Real.sqrt σsq) := fun u ↦ by
-    rw [← ofReal_integral_norm_eq_lintegral_enorm ((hZ.memLp_two u).integrable one_le_two)]
+    rw [← ofReal_integral_norm_eq_lintegral_enorm ((hZ.mem_lp_two u).integrable one_le_two)]
     exact ENNReal.ofReal_le_ofReal (by simpa using hZ.integral_abs_le_sqrt u)
   have hψe : ∑' j, ‖ψ j‖ₑ ≠ ⊤ := by
     simp_rw [← ofReal_norm, Real.norm_eq_abs]
@@ -650,7 +651,7 @@ theorem IsIIDNoise.ae_summable_abs_mul {Ω : Type*} [MeasurableSpace Ω] {μ : M
   simp [ENNReal.toReal_mul]
 
 /-- `ofReal (∑ f) ≤ ∑ ofReal f` for nonnegative real families, summable or not. -/
-private theorem ofReal_tsum_le {ι : Type*} {f : ι → ℝ} (hf : ∀ i, 0 ≤ f i) :
+private theorem of_real_tsum_le {ι : Type*} {f : ι → ℝ} (hf : ∀ i, 0 ≤ f i) :
     ENNReal.ofReal (∑' i, f i) ≤ ∑' i, ENNReal.ofReal (f i) := by
   by_cases hs : Summable f
   · rw [ENNReal.ofReal_tsum_of_nonneg hf hs]
@@ -675,7 +676,7 @@ private theorem IsIIDNoise.integral_norm_shift_window_le {Ω : Type*} [Measurabl
         4 * Real.sqrt (σsq * n) := by
   set W : ℤ → Ω → ℂ := fun s ω ↦ (Z s ω : ℂ) * Complex.exp (-((s : ℝ) * ν : ℝ) * Complex.I)
   have hWi : ∀ s, Integrable (W s) μ := fun s ↦
-    (((hZ.memLp_two s).integrable one_le_two).ofReal).mul_const _
+    (((hZ.mem_lp_two s).integrable one_le_two).ofReal).mul_const _
   have hWn : ∀ s ω, ‖W s ω‖ = |Z s ω| := fun s ω ↦ by
     simp only [W]
     rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, ← Complex.ofReal_neg,
@@ -710,7 +711,7 @@ frequency sequence `ν_n`: for iid noise and `∑_j |ψ_j| < ∞`,
 `n^{-1/2} ‖∑_{t<n} X_t e^{-itν_n} - ψ(e^{-iν_n}) ∑_{t<n} Z_t e^{-itν_n}‖ → 0` in probability,
 where `X_t = ∑_j ψ_j Z_{t-j}` and `ψ(e^{-iν}) = ∑_j ψ_j e^{-ijν}`
 (Brockwell–Davis, Theorem 10.3.1). -/
-theorem IsIIDNoise.tendstoInMeasure_dft_filter_sub {Ω : Type*} [MeasurableSpace Ω]
+theorem IsIIDNoise.tendsto_in_measure_dft_filter_sub {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsProbabilityMeasure μ] {Z : ℤ → Ω → ℝ} {σsq : ℝ}
     (hZ : IsIIDNoise μ Z σsq) {ψ : ℤ → ℝ} (hψ : Summable fun j ↦ |ψ j|) (ν : ℕ → ℝ) :
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ (Real.sqrt n)⁻¹ *
@@ -781,7 +782,7 @@ theorem IsIIDNoise.tendstoInMeasure_dft_filter_sub {Ω : Type*} [MeasurableSpace
             (norm_dft_filter_sub_le ψ hψ (fun s ↦ Z s ω) hω (ν n) n)
             (inv_nonneg.2 (Real.sqrt_nonneg _)))).trans ?_
           rw [← tsum_mul_left]
-          exact ofReal_tsum_le fun j ↦ mul_nonneg (inv_nonneg.2 (Real.sqrt_nonneg _))
+          exact of_real_tsum_le fun j ↦ mul_nonneg (inv_nonneg.2 (Real.sqrt_nonneg _))
             (mul_nonneg (abs_nonneg _) (norm_nonneg _))
       _ = ∑' j, ENNReal.ofReal (|ψ j| * ((Real.sqrt n)⁻¹ * c n j)) := by
           rw [lintegral_tsum fun j ↦ (((hmeasV j).const_mul _).const_mul _).ennreal_ofReal

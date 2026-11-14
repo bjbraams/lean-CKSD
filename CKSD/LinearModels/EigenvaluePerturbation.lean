@@ -3,6 +3,7 @@ module
 public import TauCeti.Analysis.InnerProductSpace.YuWangSamworth.Eigenvector
 public import TauCeti.Analysis.Matrix.Eigenvalues.Continuous
 
+
 /-!
 # First-order perturbation of a simple ordered eigenvalue
 

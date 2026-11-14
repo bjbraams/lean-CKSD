@@ -3,6 +3,7 @@ module
 public import CKSD.Bayes.MeanFieldParticles
 public import CKSD.Bayes.MeanFieldPicardLaw
 
+
 /-!
 # Finite-vector equations for synchronous particle coupling
 
@@ -24,7 +25,7 @@ namespace CKSD
 
 /-- Same-input particle systems and identically distributed nonlinear paths satisfy the finite
 vector integral equations used by the synchronous propagation-of-chaos estimate. -/
-theorem IsParticleSystem.ae_coupled_vector_integral_eq_on_Icc
+theorem IsParticleSystem.ae_coupled_vector_integral_eq_on_icc
     {Ω : Type*} [MeasurableSpace Ω] {d N : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0 ≤ T) (hN : 0 < N)
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d))
@@ -49,17 +50,17 @@ theorem IsParticleSystem.ae_coupled_vector_integral_eq_on_Icc
           fun j : Fin N ↦ b ((Z j ω).IccExtend hT s) (P.map (fun z ↦ (Z 0 z).IccExtend hT s))) := by
   let E := EuclideanSpace ℝ (Fin d)
   let v : (Fin N → E) → Fin N → E := fun x j ↦ b (x j) (empiricalMeasure N x)
-  have hv := hb.lipschitzWith_particleDrift b hN
+  have hv := hb.lipschitz_with_particle_drift b hN
   let w : ℝ → (Fin N → E) → Fin N → E := fun t x j ↦
     b (x j) (P.map (fun z ↦ (Z 0 z).IccExtend hT t))
   have hw : Continuous (Function.uncurry w) := by
-    have hc := continuous_nonlinearFrozenDrift P hT b hb (Z 0) (hZm 0) hZi
+    have hc := continuous_nonlinear_frozen_drift P hT b hb (Z 0) (hZm 0) hZi
     have hc' : Continuous (fun p : ℝ × E ↦ b p.2 (P.map (fun z ↦ (Z 0 z).IccExtend hT p.1))) := by
       convert hc using 1
       funext p
       change b p.2 (P.map (fun z ↦ (Z 0 z).IccExtend hT p.1)) =
         nonlinearFrozenDrift P hT b (Z 0) (hZm 0) hZi p.1 p.2
-      rw [nonlinearFrozenDrift, pathMarginalLaw_toMeasure]
+      rw [nonlinearFrozenDrift, path_marginal_law_to_measure]
     apply continuous_pi
     intro j
     exact hc'.comp (continuous_fst.prodMk ((continuous_apply j).comp continuous_snd))

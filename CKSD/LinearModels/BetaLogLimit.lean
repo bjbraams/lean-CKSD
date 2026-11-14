@@ -1,4 +1,5 @@
 module
+
 public import CKSD.LinearModels.GammaRatioAsymptotics
 public import TauCeti.Probability.Distributions.Beta.Basic
 public import TauCeti.Probability.Distributions.Gamma.Basic
@@ -25,7 +26,7 @@ open scoped Topology BigOperators ENNReal NNReal
 namespace CKSD
 
 /-- The positive real-power moment of a Beta variable. -/
-theorem integral_rpow_betaMeasure {a b q : ℝ} (ha : 0 < a) (hb : 0 < b) (hq : 0 ≤ q) :
+theorem integral_rpow_beta_measure {a b q : ℝ} (ha : 0 < a) (hb : 0 < b) (hq : 0 ≤ q) :
     (∫ x, x ^ q ∂betaMeasure a b) =
       Real.Gamma (a + q) * Real.Gamma (a + b) / (Real.Gamma a * Real.Gamma (a + b + q)) := by
   have h := TauCeti.Probability.integral_rpow_mul_one_sub_rpow_betaMeasure ha hb
@@ -44,7 +45,7 @@ theorem tendsto_integral_beta_rpow_pow {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
   let c := 1 + (k : ℝ)
   have hc : 0 < c := by dsimp [c]; positivity
   let R : ℝ → ℝ := fun x ↦ Real.Gamma (x + b) / (Real.Gamma x * x ^ b)
-  have hR : Tendsto R atTop (𝓝 1) := tendsto_Gamma_add_div_mul_rpow hb
+  have hR : Tendsto R atTop (𝓝 1) := tendsto_gamma_add_div_mul_rpow hb
   have hlim := ((hR.comp hatop).div (hR.comp (hatop.const_mul_atTop hc)) one_ne_zero).mul_const (c ^ (-b))
   simp only [div_self one_ne_zero, one_mul] at hlim
   apply hlim.congr'
@@ -57,7 +58,7 @@ theorem tendsto_integral_beta_rpow_pow {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
               filter_upwards [TauCeti.Probability.ae_mem_Ioo_betaMeasure (a n) b] with x hx
               rw [← Real.rpow_natCast, ← Real.rpow_mul hx.1.le]
         _ = _ := by
-          rw [integral_rpow_betaMeasure (ha n) hb (mul_nonneg (ha n).le (Nat.cast_nonneg k)),
+          rw [integral_rpow_beta_measure (ha n) hb (mul_nonneg (ha n).le (Nat.cast_nonneg k)),
             show a n + a n * k = c * a n by dsimp [c]; ring,
             show a n + b + a n * k = c * a n + b by dsimp [c]; ring]
     dsimp only
@@ -71,7 +72,7 @@ theorem tendsto_integral_beta_rpow_pow {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
       (Real.rpow_pos_of_pos (ha n) b).ne', (Real.rpow_pos_of_pos hc b).ne']
 
 /-- The transformed growing-shape Beta variables converge weakly to an exponentiated Gamma law. -/
-theorem tendstoInDistribution_beta_rpow {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem tendsto_in_distribution_beta_rpow {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (hatop : Tendsto a atTop atTop) {b : ℝ} (hb : 0 < b) :
     let : ∀ n, IsProbabilityMeasure (betaMeasure (a n) b) := fun n ↦ isProbabilityMeasureBeta (ha n) hb;
     let : IsProbabilityMeasure (gammaMeasure b 1) := ProbabilityTheory.isProbabilityMeasure_gammaMeasure hb zero_lt_one;
@@ -122,7 +123,7 @@ theorem tendstoInDistribution_beta_rpow {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
 
 /-- Convergence of exponentiated negative variables to an exponentiated Gamma law implies
 convergence of the variables themselves; positive closed tails handle the logarithmic endpoint. -/
-theorem tendstoInDistribution_of_exp_neg_gamma {Ω : ℕ → Type*}
+theorem tendsto_in_distribution_of_exp_neg_gamma {Ω : ℕ → Type*}
     [∀ n, MeasurableSpace (Ω n)] (μ : (n : ℕ) → Measure (Ω n)) [∀ n, IsProbabilityMeasure (μ n)]
     (X : (n : ℕ) → Ω n → ℝ) (hX : ∀ n, Measurable (X n)) {b : ℝ} (hb : 0 < b) :
     let : IsProbabilityMeasure (gammaMeasure b 1) := isProbabilityMeasure_gammaMeasure hb zero_lt_one;
@@ -168,7 +169,7 @@ theorem tendstoInDistribution_of_exp_neg_gamma {Ω : ℕ → Type*}
   simpa only [cdf_eq_real, Measure.real, Function.comp_apply] using hn n
 
 /-- Growing-shape Beta logarithms have a Gamma limit with the exact unit rate. -/
-theorem tendstoInDistribution_neg_mul_log_beta {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem tendsto_in_distribution_neg_mul_log_beta {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (hatop : Tendsto a atTop atTop) {b : ℝ} (hb : 0 < b) :
     let : ∀ n, IsProbabilityMeasure (betaMeasure (a n) b) := fun n ↦ isProbabilityMeasureBeta (ha n) hb;
     let : IsProbabilityMeasure (gammaMeasure b 1) := isProbabilityMeasure_gammaMeasure hb zero_lt_one;
@@ -176,8 +177,8 @@ theorem tendstoInDistribution_neg_mul_log_beta {a : ℕ → ℝ} (ha : ∀ n, 0 
       (fun n ↦ betaMeasure (a n) b) (gammaMeasure b 1) := by
   let : ∀ n, IsProbabilityMeasure (betaMeasure (a n) b) := fun n ↦ isProbabilityMeasureBeta (ha n) hb
   let : IsProbabilityMeasure (gammaMeasure b 1) := isProbabilityMeasure_gammaMeasure hb zero_lt_one
-  apply tendstoInDistribution_of_exp_neg_gamma _ _ (fun n ↦ by fun_prop) hb
-  apply (tendstoInDistribution_beta_rpow ha hatop hb).congr _ (EventuallyEq.rfl)
+  apply tendsto_in_distribution_of_exp_neg_gamma _ _ (fun n ↦ by fun_prop) hb
+  apply (tendsto_in_distribution_beta_rpow ha hatop hb).congr _ (EventuallyEq.rfl)
   intro n
   filter_upwards [TauCeti.Probability.ae_mem_Ioo_betaMeasure (a n) b] with z hz
   rw [Real.rpow_def_of_pos hz.1]

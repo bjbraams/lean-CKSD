@@ -2,6 +2,7 @@ module
 
 public import CKSD.Nonparametric.EmpiricalCovariance.Basic
 
+
 /-!
 # Empirical covariance and simple leading principal components
 
@@ -20,7 +21,7 @@ Population covariance reuses `TauCeti.covMatrix`.
 ## Main results
 
 * `CKSD.leading_empirical_covariance_eigenvalue_asymptotics`,
-  `CKSD.isBoundedInProbability_leading_empirical_eigenvector_error`: the root-`n` asymptotics of
+  `CKSD.is_bounded_in_probability_leading_empirical_eigenvector_error`: the root-`n` asymptotics of
   a simple leading eigenvalue and eigenvector. The proofs combine a deterministic perturbation
   bound for the leading Rayleigh value and its maximizer (in the entrywise `ℓ¹` norm of
   `Σ̂ₙ - Σ`) with the entrywise root-`n` consistency of `Σ̂ₙ`, the central limit theorem for
@@ -46,10 +47,10 @@ def leadingRayleighValue {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ) : ℝ :=
 
 /-- The bilinear form of a matrix is bounded by its entrywise `ℓ¹` norm:
 `|⟪x, A y⟫| ≤ (∑ |Aᵢⱼ|) ‖x‖ ‖y‖`. -/
-private theorem abs_inner_toEuclideanCLM_le {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ)
+private theorem abs_inner_to_euclidean_clm_le {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ)
     (x y : EuclideanSpace ℝ (Fin d)) :
     |inner ℝ x (Matrix.toEuclideanCLM (𝕜 := ℝ) A y)| ≤ entrySum A * (‖x‖ * ‖y‖) := by
-  rw [inner_toEuclideanCLM_eq_sum, entrySum, Finset.sum_mul]
+  rw [inner_to_euclidean_clm_eq_sum, entrySum, Finset.sum_mul]
   refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun i _ ↦ ?_)
   rw [Finset.sum_mul]
   refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun j _ ↦ ?_)
@@ -60,11 +61,11 @@ private theorem abs_inner_toEuclideanCLM_le {d : ℕ} (A : Matrix (Fin d) (Fin d
     _ ≤ |A i j| * (‖x‖ * ‖y‖) := by gcongr
 
 /-- For a symmetric matrix, `⟪x, A y⟫ = ⟪y, A x⟫`. -/
-private theorem inner_toEuclideanCLM_comm {d : ℕ} {A : Matrix (Fin d) (Fin d) ℝ}
+private theorem inner_to_euclidean_clm_comm {d : ℕ} {A : Matrix (Fin d) (Fin d) ℝ}
     (hA : ∀ i j, A i j = A j i) (x y : EuclideanSpace ℝ (Fin d)) :
     inner ℝ x (Matrix.toEuclideanCLM (𝕜 := ℝ) A y) =
       inner ℝ y (Matrix.toEuclideanCLM (𝕜 := ℝ) A x) := by
-  rw [inner_toEuclideanCLM_eq_sum, inner_toEuclideanCLM_eq_sum, Finset.sum_comm]
+  rw [inner_to_euclidean_clm_eq_sum, inner_to_euclidean_clm_eq_sum, Finset.sum_comm]
   refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
   rw [hA]; ring
 
@@ -100,12 +101,12 @@ private theorem rayleigh_perturbation_le {d : ℕ} {S E : Matrix (Fin d) (Fin d)
     rw [← sq_le_one_iff_abs_le_one]; nlinarith [sq_nonneg ‖b‖]
   have hSv : inner ℝ v (Sf v) = lam := by rw [heig, real_inner_smul_right, hvv, mul_one]
   have hbSv : inner ℝ b (Sf v) = 0 := by rw [heig, real_inner_smul_right, hbv, mul_zero]
-  have hvSb : inner ℝ v (Sf b) = 0 := by rw [inner_toEuclideanCLM_comm hS]; exact hbSv
+  have hvSb : inner ℝ v (Sf b) = 0 := by rw [inner_to_euclidean_clm_comm hS]; exact hbSv
   have hbSb := hother b hbv
-  have hFvv := abs_inner_toEuclideanCLM_le E v v
-  have hFvb := abs_inner_toEuclideanCLM_le E v b
-  have hFbv := abs_inner_toEuclideanCLM_le E b v
-  have hFbb := abs_inner_toEuclideanCLM_le E b b
+  have hFvv := abs_inner_to_euclidean_clm_le E v v
+  have hFvb := abs_inner_to_euclidean_clm_le E v b
+  have hFbv := abs_inner_to_euclidean_clm_le E b v
+  have hFbb := abs_inner_to_euclidean_clm_le E b b
   rw [hv] at hFvv hFvb hFbv
   have hadd : Matrix.toEuclideanCLM (𝕜 := ℝ) (S + E) = Sf + F := map_add _ _ _
   have hexp : inner ℝ u ((Sf + F) u) = a ^ 2 * (inner ℝ v (Sf v) + inner ℝ v (F v)) +
@@ -135,23 +136,23 @@ private theorem rayleigh_perturbation_le {d : ℕ} {S E : Matrix (Fin d) (Fin d)
   nlinarith
 
 /-- Rayleigh values at unit vectors are bounded by the entrywise `ℓ¹` norm. -/
-private theorem inner_toEuclideanCLM_le_entrySum {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ)
+private theorem inner_to_euclidean_clm_le_entry_sum {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ)
     {u : EuclideanSpace ℝ (Fin d)} (hu : ‖u‖ = 1) :
     inner ℝ u (Matrix.toEuclideanCLM (𝕜 := ℝ) A u) ≤ entrySum A := by
-  have := (le_abs_self _).trans (abs_inner_toEuclideanCLM_le A u u)
+  have := (le_abs_self _).trans (abs_inner_to_euclidean_clm_le A u u)
   rwa [hu, mul_one, mul_one] at this
 
 /-- Every Rayleigh value at a unit vector is at most the leading Rayleigh value. -/
-private theorem le_leadingRayleighValue {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ)
+private theorem le_leading_rayleigh_value {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ)
     {u : EuclideanSpace ℝ (Fin d)} (hu : ‖u‖ = 1) :
     inner ℝ u (Matrix.toEuclideanCLM (𝕜 := ℝ) A u) ≤ leadingRayleighValue A := by
   refine le_csSup ⟨entrySum A, ?_⟩ ⟨u, hu, rfl⟩
   rintro r ⟨w, hw, rfl⟩
-  exact inner_toEuclideanCLM_le_entrySum A hw
+  exact inner_to_euclidean_clm_le_entry_sum A hw
 
 /-- An upper bound for all Rayleigh values at unit vectors bounds the leading Rayleigh value,
 provided a unit vector exists. -/
-private theorem leadingRayleighValue_le {d : ℕ} {A : Matrix (Fin d) (Fin d) ℝ}
+private theorem leading_rayleigh_value_le {d : ℕ} {A : Matrix (Fin d) (Fin d) ℝ}
     {v : EuclideanSpace ℝ (Fin d)} (hv : ‖v‖ = 1) {c : ℝ}
     (h : ∀ u : EuclideanSpace ℝ (Fin d), ‖u‖ = 1 →
       inner ℝ u (Matrix.toEuclideanCLM (𝕜 := ℝ) A u) ≤ c) :
@@ -161,7 +162,7 @@ private theorem leadingRayleighValue_le {d : ℕ} {A : Matrix (Fin d) (Fin d) �
   exact h w hw
 
 /-- Without unit vectors (dimension zero) the leading Rayleigh value is `0`. -/
-private theorem leadingRayleighValue_eq_zero {d : ℕ} (hne : ∀ v : EuclideanSpace ℝ (Fin d), ‖v‖ ≠ 1)
+private theorem leading_rayleigh_value_eq_zero {d : ℕ} (hne : ∀ v : EuclideanSpace ℝ (Fin d), ‖v‖ ≠ 1)
     (A : Matrix (Fin d) (Fin d) ℝ) : leadingRayleighValue A = 0 := by
   unfold leadingRayleighValue
   have : {r : ℝ | ∃ u : EuclideanSpace ℝ (Fin d), ‖u‖ = 1 ∧
@@ -172,14 +173,14 @@ private theorem leadingRayleighValue_eq_zero {d : ℕ} (hne : ∀ v : EuclideanS
   rw [this, Real.sSup_empty]
 
 /-- The leading Rayleigh value is Lipschitz for the entrywise `ℓ¹` norm (one-sided form). -/
-private theorem leadingRayleighValue_le_add {d : ℕ} (A B : Matrix (Fin d) (Fin d) ℝ) :
+private theorem leading_rayleigh_value_le_add {d : ℕ} (A B : Matrix (Fin d) (Fin d) ℝ) :
     leadingRayleighValue A ≤ leadingRayleighValue B + entrySum (A - B) := by
   by_cases hne : ∃ v : EuclideanSpace ℝ (Fin d), ‖v‖ = 1
   · obtain ⟨v, hv⟩ := hne
-    refine leadingRayleighValue_le hv fun u hu ↦ ?_
+    refine leading_rayleigh_value_le hv fun u hu ↦ ?_
     have e : A = B + (A - B) := by abel
-    have h1 := le_leadingRayleighValue B hu
-    have h2 := inner_toEuclideanCLM_le_entrySum (A - B) hu
+    have h1 := le_leading_rayleigh_value B hu
+    have h2 := inner_to_euclidean_clm_le_entry_sum (A - B) hu
     calc inner ℝ u (Matrix.toEuclideanCLM (𝕜 := ℝ) A u)
         = inner ℝ u (Matrix.toEuclideanCLM (𝕜 := ℝ) B u) +
           inner ℝ u (Matrix.toEuclideanCLM (𝕜 := ℝ) (A - B) u) := by
@@ -187,13 +188,13 @@ private theorem leadingRayleighValue_le_add {d : ℕ} (A B : Matrix (Fin d) (Fin
           rw [map_add, add_apply, inner_add_right]
       _ ≤ _ := add_le_add h1 h2
   · push Not at hne
-    have hA := leadingRayleighValue_eq_zero hne A
-    have hB := leadingRayleighValue_eq_zero hne B
+    have hA := leading_rayleigh_value_eq_zero hne A
+    have hB := leading_rayleigh_value_eq_zero hne B
     rw [hA, hB, zero_add]
     exact Finset.sum_nonneg fun i _ ↦ Finset.sum_nonneg fun j _ ↦ abs_nonneg _
 
 /-- The leading Rayleigh value is a continuous function of the matrix. -/
-private theorem continuous_leadingRayleighValue (d : ℕ) :
+private theorem continuous_leading_rayleigh_value (d : ℕ) :
     Continuous (leadingRayleighValue (d := d)) := by
   have hes : Continuous (fun A : Matrix (Fin d) (Fin d) ℝ ↦ entrySum A) := by
     unfold entrySum
@@ -204,8 +205,8 @@ private theorem continuous_leadingRayleighValue (d : ℕ) :
   rw [ContinuousAt, ← tendsto_sub_nhds_zero_iff]
   refine squeeze_zero_norm (a := fun B ↦ entrySum (B - A)) (fun B ↦ ?_) ?_
   · rw [Real.norm_eq_abs, abs_le]
-    have h1 := leadingRayleighValue_le_add B A
-    have h2 := leadingRayleighValue_le_add A B
+    have h1 := leading_rayleigh_value_le_add B A
+    have h2 := leading_rayleigh_value_le_add A B
     have e : entrySum (A - B) = entrySum (B - A) := by
       unfold entrySum
       refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
@@ -217,7 +218,7 @@ private theorem continuous_leadingRayleighValue (d : ℕ) :
 
 /-- Leading eigenvalue perturbation: under the hypotheses of `rayleigh_perturbation_le`, the
 leading Rayleigh value of `A` exceeds `⟪v, A v⟫` by at most `2 ε² / gap`, `ε = ∑ |(A - S)ᵢⱼ|`. -/
-private theorem leadingRayleighValue_sub_inner_le {d : ℕ} {S A : Matrix (Fin d) (Fin d) ℝ}
+private theorem leading_rayleigh_value_sub_inner_le {d : ℕ} {S A : Matrix (Fin d) (Fin d) ℝ}
     (hS : ∀ i j, S i j = S j i) {v : EuclideanSpace ℝ (Fin d)} (hv : ‖v‖ = 1) {lam gap : ℝ}
     (hgap : 0 < gap) (heig : Matrix.toEuclideanCLM (𝕜 := ℝ) S v = lam • v)
     (hother : ∀ u : EuclideanSpace ℝ (Fin d), inner ℝ u v = 0 →
@@ -227,9 +228,9 @@ private theorem leadingRayleighValue_sub_inner_le {d : ℕ} {S A : Matrix (Fin d
       leadingRayleighValue A - inner ℝ v (Matrix.toEuclideanCLM (𝕜 := ℝ) A v) ≤
         2 * entrySum (A - S) ^ 2 / gap := by
   have hA : S + (A - S) = A := add_sub_cancel _ _
-  refine ⟨sub_nonneg.mpr (le_leadingRayleighValue A hv), ?_⟩
+  refine ⟨sub_nonneg.mpr (le_leading_rayleigh_value A hv), ?_⟩
   rw [sub_le_iff_le_add']
-  refine leadingRayleighValue_le hv fun u hu ↦ ?_
+  refine leading_rayleigh_value_le hv fun u hu ↦ ?_
   have h := rayleigh_perturbation_le hS hv heig hother hε hu
   rw [hA] at h
   set β := ‖u - inner ℝ u v • v‖
@@ -295,7 +296,7 @@ variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasu
 
 /-- The first part of `leading_empirical_covariance_eigenvalue_asymptotics`: the remainder of the
 linear expansion of the leading empirical eigenvalue is `o_P(n^{-1/2})`. -/
-private theorem tendstoInMeasure_leading_eigenvalue_remainder
+private theorem tendsto_in_measure_leading_eigenvalue_remainder
     (hiid : IsIndependentIdenticallyDistributed μ X P) (h4 : MemLp id 4 P)
     (v : EuclideanSpace ℝ (Fin d)) (hv : ‖v‖ = 1) (lambda gap : ℝ) (hgap : 0 < gap)
     (heig : Matrix.toEuclideanCLM (𝕜 := ℝ) (euclideanCovarianceMatrix P) v = lambda • v)
@@ -307,22 +308,22 @@ private theorem tendstoInMeasure_leading_eigenvalue_remainder
         inner ℝ v (Matrix.toEuclideanCLM (𝕜 := ℝ)
           (empiricalCovarianceMatrix X n ω - euclideanCovarianceMatrix P) v))) atTop
       (fun _ ↦ 0) := by
-  have hS := euclideanCovarianceMatrix_symm (P := P)
-  refine tendstoInMeasure_zero_of_abs_le μ (fun (n : ℕ) ω ↦ 2 / gap * (Real.sqrt n * entrySum
+  have hS := euclidean_covariance_matrix_symm (P := P)
+  refine tendsto_in_measure_zero_of_abs_le μ (fun (n : ℕ) ω ↦ 2 / gap * (Real.sqrt n * entrySum
       (empiricalCovarianceMatrix X n ω - euclideanCovarianceMatrix P) ^ 2)) _
     (fun n ω ↦ entrySum (empiricalCovarianceMatrix X n ω - euclideanCovarianceMatrix P))
     (by positivity : 0 < gap / 4) (Filter.Eventually.of_forall fun n ↦
       Filter.Eventually.of_forall fun ω hω ↦ ?_)
-    (tendstoInMeasure_const_mul_zero μ _ _ (tendstoInMeasure_sqrt_mul_entrySum_sq hiid h4))
-    (tendstoInMeasure_entrySum hiid h4)
+    (tendsto_in_measure_const_mul_zero μ _ _ (tendsto_in_measure_sqrt_mul_entry_sum_sq hiid h4))
+    (tendsto_in_measure_entry_sum hiid h4)
   set A := empiricalCovarianceMatrix X n ω
   have hε : 4 * entrySum (A - euclideanCovarianceMatrix P) ≤ gap := by
     have := (le_abs_self _).trans hω.le; linarith
-  obtain ⟨h0, h1⟩ := leadingRayleighValue_sub_inner_le hS hv hgap heig hother hε
+  obtain ⟨h0, h1⟩ := leading_rayleigh_value_sub_inner_le hS hv hgap heig hother hε
   have hsub : inner ℝ v (Matrix.toEuclideanCLM (𝕜 := ℝ) (A - euclideanCovarianceMatrix P) v) =
       inner ℝ v (Matrix.toEuclideanCLM (𝕜 := ℝ) A v) - lambda := by
     rw [map_sub, sub_apply, inner_sub_right,
-      inner_euclideanCovarianceMatrix_self hv heig]
+      inner_euclidean_covariance_matrix_self hv heig]
   rw [hsub, show leadingRayleighValue A - lambda -
     (inner ℝ v (Matrix.toEuclideanCLM (𝕜 := ℝ) A v) - lambda) =
       leadingRayleighValue A - inner ℝ v (Matrix.toEuclideanCLM (𝕜 := ℝ) A v) by ring]
@@ -366,26 +367,26 @@ theorem leading_empirical_covariance_eigenvalue_asymptotics
       (leadingRayleighValue (empiricalCovarianceMatrix X n ω) - lambda)) atTop id (fun _ ↦ μ)
       (gaussianReal 0 (Real.toNNReal
         (Var[fun x ↦ inner ℝ (x - ∫ z, z ∂P) v ^ 2; P]))) := by
-  have hrem := tendstoInMeasure_leading_eigenvalue_remainder hiid h4 v hv lambda gap hgap heig
+  have hrem := tendsto_in_measure_leading_eigenvalue_remainder hiid h4 v hv lambda gap hgap heig
     hother
   refine ⟨hrem, ?_⟩
-  have hclt := tendstoInDistribution_inv_sqrt_mul_sum_of_iid μ P X hiid (quadStat P v)
-    (measurable_quadStat v) (memLp_quadStat h4 v) (integral_quadStat h4 v)
-  rw [integral_quadStat_sq_eq_variance h4 hv heig] at hclt
-  have hmeasA := measurable_empiricalCovarianceMatrix hiid.1
-  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _
+  have hclt := tendsto_in_distribution_inv_sqrt_mul_sum_of_iid μ P X hiid (quadStat P v)
+    (measurable_quad_stat v) (mem_lp_quad_stat h4 v) (integral_quad_stat h4 v)
+  rw [integral_quad_stat_sq_eq_variance h4 hv heig] at hclt
+  have hmeasA := measurable_empirical_covariance_matrix hiid.1
+  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ _ _
     (fun n ↦ measurable_const.mul (Finset.measurable_fun_sum _ fun k _ ↦
-      (measurable_quadStat v).comp (hiid.1 k)))
+      (measurable_quad_stat v).comp (hiid.1 k)))
     (fun n ↦ measurable_const.mul
-      (((continuous_leadingRayleighValue d).measurable.comp (hmeasA n)).sub_const _)) hclt ?_
+      (((continuous_leading_rayleigh_value d).measurable.comp (hmeasA n)).sub_const _)) hclt ?_
   -- the difference is the remainder plus a negligible quadratic term
   have hR : TendstoInMeasure μ (fun (n : ℕ) ω ↦ ∑ i, ∑ j, (-(v i * v j)) *
       (Real.sqrt n * sampleCoordMean P X i n ω * sampleCoordMean P X j n ω)) atTop
       (fun _ ↦ 0) :=
-    tendstoInMeasure_finsetSum_zero _ fun i _ ↦ tendstoInMeasure_finsetSum_zero _ fun j _ ↦
-      tendstoInMeasure_const_mul_zero μ _ _
-        (tendstoInMeasure_sqrt_mul_sampleCoordMean_mul hiid h4 i j)
-  refine tendstoInMeasure_zero_of_abs_le' (tendstoInMeasure_add_zero μ _ _ hrem hR) ?_
+    tendsto_in_measure_finset_sum_zero _ fun i _ ↦ tendsto_in_measure_finset_sum_zero _ fun j _ ↦
+      tendsto_in_measure_const_mul_zero μ _ _
+        (tendsto_in_measure_sqrt_mul_sample_coord_mean_mul hiid h4 i j)
+  refine tendstoInMeasure_zero_of_abs_le' (tendsto_in_measure_add_zero μ _ _ hrem hR) ?_
   filter_upwards [eventually_gt_atTop 0] with n hn ω
   apply le_of_eq
   congr 1
@@ -393,9 +394,9 @@ theorem leading_empirical_covariance_eigenvalue_asymptotics
   have hQ : inner ℝ v (Matrix.toEuclideanCLM (𝕜 := ℝ) (A - euclideanCovarianceMatrix P) v) =
       ∑ i, ∑ j, v i * (sampleProdMean P X i j n ω -
         sampleCoordMean P X i n ω * sampleCoordMean P X j n ω) * v j := by
-    rw [inner_toEuclideanCLM_eq_sum]
+    rw [inner_to_euclidean_clm_eq_sum]
     refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
-    rw [Matrix.sub_apply, empiricalCovarianceMatrix_sub_eq P X hn ω i j]
+    rw [Matrix.sub_apply, empirical_covariance_matrix_sub_eq P X hn ω i j]
   have hW : (Real.sqrt n)⁻¹ * ∑ k ∈ Finset.range n, quadStat P v (X k ω) =
       ∑ i, ∑ j, v i * (Real.sqrt n * sampleProdMean P X i j n ω) * v j := by
     have hnR : (0 : ℝ) < n := by exact_mod_cast hn
@@ -429,7 +430,7 @@ theorem leading_empirical_covariance_eigenvalue_asymptotics
 `CKSD.leading_empirical_covariance_eigenvalue_asymptotics`, any choice of unit eigenvector `ŵₙ` of
 `Σ̂ₙ` for its largest eigenvalue, with sign fixed by `⟪ŵₙ, v⟫ ≥ 0`, satisfies
 `√n ‖ŵₙ - v‖ = O_P(1)`; the choice need not be measurable. -/
-theorem isBoundedInProbability_leading_empirical_eigenvector_error
+theorem is_bounded_in_probability_leading_empirical_eigenvector_error
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
@@ -446,9 +447,9 @@ theorem isBoundedInProbability_leading_empirical_eigenvector_error
     (hwleading : ∀ n ω, Matrix.toEuclideanCLM (𝕜 := ℝ) (empiricalCovarianceMatrix X n ω)
       (w n ω) = leadingRayleighValue (empiricalCovarianceMatrix X n ω) • w n ω) :
     IsBoundedInProbability μ (fun n ω ↦ Real.sqrt n * ‖w n ω - v‖) := by
-  have hS := euclideanCovarianceMatrix_symm (P := P)
-  refine (isBoundedInProbability_sqrt_mul_entrySum hiid h4).of_abs_le_of_tendstoInMeasure
-    (tendstoInMeasure_entrySum hiid h4) (by positivity : 0 < gap / 4)
+  have hS := euclidean_covariance_matrix_symm (P := P)
+  refine (is_bounded_in_probability_sqrt_mul_entry_sum hiid h4).of_abs_le_of_tendsto_in_measure
+    (tendsto_in_measure_entry_sum hiid h4) (by positivity : 0 < gap / 4)
     (by positivity : 0 ≤ 8 / gap) fun n ω hω ↦ ?_
   set A := empiricalCovarianceMatrix X n ω
   have hε : 4 * entrySum (A - euclideanCovarianceMatrix P) ≤ gap := by
@@ -457,7 +458,7 @@ theorem isBoundedInProbability_leading_empirical_eigenvector_error
       inner ℝ (w n ω) (Matrix.toEuclideanCLM (𝕜 := ℝ) A (w n ω)) := by
     rw [hwleading n ω, real_inner_smul_right, real_inner_self_eq_norm_sq, hwunit, one_pow,
       mul_one]
-    exact le_leadingRayleighValue A hv
+    exact le_leading_rayleigh_value A hv
   have h := norm_sub_le_of_inner_le hS hv hgap heig hother hε (hwunit n ω) (hsign n ω) hlead
   have hsq : 0 ≤ Real.sqrt n := Real.sqrt_nonneg _
   have hes : 0 ≤ entrySum (A - euclideanCovarianceMatrix P) :=
@@ -468,14 +469,14 @@ theorem isBoundedInProbability_leading_empirical_eigenvector_error
     _ = _ := by ring
 
 /-- The empirical covariance of the empty sample is the zero matrix. -/
-@[simp] theorem empiricalCovarianceMatrix_zero {Ω : Type*} {d : ℕ}
+@[simp] theorem empirical_covariance_matrix_zero {Ω : Type*} {d : ℕ}
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (ω : Ω) :
     empiricalCovarianceMatrix X 0 ω = 0 := by
   ext i j
   simp [empiricalCovarianceMatrix]
 
 /-- An empirical covariance matrix is symmetric, for every sample including the empty one. -/
-theorem empiricalCovarianceMatrix_isSymm {Ω : Type*} {d : ℕ}
+theorem empirical_covariance_matrix_is_symm {Ω : Type*} {d : ℕ}
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (n : ℕ) (ω : Ω) :
     (empiricalCovarianceMatrix X n ω).IsSymm := by
   ext i j

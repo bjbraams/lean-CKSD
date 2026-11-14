@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Geometry.DistanceKernel
 public import TauCeti.Probability.Density
 /-!
@@ -25,76 +26,76 @@ def distanceWeightedFst (P : Measure (E × F)) (y : F) : Measure E :=
   (P.withDensity (fun z ↦ ENNReal.ofReal (distanceKernel y z.2))).map Prod.fst
 
 /-- A distance-kernel section is integrable under every finite measure. -/
-theorem integrable_distanceKernel_snd (P : Measure (E × F)) [IsFiniteMeasure P] (y : F) :
+theorem integrable_distance_kernel_snd (P : Measure (E × F)) [IsFiniteMeasure P] (y : F) :
     Integrable (fun z ↦ distanceKernel y z.2) P := by
   refine Integrable.of_bound (by unfold distanceKernel; fun_prop) ‖y‖ (ae_of_all _ fun z ↦ ?_)
-  rw [Real.norm_eq_abs, abs_of_nonneg (distanceKernel_nonneg_le y z.2).1]
-  exact (distanceKernel_nonneg_le y z.2).2.1
+  rw [Real.norm_eq_abs, abs_of_nonneg (distance_kernel_nonneg_le y z.2).1]
+  exact (distance_kernel_nonneg_le y z.2).2.1
 
 /-- A bounded nonnegative section defines a finite weighted marginal. -/
 instance isFiniteMeasure_distanceWeightedFst (P : Measure (E × F)) [IsFiniteMeasure P] (y : F) :
     IsFiniteMeasure (distanceWeightedFst P y) := by
-  have := isFiniteMeasure_withDensity_ofReal (integrable_distanceKernel_snd P y).hasFiniteIntegral
+  have := isFiniteMeasure_withDensity_ofReal (integrable_distance_kernel_snd P y).hasFiniteIntegral
   unfold distanceWeightedFst
   infer_instance
 
 omit [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E]
   [InnerProductSpace ℝ F] [FiniteDimensional ℝ F] in
 /-- Integration against a weighted marginal pulls back to weighted integration. -/
-theorem integral_distanceWeightedFst (P : Measure (E × F)) (y : F) (f : E → ℝ)
+theorem integral_distance_weighted_fst (P : Measure (E × F)) (y : F) (f : E → ℝ)
     (hf : Measurable f) :
     (∫ x, f x ∂distanceWeightedFst P y) = ∫ z, distanceKernel y z.2 * f z.1 ∂P := by
   rw [distanceWeightedFst, integral_map measurable_fst.aemeasurable hf.aestronglyMeasurable,
     TauCeti.Probability.integral_withDensity_ofReal (ρ := fun z : E × F ↦ distanceKernel y z.2) (by unfold distanceKernel; fun_prop)
-      (ae_of_all _ fun z ↦ (distanceKernel_nonneg_le y z.2).1)]
+      (ae_of_all _ fun z ↦ (distance_kernel_nonneg_le y z.2).1)]
   rfl
 
 /-- Weighted first marginals retain finite first moments. -/
-theorem integrable_norm_distanceWeightedFst (P : Measure (E × F)) [IsFiniteMeasure P]
+theorem integrable_norm_distance_weighted_fst (P : Measure (E × F)) [IsFiniteMeasure P]
     (hP : Integrable (fun z ↦ ‖z‖) P) (y : F) :
     Integrable (fun x ↦ ‖x‖) (distanceWeightedFst P y) := by
   rw [distanceWeightedFst, integrable_map_measure (by fun_prop) measurable_fst.aemeasurable,
-    TauCeti.Probability.integrable_withDensity_ofReal_iff (ρ := fun z : E × F ↦ distanceKernel y z.2) (by unfold distanceKernel; fun_prop)
-      (ae_of_all _ fun z ↦ (distanceKernel_nonneg_le y z.2).1)]
+    TauCeti.Probability.integrable_with_density_of_real_iff (ρ := fun z : E × F ↦ distanceKernel y z.2) (by unfold distanceKernel; fun_prop)
+      (ae_of_all _ fun z ↦ (distance_kernel_nonneg_le y z.2).1)]
   refine (hP.const_mul ‖y‖).mono' (by unfold distanceKernel; fun_prop) (ae_of_all _ fun z ↦ ?_)
   simp only [Function.comp_apply, smul_eq_mul, Real.norm_eq_abs, abs_mul, abs_norm,
-    abs_of_nonneg (distanceKernel_nonneg_le y z.2).1]
-  exact mul_le_mul (distanceKernel_nonneg_le y z.2).2.1 (norm_fst_le z) (norm_nonneg _) (norm_nonneg _)
+    abs_of_nonneg (distance_kernel_nonneg_le y z.2).1]
+  exact mul_le_mul (distance_kernel_nonneg_le y z.2).2.1 (norm_fst_le z) (norm_nonneg _) (norm_nonneg _)
 
 /-- The total mass of a weighted marginal depends only on the opposite marginal. -/
-theorem distanceWeightedFst_univ_eq (P Q : Measure (E × F)) [IsFiniteMeasure P] [IsFiniteMeasure Q]
+theorem distance_weighted_fst_univ_eq (P Q : Measure (E × F)) [IsFiniteMeasure P] [IsFiniteMeasure Q]
     (hsnd : P.map Prod.snd = Q.map Prod.snd) (y : F) :
     distanceWeightedFst P y univ = distanceWeightedFst Q y univ := by
   apply (ENNReal.toReal_eq_toReal_iff' (measure_ne_top _ _) (measure_ne_top _ _)).1
-  have hP := integral_distanceWeightedFst P y (fun _ ↦ 1) measurable_const
-  have hQ := integral_distanceWeightedFst Q y (fun _ ↦ 1) measurable_const
+  have hP := integral_distance_weighted_fst P y (fun _ ↦ 1) measurable_const
+  have hQ := integral_distance_weighted_fst Q y (fun _ ↦ 1) measurable_const
   simp only [integral_const, smul_eq_mul, mul_one] at hP hQ
   change (distanceWeightedFst P y).real univ = (distanceWeightedFst Q y).real univ
   rw [hP, hQ, ← integral_map measurable_snd.aemeasurable (by unfold distanceKernel; fun_prop),
     ← integral_map measurable_snd.aemeasurable (by unfold distanceKernel; fun_prop), hsnd]
 
 /-- Equal second marginals and equal product-kernel sections give equal weighted first marginals. -/
-theorem distanceWeightedFst_eq (P Q : Measure (E × F)) [IsFiniteMeasure P] [IsFiniteMeasure Q]
+theorem distance_weighted_fst_eq (P Q : Measure (E × F)) [IsFiniteMeasure P] [IsFiniteMeasure Q]
     (hP : Integrable (fun z ↦ ‖z‖) P) (hQ : Integrable (fun z ↦ ‖z‖) Q)
     (hsnd : P.map Prod.snd = Q.map Prod.snd)
     (hsec : ∀ z, (∫ w, distanceProductKernel z w ∂P) = ∫ w, distanceProductKernel z w ∂Q)
     (y : F) : distanceWeightedFst P y = distanceWeightedFst Q y := by
-  refine measure_eq_of_integral_distanceKernel_eq _ _ (distanceWeightedFst_univ_eq P Q hsnd y)
-    (integrable_norm_distanceWeightedFst P hP y) (integrable_norm_distanceWeightedFst Q hQ y) ?_
+  refine measure_eq_of_integral_distance_kernel_eq _ _ (distance_weighted_fst_univ_eq P Q hsnd y)
+    (integrable_norm_distance_weighted_fst P hP y) (integrable_norm_distance_weighted_fst Q hQ y) ?_
   intro x
-  rw [integral_distanceWeightedFst P y _ (by unfold distanceKernel; fun_prop),
-    integral_distanceWeightedFst Q y _ (by unfold distanceKernel; fun_prop)]
+  rw [integral_distance_weighted_fst P y _ (by unfold distanceKernel; fun_prop),
+    integral_distance_weighted_fst Q y _ (by unfold distanceKernel; fun_prop)]
   simpa only [distanceProductKernel, mul_comm] using hsec (x, y)
 
 /-- Evaluating a weighted marginal is a restricted weighted integral. -/
-theorem real_distanceWeightedFst_apply (P : Measure (E × F)) [IsFiniteMeasure P]
+theorem real_distance_weighted_fst_apply (P : Measure (E × F)) [IsFiniteMeasure P]
     (y : F) (A : Set E) (hA : MeasurableSet A) :
     (distanceWeightedFst P y).real A = ∫ z in Prod.fst ⁻¹' A, distanceKernel y z.2 ∂P := by
   unfold distanceWeightedFst Measure.real
   rw [Measure.map_apply measurable_fst hA]
   exact TauCeti.Probability.measureReal_withDensity_ofReal
-    (ae_of_all _ fun z ↦ (distanceKernel_nonneg_le y z.2).1)
-    (measurable_fst hA) (integrable_distanceKernel_snd P y).integrableOn
+    (ae_of_all _ fun z ↦ (distance_kernel_nonneg_le y z.2).1)
+    (measurable_fst hA) (integrable_distance_kernel_snd P y).integrableOn
 
 /-- Restricting to a first-coordinate event preserves integrability of the second-coordinate norm. -/
 theorem integrable_norm_map_snd_restrict (P : Measure (E × F))
@@ -104,17 +105,17 @@ theorem integrable_norm_map_snd_restrict (P : Measure (E × F))
   exact hP.restrict.mono' (by fun_prop) (ae_of_all _ fun z ↦ by simpa using norm_snd_le z)
 
 /-- Product distance-kernel sections determine finite laws once both marginals are fixed. -/
-theorem measure_eq_of_integral_distanceProductKernel_eq (P Q : Measure (E × F))
+theorem measure_eq_of_integral_distance_product_kernel_eq (P Q : Measure (E × F))
     [IsFiniteMeasure P] [IsFiniteMeasure Q]
     (hP : Integrable (fun z ↦ ‖z‖) P) (hQ : Integrable (fun z ↦ ‖z‖) Q)
     (hfst : P.map Prod.fst = Q.map Prod.fst) (hsnd : P.map Prod.snd = Q.map Prod.snd)
     (hsec : ∀ z, (∫ w, distanceProductKernel z w ∂P) = ∫ w, distanceProductKernel z w ∂Q) :
     P = Q := by
-  have hw := distanceWeightedFst_eq P Q hP hQ hsnd hsec
+  have hw := distance_weighted_fst_eq P Q hP hQ hsnd hsec
   have hr (A : Set E) (hA : MeasurableSet A) :
       (P.restrict (Prod.fst ⁻¹' A)).map Prod.snd =
       (Q.restrict (Prod.fst ⁻¹' A)).map Prod.snd := by
-    refine measure_eq_of_integral_distanceKernel_eq _ _ ?_
+    refine measure_eq_of_integral_distance_kernel_eq _ _ ?_
       (integrable_norm_map_snd_restrict P hP A) (integrable_norm_map_snd_restrict Q hQ A) ?_
     · simp only [Measure.map_apply measurable_snd MeasurableSet.univ, preimage_univ,
         Measure.restrict_apply MeasurableSet.univ, univ_inter]
@@ -123,7 +124,7 @@ theorem measure_eq_of_integral_distanceProductKernel_eq (P Q : Measure (E × F))
     · intro y
       rw [integral_map measurable_snd.aemeasurable (by unfold distanceKernel; fun_prop),
         integral_map measurable_snd.aemeasurable (by unfold distanceKernel; fun_prop),
-        ← real_distanceWeightedFst_apply P y A hA, ← real_distanceWeightedFst_apply Q y A hA,
+        ← real_distance_weighted_fst_apply P y A hA, ← real_distance_weighted_fst_apply Q y A hA,
         hw y]
   apply Measure.ext_prod
   intro A B hA hB
@@ -135,24 +136,24 @@ theorem measure_eq_of_integral_distanceProductKernel_eq (P Q : Measure (E × F))
     he] using hm
 
 /-- The product distance-kernel discrepancy is nonnegative and separates laws with fixed marginals. -/
-theorem distanceProductKernel_squaredMMD_nonneg_eq_zero_iff (P Q : Measure (E × F))
+theorem distance_product_kernel_squared_mmd_nonneg_eq_zero_iff (P Q : Measure (E × F))
     [IsFiniteMeasure P] [IsFiniteMeasure Q]
     (hP : Integrable (fun z ↦ ‖z‖) P) (hQ : Integrable (fun z ↦ ‖z‖) Q)
     (hfst : P.map Prod.fst = Q.map Prod.fst) (hsnd : P.map Prod.snd = Q.map Prod.snd) :
     0 ≤ squaredMMD distanceProductKernel P Q ∧
       (squaredMMD distanceProductKernel P Q = 0 ↔ P = Q) := by
   constructor
-  · rw [squaredMMD_eq_norm_kernelMeanEmbedding_sub_sq
-      (posSemidef_distanceProductKernel (E := E) (F := F))
-      (integrable_distanceProductFeature P hP) (integrable_distanceProductFeature Q hQ)
-      (integrable_distanceProductKernel_prod P P hP hP)
-      (integrable_distanceProductKernel_prod Q Q hQ hQ)
-      (integrable_distanceProductKernel_prod P Q hP hQ)]
+  · rw [squared_mmd_eq_norm_kernel_mean_embedding_sub_sq
+      (pos_semidef_distance_product_kernel (E := E) (F := F))
+      (integrable_distance_product_feature P hP) (integrable_distance_product_feature Q hQ)
+      (integrable_distance_product_kernel_prod P P hP hP)
+      (integrable_distance_product_kernel_prod Q Q hQ hQ)
+      (integrable_distance_product_kernel_prod P Q hP hQ)]
     positivity
   constructor
   · intro hz
-    exact measure_eq_of_integral_distanceProductKernel_eq P Q hP hQ hfst hsnd
-      (integral_distanceProductKernel_eq_of_squaredMMD_eq_zero P Q hP hQ hz)
+    exact measure_eq_of_integral_distance_product_kernel_eq P Q hP hQ hfst hsnd
+      (integral_distance_product_kernel_eq_of_squared_mmd_eq_zero P Q hP hQ hz)
   · rintro rfl
     unfold squaredMMD
     ring

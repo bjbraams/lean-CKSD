@@ -3,6 +3,7 @@ module
 public import CKSD.Inference.Basic
 public import TauCeti.Probability.StrongLaw
 
+
 /-!
 # Lower bounds for the evidence of a dominated model
 
@@ -20,9 +21,9 @@ consistency theorem. The proof applies the strong law of large numbers (TauCeti'
 * `CKSD.HasDensity.measure_nonpos_eq_zero`: a law has no mass where its density is nonpositive.
 * `CKSD.llr_ae_eq_log_sub_log`: the log-likelihood ratio of two dominated laws is the difference
   of the log densities.
-* `CKSD.integral_log_sub_log_eq_neg_toReal_klDiv`: the expected log-likelihood ratio is minus the
+* `CKSD.integral_log_sub_log_eq_neg_to_real_kl_div`: the expected log-likelihood ratio is minus the
   Kullback–Leibler divergence.
-* `CKSD.tendsto_infinitePi_evidence_lt`: the evidence lower bound holds with probability tending
+* `CKSD.tendsto_infinite_pi_evidence_lt`: the evidence lower bound holds with probability tending
   to one.
 -/
 
@@ -76,7 +77,7 @@ theorem llr_ae_eq_log_sub_log {P Q μ : Measure X} [SigmaFinite μ] [IsFiniteMea
 
 /-- For probability laws `P = p · μ`, `Q = q · μ` with finite Kullback–Leibler divergence
 `KL(P ‖ Q)`, the function `log q - log p` is `P`-integrable with integral `-KL(P ‖ Q)`. -/
-theorem integral_log_sub_log_eq_neg_toReal_klDiv {P Q μ : Measure X} [SigmaFinite μ]
+theorem integral_log_sub_log_eq_neg_to_real_kl_div {P Q μ : Measure X} [SigmaFinite μ]
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q] {p q : X → ℝ} (hP : HasDensity P μ p)
     (hQ : HasDensity Q μ q) (hKL : klDiv P Q ≠ ∞) :
     Integrable (fun x ↦ Real.log (q x) - Real.log (p x)) P ∧
@@ -108,7 +109,7 @@ theorem prod_mul_exp_le_prod {n : ℕ} {a b : Fin n → ℝ} (ha : ∀ i, 0 < a 
 with `KL(P θ₀ ‖ P θ) < γ` for `θ ∈ B`. Under the true i.i.d. law `P θ₀^∞`, the probability that the
 evidence `∫ ∏_{i<n} f θ (ωᵢ) dπ(θ)` is below `π(B)/2 · ∏_{i<n} f θ₀ (ωᵢ) · e^{-γ n}` tends to
 zero. -/
-theorem tendsto_infinitePi_evidence_lt {Θ : Type*} [MeasurableSpace Θ]
+theorem tendsto_infinite_pi_evidence_lt {Θ : Type*} [MeasurableSpace Θ]
     (π : Measure Θ) [IsFiniteMeasure π] (μ : Measure X) [SigmaFinite μ]
     (P : Θ → Measure X) [∀ θ, IsProbabilityMeasure (P θ)]
     (f : Θ → X → ℝ) (hf : Measurable (Function.uncurry f))
@@ -152,7 +153,7 @@ theorem tendsto_infinitePi_evidence_lt {Θ : Type*} [MeasurableSpace Θ]
     have hKL : klDiv (P θ₀) (P θ) ≠ ∞ := ne_top_of_lt (hB θ hθ)
     have hPQ := (klDiv_ne_top_iff.1 hKL).1
     obtain ⟨hint, hmean⟩ :=
-      integral_log_sub_log_eq_neg_toReal_klDiv (hdensity θ₀) (hdensity θ) hKL
+      integral_log_sub_log_eq_neg_to_real_kl_div (hdensity θ₀) (hdensity θ) hKL
     have hlt : -γ < ∫ x, (Real.log (f θ x) - Real.log (f θ₀ x)) ∂(P θ₀) := by
       rw [hmean]; have := ENNReal.toReal_lt_of_lt_ofReal (hB θ hθ); linarith
     have hslln := TauCeti.Probability.strong_law_ae_infinitePi (P θ₀)

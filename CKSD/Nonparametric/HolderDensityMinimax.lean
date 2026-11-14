@@ -2,6 +2,7 @@ module
 
 public import CKSD.Nonparametric.SmoothingRates
 
+
 /-!
 # Pointwise minimax rate for Hölder density estimation
 
@@ -13,21 +14,21 @@ density estimator; minimax risks are infima over measurable estimators of suprem
 ## Main definitions
 
 * `CKSD.holderDensityClass β L`: probability densities on `ℝ` with
-  `|f x - f y| ≤ L |x - y|^β`; `CKSD.mem_holderDensityClass_iff` identifies it with Mathlib's
+  `|f x - f y| ≤ L |x - y|^β`; `CKSD.mem_holder_density_class_iff` identifies it with Mathlib's
   `HolderWith`.
 * `CKSD.densityLaw`, `CKSD.holderDensityPointwiseMinimaxRisk`: the law with a given density
   and the pointwise minimax squared risk.
 
 ## Main results
 
-* `CKSD.finiteKernelDensityEstimator_risk_le`: the upper bound for the kernel density estimator.
-* `CKSD.holderDensityPointwiseMinimaxRisk_lower_bound`: the matching lower bound. It is Le Cam's
+* `CKSD.finite_kernel_density_estimator_risk_le`: the upper bound for the kernel density estimator.
+* `CKSD.holder_density_pointwise_minimax_risk_lower_bound`: the matching lower bound. It is Le Cam's
   two-point method: a Cauchy density of large scale against its perturbation by two opposite
   tents of height of order `h^β` and width `h = n^(-1/(2β+1)) / 2`, with the Kullback–Leibler
   divergence of the `n`-fold products bounded through the chi-square integral and Statlib's
   tensorization.
-* `CKSD.klDiv_densityLaw_le`: `KL(f₁, f₀) ≤ ∫ (f₁ - f₀)² / f₀` for a positive density `f₀`.
-* `CKSD.ofReal_mul_measureReal_le_lintegral_sq`: Markov's inequality for the squared error.
+* `CKSD.kl_div_density_law_le`: `KL(f₁, f₀) ≤ ∫ (f₁ - f₀)² / f₀` for a positive density `f₀`.
+* `CKSD.of_real_mul_measure_real_le_lintegral_sq`: Markov's inequality for the squared error.
 -/
 
 @[expose] public section
@@ -46,17 +47,17 @@ def holderDensityClass (β L : ℝ) : Set (ℝ → ℝ) :=
     ∀ x y, |f x - f y| ≤ L * Real.rpow |x - y| β}
 
 /-- A member of the Hölder density class is integrable. -/
-theorem integrable_of_mem_holderDensityClass {β L : ℝ} {f : ℝ → ℝ}
+theorem integrable_of_mem_holder_density_class {β L : ℝ} {f : ℝ → ℝ}
     (hf : f ∈ holderDensityClass β L) : Integrable f volume :=
   Integrable.of_integral_ne_zero (by rw [hf.2.2.1]; norm_num)
 
 /-- For nonnegative parameters, the Hölder density class consists of the measurable
 probability densities satisfying Mathlib's `HolderWith L β`. -/
-theorem mem_holderDensityClass_iff {β L : ℝ≥0} {f : ℝ → ℝ} :
+theorem mem_holder_density_class_iff {β L : ℝ≥0} {f : ℝ → ℝ} :
     f ∈ holderDensityClass β L ↔
       Measurable f ∧ (∀ x, 0 ≤ f x) ∧ (∫ x, f x) = 1 ∧ HolderWith L β f := by
   simp only [holderDensityClass, mem_ofPred_eq, Real.rpow_eq_pow, ← holderOnWith_univ,
-    holderOnWith_iff_abs_sub_le, mem_univ, true_imp_iff]
+    holder_on_with_iff_abs_sub_le, mem_univ, true_imp_iff]
 
 /-- The probability law represented by a real density. -/
 def densityLaw (f : ℝ → ℝ) : Measure ℝ :=
@@ -71,7 +72,7 @@ def holderDensityPointwiseMinimaxRisk (n : ℕ) (β L x : ℝ) : ℝ≥0∞ :=
 
 /-- Mean squared error of a sample mean under a product law: bias squared plus at most the
 second moment divided by the sample size. -/
-theorem integral_sq_sampleMean_sub_le {P : Measure ℝ} [IsProbabilityMeasure P] {n : ℕ}
+theorem integral_sq_sample_mean_sub_le {P : Measure ℝ} [IsProbabilityMeasure P] {n : ℕ}
     (hn : 0 < n) {g : ℝ → ℝ} (hg : MemLp g 2 P) (a : ℝ) :
     MemLp (fun ω : Fin n → ℝ ↦ (∑ i, g (ω i)) / n - a) 2 (Measure.pi fun _ ↦ P) ∧
     ∫ ω, ((∑ i, g (ω i)) / n - a) ^ 2 ∂(Measure.pi fun _ : Fin n ↦ P) ≤
@@ -130,9 +131,9 @@ theorem integral_sq_sampleMean_sub_le {P : Measure ℝ} [IsProbabilityMeasure P]
   linarith
 
 /-- A Hölder probability density of order `β ∈ (0, 1]` is bounded by `1 / 2 + L`. -/
-theorem le_of_mem_holderDensityClass {β L : ℝ} (hβ : 0 < β) {f : ℝ → ℝ}
+theorem le_of_mem_holder_density_class {β L : ℝ} (hβ : 0 < β) {f : ℝ → ℝ}
     (hf : f ∈ holderDensityClass β L) (x : ℝ) : f x ≤ 1 / 2 + L := by
-  have hfi := integrable_of_mem_holderDensityClass hf
+  have hfi := integrable_of_mem_holder_density_class hf
   obtain ⟨hfm, hf0, hf1, hfh⟩ := hf
   have hle : ∀ y ∈ Icc (x - 1) (x + 1), f x - L ≤ f y := by
     intro y hy
@@ -160,7 +161,7 @@ theorem le_of_mem_holderDensityClass {β L : ℝ} (hβ : 0 < β) {f : ℝ → �
   linarith
 
 /-- The law with a probability density is a probability measure. -/
-theorem isProbabilityMeasure_densityLaw {f : ℝ → ℝ} (hf0 : ∀ x, 0 ≤ f x)
+theorem is_probability_measure_density_law {f : ℝ → ℝ} (hf0 : ∀ x, 0 ≤ f x)
     (hfi : Integrable f volume) (hf1 : ∫ x, f x = 1) : IsProbabilityMeasure (densityLaw f) := by
   refine ⟨?_⟩
   rw [densityLaw, withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ,
@@ -168,7 +169,7 @@ theorem isProbabilityMeasure_densityLaw {f : ℝ → ℝ} (hf0 : ∀ x, 0 ≤ f 
     ENNReal.ofReal_one]
 
 /-- Integrals against a density law. -/
-theorem integral_densityLaw {f : ℝ → ℝ} (hfm : Measurable f) (hf0 : ∀ x, 0 ≤ f x)
+theorem integral_density_law {f : ℝ → ℝ} (hfm : Measurable f) (hf0 : ∀ x, 0 ≤ f x)
     (φ : ℝ → ℝ) : ∫ y, φ y ∂densityLaw f = ∫ y, f y * φ y := by
   rw [densityLaw, integral_withDensity_eq_integral_toReal_smul hfm.ennreal_ofReal
     (Filter.Eventually.of_forall fun _ ↦ ENNReal.ofReal_lt_top)]
@@ -176,7 +177,7 @@ theorem integral_densityLaw {f : ℝ → ℝ} (hfm : Measurable f) (hf0 : ∀ x,
   simp only [ENNReal.toReal_ofReal (hf0 y), smul_eq_mul]
 
 /-- Integrability against a density law. -/
-theorem integrable_densityLaw_iff {f : ℝ → ℝ} (hfm : Measurable f) (hf0 : ∀ x, 0 ≤ f x)
+theorem integrable_density_law_iff {f : ℝ → ℝ} (hfm : Measurable f) (hf0 : ∀ x, 0 ≤ f x)
     (φ : ℝ → ℝ) : Integrable φ (densityLaw f) ↔ Integrable (fun y ↦ f y * φ y) := by
   rw [densityLaw, integrable_withDensity_iff_integrable_smul' hfm.ennreal_ofReal
     (Filter.Eventually.of_forall fun _ ↦ ENNReal.ofReal_lt_top)]
@@ -191,7 +192,7 @@ theorem integral_comp_sub_div {h : ℝ} (hh : 0 < h) (x : ℝ) (ψ : ℝ → ℝ
 
 /-- GAPS 103.26: the kernel upper bound for pointwise Hölder density risk with `0<β≤1`.
 The moment condition is the order-zero kernel condition appropriate in this range. -/
-theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
+theorem finite_kernel_density_estimator_risk_le (β L c : ℝ)
     (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) (hc : 0 < c)
     (K : ℝ → ℝ) (hK : Measurable K) (hK1 : (∫ x, K x) = 1) (hK2 : MemLp K 2 volume)
     (hKm : Integrable (fun x ↦ Real.rpow |x| β * |K x|) volume) :
@@ -213,11 +214,11 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
   have hKsq : Integrable (fun u ↦ K u ^ 2) volume := hK2.integrable_sq
   refine ⟨L ^ 2 * c ^ (2 * β) * MK ^ 2 + B * K2 / c + 1, by positivity, ?_⟩
   intro n hn f hf x
-  have hfB : ∀ y, f y ≤ B := le_of_mem_holderDensityClass hβ0 hf
-  have hfi := integrable_of_mem_holderDensityClass hf
+  have hfB : ∀ y, f y ≤ B := le_of_mem_holder_density_class hβ0 hf
+  have hfi := integrable_of_mem_holder_density_class hf
   obtain ⟨hfm, hf0, hf1, hfh⟩ := hf
   simp only [Real.rpow_eq_pow] at hfh
-  have := isProbabilityMeasure_densityLaw hf0 hfi hf1
+  have := is_probability_measure_density_law hf0 hfi hf1
   have hnR : (0 : ℝ) < n := by exact_mod_cast hn
   set e := (n : ℝ) ^ (-1 / (2 * β + 1)) with he
   set r := (n : ℝ) ^ (-2 * β / (2 * β + 1)) with hr
@@ -250,7 +251,7 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
       _ = B * K2 / h := by field_simp
   have hgL2 : MemLp g 2 (densityLaw f) := by
     rw [memLp_two_iff_integrable_sq hgm.aestronglyMeasurable,
-      integrable_densityLaw_iff hfm hf0]
+      integrable_density_law_iff hfm hf0]
     exact hg2int
   -- bias
   have hψ : Integrable (fun u ↦ f (x - h * u) * K u) volume :=
@@ -259,7 +260,7 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
       (c := B) (Filter.Eventually.of_forall fun u ↦ by
         rw [Real.norm_eq_abs, abs_of_nonneg (hf0 _)]; exact hfB _)
   have hmean : ∫ y, g y ∂densityLaw f = ∫ u, f (x - h * u) * K u := by
-    rw [integral_densityLaw hfm hf0]
+    rw [integral_density_law hfm hf0]
     have e1 : ∀ y, f y * g y = 1 / h * (fun u ↦ f (x - h * u) * K u) ((x - y) / h) := by
       intro y
       simp only [hg]
@@ -290,7 +291,7 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
     calc |∫ u, (f (x - h * u) - f x) * K u| ≤ ∫ u, L * h ^ β * (|u| ^ β * |K u|) :=
           norm_integral_le_of_norm_le (hKm.const_mul _) (Filter.Eventually.of_forall hb)
       _ = L * h ^ β * MK := integral_const_mul _ _
-  obtain ⟨hWL2, hmse⟩ := integral_sq_sampleMean_sub_le hn hgL2 (f x)
+  obtain ⟨hWL2, hmse⟩ := integral_sq_sample_mean_sub_le hn hgL2 (f x)
   have hest : ∀ sample : Fin n → ℝ,
       finiteKernelDensityEstimator K h sample x = (∑ i, g (sample i)) / n := by
     intro sample
@@ -301,11 +302,11 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
   rw [← ofReal_integral_eq_lintegral_ofReal hWL2.integrable_sq
     (Filter.Eventually.of_forall fun _ ↦ sq_nonneg _)]
   refine ENNReal.ofReal_le_ofReal (hmse.trans ?_)
-  rw [integral_densityLaw hfm hf0 (fun y ↦ g y ^ 2)]
+  rw [integral_density_law hfm hf0 (fun y ↦ g y ^ 2)]
   have hb2 : (∫ y, g y ∂densityLaw f - f x) ^ 2 ≤ (L * h ^ β * MK) ^ 2 := by
     rw [← sq_abs]; exact pow_le_pow_left₀ (abs_nonneg _) hbias 2
   have hpow : (h ^ β) ^ 2 = c ^ (2 * β) * r := sq_bandwidth_rpow_eq hn hβ0 hc
-  have hner : (n : ℝ) * e * r = 1 := natCast_mul_bandwidth_mul_rate_eq_one hn hβ0
+  have hner : (n : ℝ) * e * r = 1 := nat_cast_mul_bandwidth_mul_rate_eq_one hn hβ0
   have hvar : (∫ y, f y * g y ^ 2) / n ≤ B * K2 / c * r := by
     have hr' : r = 1 / (n * e) := by
       rw [eq_div_iff (by positivity)]; linarith [hner]
@@ -323,7 +324,7 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
         nlinarith
 
 /-- `klFun t ≤ (t - 1)²` for `t ≥ 0`, from `log t ≤ t - 1`. -/
-private theorem klFun_le_sq_of_nonneg {t : ℝ} (ht : 0 ≤ t) :
+private theorem kl_fun_le_sq_of_nonneg {t : ℝ} (ht : 0 ≤ t) :
     InformationTheory.klFun t ≤ (t - 1) ^ 2 := by
   rw [InformationTheory.klFun_apply]
   rcases ht.eq_or_lt with h | h
@@ -333,7 +334,7 @@ private theorem klFun_le_sq_of_nonneg {t : ℝ} (ht : 0 ≤ t) :
 
 /-- Kullback–Leibler divergence between laws with densities, bounded by the chi-square
 integral: `KL(f₁, f₀) ≤ ∫ (f₁ - f₀)² / f₀` for a positive density `f₀`. -/
-theorem klDiv_densityLaw_le {f₀ f₁ : ℝ → ℝ} (hm₀ : Measurable f₀) (hm₁ : Measurable f₁)
+theorem kl_div_density_law_le {f₀ f₁ : ℝ → ℝ} (hm₀ : Measurable f₀) (hm₁ : Measurable f₁)
     (hpos : ∀ y, 0 < f₀ y) (h₁ : ∀ y, 0 ≤ f₁ y)
     [IsFiniteMeasure (densityLaw f₀)] [IsFiniteMeasure (densityLaw f₁)] :
     InformationTheory.klDiv (densityLaw f₁) (densityLaw f₀) ≤
@@ -360,7 +361,7 @@ theorem klDiv_densityLaw_le {f₀ f₁ : ℝ → ℝ} (hm₀ : Measurable f₀) 
         rw [hy, ENNReal.toReal_ofReal (div_nonneg (h₁ y) (hpos y).le)]
     _ ≤ ∫⁻ y, ENNReal.ofReal ((r y - 1) ^ 2) ∂densityLaw f₀ :=
         lintegral_mono fun y ↦ ENNReal.ofReal_le_ofReal
-          (klFun_le_sq_of_nonneg (div_nonneg (h₁ y) (hpos y).le))
+          (kl_fun_le_sq_of_nonneg (div_nonneg (h₁ y) (hpos y).le))
     _ = ∫⁻ y, ENNReal.ofReal ((f₁ y - f₀ y) ^ 2 / f₀ y) := by
         rw [densityLaw, lintegral_withDensity_eq_lintegral_mul _ hm₀.ennreal_ofReal
           (by fun_prop)]
@@ -383,21 +384,21 @@ private theorem abs_sub_le_rpow_of_le_one_of_le {β a d : ℝ} (hβ : β ∈ Ioc
 private def unitTent (u : ℝ) : ℝ := max 0 (1 - |u|)
 
 /-- The tent is continuous. -/
-private theorem continuous_tentFun : Continuous unitTent := by unfold unitTent; fun_prop
+private theorem continuous_tent_fun : Continuous unitTent := by unfold unitTent; fun_prop
 
 /-- The tent is nonnegative. -/
-private theorem tentFun_nonneg (u : ℝ) : 0 ≤ unitTent u := le_max_left _ _
+private theorem tent_fun_nonneg (u : ℝ) : 0 ≤ unitTent u := le_max_left _ _
 
 /-- The tent is at most one. -/
-private theorem tentFun_le_one (u : ℝ) : unitTent u ≤ 1 :=
+private theorem tent_fun_le_one (u : ℝ) : unitTent u ≤ 1 :=
   max_le zero_le_one (by linarith [abs_nonneg u])
 
 /-- The tent vanishes outside `(-1, 1)`. -/
-private theorem tentFun_eq_zero {u : ℝ} (hu : 1 ≤ |u|) : unitTent u = 0 :=
+private theorem tent_fun_eq_zero {u : ℝ} (hu : 1 ≤ |u|) : unitTent u = 0 :=
   max_eq_left (by linarith)
 
 /-- The tent is `1`-Lipschitz. -/
-private theorem abs_tentFun_sub_le (u v : ℝ) : |unitTent u - unitTent v| ≤ |u - v| := by
+private theorem abs_tent_fun_sub_le (u v : ℝ) : |unitTent u - unitTent v| ≤ |u - v| := by
   unfold unitTent
   rw [max_comm 0, max_comm 0]
   calc |max (1 - |u|) 0 - max (1 - |v|) 0| ≤ |(1 - |u|) - (1 - |v|)| :=
@@ -407,9 +408,9 @@ private theorem abs_tentFun_sub_le (u v : ℝ) : |unitTent u - unitTent v| ≤ |
     _ = |u - v| := abs_sub_comm _ _
 
 /-- The tent has oscillation at most one. -/
-private theorem abs_tentFun_sub_le_one (u v : ℝ) : |unitTent u - unitTent v| ≤ 1 := by
-  rw [abs_le]; constructor <;> linarith [tentFun_nonneg u, tentFun_nonneg v, tentFun_le_one u,
-    tentFun_le_one v]
+private theorem abs_tent_fun_sub_le_one (u v : ℝ) : |unitTent u - unitTent v| ≤ 1 := by
+  rw [abs_le]; constructor <;> linarith [tent_fun_nonneg u, tent_fun_nonneg v, tent_fun_le_one u,
+    tent_fun_le_one v]
 
 /-- The Cauchy profile `u ↦ (1 + u²)⁻¹` is `1`-Lipschitz. -/
 private theorem abs_inv_one_add_sq_sub_le (u v : ℝ) :
@@ -437,24 +438,24 @@ private theorem abs_inv_one_add_sq_sub_le_one (u v : ℝ) :
 private def cauchyDensity (x w y : ℝ) : ℝ := (Real.pi * w)⁻¹ * (1 + (w⁻¹ * (y - x)) ^ 2)⁻¹
 
 /-- The Cauchy density is continuous. -/
-private theorem continuous_cauchyDensity (x w : ℝ) : Continuous (cauchyDensity x w) := by
+private theorem continuous_cauchy_density (x w : ℝ) : Continuous (cauchyDensity x w) := by
   unfold cauchyDensity
   exact continuous_const.mul (Continuous.inv₀ (f := fun y ↦ 1 + (w⁻¹ * (y - x)) ^ 2)
     (by fun_prop) fun y ↦ by positivity)
 
 /-- The Cauchy density is positive. -/
-private theorem cauchyDensity_pos (x : ℝ) {w : ℝ} (hw : 0 < w) (y : ℝ) :
+private theorem cauchy_density_pos (x : ℝ) {w : ℝ} (hw : 0 < w) (y : ℝ) :
     0 < cauchyDensity x w y := by
   unfold cauchyDensity; have := Real.pi_pos; positivity
 
 /-- The Cauchy density is integrable. -/
-private theorem integrable_cauchyDensity (x : ℝ) {w : ℝ} (hw : 0 < w) :
+private theorem integrable_cauchy_density (x : ℝ) {w : ℝ} (hw : 0 < w) :
     Integrable (cauchyDensity x w) := by
   unfold cauchyDensity
   exact ((integrable_inv_one_add_mul_sq (inv_ne_zero hw.ne')).comp_sub_right x).const_mul _
 
 /-- The Cauchy density integrates to one. -/
-private theorem integral_cauchyDensity (x : ℝ) {w : ℝ} (hw : 0 < w) :
+private theorem integral_cauchy_density (x : ℝ) {w : ℝ} (hw : 0 < w) :
     ∫ y, cauchyDensity x w y = 1 := by
   unfold cauchyDensity
   rw [integral_const_mul, integral_sub_right_eq_self (fun y ↦ (1 + (w⁻¹ * y) ^ 2)⁻¹) x,
@@ -463,7 +464,7 @@ private theorem integral_cauchyDensity (x : ℝ) {w : ℝ} (hw : 0 < w) :
   field_simp
 
 /-- For `w ≥ 1` the Cauchy density of scale `w` is `β`-Hölder with constant `(π w)⁻¹`. -/
-private theorem abs_cauchyDensity_sub_le {β : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1) (x : ℝ) {w : ℝ}
+private theorem abs_cauchy_density_sub_le {β : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1) (x : ℝ) {w : ℝ}
     (hw : 1 ≤ w) (y z : ℝ) :
     |cauchyDensity x w y - cauchyDensity x w z| ≤ (Real.pi * w)⁻¹ * |y - z| ^ β := by
   have hw0 : 0 < w := by linarith
@@ -481,7 +482,7 @@ private theorem abs_cauchyDensity_sub_le {β : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 
 
 /-- For `w ≥ 3` the Cauchy density of scale `w` is at least `(2 π w)⁻¹` within distance `3`
 of its center. -/
-private theorem inv_two_mul_le_cauchyDensity (x : ℝ) {w : ℝ} (hw : 3 ≤ w) {y : ℝ}
+private theorem inv_two_mul_le_cauchy_density (x : ℝ) {w : ℝ} (hw : 3 ≤ w) {y : ℝ}
     (hy : |y - x| ≤ 3) :
     (2 * Real.pi * w)⁻¹ ≤ cauchyDensity x w y := by
   have hw0 : 0 < w := by linarith
@@ -502,39 +503,39 @@ private def tentPerturbation (β κ h x y : ℝ) : ℝ :=
   κ * h ^ β * (unitTent ((y - x) / h) - unitTent ((y - x) / h - 2))
 
 /-- The tent perturbation is continuous. -/
-private theorem continuous_tentPerturbation (β κ h x : ℝ) :
+private theorem continuous_tent_perturbation (β κ h x : ℝ) :
     Continuous (tentPerturbation β κ h x) := by
   unfold tentPerturbation
-  have := continuous_tentFun
+  have := continuous_tent_fun
   fun_prop
 
 /-- The tent perturbation has height `κ h^β` at its center. -/
-private theorem tentPerturbation_self {β κ h : ℝ} (x : ℝ) :
+private theorem tent_perturbation_self {β κ h : ℝ} (x : ℝ) :
     tentPerturbation β κ h x x = κ * h ^ β := by
   simp [tentPerturbation, unitTent]
 
 /-- The tent perturbation vanishes at distance at least `3 h` from `x`. -/
-private theorem tentPerturbation_eq_zero {β κ h x y : ℝ} (hh : 0 < h) (hy : 3 * h ≤ |y - x|) :
+private theorem tent_perturbation_eq_zero {β κ h x y : ℝ} (hh : 0 < h) (hy : 3 * h ≤ |y - x|) :
     tentPerturbation β κ h x y = 0 := by
   have h1 : 3 ≤ |(y - x) / h| := by
     rw [abs_div, abs_of_pos hh, le_div_iff₀ hh]; linarith
-  rw [tentPerturbation, tentFun_eq_zero (by linarith), tentFun_eq_zero]
+  rw [tentPerturbation, tent_fun_eq_zero (by linarith), tent_fun_eq_zero]
   · ring
   · have := abs_sub_abs_le_abs_sub ((y - x) / h) 2
     rw [abs_two] at this; linarith
 
 /-- The tent perturbation is bounded by `κ h^β`. -/
-private theorem abs_tentPerturbation_le {β κ h : ℝ} (hκ : 0 ≤ κ) (hh : 0 < h) (x y : ℝ) :
+private theorem abs_tent_perturbation_le {β κ h : ℝ} (hκ : 0 ≤ κ) (hh : 0 < h) (x y : ℝ) :
     |tentPerturbation β κ h x y| ≤ κ * h ^ β := by
   rw [tentPerturbation, abs_mul, abs_of_nonneg (by positivity)]
-  exact mul_le_of_le_one_right (by positivity) (abs_tentFun_sub_le_one _ _)
+  exact mul_le_of_le_one_right (by positivity) (abs_tent_fun_sub_le_one _ _)
 
 /-- The tent perturbation is `β`-Hölder with constant `2 κ`. -/
-private theorem abs_tentPerturbation_sub_le {β κ h : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1) (hκ : 0 ≤ κ)
+private theorem abs_tent_perturbation_sub_le {β κ h : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1) (hκ : 0 ≤ κ)
     (hh : 0 < h) (x y z : ℝ) :
     |tentPerturbation β κ h x y - tentPerturbation β κ h x z| ≤ 2 * κ * |y - z| ^ β := by
   have hT : ∀ u v : ℝ, |unitTent u - unitTent v| ≤ |u - v| ^ β := fun u v ↦
-    abs_sub_le_rpow_of_le_one_of_le hβ (abs_tentFun_sub_le_one _ _) (abs_tentFun_sub_le _ _)
+    abs_sub_le_rpow_of_le_one_of_le hβ (abs_tent_fun_sub_le_one _ _) (abs_tent_fun_sub_le _ _)
       (abs_nonneg _)
   have hd1 : |(y - x) / h - (z - x) / h| = |y - z| / h := by
     rw [← sub_div, show y - x - (z - x) = y - z by ring, abs_div, abs_of_pos hh]
@@ -564,33 +565,33 @@ private theorem abs_tentPerturbation_sub_le {β κ h : ℝ} (hβ : β ∈ Ioc (0
     _ = 2 * κ * |y - z| ^ β := by field_simp
 
 /-- Rescaled and translated tents are integrable. -/
-private theorem integrable_tentFun_comp {h : ℝ} (hh : 0 < h) (x c : ℝ) :
+private theorem integrable_tent_fun_comp {h : ℝ} (hh : 0 < h) (x c : ℝ) :
     Integrable fun y ↦ unitTent ((y - x) / h - c) := by
   have hcs : HasCompactSupport unitTent := by
     refine HasCompactSupport.intro (isCompact_Icc (a := -1) (b := 1)) fun u hu ↦ ?_
-    apply tentFun_eq_zero
+    apply tent_fun_eq_zero
     simp only [mem_Icc, not_and_or, not_le] at hu
     rcases hu with hu | hu
     · rw [abs_of_neg (by linarith)]; linarith
     · rw [abs_of_pos (by linarith)]; linarith
-  have hT : Integrable unitTent := continuous_tentFun.integrable_of_hasCompactSupport hcs
+  have hT : Integrable unitTent := continuous_tent_fun.integrable_of_hasCompactSupport hcs
   have := ((hT.comp_sub_right c).comp_div hh.ne').comp_sub_right x
   refine this.congr (ae_of_all _ fun y ↦ ?_)
   simp
 
 /-- The tent perturbation has integral zero. -/
-private theorem integral_tentPerturbation {β κ h : ℝ} (hh : 0 < h) (x : ℝ) :
+private theorem integral_tent_perturbation {β κ h : ℝ} (hh : 0 < h) (x : ℝ) :
     ∫ y, tentPerturbation β κ h x y = 0 := by
   unfold tentPerturbation
-  rw [integral_const_mul, integral_sub (by simpa using integrable_tentFun_comp hh x 0)
-    (integrable_tentFun_comp hh x 2)]
+  rw [integral_const_mul, integral_sub (by simpa using integrable_tent_fun_comp hh x 0)
+    (integrable_tent_fun_comp hh x 2)]
   have : ∫ y, unitTent ((y - x) / h - 2) = ∫ y, unitTent ((y - x) / h) := by
     rw [← integral_sub_right_eq_self (fun y ↦ unitTent ((y - x) / h)) (2 * h)]
     congr 1; funext y; congr 1; field_simp; ring
   rw [this, sub_self, mul_zero]
 
 /-- Markov's inequality for the squared error. -/
-theorem ofReal_mul_measureReal_le_lintegral_sq {X : Type*} [MeasurableSpace X] (P : Measure X)
+theorem of_real_mul_measure_real_le_lintegral_sq {X : Type*} [MeasurableSpace X] (P : Measure X)
     [IsFiniteMeasure P] {T : X → ℝ} (hT : Measurable T) (θ : ℝ) {s : ℝ} (hs : 0 ≤ s) :
     ENNReal.ofReal (s ^ 2 * P.real {ω | s ≤ dist (T ω) θ}) ≤
       ∫⁻ ω, ENNReal.ofReal ((T ω - θ) ^ 2) ∂P := by
@@ -610,7 +611,7 @@ theorem ofReal_mul_measureReal_le_lintegral_sq {X : Type*} [MeasurableSpace X] (
 /-- The two hypotheses of the density lower bound: a Cauchy density of scale `w ≥ 3` with
 `(π w)⁻¹ ≤ L / 2`, and its perturbation by the tents of height `κ h^β ≤ κ`, both lie in the
 Hölder density class. -/
-private theorem mem_holderDensityClass_cauchyDensity_add {β L : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1)
+private theorem mem_holder_density_class_cauchy_density_add {β L : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1)
     {w κ h : ℝ} (x : ℝ)
     (hw3 : 3 ≤ w) (hπw : (Real.pi * w)⁻¹ ≤ L / 2) (hκ0 : 0 < κ) (hκL : κ ≤ L / 4)
     (hκw : κ ≤ 1 / (7 * w)) (hh0 : 0 < h) (hh1 : h ≤ 1) :
@@ -624,29 +625,29 @@ private theorem mem_holderDensityClass_cauchyDensity_add {β L : ℝ} (hβ : β 
   set f₀ := cauchyDensity x w with hf₀
   set g := tentPerturbation β κ h x with hg
   set f₁ : ℝ → ℝ := fun y ↦ f₀ y + g y with hf₁
-  have hf₀m : Measurable f₀ := (continuous_cauchyDensity x w).measurable
+  have hf₀m : Measurable f₀ := (continuous_cauchy_density x w).measurable
   have hf₁m : Measurable f₁ :=
-    ((continuous_cauchyDensity x w).add (continuous_tentPerturbation β κ h x)).measurable
-  have hf₀pos : ∀ y, 0 < f₀ y := cauchyDensity_pos x hw0
+    ((continuous_cauchy_density x w).add (continuous_tent_perturbation β κ h x)).measurable
+  have hf₀pos : ∀ y, 0 < f₀ y := cauchy_density_pos x hw0
   have hf₀hold : ∀ y z, |f₀ y - f₀ z| ≤ L / 2 * |y - z| ^ β := fun y z ↦
-    (abs_cauchyDensity_sub_le hβ x (by linarith) y z).trans
+    (abs_cauchy_density_sub_le hβ x (by linarith) y z).trans
       (mul_le_mul_of_nonneg_right hπw (by positivity))
-  have hf₀int : Integrable f₀ := integrable_cauchyDensity x hw0
+  have hf₀int : Integrable f₀ := integrable_cauchy_density x hw0
   have hgint : Integrable g := by
-    have h1 := integrable_tentFun_comp hh0 x 0
-    have h2 := integrable_tentFun_comp hh0 x 2
+    have h1 := integrable_tent_fun_comp hh0 x 0
+    have h2 := integrable_tent_fun_comp hh0 x 2
     simp only [sub_zero] at h1
     exact (h1.sub h2).const_mul _
   have hf₀mem : f₀ ∈ holderDensityClass β L := by
-    refine ⟨hf₀m, fun y ↦ (hf₀pos y).le, integral_cauchyDensity x hw0, fun y z ↦ ?_⟩
+    refine ⟨hf₀m, fun y ↦ (hf₀pos y).le, integral_cauchy_density x hw0, fun y z ↦ ?_⟩
     rw [Real.rpow_eq_pow]
     exact (hf₀hold y z).trans (mul_le_mul_of_nonneg_right (by linarith) (by positivity))
   have hf₁nonneg : ∀ y, 0 ≤ f₁ y := by
     intro y
     rcases le_or_gt (3 * h) |y - x| with hy | hy
-    · simp only [hf₁, hg, tentPerturbation_eq_zero hh0 hy, add_zero]; exact (hf₀pos y).le
-    · have h1 := inv_two_mul_le_cauchyDensity x hw3 (y := y) (by linarith)
-      have h2 := abs_tentPerturbation_le hκ0.le hh0 (β := β) x y
+    · simp only [hf₁, hg, tent_perturbation_eq_zero hh0 hy, add_zero]; exact (hf₀pos y).le
+    · have h1 := inv_two_mul_le_cauchy_density x hw3 (y := y) (by linarith)
+      have h2 := abs_tent_perturbation_le hκ0.le hh0 (β := β) x y
       have h3 : κ * h ^ β ≤ (2 * Real.pi * w)⁻¹ := by
         calc κ * h ^ β ≤ κ := mul_le_of_le_one_right hκ0.le hhβ1
           _ ≤ 1 / (7 * w) := hκw
@@ -658,11 +659,11 @@ private theorem mem_holderDensityClass_cauchyDensity_add {β L : ℝ} (hβ : β 
   have hf₁mem : f₁ ∈ holderDensityClass β L := by
     refine ⟨hf₁m, hf₁nonneg, ?_, fun y z ↦ ?_⟩
     · simp only [hf₁]
-      rw [integral_add hf₀int hgint, integral_cauchyDensity x hw0, hg,
-        integral_tentPerturbation hh0, add_zero]
+      rw [integral_add hf₀int hgint, integral_cauchy_density x hw0, hg,
+        integral_tent_perturbation hh0, add_zero]
     · rw [Real.rpow_eq_pow]
       have h1 := hf₀hold y z
-      have h2 := abs_tentPerturbation_sub_le hβ hκ0.le hh0 x y z
+      have h2 := abs_tent_perturbation_sub_le hβ hκ0.le hh0 x y z
       have h3 : f₁ y - f₁ z = (f₀ y - f₀ z) + (g y - g z) := by simp only [hf₁]; ring
       rw [h3]
       refine (abs_add_le _ _).trans ?_
@@ -674,7 +675,7 @@ private theorem mem_holderDensityClass_cauchyDensity_add {β L : ℝ} (hβ : β 
 
 /-- The Kullback–Leibler divergence between the two hypotheses of the density lower bound is at
 most `2 π w (κ h^β)² · 6 h`. -/
-private theorem klDiv_densityLaw_cauchyDensity_add_le {β L : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1)
+private theorem kl_div_density_law_cauchy_density_add_le {β L : ℝ} (hβ : β ∈ Ioc (0 : ℝ) 1)
     {w κ h : ℝ} (x : ℝ)
     (hw3 : 3 ≤ w) (hπw : (Real.pi * w)⁻¹ ≤ L / 2) (hκ0 : 0 < κ) (hκL : κ ≤ L / 4)
     (hκw : κ ≤ 1 / (7 * w)) (hh0 : 0 < h) (hh1 : h ≤ 1) :
@@ -683,26 +684,26 @@ private theorem klDiv_densityLaw_cauchyDensity_add_le {β L : ℝ} (hβ : β ∈
       ENNReal.ofReal (2 * Real.pi * w * (κ * h ^ β) ^ 2 * (6 * h)) := by
   have hpi := Real.pi_gt_three
   have hw0 : 0 < w := by linarith
-  obtain ⟨hf₀mem, hf₁mem⟩ := mem_holderDensityClass_cauchyDensity_add hβ x hw3 hπw hκ0 hκL
+  obtain ⟨hf₀mem, hf₁mem⟩ := mem_holder_density_class_cauchy_density_add hβ x hw3 hπw hκ0 hκL
     hκw hh0 hh1
   set f₀ := cauchyDensity x w with hf₀
   set g := tentPerturbation β κ h x with hg
   set f₁ : ℝ → ℝ := fun y ↦ f₀ y + g y with hf₁
-  have hf₀m : Measurable f₀ := (continuous_cauchyDensity x w).measurable
+  have hf₀m : Measurable f₀ := (continuous_cauchy_density x w).measurable
   have hf₁m : Measurable f₁ := hf₁mem.1
-  have hf₀pos : ∀ y, 0 < f₀ y := cauchyDensity_pos x hw0
+  have hf₀pos : ∀ y, 0 < f₀ y := cauchy_density_pos x hw0
   have hf₁nonneg : ∀ y, 0 ≤ f₁ y := hf₁mem.2.1
-  have hf₀int : Integrable f₀ := integrable_cauchyDensity x hw0
+  have hf₀int : Integrable f₀ := integrable_cauchy_density x hw0
   have hP₀ : IsProbabilityMeasure (densityLaw f₀) :=
-    isProbabilityMeasure_densityLaw (fun y ↦ (hf₀pos y).le) hf₀int (integral_cauchyDensity x hw0)
+    is_probability_measure_density_law (fun y ↦ (hf₀pos y).le) hf₀int (integral_cauchy_density x hw0)
   have hP₁ : IsProbabilityMeasure (densityLaw f₁) :=
-    isProbabilityMeasure_densityLaw hf₁nonneg (integrable_of_mem_holderDensityClass hf₁mem)
+    is_probability_measure_density_law hf₁nonneg (integrable_of_mem_holder_density_class hf₁mem)
       hf₁mem.2.2.1
   -- the Kullback–Leibler divergence of one observation
   set B : ℝ := 2 * Real.pi * w * (κ * h ^ β) ^ 2 with hB
   have hKL1 : InformationTheory.klDiv (densityLaw f₁) (densityLaw f₀) ≤
       ENNReal.ofReal (B * (6 * h)) := by
-    refine (klDiv_densityLaw_le hf₀m hf₁m hf₀pos hf₁nonneg).trans ?_
+    refine (kl_div_density_law_le hf₀m hf₁m hf₀pos hf₁nonneg).trans ?_
     have hpt : ∀ y, ENNReal.ofReal ((f₁ y - f₀ y) ^ 2 / f₀ y) ≤
         (Icc (x - 3 * h) (x + 3 * h)).indicator (fun _ ↦ ENNReal.ofReal B) y := by
       intro y
@@ -713,10 +714,10 @@ private theorem klDiv_densityLaw_cauchyDensity_add_le {β L : ℝ} (hβ : β ∈
         apply ENNReal.ofReal_le_ofReal
         have hyx : |y - x| ≤ 3 * h := by
           rw [abs_le]; constructor <;> linarith [hy.1, hy.2]
-        have h1 := inv_two_mul_le_cauchyDensity x hw3 (y := y) (by linarith)
+        have h1 := inv_two_mul_le_cauchy_density x hw3 (y := y) (by linarith)
         have h2 : g y ^ 2 ≤ (κ * h ^ β) ^ 2 := by
           rw [← sq_abs]
-          exact pow_le_pow_left₀ (abs_nonneg _) (abs_tentPerturbation_le hκ0.le hh0 x y) 2
+          exact pow_le_pow_left₀ (abs_nonneg _) (abs_tent_perturbation_le hκ0.le hh0 x y) 2
         rw [div_le_iff₀ (hf₀pos y), hB]
         have h3 : 1 ≤ 2 * Real.pi * w * f₀ y := by
           rw [← inv_le_iff_one_le_mul₀' (by positivity)]
@@ -728,7 +729,7 @@ private theorem klDiv_densityLaw_cauchyDensity_add_le {β L : ℝ} (hβ : β ∈
           rcases hy with hy | hy
           · rw [abs_of_neg (by linarith)]; linarith
           · rw [abs_of_pos (by linarith)]; linarith
-        simp [hg, tentPerturbation_eq_zero hh0 hyx]
+        simp [hg, tent_perturbation_eq_zero hh0 hyx]
     refine (lintegral_mono hpt).trans (le_of_eq ?_)
     rw [lintegral_indicator_const measurableSet_Icc, Real.volume_Icc,
       ← ENNReal.ofReal_mul (by positivity)]
@@ -736,7 +737,7 @@ private theorem klDiv_densityLaw_cauchyDensity_add_le {β L : ℝ} (hβ : β ∈
   exact hKL1
 
 /-- GAPS 103.26: the matching pointwise minimax lower bound for Hölder orders at most one. -/
-theorem holderDensityPointwiseMinimaxRisk_lower_bound (β L : ℝ)
+theorem holder_density_pointwise_minimax_risk_lower_bound (β L : ℝ)
     (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) :
     ∃ c > (0 : ℝ), ∀ n : ℕ, 0 < n → ∀ x : ℝ,
       ENNReal.ofReal (c * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1))) ≤
@@ -770,22 +771,22 @@ theorem holderDensityPointwiseMinimaxRisk_lower_bound (β L : ℝ)
     rw [inv_le_iff_one_le_mul₀ (by positivity)]
     have : 1 ≤ L * w := by rw [div_le_iff₀ hL] at hwL; linarith
     nlinarith
-  obtain ⟨hf₀mem, hf₁mem⟩ := mem_holderDensityClass_cauchyDensity_add hβ x hw3 hπw hκ0 hκL
+  obtain ⟨hf₀mem, hf₁mem⟩ := mem_holder_density_class_cauchy_density_add hβ x hw3 hπw hκ0 hκL
     hκw hh0 hh1
-  have hKL1 := klDiv_densityLaw_cauchyDensity_add_le hβ x hw3 hπw hκ0 hκL hκw hh0 hh1
+  have hKL1 := kl_div_density_law_cauchy_density_add_le hβ x hw3 hπw hκ0 hκL hκw hh0 hh1
   set B : ℝ := 2 * Real.pi * w * (κ * h ^ β) ^ 2 with hB
-  have hf₀pos : ∀ y, 0 < f₀ y := cauchyDensity_pos x hw0
-  have hf₀int : Integrable f₀ := integrable_cauchyDensity x hw0
+  have hf₀pos : ∀ y, 0 < f₀ y := cauchy_density_pos x hw0
+  have hf₀int : Integrable f₀ := integrable_cauchy_density x hw0
   have hf₁nonneg : ∀ y, 0 ≤ f₁ y := hf₁mem.2.1
   have hP₀ : IsProbabilityMeasure (densityLaw f₀) :=
-    isProbabilityMeasure_densityLaw (fun y ↦ (hf₀pos y).le) hf₀int (integral_cauchyDensity x hw0)
+    is_probability_measure_density_law (fun y ↦ (hf₀pos y).le) hf₀int (integral_cauchy_density x hw0)
   have hP₁ : IsProbabilityMeasure (densityLaw f₁) :=
-    isProbabilityMeasure_densityLaw hf₁nonneg (integrable_of_mem_holderDensityClass hf₁mem)
+    is_probability_measure_density_law hf₁nonneg (integrable_of_mem_holder_density_class hf₁mem)
       hf₁mem.2.2.1
   -- `n` observations
   have hnh : (n : ℝ) * h * (h ^ β) ^ 2 ≤ 1 / 2 := by
     have h1 := sq_bandwidth_rpow_eq hn hβ0 (c := 1 / 2) (by norm_num)
-    have h2 := natCast_mul_bandwidth_mul_rate_eq_one hn hβ0
+    have h2 := nat_cast_mul_bandwidth_mul_rate_eq_one hn hβ0
     have h3 : (1 / 2 : ℝ) ^ (2 * β) ≤ 1 :=
       Real.rpow_le_one (by norm_num) (by norm_num) (by linarith)
     rw [← hhdef] at h1
@@ -819,7 +820,7 @@ theorem holderDensityPointwiseMinimaxRisk_lower_bound (β L : ℝ)
     ne_top_of_le_ne_top ENNReal.ofReal_ne_top hKLn
   have hTV : totalVariationDistance (Measure.pi fun _ : Fin n ↦ densityLaw f₁)
       (Measure.pi fun _ : Fin n ↦ densityLaw f₀) ≤ 1 / 2 := by
-    refine (totalVariationDistance_le_sqrt_toReal_klDiv _ _ hfin).trans ?_
+    refine (total_variation_distance_le_sqrt_to_real_kl_div _ _ hfin).trans ?_
     rw [Real.sqrt_le_left (by norm_num)]
     have := ENNReal.toReal_mono ENNReal.ofReal_ne_top hKLn
     rw [ENNReal.toReal_ofReal (by norm_num)] at this
@@ -828,7 +829,7 @@ theorem holderDensityPointwiseMinimaxRisk_lower_bound (β L : ℝ)
   set s := κ * h ^ β / 2 with hs
   have hsep : 2 * s ≤ dist (f₁ x) (f₀ x) := by
     rw [Real.dist_eq, show f₁ x - f₀ x = g x by simp only [hf₁]; ring, hg,
-      tentPerturbation_self, abs_of_pos (by positivity), hs]
+      tent_perturbation_self, abs_of_pos (by positivity), hs]
     linarith
   have hc : κ ^ 2 * (1 / 2) ^ (2 * β) / 16 * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1)) =
       s ^ 2 / 4 := by
@@ -836,13 +837,13 @@ theorem holderDensityPointwiseMinimaxRisk_lower_bound (β L : ℝ)
     rw [← hhdef] at h1
     rw [hs, div_pow, mul_pow, h1, Real.rpow_eq_pow]; ring
   refine le_iInf fun T ↦ ?_
-  have hLC := one_sub_totalVariationDistance_div_two_le_max_measureReal
+  have hLC := one_sub_total_variation_distance_div_two_le_max_measure_real
     (Measure.pi fun _ : Fin n ↦ densityLaw f₁) (Measure.pi fun _ : Fin n ↦ densityLaw f₀)
     (f₁ x) (f₀ x) s hsep T.val T.2
   have hs0 : 0 ≤ s := by positivity
-  have hR₀ := ofReal_mul_measureReal_le_lintegral_sq (Measure.pi fun _ : Fin n ↦ densityLaw f₀)
+  have hR₀ := of_real_mul_measure_real_le_lintegral_sq (Measure.pi fun _ : Fin n ↦ densityLaw f₀)
     T.2 (f₀ x) hs0
-  have hR₁ := ofReal_mul_measureReal_le_lintegral_sq (Measure.pi fun _ : Fin n ↦ densityLaw f₁)
+  have hR₁ := of_real_mul_measure_real_le_lintegral_sq (Measure.pi fun _ : Fin n ↦ densityLaw f₁)
     T.2 (f₁ x) hs0
   have hsup₀ := le_iSup (fun f : holderDensityClass β L ↦ ∫⁻ sample,
     ENNReal.ofReal ((T.val sample - f.val x) ^ 2) ∂(Measure.pi fun _ : Fin n ↦ densityLaw f.val))

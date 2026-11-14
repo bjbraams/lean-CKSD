@@ -2,6 +2,7 @@ module
 
 public import CKSD.Learning.Generalization.Concentration
 
+
 /-!
 # Exponential weights for bounded losses
 
@@ -14,7 +15,7 @@ exponential-weights (Hedge) forecaster.
 * `CKSD.hedge_regret_le`: the Hedge regret bound `log K / η + η T / 8` (GAPS 107.5).
 * `CKSD.sum_sum_mul_sub_le_of_exponential_weights`: the second-order regret bound for
   exponential weights with nonnegative (estimated) losses, used for Exp3.
-* `CKSD.exponentialWeights_succ`: the multiplicative update form of exponential weights.
+* `CKSD.exponential_weights_succ`: the multiplicative update form of exponential weights.
 -/
 
 @[expose] public section
@@ -29,7 +30,7 @@ namespace CKSD
 attribute [local instance] Classical.propDecidable
 
 /-- Integrals against a finite weighted sum of Dirac masses on `Fin K`. -/
-theorem integral_finiteDiracSum {K : ℕ} (p : Fin K → ℝ) (hp : ∀ j, 0 ≤ p j) (g : Fin K → ℝ) :
+theorem integral_finite_dirac_sum {K : ℕ} (p : Fin K → ℝ) (hp : ∀ j, 0 ≤ p j) (g : Fin K → ℝ) :
     ∫ x, g x ∂(∑ j, ENNReal.ofReal (p j) • Measure.dirac j) = ∑ j, p j * g j := by
   rw [integral_finsetSum_measure (fun j _ ↦
     (Integrable.of_finite (μ := Measure.dirac j)).smul_measure ENNReal.ofReal_ne_top)]
@@ -50,8 +51,8 @@ theorem sum_mul_exp_le {K : ℕ} (p ℓ : Fin K → ℝ) (hp : ∀ j, 0 ≤ p j)
   have hs := hasSubgaussianMGF_of_mem_Icc (μ := μ) (X := ℓ) (a := 0) (b := 1)
     (measurable_of_finite ℓ).aemeasurable (ae_of_all _ hℓ)
   have hm := hs.mgf_le t
-  have hmean : μ[ℓ] = ∑ j, p j * ℓ j := integral_finiteDiracSum p hp ℓ
-  rw [mgf, integral_finiteDiracSum p hp, hmean] at hm
+  have hmean : μ[ℓ] = ∑ j, p j * ℓ j := integral_finite_dirac_sum p hp ℓ
+  rw [mgf, integral_finite_dirac_sum p hp, hmean] at hm
   have hc : ((‖(1 : ℝ) - 0‖₊ / 2) ^ 2 : ℝ≥0) = (1 / 4 : ℝ≥0) := by
     norm_num
   rw [hc] at hm
@@ -218,7 +219,7 @@ theorem sum_sum_mul_sub_le_of_exponential_weights {K : ℕ} (hK : 0 < K) {η : �
 
 /-- Multiplicative update form of exponential weights:
 `p (t+1) i = p t i exp(-η ℓ̂ t i) / ∑ⱼ p t j exp(-η ℓ̂ t j)`. -/
-theorem exponentialWeights_succ {K : ℕ} (hK : 0 < K) (η : ℝ) (lh : ℕ → Fin K → ℝ)
+theorem exponential_weights_succ {K : ℕ} (hK : 0 < K) (η : ℝ) (lh : ℕ → Fin K → ℝ)
     (p : ℕ → Fin K → ℝ)
     (hp : ∀ t i, p t i = Real.exp (-η * ∑ s ∈ Finset.range t, lh s i) /
       ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j)) (t : ℕ) (i : Fin K) :

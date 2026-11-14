@@ -6,6 +6,7 @@ public import TauCeti.Probability.Distributions.GeneralizedExtremeValue.Cdf
 public import TauCeti.Probability.Distributions.GeneralizedPareto.Cdf
 public import TauCeti.Probability.Distributions.GeneralizedPareto.Threshold
 
+
 /-!
 # Threshold excesses and the Hill estimator
 
@@ -30,10 +31,10 @@ allowed.
 
 ## Main results
 
-* `CKSD.hasExtremeValueDomainOfAttraction_iff_pareto_excesses` (GAPS 106.47).
-* `CKSD.tendstoInDistribution_hillEstimator` (GAPS 106.49):
+* `CKSD.has_extreme_value_domain_of_attraction_iff_pareto_excesses` (GAPS 106.47).
+* `CKSD.tendsto_in_distribution_hill_estimator` (GAPS 106.49):
   `√k (γ̂ - γ) ⇒ N(b / (1 - ρ), γ²)`, `b = lim √k A(n/k)`.
-* `CKSD.thresholdExcessLaw_generalizedPareto`: threshold stability of the generalized Pareto
+* `CKSD.threshold_excess_law_generalized_pareto`: threshold stability of the generalized Pareto
   laws, from TauCeti.
 -/
 
@@ -73,7 +74,7 @@ def thresholdParetoDiscrepancy (P : Measure ℝ) (γ scale threshold : ℝ) : �
 generalized extreme-value law with index `γ` if and only if there is a positive scale function
 `σ(u)` such that the excess law over `u` is uniformly approximated by the generalized Pareto law
 with scale `σ(u)` and shape `γ` as `u` increases to the upper endpoint, finite or infinite. -/
-theorem hasExtremeValueDomainOfAttraction_iff_pareto_excesses
+theorem has_extreme_value_domain_of_attraction_iff_pareto_excesses
     (P : Measure ℝ) [IsProbabilityMeasure P] (γ : ℝ) :
     HasExtremeValueDomainOfAttraction P γ ↔
       ∃ scale : ℝ → ℝ, (∀ u : ℝ, (u : EReal) < distributionUpperEndpoint P → 0 < scale u) ∧
@@ -103,7 +104,7 @@ is second-order regularly varying with index `γ > 0` and parameter `ρ < 0`, an
 sequences `k_n → ∞`, `k_n / n → 0` with `√k_n A(n / k_n) → b`,
 `√k_n (γ̂_n - γ) ⇒ N(b / (1 - ρ), γ²)`. Regular variation of the tail `1 - F` with index
 `-1/γ` follows from the second-order condition and is not assumed separately. -/
-theorem tendstoInDistribution_hillEstimator {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_hill_estimator {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P)
     (hpositive : P (Ioi 0) = 1) (γ ρ : ℝ) (hγ : 0 < γ) (hρ : ρ < 0) (A : ℝ → ℝ)
@@ -116,13 +117,13 @@ theorem tendstoInDistribution_hillEstimator {Ω : Type*} [MeasurableSpace Ω]
   sorry
 
 /-- The Hill estimator of order zero uses the explicitly specified zero convention. -/
-@[simp] theorem hillEstimator_zero {n : ℕ} (x : Fin n → ℝ) : hillEstimator 0 x = 0 := by
+@[simp] theorem hill_estimator_zero {n : ℕ} (x : Fin n → ℝ) : hillEstimator 0 x = 0 := by
   simp [hillEstimator]
 
 /-- Threshold stability of the generalized Pareto laws: the excess law over `u ≥ 0` of the
 generalized Pareto law with scale `s` and shape `γ` is generalized Pareto with scale `s + γ u`
 and the same shape (TauCeti's `map_sub_cond_generalizedParetoMeasure`). -/
-theorem thresholdExcessLaw_generalizedPareto (s γ u : ℝ) (hs : 0 < s) (hu : 0 ≤ u)
+theorem threshold_excess_law_generalized_pareto (s γ u : ℝ) (hs : 0 < s) (hu : 0 ≤ u)
     (hscale : 0 < s + γ * u) :
     thresholdExcessLaw (TauCeti.Probability.generalizedParetoMeasure s γ) u =
       TauCeti.Probability.generalizedParetoMeasure (s + γ * u) γ :=

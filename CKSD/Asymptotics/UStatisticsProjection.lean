@@ -2,6 +2,7 @@ module
 
 public import CKSD.Asymptotics.Basic
 
+
 /-!
 # The Hájek projection of a U-statistic
 
@@ -19,9 +20,9 @@ bound.
 
 ## Main results
 
-* `CKSD.uStatistic_projection_spec`: measurability, square integrability and centring of `g`.
-* `CKSD.memLp_uStatistic_sub_projection` and
-  `CKSD.exists_integral_sq_uStatistic_sub_projection_le`: the remainder is square integrable with
+* `CKSD.u_statistic_projection_spec`: measurability, square integrability and centring of `g`.
+* `CKSD.mem_lp_u_statistic_sub_projection` and
+  `CKSD.exists_integral_sq_u_statistic_sub_projection_le`: the remainder is square integrable with
   second moment at most `C / n²` for `n ≥ 2 (m + 1)`.
 -/
 
@@ -62,7 +63,7 @@ private theorem card_injective_apply_eq (k n : ℕ) (j : Fin k) (i i' : Fin n) :
 
 /-- Summing a one-coordinate function over all coordinates of all injections:
 `n ∑_f ∑_j φ (f j) = k (n)_k ∑_i φ i`. -/
-private theorem natCast_mul_sum_injective_sum_apply (k n : ℕ) (φ : Fin n → ℝ) :
+private theorem nat_cast_mul_sum_injective_sum_apply (k n : ℕ) (φ : Fin n → ℝ) :
     (n : ℝ) * ∑ f ∈ (Finset.univ : Finset (Fin k → Fin n)).filter Function.Injective,
         ∑ j, φ (f j) = k * n.descFactorial k * ∑ i, φ i := by
   set I := (Finset.univ : Finset (Fin k → Fin n)).filter Function.Injective
@@ -163,7 +164,7 @@ variable {E : Type*} [MeasurableSpace E]
 
 /-- Reindexing an iid product measure along an injection `f : Fin k → Fin n` gives the iid
 product measure: `x ↦ x ∘ f` maps `Pⁿ` to `Pᵏ`. -/
-private theorem measurePreserving_pi_comp_injective (P : Measure E) [IsProbabilityMeasure P] {k n : ℕ}
+private theorem measure_preserving_pi_comp_injective (P : Measure E) [IsProbabilityMeasure P] {k n : ℕ}
     {f : Fin k → Fin n} (hf : Function.Injective f) :
     MeasurePreserving (fun x : Fin n → E ↦ x ∘ f) (Measure.pi fun _ ↦ P)
       (Measure.pi fun _ ↦ P) := by
@@ -222,8 +223,8 @@ private theorem integral_kernel_mul_kernel_eq_zero (P : Measure E) [IsProbabilit
       exact ⟨0, fun j hj ↦ (hex j hj).elim⟩
   set p : Fin n → Prop := fun l ↦ ∃ j', f (j₀.succAbove j') = l with hp
   have hnp : ¬ p (f j₀) := fun ⟨j', hj'⟩ ↦ Fin.succAbove_ne j₀ j' (hf hj')
-  have hlaw := measurePreserving_pi_comp_injective P hf
-  have hlaw' := measurePreserving_pi_comp_injective P hf'
+  have hlaw := measure_preserving_pi_comp_injective P hf
+  have hlaw' := measure_preserving_pi_comp_injective P hf'
   refine integral_mul_eq_zero_of_slice P p _ _ (hr.comp_measurePreserving hlaw)
     (hr.comp_measurePreserving hlaw') (fun x y hxy ↦ ?_) ?_
   · congr 1
@@ -256,7 +257,7 @@ private theorem integral_kernel_mul_kernel_eq_zero (P : Measure E) [IsProbabilit
 
 /-- Integrating out the second variable of a square-integrable function on a product of
 probability spaces gives a square-integrable function of the first variable (Jensen). -/
-private theorem memLp_integral_prod_right {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
+private theorem mem_lp_integral_prod_right {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
     (μ : Measure α) (ν : Measure β) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
     (H : α × β → ℝ) (hm : Measurable H) (h2 : MemLp H 2 (μ.prod ν)) :
     MemLp (fun a ↦ ∫ y, H (a, y) ∂ν) 2 μ := by
@@ -276,7 +277,7 @@ private theorem memLp_integral_prod_right {α β : Type*} [MeasurableSpace α] [
 
 /-- The first projection `g(a) = ∫ h(a, y) dPᵐ(y) - θ` of a square-integrable kernel is
 measurable, square integrable and centred, and `y ↦ h(a, y)` is integrable for almost every `a`. -/
-theorem uStatistic_projection_spec (P : Measure E) [IsProbabilityMeasure P] {m : ℕ}
+theorem u_statistic_projection_spec (P : Measure E) [IsProbabilityMeasure P] {m : ℕ}
     (h : (Fin (m + 1) → E) → ℝ) (hmeas : Measurable h)
     (h2 : MemLp h 2 (Measure.pi fun _ : Fin (m + 1) ↦ P)) (θ : ℝ)
     (hθ : θ = ∫ x, h x ∂(Measure.pi fun _ : Fin (m + 1) ↦ P)) (g : E → ℝ)
@@ -299,7 +300,7 @@ theorem uStatistic_projection_spec (P : Measure E) [IsProbabilityMeasure P] {m :
   · rw [hgeq]
     exact (hHm.stronglyMeasurable.integral_prod_right'.measurable).sub_const _
   · rw [hgeq]
-    exact (memLp_integral_prod_right _ _ H hHm hH2).sub (memLp_const θ)
+    exact (mem_lp_integral_prod_right _ _ H hHm hH2).sub (memLp_const θ)
   · rw [hgeq, integral_sub hHi.integral_prod_left (integrable_const θ), ← integral_prod _ hHi,
       hHe]
     change (∫ z, h (e.symm z) ∂_) - _ = 0
@@ -308,7 +309,7 @@ theorem uStatistic_projection_spec (P : Measure E) [IsProbabilityMeasure P] {m :
 
 /-- The kernel `r(z) = h(z) - θ - ∑ⱼ g(zⱼ)` of a symmetric kernel `h` is square integrable and
 degenerate: integrating out all coordinates but any one gives `0` almost everywhere. -/
-private theorem uStatistic_degenerateKernel_spec (P : Measure E) [IsProbabilityMeasure P] {m : ℕ}
+private theorem u_statistic_degenerate_kernel_spec (P : Measure E) [IsProbabilityMeasure P] {m : ℕ}
     (h : (Fin (m + 1) → E) → ℝ) (hmeas : Measurable h)
     (hsym : ∀ (σ : Equiv.Perm (Fin (m + 1))) x, h (x ∘ σ) = h x)
     (h2 : MemLp h 2 (Measure.pi fun _ : Fin (m + 1) ↦ P)) (θ : ℝ)
@@ -318,7 +319,7 @@ private theorem uStatistic_degenerateKernel_spec (P : Measure E) [IsProbabilityM
       ∀ j₀ : Fin (m + 1), ∀ᵐ a ∂P,
         ∫ z, (fun z ↦ h z - θ - ∑ j, g (z j)) (j₀.insertNth a z)
           ∂(Measure.pi fun _ : Fin m ↦ P) = 0 := by
-  obtain ⟨hgm, hg2, hg0, hint⟩ := uStatistic_projection_spec P h hmeas h2 θ hθ g hg
+  obtain ⟨hgm, hg2, hg0, hint⟩ := u_statistic_projection_spec P h hmeas h2 θ hθ g hg
   refine ⟨(h2.sub (memLp_const θ)).sub (memLp_finsetSum _ fun j _ ↦
     hg2.comp_measurePreserving (measurePreserving_eval _ j)), fun j₀ ↦ ?_⟩
   filter_upwards [hint] with a ha
@@ -359,7 +360,7 @@ end Measure
 
 /-- The remainder of the Hájek projection is the U-statistic of the kernel
 `h(z) - θ - ∑ⱼ g(zⱼ)`. -/
-theorem uStatistic_sub_projection_eq {E : Type*} {k n : ℕ} (hkn : k ≤ n) (hk : 0 < k)
+theorem u_statistic_sub_projection_eq {E : Type*} {k n : ℕ} (hkn : k ≤ n) (hk : 0 < k)
     (h : (Fin k → E) → ℝ) (θ : ℝ) (g : E → ℝ) (x : Fin n → E) :
     uStatistic k n h x - θ - ((k : ℝ) / n) * ∑ i, g (x i) =
       ((n.descFactorial k : ℕ) : ℝ)⁻¹ *
@@ -368,7 +369,7 @@ theorem uStatistic_sub_projection_eq {E : Type*} {k n : ℕ} (hkn : k ≤ n) (hk
   have hD : ((n.descFactorial k : ℕ) : ℝ) ≠ 0 := by
     exact_mod_cast (Nat.descFactorial_eq_zero_iff_lt.not.2 (not_lt.2 hkn))
   have hn : (n : ℝ) ≠ 0 := by exact_mod_cast (show n ≠ 0 by omega)
-  have hS := natCast_mul_sum_injective_sum_apply k n (fun i ↦ g (x i))
+  have hS := nat_cast_mul_sum_injective_sum_apply k n (fun i ↦ g (x i))
   rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib, Finset.sum_const,
     card_filter_injective_fin, nsmul_eq_mul, uStatistic]
   field_simp
@@ -393,9 +394,9 @@ private theorem integral_sq_sum_kernel_le (P : Measure E) [IsProbabilityMeasure 
   have hV : 0 ≤ V := integral_nonneg fun _ ↦ sq_nonneg _
   have hinj : ∀ f ∈ I, Function.Injective f := fun f hf ↦ (Finset.mem_filter.1 hf).2
   have hL2 : ∀ f ∈ I, MemLp (fun x : Fin n → E ↦ r (x ∘ f)) 2 (Measure.pi fun _ ↦ P) :=
-    fun f hf ↦ hr.comp_measurePreserving (measurePreserving_pi_comp_injective P (hinj f hf))
+    fun f hf ↦ hr.comp_measurePreserving (measure_preserving_pi_comp_injective P (hinj f hf))
   have hsq : ∀ f ∈ I, ∫ x, r (x ∘ f) ^ 2 ∂(Measure.pi fun _ ↦ P) = V := fun f hf ↦ by
-    have hmp := measurePreserving_pi_comp_injective P (hinj f hf)
+    have hmp := measure_preserving_pi_comp_injective P (hinj f hf)
     have := integral_map (μ := Measure.pi fun _ : Fin n ↦ P) hmp.measurable.aemeasurable
       (f := fun z ↦ r z ^ 2) (by rw [hmp.map_eq]; exact hr.aestronglyMeasurable.pow 2)
     rw [hmp.map_eq] at this
@@ -453,7 +454,7 @@ private theorem integral_sq_sum_kernel_le (P : Measure E) [IsProbabilityMeasure 
 
 /-- The remainder `Uₙ - θ - ((m + 1)/n) ∑ᵢ g(xᵢ)` of the Hájek projection is square integrable
 for every sample size. -/
-theorem memLp_uStatistic_sub_projection (P : Measure E) [IsProbabilityMeasure P] {m : ℕ}
+theorem mem_lp_u_statistic_sub_projection (P : Measure E) [IsProbabilityMeasure P] {m : ℕ}
     (h : (Fin (m + 1) → E) → ℝ) (h2 : MemLp h 2 (Measure.pi fun _ : Fin (m + 1) ↦ P)) (θ : ℝ)
     {g : E → ℝ} (hg2 : MemLp g 2 P) (n : ℕ) :
     MemLp (fun x : Fin n → E ↦ uStatistic (m + 1) n h x - θ -
@@ -463,11 +464,11 @@ theorem memLp_uStatistic_sub_projection (P : Measure E) [IsProbabilityMeasure P]
       hg2.comp_measurePreserving (measurePreserving_eval _ i)).const_mul _)
   simp only [uStatistic]
   exact (memLp_finsetSum _ fun f hf ↦ h2.comp_measurePreserving
-    (measurePreserving_pi_comp_injective P (Finset.mem_filter.1 hf).2)).const_mul _
+    (measure_preserving_pi_comp_injective P (Finset.mem_filter.1 hf).2)).const_mul _
 
 /-- The arithmetic behind the `O(n⁻²)` rate: `m n^(m-1) n² ≤ m 2^(m+1) (n)_{m+1}` for
 `n ≥ 2 (m + 1)`. -/
-private theorem mul_pow_mul_sq_le_descFactorial {m n : ℕ} (hn : 2 * (m + 1) ≤ n) :
+private theorem mul_pow_mul_sq_le_desc_factorial {m n : ℕ} (hn : 2 * (m + 1) ≤ n) :
     m * n ^ (m + 1 - 2) * n ^ 2 ≤ m * 2 ^ (m + 1) * n.descFactorial (m + 1) := by
   cases m with
   | zero => simp
@@ -486,7 +487,7 @@ private theorem mul_pow_mul_sq_le_descFactorial {m n : ℕ} (hn : 2 * (m + 1) �
 order `m + 1` under `P`, with mean `θ` and first projection `g`, the remainder
 `Uₙ - θ - ((m + 1)/n) ∑ᵢ g(xᵢ)` has second moment at most `C / n²` under `Pⁿ` for
 `n ≥ 2 (m + 1)`. -/
-theorem exists_integral_sq_uStatistic_sub_projection_le (P : Measure E) [IsProbabilityMeasure P]
+theorem exists_integral_sq_u_statistic_sub_projection_le (P : Measure E) [IsProbabilityMeasure P]
     {m : ℕ} (h : (Fin (m + 1) → E) → ℝ) (hmeas : Measurable h)
     (hsym : ∀ (σ : Equiv.Perm (Fin (m + 1))) x, h (x ∘ σ) = h x)
     (h2 : MemLp h 2 (Measure.pi fun _ : Fin (m + 1) ↦ P)) (θ : ℝ)
@@ -495,7 +496,7 @@ theorem exists_integral_sq_uStatistic_sub_projection_le (P : Measure E) [IsProba
     ∃ C, ∀ n, 2 * (m + 1) ≤ n →
       ∫ x, (uStatistic (m + 1) n h x - θ - ((m + 1 : ℕ) : ℝ) / n * ∑ i, g (x i)) ^ 2
         ∂(Measure.pi fun _ : Fin n ↦ P) ≤ C / (n : ℝ) ^ 2 := by
-  obtain ⟨hr, hdeg⟩ := uStatistic_degenerateKernel_spec P h hmeas hsym h2 θ hθ g hg
+  obtain ⟨hr, hdeg⟩ := u_statistic_degenerate_kernel_spec P h hmeas hsym h2 θ hθ g hg
   set r := fun z : Fin (m + 1) → E ↦ h z - θ - ∑ j, g (z j) with hrdef
   set V := ∫ z, r z ^ 2 ∂(Measure.pi fun _ : Fin (m + 1) ↦ P)
   have hV : 0 ≤ V := integral_nonneg fun _ ↦ sq_nonneg _
@@ -508,13 +509,13 @@ theorem exists_integral_sq_uStatistic_sub_projection_le (P : Measure E) [IsProba
   have heq : ∀ x : Fin n → E, uStatistic (m + 1) n h x - θ - ((m + 1 : ℕ) : ℝ) / n *
       ∑ i, g (x i) = D⁻¹ * ∑ f ∈ (Finset.univ : Finset (Fin (m + 1) → Fin n)).filter
         Function.Injective, r (x ∘ f) := fun x ↦
-    uStatistic_sub_projection_eq hkn (Nat.succ_pos m) h θ g x
+    u_statistic_sub_projection_eq hkn (Nat.succ_pos m) h θ g x
   simp_rw [heq, mul_pow]
   rw [integral_const_mul]
   have hb := integral_sq_sum_kernel_le P r hr hdeg (n := n)
   have hnat : ((m * n ^ (m + 1 - 2) * n ^ 2 : ℕ) : ℝ) ≤ ((m * 2 ^ (m + 1) *
       n.descFactorial (m + 1) : ℕ) : ℝ) := by
-    exact_mod_cast mul_pow_mul_sq_le_descFactorial hn
+    exact_mod_cast mul_pow_mul_sq_le_desc_factorial hn
   simp only [Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat] at hnat
   have hn0 : (0 : ℝ) < n := by exact_mod_cast (show 0 < n by omega)
   calc D⁻¹ ^ 2 * ∫ x, (∑ f ∈ (Finset.univ : Finset (Fin (m + 1) → Fin n)).filter

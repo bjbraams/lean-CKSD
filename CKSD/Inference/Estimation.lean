@@ -5,6 +5,7 @@ public import CKSD.Inference.Model
 public import CKSD.Inference.Sufficiency
 public import Mathlib.Algebra.QuadraticDiscriminant
 
+
 /-!
 # Unbiased estimation and risk improvement
 
@@ -12,13 +13,13 @@ public import Mathlib.Algebra.QuadraticDiscriminant
 
 * `CKSD.exists_rao_blackwell_estimator`: Rao–Blackwell improvement by conditioning on a
   sufficient statistic, for convex losses that may depend on the parameter (GAPS 101.7).
-* `CKSD.ae_eq_of_isCompleteStatistic_of_isUnbiasedEstimator`: uniqueness of unbiased functions of a
+* `CKSD.ae_eq_of_is_complete_statistic_of_is_unbiased_estimator`: uniqueness of unbiased functions of a
   complete statistic (Lehmann–Scheffé, GAPS 101.8).
-* `CKSD.indepFun_of_isSufficientStatistic_of_isBoundedlyCompleteStatistic`: Basu's theorem
+* `CKSD.indep_fun_of_is_sufficient_statistic_of_is_boundedly_complete_statistic`: Basu's theorem
   (GAPS 101.9).
 * `CKSD.sq_div_information_le_variance`: the information (Cramér–Rao) inequality in score-moment
   form (GAPS 101.10).
-* `CKSD.isMinimumVarianceUnbiasedEstimator_iff_covariance_eq_zero`: UMVU estimators are those
+* `CKSD.is_minimum_variance_unbiased_estimator_iff_covariance_eq_zero`: UMVU estimators are those
   uncorrelated with every unbiased estimator of zero (GAPS 101.12).
 
 Sufficient statistics are represented by a common disintegrating Markov kernel.
@@ -54,7 +55,7 @@ theorem exists_rao_blackwell_estimator (P : Θ → Measure X) (hP : ∀ θ, IsPr
   have hr : Measurable r := (hδ.stronglyMeasurable.integral_kernel (κ := K)).measurable
   refine ⟨r, hr, fun θ ↦ ?_⟩
   have := hP θ
-  have hcomp := comp_map_eq_of_map_prodMk_eq_compProd (P θ) hTm K (hK θ)
+  have hcomp := comp_map_eq_of_map_prod_mk_eq_comp_prod (P θ) hTm K (hK θ)
   -- integrability of kernel integrals of a `P θ`-integrable function
   have hkint (f : X → ℝ) (hfm : Measurable f) (hf : Integrable f (P θ)) :
       Integrable (fun s ↦ ∫ y, f y ∂K s) ((P θ).map T) := by
@@ -81,7 +82,7 @@ theorem exists_rao_blackwell_estimator (P : Θ → Measure X) (hP : ∀ θ, IsPr
     filter_upwards [hδK, hLK] with s h1 h2
     exact hL.map_integral_le (hL.continuousOn isOpen_univ) isClosed_univ
       (ae_of_all _ fun _ ↦ mem_univ _) h1 h2
-  obtain ⟨c, hc0, hcL⟩ := exists_sub_mul_abs_le_of_convexOn hL
+  obtain ⟨c, hc0, hcL⟩ := exists_sub_mul_abs_le_of_convex_on hL
   have hu := hkint (fun x ↦ L (δ x)) hLδ hLi
   have hLr : Integrable (fun s ↦ L (r s)) ((P θ).map T) := by
     refine Integrable.mono' ((hu.norm.add (integrable_const |L 0|)).add (hrν.norm.const_mul c))
@@ -103,7 +104,7 @@ theorem exists_rao_blackwell_estimator (P : Θ → Measure X) (hP : ∀ θ, IsPr
   exact integral_mono_ae hLr hu hJ
 
 /-- GAPS 101.8, uniqueness part: unbiased functions of a complete statistic agree. -/
-theorem ae_eq_of_isCompleteStatistic_of_isUnbiasedEstimator
+theorem ae_eq_of_is_complete_statistic_of_is_unbiased_estimator
     (P : Θ → Measure X) (T : X → S) (hc : IsCompleteStatistic P T)
     (a b : S → ℝ) (ha : Measurable a) (hb : Measurable b) (g : Θ → ℝ)
     (hua : IsUnbiasedEstimator P (a ∘ T) g) (hub : IsUnbiasedEstimator P (b ∘ T) g) :
@@ -120,7 +121,7 @@ theorem ae_eq_of_isCompleteStatistic_of_isUnbiasedEstimator
 
 /-- GAPS 101.9: Basu's theorem. A boundedly complete sufficient statistic `T` is independent of
 every ancillary statistic `A` under every `P θ`. -/
-theorem indepFun_of_isSufficientStatistic_of_isBoundedlyCompleteStatistic
+theorem indep_fun_of_is_sufficient_statistic_of_is_boundedly_complete_statistic
     (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
     (T : X → S) (A : X → V) (hs : IsSufficientStatistic P T)
     (hc : IsBoundedlyCompleteStatistic P T) (ha : IsAncillaryStatistic P A) (θ : Θ) :
@@ -139,7 +140,7 @@ theorem indepFun_of_isSufficientStatistic_of_isBoundedlyCompleteStatistic
   have hconst (θ' : Θ) : (∫ x, φ x ∂P θ') = (P θ).real (A ⁻¹' B) := by
     rw [hint, measureReal_def, measureReal_def, ← Measure.map_apply hA hB,
       ← Measure.map_apply hA hB, ha θ' θ]
-  have hzero := ae_integral_kernel_eq_of_isBoundedlyCompleteStatistic P hP hT hc K hK hφ hφb
+  have hzero := ae_integral_kernel_eq_of_is_boundedly_complete_statistic P hP hT hc K hK hφ hφb
     _ hconst θ
   have hkey := integral_indicator_comp_mul_eq (P θ) hT K (hK θ) hC hφ hφb
   have hleft : (∫ x, C.indicator 1 (T x) * φ x ∂P θ) = (P θ).real (T ⁻¹' C ∩ A ⁻¹' B) := by
@@ -198,7 +199,7 @@ theorem sq_div_information_le_variance (P : Measure X) [IsProbabilityMeasure P]
 /-- GAPS 101.12: the covariance characterization of uniformly minimum variance unbiased
 estimators. A square-integrable unbiased estimator `W` of `g` is UMVU if and only if it is
 uncorrelated, under every `P θ`, with every square-integrable unbiased estimator of zero. -/
-theorem isMinimumVarianceUnbiasedEstimator_iff_covariance_eq_zero
+theorem is_minimum_variance_unbiased_estimator_iff_covariance_eq_zero
     (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
     (W : X → ℝ) (g : Θ → ℝ) (hW : IsUnbiasedEstimator P W g)
     (hW2 : ∀ θ, MemLp W 2 (P θ)) :

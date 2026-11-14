@@ -10,6 +10,7 @@ public import Mathlib.Data.Matrix.ColumnRowPartitioned
 public import Mathlib.Probability.Kernel.CondDistrib
 public import Mathlib.Probability.Kernel.Composition.WithDensity
 
+
 /-!
 # Linear images and conditional laws of Gaussian vectors
 
@@ -25,11 +26,11 @@ support the Kalman filter but do not depend on its model.
 
 ## Main results
 
-* `CKSD.posSemidef_mul_mul_transpose`: `A S Aᵀ` is positive semidefinite when `S` is.
-* `CKSD.hasLaw_toEuclideanLin_add_of_indepFun`: `A₁ ε + A₂ v ~ N(0, A₁ S₁ A₁ᵀ + A₂ S₂ A₂ᵀ)`.
-* `CKSD.indepFun_toEuclideanLin_add_of_indepFun`: two such combinations are independent when
+* `CKSD.pos_semidef_mul_mul_transpose`: `A S Aᵀ` is positive semidefinite when `S` is.
+* `CKSD.has_law_to_euclidean_lin_add_of_indep_fun`: `A₁ ε + A₂ v ~ N(0, A₁ S₁ A₁ᵀ + A₂ S₂ A₂ᵀ)`.
+* `CKSD.indep_fun_to_euclidean_lin_add_of_indep_fun`: two such combinations are independent when
   their cross-covariance vanishes.
-* `CKSD.condDistrib_add_eq_multivariateGaussian`: the conditional law of `g(Y) + Z` given
+* `CKSD.cond_distrib_add_eq_multivariate_gaussian`: the conditional law of `g(Y) + Z` given
   `Y = y` is `N(g y, S)`.
 -/
 
@@ -51,13 +52,13 @@ variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
 omit [Fintype κ] [Fintype σ] [DecidableEq ι] [DecidableEq κ] [DecidableEq τ] [DecidableEq σ] in
 /-- A real congruence `A S Aᵀ` of a positive-semidefinite matrix is positive semidefinite; this
 is Mathlib's `Matrix.PosSemidef.mul_mul_conjTranspose_same` for real matrices. -/
-theorem posSemidef_mul_mul_transpose {S : Matrix ι ι ℝ} (hS : S.PosSemidef) (A : Matrix τ ι ℝ) :
+theorem pos_semidef_mul_mul_transpose {S : Matrix ι ι ℝ} (hS : S.PosSemidef) (A : Matrix τ ι ℝ) :
     (A * S * A.transpose).PosSemidef := by
   simpa using hS.mul_mul_conjTranspose_same A
 
 /-- A matrix image of a centered multivariate Gaussian vector is centered Gaussian with the
 congruent covariance. -/
-theorem hasLaw_toEuclideanLin_multivariateGaussian_zero {X : Ω → EuclideanSpace ℝ ι}
+theorem has_law_to_euclidean_lin_multivariate_gaussian_zero {X : Ω → EuclideanSpace ℝ ι}
     {S : Matrix ι ι ℝ} (hS : S.PosSemidef)
     (hX : HasLaw X (multivariateGaussian 0 S) P) (A : Matrix τ ι ℝ) :
     HasLaw (fun ω ↦ A.toEuclideanLin (X ω))
@@ -68,28 +69,28 @@ theorem hasLaw_toEuclideanLin_multivariateGaussian_zero {X : Ω → EuclideanSpa
 
 /-- For independent centered Gaussian vectors `ε` and `v`, the combination `A₁ ε + A₂ v` is
 centered Gaussian with covariance `A₁ S₁ A₁ᵀ + A₂ S₂ A₂ᵀ`. -/
-theorem hasLaw_toEuclideanLin_add_of_indepFun {ε : Ω → EuclideanSpace ℝ ι}
+theorem has_law_to_euclidean_lin_add_of_indep_fun {ε : Ω → EuclideanSpace ℝ ι}
     {v : Ω → EuclideanSpace ℝ κ} {S₁ : Matrix ι ι ℝ} {S₂ : Matrix κ κ ℝ}
     (hS₁ : S₁.PosSemidef) (hS₂ : S₂.PosSemidef)
     (hε : HasLaw ε (multivariateGaussian 0 S₁) P) (hv : HasLaw v (multivariateGaussian 0 S₂) P)
     (hεv : IndepFun ε v P) (A₁ : Matrix τ ι ℝ) (A₂ : Matrix τ κ ℝ) :
     HasLaw (fun ω ↦ A₁.toEuclideanLin (ε ω) + A₂.toEuclideanLin (v ω))
       (multivariateGaussian 0 (A₁ * S₁ * A₁.transpose + A₂ * S₂ * A₂.transpose)) P := by
-  have h₁ := hasLaw_toEuclideanLin_multivariateGaussian_zero hS₁ hε A₁
-  have h₂ := hasLaw_toEuclideanLin_multivariateGaussian_zero hS₂ hv A₂
+  have h₁ := has_law_to_euclidean_lin_multivariate_gaussian_zero hS₁ hε A₁
+  have h₂ := has_law_to_euclidean_lin_multivariate_gaussian_zero hS₂ hv A₂
   have hind : IndepFun (fun ω ↦ A₁.toEuclideanLin (ε ω)) (fun ω ↦ A₂.toEuclideanLin (v ω)) P :=
     hεv.comp (φ := fun x ↦ A₁.toEuclideanLin x) (ψ := fun x ↦ A₂.toEuclideanLin x)
       (by fun_prop) (by fun_prop)
   have h := hind.hasLaw_fun_add h₁ h₂
   rw [TauCeti.Probability.multivariateGaussian_conv_multivariateGaussian _ _
-    (posSemidef_mul_mul_transpose hS₁ A₁) (posSemidef_mul_mul_transpose hS₂ A₂),
+    (pos_semidef_mul_mul_transpose hS₁ A₁) (pos_semidef_mul_mul_transpose hS₂ A₂),
     add_zero] at h
   exact h
 
 omit [DecidableEq τ] [DecidableEq σ] in
 /-- Two linear combinations `A₁ ε + A₂ v` and `B₁ ε + B₂ v` of independent centered Gaussian
 vectors are independent when their cross-covariance `A₁ S₁ B₁ᵀ + A₂ S₂ B₂ᵀ` vanishes. -/
-theorem indepFun_toEuclideanLin_add_of_indepFun {ε : Ω → EuclideanSpace ℝ ι}
+theorem indep_fun_to_euclidean_lin_add_of_indep_fun {ε : Ω → EuclideanSpace ℝ ι}
     {v : Ω → EuclideanSpace ℝ κ} {S₁ : Matrix ι ι ℝ} {S₂ : Matrix κ κ ℝ}
     (hS₁ : S₁.PosSemidef) (hS₂ : S₂.PosSemidef)
     (hε : HasLaw ε (multivariateGaussian 0 S₁) P) (hv : HasLaw v (multivariateGaussian 0 S₂) P)
@@ -100,9 +101,9 @@ theorem indepFun_toEuclideanLin_add_of_indepFun {ε : Ω → EuclideanSpace ℝ 
       (fun ω ↦ B₁.toEuclideanLin (ε ω) + B₂.toEuclideanLin (v ω)) P := by
   let J₁ : Matrix (ι ⊕ κ) ι ℝ := Matrix.fromRows 1 0
   let J₂ : Matrix (ι ⊕ κ) κ ℝ := Matrix.fromRows 0 1
-  have hU := hasLaw_toEuclideanLin_add_of_indepFun hS₁ hS₂ hε hv hεv J₁ J₂
+  have hU := has_law_to_euclidean_lin_add_of_indep_fun hS₁ hS₂ hε hv hεv J₁ J₂
   have hS : (J₁ * S₁ * J₁.transpose + J₂ * S₂ * J₂.transpose).PosSemidef :=
-    (posSemidef_mul_mul_transpose hS₁ J₁).add (posSemidef_mul_mul_transpose hS₂ J₂)
+    (pos_semidef_mul_mul_transpose hS₁ J₁).add (pos_semidef_mul_mul_transpose hS₂ J₂)
   have key := (TauCeti.Probability.indepFun_matrix_of_hasLaw_multivariateGaussian_iff hS hU
     (Matrix.fromCols A₁ A₂) (Matrix.fromCols B₁ B₂)).2 (by
       calc Matrix.fromCols A₁ A₂ * (J₁ * S₁ * J₁.transpose + J₂ * S₂ * J₂.transpose) *
@@ -138,15 +139,15 @@ def gaussianShiftKernel (S : Matrix ι ι ℝ) :
 omit [Fintype κ] [Fintype τ] [Fintype σ] [DecidableEq κ] [DecidableEq τ] [DecidableEq σ] in
 /-- The Gaussian shift kernel at `m` is the Gaussian law with mean `m` and covariance `S`. -/
 @[simp]
-theorem gaussianShiftKernel_apply (S : Matrix ι ι ℝ) (m : EuclideanSpace ℝ ι) :
+theorem gaussian_shift_kernel_apply (S : Matrix ι ι ℝ) (m : EuclideanSpace ℝ ι) :
     gaussianShiftKernel S m = multivariateGaussian m S := rfl
 
 instance (S : Matrix ι ι ℝ) : IsMarkovKernel (gaussianShiftKernel S) where
-  isProbabilityMeasure m := by rw [gaussianShiftKernel_apply]; infer_instance
+  isProbabilityMeasure m := by rw [gaussian_shift_kernel_apply]; infer_instance
 
 omit [Fintype κ] [Fintype τ] [Fintype σ] [DecidableEq κ] [DecidableEq τ] [DecidableEq σ] in
 /-- The multivariate Gaussian density is jointly measurable in the mean and the point. -/
-theorem measurable_multivariateGaussianPDF_uncurry (S : Matrix ι ι ℝ) :
+theorem measurable_multivariate_gaussian_pdf_uncurry (S : Matrix ι ι ℝ) :
     Measurable fun q : EuclideanSpace ℝ ι × EuclideanSpace ℝ ι ↦
       TauCeti.Probability.multivariateGaussianPDF q.1 S q.2 := by
   simp only [TauCeti.Probability.multivariateGaussianPDF_def,
@@ -156,7 +157,7 @@ theorem measurable_multivariateGaussianPDF_uncurry (S : Matrix ι ι ℝ) :
 omit [Fintype κ] [Fintype τ] [Fintype σ] [DecidableEq κ] [DecidableEq τ] [DecidableEq σ] in
 /-- If `Z` has law `N(0, S)` and is independent of `Y`, then the joint law of `Y` and
 `g(Y) + Z` is the composition of the law of `Y` with the Gaussian kernel `y ↦ N(g y, S)`. -/
-theorem map_prodMk_add_eq_compProd {β : Type*} [MeasurableSpace β] [IsProbabilityMeasure P]
+theorem map_prod_mk_add_eq_comp_prod {β : Type*} [MeasurableSpace β] [IsProbabilityMeasure P]
     {Y : Ω → β} {Z : Ω → EuclideanSpace ℝ ι} {g : β → EuclideanSpace ℝ ι} (hg : Measurable g)
     (hY : AEMeasurable Y P) {S : Matrix ι ι ℝ} (hS : S.PosSemidef)
     (hZ : HasLaw Z (multivariateGaussian 0 S) P) (hYZ : IndepFun Y Z P) :
@@ -174,7 +175,7 @@ theorem map_prodMk_add_eq_compProd {β : Type*} [MeasurableSpace β] [IsProbabil
   ext s hs
   rw [Measure.map_apply hF hs, Measure.prod_apply (hF hs), Measure.compProd_apply hs]
   refine lintegral_congr fun b ↦ ?_
-  rw [Kernel.comap_apply, gaussianShiftKernel_apply]
+  rw [Kernel.comap_apply, gaussian_shift_kernel_apply]
   have hshift : multivariateGaussian (g b) S =
       (multivariateGaussian 0 S).map fun z ↦ g b + z := by
     have h := TauCeti.Probability.map_affine_multivariateGaussian 0 hS
@@ -191,7 +192,7 @@ theorem map_prodMk_add_eq_compProd {β : Type*} [MeasurableSpace β] [IsProbabil
 omit [Fintype κ] [Fintype τ] [Fintype σ] [DecidableEq κ] [DecidableEq τ] [DecidableEq σ] in
 /-- If `Z` has law `N(0, S)` and is independent of `Y`, then the conditional law of
 `g(Y) + Z` given `Y = y` is `N(g y, S)` for almost every `y`. -/
-theorem condDistrib_add_eq_multivariateGaussian {β : Type*} [MeasurableSpace β]
+theorem cond_distrib_add_eq_multivariate_gaussian {β : Type*} [MeasurableSpace β]
     [IsProbabilityMeasure P] {Y : Ω → β} {Z : Ω → EuclideanSpace ℝ ι}
     {g : β → EuclideanSpace ℝ ι} (hg : Measurable g) (hY : AEMeasurable Y P)
     {S : Matrix ι ι ℝ} (hS : S.PosSemidef) (hZ : HasLaw Z (multivariateGaussian 0 S) P)
@@ -201,9 +202,9 @@ theorem condDistrib_add_eq_multivariateGaussian {β : Type*} [MeasurableSpace β
   have h := condDistrib_ae_eq_of_measure_eq_compProd hY
     (show AEMeasurable (fun ω ↦ g (Y ω) + Z ω) P from
       (hg.comp_aemeasurable hY).add hZ.aemeasurable)
-    (map_prodMk_add_eq_compProd hg hY hS hZ hYZ)
+    (map_prod_mk_add_eq_comp_prod hg hY hS hZ hYZ)
   filter_upwards [h] with b hb
-  rw [hb, Kernel.comap_apply, gaussianShiftKernel_apply]
+  rw [hb, Kernel.comap_apply, gaussian_shift_kernel_apply]
 
 end GaussianPair
 

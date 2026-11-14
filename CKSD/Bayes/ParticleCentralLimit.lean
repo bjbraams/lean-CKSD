@@ -4,6 +4,7 @@ public import CKSD.Bayes.ParticleFilter
 public import CKSD.Asymptotics.Lindeberg.Basic
 public import CKSD.Bayes.ParticleFluctuations
 
+
 /-!
 # Central limit theorem for the local errors of the bootstrap particle filter
 
@@ -15,10 +16,10 @@ central limit theorem for the summed local errors.
 
 ## Main results
 
-* `CKSD.integral_cexp_sum_localError_succ`: one step of the characteristic function recursion.
-* `CKSD.tendsto_integral_cexp_sum_localError`: convergence of the characteristic functions of the
+* `CKSD.integral_cexp_sum_local_error_succ`: one step of the characteristic function recursion.
+* `CKSD.tendsto_integral_cexp_sum_local_error`: convergence of the characteristic functions of the
   summed local errors.
-* `CKSD.tendstoInDistribution_sum_localError`: the central limit theorem for the summed local
+* `CKSD.tendsto_in_distribution_sum_local_error`: the central limit theorem for the summed local
   errors.
 -/
 
@@ -40,7 +41,7 @@ private def extendPath {N n : ℕ} (yz : (Fin (n + 1) → Fin N → X) × (Fin N
   if h : q < n + 1 then yz.1 ⟨q, h⟩ else yz.2
 
 /-- `extendPath` is measurable. -/
-private theorem measurable_extendPath {N n : ℕ} :
+private theorem measurable_extend_path {N n : ℕ} :
     Measurable (extendPath : (Fin (n + 1) → Fin N → X) × (Fin N → X) → ℕ → Fin N → X) := by
   refine measurable_pi_iff.2 fun q ↦ ?_
   by_cases h : q < n + 1
@@ -52,14 +53,14 @@ private theorem measurable_extendPath {N n : ℕ} :
 omit [MeasurableSpace X] in
 /-- Extending the first `n + 1` generations of a path by a generation `z` keeps generations
 `q < n + 1`. -/
-private theorem extendPath_of_lt {N n : ℕ} (x : ℕ → Fin N → X) (z : Fin N → X) {q : ℕ}
+private theorem extend_path_of_lt {N n : ℕ} (x : ℕ → Fin N → X) (z : Fin N → X) {q : ℕ}
     (hq : q < n + 1) : extendPath ((fun i : Fin (n + 1) ↦ x i), z) q = x q := by
   simp [extendPath, hq]
 
 omit [MeasurableSpace X] in
 /-- Extending the first `n + 1` generations of a path by a generation `z` puts `z` at time
 `n + 1`. -/
-private theorem extendPath_succ {N n : ℕ} (y : Fin (n + 1) → Fin N → X) (z : Fin N → X) :
+private theorem extend_path_succ {N n : ℕ} (y : Fin (n + 1) → Fin N → X) (z : Fin N → X) :
     extendPath (y, z) (n + 1) = z := by
   simp [extendPath]
 
@@ -70,7 +71,7 @@ private theorem norm_cexp_mul_mul_I (t s : ℝ) : ‖cexp (t * s * I)‖ = 1 := 
 /-- One generation of the characteristic function recursion: conditionally on the first `m + 1`
 generations, the characteristic function of the local error of generation `m + 1` is the
 `(N + 1)`-th power of a characteristic function under the prediction law. -/
-theorem integral_cexp_sum_localError_succ [StandardBorelSpace X] [Nonempty X]
+theorem integral_cexp_sum_local_error_succ [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X) (N : ℕ)
     (ξ : ℕ → Ω → Fin (N + 1) → X) (hξ : IsBootstrapParticleSystem P M (N + 1) ξ)
     (φ : ℕ → X → ℝ) (hφ : ∀ p, Measurable (φ p)) {B : ℝ} (hB : ∀ p x, |φ p x| ≤ B)
@@ -88,7 +89,7 @@ theorem integral_cexp_sum_localError_succ [StandardBorelSpace X] [Nonempty X]
           ∂M.particlePredictionLaw m (ξ m ω)) ^ (N + 1) ∂P := by
   have hS : Measurable fun yz : (Fin (m + 1) → Fin (N + 1) → X) × (Fin (N + 1) → X) ↦
       ∑ p ∈ Finset.range (m + 1 + 1), M.localError φ (extendPath yz) p :=
-    Finset.measurable_sum _ fun p _ ↦ (M.measurable_localError hφ hB p).comp measurable_extendPath
+    Finset.measurable_sum _ fun p _ ↦ (M.measurable_local_error hφ hB p).comp measurable_extend_path
   have hH : Measurable fun yz : (Fin (m + 1) → Fin (N + 1) → X) × (Fin (N + 1) → X) ↦
       cexp (t * (∑ p ∈ Finset.range (m + 1 + 1), M.localError φ (extendPath yz) p : ℝ) * I) := by
     fun_prop
@@ -102,7 +103,7 @@ theorem integral_cexp_sum_localError_succ [StandardBorelSpace X] [Nonempty X]
         (φ (m + 1) x - ∫ y, φ (m + 1) y ∂M.particlePredictionLaw m (ξ m ω)) * I)
           ∂M.particlePredictionLaw m (ξ m ω)) ^ (N + 1) := by
     intro ω
-    have := M.isProbabilityMeasure_particlePredictionLaw (Nat.succ_pos N) m (ξ m ω)
+    have := M.is_probability_measure_particle_prediction_law (Nat.succ_pos N) m (ξ m ω)
     set c := ∫ y, φ (m + 1) y ∂M.particlePredictionLaw m (ξ m ω)
     set u := (t * M.particleLikelihood (fun q ↦ ξ q ω) (m + 1)) / Real.sqrt (N + 1)
     have hpt : ∀ z : Fin (N + 1) → X, cexp (t * (∑ p ∈ Finset.range (m + 1 + 1),
@@ -113,14 +114,14 @@ theorem integral_cexp_sum_localError_succ [StandardBorelSpace X] [Nonempty X]
       have h1 : ∀ p ∈ Finset.range (m + 1),
           M.localError φ (extendPath ((fun i : Fin (m + 1) ↦ ξ i ω), z)) p =
             M.localError φ (fun q ↦ ξ q ω) p := fun p hp ↦
-        M.localError_congr φ fun q hq ↦
-          extendPath_of_lt (fun q ↦ ξ q ω) z (hq.trans_lt (Finset.mem_range.1 hp))
+        M.local_error_congr φ fun q hq ↦
+          extend_path_of_lt (fun q ↦ ξ q ω) z (hq.trans_lt (Finset.mem_range.1 hp))
       have h2 : M.localError φ (extendPath ((fun i : Fin (m + 1) ↦ ξ i ω), z)) (m + 1) =
           M.particleLikelihood (fun q ↦ ξ q ω) (m + 1) * (∑ j, (φ (m + 1) (z j) - c)) /
             Real.sqrt (N + 1) := by
-        simp only [FeynmanKacModel.localError, extendPath_succ]
-        rw [M.particleLikelihood_congr (fun q hq ↦ extendPath_of_lt (fun q ↦ ξ q ω) z hq),
-          M.pathPredMean_congr (fun q hq ↦ extendPath_of_lt (fun q ↦ ξ q ω) z hq)]
+        simp only [FeynmanKacModel.localError, extend_path_succ]
+        rw [M.particle_likelihood_congr (fun q hq ↦ extend_path_of_lt (fun q ↦ ξ q ω) z hq),
+          M.path_pred_mean_congr (fun q hq ↦ extend_path_of_lt (fun q ↦ ξ q ω) z hq)]
         push_cast
         rfl
       rw [Finset.sum_range_succ, Finset.sum_congr rfl h1, h2, ← Complex.exp_add]
@@ -137,16 +138,16 @@ theorem integral_cexp_sum_localError_succ [StandardBorelSpace X] [Nonempty X]
       cexp (t * (∑ p ∈ Finset.range (m + 1 + 1), M.localError φ (fun q ↦ ξ q ω) p : ℝ) * I) := by
     intro ω
     congr 4
-    refine Finset.sum_congr rfl fun p hp ↦ M.localError_congr φ fun q hq ↦ ?_
+    refine Finset.sum_congr rfl fun p hp ↦ M.local_error_congr φ fun q hq ↦ ?_
     rcases Nat.lt_or_ge q (m + 1) with h | h
-    · exact extendPath_of_lt (fun q ↦ ξ q ω) _ h
+    · exact extend_path_of_lt (fun q ↦ ξ q ω) _ h
     · obtain rfl : q = m + 1 := le_antisymm (hq.trans (Nat.lt_succ_iff.1
         (Finset.mem_range.1 hp))) h
-      exact extendPath_succ _ _
-  have hA := aestronglyMeasurable_integral_bootstrap_succ P M (N + 1) ξ hξ m _ hH
+      exact extend_path_succ _ _
+  have hA := aestrongly_measurable_integral_bootstrap_succ P M (N + 1) ξ hξ m _ hH
   beta_reduce at key hA
   refine ⟨Integrable.of_bound (hA.congr (ae_of_all _ hinner)) 1 (ae_of_all _ fun ω ↦ ?_), ?_⟩
-  · have := M.isProbabilityMeasure_particlePredictionLaw (Nat.succ_pos N) m (ξ m ω)
+  · have := M.is_probability_measure_particle_prediction_law (Nat.succ_pos N) m (ξ m ω)
     rw [← hinner ω]
     refine (norm_integral_le_of_norm_le_const
       (ae_of_all _ fun z ↦ (norm_cexp_mul_mul_I _ _).le)).trans ?_
@@ -165,7 +166,7 @@ private theorem tendsto_div_sqrt_add_div (a b : ℝ) :
 
 /-- Central limit theorem for the local error of the initial generation, at the level of
 characteristic functions. -/
-theorem tendsto_integral_cexp_localError_zero [StandardBorelSpace X] [Nonempty X]
+theorem tendsto_integral_cexp_local_error_zero [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
     (hξ : ∀ N, IsBootstrapParticleSystem P M (N + 1) (ξ N))
@@ -184,7 +185,7 @@ theorem tendsto_integral_cexp_localError_zero [StandardBorelSpace X] [Nonempty X
     calc ∫ ω, cexp (t * (M.localError φ (fun q ↦ ξ N q ω) 0 : ℝ) * I) ∂P
         = ∫ ω, cexp ((t / Real.sqrt (N + 1) : ℝ) * (∑ j, (φ 0 (ξ N 0 ω j) - c) : ℝ) * I) ∂P := by
           refine integral_congr_ae (ae_of_all _ fun ω ↦ ?_)
-          simp only [FeynmanKacModel.localError, FeynmanKacModel.particleLikelihood_zero,
+          simp only [FeynmanKacModel.localError, FeynmanKacModel.particle_likelihood_zero,
             FeynmanKacModel.pathPredMean, c]
           push_cast
           congr 1
@@ -198,8 +199,8 @@ theorem tendsto_integral_cexp_localError_zero [StandardBorelSpace X] [Nonempty X
           rfl
   have hvar : M.localVariance φ 0 * t ^ 2 / 2 =
       t ^ 2 * (∫ x, (φ 0 x - c) ^ 2 ∂(M.initial : Measure X)) / 2 := by
-    simp only [FeynmanKacModel.localVariance, M.integral_filterLaw,
-      FeynmanKacModel.unnormalizedLaw_zero, probReal_univ, inv_one, one_pow, one_mul, c]
+    simp only [FeynmanKacModel.localVariance, M.integral_filter_law,
+      FeynmanKacModel.unnormalized_law_zero, probReal_univ, inv_one, one_pow, one_mul, c]
     ring
   rw [tendsto_iff_norm_sub_tendsto_zero, hvar]
   simp_rw [hint]
@@ -209,7 +210,7 @@ theorem tendsto_integral_cexp_localError_zero [StandardBorelSpace X] [Nonempty X
   exact tendsto_div_sqrt_add_div _ _
 
 /-- The random Gaussian factors of the conditional characteristic functions are integrable. -/
-private theorem integrable_norm_gaussianFactor_sub [StandardBorelSpace X] [Nonempty X]
+private theorem integrable_norm_gaussian_factor_sub [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X) (N : ℕ)
     (ξ : ℕ → Ω → Fin (N + 1) → X) (hξ : IsBootstrapParticleSystem P M (N + 1) ξ)
     {g : X → ℝ} (hg : Measurable g) {B : ℝ} (hB : ∀ x, |g x| ≤ B) (t a : ℝ) (ha : 0 ≤ a)
@@ -224,15 +225,15 @@ private theorem integrable_norm_gaussianFactor_sub [StandardBorelSpace X] [Nonem
       ∂M.particlePredictionLaw p (ξ p ω)) = fun ω ↦
         ∫ x, g x ^ 2 ∂M.particlePredictionLaw p (ξ p ω) -
           (∫ x, g x ∂M.particlePredictionLaw p (ξ p ω)) ^ 2 := funext fun ω ↦ by
-    have := M.isProbabilityMeasure_particlePredictionLaw (Nat.succ_pos N) p (ξ p ω)
+    have := M.is_probability_measure_particle_prediction_law (Nat.succ_pos N) p (ξ p ω)
     exact integral_sub_integral_sq hg hB
   have hσm : Measurable fun ω ↦ ∫ x, (g x - ∫ y, g y ∂M.particlePredictionLaw p (ξ p ω)) ^ 2
       ∂M.particlePredictionLaw p (ξ p ω) := by
     rw [hσ]
-    exact ((M.measurable_integral_particlePredictionLaw p (hg.pow_const 2) hg2).comp (hξ.1 p)).sub
-      (((M.measurable_integral_particlePredictionLaw p hg hB).comp (hξ.1 p)).pow_const 2)
+    exact ((M.measurable_integral_particle_prediction_law p (hg.pow_const 2) hg2).comp (hξ.1 p)).sub
+      (((M.measurable_integral_particle_prediction_law p hg hB).comp (hξ.1 p)).pow_const 2)
   have hLm : Measurable fun ω ↦ M.particleLikelihood (fun q ↦ ξ q ω) (p + 1) :=
-    (M.measurable_particleLikelihood _).comp hpath
+    (M.measurable_particle_likelihood _).comp hpath
   refine Integrable.of_bound (by fun_prop) 2 (ae_of_all _ fun ω ↦ ?_)
   have h0 : 0 ≤ ∫ x, (g x - ∫ y, g y ∂M.particlePredictionLaw p (ξ p ω)) ^ 2
       ∂M.particlePredictionLaw p (ξ p ω) := integral_nonneg fun _ ↦ sq_nonneg _
@@ -247,7 +248,7 @@ private theorem integrable_norm_gaussianFactor_sub [StandardBorelSpace X] [Nonem
 
 /-- Central limit theorem for the summed local errors of the first `m + 1` generations, at the
 level of characteristic functions: `E exp (i t ∑ₚ₌₀ᵐ Wᴺₚ) → exp (-(∑ₚ vₚ) t² / 2)`. -/
-theorem tendsto_integral_cexp_sum_localError [StandardBorelSpace X] [Nonempty X]
+theorem tendsto_integral_cexp_sum_local_error [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
     (hξ : ∀ N, IsBootstrapParticleSystem P M (N + 1) (ξ N))
@@ -257,11 +258,11 @@ theorem tendsto_integral_cexp_sum_localError [StandardBorelSpace X] [Nonempty X]
         M.localError φ (fun q ↦ ξ N q ω) p : ℝ) * I) ∂P) atTop
       (𝓝 (Real.exp (-((∑ p ∈ Finset.range (m + 1), M.localVariance φ p) * t ^ 2 / 2)) : ℂ)) := by
   induction m with
-  | zero => simpa using tendsto_integral_cexp_localError_zero P M ξ hξ φ hφ hB t
+  | zero => simpa using tendsto_integral_cexp_local_error_zero P M ξ hξ φ hφ hB t
   | succ m ih =>
     have hpath : ∀ N, Measurable fun ω (q : ℕ) ↦ ξ N q ω := fun N ↦
       measurable_pi_iff.2 fun q ↦ (hξ N).1 q
-    obtain ⟨⟨K, hK⟩, -⟩ := tendsto_integral_abs_particleLikelihood_sub P M ξ hξ (m + 1)
+    obtain ⟨⟨K, hK⟩, -⟩ := tendsto_integral_abs_particle_likelihood_sub P M ξ hξ (m + 1)
     have hv0 : 0 ≤ M.localVariance φ (m + 1) * t ^ 2 / 2 := by
       have : 0 ≤ M.localVariance φ (m + 1) :=
         mul_nonneg (sq_nonneg _) (integral_nonneg fun _ ↦ sq_nonneg _)
@@ -279,7 +280,7 @@ theorem tendsto_integral_cexp_sum_localError [StandardBorelSpace X] [Nonempty X]
     have hA : ∀ N, Measurable fun ω ↦ cexp (t * (∑ p ∈ Finset.range (m + 1),
         M.localError φ (fun q ↦ ξ N q ω) p : ℝ) * I) := fun N ↦ by
       have : Measurable fun ω ↦ ∑ p ∈ Finset.range (m + 1), M.localError φ (fun q ↦ ξ N q ω) p :=
-        Finset.measurable_sum _ fun p _ ↦ (M.measurable_localError hφ hB p).comp (hpath N)
+        Finset.measurable_sum _ fun p _ ↦ (M.measurable_local_error hφ hB p).comp (hpath N)
       fun_prop
     have hbd : ∀ N, ‖∫ ω, cexp (t * (∑ p ∈ Finset.range (m + 1 + 1),
         M.localError φ (fun q ↦ ξ N q ω) p : ℝ) * I) ∂P - g * E‖ ≤
@@ -292,12 +293,12 @@ theorem tendsto_integral_cexp_sum_localError [StandardBorelSpace X] [Nonempty X]
           M.localError φ (fun q ↦ ξ N q ω) p : ℝ) * I) ∂P - E‖ := by
       intro N
       obtain ⟨hint, heq⟩ :=
-        integral_cexp_sum_localError_succ P M N (ξ N) (hξ N) φ hφ hB t m
+        integral_cexp_sum_local_error_succ P M N (ξ N) (hξ N) φ hφ hB t m
       have hgA : Integrable (fun ω ↦ g * cexp (t * (∑ p ∈ Finset.range (m + 1),
           M.localError φ (fun q ↦ ξ N q ω) p : ℝ) * I)) P :=
         (Integrable.of_bound (hA N).aestronglyMeasurable 1
           (ae_of_all _ fun ω ↦ (norm_cexp_mul_mul_I _ _).le)).const_mul g
-      have hGi := integrable_norm_gaussianFactor_sub P M N (ξ N) (hξ N) (hφ (m + 1)) (hB _) t _
+      have hGi := integrable_norm_gaussian_factor_sub P M N (ξ N) (hξ N) (hφ (m + 1)) (hB _) t _
         hv0 m
       rw [heq, show ∀ a b : ℂ, a - g * E = (a - g * b) + g * (b - E) from fun a b ↦ by ring,
         ← integral_const_mul, ← integral_sub hint hgA]
@@ -310,7 +311,7 @@ theorem tendsto_integral_cexp_sum_localError [StandardBorelSpace X] [Nonempty X]
         swap
         · simp only [Pi.add_apply]
           rw [integral_add (integrable_const ε) hGi, integral_const, probReal_univ, one_smul]
-        have := M.isProbabilityMeasure_particlePredictionLaw (Nat.succ_pos N) m (ξ N m ω)
+        have := M.is_probability_measure_particle_prediction_law (Nat.succ_pos N) m (ξ N m ω)
         have hs : |t * M.particleLikelihood (fun q ↦ ξ N q ω) (m + 1)| ≤ |t| * K := by
           rw [abs_mul]; exact mul_le_mul_of_nonneg_left (hK N ω) (abs_nonneg t)
         have hJ := norm_integral_cexp_pow_sub_gaussian_le (M.particlePredictionLaw m (ξ N m ω))
@@ -323,14 +324,14 @@ theorem tendsto_integral_cexp_sum_localError [StandardBorelSpace X] [Nonempty X]
     refine squeeze_zero (fun _ ↦ norm_nonneg _) hbd ?_
     have h := ((tendsto_div_sqrt_add_div ((|t| * K) ^ 3 * (2 * B) / 3 * (2 * B) ^ 2)
       ((|t| * K) ^ 4 / 4 * (2 * B) ^ 2 * (2 * B) ^ 2)).add
-        (tendsto_integral_norm_gaussianFactor_sub P M ξ hξ φ hφ hB t m)).add
+        (tendsto_integral_norm_gaussian_factor_sub P M ξ hξ φ hφ hB t m)).add
         (tendsto_iff_norm_sub_tendsto_zero.1 ih)
     rw [add_zero, add_zero] at h
     exact h
 
 /-- **Central limit theorem for the summed local errors** of the bootstrap particle filter:
 `∑ₚ₌₀ᵐ Wᴺₚ` converges in distribution to the centred normal law with variance `∑ₚ₌₀ᵐ vₚ`. -/
-theorem tendstoInDistribution_sum_localError [StandardBorelSpace X] [Nonempty X]
+theorem tendsto_in_distribution_sum_local_error [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
     (hξ : ∀ N, IsBootstrapParticleSystem P M (N + 1) (ξ N))
@@ -340,7 +341,7 @@ theorem tendstoInDistribution_sum_localError [StandardBorelSpace X] [Nonempty X]
       (fun _ ↦ P) (gaussianReal 0 (∑ p ∈ Finset.range (m + 1), M.localVariance φ p).toNNReal) := by
   have hS : ∀ N, Measurable fun ω ↦
       ∑ p ∈ Finset.range (m + 1), M.localError φ (fun q ↦ ξ N q ω) p := fun N ↦
-    Finset.measurable_sum _ fun p _ ↦ (M.measurable_localError hφ hB p).comp
+    Finset.measurable_sum _ fun p _ ↦ (M.measurable_local_error hφ hB p).comp
       (measurable_pi_iff.2 fun q ↦ (hξ N).1 q)
   refine TendstoInDistribution.of_tendsto_charFun (fun N ↦ (hS N).aemeasurable) aemeasurable_id
     fun t ↦ ?_
@@ -358,6 +359,6 @@ theorem tendstoInDistribution_sum_localError [StandardBorelSpace X] [Nonempty X]
         ∂P := fun N ↦ by
     rw [charFun_apply_real, integral_map (hS N).aemeasurable (by fun_prop)]
   simp_rw [hcf]
-  exact tendsto_integral_cexp_sum_localError P M ξ hξ φ hφ hB t m
+  exact tendsto_integral_cexp_sum_local_error P M ξ hξ φ hφ hB t m
 
 end CKSD

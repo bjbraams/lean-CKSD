@@ -3,6 +3,7 @@ module
 public import CKSD.Asymptotics.Expansions
 public import Mathlib.Probability.BrownianMotion.Basic
 
+
 /-!
 # Bootstrap of the empirical distribution function and of the studentized mean
 
@@ -63,7 +64,7 @@ def bootstrapBoundedLipschitzDistance {Ω' : Type*} [MeasurableSpace Ω'] {n : �
 observations with distribution function `F`, the bounded Lipschitz distance between the
 conditional law of `√n (F*ₙ - Fₙ)` and the law of the `F`-Brownian bridge `B⁰ ∘ F` tends to zero
 in outer probability. -/
-theorem tendstoInProbability_bootstrapBoundedLipschitzDistance
+theorem tendsto_in_probability_bootstrap_bounded_lipschitz_distance
     {Ω Ω' : Type*} [MeasurableSpace Ω] [MeasurableSpace Ω'] (μ : Measure Ω)
     [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
     (hiid : IsIndependentIdenticallyDistributed μ X P) (P' : Measure Ω')

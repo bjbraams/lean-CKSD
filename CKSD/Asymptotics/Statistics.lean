@@ -3,6 +3,7 @@ module
 public import CKSD.Asymptotics.Framework
 public import Statlib.Inference.QMD
 
+
 /-!
 # Statistical functionals, cross-fitting, and resampling
 
@@ -112,12 +113,12 @@ def saddlepointDensity (K : ℝ → ℝ) (n : ℕ) (s x : ℝ) : ℝ :=
     Real.exp ((n : ℝ) * (K s - s * x))
 
 /-- Efficient information is nonnegative. -/
-theorem efficientInformation_nonneg {X : Type*} [MeasurableSpace X] (P : Measure X)
+theorem efficient_information_nonneg {X : Type*} [MeasurableSpace X] (P : Measure X)
     (scores : Set (Lp ℝ 2 P)) (score : Lp ℝ 2 P) : 0 ≤ efficientInformation P scores score :=
   sq_nonneg _
 
 /-- A zero displacement gives a zero Wald statistic. -/
-@[simp] theorem waldStatistic_self {d : ℕ} (θ : EuclideanSpace ℝ (Fin d))
+@[simp] theorem wald_statistic_self {d : ℕ} (θ : EuclideanSpace ℝ (Fin d))
     (C : Matrix (Fin d) (Fin d) ℝ) : waldStatistic θ θ C = 0 := by
   simp [waldStatistic]
 

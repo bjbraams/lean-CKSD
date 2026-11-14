@@ -6,6 +6,7 @@ public import Mathlib.Topology.ContinuousMap.SecondCountableSpace
 public import Mathlib.MeasureTheory.Constructions.BorelSpace.ContinuousMap
 public import Mathlib.MeasureTheory.Constructions.Polish.Basic
 
+
 /-!
 # Measurable solution maps for additive-noise equations
 
@@ -42,7 +43,7 @@ def pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     exact f.continuous.sub (hprim.comp continuous_subtype_val)
 
 /-- The map recovering a solution's forcing is Lipschitz in the uniform path norm. -/
-theorem lipschitzWith_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
+theorem lipschitz_with_path_forcing_map {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) {L : ℝ≥0} (hvL : ∀ s, LipschitzWith L (v s)) :
     LipschitzWith (1 + L * Real.toNNReal T) (pathForcingMap hT v hv) := by
   let : Nonempty (Icc (0 : ℝ) T) := ⟨⟨0, le_rfl, hT⟩⟩
@@ -91,7 +92,7 @@ theorem lipschitzWith_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E →
       nlinarith
 
 /-- A continuous path solving a Lipschitz drift equation is determined by its additive forcing. -/
-theorem injective_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
+theorem injective_path_forcing_map {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) {L : ℝ≥0} (hvL : ∀ s, LipschitzWith L (v s)) :
     Function.Injective (pathForcingMap hT v hv) := by
   intro f g heq
@@ -133,12 +134,12 @@ theorem injective_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     Set.IccExtend_of_mem (h := hT) (fun z ↦ g z) t.2] using hxy
 
 /-- The inverse solution map on the range of the forcing map is measurable. -/
-theorem measurableEmbedding_pathForcingMap [MeasurableSpace E] [BorelSpace E]
+theorem measurable_embedding_path_forcing_map [MeasurableSpace E] [BorelSpace E]
     [SecondCountableTopology E] {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) {L : ℝ≥0} (hvL : ∀ s, LipschitzWith L (v s)) :
     MeasurableEmbedding (pathForcingMap hT v hv) :=
-  (lipschitzWith_pathForcingMap hT v hv hvL).continuous.measurableEmbedding
-    (injective_pathForcingMap hT v hv hvL)
+  (lipschitz_with_path_forcing_map hT v hv hvL).continuous.measurableEmbedding
+    (injective_path_forcing_map hT v hv hvL)
 
 /-- Countable coordinates of a continuous path, using rational times projected to its interval. -/
 def pathRationalCoordinates {T : ℝ} (hT : 0 ≤ T) (f : C(Icc (0 : ℝ) T, E)) : ℚ → E :=
@@ -147,7 +148,7 @@ def pathRationalCoordinates {T : ℝ} (hT : 0 ≤ T) (f : C(Icc (0 : ℝ) T, E))
 omit [NormedSpace ℝ E] in
 /-- Rational-time coordinates determine a continuous path and identify it measurably with their
 range in the countable product. -/
-theorem measurableEmbedding_pathRationalCoordinates [MeasurableSpace E] [BorelSpace E]
+theorem measurable_embedding_path_rational_coordinates [MeasurableSpace E] [BorelSpace E]
     [SecondCountableTopology E] {T : ℝ} (hT : 0 ≤ T) :
     MeasurableEmbedding (pathRationalCoordinates (E := E) hT) := by
   have hcont : Continuous (pathRationalCoordinates (E := E) hT) :=
@@ -167,19 +168,19 @@ theorem measurableEmbedding_pathRationalCoordinates [MeasurableSpace E] [BorelSp
 Coordinate families not representing a continuous path are assigned an arbitrary fixed path. -/
 def pathOfRationalCoordinates [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     {T : ℝ} (hT : 0 ≤ T) : (ℚ → E) → C(Icc (0 : ℝ) T, E) :=
-  (measurableEmbedding_pathRationalCoordinates hT).invFun
+  (measurable_embedding_path_rational_coordinates hT).invFun
 
 omit [NormedSpace ℝ E] in
 /-- Reconstructing the coordinates of a continuous path returns that path. -/
-theorem pathOfRationalCoordinates_apply [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+theorem path_of_rational_coordinates_apply [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     {T : ℝ} (hT : 0 ≤ T) (f : C(Icc (0 : ℝ) T, E)) :
     pathOfRationalCoordinates hT (pathRationalCoordinates hT f) = f :=
-  (measurableEmbedding_pathRationalCoordinates hT).leftInverse_invFun f
+  (measurable_embedding_path_rational_coordinates hT).leftInverse_invFun f
 
 omit [NormedSpace ℝ E] in
 /-- The reconstruction of continuous paths from countably many coordinates is measurable. -/
-theorem measurable_pathOfRationalCoordinates [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+theorem measurable_path_of_rational_coordinates [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     {T : ℝ} (hT : 0 ≤ T) : Measurable (pathOfRationalCoordinates (E := E) hT) :=
-  (measurableEmbedding_pathRationalCoordinates hT).measurable_invFun
+  (measurable_embedding_path_rational_coordinates hT).measurable_invFun
 
 end CKSD

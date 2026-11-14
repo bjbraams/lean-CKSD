@@ -12,6 +12,7 @@ public import TauCeti.MeasureTheory.Measure.ProductKernel
 import TauCeti.Probability.Distributions.Gaussian.Basic
 import TauCeti.Probability.Distributions.Gaussian.Moments
 
+
 /-!
 # Robustness, Edgeworth expansion, and bootstrap of the mean
 
@@ -19,11 +20,11 @@ Higher-order and robustness results of Section 102.
 
 ## Main results
 
-* `CKSD.integral_huberScore_sq_le`: Hampel's optimality of the Huber score at the Gaussian model
-  (GAPS 102.44), from `CKSD.integral_mul_huberScore_gaussianReal`.
+* `CKSD.integral_huber_score_sq_le`: Hampel's optimality of the Huber score at the Gaussian model
+  (GAPS 102.44), from `CKSD.integral_mul_huber_score_gaussian_real`.
 * `CKSD.exists_uniform_edgeworth_expansion`: the one-term Edgeworth expansion of the
   standardized mean (GAPS 102.49).
-* `CKSD.tendstoInMeasure_bootstrap_mean_kolmogorovDistance`: consistency of the
+* `CKSD.tendsto_in_measure_bootstrap_mean_kolmogorov_distance`: consistency of the
   nonparametric bootstrap of the mean (GAPS 102.51).
 
 ## Implementation notes
@@ -53,7 +54,7 @@ namespace CKSD
 attribute [local instance] Classical.propDecidable
 
 /-- The standard Gaussian density times `x ^ n` is Lebesgue integrable. -/
-theorem integrable_gaussianPDFReal_mul_pow (n : ℕ) :
+theorem integrable_gaussian_pdf_real_mul_pow (n : ℕ) :
     Integrable (fun x : ℝ ↦ gaussianPDFReal 0 1 x * x ^ n) := by
   have h : Integrable (fun x : ℝ ↦ x ^ n) (gaussianReal 0 1) := by
     have hm : MemLp id (n : ℝ≥0∞) (gaussianReal 0 1) := by
@@ -66,12 +67,12 @@ theorem integrable_gaussianPDFReal_mul_pow (n : ℕ) :
 
 /-- For a standard Gaussian, `∫ x (x - k)⁺ dΦ = P(X > k)`; proved by integrating
 `x (x - k) φ(x) = (-(x - k) φ(x))' + φ(x)` over `(k, ∞)`. -/
-theorem integral_mul_max_sub_gaussianReal (k : ℝ) :
+theorem integral_mul_max_sub_gaussian_real (k : ℝ) :
     ∫ x, x * max (x - k) 0 ∂gaussianReal 0 1 = (gaussianReal 0 1).real (Ioi k) := by
   set p := gaussianPDFReal 0 1 with hp
-  have h0 := integrable_gaussianPDFReal_mul_pow 0
-  have h1 := integrable_gaussianPDFReal_mul_pow 1
-  have h2 := integrable_gaussianPDFReal_mul_pow 2
+  have h0 := integrable_gaussian_pdf_real_mul_pow 0
+  have h1 := integrable_gaussian_pdf_real_mul_pow 1
+  have h2 := integrable_gaussian_pdf_real_mul_pow 2
   simp only [pow_zero, mul_one, pow_one] at h0 h1
   set F : ℝ → ℝ := fun x ↦ -(x - k) * p x with hF
   set F' : ℝ → ℝ := fun x ↦ -p x + (x - k) * x * p x with hF'
@@ -116,7 +117,7 @@ theorem integral_mul_max_sub_gaussianReal (k : ℝ) :
 
 
 /-- `x (x - k)⁺` is integrable for the standard Gaussian. -/
-theorem integrable_mul_max_sub_gaussianReal (k : ℝ) :
+theorem integrable_mul_max_sub_gaussian_real (k : ℝ) :
     Integrable (fun x ↦ x * max (x - k) 0) (gaussianReal 0 1) := by
   have h2 : Integrable (fun x : ℝ ↦ x ^ 2) (gaussianReal 0 1) :=
     (memLp_id_gaussianReal' (μ := 0) (v := 1) 2 ENNReal.ofNat_ne_top).integrable_sq
@@ -133,7 +134,7 @@ theorem integrable_mul_max_sub_gaussianReal (k : ℝ) :
 
 /-- For `k ≥ 0` and a standard Gaussian, `∫ x ψ_k(x) dΦ = 2Φ(k) - 1`, where `ψ_k` is the
 clipped Huber score. -/
-theorem integral_mul_huberScore_gaussianReal {k : ℝ} (hk : 0 ≤ k) :
+theorem integral_mul_huber_score_gaussian_real {k : ℝ} (hk : 0 ≤ k) :
     ∫ x, x * huberScore k x ∂gaussianReal 0 1 = 2 * cdf (gaussianReal 0 1) k - 1 := by
   have hsplit : ∀ x, x * huberScore k x =
       x ^ 2 - x * max (x - k) 0 - (-x) * max (-x - k) 0 := by
@@ -149,7 +150,7 @@ theorem integral_mul_huberScore_gaussianReal {k : ℝ} (hk : 0 ≤ k) :
         max_eq_right (by linarith)]; ring
   have h2 : Integrable (fun x : ℝ ↦ x ^ 2) (gaussianReal 0 1) :=
     (memLp_id_gaussianReal' (μ := 0) (v := 1) 2 ENNReal.ofNat_ne_top).integrable_sq
-  have hA := integrable_mul_max_sub_gaussianReal k
+  have hA := integrable_mul_max_sub_gaussian_real k
   have hmap : (gaussianReal 0 1).map (fun x ↦ -x) = gaussianReal 0 1 := by
     simp [gaussianReal_map_neg]
   have hB : Integrable (fun x ↦ (-x) * max (-x - k) 0) (gaussianReal 0 1) := by
@@ -164,18 +165,18 @@ theorem integral_mul_huberScore_gaussianReal {k : ℝ} (hk : 0 ≤ k) :
   simp_rw [hsplit]
   rw [integral_sub (f := fun x ↦ x ^ 2 - x * max (x - k) 0)
     (g := fun x ↦ -x * max (-x - k) 0) (h2.sub hA) hB, integral_sub h2 hA, hBint,
-    integral_mul_max_sub_gaussianReal, TauCeti.Probability.integral_sq_gaussianReal, cdf_eq_real,
+    integral_mul_max_sub_gaussian_real, TauCeti.Probability.integral_sq_gaussianReal, cdf_eq_real,
     ← compl_Iic, measureReal_compl measurableSet_Iic]
   simp
   ring
 
 /-- The clipped Huber score is bounded by the clipping constant. -/
-theorem abs_huberScore_le {k : ℝ} (hk : 0 ≤ k) (x : ℝ) : |huberScore k x| ≤ k := by
+theorem abs_huber_score_le {k : ℝ} (hk : 0 ≤ k) (x : ℝ) : |huberScore k x| ≤ k := by
   unfold huberScore
   exact abs_le.2 ⟨le_max_left _ _, max_le (by linarith) (min_le_left _ _)⟩
 
 /-- The clipped Huber score is measurable. -/
-theorem measurable_huberScore (k : ℝ) : Measurable (huberScore k) := by
+theorem measurable_huber_score (k : ℝ) : Measurable (huberScore k) := by
   unfold huberScore; fun_prop
 
 /-- GAPS 102.44, Hampel optimality part of the Huber statement. Under the standard Gaussian
@@ -183,7 +184,7 @@ model, with `a = 2 Φ(k) - 1`, the normalized Huber score `ψ_k / a` has the sma
 among measurable scores `φ` bounded by `k / a` with `∫ x φ(x) dΦ(x) = 1`; that is, it minimizes
 the asymptotic variance among location M-estimators with gross-error sensitivity at most
 `k / a`. -/
-theorem integral_huberScore_sq_le (k : ℝ) (hk : 0 < k) (φ : ℝ → ℝ) (hm : Measurable φ)
+theorem integral_huber_score_sq_le (k : ℝ) (hk : 0 < k) (φ : ℝ → ℝ) (hm : Measurable φ)
     (hbound : ∀ x, |φ x| ≤ k / (2 * cdf (gaussianReal 0 1) k - 1))
     (h1 : (∫ x, x * φ x ∂gaussianReal 0 1) = 1) :
     (∫ x, (huberScore k x / (2 * cdf (gaussianReal 0 1) k - 1)) ^ 2 ∂gaussianReal 0 1) ≤
@@ -192,12 +193,12 @@ theorem integral_huberScore_sq_le (k : ℝ) (hk : 0 < k) (φ : ℝ → ℝ) (hm 
   set a := 2 * cdf G k - 1 with ha
   have hx : Integrable (fun x : ℝ ↦ x) G :=
     (memLp_id_gaussianReal' (μ := 0) (v := 1) 1 ENNReal.one_ne_top).integrable le_rfl
-  have hhm := measurable_huberScore k
+  have hhm := measurable_huber_score k
   have hxh : Integrable (fun x ↦ x * huberScore k x) G := by
     refine (hx.norm.const_mul k).mono' (by fun_prop) (ae_of_all _ fun x ↦ ?_)
     rw [norm_mul, Real.norm_eq_abs, Real.norm_eq_abs, mul_comm]
-    exact mul_le_mul_of_nonneg_right (abs_huberScore_le hk.le x) (abs_nonneg x)
-  have hI : ∫ x, x * huberScore k x ∂G = a := integral_mul_huberScore_gaussianReal hk.le
+    exact mul_le_mul_of_nonneg_right (abs_huber_score_le hk.le x) (abs_nonneg x)
+  have hI : ∫ x, x * huberScore k x ∂G = a := integral_mul_huber_score_gaussian_real hk.le
   have ha : 0 < a := by
     rw [← hI]
     have hnn : 0 ≤ fun x ↦ x * huberScore k x := fun x ↦ by
@@ -223,7 +224,7 @@ theorem integral_huberScore_sq_le (k : ℝ) (hk : 0 < k) (φ : ℝ → ℝ) (hm 
   set ψ : ℝ → ℝ := fun x ↦ huberScore k x / a with hψ
   have hψb : ∀ x, |ψ x| ≤ k / a := fun x ↦ by
     simp only [hψ, abs_div, abs_of_pos ha]
-    exact div_le_div_of_nonneg_right (abs_huberScore_le hk.le x) ha.le
+    exact div_le_div_of_nonneg_right (abs_huber_score_le hk.le x) ha.le
   have hψm : Measurable ψ := hhm.div_const a
   have hφ2 : Integrable (fun x ↦ φ x ^ 2) G :=
     Integrable.of_bound (by fun_prop) ((k / a) ^ 2) (ae_of_all _ fun x ↦ by
@@ -297,7 +298,7 @@ theorem exists_uniform_edgeworth_expansion {Ω : Type*} [MeasurableSpace Ω]
 
 /-- Pólya's theorem: pointwise convergence of distribution functions to a continuous
 distribution function implies convergence in Kolmogorov distance. -/
-private theorem tendsto_kolmogorovDistance_of_tendsto_cdf (ν : ℕ → Measure ℝ) (ρ : Measure ℝ)
+private theorem tendsto_kolmogorov_distance_of_tendsto_cdf (ν : ℕ → Measure ℝ) (ρ : Measure ℝ)
     (hc : Continuous (cdf ρ)) (h : ∀ t, Tendsto (fun n ↦ cdf (ν n) t) atTop (𝓝 (cdf ρ t))) :
     Tendsto (fun n ↦ kolmogorovDistance (ν n) ρ) atTop (𝓝 0) := by
   rw [Metric.tendsto_atTop]
@@ -401,7 +402,7 @@ private theorem tendsto_kolmogorovDistance_of_tendsto_cdf (ν : ℕ → Measure 
   exact hKD.trans_lt hMε
 
 /-- The integral against the empirical measure is the sample average. -/
-private theorem integral_empiricalMeasure_fin {n : ℕ} (x : Fin n → ℝ) {F : Type*} [NormedAddCommGroup F]
+private theorem integral_empirical_measure_fin {n : ℕ} (x : Fin n → ℝ) {F : Type*} [NormedAddCommGroup F]
     [NormedSpace ℝ F] [CompleteSpace F] (f : ℝ → F) :
     ∫ y, f y ∂(empiricalMeasure n x) = (n : ℝ)⁻¹ • ∑ i, f (x i) := by
   rw [empiricalMeasure, integral_smul_measure, integral_finsetSum_measure]
@@ -411,12 +412,12 @@ private theorem integral_empiricalMeasure_fin {n : ℕ} (x : Fin n → ℝ) {F :
 
 /-- The characteristic function of the bootstrap law of `√n (X̄*ₙ - c)` is the `n`-th power of
 the empirical characteristic function of the scaled centred sample. -/
-private theorem charFun_bootstrap {n : ℕ} (hn : 0 < n) (x : Fin n → ℝ) (c s : ℝ) :
+private theorem char_fun_bootstrap {n : ℕ} (hn : 0 < n) (x : Fin n → ℝ) (c s : ℝ) :
     charFun ((Measure.pi fun _ : Fin n ↦ empiricalMeasure n x).map
         (fun y : Fin n → ℝ ↦ Real.sqrt n * ((∑ i, y i) / n - c))) s =
       ((n : ℂ)⁻¹ * ∑ i, Complex.exp ((((Real.sqrt n)⁻¹ * (x i - c) * s : ℝ) : ℂ) *
         Complex.I)) ^ n := by
-  have := isProbabilityMeasure_empiricalMeasure hn x
+  have := is_probability_measure_empirical_measure hn x
   have hsq : Real.sqrt n ≠ 0 := (Real.sqrt_pos.2 (by exact_mod_cast hn)).ne'
   have hf : ∀ y : Fin n → ℝ, Real.sqrt n * ((∑ i, y i) / n - c) =
       ∑ i, (Real.sqrt n)⁻¹ * (y i - c) := fun y ↦ by
@@ -430,7 +431,7 @@ private theorem charFun_bootstrap {n : ℕ} (hn : 0 < n) (x : Fin n → ℝ) (c 
   simp_rw [hf, Complex.ofReal_sum, Finset.mul_sum, Finset.sum_mul, Complex.exp_sum]
   rw [integral_fintype_prod_eq_prod (f := fun _ y ↦ Complex.exp
     ((s : ℂ) * (((Real.sqrt n)⁻¹ * (y - c) : ℝ) : ℂ) * Complex.I))]
-  rw [Finset.prod_const, Finset.card_univ, Fintype.card_fin, integral_empiricalMeasure_fin]
+  rw [Finset.prod_const, Finset.card_univ, Fintype.card_fin, integral_empirical_measure_fin]
   congr 1
   simp only [Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_natCast]
   rw [Finset.mul_sum]
@@ -522,7 +523,7 @@ private theorem tendsto_avg_sq_sub_avg (x : ℕ → ℝ) (m σ2 : ℝ)
 
 /-- Along a sequence whose first two empirical moments converge and with `xₙ² / n → 0`, the
 bootstrap characteristic functions converge pointwise to that of `N(0, σ²)`. -/
-private theorem tendsto_charFun_bootstrapLaw (x : ℕ → ℝ) (m σ2 : ℝ)
+private theorem tendsto_char_fun_bootstrap_law (x : ℕ → ℝ) (m σ2 : ℝ)
     (hm : Tendsto (fun n : ℕ ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, x i) atTop (𝓝 m))
     (h2 : Tendsto (fun n : ℕ ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, x i ^ 2) atTop
       (𝓝 (σ2 + m ^ 2)))
@@ -542,7 +543,7 @@ private theorem tendsto_charFun_bootstrapLaw (x : ℕ → ℝ) (m σ2 : ℝ)
         empiricalMeasure n (fun i ↦ x i.val)).map (fun y : Fin n → ℝ ↦ Real.sqrt n *
           ((∑ i, y i) / n - (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, x i))) s := by
     filter_upwards [eventually_gt_atTop 0] with n hn
-    rw [charFun_bootstrap hn]
+    rw [char_fun_bootstrap hn]
   refine (Complex.tendsto_pow_exp_of_isLittleO_sub_add_div _ ?_).congr' hchar
   rw [Asymptotics.isLittleO_iff]
   intro ε hε
@@ -649,7 +650,7 @@ private theorem tendsto_charFun_bootstrapLaw (x : ℕ → ℝ) (m σ2 : ℝ)
 
 /-- Deterministic bootstrap consistency: under the conclusions of the strong law along a fixed
 sequence, the bootstrap law of the mean converges to `N(0, σ²)` in Kolmogorov distance. -/
-private theorem tendsto_kolmogorovDistance_bootstrapLaw (x : ℕ → ℝ) (m σ2 : ℝ) (hσ : 0 < σ2)
+private theorem tendsto_kolmogorov_distance_bootstrap_law (x : ℕ → ℝ) (m σ2 : ℝ) (hσ : 0 < σ2)
     (hm : Tendsto (fun n : ℕ ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, x i) atTop (𝓝 m))
     (h2 : Tendsto (fun n : ℕ ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, x i ^ 2) atTop
       (𝓝 (σ2 + m ^ 2)))
@@ -662,14 +663,14 @@ private theorem tendsto_kolmogorovDistance_bootstrapLaw (x : ℕ → ℝ) (m σ2
         empiricalMeasure n (fun i ↦ x i.val)).map (fun y : Fin n → ℝ ↦ Real.sqrt n *
           ((∑ i, y i) / n - (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, x i)) with hB
   have hBp : ∀ n, IsProbabilityMeasure (B (n + 1)) := fun n ↦ by
-    have := isProbabilityMeasure_empiricalMeasure (Nat.succ_pos n) (fun i ↦ x i.val)
+    have := is_probability_measure_empirical_measure (Nat.succ_pos n) (fun i ↦ x i.val)
     exact (Measure.isProbabilityMeasure_map_iff (by fun_prop)).2 inferInstance
   let Bp : ℕ → ProbabilityMeasure ℝ := fun n ↦ ⟨B (n + 1), hBp n⟩
   let G : ProbabilityMeasure ℝ := ⟨gaussianReal 0 σ2.toNNReal, inferInstance⟩
   have hlim : Tendsto Bp atTop (𝓝 G) := by
     rw [ProbabilityMeasure.tendsto_iff_tendsto_charFun]
     intro t
-    have h := (tendsto_charFun_bootstrapLaw x m σ2 hm h2 hx t).comp (tendsto_add_atTop_nat 1)
+    have h := (tendsto_char_fun_bootstrap_law x m σ2 hm h2 hx t).comp (tendsto_add_atTop_nat 1)
     convert h using 2
     · rfl
     · simp only [G, ProbabilityMeasure.coe_mk, charFun_gaussianReal, Complex.ofReal_zero,
@@ -692,12 +693,12 @@ private theorem tendsto_kolmogorovDistance_bootstrapLaw (x : ℕ → ℝ) (m σ2
   have hc : Continuous (cdf (gaussianReal 0 σ2.toNNReal)) :=
     Measure.continuous_cdf_of_noAtoms _
   exact (tendsto_add_atTop_iff_nat 1).1
-    (tendsto_kolmogorovDistance_of_tendsto_cdf (fun n ↦ B (n + 1)) _ hc hcdf)
+    (tendsto_kolmogorov_distance_of_tendsto_cdf (fun n ↦ B (n + 1)) _ hc hcdf)
 
 
 /-- By right-continuity of distribution functions, the Kolmogorov distance is a supremum over
 rational points. -/
-private theorem kolmogorovDistance_eq_iSup_rat (P Q : Measure ℝ) :
+private theorem kolmogorov_distance_eq_i_sup_rat (P Q : Measure ℝ) :
     kolmogorovDistance P Q = ⨆ q : ℚ, |cdf P q - cdf Q q| := by
   have hb : ∀ t, |cdf P t - cdf Q t| ≤ 1 := fun t ↦ by
     rw [abs_le]; constructor <;>
@@ -725,7 +726,7 @@ private theorem kolmogorovDistance_eq_iSup_rat (P Q : Measure ℝ) :
 
 /-- The Kolmogorov distance of a random bootstrap law is measurable, through the measurability
 of TauCeti's random product measures. -/
-private theorem measurable_kolmogorovDistance_bootstrap {Ω : Type*} [MeasurableSpace Ω] {n : ℕ}
+private theorem measurable_kolmogorov_distance_bootstrap {Ω : Type*} [MeasurableSpace Ω] {n : ℕ}
     (hn : 0 < n) (x : Ω → Fin n → ℝ) (hx : Measurable x) (c : Ω → ℝ) (hc : Measurable c)
     (ρ : Measure ℝ) :
     Measurable fun ω ↦ kolmogorovDistance ((Measure.pi fun _ : Fin n ↦
@@ -737,7 +738,7 @@ private theorem measurable_kolmogorovDistance_bootstrap {Ω : Type*} [Measurable
     refine Measurable.const_mul (Finset.measurable_sum _ fun i _ ↦ ?_) _
     exact (Measure.measurable_coe hs).comp (Measure.measurable_dirac.comp ((measurable_pi_apply i).comp hx))
   let ν : Ω → ProbabilityMeasure ℝ := fun ω ↦
-    ⟨empiricalMeasure n (x ω), isProbabilityMeasure_empiricalMeasure hn (x ω)⟩
+    ⟨empiricalMeasure n (x ω), is_probability_measure_empirical_measure hn (x ω)⟩
   have hν : Measurable ν := hE.subtype_mk
   let κ : Kernel Ω (Fin n → ℝ) :=
     ⟨fun ω ↦ (ProbabilityMeasure.pi fun _ : Fin n ↦ ν ω).toMeasure,
@@ -745,7 +746,7 @@ private theorem measurable_kolmogorovDistance_bootstrap {Ω : Type*} [Measurable
   have : IsMarkovKernel κ := ⟨fun ω ↦ (ProbabilityMeasure.pi fun _ : Fin n ↦ ν ω).prop⟩
   have hg : Measurable fun p : Ω × (Fin n → ℝ) ↦
       Real.sqrt n * ((∑ i, p.2 i) / n - c p.1) := by fun_prop
-  simp_rw [kolmogorovDistance_eq_iSup_rat]
+  simp_rw [kolmogorov_distance_eq_i_sup_rat]
   refine Measurable.iSup fun q ↦ ?_
   refine continuous_abs.measurable.comp (Measurable.sub ?_ measurable_const)
   have hrw : ∀ ω, cdf ((Measure.pi fun _ : Fin n ↦ empiricalMeasure n (x ω)).map
@@ -755,7 +756,7 @@ private theorem measurable_kolmogorovDistance_bootstrap {Ω : Type*} [Measurable
     have hgω : Measurable fun y : Fin n → ℝ ↦ Real.sqrt n * ((∑ i, y i) / n - c ω) := by
       fun_prop
     have : IsProbabilityMeasure (Measure.pi fun _ : Fin n ↦ empiricalMeasure n (x ω)) := by
-      have := isProbabilityMeasure_empiricalMeasure hn (x ω); infer_instance
+      have := is_probability_measure_empirical_measure hn (x ω); infer_instance
     have := (Measure.isProbabilityMeasure_map_iff hgω.aemeasurable).2
       (inferInstance : IsProbabilityMeasure (Measure.pi fun _ : Fin n ↦ empiricalMeasure n (x ω)))
     rw [cdf_eq_real, Measure.real_def, Measure.map_apply hgω measurableSet_Iic]
@@ -793,8 +794,8 @@ private theorem ae_tendsto_avg_of_iid {Ω : Type*} [MeasurableSpace Ω] {μ : Me
   have hint0 : Integrable (s ∘ X 0) μ := by
     rw [← hlaw] at hint
     exact hint.comp_measurable (hm 0)
-  have hslln := strong_law_ae (fun i ↦ s ∘ X i) hint0 (hiid.pairwise_indepFun_comp hs)
-    (hiid.identDistrib_comp hs)
+  have hslln := strong_law_ae (fun i ↦ s ∘ X i) hint0 (hiid.pairwise_indep_fun_comp hs)
+    (hiid.ident_distrib_comp hs)
   have hmean : μ[s ∘ X 0] = ∫ x, s x ∂P := by
     rw [← hlaw, integral_map (hm 0).aemeasurable hs.aestronglyMeasurable]; rfl
   rw [hmean] at hslln
@@ -804,7 +805,7 @@ private theorem ae_tendsto_avg_of_iid {Ω : Type*} [MeasurableSpace Ω] {μ : Me
 /-- GAPS 102.51: bootstrap consistency for the mean. For an i.i.d. sequence with finite positive
 variance `σ²`, the Kolmogorov distance between the bootstrap law of `√n (X̄*ₙ - X̄ₙ)` (resampling
 from the empirical measure) and `N(0, σ²)` tends to zero in probability. -/
-theorem tendstoInMeasure_bootstrap_mean_kolmogorovDistance {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_bootstrap_mean_kolmogorov_distance {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (h2 : MemLp id 2 P)
     (hv : 0 < Var[id; P]) :
@@ -824,14 +825,14 @@ theorem tendstoInMeasure_bootstrap_mean_kolmogorovDistance {Ω : Type*} [Measura
           ((∑ i, y i) / (n + 1 : ℕ) - sampleAverage X (n + 1) ω)))
       (gaussianReal 0 (Real.toNNReal (Var[id; P])))) atTop (fun _ ↦ 0) := by
     refine tendstoInMeasure_of_tendsto_ae (fun n ↦ ?_) ?_
-    · refine (measurable_kolmogorovDistance_bootstrap (n := n + 1) n.succ_pos
+    · refine (measurable_kolmogorov_distance_bootstrap (n := n + 1) n.succ_pos
         (fun ω i ↦ X i.val ω) ?_ (sampleAverage X (n + 1)) ?_ _).aestronglyMeasurable
       · exact Measurable.of_eval fun i : Fin (n + 1) ↦ hX i.val
       · exact (Finset.measurable_sum (Finset.range (n + 1)) fun i _ ↦ hX i).const_mul _
     · filter_upwards [hA, hB] with ω hωA hωB
       have hx := tendsto_div_of_tendsto_avg (fun i ↦ X i ω ^ 2) _ hωB
       rw [← hvar] at hωB
-      have := tendsto_kolmogorovDistance_bootstrapLaw (fun i ↦ X i ω) _ _ hv hωA hωB hx
+      have := tendsto_kolmogorov_distance_bootstrap_law (fun i ↦ X i ω) _ _ hv hωA hωB hx
       exact this.comp (tendsto_add_atTop_nat 1)
   exact fun ε hε ↦ (tendsto_add_atTop_iff_nat 1).1 (hshift ε hε)
 

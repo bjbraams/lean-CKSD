@@ -9,6 +9,7 @@ public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 public import TauCeti.MeasureTheory.Integral.NormRpow
 public import Mathlib.Probability.Distributions.Gaussian.Fernique
 
+
 /-!
 # Gaussian models: Stein's identity, James–Stein, Scheffé
 
@@ -46,7 +47,7 @@ variable {Θ X S V : Type*} [MeasurableSpace X] [MeasurableSpace S]
 
 /-- The isotropic Gaussian density `N(θ, v I)` in closed form: its value at `θ` times
 `exp (-‖x - θ‖² / (2v))`. Stated for TauCeti's `multivariateGaussianPDFReal`. -/
-theorem multivariateGaussianPDFReal_smul_one {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) (v : ℝ≥0)
+theorem multivariate_gaussian_pdf_real_smul_one {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) (v : ℝ≥0)
     (hv : 0 < v) (x : EuclideanSpace ℝ (Fin p)) :
     TauCeti.Probability.multivariateGaussianPDFReal θ ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)) x =
       TauCeti.Probability.multivariateGaussianPDFReal θ
@@ -109,7 +110,7 @@ theorem gaussian_integration_by_parts {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)
   -- the derivative of the density
   let c := φ θ
   have hφeq : φ = fun x ↦ c * Real.exp (-((v : ℝ)⁻¹ * ‖x - θ‖ ^ 2) / 2) :=
-    funext fun x ↦ multivariateGaussianPDFReal_smul_one θ v hv x
+    funext fun x ↦ multivariate_gaussian_pdf_real_smul_one θ v hv x
   have hφd : ∀ x, HasFDerivAt φ (c • (Real.exp (-((v : ℝ)⁻¹ * ‖x - θ‖ ^ 2) / 2) •
       ((-(v : ℝ)⁻¹ / 2) • (2 • (innerSL ℝ (x - θ)).comp (ContinuousLinearMap.id ℝ _))))) x := by
     intro x
@@ -154,7 +155,7 @@ theorem gaussian_integration_by_parts {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)
   ring
 
 /-- The derivative of the regularized James–Stein shrinkage field `y ↦ (‖y‖² + ε)⁻¹ y`. -/
-private theorem hasFDerivAt_inv_norm_sq_add_smul {p : ℕ} {ε : ℝ} (hε : 0 < ε)
+private theorem has_f_deriv_at_inv_norm_sq_add_smul {p : ℕ} {ε : ℝ} (hε : 0 < ε)
     (x : EuclideanSpace ℝ (Fin p)) :
     HasFDerivAt (fun y : EuclideanSpace ℝ (Fin p) ↦ (‖y‖ ^ 2 + ε)⁻¹ • y)
       ((‖x‖ ^ 2 + ε)⁻¹ • ContinuousLinearMap.id ℝ _ +
@@ -173,12 +174,12 @@ private theorem fderiv_inv_norm_sq_add_smul_apply {p : ℕ} {ε : ℝ} (hε : 0 
     fderiv ℝ (fun y : EuclideanSpace ℝ (Fin p) ↦ (‖y‖ ^ 2 + ε)⁻¹ • y) x
       (EuclideanSpace.single i 1) i =
       (‖x‖ ^ 2 + ε)⁻¹ - 2 * x i ^ 2 / (‖x‖ ^ 2 + ε) ^ 2 := by
-  rw [(hasFDerivAt_inv_norm_sq_add_smul hε x).fderiv]
+  rw [(has_f_deriv_at_inv_norm_sq_add_smul hε x).fderiv]
   simp [EuclideanSpace.inner_single_right]
   ring
 
 /-- The law `N(θ, I)` has a measurable, bounded, Lebesgue-integrable density, maximal at `θ`. -/
-private theorem multivariateGaussian_one_density {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) :
+private theorem multivariate_gaussian_one_density {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) :
     let φ := TauCeti.Probability.multivariateGaussianPDFReal θ (1 : Matrix (Fin p) (Fin p) ℝ)
     Measurable φ ∧ (∀ x, 0 ≤ φ x) ∧ (∀ x, φ x ≤ φ θ) ∧
       multivariateGaussian θ 1 = volume.withDensity (fun x ↦ ENNReal.ofReal (φ x)) ∧
@@ -190,7 +191,7 @@ private theorem multivariateGaussian_one_density {p : ℕ} (θ : EuclideanSpace 
     rw [TauCeti.Probability.multivariateGaussian_eq_withDensity Matrix.PosDef.one θ,
       TauCeti.Probability.multivariateGaussianPDF_def]
   refine ⟨hφm, hφnn, fun x ↦ ?_, hden, ?_⟩
-  · have h := multivariateGaussianPDFReal_smul_one θ 1 one_pos x
+  · have h := multivariate_gaussian_pdf_real_smul_one θ 1 one_pos x
     simp only [NNReal.coe_one, one_smul] at h
     change φ x ≤ φ θ
     rw [show φ x = _ from h]
@@ -204,10 +205,10 @@ private theorem multivariateGaussian_one_density {p : ℕ} (θ : EuclideanSpace 
     rw [h1]; exact ENNReal.one_lt_top
 
 /-- In dimension `p ≥ 3`, `‖x‖⁻²` is integrable under `N(θ, I)`. -/
-private theorem integrable_inv_norm_sq_multivariateGaussian_one {p : ℕ} (hp : 3 ≤ p)
+private theorem integrable_inv_norm_sq_multivariate_gaussian_one {p : ℕ} (hp : 3 ≤ p)
     (θ : EuclideanSpace ℝ (Fin p)) :
     Integrable (fun x : EuclideanSpace ℝ (Fin p) ↦ (‖x‖ ^ 2)⁻¹) (multivariateGaussian θ 1) := by
-  obtain ⟨hφm, hφnn, hφle, hden, hφi⟩ := multivariateGaussian_one_density θ
+  obtain ⟨hφm, hφnn, hφle, hden, hφi⟩ := multivariate_gaussian_one_density θ
   set φ := TauCeti.Probability.multivariateGaussianPDFReal θ (1 : Matrix (Fin p) (Fin p) ℝ)
   rw [hden, integrable_withDensity_iff_integrable_smul' hφm.ennreal_ofReal
     (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
@@ -309,7 +310,7 @@ private theorem integral_inner_inv_norm_sq_add_smul {p : ℕ} (θ : EuclideanSpa
   exact Finset.sum_congr rfl fun i _ ↦ hstein i
 
 /-- The risk of `X` itself: `E‖X - θ‖² = p` under `N(θ, I)`. -/
-private theorem integral_norm_sub_sq_multivariateGaussian_one {p : ℕ}
+private theorem integral_norm_sub_sq_multivariate_gaussian_one {p : ℕ}
     (θ : EuclideanSpace ℝ (Fin p)) :
     ∫ x, ‖x - θ‖ ^ 2 ∂(multivariateGaussian θ 1) = p := by
   have hmean : ∀ i, ∫ x, x i ∂(multivariateGaussian θ (1 : Matrix (Fin p) (Fin p) ℝ)) = θ i :=
@@ -369,7 +370,7 @@ private theorem integral_norm_sub_sub_smul_inv_norm_sq_add_smul_sq {p : ℕ}
       ‖x - θ‖ ^ 2 - 2 * c * inner ℝ (x - θ) ((‖x‖ ^ 2 + ε)⁻¹ • x)) P := hsq.sub (hinner.const_mul _)
   rw [integral_add h1 (hqint.const_mul _),
     integral_sub hsq (hinner.const_mul _), integral_const_mul,
-    integral_const_mul, integral_norm_sub_sq_multivariateGaussian_one,
+    integral_const_mul, integral_norm_sub_sq_multivariate_gaussian_one,
     integral_inner_inv_norm_sq_add_smul θ hε]
 
 /-- GAPS 101.57: the James–Stein estimator `δ(x) = (1 - (p - 2) / ‖x‖²) x` for `X ~ N(θ, I)` in
@@ -383,10 +384,10 @@ theorem james_stein_risk_eq_and_lt {p : ℕ} (hp : 3 ≤ p) (θ : EuclideanSpace
   set c : ℝ := (p : ℝ) - 2 with hc
   set J := ∫ x, (‖x‖ ^ 2)⁻¹ ∂P with hJ
   have hJi : Integrable (fun x : EuclideanSpace ℝ (Fin p) ↦ (‖x‖ ^ 2)⁻¹) P :=
-    integrable_inv_norm_sq_multivariateGaussian_one hp θ
+    integrable_inv_norm_sq_multivariate_gaussian_one hp θ
   -- almost every point is nonzero
   have hne : ∀ᵐ x ∂P, x ≠ 0 := by
-    obtain ⟨-, -, -, hden, -⟩ := multivariateGaussian_one_density θ
+    obtain ⟨-, -, -, hden, -⟩ := multivariate_gaussian_one_density θ
     have hac : P ≪ volume := by
       rw [show P = _ from hden]; exact withDensity_absolutelyContinuous _ _
     have : NeZero p := ⟨by omega⟩

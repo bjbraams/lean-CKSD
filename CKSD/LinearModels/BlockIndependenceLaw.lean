@@ -1,4 +1,5 @@
 module
+
 public import CKSD.LinearModels.BlockIndependenceMoments
 public import TauCeti.Probability.Moments.CompactDeterminacy
 /-!
@@ -21,7 +22,7 @@ open MeasureTheory ProbabilityTheory Set
 open scoped ENNReal NNReal Topology MatrixOrder BigOperators
 namespace CKSD
 /-- The block-independence Wishart determinant ratio has a finite independent Beta-product law. -/
-theorem map_blockIndependenceRatio_wishart_eq_beta_product {p q ν : ℕ}
+theorem map_block_independence_ratio_wishart_eq_beta_product {p q ν : ℕ}
     (hq : 0 < q) (hν : p+q ≤ ν)
     (S : Matrix (Fin (p+q)) (Fin (p+q)) ℝ) (hS : S.PosDef)
     (hblock : S.submatrix (Fin.castAdd q) (Fin.natAdd p) = 0) :
@@ -39,7 +40,7 @@ theorem map_blockIndependenceRatio_wishart_eq_beta_product {p q ν : ℕ}
   let E := selfAdjoint.submodule ℝ (Matrix (Fin (p+q)) (Fin (p+q)) ℝ)
   let f : E → ℝ := fun A ↦ blockIndependenceRatio A.val
   let g : (Fin p → ℝ) → ℝ := fun x ↦ ∏ i, x i
-  have hf : Measurable f := (measurable_blockIndependenceRatio p q).comp measurable_subtype_coe
+  have hf : Measurable f := (measurable_block_independence_ratio p q).comp measurable_subtype_coe
   have hg : Measurable g := by dsimp [g]; fun_prop
   change (TauCeti.Probability.wishartGramMeasure ν S).map f =
     (Measure.pi fun i : Fin p ↦ betaMeasure (((ν:ℝ)-(q:ℝ)-i.val)/2) ((q:ℝ)/2)).map g
@@ -47,7 +48,7 @@ theorem map_blockIndependenceRatio_wishart_eq_beta_product {p q ν : ℕ}
   · change ∀ᵐ x ∂_, x ∈ Icc (0:ℝ) 1
     apply (ae_map_iff hf.aemeasurable measurableSet_Icc).2
     filter_upwards [TauCeti.Probability.ae_posDef_wishartGramMeasure hS hν] with A hA
-    exact ⟨(blockIndependenceRatio_mem_Ioc hA).1.le, (blockIndependenceRatio_mem_Ioc hA).2⟩
+    exact ⟨(block_independence_ratio_mem_ioc hA).1.le, (block_independence_ratio_mem_ioc hA).2⟩
   · change ∀ᵐ x ∂_, x ∈ Icc (0:ℝ) 1
     apply (ae_map_iff hg.aemeasurable measurableSet_Icc).2
     have hv : ∀ᵐ x ∂Measure.pi (fun i : Fin p ↦ betaMeasure (((ν:ℝ)-(q:ℝ)-i.val)/2) ((q:ℝ)/2)),
@@ -59,7 +60,7 @@ theorem map_blockIndependenceRatio_wishart_eq_beta_product {p q ν : ℕ}
       Finset.prod_le_one₀ (fun i _ ↦ (hx i).1) (fun i _ ↦ (hx i).2)⟩
   · intro k
     rw [integral_map hf.aemeasurable (by fun_prop), integral_map hg.aemeasurable (by fun_prop)]
-    exact (integral_blockIndependenceRatio_pow_wishartGramMeasure_eq_gamma hS hν hblock k).trans
-      (integral_blockIndependence_beta_product_pow_eq_gamma hν hq k).symm
+    exact (integral_block_independence_ratio_pow_wishart_gram_measure_eq_gamma hS hν hblock k).trans
+      (integral_block_independence_beta_product_pow_eq_gamma hν hq k).symm
 
 end CKSD

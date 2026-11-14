@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.ParticleSamplingMoments
 public import Mathlib.MeasureTheory.Function.LpSeminorm.LpNorm
 /-!
@@ -19,7 +20,7 @@ open MeasureTheory ProbabilityTheory Set Filter
 open scoped NNReal ENNReal Topology BigOperators Nat
 namespace CKSD
 /-- Real-power moments are the real-valued finite-exponent `Lᵖ` norm. -/
-theorem lpNorm_ofReal_eq_integral_abs_rpow
+theorem lp_norm_of_real_eq_integral_abs_rpow
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) {p : ℝ} (hp : 0 < p)
     {f : Ω → ℝ} (hf : AEStronglyMeasurable f P) :
     lpNorm f (ENNReal.ofReal p) P = (∫ ω, |f ω|^p ∂P)^(1/p) := by
@@ -28,7 +29,7 @@ theorem lpNorm_ofReal_eq_integral_abs_rpow
 
 /-- Bounded iid empirical averages have a uniform `Lᵖ` error of order the inverse square root
 of sample size; the constant depends only on the real moment order. -/
-theorem exists_iid_empirical_mean_lpNorm_bound
+theorem exists_iid_empirical_mean_lp_norm_bound
     {X : Type*} [MeasurableSpace X] [Nonempty X] (p : ℝ) (hp : 1 ≤ p) :
     ∃ K > 0, ∀ (ν : Measure X), IsProbabilityMeasure ν → ∀ {N : ℕ}, 0 < N →
       ∀ {f : X → ℝ}, Measurable f → ∀ {B : ℝ}, 0 ≤ B → (∀ x, |f x| ≤ B) →
@@ -54,15 +55,15 @@ theorem exists_iid_empirical_mean_lpNorm_bound
     have hA : 0 < A := by dsimp [A]; positivity
     have hs : 0 < Real.sqrt N := Real.sqrt_pos.2 (Nat.cast_pos.2 hN)
     have hsg : HasSubgaussianMGF Y 1 π :=
-      hasSubgaussianMGF_normalized_iid_sum ν hN f hf hA (fun x y ↦ by
+      has_subgaussian_mgf_normalized_iid_sum ν hN f hf hA (fun x y ↦ by
         exact (abs_sub _ _).trans (by dsimp [A]; linarith [hfb x,hfb y]))
     have hYm : Measurable Y := by
       exact measurable_const.mul (Finset.measurable_fun_sum _ fun i _ ↦
         (hf.comp (measurable_pi_apply i)).sub measurable_const)
     have hYmoment : (∫ z, |Y z|^p ∂π) ≤ D :=
-      integral_abs_rpow_le_of_hasSubgaussianMGF_one π Y hsg hp0.le hm
+      integral_abs_rpow_le_of_has_subgaussian_mgf_one π Y hsg hp0.le hm
     have hYnorm : lpNorm Y (ENNReal.ofReal p) π ≤ D^(1/p) := by
-      rw [lpNorm_ofReal_eq_integral_abs_rpow π hp0 hYm.aestronglyMeasurable]
+      rw [lp_norm_of_real_eq_integral_abs_rpow π hp0 hYm.aestronglyMeasurable]
       exact Real.rpow_le_rpow (integral_nonneg fun _ ↦ Real.rpow_nonneg (abs_nonneg _) _)
         hYmoment (by positivity)
     have hscale : (A/Real.sqrt N)*(A*Real.sqrt N)⁻¹ = 1/(N:ℝ) := by

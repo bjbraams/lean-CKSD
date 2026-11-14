@@ -2,6 +2,7 @@ module
 
 public import CKSD.Learning.Generalization.Concentration
 
+
 /-!
 # Stability bounds for learning algorithms
 
@@ -15,7 +16,7 @@ losses, following Bousquet and Elisseeff. A learning algorithm is represented by
   loss on one training point plus the stability constant.
 * `CKSD.abs_integral_sub_sum_div_sub_le_of_stable`: bounded differences of the generalization
   defect.
-* `CKSD.measureReal_sum_div_add_lt_integral_le_of_stable`: the high-probability generalization
+* `CKSD.measure_real_sum_div_add_lt_integral_le_of_stable`: the high-probability generalization
   bound (GAPS 107.12).
 -/
 
@@ -32,7 +33,7 @@ attribute [local instance] Classical.propDecidable
 
 /-- The integral of a measurable function with values in `[0, M]` against a probability
 measure lies in `[0, M]`. -/
-private theorem integral_mem_Icc_of_mem_Icc {α : Type*} [MeasurableSpace α] {μ : Measure α}
+private theorem integral_mem_icc_of_mem_icc {α : Type*} [MeasurableSpace α] {μ : Measure α}
     [IsProbabilityMeasure μ] {g : α → ℝ} (hg : Measurable g) {M : ℝ}
     (hb : ∀ x, g x ∈ Icc 0 M) : ∫ x, g x ∂μ ∈ Icc 0 M :=
   ⟨integral_nonneg fun x ↦ (hb x).1, (integral_mono (Integrable.of_mem_Icc 0 M hg.aemeasurable
@@ -66,7 +67,7 @@ theorem integral_integral_loss_le {X : Type*} [MeasurableSpace X]
   have hS : Measurable fun x : Fin (m + 1) → X ↦ loss x (x i) :=
     hm.comp (measurable_id.prodMk (measurable_pi_apply i))
   have hRb : ∀ x, ∫ z, loss x z ∂P ∈ Icc 0 M := fun x ↦
-    integral_mem_Icc_of_mem_Icc (hm.comp measurable_prodMk_left) (hl x)
+    integral_mem_icc_of_mem_icc (hm.comp measurable_prodMk_left) (hl x)
   -- rewrite both sides on the product `P ⊗ Pm`
   have hlhs : ∫ x, ∫ z, loss x z ∂P ∂(Measure.pi fun _ : Fin (m + 1) ↦ P) =
       ∫ a, ∫ w, ∫ z, loss (e.symm (a, w)) z ∂P ∂Pm ∂P := by
@@ -97,7 +98,7 @@ theorem integral_integral_loss_le {X : Type*} [MeasurableSpace X]
         hm.comp ((hes.comp (measurable_snd.prodMk measurable_fst)).prodMk measurable_snd)
       exact this.stronglyMeasurable.integral_prod_right'.measurable
     have hb2 : ∀ w, ∫ z, loss (e.symm (z, w)) z ∂P ∈ Icc 0 M := fun w ↦
-      integral_mem_Icc_of_mem_Icc (hF.comp (measurable_id.prodMk measurable_const))
+      integral_mem_icc_of_mem_icc (hF.comp (measurable_id.prodMk measurable_const))
         fun z ↦ hl _ _
     have hpt : ∀ w, ∫ z, loss (e.symm (a, w)) z ∂P ≤
         ∫ z, loss (e.symm (z, w)) z ∂P + beta := by
@@ -126,7 +127,7 @@ theorem integral_integral_loss_le {X : Type*} [MeasurableSpace X]
     have : Measurable fun p : X × (Fin m → X) ↦ ∫ z, loss (e.symm p) z ∂P := hR.comp hes
     exact this.stronglyMeasurable.integral_prod_right'.measurable
   have hbA : ∀ a, ∫ w, ∫ z, loss (e.symm (a, w)) z ∂P ∂Pm ∈ Icc 0 M := fun a ↦
-    integral_mem_Icc_of_mem_Icc (hR.comp (hes.comp measurable_prodMk_left)) fun w ↦ hRb _
+    integral_mem_icc_of_mem_icc (hR.comp (hes.comp measurable_prodMk_left)) fun w ↦ hRb _
   rw [hlhs, hrhs, ← hswap]
   calc ∫ a, ∫ w, ∫ z, loss (e.symm (a, w)) z ∂P ∂Pm ∂P
       ≤ ∫ _a, (∫ w, ∫ z, loss (e.symm (z, w)) z ∂P ∂Pm + beta) ∂P :=
@@ -190,7 +191,7 @@ theorem abs_integral_sub_sum_div_sub_le_of_stable {X : Type*} [MeasurableSpace X
 training point changes every loss by at most `β` and losses lie in `[0, M]`, then with
 probability at least `1 - δ` the risk is at most the empirical risk plus
 `β + (2 n β + M) √(log(1/δ) / (2n))` (Bousquet–Elisseeff). -/
-theorem measureReal_sum_div_add_lt_integral_le_of_stable {X : Type*} [MeasurableSpace X]
+theorem measure_real_sum_div_add_lt_integral_le_of_stable {X : Type*} [MeasurableSpace X]
     (P : Measure X) [IsProbabilityMeasure P] (n : ℕ) (hn : 0 < n)
     (loss : (Fin n → X) → X → ℝ) (hm : Measurable (Function.uncurry loss))
     (beta M : ℝ) (hl : ∀ x z, loss x z ∈ Icc 0 M)
@@ -213,7 +214,7 @@ theorem measureReal_sum_div_add_lt_integral_le_of_stable {X : Type*} [Measurable
   have hS : ∀ i, Measurable fun x : Fin n → X ↦ loss x (x i) := fun i ↦
     hm.comp (measurable_id.prodMk (measurable_pi_apply i))
   have hRb : ∀ x, ∫ z, loss x z ∂P ∈ Icc 0 M := fun x ↦
-    integral_mem_Icc_of_mem_Icc (hm.comp measurable_prodMk_left) (hl x)
+    integral_mem_icc_of_mem_icc (hm.comp measurable_prodMk_left) (hl x)
   have hΦm : Measurable Φ := hR.sub ((Finset.measurable_sum _ fun i _ ↦ hS i).div_const _)
   have hRi : Integrable (fun x : Fin n → X ↦ ∫ z, loss x z ∂P) Pn :=
     Integrable.of_mem_Icc 0 M hR.aemeasurable (ae_of_all _ hRb)

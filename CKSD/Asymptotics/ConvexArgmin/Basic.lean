@@ -7,6 +7,7 @@ public import Mathlib.MeasureTheory.Function.ConvergenceInMeasure
 import Mathlib.Analysis.Normed.Affine.Convex
 import Mathlib.Topology.UniformSpace.HeineCantor
 
+
 /-!
 # The convexity lemma for random convex functions
 
@@ -26,11 +27,11 @@ is needed.
 
 ## Main results
 
-* `CKSD.tendsto_measure_exists_abs_sub_of_convexOn`: pointwise convergence in probability of
+* `CKSD.tendsto_measure_exists_abs_sub_of_convex_on`: pointwise convergence in probability of
   random convex functions to a continuous function is uniform on balls.
-* `CKSD.norm_sub_lt_of_convexOn_of_abs_sub_lt`: the deterministic argmin bound for a convex
+* `CKSD.norm_sub_lt_of_convex_on_of_abs_sub_lt`: the deterministic argmin bound for a convex
   function uniformly close to a positive definite quadratic on a ball.
-* `CKSD.tendstoInMeasure_sub_of_convexOn_of_isMinOn`: the Hjort–Pollard basic corollary; if
+* `CKSD.tendsto_in_measure_sub_of_convex_on_of_is_min_on`: the Hjort–Pollard basic corollary; if
   `Zₙ(h) = -⟪Uₙ, h⟫ + ½⟪h, A h⟫ + o_P(1)` pointwise with `Uₙ` bounded in probability and `A`
   positive definite, then every minimizer `αₙ` of `Zₙ` satisfies `αₙ - A⁻¹ Uₙ → 0` in probability.
 
@@ -58,7 +59,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 /-- A convex function on `E` whose values on a finite set `F` are within `1` of those of `q`,
 and likewise at the origin, is bounded on any set of points `h` with `h, -h ∈ conv F` by
 `∑_{v ∈ F} (|q v| + 1) + 2 (|q 0| + 1)`. -/
-private lemma abs_le_of_convexOn_of_mem_convexHull {f q : E → ℝ} (hf : ConvexOn ℝ univ f)
+private lemma abs_le_of_convex_on_of_mem_convex_hull {f q : E → ℝ} (hf : ConvexOn ℝ univ f)
     (F : Finset E) (hF : ∀ v ∈ F, |f v - q v| < 1) (h0 : |f 0 - q 0| < 1) {h : E}
     (hh : h ∈ convexHull ℝ (F : Set E)) (hh' : -h ∈ convexHull ℝ (F : Set E)) :
     |f h| ≤ ∑ v ∈ F, (|q v| + 1) + 2 * (|q 0| + 1) := by
@@ -94,7 +95,7 @@ well-chosen points is uniformly close to `q` on a ball: for `R` and `ε > 0` the
 set `S` and `ε' > 0` such that `|f v - q v| < ε'` on `S` implies `|f h - q h| < ε` whenever
 `‖h‖ ≤ R`, for every convex `f`. The points are the vertices of a polytope containing a larger
 ball, the origin, and a fine net of the ball. -/
-private lemma exists_finset_abs_sub_lt_of_convexOn [FiniteDimensional ℝ E] {q : E → ℝ}
+private lemma exists_finset_abs_sub_lt_of_convex_on [FiniteDimensional ℝ E] {q : E → ℝ}
     (hq : Continuous q) (R : ℝ) {ε : ℝ} (hε : 0 < ε) :
     ∃ S : Finset E, ∃ ε' > 0, ∀ f : E → ℝ, ConvexOn ℝ univ f →
       (∀ v ∈ S, |f v - q v| < ε') → ∀ h, ‖h‖ ≤ R → |f h - q h| < ε := by
@@ -125,7 +126,7 @@ private lemma exists_finset_abs_sub_lt_of_convexOn [FiniteDimensional ℝ E] {q 
     intro a ha
     have ha' : a ∈ closedBall (0 : E) (3 * r) := ball_subset_closedBall ha
     have hna : -a ∈ closedBall (0 : E) (3 * r) := by simpa using ha'
-    exact abs_le_of_convexOn_of_mem_convexHull hf F
+    exact abs_le_of_convex_on_of_mem_convex_hull hf F
       (fun v hv ↦ hS1 v (by simp [hv])) (hS1 0 (by simp))
       (interior_subset (hF ha')) (interior_subset (hF hna))
   have hlip := (hf.subset (subset_univ _) (convex_ball 0 (3 * r))).lipschitzOnWith_of_abs_le hr hbd
@@ -164,12 +165,12 @@ variable {Ω ι : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {l : Filter ι}
 space converge pointwise in probability to a continuous function `q`, then the convergence is
 uniform on every ball: `μ {ω | ∃ h, ‖h‖ ≤ R ∧ ε ≤ |gₙ ω h - q h|} → 0` for all `R` and `ε > 0`.
 No measurability in `ω` is assumed; the measure is the outer measure. -/
-theorem tendsto_measure_exists_abs_sub_of_convexOn [FiniteDimensional ℝ E]
+theorem tendsto_measure_exists_abs_sub_of_convex_on [FiniteDimensional ℝ E]
     (g : ι → Ω → E → ℝ) (hg : ∀ n ω, ConvexOn ℝ univ (g n ω)) {q : E → ℝ} (hq : Continuous q)
     (hpt : ∀ h, ∀ ε > 0, Tendsto (fun n ↦ μ {ω | ε ≤ |g n ω h - q h|}) l (𝓝 0))
     (R : ℝ) {ε : ℝ} (hε : 0 < ε) :
     Tendsto (fun n ↦ μ {ω | ∃ h, ‖h‖ ≤ R ∧ ε ≤ |g n ω h - q h|}) l (𝓝 0) := by
-  obtain ⟨S, ε', hε', hS⟩ := exists_finset_abs_sub_lt_of_convexOn hq R hε
+  obtain ⟨S, ε', hε', hS⟩ := exists_finset_abs_sub_lt_of_convex_on hq R hε
   have hsub : ∀ n, {ω | ∃ h, ‖h‖ ≤ R ∧ ε ≤ |g n ω h - q h|} ⊆
       ⋃ v ∈ S, {ω | ε' ≤ |g n ω v - q v|} := by
     intro n ω ⟨h, hh, hεh⟩
@@ -190,7 +191,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 /-- **Convexity lemma, deterministic argmin bound.** Let `f` be convex and uniformly within
 `c δ² / 4` of the quadratic `C + ½ ⟪h - β, A (h - β)⟫` on the closed ball of radius `δ` about
 `β`, where `⟪h, A h⟫ ≥ c ‖h‖²`. Then every `α` with `f α ≤ f β` satisfies `‖α - β‖ < δ`. -/
-theorem norm_sub_lt_of_convexOn_of_abs_sub_lt {f : E → ℝ} (hf : ConvexOn ℝ univ f)
+theorem norm_sub_lt_of_convex_on_of_abs_sub_lt {f : E → ℝ} (hf : ConvexOn ℝ univ f)
     (A : E →L[ℝ] E) {c δ C : ℝ} (hA : ∀ h, c * ‖h‖ ^ 2 ≤ ⟪h, A h⟫_ℝ) (hδ : 0 < δ) {β α : E}
     (happ : ∀ h, ‖h - β‖ ≤ δ → |f h - (C + ⟪h - β, A (h - β)⟫_ℝ / 2)| < c * δ ^ 2 / 4)
     (hα : f α ≤ f β) : ‖α - β‖ < δ := by
@@ -232,7 +233,7 @@ on a finite-dimensional inner product space with
 bounded in probability, and `A` is self-adjoint with `⟪h, A h⟫ ≥ c ‖h‖²`, `c > 0`, with right
 inverse `B`. Then every (almost sure) minimizer `αₙ` of `Zₙ` satisfies `αₙ - B Uₙ → 0` in
 probability. -/
-theorem tendstoInMeasure_sub_of_convexOn_of_isMinOn (Z : ι → Ω → E → ℝ)
+theorem tendsto_in_measure_sub_of_convex_on_of_is_min_on (Z : ι → Ω → E → ℝ)
     (hZ : ∀ n ω, ConvexOn ℝ univ (Z n ω)) (U : ι → Ω → E) (A B : E →L[ℝ] E)
     (hAB : ∀ u, A (B u) = u) (hAsymm : ∀ u v, ⟪A u, v⟫_ℝ = ⟪u, A v⟫_ℝ) {c : ℝ} (hc : 0 < c)
     (hA : ∀ h, c * ‖h‖ ^ 2 ≤ ⟪h, A h⟫_ℝ)
@@ -249,7 +250,7 @@ theorem tendstoInMeasure_sub_of_convexOn_of_isMinOn (Z : ι → Ω → E → ℝ
   set R : ℝ := ‖B‖ * |M| + ε with hR
   have hq : Continuous fun h : E ↦ ⟪h, A h⟫_ℝ / 2 :=
     (continuous_id.inner A.continuous).div_const 2
-  have hunif := tendsto_measure_exists_abs_sub_of_convexOn
+  have hunif := tendsto_measure_exists_abs_sub_of_convex_on
     (fun n ω h ↦ Z n ω h + ⟪U n ω, h⟫_ℝ)
     (fun n ω ↦ (hZ n ω).add (((innerSL ℝ (U n ω)) : E →ₗ[ℝ] ℝ).convexOn convex_univ)) hq
     (fun h ε hε ↦ by simpa only [add_sub_assoc] using hpt h ε hε) R
@@ -271,7 +272,7 @@ theorem tendstoInMeasure_sub_of_convexOn_of_isMinOn (Z : ι → Ω → E → ℝ
     have hβR : ‖β‖ ≤ ‖B‖ * |M| :=
       (B.le_opNorm _).trans (mul_le_mul_of_nonneg_left (hUM.trans (le_abs_self M))
         (norm_nonneg _))
-    refine (norm_sub_lt_of_convexOn_of_abs_sub_lt (hZ n ω) A hA hε
+    refine (norm_sub_lt_of_convex_on_of_abs_sub_lt (hZ n ω) A hA hε
       (C := -(⟪β, A β⟫_ℝ / 2)) (fun h hh ↦ ?_) (hmin' β)).not_ge hω
     have hhR : ‖h‖ ≤ R := by
       calc ‖h‖ = ‖(h - β) + β‖ := by rw [sub_add_cancel]

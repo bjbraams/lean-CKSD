@@ -6,6 +6,7 @@ public import CKSD.Inference.LaplaceDeterminacy
 public import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 public import CKSD.Inference.LogPartition
 
+
 /-!
 # Sufficiency and natural exponential families
 
@@ -16,13 +17,13 @@ public import CKSD.Inference.LogPartition
 
 ## Main results
 
-* `CKSD.isSufficientStatistic_iff_exists_factorization`: the factorization theorem (GAPS 101.1).
-* `CKSD.isSufficientStatistic_likelihoodRatio_and_ae_eq_comp`: the likelihood-ratio statistic is
+* `CKSD.is_sufficient_statistic_iff_exists_factorization`: the factorization theorem (GAPS 101.1).
+* `CKSD.is_sufficient_statistic_likelihood_ratio_and_ae_eq_comp`: the likelihood-ratio statistic is
   minimal sufficient (GAPS 101.2).
-* `CKSD.convex_naturalParameterSpace` and `CKSD.analyticOnNhd_logPartition_and_fderiv_eq_moments`:
+* `CKSD.convex_natural_parameter_space` and `CKSD.analytic_on_nhd_log_partition_and_fderiv_eq_moments`:
   convexity of the natural parameter space, and analyticity and cumulant identities of the log
   partition function (GAPS 101.4).
-* `CKSD.isCompleteStatistic_withDensity_exp_inner`: completeness of the natural statistic on a
+* `CKSD.is_complete_statistic_with_density_exp_inner`: completeness of the natural statistic on a
   parameter set with nonempty interior (GAPS 101.5).
 * `CKSD.exists_exponential_family_of_monotone_sufficient_statistics`: the Pitman–Koopman–Darmois
   theorem with monotone sufficient statistics (GAPS 101.6).
@@ -51,7 +52,7 @@ variable {Θ X S V : Type*} [MeasurableSpace X] [MeasurableSpace S]
 
 /-- GAPS 101.1: factorization on a standard Borel sample space and an arbitrary measurable
 statistic space. -/
-theorem isSufficientStatistic_iff_exists_factorization
+theorem is_sufficient_statistic_iff_exists_factorization
     [StandardBorelSpace X] [Nonempty X] [Nonempty Θ] (P : Θ → Measure X) (μ : Measure X) [SigmaFinite μ]
     (hP : ∀ θ, IsProbabilityMeasure (P θ)) (f : Θ → X → ℝ)
     (hf : ∀ θ, HasDensity (P θ) μ (f θ)) (T : X → S) (hT : Measurable T) :
@@ -59,14 +60,14 @@ theorem isSufficientStatistic_iff_exists_factorization
       (∀ θ, Measurable (g θ) ∧ ∀ s, 0 ≤ g θ s) ∧
       Measurable h ∧ (∀ x, 0 ≤ h x) ∧
       ∀ θ, ∀ᵐ x ∂μ, f θ x = g θ (T x) * h x := by
-  refine ⟨exists_factorization_of_isSufficientStatistic P μ hP f hf T, ?_⟩
+  refine ⟨exists_factorization_of_is_sufficient_statistic P μ hP f hf T, ?_⟩
   rintro ⟨g, h, hg, -, -, hfac⟩
-  exact isSufficientStatistic_of_factorization P μ hP f hf hT g h hg hfac
+  exact is_sufficient_statistic_of_factorization P μ hP f hf hT g h hg hfac
 
 /-- GAPS 101.4, convexity part: the natural parameter space `{η | ∫ exp ⟪η, t⟫ dν(t) < ∞}` of a
 measure `ν` on a real inner product space is convex (Hölder's inequality, here through the
 convexity of `exp`). -/
-theorem convex_naturalParameterSpace {H : Type*} [NormedAddCommGroup H]
+theorem convex_natural_parameter_space {H : Type*} [NormedAddCommGroup H]
     [InnerProductSpace ℝ H] [MeasurableSpace H] [BorelSpace H] (ν : Measure H) :
     Convex ℝ (naturalParameterSpace ν id) := by
   intro η hη ζ hζ a b ha hb hab
@@ -83,7 +84,7 @@ theorem convex_naturalParameterSpace {H : Type*} [NormedAddCommGroup H]
 /-- GAPS 101.5: completeness of the natural statistic. For the laws
 `exp ⟪η, T⟫ / Z(η) · ν` with `η` ranging over a nonempty open set `U`, where `Z(η)` is the
 (finite, positive) normalizer, the statistic `T` is complete. -/
-theorem isCompleteStatistic_withDensity_exp_inner {d : ℕ} (ν : Measure X)
+theorem is_complete_statistic_with_density_exp_inner {d : ℕ} (ν : Measure X)
     (T : X → EuclideanSpace ℝ (Fin d)) (hT : Measurable T)
     (U : Set (EuclideanSpace ℝ (Fin d))) (hU : IsOpen U) (hne : U.Nonempty)
     (Z : EuclideanSpace ℝ (Fin d) → ℝ)
@@ -103,8 +104,8 @@ theorem isCompleteStatistic_withDensity_exp_inner {d : ℕ} (ν : Measure X)
     have hZ0 := (hZ η hη).2.2
     have hd : Measurable fun x ↦ Real.exp (inner ℝ η (T x)) / Z η := (hw η).div_const _
     have hd0 : ∀ x, 0 ≤ Real.exp (inner ℝ η (T x)) / Z η := fun x ↦ by positivity
-    have hi' := (integrable_withDensity_ofReal_iff ν hd hd0 _).1 hi
-    have hz' := integral_withDensity_ofReal ν hd hd0 (fun x ↦ g (T x))
+    have hi' := (integrable_with_density_of_real_iff ν hd hd0 _).1 hi
+    have hz' := integral_with_density_of_real ν hd hd0 (fun x ↦ g (T x))
     have heq : (fun x ↦ Real.exp (inner ℝ η (T x)) * g (T x)) =
         fun x ↦ Z η * (Real.exp (inner ℝ η (T x)) / Z η * g (T x)) := by
       funext x; field_simp
@@ -171,9 +172,9 @@ theorem isCompleteStatistic_withDensity_exp_inner {d : ℕ} (ν : Measure X)
     fun_prop
   have hμ : μp = μm := by
     refine measure_eq_of_integral_exp_inner_eq μp μm hr (fun u hu ↦ ?_) (fun u hu ↦ ?_)
-    · exact (integrable_map_withDensity_ofReal_iff ν hT hpm hp0 (hFm u)).2 (hpart u hu).1
-    · rw [integral_map_withDensity_ofReal ν hT hpm hp0 (hFm u),
-        integral_map_withDensity_ofReal ν hT hmm hm0 (hFm u), ← sub_eq_zero,
+    · exact (integrable_map_with_density_of_real_iff ν hT hpm hp0 (hFm u)).2 (hpart u hu).1
+    · rw [integral_map_with_density_of_real ν hT hpm hp0 (hFm u),
+        integral_map_with_density_of_real ν hT hmm hm0 (hFm u), ← sub_eq_zero,
         ← integral_sub (hpart u hu).1 (hpart u hu).2]
       rw [← (key _ (hmem u hu)).2]
       congr 1
@@ -226,7 +227,7 @@ theorem isCompleteStatistic_withDensity_exp_inner {d : ℕ} (ν : Measure X)
 /-- GAPS 101.2: for a countable family with everywhere positive densities `f θ`, the likelihood
 ratio `R(x) = (f θ x / f θ₀ x)_θ` is sufficient, and it is minimal: for every sufficient statistic
 `T` there is a measurable `φ` with `R = φ ∘ T` almost surely under every `P θ`. -/
-theorem isSufficientStatistic_likelihoodRatio_and_ae_eq_comp
+theorem is_sufficient_statistic_likelihood_ratio_and_ae_eq_comp
     [StandardBorelSpace X] [Nonempty X] [Countable Θ]
     (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
     (mu : Measure X) [SigmaFinite mu] (f : Θ → X → ℝ)
@@ -237,13 +238,13 @@ theorem isSufficientStatistic_likelihoodRatio_and_ae_eq_comp
   intro R
   have : Nonempty Θ := ⟨θ₀⟩
   have hR : Measurable R := Measurable.of_eval fun θ ↦ (hf θ).1.div (hf θ₀).1
-  refine ⟨isSufficientStatistic_of_factorization P mu hP f hf hR (fun θ r ↦ max (r θ) 0)
+  refine ⟨is_sufficient_statistic_of_factorization P mu hP f hf hR (fun θ r ↦ max (r θ) 0)
     (f θ₀) (fun θ ↦ ⟨(measurable_pi_apply θ).max measurable_const, fun _ ↦ le_max_right _ _⟩)
     fun θ ↦ ae_of_all _ fun x ↦ ?_, fun T hT ↦ ?_⟩
   · simp only [R]
     rw [max_eq_left (div_nonneg (hpos θ x).le (hpos θ₀ x).le),
       div_mul_cancel₀ _ (hpos θ₀ x).ne']
-  obtain ⟨g, h, hg, -, -, hfac⟩ := exists_factorization_of_isSufficientStatistic P mu hP f hf T hT
+  obtain ⟨g, h, hg, -, -, hfac⟩ := exists_factorization_of_is_sufficient_statistic P mu hP f hf T hT
   refine ⟨fun s θ ↦ g θ s / g θ₀ s,
     Measurable.of_eval fun θ ↦ (hg θ).1.div (hg θ₀).1, fun θ ↦ ?_⟩
   have hac : P θ ≪ mu := (hf θ).2.2 ▸ withDensity_absolutelyContinuous _ _
@@ -275,7 +276,7 @@ theorem exists_exponential_family_of_monotone_sufficient_statistics
 real inner product space `E` and statistic the identity, the log partition function `A` is real
 analytic on the interior of the natural parameter space `N`; at every `η ∈ interior N` its
 gradient is the mean of the law `P η` at `η` and its Hessian is the covariance of `P η`. -/
-theorem analyticOnNhd_logPartition_and_fderiv_eq_moments
+theorem analytic_on_nhd_log_partition_and_fderiv_eq_moments
     {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
     [MeasurableSpace E] [BorelSpace E] (ν : Measure E) [SigmaFinite ν] (hne : ν ≠ 0) :
     AnalyticOnNhd ℝ (logPartition ν id) (interior (naturalParameterSpace ν id)) ∧
@@ -285,8 +286,8 @@ theorem analyticOnNhd_logPartition_and_fderiv_eq_moments
         ∀ u v : E, fderiv ℝ (fderiv ℝ (logPartition ν id)) η u v =
           cov[fun x ↦ inner ℝ u x, fun x ↦ inner ℝ v x;
             exponentialFamilyMeasure ν id η] := by
-  exact ⟨analyticOnNhd_logPartition ν hne, fun η hη ↦
-    ⟨hasFDerivAt_logPartition ν hne hη, fderiv_fderiv_logPartition_apply ν hne hη⟩⟩
+  exact ⟨analytic_on_nhd_log_partition ν hne, fun η hη ↦
+    ⟨has_f_deriv_at_log_partition ν hne hη, fderiv_fderiv_log_partition_apply ν hne hη⟩⟩
 
 /-- A regular scalar natural exponential family: laws `exp (η T - A(η)) · base` for natural
 parameters `η` in an open interval `domain` on which `exp (η T)` is `base`-integrable, with a

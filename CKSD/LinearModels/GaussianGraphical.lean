@@ -7,6 +7,7 @@ public import Mathlib.Probability.Kernel.CondDistrib
 import Mathlib.Probability.Kernel.CompProdEqIff
 import TauCeti.Probability.Distributions.Gaussian.Independence
 
+
 /-!
 # Gaussian graphical concentration models
 
@@ -26,12 +27,12 @@ matrix `Σ⁻¹` vanishes off the edges of `G`.
 
 ## Main results
 
-* `CKSD.condIndepFun_multivariateGaussian_iff_inv_apply_eq_zero`: for positive definite `Σ`,
+* `CKSD.cond_indep_fun_multivariate_gaussian_iff_inv_apply_eq_zero`: for positive definite `Σ`,
   coordinates `i ≠ j` of `N(m, Σ)` are conditionally independent given the other coordinates
   exactly when `(Σ⁻¹)ᵢⱼ = 0`.
-* `CKSD.hasGaussianPairwiseMarkovProperty_iff_inv_mem_concentrationModel`: the pairwise Markov
+* `CKSD.has_gaussian_pairwise_markov_property_iff_inv_mem_concentration_model`: the pairwise Markov
   property relative to `G` holds exactly when `Σ⁻¹` lies in the concentration model of `G`.
-* `CKSD.condIndepFun_iff_indepFun_of_eq_add`: conditional independence given `Y` of two variables
+* `CKSD.cond_indep_fun_iff_indep_fun_of_eq_add`: conditional independence given `Y` of two variables
   that differ from functions of `Y` by a residual pair independent of `Y` is independence of the
   residuals.
 
@@ -56,7 +57,7 @@ namespace CKSD
 /-- Conditional independence through a conditional law: if the conditional distribution of
 `(f, g)` given `k` is a.e. the Markov kernel `κ`, then `f` and `g` are conditionally independent
 given `k` exactly when `κ` is a.e. the product of its two marginal kernels. -/
-theorem condIndepFun_iff_ae_eq_prod_of_condDistrib_ae_eq
+theorem cond_indep_fun_iff_ae_eq_prod_of_cond_distrib_ae_eq
     {Ω γ β β' : Type*} {mΩ : MeasurableSpace Ω} [StandardBorelSpace Ω]
     {mγ : MeasurableSpace γ} {mβ : MeasurableSpace β} {mβ' : MeasurableSpace β'}
     [StandardBorelSpace β] [Nonempty β] [StandardBorelSpace β'] [Nonempty β']
@@ -90,7 +91,7 @@ theorem condIndepFun_iff_ae_eq_prod_of_condDistrib_ae_eq
 
 /-- Conditional independence given `Y` of `f = R₁ + a₁ ∘ Y` and `g = R₂ + a₂ ∘ Y`, where the
 residual pair `(R₁, R₂)` is independent of `Y`, is equivalent to independence of `R₁` and `R₂`. -/
-theorem condIndepFun_iff_indepFun_of_eq_add
+theorem cond_indep_fun_iff_indep_fun_of_eq_add
     {Ω γ : Type*} {mΩ : MeasurableSpace Ω} [StandardBorelSpace Ω] {mγ : MeasurableSpace γ}
     {μ : Measure Ω} [IsProbabilityMeasure μ] {Y : Ω → γ} {f g R₁ R₂ : Ω → ℝ}
     {a₁ a₂ : γ → ℝ} (hY : Measurable Y) (hR₁ : Measurable R₁) (hR₂ : Measurable R₂)
@@ -130,7 +131,7 @@ theorem condIndepFun_iff_indepFun_of_eq_add
   have : IsProbabilityMeasure ν :=
     (Measure.isProbabilityMeasure_map_iff hR.aemeasurable).2 inferInstance
   have : IsMarkovKernel κ := Kernel.IsMarkovKernel.map _ hT
-  rw [condIndepFun_iff_ae_eq_prod_of_condDistrib_ae_eq (by fun_prop) (by fun_prop) hY κ hcond]
+  rw [cond_indep_fun_iff_ae_eq_prod_of_cond_distrib_ae_eq (by fun_prop) (by fun_prop) hY κ hcond]
   have hind' : IndepFun R₁ R₂ μ ↔ ν = (ν.map Prod.fst).prod (ν.map Prod.snd) := by
     rw [indepFun_iff_map_prod_eq_prod_map_map hR₁.aemeasurable hR₂.aemeasurable, hν,
       Measure.map_map measurable_fst hR, Measure.map_map measurable_snd hR]
@@ -160,7 +161,7 @@ def otherCoordinates (i j : ι) (x : EuclideanSpace ℝ ι) :
 
 omit [Fintype ι] [DecidableEq ι] in
 /-- The map to the coordinates other than `i` and `j` is measurable. -/
-@[fun_prop] theorem measurable_otherCoordinates (i j : ι) :
+@[fun_prop] theorem measurable_other_coordinates (i j : ι) :
     Measurable (otherCoordinates i j) := by
   unfold otherCoordinates
   fun_prop
@@ -178,11 +179,11 @@ def HasGaussianPairwiseMarkovProperty (G : SimpleGraph ι) (m : EuclideanSpace �
   ∀ i j, i ≠ j → ¬ G.Adj i j →
     CondIndepFun ((inferInstance : MeasurableSpace
       ({k : ι // k ≠ i ∧ k ≠ j} → ℝ)).comap (otherCoordinates i j))
-      (measurable_otherCoordinates i j).comap_le (fun x ↦ x i) (fun x ↦ x j)
+      (measurable_other_coordinates i j).comap_le (fun x ↦ x i) (fun x ↦ x j)
         (multivariateGaussian m Sigma)
 
 /-- Splitting a sum over `ι` into the terms at `i`, at `j`, and at the remaining indices. -/
-private theorem sum_eq_add_add_sum_otherCoords {i j : ι} (hij : i ≠ j) (h : ι → ℝ) :
+private theorem sum_eq_add_add_sum_other_coords {i j : ι} (hij : i ≠ j) (h : ι → ℝ) :
     ∑ k, h k = h i + h j + ∑ b : {k : ι // k ≠ i ∧ k ≠ j}, h b := by
   rw [← Finset.add_sum_erase _ _ (Finset.mem_univ i),
     ← Finset.add_sum_erase _ _ (Finset.mem_erase.2 ⟨hij.symm, Finset.mem_univ j⟩), add_assoc]
@@ -210,7 +211,7 @@ private theorem inv_apply_one_zero_eq_zero_iff {M : Matrix (Fin 2) (Fin 2) ℝ} 
 
 /-- Two linear functionals `x ↦ (W x)_r` and `x ↦ (W x)_s` of a Gaussian vector `N(m, Σ)` are
 independent exactly when their covariance `(W Σ Wᵀ)_{rs}` vanishes. -/
-private theorem indepFun_mulVec_apply_multivariateGaussian_iff {κ : Type*} [Fintype κ]
+private theorem indep_fun_mul_vec_apply_multivariate_gaussian_iff {κ : Type*} [Fintype κ]
     (m : EuclideanSpace ℝ ι) {Sigma : Matrix ι ι ℝ} (hS : Sigma.PosSemidef) (W : Matrix κ ι ℝ)
     (r s : κ) :
     IndepFun (fun x : EuclideanSpace ℝ ι ↦ (W *ᵥ WithLp.ofLp x) r)
@@ -248,12 +249,12 @@ private theorem indepFun_mulVec_apply_multivariateGaussian_iff {κ : Type*} [Fin
 /-- GAPS 105.26: for a positive definite covariance `Σ` and `i ≠ j`, the coordinates `xᵢ` and
 `xⱼ` of `N(m, Σ)` are conditionally independent given the remaining coordinates exactly when the
 `(i, j)` entry of the concentration matrix `Σ⁻¹` vanishes. -/
-theorem condIndepFun_multivariateGaussian_iff_inv_apply_eq_zero
+theorem cond_indep_fun_multivariate_gaussian_iff_inv_apply_eq_zero
     (m : EuclideanSpace ℝ ι) (Sigma : Matrix ι ι ℝ)
     (hSigma : Sigma.PosDef) (i j : ι) (hij : i ≠ j) :
     CondIndepFun ((inferInstance : MeasurableSpace
       ({k : ι // k ≠ i ∧ k ≠ j} → ℝ)).comap (otherCoordinates i j))
-      (measurable_otherCoordinates i j).comap_le (fun x ↦ x i) (fun x ↦ x j)
+      (measurable_other_coordinates i j).comap_le (fun x ↦ x i) (fun x ↦ x j)
         (multivariateGaussian m Sigma) ↔ Sigma⁻¹ i j = 0 := by
   set K := Sigma⁻¹ with hK
   have hKpd : K.PosDef := hSigma.inv
@@ -273,7 +274,7 @@ theorem condIndepFun_multivariateGaussian_iff_inv_apply_eq_zero
       K₂ *ᵥ (fun r ↦ x (idx r)) + KAB *ᵥ (fun b ↦ x b) := by
     ext r
     simp only [mulVec, dotProduct, Pi.add_apply, submatrix_apply, id]
-    rw [sum_eq_add_add_sum_otherCoords hij, Fin.sum_univ_two]
+    rw [sum_eq_add_add_sum_other_coords hij, Fin.sum_univ_two]
     fin_cases r <;> simp [idx, KAB, K₂]
   have hR (x : EuclideanSpace ℝ ι) :
       R x = (fun r ↦ x (idx r)) + K₂⁻¹ *ᵥ (KAB *ᵥ otherCoordinates i j x) := by
@@ -332,10 +333,10 @@ theorem condIndepFun_multivariateGaussian_iff_inv_apply_eq_zero
     rw [hSW, h1, nonsing_inv_mul _ hu₂, Matrix.one_mul]
   have hpair : IndepFun (fun x ↦ R x 0) (fun x ↦ R x 1) (multivariateGaussian m Sigma) ↔
       (W * Sigma * Wᵀ) 0 1 = 0 :=
-    indepFun_mulVec_apply_multivariateGaussian_iff m hS W 0 1
-  rw [condIndepFun_iff_indepFun_of_eq_add (f := fun x ↦ x i) (g := fun x ↦ x j)
+    indep_fun_mul_vec_apply_multivariate_gaussian_iff m hS W 0 1
+  rw [cond_indep_fun_iff_indep_fun_of_eq_add (f := fun x ↦ x i) (g := fun x ↦ x j)
     (R₁ := fun x ↦ R x 0) (R₂ := fun x ↦ R x 1)
-    (a₁ := fun y ↦ a y 0) (a₂ := fun y ↦ a y 1) (measurable_otherCoordinates i j)
+    (a₁ := fun y ↦ a y 0) (a₂ := fun y ↦ a y 1) (measurable_other_coordinates i j)
     (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop) (fun x ↦ hdecomp x 0)
     (fun x ↦ hdecomp x 1) hind, hpair, hWSW, transpose_apply,
     inv_apply_one_zero_eq_zero_iff hK₂]
@@ -344,14 +345,14 @@ theorem condIndepFun_multivariateGaussian_iff_inv_apply_eq_zero
 /-- GAPS 105.26: for a positive definite covariance `Σ`, the law `N(m, Σ)` has the pairwise
 Markov property relative to `G` exactly when its concentration matrix `Σ⁻¹` lies in the
 concentration model of `G`. -/
-theorem hasGaussianPairwiseMarkovProperty_iff_inv_mem_concentrationModel (G : SimpleGraph ι)
+theorem has_gaussian_pairwise_markov_property_iff_inv_mem_concentration_model (G : SimpleGraph ι)
     (m : EuclideanSpace ℝ ι) {Sigma : Matrix ι ι ℝ} (hSigma : Sigma.PosDef) :
     HasGaussianPairwiseMarkovProperty G m Sigma ↔ Sigma⁻¹ ∈ concentrationModel G :=
   ⟨fun h ↦ ⟨hSigma.inv, fun i j hij hG ↦
-      (condIndepFun_multivariateGaussian_iff_inv_apply_eq_zero m Sigma hSigma i j hij).1
+      (cond_indep_fun_multivariate_gaussian_iff_inv_apply_eq_zero m Sigma hSigma i j hij).1
         (h i j hij hG)⟩,
     fun h i j hij hG ↦
-      (condIndepFun_multivariateGaussian_iff_inv_apply_eq_zero m Sigma hSigma i j hij).2
+      (cond_indep_fun_multivariate_gaussian_iff_inv_apply_eq_zero m Sigma hSigma i j hij).2
         (h.2 i j hij hG)⟩
 
 /-- The Gaussian log likelihood of a concentration matrix `K` for `n` observations with centred

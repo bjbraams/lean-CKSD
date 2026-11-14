@@ -10,6 +10,7 @@ public import Mathlib.Analysis.SpecificLimits.FloorPow
 public import Mathlib.Analysis.PSeries
 public import CKSD.Bayes.MonteCarlo
 
+
 /-!
 # Central limit theorem for finite-state Markov chains
 
@@ -23,11 +24,11 @@ transition matrix. The chain is the one of `CKSD.Bayes.MonteCarlo`.
 
 ## Main results
 
-* `CKSD.condExp_comp_pair_succ_ae_eq`: the Markov property in conditional form.
-* `CKSD.exists_sub_mulVec_eq_of_pos`: the Poisson equation for a positive transition matrix.
-* `CKSD.tendstoInDistribution_finite_markov_chain_sum`: the central limit theorem for a
+* `CKSD.cond_exp_comp_pair_succ_ae_eq`: the Markov property in conditional form.
+* `CKSD.exists_sub_mul_vec_eq_of_pos`: the Poisson equation for a positive transition matrix.
+* `CKSD.tendsto_in_distribution_finite_markov_chain_sum`: the central limit theorem for a
   stationary chain with a positive transition matrix (GAPS 104.24), via the Poisson equation
-  and the martingale central limit theorem `CKSD.tendstoInDistribution_sum_of_sum_condVar_le`.
+  and the martingale central limit theorem `CKSD.tendsto_in_distribution_sum_of_sum_cond_var_le`.
 -/
 
 @[expose] public section
@@ -58,7 +59,7 @@ theorem integral_mul_comp_pair_succ_eq {Ω : Type*} [MeasurableSpace Ω]
       ∫ ω, F (fun i : Fin (n + 1) ↦ X i ω) * ∑ y, K (X n ω) y * φ (X n ω) y ∂μ := by
   set G : ι → (Fin (n + 1) → ι) → ℝ := fun x z ↦ F z * if z (Fin.last n) = x then 1 else 0
     with hG
-  have hpre := measurable_finChainPrefix X hX n
+  have hpre := measurable_fin_chain_prefix X hX n
   have hL (ω : Ω) : F (fun i : Fin (n + 1) ↦ X i ω) * φ (X n ω) (X (n + 1) ω) =
       ∑ x, G x (fun i : Fin (n + 1) ↦ X i ω) * φ x (X (n + 1) ω) := by
     simp [hG, Fin.val_last, mul_ite, ite_mul]
@@ -73,11 +74,11 @@ theorem integral_mul_comp_pair_succ_eq {Ω : Type*} [MeasurableSpace Ω]
       (fun ω ↦ ((fun i : Fin (n + 1) ↦ X i ω), X n ω)) (hpre.prodMk (hX n))
       (fun z ↦ G x z.1 * Matrix.mulVec K (φ x) z.2)]
   exact Finset.sum_congr rfl fun x _ ↦
-    integral_mul_comp_succ_eq_mulVec μ K X hX hstep n (G x) (φ x)
+    integral_mul_comp_succ_eq_mul_vec μ K X hX hstep n (G x) (φ x)
 
 /-- `k`-step Markov property from the initial state of a finite-state chain given by its path
 probabilities: `𝔼[a(X 0) v(X k)] = 𝔼[a(X 0) (Kᵏ v)(X 0)]`. -/
-theorem integral_mul_comp_eq_pow_mulVec {Ω : Type*} [MeasurableSpace Ω]
+theorem integral_mul_comp_eq_pow_mul_vec {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix ι ι ℝ)
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
@@ -89,7 +90,7 @@ theorem integral_mul_comp_eq_pow_mulVec {Ω : Type*} [MeasurableSpace Ω]
   induction k generalizing v with
   | zero => simp
   | succ k ih =>
-    have h := integral_mul_comp_succ_eq_mulVec μ K X hX hstep k (fun z ↦ a (z 0)) v
+    have h := integral_mul_comp_succ_eq_mul_vec μ K X hX hstep k (fun z ↦ a (z 0)) v
     simp only [Fin.val_zero] at h
     rw [h, ih, pow_succ, ← Matrix.mulVec_mulVec]
 
@@ -106,12 +107,12 @@ def chainFiltration {Ω : Type*} [m : MeasurableSpace Ω]
     simp only
     rw [this, ← MeasurableSpace.comap_comp]
     exact MeasurableSpace.comap_mono (measurable_of_finite _).comap_le
-  le' n := (measurable_finChainPrefix X hX n).comap_le
+  le' n := (measurable_fin_chain_prefix X hX n).comap_le
 
 omit [DecidableEq ι] in
 /-- A real function of the prefix `(X 0, …, X n)` is measurable for the `n`-th `σ`-algebra of
 the natural filtration. -/
-theorem measurable_chainFiltration {Ω : Type*} [MeasurableSpace Ω]
+theorem measurable_chain_filtration {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n)) (n : ℕ) (G : (Fin (n + 1) → ι) → ℝ) :
     StronglyMeasurable[chainFiltration X hX n] fun ω ↦ G fun i : Fin (n + 1) ↦ X i ω :=
@@ -119,7 +120,7 @@ theorem measurable_chainFiltration {Ω : Type*} [MeasurableSpace Ω]
 
 /-- Markov property in conditional form: given the prefix `(X 0, …, X n)`, the conditional
 expectation of `φ(X n, X (n+1))` is `∑_y K(X n, y) φ(X n, y)`. -/
-theorem condExp_comp_pair_succ_ae_eq {Ω : Type*} [MeasurableSpace Ω]
+theorem cond_exp_comp_pair_succ_ae_eq {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix ι ι ℝ)
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
@@ -129,7 +130,7 @@ theorem condExp_comp_pair_succ_ae_eq {Ω : Type*} [MeasurableSpace Ω]
     (n : ℕ) (φ : ι → ι → ℝ) :
     μ[fun ω ↦ φ (X n ω) (X (n + 1) ω) | chainFiltration X hX n] =ᵐ[μ]
       fun ω ↦ ∑ y, K (X n ω) y * φ (X n ω) y := by
-  have hpre := measurable_finChainPrefix X hX n
+  have hpre := measurable_fin_chain_prefix X hX n
   refine (ae_eq_condExp_of_forall_setIntegral_eq ((chainFiltration X hX).le n)
     (integrable_comp_of_finite μ (fun ω ↦ (X n ω, X (n + 1) ω)) ((hX n).prodMk (hX (n + 1)))
       fun z ↦ φ z.1 z.2) (fun s _ _ ↦ (integrable_comp_of_finite μ (X n) (hX n)
@@ -142,12 +143,12 @@ theorem condExp_comp_pair_succ_ae_eq {Ω : Type*} [MeasurableSpace Ω]
     all_goals
       funext ω
       by_cases hω : (fun i : Fin (n + 1) ↦ X i ω) ∈ S <;> simp [hω]
-  · exact (measurable_chainFiltration X hX n
+  · exact (measurable_chain_filtration X hX n
       (fun z ↦ ∑ y, K (z (Fin.last n)) y * φ (z (Fin.last n)) y)).aestronglyMeasurable
 
 /-- Geometric decay of `Kᵏ g` for a positive stochastic matrix `K` with invariant law `π` and a
 `π`-centred `g`. -/
-theorem exists_abs_pow_mulVec_le_of_pos (π : ι → ℝ) (K : Matrix ι ι ℝ)
+theorem exists_abs_pow_mul_vec_le_of_pos (π : ι → ℝ) (K : Matrix ι ι ℝ)
     (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1) (hK : ∀ x y, 0 < K x y)
     (hK1 : ∀ x, ∑ y, K x y = 1) (hstat : ∀ y, ∑ x, π x * K x y = π y)
     (g : ι → ℝ) (hg : ∑ x, π x * g x = 0) :
@@ -181,13 +182,13 @@ theorem exists_abs_pow_mulVec_le_of_pos (π : ι → ℝ) (K : Matrix ι ι ℝ)
 
 /-- Poisson equation for a positive stochastic matrix: `u = ∑ₖ Kᵏ g` solves `u - K u = g`, and
 `K u = ∑ₖ Kᵏ⁺¹ g`. -/
-theorem exists_sub_mulVec_eq_of_pos (π : ι → ℝ) (K : Matrix ι ι ℝ)
+theorem exists_sub_mul_vec_eq_of_pos (π : ι → ℝ) (K : Matrix ι ι ℝ)
     (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1) (hK : ∀ x y, 0 < K x y)
     (hK1 : ∀ x, ∑ y, K x y = 1) (hstat : ∀ y, ∑ x, π x * K x y = π y)
     (g : ι → ℝ) (hg : ∑ x, π x * g x = 0) :
     ∃ u : ι → ℝ, (∀ x, u x - Matrix.mulVec K u x = g x) ∧
       ∀ x, HasSum (fun k ↦ Matrix.mulVec (K ^ (k + 1)) g x) (Matrix.mulVec K u x) := by
-  obtain ⟨r, hr0, hr1, hdecay⟩ := exists_abs_pow_mulVec_le_of_pos π K hπ hπ1 hK hK1 hstat g hg
+  obtain ⟨r, hr0, hr1, hdecay⟩ := exists_abs_pow_mul_vec_le_of_pos π K hπ hπ1 hK hK1 hstat g hg
   have hsum (x : ι) : Summable fun k ↦ Matrix.mulVec (K ^ k) g x :=
     Summable.of_norm_bounded
       ((summable_geometric_of_lt_one hr0 hr1).mul_left (∑ y, |g y|))
@@ -209,7 +210,7 @@ theorem exists_sub_mulVec_eq_of_pos (π : ι → ℝ) (K : Matrix ι ι ℝ)
 
 omit [DecidableEq ι] in
 /-- A real function of a measurable finite-valued map is in every `Lᵖ`. -/
-private theorem memLp_comp_of_fintype {Ω β : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+private theorem mem_lp_comp_of_fintype {Ω β : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsFiniteMeasure μ] [Fintype β] [MeasurableSpace β] [MeasurableSingletonClass β]
     (Y : Ω → β) (hY : Measurable Y) (F : β → ℝ) (p : ℝ≥0∞) :
     MemLp (fun ω ↦ F (Y ω)) p μ :=
@@ -224,7 +225,7 @@ converges in law to the centred normal law with variance
 `∑ₓ π(x) ∑_y K(x,y) (u(y) - (K u)(x))²`. The conditional variances are functions of the current
 state, whose averages converge by the ergodic theorem, and the increments are bounded, so the
 conditional Lindeberg terms vanish for large `n`. -/
-private theorem tendstoInDistribution_sum_markovIncrement_div_sqrt {Ω : Type*}
+private theorem tendsto_in_distribution_sum_markov_increment_div_sqrt {Ω : Type*}
     [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
@@ -268,8 +269,8 @@ private theorem tendstoInDistribution_sum_markovIncrement_div_sqrt {Ω : Type*}
       fun _ ↦ v := by
     have hwc : ∑ x, π x * (w x - v) = 0 := by
       simp only [mul_sub, Finset.sum_sub_distrib, ← Finset.sum_mul, hπ1, one_mul, hv, sub_self]
-    obtain ⟨u', hu', -⟩ := exists_sub_mulVec_eq_of_pos π K hπ hπ1 hK hK1 hstat _ hwc
-    have hae := ae_tendsto_sampleAverage_of_sub_mulVec_eq μ K (fun x y ↦ (hK x y).le) hK1 X hX
+    obtain ⟨u', hu', -⟩ := exists_sub_mul_vec_eq_of_pos π K hπ hπ1 hK hK1 hstat _ hwc
+    have hae := ae_tendsto_sample_average_of_sub_mul_vec_eq μ K (fun x y ↦ (hK x y).le) hK1 X hX
       hstep w v u' hu'
     refine tendstoInMeasure_of_tendsto_ae (fun n ↦ (Finset.measurable_sum _ fun i _ ↦
       ((measurable_of_finite w).comp (hX i)).div_const _).aestronglyMeasurable) ?_
@@ -302,23 +303,23 @@ private theorem tendstoInDistribution_sum_markovIncrement_div_sqrt {Ω : Type*}
         linarith [hAle (X i ω) y]
       simp [hnot]
     simp [hzero]
-  exact tendstoInDistribution_sum_of_sum_condVar_le μ Fn Xa σ2 ℓ (fun n ↦ n)
-    (fun n i ↦ measurable_chainFiltration X hX (i + 1)
+  exact tendsto_in_distribution_sum_of_sum_cond_var_le μ Fn Xa σ2 ℓ (fun n ↦ n)
+    (fun n i ↦ measurable_chain_filtration X hX (i + 1)
       (fun z ↦ (u (z (Fin.last (i + 1))) - Ku (z ⟨i, by omega⟩)) / Real.sqrt n))
-    (fun n i ↦ memLp_comp_of_fintype μ (fun ω ↦ (X i ω, X (i + 1) ω))
+    (fun n i ↦ mem_lp_comp_of_fintype μ (fun ω ↦ (X i ω, X (i + 1) ω))
       ((hX i).prodMk (hX (i + 1))) (fun z ↦ (u z.2 - Ku z.1) / Real.sqrt n) 2)
     (fun n i ↦ by
-      refine (condExp_comp_pair_succ_ae_eq μ K X hX hstep i
+      refine (cond_exp_comp_pair_succ_ae_eq μ K X hX hstep i
         (fun x y ↦ (u y - Ku x) / Real.sqrt n)).trans (ae_of_all _ fun ω ↦ ?_)
       simp only [Pi.zero_apply, mul_div_assoc', ← Finset.sum_div, mul_sub,
         Finset.sum_sub_distrib, ← Finset.sum_mul, hK1, one_mul]
       simp [hKudef, Matrix.mulVec, dotProduct])
-    (fun n i ↦ measurable_chainFiltration X hX i (fun z ↦ w (z (Fin.last i)) / n))
+    (fun n i ↦ measurable_chain_filtration X hX i (fun z ↦ w (z (Fin.last i)) / n))
     (fun n i ↦ by
-      refine ((condExp_comp_pair_succ_ae_eq μ K X hX hstep i
+      refine ((cond_exp_comp_pair_succ_ae_eq μ K X hX hstep i
         (fun x y ↦ ((u y - Ku x) / Real.sqrt n) ^ 2)).trans (ae_of_all _ fun ω ↦ ?_)).symm
       simp only [hσ2, hw, div_pow, hsq, mul_div_assoc', Finset.sum_div])
-    (fun ε _ n i ↦ (condExp_comp_pair_succ_ae_eq μ K X hX hstep i
+    (fun ε _ n i ↦ (cond_exp_comp_pair_succ_ae_eq μ K X hX hstep i
         (fun x y ↦ if ε < |(u y - Ku x) / Real.sqrt n| then ((u y - Ku x) / Real.sqrt n) ^ 2
           else 0)).symm)
     (fun n i ↦ ae_of_all _ fun ω ↦ div_nonneg (hw0 _) (Nat.cast_nonneg n))
@@ -328,8 +329,8 @@ private theorem tendstoInDistribution_sum_markovIncrement_div_sqrt {Ω : Type*}
 the Poisson equation `u - K u = f - m`, the normalized sample averages `√n (n⁻¹ ∑_{i<n} f(Xᵢ) - m)`
 converge in law to the centred normal law with variance
 `∑ₓ π(x) ∑_y K(x,y) (u(y) - (K u)(x))²`: they differ from the normalized martingale of
-`tendstoInDistribution_sum_markovIncrement_div_sqrt` by `(u(X₀) - u(Xₙ)) / √n`. -/
-private theorem tendstoInDistribution_sqrt_mul_sampleAverage_sub_of_poisson {Ω : Type*}
+`tendsto_in_distribution_sum_markov_increment_div_sqrt` by `(u(X₀) - u(Xₙ)) / √n`. -/
+private theorem tendsto_in_distribution_sqrt_mul_sample_average_sub_of_poisson {Ω : Type*}
     [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
@@ -347,7 +348,7 @@ private theorem tendstoInDistribution_sqrt_mul_sampleAverage_sub_of_poisson {Ω 
       (gaussianReal 0 (∑ x, π x * ∑ y, K x y * (u y - Matrix.mulVec K u x) ^ 2).toNNReal) := by
   set Ku := Matrix.mulVec K u with hKudef
   have hsq (n : ℕ) : Real.sqrt n ^ 2 = n := Real.sq_sqrt (Nat.cast_nonneg n)
-  have hmart := tendstoInDistribution_sum_markovIncrement_div_sqrt μ X hX π K hπ hπ1 hK hK1 hstat
+  have hmart := tendsto_in_distribution_sum_markov_increment_div_sqrt μ X hX π K hπ hπ1 hK hK1 hstat
     hstep u
   -- the boundary term `(u(X₀) - u(Xₙ)) / √n` is negligible
   set R : ℕ → Ω → ℝ := fun n ω ↦ (u (X 0 ω) - u (X n ω)) / Real.sqrt n with hR
@@ -400,7 +401,7 @@ law with variance `σ² = Var f(X₀) + 2 ∑_{k ≥ 1} Cov(f(X₀), f(Xₖ))`. 
 equation `u - K u = f - π f` by `u = ∑ₖ Kᵏ (f - π f)`, writes the centred sums as a martingale
 plus a bounded remainder, and identifies `σ²` with the martingale variance
 `∑ₓ π(x) ∑_y K(x,y) (u(y) - (K u)(x))²`. -/
-theorem tendstoInDistribution_finite_markov_chain_sum {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_finite_markov_chain_sum {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
@@ -429,11 +430,11 @@ theorem tendstoInDistribution_finite_markov_chain_sum {Ω : Type*} [MeasurableSp
   have hgc : ∑ x, π x * g x = 0 := by
     simp only [hg, mul_sub, Finset.sum_sub_distrib, ← Finset.sum_mul, hπ1, one_mul, m,
       sub_self]
-  obtain ⟨r, hr0, hr1, hdecay⟩ := exists_abs_pow_mulVec_le_of_pos π K hπ hπ1 hK hK1 hstat g hgc
-  obtain ⟨u, hu, hKu⟩ := exists_sub_mulVec_eq_of_pos π K hπ hπ1 hK hK1 hstat g hgc
+  obtain ⟨r, hr0, hr1, hdecay⟩ := exists_abs_pow_mul_vec_le_of_pos π K hπ hπ1 hK hK1 hstat g hgc
+  obtain ⟨u, hu, hKu⟩ := exists_sub_mul_vec_eq_of_pos π K hπ hπ1 hK hK1 hstat g hgc
   -- moments of the stationary chain
   have hE0 (a : ι → ℝ) : ∫ ω, a (X 0 ω) ∂μ = ∑ x, π x * a x := by
-    rw [integral_comp_eq_sum_measureReal μ (X 0) (hX 0) a]
+    rw [integral_comp_eq_sum_measure_real μ (X 0) (hX 0) a]
     refine Finset.sum_congr rfl fun x _ ↦ ?_
     have hset : X 0 ⁻¹' {x} = {ω | ∀ i ≤ 0, X i ω = (fun _ ↦ x) i} := by
       ext ω; simp
@@ -441,7 +442,7 @@ theorem tendstoInDistribution_finite_markov_chain_sum {Ω : Type*} [MeasurableSp
     simp
   have hEk (a v : ι → ℝ) (k : ℕ) : ∫ ω, a (X 0 ω) * v (X k ω) ∂μ =
       ∑ x, π x * (a x * Matrix.mulVec (K ^ k) v x) := by
-    rw [integral_mul_comp_eq_pow_mulVec μ K X hX hstep a v k,
+    rw [integral_mul_comp_eq_pow_mul_vec μ K X hX hstep a v k,
       hE0 fun x ↦ a x * Matrix.mulVec (K ^ k) v x]
   have hEv (v : ι → ℝ) (k : ℕ) : ∫ ω, v (X k ω) ∂μ = ∑ x, π x * v x := by
     have h := hEk 1 v k
@@ -510,7 +511,7 @@ theorem tendstoInDistribution_finite_markov_chain_sum {Ω : Type*} [MeasurableSp
     rw [h2, ← h3.tsum_eq]
     simp only [sigmaSq, hvar, hcov]
   rw [hσ]
-  exact tendstoInDistribution_sqrt_mul_sampleAverage_sub_of_poisson μ X hX π K hπ hπ1 hK hK1
+  exact tendsto_in_distribution_sqrt_mul_sample_average_sub_of_poisson μ X hX π K hπ hπ1 hK hK1
     hstat hstep f m u fun x ↦ by simpa [hg] using hu x
 
 end Ergodic

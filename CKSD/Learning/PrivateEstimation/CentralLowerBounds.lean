@@ -2,6 +2,7 @@ module
 
 public import CKSD.Learning.PrivateEstimation.Mechanisms
 
+
 /-!
 # Two-point lower bounds for central private mean estimation
 
@@ -23,7 +24,7 @@ attribute [local instance] Classical.propDecidable
 /-! ### Two-point lower bounds for the central mean risk -/
 
 /-- Integrals against the Bernoulli law `Ber(1, 0, p)` on the real line. -/
-theorem integral_bernoulliMeasure_one_zero (p : unitInterval) (f : ℝ → ℝ) :
+theorem integral_bernoulli_measure_one_zero (p : unitInterval) (f : ℝ → ℝ) :
     ∫ x, f x ∂(Ber((1 : ℝ), 0, p)) = p * f 1 + (1 - p) * f 0 := by
   rw [bernoulliMeasure_def, integral_add_measure, integral_smul_nnreal_measure,
     integral_smul_nnreal_measure, integral_dirac, integral_dirac]
@@ -32,13 +33,13 @@ theorem integral_bernoulliMeasure_one_zero (p : unitInterval) (f : ℝ → ℝ) 
   · exact (integrable_dirac (by simp)).smul_measure_nnreal
 
 /-- The Bernoulli law `Ber(1, 0, p)` has mean `p`. -/
-theorem integral_id_bernoulliMeasure_one_zero (p : unitInterval) :
+theorem integral_id_bernoulli_measure_one_zero (p : unitInterval) :
     ∫ x, x ∂(Ber((1 : ℝ), 0, p)) = p := by
-  rw [integral_bernoulliMeasure_one_zero p fun x ↦ x]
+  rw [integral_bernoulli_measure_one_zero p fun x ↦ x]
   ring
 
 /-- The Bernoulli law `Ber(1, 0, p)` is supported by `[-1,1]`. -/
-theorem bernoulliMeasure_one_zero_compl_Icc (p : unitInterval) :
+theorem bernoulli_measure_one_zero_compl_icc (p : unitInterval) :
     (Ber((1 : ℝ), 0, p)) (Icc (-1) 1)ᶜ = 0 :=
   bernoulliMeasure_apply_of_notMem_of_notMem p measurableSet_Icc.compl
     (by simp) (by simp)
@@ -83,7 +84,7 @@ theorem kernel_apply_le_exp_mul_card {n : ℕ} {M : Kernel (Fin n → ℝ) ℝ} 
         ring_nf
 
 /-- A lower bound for the central mean risk on a set of releases far from the mean. -/
-theorem ofReal_mul_comp_le_centralMeanRisk {n : ℕ} (M : Kernel (Fin n → ℝ) ℝ)
+theorem of_real_mul_comp_le_central_mean_risk {n : ℕ} (M : Kernel (Fin n → ℝ) ℝ)
     (P : Measure ℝ) {B : Set ℝ} (hB : MeasurableSet B) {r : ℝ}
     (hr : ∀ y ∈ B, r ≤ (y - ∫ x, x ∂P) ^ 2) :
     ENNReal.ofReal r * (M ∘ₘ Measure.pi fun _ : Fin n ↦ P) B ≤ centralMeanRisk M P := by
@@ -101,7 +102,7 @@ theorem ofReal_mul_comp_le_centralMeanRisk {n : ℕ} (M : Kernel (Fin n → ℝ)
 /-- Le Cam's two-point bound for Bernoulli laws `Ber(1, 0, a)` and `Ber(1, 0, b)` with
 `a < b`: the sum of the two risks is at least `((b - a)/2)²` times the sum of the error
 probabilities of the test that rejects `a` when the release exceeds `(a + b)/2`. -/
-theorem centralMeanRisk_add_centralMeanRisk_ge {n : ℕ} (M : Kernel (Fin n → ℝ) ℝ)
+theorem central_mean_risk_add_central_mean_risk_ge {n : ℕ} (M : Kernel (Fin n → ℝ) ℝ)
     {a b : unitInterval} (hab : (a : ℝ) < b) :
     ENNReal.ofReal (((b - a : ℝ) / 2) ^ 2) *
         ((M ∘ₘ Measure.pi fun _ : Fin n ↦ Ber((1 : ℝ), 0, a)) {y | ((a + b : ℝ)) / 2 ≤ y} +
@@ -110,18 +111,18 @@ theorem centralMeanRisk_add_centralMeanRisk_ge {n : ℕ} (M : Kernel (Fin n → 
   have hA : MeasurableSet {y : ℝ | ((a + b : ℝ)) / 2 ≤ y} := measurableSet_Ici
   rw [mul_add]
   gcongr
-  · refine ofReal_mul_comp_le_centralMeanRisk M _ hA fun y hy ↦ ?_
-    rw [integral_id_bernoulliMeasure_one_zero]
+  · refine of_real_mul_comp_le_central_mean_risk M _ hA fun y hy ↦ ?_
+    rw [integral_id_bernoulli_measure_one_zero]
     simp only [Set.mem_ofPred_eq] at hy
     nlinarith
-  · refine ofReal_mul_comp_le_centralMeanRisk M _ hA.compl fun y hy ↦ ?_
-    rw [integral_id_bernoulliMeasure_one_zero]
+  · refine of_real_mul_comp_le_central_mean_risk M _ hA.compl fun y hy ↦ ?_
+    rw [integral_id_bernoulli_measure_one_zero]
     simp only [Set.mem_compl_iff, Set.mem_ofPred_eq, not_le] at hy
     nlinarith
 
 /-- The binary Kullback–Leibler divergence is at most the χ² divergence
 `(p - q)² / (q (1 - q))`. -/
-theorem klBerReal_le_sq_div {p q : ℝ} (hp0 : 0 ≤ p) (hp1 : p ≤ 1) (hq0 : 0 < q) (hq1 : q < 1) :
+theorem kl_ber_real_le_sq_div {p q : ℝ} (hp0 : 0 ≤ p) (hp1 : p ≤ 1) (hq0 : 0 < q) (hq1 : q < 1) :
     InformationTheory.klBerReal p q ≤ (p - q) ^ 2 / (q * (1 - q)) := by
   rw [InformationTheory.klBerReal_apply]
   have h1 : p * Real.log (p / q) ≤ p * (p / q - 1) := by
@@ -141,7 +142,7 @@ theorem klBerReal_le_sq_div {p q : ℝ} (hp0 : 0 ≤ p) (hp1 : p ≤ 1) (hq0 : 0
   linarith
 
 /-- If a sum is at least `r`, one of the two terms is at least `r / 2`. -/
-theorem ofReal_half_le_or_of_ofReal_le_add {x y : ℝ≥0∞} {r : ℝ} (h : ENNReal.ofReal r ≤ x + y) :
+theorem of_real_half_le_or_of_of_real_le_add {x y : ℝ≥0∞} {r : ℝ} (h : ENNReal.ofReal r ≤ x + y) :
     ENNReal.ofReal (r / 2) ≤ x ∨ ENNReal.ofReal (r / 2) ≤ y := by
   rcases le_or_gt r 0 with hr | hr
   · left
@@ -154,7 +155,7 @@ theorem ofReal_half_le_or_of_ofReal_le_add {x y : ℝ≥0∞} {r : ℝ} (h : ENN
   exact absurd h (not_le.mpr this)
 
 /-- The event bound from the total variation distance: `2 (Q A - Q' A) ≤ tvDist Q Q'`. -/
-theorem two_mul_measureReal_sub_le_tvDist {Y : Type*} [MeasurableSpace Y] {Q Q' : Measure Y}
+theorem two_mul_measure_real_sub_le_tv_dist {Y : Type*} [MeasurableSpace Y] {Q Q' : Measure Y}
     [IsProbabilityMeasure Q] [IsProbabilityMeasure Q'] {A : Set Y} (hA : MeasurableSet A) :
     2 * (Q.real A - Q'.real A) ≤ tvDist Q Q' := by
   have hf : ∀ (ξ : Measure Y) [IsProbabilityMeasure ξ],
@@ -177,11 +178,11 @@ theorem two_mul_measureReal_sub_le_tvDist {Y : Type*} [MeasurableSpace Y] {Q Q' 
 /-- The testing step of Le Cam's method after the Bretagnolle–Huber inequality: if
 `e⁻¹ ≤ 2 - tvDist Q' Q`, then every test errs with total probability at least `1/6`, that is,
 `1/6 ≤ Q A + Q' Aᶜ` for every event `A`. -/
-theorem one_div_six_le_measureReal_add_measureReal_compl {Y : Type*} [MeasurableSpace Y]
+theorem one_div_six_le_measure_real_add_measure_real_compl {Y : Type*} [MeasurableSpace Y]
     {Q Q' : Measure Y} [IsProbabilityMeasure Q] [IsProbabilityMeasure Q']
     (hTV : Real.exp (-1) ≤ 2 - tvDist Q' Q) {A : Set Y} (hA : MeasurableSet A) :
     1 / 6 ≤ Q.real A + Q'.real Aᶜ := by
-  have hev := two_mul_measureReal_sub_le_tvDist (Q := Q') (Q' := Q) hA
+  have hev := two_mul_measure_real_sub_le_tv_dist (Q := Q') (Q' := Q) hA
   have he3 : 1 / 3 ≤ Real.exp (-1) := by
     rw [Real.exp_neg, one_div]
     exact inv_anti₀ (Real.exp_pos 1) (by linarith [Real.exp_one_lt_d9])
@@ -194,7 +195,7 @@ theorem one_div_six_le_measureReal_add_measureReal_compl {Y : Type*} [Measurable
 (Statlib's `klDiv_pi_const` and `klDiv_bernoulliMeasure_eq_klBerReal`), so by the
 Bretagnolle–Huber inequality (Statlib's `exp_neg_klDiv_le_two_sub_tvDist`) and data processing
 (`tvDist_comp_le`) no test separates them well. -/
-theorem exists_bernoulli_centralMeanRisk_ge_inv {n : ℕ} (hn : 0 < n)
+theorem exists_bernoulli_central_mean_risk_ge_inv {n : ℕ} (hn : 0 < n)
     (M : Kernel (Fin n → ℝ) ℝ) [IsMarkovKernel M] :
     ∃ p : unitInterval,
       ENNReal.ofReal (1 / (192 * n)) ≤ centralMeanRisk M (Ber((1 : ℝ), 0, p)) := by
@@ -219,7 +220,7 @@ theorem exists_bernoulli_centralMeanRisk_ge_inv {n : ℕ} (hn : 0 < n)
   have hA : MeasurableSet A := measurableSet_Ici
   -- Kullback–Leibler divergence of the product laws
   have hkl : InformationTheory.klBerReal b a ≤ 1 / n := by
-    refine (klBerReal_le_sq_div b.2.1 b.2.2 (by rw [ha]; norm_num) (by rw [ha]; norm_num)).trans
+    refine (kl_ber_real_le_sq_div b.2.1 b.2.2 (by rw [ha]; norm_num) (by rw [ha]; norm_num)).trans
       (le_of_eq ?_)
     rw [ha, hb, show ((1 / 2 + δ - 1 / 2 : ℝ)) ^ 2 / (1 / 2 * (1 - 1 / 2)) = 4 * δ ^ 2 by ring,
       hδ2]
@@ -244,8 +245,8 @@ theorem exists_bernoulli_centralMeanRisk_ge_inv {n : ℕ} (hn : 0 < n)
     Real.exp_le_exp.mpr (by linarith)
   have hTV := tvDist_comp_le μb μa M
   have htest : 1 / 6 ≤ (M ∘ₘ μa).real A + (M ∘ₘ μb).real Aᶜ :=
-    one_div_six_le_measureReal_add_measureReal_compl (by linarith) hA
-  have hLC := centralMeanRisk_add_centralMeanRisk_ge M hab (n := n)
+    one_div_six_le_measure_real_add_measure_real_compl (by linarith) hA
+  have hLC := central_mean_risk_add_central_mean_risk_ge M hab (n := n)
   have hsum : ENNReal.ofReal (1 / (96 * n)) ≤
       centralMeanRisk M (Ber((1 : ℝ), 0, a)) + centralMeanRisk M (Ber((1 : ℝ), 0, b)) := by
     refine le_trans ?_ hLC
@@ -259,7 +260,7 @@ theorem exists_bernoulli_centralMeanRisk_ge_inv {n : ℕ} (hn : 0 < n)
     rw [hsq']
     calc 1 / (96 * (n : ℝ)) = 1 / (16 * n) * (1 / 6) := by field_simp; ring
       _ ≤ _ := mul_le_mul_of_nonneg_left htest (by positivity)
-  rcases ofReal_half_le_or_of_ofReal_le_add hsum with h | h
+  rcases of_real_half_le_or_of_of_real_le_add hsum with h | h
   · exact ⟨a, by convert h using 2; field_simp; ring⟩
   · exact ⟨b, by convert h using 2; field_simp; ring⟩
 
@@ -296,7 +297,7 @@ theorem lintegral_exp_mul_card_ne_zero {n : ℕ} (q : unitInterval) (ε : ℝ) :
       _ = _ := by simp
   rw [← ofReal_integral_eq_lintegral_ofReal hint
     (ae_of_all _ fun d ↦ Finset.prod_nonneg fun i _ ↦ (Real.exp_pos _).le),
-    integral_fintype_prod_eq_pow, integral_bernoulliMeasure_one_zero]
+    integral_fintype_prod_eq_pow, integral_bernoulli_measure_one_zero]
   simp only [g, ne_eq, one_ne_zero, not_false_eq_true, ↓reduceIte, mul_one, not_true_eq_false,
     mul_zero, Real.exp_zero, Fintype.card_fin]
   congr 2
@@ -334,7 +335,7 @@ some Bernoulli law `Ber(1, 0, p)` has mean squared error at least `min(1, 1/(nε
 two laws are `Ber(1, 0, 0) = δ₀` and `Ber(1, 0, q)` with `q = min(1, 1/(nε))`; by group
 privacy the release law under the second is at most `(1 + q(e^ε - 1))ⁿ ≤ 9` times the release
 law under the first. -/
-theorem exists_bernoulli_centralMeanRisk_ge_private {n : ℕ} (hn : 0 < n) {ε : ℝ}
+theorem exists_bernoulli_central_mean_risk_ge_private {n : ℕ} (hn : 0 < n) {ε : ℝ}
     (hε : ε ∈ Ioc (0 : ℝ) 1) (M : Kernel (Fin n → ℝ) ℝ) [IsMarkovKernel M]
     (hM : IsDifferentiallyPrivate IsHammingNeighbor ε 0 M) :
     ∃ p : unitInterval, ENNReal.ofReal (min 1 (1 / (n * ε)) ^ 2 / 72) ≤
@@ -400,7 +401,7 @@ theorem exists_bernoulli_centralMeanRisk_ge_private {n : ℕ} (hn : 0 < n) {ε :
       show ENNReal.ofReal 9 = 9 by norm_num]
     rw [ENNReal.div_le_iff (by norm_num) (by norm_num), mul_comm]
     exact h2
-  have hLC := centralMeanRisk_add_centralMeanRisk_ge M hab (n := n)
+  have hLC := central_mean_risk_add_central_mean_risk_ge M hab (n := n)
   have hsum : ENNReal.ofReal (q ^ 2 / 36) ≤
       centralMeanRisk M (Ber((1 : ℝ), 0, a)) + centralMeanRisk M (Ber((1 : ℝ), 0, b)) := by
     refine le_trans ?_ hLC
@@ -408,14 +409,14 @@ theorem exists_bernoulli_centralMeanRisk_ge_private {n : ℕ} (hn : 0 < n) {ε :
           ENNReal.ofReal (1 / 9) := by
           rw [← ENNReal.ofReal_mul (by positivity), ha, hb]; congr 1; ring
       _ ≤ _ := by gcongr
-  rcases ofReal_half_le_or_of_ofReal_le_add hsum with h | h
+  rcases of_real_half_le_or_of_of_real_le_add hsum with h | h
   · exact ⟨a, by convert h using 2; ring⟩
   · exact ⟨b, by convert h using 2; ring⟩
 
 /-- GAPS 107.66, central minimax lower bound: there is an absolute `c > 0` such that for
 `0 < ε ≤ 1` every `ε`-differentially private mechanism has mean squared error at least
 `c min(1, 1/n + 1/(nε)²)` for the mean of some law on `[-1,1]`. -/
-theorem exists_centralMeanRisk_ge :
+theorem exists_central_mean_risk_ge :
     ∃ c > (0 : ℝ), ∀ n : ℕ, 0 < n → ∀ ε ∈ Ioc (0 : ℝ) 1, ∀ M : Kernel (Fin n → ℝ) ℝ,
       IsMarkovKernel M → IsDifferentiallyPrivate IsHammingNeighbor ε 0 M →
       ∃ P : Measure ℝ, IsProbabilityMeasure P ∧ P (Icc (-1) 1)ᶜ = 0 ∧
@@ -439,8 +440,8 @@ theorem exists_centralMeanRisk_ge :
     · rw [min_eq_right h]; exact min_le_right _ _
     · rw [min_eq_left h]; exact (min_le_left _ _).trans (by linarith)
   by_cases h : q ^ 2 ≤ 1 / n
-  · obtain ⟨p, hp⟩ := exists_bernoulli_centralMeanRisk_ge_inv hn M
-    refine ⟨Ber((1 : ℝ), 0, p), inferInstance, bernoulliMeasure_one_zero_compl_Icc p,
+  · obtain ⟨p, hp⟩ := exists_bernoulli_central_mean_risk_ge_inv hn M
+    refine ⟨Ber((1 : ℝ), 0, p), inferInstance, bernoulli_measure_one_zero_compl_icc p,
       le_trans (ENNReal.ofReal_le_ofReal ?_) hp⟩
     calc 1 / 400 * min 1 (1 / n + 1 / (n * ε) ^ 2) ≤ 1 / 400 * (1 / (n : ℝ) + 1 / n) := by
           gcongr; linarith
@@ -448,8 +449,8 @@ theorem exists_centralMeanRisk_ge :
           rw [show 1 / 400 * (1 / (n : ℝ) + 1 / n) = 1 / (200 * n) by field_simp; ring]
           exact one_div_le_one_div_of_le (by positivity) (by linarith)
   · push Not at h
-    obtain ⟨p, hp⟩ := exists_bernoulli_centralMeanRisk_ge_private hn hε M hM
-    refine ⟨Ber((1 : ℝ), 0, p), inferInstance, bernoulliMeasure_one_zero_compl_Icc p,
+    obtain ⟨p, hp⟩ := exists_bernoulli_central_mean_risk_ge_private hn hε M hM
+    refine ⟨Ber((1 : ℝ), 0, p), inferInstance, bernoulli_measure_one_zero_compl_icc p,
       le_trans (ENNReal.ofReal_le_ofReal ?_) hp⟩
     rw [← hq_def]
     calc 1 / 400 * min 1 (1 / n + 1 / (n * ε) ^ 2) ≤ 1 / 400 * (q ^ 2 + q ^ 2) := by

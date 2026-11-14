@@ -3,6 +3,7 @@ module
 public import CKSD.Asymptotics.Statistics
 public import Mathlib.Probability.Moments.ComplexMGF
 
+
 /-!
 # Edgeworth and saddlepoint expansions
 
@@ -63,7 +64,7 @@ domain with `K'(ŝ) = x`, `P` has a density, and the normalized tilted character
 `t ↦ |E e^{(ŝ+it)X}| / E e^{ŝX}` is in `L^ν` for some `ν ≥ 1`. Then for `n > ν` the mean of `n`
 observations has a continuous density `fₙ`, bounded when the characteristic function of `X` is
 also in `L^ν`, and `fₙ(x) = (n/(2π K''(ŝ)))^{1/2} e^{n(K(ŝ)-ŝx)} (1 + O(1/n))`. -/
-theorem saddlepoint_approximation_sampleAverage_density
+theorem saddlepoint_approximation_sample_average_density
     {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (P : Measure ℝ) [IsProbabilityMeasure P] (X : ℕ → Ω → ℝ)
     (hiid : IsIndependentIdenticallyDistributed μ X P) (hac : P ≪ volume)

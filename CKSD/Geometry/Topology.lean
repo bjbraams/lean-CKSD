@@ -9,6 +9,7 @@ public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Rearrangement
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Pushforward
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Quantile.Isometry
 
+
 /-!
 # Čech and Rips inclusions and the distance to a measure
 
@@ -17,12 +18,12 @@ minimal enclosing ball, and the Wasserstein stability of the distance to a measu
 
 ## Main results
 
-* `CKSD.mem_convexHull_farthest_of_isMin`: a minimizer of the largest squared distance to a finite
+* `CKSD.mem_convex_hull_farthest_of_is_min`: a minimizer of the largest squared distance to a finite
   set lies in the convex hull of the farthest points.
 * `CKSD.exists_dist_le_sqrt_two_mul_of_dist_le`: a finite set of diameter at most `2r` lies in a
   closed ball of radius `√2 r`.
 * `CKSD.cech_rips_inclusions`: the Čech/Rips inclusions (GAPS 108.21).
-* `CKSD.abs_distanceToMeasure_sub_le_wasserstein`: stability of the distance to a measure
+* `CKSD.abs_distance_to_measure_sub_le_wasserstein`: stability of the distance to a measure
   (GAPS 108.24).
 
 ## Implementation notes
@@ -47,7 +48,7 @@ attribute [local instance] Classical.propDecidable
 
 /-- At a point `c` minimizing the largest squared distance to a nonempty finite set `S`, the
 point `c` lies in the convex hull of the farthest points of `S`. -/
-theorem mem_convexHull_farthest_of_isMin {E : Type*} [NormedAddCommGroup E]
+theorem mem_convex_hull_farthest_of_is_min {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [CompleteSpace E] (S : Finset E) (hne : S.Nonempty) (c : E)
     (hc : ∀ c', S.sup' hne (fun x ↦ ‖x - c‖ ^ 2) ≤ S.sup' hne (fun x ↦ ‖x - c'‖ ^ 2)) :
     c ∈ convexHull ℝ (↑(S.filter fun x ↦ ‖x - c‖ ^ 2 = S.sup' hne (fun x ↦ ‖x - c‖ ^ 2)) :
@@ -118,7 +119,7 @@ theorem exists_dist_le_sqrt_two_mul_of_dist_le {E : Type*} [NormedAddCommGroup E
       linarith
     nlinarith [sq_nonneg (‖x₀ - c‖ - 1)]
   obtain ⟨c, hc⟩ := hfc.exists_forall_le hlim
-  have hmem := mem_convexHull_farthest_of_isMin S ⟨x₀, hx₀⟩ c hc
+  have hmem := mem_convex_hull_farthest_of_is_min S ⟨x₀, hx₀⟩ c hc
   set R2 := f c
   set F := S.filter fun x ↦ ‖x - c‖ ^ 2 = R2
   rw [Finset.mem_convexHull] at hmem
@@ -170,7 +171,7 @@ theorem cech_rips_inclusions {E : Type*} [NormedAddCommGroup E] [InnerProductSpa
 
 /-- On a probability space, the mass radius `δ_{P,u}(x)` at a level `u ≥ 0` is the quantile at
 level `u` of the law of the distance `y ↦ d(x, y)`. -/
-theorem massRadius_eq_quantile_map_dist {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X]
+theorem mass_radius_eq_quantile_map_dist {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X]
     [OpensMeasurableSpace X] (P : Measure X) [IsProbabilityMeasure P] (x : X) {u : ℝ}
     (hu : 0 ≤ u) : massRadius P u x = (P.map fun y ↦ dist x y).quantile u := by
   rcases hu.eq_or_lt with rfl | hu
@@ -198,7 +199,7 @@ theorem massRadius_eq_quantile_map_dist {X : Type*} [PseudoMetricSpace X] [Measu
 
 /-- For an `L²` function, the real `L²` seminorm is the square root of the integral of the
 square. -/
-private theorem toReal_eLpNorm_two_eq_sqrt_integral {α : Type*} [MeasurableSpace α] {μ : Measure α}
+private theorem to_real_e_lp_norm_two_eq_sqrt_integral {α : Type*} [MeasurableSpace α] {μ : Measure α}
     {f : α → ℝ} (hf : MemLp f 2 μ) :
     (eLpNorm f 2 μ).toReal = Real.sqrt (∫ a, f a ^ 2 ∂μ) := by
   rw [hf.eLpNorm_eq_integral_rpow_norm two_ne_zero ENNReal.ofNat_ne_top,
@@ -209,7 +210,7 @@ private theorem toReal_eLpNorm_two_eq_sqrt_integral {α : Type*} [MeasurableSpac
 /-- GAPS 108.24: stability of distance to a measure. For laws `P, Q` on `ℝ^d` with finite second
 moments and a mass parameter `m ∈ (0, 1]`, the distance functions satisfy
 `|d_{P,m}(x) - d_{Q,m}(x)| ≤ W₂(P, Q) / √m` at every point `x`. -/
-theorem abs_distanceToMeasure_sub_le_wasserstein {d : ℕ}
+theorem abs_distance_to_measure_sub_le_wasserstein {d : ℕ}
     (P Q : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (hP : MemLp id 2 P) (hQ : MemLp id 2 Q) (m : ℝ) (hm : m ∈ Ioc 0 1)
@@ -252,12 +253,12 @@ theorem abs_distanceToMeasure_sub_le_wasserstein {d : ℕ}
       MemLp (R.map f).quantile 2 μm →
       distanceToMeasure R m x = (eLpNorm (R.map f).quantile 2 μm).toReal / Real.sqrt m := by
     intro R _ hR
-    rw [distanceToMeasure, toReal_eLpNorm_two_eq_sqrt_integral hR,
+    rw [distanceToMeasure, to_real_e_lp_norm_two_eq_sqrt_integral hR,
       intervalIntegral.integral_of_le hm.1.le, ← Real.sqrt_div' _ hm.1.le]
     congr 2
     refine setIntegral_congr_fun measurableSet_Ioc fun u hu ↦ ?_
     show massRadius R u x ^ 2 = (R.map f).quantile u ^ 2
-    rw [massRadius_eq_quantile_map_dist R x hu.1.le]
+    rw [mass_radius_eq_quantile_map_dist R x hu.1.le]
   rw [hdtm P hqPm, hdtm Q hqQm, ← sub_div, abs_div, abs_of_pos (Real.sqrt_pos.mpr hm.1)]
   gcongr
   -- Minkowski, restriction, the quantile formula and the contraction

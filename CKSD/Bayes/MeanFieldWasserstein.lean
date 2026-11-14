@@ -3,6 +3,7 @@ module
 public import CKSD.Bayes.Basic
 public import Mathlib.MeasureTheory.Function.L1Space.AEEqFun
 
+
 /-!
 # Common-source and empirical first-Wasserstein bounds
 
@@ -22,7 +23,7 @@ open MeasureTheory Set Filter
 open scoped ENNReal NNReal Topology BigOperators
 namespace CKSD
 /-- The common-source coupling bounds first Wasserstein distance by mean pointwise distance. -/
-theorem wassersteinEDist_one_map_toReal_le_integral_norm_sub {Ω E : Type*} [MeasurableSpace Ω]
+theorem wasserstein_e_dist_one_map_to_real_le_integral_norm_sub {Ω E : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [BorelSpace E]
     [SecondCountableTopology E] (P : Measure Ω) {f g : Ω → E}
     (hf : AEStronglyMeasurable f P) (hg : AEStronglyMeasurable g P)
@@ -44,12 +45,12 @@ theorem wassersteinEDist_one_map_toReal_le_integral_norm_sub {Ω E : Type*} [Mea
     ENNReal.toReal_mono ENNReal.ofReal_ne_top hW
 /-- Pairing equal-index atoms controls empirical first Wasserstein distance in the uniform
 configuration norm. -/
-theorem wassersteinEDist_one_empirical_toReal_le_norm_sub {E : Type*}
+theorem wasserstein_e_dist_one_empirical_to_real_le_norm_sub {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [BorelSpace E]
     [SecondCountableTopology E] {N : ℕ} (hN : 0 < N) (x y : Fin N → E) :
     (TauCeti.wassersteinEDist 1 (empiricalMeasure N x) (empiricalMeasure N y)).toReal ≤ ‖x - y‖ := by
   let P : Measure (Fin N) := empiricalMeasure N id
-  have : IsProbabilityMeasure P := isProbabilityMeasure_empiricalMeasure hN id
+  have : IsProbabilityMeasure P := is_probability_measure_empirical_measure hN id
   have hmap (z : Fin N → E) : P.map z = empiricalMeasure N z := by
     dsimp only [P]
     rw [empiricalMeasure, Measure.map_smul,
@@ -62,7 +63,7 @@ theorem wassersteinEDist_one_empirical_toReal_le_norm_sub {E : Type*}
       (ae_of_all _ fun j ↦ norm_le_pi_norm (x - y) j)
   rw [← hmap x, ← hmap y]
   calc _ ≤ ∫ j, ‖x j - y j‖ ∂P := by
-          exact wassersteinEDist_one_map_toReal_le_integral_norm_sub P
+          exact wasserstein_e_dist_one_map_to_real_le_integral_norm_sub P
             (measurable_of_finite _).aestronglyMeasurable (measurable_of_finite _).aestronglyMeasurable hi
     _ ≤ ∫ _ : Fin N, ‖x - y‖ ∂P := integral_mono hi.norm (integrable_const _) (fun j ↦ norm_le_pi_norm (x - y) j)
     _ = _ := by simp

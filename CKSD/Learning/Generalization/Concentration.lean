@@ -8,6 +8,7 @@ public import Mathlib.Analysis.Calculus.LocalExtr.Basic
 public import Mathlib.Probability.Moments.SubGaussian
 public import TauCeti.Probability.McDiarmid
 
+
 /-!
 # Empirical risk concentration and Rademacher bounds
 
@@ -19,10 +20,10 @@ sub-Gaussian bounds (Hoeffding) and TauCeti's bounded-differences inequality (Mc
 
 * `CKSD.measure_uniform_empirical_risk_deviation_le`: uniform concentration over a finite class
   (GAPS 107.1).
-* `CKSD.integral_sSup_sub_le_two_mul_rademacher`: symmetrization, the expected uniform
+* `CKSD.integral_s_sup_sub_le_two_mul_rademacher`: symmetrization, the expected uniform
   deviation is at most twice the expected Rademacher complexity (GAPS 107.2).
-* `CKSD.measureReal_integral_add_le_sSup_le`: McDiarmid tail for the uniform deviation.
-* `CKSD.measureReal_two_mul_rademacher_add_lt_sSup_le`: the high-probability Rademacher bound
+* `CKSD.measure_real_integral_add_le_s_sup_le`: McDiarmid tail for the uniform deviation.
+* `CKSD.measure_real_two_mul_rademacher_add_lt_s_sup_le`: the high-probability Rademacher bound
   (GAPS 107.2).
 -/
 
@@ -128,7 +129,7 @@ theorem measure_uniform_empirical_risk_deviation_le
     _ = _ := by simp only [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]; ring
 
 /-- Suprema over a finite nonempty index of pointwise `c`-close families are `c`-close. -/
-theorem abs_sSup_range_sub_sSup_range_le {H : Type*} [Finite H] [Nonempty H] {u v : H → ℝ}
+theorem abs_s_sup_range_sub_s_sup_range_le {H : Type*} [Finite H] [Nonempty H] {u v : H → ℝ}
     {c : ℝ} (h : ∀ k, |u k - v k| ≤ c) : |sSup (range u) - sSup (range v)| ≤ c := by
   have hu : BddAbove (range u) := (finite_range u).bddAbove
   have hv : BddAbove (range v) := (finite_range v).bddAbove
@@ -144,7 +145,7 @@ theorem abs_sSup_range_sub_sSup_range_le {H : Type*} [Finite H] [Nonempty H] {u 
     linarith
 
 /-- The supremum over a finite nonempty index of a sum is at most the sum of the suprema. -/
-theorem sSup_range_add_le {H : Type*} [Finite H] [Nonempty H] (u v : H → ℝ) :
+theorem s_sup_range_add_le {H : Type*} [Finite H] [Nonempty H] (u v : H → ℝ) :
     sSup (range fun k ↦ u k + v k) ≤ sSup (range u) + sSup (range v) :=
   csSup_le (range_nonempty _) <| by
     rintro _ ⟨k, rfl⟩
@@ -152,10 +153,10 @@ theorem sSup_range_add_le {H : Type*} [Finite H] [Nonempty H] (u v : H → ℝ) 
       (le_csSup (finite_range v).bddAbove ⟨k, rfl⟩)
 
 /-- The empirical Rademacher complexity is unchanged when the class is negated. -/
-theorem empiricalRademacherComplexity_neg {H X : Type*} (n : ℕ) (f : H → X → ℝ)
+theorem empirical_rademacher_complexity_neg {H X : Type*} (n : ℕ) (f : H → X → ℝ)
     (x : Fin n → X) :
     empiricalRademacherComplexity n (fun h z ↦ -f h z) x = empiricalRademacherComplexity n f x := by
-  rw [empiricalRademacherComplexity_eq, empiricalRademacherComplexity_eq]
+  rw [empirical_rademacher_complexity_eq, empirical_rademacher_complexity_eq]
   congr 1
   let e : (Fin n → Bool) ≃ (Fin n → Bool) :=
     Function.Involutive.toPerm (fun σ i ↦ !σ i) fun σ ↦ by funext i; simp
@@ -170,7 +171,7 @@ theorem empiricalRademacherComplexity_neg {H X : Type*} (n : ℕ) (f : H → X �
 
 /-- Measure preservation of the coordinatewise swap of a ghost sample: for a sign pattern `σ`,
 coordinates with `σ i = false` are exchanged between the two samples. -/
-theorem measurePreserving_ghostSwap {X : Type*} [MeasurableSpace X] (P : Measure X)
+theorem measure_preserving_ghost_swap {X : Type*} [MeasurableSpace X] (P : Measure X)
     [IsProbabilityMeasure P] (n : ℕ) (σ : Fin n → Bool) :
     MeasurePreserving (fun p : (Fin n → X) × (Fin n → X) ↦
         ((fun i ↦ if σ i then p.1 i else p.2 i), (fun i ↦ if σ i then p.2 i else p.1 i)))
@@ -195,9 +196,9 @@ theorem measurePreserving_ghostSwap {X : Type*} [MeasurableSpace X] (P : Measure
   ext i <;> by_cases hσ : σ i = true <;> simp [hσ]
 
 /-- A supremum over a finite nonempty index of values bounded by `C` is bounded by `C`. -/
-theorem abs_sSup_range_le {H : Type*} [Finite H] [Nonempty H] {u : H → ℝ} {C : ℝ}
+theorem abs_s_sup_range_le {H : Type*} [Finite H] [Nonempty H] {u : H → ℝ} {C : ℝ}
     (h : ∀ k, |u k| ≤ C) : |sSup (range u)| ≤ C := by
-  have := abs_sSup_range_sub_sSup_range_le (v := fun _ : H ↦ (0 : ℝ)) (c := C)
+  have := abs_s_sup_range_sub_s_sup_range_le (v := fun _ : H ↦ (0 : ℝ)) (c := C)
     fun k ↦ by simpa using h k
   rwa [range_const, csSup_singleton, sub_zero] at this
 
@@ -222,20 +223,20 @@ theorem abs_sum_mul_div_le {n : ℕ} (a u : Fin n → ℝ) {C : ℝ} (hC : 0 ≤
     _ = C * n := by simp [mul_comm]
 
 /-- Measurability of the empirical Rademacher complexity of a measurable finite class. -/
-theorem measurable_empiricalRademacherComplexity {H X : Type*} [Fintype H] [MeasurableSpace X]
+theorem measurable_empirical_rademacher_complexity {H X : Type*} [Fintype H] [MeasurableSpace X]
     (n : ℕ) (f : H → X → ℝ) (hm : ∀ h, Measurable (f h)) :
     Measurable fun x : Fin n → X ↦ empiricalRademacherComplexity n f x := by
-  simp only [empiricalRademacherComplexity_eq]
+  simp only [empirical_rademacher_complexity_eq]
   refine Measurable.const_mul (Finset.measurable_sum _ fun σ _ ↦ ?_) _
   exact Measurable.iSup fun h ↦ (Finset.measurable_sum _ fun i _ ↦
     ((hm h).comp (measurable_pi_apply i)).const_mul _).div_const _
 
 /-- The empirical Rademacher complexity of a nonempty finite class bounded by `C` is bounded
 by `C`. -/
-theorem abs_empiricalRademacherComplexity_le {H X : Type*} [Fintype H] [Nonempty H] (n : ℕ)
+theorem abs_empirical_rademacher_complexity_le {H X : Type*} [Fintype H] [Nonempty H] (n : ℕ)
     (f : H → X → ℝ) {C : ℝ} (hC : 0 ≤ C) (hb : ∀ h x, |f h x| ≤ C) (x : Fin n → X) :
     |empiricalRademacherComplexity n f x| ≤ C := by
-  rw [empiricalRademacherComplexity_eq]
+  rw [empirical_rademacher_complexity_eq]
   have hsig : ∀ σ : Fin n → Bool, ∀ i, |(if σ i then (1 : ℝ) else -1)| ≤ 1 := fun σ i ↦ by
     split_ifs <;> simp
   rw [abs_mul, abs_of_nonneg (by positivity)]
@@ -244,7 +245,7 @@ theorem abs_empiricalRademacherComplexity_le {H X : Type*} [Fintype H] [Nonempty
       ≤ (2 : ℝ)⁻¹ ^ n * ∑ _σ : Fin n → Bool, C := by
         gcongr
         refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun σ _ ↦ ?_)
-        exact abs_sSup_range_le fun h ↦
+        exact abs_s_sup_range_le fun h ↦
           abs_sum_mul_div_le _ _ hC (hsig σ) fun i ↦ hb h (x i)
     _ = C := by
         simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fun, Fintype.card_bool,
@@ -254,7 +255,7 @@ theorem abs_empiricalRademacherComplexity_le {H X : Type*} [Fintype H] [Nonempty
 /-- GAPS 107.2, symmetrization: the expected supremum of the centered empirical means of a
 finite class with values in `[-1,1]` is at most twice the expected empirical Rademacher
 complexity. -/
-theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonempty H]
+theorem integral_s_sup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonempty H]
     [MeasurableSpace X] (P : Measure X) [IsProbabilityMeasure P] (f : H → X → ℝ)
     (hm : ∀ h, Measurable (f h)) (hb : ∀ h x, |f h x| ≤ 1) (n : ℕ) (hn : 0 < n) :
     ∫ x, sSup (range fun h ↦ (∑ i, f h (x i)) / n - ∫ z, f h z ∂P)
@@ -289,7 +290,7 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
     with hG_def
   have hGm : Measurable G := Measurable.iSup fun h ↦
     ((hgm h).comp measurable_fst).sub ((hgm h).comp measurable_snd)
-  have hGb : ∀ p, |G p| ≤ 2 := fun p ↦ abs_sSup_range_le fun h ↦ by
+  have hGb : ∀ p, |G p| ≤ 2 := fun p ↦ abs_s_sup_range_le fun h ↦ by
     calc |g h p.1 - g h p.2| ≤ |g h p.1| + |g h p.2| := abs_sub _ _
       _ ≤ 2 := by linarith [hgb h p.1, hgb h p.2]
   have hGi : Integrable G (Pn.prod Pn) := integrable_of_abs_le _ hGm hGb
@@ -309,7 +310,7 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
   have hlhs : ∫ x, sSup (range fun h ↦ g h x - ∫ z, f h z ∂P) ∂Pn ≤ ∫ p, G p ∂(Pn.prod Pn) := by
     rw [integral_prod _ hGi]
     refine integral_mono (integrable_of_abs_le _ (C := 2) (Measurable.iSup fun h ↦
-      (hgm h).sub measurable_const) fun x ↦ abs_sSup_range_le fun h ↦ ?_)
+      (hgm h).sub measurable_const) fun x ↦ abs_s_sup_range_le fun h ↦ ?_)
       (hGi.integral_prod_left) hstep1
     have hI : |∫ z, f h z ∂P| ≤ 1 := by
       have := norm_integral_le_of_norm_le_const (μ := P) (C := 1)
@@ -322,27 +323,27 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
     fun σ p ↦ ((fun i ↦ if σ i then p.1 i else p.2 i), (fun i ↦ if σ i then p.2 i else p.1 i))
   have hT : ∀ σ, ∫ p, G p ∂(Pn.prod Pn) = ∫ p, G (T σ p) ∂(Pn.prod Pn) := by
     intro σ
-    have hmp := measurePreserving_ghostSwap P n σ
+    have hmp := measure_preserving_ghost_swap P n σ
     rw [← integral_map hmp.measurable.aemeasurable
       (by rw [hmp.map_eq]; exact hGm.aestronglyMeasurable), hmp.map_eq]
   set Rad : (Fin n → X) → ℝ := fun x ↦ empiricalRademacherComplexity n f x with hRad_def
   have hsupm : ∀ (u : (Fin n → Bool) → H → (Fin n → X) → ℝ), (∀ σ h, Measurable (u σ h)) →
       ∀ σ, Measurable fun x ↦ sSup (range fun h ↦ u σ h x) := fun u hu σ ↦
     Measurable.iSup fun h ↦ hu σ h
-  have hRm : Measurable Rad := measurable_empiricalRademacherComplexity n f hm
-  have hRb : ∀ x, |Rad x| ≤ 1 := abs_empiricalRademacherComplexity_le n f zero_le_one hb
+  have hRm : Measurable Rad := measurable_empirical_rademacher_complexity n f hm
+  have hRb : ∀ x, |Rad x| ≤ 1 := abs_empirical_rademacher_complexity_le n f zero_le_one hb
   have hRi : Integrable Rad Pn := integrable_of_abs_le _ hRm hRb
   -- pointwise bound of the sign average
   have hpt : ∀ p, (2 : ℝ)⁻¹ ^ n * ∑ σ : Fin n → Bool, G (T σ p) ≤ Rad p.1 + Rad p.2 := by
     intro p
-    have hRneg := empiricalRademacherComplexity_neg n f p.2
+    have hRneg := empirical_rademacher_complexity_neg n f p.2
     simp only [Rad]
     rw [← hRneg]
-    simp only [empiricalRademacherComplexity_eq]
+    simp only [empirical_rademacher_complexity_eq]
     rw [← mul_add, ← Finset.sum_add_distrib]
     gcongr with σ _
     simp only [G]
-    refine le_of_eq_of_le ?_ (sSup_range_add_le _ _)
+    refine le_of_eq_of_le ?_ (s_sup_range_add_le _ _)
     congr 2
     funext h
     simp only [g, T]
@@ -355,7 +356,7 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
     simp [Finset.card_univ, Fintype.card_bool]
   have hTi : ∀ σ, Integrable (fun p ↦ G (T σ p)) (Pn.prod Pn) := fun σ ↦
     integrable_of_abs_le _ (g := fun p ↦ G (T σ p))
-      (hGm.comp (measurePreserving_ghostSwap P n σ).measurable) fun p ↦ hGb _
+      (hGm.comp (measure_preserving_ghost_swap P n σ).measurable) fun p ↦ hGb _
   have havg : ∫ p, G p ∂(Pn.prod Pn) =
       ∫ p, (2 : ℝ)⁻¹ ^ n * ∑ σ : Fin n → Bool, G (T σ p) ∂(Pn.prod Pn) := by
     rw [integral_const_mul, integral_finsetSum _ fun σ _ ↦ hTi σ, ← Finset.sum_congr rfl
@@ -390,7 +391,7 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
 /-- McDiarmid tail for the supremum of the centered empirical means of a finite class whose
 members oscillate by at most `1`: the supremum exceeds its mean by `t ≥ 0` with probability
 at most `exp(-2 n t²)`. -/
-theorem measureReal_integral_add_le_sSup_le {H X : Type*} [Fintype H] [Nonempty H]
+theorem measure_real_integral_add_le_s_sup_le {H X : Type*} [Fintype H] [Nonempty H]
     [MeasurableSpace X] (P : Measure X) [IsProbabilityMeasure P] (f : H → X → ℝ)
     (hm : ∀ h, Measurable (f h)) (hosc : ∀ h x y, |f h x - f h y| ≤ 1) (n : ℕ) (hn : 0 < n)
     {t : ℝ} (ht : 0 ≤ t) :
@@ -408,7 +409,7 @@ theorem measureReal_integral_add_le_sSup_le {H X : Type*} [Fintype H] [Nonempty 
   have hbd : ∀ (i : Fin n) (x x' : Fin n → X), (∀ l, l ≠ i → x l = x' l) →
       |F x - F x'| ≤ 1 / n := by
     intro i x x' hxx'
-    refine abs_sSup_range_sub_sSup_range_le fun h ↦ ?_
+    refine abs_s_sup_range_sub_s_sup_range_le fun h ↦ ?_
     have hs : ∑ j, f h (x j) - ∑ j, f h (x' j) = f h (x i) - f h (x' i) := by
       rw [← Finset.sum_sub_distrib]
       refine Finset.sum_eq_single i (fun j _ hj ↦ by rw [hxx' j hj, sub_self]) (by simp)
@@ -438,8 +439,8 @@ theorem measureReal_integral_add_le_sSup_le {H X : Type*} [Fintype H] [Nonempty 
 functions: with probability at least `1 - δ`, the uniform deviation
 `sup_h |n⁻¹ ∑ᵢ f h (xᵢ) - ∫ f h dP|` is at most `2 𝔼 R̂ₙ + √(log(2/δ) / (2n))`, where `𝔼 R̂ₙ`
 is the expected empirical Rademacher complexity. The expectation bound of GAPS 107.2 is
-`integral_sSup_sub_le_two_mul_rademacher`. -/
-theorem measureReal_two_mul_rademacher_add_lt_sSup_le
+`integral_s_sup_sub_le_two_mul_rademacher`. -/
+theorem measure_real_two_mul_rademacher_add_lt_s_sup_le
     {H X : Type*} [Fintype H] [Nonempty H] [MeasurableSpace X]
     (P : Measure X) [IsProbabilityMeasure P] (f : H → X → ℝ)
     (hm : ∀ h, Measurable (f h)) (hb : ∀ h x, f h x ∈ Icc 0 1)
@@ -455,15 +456,15 @@ theorem measureReal_two_mul_rademacher_add_lt_sSup_le
     rw [abs_le]; constructor <;> linarith [(hb h x).1, (hb h x).2]
   have hosc : ∀ h x y, |f h x - f h y| ≤ 1 := fun h x y ↦ by
     rw [abs_le]; constructor <;> linarith [(hb h x).1, (hb h x).2, (hb h y).1, (hb h y).2]
-  have hsym := integral_sSup_sub_le_two_mul_rademacher P f hm hab n hn
+  have hsym := integral_s_sup_sub_le_two_mul_rademacher P f hm hab n hn
   -- the negated class
-  have hsymneg := integral_sSup_sub_le_two_mul_rademacher P (fun h z ↦ -f h z)
+  have hsymneg := integral_s_sup_sub_le_two_mul_rademacher P (fun h z ↦ -f h z)
     (fun h ↦ (hm h).neg) (fun h x ↦ by rw [abs_neg]; exact hab h x) n hn
-  simp only [empiricalRademacherComplexity_neg] at hsymneg
+  simp only [empirical_rademacher_complexity_neg] at hsymneg
   set tt := Real.sqrt (Real.log (2 / delta) / (2 * n)) with htt
   have htt0 : 0 ≤ tt := Real.sqrt_nonneg _
-  have htail := measureReal_integral_add_le_sSup_le P f hm hosc n hn htt0
-  have htailneg := measureReal_integral_add_le_sSup_le P (fun h z ↦ -f h z)
+  have htail := measure_real_integral_add_le_s_sup_le P f hm hosc n hn htt0
+  have htailneg := measure_real_integral_add_le_s_sup_le P (fun h z ↦ -f h z)
     (fun h ↦ (hm h).neg) (fun h x y ↦ by
       rw [show -f h x - -f h y = f h y - f h x by ring]; exact hosc h y x) n hn htt0
   have hexp : Real.exp (-2 * n * tt ^ 2) = delta / 2 := by

@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Asymptotics.GaussianShiftTilt
 public import CKSD.Inference.ExponentialFamily
 /-!
@@ -25,7 +26,7 @@ namespace CKSD
 variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 /-- The Gaussian location family is complete among integrable measurable functions. -/
-theorem ae_eq_zero_of_integral_multivariateGaussian_eq_zero
+theorem ae_eq_zero_of_integral_multivariate_gaussian_eq_zero
     {S : Matrix (Fin d) (Fin d) ℝ} (hS : S.PosDef)
     (f : E → ℝ) (hf : Measurable f)
     (hfi : ∀ h, Integrable f (multivariateGaussian h S))
@@ -44,12 +45,12 @@ theorem ae_eq_zero_of_integral_multivariateGaussian_eq_zero
     refine ⟨?_,?_,Real.exp_pos _⟩
     · simpa only [integrableExpSet,mem_ofPred_eq,one_mul,id_eq] using hi
     · simpa only [Z,P,id_eq,div_eq_mul_inv,mul_comm,one_mul] using hmgf.symm
-  have hc := isCompleteStatistic_withDensity_exp_inner P id measurable_id univ isOpen_univ
+  have hc := is_complete_statistic_with_density_exp_inner P id measurable_id univ isOpen_univ
     Set.univ_nonempty Z hZ
   have htilt (η : E) : P.withDensity
       (fun x ↦ ENNReal.ofReal (Real.exp (inner ℝ η (id x)) / Z η)) =
       multivariateGaussian (S.toEuclideanLin η) S := by
-    convert multivariateGaussian_withDensity_exp_inner hS η using 1
+    convert multivariate_gaussian_with_density_exp_inner hS η using 1
     congr 1
     funext x
     rw [Real.exp_sub]
@@ -67,11 +68,11 @@ theorem ae_eq_zero_of_integral_multivariateGaussian_eq_zero
   filter_upwards [he] with x hx
   exact hx (ne_of_gt (TauCeti.Probability.multivariateGaussianPDF_pos hS.det_pos 0 x))
 /-- The identity statistic of a nondegenerate Gaussian location family is complete. -/
-theorem isCompleteStatistic_multivariateGaussian_location
+theorem is_complete_statistic_multivariate_gaussian_location
     {S : Matrix (Fin d) (Fin d) ℝ} (hS : S.PosDef) :
     IsCompleteStatistic (fun h : E ↦ multivariateGaussian h S) id := by
   intro f hf hzero h
-  have hvol := ae_eq_zero_of_integral_multivariateGaussian_eq_zero hS f hf
+  have hvol := ae_eq_zero_of_integral_multivariate_gaussian_eq_zero hS f hf
     (fun k ↦ by simpa only [Function.comp_id] using (hzero k).1) (fun k ↦ (hzero k).2)
   change ∀ᵐ x ∂multivariateGaussian h S, f x = 0
   rw [TauCeti.Probability.multivariateGaussian_eq_withDensity hS]
@@ -79,31 +80,31 @@ theorem isCompleteStatistic_multivariateGaussian_location
 
 /-- A bounded measurable function whose mean is zero under every Gaussian location vanishes
 Lebesgue-almost everywhere. -/
-theorem ae_eq_zero_of_bounded_integral_multivariateGaussian_eq_zero
+theorem ae_eq_zero_of_bounded_integral_multivariate_gaussian_eq_zero
     {S : Matrix (Fin d) (Fin d) ℝ} (hS : S.PosDef)
     (f : E → ℝ) (hf : Measurable f) (M : ℝ) (hM : ∀ x, |f x| ≤ M)
     (hzero : ∀ h, ∫ x, f x ∂multivariateGaussian h S = 0) :
     ∀ᵐ x ∂volume, f x = 0 := by
-  apply ae_eq_zero_of_integral_multivariateGaussian_eq_zero hS f hf _ hzero
+  apply ae_eq_zero_of_integral_multivariate_gaussian_eq_zero hS f hf _ hzero
   intro h
   exact Integrable.of_bound hf.aestronglyMeasurable M (ae_of_all _ fun x ↦ by
     simpa only [Real.norm_eq_abs] using hM x)
 
 /-- Gaussian location completeness also gives equality almost everywhere under any member of
 the same nondegenerate Gaussian family. -/
-theorem ae_gaussian_eq_zero_of_bounded_integral_multivariateGaussian_eq_zero
+theorem ae_gaussian_eq_zero_of_bounded_integral_multivariate_gaussian_eq_zero
     {S : Matrix (Fin d) (Fin d) ℝ} (hS : S.PosDef)
     (f : E → ℝ) (hf : Measurable f) (M : ℝ) (hM : ∀ x, |f x| ≤ M)
     (hzero : ∀ h, ∫ x, f x ∂multivariateGaussian h S = 0) (k : E) :
     ∀ᵐ x ∂multivariateGaussian k S, f x = 0 := by
-  have hv := ae_eq_zero_of_bounded_integral_multivariateGaussian_eq_zero hS f hf M hM hzero
+  have hv := ae_eq_zero_of_bounded_integral_multivariate_gaussian_eq_zero hS f hf M hM hzero
   rw [TauCeti.Probability.multivariateGaussian_eq_withDensity hS]
   exact (withDensity_absolutelyContinuous _ _).ae_le hv
 /-- The identity statistic of a nondegenerate Gaussian location family is boundedly complete. -/
-theorem isBoundedlyCompleteStatistic_multivariateGaussian_location
+theorem is_boundedly_complete_statistic_multivariate_gaussian_location
     {S : Matrix (Fin d) (Fin d) ℝ} (hS : S.PosDef) :
     IsBoundedlyCompleteStatistic (fun h : E ↦ multivariateGaussian h S) id := by
   intro f hf hbound hzero k
   obtain ⟨M,hM⟩ := hbound
-  exact ae_gaussian_eq_zero_of_bounded_integral_multivariateGaussian_eq_zero hS f hf M hM hzero k
+  exact ae_gaussian_eq_zero_of_bounded_integral_multivariate_gaussian_eq_zero hS f hf M hM hzero k
 end CKSD

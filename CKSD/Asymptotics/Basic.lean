@@ -5,6 +5,7 @@ public import Mathlib.MeasureTheory.Measure.Portmanteau
 public import Mathlib.Probability.StrongLaw
 public import Mathlib.Probability.CentralLimitTheorem
 
+
 /-!
 # Asymptotic foundations
 
@@ -24,10 +25,10 @@ The foundational layer of Section 102, imported by the other statistics sections
 
 ## Main results
 
-* `CKSD.tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable`: Slutsky's lemma without
+* `CKSD.tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable`: Slutsky's lemma without
   second countability.
-* `CKSD.tendstoInDistribution_delta_method`: the delta method (GAPS 102.1).
-* `CKSD.tendstoInDistribution_inv_sqrt_mul_sum_of_iid`: the iid central limit theorem for a
+* `CKSD.tendsto_in_distribution_delta_method`: the delta method (GAPS 102.1).
+* `CKSD.tendsto_in_distribution_inv_sqrt_mul_sum_of_iid`: the iid central limit theorem for a
   centred square-integrable statistic.
 
 Sources: Section 102 of `GAPS.md`, `SYNOPSIS102.md`, and `STRUCTURE102.md`.
@@ -63,7 +64,7 @@ def uStatistic {E : Type*} (m n : ℕ) (h : (Fin m → E) → ℝ) (x : Fin n �
 
 /-- Contiguity of `Q n` with respect to `P n` (written `Q n ◁ P n`) on a common measurable
 space: `P n (A n) → 0` implies `Q n (A n) → 0` for measurable sets `A n`. For probability
-measures it is Statlib's `Contiguous5` (`CKSD.isContiguous_iff_contiguous5`). -/
+measures it is Statlib's `Contiguous5` (`CKSD.is_contiguous_iff_contiguous5`). -/
 def IsContiguous {Ω : Type*} [MeasurableSpace Ω]
     (P Q : ℕ → Measure Ω) : Prop :=
   ∀ A : ℕ → Set Ω, (∀ n, MeasurableSet (A n)) →
@@ -84,7 +85,7 @@ in probability, then `Yₙ` converges in law to `Z`. This generalizes Mathlib's
 second countability of `F` is assumed (Mathlib uses it for the measurability of `Yₙ - Xₙ`); the
 difference need not be measurable, since convergence in measure is measured by the outer
 measure. -/
-theorem tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable {Ω Ω' F : Type*}
+theorem tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable {Ω Ω' F : Type*}
     [MeasurableSpace Ω] [MeasurableSpace Ω']
     [SeminormedAddCommGroup F] [MeasurableSpace F] [OpensMeasurableSpace F]
     (μ : Measure Ω) [IsProbabilityMeasure μ] {μ' : Measure Ω'} [IsProbabilityMeasure μ']
@@ -121,7 +122,7 @@ theorem tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable {Ω Ω' F : 
     rw [hε, mul_div_assoc', div_lt_div_iff₀ (by positivity) (by norm_num)]
     nlinarith [L.coe_nonneg]
   have hδ : 0 < η / (2 * (|C| + 1)) := by positivity
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hXY
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hXY
   obtain ⟨N, hN⟩ := (Metric.tendsto_atTop.1 (hXY ε hεpos)) _ hδ
   refine ⟨N, fun n hn ↦ ?_⟩
   specialize hN n hn
@@ -179,7 +180,7 @@ theorem tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable {Ω Ω' F : 
 
 /-- A sequence converging in law is bounded in probability in norm: for every `ε > 0` there is
 `M > 0` with `P(‖Xₙ‖ > M) ≤ ε` eventually. -/
-theorem exists_measureReal_lt_norm_le_of_tendstoInDistribution {Ω Ω' E : Type*}
+theorem exists_measure_real_lt_norm_le_of_tendsto_in_distribution {Ω Ω' E : Type*}
     [MeasurableSpace Ω] [MeasurableSpace Ω']
     [SeminormedAddCommGroup E] [MeasurableSpace E] [OpensMeasurableSpace E]
     (μ : Measure Ω) [IsProbabilityMeasure μ] {μ' : Measure Ω'} [IsProbabilityMeasure μ']
@@ -262,7 +263,7 @@ theorem tendsto_zero_of_forall_eventually_le {u : ℕ → ℝ} (h0 : ∀ n, 0 �
     fun b hb ↦ (h (b / 2) (half_pos hb)).mono fun n hn ↦ hn.trans_lt (half_lt_self hb)⟩
 
 /-- The remainder of the delta method is negligible in probability. -/
-theorem tendstoInMeasure_delta_method_remainder {Ω Ω' E F : Type*}
+theorem tendsto_in_measure_delta_method_remainder {Ω Ω' E F : Type*}
     [MeasurableSpace Ω] [MeasurableSpace Ω']
     [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [BorelSpace E]
     [NormedAddCommGroup F] [NormedSpace ℝ F]
@@ -273,11 +274,11 @@ theorem tendstoInMeasure_delta_method_remainder {Ω Ω' E F : Type*}
       atTop Z (fun _ ↦ μ) μ') :
     TendstoInMeasure μ (fun (n : ℕ) ω ↦
       Real.sqrt n • (g (T n ω) - g θ) - D (Real.sqrt n • (T n ω - θ))) atTop (fun _ ↦ 0) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  rw [tendsto_in_measure_iff_measure_real_lt_dist]
   intro ε hε
   refine tendsto_zero_of_forall_eventually_le (fun n ↦ measureReal_nonneg) fun η hη ↦ ?_
   obtain ⟨M, hM, hev⟩ :=
-    exists_measureReal_lt_norm_le_of_tendstoInDistribution μ _ hlim hη
+    exists_measure_real_lt_norm_le_of_tendsto_in_distribution μ _ hlim hη
   have hc : 0 < ε / M := div_pos hε hM
   obtain ⟨δ, hδ, hδg⟩ := Metric.eventually_nhds_iff.1 (hd.isLittleO.def hc)
   have hsqrt : Tendsto (fun n : ℕ ↦ Real.sqrt n) atTop atTop :=
@@ -310,7 +311,7 @@ theorem tendstoInMeasure_delta_method_remainder {Ω Ω' E F : Type*}
 
 /-- GAPS 102.1: the delta method and its stochastic linearization in Banach spaces. If
 `√n (Tₙ - θ)` converges in law to `Z`, then `√n (g Tₙ - g θ)` converges in law to `D Z`. -/
-theorem tendstoInDistribution_delta_method {Ω Ω' E F : Type*}
+theorem tendsto_in_distribution_delta_method {Ω Ω' E F : Type*}
     [MeasurableSpace Ω] [MeasurableSpace Ω']
     [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [BorelSpace E]
     [NormedAddCommGroup F] [NormedSpace ℝ F] [MeasurableSpace F] [BorelSpace F]
@@ -323,24 +324,24 @@ theorem tendstoInDistribution_delta_method {Ω Ω' E F : Type*}
         (fun _ ↦ μ) μ' ∧
       TendstoInMeasure μ (fun (n : ℕ) ω ↦
         Real.sqrt n • (g (T n ω) - g θ) - D (Real.sqrt n • (T n ω - θ))) atTop (fun _ ↦ 0) := by
-  have hR := tendstoInMeasure_delta_method_remainder μ T θ g D hd hlim
+  have hR := tendsto_in_measure_delta_method_remainder μ T θ g D hd hlim
   refine ⟨?_, hR⟩
   have hZm : ∀ n : ℕ, Measurable (fun ω ↦ Real.sqrt n • (T n ω - θ)) := fun n ↦
     ((continuous_id.sub continuous_const).const_smul _).measurable.comp (hT n)
   have hYm : ∀ n : ℕ, Measurable (fun ω ↦ Real.sqrt n • (g (T n ω) - g θ)) := fun n ↦
     ((continuous_id.sub continuous_const).const_smul _).measurable.comp (hg.comp (hT n))
-  exact tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ
+  exact tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ
     (fun n ω ↦ D (Real.sqrt n • (T n ω - θ))) _
     (fun n ↦ D.continuous.measurable.comp (hZm n)) hYm
     (hlim.continuous_comp D.continuous) hR
 
 
 /-- Sum of two sequences tending to `0` in probability tends to `0` in probability. -/
-theorem tendstoInMeasure_add_zero {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+theorem tendsto_in_measure_add_zero {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsFiniteMeasure μ] (X Y : ℕ → Ω → ℝ) (hX : TendstoInMeasure μ X atTop (fun _ ↦ 0))
     (hY : TendstoInMeasure μ Y atTop (fun _ ↦ 0)) :
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ X n ω + Y n ω) atTop (fun _ ↦ 0) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hX hY ⊢
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hX hY ⊢
   intro ε hε
   have h := (hX (ε / 2) (half_pos hε)).add (hY (ε / 2) (half_pos hε))
   rw [add_zero] at h
@@ -355,12 +356,12 @@ theorem tendstoInMeasure_add_zero {Ω : Type*} [MeasurableSpace Ω] (μ : Measur
 
 /-- Domination: if eventually, for almost every `ω`, `|Yₙ| ≤ |Xₙ|` whenever `|Uₙ| < δ`, and
 `Xₙ, Uₙ → 0` in probability, then `Yₙ → 0` in probability. -/
-theorem tendstoInMeasure_zero_of_abs_le {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_zero_of_abs_le {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsFiniteMeasure μ] (X Y U : ℕ → Ω → ℝ) {δ : ℝ} (hδ : 0 < δ)
     (hXY : ∀ᶠ n in atTop, ∀ᵐ ω ∂μ, |U n ω| < δ → |Y n ω| ≤ |X n ω|)
     (hX : TendstoInMeasure μ X atTop (fun _ ↦ 0)) (hU : TendstoInMeasure μ U atTop (fun _ ↦ 0)) :
     TendstoInMeasure μ Y atTop (fun _ ↦ 0) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hX hU ⊢
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hX hU ⊢
   intro ε hε
   have h := (hX ε hε).add (hU (δ / 2) (half_pos hδ))
   rw [add_zero] at h
@@ -383,7 +384,7 @@ theorem tendstoInMeasure_zero_of_abs_le {Ω : Type*} [MeasurableSpace Ω]
     _ ≤ _ := by rw [add_zero]; exact measureReal_union_le _ _
 
 /-- A deterministic sequence tending to `0` tends to `0` in probability. -/
-theorem tendstoInMeasure_const_of_tendsto {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_const_of_tendsto {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (u : ℕ → ℝ) (hu : Tendsto u atTop (𝓝 0)) :
     TendstoInMeasure μ (fun (n : ℕ) _ ↦ u n) atTop (fun _ ↦ 0) := by
   rw [tendstoInMeasure_iff_dist]
@@ -398,12 +399,12 @@ theorem tendstoInMeasure_const_of_tendsto {Ω : Type*} [MeasurableSpace Ω]
   rw [this, measure_empty]
 
 /-- Continuous mapping for convergence in probability to a constant. -/
-theorem tendstoInMeasure_comp_of_continuousAt {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_comp_of_continuous_at {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsFiniteMeasure μ] (T : ℕ → Ω → ℝ) (θ : ℝ) (J : ℝ → ℝ)
     (hJ : ContinuousAt J θ)
     (hT : TendstoInMeasure μ T atTop (fun _ ↦ θ)) :
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ J (T n ω)) atTop (fun _ ↦ J θ) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hT ⊢
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hT ⊢
   intro ε hε
   obtain ⟨δ, hδ, hδJ⟩ := Metric.continuousAt_iff.1 hJ ε hε
   refine squeeze_zero (fun _ ↦ measureReal_nonneg) (fun n ↦ ?_) (hT (δ / 2) (half_pos hδ))
@@ -415,11 +416,11 @@ theorem tendstoInMeasure_comp_of_continuousAt {Ω : Type*} [MeasurableSpace Ω]
   exact absurd (hδJ (by linarith)) (not_lt.2 hω.le)
 
 /-- Constant multiples preserve convergence to `0` in probability. -/
-theorem tendstoInMeasure_const_mul_zero {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_const_mul_zero {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsFiniteMeasure μ] (X : ℕ → Ω → ℝ) (c : ℝ)
     (hX : TendstoInMeasure μ X atTop (fun _ ↦ 0)) :
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ c * X n ω) atTop (fun _ ↦ 0) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hX ⊢
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hX ⊢
   intro ε hε
   have h := hX (ε / (|c| + 1)) (by positivity)
   refine squeeze_zero (fun _ ↦ measureReal_nonneg) (fun n ↦ measureReal_mono fun ω hω ↦ ?_) h
@@ -428,21 +429,21 @@ theorem tendstoInMeasure_const_mul_zero {Ω : Type*} [MeasurableSpace Ω]
   nlinarith [abs_nonneg (X n ω), abs_nonneg c]
 
 /-- A real sequence converging in law is bounded in probability. -/
-theorem isBoundedInProbability_of_tendstoInDistribution {Ω Ω' : Type*}
+theorem is_bounded_in_probability_of_tendsto_in_distribution {Ω Ω' : Type*}
     [MeasurableSpace Ω] [MeasurableSpace Ω']
     (μ : Measure Ω) [IsProbabilityMeasure μ] {μ' : Measure Ω'} [IsProbabilityMeasure μ']
     (X : ℕ → Ω → ℝ) {Z : Ω' → ℝ} (h : TendstoInDistribution X atTop Z (fun _ ↦ μ) μ') :
     IsBoundedInProbability μ X := by
   intro ε hε
-  obtain ⟨M, hM, hev⟩ := exists_measureReal_lt_norm_le_of_tendstoInDistribution μ X h hε
+  obtain ⟨M, hM, hev⟩ := exists_measure_real_lt_norm_le_of_tendsto_in_distribution μ X h hε
   exact ⟨M, hM, by simpa only [Real.norm_eq_abs] using hev⟩
 
 /-- A real sequence converging in probability to a constant is bounded in probability. -/
-theorem isBoundedInProbability_of_tendstoInMeasure {Ω : Type*} [MeasurableSpace Ω]
+theorem is_bounded_in_probability_of_tendsto_in_measure {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsFiniteMeasure μ] (Z : ℕ → Ω → ℝ) (c : ℝ)
     (h : TendstoInMeasure μ Z atTop (fun _ ↦ c)) :
     IsBoundedInProbability μ Z := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at h
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at h
   intro ε hε
   refine ⟨|c| + 1, by positivity, ?_⟩
   filter_upwards [(h 1 one_pos).eventually (eventually_le_nhds hε)] with n hn
@@ -453,11 +454,11 @@ theorem isBoundedInProbability_of_tendstoInMeasure {Ω : Type*} [MeasurableSpace
 
 /-- A sequence bounded in probability times a sequence tending to `0` in probability tends
 to `0` in probability. -/
-theorem tendstoInMeasure_mul_zero_of_isBoundedInProbability {Ω : Type*}
+theorem tendsto_in_measure_mul_zero_of_is_bounded_in_probability {Ω : Type*}
     [MeasurableSpace Ω] (μ : Measure Ω) [IsFiniteMeasure μ] (U V : ℕ → Ω → ℝ)
     (hU : IsBoundedInProbability μ U) (hV : TendstoInMeasure μ V atTop (fun _ ↦ 0)) :
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ U n ω * V n ω) atTop (fun _ ↦ 0) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hV ⊢
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hV ⊢
   intro ε hε
   refine tendsto_zero_of_forall_eventually_le (fun n ↦ measureReal_nonneg) fun η hη ↦ ?_
   obtain ⟨C, hC, hev⟩ := hU (η / 2) (half_pos hη)
@@ -475,14 +476,14 @@ theorem tendstoInMeasure_mul_zero_of_isBoundedInProbability {Ω : Type*}
     _ = η := add_halves η
 
 /-- Measurable real statistics `s ∘ X i` of an i.i.d. sequence are pairwise independent. -/
-theorem IsIndependentIdenticallyDistributed.pairwise_indepFun_comp {Ω E : Type*}
+theorem IsIndependentIdenticallyDistributed.pairwise_indep_fun_comp {Ω E : Type*}
     [MeasurableSpace Ω] [MeasurableSpace E] {μ : Measure Ω} {P : Measure E} {X : ℕ → Ω → E}
     (hiid : IsIndependentIdenticallyDistributed μ X P) {s : E → ℝ} (hs : Measurable s) :
     Pairwise (fun i j ↦ IndepFun (s ∘ X i) (s ∘ X j) μ) :=
   fun _ _ hij ↦ (hiid.2.1.comp (fun _ ↦ s) (fun _ ↦ hs)).indepFun hij
 
 /-- Measurable real statistics `s ∘ X i` of an i.i.d. sequence are identically distributed. -/
-theorem IsIndependentIdenticallyDistributed.identDistrib_comp {Ω E : Type*}
+theorem IsIndependentIdenticallyDistributed.ident_distrib_comp {Ω E : Type*}
     [MeasurableSpace Ω] [MeasurableSpace E] {μ : Measure Ω} {P : Measure E} {X : ℕ → Ω → E}
     (hiid : IsIndependentIdenticallyDistributed μ X P) {s : E → ℝ} (hs : Measurable s) (i : ℕ) :
     IdentDistrib (s ∘ X i) (s ∘ X 0) μ μ := by
@@ -492,14 +493,14 @@ theorem IsIndependentIdenticallyDistributed.identDistrib_comp {Ω E : Type*}
 
 /-- Weak law of large numbers for a measurable integrable statistic of an iid sequence, in the
 form of convergence in probability, deduced from Mathlib's strong law. -/
-theorem tendstoInMeasure_sampleMean_of_iid {Ω E : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_sample_mean_of_iid {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P) (s : E → ℝ)
     (hs : Measurable s) (hint : Integrable s P) :
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, s (X i ω))
         atTop (fun _ ↦ ∫ x, s x ∂P) := by
-  have hindep := hiid.pairwise_indepFun_comp hs
-  have hident := hiid.identDistrib_comp hs
+  have hindep := hiid.pairwise_indep_fun_comp hs
+  have hident := hiid.ident_distrib_comp hs
   have hm := hiid.1
   have hlaw := hiid.2.2 0
   have hint0 : Integrable (s ∘ X 0) μ := by
@@ -518,14 +519,14 @@ theorem tendstoInMeasure_sampleMean_of_iid {Ω E : Type*} [MeasurableSpace Ω]
 /-- Central limit theorem for a centred square-integrable measurable statistic `s` of an iid
 sequence with law `P`, with limit law `N(0, ∫ s² dP)`; an adapter for Mathlib's
 `tendstoInDistribution_inv_sqrt_mul_sum_sub`. -/
-theorem tendstoInDistribution_inv_sqrt_mul_sum_of_iid {Ω E : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_inv_sqrt_mul_sum_of_iid {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P) (s : E → ℝ)
     (hs : Measurable s) (h2 : MemLp s 2 P) (h0 : (∫ x, s x ∂P) = 0) :
     TendstoInDistribution (fun (n : ℕ) ω ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, s (X i ω))
       atTop id (fun _ ↦ μ) (gaussianReal 0 (Real.toNNReal (∫ x, s x ^ 2 ∂P))) := by
-  have hindep := hiid.pairwise_indepFun_comp hs
-  have hident := hiid.identDistrib_comp hs
+  have hindep := hiid.pairwise_indep_fun_comp hs
+  have hident := hiid.ident_distrib_comp hs
   have hm := hiid.1
   have hlaw := hiid.2.2 0
   have hindep' : iIndepFun (fun i ↦ s ∘ X i) μ :=

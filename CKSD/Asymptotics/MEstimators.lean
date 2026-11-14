@@ -3,6 +3,7 @@ module
 public import CKSD.Asymptotics.Statistics
 import CKSD.Asymptotics.Estimators
 
+
 /-!
 # Consistency of extremum estimators
 
@@ -11,7 +12,7 @@ estimator over a compact parameter space (GAPS 102.2). Wald consistency is state
 positive densities and an integrable envelope of their log likelihoods; the more general
 upper-semicontinuous formulation is outside that scope. The proof combines a strict Gibbs
 inequality, local integrable majorants on balls, and the weak law of large numbers
-`tendstoInMeasure_sampleMean_of_iid` (from Mathlib's strong law). The `√n` rate, linearization,
+`tendsto_in_measure_sample_mean_of_iid` (from Mathlib's strong law). The `√n` rate, linearization,
 and asymptotic normality of M-estimators are in `CKSD.Asymptotics.MEstimatorNormality`.
 
 ## Main definitions
@@ -20,9 +21,9 @@ and asymptotic normality of M-estimators are in `CKSD.Asymptotics.MEstimatorNorm
 
 ## Main results
 
-* `CKSD.integral_log_lt_integral_log_of_withDensity_ne`: the strict Gibbs inequality.
+* `CKSD.integral_log_lt_integral_log_of_with_density_ne`: the strict Gibbs inequality.
 * `CKSD.exists_ball_measurable_dominating_integral_lt`: local integrable majorants.
-* `CKSD.tendstoInMeasure_mle_of_compact`: Wald consistency of the maximum likelihood estimator
+* `CKSD.tendsto_in_measure_mle_of_compact`: Wald consistency of the maximum likelihood estimator
   (GAPS 102.2).
 -/
 
@@ -46,7 +47,7 @@ def populationCriterion {X Θ : Type*} [MeasurableSpace X]
 
 /-- Strict Gibbs inequality for strictly positive densities: if two probability laws with
 strictly positive densities `f, g` differ, then `∫ log g dP_f < ∫ log f dP_f`. -/
-theorem integral_log_lt_integral_log_of_withDensity_ne {X : Type*} [MeasurableSpace X]
+theorem integral_log_lt_integral_log_of_with_density_ne {X : Type*} [MeasurableSpace X]
     (ν : Measure X) (f g : X → ℝ) (hf : Measurable f) (hg : Measurable g)
     (hfpos : ∀ x, 0 < f x) (hgpos : ∀ x, 0 < g x)
     (hPf : IsProbabilityMeasure (ν.withDensity fun x ↦ ENNReal.ofReal (f x)))
@@ -185,7 +186,7 @@ theorem exists_ball_measurable_dominating_integral_lt {X Θ : Type*} [Measurable
 /-- GAPS 102.2: Wald consistency with continuous positive densities on a compact parameter space.
 The log-likelihood envelope is integrable at the true law; identifiability concerns the laws,
 so no irrelevant distinction between density versions is required. -/
-theorem tendstoInMeasure_mle_of_compact
+theorem tendsto_in_measure_mle_of_compact
     {Ω X Θ : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
     [MetricSpace Θ] [CompactSpace Θ]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Θ → Measure X)
@@ -225,7 +226,7 @@ theorem tendstoInMeasure_mle_of_compact
     have hi := hmi θ
     simp only [hMpop, hP₀, hmdef] at hi0 hi ⊢
     rw [hP0eq] at hi0 hi ⊢
-    exact integral_log_lt_integral_log_of_withDensity_ne ν (f θ₀) (f θ) (hf θ₀).1 (hf θ).1
+    exact integral_log_lt_integral_log_of_with_density_ne ν (f θ₀) (f θ) (hf θ₀).1 (hf θ).1
       (hpos θ₀) (hpos θ) hP0' hP' hi0 hi (by rwa [← hPeq, ← hP0eq])
   -- Local dominating functions.
   have hloc : ∀ θ, ∃ ρ > 0, ∃ w : X → ℝ, Measurable w ∧ Integrable w P₀ ∧
@@ -239,7 +240,7 @@ theorem tendstoInMeasure_mle_of_compact
         hmc B hB henv θ (hgibbs θ hθ)
       exact ⟨ρ, hρ, w, h1, h2, h3, fun _ ↦ h4⟩
   choose ρ hρ w hwm hwi hwup hwlt using hloc
-  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  rw [tendsto_in_measure_iff_measure_real_lt_dist]
   intro ε hε
   set K : Set Θ := {θ | ε ≤ dist θ θ₀} with hK
   have hKc : IsCompact K :=
@@ -257,14 +258,14 @@ theorem tendstoInMeasure_mle_of_compact
   set Wn : Θ → ℕ → Ω → ℝ := fun θ n ω ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, w θ (Xn i ω)
   set Mn0 : ℕ → Ω → ℝ := fun n ω ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, m θ₀ (Xn i ω)
   have hW : ∀ θ, TendstoInMeasure μ (Wn θ) atTop (fun _ ↦ ∫ x, w θ x ∂P₀) := fun θ ↦
-    tendstoInMeasure_sampleMean_of_iid μ P₀ Xn hiid (w θ) (hwm θ) (hwi θ)
+    tendsto_in_measure_sample_mean_of_iid μ P₀ Xn hiid (w θ) (hwm θ) (hwi θ)
   have hM0 : TendstoInMeasure μ Mn0 atTop (fun _ ↦ Mpop θ₀) :=
-    tendstoInMeasure_sampleMean_of_iid μ P₀ Xn hiid (m θ₀) (hmm θ₀) (hmi θ₀)
+    tendsto_in_measure_sample_mean_of_iid μ P₀ Xn hiid (m θ₀) (hmm θ₀) (hmi θ₀)
   set bound : ℕ → ℝ := fun n ↦ ∑ θ ∈ t, (μ.real {ω | γ θ / 4 < dist (Wn θ n ω) (∫ x, w θ x ∂P₀)} +
     μ.real {ω | γ θ / 4 < dist (Mn0 n ω) (Mpop θ₀)} + μ.real {ω | γ θ / 4 < dist (r n ω) 0})
     with hbound
   have hbound0 : Tendsto bound atTop (𝓝 0) := by
-    simp only [tendstoInMeasure_iff_measureReal_lt_dist] at hW hM0 hr
+    simp only [tendsto_in_measure_iff_measure_real_lt_dist] at hW hM0 hr
     have : Tendsto bound atTop (𝓝 (∑ θ ∈ t, ((0 : ℝ) + 0 + 0))) :=
       tendsto_finsetSum _ fun θ hθ ↦
         ((hW θ _ (by linarith [hγpos θ hθ])).add (hM0 _ (by linarith [hγpos θ hθ]))).add
@@ -319,7 +320,7 @@ theorem tendstoInMeasure_mle_of_compact
         exact (measureReal_union_le _ _).trans (add_le_add (measureReal_union_le _ _) le_rfl)
 
 /-- An empirical criterion is unchanged if its per-observation criterion is translated. -/
-theorem empiricalCriterion_add_const {Ω X Θ : Type*} (m : Θ → X → ℝ)
+theorem empirical_criterion_add_const {Ω X Θ : Type*} (m : Θ → X → ℝ)
     (Xn : ℕ → Ω → X) (n : ℕ) (hn : n ≠ 0) (ω : Ω) (θ : Θ) (c : ℝ) :
     empiricalCriterion (fun θ x ↦ m θ x + c) Xn n ω θ =
       empiricalCriterion m Xn n ω θ + c := by

@@ -3,6 +3,7 @@ module
 public import CKSD.Inference.Model
 import CKSD.Inference.BlackwellApproximation
 import CKSD.Inference.BlackwellCoupling
+
 /-!
 # Joint limits realizing finite randomizations
 
@@ -42,7 +43,7 @@ theorem exists_joint_of_finite_randomizations
   let R : ℕ → FiniteMeasure (C × C) := fun n ↦
     ⟨(μ ⊗ₘ (δ n).val).map (fun p : X × Fin (n + 1) ↦ (u p.1, r n p.2)), inferInstance⟩
   have hfst (n : ℕ) : (R n : Measure (C × C)).fst = μ.map u :=
-    fst_map_compProd μ (δ n).val u hu (r n) (hrm n)
+    fst_map_comp_prod μ (δ n).val u hu (r n) (hrm n)
   let μu : FiniteMeasure C := ⟨μ.map u, inferInstance⟩
   have hmass (n : ℕ) : (R n).mass = μu.mass := by
     -- Express finite-measure coercions as their underlying mapped measures.
@@ -50,7 +51,7 @@ theorem exists_joint_of_finite_randomizations
     apply congrArg ENNReal.toNNReal
     simpa only [Measure.fst_apply MeasurableSet.univ, Set.preimage_univ] using
       congrArg (fun η : Measure C ↦ η univ) (hfst n)
-  obtain ⟨φ, hφ, ρ, hρ⟩ := exists_finiteMeasure_subsequence_limit_of_mass_eq R μu.mass hmass
+  obtain ⟨φ, hφ, ρ, hρ⟩ := exists_finite_measure_subsequence_limit_of_mass_eq R μu.mass hmass
   have hmap : Tendsto (fun n ↦ (R (φ n)).map Prod.fst) atTop (𝓝 (ρ.map Prod.fst)) :=
     FiniteMeasure.tendsto_map_of_tendsto_of_continuous _ _ hρ continuous_fst
   have hmaps (n : ℕ) : (R (φ n)).map Prod.fst = μu := by
@@ -64,7 +65,7 @@ theorem exists_joint_of_finite_randomizations
   let ν : FiniteMeasure C := ⟨(Q θ).map v, inferInstance⟩
   let νs : ℕ → FiniteMeasure C := fun n ↦ ν.map (r n ∘ q n)
   have hν : Tendsto νs atTop (𝓝 ν) := by
-    have hh := finiteMeasure_tendsto_map_of_pointwise ν (fun n ↦ r n ∘ q n)
+    have hh := finite_measure_tendsto_map_of_pointwise ν (fun n ↦ r n ∘ q n)
       (fun n ↦ (hrm n).comp (hq n)) id measurable_id hr
     have hid : ν.map id = ν := by
       apply Subtype.ext
@@ -75,7 +76,7 @@ theorem exists_joint_of_finite_randomizations
     -- Express finite-measure coercions as their underlying mapped measures.
     change (((μ ⊗ₘ (δ n).val).map (fun p : X × Fin (n + 1) ↦ (u p.1, r n p.2))).withDensity
       (fun p ↦ ENNReal.ofReal (w θ p.1))).snd = _
-    rw [snd_withDensity_map_compProd μ (δ n).val u hu (r n) (hrm n)
+    rw [snd_with_density_map_comp_prod μ (δ n).val u hu (r n) (hrm n)
       (fun c ↦ ENNReal.ofReal (w θ c)) (by fun_prop)]
     have hd : μ.withDensity ((fun c ↦ ENNReal.ofReal (w θ c)) ∘ u) = P θ := (hP θ).symm
     rw [hd, hδ n θ, Measure.map_map (hrm n) ((hq n).comp hv)]
@@ -83,7 +84,7 @@ theorem exists_joint_of_finite_randomizations
     change (Q θ).map (r n ∘ (q n ∘ v)) = ((Q θ).map v).map (r n ∘ q n)
     rw [Measure.map_map ((hrm n).comp (hq n)) hv]
     rfl
-  exact snd_withDensity_eq_of_finiteMeasure_tendsto (fun n ↦ R (φ n)) ρ hρ
+  exact snd_with_density_eq_of_finite_measure_tendsto (fun n ↦ R (φ n)) ρ hρ
     (fun n ↦ νs (φ n)) ν (hν.comp hφ.tendsto_atTop) (w θ) (hw θ)
     (fun n ↦ hweighted (φ n))
 

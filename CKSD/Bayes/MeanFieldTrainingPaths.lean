@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldCore
 public import CKSD.Bayes.MeanFieldEmpirical
 /-!
@@ -23,14 +24,14 @@ variable {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E] [MeasurableS
 omit [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E] in
 /-- Restricting a jointly continuous characteristic family to a compact time interval gives a
 continuous map from initial states to compact paths. -/
-theorem continuous_pathOn_parameter (γ : E → ℝ → E) (hγ : Continuous (uncurry γ)) (T : ℝ) :
+theorem continuous_path_on_parameter (γ : E → ℝ → E) (hγ : Continuous (uncurry γ)) (T : ℝ) :
     Continuous (fun x ↦ pathOn T (γ x)) := by
   apply ContinuousMap.continuous_of_continuous_uncurry
   have hc (x : E) : Continuous (γ x) := hγ.comp (continuous_const.prodMk continuous_id)
   have heq : (fun z : E × Icc (0 : ℝ) T ↦ pathOn T (γ z.1) z.2) =
       fun z ↦ γ z.1 z.2 := by
     funext z
-    exact pathOn_apply_of_continuousOn T (γ z.1) (hc _).continuousOn z.2
+    exact path_on_apply_of_continuous_on T (γ z.1) (hc _).continuousOn z.2
   change Continuous (fun z : E × Icc (0 : ℝ) T ↦ pathOn T (γ z.1) z.2)
   rw [heq]
   exact hγ.comp (continuous_fst.prodMk (continuous_subtype_val.comp continuous_snd))
@@ -38,13 +39,13 @@ theorem continuous_pathOn_parameter (γ : E → ℝ → E) (hγ : Continuous (un
 omit [MeasurableSpace E] [BorelSpace E]
   [SecondCountableTopology E] in
 /-- Uniform bounded speed controls the norm of a characteristic path by its initial norm. -/
-theorem norm_pathOn_le_initial_add_time {T : ℝ} (hT : 0 ≤ T)
+theorem norm_path_on_le_initial_add_time {T : ℝ} (hT : 0 ≤ T)
     (γ : E → ℝ → E) {M : ℝ≥0} (hγL : ∀ x, LipschitzWith M (γ x))
     (hzero : ∀ x, γ x 0 = x) (x : E) :
     ‖pathOn T (γ x)‖ ≤ ‖x‖ + (M : ℝ)*T := by
   apply (ContinuousMap.norm_le _ (by positivity : 0 ≤ ‖x‖+(M : ℝ)*T)).2
   intro t
-  rw [pathOn_apply_of_continuousOn T (γ x) (hγL x).continuous.continuousOn]
+  rw [path_on_apply_of_continuous_on T (γ x) (hγL x).continuous.continuousOn]
   have hl := (hγL x).norm_sub_le (t : ℝ) 0
   rw [hzero, sub_zero, Real.norm_of_nonneg t.2.1] at hl
   have hn := norm_le_norm_sub_add (γ x t) x
@@ -52,19 +53,19 @@ theorem norm_pathOn_le_initial_add_time {T : ℝ} (hT : 0 ≤ T)
   linarith
 
 /-- Integrable initial norm and bounded characteristic speed yield an integrable compact path. -/
-theorem integrable_pathOn_comp (P : Measure Ω) [IsProbabilityMeasure P]
+theorem integrable_path_on_comp (P : Measure Ω) [IsProbabilityMeasure P]
     {T : ℝ} (hT : 0 ≤ T) (γ : E → ℝ → E) (hγ : Continuous (uncurry γ))
     {M : ℝ≥0} (hγL : ∀ x, LipschitzWith M (γ x)) (hzero : ∀ x, γ x 0 = x)
     (ξ : Ω → E) (hξm : Measurable ξ) (hξi : Integrable (fun ω ↦ ‖ξ ω‖) P) :
     Integrable (fun ω ↦ pathOn T (γ (ξ ω))) P := by
   have hm : AEStronglyMeasurable (fun ω ↦ pathOn T (γ (ξ ω))) P :=
-    ((continuous_pathOn_parameter γ hγ T).measurable.comp hξm).aestronglyMeasurable
+    ((continuous_path_on_parameter γ hγ T).measurable.comp hξm).aestronglyMeasurable
   apply (hξi.add (integrable_const ((M : ℝ)*T))).mono' hm
-  exact ae_of_all _ fun ω ↦ norm_pathOn_le_initial_add_time hT γ hγL hzero (ξ ω)
+  exact ae_of_all _ fun ω ↦ norm_path_on_le_initial_add_time hT γ hγL hzero (ξ ω)
 
 /-- Iid initial states generate iid integrable compact characteristic paths, with the exact
 prescribed time-marginal law. -/
-theorem exists_iid_training_paths_on_Icc (P : Measure Ω) [IsProbabilityMeasure P]
+theorem exists_iid_training_paths_on_icc (P : Measure Ω) [IsProbabilityMeasure P]
     (ρ₀ : Measure E) (hρ : Integrable (fun x : E ↦ ‖x‖) ρ₀)
     (ξ : ℕ → Ω → E) (hξm : ∀ i, Measurable (ξ i)) (hind : iIndepFun ξ P)
     (hlaw : ∀ i, P.map (ξ i) = ρ₀) {T : ℝ} (hT : 0 ≤ T)
@@ -78,19 +79,19 @@ theorem exists_iid_training_paths_on_Icc (P : Measure Ω) [IsProbabilityMeasure 
         P.map (fun ω ↦ (Z i ω).IccExtend hT t) = ρ₀.map (fun x ↦ γ x t)) ∧
       (∀ i ω t, t ∈ Icc (0 : ℝ) T → (Z i ω).IccExtend hT t = γ (ξ i ω) t) := by
   let F : E → C(Icc (0 : ℝ) T, E) := fun x ↦ pathOn T (γ x)
-  have hFm : Measurable F := (continuous_pathOn_parameter γ hγ T).measurable
+  have hFm : Measurable F := (continuous_path_on_parameter γ hγ T).measurable
   let Z : ℕ → Ω → C(Icc (0 : ℝ) T, E) := fun i ω ↦ F (ξ i ω)
   have hZm (i : ℕ) : Measurable (Z i) := hFm.comp (hξm i)
   have hZi (i : ℕ) : Integrable (Z i) P := by
     have hi : Integrable (fun ω ↦ ‖ξ i ω‖) P := by
       apply (integrable_map_measure continuous_norm.aestronglyMeasurable (hξm i).aemeasurable).mp
       rwa [hlaw i]
-    exact integrable_pathOn_comp P hT γ hγ hγL hzero (ξ i) (hξm i) hi
+    exact integrable_path_on_comp P hT γ hγ hγL hzero (ξ i) (hξm i) hi
   have hid (i : ℕ) : IdentDistrib (ξ i) (ξ 0) P P :=
     ⟨(hξm i).aemeasurable, (hξm 0).aemeasurable, (hlaw i).trans (hlaw 0).symm⟩
   have heval (i : ℕ) (ω : Ω) (t : ℝ) (ht : t ∈ Icc (0 : ℝ) T) :
       (Z i ω).IccExtend hT t = γ (ξ i ω) t := by
-    exact pathOn_IccExtend_of_continuousOn hT (γ (ξ i ω))
+    exact path_on_icc_extend_of_continuous_on hT (γ (ξ i ω))
       (hγL _).continuous.continuousOn t ht
   refine ⟨Z, fun _ _ ↦ rfl, hZm, hZi, ?_, fun i ↦ (hid i).comp hFm, ?_, heval⟩
   · exact hind.comp (fun _ ↦ F) (fun _ ↦ hFm)

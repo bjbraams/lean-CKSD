@@ -3,6 +3,7 @@ module
 public import CKSD.Learning.Algorithms
 public import CKSD.Learning.Generalization
 
+
 /-!
 # Margin generalization and adversarial bandits
 
@@ -39,7 +40,7 @@ def signedMargin {H X : Type*} (f : H → X → ℝ) (h : H) (z : X × Bool) : �
   if z.2 then f h z.1 else -f h z.1
 
 /-- The ramp margin loss `min(1, max(0, 1 - u/ρ))` is `1/ρ`-Lipschitz. -/
-theorem abs_marginLoss_sub_le {ρ : ℝ} (hρ : 0 < ρ) (u v : ℝ) :
+theorem abs_margin_loss_sub_le {ρ : ℝ} (hρ : 0 < ρ) (u v : ℝ) :
     |marginLoss ρ u - marginLoss ρ v| ≤ 1 / ρ * |u - v| := by
   unfold marginLoss
   refine (abs_min_sub_min_le_max _ _ _ _).trans ?_
@@ -50,11 +51,11 @@ theorem abs_marginLoss_sub_le {ρ : ℝ} (hρ : 0 < ρ) (u v : ℝ) :
   rw [div_eq_inv_mul, one_div]
 
 /-- The ramp margin loss takes values in `[0,1]`. -/
-theorem marginLoss_mem_Icc (ρ u : ℝ) : marginLoss ρ u ∈ Icc 0 1 :=
+theorem margin_loss_mem_icc (ρ u : ℝ) : marginLoss ρ u ∈ Icc 0 1 :=
   ⟨le_min zero_le_one (le_max_left _ _), min_le_left _ _⟩
 
 /-- The ramp margin loss dominates the zero-one loss of a nonpositive margin. -/
-theorem marginLoss_eq_one_of_nonpos {ρ u : ℝ} (hρ : 0 < ρ) (hu : u ≤ 0) : marginLoss ρ u = 1 := by
+theorem margin_loss_eq_one_of_nonpos {ρ u : ℝ} (hρ : 0 < ρ) (hu : u ≤ 0) : marginLoss ρ u = 1 := by
   unfold marginLoss
   have : 1 ≤ 1 - u / ρ := by
     have : u / ρ ≤ 0 := div_nonpos_of_nonpos_of_nonneg hu hρ.le
@@ -94,35 +95,35 @@ theorem measure_margin_generalization_error_le {H X : Type*} [Fintype H] [Nonemp
     exact this.comp (hsm h)
   have hFm : ∀ h, Measurable (F h) := fun h ↦ (hφm h).neg
   have hFb : ∀ h z, |F h z| ≤ 1 := fun h z ↦ by
-    have := marginLoss_mem_Icc ρ (signedMargin f h z)
+    have := margin_loss_mem_icc ρ (signedMargin f h z)
     simp only [F, abs_neg, abs_le]; constructor <;> linarith [this.1, this.2]
   have hFosc : ∀ h z w, |F h z - F h w| ≤ 1 := fun h z w ↦ by
-    have h1 := marginLoss_mem_Icc ρ (signedMargin f h z)
-    have h2 := marginLoss_mem_Icc ρ (signedMargin f h w)
+    have h1 := margin_loss_mem_icc ρ (signedMargin f h z)
+    have h2 := margin_loss_mem_icc ρ (signedMargin f h w)
     simp only [F, abs_le]; constructor <;> linarith [h1.1, h1.2, h2.1, h2.2]
   -- expected supremum via symmetrization and contraction
-  have hsym := integral_sSup_sub_le_two_mul_rademacher P F hFm hFb n hn
+  have hsym := integral_s_sup_sub_le_two_mul_rademacher P F hFm hFb n hn
   have hcontr : ∀ x, empiricalRademacherComplexity n F x ≤
       1 / ρ * empiricalRademacherComplexity n (signedMargin f) x := by
     intro x
-    have hneg := empiricalRademacherComplexity_neg n
+    have hneg := empirical_rademacher_complexity_neg n
       (fun h z ↦ marginLoss ρ (signedMargin f h z)) x
     simp only [F]
-    rw [hneg, empiricalRademacherComplexity_eq, empiricalRademacherComplexity_eq,
+    rw [hneg, empirical_rademacher_complexity_eq, empirical_rademacher_complexity_eq,
       mul_left_comm]
-    exact mul_le_mul_of_nonneg_left (sum_sSup_rademacher_comp_le n
+    exact mul_le_mul_of_nonneg_left (sum_s_sup_rademacher_comp_le n
       (fun h i ↦ signedMargin f h (x i)) (marginLoss ρ) (by positivity)
-      (abs_marginLoss_sub_le hρ)) (by positivity)
+      (abs_margin_loss_sub_le hρ)) (by positivity)
   have hRadF : ∫ x, empiricalRademacherComplexity n F x ∂Pn ≤ 1 / ρ * rad := by
     rw [← integral_const_mul]
     refine integral_mono (integrable_of_abs_le _
-      (measurable_empiricalRademacherComplexity n F hFm)
-      (abs_empiricalRademacherComplexity_le n F zero_le_one hFb))
-      ((integrable_of_abs_le _ (measurable_empiricalRademacherComplexity n _ hsm)
-        (abs_empiricalRademacherComplexity_le n _ hB hsb)).const_mul _) hcontr
+      (measurable_empirical_rademacher_complexity n F hFm)
+      (abs_empirical_rademacher_complexity_le n F zero_le_one hFb))
+      ((integrable_of_abs_le _ (measurable_empirical_rademacher_complexity n _ hsm)
+        (abs_empirical_rademacher_complexity_le n _ hB hsb)).const_mul _) hcontr
   -- tail
   set tt := Real.sqrt (Real.log (1 / δ) / (2 * n)) with htt
-  have htail := measureReal_integral_add_le_sSup_le P F hFm hFosc n hn (Real.sqrt_nonneg _)
+  have htail := measure_real_integral_add_le_s_sup_le P F hFm hFosc n hn (Real.sqrt_nonneg _)
     (t := tt)
   have hexp : Real.exp (-2 * n * tt ^ 2) = δ := by
     have hlog : 0 ≤ Real.log (1 / δ) / (2 * n) := by
@@ -146,8 +147,8 @@ theorem measure_margin_generalization_error_le {H X : Type*} [Fintype H] [Nonemp
     refine integral_mono ((integrable_const 1).indicator hS) (integrable_of_abs_le _
       (hφm h) (C := 1) fun z ↦ by simpa [F] using hFb h z) fun z ↦ ?_
     by_cases hz : z ∈ {z | signedMargin f h z ≤ 0}
-    · rw [indicator_of_mem hz, Pi.one_apply, marginLoss_eq_one_of_nonpos hρ hz]
-    · rw [indicator_of_notMem hz]; exact (marginLoss_mem_Icc _ _).1
+    · rw [indicator_of_mem hz, Pi.one_apply, margin_loss_eq_one_of_nonpos hρ hz]
+    · rw [indicator_of_notMem hz]; exact (margin_loss_mem_icc _ _).1
   have hle := le_csSup (finite_range fun h ↦ (∑ i, F h (x i)) / n - ∫ z, F h z ∂P).bddAbove
     ⟨h, rfl⟩
   have heq : (∑ i, F h (x i)) / n - ∫ z, F h z ∂P =
@@ -162,7 +163,7 @@ theorem measure_margin_generalization_error_le {H X : Type*} [Fintype H] [Nonemp
 
 /-- Conditional-probability identity: if `P[1_{A = j} | 𝓕] = p` and `g` is bounded and
 `𝓕`-measurable, then `∫ 1_{A = j} g = ∫ p g`. -/
-theorem integral_indicator_mul_eq_of_condExp {Ω : Type*} {m : MeasurableSpace Ω}
+theorem integral_indicator_mul_eq_of_cond_exp {Ω : Type*} {m : MeasurableSpace Ω}
     [mΩ : MeasurableSpace Ω] (hm : m ≤ mΩ) (P : Measure Ω)
     [IsProbabilityMeasure P] {K : ℕ} (A : Ω → Fin K) (hA : Measurable A) (j : Fin K)
     (q : Ω → ℝ) (hq : P[(fun ω ↦ if A ω = j then (1 : ℝ) else 0) | m] =ᵐ[P] q)
@@ -201,7 +202,7 @@ def exp3WeightLowerBound (K : ℕ) (η : ℝ) : ℕ → ℝ
   | t + 1 => exp3WeightLowerBound K η t * Real.exp (-η / exp3WeightLowerBound K η t)
 
 /-- The Exp3 lower-bound sequence is positive. -/
-theorem exp3WeightLowerBound_pos {K : ℕ} (hK : 0 < K) (η : ℝ) (t : ℕ) :
+theorem exp3_weight_lower_bound_pos {K : ℕ} (hK : 0 < K) (η : ℝ) (t : ℕ) :
     0 < exp3WeightLowerBound K η t := by
   induction t with
   | zero => simp only [exp3WeightLowerBound]; positivity
@@ -209,7 +210,7 @@ theorem exp3WeightLowerBound_pos {K : ℕ} (hK : 0 < K) (η : ℝ) (t : ℕ) :
 
 /-- Exponential weights with nonnegative estimated losses `ℓ̂ t j ≤ 1 / p t j` stay above the
 positive sequence `exp3WeightLowerBound K η`. -/
-theorem exp3WeightLowerBound_le {K : ℕ} (hK : 0 < K) {η : ℝ} (hη : 0 < η)
+theorem exp3_weight_lower_bound_le {K : ℕ} (hK : 0 < K) {η : ℝ} (hη : 0 < η)
     (lh p : ℕ → Fin K → ℝ) (hlh0 : ∀ t j, 0 ≤ lh t j) (hlh1 : ∀ t j, lh t j ≤ 1 / p t j)
     (hp : ∀ t i, p t i = Real.exp (-η * ∑ s ∈ Finset.range t, lh s i) /
       ∑ j, Real.exp (-η * ∑ s ∈ Finset.range t, lh s j)) (t : ℕ) :
@@ -228,9 +229,9 @@ theorem exp3WeightLowerBound_le {K : ℕ} (hK : 0 < K) {η : ℝ} (hη : 0 < η)
     simp [exp3WeightLowerBound]
   | succ t ih =>
     set c := exp3WeightLowerBound K η t
-    have hc := exp3WeightLowerBound_pos hK η t
+    have hc := exp3_weight_lower_bound_pos hK η t
     intro j
-    have hup := exponentialWeights_succ hK η lh p hp t j
+    have hup := exponential_weights_succ hK η lh p hp t j
     have hZpos : 0 < ∑ j', p t j' * Real.exp (-η * lh t j') :=
       Finset.sum_pos (fun j' _ ↦ mul_pos (hpos t j') (Real.exp_pos _)) hne
     have hZ1 : ∑ j', p t j' * Real.exp (-η * lh t j') ≤ 1 := by
@@ -302,7 +303,7 @@ theorem integral_regret_le_of_exp3 {Ω : Type*} [MeasurableSpace Ω]
   -- deterministic lower bounds on the probabilities
   set c := exp3WeightLowerBound K η
   have hc : ∀ t, 0 < c t ∧ ∀ ω j, c t ≤ p t ω j := fun t ↦
-    ⟨exp3WeightLowerBound_pos hK0 η t, fun ω ↦ exp3WeightLowerBound_le hK0 hη (lh · ω)
+    ⟨exp3_weight_lower_bound_pos hK0 η t, fun ω ↦ exp3_weight_lower_bound_le hK0 hη (lh · ω)
       (fun t j ↦ p t ω j) (fun t j ↦ hlh0 t ω j) (fun t j ↦ hlh1 t ω j) (hrec' ω) t⟩
   -- measurability
   have hpm : ∀ t j, Measurable[F t] fun ω ↦ p t ω j := fun t j ↦
@@ -318,7 +319,7 @@ theorem integral_regret_le_of_exp3 {Ω : Type*} [MeasurableSpace Ω]
       rw [abs_of_nonneg (div_nonneg hr.1 (hpos t ω j).le)]
       exact (div_le_div_of_nonneg_right hr.2 (hpos t ω j).le).trans
         (one_div_le_one_div_of_le (hc t).1 ((hc t).2 ω j))
-    rw [integral_indicator_mul_eq_of_condExp (F.le t) P (A t) (hAm t) j _ (hchoice t j) _ hgm hb]
+    rw [integral_indicator_mul_eq_of_cond_exp (F.le t) P (A t) (hAm t) j _ (hchoice t j) _ hgm hb]
     have : ∀ ω, p t ω j * (r / p t ω j) = r := fun ω ↦ by
       field_simp [(hpos t ω j).ne']
     simp only [this, integral_const, probReal_univ, one_smul]

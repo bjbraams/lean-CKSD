@@ -5,6 +5,7 @@ public import TauCeti.InformationTheory.KullbackLeibler.Pinsker
 public import TauCeti.Probability.Distributions.Tilted
 public import Statlib.Divergence.KullbackLeibler.CondKL
 
+
 /-!
 # Divergences between Gaussian product laws
 
@@ -16,12 +17,12 @@ variation at most `√(‖δ‖² / (4v))`. Total variation is in the statistica
 
 ## Main results
 
-* `CKSD.klDiv_gaussianReal_gaussianReal`: `KL(N(a, v), N(b, v)) = (b - a)² / (2v)`, computed
+* `CKSD.kl_div_gaussian_real_gaussian_real`: `KL(N(a, v), N(b, v)) = (b - a)² / (2v)`, computed
   by exponential tilting (TauCeti's `TauCeti.Probability.gaussianReal_tilted_mul`).
-* `CKSD.klDiv_pi_gaussianReal`: the product formula, from Statlib's tensorization `klDiv_pi`.
-* `CKSD.totalVariationDistance_le_sqrt_toReal_klDiv`: Pinsker's inequality
+* `CKSD.kl_div_pi_gaussian_real`: the product formula, from Statlib's tensorization `klDiv_pi`.
+* `CKSD.total_variation_distance_le_sqrt_to_real_kl_div`: Pinsker's inequality
   `TV(P, Q) ≤ √(KL(P, Q) / 2)`, from TauCeti's `TauCeti.two_mul_sq_measureReal_sub_le_klDiv`.
-* `CKSD.totalVariationDistance_pi_gaussianReal_le`: `TV ≤ √(∑ (bᵢ - aᵢ)² / (4v))` for
+* `CKSD.total_variation_distance_pi_gaussian_real_le`: `TV ≤ √(∑ (bᵢ - aᵢ)² / (4v))` for
   Gaussian product laws.
 -/
 
@@ -36,7 +37,7 @@ namespace CKSD
 
 /-- Kullback–Leibler divergence between Gaussian laws of a common positive variance:
 `KL(N(a, v), N(b, v)) = (b - a)² / (2v)`, computed by exponential tilting. -/
-theorem klDiv_gaussianReal_gaussianReal (a b : ℝ) {v : ℝ≥0} (hv : v ≠ 0) :
+theorem kl_div_gaussian_real_gaussian_real (a b : ℝ) {v : ℝ≥0} (hv : v ≠ 0) :
     klDiv (gaussianReal a v) (gaussianReal b v) = ENNReal.ofReal ((b - a) ^ 2 / (2 * v)) := by
   set t : ℝ := (b - a) / v with ht
   have hvR : (v : ℝ) ≠ 0 := by exact_mod_cast hv
@@ -66,15 +67,15 @@ theorem klDiv_gaussianReal_gaussianReal (a b : ℝ) {v : ℝ≥0} (hv : v ≠ 0)
 
 /-- Kullback–Leibler divergence between finite products of Gaussian laws of a common positive
 variance, from the tensorization of Kullback–Leibler divergence. -/
-theorem klDiv_pi_gaussianReal {ι : Type*} [Fintype ι] (a b : ι → ℝ) {v : ℝ≥0} (hv : v ≠ 0) :
+theorem kl_div_pi_gaussian_real {ι : Type*} [Fintype ι] (a b : ι → ℝ) {v : ℝ≥0} (hv : v ≠ 0) :
     klDiv (Measure.pi fun i ↦ gaussianReal (a i) v) (Measure.pi fun i ↦ gaussianReal (b i) v) =
       ∑ i, ENNReal.ofReal ((b i - a i) ^ 2 / (2 * v)) := by
   rw [klDiv_pi]
-  exact Finset.sum_congr rfl fun i _ ↦ klDiv_gaussianReal_gaussianReal _ _ hv
+  exact Finset.sum_congr rfl fun i _ ↦ kl_div_gaussian_real_gaussian_real _ _ hv
 
 /-- Pinsker's inequality in the statistical normalization of total variation:
 `TV(P, Q) ≤ √(KL(P, Q) / 2)` when the divergence is finite. -/
-theorem totalVariationDistance_le_sqrt_toReal_klDiv {X : Type*} [MeasurableSpace X]
+theorem total_variation_distance_le_sqrt_to_real_kl_div {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q] (hfin : klDiv P Q ≠ ∞) :
     totalVariationDistance P Q ≤ Real.sqrt ((klDiv P Q).toReal / 2) := by
   apply csSup_le
@@ -89,16 +90,16 @@ theorem totalVariationDistance_le_sqrt_toReal_klDiv {X : Type*} [MeasurableSpace
 
 /-- Total variation between finite products of Gaussian laws with common variance `v`:
 `TV ≤ √(∑ (bᵢ - aᵢ)² / (4v))`. -/
-theorem totalVariationDistance_pi_gaussianReal_le {ι : Type*} [Fintype ι] (a b : ι → ℝ)
+theorem total_variation_distance_pi_gaussian_real_le {ι : Type*} [Fintype ι] (a b : ι → ℝ)
     {v : ℝ≥0} (hv : v ≠ 0) :
     totalVariationDistance (Measure.pi fun i ↦ gaussianReal (a i) v)
       (Measure.pi fun i ↦ gaussianReal (b i) v) ≤
       Real.sqrt ((∑ i, (b i - a i) ^ 2) / (4 * v)) := by
-  have hk := klDiv_pi_gaussianReal a b hv
+  have hk := kl_div_pi_gaussian_real a b hv
   have hfin : klDiv (Measure.pi fun i ↦ gaussianReal (a i) v)
       (Measure.pi fun i ↦ gaussianReal (b i) v) ≠ ∞ := by
     rw [hk]; exact ENNReal.sum_ne_top.mpr fun i _ ↦ ENNReal.ofReal_ne_top
-  refine (totalVariationDistance_le_sqrt_toReal_klDiv _ _ hfin).trans (le_of_eq ?_)
+  refine (total_variation_distance_le_sqrt_to_real_kl_div _ _ hfin).trans (le_of_eq ?_)
   congr 1
   rw [hk, ENNReal.toReal_sum (fun i _ ↦ ENNReal.ofReal_ne_top)]
   rw [Finset.sum_congr rfl fun i _ ↦ ENNReal.toReal_ofReal

@@ -2,6 +2,7 @@ module
 
 public import CKSD.Processes.Basic
 
+
 /-!
 # Risk-set estimators of independent samples
 
@@ -17,9 +18,9 @@ by second-moment bounds.
 * `CKSD.integral_comp_eq_zero_of_iid`: integrating out one coordinate of an iid sequence.
 * `CKSD.integral_sq_sum_le_of_iid`, `CKSD.integral_sq_sum_sum_le_of_iid`: second moments of
   sums of kernels with mean zero in one or both arguments.
-* `CKSD.tendstoInMeasure_zero_of_integral_le`, `CKSD.tendstoInMeasure_zero_of_integral_sq_le`:
+* `CKSD.tendsto_in_measure_zero_of_integral_le`, `CKSD.tendsto_in_measure_zero_of_integral_sq_le`:
   Markov's and Chebyshev's inequalities in sequential form.
-* `CKSD.tendstoInDistribution_sqrt_mul_riskSetSum_sub`: the central limit theorem for
+* `CKSD.tendsto_in_distribution_sqrt_mul_risk_set_sum_sub`: the central limit theorem for
   risk-set estimators.
 -/
 
@@ -246,12 +247,12 @@ theorem integral_sq_sum_sum_le_of_iid {Ω E : Type*} [MeasurableSpace Ω] [Measu
 
 /-- Markov's inequality in sequential form: nonnegative random variables whose means are
 eventually bounded by a null sequence converge to zero in probability. -/
-theorem tendstoInMeasure_zero_of_integral_le {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+theorem tendsto_in_measure_zero_of_integral_le {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsFiniteMeasure μ] (X : ℕ → Ω → ℝ) (hX0 : ∀ n ω, 0 ≤ X n ω)
     (hint : ∀ n, Integrable (X n) μ) (u : ℕ → ℝ) (hu : Tendsto u atTop (𝓝 0))
     (hle : ∀ᶠ n in atTop, ∫ ω, X n ω ∂μ ≤ u n) :
     TendstoInMeasure μ X atTop fun _ ↦ 0 := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  rw [tendsto_in_measure_iff_measure_real_lt_dist]
   intro ε hε
   refine squeeze_zero' (Eventually.of_forall fun n ↦ measureReal_nonneg) ?_
     (by simpa using hu.div_const ε)
@@ -267,14 +268,14 @@ theorem tendstoInMeasure_zero_of_integral_le {Ω : Type*} [MeasurableSpace Ω] (
 
 /-- Chebyshev's inequality in sequential form: random variables whose second moments are
 eventually bounded by a null sequence converge to zero in probability. -/
-theorem tendstoInMeasure_zero_of_integral_sq_le {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+theorem tendsto_in_measure_zero_of_integral_sq_le {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsFiniteMeasure μ] (X : ℕ → Ω → ℝ) (hint : ∀ n, Integrable (fun ω ↦ X n ω ^ 2) μ)
     (u : ℕ → ℝ) (hu : Tendsto u atTop (𝓝 0))
     (hle : ∀ᶠ n in atTop, ∫ ω, X n ω ^ 2 ∂μ ≤ u n) :
     TendstoInMeasure μ X atTop fun _ ↦ 0 := by
-  have h := tendstoInMeasure_zero_of_integral_le μ (fun n ω ↦ X n ω ^ 2)
+  have h := tendsto_in_measure_zero_of_integral_le μ (fun n ω ↦ X n ω ^ 2)
     (fun n ω ↦ sq_nonneg _) hint u hu hle
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at h ⊢
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at h ⊢
   intro ε hε
   refine squeeze_zero (fun n ↦ measureReal_nonneg) (fun n ↦ measureReal_mono fun ω hω ↦ ?_)
     (h (ε ^ 2) (by positivity))
@@ -285,7 +286,7 @@ theorem tendstoInMeasure_zero_of_integral_sq_le {Ω : Type*} [MeasurableSpace Ω
 
 /-- A normalized degenerate `V`-statistic of a bounded kernel is negligible:
 `√n n⁻² ∑_{i,j<n} g(Z i, Z j) → 0` in probability. -/
-theorem tendstoInMeasure_sqrt_mul_sum_sum_div_of_iid {Ω E : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_sqrt_mul_sum_sum_div_of_iid {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) [IsProbabilityMeasure P]
     (Z : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ Z P)
@@ -308,7 +309,7 @@ theorem tendstoInMeasure_sqrt_mul_sum_sum_div_of_iid {Ω E : Type*} [MeasurableS
           Finset.sum_le_sum fun i _ ↦ (Finset.abs_sum_le_sum_abs _ _).trans
             (Finset.sum_le_sum fun j _ ↦ hB (Z i ω) (Z j ω))
       _ = n * (n * B) := by simp
-  refine tendstoInMeasure_zero_of_integral_sq_le μ _ (fun n ↦ ?_) (fun n ↦ 3 * B ^ 2 / n)
+  refine tendsto_in_measure_zero_of_integral_sq_le μ _ (fun n ↦ ?_) (fun n ↦ 3 * B ^ 2 / n)
     (by simpa using tendsto_const_div_atTop_nhds_zero_nat (3 * B ^ 2)) ?_
   · refine Integrable.of_bound ((hmeas n).pow_const 2).aestronglyMeasurable
       ((Real.sqrt n / n ^ 2 * (n * (n * B))) ^ 2) (ae_of_all _ fun ω ↦ ?_)
@@ -329,7 +330,7 @@ theorem tendstoInMeasure_sqrt_mul_sum_sum_div_of_iid {Ω E : Type*} [MeasurableS
 `Yᵢ = n⁻¹ #{j < n : x(Z i) ≤ x(Z j)}` and `y(s) = P(x ≥ s)`, the sum
 `√n n⁻¹ ∑_{i<n} A(Z i) (Yᵢ - y(x(Z i)))² / (y(x(Z i))² Yᵢ)` tends to zero in probability when
 `0 ≤ A ≤ 1` vanishes off `{x ≤ t}` and `y(t) > 0`. -/
-theorem tendstoInMeasure_riskSet_remainder {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
+theorem tendsto_in_measure_risk_set_remainder {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) [IsProbabilityMeasure P]
     (Z : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ Z P)
     (x : E → ℝ) (hx : Measurable x) (A : E → ℝ) (hA0 : ∀ z, 0 ≤ A z) (hA1 : ∀ z, A z ≤ 1)
@@ -404,7 +405,7 @@ theorem tendstoInMeasure_riskSet_remainder {Ω E : Type*} [MeasurableSpace Ω] [
   set W : ℕ → Ω → ℝ := fun n ω ↦ Real.sqrt n / n * ∑ i ∈ Finset.range n,
     (Y n i ω - y (x (Z i ω))) ^ 2 with hW
   have hWlim : TendstoInMeasure μ W atTop fun _ ↦ 0 := by
-    refine tendstoInMeasure_zero_of_integral_le μ W
+    refine tendsto_in_measure_zero_of_integral_le μ W
       (fun n ω ↦ mul_nonneg (by positivity) (Finset.sum_nonneg fun i _ ↦ sq_nonneg _))
       (fun n ↦ (integrable_finsetSum _ fun i _ ↦ hDint n i).const_mul _)
       (fun n ↦ (Real.sqrt n)⁻¹)
@@ -442,7 +443,7 @@ theorem tendstoInMeasure_riskSet_remainder {Ω E : Type*} [MeasurableSpace Ω] [
       rw [hind]; exact (integrable_const (1 : ℝ)).indicator hS
     have hmean : ∫ z, (if t ≤ x z then (1 : ℝ) else 0) ∂P = y t := by
       rw [hind, integral_indicator_one hS, ← hy]
-    have hlln := tendstoInMeasure_sampleMean_of_iid μ P Z hiid _ hs hint
+    have hlln := tendsto_in_measure_sample_mean_of_iid μ P Z hiid _ hs hint
     rw [hmean] at hlln
     rw [tendstoInMeasure_iff_norm] at hlln ⊢
     intro ε hε
@@ -450,8 +451,8 @@ theorem tendstoInMeasure_riskSet_remainder {Ω E : Type*} [MeasurableSpace Ω] [
     congr 1
     ext ω
     simp [hYt, div_eq_inv_mul]
-  refine tendstoInMeasure_zero_of_abs_le μ (fun n ω ↦ 2 / y t ^ 3 * W n ω) _
-    (fun n ω ↦ Yt n ω - y t) (half_pos hyt) ?_ (tendstoInMeasure_const_mul_zero μ W _ hWlim) hU
+  refine tendsto_in_measure_zero_of_abs_le μ (fun n ω ↦ 2 / y t ^ 3 * W n ω) _
+    (fun n ω ↦ Yt n ω - y t) (half_pos hyt) ?_ (tendsto_in_measure_const_mul_zero μ W _ hWlim) hU
   filter_upwards [eventually_gt_atTop 0] with n hn
   refine ae_of_all _ fun ω hω ↦ ?_
   have hn' : (0 : ℝ) < n := by exact_mod_cast hn
@@ -487,11 +488,11 @@ theorem tendstoInMeasure_riskSet_remainder {Ω E : Type*} [MeasurableSpace Ω] [
   rw [mul_left_comm, Finset.mul_sum (s := Finset.range n) (a := 2 / y t ^ 3)]
   exact mul_le_mul_of_nonneg_left (Finset.sum_le_sum fun i _ ↦ (hterm i).2) (by positivity)
 
-/-- The algebraic decomposition behind `tendstoInDistribution_sqrt_mul_riskSetSum_sub`: with
+/-- The algebraic decomposition behind `tendsto_in_distribution_sqrt_mul_risk_set_sum_sub`: with
 risk-set counts `Nᵢ = ∑_j I i j ≥ 1`, fractions `Yᵢ = Nᵢ / n` and `a = A / y²`, the normalized
 estimator splits into a linear term, a quadratic remainder and a `V`-statistic, using
 `1 / Y = 1 / y - (Y - y) / y² + (Y - y)² / (y² Y)`. -/
-theorem riskSetSum_decomposition (n : ℕ) (hn : 0 < n) (Av yv bv : ℕ → ℝ) (I : ℕ → ℕ → ℝ)
+theorem risk_set_sum_decomposition (n : ℕ) (hn : 0 < n) (Av yv bv : ℕ → ℝ) (I : ℕ → ℕ → ℝ)
     (θ : ℝ) (hI0 : ∀ i j, 0 ≤ I i j) (hIi : ∀ i, I i i = 1)
     (hAy : ∀ i, Av i ≠ 0 → 0 < yv i) :
     Real.sqrt n * (∑ i ∈ Finset.range n, Av i / (∑ j ∈ Finset.range n, I i j) - θ) =
@@ -547,7 +548,7 @@ and `y(t) > 0`. The estimator is expanded around `y` to first order; the first-o
 `V`-statistic whose Hájek projection adds `-b` to the influence function, with
 `b(z') = ∫ a(z) (1{x z ≤ x z'} - y(x z)) dP(z)` and `a = A / y(x)²`, and the degenerate part and
 the quadratic remainder are negligible. -/
-theorem tendstoInDistribution_sqrt_mul_riskSetSum_sub {Ω E : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_sqrt_mul_risk_set_sum_sub {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) [IsProbabilityMeasure P]
     (Z : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ Z P)
@@ -662,10 +663,10 @@ theorem tendstoInDistribution_sqrt_mul_riskSetSum_sub {Ω E : Type*} [Measurable
     rw [integral_sub (f := fun z ↦ A z / y (x z) - θ) (hAyint.sub (integrable_const θ)) hbint,
       integral_sub hAyint (integrable_const θ), hb0, integral_const]
     simp [θ]
-  have hL := tendstoInDistribution_inv_sqrt_mul_sum_of_iid μ P Z hiid ψ hψm hψ2 hψ0
-  have hV := tendstoInMeasure_sqrt_mul_sum_sum_div_of_iid μ P Z hiid H hHm (2 * c) hHB hH1 hH2
-  have hQ := tendstoInMeasure_riskSet_remainder μ P Z hiid x hx A hA0 hA1 t hAt y hy hyt
-  have hR := tendstoInMeasure_add_zero μ _ _ hQ (tendstoInMeasure_const_mul_zero μ _ (-1) hV)
+  have hL := tendsto_in_distribution_inv_sqrt_mul_sum_of_iid μ P Z hiid ψ hψm hψ2 hψ0
+  have hV := tendsto_in_measure_sqrt_mul_sum_sum_div_of_iid μ P Z hiid H hHm (2 * c) hHB hH1 hH2
+  have hQ := tendsto_in_measure_risk_set_remainder μ P Z hiid x hx A hA0 hA1 t hAt y hy hyt
+  have hR := tendsto_in_measure_add_zero μ _ _ hQ (tendsto_in_measure_const_mul_zero μ _ (-1) hV)
   have hZm := hiid.1
   have hIm (i j : ℕ) : Measurable fun ω ↦ (if x (Z i ω) ≤ x (Z j ω) then (1 : ℝ) else 0) :=
     Measurable.ite (measurableSet_le (hx.comp (hZm i)) (hx.comp (hZm j)))
@@ -703,7 +704,7 @@ theorem tendstoInDistribution_sqrt_mul_riskSetSum_sub {Ω E : Type*} [Measurable
     push_cast
     rfl
   simp_rw [hcard]
-  exact riskSetSum_decomposition n hn (fun i ↦ A (Z i ω)) (fun i ↦ y (x (Z i ω)))
+  exact risk_set_sum_decomposition n hn (fun i ↦ A (Z i ω)) (fun i ↦ y (x (Z i ω)))
     (fun j ↦ b (Z j ω)) (fun i j ↦ if x (Z i ω) ≤ x (Z j ω) then 1 else 0) θ
     (fun i j ↦ by split_ifs <;> norm_num) (fun i ↦ by simp)
     (fun i hAi ↦ hyt.trans_le (hyA _ hAi))

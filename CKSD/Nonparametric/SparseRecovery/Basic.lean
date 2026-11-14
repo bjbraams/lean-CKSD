@@ -4,6 +4,7 @@ public import CKSD.Nonparametric.Basic
 public import Mathlib.Algebra.Order.Chebyshev
 public import Mathlib.Analysis.MeanInequalitiesPow
 
+
 /-!
 # Sparse vectors, the null space property, and restricted orthogonality
 
@@ -19,10 +20,10 @@ orthogonality of sparse vectors with disjoint supports.
 
 ## Main results
 
-* `CKSD.hasNullspaceProperty_iff`: the null space property on `S` holds if and only if basis
+* `CKSD.has_nullspace_property_iff`: the null space property on `S` holds if and only if basis
   pursuit recovers every vector supported in `S` as the unique `ℓ¹` minimizer of its
   measurements.
-* `CKSD.abs_inner_apply_le_of_hasRestrictedIsometry`: if `A` has the restricted isometry
+* `CKSD.abs_inner_apply_le_of_has_restricted_isometry`: if `A` has the restricted isometry
   property of order `2 s` with constant `δ`, then `|⟪A x, A y⟫| ≤ δ ‖x‖ ‖y‖` for `s`-sparse `x`,
   `y` with disjoint supports.
 
@@ -42,13 +43,13 @@ namespace CKSD
 attribute [local instance] Classical.propDecidable
 
 /-- The coordinatewise L1 norm splits over complementary coordinate sets. -/
-theorem restrictedL1Norm_add_compl {p : ℕ} (S : Finset (Fin p))
+theorem restricted_l1_norm_add_compl {p : ℕ} (S : Finset (Fin p))
     (x : EuclideanSpace ℝ (Fin p)) :
     restrictedL1Norm S x + restrictedL1Norm Sᶜ x = restrictedL1Norm Finset.univ x := by
   exact S.sum_add_sum_compl (fun j ↦ |x j|)
 
 /-- A restricted reverse triangle bound for coordinatewise L1 norms. -/
-theorem restrictedL1Norm_le_add_sub {p : ℕ} (S : Finset (Fin p))
+theorem restricted_l1_norm_le_add_sub {p : ℕ} (S : Finset (Fin p))
     (x y : EuclideanSpace ℝ (Fin p)) :
     restrictedL1Norm S x ≤ restrictedL1Norm S y + restrictedL1Norm S (y - x) := by
   unfold restrictedL1Norm
@@ -77,7 +78,7 @@ def IsBasisPursuitEstimator {n p : ℕ}
 
 /-- GAPS 103.48: the null space property on `S` holds if and only if every `β` supported in `S`
 is the unique minimizer of `‖b‖₁` subject to `A b = A β`. -/
-theorem hasNullspaceProperty_iff {n p : ℕ}
+theorem has_nullspace_property_iff {n p : ℕ}
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
     (S : Finset (Fin p)) :
     HasNullspaceProperty A S ↔
@@ -95,9 +96,9 @@ theorem hasNullspaceProperty_iff {n p : ℕ}
       apply Finset.sum_congr rfl
       intro j hj
       simp only [PiLp.sub_apply, hβ j (Finset.mem_compl.mp hj), sub_zero]
-    have htriangle := restrictedL1Norm_le_add_sub S β b
-    have hsplitβ := restrictedL1Norm_add_compl S β
-    have hsplitb := restrictedL1Norm_add_compl S b
+    have htriangle := restricted_l1_norm_le_add_sub S β b
+    have hsplitβ := restricted_l1_norm_add_compl S β
+    have hsplitb := restricted_l1_norm_add_compl S b
     rw [hβc, add_zero] at hsplitβ
     rw [hcomp] at hstrict
     linarith
@@ -131,7 +132,7 @@ theorem hasNullspaceProperty_iff {n p : ℕ}
       apply Finset.sum_congr rfl
       intro j hj
       simp [b, β, PiLp.sub_apply, Finset.mem_compl.mp hj]
-    rw [← restrictedL1Norm_add_compl S β, ← restrictedL1Norm_add_compl S b,
+    rw [← restricted_l1_norm_add_compl S β, ← restricted_l1_norm_add_compl S b,
       hβs, hβc, hbs, hbc, add_zero, zero_add] at hlt
     exact hlt
 
@@ -162,7 +163,7 @@ theorem inner_eq_zero_of_forall_eq_zero_or_eq_zero {p : ℕ} {x y : EuclideanSpa
 
 /-- Restricted orthogonality from the restricted isometry property: for `s`-sparse vectors
 with disjoint supports, `|⟪A x, A y⟫| ≤ δ ‖x‖ ‖y‖` when `A` has the RIP of order `2 s`. -/
-theorem abs_inner_apply_le_of_hasRestrictedIsometry {n p s : ℕ}
+theorem abs_inner_apply_le_of_has_restricted_isometry {n p s : ℕ}
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)) (δ : ℝ)
     (hrip : HasRestrictedIsometry A (2 * s) δ) (x y : EuclideanSpace ℝ (Fin p))
     (hx : sparsity x ≤ s) (hy : sparsity y ≤ s) (hxy : ∀ j, x j = 0 ∨ y j = 0) :

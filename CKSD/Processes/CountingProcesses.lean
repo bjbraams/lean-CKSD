@@ -4,6 +4,7 @@ public import CKSD.Processes.Basic
 public import Mathlib.Probability.Process.Predictable
 public import Mathlib.Topology.Order.LeftRightLim
 
+
 /-!
 # Cox regression and Rebolledo's martingale central limit theorem
 
@@ -27,9 +28,9 @@ survival function `exp(-Λ₀(t) e^{β·z})` on `[0, τ]`.
 
 ## Main results
 
-* `CKSD.tendsto_coxPartialLikelihoodMaximizer` (GAPS 106.30): consistency and asymptotic
+* `CKSD.tendsto_cox_partial_likelihood_maximizer` (GAPS 106.30): consistency and asymptotic
   normality of the maximum partial-likelihood estimator.
-* `CKSD.tendstoInDistribution_countingMartingaleTransform` (GAPS 106.34): Rebolledo's central
+* `CKSD.tendsto_in_distribution_counting_martingale_transform` (GAPS 106.34): Rebolledo's central
   limit theorem, in finite-dimensional form.
 -/
 
@@ -83,7 +84,7 @@ bounded covariates, conditionally independent censoring, `P(min(T,C) ≥ τ) > 0
 definite information. The estimator is any measurable choice that maximizes the partial
 likelihood whenever a maximizer exists. The efficiency and log-rank interpretations are not
 restated. -/
-theorem tendsto_coxPartialLikelihoodMaximizer {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_cox_partial_likelihood_maximizer {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] {d : ℕ}
     (L : Measure (EuclideanSpace ℝ (Fin d) × ℝ × ℝ)) [IsProbabilityMeasure L]
     (D : ℕ → Ω → EuclideanSpace ℝ (Fin d) × ℝ × ℝ)
@@ -148,7 +149,7 @@ probability space, and weak convergence in `D[0,τ]^k` is replaced by convergenc
 finite-dimensional distributions. The limit `V` automatically satisfies `V 0 = 0` and has
 positive-semidefinite increments on `[0, τ]`, as a limit in probability of predictable
 variations with these properties. -/
-theorem tendstoInDistribution_countingMartingaleTransform {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_counting_martingale_transform {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (k : ℕ) (kn : ℕ → ℕ)
     (F : ℕ → Filtration ℝ≥0 (inferInstance : MeasurableSpace Ω))
     (N intensity : (n : ℕ) → Fin (kn n) → ℝ≥0 → Ω → ℝ)

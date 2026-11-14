@@ -2,6 +2,7 @@ module
 
 public import CKSD.LinearModels.DirectedGraphical.Basic.CausalGraph
 
+
 /-!
 # Identifiability of restricted structural equation models
 
@@ -16,11 +17,11 @@ projections. Source: GAPS 105.71.
 
 ## Main results
 
-* `CKSD.CausalGraph.edge_eq_of_linearSEMLaw_eq_of_equalVariance`: linear Gaussian models with
+* `CKSD.CausalGraph.edge_eq_of_linear_sem_law_eq_of_equal_variance`: linear Gaussian models with
   equal noise variances identify the graph.
 * `CKSD.CausalGraph.IsLinearSEMMatrix.det_one_sub_ne_zero`: `1 - B` is nonsingular along a
   directed acyclic graph.
-* `CKSD.variance_linearSEMLaw_gaussianReal`: the variance of a linear functional of a linear
+* `CKSD.variance_linear_sem_law_gaussian_real`: the variance of a linear functional of a linear
   Gaussian model with common noise variance.
 
 The equal-variance case compares precision matrices: equal laws give
@@ -68,7 +69,7 @@ def IsNonGaussianPositiveDensityLaw (ν : Measure ℝ) : Prop :=
 def coordinateRestriction (B : Finset V) (x : V → ℝ) : B → ℝ := fun b ↦ x b
 
 /-- Coordinate restrictions are measurable. -/
-@[fun_prop] theorem measurable_coordinateRestriction (B : Finset V) :
+@[fun_prop] theorem measurable_coordinate_restriction (B : Finset V) :
     Measurable (coordinateRestriction B : (V → ℝ) → B → ℝ) := by
   unfold coordinateRestriction
   fun_prop
@@ -81,7 +82,7 @@ def CausalGraph.IsFaithfulLaw [Fintype V] (G : CausalGraph V) (μ : Measure (V �
   ∀ A B C : Finset V, Disjoint A B → Disjoint A C → Disjoint B C →
     (G.DSeparated A B C ↔
       CondIndepFun ((inferInstance : MeasurableSpace (C → ℝ)).comap (coordinateRestriction C))
-        (measurable_coordinateRestriction C).comap_le (coordinateRestriction A)
+        (measurable_coordinate_restriction C).comap_le (coordinateRestriction A)
         (coordinateRestriction B) μ)
 
 /-- The structural functions of an additive-noise model respect the parents of `G`. -/
@@ -104,7 +105,7 @@ def CausalGraph.IsNonlinearInParents [DecidableEq V] (G : CausalGraph V)
 /-- GAPS 105.71, linear non-Gaussian models: if two linear structural equation models along
 `G` and `H`, with nonzero coefficients on the edges and independent non-Gaussian noises with
 strictly positive densities, have the same law, then `G = H`. -/
-theorem CausalGraph.edge_eq_of_linearSEMLaw_eq_of_nonGaussian [Fintype V] [DecidableEq V]
+theorem CausalGraph.edge_eq_of_linear_sem_law_eq_of_non_gaussian [Fintype V] [DecidableEq V]
     (G H : CausalGraph V) (B B' : Matrix V V ℝ) (hB : G.IsLinearSEMMatrix B)
     (hB' : H.IsLinearSEMMatrix B') (ν ν' : V → Measure ℝ)
     [∀ j, IsProbabilityMeasure (ν j)] [∀ j, IsProbabilityMeasure (ν' j)]
@@ -150,7 +151,7 @@ private theorem one_sub_apply_sink [DecidableEq V] {G : CausalGraph V} {B : Matr
 
 /-- Peeling sinks: for linear SEM matrices `B`, `B'` along causal graphs `G`, `H`, equality of
 the partial Gram matrices of `1 - B` and `1 - B'` over `W` forces equal rows over `W`. -/
-private theorem rows_eq_of_rowGram_eq [Fintype V] [DecidableEq V] {G H : CausalGraph V}
+private theorem rows_eq_of_row_gram_eq [Fintype V] [DecidableEq V] {G H : CausalGraph V}
     {B B' : Matrix V V ℝ} (hB : G.IsLinearSEMMatrix B) (hB' : H.IsLinearSEMMatrix B')
     (W : Finset V) (hW : rowGram W (1 - B) = rowGram W (1 - B')) :
     ∀ r ∈ W, (1 - B) r = (1 - B') r := by
@@ -213,7 +214,7 @@ theorem CausalGraph.IsLinearSEMMatrix.det_one_sub_ne_zero [Fintype V] [Decidable
 
 /-- Variance of a linear functional of a linear Gaussian SEM with common noise variance:
 `Var(∑ₐ cₐ Xₐ) = σ² ∑ₖ (∑ₐ cₐ Mₐₖ)²` for `X = M N`. -/
-theorem variance_linearSEMLaw_gaussianReal [Fintype V] [DecidableEq V] (B : Matrix V V ℝ)
+theorem variance_linear_sem_law_gaussian_real [Fintype V] [DecidableEq V] (B : Matrix V V ℝ)
     (m : V → ℝ) (σ2 : ℝ≥0) (c : V → ℝ) :
     Var[fun x ↦ ∑ a, c a * x a; linearSEMLaw B fun j ↦ gaussianReal (m j) σ2] =
       σ2 * ∑ k, (∑ a, c a * (1 - B)⁻¹ a k) ^ 2 := by
@@ -250,7 +251,7 @@ private theorem polarization_mul_transpose [Fintype V] [DecidableEq V] (M : Matr
   exact Finset.sum_congr rfl fun k _ ↦ by ring
 
 /-- The diagonal of the Gram matrix of `1 - B` over all rows is at least one. -/
-private theorem one_le_rowGram_univ [Fintype V] [DecidableEq V] {G : CausalGraph V}
+private theorem one_le_row_gram_univ [Fintype V] [DecidableEq V] {G : CausalGraph V}
     {B : Matrix V V ℝ} (hB : G.IsLinearSEMMatrix B) (j : V) :
     1 ≤ rowGram Finset.univ (1 - B) j j := by
   simp only [rowGram]
@@ -260,7 +261,7 @@ private theorem one_le_rowGram_univ [Fintype V] [DecidableEq V] {G : CausalGraph
   exact le_add_of_nonneg_right (Finset.sum_nonneg fun i _ ↦ mul_self_nonneg _)
 
 /-- At a sink of `G`, the diagonal of the Gram matrix of `1 - B` equals one. -/
-private theorem rowGram_univ_sink [Fintype V] [DecidableEq V] {G : CausalGraph V}
+private theorem row_gram_univ_sink [Fintype V] [DecidableEq V] {G : CausalGraph V}
     {B : Matrix V V ℝ} (hB : G.IsLinearSEMMatrix B) {j : V} (hj : ∀ k ∈ Finset.univ, ¬ G.edge j k) :
     rowGram Finset.univ (1 - B) j j = 1 := by
   simp only [rowGram]
@@ -292,7 +293,7 @@ private theorem smul_transpose_mul_eq [Fintype V] [DecidableEq V] {A A' : Matrix
 equation models along `G` and `H`, with nonzero coefficients on the edges and independent
 Gaussian noises of one common positive variance within each model, have the same law, then
 `G = H`. The noise means are arbitrary. -/
-theorem CausalGraph.edge_eq_of_linearSEMLaw_eq_of_equalVariance [Fintype V] [DecidableEq V]
+theorem CausalGraph.edge_eq_of_linear_sem_law_eq_of_equal_variance [Fintype V] [DecidableEq V]
     (G H : CausalGraph V) (B B' : Matrix V V ℝ) (hB : G.IsLinearSEMMatrix B)
     (hB' : H.IsLinearSEMMatrix B') (m m' : V → ℝ) (σ2 σ2' : ℝ≥0) (hσ : 0 < σ2) (hσ' : 0 < σ2')
     (hlaw : linearSEMLaw B (fun j ↦ gaussianReal (m j) σ2) =
@@ -300,7 +301,7 @@ theorem CausalGraph.edge_eq_of_linearSEMLaw_eq_of_equalVariance [Fintype V] [Dec
     G.edge = H.edge := by
   have hvar : ∀ c : V → ℝ, (σ2 : ℝ) * ∑ k, (∑ a, c a * (1 - B)⁻¹ a k) ^ 2 =
       σ2' * ∑ k, (∑ a, c a * (1 - B')⁻¹ a k) ^ 2 := fun c ↦ by
-    rw [← variance_linearSEMLaw_gaussianReal, ← variance_linearSEMLaw_gaussianReal, hlaw]
+    rw [← variance_linear_sem_law_gaussian_real, ← variance_linear_sem_law_gaussian_real, hlaw]
   have hcov : (σ2 : ℝ) • ((1 - B)⁻¹ * (1 - B)⁻¹ᵀ) = (σ2' : ℝ) • ((1 - B')⁻¹ * (1 - B')⁻¹ᵀ) := by
     funext a b
     have h := polarization_mul_transpose (1 - B)⁻¹ a b
@@ -326,16 +327,16 @@ theorem CausalGraph.edge_eq_of_linearSEMLaw_eq_of_equalVariance [Fintype V] [Dec
   obtain ⟨j', -, hj'⟩ := H.exists_sink_mem (Finset.univ_nonempty (α := V))
   have e1 := hentry j
   have e2 := hentry j'
-  rw [rowGram_univ_sink hB hj] at e1
-  rw [rowGram_univ_sink hB' hj'] at e2
-  have g1 := one_le_rowGram_univ hB' j
-  have g2 := one_le_rowGram_univ hB j'
+  rw [row_gram_univ_sink hB hj] at e1
+  rw [row_gram_univ_sink hB' hj'] at e2
+  have g1 := one_le_row_gram_univ hB' j
+  have g2 := one_le_row_gram_univ hB j'
   have hσ0 : (0 : ℝ) < σ2 := hσ
   have hσ0' : (0 : ℝ) < σ2' := hσ'
   have hs : (σ2' : ℝ) = σ2 := by nlinarith
   rw [hs] at hprec
   have hG := smul_right_injective (Matrix V V ℝ) hσ0.ne' hprec
-  have hrows := rows_eq_of_rowGram_eq hB hB' Finset.univ hG
+  have hrows := rows_eq_of_row_gram_eq hB hB' Finset.univ hG
   have hBB : B = B' := sub_right_injective (funext fun r ↦ hrows r (Finset.mem_univ r))
   subst hBB
   funext k j
@@ -345,7 +346,7 @@ theorem CausalGraph.edge_eq_of_linearSEMLaw_eq_of_equalVariance [Fintype V] [Dec
 `G` and `H`, with three times continuously differentiable structural functions that respect
 the parents and are nonlinear in each parent argument, and independent Gaussian noises of
 positive variances, have the same law, then `G = H`. -/
-theorem CausalGraph.edge_eq_of_additiveNoiseLaw_eq [Fintype V] [DecidableEq V]
+theorem CausalGraph.edge_eq_of_additive_noise_law_eq [Fintype V] [DecidableEq V]
     (G H : CausalGraph V) (f g : V → (V → ℝ) → ℝ)
     (hfG : G.RespectsParentsReal f) (hgH : H.RespectsParentsReal g)
     (hf : ∀ j, ContDiff ℝ 3 (f j)) (hg : ∀ j, ContDiff ℝ 3 (g j))
@@ -362,7 +363,7 @@ equivalence class: for a linear Gaussian model along `G` whose law is faithful t
 directed acyclic graph `H` carries a linear Gaussian model (nonzero edge coefficients,
 positive noise variances) with the same law faithful to `H` exactly when `H` is Markov
 equivalent to `G`. Faithfulness to both graphs makes the equivalence class the precise answer. -/
-theorem CausalGraph.exists_linearGaussianSEM_iff_markovEquivalent [Fintype V] [DecidableEq V]
+theorem CausalGraph.exists_linear_gaussian_sem_iff_markov_equivalent [Fintype V] [DecidableEq V]
     (G H : CausalGraph V) (B : Matrix V V ℝ) (hB : G.IsLinearSEMMatrix B) (m : V → ℝ)
     (σ2 : V → ℝ≥0) (hσ : ∀ j, 0 < σ2 j)
     (hfaith : G.IsFaithfulLaw (linearSEMLaw B fun j ↦ gaussianReal (m j) (σ2 j))) :

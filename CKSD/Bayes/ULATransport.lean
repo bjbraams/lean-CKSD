@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.ULAHamiltonianError
 public import CKSD.Bayes.ULAContraction
 /-!
@@ -23,7 +24,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDim
   [MeasurableSpace E] [BorelSpace E]
 
 /-- Two maps on one probability space give an explicit quadratic transport bound. -/
-theorem wassersteinEDist_maps_sq_le {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
+theorem wasserstein_e_dist_maps_sq_le {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     (f g : Ω → E) (hf : Measurable f) (hg : Measurable g) :
     TauCeti.wassersteinEDist 2 (P.map f) (P.map g) ^ 2 ≤
       ∫⁻ ω, ENNReal.ofReal (‖f ω - g ω‖ ^ 2) ∂P := by
@@ -39,7 +40,7 @@ theorem wassersteinEDist_maps_sq_le {Ω : Type*} [MeasurableSpace Ω] (P : Measu
   simp only [edist_dist, dist_eq_norm, ENNReal.ofReal_pow (norm_nonneg _)]
 
 /-- The frozen-force quadratic position has Wasserstein error controlled by stationary energy. -/
-theorem wassersteinEDist_mechanical_position_le
+theorem wasserstein_e_dist_mechanical_position_le
     (π : Measure E) [IsProbabilityMeasure π] (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L G)
     (hInv : ∀ s : ℝ, MeasurePreserving (mechanicalFlow G hG s)
       (π.prod (stdGaussian E)) (π.prod (stdGaussian E))) {T : ℝ} (hT : 0 ≤ T) :
@@ -59,7 +60,7 @@ theorem wassersteinEDist_mechanical_position_le
   have hweq := congrArg (fun ν ↦ TauCeti.wassersteinEDist 2 (P.map f) ν) hmap.symm
   rw [hweq]
   apply (ENNReal.pow_le_pow_left_iff (by norm_num : (2 : ℕ) ≠ 0)).1
-  have hw := wassersteinEDist_maps_sq_le P f g hf hg
+  have hw := wasserstein_e_dist_maps_sq_le P f g hf hg
   have he := lintegral_mechanical_position_error_sq_le π G hG hInv hT
   have hbound : (∫⁻ z, ENNReal.ofReal (‖f z - g z‖^2) ∂P) ≤
       ENNReal.ofReal ((L : ℝ)^2*(Module.finrank ℝ E)*T^6) := by
@@ -70,7 +71,7 @@ theorem wassersteinEDist_mechanical_position_le
   rw [mul_pow, mul_pow, Real.sq_sqrt (by positivity : 0 ≤ (Module.finrank ℝ E : ℝ))]
   ring
 /-- One ULA step from an invariant mechanical position law has order `h^(3/2)` bias. -/
-theorem wassersteinEDist_langevinStepLaw_self_le {d : ℕ}
+theorem wasserstein_e_dist_langevin_step_law_self_le {d : ℕ}
     (π : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure π]
     (G : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) {L : ℝ≥0} (hG : LipschitzWith L G)
     (hInv : ∀ s : ℝ, MeasurePreserving (mechanicalFlow G hG s)
@@ -89,7 +90,7 @@ theorem wassersteinEDist_langevinStepLaw_self_le {d : ℕ}
     rw [hT]
     module
   rw [heq]
-  refine (wassersteinEDist_mechanical_position_le π G hG hInv (Real.sqrt_nonneg _)).trans ?_
+  refine (wasserstein_e_dist_mechanical_position_le π G hG hInv (Real.sqrt_nonneg _)).trans ?_
   apply ENNReal.ofReal_le_ofReal
   simp only [finrank_euclideanSpace, Fintype.card_fin]
   have hs : Real.sqrt (2*h) ≤ 3/2 * Real.sqrt h := by
@@ -147,7 +148,7 @@ theorem ula_bias_supersolution {α β h D : ℝ} (hα : 0 < α) (hβ : 0 ≤ β)
       12*β*Real.sqrt (D*h)/α := by field_simp [hα.ne']; ring
   linarith
 /-- A Langevin step maps probability measures to probability measures. -/
-theorem isProbabilityMeasure_langevinStepLaw {d : ℕ}
+theorem is_probability_measure_langevin_step_law {d : ℕ}
     (G : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (h : ℝ)
     (μ : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure μ] :
     IsProbabilityMeasure (langevinStepLaw G h μ) := by
@@ -155,7 +156,7 @@ theorem isProbabilityMeasure_langevinStepLaw {d : ℕ}
   infer_instance
 
 /-- A mechanically invariant law gives a geometric ULA bound with an order-sqrt-step bias. -/
-theorem wassersteinEDist_iterate_langevinStepLaw_le {d : ℕ}
+theorem wasserstein_e_dist_iterate_langevin_step_law_le {d : ℕ}
     (π : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure π]
     (G : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) {L : ℝ≥0} (hG : LipschitzWith L G)
     (hInv : ∀ s : ℝ, MeasurePreserving (mechanicalFlow G hG s)
@@ -173,17 +174,17 @@ theorem wassersteinEDist_iterate_langevinStepLaw_le {d : ℕ}
     | zero => simpa using inferInstanceAs (IsProbabilityMeasure μ)
     | succ k ih =>
       rw [Function.iterate_succ_apply']
-      exact isProbabilityMeasure_langevinStepLaw G h _
+      exact is_probability_measure_langevin_step_law G h _
   let u : ℕ → ℝ≥0∞ := fun k ↦ TauCeti.wassersteinEDist 2 ((langevinStepLaw G h)^[k] μ) π
   have hu (k : ℕ) : u (k+1) ≤ ENNReal.ofReal (Real.exp (-α*h/2))*u k+
       ENNReal.ofReal (3*(L : ℝ)*h*Real.sqrt (d*h)) := by
     have := hprob k
-    have := isProbabilityMeasure_langevinStepLaw G h π
+    have := is_probability_measure_langevin_step_law G h π
     have ht := TauCeti.wassersteinEDist_triangle (p := 2) measurable_edist (by norm_num)
       (langevinStepLaw G h ((langevinStepLaw G h)^[k] μ)) (langevinStepLaw G h π) π
-    have hc := wassersteinEDist_langevinStepLaw_le hG hmono hh hstep
+    have hc := wasserstein_e_dist_langevin_step_law_le hG hmono hh hstep
       ((langevinStepLaw G h)^[k] μ) π
-    have hb := wassersteinEDist_langevinStepLaw_self_le π G hG hInv hh
+    have hb := wasserstein_e_dist_langevin_step_law_self_le π G hG hInv hh
     simpa only [u, Function.iterate_succ_apply'] using ht.trans (add_le_add hc hb)
   have hx := ennreal_affine_recurrence_le u _ _ _ hu
     (ula_bias_supersolution hα L.coe_nonneg hh (by positivity : 0 ≤ (d : ℝ)) hαh) n
@@ -193,7 +194,7 @@ theorem wassersteinEDist_iterate_langevinStepLaw_le {d : ℕ}
     ring
   simpa only [u, Function.iterate_zero_apply, hp] using hx
 /-- Every quadratic transport distance vanishes on a subsingleton space. -/
-theorem wassersteinEDist_eq_zero_of_subsingleton {E : Type*} [PseudoEMetricSpace E]
+theorem wasserstein_e_dist_eq_zero_of_subsingleton {E : Type*} [PseudoEMetricSpace E]
     [MeasurableSpace E] [Subsingleton E]
     (μ ν : Measure E) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
     TauCeti.wassersteinEDist 2 μ ν = 0 := by

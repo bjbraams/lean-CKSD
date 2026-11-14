@@ -6,6 +6,7 @@ public import CKSD.Learning.CoordinateSum
 public import Mathlib.Combinatorics.SimpleGraph.Acyclic
 public import Mathlib.Combinatorics.SimpleGraph.Clique
 
+
 /-!
 # Junction trees and triangulated graphs
 
@@ -27,10 +28,10 @@ values in a finite alphabet `S`.
 
 ## Main results
 
-* `CKSD.hasJunctionTree_iff_isTriangulated`: junction trees exist exactly for triangulated
+* `CKSD.has_junction_tree_iff_is_triangulated`: junction trees exist exactly for triangulated
   graphs (GAPS 107.27).
-* `CKSD.sum_eq_one_and_tableMarginal_eq_of_jointMarginal`,
-  `CKSD.junctionTreeProduct_isJointLaw`, `CKSD.exists_joint_with_clique_marginals_iff`: the
+* `CKSD.sum_eq_one_and_table_marginal_eq_of_joint_marginal`,
+  `CKSD.junction_tree_product_is_joint_law`, `CKSD.exists_joint_with_clique_marginals_iff`: the
   marginal problem on a junction tree (GAPS 107.27).
 -/
 
@@ -66,10 +67,10 @@ def HasJunctionTree {V : Type*} (G : SimpleGraph V) : Prop :=
   ∃ (m : ℕ) (c : Fin m → Finset V) (T : SimpleGraph (Fin m)), IsJunctionTree G c T
 
 /-- GAPS 107.27: a finite graph has a junction tree if and only if it is triangulated. -/
-theorem hasJunctionTree_iff_isTriangulated {V : Type*} [Fintype V] (G : SimpleGraph V) :
+theorem has_junction_tree_iff_is_triangulated {V : Type*} [Fintype V] (G : SimpleGraph V) :
     HasJunctionTree G ↔ IsTriangulatedGraph G :=
-  ⟨fun ⟨_, c, T, _, hmax, hcov, hT, hrip⟩ ↦ chordal_of_junctionTree G c T hmax hcov hT hrip,
-    fun h ↦ exists_junctionTree_of_chordal G h⟩
+  ⟨fun ⟨_, c, T, _, hmax, hcov, hT, hrip⟩ ↦ chordal_of_junction_tree G c T hmax hcov hT hrip,
+    fun h ↦ exists_junction_tree_of_chordal G h⟩
 
 /-- Marginal table of a joint configuration mass on a finite set of vertices. -/
 def jointMarginal {V S : Type*} [Fintype V] [Fintype S] (p : (V → S) → ℝ) (C : Finset V)
@@ -95,7 +96,7 @@ variable {V S : Type*} [Fintype V] [Fintype S]
 
 /-- Summing a clique table over coordinates `D ⊆ C` is a table sum with the coordinates of
 `C \ D` frozen. -/
-private theorem coordSum_table {C D : Finset V} (hD : D ⊆ C) (g : (C → S) → ℝ) (x : V → S) :
+private theorem coord_sum_table {C D : Finset V} (hD : D ⊆ C) (g : (C → S) → ℝ) (x : V → S) :
     coordSum D (fun x' ↦ g fun v : C ↦ x' v) x =
       ∑ y : C → S, if ∀ v : C, (v : V) ∉ D → y v = x v then g y else 0 := by
   unfold coordSum
@@ -166,7 +167,7 @@ private theorem jt_exists_parent (hT : T.IsTree) (r : ι) {k : ι} (hk : k ≠ r
 
 /-- Along a path that leaves `a` away from its neighbour `a'` closer to the root, the distance
 to the root increases by one at each step. -/
-private theorem jt_dist_of_isPath_away (hT : T.IsTree) (r : ι) {a k : ι} (W : T.Walk a k)
+private theorem jt_dist_of_is_path_away (hT : T.IsTree) (r : ι) {a k : ι} (W : T.Walk a k)
     (hW : W.IsPath) {a' : ι} (haa' : T.Adj a a') (hd : T.dist r a' + 1 = T.dist r a)
     (ha' : a' ∉ W.support) : T.dist r k = T.dist r a + W.length := by
   induction W generalizing a' with
@@ -187,7 +188,7 @@ private theorem jt_parent_mem_support (hT : T.IsTree) (r : ι) {i p k : ι} (hip
     (hd : T.dist r p + 1 = T.dist r i) (hki : k ≠ i) (hk : T.dist r k ≤ T.dist r i)
     (W : T.Walk i k) (hW : W.IsPath) : p ∈ W.support := by
   by_contra hp
-  have h := jt_dist_of_isPath_away hT r W hW hip hd hp
+  have h := jt_dist_of_is_path_away hT r W hW hip hd hp
   have hl : W.length ≠ 0 := fun h0 ↦ hki (SimpleGraph.Walk.eq_of_length_eq_zero h0).symm
   omega
 
@@ -204,7 +205,7 @@ private def jtSep (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ) (k l
 
 omit [Fintype V] in
 /-- A separator value depends only on the coordinates in the intersection of the cliques. -/
-private theorem jtSep_congr (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ) (k l : Fin m)
+private theorem jt_sep_congr (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ) (k l : Fin m)
     {x x' : V → S} (h : ∀ v ∈ c k, v ∈ c l → x' v = x v) :
     jtSep c b k l x' = jtSep c b k l x := by
   unfold jtSep
@@ -215,9 +216,9 @@ private theorem jtSep_congr (c : Fin m → Finset V) (b : ∀ i, (c i → S) →
 
 /-- Summing a clique table over the coordinates outside the separator gives the separator
 value. -/
-private theorem coordSum_eq_jtSep (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ) (k l : Fin m)
+private theorem coord_sum_eq_jt_sep (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ) (k l : Fin m)
     (x : V → S) : coordSum (c k \ c l) (fun x' ↦ b k fun v ↦ x' v) x = jtSep c b k l x := by
-  rw [coordSum_table sdiff_subset]
+  rw [coord_sum_table sdiff_subset]
   unfold jtSep
   refine Finset.sum_congr rfl fun y _ ↦ ?_
   have : (∀ v : c k, (v : V) ∉ c k \ c l → y v = x v) ↔
@@ -227,7 +228,7 @@ private theorem coordSum_eq_jtSep (c : Fin m → Finset V) (b : ∀ i, (c i → 
 
 omit [Fintype V] in
 /-- A vanishing separator value of a nonnegative table forces the clique entry to vanish. -/
-private theorem jtSep_eq_zero (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ)
+private theorem jt_sep_eq_zero (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ)
     (hb : ∀ i y, 0 ≤ b i y) (k l : Fin m) (x : V → S) (h : jtSep c b k l x = 0) :
     b k (fun v ↦ x v) = 0 := by
   unfold jtSep at h
@@ -236,7 +237,7 @@ private theorem jtSep_eq_zero (c : Fin m → Finset V) (b : ∀ i, (c i → S) �
 
 omit [Fintype V] in
 /-- The separator marginal of the left clique of a pair, evaluated at `x`. -/
-private theorem tableMarginal_eq_jtSep (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ)
+private theorem table_marginal_eq_jt_sep (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ)
     (k l : Fin m) (x : V → S) :
     tableMarginal (inter_subset_left (s₁ := c k) (s₂ := c l)) (b k) (fun v ↦ x v) =
       jtSep c b k l x := by
@@ -249,7 +250,7 @@ private theorem tableMarginal_eq_jtSep (c : Fin m → Finset V) (b : ∀ i, (c i
 
 omit [Fintype V] in
 /-- The separator marginal of the right clique of a pair, evaluated at `x`. -/
-private theorem tableMarginal_right_eq_jtSep (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ)
+private theorem table_marginal_right_eq_jt_sep (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ)
     (k l : Fin m) (x : V → S) :
     tableMarginal (inter_subset_right (s₁ := c k) (s₂ := c l)) (b l) (fun v ↦ x v) =
       jtSep c b l k x := by
@@ -267,7 +268,7 @@ private def jtPartial (c : Fin m → Finset V) (b : ∀ i, (c i → S) → ℝ) 
 
 /-- Leaf elimination on a junction tree rooted at `r`: summing the partial product over a
 parent-closed set `A` over the coordinates of its cliques outside `c r` gives the root table. -/
-private theorem coordSum_jtPartial (c : Fin m → Finset V) (T : SimpleGraph (Fin m))
+private theorem coord_sum_jt_partial (c : Fin m → Finset V) (T : SimpleGraph (Fin m))
     (hT : T.IsTree)
     (hrip : ∀ i j (p : T.Walk i j), p.IsPath → ∀ k ∈ p.support, c i ∩ c j ⊆ c k)
     (b : ∀ i, (c i → S) → ℝ) (hb : ∀ i y, 0 ≤ b i y)
@@ -354,26 +355,26 @@ private theorem coordSum_jtPartial (c : Fin m → Finset V) (T : SimpleGraph (Fi
           funext v
           exact hy' v fun hvD ↦ hDk k hk v hvD v.2
         · refine Finset.prod_congr rfl fun k hk ↦ ?_
-          exact jtSep_congr c b k (par k) fun v hv _ ↦
+          exact jt_sep_congr c b k (par k) fun v hv _ ↦
             hy' v fun hvD ↦ hDk k (Finset.mem_of_mem_erase hk) v hvD hv
       have hsconst : ∀ y', (∀ v ∉ D, y' v = y v) →
           (jtSep c b i p y')⁻¹ = (jtSep c b i p y)⁻¹ := by
         intro y' hy'
-        rw [jtSep_congr c b i p (x := y) (x' := y') fun v _ hvp ↦
+        rw [jt_sep_congr c b i p (x := y) (x' := y') fun v _ hvp ↦
           hy' v fun hvD ↦ (Finset.mem_sdiff.mp hvD).2 hvp]
-      rw [coordSum_congr (g := fun y' ↦ jtPartial c b r par A' y' *
+      rw [coord_sum_congr (g := fun y' ↦ jtPartial c b r par A' y' *
         ((jtSep c b i p y')⁻¹ * b i fun v ↦ y' v)) fun y' _ ↦ hsplit y']
-      rw [coordSum_mul_left _ _ (hA'const), coordSum_mul_left _ _ hsconst,
-        hD_def, coordSum_eq_jtSep]
+      rw [coord_sum_mul_left _ _ (hA'const), coord_sum_mul_left _ _ hsconst,
+        hD_def, coord_sum_eq_jt_sep]
       by_cases hs : jtSep c b i p y = 0
       · rw [hs, inv_zero, zero_mul, mul_zero]
         have hbp : b p (fun v ↦ y v) = 0 :=
-          jtSep_eq_zero c b hb p i y ((hsymm i p hip y).symm.trans hs)
+          jt_sep_eq_zero c b hb p i y ((hsymm i p hip y).symm.trans hs)
         unfold jtPartial
         rw [Finset.prod_eq_zero hpA' hbp, zero_div]
       · rw [inv_mul_cancel₀ hs, mul_one]
-    rw [hunion, coordSum_union hdisj]
-    rw [coordSum_congr (g := jtPartial c b r par A') fun y _ ↦ hstep y]
+    rw [hunion, coord_sum_union hdisj]
+    rw [coord_sum_congr (g := jtPartial c b r par A') fun y _ ↦ hstep y]
     exact ih A' (Finset.erase_ssubset hiA') hrA' hA'cl x
   · have hAr : A = {r} := by
       ext k
@@ -381,7 +382,7 @@ private theorem coordSum_jtPartial (c : Fin m → Finset V) (T : SimpleGraph (Fi
       refine ⟨fun hk ↦ by_contra fun hkr ↦ hne ⟨k, Finset.mem_erase.mpr ⟨hkr, hk⟩⟩,
         fun hk ↦ hk ▸ hr⟩
     subst hAr
-    simp [jtPartial, coordSum_empty]
+    simp [jtPartial, coord_sum_empty]
 
 end JunctionProduct
 
@@ -390,7 +391,7 @@ section Marginals
 variable {V S : Type*} [Fintype V] [Fintype S]
 
 /-- A marginal table has the total mass of the joint table. -/
-theorem sum_jointMarginal (p : (V → S) → ℝ) (C : Finset V) :
+theorem sum_joint_marginal (p : (V → S) → ℝ) (C : Finset V) :
     ∑ y, jointMarginal p C y = ∑ x, p x := by
   simp only [jointMarginal]
   rw [Finset.sum_comm]
@@ -403,7 +404,7 @@ theorem sum_jointMarginal (p : (V → S) → ℝ) (C : Finset V) :
   · simp
 
 /-- Marginalizing the marginal on `C` to `D ⊆ C` gives the marginal on `D`. -/
-theorem tableMarginal_jointMarginal (p : (V → S) → ℝ) {C D : Finset V} (hD : D ⊆ C) :
+theorem table_marginal_joint_marginal (p : (V → S) → ℝ) {C D : Finset V} (hD : D ⊆ C) :
     tableMarginal hD (jointMarginal p C) = jointMarginal p D := by
   funext z
   simp only [tableMarginal, jointMarginal]
@@ -424,20 +425,20 @@ theorem tableMarginal_jointMarginal (p : (V → S) → ℝ) {C D : Finset V} (hD
 
 /-- GAPS 107.27, necessity in the marginal problem: the clique marginals of a joint probability
 table are normalized and agree on separators. No junction-tree hypothesis is needed. -/
-theorem sum_eq_one_and_tableMarginal_eq_of_jointMarginal {m : ℕ} (c : Fin m → Finset V)
+theorem sum_eq_one_and_table_marginal_eq_of_joint_marginal {m : ℕ} (c : Fin m → Finset V)
     (T : SimpleGraph (Fin m)) (b : ∀ i, (c i → S) → ℝ)
     (h : ∃ p : (V → S) → ℝ, (∀ x, 0 ≤ p x) ∧ ∑ x, p x = 1 ∧ ∀ i, jointMarginal p (c i) = b i) :
     (∀ i, ∑ y, b i y = 1) ∧ ∀ i j, T.Adj i j →
       tableMarginal (inter_subset_left (s₁ := c i) (s₂ := c j)) (b i) =
         tableMarginal (inter_subset_right (s₁ := c i) (s₂ := c j)) (b j) := by
   obtain ⟨p, -, hp1, hpb⟩ := h
-  refine ⟨fun i ↦ by rw [← hpb i, sum_jointMarginal, hp1], fun i j _ ↦ ?_⟩
-  rw [← hpb i, ← hpb j, tableMarginal_jointMarginal, tableMarginal_jointMarginal]
+  refine ⟨fun i ↦ by rw [← hpb i, sum_joint_marginal, hp1], fun i j _ ↦ ?_⟩
+  rw [← hpb i, ← hpb j, table_marginal_joint_marginal, table_marginal_joint_marginal]
 
 /-- GAPS 107.27, sufficiency in the marginal problem: on a junction tree, normalized nonnegative
 clique tables that agree on separators are the clique marginals of the junction-tree product,
 which is a probability table. -/
-theorem junctionTreeProduct_isJointLaw {m : ℕ} (G : SimpleGraph V) (c : Fin m → Finset V)
+theorem junction_tree_product_is_joint_law {m : ℕ} (G : SimpleGraph V) (c : Fin m → Finset V)
     (T : SimpleGraph (Fin m)) (hJ : IsJunctionTree G c T) (b : ∀ i, (c i → S) → ℝ)
     (hb : ∀ i y, 0 ≤ b i y) (hsum : ∀ i, ∑ y, b i y = 1)
     (hcons : ∀ i j, T.Adj i j →
@@ -455,7 +456,7 @@ theorem junctionTreeProduct_isJointLaw {m : ℕ} (G : SimpleGraph V) (c : Fin m 
   have hsymm : ∀ i j, T.Adj i j → ∀ x, jtSep c b i j x = jtSep c b j i x := by
     intro i j hij x
     have := congrFun (hcons i j hij) (fun v ↦ x v)
-    rwa [tableMarginal_eq_jtSep, tableMarginal_right_eq_jtSep] at this
+    rwa [table_marginal_eq_jt_sep, table_marginal_right_eq_jt_sep] at this
   have hne : Nonempty (V → S) := by
     by_cases hS : Nonempty S
     · infer_instance
@@ -502,7 +503,7 @@ theorem junctionTreeProduct_isJointLaw {m : ℕ} (G : SimpleGraph V) (c : Fin m 
         refine ⟨e₂, Finset.mem_erase.mpr ⟨hr, Finset.mem_univ _⟩, ?_⟩
         simp [hp, not_lt.mpr hlt.le]
     · intro k hk
-      rw [tableMarginal_eq_jtSep]
+      rw [table_marginal_eq_jt_sep]
       split_ifs
       · rfl
       · exact hsymm _ _ (hpar k (Finset.ne_of_mem_erase hk)).1 x
@@ -513,7 +514,7 @@ theorem junctionTreeProduct_isJointLaw {m : ℕ} (G : SimpleGraph V) (c : Fin m 
         ∀ k, k ≠ r → T.Adj k (par k) ∧ T.dist r (par k) + 1 = T.dist r k := by
       choose! par hpar using fun k (hk : k ≠ r) ↦ jt_exists_parent hT r hk
       exact ⟨par, hpar⟩
-    have h1 := coordSum_jtPartial c T hT hrip b hb hsymm r par hpar univ (Finset.mem_univ _)
+    have h1 := coord_sum_jt_partial c T hT hrip b hb hsymm r par hpar univ (Finset.mem_univ _)
       (fun k _ _ ↦ Finset.mem_univ _) x
     have hU : univ.biUnion c = univ := Finset.eq_univ_of_forall fun v ↦ by
       obtain ⟨i, hi⟩ := hcover v
@@ -537,7 +538,7 @@ theorem junctionTreeProduct_isJointLaw {m : ℕ} (G : SimpleGraph V) (c : Fin m 
     refine div_nonneg (Finset.prod_nonneg fun i _ ↦ hb _ _) (Finset.prod_nonneg fun e _ ↦ ?_)
     exact Finset.sum_nonneg fun y _ ↦ by split_ifs <;> simp [hb]
   · obtain ⟨r⟩ := hT.connected.nonempty
-    rw [← sum_jointMarginal _ (c r), hmarg' r, hsum r]
+    rw [← sum_joint_marginal _ (c r), hmarg' r, hsum r]
 
 /-- GAPS 107.27, marginal problem on a junction tree: nonnegative clique tables are the clique
 marginals of a joint probability law exactly when every table is normalized and adjacent
@@ -556,8 +557,8 @@ theorem exists_joint_with_clique_marginals_iff {m : ℕ}
           tableMarginal (inter_subset_right (s₁ := c i) (s₂ := c j)) (b j)) →
       (∀ x, 0 ≤ junctionTreeProduct c T b x) ∧ ∑ x, junctionTreeProduct c T b x = 1 ∧
         ∀ i, jointMarginal (junctionTreeProduct c T b) (c i) = b i) := by
-  have hsuff := junctionTreeProduct_isJointLaw G c T hJ b hb
-  refine ⟨⟨sum_eq_one_and_tableMarginal_eq_of_jointMarginal c T b, fun h ↦ ?_⟩, hsuff⟩
+  have hsuff := junction_tree_product_is_joint_law G c T hJ b hb
+  refine ⟨⟨sum_eq_one_and_table_marginal_eq_of_joint_marginal c T b, fun h ↦ ?_⟩, hsuff⟩
   obtain ⟨h0, h1, h2⟩ := hsuff h.1 h.2
   exact ⟨_, h0, h1, h2⟩
 

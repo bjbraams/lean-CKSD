@@ -9,6 +9,7 @@ public import TauCeti.Probability.Distributions.StudentT.Basic
 public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
 public import Mathlib.FieldTheory.Finite.GaloisField
 
+
 /-!
 # Optimal and combinatorial experimental design
 
@@ -27,12 +28,12 @@ randomization tests, balanced incomplete block designs, and mutually orthogonal 
 * `CKSD.kiefer_wolfowitz_equivalence`: a design maximizes `det M(a)` if and only if the
   standardized variance `fᵢᵀ M(w)⁻¹ fᵢ` is at most `p` everywhere, with equality on the support
   (Kiefer–Wolfowitz equivalence theorem).
-* `CKSD.sum_ite_randomizationPValue_le`: randomization p-values are conservative,
+* `CKSD.sum_ite_randomization_p_value_le`: randomization p-values are conservative,
   `P(p ≤ α) ≤ α`, ties included.
 * `CKSD.fisher_inequality`: a balanced incomplete block design has at least as many blocks as
   points (Fisher's inequality).
-* `CKSD.card_le_sub_one_of_orthogonalLatinSquares`: at most `s - 1` mutually orthogonal Latin
-  squares of order `s ≥ 2` exist, and `CKSD.exists_orthogonalLatinSquares_of_isPrimePow`: for a
+* `CKSD.card_le_sub_one_of_orthogonal_latin_squares`: at most `s - 1` mutually orthogonal Latin
+  squares of order `s ≥ 2` exist, and `CKSD.exists_orthogonal_latin_squares_of_is_prime_pow`: for a
   prime power `s` this bound is attained.
 
 The Kiefer–Wolfowitz theorem uses Mathlib's matrix determinant lemma
@@ -70,7 +71,7 @@ def designInformationMatrix {ι : Type*} [Fintype ι] {p : ℕ} (f : ι → Eucl
 
 open Matrix in
 /-- The information matrix is the weighted sum `∑ᵢ aᵢ fᵢ fᵢᵀ` of rank-one matrices. -/
-theorem designInformationMatrix_eq_sum {ι : Type*} [Fintype ι] {p : ℕ}
+theorem design_information_matrix_eq_sum {ι : Type*} [Fintype ι] {p : ℕ}
     (f : ι → EuclideanSpace ℝ (Fin p)) (a : ι → ℝ) :
     designInformationMatrix f a = ∑ i, a i • vecMulVec (f i : Fin p → ℝ) (f i : Fin p → ℝ) := by
   ext j k
@@ -78,10 +79,10 @@ theorem designInformationMatrix_eq_sum {ι : Type*} [Fintype ι] {p : ℕ}
 
 open Matrix in
 /-- `tr(M(a) N) = ∑ᵢ aᵢ fᵢᵀ N fᵢ`. -/
-theorem trace_designInformationMatrix_mul {ι : Type*} [Fintype ι] {p : ℕ}
+theorem trace_design_information_matrix_mul {ι : Type*} [Fintype ι] {p : ℕ}
     (f : ι → EuclideanSpace ℝ (Fin p)) (a : ι → ℝ) (N : Matrix (Fin p) (Fin p) ℝ) :
     (designInformationMatrix f a * N).trace = ∑ i, a i * matrixQuadraticForm N (f i) := by
-  simp only [matrixQuadraticForm_eq_dotProduct, Matrix.trace, Matrix.diag, Matrix.mul_apply,
+  simp only [matrix_quadratic_form_eq_dot_product, Matrix.trace, Matrix.diag, Matrix.mul_apply,
     designInformationMatrix, Matrix.of_apply, mulVec, dotProduct, Finset.sum_mul, Finset.mul_sum]
   conv_lhs => rw [Finset.sum_comm]; enter [2, j]; rw [Finset.sum_comm]
   rw [Finset.sum_comm]
@@ -91,10 +92,10 @@ theorem trace_designInformationMatrix_mul {ι : Type*} [Fintype ι] {p : ℕ}
 
 open Matrix in
 /-- The information matrix of a design with nonnegative weights is positive semidefinite. -/
-theorem posSemidef_designInformationMatrix {ι : Type*} [Fintype ι] {p : ℕ}
+theorem pos_semidef_design_information_matrix {ι : Type*} [Fintype ι] {p : ℕ}
     (f : ι → EuclideanSpace ℝ (Fin p)) (a : ι → ℝ) (ha : ∀ i, 0 ≤ a i) :
     (designInformationMatrix f a).PosSemidef := by
-  rw [designInformationMatrix_eq_sum]
+  rw [design_information_matrix_eq_sum]
   refine posSemidef_sum _ fun i _ ↦ ?_
   have h := posSemidef_vecMulVec_self_star (f i : Fin p → ℝ)
   rw [star_trivial] at h
@@ -104,7 +105,7 @@ open Matrix in
 /-- Sufficiency in the Kiefer–Wolfowitz theorem: if `fᵢᵀ M(w)⁻¹ fᵢ ≤ p` everywhere, then
 `det M(a) ≤ det M(w)` for every probability design `a`, by the Gaussian likelihood inequality
 `log det S + p ≤ log det C + tr(S C⁻¹)`. -/
-private theorem det_designInformationMatrix_le_of_forall_le {ι : Type*} [Fintype ι] {p : ℕ}
+private theorem det_design_information_matrix_le_of_forall_le {ι : Type*} [Fintype ι] {p : ℕ}
     (f : ι → EuclideanSpace ℝ (Fin p)) (w : ι → ℝ) (hM : (designInformationMatrix f w).PosDef)
     (hle : ∀ i, matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f i) ≤ p)
     (a : ι → ℝ) (ha : ∀ i, 0 ≤ a i) (ha1 : ∑ i, a i = 1) :
@@ -112,9 +113,9 @@ private theorem det_designInformationMatrix_le_of_forall_le {ι : Type*} [Fintyp
   by_cases hdet : (designInformationMatrix f a).det = 0
   · rw [hdet]
     exact hM.det_pos.le
-  have hpd := (posSemidef_designInformationMatrix f a ha).posDef_iff_det_ne_zero.2 hdet
+  have hpd := (pos_semidef_design_information_matrix f a ha).posDef_iff_det_ne_zero.2 hdet
   have h := log_det_add_card_le_log_det_add_trace_mul_inv _ _ hpd hM
-  rw [trace_designInformationMatrix_mul] at h
+  rw [trace_design_information_matrix_mul] at h
   have hsum : ∑ i, a i * matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f i) ≤ p :=
     calc _ ≤ ∑ i, a i * (p : ℝ) :=
           Finset.sum_le_sum fun i _ ↦ mul_le_mul_of_nonneg_left (hle i) (ha i)
@@ -125,14 +126,14 @@ open Matrix in
 towards a design point `i` gives `det M = (1 - t)^{p-1} (1 + (q - 1) t) det M(w)` with
 `q = fᵢᵀ M(w)⁻¹ fᵢ` (matrix determinant lemma), which exceeds `det M(w)` for small `t > 0`
 unless `q ≤ p`. -/
-private theorem matrixQuadraticForm_inv_le_of_forall_det_le {ι : Type*} [Fintype ι] [DecidableEq ι] {p : ℕ}
+private theorem matrix_quadratic_form_inv_le_of_forall_det_le {ι : Type*} [Fintype ι] [DecidableEq ι] {p : ℕ}
     (f : ι → EuclideanSpace ℝ (Fin p)) (w : ι → ℝ)
     (hw : ∀ i, 0 ≤ w i) (hw1 : ∑ i, w i = 1) (hM : (designInformationMatrix f w).PosDef)
     (hmax : ∀ a, (∀ i, 0 ≤ a i) → (∑ i, a i = 1) →
         (designInformationMatrix f a).det ≤ (designInformationMatrix f w).det) (i : ι) :
     matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f i) ≤ p := by
   rcases Nat.eq_zero_or_pos p with rfl | hp
-  · simp [matrixQuadraticForm_eq_dotProduct]
+  · simp [matrix_quadratic_form_eq_dot_product]
   set M := designInformationMatrix f w with hMdef
   set q := matrixQuadraticForm M⁻¹ (f i) with hqdef
   by_contra hlt
@@ -171,7 +172,7 @@ private theorem matrixQuadraticForm_inv_le_of_forall_det_le {ι : Type*} [Fintyp
     rw [Matrix.smul_mul, Matrix.mul_smul, smul_smul, inv_mul_cancel₀ h1t, one_smul,
       Matrix.nonsing_inv_mul _ hMu]
   have hq' : (f i : Fin p → ℝ) ⬝ᵥ (M⁻¹ *ᵥ (f i : Fin p → ℝ)) = q := by
-    rw [hqdef, matrixQuadraticForm_eq_dotProduct, dotProduct_comm]
+    rw [hqdef, matrix_quadratic_form_eq_dot_product, dotProduct_comm]
   have hdetMa : (designInformationMatrix f a).det =
       (1 - t) ^ p * M.det * (1 + (1 - t)⁻¹ * t * q) := by
     rw [hMa, det_add_replicateCol_mul_replicateRow hdetA, hinv, det_smul, Fintype.card_fin,
@@ -224,9 +225,9 @@ theorem kiefer_wolfowitz_equivalence {ι : Type*} [Fintype ι] {p : ℕ}
         ∀ i, 0 < w i → matrixQuadraticForm (designInformationMatrix f w)⁻¹ (f i) = p := by
   constructor
   · intro hmax
-    have hle := matrixQuadraticForm_inv_le_of_forall_det_le f w hw hw1 hM hmax
+    have hle := matrix_quadratic_form_inv_le_of_forall_det_le f w hw hw1 hM hmax
     refine ⟨hle, fun i hi ↦ ?_⟩
-    have htr := trace_designInformationMatrix_mul f w (designInformationMatrix f w)⁻¹
+    have htr := trace_design_information_matrix_mul f w (designInformationMatrix f w)⁻¹
     rw [Matrix.mul_nonsing_inv _ ((Matrix.isUnit_iff_isUnit_det _).1 hM.isUnit),
       Matrix.trace_one, Fintype.card_fin] at htr
     have hzero : ∑ j, w j * ((p : ℝ) -
@@ -239,7 +240,7 @@ theorem kiefer_wolfowitz_equivalence {ι : Type*} [Fintype ι] {p : ℕ}
     · linarith
     · linarith
   · rintro ⟨hle, -⟩ a ha ha1
-    exact det_designInformationMatrix_le_of_forall_le f w hM hle a ha ha1
+    exact det_design_information_matrix_le_of_forall_le f w hM hle a ha ha1
 
 /-- The randomization p-value of arrangement `i`: the total randomization weight of the
 arrangements `j` whose statistic `T j` is at least `T i`. -/
@@ -249,7 +250,7 @@ def randomizationPValue {ι : Type*} [Fintype ι] (w T : ι → ℝ) (i : ι) : 
 /-- GAPS 105.38, conservative finite randomization p-values, including ties: for nonnegative
 randomization weights `w` (of total mass at most one, in applications) and `0 ≤ α`, the total
 weight of the arrangements whose randomization p-value is at most `α` is at most `α`. -/
-theorem sum_ite_randomizationPValue_le {ι : Type*} [Fintype ι] (w T : ι → ℝ)
+theorem sum_ite_randomization_p_value_le {ι : Type*} [Fintype ι] (w T : ι → ℝ)
     (hw : ∀ i, 0 ≤ w i) {α : ℝ} (hα : 0 ≤ α) :
     (∑ i, if randomizationPValue w T i ≤ α then w i else 0) ≤ α := by
   classical
@@ -365,7 +366,7 @@ theorem fisher_inequality
 
 /-- GAPS 105.44, the upper bound on a family of mutually orthogonal Latin squares: there are at
 most `s - 1` pairwise orthogonal Latin squares of order `s ≥ 2`. -/
-theorem card_le_sub_one_of_orthogonalLatinSquares (s k : ℕ) (hs : 2 ≤ s)
+theorem card_le_sub_one_of_orthogonal_latin_squares (s k : ℕ) (hs : 2 ≤ s)
     (L : Fin k → Fin s → Fin s → Fin s)
     (hLatin : ∀ i, IsLatinSquare (L i))
     (hortho : ∀ i j, i ≠ j → OrthogonalLatinSquares (L i) (L j)) : k ≤ s - 1 := by
@@ -396,7 +397,7 @@ theorem card_le_sub_one_of_orthogonalLatinSquares (s k : ℕ) (hs : 2 ≤ s)
 
 /-- Over a finite field `F` identified with `Fin s`, the squares `(x, y) ↦ a x + y` for the
 nonzero elements `a` form a complete family of mutually orthogonal Latin squares. -/
-theorem exists_orthogonalLatinSquares_of_equiv {F : Type*} [Field F] {t : ℕ}
+theorem exists_orthogonal_latin_squares_of_equiv {F : Type*} [Field F] {t : ℕ}
     (e : F ≃ Fin (t + 1)) :
     ∃ L : Fin t → Fin (t + 1) → Fin (t + 1) → Fin (t + 1),
       (∀ i, IsLatinSquare (L i)) ∧ ∀ i j, i ≠ j → OrthogonalLatinSquares (L i) (L j) := by
@@ -430,7 +431,7 @@ theorem exists_orthogonalLatinSquares_of_equiv {F : Type*} [Field F] {t : ℕ}
 
 /-- GAPS 105.44, existence of a complete family at prime-power orders: for a prime power `s`
 there are `s - 1` pairwise orthogonal Latin squares of order `s`. -/
-theorem exists_orthogonalLatinSquares_of_isPrimePow (s : ℕ) (hs : IsPrimePow s) :
+theorem exists_orthogonal_latin_squares_of_is_prime_pow (s : ℕ) (hs : IsPrimePow s) :
     ∃ L : Fin (s - 1) → Fin s → Fin s → Fin s,
       (∀ i, IsLatinSquare (L i)) ∧ ∀ i j, i ≠ j → OrthogonalLatinSquares (L i) (L j) := by
   obtain ⟨p, n, hp, hn, rfl⟩ := (isPrimePow_nat_iff s).1 hs
@@ -439,7 +440,7 @@ theorem exists_orthogonalLatinSquares_of_isPrimePow (s : ℕ) (hs : IsPrimePow s
   obtain ⟨t, ht⟩ : ∃ t, p ^ n = t + 1 :=
     ⟨p ^ n - 1, (Nat.sub_add_cancel (Nat.one_le_pow _ _ hp.pos)).symm⟩
   have e : GaloisField p n ≃ Fin (t + 1) := (Finite.equivFin _).trans (finCongr (hcard.trans ht))
-  obtain ⟨L, hL⟩ := exists_orthogonalLatinSquares_of_equiv e
+  obtain ⟨L, hL⟩ := exists_orthogonal_latin_squares_of_equiv e
   rw [ht, Nat.add_sub_cancel]
   exact ⟨L, hL⟩
 

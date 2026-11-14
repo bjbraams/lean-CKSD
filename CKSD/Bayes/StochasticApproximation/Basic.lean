@@ -4,6 +4,7 @@ public import CKSD.Bayes.Basic
 public import Mathlib.Probability.Martingale.Basic
 public import Mathlib.Analysis.InnerProductSpace.Basic
 
+
 /-!
 # Flows, limit sets, and Robbins–Monro schemes
 
@@ -43,7 +44,7 @@ def limitSet {E : Type*} [TopologicalSpace E] (u : ℕ → E) : Set E :=
   ⋂ n, closure (u '' Ici n)
 
 /-- A bounded sequence in a proper metric space converges if its limit set is a singleton. -/
-theorem tendsto_of_limitSet_eq_singleton {E : Type*} [NormedAddCommGroup E] [ProperSpace E]
+theorem tendsto_of_limit_set_eq_singleton {E : Type*} [NormedAddCommGroup E] [ProperSpace E]
     (u : ℕ → E) (hbdd : BddAbove (range fun n ↦ ‖u n‖)) (x : E)
     (hlim : limitSet u = {x}) : Tendsto u atTop (𝓝 x) := by
   obtain ⟨R, hR⟩ := hbdd

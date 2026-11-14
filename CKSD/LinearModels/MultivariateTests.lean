@@ -18,6 +18,7 @@ public import TauCeti.Probability.Distributions.Beta.Basic
 public import TauCeti.Probability.Distributions.ChiSquared.Basic
 public import CKSD.LinearModels.CanonicalCorrelation
 
+
 /-!
 # Multivariate normal test statistics and eigenvalue limits
 
@@ -38,13 +39,13 @@ and their expression through the generalized roots of a pair of scatter matrices
 
 ## Main results
 
-* `CKSD.map_wilksLambda_wishart_eq_beta_product`: for independent `E ∼ W_p(e, Σ)` and
+* `CKSD.map_wilks_lambda_wishart_eq_beta_product`: for independent `E ∼ W_p(e, Σ)` and
   `H ∼ W_p(h, Σ)`, Wilks's `Λ` is a product of independent beta variables.
-* `CKSD.tendstoInDistribution_gaussian_sample_covariance_eigenvalue`: asymptotic normality of a
+* `CKSD.tendsto_in_distribution_gaussian_sample_covariance_eigenvalue`: asymptotic normality of a
   simple eigenvalue of the sample covariance.
-* `CKSD.tendstoInDistribution_sphericity_likelihood_ratio`,
-  `CKSD.tendstoInDistribution_block_independence_likelihood_ratio`: Wilks's chi-squared limits.
-* `CKSD.multivariateHypothesisRoots_eq_iff_congruent`: the generalized roots classify pairs
+* `CKSD.tendsto_in_distribution_sphericity_likelihood_ratio`,
+  `CKSD.tendsto_in_distribution_block_independence_likelihood_ratio`: Wilks's chi-squared limits.
+* `CKSD.multivariate_hypothesis_roots_eq_iff_congruent`: the generalized roots classify pairs
   `(E, H)` under simultaneous congruence, so they form a maximal invariant.
 * `CKSD.multivariate_test_statistics_eq_roots`: Wilks's `Λ`, the Lawley–Hotelling trace and
   Pillai's trace as functions of the generalized roots.
@@ -90,7 +91,7 @@ def royLargestRoot {p : ℕ} (E H : Matrix (Fin p) (Fin p) ℝ) : ℝ :=
   sSup (range (multivariateHypothesisRoots E H))
 
 /-- Sample covariance is Hermitian, including an empty sample. -/
-theorem sampleCovarianceMatrix_isHermitian {n p : ℕ}
+theorem sample_covariance_matrix_is_hermitian {n p : ℕ}
     (x : Fin n → EuclideanSpace ℝ (Fin p)) : (sampleCovarianceMatrix x).IsHermitian := by
   rw [Matrix.IsHermitian.ext_iff]
   intro i j
@@ -100,7 +101,7 @@ theorem sampleCovarianceMatrix_isHermitian {n p : ℕ}
 `p ≤ e`, `0 < h` and `Σ` positive definite, Wilks's `Λ = det E / det(E + H)` has the law of a
 product `∏_{i<p} Bᵢ` of independent `Bᵢ ∼ Beta((e - i)/2, h/2)`. This is the distributional
 core; the linear-model projection reduction and the Bartlett correction are not stated. -/
-theorem map_wilksLambda_wishart_eq_beta_product {p : ℕ}
+theorem map_wilks_lambda_wishart_eq_beta_product {p : ℕ}
     (e h : ℕ) (he : p ≤ e) (hh : 0 < h)
     (Sigma : Matrix (Fin p) (Fin p) ℝ) (hSigma : Sigma.PosDef) :
     ((TauCeti.Probability.wishartGramMeasure e Sigma).prod
@@ -150,11 +151,11 @@ theorem map_wilksLambda_wishart_eq_beta_product {p : ℕ}
       Finset.prod_le_one₀ (fun i _ ↦ (hv i).1) (fun i _ ↦ (hv i).2)⟩
   · intro k
     rw [integral_map hf.aemeasurable (by fun_prop), integral_map hg.aemeasurable (by fun_prop)]
-    exact (integral_det_ratio_pow_wishartGram_prod_eq_gamma hSigma he k).trans
+    exact (integral_det_ratio_pow_wishart_gram_prod_eq_gamma hSigma he k).trans
       (integral_beta_product_pow_eq_gamma he hh k).symm
 
 /-- The sequence and finite-sample covariance conventions agree. -/
-theorem sampleCovarianceMatrix_eq_empirical {Ω : Type*} {p n : ℕ}
+theorem sample_covariance_matrix_eq_empirical {Ω : Type*} {p n : ℕ}
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin p)) (ω : Ω) :
     sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω) = empiricalCovarianceMatrix X n ω := by
   have hm : sampleMean (fun i : Fin n ↦ X i.val ω) = sampleAverage X n ω := by
@@ -172,7 +173,7 @@ theorem sampleCovarianceMatrix_eq_empirical {Ω : Type*} {p n : ℕ}
 `N_p(m, Σ)` with `Σ` positive definite and a simple eigenvalue `λ_j` of `Σ`, the `j`-th largest
 eigenvalue `λ̂_j` of the sample covariance (divisor `n`) satisfies
 `√n (λ̂_j - λ_j) ⇒ N(0, 2 λ_j²)`. Multiplicities of the other eigenvalues are allowed. -/
-theorem tendstoInDistribution_gaussian_sample_covariance_eigenvalue
+theorem tendsto_in_distribution_gaussian_sample_covariance_eigenvalue
     {Ω : Type*} [MeasurableSpace Ω] {p : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P] (m : EuclideanSpace ℝ (Fin p))
     (Sigma : Matrix (Fin p) (Fin p) ℝ) (hSigma : Sigma.PosDef)
@@ -223,13 +224,13 @@ theorem tendstoInDistribution_gaussian_sample_covariance_eigenvalue
     (symmetricMatrixEigenvalues Sigma j) (f k) (hf k) (by rw [hcov]) heig'
     (by simpa only [hcov] using hsep)
   rw [variance_sq_inner_gaussian_eigenvector _ v hv _ heig'] at h
-  simpa only [sampleCovarianceMatrix_eq_empirical] using h
+  simpa only [sample_covariance_matrix_eq_empirical] using h
 
 /-- GAPS 105.33: Wilks's chi-squared limit for sphericity in fixed dimension `p ≥ 2`: under
 `N_p(m, v I)` with `v > 0`, the likelihood-ratio statistic `-n log(det S / (tr S / p)^p)` converges
 in distribution to `χ²` with `p(p+1)/2 - 1` degrees of freedom. The second-order Bartlett
 approximation is not stated. -/
-theorem tendstoInDistribution_sphericity_likelihood_ratio
+theorem tendsto_in_distribution_sphericity_likelihood_ratio
     {Ω : Type*} [MeasurableSpace Ω] {p : ℕ} (hp : 2 ≤ p)
     (P : Measure Ω) [IsProbabilityMeasure P] (m : EuclideanSpace ℝ (Fin p))
     (v : ℝ≥0) (hv : 0 < v) (X : ℕ → Ω → EuclideanSpace ℝ (Fin p))
@@ -246,8 +247,8 @@ theorem tendstoInDistribution_sphericity_likelihood_ratio
     (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω))
   have hb (i : Fin (p-1)) : 0 < b i := by dsimp [b]; positivity
   have hZm (n : ℕ) : Measurable (Z n) :=
-    (measurable_sphericityRatio p).comp
-      ((measurable_sampleCovarianceMatrix (n := n) (p := p)).comp
+    (measurable_sphericity_ratio p).comp
+      ((measurable_sample_covariance_matrix (n := n) (p := p)).comp
         (Measurable.of_eval fun i ↦ hiid.1 i.val))
   have hlaw (n : ℕ) : P.map (fun ω (i : Fin n) ↦ X i.val ω) =
       Measure.pi (fun _ : Fin n ↦ multivariateGaussian m ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ))) := by
@@ -265,12 +266,12 @@ theorem tendstoInDistribution_sphericity_likelihood_ratio
     have harray : Measurable (fun ω (i : Fin n) ↦ X i.val ω) := Measurable.of_eval fun i ↦ hiid.1 i.val
     have hratio : Measurable (fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦
         sphericityRatio (sampleCovarianceMatrix x)) :=
-      (measurable_sphericityRatio p).comp measurable_sampleCovarianceMatrix
+      (measurable_sphericity_ratio p).comp measurable_sample_covariance_matrix
     change P.map ((fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦
       sphericityRatio (sampleCovarianceMatrix x)) ∘ (fun ω (i : Fin n) ↦ X i.val ω)) = _
     rw [← Measure.map_map hratio harray, hlaw,
-      map_sphericityRatio_sampleCovarianceMatrix_eq_wishart hp0 hn0 m _ hS,
-      map_sphericityRatio_wishart_eq_beta_product hp0 (by omega : p ≤ n-1) v hv]
+      map_sphericity_ratio_sample_covariance_matrix_eq_wishart hp0 hn0 m _ hS,
+      map_sphericity_ratio_wishart_eq_beta_product hp0 (by omega : p ≤ n-1) v hv]
     congr 1
     congr 1
     funext i
@@ -282,7 +283,7 @@ theorem tendstoInDistribution_sphericity_likelihood_ratio
     ring
   let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) (1 / 2)) :=
     isProbabilityMeasure_gammaMeasure (Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty) (by norm_num)
-  have hlim := tendstoInDistribution_neg_natCast_mul_log_of_beta_product_law P c b hb Z hZm hmap
+  have hlim := tendsto_in_distribution_neg_nat_cast_mul_log_of_beta_product_law P c b hb Z hZm hmap
   have hGamma : gammaMeasure (∑ i, b i) (1 / 2) =
       TauCeti.Probability.chiSquaredMeasure (p * (p+1)/2-1 : ℕ) := by
     have hnat : 2 * (p * (p + 1) / 2) = p * (p + 1) := Nat.mul_div_cancel' p.two_dvd_mul_add_one
@@ -301,7 +302,7 @@ theorem tendstoInDistribution_sphericity_likelihood_ratio
 /-- GAPS 105.33: under `N_{p+q}(m, Σ)` with `Σ` positive definite and block diagonal, the
 likelihood-ratio statistic `-n log(det S / (det S₁₁ det S₂₂))` for independence of the two
 blocks converges in distribution to `χ²` with `p q` degrees of freedom. -/
-theorem tendstoInDistribution_block_independence_likelihood_ratio
+theorem tendsto_in_distribution_block_independence_likelihood_ratio
     {Ω : Type*} [MeasurableSpace Ω] {p q : ℕ} (hp : 0 < p) (hq : 0 < q)
     (P : Measure Ω) [IsProbabilityMeasure P] (m : EuclideanSpace ℝ (Fin (p + q)))
     (Sigma : Matrix (Fin (p + q)) (Fin (p + q)) ℝ) (hSigma : Sigma.PosDef)
@@ -312,7 +313,7 @@ theorem tendstoInDistribution_block_independence_likelihood_ratio
       (blockIndependenceRatio (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω))))
       atTop id (fun _ ↦ P)
       (TauCeti.Probability.chiSquaredMeasure (p * q : ℕ)) := by
-  apply tendstoInDistribution_block_independence_of_beta_product_laws hp hq P X hiid.1
+  apply tendsto_in_distribution_block_independence_of_beta_product_laws hp hq P X hiid.1
   intro n hn
   have harray : Measurable (fun ω (i : Fin n) ↦ X i.val ω) := Measurable.of_eval fun i ↦ hiid.1 i.val
   have hlaw : P.map (fun ω (i : Fin n) ↦ X i.val ω) =
@@ -324,12 +325,12 @@ theorem tendstoInDistribution_block_independence_likelihood_ratio
     exact hiid.2.2 i
   have hratio : Measurable (fun x : Fin n → EuclideanSpace ℝ (Fin (p+q)) ↦
       blockIndependenceRatio (sampleCovarianceMatrix x)) :=
-    (measurable_blockIndependenceRatio p q).comp measurable_sampleCovarianceMatrix
+    (measurable_block_independence_ratio p q).comp measurable_sample_covariance_matrix
   change P.map ((fun x : Fin n → EuclideanSpace ℝ (Fin (p+q)) ↦
     blockIndependenceRatio (sampleCovarianceMatrix x)) ∘ (fun ω (i : Fin n) ↦ X i.val ω)) = _
   rw [← Measure.map_map hratio harray, hlaw,
-    map_blockIndependenceRatio_sampleCovarianceMatrix_eq_wishart (by omega : 0<p+q) hn m Sigma hSigma,
-    map_blockIndependenceRatio_wishart_eq_beta_product hq (by omega : p+q≤n-1) Sigma hSigma
+    map_block_independence_ratio_sample_covariance_matrix_eq_wishart (by omega : 0<p+q) hn m Sigma hSigma,
+    map_block_independence_ratio_wishart_eq_beta_product hq (by omega : p+q≤n-1) Sigma hSigma
       (by ext i j; exact hblock i j)]
 
 section RootStatistics
@@ -338,7 +339,7 @@ open Matrix
 
 /-- Two real symmetric matrices have the same ordered eigenvalues exactly when they have the same
 characteristic polynomial. -/
-theorem isHermitian_eigenvalues₀_eq_iff {p : ℕ} {A B : Matrix (Fin p) (Fin p) ℝ}
+theorem is_hermitian_eigenvalues₀_eq_iff {p : ℕ} {A B : Matrix (Fin p) (Fin p) ℝ}
     (hA : A.IsHermitian) (hB : B.IsHermitian) :
     hA.eigenvalues₀ = hB.eigenvalues₀ ↔ A.charpoly = B.charpoly := by
   rw [← hA.eigenvalues_eq_eigenvalues_iff hB]
@@ -353,14 +354,14 @@ theorem isHermitian_eigenvalues₀_eq_iff {p : ℕ} {A B : Matrix (Fin p) (Fin p
 
 /-- When the whitened hypothesis matrices `E^{-1/2} H E^{-1/2}` are symmetric, two pairs have the
 same generalized roots exactly when these matrices have the same characteristic polynomial. -/
-theorem multivariateHypothesisRoots_eq_iff_charpoly_eq {p : ℕ}
+theorem multivariate_hypothesis_roots_eq_iff_charpoly_eq {p : ℕ}
     (E H E' H' : Matrix (Fin p) (Fin p) ℝ)
     (hM : ((CFC.sqrt E)⁻¹ * H * (CFC.sqrt E)⁻¹).IsHermitian)
     (hM' : ((CFC.sqrt E')⁻¹ * H' * (CFC.sqrt E')⁻¹).IsHermitian) :
     multivariateHypothesisRoots E H = multivariateHypothesisRoots E' H' ↔
       ((CFC.sqrt E)⁻¹ * H * (CFC.sqrt E)⁻¹).charpoly =
         ((CFC.sqrt E')⁻¹ * H' * (CFC.sqrt E')⁻¹).charpoly := by
-  rw [← isHermitian_eigenvalues₀_eq_iff hM hM']
+  rw [← is_hermitian_eigenvalues₀_eq_iff hM hM']
   have h₁ : multivariateHypothesisRoots E H = fun j ↦ hM.eigenvalues₀ ⟨j.val, by simp⟩ := by
     funext j
     simp only [multivariateHypothesisRoots, symmetricMatrixEigenvalues]
@@ -387,20 +388,20 @@ for `E`, `E'` positive definite and `H`, `H'` positive semidefinite, the pairs `
 `(E', H')` have the same generalized roots exactly when `E' = Aᵀ E A` and `H' = Aᵀ H A` for some
 invertible `A`. This is the algebraic maximal-invariant assertion for response
 transformations. -/
-theorem multivariateHypothesisRoots_eq_iff_congruent {p : ℕ}
+theorem multivariate_hypothesis_roots_eq_iff_congruent {p : ℕ}
     (E H E' H' : Matrix (Fin p) (Fin p) ℝ)
     (hE : E.PosDef) (hE' : E'.PosDef) (hH : H.PosSemidef) (hH' : H'.PosSemidef) :
     multivariateHypothesisRoots E H = multivariateHypothesisRoots E' H' ↔
       ∃ A : Matrix (Fin p) (Fin p) ℝ, IsUnit A ∧
         E' = A.transpose * E * A ∧ H' = A.transpose * H * A := by
-  have hRt := transpose_inv_sqrt_of_posSemidef hE.posSemidef
-  have hRR := inv_sqrt_mul_inv_sqrt_of_posSemidef hE.posSemidef
-  have hRt' := transpose_inv_sqrt_of_posSemidef hE'.posSemidef
-  have hRR' := inv_sqrt_mul_inv_sqrt_of_posSemidef hE'.posSemidef
-  have hRER := inv_sqrt_mul_mul_inv_sqrt_of_posDef hE
-  have hRER' := inv_sqrt_mul_mul_inv_sqrt_of_posDef hE'
-  have hRu := isUnit_det_inv_sqrt_of_posDef hE
-  have hRu' := isUnit_det_inv_sqrt_of_posDef hE'
+  have hRt := transpose_inv_sqrt_of_pos_semidef hE.posSemidef
+  have hRR := inv_sqrt_mul_inv_sqrt_of_pos_semidef hE.posSemidef
+  have hRt' := transpose_inv_sqrt_of_pos_semidef hE'.posSemidef
+  have hRR' := inv_sqrt_mul_inv_sqrt_of_pos_semidef hE'.posSemidef
+  have hRER := inv_sqrt_mul_mul_inv_sqrt_of_pos_def hE
+  have hRER' := inv_sqrt_mul_mul_inv_sqrt_of_pos_def hE'
+  have hRu := is_unit_det_inv_sqrt_of_pos_def hE
+  have hRu' := is_unit_det_inv_sqrt_of_pos_def hE'
   set R := (CFC.sqrt E)⁻¹
   set R' := (CFC.sqrt E')⁻¹
   have hpsd : ∀ {S K : Matrix (Fin p) (Fin p) ℝ}, Sᵀ = S → K.PosSemidef → (S * K * S).PosSemidef := by
@@ -409,7 +410,7 @@ theorem multivariateHypothesisRoots_eq_iff_congruent {p : ℕ}
     rwa [conjTranspose_eq_transpose_of_trivial, hS] at this
   have hM := (hpsd hRt hH).isHermitian
   have hM' := (hpsd hRt' hH').isHermitian
-  rw [multivariateHypothesisRoots_eq_iff_charpoly_eq E H E' H' hM hM']
+  rw [multivariate_hypothesis_roots_eq_iff_charpoly_eq E H E' H' hM hM']
   have hRinv : R * R⁻¹ = 1 := Matrix.mul_nonsing_inv _ hRu
   have hRinv' : R⁻¹ * R = 1 := Matrix.nonsing_inv_mul _ hRu
   have hR'inv : R' * R'⁻¹ = 1 := Matrix.mul_nonsing_inv _ hRu'
@@ -484,7 +485,7 @@ theorem multivariateHypothesisRoots_eq_iff_congruent {p : ℕ}
           rw [Matrix.mul_assoc, charpoly_mul_comm, Matrix.mul_assoc]
 
 /-- For a real symmetric matrix `M`, `det (1 + M) = ∏ᵢ (1 + λᵢ)` over its eigenvalues `λᵢ`. -/
-theorem isHermitian_det_one_add_eq_prod {p : ℕ} {M : Matrix (Fin p) (Fin p) ℝ}
+theorem is_hermitian_det_one_add_eq_prod {p : ℕ} {M : Matrix (Fin p) (Fin p) ℝ}
     (hM : M.IsHermitian) : (1 + M).det = ∏ i, (1 + hM.eigenvalues i) := by
   have h := hM.spectral_theorem
   rw [Unitary.conjStarAlgAut_apply] at h
@@ -502,7 +503,7 @@ theorem isHermitian_det_one_add_eq_prod {p : ℕ} {M : Matrix (Fin p) (Fin p) �
 
 /-- For a real symmetric matrix `M` with nonnegative eigenvalues `λᵢ`,
 `tr (M (1 + M)⁻¹) = ∑ᵢ λᵢ / (1 + λᵢ)`. -/
-theorem isHermitian_trace_mul_inv_one_add_eq_sum {p : ℕ}
+theorem is_hermitian_trace_mul_inv_one_add_eq_sum {p : ℕ}
     {M : Matrix (Fin p) (Fin p) ℝ} (hM : M.IsHermitian) (hnn : ∀ i, 0 ≤ hM.eigenvalues i) :
     trace (M * (1 + M)⁻¹) = ∑ i, hM.eigenvalues i / (1 + hM.eigenvalues i) := by
   have h := hM.spectral_theorem
@@ -541,7 +542,7 @@ theorem isHermitian_trace_mul_inv_one_add_eq_sum {p : ℕ}
         rfl
 
 /-- Sums over the ordered eigenvalues agree with sums over the matrix-indexed eigenvalues. -/
-theorem isHermitian_sum_eigenvalues₀_eq {p : ℕ} {M : Matrix (Fin p) (Fin p) ℝ}
+theorem is_hermitian_sum_eigenvalues₀_eq {p : ℕ} {M : Matrix (Fin p) (Fin p) ℝ}
     (hM : M.IsHermitian) (f : ℝ → ℝ) :
     ∑ j : Fin p, f (hM.eigenvalues₀ ⟨j.val, by simp⟩) =
       ∑ i, f (hM.eigenvalues i) := by
@@ -552,7 +553,7 @@ theorem isHermitian_sum_eigenvalues₀_eq {p : ℕ} {M : Matrix (Fin p) (Fin p) 
 
 /-- Products over the ordered eigenvalues agree with products over the matrix-indexed
 eigenvalues. -/
-theorem isHermitian_prod_eigenvalues₀_eq {p : ℕ} {M : Matrix (Fin p) (Fin p) ℝ}
+theorem is_hermitian_prod_eigenvalues₀_eq {p : ℕ} {M : Matrix (Fin p) (Fin p) ℝ}
     (hM : M.IsHermitian) (f : ℝ → ℝ) :
     ∏ j : Fin p, f (hM.eigenvalues₀ ⟨j.val, by simp⟩) =
       ∏ i, f (hM.eigenvalues i) := by
@@ -570,10 +571,10 @@ theorem multivariate_test_statistics_eq_roots {p : ℕ}
       lawleyHotellingTrace E H = (∑ i, multivariateHypothesisRoots E H i) ∧
       pillaiTrace E H = ∑ i, multivariateHypothesisRoots E H i /
         (1 + multivariateHypothesisRoots E H i) := by
-  have hRt := transpose_inv_sqrt_of_posSemidef hE.posSemidef
-  have hRR := inv_sqrt_mul_inv_sqrt_of_posSemidef hE.posSemidef
-  have hRER := inv_sqrt_mul_mul_inv_sqrt_of_posDef hE
-  have hRu := isUnit_det_inv_sqrt_of_posDef hE
+  have hRt := transpose_inv_sqrt_of_pos_semidef hE.posSemidef
+  have hRR := inv_sqrt_mul_inv_sqrt_of_pos_semidef hE.posSemidef
+  have hRER := inv_sqrt_mul_mul_inv_sqrt_of_pos_def hE
+  have hRu := is_unit_det_inv_sqrt_of_pos_def hE
   set R := (CFC.sqrt E)⁻¹
   set M := R * H * R with hMdef
   have hMpsd : M.PosSemidef := by
@@ -581,8 +582,8 @@ theorem multivariate_test_statistics_eq_roots {p : ℕ}
     rwa [conjTranspose_eq_transpose_of_trivial, hRt] at this
   have hM : M.IsHermitian := hMpsd.isHermitian
   have hnn : ∀ i, 0 ≤ hM.eigenvalues i := hMpsd.eigenvalues_nonneg
-  have hdet := isHermitian_det_one_add_eq_prod hM
-  have htr := isHermitian_trace_mul_inv_one_add_eq_sum hM hnn
+  have hdet := is_hermitian_det_one_add_eq_prod hM
+  have htr := is_hermitian_trace_mul_inv_one_add_eq_sum hM hnn
   have hroots : ∀ j, multivariateHypothesisRoots E H j =
       hM.eigenvalues₀ ⟨j.val, by simp⟩ := fun j ↦ by
     simp only [multivariateHypothesisRoots, symmetricMatrixEigenvalues]
@@ -590,9 +591,9 @@ theorem multivariate_test_statistics_eq_roots {p : ℕ}
     · rfl
     · exact absurd hM h
   simp_rw [hroots]
-  have e₁ := isHermitian_sum_eigenvalues₀_eq hM (fun t ↦ t)
-  have e₂ := isHermitian_sum_eigenvalues₀_eq hM (fun t ↦ t / (1 + t))
-  have e₃ := isHermitian_prod_eigenvalues₀_eq hM (fun t ↦ (1 + t)⁻¹)
+  have e₁ := is_hermitian_sum_eigenvalues₀_eq hM (fun t ↦ t)
+  have e₂ := is_hermitian_sum_eigenvalues₀_eq hM (fun t ↦ t / (1 + t))
+  have e₃ := is_hermitian_prod_eigenvalues₀_eq hM (fun t ↦ (1 + t)⁻¹)
   rw [e₁, e₂, e₃]
   have hRinv : R * R⁻¹ = 1 := Matrix.mul_nonsing_inv _ hRu
   have hRinv' : R⁻¹ * R = 1 := Matrix.nonsing_inv_mul _ hRu

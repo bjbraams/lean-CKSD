@@ -24,6 +24,9 @@ public import CKSD.LinearModels.GFormula
 public import CKSD.LinearModels.GLMAsymptotics
 public import CKSD.LinearModels.StructuralEquations
 
+
+namespace CKSD
+
 /-!
 # Section 105: linear models, multivariate analysis, design, and causal inference
 
@@ -42,3 +45,6 @@ Entry module for the CKSD formalization of Section 105. It imports:
   directed Markov properties and the do-calculus (`DirectedGraphical`), and structural equation
   models (`StructuralEquations`).
 -/
+
+
+end CKSD

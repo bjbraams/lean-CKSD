@@ -1,4 +1,5 @@
 module
+
 public import TauCeti.Probability.Distributions.Wishart.Transforms
 public import TauCeti.Probability.Distributions.Gamma.Basic
 public import TauCeti.Probability.Moments.Determinacy
@@ -19,7 +20,7 @@ open scoped Topology BigOperators ENNReal NNReal MatrixOrder
 namespace CKSD
 
 /-- The trace of a spherical Gaussian-Gram Wishart matrix has the corresponding Gamma law. -/
-theorem map_trace_wishartGramMeasure_smul_one {p : ℕ} (hp : 0 < p) (ν : ℕ) (hν : 0 < ν)
+theorem map_trace_wishart_gram_measure_smul_one {p : ℕ} (hp : 0 < p) (ν : ℕ) (hν : 0 < ν)
     (v : ℝ) (hv : 0 < v) :
     (TauCeti.Probability.wishartGramMeasure ν (v • (1 : Matrix (Fin p) (Fin p) ℝ))).map
       (fun A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦ (A : Matrix (Fin p) (Fin p) ℝ).trace) =
@@ -72,7 +73,7 @@ theorem map_trace_wishartGramMeasure_smul_one {p : ℕ} (hp : 0 < p) (ν : ℕ) 
     ring
 
 /-- Matrix AM-GM bounds the determinant by the dimension-th power of the mean eigenvalue. -/
-theorem det_le_trace_div_pow_of_posDef {p : ℕ} (hp : 0 < p)
+theorem det_le_trace_div_pow_of_pos_def {p : ℕ} (hp : 0 < p)
     (A : Matrix (Fin p) (Fin p) ℝ) (hA : A.PosDef) :
     A.det ≤ (A.trace / p) ^ p := by
   have hpR : (0 : ℝ) < p := by exact_mod_cast hp
@@ -90,16 +91,16 @@ theorem det_le_trace_div_pow_of_posDef {p : ℕ} (hp : 0 < p)
   simpa only [div_eq_inv_mul] using hpow
 
 /-- The sphericity determinant ratio of a positive definite matrix lies in the unit interval. -/
-theorem det_trace_ratio_mem_Ioc {p : ℕ} (hp : 0 < p)
+theorem det_trace_ratio_mem_ioc {p : ℕ} (hp : 0 < p)
     (A : Matrix (Fin p) (Fin p) ℝ) (hA : A.PosDef) :
     A.det / (A.trace / p) ^ p ∈ Ioc (0 : ℝ) 1 := by
   let : Nonempty (Fin p) := Fin.pos_iff_nonempty.1 hp
   have htrace : 0 < A.trace / p := div_pos hA.trace_pos (by exact_mod_cast hp)
   exact ⟨div_pos hA.det_pos (pow_pos htrace _),
-    (div_le_one (pow_pos htrace _)).2 (det_le_trace_div_pow_of_posDef hp A hA)⟩
+    (div_le_one (pow_pos htrace _)).2 (det_le_trace_div_pow_of_pos_def hp A hA)⟩
 
 /-- Spherical Wishart normalizers combine the two scalar scales into their product. -/
-theorem wishartNormalizer_smul_one {p : ℕ} (n v : ℝ) (hv : 0 < v) :
+theorem wishart_normalizer_smul_one {p : ℕ} (n v : ℝ) (hv : 0 < v) :
     wishartNormalizer n (v • (1 : Matrix (Fin p) (Fin p) ℝ)) =
       (2 * v) ^ (n * p / 2) * TauCeti.multivariateGamma p (n / 2) := by
   rw [wishartNormalizer, Matrix.det_smul, Matrix.det_one, mul_one, Fintype.card_fin,
@@ -107,7 +108,7 @@ theorem wishartNormalizer_smul_one {p : ℕ} (n v : ℝ) (hv : 0 < v) :
   rw [show (p : ℝ) * (n / 2) = n * p / 2 by ring]
 
 /-- Determinant tilting reduces sphericity moments to an inverse trace moment. -/
-theorem integral_det_trace_ratio_pow_wishartGramMeasure {p e : ℕ}
+theorem integral_det_trace_ratio_pow_wishart_gram_measure {p e : ℕ}
     (hp : 0 < p) (he : p ≤ e) (v : ℝ) (hv : 0 < v) (k : ℕ) :
     (∫ A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ),
       ((A : Matrix (Fin p) (Fin p) ℝ).det / ((A : Matrix (Fin p) (Fin p) ℝ).trace / p) ^ p) ^ k
@@ -124,8 +125,8 @@ theorem integral_det_trace_ratio_pow_wishartGramMeasure {p e : ℕ}
   let g : E → ℝ := fun A ↦ ((A : Matrix (Fin p) (Fin p) ℝ).trace ^ (p * k))⁻¹
   have hS : S.PosDef := (Matrix.PosDef.one : (1 : Matrix (Fin p) (Fin p) ℝ).PosDef).smul hv
   have hen : (p : ℝ) - 1 < e := (sub_one_lt _).trans_le (Nat.cast_le.2 he)
-  have hC : 0 ≤ C := (div_pos (wishartNormalizer_pos hS (by linarith [(Nat.cast_nonneg k : (0 : ℝ) ≤ k)]))
-    (wishartNormalizer_pos hS hen)).le
+  have hC : 0 ≤ C := (div_pos (wishart_normalizer_pos hS (by linarith [(Nat.cast_nonneg k : (0 : ℝ) ≤ k)]))
+    (wishart_normalizer_pos hS hen)).le
   have hweighted : (∫ A, g A ∂μ.withDensity
       (fun A ↦ ENNReal.ofReal ((A : Matrix (Fin p) (Fin p) ℝ).det ^ k))) =
       ∫ A, ((A : Matrix (Fin p) (Fin p) ℝ).det ^ k) * g A ∂μ := by
@@ -147,10 +148,10 @@ theorem integral_det_trace_ratio_pow_wishartGramMeasure {p e : ℕ}
   rw [hratio, ← hweighted]
   change _ * (∫ A, g A ∂(TauCeti.Probability.wishartGramMeasure e S).withDensity
     (fun A ↦ ENNReal.ofReal ((A : Matrix (Fin p) (Fin p) ℝ).det ^ k))) = _
-  rw [withDensity_det_pow_wishartGramMeasure hS he k, integral_smul_measure,
+  rw [with_density_det_pow_wishart_gram_measure hS he k, integral_smul_measure,
     ENNReal.toReal_ofReal hC, smul_eq_mul]
   have he' : 0 < e + 2 * k := lt_of_lt_of_le hp (by omega)
-  have htrace := map_trace_wishartGramMeasure_smul_one hp (e + 2 * k) he' v hv
+  have htrace := map_trace_wishart_gram_measure_smul_one hp (e + 2 * k) he' v hv
   have hgintegral : (∫ A : E, g A ∂μ') =
       (1 / (2 * v)) ^ (p * k) * Real.Gamma ((e : ℝ) * p / 2) /
         Real.Gamma (((e + 2 * k : ℕ) : ℝ) * p / 2) := by
@@ -170,21 +171,21 @@ theorem integral_det_trace_ratio_pow_wishartGramMeasure {p e : ℕ}
   ring
 
 /-- The scale in a spherical determinant tilt cancels against the inverse trace-moment scale. -/
-theorem wishartNormalizer_spherical_shift_ratio_mul_rate_pow {p : ℕ} (n v : ℝ)
+theorem wishart_normalizer_spherical_shift_ratio_mul_rate_pow {p : ℕ} (n v : ℝ)
     (hv : 0 < v) (hn : (p : ℝ) - 1 < n) (k : ℕ) :
     (wishartNormalizer (n + 2 * k) (v • (1 : Matrix (Fin p) (Fin p) ℝ)) /
       wishartNormalizer n (v • (1 : Matrix (Fin p) (Fin p) ℝ))) * (1 / (2 * v)) ^ (p * k) =
       TauCeti.multivariateGamma p (n / 2 + k) / TauCeti.multivariateGamma p (n / 2) := by
   have hbase : 0 < TauCeti.multivariateGamma p (n / 2) := TauCeti.multivariateGamma_pos (by linarith)
   have h2v : 0 < 2 * v := by positivity
-  rw [wishartNormalizer_smul_one _ _ hv, wishartNormalizer_smul_one _ _ hv,
+  rw [wishart_normalizer_smul_one _ _ hv, wishart_normalizer_smul_one _ _ hv,
     show (n + 2 * (k : ℝ)) * p / 2 = n * p / 2 + (p * k : ℕ) by push_cast; ring,
     show (n + 2 * (k : ℝ)) / 2 = n / 2 + k by ring,
     Real.rpow_add h2v, Real.rpow_natCast, _root_.one_div_pow]
   field_simp [(Real.rpow_pos_of_pos h2v (n * p / 2)).ne', pow_ne_zero (p * k) h2v.ne', hbase.ne']
 
 /-- Exact natural moments of the spherical Wishart sphericity ratio. -/
-theorem integral_det_trace_ratio_pow_wishartGram_eq_gamma {p e : ℕ}
+theorem integral_det_trace_ratio_pow_wishart_gram_eq_gamma {p e : ℕ}
     (hp : 0 < p) (he : p ≤ e) (v : ℝ) (hv : 0 < v) (k : ℕ) :
     (∫ A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ),
       ((A : Matrix (Fin p) (Fin p) ℝ).det / ((A : Matrix (Fin p) (Fin p) ℝ).trace / p) ^ p) ^ k
@@ -193,8 +194,8 @@ theorem integral_det_trace_ratio_pow_wishartGram_eq_gamma {p e : ℕ}
         Real.Gamma ((p : ℝ) * ((e : ℝ) / 2)) /
         (TauCeti.multivariateGamma p ((e : ℝ) / 2) * Real.Gamma ((p : ℝ) * ((e : ℝ) / 2) + p * k)) := by
   have hen : (p : ℝ) - 1 < e := (sub_one_lt _).trans_le (Nat.cast_le.2 he)
-  have hcancel := wishartNormalizer_spherical_shift_ratio_mul_rate_pow (p := p) e v hv hen k
-  rw [integral_det_trace_ratio_pow_wishartGramMeasure hp he v hv k]
+  have hcancel := wishart_normalizer_spherical_shift_ratio_mul_rate_pow (p := p) e v hv hen k
+  rw [integral_det_trace_ratio_pow_wishart_gram_measure hp he v hv k]
   have hshape : (((e + 2 * k : ℕ) : ℝ) * p / 2) = (p : ℝ) * ((e : ℝ) / 2) + p * k := by push_cast; ring
   rw [hshape, show (e : ℝ) * p / 2 = (p : ℝ) * ((e : ℝ) / 2) by ring]
   calc _ = (p : ℝ) ^ (p * k) *

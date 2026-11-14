@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.Basic
 /-!
 # Integrating individual and averaged error bounds
@@ -51,7 +52,7 @@ theorem lintegral_le_of_individual_add_average_bound {Ω : Type*} [MeasurableSpa
         _ = _ := by ring
 
 /-- An almost-sure squared-error bound integrates uniformly over an arbitrary time set. -/
-theorem lintegral_iSup_enorm_sq_le_of_individual_add_average_bound
+theorem lintegral_i_sup_enorm_sq_le_of_individual_add_average_bound
     {Ω ι E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
     (P : Measure Ω) {N : ℕ} (i : Fin N) (f : Fin N → Ω → ℝ)
     (hf : ∀ j, Integrable (f j) P) (hnn : ∀ j, ∀ᵐ ω ∂P, 0 ≤ f j ω)

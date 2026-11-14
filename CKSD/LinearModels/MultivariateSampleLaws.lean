@@ -12,6 +12,7 @@ public import TauCeti.Probability.Distributions.Chi.Gaussian
 public import TauCeti.Analysis.Matrix.MeasurableSpace
 public import TauCeti.MeasureTheory.Constructions.Pi
 
+
 /-!
 # Exact laws for multivariate normal samples
 
@@ -20,15 +21,15 @@ for a Gaussian vector and an independent Wishart matrix.
 
 ## Main results
 
-* `CKSD.map_orthogonalMix_pi_multivariateGaussian`: an orthogonal mixing of a centred
+* `CKSD.map_orthogonal_mix_pi_multivariate_gaussian`: an orthogonal mixing of a centred
   i.i.d. `N(m, Σ)` sample is again i.i.d. `N(0, Σ)`.
 * `CKSD.exists_helmert_decomposition`: an i.i.d. `N(m, Σ)` sample of size `n` splits into
   `n - 1` independent `N(0, Σ)` vectors whose Gram sum is the scatter matrix and an independent
   `N(0, Σ)` vector `U` with `x̄ = m + n^{-1/2} U`.
-* `CKSD.map_quadForm_div_quadForm_inv_wishartGramMeasure`: for `A ∼ W_p(ν, Σ)` and a fixed
+* `CKSD.map_quad_form_div_quad_form_inv_wishart_gram_measure`: for `A ∼ W_p(ν, Σ)` and a fixed
   nonzero `u`, `uᵀ Σ⁻¹ u / uᵀ A⁻¹ u ∼ χ²(ν - p + 1)`.
-* `CKSD.map_quadForm_inv_multivariateGaussian`: `Uᵀ Σ⁻¹ U ∼ χ²(p)` for `U ∼ N_p(0, Σ)`.
-* `CKSD.map_hotelling_multivariateGaussian_wishartGramMeasure`: for independent
+* `CKSD.map_quad_form_inv_multivariate_gaussian`: `Uᵀ Σ⁻¹ U ∼ χ²(p)` for `U ∼ N_p(0, Σ)`.
+* `CKSD.map_hotelling_multivariate_gaussian_wishart_gram_measure`: for independent
   `U ∼ N_p(0, Σ)` and `A ∼ W_p(ν, Σ)`, `(ν - p + 1) / p · Uᵀ A⁻¹ U ∼ F(p, ν - p + 1)`.
 
 The Helmert decomposition uses TauCeti's matrix normal law under orthogonal mixing
@@ -62,13 +63,13 @@ def sampleColumns (X : κ → EuclideanSpace ℝ (Fin p)) : Matrix (Fin p) κ �
 omit [Fintype κ] [DecidableEq κ] in
 /-- `sampleColumns` is measurable. -/
 @[fun_prop]
-theorem measurable_sampleColumns :
+theorem measurable_sample_columns :
     Measurable (sampleColumns : (κ → EuclideanSpace ℝ (Fin p)) → Matrix (Fin p) κ ℝ) := by
   unfold sampleColumns
   fun_prop
 
 /-- Sample columns of independent standard Gaussian vectors are matrix normal `MN(0, 1, 1)`. -/
-theorem map_sampleColumns_pi_stdGaussian :
+theorem map_sample_columns_pi_std_gaussian :
     (Measure.pi fun _ : κ ↦
       multivariateGaussian 0 (1 : Matrix (Fin p) (Fin p) ℝ)).map sampleColumns =
       TauCeti.Probability.matrixNormalMeasure (0 : Matrix (Fin p) κ ℝ) 1 1 := by
@@ -102,13 +103,13 @@ def sampleColumnsEquiv : (κ → EuclideanSpace ℝ (Fin p)) ≃ᵐ Matrix (Fin 
   invFun X k := WithLp.toLp 2 fun i ↦ X i k
   left_inv X := by ext k i; simp [sampleColumns]
   right_inv X := by ext i k; simp [sampleColumns]
-  measurable_toFun := measurable_sampleColumns
+  measurable_toFun := measurable_sample_columns
   measurable_invFun := by
     show Measurable (fun (X : Matrix (Fin p) κ ℝ) (k : κ) ↦ WithLp.toLp 2 fun i ↦ X i k)
     fun_prop
 
 /-- Sample columns of independent `N(M_k, Σ)` vectors are matrix normal `MN(M, Σ, 1)`. -/
-theorem map_sampleColumns_pi_multivariateGaussian (M : Matrix (Fin p) κ ℝ)
+theorem map_sample_columns_pi_multivariate_gaussian (M : Matrix (Fin p) κ ℝ)
     {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosSemidef) :
     (Measure.pi fun k : κ ↦ multivariateGaussian (WithLp.toLp 2 fun i ↦ M i k) S).map
       sampleColumns = TauCeti.Probability.matrixNormalMeasure M S 1 := by
@@ -129,14 +130,14 @@ theorem map_sampleColumns_pi_multivariateGaussian (M : Matrix (Fin p) κ ℝ)
     ext i k
     simp [sampleColumns, Matrix.mul_apply, Matrix.toEuclideanLin, Matrix.toLpLin_apply,
       Matrix.mulVec, dotProduct]
-  rw [hfun, ← Measure.map_map (by fun_prop) (by fun_prop), map_sampleColumns_pi_stdGaussian,
+  rw [hfun, ← Measure.map_map (by fun_prop) (by fun_prop), map_sample_columns_pi_std_gaussian,
     TauCeti.Probability.map_mul_mul_add_matrixNormalMeasure 0 Matrix.PosSemidef.one
       Matrix.PosSemidef.one, hA]
   simp
 
 /-- Orthogonal mixing of a Gaussian sample: if `Bᵀ B = 1` and `x₁, …, x_n` are independent
 `N(m, Σ)`, then the vectors `y_k = ∑ᵢ B i k (xᵢ - m)` are independent `N(0, Σ)`. -/
-theorem map_orthogonalMix_pi_multivariateGaussian {ι : Type*} [Fintype ι] [DecidableEq ι]
+theorem map_orthogonal_mix_pi_multivariate_gaussian {ι : Type*} [Fintype ι] [DecidableEq ι]
     (B : Matrix ι κ ℝ) (hB : Bᵀ * B = 1) (m : EuclideanSpace ℝ (Fin p))
     {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosSemidef) :
     (Measure.pi fun _ : ι ↦ multivariateGaussian m S).map
@@ -145,11 +146,11 @@ theorem map_orthogonalMix_pi_multivariateGaussian {ι : Type*} [Fintype ι] [Dec
   set Mm : Matrix (Fin p) ι ℝ := Matrix.of fun j _ ↦ m j
   have hx : (Measure.pi fun _ : ι ↦ multivariateGaussian m S).map sampleColumns =
       TauCeti.Probability.matrixNormalMeasure Mm S 1 := by
-    rw [← map_sampleColumns_pi_multivariateGaussian Mm hS]
+    rw [← map_sample_columns_pi_multivariate_gaussian Mm hS]
     rfl
   have h0 : (Measure.pi fun _ : κ ↦ multivariateGaussian 0 S).map sampleColumns =
       TauCeti.Probability.matrixNormalMeasure 0 S 1 := by
-    rw [← map_sampleColumns_pi_multivariateGaussian 0 hS]
+    rw [← map_sample_columns_pi_multivariate_gaussian 0 hS]
     rfl
   have hfun : (sampleColumns ∘ fun (x : ι → EuclideanSpace ℝ (Fin p)) (k : κ) ↦
       ∑ i, B i k • (x i - m)) =
@@ -169,8 +170,8 @@ theorem map_orthogonalMix_pi_multivariateGaussian {ι : Type*} [Fintype ι] [Dec
     change _ = Measure.map sampleColumns _
     rw [h0]
     change Measure.map sampleColumns _ = _
-    rw [Measure.map_map measurable_sampleColumns hmeasY, hfun,
-      ← Measure.map_map (by fun_prop) measurable_sampleColumns, hx,
+    rw [Measure.map_map measurable_sample_columns hmeasY, hfun,
+      ← Measure.map_map (by fun_prop) measurable_sample_columns, hx,
       TauCeti.Probability.map_mul_mul_add_matrixNormalMeasure Mm hS Matrix.PosSemidef.one]
     simp [hB]
   have := congrArg (fun μ ↦ μ.map sampleColumnsEquiv.symm) hmap
@@ -297,7 +298,7 @@ theorem exists_helmert_decomposition {n : ℕ} (hn : 0 < n) (m : EuclideanSpace 
     field_simp
     linarith
   refine ⟨fun x k ↦ Z x (Sum.inl k), fun x ↦ Z x (Sum.inr ()), by fun_prop, by fun_prop, ?_, ?_, ?_⟩
-  · have hlaw := map_orthogonalMix_pi_multivariateGaussian B hB m hS
+  · have hlaw := map_orthogonal_mix_pi_multivariate_gaussian B hB m hS
     have h1 : IsProbabilityMeasure (multivariateGaussian (0 : EuclideanSpace ℝ (Fin p)) S) :=
       inferInstance
     have : SFinite (Measure.pi fun _ : Fin (n - 1) ↦
@@ -356,7 +357,7 @@ theorem exists_helmert_decomposition {n : ℕ} (hn : 0 < n) (m : EuclideanSpace 
     linarith [hfull, hlast]
 omit [Fintype κ] [DecidableEq κ] in
 /-- The Euclidean quadratic form in coordinates. -/
-theorem matrixQuadraticForm_eq_sum (A : Matrix (Fin p) (Fin p) ℝ) (u : EuclideanSpace ℝ (Fin p)) :
+theorem matrix_quadratic_form_eq_sum (A : Matrix (Fin p) (Fin p) ℝ) (u : EuclideanSpace ℝ (Fin p)) :
     matrixQuadraticForm A u = ∑ i, ∑ j, u i * A i j * u j := by
   simp [matrixQuadraticForm, Matrix.toEuclideanCLM_apply, PiLp.inner_apply, Matrix.mulVec,
     dotProduct, Finset.mul_sum, mul_comm, mul_left_comm]
@@ -393,7 +394,7 @@ theorem exists_orthogonal_first_column (u : EuclideanSpace ℝ (Fin p)) (hu : u 
 omit [Fintype κ] [DecidableEq κ] in
 /-- For a Wishart matrix `A ∼ W_p(ν, Σ)` with `p ≤ ν` and a fixed nonzero `u`, the ratio
 `uᵀ Σ⁻¹ u / uᵀ A⁻¹ u` is chi-squared with `ν - p + 1` degrees of freedom. -/
-theorem map_quadForm_div_quadForm_inv_wishartGramMeasure {ν : ℕ}
+theorem map_quad_form_div_quad_form_inv_wishart_gram_measure {ν : ℕ}
     {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) (hν : p ≤ ν)
     (u : EuclideanSpace ℝ (Fin p)) (hu : u ≠ 0) :
     (TauCeti.Probability.wishartGramMeasure ν S).map
@@ -415,7 +416,7 @@ theorem map_quadForm_div_quadForm_inv_wishartGramMeasure {ν : ℕ}
   have hc : c ≠ 0 := by positivity
   have hentry : ∀ X : Matrix (Fin p) (Fin p) ℝ,
       (Nᵀ * X * N) i0 i0 = c * matrixQuadraticForm X u := fun X ↦ by
-    rw [matrixQuadraticForm_eq_sum, Finset.mul_sum]
+    rw [matrix_quadratic_form_eq_sum, Finset.mul_sum]
     simp only [Matrix.mul_apply, Matrix.transpose_apply, hcol, Finset.sum_mul, Finset.mul_sum]
     rw [Finset.sum_comm]
     exact Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ by ring
@@ -473,7 +474,7 @@ theorem map_quadForm_div_quadForm_inv_wishartGramMeasure {ν : ℕ}
 
 omit [Fintype κ] [DecidableEq κ] in
 /-- The Euclidean quadratic form as a coordinate dot product. -/
-theorem matrixQuadraticForm_eq_mulVec_dotProduct (A : Matrix (Fin p) (Fin p) ℝ)
+theorem matrix_quadratic_form_eq_mul_vec_dot_product (A : Matrix (Fin p) (Fin p) ℝ)
     (v : EuclideanSpace ℝ (Fin p)) :
     matrixQuadraticForm A v = (A *ᵥ (v : Fin p → ℝ)) ⬝ᵥ (v : Fin p → ℝ) := by
   simp [matrixQuadraticForm, Matrix.toEuclideanCLM_apply,
@@ -482,7 +483,7 @@ theorem matrixQuadraticForm_eq_mulVec_dotProduct (A : Matrix (Fin p) (Fin p) ℝ
 omit [Fintype κ] [DecidableEq κ] in
 /-- For `U ∼ N(0, Σ)` with `Σ` positive definite, `Uᵀ Σ⁻¹ U` is chi-squared with `p` degrees of
 freedom. -/
-theorem map_quadForm_inv_multivariateGaussian {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) :
+theorem map_quad_form_inv_multivariate_gaussian {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) :
     (multivariateGaussian 0 S).map (fun u ↦ matrixQuadraticForm S⁻¹ u) =
       TauCeti.Probability.chiSquaredMeasure p := by
   set R := CFC.sqrt S
@@ -503,24 +504,24 @@ theorem map_quadForm_inv_multivariateGaussian {S : Matrix (Fin p) (Fin p) ℝ} (
       (fun x : EuclideanSpace ℝ (Fin p) ↦ 0 + Matrix.toEuclideanCLM (𝕜 := ℝ) R x) =
       fun x ↦ ‖x‖ ^ 2 := by
     funext x
-    simp only [Function.comp_apply, zero_add, matrixQuadraticForm_eq_mulVec_dotProduct,
+    simp only [Function.comp_apply, zero_add, matrix_quadratic_form_eq_mul_vec_dot_product,
       Matrix.toEuclideanCLM_apply, Matrix.ofLp_toLpLin, Matrix.toLin'_apply]
     rw [← real_inner_self_eq_norm_sq, EuclideanSpace.inner_eq_star_dotProduct, star_trivial,
       Matrix.dotProduct_mulVec, ← Matrix.mulVec_transpose, hRt, Matrix.mulVec_mulVec,
       Matrix.mulVec_mulVec, hW, Matrix.one_mulVec]
-  rw [multivariateGaussian, Measure.map_map (measurable_matrixQuadraticForm _) (by fun_prop),
+  rw [multivariateGaussian, Measure.map_map (measurable_matrix_quadratic_form _) (by fun_prop),
     hfun, TauCeti.Probability.stdGaussian_map_norm_sq, finrank_euclideanSpace_fin]
 
 omit [Fintype κ] [DecidableEq κ] in
 /-- The quadratic form `uᵀ A⁻¹ u` is jointly measurable in a symmetric matrix `A` and `u`. -/
-theorem measurable_matrixQuadraticForm_inv :
+theorem measurable_matrix_quadratic_form_inv :
     Measurable fun z : EuclideanSpace ℝ (Fin p) ×
         selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦
       matrixQuadraticForm (z.2 : Matrix (Fin p) (Fin p) ℝ)⁻¹ z.1 := by
   have h1 : Measurable fun z : EuclideanSpace ℝ (Fin p) ×
       selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦ (z.2 : Matrix (Fin p) (Fin p) ℝ)⁻¹ :=
     TauCeti.measurable_matrix_inv.comp (measurable_subtype_coe.comp measurable_snd)
-  simp_rw [matrixQuadraticForm_eq_sum]
+  simp_rw [matrix_quadratic_form_eq_sum]
   refine Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ ?_
   have hu : ∀ k : Fin p, Measurable fun z : EuclideanSpace ℝ (Fin p) ×
       selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦ z.1 k := fun k ↦
@@ -529,37 +530,37 @@ theorem measurable_matrixQuadraticForm_inv :
 
 omit [Fintype κ] [DecidableEq κ] in
 /-- Measurability of `A ↦ uᵀ A⁻¹ u` on symmetric matrices. -/
-theorem measurable_matrixQuadraticForm_inv_left (u : EuclideanSpace ℝ (Fin p)) :
+theorem measurable_matrix_quadratic_form_inv_left (u : EuclideanSpace ℝ (Fin p)) :
     Measurable fun A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦
       matrixQuadraticForm (A : Matrix (Fin p) (Fin p) ℝ)⁻¹ u := by
   have h1 : Measurable fun A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦
       (A : Matrix (Fin p) (Fin p) ℝ)⁻¹ :=
     TauCeti.measurable_matrix_inv.comp measurable_subtype_coe
-  simp_rw [matrixQuadraticForm_eq_sum]
+  simp_rw [matrix_quadratic_form_eq_sum]
   refine Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ ?_
   exact (measurable_const.mul ((measurable_pi_apply j).comp ((measurable_pi_apply i).comp h1))).mul
     measurable_const
 
 omit [Fintype κ] [DecidableEq κ] in
 /-- A nonzero vector has positive quadratic form under a positive definite matrix. -/
-private theorem quadForm_pos {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef)
+private theorem quad_form_pos {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef)
     {u : EuclideanSpace ℝ (Fin p)} (hu : u ≠ 0) : 0 < matrixQuadraticForm S u := by
   have hu' : (u : Fin p → ℝ) ≠ 0 := fun h ↦ hu (WithLp.ofLp_injective 2 (by simpa using h))
   have := hS.dotProduct_mulVec_pos hu'
   simp only [star_trivial] at this
-  rw [matrixQuadraticForm_eq_mulVec_dotProduct, dotProduct_comm]
+  rw [matrix_quadratic_form_eq_mul_vec_dot_product, dotProduct_comm]
   exact this
 
 omit [Fintype κ] [DecidableEq κ] in
 /-- A centred nondegenerate Gaussian vector is almost surely nonzero. -/
-theorem multivariateGaussian_singleton_zero (hp : 0 < p) {S : Matrix (Fin p) (Fin p) ℝ}
+theorem multivariate_gaussian_singleton_zero (hp : 0 < p) {S : Matrix (Fin p) (Fin p) ℝ}
     (hS : S.PosDef) : multivariateGaussian (0 : EuclideanSpace ℝ (Fin p)) S {0} = 0 := by
-  have hX := measurable_matrixQuadraticForm (n := p) S⁻¹
+  have hX := measurable_matrix_quadratic_form (n := p) S⁻¹
   have hp0 : (0 : ℝ) < p := by exact_mod_cast hp
   have hnull : multivariateGaussian (0 : EuclideanSpace ℝ (Fin p)) S
       ((fun u ↦ matrixQuadraticForm S⁻¹ u) ⁻¹' {0}) = 0 := by
     rw [← Measure.map_apply hX (measurableSet_singleton 0),
-      map_quadForm_inv_multivariateGaussian hS]
+      map_quad_form_inv_multivariate_gaussian hS]
     have := TauCeti.Probability.nullSingletonClass_chiSquaredMeasure (k := (p : ℝ)) hp0
     exact measure_singleton 0
   refine measure_mono_null (fun u hu ↦ ?_) hnull
@@ -569,7 +570,7 @@ theorem multivariateGaussian_singleton_zero (hp : 0 < p) {S : Matrix (Fin p) (Fi
 omit [Fintype κ] [DecidableEq κ] in
 /-- Joint law of `U` and `Uᵀ Σ⁻¹ U / Uᵀ A⁻¹ U` for independent `U ∼ N_p(0, Σ)` and
 `A ∼ W_p(ν, Σ)`: the ratio is independent of `U` with law `χ²(ν - p + 1)`. -/
-theorem map_prod_quadForm_ratio (hp : 0 < p) {ν : ℕ} (hν : p ≤ ν)
+theorem map_prod_quad_form_ratio (hp : 0 < p) {ν : ℕ} (hν : p ≤ ν)
     {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) :
     ((multivariateGaussian 0 S).prod (TauCeti.Probability.wishartGramMeasure ν S)).map
         (fun z ↦ (z.1, matrixQuadraticForm S⁻¹ z.1 /
@@ -579,8 +580,8 @@ theorem map_prod_quadForm_ratio (hp : 0 < p) {ν : ℕ} (hν : p ≤ ν)
   have hR : Measurable fun z : EuclideanSpace ℝ (Fin p) ×
       selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦
         matrixQuadraticForm S⁻¹ z.1 / matrixQuadraticForm (z.2 : Matrix (Fin p) (Fin p) ℝ)⁻¹ z.1 :=
-    ((measurable_matrixQuadraticForm _).comp measurable_fst).div
-      measurable_matrixQuadraticForm_inv
+    ((measurable_matrix_quadratic_form _).comp measurable_fst).div
+      measurable_matrix_quadratic_form_inv
   have hmeas := measurable_fst.prodMk hR
   have hk : (0 : ℝ) ≤ (ν : ℝ) - p + 1 := by
     have : (p : ℝ) ≤ ν := by exact_mod_cast hν
@@ -589,7 +590,7 @@ theorem map_prod_quadForm_ratio (hp : 0 < p) {ν : ℕ} (hν : p ≤ ν)
   refine (Measure.prod_eq fun s t (hs : MeasurableSet s) (ht : MeasurableSet t) ↦ ?_).symm
   rw [Measure.map_apply hmeas (hs.prod ht), Measure.prod_apply (hmeas (hs.prod ht))]
   have h0 : ∀ᵐ u ∂(multivariateGaussian (0 : EuclideanSpace ℝ (Fin p)) S), u ≠ 0 :=
-    measure_mono_null (fun u hu ↦ by simpa using hu) (multivariateGaussian_singleton_zero hp hS)
+    measure_mono_null (fun u hu ↦ by simpa using hu) (multivariate_gaussian_singleton_zero hp hS)
   have hae : ∀ᵐ u ∂(multivariateGaussian (0 : EuclideanSpace ℝ (Fin p)) S),
       TauCeti.Probability.wishartGramMeasure ν S (Prod.mk u ⁻¹' ((fun z ↦ (z.1,
         matrixQuadraticForm S⁻¹ z.1 / matrixQuadraticForm (z.2 : Matrix (Fin p) (Fin p) ℝ)⁻¹ z.1))
@@ -599,8 +600,8 @@ theorem map_prod_quadForm_ratio (hp : 0 < p) {ν : ℕ} (hν : p ≤ ν)
     by_cases hus : u ∈ s
     · have hm : Measurable fun A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦
           matrixQuadraticForm S⁻¹ u / matrixQuadraticForm (A : Matrix (Fin p) (Fin p) ℝ)⁻¹ u :=
-        measurable_const.div (measurable_matrixQuadraticForm_inv_left u)
-      rw [Set.indicator_of_mem hus, ← map_quadForm_div_quadForm_inv_wishartGramMeasure hS hν u hu,
+        measurable_const.div (measurable_matrix_quadratic_form_inv_left u)
+      rw [Set.indicator_of_mem hus, ← map_quad_form_div_quad_form_inv_wishart_gram_measure hS hν u hu,
         Measure.map_apply hm ht]
       congr 1
       ext A
@@ -615,7 +616,7 @@ omit [Fintype κ] [DecidableEq κ] in
 /-- Hotelling's law: for independent `U ∼ N_p(0, Σ)` and `A ∼ W_p(ν, Σ)` with `0 < p ≤ ν` and
 `Σ` positive definite, `(ν - p + 1) / p · Uᵀ A⁻¹ U` has the F law with `p` and `ν - p + 1`
 degrees of freedom. -/
-theorem map_hotelling_multivariateGaussian_wishartGramMeasure (hp : 0 < p) {ν : ℕ} (hν : p ≤ ν)
+theorem map_hotelling_multivariate_gaussian_wishart_gram_measure (hp : 0 < p) {ν : ℕ} (hν : p ≤ ν)
     {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) :
     ((multivariateGaussian 0 S).prod (TauCeti.Probability.wishartGramMeasure ν S)).map
         (fun z ↦ ((ν - p + 1 : ℕ) : ℝ) / p *
@@ -629,15 +630,15 @@ theorem map_hotelling_multivariateGaussian_wishartGramMeasure (hp : 0 < p) {ν :
     have : 0 < ν - p + 1 := by omega
     exact_mod_cast this
   have hp0 : (0 : ℝ) < p := by exact_mod_cast hp
-  have hpair := map_prod_quadForm_ratio hp hν hS
+  have hpair := map_prod_quad_form_ratio hp hν hS
   rw [hk] at hpair
   have := TauCeti.Probability.isProbabilityMeasure_chiSquaredMeasure hk0.le
   have hX : Measurable fun u : EuclideanSpace ℝ (Fin p) ↦ matrixQuadraticForm S⁻¹ u :=
-    measurable_matrixQuadraticForm _
+    measurable_matrix_quadratic_form _
   have hR : Measurable fun z : EuclideanSpace ℝ (Fin p) ×
       selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦
         matrixQuadraticForm S⁻¹ z.1 / matrixQuadraticForm (z.2 : Matrix (Fin p) (Fin p) ℝ)⁻¹ z.1 :=
-    (hX.comp measurable_fst).div measurable_matrixQuadraticForm_inv
+    (hX.comp measurable_fst).div measurable_matrix_quadratic_form_inv
   have hX1 : Measurable fun z : EuclideanSpace ℝ (Fin p) ×
       selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦ matrixQuadraticForm S⁻¹ z.1 :=
     hX.comp measurable_fst
@@ -652,13 +653,13 @@ theorem map_hotelling_multivariateGaussian_wishartGramMeasure (hp : 0 < p) {ν :
       TauCeti.Probability.chiSquaredMeasure p := by
     have h1 : P.map Prod.fst = multivariateGaussian 0 S := by
       rw [Measure.map_fst_prod, measure_univ, one_smul]
-    rw [← map_quadForm_inv_multivariateGaussian hS, ← h1, Measure.map_map hX measurable_fst]
+    rw [← map_quad_form_inv_multivariate_gaussian hS, ← h1, Measure.map_map hX measurable_fst]
     rfl
   have hind : IndepFun (fun z ↦ matrixQuadraticForm S⁻¹ z.1)
       (fun z ↦ matrixQuadraticForm S⁻¹ z.1 /
         matrixQuadraticForm (z.2 : Matrix (Fin p) (Fin p) ℝ)⁻¹ z.1) P := by
     rw [indepFun_iff_map_prod_eq_prod_map_map hX1.aemeasurable
-      hR.aemeasurable, hXlaw, hRlaw, ← map_quadForm_inv_multivariateGaussian hS]
+      hR.aemeasurable, hXlaw, hRlaw, ← map_quad_form_inv_multivariate_gaussian hS]
     have h := congrArg (Measure.map (Prod.map (fun u ↦ matrixQuadraticForm S⁻¹ u) id)) hpair
     rw [Measure.map_map (hX.prodMap measurable_id) hpm, ← Measure.map_prod_map _ _ hX measurable_id,
       Measure.map_id] at h
@@ -671,20 +672,20 @@ theorem map_hotelling_multivariateGaussian_wishartGramMeasure (hp : 0 < p) {ν :
     simp only [ne_eq, not_not]
     rw [show {a : EuclideanSpace ℝ (Fin p) × selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) |
       a.1 = 0} = {0} ×ˢ Set.univ by ext; simp, Measure.prod_prod,
-      multivariateGaussian_singleton_zero hp hS, zero_mul]
+      multivariate_gaussian_singleton_zero hp hS, zero_mul]
   refine (hF.congr ?_).map_eq
   filter_upwards [h0] with z hz
-  have hXz := quadForm_pos hS.inv hz
+  have hXz := quad_form_pos hS.inv hz
   by_cases hQ : matrixQuadraticForm (z.2 : Matrix (Fin p) (Fin p) ℝ)⁻¹ z.1 = 0
   · simp [hQ]
   · field_simp
 
 omit [Fintype κ] [DecidableEq κ] in
 /-- Homogeneity of the matrix quadratic form in the matrix and in the vector. -/
-theorem matrixQuadraticForm_smul_smul (c a : ℝ) (A : Matrix (Fin p) (Fin p) ℝ)
+theorem matrix_quadratic_form_smul_smul (c a : ℝ) (A : Matrix (Fin p) (Fin p) ℝ)
     (u : EuclideanSpace ℝ (Fin p)) :
     matrixQuadraticForm (c • A) (a • u) = c * a ^ 2 * matrixQuadraticForm A u := by
-  simp only [matrixQuadraticForm_eq_sum, Finset.mul_sum]
+  simp only [matrix_quadratic_form_eq_sum, Finset.mul_sum]
   refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
   simp only [PiLp.smul_apply, Matrix.smul_apply, smul_eq_mul]
   ring

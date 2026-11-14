@@ -2,6 +2,7 @@ module
 
 public import CKSD.Inference.Basic
 
+
 /-!
 # Integration identities for sufficient statistics
 
@@ -14,7 +15,7 @@ structure (GAPS 101.49).
 
 * `CKSD.integral_comp_mul_eq_integral_comp_mul_integral_kernel`, `CKSD.integral_indicator_comp_mul_eq`.
 * `CKSD.integral_comp_eq_integral_integral`: integrals against a mixture `P ∘ₘ Λ`.
-* `CKSD.ae_integral_kernel_eq_of_isBoundedlyCompleteStatistic`: under bounded completeness, a
+* `CKSD.ae_integral_kernel_eq_of_is_boundedly_complete_statistic`: under bounded completeness, a
   bounded function with constant mean has constant conditional mean `∫ φ dK(T)`.
 -/
 @[expose] public section
@@ -75,7 +76,7 @@ theorem integral_comp_eq_integral_integral {Θ X : Type*} [MeasurableSpace Θ] [
 
 /-- If the joint law of `(T, X)` under `μ` is `μ.map T ⊗ₘ K`, then `μ` is the mixture of `K`
 over the law of `T`. -/
-theorem comp_map_eq_of_map_prodMk_eq_compProd (μ : Measure X) [IsFiniteMeasure μ] {T : X → S}
+theorem comp_map_eq_of_map_prod_mk_eq_comp_prod (μ : Measure X) [IsFiniteMeasure μ] {T : X → S}
     (hT : Measurable T) (K : Kernel S X) [IsMarkovKernel K]
     (hK : μ.map (fun x ↦ (T x, x)) = μ.map T ⊗ₘ K) : K ∘ₘ μ.map T = μ := by
   rw [← Measure.snd_compProd, ← hK, Measure.snd_map_prodMk hT]
@@ -83,7 +84,7 @@ theorem comp_map_eq_of_map_prodMk_eq_compProd (μ : Measure X) [IsFiniteMeasure 
   · exact measurable_id
 
 /-- A real convex function on the line is bounded below by `L 0 - c |t|` for some constant `c`. -/
-theorem exists_sub_mul_abs_le_of_convexOn {L : ℝ → ℝ} (hL : ConvexOn ℝ univ L) :
+theorem exists_sub_mul_abs_le_of_convex_on {L : ℝ → ℝ} (hL : ConvexOn ℝ univ L) :
     ∃ c : ℝ, 0 ≤ c ∧ ∀ t, L 0 - c * |t| ≤ L t := by
   refine ⟨|L 0 - L (-1)| + |L 1 - L 0|, by positivity, fun t ↦ ?_⟩
   rcases lt_trichotomy t 0 with ht | rfl | ht
@@ -98,7 +99,7 @@ theorem exists_sub_mul_abs_le_of_convexOn {L : ℝ → ℝ} (hL : ConvexOn ℝ u
     nlinarith [neg_abs_le (L 0 - L (-1)), abs_nonneg (L 1 - L 0)]
 
 /-- A set integral over a preimage `T⁻¹ B` as an integral against the indicator of `B` at `T`. -/
-theorem setIntegral_preimage_eq_integral_indicator_mul (μ : Measure X) {T : X → S}
+theorem set_integral_preimage_eq_integral_indicator_mul (μ : Measure X) {T : X → S}
     (hT : Measurable T) {B : Set S} (hB : MeasurableSet B) (f : X → ℝ) :
     ∫ x in T ⁻¹' B, f x ∂μ = ∫ x, B.indicator 1 (T x) * f x ∂μ := by
   rw [← integral_indicator (hT hB)]
@@ -127,7 +128,7 @@ theorem integral_indicator_comp_mul_eq (μ : Measure X)
 /-- For a boundedly complete sufficient statistic `T` with disintegrating kernel `K`, a bounded
 measurable `φ` whose expectation is `α` under every parameter satisfies `∫ φ dK(T) = α` almost
 surely under every parameter. -/
-theorem ae_integral_kernel_eq_of_isBoundedlyCompleteStatistic {Θ : Type*}
+theorem ae_integral_kernel_eq_of_is_boundedly_complete_statistic {Θ : Type*}
     (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ)) {T : X → S}
     (hT : Measurable T) (hc : IsBoundedlyCompleteStatistic P T)
     (K : Kernel S X) [IsMarkovKernel K]

@@ -2,6 +2,7 @@ module
 
 public import CKSD.Nonparametric.SparseRecovery.Basic
 
+
 /-!
 # Restricted isometry and the null space property
 
@@ -20,10 +21,10 @@ are used for the robust null space property in `CKSD.Nonparametric.SparseRecover
 ## Main results
 
 * `CKSD.exists_decreasing_blocks`: the decomposition into blocks of decreasing absolute value.
-* `CKSD.hasNullspaceProperty_of_hasRestrictedIsometry`: the restricted isometry property of
+* `CKSD.has_nullspace_property_of_has_restricted_isometry`: the restricted isometry property of
   order `2 s` with constant `δ < 1/3` implies the null space property on every set of at most
   `s` coordinates.
-* `CKSD.abs_inner_apply_le_sqrt_of_hasRestrictedIsometry`: the sharpened restricted
+* `CKSD.abs_inner_apply_le_sqrt_of_has_restricted_isometry`: the sharpened restricted
   orthogonality bound `|⟪A x, A y⟫| ≤ √(δ² - t²) ‖x‖ ‖y‖` when `‖A x‖² = (1 + t) ‖x‖²`.
 
 Sources: GAPS 103.48 and 103.49.
@@ -109,44 +110,44 @@ def blockVector {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p))
   WithLp.toLp 2 (fun j ↦ if ℓ j = k then v j else 0)
 
 /-- Coordinates of a block vector. -/
-theorem blockVector_apply {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p)) (k : ℕ)
+theorem block_vector_apply {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p)) (k : ℕ)
     (j : Fin p) : blockVector ℓ v k j = if ℓ j = k then v j else 0 := rfl
 
 /-- A block vector is supported in its block. -/
-theorem sparsity_blockVector_le {p s : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p))
+theorem sparsity_block_vector_le {p s : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p))
     (k : ℕ) (hcard : (Finset.univ.filter fun j ↦ ℓ j = k).card ≤ s) :
     sparsity (blockVector ℓ v k) ≤ s := by
   refine le_trans (Finset.card_le_card ?_) hcard
   intro j hj
-  simp only [Finset.mem_filter, Finset.mem_univ, true_and, blockVector_apply] at hj ⊢
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and, block_vector_apply] at hj ⊢
   by_contra h
   exact hj (ite_eq_right h)
 
 /-- Distinct block vectors have disjoint supports. -/
-theorem blockVector_eq_zero_or_eq_zero {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p))
+theorem block_vector_eq_zero_or_eq_zero {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p))
     {k k' : ℕ} (hkk : k ≠ k') (j : Fin p) :
     blockVector ℓ v k j = 0 ∨ blockVector ℓ v k' j = 0 := by
-  simp only [blockVector_apply]
+  simp only [block_vector_apply]
   by_cases h : ℓ j = k
   · right; rw [ite_eq_right]; rw [h]; exact hkk
   · left; rw [ite_eq_right h]
 
 /-- The squared norm of a block vector is the sum of squares over its block. -/
-theorem norm_blockVector_sq {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p)) (k : ℕ) :
+theorem norm_block_vector_sq {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p)) (k : ℕ) :
     ‖blockVector ℓ v k‖ ^ 2 = ∑ j ∈ Finset.univ.filter (fun j ↦ ℓ j = k), v j ^ 2 := by
   rw [EuclideanSpace.norm_sq_eq]
-  simp only [blockVector_apply, Real.norm_eq_abs, sq_abs, Finset.sum_filter]
+  simp only [block_vector_apply, Real.norm_eq_abs, sq_abs, Finset.sum_filter]
   refine Finset.sum_congr rfl fun j _ ↦ ?_
   split_ifs <;> simp
 
 /-- A vector is the sum of its blocks when all block indices are below `p`. -/
-theorem eq_blockVector_zero_add_sum {p : ℕ} (ℓ : Fin p → ℕ) (hℓ : ∀ j, ℓ j < p)
+theorem eq_block_vector_zero_add_sum {p : ℕ} (ℓ : Fin p → ℕ) (hℓ : ∀ j, ℓ j < p)
     (v : EuclideanSpace ℝ (Fin p)) :
     v = blockVector ℓ v 0 + ∑ k ∈ Finset.range p, blockVector ℓ v (k + 1) := by
   ext j
   simp only [PiLp.add_apply, WithLp.ofLp_sum, Finset.sum_apply]
   change v j = blockVector ℓ v 0 j + ∑ c ∈ Finset.range p, blockVector ℓ v (c + 1) j
-  simp only [blockVector_apply]
+  simp only [block_vector_apply]
   rcases Nat.eq_zero_or_pos (ℓ j) with h0 | h0
   · rw [ite_eq_left h0, Finset.sum_eq_zero fun k _ ↦ ite_eq_right (by omega)]; ring
   · obtain ⟨m, hm⟩ : ∃ m, ℓ j = m + 1 := ⟨ℓ j - 1, by omega⟩
@@ -156,21 +157,21 @@ theorem eq_blockVector_zero_add_sum {p : ℕ} (ℓ : Fin p → ℕ) (hℓ : ∀ 
     · intro hm'; exact absurd (Finset.mem_range.mpr (by have := hℓ j; omega)) hm'
 
 /-- The block `ℓ¹` norms add up to the full `ℓ¹` norm. -/
-theorem sum_range_sum_abs_eq_restrictedL1Norm {p : ℕ} (ℓ : Fin p → ℕ) (hℓ : ∀ j, ℓ j < p)
+theorem sum_range_sum_abs_eq_restricted_l1_norm {p : ℕ} (ℓ : Fin p → ℕ) (hℓ : ∀ j, ℓ j < p)
     (v : EuclideanSpace ℝ (Fin p)) :
     ∑ k ∈ Finset.range p, ∑ j ∈ Finset.univ.filter (fun j ↦ ℓ j = k), |v j| =
       restrictedL1Norm Finset.univ v :=
   Finset.sum_fiberwise_of_maps_to (fun j _ ↦ Finset.mem_range.mpr (hℓ j)) _
 
 /-- Expanding `⟪A v₀, A v⟫` over the blocks of `v`, where `v₀` is the leading block. -/
-theorem inner_apply_blockVector_zero_apply {n p : ℕ}
+theorem inner_apply_block_vector_zero_apply {n p : ℕ}
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)) (ℓ : Fin p → ℕ)
     (hℓ : ∀ j, ℓ j < p) (v : EuclideanSpace ℝ (Fin p)) :
     ⟪A (blockVector ℓ v 0), A v⟫ = ‖A (blockVector ℓ v 0)‖ ^ 2 +
       ∑ k ∈ Finset.range p, ⟪A (blockVector ℓ v 0), A (blockVector ℓ v (k + 1))⟫ := by
   calc ⟪A (blockVector ℓ v 0), A v⟫ = ⟪A (blockVector ℓ v 0),
         A (blockVector ℓ v 0 + ∑ k ∈ Finset.range p, blockVector ℓ v (k + 1))⟫ :=
-        congrArg (fun w ↦ ⟪A (blockVector ℓ v 0), A w⟫) (eq_blockVector_zero_add_sum ℓ hℓ v)
+        congrArg (fun w ↦ ⟪A (blockVector ℓ v 0), A w⟫) (eq_block_vector_zero_add_sum ℓ hℓ v)
     _ = _ := by rw [map_add, inner_add_right, map_sum, inner_sum, real_inner_self_eq_norm_sq]
 
 /-- A sum of nonnegative values over a set `S` is at most the sum over a set `B` that
@@ -228,7 +229,7 @@ theorem sum_le_sum_filter_eq_zero_of_decreasing_blocks {p s : ℕ} {v : Fin p �
 /-- GAPS 103.48, restricted-isometry sufficient condition for exact sparse recovery: if `A` has
 the restricted isometry property of order `2 s` with constant `0 ≤ δ < 1/3`, then `A` has the
 null space property on every set `S` of at most `s` coordinates. -/
-theorem hasNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ}
+theorem has_nullspace_property_of_has_restricted_isometry {n p s : ℕ}
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
     (δ : ℝ) (hδ : δ ∈ Ico 0 (1 / 3 : ℝ)) (hrip : HasRestrictedIsometry A (2 * s) δ)
     (S : Finset (Fin p)) (hS : S.card ≤ s) : HasNullspaceProperty A S := by
@@ -244,7 +245,7 @@ theorem hasNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ}
     calc (0 : ℝ) < |v j| := abs_pos.mpr hj
       _ ≤ restrictedL1Norm Finset.univ v :=
         Finset.single_le_sum (f := fun j ↦ |v j|) (fun j _ ↦ abs_nonneg _) (Finset.mem_univ j)
-  have hsplit := restrictedL1Norm_add_compl S v
+  have hsplit := restricted_l1_norm_add_compl S v
   have hS0 : 0 ≤ restrictedL1Norm S v := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
   have hSc0 : 0 ≤ restrictedL1Norm Sᶜ v := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
   rcases Nat.eq_zero_or_pos s with rfl | hs
@@ -257,7 +258,7 @@ theorem hasNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ}
     obtain ⟨ℓ, hcmp, hcard, hfull, hℓlt⟩ := exists_decreasing_blocks (fun j ↦ v j) hs
     set lev : ℕ → Finset (Fin p) := fun k ↦ Finset.univ.filter fun j ↦ ℓ j = k with hlev
     set vk : ℕ → EuclideanSpace ℝ (Fin p) := blockVector ℓ v with hvk
-    have hsp : ∀ k, sparsity (vk k) ≤ s := fun k ↦ sparsity_blockVector_le ℓ v k (hcard k)
+    have hsp : ∀ k, sparsity (vk k) ≤ s := fun k ↦ sparsity_block_vector_le ℓ v k (hcard k)
     set L : ℕ → ℝ := fun k ↦ ∑ j ∈ lev k, |v j| with hL
     have hblock_pt : ∀ k j, ℓ j = k + 1 → |v j| ≤ L k / s := by
       intro k j hj
@@ -275,7 +276,7 @@ theorem hasNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ}
       intro k
       refine (pow_le_pow_iff_left₀ (norm_nonneg _) (div_nonneg (hL0 k) hsqrt.le)
         two_ne_zero).mp ?_
-      rw [hvk, norm_blockVector_sq, div_pow, Real.sq_sqrt hspos.le]
+      rw [hvk, norm_block_vector_sq, div_pow, Real.sq_sqrt hspos.le]
       calc ∑ j ∈ lev (k + 1), v j ^ 2 ≤ ∑ _j ∈ lev (k + 1), (L k / s) ^ 2 := by
             refine Finset.sum_le_sum fun j hj ↦ ?_
             simp only [lev, Finset.mem_filter, Finset.mem_univ, true_and] at hj
@@ -286,7 +287,7 @@ theorem hasNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ}
             gcongr; exact_mod_cast hcard (k + 1)
         _ = L k ^ 2 / s := by field_simp
     have hsumL : ∑ k ∈ Finset.range p, L k = restrictedL1Norm Finset.univ v :=
-      sum_range_sum_abs_eq_restrictedL1Norm ℓ hℓlt v
+      sum_range_sum_abs_eq_restricted_l1_norm ℓ hℓlt v
     have hL0le : L 0 ≤ restrictedL1Norm Finset.univ v := by
       rw [← hsumL]
       exact Finset.single_le_sum (fun k _ ↦ hL0 k) (Finset.mem_range.mpr (by
@@ -296,12 +297,12 @@ theorem hasNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ}
     set X := ∑ k ∈ Finset.range p, ‖vk (k + 1)‖ with hX
     have hX0 : 0 ≤ X := Finset.sum_nonneg fun k _ ↦ norm_nonneg _
     have hAsq : ‖A (vk 0)‖ ^ 2 ≤ δ * ‖vk 0‖ * X := by
-      have h0 := inner_apply_blockVector_zero_apply A ℓ hℓlt v
+      have h0 := inner_apply_block_vector_zero_apply A ℓ hℓlt v
       rw [hv, inner_zero_right] at h0
       have hb : ∀ k ∈ Finset.range p, -(δ * ‖vk 0‖ * ‖vk (k + 1)‖) ≤
           ⟪A (vk 0), A (vk (k + 1))⟫ := fun k _ ↦
-        (abs_le.mp (abs_inner_apply_le_of_hasRestrictedIsometry A δ hrip _ _ (hsp 0)
-          (hsp (k + 1)) (blockVector_eq_zero_or_eq_zero ℓ v (by omega)))).1
+        (abs_le.mp (abs_inner_apply_le_of_has_restricted_isometry A δ hrip _ _ (hsp 0)
+          (hsp (k + 1)) (block_vector_eq_zero_or_eq_zero ℓ v (by omega)))).1
       have := Finset.sum_le_sum hb
       rw [Finset.sum_neg_distrib, ← Finset.mul_sum] at this
       linarith
@@ -315,7 +316,7 @@ theorem hasNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ}
       exact Finset.sum_le_sum fun k _ ↦ hblock k
     have hL0v0 : L 0 ≤ Real.sqrt s * ‖vk 0‖ := by
       refine (pow_le_pow_iff_left₀ (hL0 0) (by positivity) two_ne_zero).mp ?_
-      rw [mul_pow, Real.sq_sqrt hspos.le, hvk, norm_blockVector_sq]
+      rw [mul_pow, Real.sq_sqrt hspos.le, hvk, norm_block_vector_sq]
       calc L 0 ^ 2 ≤ (lev 0).card * ∑ j ∈ lev 0, |v j| ^ 2 := sq_sum_le_card_mul_sum_sq
         _ ≤ s * ∑ j ∈ lev 0, v j ^ 2 := by
             simp only [sq_abs]
@@ -397,7 +398,7 @@ theorem le_sqrt_of_forall_two_mul_le {c D : ℝ} (h : ∀ lam : ℝ, 2 * lam * c
 /-- Sharpened restricted orthogonality: if `‖A x‖² = (1 + t) ‖x‖²`, then for `s`-sparse
 vectors with disjoint supports `|⟪A x, A y⟫| ≤ √(δ² - t²) ‖x‖ ‖y‖` when `A` has the RIP of
 order `2 s` with constant `δ > 0`. -/
-theorem abs_inner_apply_le_sqrt_of_hasRestrictedIsometry {n p s : ℕ}
+theorem abs_inner_apply_le_sqrt_of_has_restricted_isometry {n p s : ℕ}
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)) {δ : ℝ} (hδ : 0 < δ)
     (hrip : HasRestrictedIsometry A (2 * s) δ) (x y : EuclideanSpace ℝ (Fin p))
     (hx : sparsity x ≤ s) (hy : sparsity y ≤ s) (hxy : ∀ j, x j = 0 ∨ y j = 0) (t : ℝ)
@@ -477,7 +478,7 @@ def ripNullspaceTau (δ : ℝ) : ℝ :=
 
 /-- The constants of the robust null space property: for `0 ≤ δ < 4 / √41`,
 `0 ≤ ρ(δ) < 1` and `τ(δ) > 0`. -/
-theorem ripNullspace_constants {δ : ℝ} (hδ : δ ∈ Ico 0 (4 / Real.sqrt 41)) :
+theorem rip_nullspace_constants {δ : ℝ} (hδ : δ ∈ Ico 0 (4 / Real.sqrt 41)) :
     0 < 4 * Real.sqrt (1 - δ ^ 2) - δ ∧ 0 ≤ ripNullspaceRho δ ∧ ripNullspaceRho δ < 1 ∧
       0 < ripNullspaceTau δ ∧ δ < 1 := by
   obtain ⟨h0, h1⟩ := hδ

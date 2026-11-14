@@ -1,4 +1,5 @@
 module
+
 public import CKSD.LinearModels.EigenvaluePerturbation
 public import CKSD.Nonparametric.EmpiricalCovariance.Basic
 public import TauCeti.Probability.Distributions.Gaussian.MixedMoments
@@ -53,7 +54,7 @@ theorem abs_simple_matrix_eigenvalue_sub_rayleigh_le {p : ℕ}
   exact hh
 
 /-- The Euclidean operator norm is bounded by the dimension times the entrywise sum. -/
-theorem norm_matrix_le_card_mul_entrySum {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ) :
+theorem norm_matrix_le_card_mul_entry_sum {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ) :
     ‖A‖ ≤ p * entrySum A := by
   have he (i j : Fin p) : ‖A i j‖ ≤ entrySum A := by
     rw [Real.norm_eq_abs]
@@ -99,15 +100,15 @@ theorem simple_empirical_covariance_eigenvalue_asymptotics
           (empiricalCovarianceMatrix X n ω - euclideanCovarianceMatrix P) v)))
       atTop (fun _ ↦ 0) := by
     let C := (4 * Real.sqrt 2 / gap) * (d : ℝ) ^ 2
-    have hlim := tendstoInMeasure_const_mul_zero μ _ C
-      (tendstoInMeasure_sqrt_mul_entrySum_sq hiid h4)
+    have hlim := tendsto_in_measure_const_mul_zero μ _ C
+      (tendsto_in_measure_sqrt_mul_entry_sum_sq hiid h4)
     refine tendstoInMeasure_zero_of_abs_le' hlim (Filter.Eventually.of_forall fun n ω ↦ ?_)
     have hbd := abs_simple_matrix_eigenvalue_sub_rayleigh_le
       (euclideanCovarianceMatrix P) (empiricalCovarianceMatrix X n ω) hS (hA n ω)
       j v hv (by rw [← hlambda]; exact heig) gap hgap (by simpa only [← hlambda] using hsep)
     rw [← hlambda] at hbd
     let E := empiricalCovarianceMatrix X n ω - euclideanCovarianceMatrix P
-    have hnorm := norm_matrix_le_card_mul_entrySum E
+    have hnorm := norm_matrix_le_card_mul_entry_sum E
     calc |Real.sqrt n * (symmetricMatrixEigenvalues (empiricalCovarianceMatrix X n ω) j -
           lambda - inner ℝ v (Matrix.toEuclideanCLM (𝕜 := ℝ) E v))| =
           Real.sqrt n * |symmetricMatrixEigenvalues (empiricalCovarianceMatrix X n ω) j -
@@ -121,7 +122,7 @@ theorem simple_empirical_covariance_eigenvalue_asymptotics
             rw [abs_of_nonneg (by dsimp [C]; positivity)]
             dsimp [C]
             ring
-  have hmeasA := measurable_empiricalCovarianceMatrix hiid.1
+  have hmeasA := measurable_empirical_covariance_matrix hiid.1
   have hmeasEigen (n : ℕ) : Measurable (fun ω ↦ symmetricMatrixEigenvalues
       (empiricalCovarianceMatrix X n ω) j) := by
     have h := (Matrix.measurable_eigenvalues₀ (n := Fin d) (𝕜 := ℝ)).comp
@@ -130,23 +131,23 @@ theorem simple_empirical_covariance_eigenvalue_asymptotics
     convert hc using 1
     funext ω
     simp only [symmetricMatrixEigenvalues, dite_eq_left (hA n ω), Function.comp_apply]
-  have hclt := tendstoInDistribution_inv_sqrt_mul_sum_of_iid μ P X hiid (quadStat P v)
-    (measurable_quadStat v) (memLp_quadStat h4 v) (integral_quadStat h4 v)
-  rw [integral_quadStat_sq_eq_variance h4 hv heig] at hclt
-  have hmeasA := measurable_empiricalCovarianceMatrix hiid.1
-  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _
+  have hclt := tendsto_in_distribution_inv_sqrt_mul_sum_of_iid μ P X hiid (quadStat P v)
+    (measurable_quad_stat v) (mem_lp_quad_stat h4 v) (integral_quad_stat h4 v)
+  rw [integral_quad_stat_sq_eq_variance h4 hv heig] at hclt
+  have hmeasA := measurable_empirical_covariance_matrix hiid.1
+  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ _ _
     (fun n ↦ measurable_const.mul (Finset.measurable_fun_sum _ fun k _ ↦
-      (measurable_quadStat v).comp (hiid.1 k)))
+      (measurable_quad_stat v).comp (hiid.1 k)))
     (fun n ↦ measurable_const.mul
       ((hmeasEigen n).sub_const _)) hclt ?_
   -- the difference is the remainder plus a negligible quadratic term
   have hR : TendstoInMeasure μ (fun (n : ℕ) ω ↦ ∑ i, ∑ j, (-(v i * v j)) *
       (Real.sqrt n * sampleCoordMean P X i n ω * sampleCoordMean P X j n ω)) atTop
       (fun _ ↦ 0) :=
-    tendstoInMeasure_finsetSum_zero _ fun i _ ↦ tendstoInMeasure_finsetSum_zero _ fun j _ ↦
-      tendstoInMeasure_const_mul_zero μ _ _
-        (tendstoInMeasure_sqrt_mul_sampleCoordMean_mul hiid h4 i j)
-  refine tendstoInMeasure_zero_of_abs_le' (tendstoInMeasure_add_zero μ _ _ hrem hR) ?_
+    tendsto_in_measure_finset_sum_zero _ fun i _ ↦ tendsto_in_measure_finset_sum_zero _ fun j _ ↦
+      tendsto_in_measure_const_mul_zero μ _ _
+        (tendsto_in_measure_sqrt_mul_sample_coord_mean_mul hiid h4 i j)
+  refine tendstoInMeasure_zero_of_abs_le' (tendsto_in_measure_add_zero μ _ _ hrem hR) ?_
   filter_upwards [eventually_gt_atTop 0] with n hn ω
   apply le_of_eq
   congr 1
@@ -154,9 +155,9 @@ theorem simple_empirical_covariance_eigenvalue_asymptotics
   have hQ : inner ℝ v (Matrix.toEuclideanCLM (𝕜 := ℝ) (A - euclideanCovarianceMatrix P) v) =
       ∑ i, ∑ j, v i * (sampleProdMean P X i j n ω -
         sampleCoordMean P X i n ω * sampleCoordMean P X j n ω) * v j := by
-    rw [inner_toEuclideanCLM_eq_sum]
+    rw [inner_to_euclidean_clm_eq_sum]
     refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
-    rw [Matrix.sub_apply, empiricalCovarianceMatrix_sub_eq P X hn ω i j]
+    rw [Matrix.sub_apply, empirical_covariance_matrix_sub_eq P X hn ω i j]
   have hW : (Real.sqrt n)⁻¹ * ∑ k ∈ Finset.range n, quadStat P v (X k ω) =
       ∑ i, ∑ j, v i * (Real.sqrt n * sampleProdMean P X i j n ω) * v j := by
     have hnR : (0 : ℝ) < n := by exact_mod_cast hn
@@ -195,11 +196,11 @@ theorem variance_sq_inner_gaussian_eigenvector {d : ℕ}
   have h4 := IsGaussian.memLp_id P 4 (by simp)
   have hY : (fun x ↦ inner ℝ (x - ∫ z, z ∂P) v ^ 2) = fun x ↦ quadStat P v x + lambda := by
     funext x
-    rw [quadStat_eq hv heig]
+    rw [quad_stat_eq hv heig]
     ring
   have hmean : ∫ x, inner ℝ (x - ∫ z, z ∂P) v ^ 2 ∂P = lambda := by
-    rw [hY, integral_add ((memLp_quadStat h4 v).integrable (by norm_num))
-      (integrable_const _), integral_quadStat h4, integral_const]
+    rw [hY, integral_add ((mem_lp_quad_stat h4 v).integrable (by norm_num))
+      (integrable_const _), integral_quad_stat h4, integral_const]
     simp
   have hc : covarianceBilinDual P (toDualMap ℝ _ v) (toDualMap ℝ _ v) = lambda := by
     rw [← covarianceBilin_eq_covarianceBilinDual, covarianceBilin_apply IsGaussian.memLp_two_id]
@@ -221,7 +222,7 @@ theorem variance_sq_inner_gaussian_eigenvector {d : ℕ}
         ring
       _ = lambda ^ 2 * 3 := h
       _ = _ := by ring
-  rw [variance_eq_sub (by rw [hY]; exact (memLp_quadStat h4 v).add (memLp_const _)), hmean]
+  rw [variance_eq_sub (by rw [hY]; exact (mem_lp_quad_stat h4 v).add (memLp_const _)), hmean]
   change (∫ x, (inner ℝ (x - ∫ z, z ∂P) v ^ 2) ^ 2 ∂P) - lambda ^ 2 = _
   rw [hm4]
   ring

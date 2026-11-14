@@ -3,6 +3,7 @@ module
 public import CKSD.Geometry.MatrixReduction.Filtered
 public import CKSD.Geometry.FiniteCombinatorics
 
+
 /-!
 # Persistent Betti numbers from a reduced boundary matrix
 
@@ -11,8 +12,8 @@ filtered boundary matrix, including the unpaired essential classes.
 
 ## Main results
 
-* `CKSD.persistentBettiOfMatrix_eq_card`: persistent Betti numbers count bars (GAPS 108.32).
-* `CKSD.IsColumnLow.dim_eq_and_persistentBettiOfMatrix_eq`: the homological meaning of a pair
+* `CKSD.persistent_betti_of_matrix_eq_card`: persistent Betti numbers count bars (GAPS 108.32).
+* `CKSD.IsColumnLow.dim_eq_and_persistent_betti_of_matrix_eq`: the homological meaning of a pair
   (GAPS 108.32).
 -/
 
@@ -41,7 +42,7 @@ theorem Submodule.finrank_map_add_finrank_inf_ker {V W : Type*} [AddCommGroup V]
   exact h
 
 /-- Chains of the subcomplex are the range of a diagonal projection. -/
-theorem filteredChains_eq_range (dim : Fin m → ℕ) (p a : ℕ) :
+theorem filtered_chains_eq_range (dim : Fin m → ℕ) (p a : ℕ) :
     filteredChains (𝕜 := 𝕜) dim p a = LinearMap.range
       (diagonal fun k : Fin m ↦ if k.val < a ∧ dim k = p then (1 : 𝕜) else 0).mulVecLin := by
   ext c
@@ -60,40 +61,40 @@ theorem filteredChains_eq_range (dim : Fin m → ℕ) (p a : ℕ) :
     exact hk (by simp [hcon])
 
 /-- The dimension of the chains of the subcomplex. -/
-theorem finrank_filteredChains (dim : Fin m → ℕ) (p a : ℕ) :
+theorem finrank_filtered_chains (dim : Fin m → ℕ) (p a : ℕ) :
     finrank 𝕜 (filteredChains (𝕜 := 𝕜) dim p a) =
       (Finset.univ.filter fun k : Fin m ↦ k.val < a ∧ dim k = p).card := by
   classical
-  rw [filteredChains_eq_range, ← Matrix.rank, rank_diagonal, Fintype.card_subtype]
+  rw [filtered_chains_eq_range, ← Matrix.rank, rank_diagonal, Fintype.card_subtype]
   congr 1
   ext k
   simp
 
 /-- The boundary of the chains of the subcomplex is the range of a masked part of `D`. -/
-theorem map_filteredChains_eq_range (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ)
+theorem map_filtered_chains_eq_range (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ)
     (p a : ℕ) :
     (filteredChains (𝕜 := 𝕜) dim p a).map D.mulVecLin =
-      LinearMap.range (lowerLeftPart (dimColumnPart D dim p) 0 a).mulVecLin := by
-  rw [filteredChains_eq_range, ← LinearMap.range_comp, ← Matrix.mulVecLin_mul]
+      LinearMap.range (lower_left_part (dimColumnPart D dim p) 0 a).mulVecLin := by
+  rw [filtered_chains_eq_range, ← LinearMap.range_comp, ← Matrix.mulVecLin_mul]
   congr 2
   ext k l
-  simp only [mul_diagonal, lowerLeftPart, dimColumnPart, of_apply, zero_le, true_and]
+  simp only [mul_diagonal, lower_left_part, dimColumnPart, of_apply, zero_le, true_and]
   by_cases h1 : l.val < a <;> by_cases h2 : dim l = p <;> simp [h1, h2]
 
 /-- Dimension of the cycles of the subcomplex formed by the first `a` simplices. -/
-theorem finrank_filteredCycles_add (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ)
+theorem finrank_filtered_cycles_add (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ)
     (p a : ℕ) :
     finrank 𝕜 (filteredCycles D dim p a) + lowerLeftRank (dimColumnPart D dim p) 0 a =
       (Finset.univ.filter fun k : Fin m ↦ k.val < a ∧ dim k = p).card := by
   have h := Submodule.finrank_map_add_finrank_inf_ker D.mulVecLin (filteredChains (𝕜 := 𝕜) dim p a)
-  rw [map_filteredChains_eq_range] at h
+  rw [map_filtered_chains_eq_range] at h
   have h2 : filteredCycles D dim p a = filteredChains dim p a ⊓ LinearMap.ker D.mulVecLin := rfl
-  rw [← finrank_filteredChains (𝕜 := 𝕜), h2]
+  rw [← finrank_filtered_chains (𝕜 := 𝕜), h2]
   unfold lowerLeftRank Matrix.rank
   omega
 
 /-- Dimension of the cycles of `K_a` that bound in `K_b`. -/
-theorem finrank_filteredCycles_inf_filteredBoundaries_add {D : Matrix (Fin m) (Fin m) 𝕜}
+theorem finrank_filtered_cycles_inf_filtered_boundaries_add {D : Matrix (Fin m) (Fin m) 𝕜}
     {dim : Fin m → ℕ} (hD : IsFilteredBoundaryMatrix D dim) (p a b : ℕ) :
     finrank 𝕜 ↥(filteredCycles D dim p a ⊓ filteredBoundaries D dim p b) +
         lowerLeftRank (dimColumnPart D dim (p + 1)) a b =
@@ -101,8 +102,8 @@ theorem finrank_filteredCycles_inf_filteredBoundaries_add {D : Matrix (Fin m) (F
   classical
   set Pa : Matrix (Fin m) (Fin m) 𝕜 := diagonal fun k ↦ if a ≤ k.val then 1 else 0
   set B := filteredBoundaries D dim p b
-  have hB : B = LinearMap.range (lowerLeftPart (dimColumnPart D dim (p + 1)) 0 b).mulVecLin :=
-    map_filteredChains_eq_range D dim (p + 1) b
+  have hB : B = LinearMap.range (lower_left_part (dimColumnPart D dim (p + 1)) 0 b).mulVecLin :=
+    map_filtered_chains_eq_range D dim (p + 1) b
   have hinf : filteredCycles D dim p a ⊓ B = B ⊓ LinearMap.ker Pa.mulVecLin := by
     ext v
     simp only [filteredCycles, Submodule.mem_inf, LinearMap.mem_ker, Matrix.mulVecLin_apply]
@@ -133,13 +134,13 @@ theorem finrank_filteredCycles_inf_filteredBoundaries_add {D : Matrix (Fin m) (F
   have h := Submodule.finrank_map_add_finrank_inf_ker Pa.mulVecLin B
   rw [← hinf] at h
   have hmap : B.map Pa.mulVecLin =
-      LinearMap.range (lowerLeftPart (dimColumnPart D dim (p + 1)) a b).mulVecLin := by
+      LinearMap.range (lower_left_part (dimColumnPart D dim (p + 1)) a b).mulVecLin := by
     rw [hB, ← LinearMap.range_comp, ← Matrix.mulVecLin_mul]
     congr 2
     ext k l
-    simp only [Pa, diagonal_mul, lowerLeftPart, dimColumnPart, of_apply, zero_le, true_and]
+    simp only [Pa, diagonal_mul, lower_left_part, dimColumnPart, of_apply, zero_le, true_and]
     by_cases h1 : a ≤ k.val <;> simp [h1]
-  have hfB : finrank 𝕜 B = (lowerLeftPart (dimColumnPart D dim (p + 1)) 0 b).rank := by
+  have hfB : finrank 𝕜 B = (lower_left_part (dimColumnPart D dim (p + 1)) 0 b).rank := by
     rw [hB]; rfl
   rw [hmap, ← Matrix.rank] at h
   unfold lowerLeftRank
@@ -154,19 +155,19 @@ theorem IsColumnLow.exists_and_iff {R : Matrix (Fin m) (Fin m) 𝕜} {i l : Fin 
   · exact fun hP ↦ ⟨i, hi, hP⟩
 
 /-- A column has a low exactly when it is nonzero. -/
-theorem exists_isColumnLow_iff {R : Matrix (Fin m) (Fin m) 𝕜} {l : Fin m} :
+theorem exists_is_column_low_iff {R : Matrix (Fin m) (Fin m) 𝕜} {l : Fin m} :
     (∃ i, IsColumnLow R i l) ↔ ¬ ∀ k, R k l = 0 := by
   constructor
   · rintro ⟨i, hi⟩ hz
     exact hi.1 (hz i)
   · intro hn
     push Not at hn
-    exact exists_isColumnLow_of_ne_zero hn
+    exact exists_is_column_low_of_ne_zero hn
 
 /-- GAPS 108.32, the persistent Betti numbers of a reduced filtered boundary matrix count the bars
 `[i, j)` with `low_R(j) = i`, `i < a ≤ b ≤ j`, and the essential bars born before `a`. The
 inequality `a ≤ b` is not needed. -/
-theorem persistentBettiOfMatrix_eq_card {D R V : Matrix (Fin m) (Fin m) 𝕜}
+theorem persistent_betti_of_matrix_eq_card {D R V : Matrix (Fin m) (Fin m) 𝕜}
     {dim : Fin m → ℕ} (hD : IsFilteredBoundaryMatrix D dim) (h : IsMatrixReduction D R V)
     (p a b : ℕ) :
     persistentBettiOfMatrix D dim p a b =
@@ -175,16 +176,16 @@ theorem persistentBettiOfMatrix_eq_card {D R V : Matrix (Fin m) (Fin m) 𝕜}
       (Finset.univ.filter fun j : Fin m ↦
         (∀ k, R k j = 0) ∧ (∀ l, ¬ IsColumnLow R j l) ∧ dim j = p ∧ j.val < a).card := by
   have hdD : ∀ i j, D i j ≠ 0 → dim i + 1 = dim j := fun i j h ↦ (hD.lt_and_dim_of_ne_zero i j h).2
-  have hZ := finrank_filteredCycles_add D dim p a
-  have hZB := finrank_filteredCycles_inf_filteredBoundaries_add hD p a b
-  rw [lowerLeftRank_dimColumnPart_eq_card hdD h] at hZ
-  rw [lowerLeftRank_dimColumnPart_eq_card hdD h, lowerLeftRank_dimColumnPart_eq_card hdD h] at hZB
+  have hZ := finrank_filtered_cycles_add D dim p a
+  have hZB := finrank_filtered_cycles_inf_filtered_boundaries_add hD p a b
+  rw [lower_left_rank_dim_column_part_eq_card hdD h] at hZ
+  rw [lower_left_rank_dim_column_part_eq_card hdD h, lower_left_rank_dim_column_part_eq_card hdD h] at hZB
   -- split the `p`-simplices of `K_a` into negative, paired positive, and essential ones
   have hI1 := card_filter_eq_add_of_iff (α := Fin m) (P := fun k ↦ k.val < a ∧ dim k = p)
     (Q := fun l ↦ l.val < a ∧ dim l = p ∧ ∃ i, 0 ≤ i.val ∧ IsColumnLow R i l)
     (S := fun k ↦ k.val < a ∧ dim k = p ∧ ∀ j, R j k = 0)
     (fun k ↦ by
-      have := (exists_isColumnLow_iff (R := R) (l := k))
+      have := (exists_is_column_low_iff (R := R) (l := k))
       simp only [zero_le, true_and]
       tauto)
     (fun k hQ hS ↦ by
@@ -276,9 +277,9 @@ consists of the first `a` simplices). If `low_R(j) = i`, then `σ_j` has dimensi
 lowers the Betti number one dimension below its own (`σ_j` is negative). The bars are the pairs
 `[i, j)` with `low_R(j) = i` and the essential intervals `[j, ∞)` for zero columns `j` that are
 the low of no column; the count of bars by persistent Betti numbers is
-`CKSD.persistentBettiOfMatrix_eq_card`. The restatement for monotone functions on simplices, with
+`CKSD.persistent_betti_of_matrix_eq_card`. The restatement for monotone functions on simplices, with
 bars `[f(σ_i), f(σ_j))`, is a relabelling and is not stated separately. -/
-theorem IsColumnLow.dim_eq_and_persistentBettiOfMatrix_eq {D R V : Matrix (Fin m) (Fin m) 𝕜}
+theorem IsColumnLow.dim_eq_and_persistent_betti_of_matrix_eq {D R V : Matrix (Fin m) (Fin m) 𝕜}
     {dim : Fin m → ℕ} (hD : IsFilteredBoundaryMatrix D dim) (h : IsMatrixReduction D R V)
     {i j : Fin m} (hij : IsColumnLow R i j) :
     dim j = dim i + 1 ∧
@@ -292,7 +293,7 @@ theorem IsColumnLow.dim_eq_and_persistentBettiOfMatrix_eq {D R V : Matrix (Fin m
   have hij' : i < j := hij.lt hlt h
   have hzi := hij.col_eq_zero hD.mul_self_eq_zero h
   refine ⟨hdim, ?_, ?_⟩
-  · rw [persistentBettiOfMatrix_eq_card hD h, persistentBettiOfMatrix_eq_card hD h]
+  · rw [persistent_betti_of_matrix_eq_card hD h, persistent_betti_of_matrix_eq_card hD h]
     have hT : (Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧
           (∀ l, ¬ IsColumnLow R j' l) ∧ dim j' = dim i ∧ j'.val < i.val + 1) =
         Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧
@@ -337,7 +338,7 @@ theorem IsColumnLow.dim_eq_and_persistentBettiOfMatrix_eq {D R V : Matrix (Fin m
       omega
     rw [hT, hS, Finset.card_insert_of_notMem hjS]
     ring
-  · rw [persistentBettiOfMatrix_eq_card hD h, persistentBettiOfMatrix_eq_card hD h]
+  · rw [persistent_betti_of_matrix_eq_card hD h, persistent_betti_of_matrix_eq_card hD h]
     have hT : (Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧
           (∀ l, ¬ IsColumnLow R j' l) ∧ dim j' = dim i ∧ j'.val < j.val + 1) =
         Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧

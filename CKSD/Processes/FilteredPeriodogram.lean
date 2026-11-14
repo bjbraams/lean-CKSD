@@ -12,6 +12,7 @@ public import TauCeti.Probability.Distributions.ChiSquared.Basic
 public import TauCeti.Probability.Distributions.Exponential.Basic
 public import CKSD.Processes.PeriodogramLimits
 
+
 /-!
 # Limit law of the normalized periodogram of a linear process
 
@@ -27,7 +28,7 @@ Slutsky's lemma combine the two.
 
 * `CKSD.sq_norm_sum_range_mul_cexp`: the squared modulus of a real discrete Fourier transform.
 * `CKSD.eventually_round_fourier`: properties of the nearest Fourier frequencies.
-* `CKSD.IsIIDNoise.tendstoInDistribution_periodogram_filter_div`: the limit law of the
+* `CKSD.IsIIDNoise.tendsto_in_distribution_periodogram_filter_div`: the limit law of the
   normalized periodogram at Fourier frequencies.
 -/
 
@@ -69,7 +70,7 @@ private theorem EuclideanSpace.norm_le_sum_abs {ι : Type*} [Fintype ι] (v : Eu
 
 /-- Convergence to `0` in probability of Euclidean vectors follows from convergence of each
 coordinate. -/
-theorem tendstoInMeasure_euclidean_of_forall_apply {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_euclidean_of_forall_apply {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsFiniteMeasure μ] {ι : Type*} [Fintype ι]
     (Y : ℕ → Ω → EuclideanSpace ℝ ι)
     (h : ∀ i, TendstoInMeasure μ (fun n ω ↦ Y n ω i) atTop (fun _ ↦ 0)) :
@@ -84,39 +85,39 @@ theorem tendstoInMeasure_euclidean_of_forall_apply {Ω : Type*} [MeasurableSpace
     intro s
     induction s using Finset.induction_on with
     | empty =>
-      simpa using tendstoInMeasure_const_of_tendsto μ (fun _ ↦ (0 : ℝ)) tendsto_const_nhds
+      simpa using tendsto_in_measure_const_of_tendsto μ (fun _ ↦ (0 : ℝ)) tendsto_const_nhds
     | insert i s hi ih =>
       simp_rw [Finset.sum_insert hi]
-      exact tendstoInMeasure_add_zero μ _ _ (habs i) ih
+      exact tendsto_in_measure_add_zero μ _ _ (habs i) ih
   have hn : TendstoInMeasure μ (fun n ω ↦ ‖Y n ω‖) atTop (fun _ ↦ 0) :=
-    tendstoInMeasure_zero_of_abs_le μ _ _ (fun _ _ ↦ 0) one_pos
+    tendsto_in_measure_zero_of_abs_le μ _ _ (fun _ _ ↦ 0) one_pos
       (Eventually.of_forall fun n ↦ ae_of_all _ fun ω _ ↦ by
         rw [abs_norm, abs_of_nonneg (Finset.sum_nonneg fun i _ ↦ abs_nonneg _)]
         exact EuclideanSpace.norm_le_sum_abs _)
-      (hsum Finset.univ) (tendstoInMeasure_const_of_tendsto μ _ tendsto_const_nhds)
+      (hsum Finset.univ) (tendsto_in_measure_const_of_tendsto μ _ tendsto_const_nhds)
   rw [tendstoInMeasure_iff_norm] at hn ⊢
   simpa only [sub_zero, norm_norm] using hn
 
 /-- Stochastic algebra for squared moduli: if `‖a_n - b_n‖ → 0` in probability and
 `‖b_n‖ ≤ C R_n` with `R_n` bounded in probability, then `‖a_n‖² - ‖b_n‖² → 0` in
 probability. -/
-theorem tendstoInMeasure_sq_norm_sub_sq_norm {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_sq_norm_sub_sq_norm {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsFiniteMeasure μ] {E : Type*} [NormedAddCommGroup E]
     (a b : ℕ → Ω → E) (R : ℕ → Ω → ℝ) (C : ℝ)
     (hab : TendstoInMeasure μ (fun n ω ↦ ‖a n ω - b n ω‖) atTop (fun _ ↦ 0))
     (hb : ∀ n ω, ‖b n ω‖ ≤ C * R n ω) (hR : IsBoundedInProbability μ R) :
     TendstoInMeasure μ (fun n ω ↦ ‖a n ω‖ ^ 2 - ‖b n ω‖ ^ 2) atTop (fun _ ↦ 0) := by
   set D : ℕ → Ω → ℝ := fun n ω ↦ ‖a n ω - b n ω‖
-  have hD := isBoundedInProbability_of_tendstoInMeasure μ D 0 hab
+  have hD := is_bounded_in_probability_of_tendsto_in_measure μ D 0 hab
   have hX : TendstoInMeasure μ (fun n ω ↦ D n ω * D n ω + 2 * C * (R n ω * D n ω)) atTop
       (fun _ ↦ 0) :=
-    tendstoInMeasure_add_zero μ _ _
-      (tendstoInMeasure_mul_zero_of_isBoundedInProbability μ D D hD hab)
-      (tendstoInMeasure_const_mul_zero μ _ _
-        (tendstoInMeasure_mul_zero_of_isBoundedInProbability μ R D hR hab))
-  refine tendstoInMeasure_zero_of_abs_le μ _ _ (fun _ _ ↦ 0) one_pos
+    tendsto_in_measure_add_zero μ _ _
+      (tendsto_in_measure_mul_zero_of_is_bounded_in_probability μ D D hD hab)
+      (tendsto_in_measure_const_mul_zero μ _ _
+        (tendsto_in_measure_mul_zero_of_is_bounded_in_probability μ R D hR hab))
+  refine tendsto_in_measure_zero_of_abs_le μ _ _ (fun _ _ ↦ 0) one_pos
     (Eventually.of_forall fun n ↦ ae_of_all _ fun ω _ ↦ ?_) hX
-    (tendstoInMeasure_const_of_tendsto μ _ tendsto_const_nhds)
+    (tendsto_in_measure_const_of_tendsto μ _ tendsto_const_nhds)
   have h1 : |‖a n ω‖ - ‖b n ω‖| ≤ D n ω := abs_norm_sub_norm_le _ _
   have h2 : ‖a n ω‖ + ‖b n ω‖ ≤ D n ω + 2 * ‖b n ω‖ := by
     have := norm_le_norm_add_norm_sub' (a n ω) (b n ω)
@@ -227,10 +228,10 @@ theorem eventually_round_fourier {m : ℕ} {x : Fin m → ℝ} (hx : Function.In
     filter_upwards [eventually_gt_atTop 0] with n hn
     exact hb n hn
 
-/-- The cosine and sine sums of `tendstoInDistribution_fourierTrig_sum` recover the squared
+/-- The cosine and sine sums of `tendsto_in_distribution_fourier_trig_sum` recover the squared
 modulus of the discrete Fourier transform at `ν = 2πk/n`:
 `σ² (U₀² + U₁²)/2 = |∑_{t<n} z_t e^{-itν}|² / n`. -/
-private theorem sq_norm_dft_eq_fourierTrig (z : ℕ → ℝ) {σsq : ℝ} (hσ : 0 < σsq) {n : ℕ}
+private theorem sq_norm_dft_eq_fourier_trig (z : ℕ → ℝ) {σsq : ℝ} (hσ : 0 < σsq) {n : ℕ}
     (hn : 0 < n) (k : ℤ) :
     ‖∑ t ∈ Finset.range n, (z t : ℂ) *
         Complex.exp (-((t : ℝ) * (2 * Real.pi * (k : ℝ) / n) : ℝ) * Complex.I)‖ ^ 2 / n =
@@ -259,7 +260,7 @@ noise of variance `σ²`, `∑_j |ψ_j| < ∞`, integer frequencies `k_n(j)` wit
 `I_n(2πk_n(j)/n) / f(x_j)` of the periodogram of `X_t = ∑_l ψ_l Z_{t-l}` to the spectral
 density `f = σ² |ψ(e^{-i·})|² / (2π)` converge jointly in law to independent standard
 exponential variables (Brockwell–Davis, Theorem 10.3.2). -/
-theorem IsIIDNoise.tendstoInDistribution_periodogram_filter_div {Ω : Type*}
+theorem IsIIDNoise.tendsto_in_distribution_periodogram_filter_div {Ω : Type*}
     [MeasurableSpace Ω] {μ : Measure Ω} [IsProbabilityMeasure μ] {Z : ℤ → Ω → ℝ} {σsq : ℝ}
     (hZ : IsIIDNoise μ Z σsq) {ψ : ℤ → ℝ} (hψ : Summable fun j ↦ |ψ j|) {m : ℕ}
     (k : ℕ → Fin m → ℤ)
@@ -283,7 +284,7 @@ theorem IsIIDNoise.tendstoInDistribution_periodogram_filter_div {Ω : Type*}
     Real.sqrt (2 / (n * σsq)) * ∑ t ∈ Finset.range n,
       Z t ω * fourierTrig p.2 (2 * Real.pi * k n p.1 * t / n) with hUdef
   have hU : TendstoInDistribution U atTop id (fun _ ↦ μ) _ :=
-    tendstoInDistribution_fourierTrig_sum hZ k hk
+    tendsto_in_distribution_fourier_trig_sum hZ k hk
   set Φ : EuclideanSpace ℝ (Fin m × Fin 2) → EuclideanSpace ℝ (Fin m) := fun u ↦
     WithLp.toLp 2 fun j ↦ (u (j, 0) ^ 2 + u (j, 1) ^ 2) / 2 with hΦdef
   have hΦ : Continuous Φ := by
@@ -298,15 +299,15 @@ theorem IsIIDNoise.tendstoInDistribution_periodogram_filter_div {Ω : Type*}
   have hlim : TendstoInDistribution (fun n ω ↦ Φ (U n ω)) atTop id (fun _ ↦ μ)
       ((Measure.pi fun _ : Fin m ↦ expMeasure 1).map (WithLp.toLp 2)) :=
     have hΦU := hU.continuous_comp hΦ
-    tendstoInDistribution_of_map_eq hΦU aemeasurable_id
-      (by rw [Measure.map_id, ← map_stdGaussian_half_sum_sq]; rfl)
+    tendsto_in_distribution_of_map_eq hΦU aemeasurable_id
+      (by rw [Measure.map_id, ← map_std_gaussian_half_sum_sq]; rfl)
   have hXm : ∀ t : ℤ, Measurable fun ω ↦ ∑' l, ψ l * Z (t - l) ω := fun t ↦
     Measurable.tsum fun l ↦ (hZ.measurable _).const_mul _
   have hZm := hZ.measurable
-  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ
+  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ
     (fun n ω ↦ Φ (U n ω)) _ (fun n ↦ hΦ.measurable.comp (hUm n))
     (fun n ↦ (WithLp.measurable_toLp 2 _).comp (measurable_pi_iff.2 fun j ↦ by fun_prop))
-    hlim (tendstoInMeasure_euclidean_of_forall_apply _ fun j ↦ ?_)
+    hlim (tendsto_in_measure_euclidean_of_forall_apply _ fun j ↦ ?_)
   -- one coordinate
   set ν : ℕ → ℝ := fun n ↦ 2 * Real.pi * (k n j : ℝ) / n with hν
   set dX : ℕ → Ω → ℂ := fun n ω ↦ ∑ t ∈ Finset.range n,
@@ -320,7 +321,7 @@ theorem IsIIDNoise.tendstoInDistribution_periodogram_filter_div {Ω : Type*}
     rw [inv_pow, Real.sq_sqrt (Nat.cast_nonneg n)]
   -- the linear-process approximation
   have hab : TendstoInMeasure μ (fun n ω ↦ ‖a n ω - b n ω‖) atTop (fun _ ↦ 0) := by
-    refine (hZ.tendstoInMeasure_dft_filter_sub hψ ν).congr (fun n ↦ ae_of_all _ fun ω ↦ ?_)
+    refine (hZ.tendsto_in_measure_dft_filter_sub hψ ν).congr (fun n ↦ ae_of_all _ fun ω ↦ ?_)
       (ae_of_all _ fun _ ↦ rfl)
     simp only [a, b, dX, dZ, ← mul_sub, norm_mul, Complex.norm_real, Real.norm_eq_abs,
       abs_of_nonneg (inv_nonneg.2 (Real.sqrt_nonneg _))]
@@ -334,16 +335,16 @@ theorem IsIIDNoise.tendstoInDistribution_periodogram_filter_div {Ω : Type*}
       have h1 := (PiLp.continuous_apply 2 (fun _ : Fin m × Fin 2 ↦ ℝ) (j, 1))
       exact Real.continuous_sqrt.comp
         (continuous_const.mul (((h0.pow 2).add (h1.pow 2)).div_const 2))
-    refine (isBoundedInProbability_of_tendstoInDistribution μ (fun n ↦ g ∘ U n)
+    refine (is_bounded_in_probability_of_tendsto_in_distribution μ (fun n ↦ g ∘ U n)
       (hU.continuous_comp hg)).congr' ?_
     filter_upwards [eventually_gt_atTop 0] with n hn
     funext ω
     have hn' : (0 : ℝ) < n := by exact_mod_cast hn
     simp only [Function.comp, g, R, hUdef]
-    rw [← sq_norm_dft_eq_fourierTrig (fun t ↦ Z t ω) hσ hn, Real.sqrt_div' _ (Nat.cast_nonneg n),
+    rw [← sq_norm_dft_eq_fourier_trig (fun t ↦ Z t ω) hσ hn, Real.sqrt_div' _ (Nat.cast_nonneg n),
       Real.sqrt_sq (norm_nonneg _), div_eq_inv_mul]
   -- the two error terms
-  have h1 := tendstoInMeasure_sq_norm_sub_sq_norm a b R (∑' l, |ψ l|) hab (fun n ω ↦ by
+  have h1 := tendsto_in_measure_sq_norm_sub_sq_norm a b R (∑' l, |ψ l|) hab (fun n ω ↦ by
     simp only [b, R, norm_mul, Complex.norm_real, Real.norm_eq_abs,
       abs_of_nonneg (inv_nonneg.2 (Real.sqrt_nonneg _))]
     have := norm_tsum_mul_cexp_le hψ (ν n)
@@ -357,17 +358,17 @@ theorem IsIIDNoise.tendstoInDistribution_periodogram_filter_div {Ω : Type*}
     have := (hT'.norm.pow 2).sub_const (‖T (x j)‖ ^ 2)
     rwa [sub_self] at this
   have h2 : TendstoInMeasure μ (fun n ω ↦ R n ω * (R n ω * c n)) atTop (fun _ ↦ 0) :=
-    tendstoInMeasure_mul_zero_of_isBoundedInProbability μ R _ hR
-      (tendstoInMeasure_mul_zero_of_isBoundedInProbability μ R _ hR
-        (tendstoInMeasure_const_of_tendsto μ c hc))
+    tendsto_in_measure_mul_zero_of_is_bounded_in_probability μ R _ hR
+      (tendsto_in_measure_mul_zero_of_is_bounded_in_probability μ R _ hR
+        (tendsto_in_measure_const_of_tendsto μ c hc))
   set K : ℝ := (σsq * ‖T (x j)‖ ^ 2)⁻¹
   have hTx : 0 < ‖T (x j)‖ := norm_pos_iff.2 (hT j)
-  refine (tendstoInMeasure_add_zero μ _ _ (tendstoInMeasure_const_mul_zero μ _ K h1)
-    (tendstoInMeasure_const_mul_zero μ _ K h2)).congr' ?_ (ae_of_all _ fun _ ↦ rfl)
+  refine (tendsto_in_measure_add_zero μ _ _ (tendsto_in_measure_const_mul_zero μ _ K h1)
+    (tendsto_in_measure_const_mul_zero μ _ K h2)).congr' ?_ (ae_of_all _ fun _ ↦ rfl)
   filter_upwards [eventually_gt_atTop 0] with n hn
   refine ae_of_all _ fun ω ↦ ?_
   have hn' : (0 : ℝ) < n := by exact_mod_cast hn
-  have hQ := sq_norm_dft_eq_fourierTrig (fun t ↦ Z t ω) hσ hn (k n j)
+  have hQ := sq_norm_dft_eq_fourier_trig (fun t ↦ Z t ω) hσ hn (k n j)
   simp only [PiLp.sub_apply, Φ, hUdef]
   have hQ' : ((Real.sqrt (2 / (n * σsq)) * ∑ t ∈ Finset.range n,
           Z t ω * fourierTrig 0 (2 * Real.pi * k n j * t / n)) ^ 2 +

@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.Basic
 public import TauCeti.Probability.BrownianMotion.RunningMaximum
 public import Mathlib.MeasureTheory.Constructions.Polish.StronglyMeasurable
@@ -21,7 +22,7 @@ namespace CKSD
 
 /-- An a.s. continuous process with a.e. strongly measurable sections on a separable
 first-countable time space has a sectionwise strongly measurable indistinguishable version. -/
-theorem exists_stronglyMeasurable_version_of_ae_continuous
+theorem exists_strongly_measurable_version_of_ae_continuous
     {Ω ι E : Type*} [MeasurableSpace Ω] [TopologicalSpace ι] [FirstCountableTopology ι]
     [TopologicalSpace.SeparableSpace ι] [MetricSpace E] [CompleteSpace E] [Nonempty E]
     (P : Measure Ω) (X : ι → Ω → E) (hXm : ∀ t, AEStronglyMeasurable (X t) P)
@@ -53,7 +54,7 @@ theorem IsBrownianReal.exists_integrable_uniform_bound {Ω : Type*} [MeasurableS
     (P : Measure Ω) [IsProbabilityMeasure P] (W : ℝ≥0 → Ω → ℝ) (hW : IsBrownianReal W P)
     (T : ℝ≥0) :
     ∃ D : Ω → ℝ, Integrable D P ∧ ∀ᵐ ω ∂P, ∀ t ≤ T, ‖W t ω‖ ≤ D ω := by
-  obtain ⟨V, hVm, hVW⟩ := exists_stronglyMeasurable_version_of_ae_continuous P W
+  obtain ⟨V, hVm, hVW⟩ := exists_strongly_measurable_version_of_ae_continuous P W
     (fun t ↦ (hW.aemeasurable t).aestronglyMeasurable) hW.cont
   have hVc : ∀ᵐ ω ∂P, Continuous (fun t ↦ V t ω) := by
     filter_upwards [hW.cont, hVW] with ω hc heq
@@ -100,7 +101,7 @@ theorem IsBrownianReal.exists_integrable_uniform_bound {Ω : Type*} [MeasurableS
 
 
 /-- Coordinatewise Brownian motion has an integrable random bound uniform on compact intervals. -/
-theorem exists_integrable_uniform_bound_brownianEuclidean {Ω : Type*} [MeasurableSpace Ω]
+theorem exists_integrable_uniform_bound_brownian_euclidean {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] {d : ℕ}
     (W : ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d))
     (hW : ∀ j, IsBrownianReal (fun t ω ↦ W t ω j) P) (T : ℝ≥0) :
@@ -117,14 +118,14 @@ theorem exists_integrable_uniform_bound_brownianEuclidean {Ω : Type*} [Measurab
   exact (hnorm _).trans (Finset.sum_le_sum fun j _ ↦ hω j t ht)
 
 /-- An integrable initial vector plus Brownian motion admits a uniform integrable random bound. -/
-theorem exists_integrable_uniform_bound_add_brownianEuclidean {Ω : Type*} [MeasurableSpace Ω]
+theorem exists_integrable_uniform_bound_add_brownian_euclidean {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] {d : ℕ}
     (ξ : Ω → EuclideanSpace ℝ (Fin d)) (hξ : Integrable ξ P)
     (W : ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d))
     (hW : ∀ j, IsBrownianReal (fun t ω ↦ W t ω j) P) (T : ℝ) :
     ∃ B : Ω → ℝ, Integrable B P ∧ ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T,
       ‖ξ ω + W t.toNNReal ω‖ ≤ B ω := by
-  obtain ⟨D, hDi, hDb⟩ := exists_integrable_uniform_bound_brownianEuclidean P W hW T.toNNReal
+  obtain ⟨D, hDi, hDb⟩ := exists_integrable_uniform_bound_brownian_euclidean P W hW T.toNNReal
   refine ⟨fun ω ↦ ‖ξ ω‖ + D ω, hξ.norm.add hDi, ?_⟩
   filter_upwards [hDb] with ω hω
   intro t ht

@@ -3,6 +3,7 @@ module
 public import Mathlib.Combinatorics.SimpleGraph.Acyclic
 public import Mathlib.Combinatorics.SimpleGraph.Clique
 
+
 /-!
 # Chordal graphs and junction trees
 
@@ -23,8 +24,8 @@ simplicial vertex and attaching its closed neighbourhood as a leaf clique.
 
 ## Main results
 
-* `CKSD.chordal_of_junctionTree`: a graph with a junction tree is chordal.
-* `CKSD.exists_junctionTree_of_chordal`: a finite chordal graph has a junction tree.
+* `CKSD.chordal_of_junction_tree`: a graph with a junction tree is chordal.
+* `CKSD.exists_junction_tree_of_chordal`: a finite chordal graph has a junction tree.
 
 ## References
 
@@ -136,14 +137,14 @@ private def walkNodes (c : Fin m → Finset V) {a b : V} (W : G.Walk a b) : Set 
 omit [Fintype V] in
 /-- Under the running-intersection property, the nodes whose clique contains a vertex form a
 path-convex set. -/
-private theorem isPathConvex_nodes
+private theorem is_path_convex_nodes
     (hrip : ∀ i j (p : T.Walk i j), p.IsPath → ∀ k ∈ p.support, c i ∩ c j ⊆ c k) (v : V) :
     IsPathConvex T {i | v ∈ c i} := fun i j p hp hi hj k hk ↦
   hrip i j p hp k hk (Finset.mem_inter.mpr ⟨hi, hj⟩)
 
 omit [DecidableEq V] in
 /-- Every clique lies in the clique of some node. -/
-private theorem exists_node_of_isClique
+private theorem exists_node_of_is_clique
     (hcov : ∀ C, Maximal (fun D : Finset V ↦ G.IsClique (D : Set V)) C → ∃ i, c i = C)
     {D : Finset V} (hD : G.IsClique (D : Set V)) : ∃ i, D ⊆ c i := by
   obtain ⟨C, hDC, hC⟩ := exists_subset_maximal (fun D : Finset V ↦ G.IsClique (D : Set V)) hD
@@ -151,7 +152,7 @@ private theorem exists_node_of_isClique
   exact ⟨i, hDC⟩
 
 /-- The nodes whose clique meets a walk form a path-convex set. -/
-private theorem isPathConvex_walkNodes (hT : T.IsTree)
+private theorem is_path_convex_walk_nodes (hT : T.IsTree)
     (hcov : ∀ C, Maximal (fun D : Finset V ↦ G.IsClique (D : Set V)) C → ∃ i, c i = C)
     (hrip : ∀ i j (p : T.Walk i j), p.IsPath → ∀ k ∈ p.support, c i ∩ c j ⊆ c k) :
     ∀ {a b : V} (W : G.Walk a b), IsPathConvex T (walkNodes c W)
@@ -159,13 +160,13 @@ private theorem isPathConvex_walkNodes (hT : T.IsTree)
     have : walkNodes c (SimpleGraph.Walk.nil : G.Walk a a) = {i | a ∈ c i} := by
       ext i; simp [walkNodes]
     rw [this]
-    exact isPathConvex_nodes hrip a
+    exact is_path_convex_nodes hrip a
   | a, _, .cons (v := z) h W => by
     have : walkNodes c (SimpleGraph.Walk.cons h W) = {i | a ∈ c i} ∪ walkNodes c W := by
       ext i; simp [walkNodes]
     rw [this]
-    refine (isPathConvex_nodes hrip a).union hT (isPathConvex_walkNodes hT hcov hrip W) ?_
-    obtain ⟨i, hi⟩ := exists_node_of_isClique hcov (D := {a, z}) (by
+    refine (is_path_convex_nodes hrip a).union hT (is_path_convex_walk_nodes hT hcov hrip W) ?_
+    obtain ⟨i, hi⟩ := exists_node_of_is_clique hcov (D := {a, z}) (by
       rw [Finset.coe_pair]; exact SimpleGraph.isClique_pair.mpr fun _ ↦ h)
     exact ⟨i, hi (by simp), z, by simp, hi (by simp)⟩
 
@@ -178,7 +179,7 @@ private theorem not_mem_both (hmax : ∀ i, Maximal (fun D : Finset V ↦ G.IsCl
 omit [Fintype V] [DecidableEq V] in
 /-- An edge `s(a, b)` between the endpoints of a path of length at least two is not an edge of
 the path. -/
-private theorem not_mem_edges_of_isPath {a b : V} (W : G.Walk a b) (hW : W.IsPath)
+private theorem not_mem_edges_of_is_path {a b : V} (W : G.Walk a b) (hW : W.IsPath)
     (hl : 2 ≤ W.length) : s(a, b) ∉ W.edges := by
   cases W with
   | nil => simp at hl
@@ -199,7 +200,7 @@ private theorem not_mem_edges_of_isPath {a b : V} (W : G.Walk a b) (hW : W.IsPat
 /-- **Graphs with junction trees are chordal.** If the cliques `c i` enumerate the maximal
 cliques of `G` and a tree `T` on them has the running-intersection property, then every cycle of
 `G` of length at least four has a chord. -/
-theorem chordal_of_junctionTree (G : SimpleGraph V) (c : Fin m → Finset V)
+theorem chordal_of_junction_tree (G : SimpleGraph V) (c : Fin m → Finset V)
     (T : SimpleGraph (Fin m))
     (hmax : ∀ i, Maximal (fun D : Finset V ↦ G.IsClique (D : Set V)) (c i))
     (hcov : ∀ C, Maximal (fun D : Finset V ↦ G.IsClique (D : Set V)) C → ∃ i, c i = C)
@@ -259,7 +260,7 @@ theorem chordal_of_junctionTree (G : SimpleGraph V) (c : Fin m → Finset V)
     · rcases Sym2.eq_iff.mp he with ⟨rfl, -⟩ | ⟨-, rfl⟩
       · exact hu₃ hv₁₃
       · exact hu₃ hw₃
-    · exact not_mem_edges_of_isPath q₃ hq₃p (by simp [q₃]) he
+    · exact not_mem_edges_of_is_path q₃ hq₃p (by simp [q₃]) he
     · rcases Sym2.eq_iff.mp he with ⟨rfl, -⟩ | ⟨rfl, -⟩
       · exact hv₁w rfl
       · exact hu₃ hv₁₃
@@ -281,7 +282,7 @@ theorem chordal_of_junctionTree (G : SimpleGraph V) (c : Fin m → Finset V)
   set N : V → Set (Fin m) := fun v ↦ {i | v ∈ c i}
   have hpair : ∀ a b, G.Adj a b → ∃ i, a ∈ c i ∧ b ∈ c i := by
     intro a b hab
-    obtain ⟨i, hi⟩ := exists_node_of_isClique hcov (D := {a, b}) (by
+    obtain ⟨i, hi⟩ := exists_node_of_is_clique hcov (D := {a, b}) (by
       rw [Finset.coe_pair]; exact SimpleGraph.isClique_pair.mpr fun _ ↦ hab)
     exact ⟨i, hi (by simp), hi (by simp)⟩
   have hdisj : Disjoint (N v₁) (N w) := Set.disjoint_left.mpr fun i h₁ h₂ ↦
@@ -292,8 +293,8 @@ theorem chordal_of_junctionTree (G : SimpleGraph V) (c : Fin m → Finset V)
   obtain ⟨b, hwb, hub⟩ := hpair w u h₃
   obtain ⟨P, hP⟩ : ∃ P : T.Walk a b, P.IsPath :=
     ⟨_, SimpleGraph.Walk.bypass_isPath (hT.connected a b).some⟩
-  have hPu := isPathConvex_nodes hrip u P hP hua hub
-  have hPq := isPathConvex_walkNodes hT hcov hrip q₃ P hP ⟨v₁, hv₁₃, hva⟩ ⟨w, hw₃, hwb⟩
+  have hPu := is_path_convex_nodes hrip u P hP hua hub
+  have hPq := is_path_convex_walk_nodes hT hcov hrip q₃ P hP ⟨v₁, hv₁₃, hva⟩ ⟨w, hw₃, hwb⟩
   have hPsplit : ∀ k ∈ P.support, k ∈ N v₁ ∪ N w := by
     intro k hk
     obtain ⟨x, hx, hxk⟩ := hPq k hk
@@ -304,10 +305,10 @@ theorem chordal_of_junctionTree (G : SimpleGraph V) (c : Fin m → Finset V)
     · exact Or.inr hxk
   obtain ⟨x, y, hxy, hx, hy, hxP, hyP⟩ := exists_adj_of_walk hdisj P hPsplit hva hwb
   obtain ⟨i₀, hi₀⟩ : ∃ i, z ∈ c i := by
-    obtain ⟨i, hi⟩ := exists_node_of_isClique hcov (D := {z}) (by simp)
+    obtain ⟨i, hi⟩ := exists_node_of_is_clique hcov (D := {z}) (by simp)
     exact ⟨i, hi (by simp)⟩
-  have hA := isPathConvex_walkNodes hT hcov hrip (SimpleGraph.Walk.cons h₄ q₆)
-  have hB := isPathConvex_walkNodes hT hcov hrip (q₆.concat h₆)
+  have hA := is_path_convex_walk_nodes hT hcov hrip (SimpleGraph.Walk.cons h₄ q₆)
+  have hB := is_path_convex_walk_nodes hT hcov hrip (q₆.concat h₆)
   refine not_separated hT hA hB hxy ⟨v₁, by simp, hx⟩ ?_ ?_ ⟨w, by
     simp [SimpleGraph.Walk.support_concat], hy⟩ ⟨z, by simp, hi₀⟩
     ⟨z, by simp [SimpleGraph.Walk.support_concat], hi₀⟩
@@ -498,7 +499,7 @@ nonadjacent, then `U` has a simplicial vertex different from and nonadjacent to 
 by strong induction on `#U`: a simplicial vertex is found in the subgraph induced on the
 component `C` of `y` outside the closed neighbourhood of `x` together with its neighbourhood
 `S`, which is a clique. -/
-private theorem exists_isSimplicialIn_not_adj (n : ℕ) :
+private theorem exists_is_simplicial_in_not_adj (n : ℕ) :
     ∀ U : Finset V, U.card = n → IsChordalOn G U → ∀ x ∈ U, ∀ y ∈ U, x ≠ y → ¬ G.Adj x y →
       ∃ v, IsSimplicialIn G U v ∧ v ≠ x ∧ ¬ G.Adj x v := by
   classical
@@ -575,14 +576,14 @@ private theorem exists_isSimplicialIn_not_adj (n : ℕ) :
     hv.2 a (hnbr a ha hva) b (hnbr b hb hvb) hva hvb hab⟩, hvx.1, hvx.2⟩
 
 /-- A nonempty vertex set on which `G` is chordal has a simplicial vertex. -/
-private theorem exists_isSimplicialIn {U : Finset V} (hU : IsChordalOn G U) (hne : U.Nonempty) :
+private theorem exists_is_simplicial_in {U : Finset V} (hU : IsChordalOn G U) (hne : U.Nonempty) :
     ∃ v, IsSimplicialIn G U v := by
   by_cases hcomp : ∀ a ∈ U, ∀ b ∈ U, a ≠ b → G.Adj a b
   · obtain ⟨v, hv⟩ := hne
     exact ⟨v, hv, fun a ha b hb _ _ hab ↦ hcomp a ha b hb hab⟩
   · push Not at hcomp
     obtain ⟨p, hp, q, hq, hpq, hnpq⟩ := hcomp
-    obtain ⟨v, hv, -⟩ := exists_isSimplicialIn_not_adj _ U rfl hU p hp q hq hpq hnpq
+    obtain ⟨v, hv, -⟩ := exists_is_simplicial_in_not_adj _ U rfl hU p hp q hq hpq hnpq
     exact ⟨v, hv⟩
 
 end Dirac
@@ -607,7 +608,7 @@ private def leafGraph (T : SimpleGraph (Fin m)) (i₀ : Fin m) : SimpleGraph (Fi
     · exact Fin.castSucc_ne_last _ h.symm⟩
 
 /-- Old nodes are adjacent in the leaf graph exactly when they are adjacent in `T`. -/
-private theorem leafGraph_adj_castSucc {a b : Fin m} :
+private theorem leaf_graph_adj_cast_succ {a b : Fin m} :
     (leafGraph T i₀).Adj a.castSucc b.castSucc ↔ T.Adj a b := by
   constructor
   · rintro (⟨a', b', h, ha, hb⟩ | ⟨h, -⟩ | ⟨h, -⟩)
@@ -617,7 +618,7 @@ private theorem leafGraph_adj_castSucc {a b : Fin m} :
   · exact fun h ↦ Or.inl ⟨a, b, h, rfl, rfl⟩
 
 /-- The only neighbour of the new leaf is `i₀`. -/
-private theorem leafGraph_adj_last {y : Fin (m + 1)} :
+private theorem leaf_graph_adj_last {y : Fin (m + 1)} :
     (leafGraph T i₀).Adj (Fin.last m) y ↔ y = i₀.castSucc := by
   constructor
   · rintro (⟨a', b', -, ha, -⟩ | ⟨-, h⟩ | ⟨-, h⟩)
@@ -628,7 +629,7 @@ private theorem leafGraph_adj_last {y : Fin (m + 1)} :
     exact Or.inr (Or.inl ⟨rfl, rfl⟩)
 
 /-- A walk of the leaf graph between old nodes that avoids the leaf comes from a walk of `T`. -/
-private theorem leafGraph_walk_transfer {x y : Fin (m + 1)} (p : (leafGraph T i₀).Walk x y)
+private theorem leaf_graph_walk_transfer {x y : Fin (m + 1)} (p : (leafGraph T i₀).Walk x y)
     (hp : Fin.last m ∉ p.support) (a b : Fin m) (hx : x = a.castSucc) (hy : y = b.castSucc) :
     ∃ q : T.Walk a b, q.support.map Fin.castSucc = p.support := by
   induction p generalizing a with
@@ -641,10 +642,10 @@ private theorem leafGraph_walk_transfer {x y : Fin (m + 1)} (p : (leafGraph T i�
       (Fin.eq_castSucc_or_eq_last z).resolve_right hz
     subst hx
     obtain ⟨q, hq⟩ := ih (fun h' ↦ hp (by simp [h'])) c rfl hy
-    exact ⟨.cons (leafGraph_adj_castSucc.mp h) q, by simp [hq]⟩
+    exact ⟨.cons (leaf_graph_adj_cast_succ.mp h) q, by simp [hq]⟩
 
 /-- A path of the leaf graph between old nodes avoids the leaf. -/
-private theorem leafGraph_last_not_mem {a b : Fin m}
+private theorem leaf_graph_last_not_mem {a b : Fin m}
     (p : (leafGraph T i₀).Walk a.castSucc b.castSucc) (hp : p.IsPath) :
     Fin.last m ∉ p.support := by
   intro h
@@ -656,20 +657,20 @@ private theorem leafGraph_last_not_mem {a b : Fin m}
     have hn : ¬ (p.takeUntil _ h).Nil :=
       SimpleGraph.Walk.not_nil_of_ne (Fin.castSucc_ne_last a)
     have hadj := (SimpleGraph.Walk.adj_penultimate hn).symm
-    rw [leafGraph_adj_last] at hadj
+    rw [leaf_graph_adj_last] at hadj
     rw [← hadj]
     exact SimpleGraph.Walk.getVert_mem_support _ _
   have h₂ : i₀.castSucc ∈ (p.dropUntil _ h).support.tail := by
     have hn : ¬ (p.dropUntil _ h).Nil :=
       SimpleGraph.Walk.not_nil_of_ne (Fin.castSucc_ne_last b).symm
     have hadj := SimpleGraph.Walk.adj_snd hn
-    rw [leafGraph_adj_last] at hadj
+    rw [leaf_graph_adj_last] at hadj
     rw [← hadj]
     exact SimpleGraph.Walk.snd_mem_tail_support hn
   exact hnd.2.2 _ h₁ _ h₂ rfl
 
 /-- The edges of the leaf graph: the edges of `T` and the new edge to the leaf. -/
-private theorem edgeSet_leafGraph :
+private theorem edge_set_leaf_graph :
     (leafGraph T i₀).edgeSet =
       Sym2.map Fin.castSucc '' T.edgeSet ∪ {s(Fin.last m, i₀.castSucc)} := by
   ext e
@@ -686,26 +687,26 @@ private theorem edgeSet_leafGraph :
       | _ a b =>
       rw [Sym2.map_mk, Sym2.eq_iff] at hxy
       rcases hxy with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
-      · exact leafGraph_adj_castSucc.mpr he'
-      · exact leafGraph_adj_castSucc.mpr (T.adj_symm he')
+      · exact leaf_graph_adj_cast_succ.mpr he'
+      · exact leaf_graph_adj_cast_succ.mpr (T.adj_symm he')
     · rcases Sym2.eq_iff.mp hxy with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
-      · exact leafGraph_adj_last.mpr rfl
-      · exact (leafGraph_adj_last.mpr rfl).symm
+      · exact leaf_graph_adj_last.mpr rfl
+      · exact (leaf_graph_adj_last.mpr rfl).symm
 
 /-- Attaching a leaf to a tree gives a tree. -/
-private theorem isTree_leafGraph (hT : T.IsTree) : (leafGraph T i₀).IsTree := by
+private theorem is_tree_leaf_graph (hT : T.IsTree) : (leafGraph T i₀).IsTree := by
   have hcard := (SimpleGraph.isTree_iff_connected_and_card.mp hT).2
   rw [SimpleGraph.isTree_iff_connected_and_card]
   refine ⟨?_, ?_⟩
   · have hφ : ∀ a b : Fin m, T.Reachable a b → (leafGraph T i₀).Reachable a.castSucc b.castSucc :=
-      fun a b h ↦ h.map ⟨Fin.castSucc, fun h' ↦ leafGraph_adj_castSucc.mpr h'⟩
+      fun a b h ↦ h.map ⟨Fin.castSucc, fun h' ↦ leaf_graph_adj_cast_succ.mpr h'⟩
     have hroot : ∀ x, (leafGraph T i₀).Reachable x i₀.castSucc := by
       intro x
       rcases Fin.eq_castSucc_or_eq_last x with ⟨a, rfl⟩ | rfl
       · exact hφ a i₀ (hT.connected a i₀)
-      · exact (leafGraph_adj_last.mpr rfl).reachable
+      · exact (leaf_graph_adj_last.mpr rfl).reachable
     exact ⟨fun x y ↦ (hroot x).trans (hroot y).symm⟩
-  · rw [edgeSet_leafGraph, Nat.card_coe_set_eq, Set.ncard_union_eq, Set.ncard_singleton,
+  · rw [edge_set_leaf_graph, Nat.card_coe_set_eq, Set.ncard_union_eq, Set.ncard_singleton,
       Set.ncard_image_of_injective _ (Sym2.map.injective (Fin.castSucc_injective m)),
       ← Nat.card_coe_set_eq, Nat.card_fin]
     · rw [Nat.card_fin] at hcard
@@ -736,7 +737,7 @@ private def IsJunctionTreeOn (G : SimpleGraph V) (U : Finset V) {m : ℕ} (c : F
 
 omit [DecidableRel G.Adj] in
 /-- The empty vertex set has a junction tree with the single clique `∅`. -/
-private theorem isJunctionTreeOn_empty :
+private theorem is_junction_tree_on_empty :
     IsJunctionTreeOn G ∅ (fun _ : Fin 1 ↦ (∅ : Finset V)) ⊥ := by
   refine ⟨fun i j _ ↦ Subsingleton.elim i j, fun _ ↦ ?_, fun C hC ↦ ⟨0, ?_⟩,
     SimpleGraph.IsTree.of_subsingleton, fun _ _ _ _ _ _ ↦ by simp⟩
@@ -754,7 +755,7 @@ private theorem subset_insert_of_mem {U D : Finset V} {v : V} (hDU : D ⊆ U)
       ⟨Finset.mem_erase.mpr ⟨hxv, hDU hx⟩, hD hvD hx (Ne.symm hxv)⟩)
 
 /-- The closed neighbourhood in `U` of a simplicial vertex is a clique. -/
-private theorem isClique_insert_neighbors {U : Finset V} {v : V} (hv : IsSimplicialIn G U v) :
+private theorem is_clique_insert_neighbors {U : Finset V} {v : V} (hv : IsSimplicialIn G U v) :
     G.IsClique ((insert v ((U.erase v).filter (G.Adj v)) : Finset V) : Set V) := by
   intro a ha b hb hab
   simp only [Finset.coe_insert, Set.mem_insert_iff, Finset.coe_filter, Finset.mem_erase,
@@ -766,34 +767,34 @@ private theorem isClique_insert_neighbors {U : Finset V} {v : V} (hv : IsSimplic
   · exact hv.2 a haU b hbU hva hvb hab
 
 /-- The closed neighbourhood in `U` of a simplicial vertex is a maximal clique of `U`. -/
-private theorem isMaxCliqueIn_insert {U : Finset V} {v : V} (hv : IsSimplicialIn G U v) :
+private theorem is_max_clique_in_insert {U : Finset V} {v : V} (hv : IsSimplicialIn G U v) :
     IsMaxCliqueIn G U (insert v ((U.erase v).filter (G.Adj v))) :=
   ⟨⟨Finset.insert_subset hv.1 fun _ hx ↦ Finset.mem_of_mem_erase (Finset.mem_filter.mp hx).1,
-    isClique_insert_neighbors hv⟩,
+    is_clique_insert_neighbors hv⟩,
     fun _ hD hND ↦ subset_insert_of_mem hD.1 hD.2 (hND (Finset.mem_insert_self _ _))⟩
 
 /-- The open neighbourhood of `v` in `U` is not a maximal clique of `U`. -/
-private theorem ne_filter_of_isMaxCliqueIn {U C : Finset V} {v : V} (hv : IsSimplicialIn G U v)
+private theorem ne_filter_of_is_max_clique_in {U C : Finset V} {v : V} (hv : IsSimplicialIn G U v)
     (hC : IsMaxCliqueIn G U C) : C ≠ (U.erase v).filter (G.Adj v) := by
   rintro rfl
-  have h := hC.2 (isMaxCliqueIn_insert hv).1 (Finset.subset_insert _ _)
+  have h := hC.2 (is_max_clique_in_insert hv).1 (Finset.subset_insert _ _)
     (Finset.mem_insert_self v _)
   simp at h
 
 /-- A maximal clique of `U` other than the closed neighbourhood of `v` is a maximal clique of
 `U.erase v`. -/
-private theorem isMaxCliqueIn_erase {U C : Finset V} {v : V} (hv : IsSimplicialIn G U v)
+private theorem is_max_clique_in_erase {U C : Finset V} {v : V} (hv : IsSimplicialIn G U v)
     (hC : IsMaxCliqueIn G U C) (hCN : C ≠ insert v ((U.erase v).filter (G.Adj v))) :
     IsMaxCliqueIn G (U.erase v) C := by
   have hvC : v ∉ C := fun hvC ↦ hCN (Finset.Subset.antisymm
     (subset_insert_of_mem hC.1.1 hC.1.2 hvC)
-    (hC.2 (isMaxCliqueIn_insert hv).1 (subset_insert_of_mem hC.1.1 hC.1.2 hvC)))
+    (hC.2 (is_max_clique_in_insert hv).1 (subset_insert_of_mem hC.1.1 hC.1.2 hvC)))
   exact ⟨⟨fun x hx ↦ Finset.mem_erase.mpr ⟨fun h ↦ hvC (h ▸ hx), hC.1.1 hx⟩, hC.1.2⟩,
     fun D hD hCD ↦ hC.2 ⟨hD.1.trans (Finset.erase_subset _ _), hD.2⟩ hCD⟩
 
 /-- A maximal clique of `U.erase v` other than the open neighbourhood of `v` is a maximal clique
 of `U`. -/
-private theorem isMaxCliqueIn_of_erase {U C : Finset V} {v : V} (hv : IsSimplicialIn G U v)
+private theorem is_max_clique_in_of_erase {U C : Finset V} {v : V} (hv : IsSimplicialIn G U v)
     (hC : IsMaxCliqueIn G (U.erase v) C) (hCK : C ≠ (U.erase v).filter (G.Adj v)) :
     IsMaxCliqueIn G U C := by
   refine ⟨⟨hC.1.1.trans (Finset.erase_subset _ _), hC.1.2⟩, fun D hD hCD ↦ ?_⟩
@@ -801,13 +802,13 @@ private theorem isMaxCliqueIn_of_erase {U C : Finset V} {v : V} (hv : IsSimplici
   · have hK : C ⊆ (U.erase v).filter (G.Adj v) := fun x hx ↦ Finset.mem_filter.mpr
       ⟨hC.1.1 hx, hD.2 hvD (hCD hx) (Finset.mem_erase.mp (hC.1.1 hx)).1.symm⟩
     have hKcl : G.IsClique (((U.erase v).filter (G.Adj v) : Finset V) : Set V) :=
-      (isClique_insert_neighbors hv).subset (Finset.coe_subset.mpr (Finset.subset_insert _ _))
+      (is_clique_insert_neighbors hv).subset (Finset.coe_subset.mpr (Finset.subset_insert _ _))
     exact absurd (Finset.Subset.antisymm hK (hC.2 ⟨Finset.filter_subset _ _, hKcl⟩ hK)) hCK
   · exact hC.2 ⟨fun x hx ↦ Finset.mem_erase.mpr ⟨fun h ↦ hvD (h ▸ hx), hD.1 hx⟩, hD.2⟩ hCD
 
 /-- Elimination step when the open neighbourhood of `v` is the clique `c i₀`: replace it by the
 closed neighbourhood. -/
-private theorem isJunctionTreeOn_update {U : Finset V} {v : V} (hv : IsSimplicialIn G U v)
+private theorem is_junction_tree_on_update {U : Finset V} {v : V} (hv : IsSimplicialIn G U v)
     {m : ℕ} {c : Fin m → Finset V} {T : SimpleGraph (Fin m)}
     (h : IsJunctionTreeOn G (U.erase v) c T) {i₀ : Fin m}
     (hi₀ : c i₀ = (U.erase v).filter (G.Adj v)) :
@@ -834,14 +835,14 @@ private theorem isJunctionTreeOn_update {U : Finset V} {v : V} (hv : IsSimplicia
   · by_cases hi : i = i₀
     · subst hi
       rw [Function.update_self, hi₀]
-      exact isMaxCliqueIn_insert hv
+      exact is_max_clique_in_insert hv
     · rw [Function.update_of_ne hi]
-      exact isMaxCliqueIn_of_erase hv (hmax i) fun h ↦ hi (hinj (h.trans hi₀.symm))
+      exact is_max_clique_in_of_erase hv (hmax i) fun h ↦ hi (hinj (h.trans hi₀.symm))
   · by_cases hCN : C = insert v ((U.erase v).filter (G.Adj v))
     · exact ⟨i₀, by rw [Function.update_self, hi₀, hCN]⟩
-    · obtain ⟨i, hi⟩ := hcov C (isMaxCliqueIn_erase hv hC hCN)
+    · obtain ⟨i, hi⟩ := hcov C (is_max_clique_in_erase hv hC hCN)
       have hne : i ≠ i₀ := fun h ↦
-        ne_filter_of_isMaxCliqueIn hv hC (hi.symm.trans (h ▸ hi₀))
+        ne_filter_of_is_max_clique_in hv hC (hi.symm.trans (h ▸ hi₀))
       exact ⟨i, by rw [Function.update_of_ne hne, hi]⟩
   · rw [Finset.mem_inter, hmem, hmem] at hx
     rw [hmem]
@@ -856,7 +857,7 @@ private theorem isJunctionTreeOn_update {U : Finset V} {v : V} (hv : IsSimplicia
 
 /-- Elimination step when the open neighbourhood of `v` is strictly contained in the clique
 `c i₀`: attach the closed neighbourhood as a new leaf at `i₀`. -/
-private theorem isJunctionTreeOn_snoc {U : Finset V} {v : V} (hv : IsSimplicialIn G U v)
+private theorem is_junction_tree_on_snoc {U : Finset V} {v : V} (hv : IsSimplicialIn G U v)
     {m : ℕ} {c : Fin m → Finset V} {T : SimpleGraph (Fin m)}
     (h : IsJunctionTreeOn G (U.erase v) c T) {i₀ : Fin m}
     (hK : (U.erase v).filter (G.Adj v) ⊆ c i₀) (hne : c i₀ ≠ (U.erase v).filter (G.Adj v)) :
@@ -873,7 +874,7 @@ private theorem isJunctionTreeOn_snoc {U : Finset V} {v : V} (hv : IsSimplicialI
   have hold : ∀ (a b : Fin m) (p : (leafGraph T i₀).Walk a.castSucc b.castSucc), p.IsPath →
       ∀ k ∈ p.support, ∃ k' : Fin m, k = k'.castSucc ∧ c a ∩ c b ⊆ c k' := by
     intro a b p hp k hk
-    obtain ⟨q, hq⟩ := leafGraph_walk_transfer p (leafGraph_last_not_mem p hp) a b rfl rfl
+    obtain ⟨q, hq⟩ := leaf_graph_walk_transfer p (leaf_graph_last_not_mem p hp) a b rfl rfl
     have hqp : q.IsPath :=
       SimpleGraph.Walk.IsPath.mk' (List.Nodup.of_map _ (hq ▸ hp.support_nodup))
     rw [← hq, List.mem_map] at hk
@@ -896,11 +897,11 @@ private theorem isJunctionTreeOn_snoc {U : Finset V} {v : V} (hv : IsSimplicialI
       rcases hk with rfl | hk
       · rw [Fin.snoc_last]
         exact (Finset.mem_inter.mp hz).1
-      · obtain rfl := leafGraph_adj_last.mp h
+      · obtain rfl := leaf_graph_adj_last.mp h
         obtain ⟨k', rfl, hk'⟩ := hold i₀ b p' hp.of_cons k hk
         rw [Fin.snoc_castSucc]
         exact hk' hz'
-  refine ⟨fun i j hij ↦ ?_, fun i ↦ ?_, fun C hC ↦ ?_, isTree_leafGraph hT,
+  refine ⟨fun i j hij ↦ ?_, fun i ↦ ?_, fun C hC ↦ ?_, is_tree_leaf_graph hT,
     fun i j p hp k hk ↦ ?_⟩
   · rcases Fin.eq_castSucc_or_eq_last i with ⟨a, rfl⟩ | rfl <;>
       rcases Fin.eq_castSucc_or_eq_last j with ⟨b, rfl⟩ | rfl
@@ -913,12 +914,12 @@ private theorem isJunctionTreeOn_snoc {U : Finset V} {v : V} (hv : IsSimplicialI
     · rfl
   · rcases Fin.eq_castSucc_or_eq_last i with ⟨a, rfl⟩ | rfl
     · rw [Fin.snoc_castSucc]
-      exact isMaxCliqueIn_of_erase hv (hmax a) (hcK a)
+      exact is_max_clique_in_of_erase hv (hmax a) (hcK a)
     · rw [Fin.snoc_last]
-      exact isMaxCliqueIn_insert hv
+      exact is_max_clique_in_insert hv
   · by_cases hCN : C = insert v K
     · exact ⟨Fin.last m, by rw [Fin.snoc_last, hCN]⟩
-    · obtain ⟨i, hi⟩ := hcov C (isMaxCliqueIn_erase hv hC hCN)
+    · obtain ⟨i, hi⟩ := hcov C (is_max_clique_in_erase hv hC hCN)
       exact ⟨i.castSucc, by rw [Fin.snoc_castSucc, hi]⟩
   · rcases Fin.eq_castSucc_or_eq_last i with ⟨a, rfl⟩ | rfl <;>
       rcases Fin.eq_castSucc_or_eq_last j with ⟨b, rfl⟩ | rfl
@@ -935,27 +936,27 @@ private theorem isJunctionTreeOn_snoc {U : Finset V} {v : V} (hv : IsSimplicialI
 
 /-- Every finite vertex set on which `G` is chordal carries a junction tree of the induced
 subgraph, by induction on the number of vertices. -/
-private theorem exists_isJunctionTreeOn [Fintype V] (n : ℕ) :
+private theorem exists_is_junction_tree_on [Fintype V] (n : ℕ) :
     ∀ U : Finset V, U.card = n → IsChordalOn G U →
       ∃ (m : ℕ) (c : Fin m → Finset V) (T : SimpleGraph (Fin m)), IsJunctionTreeOn G U c T := by
   induction n with
   | zero =>
     intro U hU _
     rw [Finset.card_eq_zero.mp hU]
-    exact ⟨1, _, _, isJunctionTreeOn_empty⟩
+    exact ⟨1, _, _, is_junction_tree_on_empty⟩
   | succ n ih =>
     intro U hU hch
-    obtain ⟨v, hv⟩ := exists_isSimplicialIn hch (Finset.card_pos.mp (by omega))
+    obtain ⟨v, hv⟩ := exists_is_simplicial_in hch (Finset.card_pos.mp (by omega))
     obtain ⟨m, c, T, h⟩ := ih (U.erase v) (by rw [Finset.card_erase_of_mem hv.1, hU]; rfl)
       (hch.mono (Finset.erase_subset _ _))
     obtain ⟨C, hKC, hC⟩ := exists_subset_maximal
       (fun D : Finset V ↦ D ⊆ U.erase v ∧ G.IsClique (D : Set V))
       (D := (U.erase v).filter (G.Adj v)) ⟨Finset.filter_subset _ _,
-        (isClique_insert_neighbors hv).subset (Finset.coe_subset.mpr (Finset.subset_insert _ _))⟩
+        (is_clique_insert_neighbors hv).subset (Finset.coe_subset.mpr (Finset.subset_insert _ _))⟩
     obtain ⟨i₀, hi₀⟩ := h.2.2.1 C hC
     by_cases hne : c i₀ = (U.erase v).filter (G.Adj v)
-    · exact ⟨m, _, T, isJunctionTreeOn_update hv h hne⟩
-    · exact ⟨m + 1, _, _, isJunctionTreeOn_snoc hv h (hi₀ ▸ hKC) hne⟩
+    · exact ⟨m, _, T, is_junction_tree_on_update hv h hne⟩
+    · exact ⟨m + 1, _, _, is_junction_tree_on_snoc hv h (hi₀ ▸ hKC) hne⟩
 
 end ChordalToJunctionTree
 
@@ -963,7 +964,7 @@ end ChordalToJunctionTree
 least four has a chord admits an injective enumeration `c` of its maximal cliques and a tree `T`
 on the indices in which every clique on the path between two cliques contains their
 intersection. -/
-theorem exists_junctionTree_of_chordal {V : Type*} [Fintype V] [DecidableEq V] (G : SimpleGraph V)
+theorem exists_junction_tree_of_chordal {V : Type*} [Fintype V] [DecidableEq V] (G : SimpleGraph V)
     (h : ∀ (u : V) (p : G.Walk u u), p.IsCycle → 4 ≤ p.length →
       ∃ a ∈ p.support, ∃ b ∈ p.support, G.Adj a b ∧ s(a, b) ∉ p.edges) :
     ∃ (m : ℕ) (c : Fin m → Finset V) (T : SimpleGraph (Fin m)), Function.Injective c ∧
@@ -972,7 +973,7 @@ theorem exists_junctionTree_of_chordal {V : Type*} [Fintype V] [DecidableEq V] (
       T.IsTree ∧ ∀ i j (p : T.Walk i j), p.IsPath → ∀ k ∈ p.support, c i ∩ c j ⊆ c k := by
   classical
   obtain ⟨m, c, T, hinj, hmax, hcov, hT, hrip⟩ :=
-    exists_isJunctionTreeOn (G := G) _ Finset.univ rfl fun u p hp hl _ ↦ h u p hp hl
+    exists_is_junction_tree_on (G := G) _ Finset.univ rfl fun u p hp hl _ ↦ h u p hp hl
   have hiff : ∀ C : Finset V, IsMaxCliqueIn G Finset.univ C ↔
       Maximal (fun D : Finset V ↦ G.IsClique (D : Set V)) C := by
     intro C

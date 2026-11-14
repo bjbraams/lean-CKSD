@@ -11,6 +11,7 @@ public import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 public import Mathlib.Topology.MetricSpace.HausdorffDistance
 public import Mathlib.Analysis.SpecialFunctions.Exp
 
+
 /-!
 # Sampling nets and small balls on immersed manifolds
 
@@ -29,9 +30,9 @@ Hausdorff measure of a small image ball is comparable with the Lebesgue measure 
 ## Main results
 
 * `CKSD.exists_finset_net_of_le_measure_ball`: a packing bound for nets.
-* `CKSD.one_sub_le_measureReal_pi_hausdorffDist_le`: the probability that an i.i.d. sample is
+* `CKSD.one_sub_le_measure_real_pi_hausdorff_dist_le`: the probability that an i.i.d. sample is
   `ε`-close to the support in Hausdorff distance, under a small-ball lower bound.
-* `CKSD.exists_hausdorffMeasure_ball_inter_range_ge_of_isImmersion`: the uniform lower bound
+* `CKSD.exists_hausdorff_measure_ball_inter_range_ge_of_is_immersion`: the uniform lower bound
   `μH[d] (B(j x, r) ∩ j(N)) ≥ a r^d` on a compact immersed manifold.
 -/
 
@@ -106,7 +107,7 @@ carried by a measurable set `K` such that every ball `B(x, s)` with `x ∈ K` an
 has mass at least `β s^d`. Then an independent sample of size `n` from `μ` is `ε`-close to `K`
 in Hausdorff distance with probability at least `1 - (β (ε/4)^d)⁻¹ exp(-β (ε/2)^d n)`. The proof
 is a union bound over the balls of radius `ε/2` around a maximal `ε/2`-packing of `K`. -/
-theorem one_sub_le_measureReal_pi_hausdorffDist_le {X : Type*} [MetricSpace X]
+theorem one_sub_le_measure_real_pi_hausdorff_dist_le {X : Type*} [MetricSpace X]
     [MeasurableSpace X] [OpensMeasurableSpace X] (μ : Measure X) [IsProbabilityMeasure μ]
     {K : Set X} (hK : MeasurableSet K) (hμK : μ Kᶜ = 0) {ε β : ℝ} (hε : 0 < ε) (hβ : 0 < β)
     (d n : ℕ)
@@ -171,7 +172,7 @@ theorem one_sub_le_measureReal_pi_hausdorffDist_le {X : Type*} [MetricSpace X]
 Lipschitz near `u₀` and have a left inverse `h` on a neighbourhood `T` of `u₀` that is Lipschitz
 near `g u₀`. Then there are `ρ, a, r₀ > 0` such that `μH[d] (B(g u, r) ∩ g(T)) ≥ a r^d` for all
 `u` with `|u - u₀| < ρ` and all `r ∈ (0, r₀)`. -/
-private theorem exists_hausdorffMeasure_ball_inter_image_ge
+private theorem exists_hausdorff_measure_ball_inter_image_ge
     {d : ℕ} {X : Type*} [MetricSpace X] [MeasurableSpace X] [BorelSpace X]
     {g : EuclideanSpace ℝ (Fin d) → X} {h : X → EuclideanSpace ℝ (Fin d)}
     {T U : Set (EuclideanSpace ℝ (Fin d))} {W : Set X} {u₀ : EuclideanSpace ℝ (Fin d)}
@@ -237,7 +238,7 @@ private theorem exists_hausdorffMeasure_ball_inter_image_ge
 /-- Local small-ball bound on an immersed manifold: if `j : N → ℝ^D` is a smooth immersion of a
 manifold modeled on `ℝ^d`, every point of `N` has an open neighbourhood `V` and constants
 `a, r₀ > 0` with `μH[d] (B(j x', r) ∩ j(N)) ≥ a r^d` for `x' ∈ V` and `r ∈ (0, r₀)`. -/
-private theorem exists_isOpen_hausdorffMeasure_ball_inter_range_ge {d D : ℕ} {N : Type*}
+private theorem exists_is_open_hausdorff_measure_ball_inter_range_ge {d D : ℕ} {N : Type*}
     [TopologicalSpace N]
     [ChartedSpace (EuclideanSpace ℝ (Fin d)) N]
     [IsManifold (𝓡 d) ∞ N] {j : N → EuclideanSpace ℝ (Fin D)}
@@ -301,7 +302,7 @@ private theorem exists_isOpen_hausdorffMeasure_ball_inter_range_ge {d D : ℕ} {
     simp only [Function.comp_apply] at h
     simp [π, h]
   have hgx : (j ∘ φ.symm) (φ x) = j x := by simp [φ.left_inv hxφ]
-  obtain ⟨ρ, hρ, a, ha, r₀, hr₀, hmain⟩ := exists_hausdorffMeasure_ball_inter_image_ge
+  obtain ⟨ρ, hρ, a, ha, r₀, hr₀, hmain⟩ := exists_hausdorff_measure_ball_inter_image_ge
     (φ.open_target.mem_nhds hxT) (inter_mem hU (φ.open_target.mem_nhds hxT))
     (by rw [hgx]; exact hW) hgL hhW hhg
   refine ⟨φ.source ∩ φ ⁻¹' ball (φ x) ρ, φ.continuousOn.isOpen_inter_preimage φ.open_source
@@ -317,7 +318,7 @@ private theorem exists_isOpen_hausdorffMeasure_ball_inter_range_ge {d D : ℕ} {
 /-- Uniform small-ball bound on a compact immersed manifold: if `N` is a compact smooth manifold
 modeled on `ℝ^d` and `j : N → ℝ^D` a smooth immersion, there are `a, r₀ > 0` such that
 `μH[d] (B(j x, r) ∩ j(N)) ≥ a r^d` for every `x ∈ N` and every `r ∈ (0, r₀)`. -/
-theorem exists_hausdorffMeasure_ball_inter_range_ge_of_isImmersion {d D : ℕ} {N : Type*}
+theorem exists_hausdorff_measure_ball_inter_range_ge_of_is_immersion {d D : ℕ} {N : Type*}
     [TopologicalSpace N] [ChartedSpace (EuclideanSpace ℝ (Fin d)) N] [IsManifold (𝓡 d) ∞ N]
     [CompactSpace N] {j : N → EuclideanSpace ℝ (Fin D)}
     (hj : Manifold.IsImmersion (𝓡 d) 𝓘(ℝ, EuclideanSpace ℝ (Fin D)) ∞ j) :
@@ -325,7 +326,7 @@ theorem exists_hausdorffMeasure_ball_inter_range_ge_of_isImmersion {d D : ℕ} {
       ENNReal.ofReal (a * r ^ d) ≤ μH[d] (ball (j x) r ∩ range j) := by
   rcases isEmpty_or_nonempty N with hN | hN
   · exact ⟨1, one_pos, 1, one_pos, fun x ↦ isEmptyElim x⟩
-  choose V hVo hxV a ha r₀ hr₀ hV using exists_isOpen_hausdorffMeasure_ball_inter_range_ge hj
+  choose V hVo hxV a ha r₀ hr₀ hV using exists_is_open_hausdorff_measure_ball_inter_range_ge hj
   obtain ⟨t, ht⟩ := CompactSpace.elim_nhds_subcover V fun x ↦ (hVo x).mem_nhds (hxV x)
   have htne : t.Nonempty := by
     obtain ⟨x⟩ := hN

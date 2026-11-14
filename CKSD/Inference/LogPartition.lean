@@ -7,6 +7,7 @@ public import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 public import Mathlib.Analysis.InnerProductSpace.Calculus
 public import Mathlib.Probability.Moments.Covariance
 
+
 /-!
 # Analyticity and moments of the log partition function
 
@@ -17,14 +18,14 @@ the covariance of the law `exponentialFamilyMeasure ν id η`.
 
 ## Main results
 
-* `CKSD.analyticOnNhd_logPartition`: `A` is analytic on the interior of the natural parameter
+* `CKSD.analytic_on_nhd_log_partition`: `A` is analytic on the interior of the natural parameter
   space.
-* `CKSD.hasFDerivAt_logPartition`: the derivative of `A` at an interior point `η` is
+* `CKSD.has_f_deriv_at_log_partition`: the derivative of `A` at an interior point `η` is
   `⟪∫ x dP_η, ·⟫`.
-* `CKSD.fderiv_fderiv_logPartition_apply`: the second derivative of `A` at `η` is the
+* `CKSD.fderiv_fderiv_log_partition_apply`: the second derivative of `A` at `η` is the
   covariance form of `P_η`.
-* `CKSD.isProbabilityMeasure_exponentialFamilyMeasure`,
-  `CKSD.integrable_id_exponentialFamilyMeasure`, `CKSD.memLp_inner_exponentialFamilyMeasure`: at
+* `CKSD.is_probability_measure_exponential_family_measure`,
+  `CKSD.integrable_id_exponential_family_measure`, `CKSD.mem_lp_inner_exponential_family_measure`: at
   interior points `P_η` is a probability measure with a first moment under which linear
   functionals are square integrable.
 
@@ -129,19 +130,19 @@ private def innerProdML (n : ℕ) (x : E) : ContinuousMultilinearMap ℝ (fun _ 
   (ContinuousMultilinearMap.mkPiAlgebraFin ℝ n ℝ).compContinuousLinearMap fun _ ↦ innerSL ℝ x
 
 /-- Evaluation: `innerProdML n x (h₁, …, hₙ) = ∏ ⟪x, hᵢ⟫`. -/
-private theorem innerProdML_apply (n : ℕ) (x : E) (m : Fin n → E) :
+private theorem inner_prod_ml_apply (n : ℕ) (x : E) (m : Fin n → E) :
     innerProdML n x m = ∏ i, inner ℝ x (m i) := by
   simp [innerProdML, ContinuousMultilinearMap.mkPiAlgebraFin_apply, List.prod_ofFn]
 
 /-- The operator norm bound `‖innerProdML n x‖ ≤ ‖x‖ⁿ`. -/
-private theorem norm_innerProdML_le (n : ℕ) (x : E) : ‖innerProdML n x‖ ≤ ‖x‖ ^ n := by
+private theorem norm_inner_prod_ml_le (n : ℕ) (x : E) : ‖innerProdML n x‖ ≤ ‖x‖ ^ n := by
   refine (ContinuousMultilinearMap.norm_compContinuousLinearMap_le _ _).trans ?_
   simp only [innerSL_apply_norm, Finset.prod_const, Finset.card_univ, Fintype.card_fin]
   exact mul_le_of_le_one_left (by positivity)
     (ContinuousMultilinearMap.norm_mkPiAlgebraFin_le.trans (by simp))
 
 /-- `x ↦ innerProdML n x` is continuous. -/
-private theorem continuous_innerProdML (n : ℕ) : Continuous (innerProdML (E := E) n) :=
+private theorem continuous_inner_prod_ml (n : ℕ) : Continuous (innerProdML (E := E) n) :=
   ((ContinuousMultilinearMap.compContinuousLinearMapContinuousMultilinear ℝ
     (fun _ : Fin n ↦ E) (fun _ ↦ ℝ) ℝ).coe_continuous.comp
       (continuous_pi fun _ ↦ (innerSL ℝ (E := E)).continuous)).clm_apply continuous_const
@@ -191,30 +192,30 @@ private theorem integrable_abs_mul_exp_mul_pow (hg : AEStronglyMeasurable g ν) 
     exact abs_mul_exp_mul_pow_le hr x n
 
 /-- The terms of `expMomentSeries` are Bochner integrals of integrable functions. -/
-private theorem integrable_expMoment (hg : AEStronglyMeasurable g ν) (hr : 0 < r)
+private theorem integrable_exp_moment (hg : AEStronglyMeasurable g ν) (hr : 0 < r)
     (hint : Integrable (fun x ↦ |g x| * Real.exp (inner ℝ η x + r * ‖x‖)) ν) (n : ℕ) :
     Integrable (fun x ↦ (g x * Real.exp (inner ℝ η x) / n !) • innerProdML n x) ν := by
   refine (integrable_abs_mul_exp_mul_pow hg hr hint n).mono' ?_ (ae_of_all _ fun x ↦ ?_)
   · exact ((continuous_id.div_const _).comp_aestronglyMeasurable
       (hg.mul (by fun_prop : Continuous fun x : E ↦ Real.exp (inner ℝ η x)
-      ).aestronglyMeasurable)).smul (continuous_innerProdML n).aestronglyMeasurable
+      ).aestronglyMeasurable)).smul (continuous_inner_prod_ml n).aestronglyMeasurable
   · rw [norm_smul, Real.norm_eq_abs, abs_div, abs_mul, Real.abs_exp,
       abs_of_pos (by positivity : (0 : ℝ) < n !), div_mul_eq_mul_div, mul_div_assoc]
     gcongr
-    exact norm_innerProdML_le n x
+    exact norm_inner_prod_ml_le n x
 
 /-- Evaluation of the terms of `expMomentSeries`. -/
-private theorem expMomentSeries_apply (hg : AEStronglyMeasurable g ν) (hr : 0 < r)
+private theorem exp_moment_series_apply (hg : AEStronglyMeasurable g ν) (hr : 0 < r)
     (hint : Integrable (fun x ↦ |g x| * Real.exp (inner ℝ η x + r * ‖x‖)) ν) (n : ℕ)
     (m : Fin n → E) :
     expMomentSeries ν g η n m =
       ∫ x, g x * Real.exp (inner ℝ η x) / n ! * ∏ i, inner ℝ x (m i) ∂ν := by
-  rw [expMomentSeries, ContinuousMultilinearMap.integral_apply (integrable_expMoment hg hr hint n)]
-  simp only [smul_apply, innerProdML_apply, smul_eq_mul]
+  rw [expMomentSeries, ContinuousMultilinearMap.integral_apply (integrable_exp_moment hg hr hint n)]
+  simp only [smul_apply, inner_prod_ml_apply, smul_eq_mul]
 
 omit [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] in
 /-- The exponential series in the form used for the moment series. -/
-private theorem hasSum_abs_mul_exp_mul_pow (x : E) (s : ℝ) :
+private theorem has_sum_abs_mul_exp_mul_pow (x : E) (s : ℝ) :
     HasSum (fun n : ℕ ↦ |g x| * Real.exp (inner ℝ η x) * ((s * ‖x‖) ^ n / n !))
       (|g x| * Real.exp (inner ℝ η x + s * ‖x‖)) := by
   rw [Real.exp_add, ← mul_assoc, Real.exp_eq_exp_ℝ]
@@ -223,7 +224,7 @@ private theorem hasSum_abs_mul_exp_mul_pow (x : E) (s : ℝ) :
 /-- **Power series of exponential moments.** If `|g| e^{⟪η, x⟫ + r‖x‖}` is `ν`-integrable, then
 `ζ ↦ ∫ g(x) e^{⟪ζ, x⟫} dν` has the power series `expMomentSeries ν g η` on the ball of radius `r`
 about `η`. -/
-private theorem hasFPowerSeriesOnBall_integral_mul_exp_inner (hg : AEStronglyMeasurable g ν)
+private theorem has_f_power_series_on_ball_integral_mul_exp_inner (hg : AEStronglyMeasurable g ν)
     (hr : 0 < r) (hint : Integrable (fun x ↦ |g x| * Real.exp (inner ℝ η x + r * ‖x‖)) ν) :
     HasFPowerSeriesOnBall (fun ζ ↦ ∫ x, g x * Real.exp (inner ℝ ζ x) ∂ν)
       (expMomentSeries ν g η) η r := by
@@ -236,21 +237,21 @@ private theorem hasFPowerSeriesOnBall_integral_mul_exp_inner (hg : AEStronglyMea
       ).aestronglyMeasurable
   have hint' : Integrable (fun x ↦ ∑' n : ℕ,
       |g x| * Real.exp (inner ℝ η x) * ((r * ‖x‖) ^ n / n !)) ν :=
-    hint.congr (ae_of_all _ fun x ↦ (hasSum_abs_mul_exp_mul_pow x r).tsum_eq.symm)
+    hint.congr (ae_of_all _ fun x ↦ (has_sum_abs_mul_exp_mul_pow x r).tsum_eq.symm)
   refine ⟨?_, by exact_mod_cast hr, fun {y} hy ↦ ?_⟩
   · refine FormalMultilinearSeries.le_radius_of_summable _ ?_
     have hB := hasSum_integral_of_dominated_convergence
       (fun n x ↦ |g x| * Real.exp (inner ℝ η x) * ((r * ‖x‖) ^ n / n !)) hmeas
       (fun n ↦ ae_of_all _ fun x ↦ le_of_eq (Real.norm_of_nonneg (by positivity)))
-      (ae_of_all _ fun x ↦ (hasSum_abs_mul_exp_mul_pow x r).summable) hint'
-      (ae_of_all _ fun x ↦ hasSum_abs_mul_exp_mul_pow (g := g) (η := η) x r)
+      (ae_of_all _ fun x ↦ (has_sum_abs_mul_exp_mul_pow x r).summable) hint'
+      (ae_of_all _ fun x ↦ has_sum_abs_mul_exp_mul_pow (g := g) (η := η) x r)
     refine Summable.of_nonneg_of_le (fun n ↦ by positivity) (fun n ↦ ?_) hB.summable
     have hn := norm_integral_le_of_norm_le (integrable_abs_mul_exp_mul_pow hg hr hint n)
       (ae_of_all _ fun x ↦ show ‖(g x * Real.exp (inner ℝ η x) / n !) • innerProdML n x‖ ≤ _ by
         rw [norm_smul, Real.norm_eq_abs, abs_div, abs_mul, Real.abs_exp,
           abs_of_pos (by positivity : (0 : ℝ) < n !), div_mul_eq_mul_div, mul_div_assoc]
         gcongr
-        exact norm_innerProdML_le n x)
+        exact norm_inner_prod_ml_le n x)
     calc ‖expMomentSeries ν g η n‖ * (r : ℝ) ^ n ≤
           (∫ x, |g x| * Real.exp (inner ℝ η x) * (‖x‖ ^ n / n !) ∂ν) * (r : ℝ) ^ n := by
           gcongr; exact hn
@@ -259,12 +260,12 @@ private theorem hasFPowerSeriesOnBall_integral_mul_exp_inner (hg : AEStronglyMea
           congr 1; funext x; rw [mul_pow]; ring
   · have hy' : ‖y‖ < r := by
       simpa [Metric.mem_eball, edist_zero_right, enorm_eq_nnnorm] using hy
-    simp only [expMomentSeries_apply hg hr hint, Finset.prod_const, Finset.card_univ,
+    simp only [exp_moment_series_apply hg hr hint, Finset.prod_const, Finset.card_univ,
       Fintype.card_fin]
     refine hasSum_integral_of_dominated_convergence
       (fun n x ↦ |g x| * Real.exp (inner ℝ η x) * ((r * ‖x‖) ^ n / n !))
       (fun n ↦ ?_) (fun n ↦ ae_of_all _ fun x ↦ ?_)
-      (ae_of_all _ fun x ↦ (hasSum_abs_mul_exp_mul_pow x r).summable) hint'
+      (ae_of_all _ fun x ↦ (has_sum_abs_mul_exp_mul_pow x r).summable) hint'
       (ae_of_all _ fun x ↦ ?_)
     · exact ((continuous_id.div_const _).comp_aestronglyMeasurable
         (hg.mul (by fun_prop : Continuous fun x : E ↦ Real.exp (inner ℝ η x)
@@ -285,13 +286,13 @@ private theorem hasFPowerSeriesOnBall_integral_mul_exp_inner (hg : AEStronglyMea
       · rw [inner_add_left, Real.exp_add, real_inner_comm y x, mul_assoc]
 
 /-- The derivative of `ζ ↦ ∫ g(x) e^{⟪ζ, x⟫} dν` at `η` is `h ↦ ∫ g(x) e^{⟪η, x⟫} ⟪h, x⟫ dν`. -/
-private theorem exists_hasFDerivAt_integral_mul_exp_inner (hg : AEStronglyMeasurable g ν)
+private theorem exists_has_f_deriv_at_integral_mul_exp_inner (hg : AEStronglyMeasurable g ν)
     (hr : 0 < r) (hint : Integrable (fun x ↦ |g x| * Real.exp (inner ℝ η x + r * ‖x‖)) ν) :
     ∃ Φ : E →L[ℝ] ℝ, HasFDerivAt (fun ζ ↦ ∫ x, g x * Real.exp (inner ℝ ζ x) ∂ν) Φ η ∧
       ∀ h, Φ h = ∫ x, g x * Real.exp (inner ℝ η x) * inner ℝ h x ∂ν := by
-  refine ⟨_, (hasFPowerSeriesOnBall_integral_mul_exp_inner hg hr hint).hasFPowerSeriesAt
+  refine ⟨_, (has_f_power_series_on_ball_integral_mul_exp_inner hg hr hint).hasFPowerSeriesAt
     |>.hasFDerivAt, fun h ↦ ?_⟩
-  rw [continuousMultilinearCurryFin1_apply, expMomentSeries_apply hg hr hint]
+  rw [continuousMultilinearCurryFin1_apply, exp_moment_series_apply hg hr hint]
   congr 1; funext x
   simp [real_inner_comm]
 
@@ -333,7 +334,7 @@ end PowerSeries
 end LogPartition
 
 /-- Analyticity, gradient and Hessian of the log partition function (combined form). -/
-private theorem logPartition_analytic_and_moments
+private theorem log_partition_analytic_and_moments
     {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
     [MeasurableSpace E] [BorelSpace E] (ν : Measure E) (hne : ν ≠ 0) :
     AnalyticOnNhd ℝ (logPartition ν id) (interior (naturalParameterSpace ν id)) ∧
@@ -362,7 +363,7 @@ private theorem logPartition_analytic_and_moments
       ∀ h, Φ h = ∫ x, Real.exp (inner ℝ ζ x) * inner ℝ h x ∂ν := by
     intro ζ hζ
     obtain ⟨r, hr, hint⟩ := hloc ζ hζ
-    obtain ⟨Φ, hΦ, hΦh⟩ := exists_hasFDerivAt_integral_mul_exp_inner
+    obtain ⟨Φ, hΦ, hΦh⟩ := exists_has_f_deriv_at_integral_mul_exp_inner
       (g := fun _ ↦ (1 : ℝ)) aestronglyMeasurable_const hr (by simpa using hint)
     exact ⟨Φ, hZF ▸ hΦ, fun h ↦ by simp [hΦh h]⟩
   have hAd : ∀ ζ ∈ interior N, ∃ Φ : E →L[ℝ] ℝ, HasFDerivAt (logPartition ν id)
@@ -374,7 +375,7 @@ private theorem logPartition_analytic_and_moments
   have hanalytic : AnalyticOnNhd ℝ (logPartition ν id) (interior N) := by
     intro ζ hζ
     obtain ⟨r, hr, hint⟩ := hloc ζ hζ
-    have hZa : AnalyticAt ℝ Z ζ := (hZF ▸ hasFPowerSeriesOnBall_integral_mul_exp_inner
+    have hZa : AnalyticAt ℝ Z ζ := (hZF ▸ has_f_power_series_on_ball_integral_mul_exp_inner
       (g := fun _ ↦ (1 : ℝ)) aestronglyMeasurable_const hr (by simpa using hint)).analyticAt
     rw [hA]
     exact (analyticAt_log (hZpos ζ hζ)).comp hZa
@@ -391,11 +392,11 @@ private theorem logPartition_analytic_and_moments
   have hd0 : ∀ x, 0 ≤ dens x := fun x ↦ (Real.exp_pos _).le
   have hintP : ∀ F : E → ℝ, ∫ x, F x ∂P = (Z η)⁻¹ * ∫ x, Real.exp (inner ℝ η x) * F x ∂ν :=
     fun F ↦ by
-    rw [hP, integral_withDensity_ofReal ν hdm hd0, ← integral_const_mul]
+    rw [hP, integral_with_density_of_real ν hdm hd0, ← integral_const_mul]
     congr 1; funext x; rw [hdens, mul_assoc]
   have hiP : ∀ F : E → ℝ, Integrable (fun x ↦ Real.exp (inner ℝ η x) * F x) ν →
       Integrable F P := fun F hF ↦ by
-    rw [hP, integrable_withDensity_ofReal_iff ν hdm hd0]
+    rw [hP, integrable_with_density_of_real_iff ν hdm hd0]
     exact (hF.const_mul (Z η)⁻¹).congr (ae_of_all _ fun x ↦ by simp only [hdens]; ring)
   have hn1 := integrable_pow_norm_mul_exp hr hint 1
   have hn2 := integrable_pow_norm_mul_exp hr hint 2
@@ -436,7 +437,7 @@ private theorem logPartition_analytic_and_moments
       _ = _ := by ring
   refine ⟨hmean ▸ hΦ, hprob, hidP, hL2, fun u v ↦ ?_⟩
   -- The second derivative, from the quotient `G_v / Z` with `G_v ζ = ∫ ⟪v, x⟫ e^{⟪ζ, x⟫} dν`.
-  obtain ⟨Ψ, hΨ, hΨh⟩ := exists_hasFDerivAt_integral_mul_exp_inner (g := fun x ↦ inner ℝ v x)
+  obtain ⟨Ψ, hΨ, hΨh⟩ := exists_has_f_deriv_at_integral_mul_exp_inner (g := fun x ↦ inner ℝ v x)
     (by fun_prop : Continuous fun x : E ↦ inner ℝ v x).aestronglyMeasurable
     (r := r / 2) (by positivity) (integrable_abs_inner_mul_exp hr hint v)
   obtain ⟨ΦZ, hΦZ, hΦZh⟩ := hZd η hη
@@ -475,42 +476,42 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDim
 /-- The log partition function `η ↦ log ∫ e^{⟪η, x⟫} dν` of a nonzero measure on a
 finite-dimensional real inner product space is real analytic on the interior of the natural
 parameter space. -/
-theorem analyticOnNhd_logPartition (ν : Measure E) (hne : ν ≠ 0) :
+theorem analytic_on_nhd_log_partition (ν : Measure E) (hne : ν ≠ 0) :
     AnalyticOnNhd ℝ (logPartition ν id) (interior (naturalParameterSpace ν id)) :=
-  (logPartition_analytic_and_moments ν hne).1
+  (log_partition_analytic_and_moments ν hne).1
 
 /-- At an interior point `η` of the natural parameter space, the derivative of the log partition
 function is `⟪m, ·⟫`, where `m = ∫ x dP_η` is the mean of the law `P_η`. -/
-theorem hasFDerivAt_logPartition (ν : Measure E) (hne : ν ≠ 0) {η : E}
+theorem has_f_deriv_at_log_partition (ν : Measure E) (hne : ν ≠ 0) {η : E}
     (hη : η ∈ interior (naturalParameterSpace ν id)) :
     HasFDerivAt (logPartition ν id) (innerSL ℝ (∫ x, x ∂exponentialFamilyMeasure ν id η)) η :=
-  ((logPartition_analytic_and_moments ν hne).2 η hη).1
+  ((log_partition_analytic_and_moments ν hne).2 η hη).1
 
 /-- At an interior point `η` of the natural parameter space, the second derivative of the log
 partition function is the covariance form `(u, v) ↦ Cov_{P_η}(⟪u, X⟫, ⟪v, X⟫)`. -/
-theorem fderiv_fderiv_logPartition_apply (ν : Measure E) (hne : ν ≠ 0) {η : E}
+theorem fderiv_fderiv_log_partition_apply (ν : Measure E) (hne : ν ≠ 0) {η : E}
     (hη : η ∈ interior (naturalParameterSpace ν id)) (u v : E) :
     fderiv ℝ (fderiv ℝ (logPartition ν id)) η u v =
       cov[fun x ↦ inner ℝ u x, fun x ↦ inner ℝ v x; exponentialFamilyMeasure ν id η] :=
-  ((logPartition_analytic_and_moments ν hne).2 η hη).2.2.2.2 u v
+  ((log_partition_analytic_and_moments ν hne).2 η hη).2.2.2.2 u v
 
 /-- At an interior point `η` of the natural parameter space, `P_η` is a probability measure. -/
-theorem isProbabilityMeasure_exponentialFamilyMeasure (ν : Measure E) (hne : ν ≠ 0) {η : E}
+theorem is_probability_measure_exponential_family_measure (ν : Measure E) (hne : ν ≠ 0) {η : E}
     (hη : η ∈ interior (naturalParameterSpace ν id)) :
     IsProbabilityMeasure (exponentialFamilyMeasure ν id η) :=
-  ((logPartition_analytic_and_moments ν hne).2 η hη).2.1
+  ((log_partition_analytic_and_moments ν hne).2 η hη).2.1
 
 /-- At an interior point `η` of the natural parameter space, `P_η` has a first moment. -/
-theorem integrable_id_exponentialFamilyMeasure (ν : Measure E) (hne : ν ≠ 0) {η : E}
+theorem integrable_id_exponential_family_measure (ν : Measure E) (hne : ν ≠ 0) {η : E}
     (hη : η ∈ interior (naturalParameterSpace ν id)) :
     Integrable (fun x ↦ x) (exponentialFamilyMeasure ν id η) :=
-  ((logPartition_analytic_and_moments ν hne).2 η hη).2.2.1
+  ((log_partition_analytic_and_moments ν hne).2 η hη).2.2.1
 
 /-- At an interior point `η` of the natural parameter space, every linear functional `⟪w, ·⟫` is
 square integrable under `P_η`. -/
-theorem memLp_inner_exponentialFamilyMeasure (ν : Measure E) (hne : ν ≠ 0) {η : E}
+theorem mem_lp_inner_exponential_family_measure (ν : Measure E) (hne : ν ≠ 0) {η : E}
     (hη : η ∈ interior (naturalParameterSpace ν id)) (w : E) :
     MemLp (fun x ↦ inner ℝ w x) 2 (exponentialFamilyMeasure ν id η) :=
-  ((logPartition_analytic_and_moments ν hne).2 η hη).2.2.2.1 w
+  ((log_partition_analytic_and_moments ν hne).2 η hη).2.2.2.1 w
 
 end CKSD

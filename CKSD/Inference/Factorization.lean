@@ -6,17 +6,18 @@ public import Mathlib.MeasureTheory.Measure.WithDensityFinite
 public import Mathlib.Probability.Kernel.Composition.WithDensity
 public import Mathlib.Probability.Kernel.CondDistrib
 
+
 /-!
 # Inference: the factorization theorem
 
 Tools for GAPS 101.1 and 101.2 for a family of laws with densities `f θ` with respect to a
 σ-finite measure `μ`.
 
-* `exists_absolutelyContinuous_countableMixture`: the Halmos–Savage lemma in density form; the
+* `exists_absolutely_continuous_countable_mixture`: the Halmos–Savage lemma in density form; the
   family is dominated by a countable mixture `∑ 2^{-(n+1)} P (θs n)` of its members.
-* `exists_factorization_of_isSufficientStatistic`: a statistic with a common disintegrating
+* `exists_factorization_of_is_sufficient_statistic`: a statistic with a common disintegrating
   kernel gives a factorization `f θ = g θ ∘ T * h` almost everywhere.
-* `isSufficientStatistic_of_factorization`: conversely, a factorization gives a common kernel,
+* `is_sufficient_statistic_of_factorization`: conversely, a factorization gives a common kernel,
   namely the conditional distribution of the sample given `T` under the dominating mixture
   (the sample space is standard Borel).
 
@@ -39,11 +40,11 @@ variable {Θ X S : Type*} [MeasurableSpace X] [MeasurableSpace S]
 def mixtureWeight (n : ℕ) : ℝ≥0∞ := (2 ^ (n + 1))⁻¹
 
 /-- The mixture weights are nonzero. -/
-theorem mixtureWeight_ne_zero (n : ℕ) : mixtureWeight n ≠ 0 := by
+theorem mixture_weight_ne_zero (n : ℕ) : mixtureWeight n ≠ 0 := by
   simp [mixtureWeight]
 
 /-- The mixture weights sum to one. -/
-theorem tsum_mixtureWeight : ∑' n, mixtureWeight n = 1 := by
+theorem tsum_mixture_weight : ∑' n, mixtureWeight n = 1 := by
   unfold mixtureWeight
   have h : ∀ n : ℕ, ((2 : ℝ≥0∞) ^ (n + 1))⁻¹ = 2⁻¹ ^ n * 2⁻¹ := fun n ↦ by
     rw [ENNReal.inv_pow, pow_succ]
@@ -56,30 +57,30 @@ def countableMixture (P : Θ → Measure X) (θs : ℕ → Θ) : Measure X :=
   Measure.sum fun n ↦ mixtureWeight n • P (θs n)
 
 /-- A countable mixture of probability measures has total mass one. -/
-theorem countableMixture_univ (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
+theorem countable_mixture_univ (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
     (θs : ℕ → Θ) : countableMixture P θs univ = 1 := by
-  simp [countableMixture, Measure.sum_apply _ MeasurableSet.univ, tsum_mixtureWeight]
+  simp [countableMixture, Measure.sum_apply _ MeasurableSet.univ, tsum_mixture_weight]
 
 /-- A countable mixture of probability measures is a probability measure. -/
 instance (P : Θ → Measure X) [hP : ∀ θ, IsProbabilityMeasure (P θ)] (θs : ℕ → Θ) :
     IsProbabilityMeasure (countableMixture P θs) :=
-  ⟨countableMixture_univ P hP θs⟩
+  ⟨countable_mixture_univ P hP θs⟩
 
 /-- A measurable set is null for a countable mixture iff it is null for every component. -/
-theorem countableMixture_apply_eq_zero (P : Θ → Measure X) (θs : ℕ → Θ) {A : Set X}
+theorem countable_mixture_apply_eq_zero (P : Θ → Measure X) (θs : ℕ → Θ) {A : Set X}
     (hA : MeasurableSet A) :
     countableMixture P θs A = 0 ↔ ∀ n, P (θs n) A = 0 := by
-  simp [countableMixture, Measure.sum_apply _ hA, mixtureWeight_ne_zero]
+  simp [countableMixture, Measure.sum_apply _ hA, mixture_weight_ne_zero]
 
 /-- Each component of a countable mixture is absolutely continuous with respect to it. -/
-theorem absolutelyContinuous_countableMixture (P : Θ → Measure X) (θs : ℕ → Θ) (n : ℕ) :
+theorem absolutely_continuous_countable_mixture (P : Θ → Measure X) (θs : ℕ → Θ) (n : ℕ) :
     P (θs n) ≪ countableMixture P θs := by
   refine Measure.AbsolutelyContinuous.mk fun A hA h ↦ ?_
-  exact (countableMixture_apply_eq_zero P θs hA).1 h n
+  exact (countable_mixture_apply_eq_zero P θs hA).1 h n
 
 /-- Halmos–Savage lemma, density form: a family of laws with densities with respect to a
 σ-finite measure is dominated by one of its countable mixtures. -/
-theorem exists_absolutelyContinuous_countableMixture [Nonempty Θ] (P : Θ → Measure X)
+theorem exists_absolutely_continuous_countable_mixture [Nonempty Θ] (P : Θ → Measure X)
     (μ : Measure X) [SigmaFinite μ] (f : Θ → X → ℝ) (hf : ∀ θ, HasDensity (P θ) μ (f θ)) :
     ∃ θs : ℕ → Θ, ∀ θ, P θ ≪ countableMixture P θs := by
   classical
@@ -126,7 +127,7 @@ theorem exists_absolutelyContinuous_countableMixture [Nonempty Θ] (P : Θ → M
     rw [measureReal_eq_zero_iff] at h0
     exact toFinite_apply_eq_zero_iff.1 h0
   refine ⟨θstar, fun θ ↦ Measure.AbsolutelyContinuous.mk fun B hB hB0 ↦ ?_⟩
-  have hall := (countableMixture_apply_eq_zero P θstar hB).1 hB0
+  have hall := (countable_mixture_apply_eq_zero P θstar hB).1 hB0
   have hn : ∀ n, μ (C (θstar n) ∩ B) = 0 := fun n ↦ by
     have := hall n
     rwa [(hf (θstar n)).2.2, withDensity_apply_eq_zero
@@ -141,7 +142,7 @@ theorem exists_absolutelyContinuous_countableMixture [Nonempty Θ] (P : Θ → M
   · exact Or.inr ⟨hx.1, hxU⟩
 
 /-- A countable mixture of laws sharing a disintegrating kernel is disintegrated by that kernel. -/
-theorem countableMixture_map_prodMk_eq_compProd (P : Θ → Measure X)
+theorem countable_mixture_map_prod_mk_eq_comp_prod (P : Θ → Measure X)
     [∀ θ, IsProbabilityMeasure (P θ)] (θs : ℕ → Θ) {T : X → S} (hT : Measurable T)
     (K : Kernel S X) [IsMarkovKernel K]
     (hK : ∀ n, (P (θs n)).map (fun x ↦ (T x, x)) = (P (θs n)).map T ⊗ₘ K) :
@@ -157,7 +158,7 @@ theorem countableMixture_map_prodMk_eq_compProd (P : Θ → Measure X)
   all_goals first | exact hTX.aemeasurable | exact hT.aemeasurable
 
 /-- The density of a countable mixture with respect to a dominating measure. -/
-theorem countableMixture_eq_withDensity (P : Θ → Measure X) (μ : Measure X)
+theorem countable_mixture_eq_with_density (P : Θ → Measure X) (μ : Measure X)
     (f : Θ → X → ℝ) (hf : ∀ θ, HasDensity (P θ) μ (f θ)) (θs : ℕ → Θ) :
     countableMixture P θs =
       μ.withDensity (fun x ↦ ∑' n, mixtureWeight n * ENNReal.ofReal (f (θs n) x)) := by
@@ -173,20 +174,20 @@ theorem countableMixture_eq_withDensity (P : Θ → Measure X) (μ : Measure X)
 
 /-- If `P = L.withDensity (r ∘ T)` and the joint law of `(T, X)` under `L` is disintegrated by
 `K`, then the joint law under `P` is also disintegrated by `K`. -/
-theorem map_prodMk_eq_compProd_of_withDensity_comp (L : Measure X) [IsFiniteMeasure L]
+theorem map_prod_mk_eq_comp_prod_of_with_density_comp (L : Measure X) [IsFiniteMeasure L]
     {T : X → S} (hT : Measurable T) (K : Kernel S X) [IsMarkovKernel K]
     (hL : L.map (fun x ↦ (T x, x)) = L.map T ⊗ₘ K) {r : S → ℝ≥0∞} (hr : Measurable r) :
     (L.withDensity (r ∘ T)).map (fun x ↦ (T x, x)) = (L.withDensity (r ∘ T)).map T ⊗ₘ K := by
   have hTX : Measurable (fun x ↦ (T x, x)) := hT.prodMk measurable_id
   rw [show r ∘ T = (fun p : S × X ↦ r p.1) ∘ (fun x ↦ (T x, x)) from rfl,
-    map_withDensity_comp (k := fun p : S × X ↦ r p.1) L hTX (hr.comp measurable_fst), hL,
+    map_with_density_comp (k := fun p : S × X ↦ r p.1) L hTX (hr.comp measurable_fst), hL,
     ← Measure.withDensity_compProd hr]
   congr 1
-  exact (map_withDensity_comp L hT hr).symm
+  exact (map_with_density_comp L hT hr).symm
 
 /-- If two finite laws `P ≪ L` have joint laws of `(T, X)` disintegrated by the same kernel, then
 `P` has a density with respect to `L` that is a function of `T`. -/
-theorem eq_withDensity_rnDeriv_comp_of_compProd (P L : Measure X) [IsFiniteMeasure P]
+theorem eq_with_density_rn_deriv_comp_of_comp_prod (P L : Measure X) [IsFiniteMeasure P]
     [IsFiniteMeasure L] (hPL : P ≪ L) {T : X → S} (hT : Measurable T)
     (K : Kernel S X) [IsMarkovKernel K]
     (hP : P.map (fun x ↦ (T x, x)) = P.map T ⊗ₘ K)
@@ -198,11 +199,11 @@ theorem eq_withDensity_rnDeriv_comp_of_compProd (P L : Measure X) [IsFiniteMeasu
   have hr := Measure.measurable_rnDeriv (P.map T) (L.map T)
   have hac : P.map T ≪ L.map T := hPL.map hT
   conv_lhs => rw [← hsnd P, hP, ← Measure.withDensity_rnDeriv_eq _ _ hac]
-  rw [← hsnd (L.withDensity _), map_prodMk_eq_compProd_of_withDensity_comp L hT K hL hr,
-    map_withDensity_comp L hT hr]
+  rw [← hsnd (L.withDensity _), map_prod_mk_eq_comp_prod_of_with_density_comp L hT K hL hr,
+    map_with_density_comp L hT hr]
 
 /-- Sufficiency implies a factorization of the densities (necessity half of GAPS 101.1). -/
-theorem exists_factorization_of_isSufficientStatistic [Nonempty Θ] (P : Θ → Measure X)
+theorem exists_factorization_of_is_sufficient_statistic [Nonempty Θ] (P : Θ → Measure X)
     (μ : Measure X) [SigmaFinite μ] (hP : ∀ θ, IsProbabilityMeasure (P θ)) (f : Θ → X → ℝ)
     (hf : ∀ θ, HasDensity (P θ) μ (f θ)) (T : X → S) (hsuff : IsSufficientStatistic P T) :
     ∃ (g : Θ → S → ℝ) (h : X → ℝ),
@@ -210,20 +211,20 @@ theorem exists_factorization_of_isSufficientStatistic [Nonempty Θ] (P : Θ → 
       Measurable h ∧ (∀ x, 0 ≤ h x) ∧
       ∀ θ, ∀ᵐ x ∂μ, f θ x = g θ (T x) * h x := by
   obtain ⟨hT, K, hKm, hK⟩ := hsuff
-  obtain ⟨θs, hac⟩ := exists_absolutelyContinuous_countableMixture P μ f hf
+  obtain ⟨θs, hac⟩ := exists_absolutely_continuous_countable_mixture P μ f hf
   have := hP
   set L := countableMixture P θs
-  have hL := countableMixture_map_prodMk_eq_compProd P θs hT K fun n ↦ hK (θs n)
+  have hL := countable_mixture_map_prod_mk_eq_comp_prod P θs hT K fun n ↦ hK (θs n)
   set ρ : X → ℝ≥0∞ := fun x ↦ ∑' n, mixtureWeight n * ENNReal.ofReal (f (θs n) x)
   have hρm : Measurable ρ := Measurable.tsum fun n ↦
     (hf (θs n)).1.ennreal_ofReal.const_mul _
-  have hLρ : L = μ.withDensity ρ := countableMixture_eq_withDensity P μ f hf θs
+  have hLρ : L = μ.withDensity ρ := countable_mixture_eq_with_density P μ f hf θs
   let r : Θ → S → ℝ≥0∞ := fun θ ↦ ((P θ).map T).rnDeriv (L.map T)
   refine ⟨fun θ s ↦ (r θ s).toReal, fun x ↦ (ρ x).toReal,
     fun θ ↦ ⟨(Measure.measurable_rnDeriv _ _).ennreal_toReal, fun _ ↦ ENNReal.toReal_nonneg⟩,
     hρm.ennreal_toReal, fun _ ↦ ENNReal.toReal_nonneg, fun θ ↦ ?_⟩
   have hPθ' : P θ = L.withDensity (r θ ∘ T) :=
-    eq_withDensity_rnDeriv_comp_of_compProd (P θ) L (hac θ) hT K (hK θ) hL
+    eq_with_density_rn_deriv_comp_of_comp_prod (P θ) L (hac θ) hT K (hK θ) hL
   have hrm : Measurable (r θ ∘ T) := (Measure.measurable_rnDeriv _ _).comp hT
   have hPθ : μ.withDensity (fun x ↦ ENNReal.ofReal (f θ x)) = μ.withDensity (ρ * (r θ ∘ T)) := by
     rw [withDensity_mul μ hρm hrm, ← hLρ, ← hPθ', ← (hf θ).2.2]
@@ -238,19 +239,19 @@ theorem exists_factorization_of_isSufficientStatistic [Nonempty Θ] (P : Θ → 
 /-- A factorization of the densities implies sufficiency (sufficiency half of GAPS 101.1). The
 common kernel is the conditional distribution of the sample given `T` under a dominating countable
 mixture of the family. -/
-theorem isSufficientStatistic_of_factorization [StandardBorelSpace X] [Nonempty X] [Nonempty Θ]
+theorem is_sufficient_statistic_of_factorization [StandardBorelSpace X] [Nonempty X] [Nonempty Θ]
     (P : Θ → Measure X) (μ : Measure X) [SigmaFinite μ] (hP : ∀ θ, IsProbabilityMeasure (P θ))
     (f : Θ → X → ℝ) (hf : ∀ θ, HasDensity (P θ) μ (f θ)) {T : X → S} (hT : Measurable T)
     (g : Θ → S → ℝ) (h : X → ℝ) (hg : ∀ θ, Measurable (g θ) ∧ ∀ s, 0 ≤ g θ s)
     (hfac : ∀ θ, ∀ᵐ x ∂μ, f θ x = g θ (T x) * h x) :
     IsSufficientStatistic P T := by
-  obtain ⟨θs, hac⟩ := exists_absolutelyContinuous_countableMixture P μ f hf
+  obtain ⟨θs, hac⟩ := exists_absolutely_continuous_countable_mixture P μ f hf
   have := hP
   set L := countableMixture P θs
   set ρ : X → ℝ≥0∞ := fun x ↦ ∑' n, mixtureWeight n * ENNReal.ofReal (f (θs n) x)
   have hρm : Measurable ρ := Measurable.tsum fun n ↦
     (hf (θs n)).1.ennreal_ofReal.const_mul _
-  have hLρ : L = μ.withDensity ρ := countableMixture_eq_withDensity P μ f hf θs
+  have hLρ : L = μ.withDensity ρ := countable_mixture_eq_with_density P μ f hf θs
   let K : Kernel S X := condDistrib (fun x ↦ x) T L
   have hL : L.map (fun x ↦ (T x, x)) = L.map T ⊗ₘ K :=
     (compProd_map_condDistrib hT.aemeasurable aemeasurable_id).symm
@@ -261,7 +262,7 @@ theorem isSufficientStatistic_of_factorization [StandardBorelSpace X] [Nonempty 
   have hrm : Measurable r := (hg θ).1.ennreal_ofReal.div hGm
   suffices hPθ : P θ = L.withDensity (r ∘ T) by
     rw [hPθ]
-    exact map_prodMk_eq_compProd_of_withDensity_comp L hT K hL hrm
+    exact map_prod_mk_eq_comp_prod_of_with_density_comp L hT K hL hrm
   rw [hLρ, ← withDensity_mul μ hρm (hrm.comp hT), (hf θ).2.2]
   refine withDensity_congr_ae ?_
   have hint : ∫⁻ x, ρ x ∂μ = 1 := by

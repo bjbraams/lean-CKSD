@@ -2,6 +2,7 @@ module
 
 public import CKSD.Learning.RandomGraphs.Connectivity
 
+
 /-!
 # Small components of the subcritical binomial random graph
 
@@ -13,7 +14,7 @@ processed vertices, and each step processes the least discovered unprocessed ver
 revealing which undiscovered vertices are adjacent to `u`. A history of `m` steps is a sequence
 of newly discovered sets; it is realized by the event that the revealed pairs are edges and the
 remaining pairs from `u` to undiscovered vertices are not, which has probability
-`p^{#found} (1-p)^{#missed}` (`binomialRandom_real_exploreEvent`). If the component has more
+`p^{#found} (1-p)^{#missed}` (`binomial_random_real_explore_event`). If the component has more
 than `m` vertices, the first `m` steps discover at least `m` new vertices. Weighting each
 history by `λ^{#found}` and summing step by step (binomial theorem) gives
 `P(|C(v)| > m) ≤ λ^{-m} (1 - p + pλ)^{nm}`, which for `λ = 1/c'` with `c' = max(c, 1/2)` is at
@@ -21,7 +22,7 @@ most `(c' e^{1-c'})^m`, a geometric rate below one.
 
 ## Main results
 
-* `CKSD.binomialRandom_real_reachableSet_card_le`: the exponential tail bound for the size of the
+* `CKSD.binomial_random_real_reachable_set_card_le`: the exponential tail bound for the size of the
   component of a vertex.
 * `CKSD.exists_tendsto_binomialRandom_components_le_log'`: the subcritical phase of GAPS 107.47.
 -/
@@ -70,7 +71,7 @@ def exploreMissed : (m : ℕ) → (Fin m → Finset V) → Finset V × Finset V 
 
 omit [Fintype V] in
 /-- The exploration step is monotone in both coordinates. -/
-theorem subset_exploreStep (a : Finset V) (s : Finset V × Finset V) :
+theorem subset_explore_step (a : Finset V) (s : Finset V × Finset V) :
     s.1 ⊆ (exploreStep a s).1 ∧ s.2 ⊆ (exploreStep a s).2 := by
   unfold exploreStep
   split_ifs
@@ -79,7 +80,7 @@ theorem subset_exploreStep (a : Finset V) (s : Finset V × Finset V) :
 
 /-- Every revealed pair of a valid history from `s` joins an unprocessed vertex `x` to a
 different, undiscovered vertex `y`. -/
-theorem exploreFound_union_exploreMissed_spec (m : ℕ) :
+theorem explore_found_union_explore_missed_spec (m : ℕ) :
     ∀ (N : Fin m → Finset V) (s : Finset V × Finset V), ExploreValid m N s →
       ∀ e ∈ exploreFound m N s ∪ exploreMissed m N s,
         ∃ x y, e = s(x, y) ∧ x ≠ y ∧ x ∉ s.2 ∧ y ∉ s.1 := by
@@ -87,7 +88,7 @@ theorem exploreFound_union_exploreMissed_spec (m : ℕ) :
   | zero => intro N s _ e he; simp [exploreFound, exploreMissed] at he
   | succ m ih =>
     rintro N s ⟨hne, hsub, hval⟩ e he
-    have hmono := subset_exploreStep (N 0) s
+    have hmono := subset_explore_step (N 0) s
     set u := (s.1 \ s.2).min' hne
     have hu : u ∈ s.1 \ s.2 := Finset.min'_mem _ hne
     simp only [exploreFound, exploreMissed, dite_eq_left hne, Finset.mem_union, Finset.mem_image]
@@ -112,7 +113,7 @@ private theorem not_mem_later_of_valid {m : ℕ} {N : Fin (m + 1) → Finset V}
     s((s.1 \ s.2).min' hne, w) ∉ exploreFound m (Fin.tail N) (exploreStep (N 0) s) ∪
       exploreMissed m (Fin.tail N) (exploreStep (N 0) s) := by
   intro h
-  obtain ⟨x, y, hxy, -, hx, hy⟩ := exploreFound_union_exploreMissed_spec m _ _ hval _ h
+  obtain ⟨x, y, hxy, -, hx, hy⟩ := explore_found_union_explore_missed_spec m _ _ hval _ h
   have hu : (s.1 \ s.2).min' hne ∈ s.1 \ s.2 := Finset.min'_mem _ hne
   have hstep : exploreStep (N 0) s = (s.1 ∪ N 0, insert ((s.1 \ s.2).min' hne) s.2) := by
     simp [exploreStep, dite_eq_left hne]
@@ -124,7 +125,7 @@ private theorem not_mem_later_of_valid {m : ℕ} {N : Fin (m + 1) → Finset V}
     exact hy (Finset.mem_union_left _ (Finset.mem_sdiff.mp hu).1)
 
 /-- Found and missed pairs of a valid history are disjoint. -/
-theorem exploreFound_exploreMissed_props (m : ℕ) :
+theorem explore_found_explore_missed_props (m : ℕ) :
     ∀ (N : Fin m → Finset V) (s : Finset V × Finset V), ExploreValid m N s →
       Disjoint (exploreFound m N s) (exploreMissed m N s) := by
   induction m with
@@ -151,7 +152,7 @@ theorem exploreFound_exploreMissed_props (m : ℕ) :
       exact hlater w (Finset.mem_union_left _ he)
 
 /-- Cardinality recursion for found pairs. -/
-theorem card_exploreFound_succ {m : ℕ} {N : Fin (m + 1) → Finset V} {s : Finset V × Finset V}
+theorem card_explore_found_succ {m : ℕ} {N : Fin (m + 1) → Finset V} {s : Finset V × Finset V}
     (hval : ExploreValid (m + 1) N s) :
     (exploreFound (m + 1) N s).card =
       (N 0).card + (exploreFound m (Fin.tail N) (exploreStep (N 0) s)).card := by
@@ -165,7 +166,7 @@ theorem card_exploreFound_succ {m : ℕ} {N : Fin (m + 1) → Finset V} {s : Fin
   exact not_mem_later_of_valid (N := N) hne hval' w (Finset.mem_union_left _ h)
 
 /-- Cardinality recursion for missed pairs. -/
-theorem card_exploreMissed_succ {m : ℕ} {N : Fin (m + 1) → Finset V} {s : Finset V × Finset V}
+theorem card_explore_missed_succ {m : ℕ} {N : Fin (m + 1) → Finset V} {s : Finset V × Finset V}
     (hval : ExploreValid (m + 1) N s) :
     (exploreMissed (m + 1) N s).card = (s.1ᶜ.card - (N 0).card) +
       (exploreMissed m (Fin.tail N) (exploreStep (N 0) s)).card := by
@@ -185,7 +186,7 @@ def exploreWeight (x y : ℝ) (m : ℕ) (N : Fin m → Finset V) (s : Finset V �
   else 0
 
 /-- One-step decomposition of the weight of a history. -/
-private theorem exploreWeight_cons (x y : ℝ) (m : ℕ) (a : Finset V) (N : Fin m → Finset V)
+private theorem explore_weight_cons (x y : ℝ) (m : ℕ) (a : Finset V) (N : Fin m → Finset V)
     (s : Finset V × Finset V) (hne : (s.1 \ s.2).Nonempty) :
     exploreWeight x y (m + 1) (Fin.cons a N) s =
       if a ⊆ s.1ᶜ then x ^ a.card * y ^ (s.1ᶜ.card - a.card) *
@@ -198,7 +199,7 @@ private theorem exploreWeight_cons (x y : ℝ) (m : ℕ) (a : Finset V) (N : Fin
   unfold exploreWeight
   by_cases h : a ⊆ s.1ᶜ ∧ ExploreValid m N (exploreStep a s)
   · have hv := hval.mpr h
-    rw [ite_eq_left hv, ite_eq_left h.1, ite_eq_left h.2, card_exploreFound_succ hv, card_exploreMissed_succ hv]
+    rw [ite_eq_left hv, ite_eq_left h.1, ite_eq_left h.2, card_explore_found_succ hv, card_explore_missed_succ hv]
     simp only [Fin.cons_zero, Fin.tail_cons]
     ring
   · rw [ite_eq_right (fun hv ↦ h (hval.mp hv))]
@@ -208,7 +209,7 @@ private theorem exploreWeight_cons (x y : ℝ) (m : ℕ) (a : Finset V) (N : Fin
 
 /-- The total weight of admissible histories of length `m` is at most `((x + y)^{|V|})^m` when
 `x, y ≥ 0` and `x + y ≥ 1`. -/
-theorem sum_exploreWeight_le {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) (hxy : 1 ≤ x + y) (m : ℕ) :
+theorem sum_explore_weight_le {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) (hxy : 1 ≤ x + y) (m : ℕ) :
     ∀ s : Finset V × Finset V,
       ∑ N : Fin m → Finset V, exploreWeight x y m N s ≤ ((x + y) ^ Fintype.card V) ^ m := by
   classical
@@ -226,7 +227,7 @@ theorem sum_exploreWeight_le {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) (hxy : 1 
     rw [← (Fin.consEquiv fun _ : Fin (m + 1) ↦ Finset V).sum_comp, Fintype.sum_prod_type]
     simp only [Fin.consEquiv_apply]
     by_cases hne : (s.1 \ s.2).Nonempty
-    · simp_rw [exploreWeight_cons x y m _ _ s hne]
+    · simp_rw [explore_weight_cons x y m _ _ s hne]
       calc ∑ a : Finset V, ∑ N : Fin m → Finset V, (if a ⊆ s.1ᶜ then
             x ^ a.card * y ^ (s.1ᶜ.card - a.card) * exploreWeight x y m N (exploreStep a s)
             else 0)
@@ -272,13 +273,13 @@ def exploreEvent (m : ℕ) (N : Fin m → Finset V) (s : Finset V × Finset V) :
   {G | (∀ e ∈ exploreFound m N s, e ∈ G.edgeSet) ∧ ∀ e ∈ exploreMissed m N s, e ∉ G.edgeSet}
 
 /-- An admissible history is realized with probability `p^{#found} (1-p)^{#missed}`. -/
-theorem binomialRandom_real_exploreEvent (p : I) {m : ℕ} {N : Fin m → Finset V}
+theorem binomial_random_real_explore_event (p : I) {m : ℕ} {N : Fin m → Finset V}
     {s : Finset V × Finset V} (hval : ExploreValid m N s) :
     (SimpleGraph.binomialRandom V p).real (exploreEvent m N s) =
       (p : ℝ) ^ (exploreFound m N s).card * (1 - p) ^ (exploreMissed m N s).card := by
-  have hspec := exploreFound_union_exploreMissed_spec m N s hval
-  refine binomialRandom_real_edges p _ _ (fun e he ↦ ?_) (fun e he ↦ ?_)
-    (exploreFound_exploreMissed_props m N s hval)
+  have hspec := explore_found_union_explore_missed_spec m N s hval
+  refine binomial_random_real_edges p _ _ (fun e he ↦ ?_) (fun e he ↦ ?_)
+    (explore_found_explore_missed_props m N s hval)
   · obtain ⟨x, y, rfl, hxy, -⟩ := hspec e (Finset.mem_union_left _ he)
     exact Sym2.mk_isDiag_iff.not.mpr hxy
   · obtain ⟨x, y, rfl, hxy, -⟩ := hspec e (Finset.mem_union_right _ he)
@@ -318,7 +319,7 @@ def ExploreInv (G : SimpleGraph V) (v : V) (s : Finset V × Finset V) : Prop :=
 
 /-- While fewer vertices are processed than the component has, some discovered vertex is
 unprocessed. -/
-private theorem exploreInv_nonempty {G : SimpleGraph V} {v : V} {s : Finset V × Finset V}
+private theorem explore_inv_nonempty {G : SimpleGraph V} {v : V} {s : Finset V × Finset V}
     (hI : ExploreInv G v s) (hcard : s.2.card + 1 ≤ (reachableSet G v).card) :
     (s.1 \ s.2).Nonempty := by
   classical
@@ -336,7 +337,7 @@ private theorem exploreInv_nonempty {G : SimpleGraph V} {v : V} {s : Finset V ×
 
 /-- The exploration of `G` from a state satisfying the invariant is an admissible realized
 history, and it discovers enough vertices as long as the component is large. -/
-theorem exploreHistory_spec (G : SimpleGraph V) (v : V) (m : ℕ) :
+theorem explore_history_spec (G : SimpleGraph V) (v : V) (m : ℕ) :
     ∀ s : Finset V × Finset V, ExploreInv G v s →
       s.2.card + m + 1 ≤ (reachableSet G v).card →
       ExploreValid m (exploreHistory G m s) s ∧ G ∈ exploreEvent m (exploreHistory G m s) s ∧
@@ -346,7 +347,7 @@ theorem exploreHistory_spec (G : SimpleGraph V) (v : V) (m : ℕ) :
   | zero =>
     intro s hI hcard
     refine ⟨trivial, ⟨by simp [exploreFound], by simp [exploreMissed]⟩, ?_⟩
-    have hne := exploreInv_nonempty hI (by omega)
+    have hne := explore_inv_nonempty hI (by omega)
     have hlt : s.2 ⊂ s.1 := by
       refine Finset.ssubset_iff_subset_ne.mpr ⟨hI.1, fun h ↦ ?_⟩
       obtain ⟨w, hw⟩ := hne
@@ -357,7 +358,7 @@ theorem exploreHistory_spec (G : SimpleGraph V) (v : V) (m : ℕ) :
     omega
   | succ m ih =>
     intro s hI hcard
-    have hne := exploreInv_nonempty hI (by omega)
+    have hne := explore_inv_nonempty hI (by omega)
     set u := (s.1 \ s.2).min' hne with hu_def
     have hu : u ∈ s.1 \ s.2 := Finset.min'_mem _ hne
     set a := exploreNew G s with ha_def
@@ -422,13 +423,13 @@ theorem exploreHistory_spec (G : SimpleGraph V) (v : V) (m : ℕ) :
         rw [ha]
         exact Finset.mem_filter.mpr ⟨Finset.mem_univ _, hw.1, hadj⟩
       · exact hev.2 e he
-    · rw [card_exploreFound_succ hval', hhist]
+    · rw [card_explore_found_succ hval', hhist]
       simp only [Fin.cons_zero, Fin.tail_cons]
       omega
 
 /-- The component of `v` has more than `m` vertices with probability at most
 `λ^{-m} (1 - p + pλ)^{m|V|}` for every `λ ≥ 1` (exploration and the exponential moment bound). -/
-theorem binomialRandom_real_reachableSet_card_le (p : I) (v : V) (m : ℕ) {lam : ℝ}
+theorem binomial_random_real_reachable_set_card_le (p : I) (v : V) (m : ℕ) {lam : ℝ}
     (hlam : 1 ≤ lam) :
     (SimpleGraph.binomialRandom V p).real {G | m + 1 ≤ (reachableSet G v).card} ≤
       (lam ^ m)⁻¹ * ((1 - p + p * lam) ^ Fintype.card V) ^ m := by
@@ -443,7 +444,7 @@ theorem binomialRandom_real_reachableSet_card_le (p : I) (v : V) (m : ℕ) {lam 
       ⋃ N ∈ H, exploreEvent m N s₀ := by
     intro G hG
     have hI : ExploreInv G v s₀ := ⟨by simp [s₀], by simp [s₀], by simp [s₀], by simp [s₀]⟩
-    obtain ⟨hval, hev, hc⟩ := exploreHistory_spec G v m s₀ hI (by simpa [s₀] using hG)
+    obtain ⟨hval, hev, hc⟩ := explore_history_spec G v m s₀ hI (by simpa [s₀] using hG)
     simp only [Set.mem_iUnion]
     refine ⟨exploreHistory G m s₀, Finset.mem_filter.mpr ⟨Finset.mem_univ _, hval, ?_⟩, hev⟩
     have h1 : s₀.1.card = 1 := Finset.card_singleton v
@@ -455,7 +456,7 @@ theorem binomialRandom_real_reachableSet_card_le (p : I) (v : V) (m : ℕ) {lam 
       (lam ^ m)⁻¹ * exploreWeight ((p : ℝ) * lam) (1 - p) m N s₀ := by
     intro N hN
     obtain ⟨hval, hcard⟩ := (Finset.mem_filter.mp hN).2
-    rw [binomialRandom_real_exploreEvent p hval, exploreWeight, ite_eq_left hval, mul_pow]
+    rw [binomial_random_real_explore_event p hval, exploreWeight, ite_eq_left hval, mul_pow]
     have hl : lam ^ m ≤ lam ^ (exploreFound m N s₀).card := pow_le_pow_right₀ hlam hcard
     rw [← mul_assoc, ← mul_assoc]
     refine mul_le_mul_of_nonneg_right ?_ (pow_nonneg hq0 _)
@@ -472,14 +473,14 @@ theorem binomialRandom_real_reachableSet_card_le (p : I) (v : V) (m : ℕ) {lam 
     split_ifs <;> positivity
   refine (Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ H)
     fun N _ _ ↦ hw0 N).trans ?_
-  have := sum_exploreWeight_le (V := V) (mul_nonneg hp0 hlam0.le) hq0
+  have := sum_explore_weight_le (V := V) (mul_nonneg hp0 hlam0.le) hq0
     (by nlinarith) m s₀
   convert this using 3
   ring
 
 omit [LinearOrder V] in
 /-- The connected component of `v` has as many vertices as are reachable from `v`. -/
-theorem ncard_supp_connectedComponentMk (G : SimpleGraph V) (v : V) :
+theorem ncard_supp_connected_component_mk (G : SimpleGraph V) (v : V) :
     (G.connectedComponentMk v).supp.ncard = (reachableSet G v).card := by
   classical
   rw [← Set.ncard_coe_finset]
@@ -491,7 +492,7 @@ theorem ncard_supp_connectedComponentMk (G : SimpleGraph V) (v : V) :
 
 /-- Union bound over the vertices: some component has more than `m` vertices with probability
 at most `|V| λ^{-m} (1 - p + pλ)^{m|V|}`. -/
-theorem binomialRandom_real_exists_large_component_le (p : I) (m : ℕ) {lam : ℝ}
+theorem binomial_random_real_exists_large_component_le (p : I) (m : ℕ) {lam : ℝ}
     (hlam : 1 ≤ lam) :
     (SimpleGraph.binomialRandom V p).real {G | ∃ v, m + 1 ≤ (reachableSet G v).card} ≤
       Fintype.card V * ((lam ^ m)⁻¹ * ((1 - p + p * lam) ^ Fintype.card V) ^ m) := by
@@ -502,7 +503,7 @@ theorem binomialRandom_real_exists_large_component_le (p : I) (m : ℕ) {lam : �
   rw [hsub]
   refine (measureReal_biUnion_finset_le _ _).trans ?_
   refine (Finset.sum_le_sum fun v _ ↦
-    binomialRandom_real_reachableSet_card_le p v m hlam).trans (le_of_eq ?_)
+    binomial_random_real_reachable_set_card_le p v m hlam).trans (le_of_eq ?_)
   rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
 
 /-- GAPS 107.47, subcritical phase: for `p = c/n` with `0 ≤ c < 1`, all components of
@@ -543,7 +544,7 @@ theorem exists_tendsto_binomialRandom_components_le_log' (c : ℝ) (hc0 : 0 ≤ 
     linarith [(show (1 : ℝ) ≤ n by exact_mod_cast hn)]
   set m := ⌊2 / L * Real.log n⌋₊ with hm
   -- the bad event has small probability
-  have hbad := binomialRandom_real_exists_large_component_le (V := Fin n) pn m hlam
+  have hbad := binomial_random_real_exists_large_component_le (V := Fin n) pn m hlam
   rw [Fintype.card_fin] at hbad
   have hR : (lam ^ m)⁻¹ * ((1 - pn + pn * lam) ^ n) ^ m ≤ ρ ^ m := by
     have h2' : 0 ≤ 1 - (pn : ℝ) + pn * lam := by
@@ -594,7 +595,7 @@ theorem exists_tendsto_binomialRandom_components_le_log' (c : ℝ) (hc0 : 0 ≤ 
       {G | ∀ v, ((G.connectedComponentMk v).supp.ncard : ℝ) ≤ 2 / L * Real.log n} := by
     intro G hG v
     simp only [Set.mem_compl_iff, Set.mem_ofPred_eq, not_exists, not_le] at hG
-    rw [ncard_supp_connectedComponentMk]
+    rw [ncard_supp_connected_component_mk]
     have h1 : (reachableSet G v).card ≤ m := Nat.lt_succ_iff.mp (hG v)
     calc ((reachableSet G v).card : ℝ) ≤ m := by exact_mod_cast h1
       _ ≤ 2 / L * Real.log n := Nat.floor_le (by positivity)

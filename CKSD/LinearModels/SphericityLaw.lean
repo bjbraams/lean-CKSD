@@ -1,4 +1,5 @@
 module
+
 public import CKSD.LinearModels.SphericityBetaMoments
 public import CKSD.LinearModels.SphericityBasic
 public import TauCeti.Probability.Moments.CompactDeterminacy
@@ -16,7 +17,7 @@ open Filter Set Real MeasureTheory ProbabilityTheory Matrix
 open scoped Topology BigOperators ENNReal NNReal MatrixOrder
 namespace CKSD
 /-- The exact spherical Wishart sphericity law is a product of independent Beta factors. -/
-theorem map_sphericityRatio_wishart_eq_beta_product {p e : ℕ}
+theorem map_sphericity_ratio_wishart_eq_beta_product {p e : ℕ}
     (hp : 0 < p) (he : p ≤ e) (v : ℝ) (hv : 0 < v) :
     (TauCeti.Probability.wishartGramMeasure e (v • (1 : Matrix (Fin p) (Fin p) ℝ))).map
       (fun A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦ sphericityRatio A.val) =
@@ -44,7 +45,7 @@ theorem map_sphericityRatio_wishart_eq_beta_product {p e : ℕ}
   · change ∀ᵐ z ∂_, z ∈ Icc (0 : ℝ) 1
     apply (ae_map_iff hf.aemeasurable measurableSet_Icc).2
     filter_upwards [TauCeti.Probability.ae_posDef_wishartGramMeasure hS he] with A hA
-    exact ⟨(det_trace_ratio_mem_Ioc hp0 A.val hA).1.le, (det_trace_ratio_mem_Ioc hp0 A.val hA).2⟩
+    exact ⟨(det_trace_ratio_mem_ioc hp0 A.val hA).1.le, (det_trace_ratio_mem_ioc hp0 A.val hA).2⟩
   · change ∀ᵐ z ∂_, z ∈ Icc (0 : ℝ) 1
     apply (ae_map_iff hg.aemeasurable measurableSet_Icc).2
     have hs : ∀ᵐ x ∂Measure.pi (fun i : Fin (p-1) ↦ betaMeasure (((e : ℝ) - (i.val + 1)) / 2)
@@ -56,5 +57,5 @@ theorem map_sphericityRatio_wishart_eq_beta_product {p e : ℕ}
       Finset.prod_le_one₀ (fun i _ ↦ (hx i).1) (fun i _ ↦ (hx i).2)⟩
   · intro k
     rw [integral_map hf.aemeasurable (by fun_prop), integral_map hg.aemeasurable (by fun_prop)]
-    exact (integral_det_trace_ratio_pow_wishartGram_eq_gamma hp0 he v hv k).trans (integral_sphericity_beta_product_pow_eq_gamma hp0 he k).symm
+    exact (integral_det_trace_ratio_pow_wishart_gram_eq_gamma hp0 he v hv k).trans (integral_sphericity_beta_product_pow_eq_gamma hp0 he k).symm
 end CKSD

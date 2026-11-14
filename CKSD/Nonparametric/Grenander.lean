@@ -3,6 +3,7 @@ module
 public import CKSD.Nonparametric.Basic
 public import Mathlib.Probability.BrownianMotion.Basic
 
+
 /-!
 # The Grenander estimator of a decreasing density
 
@@ -67,34 +68,34 @@ def IsConcaveMajorant (F g : ℝ → ℝ) : Prop :=
   ConcaveOn ℝ (Ici 0) g ∧ ∀ s ∈ Ici (0 : ℝ), F s ≤ g s
 
 /-- The least concave majorant lies below every concave majorant on `[0, ∞)`. -/
-theorem leastConcaveMajorant_le {F g : ℝ → ℝ} (hg : IsConcaveMajorant F g) {t : ℝ}
+theorem least_concave_majorant_le {F g : ℝ → ℝ} (hg : IsConcaveMajorant F g) {t : ℝ}
     (ht : 0 ≤ t) : leastConcaveMajorant F t ≤ g t := by
   refine csInf_le ⟨F t, ?_⟩ ⟨g, hg.1, hg.2, rfl⟩
   rintro r ⟨g', -, hg', rfl⟩
   exact hg' t ht
 
 /-- A function bounded above on `[0, ∞)` lies below its least concave majorant there. -/
-theorem le_leastConcaveMajorant {F : ℝ → ℝ} {C : ℝ} (hC : ∀ s, 0 ≤ s → F s ≤ C) {t : ℝ}
+theorem le_least_concave_majorant {F : ℝ → ℝ} {C : ℝ} (hC : ∀ s, 0 ≤ s → F s ≤ C) {t : ℝ}
     (ht : 0 ≤ t) : F t ≤ leastConcaveMajorant F t := by
   refine le_csInf ⟨C, fun _ ↦ C, concaveOn_const C (convex_Ici 0), fun s hs ↦ hC s hs, rfl⟩ ?_
   rintro r ⟨g', -, hg', rfl⟩
   exact hg' t ht
 
 /-- The least concave majorant of a function bounded above on `[0, ∞)` is concave there. -/
-theorem concaveOn_leastConcaveMajorant {F : ℝ → ℝ} {C : ℝ} (hC : ∀ s, 0 ≤ s → F s ≤ C) :
+theorem concave_on_least_concave_majorant {F : ℝ → ℝ} {C : ℝ} (hC : ∀ s, 0 ≤ s → F s ≤ C) :
     ConcaveOn ℝ (Ici 0) (leastConcaveMajorant F) := by
   refine ⟨convex_Ici 0, fun x hx y hy a b ha hb hab ↦ ?_⟩
   have hxy : (0 : ℝ) ≤ a • x + b • y := (convex_Ici 0) hx hy ha hb hab
   refine le_csInf ⟨C, fun _ ↦ C, concaveOn_const C (convex_Ici 0), fun s hs ↦ hC s hs, rfl⟩ ?_
   rintro r ⟨g, hgc, hg, rfl⟩
-  have h1 := leastConcaveMajorant_le ⟨hgc, hg⟩ (show (0:ℝ) ≤ x from hx)
-  have h2 := leastConcaveMajorant_le ⟨hgc, hg⟩ (show (0:ℝ) ≤ y from hy)
+  have h1 := least_concave_majorant_le ⟨hgc, hg⟩ (show (0:ℝ) ≤ x from hx)
+  have h2 := least_concave_majorant_le ⟨hgc, hg⟩ (show (0:ℝ) ≤ y from hy)
   have h3 := hgc.2 hx hy ha hb hab
   simp only [smul_eq_mul] at h3 ⊢
   nlinarith
 
 /-- A concave function on `[0, ∞)` that is bounded below is monotone there. -/
-theorem ConcaveOn.monotoneOn_of_bddBelow {f : ℝ → ℝ} (hf : ConcaveOn ℝ (Ici 0) f) {c : ℝ}
+theorem ConcaveOn.monotone_on_of_bdd_below {f : ℝ → ℝ} (hf : ConcaveOn ℝ (Ici 0) f) {c : ℝ}
     (hc : ∀ t, 0 ≤ t → c ≤ f t) : MonotoneOn f (Ici 0) := by
   intro a ha b hb hab
   rcases hab.eq_or_lt with rfl | hab
@@ -236,7 +237,7 @@ theorem exists_sample_grid (x : ℕ → ℝ) (n : ℕ) (hn : 0 < n) (hpos : ∀ 
 
 /-- Summation by parts: a nonincreasing nonnegative weight sequence preserves nonpositivity of
 all partial sums. -/
-theorem sum_mul_le_of_partialSum_nonpos (b c : ℕ → ℝ) (k : ℕ)
+theorem sum_mul_le_of_partial_sum_nonpos (b c : ℕ → ℝ) (k : ℕ)
     (hb : ∀ j, j + 1 < k → b (j + 1) ≤ b j) (hb0 : ∀ j < k, 0 ≤ b j)
     (hc : ∀ l < k, ∑ j ∈ Finset.range (l + 1), c j ≤ 0) :
     ∑ j ∈ Finset.range k, b j * c j ≤ 0 := by
@@ -318,7 +319,7 @@ theorem sum_count_mul_div_slope_le (k : ℕ) (n : ℝ) (y G N s b : ℕ → ℝ)
     have h2 : 0 ≤ (n * G (l + 1) - N (l + 1)) / s l :=
       div_nonneg (by linarith [hNG (l + 1) hl]) (hspos l hl).le
     linarith
-  have := sum_mul_le_of_partialSum_nonpos b c k hb hb0 hc
+  have := sum_mul_le_of_partial_sum_nonpos b c k hb hb0 hc
   have e : ∑ j ∈ Finset.range k, b j * c j =
       ∑ j ∈ Finset.range k, (N (j + 1) - N j) * b j / s j -
         n * ∑ j ∈ Finset.range k, b j * (y (j + 1) - y j) := by
@@ -329,7 +330,7 @@ theorem sum_count_mul_div_slope_le (k : ℕ) (n : ℝ) (y G N s b : ℕ → ℝ)
 
 
 /-- An affine function is concave on `[0, ∞)`. -/
-theorem concaveOn_affine (c σ a : ℝ) : ConcaveOn ℝ (Ici 0) (fun t ↦ c + σ * (t - a)) := by
+theorem concave_on_affine (c σ a : ℝ) : ConcaveOn ℝ (Ici 0) (fun t ↦ c + σ * (t - a)) := by
   refine ⟨convex_Ici 0, fun x _ y _ p q _ _ hpq ↦ ?_⟩
   simp only [smul_eq_mul]
   rw [show q = 1 - p by linarith]
@@ -338,22 +339,22 @@ theorem concaveOn_affine (c σ a : ℝ) : ConcaveOn ℝ (Ici 0) (fun t ↦ c + �
 
 /-- The least concave majorant is affine on any interval where the majorized function is
 constant except possibly at the right endpoint. -/
-theorem leastConcaveMajorant_eq_affine {F : ℝ → ℝ} (hF0 : ∀ t, 0 ≤ t → 0 ≤ F t)
+theorem least_concave_majorant_eq_affine {F : ℝ → ℝ} (hF0 : ∀ t, 0 ≤ t → 0 ≤ F t)
     (hF1 : ∀ t, 0 ≤ t → F t ≤ 1) {a b : ℝ} (ha : 0 ≤ a) (hab : a < b)
     (hconst : ∀ t, a ≤ t → t < b → F t = F a) {t : ℝ} (hat : a ≤ t) (htb : t ≤ b) :
     leastConcaveMajorant F t = leastConcaveMajorant F a +
       (leastConcaveMajorant F b - leastConcaveMajorant F a) / (b - a) * (t - a) := by
   set G := leastConcaveMajorant F with hGdef
-  have hGc : ConcaveOn ℝ (Ici 0) G := concaveOn_leastConcaveMajorant hF1
-  have hFG : ∀ u, 0 ≤ u → F u ≤ G u := fun u hu ↦ le_leastConcaveMajorant hF1 hu
+  have hGc : ConcaveOn ℝ (Ici 0) G := concave_on_least_concave_majorant hF1
+  have hFG : ∀ u, 0 ≤ u → F u ≤ G u := fun u hu ↦ le_least_concave_majorant hF1 hu
   have hGm : MonotoneOn G (Ici 0) :=
-    ConcaveOn.monotoneOn_of_bddBelow hGc (c := 0) fun u hu ↦ (hF0 u hu).trans (hFG u hu)
+    ConcaveOn.monotone_on_of_bdd_below hGc (c := 0) fun u hu ↦ (hF0 u hu).trans (hFG u hu)
   have hb : (0 : ℝ) ≤ b := ha.trans hab.le
   set L : ℝ → ℝ := fun u ↦ G a + (G b - G a) / (b - a) * (u - a) with hL
   have hGab : G a ≤ G b := hGm (show a ∈ Ici (0:ℝ) from ha) (show b ∈ Ici (0:ℝ) from hb) hab.le
   have hslope : 0 ≤ (G b - G a) / (b - a) := div_nonneg (by linarith) (by linarith)
   have hmaj : IsConcaveMajorant F (G ⊓ L) := by
-    refine ⟨hGc.inf (concaveOn_affine _ _ _), fun u hu ↦ ?_⟩
+    refine ⟨hGc.inf (concave_on_affine _ _ _), fun u hu ↦ ?_⟩
     have hu' : (0 : ℝ) ≤ u := hu
     refine le_inf (hFG u hu') ?_
     rcases lt_or_ge u a with hua | hua
@@ -366,7 +367,7 @@ theorem leastConcaveMajorant_eq_affine {F : ℝ → ℝ} (hF0 : ∀ t, 0 ≤ t �
       exact (hFG a ha).trans this
     · exact (hFG u hu').trans (ConcaveOn.le_chord_of_le hGc (show a ∈ Ici (0:ℝ) from ha) hu hab hub)
   have ht : 0 ≤ t := ha.trans hat
-  have h1 := leastConcaveMajorant_le hmaj ht
+  have h1 := least_concave_majorant_le hmaj ht
   rw [← hGdef] at h1
   have h2 := ConcaveOn.chord_le hGc (show a ∈ Ici (0:ℝ) from ha) (show b ∈ Ici (0:ℝ) from hb)
     hab hat htb
@@ -375,17 +376,17 @@ theorem leastConcaveMajorant_eq_affine {F : ℝ → ℝ} (hF0 : ∀ t, 0 ≤ t �
 
 /-- At a strict kink of the least concave majorant on a grid of constancy intervals, the
 majorant touches the majorized function. -/
-theorem leastConcaveMajorant_eq_of_slope_lt {F : ℝ → ℝ} (hF0 : ∀ t, 0 ≤ t → 0 ≤ F t)
+theorem least_concave_majorant_eq_of_slope_lt {F : ℝ → ℝ} (hF0 : ∀ t, 0 ≤ t → 0 ≤ F t)
     (hF1 : ∀ t, 0 ≤ t → F t ≤ 1) {a c b : ℝ} (ha : 0 ≤ a) (hac : a < c) (hcb : c < b)
     (hconst₁ : ∀ t, a ≤ t → t < c → F t = F a) (hconst₂ : ∀ t, c ≤ t → t < b → F t = F c)
     (hkink : (leastConcaveMajorant F b - leastConcaveMajorant F c) / (b - c) <
       (leastConcaveMajorant F c - leastConcaveMajorant F a) / (c - a)) :
     leastConcaveMajorant F c = F c := by
   set G := leastConcaveMajorant F with hGdef
-  have hGc : ConcaveOn ℝ (Ici 0) G := concaveOn_leastConcaveMajorant hF1
-  have hFG : ∀ u, 0 ≤ u → F u ≤ G u := fun u hu ↦ le_leastConcaveMajorant hF1 hu
+  have hGc : ConcaveOn ℝ (Ici 0) G := concave_on_least_concave_majorant hF1
+  have hFG : ∀ u, 0 ≤ u → F u ≤ G u := fun u hu ↦ le_least_concave_majorant hF1 hu
   have hGm : MonotoneOn G (Ici 0) :=
-    ConcaveOn.monotoneOn_of_bddBelow hGc (c := 0) fun u hu ↦ (hF0 u hu).trans (hFG u hu)
+    ConcaveOn.monotone_on_of_bdd_below hGc (c := 0) fun u hu ↦ (hF0 u hu).trans (hFG u hu)
   have hc : (0 : ℝ) ≤ c := ha.trans hac.le
   have hb : (0 : ℝ) ≤ b := hc.trans hcb.le
   have hab : a < b := hac.trans hcb
@@ -410,7 +411,7 @@ theorem leastConcaveMajorant_eq_of_slope_lt {F : ℝ → ℝ} (hF0 : ∀ t, 0 �
   have hlam1 : lam < 1 := (div_lt_one hGcpos).mpr hlt
   have hGa0 : 0 ≤ G a := (hF0 a ha).trans (hFG a ha)
   have hmaj : IsConcaveMajorant F (fun u ↦ lam • G u + (1 - lam) • (G ⊓ L) u) := by
-    refine ⟨(hGc.smul hlam0).add ((hGc.inf (concaveOn_affine _ _ _)).smul (by linarith)),
+    refine ⟨(hGc.smul hlam0).add ((hGc.inf (concave_on_affine _ _ _)).smul (by linarith)),
       fun u hu ↦ ?_⟩
     have hu' : (0 : ℝ) ≤ u := hu
     simp only [smul_eq_mul, Pi.inf_apply]
@@ -438,7 +439,7 @@ theorem leastConcaveMajorant_eq_of_slope_lt {F : ℝ → ℝ} (hF0 : ∀ t, 0 �
       have hGcu : G c ≤ G u := hGm (show c ∈ Ici (0:ℝ) from hc) hu huc
       have hFc : F c = lam * G c := by rw [hlam]; field_simp
       nlinarith
-  have h1 := leastConcaveMajorant_le hmaj hc
+  have h1 := least_concave_majorant_le hmaj hc
   rw [← hGdef] at h1
   simp only [smul_eq_mul, Pi.inf_apply] at h1
   have : min (G c) (L c) = L c := min_eq_right hLc.le
@@ -449,7 +450,7 @@ theorem leastConcaveMajorant_eq_of_slope_lt {F : ℝ → ℝ} (hF0 : ∀ t, 0 �
 among nonincreasing densities on `[0, ∞)`. Scope: a fixed sample of `n ≥ 1` positive
 observations; the estimator is extended by zero to the nonpositive half-line, and the
 likelihood is the product of density values at the observations. -/
-theorem grenanderEstimator_isMaximumLikelihood {Ω : Type*} (X : ℕ → Ω → ℝ) (n : ℕ)
+theorem grenander_estimator_is_maximum_likelihood {Ω : Type*} (X : ℕ → Ω → ℝ) (n : ℕ)
     (hn : 0 < n) (ω : Ω) (hpos : ∀ i < n, 0 < X i ω) :
     let ĝ := fun t ↦ if 0 < t then grenanderEstimator X n ω t else 0;
     IsNonincreasingDensity ĝ ∧ ∀ g : ℝ → ℝ, IsNonincreasingDensity g →
@@ -519,17 +520,17 @@ theorem grenanderEstimator_isMaximumLikelihood {Ω : Type*} (X : ℕ → Ω → 
       Finset.mem_range, not_le]
     exact fun i hi ↦ hpos i hi
   -- the least concave majorant
-  have hGc : ConcaveOn ℝ (Ici 0) G := concaveOn_leastConcaveMajorant hF1
-  have hFG : ∀ t, 0 ≤ t → F t ≤ G t := fun t ht ↦ le_leastConcaveMajorant hF1 ht
+  have hGc : ConcaveOn ℝ (Ici 0) G := concave_on_least_concave_majorant hF1
+  have hFG : ∀ t, 0 ≤ t → F t ≤ G t := fun t ht ↦ le_least_concave_majorant hF1 ht
   have hG1 : ∀ t, 0 ≤ t → G t ≤ 1 := fun t ht ↦
-    leastConcaveMajorant_le ⟨concaveOn_const 1 (convex_Ici 0), fun s hs ↦ hF1 s hs⟩ ht
+    least_concave_majorant_le ⟨concaveOn_const 1 (convex_Ici 0), fun s hs ↦ hF1 s hs⟩ ht
   have hGm : MonotoneOn G (Ici 0) :=
-    ConcaveOn.monotoneOn_of_bddBelow hGc (c := 0) fun u hu ↦ (hF0 u hu).trans (hFG u hu)
+    ConcaveOn.monotone_on_of_bdd_below hGc (c := 0) fun u hu ↦ (hF0 u hu).trans (hFG u hu)
   have hy1 : 0 < y 1 := hy0 ▸ hylt 0 1 one_pos hk
   have hG0 : G 0 = 0 := by
     refine le_antisymm ?_ ((hF0 0 le_rfl).trans (hFG 0 le_rfl))
     have hmaj : IsConcaveMajorant F (fun t ↦ 0 + (1 / y 1) * (t - 0)) := by
-      refine ⟨concaveOn_affine _ _ _, fun s hs ↦ ?_⟩
+      refine ⟨concave_on_affine _ _ _, fun s hs ↦ ?_⟩
       have hs' : (0 : ℝ) ≤ s := hs
       simp only [zero_add, sub_zero]
       rcases lt_or_ge s (y 1) with h | h
@@ -537,20 +538,20 @@ theorem grenanderEstimator_isMaximumLikelihood {Ω : Type*} (X : ℕ → Ω → 
         positivity
       · calc F s ≤ 1 := hF1 s hs'
           _ ≤ 1 / y 1 * s := by rw [div_mul_eq_mul_div, one_mul, le_div_iff₀ hy1]; linarith
-    simpa using leastConcaveMajorant_le hmaj le_rfl
+    simpa using least_concave_majorant_le hmaj le_rfl
   have hGtop : ∀ t, y k ≤ t → G t = 1 := fun t ht ↦
     le_antisymm (hG1 t ((hynn k le_rfl).trans ht))
       ((hFtop t ht).symm.le.trans (hFG t ((hynn k le_rfl).trans ht)))
   set s : ℕ → ℝ := fun j ↦ (G (y (j + 1)) - G (y j)) / (y (j + 1) - y j) with hsdef
   have haff : ∀ j < k, ∀ t, y j ≤ t → t ≤ y (j + 1) → G t = G (y j) + s j * (t - y j) :=
-    fun j hj t h1 h2 ↦ leastConcaveMajorant_eq_affine hF0 hF1 (hynn j hj.le)
+    fun j hj t h1 h2 ↦ least_concave_majorant_eq_affine hF0 hF1 (hynn j hj.le)
       (hylt j (j + 1) (by omega) hj) (hFconst j hj) h1 h2
   have hsanti : ∀ j, j + 1 < k → s (j + 1) ≤ s j := fun j hj ↦
     hGc.slope_anti_adjacent (show y j ∈ Ici (0:ℝ) from hynn j (by omega))
       (show y (j + 2) ∈ Ici (0:ℝ) from hynn (j + 2) (by omega))
       (hylt j (j + 1) (by omega) (by omega)) (hylt (j + 1) (j + 2) (by omega) (by omega))
   have hknot : ∀ j, j + 1 < k → s (j + 1) < s j → G (y (j + 1)) = F (y (j + 1)) :=
-    fun j hj hlt ↦ leastConcaveMajorant_eq_of_slope_lt hF0 hF1 (hynn j (by omega))
+    fun j hj hlt ↦ least_concave_majorant_eq_of_slope_lt hF0 hF1 (hynn j (by omega))
       (hylt j (j + 1) (by omega) (by omega)) (hylt (j + 1) (j + 2) (by omega) (by omega))
       (hFconst j (by omega)) (hFconst (j + 1) hj) hlt
   have hspos : ∀ j < k, 0 < s j := by
@@ -822,7 +823,7 @@ nonincreasing on `[0, ∞)`, and let `f` be differentiable at `x₀ > 0` with `f
 gives continuity at `x₀`). Then `n^{1/3} (f̂ₙ(x₀) - f(x₀))` converges in distribution to
 `|4 f(x₀) f'(x₀)|^{1/3} Z`, where `Z = argmax_t (W(t) - t²)` for a two-sided Brownian motion `W`.
 Positivity `f(x₀) > 0` is not assumed: it follows from monotonicity and `f'(x₀) < 0`. -/
-theorem tendstoInDistribution_grenanderEstimator {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_grenander_estimator {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (f : ℝ → ℝ)
     (hf : HasDensity P volume f) (hneg : ∀ t < 0, f t = 0)

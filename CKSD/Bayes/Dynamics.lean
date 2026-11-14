@@ -11,6 +11,7 @@ public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.BenamouB
 public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.PlanInterpolation
 public import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Map
 
+
 /-!
 # Langevin dynamics: invariance, contraction, entropy decay, and score matching
 
@@ -24,7 +25,7 @@ models.
 * `CKSD.dist_synchronous_langevin_le_exp`: two solutions of `dX = b(X) dt + dW` driven by the same
   noise contract at rate `m` when `b` is `m`-monotone, `⟪b x - b y, x - y⟫ ≥ m ‖x - y‖²`
   (GAPS 104.38).
-* `CKSD.le_exp_neg_mul_of_hasDerivAt_neg_of_two_mul_le`: the Grönwall step behind exponential
+* `CKSD.le_exp_neg_mul_of_has_deriv_at_neg_of_two_mul_le`: the Grönwall step behind exponential
   entropy decay: `E' = -I` and `2m E ≤ I` give `E t ≤ e^{-2mt} E 0` (GAPS 104.41).
 * `CKSD.integral_sq_sub_score_div_two_eq`: Hyvärinen's score-matching identity (GAPS 104.64).
 * `CKSD.wasserstein_le_barycentric_velocity_action`: the barycentric velocity of a straight
@@ -144,7 +145,7 @@ theorem dist_synchronous_langevin_le_exp {d : ℕ}
 with `E' = -I` on `(0, ∞)` (dissipation of relative entropy by Fisher information) and
 `2m E ≤ I` (a logarithmic Sobolev inequality), then `E t ≤ e^{-2mt} E 0` for `t ≥ 0`. The
 coefficient `m` may be any real number. -/
-theorem le_exp_neg_mul_of_hasDerivAt_neg_of_two_mul_le (E I : ℝ → ℝ) (m : ℝ)
+theorem le_exp_neg_mul_of_has_deriv_at_neg_of_two_mul_le (E I : ℝ → ℝ) (m : ℝ)
     (hE : ContinuousOn E (Ici 0))
     (hder : ∀ t > 0, HasDerivAt E (-I t) t)
     (hlsi : ∀ t > 0, 2 * m * E t ≤ I t) :
@@ -254,7 +255,7 @@ theorem integral_sq_sub_score_div_two_eq (P : Measure ℝ) [IsProbabilityMeasure
 /-- Slice conditional expectations give the conditional expectation on the product space: if
 `v t (X t ·)` is a version of `𝔼[W | X t]` for `ρ`-almost every `t`, then `(t, ω) ↦ v t (X t ω)` is
 a version of `𝔼[W | (t, X t)]` under `ρ ⊗ π`. -/
-theorem condExp_prod_of_condExp_slices
+theorem cond_exp_prod_of_cond_exp_slices
     {T Ω Y E : Type*} [MeasurableSpace T] [MeasurableSpace Ω] [MeasurableSpace Y]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
@@ -334,7 +335,7 @@ theorem wasserstein_le_barycentric_velocity_action {d : ℕ}
     filter_upwards [ae_restrict_mem measurableSet_Ioo] with t ht
     exact hcond t ⟨ht.1.le, ht.2.le⟩
   -- Identify the supplied slice-wise conditional velocity with TauCeti's space-time version.
-  have hprod := condExp_prod_of_condExp_slices ρ π Xt hXt v hv _ hW hc
+  have hprod := cond_exp_prod_of_cond_exp_slices ρ π Xt hXt v hv _ hW hc
   obtain ⟨u, hce, hcu, _⟩ :=
     TauCeti.exists_isContinuityEquation_map_smul_fst_add_smul_snd π
       (by simpa only [← hasFiniteIntegral_iff_enorm] using hW.2)

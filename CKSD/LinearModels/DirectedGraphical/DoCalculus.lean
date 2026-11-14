@@ -2,6 +2,7 @@ module
 
 public import CKSD.LinearModels.DirectedGraphical.Markov
 
+
 /-!
 # Augmentation and rule 3 of the do-calculus
 
@@ -17,8 +18,8 @@ rule 3 of the do-calculus from the global directed Markov property.
 
 ## Main results
 
-* `CKSD.CausalGraph.dSeparated_augment_of_rule_three`: the graph-theoretic step of rule 3.
-* `CKSD.condDoMass_rule_three`: rule 3 (insertion and deletion of actions),
+* `CKSD.CausalGraph.d_separated_augment_of_rule_three`: the graph-theoretic step of rule 3.
+* `CKSD.cond_do_mass_rule_three`: rule 3 (insertion and deletion of actions),
   `P(y | do(x), do(z), w) = P(y | do(x), w)` when `Y` and `Z` are d-separated by `X ∪ W` in
   `G_{\bar X, \overline{Z(W)}}`.
 
@@ -98,7 +99,7 @@ theorem CausalGraph.augment_not_edge_to_none (G : CausalGraph V) (Z : Finset V)
 
 /-- Descendants among the original vertices of the augmented graph are descendants in the
 graph. -/
-theorem CausalGraph.isDescendant_of_augment (G : CausalGraph V) (Z : Finset V) {u v : V}
+theorem CausalGraph.is_descendant_of_augment (G : CausalGraph V) (Z : Finset V) {u v : V}
     (h : (G.augment Z).IsDescendant (some u) (some v)) : G.IsDescendant u v := by
   have key : ∀ a c, (G.augment Z).IsDescendant a c → ∀ u v, a = some u → c = some v →
       G.IsDescendant u v := by
@@ -126,10 +127,10 @@ def augmentedLocalMass (localMass : V → (V → S) → S → ℝ) (X Z : Finset
     else intervenedLocalMass localMass X b v (fun u ↦ y (some u)) s
 
 /-- The augmented local masses form a local mass family. -/
-theorem isLocalMassFamily_augmentedLocalMass [Fintype S] {localMass : V → (V → S) → S → ℝ}
+theorem is_local_mass_family_augmented_local_mass [Fintype S] {localMass : V → (V → S) → S → ℝ}
     (hloc : IsLocalMassFamily localMass) (X Z : Finset V) (b : V → S) {s₀ s₁ : S}
     (hs : s₀ ≠ s₁) : IsLocalMassFamily (augmentedLocalMass localMass X Z b s₀ s₁) := by
-  have hl := isLocalMassFamily_intervenedLocalMass hloc X b
+  have hl := is_local_mass_family_intervened_local_mass hloc X b
   refine ⟨fun o y s ↦ ?_, fun o y ↦ ?_⟩
   · cases o with
     | none =>
@@ -154,7 +155,7 @@ theorem isLocalMassFamily_augmentedLocalMass [Fintype S] {localMass : V → (V �
       · exact hl.2 v _
 
 /-- The augmented local masses respect the parents of the augmented graph of `G_{\bar X}`. -/
-theorem respectsParents_augmentedLocalMass (G : CausalGraph V)
+theorem respects_parents_augmented_local_mass (G : CausalGraph V)
     {localMass : V → (V → S) → S → ℝ} (hpar : G.RespectsParents localMass) (X Z : Finset V)
     (b : V → S) (s₀ s₁ : S) :
     ((G.removeIncoming ↑X).augment Z).RespectsParents
@@ -163,7 +164,7 @@ theorem respectsParents_augmentedLocalMass (G : CausalGraph V)
   cases o with
   | none => rfl
   | some v =>
-    have hi := respectsParents_intervenedLocalMass G hpar X b v (fun u ↦ y (some u))
+    have hi := respects_parents_intervened_local_mass G hpar X b v (fun u ↦ y (some u))
       (fun u ↦ y' (some u)) fun u hu ↦ h (some u) ((CausalGraph.augment_edge_some _ Z u v).2 hu)
     funext s
     simp only [augmentedLocalMass, Option.elim]
@@ -175,7 +176,7 @@ theorem respectsParents_augmentedLocalMass (G : CausalGraph V)
 
 /-- The recursive product of the augmented local masses: the indicator mass times the law
 under `do(X ∪ Z)` (indicator `s₁`) or under `do(X)` (any other value). -/
-theorem directedFactorizationMass_augmentedLocalMass [Fintype V]
+theorem directed_factorization_mass_augmented_local_mass [Fintype V]
     (localMass : V → (V → S) → S → ℝ) (X Z : Finset V) (b : V → S) (s₀ s₁ : S)
     (y : Option V → S) :
     directedFactorizationMass (augmentedLocalMass localMass X Z b s₀ s₁) y =
@@ -186,13 +187,13 @@ theorem directedFactorizationMass_augmentedLocalMass [Fintype V]
   rw [Fintype.prod_option]
   congr 1
   split_ifs with h1
-  · rw [← directedFactorizationMass_intervenedLocalMass]
+  · rw [← directed_factorization_mass_intervened_local_mass]
     unfold directedFactorizationMass
     refine Finset.prod_congr rfl fun v _ ↦ ?_
     simp only [augmentedLocalMass, Option.elim, h1, and_true, intervenedLocalMass,
       Finset.mem_union]
     by_cases hvZ : v ∈ Z <;> by_cases hvX : v ∈ X <;> simp [hvZ, hvX]
-  · rw [← directedFactorizationMass_intervenedLocalMass]
+  · rw [← directed_factorization_mass_intervened_local_mass]
     unfold directedFactorizationMass
     refine Finset.prod_congr rfl fun v _ ↦ ?_
     simp [augmentedLocalMass, Option.elim, h1]
@@ -209,7 +210,7 @@ private theorem sum_option_pi [Fintype V] [Fintype S]
   cases o <;> rfl
 
 /-- Marginal masses of the augmented mass, at a point with indicator value `s`. -/
-theorem marginalMass_augmented [Fintype V] [Fintype S] (localMass : V → (V → S) → S → ℝ)
+theorem marginal_mass_augmented [Fintype V] [Fintype S] (localMass : V → (V → S) → S → ℝ)
     (X Z : Finset V) (b : V → S) (s₀ s₁ : S) (T : Finset (Option V)) (s : S) (x : V → S) :
     marginalMass (directedFactorizationMass (augmentedLocalMass localMass X Z b s₀ s₁)) T
         (fun o ↦ o.elim s x) =
@@ -244,7 +245,7 @@ theorem marginalMass_augmented [Fintype V] [Fintype S] (localMass : V → (V →
           (if s' = s₁ then interventionMass localMass (X ∪ Z) b
             else interventionMass localMass X b) y := by
     intro y
-    rw [directedFactorizationMass_augmentedLocalMass]
+    rw [directed_factorization_mass_augmented_local_mass]
     by_cases h1 : s' = s₁ <;> simp [Option.elim, h1]
   by_cases hT : none ∈ T → s' = s
   · rw [ite_eq_left hT, Finset.mul_sum]
@@ -258,7 +259,7 @@ theorem marginalMass_augmented [Fintype V] [Fintype S] (localMass : V → (V →
 
 /-- A directed path of `G_{\bar X}` ending in `W` survives the removal of the arrows into the
 vertices of `Z` that are not ancestors of `W` in `G_{\bar X}`. -/
-theorem CausalGraph.transGen_removeIncoming_nonAncestorPart (G : CausalGraph V)
+theorem CausalGraph.trans_gen_remove_incoming_non_ancestor_part (G : CausalGraph V)
     {X Z W : Set V} (hZW : Disjoint Z W) :
     ∀ u w, (G.removeIncoming X).IsDescendant u w → w ∈ W →
       (G.removeIncoming (X ∪ G.nonAncestorPart X Z W)).IsDescendant u w := by
@@ -277,7 +278,7 @@ theorem CausalGraph.transGen_removeIncoming_nonAncestorPart (G : CausalGraph V)
       exact hZ w hw hbw
 
 /-- In `G_{\bar X}` no vertex is a proper ancestor of a vertex of `X`. -/
-theorem CausalGraph.not_isDescendant_removeIncoming_mem (G : CausalGraph V) {X : Set V}
+theorem CausalGraph.not_is_descendant_remove_incoming_mem (G : CausalGraph V) {X : Set V}
     {u x : V} (hx : x ∈ X) : ¬ (G.removeIncoming X).IsDescendant u x := by
   intro h
   obtain ⟨c, -, hc⟩ := Relation.TransGen.tail'_iff.1 h
@@ -286,7 +287,7 @@ theorem CausalGraph.not_isDescendant_removeIncoming_mem (G : CausalGraph V) {X :
 /-- The graph-theoretic step of rule 3: if `Y` and `Z` are d-separated by `X ∪ W` in
 `G_{\bar X, \overline{Z(W)}}`, then `Y` and the intervention indicator are d-separated by
 `X ∪ W` in the augmented graph of `G_{\bar X}`. -/
-theorem CausalGraph.dSeparated_augment_of_rule_three (G : CausalGraph V)
+theorem CausalGraph.d_separated_augment_of_rule_three (G : CausalGraph V)
     (X Y Z W : Finset V) (hXZ : Disjoint X Z) (hYZ : Disjoint Y Z) (hZW : Disjoint Z W)
     (hsep : (G.removeIncoming (↑X ∪ G.nonAncestorPart ↑X ↑Z ↑W)).DSeparated ↑Y ↑Z ↑(X ∪ W)) :
     ((G.removeIncoming ↑X).augment Z).DSeparated (some '' ↑Y) {none} (some '' ↑(X ∪ W)) := by
@@ -302,9 +303,9 @@ theorem CausalGraph.dSeparated_augment_of_rule_three (G : CausalGraph V)
     rintro c ⟨z, ⟨z', hz', rfl⟩, h⟩
     rcases h with h | h
     · exact Or.inl (Option.some_injective _ h ▸ hz')
-    · have hd := G'.isDescendant_of_augment Z h
+    · have hd := G'.is_descendant_of_augment Z h
       rcases Finset.mem_union.1 hz' with hx | hw
-      · exact absurd hd (G.not_isDescendant_removeIncoming_mem (by simpa using hx))
+      · exact absurd hd (G.not_is_descendant_remove_incoming_mem (by simpa using hx))
       · exact Or.inr ⟨z', hw, hd⟩
   have hnotZ1 : ∀ c : V, A.MemAncestorClosure Cp (some c) →
       c ∉ G.nonAncestorPart ↑X ↑Z ↑W := by
@@ -318,7 +319,7 @@ theorem CausalGraph.dSeparated_augment_of_rule_three (G : CausalGraph V)
     fun u v h hv ↦ ⟨h.1, fun h' ↦ h'.elim h.2 hv⟩
   intro n p h0 hn hp
   -- read the reversed path as a trail starting at the indicator
-  obtain ⟨htr, hinj⟩ := A.isTrailWith_of_isActivePath hp.rev
+  obtain ⟨htr, hinj⟩ := A.is_trail_with_of_is_active_path hp.rev
   set q : ℕ → Option V := fun k ↦ (p ∘ Fin.rev) ⟨min k n, by omega⟩ with hq
   have hq0 : q 0 = none := by simpa [hq] using hn
   obtain ⟨yv, hyv, hqn⟩ : ∃ yv ∈ Y, q n = some yv := by
@@ -451,16 +452,16 @@ theorem CausalGraph.dSeparated_augment_of_rule_three (G : CausalGraph V)
       · rcases hclos _ hs with h | ⟨w, hw, hd⟩
         · exact ⟨_, h, Or.inl rfl⟩
         · exact ⟨w, Finset.mem_union_right _ hw, Or.inr
-            (G.transGen_removeIncoming_nonAncestorPart (Finset.disjoint_coe.2 hZW) _ _ hd hw)⟩
+            (G.trans_gen_remove_incoming_non_ancestor_part (Finset.disjoint_coe.2 hZW) _ _ hd hw)⟩
       · exact fun h ↦ hs ⟨_, h, rfl⟩
-  exact hsep.symm.false_of_isTrailWith hrtr hr0 hrn
+  exact hsep.symm.false_of_is_trail_with hrtr hr0 hrn
 
 /-- GAPS 105.64, rule 3 of the do-calculus (insertion and deletion of actions):
 if `Y` and `Z` are d-separated by `X ∪ W` in `G_{\bar X, \overline{Z(W)}}`, then
 `P(y | do(x), do(z), w) = P(y | do(x), w)`. The conditioning events have positive
 interventional probability. The completeness of the three rules for identifiability is not
 stated. -/
-theorem condDoMass_rule_three [Fintype V] [Fintype S] (G : CausalGraph V)
+theorem cond_do_mass_rule_three [Fintype V] [Fintype S] (G : CausalGraph V)
     (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (X Y Z W : Finset V)
     (hdisj : Disjoint X Y ∧ Disjoint X Z ∧ Disjoint X W ∧ Disjoint Y Z ∧ Disjoint Y W ∧
@@ -488,11 +489,11 @@ theorem condDoMass_rule_three [Fintype V] [Fintype S] (G : CausalGraph V)
     rw [hM, hM, hM, hM, div_self h2.ne', div_self h1.ne']
   obtain ⟨s₀, s₁, hs⟩ := hS
   set e : V ↪ Option V := Function.Embedding.some
-  have hsep' := G.dSeparated_augment_of_rule_three X Y Z W hXZ hYZ hZW hsep
-  have hci := condIndepMass_directedFactorizationMass_of_dSeparated
+  have hsep' := G.d_separated_augment_of_rule_three X Y Z W hXZ hYZ hZW hsep
+  have hci := cond_indep_mass_directed_factorization_mass_of_d_separated
     ((G.removeIncoming ↑X).augment Z) (augmentedLocalMass localMass X Z b s₀ s₁)
-    (isLocalMassFamily_augmentedLocalMass hloc X Z b hs)
-    (respectsParents_augmentedLocalMass G hpar X Z b s₀ s₁) (Y.map e) {none} ((X ∪ W).map e)
+    (is_local_mass_family_augmented_local_mass hloc X Z b hs)
+    (respects_parents_augmented_local_mass G hpar X Z b s₀ s₁) (Y.map e) {none} ((X ∪ W).map e)
     ((Finset.disjoint_map e).2 (Finset.disjoint_union_right.2 ⟨hXY.symm, hYW⟩))
     (by simp [e]) (by simpa [e] using hsep') (fun o ↦ o.elim s₀ b)
   have hfilt : ∀ (T : Finset (Option V)) (E : Finset V), (∀ v, some v ∈ T ↔ v ∈ E) →
@@ -505,7 +506,7 @@ theorem condDoMass_rule_three [Fintype V] [Fintype S] (G : CausalGraph V)
     rw [Fintype.sum_eq_add s₀ s₁ hs fun s h ↦ by simp [h.1, h.2]]
     simp
     ring
-  simp only [marginalMass_augmented] at hci
+  simp only [marginal_mass_augmented] at hci
   rw [hfilt _ (Y ∪ (X ∪ W)) (fun v ↦ by simp [e]),
     hfilt _ (X ∪ W) (fun v ↦ by simp [e]),
     hfilt _ (Y ∪ (X ∪ W)) (fun v ↦ by simp [e]),
@@ -516,14 +517,14 @@ theorem condDoMass_rule_three [Fintype V] [Fintype S] (G : CausalGraph V)
   rw [hw, hw] at hci
   simp only [hs, ite_false, ite_true, true_or] at hci
   have hsX : ∀ y, interventionMass localMass X b y ≠ 0 → ∀ v ∈ X, y v = b v :=
-    fun y hy ↦ interventionMass_support hy
+    fun y hy ↦ intervention_mass_support hy
   have hsXZ : ∀ y, interventionMass localMass (X ∪ Z) b y ≠ 0 → ∀ v ∈ X, y v = b v :=
-    fun y hy v hv ↦ interventionMass_support hy v (Finset.mem_union_left _ hv)
+    fun y hy v hv ↦ intervention_mass_support hy v (Finset.mem_union_left _ hv)
   have e1 : Y ∪ (X ∪ W) = (Y ∪ W) ∪ X := by
     ext v; simp only [Finset.mem_union]; tauto
   have e2 : X ∪ W = W ∪ X := Finset.union_comm _ _
-  rw [e1, e2, marginalMass_union_of_support hsX, marginalMass_union_of_support hsX,
-    marginalMass_union_of_support hsXZ, marginalMass_union_of_support hsXZ] at hci
+  rw [e1, e2, marginal_mass_union_of_support hsX, marginal_mass_union_of_support hsX,
+    marginal_mass_union_of_support hsXZ, marginal_mass_union_of_support hsXZ] at hci
   unfold condDoMass
   change marginalMass (interventionMass localMass (X ∪ Z) b) (Y ∪ W) b /
       marginalMass (interventionMass localMass (X ∪ Z) b) W b =

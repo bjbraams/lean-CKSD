@@ -8,6 +8,7 @@ public import TauCeti.Probability.Distributions.Chi.Gaussian
 public import TauCeti.Probability.Distributions.StudentT.Basic
 public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
 
+
 /-!
 # Consistency, argmax and multinomial asymptotics
 
@@ -34,7 +35,7 @@ namespace CKSD
 attribute [local instance] Classical.propDecidable
 
 /-- Constant random variables converge in probability to their constant value. -/
-theorem tendstoInMeasure_const {Ω E : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_const {Ω E : Type*} [MeasurableSpace Ω]
     [PseudoMetricSpace E] (μ : Measure Ω) (x : E) :
     TendstoInMeasure μ (fun (_ : ℕ) (_ : Ω) ↦ x) atTop (fun _ ↦ x) := by
   intro ε hε
@@ -42,7 +43,7 @@ theorem tendstoInMeasure_const {Ω E : Type*} [MeasurableSpace Ω]
 
 /-- GAPS 102.23: consistency from uniform convergence and a separated maximum.
 Pointwise bounds avoid any unmentioned measurability of a supremum. -/
-theorem tendstoInMeasure_mEstimator {Ω Θ : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_m_estimator {Ω Θ : Type*} [MeasurableSpace Ω]
     [MetricSpace Θ] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (M : Θ → ℝ) (Mn : ℕ → Ω → Θ → ℝ) (θ₀ : Θ) (T : ℕ → Ω → Θ)
     (e r : ℕ → Ω → ℝ)
@@ -51,7 +52,7 @@ theorem tendstoInMeasure_mEstimator {Ω Θ : Type*} [MeasurableSpace Ω]
     (hunif : ∀ n, ∀ᵐ ω ∂μ, ∀ θ, |Mn n ω θ - M θ| ≤ e n ω)
     (hopt : ∀ n, ∀ᵐ ω ∂μ, Mn n ω θ₀ - r n ω ≤ Mn n ω (T n ω)) :
     TendstoInMeasure μ T atTop (fun _ ↦ θ₀) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at he hr ⊢
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at he hr ⊢
   intro ε hε
   obtain ⟨δ, hδ, hsepδ⟩ := hsep ε hε
   have he' := he (δ / 8) (by positivity)
@@ -80,7 +81,7 @@ theorem tendstoInMeasure_mEstimator {Ω Θ : Type*} [MeasurableSpace Ω]
 
 /-- The orthogonal projection of a standard Gaussian vector onto a subspace `K` is standard
 Gaussian on `K`. -/
-private theorem stdGaussian_map_orthogonalProjectionOnto {E : Type*} [NormedAddCommGroup E]
+private theorem std_gaussian_map_orthogonal_projection_onto {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     (K : Submodule ℝ E) :
     (stdGaussian E).map K.orthogonalProjectionOnto = stdGaussian K := by
@@ -96,7 +97,7 @@ private theorem stdGaussian_map_orthogonalProjectionOnto {E : Type*} [NormedAddC
 open scoped Matrix in
 /-- A centred Gaussian vector in `ℝᵏ` whose covariance form is `‖x‖² - ⟪u, x⟫²` for a unit vector
 `u` (the projection onto `u⊥`) has squared norm with law `χ²_{k-1}`. -/
-private theorem multivariateGaussian_map_norm_sq_of_quadratic_eq {k : ℕ} (hk : 1 ≤ k)
+private theorem multivariate_gaussian_map_norm_sq_of_quadratic_eq {k : ℕ} (hk : 1 ≤ k)
     (C : Matrix (Fin k) (Fin k) ℝ) (hC : C.PosSemidef) (u : EuclideanSpace ℝ (Fin k))
     (hu : ‖u‖ = 1) (hq : ∀ x : EuclideanSpace ℝ (Fin k),
       x ⬝ᵥ C *ᵥ x = ‖x‖ ^ 2 - inner ℝ u x ^ 2) :
@@ -130,7 +131,7 @@ private theorem multivariateGaussian_map_norm_sq_of_quadratic_eq {k : ℕ} (hk :
       (fun y : K ↦ ‖y‖ ^ 2) ∘ K.orthogonalProjectionOnto := by
     funext y; simp
   rw [this, ← Measure.map_map (by fun_prop) (by fun_prop),
-    stdGaussian_map_orthogonalProjectionOnto, TauCeti.Probability.stdGaussian_map_norm_sq, hfin]
+    std_gaussian_map_orthogonal_projection_onto, TauCeti.Probability.stdGaussian_map_norm_sq, hfin]
 
 
 /-- Integrals against the categorical law `∑ᵢ pᵢ δᵢ` on `Fin k` are finite weighted sums. -/
@@ -144,7 +145,7 @@ private theorem integral_categorical {k : ℕ} {F : Type*} [NormedAddCommGroup F
 
 /-- Convergence in distribution to `Z` under `μ'` is convergence to the identity under the law of
 `Z`. -/
-private theorem tendstoInDistribution_id_of_map_eq {Ω E Ω' : Type*} [MeasurableSpace Ω]
+private theorem tendsto_in_distribution_id_of_map_eq {Ω E Ω' : Type*} [MeasurableSpace Ω]
     [MeasurableSpace Ω']
     [TopologicalSpace E] [MeasurableSpace E] [OpensMeasurableSpace E] {X : ℕ → Ω → E}
     {Z : Ω' → E} {μ : ℕ → Measure Ω} [∀ n, IsProbabilityMeasure (μ n)] {μ' : Measure Ω'}
@@ -160,7 +161,7 @@ private theorem tendstoInDistribution_id_of_map_eq {Ω E Ω' : Type*} [Measurabl
 open scoped Matrix in
 /-- GAPS 102.31: Pearson's chi-squared statistic `∑ (Nᵢ - n pᵢ)² / (n pᵢ)` for i.i.d. observations
 with `k ≥ 2` categories of positive probabilities `pᵢ` converges in law to `χ²_{k-1}`. -/
-theorem tendstoInDistribution_pearson_statistic {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_pearson_statistic {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (k : ℕ) (hk : 2 ≤ k)
     (p : Fin k → ℝ) (hp : ∀ i, 0 < p i) (hsum : ∑ i, p i = 1)
     (X : ℕ → Ω → Fin k)
@@ -235,12 +236,12 @@ theorem tendstoInDistribution_pearson_statistic {Ω : Type*} [MeasurableSpace Ω
       ← Finset.sum_mul, hsum, ← hs, EuclideanSpace.real_norm_sq_eq]
     rw [real_inner_comm u x]
     ring
-  have hclt := tendstoInDistribution_inv_sqrt_smul_sum_sub_of_iid μ Y h2 hYind hYid
+  have hclt := tendsto_in_distribution_inv_sqrt_smul_sum_sub_of_iid μ Y h2 hYind hYid
   simp only [hmean, smul_zero, sub_zero] at hclt
   have hcomp := hclt.continuous_comp (g := fun x : EuclideanSpace ℝ (Fin k) ↦ ‖x‖ ^ 2)
     (by fun_prop)
-  have hlim := multivariateGaussian_map_norm_sq_of_quadratic_eq (by omega) C hC u hu1 hq
-  refine (tendstoInDistribution_id_of_map_eq hcomp (by rw [Function.comp_id]; exact hlim)).congr
+  have hlim := multivariate_gaussian_map_norm_sq_of_quadratic_eq (by omega) C hC u hu1 hq
+  refine (tendsto_in_distribution_id_of_map_eq hcomp (by rw [Function.comp_id]; exact hlim)).congr
     (fun n ↦ ae_of_all _ fun ω ↦ ?_) (ae_of_all _ fun _ ↦ rfl)
   have hcoord : ∀ i, (∑ j ∈ Finset.range n, Y j ω) i =
       (r i)⁻¹ * (((Finset.range n).filter (fun j ↦ X j ω = i)).card : ℝ) - n * r i := by
@@ -263,7 +264,7 @@ theorem tendstoInDistribution_pearson_statistic {Ω : Type*} [MeasurableSpace Ω
 /-- GAPS 102.33, the argmax theorem with a deterministic limit on a compact space. If the
 criteria `Mₙ` converge uniformly in probability to a continuous `M` with a unique maximizer `θ`,
 then maximizers `Tₙ` of `Mₙ` converge in probability to `θ`. -/
-theorem tendstoInMeasure_argmax_of_compact
+theorem tendsto_in_measure_argmax_of_compact
     {Ω H : Type*} [MeasurableSpace Ω]
     [MetricSpace H] [CompactSpace H] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (M : H → ℝ) (hc : Continuous M) (θ : H) (huniq : ∀ h, h ≠ θ → M h < M θ)
@@ -291,8 +292,8 @@ theorem tendstoInMeasure_argmax_of_compact
     · refine ⟨1, zero_lt_one, ?_⟩
       intro h hh
       exact (hne ⟨h, hh⟩).elim
-  apply tendstoInMeasure_mEstimator μ M Mn θ T e (fun _ _ ↦ 0)
-    he (tendstoInMeasure_const μ 0) hsep hu
+  apply tendsto_in_measure_m_estimator μ M Mn θ T e (fun _ _ ↦ 0)
+    he (tendsto_in_measure_const μ 0) hsep hu
   intro n
   filter_upwards [ho n] with ω hω
   simpa only [sub_zero] using hω θ

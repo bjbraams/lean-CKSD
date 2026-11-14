@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldContinuityMoments
 public import CKSD.Bayes.MeanFieldCore
 /-!
@@ -23,7 +24,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   [MeasurableSpace E] [BorelSpace E]
 /-- Bounded velocity makes a narrowly continuous probability solution Lipschitz in first
 Wasserstein distance on nonnegative time, even before any moment condition is known. -/
-theorem wassersteinEDist_one_nonneg_le_of_isContinuityEquation_of_bound
+theorem wasserstein_e_dist_one_nonneg_le_of_is_continuity_equation_of_bound
     (μ : ℝ → Measure E) (hp : ∀ t ≥ 0, IsProbabilityMeasure (μ t))
     (hc : ∀ g : BoundedContinuousFunction E ℝ, ContinuousOn (fun t ↦ ∫ x, g x ∂μ t) (Ici 0))
     (v : ℝ → E → E) (hce : ∀ T > 0, TauCeti.IsContinuityEquation μ v 0 T)
@@ -31,19 +32,19 @@ theorem wassersteinEDist_one_nonneg_le_of_isContinuityEquation_of_bound
     (s : ℝ) (hs : 0 ≤ s) (t : ℝ) (ht : 0 ≤ t) :
     TauCeti.wassersteinEDist 1 (μ s) (μ t) ≤ ENNReal.ofReal (B * |t - s|) := by
   let ν := finiteMeasureNonnegExtension μ hp
-  have hν : Continuous ν := continuous_finiteMeasure_nonneg_extension μ hp hc
+  have hν : Continuous ν := continuous_finite_measure_nonneg_extension μ hp hc
   have hνeq (r : ℝ) (hr : 0 ≤ r) : (ν r : Measure E) = μ r := by
-    simp only [ν, finiteMeasureNonnegExtension_toMeasure, max_eq_right hr]
+    simp only [ν, finite_measure_nonneg_extension_to_measure, max_eq_right hr]
   have hνce (R : ℝ) (hR : 0 < R) :
       TauCeti.IsContinuityEquation (fun r ↦ (ν r : Measure E)) v 0 R := by
-    apply isContinuityEquation_congr_measure_on_Ioo (hce R hR)
+    apply is_continuity_equation_congr_measure_on_ioo (hce R hR)
       ((hce R hR).measurable.comp (continuous_const.max continuous_id).measurable)
     intro r hr
     exact hνeq r hr.1.le
   have hfor (a : ℝ) (ha : 0 ≤ a) (b : ℝ) (hab : a ≤ b) :
       TauCeti.wassersteinEDist 1 (μ a) (μ b) ≤ ENNReal.ofReal (B * (b - a)) := by
     have hb0 : 0 ≤ b := ha.trans hab
-    have hh := wassersteinEDist_one_le_of_isContinuityEquation_of_bound
+    have hh := wasserstein_e_dist_one_le_of_is_continuity_equation_of_bound
       ((hνce (b + 1) (by linarith)).mono ha (by linarith : b ≤ b + 1))
       (hν.continuousOn) hab (fun r hr ↦ by rw [hνeq r (ha.trans hr.1)]; exact hp r (ha.trans hr.1))
       B hB (fun r hr x ↦ hb r (ha.trans hr.1.le) x)
@@ -56,7 +57,7 @@ theorem wassersteinEDist_one_nonneg_le_of_isContinuityEquation_of_bound
 
 /-- Wasserstein-Lipschitz marginal curves give globally Lipschitz nonlinear drifts after
 projecting time to the nonnegative half-line. -/
-theorem IsWassersteinLipschitzDrift.lipschitzWith_nonneg_marginalDrift_of_wasserstein_bound {d : ℕ}
+theorem IsWassersteinLipschitzDrift.lipschitz_with_nonneg_marginal_drift_of_wasserstein_bound {d : ℕ}
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d))
     {L : ℝ} (hb : IsWassersteinLipschitzDrift b L) (hL : 0 ≤ L)
     (μ : ℝ → Measure (EuclideanSpace ℝ (Fin d))) (hp : ∀ t ≥ 0, IsProbabilityMeasure (μ t))
@@ -90,7 +91,7 @@ theorem IsWassersteinLipschitzDrift.lipschitzWith_nonneg_marginalDrift_of_wasser
 
 /-- Along a bounded-velocity nonlinear continuity-equation solution, a Wasserstein-Lipschitz
 drift is globally Lipschitz in space and projected nonnegative time. -/
-theorem IsWassersteinLipschitzDrift.lipschitzWith_nonneg_marginalDrift {d : ℕ}
+theorem IsWassersteinLipschitzDrift.lipschitz_with_nonneg_marginal_drift {d : ℕ}
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d))
     {L : ℝ} (hb : IsWassersteinLipschitzDrift b L) (hL : 0 ≤ L)
     (μ : ℝ → Measure (EuclideanSpace ℝ (Fin d))) (hp : ∀ t ≥ 0, IsProbabilityMeasure (μ t))
@@ -101,10 +102,10 @@ theorem IsWassersteinLipschitzDrift.lipschitzWith_nonneg_marginalDrift {d : ℕ}
     (hbound : ∀ t ≥ 0, ∀ x, ‖b x (μ t)‖ ≤ B) :
     LipschitzWith (Real.toNNReal (L * (B + 1)))
       (fun q : ℝ × EuclideanSpace ℝ (Fin d) ↦ b q.2 (μ (max 0 q.1))) := by
-  apply hb.lipschitzWith_nonneg_marginalDrift_of_wasserstein_bound b hL μ hp
-    (fun t ht ↦ integrable_norm_of_isContinuityEquation_on_nonneg μ hp hc _ hce hi t ht) B hB
+  apply hb.lipschitz_with_nonneg_marginal_drift_of_wasserstein_bound b hL μ hp
+    (fun t ht ↦ integrable_norm_of_is_continuity_equation_on_nonneg μ hp hc _ hce hi t ht) B hB
   intro s hs t ht
-  have hW := wassersteinEDist_one_nonneg_le_of_isContinuityEquation_of_bound μ hp hc _ hce
+  have hW := wasserstein_e_dist_one_nonneg_le_of_is_continuity_equation_of_bound μ hp hc _ hce
     B hB hbound s hs t ht
   simpa only [ENNReal.toReal_ofReal (mul_nonneg hB (abs_nonneg _))] using
     ENNReal.toReal_mono ENNReal.ofReal_ne_top hW

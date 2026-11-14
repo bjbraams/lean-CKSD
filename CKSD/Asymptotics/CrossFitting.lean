@@ -2,6 +2,7 @@ module
 
 public import CKSD.Asymptotics.Statistics
 
+
 /-!
 # Cross-fitted estimation of a missing mean
 
@@ -20,7 +21,7 @@ infinite norm cannot be replaced by a junk real value.
 
 ## Main results
 
-* `CKSD.crossFittedAverage_missingMean_asymptotically_linear`: asymptotic linearity of the
+* `CKSD.cross_fitted_average_missing_mean_asymptotically_linear`: asymptotic linearity of the
   cross-fitted estimator (GAPS 102.39).
 
 ## Implementation notes
@@ -230,7 +231,7 @@ variable {X : Type*} [MeasurableSpace X]
 /-- **Missing at random as a density identity.** If the response is missing at random with
 propensity `π₀ ≥ 0`, the law of `(X, Y)` on the event `R = 1` has density `π₀(x)` with respect to
 the law of `(X, Y)`. -/
-private theorem map_restrict_observed_eq_withDensity (P : Measure (Bool × X × ℝ))
+private theorem map_restrict_observed_eq_with_density (P : Measure (Bool × X × ℝ))
     [IsProbabilityMeasure P] (π₀ : X → ℝ) (hπ₀m : Measurable π₀) (hπ₀0 : ∀ x, 0 ≤ π₀ x)
     (hmar : ∀ A B, MeasurableSet A → MeasurableSet B →
       P.real {w | w.1 = true ∧ w.2.1 ∈ A ∧ w.2.2 ∈ B} =
@@ -317,7 +318,7 @@ private theorem integral_ite_observed_eq (P : Measure (Bool × X × ℝ))
     measurable_fst (measurableSet_singleton true)
   have heq : (P.restrict {w | w.1 = true}).map q =
       (P.map q).withDensity fun p ↦ (((π₀ p.1).toNNReal : ℝ≥0) : ℝ≥0∞) :=
-    map_restrict_observed_eq_withDensity P π₀ hπ₀m hπ₀0 hmar
+    map_restrict_observed_eq_with_density P π₀ hπ₀m hπ₀0 hmar
   have hdm : Measurable fun p : X × ℝ ↦ (π₀ p.1).toNNReal := by fun_prop
   have hind : (fun w : Bool × X × ℝ ↦ if w.1 = true then F (w.2.1, w.2.2) else 0) =
       {w | w.1 = true}.indicator (F ∘ q) := by
@@ -340,7 +341,7 @@ private theorem integral_ite_observed_eq (P : Measure (Bool × X × ℝ))
 
 /-- A truncation bound for a positive part: if `∫_{0 ≤ g ≤ M} g ≤ C` for every `M`, then
 `∫⁻ g⁺ ≤ C`. -/
-private theorem lintegral_ofReal_le_of_setIntegral_le {Ω : Type*} [MeasurableSpace Ω]
+private theorem lintegral_of_real_le_of_set_integral_le {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsFiniteMeasure μ] {g : Ω → ℝ} (hg : Measurable g) {C : ℝ}
     (hC : ∀ M : ℕ, ∫ w in {w | 0 ≤ g w ∧ g w ≤ M}, g w ∂μ ≤ C) :
     ∫⁻ w, ENNReal.ofReal (g w) ∂μ ≤ ENNReal.ofReal C := by
@@ -384,7 +385,7 @@ private theorem integrable_of_regression (P : Measure (Bool × X × ℝ)) [IsPro
     (abs_integral_le_integral_abs).trans (setIntegral_le_integral hYi.abs
       (Eventually.of_forall fun _ ↦ abs_nonneg _))
   have hpos : ∫⁻ w, ENNReal.ofReal (m₀ w.2.1) ∂P ≤ ENNReal.ofReal (∫ w, |w.2.2| ∂P) := by
-    refine lintegral_ofReal_le_of_setIntegral_le hgm fun M ↦ ?_
+    refine lintegral_of_real_le_of_set_integral_le hgm fun M ↦ ?_
     have hA : MeasurableSet {x | 0 ≤ m₀ x ∧ m₀ x ≤ M} :=
       (measurableSet_le measurable_const hm₀m).inter (measurableSet_le hm₀m measurable_const)
     have hset : {w : Bool × X × ℝ | w.2.1 ∈ {x | 0 ≤ m₀ x ∧ m₀ x ≤ M}} =
@@ -393,7 +394,7 @@ private theorem integrable_of_regression (P : Measure (Bool × X × ℝ)) [IsPro
     exact (le_abs_self _).trans (hbound _ hA)
   have hneg : ∫⁻ w, ENNReal.ofReal (-m₀ w.2.1) ∂P ≤ ENNReal.ofReal (∫ w, |w.2.2| ∂P) := by
     have hnm : Measurable fun w : Bool × X × ℝ ↦ -m₀ w.2.1 := by fun_prop
-    refine lintegral_ofReal_le_of_setIntegral_le hnm fun M ↦ ?_
+    refine lintegral_of_real_le_of_set_integral_le hnm fun M ↦ ?_
     have hA : MeasurableSet {x | 0 ≤ -m₀ x ∧ -m₀ x ≤ M} :=
       (measurableSet_le measurable_const hm₀m.neg).inter
         (measurableSet_le hm₀m.neg measurable_const)
@@ -482,7 +483,7 @@ private theorem enorm_integral_comp_mul_div_le {Ω : Type*} [MeasurableSpace Ω]
 nuisance values `(m, π)` with `π ≥ δ` and `m - m₀, π - π₀ ∈ L²(P_X)`, the mean of the difference
 of the scores at `(m, π)` and `(m₀, π₀)` is `E[(m - m₀)(π - π₀)/π](X)`, so it is bounded by
 `δ⁻¹ ‖m - m₀‖₂ ‖π - π₀‖₂`. -/
-private theorem enorm_integral_missingMeanScore_sub_le (P : Measure (Bool × X × ℝ))
+private theorem enorm_integral_missing_mean_score_sub_le (P : Measure (Bool × X × ℝ))
     [IsProbabilityMeasure P] (hY : MemLp (fun w : Bool × X × ℝ ↦ w.2.2) 2 P)
     (π₀ m₀ : X → ℝ) (hπ₀m : Measurable π₀) (hm₀m : Measurable m₀) {δ : ℝ} (hδ : 0 < δ)
     (hπ₀ : ∀ x, δ ≤ π₀ x)
@@ -594,7 +595,7 @@ private theorem enorm_integral_missingMeanScore_sub_le (P : Measure (Bool × X �
   exact enorm_integral_comp_mul_div_le P hX hum (hπ.sub hπ₀m) hπ hδ hπδ
 
 /-- The squared `L²` seminorm bound `‖f‖₂ ≤ η` gives `∫⁻ f² ≤ η²`. -/
-private theorem lintegral_ofReal_sq_le_of_eLpNorm_le {Ω : Type*} [MeasurableSpace Ω]
+private theorem lintegral_of_real_sq_le_of_e_lp_norm_le {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} {f : Ω → ℝ} (hfm : AEStronglyMeasurable f μ) {η : ℝ} (hη : 0 ≤ η)
     (hf : eLpNorm f 2 μ ≤ ENNReal.ofReal η) :
     ∫⁻ x, ENNReal.ofReal (f x ^ 2) ∂μ ≤ ENNReal.ofReal (η ^ 2) := by
@@ -610,7 +611,7 @@ private theorem lintegral_ofReal_sq_le_of_eLpNorm_le {Ω : Type*} [MeasurableSpa
 
 omit [MeasurableSpace X] in
 /-- The augmented inverse-probability score only uses the response when it is observed. -/
-private theorem missingMeanScore_missingDataObservation (h : (X → ℝ) × (X → ℝ))
+private theorem missing_mean_score_missing_data_observation (h : (X → ℝ) × (X → ℝ))
     (w : Bool × X × ℝ) :
     missingMeanScore h.1 h.2 (missingDataObservation w).2.1 (missingDataObservation w).1
         (missingDataObservation w).2.2 = missingMeanScore h.1 h.2 w.2.1 w.1 w.2.2 := by
@@ -618,7 +619,7 @@ private theorem missingMeanScore_missingDataObservation (h : (X → ℝ) × (X �
 
 /-- **Cross-fitting decomposition.** For `n ≥ 1`, the centred and scaled cross-fitted average
 minus the linear term is the sum over folds of the scaled fold sums of score differences. -/
-private theorem sqrt_mul_crossFittedAverage_sub_eq {Y H : Type*} {n K : ℕ} (hn : 0 < n)
+private theorem sqrt_mul_cross_fitted_average_sub_eq {Y H : Type*} {n K : ℕ} (hn : 0 < n)
     (split : SampleSplit n K) (train : ∀ k : Fin K, (split.trainingIndices k → Y) → H)
     (score : H → Y → ℝ) (s₀ : Y → ℝ) (x y : Fin n → Y)
     (hxy : ∀ h i, score h (x i) = score h (y i)) (c : ℝ) :
@@ -645,12 +646,12 @@ private theorem sqrt_mul_crossFittedAverage_sub_eq {Y H : Type*} {n K : ℕ} (hn
 
 omit [MeasurableSpace X] in
 /-- Unfolding of the augmented inverse-probability score. -/
-private theorem missingMeanScore_def (m π : X → ℝ) (x : X) (r : Bool) (y : ℝ) :
+private theorem missing_mean_score_def (m π : X → ℝ) (x : X) (r : Bool) (y : ℝ) :
     missingMeanScore m π x r y = m x + if r = true then (y - m x) / π x else 0 := rfl
 
 /-- Measurability of the augmented inverse-probability score with measurably estimated
 nuisance functions. -/
-private theorem measurable_missingMeanScore_comp {Z : Type*} [MeasurableSpace Z]
+private theorem measurable_missing_mean_score_comp {Z : Type*} [MeasurableSpace Z]
     {h : Z → (X → ℝ) × (X → ℝ)} (h₁ : Measurable fun p : Z × X ↦ (h p.1).1 p.2)
     (h₂ : Measurable fun p : Z × X ↦ (h p.1).2 p.2) :
     Measurable fun p : Z × (Bool × X × ℝ) ↦
@@ -661,25 +662,25 @@ private theorem measurable_missingMeanScore_comp {Z : Type*} [MeasurableSpace Z]
     h₁.comp (measurable_fst.prodMk (measurable_fst.comp (measurable_snd.comp measurable_snd)))
   have hπ : Measurable fun p : Z × (Bool × X × ℝ) ↦ (h p.1).2 p.2.2.1 :=
     h₂.comp (measurable_fst.prodMk (measurable_fst.comp (measurable_snd.comp measurable_snd)))
-  simp only [missingMeanScore_def]
+  simp only [missing_mean_score_def]
   exact hm.add (Measurable.ite hS (((measurable_snd.comp (measurable_snd.comp
     measurable_snd)).sub hm).div hπ) measurable_const)
 
 /-- Measurability of the difference of two augmented inverse-probability scores, one with
 measurably estimated nuisance functions. -/
-private theorem measurable_missingMeanScore_sub {Z : Type*} [MeasurableSpace Z]
+private theorem measurable_missing_mean_score_sub {Z : Type*} [MeasurableSpace Z]
     {h : Z → (X → ℝ) × (X → ℝ)} (h₁ : Measurable fun p : Z × X ↦ (h p.1).1 p.2)
     (h₂ : Measurable fun p : Z × X ↦ (h p.1).2 p.2) {m₀ π₀ : X → ℝ} (hm₀m : Measurable m₀)
     (hπ₀m : Measurable π₀) :
     Measurable fun p : Z × (Bool × X × ℝ) ↦
       missingMeanScore (h p.1).1 (h p.1).2 p.2.2.1 p.2.1 p.2.2.2 -
         missingMeanScore m₀ π₀ p.2.2.1 p.2.1 p.2.2.2 :=
-  (measurable_missingMeanScore_comp h₁ h₂).sub
-    (measurable_missingMeanScore_comp (h := fun _ ↦ (m₀, π₀)) (hm₀m.comp measurable_snd)
+  (measurable_missing_mean_score_comp h₁ h₂).sub
+    (measurable_missing_mean_score_comp (h := fun _ ↦ (m₀, π₀)) (hm₀m.comp measurable_snd)
       (hπ₀m.comp measurable_snd))
 
 /-- Measurability of the observed-data map `(R, X, Y) ↦ (R, X, R Y)`. -/
-private theorem measurable_missingDataObservation :
+private theorem measurable_missing_data_observation :
     Measurable (missingDataObservation : Bool × X × ℝ → Bool × X × ℝ) := by
   have hS : MeasurableSet {w : Bool × X × ℝ | w.1 = true} :=
     measurable_fst (measurableSet_singleton true)
@@ -792,7 +793,7 @@ private theorem tendsto_measure_lt_abs_fold_term {Ω : Type*} [MeasurableSpace �
     subst hA; exact hiT (Finset.mem_filter.1 hi).2
   have hΦ : Measurable fun z : (split n).trainingIndices k → Bool × X × ℝ ↦
       fun j ↦ missingDataObservation (z j) :=
-    measurable_pi_iff.2 fun j ↦ measurable_missingDataObservation.comp (measurable_pi_apply j)
+    measurable_pi_iff.2 fun j ↦ measurable_missing_data_observation.comp (measurable_pi_apply j)
   obtain ⟨G, hGdef⟩ : ∃ G : ((split n).trainingIndices k → Bool × X × ℝ) × (Bool × X × ℝ) → ℝ,
       G = fun p ↦ missingMeanScore (train n k fun j ↦ missingDataObservation (p.1 j)).1
         (train n k fun j ↦ missingDataObservation (p.1 j)).2 p.2.2.1 p.2.1 p.2.2.2 -
@@ -805,7 +806,7 @@ private theorem tendsto_measure_lt_abs_fold_term {Ω : Type*} [MeasurableSpace �
     (htrain₂ n k).comp ((hΦ.comp measurable_fst).prodMk measurable_snd)
   have hG : Measurable G := by
     rw [hGdef]
-    exact measurable_missingMeanScore_sub
+    exact measurable_missing_mean_score_sub
       (h := fun z : (split n).trainingIndices k → Bool × X × ℝ ↦
         train n k fun j ↦ missingDataObservation (z j)) hg₁ hg₂ hm₀m hπ₀m
   have hsn : 0 < Real.sqrt n := Real.sqrt_pos.2 (by exact_mod_cast hn)
@@ -829,7 +830,7 @@ private theorem tendsto_measure_lt_abs_fold_term {Ω : Type*} [MeasurableSpace �
   have hbad : {ω | ENNReal.ofReal (η ^ 2) < ∫⁻ y, ENNReal.ofReal (D ω y ^ 2) ∂P} ⊆
       {ω | ENNReal.ofReal η < eLpNorm (D ω) 2 P} := fun ω hω ↦ by
     by_contra h
-    exact (not_lt.2 (lintegral_ofReal_sq_le_of_eLpNorm_le (hDm ω).aestronglyMeasurable hη.le
+    exact (not_lt.2 (lintegral_of_real_sq_le_of_e_lp_norm_le (hDm ω).aestronglyMeasurable hη.le
       (not_lt.1 h))) hω
   have hrem : ENNReal.ofReal (A.card * η ^ 2 / (ε / 2 * Real.sqrt n) ^ 2) ≤
       ENNReal.ofReal r := by
@@ -874,7 +875,7 @@ private theorem tendsto_measure_lt_abs_fold_term {Ω : Type*} [MeasurableSpace �
       (htrain₁ n k).comp (measurable_const.prodMk measurable_id)
     have hπ : Measurable fun x ↦ (train n k fun j ↦ missingDataObservation (W j.val ω)).2 x :=
       (htrain₂ n k).comp (measurable_const.prodMk measurable_id)
-    have hbias := enorm_integral_missingMeanScore_sub_le P hY π₀ m₀ hπ₀m hm₀m hδ hπ₀ hmar hreg
+    have hbias := enorm_integral_missing_mean_score_sub_le P hY π₀ m₀ hπ₀m hm₀m hδ hπ₀ hmar hreg
       _ _ hm hπ (hπhat n k _) ((heu ω).trans_le hu1 |>.trans_lt ENNReal.ofReal_lt_top)
     rw [heu, hev, hDω] at hbias
     have hc := sqrt_mul_abs_le_of_enorm_le hsn.le hδ hε.le hbias hp
@@ -915,7 +916,7 @@ are computed from the observed data `(R, X, RY)` outside fold `k`. On each fold 
 errors of `m̂` and `π̂` tend to zero in probability, their product is `o_P(n^{-1/2})`, and the
 `L²(P)` distance between the estimated and true scores, with the nuisance estimates held fixed,
 tends to zero in probability. -/
-theorem crossFittedAverage_missingMean_asymptotically_linear
+theorem cross_fitted_average_missing_mean_asymptotically_linear
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure (Bool × X × ℝ))
     [IsProbabilityMeasure P] (W : ℕ → Ω → Bool × X × ℝ)
@@ -971,9 +972,9 @@ theorem crossFittedAverage_missingMean_asymptotically_linear
   refine (measure_mono ?_).trans (measure_biUnion_finset_le Finset.univ _)
   intro ω hω
   simp only [mem_ofPred_eq, Real.dist_eq, sub_zero] at hω
-  rw [sqrt_mul_crossFittedAverage_sub_eq hn (split n) (train n) score (score (m₀, π₀))
+  rw [sqrt_mul_cross_fitted_average_sub_eq hn (split n) (train n) score (score (m₀, π₀))
     (fun i ↦ missingDataObservation (W i ω)) (fun i ↦ W i ω)
-    (fun h i ↦ missingMeanScore_missingDataObservation h _) mean] at hω
+    (fun h i ↦ missing_mean_score_missing_data_observation h _) mean] at hω
   by_contra hcon
   simp only [mem_iUnion, mem_ofPred_eq, Finset.mem_univ, exists_true_left, not_exists,
     not_lt] at hcon

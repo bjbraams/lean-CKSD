@@ -4,6 +4,7 @@ public import CKSD.Geometry.Basic
 public import CKSD.Bayes.Basic
 public import Mathlib.Analysis.Calculus.Gradient.Basic
 
+
 /-!
 # Convergence control by kernel Stein discrepancies
 
@@ -20,9 +21,9 @@ closed form of GAPS 108.71 under its integrability hypotheses.
 
 ## Main results
 
-* `CKSD.tendsto_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero`: the inverse
+* `CKSD.tendsto_of_kernel_stein_discrepancy_sq_inverse_multiquadric_tendsto_zero`: the inverse
   multiquadric KSD controls weak convergence (GAPS 108.72(b)).
-* `CKSD.exists_not_tendsto_of_kernelSteinDiscrepancySq_tendsto_zero`: fast-decaying kernels fail
+* `CKSD.exists_not_tendsto_of_kernel_stein_discrepancy_sq_tendsto_zero`: fast-decaying kernels fail
   to detect non-convergence for `d ≥ 3` (GAPS 108.72(d)).
 
 Weak convergence of laws is convergence in Mathlib's `MeasureTheory.ProbabilityMeasure`
@@ -67,7 +68,7 @@ def inverseMultiquadricKernel (c β : ℝ) (x y : E) : ℝ := (c ^ 2 + ‖x - y�
 `b = ∇ log p` that is Lipschitz and distantly dissipative. For the inverse multiquadric kernel
 with `c > 0` and `β ∈ (-1, 0)`, every sequence of laws with square-integrable score whose kernel
 Stein discrepancy tends to zero converges weakly to `P`. -/
-theorem tendsto_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero
+theorem tendsto_of_kernel_stein_discrepancy_sq_inverse_multiquadric_tendsto_zero
     (P : Measure E) [IsProbabilityMeasure P] (p : E → ℝ) (hp : HasDensity P volume p)
     (hpos : ∀ x, 0 < p x) (hp1 : ContDiff ℝ 1 p) (b : E → E)
     (hb : ∀ x, b x = gradient (fun z ↦ Real.log (p z)) x) (L : ℝ≥0) (hlip : LipschitzWith L b)
@@ -87,7 +88,7 @@ kernel Stein discrepancy tending to zero without converging weakly to the standa
 This covers the Gaussian, Matérn and Wendland kernels. The `C²` hypothesis strengthens the
 source's continuity requirement on the listed derivatives. Clauses (a) and (c) are not
 formalized. -/
-theorem exists_not_tendsto_of_kernelSteinDiscrepancySq_tendsto_zero (hd : 3 ≤ d)
+theorem exists_not_tendsto_of_kernel_stein_discrepancy_sq_tendsto_zero (hd : 3 ≤ d)
     (k : E → E → ℝ) (hk : ContDiff ℝ 2 (Function.uncurry k))
     (hbdd : ∃ C, ∀ x y, |k x y| ≤ C ∧ ‖gradient (fun x' ↦ k x' y) x‖ ≤ C ∧
       ‖gradient (k x) y‖ ≤ C ∧ |mixedKernelDivergence k x y| ≤ C)

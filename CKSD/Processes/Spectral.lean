@@ -5,6 +5,7 @@ public import CKSD.Processes.FilteredPeriodogram
 public import Mathlib.Probability.Distributions.Exponential
 public import Mathlib.Analysis.Calculus.Gradient.Basic
 
+
 /-!
 # Spectral analysis of stationary processes
 
@@ -39,10 +40,10 @@ the Fourier transform of `F`.
 
 ## Main results
 
-* `CKSD.tendstoInDistribution_periodogram_div_spectralDensity` and
-  `CKSD.tendsto_lagWindowEstimator_moments` (GAPS 106.6).
-* `CKSD.infDist_past_sq_eq_kolmogorov` (GAPS 106.16): Kolmogorov's (Szegő's) formula.
-* `CKSD.tendsto_whittleEstimator` (GAPS 106.17).
+* `CKSD.tendsto_in_distribution_periodogram_div_spectral_density` and
+  `CKSD.tendsto_lag_window_estimator_moments` (GAPS 106.6).
+* `CKSD.inf_dist_past_sq_eq_kolmogorov` (GAPS 106.16): Kolmogorov's (Szegő's) formula.
+* `CKSD.tendsto_whittle_estimator` (GAPS 106.17).
 * `CKSD.exists_stationary_field_of_spectral_measure` (GAPS 106.24): every finite spectral
   measure is the spectral measure of a mean-square continuous weakly stationary field.
 -/
@@ -99,7 +100,7 @@ def lagWindowEstimator {Ω : Type*} (X : ℕ → Ω → ℝ) (w : ℝ → ℝ) (
 exponential variables, for a linear process with absolutely summable coefficients and iid
 innovations of finite positive variance. Positivity of the spectral density is needed only at
 the fixed frequencies. The non-consistency corollary is not restated. -/
-theorem tendstoInDistribution_periodogram_div_spectralDensity {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_distribution_periodogram_div_spectral_density {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (Z : ℤ → Ω → ℝ) (σsq : ℝ)
     (hZ : IsIIDNoise μ Z σsq) (ψ : ℤ → ℝ) (hψ : Summable fun j ↦ |ψ j|)
     (m : ℕ) (x : Fin m → ℝ) (hx : StrictMono x) (hx0 : ∀ j, 0 < x j)
@@ -113,7 +114,7 @@ theorem tendstoInDistribution_periodogram_div_spectralDensity {Ω : Type*} [Meas
   have hT : ∀ j, transferFunction ψ (x j) ≠ 0 := fun j h ↦ by
     have := hf j
     simp [linearProcessSpectralDensity, h] at this
-  exact hZ.tendstoInDistribution_periodogram_filter_div hψ
+  exact hZ.tendsto_in_distribution_periodogram_filter_div hψ
     (fun n j ↦ round ((n : ℝ) * x j / (2 * Real.pi))) hk x hkx hT
 
 /-- GAPS 106.6: asymptotic mean and variance, and mean-square consistency, of a lag-window
@@ -122,7 +123,7 @@ finite fourth moment, when the truncation point `r` satisfies `r → ∞` and `r
 The window is assumed continuous at `0` (see `IsLagWindow`). The condition
 `∑ |ψ_j| |j|^{1/2} < ∞` implies absolute summability of `ψ`, and positivity of the spectral
 density is not needed. -/
-theorem tendsto_lagWindowEstimator_moments {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_lag_window_estimator_moments {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (Z : ℤ → Ω → ℝ) (σsq : ℝ)
     (hZ : IsIIDNoise μ Z σsq) (h4 : MemLp (Z 0) 4 μ)
     (ψ : ℤ → ℝ) (hψ : Summable fun j : ℤ ↦ |ψ j| * Real.sqrt |(j : ℝ)|)
@@ -143,7 +144,7 @@ space, `⟪X s, X t⟫ = γ(t - s)` (`IsWeaklyStationary`), the spectral measure
 `(-π, π]`, and `f` is the density of its absolutely continuous part. The value `0` is taken
 exactly when `log f` fails to be integrable or `f` vanishes on a set of positive measure, i.e.
 when `∫ log f = -∞`. -/
-theorem infDist_past_sq_eq_kolmogorov {H : Type*} [NormedAddCommGroup H]
+theorem inf_dist_past_sq_eq_kolmogorov {H : Type*} [NormedAddCommGroup H]
     [InnerProductSpace ℂ H] (X : ℤ → H) (hstat : IsWeaklyStationary ℂ X)
     (F : Measure ℝ) [IsFiniteMeasure F] (hF : F (Ioc (-Real.pi) Real.pi)ᶜ = 0)
     (hγ : ∀ h : ℤ, inner ℂ (X 0) (X h) =
@@ -207,7 +208,7 @@ strongly consistent, the Whittle innovation-variance estimator `2π · min` conv
 to `σ²`, and `√n (β̂ - β) ⇒ N(0, W(β)⁻¹)`. The process is any `L²`-bounded solution of the ARMA
 equations, which is the stationary causal solution. The Gaussian maximum-likelihood and
 least-squares estimators, and the autoregressive identity `W⁻¹ = σ² Γ_p⁻¹`, are not covered. -/
-theorem tendsto_whittleEstimator {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_whittle_estimator {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] {p q : ℕ} (Z : ℤ → Ω → ℝ) (σsq : ℝ)
     (hZ : IsIIDNoise μ Z σsq)
     (β : EuclideanSpace ℝ (Fin p ⊕ Fin q)) (hβ : β ∈ armaAdmissibleParameters p q)
@@ -241,7 +242,7 @@ instance : IsProbabilityMeasure twoPointPhaseLaw := by
   rw [one_add_one_eq_two, ENNReal.inv_mul_cancel (by norm_num) (by norm_num)]
 
 /-- The first circular moment of the two-point phase law vanishes. -/
-theorem integral_exp_twoPointPhaseLaw :
+theorem integral_exp_two_point_phase_law :
     ∫ φ, Complex.exp ((φ : ℂ) * Complex.I) ∂twoPointPhaseLaw = 0 := by
   rw [twoPointPhaseLaw, integral_smul_measure, integral_add_measure]
   · simp [Complex.exp_pi_mul_I]
@@ -269,7 +270,7 @@ instance (F : Measure E) [IsFiniteMeasure F] :
 
 /-- Integrating against the spectral measure is the total mass times integrating against the
 normalized spectral measure. -/
-theorem real_mul_integral_normalizedSpectralMeasure
+theorem real_mul_integral_normalized_spectral_measure
     (F : Measure E) [IsFiniteMeasure F]
     (g : E → ℂ) :
     (F.real univ : ℂ) * ∫ w, g w ∂normalizedSpectralMeasure F = ∫ w, g w ∂F := by
@@ -297,7 +298,7 @@ def spectralRandomField (mass : ℝ) (x : E)
   (Real.sqrt mass : ℂ) * Complex.exp ((inner ℝ ω.1 x + ω.2) * Complex.I)
 
 /-- The random-phase field factors into a frequency part and a phase part. -/
-theorem spectralRandomField_eq (m : ℝ) (x : E)
+theorem spectral_random_field_eq (m : ℝ) (x : E)
     (ω : E × ℝ) :
     spectralRandomField m x ω = (Real.sqrt m : ℂ) *
       (Complex.exp ((inner ℝ ω.1 x : ℝ) * Complex.I) * Complex.exp ((ω.2 : ℂ) * Complex.I)) := by
@@ -306,15 +307,15 @@ theorem spectralRandomField_eq (m : ℝ) (x : E)
   ring
 
 /-- The random-phase field has constant modulus `√mass`. -/
-theorem norm_spectralRandomField (m : ℝ) (x : E)
+theorem norm_spectral_random_field (m : ℝ) (x : E)
     (ω : E × ℝ) :
     ‖spectralRandomField m x ω‖ = Real.sqrt m := by
-  rw [spectralRandomField_eq, norm_mul, norm_mul, Complex.norm_exp_ofReal_mul_I,
+  rw [spectral_random_field_eq, norm_mul, norm_mul, Complex.norm_exp_ofReal_mul_I,
     Complex.norm_exp_ofReal_mul_I, Complex.norm_real, Real.norm_of_nonneg (Real.sqrt_nonneg _)]
   ring
 
 /-- The random-phase field is jointly continuous in location and randomness. -/
-theorem continuous_spectralRandomField (m : ℝ) :
+theorem continuous_spectral_random_field (m : ℝ) :
     Continuous fun p : E × (E × ℝ) ↦
       spectralRandomField m p.1 p.2 := by
   unfold spectralRandomField
@@ -322,7 +323,7 @@ theorem continuous_spectralRandomField (m : ℝ) :
 
 /-- The product `f(x) f(y)^*` of the random-phase field depends only on the frequency and on
 `x - y`. -/
-theorem spectralRandomField_mul_star {m : ℝ} (hm : 0 ≤ m)
+theorem spectral_random_field_mul_star {m : ℝ} (hm : 0 ≤ m)
     (x y : E) (ω : E × ℝ) :
     spectralRandomField m x ω * star (spectralRandomField m y ω) =
       (m : ℂ) * Complex.exp ((inner ℝ ω.1 (x - y) : ℝ) * Complex.I) := by
@@ -356,18 +357,18 @@ theorem exists_stationary_field_of_spectral_measure [MeasurableSpace E] [BorelSp
   refine ⟨P, inferInstance, fun x ↦ ?_, fun x ↦ ?_, fun x y ↦ ?_, fun x ↦ ?_⟩
 
   · exact MemLp.of_bound (hcont x).aestronglyMeasurable (Real.sqrt (F.real univ))
-      (ae_of_all _ fun ω ↦ (norm_spectralRandomField _ x ω).le)
-  · simp_rw [spectralRandomField_eq]
+      (ae_of_all _ fun ω ↦ (norm_spectral_random_field _ x ω).le)
+  · simp_rw [spectral_random_field_eq]
     rw [integral_const_mul]
     simp only [P]
     rw [integral_prod_mul (fun w ↦ Complex.exp ((inner ℝ w x : ℝ) * Complex.I))
-      (fun φ : ℝ ↦ Complex.exp ((φ : ℂ) * Complex.I)), integral_exp_twoPointPhaseLaw]
+      (fun φ : ℝ ↦ Complex.exp ((φ : ℂ) * Complex.I)), integral_exp_two_point_phase_law]
     simp
-  · simp_rw [spectralRandomField_mul_star hm]
+  · simp_rw [spectral_random_field_mul_star hm]
     rw [integral_const_mul]
     simp only [P]
     rw [integral_fun_fst (fun w ↦ Complex.exp ((inner ℝ w (x - y) : ℝ) * Complex.I)),
-      probReal_univ (μ := twoPointPhaseLaw), one_smul, real_mul_integral_normalizedSpectralMeasure]
+      probReal_univ (μ := twoPointPhaseLaw), one_smul, real_mul_integral_normalized_spectral_measure]
   · have hlim : (0 : ℝ) = ∫ ω, ‖spectralRandomField (F.real univ) x ω -
         spectralRandomField (F.real univ) x ω‖ ^ 2 ∂P := by
       simp
@@ -383,7 +384,7 @@ theorem exists_stationary_field_of_spectral_measure [MeasurableSpace E] [BorelSp
           ≤ ‖spectralRandomField (F.real univ) y ω‖ +
               ‖spectralRandomField (F.real univ) x ω‖ := norm_sub_le _ _
         _ = 2 * Real.sqrt (F.real univ) := by
-          rw [norm_spectralRandomField, norm_spectralRandomField]; ring
+          rw [norm_spectral_random_field, norm_spectral_random_field]; ring
     · have : Continuous fun y ↦
           ‖spectralRandomField (F.real univ) y ω - spectralRandomField (F.real univ) x ω‖ ^ 2 := by
         unfold spectralRandomField; fun_prop

@@ -14,6 +14,7 @@ public import Mathlib.MeasureTheory.Group.Convolution
 public import Statlib.Contiguity.Def
 import Mathlib.MeasureTheory.Measure.Portmanteau
 
+
 /-!
 # Asymptotic statistical interfaces: local experiments, efficiency, and the delta method
 
@@ -32,14 +33,14 @@ import Mathlib.MeasureTheory.Measure.Portmanteau
 
 * `CKSD.exists_gaussian_shift_kernel_of_local_limits`: limits of statistics in a LAN experiment
   are randomizations of the Gaussian shift experiment (GAPS 102.15).
-* `CKSD.exists_convolution_of_isRegularEstimator`: Hájek's convolution theorem (GAPS 102.16).
+* `CKSD.exists_convolution_of_is_regular_estimator`: Hájek's convolution theorem (GAPS 102.16).
 * `CKSD.gaussian_risk_le_local_asymptotic_minimax`: the local asymptotic minimax theorem
   (GAPS 102.17).
-* `CKSD.tendstoInDistribution_of_hasHadamardFDerivAt`: the functional delta method
+* `CKSD.tendsto_in_distribution_of_has_hadamard_f_deriv_at`: the functional delta method
   (GAPS 102.28).
-* `CKSD.fisherRaoMetric_congruent_embedding`: invariance of the Fisher–Rao metric under
+* `CKSD.fisher_rao_metric_congruent_embedding`: invariance of the Fisher–Rao metric under
   congruent embeddings (GAPS 102.58).
-* `CKSD.isContiguous_iff_contiguous5`: `CKSD.IsContiguous` is Statlib's `Contiguous5`.
+* `CKSD.is_contiguous_iff_contiguous5`: `CKSD.IsContiguous` is Statlib's `Contiguous5`.
 
 ## Conventions
 
@@ -147,14 +148,14 @@ theorem exists_gaussian_shift_kernel_of_local_limits
     exists_joint_subsequence_limit_of_marginal_limits
       (fun n ↦ (P n 0 : Measure (Ω n))) Δ T hΔ hT
       (multivariateGaussian 0 I) (L 0) hΔlim (hlim 0)
-  apply exists_markovKernel_of_map_eq_tilted_joint_laws (ρ : Measure (_ × S))
+  apply exists_markov_kernel_of_map_eq_tilted_joint_laws (ρ : Measure (_ × S))
     (fun h x ↦ ENNReal.ofReal (Real.exp
       (inner ℝ h x-inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h)/2)))
     (fun h ↦ by fun_prop) (Matrix.toEuclideanCLM (𝕜 := ℝ) I) (by fun_prop)
     (fun h ↦ multivariateGaussian h I⁻¹) L
   · intro h
     rw [hfst]
-    exact map_gaussianShift_eq_withDensity hI h
+    exact map_gaussian_shift_eq_with_density hI h
   · intro h
     by_cases hh : h = 0
     · subst h
@@ -176,7 +177,7 @@ theorem exists_gaussian_shift_kernel_of_local_limits
       by_contra hni
       rw [integral_undef hni] at hm
       exact zero_ne_one hm
-    have := isProbabilityMeasure_withDensity_of_real_integral_one
+    have := is_probability_measure_with_density_of_real_integral_one
       (ρ : Measure (_ × S)) w hw0 hi hm
     let P0 : ∀ n, Measure (Ω (φ n)) := fun n ↦ (P (φ n) 0 : Measure _)
     let Q : ∀ n, Measure (Ω (φ n)) := fun n ↦ (P (φ n) h : Measure _)
@@ -191,7 +192,7 @@ theorem exists_gaussian_shift_kernel_of_local_limits
       fun p ↦ (p,a p.1)
     have hf : Continuous f := by dsimp [f]; fun_prop
     have hbase := hjoint.continuous_comp hf
-    have hlograw := tendstoInDistribution_of_dist_small_in_probability
+    have hlograw := tendsto_in_distribution_of_dist_small_in_probability
       (fun n ω ↦ (U n ω,Λ n ω)) f hbase ?_
       (fun n ↦ ((hU n).prodMk (hΛ n)).aemeasurable)
     · have hlog : TendstoInDistribution (fun n ω ↦ (U n ω,Λ n ω)) atTop id P0
@@ -207,8 +208,8 @@ theorem exists_gaussian_shift_kernel_of_local_limits
         rw [← Measure.map_apply measurable_fst (ha.measurable (measurableSet_singleton 0))]
         change (ρ : Measure (_ × S)).fst {x | a x = 0} = 0
         rw [hfst]
-        exact multivariateGaussian_affine_score_zero hI h hh
-      have hRN := tendstoInDistribution_joint_rnDeriv_of_log P0 Q U hU _ hlog hzero
+        exact multivariate_gaussian_affine_score_zero hI h hh
+      have hRN := tendsto_in_distribution_joint_rn_deriv_of_log P0 Q U hU _ hlog hzero
       have hgraph : (((ρ : Measure (_ × S)).map f).map
           (fun z ↦ (z.1,Real.exp z.2))) =
           (ρ : Measure (_ × S)).map (fun p ↦ (p,w p)) := by
@@ -218,7 +219,7 @@ theorem exists_gaussian_shift_kernel_of_local_limits
           (fun n ω ↦ (U n ω,((Q n).rnDeriv (P0 n) ω).toReal)) atTop id P0
           ((ρ : Measure (_ × S)).map (fun p ↦ (p,w p))) := by
         simpa only [hgraph] using hRN
-      have hchange := tendstoInDistribution_of_joint_rnDeriv_graph
+      have hchange := tendsto_in_distribution_of_joint_rn_deriv_graph
         P0 Q U hU (ρ : Measure (_ × S)) w hw hw0 hm hRN'
       have hsub : TendstoInDistribution (fun n ↦ T (φ n)) atTop id Q (L h) :=
         ⟨fun n ↦ (hT _).aemeasurable,measurable_id.aemeasurable,
@@ -247,7 +248,7 @@ theorem exists_gaussian_shift_kernel_of_local_limits
 /-- GAPS 102.16: Hájek's convolution theorem. In a LAN experiment with information `I`, the limit
 law `L` of a regular estimator sequence is the convolution of `N(0, I⁻¹)` with a probability
 measure `M`. -/
-theorem exists_convolution_of_isRegularEstimator
+theorem exists_convolution_of_is_regular_estimator
     {d : ℕ} {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
     (P : LocalExperiment d Ω) (I : Matrix (Fin d) (Fin d) ℝ)
     (Δ : ∀ n, Ω n → EuclideanSpace ℝ (Fin d)) (hLAN : IsLocallyAsymptoticallyNormal P I Δ)
@@ -262,7 +263,7 @@ theorem exists_convolution_of_isRegularEstimator
   have hlim (h : EuclideanSpace ℝ (Fin d)) : TendstoInDistribution T atTop id
       (fun n ↦ (P n h : Measure (Ω n))) (Lh h) := by
     have hc := (hreg.2 h).continuous_comp (g := fun y ↦ h+y) (by fun_prop)
-    have hl := tendstoInDistribution_of_map_eq hc
+    have hl := tendsto_in_distribution_of_map_eq hc
       (μ'' := L.map (fun y ↦ h+y)) (W := id) aemeasurable_id (by rw [Measure.map_id]; rfl)
     have heq : (fun n ↦ (fun y ↦ h+y) ∘ (fun ω ↦ T n ω-h)) = T := by
       funext n ω
@@ -291,7 +292,7 @@ theorem gaussian_risk_le_local_asymptotic_minimax
 
 /-- GAPS 102.28: functional delta method for measurable maps and a closed tangent space.
 The outer version for nonmeasurable empirical processes uses `TendstoInOuterDistribution`. -/
-theorem tendstoInDistribution_of_hasHadamardFDerivAt
+theorem tendsto_in_distribution_of_has_hadamard_f_deriv_at
     {Ω E F : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup E] [NormedSpace ℝ E]
     [MeasurableSpace E] [BorelSpace E]
@@ -317,9 +318,9 @@ theorem tendstoInDistribution_of_hasHadamardFDerivAt
   let PY : ℕ → ProbabilityMeasure F := fun n ↦ ⟨μ.map (Y n), inferInstance⟩
   let PG : ProbabilityMeasure E := ⟨G, inferInstance⟩
   let PGD : ProbabilityMeasure F := ⟨G.map D, inferInstance⟩
-  have hZlim : Tendsto PZ atTop (𝓝 PG) := (tendstoInDistribution_id_iff.1 hlim).2
+  have hZlim : Tendsto PZ atTop (𝓝 PG) := (tendsto_in_distribution_id_iff.1 hlim).2
   suffices hYlim : Tendsto PY atTop (𝓝 PGD) from
-    tendstoInDistribution_id_iff.2 ⟨fun n ↦ (hYm n).aemeasurable, hYlim⟩
+    tendsto_in_distribution_id_iff.2 ⟨fun n ↦ (hYm n).aemeasurable, hYlim⟩
   refine tendsto_of_forall_isClosed_limsup_le' fun Fc hFc ↦ ?_
   -- The sets of local increments mapped into `Fc` at stage `m`.
   let A : ℕ → Set E := fun m ↦
@@ -435,7 +436,7 @@ def CongruentSimplexEmbedding.map {m n : ℕ} (f : CongruentSimplexEmbedding m n
 
 /-- GAPS 102.58: the Fisher–Rao metric `∑ uᵢ vᵢ / pᵢ` on the open simplex is invariant under
 congruent embeddings (Chentsov's defining invariance). -/
-theorem fisherRaoMetric_congruent_embedding {m n : ℕ} (f : CongruentSimplexEmbedding m n)
+theorem fisher_rao_metric_congruent_embedding {m n : ℕ} (f : CongruentSimplexEmbedding m n)
     (p : Fin m → ℝ) (hp : p ∈ openProbabilitySimplex m) (u v : Fin m → ℝ) :
     fisherRaoMetric (f.map p) (f.map u) (f.map v) = fisherRaoMetric p u v := by
   let a := fun i ↦ u i * v i / p i
@@ -457,7 +458,7 @@ theorem fisherRaoMetric_congruent_embedding {m n : ℕ} (f : CongruentSimplexEmb
 
 /-- For probability measures, `CKSD.IsContiguous` is Statlib's direct set formulation
 `Contiguous5` of contiguity. -/
-theorem isContiguous_iff_contiguous5 {Ω : Type*} [MeasurableSpace Ω]
+theorem is_contiguous_iff_contiguous5 {Ω : Type*} [MeasurableSpace Ω]
     (P Q : ℕ → ProbabilityMeasure Ω) :
     IsContiguous (fun n ↦ (P n : Measure Ω)) (fun n ↦ (Q n : Measure Ω)) ↔
       _root_.Contiguous5 atTop P Q := by

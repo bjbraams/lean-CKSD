@@ -1,4 +1,5 @@
 module
+
 public import CKSD.LinearModels.BetaLogLimit
 public import Mathlib.MeasureTheory.Integral.Pi
 /-!
@@ -39,7 +40,7 @@ theorem tendsto_integral_beta_rpow_pow_of_ratio {a t : ℕ → ℝ}
     simpa only [mul_one, one_mul] using tendsto_const_nhds.add (hratio.mul_const (k : ℝ))
   have hpower := (Real.continuousAt_rpow_const (1 + (k : ℝ)) (-b) (Or.inl (by positivity))).tendsto.comp hcratio
   let R : ℝ → ℝ := fun x ↦ Real.Gamma (x + b) / (Real.Gamma x * x ^ b)
-  have hR : Tendsto R atTop (𝓝 1) := tendsto_Gamma_add_div_mul_rpow hb
+  have hR : Tendsto R atTop (𝓝 1) := tendsto_gamma_add_div_mul_rpow hb
   have hlim := ((hR.comp hatop).div (hR.comp hctop) one_ne_zero).mul hpower
   simp only [div_self one_ne_zero, one_mul] at hlim
   apply hlim.congr'
@@ -54,7 +55,7 @@ theorem tendsto_integral_beta_rpow_pow_of_ratio {a t : ℕ → ℝ}
               filter_upwards [TauCeti.Probability.ae_mem_Ioo_betaMeasure (a n) b] with x hx
               rw [← Real.rpow_natCast, ← Real.rpow_mul hx.1.le]
         _ = _ := by
-          rw [integral_rpow_betaMeasure (ha n) hb (mul_nonneg (ht n).le (Nat.cast_nonneg k))]
+          rw [integral_rpow_beta_measure (ha n) hb (mul_nonneg (ht n).le (Nat.cast_nonneg k))]
           rw [show a n + b + t n * k = c n + b by dsimp [c]; ring]
     rw [hmoment]
     dsimp [R]
@@ -64,20 +65,20 @@ theorem tendsto_integral_beta_rpow_pow_of_ratio {a t : ℕ → ℝ}
       (Real.rpow_pos_of_pos (ha n) b).ne', (Real.rpow_pos_of_pos (hc n) b).ne']
 
 /-- Positive Beta factors give a probability measure on their finite product. -/
-theorem isProbabilityMeasure_pi_beta {ι : Type*} [Fintype ι] (a b : ι → ℝ)
+theorem is_probability_measure_pi_beta {ι : Type*} [Fintype ι] (a b : ι → ℝ)
     (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i) :
     IsProbabilityMeasure (Measure.pi fun i ↦ betaMeasure (a i) (b i)) := by
   let : ∀ i, IsProbabilityMeasure (betaMeasure (a i) (b i)) := fun i ↦ isProbabilityMeasureBeta (ha i) (hb i)
   infer_instance
 
 /-- Finite products of asymptotically equal-scale Beta powers have an exponentiated Gamma limit. -/
-theorem tendstoInDistribution_beta_product_rpow {ι : Type*} [Fintype ι] [Nonempty ι]
+theorem tendsto_in_distribution_beta_product_rpow {ι : Type*} [Fintype ι] [Nonempty ι]
     (a : ι → ℕ → ℝ) (b : ι → ℝ) (t : ℕ → ℝ)
     (ha : ∀ i n, 0 < a i n) (hb : ∀ i, 0 < b i) (ht : ∀ n, 0 < t n)
     (hatop : ∀ i, Tendsto (a i) atTop atTop)
     (hratio : ∀ i, Tendsto (fun n ↦ t n / a i n) atTop (𝓝 1)) :
     let : ∀ n, IsProbabilityMeasure (Measure.pi fun i ↦ betaMeasure (a i n) (b i)) :=
-      fun n ↦ isProbabilityMeasure_pi_beta _ _ (fun i ↦ ha i n) hb;
+      fun n ↦ is_probability_measure_pi_beta _ _ (fun i ↦ ha i n) hb;
     let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) 1) :=
       isProbabilityMeasure_gammaMeasure (Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty) zero_lt_one;
     TendstoInDistribution (fun (n : ℕ) (x : ι → ℝ) ↦ ∏ i, x i ^ (t n)) atTop
@@ -85,7 +86,7 @@ theorem tendstoInDistribution_beta_product_rpow {ι : Type*} [Fintype ι] [Nonem
       (gammaMeasure (∑ i, b i) 1) := by
   have hbS : 0 < ∑ i, b i := Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty
   let : ∀ n, IsProbabilityMeasure (Measure.pi fun i ↦ betaMeasure (a i n) (b i)) :=
-    fun n ↦ isProbabilityMeasure_pi_beta _ _ (fun i ↦ ha i n) hb
+    fun n ↦ is_probability_measure_pi_beta _ _ (fun i ↦ ha i n) hb
   let : ∀ n i, IsProbabilityMeasure (betaMeasure (a i n) (b i)) := fun n i ↦ isProbabilityMeasureBeta (ha i n) (hb i)
   let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) 1) := isProbabilityMeasure_gammaMeasure hbS zero_lt_one
   let U : ℕ → (ι → ℝ) → ℝ := fun n x ↦ ∏ i, x i ^ (t n)
@@ -149,25 +150,25 @@ theorem tendstoInDistribution_beta_product_rpow {ι : Type*} [Fintype ι] [Nonem
 
 /-- The logarithm of a finite independent Beta product converges to a Gamma law when the
 first shapes share a growing common scale; the limiting shape is the sum of second shapes. -/
-theorem tendstoInDistribution_neg_mul_log_beta_product {ι : Type*} [Fintype ι] [Nonempty ι]
+theorem tendsto_in_distribution_neg_mul_log_beta_product {ι : Type*} [Fintype ι] [Nonempty ι]
     (a : ι → ℕ → ℝ) (b : ι → ℝ) (t : ℕ → ℝ)
     (ha : ∀ i n, 0 < a i n) (hb : ∀ i, 0 < b i) (ht : ∀ n, 0 < t n)
     (hatop : ∀ i, Tendsto (a i) atTop atTop)
     (hratio : ∀ i, Tendsto (fun n ↦ t n / a i n) atTop (𝓝 1)) :
     let : ∀ n, IsProbabilityMeasure (Measure.pi fun i ↦ betaMeasure (a i n) (b i)) :=
-      fun n ↦ isProbabilityMeasure_pi_beta _ _ (fun i ↦ ha i n) hb;
+      fun n ↦ is_probability_measure_pi_beta _ _ (fun i ↦ ha i n) hb;
     let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) 1) :=
       isProbabilityMeasure_gammaMeasure (Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty) zero_lt_one;
     TendstoInDistribution (fun (n : ℕ) (x : ι → ℝ) ↦ -(t n) * Real.log (∏ i, x i)) atTop id
       (fun n ↦ Measure.pi fun i ↦ betaMeasure (a i n) (b i)) (gammaMeasure (∑ i, b i) 1) := by
   have hbS : 0 < ∑ i, b i := Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty
   let : ∀ n, IsProbabilityMeasure (Measure.pi fun i ↦ betaMeasure (a i n) (b i)) :=
-    fun n ↦ isProbabilityMeasure_pi_beta _ _ (fun i ↦ ha i n) hb
+    fun n ↦ is_probability_measure_pi_beta _ _ (fun i ↦ ha i n) hb
   let : ∀ n i, IsProbabilityMeasure (betaMeasure (a i n) (b i)) := fun n i ↦ isProbabilityMeasureBeta (ha i n) (hb i)
   let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) 1) := isProbabilityMeasure_gammaMeasure hbS zero_lt_one
   have hXm (n : ℕ) : Measurable (fun x : ι → ℝ ↦ -(t n) * Real.log (∏ i, x i)) := by fun_prop
-  apply tendstoInDistribution_of_exp_neg_gamma _ _ hXm hbS
-  apply (tendstoInDistribution_beta_product_rpow a b t ha hb ht hatop hratio).congr _ (EventuallyEq.rfl)
+  apply tendsto_in_distribution_of_exp_neg_gamma _ _ hXm hbS
+  apply (tendsto_in_distribution_beta_product_rpow a b t ha hb ht hatop hratio).congr _ (EventuallyEq.rfl)
   intro n
   have hs : ∀ᵐ x ∂Measure.pi (fun i ↦ betaMeasure (a i n) (b i)), ∀ i, x i ∈ Ioo (0 : ℝ) 1 :=
     ae_all_iff.2 fun i ↦ Measure.tendsto_eval_ae_ae.eventually

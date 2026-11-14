@@ -5,6 +5,7 @@ public import TauCeti.Probability.Distributions.OrderStatistic.Joint
 public import TauCeti.Probability.Distributions.Uniform.Basic
 public import TauCeti.Probability.Quantile
 
+
 /-!
 # Distribution-free goodness-of-fit statistics and eigenvector perturbation
 
@@ -23,8 +24,8 @@ self-adjoint operator.
 
 ## Main results
 
-* `CKSD.map_cramerVonMisesStatistic_eq_uniform`,
-  `CKSD.map_twoSampleKolmogorovSmirnovStatistic_eq_uniform`: finite-sample distribution-freeness.
+* `CKSD.map_cramer_von_mises_statistic_eq_uniform`,
+  `CKSD.map_two_sample_kolmogorov_smirnov_statistic_eq_uniform`: finite-sample distribution-freeness.
 * `CKSD.exists_unit_eigenvector_rayleigh_le`: a self-adjoint operator on a finite-dimensional
   inner product space has a unit eigenvector whose eigenvalue bounds the Rayleigh quotient.
 * `CKSD.exists_eigenvector_norm_sub_le_of_rayleigh_gap`: if `A v = a v` and the Rayleigh
@@ -67,7 +68,7 @@ def twoSampleKolmogorovSmirnovStatistic {m n : ℕ} (x : Fin m → ℝ) (y : Fin
 
 /-- The finite empirical distribution function is jointly measurable in the sample and the
 argument. -/
-theorem measurable_finiteEmpiricalCDF_uncurry (n : ℕ) :
+theorem measurable_finite_empirical_cdf_uncurry (n : ℕ) :
     Measurable fun z : (Fin n → ℝ) × ℝ ↦ finiteEmpiricalCDF z.1 z.2 := by
   unfold finiteEmpiricalCDF
   simp only [Finset.card_filter, Nat.cast_sum, Nat.cast_ite, Nat.cast_one, Nat.cast_zero]
@@ -76,13 +77,13 @@ theorem measurable_finiteEmpiricalCDF_uncurry (n : ℕ) :
     measurable_snd) measurable_const measurable_const
 
 /-- The finite empirical distribution function at a fixed point is measurable in the sample. -/
-theorem measurable_finiteEmpiricalCDF {k : ℕ} (t : ℝ) :
+theorem measurable_finite_empirical_cdf {k : ℕ} (t : ℝ) :
     Measurable fun x : Fin k → ℝ ↦ finiteEmpiricalCDF x t :=
-  (measurable_finiteEmpiricalCDF_uncurry k).comp
+  (measurable_finite_empirical_cdf_uncurry k).comp
     (f := fun x : Fin k → ℝ ↦ (x, t)) (measurable_id.prodMk measurable_const)
 
 /-- The uniform law on `[0, 1]` is Lebesgue measure restricted to `(0, 1)`. -/
-theorem uniformMeasure_zero_one_eq_restrict_Ioo :
+theorem uniform_measure_zero_one_eq_restrict_ioo :
     TauCeti.Probability.uniformMeasure 0 1 = volume.restrict (Ioo (0 : ℝ) 1) := by
   simp only [TauCeti.Probability.uniformMeasure_eq_smul, sub_zero, ENNReal.ofReal_one,
     inv_one, one_smul]
@@ -104,7 +105,7 @@ theorem pi_eq_map_pi_quantile (P : Measure ℝ) [IsProbabilityMeasure P] (k : �
   simp only [Measure.map_quantile_volume_Ioo P]
 
 /-- Almost every sample from the uniform law on `(0, 1)` has all its values in `(0, 1)`. -/
-theorem ae_forall_mem_Ioo_pi_restrict (k : ℕ) :
+theorem ae_forall_mem_ioo_pi_restrict (k : ℕ) :
     ∀ᵐ u ∂(Measure.pi fun _ : Fin k ↦ volume.restrict (Ioo (0 : ℝ) 1)),
       ∀ i, u i ∈ Ioo (0 : ℝ) 1 := by
   have : IsProbabilityMeasure (volume.restrict (Ioo (0 : ℝ) 1)) := ⟨by simp⟩
@@ -114,19 +115,19 @@ theorem ae_forall_mem_Ioo_pi_restrict (k : ℕ) :
     |>.quasiMeasurePreserving.ae (ae_restrict_mem measurableSet_Ioo)
 
 /-- The Cramér–von Mises statistic is a measurable function of the sample. -/
-theorem measurable_cramerVonMisesStatistic (P : Measure ℝ) [IsFiniteMeasure P] (n : ℕ) :
+theorem measurable_cramer_von_mises_statistic (P : Measure ℝ) [IsFiniteMeasure P] (n : ℕ) :
     Measurable (cramerVonMisesStatistic (n := n) P) := by
   unfold cramerVonMisesStatistic
   refine measurable_const.mul ?_
   have h : Measurable fun z : (Fin n → ℝ) × ℝ ↦ (finiteEmpiricalCDF z.1 z.2 - cdf P z.2) ^ 2 :=
-    ((measurable_finiteEmpiricalCDF_uncurry n).sub
+    ((measurable_finite_empirical_cdf_uncurry n).sub
       ((cdf P).mono.measurable.comp measurable_snd)).pow_const 2
   exact (h.stronglyMeasurable.integral_prod_right' (ν := P)).measurable
 
 /-- GAPS 103.17: finite-sample distribution-freeness of the Cramér–von Mises statistic. For a
 probability measure `P` without atoms, the law of `n ∫ (F_n - F)² dF` under `P^n` equals its law
 under the uniform distribution on `[0, 1]`. -/
-theorem map_cramerVonMisesStatistic_eq_uniform (P : Measure ℝ) [IsProbabilityMeasure P]
+theorem map_cramer_von_mises_statistic_eq_uniform (P : Measure ℝ) [IsProbabilityMeasure P]
     [NullSingletonClass P] (n : ℕ) :
     (Measure.pi fun _ : Fin n ↦ P).map (cramerVonMisesStatistic P) =
       (Measure.pi fun _ : Fin n ↦ TauCeti.Probability.uniformMeasure 0 1).map
@@ -134,7 +135,7 @@ theorem map_cramerVonMisesStatistic_eq_uniform (P : Measure ℝ) [IsProbabilityM
   set U := TauCeti.Probability.uniformMeasure 0 1 with hU
   set V : Measure ℝ := volume.restrict (Ioo (0 : ℝ) 1) with hV
   have hVprob : IsProbabilityMeasure V := ⟨by simp [V]⟩
-  have hUV : U = V := uniformMeasure_zero_one_eq_restrict_Ioo
+  have hUV : U = V := uniform_measure_zero_one_eq_restrict_ioo
   have hcdfV : ∀ s ∈ Ioo (0 : ℝ) 1, cdf V s = s := by
     intro s hs
     rw [← hUV, TauCeti.Probability.cdf_uniformMeasure zero_lt_one,
@@ -151,7 +152,7 @@ theorem map_cramerVonMisesStatistic_eq_uniform (P : Measure ℝ) [IsProbabilityM
     unfold cramerVonMisesStatistic
     congr 1
     have hg : Measurable fun t ↦ (finiteEmpiricalCDF (fun i ↦ Q (u i)) t - cdf P t) ^ 2 :=
-      (((measurable_finiteEmpiricalCDF_uncurry n).comp (measurable_const.prodMk measurable_id)).sub
+      (((measurable_finite_empirical_cdf_uncurry n).comp (measurable_const.prodMk measurable_id)).sub
         (cdf P).mono.measurable).pow_const 2
     calc ∫ t, (finiteEmpiricalCDF (fun i ↦ Q (u i)) t - cdf P t) ^ 2 ∂P
         = ∫ t, (finiteEmpiricalCDF (fun i ↦ Q (u i)) t - cdf P t) ^ 2 ∂(V.map Q) := by
@@ -170,12 +171,12 @@ theorem map_cramerVonMisesStatistic_eq_uniform (P : Measure ℝ) [IsProbabilityM
           show Q (u i) ≤ Q s ↔ u i ≤ s
           rw [hQ, Measure.quantile_le_iff P (hu i).1 (hu i).2, ← hQ, hFQ]
   -- assemble
-  rw [pi_eq_map_pi_quantile P n, Measure.map_map (measurable_cramerVonMisesStatistic P n)
+  rw [pi_eq_map_pi_quantile P n, Measure.map_map (measurable_cramer_von_mises_statistic P n)
     (measurable_pi_quantile P n), hUV]
-  exact Measure.map_congr ((ae_forall_mem_Ioo_pi_restrict n).mono fun u hu ↦ hpt u hu)
+  exact Measure.map_congr ((ae_forall_mem_ioo_pi_restrict n).mono fun u hu ↦ hpt u hu)
 
 /-- The finite empirical distribution function takes values in `[0, 1]`. -/
-theorem finiteEmpiricalCDF_mem_Icc {n : ℕ} (x : Fin n → ℝ) (t : ℝ) :
+theorem finite_empirical_cdf_mem_icc {n : ℕ} (x : Fin n → ℝ) (t : ℝ) :
     finiteEmpiricalCDF x t ∈ Icc (0 : ℝ) 1 := by
   unfold finiteEmpiricalCDF
   refine ⟨by positivity, ?_⟩
@@ -186,7 +187,7 @@ theorem finiteEmpiricalCDF_mem_Icc {n : ℕ} (x : Fin n → ℝ) (t : ℝ) :
 
 /-- Two finite empirical distribution functions take at every real point the same pair of
 values as at some rational point slightly to the right. -/
-theorem exists_rat_finiteEmpiricalCDF_eq {m n : ℕ} (x : Fin m → ℝ) (y : Fin n → ℝ) (r : ℝ) :
+theorem exists_rat_finite_empirical_cdf_eq {m n : ℕ} (x : Fin m → ℝ) (y : Fin n → ℝ) (r : ℝ) :
     ∃ q : ℚ, finiteEmpiricalCDF x q = finiteEmpiricalCDF x r ∧
       finiteEmpiricalCDF y q = finiteEmpiricalCDF y r := by
   -- a gap to the right of `r` that contains no sample point
@@ -231,29 +232,29 @@ theorem exists_rat_finiteEmpiricalCDF_eq {m n : ℕ} (x : Fin m → ℝ) (y : Fi
     linarith
 
 /-- The two-sample Kolmogorov–Smirnov statistic is a measurable function of the two samples. -/
-theorem measurable_twoSampleKolmogorovSmirnovStatistic (m n : ℕ) :
+theorem measurable_two_sample_kolmogorov_smirnov_statistic (m n : ℕ) :
     Measurable fun z : (Fin m → ℝ) × (Fin n → ℝ) ↦
       twoSampleKolmogorovSmirnovStatistic z.1 z.2 := by
   have hf : ∀ t : ℚ, Measurable fun z : (Fin m → ℝ) × (Fin n → ℝ) ↦
       |finiteEmpiricalCDF z.1 (t : ℝ) - finiteEmpiricalCDF z.2 (t : ℝ)| := fun t ↦
     continuous_abs.measurable.comp
-      (((measurable_finiteEmpiricalCDF (t : ℝ)).comp measurable_fst).sub
-        ((measurable_finiteEmpiricalCDF (t : ℝ)).comp measurable_snd))
+      (((measurable_finite_empirical_cdf (t : ℝ)).comp measurable_fst).sub
+        ((measurable_finite_empirical_cdf (t : ℝ)).comp measurable_snd))
   exact Measurable.iSup hf
 
 /-- The range defining the two-sample Kolmogorov–Smirnov statistic is bounded above by one. -/
-theorem bddAbove_range_abs_finiteEmpiricalCDF_sub {m n : ℕ} (x : Fin m → ℝ) (y : Fin n → ℝ) :
+theorem bdd_above_range_abs_finite_empirical_cdf_sub {m n : ℕ} (x : Fin m → ℝ) (y : Fin n → ℝ) :
     BddAbove (range fun t : ℚ ↦ |finiteEmpiricalCDF x t - finiteEmpiricalCDF y t|) := by
   refine ⟨1, ?_⟩
   rintro _ ⟨t, rfl⟩
-  have h1 := finiteEmpiricalCDF_mem_Icc x t
-  have h2 := finiteEmpiricalCDF_mem_Icc y t
+  have h1 := finite_empirical_cdf_mem_icc x t
+  have h2 := finite_empirical_cdf_mem_icc y t
   rw [abs_le]
   constructor <;> linarith [h1.1, h1.2, h2.1, h2.2]
 
 /-- Composing a sample in `(0, 1)` with the quantile function of `P` turns its empirical
 distribution function into the original one evaluated along the CDF of `P`. -/
-theorem finiteEmpiricalCDF_quantile_comp (P : Measure ℝ) {k : ℕ} (u : Fin k → ℝ)
+theorem finite_empirical_cdf_quantile_comp (P : Measure ℝ) {k : ℕ} (u : Fin k → ℝ)
     (hu : ∀ i, u i ∈ Ioo (0 : ℝ) 1) (t : ℝ) :
     finiteEmpiricalCDF (fun i ↦ P.quantile (u i)) t =
       finiteEmpiricalCDF u (ProbabilityTheory.cdf P t) := by
@@ -266,7 +267,7 @@ theorem finiteEmpiricalCDF_quantile_comp (P : Measure ℝ) {k : ℕ} (u : Fin k 
 statistic. For a probability measure `P` without atoms and nonempty samples, the law of
 `sup_t |F_m(t) - G_n(t)|` under `P^m ⊗ P^n` equals its law under the uniform distribution on
 `[0, 1]`. -/
-theorem map_twoSampleKolmogorovSmirnovStatistic_eq_uniform
+theorem map_two_sample_kolmogorov_smirnov_statistic_eq_uniform
     (P : Measure ℝ) [IsProbabilityMeasure P] [NullSingletonClass P]
     (m n : ℕ) (hm : 0 < m) (hn : 0 < n) :
     ((Measure.pi fun _ : Fin m ↦ P).prod (Measure.pi fun _ : Fin n ↦ P)).map
@@ -299,35 +300,35 @@ theorem map_twoSampleKolmogorovSmirnovStatistic_eq_uniform
     unfold twoSampleKolmogorovSmirnovStatistic
     refine le_antisymm (csSup_le (range_nonempty _) ?_) (csSup_le (range_nonempty _) ?_)
     · rintro _ ⟨t, rfl⟩
-      simp only [hQ, finiteEmpiricalCDF_quantile_comp P u hu,
-        finiteEmpiricalCDF_quantile_comp P w hw]
-      obtain ⟨q, hq1, hq2⟩ := exists_rat_finiteEmpiricalCDF_eq u w (ProbabilityTheory.cdf P t)
+      simp only [hQ, finite_empirical_cdf_quantile_comp P u hu,
+        finite_empirical_cdf_quantile_comp P w hw]
+      obtain ⟨q, hq1, hq2⟩ := exists_rat_finite_empirical_cdf_eq u w (ProbabilityTheory.cdf P t)
       rw [← hq1, ← hq2]
-      exact le_csSup (bddAbove_range_abs_finiteEmpiricalCDF_sub u w) (mem_range_self q)
+      exact le_csSup (bdd_above_range_abs_finite_empirical_cdf_sub u w) (mem_range_self q)
     · rintro _ ⟨q, rfl⟩
       beta_reduce
       by_cases hq : (q : ℝ) ∈ Ioo (0 : ℝ) 1
       · have hFQ : ProbabilityTheory.cdf P (Q q) = q := Measure.cdf_quantile P hcont hq.1 hq.2
-        obtain ⟨q', hq1, hq2⟩ := exists_rat_finiteEmpiricalCDF_eq (fun i ↦ Q (u i))
+        obtain ⟨q', hq1, hq2⟩ := exists_rat_finite_empirical_cdf_eq (fun i ↦ Q (u i))
           (fun j ↦ Q (w j)) (Q q)
-        have e1 := finiteEmpiricalCDF_quantile_comp P u hu (Q q)
-        have e2 := finiteEmpiricalCDF_quantile_comp P w hw (Q q)
+        have e1 := finite_empirical_cdf_quantile_comp P u hu (Q q)
+        have e2 := finite_empirical_cdf_quantile_comp P w hw (Q q)
         rw [← hQ, hFQ] at e1 e2
         rw [← e1, ← e2, ← hq1, ← hq2]
-        exact le_csSup (bddAbove_range_abs_finiteEmpiricalCDF_sub _ _) (mem_range_self q')
+        exact le_csSup (bdd_above_range_abs_finite_empirical_cdf_sub _ _) (mem_range_self q')
       · rw [hedge hm u hu _ hq, hedge hn w hw _ hq, sub_self, abs_zero]
-        exact le_csSup_of_le (bddAbove_range_abs_finiteEmpiricalCDF_sub _ _) (mem_range_self 0)
+        exact le_csSup_of_le (bdd_above_range_abs_finite_empirical_cdf_sub _ _) (mem_range_self 0)
           (abs_nonneg _)
   -- assemble
   have hae2 : ∀ᵐ z ∂((Measure.pi fun _ : Fin m ↦ V).prod (Measure.pi fun _ : Fin n ↦ V)),
       (∀ i, z.1 i ∈ Ioo (0 : ℝ) 1) ∧ ∀ j, z.2 j ∈ Ioo (0 : ℝ) 1 :=
-    (Measure.quasiMeasurePreserving_fst.ae (ae_forall_mem_Ioo_pi_restrict m)).and
-      (Measure.quasiMeasurePreserving_snd.ae (ae_forall_mem_Ioo_pi_restrict n))
+    (Measure.quasiMeasurePreserving_fst.ae (ae_forall_mem_ioo_pi_restrict m)).and
+      (Measure.quasiMeasurePreserving_snd.ae (ae_forall_mem_ioo_pi_restrict n))
   rw [pi_eq_map_pi_quantile P m, pi_eq_map_pi_quantile P n,
     Measure.map_prod_map _ _ (measurable_pi_quantile P m) (measurable_pi_quantile P n),
-    Measure.map_map (measurable_twoSampleKolmogorovSmirnovStatistic m n)
+    Measure.map_map (measurable_two_sample_kolmogorov_smirnov_statistic m n)
       ((measurable_pi_quantile P m).prodMap (measurable_pi_quantile P n)),
-    uniformMeasure_zero_one_eq_restrict_Ioo]
+    uniform_measure_zero_one_eq_restrict_ioo]
   exact Measure.map_congr (hae2.mono fun z hz ↦ hpt z.1 hz.1 z.2 hz.2)
 
 section Eigenvector

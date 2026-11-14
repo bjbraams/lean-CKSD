@@ -9,6 +9,7 @@ public import CKSD.Bayes.EvidenceBounds
 public import CKSD.Bayes.EvidenceConcentration
 public import TauCeti.MeasureTheory.Measure.PiWithDensity
 
+
 /-!
 # Dominated posteriors and posterior contraction
 
@@ -27,7 +28,7 @@ two to obtain the convention `h² = ∫ (√p - √q)²` of `GAPS.md`.
 
 ## Main results
 
-* `CKSD.tendstoInMeasure_posterior_compl_of_kl_support`: Schwartz's posterior
+* `CKSD.tendsto_in_measure_posterior_compl_of_kl_support`: Schwartz's posterior
   consistency theorem (GAPS 104.18).
 * `CKSD.exists_posterior_hellinger_contraction`: the Ghosal–Ghosh–van der Vaart contraction
   theorem in Hellinger distance (GAPS 104.19).
@@ -58,7 +59,7 @@ def HasUniformlyConsistentTests {Θ X : Type*} [MeasurableSpace X]
       (∫ x, 1 - φ n x ∂(Measure.pi fun _ : Fin n ↦ P θ)) ≤ ε
 
 /-- The integrated likelihood `x ↦ ∫ ofReal (∏ᵢ f θ (xᵢ)) dπ(θ)` is measurable. -/
-private theorem measurable_lintegral_ofReal_prod {Θ X : Type*} [MeasurableSpace Θ]
+private theorem measurable_lintegral_of_real_prod {Θ X : Type*} [MeasurableSpace Θ]
     [MeasurableSpace X] (π : Measure Θ) [SFinite π] (f : Θ → X → ℝ)
     (hf : Measurable (Function.uncurry f)) (n : ℕ) :
     Measurable fun x : Fin n → X ↦ ∫⁻ θ, ENNReal.ofReal (∏ i, f θ (x i)) ∂π :=
@@ -69,7 +70,7 @@ private theorem measurable_lintegral_ofReal_prod {Θ X : Type*} [MeasurableSpace
 
 /-- The `n`-fold product of a dominated law has the product density with respect to `μ^n`,
 almost everywhere equal to `ofReal (∏ᵢ f θ (xᵢ))`. This uses TauCeti's `pi_withDensity`. -/
-private theorem pi_eq_withDensity_ofReal_prod {Θ X : Type*} [MeasurableSpace X]
+private theorem pi_eq_with_density_of_real_prod {Θ X : Type*} [MeasurableSpace X]
     (μ : Measure X) [SigmaFinite μ] (P : Θ → Measure X) [∀ θ, IsProbabilityMeasure (P θ)]
     (f : Θ → X → ℝ) (hdensity : ∀ θ, HasDensity (P θ) μ (f θ)) (θ : Θ) (n : ℕ) :
     Measure.pi (fun _ : Fin n ↦ P θ) =
@@ -112,7 +113,7 @@ theorem lintegral_tested_numerator_le_add_prior_compl {Θ X : Type*} [Measurable
   have hG : Measurable fun x ↦ ENNReal.ofReal (1 - ψ x) *
       ((∫⁻ θ in A, ENNReal.ofReal (∏ i, f θ (x i)) ∂π) / ENNReal.ofReal (∏ i, f θ₀ (x i))) :=
     hψm.mul (hN.div hL0)
-  rw [pi_eq_withDensity_ofReal_prod μ P f hdensity θ₀ n,
+  rw [pi_eq_with_density_of_real_prod μ P f hdensity θ₀ n,
     lintegral_withDensity_eq_lintegral_mul _ hL0 hG]
   calc ∫⁻ x, ((fun x : Fin n → X ↦ ENNReal.ofReal (∏ i, f θ₀ (x i))) *
         fun x : Fin n → X ↦ ENNReal.ofReal (1 - ψ x) *
@@ -144,7 +145,7 @@ theorem lintegral_tested_numerator_le_add_prior_compl {Θ X : Type*} [Measurable
             hL.comp (measurable_id.prodMk measurable_const)
           rw [ofReal_integral_eq_lintegral_ofReal hint
             (ae_of_all _ fun x ↦ sub_nonneg.2 (hψ.2 x).2),
-            pi_eq_withDensity_ofReal_prod μ P f hdensity θ n,
+            pi_eq_with_density_of_real_prod μ P f hdensity θ n,
             lintegral_withDensity_eq_lintegral_mul _ hLθ hψm]
           exact lintegral_congr fun x ↦ mul_comm _ _
         rw [heq]
@@ -183,7 +184,7 @@ private theorem lintegral_one_sub_test_mul_numerator_le {Θ X : Type*} [Measurab
 
 /-- Vanishing test error and a tested likelihood numerator small relative to an evidence lower
 bound imply vanishing posterior mass for varying measurable exceptional sets. -/
-theorem tendstoInMeasure_posterior_of_testedNumerator
+theorem tendsto_in_measure_posterior_of_tested_numerator
     {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
     (π : Measure Θ) [IsFiniteMeasure π] (P : Θ → Measure X)
     [∀ θ, IsProbabilityMeasure (P θ)] (f : Θ → X → ℝ)
@@ -280,7 +281,7 @@ theorem tendstoInMeasure_posterior_of_testedNumerator
       _ ≤ ENNReal.ofReal ε * D n (r n ω) := mul_le_mul_right hc2 _
       _ ≤ N n (r n ω) := hNge
   have hmap : ∀ n, Pinf.map (r n) = Measure.pi fun _ : Fin n ↦ P θ₀ := fun n ↦
-    infinitePi_map_fin_val (P θ₀) n
+    infinite_pi_map_fin_val (P θ₀) n
   have hE1 : ∀ n : ℕ, Pinf (E1 n) ≤
       ENNReal.ofReal (∫ x, ψ n x ∂(Measure.pi fun _ : Fin n ↦ P θ₀)) /
         ENNReal.ofReal (1 / 2) := by
@@ -347,7 +348,7 @@ theorem tendstoInMeasure_posterior_of_testedNumerator
 Kullback–Leibler neighbourhood `{θ | KL(P θ₀ ‖ P θ) < ε}` of the true parameter and there are
 uniformly consistent tests of `θ₀` against `Uᶜ`, then the posterior mass of `Uᶜ` tends to zero in
 probability under the true law. -/
-theorem tendstoInMeasure_posterior_compl_of_kl_support
+theorem tendsto_in_measure_posterior_compl_of_kl_support
     {Θ X : Type*} [MeasurableSpace Θ] [StandardBorelSpace Θ]
     [MeasurableSpace X] [StandardBorelSpace X]
     (π : Measure Θ) [IsProbabilityMeasure π] (μ : Measure X) [SigmaFinite μ]
@@ -363,14 +364,14 @@ theorem tendstoInMeasure_posterior_compl_of_kl_support
           atTop (fun _ ↦ 0) := by
   classical
   obtain ⟨φ, hφ, h0, h1⟩ := htests
-  obtain ⟨β, hβ, ψ, hψ, hψb⟩ := exists_exponentiallyConsistent_tests P θ₀ Uᶜ φ hφ h0 h1
+  obtain ⟨β, hβ, ψ, hψ, hψb⟩ := exists_exponentially_consistent_tests P θ₀ Uᶜ φ hφ h0 h1
   set γ := β / 2 with hγ
   set B := {θ | klDiv (P θ₀) (P θ) < ENNReal.ofReal γ}
   have hBm : MeasurableSet B := hKLmeas γ (by positivity)
   have hπB : 0 < π B := hKL γ (by positivity)
   have hπBtop : π B ≠ ∞ := measure_ne_top _ _
   have hπBr : 0 < π.real B := ENNReal.toReal_pos hπB.ne' hπBtop
-  have hev := tendsto_infinitePi_evidence_lt π μ P f hf hdensity θ₀ hBm (fun θ hθ ↦ hθ)
+  have hev := tendsto_infinite_pi_evidence_lt π μ P f hf hdensity θ₀ hBm (fun θ hθ ↦ hθ)
   set C := Real.exp (1 / 8)
   have hexpto : ∀ a > 0, ∀ c : ℝ, Tendsto (fun n : ℕ ↦ c * Real.exp (-a * n)) atTop (𝓝 0) := by
     intro a ha c
@@ -379,7 +380,7 @@ theorem tendstoInMeasure_posterior_compl_of_kl_support
     simpa using (tendsto_const_nhds (x := c)).mul this
   let τ : ℕ → ℝ := fun n ↦ π.real B / 2 * Real.exp (-γ * n)
   let b : ℕ → ℝ := fun n ↦ C * Real.exp (-β * n)
-  refine tendstoInMeasure_posterior_of_testedNumerator π P f hf θ₀
+  refine tendsto_in_measure_posterior_of_tested_numerator π P f hf θ₀
     (hdensity θ₀).measure_nonpos_eq_zero (fun _ ↦ Uᶜ) (fun _ ↦ hU.compl)
     ψ hψ τ b (fun n ↦ mul_pos (div_pos hπBr two_pos) (Real.exp_pos _)) ?_ ?_ ?_ ?_
   · exact tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds (hexpto β hβ C)
@@ -420,7 +421,7 @@ def HasHellingerSieveCover {Θ X : Type*} [MeasurableSpace X]
 /-- Exponentially small type II errors on a sieve, small prior tails, and KL/second-moment
 prior mass imply posterior contraction. The test construction is separated from the evidence
 and likelihood-ratio argument. -/
-theorem hasPosteriorContractionRate_of_sieve_tests
+theorem has_posterior_contraction_rate_of_sieve_tests
     {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
     (π : Measure Θ) [IsProbabilityMeasure π] (μ : Measure X) [SigmaFinite μ]
     (P : Θ → Measure X) [∀ θ, IsProbabilityMeasure (P θ)]
@@ -457,7 +458,7 @@ theorem hasPosteriorContractionRate_of_sieve_tests
   let τ : ℕ → ℝ := fun n ↦ π.real (B n) / 2 * Real.exp (-(2 * ε n ^ 2) * n)
   let b : ℕ → ℝ := fun n ↦ 2 * Real.exp (-(C + 4) * (n : ℝ) * ε n ^ 2)
   have hτ (n : ℕ) : 0 < τ n := mul_pos (div_pos (hπBr n) two_pos) (Real.exp_pos _)
-  refine tendstoInMeasure_posterior_of_testedNumerator π P f hf θ₀
+  refine tendsto_in_measure_posterior_of_tested_numerator π P f hf θ₀
     (hdensity θ₀).measure_nonpos_eq_zero (fun n ↦ {θ | M * ε n ≤ ρ θ})
     (fun n ↦ measurableSet_le measurable_const hρ) ψ hψ τ b hτ htest ?_ ?_ ?_
   · intro n
@@ -492,7 +493,7 @@ theorem hasPosteriorContractionRate_of_sieve_tests
     rw [he]
     field_simp
     ring
-  · have hev := tendsto_infinitePi_evidence_lt_of_secondMoment π μ P f hf hdensity θ₀ B
+  · have hev := tendsto_infinite_pi_evidence_lt_of_second_moment π μ P f hf hdensity θ₀ B
       hBmeas (fun n ↦ ε n ^ 2) (fun n ↦ sq_pos_of_pos (hε n)) hnε hKL hsecond
     have heq (n : ℕ) (ω : ℕ → X) :
         ENNReal.ofReal ((∏ i : Fin n, f θ₀ (ω i)) * τ n) =
@@ -657,13 +658,13 @@ theorem exists_posterior_hellinger_contraction
     HasPosteriorContractionRate (Measure.infinitePi fun _ : ℕ ↦ P θ₀)
       (fun n x ↦ dominatedPosterior π f (fun i : Fin n ↦ x i.val))
       (fun θ ↦ statisticalHellingerDistance (P θ) (P θ₀)) ε := by
-  refine hasPosteriorContractionRate_of_sieve_tests π μ P f hf hdensity θ₀ ε hε hnε C
+  refine has_posterior_contraction_rate_of_sieve_tests π μ P f hf hdensity θ₀ ε hε hnε C
     sieve (fun n ↦ {θ | klDiv (P θ₀) (P θ) ≤ ENNReal.ofReal (ε n ^ 2) ∧
       logLikelihoodRatioSecondMoment (P θ₀) (P θ) ≤ ENNReal.ofReal (ε n ^ 2)})
     hsieve hBmeas (fun n θ hθ ↦ hθ.1) (fun n θ hθ ↦ hθ.2) htail hprior
     (fun θ ↦ statisticalHellingerDistance (P θ) (P θ₀)) hHmeas ?_
   refine exists_hellinger_sieve_tests_of_ball_tests P θ₀ ε hε hnε C hC sieve hcover
-    (fun θ η ↦ statisticalHellingerDistance_triangle_of_hasDensity
+    (fun θ η ↦ statistical_hellinger_distance_triangle_of_has_density
       (hdensity θ) (hdensity η) (hdensity θ₀)) ?_
   intro θ n hpos
   have hsym : statisticalHellingerDistance (P θ₀) (P θ) =
@@ -680,22 +681,22 @@ theorem exists_posterior_hellinger_contraction
     simpa only [hsym, neg_div, neg_mul] using h
 
 /-- Statistical Hellinger distance is nonnegative by its definition. -/
-theorem statisticalHellingerDistance_nonneg {X : Type*} [MeasurableSpace X]
+theorem statistical_hellinger_distance_nonneg {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) : 0 ≤ statisticalHellingerDistance P Q := Real.sqrt_nonneg _
 
 /-- The Hellinger adapter vanishes when its two laws agree, by Statlib. -/
-@[simp] theorem statisticalHellingerDistance_self {X : Type*} [MeasurableSpace X]
+@[simp] theorem statistical_hellinger_distance_self {X : Type*} [MeasurableSpace X]
     (P : Measure X) [SigmaFinite P] : statisticalHellingerDistance P P = 0 := by
   simp [statisticalHellingerDistance]
 
 /-- Symmetry of the Hellinger adapter follows from Statlib's symmetry theorem. -/
-theorem statisticalHellingerDistance_comm {X : Type*} [MeasurableSpace X]
+theorem statistical_hellinger_distance_comm {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) [SigmaFinite P] [SigmaFinite Q] :
     statisticalHellingerDistance P Q = statisticalHellingerDistance Q P := by
   simp only [statisticalHellingerDistance, ProbabilityTheory.sqHellinger_comm P Q]
 
 /-- Before any observations, a probability prior is its own dominated posterior. -/
-@[simp] theorem dominatedPosterior_empty {Θ X : Type*} [MeasurableSpace Θ]
+@[simp] theorem dominated_posterior_empty {Θ X : Type*} [MeasurableSpace Θ]
     (π : Measure Θ) [IsProbabilityMeasure π] (f : Θ → X → ℝ) (x : Fin 0 → X) :
     dominatedPosterior π f x = π := by
   simp [dominatedPosterior]

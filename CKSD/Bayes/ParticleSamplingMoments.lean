@@ -1,4 +1,5 @@
 module
+
 public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.MeasureTheory.Integral.Pi
 public import Mathlib.MeasureTheory.Function.L1Space.Integrable
@@ -41,7 +42,7 @@ theorem abs_rpow_le_one_add_factorial_mul_exp {p : ℝ} (hp : 0 ≤ p) {m : ℕ}
     hf.trans (by simpa only [mul_comm] using mul_le_mul_of_nonneg_right he (Nat.cast_nonneg (m !)))
   exact hpow.trans (by linarith [hf2])
 /-- A sub-Gaussian variable of parameter one has a uniform moment bound of every real order. -/
-theorem integral_abs_rpow_le_of_hasSubgaussianMGF_one
+theorem integral_abs_rpow_le_of_has_subgaussian_mgf_one
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
     (Y : Ω → ℝ) (hY : HasSubgaussianMGF Y 1 P) {p : ℝ} (hp : 0 ≤ p)
     {m : ℕ} (hpm : p ≤ m) :
@@ -71,7 +72,7 @@ theorem integral_abs_rpow_le_of_hasSubgaussianMGF_one
         nlinarith
 /-- Centered iid sums, normalized by the square-root sample size and oscillation, are
 sub-Gaussian of parameter one. -/
-theorem hasSubgaussianMGF_normalized_iid_sum
+theorem has_subgaussian_mgf_normalized_iid_sum
     {X : Type*} [MeasurableSpace X] [Nonempty X] (ν : Measure X) [IsProbabilityMeasure ν]
     {N : ℕ} (hN : 0<N) (f : X → ℝ) (hf : Measurable f) {B : ℝ} (hB : 0<B)
     (hfo : ∀ x y, |f x-f y|≤B) :

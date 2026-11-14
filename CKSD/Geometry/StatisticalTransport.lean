@@ -7,6 +7,7 @@ import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Pushforward
 public import CKSD.Geometry.Transport
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
 
+
 /-!
 # Statistical entropic transport and Wasserstein barycenter gradients
 
@@ -24,12 +25,12 @@ constructions; empirical laws use `CKSD.empiricalMeasure`.
 
 ## Main results
 
-* `CKSD.quadraticEntropicTransport_empirical_bounds`: dimension-free mean-square and bias bounds
+* `CKSD.quadratic_entropic_transport_empirical_bounds`: dimension-free mean-square and bias bounds
   (GAPS 108.55).
-* `CKSD.hasDerivAt_wassersteinBarycenterEnergy_displacement`: the directional first variation of
+* `CKSD.has_deriv_at_wasserstein_barycenter_energy_displacement`: the directional first variation of
   the barycenter energy (GAPS 108.58). It is a directional derivative along a specified
   square-integrable displacement, not the full Wasserstein Fréchet expansion.
-* `CKSD.satisfiesWassersteinKarcherEquation_of_minimizer`: minimizers satisfy the Karcher equation
+* `CKSD.satisfies_wasserstein_karcher_equation_of_minimizer`: minimizers satisfy the Karcher equation
   (GAPS 108.58).
 -/
 
@@ -64,7 +65,7 @@ def entropicBarycentricMap {d : ℕ} (ε : ℝ)
 radius `1/2` and `n ≥ 1` samples the empirical entropic cost `S_n` satisfies
 `E (S_n - S)² ≤ C / n` and `|E S_n - S| ≤ C / n`. The entropic-map estimation bound is not
 asserted here. Constants may depend on `ε` only. -/
-theorem quadraticEntropicTransport_empirical_bounds (ε : ℝ≥0) (hε : 0 < ε) :
+theorem quadratic_entropic_transport_empirical_bounds (ε : ℝ≥0) (hε : 0 < ε) :
     ∃ C > (0 : ℝ), ∀ d : ℕ,
       ∀ P Q : Measure (EuclideanSpace ℝ (Fin d)),
       IsProbabilityMeasure P → IsProbabilityMeasure Q →
@@ -134,7 +135,7 @@ absolutely continuous law `P` with finite second moment and square-integrable ma
 optimal from `P` to the targets, the energy along the displacement `x ↦ x + t v(x)` has derivative
 `∫ ⟨x - k⁻¹ ∑ T_i x, v x⟩ dP` at `t = 0`. The targets are probability laws with finite second
 moment because they are the images `(T_i)_# P`. -/
-theorem hasDerivAt_wassersteinBarycenterEnergy_displacement {d k : ℕ} (hk : 0 < k)
+theorem has_deriv_at_wasserstein_barycenter_energy_displacement {d k : ℕ} (hk : 0 < k)
     (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
     (hP : P ≪ volume) (hP2 : MemLp id 2 P)
     (target : Fin k → Measure (EuclideanSpace ℝ (Fin d)))
@@ -158,7 +159,7 @@ theorem hasDerivAt_wassersteinBarycenterEnergy_displacement {d k : ℕ} (hk : 0 
   have hder (i : Fin k) : HasDerivAt (fun t : ℝ ↦
         (TauCeti.wassersteinEDist 2 (P.map fun x ↦ x + t • v x) (target i)).toReal ^ 2)
       (2*∫ x, inner ℝ (x - T i x) (v x) ∂P) 0 := by
-    have hd := hasDerivAt_wasserstein_sq_displacement μ (ν i) (by simpa only [hμ'] using hP) (T i)
+    have hd := has_deriv_at_wasserstein_sq_displacement μ (ν i) (by simpa only [hμ'] using hP) (T i)
       (hT i)
       (by simpa only [hμ', hν'] using hlaw i)
       (by simpa only [hμ', hν'] using hopt i) v hv
@@ -168,7 +169,7 @@ theorem hasDerivAt_wassersteinBarycenterEnergy_displacement {d k : ℕ} (hk : 0 
 
 /-- GAPS 108.58: a minimizing barycenter with the supplied optimal maps satisfies the
 Karcher equation. -/
-theorem satisfiesWassersteinKarcherEquation_of_minimizer {d k : ℕ} (hk : 0 < k)
+theorem satisfies_wasserstein_karcher_equation_of_minimizer {d k : ℕ} (hk : 0 < k)
     (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
     (hP2 : MemLp id 2 P)
     (target : Fin k → Measure (EuclideanSpace ℝ (Fin d)))
@@ -197,7 +198,7 @@ theorem satisfiesWassersteinKarcherEquation_of_minimizer {d k : ℕ} (hk : 0 < k
     intro i
     rw [hlaw]
     exact hopt i
-  have hdescent := wassersteinBarycenterEnergy_map_sub_le hk P hP2 T hT hT2 hopt' 1
+  have hdescent := wasserstein_barycenter_energy_map_sub_le hk P hP2 T hT hT2 hopt' 1
   have hmin' := hmin (P.map (fun x ↦ x - (1 : ℝ) • g x))
     inferInstance hmap2
   simp only [wassersteinBarycenterEnergy, ← hlaw] at hmin'
@@ -214,7 +215,7 @@ theorem satisfiesWassersteinKarcherEquation_of_minimizer {d k : ℕ} (hk : 0 < k
   exact norm_eq_zero.mp (sq_eq_zero_iff.mp hx)
 
 /-- The Karcher equation says exactly that the average optimal map is the identity almost surely. -/
-theorem satisfiesWassersteinKarcherEquation_iff {d k : ℕ}
+theorem satisfies_wasserstein_karcher_equation_iff {d k : ℕ}
     (P : Measure (EuclideanSpace ℝ (Fin d)))
     (T : Fin k → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) :
     SatisfiesWassersteinKarcherEquation P T ↔

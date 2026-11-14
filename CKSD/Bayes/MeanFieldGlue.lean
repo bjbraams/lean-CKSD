@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldGlobal
 public import CKSD.Bayes.MeanFieldPicardLaw
 public import CKSD.Bayes.MeanFieldUniqueness
@@ -17,7 +18,7 @@ open MeasureTheory ProbabilityTheory Set Filter Function
 open scoped NNReal ENNReal Topology
 namespace CKSD
 /-- Integrable nonlinear solutions on every compact interval yield a global solution. -/
-theorem exists_mcKeanVlasovSolution_of_compact_solutions
+theorem exists_mc_kean_vlasov_solution_of_compact_solutions
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d))
@@ -38,7 +39,7 @@ theorem exists_mcKeanVlasovSolution_of_compact_solutions
   have hYm (n : ℕ) (t : ℝ) : Measurable (Y n t) :=
     (ContinuousMap.measurable_eval (projIcc 0 (T n) (hT n) t)).comp (hUm n)
   have hYi (n : ℕ) (t : ℝ) : Integrable (Y n t) P :=
-    integrable_IccExtend_eval P (hT n) (U n) (hUm n) (hUi n) t
+    integrable_icc_extend_eval P (hT n) (U n) (hUm n) (hUi n) t
   have hYc (n : ℕ) : ∀ᵐ ω ∂P, Continuous (fun t ↦ Y n t ω) :=
     ae_of_all _ fun ω ↦ ((U n ω).IccExtend (hT n)).continuous
   have hYbound (n : ℕ) : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0:ℝ) (T n), ‖Y n t ω‖ ≤ ‖U n ω‖ :=
@@ -46,9 +47,9 @@ theorem exists_mcKeanVlasovSolution_of_compact_solutions
   have hbm (n : ℕ) : ∀ᵐ ω ∂P, AEStronglyMeasurable
       (fun s ↦ b (Y n s ω) (P.map (Y n s))) volume := by
     refine ae_of_all _ fun ω ↦ ?_
-    have hc := (continuous_nonlinearFrozenDrift P (hT n) b hb (U n) (hUm n) (hUi n)).comp
+    have hc := (continuous_nonlinear_frozen_drift P (hT n) b hb (U n) (hUm n) (hUi n)).comp
       (continuous_id.prodMk (((U n ω).IccExtend (hT n)).continuous))
-    simpa only [nonlinearFrozenDrift, pathMarginalLaw_toMeasure, Function.comp_def,
+    simpa only [nonlinearFrozenDrift, path_marginal_law_to_measure, Function.comp_def,
       Function.uncurry_apply_pair, Y, id_eq] using (hc.aestronglyMeasurable (μ := volume))
   have hYe (n : ℕ) : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) (T n),
       Y n t ω = ξ ω + W t.toNNReal ω + ∫ s in (0:ℝ)..t, b (Y n s ω) (P.map (Y n s)) := by
@@ -60,7 +61,7 @@ theorem exists_mcKeanVlasovSolution_of_compact_solutions
     exact hev.trans he
   have hconsPair (n m : ℕ) : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) (min (T n) (T m)),
       Y n t ω = Y m t ω := by
-    apply ae_eq_of_wasserstein_integral_eq_on_Icc P b hb (Y n) (Y m) (hYm n) (hYm m)
+    apply ae_eq_of_wasserstein_integral_eq_on_icc P b hb (Y n) (Y m) (hYm n) (hYm m)
       (hYc n) (hYc m) (le_min (hT n) (hT m))
       (fun t _ ↦ (hYi n t).norm) (fun t _ ↦ (hYi m t).norm)
       (fun ω ↦ ‖U n ω‖) (fun ω ↦ ‖U m ω‖) (hUi n).norm (hUi m).norm

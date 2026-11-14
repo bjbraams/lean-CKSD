@@ -1,4 +1,5 @@
 module
+
 public import TauCeti.Geometry.Symplectic.Hamiltonian.Flow
 public import TauCeti.Geometry.Symplectic.Hamiltonian.Standard
 public import Mathlib.Analysis.InnerProductSpace.Calculus
@@ -33,13 +34,13 @@ def mechanicalVelocity (G : E → E) (z : E × E) : E × E := (z.2, -G z.1)
 
 omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] in
 /-- A Lipschitz force gives a globally Lipschitz Hamiltonian velocity. -/
-theorem lipschitzWith_mechanicalVelocity {G : E → E} {L : ℝ≥0} (hG : LipschitzWith L G) :
+theorem lipschitz_with_mechanical_velocity {G : E → E} {L : ℝ≥0} (hG : LipschitzWith L G) :
     LipschitzWith (max 1 L) (mechanicalVelocity G) := by
   change LipschitzWith (max 1 L) (fun z : E × E ↦ (z.2, -G z.1))
   simpa only [mul_one, Function.comp_def, Pi.neg_apply] using LipschitzWith.prod_snd.prodMk (hG.comp LipschitzWith.prod_fst).neg
 
 /-- The derivative of mechanical energy consists of the potential gradient and momentum. -/
-theorem hasFDerivAt_mechanicalHamiltonian (V : E → ℝ) (G : E → E)
+theorem has_f_deriv_at_mechanical_hamiltonian (V : E → ℝ) (G : E → E)
     (hG : ∀ x, HasGradientAt V (G x) x) (z : E × E) :
     HasFDerivAt (mechanicalHamiltonian V)
       ((innerSL ℝ (G z.1)).coprod (innerSL ℝ z.2)) z := by
@@ -56,60 +57,60 @@ theorem hasFDerivAt_mechanicalHamiltonian (V : E → ℝ) (G : E → E)
   simp [ContinuousLinearMap.coprod_apply, innerSL_apply_apply]
 
 /-- Mechanical Hamilton's equations have velocity `(p,-gradV(q))`. -/
-theorem hamiltonianVectorField_mechanicalHamiltonian (V : E → ℝ) (G : E → E)
+theorem hamiltonian_vector_field_mechanical_hamiltonian (V : E → ℝ) (G : E → E)
     (hG : ∀ x, HasGradientAt V (G x) x) :
     (TauCeti.stdSymplecticForm (V := E)).hamiltonianVectorField (mechanicalHamiltonian V) =
       mechanicalVelocity G := by
   funext z
-  exact TauCeti.stdSymplecticForm_hamiltonianVectorField (hasFDerivAt_mechanicalHamiltonian V G hG z)
+  exact TauCeti.stdSymplecticForm_hamiltonianVectorField (has_f_deriv_at_mechanical_hamiltonian V G hG z)
 
 omit [FiniteDimensional ℝ E] in
 /-- Mechanical energy is twice continuously differentiable for a C2 potential. -/
-theorem contDiff_mechanicalHamiltonian (V : E → ℝ) (hV : ContDiff ℝ 2 V) :
+theorem cont_diff_mechanical_hamiltonian (V : E → ℝ) (hV : ContDiff ℝ 2 V) :
     ContDiff ℝ 2 (mechanicalHamiltonian V) :=
   (hV.comp contDiff_fst).add (((contDiff_norm_sq ℝ).comp contDiff_snd).div_const 2)
 
 /-- The canonical mechanical flow of a globally Lipschitz force. -/
 def mechanicalFlow (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L G) : Flow ℝ (E × E) :=
-  TauCeti.flowOfLipschitz (mechanicalVelocity G) (lipschitzWith_mechanicalVelocity hG)
+  TauCeti.flowOfLipschitz (mechanicalVelocity G) (lipschitz_with_mechanical_velocity hG)
 
 /-- The mechanical flow is the symplectic Hamiltonian flow of its energy. -/
-theorem mechanicalFlow_eq_hamiltonianFlow (V : E → ℝ) (G : E → E)
+theorem mechanical_flow_eq_hamiltonian_flow (V : E → ℝ) (G : E → E)
     (hgrad : ∀ x, HasGradientAt V (G x) x) {L : ℝ≥0} (hG : LipschitzWith L G) :
     let hX : LipschitzWith (max 1 L)
       ((TauCeti.stdSymplecticForm (V := E)).hamiltonianVectorField (mechanicalHamiltonian V)) :=
-      (hamiltonianVectorField_mechanicalHamiltonian V G hgrad).symm ▸ lipschitzWith_mechanicalVelocity hG;
+      (hamiltonian_vector_field_mechanical_hamiltonian V G hgrad).symm ▸ lipschitz_with_mechanical_velocity hG;
     mechanicalFlow G hG = (TauCeti.stdSymplecticForm (V := E)).hamiltonianFlow (mechanicalHamiltonian V) hX := by
   dsimp only
   apply Flow.ext
   intro t z
   have hder (s : ℝ) := (TauCeti.stdSymplecticForm (V := E)).hasDerivAt_hamiltonianFlow
-    (mechanicalHamiltonian V) ((hamiltonianVectorField_mechanicalHamiltonian V G hgrad).symm ▸
-      lipschitzWith_mechanicalVelocity hG) z s
+    (mechanicalHamiltonian V) ((hamiltonian_vector_field_mechanical_hamiltonian V G hgrad).symm ▸
+      lipschitz_with_mechanical_velocity hG) z s
   have hd (s : ℝ) : HasDerivAt
       (fun r ↦ (TauCeti.stdSymplecticForm (V := E)).hamiltonianFlow (mechanicalHamiltonian V)
-        ((hamiltonianVectorField_mechanicalHamiltonian V G hgrad).symm ▸ lipschitzWith_mechanicalVelocity hG) r z)
+        ((hamiltonian_vector_field_mechanical_hamiltonian V G hgrad).symm ▸ lipschitz_with_mechanical_velocity hG) r z)
       (mechanicalVelocity G ((TauCeti.stdSymplecticForm (V := E)).hamiltonianFlow (mechanicalHamiltonian V)
-        ((hamiltonianVectorField_mechanicalHamiltonian V G hgrad).symm ▸ lipschitzWith_mechanicalVelocity hG) s z)) s :=
-    (hder s).congr_deriv (congrFun (hamiltonianVectorField_mechanicalHamiltonian V G hgrad) _)
-  have hc := TauCeti.eq_flowOfLipschitz (lipschitzWith_mechanicalVelocity hG) hd t
+        ((hamiltonian_vector_field_mechanical_hamiltonian V G hgrad).symm ▸ lipschitz_with_mechanical_velocity hG) s z)) s :=
+    (hder s).congr_deriv (congrFun (hamiltonian_vector_field_mechanical_hamiltonian V G hgrad) _)
+  have hc := TauCeti.eq_flowOfLipschitz (lipschitz_with_mechanical_velocity hG) hd t
   simpa only [Flow.map_zero, id_eq, mechanicalFlow] using hc.symm
 
 /-- Mechanical-flow trajectories solve Hamilton's equations. -/
-theorem hasDerivAt_mechanicalFlow (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L G)
+theorem has_deriv_at_mechanical_flow (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L G)
     (z : E × E) (t : ℝ) :
     HasDerivAt (fun s ↦ mechanicalFlow G hG s z)
       ((mechanicalFlow G hG t z).2, -G (mechanicalFlow G hG t z).1) t :=
-  TauCeti.hasDerivAt_flowOfLipschitz (lipschitzWith_mechanicalVelocity hG) z t
+  TauCeti.hasDerivAt_flowOfLipschitz (lipschitz_with_mechanical_velocity hG) z t
 
 /-- Position along a mechanical orbit is the integral of momentum. -/
-theorem mechanicalFlow_fst_eq (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L G)
+theorem mechanical_flow_fst_eq (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L G)
     (z : E × E) (t : ℝ) :
     (mechanicalFlow G hG t z).1 = z.1 + ∫ s in (0 : ℝ)..t, (mechanicalFlow G hG s z).2 := by
   have h := congrArg Prod.fst (TauCeti.flowOfLipschitz_eq_add_integral
-    (lipschitzWith_mechanicalVelocity hG) z t)
+    (lipschitz_with_mechanical_velocity hG) z t)
   have hc : Continuous (fun s ↦ mechanicalVelocity G (mechanicalFlow G hG s z)) :=
-    (lipschitzWith_mechanicalVelocity hG).continuous.comp
+    (lipschitz_with_mechanical_velocity hG).continuous.comp
       ((mechanicalFlow G hG).continuous continuous_id continuous_const)
   have hi := (ContinuousLinearMap.fst ℝ E E).intervalIntegral_comp_comm (hc.intervalIntegrable (μ := volume) 0 t)
   change (mechanicalFlow G hG t z).1 = z.1 +
@@ -118,13 +119,13 @@ theorem mechanicalFlow_fst_eq (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L 
   exact h
 
 /-- Momentum along a mechanical orbit is the integral of the force. -/
-theorem mechanicalFlow_snd_eq (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L G)
+theorem mechanical_flow_snd_eq (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L G)
     (z : E × E) (t : ℝ) :
     (mechanicalFlow G hG t z).2 = z.2 - ∫ s in (0 : ℝ)..t, G (mechanicalFlow G hG s z).1 := by
   have h := congrArg Prod.snd (TauCeti.flowOfLipschitz_eq_add_integral
-    (lipschitzWith_mechanicalVelocity hG) z t)
+    (lipschitz_with_mechanical_velocity hG) z t)
   have hc : Continuous (fun s ↦ mechanicalVelocity G (mechanicalFlow G hG s z)) :=
-    (lipschitzWith_mechanicalVelocity hG).continuous.comp
+    (lipschitz_with_mechanical_velocity hG).continuous.comp
       ((mechanicalFlow G hG).continuous continuous_id continuous_const)
   have hi := (ContinuousLinearMap.snd ℝ E E).intervalIntegral_comp_comm (hc.intervalIntegrable (μ := volume) 0 t)
   change (mechanicalFlow G hG t z).2 = z.2 +
@@ -134,10 +135,10 @@ theorem mechanicalFlow_snd_eq (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L 
   simpa only [intervalIntegral.integral_neg, sub_eq_add_neg] using h
 omit [FiniteDimensional ℝ E] in
 /-- Squared norm of a continuous time integral is bounded by length times its squared energy. -/
-theorem norm_intervalIntegral_sq_le (f : ℝ → E) (hf : Continuous f) {T : ℝ} (hT : 0 ≤ T) :
+theorem norm_interval_integral_sq_le (f : ℝ → E) (hf : Continuous f) {T : ℝ} (hT : 0 ≤ T) :
     ‖∫ s in (0 : ℝ)..T, f s‖ ^ 2 ≤ T * ∫ s in (0 : ℝ)..T, ‖f s‖ ^ 2 := by
   have hn := intervalIntegral.norm_integral_le_integral_norm (μ := volume) (f := f) hT
-  have hp := sq_intervalIntegral_le_length_mul_integral_sq (fun s ↦ ‖f s‖) hf.norm hT
+  have hp := sq_interval_integral_le_length_mul_integral_sq (fun s ↦ ‖f s‖) hf.norm hT
   have hi := intervalIntegral.integral_nonneg (μ := volume) hT (fun s _ ↦ norm_nonneg (f s))
   nlinarith [norm_nonneg (∫ s in (0 : ℝ)..T, f s)]
 
@@ -159,7 +160,7 @@ theorem mechanical_position_error_sq_le (G : E → E) {L : ℝ≥0} (hG : Lipsch
     have hi : (∫ r in (0 : ℝ)..s, ‖p r‖ ^ 2) ≤ A :=
       intervalIntegral.integral_mono_interval le_rfl hs.1 hs.2
         (ae_of_all _ fun _ ↦ sq_nonneg _) ((hp.norm.pow 2).intervalIntegrable _ _)
-    have hn := norm_intervalIntegral_sq_le p hp hs.1
+    have hn := norm_interval_integral_sq_le p hp hs.1
     rw [hqp s hs.1, add_sub_cancel_left]
     have ht : s * ∫ r in (0 : ℝ)..s, ‖p r‖ ^ 2 ≤ T * A :=
       (mul_le_mul_of_nonneg_left hi hs.1).trans (mul_le_mul_of_nonneg_right hs.2 hA)

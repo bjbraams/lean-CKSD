@@ -4,6 +4,7 @@ public import CKSD.Bayes.Basic
 public import Mathlib.MeasureTheory.Integral.Pi
 public import TauCeti.Probability.Moments.SampleMean
 
+
 /-!
 # Mean-square fluctuations of bounded empirical interactions
 
@@ -31,7 +32,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 /-- For a frozen location and independent samples, the expected squared centered interaction
 sum is at most `4κ²` times the number of samples. -/
-theorem integral_norm_sum_centeredInteraction_sq_le
+theorem integral_norm_sum_centered_interaction_sq_le
     (μ : Measure E) [IsProbabilityMeasure μ] (K : E → E → E)
     (hKm : Measurable (Function.uncurry K)) (κ : ℝ≥0) (hK : ∀ x y, ‖K x y‖ ≤ κ)
     {ι : Type*} [Fintype ι] (x : E) :
@@ -81,7 +82,7 @@ theorem integral_norm_sum_centeredInteraction_sq_le
 
 /-- In an iid sample, the interaction average seen by one sampled particle differs from its
 population counterpart in mean square by at most `16κ²/N`, including the self-interaction term. -/
-theorem integral_norm_empiricalInteraction_sub_sq_le
+theorem integral_norm_empirical_interaction_sub_sq_le
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) [IsProbabilityMeasure P]
     (μ : Measure E) [IsProbabilityMeasure μ] (K : E → E → E)
     (hKm : Measurable (Function.uncurry K)) (κ : ℝ≥0) (hK : ∀ x y, ‖K x y‖ ≤ κ)
@@ -146,7 +147,7 @@ theorem integral_norm_empiricalInteraction_sub_sq_le
         have hconst : (∫ _ : T → E, 8 * (κ : ℝ) ^ 2 ∂ν) = 8 * (κ : ℝ) ^ 2 := by simp
         rw [ha, hconst, integral_const_mul]
       _ ≤ 8 * (κ : ℝ) ^ 2 + 2 * ((Fintype.card T : ℝ) * (4 * (κ : ℝ) ^ 2)) := by
-        have hb := integral_norm_sum_centeredInteraction_sq_le μ K hKm κ hK (ι := T) x
+        have hb := integral_norm_sum_centered_interaction_sq_le μ K hKm κ hK (ι := T) x
         exact add_le_add le_rfl (mul_le_mul_of_nonneg_left hb (by norm_num))
       _ ≤ 16 * (κ : ℝ) ^ 2 * N := by
         have hcard : Fintype.card T ≤ N := by

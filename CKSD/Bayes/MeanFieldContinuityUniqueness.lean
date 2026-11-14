@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldBackwardTest
 public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.Endpoint
 public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
@@ -28,7 +29,7 @@ section WeakTransport
 variable [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
 /-- Two narrowly continuous probability solutions for a bounded globally Lipschitz velocity
 have the same terminal integrals against every smooth bounded Lipschitz scalar test. -/
-theorem integral_eq_of_isContinuityEquation_of_bounded_lipschitz
+theorem integral_eq_of_is_continuity_equation_of_bounded_lipschitz
     {T : ℝ} (hT : 0 ≤ T) (v : ℝ × E → E) {K M : ℝ≥0}
     (hv : LipschitzWith K v) (hM : ∀ q, ‖v q‖₊ ≤ M)
     (μ ν : ℝ → FiniteMeasure E) (hμ : ContinuousOn μ (Icc (0 : ℝ) T))
@@ -94,7 +95,7 @@ variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H]
   [FiniteDimensional ℝ H] [MeasurableSpace H] [BorelSpace H] [CompleteSpace H]
 /-- Narrowly continuous probability solutions of a continuity equation with bounded globally
 Lipschitz space-time velocity are unique without moment hypotheses. -/
-theorem eq_of_isContinuityEquation_of_bounded_lipschitz
+theorem eq_of_is_continuity_equation_of_bounded_lipschitz
     {T : ℝ} (hT : 0 ≤ T) (v : ℝ × H → H) {K M : ℝ≥0}
     (hv : LipschitzWith K v) (hM : ∀ q, ‖v q‖₊ ≤ M)
     (μ ν : ℝ → FiniteMeasure H) (hμ : ContinuousOn μ (Icc (0 : ℝ) T))
@@ -110,11 +111,11 @@ theorem eq_of_isContinuityEquation_of_bounded_lipschitz
   apply Measure.ext_of_charFun
   funext z
   let ℓ : H →L[ℝ] ℝ := innerSL ℝ z
-  have hc := integral_eq_of_isContinuityEquation_of_bounded_lipschitz hT v hv hM
+  have hc := integral_eq_of_is_continuity_equation_of_bounded_lipschitz hT v hv hM
     μ ν hμ hν hμp hνp hμce hνce hinit (fun x ↦ Real.cos (ℓ x))
     (Real.contDiff_cos.comp ℓ.contDiff) (Real.lipschitzWith_cos.comp ℓ.lipschitzWith)
     1 (fun x ↦ by simpa only [Real.norm_eq_abs] using Real.abs_cos_le_one (ℓ x))
-  have hs := integral_eq_of_isContinuityEquation_of_bounded_lipschitz hT v hv hM
+  have hs := integral_eq_of_is_continuity_equation_of_bounded_lipschitz hT v hv hM
     μ ν hμ hν hμp hνp hμce hνce hinit (fun x ↦ Real.sin (ℓ x))
     (Real.contDiff_sin.comp ℓ.contDiff) (Real.lipschitzWith_sin.comp ℓ.lipschitzWith)
     1 (fun x ↦ by simpa only [Real.norm_eq_abs] using Real.abs_sin_le_one (ℓ x))

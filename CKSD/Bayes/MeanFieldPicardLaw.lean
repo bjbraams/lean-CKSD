@@ -3,6 +3,7 @@ module
 public import CKSD.Bayes.MeanFieldPathLaws
 public import CKSD.Bayes.MeanFieldPicard
 
+
 /-!
 # The frozen-law Picard operator on integrable random paths
 
@@ -30,16 +31,16 @@ def nonlinearFrozenDrift (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT
   b x ((pathMarginalLaw P hT U hUm hUi t : ProbabilityMeasure E) : Measure E)
 
 /-- Frozen marginal laws give a jointly continuous drift. -/
-theorem continuous_nonlinearFrozenDrift (P : Measure Ω) [IsProbabilityMeasure P]
+theorem continuous_nonlinear_frozen_drift (P : Measure Ω) [IsProbabilityMeasure P]
     {T : ℝ} (hT : 0 ≤ T) (b : E → Measure E → E) {L : ℝ}
     (hb : IsWassersteinLipschitzDrift b L) (U : Ω → C(Icc (0 : ℝ) T, E))
     (hUm : Measurable U) (hUi : Integrable U P) :
     Continuous (Function.uncurry (nonlinearFrozenDrift P hT b U hUm hUi)) :=
-  (hb.lipschitzWith_lift b).continuous.comp
-    (continuous_snd.prodMk ((continuous_pathMarginalLaw P hT U hUm hUi).comp continuous_fst))
+  (hb.lipschitz_with_lift b).continuous.comp
+    (continuous_snd.prodMk ((continuous_path_marginal_law P hT U hUm hUi).comp continuous_fst))
 
 /-- Freezing a path law retains the spatial Lipschitz constant. -/
-theorem lipschitzWith_nonlinearFrozenDrift (P : Measure Ω) [IsProbabilityMeasure P]
+theorem lipschitz_with_nonlinear_frozen_drift (P : Measure Ω) [IsProbabilityMeasure P]
     {T : ℝ} (hT : 0 ≤ T) (b : E → Measure E → E) {L : ℝ}
     (hb : IsWassersteinLipschitzDrift b L) (U : Ω → C(Icc (0 : ℝ) T, E))
     (hUm : Measurable U) (hUi : Integrable U P) (t : ℝ) :
@@ -47,7 +48,7 @@ theorem lipschitzWith_nonlinearFrozenDrift (P : Measure Ω) [IsProbabilityMeasur
   let μ := pathMarginalLaw P hT U hUm hUi t
   have hi : Integrable (fun z ↦ ‖z‖) ((μ : ProbabilityMeasure E) : Measure E) := by
     simpa only [id_eq] using (TauCeti.WassersteinSpace.hasFiniteMoment μ).memLp_id.integrable (by norm_num) |>.norm
-  exact hb.lipschitzWith_position b _ hi
+  exact hb.lipschitz_with_position b _ hi
 
 /-- Solve the pathwise equation with the marginal laws of a prescribed random path. -/
 def frozenPathSolutionMap (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0 ≤ T)
@@ -55,27 +56,27 @@ def frozenPathSolutionMap (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (h
     (U : Ω → C(Icc (0 : ℝ) T, E)) (hUm : Measurable U) (hUi : Integrable U P) :
     C(Icc (0 : ℝ) T, E) → C(Icc (0 : ℝ) T, E) :=
   (pathForcingEquiv hT (nonlinearFrozenDrift P hT b U hUm hUi)
-    (continuous_nonlinearFrozenDrift P hT b hb U hUm hUi)
-    (lipschitzWith_nonlinearFrozenDrift P hT b hb U hUm hUi)).symm
+    (continuous_nonlinear_frozen_drift P hT b hb U hUm hUi)
+    (lipschitz_with_nonlinear_frozen_drift P hT b hb U hUm hUi)).symm
 
 /-- Frozen-law solutions depend Lipschitz continuously on their additive forcing. -/
-theorem lipschitzWith_frozenPathSolutionMap (P : Measure Ω) [IsProbabilityMeasure P]
+theorem lipschitz_with_frozen_path_solution_map (P : Measure Ω) [IsProbabilityMeasure P]
     {T : ℝ} (hT : 0 ≤ T) (b : E → Measure E → E) {L : ℝ}
     (hb : IsWassersteinLipschitzDrift b L) (U : Ω → C(Icc (0 : ℝ) T, E))
     (hUm : Measurable U) (hUi : Integrable U P) :
     LipschitzWith (Real.toNNReal (Real.exp ((Real.toNNReal L : ℝ) * T)))
       (frozenPathSolutionMap P hT b hb U hUm hUi) :=
-  lipschitzWith_pathForcingEquiv_symm hT _ _ _
+  lipschitz_with_path_forcing_equiv_symm hT _ _ _
 
 set_option maxHeartbeats 800000 in
 /-- Integrable random forcings give integrable frozen-law solution paths. -/
-theorem integrable_frozenPathSolutionMap_comp (P : Measure Ω) [IsProbabilityMeasure P]
+theorem integrable_frozen_path_solution_map_comp (P : Measure Ω) [IsProbabilityMeasure P]
     {T : ℝ} (hT : 0 ≤ T) (b : E → Measure E → E) {L : ℝ}
     (hb : IsWassersteinLipschitzDrift b L) (U F : Ω → C(Icc (0 : ℝ) T, E))
     (hUm : Measurable U) (hUi : Integrable U P) (hFm : Measurable F) (hFi : Integrable F P) :
     Integrable (fun ω ↦ frozenPathSolutionMap P hT b hb U hUm hUi (F ω)) P := by
   let G := frozenPathSolutionMap P hT b hb U hUm hUi
-  have hG := lipschitzWith_frozenPathSolutionMap P hT b hb U hUm hUi
+  have hG := lipschitz_with_frozen_path_solution_map P hT b hb U hUm hUi
   let c := Real.toNNReal (Real.exp ((Real.toNNReal L : ℝ) * T))
   apply ((hFi.norm.const_mul (c : ℝ)).add (integrable_const ‖G 0‖)).mono'
     (hG.continuous.measurable.comp hFm).aestronglyMeasurable
@@ -93,27 +94,27 @@ def nonlinearPathPicard (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT 
     (b : E → Measure E → E) {L : ℝ} (hb : IsWassersteinLipschitzDrift b L)
     (F : Ω → C(Icc (0 : ℝ) T, E)) (hFm : Measurable F) (hFi : Integrable F P)
     (U : Lp C(Icc (0 : ℝ) T, E) 1 P) : Lp C(Icc (0 : ℝ) T, E) 1 P :=
-  (integrable_frozenPathSolutionMap_comp P hT b hb U F (Lp.stronglyMeasurable U).measurable
+  (integrable_frozen_path_solution_map_comp P hT b hb U F (Lp.stronglyMeasurable U).measurable
     (L1.integrable_coeFn U) hFm hFi).toL1
       (fun ω ↦ frozenPathSolutionMap P hT b hb U (Lp.stronglyMeasurable U).measurable (L1.integrable_coeFn U) (F ω))
 /-- Frozen-law solutions satisfy their pathwise integral equation at every time. -/
-theorem frozenPathSolutionMap_apply_eq (P : Measure Ω) [IsProbabilityMeasure P]
+theorem frozen_path_solution_map_apply_eq (P : Measure Ω) [IsProbabilityMeasure P]
     {T : ℝ} (hT : 0 ≤ T) (b : E → Measure E → E) {L : ℝ}
     (hb : IsWassersteinLipschitzDrift b L) (U : Ω → C(Icc (0 : ℝ) T, E))
     (hUm : Measurable U) (hUi : Integrable U P) (f : C(Icc (0 : ℝ) T, E)) (t : Icc (0 : ℝ) T) :
     frozenPathSolutionMap P hT b hb U hUm hUi f t = f t + ∫ s in (0 : ℝ)..t,
       nonlinearFrozenDrift P hT b U hUm hUi s ((frozenPathSolutionMap P hT b hb U hUm hUi f).IccExtend hT s) :=
-  pathForcingEquiv_symm_apply_eq hT _ _ _ f t
+  path_forcing_equiv_symm_apply_eq hT _ _ _ f t
 
 /-- The integrable path representative of the Picard operator is its pathwise frozen-law solution
 almost everywhere, as an equality of whole continuous paths. -/
-theorem nonlinearPathPicard_ae_eq (P : Measure Ω) [IsProbabilityMeasure P]
+theorem nonlinear_path_picard_ae_eq (P : Measure Ω) [IsProbabilityMeasure P]
     {T : ℝ} (hT : 0 ≤ T) (b : E → Measure E → E) {L : ℝ}
     (hb : IsWassersteinLipschitzDrift b L) (F : Ω → C(Icc (0 : ℝ) T, E))
     (hFm : Measurable F) (hFi : Integrable F P) (U : Lp C(Icc (0 : ℝ) T, E) 1 P) :
     (nonlinearPathPicard P hT b hb F hFm hFi U : Ω → C(Icc (0 : ℝ) T, E)) =ᵐ[P]
       fun ω ↦ frozenPathSolutionMap P hT b hb U (Lp.stronglyMeasurable U).measurable
         (L1.integrable_coeFn U) (F ω) := by
-  exact (integrable_frozenPathSolutionMap_comp P hT b hb U F (Lp.stronglyMeasurable U).measurable
+  exact (integrable_frozen_path_solution_map_comp P hT b hb U F (Lp.stronglyMeasurable U).measurable
     (L1.integrable_coeFn U) hFm hFi).coeFn_toL1
 end CKSD

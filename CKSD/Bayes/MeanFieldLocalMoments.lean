@@ -2,6 +2,7 @@ module
 
 public import CKSD.Bayes.MeanFieldCoupling
 
+
 /-!
 # Local moment bounds from spatial Lipschitz continuity
 

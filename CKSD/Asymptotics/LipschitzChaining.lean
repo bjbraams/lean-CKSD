@@ -4,6 +4,7 @@ public import CKSD.Asymptotics.LikelihoodSupport
 public import TauCeti.Probability.Moments.Bernstein
 public import Mathlib.Analysis.Calculus.LineDeriv.Basic
 
+
 /-!
 # Maximal inequalities for Lipschitz parameter families
 
@@ -24,10 +25,10 @@ in `CKSD.Asymptotics.LipschitzExpansion`.
 
 ## Main results
 
-* `CKSD.measureReal_le_abs_empiricalProcess_le`: Bernstein's inequality for `Gₙ g`.
-* `CKSD.measureReal_exists_cube_chain_le`: dyadic chaining on a cube.
-* `CKSD.measureReal_exists_abs_empiricalProcess_sub_gt_le`: the maximal inequality.
-* `CKSD.tendstoInMeasure_lipschitzChainRemainder`: the remainder tends to zero in probability.
+* `CKSD.measure_real_le_abs_empirical_process_le`: Bernstein's inequality for `Gₙ g`.
+* `CKSD.measure_real_exists_cube_chain_le`: dyadic chaining on a cube.
+* `CKSD.measure_real_exists_abs_empirical_process_sub_gt_le`: the maximal inequality.
+* `CKSD.tendsto_in_measure_lipschitz_chain_remainder`: the remainder tends to zero in probability.
 
 ## References
 
@@ -53,7 +54,7 @@ def empiricalProcess {Ω X : Type*} [MeasurableSpace X] (P : Measure X) (Xn : �
   (Real.sqrt n)⁻¹ * (∑ i ∈ Finset.range n, f (Xn i ω) - n * ∫ x, f x ∂P)
 
 /-- The empirical process is additive on integrable functions: `Gₙ (f - g) = Gₙ f - Gₙ g`. -/
-theorem empiricalProcess_sub {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
+theorem empirical_process_sub {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
     (Xn : ℕ → Ω → X) (n : ℕ) {f g : X → ℝ} (hf : Integrable f P) (hg : Integrable g P)
     (ω : Ω) :
     empiricalProcess P Xn n (fun x ↦ f x - g x) ω =
@@ -62,7 +63,7 @@ theorem empiricalProcess_sub {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
   ring
 
 /-- The empirical process is additive on integrable functions: `Gₙ (f + g) = Gₙ f + Gₙ g`. -/
-theorem empiricalProcess_add {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
+theorem empirical_process_add {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
     (Xn : ℕ → Ω → X) (n : ℕ) {f g : X → ℝ} (hf : Integrable f P) (hg : Integrable g P)
     (ω : Ω) :
     empiricalProcess P Xn n (fun x ↦ f x + g x) ω =
@@ -71,7 +72,7 @@ theorem empiricalProcess_add {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
   ring
 
 /-- Deterministic bound: `|Gₙ f| ≤ n^{-1/2} (∑ |f|(Xᵢ) + n ∫ |f|)`. -/
-theorem abs_empiricalProcess_le {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
+theorem abs_empirical_process_le {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
     (Xn : ℕ → Ω → X) (n : ℕ) (f F : X → ℝ) (hF : Integrable F P) (hfF : ∀ x, |f x| ≤ F x)
     (ω : Ω) :
     |empiricalProcess P Xn n f ω| ≤
@@ -93,7 +94,7 @@ theorem abs_empiricalProcess_le {Ω X : Type*} [MeasurableSpace X] (P : Measure 
 
 /-- Bernstein's inequality for the empirical process of a bounded function: if `|g| ≤ b` and
 `∫ g² dP ≤ v` with `v > 0`, then `P(t ≤ |Gₙ g|) ≤ 2 exp(-t² / (2 (v + 2 b t / (3 √n))))`. -/
-theorem measureReal_le_abs_empiricalProcess_le {Ω X : Type*} [MeasurableSpace Ω]
+theorem measure_real_le_abs_empirical_process_le {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X)
     [IsProbabilityMeasure P] (Xn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ Xn P)
     (g : X → ℝ) (hg : Measurable g) {b v : ℝ} (hgb : ∀ x, |g x| ≤ b)
@@ -194,7 +195,7 @@ def cubeIndex {d : ℕ} (a : EuclideanSpace ℝ (Fin d)) (w : ℝ) (k : ℕ)
   fun i ↦ ⌊(θ i - a i) * 2 ^ k / w⌋
 
 /-- Coordinates of a grid point: `(a + (w / 2ᵏ) z)ᵢ = aᵢ + zᵢ w / 2ᵏ`. -/
-@[simp] theorem cubeGridPoint_apply {d : ℕ} (a : EuclideanSpace ℝ (Fin d)) (w : ℝ) (k : ℕ)
+@[simp] theorem cube_grid_point_apply {d : ℕ} (a : EuclideanSpace ℝ (Fin d)) (w : ℝ) (k : ℕ)
     (z : Fin d → ℤ) (i : Fin d) : cubeGridPoint a w k z i = a i + z i * (w / 2 ^ k) := by
   simp [cubeGridPoint]
 
@@ -213,7 +214,7 @@ theorem norm_le_sqrt_card_mul_of_abs_le {d : ℕ} (v : EuclideanSpace ℝ (Fin d
     _ = d * c ^ 2 := by simp
 
 /-- The cell indices of a point of the cube lie in `[0, 2ᵏ)`. -/
-theorem cubeIndex_mem {d : ℕ} {a θ : EuclideanSpace ℝ (Fin d)} {w : ℝ} (hw : 0 < w)
+theorem cube_index_mem {d : ℕ} {a θ : EuclideanSpace ℝ (Fin d)} {w : ℝ} (hw : 0 < w)
     (hθ : θ ∈ halfOpenCube a w) (k : ℕ) :
     cubeIndex a w k θ ∈ Fintype.piFinset fun _ ↦ Finset.Ico (0 : ℤ) (2 ^ k) := by
   rw [Fintype.mem_piFinset]
@@ -227,7 +228,7 @@ theorem cubeIndex_mem {d : ℕ} {a θ : EuclideanSpace ℝ (Fin d)} {w : ℝ} (h
   · rw [div_lt_iff₀ hw]; nlinarith
 
 /-- Grid points with indices in `[0, 2ᵏ)` lie in the cube. -/
-theorem cubeGridPoint_mem {d : ℕ} {a : EuclideanSpace ℝ (Fin d)} {w : ℝ} (hw : 0 < w) {k : ℕ}
+theorem cube_grid_point_mem {d : ℕ} {a : EuclideanSpace ℝ (Fin d)} {w : ℝ} (hw : 0 < w) {k : ℕ}
     {z : Fin d → ℤ} (hz : z ∈ Fintype.piFinset fun _ ↦ Finset.Ico (0 : ℤ) (2 ^ k)) :
     cubeGridPoint a w k z ∈ halfOpenCube a w := by
   rw [Fintype.mem_piFinset] at hz
@@ -237,7 +238,7 @@ theorem cubeGridPoint_mem {d : ℕ} {a : EuclideanSpace ℝ (Fin d)} {w : ℝ} (
   have h1 : (0 : ℝ) ≤ z i := by exact_mod_cast h.1
   have h2 : (z i : ℝ) + 1 ≤ 2 ^ k := by exact_mod_cast Int.add_one_le_iff.2 h.2
   have e : (2 : ℝ) ^ k * (w / 2 ^ k) = w := by field_simp
-  rw [cubeGridPoint_apply]
+  rw [cube_grid_point_apply]
   constructor
   · have : 0 ≤ (z i : ℝ) * (w / 2 ^ k) := mul_nonneg h1 (by positivity)
     linarith
@@ -246,7 +247,7 @@ theorem cubeGridPoint_mem {d : ℕ} {a : EuclideanSpace ℝ (Fin d)} {w : ℝ} (
     nlinarith
 
 /-- A point exceeds its grid point of level `k` coordinatewise by less than `w / 2ᵏ`. -/
-theorem sub_cubeGridPoint_cubeIndex_mem {d : ℕ} (a θ : EuclideanSpace ℝ (Fin d)) {w : ℝ}
+theorem sub_cube_grid_point_cube_index_mem {d : ℕ} (a θ : EuclideanSpace ℝ (Fin d)) {w : ℝ}
     (hw : 0 < w) (k : ℕ) (i : Fin d) :
     0 ≤ θ i - cubeGridPoint a w k (cubeIndex a w k θ) i ∧
       θ i - cubeGridPoint a w k (cubeIndex a w k θ) i < w / 2 ^ k := by
@@ -256,21 +257,21 @@ theorem sub_cubeGridPoint_cubeIndex_mem {d : ℕ} (a θ : EuclideanSpace ℝ (Fi
   have h1 := Int.floor_le x
   have h2 := Int.lt_floor_add_one x
   have hh : 0 < w / 2 ^ k := by positivity
-  rw [cubeGridPoint_apply, cubeIndex]
+  rw [cube_grid_point_apply, cubeIndex]
   rw [← hx]
   constructor <;> nlinarith
 
 /-- A point of the cube is within `√d w / 2ᵏ` of its grid point of level `k`. -/
-theorem norm_sub_cubeGridPoint_cubeIndex_le {d : ℕ} (a θ : EuclideanSpace ℝ (Fin d)) {w : ℝ}
+theorem norm_sub_cube_grid_point_cube_index_le {d : ℕ} (a θ : EuclideanSpace ℝ (Fin d)) {w : ℝ}
     (hw : 0 < w) (k : ℕ) :
     ‖θ - cubeGridPoint a w k (cubeIndex a w k θ)‖ ≤ Real.sqrt d * (w / 2 ^ k) := by
   refine norm_le_sqrt_card_mul_of_abs_le _ fun i ↦ ?_
-  obtain ⟨h1, h2⟩ := sub_cubeGridPoint_cubeIndex_mem a θ hw k i
+  obtain ⟨h1, h2⟩ := sub_cube_grid_point_cube_index_mem a θ hw k i
   rw [PiLp.sub_apply, abs_of_nonneg h1]
   exact h2.le
 
 /-- The cell index of level `k` is the halved cell index of level `k + 1`. -/
-theorem cubeIndex_eq_div_two {d : ℕ} (a θ : EuclideanSpace ℝ (Fin d)) (w : ℝ) (k : ℕ) :
+theorem cube_index_eq_div_two {d : ℕ} (a θ : EuclideanSpace ℝ (Fin d)) (w : ℝ) (k : ℕ) :
     cubeIndex a w k θ = fun i ↦ cubeIndex a w (k + 1) θ i / 2 := by
   funext i
   set x := (θ i - a i) * 2 ^ k / w with hx
@@ -284,7 +285,7 @@ theorem cubeIndex_eq_div_two {d : ℕ} (a θ : EuclideanSpace ℝ (Fin d)) (w : 
   omega
 
 /-- Consecutive grid points of a chain are within `√d w / 2ᵏ⁺¹` of each other. -/
-theorem norm_cubeGridPoint_succ_sub_le {d : ℕ} (a : EuclideanSpace ℝ (Fin d)) {w : ℝ}
+theorem norm_cube_grid_point_succ_sub_le {d : ℕ} (a : EuclideanSpace ℝ (Fin d)) {w : ℝ}
     (hw : 0 < w) (k : ℕ) (z : Fin d → ℤ) :
     ‖cubeGridPoint a w (k + 1) z - cubeGridPoint a w k (fun i ↦ z i / 2)‖ ≤
       Real.sqrt d * (w / 2 ^ (k + 1)) := by
@@ -299,17 +300,17 @@ theorem norm_cubeGridPoint_succ_sub_le {d : ℕ} (a : EuclideanSpace ℝ (Fin d)
   have hp : (0 : ℝ) < 2 ^ k := by positivity
   have hval : cubeGridPoint a w (k + 1) z i - cubeGridPoint a w k (fun i ↦ z i / 2) i =
       ((z i % 2 : ℤ) : ℝ) * (w / 2 ^ (k + 1)) := by
-    rw [cubeGridPoint_apply, cubeGridPoint_apply, e, pow_succ]
+    rw [cube_grid_point_apply, cube_grid_point_apply, e, pow_succ]
     field_simp
     ring
   rw [PiLp.sub_apply, hval, abs_mul, abs_of_nonneg r0, abs_of_pos (by positivity)]
   nlinarith [show (0 : ℝ) < w / 2 ^ (k + 1) by positivity]
 
 /-- The level-zero grid point of a point of the cube is the anchor. -/
-theorem cubeGridPoint_zero_cubeIndex {d : ℕ} {a θ : EuclideanSpace ℝ (Fin d)} {w : ℝ}
+theorem cube_grid_point_zero_cube_index {d : ℕ} {a θ : EuclideanSpace ℝ (Fin d)} {w : ℝ}
     (hw : 0 < w) (hθ : θ ∈ halfOpenCube a w) :
     cubeGridPoint a w 0 (cubeIndex a w 0 θ) = a := by
-  have h := cubeIndex_mem hw hθ 0
+  have h := cube_index_mem hw hθ 0
   rw [Fintype.mem_piFinset] at h
   have h0 : cubeIndex a w 0 θ = 0 := by
     funext i
@@ -346,7 +347,7 @@ private theorem sum_range_one_div_two_pow (K : ℕ) :
 exceeds `‖u - v‖ ((j + 1) A + W)` with probability at most `2 pʲ⁺¹`, then the increment between
 the anchor and the grid point of level `K` of any point of the cube exceeds `√d w (2 A + W)` with
 probability at most `2 ∑_{k<K} (2ᵈ p)ᵏ⁺¹`. -/
-theorem measureReal_exists_cube_chain_le {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+theorem measure_real_exists_cube_chain_le {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     [IsFiniteMeasure μ] {d : ℕ} (S : EuclideanSpace ℝ (Fin d) → Ω → ℝ)
     (a : EuclideanSpace ℝ (Fin d)) {w : ℝ} (hw : 0 < w) (W : Ω → ℝ) (hW : ∀ ω, 0 ≤ W ω)
     {A p : ℝ} (hA : 0 ≤ A)
@@ -371,18 +372,18 @@ theorem measureReal_exists_cube_chain_le {Ω : Type*} [MeasurableSpace Ω] (μ :
     have hstep : ∀ k < K, |S (π (k + 1)) ω - S (π k) ω| ≤
         Real.sqrt d * (w / 2 ^ (k + 1)) * ((k + 1) * A + W ω) := by
       intro k hk
-      have hz := cubeIndex_mem hw hθ (k + 1)
+      have hz := cube_index_mem hw hθ (k + 1)
       have hπk : π k = g k (fun i ↦ cubeIndex a w (k + 1) θ i / 2) := by
-        simp only [hπ]; rw [cubeIndex_eq_div_two a θ w k]
+        simp only [hπ]; rw [cube_index_eq_div_two a θ w k]
       rw [hπk]
       refine (hn k hk _ hz).trans ?_
       gcongr
       · have := hW ω; positivity
-      · exact norm_cubeGridPoint_succ_sub_le a hw k _
+      · exact norm_cube_grid_point_succ_sub_le a hw k _
     have htel : S (π K) ω - S (π 0) ω =
         ∑ k ∈ Finset.range K, (S (π (k + 1)) ω - S (π k) ω) :=
       (Finset.sum_range_sub (fun j ↦ S (π j) ω) K).symm
-    have h0 : π 0 = a := cubeGridPoint_zero_cubeIndex hw hθ
+    have h0 : π 0 = a := cube_grid_point_zero_cube_index hw hθ
     have hsum : |∑ k ∈ Finset.range K, (S (π (k + 1)) ω - S (π k) ω)| ≤
         Real.sqrt d * w * (2 * A + W ω) := by
       refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
@@ -429,7 +430,7 @@ theorem measureReal_exists_cube_chain_le {Ω : Type*} [MeasurableSpace Ω] (μ :
           rw [Finset.mem_Ico]
           omega
         simp only [hB]
-        exact hS _ (cubeGridPoint_mem hw hz1) _ (cubeGridPoint_mem hw hz2) k
+        exact hS _ (cube_grid_point_mem hw hz1) _ (cube_grid_point_mem hw hz2) k
     _ = 2 * ∑ k ∈ Finset.range K, (2 ^ d * p) ^ (k + 1) := by
         rw [Finset.mul_sum]
         refine Finset.sum_congr rfl fun k _ ↦ ?_
@@ -455,7 +456,7 @@ def lipschitzChainRemainder {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
 def bernsteinExponent (β γ t : ℝ) : ℝ := t ^ 2 / (2 * (β + γ * t))
 
 /-- The Bernstein exponent grows at least linearly under dilation by `c ≥ 1`. -/
-theorem mul_bernsteinExponent_le {β γ t c : ℝ} (hβ : 0 < β) (hγ : 0 ≤ γ) (ht : 0 ≤ t)
+theorem mul_bernstein_exponent_le {β γ t c : ℝ} (hβ : 0 < β) (hγ : 0 ≤ γ) (ht : 0 ≤ t)
     (hc : 1 ≤ c) : c * bernsteinExponent β γ t ≤ bernsteinExponent β γ (c * t) := by
   unfold bernsteinExponent
   have h1 : 0 < β + γ * t := by positivity
@@ -470,7 +471,7 @@ theorem mul_bernsteinExponent_le {β γ t c : ℝ} (hβ : 0 < β) (hγ : 0 ≤ �
     _ = (c * t) ^ 2 * (2 * (β + γ * t)) := by ring
 
 /-- The empirical envelope of a nonnegative function is nonnegative. -/
-theorem empiricalEnvelope_nonneg {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
+theorem empirical_envelope_nonneg {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
     (Xn : ℕ → Ω → X) (n : ℕ) {F : X → ℝ} (hF : ∀ x, 0 ≤ F x) (ω : Ω) :
     0 ≤ empiricalEnvelope P Xn n F ω :=
   mul_nonneg (inv_nonneg.2 (Real.sqrt_nonneg _))
@@ -478,7 +479,7 @@ theorem empiricalEnvelope_nonneg {Ω X : Type*} [MeasurableSpace X] (P : Measure
       (mul_nonneg (Nat.cast_nonneg _) (integral_nonneg hF)))
 
 /-- The empirical envelope is homogeneous: `envₙ (c F) = c envₙ F`. -/
-theorem empiricalEnvelope_const_mul {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
+theorem empirical_envelope_const_mul {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
     (Xn : ℕ → Ω → X) (n : ℕ) (c : ℝ) (F : X → ℝ) (ω : Ω) :
     empiricalEnvelope P Xn n (fun x ↦ c * F x) ω = c * empiricalEnvelope P Xn n F ω := by
   simp only [empiricalEnvelope, integral_const_mul, ← Finset.mul_sum]
@@ -492,7 +493,7 @@ that `|Gₙ f θ - Gₙ f a| > √d w (2A + Rₙ)` for some `θ` of the cube, wh
 Bernstein exponent with `β = ∫ L² + 1` and `γ = 2ε/3`. The proof truncates the envelope at
 `ε √n`, applies Bernstein's inequality to the truncated increments, and chains over dyadic grids
 of levels `< n`. -/
-theorem measureReal_exists_abs_empiricalProcess_sub_gt_le {Ω X : Type*} [MeasurableSpace Ω]
+theorem measure_real_exists_abs_empirical_process_sub_gt_le {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X)
     [IsProbabilityMeasure P] (Xn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ Xn P)
     {d : ℕ} (f : EuclideanSpace ℝ (Fin d) → X → ℝ) (a : EuclideanSpace ℝ (Fin d)) {w : ℝ}
@@ -519,7 +520,7 @@ theorem measureReal_exists_abs_empiricalProcess_sub_gt_le {Ω X : Type*} [Measur
   have hLi : Integrable L P := hL2.integrable one_le_two
   have hLti : Integrable Lt P := hLi.indicator (measurableSet_lt measurable_const hLm)
   set W : Ω → ℝ := empiricalEnvelope P Xn n Lt with hW
-  have hW0 : ∀ ω, 0 ≤ W ω := empiricalEnvelope_nonneg P Xn n hLt0
+  have hW0 : ∀ ω, 0 ≤ W ω := empirical_envelope_nonneg P Xn n hLt0
   set S : EuclideanSpace ℝ (Fin d) → Ω → ℝ := fun θ ω ↦ empiricalProcess P Xn n (f θ) ω
     with hS
   set p : ℝ := Real.exp (-bernsteinExponent β (2 * ε / 3) A) with hp
@@ -582,13 +583,13 @@ theorem measureReal_exists_abs_empiricalProcess_sub_gt_le {Ω X : Type*} [Measur
     have hsplit : ∀ ω, S u ω - S v ω =
         empiricalProcess P Xn n g ω + empiricalProcess P Xn n h ω := fun ω ↦ by
       simp only [hS]
-      rw [← empiricalProcess_sub P Xn n (hfi u hu) (hfi v hv), ← empiricalProcess_add P Xn n
+      rw [← empirical_process_sub P Xn n (hfi u hu) (hfi v hv), ← empirical_process_add P Xn n
         hgi hhi]
       simp only [← hgh]
       rfl
     have hhW : ∀ ω, |empiricalProcess P Xn n h ω| ≤ σ * W ω := fun ω ↦ by
-      have := abs_empiricalProcess_le P Xn n h (fun x ↦ σ * Lt x) (hLti.const_mul σ) hhb ω
-      rw [hW, ← empiricalEnvelope_const_mul]
+      have := abs_empirical_process_le P Xn n h (fun x ↦ σ * Lt x) (hLti.const_mul σ) hhb ω
+      rw [hW, ← empirical_envelope_const_mul]
       exact this
     have hsub : {ω | σ * (t + W ω) < |S u ω - S v ω|} ⊆
         {ω | σ * t ≤ |empiricalProcess P Xn n g ω|} := by
@@ -598,7 +599,7 @@ theorem measureReal_exists_abs_empiricalProcess_sub_gt_le {Ω X : Type*} [Measur
       have := abs_add_le (empiricalProcess P Xn n g ω) (empiricalProcess P Xn n h ω)
       have := hhW ω
       nlinarith
-    have hbern := measureReal_le_abs_empiricalProcess_le μ P Xn hiid g hgm hgb hg2
+    have hbern := measure_real_le_abs_empirical_process_le μ P Xn hiid g hgm hgb hg2
       (by positivity) hn (t := σ * t) (by positivity)
     refine (measureReal_mono hsub).trans (hbern.trans ?_)
     have hexp : Real.exp (-bernsteinExponent β (2 * ε / 3) A) ^ (j + 1) =
@@ -607,7 +608,7 @@ theorem measureReal_exists_abs_empiricalProcess_sub_gt_le {Ω X : Type*} [Measur
     rw [hp, hexp]
     gcongr 2 * Real.exp ?_
     rw [neg_div, neg_le_neg_iff]
-    have hmono := mul_bernsteinExponent_le (β := β) (γ := 2 * ε / 3) (t := A)
+    have hmono := mul_bernstein_exponent_le (β := β) (γ := 2 * ε / 3) (t := A)
       (c := (j + 1 : ℝ)) hβ0 (by positivity) hA (by linarith [(Nat.cast_nonneg j : (0 : ℝ) ≤ j)])
     refine hmono.trans (le_of_eq ?_)
     simp only [bernsteinExponent, ht]
@@ -617,22 +618,22 @@ theorem measureReal_exists_abs_empiricalProcess_sub_gt_le {Ω X : Type*} [Measur
     rw [show 2 * (σ * κ) * (σ * ((↑j + 1) * A)) / (3 * Real.sqrt ↑n) =
       2 * (σ * κ * (σ * ((j + 1) * A)) / (3 * Real.sqrt n)) by ring, hκ']
     field_simp
-  have hchain := measureReal_exists_cube_chain_le μ S a hw W hW0 hA hinc n
+  have hchain := measure_real_exists_cube_chain_le μ S a hw W hW0 hA hinc n
   refine (measureReal_mono ?_).trans hchain
   rintro ω ⟨θ, hθ, hlt⟩
   refine ⟨θ, hθ, ?_⟩
   set πθ := cubeGridPoint a w n (cubeIndex a w n θ)
-  have hπ : πθ ∈ halfOpenCube a w := cubeGridPoint_mem hw (cubeIndex_mem hw hθ n)
+  have hπ : πθ ∈ halfOpenCube a w := cube_grid_point_mem hw (cube_index_mem hw hθ n)
   have hres : |S θ ω - S πθ ω| ≤ Real.sqrt d * w * ((2 ^ n)⁻¹ * empiricalEnvelope P Xn n L ω) := by
     simp only [hS]
-    rw [← empiricalProcess_sub P Xn n (hfi θ hθ) (hfi πθ hπ)]
+    rw [← empirical_process_sub P Xn n (hfi θ hθ) (hfi πθ hπ)]
     have hb : ∀ x, |f θ x - f πθ x| ≤ ‖θ - πθ‖ * L x := fun x ↦ by
       rw [mul_comm]; exact hlip θ hθ πθ hπ x
-    refine (abs_empiricalProcess_le P Xn n _ _ (hLi.const_mul _) hb ω).trans ?_
+    refine (abs_empirical_process_le P Xn n _ _ (hLi.const_mul _) hb ω).trans ?_
     change empiricalEnvelope P Xn n (fun x ↦ ‖θ - πθ‖ * L x) ω ≤ _
-    rw [empiricalEnvelope_const_mul]
-    have h1 := norm_sub_cubeGridPoint_cubeIndex_le a θ hw n
-    have h2 := empiricalEnvelope_nonneg P Xn n hL0 ω
+    rw [empirical_envelope_const_mul]
+    have h1 := norm_sub_cube_grid_point_cube_index_le a θ hw n
+    have h2 := empirical_envelope_nonneg P Xn n hL0 ω
     calc ‖θ - πθ‖ * empiricalEnvelope P Xn n L ω
         ≤ Real.sqrt d * (w / 2 ^ n) * empiricalEnvelope P Xn n L ω := by gcongr
       _ = _ := by ring
@@ -647,7 +648,7 @@ theorem measureReal_exists_abs_empiricalProcess_sub_gt_le {Ω X : Type*} [Measur
   linarith
 
 /-- The expectation of the empirical envelope of an integrable function is `2 √n ∫ F dP`. -/
-theorem integral_empiricalEnvelope {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
+theorem integral_empirical_envelope {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X) (Xn : ℕ → Ω → X)
     (hiid : IsIndependentIdenticallyDistributed μ Xn P) (n : ℕ) {F : X → ℝ} (hFm : Measurable F)
     (hF : Integrable F P) :
@@ -676,7 +677,7 @@ theorem integral_empiricalEnvelope {Ω X : Type*} [MeasurableSpace Ω] [Measurab
 
 /-- The chaining remainder `lipschitzChainRemainder` of a square-integrable envelope tends to
 zero in probability: its expectation is at most `(2/ε) ∫_{L > ε√n} L² + 2⁻ⁿ⁺¹ √n ∫ L`. -/
-theorem tendstoInMeasure_lipschitzChainRemainder {Ω X : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_lipschitz_chain_remainder {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X)
     [IsProbabilityMeasure P] (Xn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ Xn P)
     (L : X → ℝ) (hLm : Measurable L) (hL0 : ∀ x, 0 ≤ L x) (hL2 : MemLp L 2 P)
@@ -690,8 +691,8 @@ theorem tendstoInMeasure_lipschitzChainRemainder {Ω X : Type*} [MeasurableSpace
   have hLtm : ∀ n, Measurable (Lt n) := fun n ↦ hLm.indicator (hmeas n)
   have hLti : ∀ n, Integrable (Lt n) P := fun n ↦ hLi.indicator (hmeas n)
   have hLt0 : ∀ n x, 0 ≤ Lt n x := fun n x ↦ Set.indicator_nonneg (fun x _ ↦ hL0 x) x
-  have hE := fun n ↦ integral_empiricalEnvelope μ P Xn hiid n (hLtm n) (hLti n)
-  have hE' := fun n ↦ integral_empiricalEnvelope μ P Xn hiid n hLm hLi
+  have hE := fun n ↦ integral_empirical_envelope μ P Xn hiid n (hLtm n) (hLti n)
+  have hE' := fun n ↦ integral_empirical_envelope μ P Xn hiid n hLm hLi
   set e : ℕ → ℝ := fun n ↦ ∫ ω, lipschitzChainRemainder P Xn L ε n ω ∂μ with he
   have heq : ∀ n, e n = 2 * (Real.sqrt n * ∫ x, Lt n x ∂P) +
       2 * ((2 ^ n)⁻¹ * Real.sqrt n) * ∫ x, L x ∂P := fun n ↦ by
@@ -745,16 +746,16 @@ theorem tendstoInMeasure_lipschitzChainRemainder {Ω X : Type*} [MeasurableSpace
       have := ((hdct.const_mul ε⁻¹).const_mul 2).add ((hgeo.const_mul 2).mul_const (∫ x, L x ∂P))
       simpa using this
     refine squeeze_zero (fun n ↦ ?_) (fun n ↦ ?_) hup
-    · exact integral_nonneg fun ω ↦ add_nonneg (empiricalEnvelope_nonneg P Xn n (hLt0 n) ω)
-        (mul_nonneg (by positivity) (empiricalEnvelope_nonneg P Xn n hL0 ω))
+    · exact integral_nonneg fun ω ↦ add_nonneg (empirical_envelope_nonneg P Xn n (hLt0 n) ω)
+        (mul_nonneg (by positivity) (empirical_envelope_nonneg P Xn n hL0 ω))
     · rw [heq]
       have := hbound n
       linarith
-  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  rw [tendsto_in_measure_iff_measure_real_lt_dist]
   intro c hc
   have hR0 : ∀ n ω, 0 ≤ lipschitzChainRemainder P Xn L ε n ω := fun n ω ↦
-    add_nonneg (empiricalEnvelope_nonneg P Xn n (hLt0 n) ω)
-      (mul_nonneg (by positivity) (empiricalEnvelope_nonneg P Xn n hL0 ω))
+    add_nonneg (empirical_envelope_nonneg P Xn n (hLt0 n) ω)
+      (mul_nonneg (by positivity) (empirical_envelope_nonneg P Xn n hL0 ω))
   refine squeeze_zero (fun n ↦ measureReal_nonneg) (fun n ↦ ?_) (he0.div_const c |>.trans
     (by rw [zero_div]))
   have hint : Integrable (lipschitzChainRemainder P Xn L ε n) μ :=
@@ -770,7 +771,7 @@ theorem tendstoInMeasure_lipschitzChainRemainder {Ω X : Type*} [MeasurableSpace
 /-! ### Centred cubes and dyadic counting -/
 
 /-- The number of grid indices of level `k` is `(2ᵏ)ᵈ`. -/
-theorem card_piFinset_Ico_two_pow (d k : ℕ) :
+theorem card_pi_finset_ico_two_pow (d k : ℕ) :
     ((Fintype.piFinset fun _ : Fin d ↦ Finset.Ico (0 : ℤ) (2 ^ k)).card : ℝ) = (2 ^ k) ^ d := by
   simp only [Fintype.card_piFinset, Finset.prod_const, Finset.card_univ, Fintype.card_fin,
     Int.card_Ico, sub_zero]
@@ -795,7 +796,7 @@ theorem two_mul_sum_range_pow_succ_le {q : ℝ} (hq0 : 0 ≤ q) (hq : q ≤ 1 / 
 
 /-- Scaling a half-open cube: if `h ∈ ∏ [uᵢ, uᵢ + w)` and `c > 0`, then
 `θ₀ + c h ∈ ∏ [θ₀ᵢ + c uᵢ, θ₀ᵢ + c uᵢ + c w)`. -/
-theorem add_smul_mem_halfOpenCube {d : ℕ} {u h : EuclideanSpace ℝ (Fin d)} {w : ℝ}
+theorem add_smul_mem_half_open_cube {d : ℕ} {u h : EuclideanSpace ℝ (Fin d)} {w : ℝ}
     (hh : h ∈ halfOpenCube u w) (θ₀ : EuclideanSpace ℝ (Fin d)) {c : ℝ} (hc : 0 < c) :
     θ₀ + c • h ∈ halfOpenCube (θ₀ + c • u) (c * w) := by
   intro i
@@ -809,7 +810,7 @@ def centredCube {d : ℕ} (θ₀ : EuclideanSpace ℝ (Fin d)) (ρ : ℝ) :
   halfOpenCube (θ₀ - WithLp.toLp 2 fun _ ↦ ρ) (2 * ρ)
 
 /-- Points within `ρ` of `θ₀` lie in the centred cube of half-width `ρ`. -/
-theorem mem_centredCube_of_norm_sub_lt {d : ℕ} {θ₀ θ : EuclideanSpace ℝ (Fin d)} {ρ : ℝ}
+theorem mem_centred_cube_of_norm_sub_lt {d : ℕ} {θ₀ θ : EuclideanSpace ℝ (Fin d)} {ρ : ℝ}
     (h : ‖θ - θ₀‖ < ρ) : θ ∈ centredCube θ₀ ρ := by
   intro i
   have := (PiLp.norm_apply_le (θ - θ₀) i).trans_lt h
@@ -817,7 +818,7 @@ theorem mem_centredCube_of_norm_sub_lt {d : ℕ} {θ₀ θ : EuclideanSpace ℝ 
   constructor <;> simp only [PiLp.sub_apply] <;> linarith
 
 /-- Points of the centred cube of half-width `ρ` lie within `√d ρ` of the centre. -/
-theorem norm_sub_le_of_mem_centredCube {d : ℕ} {θ₀ θ : EuclideanSpace ℝ (Fin d)} {ρ : ℝ}
+theorem norm_sub_le_of_mem_centred_cube {d : ℕ} {θ₀ θ : EuclideanSpace ℝ (Fin d)} {ρ : ℝ}
     (h : θ ∈ centredCube θ₀ ρ) : ‖θ - θ₀‖ ≤ Real.sqrt d * ρ := by
   refine norm_le_sqrt_card_mul_of_abs_le _ fun i ↦ ?_
   obtain ⟨h1, h2⟩ := h i

@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.JKOEnergy
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Resolvent
 /-!
@@ -25,25 +26,25 @@ variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 /-- Adding the Gaussian quadratic correction leaves a narrowly lower-semicontinuous entropy
 and nonnegative potential, up to a finite normalization constant. -/
-theorem jkoFreeEnergy_add_quadratic_eq (V : E → ℝ) {a : ℝ} (ha : 0<a)
+theorem jko_free_energy_add_quadratic_eq (V : E → ℝ) {a : ℝ} (ha : 0<a)
     (μ : TauCeti.WassersteinSpace 2 E) :
     jkoFreeEnergy V μ+((a*(∫ x,‖x‖^2 ∂wassersteinLaw μ) : ℝ) : EReal) =
       (klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a*‖x‖^2))) : EReal) +
         TauCeti.potentialEnergy V (wassersteinLaw μ)+
           ((-Real.log (∫ x : E,Real.exp (-(a*‖x‖^2))) : ℝ) : EReal) := by
-  rw [jkoFreeEnergy_eq_klDiv_gaussian_add V ha μ,add_assoc,← EReal.coe_add]
+  rw [jko_free_energy_eq_kl_div_gaussian_add V ha μ,add_assoc,← EReal.coe_add]
   congr 1
   congr 1
   ring
 
 /-- The free energy is narrowly lower semicontinuous along any Wasserstein-bounded sequence. -/
-theorem jkoFreeEnergy_le_liminf_of_isBounded
+theorem jko_free_energy_le_liminf_of_is_bounded
     (V : E → ℝ) (hVc : Continuous V) (hV : ∀ x,0≤V x)
     {u : ℕ → TauCeti.WassersteinSpace 2 E} {ν : TauCeti.WassersteinSpace 2 E}
     (hu : Bornology.IsBounded (range u))
     (hlim : Tendsto (fun n ↦ (u n : ProbabilityMeasure E)) atTop (𝓝 (ν : ProbabilityMeasure E))) :
     jkoFreeEnergy V ν ≤ liminf (fun n ↦ jkoFreeEnergy V (u n)) atTop := by
-  obtain ⟨B,hB,hbound⟩ := exists_integral_norm_sq_le_of_isBounded u hu
+  obtain ⟨B,hB,hbound⟩ := exists_integral_norm_sq_le_of_is_bounded u hu
   apply ereal_le_liminf_of_positive_tilts
     (mn := fun n ↦ ∫ x,‖x‖^2 ∂wassersteinLaw (u n))
     (m := ∫ x,‖x‖^2 ∂wassersteinLaw ν)
@@ -78,12 +79,12 @@ theorem jkoFreeEnergy_le_liminf_of_isBounded
     change (klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a*‖x‖^2))) : EReal)+
       TauCeti.potentialEnergy V (wassersteinLaw μ)+
         ((-Real.log (∫ x : E,Real.exp (-(a*‖x‖^2))) : ℝ) : EReal) = _
-    exact (jkoFreeEnergy_add_quadratic_eq V ha μ).symm
+    exact (jko_free_energy_add_quadratic_eq V ha μ).symm
   have h := (hG.le_liminf (ν : ProbabilityMeasure E)).trans hlim.liminf_le_liminf_comp
   simpa only [Function.comp_def,hrep] using h
 /-- Gaussian moment compensation bounds the JKO Moreau envelope below at a Dirac law for
 every positive step size. -/
-theorem exists_moreauYosida_jkoFreeEnergy_ne_bot
+theorem exists_moreau_yosida_jko_free_energy_ne_bot
     (V : E → ℝ) (hV : ∀ x,0≤V x) (τ : ℝ≥0) (hτ : 0<τ) :
     ∃ δ : TauCeti.WassersteinSpace 2 E, TauCeti.moreauYosida (jkoFreeEnergy V) τ δ ≠ ⊥ := by
   have hmem : TauCeti.HasFiniteMoment 2 (diracProba (0:E) : Measure E) := by
@@ -118,15 +119,15 @@ theorem exists_moreauYosida_jkoFreeEnergy_ne_bot
         rw [← EReal.coe_add]
         congr 1
         ring
-    _ ≤ _ := add_le_add (jkoFreeEnergy_gaussian_lower_bound V hV ha ν) le_rfl
+    _ ≤ _ := add_le_add (jko_free_energy_gaussian_lower_bound V hV ha ν) le_rfl
 
 /-- Every positive JKO step for a continuous nonnegative potential has a minimizer. -/
-theorem nonempty_moreauYosidaResolvent_jkoFreeEnergy
+theorem nonempty_moreau_yosida_resolvent_jko_free_energy
     (V : E → ℝ) (hVc : Continuous V) (hV : ∀ x,0≤V x) (τ : ℝ≥0) (hτ : 0<τ)
     (μ : TauCeti.WassersteinSpace 2 E) :
     (TauCeti.moreauYosidaResolvent (jkoFreeEnergy V) τ μ).Nonempty := by
-  obtain ⟨δ,hδ⟩ := exists_moreauYosida_jkoFreeEnergy_ne_bot V hV (τ+1) (by positivity)
+  obtain ⟨δ,hδ⟩ := exists_moreau_yosida_jko_free_energy_ne_bot V hV (τ+1) (by positivity)
   exact TauCeti.WassersteinSpace.moreauYosidaResolvent_nonempty_of_properSpace
     (p := 2) (X := E) (φ := jkoFreeEnergy V) (τ₀ := τ+1) (μ₀ := δ)
-    (fun {v} {ν} hv hν ↦ jkoFreeEnergy_le_liminf_of_isBounded V hVc hV (u := v) (ν := ν) hv hν) hτ (lt_add_of_pos_right τ one_pos) hδ μ
+    (fun {v} {ν} hv hν ↦ jko_free_energy_le_liminf_of_is_bounded V hVc hV (u := v) (ν := ν) hv hν) hτ (lt_add_of_pos_right τ one_pos) hδ μ
 end CKSD

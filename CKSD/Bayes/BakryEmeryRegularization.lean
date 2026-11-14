@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.BakryEmeryInterpolation
 public import CKSD.Bayes.BoundedPerturbation
 public import TauCeti.Analysis.Calculus.BumpFunction.LipschitzCutoff
@@ -45,7 +46,7 @@ theorem quadratic_upper_bound_of_lipschitz_fderiv {E : Type*} [NormedAddCommGrou
   nlinarith
 
 /-- Integration against the Gibbs law is normalized weighted Lebesgue integration. -/
-theorem integral_gibbsMeasure {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
+theorem integral_gibbs_measure {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (hVm : Measurable V) (hV : Integrable (fun x ↦ Real.exp (-V x)))
     (f : EuclideanSpace ℝ (Fin d) → ℝ) :
     (∫ x, f x ∂gibbsMeasure V) = (∫ x, Real.exp (-V x) * f x) / ∫ x, Real.exp (-V x) := by
@@ -84,19 +85,19 @@ theorem entropy_gibbs_exponential_le {d : ℕ}
     hM hgM hDgM hZ
   have hmean : (∫ x, Real.exp (g x) ∂gibbsMeasure V) =
       (∫ x, Real.exp (g x - V x)) / ∫ x, Real.exp (-V x) := by
-    rw [integral_gibbsMeasure V hVm hZ]
+    rw [integral_gibbs_measure V hVm hZ]
     congr 1
     apply integral_congr_ae
     exact ae_of_all _ fun x ↦ by dsimp only; rw [← Real.exp_add]; congr 1; ring
   have hlog : (∫ x, Real.exp (g x) * Real.log (Real.exp (g x)) ∂gibbsMeasure V) =
       (∫ x, Real.exp (g x - V x) * g x) / ∫ x, Real.exp (-V x) := by
-    rw [integral_gibbsMeasure V hVm hZ]
+    rw [integral_gibbs_measure V hVm hZ]
     congr 1
     apply integral_congr_ae
     exact ae_of_all _ fun x ↦ by dsimp only; rw [Real.log_exp, ← mul_assoc, ← Real.exp_add]; congr 2; ring
   have henergy : (∫ x, Real.exp (g x) * ‖Dg x‖ ^ 2 ∂gibbsMeasure V) =
       (∫ x, Real.exp (g x - V x) * ‖Dg x‖ ^ 2) / ∫ x, Real.exp (-V x) := by
-    rw [integral_gibbsMeasure V hVm hZ]
+    rw [integral_gibbs_measure V hVm hZ]
     congr 1
     apply integral_congr_ae
     exact ae_of_all _ fun x ↦ by dsimp only; rw [← mul_assoc, ← Real.exp_add]; congr 2; ring
@@ -207,7 +208,7 @@ theorem entropy_gibbs_regularized_sq_le {d : ℕ}
   have hexp : (fun x ↦ Real.exp (g x)) = (fun x ↦ ε + f x ^ 2) :=
     funext fun x ↦ Real.exp_log (by positivity)
   simp_rw [show ∀ x, Real.exp (g x) = ε + f x ^ 2 from fun x ↦ congrFun hexp x] at hmain
-  have : IsProbabilityMeasure (gibbsMeasure V) := isProbabilityMeasure_gibbsMeasure hZ
+  have : IsProbabilityMeasure (gibbsMeasure V) := is_probability_measure_gibbs_measure hZ
   obtain ⟨C, hC⟩ := (hf.continuous_fderiv (by simp)).bounded_above_of_compact_support (hfc.fderiv (𝕜 := ℝ))
   have hDint : Integrable (fun x ↦ ‖fderiv ℝ f x‖ ^ 2) (gibbsMeasure V) := by
     refine Integrable.of_bound (by fun_prop) (C ^ 2) (ae_of_all _ fun x ↦ ?_)
@@ -251,7 +252,7 @@ theorem tendsto_entropy_add_inv {X : Type*} [MeasurableSpace X]
       simpa only [zero_add] using tendsto_one_div_add_atTop_nhds_zero_nat.add_const (q x)
 
 /-- Smooth compactly supported tests satisfy the sharp Bakry–Émery logarithmic Sobolev bound. -/
-theorem entropy_gibbs_sq_le_of_hasCompactSupport {d : ℕ}
+theorem entropy_gibbs_sq_le_of_has_compact_support {d : ℕ}
     (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (G : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (m : ℝ) (hm0 : 0 < m)
     (hG : ∀ x, HasGradientAt V (G x) x) (hm : IsStronglyMonotoneGradient G m)
@@ -259,7 +260,7 @@ theorem entropy_gibbs_sq_le_of_hasCompactSupport {d : ℕ}
     (f : EuclideanSpace ℝ (Fin d) → ℝ) (hf : ContDiff ℝ ∞ f) (hfc : HasCompactSupport f) :
     (gibbsMeasure V).entropy (fun x ↦ f x ^ 2) ≤
       (2 / m) * ∫ x, ‖fderiv ℝ f x‖ ^ 2 ∂gibbsMeasure V := by
-  have : IsProbabilityMeasure (gibbsMeasure V) := isProbabilityMeasure_gibbsMeasure hZ
+  have : IsProbabilityMeasure (gibbsMeasure V) := is_probability_measure_gibbs_measure hZ
   obtain ⟨C, hC⟩ := hf.continuous.bounded_above_of_compact_support hfc
   have hq (x) : f x ^ 2 ∈ Icc (0 : ℝ) (C ^ 2) := by
     constructor

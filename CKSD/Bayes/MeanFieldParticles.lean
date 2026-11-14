@@ -4,6 +4,7 @@ public import CKSD.Bayes.MeanFieldCore
 public import CKSD.Bayes.MeanFieldWasserstein
 public import CKSD.Bayes.MeanFieldCoupling
 
+
 /-!
 # General finite-particle drift and uniqueness
 
@@ -22,7 +23,7 @@ open scoped ENNReal NNReal Topology BigOperators
 namespace CKSD
 
 /-- A Wasserstein-Lipschitz drift induces a globally Lipschitz finite-particle vector field. -/
-theorem IsWassersteinLipschitzDrift.lipschitzWith_particleDrift {d N : ℕ}
+theorem IsWassersteinLipschitzDrift.lipschitz_with_particle_drift {d N : ℕ}
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d))
     {L : ℝ} (hb : IsWassersteinLipschitzDrift b L) (hN : 0 < N) :
     LipschitzWith (2 * Real.toNNReal L) (fun x : Fin N → EuclideanSpace ℝ (Fin d) ↦
@@ -39,10 +40,10 @@ theorem IsWassersteinLipschitzDrift.lipschitzWith_particleDrift {d N : ℕ}
   rw [dist_eq_norm]
   apply (pi_norm_le_iff_of_nonneg (by positivity)).2
   intro i
-  have hx := isProbabilityMeasure_empiricalMeasure hN x
-  have hy := isProbabilityMeasure_empiricalMeasure hN y
+  have hx := is_probability_measure_empirical_measure hN x
+  have hy := is_probability_measure_empirical_measure hN y
   have h := hb (x i) (y i) (empiricalMeasure N x) (empiricalMeasure N y) hx hy (hfirst x) (hfirst y)
-  have hw := wassersteinEDist_one_empirical_toReal_le_norm_sub hN x y
+  have hw := wasserstein_e_dist_one_empirical_to_real_le_norm_sub hN x y
   have hl := Real.le_coe_toNNReal L
   have hnon : 0 ≤ ‖x i - y i‖ + (TauCeti.wassersteinEDist 1 (empiricalMeasure N x) (empiricalMeasure N y)).toReal := by positivity
   calc ‖b (x i) (empiricalMeasure N x) - b (y i) (empiricalMeasure N y)‖ ≤
@@ -53,7 +54,7 @@ theorem IsWassersteinLipschitzDrift.lipschitzWith_particleDrift {d N : ℕ}
     _ = _ := by simp only [NNReal.coe_mul, NNReal.coe_ofNat, dist_eq_norm]; ring
 /-- Under a Wasserstein-Lipschitz drift, two finite particle systems with the same additive
 inputs are indistinguishable on nonnegative time, without assumptions on the input law. -/
-theorem IsParticleSystem.ae_eq_of_wassersteinLipschitz {Ω : Type*} [MeasurableSpace Ω] {d N : ℕ}
+theorem IsParticleSystem.ae_eq_of_wasserstein_lipschitz {Ω : Type*} [MeasurableSpace Ω] {d N : ℕ}
     (P : Measure Ω)
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d))
     {L : ℝ} (hb : IsWassersteinLipschitzDrift b L)
@@ -66,7 +67,7 @@ theorem IsParticleSystem.ae_eq_of_wassersteinLipschitz {Ω : Type*} [MeasurableS
   have hN : 0 < N := lt_of_le_of_lt (Nat.zero_le i) hi
   let F : (Fin N → EuclideanSpace ℝ (Fin d)) → (Fin N → EuclideanSpace ℝ (Fin d)) :=
     fun x j ↦ b (x j) (empiricalMeasure N x)
-  have hF : LipschitzWith (2 * Real.toNNReal L) F := hb.lipschitzWith_particleDrift b hN
+  have hF : LipschitzWith (2 * Real.toNNReal L) F := hb.lipschitz_with_particle_drift b hN
   have hxall := ae_all_iff.2 (fun j : Fin N ↦ hX.2 j j.isLt)
   have hyall := ae_all_iff.2 (fun j : Fin N ↦ hY.2 j j.isLt)
   filter_upwards [hxall, hyall] with ω hx hy

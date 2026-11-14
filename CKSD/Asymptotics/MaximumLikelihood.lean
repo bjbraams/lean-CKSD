@@ -2,6 +2,7 @@ module
 
 public import CKSD.Asymptotics.LikelihoodSupport
 
+
 /-!
 # Scalar likelihood-root asymptotic normality
 
@@ -78,23 +79,23 @@ theorem mle_asymptotic_linearization_and_normality
     (Finset.measurable_fun_sum _ fun i _ ↦ hSm.comp (hXm i)).const_mul _
   have hZlim : TendstoInDistribution Z atTop id (fun _ ↦ mu)
       (gaussianReal 0 (Real.toNNReal I)) := by
-    have := tendstoInDistribution_inv_sqrt_mul_sum_of_iid mu P X ⟨hXm, hind, hlaw⟩ S hSm
+    have := tendsto_in_distribution_inv_sqrt_mul_sum_of_iid mu P X ⟨hXm, hind, hlaw⟩ S hSm
       hscore hmean
     rwa [hvar] at this
   have hBlim : TendstoInMeasure mu B atTop (fun _ ↦ -I) := by
-    have := tendstoInMeasure_sampleMean_of_iid mu P X ⟨hXm, hind, hlaw⟩ H hHm hhess
+    have := tendsto_in_measure_sample_mean_of_iid mu P X ⟨hXm, hind, hlaw⟩ H hHm hhess
     rwa [hinfo] at this
   have hAlim : TendstoInMeasure mu A atTop (fun _ ↦ ∫ x, M' x ∂P) :=
-    tendstoInMeasure_sampleMean_of_iid mu P X ⟨hXm, hind, hlaw⟩ M' hM'm hM'i
+    tendsto_in_measure_sample_mean_of_iid mu P X ⟨hXm, hind, hlaw⟩ M' hM'm hM'i
   set m : ℝ := ∫ x, M' x ∂P with hmdef
   have hrem : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt n * (T n w - theta₀) -
       (I * Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, S (X i w)) atTop (fun _ ↦ 0) := by
-    rw [tendstoInMeasure_iff_measureReal_lt_dist] at hcons hBlim hAlim ⊢
+    rw [tendsto_in_measure_iff_measure_real_lt_dist] at hcons hBlim hAlim ⊢
     intro ε hε
     refine tendsto_zero_of_forall_eventually_le (fun n ↦ measureReal_nonneg) fun η hη ↦ ?_
     have hη5 : 0 < η / 5 := by positivity
     obtain ⟨K, hK, hZev⟩ :=
-      exists_measureReal_lt_norm_le_of_tendstoInDistribution mu Z hZlim hη5
+      exists_measure_real_lt_norm_le_of_tendsto_in_distribution mu Z hZlim hη5
     set κ : ℝ := min (I / 4) (ε * I ^ 2 / (8 * K)) with hκ
     have hκpos : 0 < κ := lt_min (by positivity) (by positivity)
     have hκI : κ ≤ I / 4 := min_le_left _ _
@@ -203,7 +204,7 @@ theorem mle_asymptotic_linearization_and_normality
   refine ⟨hrem, ?_⟩
   have hX' : TendstoInDistribution (fun (n : ℕ) w ↦ I⁻¹ * Z n w) atTop id (fun _ ↦ mu)
       (gaussianReal 0 (Real.toNNReal I⁻¹)) := by
-    refine tendstoInDistribution_of_map_eq (hZlim.continuous_comp (g := fun x ↦ I⁻¹ * x)
+    refine tendsto_in_distribution_of_map_eq (hZlim.continuous_comp (g := fun x ↦ I⁻¹ * x)
       (continuous_const.mul continuous_id)) aemeasurable_id ?_
     rw [Measure.map_id, Function.comp_id, gaussianReal_map_const_mul, mul_zero]
     congr 1
@@ -211,7 +212,7 @@ theorem mle_asymptotic_linearization_and_normality
     simp only [NNReal.coe_mul, NNReal.coe_mk, Real.coe_toNNReal _ hI.le,
       Real.coe_toNNReal _ (inv_nonneg.2 hI.le)]
     field_simp
-  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable mu _ _
+  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable mu _ _
     (fun n ↦ (hZm n).const_mul _) (fun n ↦ ((hT n).sub_const _).const_mul _) hX' ?_
   convert hrem using 3 with n w
   simp only [hZ]

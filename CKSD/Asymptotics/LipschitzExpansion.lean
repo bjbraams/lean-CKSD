@@ -2,6 +2,7 @@ module
 
 public import CKSD.Asymptotics.LipschitzChaining
 
+
 /-!
 # Uniform local expansion of the empirical process of a Lipschitz family
 
@@ -14,9 +15,9 @@ uniformly over bounded sets of `h`. This is the expansion used for M-estimators.
 ## Main results
 
 * `CKSD.tendsto_sqrt_mul_sub_sub_inner`: the deterministic expansion of a differentiable function.
-* `CKSD.empiricalProcess_inner`: the empirical process of a linear functional of the score.
-* `CKSD.tendstoInMeasure_sqrt_mul_empiricalProcess_sub_sub_inner`: the pointwise expansion.
-* `CKSD.tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner`: the uniform
+* `CKSD.empirical_process_inner`: the empirical process of a linear functional of the score.
+* `CKSD.tendsto_in_measure_sqrt_mul_empirical_process_sub_sub_inner`: the pointwise expansion.
+* `CKSD.tendsto_measure_real_exists_abs_sqrt_mul_empirical_process_sub_sub_inner`: the uniform
   expansion over `‖h‖ ≤ R`.
 
 ## References
@@ -60,7 +61,7 @@ theorem tendsto_sqrt_mul_sub_sub_inner {d : ℕ} {φ : EuclideanSpace ℝ (Fin d
 
 /-- Linear functionals of a square-integrable centred vector: the empirical process of `⟪u, s⟫`
 is `⟪u, n^{-1/2} ∑ s(Xᵢ)⟫`. -/
-theorem empiricalProcess_inner {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
+theorem empirical_process_inner {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
     (Xn : ℕ → Ω → X) (n : ℕ) {d : ℕ} (s : X → EuclideanSpace ℝ (Fin d))
     (hs : Integrable s P) (hs0 : ∫ x, s x ∂P = 0) (u : EuclideanSpace ℝ (Fin d)) (ω : Ω) :
     empiricalProcess P Xn n (fun x ↦ inner ℝ u (s x)) ω =
@@ -73,7 +74,7 @@ square-integrable envelope and differentiable at `θ₀` with derivative `⟪s x
 square-integrable `s`, and for a fixed local direction `u`,
 `√n (Gₙ f(θ₀ + u/√n) - Gₙ f θ₀) - ⟪u, n^{-1/2} ∑ s(Xᵢ)⟫ → 0` in probability. The proof is
 Chebyshev's inequality and dominated convergence for the second moment of the remainder. -/
-theorem tendstoInMeasure_sqrt_mul_empiricalProcess_sub_sub_inner {Ω X : Type*}
+theorem tendsto_in_measure_sqrt_mul_empirical_process_sub_sub_inner {Ω X : Type*}
     [MeasurableSpace Ω] [MeasurableSpace X] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (P : Measure X) [IsProbabilityMeasure P] (Xn : ℕ → Ω → X)
     (hiid : IsIndependentIdenticallyDistributed μ Xn P) {d : ℕ}
@@ -136,8 +137,8 @@ theorem tendstoInMeasure_sqrt_mul_empiricalProcess_sub_sub_inner {Ω X : Type*}
     have hinti : Integrable (fun x ↦ inner ℝ u (s x)) P := hsi.const_inner u
     have hd1 : Integrable (fun x ↦ Real.sqrt n * (f (θn n) x - f θ₀ x)) P :=
       ((hfi _ hn).sub (hfi _ h0ball)).const_mul _
-    rw [← empiricalProcess_inner P Xn n s hsi hs0 u ω, hg,
-      empiricalProcess_sub P Xn n hd1 hinti]
+    rw [← empirical_process_inner P Xn n s hsi hs0 u ω, hg,
+      empirical_process_sub P Xn n hd1 hinti]
     congr 1
     have hI : ∫ x, (f (θn n) x - f θ₀ x) ∂P = ∫ x, f (θn n) x ∂P - ∫ x, f θ₀ x ∂P :=
       integral_sub (hfi _ hn) (hfi _ h0ball)
@@ -158,7 +159,7 @@ theorem tendstoInMeasure_sqrt_mul_empiricalProcess_sub_sub_inner {Ω X : Type*}
         have h := (tendsto_sqrt_mul_sub_sub_inner (hd x) u).pow 2
         simpa [hg, hθn] using h)
     simpa using this
-  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  rw [tendsto_in_measure_iff_measure_real_lt_dist]
   intro c hc
   refine squeeze_zero' (Eventually.of_forall fun n ↦ measureReal_nonneg) ?_
     ((hmom.div_const (c ^ 2)).trans (by rw [zero_div]))
@@ -169,7 +170,7 @@ theorem tendstoInMeasure_sqrt_mul_empiricalProcess_sub_sub_inner {Ω X : Type*}
     (ae_of_all _ fun x ↦ by
       rw [Real.norm_eq_abs, Real.norm_eq_abs]
       exact (hgbn x).trans (le_abs_self _))
-  have hcheb := measureReal_le_abs_sum_sub_le_of_iid μ P Xn hiid (g n) hgmn hg2 n
+  have hcheb := measure_real_le_abs_sum_sub_le_of_iid μ P Xn hiid (g n) hgmn hg2 n
     (ε := c * Real.sqrt n) (by positivity)
   have hsub : {ω | c < dist (Real.sqrt n *
       (empiricalProcess P Xn n (f (θ₀ + (Real.sqrt n)⁻¹ • u)) ω -
@@ -214,7 +215,7 @@ private theorem exists_dyadic_level {a : ℝ} (ha : 0 < a) (d : ℕ) (b w : ℝ)
 
 /-- The scaled dyadic cells of `[-2R, 2R)ᵈ` lie within `c √d 2R` of `θ₀`: if `θ` lies in the
 cell `θ₀ + c • (cell z of level k)`, then `‖θ - θ₀‖ ≤ c (√d (2R))`. -/
-private theorem norm_sub_le_of_mem_halfOpenCube_add_smul_cubeGridPoint {d : ℕ}
+private theorem norm_sub_le_of_mem_half_open_cube_add_smul_cube_grid_point {d : ℕ}
     {θ₀ θ : EuclideanSpace ℝ (Fin d)} {R c : ℝ} (hR : 0 < R) (hc : 0 < c) {k : ℕ}
     {z : Fin d → ℤ} (hz : z ∈ Fintype.piFinset fun _ : Fin d ↦ Finset.Ico (0 : ℤ) (2 ^ k))
     (hθ : θ ∈ halfOpenCube
@@ -231,7 +232,7 @@ private theorem norm_sub_le_of_mem_halfOpenCube_add_smul_cubeGridPoint {d : ℕ}
   have hp : (0 : ℝ) < 2 ^ k := by positivity
   have hwk0 : 0 < 4 * R / 2 ^ k := div_pos (by linarith) hp
   have e : (2 : ℝ) ^ k * (4 * R / 2 ^ k) = 4 * R := by field_simp
-  simp only [PiLp.add_apply, PiLp.smul_apply, smul_eq_mul, cubeGridPoint_apply] at h1 h2
+  simp only [PiLp.add_apply, PiLp.smul_apply, smul_eq_mul, cube_grid_point_apply] at h1 h2
   rw [PiLp.sub_apply, abs_le]
   have hzw : 0 ≤ (z i : ℝ) * (4 * R / 2 ^ k) := mul_nonneg hz1 hwk0.le
   have hzw2 : ((z i : ℝ) + 1) * (4 * R / 2 ^ k) ≤ 2 ^ k * (4 * R / 2 ^ k) :=
@@ -278,13 +279,13 @@ private theorem abs_mul_sub_sub_inner_le_of_anchor {d : ℕ}
   linarith
 
 /-- **Uniform local expansion of the empirical process.** In the setting of
-`tendstoInMeasure_sqrt_mul_empiricalProcess_sub_sub_inner`, with `n^{-1/2} ∑ s(Xᵢ)` bounded in
+`tendsto_in_measure_sqrt_mul_empirical_process_sub_sub_inner`, with `n^{-1/2} ∑ s(Xᵢ)` bounded in
 probability, for every `R > 0` the remainder
 `√n (Gₙ f(θ₀ + h/√n) - Gₙ f θ₀) - ⟪h, n^{-1/2} ∑ s(Xᵢ)⟫` tends to zero in outer probability
 uniformly over `‖h‖ ≤ R`. The proof covers the cube `[-2R, 2R)ᵈ` by `2ᵏᵈ` dyadic cells,
-applies the maximal inequality `measureReal_exists_abs_empiricalProcess_sub_gt_le` in each cell,
+applies the maximal inequality `measure_real_exists_abs_empirical_process_sub_gt_le` in each cell,
 and the pointwise expansion at the cell anchors. -/
-theorem tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner {Ω X : Type*}
+theorem tendsto_measure_real_exists_abs_sqrt_mul_empirical_process_sub_sub_inner {Ω X : Type*}
     [MeasurableSpace Ω] [MeasurableSpace X] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (P : Measure X) [IsProbabilityMeasure P] (Xn : ℕ → Ω → X)
     (hiid : IsIndependentIdenticallyDistributed μ Xn P) {d : ℕ}
@@ -347,7 +348,7 @@ theorem tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner {
     intro k
     simp only [hqk]
     gcongr
-    have := mul_bernsteinExponent_le (β := β) (γ := 2 * 1 / 3) (t := cA) (c := 2 ^ k) hβ0
+    have := mul_bernstein_exponent_le (β := β) (γ := 2 * 1 / 3) (t := cA) (c := 2 ^ k) hβ0
       (by norm_num) hcA0.le (one_le_pow₀ (by norm_num))
     simp only [hAk, hφ]
     rw [mul_comm cA, mul_comm (bernsteinExponent β (2 * 1 / 3) cA)]
@@ -360,22 +361,22 @@ theorem tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner {
   set Z : Finset (Fin d → ℤ) := Fintype.piFinset fun _ : Fin d ↦ Finset.Ico (0 : ℤ) (2 ^ k)
     with hZ
   set u : (Fin d → ℤ) → EuclideanSpace ℝ (Fin d) := cubeGridPoint a₀ w₀ k with hu
-  have hZcard : (Z.card : ℝ) = (2 ^ k) ^ d := card_piFinset_Ico_two_pow d k
+  have hZcard : (Z.card : ℝ) = (2 ^ k) ^ d := card_pi_finset_ico_two_pow d k
   have hZpos : 0 < (Z.card : ℝ) := by rw [hZcard]; positivity
   -- Pointwise expansions at the cell anchors.
   have hanchor : ∀ z ∈ Z, ∀ᶠ n : ℕ in atTop, μ.real {ω | ε / 4 < dist (Real.sqrt n *
       (G n (θ₀ + (Real.sqrt n)⁻¹ • u z) ω - G n θ₀ ω) - inner ℝ (u z) (Δ n ω)) 0} ≤
         η / (4 * Z.card) := fun z _ ↦ by
-    have h := tendstoInMeasure_sqrt_mul_empiricalProcess_sub_sub_inner μ P Xn hiid f θ₀ hr₀ hfm
+    have h := tendsto_in_measure_sqrt_mul_empirical_process_sub_sub_inner μ P Xn hiid f θ₀ hr₀ hfm
       hfi L hL2 hlip s hsm hs2 hs0 hd (u z)
-    rw [tendstoInMeasure_iff_measureReal_lt_dist] at h
+    rw [tendsto_in_measure_iff_measure_real_lt_dist] at h
     exact (h (ε / 4) (by positivity)).eventually (eventually_le_nhds (by positivity))
   have hrad : ∀ᶠ n : ℕ in atTop, (Real.sqrt n)⁻¹ * (Real.sqrt d * (2 * R)) < r₀ := by
     have hsqrt : Tendsto (fun n : ℕ ↦ (Real.sqrt n)⁻¹) atTop (𝓝 0) :=
       tendsto_inv_atTop_zero.comp (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop)
     exact (hsqrt.mul_const _).eventually (gt_mem_nhds (by rw [zero_mul]; exact hr₀))
-  have hrem := tendstoInMeasure_lipschitzChainRemainder μ P Xn hiid L hLm hL0 hL2 one_pos
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hrem
+  have hrem := tendsto_in_measure_lipschitz_chain_remainder μ P Xn hiid L hLm hL0 hL2 one_pos
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hrem
   filter_upwards [hK₀, (Filter.eventually_all_finset Z).2 hanchor, hrad,
     (hrem 1 one_pos).eventually (eventually_le_nhds (by positivity : (0 : ℝ) < η / 4)),
     eventually_ge_atTop 1] with n hnΔ hnA hnr hnR hn1
@@ -388,7 +389,7 @@ theorem tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner {
     halfOpenCube (θ₀ + c • u z) (c * wk) with hcell
   have hcellball : ∀ z ∈ Z, ∀ θ ∈ cell z, θ ∈ Metric.ball θ₀ r₀ := fun z hz θ hθ ↦ by
     rw [Metric.mem_ball, dist_eq_norm]
-    exact (norm_sub_le_of_mem_halfOpenCube_add_smul_cubeGridPoint hR hc0 hz hθ).trans_lt hnr
+    exact (norm_sub_le_of_mem_half_open_cube_add_smul_cube_grid_point hR hc0 hz hθ).trans_lt hnr
   -- Probability of a large oscillation in some cell.
   set E : (Fin d → ℤ) → Set Ω := fun z ↦ {ω | ∃ θ ∈ cell z,
     Real.sqrt d * (c * wk) * (2 * Ak k + lipschitzChainRemainder P Xn L 1 n ω) <
@@ -396,7 +397,7 @@ theorem tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner {
   have hEz : ∀ z ∈ Z, μ.real (E z) ≤ 4 * qk k := by
     intro z hz
     have hcellm : ∀ θ ∈ cell z, θ ∈ Metric.ball θ₀ r₀ := hcellball z hz
-    have hmax := measureReal_exists_abs_empiricalProcess_sub_gt_le μ P Xn hiid f
+    have hmax := measure_real_exists_abs_empirical_process_sub_gt_le μ P Xn hiid f
       (θ₀ + c • u z) (w := c * wk) (by positivity) (fun θ hθ ↦ hfm θ (hcellm θ hθ))
       (fun θ hθ ↦ hfi θ (hcellm θ hθ)) L hLm hL0 hL2
       (fun a ha b hb x ↦ hlip a (hcellm a ha) b (hcellm b hb) x) one_pos hn1
@@ -425,12 +426,12 @@ theorem tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner {
       simp only [ha₀, PiLp.toLp_apply, hw₀]
       constructor <;> linarith
     set z := cubeIndex a₀ w₀ k h with hzdef
-    have hz : z ∈ Z := cubeIndex_mem hw₀0 hhcube k
+    have hz : z ∈ Z := cube_index_mem hw₀0 hhcube k
     have hhu : h ∈ halfOpenCube (u z) wk := fun i ↦ by
-      obtain ⟨h1, h2⟩ := sub_cubeGridPoint_cubeIndex_mem a₀ h hw₀0 k i
+      obtain ⟨h1, h2⟩ := sub_cube_grid_point_cube_index_mem a₀ h hw₀0 k i
       constructor <;> simp only [hu, hzdef] <;> linarith
     set θ := θ₀ + c • h with hθ
-    have hθcell : θ ∈ cell z := add_smul_mem_halfOpenCube hhu θ₀ hc0
+    have hθcell : θ ∈ cell z := add_smul_mem_half_open_cube hhu θ₀ hc0
     have h1 : |G n θ ω - G n (θ₀ + c • u z) ω| ≤
         Real.sqrt d * (c * wk) * (2 * Ak k + lipschitzChainRemainder P Xn L 1 n ω) := by
       have := hnE z hz
@@ -462,9 +463,9 @@ theorem tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner {
         ring
       exact key _ _ _ _ hsd hw₀0 (by positivity)
     have hR0 : 0 ≤ lipschitzChainRemainder P Xn L 1 n ω :=
-      add_nonneg (empiricalEnvelope_nonneg P Xn n
+      add_nonneg (empirical_envelope_nonneg P Xn n
         (fun x ↦ Set.indicator_nonneg (fun x _ ↦ hL0 x) x) ω)
-        (mul_nonneg (by positivity) (empiricalEnvelope_nonneg P Xn n hL0 ω))
+        (mul_nonneg (by positivity) (empirical_envelope_nonneg P Xn n hL0 ω))
     have hle : |Real.sqrt n * (G n θ ω - G n θ₀ ω) - inner ℝ h (Δ n ω)| ≤ 5 * ε / 8 :=
       abs_mul_sub_sub_inner_le_of_anchor (fun θ ↦ G n θ ω) θ₀ h (u z) (Δ n ω) hsn hcs hsd.le
         hwk0.le hR0 hR1 h1 h2 hhu' (hnΔω.trans hK₀Δ) hkε hk3 hAk'

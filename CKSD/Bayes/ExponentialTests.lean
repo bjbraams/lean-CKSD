@@ -4,6 +4,7 @@ public import CKSD.Inference.Basic
 public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.Probability.Independence.InfinitePi
 
+
 /-!
 # Exponentially consistent tests
 
@@ -16,11 +17,11 @@ under every product law, so Hoeffding's inequality (Mathlib's
 
 ## Main results
 
-* `CKSD.infinitePi_map_fin_val`: the first `n` coordinates of an i.i.d. sequence have the
+* `CKSD.infinite_pi_map_fin_val`: the first `n` coordinates of an i.i.d. sequence have the
   `n`-fold product law.
-* `CKSD.iIndepFun_blockSample`, `CKSD.infinitePi_map_blockSample`: consecutive blocks of an
+* `CKSD.i_indep_fun_block_sample`, `CKSD.infinite_pi_map_block_sample`: consecutive blocks of an
   i.i.d. sequence are i.i.d. with the product law on the block.
-* `CKSD.exists_exponentiallyConsistent_tests`: exponentially consistent tests from uniformly
+* `CKSD.exists_exponentially_consistent_tests`: exponentially consistent tests from uniformly
   consistent ones.
 -/
 
@@ -36,7 +37,7 @@ namespace CKSD
 variable {X : Type*} [MeasurableSpace X]
 
 /-- The first `n` coordinates of an i.i.d. sequence with law `P` have the `n`-fold product law. -/
-theorem infinitePi_map_fin_val (P : Measure X) [IsProbabilityMeasure P] (n : ℕ) :
+theorem infinite_pi_map_fin_val (P : Measure X) [IsProbabilityMeasure P] (n : ℕ) :
     (Measure.infinitePi fun _ : ℕ ↦ P).map (fun ω (i : Fin n) ↦ ω i) =
       Measure.pi fun _ : Fin n ↦ P := by
   rw [Measure.map_infinitePi_infinitePi_of_inj Fin.val_injective, Measure.infinitePi_eq_pi]
@@ -45,12 +46,12 @@ theorem infinitePi_map_fin_val (P : Measure X) [IsProbabilityMeasure P] (n : ℕ
 def blockSample (k j : ℕ) (ω : ℕ → X) : Fin k → X := fun i ↦ ω (j * k + i)
 
 /-- The block map is measurable. -/
-@[fun_prop] theorem measurable_blockSample (k j : ℕ) :
+@[fun_prop] theorem measurable_block_sample (k j : ℕ) :
     Measurable (blockSample (X := X) k j) :=
   measurable_pi_iff.2 fun _ ↦ measurable_pi_apply _
 
 /-- Each block of length `k` of an i.i.d. sequence has the `k`-fold product law. -/
-theorem infinitePi_map_blockSample (P : Measure X) [IsProbabilityMeasure P] (k j : ℕ) :
+theorem infinite_pi_map_block_sample (P : Measure X) [IsProbabilityMeasure P] (k j : ℕ) :
     (Measure.infinitePi fun _ : ℕ ↦ P).map (blockSample k j) = Measure.pi fun _ : Fin k ↦ P := by
   have hinj : Function.Injective fun i : Fin k ↦ j * k + (i : ℕ) :=
     fun a b h ↦ Fin.ext (by simpa using h)
@@ -58,10 +59,10 @@ theorem infinitePi_map_blockSample (P : Measure X) [IsProbabilityMeasure P] (k j
   exact Measure.map_infinitePi_infinitePi_of_inj (P := fun _ : ℕ ↦ P) hinj
 
 /-- The consecutive blocks of length `k` of an i.i.d. sequence are independent. -/
-theorem iIndepFun_blockSample (P : Measure X) [IsProbabilityMeasure P] (k : ℕ) :
+theorem i_indep_fun_block_sample (P : Measure X) [IsProbabilityMeasure P] (k : ℕ) :
     iIndepFun (fun j ↦ blockSample (X := X) k j) (Measure.infinitePi fun _ : ℕ ↦ P) := by
-  rw [iIndepFun_iff_map_fun_eq_infinitePi_map (fun j ↦ measurable_blockSample k j)]
-  simp_rw [infinitePi_map_blockSample, ← Measure.infinitePi_eq_pi]
+  rw [iIndepFun_iff_map_fun_eq_infinitePi_map (fun j ↦ measurable_block_sample k j)]
+  simp_rw [infinite_pi_map_block_sample, ← Measure.infinitePi_eq_pi]
   have hinj : Function.Injective fun p : ℕ × Fin k ↦ p.1 * k + (p.2 : ℕ) := by
     rintro ⟨a, i⟩ ⟨b, l⟩ h
     have hk : 0 < k := Fin.pos i
@@ -82,7 +83,7 @@ theorem iIndepFun_blockSample (P : Measure X) [IsProbabilityMeasure P] (k : ℕ)
 /-- Hoeffding's inequality for block statistics: if `g` takes values in an interval of length
 one, the centred sum of `g` over the first `m` blocks of length `k` of an i.i.d. sequence exceeds
 `m/4` with probability at most `exp (-m/8)`. -/
-theorem measureReal_sum_blockSample_ge_le (Q : Measure X) [IsProbabilityMeasure Q] (k m : ℕ)
+theorem measure_real_sum_block_sample_ge_le (Q : Measure X) [IsProbabilityMeasure Q] (k m : ℕ)
     {g : (Fin k → X) → ℝ} (hg : Measurable g) {a : ℝ} (hga : ∀ z, g z ∈ Icc a (a + 1)) :
     (Measure.infinitePi fun _ : ℕ ↦ Q).real
       {ω | (m : ℝ) / 4 ≤ ∑ j ∈ Finset.range m,
@@ -93,14 +94,14 @@ theorem measureReal_sum_blockSample_ge_le (Q : Measure X) [IsProbabilityMeasure 
   have hmean : ∀ j, μ[fun ω ↦ g (blockSample k j ω)] = c := by
     intro j
     change ∫ ω, g (blockSample k j ω) ∂μ = ∫ z, g z ∂(Measure.pi fun _ : Fin k ↦ Q)
-    rw [← infinitePi_map_blockSample Q k j, integral_map (by fun_prop) hg.aestronglyMeasurable]
+    rw [← infinite_pi_map_block_sample Q k j, integral_map (by fun_prop) hg.aestronglyMeasurable]
   have hind : iIndepFun (fun j ω ↦ g (blockSample k j ω) - c) μ :=
-    (iIndepFun_blockSample Q k).comp (fun _ z ↦ g z - c) (fun _ ↦ hg.sub_const _)
+    (i_indep_fun_block_sample Q k).comp (fun _ z ↦ g z - c) (fun _ ↦ hg.sub_const _)
   have hsub : ∀ j < m, HasSubgaussianMGF (fun ω ↦ g (blockSample k j ω) - c)
       ((‖(a + 1) - a‖₊ / 2) ^ 2) μ := by
     intro j _
     have := hasSubgaussianMGF_of_mem_Icc (μ := μ) (X := fun ω ↦ g (blockSample k j ω))
-      (a := a) (b := a + 1) (hg.comp (measurable_blockSample k j)).aemeasurable
+      (a := a) (b := a + 1) (hg.comp (measurable_block_sample k j)).aemeasurable
       (ae_of_all _ fun ω ↦ hga _)
     rwa [hmean j] at this
   refine (HasSubgaussianMGF.measure_sum_range_ge_le_of_iIndepFun hind hsub (ε := (m : ℝ) / 4)
@@ -119,7 +120,7 @@ theorem measureReal_sum_blockSample_ge_le (Q : Measure X) [IsProbabilityMeasure 
 have type I error tending to zero and type II error tending to zero uniformly on `A`, then there
 are tests `ψ n` and `β > 0` whose type I error and uniform type II error are both at most
 `exp (1/8) exp (-β n)`. The tests `ψ n` reject when at least half of the block tests reject. -/
-theorem exists_exponentiallyConsistent_tests {Θ : Type*} (P : Θ → Measure X)
+theorem exists_exponentially_consistent_tests {Θ : Type*} (P : Θ → Measure X)
     [∀ θ, IsProbabilityMeasure (P θ)] (θ₀ : Θ) (A : Set Θ)
     (φ : ∀ n : ℕ, (Fin n → X) → ℝ) (hφ : ∀ n, IsStatisticalTest (φ n))
     (h0 : Tendsto (fun n : ℕ ↦ ∫ x, φ n x ∂(Measure.pi fun _ : Fin n ↦ P θ₀)) atTop (𝓝 0))
@@ -147,7 +148,7 @@ theorem exists_exponentiallyConsistent_tests {Θ : Type*} (P : Θ → Measure X)
   let S : ℕ → (ℕ → X) → ℝ := fun n ω ↦
     ∑ j ∈ Finset.range (n / k), φ k (blockSample k j ω)
   have hS : ∀ n, Measurable (S n) := fun n ↦
-    Finset.measurable_sum _ fun j _ ↦ (hφ k).1.comp (measurable_blockSample k j)
+    Finset.measurable_sum _ fun j _ ↦ (hφ k).1.comp (measurable_block_sample k j)
   let E : ℕ → Set (ℕ → X) := fun n ↦ {ω | ((n / k : ℕ) : ℝ) / 2 ≤ S n ω}
   have hE : ∀ n, MeasurableSet (E n) := fun n ↦ measurableSet_le measurable_const (hS n)
   refine ⟨1 / (8 * k), by positivity, fun n x ↦ (E n).indicator 1 (ext n x), fun n ↦ ?_, ?_⟩
@@ -171,7 +172,7 @@ theorem exists_exponentiallyConsistent_tests {Θ : Type*} (P : Θ → Measure X)
       ∂(Measure.pi fun _ : Fin n ↦ P θ)) =
       ∫ ω, h ((E n).indicator 1 ω) ∂(Measure.infinitePi fun _ : ℕ ↦ P θ) := by
     intro θ h hh
-    rw [← infinitePi_map_fin_val (P θ) n,
+    rw [← infinite_pi_map_fin_val (P θ) n,
       integral_map (measurable_pi_iff.2 fun i ↦ measurable_pi_apply _).aemeasurable
         (hh.comp ((measurable_one.indicator (hE n)).comp (hext n))).aestronglyMeasurable]
     refine integral_congr_ae (ae_of_all _ fun ω ↦ ?_)
@@ -203,7 +204,7 @@ theorem exists_exponentiallyConsistent_tests {Θ : Type*} (P : Θ → Measure X)
     simp only [id] at hl
     show (∫ x, (E n).indicator 1 (ext n x) ∂(Measure.pi fun _ : Fin n ↦ P θ₀)) ≤ _
     rw [hl, integral_indicator_one (hE n)]
-    refine le_trans ?_ (le_trans (measureReal_sum_blockSample_ge_le (P θ₀) k m (hφ k).1
+    refine le_trans ?_ (le_trans (measure_real_sum_block_sample_ge_le (P θ₀) k m (hφ k).1
       (a := 0) (fun z ↦ by simpa using (hφ k).2 z)) hexp)
     refine measureReal_mono (fun ω hω ↦ ?_)
     simp only [E, Set.mem_ofPred_eq] at hω ⊢
@@ -223,7 +224,7 @@ theorem exists_exponentiallyConsistent_tests {Θ : Type*} (P : Θ → Measure X)
       integral_indicator_one (hE n)]
     simp only [integral_const, probReal_univ, smul_eq_mul, mul_one]
     rw [← probReal_compl_eq_one_sub (hE n)]
-    refine le_trans ?_ (le_trans (measureReal_sum_blockSample_ge_le (P θ) k m
+    refine le_trans ?_ (le_trans (measure_real_sum_block_sample_ge_le (P θ) k m
       (g := fun z ↦ -φ k z) (hφ k).1.neg (a := -1)
       (fun z ↦ by have := (hφ k).2 z; constructor <;> simp <;> linarith [this.1, this.2]))
       hexp)

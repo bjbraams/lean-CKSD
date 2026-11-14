@@ -5,6 +5,7 @@ public import Mathlib.Probability.Kernel.WithDensity
 public import CKSD.Inference.Factorization
 public import CKSD.Inference.LaplaceDeterminacy
 
+
 /-!
 # Conditional exponential families and conditional tests
 
@@ -22,8 +23,8 @@ law of `T` given `S` and the conditional UMPU tests in the presence of a nuisanc
 
 * `CKSD.exists_kernel_conditional_exponential_family`: the conditional law of `T` given `S` is a
   parameter-free exponential tilt depending only on `η` (GAPS 101.43).
-* `CKSD.isUniformlyMostPowerfulUnbiasedTest_conditional_two_sided` and
-  `CKSD.isUniformlyMostPowerfulUnbiasedTest_conditional_one_sided`: conditional UMPU tests with a
+* `CKSD.is_uniformly_most_powerful_unbiased_test_conditional_two_sided` and
+  `CKSD.is_uniformly_most_powerful_unbiased_test_conditional_one_sided`: conditional UMPU tests with a
   nuisance parameter (GAPS 101.46).
 
 ## Implementation notes
@@ -66,7 +67,7 @@ def conditionalExponentialKernel [MeasurableSpace E] [MeasurableSpace F]
 /-- Exponential tilting of a composition product. If `μ` is a finite measure and `κ` a Markov
 kernel, and the tilt of `μ ⊗ₘ κ` by `exp (a t + b s)` is finite, then this tilt is its first
 marginal composed with the fibrewise normalized tilt `s ↦ exp (a t - log ∫ exp (a t') κ s) κ s`. -/
-theorem withDensity_exp_compProd_eq_fst_compProd {α β : Type*} [MeasurableSpace α]
+theorem with_density_exp_comp_prod_eq_fst_comp_prod {α β : Type*} [MeasurableSpace α]
     [MeasurableSpace β] (μ : Measure α) [IsFiniteMeasure μ] (κ : Kernel α β) [IsMarkovKernel κ]
     {a : β → ℝ} {b : α → ℝ} (ha : Measurable a) (hb : Measurable b)
     (hfin : IsFiniteMeasure
@@ -158,7 +159,7 @@ theorem withDensity_exp_compProd_eq_fst_compProd {α β : Type*} [MeasurableSpac
 omit [NormedAddCommGroup F] [InnerProductSpace ℝ F] in
 /-- Tilting a kernel by `exp (-η₁ · t)` and then forming the conditional exponential kernel at
 `η` is the conditional exponential kernel of the untilted kernel at `η - η₁`. -/
-theorem conditionalExponentialKernel_withDensity_exp_neg [MeasurableSpace E] [BorelSpace E]
+theorem conditional_exponential_kernel_with_density_exp_neg [MeasurableSpace E] [BorelSpace E]
     [MeasurableSpace F] (κ : Kernel F E) [IsSFiniteKernel κ] (η₁ η : E) :
     have : IsSFiniteKernel (κ.withDensity fun _ t ↦ ENNReal.ofReal (Real.exp (-inner ℝ η₁ t))) :=
       Kernel.IsSFiniteKernel.withDensity _ fun _ _ ↦ ENNReal.ofReal_ne_top
@@ -186,7 +187,7 @@ theorem conditionalExponentialKernel_withDensity_exp_neg [MeasurableSpace E] [Bo
   have hint : ∀ s, ∫ t', Real.exp (inner ℝ η t') ∂κw s =
       ∫ t', Real.exp (inner ℝ (η - η₁) t') ∂κ s := by
     intro s
-    rw [Kernel.withDensity_apply _ hw, integral_withDensity_ofReal (h := fun t ↦
+    rw [Kernel.withDensity_apply _ hw, integral_with_density_of_real (h := fun t ↦
       Real.exp (-inner ℝ η₁ t)) _ (Real.measurable_exp.comp (hin η₁).neg)
       (fun _ ↦ (Real.exp_pos _).le)]
     congr 1
@@ -208,7 +209,7 @@ theorem conditionalExponentialKernel_withDensity_exp_neg [MeasurableSpace E] [Bo
   ring_nf
 
 /-- The split exponential law has finite total mass where its density is integrable. -/
-theorem isFiniteMeasure_splitExponentialFamilyMeasure (ν : Measure X) (T : X → E) (S : X → F)
+theorem is_finite_measure_split_exponential_family_measure (ν : Measure X) (T : X → E) (S : X → F)
     (η : E) (ζ : F) (h : Integrable (fun x ↦ Real.exp (inner ℝ η (T x) + inner ℝ ζ (S x))) ν) :
     IsFiniteMeasure (splitExponentialFamilyMeasure ν T S η ζ) := by
   refine ⟨?_⟩
@@ -223,7 +224,7 @@ theorem isFiniteMeasure_splitExponentialFamilyMeasure (ν : Measure X) (T : X �
 
 /-- Two split exponential laws differ by an exponential tilt in `(S, T)`; here `c` is the
 difference of the two log partition functions. -/
-theorem splitExponentialFamilyMeasure_eq_withDensity [MeasurableSpace E] [BorelSpace E]
+theorem split_exponential_family_measure_eq_with_density [MeasurableSpace E] [BorelSpace E]
     [MeasurableSpace F] [BorelSpace F] (ν : Measure X) {T : X → E} {S : X → F}
     (hT : Measurable T) (hS : Measurable S) (η η₁ : E) (ζ ζ₁ : F) {c : ℝ}
     (hc : c = splitLogPartition ν T S η ζ - splitLogPartition ν T S η₁ ζ₁) :
@@ -269,14 +270,14 @@ theorem exists_kernel_conditional_exponential_family {k l : ℕ} (ν : Measure X
   obtain ⟨η₁, ζ₁, h₁⟩ := hex
   have hST : Measurable fun x ↦ (S x, T x) := hS.prodMk hT
   set P₁ := splitExponentialFamilyMeasure ν T S η₁ ζ₁
-  have := isFiniteMeasure_splitExponentialFamilyMeasure ν T S η₁ ζ₁ h₁
+  have := is_finite_measure_split_exponential_family_measure ν T S η₁ ζ₁ h₁
   set Q := P₁.map fun x ↦ (S x, T x)
   set κ₁ := Q.condKernel
   have hκ : IsSFiniteKernel
       (κ₁.withDensity fun _ t ↦ ENNReal.ofReal (Real.exp (-inner ℝ η₁ t))) :=
     Kernel.IsSFiniteKernel.withDensity _ fun _ _ ↦ ENNReal.ofReal_ne_top
   refine ⟨_, hκ, fun η ζ hint ↦ ?_⟩
-  rw [conditionalExponentialKernel_withDensity_exp_neg κ₁ η₁ η]
+  rw [conditional_exponential_kernel_with_density_exp_neg κ₁ η₁ η]
   obtain ⟨c, hc⟩ : ∃ c, c = splitLogPartition ν T S η ζ - splitLogPartition ν T S η₁ ζ₁ :=
     ⟨_, rfl⟩
   have ha : Measurable fun t : EuclideanSpace ℝ (Fin k) ↦ inner ℝ (η - η₁) t :=
@@ -290,15 +291,15 @@ theorem exists_kernel_conditional_exponential_family {k l : ℕ} (ν : Measure X
   have hPmap : (splitExponentialFamilyMeasure ν T S η ζ).map (fun x ↦ (S x, T x)) =
       Q.withDensity fun p ↦
         ENNReal.ofReal (Real.exp (inner ℝ (η - η₁) p.2 + (inner ℝ (ζ - ζ₁) p.1 - c))) := by
-    rw [splitExponentialFamilyMeasure_eq_withDensity ν hT hS η η₁ ζ ζ₁ hc,
-      map_withDensity_comp P₁ hST hk]
+    rw [split_exponential_family_measure_eq_with_density ν hT hS η η₁ ζ ζ₁ hc,
+      map_with_density_comp P₁ hST hk]
   have hQ : Q = Q.fst ⊗ₘ κ₁ := (Q.disintegrate Q.condKernel).symm
-  have := isFiniteMeasure_splitExponentialFamilyMeasure ν T S η ζ hint
+  have := is_finite_measure_split_exponential_family_measure ν T S η ζ hint
   have hfin : IsFiniteMeasure ((Q.fst ⊗ₘ κ₁).withDensity fun p ↦
       ENNReal.ofReal (Real.exp (inner ℝ (η - η₁) p.2 + (inner ℝ (ζ - ζ₁) p.1 - c)))) := by
     rw [← hQ, ← hPmap]
     infer_instance
-  have key := withDensity_exp_compProd_eq_fst_compProd Q.fst κ₁ ha hb hfin
+  have key := with_density_exp_comp_prod_eq_fst_comp_prod Q.fst κ₁ ha hb hfin
   rw [← hQ, ← hPmap, Measure.fst_map_prodMk hS hT] at key
   exact key
 
@@ -317,7 +318,7 @@ hyperplane `η = η₀`, a test that rejects for values of `T` outside the condi
 constraint `E[Tφ | S] = α E[T | S]` at one point of the hyperplane, is UMPU of level `α` for
 `η = η₀` against `η ≠ η₀`. The randomization at the conditional critical points is
 unrestricted. -/
-theorem isUniformlyMostPowerfulUnbiasedTest_conditional_two_sided {l : ℕ} (ν : Measure X)
+theorem is_uniformly_most_powerful_unbiased_test_conditional_two_sided {l : ℕ} (ν : Measure X)
     (T : X → ℝ) (S : X → EuclideanSpace ℝ (Fin l)) (hT : Measurable T) (hS : Measurable S)
     (hmin : IsMinimalSplitStatistic ν T S)
     (U : Set (ℝ × EuclideanSpace ℝ (Fin l))) (hU : IsOpen U) (hc : Convex ℝ U)
@@ -334,10 +335,10 @@ theorem isUniformlyMostPowerfulUnbiasedTest_conditional_two_sided {l : ℕ} (ν 
   sorry
 
 /-- GAPS 101.46, one-sided part: in the setting of
-`isUniformlyMostPowerfulUnbiasedTest_conditional_two_sided`, a test that rejects for
+`is_uniformly_most_powerful_unbiased_test_conditional_two_sided`, a test that rejects for
 `T > c(S)`, accepts for `T < c(S)`, and has conditional size `α` at one point of the hyperplane
 `η = η₀` is UMPU of level `α` for `η ≤ η₀` against `η > η₀`. -/
-theorem isUniformlyMostPowerfulUnbiasedTest_conditional_one_sided {l : ℕ} (ν : Measure X)
+theorem is_uniformly_most_powerful_unbiased_test_conditional_one_sided {l : ℕ} (ν : Measure X)
     (T : X → ℝ) (S : X → EuclideanSpace ℝ (Fin l)) (hT : Measurable T) (hS : Measurable S)
     (hmin : IsMinimalSplitStatistic ν T S)
     (U : Set (ℝ × EuclideanSpace ℝ (Fin l))) (hU : IsOpen U) (hc : Convex ℝ U)

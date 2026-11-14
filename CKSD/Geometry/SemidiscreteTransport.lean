@@ -5,6 +5,7 @@ public import Mathlib.Analysis.Calculus.ParametricIntegral
 public import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
 
+
 /-!
 # Semidiscrete optimal transport
 
@@ -28,13 +29,13 @@ coupling shows that this cost is the squared Wasserstein distance.
 
 ## Main results
 
-* `CKSD.hasFDerivAt_semidiscreteTransportDual`: the gradient formula.
-* `CKSD.contDiff_semidiscreteTransportDual`: the dual functional is `C¹`.
-* `CKSD.concaveOn_semidiscreteTransportDual`: concavity.
-* `CKSD.semidiscreteTransportDual_isMax_iff`: maximizers are the weights with cell masses `b_j`.
-* `CKSD.exists_isMax_semidiscreteTransportDual`: a maximizer exists.
-* `CKSD.map_semidiscreteTransportMap`: at a maximizer the cell map transports `P` to the target.
-* `CKSD.semidiscreteTransportDual_eq_wassersteinEDist_sq`: the maximal value is `W₂²`.
+* `CKSD.has_f_deriv_at_semidiscrete_transport_dual`: the gradient formula.
+* `CKSD.cont_diff_semidiscrete_transport_dual`: the dual functional is `C¹`.
+* `CKSD.concave_on_semidiscrete_transport_dual`: concavity.
+* `CKSD.semidiscrete_transport_dual_is_max_iff`: maximizers are the weights with cell masses `b_j`.
+* `CKSD.exists_is_max_semidiscrete_transport_dual`: a maximizer exists.
+* `CKSD.map_semidiscrete_transport_map`: at a maximizer the cell map transports `P` to the target.
+* `CKSD.semidiscrete_transport_dual_eq_wasserstein_e_dist_sq`: the maximal value is `W₂²`.
 
 ## References
 
@@ -64,19 +65,19 @@ def semidiscretePotential (y : Fin k → EuclideanSpace ℝ (Fin d)) (g : Fin k 
   sInf (range fun j ↦ ‖x - y j‖ ^ 2 - g j)
 
 /-- The dual functional is the integral of the potential plus the linear term. -/
-theorem semidiscreteTransportDual_eq (P : Measure (EuclideanSpace ℝ (Fin d)))
+theorem semidiscrete_transport_dual_eq (P : Measure (EuclideanSpace ℝ (Fin d)))
     (y : Fin k → EuclideanSpace ℝ (Fin d)) (b g : Fin k → ℝ) :
     semidiscreteTransportDual P y b g =
       (∫ x, semidiscretePotential y g x ∂P) + ∑ j, b j * g j := rfl
 
 /-- The potential is at most each of the shifted costs. -/
-theorem semidiscretePotential_le (y : Fin k → EuclideanSpace ℝ (Fin d)) (g : Fin k → ℝ)
+theorem semidiscrete_potential_le (y : Fin k → EuclideanSpace ℝ (Fin d)) (g : Fin k → ℝ)
     (x : EuclideanSpace ℝ (Fin d)) (j : Fin k) :
     semidiscretePotential y g x ≤ ‖x - y j‖ ^ 2 - g j :=
   csInf_le (Set.finite_range _).bddBelow (mem_range_self j)
 
 /-- For at least one site the potential is attained. -/
-theorem exists_semidiscretePotential_eq (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
+theorem exists_semidiscrete_potential_eq (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
     (g : Fin k → ℝ) (x : EuclideanSpace ℝ (Fin d)) :
     ∃ j, semidiscretePotential y g x = ‖x - y j‖ ^ 2 - g j := by
   have : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
@@ -85,34 +86,34 @@ theorem exists_semidiscretePotential_eq (hk : 0 < k) (y : Fin k → EuclideanSpa
   exact ⟨j, hj.symm⟩
 
 /-- A point lies in the Laguerre cell of `y_j` exactly when the potential is attained at `j`. -/
-theorem mem_laguerreCell_iff (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
+theorem mem_laguerre_cell_iff (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
     (g : Fin k → ℝ) (x : EuclideanSpace ℝ (Fin d)) (j : Fin k) :
     x ∈ laguerreCell y g j ↔ semidiscretePotential y g x = ‖x - y j‖ ^ 2 - g j := by
   have : Nonempty (Fin k) := ⟨⟨0, hk⟩⟩
   constructor
   · intro hx
-    refine le_antisymm (semidiscretePotential_le y g x j) (le_csInf (range_nonempty _) ?_)
+    refine le_antisymm (semidiscrete_potential_le y g x j) (le_csInf (range_nonempty _) ?_)
     rintro _ ⟨i, rfl⟩
     exact hx i
   · intro hx i
     rw [← hx]
-    exact semidiscretePotential_le y g x i
+    exact semidiscrete_potential_le y g x i
 
 /-- Every point lies in some Laguerre cell. -/
-theorem exists_mem_laguerreCell (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
+theorem exists_mem_laguerre_cell (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
     (g : Fin k → ℝ) (x : EuclideanSpace ℝ (Fin d)) : ∃ j, x ∈ laguerreCell y g j := by
-  obtain ⟨j, hj⟩ := exists_semidiscretePotential_eq hk y g x
-  exact ⟨j, (mem_laguerreCell_iff hk y g x j).mpr hj⟩
+  obtain ⟨j, hj⟩ := exists_semidiscrete_potential_eq hk y g x
+  exact ⟨j, (mem_laguerre_cell_iff hk y g x j).mpr hj⟩
 
 /-- The potential is `1`-Lipschitz in the weights for the sup norm. -/
-theorem abs_semidiscretePotential_sub_le (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
+theorem abs_semidiscrete_potential_sub_le (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
     (g h : Fin k → ℝ) (x : EuclideanSpace ℝ (Fin d)) :
     |semidiscretePotential y g x - semidiscretePotential y h x| ≤ ‖g - h‖ := by
   have key : ∀ g h : Fin k → ℝ,
       semidiscretePotential y g x ≤ semidiscretePotential y h x + ‖g - h‖ := by
     intro g h
-    obtain ⟨j, hj⟩ := exists_semidiscretePotential_eq hk y h x
-    have h1 := semidiscretePotential_le y g x j
+    obtain ⟨j, hj⟩ := exists_semidiscrete_potential_eq hk y h x
+    have h1 := semidiscrete_potential_le y g x j
     have h2 : |g j - h j| ≤ ‖g - h‖ := by
       simpa only [Pi.sub_apply, Real.norm_eq_abs] using norm_le_pi_norm (g - h) j
     rw [hj]
@@ -125,14 +126,14 @@ theorem abs_semidiscretePotential_sub_le (hk : 0 < k) (y : Fin k → EuclideanSp
   · linarith [key g h]
 
 /-- The potential is measurable in the point. -/
-theorem measurable_semidiscretePotential (y : Fin k → EuclideanSpace ℝ (Fin d))
+theorem measurable_semidiscrete_potential (y : Fin k → EuclideanSpace ℝ (Fin d))
     (g : Fin k → ℝ) : Measurable (semidiscretePotential y g) :=
   Measurable.iInf fun j ↦ by fun_prop
 
 /-- The potential is bounded below by `-‖g‖`. -/
-theorem neg_norm_le_semidiscretePotential (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
+theorem neg_norm_le_semidiscrete_potential (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
     (g : Fin k → ℝ) (x : EuclideanSpace ℝ (Fin d)) : -‖g‖ ≤ semidiscretePotential y g x := by
-  obtain ⟨j, hj⟩ := exists_semidiscretePotential_eq hk y g x
+  obtain ⟨j, hj⟩ := exists_semidiscrete_potential_eq hk y g x
   rw [hj]
   have h1 : g j ≤ ‖g‖ := (le_abs_self _).trans (by
     simpa only [Real.norm_eq_abs] using norm_le_pi_norm g j)
@@ -147,14 +148,14 @@ theorem integrable_norm_sub_sq {P : Measure (EuclideanSpace ℝ (Fin d))} [IsFin
   exact (memLp_two_iff_integrable_sq_norm (by fun_prop)).mp this
 
 /-- For a law with finite second moment, the potential is integrable. -/
-theorem integrable_semidiscretePotential (hk : 0 < k) {P : Measure (EuclideanSpace ℝ (Fin d))}
+theorem integrable_semidiscrete_potential (hk : 0 < k) {P : Measure (EuclideanSpace ℝ (Fin d))}
     [IsFiniteMeasure P] (h2 : MemLp id 2 P) (y : Fin k → EuclideanSpace ℝ (Fin d))
     (g : Fin k → ℝ) : Integrable (semidiscretePotential y g) P := by
   set j₀ : Fin k := ⟨0, hk⟩
   refine ((integrable_norm_sub_sq h2 (y j₀)).add (integrable_const (2 * ‖g‖))).mono'
-    (measurable_semidiscretePotential y g).aestronglyMeasurable (ae_of_all _ fun x ↦ ?_)
-  have h1 := semidiscretePotential_le y g x j₀
-  have h3 := neg_norm_le_semidiscretePotential hk y g x
+    (measurable_semidiscrete_potential y g).aestronglyMeasurable (ae_of_all _ fun x ↦ ?_)
+  have h1 := semidiscrete_potential_le y g x j₀
+  have h3 := neg_norm_le_semidiscrete_potential hk y g x
   have h4 : -g j₀ ≤ ‖g‖ := (neg_le_abs _).trans (by
     simpa only [Real.norm_eq_abs] using norm_le_pi_norm g j₀)
   rw [Real.norm_eq_abs, abs_le, Pi.add_apply]
@@ -198,7 +199,7 @@ private theorem volume_tie_eq_zero (y : Fin k → EuclideanSpace ℝ (Fin d)) (g
   exact measure_mono_null hsub (Measure.addHaar_affineSubspace volume A hA)
 
 /-- For an absolutely continuous law and distinct sites, almost every point has no ties. -/
-theorem ae_forall_ne_of_absolutelyContinuous {P : Measure (EuclideanSpace ℝ (Fin d))}
+theorem ae_forall_ne_of_absolutely_continuous {P : Measure (EuclideanSpace ℝ (Fin d))}
     (hP : P ≪ volume) {y : Fin k → EuclideanSpace ℝ (Fin d)} (hy : Function.Injective y)
     (g : Fin k → ℝ) :
     ∀ᵐ x ∂P, ∀ i j, i ≠ j → ‖x - y i‖ ^ 2 - g i ≠ ‖x - y j‖ ^ 2 - g j := by
@@ -213,7 +214,7 @@ theorem ae_forall_ne_of_absolutelyContinuous {P : Measure (EuclideanSpace ℝ (F
     exact hx fun _ ↦ hne
 
 /-- Laguerre cells are closed. -/
-theorem isClosed_laguerreCell (y : Fin k → EuclideanSpace ℝ (Fin d)) (g : Fin k → ℝ)
+theorem is_closed_laguerre_cell (y : Fin k → EuclideanSpace ℝ (Fin d)) (g : Fin k → ℝ)
     (j : Fin k) : IsClosed (laguerreCell y g j) := by
   have : laguerreCell y g j = ⋂ i, {x | ‖x - y j‖ ^ 2 - g j ≤ ‖x - y i‖ ^ 2 - g i} := by
     ext x; simp [laguerreCell]
@@ -221,12 +222,12 @@ theorem isClosed_laguerreCell (y : Fin k → EuclideanSpace ℝ (Fin d)) (g : Fi
   exact isClosed_iInter fun i ↦ isClosed_le (by fun_prop) (by fun_prop)
 
 /-- Laguerre cells are measurable. -/
-theorem measurableSet_laguerreCell (y : Fin k → EuclideanSpace ℝ (Fin d)) (g : Fin k → ℝ)
+theorem measurable_set_laguerre_cell (y : Fin k → EuclideanSpace ℝ (Fin d)) (g : Fin k → ℝ)
     (j : Fin k) : MeasurableSet (laguerreCell y g j) :=
-  (isClosed_laguerreCell y g j).measurableSet
+  (is_closed_laguerre_cell y g j).measurableSet
 
 /-- A point of a Laguerre cell with no ties stays in the cell for all nearby weights. -/
-theorem eventually_mem_laguerreCell {y : Fin k → EuclideanSpace ℝ (Fin d)} {g₀ : Fin k → ℝ}
+theorem eventually_mem_laguerre_cell {y : Fin k → EuclideanSpace ℝ (Fin d)} {g₀ : Fin k → ℝ}
     {x : EuclideanSpace ℝ (Fin d)} {j : Fin k} (hj : x ∈ laguerreCell y g₀ j)
     (huniq : ∀ i, i ≠ j → ‖x - y i‖ ^ 2 - g₀ i ≠ ‖x - y j‖ ^ 2 - g₀ j) :
     ∀ᶠ g in 𝓝 g₀, x ∈ laguerreCell y g j := by
@@ -242,7 +243,7 @@ theorem eventually_mem_laguerreCell {y : Fin k → EuclideanSpace ℝ (Fin d)} {
   exact (eventually_all.mpr h).mono fun g hg ↦ hg
 
 /-- A point outside a Laguerre cell stays outside for all nearby weights. -/
-theorem eventually_notMem_laguerreCell {y : Fin k → EuclideanSpace ℝ (Fin d)} {g₀ : Fin k → ℝ}
+theorem eventually_not_mem_laguerre_cell {y : Fin k → EuclideanSpace ℝ (Fin d)} {g₀ : Fin k → ℝ}
     {x : EuclideanSpace ℝ (Fin d)} {j : Fin k} (hj : x ∉ laguerreCell y g₀ j) :
     ∀ᶠ g in 𝓝 g₀, x ∉ laguerreCell y g j := by
   simp only [laguerreCell, mem_ofPred_eq, not_forall, not_le] at hj
@@ -254,7 +255,7 @@ theorem eventually_notMem_laguerreCell {y : Fin k → EuclideanSpace ℝ (Fin d)
 
 /-- Off the ties, the potential is differentiable in the weights, with derivative `-e_j` on the
 cell of `y_j`. -/
-theorem hasFDerivAt_semidiscretePotential (hk : 0 < k) {y : Fin k → EuclideanSpace ℝ (Fin d)}
+theorem has_f_deriv_at_semidiscrete_potential (hk : 0 < k) {y : Fin k → EuclideanSpace ℝ (Fin d)}
     {g₀ : Fin k → ℝ} {x : EuclideanSpace ℝ (Fin d)} {j : Fin k} (hj : x ∈ laguerreCell y g₀ j)
     (huniq : ∀ i, i ≠ j → ‖x - y i‖ ^ 2 - g₀ i ≠ ‖x - y j‖ ^ 2 - g₀ j) :
     HasFDerivAt (fun g ↦ semidiscretePotential y g x)
@@ -266,12 +267,12 @@ theorem hasFDerivAt_semidiscretePotential (hk : 0 < k) {y : Fin k → EuclideanS
     rw [zero_sub] at h0
     exact h0
   refine h.congr_of_eventuallyEq ?_
-  filter_upwards [eventually_mem_laguerreCell hj huniq] with g hg
-  exact (mem_laguerreCell_iff hk y g x j).mp hg
+  filter_upwards [eventually_mem_laguerre_cell hj huniq] with g hg
+  exact (mem_laguerre_cell_iff hk y g x j).mp hg
 
 /-- At a point without ties, the indicator of the Laguerre cell of `y_j` is the Kronecker delta of
 the unique minimizing site. -/
-theorem indicator_laguerreCell_eq {y : Fin k → EuclideanSpace ℝ (Fin d)} {g : Fin k → ℝ}
+theorem indicator_laguerre_cell_eq {y : Fin k → EuclideanSpace ℝ (Fin d)} {g : Fin k → ℝ}
     {x : EuclideanSpace ℝ (Fin d)} {j : Fin k} (hj : x ∈ laguerreCell y g j)
     (huniq : ∀ i l, i ≠ l → ‖x - y i‖ ^ 2 - g i ≠ ‖x - y l‖ ^ 2 - g l) (i : Fin k) :
     (laguerreCell y g i).indicator (fun _ ↦ (1 : ℝ)) x = if i = j then 1 else 0 := by
@@ -283,7 +284,7 @@ theorem indicator_laguerreCell_eq {y : Fin k → EuclideanSpace ℝ (Fin d)} {g 
 
 /-- GAPS 108.56, differentiation under the integral: for an absolutely continuous law with finite
 second moment and distinct sites, `g ↦ ∫ φ_g dP` has derivative `-∑ P(L_j(g)) e_j`. -/
-theorem hasFDerivAt_integral_semidiscretePotential (hk : 0 < k)
+theorem has_f_deriv_at_integral_semidiscrete_potential (hk : 0 < k)
     {P : Measure (EuclideanSpace ℝ (Fin d))} [IsProbabilityMeasure P] (hP : P ≪ volume)
     (h2 : MemLp id 2 P) {y : Fin k → EuclideanSpace ℝ (Fin d)} (hy : Function.Injective y)
     (g₀ : Fin k → ℝ) :
@@ -294,13 +295,13 @@ theorem hasFDerivAt_integral_semidiscretePotential (hk : 0 < k)
     -∑ j, (laguerreCell y g₀ j).indicator (fun _ ↦ (1 : ℝ)) x •
       (ContinuousLinearMap.proj j : (Fin k → ℝ) →L[ℝ] ℝ) with hF'
   have hind : ∀ j, Integrable ((laguerreCell y g₀ j).indicator fun _ ↦ (1 : ℝ)) P := fun j ↦
-    (integrable_const (1 : ℝ)).indicator (measurableSet_laguerreCell y g₀ j)
+    (integrable_const (1 : ℝ)).indicator (measurable_set_laguerre_cell y g₀ j)
   have hF'int : ∫ x, F' x ∂P = -∑ j, P.real (laguerreCell y g₀ j) •
       (ContinuousLinearMap.proj j : (Fin k → ℝ) →L[ℝ] ℝ) := by
     rw [hF', integral_neg, integral_finsetSum _ fun j _ ↦ (hind j).smul_const _]
     congr 1
     refine Finset.sum_congr rfl fun j _ ↦ ?_
-    rw [integral_smul_const, integral_indicator_const _ (measurableSet_laguerreCell y g₀ j),
+    rw [integral_smul_const, integral_indicator_const _ (measurable_set_laguerre_cell y g₀ j),
       smul_eq_mul, mul_one]
   have hF'meas : AEStronglyMeasurable F' P := by
     refine (Finset.aestronglyMeasurable_fun_sum _ fun j _ ↦ ?_).neg
@@ -308,50 +309,50 @@ theorem hasFDerivAt_integral_semidiscretePotential (hk : 0 < k)
   have key := hasFDerivAt_integral_of_dominated_loc_of_lip' (μ := P)
     (F := fun g x ↦ semidiscretePotential y g x) (F' := F') (x₀ := g₀)
     (bound := fun _ ↦ (1 : ℝ)) univ_mem
-    (fun g _ ↦ (measurable_semidiscretePotential y g).aestronglyMeasurable)
-    (integrable_semidiscretePotential hk h2 y g₀) hF'meas
+    (fun g _ ↦ (measurable_semidiscrete_potential y g).aestronglyMeasurable)
+    (integrable_semidiscrete_potential hk h2 y g₀) hF'meas
     (ae_of_all _ fun x g _ ↦ by
-      rw [one_mul, Real.norm_eq_abs]; exact abs_semidiscretePotential_sub_le hk y g g₀ x)
+      rw [one_mul, Real.norm_eq_abs]; exact abs_semidiscrete_potential_sub_le hk y g g₀ x)
     (integrable_const _) ?_
   · rw [← hF'int]; exact key.2
-  filter_upwards [ae_forall_ne_of_absolutelyContinuous hP hy g₀] with x hx
-  obtain ⟨j, hj⟩ := exists_mem_laguerreCell hk y g₀ x
+  filter_upwards [ae_forall_ne_of_absolutely_continuous hP hy g₀] with x hx
+  obtain ⟨j, hj⟩ := exists_mem_laguerre_cell hk y g₀ x
   have hF'x : F' x = -(ContinuousLinearMap.proj j : (Fin k → ℝ) →L[ℝ] ℝ) := by
-    simp only [hF', indicator_laguerreCell_eq hj hx, ite_smul, one_smul, zero_smul,
+    simp only [hF', indicator_laguerre_cell_eq hj hx, ite_smul, one_smul, zero_smul,
       Finset.sum_ite_eq', Finset.mem_univ, ite_true]
   rw [hF'x]
-  exact hasFDerivAt_semidiscretePotential hk hj fun i hi ↦ hx i j hi
+  exact has_f_deriv_at_semidiscrete_potential hk hj fun i hi ↦ hx i j hi
 
 /-- The mass of a Laguerre cell depends continuously on the weights, for an absolutely continuous
 law and distinct sites. -/
-theorem continuous_measureReal_laguerreCell {P : Measure (EuclideanSpace ℝ (Fin d))}
+theorem continuous_measure_real_laguerre_cell {P : Measure (EuclideanSpace ℝ (Fin d))}
     [IsProbabilityMeasure P] (hP : P ≪ volume) {y : Fin k → EuclideanSpace ℝ (Fin d)}
     (hy : Function.Injective y) (j : Fin k) :
     Continuous fun g ↦ P.real (laguerreCell y g j) := by
   have heq : (fun g ↦ P.real (laguerreCell y g j)) =
       fun g ↦ ∫ x, (laguerreCell y g j).indicator (fun _ ↦ (1 : ℝ)) x ∂P := by
     funext g
-    rw [integral_indicator_const _ (measurableSet_laguerreCell y g j), smul_eq_mul, mul_one]
+    rw [integral_indicator_const _ (measurable_set_laguerre_cell y g j), smul_eq_mul, mul_one]
   rw [heq, continuous_iff_continuousAt]
   intro g₀
   refine continuousAt_of_dominated (bound := fun _ ↦ (1 : ℝ))
     (Eventually.of_forall fun g ↦ ((integrable_const (1 : ℝ)).indicator
-      (measurableSet_laguerreCell y g j)).aestronglyMeasurable)
+      (measurable_set_laguerre_cell y g j)).aestronglyMeasurable)
     (Eventually.of_forall fun g ↦ ae_of_all _ fun x ↦ ?_) (integrable_const _) ?_
   · rw [Real.norm_eq_abs]
     by_cases hx : x ∈ laguerreCell y g j <;> simp [hx]
-  filter_upwards [ae_forall_ne_of_absolutelyContinuous hP hy g₀] with x hx
+  filter_upwards [ae_forall_ne_of_absolutely_continuous hP hy g₀] with x hx
   by_cases hxj : x ∈ laguerreCell y g₀ j
   · refine (continuousAt_const (y := (1 : ℝ))).congr ?_
-    filter_upwards [eventually_mem_laguerreCell hxj fun i hi ↦ hx i j hi] with g hg
+    filter_upwards [eventually_mem_laguerre_cell hxj fun i hi ↦ hx i j hi] with g hg
     simp [hg]
   · refine (continuousAt_const (y := (0 : ℝ))).congr ?_
-    filter_upwards [eventually_notMem_laguerreCell hxj] with g hg
+    filter_upwards [eventually_not_mem_laguerre_cell hxj] with g hg
     simp [hg]
 
 /-- GAPS 108.56, the gradient formula: the dual functional has derivative
 `∑ (b_j - P(L_j(g))) e_j`. -/
-theorem hasFDerivAt_semidiscreteTransportDual (hk : 0 < k)
+theorem has_f_deriv_at_semidiscrete_transport_dual (hk : 0 < k)
     {P : Measure (EuclideanSpace ℝ (Fin d))} [IsProbabilityMeasure P] (hP : P ≪ volume)
     (h2 : MemLp id 2 P) {y : Fin k → EuclideanSpace ℝ (Fin d)} (hy : Function.Injective y)
     (b g : Fin k → ℝ) :
@@ -361,7 +362,7 @@ theorem hasFDerivAt_semidiscreteTransportDual (hk : 0 < k)
   set L : (Fin k → ℝ) →L[ℝ] ℝ :=
     ∑ j, b j • (ContinuousLinearMap.proj j : (Fin k → ℝ) →L[ℝ] ℝ)
   have hL : ∀ h, L h = ∑ j, b j * h j := fun h ↦ by simp [L]
-  have h := (hasFDerivAt_integral_semidiscretePotential hk hP h2 hy g).add L.hasFDerivAt
+  have h := (has_f_deriv_at_integral_semidiscrete_potential hk hP h2 hy g).add L.hasFDerivAt
   have hfun : ((fun g ↦ ∫ x, semidiscretePotential y g x ∂P) + ⇑L) =
       semidiscreteTransportDual P y b := by
     funext g; rw [Pi.add_apply, hL]; rfl
@@ -381,18 +382,18 @@ theorem hasFDerivAt_semidiscreteTransportDual (hk : 0 < k)
   exact h
 
 /-- GAPS 108.56: the dual functional is continuously differentiable. -/
-theorem contDiff_semidiscreteTransportDual (hk : 0 < k)
+theorem cont_diff_semidiscrete_transport_dual (hk : 0 < k)
     {P : Measure (EuclideanSpace ℝ (Fin d))} [IsProbabilityMeasure P] (hP : P ≪ volume)
     (h2 : MemLp id 2 P) {y : Fin k → EuclideanSpace ℝ (Fin d)} (hy : Function.Injective y)
     (b : Fin k → ℝ) : ContDiff ℝ 1 (semidiscreteTransportDual P y b) := by
   refine contDiff_one_iff_hasFDerivAt.mpr ⟨_, ?_,
-    hasFDerivAt_semidiscreteTransportDual hk hP h2 hy b⟩
+    has_f_deriv_at_semidiscrete_transport_dual hk hP h2 hy b⟩
   refine continuous_finsetSum _ fun j _ ↦ ?_
-  exact (continuous_const.sub (continuous_measureReal_laguerreCell hP hy j)).smul
+  exact (continuous_const.sub (continuous_measure_real_laguerre_cell hP hy j)).smul
     continuous_const
 
 /-- GAPS 108.56: the dual functional is concave. -/
-theorem concaveOn_semidiscreteTransportDual (hk : 0 < k)
+theorem concave_on_semidiscrete_transport_dual (hk : 0 < k)
     {P : Measure (EuclideanSpace ℝ (Fin d))} [IsProbabilityMeasure P] (h2 : MemLp id 2 P)
     (y : Fin k → EuclideanSpace ℝ (Fin d)) (b : Fin k → ℝ) :
     ConcaveOn ℝ univ (semidiscreteTransportDual P y b) := by
@@ -402,8 +403,8 @@ theorem concaveOn_semidiscreteTransportDual (hk : 0 < k)
       semidiscretePotential y (a • g + c • h) x := fun x ↦ by
     refine le_csInf (range_nonempty _) ?_
     rintro _ ⟨j, rfl⟩
-    have h1 := semidiscretePotential_le y g x j
-    have h2 := semidiscretePotential_le y h x j
+    have h1 := semidiscrete_potential_le y g x j
+    have h2 := semidiscrete_potential_le y h x j
     have e : ‖x - y j‖ ^ 2 - (a • g + c • h) j =
         a * (‖x - y j‖ ^ 2 - g j) + c * (‖x - y j‖ ^ 2 - h j) := by
       simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
@@ -411,8 +412,8 @@ theorem concaveOn_semidiscreteTransportDual (hk : 0 < k)
     show _ ≤ ‖x - y j‖ ^ 2 - (a • g + c • h) j
     rw [e]
     exact add_le_add (mul_le_mul_of_nonneg_left h1 ha) (mul_le_mul_of_nonneg_left h2 hc)
-  have hint := fun g ↦ integrable_semidiscretePotential hk h2 y g
-  simp only [semidiscreteTransportDual_eq, smul_eq_mul]
+  have hint := fun g ↦ integrable_semidiscrete_potential hk h2 y g
+  simp only [semidiscrete_transport_dual_eq, smul_eq_mul]
   have hI : a * (∫ x, semidiscretePotential y g x ∂P) + c * ∫ x, semidiscretePotential y h x ∂P
       ≤ ∫ x, semidiscretePotential y (a • g + c • h) x ∂P := by
     rw [← integral_const_mul, ← integral_const_mul, ← integral_add ((hint g).const_mul a)
@@ -426,7 +427,7 @@ theorem concaveOn_semidiscreteTransportDual (hk : 0 < k)
   linarith
 
 /-- A concave function with vanishing derivative at `g` attains its global maximum at `g`. -/
-private theorem ConcaveOn.le_of_hasFDerivAt_eq_zero {F : Type*} [NormedAddCommGroup F]
+private theorem ConcaveOn.le_of_has_f_deriv_at_eq_zero {F : Type*} [NormedAddCommGroup F]
     [NormedSpace ℝ F] {f : F → ℝ} (hf : ConcaveOn ℝ univ f) {g : F}
     (hg : HasFDerivAt f (0 : F →L[ℝ] ℝ) g) (h : F) : f h ≤ f g := by
   set ℓ : ℝ → ℝ := fun t ↦ f (g + t • (h - g))
@@ -453,43 +454,43 @@ private theorem ConcaveOn.le_of_hasFDerivAt_eq_zero {F : Type*} [NormedAddCommGr
   linarith
 
 /-- Adding a constant to all weights lowers the potential by that constant. -/
-theorem semidiscretePotential_add_const (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
+theorem semidiscrete_potential_add_const (hk : 0 < k) (y : Fin k → EuclideanSpace ℝ (Fin d))
     (g : Fin k → ℝ) (c : ℝ) (x : EuclideanSpace ℝ (Fin d)) :
     semidiscretePotential y (fun j ↦ g j + c) x = semidiscretePotential y g x - c := by
-  obtain ⟨j, hj⟩ := exists_semidiscretePotential_eq hk y g x
-  obtain ⟨i, hi⟩ := exists_semidiscretePotential_eq hk y (fun j ↦ g j + c) x
+  obtain ⟨j, hj⟩ := exists_semidiscrete_potential_eq hk y g x
+  obtain ⟨i, hi⟩ := exists_semidiscrete_potential_eq hk y (fun j ↦ g j + c) x
   refine le_antisymm ?_ ?_
-  · have := semidiscretePotential_le y (fun j ↦ g j + c) x j
+  · have := semidiscrete_potential_le y (fun j ↦ g j + c) x j
     rw [hj]; linarith
-  · have := semidiscretePotential_le y g x i
+  · have := semidiscrete_potential_le y g x i
     rw [hi]; linarith
 
 /-- For target masses summing to one, the dual functional is invariant under adding a constant to
 the weights. -/
-theorem semidiscreteTransportDual_add_const (hk : 0 < k)
+theorem semidiscrete_transport_dual_add_const (hk : 0 < k)
     {P : Measure (EuclideanSpace ℝ (Fin d))} [IsProbabilityMeasure P] (h2 : MemLp id 2 P)
     (y : Fin k → EuclideanSpace ℝ (Fin d)) {b : Fin k → ℝ} (hb1 : ∑ j, b j = 1)
     (g : Fin k → ℝ) (c : ℝ) :
     semidiscreteTransportDual P y b (fun j ↦ g j + c) = semidiscreteTransportDual P y b g := by
-  simp only [semidiscreteTransportDual_eq, semidiscretePotential_add_const hk]
-  rw [integral_sub (integrable_semidiscretePotential hk h2 y g) (integrable_const c),
+  simp only [semidiscrete_transport_dual_eq, semidiscrete_potential_add_const hk]
+  rw [integral_sub (integrable_semidiscrete_potential hk h2 y g) (integrable_const c),
     integral_const, probReal_univ, one_smul]
   simp only [mul_add, Finset.sum_add_distrib, ← Finset.sum_mul, hb1, one_mul]
   ring
 
 /-- An upper bound for the dual functional: with `C = ∑ⱼ ∫ ‖x - y_j‖² dP`,
 `E(g) ≤ C - b_i (max g - g_i)` for every site `i`. -/
-theorem semidiscreteTransportDual_le (hk : 0 < k)
+theorem semidiscrete_transport_dual_le (hk : 0 < k)
     {P : Measure (EuclideanSpace ℝ (Fin d))} [IsProbabilityMeasure P] (h2 : MemLp id 2 P)
     (y : Fin k → EuclideanSpace ℝ (Fin d)) {b : Fin k → ℝ} (hb : ∀ j, 0 < b j)
     (hb1 : ∑ j, b j = 1) (g : Fin k → ℝ) (i j : Fin k) (hmax : ∀ l, g l ≤ g j) :
     semidiscreteTransportDual P y b g ≤
       (∑ l, ∫ x, ‖x - y l‖ ^ 2 ∂P) - b i * (g j - g i) := by
-  have hint := integrable_semidiscretePotential hk h2 y g
+  have hint := integrable_semidiscrete_potential hk h2 y g
   have h1 : ∫ x, semidiscretePotential y g x ∂P ≤ (∫ x, ‖x - y j‖ ^ 2 ∂P) - g j := by
     have hI : Integrable (fun x ↦ ‖x - y j‖ ^ 2 - g j) P :=
       (integrable_norm_sub_sq h2 (y j)).sub (integrable_const (g j))
-    have := integral_mono hint hI (fun x ↦ semidiscretePotential_le y g x j)
+    have := integral_mono hint hI (fun x ↦ semidiscrete_potential_le y g x j)
     rwa [integral_sub (integrable_norm_sub_sq h2 (y j)) (integrable_const _), integral_const,
       probReal_univ, one_smul] at this
   have h3 : ∑ l, b l * g l - g j = ∑ l, b l * (g l - g j) := by
@@ -503,18 +504,18 @@ theorem semidiscreteTransportDual_le (hk : 0 < k)
   have h5 : ∫ x, ‖x - y j‖ ^ 2 ∂P ≤ ∑ l, ∫ x, ‖x - y l‖ ^ 2 ∂P :=
     Finset.single_le_sum (f := fun l ↦ ∫ x, ‖x - y l‖ ^ 2 ∂P)
       (fun l _ ↦ integral_nonneg fun _ ↦ sq_nonneg _) (Finset.mem_univ j)
-  rw [semidiscreteTransportDual_eq]
+  rw [semidiscrete_transport_dual_eq]
   linarith
 
 /-- GAPS 108.56: the maximizers of the dual functional are exactly the weights whose Laguerre cells
 have the target masses. -/
-theorem semidiscreteTransportDual_isMax_iff (hk : 0 < k)
+theorem semidiscrete_transport_dual_is_max_iff (hk : 0 < k)
     {P : Measure (EuclideanSpace ℝ (Fin d))} [IsProbabilityMeasure P] (hP : P ≪ volume)
     (h2 : MemLp id 2 P) {y : Fin k → EuclideanSpace ℝ (Fin d)} (hy : Function.Injective y)
     (b g : Fin k → ℝ) :
     (∀ h, semidiscreteTransportDual P y b h ≤ semidiscreteTransportDual P y b g) ↔
       ∀ j, P.real (laguerreCell y g j) = b j := by
-  have hD := hasFDerivAt_semidiscreteTransportDual hk hP h2 hy b g
+  have hD := has_f_deriv_at_semidiscrete_transport_dual hk hP h2 hy b g
   constructor
   · intro hmax j
     have hloc : IsLocalMax (semidiscreteTransportDual P y b) g :=
@@ -531,10 +532,10 @@ theorem semidiscreteTransportDual_isMax_iff (hk : 0 < k)
         (ContinuousLinearMap.proj j : (Fin k → ℝ) →L[ℝ] ℝ) = 0 := by
       simp [hmass]
     rw [h0] at hD
-    exact ConcaveOn.le_of_hasFDerivAt_eq_zero (concaveOn_semidiscreteTransportDual hk h2 y b) hD h
+    exact ConcaveOn.le_of_has_f_deriv_at_eq_zero (concave_on_semidiscrete_transport_dual hk h2 y b) hD h
 
 /-- GAPS 108.56: the dual functional attains its maximum. -/
-theorem exists_isMax_semidiscreteTransportDual (hk : 0 < k)
+theorem exists_is_max_semidiscrete_transport_dual (hk : 0 < k)
     {P : Measure (EuclideanSpace ℝ (Fin d))} [IsProbabilityMeasure P] (hP : P ≪ volume)
     (h2 : MemLp id 2 P) {y : Fin k → EuclideanSpace ℝ (Fin d)} (hy : Function.Injective y)
     {b : Fin k → ℝ} (hb : ∀ j, 0 < b j) (hb1 : ∑ j, b j = 1) :
@@ -549,28 +550,28 @@ theorem exists_isMax_semidiscreteTransportDual (hk : 0 < k)
   have hC : 0 ≤ C := Finset.sum_nonneg fun l _ ↦ integral_nonneg fun _ ↦ sq_nonneg _
   set R := C / β
   have hE0 : 0 ≤ E 0 := by
-    simp only [E, semidiscreteTransportDual_eq, Pi.zero_apply, mul_zero, Finset.sum_const_zero,
+    simp only [E, semidiscrete_transport_dual_eq, Pi.zero_apply, mul_zero, Finset.sum_const_zero,
       add_zero]
     refine integral_nonneg fun x ↦ ?_
-    have := neg_norm_le_semidiscretePotential hk y 0 x
+    have := neg_norm_le_semidiscrete_potential hk y 0 x
     simpa using this
   set K := {g : Fin k → ℝ | g j₀ = 0} ∩ Metric.closedBall 0 R
   have hK : IsCompact K :=
     (isCompact_closedBall 0 R).inter_left (isClosed_eq (continuous_apply j₀) continuous_const)
   have h0K : (0 : Fin k → ℝ) ∈ K :=
     ⟨rfl, Metric.mem_closedBall_self (div_nonneg hC hβ.le)⟩
-  have hEc : Continuous E := (contDiff_semidiscreteTransportDual hk hP h2 hy b).continuous
+  have hEc : Continuous E := (cont_diff_semidiscrete_transport_dual hk hP h2 hy b).continuous
   obtain ⟨g, hgK, hgmax⟩ := hK.exists_isMaxOn ⟨0, h0K⟩ hEc.continuousOn
   refine ⟨g, fun h ↦ ?_⟩
   set h' : Fin k → ℝ := fun j ↦ h j + -h j₀
-  have hEh : E h = E h' := (semidiscreteTransportDual_add_const hk h2 y hb1 h _).symm
+  have hEh : E h = E h' := (semidiscrete_transport_dual_add_const hk h2 y hb1 h _).symm
   rw [hEh]
   by_cases hR : ‖h'‖ ≤ R
   · exact hgmax ⟨by simp [h'], by simpa using hR⟩
   · push Not at hR
     obtain ⟨j, -, hj⟩ := Finset.exists_max_image Finset.univ h' Finset.univ_nonempty
     obtain ⟨i, -, hi⟩ := Finset.exists_min_image Finset.univ h' Finset.univ_nonempty
-    have hup := semidiscreteTransportDual_le hk h2 y hb hb1 h' i j fun l ↦ hj l (Finset.mem_univ l)
+    have hup := semidiscrete_transport_dual_le hk h2 y hb hb1 h' i j fun l ↦ hj l (Finset.mem_univ l)
     have hspread : ‖h'‖ ≤ h' j - h' i := by
       have h0 : h' j₀ = 0 := by simp [h']
       refine (pi_norm_le_iff_of_nonneg (by
@@ -590,7 +591,7 @@ theorem exists_isMax_semidiscreteTransportDual (hk : 0 < k)
 
 /-- At a point without ties lying in the Laguerre cell of `y_j`, a sum of indicators of the cells
 picks out the `j`-th value. -/
-theorem sum_indicator_laguerreCell_eq {M : Type*} [AddCommMonoid M]
+theorem sum_indicator_laguerre_cell_eq {M : Type*} [AddCommMonoid M]
     {y : Fin k → EuclideanSpace ℝ (Fin d)} {g : Fin k → ℝ} {x : EuclideanSpace ℝ (Fin d)}
     {j : Fin k} (hj : x ∈ laguerreCell y g j)
     (huniq : ∀ i l, i ≠ l → ‖x - y i‖ ^ 2 - g i ≠ ‖x - y l‖ ^ 2 - g l) (F : Fin k → M) :
@@ -633,39 +634,39 @@ def semidiscreteTransportMap (y : Fin k → EuclideanSpace ℝ (Fin d)) (g : Fin
   ∑ j, (laguerreCell y g j).indicator (fun _ ↦ y j) x
 
 /-- The semidiscrete transport map is measurable. -/
-theorem measurable_semidiscreteTransportMap (y : Fin k → EuclideanSpace ℝ (Fin d))
+theorem measurable_semidiscrete_transport_map (y : Fin k → EuclideanSpace ℝ (Fin d))
     (g : Fin k → ℝ) : Measurable (semidiscreteTransportMap y g) := by
   unfold semidiscreteTransportMap
   exact Finset.measurable_sum _ fun j _ ↦
-    measurable_const.indicator (measurableSet_laguerreCell y g j)
+    measurable_const.indicator (measurable_set_laguerre_cell y g j)
 
 /-- For an absolutely continuous law and distinct sites, almost every point lies in a Laguerre
 cell and has no ties. -/
-theorem ae_exists_mem_laguerreCell (hk : 0 < k) {P : Measure (EuclideanSpace ℝ (Fin d))}
+theorem ae_exists_mem_laguerre_cell (hk : 0 < k) {P : Measure (EuclideanSpace ℝ (Fin d))}
     (hP : P ≪ volume) {y : Fin k → EuclideanSpace ℝ (Fin d)} (hy : Function.Injective y)
     (g : Fin k → ℝ) :
     ∀ᵐ x ∂P, ∃ j, x ∈ laguerreCell y g j ∧
       ∀ i l, i ≠ l → ‖x - y i‖ ^ 2 - g i ≠ ‖x - y l‖ ^ 2 - g l := by
-  filter_upwards [ae_forall_ne_of_absolutelyContinuous hP hy g] with x hx
-  obtain ⟨j, hj⟩ := exists_mem_laguerreCell hk y g x
+  filter_upwards [ae_forall_ne_of_absolutely_continuous hP hy g] with x hx
+  obtain ⟨j, hj⟩ := exists_mem_laguerre_cell hk y g x
   exact ⟨j, hj, hx⟩
 
 /-- GAPS 108.56: when the Laguerre cells have the masses `b_j`, the semidiscrete transport map
 pushes `P` forward to the discrete law `∑ b_j δ_{y_j}`. -/
-theorem map_semidiscreteTransportMap (hk : 0 < k) {P : Measure (EuclideanSpace ℝ (Fin d))}
+theorem map_semidiscrete_transport_map (hk : 0 < k) {P : Measure (EuclideanSpace ℝ (Fin d))}
     [IsFiniteMeasure P] (hP : P ≪ volume) {y : Fin k → EuclideanSpace ℝ (Fin d)}
     (hy : Function.Injective y) {b g : Fin k → ℝ}
     (hmass : ∀ j, P.real (laguerreCell y g j) = b j) :
     P.map (semidiscreteTransportMap y g) = ∑ j, ENNReal.ofReal (b j) • Measure.dirac (y j) := by
-  have hT := measurable_semidiscreteTransportMap y g
+  have hT := measurable_semidiscrete_transport_map y g
   ext s hs
   rw [Measure.map_apply hT hs, sum_smul_dirac_apply, ← lintegral_indicator_one (hT hs)]
   have hae : (fun x ↦ (semidiscreteTransportMap y g ⁻¹' s).indicator 1 x) =ᵐ[P]
       fun x ↦ ∑ j, (laguerreCell y g j).indicator
         (fun _ ↦ s.indicator (1 : EuclideanSpace ℝ (Fin d) → ℝ≥0∞) (y j)) x := by
-    filter_upwards [ae_exists_mem_laguerreCell hk hP hy g] with x ⟨j, hj, huniq⟩
-    rw [sum_indicator_laguerreCell_eq hj huniq]
-    have hTx : semidiscreteTransportMap y g x = y j := sum_indicator_laguerreCell_eq hj huniq y
+    filter_upwards [ae_exists_mem_laguerre_cell hk hP hy g] with x ⟨j, hj, huniq⟩
+    rw [sum_indicator_laguerre_cell_eq hj huniq]
+    have hTx : semidiscreteTransportMap y g x = y j := sum_indicator_laguerre_cell_eq hj huniq y
     by_cases h : y j ∈ s
     · rw [Set.indicator_of_mem (show x ∈ semidiscreteTransportMap y g ⁻¹' s by
         rw [mem_preimage, hTx]; exact h), Set.indicator_of_mem h]
@@ -673,14 +674,14 @@ theorem map_semidiscreteTransportMap (hk : 0 < k) {P : Measure (EuclideanSpace �
     · rw [Set.indicator_of_notMem (show x ∉ semidiscreteTransportMap y g ⁻¹' s by
         rw [mem_preimage, hTx]; exact h), Set.indicator_of_notMem h]
   rw [lintegral_congr_ae hae, lintegral_finsetSum _ fun j _ ↦
-    measurable_const.indicator (measurableSet_laguerreCell y g j)]
+    measurable_const.indicator (measurable_set_laguerre_cell y g j)]
   refine Finset.sum_congr rfl fun j _ ↦ ?_
-  rw [lintegral_indicator_const (measurableSet_laguerreCell y g j), ← hmass j,
+  rw [lintegral_indicator_const (measurable_set_laguerre_cell y g j), ← hmass j,
     Measure.real, ENNReal.ofReal_toReal (measure_ne_top _ _), mul_comm]
 
 /-- GAPS 108.56: when the Laguerre cells have the masses `b_j`, the quadratic cost of the
 semidiscrete transport map is the value of the dual functional. -/
-theorem integral_norm_sub_semidiscreteTransportMap_sq (hk : 0 < k)
+theorem integral_norm_sub_semidiscrete_transport_map_sq (hk : 0 < k)
     {P : Measure (EuclideanSpace ℝ (Fin d))} [IsFiniteMeasure P] (hP : P ≪ volume)
     (h2 : MemLp id 2 P) {y : Fin k → EuclideanSpace ℝ (Fin d)} (hy : Function.Injective y)
     {b g : Fin k → ℝ} (hmass : ∀ j, P.real (laguerreCell y g j) = b j) :
@@ -689,26 +690,26 @@ theorem integral_norm_sub_semidiscreteTransportMap_sq (hk : 0 < k)
   have hae : (fun x ↦ ‖x - semidiscreteTransportMap y g x‖ ^ 2) =ᵐ[P]
       fun x ↦ semidiscretePotential y g x +
         ∑ j, (laguerreCell y g j).indicator (fun _ ↦ g j) x := by
-    filter_upwards [ae_exists_mem_laguerreCell hk hP hy g] with x ⟨j, hj, huniq⟩
-    rw [sum_indicator_laguerreCell_eq hj huniq, (mem_laguerreCell_iff hk y g x j).mp hj,
-      show semidiscreteTransportMap y g x = y j from sum_indicator_laguerreCell_eq hj huniq y]
+    filter_upwards [ae_exists_mem_laguerre_cell hk hP hy g] with x ⟨j, hj, huniq⟩
+    rw [sum_indicator_laguerre_cell_eq hj huniq, (mem_laguerre_cell_iff hk y g x j).mp hj,
+      show semidiscreteTransportMap y g x = y j from sum_indicator_laguerre_cell_eq hj huniq y]
     ring
   have hI : ∀ j, Integrable ((laguerreCell y g j).indicator fun _ ↦ g j) P := fun j ↦
-    (integrable_const (g j)).indicator (measurableSet_laguerreCell y g j)
+    (integrable_const (g j)).indicator (measurable_set_laguerre_cell y g j)
   have hInt : Integrable (fun x ↦ semidiscretePotential y g x +
       ∑ j, (laguerreCell y g j).indicator (fun _ ↦ g j) x) P :=
-    (integrable_semidiscretePotential hk h2 y g).add (integrable_finsetSum _ fun j _ ↦ hI j)
+    (integrable_semidiscrete_potential hk h2 y g).add (integrable_finsetSum _ fun j _ ↦ hI j)
   refine ⟨hInt.congr hae.symm, ?_⟩
-  rw [integral_congr_ae hae, integral_add (integrable_semidiscretePotential hk h2 y g)
+  rw [integral_congr_ae hae, integral_add (integrable_semidiscrete_potential hk h2 y g)
     (integrable_finsetSum _ fun j _ ↦ hI j), integral_finsetSum _ fun j _ ↦ hI j,
-    semidiscreteTransportDual_eq]
+    semidiscrete_transport_dual_eq]
   congr 1
   refine Finset.sum_congr rfl fun j _ ↦ ?_
-  rw [integral_indicator_const _ (measurableSet_laguerreCell y g j), hmass j, smul_eq_mul]
+  rw [integral_indicator_const _ (measurable_set_laguerre_cell y g j), hmass j, smul_eq_mul]
 
 /-- GAPS 108.56, weak duality: for every coupling `π` of `P` and `∑ b_j δ_{y_j}` with distinct
 sites, the dual functional is at most the quadratic cost of `π`. -/
-theorem ofReal_semidiscreteTransportDual_le_lintegral (hk : 0 < k)
+theorem of_real_semidiscrete_transport_dual_le_lintegral (hk : 0 < k)
     {P : Measure (EuclideanSpace ℝ (Fin d))} [IsProbabilityMeasure P] (h2 : MemLp id 2 P)
     {y : Fin k → EuclideanSpace ℝ (Fin d)} (hy : Function.Injective y) {b : Fin k → ℝ}
     (hb : ∀ j, 0 ≤ b j) (g : Fin k → ℝ)
@@ -728,7 +729,7 @@ theorem ofReal_semidiscreteTransportDual_le_lintegral (hk : 0 < k)
     rw [← hsnd] at this
     exact ae_of_ae_map measurable_snd.aemeasurable this
   have hφ : Integrable (fun z : _ × _ ↦ semidiscretePotential y g z.1) π := by
-    have := integrable_semidiscretePotential hk h2 y g
+    have := integrable_semidiscrete_potential hk h2 y g
     rw [← hfst] at this
     exact this.comp_measurable measurable_fst
   have hG : Integrable (fun z : _ × _ ↦ ∑ j, ‖z.1 - y j‖ ^ 2) π := by
@@ -757,15 +758,15 @@ theorem ofReal_semidiscreteTransportDual_le_lintegral (hk : 0 < k)
       · exact Set.indicator_of_notMem (show z ∉ Prod.snd ⁻¹' ({y i} : Set _) from
           fun h ↦ hij (hy ((show z.2 = y i from h).symm.trans hj.symm))) _
     rw [hsum, ← hj]
-    linarith [semidiscretePotential_le y g z.1 j]
+    linarith [semidiscrete_potential_le y g z.1 j]
   have hval : ∫ z, (semidiscretePotential y g z.1 +
       ∑ j, (Prod.snd ⁻¹' {y j}).indicator (fun _ ↦ g j) z) ∂π =
       semidiscreteTransportDual P y b g := by
     rw [integral_add hφ (integrable_finsetSum _ fun j _ ↦ hI j),
-      integral_finsetSum _ fun j _ ↦ hI j, semidiscreteTransportDual_eq]
+      integral_finsetSum _ fun j _ ↦ hI j, semidiscrete_transport_dual_eq]
     congr 1
     · rw [← hfst, integral_map measurable_fst.aemeasurable
-        (measurable_semidiscretePotential y g).aestronglyMeasurable]
+        (measurable_semidiscrete_potential y g).aestronglyMeasurable]
     · refine Finset.sum_congr rfl fun j _ ↦ ?_
       rw [integral_indicator_const _ (hs j), smul_eq_mul, Measure.real,
         ← Measure.map_apply measurable_snd (measurableSet_singleton _), hsnd,
@@ -776,7 +777,7 @@ theorem ofReal_semidiscreteTransportDual_le_lintegral (hk : 0 < k)
 
 /-- GAPS 108.56, the value: when the Laguerre cells have the masses `b_j` (equivalently, at a
 maximizer), the dual functional equals the squared Wasserstein distance `W₂(P, ∑ b_j δ_{y_j})²`. -/
-theorem semidiscreteTransportDual_eq_wassersteinEDist_sq (hk : 0 < k)
+theorem semidiscrete_transport_dual_eq_wasserstein_e_dist_sq (hk : 0 < k)
     {P : Measure (EuclideanSpace ℝ (Fin d))} [IsProbabilityMeasure P] (hP : P ≪ volume)
     (h2 : MemLp id 2 P) {y : Fin k → EuclideanSpace ℝ (Fin d)} (hy : Function.Injective y)
     {b g : Fin k → ℝ} (hmass : ∀ j, P.real (laguerreCell y g j) = b j) :
@@ -784,13 +785,13 @@ theorem semidiscreteTransportDual_eq_wassersteinEDist_sq (hk : 0 < k)
       (TauCeti.wassersteinEDist 2 P
         (∑ j, ENNReal.ofReal (b j) • Measure.dirac (y j))).toReal ^ 2 := by
   have hb : ∀ j, 0 ≤ b j := fun j ↦ hmass j ▸ measureReal_nonneg
-  obtain ⟨hInt, hval⟩ := integral_norm_sub_semidiscreteTransportMap_sq hk hP h2 hy hmass
+  obtain ⟨hInt, hval⟩ := integral_norm_sub_semidiscrete_transport_map_sq hk hP h2 hy hmass
   have hE : 0 ≤ semidiscreteTransportDual P y b g :=
     hval ▸ integral_nonneg fun _ ↦ sq_nonneg _
   have hlaw : ProbabilityTheory.HasLaw (semidiscreteTransportMap y g)
       (∑ j, ENNReal.ofReal (b j) • Measure.dirac (y j)) P :=
-    ⟨(measurable_semidiscreteTransportMap y g).aemeasurable,
-      map_semidiscreteTransportMap hk hP hy hmass⟩
+    ⟨(measurable_semidiscrete_transport_map y g).aemeasurable,
+      map_semidiscrete_transport_map hk hP hy hmass⟩
   have key : TauCeti.wassersteinEDist 2 P (∑ j, ENNReal.ofReal (b j) • Measure.dirac (y j)) ^
       (2 : ℝ) = ENNReal.ofReal (semidiscreteTransportDual P y b g) := by
     have h2r : (2 : ℝ) = (2 : ℝ≥0∞).toReal := by simp
@@ -799,7 +800,7 @@ theorem semidiscreteTransportDual_eq_wassersteinEDist_sq (hk : 0 < k)
     simp only [ENNReal.rpow_two]
     refine le_antisymm ((TauCeti.transportCost_le_lintegral_of_hasLaw hlaw _).trans_eq ?_)
       (TauCeti.le_transportCost fun π hπ ↦
-        ofReal_semidiscreteTransportDual_le_lintegral hk h2 hy hb g hπ)
+        of_real_semidiscrete_transport_dual_le_lintegral hk h2 hy hb g hπ)
     rw [← hval, ofReal_integral_eq_lintegral_ofReal hInt (ae_of_all _ fun _ ↦ sq_nonneg _)]
     refine lintegral_congr fun x ↦ ?_
     rw [edist_dist, dist_eq_norm, ENNReal.ofReal_pow (norm_nonneg _)]

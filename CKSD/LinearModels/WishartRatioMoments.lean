@@ -1,4 +1,5 @@
 module
+
 public import CKSD.LinearModels.WishartTilt
 public import TauCeti.Analysis.Matrix.PosSemidef.Determinant
 public import Mathlib.MeasureTheory.Integral.Prod
@@ -22,20 +23,20 @@ open MeasureTheory ProbabilityTheory Set Filter
 open scoped ENNReal NNReal Topology BigOperators MatrixOrder
 namespace CKSD
 /-- A natural determinant tilt of a nonsingular Gaussian-Gram Wishart law. -/
-theorem withDensity_det_pow_wishartGramMeasure {p e : ℕ}
+theorem with_density_det_pow_wishart_gram_measure {p e : ℕ}
     {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) (he : p ≤ e) (k : ℕ) :
     (TauCeti.Probability.wishartGramMeasure e S).withDensity
       (fun A ↦ ENNReal.ofReal ((A : Matrix (Fin p) (Fin p) ℝ).det ^ k)) =
       ENNReal.ofReal (wishartNormalizer ((e:ℝ)+2*k) S / wishartNormalizer e S) •
         TauCeti.Probability.wishartGramMeasure (e+2*k) S := by
   rw [TauCeti.Probability.wishartGramMeasure_eq_nonsingularWishartMeasure hS he,
-    withDensity_det_pow_nonsingularWishartMeasure hS ((sub_one_lt _).trans_le (Nat.cast_le.2 he)),
+    with_density_det_pow_nonsingular_wishart_measure hS ((sub_one_lt _).trans_le (Nat.cast_le.2 he)),
     TauCeti.Probability.wishartGramMeasure_eq_nonsingularWishartMeasure hS (by omega : p ≤ e+2*k)]
   push_cast
   rfl
 
 /-- Determinant-ratio moments reduce to one shifted Wishart determinant moment. -/
-theorem integral_det_ratio_pow_wishartGram_prod {p e : ℕ}
+theorem integral_det_ratio_pow_wishart_gram_prod {p e : ℕ}
     (h : ℕ) {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) (he : p ≤ e) (k : ℕ) :
     (∫ z, ((z.1 : Matrix (Fin p) (Fin p) ℝ).det /
       ((z.1 + z.2 : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) : Matrix (Fin p) (Fin p) ℝ).det) ^ k
@@ -56,7 +57,7 @@ theorem integral_det_ratio_pow_wishartGram_prod {p e : ℕ}
   have hweight : (μ.prod ν).withDensity (fun z ↦ f z.1) = ENNReal.ofReal C • (μ'.prod ν) := by
     rw [← prod_withDensity_left hf]
     change ((TauCeti.Probability.wishartGramMeasure e S).withDensity f).prod ν = _
-    rw [withDensity_det_pow_wishartGramMeasure hS he k, Measure.prod_smul_left]
+    rw [with_density_det_pow_wishart_gram_measure hS he k, Measure.prod_smul_left]
   have hpos : ∀ᵐ z : E × E ∂μ.prod ν, (z.1 : Matrix (Fin p) (Fin p) ℝ).PosDef := by
     apply (Measure.ae_prod_iff_ae_ae
       (TauCeti.measurableSet_setOfPred_posDef.preimage (measurable_subtype_coe.comp measurable_fst))).2
@@ -76,7 +77,7 @@ theorem integral_det_ratio_pow_wishartGram_prod {p e : ℕ}
   have heR : (p:ℝ) ≤ e := Nat.cast_le.2 he
   have hen : (p:ℝ)-1 < e := by linarith
   have henk : (p:ℝ)-1 < (e:ℝ)+2*k := by linarith [(Nat.cast_nonneg k : (0:ℝ) ≤ k)]
-  have hC : 0 ≤ C := (div_pos (wishartNormalizer_pos hS henk) (wishartNormalizer_pos hS hen)).le
+  have hC : 0 ≤ C := (div_pos (wishart_normalizer_pos hS henk) (wishart_normalizer_pos hS hen)).le
   rw [← hweighted, hweight, integral_smul_measure, ENNReal.toReal_ofReal hC, smul_eq_mul]
   congr 1
   have hsum : (μ'.prod ν).map (fun z : E × E ↦ z.1+z.2) =
@@ -110,7 +111,7 @@ theorem wishart_normalizer_ratio_mul_negative_moment {p : ℕ}
     (Real.rpow_pos_of_pos hS.det_pos (n/2)).ne', pow_ne_zero k hS.det_pos.ne', hG₀.ne', hG₁.ne']
 
 /-- The natural moments of a Wishart determinant ratio are a quotient of multivariate Gamma values. -/
-theorem integral_det_ratio_pow_wishartGram_prod_eq_gamma {p e h : ℕ}
+theorem integral_det_ratio_pow_wishart_gram_prod_eq_gamma {p e h : ℕ}
     {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) (he : p ≤ e) (k : ℕ) :
     (∫ z, ((z.1 : Matrix (Fin p) (Fin p) ℝ).det /
       ((z.1 + z.2 : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) : Matrix (Fin p) (Fin p) ℝ).det) ^ k
@@ -126,7 +127,7 @@ theorem integral_det_ratio_pow_wishartGram_prod_eq_gamma {p e h : ℕ}
   have hq : -((((e+2*k+h:ℕ):ℝ)-(p:ℝ)+1)/2) < -(k:ℝ) := by
     push_cast
     linarith [(Nat.cast_nonneg h : (0:ℝ)≤h)]
-  rw [integral_det_ratio_pow_wishartGram_prod h hS he,
+  rw [integral_det_ratio_pow_wishart_gram_prod h hS he,
     TauCeti.Probability.wishartGramMeasure_eq_nonsingularWishartMeasure hS (by omega : p ≤ e+2*k+h),
     TauCeti.Probability.integral_rpow_det_nonsingularWishartMeasure hS hsum hq]
   simp only [Nat.cast_add, Nat.cast_mul, Nat.cast_ofNat]

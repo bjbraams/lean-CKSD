@@ -3,6 +3,7 @@ module
 public import CKSD.Bayes.ParticleFilter
 public import CKSD.Asymptotics.Lindeberg.Basic
 
+
 /-!
 # Fluctuations of the bootstrap particle filter
 
@@ -15,7 +16,7 @@ in law to a centred normal law.
 
 Given the past, the next generation consists of independent draws from the prediction law, so the
 conditional characteristic function of a local error is the `N`-th power of a characteristic
-function. Lindeberg's estimate `CKSD.norm_prod_charFun_sub_exp_le` compares it with a Gaussian
+function. Lindeberg's estimate `CKSD.norm_prod_char_fun_sub_exp_le` compares it with a Gaussian
 factor, and the mean-square bounds of `CKSD.exists_integral_sq_particle_average_sub_le` control
 the random variances. The characteristic-function recursion and the Lévy continuity argument are
 in `CKSD.Bayes.ParticleCentralLimit`.
@@ -29,9 +30,9 @@ in `CKSD.Bayes.ParticleCentralLimit`.
 ## Main results
 
 * `CKSD.integral_bootstrap_succ`: one conditional sampling step for bounded complex functions.
-* `CKSD.tendsto_integral_abs_particleLikelihood_sub`: mean-absolute consistency of the particle
+* `CKSD.tendsto_integral_abs_particle_likelihood_sub`: mean-absolute consistency of the particle
   likelihood estimates.
-* `CKSD.tendsto_integral_norm_gaussianFactor_sub`: the random Gaussian factors converge in mean
+* `CKSD.tendsto_integral_norm_gaussian_factor_sub`: the random Gaussian factors converge in mean
   to the deterministic one.
 -/
 
@@ -122,7 +123,7 @@ theorem norm_integral_cexp_pow_sub_exp_le (ν : Measure X) [IsProbabilityMeasure
     simp [c]
   have := nonempty_of_isProbabilityMeasure ν
   have hB0 : 0 ≤ 2 * B := (abs_nonneg _).trans (hY2 (Classical.arbitrary X))
-  have hmain := norm_prod_charFun_sub_exp_le (μ := ν) (Finset.univ : Finset (Fin N))
+  have hmain := norm_prod_char_fun_sub_exp_le (μ := ν) (Finset.univ : Finset (Fin N))
     (fun _ ↦ Y) (fun _ _ ↦ hmem) (fun _ _ ↦ h0) hB0 u
   have hind : ∫ x, (if 2 * B < |Y x| then Y x ^ 2 else 0) ∂ν = 0 := by
     refine integral_eq_zero_of_ae (ae_of_all _ fun x ↦ ?_)
@@ -156,16 +157,16 @@ def localVariance (M : FeynmanKacModel X) (φ : ℕ → X → ℝ) (p : ℕ) : �
 
 /-- The prediction integral of generation `p + 1` is an integral against the bootstrap
 prediction law from generation `p`. -/
-theorem pathPredMean_succ (M : FeynmanKacModel X) {N : ℕ} (x : ℕ → Fin N → X) (p : ℕ)
+theorem path_pred_mean_succ (M : FeynmanKacModel X) {N : ℕ} (x : ℕ → Fin N → X) (p : ℕ)
     (g : X → ℝ) : M.pathPredMean x (p + 1) g = ∫ y, g y ∂M.particlePredictionLaw p (x p) := rfl
 
 /-- The particle likelihood up to generation `p` only depends on generations before `p`. -/
-theorem particleLikelihood_congr (M : FeynmanKacModel X) {N : ℕ} {x x' : ℕ → Fin N → X}
+theorem particle_likelihood_congr (M : FeynmanKacModel X) {N : ℕ} {x x' : ℕ → Fin N → X}
     {p : ℕ} (h : ∀ q < p, x q = x' q) : M.particleLikelihood x p = M.particleLikelihood x' p :=
   Finset.prod_congr rfl fun q hq ↦ by rw [h q (Finset.mem_range.1 hq)]
 
 /-- The prediction integral of generation `p` only depends on generations before `p`. -/
-theorem pathPredMean_congr (M : FeynmanKacModel X) {N : ℕ} {x x' : ℕ → Fin N → X}
+theorem path_pred_mean_congr (M : FeynmanKacModel X) {N : ℕ} {x x' : ℕ → Fin N → X}
     {p : ℕ} (h : ∀ q < p, x q = x' q) (g : X → ℝ) :
     M.pathPredMean x p g = M.pathPredMean x' p g := by
   cases p with
@@ -173,11 +174,11 @@ theorem pathPredMean_congr (M : FeynmanKacModel X) {N : ℕ} {x x' : ℕ → Fin
   | succ p => simp only [pathPredMean, h p (Nat.lt_succ_self p)]
 
 /-- The local error of generation `p` only depends on generations up to `p`. -/
-theorem localError_congr (M : FeynmanKacModel X) {N : ℕ} (φ : ℕ → X → ℝ)
+theorem local_error_congr (M : FeynmanKacModel X) {N : ℕ} (φ : ℕ → X → ℝ)
     {x x' : ℕ → Fin N → X} {p : ℕ} (h : ∀ q ≤ p, x q = x' q) :
     M.localError φ x p = M.localError φ x' p := by
-  simp only [localError, M.particleLikelihood_congr (fun q hq ↦ h q hq.le),
-    M.pathPredMean_congr (fun q hq ↦ h q hq.le), h p le_rfl]
+  simp only [localError, M.particle_likelihood_congr (fun q hq ↦ h q hq.le),
+    M.path_pred_mean_congr (fun q hq ↦ h q hq.le), h p le_rfl]
 
 /-- Measurability of a transition integral of a measurable function. -/
 theorem measurable_integral_transition (M : FeynmanKacModel X) (p : ℕ) {g : X → ℝ}
@@ -186,17 +187,17 @@ theorem measurable_integral_transition (M : FeynmanKacModel X) (p : ℕ) {g : X 
 
 /-- The prediction integral of a bounded measurable function is a measurable function of the
 current generation. -/
-theorem measurable_integral_particlePredictionLaw (M : FeynmanKacModel X) {N : ℕ} (p : ℕ)
+theorem measurable_integral_particle_prediction_law (M : FeynmanKacModel X) {N : ℕ} (p : ℕ)
     {g : X → ℝ} (hg : Measurable g) {C : ℝ} (hC : ∀ y, |g y| ≤ C) :
     Measurable fun x : Fin N → X ↦ ∫ y, g y ∂M.particlePredictionLaw p x := by
-  simp_rw [M.integral_particlePredictionLaw p _ hg hC]
+  simp_rw [M.integral_particle_prediction_law p _ hg hC]
   exact (Finset.measurable_sum _ fun i _ ↦
     ((M.measurable_potential p).comp (measurable_pi_apply i)).mul
       ((M.measurable_integral_transition p hg).comp (measurable_pi_apply i))).div
     (Finset.measurable_sum _ fun i _ ↦ (M.measurable_potential p).comp (measurable_pi_apply i))
 
 /-- The particle likelihood is a measurable function of the path. -/
-theorem measurable_particleLikelihood (M : FeynmanKacModel X) {N : ℕ} (p : ℕ) :
+theorem measurable_particle_likelihood (M : FeynmanKacModel X) {N : ℕ} (p : ℕ) :
     Measurable fun x : ℕ → Fin N → X ↦ M.particleLikelihood x p :=
   Finset.measurable_prod _ fun q _ ↦ (Finset.measurable_sum _ fun i _ ↦
     (M.measurable_potential q).comp ((measurable_pi_apply i).comp
@@ -204,21 +205,21 @@ theorem measurable_particleLikelihood (M : FeynmanKacModel X) {N : ℕ} (p : ℕ
 
 /-- The prediction integral of a bounded measurable function is a measurable function of the
 path. -/
-theorem measurable_pathPredMean (M : FeynmanKacModel X) {N : ℕ} (p : ℕ) {g : X → ℝ}
+theorem measurable_path_pred_mean (M : FeynmanKacModel X) {N : ℕ} (p : ℕ) {g : X → ℝ}
     (hg : Measurable g) {C : ℝ} (hC : ∀ y, |g y| ≤ C) :
     Measurable fun x : ℕ → Fin N → X ↦ M.pathPredMean x p g := by
   cases p with
   | zero => exact measurable_const
   | succ p =>
-    exact (M.measurable_integral_particlePredictionLaw p hg hC).comp (measurable_pi_apply p)
+    exact (M.measurable_integral_particle_prediction_law p hg hC).comp (measurable_pi_apply p)
 
 /-- The local error is a measurable function of the path. -/
-theorem measurable_localError (M : FeynmanKacModel X) {N : ℕ} {φ : ℕ → X → ℝ}
+theorem measurable_local_error (M : FeynmanKacModel X) {N : ℕ} {φ : ℕ → X → ℝ}
     (hφ : ∀ p, Measurable (φ p)) {B : ℝ} (hB : ∀ p x, |φ p x| ≤ B) (p : ℕ) :
     Measurable fun x : ℕ → Fin N → X ↦ M.localError φ x p :=
-  ((M.measurable_particleLikelihood p).mul (Finset.measurable_sum _ fun i _ ↦
+  ((M.measurable_particle_likelihood p).mul (Finset.measurable_sum _ fun i _ ↦
     ((hφ p).comp ((measurable_pi_apply i).comp (measurable_pi_apply p))).sub
-      (M.measurable_pathPredMean p (hφ p) (hB p)))).div_const _
+      (M.measurable_path_pred_mean p (hφ p) (hB p)))).div_const _
 
 end FeynmanKacModel
 
@@ -370,22 +371,22 @@ theorem tendsto_integral_abs_particle_average_sub [StandardBorelSpace X] [Nonemp
   ring
 
 /-- Total mass recursion `γₚ₊₁(1) = γₚ(1) ηₚ(Gₚ)` in real form. -/
-theorem FeynmanKacModel.unnormalizedLaw_real_univ_succ (M : FeynmanKacModel X) (p : ℕ) :
+theorem FeynmanKacModel.unnormalized_law_real_univ_succ (M : FeynmanKacModel X) (p : ℕ) :
     (M.unnormalizedLaw (p + 1)).real univ =
       (M.unnormalizedLaw p).real univ * ∫ x, M.potential p x ∂M.filterLaw p := by
   have := M.isMarkov_transition p
   obtain ⟨a, b, ha, hab⟩ := M.potential_bounds p
   have h1 : (M.unnormalizedLaw (p + 1)).real univ = ∫ x, M.potential p x ∂M.unnormalizedLaw p := by
-    have := M.integral_unnormalizedLaw_succ p (f := fun _ ↦ (1 : ℝ)) measurable_const
+    have := M.integral_unnormalized_law_succ p (f := fun _ ↦ (1 : ℝ)) measurable_const
       (C := 1) (fun _ ↦ by simp)
     simpa using this
   have hc : (M.unnormalizedLaw p).real univ ≠ 0 := by
     rw [measureReal_def, ENNReal.toReal_ne_zero]
-    exact ⟨M.unnormalizedLaw_univ_ne_zero p, measure_ne_top _ _⟩
-  rw [h1, M.integral_filterLaw, ← mul_assoc, mul_inv_cancel₀ hc, one_mul]
+    exact ⟨M.unnormalized_law_univ_ne_zero p, measure_ne_top _ _⟩
+  rw [h1, M.integral_filter_law, ← mul_assoc, mul_inv_cancel₀ hc, one_mul]
 
 /-- Mean-absolute consistency of the particle likelihood estimates, with a uniform bound. -/
-theorem tendsto_integral_abs_particleLikelihood_sub [StandardBorelSpace X] [Nonempty X]
+theorem tendsto_integral_abs_particle_likelihood_sub [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
     (hξ : ∀ N, IsBootstrapParticleSystem P M (N + 1) (ξ N)) (p : ℕ) :
@@ -413,9 +414,9 @@ theorem tendsto_integral_abs_particleLikelihood_sub [StandardBorelSpace X] [None
     · rw [hsucc, abs_mul]
       exact mul_le_mul (hK N ω) (abs_sum_div_le fun i ↦ hGb _) (abs_nonneg _)
         ((abs_nonneg _).trans (hK N ω))
-    · simp_rw [hsucc, M.unnormalizedLaw_real_univ_succ]
+    · simp_rw [hsucc, M.unnormalized_law_real_univ_succ]
       exact tendsto_integral_abs_mul_sub_mul
-        (fun N ↦ (M.measurable_particleLikelihood p).comp (hpath N))
+        (fun N ↦ (M.measurable_particle_likelihood p).comp (hpath N))
         (fun N ↦ (Finset.measurable_sum _ fun i _ ↦ (M.measurable_potential p).comp
           ((measurable_pi_apply i).comp ((hξ N).1 p))).div_const _)
         hK (fun N ω ↦ abs_sum_div_le fun i ↦ hGb _)
@@ -423,7 +424,7 @@ theorem tendsto_integral_abs_particleLikelihood_sub [StandardBorelSpace X] [None
         (tendsto_integral_abs_particle_average_sub P M ξ hξ p (M.measurable_potential p) hGb)
 
 /-- Mean-absolute consistency of the prediction integrals along the particle path. -/
-theorem tendsto_integral_abs_pathPredMean_sub [StandardBorelSpace X] [Nonempty X]
+theorem tendsto_integral_abs_path_pred_mean_sub [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
     (hξ : ∀ N, IsBootstrapParticleSystem P M (N + 1) (ξ N))
@@ -433,7 +434,7 @@ theorem tendsto_integral_abs_pathPredMean_sub [StandardBorelSpace X] [Nonempty X
   cases p with
   | zero =>
     have h0 : ∫ x, g x ∂M.filterLaw 0 = ∫ x, g x ∂(M.initial : Measure X) := by
-      rw [M.integral_filterLaw, FeynmanKacModel.unnormalizedLaw_zero]; simp
+      rw [M.integral_filter_law, FeynmanKacModel.unnormalized_law_zero]; simp
     simp [FeynmanKacModel.pathPredMean, h0]
   | succ p =>
     have := M.isMarkov_transition p
@@ -451,10 +452,10 @@ theorem tendsto_integral_abs_pathPredMean_sub [StandardBorelSpace X] [Nonempty X
         ((∑ i, h (ξ N p ω i)) / (N + 1)) / ((∑ i, M.potential p (ξ N p ω i)) / (N + 1)) := by
       intro N ω
       simp only [FeynmanKacModel.pathPredMean]
-      rw [M.integral_particlePredictionLaw p _ hg hC, div_div_div_cancel_right₀ (by positivity)]
+      rw [M.integral_particle_prediction_law p _ hg hC, div_div_div_cancel_right₀ (by positivity)]
     have hlim : ∫ x, g x ∂M.filterLaw (p + 1) =
         (∫ x, h x ∂M.filterLaw p) / ∫ x, M.potential p x ∂M.filterLaw p :=
-      M.integral_filterLaw_succ p hg hC
+      M.integral_filter_law_succ p hg hC
     simp_rw [hpred, hlim]
     have hGa : a ≤ ∫ x, M.potential p x ∂M.filterLaw p := by
       calc a = ∫ _, a ∂M.filterLaw p := by simp
@@ -473,7 +474,7 @@ theorem tendsto_integral_abs_pathPredMean_sub [StandardBorelSpace X] [Nonempty X
 
 /-- The conditional integral of a bounded measurable function of the past and the next generation
 against the product prediction law is an almost everywhere strongly measurable function. -/
-theorem aestronglyMeasurable_integral_bootstrap_succ [StandardBorelSpace X] [Nonempty X]
+theorem aestrongly_measurable_integral_bootstrap_succ [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (N : ℕ) (ξ : ℕ → Ω → Fin N → X) (hξ : IsBootstrapParticleSystem P M N ξ) (n : ℕ)
     (H : (Fin (n + 1) → Fin N → X) × (Fin N → X) → ℂ) (hH : Measurable H) :
@@ -616,7 +617,7 @@ private theorem abs_exp_neg_sub_exp_neg_le {a b : ℝ} (ha : 0 ≤ a) (hb : 0 �
 /-- `L¹` convergence of the random Gaussian factors of the conditional characteristic functions:
 `exp (-(t Lᴺₚ₊₁)² σ²ᴺ / 2) → exp (-vₚ₊₁ t² / 2)`, where `σ²ᴺ` is the variance of `φₚ₊₁` under the
 prediction law and `vₚ₊₁` the limiting local variance. -/
-theorem tendsto_integral_norm_gaussianFactor_sub [StandardBorelSpace X] [Nonempty X]
+theorem tendsto_integral_norm_gaussian_factor_sub [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
     (hξ : ∀ N, IsBootstrapParticleSystem P M (N + 1) (ξ N))
@@ -629,11 +630,11 @@ theorem tendsto_integral_norm_gaussianFactor_sub [StandardBorelSpace X] [Nonempt
   have hpath : ∀ N, Measurable fun ω (q : ℕ) ↦ ξ N q ω := fun N ↦
     measurable_pi_iff.2 fun q ↦ (hξ N).1 q
   have hpred : ∀ N ω, IsProbabilityMeasure (M.particlePredictionLaw p (ξ N p ω)) := fun N ω ↦
-    M.isProbabilityMeasure_particlePredictionLaw (Nat.succ_pos N) p _
+    M.is_probability_measure_particle_prediction_law (Nat.succ_pos N) p _
   have hφ2m : Measurable fun x ↦ φ (p + 1) x ^ 2 := (hφ (p + 1)).pow_const 2
   have hφ2b : ∀ x, |φ (p + 1) x ^ 2| ≤ B ^ 2 := fun x ↦ by
     rw [abs_pow]; exact pow_le_pow_left₀ (abs_nonneg _) (hB _ x) 2
-  obtain ⟨⟨K, hK⟩, hΓ⟩ := tendsto_integral_abs_particleLikelihood_sub P M ξ hξ (p + 1)
+  obtain ⟨⟨K, hK⟩, hΓ⟩ := tendsto_integral_abs_particle_likelihood_sub P M ξ hξ (p + 1)
   obtain ⟨Γ, hΓd⟩ : ∃ Γ : ℝ, Γ = (M.unnormalizedLaw (p + 1)).real univ := ⟨_, rfl⟩
   obtain ⟨L, hLd⟩ : ∃ L : ℕ → Ω → ℝ,
       L = fun N ω ↦ M.particleLikelihood (fun q ↦ ξ N q ω) (p + 1) := ⟨_, rfl⟩
@@ -644,11 +645,11 @@ theorem tendsto_integral_norm_gaussianFactor_sub [StandardBorelSpace X] [Nonempt
   obtain ⟨e1, he1d⟩ : ∃ e1 : ℝ, e1 = ∫ x, φ (p + 1) x ∂M.filterLaw (p + 1) := ⟨_, rfl⟩
   obtain ⟨e2, he2d⟩ : ∃ e2 : ℝ, e2 = ∫ x, φ (p + 1) x ^ 2 ∂M.filterLaw (p + 1) := ⟨_, rfl⟩
   have hLm : ∀ N, Measurable (L N) := fun N ↦ by
-    rw [hLd]; exact (M.measurable_particleLikelihood _).comp (hpath N)
+    rw [hLd]; exact (M.measurable_particle_likelihood _).comp (hpath N)
   have hm1m : ∀ N, Measurable (m1 N) := fun N ↦ by
-    rw [hm1d]; exact (M.measurable_integral_particlePredictionLaw p (hφ _) (hB _)).comp ((hξ N).1 p)
+    rw [hm1d]; exact (M.measurable_integral_particle_prediction_law p (hφ _) (hB _)).comp ((hξ N).1 p)
   have hm2m : ∀ N, Measurable (m2 N) := fun N ↦ by
-    rw [hm2d]; exact (M.measurable_integral_particlePredictionLaw p hφ2m hφ2b).comp ((hξ N).1 p)
+    rw [hm2d]; exact (M.measurable_integral_particle_prediction_law p hφ2m hφ2b).comp ((hξ N).1 p)
   have hm1b : ∀ N ω, |m1 N ω| ≤ B := fun N ω ↦ by
     have := hpred N ω
     rw [hm1d]; exact abs_integral_le_of_abs_le (hφ _) (hB _)
@@ -656,12 +657,12 @@ theorem tendsto_integral_norm_gaussianFactor_sub [StandardBorelSpace X] [Nonempt
     have := hpred N ω
     rw [hm2d]; exact abs_integral_le_of_abs_le hφ2m hφ2b
   have hl1 : Tendsto (fun N ↦ ∫ ω, |m1 N ω - e1| ∂P) atTop (𝓝 0) := by
-    have := tendsto_integral_abs_pathPredMean_sub P M ξ hξ (p + 1) (hφ (p + 1)) (hB _)
-    simp only [FeynmanKacModel.pathPredMean_succ] at this
+    have := tendsto_integral_abs_path_pred_mean_sub P M ξ hξ (p + 1) (hφ (p + 1)) (hB _)
+    simp only [FeynmanKacModel.path_pred_mean_succ] at this
     rw [hm1d, he1d]; exact this
   have hl2 : Tendsto (fun N ↦ ∫ ω, |m2 N ω - e2| ∂P) atTop (𝓝 0) := by
-    have := tendsto_integral_abs_pathPredMean_sub P M ξ hξ (p + 1) hφ2m hφ2b
-    simp only [FeynmanKacModel.pathPredMean_succ] at this
+    have := tendsto_integral_abs_path_pred_mean_sub P M ξ hξ (p + 1) hφ2m hφ2b
+    simp only [FeynmanKacModel.path_pred_mean_succ] at this
     rw [hm2d, he2d]; exact this
   have hK' : ∀ N ω, |L N ω| ≤ K := fun N ω ↦ by rw [hLd]; exact hK N ω
   have hΓ' : Tendsto (fun N ↦ ∫ ω, |L N ω - Γ| ∂P) atTop (𝓝 0) := by

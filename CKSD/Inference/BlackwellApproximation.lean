@@ -4,6 +4,7 @@ public import Mathlib.MeasureTheory.Measure.FiniteMeasure
 import Mathlib.MeasureTheory.Function.SimpleFuncDense
 import Mathlib.MeasureTheory.Measure.Prokhorov
 import Mathlib.MeasureTheory.Measure.LevyProkhorovMetric
+
 /-!
 # Finite quantizations and compact limits for Blackwell comparison
 
@@ -41,7 +42,7 @@ theorem exists_measurable_finite_quantizations
 
 /-- Finite measures of fixed mass on a compact metric space admit a weakly convergent
 subsequence. Normalization reduces this to compactness of probability measures. -/
-theorem exists_finiteMeasure_subsequence_limit_of_mass_eq
+theorem exists_finite_measure_subsequence_limit_of_mass_eq
     {C : Type*} [MetricSpace C] [MeasurableSpace C] [BorelSpace C]
     [CompactSpace C] [SeparableSpace C] [Nonempty C]
     (μ : ℕ → FiniteMeasure C) (M : ℝ≥0) (hM : ∀ n, (μ n).mass = M) :

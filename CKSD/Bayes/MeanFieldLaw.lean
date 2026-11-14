@@ -4,6 +4,7 @@ public import CKSD.Bayes.MeanFieldCore
 public import CKSD.Bayes.MeanFieldCoupling
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Borel
 
+
 /-!
 # Marginal laws and time-measurable nonlinear drifts
 
@@ -24,7 +25,7 @@ open scoped NNReal ENNReal Topology BigOperators
 namespace CKSD
 /-- Almost sure path continuity implies weak continuity of the marginal laws, without moment
 bounds. -/
-theorem continuous_probabilityMeasure_map_of_ae_continuous {Ω E : Type*} [MeasurableSpace Ω]
+theorem continuous_probability_measure_map_of_ae_continuous {Ω E : Type*} [MeasurableSpace Ω]
     [MetricSpace E] [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure Ω) [IsProbabilityMeasure P] (Y : ℝ → Ω → E)
     (hY : ∀ t, Measurable (Y t)) (hc : ∀ᵐ ω ∂P, Continuous (fun t ↦ Y t ω)) :
@@ -45,7 +46,7 @@ theorem continuous_probabilityMeasure_map_of_ae_continuous {Ω E : Type*} [Measu
   · exact hc.mono fun ω hω ↦ f.continuous.comp hω
 /-- Fixing a finite-first-moment probability law preserves the spatial Lipschitz bound of a
 Wasserstein-Lipschitz drift. -/
-theorem IsWassersteinLipschitzDrift.lipschitzWith_position {d : ℕ}
+theorem IsWassersteinLipschitzDrift.lipschitz_with_position {d : ℕ}
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d))
     {L : ℝ} (hb : IsWassersteinLipschitzDrift b L)
     (μ : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure μ]
@@ -60,7 +61,7 @@ theorem IsWassersteinLipschitzDrift.lipschitzWith_position {d : ℕ}
 
 /-- A Wasserstein-Lipschitz drift is a globally Lipschitz function of position and its
 finite-first-moment law, with the product metric. -/
-theorem IsWassersteinLipschitzDrift.lipschitzWith_lift {d : ℕ}
+theorem IsWassersteinLipschitzDrift.lipschitz_with_lift {d : ℕ}
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d))
     {L : ℝ} (hb : IsWassersteinLipschitzDrift b L) :
     LipschitzWith (2 * Real.toNNReal L)
@@ -87,7 +88,7 @@ theorem IsWassersteinLipschitzDrift.lipschitzWith_lift {d : ℕ}
     _ = _ := by simp only [NNReal.coe_mul, NNReal.coe_ofNat]; ring
 /-- A Wasserstein-Lipschitz drift is measurable in time along continuous paths and marginal
 laws with finite first moments, even when no locally uniform moment bound has been assumed. -/
-theorem IsWassersteinLipschitzDrift.aestronglyMeasurable_drift_of_ae_continuous
+theorem IsWassersteinLipschitzDrift.aestrongly_measurable_drift_of_ae_continuous
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d))
@@ -101,7 +102,7 @@ theorem IsWassersteinLipschitzDrift.aestronglyMeasurable_drift_of_ae_continuous
   have : Fact ((1 : ℝ≥0∞) ≠ ∞) := ⟨by norm_num⟩
   have : BorelSpace (TauCeti.WassersteinSpace 1 E) := TauCeti.WassersteinSpace.borelSpace (by norm_num)
   let pm : ℝ → ProbabilityMeasure E := fun t ↦ ProbabilityMeasure.map (⟨P, inferInstance⟩ : ProbabilityMeasure Ω) (Y t)
-  have hpm : Continuous pm := continuous_probabilityMeasure_map_of_ae_continuous P Y hY hYc
+  have hpm : Continuous pm := continuous_probability_measure_map_of_ae_continuous P Y hY hYc
   have hmem (t : ℝ≥0) : TauCeti.HasFiniteMoment 1 (pm t : Measure E) := by
     have hi : Integrable (Y t) P := (integrable_norm_iff (hY t).aestronglyMeasurable).mp (hYint t t.coe_nonneg)
     have hm : Integrable (id : E → E) (P.map (Y t)) :=
@@ -114,7 +115,7 @@ theorem IsWassersteinLipschitzDrift.aestronglyMeasurable_drift_of_ae_continuous
   have hq : Measurable q := TauCeti.WassersteinSpace.measurable_mk
     (hpm.measurable_probabilityMeasure.comp measurable_subtype_coe) hmem
   let B : E × TauCeti.WassersteinSpace 1 E → E := fun p ↦ b p.1 ((p.2 : ProbabilityMeasure E) : Measure E)
-  have hB : LipschitzWith (2 * Real.toNNReal L) B := hb.lipschitzWith_lift b
+  have hB : LipschitzWith (2 * Real.toNNReal L) B := hb.lipschitz_with_lift b
   have hm : Measurable (fun t : ℝ ↦ B (x t, q t.toNNReal)) :=
     hB.continuous.measurable.comp (hx.measurable.prodMk (hq.comp continuous_real_toNNReal.measurable))
   apply hm.aestronglyMeasurable.restrict.congr

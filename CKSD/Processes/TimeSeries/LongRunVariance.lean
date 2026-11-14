@@ -3,6 +3,7 @@ module
 public import CKSD.Processes.Basic
 public import Mathlib.Analysis.Normed.Group.Tannery
 
+
 /-!
 # Long-run variance of a sample mean
 
@@ -17,9 +18,9 @@ tend to `1`, and passes to the limit by Tannery's theorem.
 
 ## Main results
 
-* `CKSD.sum_sum_eq_tsum_lagCountWeight`: regrouping by lag.
-* `CKSD.tendsto_lagCountWeight`: the weights tend to `1` at each fixed lag.
-* `CKSD.tendsto_mul_variance_sampleAverage` (GAPS 106.12): `n Var(X̄_n) → ∑_h γ(h)`.
+* `CKSD.sum_sum_eq_tsum_lag_count_weight`: regrouping by lag.
+* `CKSD.tendsto_lag_count_weight`: the weights tend to `1` at each fixed lag.
+* `CKSD.tendsto_mul_variance_sample_average` (GAPS 106.12): `n Var(X̄_n) → ∑_h γ(h)`.
 -/
 
 @[expose] public section
@@ -38,7 +39,7 @@ def lagCountWeight (n : ℕ) (h : ℤ) : ℝ :=
   (((Finset.range n ×ˢ Finset.range n).filter fun p : ℕ × ℕ ↦ (p.1 : ℤ) - p.2 = h).card : ℝ) / n
 
 /-- A normalized double sum over `i, j < n` of a function of `i - j`, regrouped by lag. -/
-theorem sum_sum_eq_tsum_lagCountWeight (γ : ℤ → ℝ) (n : ℕ) :
+theorem sum_sum_eq_tsum_lag_count_weight (γ : ℤ → ℝ) (n : ℕ) :
     (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, ∑ j ∈ Finset.range n, γ ((i : ℤ) - j) =
       ∑' h : ℤ, lagCountWeight n h * γ h := by
   classical
@@ -68,11 +69,11 @@ theorem sum_sum_eq_tsum_lagCountWeight (γ : ℤ → ℝ) (n : ℕ) :
   ring
 
 /-- Lag-counting weights are nonnegative. -/
-theorem lagCountWeight_nonneg (n : ℕ) (h : ℤ) : 0 ≤ lagCountWeight n h := by
+theorem lag_count_weight_nonneg (n : ℕ) (h : ℤ) : 0 ≤ lagCountWeight n h := by
   unfold lagCountWeight; positivity
 
 /-- Lag-counting weights are at most one. -/
-theorem lagCountWeight_le_one (n : ℕ) (h : ℤ) : lagCountWeight n h ≤ 1 := by
+theorem lag_count_weight_le_one (n : ℕ) (h : ℤ) : lagCountWeight n h ≤ 1 := by
   unfold lagCountWeight
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · simp
@@ -89,7 +90,7 @@ theorem lagCountWeight_le_one (n : ℕ) (h : ℤ) : lagCountWeight n h ≤ 1 := 
   simpa using (Nat.cast_le (α := ℝ)).2 this
 
 /-- The lower bound `(n - |h|)/n` for the lag-counting weight. -/
-theorem le_lagCountWeight (n : ℕ) (h : ℤ) :
+theorem le_lag_count_weight (n : ℕ) (h : ℤ) :
     ((n - (h.toNat + (-h).toNat) : ℕ) : ℝ) / n ≤ lagCountWeight n h := by
   unfold lagCountWeight
   gcongr
@@ -103,7 +104,7 @@ theorem le_lagCountWeight (n : ℕ) (h : ℤ) :
     omega
 
 /-- Lag-counting weights tend to one at each fixed lag. -/
-theorem tendsto_lagCountWeight (h : ℤ) : Tendsto (fun n ↦ lagCountWeight n h) atTop (𝓝 1) := by
+theorem tendsto_lag_count_weight (h : ℤ) : Tendsto (fun n ↦ lagCountWeight n h) atTop (𝓝 1) := by
   set a := h.toNat + (-h).toNat
   have hlow : Tendsto (fun n : ℕ ↦ ((n - a : ℕ) : ℝ) / n) atTop (𝓝 1) := by
     have h1 : Tendsto (fun n : ℕ ↦ 1 - (a : ℝ) / n) atTop (𝓝 1) := by
@@ -114,13 +115,13 @@ theorem tendsto_lagCountWeight (h : ℤ) : Tendsto (fun n ↦ lagCountWeight n h
     rw [Nat.cast_sub (by omega)]
     field_simp
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le hlow tendsto_const_nhds
-    (fun n ↦ le_lagCountWeight n h) (fun n ↦ lagCountWeight_le_one n h)
+    (fun n ↦ le_lag_count_weight n h) (fun n ↦ lag_count_weight_le_one n h)
 
 
 /-- GAPS 106.12, long-run variance from summable autocovariances: if the autocovariance
 `Cov(X_s, X_t) = γ(s - t)` is absolutely summable, then `n Var(X̄_n) → ∑_h γ(h)`, with `X̄_n` the
 mean of `X 0, …, X (n - 1)`. -/
-theorem tendsto_mul_variance_sampleAverage {Ω : Type*} [MeasurableSpace Ω]
+theorem tendsto_mul_variance_sample_average {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℤ → Ω → ℝ)
     (h2 : ∀ t, MemLp (X t) 2 μ) (γ : ℤ → ℝ) (hγ : Summable (fun t ↦ |γ t|))
     (hcov : ∀ s t, cov[X s, X t; μ] = γ (s - t)) :
@@ -129,7 +130,7 @@ theorem tendsto_mul_variance_sampleAverage {Ω : Type*} [MeasurableSpace Ω]
   have hrepr : ∀ n : ℕ, 0 < n → (n : ℝ) * Var[sampleAverage (fun j ↦ X j) n; μ] =
       ∑' h : ℤ, lagCountWeight n h * γ h := by
     intro n hn
-    rw [← sum_sum_eq_tsum_lagCountWeight]
+    rw [← sum_sum_eq_tsum_lag_count_weight]
     have havg : sampleAverage (fun j : ℕ ↦ X j) n =
         fun ω ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, X i ω := by
       funext ω; simp [sampleAverage, smul_eq_mul]
@@ -147,10 +148,10 @@ theorem tendsto_mul_variance_sampleAverage {Ω : Type*} [MeasurableSpace Ω]
     field_simp
   have hlim := tendsto_tsum_of_dominated_convergence (f := fun n h ↦ lagCountWeight n h * γ h)
     (g := γ) (bound := fun h ↦ |γ h|) hγ
-    (fun h ↦ by simpa using (tendsto_lagCountWeight h).mul_const (γ h))
+    (fun h ↦ by simpa using (tendsto_lag_count_weight h).mul_const (γ h))
     (Eventually.of_forall fun n h ↦ by
-      rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (lagCountWeight_nonneg n h)]
-      exact mul_le_of_le_one_left (abs_nonneg _) (lagCountWeight_le_one n h))
+      rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (lag_count_weight_nonneg n h)]
+      exact mul_le_of_le_one_left (abs_nonneg _) (lag_count_weight_le_one n h))
   refine hlim.congr' ?_
   filter_upwards [eventually_gt_atTop 0] with n hn using (hrepr n hn).symm
 

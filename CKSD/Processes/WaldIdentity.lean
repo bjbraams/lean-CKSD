@@ -3,6 +3,7 @@ module
 public import CKSD.Processes.Independence
 public import Mathlib.Probability.Independence.Integration
 
+
 /-!
 # Wald's fundamental identity
 
@@ -38,7 +39,7 @@ def rangePartialSum {n : ℕ} (v : Finset.range n → ℝ) (k : ℕ) : ℝ :=
   ∑ i : Finset.range n, if (i : ℕ) < k then v i else 0
 
 /-- Truncated partial sums of a finite coordinate vector are measurable. -/
-theorem measurable_rangePartialSum (n k : ℕ) :
+theorem measurable_range_partial_sum (n k : ℕ) :
     Measurable fun v : Finset.range n → ℝ ↦ rangePartialSum v k := by
   unfold rangePartialSum
   refine Finset.measurable_sum _ fun i _ ↦ ?_
@@ -48,7 +49,7 @@ theorem measurable_rangePartialSum (n k : ℕ) :
 
 /-- Up to the length of the vector, truncated partial sums of the restriction of a sequence are
 its partial sums. -/
-theorem rangePartialSum_restrict {Ω : Type*} (Z : ℕ → Ω → ℝ) (ω : Ω) {n k : ℕ} (hk : k ≤ n) :
+theorem range_partial_sum_restrict {Ω : Type*} (Z : ℕ → Ω → ℝ) (ω : Ω) {n k : ℕ} (hk : k ≤ n) :
     rangePartialSum (fun i : Finset.range n ↦ Z i ω) k = ∑ i ∈ Finset.range k, Z i ω := by
   unfold rangePartialSum
   rw [Finset.sum_coe_sort (Finset.range n) (fun i ↦ if i < k then Z i ω else 0),
@@ -136,7 +137,7 @@ theorem integral_stopped_exponential_eq_one {Ω : Type*} [MeasurableSpace Ω]
     let ψ : (({n} : Finset ℕ) → ℝ) → ℝ := fun v ↦
       Real.exp (t * v ⟨n, Finset.mem_singleton_self n⟩) / m - 1
     have hφ : Measurable φ := by
-      refine Measurable.ite ?_ (((measurable_rangePartialSum n n).const_mul t).exp.div_const _)
+      refine Measurable.ite ?_ (((measurable_range_partial_sum n n).const_mul t).exp.div_const _)
         measurable_const
       have : {v : Finset.range n → ℝ | ∀ k ≤ n, a < rangePartialSum v k ∧
           rangePartialSum v k < b} = ⋂ k, ⋂ (_ : k ≤ n),
@@ -144,15 +145,15 @@ theorem integral_stopped_exponential_eq_one {Ω : Type*} [MeasurableSpace Ω]
         ext v; simp
       rw [this]
       exact MeasurableSet.iInter fun k ↦ MeasurableSet.iInter fun _ ↦
-        (measurableSet_lt measurable_const (measurable_rangePartialSum n k)).inter
-          (measurableSet_lt (measurable_rangePartialSum n k) measurable_const)
+        (measurableSet_lt measurable_const (measurable_range_partial_sum n k)).inter
+          (measurableSet_lt (measurable_range_partial_sum n k) measurable_const)
     have hψ : Measurable ψ := by
       simp only [ψ]; fun_prop
     have hφeq : (φ ∘ fun ω (i : Finset.range n) ↦ Z i ω) = (A n).indicator (G n) := by
       funext ω
       simp only [Function.comp_apply, φ, Set.indicator, A, Set.mem_ofPred_eq]
       have hr : ∀ k ≤ n, rangePartialSum (fun i : Finset.range n ↦ Z i ω) k = S k ω :=
-        fun k hk ↦ rangePartialSum_restrict Z ω hk
+        fun k hk ↦ range_partial_sum_restrict Z ω hk
       by_cases h : ∀ k ≤ n, a < S k ω ∧ S k ω < b
       · rw [ite_eq_left (fun k hk ↦ (hr k hk).symm ▸ h k hk), ite_eq_left h, hr n le_rfl]
       · rw [ite_eq_right (fun h' ↦ h fun k hk ↦ (hr k hk) ▸ h' k hk), ite_eq_right h]
@@ -217,7 +218,7 @@ theorem integral_stopped_exponential_eq_one {Ω : Type*} [MeasurableSpace Ω]
       refine ⟨(ih.1.add hinc).congr (hYrec n).symm, ?_⟩
       rw [integral_congr_ae (hYrec n), integral_add ih.1 hinc, ih.2, hkey n, add_zero]
   let GN : Ω → ℝ := fun ω ↦ G (N ω) ω
-  have hGN_meas : Measurable GN := measurable_randomIndex hG_meas hN
+  have hGN_meas : Measurable GN := measurable_random_index hG_meas hN
   have hGN_nonneg : ∀ ω, 0 ≤ GN ω := fun ω ↦ by positivity
   let f : ℕ → Ω → ℝ := fun n ↦ {ω | N ω ≤ n}.indicator GN
   have hdecomp : ∀ n, Y n =ᵐ[P] fun ω ↦ f n ω + (A n).indicator (G n) ω := by

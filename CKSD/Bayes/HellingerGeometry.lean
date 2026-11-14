@@ -5,6 +5,7 @@ public import CKSD.Inference.Density
 public import Statlib.Divergence.Hellinger.Basic
 public import Mathlib.MeasureTheory.Function.L2Space
 
+
 /-!
 # Hellinger geometry and bounded testing scores
 
@@ -33,7 +34,7 @@ def statisticalHellingerDistance {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) : ℝ := Real.sqrt (2 * (ProbabilityTheory.sqHellinger P Q).toReal)
 
 /-- Hellinger affinity in terms of densities relative to a common dominating measure. -/
-theorem integral_sqrt_rnDeriv_eq_integral_sqrt_density_mul {X : Type*} [MeasurableSpace X]
+theorem integral_sqrt_rn_deriv_eq_integral_sqrt_density_mul {X : Type*} [MeasurableSpace X]
     {P Q μ : Measure X} [SigmaFinite μ] [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     {p q : X → ℝ} (hP : HasDensity P μ p) (hQ : HasDensity Q μ q) :
     ∫ x, Real.sqrt ((P.rnDeriv Q x).toReal) ∂Q =
@@ -72,23 +73,23 @@ theorem integral_sqrt_rnDeriv_eq_integral_sqrt_density_mul {X : Type*} [Measurab
     _ = Real.sqrt (p x) * Real.sqrt (q x) := by rw [heq]; ring
 
 /-- The square root of an integrable nonnegative density belongs to `L²`. -/
-theorem HasDensity.memLp_sqrt {X : Type*} [MeasurableSpace X]
+theorem HasDensity.mem_lp_sqrt {X : Type*} [MeasurableSpace X]
     {P μ : Measure X} [IsFiniteMeasure P] {p : X → ℝ} (hP : HasDensity P μ p) :
     MemLp (fun x ↦ Real.sqrt (p x)) 2 μ := by
   apply (memLp_two_iff_integrable_sq hP.1.sqrt.aestronglyMeasurable).2
   exact hP.integrable.congr (hP.2.1.mono fun x hx ↦ (Real.sq_sqrt hx).symm)
 
 /-- Hellinger distance is the `L²` distance between square roots of densities. -/
-theorem statisticalHellingerDistance_sq_eq_integral {X : Type*} [MeasurableSpace X]
+theorem statistical_hellinger_distance_sq_eq_integral {X : Type*} [MeasurableSpace X]
     {P Q μ : Measure X} [SigmaFinite μ] [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     {p q : X → ℝ} (hP : HasDensity P μ p) (hQ : HasDensity Q μ q) :
     statisticalHellingerDistance P Q ^ 2 =
       ∫ x, (Real.sqrt (p x) - Real.sqrt (q x)) ^ 2 ∂μ := by
   have hprod : Integrable (fun x ↦ Real.sqrt (p x) * Real.sqrt (q x)) μ :=
-    hP.memLp_sqrt.integrable_mul hQ.memLp_sqrt
+    hP.mem_lp_sqrt.integrable_mul hQ.mem_lp_sqrt
   rw [statisticalHellingerDistance, Real.sq_sqrt (by positivity),
     ProbabilityTheory.toReal_sqHellinger_eq_integral,
-    integral_sqrt_rnDeriv_eq_integral_sqrt_density_mul hP hQ]
+    integral_sqrt_rn_deriv_eq_integral_sqrt_density_mul hP hQ]
   simp only [probReal_univ]
   have hexpand : (fun x ↦ (Real.sqrt (p x) - Real.sqrt (q x)) ^ 2) =ᵐ[μ]
       fun x ↦ p x + q x - 2 * (Real.sqrt (p x) * Real.sqrt (q x)) := by
@@ -105,12 +106,12 @@ def hellingerScore {X : Type*} (p q : X → ℝ) (x : X) : ℝ :=
   (Real.sqrt (q x) - Real.sqrt (p x)) / (Real.sqrt (q x) + Real.sqrt (p x))
 
 /-- The Hellinger score is measurable. -/
-theorem measurable_hellingerScore {X : Type*} [MeasurableSpace X]
+theorem measurable_hellinger_score {X : Type*} [MeasurableSpace X]
     {p q : X → ℝ} (hp : Measurable p) (hq : Measurable q) : Measurable (hellingerScore p q) :=
   (hq.sqrt.sub hp.sqrt).div (hq.sqrt.add hp.sqrt)
 
 /-- The Hellinger score takes values in `[-1,1]`, including points where both densities vanish. -/
-theorem abs_hellingerScore_le_one {X : Type*} (p q : X → ℝ) (x : X) :
+theorem abs_hellinger_score_le_one {X : Type*} (p q : X → ℝ) (x : X) :
     |hellingerScore p q x| ≤ 1 := by
   have ha := Real.sqrt_nonneg (p x)
   have hb := Real.sqrt_nonneg (q x)
@@ -121,7 +122,7 @@ theorem abs_hellingerScore_le_one {X : Type*} (p q : X → ℝ) (x : X) :
   constructor <;> linarith
 
 /-- A density-weighted squared Hellinger score is at most the squared square-root difference. -/
-theorem mul_hellingerScore_sq_le {X : Type*} {p q : X → ℝ} {x : X}
+theorem mul_hellinger_score_sq_le {X : Type*} {p q : X → ℝ} {x : X}
     (hq : 0 ≤ q x) :
     q x * hellingerScore p q x ^ 2 ≤ (Real.sqrt (q x) - Real.sqrt (p x)) ^ 2 := by
   have ha := Real.sqrt_nonneg (p x)
@@ -145,7 +146,7 @@ theorem mul_hellingerScore_sq_le {X : Type*} {p q : X → ℝ} {x : X}
     _ = _ := one_mul _
 
 /-- The mean separation identity for the Hellinger score. -/
-theorem sub_mul_hellingerScore_eq {X : Type*} {p q : X → ℝ} {x : X}
+theorem sub_mul_hellinger_score_eq {X : Type*} {p q : X → ℝ} {x : X}
     (hp : 0 ≤ p x) (hq : 0 ≤ q x) :
     (q x - p x) * hellingerScore p q x = (Real.sqrt (q x) - Real.sqrt (p x)) ^ 2 := by
   have ha := Real.sqrt_nonneg (p x)
@@ -172,41 +173,41 @@ theorem abs_integral_mul_le_sqrt {X : Type*} [MeasurableSpace X] {μ : Measure X
     _ ≤ _ := h
 
 /-- The bounded Hellinger score belongs to every `Lᵖ` under a finite measure. -/
-theorem memLp_hellingerScore {X : Type*} [MeasurableSpace X] (P : Measure X)
+theorem mem_lp_hellinger_score {X : Type*} [MeasurableSpace X] (P : Measure X)
     [IsFiniteMeasure P] {p q : X → ℝ} (hp : Measurable p) (hq : Measurable q) (a : ℝ≥0∞) :
     MemLp (hellingerScore p q) a P :=
-  MemLp.of_bound (measurable_hellingerScore hp hq).aestronglyMeasurable 1
-    (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using abs_hellingerScore_le_one p q x)
+  MemLp.of_bound (measurable_hellinger_score hp hq).aestronglyMeasurable 1
+    (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using abs_hellinger_score_le_one p q x)
 
 /-- The difference between the alternative and null score means is the squared Hellinger distance. -/
-theorem integral_hellingerScore_sub_eq {X : Type*} [MeasurableSpace X]
+theorem integral_hellinger_score_sub_eq {X : Type*} [MeasurableSpace X]
     {P Q μ : Measure X} [SigmaFinite μ] [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     {p q : X → ℝ} (hP : HasDensity P μ p) (hQ : HasDensity Q μ q) :
     (∫ x, hellingerScore p q x ∂Q) - (∫ x, hellingerScore p q x ∂P) =
       statisticalHellingerDistance P Q ^ 2 := by
-  have hiP := ((hP.integrable_iff _).1 ((memLp_hellingerScore P hP.1 hQ.1 2).integrable (by norm_num)))
-  have hiQ := ((hQ.integrable_iff _).1 ((memLp_hellingerScore Q hP.1 hQ.1 2).integrable (by norm_num)))
+  have hiP := ((hP.integrable_iff _).1 ((mem_lp_hellinger_score P hP.1 hQ.1 2).integrable (by norm_num)))
+  have hiQ := ((hQ.integrable_iff _).1 ((mem_lp_hellinger_score Q hP.1 hQ.1 2).integrable (by norm_num)))
   rw [hP.integral_eq, hQ.integral_eq, ← integral_sub hiQ hiP,
-    statisticalHellingerDistance_sq_eq_integral hP hQ]
+    statistical_hellinger_distance_sq_eq_integral hP hQ]
   refine integral_congr_ae ?_
   filter_upwards [hP.2.1, hQ.2.1] with x hp hq
-  have h := sub_mul_hellingerScore_eq hp hq
+  have h := sub_mul_hellinger_score_eq hp hq
   nlinarith
 
 /-- The squared score has expectation at most the squared Hellinger distance under its alternative. -/
-theorem integral_hellingerScore_sq_le {X : Type*} [MeasurableSpace X]
+theorem integral_hellinger_score_sq_le {X : Type*} [MeasurableSpace X]
     {P Q μ : Measure X} [SigmaFinite μ] [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     {p q : X → ℝ} (hP : HasDensity P μ p) (hQ : HasDensity Q μ q) :
     (∫ x, hellingerScore p q x ^ 2 ∂Q) ≤ statisticalHellingerDistance P Q ^ 2 := by
-  rw [hQ.integral_eq, statisticalHellingerDistance_sq_eq_integral hP hQ]
+  rw [hQ.integral_eq, statistical_hellinger_distance_sq_eq_integral hP hQ]
   apply integral_mono_ae
-    ((hQ.integrable_iff _).1 (memLp_hellingerScore Q hP.1 hQ.1 2).integrable_sq)
-    (by simpa only [Pi.sub_apply] using (hP.memLp_sqrt.sub hQ.memLp_sqrt).integrable_sq)
+    ((hQ.integrable_iff _).1 (mem_lp_hellinger_score Q hP.1 hQ.1 2).integrable_sq)
+    (by simpa only [Pi.sub_apply] using (hP.mem_lp_sqrt.sub hQ.mem_lp_sqrt).integrable_sq)
   filter_upwards [hQ.2.1] with x hq
-  convert mul_hellingerScore_sq_le (p := p) hq using 1; ring
+  convert mul_hellinger_score_sq_le (p := p) hq using 1; ring
 
 /-- Exchanging the densities negates the Hellinger score. -/
-theorem hellingerScore_swap {X : Type*} (p q : X → ℝ) :
+theorem hellinger_score_swap {X : Type*} (p q : X → ℝ) :
     hellingerScore q p = fun x ↦ -hellingerScore p q x := by
   funext x
   unfold hellingerScore
@@ -226,7 +227,7 @@ theorem abs_integral_sub_le_hellinger {X : Type*} [MeasurableSpace X]
   let W : X → ℝ := fun x ↦ Real.sqrt (q x) * T x
   have hTmem (ν : Measure X) [IsFiniteMeasure ν] : MemLp T 2 ν :=
     MemLp.of_bound hT.aestronglyMeasurable 1 (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using hTb x)
-  have hD : MemLp D 2 μ := by simpa only [Pi.sub_def, D] using hR.memLp_sqrt.sub hQ.memLp_sqrt
+  have hD : MemLp D 2 μ := by simpa only [Pi.sub_def, D] using hR.mem_lp_sqrt.sub hQ.mem_lp_sqrt
   have hW : MemLp W 2 μ := by
     apply (memLp_two_iff_integrable_sq (hQ.1.sqrt.mul hT).aestronglyMeasurable).2
     refine ((hQ.integrable_iff _).1 (hTmem Q).integrable_sq).congr ?_
@@ -234,7 +235,7 @@ theorem abs_integral_sub_le_hellinger {X : Type*} [MeasurableSpace X]
     dsimp [W]
     rw [mul_pow, Real.sq_sqrt hx]
   have hDmoment : ∫ x, D x ^ 2 ∂μ = statisticalHellingerDistance R Q ^ 2 :=
-    (statisticalHellingerDistance_sq_eq_integral hR hQ).symm
+    (statistical_hellinger_distance_sq_eq_integral hR hQ).symm
   have hWmoment : ∫ x, W x ^ 2 ∂μ = ∫ x, T x ^ 2 ∂Q := by
     rw [hQ.integral_eq]
     refine integral_congr_ae ?_
@@ -287,8 +288,8 @@ theorem integral_sq_le_of_hellinger {X : Type*} [MeasurableSpace X]
   let D : X → ℝ := fun x ↦ Real.sqrt (r x) - Real.sqrt (q x)
   have hTmem (ν : Measure X) [IsFiniteMeasure ν] : MemLp T 2 ν :=
     MemLp.of_bound hT.aestronglyMeasurable 1 (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using hTb x)
-  have hD : MemLp D 2 μ := by simpa only [Pi.sub_def, D] using hR.memLp_sqrt.sub hQ.memLp_sqrt
-  rw [hR.integral_eq, hQ.integral_eq, statisticalHellingerDistance_sq_eq_integral hR hQ,
+  have hD : MemLp D 2 μ := by simpa only [Pi.sub_def, D] using hR.mem_lp_sqrt.sub hQ.mem_lp_sqrt
+  rw [hR.integral_eq, hQ.integral_eq, statistical_hellinger_distance_sq_eq_integral hR hQ,
     ← integral_const_mul, ← integral_const_mul,
     ← integral_add (hD.integrable_sq.const_mul 2)
       (((hQ.integrable_iff _).1 (hTmem Q).integrable_sq).const_mul 2)]
@@ -311,26 +312,26 @@ theorem integral_sq_le_of_hellinger {X : Type*} [MeasurableSpace X]
   nlinarith
 
 /-- Triangle inequality for Hellinger distance among laws with a common dominating measure. -/
-theorem statisticalHellingerDistance_triangle_of_hasDensity {X : Type*} [MeasurableSpace X]
+theorem statistical_hellinger_distance_triangle_of_has_density {X : Type*} [MeasurableSpace X]
     {P Q R μ : Measure X} [SigmaFinite μ]
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q] [IsProbabilityMeasure R]
     {p q r : X → ℝ} (hP : HasDensity P μ p) (hQ : HasDensity Q μ q) (hR : HasDensity R μ r) :
     statisticalHellingerDistance P R ≤ statisticalHellingerDistance P Q + statisticalHellingerDistance Q R := by
   let A : X → ℝ := fun x ↦ Real.sqrt (p x) - Real.sqrt (q x)
   let B : X → ℝ := fun x ↦ Real.sqrt (q x) - Real.sqrt (r x)
-  have hA : MemLp A 2 μ := by simpa only [Pi.sub_def, A] using hP.memLp_sqrt.sub hQ.memLp_sqrt
-  have hB : MemLp B 2 μ := by simpa only [Pi.sub_def, B] using hQ.memLp_sqrt.sub hR.memLp_sqrt
+  have hA : MemLp A 2 μ := by simpa only [Pi.sub_def, A] using hP.mem_lp_sqrt.sub hQ.mem_lp_sqrt
+  have hB : MemLp B 2 μ := by simpa only [Pi.sub_def, B] using hQ.mem_lp_sqrt.sub hR.mem_lp_sqrt
   have hcs := abs_integral_mul_le_sqrt hA hB
-  rw [← statisticalHellingerDistance_sq_eq_integral hP hQ,
-    ← statisticalHellingerDistance_sq_eq_integral hQ hR,
+  rw [← statistical_hellinger_distance_sq_eq_integral hP hQ,
+    ← statistical_hellinger_distance_sq_eq_integral hQ hR,
     Real.sqrt_sq_eq_abs, Real.sqrt_sq_eq_abs,
     abs_of_nonneg (show 0 ≤ statisticalHellingerDistance P Q from Real.sqrt_nonneg _),
     abs_of_nonneg (show 0 ≤ statisticalHellingerDistance Q R from Real.sqrt_nonneg _)] at hcs
   have heq : statisticalHellingerDistance P R ^ 2 = statisticalHellingerDistance P Q ^ 2 +
       2 * (∫ x, A x * B x ∂μ) + statisticalHellingerDistance Q R ^ 2 := by
-    rw [statisticalHellingerDistance_sq_eq_integral hP hR,
-      statisticalHellingerDistance_sq_eq_integral hP hQ,
-      statisticalHellingerDistance_sq_eq_integral hQ hR,
+    rw [statistical_hellinger_distance_sq_eq_integral hP hR,
+      statistical_hellinger_distance_sq_eq_integral hP hQ,
+      statistical_hellinger_distance_sq_eq_integral hQ hR,
       ← integral_const_mul,
       ← integral_add (f := fun x ↦ A x ^ 2) (g := fun x ↦ 2 * (A x * B x)) hA.integrable_sq
         (hA.integrable_mul hB |>.const_mul 2),

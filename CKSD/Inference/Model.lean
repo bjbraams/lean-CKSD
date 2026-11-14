@@ -2,6 +2,7 @@ module
 
 public import CKSD.Inference.Basic
 
+
 /-!
 # Statistical models, tests, confidence sets, and decision criteria
 
@@ -26,9 +27,9 @@ Statistical models are families of measures or Mathlib Markov kernels.
 
 ## Main results
 
-* `CKSD.hasConfidenceCoverage_confidenceSetOfTests`: inverting level-`α` tests gives confidence
+* `CKSD.has_confidence_coverage_confidence_set_of_tests`: inverting level-`α` tests gives confidence
   sets of coverage `1 - α`.
-* `CKSD.IsGarbling.refl`, `CKSD.IsUniformlyMostPowerfulTest.hasTestLevel`.
+* `CKSD.IsGarbling.refl`, `CKSD.IsUniformlyMostPowerfulTest.has_test_level`.
 
 ## Conventions
 
@@ -164,7 +165,7 @@ def confidenceSetOfTests {Θ X : Type*} (reject : Θ → Set X) (x : X) : Set Θ
 
 /-- Test/confidence-set duality: inverting level-`α` tests with measurable rejection regions
 gives confidence sets with coverage at least `1 - α`. -/
-theorem hasConfidenceCoverage_confidenceSetOfTests {Θ X : Type*} [MeasurableSpace X]
+theorem has_confidence_coverage_confidence_set_of_tests {Θ X : Type*} [MeasurableSpace X]
     (P : Θ → Measure X) [∀ θ, IsProbabilityMeasure (P θ)]
     (reject : Θ → Set X) (hm : ∀ θ, MeasurableSet (reject θ)) (α : ℝ)
     (hlevel : ∀ θ, (P θ).real (reject θ) ≤ α) :
@@ -176,12 +177,12 @@ theorem hasConfidenceCoverage_confidenceSetOfTests {Θ X : Type*} [MeasurableSpa
   simpa using sub_le_sub_left (hlevel θ) 1
 
 /-- The Fisher information is nonnegative. -/
-theorem fisherInformation_nonneg {X : Type*} [MeasurableSpace X]
+theorem fisher_information_nonneg {X : Type*} [MeasurableSpace X]
     (P : ℝ → Measure X) (f : ℝ → X → ℝ) (θ : ℝ) : 0 ≤ fisherInformation P f θ :=
   integral_nonneg (fun _ ↦ sq_nonneg _)
 
 /-- A uniformly most powerful level-`α` test has level `α`. -/
-theorem IsUniformlyMostPowerfulTest.hasTestLevel {Θ X : Type*} [MeasurableSpace X]
+theorem IsUniformlyMostPowerfulTest.has_test_level {Θ X : Type*} [MeasurableSpace X]
     {P : Θ → Measure X} {H₀ H₁ : Set Θ} {α : ℝ} {φ : X → ℝ}
     (h : IsUniformlyMostPowerfulTest P H₀ H₁ α φ) : HasTestLevel P H₀ α φ :=
   ⟨h.1, h.2.1⟩

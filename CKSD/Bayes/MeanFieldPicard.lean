@@ -4,6 +4,7 @@ public import CKSD.Bayes.MeanFieldPathMap
 public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 public import Mathlib.Topology.Algebra.Order.Floor
 
+
 /-!
 # Continuous solution maps for Lipschitz equations with additive forcing
 
@@ -31,14 +32,14 @@ def forcedPicardMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
   f + y - pathForcingMap hT v hv y
 
 /-- Evaluation of the Picard map is the forcing plus the integrated drift. -/
-theorem forcedPicardMap_apply {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
+theorem forced_picard_map_apply {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) (f y : C(Icc (0 : ℝ) T, E)) (t : Icc (0 : ℝ) T) :
     forcedPicardMap hT v hv f y t = f t + ∫ s in (0 : ℝ)..t, v s (y.IccExtend hT s) := by
   change f t + y t - (y t - _) = _
   abel
 
 /-- The factorial Picard estimate holds for arbitrary continuous additive forcings. -/
-theorem dist_iterate_forcedPicardMap_apply_le {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
+theorem dist_iterate_forced_picard_map_apply_le {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) {L : ℝ≥0} (hvL : ∀ s, LipschitzWith L (v s))
     (f : C(Icc (0 : ℝ) T, E)) (n : ℕ) (y z : C(Icc (0 : ℝ) T, E)) (t : Icc (0 : ℝ) T) :
     dist ((forcedPicardMap hT v hv f)^[n] y t) ((forcedPicardMap hT v hv f)^[n] z t) ≤
@@ -51,8 +52,8 @@ theorem dist_iterate_forcedPicardMap_apply_le {T : ℝ} (hT : 0 ≤ T) (v : ℝ 
     have hint (W : C(Icc (0 : ℝ) T, E)) : IntervalIntegrable
         (fun s ↦ v s (W.IccExtend hT s)) volume 0 t :=
       (hv.comp (continuous_id.prodMk (W.IccExtend hT).continuous)).intervalIntegrable _ _
-    rw [iterate_succ_apply', iterate_succ_apply', dist_eq_norm, forcedPicardMap_apply,
-      forcedPicardMap_apply, add_sub_add_left_eq_sub, ← intervalIntegral.integral_sub (hint Y) (hint Z)]
+    rw [iterate_succ_apply', iterate_succ_apply', dist_eq_norm, forced_picard_map_apply,
+      forced_picard_map_apply, add_sub_add_left_eq_sub, ← intervalIntegral.integral_sub (hint Y) (hint Z)]
     calc _ ≤ ∫ s in (0 : ℝ)..t, (L : ℝ) * (((L : ℝ) * s) ^ n / n ! * dist y z) := by
           apply intervalIntegral.norm_integral_le_of_norm_le t.2.1 _
             (Continuous.intervalIntegrable (by fun_prop) _ _)
@@ -77,7 +78,7 @@ theorem dist_iterate_forcedPicardMap_apply_le {T : ℝ} (hT : 0 ≤ T) (v : ℝ 
           field_simp
 
 /-- Some iterate of the forced Picard map is a contraction on the whole continuous path space. -/
-theorem exists_contractingWith_iterate_forcedPicardMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
+theorem exists_contracting_with_iterate_forced_picard_map {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) {L : ℝ≥0} (hvL : ∀ s, LipschitzWith L (v s))
     (f : C(Icc (0 : ℝ) T, E)) :
     ∃ (n : ℕ) (C : ℝ≥0), ContractingWith C (forcedPicardMap hT v hv f)^[n] := by
@@ -89,7 +90,7 @@ theorem exists_contractingWith_iterate_forcedPicardMap {T : ℝ} (hT : 0 ≤ T) 
     (((L : ℝ) * T) ^ n / n !) * dist y z
   apply (ContinuousMap.dist_le (mul_nonneg h0 dist_nonneg)).2
   intro t
-  refine (dist_iterate_forcedPicardMap_apply_le hT v hv hvL f n y z t).trans ?_
+  refine (dist_iterate_forced_picard_map_apply_le hT v hv hvL f n y z t).trans ?_
   apply mul_le_mul_of_nonneg_right _ dist_nonneg
   apply div_le_div_of_nonneg_right _ (Nat.cast_nonneg (n !))
   exact pow_le_pow_left₀ (mul_nonneg L.coe_nonneg t.2.1)
@@ -97,11 +98,11 @@ theorem exists_contractingWith_iterate_forcedPicardMap {T : ℝ} (hT : 0 ≤ T) 
 
 /-- Every continuous forcing admits a unique continuous solution of a uniformly Lipschitz
 nonautonomous integral equation on a bounded interval. -/
-theorem surjective_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
+theorem surjective_path_forcing_map {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) {L : ℝ≥0} (hvL : ∀ s, LipschitzWith L (v s)) :
     Function.Surjective (pathForcingMap hT v hv) := by
   intro f
-  obtain ⟨n, C, hC⟩ := exists_contractingWith_iterate_forcedPicardMap hT v hv hvL f
+  obtain ⟨n, C, hC⟩ := exists_contracting_with_iterate_forced_picard_map hT v hv hvL f
   obtain ⟨y, hy⟩ : ∃ y, IsFixedPt (forcedPicardMap hT v hv f) y :=
     ⟨_, hC.isFixedPt_fixedPoint_iterate⟩
   refine ⟨y, ?_⟩
@@ -109,7 +110,7 @@ theorem surjective_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
   exact add_left_cancel ((sub_eq_iff_eq_add.mp hy).symm.trans (add_comm f y))
 /-- A solution's uniform distance is controlled exponentially by the uniform distance between
 its additive forcings. -/
-theorem dist_le_exp_mul_dist_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
+theorem dist_le_exp_mul_dist_path_forcing_map {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) {L : ℝ≥0} (hvL : ∀ s, LipschitzWith L (v s))
     (f g : C(Icc (0 : ℝ) T, E)) :
     dist f g ≤ Real.exp ((L : ℝ) * T) * dist (pathForcingMap hT v hv f) (pathForcingMap hT v hv g) := by
@@ -172,23 +173,23 @@ def pathForcingEquiv {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) {L : ℝ≥0} (hvL : ∀ s, LipschitzWith L (v s)) :
     C(Icc (0 : ℝ) T, E) ≃ C(Icc (0 : ℝ) T, E) :=
   Equiv.ofBijective (pathForcingMap hT v hv)
-    ⟨injective_pathForcingMap hT v hv hvL, surjective_pathForcingMap hT v hv hvL⟩
+    ⟨injective_path_forcing_map hT v hv hvL, surjective_path_forcing_map hT v hv hvL⟩
 
 /-- Solving a forced Lipschitz integral equation is a Lipschitz map of the forcing path. -/
-theorem lipschitzWith_pathForcingEquiv_symm {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
+theorem lipschitz_with_path_forcing_equiv_symm {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) {L : ℝ≥0} (hvL : ∀ s, LipschitzWith L (v s)) :
     LipschitzWith (Real.toNNReal (Real.exp ((L : ℝ) * T))) (pathForcingEquiv hT v hv hvL).symm := by
   apply LipschitzWith.of_dist_le_mul
   intro f g
   rw [Real.coe_toNNReal _ (Real.exp_pos _).le]
-  have h := dist_le_exp_mul_dist_pathForcingMap hT v hv hvL
+  have h := dist_le_exp_mul_dist_path_forcing_map hT v hv hvL
     ((pathForcingEquiv hT v hv hvL).symm f) ((pathForcingEquiv hT v hv hvL).symm g)
   change dist ((pathForcingEquiv hT v hv hvL).symm f) ((pathForcingEquiv hT v hv hvL).symm g) ≤
     Real.exp ((L : ℝ) * T) * dist (pathForcingEquiv hT v hv hvL ((pathForcingEquiv hT v hv hvL).symm f))
       (pathForcingEquiv hT v hv hvL ((pathForcingEquiv hT v hv hvL).symm g)) at h
   simpa only [Equiv.apply_symm_apply] using h
 /-- The inverse forcing map satisfies the prescribed integral equation at every time. -/
-theorem pathForcingEquiv_symm_apply_eq {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
+theorem path_forcing_equiv_symm_apply_eq {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) {L : ℝ≥0} (hvL : ∀ s, LipschitzWith L (v s))
     (f : C(Icc (0 : ℝ) T, E)) (t : Icc (0 : ℝ) T) :
     (pathForcingEquiv hT v hv hvL).symm f t = f t + ∫ s in (0 : ℝ)..t,

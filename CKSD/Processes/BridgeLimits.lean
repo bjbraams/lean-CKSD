@@ -2,6 +2,7 @@ module
 
 public import CKSD.Processes.Models
 
+
 /-!
 # The CUSUM bridge limit
 
@@ -32,7 +33,7 @@ def cusumBridgeStatistic {Ω : Type*} (X : ℕ → Ω → ℝ) (σ : ℝ) (n : �
 /-- GAPS 106.39: the iid finite-variance CUSUM statistic converges to the Brownian-bridge
 supremum: for iid observations with positive (hence finite) variance `σ²`,
 `max_{k ≤ n} |S_k - (k / n) S_n| / (σ √n) ⇒ sup_{t ∈ [0, 1]} |B_t - t B_1|`. -/
-theorem tendstoInDistribution_cusumBridgeStatistic {Ω Ω' : Type*}
+theorem tendsto_in_distribution_cusum_bridge_statistic {Ω Ω' : Type*}
     [MeasurableSpace Ω] [MeasurableSpace Ω']
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P)
@@ -45,7 +46,7 @@ theorem tendstoInDistribution_cusumBridgeStatistic {Ω Ω' : Type*}
   sorry
 
 /-- At sample size zero, the standardized CUSUM statistic uses division-by-zero value zero. -/
-@[simp] theorem cusumBridgeStatistic_zero {Ω : Type*} (X : ℕ → Ω → ℝ) (σ : ℝ) (ω : Ω) :
+@[simp] theorem cusum_bridge_statistic_zero {Ω : Type*} (X : ℕ → Ω → ℝ) (σ : ℝ) (ω : Ω) :
     cusumBridgeStatistic X σ 0 ω = 0 := by simp [cusumBridgeStatistic]
 
 end CKSD

@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Inference.KernelDisintegration
 public import Mathlib.Probability.Kernel.Composition.Prod
 public import Mathlib.Probability.Kernel.Composition.MeasureComp
@@ -40,7 +41,7 @@ instance isMarkovKernel_residualKernel {E : Type*} [NormedAddCommGroup E]
   Kernel.IsMarkovKernel.map _ (by fun_prop)
 
 /-- A residual row is the translated output distribution. -/
-theorem residualKernel_apply {E : Type*} [NormedAddCommGroup E] [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+theorem residual_kernel_apply {E : Type*} [NormedAddCommGroup E] [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (K : Kernel E E) [IsMarkovKernel K] (x : E) :
     residualKernel K x = (K x).map (fun y ↦ y-x) := by
   rw [residualKernel,Kernel.map_apply _ (by fun_prop),Kernel.prod_apply,Kernel.id_apply,
@@ -87,14 +88,14 @@ theorem ae_eq_kernel_of_bounded_complete
   exact he.mono fun x hx ↦ congrArg ProbabilityMeasure.toMeasure hx
 /-- Equal randomizations of every nondegenerate Gaussian shift identify their kernels
 Lebesgue-almost everywhere. -/
-theorem ae_eq_kernel_of_multivariateGaussian_comp_eq
+theorem ae_eq_kernel_of_multivariate_gaussian_comp_eq
     {d : ℕ} {Y : Type*} [MeasurableSpace Y] [CountablyGenerated Y]
     {S : Matrix (Fin d) (Fin d) ℝ} (hS : S.PosDef)
     (K J : Kernel (EuclideanSpace ℝ (Fin d)) Y) [IsMarkovKernel K] [IsMarkovKernel J]
     (heq : ∀ h,K ∘ₘ multivariateGaussian h S=J ∘ₘ multivariateGaussian h S) :
     ∀ᵐ x ∂volume,K x=J x := by
   exact ae_eq_kernel_of_bounded_complete volume (fun h ↦ multivariateGaussian h S)
-    (fun f hf M hM hzero ↦ ae_eq_zero_of_bounded_integral_multivariateGaussian_eq_zero hS f hf M hM hzero)
+    (fun f hf M hM hzero ↦ ae_eq_zero_of_bounded_integral_multivariate_gaussian_eq_zero hS f hf M hM hzero)
     K J heq
 section GaussianClassification
 variable {d : ℕ}
@@ -110,7 +111,7 @@ theorem ae_covariant_kernel_of_gaussian_shift_laws
   have : IsMarkovKernel J := Kernel.IsMarkovKernel.map _ (by fun_prop)
   have heq (h : E) : J ∘ₘ multivariateGaussian h S=K ∘ₘ multivariateGaussian h S := by
     change ((K.comap (fun x ↦ a+x) (by fun_prop)).map (fun y ↦ y-a)) ∘ₘ multivariateGaussian h S = _
-    rw [translatedKernel_comp_multivariateGaussian K a h hS.posSemidef,hLaw (a+h),
+    rw [translated_kernel_comp_multivariate_gaussian K a h hS.posSemidef,hLaw (a+h),
       Measure.map_map (by fun_prop) (by fun_prop)]
     have hfun : (fun y ↦ y-a) ∘ (fun y : E ↦ (a+h)+y) = fun y ↦ h+y := by
       funext y
@@ -118,7 +119,7 @@ theorem ae_covariant_kernel_of_gaussian_shift_laws
       abel
     rw [hfun]
     exact (hLaw h).symm
-  have he := ae_eq_kernel_of_multivariateGaussian_comp_eq hS J K heq
+  have he := ae_eq_kernel_of_multivariate_gaussian_comp_eq hS J K heq
   filter_upwards [he] with x hx
   change ((K.comap (fun x ↦ a+x) (by fun_prop)).map (fun y ↦ y-a)) x=K x at hx
   have hm : Measurable (fun y : E ↦ y-a) := by fun_prop
@@ -127,13 +128,13 @@ theorem ae_covariant_kernel_of_gaussian_shift_laws
 end GaussianClassification
 
 /-- Translation covariance of output rows makes the corresponding residual rows invariant. -/
-theorem ae_residualKernel_add_eq_of_ae_covariant
+theorem ae_residual_kernel_add_eq_of_ae_covariant
     {E : Type*} [NormedAddCommGroup E] [MeasurableSpace E] [BorelSpace E]
     [SecondCountableTopology E] (ν : Measure E) (K : Kernel E E) [IsMarkovKernel K]
     (a : E) (hcov : ∀ᵐ x ∂ν,(K (a+x)).map (fun y ↦ y-a)=K x) :
     ∀ᵐ x ∂ν,residualKernel K (a+x)=residualKernel K x := by
   filter_upwards [hcov] with x hx
-  rw [residualKernel_apply K (a+x),residualKernel_apply K x]
+  rw [residual_kernel_apply K (a+x),residual_kernel_apply K x]
   calc (K (a+x)).map (fun y ↦ y-(a+x)) =
       ((K (a+x)).map (fun y ↦ y-a)).map (fun y ↦ y-x) := by
         rw [Measure.map_map (by fun_prop) (by fun_prop)]
@@ -144,13 +145,13 @@ theorem ae_residualKernel_add_eq_of_ae_covariant
     _ = _ := by rw [hx]
 
 /-- A constant residual law gives the original kernel rows as translates of that law. -/
-theorem ae_eq_map_add_of_residualKernel_ae_eq_const
+theorem ae_eq_map_add_of_residual_kernel_ae_eq_const
     {E : Type*} [NormedAddCommGroup E] [MeasurableSpace E] [BorelSpace E]
     [SecondCountableTopology E] (μ : Measure E) (K : Kernel E E) [IsMarkovKernel K]
     (M : Measure E) (hR : ∀ᵐ x ∂μ,residualKernel K x=M) :
     ∀ᵐ x ∂μ,K x=M.map (fun y ↦ x+y) := by
   filter_upwards [hR] with x hx
-  rw [residualKernel_apply K x] at hx
+  rw [residual_kernel_apply K x] at hx
   have he := congrArg (fun ρ : Measure E ↦ ρ.map (fun y ↦ x+y)) hx
   rw [Measure.map_map (by fun_prop) (by fun_prop)] at he
   have hfun : (fun y ↦ x+y) ∘ (fun y : E ↦ y-x) = id := by
@@ -170,13 +171,13 @@ theorem exists_convolution_of_gaussian_shift_kernel
       L=(multivariateGaussian 0 S).conv M := by
   obtain ⟨M,hM,hR⟩ := exists_ae_eq_const_kernel_of_forall_add_ae_eq
     (volume : Measure (EuclideanSpace ℝ (Fin d))) (residualKernel K)
-    (fun a ↦ ae_residualKernel_add_eq_of_ae_covariant volume K a
+    (fun a ↦ ae_residual_kernel_add_eq_of_ae_covariant volume K a
       (ae_covariant_kernel_of_gaussian_shift_laws hS K L hLaw a))
   have := hM
   have hgauss : multivariateGaussian (0 : EuclideanSpace ℝ (Fin d)) S ≪ volume := by
     rw [TauCeti.Probability.multivariateGaussian_eq_withDensity hS]
     exact withDensity_absolutelyContinuous _ _
-  have hK := ae_eq_map_add_of_residualKernel_ae_eq_const (multivariateGaussian 0 S) K M
+  have hK := ae_eq_map_add_of_residual_kernel_ae_eq_const (multivariateGaussian 0 S) K M
     (hgauss.ae_le hR)
   have h0 : K ∘ₘ multivariateGaussian 0 S=L := by
     simpa only [zero_add,Measure.map_id'] using hLaw 0

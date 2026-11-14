@@ -1,4 +1,5 @@
 module
+
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 /-!
 # One-sided differential equations and path continuity
@@ -18,7 +19,7 @@ open Set Filter
 open scoped Topology
 namespace CKSD
 /-- A right-continuous step has zero right derivative everywhere, including at its jump. -/
-theorem hasDerivWithinAt_right_step (a c t : ℝ) :
+theorem has_deriv_within_at_right_step (a c t : ℝ) :
     HasDerivWithinAt (fun s : ℝ ↦ if s < a then 0 else c) 0 (Ici t) t := by
   by_cases ht : t < a
   · apply (hasDerivWithinAt_const t (Ici t) (0 : ℝ)).congr_of_eventuallyEq
@@ -35,5 +36,5 @@ theorem hasDerivWithinAt_right_step (a c t : ℝ) :
 theorem exists_nonconstant_zero_right_derivative :
     ∃ z : ℝ → ℝ, z 0 = 0 ∧ (∀ t, HasDerivWithinAt z 0 (Ici t) t) ∧ z 1 ≠ 0 := by
   refine ⟨(fun t : ℝ ↦ if t < 1 then 0 else 1), by norm_num,
-    (fun t ↦ hasDerivWithinAt_right_step 1 1 t), by norm_num⟩
+    (fun t ↦ has_deriv_within_at_right_step 1 1 t), by norm_num⟩
 end CKSD

@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldEmpirical
 public import CKSD.Bayes.MeanFieldPicardLaw
 /-!
@@ -42,20 +43,20 @@ theorem norm_particle_path_sub_le_empirical_wasserstein
   have hμi (t : ℝ) : Integrable (fun v ↦ ‖v‖) (μ t) := by
     exact (integrable_map_measure continuous_norm.aestronglyMeasurable
       (((ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)).comp hZm).aemeasurable)).2
-      (integrable_IccExtend_eval P hT Z hZm hZi t).norm
+      (integrable_icc_extend_eval P hT Z hZm hZi t).norm
   have hμb : Continuous (Function.uncurry (fun t v ↦ b v (μ t))) := by
     have hbeq : (fun t v ↦ b v (μ t)) = nonlinearFrozenDrift P hT b Z hZm hZi := by
       funext t v
-      rw [nonlinearFrozenDrift, pathMarginalLaw_toMeasure]
+      rw [nonlinearFrozenDrift, path_marginal_law_to_measure]
     rw [hbeq]
-    exact continuous_nonlinearFrozenDrift P hT b hb Z hZm hZi
+    exact continuous_nonlinear_frozen_drift P hT b hb Z hZm hZi
   let y : ℝ → Fin N → E := fun t j ↦ (z j).IccExtend hT t
   have hy : Continuous y := continuous_pi fun j ↦ ((z j).IccExtend hT).continuous
   let r := (TauCeti.wassersteinEDist 1 (empiricalMeasure N z) (P.map Z)).toReal
   have hW (t : ℝ) (_ht : t ∈ Icc (0 : ℝ) T) :
       (TauCeti.wassersteinEDist 1 (empiricalMeasure N (y t)) (μ t)).toReal ≤ r := by
-    have hh := wassersteinEDist_one_empirical_IccExtend_toReal_le hN hT z (P.map Z)
-      (wassersteinEDist_one_empirical_map_ne_top P hN z Z hZm hZi) t
+    have hh := wasserstein_e_dist_one_empirical_icc_extend_to_real_le hN hT z (P.map Z)
+      (wasserstein_e_dist_one_empirical_map_ne_top P hN z Z hZm hZi) t
     have hEval : Measurable (fun f : C(Icc (0 : ℝ) T, E) ↦ f.IccExtend hT t) :=
       ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)
     rw [hEval.aemeasurable.map_map_of_aemeasurable hZm.aemeasurable] at hh
@@ -71,7 +72,7 @@ theorem norm_particle_path_sub_le_empirical_wasserstein
   intro t
   have hh := (norm_le_pi_norm (x t - y t) i).trans (hg t t.2)
   have hxi : Continuous (fun s ↦ x s i) := (continuous_apply i).comp hx
-  rw [ContinuousMap.sub_apply, pathOn_apply_of_continuousOn T (fun s ↦ x s i) hxi.continuousOn t]
+  rw [ContinuousMap.sub_apply, path_on_apply_of_continuous_on T (fun s ↦ x s i) hxi.continuousOn t]
   simpa only [y, Pi.sub_apply,
     ContinuousMap.coe_IccExtend, Set.IccExtend_of_mem (h := hT) (fun u ↦ z i u) t.2] using hh
 end CKSD

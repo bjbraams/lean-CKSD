@@ -4,6 +4,7 @@ public import Mathlib.Probability.Distributions.Gaussian.Real
 public import Mathlib.MeasureTheory.Integral.Pi
 public import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 
+
 /-!
 # Characteristic functions of wide random layers
 
@@ -15,9 +16,9 @@ of a Gaussian mixture integral over one hidden unit. The power converges as `N �
 
 ## Main results
 
-* `CKSD.measurePreserving_uncurry_pi`: the product measure on `κ × U → α` is the image of the
+* `CKSD.measure_preserving_uncurry_pi`: the product measure on `κ × U → α` is the image of the
   iterated product measure under uncurrying.
-* `CKSD.integral_cexp_wideLayer`: the factorization of the characteristic function.
+* `CKSD.integral_cexp_wide_layer`: the factorization of the characteristic function.
 * `CKSD.tendsto_integral_exp_neg_div_pow`: `(𝔼 exp(-h/N))^N → exp(-𝔼 h)` for integrable `h ≥ 0`.
 -/
 
@@ -29,7 +30,7 @@ namespace CKSD
 
 /-- The product measure `μ^{κ × U}` is the image of the iterated product measure
 `(μ^U)^κ` under uncurrying `z ↦ ((k, u) ↦ z k u)`. -/
-theorem measurePreserving_uncurry_pi {κ U : Type*} [Fintype κ] [Fintype U] {α : Type*}
+theorem measure_preserving_uncurry_pi {κ U : Type*} [Fintype κ] [Fintype U] {α : Type*}
     [MeasurableSpace α] (μ : Measure α) [SigmaFinite μ] :
     MeasurePreserving (fun z : κ → U → α ↦ fun p : κ × U ↦ z p.1 p.2)
       (Measure.pi fun _ : κ ↦ Measure.pi fun _ : U ↦ μ) (Measure.pi fun _ : κ × U ↦ μ) where
@@ -45,7 +46,7 @@ theorem measurePreserving_uncurry_pi {κ U : Type*} [Fintype κ] [Fintype U] {α
     simp_rw [Measure.pi_pi, Fintype.prod_prod_type]
 
 /-- Integral of `exp(i t v)` against the standard normal law: `exp(-t²/2)`. -/
-private lemma integral_cexp_mul_gaussianReal (t : ℝ) :
+private lemma integral_cexp_mul_gaussian_real (t : ℝ) :
     ∫ v, cexp (↑(t * v) * I) ∂gaussianReal 0 1 = ↑(Real.exp (-(t ^ 2 / 2))) := by
   have h := charFun_gaussianReal (μ := 0) (v := 1) t
   rw [charFun_apply_real] at h
@@ -59,7 +60,7 @@ private lemma integral_cexp_mul_gaussianReal (t : ℝ) :
 parameters indexed by `(Fin N × U) ⊕ (Fin N ⊕ Unit)` (hidden-unit parameters `uₖ ∈ ℝ^U`,
 output weights `vₖ`, bias `b`), the scalar output `a b + c ∑ₖ vₖ g(uₖ)` has characteristic
 function at `1` equal to `exp(-a²/2) · (𝔼 exp(-c² g(u)²/2))^N`. -/
-theorem integral_cexp_wideLayer {U : Type*} [Fintype U] (N : ℕ) (g : (U → ℝ) → ℝ)
+theorem integral_cexp_wide_layer {U : Type*} [Fintype U] (N : ℕ) (g : (U → ℝ) → ℝ)
     (hg : Measurable g) (a c : ℝ) :
     ∫ θ, cexp (↑(a * θ (Sum.inr (Sum.inr ())) + c * ∑ k, θ (Sum.inr (Sum.inl k)) *
         g (fun i ↦ θ (Sum.inl (k, i)))) * I)
@@ -105,20 +106,20 @@ theorem integral_cexp_wideLayer {U : Type*} [Fintype U] (N : ℕ) (g : (U → �
       exact Finset.sum_congr rfl fun _ _ ↦ by ring
     simp_rw [hF]
     rw [integral_fintype_prod_eq_prod, Fintype.prod_sum_type, mul_comm]
-    simp only [f, μ, integral_cexp_mul_gaussianReal, Finset.univ_unique, Finset.prod_singleton,
+    simp only [f, μ, integral_cexp_mul_gaussian_real, Finset.univ_unique, Finset.prod_singleton,
       mul_pow]
   simp_rw [hinner]
   rw [integral_const_mul]
   congr 1
-  rw [← (measurePreserving_uncurry_pi (κ := Fin N) (U := U) μ).map_eq,
-    integral_map (measurePreserving_uncurry_pi μ).measurable.aemeasurable
+  rw [← (measure_preserving_uncurry_pi (κ := Fin N) (U := U) μ).map_eq,
+    integral_map (measure_preserving_uncurry_pi μ).measurable.aemeasurable
       (Measurable.aestronglyMeasurable (by fun_prop)),
     integral_fintype_prod_eq_prod (f := fun (_ : Fin N) (u : U → ℝ) ↦
       (↑(Real.exp (-(c ^ 2 * g u ^ 2 / 2))) : ℂ)), integral_complex_ofReal, Finset.prod_const,
     Finset.card_univ, Fintype.card_fin]
 
 /-- For `y ≥ 0`, `n (exp(-y/n) - 1) → -y` as `n → ∞`. -/
-private lemma tendsto_natCast_mul_exp_neg_div_sub_one (y : ℝ) :
+private lemma tendsto_nat_cast_mul_exp_neg_div_sub_one (y : ℝ) :
     Tendsto (fun n : ℕ ↦ (n : ℝ) * (Real.exp (-(y / n)) - 1)) atTop (𝓝 (-y)) := by
   have hb : ∀ᶠ n : ℕ in atTop, |(n : ℝ) * (Real.exp (-(y / n)) - 1) - (-y)| ≤ y ^ 2 / n := by
     filter_upwards [eventually_ge_atTop (⌈|y|⌉₊ + 1)] with n hn
@@ -164,7 +165,7 @@ theorem tendsto_integral_exp_neg_div_pow {Ω : Type*} [MeasurableSpace Ω] (μ :
       (𝓝 (-∫ ω, h ω ∂μ)) := by
     simp_rw [key, ← integral_neg]
     refine tendsto_integral_of_dominated_convergence h (fun N ↦ ?_) hh (fun N ↦ ?_)
-      (Eventually.of_forall fun ω ↦ tendsto_natCast_mul_exp_neg_div_sub_one (h ω))
+      (Eventually.of_forall fun ω ↦ tendsto_nat_cast_mul_exp_neg_div_sub_one (h ω))
     · exact (by fun_prop : Continuous fun y : ℝ ↦ (N : ℝ) * (Real.exp (-(y / N)) - 1)
         ).comp_aestronglyMeasurable hh.1
     · refine Eventually.of_forall fun ω ↦ ?_

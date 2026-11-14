@@ -20,6 +20,9 @@ public import CKSD.Inference.ExponentialFamilyMLE
 public import CKSD.Inference.MeanParametrization
 public import CKSD.Inference.ConditionalExponentialFamily
 
+
+namespace CKSD
+
 /-!
 # Section 101: Statistical inference
 
@@ -39,3 +42,6 @@ Entry module for the CKSD formalization of Section 101 (core statistical inferen
   `CKSD.Inference.MeanParametrization`: decision theory, comparison of experiments, Gaussian models,
   and maximum likelihood in natural exponential families (GAPS 101.32–101.42, 101.57–101.69).
 -/
+
+
+end CKSD

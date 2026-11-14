@@ -23,6 +23,12 @@ public import CKSD.Geometry.TransportRates
 public import CKSD.Geometry.SteinDiscrepancy
 public import CKSD.Geometry.RipsStability
 
+
+namespace CKSD
+
 /-! # Section 108: Geometry
 
 Entry module for the CKSD formalization of Section 108. -/
+
+
+end CKSD

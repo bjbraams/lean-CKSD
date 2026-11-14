@@ -1,12 +1,13 @@
 module
+
 public import CKSD.Asymptotics.Statistics
 
 /-!
 # Reference-measure degeneracy for quadratic-mean differentiability
 
-`rnDeriv_count_eq_zero_of_noAtoms` shows that an atomless measure has chosen
+`rn_deriv_count_eq_zero_of_no_atoms` shows that an atomless measure has chosen
 Radon–Nikodym derivative zero relative to counting measure.
-`hasQuadraticMeanDerivAt_of_rnDeriv_eq_zero` shows that the square-root-density
+`has_quadratic_mean_deriv_at_of_rn_deriv_eq_zero` shows that the square-root-density
 remainder then vanishes regardless of the prescribed derivative. These facts explain
 why semiparametric results require a sigma-finite common dominating reference.
 
@@ -22,7 +23,7 @@ namespace CKSD
 
 /-- Relative to counting measure, the chosen Radon–Nikodym derivative of an atomless law is
 zero, even though every law is absolutely continuous with respect to counting measure. -/
-theorem rnDeriv_count_eq_zero_of_noAtoms
+theorem rn_deriv_count_eq_zero_of_no_atoms
     {X : Type*} [MeasurableSpace X] [MeasurableSingletonClass X]
     (P : Measure X) [NullSingletonClass P] : P.rnDeriv Measure.count = 0 := by
   classical
@@ -41,7 +42,7 @@ theorem rnDeriv_count_eq_zero_of_noAtoms
 
 /-- A square-root Radon–Nikodym remainder is vacuous if all chosen reference densities vanish.
 Sigma-finite domination rules out this degeneracy for probability path laws. -/
-theorem hasQuadraticMeanDerivAt_of_rnDeriv_eq_zero
+theorem has_quadratic_mean_deriv_at_of_rn_deriv_eq_zero
     {X E : Type*} [MeasurableSpace X] [AddCommGroup E] [Module ℝ E] [TopologicalSpace E]
     (P : E → Measure X) (ν : Measure X) (θ : E)
     (A : E →ₗ[ℝ] Lp ℝ 2 (P θ)) (hzero : ∀ t, (P t).rnDeriv ν = 0) :

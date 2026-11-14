@@ -5,6 +5,7 @@ public import CKSD.Bayes.EvidenceBounds
 public import CKSD.Bayes.ExponentialTests
 public import Mathlib.Probability.Moments.Variance
 
+
 /-!
 # Quantitative lower bounds for Bayesian evidence
 
@@ -22,8 +23,8 @@ The second-moment convention is `CKSD.logLikelihoodRatioSecondMoment`.
 
 ## Main results
 
-* `CKSD.measure_infinitePi_evidence_lt_le`: a nonasymptotic evidence lower bound.
-* `CKSD.tendsto_infinitePi_evidence_lt_of_secondMoment`: its shrinking-ball consequence.
+* `CKSD.measure_infinite_pi_evidence_lt_le`: a nonasymptotic evidence lower bound.
+* `CKSD.tendsto_infinite_pi_evidence_lt_of_second_moment`: its shrinking-ball consequence.
 -/
 
 @[expose] public section
@@ -84,7 +85,7 @@ theorem measure_sum_lt_neg_two_mul_le {X : Type*} [MeasurableSpace X]
 
 /-- The log-density ratio has a finite second moment when the likelihood-ratio second moment
 used in the posterior contraction hypotheses is finite. -/
-theorem memLp_log_sub_log_of_secondMoment {X : Type*} [MeasurableSpace X]
+theorem mem_lp_log_sub_log_of_second_moment {X : Type*} [MeasurableSpace X]
     {P Q μ : Measure X} [SigmaFinite μ] [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     {p q : X → ℝ} (hP : HasDensity P μ p) (hQ : HasDensity Q μ q)
     (hKL : klDiv P Q ≠ ∞) (hsecond : logLikelihoodRatioSecondMoment P Q ≠ ∞) :
@@ -117,8 +118,8 @@ theorem measure_sum_log_ratio_lt_le {X : Type*} [MeasurableSpace X]
     ne_top_of_le_ne_top ENNReal.ofReal_ne_top hsecond
   let g : X → ℝ := fun x ↦ Real.log (q x) - Real.log (p x)
   have hg : Measurable g := hQ.1.log.sub hP.1.log
-  have hg2 : MemLp g 2 P := memLp_log_sub_log_of_secondMoment hP hQ hKLfin hsecondfin
-  obtain ⟨hint, hmean⟩ := integral_log_sub_log_eq_neg_toReal_klDiv hP hQ hKLfin
+  have hg2 : MemLp g 2 P := mem_lp_log_sub_log_of_second_moment hP hQ hKLfin hsecondfin
+  obtain ⟨hint, hmean⟩ := integral_log_sub_log_eq_neg_to_real_kl_div hP hQ hKLfin
   have hlow : -δ ≤ ∫ x, g x ∂P := by
     rw [hmean]
     have := ENNReal.toReal_mono ENNReal.ofReal_ne_top hKL
@@ -139,14 +140,14 @@ theorem measure_sum_log_ratio_lt_le {X : Type*} [MeasurableSpace X]
     rw [heq]
     exact (ENNReal.toReal_mono ENNReal.ofReal_ne_top hsecond).trans_eq (ENNReal.toReal_ofReal hδ.le)
   have h := measure_sum_lt_neg_two_mul_le P g hg hg2 δ hδ hlow hvar n hn
-  rw [← infinitePi_map_fin_val P n, Measure.map_apply (by fun_prop)
+  rw [← infinite_pi_map_fin_val P n, Measure.map_apply (by fun_prop)
     (measurableSet_lt (by fun_prop) measurable_const)] at h
   simpa only [Set.preimage_ofPred_eq, Finset.sum_range, g] using h
 
 /-- Quantitative evidence lower bound on a KL and log-likelihood second-moment ball.
 For `n > 0`, the evidence is at least half the prior mass of the ball times the true likelihood
 and `exp (-2 n δ)`, except on a set of probability at most `2/(n δ)`. -/
-theorem measure_infinitePi_evidence_lt_le {Θ X : Type*} [MeasurableSpace Θ]
+theorem measure_infinite_pi_evidence_lt_le {Θ X : Type*} [MeasurableSpace Θ]
     [MeasurableSpace X] (π : Measure Θ) [IsFiniteMeasure π] (μ : Measure X) [SigmaFinite μ]
     (P : Θ → Measure X) [∀ θ, IsProbabilityMeasure (P θ)]
     (f : Θ → X → ℝ) (hf : Measurable (Function.uncurry f))
@@ -285,7 +286,7 @@ theorem measure_infinitePi_evidence_lt_le {Θ X : Type*} [MeasurableSpace Θ]
 /-- The evidence lower bound holds with probability tending to one for varying KL and
 second-moment balls of radius `δ n`, provided `n δ n → ∞`. The prior mass of each ball may
 vanish, and no lower bound on that mass is needed for this relative evidence estimate. -/
-theorem tendsto_infinitePi_evidence_lt_of_secondMoment {Θ X : Type*}
+theorem tendsto_infinite_pi_evidence_lt_of_second_moment {Θ X : Type*}
     [MeasurableSpace Θ] [MeasurableSpace X] (π : Measure Θ) [IsFiniteMeasure π]
     (μ : Measure X) [SigmaFinite μ] (P : Θ → Measure X)
     [∀ θ, IsProbabilityMeasure (P θ)] (f : Θ → X → ℝ)
@@ -306,7 +307,7 @@ theorem tendsto_infinitePi_evidence_lt_of_secondMoment {Θ X : Type*}
   apply tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hlim
     (Eventually.of_forall fun n ↦ zero_le)
   filter_upwards [eventually_gt_atTop 0] with n hn
-  exact measure_infinitePi_evidence_lt_le π μ P f hf hdensity θ₀ (hBm n) (δ n) (hδ n)
+  exact measure_infinite_pi_evidence_lt_le π μ P f hf hdensity θ₀ (hBm n) (δ n) (hδ n)
     (hKL n) (hsecond n) n hn
 
 end CKSD

@@ -2,6 +2,7 @@ module
 
 public import CKSD.Asymptotics.Basic
 
+
 /-!
 # Processes: basic definitions
 
@@ -26,9 +27,9 @@ Common notions for Section 106 (dependent data and stochastic models).
 
 * `CKSD.IsWeaklyStationary.inner_eq_inner_sub_zero`: the equivalent form
   `⟪X s, X t⟫ = ⟪X (s - t), X 0⟫`.
-* `CKSD.IsIIDNoise.memLp_two`, `CKSD.IsIIDNoise.integral_eq_zero'`,
+* `CKSD.IsIIDNoise.mem_lp_two`, `CKSD.IsIIDNoise.integral_eq_zero'`,
   `CKSD.IsIIDNoise.integral_sq'`: the moments of every term, not only of `Z 0`.
-* `CKSD.memLp_id_two_of_variance_pos`: a law with positive variance is square integrable.
+* `CKSD.mem_lp_id_two_of_variance_pos`: a law with positive variance is square integrable.
 
 ## Conventions
 
@@ -67,7 +68,7 @@ theorem IsWeaklyStationary.inner_eq_inner_sub_zero {𝕜 H : Type*} [RCLike 𝕜
 /-- An iid centred noise sequence on `ℤ` with variance `σ² > 0`: the `Z t` are measurable,
 mutually independent and identically distributed, `𝔼 Z_0 = 0` and `𝔼 Z_0² = σ²`. Square
 integrability is not a separate condition: it follows from `𝔼 Z_0² = σ² ≠ 0`
-(`IsIIDNoise.memLp_two`). -/
+(`IsIIDNoise.mem_lp_two`). -/
 structure IsIIDNoise {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) (Z : ℤ → Ω → ℝ)
     (σsq : ℝ) : Prop where
   /-- Each `Z t` is measurable. -/
@@ -88,31 +89,31 @@ namespace IsIIDNoise
 variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {Z : ℤ → Ω → ℝ} {σsq : ℝ}
 
 /-- Each term of an iid noise sequence has the law of `Z 0`. -/
-theorem identDistrib (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : IdentDistrib (Z t) (Z 0) μ μ :=
+theorem ident_distrib (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : IdentDistrib (Z t) (Z 0) μ μ :=
   ⟨(hZ.measurable t).aemeasurable, (hZ.measurable 0).aemeasurable, hZ.map_eq t⟩
 
 /-- Every term of an iid noise sequence is square integrable. -/
-theorem memLp_two (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : MemLp (Z t) 2 μ := by
+theorem mem_lp_two (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : MemLp (Z t) 2 μ := by
   have h0 : MemLp (Z 0) 2 μ := by
     refine (memLp_two_iff_integrable_sq (hZ.measurable 0).aestronglyMeasurable).2 ?_
     exact Integrable.of_integral_ne_zero (by rw [hZ.integral_sq]; exact hZ.pos.ne')
-  exact (hZ.identDistrib t).memLp_iff.2 h0
+  exact (hZ.ident_distrib t).memLp_iff.2 h0
 
 /-- Every term of an iid noise sequence is centred. -/
 theorem integral_eq_zero' (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : ∫ ω, Z t ω ∂μ = 0 := by
-  rw [(hZ.identDistrib t).integral_eq, hZ.integral_eq_zero]
+  rw [(hZ.ident_distrib t).integral_eq, hZ.integral_eq_zero]
 
 /-- Every term of an iid noise sequence has second moment `σ²`. -/
 theorem integral_sq' (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : ∫ ω, Z t ω ^ 2 ∂μ = σsq := by
   rw [← hZ.integral_sq]
-  exact ((hZ.identDistrib t).comp (measurable_id.pow_const 2)).integral_eq
+  exact ((hZ.ident_distrib t).comp (measurable_id.pow_const 2)).integral_eq
 
 end IsIIDNoise
 
 /-- A real law with positive variance has a finite second moment: `0 < Var(P)` forces the
 integrand `(x - 𝔼x)²` to be integrable, since a Bochner integral of a non-integrable function
 is `0`. -/
-theorem memLp_id_two_of_variance_pos {P : Measure ℝ} [IsProbabilityMeasure P]
+theorem mem_lp_id_two_of_variance_pos {P : Measure ℝ} [IsProbabilityMeasure P]
     (hv : 0 < Var[id; P]) : MemLp id 2 P := by
   rw [variance_eq_integral aemeasurable_id] at hv
   have hint : Integrable (fun x : ℝ ↦ (x - ∫ y, id y ∂P) ^ 2) P :=

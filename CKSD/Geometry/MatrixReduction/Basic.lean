@@ -4,6 +4,7 @@ public import Mathlib.LinearAlgebra.Matrix.Rank
 public import Mathlib.LinearAlgebra.Matrix.Block
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 
+
 /-!
 # Column reductions of finite matrices
 
@@ -13,13 +14,13 @@ column operations. These algebraic constructions allow empty index types.
 ## Main definitions
 
 * `CKSD.IsColumnLow`, `CKSD.IsReducedMatrix`, `CKSD.IsMatrixReduction`.
-* `CKSD.lowerLeftPart`, `CKSD.lowerLeftRank`, `CKSD.pairingRankCombination`.
+* `CKSD.lower_left_part`, `CKSD.lowerLeftRank`, `CKSD.pairingRankCombination`.
 
 ## Main results
 
-* `CKSD.lowerLeftRank_eq_of_isMatrixReduction`: lower-left ranks are invariant under reduction.
-* `CKSD.isColumnLow_iff_pairingRankCombination_eq_one`: the pairing lemma (GAPS 108.32).
-* `CKSD.isColumnLow_iff_of_isMatrixReduction`: independence of the reduction (GAPS 108.32).
+* `CKSD.lower_left_rank_eq_of_is_matrix_reduction`: lower-left ranks are invariant under reduction.
+* `CKSD.is_column_low_iff_pairing_rank_combination_eq_one`: the pairing lemma (GAPS 108.32).
+* `CKSD.is_column_low_iff_of_is_matrix_reduction`: independence of the reduction (GAPS 108.32).
 -/
 
 @[expose] public section
@@ -55,12 +56,12 @@ structure IsMatrixReduction (D R V : Matrix (Fin m) (Fin m) 𝕜) : Prop where
   reduced : IsReducedMatrix R
 
 /-- The lower-left part of `D`: rows with index at least `a`, columns with index below `b`. -/
-def lowerLeftPart (D : Matrix (Fin m) (Fin m) 𝕜) (a b : ℕ) : Matrix (Fin m) (Fin m) 𝕜 :=
+def lower_left_part (D : Matrix (Fin m) (Fin m) 𝕜) (a b : ℕ) : Matrix (Fin m) (Fin m) 𝕜 :=
   Matrix.of fun k l ↦ if a ≤ k.val ∧ l.val < b then D k l else 0
 
 /-- Rank of the lower-left submatrix of rows `a, a+1, …` and columns `0, …, b-1`. -/
 def lowerLeftRank (D : Matrix (Fin m) (Fin m) 𝕜) (a b : ℕ) : ℕ :=
-  (lowerLeftPart D a b).rank
+  (lower_left_part D a b).rank
 
 /-- A column has at most one low. -/
 theorem IsColumnLow.unique {R : Matrix (Fin m) (Fin m) 𝕜} {i i' j : Fin m}
@@ -71,7 +72,7 @@ theorem IsColumnLow.unique {R : Matrix (Fin m) (Fin m) 𝕜} {i i' j : Fin m}
   · exact absurd (h'.2 i hgt) h.1
 
 /-- A nonzero column has a low. -/
-theorem exists_isColumnLow_of_ne_zero {R : Matrix (Fin m) (Fin m) 𝕜} {j : Fin m}
+theorem exists_is_column_low_of_ne_zero {R : Matrix (Fin m) (Fin m) 𝕜} {j : Fin m}
     (h : ∃ k, R k j ≠ 0) : ∃ i, IsColumnLow R i j := by
   classical
   obtain ⟨k, hk⟩ := h
@@ -85,16 +86,16 @@ theorem exists_isColumnLow_of_ne_zero {R : Matrix (Fin m) (Fin m) 𝕜} {j : Fin
     exact absurd hk' (not_lt.mpr this)
 
 /-- Masking is multiplication by diagonal projections on both sides. -/
-theorem lowerLeftPart_eq_mul (D : Matrix (Fin m) (Fin m) 𝕜) (a b : ℕ) :
-    lowerLeftPart D a b =
+theorem lower_left_part_eq_mul (D : Matrix (Fin m) (Fin m) 𝕜) (a b : ℕ) :
+    lower_left_part D a b =
       diagonal (fun k : Fin m ↦ if a ≤ k.val then (1 : 𝕜) else 0) * D *
         diagonal (fun l : Fin m ↦ if l.val < b then (1 : 𝕜) else 0) := by
   ext k l
-  simp only [lowerLeftPart, of_apply, mul_diagonal, diagonal_mul]
+  simp only [lower_left_part, of_apply, mul_diagonal, diagonal_mul]
   by_cases ha : a ≤ k.val <;> by_cases hb : l.val < b <;> simp [ha, hb]
 
 /-- Right multiplication by an upper triangular matrix does not raise lower-left ranks. -/
-theorem lowerLeftRank_mul_le (A V : Matrix (Fin m) (Fin m) 𝕜) (hV : V.BlockTriangular id)
+theorem lower_left_rank_mul_le (A V : Matrix (Fin m) (Fin m) 𝕜) (hV : V.BlockTriangular id)
     (a b : ℕ) : lowerLeftRank (A * V) a b ≤ lowerLeftRank A a b := by
   set P := diagonal (fun k : Fin m ↦ if a ≤ k.val then (1 : 𝕜) else 0)
   set Q := diagonal (fun l : Fin m ↦ if l.val < b then (1 : 𝕜) else 0)
@@ -110,8 +111,8 @@ theorem lowerLeftRank_mul_le (A V : Matrix (Fin m) (Fin m) 𝕜) (hV : V.BlockTr
         have : k.val < b := lt_of_le_of_lt hk hl
         simp [hl, this]
     · simp [hl]
-  have : lowerLeftPart (A * V) a b = lowerLeftPart A a b * (V * Q) := by
-    rw [lowerLeftPart_eq_mul, lowerLeftPart_eq_mul]
+  have : lower_left_part (A * V) a b = lower_left_part A a b * (V * Q) := by
+    rw [lower_left_part_eq_mul, lower_left_part_eq_mul]
     change P * (A * V) * Q = P * A * Q * (V * Q)
     calc P * (A * V) * Q = P * A * (V * Q) := by simp only [Matrix.mul_assoc]
       _ = P * A * (Q * V * Q) := by rw [hVQ]
@@ -121,7 +122,7 @@ theorem lowerLeftRank_mul_le (A V : Matrix (Fin m) (Fin m) 𝕜) (hV : V.BlockTr
   exact rank_mul_le_left _ _
 
 /-- Lower-left ranks are invariant under a column reduction. -/
-theorem lowerLeftRank_eq_of_isMatrixReduction {D R V : Matrix (Fin m) (Fin m) 𝕜}
+theorem lower_left_rank_eq_of_is_matrix_reduction {D R V : Matrix (Fin m) (Fin m) 𝕜}
     (h : IsMatrixReduction D R V) (a b : ℕ) : lowerLeftRank R a b = lowerLeftRank D a b := by
   have hdet : IsUnit V.det := by
     rw [det_of_isUpperTriangular h.upperTriangular]
@@ -130,14 +131,14 @@ theorem lowerLeftRank_eq_of_isMatrixReduction {D R V : Matrix (Fin m) (Fin m) �
   have hinv : V⁻¹.BlockTriangular id := blockTriangular_inv_of_blockTriangular h.upperTriangular
   apply le_antisymm
   · rw [h.eq_mul]
-    exact lowerLeftRank_mul_le D V h.upperTriangular a b
+    exact lower_left_rank_mul_le D V h.upperTriangular a b
   · have hD : D = R * V⁻¹ := by
       rw [h.eq_mul, Matrix.mul_assoc, mul_nonsing_inv V hdet, Matrix.mul_one]
     conv_lhs => rw [hD]
-    exact lowerLeftRank_mul_le R V⁻¹ hinv a b
+    exact lower_left_rank_mul_le R V⁻¹ hinv a b
 
 /-- The rank of a reduced matrix is the number of its nonzero columns. -/
-theorem rank_eq_card_of_isReducedMatrix {M : Matrix (Fin m) (Fin m) 𝕜}
+theorem rank_eq_card_of_is_reduced_matrix {M : Matrix (Fin m) (Fin m) 𝕜}
     (hM : IsReducedMatrix M) :
     M.rank = Fintype.card {l : Fin m // ∃ i, IsColumnLow M i l} := by
   classical
@@ -184,7 +185,7 @@ theorem rank_eq_card_of_isReducedMatrix {M : Matrix (Fin m) (Fin m) 𝕜}
       · have : Mᵀ l = 0 := by
           ext k
           by_contra hk
-          exact hl (exists_isColumnLow_of_ne_zero ⟨k, by simpa using hk⟩)
+          exact hl (exists_is_column_low_of_ne_zero ⟨k, by simpa using hk⟩)
         rw [this]
         exact Submodule.zero_mem _
     · rw [Submodule.span_le]
@@ -193,9 +194,9 @@ theorem rank_eq_card_of_isReducedMatrix {M : Matrix (Fin m) (Fin m) 𝕜}
   rw [hspan, finrank_span_eq_card hli]
 
 /-- Lows of the masked matrix are the lows of the original in the masked region. -/
-theorem isColumnLow_lowerLeftPart_iff {R : Matrix (Fin m) (Fin m) 𝕜} {a b : ℕ} {i l : Fin m} :
-    IsColumnLow (lowerLeftPart R a b) i l ↔ (l.val < b ∧ a ≤ i.val ∧ IsColumnLow R i l) := by
-  simp only [IsColumnLow, lowerLeftPart, of_apply]
+theorem is_column_low_lower_left_part_iff {R : Matrix (Fin m) (Fin m) 𝕜} {a b : ℕ} {i l : Fin m} :
+    IsColumnLow (lower_left_part R a b) i l ↔ (l.val < b ∧ a ≤ i.val ∧ IsColumnLow R i l) := by
+  simp only [IsColumnLow, lower_left_part, of_apply]
   constructor
   · rintro ⟨hne, hzero⟩
     have hab : a ≤ i.val ∧ l.val < b := by
@@ -210,23 +211,23 @@ theorem isColumnLow_lowerLeftPart_iff {R : Matrix (Fin m) (Fin m) 𝕜} {a b : �
     simp [hzero k hk]
 
 /-- A masked reduced matrix is reduced. -/
-theorem IsReducedMatrix.lowerLeftPart {R : Matrix (Fin m) (Fin m) 𝕜} (hR : IsReducedMatrix R)
-    (a b : ℕ) : IsReducedMatrix (lowerLeftPart R a b) := by
+theorem IsReducedMatrix.lower_left_part {R : Matrix (Fin m) (Fin m) 𝕜} (hR : IsReducedMatrix R)
+    (a b : ℕ) : IsReducedMatrix (lower_left_part R a b) := by
   intro i j j' hj hj'
-  rw [isColumnLow_lowerLeftPart_iff] at hj hj'
+  rw [is_column_low_lower_left_part_iff] at hj hj'
   exact hR i j j' hj.2.2 hj'.2.2
 
 /-- Lower-left ranks of a reduced matrix count the columns with low in the region. -/
-theorem lowerLeftRank_eq_card_of_isReducedMatrix {R : Matrix (Fin m) (Fin m) 𝕜}
+theorem lower_left_rank_eq_card_of_is_reduced_matrix {R : Matrix (Fin m) (Fin m) 𝕜}
     (hR : IsReducedMatrix R) (a b : ℕ) :
     lowerLeftRank R a b =
       (Finset.univ.filter fun l : Fin m ↦ l.val < b ∧ ∃ i, a ≤ i.val ∧ IsColumnLow R i l).card := by
   classical
   unfold lowerLeftRank
-  rw [rank_eq_card_of_isReducedMatrix (hR.lowerLeftPart a b), Fintype.card_subtype]
+  rw [rank_eq_card_of_is_reduced_matrix (hR.lower_left_part a b), Fintype.card_subtype]
   congr 1
   ext l
-  simp only [Finset.mem_filter, Finset.mem_univ, true_and, isColumnLow_lowerLeftPart_iff]
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and, is_column_low_lower_left_part_iff]
   constructor
   · rintro ⟨i, hb, ha, hi⟩
     exact ⟨hb, i, ha, hi⟩
@@ -241,13 +242,13 @@ def pairingRankCombination (D : Matrix (Fin m) (Fin m) 𝕜) (i j : Fin m) : ℤ
     lowerLeftRank D (i.val + 1) j.val - lowerLeftRank D i.val j.val
 
 /-- The pairing combination of ranks is the indicator of the lows of any column reduction. -/
-theorem pairingRankCombination_eq_ite {D R V : Matrix (Fin m) (Fin m) 𝕜}
+theorem pairing_rank_combination_eq_ite {D R V : Matrix (Fin m) (Fin m) 𝕜}
     (h : IsMatrixReduction D R V) (i j : Fin m) :
     pairingRankCombination D i j = if IsColumnLow R i j then 1 else 0 := by
   classical
   unfold pairingRankCombination
-  simp only [← lowerLeftRank_eq_of_isMatrixReduction h,
-    lowerLeftRank_eq_card_of_isReducedMatrix h.reduced, Finset.card_filter]
+  simp only [← lower_left_rank_eq_of_is_matrix_reduction h,
+    lower_left_rank_eq_card_of_is_reduced_matrix h.reduced, Finset.card_filter]
   push_cast
   rw [← Finset.sum_sub_distrib, ← Finset.sum_add_distrib, ← Finset.sum_sub_distrib]
   rw [Finset.sum_eq_single j]
@@ -292,23 +293,23 @@ theorem pairingRankCombination_eq_ite {D R V : Matrix (Fin m) (Fin m) 𝕜}
 /-- GAPS 108.32, the pairing lemma: for every column reduction `R = D V` of a square matrix over a
 field, row `i` is the low of column `j` of `R` exactly when the alternating combination of ranks
 of lower-left submatrices of `D` equals `1`. In particular the pairing does not depend on the
-reduction (`isColumnLow_iff_of_isMatrixReduction`). The statement holds for every square matrix,
+reduction (`is_column_low_iff_of_is_matrix_reduction`). The statement holds for every square matrix,
 so it covers boundary matrices over `ℤ/2` and signed boundary matrices over any field. Indices
 start at `0`; the homological reading of the pairs is
-`CKSD.IsColumnLow.dim_eq_and_persistentBettiOfMatrix_eq` and
-`CKSD.persistentBettiOfMatrix_eq_card`. -/
-theorem isColumnLow_iff_pairingRankCombination_eq_one {D R V : Matrix (Fin m) (Fin m) 𝕜}
+`CKSD.IsColumnLow.dim_eq_and_persistent_betti_of_matrix_eq` and
+`CKSD.persistent_betti_of_matrix_eq_card`. -/
+theorem is_column_low_iff_pairing_rank_combination_eq_one {D R V : Matrix (Fin m) (Fin m) 𝕜}
     (h : IsMatrixReduction D R V) (i j : Fin m) :
     IsColumnLow R i j ↔ pairingRankCombination D i j = 1 := by
-  rw [pairingRankCombination_eq_ite h]
+  rw [pairing_rank_combination_eq_ite h]
   split_ifs with hlow <;> simp [hlow]
 
 /-- GAPS 108.32: the pairing is independent of the chosen reduction: for two column reductions
 `R = D V` and `R' = D V'` of the same matrix, `R` and `R'` have the same column lows. -/
-theorem isColumnLow_iff_of_isMatrixReduction {D R V R' V' : Matrix (Fin m) (Fin m) 𝕜}
+theorem is_column_low_iff_of_is_matrix_reduction {D R V R' V' : Matrix (Fin m) (Fin m) 𝕜}
     (h : IsMatrixReduction D R V) (h' : IsMatrixReduction D R' V') (i j : Fin m) :
     IsColumnLow R i j ↔ IsColumnLow R' i j := by
-  rw [isColumnLow_iff_pairingRankCombination_eq_one h,
-    isColumnLow_iff_pairingRankCombination_eq_one h']
+  rw [is_column_low_iff_pairing_rank_combination_eq_one h,
+    is_column_low_iff_pairing_rank_combination_eq_one h']
 
 end CKSD

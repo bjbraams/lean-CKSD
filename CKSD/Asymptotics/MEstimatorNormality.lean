@@ -8,6 +8,7 @@ import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Order
 import Mathlib.Analysis.Matrix.Order
 import TauCeti.Probability.Distributions.Gaussian.Affine
 
+
 /-!
 # Rate and local normality of M-estimators
 
@@ -18,7 +19,7 @@ curvature, and the quality of the empirical optimization. The fixed-design conve
 
 ## Main results
 
-* `CKSD.mEstimator_asymptotic_linearization_and_normality`: asymptotic linearization and
+* `CKSD.m_estimator_asymptotic_linearization_and_normality`: asymptotic linearization and
   normality of M-estimators (GAPS 102.24).
 
 ## References
@@ -46,8 +47,8 @@ attribute [local instance] Classical.propDecidable
 open scoped MatrixOrder in
 /-- A negative definite matrix `V` has a uniformly negative quadratic form:
 `⟪h, V h⟫ ≤ -c ‖h‖²` for some `c > 0`. The spectral bound is the argument of
-`exists_pos_posSemidef_sub_smul_one` in `CKSD.LinearModels.Decomposable`. -/
-private theorem exists_pos_inner_toEuclideanCLM_le {d : ℕ} {V : Matrix (Fin d) (Fin d) ℝ}
+`exists_pos_pos_semidef_sub_smul_one` in `CKSD.LinearModels.Decomposable`. -/
+private theorem exists_pos_inner_to_euclidean_clm_le {d : ℕ} {V : Matrix (Fin d) (Fin d) ℝ}
     (hV : (-V).PosDef) :
     ∃ c > 0, ∀ h : EuclideanSpace ℝ (Fin d),
       inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) ≤ -(c * ‖h‖ ^ 2) := by
@@ -73,7 +74,7 @@ private theorem exists_pos_inner_toEuclideanCLM_le {d : ℕ} {V : Matrix (Fin d)
 
 /-- The empirical criterion in terms of the empirical process:
 `Mₙ θ = ∫ f θ dP + n^{-1/2} Gₙ (f θ)` for `n ≥ 1`. -/
-private theorem empiricalCriterion_eq_integral_add {Ω X Θ : Type*} [MeasurableSpace X]
+private theorem empirical_criterion_eq_integral_add {Ω X Θ : Type*} [MeasurableSpace X]
     (P : Measure X) (f : Θ → X → ℝ) (Xn : ℕ → Ω → X) {n : ℕ} (hn : 0 < n) (ω : Ω) (θ : Θ) :
     empiricalCriterion f Xn n ω θ =
       ∫ x, f θ x ∂P + (Real.sqrt n)⁻¹ * empiricalProcess P Xn n (f θ) ω := by
@@ -85,7 +86,7 @@ private theorem empiricalCriterion_eq_integral_add {Ω X Θ : Type*} [Measurable
   ring
 
 /-- Tail of a geometric series: `∑_{j ∈ [a, b]} ρʲ ≤ ρᵃ / (1 - ρ)` for `0 ≤ ρ < 1`. -/
-private theorem sum_Icc_pow_le {ρ : ℝ} (h0 : 0 ≤ ρ) (h1 : ρ < 1) (a b : ℕ) :
+private theorem sum_icc_pow_le {ρ : ℝ} (h0 : 0 ≤ ρ) (h1 : ρ < 1) (a b : ℕ) :
     ∑ j ∈ Finset.Icc a b, ρ ^ j ≤ ρ ^ a / (1 - ρ) := by
   rw [← Finset.Ico_add_one_right_eq_Icc, Finset.sum_Ico_eq_sum_range]
   simp only [pow_add, ← Finset.mul_sum]
@@ -168,11 +169,11 @@ private theorem sqrt_mul_norm_sub_le_of_shell {d : ℕ} (G : EuclideanSpace ℝ 
     nlinarith
   have hjr : sd * (2 ^ (j + 1) / s) < r₀ := by nlinarith
   have hTc : θ ∈ centredCube θ₀ (2 ^ (j + 1) / s) := by
-    refine mem_centredCube_of_norm_sub_lt ?_
+    refine mem_centred_cube_of_norm_sub_lt ?_
     rw [lt_div_iff₀ hs, pow_succ]
     nlinarith [norm_nonneg (θ - θ₀)]
   have hθc : θ₀ ∈ centredCube θ₀ (2 ^ (j + 1) / s) :=
-    mem_centredCube_of_norm_sub_lt (by rw [sub_self, norm_zero]; exact hρ0)
+    mem_centred_cube_of_norm_sub_lt (by rw [sub_self, norm_zero]; exact hρ0)
   have hb1 := hshell j hJj hjM hjr _ hTc
   have hb2 := hshell j hJj hjM hjr _ hθc
   set ρ : ℝ := 2 ^ (j + 1) / s with hρ
@@ -194,8 +195,8 @@ Lipschitz near `θ₀` with a square-integrable envelope, whose population crite
 quadratically, `∫ f θ - ∫ f θ₀ ≤ -c ‖θ - θ₀‖²` near `θ₀`, a consistent approximate maximizer
 with optimization error `o_P(1/n)` satisfies `√n ‖Tₙ - θ₀‖ = O_P(1)`. The proof is the peeling
 argument of van der Vaart, *Asymptotic Statistics*, Theorem 5.52, with the shell probabilities
-controlled by the maximal inequality `measureReal_exists_abs_empiricalProcess_sub_gt_le`. -/
-private theorem exists_measureReal_lt_sqrt_mul_norm_sub_le {Ω X : Type*} [MeasurableSpace Ω]
+controlled by the maximal inequality `measure_real_exists_abs_empirical_process_sub_gt_le`. -/
+private theorem exists_measure_real_lt_sqrt_mul_norm_sub_le {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] {d : ℕ} (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X)
     [IsProbabilityMeasure P] (Xn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ Xn P)
     (f : EuclideanSpace ℝ (Fin d) → X → ℝ) (θ₀ : EuclideanSpace ℝ (Fin d)) {r₀ : ℝ}
@@ -250,7 +251,7 @@ private theorem exists_measureReal_lt_sqrt_mul_norm_sub_le {Ω X : Type*} [Measu
     gcongr
     rw [← Real.exp_nat_mul, Real.exp_le_exp, mul_neg, neg_le_neg_iff]
     have hj : ((j + 1 : ℕ) : ℝ) ≤ 2 ^ j := by exact_mod_cast Nat.lt_two_pow_self
-    have := mul_bernsteinExponent_le (β := β) (γ := 2 * 1 / 3) (t := a) (c := 2 ^ j) hβ0
+    have := mul_bernstein_exponent_le (β := β) (γ := 2 * 1 / 3) (t := a) (c := 2 ^ j) hβ0
       (by norm_num) ha0.le (one_le_pow₀ (by norm_num))
     calc ((j + 1 : ℕ) : ℝ) * φ a ≤ 2 ^ j * φ a := by gcongr
       _ ≤ φ (a * 2 ^ j) := by rw [mul_comm a]; exact this
@@ -279,8 +280,8 @@ private theorem exists_measureReal_lt_sqrt_mul_norm_sub_le {Ω X : Type*} [Measu
   obtain ⟨J₁, hJ₁⟩ := eventually_atTop.1 (hev1.and hev2)
   obtain ⟨J₀, hJ₀3, hJ₀1⟩ := (hev3.and (eventually_ge_atTop J₁)).exists
   refine ⟨2 ^ J₀, ?_⟩
-  have hrem := tendstoInMeasure_lipschitzChainRemainder μ P Xn hiid L hLm hL0 hL2 one_pos
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hrem hcons hr
+  have hrem := tendsto_in_measure_lipschitz_chain_remainder μ P Xn hiid L hLm hL0 hL2 one_pos
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hrem hcons hr
   filter_upwards [(hcons δ hδ0).eventually (eventually_le_nhds (by positivity : 0 < η / 4)),
     (hr 1 one_pos).eventually (eventually_le_nhds (by positivity : 0 < η / 4)),
     (hrem 1 one_pos).eventually (eventually_le_nhds (by positivity : 0 < η / 4)),
@@ -302,8 +303,8 @@ private theorem exists_measureReal_lt_sqrt_mul_norm_sub_le {Ω X : Type*} [Measu
     have hρ0 : 0 < ρj j := by positivity
     have hball : ∀ θ ∈ centredCube θ₀ (ρj j), θ ∈ Metric.ball θ₀ r₀ := fun θ hθ ↦ by
       rw [Metric.mem_ball, dist_eq_norm]
-      exact (norm_sub_le_of_mem_centredCube hθ).trans_lt hj.2
-    have hmax := measureReal_exists_abs_empiricalProcess_sub_gt_le μ P Xn hiid f (anc j)
+      exact (norm_sub_le_of_mem_centred_cube hθ).trans_lt hj.2
+    have hmax := measure_real_exists_abs_empirical_process_sub_gt_le μ P Xn hiid f (anc j)
       (w := 2 * ρj j) (by positivity) (fun θ hθ ↦ hfm θ (hball θ hθ))
       (fun θ hθ ↦ hfi θ (hball θ hθ)) L hLm hL0 hL2
       (fun u hu v hv x ↦ hlip u (hball u hu) v (hball v hv) x) one_pos hn1
@@ -329,8 +330,8 @@ private theorem exists_measureReal_lt_sqrt_mul_norm_sub_le {Ω X : Type*} [Measu
     rw [Real.dist_eq, sub_zero] at hrω hRω
     -- The optimality inequality in terms of the empirical process.
     have hcrit := hoptω
-    rw [empiricalCriterion_eq_integral_add P f Xn hn1,
-      empiricalCriterion_eq_integral_add P f Xn hn1]
+    rw [empirical_criterion_eq_integral_add P f Xn hn1,
+      empirical_criterion_eq_integral_add P f Xn hn1]
       at hcrit
     have hcurvT := hcurv (T n ω) (hTδ.trans_lt hδδ₁)
     have hkey : c * ‖T n ω - θ₀‖ ^ 2 ≤ r n ω + (Real.sqrt n)⁻¹ * |G (T n ω) ω - G θ₀ ω| := by
@@ -370,13 +371,13 @@ private theorem exists_measureReal_lt_sqrt_mul_norm_sub_le {Ω X : Type*} [Measu
         _ = 4 * 2 ^ d * ρ * ∑ j ∈ Finset.Icc (J₀ + 1) (M + 1), ρ ^ j := by
           rw [Finset.mul_sum]; exact Finset.sum_congr rfl fun j _ ↦ by ring
         _ ≤ 4 * 2 ^ d * ρ * (ρ ^ (J₀ + 1) / (1 - ρ)) := by
-          gcongr; exact sum_Icc_pow_le hρ0 hρ1 _ _
+          gcongr; exact sum_icc_pow_le hρ0 hρ1 _ _
         _ = 4 * 2 ^ d * (ρ ^ (J₀ + 2) / (1 - ρ)) := by ring
         _ ≤ η / 4 := hJ₀3
     _ = η := by ring
 
 /-- A symmetric matrix gives a symmetric bilinear form: `⟪x, V y⟫ = ⟪y, V x⟫`. -/
-private theorem inner_toEuclideanCLM_comm {d : ℕ} {V : Matrix (Fin d) (Fin d) ℝ}
+private theorem inner_to_euclidean_clm_comm {d : ℕ} {V : Matrix (Fin d) (Fin d) ℝ}
     (hV : V.transpose = V) (x y : EuclideanSpace ℝ (Fin d)) :
     inner ℝ x (Matrix.toEuclideanCLM (𝕜 := ℝ) V y) =
       inner ℝ y (Matrix.toEuclideanCLM (𝕜 := ℝ) V x) := by
@@ -392,13 +393,13 @@ private theorem quadratic_sub_eq {d : ℕ} {V : Matrix (Fin d) (Fin d) ℝ} (hV 
       (inner ℝ hh (Matrix.toEuclideanCLM (𝕜 := ℝ) V hh) / 2 + inner ℝ hh Δ) =
       inner ℝ (h - hh) (Matrix.toEuclideanCLM (𝕜 := ℝ) V (h - hh)) / 2 := by
   have hΔ : Δ = -Matrix.toEuclideanCLM (𝕜 := ℝ) V hh := by rw [hhΔ, neg_neg]
-  have hsym := inner_toEuclideanCLM_comm hV hh h
+  have hsym := inner_to_euclidean_clm_comm hV hh h
   rw [map_sub, inner_sub_left, inner_sub_right, inner_sub_right, hΔ, inner_neg_right,
     inner_neg_right, hsym]
   ring
 
 /-- The scaled quadratic form: `⟪c h, V (c h)⟫ = c² ⟪h, V h⟫`. -/
-private theorem inner_smul_toEuclideanCLM_smul {d : ℕ} (V : Matrix (Fin d) (Fin d) ℝ) (c : ℝ)
+private theorem inner_smul_to_euclidean_clm_smul {d : ℕ} (V : Matrix (Fin d) (Fin d) ℝ) (c : ℝ)
     (h : EuclideanSpace ℝ (Fin d)) :
     inner ℝ (c • h) (Matrix.toEuclideanCLM (𝕜 := ℝ) V (c • h)) =
       c ^ 2 * inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) := by
@@ -407,13 +408,13 @@ private theorem inner_smul_toEuclideanCLM_smul {d : ℕ} (V : Matrix (Fin d) (Fi
 
 /-- The rescaled criterion difference in terms of the population criterion and the empirical
 process: `n (Mₙ(θ₀ + h/√n) - Mₙ θ₀) = n (M(θ₀ + h/√n) - M θ₀) + √n (Gₙ(θ₀ + h/√n) - Gₙ θ₀)`. -/
-private theorem nat_mul_empiricalCriterion_sub {Ω X : Type*} [MeasurableSpace X] {d : ℕ}
+private theorem nat_mul_empirical_criterion_sub {Ω X : Type*} [MeasurableSpace X] {d : ℕ}
     (P : Measure X) (f : EuclideanSpace ℝ (Fin d) → X → ℝ) (Xn : ℕ → Ω → X) {n : ℕ}
     (hn : 0 < n) (ω : Ω) (θ θ' : EuclideanSpace ℝ (Fin d)) :
     (n : ℝ) * (empiricalCriterion f Xn n ω θ - empiricalCriterion f Xn n ω θ') =
       n * (∫ x, f θ x ∂P - ∫ x, f θ' x ∂P) + Real.sqrt n *
         (empiricalProcess P Xn n (f θ) ω - empiricalProcess P Xn n (f θ') ω) := by
-  rw [empiricalCriterion_eq_integral_add P f Xn hn, empiricalCriterion_eq_integral_add P f Xn hn]
+  rw [empirical_criterion_eq_integral_add P f Xn hn, empirical_criterion_eq_integral_add P f Xn hn]
   have hsn : 0 < Real.sqrt n := Real.sqrt_pos.2 (by exact_mod_cast hn)
   have e : (n : ℝ) * (Real.sqrt n)⁻¹ = Real.sqrt n := by
     calc (n : ℝ) * (Real.sqrt n)⁻¹ = (Real.sqrt n * Real.sqrt n) * (Real.sqrt n)⁻¹ := by
@@ -442,7 +443,7 @@ private theorem half_mul_norm_sub_sq_le {d : ℕ} {V : Matrix (Fin d) (Fin d) �
   nlinarith
 
 /-- `V V⁻¹ = 1` on vectors, for an invertible (here negative definite) matrix. -/
-private theorem toEuclideanCLM_toEuclideanCLM_inv {d : ℕ} {V : Matrix (Fin d) (Fin d) ℝ}
+private theorem to_euclidean_clm_to_euclidean_clm_inv {d : ℕ} {V : Matrix (Fin d) (Fin d) ℝ}
     (hV : (-V).PosDef) (y : EuclideanSpace ℝ (Fin d)) :
     Matrix.toEuclideanCLM (𝕜 := ℝ) V (Matrix.toEuclideanCLM (𝕜 := ℝ) V⁻¹ y) = y := by
   have hU : IsUnit V := by simpa using hV.isUnit.neg
@@ -453,7 +454,7 @@ private theorem toEuclideanCLM_toEuclideanCLM_inv {d : ℕ} {V : Matrix (Fin d) 
 
 /-- Rescaling a quadratic expansion: if `|F v - ⟪v, V v⟫ / 2| ≤ κ ‖v‖²` for `‖v‖ < δq` and
 `n^{-1/2} R < δq`, then `|n F(n^{-1/2} h) - ⟪h, V h⟫ / 2| ≤ κ R²` for `‖h‖ ≤ R`. -/
-private theorem abs_nat_mul_sub_inner_toEuclideanCLM_le {d : ℕ} (V : Matrix (Fin d) (Fin d) ℝ)
+private theorem abs_nat_mul_sub_inner_to_euclidean_clm_le {d : ℕ} (V : Matrix (Fin d) (Fin d) ℝ)
     (F : EuclideanSpace ℝ (Fin d) → ℝ) {κ δq R : ℝ} (hκ : 0 ≤ κ) {n : ℕ} (hn : 1 ≤ n)
     (hQ : ∀ v : EuclideanSpace ℝ (Fin d), dist v 0 < δq →
       ‖F v - inner ℝ v (Matrix.toEuclideanCLM (𝕜 := ℝ) V v) / 2‖ ≤ κ * ‖‖v‖ ^ 2‖)
@@ -467,7 +468,7 @@ private theorem abs_nat_mul_sub_inner_toEuclideanCLM_le {d : ℕ} (V : Matrix (F
       _ < δq := hnδ
   have hq := hQ _ hv
   rw [Real.norm_eq_abs, norm_pow, norm_norm, norm_smul, Real.norm_eq_abs,
-    abs_of_pos (inv_pos.2 hsn), inner_smul_toEuclideanCLM_smul] at hq
+    abs_of_pos (inv_pos.2 hsn), inner_smul_to_euclidean_clm_smul] at hq
   have hn' : (n : ℝ) * ((Real.sqrt n)⁻¹) ^ 2 = 1 := by
     rw [inv_pow, Real.sq_sqrt (Nat.cast_nonneg _),
       mul_inv_cancel₀ (by positivity : (n : ℝ) ≠ 0)]
@@ -495,11 +496,11 @@ private theorem le_of_half_mul_sq_le {c ε x τ ρ : ℝ} (hc : 0 < c) (hε : 0 
 
 /-- **Asymptotic linearity of Lipschitz M-estimators** (van der Vaart, *Asymptotic Statistics*,
 Theorem 5.23), given the `√n` rate. In the setting of
-`tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner`, with a population
+`tendsto_measure_real_exists_abs_sqrt_mul_empirical_process_sub_sub_inner`, with a population
 criterion that has the quadratic expansion `θ₀ + h ↦ M θ₀ + ⟪h, V h⟫ / 2 + o(‖h‖²)` for a negative
 definite `V`, an approximate maximizer with error `o_P(1/n)` and `√n ‖Tₙ - θ₀‖ = O_P(1)`
 satisfies `√n (Tₙ - θ₀) + V⁻¹ n^{-1/2} ∑ s(Xᵢ) → 0` in probability. -/
-private theorem tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz {Ω X : Type*}
+private theorem tendsto_in_measure_sqrt_smul_sub_add_of_lipschitz {Ω X : Type*}
     [MeasurableSpace Ω] [MeasurableSpace X] {d : ℕ} (μ : Measure Ω) [IsProbabilityMeasure μ]
     (P : Measure X) [IsProbabilityMeasure P] (Xn : ℕ → Ω → X)
     (hiid : IsIndependentIdenticallyDistributed μ Xn P)
@@ -528,7 +529,7 @@ private theorem tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz {Ω X : Type*}
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ Real.sqrt n • (T n ω - θ₀) +
       Matrix.toEuclideanCLM (𝕜 := ℝ) V⁻¹
         ((Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω))) atTop (fun _ ↦ 0) := by
-  obtain ⟨c, hc, hcV⟩ := exists_pos_inner_toEuclideanCLM_le hV
+  obtain ⟨c, hc, hcV⟩ := exists_pos_inner_to_euclidean_clm_le hV
   have hVt : V.transpose = V := by
     have h := hV.isHermitian.eq
     rw [Matrix.conjTranspose_neg, Matrix.conjTranspose_eq_transpose_of_trivial] at h
@@ -538,7 +539,7 @@ private theorem tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz {Ω X : Type*}
   set Vi := Matrix.toEuclideanCLM (𝕜 := ℝ) V⁻¹ with hVi
   set G : ℕ → EuclideanSpace ℝ (Fin d) → Ω → ℝ := fun n θ ω ↦ empiricalProcess P Xn n (f θ) ω
     with hG
-  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  rw [tendsto_in_measure_iff_measure_real_lt_dist]
   intro ε hε
   refine tendsto_zero_of_forall_eventually_le (fun n ↦ measureReal_nonneg) fun η hη ↦ ?_
   obtain ⟨RT, hRT⟩ := hrate (η / 5) (by positivity)
@@ -550,9 +551,9 @@ private theorem tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz {Ω X : Type*}
   set κ : ℝ := τ / (2 * R ^ 2) with hκ
   have hκ0 : 0 < κ := by positivity
   obtain ⟨δq, hδq, hQ⟩ := Metric.eventually_nhds_iff.1 (hquad.def hκ0)
-  have hU := tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner μ P Xn hiid
+  have hU := tendsto_measure_real_exists_abs_sqrt_mul_empirical_process_sub_sub_inner μ P Xn hiid
     f θ₀ hr₀ hfm hfi L hLm hL0 hL2 hlip s hsm hs2 hs0 hd hΔ hR0 (ε := τ / 2) (by positivity)
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hr
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hr
   have hsqrt : Tendsto (fun n : ℕ ↦ (Real.sqrt n)⁻¹) atTop (𝓝 0) :=
     tendsto_inv_atTop_zero.comp (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop)
   filter_upwards [hRT, hK₀, hU.eventually (eventually_le_nhds (by positivity : 0 < η / 5)),
@@ -571,7 +572,7 @@ private theorem tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz {Ω X : Type*}
       |(n : ℝ) * (∫ x, f (θ₀ + (Real.sqrt n)⁻¹ • h) x ∂P - ∫ x, f θ₀ x ∂P) -
         inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) / 2| ≤ τ / 2 := by
     intro h hh
-    refine (abs_nat_mul_sub_inner_toEuclideanCLM_le V
+    refine (abs_nat_mul_sub_inner_to_euclidean_clm_le V
       (fun h ↦ ∫ x, f (θ₀ + h) x ∂P - ∫ x, f θ₀ x ∂P) hκ0.le hn1 hQ hnδ h hh).trans_eq ?_
     simp only [hκ]; field_simp
   have hsub : {ω | ε < dist (Real.sqrt n • (T n ω - θ₀) + Vi (Δ n ω)) 0} ⊆
@@ -609,7 +610,7 @@ private theorem tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz {Ω X : Type*}
         |Φ h - (inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) / 2 + inner ℝ h (Δ n ω))| ≤
           τ := by
       intro h hhR
-      have e := nat_mul_empiricalCriterion_sub P f Xn hn1 ω (θ₀ + (Real.sqrt n)⁻¹ • h) θ₀
+      have e := nat_mul_empirical_criterion_sub P f Xn hn1 ω (θ₀ + (Real.sqrt n)⁻¹ • h) θ₀
       have h1 := hpop h hhR
       have h2 := hUω h hhR
       simp only [hΦ, e]
@@ -631,7 +632,7 @@ private theorem tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz {Ω X : Type*}
       have hn0 : (0 : ℝ) ≤ n := Nat.cast_nonneg _
       nlinarith
     have hhΔ : Matrix.toEuclideanCLM (𝕜 := ℝ) V hh = -Δ n ω := by
-      rw [hhh, map_neg, toEuclideanCLM_toEuclideanCLM_inv hV]
+      rw [hhh, map_neg, to_euclidean_clm_to_euclidean_clm_inv hV]
     have hfinal := half_mul_norm_sub_sq_le hVt hcV hn hh (Δ n ω) hhΔ Φ (happrox hn hhnR)
       (happrox hh hhhR) hoptn
     have hnr : (n : ℝ) * r n ω ≤ τ := (le_abs_self _).trans hrω
@@ -669,7 +670,7 @@ private theorem integral_apply_eq_zero {X : Type*} [MeasurableSpace X] {d : ℕ}
 
 /-- The covariance matrix of the law of a centred square-integrable score is its Fisher
 information matrix `(∫ sᵢ sⱼ dP)ᵢⱼ`. -/
-private theorem covMatrix_map_eq_fisherInformationMatrix {X : Type*} [MeasurableSpace X] {d : ℕ}
+private theorem cov_matrix_map_eq_fisher_information_matrix {X : Type*} [MeasurableSpace X] {d : ℕ}
     (P : Measure X) [IsProbabilityMeasure P] {s : X → EuclideanSpace ℝ (Fin d)} (hsm : Measurable s)
     (hs2 : MemLp s 2 P) (hs0 : ∫ x, s x ∂P = 0) :
     TauCeti.covMatrix (P.map s) = fisherInformationMatrix P s := by
@@ -683,7 +684,7 @@ private theorem covMatrix_map_eq_fisherInformationMatrix {X : Type*} [Measurable
 /-- **Central limit theorem for a centred score.** For i.i.d. observations and a measurable,
 square-integrable, centred score `s`, the normalized score sums `n^{-1/2} ∑ s(Xᵢ)` converge in
 distribution to the centred Gaussian law with covariance the Fisher information matrix. -/
-private theorem tendstoInDistribution_inv_sqrt_smul_sum_score {Ω X : Type*} [MeasurableSpace Ω]
+private theorem tendsto_in_distribution_inv_sqrt_smul_sum_score {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] {d : ℕ} (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X)
     [IsProbabilityMeasure P] (Xn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ Xn P)
     {s : X → EuclideanSpace ℝ (Fin d)} (hsm : Measurable s)
@@ -703,11 +704,11 @@ private theorem tendstoInDistribution_inv_sqrt_smul_sum_score {Ω X : Type*} [Me
   have hYid : ∀ i, IdentDistrib (Y i) (Y 0) μ μ := fun i ↦
     ⟨(hsm.comp (hXm i)).aemeasurable, (hsm.comp (hXm 0)).aemeasurable,
       (hYlaw i).trans (hYlaw 0).symm⟩
-  have hclt := tendstoInDistribution_inv_sqrt_smul_sum_sub_of_iid μ Y h2 hYind hYid
+  have hclt := tendsto_in_distribution_inv_sqrt_smul_sum_sub_of_iid μ Y h2 hYind hYid
   have hmean : ∫ ω, Y 0 ω ∂μ = 0 := by
     rw [hY, ← hs0, ← hlaw 0]
     exact (integral_map (hXm 0).aemeasurable (hlaw 0 ▸ hs2.aestronglyMeasurable)).symm
-  rw [hmean, hYlaw 0, covMatrix_map_eq_fisherInformationMatrix P hsm hs2 hs0] at hclt
+  rw [hmean, hYlaw 0, cov_matrix_map_eq_fisher_information_matrix P hsm hs2 hs0] at hclt
   simpa [hY] using hclt
 
 
@@ -767,7 +768,7 @@ private theorem exists_null_modification {X : Type*} [MeasurableSpace X] {d : �
 /-- GAPS 102.24: local asymptotic linearity and normality of multivariate M-estimators.
 The negative-definite matrix `V` is the Hessian of the population criterion through its
 quadratic little-o expansion. The empirical optimization error is `o_P(1/n)`. -/
-theorem mEstimator_asymptotic_linearization_and_normality
+theorem m_estimator_asymptotic_linearization_and_normality
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X) [IsProbabilityMeasure P]
     (Xn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ Xn P)
@@ -853,7 +854,7 @@ theorem mEstimator_asymptotic_linearization_and_normality
           inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) / 2)
       (fun h : EuclideanSpace ℝ (Fin d) ↦ ‖h‖ ^ 2) := by
     simpa only [populationCriterion, hfint] using hquad
-  obtain ⟨c, hc, hcV⟩ := exists_pos_inner_toEuclideanCLM_le hV
+  obtain ⟨c, hc, hcV⟩ := exists_pos_inner_to_euclidean_clm_le hV
   obtain ⟨δ₁, hδ₁, hQ⟩ := Metric.eventually_nhds_iff.1 (hquadf.def (by positivity : 0 < c / 4))
   have hcurv : ∀ θ, ‖θ - θ₀‖ < δ₁ →
       ∫ x, f θ x ∂P - ∫ x, f θ₀ x ∂P ≤ -(c / 4 * ‖θ - θ₀‖ ^ 2) := by
@@ -864,16 +865,16 @@ theorem mEstimator_asymptotic_linearization_and_normality
     have h3 := le_abs_self (∫ x, f θ x ∂P - ∫ x, f θ₀ x ∂P -
       inner ℝ (θ - θ₀) (Matrix.toEuclideanCLM (𝕜 := ℝ) V (θ - θ₀)) / 2)
     linarith
-  have hclt := tendstoInDistribution_inv_sqrt_smul_sum_score μ P Xn hiid hsm hs2 hs0'
+  have hclt := tendsto_in_distribution_inv_sqrt_smul_sum_score μ P Xn hiid hsm hs2 hs0'
   have hΔ : ∀ η > 0, ∃ K, ∀ᶠ n : ℕ in atTop,
       μ.real {ω | K < ‖(Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω)‖} ≤ η :=
     fun η hη ↦ by
-      obtain ⟨M, -, hM⟩ := exists_measureReal_lt_norm_le_of_tendstoInDistribution μ _ hclt hη
+      obtain ⟨M, -, hM⟩ := exists_measure_real_lt_norm_le_of_tendsto_in_distribution μ _ hclt hη
       exact ⟨M, hM⟩
-  have hrate := exists_measureReal_lt_sqrt_mul_norm_sub_le μ P Xn hiid f θ₀ hr₀ hfm hfi L hLm
+  have hrate := exists_measure_real_lt_sqrt_mul_norm_sub_le μ P Xn hiid f θ₀ hr₀ hfm hfi L hLm
     hL0 hL2 hlipf (by positivity : 0 < c / 4) hδ₁ hcurv T hcons r hr
     (fun n hn ↦ (hoptf n hn).mono fun ω h ↦ h θ₀)
-  have hlin := tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz μ P Xn hiid f θ₀ hr₀ hfm hfi L
+  have hlin := tendsto_in_measure_sqrt_smul_sub_add_of_lipschitz μ P Xn hiid f θ₀ hr₀ hfm hfi L
     hLm hL0 hL2 hlipf s hsm hs2 hs0' hdf hΔ V hV hquadf T hrate r hr hoptf
   refine ⟨hlin.congr' (Eventually.of_forall fun n ↦ ?_) EventuallyEq.rfl, ?_⟩
   · filter_upwards [hgoodω] with ω hω
@@ -885,7 +886,7 @@ theorem mEstimator_asymptotic_linearization_and_normality
     filter_upwards [hsae] with x hx
     rw [hx]
   have hIpsd : (fisherInformationMatrix P s).PosSemidef := by
-    rw [← covMatrix_map_eq_fisherInformationMatrix P hsm hs2 hs0']
+    rw [← cov_matrix_map_eq_fisher_information_matrix P hsm hs2 hs0']
     exact TauCeti.posSemidef_covMatrix _
       ((memLp_map_measure_iff aestronglyMeasurable_id hsm.aemeasurable).2 hs2)
   set g : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d) :=
@@ -896,10 +897,10 @@ theorem mEstimator_asymptotic_linearization_and_normality
   have hlim : TendstoInDistribution (fun (n : ℕ) ↦ g ∘ fun ω ↦
       (Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω)) atTop id (fun _ ↦ μ)
       (multivariateGaussian 0 (V⁻¹ * fisherInformationMatrix P score * (V⁻¹).transpose)) := by
-    refine tendstoInDistribution_of_map_eq hcomp aemeasurable_id ?_
+    refine tendsto_in_distribution_of_map_eq hcomp aemeasurable_id ?_
     rw [Measure.map_id, Function.comp_id, hmap]
     simp [hI, Matrix.transpose_neg]
-  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _ (fun n ↦ ?_)
+  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ _ _ (fun n ↦ ?_)
     (fun n ↦ ?_) hlim ?_
   · have := hiid.1
     exact hgc.measurable.comp (by fun_prop)

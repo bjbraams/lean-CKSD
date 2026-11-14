@@ -2,6 +2,7 @@ module
 
 public import CKSD.Bayes.Basic
 
+
 /-!
 # Gibbs laws, diffusion generators, and discretized Langevin dynamics
 
@@ -25,7 +26,7 @@ laws when the Gaussian increment is integrated out.
 
 ## Main results
 
-* `CKSD.isProbabilityMeasure_gibbsMeasure`: the Gibbs law is a probability measure when `e^{-V}`
+* `CKSD.is_probability_measure_gibbs_measure`: the Gibbs law is a probability measure when `e^{-V}`
   is integrable.
 -/
 
@@ -39,7 +40,7 @@ open scoped NNReal ENNReal Topology BigOperators ContDiff
 namespace CKSD
 
 /-- Gibbs law `e^{-V(x)} dx / Z` with partition integral `Z = ∫ e^{-V}`. It is a probability
-measure when `e^{-V}` is integrable (`isProbabilityMeasure_gibbsMeasure`); otherwise the Bochner
+measure when `e^{-V}` is integrable (`is_probability_measure_gibbs_measure`); otherwise the Bochner
 integral `Z` is zero and the definition carries no meaning. -/
 def gibbsMeasure {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ) :
     Measure (EuclideanSpace ℝ (Fin d)) :=
@@ -47,7 +48,7 @@ def gibbsMeasure {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ) :
   volume.withDensity (fun x ↦ ENNReal.ofReal (Real.exp (-V x) / Z))
 
 /-- If `e^{-V}` is integrable, the Gibbs law is a probability measure. -/
-theorem isProbabilityMeasure_gibbsMeasure {d : ℕ} {V : EuclideanSpace ℝ (Fin d) → ℝ}
+theorem is_probability_measure_gibbs_measure {d : ℕ} {V : EuclideanSpace ℝ (Fin d) → ℝ}
     (hV : Integrable (fun x ↦ Real.exp (-V x))) : IsProbabilityMeasure (gibbsMeasure V) := by
   have hZ : 0 < ∫ x, Real.exp (-V x) :=
     integral_exp_pos (μ := volume) (f := fun x ↦ -V x) hV

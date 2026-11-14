@@ -6,6 +6,7 @@ public import Mathlib.MeasureTheory.Integral.DominatedConvergence
 public import Mathlib.MeasureTheory.Function.StronglyMeasurable.Basic
 public import TauCeti.Analysis.ODE.Gronwall
 
+
 /-!
 # Synchronous coupling for bounded Lipschitz interactions
 
@@ -59,7 +60,7 @@ theorem norm_integral_interaction_le {Ω E : Type*} [MeasurableSpace Ω]
 
 /-- Two integral equations with the same additive forcing and bounded interaction terms differ
 by a deterministic bound, independent of their initial data and the forcing. -/
-theorem norm_sub_le_of_bounded_interactions_on_Icc {E : Type*}
+theorem norm_sub_le_of_bounded_interactions_on_icc {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     (b₀ : E → E) {L : ℝ≥0} (hb₀ : LipschitzWith L b₀)
     (v w : ℝ → E → E) (hv : Continuous (Function.uncurry v))
@@ -119,7 +120,7 @@ theorem norm_sub_le_of_bounded_interactions {E : Type*}
       (b₀ (x s) + v s (x s)) - (b₀ (y s) + w s (y s)))
     {T : ℝ} (hT : 0 ≤ T) :
     ∀ t ∈ Icc (0 : ℝ) T, ‖x t - y t‖ ≤ 2 * κ * T * Real.exp (L * T) := by
-  exact norm_sub_le_of_bounded_interactions_on_Icc b₀ hb₀ v w hv hw hκ hvb hwb x y hx hy hT
+  exact norm_sub_le_of_bounded_interactions_on_icc b₀ hb₀ v w hv hw hκ hvb hwb x y hx hy hT
     (fun t ht ↦ heq t ht.1)
 
 /-- Coupling the variables inside the interaction bounds the difference of their averaged
@@ -155,7 +156,7 @@ theorem norm_integral_interaction_sub_le {Ω E : Type*} [MeasurableSpace Ω]
 
 /-- A process with measurable time sections and almost surely continuous paths is jointly
 almost everywhere strongly measurable on every product with a time measure. -/
-theorem aestronglyMeasurable_uncurry_of_ae_continuous {Ω E : Type*} [MeasurableSpace Ω]
+theorem aestrongly_measurable_uncurry_of_ae_continuous {Ω E : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup E] [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure Ω) (ν : Measure ℝ) (Y : ℝ → Ω → E) (hY : ∀ t, Measurable (Y t))
     (hcont : ∀ᵐ ω ∂P, Continuous (fun t ↦ Y t ω)) :
@@ -209,7 +210,7 @@ theorem ae_eq_zero_of_le_integral_add_integral_mean_of_integrable_bound {Ω : Ty
   have hmean (t : ℝ) (ht : t ∈ Icc 0 T) : F t ≤ (A + B) * ∫ s in (0 : ℝ)..t, F s := by
     let ν := volume.restrict (Ioc (0 : ℝ) t)
     have hprod : Integrable (Function.uncurry X) (ν.prod P) := by
-      apply (hD.comp_snd ν).mono' (aestronglyMeasurable_uncurry_of_ae_continuous P ν X hX hcont)
+      apply (hD.comp_snd ν).mono' (aestrongly_measurable_uncurry_of_ae_continuous P ν X hX hcont)
       have htime : ∀ᵐ s ∂ν, s ∈ Ioc (0 : ℝ) t := ae_restrict_mem measurableSet_Ioc
       filter_upwards [(Measure.quasiMeasurePreserving_fst (ν := P)).ae htime,
         (Measure.quasiMeasurePreserving_snd (μ := ν)).ae hbound] with z hz hω
@@ -266,7 +267,7 @@ theorem ae_eq_zero_of_le_integral_add_integral_mean {Ω : Type*} [MeasurableSpac
 
 /-- Nonlinear same-forcing uniqueness for a bounded Lipschitz interaction. Neither independence
 nor any assumption on the law of the common forcing is needed. -/
-theorem ae_eq_of_interaction_integral_eq_on_Icc {Ω E : Type*} [MeasurableSpace Ω]
+theorem ae_eq_of_interaction_integral_eq_on_icc {Ω E : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure Ω) [IsProbabilityMeasure P] (b₀ : E → E) {L₀ : ℝ≥0}
@@ -297,7 +298,7 @@ theorem ae_eq_of_interaction_integral_eq_on_Icc {Ω E : Type*} [MeasurableSpace 
     exact (hx.sub hy).norm
   have hbound : ∀ᵐ ω ∂P, ∀ t ∈ Icc 0 T, δ t ω ≤ D := by
     filter_upwards [hXc, hYc, heq] with ω hx hy hω
-    exact norm_sub_le_of_bounded_interactions_on_Icc b₀ hb₀ v w hv hw hκ hvb hwb
+    exact norm_sub_le_of_bounded_interactions_on_icc b₀ hb₀ v w hv hw hκ hvb hwb
       (fun t ↦ X t ω) (fun t ↦ Y t ω) hx hy hT hω
   have hδint (t : ℝ) (ht : t ∈ Icc 0 T) : Integrable (δ t) P :=
     Integrable.of_bound (hδm t).aestronglyMeasurable D (hbound.mono fun ω hω ↦ by
@@ -355,7 +356,7 @@ theorem ae_eq_of_interaction_integral_eq_on_Icc {Ω E : Type*} [MeasurableSpace 
 
 /-- Nonlinear same-forcing uniqueness for a bounded Lipschitz interaction. Neither independence
 nor any assumption on the law of the common forcing is needed. -/
-theorem ae_eq_on_Icc_of_interaction_integral_eq {Ω E : Type*} [MeasurableSpace Ω]
+theorem ae_eq_on_icc_of_interaction_integral_eq {Ω E : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure Ω) [IsProbabilityMeasure P] (b₀ : E → E) {L₀ : ℝ≥0}
@@ -370,7 +371,7 @@ theorem ae_eq_on_Icc_of_interaction_integral_eq {Ω E : Type*} [MeasurableSpace 
         (b₀ (Y s ω) + ∫ z, K (Y s ω) (Y s z) ∂P))
     {T : ℝ} (hT : 0 ≤ T) :
     ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T, X t ω = Y t ω := by
-  exact ae_eq_of_interaction_integral_eq_on_Icc P b₀ hb₀ K hK hκ hKb X Y hX hY hXc hYc hT
+  exact ae_eq_of_interaction_integral_eq_on_icc P b₀ hb₀ K hK hκ hKb X Y hX hY hXc hYc hT
     (heq.mono fun ω hω t ht ↦ hω t ht.1)
 
 end CKSD

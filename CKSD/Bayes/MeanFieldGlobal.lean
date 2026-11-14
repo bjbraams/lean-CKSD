@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldPicard
 public import CKSD.Bayes.MeanFieldCore
 public import CKSD.Bayes.MeanFieldParticles
@@ -24,7 +25,7 @@ variable {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E] [NormedSpace
   [CompleteSpace E] [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
 omit [NormedSpace ℝ E] in
 /-- An almost-surely continuous process with almost-everywhere measurable sections has a measurable continuous-path version on every compact interval. -/
-theorem exists_measurable_continuousPath_version (P : Measure Ω) (F : ℝ → Ω → E)
+theorem exists_measurable_continuous_path_version (P : Measure Ω) (F : ℝ → Ω → E)
     (hFm : ∀ t, AEMeasurable (F t) P) (hFc : ∀ᵐ ω ∂P, Continuous (fun t ↦ F t ω))
     {T : ℝ} (hT : 0 ≤ T) :
     ∃ G : Ω → C(Icc (0 : ℝ) T, E), Measurable G ∧
@@ -33,7 +34,7 @@ theorem exists_measurable_continuousPath_version (P : Measure Ω) (F : ℝ → �
   let f (q : ℚ) : Ω → E := (hFm (τ q)).mk (F (τ q))
   have hfm (q : ℚ) : Measurable (f q) := (hFm (τ q)).measurable_mk
   let G : Ω → C(Icc (0 : ℝ) T, E) := fun ω ↦ pathOfRationalCoordinates hT (fun q ↦ f q ω)
-  refine ⟨G, (measurable_pathOfRationalCoordinates hT).comp
+  refine ⟨G, (measurable_path_of_rational_coordinates hT).comp
     (measurable_pi_iff.2 hfm), ?_⟩
   have heq : ∀ᵐ ω ∂P, ∀ q : ℚ, F (τ q) ω = f q ω :=
     ae_all_iff.2 fun q ↦ (hFm (τ q)).ae_eq_mk
@@ -44,12 +45,12 @@ theorem exists_measurable_continuousPath_version (P : Measure Ω) (F : ℝ → �
     exact (hω q).symm
   intro t
   dsimp only [G]
-  rw [hcoord, pathOfRationalCoordinates_apply]
+  rw [hcoord, path_of_rational_coordinates_apply]
   rfl
 
 omit [CompleteSpace E] [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E] in
 /-- Two continuous paths with a common additive forcing and Lipschitz drift coincide. -/
-theorem eqOn_of_forced_integral_eq (b : E → E) {L : ℝ≥0} (hb : LipschitzWith L b)
+theorem eq_on_of_forced_integral_eq (b : E → E) {L : ℝ≥0} (hb : LipschitzWith L b)
     (F x y : ℝ → E) (hx : Continuous x) (hy : Continuous y) {T : ℝ}
     (hxe : ∀ t ∈ Icc (0 : ℝ) T, x t = F t + ∫ s in (0 : ℝ)..t, b (x s))
     (hye : ∀ t ∈ Icc (0 : ℝ) T, y t = F t + ∫ s in (0 : ℝ)..t, b (y s)) :
@@ -126,18 +127,18 @@ theorem exists_global_solution_of_continuous_forcing (P : Measure Ω) (b : E →
   classical
   let T : ℕ → ℝ := fun n ↦ (n:ℝ)+1
   have hT (n : ℕ) : 0 ≤ T n := by dsimp [T]; positivity
-  choose H hHm hH using fun n ↦ exists_measurable_continuousPath_version P F hFm hFc (hT n)
+  choose H hHm hH using fun n ↦ exists_measurable_continuous_path_version P F hFm hFc (hT n)
   let v : ℝ → E → E := fun _ x ↦ b x
   have hv : Continuous (Function.uncurry v) := hb.continuous.comp continuous_snd
   let S (n : ℕ) (ω : Ω) : C(Icc (0:ℝ) (T n), E) :=
     (pathForcingEquiv (hT n) v hv (fun _ ↦ hb)).symm (H n ω)
   have hSm (n : ℕ) : Measurable (S n) :=
-    (lipschitzWith_pathForcingEquiv_symm (hT n) v hv (fun _ ↦ hb)).continuous.measurable.comp (hHm n)
+    (lipschitz_with_path_forcing_equiv_symm (hT n) v hv (fun _ ↦ hb)).continuous.measurable.comp (hHm n)
   let y (n : ℕ) (ω : Ω) : C(ℝ,E) := (S n ω).IccExtend (hT n)
   have hye (n : ℕ) (ω : Ω) (hω : ∀ t : Icc (0:ℝ) (T n), H n ω t = F t ω)
       (t : ℝ) (ht : t ∈ Icc (0:ℝ) (T n)) :
       y n ω t = F t ω + ∫ s in (0:ℝ)..t, b (y n ω s) := by
-    have he := pathForcingEquiv_symm_apply_eq (hT n) v hv (fun _ ↦ hb) (H n ω) ⟨t,ht⟩
+    have he := path_forcing_equiv_symm_apply_eq (hT n) v hv (fun _ ↦ hb) (H n ω) ⟨t,ht⟩
     change S n ω ⟨t,ht⟩ = H n ω ⟨t,ht⟩ + ∫ s in (0:ℝ)..t, b (y n ω s) at he
     rw [hω ⟨t,ht⟩] at he
     have hyv : y n ω t = S n ω ⟨t,ht⟩ := Set.IccExtend_of_mem (h := hT n) (fun z ↦ S n ω z) ht
@@ -146,7 +147,7 @@ theorem exists_global_solution_of_continuous_forcing (P : Measure Ω) (b : E →
       (S n ω).IccExtend (by positivity) t = (S m ω).IccExtend (by positivity) t := by
     filter_upwards [ae_all_iff.2 hH] with ω hω
     intro n m t ht htn htm
-    have he := eqOn_of_forced_integral_eq b hb (fun t ↦ F t ω) (y n ω) (y m ω)
+    have he := eq_on_of_forced_integral_eq b hb (fun t ↦ F t ω) (y n ω) (y m ω)
       (y n ω).continuous (y m ω).continuous
       (fun s hs ↦ hye n ω (hω n) s ⟨hs.1,hs.2.trans htn⟩)
       (fun s hs ↦ hye m ω (hω m) s ⟨hs.1,hs.2.trans htm⟩)
@@ -172,7 +173,7 @@ theorem exists_global_solution_of_continuous_forcing (P : Measure Ω) (b : E →
   exact congrArg b (hsame s hst).symm
 
 /-- General finite particle systems exist for iid initial states and Brownian forcings. -/
-theorem exists_particleSystem_of_wassersteinLipschitz
+theorem exists_particle_system_of_wasserstein_lipschitz
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ} (P : Measure Ω) [IsProbabilityMeasure P]
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d))
     {L : ℝ} (hb : IsWassersteinLipschitzDrift b L)
@@ -184,7 +185,7 @@ theorem exists_particleSystem_of_wassersteinLipschitz
   by_cases hN : 0 < N
   · let A := Fin N → EuclideanSpace ℝ (Fin d)
     let B : A → A := fun x i ↦ b (x i) (empiricalMeasure N x)
-    have hB : LipschitzWith (2 * Real.toNNReal L) B := hb.lipschitzWith_particleDrift b hN
+    have hB : LipschitzWith (2 * Real.toNNReal L) B := hb.lipschitz_with_particle_drift b hN
     let F : ℝ → Ω → A := fun t ω i ↦ X₀ i ω + W i t.toNNReal ω
     have hWm (i : ℕ) (t : ℝ≥0) : AEMeasurable (W i t) P := by
       have hc : AEMeasurable (fun ω (j : Fin d) ↦ W i t ω j) P :=
@@ -196,7 +197,7 @@ theorem exists_particleSystem_of_wassersteinLipschitz
     have hFm (t : ℝ) : AEMeasurable (F t) P :=
       AEMeasurable.of_eval fun i : Fin N ↦ (hiid.1 i).aemeasurable.add (hWm i t.toNNReal)
     have hFc : ∀ᵐ ω ∂P, Continuous (fun t ↦ F t ω) := by
-      filter_upwards [ae_all_iff.2 (fun i : Fin N ↦ (hiid.2.2.1 i).ae_continuous_toNNReal)] with ω hω
+      filter_upwards [ae_all_iff.2 (fun i : Fin N ↦ (hiid.2.2.1 i).ae_continuous_to_nn_real)] with ω hω
       exact continuous_pi fun i ↦ continuous_const.add (hω i)
     obtain ⟨Z,hZm,hZ⟩ := exists_global_solution_of_continuous_forcing P B hB F hFm hFc
     let X : ℕ → ℝ → Ω → EuclideanSpace ℝ (Fin d) :=

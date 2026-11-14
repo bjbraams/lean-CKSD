@@ -5,6 +5,7 @@ public import Mathlib.Analysis.Normed.Operator.Extend
 public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
 public import TauCeti.Analysis.InnerProductSpace.LinearCombination
 
+
 /-!
 # Hilbert-space Wold decomposition
 
@@ -72,7 +73,7 @@ theorem mem_past_self (t : ℤ) : X t ∈ past X t :=
   Submodule.le_topologicalClosure _ (Submodule.subset_span ⟨t, le_rfl, rfl⟩)
 
 /-- The closed past is closed. -/
-theorem isClosed_past (t : ℤ) : IsClosed (past X t : Set H) :=
+theorem is_closed_past (t : ℤ) : IsClosed (past X t : Set H) :=
   Submodule.isClosed_topologicalClosure _
 
 /-- The closed past lies in the closed span. -/
@@ -94,7 +95,7 @@ theorem inner_eq_zero_of_forall_le {z : H} {t : ℤ} (hz : ∀ s ≤ t, ⟪z, X 
   exact (Submodule.mem_orthogonal_singleton_iff_inner_right).1 (hle hy)
 
 /-- The closed span is closed. -/
-theorem isClosed_hull : IsClosed (hull X : Set H) := Submodule.isClosed_topologicalClosure _
+theorem is_closed_hull : IsClosed (hull X : Set H) := Submodule.isClosed_topologicalClosure _
 
 /-- `X_t` lies in the closed span. -/
 theorem mem_hull (t : ℤ) : X t ∈ hull X :=
@@ -105,7 +106,7 @@ section Shift
 variable [CompleteSpace H]
 
 /-- The closed span of a sequence in a Hilbert space is complete. -/
-instance : CompleteSpace (hull X) := (isClosed_hull X).completeSpace_coe
+instance : CompleteSpace (hull X) := (is_closed_hull X).completeSpace_coe
 
 /-- The coefficient map `c ↦ ∑ c_t X_t` into the closed span. -/
 def coeffMap : (ℤ →₀ ℝ) →ₗ[ℝ] hull X :=
@@ -117,7 +118,7 @@ def shiftedCoeffMap : (ℤ →₀ ℝ) →ₗ[ℝ] hull X :=
 
 omit [CompleteSpace H] in
 /-- The finite linear combinations of the `X_t` are dense in the closed span. -/
-theorem denseRange_coeffMap : DenseRange (coeffMap X) := by
+theorem dense_range_coeff_map : DenseRange (coeffMap X) := by
   intro k
   rw [Topology.IsInducing.subtypeVal.closure_eq_preimage_closure_image, Set.mem_preimage]
   have himage :
@@ -139,7 +140,7 @@ variable {X}
 
 omit [CompleteSpace H] in
 /-- Under a stationary Gram matrix, shifting the coefficients preserves norms. -/
-theorem norm_shiftedCoeffMap (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (f : ℤ →₀ ℝ) :
+theorem norm_shifted_coeff_map (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (f : ℤ →₀ ℝ) :
     ‖shiftedCoeffMap X f‖ = ‖coeffMap X f‖ :=
   f.norm_linearCombination_eq_of_inner_eq fun a b ↦ by
     change ⟪X (a + 1), X (b + 1)⟫ = ⟪X a, X b⟫
@@ -149,28 +150,28 @@ theorem norm_shiftedCoeffMap (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 
 
 omit [CompleteSpace H] in
 /-- The shifted coefficient map is bounded by the coefficient map. -/
-theorem exists_bound_shiftedCoeffMap (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) :
+theorem exists_bound_shifted_coeff_map (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) :
     ∃ C, ∀ f, ‖shiftedCoeffMap X f‖ ≤ C * ‖coeffMap X f‖ :=
-  ⟨1, fun f ↦ by rw [norm_shiftedCoeffMap hstat f, one_mul]⟩
+  ⟨1, fun f ↦ by rw [norm_shifted_coeff_map hstat f, one_mul]⟩
 
 /-- With a stationary Gram matrix, the shift `X_t ↦ X_{t+1}` is a linear isometry of the
 closed span. -/
 def shiftIsometry (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) : hull X →ₗᵢ[ℝ] hull X :=
   LinearIsometry.mk ((shiftedCoeffMap X).extendOfNorm (coeffMap X)).toLinearMap fun x ↦ by
-    refine (denseRange_coeffMap X).induction_on x
+    refine (dense_range_coeff_map X).induction_on x
       (isClosed_eq ((shiftedCoeffMap X).extendOfNorm (coeffMap X)).continuous.norm
         continuous_norm) ?_
     intro f
     exact calc
       ‖(shiftedCoeffMap X).extendOfNorm (coeffMap X) (coeffMap X f)‖ = ‖shiftedCoeffMap X f‖ :=
-        congrArg norm (LinearMap.extendOfNorm_eq (denseRange_coeffMap X)
-          (exists_bound_shiftedCoeffMap hstat) f)
-      _ = ‖coeffMap X f‖ := norm_shiftedCoeffMap hstat f
+        congrArg norm (LinearMap.extendOfNorm_eq (dense_range_coeff_map X)
+          (exists_bound_shifted_coeff_map hstat) f)
+      _ = ‖coeffMap X f‖ := norm_shifted_coeff_map hstat f
 
 /-- The shift isometry sends `X_t` to `X_{t+1}`. -/
-theorem shiftIsometry_apply (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (t : ℤ) :
+theorem shift_isometry_apply (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (t : ℤ) :
     shiftIsometry hstat ⟨X t, mem_hull X t⟩ = ⟨X (t + 1), mem_hull X (t + 1)⟩ := by
-  have h := LinearMap.extendOfNorm_eq (denseRange_coeffMap X) (exists_bound_shiftedCoeffMap hstat)
+  have h := LinearMap.extendOfNorm_eq (dense_range_coeff_map X) (exists_bound_shifted_coeff_map hstat)
     (Finsupp.single t 1)
   simp only [coeffMap, shiftedCoeffMap, Finsupp.linearCombination_single, one_smul] at h
   exact h
@@ -190,7 +191,7 @@ theorem shift_apply_of_mem {x : H} (hx : x ∈ hull X) :
 
 /-- The shift sends `X_t` to `X_{t+1}`. -/
 theorem shift_apply_X (t : ℤ) : shift hstat (X t) = X (t + 1) := by
-  rw [shift_apply_of_mem hstat (mem_hull X t), shiftIsometry_apply]
+  rw [shift_apply_of_mem hstat (mem_hull X t), shift_isometry_apply]
 
 /-- The shift preserves inner products on the closed span. -/
 theorem inner_shift_shift {x y : H} (hx : x ∈ hull X) (hy : y ∈ hull X) :
@@ -202,7 +203,7 @@ theorem inner_shift_shift {x y : H} (hx : x ∈ hull X) (hy : y ∈ hull X) :
 theorem shift_mem_past {x : H} {t : ℤ} (hx : x ∈ past X t) : shift hstat x ∈ past X (t + 1) := by
   have hle : past X t ≤ (past X (t + 1)).comap (shift hstat).toLinearMap := by
     refine Submodule.topologicalClosure_minimal _ ?_
-      ((isClosed_past X (t + 1)).preimage (shift hstat).continuous)
+      ((is_closed_past X (t + 1)).preimage (shift hstat).continuous)
     refine Submodule.span_le.2 ?_
     rintro _ ⟨s, hs, rfl⟩
     change shift hstat (X s) ∈ past X (t + 1)
@@ -394,7 +395,7 @@ omit [CompleteSpace H] hstat hproj in
 /-- A countable sum of elements of a closed past lies in that closed past. -/
 theorem tsum_mem_past {f : ℕ → H} {t : ℤ} (hf : ∀ j, f j ∈ past X t) : ∑' j, f j ∈ past X t := by
   by_cases h : Summable f
-  · exact (isClosed_past X t).mem_of_tendsto h.hasSum
+  · exact (is_closed_past X t).mem_of_tendsto h.hasSum
       (Eventually.of_forall fun s ↦ Submodule.sum_mem _ fun j _ ↦ hf j)
   · rw [tsum_eq_zero_of_not_summable h]
     exact Submodule.zero_mem _

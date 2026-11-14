@@ -9,6 +9,7 @@ public import CKSD.LinearModels.Multivariate
 import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Order
 import Mathlib.Analysis.Matrix.Order
 
+
 /-!
 # Decomposable graphical models
 
@@ -28,11 +29,11 @@ so the results below are stated for a perfect sequence only.
 
 ## Main results
 
-* `CKSD.isUndirectedGlobalMarkovMass_of_factorization`: a clique factorization implies the
+* `CKSD.is_undirected_global_markov_mass_of_factorization`: a clique factorization implies the
   undirected global Markov property.
-* `CKSD.graphSeparates_cliqueSeparator`: in a perfect sequence, `S_j` separates `C_j \ S_j` from
+* `CKSD.graph_separates_clique_separator`: in a perfect sequence, `S_j` separates `C_j \ S_j` from
   the earlier vertices.
-* `CKSD.isUndirectedGlobalMarkovMass_iff_clique_factorization`: a positive mass function is
+* `CKSD.is_undirected_global_markov_mass_iff_clique_factorization`: a positive mass function is
   globally Markov exactly when `p(x) ∏_S p_S(x_S)^{ν(S)} = ∏_C p_C(x_C)`.
 The Gaussian maximum likelihood estimate of the concentration matrix is in
 `CKSD.LinearModels.DecomposableGaussian`.
@@ -88,7 +89,7 @@ def IsUndirectedGlobalMarkovMass [Fintype V] [Fintype S] (G : SimpleGraph V)
     GraphSeparates G A B C → CondIndepMass p A B C
 
 /-- In a finite graph every clique lies in a maximal clique. -/
-theorem exists_maximal_isClique_superset [Fintype V] (G : SimpleGraph V) {T : Finset V}
+theorem exists_maximal_is_clique_superset [Fintype V] (G : SimpleGraph V) {T : Finset V}
     (hT : G.IsClique (T : Set V)) : ∃ D : Finset V, T ⊆ D ∧ Maximal G.IsClique (D : Set V) := by
   obtain ⟨D, hTD, hD⟩ := Finset.exists_le_maximal
     (Finset.univ.filter fun D : Finset V ↦ G.IsClique (D : Set V)) (by simpa using hT)
@@ -100,7 +101,7 @@ theorem exists_maximal_isClique_superset [Fintype V] (G : SimpleGraph V) {T : Fi
 
 /-- The undirected global Markov property follows from a factorization of the mass function
 into factors each depending only on the coordinates in a clique. -/
-theorem isUndirectedGlobalMarkovMass_of_factorization [Fintype V] [Fintype S]
+theorem is_undirected_global_markov_mass_of_factorization [Fintype V] [Fintype S]
     (G : SimpleGraph V) {ι : Type*} [Fintype ι] (K : ι → Finset V)
     (hK : ∀ i, G.IsClique (K i : Set V)) (f : ι → (V → S) → ℝ)
     (hf : ∀ i y y', (∀ v ∈ K i, y v = y' v) → f i y = f i y') (p : (V → S) → ℝ)
@@ -151,7 +152,7 @@ def cliqueHistory {k : ℕ} (C : Fin k → Finset V) (m : ℕ) : Finset V :=
 
 /-- For a perfect sequence of the maximal cliques, the separator `S_j` separates the new
 vertices `C_j \ S_j` from the earlier vertices `(C₀ ∪ ⋯ ∪ C_{j-1}) \ S_j`. -/
-theorem graphSeparates_cliqueSeparator [Fintype V] (G : SimpleGraph V) {k : ℕ}
+theorem graph_separates_clique_separator [Fintype V] (G : SimpleGraph V) {k : ℕ}
     (C : Fin k → Finset V) (hC : IsPerfectCliqueSequence G C) (j : Fin k) :
     GraphSeparates G ↑(C j \ cliqueSeparator C j) ↑(cliqueHistory C j \ cliqueSeparator C j)
       ↑(cliqueSeparator C j) := by
@@ -256,7 +257,7 @@ theorem graphSeparates_cliqueSeparator [Fintype V] (G : SimpleGraph V) {k : ℕ}
   have hpair : G.IsClique (({u, v} : Finset V) : Set V) := by
     rw [Finset.coe_pair]
     exact SimpleGraph.isClique_pair.2 fun _ ↦ huv
-  obtain ⟨D, hD, hDmax⟩ := exists_maximal_isClique_superset G hpair
+  obtain ⟨D, hD, hDmax⟩ := exists_maximal_is_clique_superset G hpair
   obtain ⟨m, rfl⟩ := hall D hDmax
   by_cases hSm : Sub m
   · exact hLv ⟨m, hSm, hD (by simp)⟩
@@ -265,7 +266,7 @@ theorem graphSeparates_cliqueSeparator [Fintype V] (G : SimpleGraph V) {k : ℕ}
 
 /-- For a perfect sequence of the maximal cliques, the global Markov property implies the
 clique factorization of the marginal masses. -/
-theorem clique_factorization_of_isUndirectedGlobalMarkovMass [Fintype V] [Fintype S]
+theorem clique_factorization_of_is_undirected_global_markov_mass [Fintype V] [Fintype S]
     (G : SimpleGraph V) {k : ℕ} (C : Fin k → Finset V) (hC : IsPerfectCliqueSequence G C)
     (p : (V → S) → ℝ) (hp : IsProbabilityMass p) (hGM : IsUndirectedGlobalMarkovMass G p)
     (x : V → S) :
@@ -326,7 +327,7 @@ theorem clique_factorization_of_isUndirectedGlobalMarkovMass [Fintype V] [Fintyp
                 exact Finset.mem_inter.2 ⟨(Finset.mem_sdiff.1 hv).1, (Finset.mem_sdiff.1 hv').1⟩))
             Finset.sdiff_disjoint Finset.sdiff_disjoint
             (by
-              have := graphSeparates_cliqueSeparator G C hC j
+              have := graph_separates_clique_separator G C hC j
               rwa [hjm] at this) x
           have e1 : C j \ cliqueSeparator C j ∪ (cliqueHistory C m \ cliqueSeparator C j) ∪
               cliqueSeparator C j = cliqueHistory C (m + 1) := by
@@ -360,7 +361,7 @@ theorem clique_factorization_of_isUndirectedGlobalMarkovMass [Fintype V] [Fintyp
         _ = _ := by rw [hstep]; ring
   have hall : cliqueHistory C k = Finset.univ := by
     refine Finset.eq_univ_of_forall fun v ↦ ?_
-    obtain ⟨D, hD, hDmax⟩ := exists_maximal_isClique_superset G
+    obtain ⟨D, hD, hDmax⟩ := exists_maximal_is_clique_superset G
       (T := {v}) (by simp)
     obtain ⟨m, rfl⟩ := hC.2.2.1 D hDmax
     simp only [cliqueHistory, Finset.mem_biUnion, Finset.mem_filter, Finset.mem_univ, true_and]
@@ -369,12 +370,12 @@ theorem clique_factorization_of_isUndirectedGlobalMarkovMass [Fintype V] [Fintyp
     ext j
     simp
   have := key k le_rfl
-  rwa [hall, hfk, marginalMass_univ] at this
+  rwa [hall, hfk, marginal_mass_univ] at this
 
 /-- GAPS 105.36, discrete form: for a decomposable graph with a perfect sequence of its maximal
 cliques, a positive probability mass function is globally Markov exactly when
 `p(x) = ∏_C p_C(x_C) / ∏_S p_S(x_S)^{ν(S)}`, written here without division. -/
-theorem isUndirectedGlobalMarkovMass_iff_clique_factorization [Fintype V] [Fintype S]
+theorem is_undirected_global_markov_mass_iff_clique_factorization [Fintype V] [Fintype S]
     (G : SimpleGraph V) {k : ℕ} (C : Fin k → Finset V)
     (hC : IsPerfectCliqueSequence G C) (p : (V → S) → ℝ) (hp : IsProbabilityMass p)
     (hpos : ∀ x, 0 < p x) :
@@ -382,25 +383,25 @@ theorem isUndirectedGlobalMarkovMass_iff_clique_factorization [Fintype V] [Finty
       ∀ x, p x * ∏ j : Fin k, (if (j : ℕ) = 0 then 1 else marginalMass p (cliqueSeparator C j) x) =
         ∏ j, marginalMass p (C j) x := by
   constructor
-  · exact fun hGM x ↦ clique_factorization_of_isUndirectedGlobalMarkovMass G C hC p hp hGM x
+  · exact fun hGM x ↦ clique_factorization_of_is_undirected_global_markov_mass G C hC p hp hGM x
   · intro hfac
     have hp0 : ∀ y, 0 ≤ p y := hp.1
     have hMpos : ∀ (E : Finset V) y, 0 < marginalMass p E y := fun E y ↦ by
-      have := marginalMass_anti hp0 (Finset.subset_univ E) y
-      rw [marginalMass_univ] at this
+      have := marginal_mass_anti hp0 (Finset.subset_univ E) y
+      rw [marginal_mass_univ] at this
       exact lt_of_lt_of_le (hpos y) this
     have hsepC : ∀ j, cliqueSeparator C j ⊆ C j := fun j ↦ Finset.inter_subset_left
     let K : Fin k ⊕ Fin k → Finset V := Sum.elim C (cliqueSeparator C)
     let f : Fin k ⊕ Fin k → (V → S) → ℝ := Sum.elim (fun j y ↦ marginalMass p (C j) y)
       (fun j y ↦ if (j : ℕ) = 0 then 1 else (marginalMass p (cliqueSeparator C j) y)⁻¹)
-    refine isUndirectedGlobalMarkovMass_of_factorization G K ?_ f ?_ p ?_
+    refine is_undirected_global_markov_mass_of_factorization G K ?_ f ?_ p ?_
     · rintro (j | j)
       · exact (hC.2.1 j).prop
       · exact (hC.2.1 j).prop.subset (Finset.coe_subset.2 (hsepC j))
     · rintro (j | j) y y' h
-      · exact marginalMass_congr_point p _ h
+      · exact marginal_mass_congr_point p _ h
       · simp only [f, Sum.elim_inr]
-        rw [marginalMass_congr_point p (cliqueSeparator C j) (x := y) (x' := y') h]
+        rw [marginal_mass_congr_point p (cliqueSeparator C j) (x := y) (x' := y') h]
     · intro y
       rw [Fintype.prod_sum_type]
       simp only [f, Sum.elim_inl, Sum.elim_inr]

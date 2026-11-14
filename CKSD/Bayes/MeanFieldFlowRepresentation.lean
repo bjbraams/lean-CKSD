@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldBackwardTest
 public import CKSD.Bayes.MeanFieldContinuityUniqueness
 public import CKSD.Bayes.MeanFieldContinuityMoments
@@ -69,7 +70,7 @@ theorem exists_flow_law_of_bounded_lipschitz (v : ℝ × E → E) {K M : ℝ≥0
       (ODE.hasDerivAt_globalSolution w hw (0,x) t)
     change HasDerivAt (γ x)
       (v ((ODE.globalSolution w hw (0,x) t).1, γ x t)) t at hh
-    have ht := globalSolution_fst_eq_add w hw (fun _ ↦ rfl) (0,x) t
+    have ht := global_solution_fst_eq_add w hw (fun _ ↦ rfl) (0,x) t
     simp only [zero_add] at ht
     rwa [ht] at hh
   have hγL (x : E) : LipschitzWith M (γ x) := by
@@ -99,7 +100,7 @@ variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H]
   [FiniteDimensional ℝ H] [MeasurableSpace H] [BorelSpace H] [CompleteSpace H]
 /-- Narrowly continuous probability solutions with a common initial law agree at every
 nonnegative time for a bounded globally Lipschitz space-time velocity. -/
-theorem eq_on_nonneg_of_isContinuityEquation_of_bounded_lipschitz
+theorem eq_on_nonneg_of_is_continuity_equation_of_bounded_lipschitz
     (v : ℝ × H → H) {K M : ℝ≥0} (hv : LipschitzWith K v) (hM : ∀ q, ‖v q‖₊ ≤ M)
     (μ ν : ℝ → Measure H)
     (hμp : ∀ t ≥ 0, IsProbabilityMeasure (μ t))
@@ -115,16 +116,16 @@ theorem eq_on_nonneg_of_isContinuityEquation_of_bounded_lipschitz
   · exact hinit
   let μ' := finiteMeasureNonnegExtension μ hμp
   let ν' := finiteMeasureNonnegExtension ν hνp
-  have hμc' : Continuous μ' := continuous_finiteMeasure_nonneg_extension μ hμp hμc
-  have hνc' : Continuous ν' := continuous_finiteMeasure_nonneg_extension ν hνp hνc
+  have hμc' : Continuous μ' := continuous_finite_measure_nonneg_extension μ hμp hμc
+  have hνc' : Continuous ν' := continuous_finite_measure_nonneg_extension ν hνp hνc
   have hμce' : TauCeti.IsContinuityEquation (fun s ↦ (μ' s : Measure H)) (fun s x ↦ v (s,x)) 0 t := by
-    apply isContinuityEquation_congr_measure_on_Ioo (hμce t ht)
+    apply is_continuity_equation_congr_measure_on_ioo (hμce t ht)
       ((hμce t ht).measurable.comp (continuous_const.max continuous_id).measurable)
     intro s hs
     change μ (max 0 s) = μ s
     rw [max_eq_right hs.1.le]
   have hνce' : TauCeti.IsContinuityEquation (fun s ↦ (ν' s : Measure H)) (fun s x ↦ v (s,x)) 0 t := by
-    apply isContinuityEquation_congr_measure_on_Ioo (hνce t ht)
+    apply is_continuity_equation_congr_measure_on_ioo (hνce t ht)
       ((hνce t ht).measurable.comp (continuous_const.max continuous_id).measurable)
     intro s hs
     change ν (max 0 s) = ν s
@@ -137,10 +138,10 @@ theorem eq_on_nonneg_of_isContinuityEquation_of_bounded_lipschitz
     apply Subtype.ext
     change μ (max 0 0) = ν (max 0 0)
     simpa only [max_self] using hinit
-  have heq := eq_of_isContinuityEquation_of_bounded_lipschitz ht.le v hv hM μ' ν'
+  have heq := eq_of_is_continuity_equation_of_bounded_lipschitz ht.le v hv hM μ' ν'
     hμc'.continuousOn hνc'.continuousOn hpμ hpν hμce' hνce' hinit'
   have hh := congrArg (fun κ : FiniteMeasure H ↦ (κ : Measure H)) heq
-  simpa only [μ', ν', finiteMeasureNonnegExtension_toMeasure, max_eq_right ht.le] using hh
+  simpa only [μ', ν', finite_measure_nonneg_extension_to_measure, max_eq_right ht.le] using hh
 /-- Bounded globally Lipschitz space-time velocities represent every narrowly continuous
 probability solution by the canonical characteristic flow, with no moment hypothesis. -/
 theorem exists_flow_representation_of_bounded_lipschitz
@@ -166,7 +167,7 @@ theorem exists_flow_representation_of_bounded_lipschitz
     infer_instance
   have hzero' : P.map (fun x ↦ γ x 0) = P := by
     simp only [hzero, Measure.map_id']
-  exact eq_on_nonneg_of_isContinuityEquation_of_bounded_lipschitz v hv hM σ
+  exact eq_on_nonneg_of_is_continuity_equation_of_bounded_lipschitz v hv hM σ
     (fun s ↦ P.map (fun x ↦ γ x s)) hσp hp hσc (fun g ↦ (hc g).continuousOn)
     hσce hce (hinit.trans hzero'.symm) t ht
 end InnerProduct

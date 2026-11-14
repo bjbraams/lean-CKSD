@@ -3,6 +3,7 @@ module
 public import CKSD.Inference.Basic
 public import TauCeti.Probability.Distributions.Wishart.Basic
 
+
 /-!
 # Linear models: common definitions
 
@@ -25,7 +26,7 @@ survey sampling (Section 105).
 
 ## Main results
 
-* `CKSD.measurable_matrixQuadraticForm`: quadratic forms are measurable.
+* `CKSD.measurable_matrix_quadratic_form`: quadratic forms are measurable.
 * `CKSD.matrix_inv_smul_of_ne_zero`: `(c • A)⁻¹ = c⁻¹ • A⁻¹` for `c ≠ 0`.
 -/
 
@@ -51,7 +52,7 @@ def matrixQuadraticForm {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ) (x : Euclidea
 
 /-- A quadratic form `x ↦ xᵀ P x` is measurable. -/
 @[fun_prop]
-theorem measurable_matrixQuadraticForm {n : ℕ} (P : Matrix (Fin n) (Fin n) ℝ) :
+theorem measurable_matrix_quadratic_form {n : ℕ} (P : Matrix (Fin n) (Fin n) ℝ) :
     Measurable (matrixQuadraticForm P) := by
   unfold matrixQuadraticForm
   exact (continuous_id.inner (Matrix.toEuclideanCLM (𝕜 := ℝ) P).continuous).measurable

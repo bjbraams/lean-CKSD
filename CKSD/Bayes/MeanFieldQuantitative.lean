@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldCoupling
 public import Mathlib.Algebra.Order.Chebyshev
 /-!
@@ -72,7 +73,7 @@ theorem finite_coupling_gronwall {N : ℕ} (hN : 0 < N) (u : Fin N → ℝ → �
     (add_nonneg (hR i) (by positivity))
 
 /-- Cauchy–Schwarz for a continuous scalar integral on a finite time interval. -/
-theorem sq_intervalIntegral_le_length_mul_integral_sq (r : ℝ → ℝ) (hr : Continuous r)
+theorem sq_interval_integral_le_length_mul_integral_sq (r : ℝ → ℝ) (hr : Continuous r)
     {T : ℝ} (hT : 0 ≤ T) :
     (∫ s in (0 : ℝ)..T, r s) ^ 2 ≤ T * ∫ s in (0 : ℝ)..T, r s ^ 2 := by
   rcases hT.eq_or_lt with rfl | hT
@@ -119,7 +120,7 @@ theorem finite_coupling_gronwall_sq {N : ℕ} (hN : 0 < N) (u r : Fin N → ℝ 
   have hR (i : Fin N) : 0 ≤ R i := intervalIntegral.integral_nonneg hT (fun s _ ↦ hr0 i s)
   have hV (i : Fin N) : 0 ≤ V i := intervalIntegral.integral_nonneg hT (fun s _ ↦ sq_nonneg _)
   have hB : 0 ≤ B := mul_nonneg (by positivity) (Finset.sum_nonneg fun i _ ↦ hV i)
-  have hsq (i : Fin N) : R i ^ 2 ≤ T * V i := sq_intervalIntegral_le_length_mul_integral_sq _ (hr i) hT
+  have hsq (i : Fin N) : R i ^ 2 ≤ T * V i := sq_interval_integral_le_length_mul_integral_sq _ (hr i) hT
   have hAsq : A ^ 2 ≤ T * B := by
     calc A ^ 2 ≤ (N : ℝ)⁻¹ * ∑ j, R j ^ 2 := by
             simpa only [Finset.card_univ, Fintype.card_fin, div_eq_inv_mul] using

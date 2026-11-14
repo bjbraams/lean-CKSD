@@ -5,6 +5,7 @@ public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Logic.Function.DependsOn
 
+
 /-!
 # Partial sums over coordinates of finite configurations
 
@@ -21,13 +22,13 @@ is expressed with Mathlib's `DependsOn`.
 
 ## Main results
 
-* `CKSD.coordSum_empty`, `CKSD.coordSum_singleton`: summing over no coordinates and over one
+* `CKSD.coord_sum_empty`, `CKSD.coord_sum_singleton`: summing over no coordinates and over one
   coordinate.
-* `CKSD.coordSum_union`: Fubini for disjoint coordinate sets.
-* `CKSD.coordSum_mul_left`, `CKSD.coordSum_mul_right`: factors that do not depend on the summed
+* `CKSD.coord_sum_union`: Fubini for disjoint coordinate sets.
+* `CKSD.coord_sum_mul_left`, `CKSD.coord_sum_mul_right`: factors that do not depend on the summed
   coordinates come out of the sum.
-* `CKSD.dependsOn_coordSum`: a partial sum over `D` does not depend on the coordinates in `D`.
-* `CKSD.coordSum_biUnion_prod`: a product of factors on disjoint blocks of coordinates sums
+* `CKSD.depends_on_coord_sum`: a partial sum over `D` does not depend on the coordinates in `D`.
+* `CKSD.coord_sum_bi_union_prod`: a product of factors on disjoint blocks of coordinates sums
   blockwise.
 -/
 
@@ -54,19 +55,19 @@ def coordSum (D : Finset V) (f : (V → S) → M) (x : V → S) : M :=
 
 /-- Summing over no coordinates is evaluation. -/
 @[simp]
-theorem coordSum_empty (f : (V → S) → M) (x : V → S) : coordSum ∅ f x = f x := by
+theorem coord_sum_empty (f : (V → S) → M) (x : V → S) : coordSum ∅ f x = f x := by
   unfold coordSum
   rw [Finset.sum_eq_single_of_mem x (by simp)]
   intro x' hx' hne
   exact absurd (funext fun v ↦ (Finset.mem_filter.mp hx').2 v (Finset.notMem_empty v)) hne
 
 /-- `coordSum D f x` only sees values of `f` at configurations agreeing with `x` off `D`. -/
-theorem coordSum_congr {D : Finset V} {f g : (V → S) → M} {x : V → S}
+theorem coord_sum_congr {D : Finset V} {f g : (V → S) → M} {x : V → S}
     (h : ∀ x', (∀ v ∉ D, x' v = x v) → f x' = g x') : coordSum D f x = coordSum D g x :=
   Finset.sum_congr rfl fun x' hx' ↦ h x' (Finset.mem_filter.mp hx').2
 
 /-- Summing over disjoint coordinate sets in two stages (Fubini for finite sums). -/
-theorem coordSum_union {D E : Finset V} (hDE : Disjoint D E) (f : (V → S) → M)
+theorem coord_sum_union {D E : Finset V} (hDE : Disjoint D E) (f : (V → S) → M)
     (x : V → S) : coordSum (D ∪ E) f x = coordSum D (fun y ↦ coordSum E f y) x := by
   unfold coordSum
   rw [Finset.sum_sigma']
@@ -100,7 +101,7 @@ theorem coordSum_union {D E : Finset V} (hDE : Disjoint D E) (f : (V → S) → 
     rfl
 
 /-- Summing over one coordinate. -/
-theorem coordSum_singleton (i : V) (f : (V → S) → M) (x : V → S) :
+theorem coord_sum_singleton (i : V) (f : (V → S) → M) (x : V → S) :
     coordSum {i} f x = ∑ a : S, f (Function.update x i a) := by
   unfold coordSum
   refine Finset.sum_nbij' (fun z ↦ z i) (fun a ↦ Function.update x i a) ?_ ?_ ?_ ?_ ?_
@@ -127,7 +128,7 @@ theorem coordSum_singleton (i : V) (f : (V → S) → M) (x : V → S) :
 
 /-- If `f` depends only on the coordinates in `s`, then its partial sum over `D` depends only on
 the coordinates in `s \ D`. -/
-theorem dependsOn_coordSum {D : Finset V} {s : Set V} {f : (V → S) → M} (hf : DependsOn f s) :
+theorem depends_on_coord_sum {D : Finset V} {s : Set V} {f : (V → S) → M} (hf : DependsOn f s) :
     DependsOn (coordSum D f) (s \ (D : Set V)) := by
   intro y y' hy
   unfold coordSum
@@ -167,7 +168,7 @@ variable [NonUnitalNonAssocSemiring R]
 
 /-- A factor that does not depend on the coordinates in `D` comes out of `coordSum D` on the
 left. -/
-theorem coordSum_mul_left {D : Finset V} (g h : (V → S) → R) {x : V → S}
+theorem coord_sum_mul_left {D : Finset V} (g h : (V → S) → R) {x : V → S}
     (hg : ∀ x', (∀ v ∉ D, x' v = x v) → g x' = g x) :
     coordSum D (fun y ↦ g y * h y) x = g x * coordSum D h x := by
   unfold coordSum
@@ -178,7 +179,7 @@ theorem coordSum_mul_left {D : Finset V} (g h : (V → S) → R) {x : V → S}
 
 /-- A factor that does not depend on the coordinates in `D` comes out of `coordSum D` on the
 right. -/
-theorem coordSum_mul_right {D : Finset V} (h g : (V → S) → R) {x : V → S}
+theorem coord_sum_mul_right {D : Finset V} (h g : (V → S) → R) {x : V → S}
     (hg : ∀ x', (∀ v ∉ D, x' v = x v) → g x' = g x) :
     coordSum D (fun y ↦ h y * g y) x = coordSum D h x * g x := by
   unfold coordSum
@@ -192,7 +193,7 @@ end Semiring
 /-- Summing a product of factors over a disjoint union of coordinate blocks, each factor not
 depending on the blocks of the other factors, factorizes into the product of the blockwise
 sums. -/
-theorem coordSum_biUnion_prod [CommSemiring R] {ι : Type*} (K : Finset ι) (D : ι → Finset V)
+theorem coord_sum_bi_union_prod [CommSemiring R] {ι : Type*} (K : Finset ι) (D : ι → Finset V)
     (f : ι → (V → S) → R) (hD : (K : Set ι).PairwiseDisjoint D)
     (hf : ∀ k ∈ K, DependsOn (f k) (↑((K.erase k).biUnion D))ᶜ) (x : V → S) :
     coordSum (K.biUnion D) (fun y ↦ ∏ k ∈ K, f k y) x = ∏ k ∈ K, coordSum (D k) (f k) x := by
@@ -211,16 +212,16 @@ theorem coordSum_biUnion_prod [CommSemiring R] {ι : Type*} (K : Finset ι) (D :
     have hfk : DependsOn (f k) (↑(K.biUnion D))ᶜ := by
       have := hf k (by simp)
       rwa [Finset.erase_insert hk] at this
-    rw [Finset.biUnion_insert, coordSum_union hdisj, Finset.prod_insert hk]
+    rw [Finset.biUnion_insert, coord_sum_union hdisj, Finset.prod_insert hk]
     simp_rw [Finset.prod_insert hk]
-    rw [coordSum_congr (g := fun y ↦ f k y * ∏ l ∈ K, coordSum (D l) (f l) y) fun y _ ↦ by
-      rw [coordSum_mul_left _ _ fun y' hy' ↦ hfk fun v hv ↦ hy' v hv, ih hD' hf' y]]
-    rw [coordSum_mul_right _ _ fun y' hy' ↦ ?_]
+    rw [coord_sum_congr (g := fun y ↦ f k y * ∏ l ∈ K, coordSum (D l) (f l) y) fun y _ ↦ by
+      rw [coord_sum_mul_left _ _ fun y' hy' ↦ hfk fun v hv ↦ hy' v hv, ih hD' hf' y]]
+    rw [coord_sum_mul_right _ _ fun y' hy' ↦ ?_]
     refine Finset.prod_congr rfl fun l hl ↦ ?_
     have hlk : l ≠ k := fun h ↦ hk (h ▸ hl)
     have hign : DependsOn (f l) (↑(D k))ᶜ := (hf l (by simp [hl])).mono
       (Set.compl_subset_compl.mpr fun v hv ↦
         Finset.mem_coe.mpr (Finset.mem_biUnion.mpr ⟨k, by simp [hlk.symm], hv⟩))
-    exact dependsOn_coordSum hign fun v hv ↦ hy' v hv.1
+    exact depends_on_coord_sum hign fun v hv ↦ hy' v hv.1
 
 end CKSD

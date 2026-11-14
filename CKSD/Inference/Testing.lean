@@ -8,6 +8,7 @@ public import CKSD.Inference.Sufficiency
 public import TauCeti.Probability.Distributions.Gaussian.Projection
 public import TauCeti.Probability.Distributions.StudentT.ChiSquared
 
+
 /-!
 # Uniformly most powerful tests
 
@@ -22,7 +23,7 @@ exponential families, least favorable mixtures, and the Gaussian sample laws beh
 
 ## Main results
 
-* `CKSD.isUniformlyMostPowerfulTest_of_monotone_likelihood_ratio`: Karlin–Rubin (GAPS 101.15).
+* `CKSD.is_uniformly_most_powerful_test_of_monotone_likelihood_ratio`: Karlin–Rubin (GAPS 101.15).
 * `CKSD.gaussian_sample_mean_residual_laws`: for a Gaussian sample, the residual sum of squares
   is `σ² χ²_{n-1}`, independent of the sample mean, and the `t` statistic has Student's law with
   `n - 1` degrees of freedom (GAPS 101.17).
@@ -62,24 +63,24 @@ likelihood ratios `f b / f a` (`a < b`) are nondecreasing functions of `T`, the 
 `thresholdTest T c γ` of size `α` at `θ₀` is uniformly most powerful of level `α` for
 `θ ≤ θ₀` against `θ > θ₀`. Positivity of the densities avoids the convention for ratios with zero
 denominator. The monotonicity of the power function is not included. -/
-theorem isUniformlyMostPowerfulTest_of_monotone_likelihood_ratio (P : ℝ → Measure X)
+theorem is_uniformly_most_powerful_test_of_monotone_likelihood_ratio (P : ℝ → Measure X)
     (μ : Measure X) [∀ θ, IsProbabilityMeasure (P θ)] (f : ℝ → X → ℝ)
     (hf : ∀ θ, HasDensity (P θ) μ (f θ)) (hpos : ∀ θ x, 0 < f θ x)
     (T : X → ℝ) (hT : Measurable T)
     (hmlr : ∀ a b, a < b → ∃ r : ℝ → ℝ, Monotone r ∧ ∀ x, f b x / f a x = r (T x))
     (θ₀ c γ α : ℝ) (hγ : γ ∈ Icc 0 1) (hsize : (∫ x, thresholdTest T c γ x ∂P θ₀) = α) :
     IsUniformlyMostPowerfulTest P (Iic θ₀) (Ioi θ₀) α (thresholdTest T c γ) := by
-  have hφ : IsStatisticalTest (thresholdTest T c γ) := isStatisticalTest_thresholdTest hT c hγ
+  have hφ : IsStatisticalTest (thresholdTest T c γ) := is_statistical_test_threshold_test hT c hγ
   have step (a b : ℝ) (hab : a < b) (ψ : X → ℝ) (hψ : IsStatisticalTest ψ)
       (hle : (∫ x, ψ x ∂P a) ≤ ∫ x, thresholdTest T c γ x ∂P a) :
       (∫ x, ψ x ∂P b) ≤ ∫ x, thresholdTest T c γ x ∂P b := by
     obtain ⟨r, hr, hratio⟩ := hmlr a b hab
-    exact integral_le_integral_thresholdTest_of_monotone_likelihood_ratio μ (P a) (P b) (f a)
+    exact integral_le_integral_threshold_test_of_monotone_likelihood_ratio μ (P a) (P b) (f a)
       (f b) (hf a) (hf b) (hpos a) (hpos b) T r hr hratio c γ hφ ψ hψ hle
   refine ⟨hφ, fun θ hθ ↦ ?_, fun ψ hψ hlevel θ hθ ↦ ?_⟩
   · rcases (mem_Iic.1 hθ).lt_or_eq with hlt | rfl
     · set β := ∫ x, thresholdTest T c γ x ∂P θ
-      have h := step θ θ₀ hlt (fun _ ↦ β) (IsStatisticalTest.const (hφ.integral_mem_Icc _))
+      have h := step θ θ₀ hlt (fun _ ↦ β) (IsStatisticalTest.const (hφ.integral_mem_icc _))
         (by simp [β])
       simp only [integral_const, probReal_univ, smul_eq_mul, one_mul] at h
       rw [← hsize]
@@ -89,7 +90,7 @@ theorem isUniformlyMostPowerfulTest_of_monotone_likelihood_ratio (P : ℝ → Me
 
 /-- Standardization of a Gaussian sample: the coordinates `(xᵢ - m) / √v` of an i.i.d.
 `N(m, v)` sample form a standard Gaussian vector in Euclidean space. -/
-theorem hasLaw_standardize_pi_gaussianReal (n : ℕ) (m : ℝ) (v : ℝ≥0) (hv : 0 < v) :
+theorem has_law_standardize_pi_gaussian_real (n : ℕ) (m : ℝ) (v : ℝ≥0) (hv : 0 < v) :
     HasLaw (fun x : Fin n → ℝ ↦ WithLp.toLp 2 (fun i ↦ (x i - m) / Real.sqrt v))
       (stdGaussian (EuclideanSpace ℝ (Fin n))) (Measure.pi fun _ : Fin n ↦ gaussianReal m v) := by
   have h1 : (gaussianReal m v).map (fun t ↦ (t - m) / Real.sqrt v) = gaussianReal 0 1 := by
@@ -112,7 +113,7 @@ theorem hasLaw_standardize_pi_gaussianReal (n : ℕ) (m : ℝ) (v : ℝ≥0) (hv
 
 /-- A unit linear functional of a standard Gaussian vector is standard Gaussian, from Mathlib's
 `variance_dual_stdGaussian` and `integral_strongDual_stdGaussian`. -/
-theorem stdGaussian_map_inner_of_norm_eq_one {E : Type*} [NormedAddCommGroup E]
+theorem std_gaussian_map_inner_of_norm_eq_one {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     (w : E) (hw : ‖w‖ = 1) :
     (stdGaussian E).map (fun y ↦ inner ℝ w y) = gaussianReal 0 1 := by
@@ -141,7 +142,7 @@ theorem gaussian_sample_mean_residual_laws (n : ℕ) (hn : 2 ≤ n) (m : ℝ) (v
   let one : EuclideanSpace ℝ (Fin n) := WithLp.toLp 2 (fun _ ↦ 1)
   let K : Submodule ℝ (EuclideanSpace ℝ (Fin n)) := ℝ ∙ one
   let Y : (Fin n → ℝ) → EuclideanSpace ℝ (Fin n) := fun x ↦ WithLp.toLp 2 (fun i ↦ (x i - m) / Real.sqrt v)
-  have hY : HasLaw Y (stdGaussian (EuclideanSpace ℝ (Fin n))) P := hasLaw_standardize_pi_gaussianReal n m v hv
+  have hY : HasLaw Y (stdGaussian (EuclideanSpace ℝ (Fin n))) P := has_law_standardize_pi_gaussian_real n m v hv
   have hn0 : (n : ℝ) ≠ 0 := by positivity
   have hsv : Real.sqrt v ≠ 0 := (Real.sqrt_pos.2 (NNReal.coe_pos.2 hv)).ne'
   have hinner : ∀ y : EuclideanSpace ℝ (Fin n), inner ℝ one y = ∑ i, y i := by
@@ -226,7 +227,7 @@ theorem gaussian_sample_mean_residual_laws (n : ℕ) (hn : 2 ≤ n) (m : ℝ) (v
       rw [norm_smul, h1, norm_inv, Real.norm_eq_abs, abs_of_pos (Real.sqrt_pos.2 (by positivity)),
         inv_mul_cancel₀ hsn]
     have hZ : HasLaw (fun x ↦ inner ℝ w (Y x)) (gaussianReal 0 1) P :=
-      HasLaw.comp ⟨by fun_prop, stdGaussian_map_inner_of_norm_eq_one w hw⟩ hY
+      HasLaw.comp ⟨by fun_prop, std_gaussian_map_inner_of_norm_eq_one w hw⟩ hY
     have hZV : IndepFun (fun x ↦ inner ℝ w (Y x))
         (fun x ↦ ‖Kᗮ.orthogonalProjectionOnto (Y x)‖ ^ 2) P := by
       have := hTF.comp (φ := fun z : K ↦ (Real.sqrt n)⁻¹ *
@@ -256,7 +257,7 @@ def intervalTest (T : ℝ) (c₁ c₂ γ₁ γ₂ : ℝ) : ℝ :=
   if c₁ < T ∧ T < c₂ then 1 else if T = c₁ then γ₁ else if T = c₂ then γ₂ else 0
 
 /-- The interval test is measurable in the statistic value. -/
-private theorem measurable_intervalTest (c₁ c₂ γ₁ γ₂ : ℝ) :
+private theorem measurable_interval_test (c₁ c₂ γ₁ γ₂ : ℝ) :
     Measurable fun t ↦ intervalTest t c₁ c₂ γ₁ γ₂ := by
   unfold intervalTest
   refine Measurable.ite ?_ measurable_const (Measurable.ite ?_ measurable_const
@@ -266,7 +267,7 @@ private theorem measurable_intervalTest (c₁ c₂ γ₁ γ₂ : ℝ) :
   · exact measurableSet_singleton _
 
 /-- With randomizations in `[0, 1]` the interval test takes values in `[0, 1]`. -/
-private theorem intervalTest_mem_Icc {c₁ c₂ γ₁ γ₂ : ℝ} (hγ₁ : γ₁ ∈ Icc (0 : ℝ) 1)
+private theorem interval_test_mem_icc {c₁ c₂ γ₁ γ₂ : ℝ} (hγ₁ : γ₁ ∈ Icc (0 : ℝ) 1)
     (hγ₂ : γ₂ ∈ Icc (0 : ℝ) 1) (t : ℝ) : intervalTest t c₁ c₂ γ₁ γ₂ ∈ Icc (0 : ℝ) 1 := by
   unfold intervalTest
   split_ifs
@@ -276,12 +277,12 @@ private theorem intervalTest_mem_Icc {c₁ c₂ γ₁ γ₂ : ℝ} (hγ₁ : γ�
   · exact ⟨le_rfl, zero_le_one⟩
 
 /-- The interval test rejects strictly inside the interval. -/
-private theorem intervalTest_of_mem_Ioo {c₁ c₂ γ₁ γ₂ t : ℝ} (ht : t ∈ Ioo c₁ c₂) :
+private theorem interval_test_of_mem_ioo {c₁ c₂ γ₁ γ₂ t : ℝ} (ht : t ∈ Ioo c₁ c₂) :
     intervalTest t c₁ c₂ γ₁ γ₂ = 1 := by
   simp [intervalTest, ht.1, ht.2]
 
 /-- The interval test accepts outside the closed interval. -/
-private theorem intervalTest_of_notMem_Icc {c₁ c₂ γ₁ γ₂ t : ℝ} (hc : c₁ ≤ c₂)
+private theorem interval_test_of_not_mem_icc {c₁ c₂ γ₁ γ₂ t : ℝ} (hc : c₁ ≤ c₂)
     (ht : t ∉ Icc c₁ c₂) : intervalTest t c₁ c₂ γ₁ γ₂ = 0 := by
   simp only [mem_Icc, not_and_or, not_le] at ht
   rcases ht with ht | ht
@@ -325,17 +326,17 @@ private theorem measurable_density (θ : ℝ) :
 /-- Integrals against the law at `η` are integrals against the base measure with density. -/
 private theorem integral_law (η : F.domain) (φ : X → ℝ) :
     ∫ x, φ x ∂F.law η = ∫ x, Real.exp (η.val * F.statistic x - F.cumulant η.val) * φ x ∂F.base :=
-  integral_withDensity_ofReal F.base (F.measurable_density η.val) (fun _ ↦ (Real.exp_pos _).le) φ
+  integral_with_density_of_real F.base (F.measurable_density η.val) (fun _ ↦ (Real.exp_pos _).le) φ
 
 /-- Integrability against the law at `η`. -/
 private theorem integrable_law_iff (η : F.domain) (φ : X → ℝ) :
     Integrable φ (F.law η) ↔
       Integrable (fun x ↦ Real.exp (η.val * F.statistic x - F.cumulant η.val) * φ x) F.base :=
-  integrable_withDensity_ofReal_iff F.base (F.measurable_density η.val)
+  integrable_with_density_of_real_iff F.base (F.measurable_density η.val)
     (fun _ ↦ (Real.exp_pos _).le) φ
 
 /-- The laws of a regular scalar exponential family are probability measures. -/
-private theorem isProbabilityMeasure_law (η : F.domain) : IsProbabilityMeasure (F.law η) := by
+private theorem is_probability_measure_law (η : F.domain) : IsProbabilityMeasure (F.law η) := by
   constructor
   rw [law, withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ,
     ← ofReal_integral_eq_lintegral_ofReal (F.integrable_density η.2)
@@ -404,12 +405,12 @@ private theorem integral_le_of_exp_threshold_flip (θ ζ₁ ζ₂ : F.domain) (K
     ⟨measurable_const, fun _ ↦ ⟨by linarith [hα.2], by linarith [hα.1]⟩⟩
   have hside : ∀ (ζ : F.domain), ∫ x, φ x ∂F.law ζ = α → ∀ K : ℝ,
       K * ∫ x, (1 - α) ∂F.law ζ ≤ K * ∫ x, (1 - φ x) ∂F.law ζ := fun ζ hζ K ↦ by
-    have := F.isProbabilityMeasure_law ζ
+    have := F.is_probability_measure_law ζ
     rw [hφ.integral_one_sub, hζ, integral_const, probReal_univ, one_smul]
   have key := F.integral_le_of_exp_threshold θ ζ₁ ζ₂ K₁ K₂ hφ.one_sub hconst
     (fun x ↦ ⟨fun h ↦ by rw [(hthr x).1 h, sub_zero], fun h ↦ by rw [(hthr x).2 h, sub_self]⟩)
     (hside ζ₁ h₁ _) (hside ζ₂ h₂ _)
-  have := F.isProbabilityMeasure_law θ
+  have := F.is_probability_measure_law θ
   rw [hφ.integral_one_sub, integral_const, probReal_univ, one_smul] at key
   linarith
 
@@ -418,13 +419,13 @@ private theorem integral_le_of_exp_threshold_flip (θ ζ₁ ζ₂ : F.domain) (K
 `η₂`. Its window of quantile levels of the law of `T` under `η₁` is chosen by the intermediate
 value theorem applied to the likelihood ratio `dP_{η₂} / dP_{η₁}`, a strictly increasing
 function of `T`. -/
-private theorem exists_intervalTest_integral_eq (η₁ η₂ : F.domain) (hη : η₁.val < η₂.val)
+private theorem exists_interval_test_integral_eq (η₁ η₂ : F.domain) (hη : η₁.val < η₂.val)
     {α : ℝ} (hα : α ∈ Ioo 0 1) :
     ∃ c₁ c₂ γ₁ γ₂ : ℝ, c₁ ≤ c₂ ∧ γ₁ ∈ Icc 0 1 ∧ γ₂ ∈ Icc 0 1 ∧
       ∫ x, intervalTest (F.statistic x) c₁ c₂ γ₁ γ₂ ∂F.law η₁ = α ∧
       ∫ x, intervalTest (F.statistic x) c₁ c₂ γ₁ γ₂ ∂F.law η₂ = α := by
   have hTm : Measurable F.statistic := F.measurable_statistic
-  have := F.isProbabilityMeasure_law η₁
+  have := F.is_probability_measure_law η₁
   set μ₁ := (F.law η₁).map F.statistic with hμ₁
   have : IsProbabilityMeasure μ₁ :=
     (Measure.isProbabilityMeasure_map_iff hTm.aemeasurable).2 inferInstance
@@ -458,17 +459,17 @@ private theorem exists_intervalTest_integral_eq (η₁ η₂ : F.domain) (hη : 
       (ae_of_all _ fun x ↦ by simp [Real.exp_pos])
     exact F.nonconstant (F.statistic x₀) (hac.ae_le hT)
   -- The two-point size construction.
-  obtain ⟨a, ha0, ha1, ha⟩ := exists_setIntegral_comp_quantile_eq_mul μ₁ hLmono.monotone hLi
+  obtain ⟨a, ha0, ha1, ha⟩ := exists_set_integral_comp_quantile_eq_mul μ₁ hLmono.monotone hLi
     hnc hα
   rw [hL1, mul_one] at ha
   obtain ⟨c₁, c₂, γ₁, γ₂, hc, hγ₁, hγ₂, hW⟩ :=
-    exists_intervalWeight_integral_eq_setIntegral_quantile μ₁ ha0 (by linarith [hα.1]) ha1
+    exists_interval_weight_integral_eq_set_integral_quantile μ₁ ha0 (by linarith [hα.1]) ha1
   have hW' : ∀ ψ : ℝ → ℝ, Integrable ψ μ₁ →
       ∫ t, intervalTest t c₁ c₂ γ₁ γ₂ * ψ t ∂μ₁ = ∫ v in Ioo a (a + α), ψ (μ₁.quantile v) :=
     fun ψ hψ ↦ by
       rw [← hW ψ hψ]
       congr 1
-  have hImeas := measurable_intervalTest c₁ c₂ γ₁ γ₂
+  have hImeas := measurable_interval_test c₁ c₂ γ₁ γ₂
   set φ : X → ℝ := fun x ↦ intervalTest (F.statistic x) c₁ c₂ γ₁ γ₂ with hφdef
   have hsize₁ : ∫ x, φ x ∂F.law η₁ = α := by
     have h := hW' (fun _ ↦ 1) (integrable_const _)
@@ -498,15 +499,15 @@ theorem exists_ump_interval_test {X : Type*} [MeasurableSpace X]
         {η | η₁.val < η.val ∧ η.val < η₂.val} α
         (fun x ↦ intervalTest (F.statistic x) c₁ c₂ γ₁ γ₂) := by
   obtain ⟨c₁, c₂, γ₁, γ₂, hc, hγ₁, hγ₂, hsize₁, hsize₂⟩ :=
-    F.exists_intervalTest_integral_eq η₁ η₂ hη hα
+    F.exists_interval_test_integral_eq η₁ η₂ hη hα
   have hIin : ∀ t ∈ Ioo c₁ c₂, intervalTest t c₁ c₂ γ₁ γ₂ = 1 := fun t ht ↦
-    intervalTest_of_mem_Ioo ht
+    interval_test_of_mem_ioo ht
   have hIout : ∀ t ∉ Icc c₁ c₂, intervalTest t c₁ c₂ γ₁ γ₂ = 0 := fun t ht ↦
-    intervalTest_of_notMem_Icc hc ht
+    interval_test_of_not_mem_icc hc ht
   set φ : X → ℝ := fun x ↦ intervalTest (F.statistic x) c₁ c₂ γ₁ γ₂ with hφdef
   have hφ : IsStatisticalTest φ :=
-    ⟨(measurable_intervalTest c₁ c₂ γ₁ γ₂).comp F.measurable_statistic,
-      fun x ↦ intervalTest_mem_Icc hγ₁ hγ₂ _⟩
+    ⟨(measurable_interval_test c₁ c₂ γ₁ γ₂).comp F.measurable_statistic,
+      fun x ↦ interval_test_mem_icc hγ₁ hγ₂ _⟩
   refine ⟨c₁, c₂, γ₁, γ₂, hc, hγ₁, hγ₂, hsize₁, hsize₂, hφ, ?_, ?_⟩
   · -- Level `α` on the two-sided null hypothesis.
     have hα' : α ∈ Icc (0 : ℝ) 1 := ⟨hα.1.le, hα.2.le⟩
@@ -585,7 +586,7 @@ mutually absolutely continuous), the loss `L θ` of rejecting (`true`) minus acc
 is positive below `θ₀` and negative above it, and the threshold may be infinite. For every test
 `φ` there is a threshold test in `T` whose risk `L θ false + (L θ true - L θ false) · power` is at
 most that of `φ` at every `θ`. The threshold test matches the size of `φ` at `θ₀`
-(`exists_integral_thresholdTest_eq`); the two Neyman–Pearson steps of the Karlin–Rubin argument
+(`exists_integral_threshold_test_eq`); the two Neyman–Pearson steps of the Karlin–Rubin argument
 then compare powers below and above `θ₀`. -/
 theorem exists_one_sided_test_risk_le {X : Type*} [MeasurableSpace X]
     (P : ℝ → Measure X) (μ : Measure X) [∀ θ, IsProbabilityMeasure (P θ)]
@@ -617,25 +618,25 @@ theorem exists_one_sided_test_risk_le {X : Type*} [MeasurableSpace X]
   have hTe : Measurable fun x ↦ (T x : EReal) := measurable_coe_real_ereal.comp hT
   have hψtest : ∀ (c : EReal) (γ : ℝ), γ ∈ Icc (0 : ℝ) 1 →
       IsStatisticalTest (thresholdTest (fun x ↦ (T x : EReal)) c γ) :=
-    fun c γ hγ ↦ isStatisticalTest_thresholdTest hTe c hγ
-  have hφb : ∀ θ, testPower P φ θ ∈ Icc (0 : ℝ) 1 := fun θ ↦ hφ.integral_mem_Icc (P θ)
+    fun c γ hγ ↦ is_statistical_test_threshold_test hTe c hγ
+  have hφb : ∀ θ, testPower P φ θ ∈ Icc (0 : ℝ) 1 := fun θ ↦ hφ.integral_mem_icc (P θ)
   have h01 : (0 : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨le_rfl, zero_le_one⟩
   rcases (hφb θ₀).1.lt_or_eq with hβ0 | hβ0
   · rcases (hφb θ₀).2.lt_or_eq with hβ1 | hβ1
     · -- a genuine threshold
-      obtain ⟨c, γ, hγ, hsize⟩ := exists_integral_thresholdTest_eq (P θ₀) hT ⟨hβ0, hβ1⟩
+      obtain ⟨c, γ, hγ, hsize⟩ := exists_integral_threshold_test_eq (P θ₀) hT ⟨hβ0, hβ1⟩
       have hreal : thresholdTest (fun x ↦ (T x : EReal)) (c : EReal) γ = thresholdTest T c γ := by
         funext x; simp only [thresholdTest, EReal.coe_lt_coe_iff, EReal.coe_eq_coe_iff]
-      have hthr := isStatisticalTest_thresholdTest hT c hγ
+      have hthr := is_statistical_test_threshold_test hT c hγ
       refine ⟨(c : EReal), γ, hγ, hψtest c γ hγ, hfinal _ ?_ ?_ ?_⟩ <;> rw [hreal]
       · intro θ hθ
         obtain ⟨r, hr, hratio⟩ := hmlr θ θ₀ hθ
-        exact integral_thresholdTest_le_of_monotone_likelihood_ratio μ (P θ) (P θ₀) (f θ)
+        exact integral_threshold_test_le_of_monotone_likelihood_ratio μ (P θ) (P θ₀) (f θ)
           (f θ₀) (hf θ) (hf θ₀) (hpos θ) (hpos θ₀) T r hr hratio c γ hthr φ hφ
           (by rw [hsize]; exact le_rfl)
       · intro θ hθ
         obtain ⟨r, hr, hratio⟩ := hmlr θ₀ θ hθ
-        exact integral_le_integral_thresholdTest_of_monotone_likelihood_ratio μ (P θ₀) (P θ)
+        exact integral_le_integral_threshold_test_of_monotone_likelihood_ratio μ (P θ₀) (P θ)
           (f θ₀) (f θ) (hf θ₀) (hf θ) (hpos θ₀) (hpos θ) T r hr hratio c γ hthr φ hφ
           (by rw [hsize]; exact le_rfl)
       · exact hsize

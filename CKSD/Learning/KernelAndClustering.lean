@@ -4,6 +4,7 @@ public import CKSD.Learning.Algorithms
 public import TauCeti.Probability.Distributions.Gaussian.ChiSquared
 public import TauCeti.Probability.Distributions.Gaussian.L2
 
+
 /-!
 # Kernel ridge regression and compact-support clustering
 
@@ -21,7 +22,7 @@ Matrices, Gaussian laws, and Hausdorff distance are Mathlib APIs.
 
 ## Main results
 
-* `CKSD.ridgePrediction_oracle_bounds`: kernel-ridge oracle bounds (GAPS 107.13).
+* `CKSD.ridge_prediction_oracle_bounds`: kernel-ridge oracle bounds (GAPS 107.13).
 * `CKSD.ae_tendsto_kmeans_centers_of_compact`: consistency of empirical `k`-means
   (GAPS 107.16).
 -/
@@ -59,27 +60,27 @@ open scoped RealInnerProductSpace
 variable {n p : ℕ}
 
 /-- The regularized Gram matrix `Aᵀ A + c I` is positive definite for `0 < c`. -/
-private theorem posDef_transpose_mul_add (A : Matrix (Fin n) (Fin p) ℝ) {c : ℝ} (hc : 0 < c) :
+private theorem pos_def_transpose_mul_add (A : Matrix (Fin n) (Fin p) ℝ) {c : ℝ} (hc : 0 < c) :
     (Aᵀ * A + c • (1 : Matrix (Fin p) (Fin p) ℝ)).PosDef := by
   have h1 := Matrix.posSemidef_conjTranspose_mul_self A
   rw [conjTranspose_eq_transpose_of_trivial] at h1
   exact PosDef.posSemidef_add h1 (PosDef.one.smul hc)
 
 /-- The regularized Gram matrix `A Aᵀ + c I` is positive definite for `0 < c`. -/
-private theorem posDef_mul_transpose_add (A : Matrix (Fin n) (Fin p) ℝ) {c : ℝ} (hc : 0 < c) :
+private theorem pos_def_mul_transpose_add (A : Matrix (Fin n) (Fin p) ℝ) {c : ℝ} (hc : 0 < c) :
     (A * Aᵀ + c • (1 : Matrix (Fin n) (Fin n) ℝ)).PosDef := by
   have h1 := Matrix.posSemidef_self_mul_conjTranspose A
   rw [conjTranspose_eq_transpose_of_trivial] at h1
   exact PosDef.posSemidef_add h1 (PosDef.one.smul hc)
 
 /-- Push-through form of the ridge smoother. -/
-private theorem ridgeSmoother_eq (A : Matrix (Fin n) (Fin p) ℝ) {lam : ℝ}
+private theorem ridge_smoother_eq (A : Matrix (Fin n) (Fin p) ℝ) {lam : ℝ}
     (hc : 0 < 2 * (n : ℝ) * lam) :
     ridgeSmoother A lam =
       A * Aᵀ * (A * Aᵀ + (2 * (n : ℝ) * lam) • (1 : Matrix (Fin n) (Fin n) ℝ))⁻¹ := by
   set c := 2 * (n : ℝ) * lam
-  have hM := (isUnit_iff_isUnit_det _).mp (posDef_transpose_mul_add A hc).isUnit
-  have hN := (isUnit_iff_isUnit_det _).mp (posDef_mul_transpose_add A hc).isUnit
+  have hM := (isUnit_iff_isUnit_det _).mp (pos_def_transpose_mul_add A hc).isUnit
+  have hN := (isUnit_iff_isUnit_det _).mp (pos_def_mul_transpose_add A hc).isUnit
   have h : Aᵀ * (A * Aᵀ + c • 1) = (Aᵀ * A + c • 1) * Aᵀ := by
     simp [Matrix.mul_add, Matrix.add_mul, Matrix.mul_assoc]
   have key : (Aᵀ * A + c • 1)⁻¹ * Aᵀ = Aᵀ * (A * Aᵀ + c • 1)⁻¹ := by
@@ -93,20 +94,20 @@ private theorem ridgeSmoother_eq (A : Matrix (Fin n) (Fin p) ℝ) {lam : ℝ}
   rw [Matrix.mul_assoc A, key, ← Matrix.mul_assoc]
 
 /-- Coordinates of a matrix acting on Euclidean space. -/
-private theorem toEuclideanLin_ofLp {m k : ℕ} (M : Matrix (Fin m) (Fin k) ℝ)
+private theorem to_euclidean_lin_of_lp {m k : ℕ} (M : Matrix (Fin m) (Fin k) ℝ)
     (v : EuclideanSpace ℝ (Fin k)) :
     (Matrix.toEuclideanLin (𝕜 := ℝ) M v).ofLp = M *ᵥ v.ofLp := by
   simp [Matrix.toLpLin_apply]
 
 /-- The squared Euclidean norm is the dot product of the coordinate vector with itself. -/
-private theorem norm_sq_eq_dotProduct {m : ℕ} (v : EuclideanSpace ℝ (Fin m)) :
+private theorem norm_sq_eq_dot_product {m : ℕ} (v : EuclideanSpace ℝ (Fin m)) :
     ‖v‖ ^ 2 = v.ofLp ⬝ᵥ v.ofLp := by
   rw [EuclideanSpace.norm_sq_eq]
   simp [dotProduct, sq]
 
 /-- An eigenvector of the normalized Gram matrix `A Aᵀ / n` with eigenvalue `μ` has `0 ≤ μ` and
 is an eigenvector of the ridge smoother with eigenvalue `μ / (μ + 2λ)`. -/
-private theorem ridgeSmoother_eigen (A : Matrix (Fin n) (Fin p) ℝ) {lam : ℝ} (hn : 0 < n)
+private theorem ridge_smoother_eigen (A : Matrix (Fin n) (Fin p) ℝ) {lam : ℝ} (hn : 0 < n)
     (hlam : 0 < lam) {v : EuclideanSpace ℝ (Fin n)} (hv : ‖v‖ = 1) {μ : ℝ}
     (h : Matrix.toEuclideanLin (𝕜 := ℝ) (((n : ℝ)⁻¹) • (A * A.transpose)) v = μ • v) :
     0 ≤ μ ∧
@@ -116,11 +117,11 @@ private theorem ridgeSmoother_eigen (A : Matrix (Fin n) (Fin p) ℝ) {lam : ℝ}
   set w := v.ofLp with hw
   have hAA : (A * Aᵀ) *ᵥ w = ((n : ℝ) * μ) • w := by
     have h' := congrArg WithLp.ofLp h
-    rw [toEuclideanLin_ofLp, Matrix.smul_mulVec, WithLp.ofLp_smul] at h'
+    rw [to_euclidean_lin_of_lp, Matrix.smul_mulVec, WithLp.ofLp_smul] at h'
     calc (A * Aᵀ) *ᵥ w = (n : ℝ) • ((n : ℝ)⁻¹ • ((A * Aᵀ) *ᵥ w)) := by
           rw [smul_smul, mul_inv_cancel₀ hn'.ne', one_smul]
       _ = _ := by rw [h', smul_smul]
-  have hww : w ⬝ᵥ w = 1 := by rw [← norm_sq_eq_dotProduct, hv, one_pow]
+  have hww : w ⬝ᵥ w = 1 := by rw [← norm_sq_eq_dot_product, hv, one_pow]
   have hμ : 0 ≤ μ := by
     have h1 : w ⬝ᵥ ((A * Aᵀ) *ᵥ w) = (Aᵀ *ᵥ w) ⬝ᵥ (Aᵀ *ᵥ w) := by
       rw [← Matrix.mulVec_mulVec, Matrix.dotProduct_mulVec, ← Matrix.mulVec_transpose]
@@ -130,7 +131,7 @@ private theorem ridgeSmoother_eigen (A : Matrix (Fin n) (Fin p) ℝ) {lam : ℝ}
   refine ⟨hμ, ?_⟩
   set c := 2 * (n : ℝ) * lam with hcdef
   set N := A * Aᵀ + c • (1 : Matrix (Fin n) (Fin n) ℝ) with hNdef
-  have hN := (isUnit_iff_isUnit_det _).mp (posDef_mul_transpose_add A hc).isUnit
+  have hN := (isUnit_iff_isUnit_det _).mp (pos_def_mul_transpose_add A hc).isUnit
   have hpos : 0 < (n : ℝ) * μ + c := by positivity
   have hNw : N *ᵥ w = ((n : ℝ) * μ + c) • w := by
     rw [hNdef, Matrix.add_mulVec, hAA, Matrix.smul_mulVec, Matrix.one_mulVec, add_smul]
@@ -145,7 +146,7 @@ private theorem ridgeSmoother_eigen (A : Matrix (Fin n) (Fin p) ℝ) {lam : ℝ}
     rw [hcdef]
     field_simp
   ext i
-  rw [toEuclideanLin_ofLp, ridgeSmoother_eq A hc, ← Matrix.mulVec_mulVec, hNinv,
+  rw [to_euclidean_lin_of_lp, ridge_smoother_eq A hc, ← Matrix.mulVec_mulVec, hNinv,
     Matrix.mulVec_smul, hAA, smul_smul, hscal]
   rfl
 
@@ -157,13 +158,13 @@ private theorem norm_sq_ridge_residual_le (A : Matrix (Fin n) (Fin p) ℝ) {lam 
       ‖Matrix.toEuclideanLin (𝕜 := ℝ) A β - y‖ ^ 2 + 2 * n * lam * ‖β‖ ^ 2 := by
   set c := 2 * (n : ℝ) * lam with hcdef
   set M := Aᵀ * A + c • (1 : Matrix (Fin p) (Fin p) ℝ) with hMdef
-  have hM := (isUnit_iff_isUnit_det _).mp (posDef_transpose_mul_add A hc).isUnit
+  have hM := (isUnit_iff_isUnit_det _).mp (pos_def_transpose_mul_add A hc).isUnit
   set L := Matrix.toEuclideanLin (𝕜 := ℝ) A with hL
   set Lt := Matrix.toEuclideanLin (𝕜 := ℝ) Aᵀ with hLt
   set b := Matrix.toEuclideanLin (𝕜 := ℝ) M⁻¹ (Lt y) with hb
   have hH : Matrix.toEuclideanLin (𝕜 := ℝ) (ridgeSmoother A lam) y = L b := by
     ext i
-    simp only [hL, hb, hLt, toEuclideanLin_ofLp, ridgeSmoother, Matrix.mulVec_mulVec, hMdef,
+    simp only [hL, hb, hLt, to_euclidean_lin_of_lp, ridgeSmoother, Matrix.mulVec_mulVec, hMdef,
       Matrix.mul_assoc]
     rfl
   have hadj : ∀ u w, ⟪u, L w⟫ = ⟪Lt u, w⟫ := by
@@ -172,12 +173,12 @@ private theorem norm_sq_ridge_residual_le (A : Matrix (Fin n) (Fin p) ℝ) {lam 
       Matrix.toEuclideanLin_conjTranspose_eq_adjoint, LinearMap.adjoint_inner_left]
   have hnormal : Lt (y - L b) = c • b := by
     have hMb : M *ᵥ b.ofLp = Aᵀ *ᵥ y.ofLp := by
-      rw [hb, toEuclideanLin_ofLp, Matrix.mulVec_mulVec, Matrix.mul_nonsing_inv _ hM,
-        Matrix.one_mulVec, hLt, toEuclideanLin_ofLp]
+      rw [hb, to_euclidean_lin_of_lp, Matrix.mulVec_mulVec, Matrix.mul_nonsing_inv _ hM,
+        Matrix.one_mulVec, hLt, to_euclidean_lin_of_lp]
     rw [hMdef, Matrix.add_mulVec, Matrix.smul_mulVec, Matrix.one_mulVec] at hMb
     ext i
     have := congrFun hMb i
-    simp only [hLt, hL, toEuclideanLin_ofLp, WithLp.ofLp_sub, WithLp.ofLp_smul, Matrix.mulVec_sub,
+    simp only [hLt, hL, to_euclidean_lin_of_lp, WithLp.ofLp_sub, WithLp.ofLp_smul, Matrix.mulVec_sub,
       Matrix.mulVec_mulVec, Pi.sub_apply, Pi.add_apply, Pi.smul_apply] at this ⊢
     linarith
   set r := y - L b with hr
@@ -265,7 +266,7 @@ private theorem integrable_and_integral_sum_sq_inner {E : Type*} [NormedAddCommG
 
 /-- The critical-radius inequality bounds the sum of the squared ridge-smoother eigenvalues
 `μ / (μ + 2λ)` by `n R² δ² / (32 σ²)` when `2 δ² ≤ λ`. -/
-private theorem sum_sq_ridgeEigen_le {n : ℕ} {mu : Fin n → ℝ} (hmu : ∀ j, 0 ≤ mu j)
+private theorem sum_sq_ridge_eigen_le {n : ℕ} {mu : Fin n → ℝ} (hmu : ∀ j, 0 ≤ mu j)
     {R sigma delta lambda : ℝ} (hn' : (0 : ℝ) < n) (hsigma : 0 < sigma) (hdelta : 0 < delta)
     (hcrit : HasKernelCriticalRadius mu R sigma delta) (hlam : 2 * delta ^ 2 ≤ lambda) :
     ∑ j, (mu j / (mu j + 2 * lambda)) ^ 2 ≤ (n : ℝ) * R ^ 2 * delta ^ 2 / sigma ^ 2 / 32 := by
@@ -307,7 +308,7 @@ The constants are universal. Both the expected bound and the Gaussian tail bound
 critical radius. The eigenvalues `mu j` of the normalized Gram matrix `A Aᵀ / n` are
 automatically nonnegative. This does not formalize the eigenvalue-decay calculation for infinite
 RKHSs. -/
-theorem ridgePrediction_oracle_bounds :
+theorem ridge_prediction_oracle_bounds :
     ∃ c₀ > (0 : ℝ), ∃ c₁ > (0 : ℝ), ∃ c₂ > (0 : ℝ), ∃ c₃ > (0 : ℝ),
       ∀ n p : ℕ, 0 < n → ∀ A : Matrix (Fin n) (Fin p) ℝ,
       ∀ e : OrthonormalBasis (Fin n) ℝ (EuclideanSpace ℝ (Fin n)),
@@ -332,14 +333,14 @@ theorem ridgePrediction_oracle_bounds :
   have hlam0 : 0 < lambda := by nlinarith [pow_pos hdelta 2]
   have hc : 0 < 2 * (n : ℝ) * lambda := by positivity
   set H := Matrix.toEuclideanLin (𝕜 := ℝ) (ridgeSmoother A lambda) with hHdef
-  have heig := fun j ↦ ridgeSmoother_eigen A hn hlam0 (e.orthonormal.1 j) (hmu j)
+  have heig := fun j ↦ ridge_smoother_eigen A hn hlam0 (e.orthonormal.1 j) (hmu j)
   set h : Fin n → ℝ := fun j ↦ mu j / (mu j + 2 * lambda) with hh
   have hh0 : ∀ j, 0 ≤ h j := fun j ↦ div_nonneg (heig j).1 (by linarith [(heig j).1])
   have hh1 : ∀ j, h j ≤ 1 := fun j ↦
     (div_le_one (by linarith [(heig j).1])).mpr (by linarith [(heig j).1])
   set a := (n : ℝ) * R ^ 2 * delta ^ 2 / sigma ^ 2 with ha
   have hsum : ∑ j, h j ^ 2 ≤ a / 32 :=
-    sum_sq_ridgeEigen_le (fun j ↦ (heig j).1) hn' hsigma hdelta hcrit hlam
+    sum_sq_ridge_eigen_le (fun j ↦ (heig j).1) hn' hsigma hdelta hcrit hlam
   have hvar : 2 * sigma ^ 2 * ∑ j, h j ^ 2 ≤ n * R ^ 2 * delta ^ 2 / 16 := by
     have : 2 * sigma ^ 2 * (a / 32) = n * R ^ 2 * delta ^ 2 / 16 := by
       rw [ha]
@@ -425,7 +426,7 @@ def kmeansSampleRisk {X : Type*} [PseudoMetricSpace X] {n k : ℕ}
 
 /-- Infima of two finite families differ by at most a uniform bound on their pointwise
 differences. -/
-private theorem abs_ciInf_sub_ciInf_le {ι : Type*} [Nonempty ι] [Finite ι] {f g : ι → ℝ}
+private theorem abs_ci_inf_sub_ci_inf_le {ι : Type*} [Nonempty ι] [Finite ι] {f g : ι → ℝ}
     {ε : ℝ} (h : ∀ j, |f j - g j| ≤ ε) : |(⨅ j, f j) - ⨅ j, g j| ≤ ε := by
   have hf := (Set.finite_range f).bddBelow
   have hg := (Set.finite_range g).bddBelow
@@ -491,7 +492,7 @@ private theorem tendsto_of_lipschitz_of_dense {X : Type*} [PseudoMetricSpace X] 
 /-- In a compact set `K`, if every subsequential limit of a sequence of `k`-tuples of points has
 the same range as a fixed tuple `star`, then the ranges converge to that of `star` in Hausdorff
 distance. -/
-private theorem tendsto_hausdorffDist_range_of_forall_tendsto_subseq {E : Type*} [MetricSpace E]
+private theorem tendsto_hausdorff_dist_range_of_forall_tendsto_subseq {E : Type*} [MetricSpace E]
     {K : Set E} [CompactSpace K] {k : ℕ} (C : ℕ → Fin k → K) (star : Fin k → K)
     (hlimit : ∀ (c : Fin k → K) (ψ : ℕ → ℕ), StrictMono ψ →
       Tendsto (fun j ↦ C (ψ j)) atTop (𝓝 c) →
@@ -565,7 +566,7 @@ theorem ae_tendsto_kmeans_centers_of_compact
   have hL0 : 0 < L := by rw [hL]; linarith
   have hlip : ∀ x ∈ K, ∀ c c' : Fin k → K, |φ x c - φ x c'| ≤ L * dist c c' := by
     intro x hx c c'
-    refine abs_ciInf_sub_ciInf_le fun j ↦ ?_
+    refine abs_ci_inf_sub_ci_inf_le fun j ↦ ?_
     refine (abs_dist_sq_sub_dist_sq_le hKb hx (c j).2 (c' j).2).trans ?_
     have hj : dist (c j : EuclideanSpace ℝ (Fin d)) (c' j : EuclideanSpace ℝ (Fin d)) ≤ dist c c' := by
       rw [← Subtype.dist_eq]; exact dist_le_pi_dist c c' j
@@ -614,7 +615,7 @@ theorem ae_tendsto_kmeans_centers_of_compact
       rw [← hlaw] at this
       exact this.comp_measurable (hiid.1 0)
     have h := strong_law_ae (fun i ω ↦ φ (X i ω) c) hint0
-      (hiid.pairwise_indepFun_comp (hmeas c)) (hiid.identDistrib_comp (hmeas c))
+      (hiid.pairwise_indep_fun_comp (hmeas c)) (hiid.ident_distrib_comp (hmeas c))
     have hmean : ∫ ω, φ (X 0 ω) c ∂μ = R c := by
       rw [hR]
       simp only
@@ -668,10 +669,10 @@ theorem ae_tendsto_kmeans_centers_of_compact
       exact le_antisymm hle (by rw [← hRdef, ← hRdef]; exact hmin c)
     exact hunique c heq
   -- conclusion by compactness
-  exact tendsto_hausdorffDist_range_of_forall_tendsto_subseq (fun n ↦ C n ω) star hlimit
+  exact tendsto_hausdorff_dist_range_of_forall_tendsto_subseq (fun n ↦ C n ω) star hlimit
 
 /-- Permuting center labels leaves the population distortion unchanged. -/
-theorem kmeansRisk_comp_perm {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X]
+theorem kmeans_risk_comp_perm {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X]
     {k : ℕ} (P : Measure X) (c : Fin k → X) (σ : Equiv.Perm (Fin k)) :
     kmeansRisk P (c ∘ σ) = kmeansRisk P c := by
   unfold kmeansRisk
@@ -679,7 +680,7 @@ theorem kmeansRisk_comp_perm {X : Type*} [PseudoMetricSpace X] [MeasurableSpace 
   exact congrArg sInf (EquivLike.range_comp (fun j ↦ dist x (c j) ^ 2) σ)
 
 /-- A ridge smoother sends zero observations to zero predicted values. -/
-@[simp] theorem ridgePrediction_zero {n p : ℕ} (A : Matrix (Fin n) (Fin p) ℝ)
+@[simp] theorem ridge_prediction_zero {n p : ℕ} (A : Matrix (Fin n) (Fin p) ℝ)
     (lambda : ℝ) : ridgePrediction A lambda 0 = 0 := by simp [ridgePrediction]
 
 end CKSD

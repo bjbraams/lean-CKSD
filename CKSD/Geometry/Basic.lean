@@ -3,6 +3,7 @@ module
 public import CKSD.Nonparametric.Basic
 public import CKSD.LinearModels.Basic
 
+
 /-!
 # Geometry: basic definitions
 
@@ -90,7 +91,7 @@ def distanceToMeasure {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X] (P :
 expression `∫∫ k dP dP + ∫∫ k dQ dQ - 2 ∫∫ k dP dQ` over product measures. The expression is
 meaningful when `k` is integrable for the three product measures, for example for a bounded
 measurable kernel; for a positive semidefinite kernel it is the squared distance of the kernel mean
-embeddings (`CKSD.squaredMMD_eq_norm_kernelMeanEmbedding_sub_sq`). -/
+embeddings (`CKSD.squared_mmd_eq_norm_kernel_mean_embedding_sub_sq`). -/
 def squaredMMD {X : Type*} [MeasurableSpace X] (k : X → X → ℝ) (P Q : Measure X) : ℝ :=
   (∫ z, k z.1 z.2 ∂P.prod P) + (∫ z, k z.1 z.2 ∂Q.prod Q) -
     2 * ∫ z, k z.1 z.2 ∂P.prod Q

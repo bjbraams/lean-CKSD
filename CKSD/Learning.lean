@@ -25,6 +25,9 @@ public import CKSD.Learning.Policies
 public import CKSD.Learning.ChordalGraphs
 public import CKSD.Learning.PrivateEstimation
 
+
+namespace CKSD
+
 /-!
 # Section 107: Statistical learning
 
@@ -55,3 +58,6 @@ learning models).
 * `CKSD.Learning.Privacy`, `CKSD.Learning.PrivateEstimation`: differential privacy and private
   estimation.
 -/
+
+
+end CKSD

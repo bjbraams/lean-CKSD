@@ -2,6 +2,7 @@ module
 
 public import CKSD.Processes.Independence
 
+
 /-!
 # Strong mixing, the moving-block bootstrap, and Stein's prediction theorem
 
@@ -24,12 +25,12 @@ of `ψ` from the first `n` coordinates computed under covariance `k` has coeffic
 
 ## Main results
 
-* `CKSD.indepFun_of_measurable_pastSigmaAlgebra`: for an independent sequence, a function of the
+* `CKSD.indep_fun_of_measurable_past_sigma_algebra`: for an independent sequence, a function of the
   strict past `σ(ε_s : s < t)` is independent of `ε_t`; with the monotonicity and measurability
   lemmas for `pastSigmaAlgebra`.
-* `CKSD.tendstoInMeasure_kolmogorovDistance_movingBlockBootstrapLaw` (GAPS 106.11):
+* `CKSD.tendsto_in_measure_kolmogorov_distance_moving_block_bootstrap_law` (GAPS 106.11):
   consistency of the moving-block bootstrap for the mean of a strongly mixing sequence.
-* `CKSD.eventually_abs_linearPredictionError_div_sub_one_le` (GAPS 106.21): Stein's theorem on
+* `CKSD.eventually_abs_linear_prediction_error_div_sub_one_le` (GAPS 106.21): Stein's theorem on
   asymptotically efficient prediction under equivalent Gaussian laws.
 -/
 
@@ -48,28 +49,28 @@ def pastSigmaAlgebra {Ω : Type*} (X : ℤ → Ω → ℝ) (t : ℤ) : Measurabl
   ⨆ s : ℤ, ⨆ _ : s ≤ t, MeasurableSpace.comap (X s) inferInstance
 
 /-- The coordinate `ε_s` is measurable with respect to the past `σ(ε_r : r ≤ t)` when `s ≤ t`. -/
-theorem measurable_pastSigmaAlgebra_of_le {Ω : Type*}
+theorem measurable_past_sigma_algebra_of_le {Ω : Type*}
     {ε : ℤ → Ω → ℝ} {s t : ℤ} (hst : s ≤ t) :
     Measurable[pastSigmaAlgebra ε t] (ε s) :=
   Measurable.of_comap_le (le_iSup₂_of_le s hst le_rfl)
 
 /-- The past σ-algebras increase with time. -/
-theorem pastSigmaAlgebra_mono {Ω : Type*} (ε : ℤ → Ω → ℝ) {s t : ℤ} (hst : s ≤ t) :
+theorem past_sigma_algebra_mono {Ω : Type*} (ε : ℤ → Ω → ℝ) {s t : ℤ} (hst : s ≤ t) :
     pastSigmaAlgebra ε s ≤ pastSigmaAlgebra ε t :=
   iSup₂_le fun r hr ↦ le_iSup₂_of_le r (hr.trans hst) le_rfl
 
 /-- The past σ-algebras of a measurable process are sub-σ-algebras. -/
-theorem pastSigmaAlgebra_le {Ω : Type*} [MeasurableSpace Ω] {ε : ℤ → Ω → ℝ}
+theorem past_sigma_algebra_le {Ω : Type*} [MeasurableSpace Ω] {ε : ℤ → Ω → ℝ}
     (hm : ∀ t, Measurable (ε t)) (t : ℤ) : pastSigmaAlgebra ε t ≤ ‹MeasurableSpace Ω› :=
   iSup₂_le fun r _ ↦ (hm r).comap_le
 
 /-- A function of the strict past `σ(ε_s : s < t)` of an independent sequence is independent
 of `ε_t`. -/
-theorem indepFun_of_measurable_pastSigmaAlgebra {Ω : Type*} [MeasurableSpace Ω]
+theorem indep_fun_of_measurable_past_sigma_algebra {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} {ε : ℤ → Ω → ℝ} (hm : ∀ t, Measurable (ε t)) (hind : iIndepFun ε μ)
     (t : ℤ) {Y : Ω → ℝ} (hY : Measurable[pastSigmaAlgebra ε (t - 1)] Y) :
     IndepFun Y (ε t) μ :=
-  indepFun_of_measurable_biSup_of_notMem hm hind (S := {s | s ≤ t - 1}) (by simp) hY
+  indep_fun_of_measurable_bi_sup_of_not_mem hm hind (S := {s | s ≤ t - 1}) (by simp) hY
 
 /-- The future σ-algebra `σ(X_s : s ≥ t)` of a real process on `ℤ`. -/
 @[instance_reducible]
@@ -102,7 +103,7 @@ stationary strongly mixing sequence with `𝔼|X|^{2+δ} < ∞` and `∑ α(k)^{
 the autocovariances are absolutely summable, `√n (X̄_n - μ) ⇒ N(0, σ²_∞)`, and the Kolmogorov
 distance between the bootstrap law and the law of `√n (X̄_n - μ)` tends to `0` in probability,
 for block lengths `b → ∞` with `b/n → 0` (so that eventually `1 ≤ b ≤ n`). -/
-theorem tendstoInMeasure_kolmogorovDistance_movingBlockBootstrapLaw {Ω : Type*}
+theorem tendsto_in_measure_kolmogorov_distance_moving_block_bootstrap_law {Ω : Type*}
     [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℤ → Ω → ℝ) (hXm : ∀ t, Measurable (X t))
     (hstat : ∀ h : ℤ, μ.map (fun ω t ↦ X (t + h) ω) = μ.map (fun ω t ↦ X t ω))
@@ -141,7 +142,7 @@ excess error of the `k₁`-predictor and the relative misstatement of its error 
 exchanged roles are the same statement applied to `(k₁, P₁, k₀, P₀)`. The Gram matrices of
 `k₁` are automatically positive semidefinite: otherwise the marginal of `P₁` is a Dirac mass,
 which is not equivalent to the nondegenerate marginal of `P₀`. -/
-theorem eventually_abs_linearPredictionError_div_sub_one_le (k₀ k₁ : ℕ → ℕ → ℝ)
+theorem eventually_abs_linear_prediction_error_div_sub_one_le (k₀ k₁ : ℕ → ℕ → ℝ)
     (P₀ P₁ : Measure (ℕ → ℝ)) [IsProbabilityMeasure P₀] [IsProbabilityMeasure P₁]
     (hk₀ : ∀ n, (kernelGram k₀ n).PosDef)
     (hP₀ : ∀ n, P₀.map (fun x ↦ WithLp.toLp 2 fun i : Fin n ↦ x i) =

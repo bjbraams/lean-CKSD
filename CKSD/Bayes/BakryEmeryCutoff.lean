@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.BakryEmeryRegularization
 /-!
 # Bakry–Émery logarithmic Sobolev inequality
@@ -72,7 +73,7 @@ theorem exists_expanding_smooth_cutoffs (E : Type*) [NormedAddCommGroup E] [Inne
     simpa only [Pi.one_apply] using heq n (Metric.ball_subset_closedBall hy)
 
 /-- A logarithmic Sobolev bound on smooth compactly supported tests extends to all admissible tests. -/
-theorem logSobolevInequality_of_hasCompactSupport {E : Type*} [NormedAddCommGroup E]
+theorem log_sobolev_inequality_of_has_compact_support {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     (μ : Measure E) [IsProbabilityMeasure μ] (C : ℝ)
     (h : ∀ f : E → ℝ, ContDiff ℝ ∞ f → HasCompactSupport f →
@@ -143,15 +144,15 @@ theorem logSobolevInequality_of_hasCompactSupport {E : Type*} [NormedAddCommGrou
   exact le_of_tendsto_of_tendsto' hEntropy (hEnergy.const_mul (2 * C)) (fun n ↦ h (F n) (hFs n) (hFc n))
 
 /-- Bakry–Émery: a strongly convex smooth potential has logarithmic Sobolev constant `1/m`. -/
-theorem logSobolevInequality_gibbsMeasure_of_stronglyMonotoneGradient {d : ℕ}
+theorem log_sobolev_inequality_gibbs_measure_of_strongly_monotone_gradient {d : ℕ}
     (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (G : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (m : ℝ) (hm0 : 0 < m)
     (hG : ∀ x, HasGradientAt V (G x) x) (hm : IsStronglyMonotoneGradient G m)
     (hZ : Integrable (fun x ↦ Real.exp (-V x))) :
     (gibbsMeasure V).LogSobolevInequality (1 / m) := by
-  have : IsProbabilityMeasure (gibbsMeasure V) := isProbabilityMeasure_gibbsMeasure hZ
-  apply logSobolevInequality_of_hasCompactSupport
+  have : IsProbabilityMeasure (gibbsMeasure V) := is_probability_measure_gibbs_measure hZ
+  apply log_sobolev_inequality_of_has_compact_support
   intro f hf hfc
-  convert entropy_gibbs_sq_le_of_hasCompactSupport V G m hm0 hG hm hZ f hf hfc using 1 <;> ring
+  convert entropy_gibbs_sq_le_of_has_compact_support V G m hm0 hG hm hZ f hf hfc using 1 <;> ring
 
 end CKSD

@@ -5,6 +5,7 @@ public import CKSD.Learning.CoordinateSum
 public import Mathlib.Combinatorics.SimpleGraph.Acyclic
 public import Mathlib.Combinatorics.SimpleGraph.Finite
 
+
 /-!
 # Pairwise graphical models and belief propagation
 
@@ -25,7 +26,7 @@ Mathlib's `SimpleGraph`.
 
 ## Main results
 
-* `CKSD.isBetheStationary_iff_exists_beliefPropagationFixedPoint`: Bethe stationary points are
+* `CKSD.is_bethe_stationary_iff_exists_belief_propagation_fixed_point`: Bethe stationary points are
   BP beliefs (GAPS 107.19).
 
 Exactness and uniqueness of belief propagation on trees are in
@@ -175,7 +176,7 @@ private def betheDirDeriv (M : PairwiseGraphicalModel V S) (B : LocalBeliefTable
     ∑ e ∈ M.orderedEdges, ∑ a, ∑ b, betheEdgeGrad M B e.1 e.2 a b * D.2 e.1 e.2 a b
 
 /-- Derivative of `t ↦ negMulLog (x + t d)` at `0`, for `x ≠ 0`. -/
-private theorem hasDerivAt_negMulLog_affine {x : ℝ} (hx : x ≠ 0) (d : ℝ) :
+private theorem has_deriv_at_neg_mul_log_affine {x : ℝ} (hx : x ≠ 0) (d : ℝ) :
     HasDerivAt (fun t ↦ Real.negMulLog (x + t * d)) ((-Real.log x - 1) * d) 0 := by
   have h1 : HasDerivAt (fun t : ℝ ↦ x + t * d) d 0 := by
     have := ((hasDerivAt_id (0 : ℝ)).mul_const d).const_add x
@@ -185,14 +186,14 @@ private theorem hasDerivAt_negMulLog_affine {x : ℝ} (hx : x ≠ 0) (d : ℝ) :
   exact h2.comp (0 : ℝ) h1
 
 /-- Derivative of `t ↦ (x + t d) c` at `0`. -/
-private theorem hasDerivAt_affine_mul (x d c : ℝ) :
+private theorem has_deriv_at_affine_mul (x d c : ℝ) :
     HasDerivAt (fun t : ℝ ↦ (x + t * d) * c) (d * c) 0 := by
   have := (((hasDerivAt_id (0 : ℝ)).mul_const d).const_add x).mul_const c
   rwa [one_mul] at this
 
 /-- At an interior point of the local polytope, the Bethe free energy is differentiable along
 every line, with derivative given by the node and edge gradients. -/
-private theorem hasDerivAt_betheFreeEnergy (M : PairwiseGraphicalModel V S)
+private theorem has_deriv_at_bethe_free_energy (M : PairwiseGraphicalModel V S)
     (B : LocalBeliefTables V S) (hB : IsInteriorLocalBelief M B) (D : LocalBeliefTables V S) :
     HasDerivAt (fun t : ℝ ↦ betheFreeEnergy M (B + t • D)) (betheDirDeriv M B D) 0 := by
   unfold betheFreeEnergy betheEntropy finiteTableEntropy
@@ -201,18 +202,18 @@ private theorem hasDerivAt_betheFreeEnergy (M : PairwiseGraphicalModel V S)
   have hE : ∀ e ∈ M.orderedEdges, M.graph.Adj e.1 e.2 := fun e he ↦ (Finset.mem_filter.mp he).2.2
   have h1 := HasDerivAt.fun_sum (u := Finset.univ) fun i _ ↦
     HasDerivAt.fun_sum (u := Finset.univ) fun a _ ↦
-      hasDerivAt_affine_mul (B.1 i a) (D.1 i a) (Real.log (M.vertexPotential i a))
+      has_deriv_at_affine_mul (B.1 i a) (D.1 i a) (Real.log (M.vertexPotential i a))
   have h2 := HasDerivAt.fun_sum (u := M.orderedEdges) fun (e : V × V) _ ↦
     HasDerivAt.fun_sum (u := Finset.univ) fun a _ ↦
       HasDerivAt.fun_sum (u := Finset.univ) fun b _ ↦
-        hasDerivAt_affine_mul (B.2 e.1 e.2 a b) (D.2 e.1 e.2 a b)
+        has_deriv_at_affine_mul (B.2 e.1 e.2 a b) (D.2 e.1 e.2 a b)
           (Real.log (M.edgePotential e.1 e.2 a b))
   have h3 := HasDerivAt.fun_sum (u := M.orderedEdges) fun (e : V × V) he ↦
     HasDerivAt.fun_sum (u := Finset.univ) fun (z : S × S) _ ↦
-      hasDerivAt_negMulLog_affine (hB.2.2 _ _ (hE e he) z.1 z.2).ne' (D.2 e.1 e.2 z.1 z.2)
+      has_deriv_at_neg_mul_log_affine (hB.2.2 _ _ (hE e he) z.1 z.2).ne' (D.2 e.1 e.2 z.1 z.2)
   have h4 := HasDerivAt.fun_sum (u := Finset.univ) fun i _ ↦
     (HasDerivAt.fun_sum (u := Finset.univ) fun a _ ↦
-      hasDerivAt_negMulLog_affine (hB.2.1 i a).ne' (D.1 i a)).const_mul
+      has_deriv_at_neg_mul_log_affine (hB.2.1 i a).ne' (D.1 i a)).const_mul
         ((M.graph.neighborFinset i).card - (1 : ℝ))
   have h := (h1.neg.sub h2).sub (h3.sub h4)
   convert h using 1
@@ -242,7 +243,7 @@ private theorem hasDerivAt_betheFreeEnergy (M : PairwiseGraphicalModel V S)
 omit [Fintype S] in
 /-- Summing over the edges counted once is half the sum over both orientations, for a function
 that is symmetric on edges. -/
-private theorem sum_orderedEdges_eq_half (M : PairwiseGraphicalModel V S) (Φ : V → V → ℝ)
+private theorem sum_ordered_edges_eq_half (M : PairwiseGraphicalModel V S) (Φ : V → V → ℝ)
     (hΦ : ∀ i j, M.graph.Adj i j → Φ i j = Φ j i) :
     ∑ e ∈ M.orderedEdges, Φ e.1 e.2 =
       (1 / 2) * ∑ i, ∑ j ∈ M.graph.neighborFinset i, Φ i j := by
@@ -277,7 +278,7 @@ private theorem sum_orderedEdges_eq_half (M : PairwiseGraphicalModel V S) (Φ : 
 
 omit [LinearOrder V] [Fintype S] in
 /-- Exchanging the roles of the two endpoints in a sum over oriented edges. -/
-private theorem sum_neighborFinset_swap (M : PairwiseGraphicalModel V S) (Φ : V → V → ℝ) :
+private theorem sum_neighbor_finset_swap (M : PairwiseGraphicalModel V S) (Φ : V → V → ℝ) :
     ∑ i, ∑ j ∈ M.graph.neighborFinset i, Φ j i = ∑ i, ∑ j ∈ M.graph.neighborFinset i, Φ i j := by
   have h : ∀ Ψ : V → V → ℝ, ∑ i, ∑ j ∈ M.graph.neighborFinset i, Ψ i j =
       ∑ p : V × V, if M.graph.Adj p.1 p.2 then Ψ p.1 p.2 else 0 := by
@@ -294,7 +295,7 @@ private theorem sum_neighborFinset_swap (M : PairwiseGraphicalModel V S) (Φ : V
 
 omit [Fintype V] [LinearOrder V] in
 /-- Edge gradients are symmetric under reversing the edge. -/
-private theorem betheEdgeGrad_symm (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
+private theorem bethe_edge_grad_symm (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
     (hB : IsInteriorLocalBelief M B) {i j : V} (h : M.graph.Adj i j) (a b : S) :
     betheEdgeGrad M B j i b a = betheEdgeGrad M B i j a b := by
   unfold betheEdgeGrad
@@ -302,7 +303,7 @@ private theorem betheEdgeGrad_symm (M : PairwiseGraphicalModel V S) (B : LocalBe
 
 /-- The directional derivative of the Bethe free energy along a direction that is symmetric on
 edges, written with both orientations of each edge. -/
-private theorem betheDirDeriv_eq (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
+private theorem bethe_dir_deriv_eq (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
     (hB : IsInteriorLocalBelief M B) (D : LocalBeliefTables V S)
     (hD : ∀ i j, M.graph.Adj i j → ∀ a b, D.2 i j a b = D.2 j i b a) :
     betheDirDeriv M B D = ∑ i, ∑ a, betheNodeGrad M B i a * D.1 i a +
@@ -310,19 +311,19 @@ private theorem betheDirDeriv_eq (M : PairwiseGraphicalModel V S) (B : LocalBeli
         betheEdgeGrad M B i j a b * D.2 i j a b := by
   unfold betheDirDeriv
   congr 1
-  refine sum_orderedEdges_eq_half M (fun i j ↦ ∑ a, ∑ b, betheEdgeGrad M B i j a b * D.2 i j a b)
+  refine sum_ordered_edges_eq_half M (fun i j ↦ ∑ a, ∑ b, betheEdgeGrad M B i j a b * D.2 i j a b)
     fun i j h ↦ ?_
   rw [Finset.sum_comm]
   refine Finset.sum_congr rfl fun b _ ↦ Finset.sum_congr rfl fun a _ ↦ ?_
-  rw [betheEdgeGrad_symm M B hB h a b, ← hD i j h a b]
+  rw [bethe_edge_grad_symm M B hB h a b, ← hD i j h a b]
 
 /-- The directional derivative along a symmetrized rank-one direction on the edges. -/
-private theorem betheDirDeriv_test (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
+private theorem bethe_dir_deriv_test (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
     (hB : IsInteriorLocalBelief M B) (D₁ : V → S → ℝ) (c : V → V → ℝ) (f g : S → ℝ) :
     betheDirDeriv M B (D₁, fun k l x y ↦ c k l * f x * g y + c l k * g x * f y) =
       ∑ i, ∑ a, betheNodeGrad M B i a * D₁ i a + ∑ i, ∑ j ∈ M.graph.neighborFinset i,
         c i j * ∑ x, ∑ y, betheEdgeGrad M B i j x y * (f x * g y) := by
-  rw [betheDirDeriv_eq M B hB _ fun i j _ a b ↦ by simp only; ring]
+  rw [bethe_dir_deriv_eq M B hB _ fun i j _ a b ↦ by simp only; ring]
   congr 1
   set Ψ : V → V → ℝ := fun i j ↦ c i j * ∑ x, ∑ y, betheEdgeGrad M B i j x y * (f x * g y)
   have h : ∀ i, ∀ j ∈ M.graph.neighborFinset i, ∑ x, ∑ y, betheEdgeGrad M B i j x y *
@@ -334,15 +335,15 @@ private theorem betheDirDeriv_test (M : PairwiseGraphicalModel V S) (B : LocalBe
     · exact Finset.sum_congr rfl fun x _ ↦ Finset.sum_congr rfl fun y _ ↦ by ring
     · rw [Finset.sum_comm]
       refine Finset.sum_congr rfl fun x _ ↦ Finset.sum_congr rfl fun y _ ↦ ?_
-      rw [betheEdgeGrad_symm M B hB hij]
+      rw [bethe_edge_grad_symm M B hB hij]
       ring
   rw [Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl (h i), Finset.sum_congr rfl
-    fun i _ ↦ Finset.sum_add_distrib, Finset.sum_add_distrib, sum_neighborFinset_swap]
+    fun i _ ↦ Finset.sum_add_distrib, Finset.sum_add_distrib, sum_neighbor_finset_swap]
   ring
 
 omit [Fintype V] [LinearOrder V] in
 /-- Symmetrized rank-one directions satisfy the homogeneous local constraints. -/
-private theorem isLocalBeliefDirection_test (M : PairwiseGraphicalModel V S)
+private theorem is_local_belief_direction_test (M : PairwiseGraphicalModel V S)
     (D₁ : V → S → ℝ) (c : V → V → ℝ) (f g : S → ℝ) (hD₁ : ∀ i, ∑ a, D₁ i a = 0)
     (hf : ∑ x, f x = 0) (hc : ∀ k l, M.graph.Adj k l → ∀ x, D₁ k x = c k l * f x * ∑ y, g y) :
     IsLocalBeliefDirection M (D₁, fun k l x y ↦ c k l * f x * g y + c l k * g x * f y) := by
@@ -357,10 +358,10 @@ private theorem isLocalBeliefDirection_test (M : PairwiseGraphicalModel V S)
 
 /-- At a Bethe stationary point the directional derivative vanishes along every admissible
 direction. -/
-private theorem betheDirDeriv_eq_zero (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
+private theorem bethe_dir_deriv_eq_zero (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
     (hB : IsInteriorLocalBelief M B) (hstat : IsBetheStationary M B) (D : LocalBeliefTables V S)
     (hD : IsLocalBeliefDirection M D) : betheDirDeriv M B D = 0 :=
-  (hasDerivAt_betheFreeEnergy M B hB D).unique (hstat D hD)
+  (has_deriv_at_bethe_free_energy M B hB D).unique (hstat D hD)
 
 /-- The ratio of an edge belief to the edge potential. -/
 private def betheRatio (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
@@ -369,14 +370,14 @@ private def betheRatio (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V
 
 omit [Fintype V] [LinearOrder V] in
 /-- Edge ratios are positive at interior beliefs. -/
-private theorem betheRatio_pos (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
+private theorem bethe_ratio_pos (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
     (hB : IsInteriorLocalBelief M B) {i j : V} (h : M.graph.Adj i j) (a b : S) :
     0 < betheRatio M B i j a b :=
   div_pos (hB.2.2 i j h a b) (M.edgePotential_pos i j h a b)
 
 omit [Fintype V] [LinearOrder V] in
 /-- Edge ratios are symmetric under reversing the edge. -/
-private theorem betheRatio_symm (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
+private theorem bethe_ratio_symm (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
     (hB : IsInteriorLocalBelief M B) {i j : V} (h : M.graph.Adj i j) (a b : S) :
     betheRatio M B j i b a = betheRatio M B i j a b := by
   unfold betheRatio
@@ -384,7 +385,7 @@ private theorem betheRatio_symm (M : PairwiseGraphicalModel V S) (B : LocalBelie
 
 omit [Fintype V] [LinearOrder V] in
 /-- The edge gradient is the logarithm of the edge ratio plus one. -/
-private theorem betheEdgeGrad_eq (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
+private theorem bethe_edge_grad_eq (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
     (hB : IsInteriorLocalBelief M B) {i j : V} (h : M.graph.Adj i j) (a b : S) :
     betheEdgeGrad M B i j a b = Real.log (betheRatio M B i j a b) + 1 := by
   unfold betheEdgeGrad betheRatio
@@ -392,20 +393,20 @@ private theorem betheEdgeGrad_eq (M : PairwiseGraphicalModel V S) (B : LocalBeli
 
 /-- At a Bethe stationary point each edge belief is the edge potential times a product of
 functions of the two endpoint states. -/
-private theorem betheRatio_mul_of_stationary (M : PairwiseGraphicalModel V S)
+private theorem bethe_ratio_mul_of_stationary (M : PairwiseGraphicalModel V S)
     (B : LocalBeliefTables V S) (hB : IsInteriorLocalBelief M B) (hstat : IsBetheStationary M B)
     {i j : V} (h : M.graph.Adj i j) (s₀ a b : S) :
     betheRatio M B i j a b * betheRatio M B i j s₀ s₀ =
       betheRatio M B i j a s₀ * betheRatio M B i j s₀ b := by
-  have h0 := betheDirDeriv_eq_zero M B hB hstat _ (isLocalBeliefDirection_test M
+  have h0 := bethe_dir_deriv_eq_zero M B hB hstat _ (is_local_belief_direction_test M
     (fun _ _ ↦ 0) (fun k l ↦ if k = i ∧ l = j then 1 else 0)
     (fun x ↦ (if x = a then 1 else 0) - if x = s₀ then 1 else 0)
     (fun y ↦ (if y = b then 1 else 0) - if y = s₀ then 1 else 0) (fun _ ↦ by simp)
     (by simp [Finset.sum_sub_distrib]) (fun k l _ x ↦ by simp [Finset.sum_sub_distrib]))
-  rw [betheDirDeriv_test M B hB] at h0
+  rw [bethe_dir_deriv_test M B hB] at h0
   simp [ite_and, mul_sub, Finset.sum_sub_distrib, h] at h0
-  simp only [betheEdgeGrad_eq M B hB h] at h0
-  have hR := betheRatio_pos M B hB h
+  simp only [bethe_edge_grad_eq M B hB h] at h0
+  have hR := bethe_ratio_pos M B hB h
   rw [← Real.exp_log (mul_pos (hR a b) (hR s₀ s₀)), ← Real.exp_log (mul_pos (hR a s₀) (hR s₀ b)),
     Real.log_mul (hR a b).ne' (hR s₀ s₀).ne', Real.log_mul (hR a s₀).ne' (hR s₀ b).ne']
   congr 1
@@ -413,25 +414,25 @@ private theorem betheRatio_mul_of_stationary (M : PairwiseGraphicalModel V S)
 
 /-- At a Bethe stationary point the node gradient plus the edge ratios at a reference state does
 not depend on the node state. -/
-private theorem betheNodeGrad_add_of_stationary (M : PairwiseGraphicalModel V S)
+private theorem bethe_node_grad_add_of_stationary (M : PairwiseGraphicalModel V S)
     (B : LocalBeliefTables V S) (hB : IsInteriorLocalBelief M B) (hstat : IsBetheStationary M B)
     (i : V) (s₀ a : S) :
     betheNodeGrad M B i a + ∑ j ∈ M.graph.neighborFinset i, Real.log (betheRatio M B i j a s₀) =
       betheNodeGrad M B i s₀ +
         ∑ j ∈ M.graph.neighborFinset i, Real.log (betheRatio M B i j s₀ s₀) := by
-  have h0 := betheDirDeriv_eq_zero M B hB hstat _ (isLocalBeliefDirection_test M
+  have h0 := bethe_dir_deriv_eq_zero M B hB hstat _ (is_local_belief_direction_test M
     (fun k x ↦ if k = i then (if x = a then 1 else 0) - (if x = s₀ then 1 else 0) else 0)
     (fun k _ ↦ if k = i then 1 else 0)
     (fun x ↦ (if x = a then 1 else 0) - if x = s₀ then 1 else 0)
     (fun y ↦ if y = s₀ then 1 else 0) (fun k ↦ by split_ifs <;> simp [Finset.sum_sub_distrib])
     (by simp [Finset.sum_sub_distrib]) (fun k l _ x ↦ by split_ifs <;> simp))
-  rw [betheDirDeriv_test M B hB] at h0
+  rw [bethe_dir_deriv_test M B hB] at h0
   simp [mul_sub, Finset.sum_sub_distrib] at h0
   have hG : ∀ s, ∑ j ∈ M.graph.neighborFinset i, betheEdgeGrad M B i j s s₀ =
       ∑ j ∈ M.graph.neighborFinset i, Real.log (betheRatio M B i j s s₀) +
         (M.graph.neighborFinset i).card := by
     intro s
-    rw [Finset.sum_congr rfl fun j hj ↦ betheEdgeGrad_eq M B hB
+    rw [Finset.sum_congr rfl fun j hj ↦ bethe_edge_grad_eq M B hB
       ((SimpleGraph.mem_neighborFinset _ _ _).mp hj) s s₀, Finset.sum_add_distrib]
     simp
   rw [hG, hG] at h0
@@ -452,7 +453,7 @@ private def betheNodeConst (M : PairwiseGraphicalModel V S) (B : LocalBeliefTabl
 
 /-- At a Bethe stationary point the reconstructed messages give the node beliefs up to a
 positive factor. -/
-private theorem betheMessage_node (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
+private theorem bethe_message_node (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
     (hB : IsInteriorLocalBelief M B) (hstat : IsBetheStationary M B) (s₀ : S) (i : V) (a : S) :
     M.vertexPotential i a * ∏ k ∈ M.graph.neighborFinset i, betheMessage M B s₀ k i a =
       Real.exp (betheNodeConst M B s₀ i) * B.1 i a := by
@@ -460,31 +461,31 @@ private theorem betheMessage_node (M : PairwiseGraphicalModel V S) (B : LocalBel
     (SimpleGraph.mem_neighborFinset _ _ _).mp hk
   have hb := hB.2.1 i a
   have hm : ∀ k ∈ M.graph.neighborFinset i, 0 < betheMessage M B s₀ k i a := fun k hk ↦
-    div_pos hb (betheRatio_pos M B hB (hadj k hk) a s₀)
+    div_pos hb (bethe_ratio_pos M B hB (hadj k hk) a s₀)
   have hψ := M.vertexPotential_pos i a
   rw [← Real.exp_log (mul_pos hψ (Finset.prod_pos hm)), ← Real.exp_log hb, ← Real.exp_add,
     Real.log_mul hψ.ne' (Finset.prod_pos hm).ne', Real.log_prod fun k hk ↦ (hm k hk).ne']
   congr 1
   unfold betheMessage
   rw [Finset.sum_congr rfl fun k hk ↦ Real.log_div hb.ne'
-    (betheRatio_pos M B hB (hadj k hk) a s₀).ne', Finset.sum_sub_distrib, Finset.sum_const,
+    (bethe_ratio_pos M B hB (hadj k hk) a s₀).ne', Finset.sum_sub_distrib, Finset.sum_const,
     nsmul_eq_mul]
-  have hn := betheNodeGrad_add_of_stationary M B hB hstat i s₀ a
+  have hn := bethe_node_grad_add_of_stationary M B hB hstat i s₀ a
   unfold betheNodeConst
   unfold betheNodeGrad at hn ⊢
   linear_combination (-1 : ℝ) * hn
 
 /-- At a Bethe stationary point, the vertex potential times the messages entering `i` from
 neighbours other than `j` is proportional to the edge ratio at the reference state. -/
-private theorem betheMessage_incoming (M : PairwiseGraphicalModel V S)
+private theorem bethe_message_incoming (M : PairwiseGraphicalModel V S)
     (B : LocalBeliefTables V S) (hB : IsInteriorLocalBelief M B) (hstat : IsBetheStationary M B)
     (s₀ : S) {i j : V} (h : M.graph.Adj i j) (a : S) :
     M.vertexPotential i a * incomingMessageProduct M (betheMessage M B s₀) i j a =
       Real.exp (betheNodeConst M B s₀ i) * betheRatio M B i j a s₀ := by
-  have hN := betheMessage_node M B hB hstat s₀ i a
+  have hN := bethe_message_node M B hB hstat s₀ i a
   rw [← Finset.mul_prod_erase _ _ ((SimpleGraph.mem_neighborFinset _ _ _).mpr h)] at hN
   have hb := (hB.2.1 i a).ne'
-  have hR := (betheRatio_pos M B hB h a s₀).ne'
+  have hR := (bethe_ratio_pos M B hB h a s₀).ne'
   unfold incomingMessageProduct
   unfold betheMessage at hN ⊢
   field_simp at hN ⊢
@@ -498,7 +499,7 @@ private theorem eq_div_sum_of_eq_mul {ι : Type*} [Fintype ι] {p w : ι → ℝ
   field_simp
 
 /-- Bethe stationary points in the interior of the local polytope are BP beliefs. -/
-private theorem exists_beliefPropagationFixedPoint_of_isBetheStationary
+private theorem exists_belief_propagation_fixed_point_of_is_bethe_stationary
     (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
     (hB : IsInteriorLocalBelief M B) (hstat : IsBetheStationary M B) :
     ∃ m, IsBeliefPropagationFixedPoint M m ∧
@@ -510,12 +511,12 @@ private theorem exists_beliefPropagationFixedPoint_of_isBetheStationary
       fun i _ ↦ (hV i).elim, fun i _ _ _ _ ↦ (hV i).elim⟩
   set m := betheMessage M B s₀
   set K := betheNodeConst M B s₀
-  have hR := fun {i j : V} (h : M.graph.Adj i j) ↦ betheRatio_pos M B hB h
+  have hR := fun {i j : V} (h : M.graph.Adj i j) ↦ bethe_ratio_pos M B hB h
   -- the edge beliefs in terms of the edge ratios at the reference state
   have hedge : ∀ i j, M.graph.Adj i j → ∀ a b, B.2 i j a b * betheRatio M B i j s₀ s₀ =
       M.edgePotential i j a b * betheRatio M B i j a s₀ * betheRatio M B i j s₀ b := by
     intro i j h a b
-    have := betheRatio_mul_of_stationary M B hB hstat h s₀ a b
+    have := bethe_ratio_mul_of_stationary M B hB hstat h s₀ a b
     have hψ := (M.edgePotential_pos i j h a b).ne'
     unfold betheRatio at this ⊢
     field_simp at this ⊢
@@ -528,7 +529,7 @@ private theorem exists_beliefPropagationFixedPoint_of_isBetheStationary
         incomingMessageProduct M m i j a =
           Real.exp (K i) * betheRatio M B i j s₀ s₀ / betheRatio M B i j s₀ b * B.2 i j a b := by
       intro a
-      have h1 := betheMessage_incoming M B hB hstat s₀ h a
+      have h1 := bethe_message_incoming M B hB hstat s₀ h a
       have h2 := hedge i j h a b
       have := hR h s₀ b
       field_simp
@@ -537,13 +538,13 @@ private theorem exists_beliefPropagationFixedPoint_of_isBetheStationary
     rw [Finset.sum_congr rfl fun a _ ↦ hterm a, ← Finset.mul_sum,
       (hB.1.2.2 i j h).2.2.1 b]
     show B.1 j b / betheRatio M B j i b s₀ = _
-    rw [betheRatio_symm M B hB h]
+    rw [bethe_ratio_symm M B hB h]
     have := hR h s₀ s₀
     have := hR h s₀ b
     field_simp
   · unfold beliefPropagationNode
     exact eq_div_sum_of_eq_mul (Real.exp_pos (K i)).ne' (hB.1.2.1 i)
-      (fun a ↦ betheMessage_node M B hB hstat s₀ i a) a
+      (fun a ↦ bethe_message_node M B hB hstat s₀ i a) a
   · unfold beliefPropagationEdge
     dsimp only
     have hsum : ∑ z : S × S, B.2 i j z.1 z.2 = 1 := by
@@ -555,9 +556,9 @@ private theorem exists_beliefPropagationFixedPoint_of_isBetheStationary
           incomingMessageProduct M m j i z.2)
       (C := Real.exp (K i) * Real.exp (K j) * betheRatio M B i j s₀ s₀)
       (by have := hR h s₀ s₀; positivity) hsum (fun z ↦ ?_) (a, b)
-    have h1 := betheMessage_incoming M B hB hstat s₀ h z.1
-    have h2 := betheMessage_incoming M B hB hstat s₀ h.symm z.2
-    rw [betheRatio_symm M B hB h] at h2
+    have h1 := bethe_message_incoming M B hB hstat s₀ h z.1
+    have h2 := bethe_message_incoming M B hB hstat s₀ h.symm z.2
+    rw [bethe_ratio_symm M B hB h] at h2
     have h3 := hedge i j h z.1 z.2
     linear_combination M.edgePotential i j z.1 z.2 * M.vertexPotential j z.2 *
       incomingMessageProduct M m j i z.2 * h1 +
@@ -566,23 +567,23 @@ private theorem exists_beliefPropagationFixedPoint_of_isBetheStationary
 
 omit [LinearOrder V] [Fintype S] in
 /-- Products of positive incoming messages are positive. -/
-private theorem incomingMessageProduct_pos (M : PairwiseGraphicalModel V S) {m : V → V → S → ℝ}
+private theorem incoming_message_product_pos (M : PairwiseGraphicalModel V S) {m : V → V → S → ℝ}
     (hm : ∀ i j, M.graph.Adj i j → ∀ a, 0 < m i j a) (i j : V) (a : S) :
     0 < incomingMessageProduct M m i j a :=
   Finset.prod_pos fun k hk ↦ hm k i ((SimpleGraph.mem_neighborFinset _ _ _).mp
     (Finset.mem_of_mem_erase hk)).symm a
 
 /-- BP beliefs from positive messages are Bethe stationary points. -/
-private theorem isBetheStationary_of_beliefPropagation (M : PairwiseGraphicalModel V S)
+private theorem is_bethe_stationary_of_belief_propagation (M : PairwiseGraphicalModel V S)
     (B : LocalBeliefTables V S) (hB : IsInteriorLocalBelief M B) (m : V → V → S → ℝ)
     (hm : ∀ i j, M.graph.Adj i j → ∀ a, 0 < m i j a)
     (hnode : ∀ i a, B.1 i a = beliefPropagationNode M m i a)
     (hedge : ∀ i j, M.graph.Adj i j → ∀ a b, B.2 i j a b = beliefPropagationEdge M m i j a b) :
     IsBetheStationary M B := by
   intro D hD
-  convert hasDerivAt_betheFreeEnergy M B hB D using 1
-  rw [betheDirDeriv_eq M B hB D fun i j h ↦ (hD.2 i j h).2.2]
-  have hI := incomingMessageProduct_pos M hm
+  convert has_deriv_at_bethe_free_energy M B hB D using 1
+  rw [bethe_dir_deriv_eq M B hB D fun i j h ↦ (hD.2 i j h).2.2]
+  have hI := incoming_message_product_pos M hm
   set P : V → V → S → ℝ := fun i j a ↦
     Real.log (M.vertexPotential i a) + Real.log (incomingMessageProduct M m i j a)
   set w : V → V → S → S → ℝ := fun i j a b ↦ M.vertexPotential i a * M.vertexPotential j b *
@@ -657,7 +658,7 @@ private theorem isBetheStationary_of_beliefPropagation (M : PairwiseGraphicalMod
     ring
   rw [Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl (hrow i)]
   simp only [Finset.sum_add_distrib]
-  rw [sum_neighborFinset_swap M (fun i j ↦ ∑ a, P i j a * D.1 i a)]
+  rw [sum_neighbor_finset_swap M (fun i j ↦ ∑ a, P i j a * D.1 i a)]
   have hfin : ∀ i, ∑ a, betheNodeGrad M B i a * D.1 i a +
       ∑ j ∈ M.graph.neighborFinset i, ∑ a, P i j a * D.1 i a = 0 := by
     intro i
@@ -670,14 +671,14 @@ private theorem isBetheStationary_of_beliefPropagation (M : PairwiseGraphicalMod
   linarith
 
 /-- GAPS 107.19: Bethe stationary points in the positive local polytope are exactly BP beliefs. -/
-theorem isBetheStationary_iff_exists_beliefPropagationFixedPoint
+theorem is_bethe_stationary_iff_exists_belief_propagation_fixed_point
     (M : PairwiseGraphicalModel V S) (B : LocalBeliefTables V S)
     (hB : IsInteriorLocalBelief M B) :
     IsBetheStationary M B ↔ ∃ m, IsBeliefPropagationFixedPoint M m ∧
       (∀ i a, B.1 i a = beliefPropagationNode M m i a) ∧
       ∀ i j, M.graph.Adj i j → ∀ a b, B.2 i j a b = beliefPropagationEdge M m i j a b :=
-  ⟨exists_beliefPropagationFixedPoint_of_isBetheStationary M B hB,
-    fun ⟨m, hm, hnode, hedge⟩ ↦ isBetheStationary_of_beliefPropagation M B hB m hm.1 hnode hedge⟩
+  ⟨exists_belief_propagation_fixed_point_of_is_bethe_stationary M B hB,
+    fun ⟨m, hm, hnode, hedge⟩ ↦ is_bethe_stationary_of_belief_propagation M B hB m hm.1 hnode hedge⟩
 
 omit [Fintype S] in
 /-- Every finite positive graphical-model configuration has positive weight. -/

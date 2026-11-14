@@ -11,6 +11,7 @@ public import TauCeti.Probability.Quantile
 public import TauCeti.Probability.Independence.InfinitePi
 public import TauCeti.MeasureTheory.Measure.PiWithDensity
 
+
 /-!
 # Symmetric completeness, order statistics, and the Pitman estimator
 
@@ -23,19 +24,19 @@ public import TauCeti.MeasureTheory.Measure.PiWithDensity
 
 ## Main results
 
-* `CKSD.isSymmetricallyComplete_of_complete_convex_family`: the order statistic is complete in a
+* `CKSD.is_symmetrically_complete_of_complete_convex_family`: the order statistic is complete in a
   convex complete family (GAPS 101.13).
-* `CKSD.map_orderStatistics_eq_withDensity`, `CKSD.map_orderStatistic_eq_withDensity`: joint and
+* `CKSD.map_order_statistics_eq_with_density`, `CKSD.map_order_statistic_eq_with_density`: joint and
   marginal densities of order statistics (GAPS 101.21).
-* `CKSD.map_sort_eq_and_indepFun_orderStatistics`: the ranks of an atomless i.i.d. sample are
+* `CKSD.map_sort_eq_and_indep_fun_order_statistics`: the ranks of an atomless i.i.d. sample are
   uniform and independent of the order statistics (GAPS 101.21).
-* `CKSD.pitmanEstimator_minimum_equivariant_risk`: the Pitman estimator minimizes the
+* `CKSD.pitman_estimator_minimum_equivariant_risk`: the Pitman estimator minimizes the
   squared-error risk among location-equivariant estimators (GAPS 101.40).
 
 ## Implementation notes
 
 The completeness of symmetric statistics (GAPS 101.13) is
-`CKSD.ae_eq_zero_pi_of_isCompleteStatistic_of_convex` in `CKSD.Inference.SymmetricCompleteness`.
+`CKSD.ae_eq_zero_pi_of_is_complete_statistic_of_convex` in `CKSD.Inference.SymmetricCompleteness`.
 
 Order statistics and sorting are TauCeti's `TauCeti.orderStatistic` and Mathlib's `Tuple.sort`;
 the densities use TauCeti's chamber formula `TauCeti.Probability.map_orderStatistics_pi`, its
@@ -66,7 +67,7 @@ def IsSymmetricallyComplete {Θ X : Type*} [MeasurableSpace X]
     ∀ θ, g =ᵐ[Measure.pi fun _ : Fin n ↦ P θ] 0
 
 /-- GAPS 101.13: completeness of permutation-invariant statistics in a convex complete model. -/
-theorem isSymmetricallyComplete_of_complete_convex_family
+theorem is_symmetrically_complete_of_complete_convex_family
     {X : Type*} [MeasurableSpace X] (C : Set (ProbabilityMeasure X))
     (hc : IsCompleteStatistic (fun P : C ↦ (P.val : Measure X)) id)
     (hconv : ∀ P ∈ C, ∀ Q ∈ C, ∀ a : ℝ≥0, a ≤ 1 →
@@ -74,14 +75,14 @@ theorem isSymmetricallyComplete_of_complete_convex_family
         ((1 - a : ℝ≥0) : ℝ≥0∞) • (Q : Measure X)) (n : ℕ) :
     IsSymmetricallyComplete (fun P : C ↦ (P.val : Measure X)) n := by
   intro g hgm hsym hint θ
-  refine ae_eq_zero_pi_of_isCompleteStatistic_of_convex (fun f hf hf0 P hP ↦ ?_) hconv g hgm
+  refine ae_eq_zero_pi_of_is_complete_statistic_of_convex (fun f hf hf0 P hP ↦ ?_) hconv g hgm
     hsym (fun P hP ↦ hint ⟨P, hP⟩) θ.1 θ.2
   exact hc f hf (fun θ' ↦ hf0 θ'.1 θ'.2) ⟨P, hP⟩
 
 /-- GAPS 101.21: joint order-statistic density for an absolutely continuous law.
 The proof combines TauCeti's chamber formula `TauCeti.Probability.map_orderStatistics_pi` with
 TauCeti's product-density identity `TauCeti.pi_withDensity`. -/
-theorem map_orderStatistics_eq_withDensity {n : ℕ} (P : Measure ℝ)
+theorem map_order_statistics_eq_with_density {n : ℕ} (P : Measure ℝ)
     [IsProbabilityMeasure P] (f : ℝ → ℝ) (hf : HasDensity P volume f) :
     (Measure.pi fun _ : Fin n ↦ P).map (fun x i ↦ TauCeti.orderStatistic i x) =
       (volume : Measure (Fin n → ℝ)).withDensity (fun x ↦
@@ -113,7 +114,7 @@ theorem map_orderStatistics_eq_withDensity {n : ℕ} (P : Measure ℝ)
 
 /-- On the unit interval the beta density with integer shapes `j + 1` and `n - j` is the
 polynomial `n! / (j! (n - j - 1)!) u ^ j (1 - u) ^ (n - j - 1)`. -/
-theorem betaMeasure_nat_eq_withDensity {n : ℕ} (j : Fin n) :
+theorem beta_measure_nat_eq_with_density {n : ℕ} (j : Fin n) :
     betaMeasure ((j : ℝ) + 1) ((n : ℝ) - j) =
       (volume.restrict (Icc (0 : ℝ) 1)).withDensity (fun u ↦ ENNReal.ofReal
         ((n.factorial : ℝ) / (j.val.factorial * (n - j.val - 1).factorial) *
@@ -140,7 +141,7 @@ The proof compares distribution functions: TauCeti's
 `TauCeti.Probability.cdf_betaMeasure_eq` give the beta law of `F(X₍ⱼ₎)`, and TauCeti's
 probability integral transform `MeasureTheory.Measure.cdf_map_eq_volume_restrict` moves the
 beta density back along `F`. -/
-theorem map_orderStatistic_eq_withDensity {n : ℕ} (j : Fin n) (P : Measure ℝ)
+theorem map_order_statistic_eq_with_density {n : ℕ} (j : Fin n) (P : Measure ℝ)
     [IsProbabilityMeasure P] (f : ℝ → ℝ) (hf : HasDensity P volume f) :
     (Measure.pi fun _ : Fin n ↦ P).map (TauCeti.orderStatistic j) =
       volume.withDensity (fun x ↦ ENNReal.ofReal
@@ -206,7 +207,7 @@ theorem map_orderStatistic_eq_withDensity {n : ℕ} (j : Fin n) (P : Measure ℝ
   rw [← ProbabilityTheory.ofReal_cdf,
     TauCeti.Probability.cdf_map_orderStatistic_pi_eq_regularizedIncompleteBeta,
     ← TauCeti.Probability.cdf_betaMeasure_eq ha hb, ProbabilityTheory.ofReal_cdf,
-    betaMeasure_nat_eq_withDensity j, ← hpit, withDensity_apply _ measurableSet_Iic,
+    beta_measure_nat_eq_with_density j, ← hpit, withDensity_apply _ measurableSet_Iic,
     setLIntegral_map measurableSet_Iic (by fun_prop) hFm, withDensity_apply _ measurableSet_Iic]
   refine setLIntegral_congr (ae_eq_set.2 ⟨?_, ?_⟩)
   · refine measure_mono_null (fun x hx ↦ ?_) (hlevel (F t))
@@ -217,7 +218,7 @@ theorem map_orderStatistic_eq_withDensity {n : ℕ} (j : Fin n) (P : Measure ℝ
     exact hx.2 (hFmono hx.1)
 
 /-- The set of samples with a prescribed sorting permutation is measurable. -/
-theorem measurableSet_setOf_sort_eq {n : ℕ} (τ : Equiv.Perm (Fin n)) :
+theorem measurable_set_set_of_sort_eq {n : ℕ} (τ : Equiv.Perm (Fin n)) :
     MeasurableSet {x : Fin n → ℝ | Tuple.sort x = τ} := by
   classical
   have h : {x : Fin n → ℝ | Tuple.sort x = τ} =
@@ -249,7 +250,7 @@ The proof refines the chamber decomposition of TauCeti's
 `TauCeti.Probability.map_orderStatistics_pi`: ties are null
 (`TauCeti.Probability.ae_eval_ne_eval_infinitePi`), and coordinate permutations preserve the
 product law and the order statistics (`TauCeti.orderStatistic_comp_perm`). -/
-theorem map_sort_eq_and_indepFun_orderStatistics {n : ℕ} (P : Measure ℝ)
+theorem map_sort_eq_and_indep_fun_order_statistics {n : ℕ} (P : Measure ℝ)
     [IsProbabilityMeasure P] [NullSingletonClass P]
     [MeasurableSpace (Equiv.Perm (Fin n))] [DiscreteMeasurableSpace (Equiv.Perm (Fin n))] :
     (Measure.pi fun _ : Fin n ↦ P).map Tuple.sort = (n.factorial : ℝ≥0∞)⁻¹ • Measure.count ∧
@@ -262,7 +263,7 @@ theorem map_sort_eq_and_indepFun_orderStatistics {n : ℕ} (P : Measure ℝ)
   have hM : MeasurableSet M := TauCeti.measurableSet_setOf_strictMono
   have hS : Measurable S := by fun_prop
   have hsort : Measurable (Tuple.sort : (Fin n → ℝ) → Equiv.Perm (Fin n)) :=
-    measurable_to_countable' fun τ ↦ measurableSet_setOf_sort_eq τ
+    measurable_to_countable' fun τ ↦ measurable_set_set_of_sort_eq τ
   have hSperm : ∀ x (σ : Equiv.Perm (Fin n)), S (x ∘ σ) = S x := fun x σ ↦ by
     funext i; exact TauCeti.orderStatistic_comp_perm i x σ
   have hperm (σ : Equiv.Perm (Fin n)) : MeasurePreserving (fun x : Fin n → ℝ ↦ x ∘ σ) μ μ := by
@@ -313,7 +314,7 @@ theorem map_sort_eq_and_indepFun_orderStatistics {n : ℕ} (P : Measure ℝ)
       ext x; simp
     nth_rw 1 [hU]
     rw [measure_iUnion (fun τ τ' hττ' ↦ ?_)
-      (fun τ ↦ (measurableSet_setOf_sort_eq τ).inter (hS ht)), tsum_fintype]
+      (fun τ ↦ (measurable_set_set_of_sort_eq τ).inter (hS ht)), tsum_fintype]
     · simp_rw [hkey _ t ht]
       rw [Finset.sum_const, Finset.card_univ, Fintype.card_perm, Fintype.card_fin, nsmul_eq_mul]
     · refine Set.disjoint_left.2 fun x hx hx' ↦ hττ' ?_
@@ -341,7 +342,7 @@ theorem map_sort_eq_and_indepFun_orderStatistics {n : ℕ} (P : Measure ℝ)
   refine ⟨?_, ?_⟩
   · ext s hs
     rw [Measure.map_apply hsort hs, hpre, measure_biUnion_finset (hdisj s)
-      (fun τ _ ↦ measurableSet_setOf_sort_eq τ)]
+      (fun τ _ ↦ measurable_set_set_of_sort_eq τ)]
     simp_rw [hval1]
     rw [smul_apply, Measure.count_apply_finite s (Set.toFinite s), Finset.sum_const,
       nsmul_eq_mul, smul_eq_mul, mul_comm, Set.Finite.toFinset_eq_toFinset]
@@ -352,8 +353,8 @@ theorem map_sort_eq_and_indepFun_orderStatistics {n : ℕ} (P : Measure ℝ)
       rw [hpre, Set.iUnion₂_inter]
     change μ (Tuple.sort ⁻¹' s ∩ S ⁻¹' t) = μ (Tuple.sort ⁻¹' s) * μ (S ⁻¹' t)
     rw [hpre', hpre, measure_biUnion_finset (fun τ _ τ' _ hττ' ↦ ?_)
-      (fun τ _ ↦ (measurableSet_setOf_sort_eq τ).inter (hS ht)),
-      measure_biUnion_finset (hdisj s) (fun τ _ ↦ measurableSet_setOf_sort_eq τ),
+      (fun τ _ ↦ (measurable_set_set_of_sort_eq τ).inter (hS ht)),
+      measure_biUnion_finset (hdisj s) (fun τ _ ↦ measurable_set_set_of_sort_eq τ),
       Finset.sum_mul]
     · refine Finset.sum_congr rfl fun τ _ ↦ ?_
       rw [hval τ t ht, hval1]
@@ -410,7 +411,7 @@ theorem lintegral_eq_lintegral_indicator_mul_lintegral_sub_const {n : ℕ} (i₀
 /-- Minimization of a weighted quadratic: for an integrable weight `w ≥ 0` with integrable first
 moment and positive mass, the weighted second moment `∫ (c - u)² w(u) du` is minimal at the
 weighted mean `c = ∫ u w / ∫ w`. -/
-theorem lintegral_ofReal_sq_sub_mul_le {w : ℝ → ℝ} (hw : Measurable w) (hw0 : ∀ u, 0 ≤ w u)
+theorem lintegral_of_real_sq_sub_mul_le {w : ℝ → ℝ} (hw : Measurable w) (hw0 : ∀ u, 0 ≤ w u)
     (hwi : Integrable w) (hmi : Integrable fun u ↦ u * w u) (hpos : 0 < ∫ u, w u) (c : ℝ) :
     ∫⁻ u, ENNReal.ofReal (((∫ u, u * w u) / (∫ u, w u) - u) ^ 2 * w u) ≤
       ∫⁻ u, ENNReal.ofReal ((c - u) ^ 2 * w u) := by
@@ -473,7 +474,7 @@ theorem measurable_prod_sub {n : ℕ} {f : ℝ → ℝ} (hf : Measurable f) :
     hf.comp (((measurable_pi_apply i).comp measurable_fst).sub measurable_snd)
 
 /-- The Pitman estimator is measurable for a measurable density. -/
-theorem measurable_pitmanEstimator {n : ℕ} {f : ℝ → ℝ} (hf : Measurable f) :
+theorem measurable_pitman_estimator {n : ℕ} {f : ℝ → ℝ} (hf : Measurable f) :
     Measurable (pitmanEstimator (n := n) f) := by
   have h0 := measurable_prod_sub (n := n) hf
   have h1 : Measurable fun p : (Fin n → ℝ) × ℝ ↦ p.2 * ∏ i, f (p.1 i - p.2) :=
@@ -482,7 +483,7 @@ theorem measurable_pitmanEstimator {n : ℕ} {f : ℝ → ℝ} (hf : Measurable 
     (h0.stronglyMeasurable.integral_prod_right' (ν := volume)).measurable
 
 /-- The Pitman good set is measurable. -/
-theorem measurableSet_pitmanGoodSet {n : ℕ} {f : ℝ → ℝ} (hf : Measurable f) :
+theorem measurable_set_pitman_good_set {n : ℕ} {f : ℝ → ℝ} (hf : Measurable f) :
     MeasurableSet (pitmanGoodSet (n := n) f) := by
   have h0 := measurable_prod_sub (n := n) hf
   have h1 : Measurable fun p : (Fin n → ℝ) × ℝ ↦ p.2 * ∏ i, f (p.1 i - p.2) :=
@@ -499,7 +500,7 @@ theorem measurableSet_pitmanGoodSet {n : ℕ} {f : ℝ → ℝ} (hf : Measurable
     (h0.stronglyMeasurable.integral_prod_right' (ν := volume)).measurable))
 
 /-- The Pitman good set is invariant under diagonal translations. -/
-theorem sub_const_mem_pitmanGoodSet {n : ℕ} {f : ℝ → ℝ} {x : Fin n → ℝ}
+theorem sub_const_mem_pitman_good_set {n : ℕ} {f : ℝ → ℝ} {x : Fin n → ℝ}
     (hx : x ∈ pitmanGoodSet f) (t : ℝ) : (x - fun _ : Fin n ↦ t) ∈ pitmanGoodSet f := by
   obtain ⟨h1, h2, h3⟩ := hx
   have hv' : ∀ u, ∏ i, f ((x - fun _ : Fin n ↦ t) i - u) = ∏ i, f (x i - (u + t)) := by
@@ -518,15 +519,15 @@ theorem sub_const_mem_pitmanGoodSet {n : ℕ} {f : ℝ → ℝ} {x : Fin n → �
     exact h3
 
 /-- Membership in the Pitman good set is invariant under diagonal translations. -/
-theorem sub_const_mem_pitmanGoodSet_iff {n : ℕ} {f : ℝ → ℝ} {x : Fin n → ℝ} (t : ℝ) :
+theorem sub_const_mem_pitman_good_set_iff {n : ℕ} {f : ℝ → ℝ} {x : Fin n → ℝ} (t : ℝ) :
     (x - fun _ : Fin n ↦ t) ∈ pitmanGoodSet f ↔ x ∈ pitmanGoodSet f := by
-  refine ⟨fun h ↦ ?_, fun h ↦ sub_const_mem_pitmanGoodSet h t⟩
-  have := sub_const_mem_pitmanGoodSet h (-t)
+  refine ⟨fun h ↦ ?_, fun h ↦ sub_const_mem_pitman_good_set h t⟩
+  have := sub_const_mem_pitman_good_set h (-t)
   have hx : ((x - fun _ : Fin n ↦ t) - fun _ ↦ -t) = x := by funext i; simp
   rwa [hx] at this
 
 /-- On the good set, the Pitman estimator is location-equivariant. -/
-theorem pitmanEstimator_sub_const {n : ℕ} {f : ℝ → ℝ} {x : Fin n → ℝ}
+theorem pitman_estimator_sub_const {n : ℕ} {f : ℝ → ℝ} {x : Fin n → ℝ}
     (hx : x ∈ pitmanGoodSet f) (t : ℝ) :
     pitmanEstimator f (x - fun _ : Fin n ↦ t) = pitmanEstimator f x - t := by
   obtain ⟨h1, h2, h3⟩ := hx
@@ -549,7 +550,7 @@ theorem pitmanEstimator_sub_const {n : ℕ} {f : ℝ → ℝ} {x : Fin n → ℝ
 
 /-- GAPS 101.40 for a nonnegative density: on the good set the Pitman estimator minimizes the
 equivariant squared-error risk. -/
-theorem pitmanEstimator_minimum_equivariant_risk_of_nonneg {n : ℕ} (hn : 0 < n)
+theorem pitman_estimator_minimum_equivariant_risk_of_nonneg {n : ℕ} (hn : 0 < n)
     (P : Measure ℝ) [IsProbabilityMeasure P] (f : ℝ → ℝ) (hf : HasDensity P volume f)
     (hf0 : ∀ t, 0 ≤ f t)
     (δ : (Fin n → ℝ) → ℝ) (hm : Measurable δ) (heq : IsLocationEquivariant δ)
@@ -569,8 +570,8 @@ theorem pitmanEstimator_minimum_equivariant_risk_of_nonneg {n : ℕ} (hn : 0 < n
     rw [hf.2.2, TauCeti.pi_withDensity (fun _ : Fin n ↦ (volume : Measure ℝ))
       (fun _ ↦ hf.1.ennreal_ofReal), hD, volume_pi]
   set G := pitmanGoodSet (n := n) f
-  have hG : MeasurableSet G := measurableSet_pitmanGoodSet hf.1
-  have hpm := measurable_pitmanEstimator (n := n) hf.1
+  have hG : MeasurableSet G := measurable_set_pitman_good_set hf.1
+  have hpm := measurable_pitman_estimator (n := n) hf.1
   have hshift : ∀ (z : Fin n → ℝ) (u : ℝ), (z - fun _ : Fin n ↦ u) = fun i ↦ z i + -u := by
     intro z u; funext i; simp [sub_eq_add_neg]
   have hDz : ∀ (z : Fin n → ℝ) (u : ℝ),
@@ -606,7 +607,7 @@ theorem pitmanEstimator_minimum_equivariant_risk_of_nonneg {n : ℕ} (hn : 0 < n
     intro z
     by_cases hz : z ∈ G
     · have hmem : ∀ u : ℝ, (z - fun _ : Fin n ↦ u) ∈ G := fun u ↦
-        (sub_const_mem_pitmanGoodSet_iff u).2 hz
+        (sub_const_mem_pitman_good_set_iff u).2 hz
       have hform : ∀ g : (Fin n → ℝ) → ℝ, ∀ c : ℝ,
           (∀ u : ℝ, g (z - fun _ : Fin n ↦ u) = c - u) →
           Φ g z = ∫⁻ u : ℝ, ENNReal.ofReal ((c - u) ^ 2 * ∏ i, f (z i - u)) := by
@@ -614,15 +615,15 @@ theorem pitmanEstimator_minimum_equivariant_risk_of_nonneg {n : ℕ} (hn : 0 < n
         refine lintegral_congr fun u ↦ ?_
         rw [indicator_of_mem (hmem u), hDz, hgc, ← ENNReal.ofReal_mul (sq_nonneg _)]
       have ⟨h1, h2', h3⟩ := hz
-      rw [hform _ (pitmanEstimator f z) fun u ↦ pitmanEstimator_sub_const hz u,
+      rw [hform _ (pitmanEstimator f z) fun u ↦ pitman_estimator_sub_const hz u,
         hform δ (δ z) fun u ↦ by rw [hshift, heq, sub_eq_add_neg]]
-      exact lintegral_ofReal_sq_sub_mul_le (measurable_prod_sub hf.1 |>.comp
+      exact lintegral_of_real_sq_sub_mul_le (measurable_prod_sub hf.1 |>.comp
         (measurable_const.prodMk measurable_id)) (fun u ↦ Finset.prod_nonneg fun i _ ↦ hf0 _)
         h1 h2' h3 (δ z)
     · have hzero : ∀ g : (Fin n → ℝ) → ℝ, Φ g z = 0 := by
         intro g
         refine (lintegral_congr fun u ↦ ?_).trans lintegral_zero
-        rw [indicator_of_notMem (fun h ↦ hz ((sub_const_mem_pitmanGoodSet_iff u).1 h)),
+        rw [indicator_of_notMem (fun h ↦ hz ((sub_const_mem_pitman_good_set_iff u).1 h)),
           zero_mul]
       rw [hzero, hzero]
   have hle : ∫⁻ x, ENNReal.ofReal (pitmanEstimator f x ^ 2) ∂(Measure.pi fun _ : Fin n ↦ P) ≤
@@ -638,7 +639,7 @@ theorem pitmanEstimator_minimum_equivariant_risk_of_nonneg {n : ℕ} (hn : 0 < n
 
 /-- GAPS 101.40: the Pitman estimator minimizes equivariant squared-error risk.
 The normalizing and first-moment integrals are assumed to exist almost surely explicitly. -/
-theorem pitmanEstimator_minimum_equivariant_risk {n : ℕ} (hn : 0 < n)
+theorem pitman_estimator_minimum_equivariant_risk {n : ℕ} (hn : 0 < n)
     (P : Measure ℝ) [IsProbabilityMeasure P] (f : ℝ → ℝ) (hf : HasDensity P volume f)
     (δ : (Fin n → ℝ) → ℝ) (hm : Measurable δ) (heq : IsLocationEquivariant δ)
     (h2 : MemLp δ 2 (Measure.pi fun _ : Fin n ↦ P))
@@ -678,7 +679,7 @@ theorem pitmanEstimator_minimum_equivariant_risk {n : ℕ} (hn : 0 < n)
     unfold pitmanEstimator
     rw [integral_congr_ae (hae x), integral_congr_ae (hae' x)]
   rw [hpit]
-  refine pitmanEstimator_minimum_equivariant_risk_of_nonneg hn P g hg hg0 δ hm heq h2 ?_
+  refine pitman_estimator_minimum_equivariant_risk_of_nonneg hn P g hg hg0 δ hm heq h2 ?_
   filter_upwards [hint] with x hx
   obtain ⟨h1, h2, h3⟩ := hx
   refine ⟨h1.congr (hae x), h2.congr (hae' x), ?_⟩

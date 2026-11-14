@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldCore
 public import CKSD.Bayes.MeanFieldPathLaws
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.KantorovichRubinstein
@@ -23,7 +24,7 @@ open MeasureTheory Set
 open scoped ENNReal NNReal
 namespace CKSD
 /-- A vector-valued Lipschitz expectation is Lipschitz in the first Wasserstein distance. -/
-theorem norm_integral_sub_integral_le_mul_wassersteinEDist_one
+theorem norm_integral_sub_integral_le_mul_wasserstein_e_dist_one
     {X F : Type*} [PseudoMetricSpace X] [MeasurableSpace X]
     [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
     (μ ν : Measure X) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] {K : ℝ≥0} (f : X → F) (hf : LipschitzWith K f)
@@ -73,7 +74,7 @@ section Training
 variable {p : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin p)
 /-- Fixing the first interaction argument preserves its Lipschitz bound in the second. -/
-theorem lipschitzWith_meanFieldInteraction (gradU : E → E → E) (L : ℝ)
+theorem lipschitz_with_mean_field_interaction (gradU : E → E → E) (L : ℝ)
     (hUl : ∀ θ θ' η η', ‖gradU θ θ' - gradU η η'‖ ≤ L * (‖θ - η‖ + ‖θ' - η'‖))
     (θ : E) : LipschitzWith (Real.toNNReal L) (gradU θ) := by
   apply LipschitzWith.of_dist_le_mul
@@ -83,15 +84,15 @@ theorem lipschitzWith_meanFieldInteraction (gradU : E → E → E) (L : ℝ)
   simp only [sub_self, norm_zero, zero_add] at h
   exact h.trans (mul_le_mul_of_nonneg_right (Real.le_coe_toNNReal L) (norm_nonneg _))
 /-- Bounded Lipschitz interaction fields are integrable against any finite measure. -/
-theorem integrable_meanFieldInteraction (gradU : E → E → E) (B L : ℝ)
+theorem integrable_mean_field_interaction (gradU : E → E → E) (B L : ℝ)
     (hUb : ∀ θ θ', ‖gradU θ θ'‖ ≤ B)
     (hUl : ∀ θ θ' η η', ‖gradU θ θ' - gradU η η'‖ ≤ L * (‖θ - η‖ + ‖θ' - η'‖))
     (μ : Measure E) [IsFiniteMeasure μ] (θ : E) : Integrable (gradU θ) μ := by
   exact Integrable.of_bound
-    (lipschitzWith_meanFieldInteraction gradU L hUl θ).continuous.aestronglyMeasurable B
+    (lipschitz_with_mean_field_interaction gradU L hUl θ).continuous.aestronglyMeasurable B
     (ae_of_all _ (hUb θ))
 /-- Mean-field velocities are bounded uniformly over probability laws. -/
-theorem norm_meanFieldVelocity_le (gradV : E → E) (gradU : E → E → E) (B : ℝ)
+theorem norm_mean_field_velocity_le (gradV : E → E) (gradU : E → E → E) (B : ℝ)
     (hVb : ∀ θ, ‖gradV θ‖ ≤ B) (hUb : ∀ θ θ', ‖gradU θ θ'‖ ≤ B)
     (μ : Measure E) [IsProbabilityMeasure μ] (θ : E) :
     ‖meanFieldVelocity gradV gradU μ θ‖ ≤ 2 * B := by
@@ -100,7 +101,7 @@ theorem norm_meanFieldVelocity_le (gradV : E → E) (gradU : E → E → E) (B :
       norm_integral_le_of_norm_le_const (μ := μ) (ae_of_all _ (hUb θ))
   exact (norm_sub_le _ _).trans (by linarith [hVb θ])
 /-- Mean-field training is Lipschitz in position and first-Wasserstein law. -/
-theorem isWassersteinLipschitzDrift_meanFieldVelocity
+theorem is_wasserstein_lipschitz_drift_mean_field_velocity
     (gradV : E → E) (gradU : E → E → E) (B L : ℝ)
     (_hVb : ∀ θ, ‖gradV θ‖ ≤ B) (hUb : ∀ θ θ', ‖gradU θ θ'‖ ≤ B)
     (hVl : ∀ θ η, ‖gradV θ - gradV η‖ ≤ L * ‖θ - η‖)
@@ -117,13 +118,13 @@ theorem isWassersteinLipschitzDrift_meanFieldVelocity
   have hνid : Integrable (id : E → E) ν :=
     hν.mono' aestronglyMeasurable_id (ae_of_all _ fun _ ↦ le_rfl)
   have hμmom : TauCeti.HasFiniteMoment 1 μ := by
-    simpa only [Measure.map_id] using hasFiniteMoment_one_map_of_integrable μ id measurable_id hμid
+    simpa only [Measure.map_id] using has_finite_moment_one_map_of_integrable μ id measurable_id hμid
   have hνmom : TauCeti.HasFiniteMoment 1 ν := by
-    simpa only [Measure.map_id] using hasFiniteMoment_one_map_of_integrable ν id measurable_id hνid
+    simpa only [Measure.map_id] using has_finite_moment_one_map_of_integrable ν id measurable_id hνid
   have hW := (TauCeti.hasFiniteMoment_iff_wassersteinEDist_ne_top_of_hasFiniteMoment
     measurable_edist hμmom).mp hνmom
   have hi (z : E) (η : Measure E) [IsFiniteMeasure η] : Integrable (gradU z) η :=
-    integrable_meanFieldInteraction gradU B L hUb hUl η z
+    integrable_mean_field_interaction gradU B L hUb hUl η z
   have hsame : ‖(∫ z, gradU x z ∂μ) - ∫ z, gradU y z ∂μ‖ ≤ (K:ℝ)*‖x-y‖ := by
     rw [← integral_sub (hi x μ) (hi y μ)]
     have hb : ∀ᵐ z ∂μ, ‖gradU x z - gradU y z‖ ≤ (K:ℝ)*‖x-y‖ := by
@@ -134,8 +135,8 @@ theorem isWassersteinLipschitzDrift_meanFieldVelocity
     simpa only [probReal_univ, mul_one] using norm_integral_le_of_norm_le_const hb
   have hlaw : ‖(∫ z, gradU y z ∂μ) - ∫ z, gradU y z ∂ν‖ ≤
       (K:ℝ) * (TauCeti.wassersteinEDist 1 μ ν).toReal :=
-    norm_integral_sub_integral_le_mul_wassersteinEDist_one μ ν (gradU y)
-      (lipschitzWith_meanFieldInteraction gradU L hUl y) (hi y μ) (hi y ν) hW
+    norm_integral_sub_integral_le_mul_wasserstein_e_dist_one μ ν (gradU y)
+      (lipschitz_with_mean_field_interaction gradU L hUl y) (hi y μ) (hi y ν) hW
   have hV : ‖gradV x-gradV y‖ ≤ (K:ℝ)*‖x-y‖ :=
     (hVl x y).trans (mul_le_mul_of_nonneg_right hLK (norm_nonneg _))
   have heq : meanFieldVelocity gradV gradU μ x - meanFieldVelocity gradV gradU ν y =

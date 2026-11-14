@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.Diffusion
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Pushforward
 public import Mathlib.Analysis.SpecialFunctions.Exp
@@ -36,7 +37,7 @@ theorem monotonicity_le_lipschitz {E : Type*} [NormedAddCommGroup E] [InnerProdu
   exact le_of_mul_le_mul_right (by nlinarith : α * ‖x-y‖^2 ≤ β * ‖x-y‖^2) (by positivity)
 
 /-- A small Euler step is contractive with the exponential factor used by ULA. -/
-theorem norm_gradientEulerStep_sub_le {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+theorem norm_gradient_euler_step_sub_le {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     {G : E → E} {L : ℝ≥0} (hG : LipschitzWith L G) {α h : ℝ}
     (hmono : ∀ x y, α * ‖x - y‖ ^ 2 ≤ inner ℝ (G x - G y) (x - y))
     (hh : 0 ≤ h) (hstep : h * (L : ℝ) ^ 2 ≤ α) (x y : E) :
@@ -71,7 +72,7 @@ theorem norm_gradientEulerStep_sub_le {E : Type*} [NormedAddCommGroup E] [InnerP
   nlinarith [norm_nonneg (u-h•g)]
 
 /-- The deterministic part of ULA has a global contraction factor. -/
-theorem lipschitzWith_gradientEulerStep {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+theorem lipschitz_with_gradient_euler_step {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     {G : E → E} {L : ℝ≥0} (hG : LipschitzWith L G) {α h : ℝ}
     (hmono : ∀ x y, α * ‖x - y‖ ^ 2 ≤ inner ℝ (G x - G y) (x - y))
     (hh : 0 ≤ h) (hstep : h * (L : ℝ) ^ 2 ≤ α) :
@@ -79,10 +80,10 @@ theorem lipschitzWith_gradientEulerStep {E : Type*} [NormedAddCommGroup E] [Inne
   apply LipschitzWith.of_dist_le_mul
   intro x y
   simpa only [dist_eq_norm, Real.coe_toNNReal _ (Real.exp_pos _).le] using
-    norm_gradientEulerStep_sub_le hG hmono hh hstep x y
+    norm_gradient_euler_step_sub_le hG hmono hh hstep x y
 
 /-- ULA is a deterministic Euler pushforward followed by a common Gaussian convolution. -/
-theorem langevinStepLaw_eq_gaussian_pushforward {d : ℕ}
+theorem langevin_step_law_eq_gaussian_pushforward {d : ℕ}
     (G : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (h : ℝ)
     (hG : Measurable G) (μ : Measure (EuclideanSpace ℝ (Fin d))) :
     langevinStepLaw G h μ =
@@ -97,7 +98,7 @@ theorem langevinStepLaw_eq_gaussian_pushforward {d : ℕ}
   rfl
 
 /-- Common Gaussian noise preserves the deterministic Euler contraction in Wasserstein distance. -/
-theorem wassersteinEDist_langevinStepLaw_le {d : ℕ}
+theorem wasserstein_e_dist_langevin_step_law_le {d : ℕ}
     {G : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)} {L : ℝ≥0}
     (hG : LipschitzWith L G) {α h : ℝ}
     (hmono : ∀ x y, α * ‖x - y‖ ^ 2 ≤ inner ℝ (G x - G y) (x - y))
@@ -113,12 +114,12 @@ theorem wassersteinEDist_langevinStepLaw_le {d : ℕ}
     apply LipschitzWith.of_dist_le_mul
     intro x y
     simp only [dist_add_right, NNReal.coe_one, one_mul, le_refl]
-  rw [langevinStepLaw_eq_gaussian_pushforward G h hG.continuous.measurable μ,
-    langevinStepLaw_eq_gaussian_pushforward G h hG.continuous.measurable ν]
+  rw [langevin_step_law_eq_gaussian_pushforward G h hG.continuous.measurable μ,
+    langevin_step_law_eq_gaussian_pushforward G h hG.continuous.measurable ν]
   have hc := TauCeti.wassersteinEDist_map_prod_le (p := 2) measurable_edist measurable_edist hf hfL
     (μ.map (gradientEulerStep G h)) (ν.map (gradientEulerStep G h)) (stdGaussian (EuclideanSpace ℝ (Fin d)))
   have hd := TauCeti.wassersteinEDist_map_le_mul (p := 2) measurable_edist
-    (lipschitzWith_gradientEulerStep hG hmono hh hstep).continuous.measurable
-    (lipschitzWith_gradientEulerStep hG hmono hh hstep) μ ν
+    (lipschitz_with_gradient_euler_step hG hmono hh hstep).continuous.measurable
+    (lipschitz_with_gradient_euler_step hG hmono hh hstep) μ ν
   exact hc.trans (by simpa only [ENNReal.ofReal] using hd)
 end CKSD

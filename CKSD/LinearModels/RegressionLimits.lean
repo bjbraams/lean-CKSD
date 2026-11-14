@@ -6,6 +6,7 @@ public import Mathlib.Probability.CramerWold
 public import TauCeti.Probability.Distributions.Gaussian.Transforms
 import CKSD.Asymptotics.ConvexRegression.Basic
 
+
 /-!
 # Quantile regression and two-stage least squares
 
@@ -23,9 +24,9 @@ in `CKSD.LinearModels.InstrumentalVariables`.
 
 ## Main results
 
-* `CKSD.minimizes_expectedQuantileCheckLoss_iff`: the minimizers of the expected check loss are
+* `CKSD.minimizes_expected_quantile_check_loss_iff`: the minimizers of the expected check loss are
   exactly the `τ`-quantiles, `P(Y < a) ≤ τ ≤ P(Y ≤ a)`.
-* `CKSD.tendstoInDistribution_quantile_regression`: the fixed-design quantile-regression
+* `CKSD.tendsto_in_distribution_quantile_regression`: the fixed-design quantile-regression
   central limit theorem, `√n (β̂ - β) ⇒ N(0, τ(1-τ) D₁⁻¹ D₀ D₁⁻¹)`.
 
 The quantile characterization uses Mathlib's continuity of measure (`Monotone.measure_iUnion`)
@@ -60,7 +61,7 @@ def IsQuantileRegressionEstimator {n p : ℕ} (τ : ℝ)
   ∀ b, quantileRegressionObjective τ x y β ≤ quantileRegressionObjective τ x y b
 
 /-- The check loss is nonnegative for a level `τ ∈ [0, 1]`. -/
-theorem quantileCheckLoss_nonneg (τ u : ℝ) (hτ : τ ∈ Icc 0 1) :
+theorem quantile_check_loss_nonneg (τ u : ℝ) (hτ : τ ∈ Icc 0 1) :
     0 ≤ quantileCheckLoss τ u := by
   unfold quantileCheckLoss
   split_ifs with h
@@ -79,7 +80,7 @@ def expectedQuantileCheckLoss (P : Measure ℝ) (tau a : ℝ) : ℝ :=
   ∫ y, quantileCheckLoss tau (y - a) ∂P
 
 /-- The check loss as a linear part plus a negative part. -/
-theorem quantileCheckLoss_eq_add_max (τ u : ℝ) :
+theorem quantile_check_loss_eq_add_max (τ u : ℝ) :
     quantileCheckLoss τ u = τ * u + max (-u) 0 := by
   unfold quantileCheckLoss
   split_ifs with h
@@ -87,20 +88,20 @@ theorem quantileCheckLoss_eq_add_max (τ u : ℝ) :
   · rw [max_eq_right (by linarith)]; ring
 
 /-- Measurability of the check loss. -/
-theorem measurable_quantileCheckLoss (τ : ℝ) : Measurable (quantileCheckLoss τ) := by
+theorem measurable_quantile_check_loss (τ : ℝ) : Measurable (quantileCheckLoss τ) := by
   have : quantileCheckLoss τ = fun u ↦ τ * u + max (-u) 0 :=
-    funext (quantileCheckLoss_eq_add_max τ)
+    funext (quantile_check_loss_eq_add_max τ)
   rw [this]
   fun_prop
 
 /-- The check loss at a translated location is integrable when the law has a first moment. -/
-theorem integrable_quantileCheckLoss_sub (P : Measure ℝ) [IsProbabilityMeasure P]
+theorem integrable_quantile_check_loss_sub (P : Measure ℝ) [IsProbabilityMeasure P]
     (hint : Integrable id P) (τ a : ℝ) :
     Integrable (fun y ↦ quantileCheckLoss τ (y - a)) P := by
   refine Integrable.mono' (((hint.norm.add (integrable_const |a|))).const_mul (|τ| + 1)) ?_ ?_
-  · exact ((measurable_quantileCheckLoss τ).comp (measurable_id.sub_const a)).aestronglyMeasurable
+  · exact ((measurable_quantile_check_loss τ).comp (measurable_id.sub_const a)).aestronglyMeasurable
   · refine Filter.Eventually.of_forall fun y ↦ ?_
-    rw [quantileCheckLoss_eq_add_max, Real.norm_eq_abs]
+    rw [quantile_check_loss_eq_add_max, Real.norm_eq_abs]
     simp only [Pi.add_apply, id, Real.norm_eq_abs]
     have h1 : |y - a| ≤ |y| + |a| := abs_sub _ _
     have h2 : |τ * (y - a) + max (-(y - a)) 0| ≤ (|τ| + 1) * |y - a| := by
@@ -147,14 +148,14 @@ theorem integral_add_mul_sub_indicator_le_integral (P : Measure ℝ) [IsProbabil
 
 /-- GAPS 105.5: expected check-loss minimizers are precisely the distributional quantiles.
 This characterization allows atoms; finite first moment makes every displayed risk finite. -/
-theorem minimizes_expectedQuantileCheckLoss_iff (P : Measure ℝ) [IsProbabilityMeasure P]
+theorem minimizes_expected_quantile_check_loss_iff (P : Measure ℝ) [IsProbabilityMeasure P]
     (hint : Integrable id P) (tau : ℝ) (htau : tau ∈ Ioo 0 1) (a : ℝ) :
     (∀ b, expectedQuantileCheckLoss P tau a ≤ expectedQuantileCheckLoss P tau b) ↔
       P.real (Iio a) ≤ tau ∧ tau ≤ P.real (Iic a) := by
-  have hI := fun c ↦ integrable_quantileCheckLoss_sub P hint tau c
-  simp only [quantileCheckLoss_eq_add_max] at hI
+  have hI := fun c ↦ integrable_quantile_check_loss_sub P hint tau c
+  simp only [quantile_check_loss_eq_add_max] at hI
   unfold expectedQuantileCheckLoss
-  simp only [quantileCheckLoss_eq_add_max]
+  simp only [quantile_check_loss_eq_add_max]
   constructor
   · intro hmin
     constructor
@@ -291,9 +292,9 @@ def weightedDesignMoment {p : ℕ} (x : ℕ → EuclideanSpace ℝ (Fin p))
 section QuantileRegressionAsymptotics
 
 /-- The check loss is convex. -/
-private lemma convexOn_quantileCheckLoss (tau : ℝ) : ConvexOn ℝ univ (quantileCheckLoss tau) := by
+private lemma convex_on_quantile_check_loss (tau : ℝ) : ConvexOn ℝ univ (quantileCheckLoss tau) := by
   refine ⟨convex_univ, fun u _ v _ a b ha hb hab ↦ ?_⟩
-  simp only [quantileCheckLoss_eq_add_max, smul_eq_mul]
+  simp only [quantile_check_loss_eq_add_max, smul_eq_mul]
   have hu := le_max_left (-u) 0
   have hu' := le_max_right (-u) 0
   have hv := le_max_left (-v) 0
@@ -303,7 +304,7 @@ private lemma convexOn_quantileCheckLoss (tau : ℝ) : ConvexOn ℝ univ (quanti
   nlinarith
 
 /-- The right derivative `ψ_τ(u) = τ - 1{u < 0}` of the check loss. -/
-private lemma hasDerivWithinAt_quantileCheckLoss (tau u : ℝ) :
+private lemma has_deriv_within_at_quantile_check_loss (tau u : ℝ) :
     HasDerivWithinAt (quantileCheckLoss tau) (tau - if u < 0 then 1 else 0) (Ioi u) u := by
   rcases lt_or_ge u 0 with hu | hu
   · have h : HasDerivAt (fun v ↦ (tau - 1) * v) (tau - 1) u := by
@@ -320,7 +321,7 @@ private lemma hasDerivWithinAt_quantileCheckLoss (tau u : ℝ) :
     simpa [not_lt.2 hu] using h'
 
 /-- A law with a density has no atoms. -/
-private lemma nullSingletonClass_of_hasDensity {Q : Measure ℝ} {f : ℝ → ℝ}
+private lemma null_singleton_class_of_has_density {Q : Measure ℝ} {f : ℝ → ℝ}
     (hf : HasDensity Q volume f) : NullSingletonClass Q :=
   ⟨fun c ↦ by
     rw [hf.2.2]
@@ -340,7 +341,7 @@ private lemma integral_add_mul_ite_sub_lt_zero (Q : Measure ℝ) [IsProbabilityM
 
 /-- Distribution function increments are integrals of the density:
 `Q(y ≤ d) - Q(y ≤ c) = ∫_c^d f`. -/
-private lemma measureReal_Iic_sub_eq_integral {Q : Measure ℝ} [IsProbabilityMeasure Q]
+private lemma measure_real_iic_sub_eq_integral {Q : Measure ℝ} [IsProbabilityMeasure Q]
     {f : ℝ → ℝ} (hf : HasDensity Q volume f) (c d : ℝ) :
     Q.real (Iic d) - Q.real (Iic c) = ∫ y in c..d, f y := by
   have key : ∀ c d : ℝ, c ≤ d → Q.real (Iic d) - Q.real (Iic c) = ∫ y in c..d, f y := by
@@ -356,7 +357,7 @@ private lemma measureReal_Iic_sub_eq_integral {Q : Measure ℝ} [IsProbabilityMe
   · rw [intervalIntegral.integral_symm, ← key d c h]; ring
 
 /-- A density bounded by `C` on `[c - r, c + r]` gives this interval mass at most `2 C r`. -/
-private lemma measure_Icc_le_of_hasDensity {Q : Measure ℝ} {f : ℝ → ℝ}
+private lemma measure_icc_le_of_has_density {Q : Measure ℝ} {f : ℝ → ℝ}
     (hf : HasDensity Q volume f) {c r C : ℝ} (hC : 0 ≤ C)
     (hfC : ∀ y ∈ Icc (c - r) (c + r), f y ≤ C) :
     Q (Icc (c - r) (c + r)) ≤ ENNReal.ofReal (C * (2 * r)) := by
@@ -370,7 +371,7 @@ private lemma measure_Icc_le_of_hasDensity {Q : Measure ℝ} {f : ℝ → ℝ}
 
 /-- `L²` continuity of the quantile score: if the density of `Y` is at most `C` near `θ`, then
 `E (ψ_τ(Y - θ - t) - ψ_τ(Y - θ))² ≤ 2 C |t|`. -/
-private lemma lintegral_sq_quantileScore_sub_le {Ω : Type*} [MeasurableSpace Ω]
+private lemma lintegral_sq_quantile_score_sub_le {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) {Y : Ω → ℝ} (hY : Measurable Y) {Q : Measure ℝ} (hlaw : P.map Y = Q)
     {f : ℝ → ℝ} (hf : HasDensity Q volume f) (tau θ t C : ℝ) (hC : 0 ≤ C)
     (hfC : ∀ y ∈ Icc (θ - |t|) (θ + |t|), f y ≤ C) :
@@ -391,19 +392,19 @@ private lemma lintegral_sq_quantileScore_sub_le {Ω : Type*} [MeasurableSpace Ω
           split_ifs with ha hb hb <;> first | (exfalso; rcases hm with hm | hm <;> linarith) | simp
     _ = Q (Icc (θ - |t|) (θ + |t|)) := by
         rw [lintegral_indicator_one hS, ← hlaw, Measure.map_apply hY measurableSet_Icc]
-    _ ≤ _ := measure_Icc_le_of_hasDensity hf hC hfC
+    _ ≤ _ := measure_icc_le_of_has_density hf hC hfC
 
 /-- Curvature of the expected check loss: if `Y` has density `f`, `τ`-quantile `θ`, and
 `|f y - f θ| ≤ η` for `|y - θ| ≤ |t|`, then
 `|E [ρ_τ(Y - θ - t) - ρ_τ(Y - θ) + t ψ_τ(Y - θ)] - f(θ) t² / 2| ≤ η t²`. -/
-private lemma abs_integral_quantileRemainder_sub_le {Ω : Type*} [MeasurableSpace Ω]
+private lemma abs_integral_quantile_remainder_sub_le {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] {Y : Ω → ℝ} (hY : Measurable Y)
     {Q : Measure ℝ} [IsProbabilityMeasure Q] (hlaw : P.map Y = Q) {f : ℝ → ℝ}
     (hf : HasDensity Q volume f) (tau θ : ℝ) (hθ : cdf Q θ = tau) {t η : ℝ} (hη : 0 ≤ η)
     (hfη : ∀ y, |y - θ| ≤ |t| → |f y - f θ| ≤ η) :
     |∫ ω, (quantileCheckLoss tau (Y ω - θ - t) - quantileCheckLoss tau (Y ω - θ) +
         t * (tau - if Y ω - θ < 0 then 1 else 0)) ∂P - f θ * t ^ 2 / 2| ≤ η * t ^ 2 := by
-  have := nullSingletonClass_of_hasDensity hf
+  have := null_singleton_class_of_has_density hf
   set ψ : ℝ → ℝ := fun u ↦ tau - if u < 0 then 1 else 0 with hψ
   have hψm : Measurable ψ :=
     measurable_const.sub (Measurable.ite (measurableSet_lt measurable_id measurable_const)
@@ -413,7 +414,7 @@ private lemma abs_integral_quantileRemainder_sub_le {Ω : Type*} [MeasurableSpac
     refine (abs_sub _ _).trans ?_
     split_ifs <;> simp
   have hρc : Continuous (quantileCheckLoss tau) :=
-    continuousOn_univ.1 ((convexOn_quantileCheckLoss tau).continuousOn isOpen_univ)
+    continuousOn_univ.1 ((convex_on_quantile_check_loss tau).continuousOn isOpen_univ)
   have he : Measurable fun ω ↦ Y ω - θ := hY.sub_const θ
   have hmap : ∀ g : ℝ → ℝ, Measurable g →
       ∫ ω, g (Y ω - θ) ∂P = ∫ z, g z ∂(P.map fun ω ↦ Y ω - θ) := fun g hg ↦
@@ -435,14 +436,14 @@ private lemma abs_integral_quantileRemainder_sub_le {Ω : Type*} [MeasurableSpac
         fun y ↦ tau + (-1) * if y - (θ + s) < 0 then 1 else 0 := by
       funext y; simp only [hψ, sub_sub]; ring
     rw [e1, e2, e3, integral_add_mul_ite_sub_lt_zero, hIio,
-      ← measureReal_Iic_sub_eq_integral hf θ (θ + s), ← hθ, cdf_eq_real]
+      ← measure_real_iic_sub_eq_integral hf θ (θ + s), ← hθ, cdf_eq_real]
     ring
   have hψ0 : ∫ z, ψ z ∂(P.map fun ω ↦ Y ω - θ) = 0 := by
     simpa using hG 0
   have hfi : ∀ c d, IntervalIntegrable f volume c d := fun c d ↦
-    (integrable_of_hasDensity _ _ hf).intervalIntegrable
+    (integrable_of_has_density _ _ hf).intervalIntegrable
   have key := abs_integral_remainder_sub_le (P.map fun ω ↦ Y ω - θ)
-    (convexOn_quantileCheckLoss tau) (fun u ↦ hasDerivWithinAt_quantileCheckLoss tau u) hψm
+    (convex_on_quantile_check_loss tau) (fun u ↦ has_deriv_within_at_quantile_check_loss tau u) hψm
     (by simpa using hint 0) hψ0 (t := t) (γ := f θ) hη (fun s _ ↦ hint s) fun s hs ↦ by
       rw [hG s]
       have hsplit : (-∫ y in θ..θ + s, f y) + f θ * s = -∫ y in θ..θ + s, (f y - f θ) := by
@@ -479,7 +480,7 @@ end QuantileRegressionAsymptotics
 `maxᵢ ‖xᵢ‖ / √n → 0`, then every sequence of quantile-regression estimates satisfies
 `√n (β̂ - β) ⇒ N(0, τ(1-τ) D₁⁻¹ D₀ D₁⁻¹)`. The limit `D₁ ≥ a D₀` is then positive definite.
 No identical-distribution assumption is imposed on the responses. -/
-theorem tendstoInDistribution_quantile_regression
+theorem tendsto_in_distribution_quantile_regression
     {Ω : Type*} [MeasurableSpace Ω] {p : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P] (Q : ℕ → Measure ℝ) (f : ℕ → ℝ → ℝ)
     (hf : ∀ i, HasDensity (Q i) volume (f i))
@@ -519,7 +520,7 @@ theorem tendstoInDistribution_quantile_regression
   have he : ∀ i, Measurable (e i) := fun i ↦ (hY i).sub_const _
   have hinde : iIndepFun e P := hind.comp (fun i y ↦ y - θ i) fun i ↦ measurable_id.sub_const _
   have hIio : ∀ i, (Q i).real (Iio (θ i)) = tau := fun i ↦ by
-    have := nullSingletonClass_of_hasDensity (hf i)
+    have := null_singleton_class_of_has_density (hf i)
     have h1 : (Q i).real (Iio (θ i)) = (Q i).real (Iic (θ i)) := by
       simp [measureReal_def, measure_congr (Iio_ae_eq_Iic (μ := Q i))]
     rw [h1, ← cdf_eq_real, hquantile i]
@@ -548,8 +549,8 @@ theorem tendstoInDistribution_quantile_regression
       not_lt.2 (by simpa [Real.norm_eq_abs] using hψb (e i ω))
     simp [h, hη.le]⟩
   have hsub : ∀ u v, quantileCheckLoss tau u + ψ u * (v - u) ≤ quantileCheckLoss tau v :=
-    fun u v ↦ add_mul_sub_le_of_convexOn_of_hasDerivWithinAt (convexOn_quantileCheckLoss tau)
-      (hasDerivWithinAt_quantileCheckLoss tau u) v
+    fun u v ↦ add_mul_sub_le_of_convex_on_of_has_deriv_within_at (convex_on_quantile_check_loss tau)
+      (has_deriv_within_at_quantile_check_loss tau u) v
   have hb0 : 0 ≤ b := (ha.le.trans (hbound 0).1).trans (hbound 0).2
   have hw : ∀ η > 0, ∃ δ > 0, ∀ i t, |t| < δ →
       ∫⁻ ω, ENNReal.ofReal ((ψ (e i ω - t) - ψ (e i ω)) ^ 2) ∂P ≤ ENNReal.ofReal η := by
@@ -565,7 +566,7 @@ theorem tendstoInDistribution_quantile_regression
       have h2 := (hbound i).2
       rw [abs_lt] at h1
       linarith
-    refine (lintegral_sq_quantileScore_sub_le P (hY i) (hlaw i) (hf i) tau (θ i) t (b + 1)
+    refine (lintegral_sq_quantile_score_sub_le P (hY i) (hlaw i) (hf i) tau (θ i) t (b + 1)
       (by linarith) hfC).trans (ENNReal.ofReal_le_ofReal ?_)
     have h := ht.trans_le (min_le_right _ _)
     rw [lt_div_iff₀ (by positivity)] at h
@@ -577,7 +578,7 @@ theorem tendstoInDistribution_quantile_regression
     obtain ⟨δe, hδe, hq⟩ := hequi η hη
     refine ⟨δe, hδe, fun i t ht ↦ ?_⟩
     have := hQp i
-    exact abs_integral_quantileRemainder_sub_le P (hY i) (hlaw i) (hf i) tau (θ i)
+    exact abs_integral_quantile_remainder_sub_le P (hY i) (hlaw i) (hf i) tau (θ i)
       (hquantile i) hη.le fun y hy ↦ (hq i y (hy.trans_lt ht)).le
   have hdesign' : Tendsto (fun n : ℕ ↦ Matrix.of fun j k ↦ (n : ℝ)⁻¹ *
       ∑ i ∈ Finset.range n, x i j * x i k) atTop (𝓝 D₀) := by
@@ -629,8 +630,8 @@ theorem tendstoInDistribution_quantile_regression
       ring
     have := hω c
     rwa [hobj, hobj] at this
-  exact (tendstoInMeasure_and_tendstoInDistribution_convexRegression P e he hinde
-    (convexOn_quantileCheckLoss tau) hψm hsub hψ2 hψ0 hψvar hUI hw (fun i ↦ f i (θ i)) hm x
+  exact (tendsto_in_measure_and_tendsto_in_distribution_convex_regression P e he hinde
+    (convex_on_quantile_check_loss tau) hψm hsub hψ2 hψ0 hψvar hUI hw (fun i ↦ f i (θ i)) hm x
     hD₀.posSemidef hD₁ hdesign' hweighted hleverage beta T hT hmin').2.2
 
 end CKSD

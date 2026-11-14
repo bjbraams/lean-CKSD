@@ -19,6 +19,7 @@ public import TauCeti.Probability.Distributions.ChiSquared.Basic
 public import TauCeti.Probability.Distributions.StudentT.Basic
 public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
 
+
 /-!
 # Statistical models and convergence interfaces
 
@@ -46,19 +47,19 @@ topology, characterized by `MeasureTheory.ProbabilityMeasure.tendsto_iff_forall_
 
 ## Main results
 
-* `CKSD.isBoundedInProbability_iff_isTightMeasureSet`: for almost everywhere measurable
+* `CKSD.is_bounded_in_probability_iff_is_tight_measure_set`: for almost everywhere measurable
   sequences, boundedness in probability is tightness (Mathlib's `MeasureTheory.IsTightMeasureSet`)
   of the set of laws.
-* `CKSD.tendstoInDistribution_id_iff`: convergence in distribution to a law, with the identity
+* `CKSD.tendsto_in_distribution_id_iff`: convergence in distribution to a law, with the identity
   as limit random variable, is convergence in the `ProbabilityMeasure` topology.
-* `CKSD.tendstoInDistribution_of_map_eq`: the limit random variable of convergence in
+* `CKSD.tendsto_in_distribution_of_map_eq`: the limit random variable of convergence in
   distribution matters only through its law.
-* `CKSD.tendstoInMeasure_iff_measureReal_lt_dist`: for a finite measure, convergence in
+* `CKSD.tendsto_in_measure_iff_measure_real_lt_dist`: for a finite measure, convergence in
   measure (Mathlib's `MeasureTheory.TendstoInMeasure`) with strict inequalities and real-valued
   measures.
-* `CKSD.IsStatisticalTest.integrable`, `CKSD.IsStatisticalTest.integral_mem_Icc`: a test is
+* `CKSD.IsStatisticalTest.integrable`, `CKSD.IsStatisticalTest.integral_mem_icc`: a test is
   integrable for every finite measure, with mean in `[0, 1]` under a probability measure.
-* `CKSD.isProbabilityMeasure_empiricalMeasure`, `CKSD.integrable_of_hasDensity`: the empirical
+* `CKSD.is_probability_measure_empirical_measure`, `CKSD.integrable_of_has_density`: the empirical
   measure of a nonempty sample is a probability measure, and a real density is integrable.
 
 ## Conventions
@@ -80,7 +81,7 @@ namespace CKSD
 attribute [local instance] Classical.propDecidable
 
 /-- Convergence in distribution depends on the limit random variable only through its law. -/
-theorem tendstoInDistribution_of_map_eq {ι Ω' Ω'' E : Type*} {Ω : ι → Type*}
+theorem tendsto_in_distribution_of_map_eq {ι Ω' Ω'' E : Type*} {Ω : ι → Type*}
     [∀ i, MeasurableSpace (Ω i)] [MeasurableSpace Ω'] [MeasurableSpace Ω'']
     [TopologicalSpace E] [MeasurableSpace E] [OpensMeasurableSpace E]
     {μ : (i : ι) → Measure (Ω i)} [∀ i, IsProbabilityMeasure (μ i)]
@@ -99,7 +100,7 @@ theorem tendstoInDistribution_of_map_eq {ι Ω' Ω'' E : Type*} {Ω : ι → Typ
 
 /-- Convergence in distribution to a law `ν`, with the identity as limit random variable, is
 convergence of the laws to `ν` in Mathlib's `ProbabilityMeasure` topology. -/
-theorem tendstoInDistribution_id_iff {ι E : Type*} {Ω : ι → Type*}
+theorem tendsto_in_distribution_id_iff {ι E : Type*} {Ω : ι → Type*}
     [∀ i, MeasurableSpace (Ω i)] [TopologicalSpace E] [MeasurableSpace E] [OpensMeasurableSpace E]
     {μ : (i : ι) → Measure (Ω i)} [∀ i, IsProbabilityMeasure (μ i)] {ν : Measure E}
     [IsProbabilityMeasure ν] {X : (i : ι) → Ω i → E} {l : Filter ι} :
@@ -134,7 +135,7 @@ instance isProbabilityMeasure_chiSquaredMeasure_one :
 outer measure, so no measurability of `X n` is required; this serves the stochastic `O_P` algebra
 of possibly nonmeasurable sequences. For almost everywhere measurable `X n` and finite `μ` it is
 tightness of the laws, Mathlib's `IsTightMeasureSet (range fun n ↦ μ.map (X n))`
-(`CKSD.isBoundedInProbability_iff_isTightMeasureSet`). -/
+(`CKSD.is_bounded_in_probability_iff_is_tight_measure_set`). -/
 def IsBoundedInProbability {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : ℕ → Ω → ℝ) : Prop :=
   ∀ ε > 0, ∃ C > 0, ∀ᶠ n in atTop, μ.real {ω | C < |X n ω|} ≤ ε
@@ -143,7 +144,7 @@ def IsBoundedInProbability {Ω : Type*} [MeasurableSpace Ω]
 probability is tightness of the set of their laws (Mathlib's `MeasureTheory.IsTightMeasureSet`).
 Eventual bounds suffice for tightness of the whole sequence since each finite measure on `ℝ` is
 tight. -/
-theorem isBoundedInProbability_iff_isTightMeasureSet {Ω : Type*} [MeasurableSpace Ω]
+theorem is_bounded_in_probability_iff_is_tight_measure_set {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → ℝ} (hX : ∀ n, AEMeasurable (X n) μ) :
     IsBoundedInProbability μ X ↔ IsTightMeasureSet (range fun n ↦ μ.map (X n)) := by
   rw [isTightMeasureSet_range_iff_tendsto_limsup_measure_norm_gt]
@@ -183,7 +184,7 @@ def empiricalMeasure {E : Type*} [MeasurableSpace E] (n : ℕ) (x : Fin n → E)
   (n : ℝ≥0∞)⁻¹ • ∑ i, Measure.dirac (x i)
 
 /-- The empirical measure of a nonempty sample is a probability measure. -/
-theorem isProbabilityMeasure_empiricalMeasure {E : Type*} [MeasurableSpace E] {n : ℕ}
+theorem is_probability_measure_empirical_measure {E : Type*} [MeasurableSpace E] {n : ℕ}
     (hn : 0 < n) (x : Fin n → E) : IsProbabilityMeasure (empiricalMeasure n x) := by
   constructor
   simp [empiricalMeasure]
@@ -206,7 +207,7 @@ def HasDensity {X : Type*} [MeasurableSpace X]
   Measurable f ∧ (∀ᵐ x ∂μ, 0 ≤ f x) ∧ P = μ.withDensity (fun x ↦ ENNReal.ofReal (f x))
 
 /-- A density of a probability law on `ℝ` is integrable. -/
-theorem integrable_of_hasDensity (F : Measure ℝ) [IsProbabilityMeasure F] (f : ℝ → ℝ)
+theorem integrable_of_has_density (F : Measure ℝ) [IsProbabilityMeasure F] (f : ℝ → ℝ)
     (hf : HasDensity F volume f) : Integrable f := by
   refine ⟨hf.1.aestronglyMeasurable, (hasFiniteIntegral_iff_ofReal hf.2.1).2 ?_⟩
   rw [← setLIntegral_univ, ← withDensity_apply _ MeasurableSet.univ, ← hf.2.2]
@@ -281,7 +282,7 @@ def risk {Θ X A : Type*} [MeasurableSpace X] [MeasurableSpace A]
 /-- For a finite measure, convergence in measure is the vanishing of the real-valued measures of
 the sets `{ε < dist (f i) (g)}`, with strict inequality; compare Mathlib's
 `MeasureTheory.tendstoInMeasure_iff_measureReal_dist`. -/
-theorem tendstoInMeasure_iff_measureReal_lt_dist {ι Ω E : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_iff_measure_real_lt_dist {ι Ω E : Type*} [MeasurableSpace Ω]
     [PseudoMetricSpace E] {μ : Measure Ω} [IsFiniteMeasure μ] {l : Filter ι} {f : ι → Ω → E}
     {g : Ω → E} :
     TendstoInMeasure μ f l g ↔
@@ -339,7 +340,7 @@ theorem integral_le_one (hφ : IsStatisticalTest φ) (μ : Measure X) [IsProbabi
   (integral_mono (hφ.integrable μ) (integrable_const 1) hφ.le_one).trans (by simp)
 
 /-- The mean of a test under a probability measure lies in `[0, 1]`. -/
-theorem integral_mem_Icc (hφ : IsStatisticalTest φ) (μ : Measure X) [IsProbabilityMeasure μ] :
+theorem integral_mem_icc (hφ : IsStatisticalTest φ) (μ : Measure X) [IsProbabilityMeasure μ] :
     ∫ x, φ x ∂μ ∈ Icc (0 : ℝ) 1 :=
   ⟨hφ.integral_nonneg μ, hφ.integral_le_one μ⟩
 
@@ -352,7 +353,7 @@ theorem integral_one_sub (hφ : IsStatisticalTest φ) (μ : Measure X) [IsProbab
 end IsStatisticalTest
 
 /-- A threshold test with randomization `γ ∈ [0, 1]` in a measurable statistic is a test. -/
-theorem isStatisticalTest_thresholdTest {X α : Type*} [MeasurableSpace X] [LinearOrder α]
+theorem is_statistical_test_threshold_test {X α : Type*} [MeasurableSpace X] [LinearOrder α]
     [TopologicalSpace α] [OrderClosedTopology α] [MeasurableSpace α] [OpensMeasurableSpace α]
     {T : X → α} (hT : Measurable T) (c : α) {γ : ℝ} (hγ : γ ∈ Icc (0 : ℝ) 1) :
     IsStatisticalTest (thresholdTest T c γ) := by

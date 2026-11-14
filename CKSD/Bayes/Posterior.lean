@@ -7,6 +7,7 @@ public import TauCeti.Probability.Distributions.Gaussian.Basic
 public import TauCeti.Probability.Distributions.Gaussian.Density
 public import Mathlib.Analysis.Calculus.FDeriv.Symmetric
 
+
 /-!
 # Posterior summaries, empirical Bayes, and asymptotic normality of posteriors
 
@@ -19,15 +20,15 @@ Laplace approximation of posterior normalizing constants.
 
 * `CKSD.volume_highest_density_region_le`: a highest-density region has least volume among sets of
   at least its probability (GAPS 104.10).
-* `CKSD.integral_mul_gaussianPDFReal_div_eq_add_mul_deriv_log`: Tweedie's formula
+* `CKSD.integral_mul_gaussian_pdf_real_div_eq_add_mul_deriv_log`: Tweedie's formula
   `E[θ | x] = x + v (log m)'(x)` for normal observations (GAPS 104.14).
-* `CKSD.integral_mul_poissonMass_div_eq`: the Poisson identity
+* `CKSD.integral_mul_poisson_mass_div_eq`: the Poisson identity
   `E[θ | x] = (x + 1) m(x + 1) / m(x)` (GAPS 104.14).
 * `CKSD.ae_tendsto_robbins_estimator`: almost-sure consistency of Robbins' estimator
   (GAPS 104.14).
-* `CKSD.tendstoInMeasure_totalVariationDistance_normalPosterior`: Bernstein–von Mises in
+* `CKSD.tendsto_in_measure_total_variation_distance_normal_posterior`: Bernstein–von Mises in
   the normal location model (GAPS 104.1).
-* `CKSD.integral_exp_neg_inner_toEuclideanCLM_div_two`: the Gaussian integral
+* `CKSD.integral_exp_neg_inner_to_euclidean_clm_div_two`: the Gaussian integral
   `∫ exp(-⟪y, H y⟫/2) dy = (2π)^{d/2} / √(det H)`.
 * `CKSD.tendsto_laplace_approximation`: Laplace's method on a compact set
   `n^{d/2} ∫_K a e^{-n f} → a(m) (2π)^{d/2} / √(det ∇²f(m))` (GAPS 104.5).
@@ -83,7 +84,7 @@ theorem volume_highest_density_region_le {d : ℕ} (P : Measure (EuclideanSpace 
 
 /-- GAPS 104.14: Tweedie's formula. For `X | θ ~ N(θ, v)` and an arbitrary probability prior `π`
 with marginal density `m(x) = ∫ φ_{θ,v}(x) dπ(θ)`, the posterior mean is `x + v (log m)'(x)`. -/
-theorem integral_mul_gaussianPDFReal_div_eq_add_mul_deriv_log (π : Measure ℝ)
+theorem integral_mul_gaussian_pdf_real_div_eq_add_mul_deriv_log (π : Measure ℝ)
     [IsProbabilityMeasure π] (v : ℝ≥0) (hv : 0 < v) (x : ℝ) :
     let m := fun t ↦ ∫ θ, gaussianPDFReal θ v t ∂π;
     (∫ θ, θ * gaussianPDFReal θ v x ∂π) / m x =
@@ -173,7 +174,7 @@ theorem integral_mul_gaussianPDFReal_div_eq_add_mul_deriv_log (π : Measure ℝ)
 with `m(j) = ∫ p_θ(j) dπ(θ)`. For a probability prior on nonnegative intensities with finite first
 moment and `m(x) > 0`, the left side is the posterior mean; the identity itself holds for every
 measure `π`. -/
-theorem integral_mul_poissonMass_div_eq (π : Measure ℝ)
+theorem integral_mul_poisson_mass_div_eq (π : Measure ℝ)
     (x : ℕ) :
     let m := fun j ↦ ∫ θ, poissonMass θ j ∂π;
     (∫ θ, θ * poissonMass θ x ∂π) / m x = (x + 1 : ℕ) * m (x + 1) / m x := by
@@ -244,7 +245,7 @@ private theorem integrable_exp_neg_mul_sq_sub {b : ℝ} (hb : 0 < b) (m : ℝ) :
 
 /-- The difference of the masses of an event under two laws with densities, one of them
 normalized by `c`, is at most the `L¹` distance of the normalized densities. -/
-private theorem abs_measureReal_sub_le_integral {g q : ℝ → ℝ} (hg : Integrable g)
+private theorem abs_measure_real_sub_le_integral {g q : ℝ → ℝ} (hg : Integrable g)
     (hg0 : ∀ θ, 0 ≤ g θ) (hq : Integrable q) (hq0 : ∀ θ, 0 ≤ q θ) {c : ℝ} (hc : 0 < c)
     {B : Set ℝ} (hB : MeasurableSet B) :
     |((ENNReal.ofReal c)⁻¹ • volume.withDensity (fun θ ↦ ENNReal.ofReal (g θ))).real B -
@@ -420,7 +421,7 @@ private theorem eventually_exp_tail_le {δ p₀ c : ℝ} (hδ : 0 < δ) (hc : 0 
 /-- Deterministic core of the Bernstein–von Mises theorem in the normal location model: the total
 variation bound holds uniformly over posterior centres `m` near the true parameter, for all large
 `n`. -/
-private theorem exists_tv_normalPosterior_le (prior : ℝ → ℝ) (hmeas : Measurable prior)
+private theorem exists_tv_normal_posterior_le (prior : ℝ → ℝ) (hmeas : Measurable prior)
     (hpos : ∀ θ, 0 ≤ prior θ)
     (h1 : ∫ θ, prior θ = 1) (θ₀ : ℝ) (hc : ContinuousAt prior θ₀) (htrue : 0 < prior θ₀)
     (v : ℝ≥0) (hv : 0 < v) {ε : ℝ} (hε : 0 < ε) :
@@ -515,7 +516,7 @@ private theorem exists_tv_normalPosterior_le (prior : ℝ → ℝ) (hmeas : Meas
       |((normalPosterior prior v n m).map T).real A - (gaussianReal 0 v).real A| ≤ ε := by
     intro A hA
     rw [map_measureReal_apply hTm hA, hG, map_measureReal_apply hTm hA, hP, hGd]
-    refine (abs_measureReal_sub_le_integral hgint hg0 (hEint.div_const I)
+    refine (abs_measure_real_sub_le_integral hgint hg0 (hEint.div_const I)
       (fun θ ↦ div_nonneg (hE0 θ) hIpos.le) hcpos (hTm hA)).trans (hL1.trans ?_)
     have := min_le_right (1 / 2 : ℝ) (ε / 4)
     linarith
@@ -533,7 +534,7 @@ private theorem exists_tv_normalPosterior_le (prior : ℝ → ℝ) (hmeas : Meas
 prior density that is continuous and positive at the true mean `θ₀`, the posterior of
 `√n (θ - X̄ₙ)` converges to `N(0, v)` in total variation, in probability. The normalization
 `∫ prior = 1` forces the prior density to be integrable. -/
-theorem tendstoInMeasure_totalVariationDistance_normalPosterior {Ω : Type*}
+theorem tendsto_in_measure_total_variation_distance_normal_posterior {Ω : Type*}
     [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ] (θ₀ : ℝ) (v : ℝ≥0) (hv : 0 < v)
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X (gaussianReal θ₀ v))
     (prior : ℝ → ℝ) (hm : Measurable prior)
@@ -564,7 +565,7 @@ theorem tendstoInMeasure_totalVariationDistance_normalPosterior {Ω : Type*}
       simpa [sampleAverage, div_eq_inv_mul] using hω
   rw [tendstoInMeasure_iff_dist] at hS ⊢
   intro ε hε
-  obtain ⟨δ, hδ, N, hN⟩ := exists_tv_normalPosterior_le prior hm hpos h1 θ₀ hc htrue v hv
+  obtain ⟨δ, hδ, N, hN⟩ := exists_tv_normal_posterior_le prior hm hpos h1 θ₀ hc htrue v hv
     (half_pos hε)
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds (hS δ hδ)
     (Eventually.of_forall fun _ ↦ zero_le) ?_
@@ -581,7 +582,7 @@ theorem tendstoInMeasure_totalVariationDistance_normalPosterior {Ω : Type*}
 /-- Gaussian integral for a positive definite matrix `H`:
 `∫ exp(-⟪y, H y⟫/2) dy = (2π)^{d/2} / √(det H)`, from the normalization of TauCeti's
 multivariate normal density with covariance `H⁻¹`. -/
-theorem integral_exp_neg_inner_toEuclideanCLM_div_two {d : ℕ} {H : Matrix (Fin d) (Fin d) ℝ}
+theorem integral_exp_neg_inner_to_euclidean_clm_div_two {d : ℕ} {H : Matrix (Fin d) (Fin d) ℝ}
     (hH : H.PosDef) :
     ∫ y : EuclideanSpace ℝ (Fin d), Real.exp (-inner ℝ y (Matrix.toEuclideanCLM (𝕜 := ℝ) H y) / 2) =
       Real.rpow (2 * Real.pi) ((d : ℝ) / 2) / Real.sqrt H.det := by
@@ -622,7 +623,7 @@ theorem integral_exp_neg_inner_toEuclideanCLM_div_two {d : ℕ} {H : Matrix (Fin
 
 
 /-- Coercivity of a positive definite quadratic form: `c ‖v‖² ≤ ⟪v, H v⟫` for some `c > 0`. -/
-theorem exists_pos_mul_norm_sq_le_inner_toEuclideanCLM {d : ℕ}
+theorem exists_pos_mul_norm_sq_le_inner_to_euclidean_clm {d : ℕ}
     {H : Matrix (Fin d) (Fin d) ℝ} (hH : H.PosDef) :
     ∃ c > 0, ∀ v : EuclideanSpace ℝ (Fin d),
       c * ‖v‖ ^ 2 ≤ inner ℝ v (Matrix.toEuclideanCLM (𝕜 := ℝ) H v) := by
@@ -709,7 +710,7 @@ theorem exists_abs_sub_half_fderiv_fderiv_le {E : Type*} [NormedAddCommGroup E]
 
 /-- On a compact set where `f` is positive off `m`, a local quadratic lower bound at `m` extends to
 a global one: `c ‖x - m‖² ≤ f x` on `K`. -/
-theorem exists_pos_mul_norm_sub_sq_le_of_isCompact {E : Type*} [NormedAddCommGroup E]
+theorem exists_pos_mul_norm_sub_sq_le_of_is_compact {E : Type*} [NormedAddCommGroup E]
     {K : Set E} (hK : IsCompact K) {m : E} {f : E → ℝ} (hfc : Continuous f)
     (huniq : ∀ x ∈ K, x ≠ m → 0 < f x) {δ c₁ : ℝ} (hδ : 0 < δ) (hc₁ : 0 < c₁)
     (hloc : ∀ h : E, ‖h‖ < δ → c₁ * ‖h‖ ^ 2 ≤ f (m + h)) :
@@ -770,7 +771,7 @@ theorem tendsto_laplace_approximation
     · exact le_rfl
     · rw [hmin]; exact (huniq x hx hxm).le
   have hd : fderiv ℝ f m = 0 := hlmin.fderiv_eq_zero
-  obtain ⟨c₁, hc₁, hcoer⟩ := exists_pos_mul_norm_sq_le_inner_toEuclideanCLM hH
+  obtain ⟨c₁, hc₁, hcoer⟩ := exists_pos_mul_norm_sq_le_inner_to_euclidean_clm hH
   obtain ⟨δ, hδ, hTay⟩ := exists_abs_sub_half_fderiv_fderiv_le hf hmin hd
     (ε := c₁ / 4) (by positivity)
   have hloc : ∀ h : EuclideanSpace ℝ (Fin d), ‖h‖ < δ → c₁ / 4 * ‖h‖ ^ 2 ≤ f (m + h) := by
@@ -780,7 +781,7 @@ theorem tendsto_laplace_approximation
     rw [hhess] at h1
     have := (abs_le.1 h1).1
     nlinarith
-  obtain ⟨c, hc, hquad⟩ := exists_pos_mul_norm_sub_sq_le_of_isCompact hK hfc huniq hδ
+  obtain ⟨c, hc, hquad⟩ := exists_pos_mul_norm_sub_sq_le_of_is_compact hK hfc huniq hδ
     (by positivity) hloc
   obtain ⟨A, hA⟩ := hK.exists_bound_of_continuousOn ha
   have hA0 : 0 ≤ A := (norm_nonneg _).trans (hA m (interior_subset hm))
@@ -893,7 +894,7 @@ theorem tendsto_laplace_approximation
     (ae_of_all _ hlim)
   have hval : ∫ y, a m * Real.exp (-inner ℝ y (H' y) / 2) =
       a m * Real.rpow (2 * Real.pi) ((d : ℝ) / 2) / Real.sqrt H.det := by
-    rw [integral_const_mul, hH', integral_exp_neg_inner_toEuclideanCLM_div_two hH, mul_div_assoc]
+    rw [integral_const_mul, hH', integral_exp_neg_inner_to_euclidean_clm_div_two hH, mul_div_assoc]
   rw [hval] at hDCT
   rw [← tendsto_add_atTop_iff_nat 1]
   refine hDCT.congr fun n ↦ ?_

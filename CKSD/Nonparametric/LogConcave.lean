@@ -4,6 +4,7 @@ public import CKSD.Nonparametric.Basic
 public import Mathlib.MeasureTheory.Measure.Support
 public import Mathlib.Analysis.Convex.Topology
 
+
 /-!
 # Log-concave maximum likelihood
 
@@ -78,7 +79,7 @@ def logConcaveLowerRate (d n : ℕ) : ℝ :=
 /-- GAPS 103.28: existence and uniqueness of the log-concave projection, with its positivity
 set between the interior of the convex support of `P` and that support. The convex support is
 the closed convex hull of the support of `P`. -/
-theorem existsUnique_isLogConcaveProjection {d : ℕ}
+theorem exists_unique_is_log_concave_projection {d : ℕ}
     (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
     (hP1 : Integrable (fun x ↦ ‖x‖) P)
     (hhyp : ∀ (a : EuclideanSpace ℝ (Fin d)) (b : ℝ), a ≠ 0 →
@@ -92,7 +93,7 @@ theorem existsUnique_isLogConcaveProjection {d : ℕ}
 /-- GAPS 103.28: the log-concave maximum likelihood estimator of affinely spanning data is
 unique, vanishes outside the convex hull `C_n` of the data, and its logarithm is a tent
 function on `C_n`. Affine spanning of `ℝ^d` forces `n ≥ d + 1`. -/
-theorem existsUnique_logConcaveMLE_tent {d n : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin d))
+theorem exists_unique_log_concave_mle_tent {d n : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin d))
     (hspan : affineSpan ℝ (range x) = ⊤) :
     ∃ f, IsLogConcaveProjection (empiricalMeasure n x) f ∧
       (∀ g, IsLogConcaveProjection (empiricalMeasure n x) g → g = f) ∧
@@ -103,7 +104,7 @@ theorem existsUnique_logConcaveMLE_tent {d n : ℕ} (x : Fin n → EuclideanSpac
 /-- GAPS 103.28: the worst-case squared Hellinger risk of the log-concave maximum likelihood
 estimator. The estimator `T` is required to be the maximum likelihood estimator on affinely
 spanning samples, which have probability one; the constant depends only on `d`. -/
-theorem logConcaveMLE_hellingerRisk_le (d : ℕ) (hd : 1 ≤ d) :
+theorem log_concave_mle_hellinger_risk_le (d : ℕ) (hd : 1 ≤ d) :
     ∃ C > (0 : ℝ), ∀ n : ℕ, d + 1 ≤ n →
       ∀ T : (Fin n → EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d) → ℝ,
       (∀ x, affineSpan ℝ (range x) = ⊤ → IsLogConcaveProjection (empiricalMeasure n x) (T x)) →
@@ -115,7 +116,7 @@ theorem logConcaveMLE_hellingerRisk_le (d : ℕ) (hd : 1 ≤ d) :
 Hellinger distance, with a constant `c_d` depending only on the dimension (Kim and Samworth,
 2016, Theorem 1). Estimators are jointly measurable functions of the sample and the evaluation
 point. -/
-theorem logConcave_minimax_hellingerRisk_lower_bound (d : ℕ) (hd : 1 ≤ d) :
+theorem log_concave_minimax_hellinger_risk_lower_bound (d : ℕ) (hd : 1 ≤ d) :
     ∃ c > (0 : ℝ), ∀ n : ℕ, d + 1 ≤ n →
       ∀ T : (Fin n → EuclideanSpace ℝ (Fin d)) → EuclideanSpace ℝ (Fin d) → ℝ,
       Measurable (fun q : (Fin n → EuclideanSpace ℝ (Fin d)) × EuclideanSpace ℝ (Fin d) ↦

@@ -5,6 +5,7 @@ public import Mathlib.Dynamics.OmegaLimit
 public import Mathlib.Topology.MetricSpace.Thickening
 public import TauCeti.Topology.OmegaLimit
 
+
 /-!
 # Limit sets of stochastic approximation and asymptotic pseudotrajectories
 
@@ -95,7 +96,7 @@ theorem IsFlowOf.continuous_apply {h : E → E} {L : ℝ≥0} (hL : LipschitzWit
 omit [NormedSpace ℝ E] in
 /-- Functions whose difference tends to zero have the same cluster points along a countably
 generated filter. -/
-theorem mapClusterPt_of_tendsto_sub {α : Type*} {l : Filter α} [l.IsCountablyGenerated]
+theorem map_cluster_pt_of_tendsto_sub {α : Type*} {l : Filter α} [l.IsCountablyGenerated]
     {u v : α → E} {x : E} (hu : MapClusterPt x l u)
     (huv : Tendsto (fun a ↦ u a - v a) l (𝓝 0)) : MapClusterPt x l v := by
   obtain ⟨ψ, hψu, hψ⟩ := hu.exists_seq_tendsto
@@ -133,7 +134,7 @@ theorem tendsto_shift_sub_flow_of_apt {h : E → E} {L : ℝ≥0} (hL : Lipschit
 
 /-- The cluster set at infinity of an asymptotic pseudotrajectory is invariant under the flow
 for every real time. -/
-theorem isInvariantSet_clusterSet_of_apt {h : E → E} {L : ℝ≥0} (hL : LipschitzWith L h)
+theorem is_invariant_set_cluster_set_of_apt {h : E → E} {L : ℝ≥0} (hL : LipschitzWith L h)
     {Φ : ℝ → E → E} (hΦ : IsFlowOf h Φ) (u : ℝ → E)
     (hapt : ∀ T > 0, ∀ ε > 0, ∀ᶠ s in atTop, ∀ r ∈ Icc 0 T, ‖u (s + r) - Φ r (u s)‖ ≤ ε) :
     IsInvariantSet Φ {x | MapClusterPt x atTop u} := by
@@ -147,7 +148,7 @@ theorem isInvariantSet_clusterSet_of_apt {h : E → E} {L : ℝ≥0} (hL : Lipsc
         abel
       · simp
     have hc' : MapClusterPt (Φ t x) atTop (fun s ↦ u (s + t)) :=
-      mapClusterPt_of_tendsto_sub hc he'
+      map_cluster_pt_of_tendsto_sub hc he'
     exact hc'.of_comp (tendsto_atTop_add_const_right _ _ tendsto_id)
   intro t
   apply subset_antisymm
@@ -160,7 +161,7 @@ theorem isInvariantSet_clusterSet_of_apt {h : E → E} {L : ℝ≥0} (hL : Lipsc
 
 omit [NormedSpace ℝ E] in
 /-- A continuous curve confined to a compact set has a compact connected cluster set at infinity. -/
-theorem isCompact_isConnected_clusterSet_of_mapsTo {u : ℝ → E} {K : Set E}
+theorem is_compact_is_connected_cluster_set_of_maps_to {u : ℝ → E} {K : Set E}
     (hK : IsCompact K) (hu : ContinuousOn u (Ici 0)) (hum : MapsTo u (Ici 0) K) :
     IsCompact {x | MapClusterPt x atTop u} ∧ IsConnected {x | MapClusterPt x atTop u} := by
   have hev : ∀ᶠ s in atTop, u s ∈ K := by
@@ -178,7 +179,7 @@ theorem isCompact_isConnected_clusterSet_of_mapsTo {u : ℝ → E} {K : Set E}
 
 omit [NormedSpace ℝ E] in
 /-- A curve confined eventually to a compact set approaches its cluster set at infinity. -/
-theorem eventually_exists_clusterPoint_near {u : ℝ → E} {K : Set E}
+theorem eventually_exists_cluster_point_near {u : ℝ → E} {K : Set E}
     (hK : IsCompact K) (hum : MapsTo u (Ici 0) K) {δ : ℝ} (hδ : 0 < δ) :
     ∀ᶠ s in atTop, ∃ z, MapClusterPt z atTop u ∧ ‖u s - z‖ < δ := by
   let A : Set E := {x | MapClusterPt x atTop u}
@@ -200,13 +201,13 @@ theorem eventually_exists_clusterPoint_near {u : ℝ → E} {K : Set E}
 
 /-- The cluster set at infinity of a confined asymptotic pseudotrajectory is internally chain
 transitive. Long late curve segments give chains with flight times between `T` and `2T`. -/
-theorem isInternallyChainTransitive_clusterSet_of_apt {h : E → E} {L : ℝ≥0}
+theorem is_internally_chain_transitive_cluster_set_of_apt {h : E → E} {L : ℝ≥0}
     (hL : LipschitzWith L h) {Φ : ℝ → E → E} (hΦ : IsFlowOf h Φ)
     (u : ℝ → E) {K : Set E} (hK : IsCompact K) (hum : MapsTo u (Ici 0) K)
     (hapt : ∀ T > 0, ∀ ε > 0, ∀ᶠ s in atTop, ∀ r ∈ Icc 0 T, ‖u (s + r) - Φ r (u s)‖ ≤ ε) :
     IsInternallyChainTransitive Φ {x | MapClusterPt x atTop u} := by
   classical
-  refine ⟨isInvariantSet_clusterSet_of_apt hL hΦ u hapt, ?_⟩
+  refine ⟨is_invariant_set_cluster_set_of_apt hL hΦ u hapt, ?_⟩
   intro x hx y hy ε hε T hT
   let C := Real.exp ((L : ℝ) * (2 * T))
   have hC : 0 < C := Real.exp_pos _
@@ -214,7 +215,7 @@ theorem isInternallyChainTransitive_clusterSet_of_apt {h : E → E} {L : ℝ≥0
   have hδ : 0 < δ := div_pos hε (by positivity)
   have hδeq : C * δ + δ + δ = ε := by dsimp [δ]; field_simp; ring
   obtain ⟨S, hS⟩ := eventually_atTop.1
-    ((hapt (2 * T) (by positivity) δ hδ).and (eventually_exists_clusterPoint_near hK hum hδ))
+    ((hapt (2 * T) (by positivity) δ hδ).and (eventually_exists_cluster_point_near hK hum hδ))
   obtain ⟨a, hax, haS⟩ := ((hx.frequently (Metric.ball_mem_nhds x hδ)).and_eventually
     (eventually_ge_atTop S)).exists
   have hax' : ‖u a - x‖ < δ := by simpa only [Metric.mem_ball, dist_eq_norm] using hax
@@ -302,15 +303,15 @@ theorem isInternallyChainTransitive_clusterSet_of_apt {h : E → E} {L : ℝ≥0
 
 
 /-- The affine stochastic-approximation interpolation recovers the sequence at each grid time. -/
-theorem stochasticApproxInterp_time {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem stochastic_approx_interp_time {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (x : ℕ → E) (n : ℕ) :
     stochasticApproxInterp a x (stochasticApproxTime a n) = x n := by
-  rw [stochasticApproxInterp_eq_of_mem_Icc ha ht x
-    ⟨le_rfl, (strictMono_stochasticApproxTime ha).monotone (Nat.le_succ n)⟩,
+  rw [stochastic_approx_interp_eq_of_mem_icc ha ht x
+    ⟨le_rfl, (strict_mono_stochastic_approx_time ha).monotone (Nat.le_succ n)⟩,
     sub_self, zero_div, zero_smul, add_zero]
 
 /-- For vanishing increments, the discrete limit set equals the interpolation cluster set. -/
-theorem limitSet_eq_clusterSet_stochasticApproxInterp {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem limit_set_eq_cluster_set_stochastic_approx_interp {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (x : ℕ → E)
     (hinc : Tendsto (fun n ↦ x (n + 1) - x n) atTop (𝓝 0)) :
     limitSet x = {y | MapClusterPt y atTop (stochasticApproxInterp a x)} := by
@@ -320,19 +321,19 @@ theorem limitSet_eq_clusterSet_stochasticApproxInterp {a : ℕ → ℝ} (ha : �
   constructor
   · intro hy
     have hh : MapClusterPt y atTop ((stochasticApproxInterp a x) ∘ stochasticApproxTime a) := by
-      simpa only [Function.comp_def, stochasticApproxInterp_time ha ht] using hy
+      simpa only [Function.comp_def, stochastic_approx_interp_time ha ht] using hy
     exact hh.of_comp ht
   · intro hy
-    have hh := mapClusterPt_of_tendsto_sub hy
-      (tendsto_stochasticApproxInterp_sub_node ha ht x hinc)
-    exact hh.of_comp (tendsto_stochasticApproxIndex ha ht)
+    have hh := map_cluster_pt_of_tendsto_sub hy
+      (tendsto_stochastic_approx_interp_sub_node ha ht x hinc)
+    exact hh.of_comp (tendsto_stochastic_approx_index ha ht)
 
 /-- A bounded sequence gives a bounded affine interpolation on nonnegative times. -/
-theorem norm_stochasticApproxInterp_le {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
+theorem norm_stochastic_approx_interp_le {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (x : ℕ → E) {R : ℝ}
     (hR : ∀ n, ‖x n‖ ≤ R) {s : ℝ} (hs : 0 ≤ s) : ‖stochasticApproxInterp a x s‖ ≤ 3 * R := by
   let n := stochasticApproxIndex a s
-  have hh := norm_stochasticApproxInterp_sub_node_le ha ht x hs
+  have hh := norm_stochastic_approx_interp_sub_node_le ha ht x hs
   have hnext : ‖x (n + 1) - x n‖ ≤ 2 * R :=
     (norm_sub_le _ _).trans (by linarith [hR (n + 1), hR n])
   have htri := norm_le_norm_sub_add (stochasticApproxInterp a x s) (x n)
@@ -340,7 +341,7 @@ theorem norm_stochasticApproxInterp_le {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
 
 /-- A bounded affine interpolation that is an asymptotic pseudotrajectory has a compact
 connected internally chain transitive discrete limit set when its increments vanish. -/
-theorem limitSet_properties_of_stochasticApproxInterp [ProperSpace E]
+theorem limit_set_properties_of_stochastic_approx_interp [ProperSpace E]
     {a : ℕ → ℝ} (ha : ∀ n, 0 < a n)
     (ht : Tendsto (stochasticApproxTime a) atTop atTop) (x : ℕ → E)
     (hinc : Tendsto (fun n ↦ x (n + 1) - x n) atTop (𝓝 0))
@@ -353,16 +354,16 @@ theorem limitSet_properties_of_stochasticApproxInterp [ProperSpace E]
   have hmap : MapsTo (stochasticApproxInterp a x) (Ici 0) (Metric.closedBall 0 (3 * R)) := by
     intro s hs
     simpa only [Metric.mem_closedBall, dist_zero_right] using
-      norm_stochasticApproxInterp_le ha ht x (fun n ↦ hR (mem_range_self n)) hs
-  rw [limitSet_eq_clusterSet_stochasticApproxInterp ha ht x hinc]
-  have hh := isCompact_isConnected_clusterSet_of_mapsTo (isCompact_closedBall (0 : E) (3 * R))
-    (continuousOn_stochasticApproxInterp ha ht x) hmap
-  exact ⟨hh.1, hh.2, isInternallyChainTransitive_clusterSet_of_apt hL hΦ
+      norm_stochastic_approx_interp_le ha ht x (fun n ↦ hR (mem_range_self n)) hs
+  rw [limit_set_eq_cluster_set_stochastic_approx_interp ha ht x hinc]
+  have hh := is_compact_is_connected_cluster_set_of_maps_to (isCompact_closedBall (0 : E) (3 * R))
+    (continuous_on_stochastic_approx_interp ha ht x) hmap
+  exact ⟨hh.1, hh.2, is_internally_chain_transitive_cluster_set_of_apt hL hΦ
     (stochasticApproxInterp a x) (isCompact_closedBall (0 : E) (3 * R)) hmap hapt⟩
 
 /-- Bounded stochastic-approximation iterates with vanishing steps and convergent cumulative
 noise have a compact connected internally chain transitive limit set. -/
-theorem limitSet_properties_of_stochasticApproximation [ProperSpace E]
+theorem limit_set_properties_of_stochastic_approximation [ProperSpace E]
     {a : ℕ → ℝ} (ha : ∀ n, 0 < a n) (ha0 : Tendsto a atTop (𝓝 0))
     (ht : Tendsto (stochasticApproxTime a) atTop atTop)
     (h : E → E) (L : ℝ≥0) (hL : LipschitzWith L h) (Φ : ℝ → E → E) (hΦ : IsFlowOf h Φ)
@@ -394,8 +395,8 @@ theorem limitSet_properties_of_stochasticApproximation [ProperSpace E]
       rw [hrec]
       abel
     · simp
-  apply limitSet_properties_of_stochasticApproxInterp ha ht x hxinc ⟨R, hR⟩ hL hΦ
-  exact fun T hT ↦ asymptotic_pseudotrajectory_stochasticApproxInterp ha ha0 ht
+  apply limit_set_properties_of_stochastic_approx_interp ha ht x hxinc ⟨R, hR⟩ hL hΦ
+  exact fun T hT ↦ asymptotic_pseudotrajectory_stochastic_approx_interp ha ha0 ht
     h L hL Φ hΦ x S hS ⟨R, hR⟩ hrec T hT
 
 end CKSD

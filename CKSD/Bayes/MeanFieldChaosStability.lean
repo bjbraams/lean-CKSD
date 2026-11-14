@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldParticles
 public import CKSD.Bayes.MeanFieldStability
 public import CKSD.Bayes.MeanFieldPathLaws
@@ -48,7 +49,7 @@ section ParticleComparison
 variable {d N : ℕ}
 local notation "F" => EuclideanSpace ℝ (Fin d)
 /-- Empirical laws have integrable norm. -/
-theorem integrable_norm_empiricalMeasure (hN : 0 < N) (x : Fin N → F) :
+theorem integrable_norm_empirical_measure (hN : 0 < N) (x : Fin N → F) :
     Integrable (fun z ↦ ‖z‖) (empiricalMeasure N x) := by
   dsimp only [empiricalMeasure]
   apply Integrable.smul_measure _ (ENNReal.inv_ne_top.mpr (by exact_mod_cast hN.ne'))
@@ -77,7 +78,7 @@ theorem norm_sub_le_of_particle_integral_eq
   let K := Real.toNNReal L
   let v : ℝ → (Fin N → F) → Fin N → F := fun _ z j ↦ b (z j) (empiricalMeasure N z)
   let w : ℝ → (Fin N → F) → Fin N → F := fun t z j ↦ b (z j) (μ t)
-  have hvK : ∀ t, LipschitzWith (2 * K) (v t) := fun _ ↦ hb.lipschitzWith_particleDrift b hN
+  have hvK : ∀ t, LipschitzWith (2 * K) (v t) := fun _ ↦ hb.lipschitz_with_particle_drift b hN
   have hv : Continuous (Function.uncurry v) := (hvK 0).continuous.comp continuous_snd
   have hw : Continuous (Function.uncurry w) := by
     apply continuous_pi
@@ -87,8 +88,8 @@ theorem norm_sub_le_of_particle_integral_eq
     apply (pi_norm_le_iff_of_nonneg (mul_nonneg K.coe_nonneg hr)).2
     intro j
     have hh := hb (y t j) (y t j) (empiricalMeasure N (y t)) (μ t)
-      (isProbabilityMeasure_empiricalMeasure hN _) (hμp t)
-      (integrable_norm_empiricalMeasure hN _) (hμi t)
+      (is_probability_measure_empirical_measure hN _) (hμp t)
+      (integrable_norm_empirical_measure hN _) (hμi t)
     simp only [sub_self, norm_zero, zero_add] at hh
     have hnn : 0 ≤ (TauCeti.wassersteinEDist 1 (empiricalMeasure N (y t)) (μ t)).toReal := ENNReal.toReal_nonneg
     exact hh.trans ((mul_le_mul_of_nonneg_right (Real.le_coe_toNNReal L) hnn).trans
@@ -109,7 +110,7 @@ end ParticleComparison
 section Evaluation
 variable [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
 /-- Pushforward of an empirical law is the empirical law of the mapped atoms. -/
-theorem map_empiricalMeasure {A B : Type*} [MeasurableSpace A] [MeasurableSpace B]
+theorem map_empirical_measure {A B : Type*} [MeasurableSpace A] [MeasurableSpace B]
     (N : ℕ) (x : Fin N → A) (f : A → B) (hf : Measurable f) :
     (empiricalMeasure N x).map f = empiricalMeasure N (fun j ↦ f (x j)) := by
   rw [empiricalMeasure, Measure.map_smul, Measure.map_finset_sum' hf.aemeasurable]
@@ -119,7 +120,7 @@ theorem map_empiricalMeasure {A B : Type*} [MeasurableSpace A] [MeasurableSpace 
 
 omit [NormedSpace ℝ E] in
 /-- Evaluation at any projected time cannot increase first-Wasserstein distance of path laws. -/
-theorem wassersteinEDist_one_IccExtend_map_le {T : ℝ} (hT : 0 ≤ T) (t : ℝ)
+theorem wasserstein_e_dist_one_icc_extend_map_le {T : ℝ} (hT : 0 ≤ T) (t : ℝ)
     (μ ν : Measure C(Icc (0 : ℝ) T, E)) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
     TauCeti.wassersteinEDist 1 (μ.map fun f ↦ f.IccExtend hT t)
       (ν.map fun f ↦ f.IccExtend hT t) ≤ TauCeti.wassersteinEDist 1 μ ν := by
@@ -137,18 +138,18 @@ theorem wassersteinEDist_one_IccExtend_map_le {T : ℝ} (hT : 0 ≤ T) (t : ℝ)
 omit [NormedSpace ℝ E] in
 /-- Empirical marginal Wasserstein discrepancy is uniformly bounded by the discrepancy of path
 laws, whenever the latter is finite. -/
-theorem wassersteinEDist_one_empirical_IccExtend_toReal_le {N : ℕ} (hN : 0 < N)
+theorem wasserstein_e_dist_one_empirical_icc_extend_to_real_le {N : ℕ} (hN : 0 < N)
     {T : ℝ} (hT : 0 ≤ T) (z : Fin N → C(Icc (0 : ℝ) T, E))
     (μ : Measure C(Icc (0 : ℝ) T, E)) [IsProbabilityMeasure μ]
     (hfin : TauCeti.wassersteinEDist 1 (empiricalMeasure N z) μ ≠ ∞) (t : ℝ) :
     (TauCeti.wassersteinEDist 1 (empiricalMeasure N (fun j ↦ (z j).IccExtend hT t))
       (μ.map fun f ↦ f.IccExtend hT t)).toReal ≤
         (TauCeti.wassersteinEDist 1 (empiricalMeasure N z) μ).toReal := by
-  let := isProbabilityMeasure_empiricalMeasure hN z
+  let := is_probability_measure_empirical_measure hN z
   apply ENNReal.toReal_mono hfin
   have hm : Measurable (fun f : C(Icc (0 : ℝ) T, E) ↦ f.IccExtend hT t) :=
     ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)
-  rw [← map_empiricalMeasure N z _ hm]
-  exact wassersteinEDist_one_IccExtend_map_le hT t _ _
+  rw [← map_empirical_measure N z _ hm]
+  exact wasserstein_e_dist_one_icc_extend_map_le hT t _ _
 end Evaluation
 end CKSD

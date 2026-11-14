@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.LangevinSampling
 public import TauCeti.MeasureTheory.Integral.PrekopaLeindler
 public import Mathlib.Analysis.Calculus.ParametricIntegral
@@ -159,7 +160,7 @@ theorem integral_exponential_interpolation_le {E : Type*} [NormedAddCommGroup E]
   exact (ENNReal.ofReal_le_ofReal_iff (by positivity)).1 h
 
 /-- Differentiate a bounded exponential perturbation under a finite-density integral. -/
-theorem hasDerivAt_integral_exponential_perturbation {E : Type*} [MeasurableSpace E]
+theorem has_deriv_at_integral_exponential_perturbation {E : Type*} [MeasurableSpace E]
     (μ : Measure E) (V g h : E → ℝ) (hV : Measurable V) (hg : Measurable g) (hh : Measurable h)
     {M : ℝ} (_hM : 0 ≤ M) (hgM : ∀ x, |g x| ≤ M) (hhM : ∀ x, |h x| ≤ M)
     (hint : Integrable (fun x ↦ Real.exp (-V x)) μ)
@@ -216,7 +217,7 @@ theorem hasDerivAt_integral_exponential_perturbation {E : Type*} [MeasurableSpac
   simpa only [F', hc0, sub_zero, one_mul, zero_mul, add_zero] using hder
 
 /-- Right-hand comparison of differentiable functions compares derivatives at a contact point. -/
-theorem hasDerivAt_le_of_eventually_le_right {F J : ℝ → ℝ} {f j : ℝ}
+theorem has_deriv_at_le_of_eventually_le_right {F J : ℝ → ℝ} {f j : ℝ}
     (hF : HasDerivAt F f 0) (hJ : HasDerivAt J j 0) (heq : F 0 = J 0)
     (hle : ∀ᶠ t in 𝓝[>] (0 : ℝ), F t ≤ J t) : f ≤ j := by
   apply le_of_tendsto_of_tendsto (hasDerivAt_iff_tendsto_slope_left_right.1 hF).2
@@ -278,7 +279,7 @@ theorem entropy_exponential_le_of_quadratic_upper_bound {E : Type*} [NormedAddCo
   have hc'0 : c' 0 = 1 / (2 * m) := by dsimp [c']; field_simp [hm0.ne']; ring
   let F : ℝ → ℝ := fun t ↦ Real.exp ((1 - t) * Real.log A + t * Real.log Z)
   let J : ℝ → ℝ := fun t ↦ ∫ x, Real.exp ((1 - t) * g x + c t * ‖Dg x‖ ^ 2 - V x)
-  have hderJ := hasDerivAt_integral_exponential_perturbation volume V g (fun x ↦ ‖Dg x‖ ^ 2)
+  have hderJ := has_deriv_at_integral_exponential_perturbation volume V g (fun x ↦ ‖Dg x‖ ^ 2)
     hVm hgm (hDgm.pow_const (2 : ℕ)) hM hgM (fun x ↦ by rw [abs_of_nonneg (sq_nonneg _)]; exact hDgM x)
     hZ c c' hc0 hcc hc'c hct
   rw [hc'0] at hderJ
@@ -304,7 +305,7 @@ theorem entropy_exponential_le_of_quadratic_upper_bound {E : Type*} [NormedAddCo
       ht.1.le ht.2.le htm hI hZ hJ
     simpa only [F, J, A, Z, c, Real.rpow_def_of_pos hA, Real.rpow_def_of_pos hZ0,
       ← Real.exp_add, mul_comm] using h
-  have hder := hasDerivAt_le_of_eventually_le_right hderF hderJ heq hle
+  have hder := has_deriv_at_le_of_eventually_le_right hderF hderJ heq hle
   have hgg : Integrable (fun x ↦ Real.exp (g x - V x) * g x) :=
     hI.mul_bdd hgm.aestronglyMeasurable (ae_of_all _ fun x ↦ by simpa only [Real.norm_eq_abs] using hgM x)
   have hgd : Integrable (fun x ↦ Real.exp (g x - V x) * ‖Dg x‖ ^ 2) :=

@@ -1,10 +1,11 @@
+module
+
+public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
 /-
 Copyright (c) 2025 Rémy Degenne. All rights reserved.
 Released under the Apache 2.0 license, as in Mathlib's LICENSE.
 The proof is adapted from Mathlib.MeasureTheory.Function.ConvergenceInDistribution.
 -/
-module
-public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
 /-!
 # Metric Slutsky perturbations for varying observation spaces
 
@@ -28,7 +29,7 @@ variable {ι E Ω' : Type*} {Ω : ι → Type*} [∀ i, MeasurableSpace (Ω i)]
   [SecondCountableTopology E]
 set_option backward.isDefEq.respectTransparency.types false in
 /-- Metric Slutsky perturbations allow both observation spaces and probability measures to vary. -/
-theorem tendstoInDistribution_of_dist_small_in_probability
+theorem tendsto_in_distribution_of_dist_small_in_probability
     {μ : (i : ι) → Measure (Ω i)} [∀ i, IsProbabilityMeasure (μ i)]
     {ν : Measure Ω'} [IsProbabilityMeasure ν] {l : Filter ι} [l.IsCountablyGenerated]
     {X : (i : ι) → Ω i → E} (Y : (i : ι) → Ω i → E) (Z : Ω' → E)

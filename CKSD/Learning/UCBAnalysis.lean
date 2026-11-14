@@ -5,6 +5,7 @@ public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.Analysis.PSeries
 public import Mathlib.Analysis.Real.Pi.Bounds
 
+
 /-!
 # The UCB1 index policy
 
@@ -22,9 +23,9 @@ bounds the probability of each deviation by `t⁻⁴`.
 
 ## Main results
 
-* `CKSD.measureReal_mul_le_sum_sub_le`: Hoeffding's inequality for prefix sums.
-* `CKSD.armPlayCount_le_add_sum_indicator`: the deterministic step of the analysis.
-* `CKSD.integral_armPlayCount_le_of_ucb`: the expected number of plays of a suboptimal arm with
+* `CKSD.measure_real_mul_le_sum_sub_le`: Hoeffding's inequality for prefix sums.
+* `CKSD.arm_play_count_le_add_sum_indicator`: the deterministic step of the analysis.
+* `CKSD.integral_arm_play_count_le_of_ucb`: the expected number of plays of a suboptimal arm with
   gap `Δ` during the first `T` rounds is at most `8 log T / Δ² + 3`.
 * `CKSD.integral_regret_le_of_ucb`: the UCB1 regret bound (GAPS 107.50).
 
@@ -49,7 +50,7 @@ variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} [IsProbabilityMeasur
 
 omit [MeasurableSpace Ω] [IsProbabilityMeasure P] in
 /-- The prefix sum of the centred rewards of one arm, rewritten from the prefix average. -/
-theorem le_sum_sub_of_add_le_armSampleAverage {i : Fin K} {s : ℕ} (hs : 0 < s) {μ c : ℝ}
+theorem le_sum_sub_of_add_le_arm_sample_average {i : Fin K} {s : ℕ} (hs : 0 < s) {μ c : ℝ}
     {ω : Ω} (h : μ + c ≤ armSampleAverage R i s ω) :
     s * c ≤ ∑ j ∈ Finset.range s, (R i j ω - μ) := by
   have hsr : (0 : ℝ) < s := Nat.cast_pos.mpr hs
@@ -60,7 +61,7 @@ theorem le_sum_sub_of_add_le_armSampleAverage {i : Fin K} {s : ℕ} (hs : 0 < s)
 
 omit [MeasurableSpace Ω] [IsProbabilityMeasure P] in
 /-- The prefix sum of the centred losses of one arm, rewritten from the prefix average. -/
-theorem le_sum_sub_of_armSampleAverage_le {i : Fin K} {s : ℕ} (hs : 0 < s) {μ c : ℝ}
+theorem le_sum_sub_of_arm_sample_average_le {i : Fin K} {s : ℕ} (hs : 0 < s) {μ c : ℝ}
     {ω : Ω} (h : armSampleAverage R i s ω ≤ μ - c) :
     s * c ≤ ∑ j ∈ Finset.range s, (μ - R i j ω) := by
   have hsr : (0 : ℝ) < s := Nat.cast_pos.mpr hs
@@ -71,7 +72,7 @@ theorem le_sum_sub_of_armSampleAverage_le {i : Fin K} {s : ℕ} (hs : 0 < s) {μ
 
 /-- Hoeffding's inequality for prefix sums of independent `[0,1]`-valued variables with common
 mean `μ`: `P(s c ≤ ∑_{j<s} (X j - μ)) ≤ exp(-2 s c²)`. -/
-theorem measureReal_mul_le_sum_sub_le {X : ℕ → Ω → ℝ} (hm : ∀ j, Measurable (X j))
+theorem measure_real_mul_le_sum_sub_le {X : ℕ → Ω → ℝ} (hm : ∀ j, Measurable (X j))
     (hb : ∀ j, ∀ᵐ ω ∂P, X j ω ∈ Icc 0 1) (hind : iIndepFun X P) {μ : ℝ}
     (hmean : ∀ j, ∫ ω, X j ω ∂P = μ) {s : ℕ} (hs : 0 < s) {c : ℝ} (hc : 0 ≤ c) :
     P.real {ω | s * c ≤ ∑ j ∈ Finset.range s, (X j ω - μ)} ≤ Real.exp (-2 * s * c ^ 2) := by
@@ -90,46 +91,46 @@ theorem measureReal_mul_le_sum_sub_le {X : ℕ → Ω → ℝ} (hm : ∀ j, Meas
 
 omit [IsProbabilityMeasure P] in
 /-- The rewards of one arm, as a sequence, are independent. -/
-theorem iIndepFun_reward (hind : iIndepFun (fun z : Fin K × ℕ ↦ R z.1 z.2) P) (i : Fin K) :
+theorem i_indep_fun_reward (hind : iIndepFun (fun z : Fin K × ℕ ↦ R z.1 z.2) P) (i : Fin K) :
     iIndepFun (fun j : ℕ ↦ R i j) P :=
   hind.precomp (g := fun j : ℕ ↦ (i, j)) fun a b h ↦ by simpa using h
 
 /-- Hoeffding's inequality for an upper deviation of the prefix average of one arm. -/
-theorem measureReal_add_le_armSampleAverage_le (hm : ∀ i j, Measurable (R i j))
+theorem measure_real_add_le_arm_sample_average_le (hm : ∀ i j, Measurable (R i j))
     (hb : ∀ i j, ∀ᵐ ω ∂P, R i j ω ∈ Icc 0 1)
     (hind : iIndepFun (fun z : Fin K × ℕ ↦ R z.1 z.2) P)
     (hmean : ∀ i j, ∫ ω, R i j ω ∂P = ∫ ω, R i 0 ω ∂P) (i : Fin K) {s : ℕ} (hs : 0 < s) {c : ℝ}
     (hc : 0 ≤ c) :
     P.real {ω | (∫ ω, R i 0 ω ∂P) + c ≤ armSampleAverage R i s ω} ≤
       Real.exp (-2 * s * c ^ 2) :=
-  (measureReal_mono (fun ω hω ↦ le_sum_sub_of_add_le_armSampleAverage hs hω)).trans
-    (measureReal_mul_le_sum_sub_le (hm i) (hb i) (iIndepFun_reward hind i) (hmean i) hs hc)
+  (measureReal_mono (fun ω hω ↦ le_sum_sub_of_add_le_arm_sample_average hs hω)).trans
+    (measure_real_mul_le_sum_sub_le (hm i) (hb i) (i_indep_fun_reward hind i) (hmean i) hs hc)
 
 /-- Hoeffding's inequality for a lower deviation of the prefix average of one arm, obtained
 from the upper deviation bound for the losses `1 - R i j`. -/
-theorem measureReal_armSampleAverage_le_sub_le (hm : ∀ i j, Measurable (R i j))
+theorem measure_real_arm_sample_average_le_sub_le (hm : ∀ i j, Measurable (R i j))
     (hb : ∀ i j, ∀ᵐ ω ∂P, R i j ω ∈ Icc 0 1)
     (hind : iIndepFun (fun z : Fin K × ℕ ↦ R z.1 z.2) P)
     (hmean : ∀ i j, ∫ ω, R i j ω ∂P = ∫ ω, R i 0 ω ∂P) (i : Fin K) {s : ℕ} (hs : 0 < s) {c : ℝ}
     (hc : 0 ≤ c) :
     P.real {ω | armSampleAverage R i s ω ≤ (∫ ω, R i 0 ω ∂P) - c} ≤
       Real.exp (-2 * s * c ^ 2) := by
-  have h := measureReal_mul_le_sum_sub_le (X := fun j ω ↦ 1 - R i j ω)
+  have h := measure_real_mul_le_sum_sub_le (X := fun j ω ↦ 1 - R i j ω)
     (μ := 1 - ∫ ω, R i 0 ω ∂P) (fun j ↦ measurable_const.sub (hm i j))
     (fun j ↦ (hb i j).mono fun ω hω ↦ ⟨by linarith [hω.2], by linarith [hω.1]⟩)
-    ((iIndepFun_reward hind i).comp (fun _ x ↦ 1 - x) fun _ ↦ measurable_const.sub measurable_id)
+    ((i_indep_fun_reward hind i).comp (fun _ x ↦ 1 - x) fun _ ↦ measurable_const.sub measurable_id)
     (fun j ↦ by
       rw [integral_sub (integrable_const 1)
         (Integrable.of_mem_Icc 0 1 (hm i j).aemeasurable (hb i j)), hmean i j]
       simp) hs hc
   refine (measureReal_mono (fun ω hω ↦ ?_)).trans h
-  have := le_sum_sub_of_armSampleAverage_le hs hω
+  have := le_sum_sub_of_arm_sample_average_le hs hω
   simpa only [mem_ofPred_eq, sub_sub_sub_cancel_left] using this
 
 end Hoeffding
 
 /-- Prefix averages of measurable rewards are measurable. -/
-theorem measurable_armSampleAverage {Ω : Type*} [MeasurableSpace Ω] {K : ℕ}
+theorem measurable_arm_sample_average {Ω : Type*} [MeasurableSpace Ω] {K : ℕ}
     {R : Fin K → ℕ → Ω → ℝ} (hm : ∀ i j, Measurable (R i j)) (i : Fin K) (s : ℕ) :
     Measurable (armSampleAverage R i s) := by
   unfold armSampleAverage
@@ -140,7 +141,7 @@ section Counting
 variable {Ω : Type*} {K : ℕ}
 
 /-- The play count increases by one exactly at a play of the arm. -/
-theorem armPlayCount_succ (A : ℕ → Ω → Fin K) (i : Fin K) (t : ℕ) (ω : Ω) :
+theorem arm_play_count_succ (A : ℕ → Ω → Fin K) (i : Fin K) (t : ℕ) (ω : Ω) :
     armPlayCount A i (t + 1) ω = armPlayCount A i t ω + if A t ω = i then 1 else 0 := by
   unfold armPlayCount
   rw [Finset.range_add_one, Finset.filter_insert]
@@ -149,21 +150,21 @@ theorem armPlayCount_succ (A : ℕ → Ω → Fin K) (i : Fin K) (t : ℕ) (ω :
   · rfl
 
 /-- Play counts are monotone in time. -/
-theorem armPlayCount_mono (A : ℕ → Ω → Fin K) (i : Fin K) {t t' : ℕ} (h : t ≤ t') (ω : Ω) :
+theorem arm_play_count_mono (A : ℕ → Ω → Fin K) (i : Fin K) {t t' : ℕ} (h : t ≤ t') (ω : Ω) :
     armPlayCount A i t ω ≤ armPlayCount A i t' ω :=
   Finset.card_le_card (Finset.filter_subset_filter _ (Finset.range_subset_range.2 h))
 
 /-- The play count after `t` rounds is at most `t`. -/
-theorem armPlayCount_le (A : ℕ → Ω → Fin K) (i : Fin K) (t : ℕ) (ω : Ω) :
+theorem arm_play_count_le (A : ℕ → Ω → Fin K) (i : Fin K) (t : ℕ) (ω : Ω) :
     armPlayCount A i t ω ≤ t :=
   (Finset.card_filter_le _ _).trans (Finset.card_range t).le
 
 /-- A play of the arm at time `t` makes its count strictly larger at every later time. -/
-theorem armPlayCount_lt_of_play (A : ℕ → Ω → Fin K) (i : Fin K) {t t' : ℕ} (h : t < t')
+theorem arm_play_count_lt_of_play (A : ℕ → Ω → Fin K) (i : Fin K) {t t' : ℕ} (h : t < t')
     {ω : Ω} (hA : A t ω = i) : armPlayCount A i t ω < armPlayCount A i t' ω := by
-  have := armPlayCount_succ A i t ω
+  have := arm_play_count_succ A i t ω
   simp only [hA, ↓reduceIte] at this
-  have := armPlayCount_mono A i (show t + 1 ≤ t' from h) ω
+  have := arm_play_count_mono A i (show t + 1 ≤ t' from h) ω
   omega
 
 /-- At most `ℓ` plays of an arm happen while its count is below `ℓ`. -/
@@ -178,13 +179,13 @@ theorem card_filter_play_count_lt_le (A : ℕ → Ω → Fin K) (i : Fin K) (T �
           simp only [Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq] at ha hb
           by_contra hne
           rcases lt_or_gt_of_ne hne with h | h
-          · exact absurd hab (armPlayCount_lt_of_play A i h ha.2.1).ne
-          · exact absurd hab (armPlayCount_lt_of_play A i h hb.2.1).ne'
+          · exact absurd hab (arm_play_count_lt_of_play A i h ha.2.1).ne
+          · exact absurd hab (arm_play_count_lt_of_play A i h hb.2.1).ne'
     _ = ℓ := Finset.card_range ℓ
 
 /-- If the first `K` rounds play each arm once, then every arm has been played at least once
 by any time `t ≥ K`. -/
-theorem one_le_armPlayCount (A : ℕ → Ω → Fin K)
+theorem one_le_arm_play_count (A : ℕ → Ω → Fin K)
     (hinit : ∀ t : ℕ, ∀ ht : t < K, ∀ ω, A t ω = ⟨t, ht⟩) (i : Fin K) {t : ℕ} (ht : K ≤ t)
     (ω : Ω) : 1 ≤ armPlayCount A i t ω := by
   unfold armPlayCount
@@ -193,7 +194,7 @@ theorem one_le_armPlayCount (A : ℕ → Ω → Fin K)
 
 /-- Plays during the initialization rounds: the count of an arm before its initial play is
 zero, so with `1 ≤ ℓ` all plays with count at least `ℓ` happen at times `t ≥ K`. -/
-theorem armPlayCount_le_add_card (A : ℕ → Ω → Fin K)
+theorem arm_play_count_le_add_card (A : ℕ → Ω → Fin K)
     (hinit : ∀ t : ℕ, ∀ ht : t < K, ∀ ω, A t ω = ⟨t, ht⟩) (i : Fin K) (T ℓ : ℕ) (hℓ : 1 ≤ ℓ)
     (ω : Ω) :
     armPlayCount A i T ω ≤ ℓ + ((Finset.Ico K T).filter fun t ↦
@@ -277,7 +278,7 @@ section Expectation
 variable {Ω : Type*} [MeasurableSpace Ω] {K : ℕ}
 
 /-- Play counts of a measurable arm process are measurable. -/
-theorem measurable_armPlayCount (A : ℕ → Ω → Fin K) (hA : ∀ t, Measurable (A t)) (i : Fin K)
+theorem measurable_arm_play_count (A : ℕ → Ω → Fin K) (hA : ∀ t, Measurable (A t)) (i : Fin K)
     (t : ℕ) : Measurable fun ω ↦ armPlayCount A i t ω := by
   have : (fun ω ↦ armPlayCount A i t ω) =
       fun ω ↦ ∑ j ∈ Finset.range t, if A j ω = i then 1 else 0 := by
@@ -300,7 +301,7 @@ theorem exp_neg_two_mul_sqrt_sq_eq (t s : ℕ) (ht : 1 ≤ t) (hs : 1 ≤ s) :
   rw [Real.exp_neg, Real.exp_log (by positivity)]
 
 /-- `t · t⁻⁴ ≤ t⁻²` for `t ≥ 1`. -/
-theorem natCast_mul_inv_pow_four_le (t : ℕ) (ht : 1 ≤ t) :
+theorem nat_cast_mul_inv_pow_four_le (t : ℕ) (ht : 1 ≤ t) :
     (t : ℝ) * ((t : ℝ) ^ 4)⁻¹ ≤ ((t : ℝ) ^ 2)⁻¹ := by
   have ht' : (1 : ℝ) ≤ t := by exact_mod_cast ht
   have ht0 : (0 : ℝ) < t := by linarith
@@ -312,7 +313,7 @@ omit [MeasurableSpace Ω] in
 plays, every further play at a time `t ∈ [K, T)` is witnessed by a deviation of the prefix
 average of the optimal arm or of arm `i` at the confidence radius `√(2 log t / s)`, for some
 count `s ∈ [1, t]`. -/
-theorem armPlayCount_le_add_sum_indicator (R : Fin K → ℕ → Ω → ℝ) (A : ℕ → Ω → Fin K)
+theorem arm_play_count_le_add_sum_indicator (R : Fin K → ℕ → Ω → ℝ) (A : ℕ → Ω → Fin K)
     (hinit : ∀ t : ℕ, ∀ ht : t < K, ∀ ω, A t ω = ⟨t, ht⟩)
     (hucb : ∀ t ≥ K, ∀ ω i, armSampleAverage R i (armPlayCount A i t ω) ω +
         Real.sqrt (2 * Real.log t / armPlayCount A i t ω) ≤
@@ -329,7 +330,7 @@ theorem armPlayCount_le_add_sum_indicator (R : Fin K → ℕ → Ω → ℝ) (A 
     {ω | armSampleAverage R star s ω ≤ μs - Real.sqrt (2 * Real.log t / s)}
   set B2 : ℕ → ℕ → Set Ω := fun t s ↦
     {ω | μi + Real.sqrt (2 * Real.log t / s) ≤ armSampleAverage R i s ω}
-  have h1 := armPlayCount_le_add_card A hinit i T ℓ hℓpos ω
+  have h1 := arm_play_count_le_add_card A hinit i T ℓ hℓpos ω
   have h1r : (armPlayCount A i T ω : ℝ) ≤ ℓ + ∑ t ∈ Finset.Ico K T,
       if A t ω = i ∧ ℓ ≤ armPlayCount A i t ω then (1 : ℝ) else 0 := by
     rw [Finset.card_filter] at h1
@@ -344,7 +345,7 @@ theorem armPlayCount_le_add_sum_indicator (R : Fin K → ℕ → Ω → ℝ) (A 
   · have hdev := ucb_deviation_of_play R A hucb (star := star) hΔ hℓpos
       (hℓt t (by have := i.pos; omega) ht.2) ht.1 hc.1 hc.2
     have hmem : ∀ k : Fin K, armPlayCount A k t ω ∈ Finset.Icc 1 t := fun k ↦
-      Finset.mem_Icc.mpr ⟨one_le_armPlayCount A hinit k ht.1 ω, armPlayCount_le A k t ω⟩
+      Finset.mem_Icc.mpr ⟨one_le_arm_play_count A hinit k ht.1 ω, arm_play_count_le A k t ω⟩
     rcases hdev with h | h
     · have : (B1 t (armPlayCount A star t ω)).indicator (1 : Ω → ℝ) ω = 1 :=
         Set.indicator_of_mem h _
@@ -360,7 +361,7 @@ theorem armPlayCount_le_add_sum_indicator (R : Fin K → ℕ → Ω → ℝ) (A 
 
 /-- The probabilities of the UCB1 deviation events at time `t ≥ 1`, summed over the possible
 counts `s ∈ [1, t]` of the optimal arm and of arm `i`, are at most `2 t⁻²`. -/
-theorem sum_measureReal_ucb_deviation_le {P : Measure Ω} [IsProbabilityMeasure P]
+theorem sum_measure_real_ucb_deviation_le {P : Measure Ω} [IsProbabilityMeasure P]
     {R : Fin K → ℕ → Ω → ℝ} (hm : ∀ i j, Measurable (R i j))
     (hb : ∀ i j, ∀ᵐ ω ∂P, R i j ω ∈ Icc 0 1)
     (hind : iIndepFun (fun z : Fin K × ℕ ↦ R z.1 z.2) P)
@@ -374,17 +375,17 @@ theorem sum_measureReal_ucb_deviation_le {P : Measure Ω} [IsProbabilityMeasure 
     intro s hs
     have hs1 : 1 ≤ s := (Finset.mem_Icc.mp hs).1
     rw [← exp_neg_two_mul_sqrt_sq_eq t s ht1 hs1]
-    exact measureReal_armSampleAverage_le_sub_le hm hb hind hmean star hs1
+    exact measure_real_arm_sample_average_le_sub_le hm hb hind hmean star hs1
       (Real.sqrt_nonneg _)
   have hs2 : ∀ s ∈ Finset.Icc 1 t, P.real {ω | (∫ ω, R i 0 ω ∂P) +
       Real.sqrt (2 * Real.log t / s) ≤ armSampleAverage R i s ω} ≤ ((t : ℝ) ^ 4)⁻¹ := by
     intro s hs
     have hs1 : 1 ≤ s := (Finset.mem_Icc.mp hs).1
     rw [← exp_neg_two_mul_sqrt_sq_eq t s ht1 hs1]
-    exact measureReal_add_le_armSampleAverage_le hm hb hind hmean i hs1 (Real.sqrt_nonneg _)
+    exact measure_real_add_le_arm_sample_average_le hm hb hind hmean i hs1 (Real.sqrt_nonneg _)
   have hsum : ∑ _s ∈ Finset.Icc 1 t, ((t : ℝ) ^ 4)⁻¹ = (t : ℝ) * ((t : ℝ) ^ 4)⁻¹ := by
     rw [Finset.sum_const, Nat.card_Icc, Nat.add_sub_cancel, nsmul_eq_mul]
-  have := natCast_mul_inv_pow_four_le t ht1
+  have := nat_cast_mul_inv_pow_four_le t ht1
   have h1 := Finset.sum_le_sum hs1
   have h2 := Finset.sum_le_sum hs2
   rw [hsum] at h1 h2
@@ -396,7 +397,7 @@ plays of `i` during the first `T` rounds is at most `8 log T / Δ² + 3`. The re
 independent entries in `[0,1]` almost surely, with a common mean along each arm; the arm
 process plays each arm once during the first `K` rounds and afterwards an arm of maximal
 UCB1 index. -/
-theorem integral_armPlayCount_le_of_ucb (P : Measure Ω) [IsProbabilityMeasure P]
+theorem integral_arm_play_count_le_of_ucb (P : Measure Ω) [IsProbabilityMeasure P]
     (R : Fin K → ℕ → Ω → ℝ) (hm : ∀ i j, Measurable (R i j))
     (hb : ∀ i j, ∀ᵐ ω ∂P, R i j ω ∈ Icc 0 1)
     (hind : iIndepFun (fun z : Fin K × ℕ ↦ R z.1 z.2) P)
@@ -423,7 +424,7 @@ theorem integral_armPlayCount_le_of_ucb (P : Measure Ω) [IsProbabilityMeasure P
   by_cases hT : T < 2
   · calc ∫ ω, (armPlayCount A i T ω : ℝ) ∂P ≤ ∫ _ω, (T : ℝ) ∂P :=
           integral_mono_of_nonneg (ae_of_all _ hNnn) (integrable_const _)
-            (ae_of_all _ fun ω ↦ Nat.cast_le.mpr (armPlayCount_le A i T ω))
+            (ae_of_all _ fun ω ↦ Nat.cast_le.mpr (arm_play_count_le A i T ω))
       _ = T := by simp
       _ ≤ _ := by
         have : (T : ℝ) ≤ 1 := by exact_mod_cast (by omega : T ≤ 1)
@@ -448,14 +449,14 @@ theorem integral_armPlayCount_le_of_ucb (P : Measure Ω) [IsProbabilityMeasure P
   set B1 : ℕ → ℕ → Set Ω := fun t s ↦ {ω | armSampleAverage R star s ω ≤ μs - c t s}
   set B2 : ℕ → ℕ → Set Ω := fun t s ↦ {ω | μi + c t s ≤ armSampleAverage R i s ω}
   have hB1m : ∀ t s, MeasurableSet (B1 t s) := fun t s ↦
-    measurableSet_le (measurable_armSampleAverage hm _ _) measurable_const
+    measurableSet_le (measurable_arm_sample_average hm _ _) measurable_const
   have hB2m : ∀ t s, MeasurableSet (B2 t s) := fun t s ↦
-    measurableSet_le measurable_const (measurable_armSampleAverage hm _ _)
+    measurableSet_le measurable_const (measurable_arm_sample_average hm _ _)
   set F : Ω → ℝ := fun ω ↦ (ℓ : ℝ) + ∑ t ∈ Finset.Ico K T,
     (∑ s ∈ Finset.Icc 1 t, (B1 t s).indicator (1 : Ω → ℝ) ω +
       ∑ s ∈ Finset.Icc 1 t, (B2 t s).indicator (1 : Ω → ℝ) ω)
   have hpt : ∀ ω, (armPlayCount A i T ω : ℝ) ≤ F ω :=
-    armPlayCount_le_add_sum_indicator R A hinit hucb hΔ hℓpos hℓt
+    arm_play_count_le_add_sum_indicator R A hinit hucb hΔ hℓpos hℓt
   have hI1 : ∀ t s, Integrable ((B1 t s).indicator (1 : Ω → ℝ)) P := fun t s ↦
     (integrable_const 1).indicator (hB1m t s)
   have hI2 : ∀ t s, Integrable ((B2 t s).indicator (1 : Ω → ℝ)) P := fun t s ↦
@@ -480,7 +481,7 @@ theorem integral_armPlayCount_le_of_ucb (P : Measure Ω) [IsProbabilityMeasure P
   have hbound : ∀ t ∈ Finset.Ico K T,
       ∑ s ∈ Finset.Icc 1 t, P.real (B1 t s) + ∑ s ∈ Finset.Icc 1 t, P.real (B2 t s) ≤
         2 * ((t : ℝ) ^ 2)⁻¹ := fun t ht ↦
-    sum_measureReal_ucb_deviation_le hm hb hind hmean i star (by
+    sum_measure_real_ucb_deviation_le hm hb hind hmean i star (by
       have := (Finset.mem_Ico.mp ht).1; omega)
   have hzeta : ∑ t ∈ Finset.Ico K T, 2 * ((t : ℝ) ^ 2)⁻¹ ≤ 2 := by
     rw [← Finset.mul_sum]
@@ -501,18 +502,18 @@ theorem integral_armPlayCount_le_of_ucb (P : Measure Ω) [IsProbabilityMeasure P
     _ ≤ _ := by linarith
 
 /-- Play counts of a measurable arm process are integrable. -/
-theorem integrable_armPlayCount (P : Measure Ω) [IsFiniteMeasure P] (A : ℕ → Ω → Fin K)
+theorem integrable_arm_play_count (P : Measure Ω) [IsFiniteMeasure P] (A : ℕ → Ω → Fin K)
     (hA : ∀ t, Measurable (A t)) (i : Fin K) (t : ℕ) :
     Integrable (fun ω ↦ (armPlayCount A i t ω : ℝ)) P := by
   refine Integrable.of_bound (C := t)
-    (measurable_from_top.comp (measurable_armPlayCount A hA i t)).aestronglyMeasurable
+    (measurable_from_top.comp (measurable_arm_play_count A hA i t)).aestronglyMeasurable
     (ae_of_all _ fun ω ↦ ?_)
   rw [Real.norm_natCast]
-  exact Nat.cast_le.mpr (armPlayCount_le A i t ω)
+  exact Nat.cast_le.mpr (arm_play_count_le A i t ω)
 
 omit [MeasurableSpace Ω] in
 /-- A sum over rounds of a function of the arm played, regrouped by arms. -/
-theorem sum_range_comp_eq_sum_mul_armPlayCount {M : Type*} [CommRing M]
+theorem sum_range_comp_eq_sum_mul_arm_play_count {M : Type*} [CommRing M]
     (A : ℕ → Ω → Fin K) (f : Fin K → M) (T : ℕ) (ω : Ω) :
     ∑ t ∈ Finset.range T, f (A t ω) = ∑ i, f i * armPlayCount A i T ω := by
   rw [← Finset.sum_fiberwise (Finset.range T) (fun t ↦ A t ω)]
@@ -546,15 +547,15 @@ theorem integral_regret_le_of_ucb (P : Measure Ω) [IsProbabilityMeasure P]
   change ∫ ω, ∑ t ∈ Finset.range T, (mu star - mu (A t ω)) ∂P ≤
     8 * (∑ i, if mu i < mu star then Real.log T / (mu star - mu i) else 0) +
       (1 + Real.pi ^ 2 / 3) * ∑ i, (mu star - mu i)
-  simp_rw [sum_range_comp_eq_sum_mul_armPlayCount A (fun i ↦ mu star - mu i) T]
-  rw [integral_finsetSum _ fun i _ ↦ (integrable_armPlayCount P A hA i T).const_mul _,
+  simp_rw [sum_range_comp_eq_sum_mul_arm_play_count A (fun i ↦ mu star - mu i) T]
+  rw [integral_finsetSum _ fun i _ ↦ (integrable_arm_play_count P A hA i T).const_mul _,
     Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib]
   refine Finset.sum_le_sum fun i _ ↦ ?_
   rw [integral_const_mul]
   have hπ : (3 : ℝ) ≤ 1 + Real.pi ^ 2 / 3 := by nlinarith [Real.pi_gt_three]
   have hΔnn : 0 ≤ mu star - mu i := sub_nonneg.mpr (hstar i)
   split_ifs with hlt
-  · have hcount := integral_armPlayCount_le_of_ucb P R hm hb hind hmean A hinit hucb hlt T
+  · have hcount := integral_arm_play_count_le_of_ucb P R hm hb hind hmean A hinit hucb hlt T
     have hΔ : 0 < mu star - mu i := sub_pos.mpr hlt
     calc (mu star - mu i) * ∫ ω, (armPlayCount A i T ω : ℝ) ∂P
         ≤ (mu star - mu i) * (8 * Real.log T / (mu star - mu i) ^ 2 + 3) :=

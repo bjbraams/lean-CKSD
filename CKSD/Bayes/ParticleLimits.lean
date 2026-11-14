@@ -3,6 +3,7 @@ module
 public import CKSD.Bayes.ParticleLimitCore
 public import CKSD.Bayes.ParticleUniformMoments
 
+
 /-!
 # Uniform particle moment bounds
 
@@ -39,7 +40,7 @@ theorem exists_uniform_particle_moment_bound {Ω X : Type*} [MeasurableSpace Ω]
           C / (εM ^ 2 * εG) := by
   have hp0 : 0 < p := lt_of_lt_of_le zero_lt_one hp
   have hε : 0 < εM^2*εG := mul_pos (sq_pos_of_pos hM.1) hG.1
-  obtain ⟨C,hC,hbound⟩ := exists_uniform_particle_lpNorm_bound P M hG hM hpotential htransition p hp
+  obtain ⟨C,hC,hbound⟩ := exists_uniform_particle_lp_norm_bound P M hG hM hpotential htransition p hp
   refine ⟨C*(εM^2*εG),mul_pos hC hε,fun N ξ hξ n f hf hosc ↦ ?_⟩
   have hFm : Measurable (fun ω ↦ (∑ i,f (ξ n ω i))/(N+1)-∫ x,f x ∂M.filterLaw n) :=
     ((Finset.measurable_fun_sum _ fun i _ ↦ hf.comp ((measurable_pi_apply i).comp (hξ.1 n))).div_const _).sub
@@ -47,7 +48,7 @@ theorem exists_uniform_particle_moment_bound {Ω X : Type*} [MeasurableSpace Ω]
   have hLp : lpNorm (fun ω ↦ (∑ i,f (ξ n ω i))/(N+1)-∫ x,f x ∂M.filterLaw n)
       (ENNReal.ofReal p) P ≤ C/Real.sqrt (N+1) := by
     simpa only [Nat.cast_add,Nat.cast_one] using hbound (N+1) (by omega) ξ hξ n f hf hosc
-  rw [lpNorm_ofReal_eq_integral_abs_rpow P hp0 hFm.aestronglyMeasurable] at hLp
+  rw [lp_norm_of_real_eq_integral_abs_rpow P hp0 hFm.aestronglyMeasurable] at hLp
   have hs : 0 < Real.sqrt (N+1) := by positivity
   have h := mul_le_mul_of_nonneg_left hLp hs.le
   have hscale : Real.sqrt (N+1)*(C/Real.sqrt (N+1))=C := by field_simp [hs.ne']

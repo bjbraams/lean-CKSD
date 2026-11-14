@@ -2,6 +2,7 @@ module
 
 public import CKSD.Inference.Basic
 
+
 /-!
 # Completeness of symmetric statistics in convex complete families
 
@@ -18,9 +19,9 @@ measurable box `B`, and a π-λ argument gives `g = 0` almost everywhere.
 
 ## Main results
 
-* `CKSD.ae_eq_zero_of_setIntegral_pi_eq_zero`: an integrable function on a finite product with
+* `CKSD.ae_eq_zero_of_set_integral_pi_eq_zero`: an integrable function on a finite product with
   vanishing integrals over all measurable boxes vanishes almost everywhere.
-* `CKSD.ae_eq_zero_pi_of_isCompleteStatistic_of_convex`: the completeness of symmetric statistics.
+* `CKSD.ae_eq_zero_pi_of_is_complete_statistic_of_convex`: the completeness of symmetric statistics.
 -/
 
 @[expose] public section
@@ -36,7 +37,7 @@ attribute [local instance] Classical.propDecidable
 
 /-- An integrable function on a finite product of measurable spaces whose integrals over all
 measurable boxes `∏ᵢ Aᵢ` vanish is zero almost everywhere. -/
-theorem ae_eq_zero_of_setIntegral_pi_eq_zero {ι : Type*} [Fintype ι] {α : ι → Type*}
+theorem ae_eq_zero_of_set_integral_pi_eq_zero {ι : Type*} [Fintype ι] {α : ι → Type*}
     [∀ i, MeasurableSpace (α i)] (μ : Measure (∀ i, α i)) {g : (∀ i, α i) → ℝ}
     (hg : Integrable g μ)
     (hbox : ∀ s : ∀ i, Set (α i), (∀ i, MeasurableSet (s i)) →
@@ -246,7 +247,7 @@ private theorem integrable_and_integral_pi_eq_zero {C : Set (ProbabilityMeasure 
   exact ⟨hνint id, (mul_eq_zero.1 hU).resolve_left hcard⟩
 
 /-- Fubini at the coordinate `j`: integrate the `j`-th coordinate last. -/
-theorem integral_pi_eq_integral_integral_insertNth {n : ℕ} (μ : Fin (n + 1) → Measure X)
+theorem integral_pi_eq_integral_integral_insert_nth {n : ℕ} (μ : Fin (n + 1) → Measure X)
     [∀ i, IsProbabilityMeasure (μ i)] (j : Fin (n + 1)) {F : (Fin (n + 1) → X) → ℝ}
     (hF : Integrable F (Measure.pi μ)) :
     Integrable (fun t ↦ ∫ y, F (j.insertNth t y) ∂(Measure.pi fun i ↦ μ (j.succAbove i)))
@@ -263,7 +264,7 @@ theorem integral_pi_eq_integral_integral_insertNth {n : ℕ} (μ : Fin (n + 1) �
 /-- **Completeness of symmetric statistics.** In a convex complete set `C` of probability laws, a
 measurable symmetric function of a sample of size `n` that has mean zero under every `Pⁿ`,
 `P ∈ C`, vanishes `Pⁿ`-almost everywhere for every `P ∈ C`. -/
-theorem ae_eq_zero_pi_of_isCompleteStatistic_of_convex {C : Set (ProbabilityMeasure X)}
+theorem ae_eq_zero_pi_of_is_complete_statistic_of_convex {C : Set (ProbabilityMeasure X)}
     (hc : ∀ f : X → ℝ, Measurable f →
       (∀ P ∈ C, Integrable f (P : Measure X) ∧ ∫ x, f x ∂(P : Measure X) = 0) →
       ∀ P ∈ C, ∀ᵐ x ∂(P : Measure X), f x = 0)
@@ -320,7 +321,7 @@ theorem ae_eq_zero_pi_of_isCompleteStatistic_of_convex {C : Set (ProbabilityMeas
         have hjj : fam j Q' jj = ⟨R, hR⟩ := by simp [fam, Q', jj]
         have hoff : ∀ i, fam j Q' (jj.succAbove i) = fam j Q (jj.succAbove i) := fun i ↦ by
           simp [fam, Q']
-        have hF := integral_pi_eq_integral_integral_insertNth
+        have hF := integral_pi_eq_integral_integral_insert_nth
           (fun i ↦ ((fam j Q' i).val : Measure X)) jj (hGint j s hs (fam j Q'))
         simp only [hjj, hoff] at hF
         exact ⟨hF.1, hF.2 ▸ ih (by omega) Q' s hs⟩
@@ -337,7 +338,7 @@ theorem ae_eq_zero_pi_of_isCompleteStatistic_of_convex {C : Set (ProbabilityMeas
         simp only [fam]
         congr 1
         exact propext ⟨fun h ↦ by omega, fun h ↦ by omega⟩
-      have hF := integral_pi_eq_integral_integral_insertNth
+      have hF := integral_pi_eq_integral_integral_insert_nth
         (fun i ↦ ((fam (j + 1) Q i).val : Measure X)) jj (hGint (j + 1) s hs (fam (j + 1) Q))
       simp only [hjjP, hoff] at hF
       rw [hF.2]
@@ -367,7 +368,7 @@ theorem ae_eq_zero_pi_of_isCompleteStatistic_of_convex {C : Set (ProbabilityMeas
   -- all boxes
   have hfamP : ∀ Q i, fam (n + 1) Q i = ⟨P, hP⟩ := fun Q i ↦ by simp [fam, i.isLt]
   obtain ⟨Q₀⟩ : Nonempty (Fin (n + 1) → C) := ⟨fun _ ↦ ⟨P, hP⟩⟩
-  refine ae_eq_zero_of_setIntegral_pi_eq_zero _ (hint P hP).1 fun s hs ↦ ?_
+  refine ae_eq_zero_of_set_integral_pi_eq_zero _ (hint P hP).1 fun s hs ↦ ?_
   have h := claim (n + 1) le_rfl Q₀ s hs
   simp only [hfamP] at h
   rw [← integral_indicator (MeasurableSet.univ_pi hs)]

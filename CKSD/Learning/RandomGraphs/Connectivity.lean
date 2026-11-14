@@ -9,6 +9,7 @@ public import Mathlib.Data.Nat.Choose.Cast
 public import Mathlib.Algebra.Order.Field.GeomSum
 public import Mathlib.Probability.Distributions.Poisson.PoissonLimitThm
 
+
 /-!
 # Connectivity estimates for the binomial random graph
 
@@ -26,11 +27,11 @@ leaving `S` and `|S| - 1` edges inside `S`; the union bound over such sets tends
 
 ## Main results
 
-* `CKSD.binomialRandom_real_edges`: probability of prescribed present and absent edges.
-* `CKSD.bonferroni_isolatedVertices`: Bonferroni inequalities for isolated vertices.
-* `CKSD.binomialRandom_real_not_connected_le`: union bound for disconnected graphs without
+* `CKSD.binomial_random_real_edges`: probability of prescribed present and absent edges.
+* `CKSD.bonferroni_isolated_vertices`: Bonferroni inequalities for isolated vertices.
+* `CKSD.binomial_random_real_not_connected_le`: union bound for disconnected graphs without
   isolated vertices.
-* `CKSD.tendsto_disconnSum`, `CKSD.binomialRandom_real_connected_mem_Icc`: the analytic
+* `CKSD.tendsto_disconn_sum`, `CKSD.binomial_random_real_connected_mem_icc`: the analytic
   estimates and the two-sided bound on the connection probability.
 
 The limits along the threshold sequence, and the three parts of the connectivity threshold
@@ -50,7 +51,7 @@ variable {V : Type*} [Fintype V] [DecidableEq V]
 
 /-- In the binomial random graph `G(V, p)`, a set `A` of prescribed edges is present and a
 disjoint set `B` of prescribed edges is absent with probability `p ^ |A| (1 - p) ^ |B|`. -/
-theorem binomialRandom_real_edges (p : I) (A B : Finset (Sym2 V)) (hA : ∀ e ∈ A, ¬ e.IsDiag)
+theorem binomial_random_real_edges (p : I) (A B : Finset (Sym2 V)) (hA : ∀ e ∈ A, ¬ e.IsDiag)
     (hB : ∀ e ∈ B, ¬ e.IsDiag) (hAB : Disjoint A B) :
     (SimpleGraph.binomialRandom V p).real
         {G | (∀ e ∈ A, e ∈ G.edgeSet) ∧ ∀ e ∈ B, e ∉ G.edgeSet} =
@@ -118,7 +119,7 @@ def incidentEdges (J : Finset V) : Finset (Sym2 V) :=
 
 /-- A vertex set `J` consists of isolated vertices exactly when no pair incident to `J` is an
 edge. -/
-theorem subset_isolatedVertices_iff (G : SimpleGraph V) (J : Finset V) :
+theorem subset_isolated_vertices_iff (G : SimpleGraph V) (J : Finset V) :
     J ⊆ isolatedVertices G ↔ ∀ e ∈ incidentEdges J, e ∉ G.edgeSet := by
   constructor
   · intro h e he hG
@@ -138,27 +139,27 @@ theorem subset_isolatedVertices_iff (G : SimpleGraph V) (J : Finset V) :
 
 /-- A vertex set `J` consists of isolated vertices with probability
 `(1 - p) ^ |incidentEdges J|`. -/
-theorem binomialRandom_real_subset_isolatedVertices (p : I) (J : Finset V) :
+theorem binomial_random_real_subset_isolated_vertices (p : I) (J : Finset V) :
     (SimpleGraph.binomialRandom V p).real {G | J ⊆ isolatedVertices G} =
       (1 - p) ^ (incidentEdges J).card := by
-  have h := binomialRandom_real_edges p ∅ (incidentEdges J) (by simp)
+  have h := binomial_random_real_edges p ∅ (incidentEdges J) (by simp)
     (fun e he ↦ (Finset.mem_filter.mp he).2) (Finset.disjoint_empty_left _)
   simp only [Finset.notMem_empty, IsEmpty.forall_iff, implies_true, true_and,
     Finset.card_empty, pow_zero, one_mul] at h
   rw [← h]
   congr 1
   ext G
-  exact subset_isolatedVertices_iff G J
+  exact subset_isolated_vertices_iff G J
 
 /-- The number of pairs incident to `J` is at most `|J| |V|`. -/
-theorem card_incidentEdges_le (J : Finset V) :
+theorem card_incident_edges_le (J : Finset V) :
     (incidentEdges J).card ≤ J.card * Fintype.card V := by
   unfold incidentEdges
   refine (Finset.card_filter_le _ _).trans ((Finset.card_image_le).trans ?_)
   rw [Finset.card_product, Finset.card_univ]
 
 /-- The pairs joining `J` to its complement are pairwise distinct non-loops. -/
-private theorem injOn_mk_product_compl (J : Finset V) :
+private theorem inj_on_mk_product_compl (J : Finset V) :
     Set.InjOn (fun x : V × V ↦ s(x.1, x.2)) ↑(J ×ˢ Jᶜ) := by
   rintro ⟨a, b⟩ hab ⟨c, d⟩ hcd h
   simp only [Finset.coe_product, Set.mem_prod, Finset.mem_coe, Finset.mem_compl] at hab hcd
@@ -167,7 +168,7 @@ private theorem injOn_mk_product_compl (J : Finset V) :
   · exact absurd hcd.1 hab.2
 
 /-- The number of pairs incident to `J` is at least `|J| (|V| - |J|)`. -/
-theorem le_card_incidentEdges (J : Finset V) :
+theorem le_card_incident_edges (J : Finset V) :
     J.card * (Fintype.card V - J.card) ≤ (incidentEdges J).card := by
   have hsub : (J ×ˢ Jᶜ).image (fun x : V × V ↦ s(x.1, x.2)) ⊆ incidentEdges J := by
     intro e he
@@ -179,7 +180,7 @@ theorem le_card_incidentEdges (J : Finset V) :
   calc J.card * (Fintype.card V - J.card) = (J ×ˢ Jᶜ).card := by
         rw [Finset.card_product, Finset.card_compl]
     _ = ((J ×ˢ Jᶜ).image (fun x : V × V ↦ s(x.1, x.2))).card :=
-        (Finset.card_image_of_injOn (injOn_mk_product_compl J)).symm
+        (Finset.card_image_of_injOn (inj_on_mk_product_compl J)).symm
     _ ≤ _ := Finset.card_le_card hsub
 
 /-- The `j`-th factorial moment of the number of isolated vertices of `G(V, p)`:
@@ -188,7 +189,7 @@ def isolatedMoment (p : I) (j : ℕ) : ℝ :=
   ∑ J ∈ Finset.powersetCard j (Finset.univ : Finset V), (1 - (p : ℝ)) ^ (incidentEdges J).card
 
 /-- The `j`-th binomial moment of the number of isolated vertices is `isolatedMoment p j`. -/
-theorem integral_choose_card_isolatedVertices (p : I) (j : ℕ) :
+theorem integral_choose_card_isolated_vertices (p : I) (j : ℕ) :
     ∫ G, ((isolatedVertices G).card.choose j : ℝ) ∂SimpleGraph.binomialRandom V p =
       isolatedMoment (V := V) p j := by
   have hpt : ∀ G : SimpleGraph V, ((isolatedVertices G).card.choose j : ℝ) =
@@ -204,7 +205,7 @@ theorem integral_choose_card_isolatedVertices (p : I) (j : ℕ) :
   rw [integral_finsetSum _ fun J _ ↦ Integrable.of_finite]
   refine Finset.sum_congr rfl fun J _ ↦ ?_
   rw [integral_indicator_one (DiscreteMeasurableSpace.forall_measurableSet _),
-    binomialRandom_real_subset_isolatedVertices]
+    binomial_random_real_subset_isolated_vertices]
 
 /-- Pointwise Bonferroni inequality: `(-1)^M (∑_{j ≤ M} (-1)^j C(N, j) - 1{N = 0}) ≥ 0`. -/
 private theorem bonferroni_pointwise (N M : ℕ) :
@@ -221,7 +222,7 @@ private theorem bonferroni_pointwise (N M : ℕ) :
 
 /-- Bonferroni inequalities for the absence of isolated vertices: the alternating partial sums
 of the factorial moments bound `P(no isolated vertex)` alternately from above and below. -/
-theorem bonferroni_isolatedVertices (p : I) (M : ℕ) :
+theorem bonferroni_isolated_vertices (p : I) (M : ℕ) :
     0 ≤ (-1 : ℝ) ^ M * ((∑ j ∈ Finset.range (M + 1), (-1 : ℝ) ^ j * isolatedMoment (V := V) p j) -
       (SimpleGraph.binomialRandom V p).real {G | isolatedVertices G = ∅}) := by
   have h : 0 ≤ ∫ G, (-1 : ℝ) ^ M * ((∑ j ∈ Finset.range (M + 1),
@@ -235,12 +236,12 @@ theorem bonferroni_isolatedVertices (p : I) (M : ℕ) :
   rw [integral_const_mul, integral_sub Integrable.of_finite Integrable.of_finite,
     integral_finsetSum _ fun j _ ↦ Integrable.of_finite,
     integral_indicator_one (DiscreteMeasurableSpace.forall_measurableSet _)] at h
-  simp_rw [integral_const_mul, integral_choose_card_isolatedVertices] at h
+  simp_rw [integral_const_mul, integral_choose_card_isolated_vertices] at h
   exact h
 
 /-- Second-moment inequality for isolated vertices:
 `P(no isolated vertex) S₁² ≤ S₁ + 2 S₂ - S₁²`. -/
-theorem binomialRandom_real_isolatedVertices_eq_empty_mul_le (p : I) :
+theorem binomial_random_real_isolated_vertices_eq_empty_mul_le (p : I) :
     (SimpleGraph.binomialRandom V p).real {G | isolatedVertices G = ∅} *
         isolatedMoment (V := V) p 1 ^ 2 ≤
       isolatedMoment (V := V) p 1 + 2 * isolatedMoment (V := V) p 2 -
@@ -261,8 +262,8 @@ theorem binomialRandom_real_isolatedVertices_eq_empty_mul_le (p : I) :
     integral_add Integrable.of_finite (integrable_const _),
     integral_sub Integrable.of_finite Integrable.of_finite,
     integral_add Integrable.of_finite Integrable.of_finite, integral_const_mul,
-    integral_const_mul, integral_const, integral_choose_card_isolatedVertices,
-    integral_choose_card_isolatedVertices] at h
+    integral_const_mul, integral_const, integral_choose_card_isolated_vertices,
+    integral_choose_card_isolated_vertices] at h
   simp only [probReal_univ, smul_eq_mul, one_mul] at h
   linarith
 
@@ -278,19 +279,19 @@ def boundaryPairs (S : Finset V) : Finset (Sym2 V) :=
 
 omit [Fintype V] in
 /-- There are at most `|S|²` internal pairs. -/
-theorem card_internalPairs_le (S : Finset V) : (internalPairs S).card ≤ S.card ^ 2 := by
+theorem card_internal_pairs_le (S : Finset V) : (internalPairs S).card ≤ S.card ^ 2 := by
   unfold internalPairs
   refine (Finset.card_filter_le _ _).trans ((Finset.card_image_le).trans ?_)
   rw [Finset.card_product, sq]
 
 /-- There are exactly `|S| (|V| - |S|)` boundary pairs. -/
-theorem card_boundaryPairs (S : Finset V) :
+theorem card_boundary_pairs (S : Finset V) :
     (boundaryPairs S).card = S.card * (Fintype.card V - S.card) := by
-  rw [boundaryPairs, Finset.card_image_of_injOn (injOn_mk_product_compl S), Finset.card_product,
+  rw [boundaryPairs, Finset.card_image_of_injOn (inj_on_mk_product_compl S), Finset.card_product,
     Finset.card_compl]
 
 /-- Boundary pairs are not loops. -/
-theorem not_isDiag_of_mem_boundaryPairs {S : Finset V} {e : Sym2 V}
+theorem not_is_diag_of_mem_boundary_pairs {S : Finset V} {e : Sym2 V}
     (he : e ∈ boundaryPairs S) : ¬ e.IsDiag := by
   simp only [boundaryPairs, Finset.mem_image, Finset.mem_product, Finset.mem_compl] at he
   obtain ⟨⟨a, b⟩, ⟨ha, hb⟩, rfl⟩ := he
@@ -298,7 +299,7 @@ theorem not_isDiag_of_mem_boundaryPairs {S : Finset V} {e : Sym2 V}
   exact fun h ↦ hb (h ▸ ha)
 
 /-- Internal and boundary pairs of the same set are disjoint. -/
-theorem disjoint_internalPairs_boundaryPairs (S : Finset V) :
+theorem disjoint_internal_pairs_boundary_pairs (S : Finset V) :
     Disjoint (internalPairs S) (boundaryPairs S) := by
   rw [Finset.disjoint_left]
   intro e he he'
@@ -316,12 +317,12 @@ private def reachableFinset (G : SimpleGraph V) (a : V) : Finset V :=
 
 omit [DecidableEq V] in
 /-- Membership in `reachableFinset` is reachability. -/
-private theorem mem_reachableFinset {G : SimpleGraph V} {a v : V} :
+private theorem mem_reachable_finset {G : SimpleGraph V} {a v : V} :
     v ∈ reachableFinset G a ↔ G.Reachable a v := by
   simp [reachableFinset]
 
 /-- A connected component with `k` vertices contains at least `k - 1` edges. -/
-private theorem exists_edges_reachableFinset (G : SimpleGraph V) (a : V) :
+private theorem exists_edges_reachable_finset (G : SimpleGraph V) (a : V) :
     ∃ T ⊆ internalPairs (reachableFinset G a), (reachableFinset G a).card ≤ T.card + 1 ∧
       ∀ e ∈ T, e ∈ G.edgeSet := by
   classical
@@ -330,7 +331,7 @@ private theorem exists_edges_reachableFinset (G : SimpleGraph V) (a : V) :
   have hsupp : C.supp = (↑S : Set V) := by
     ext v
     simp only [SimpleGraph.ConnectedComponent.mem_supp_iff, Finset.mem_coe, S,
-      mem_reachableFinset, C, SimpleGraph.ConnectedComponent.eq]
+      mem_reachable_finset, C, SimpleGraph.ConnectedComponent.eq]
     exact SimpleGraph.reachable_comm
   have h := C.connected_toSimpleGraph.card_vert_le_card_edgeSet_add_one
   have h1 : Nat.card C.supp = S.card := by
@@ -377,7 +378,7 @@ theorem exists_closed_set_of_not_connected [Nonempty V] (G : SimpleGraph V)
   have hdisj : Disjoint (reachableFinset G u) (reachableFinset G w) := by
     rw [Finset.disjoint_left]
     intro v hu hw
-    rw [mem_reachableFinset] at hu hw
+    rw [mem_reachable_finset] at hu hw
     exact huw (hu.trans hw.symm)
   have hsum : (reachableFinset G u).card + (reachableFinset G w).card ≤ Fintype.card V := by
     rw [← Finset.card_union_of_disjoint hdisj]
@@ -397,9 +398,9 @@ theorem exists_closed_set_of_not_connected [Nonempty V] (G : SimpleGraph V)
   obtain ⟨b, hab⟩ := hnb
   have hk : 2 ≤ S.card := by
     rw [Nat.succ_le_iff, Finset.one_lt_card]
-    exact ⟨a, mem_reachableFinset.mpr SimpleGraph.Reachable.rfl, b,
-      mem_reachableFinset.mpr hab.reachable, hab.ne⟩
-  obtain ⟨T₀, hT₀S, hT₀card, hT₀G⟩ := exists_edges_reachableFinset G a
+    exact ⟨a, mem_reachable_finset.mpr SimpleGraph.Reachable.rfl, b,
+      mem_reachable_finset.mpr hab.reachable, hab.ne⟩
+  obtain ⟨T₀, hT₀S, hT₀card, hT₀G⟩ := exists_edges_reachable_finset G a
   rw [← hS] at hT₀S hT₀card
   obtain ⟨T, hTsub, hTcard⟩ := Finset.exists_subset_card_eq (s := T₀) (n := S.card - 1)
     (by omega)
@@ -410,13 +411,13 @@ theorem exists_closed_set_of_not_connected [Nonempty V] (G : SimpleGraph V)
   intro e he hGe
   simp only [boundaryPairs, Finset.mem_image, Finset.mem_product, Finset.mem_compl] at he
   obtain ⟨⟨c, d⟩, ⟨hc, hd⟩, rfl⟩ := he
-  rw [hS, mem_reachableFinset] at hc hd
+  rw [hS, mem_reachable_finset] at hc hd
   exact hd (hc.trans (SimpleGraph.Adj.reachable hGe))
 
 /-- Union bound for disconnected graphs without isolated vertices:
 `P(no isolated vertex, not connected) ≤ ∑_{k=2}^{|V|/2} C(|V|, k) C(k², k-1) p^{k-1}
 (1-p)^{k(|V|-k)}`. -/
-theorem binomialRandom_real_not_connected_le [Nonempty V] (p : I) :
+theorem binomial_random_real_not_connected_le [Nonempty V] (p : I) :
     (SimpleGraph.binomialRandom V p).real {G | isolatedVertices G = ∅ ∧ ¬ G.Connected} ≤
       ∑ k ∈ Finset.Icc 2 (Fintype.card V / 2), ((Fintype.card V).choose k : ℝ) *
         ((k ^ 2).choose (k - 1) : ℝ) * (p : ℝ) ^ (k - 1) *
@@ -447,15 +448,15 @@ theorem binomialRandom_real_not_connected_le [Nonempty V] (p : I) :
         μ.real (E S T) = (p : ℝ) ^ (k - 1) * (1 - (p : ℝ)) ^ (k * (Fintype.card V - k)) := by
       intro T hT
       obtain ⟨hTS, hTc⟩ := Finset.mem_powersetCard.mp hT
-      rw [binomialRandom_real_edges p T (boundaryPairs S)
+      rw [binomial_random_real_edges p T (boundaryPairs S)
         (fun e he ↦ (Finset.mem_filter.mp (hTS he)).2)
-        (fun e he ↦ not_isDiag_of_mem_boundaryPairs he)
-        ((disjoint_internalPairs_boundaryPairs S).mono_left hTS), hTc, card_boundaryPairs,
+        (fun e he ↦ not_is_diag_of_mem_boundary_pairs he)
+        ((disjoint_internal_pairs_boundary_pairs S).mono_left hTS), hTc, card_boundary_pairs,
         hSk]
     rw [Finset.sum_congr rfl hET, Finset.sum_const, Finset.card_powersetCard, nsmul_eq_mul,
       mul_assoc]
     refine mul_le_mul_of_nonneg_right ?_ (by positivity)
-    exact_mod_cast Nat.choose_le_choose _ (hSk ▸ card_internalPairs_le S)
+    exact_mod_cast Nat.choose_le_choose _ (hSk ▸ card_internal_pairs_le S)
   refine (Finset.sum_le_sum hterm).trans (le_of_eq ?_)
   rw [Finset.sum_const, Finset.card_powersetCard, Finset.card_univ, nsmul_eq_mul]
   ring
@@ -556,7 +557,7 @@ private theorem term_le (n k : ℕ) {p : ℝ} (hp0 : 0 ≤ p) (hp1 : p ≤ 1) (h
 
 /-- Explicit bound for the union bound: if `n ≥ 4` and `a = e² y e^{-y/2} ≤ 1/2` with `y = np`,
 the sum is at most `2 e⁴ n y e^{-2y} + 2 e⁶ n y² e^{-3y/2}`. -/
-private theorem disconnSum_le (n : ℕ) {p : ℝ} (hp0 : 0 ≤ p) (hp1 : p ≤ 1) (hn : 4 ≤ n)
+private theorem disconn_sum_le (n : ℕ) {p : ℝ} (hp0 : 0 ≤ p) (hp1 : p ≤ 1) (hn : 4 ≤ n)
     (ha : Real.exp 2 * (n * p) * Real.exp (-(n * p) / 2) ≤ 1 / 2) :
     ∑ k ∈ Finset.Icc 2 (n / 2), (n.choose k : ℝ) * ((k ^ 2).choose (k - 1) : ℝ) *
         p ^ (k - 1) * (1 - p) ^ (k * (n - k)) ≤
@@ -653,7 +654,7 @@ private theorem tendsto_mul_pow_mul_exp_neg (m : ℕ) {c : ℝ} (hc : 1 < c) (y 
 
 /-- The union bound for disconnected graphs without isolated vertices tends to zero as soon as
 `n pₙ ≥ log n - M` eventually. -/
-theorem tendsto_disconnSum (p : ℕ → I) (M : ℝ)
+theorem tendsto_disconn_sum (p : ℕ → I) (M : ℝ)
     (hp : ∀ᶠ n : ℕ in atTop, Real.log n - M ≤ n * (p n : ℝ)) :
     Tendsto (fun n : ℕ ↦ ∑ k ∈ Finset.Icc 2 (n / 2), (n.choose k : ℝ) *
         ((k ^ 2).choose (k - 1) : ℝ) * (p n : ℝ) ^ (k - 1) * (1 - (p n : ℝ)) ^ (k * (n - k)))
@@ -682,18 +683,18 @@ theorem tendsto_disconnSum (p : ℕ → I) (M : ℝ)
     positivity
   · filter_upwards [ha.eventually (ge_mem_nhds (by norm_num : (0 : ℝ) < 1 / 2)),
       eventually_ge_atTop 4] with n han hn
-    refine (disconnSum_le n (p n).2.1 (p n).2.2 hn han).trans (le_of_eq ?_)
+    refine (disconn_sum_le n (p n).2.1 (p n).2.2 hn han).trans (le_of_eq ?_)
     simp only [hy, pow_one]
     ring_nf
 
 /-! ### Moments of the number of isolated vertices -/
 
 /-- The zeroth factorial moment is one. -/
-theorem isolatedMoment_zero (p : I) : isolatedMoment (V := V) p 0 = 1 := by
+theorem isolated_moment_zero (p : I) : isolatedMoment (V := V) p 0 = 1 := by
   simp [isolatedMoment, incidentEdges]
 
 /-- Two-sided bounds `C(|V|, j) (1-p)^{j|V|} ≤ Sⱼ ≤ C(|V|, j) (1-p)^{j(|V|-j)}`. -/
-theorem isolatedMoment_mem_Icc (p : I) (j : ℕ) :
+theorem isolated_moment_mem_icc (p : I) (j : ℕ) :
     isolatedMoment (V := V) p j ∈ Set.Icc
       (((Fintype.card V).choose j : ℝ) * (1 - (p : ℝ)) ^ (j * Fintype.card V))
       (((Fintype.card V).choose j : ℝ) * (1 - (p : ℝ)) ^ (j * (Fintype.card V - j))) := by
@@ -710,17 +711,17 @@ theorem isolatedMoment_mem_Icc (p : I) (j : ℕ) :
       _ ≤ isolatedMoment (V := V) p j := Finset.sum_le_sum fun J hJ ↦ by
           refine pow_le_pow_of_le_one hq0 hq1 ?_
           rw [← (Finset.mem_powersetCard.mp hJ).2]
-          exact card_incidentEdges_le J
+          exact card_incident_edges_le J
   · calc isolatedMoment (V := V) p j
         ≤ ∑ _J ∈ Finset.powersetCard j (Finset.univ : Finset V),
             (1 - (p : ℝ)) ^ (j * (Fintype.card V - j)) := Finset.sum_le_sum fun J hJ ↦ by
           refine pow_le_pow_of_le_one hq0 hq1 ?_
           rw [← (Finset.mem_powersetCard.mp hJ).2]
-          exact le_card_incidentEdges J
+          exact le_card_incident_edges J
       _ = _ := by rw [Finset.sum_const, hcard, nsmul_eq_mul]
 
 /-- In a connected graph on at least two vertices no vertex is isolated. -/
-theorem isolatedVertices_eq_empty_of_connected (h2 : 2 ≤ Fintype.card V) {G : SimpleGraph V}
+theorem isolated_vertices_eq_empty_of_connected (h2 : 2 ≤ Fintype.card V) {G : SimpleGraph V}
     (hG : G.Connected) : isolatedVertices G = ∅ := by
   rw [Finset.eq_empty_iff_forall_notMem]
   intro v hv
@@ -737,7 +738,7 @@ theorem isolatedVertices_eq_empty_of_connected (h2 : 2 ≤ Fintype.card V) {G : 
 
 /-- Connectivity and the absence of isolated vertices differ by at most the union bound:
 `P(no isolated vertex) - T ≤ P(connected) ≤ P(no isolated vertex)` on at least two vertices. -/
-theorem binomialRandom_real_connected_mem_Icc (h2 : 2 ≤ Fintype.card V) (p : I) :
+theorem binomial_random_real_connected_mem_icc (h2 : 2 ≤ Fintype.card V) (p : I) :
     (SimpleGraph.binomialRandom V p).real {G | G.Connected} ∈ Set.Icc
       ((SimpleGraph.binomialRandom V p).real {G | isolatedVertices G = ∅} -
         ∑ k ∈ Finset.Icc 2 (Fintype.card V / 2), ((Fintype.card V).choose k : ℝ) *
@@ -746,7 +747,7 @@ theorem binomialRandom_real_connected_mem_Icc (h2 : 2 ≤ Fintype.card V) (p : I
       ((SimpleGraph.binomialRandom V p).real {G | isolatedVertices G = ∅}) := by
   have : Nonempty V := Fintype.card_pos_iff.mp (by omega)
   have hsub : {G : SimpleGraph V | G.Connected} ⊆ {G | isolatedVertices G = ∅} :=
-    fun G hG ↦ isolatedVertices_eq_empty_of_connected h2 hG
+    fun G hG ↦ isolated_vertices_eq_empty_of_connected h2 hG
   constructor
   · have hcov : {G : SimpleGraph V | isolatedVertices G = ∅} ⊆
         {G | G.Connected} ∪ {G | isolatedVertices G = ∅ ∧ ¬ G.Connected} := by
@@ -757,7 +758,7 @@ theorem binomialRandom_real_connected_mem_Icc (h2 : 2 ≤ Fintype.card V) (p : I
     have h1 := measureReal_mono (μ := SimpleGraph.binomialRandom V p) hcov (measure_ne_top _ _)
     have h3 := measureReal_union_le (μ := SimpleGraph.binomialRandom V p)
       {G : SimpleGraph V | G.Connected} {G | isolatedVertices G = ∅ ∧ ¬ G.Connected}
-    have h4 := binomialRandom_real_not_connected_le (V := V) p
+    have h4 := binomial_random_real_not_connected_le (V := V) p
     linarith
   · exact measureReal_mono hsub (measure_ne_top _ _)
 

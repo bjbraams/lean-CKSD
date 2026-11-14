@@ -1,4 +1,5 @@
 module
+
 public import CKSD.LinearModels.BlockIndependenceBasic
 public import CKSD.LinearModels.SphericityLimit
 /-!
@@ -19,7 +20,7 @@ open MeasureTheory ProbabilityTheory Filter Set
 open scoped NNReal ENNReal Topology BigOperators MatrixOrder
 namespace CKSD
 /-- A block determinant-ratio Beta law gives its chi-squared likelihood-ratio limit. -/
-theorem tendstoInDistribution_block_independence_of_beta_product_laws
+theorem tendsto_in_distribution_block_independence_of_beta_product_laws
     {Ω : Type*} [MeasurableSpace Ω] {p q : ℕ} (hp : 0 < p) (hq : 0 < q)
     (P : Measure Ω) [IsProbabilityMeasure P]
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin (p+q)))
@@ -37,9 +38,9 @@ theorem tendstoInDistribution_block_independence_of_beta_product_laws
   let Z : ℕ → Ω → ℝ := fun n ω ↦ blockIndependenceRatio
     (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω))
   have hb (i : Fin p) : 0 < b i := by dsimp [b]; exact div_pos (Nat.cast_pos.2 hq) two_pos
-  have hbr := measurable_blockIndependenceRatio p q
+  have hbr := measurable_block_independence_ratio p q
   have hZm (n : ℕ) : Measurable (Z n) :=
-    hbr.comp ((measurable_sampleCovarianceMatrix (n := n) (p := p+q)).comp
+    hbr.comp ((measurable_sample_covariance_matrix (n := n) (p := p+q)).comp
       (Measurable.of_eval fun i ↦ hXm i.val))
   have hmap : ∀ᶠ n in atTop, P.map (Z n) =
       (Measure.pi fun i : Fin p ↦ betaMeasure (max 1 (((n:ℝ)-c i)/2)) (b i)).map
@@ -56,7 +57,7 @@ theorem tendstoInDistribution_block_independence_of_beta_product_laws
     ring
   let : IsProbabilityMeasure (gammaMeasure (∑ i,b i) (1/2)) :=
     isProbabilityMeasure_gammaMeasure (Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty) (by norm_num)
-  have hlim := tendstoInDistribution_neg_natCast_mul_log_of_beta_product_law P c b hb Z hZm hmap
+  have hlim := tendsto_in_distribution_neg_nat_cast_mul_log_of_beta_product_law P c b hb Z hZm hmap
   have hGamma : gammaMeasure (∑ i,b i) (1/2) = TauCeti.Probability.chiSquaredMeasure (p*q:ℕ) := by
     rw [TauCeti.Probability.chiSquaredMeasure_eq_gammaMeasure (by exact_mod_cast Nat.mul_pos hp hq)]
     congr 1

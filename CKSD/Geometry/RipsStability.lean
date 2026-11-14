@@ -2,12 +2,13 @@ module
 
 public import CKSD.Geometry.SimplicialPersistence
 
+
 /-!
 # Gromov–Hausdorff stability of Rips persistence
 
 Two homological invariances of sublevel persistence of monotone functions on finite simplicial
 complexes, using that the simplicial boundary squares to zero
-(`CKSD.simplicialBoundary_apply_simplicialBoundary`):
+(`CKSD.simplicial_boundary_apply_simplicial_boundary`):
 
 * removing a vertex `w` with a twin `v` (adding `v` to a simplex containing `w` gives a simplex of
   the same filtration value) leaves the persistent Betti numbers unchanged: the chain homotopy
@@ -30,9 +31,9 @@ Mathlib's `GromovHausdorff.ghDist_eq_hausdorffDist`.
 
 ## Main results
 
-* `CKSD.sublevelPersistentBetti_eq_of_twin`, `CKSD.sublevelPersistentBetti_map`,
-  `CKSD.sublevelPersistentBetti_pullback`: the invariances above.
-* `CKSD.fullBottleneckEDist_rips_le_ghDist`: Gromov–Hausdorff stability of Rips persistence
+* `CKSD.sublevel_persistent_betti_eq_of_twin`, `CKSD.sublevel_persistent_betti_map`,
+  `CKSD.sublevel_persistent_betti_pullback`: the invariances above.
+* `CKSD.full_bottleneck_e_dist_rips_le_gh_dist`: Gromov–Hausdorff stability of Rips persistence
   (GAPS 108.36).
 -/
 
@@ -56,16 +57,16 @@ theorem PreAbstractSimplicialComplex.mem_of_subset {K : PreAbstractSimplicialCom
   K.isRelLowerSet_faces.mem_of_le hσ hτσ hτ
 
 /-- The simplicial boundary, evaluated at a simplex. -/
-theorem simplicialBoundary_apply (c : Finset ι → 𝕜) (τ : Finset ι) :
+theorem simplicial_boundary_apply (c : Finset ι → 𝕜) (τ : Finset ι) :
     simplicialBoundary 𝕜 c τ = ∑ σ, simplexIncidence 𝕜 τ σ * c σ := rfl
 
 /-- The boundary maps chains of the sublevel complex to chains of the sublevel complex. -/
-theorem simplicialBoundary_mem_sublevelChains {K : PreAbstractSimplicialComplex ι}
+theorem simplicial_boundary_mem_sublevel_chains {K : PreAbstractSimplicialComplex ι}
     {F : Finset ι → ℝ} (hF : IsMonotoneOnFaces K F) {q : ℕ} {a : ℝ} {c : Finset ι → 𝕜}
     (hc : c ∈ sublevelChains 𝕜 K F (q + 1) a) :
     simplicialBoundary 𝕜 c ∈ sublevelChains 𝕜 K F q a := by
   intro τ hτ
-  rw [simplicialBoundary_apply] at hτ
+  rw [simplicial_boundary_apply] at hτ
   obtain ⟨σ, -, hσ⟩ := Finset.exists_ne_zero_of_sum_ne_zero hτ
   have hinc := left_ne_zero_of_mul hσ
   obtain ⟨h1, h2, h3⟩ := hc σ (right_ne_zero_of_mul hσ)
@@ -78,9 +79,9 @@ theorem simplicialBoundary_mem_sublevelChains {K : PreAbstractSimplicialComplex 
 
 omit [Fintype ι] in
 /-- The incidence number of a codimension-one face is a sign. -/
-theorem simplexIncidence_insert_mul_self {σ : Finset ι} {v : ι} (hv : v ∉ σ) (hσ : σ.Nonempty) :
+theorem simplex_incidence_insert_mul_self {σ : Finset ι} {v : ι} (hv : v ∉ σ) (hσ : σ.Nonempty) :
     simplexIncidence 𝕜 σ (insert v σ) * simplexIncidence 𝕜 σ (insert v σ) = 1 := by
-  have h := simplexIncidence_erase 𝕜 (Finset.mem_insert_self v σ)
+  have h := simplex_incidence_erase 𝕜 (Finset.mem_insert_self v σ)
     (by rw [Finset.erase_insert hv]; exact hσ)
   rw [Finset.erase_insert hv] at h
   rw [h, ← pow_add, ← two_mul, pow_mul]
@@ -88,9 +89,9 @@ theorem simplexIncidence_insert_mul_self {σ : Finset ι} {v : ι} (hv : v ∉ �
 
 omit [Fintype ι] in
 /-- The incidence number of a codimension-one face is nonzero. -/
-theorem simplexIncidence_insert_ne_zero {σ : Finset ι} {v : ι} (hv : v ∉ σ) (hσ : σ.Nonempty) :
+theorem simplex_incidence_insert_ne_zero {σ : Finset ι} {v : ι} (hv : v ∉ σ) (hσ : σ.Nonempty) :
     simplexIncidence 𝕜 σ (insert v σ) ≠ 0 := fun h ↦ by
-  have := simplexIncidence_insert_mul_self 𝕜 hv hσ
+  have := simplex_incidence_insert_mul_self 𝕜 hv hσ
   rw [h, zero_mul] at this
   exact zero_ne_one this
 
@@ -110,7 +111,7 @@ def simplicialTwinHomotopy (v w : ι) : (Finset ι → 𝕜) →ₗ[𝕜] (Finse
 
 omit [Fintype ι] in
 /-- The twin homotopy raises the dimension by one and preserves sublevel complexes. -/
-theorem simplicialTwinHomotopy_mem_sublevelChains {K : PreAbstractSimplicialComplex ι}
+theorem simplicial_twin_homotopy_mem_sublevel_chains {K : PreAbstractSimplicialComplex ι}
     {F : Finset ι → ℝ} {v w : ι} (hvw : v ≠ w)
     (htwin : ∀ σ ∈ K, w ∈ σ → insert v σ ∈ K ∧ F (insert v σ) = F σ) {q : ℕ} {a : ℝ}
     {c : Finset ι → 𝕜} (hc : c ∈ sublevelChains 𝕜 K F q a) :
@@ -130,17 +131,17 @@ theorem simplicialTwinHomotopy_mem_sublevelChains {K : PreAbstractSimplicialComp
 
 /-- The boundary of a chain vanishing on the simplices that contain `w` but not `v`, evaluated at
 such a simplex `σ`, only sees the simplex `σ ∪ {v}`. -/
-theorem simplicialBoundary_apply_of_twin {v w : ι} {c : Finset ι → 𝕜}
+theorem simplicial_boundary_apply_of_twin {v w : ι} {c : Finset ι → 𝕜}
     (hc : ∀ τ, w ∈ τ → v ∉ τ → c τ = 0) {σ : Finset ι} (hwσ : w ∈ σ) (hvσ : v ∉ σ) :
     simplicialBoundary 𝕜 c σ = simplexIncidence 𝕜 σ (insert v σ) * c (insert v σ) := by
-  rw [simplicialBoundary_apply, Finset.sum_eq_single (insert v σ)]
+  rw [simplicial_boundary_apply, Finset.sum_eq_single (insert v σ)]
   · intro τ _ hτ
     by_cases hinc : simplexIncidence 𝕜 σ τ = 0
     · rw [hinc, zero_mul]
     · have : ∃ x ∈ τ, σ = τ.erase x := by
         by_contra hcon
         push Not at hcon
-        exact hinc (simplexIncidence_eq_zero 𝕜 hcon)
+        exact hinc (simplex_incidence_eq_zero 𝕜 hcon)
       obtain ⟨x, hx, rfl⟩ := this
       have hxv : x ≠ v := by
         rintro rfl
@@ -151,14 +152,14 @@ theorem simplicialBoundary_apply_of_twin {v w : ι} {c : Finset ι → 𝕜}
 
 /-- The boundary of the twin homotopy restores the coefficients on simplices containing `w` but
 not `v`. -/
-theorem simplicialBoundary_simplicialTwinHomotopy_apply {v w : ι} (c : Finset ι → 𝕜)
+theorem simplicial_boundary_simplicial_twin_homotopy_apply {v w : ι} (c : Finset ι → 𝕜)
     {σ : Finset ι} (hwσ : w ∈ σ) (hvσ : v ∉ σ) :
     simplicialBoundary 𝕜 (simplicialTwinHomotopy 𝕜 v w c) σ = c σ := by
-  rw [simplicialBoundary_apply_of_twin 𝕜 (fun τ _ hvτ ↦ ?_) hwσ hvσ]
+  rw [simplicial_boundary_apply_of_twin 𝕜 (fun τ _ hvτ ↦ ?_) hwσ hvσ]
   · change simplexIncidence 𝕜 σ (insert v σ) * (if w ∈ insert v σ ∧ v ∈ insert v σ then
       simplexIncidence 𝕜 ((insert v σ).erase v) (insert v σ) * c ((insert v σ).erase v) else 0) = _
     rw [ite_eq_left ⟨Finset.mem_insert_of_mem hwσ, Finset.mem_insert_self v σ⟩,
-      Finset.erase_insert hvσ, ← mul_assoc, simplexIncidence_insert_mul_self 𝕜 hvσ ⟨w, hwσ⟩,
+      Finset.erase_insert hvσ, ← mul_assoc, simplex_incidence_insert_mul_self 𝕜 hvσ ⟨w, hwσ⟩,
       one_mul]
   · change (if w ∈ τ ∧ v ∈ τ then _ else 0) = 0
     rw [ite_eq_right (fun h ↦ absurd h.2 hvτ)]
@@ -173,8 +174,8 @@ theorem eq_zero_of_twin {v w : ι} (hvw : v ≠ w) {c : Finset ι → 𝕜}
   · have hw : w ∈ ρ.erase v := Finset.mem_erase.mpr ⟨hvw.symm, hwρ⟩
     have hv : v ∉ ρ.erase v := Finset.notMem_erase v ρ
     have := hdc _ hw hv
-    rw [simplicialBoundary_apply_of_twin 𝕜 hc hw hv, Finset.insert_erase hvρ] at this
-    have hne := simplexIncidence_insert_ne_zero 𝕜 hv ⟨w, hw⟩
+    rw [simplicial_boundary_apply_of_twin 𝕜 hc hw hv, Finset.insert_erase hvρ] at this
+    have hne := simplex_incidence_insert_ne_zero 𝕜 hv ⟨w, hw⟩
     rw [Finset.insert_erase hvρ] at hne
     exact (mul_eq_zero.mp this).resolve_left hne
   · exact hc ρ hwρ hvρ
@@ -182,7 +183,7 @@ theorem eq_zero_of_twin {v w : ι} (hvw : v ≠ w) {c : Finset ι → 𝕜}
 /-- Removing a twin: let `v ≠ w` be vertices such that adding `v` to a simplex containing `w`
 gives a simplex with the same filtration value. Then deleting all simplices containing `w` does
 not change the persistent Betti numbers of the sublevel filtration. -/
-theorem sublevelPersistentBetti_eq_of_twin {K K' : PreAbstractSimplicialComplex ι}
+theorem sublevel_persistent_betti_eq_of_twin {K K' : PreAbstractSimplicialComplex ι}
     {F : Finset ι → ℝ} (hF : IsMonotoneOnFaces K F) {v w : ι} (hvw : v ≠ w)
     (hK' : ∀ σ, σ ∈ K' ↔ σ ∈ K ∧ w ∉ σ)
     (htwin : ∀ σ ∈ K, w ∈ σ → insert v σ ∈ K ∧ F (insert v σ) = F σ) (p : ℕ) {a b : ℝ}
@@ -224,12 +225,12 @@ theorem sublevelPersistentBetti_eq_of_twin {K K' : PreAbstractSimplicialComplex 
     obtain ⟨hz', c, hc, rfl⟩ := hz
     set c'' := c - simplicialBoundary 𝕜 (simplicialTwinHomotopy 𝕜 v w c)
     have hc''mem : c'' ∈ sublevelChains 𝕜 K F (p + 1) b :=
-      sub_mem hc (simplicialBoundary_mem_sublevelChains 𝕜 hF
-        (simplicialTwinHomotopy_mem_sublevelChains 𝕜 hvw htwin hc))
+      sub_mem hc (simplicial_boundary_mem_sublevel_chains 𝕜 hF
+        (simplicial_twin_homotopy_mem_sublevel_chains 𝕜 hvw htwin hc))
     have hdc'' : simplicialBoundary 𝕜 c'' = simplicialBoundary 𝕜 c := by
-      simp [c'', simplicialBoundary_apply_simplicialBoundary]
+      simp [c'', simplicial_boundary_apply_simplicial_boundary]
     have hW : ∀ τ, w ∈ τ → v ∉ τ → c'' τ = 0 := fun τ hw hv ↦ by
-      simp only [c'', Pi.sub_apply, simplicialBoundary_simplicialTwinHomotopy_apply 𝕜 c hw hv,
+      simp only [c'', Pi.sub_apply, simplicial_boundary_simplicial_twin_homotopy_apply 𝕜 c hw hv,
         sub_self]
     have hzero : ∀ ρ, w ∈ ρ → c'' ρ = 0 := fun ρ hρ ↦
       eq_zero_of_twin 𝕜 hvw hW (fun τ hw _ ↦ by
@@ -239,15 +240,15 @@ theorem sublevelPersistentBetti_eq_of_twin {K K' : PreAbstractSimplicialComplex 
   have hsup : Z ≤ Z' ⊔ (Z ⊓ B) := by
     intro z hz
     set d := simplicialBoundary 𝕜 (simplicialTwinHomotopy 𝕜 v w z)
-    have hHz := simplicialTwinHomotopy_mem_sublevelChains 𝕜 hvw htwin hz.1
-    have hdmem : d ∈ sublevelChains 𝕜 K F p a := simplicialBoundary_mem_sublevelChains 𝕜 hF hHz
+    have hHz := simplicial_twin_homotopy_mem_sublevel_chains 𝕜 hvw htwin hz.1
+    have hdmem : d ∈ sublevelChains 𝕜 K F p a := simplicial_boundary_mem_sublevel_chains 𝕜 hF hHz
     have hdcyc : d ∈ LinearMap.ker (simplicialBoundary 𝕜) :=
-      LinearMap.mem_ker.mpr (simplicialBoundary_apply_simplicialBoundary 𝕜 _)
-    have hdB : d ∈ B := ⟨_, sublevelChains_mono 𝕜 K F (p + 1) hab hHz, rfl⟩
+      LinearMap.mem_ker.mpr (simplicial_boundary_apply_simplicial_boundary 𝕜 _)
+    have hdB : d ∈ B := ⟨_, sublevel_chains_mono 𝕜 K F (p + 1) hab hHz, rfl⟩
     have hz1 : z - d ∈ Z' := by
       have hcyc : z - d ∈ LinearMap.ker (simplicialBoundary 𝕜) := sub_mem hz.2 hdcyc
       have hW : ∀ τ, w ∈ τ → v ∉ τ → (z - d) τ = 0 := fun τ hw hv ↦ by
-        simp only [d, Pi.sub_apply, simplicialBoundary_simplicialTwinHomotopy_apply 𝕜 z hw hv,
+        simp only [d, Pi.sub_apply, simplicial_boundary_simplicial_twin_homotopy_apply 𝕜 z hw hv,
           sub_self]
       have hzero : ∀ ρ, w ∈ ρ → (z - d) ρ = 0 := fun ρ hρ ↦
         eq_zero_of_twin 𝕜 hvw hW (fun τ _ _ ↦ by
@@ -271,7 +272,7 @@ variable {X V : Type*} [Fintype X] [LinearOrder X] [Fintype V] [LinearOrder V] (
   [Field 𝕜]
 
 /-- Incidence numbers are invariant under an order embedding of the vertices. -/
-theorem simplexIncidence_map (s : X ↪o V) (μ σ : Finset X) :
+theorem simplex_incidence_map (s : X ↪o V) (μ σ : Finset X) :
     simplexIncidence 𝕜 (μ.map s.toEmbedding) (σ.map s.toEmbedding) = simplexIncidence 𝕜 μ σ := by
   unfold simplexIncidence
   simp only [Finset.map_nonempty, Finset.map_subset_map, Finset.card_map]
@@ -297,7 +298,7 @@ def simplicialChainMap (s : X ↪o V) : (Finset X → 𝕜) →ₗ[𝕜] (Finset
 
 omit [Fintype V] in
 /-- Transported chains take the original coefficient on the image of a simplex. -/
-theorem simplicialChainMap_apply_map (s : X ↪o V) (c : Finset X → 𝕜) (μ : Finset X) :
+theorem simplicial_chain_map_apply_map (s : X ↪o V) (c : Finset X → 𝕜) (μ : Finset X) :
     simplicialChainMap 𝕜 s c (μ.map s.toEmbedding) = c μ := by
   change ∑ σ, (if σ.map s.toEmbedding = μ.map s.toEmbedding then (1 : 𝕜) else 0) * c σ = c μ
   rw [Finset.sum_eq_single μ]
@@ -308,18 +309,18 @@ theorem simplicialChainMap_apply_map (s : X ↪o V) (c : Finset X → 𝕜) (μ 
 
 omit [Fintype V] in
 /-- Transported chains vanish off the image of the vertex embedding. -/
-theorem simplicialChainMap_apply_of_notMem (s : X ↪o V) (c : Finset X → 𝕜) {ρ : Finset V}
+theorem simplicial_chain_map_apply_of_not_mem (s : X ↪o V) (c : Finset X → 𝕜) {ρ : Finset V}
     (hρ : ∀ μ : Finset X, μ.map s.toEmbedding ≠ ρ) : simplicialChainMap 𝕜 s c ρ = 0 := by
   change ∑ σ, (if σ.map s.toEmbedding = ρ then (1 : 𝕜) else 0) * c σ = 0
   exact Finset.sum_eq_zero fun σ _ ↦ by rw [ite_eq_right (hρ σ), zero_mul]
 
 omit [Fintype V] in
 /-- Transport of chains is injective. -/
-theorem simplicialChainMap_injective (s : X ↪o V) :
+theorem simplicial_chain_map_injective (s : X ↪o V) :
     Function.Injective (simplicialChainMap 𝕜 s) := by
   intro c d h
   ext μ
-  rw [← simplicialChainMap_apply_map 𝕜 s c μ, ← simplicialChainMap_apply_map 𝕜 s d μ, h]
+  rw [← simplicial_chain_map_apply_map 𝕜 s c μ, ← simplicial_chain_map_apply_map 𝕜 s d μ, h]
 
 omit [Fintype X] [Fintype V] in
 /-- A subset of the image of an order embedding is the image of a subset. -/
@@ -337,36 +338,36 @@ theorem exists_map_eq_of_subset_map (s : X ↪o V) {ρ : Finset V} {σ : Finset 
     exact ⟨x, ⟨hx, hy⟩, rfl⟩
 
 /-- Transport of chains commutes with the boundary. -/
-theorem simplicialBoundary_simplicialChainMap (s : X ↪o V) (c : Finset X → 𝕜) :
+theorem simplicial_boundary_simplicial_chain_map (s : X ↪o V) (c : Finset X → 𝕜) :
     simplicialBoundary 𝕜 (simplicialChainMap 𝕜 s c) =
       simplicialChainMap 𝕜 s (simplicialBoundary 𝕜 c) := by
   ext ρ
-  rw [simplicialBoundary_apply]
+  rw [simplicial_boundary_apply]
   have hsum : ∑ τ, simplexIncidence 𝕜 ρ τ * simplicialChainMap 𝕜 s c τ =
       ∑ σ, simplexIncidence 𝕜 ρ (σ.map s.toEmbedding) * c σ := by
     rw [← Finset.sum_subset (Finset.subset_univ (Finset.univ.image fun σ : Finset X ↦
       σ.map s.toEmbedding))]
     · rw [Finset.sum_image (fun σ _ τ _ h ↦ Finset.map_injective _ h)]
-      exact Finset.sum_congr rfl fun σ _ ↦ by rw [simplicialChainMap_apply_map]
+      exact Finset.sum_congr rfl fun σ _ ↦ by rw [simplicial_chain_map_apply_map]
     · intro τ _ hτ
-      rw [simplicialChainMap_apply_of_notMem 𝕜 s c
+      rw [simplicial_chain_map_apply_of_not_mem 𝕜 s c
         (fun μ h ↦ hτ (Finset.mem_image.mpr ⟨μ, by simp, h⟩)), mul_zero]
   rw [hsum]
   by_cases hρ : ∃ μ : Finset X, μ.map s.toEmbedding = ρ
   · obtain ⟨μ, rfl⟩ := hρ
-    rw [simplicialChainMap_apply_map, simplicialBoundary_apply]
-    exact Finset.sum_congr rfl fun σ _ ↦ by rw [simplexIncidence_map]
+    rw [simplicial_chain_map_apply_map, simplicial_boundary_apply]
+    exact Finset.sum_congr rfl fun σ _ ↦ by rw [simplex_incidence_map]
   · push Not at hρ
-    rw [simplicialChainMap_apply_of_notMem 𝕜 s _ hρ]
+    rw [simplicial_chain_map_apply_of_not_mem 𝕜 s _ hρ]
     refine Finset.sum_eq_zero fun σ _ ↦ ?_
-    rw [simplexIncidence_eq_zero 𝕜, zero_mul]
+    rw [simplex_incidence_eq_zero 𝕜, zero_mul]
     intro x _ h
     exact (exists_map_eq_of_subset_map s (h ▸ Finset.erase_subset x _)).elim fun μ hμ ↦
       hρ μ hμ
 
 omit [Fintype V] in
 /-- Sublevel chains of the transported complex are the transported sublevel chains. -/
-theorem sublevelChains_map (s : X ↪o V) {K : PreAbstractSimplicialComplex X}
+theorem sublevel_chains_map (s : X ↪o V) {K : PreAbstractSimplicialComplex X}
     {KV : PreAbstractSimplicialComplex V}
     (hKV : ∀ ρ, ρ ∈ KV ↔ ∃ σ ∈ K, σ.map s.toEmbedding = ρ) {F : Finset X → ℝ}
     {FV : Finset V → ℝ} (hF : ∀ σ, FV (σ.map s.toEmbedding) = F σ) (q : ℕ) (a : ℝ) :
@@ -382,49 +383,49 @@ theorem sublevelChains_map (s : X ↪o V) {K : PreAbstractSimplicialComplex X}
     · ext ρ
       by_cases hρ : ∃ μ : Finset X, μ.map s.toEmbedding = ρ
       · obtain ⟨μ, rfl⟩ := hρ
-        rw [simplicialChainMap_apply_map]
+        rw [simplicial_chain_map_apply_map]
       · push Not at hρ
-        rw [simplicialChainMap_apply_of_notMem 𝕜 s _ hρ]
+        rw [simplicial_chain_map_apply_of_not_mem 𝕜 s _ hρ]
         by_contra h
         obtain ⟨σ, -, hσ⟩ := (hKV ρ).mp (hd ρ (Ne.symm h)).1
         exact hρ σ hσ
   · rintro ⟨c, hc, rfl⟩ ρ hρ
     by_cases hρ' : ∃ μ : Finset X, μ.map s.toEmbedding = ρ
     · obtain ⟨μ, rfl⟩ := hρ'
-      rw [simplicialChainMap_apply_map] at hρ
+      rw [simplicial_chain_map_apply_map] at hρ
       obtain ⟨h1, h2, h3⟩ := hc μ hρ
       exact ⟨(hKV _).mpr ⟨μ, h1, rfl⟩, by simpa using h2, by rwa [hF]⟩
     · push Not at hρ'
-      exact absurd (simplicialChainMap_apply_of_notMem 𝕜 s c hρ') hρ
+      exact absurd (simplicial_chain_map_apply_of_not_mem 𝕜 s c hρ') hρ
 
 /-- Persistent Betti numbers are invariant under an order embedding of the vertices. -/
-theorem sublevelPersistentBetti_map (s : X ↪o V) {K : PreAbstractSimplicialComplex X}
+theorem sublevel_persistent_betti_map (s : X ↪o V) {K : PreAbstractSimplicialComplex X}
     {KV : PreAbstractSimplicialComplex V}
     (hKV : ∀ ρ, ρ ∈ KV ↔ ∃ σ ∈ K, σ.map s.toEmbedding = ρ) {F : Finset X → ℝ}
     {FV : Finset V → ℝ} (hF : ∀ σ, FV (σ.map s.toEmbedding) = F σ) (p : ℕ) (a b : ℝ) :
     sublevelPersistentBetti 𝕜 KV FV p a b = sublevelPersistentBetti 𝕜 K F p a b := by
-  have hT := simplicialChainMap_injective 𝕜 s
+  have hT := simplicial_chain_map_injective 𝕜 s
   have hZ : sublevelCycles 𝕜 KV FV p a =
       (sublevelCycles 𝕜 K F p a).map (simplicialChainMap 𝕜 s) := by
     unfold sublevelCycles
-    rw [sublevelChains_map 𝕜 s hKV hF]
+    rw [sublevel_chains_map 𝕜 s hKV hF]
     ext d
     constructor
     · rintro ⟨⟨c, hc, rfl⟩, hd⟩
       refine ⟨c, ⟨hc, ?_⟩, rfl⟩
       have hd' : simplicialBoundary 𝕜 (simplicialChainMap 𝕜 s c) = 0 := hd
-      rw [simplicialBoundary_simplicialChainMap] at hd'
+      rw [simplicial_boundary_simplicial_chain_map] at hd'
       exact LinearMap.mem_ker.mpr (hT (hd'.trans (map_zero _).symm))
     · rintro ⟨c, ⟨hc, hc'⟩, rfl⟩
       refine ⟨⟨c, hc, rfl⟩, ?_⟩
       have hc'' : simplicialBoundary 𝕜 c = 0 := hc'
-      exact LinearMap.mem_ker.mpr (by rw [simplicialBoundary_simplicialChainMap, hc'', map_zero])
+      exact LinearMap.mem_ker.mpr (by rw [simplicial_boundary_simplicial_chain_map, hc'', map_zero])
   have hB : sublevelBoundaries 𝕜 KV FV p b =
       (sublevelBoundaries 𝕜 K F p b).map (simplicialChainMap 𝕜 s) := by
     unfold sublevelBoundaries
-    rw [sublevelChains_map 𝕜 s hKV hF, ← Submodule.map_comp, ← Submodule.map_comp]
+    rw [sublevel_chains_map 𝕜 s hKV hF, ← Submodule.map_comp, ← Submodule.map_comp]
     congr 1
-    exact LinearMap.ext fun c ↦ simplicialBoundary_simplicialChainMap 𝕜 s c
+    exact LinearMap.ext fun c ↦ simplicial_boundary_simplicial_chain_map 𝕜 s c
   unfold sublevelPersistentBetti
   rw [hZ, hB, ← Submodule.map_inf _ hT,
     ← (Submodule.equivMapOfInjective _ hT (sublevelCycles 𝕜 K F p a)).finrank_eq,
@@ -444,7 +445,7 @@ def PreAbstractSimplicialComplex.simplexOn (T : Finset V) : PreAbstractSimplicia
 
 omit [Fintype V] [LinearOrder V] in
 /-- Membership in the full simplex on a finite set of vertices. -/
-theorem PreAbstractSimplicialComplex.mem_simplexOn {T σ : Finset V} :
+theorem PreAbstractSimplicialComplex.mem_simplex_on {T σ : Finset V} :
     σ ∈ PreAbstractSimplicialComplex.simplexOn T ↔ σ.Nonempty ∧ σ ⊆ T := Iff.rfl
 
 omit [Fintype V] [LinearOrder V] in
@@ -457,7 +458,7 @@ theorem PreAbstractSimplicialComplex.mem_top {σ : Finset V} :
 sublevel filtration `σ ↦ Φ (π σ)` of the full simplex on `V` has the same persistent Betti numbers
 as the sublevel filtration of `Φ` on the full simplex on `X`. The vertices outside the image of `s`
 are twins of vertices in the image and are removed one at a time. -/
-theorem sublevelPersistentBetti_pullback (π : V → X) (s : X ↪o V) (hs : ∀ x, π (s x) = x)
+theorem sublevel_persistent_betti_pullback (π : V → X) (s : X ↪o V) (hs : ∀ x, π (s x) = x)
     (Φ : Finset X → ℝ) (hΦ : IsMonotoneOnFaces ⊤ Φ) (p : ℕ) {a b : ℝ} (hab : a ≤ b) :
     sublevelPersistentBetti 𝕜 ⊤ (fun σ ↦ Φ (σ.image π)) p a b =
       sublevelPersistentBetti 𝕜 ⊤ Φ p a b := by
@@ -483,10 +484,10 @@ theorem sublevelPersistentBetti_pullback (π : V → X) (s : X ↪o V) (hs : ∀
       set v := s (π w)
       have hvS : v ∈ S := Finset.mem_map_of_mem _ (Finset.mem_univ _)
       have hvw : v ≠ w := fun h ↦ hwS (h ▸ hvS)
-      rw [sublevelPersistentBetti_eq_of_twin 𝕜
+      rw [sublevel_persistent_betti_eq_of_twin 𝕜
         (K' := PreAbstractSimplicialComplex.simplexOn (T.erase w)) (hF T) hvw
         (fun σ ↦ by
-          simp only [PreAbstractSimplicialComplex.mem_simplexOn, Finset.subset_erase]
+          simp only [PreAbstractSimplicialComplex.mem_simplex_on, Finset.subset_erase]
           tauto)
         (fun σ hσ hwσ ↦ by
           refine ⟨⟨Finset.insert_nonempty _ _, Finset.insert_subset (hST hvS) hσ.2⟩, ?_⟩
@@ -500,8 +501,8 @@ theorem sublevelPersistentBetti_pullback (π : V → X) (s : X ↪o V) (hs : ∀
     ext σ
     exact ⟨fun h ↦ ⟨h, Finset.subset_univ _⟩, fun h ↦ h.1⟩
   rw [htop, hind _ Finset.univ (Finset.subset_univ _) rfl]
-  refine sublevelPersistentBetti_map 𝕜 s (fun ρ ↦ ?_) (fun σ ↦ ?_) p a b
-  · rw [PreAbstractSimplicialComplex.mem_simplexOn]
+  refine sublevel_persistent_betti_map 𝕜 s (fun ρ ↦ ?_) (fun σ ↦ ?_) p a b
+  · rw [PreAbstractSimplicialComplex.mem_simplex_on]
     constructor
     · rintro ⟨hne, hsub⟩
       obtain ⟨μ, hμ⟩ := exists_map_eq_of_subset_map s hsub
@@ -543,11 +544,11 @@ theorem diam_image_le_diam_image_add {X Y V Z : Type*} [MetricSpace X] [MetricSp
 
 /-- The Rips filtration value of the image of a simplex under a vertex map is monotone along
 faces. -/
-theorem isMonotoneOnFaces_ripsFiltrationValue_image {V W : Type*} [PseudoMetricSpace W]
+theorem is_monotone_on_faces_rips_filtration_value_image {V W : Type*} [PseudoMetricSpace W]
     [DecidableEq W] (π : V → W) :
     IsMonotoneOnFaces ⊤ fun σ : Finset V ↦ ripsFiltrationValue (σ.image π) := by
   intro τ σ _ hτ hτσ
-  exact isMonotoneOnFaces_ripsFiltrationValue _ _
+  exact is_monotone_on_faces_rips_filtration_value _ _
     (hτ.image π |>.mono (Finset.image_subset_image hτσ)) (hτ.image π)
     (Finset.image_subset_image hτσ)
 
@@ -556,7 +557,7 @@ filtrations of two nonempty finite metric spaces, in the diameter-`2r` parameter
 bottleneck distance `d_GH(X, Y)`. In the maximum-edge parameter the filtration values double, and
 the bound becomes `2 d_GH(X, Y)`. The linear orders on the points only orient simplices. Totally
 bounded spaces (where `q`-tameness is needed) and the Čech variants are not formalized. -/
-theorem fullBottleneckEDist_rips_le_ghDist (𝕜 : Type*) [Field 𝕜] {X Y : Type*} [MetricSpace X]
+theorem full_bottleneck_e_dist_rips_le_gh_dist (𝕜 : Type*) [Field 𝕜] {X Y : Type*} [MetricSpace X]
     [Fintype X] [Nonempty X] [LinearOrder X] [MetricSpace Y] [Fintype Y] [Nonempty Y]
     [LinearOrder Y] (p : ℕ)
     {α β κ κ' : Type*} [Fintype α] [Fintype β] [Fintype κ] [Fintype κ']
@@ -611,15 +612,15 @@ theorem fullBottleneckEDist_rips_le_ghDist (𝕜 : Type*) [Field 𝕜] {X Y : Ty
   set f : Finset V → ℝ := fun σ ↦ ripsFiltrationValue (σ.image πX)
   set g : Finset V → ℝ := fun σ ↦ ripsFiltrationValue (σ.image πY)
   have hD' : IsSublevelDiagram 𝕜 ⊤ f p D e := fun a b hab ↦
-    (sublevelPersistentBetti_pullback 𝕜 πX sX hsX ripsFiltrationValue
-      isMonotoneOnFaces_ripsFiltrationValue p hab).trans (hD a b hab)
+    (sublevel_persistent_betti_pullback 𝕜 πX sX hsX ripsFiltrationValue
+      is_monotone_on_faces_rips_filtration_value p hab).trans (hD a b hab)
   have hE' : IsSublevelDiagram 𝕜 ⊤ g p E e' := fun a b hab ↦
-    (sublevelPersistentBetti_pullback 𝕜 πY sY hsY ripsFiltrationValue
-      isMonotoneOnFaces_ripsFiltrationValue p hab).trans (hE a b hab)
+    (sublevel_persistent_betti_pullback 𝕜 πY sY hsY ripsFiltrationValue
+      is_monotone_on_faces_rips_filtration_value p hab).trans (hE a b hab)
   have hR : ∀ u : V, dist (Φ (πX u)) (Ψ (πY u)) ≤ d := fun u ↦ u.2
-  refine fullBottleneckEDist_le_of_isSublevelDiagram 𝕜 ⊤ f g
-    (isMonotoneOnFaces_ripsFiltrationValue_image πX)
-    (isMonotoneOnFaces_ripsFiltrationValue_image πY) p d
+  refine full_bottleneck_e_dist_le_of_is_sublevel_diagram 𝕜 ⊤ f g
+    (is_monotone_on_faces_rips_filtration_value_image πX)
+    (is_monotone_on_faces_rips_filtration_value_image πY) p d
     (fun σ _ ↦ ?_) D e E e' hD' hE'
   have h1 := diam_image_le_diam_image_add hΦ hΨ hd0 πX πY hR σ
   have h2 := diam_image_le_diam_image_add hΨ hΦ hd0 πY πX

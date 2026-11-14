@@ -1,4 +1,5 @@
 module
+
 public import TauCeti.Probability.Distributions.Wishart.Agreement
 public import TauCeti.Probability.Distributions.Wishart.Determinant
 public import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
@@ -21,12 +22,12 @@ namespace CKSD
 def wishartNormalizer {p : ℕ} (n : ℝ) (S : Matrix (Fin p) (Fin p) ℝ) : ℝ :=
   2 ^ (n * (p : ℝ) / 2) * S.det ^ (n / 2) * TauCeti.multivariateGamma p (n / 2)
 /-- A valid Wishart normalizer is strictly positive. -/
-theorem wishartNormalizer_pos {p : ℕ} {n : ℝ} {S : Matrix (Fin p) (Fin p) ℝ}
+theorem wishart_normalizer_pos {p : ℕ} {n : ℝ} {S : Matrix (Fin p) (Fin p) ℝ}
     (hS : S.PosDef) (hn : (p : ℝ) - 1 < n) : 0 < wishartNormalizer n S := by
   apply mul_pos (mul_pos (Real.rpow_pos_of_pos two_pos _) (Real.rpow_pos_of_pos hS.det_pos _))
   exact TauCeti.multivariateGamma_pos (by linarith)
 /-- Multiplication by a determinant power shifts the Wishart density's degree. -/
-theorem det_pow_mul_wishartPDFReal {p : ℕ} {n : ℝ} {S : Matrix (Fin p) (Fin p) ℝ}
+theorem det_pow_mul_wishart_pdf_real {p : ℕ} {n : ℝ} {S : Matrix (Fin p) (Fin p) ℝ}
     (hS : S.PosDef) (hn : (p : ℝ) - 1 < n) (k : ℕ)
     (A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) :
     (A : Matrix (Fin p) (Fin p) ℝ).det ^ k *
@@ -44,10 +45,10 @@ theorem det_pow_mul_wishartPDFReal {p : ℕ} {n : ℝ} {S : Matrix (Fin p) (Fin 
       rw [show (n+2*(k:ℝ)-(p:ℝ)-1)/2 = (k:ℝ)+(n-(p:ℝ)-1)/2 by ring,
         Real.rpow_add hA.det_pos, Real.rpow_natCast]
     rw [hp]
-    field_simp [(wishartNormalizer_pos hS hn).ne', (wishartNormalizer_pos hS hnk).ne']
+    field_simp [(wishart_normalizer_pos hS hn).ne', (wishart_normalizer_pos hS hnk).ne']
   · simp only [TauCeti.Probability.nonsingularWishartPDFReal_of_not_posDef _ _ hA, mul_zero]
 /-- Determinant tilting of a valid Wishart law gives a scaled law with shifted degree. -/
-theorem withDensity_det_pow_nonsingularWishartMeasure {p : ℕ} {n : ℝ}
+theorem with_density_det_pow_nonsingular_wishart_measure {p : ℕ} {n : ℝ}
     {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) (hn : (p : ℝ) - 1 < n) (k : ℕ) :
     (TauCeti.Probability.nonsingularWishartMeasure n S).withDensity
       (fun A ↦ ENNReal.ofReal ((A : Matrix (Fin p) (Fin p) ℝ).det ^ k)) =
@@ -64,7 +65,7 @@ theorem withDensity_det_pow_nonsingularWishartMeasure {p : ℕ} {n : ℝ}
   simp only [Pi.mul_apply, Pi.smul_apply, smul_eq_mul,
     TauCeti.Probability.nonsingularWishartPDF_def]
   rw [← ENNReal.ofReal_mul (TauCeti.Probability.nonsingularWishartPDFReal_nonneg hS hn A),
-    ← ENNReal.ofReal_mul (div_pos (wishartNormalizer_pos hS hnk) (wishartNormalizer_pos hS hn)).le]
+    ← ENNReal.ofReal_mul (div_pos (wishart_normalizer_pos hS hnk) (wishart_normalizer_pos hS hn)).le]
   congr 1
-  rw [mul_comm, det_pow_mul_wishartPDFReal hS hn]
+  rw [mul_comm, det_pow_mul_wishart_pdf_real hS hn]
 end CKSD

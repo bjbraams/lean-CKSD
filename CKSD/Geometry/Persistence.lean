@@ -4,6 +4,7 @@ public import CKSD.Geometry.Basic
 public import Mathlib.CategoryTheory.Category.Preorder
 public import Mathlib.Algebra.Category.ModuleCat.Basic
 
+
 /-!
 # Persistence modules, diagrams, and landscapes
 
@@ -23,7 +24,7 @@ to the diagonal at half their lifetime. The landscape is indexed from zero.
 
 ## Main results
 
-* `CKSD.IsCechSimplex.isRipsSimplex`: the first Čech/Rips inclusion (GAPS 108.21).
+* `CKSD.IsCechSimplex.is_rips_simplex`: the first Čech/Rips inclusion (GAPS 108.21).
 -/
 
 @[expose] public section
@@ -130,7 +131,7 @@ def IsRipsSimplex {X : Type*} [PseudoMetricSpace X] (r : ℝ) (S : Finset X) : P
 /-- GAPS 108.21, the first Čech/Rips inclusion in every pseudometric space: a Čech simplex of
 radius `r` is a Rips simplex of parameter `r`, since points within `r` of a common center are
 within `2r` of each other. -/
-theorem IsCechSimplex.isRipsSimplex {X : Type*} [PseudoMetricSpace X]
+theorem IsCechSimplex.is_rips_simplex {X : Type*} [PseudoMetricSpace X]
     {r : ℝ} {S : Finset X} (h : IsCechSimplex r S) : IsRipsSimplex r S := by
   obtain ⟨c, hc⟩ := h
   intro x hx y hy
@@ -151,6 +152,6 @@ theorem IsRipsSimplex.mono {X : Type*} [PseudoMetricSpace X] {r : ℝ}
   fun x hx y hy ↦ h x (hTS hx) y (hTS hy)
 
 /-- Persistence tents are nonnegative. -/
-theorem persistenceTent_nonneg (b d t : ℝ) : 0 ≤ persistenceTent b d t := le_max_left _ _
+theorem persistence_tent_nonneg (b d t : ℝ) : 0 ≤ persistenceTent b d t := le_max_left _ _
 
 end CKSD

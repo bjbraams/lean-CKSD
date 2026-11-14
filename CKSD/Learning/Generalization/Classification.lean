@@ -2,6 +2,7 @@ module
 
 public import CKSD.Learning.Generalization.Concentration
 
+
 /-!
 # Classification lower bounds and convex calibration
 
@@ -11,8 +12,8 @@ minimizers of convex surrogate risks.
 ## Main results
 
 * `CKSD.exists_labelling_le_average_error`: the no-free-lunch lower bound (GAPS 107.7).
-* `CKSD.classificationRisk_sub_bayes_risk_eq`: the excess Bayes risk identity (GAPS 107.8).
-* `CKSD.classificationRisk_plugin_sub_bayes_risk_le`: the plug-in excess risk bound
+* `CKSD.classification_risk_sub_bayes_risk_eq`: the excess Bayes risk identity (GAPS 107.8).
+* `CKSD.classification_risk_plugin_sub_bayes_risk_le`: the plug-in excess risk bound
   (GAPS 107.8).
 * `CKSD.surrogate_minimizer_sign_of_convex`: classification calibration of convex surrogates
   (GAPS 107.11).
@@ -131,7 +132,7 @@ theorem exists_labelling_le_average_error (n m : ℕ) (hm : 0 < m)
   linarith
 
 /-- Binary conditional classification loss is integrable under a probability law. -/
-theorem integrable_classificationLoss {X : Type*} [MeasurableSpace X]
+theorem integrable_classification_loss {X : Type*} [MeasurableSpace X]
     (P : Measure X) [IsProbabilityMeasure P] (η : X → ℝ) (hη : Measurable η)
     (hrange : ∀ x, η x ∈ Icc 0 1) (g : X → Bool) (hg : Measurable g) :
     Integrable (fun x ↦ if g x then 1 - η x else η x) P := by
@@ -154,7 +155,7 @@ theorem measurable_decide_half_le {X : Type*} [MeasurableSpace X] {a : X → ℝ
 /-- GAPS 107.8: the exact excess Bayes classification risk identity. For a regression function
 `η` with values in `[0,1]` and any measurable classifier `g`, the excess risk of `g` over the
 Bayes classifier `g⋆(x) = (1/2 ≤ η x)` is `∫_{g ≠ g⋆} |2η - 1| dP`. -/
-theorem classificationRisk_sub_bayes_risk_eq {X : Type*} [MeasurableSpace X]
+theorem classification_risk_sub_bayes_risk_eq {X : Type*} [MeasurableSpace X]
     (P : Measure X) [IsProbabilityMeasure P] (η : X → ℝ) (hη : Measurable η)
     (hrange : ∀ x, η x ∈ Icc 0 1) (g : X → Bool) (hg : Measurable g) :
     let star := fun x ↦ decide ((1 / 2 : ℝ) ≤ η x);
@@ -166,8 +167,8 @@ theorem classificationRisk_sub_bayes_risk_eq {X : Type*} [MeasurableSpace X]
   change (∫ x, (if g x then 1 - η x else η x) ∂P) -
       (∫ x, (if star x then 1 - η x else η x) ∂P) =
     ∫ x, if g x ≠ star x then |2 * η x - 1| else 0 ∂P
-  rw [← integral_sub (integrable_classificationLoss P η hη hrange g hg)
-    (integrable_classificationLoss P η hη hrange star hstar)]
+  rw [← integral_sub (integrable_classification_loss P η hη hrange g hg)
+    (integrable_classification_loss P η hη hrange star hstar)]
   apply integral_congr_ae
   filter_upwards with x
   by_cases h : (1 / 2 : ℝ) ≤ η x
@@ -181,7 +182,7 @@ theorem classificationRisk_sub_bayes_risk_eq {X : Type*} [MeasurableSpace X]
 /-- GAPS 107.8: the plugin classification risk bound. The plug-in classifier `x ↦ (1/2 ≤ a x)`
 built from an integrable estimate `a` of the regression function `η` has excess risk at most
 `2 ∫ |a - η| dP`. -/
-theorem classificationRisk_plugin_sub_bayes_risk_le {X : Type*} [MeasurableSpace X]
+theorem classification_risk_plugin_sub_bayes_risk_le {X : Type*} [MeasurableSpace X]
     (P : Measure X) [IsProbabilityMeasure P] (η a : X → ℝ)
     (hη : Measurable η) (ha : Measurable a) (hi : Integrable a P)
     (hrange : ∀ x, η x ∈ Icc 0 1) :
@@ -194,14 +195,14 @@ theorem classificationRisk_plugin_sub_bayes_risk_le {X : Type*} [MeasurableSpace
   have hstar : Measurable star := measurable_decide_half_le hη
   have hiη : Integrable η P := by
     simpa only [Bool.false_eq_true, ite_false] using
-      integrable_classificationLoss P η hη hrange (fun _ ↦ false) measurable_const
+      integrable_classification_loss P η hη hrange (fun _ ↦ false) measurable_const
   change (∫ x, (if ga x then 1 - η x else η x) ∂P) -
       (∫ x, (if star x then 1 - η x else η x) ∂P) ≤ _
-  rw [← integral_sub (integrable_classificationLoss P η hη hrange ga hga)
-    (integrable_classificationLoss P η hη hrange star hstar), ← integral_const_mul]
+  rw [← integral_sub (integrable_classification_loss P η hη hrange ga hga)
+    (integrable_classification_loss P η hη hrange star hstar), ← integral_const_mul]
   apply integral_mono
-    ((integrable_classificationLoss P η hη hrange ga hga).sub
-      (integrable_classificationLoss P η hη hrange star hstar))
+    ((integrable_classification_loss P η hη hrange ga hga).sub
+      (integrable_classification_loss P η hη hrange star hstar))
     ((hi.sub hiη).abs.const_mul 2)
   intro x
   dsimp only [ga, star]

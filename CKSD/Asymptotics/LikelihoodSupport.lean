@@ -2,6 +2,7 @@ module
 
 public import CKSD.Asymptotics.Basic
 
+
 /-!
 # Integral and Taylor estimates for likelihood asymptotics
 
@@ -98,13 +99,13 @@ theorem abs_integral_mul_le_sqrt_mul_sqrt {α : Type*} [MeasurableSpace α] (ν 
 
 /-- Chebyshev's inequality for a sum of a measurable square-integrable statistic of an iid
 sequence. -/
-theorem measureReal_le_abs_sum_sub_le_of_iid {Ω E : Type*} [MeasurableSpace Ω]
+theorem measure_real_le_abs_sum_sub_le_of_iid {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
     (φ : E → ℝ) (hφ : Measurable φ) (h2 : MemLp φ 2 P) (n : ℕ) {ε : ℝ} (hε : 0 < ε) :
     μ.real {ω | ε ≤ |∑ i ∈ Finset.range n, φ (X i ω) - n * ∫ x, φ x ∂P|} ≤
       n * (∫ x, φ x ^ 2 ∂P) / ε ^ 2 := by
-  have hindep := hiid.pairwise_indepFun_comp hφ
-  have hident := hiid.identDistrib_comp hφ
+  have hindep := hiid.pairwise_indep_fun_comp hφ
+  have hident := hiid.ident_distrib_comp hφ
   have hm := hiid.1
   have h2i : ∀ i, MemLp (φ ∘ X i) 2 μ := fun i ↦ by
     have h := h2
@@ -141,7 +142,7 @@ theorem measureReal_le_abs_sum_sub_le_of_iid {Ω E : Type*} [MeasurableSpace Ω]
 
 /-- A triangular-array weak law: if `n ∫ φₙ² dP → 0`, then the centred sums
 `∑_{i<n} (φₙ(Xᵢ) - ∫ φₙ dP)` of an iid sequence tend to zero in probability. -/
-theorem tendstoInMeasure_sum_sub_of_iid {Ω E : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_sum_sub_of_iid {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
     (φ : ℕ → E → ℝ) (hφ : ∀ n, Measurable (φ n)) (h2 : ∀ n, MemLp (φ n) 2 P)
@@ -149,26 +150,26 @@ theorem tendstoInMeasure_sum_sub_of_iid {Ω E : Type*} [MeasurableSpace Ω]
     TendstoInMeasure μ
       (fun (n : ℕ) ω ↦ ∑ i ∈ Finset.range n, φ n (X i ω) - n * ∫ x, φ n x ∂P)
           atTop (fun _ ↦ 0) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  rw [tendsto_in_measure_iff_measure_real_lt_dist]
   intro ε hε
   have hb : Tendsto (fun n : ℕ ↦ n * (∫ x, φ n x ^ 2 ∂P) / ε ^ 2) atTop (𝓝 0) := by
     simpa using hlim.div_const (ε ^ 2)
   refine squeeze_zero (fun _ ↦ measureReal_nonneg) (fun n ↦ ?_) hb
   refine (measureReal_mono fun ω hω ↦ ?_).trans
-    (measureReal_le_abs_sum_sub_le_of_iid μ P X hiid (φ n) (hφ n) (h2 n) n hε)
+    (measure_real_le_abs_sum_sub_le_of_iid μ P X hiid (φ n) (hφ n) (h2 n) n hε)
   simp only [mem_ofPred_eq, Real.dist_eq, sub_zero] at hω ⊢
   exact hω.le
 
 /-- Markov's inequality for sums of squares: if `n ∫ φₙ² dP → 0`, then `∑_{i<n} φₙ(Xᵢ)²` tends to
 zero in probability. -/
-theorem tendstoInMeasure_sum_sq_of_iid {Ω E : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_sum_sq_of_iid {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
     (φ : ℕ → E → ℝ) (hφ : ∀ n, Measurable (φ n)) (h2 : ∀ n, Integrable (fun x ↦ φ n x ^ 2) P)
     (hlim : Tendsto (fun n : ℕ ↦ n * ∫ x, φ n x ^ 2 ∂P) atTop (𝓝 0)) :
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ ∑ i ∈ Finset.range n, φ n (X i ω) ^ 2)
         atTop (fun _ ↦ 0) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  rw [tendsto_in_measure_iff_measure_real_lt_dist]
   intro ε hε
   have hm := hiid.1
   have hb : Tendsto (fun n : ℕ ↦ n * (∫ x, φ n x ^ 2 ∂P) / ε) atTop (𝓝 0) := by
@@ -221,7 +222,7 @@ theorem abs_two_mul_log_one_add_sub_le {g : ℝ} (hg : |g| ≤ 1 / 2) :
 
 /-- Uniform integrability of a square-integrable function along `√n`: for `c > 0`,
 `n P(|s| > c √n) → 0`. -/
-theorem tendsto_mul_measureReal_lt_abs_of_integrable_sq {E : Type*} [MeasurableSpace E]
+theorem tendsto_mul_measure_real_lt_abs_of_integrable_sq {E : Type*} [MeasurableSpace E]
     (P : Measure E) [IsFiniteMeasure P] (s : E → ℝ) (hs : Measurable s)
     (h2 : Integrable (fun x ↦ s x ^ 2) P) {c : ℝ} (hc : 0 < c) :
     Tendsto (fun n : ℕ ↦ n * P.real {x | c * Real.sqrt n < |s x|}) atTop (𝓝 0) := by

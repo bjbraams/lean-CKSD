@@ -3,6 +3,7 @@ module
 public import CKSD.Processes.Basic
 public import Mathlib.Probability.BrownianMotion.Basic
 
+
 /-!
 # Brownian bridge, hitting times and change-detection statistics
 
@@ -21,10 +22,10 @@ Pathwise definitions shared by the sequential and change-point results of Sectio
 
 ## Main results
 
-* `CKSD.cusumStatistic_le_shiryaevRobertsStatistic`: for nonnegative likelihood ratios the CUSUM
+* `CKSD.cusum_statistic_le_shiryaev_roberts_statistic`: for nonnegative likelihood ratios the CUSUM
   statistic is dominated pathwise by the Shiryaev–Roberts statistic. Since `R_n - n` is a
   martingale under the pre-change law, this gives Lorden's bound `𝔼_∞ T_CS(A) ≥ A` (GAPS 106.44).
-* `CKSD.brownianBridge_one`: the bridge is pinned at `1`.
+* `CKSD.brownian_bridge_one`: the bridge is pinned at `1`.
 
 ## Conventions
 
@@ -62,7 +63,7 @@ def shiryaevRobertsStatistic {Ω : Type*} (L : ℕ → Ω → ℝ) : ℕ → Ω 
   | n + 1, ω => (1 + shiryaevRobertsStatistic L n ω) * L n ω
 
 /-- The Shiryaev–Roberts statistic of nonnegative likelihood ratios is nonnegative. -/
-theorem shiryaevRobertsStatistic_nonneg {Ω : Type*} (L : ℕ → Ω → ℝ)
+theorem shiryaev_roberts_statistic_nonneg {Ω : Type*} (L : ℕ → Ω → ℝ)
     (hL : ∀ n ω, 0 ≤ L n ω) (n : ℕ) (ω : Ω) : 0 ≤ shiryaevRobertsStatistic L n ω := by
   induction n with
   | zero => simp [shiryaevRobertsStatistic]
@@ -72,17 +73,17 @@ theorem shiryaevRobertsStatistic_nonneg {Ω : Type*} (L : ℕ → Ω → ℝ)
 at most the Shiryaev–Roberts statistic, `W_n ≤ R_n`. Hence the CUSUM stopping time is at least
 the Shiryaev–Roberts stopping time for the same threshold, which underlies the false-alarm bound
 `𝔼_∞ T_CS(A) ≥ A`. -/
-theorem cusumStatistic_le_shiryaevRobertsStatistic {Ω : Type*} (L : ℕ → Ω → ℝ)
+theorem cusum_statistic_le_shiryaev_roberts_statistic {Ω : Type*} (L : ℕ → Ω → ℝ)
     (hL : ∀ n ω, 0 ≤ L n ω) (n : ℕ) (ω : Ω) :
     cusumStatistic L n ω ≤ shiryaevRobertsStatistic L n ω := by
   induction n with
   | zero => rfl
   | succ n ih =>
     apply mul_le_mul_of_nonneg_right _ (hL n ω)
-    exact max_le (by linarith [shiryaevRobertsStatistic_nonneg L hL n ω]) (by linarith)
+    exact max_le (by linarith [shiryaev_roberts_statistic_nonneg L hL n ω]) (by linarith)
 
 /-- The bridge is pinned at its right endpoint. -/
-@[simp] theorem brownianBridge_one {Ω : Type*} (B : ℝ≥0 → Ω → ℝ) (ω : Ω) :
+@[simp] theorem brownian_bridge_one {Ω : Type*} (B : ℝ≥0 → Ω → ℝ) (ω : Ω) :
     brownianBridge B 1 ω = 0 := by simp [brownianBridge]
 
 end CKSD

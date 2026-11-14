@@ -2,6 +2,7 @@ module
 
 public import CKSD.Nonparametric.Basic
 
+
 /-!
 # Basic objects of statistical learning
 
@@ -58,7 +59,7 @@ def empiricalRademacherComplexity
 
 /-- The empirical Rademacher complexity of an indexed class as an average of suprema over the
 index set. -/
-theorem empiricalRademacherComplexity_eq {H X : Type*} (n : ℕ) (f : H → X → ℝ)
+theorem empirical_rademacher_complexity_eq {H X : Type*} (n : ℕ) (f : H → X → ℝ)
     (x : Fin n → X) :
     empiricalRademacherComplexity n f x = (2 : ℝ)⁻¹ ^ n * ∑ σ : Fin n → Bool,
       sSup (range fun h ↦ (∑ i, (if σ i then (1 : ℝ) else -1) * f h (x i)) / n) := by

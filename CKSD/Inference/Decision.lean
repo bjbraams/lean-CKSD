@@ -14,6 +14,7 @@ public import CKSD.Inference.MeanParametrization
 public import CKSD.Inference.ExponentialFamilyMLE
 public import Mathlib.Analysis.Calculus.InverseFunctionTheorem.FDeriv
 
+
 /-!
 # Decision theory: minimax, complete classes, admissibility, and comparison of experiments
 
@@ -31,8 +32,8 @@ public import Mathlib.Analysis.Calculus.InverseFunctionTheorem.FDeriv
 * `CKSD.exists_equivariant_rule_risk_eq_average`: averaging over a finite group (GAPS 101.39).
 * `CKSD.exists_analytic_inverse_exponential_family_mean`: the mean parametrization of a regular
   minimal exponential family (GAPS 101.42).
-* `CKSD.isAdmissibleRisk_of_blyth`: Blyth's method for admissibility (GAPS 101.58).
-* `CKSD.isMoreInformative_iff_isGarbling`: Blackwell's comparison theorem (GAPS 101.62).
+* `CKSD.is_admissible_risk_of_blyth`: Blyth's method for admissibility (GAPS 101.58).
+* `CKSD.is_more_informative_iff_is_garbling`: Blackwell's comparison theorem (GAPS 101.62).
 
 ## References
 
@@ -74,7 +75,7 @@ theorem exists_statistical_game_saddle_point [Fintype Θ] [Nonempty Θ] [Measura
     simp only [FunLike.coe_sum, Finset.sum_apply]
     exact Finset.single_le_sum (f := fun θ' : Θ ↦ P θ' s)
       (fun _ _ ↦ (zero_le : (0 : ℝ≥0∞) ≤ _)) (Finset.mem_univ θ)
-  obtain ⟨hcompact, hconv⟩ := isCompact_convex_range_risk μ P hdom L
+  obtain ⟨hcompact, hconv⟩ := is_compact_convex_range_risk μ P hdom L
   let a₀ : A := Classical.choice inferInstance
   let δ₀ : RandomizedDecisionRule X A := ⟨Kernel.const X (Measure.dirac a₀), inferInstance⟩
   obtain ⟨y, ⟨δ, hδ⟩, w, hwn, hws, hwmin, hwmax⟩ :=
@@ -295,15 +296,15 @@ theorem exists_analytic_inverse_exponential_family_mean
   set N := naturalParameterSpace ν id
   set M : E → E := fun η ↦ ∫ x, x ∂exponentialFamilyMeasure ν id η with hMdef
   set K := interior (convexHull ℝ ν.support)
-  have hMan : AnalyticOnNhd ℝ M N := analyticOnNhd_mean_exponentialFamilyMeasure ν hne hN
-  have hinj : InjOn M N := injOn_mean_exponentialFamilyMeasure ν hne hminimal hN
+  have hMan : AnalyticOnNhd ℝ M N := analytic_on_nhd_mean_exponential_family_measure ν hne hN
+  have hinj : InjOn M N := inj_on_mean_exponential_family_measure ν hne hminimal hN
   -- Every interior point of the convex hull is a mean (existence of the MLE).
   have hsurj : ∀ m ∈ K, ∃ η ∈ N, M η = m := by
     intro m hm
     obtain ⟨η, hη, hmax⟩ :=
-      (exists_isMaxOn_logLikelihood_iff_mem_interior_convexHull_support ν hne hminimal hNne m).2 hm
-    have h2 := (hasFDerivAt_logPartition_and_eq_of_isMaxOn ν hne hminimal hN hη hmax).1.unique
-      (hasFDerivAt_logPartition ν hne (hN.interior_eq.symm ▸ hη))
+      (exists_is_max_on_log_likelihood_iff_mem_interior_convex_hull_support ν hne hminimal hNne m).2 hm
+    have h2 := (has_f_deriv_at_log_partition_and_eq_of_is_max_on ν hne hminimal hN hη hmax).1.unique
+      (has_f_deriv_at_log_partition ν hne (hN.interior_eq.symm ▸ hη))
     refine ⟨η, hη, ?_⟩
     have := congrArg (fun f : E →L[ℝ] ℝ ↦ f (m - M η)) h2
     simp only [innerSL_apply_apply] at this
@@ -315,7 +316,7 @@ theorem exists_analytic_inverse_exponential_family_mean
     simp only [g, h, ↓reduceDIte]
     exact h.choose_spec
   have hmemK : ∀ η ∈ N, M η ∈ K := fun η hη ↦
-    mean_exponentialFamilyMeasure_mem_interior_convexHull_support ν hne hminimal hN hη
+    mean_exponential_family_measure_mem_interior_convex_hull_support ν hne hminimal hN hη
   have hgM : ∀ η ∈ N, g (M η) = η := fun η hη ↦
     hinj (hg _ (hmemK η hη)).1 hη (hg _ (hmemK η hη)).2
   refine ⟨g, hMan, fun m hm ↦ ?_, fun η hη ↦ ⟨hmemK η hη, hgM η hη⟩, hg⟩
@@ -323,7 +324,7 @@ theorem exists_analytic_inverse_exponential_family_mean
   obtain ⟨hη, hMη⟩ := hg m hm
   set η := g m
   obtain ⟨i, hfd, hstrict⟩ :=
-    exists_hasStrictFDerivAt_mean_exponentialFamilyMeasure ν hne hminimal hN hη
+    exists_has_strict_f_deriv_at_mean_exponential_family_measure ν hne hminimal hN hη
   set R := hstrict.toOpenPartialHomeomorph M
   have h0 : η ∈ R.source := hstrict.mem_toOpenPartialHomeomorph_source
   have hRcoe : ⇑R = M := hstrict.toOpenPartialHomeomorph_coe
@@ -345,7 +346,7 @@ interior and let the rules `δ` in a class `D` have continuous risk functions `R
 are finite measures `π n` on `Θ` with Bayes rules `δ n`, giving uniformly positive mass to every
 convex subset with nonempty interior for large `n`, such that the Bayes risk excess
 `∫ R δ₀ dπ n - ∫ R (δ n) dπ n` of `δ₀` tends to zero. Then `δ₀` is admissible. -/
-theorem isAdmissibleRisk_of_blyth {d : ℕ} {D : Type*}
+theorem is_admissible_risk_of_blyth {d : ℕ} {D : Type*}
     (Θ : Set (EuclideanSpace ℝ (Fin d))) (hΘ : Convex ℝ Θ)
     (hinterior : (interior Θ).Nonempty) (R : D → Θ → ℝ)
     (hc : ∀ δ, Continuous (R δ)) (δ₀ : D) (π : ℕ → Measure Θ)
@@ -413,7 +414,7 @@ def IsMoreInformative {Θ X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
       ∀ θ, risk P L δ' θ ≤ risk Q L δ θ
 
 /-- Garbling cannot improve any finite-action bounded-loss decision problem. -/
-theorem isMoreInformative_of_isGarbling
+theorem is_more_informative_of_is_garbling
     {Θ X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
     (P : Θ → Measure X) (Q : Θ → Measure Y)
     [∀ θ, IsProbabilityMeasure (P θ)] [∀ θ, IsProbabilityMeasure (Q θ)]
@@ -428,13 +429,13 @@ theorem isMoreInformative_of_isGarbling
     -- Unpack the composed decision kernel before associating measure composition.
     change (δ.val ∘ₖ K) ∘ₘ P θ = δ.val ∘ₘ Q θ
     rw [← Measure.comp_assoc, ← hPQ θ]
-  rw [risk_eq_sum_actionLaw P L δP θ, risk_eq_sum_actionLaw Q L δ θ, hcomp]
+  rw [risk_eq_sum_action_law P L δP θ, risk_eq_sum_action_law Q L δ θ, hcomp]
 
 /-- GAPS 101.62: Blackwell's comparison theorem for a finite parameter set. A family of
 probability laws `P` is more informative than `Q`, whose sample space is standard Borel, if and
 only if `Q` is a garbling of `P`. Both families are dominated, by `∑ θ, P θ` and `∑ θ, Q θ`,
 since the parameter set is finite. -/
-theorem isMoreInformative_iff_isGarbling {Θ X Y : Type*} [Fintype Θ]
+theorem is_more_informative_iff_is_garbling {Θ X Y : Type*} [Fintype Θ]
     [MeasurableSpace X] [MeasurableSpace Y] [StandardBorelSpace Y] [Nonempty Y]
     (P : Θ → Measure X) (Q : Θ → Measure Y)
     [∀ θ, IsProbabilityMeasure (P θ)] [∀ θ, IsProbabilityMeasure (Q θ)] :
@@ -452,14 +453,14 @@ theorem isMoreInformative_iff_isGarbling {Θ X Y : Type*} [Fintype Θ]
     have : IsFiniteMeasure μ := inferInstance
     let u : X → C := finiteLikelihoodMap P
     let v : Y → C := finiteLikelihoodMap Q
-    have hu : Measurable u := measurable_finiteLikelihoodMap P
-    have hv : Measurable v := measurable_finiteLikelihoodMap Q
+    have hu : Measurable u := measurable_finite_likelihood_map P
+    have hv : Measurable v := measurable_finite_likelihood_map Q
     let w : Θ → BoundedContinuousFunction C ℝ := fun θ ↦
       BoundedContinuousFunction.mkOfCompact
         (⟨fun z ↦ z.val θ, (continuous_apply θ).comp continuous_subtype_val⟩ : C(C, ℝ))
     have hw (θ : Θ) (z : C) : 0 ≤ w θ z := z.property.1 θ
     have hP (θ : Θ) : P θ = μ.withDensity (fun x ↦ ENNReal.ofReal (w θ (u x))) :=
-      (hasDensity_finiteLikelihoodMap P θ).2.2
+      (has_density_finite_likelihood_map P θ).2.2
     have hfinite (n : ℕ) (hn : 0 < n) (q : Y → Fin n) (hq : Measurable q) :
         ∃ δ : RandomizedDecisionRule X (Fin n), ∀ θ, δ.val ∘ₘ P θ = (Q θ).map q := by
       let δQ : RandomizedDecisionRule Y (Fin n) := ⟨Kernel.deterministic q hq, inferInstance⟩
@@ -469,19 +470,19 @@ theorem isMoreInformative_iff_isGarbling {Θ X Y : Type*} [Fintype Θ]
       exact Measure.deterministic_comp_eq_map hq
     obtain ⟨ρ, hfst, hweighted⟩ :=
       exists_joint_of_finite_randomizations μ P Q u hu v hv w hw hP hfinite
-    obtain ⟨K, hK, hKmodel⟩ := exists_markovKernel_of_map_eq_tilted_joint_laws
+    obtain ⟨K, hK, hKmodel⟩ := exists_markov_kernel_of_map_eq_tilted_joint_laws
       (ρ : Measure (C × C)) (fun θ z ↦ ENNReal.ofReal (w θ z)) (fun θ ↦ by fun_prop)
       u hu P (fun θ ↦ (Q θ).map v)
-      (fun θ ↦ by rw [hfst]; exact map_finiteLikelihood_eq_withDensity P θ)
+      (fun θ ↦ by rw [hfst]; exact map_finite_likelihood_eq_with_density P θ)
       (fun θ ↦ (hweighted θ).symm)
     have := hK
-    obtain ⟨J, hJ, hJmodel⟩ := isGarbling_of_finiteLikelihoodMap Q
+    obtain ⟨J, hJ, hJmodel⟩ := is_garbling_of_finite_likelihood_map Q
     have := hJ
     refine ⟨J ∘ₖ K, inferInstance, fun θ ↦ ?_⟩
     calc
       Q θ = J ∘ₘ (Q θ).map v := hJmodel θ
       _ = J ∘ₘ (K ∘ₘ P θ) := by rw [hKmodel θ]
       _ = (J ∘ₖ K) ∘ₘ P θ := Measure.comp_assoc
-  · exact isMoreInformative_of_isGarbling P Q
+  · exact is_more_informative_of_is_garbling P Q
 
 end CKSD

@@ -6,6 +6,7 @@ public import TauCeti.Probability.Quantile
 public import Mathlib.Probability.BrownianMotion.Basic
 public import Mathlib.Analysis.Calculus.Gradient.Basic
 
+
 /-!
 # Limits and rates for empirical transport
 
@@ -25,10 +26,10 @@ the empirical semidual functional.
 
 ## Main results
 
-* `CKSD.tendstoInDistribution_mul_wasserstein_sq_empiricalMeasure`: the one-dimensional limit law
+* `CKSD.tendsto_in_distribution_mul_wasserstein_sq_empirical_measure`: the one-dimensional limit law
   of `n W₂²(μ_n, μ)` (GAPS 108.47).
-* `CKSD.lintegral_transportMapRisk_semidualEstimator_le` and
-  `CKSD.lintegral_transportMapRisk_semidualEstimator_le_of_poincare`: risk bounds for semidual
+* `CKSD.lintegral_transport_map_risk_semidual_estimator_le` and
+  `CKSD.lintegral_transport_map_risk_semidual_estimator_le_of_poincare`: risk bounds for semidual
   transport-map estimators (GAPS 108.53).
 -/
 
@@ -47,7 +48,7 @@ compact interval, and `a < b` follows because `μ` has a density and total mass 
 i.i.d. sample of law `μ`, `n W₂²(μ_n, μ)` converges in distribution to
 `∫₀¹ B⁰(u)² / f(F⁻¹(u))² du`, where `B⁰(u) = W(u) - u W(1)` is the Brownian bridge built from any Brownian motion `W`; consequently
 `√n W₂(μ_n, μ)` is bounded in probability. -/
-theorem tendstoInDistribution_mul_wasserstein_sq_empiricalMeasure
+theorem tendsto_in_distribution_mul_wasserstein_sq_empirical_measure
     {Ω Ω' : Type*} [MeasurableSpace Ω] [MeasurableSpace Ω'] (P : Measure Ω) [IsProbabilityMeasure P]
     (μ : Measure ℝ) [IsProbabilityMeasure μ] (a b : ℝ) (f : ℝ → ℝ)
     (hμ : HasDensity μ volume f) (hsupp : μ (Icc a b)ᶜ = 0) (hf : ContinuousOn f (Icc a b))
@@ -116,7 +117,7 @@ ball of radius `r ∈ [0, 1)` and `ν` by the closed unit ball, with `ν = (∇�
 The regular class `Φ` has entropy exponent `γ ∈ [0, 1)`. Every semidual estimator from `n`
 independent pairs satisfies `E ‖∇φ̂ - ∇φ₀‖²_{L²(μ)} ≤ K n^{-1/2}`, where `K` is independent of `n`
 and may depend on `r`. The expectation is the lower Lebesgue integral of the measurable risk. -/
-theorem lintegral_transportMapRisk_semidualEstimator_le (Φ : Set (E → ℝ)) (B A γ : ℝ)
+theorem lintegral_transport_map_risk_semidual_estimator_le (Φ : Set (E → ℝ)) (B A γ : ℝ)
     (hΦ : IsRegularPotentialClass Φ B A γ) (hγ : γ ∈ Ico (0 : ℝ) 1)
     (μ ν : Measure E) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
     (r : ℝ) (hr : r ∈ Ico (0 : ℝ) 1)
@@ -133,7 +134,7 @@ inequality `Var_μ(h) ≤ C_P ∫ ‖∇h‖² dμ` for continuously differentia
 semidual estimator is at most `K (log n / n)^{2/(2+γ)}`. The source is carried by a closed ball of
 radius `r ∈ [0, 1)`; the constant may depend on this interior margin. The minimax rate for Hölder
 maps and its wavelet estimator are not formalized. -/
-theorem lintegral_transportMapRisk_semidualEstimator_le_of_poincare (Φ : Set (E → ℝ))
+theorem lintegral_transport_map_risk_semidual_estimator_le_of_poincare (Φ : Set (E → ℝ))
     (B A γ : ℝ) (hΦ : IsRegularPotentialClass Φ B A γ) (hγ : γ ∈ Ico (0 : ℝ) 1)
     (hconv : Convex ℝ Φ) (μ ν : Measure E) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
     (r : ℝ) (hr : r ∈ Ico (0 : ℝ) 1)

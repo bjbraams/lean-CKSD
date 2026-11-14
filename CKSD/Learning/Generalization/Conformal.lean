@@ -2,6 +2,7 @@ module
 
 public import CKSD.Learning.Generalization.Concentration
 
+
 /-!
 # Conformal coverage from exchangeable ranks
 
@@ -15,9 +16,9 @@ Strict ranks with arbitrary ties yield finite-sample prediction coverage under e
 
 ## Main results
 
-* `CKSD.div_le_measureReal_conformalEvent`: coverage at least `k / (n + 1)`, ties allowed
+* `CKSD.div_le_measure_real_conformal_event`: coverage at least `k / (n + 1)`, ties allowed
   (GAPS 107.6).
-* `CKSD.measureReal_conformalEvent_eq_div`: exact coverage `k / (n + 1)` for almost surely
+* `CKSD.measure_real_conformal_event_eq_div`: exact coverage `k / (n + 1)` for almost surely
   distinct scores (GAPS 107.6).
 -/
 
@@ -37,7 +38,7 @@ def conformalRank {m : ℕ} (v : Fin m → ℝ) (i : Fin m) : ℕ :=
   (Finset.univ.filter fun j ↦ v j < v i).card
 
 /-- At least `k` coordinates have strict rank below `k`, whatever the ties. -/
-theorem le_card_conformalRank_lt {m : ℕ} (v : Fin m → ℝ) (k : ℕ) (hk : k ≤ m) :
+theorem le_card_conformal_rank_lt {m : ℕ} (v : Fin m → ℝ) (k : ℕ) (hk : k ≤ m) :
     k ≤ (Finset.univ.filter fun i ↦ conformalRank v i < k).card := by
   set T := Finset.univ.filter fun i ↦ conformalRank v i < k
   by_contra hlt
@@ -58,7 +59,7 @@ theorem le_card_conformalRank_lt {m : ℕ} (v : Fin m → ℝ) (k : ℕ) (hk : k
   omega
 
 /-- For distinct values exactly `k` coordinates have strict rank below `k`. -/
-theorem card_conformalRank_lt_of_injective {m : ℕ} (v : Fin m → ℝ) (hv : Function.Injective v)
+theorem card_conformal_rank_lt_of_injective {m : ℕ} (v : Fin m → ℝ) (hv : Function.Injective v)
     (k : ℕ) (hk : k ≤ m) :
     (Finset.univ.filter fun i ↦ conformalRank v i < k).card = k := by
   have hmono : ∀ i i', v i < v i' → conformalRank v i < conformalRank v i' := by
@@ -101,7 +102,7 @@ theorem card_conformalRank_lt_of_injective {m : ℕ} (v : Fin m → ℝ) (hv : F
   rw [← Finset.card_map Fin.valEmbedding, hmap, Finset.card_range]
 
 /-- Swapping two coordinates transports the strict rank. -/
-theorem conformalRank_comp_swap {m : ℕ} (v : Fin m → ℝ) (i l : Fin m) :
+theorem conformal_rank_comp_swap {m : ℕ} (v : Fin m → ℝ) (i l : Fin m) :
     conformalRank (fun j ↦ v (Equiv.swap i l j)) l = conformalRank v i := by
   unfold conformalRank
   simp only [Equiv.swap_apply_right]
@@ -110,7 +111,7 @@ theorem conformalRank_comp_swap {m : ℕ} (v : Fin m → ℝ) (i l : Fin m) :
     (fun b hb ↦ ⟨Equiv.swap i l b, by simpa using hb, by simp⟩)
 
 /-- The strict rank is a measurable function of the vector. -/
-theorem measurable_conformalRank_cast {m : ℕ} (i : Fin m) :
+theorem measurable_conformal_rank_cast {m : ℕ} (i : Fin m) :
     Measurable fun v : Fin m → ℝ ↦ (conformalRank v i : ℝ) := by
   have : (fun v : Fin m → ℝ ↦ (conformalRank v i : ℝ)) =
       fun v ↦ ∑ j, if v j < v i then (1 : ℝ) else 0 := by
@@ -121,12 +122,12 @@ theorem measurable_conformalRank_cast {m : ℕ} (i : Fin m) :
 
 /-- The number of coordinates of strict rank below `k` is a measurable function of the
 vector. -/
-theorem measurable_card_conformalRank_lt {m : ℕ} (k : ℕ) :
+theorem measurable_card_conformal_rank_lt {m : ℕ} (k : ℕ) :
     Measurable fun v : Fin m → ℝ ↦
       ((Finset.univ.filter fun i ↦ conformalRank v i < k).card : ℝ) := by
   simp_rw [Finset.natCast_card_filter]
   refine Finset.measurable_sum _ fun i _ ↦ Measurable.ite ?_ measurable_const measurable_const
-  have := (measurable_conformalRank_cast i) (measurableSet_Iio : MeasurableSet (Iio (k : ℝ)))
+  have := (measurable_conformal_rank_cast i) (measurableSet_Iio : MeasurableSet (Iio (k : ℝ)))
   convert this using 1
   ext v
   simp
@@ -139,7 +140,7 @@ def conformalEvent {Ω : Type*} {n : ℕ} (S : Fin (n + 1) → Ω → ℝ) (k : 
 
 /-- Under exchangeability of the scores, `(n + 1)` times the probability of the conformal event
 is the expected number of coordinates of strict rank below `k`. -/
-theorem natCast_add_one_mul_measureReal_conformalEvent {Ω : Type*} [MeasurableSpace Ω]
+theorem nat_cast_add_one_mul_measure_real_conformal_event {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] {n : ℕ}
     (S : Fin (n + 1) → Ω → ℝ) (hS : ∀ i, Measurable (S i))
     (hex : ∀ σ : Equiv.Perm (Fin (n + 1)),
@@ -151,7 +152,7 @@ theorem natCast_add_one_mul_measureReal_conformalEvent {Ω : Type*} [MeasurableS
   have hV : Measurable V := measurable_pi_iff.mpr hS
   set A : Fin (n + 1) → Set Ω := fun i ↦ {ω | conformalRank (V ω) i < k}
   have hAm : ∀ i, MeasurableSet (A i) := fun i ↦ by
-    have := ((measurable_conformalRank_cast i).comp hV)
+    have := ((measurable_conformal_rank_cast i).comp hV)
       (measurableSet_Iio : MeasurableSet (Iio (k : ℝ)))
     convert this using 1
     ext ω; simp [A]
@@ -173,7 +174,7 @@ theorem natCast_add_one_mul_measureReal_conformalEvent {Ω : Type*} [MeasurableS
     have hW : Measurable fun ω (j : Fin (n + 1)) ↦ S (σ j) ω :=
       measurable_pi_iff.mpr fun j ↦ hS (σ j)
     have hE : MeasurableSet {v : Fin (n + 1) → ℝ | conformalRank v (Fin.last n) < k} := by
-      have := (measurable_conformalRank_cast (Fin.last n))
+      have := (measurable_conformal_rank_cast (Fin.last n))
         (measurableSet_Iio : MeasurableSet (Iio (k : ℝ)))
       convert this using 1
       ext v; simp
@@ -184,7 +185,7 @@ theorem natCast_add_one_mul_measureReal_conformalEvent {Ω : Type*} [MeasurableS
     convert hmap using 2
     ext ω
     simp only [A, mem_ofPred_eq, mem_preimage]
-    rw [show (fun j ↦ S (σ j) ω) = fun j ↦ V ω (σ j) from rfl, conformalRank_comp_swap]
+    rw [show (fun j ↦ S (σ j) ω) = fun j ↦ V ω (σ j) from rfl, conformal_rank_comp_swap]
     rfl
   have hint : ∀ i, Integrable ((A i).indicator (1 : Ω → ℝ)) P := fun i ↦
     (integrable_const (1 : ℝ)).indicator (hAm i)
@@ -208,28 +209,28 @@ theorem natCast_add_one_mul_measureReal_conformalEvent {Ω : Type*} [MeasurableS
 /-- GAPS 107.6, the exchangeable-rank coverage assertion, with ties allowed: for exchangeable
 scores `S₀, …, Sₙ` and `k ≤ n + 1`, the last score has fewer than `k` strictly smaller scores
 among the others with probability at least `k / (n + 1)`. -/
-theorem div_le_measureReal_conformalEvent {Ω : Type*} [MeasurableSpace Ω]
+theorem div_le_measure_real_conformal_event {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (n : ℕ)
     (S : Fin (n + 1) → Ω → ℝ) (hS : ∀ i, Measurable (S i))
     (hex : ∀ σ : Equiv.Perm (Fin (n + 1)),
       P.map (fun ω i ↦ S (σ i) ω) = P.map (fun ω i ↦ S i ω))
     {k : ℕ} (hkn : k ≤ n + 1) :
     (k : ℝ) / (n + 1) ≤ P.real (conformalEvent S k) := by
-  rw [div_le_iff₀' (by positivity), natCast_add_one_mul_measureReal_conformalEvent P S hS hex k]
+  rw [div_le_iff₀' (by positivity), nat_cast_add_one_mul_measure_real_conformal_event P S hS hex k]
   have hm : Measurable fun ω ↦
       ((Finset.univ.filter fun i ↦ conformalRank (fun j ↦ S j ω) i < k).card : ℝ) :=
-    (measurable_card_conformalRank_lt k).comp (measurable_pi_iff.mpr hS)
+    (measurable_card_conformal_rank_lt k).comp (measurable_pi_iff.mpr hS)
   have hb : ∀ ω, ((Finset.univ.filter fun i ↦ conformalRank (fun j ↦ S j ω) i < k).card : ℝ) ∈
       Icc 0 ((n : ℝ) + 1) := fun ω ↦
     ⟨Nat.cast_nonneg _, by exact_mod_cast (Finset.card_filter_le _ _).trans (by simp)⟩
   calc (k : ℝ) = ∫ _ω, (k : ℝ) ∂P := by simp
     _ ≤ _ := integral_mono (integrable_const _)
         (Integrable.of_mem_Icc 0 ((n : ℝ) + 1) hm.aemeasurable (ae_of_all _ hb))
-        fun ω ↦ by exact_mod_cast le_card_conformalRank_lt _ k hkn
+        fun ω ↦ by exact_mod_cast le_card_conformal_rank_lt _ k hkn
 
 /-- GAPS 107.6, the exchangeable-rank coverage assertion, without ties: if the scores are almost
 surely distinct, the coverage probability is exactly `k / (n + 1)`. -/
-theorem measureReal_conformalEvent_eq_div {Ω : Type*} [MeasurableSpace Ω]
+theorem measure_real_conformal_event_eq_div {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (n : ℕ)
     (S : Fin (n + 1) → Ω → ℝ) (hS : ∀ i, Measurable (S i))
     (hex : ∀ σ : Equiv.Perm (Fin (n + 1)),
@@ -237,10 +238,10 @@ theorem measureReal_conformalEvent_eq_div {Ω : Type*} [MeasurableSpace Ω]
     {k : ℕ} (hkn : k ≤ n + 1) (hinj : ∀ᵐ ω ∂P, Function.Injective (fun i ↦ S i ω)) :
     P.real (conformalEvent S k) = (k : ℝ) / (n + 1) := by
   rw [eq_div_iff (by positivity), mul_comm,
-    natCast_add_one_mul_measureReal_conformalEvent P S hS hex k]
+    nat_cast_add_one_mul_measure_real_conformal_event P S hS hex k]
   calc _ = ∫ _ω, (k : ℝ) ∂P := integral_congr_ae (hinj.mono fun ω hω ↦ by
           dsimp only
-          exact_mod_cast card_conformalRank_lt_of_injective _ hω k hkn)
+          exact_mod_cast card_conformal_rank_lt_of_injective _ hω k hkn)
     _ = k := by simp
 
 end CKSD

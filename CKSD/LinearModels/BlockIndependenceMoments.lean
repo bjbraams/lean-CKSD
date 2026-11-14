@@ -1,4 +1,5 @@
 module
+
 public import CKSD.LinearModels.BlockIndependenceBasic
 public import CKSD.LinearModels.BlockWishartGamma
 /-!
@@ -19,7 +20,7 @@ open MeasureTheory ProbabilityTheory Set
 open scoped ENNReal NNReal Topology MatrixOrder BigOperators
 namespace CKSD
 /-- A block-ratio moment is a product of inverse block moments after a determinant tilt. -/
-theorem integral_blockIndependenceRatio_pow_wishartGramMeasure
+theorem integral_block_independence_ratio_pow_wishart_gram_measure
     {p q ν : ℕ} {S : Matrix (Fin (p+q)) (Fin (p+q)) ℝ}
     (hS : S.PosDef) (hν : p+q ≤ ν)
     (hblock : S.submatrix (Fin.castAdd q) (Fin.natAdd p) = 0) (k : ℕ) :
@@ -42,7 +43,7 @@ theorem integral_blockIndependenceRatio_pow_wishartGramMeasure
     ((A : Matrix (Fin (p+q)) (Fin (p+q)) ℝ).submatrix (Fin.natAdd p) (Fin.natAdd p)).det ^ (-(k:ℝ))
   have hf : Measurable f := by dsimp [f]; fun_prop
   have hweight : μ.withDensity f = ENNReal.ofReal C • μ' :=
-    withDensity_det_pow_wishartGramMeasure hS hν k
+    with_density_det_pow_wishart_gram_measure hS hν k
   have hweighted : (∫ A, g A ∂μ.withDensity f) =
       ∫ A, blockIndependenceRatio (A : Matrix (Fin (p+q)) (Fin (p+q)) ℝ)^k ∂μ := by
     rw [integral_withDensity_eq_integral_toReal_smul hf
@@ -57,7 +58,7 @@ theorem integral_blockIndependenceRatio_pow_wishartGramMeasure
     ring
   have hνR : ((p+q:ℕ):ℝ)-1 < ν := (sub_one_lt _).trans_le (Nat.cast_le.2 hν)
   have hνk : ((p+q:ℕ):ℝ)-1 < (ν:ℝ)+2*k := by linarith [Nat.cast_nonneg (α := ℝ) k]
-  have hC : 0 ≤ C := (div_pos (wishartNormalizer_pos hS hνk) (wishartNormalizer_pos hS hνR)).le
+  have hC : 0 ≤ C := (div_pos (wishart_normalizer_pos hS hνk) (wishart_normalizer_pos hS hνR)).le
   rw [← hweighted, hweight, integral_smul_measure, ENNReal.toReal_ofReal hC, smul_eq_mul, mul_assoc]
   congr 1
   let π := fun A : E ↦
@@ -70,13 +71,13 @@ theorem integral_blockIndependenceRatio_pow_wishartGramMeasure
   have hg : g = gp ∘ π := by
     funext A
     dsimp [g, gp, π]
-    rw [coe_symmetricCongruenceLinearMap_submatrix_one,
-      coe_symmetricCongruenceLinearMap_submatrix_one]
+    rw [coe_symmetric_congruence_linear_map_submatrix_one,
+      coe_symmetric_congruence_linear_map_submatrix_one]
   rw [hg]
   change (∫ A, gp (π A) ∂μ') = _
   have hgp : Measurable gp := by dsimp [gp]; fun_prop
   rw [← integral_map (by fun_prop : Measurable π).aemeasurable hgp.aestronglyMeasurable]
-  have hpair := map_pair_principalBlocks_wishartGramMeasure (ν+2*k) hS.posSemidef
+  have hpair := map_pair_principal_blocks_wishart_gram_measure (ν+2*k) hS.posSemidef
     (Fin.castAdd q) (Fin.natAdd p) hblock
   change μ'.map π = _ at hpair
   rw [hpair]
@@ -90,7 +91,7 @@ theorem integral_blockIndependenceRatio_pow_wishartGramMeasure
       (A : Matrix (Fin q) (Fin q) ℝ).det ^ (-(k:ℝ)))
 
 /-- The shifted inverse determinant moment is valid for every natural tilt order. -/
-theorem integral_negative_natCast_det_shift_wishartGramMeasure {p ν : ℕ}
+theorem integral_negative_nat_cast_det_shift_wishart_gram_measure {p ν : ℕ}
     {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) (hν : p ≤ ν) (k : ℕ) :
     (∫ A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ),
       (A : Matrix (Fin p) (Fin p) ℝ).det ^ (-(k:ℝ))
@@ -112,7 +113,7 @@ theorem integral_negative_natCast_det_shift_wishartGramMeasure {p ν : ℕ}
     show ((ν:ℝ)+2*k)/2 = (ν:ℝ)/2+k by ring]
 
 /-- The natural moments of the block determinant ratio are the shifted Wilks Gamma quotient. -/
-theorem integral_blockIndependenceRatio_pow_wishartGramMeasure_eq_gamma
+theorem integral_block_independence_ratio_pow_wishart_gram_measure_eq_gamma
     {p q ν : ℕ} {S : Matrix (Fin (p+q)) (Fin (p+q)) ℝ}
     (hS : S.PosDef) (hν : p+q ≤ ν)
     (hblock : S.submatrix (Fin.castAdd q) (Fin.natAdd p) = 0) (k : ℕ) :
@@ -131,15 +132,15 @@ theorem integral_blockIndependenceRatio_pow_wishartGramMeasure_eq_gamma
     simpa using hv
   have hA := hS.submatrix hf
   have hB := hS.submatrix hg
-  rw [integral_blockIndependenceRatio_pow_wishartGramMeasure hS hν hblock,
-    integral_negative_natCast_det_shift_wishartGramMeasure hA (by omega : p ≤ ν),
-    integral_negative_natCast_det_shift_wishartGramMeasure hB (by omega : q ≤ ν)]
-  exact wishartNormalizer_block_ratio_mul_negative_moments ν k hS hA hB
-    (det_eq_mul_det_principalBlocks_of_zero hS.isHermitian hblock)
+  rw [integral_block_independence_ratio_pow_wishart_gram_measure hS hν hblock,
+    integral_negative_nat_cast_det_shift_wishart_gram_measure hA (by omega : p ≤ ν),
+    integral_negative_nat_cast_det_shift_wishart_gram_measure hB (by omega : q ≤ ν)]
+  exact wishart_normalizer_block_ratio_mul_negative_moments ν k hS hA hB
+    (det_eq_mul_det_principal_blocks_of_zero hS.isHermitian hblock)
     ((sub_one_lt _).trans_le (Nat.cast_le.2 hν))
 
 /-- The Beta product with block-independence shapes has the same Gamma quotient. -/
-theorem integral_blockIndependence_beta_product_pow_eq_gamma {p q ν : ℕ}
+theorem integral_block_independence_beta_product_pow_eq_gamma {p q ν : ℕ}
     (hν : p+q ≤ ν) (hq : 0 < q) (k : ℕ) :
     (∫ v : Fin p → ℝ, (∏ i, v i)^k ∂Measure.pi (fun i : Fin p ↦
       betaMeasure (((ν:ℝ)-(q:ℝ)-i.val)/2) ((q:ℝ)/2))) =

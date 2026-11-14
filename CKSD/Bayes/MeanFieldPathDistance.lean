@@ -3,6 +3,7 @@ module
 public import CKSD.Bayes.MeanFieldPathLaws
 public import Mathlib.MeasureTheory.Function.L1Space.AEEqFun
 
+
 /-!
 # Mean pointwise distance of random continuous paths
 
@@ -33,12 +34,12 @@ def meanPathDistance (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
   ∫ ω, ‖(U ω).IccExtend hT t - (V ω).IccExtend hT t‖ ∂P
 
 /-- Mean path distance is nonnegative. -/
-theorem meanPathDistance_nonneg (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
+theorem mean_path_distance_nonneg (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
     (U V : Ω → C(Icc (0 : ℝ) T, E)) (t : ℝ) : 0 ≤ meanPathDistance P hT U V t :=
   integral_nonneg fun _ ↦ norm_nonneg _
 
 /-- Mean path distance varies continuously with real time for integrable random paths. -/
-theorem continuous_meanPathDistance_of_integrable (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
+theorem continuous_mean_path_distance_of_integrable (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
     (U V : Ω → C(Icc (0 : ℝ) T, E)) (hUi : Integrable U P) (hVi : Integrable V P) :
     Continuous (meanPathDistance P hT U V) := by
   apply continuous_of_dominated (bound := fun ω ↦ ‖U ω‖ + ‖V ω‖)
@@ -57,18 +58,18 @@ theorem continuous_meanPathDistance_of_integrable (P : Measure Ω) {T : ℝ} (hT
   · exact ae_of_all _ fun ω ↦ (((U ω).IccExtend hT).continuous.sub ((V ω).IccExtend hT).continuous).norm
 
 /-- Measurable integrable random paths have a continuous mean pointwise distance. -/
-theorem continuous_meanPathDistance (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
+theorem continuous_mean_path_distance (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
     (U V : Ω → C(Icc (0 : ℝ) T, E)) (_hUm : Measurable U) (_hVm : Measurable V)
     (hUi : Integrable U P) (hVi : Integrable V P) : Continuous (meanPathDistance P hT U V) :=
-  continuous_meanPathDistance_of_integrable P hT U V hUi hVi
+  continuous_mean_path_distance_of_integrable P hT U V hUi hVi
 
 /-- For two L¹ random continuous paths, mean path distance is a continuous function of time. -/
-theorem continuous_meanPathDistance_L1 (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
+theorem continuous_mean_path_distance_l1 (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
     (U V : Lp C(Icc (0 : ℝ) T, E) 1 P) : Continuous (meanPathDistance P hT U V) :=
-  continuous_meanPathDistance_of_integrable P hT U V (L1.integrable_coeFn U) (L1.integrable_coeFn V)
+  continuous_mean_path_distance_of_integrable P hT U V (L1.integrable_coeFn U) (L1.integrable_coeFn V)
 
 /-- Mean path distance at any time is bounded by the L¹ distance of the random paths. -/
-theorem meanPathDistance_le_norm_sub (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
+theorem mean_path_distance_le_norm_sub (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)
     (U V : Lp C(Icc (0 : ℝ) T, E) 1 P) (t : ℝ) :
     meanPathDistance P hT U V t ≤ ‖U - V‖ := by
   have hi : Integrable (fun ω ↦ U ω - V ω) P := (L1.integrable_coeFn U).sub (L1.integrable_coeFn V)
@@ -97,7 +98,7 @@ theorem norm_sub_L1_eq_integral_norm (P : Measure Ω) {T : ℝ}
     ENNReal.toReal_ofReal (integral_nonneg fun _ ↦ norm_nonneg _)]
 
 /-- An almost sure scalar bound on the pointwise distance also bounds its expectation. -/
-theorem meanPathDistance_le_of_ae_bound (P : Measure Ω) [IsProbabilityMeasure P]
+theorem mean_path_distance_le_of_ae_bound (P : Measure Ω) [IsProbabilityMeasure P]
     {T : ℝ} (hT : 0 ≤ T) (U V : Lp C(Icc (0 : ℝ) T, E) 1 P) (t r : ℝ)
     (hbound : ∀ᵐ ω ∂P, ‖(U ω).IccExtend hT t - (V ω).IccExtend hT t‖ ≤ r) :
     meanPathDistance P hT U V t ≤ r := by
@@ -137,14 +138,14 @@ theorem norm_sub_L1_le_of_ae_bound (P : Measure Ω) [IsProbabilityMeasure P]
     _ = r := by simp
 
 /-- An almost sure integral stability estimate implies the corresponding mean-distance bound. -/
-theorem meanPathDistance_le_integral_of_ae_bound (P : Measure Ω) [IsProbabilityMeasure P]
+theorem mean_path_distance_le_integral_of_ae_bound (P : Measure Ω) [IsProbabilityMeasure P]
     {T : ℝ} (hT : 0 ≤ T) (U V : Lp C(Icc (0 : ℝ) T, E) 1 P)
     (a : ℝ) (q : ℝ → ℝ)
     (hbound : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T,
       ‖(U ω).IccExtend hT t - (V ω).IccExtend hT t‖ ≤ a * ∫ s in (0 : ℝ)..t, q s)
     (t : ℝ) (ht : t ∈ Icc (0 : ℝ) T) :
     meanPathDistance P hT U V t ≤ a * ∫ s in (0 : ℝ)..t, q s :=
-  meanPathDistance_le_of_ae_bound P hT U V t _ (hbound.mono fun _ hω ↦ hω t ht)
+  mean_path_distance_le_of_ae_bound P hT U V t _ (hbound.mono fun _ hω ↦ hω t ht)
 
 /-- For nonnegative continuous input, integral stability bounds the whole L¹ path distance. -/
 theorem norm_sub_L1_le_integral_of_ae_bound (P : Measure Ω) [IsProbabilityMeasure P]

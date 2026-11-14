@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldChaosStability
 public import CKSD.Bayes.MeanFieldGlobal
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Empirical
@@ -21,7 +22,7 @@ open MeasureTheory ProbabilityTheory Set Filter Function
 open scoped NNReal ENNReal Topology BigOperators
 namespace CKSD
 /-- The finite-index empirical law agrees with TauCeti's offset sequence convention. -/
-theorem empiricalMeasure_succ_eq_tauCeti {E : Type*} [MeasurableSpace E]
+theorem empirical_measure_succ_eq_tau_ceti {E : Type*} [MeasurableSpace E]
     (x : ℕ → E) (n : ℕ) :
     empiricalMeasure (n + 1) (fun j ↦ x j) =
       (TauCeti.Probability.empiricalMeasure x n : Measure E) := by
@@ -30,7 +31,7 @@ theorem empiricalMeasure_succ_eq_tauCeti {E : Type*} [MeasurableSpace E]
 
 /-- Eventual measurability suffices for weak convergence of image laws under almost sure
 pointwise convergence. -/
-theorem tendsto_probabilityMeasure_map_of_eventually_aemeasurable_of_ae_tendsto
+theorem tendsto_probability_measure_map_of_eventually_aemeasurable_of_ae_tendsto
     {Ω E : Type*} [MeasurableSpace Ω] [PseudoMetricSpace E] [MeasurableSpace E]
     [BorelSpace E] (P : Measure Ω) [IsProbabilityMeasure P]
     (F : ℕ → Ω → E) (Z : Ω → E) (hFm : ∀ᶠ n in atTop, AEMeasurable (F n) P)
@@ -64,7 +65,7 @@ theorem ae_tendsto_empirical_wasserstein_one
         atTop (𝓝 0) := by
   let μ : ProbabilityMeasure E := ⟨P.map (Z 0), inferInstance⟩
   have hμ : TauCeti.HasFiniteMoment 1 (μ : Measure E) :=
-    hasFiniteMoment_one_map_of_integrable P (Z 0) (hZm 0) hZi
+    has_finite_moment_one_map_of_integrable P (Z 0) (hZm 0) hZi
   have hHasLaw (i : ℕ) : HasLaw (Z i) (μ : Measure E) P := ⟨(hZm i).aemeasurable, (hid i).map_eq⟩
   have hstrong := TauCeti.tendsto_wassersteinEDist_empiricalMeasure_ae
     (p := 1) (by norm_num) (by norm_num) hμ hind hHasLaw
@@ -75,48 +76,48 @@ theorem ae_tendsto_empirical_wasserstein_one
     change Tendsto (fun n ↦ (TauCeti.wassersteinEDist 1
       (TauCeti.Probability.empiricalMeasure (fun i ↦ Z i ω) n : Measure E)
       (P.map (Z 0))).toReal) atTop (𝓝 (0 : ℝ≥0∞).toReal) at hr0
-    simpa only [← empiricalMeasure_succ_eq_tauCeti, ENNReal.toReal_zero] using hr0
+    simpa only [← empirical_measure_succ_eq_tau_ceti, ENNReal.toReal_zero] using hr0
   apply (hr.comp (tendsto_sub_atTop_nat 1)).congr'
   filter_upwards [eventually_ge_atTop (1 : ℕ)] with N hN
   exact congrArg (fun M : ℕ ↦
     (TauCeti.wassersteinEDist 1 (empiricalMeasure M (fun j ↦ Z j ω)) (P.map (Z 0))).toReal)
       (Nat.sub_add_cancel hN)
 /-- Finite empirical laws have finite first moment. -/
-theorem hasFiniteMoment_one_empiricalMeasure {E : Type*} [NormedAddCommGroup E]
+theorem has_finite_moment_one_empirical_measure {E : Type*} [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     {N : ℕ} (hN : 0 < N) (x : Fin N → E) :
     TauCeti.HasFiniteMoment 1 (empiricalMeasure N x) := by
   let P : Measure (Fin N) := empiricalMeasure N id
-  let := isProbabilityMeasure_empiricalMeasure hN (id : Fin N → Fin N)
+  let := is_probability_measure_empirical_measure hN (id : Fin N → Fin N)
   have hi : Integrable x P := Integrable.of_bound (measurable_of_finite x).aestronglyMeasurable
     ‖x‖ (ae_of_all _ fun j ↦ norm_le_pi_norm x j)
-  have hh := hasFiniteMoment_one_map_of_integrable P x (measurable_of_finite x) hi
-  simpa only [P, map_empiricalMeasure N id x (measurable_of_finite x), id_eq] using hh
+  have hh := has_finite_moment_one_map_of_integrable P x (measurable_of_finite x) hi
+  simpa only [P, map_empirical_measure N id x (measurable_of_finite x), id_eq] using hh
 
 /-- A finite empirical law and an integrable image law are at finite first-Wasserstein distance. -/
-theorem wassersteinEDist_one_empirical_map_ne_top
+theorem wasserstein_e_dist_one_empirical_map_ne_top
     {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure Ω) [IsProbabilityMeasure P] {N : ℕ} (hN : 0 < N) (x : Fin N → E)
     (Z : Ω → E) (hZm : Measurable Z) (hZi : Integrable Z P) :
     TauCeti.wassersteinEDist 1 (empiricalMeasure N x) (P.map Z) ≠ ∞ := by
-  let := isProbabilityMeasure_empiricalMeasure hN x
+  let := is_probability_measure_empirical_measure hN x
   exact (TauCeti.hasFiniteMoment_iff_wassersteinEDist_ne_top_of_hasFiniteMoment
-    measurable_edist (hasFiniteMoment_one_empiricalMeasure hN x)).mp
-    (hasFiniteMoment_one_map_of_integrable P Z hZm hZi)
+    measurable_edist (has_finite_moment_one_empirical_measure hN x)).mp
+    (has_finite_moment_one_map_of_integrable P Z hZm hZi)
 /-- Continuous process paths give an almost-everywhere measurable compact-path constructor. -/
-theorem aemeasurable_pathOn_of_ae_continuous
+theorem aemeasurable_path_on_of_ae_continuous
     {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure Ω) (F : ℝ → Ω → E) (hFm : ∀ t, AEMeasurable (F t) P)
     (hFc : ∀ᵐ ω ∂P, Continuous (fun t ↦ F t ω)) {T : ℝ} (hT : 0 ≤ T) :
     AEMeasurable (fun ω ↦ pathOn T (fun t ↦ F t ω)) P := by
-  obtain ⟨G, hGm, hG⟩ := exists_measurable_continuousPath_version P F hFm hFc hT
+  obtain ⟨G, hGm, hG⟩ := exists_measurable_continuous_path_version P F hFm hFc hT
   apply hGm.aemeasurable.congr
   filter_upwards [hG, hFc] with ω hω hc
   apply ContinuousMap.ext
   intro t
-  rw [pathOn_apply_of_continuousOn T (fun s ↦ F s ω) hc.continuousOn t]
+  rw [path_on_apply_of_continuous_on T (fun s ↦ F s ω) hc.continuousOn t]
   exact hω t
 
 /-- Vanishing uniform coupling errors imply weak convergence of every fixed finite set of
@@ -139,7 +140,7 @@ theorem tendsto_joint_image_laws_of_ae_uniform_bound
     by_cases hN : 0 < N
     · exact hbound N hN
     · exact ae_of_all _ fun _ i ↦ False.elim (hN (lt_of_le_of_lt (Nat.zero_le i) i.isLt))
-  apply tendsto_probabilityMeasure_map_of_eventually_aemeasurable_of_ae_tendsto P _ _ hXm
+  apply tendsto_probability_measure_map_of_eventually_aemeasurable_of_ae_tendsto P _ _ hXm
     (AEMeasurable.of_eval fun i ↦ hZm i)
   filter_upwards [hr, hall] with ω hrω hω
   apply tendsto_pi_nhds.2

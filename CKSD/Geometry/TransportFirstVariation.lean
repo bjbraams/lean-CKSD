@@ -1,4 +1,5 @@
 module
+
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Normed.Lp.MeasurableSpace
 public import Mathlib.MeasureTheory.Measure.Haar.Basic
@@ -25,7 +26,7 @@ rule then applies. The displacement field need not be continuous or bounded.
 ## Main results
 
 * `CKSD.integral_displacement_cost_eq_wasserstein_of_minimizer`: identify the minimum cost.
-* `CKSD.hasDerivAt_wasserstein_sq_displacement`: the directional first variation.
+* `CKSD.has_deriv_at_wasserstein_sq_displacement`: the directional first variation.
 -/
 
 public section
@@ -73,7 +74,7 @@ theorem integral_displacement_cost_eq_wasserstein_of_minimizer
     (hμt ▸ hmap γ)
   rw [hdist, hcost] at hlo
   obtain ⟨π, hπ⟩ := TauCeti.exists_isOptimalCoupling_edist_rpow (P.map f) Q 2
-  obtain ⟨etaRaw, hη, hlift⟩ := exists_isCoupling_map_prodMap_eq P Q f hf hπ.toIsCoupling
+  obtain ⟨etaRaw, hη, hlift⟩ := exists_is_coupling_map_prod_map_eq P Q f hf hπ.toIsCoupling
   have hηprob : IsProbabilityMeasure etaRaw := hη.isProbabilityMeasure
   let η : TauCeti.Coupling (μ : ProbabilityMeasure E) (ν : ProbabilityMeasure E) :=
     ⟨⟨etaRaw, hηprob⟩, hη⟩
@@ -87,7 +88,7 @@ theorem integral_displacement_cost_eq_wasserstein_of_minimizer
 
 /-- First variation of the squared quadratic Wasserstein distance along an arbitrary measurable
 square-integrable displacement, at an absolutely continuous source law. -/
-theorem hasDerivAt_wasserstein_sq_displacement [FiniteDimensional ℝ E]
+theorem has_deriv_at_wasserstein_sq_displacement [FiniteDimensional ℝ E]
     {ρ : Measure E} [ρ.IsAddHaarMeasure]
     (μ ν : TauCeti.WassersteinSpace 2 E)
     (hac : ((μ : ProbabilityMeasure E) : Measure E) ≪ ρ)
@@ -114,7 +115,7 @@ theorem hasDerivAt_wasserstein_sq_displacement [FiniteDimensional ℝ E]
   have hgc : TauCeti.IsCoupling (TauCeti.graphPlan T P) P Q :=
     TauCeti.isCoupling_graphPlan ⟨hT.aemeasurable, hlaw⟩
   let g : X := ⟨⟨TauCeti.graphPlan T P, hgc.isProbabilityMeasure⟩, hgc⟩
-  have hgo := isOptimalCoupling_graphPlan_of_integral_norm_sq_eq μ ν T hT hlaw hopt
+  have hgo := is_optimal_coupling_graph_plan_of_integral_norm_sq_eq μ ν T hT hlaw hopt
   let A : X → ℝ := fun γ ↦ ∫ z, ‖z.1 - z.2‖ ^ 2 ∂γ.1.toMeasure
   let B : X → ℝ := fun γ ↦ 2 * ∫ z, inner ℝ (z.1 - z.2) (v z.1) ∂γ.1.toMeasure
   let C : ℝ := ∫ x, ‖v x‖ ^ 2 ∂P
@@ -130,10 +131,10 @@ theorem hasDerivAt_wasserstein_sq_displacement [FiniteDimensional ℝ E]
     rw [TauCeti.integral_graphPlan hT.aemeasurable (by fun_prop)]
   have hA : LowerSemicontinuous A := by
     simpa only [A, zero_smul, add_zero] using
-      lowerSemicontinuous_integral_coupling_displacement_sq (μ : ProbabilityMeasure E)
+      lower_semicontinuous_integral_coupling_displacement_sq (μ : ProbabilityMeasure E)
         (ν : ProbabilityMeasure E) hμ₂ hν₂ v hv hv₂ 0
   have hAp : LowerSemicontinuous (fun γ ↦ A γ + B γ) := by
-    have h := (lowerSemicontinuous_integral_coupling_displacement_sq (μ : ProbabilityMeasure E)
+    have h := (lower_semicontinuous_integral_coupling_displacement_sq (μ : ProbabilityMeasure E)
       (ν : ProbabilityMeasure E) hμ₂ hν₂ v hv hv₂ 1).add
       (lowerSemicontinuous_const (z := -C))
     convert h using 1
@@ -141,7 +142,7 @@ theorem hasDerivAt_wasserstein_sq_displacement [FiniteDimensional ℝ E]
     rw [hcost]
     ring
   have hAm : LowerSemicontinuous (fun γ ↦ A γ - B γ) := by
-    have h := (lowerSemicontinuous_integral_coupling_displacement_sq (μ : ProbabilityMeasure E)
+    have h := (lower_semicontinuous_integral_coupling_displacement_sq (μ : ProbabilityMeasure E)
       (ν : ProbabilityMeasure E) hμ₂ hν₂ v hv hv₂ (-1)).add
       (lowerSemicontinuous_const (z := -C))
     convert h using 1
@@ -165,7 +166,7 @@ theorem hasDerivAt_wasserstein_sq_displacement [FiniteDimensional ℝ E]
       (∫ z, ‖z.1 + t • v z.1 - z.2‖ ^ 2 ∂γ.1.toMeasure) ≤
         ∫ z, ‖z.1 + t • v z.1 - z.2‖ ^ 2 ∂η.1.toMeasure := by
     obtain ⟨γ, -, hγ⟩ :=
-      (lowerSemicontinuous_integral_coupling_displacement_sq (μ : ProbabilityMeasure E)
+      (lower_semicontinuous_integral_coupling_displacement_sq (μ : ProbabilityMeasure E)
         (ν : ProbabilityMeasure E) hμ₂ hν₂ v hv hv₂ t).lowerSemicontinuousOn univ
         |>.exists_isMinOn Set.univ_nonempty isCompact_univ
     exact ⟨γ, fun η ↦ hγ (mem_univ η)⟩
@@ -174,7 +175,7 @@ theorem hasDerivAt_wasserstein_sq_displacement [FiniteDimensional ℝ E]
     have h := hq t g
     rw [hcost, hcost, hAg, hBg] at h
     linarith
-  have hder := hasDerivAt_compact_quadratic_minimum (S := (univ : Set X)) isCompact_univ
+  have hder := has_deriv_at_compact_quadratic_minimum (S := (univ : Set X)) isCompact_univ
     A B (hA.lowerSemicontinuousOn _) (hAp.lowerSemicontinuousOn _) (hAm.lowerSemicontinuousOn _)
     a D M C (fun γ _ ↦ ha γ) (fun γ _ ↦ hD γ)
     (fun γ _ ↦ abs_integral_inner_displacement_coupling_le γ.2 hμ₂ hν₂ hv₂)

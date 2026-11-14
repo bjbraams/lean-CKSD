@@ -2,6 +2,7 @@ module
 
 public import CKSD.Asymptotics.Statistics
 
+
 /-!
 # Rate of convergence of M-estimators
 
@@ -30,7 +31,7 @@ def centredCriterionModulus {Ω Θ : Type*} [PseudoMetricSpace Θ] (M : Θ → �
 
 /-- Markov's inequality for outer expectations: a set on which `f ≥ t` has outer measure at
 most `E* f / t`. -/
-theorem measure_le_outerExpectation_div {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+theorem measure_le_outer_expectation_div {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
     (f : Ω → ℝ≥0∞) (A : Set Ω) {t : ℝ≥0∞} (ht : t ≠ 0) (ht' : t ≠ ∞)
     (h : ∀ ω ∈ A, t ≤ f ω) : μ A ≤ outerExpectation μ f / t := by
   rw [ENNReal.le_div_iff_mul_le (Or.inl ht) (Or.inl ht')]
@@ -49,7 +50,7 @@ quadratic separation `M θ - M θ₀ ≤ -c d(θ,θ₀)²` near `θ₀`, and tha
 most `C φₙ(δ)/√n` with a constant `C ≥ 0`, where `δ ↦ φₙ(δ)/δ^a` is decreasing on `(0,∞)` for
 a fixed `a < 2`. If `rₙ² φₙ(1/rₙ) ≤ √n`, the estimator maximizes `Mₙ` up to `O_P(rₙ⁻²)`, and it
 is consistent in outer probability, then `rₙ d(Tₙ, θ₀) = O_P(1)`. -/
-theorem isBoundedInProbability_rate_mEstimator {Ω Θ : Type*} [MeasurableSpace Ω]
+theorem is_bounded_in_probability_rate_m_estimator {Ω Θ : Type*} [MeasurableSpace Ω]
     [PseudoMetricSpace Θ] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (M : Θ → ℝ) (Mn : ℕ → Ω → Θ → ℝ) (θ₀ : Θ)
     (c η : ℝ) (hc : 0 < c) (hη : 0 < η)
@@ -67,7 +68,7 @@ theorem isBoundedInProbability_rate_mEstimator {Ω Θ : Type*} [MeasurableSpace 
     (hopt : ∀ n ω, Mn n ω θ₀ - R n ω ≤ Mn n ω (T n ω))
     (hcons : TendstoInMeasure μ T atTop (fun _ ↦ θ₀)) :
     IsBoundedInProbability μ (fun n ω ↦ r n * dist (T n ω) θ₀) := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hcons
+  rw [tendsto_in_measure_iff_measure_real_lt_dist] at hcons
   intro ε hε
   have hε3 : 0 < ε / 3 := by positivity
   obtain ⟨K, hK, hKev⟩ := hR (ε / 3) hε3
@@ -164,7 +165,7 @@ theorem isBoundedInProbability_rate_mEstimator {Ω Θ : Type*} [MeasurableSpace 
       rw [this, measure_empty]; exact zero_le
     have ht : 0 < c * 4 ^ k / (2 * r n ^ 2) := by positivity
     have hδpos : 0 < δk := by positivity
-    refine (measure_le_outerExpectation_div μ _ (Ak k) (ENNReal.ofReal_pos.2 ht).ne'
+    refine (measure_le_outer_expectation_div μ _ (Ak k) (ENNReal.ofReal_pos.2 ht).ne'
       ENNReal.ofReal_ne_top (fun ω hω ↦ hω.2)).trans ?_
     refine (ENNReal.div_le_div_right (hmod n hn1 δk hδpos hδ) _).trans ?_
     refine ENNReal.div_le_of_le_mul ?_

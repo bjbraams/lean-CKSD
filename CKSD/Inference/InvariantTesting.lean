@@ -4,6 +4,7 @@ public import CKSD.Inference.Model
 public import CKSD.Inference.NeymanPearson
 public import CKSD.Inference.Sufficiency
 
+
 /-!
 # Unbiased tests, Neyman structure, and maximal invariants
 
@@ -12,12 +13,12 @@ Neyman structure of similar tests under bounded completeness, and maximal invari
 
 ## Main results
 
-* `CKSD.isUniformlyMostPowerfulUnbiasedTest_of_two_tail_moment_constraints`: the two-tailed test
+* `CKSD.is_uniformly_most_powerful_unbiased_test_of_two_tail_moment_constraints`: the two-tailed test
   in the natural statistic whose size and first moment match `α` at `η₀` is UMPU for `η = η₀`
   against `η ≠ η₀` (GAPS 101.45).
-* `CKSD.hasDerivAt_integral_mul_exp`: differentiation of exponential-family integrals in the
+* `CKSD.has_deriv_at_integral_mul_exp`: differentiation of exponential-family integrals in the
   natural parameter.
-* `CKSD.condExp_eq_const_of_isSimilarTest`: similar tests have Neyman structure (GAPS 101.49).
+* `CKSD.cond_exp_eq_const_of_is_similar_test`: similar tests have Neyman structure (GAPS 101.49).
 * `CKSD.invariant_iff_factors_through_maximal_invariant` (GAPS 101.55) and
   `CKSD.mean_scale_ratio_eq_iff` (GAPS 101.56).
 
@@ -69,7 +70,7 @@ theorem abs_mul_exp_le_of_abs_sub_lt {η η₀ ε : ℝ} (hε : 0 < ε) (hη : |
 
 /-- Differentiation under the integral sign for a bounded multiple of an exponential family
 integrand, at an interior point of the Laplace-integrability set. -/
-theorem hasDerivAt_integral_mul_exp (μ : Measure X)
+theorem has_deriv_at_integral_mul_exp (μ : Measure X)
     (T h g : X → ℝ) (hT : Measurable T) (hh : Measurable h) (hpos : ∀ x, 0 ≤ h x)
     (hg : Measurable g) (hgb : ∀ x, |g x| ≤ 1) (U : Set ℝ) (hU : IsOpen U)
     (hint : ∀ η ∈ U, Integrable (fun x ↦ h x * Real.exp (η * T x)) μ) (η₀ : ℝ) (hη₀ : η₀ ∈ U) :
@@ -173,7 +174,7 @@ theorem exists_chord_of_const_mul_exp {a d c₁ c₂ : ℝ} (ha : 0 ≤ a) (hc :
 UMPU. The proof applies `integral_le_of_generalized_neyman_pearson` with the chord of the
 likelihood ratio through the critical points; for a competing unbiased test, the two moment
 constraints follow from the vanishing derivative of its power function at `η₀`. -/
-theorem isUniformlyMostPowerfulUnbiasedTest_of_two_tail_moment_constraints
+theorem is_uniformly_most_powerful_unbiased_test_of_two_tail_moment_constraints
     (μ : Measure X) (T h : X → ℝ) (hT : Measurable T)
     (hh : Measurable h) (hpos : ∀ x, 0 ≤ h x) (A : ℝ → ℝ)
     (U : Set ℝ) (hU : IsOpen U)
@@ -303,10 +304,10 @@ theorem isUniformlyMostPowerfulUnbiasedTest_of_two_tail_moment_constraints
     have hPθ := hP θ
     simpa using this
   · intro ψ hψ hlev hunb θ _
-    obtain ⟨-, hM⟩ := hasDerivAt_integral_mul_exp μ T h ψ hT hh hpos hψ.1 hψ.abs_le_one U hU
+    obtain ⟨-, hM⟩ := has_deriv_at_integral_mul_exp μ T h ψ hT hh hpos hψ.1 hψ.abs_le_one U hU
       hexpint
       η₀ η₀.2
-    obtain ⟨-, hZd⟩ := hasDerivAt_integral_mul_exp μ T h (fun _ ↦ 1) hT hh hpos measurable_const
+    obtain ⟨-, hZd⟩ := has_deriv_at_integral_mul_exp μ T h (fun _ ↦ 1) hT hh hpos measurable_const
       (fun _ ↦ by simp) U hU hexpint η₀ η₀.2
     set M := fun η : ℝ ↦ ∫ x, ψ x * h x * Real.exp (η * T x) ∂μ with hMdef
     set Z := fun η : ℝ ↦ ∫ x, 1 * h x * Real.exp (η * T x) ∂μ with hZdef
@@ -357,7 +358,7 @@ theorem isUniformlyMostPowerfulUnbiasedTest_of_two_tail_moment_constraints
 /-- GAPS 101.49: similar tests have Neyman structure. If `T` is sufficient and boundedly
 complete, every test `φ` that is similar of size `α` (its power is `α` at every parameter) has
 conditional rejection probability `E_θ[φ | T] = α` almost surely for every `θ`. -/
-theorem condExp_eq_const_of_isSimilarTest (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
+theorem cond_exp_eq_const_of_is_similar_test (P : Θ → Measure X) (hP : ∀ θ, IsProbabilityMeasure (P θ))
     (T : X → S) (hs : IsSufficientStatistic P T) (hc : IsBoundedlyCompleteStatistic P T)
     (φ : X → ℝ) (α : ℝ) (hsim' : IsSimilarTest P univ α φ) (θ : Θ) :
     (P θ)[φ | (inferInstance : MeasurableSpace S).comap T] =ᵐ[P θ] fun _ ↦ α := by
@@ -365,15 +366,15 @@ theorem condExp_eq_const_of_isSimilarTest (P : Θ → Measure X) (hP : ∀ θ, I
   obtain ⟨hφ, hsim⟩ := hsim'
   replace hsim : ∀ θ, (∫ x, φ x ∂P θ) = α := fun θ ↦ hsim θ (mem_univ θ)
   have hφb : ∀ x, |φ x| ≤ 1 := hφ.abs_le_one
-  have hzero := ae_integral_kernel_eq_of_isBoundedlyCompleteStatistic P hP hT hc K hK hφ.1 hφb
+  have hzero := ae_integral_kernel_eq_of_is_boundedly_complete_statistic P hP hT hc K hK hφ.1 hφb
     α hsim θ
   have := hP θ
   refine (ae_eq_condExp_of_forall_setIntegral_eq hT.comap_le
     (hφ.integrable _)
     (fun _ _ _ ↦ integrableOn_const) (fun s hs' _ ↦ ?_) aestronglyMeasurable_const).symm
   obtain ⟨B, hB, rfl⟩ := hs'
-  rw [setIntegral_preimage_eq_integral_indicator_mul _ hT hB,
-    setIntegral_preimage_eq_integral_indicator_mul _ hT hB,
+  rw [set_integral_preimage_eq_integral_indicator_mul _ hT hB,
+    set_integral_preimage_eq_integral_indicator_mul _ hT hB,
     integral_indicator_comp_mul_eq _ hT K (hK θ) hB hφ.1 hφb]
   refine integral_congr_ae (hzero.mono fun x hx ↦ ?_)
   simp only

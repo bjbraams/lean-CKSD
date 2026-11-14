@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.Diffusion
 public import TauCeti.Probability.Distributions.Uniform.Basic
 public import CKSD.Nonparametric.Basic
@@ -31,7 +32,7 @@ of `μ ⊗ N(0, I) ⊗ U(0,1) ⊗ U(0,1)` under the lazy accept–reject map. -/
       if w.2 ≤ 1 / 2 then x else if w.1.2 ≤ malaAcceptance V gradV h x y then y else x
 
 /-- The explicit sampling representation of a lazy MALA step. -/
-theorem malaStepLaw_def {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
+theorem mala_step_law_def {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (h : ℝ)
     (μ : Measure (EuclideanSpace ℝ (Fin d))) :
     malaStepLaw V gradV h μ =
@@ -43,7 +44,7 @@ theorem malaStepLaw_def {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
       if w.2 ≤ 1 / 2 then x else if w.1.2 ≤ malaAcceptance V gradV h x y then y else x := rfl
 
 /-- The lazy MALA accept-reject update is measurable for measurable potential and gradient. -/
-theorem measurable_malaStepMap {d : ℕ}
+theorem measurable_mala_step_map {d : ℕ}
     (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (G : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (h : ℝ) (hV : Measurable V) (hG : Measurable G) :
@@ -66,7 +67,7 @@ theorem measurable_malaStepMap {d : ℕ}
     (Measurable.ite (measurableSet_le (measurable_snd.comp measurable_fst) hAcc) hY hX)
 
 /-- Lazy MALA maps probability laws to probability laws. -/
-theorem isProbabilityMeasure_malaStepLaw {d : ℕ}
+theorem is_probability_measure_mala_step_law {d : ℕ}
     (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (G : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (h : ℝ) (hV : Measurable V) (hG : Measurable G)
@@ -74,13 +75,13 @@ theorem isProbabilityMeasure_malaStepLaw {d : ℕ}
     IsProbabilityMeasure (malaStepLaw V G h μ) := by
   have := TauCeti.Probability.isProbabilityMeasure_uniformMeasure zero_lt_one
   constructor
-  rw [malaStepLaw_def, Measure.map_apply (measurable_malaStepMap V G h hV hG) MeasurableSet.univ,
+  rw [mala_step_law_def, Measure.map_apply (measurable_mala_step_map V G h hV hG) MeasurableSet.univ,
     Set.preimage_univ]
   simp
 
 /-- If proposals from an event have small acceptance on a noise event, the accept-reject
 update retains at least the corresponding rejected mass inside the original event. -/
-theorem malaStepLaw_apply_ge_of_acceptance_lt {d : ℕ}
+theorem mala_step_law_apply_ge_of_acceptance_lt {d : ℕ}
     (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (G : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (h : ℝ) (hV : Measurable V) (hG : Measurable G)
@@ -90,7 +91,7 @@ theorem malaStepLaw_apply_ge_of_acceptance_lt {d : ℕ}
     (hacc : ∀ x ∈ A, ∀ z ∈ B,
       malaAcceptance V G h x (x - h • G x + Real.sqrt (2 * h) • z) < r) :
     μ A * stdGaussian _ B * ENNReal.ofReal (1 - r) ≤ malaStepLaw V G h μ A := by
-  rw [malaStepLaw_def, Measure.map_apply (measurable_malaStepMap V G h hV hG) hA]
+  rw [mala_step_law_def, Measure.map_apply (measurable_mala_step_map V G h hV hG) hA]
   have hsub : ((A ×ˢ B) ×ˢ Ici r) ×ˢ (univ : Set ℝ) ⊆
       (fun w : ((EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d)) × ℝ) × ℝ ↦
         let x := w.1.1.1

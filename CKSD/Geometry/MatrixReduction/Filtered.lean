@@ -2,6 +2,7 @@ module
 
 public import CKSD.Geometry.MatrixReduction.Basic
 
+
 /-!
 # Graded reductions and filtered chains
 
@@ -15,7 +16,7 @@ reductions with the grading (used for GAPS 108.32).
 
 ## Main results
 
-* `CKSD.Matrix.rank_add_of_disjoint_supports`, `CKSD.lowerLeftRank_eq_add_dimColumnPart`.
+* `CKSD.Matrix.rank_add_of_disjoint_supports`, `CKSD.lower_left_rank_eq_add_dim_column_part`.
 * `CKSD.IsColumnLow.dim_eq`, `CKSD.IsColumnLow.col_eq_zero`.
 -/
 
@@ -135,23 +136,23 @@ def dimColumnPartCompl (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (
 
 /-- Lower-left ranks split along column dimensions for a matrix whose nonzero entries raise
 the dimension by one. -/
-theorem lowerLeftRank_eq_add_dimColumnPart {D : Matrix (Fin m) (Fin m) 𝕜} {dim : Fin m → ℕ}
+theorem lower_left_rank_eq_add_dim_column_part {D : Matrix (Fin m) (Fin m) 𝕜} {dim : Fin m → ℕ}
     (hD : ∀ i j, D i j ≠ 0 → dim i + 1 = dim j) (q a b : ℕ) :
     lowerLeftRank D a b =
       lowerLeftRank (dimColumnPart D dim q) a b + lowerLeftRank (dimColumnPartCompl D dim q) a b := by
   unfold lowerLeftRank
-  have hsum : lowerLeftPart D a b = lowerLeftPart (dimColumnPart D dim q) a b +
-      lowerLeftPart (dimColumnPartCompl D dim q) a b := by
+  have hsum : lower_left_part D a b = lower_left_part (dimColumnPart D dim q) a b +
+      lower_left_part (dimColumnPartCompl D dim q) a b := by
     ext k l
-    simp only [lowerLeftPart, dimColumnPart, dimColumnPartCompl, of_apply]
+    simp only [lower_left_part, dimColumnPart, dimColumnPartCompl, of_apply]
     by_cases h1 : a ≤ k.val ∧ l.val < b <;> by_cases h2 : dim l = q <;> simp [h1, h2]
   rw [hsum]
   apply Matrix.rank_add_of_disjoint_supports
   · intro k l hkl k'
-    simp only [lowerLeftPart, dimColumnPart, dimColumnPartCompl, of_apply] at hkl ⊢
+    simp only [lower_left_part, dimColumnPart, dimColumnPartCompl, of_apply] at hkl ⊢
     split_ifs at hkl ⊢ <;> simp_all
   · intro k l hkl l'
-    simp only [lowerLeftPart, dimColumnPart, dimColumnPartCompl, of_apply] at hkl ⊢
+    simp only [lower_left_part, dimColumnPart, dimColumnPartCompl, of_apply] at hkl ⊢
     split_ifs at hkl ⊢ with h1 h2 h3 h4 h5 <;> simp_all
     by_contra hne
     have e1 := hD k l (by simpa [h2] using hkl)
@@ -159,12 +160,12 @@ theorem lowerLeftRank_eq_add_dimColumnPart {D : Matrix (Fin m) (Fin m) 𝕜} {di
     omega
 
 /-- Adding a zero column does not change lower-left ranks. -/
-theorem lowerLeftRank_succ_of_col_eq_zero {M : Matrix (Fin m) (Fin m) 𝕜} {l : Fin m}
+theorem lower_left_rank_succ_of_col_eq_zero {M : Matrix (Fin m) (Fin m) 𝕜} {l : Fin m}
     (hl : ∀ k, M k l = 0) (a : ℕ) : lowerLeftRank M a (l.val + 1) = lowerLeftRank M a l.val := by
   unfold lowerLeftRank
   congr 1
   ext k l'
-  simp only [lowerLeftPart, of_apply]
+  simp only [lower_left_part, of_apply]
   by_cases h : l' = l
   · subst h; simp [hl]
   · have : l'.val < l.val + 1 ↔ l'.val < l.val := by
@@ -173,12 +174,12 @@ theorem lowerLeftRank_succ_of_col_eq_zero {M : Matrix (Fin m) (Fin m) 𝕜} {l :
     simp only [this]
 
 /-- Adding a zero row does not change lower-left ranks. -/
-theorem lowerLeftRank_of_row_eq_zero {M : Matrix (Fin m) (Fin m) 𝕜} {k : Fin m}
+theorem lower_left_rank_of_row_eq_zero {M : Matrix (Fin m) (Fin m) 𝕜} {k : Fin m}
     (hk : ∀ l, M k l = 0) (b : ℕ) : lowerLeftRank M k.val b = lowerLeftRank M (k.val + 1) b := by
   unfold lowerLeftRank
   congr 1
   ext k' l
-  simp only [lowerLeftPart, of_apply]
+  simp only [lower_left_part, of_apply]
   by_cases h : k' = k
   · subst h; simp [hk]
   · have : k.val ≤ k'.val ↔ k.val + 1 ≤ k'.val := by
@@ -187,17 +188,17 @@ theorem lowerLeftRank_of_row_eq_zero {M : Matrix (Fin m) (Fin m) 𝕜} {k : Fin 
     simp only [this]
 
 /-- The pairing combination vanishes at a zero column. -/
-theorem pairingRankCombination_eq_zero_of_col {M : Matrix (Fin m) (Fin m) 𝕜} {i l : Fin m}
+theorem pairing_rank_combination_eq_zero_of_col {M : Matrix (Fin m) (Fin m) 𝕜} {i l : Fin m}
     (hl : ∀ k, M k l = 0) : pairingRankCombination M i l = 0 := by
   unfold pairingRankCombination
-  rw [lowerLeftRank_succ_of_col_eq_zero hl, lowerLeftRank_succ_of_col_eq_zero hl]
+  rw [lower_left_rank_succ_of_col_eq_zero hl, lower_left_rank_succ_of_col_eq_zero hl]
   ring
 
 /-- The pairing combination vanishes at a zero row. -/
-theorem pairingRankCombination_eq_zero_of_row {M : Matrix (Fin m) (Fin m) 𝕜} {i l : Fin m}
+theorem pairing_rank_combination_eq_zero_of_row {M : Matrix (Fin m) (Fin m) 𝕜} {i l : Fin m}
     (hi : ∀ k, M i k = 0) : pairingRankCombination M i l = 0 := by
   unfold pairingRankCombination
-  rw [lowerLeftRank_of_row_eq_zero hi, lowerLeftRank_of_row_eq_zero hi]
+  rw [lower_left_rank_of_row_eq_zero hi, lower_left_rank_of_row_eq_zero hi]
   ring
 
 /-- In a column reduction of a matrix whose nonzero entries raise the dimension by one, the low
@@ -206,16 +207,16 @@ theorem IsColumnLow.dim_eq {D R V : Matrix (Fin m) (Fin m) 𝕜} {dim : Fin m �
     (hD : ∀ i j, D i j ≠ 0 → dim i + 1 = dim j) (h : IsMatrixReduction D R V) {i j : Fin m}
     (hij : IsColumnLow R i j) : dim j = dim i + 1 := by
   have h1 : pairingRankCombination D i j = 1 := by
-    simp [pairingRankCombination_eq_ite h, hij]
+    simp [pairing_rank_combination_eq_ite h, hij]
   have hsplit : pairingRankCombination D i j =
       pairingRankCombination (dimColumnPart D dim (dim j)) i j +
         pairingRankCombination (dimColumnPartCompl D dim (dim j)) i j := by
     unfold pairingRankCombination
-    simp only [lowerLeftRank_eq_add_dimColumnPart hD (dim j)]
+    simp only [lower_left_rank_eq_add_dim_column_part hD (dim j)]
     push_cast
     ring
   have h0 : pairingRankCombination (dimColumnPartCompl D dim (dim j)) i j = 0 :=
-    pairingRankCombination_eq_zero_of_col fun k ↦ by simp [dimColumnPartCompl]
+    pairing_rank_combination_eq_zero_of_col fun k ↦ by simp [dimColumnPartCompl]
   rw [h0, add_zero] at hsplit
   by_contra hne
   have hrow : ∀ k, dimColumnPart D dim (dim j) i k = 0 := by
@@ -225,7 +226,7 @@ theorem IsColumnLow.dim_eq {D R V : Matrix (Fin m) (Fin m) 𝕜} {dim : Fin m �
     · by_contra hD0
       exact hne ((hD i k hD0).trans hk).symm
     · rfl
-  rw [pairingRankCombination_eq_zero_of_row hrow] at hsplit
+  rw [pairing_rank_combination_eq_zero_of_row hrow] at hsplit
   omega
 
 /-- In a column reduction of a strictly upper triangular matrix, the low of a column lies
@@ -255,7 +256,7 @@ def dimTransformPart (V : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (q 
   Matrix.of fun k l ↦ if dim l = q then V k l else if k = l then 1 else 0
 
 /-- Lows of the restricted reduction are the lows of `R` in columns of dimension `q`. -/
-theorem isColumnLow_dimReducedPart_iff {D R V : Matrix (Fin m) (Fin m) 𝕜} {dim : Fin m → ℕ}
+theorem is_column_low_dim_reduced_part_iff {D R V : Matrix (Fin m) (Fin m) 𝕜} {dim : Fin m → ℕ}
     (hD : ∀ i j, D i j ≠ 0 → dim i + 1 = dim j) (h : IsMatrixReduction D R V) (q : ℕ)
     (i l : Fin m) : IsColumnLow (dimReducedPart R dim q) i l ↔ dim l = q ∧ IsColumnLow R i l := by
   constructor
@@ -266,7 +267,7 @@ theorem isColumnLow_dimReducedPart_iff {D R V : Matrix (Fin m) (Fin m) 𝕜} {di
       exact hne (ite_eq_right hc)
     rw [ite_eq_left hc] at hne
     refine ⟨hc.1, hne, fun k hk ↦ ?_⟩
-    obtain ⟨i', hi'⟩ := exists_isColumnLow_of_ne_zero ⟨i, hne⟩
+    obtain ⟨i', hi'⟩ := exists_is_column_low_of_ne_zero ⟨i, hne⟩
     have hdim := hi'.dim_eq hD h
     have hii' : i ≤ i' := by
       by_contra hlt
@@ -292,7 +293,7 @@ theorem isColumnLow_dimReducedPart_iff {D R V : Matrix (Fin m) (Fin m) 𝕜} {di
 
 /-- Keeping the columns of dimension `q` of a column reduction gives a column reduction of the
 part of `D` in the columns of dimension `q`. -/
-theorem isMatrixReduction_dimColumnPart {D R V : Matrix (Fin m) (Fin m) 𝕜} {dim : Fin m → ℕ}
+theorem is_matrix_reduction_dim_column_part {D R V : Matrix (Fin m) (Fin m) 𝕜} {dim : Fin m → ℕ}
     (hD : ∀ i j, D i j ≠ 0 → dim i + 1 = dim j) (h : IsMatrixReduction D R V) (q : ℕ) :
     IsMatrixReduction (dimColumnPart D dim q) (dimReducedPart R dim q)
       (dimTransformPart V dim q) where
@@ -334,23 +335,23 @@ theorem isMatrixReduction_dimColumnPart {D R V : Matrix (Fin m) (Fin m) 𝕜} {d
     · exact one_ne_zero
   reduced := by
     intro i j j' hj hj'
-    rw [isColumnLow_dimReducedPart_iff hD h] at hj hj'
+    rw [is_column_low_dim_reduced_part_iff hD h] at hj hj'
     exact h.reduced i j j' hj.2 hj'.2
 
 /-- Lower-left ranks of the part of `D` in the columns of dimension `q` count the columns of
 dimension `q` whose low lies in the region. -/
-theorem lowerLeftRank_dimColumnPart_eq_card {D R V : Matrix (Fin m) (Fin m) 𝕜}
+theorem lower_left_rank_dim_column_part_eq_card {D R V : Matrix (Fin m) (Fin m) 𝕜}
     {dim : Fin m → ℕ} (hD : ∀ i j, D i j ≠ 0 → dim i + 1 = dim j) (h : IsMatrixReduction D R V)
     (q a b : ℕ) :
     lowerLeftRank (dimColumnPart D dim q) a b =
       (Finset.univ.filter fun l : Fin m ↦
         l.val < b ∧ dim l = q ∧ ∃ i, a ≤ i.val ∧ IsColumnLow R i l).card := by
-  have h' := isMatrixReduction_dimColumnPart hD h q
-  rw [← lowerLeftRank_eq_of_isMatrixReduction h', lowerLeftRank_eq_card_of_isReducedMatrix
+  have h' := is_matrix_reduction_dim_column_part hD h q
+  rw [← lower_left_rank_eq_of_is_matrix_reduction h', lower_left_rank_eq_card_of_is_reduced_matrix
     h'.reduced]
   congr 1
   ext l
-  simp only [Finset.mem_filter, Finset.mem_univ, true_and, isColumnLow_dimReducedPart_iff hD h]
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and, is_column_low_dim_reduced_part_iff hD h]
   constructor
   · rintro ⟨hb, i, ha, hq, hi⟩
     exact ⟨hb, hq, i, ha, hi⟩
@@ -382,12 +383,12 @@ theorem IsColumnLow.col_eq_zero {D R V : Matrix (Fin m) (Fin m) 𝕜} (hDD : D *
     exact j.2 k
   -- the kernel of `D` has dimension the number of zero columns of `R`
   have hrank : D.rank = Fintype.card {l : Fin m // ∃ i, IsColumnLow R i l} := by
-    have h0 := lowerLeftRank_eq_of_isMatrixReduction h 0 m
-    have hfull : ∀ M : Matrix (Fin m) (Fin m) 𝕜, lowerLeftPart M 0 m = M := by
-      intro M; ext k l; simp [lowerLeftPart]
+    have h0 := lower_left_rank_eq_of_is_matrix_reduction h 0 m
+    have hfull : ∀ M : Matrix (Fin m) (Fin m) 𝕜, lower_left_part M 0 m = M := by
+      intro M; ext k l; simp [lower_left_part]
     unfold lowerLeftRank at h0
     rw [hfull, hfull] at h0
-    rw [← h0, rank_eq_card_of_isReducedMatrix h.reduced]
+    rw [← h0, rank_eq_card_of_is_reduced_matrix h.reduced]
   have hcardZ : Fintype.card Z + Fintype.card {l : Fin m // ∃ i, IsColumnLow R i l} = m := by
     have hiff : ∀ l : Fin m, (∀ k, R k l = 0) ↔ ¬ ∃ i, IsColumnLow R i l := by
       intro l
@@ -396,7 +397,7 @@ theorem IsColumnLow.col_eq_zero {D R V : Matrix (Fin m) (Fin m) 𝕜} (hDD : D *
         exact hi.1 (hz i)
       · intro hn k
         by_contra hk
-        exact hn (exists_isColumnLow_of_ne_zero ⟨k, hk⟩)
+        exact hn (exists_is_column_low_of_ne_zero ⟨k, hk⟩)
     rw [Fintype.card_subtype, Fintype.card_subtype, ← Finset.card_union_of_disjoint]
     · rw [show (Finset.univ.filter fun l : Fin m ↦ ∀ k, R k l = 0) ∪
           Finset.univ.filter (fun l : Fin m ↦ ∃ i, IsColumnLow R i l) = Finset.univ by

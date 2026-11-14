@@ -2,6 +2,7 @@ module
 
 public import CKSD.Bayes.Basic
 
+
 /-!
 # Feynman–Kac models and the bootstrap particle filter
 
@@ -22,13 +23,13 @@ potential-weighted mixture of the transitions from the current particles (multin
 
 ## Main results
 
-* `CKSD.lintegral_bootstrapWeight_mul_average`: unbiasedness of the particle approximation of the
+* `CKSD.lintegral_bootstrap_weight_mul_average`: unbiasedness of the particle approximation of the
   unnormalized measures.
-* `CKSD.integral_particleLikelihood_eq`: the particle likelihood estimate is unbiased
+* `CKSD.integral_particle_likelihood_eq`: the particle likelihood estimate is unbiased
   (GAPS 104.58).
 * `CKSD.exists_integral_sq_particle_average_sub_le`: the mean-square error of the particle
   average at a fixed time is `O(1/N)`, uniformly over test functions bounded by a constant.
-* `CKSD.tendstoInMeasure_particle_average`: fixed-time consistency of the bootstrap
+* `CKSD.tendsto_in_measure_particle_average`: fixed-time consistency of the bootstrap
   filter (GAPS 104.55).
 -/
 
@@ -99,7 +100,7 @@ def IsBootstrapParticleSystem {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpa
 
 /-- Integral against the bootstrap prediction law: the potential-weighted average of the
 transition integrals from the current particles. -/
-theorem FeynmanKacModel.lintegral_particlePredictionLaw {X : Type*} [MeasurableSpace X]
+theorem FeynmanKacModel.lintegral_particle_prediction_law {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) {N : ℕ} (n : ℕ) (x : Fin N → X) (φ : X → ℝ≥0∞) :
     ∫⁻ y, φ y ∂M.particlePredictionLaw n x =
       (∑ i, ENNReal.ofReal (M.potential n (x i)))⁻¹ *
@@ -108,7 +109,7 @@ theorem FeynmanKacModel.lintegral_particlePredictionLaw {X : Type*} [MeasurableS
     lintegral_finsetSum_measure, smul_eq_mul]
 
 /-- With at least one particle, the bootstrap prediction law is a probability measure. -/
-theorem FeynmanKacModel.isProbabilityMeasure_particlePredictionLaw {X : Type*}
+theorem FeynmanKacModel.is_probability_measure_particle_prediction_law {X : Type*}
     [MeasurableSpace X] (M : FeynmanKacModel X) {N : ℕ} (hN : 0 < N) (n : ℕ) (x : Fin N → X) :
     IsProbabilityMeasure (M.particlePredictionLaw n x) := by
   constructor
@@ -118,7 +119,7 @@ theorem FeynmanKacModel.isProbabilityMeasure_particlePredictionLaw {X : Type*}
     exact ⟨⟨0, hN⟩, Finset.mem_univ _, by simpa using M.potential_pos n _⟩
   have hSt : (∑ i, ENNReal.ofReal (M.potential n (x i))) ≠ ⊤ :=
     ENNReal.sum_ne_top.2 fun _ _ ↦ ENNReal.ofReal_ne_top
-  have hpl := M.lintegral_particlePredictionLaw n x (fun _ ↦ 1)
+  have hpl := M.lintegral_particle_prediction_law n x (fun _ ↦ 1)
   have := M.isMarkov_transition n
   simp only [lintegral_one, measure_univ, mul_one] at hpl
   rwa [ENNReal.inv_mul_cancel hS0 hSt] at hpl
@@ -133,7 +134,7 @@ theorem lintegral_sum_comp_eval_pi {X : Type*} [MeasurableSpace X] {N : ℕ} (ν
   simp
 
 /-- One step of the unnormalized Feynman–Kac recursion `γₙ₊₁(φ) = γₙ(Gₙ Qₙ φ)`. -/
-theorem FeynmanKacModel.lintegral_unnormalizedLaw_succ {X : Type*} [MeasurableSpace X]
+theorem FeynmanKacModel.lintegral_unnormalized_law_succ {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) {φ : X → ℝ≥0∞} (hφ : Measurable φ) :
     ∫⁻ y, φ y ∂M.unnormalizedLaw (n + 1) =
       ∫⁻ x, ENNReal.ofReal (M.potential n x) * ∫⁻ y, φ y ∂M.transition n x
@@ -175,7 +176,7 @@ theorem lintegral_mul_sum_bootstrap_succ {Ω X : Type*} [MeasurableSpace Ω]
     simp only [hYdef] at hω ⊢
     rw [hω]
     simp only [hH]
-    have := M.isProbabilityMeasure_particlePredictionLaw hN n (ξ n ω)
+    have := M.is_probability_measure_particle_prediction_law hN n (ξ n ω)
     have hsm : Measurable fun z : Fin N → X ↦ ∑ i, φ (z i) :=
       Finset.measurable_sum _ fun i _ ↦ hφ.comp (measurable_pi_apply i)
     rw [lintegral_const_mul _ hsm, lintegral_sum_comp_eval_pi _ hφ]
@@ -184,7 +185,7 @@ theorem lintegral_mul_sum_bootstrap_succ {Ω X : Type*} [MeasurableSpace Ω]
 /-- Unbiasedness of the bootstrap particle approximation of the unnormalized Feynman–Kac
 measures: `𝔼[∏_{p<n} ηᵖ(Gₚ) · ηⁿ(φ)] = γₙ(φ)` for every measurable `φ ≥ 0`, where `ηᵖ` is the
 empirical measure of generation `p`. -/
-theorem lintegral_bootstrapWeight_mul_average {Ω X : Type*} [MeasurableSpace Ω]
+theorem lintegral_bootstrap_weight_mul_average {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (N : ℕ) (hN : 0 < N) (ξ : ℕ → Ω → Fin N → X)
@@ -223,7 +224,7 @@ theorem lintegral_bootstrapWeight_mul_average {Ω X : Type*} [MeasurableSpace Ω
     simp_rw [hFeq] at hstep
     set ψ : X → ℝ≥0∞ := fun x ↦ w n x * ∫⁻ y, φ y ∂M.transition n x with hψ
     have hψm : Measurable ψ := (hwm n).mul hφ.lintegral_kernel
-    rw [M.lintegral_unnormalizedLaw_succ n hφ, ← ih hψm]
+    rw [M.lintegral_unnormalized_law_succ n hφ, ← ih hψm]
     have hlhs (ω : Ω) : (∏ p ∈ Finset.range (n + 1), (∑ i, w p (ξ p ω i)) / N) *
         ((∑ i, φ (ξ (n + 1) ω i)) / N) =
         (∏ p ∈ Finset.range (n + 1), (∑ i, w p (ξ p ω i)) / N) / N *
@@ -238,7 +239,7 @@ theorem lintegral_bootstrapWeight_mul_average {Ω X : Type*} [MeasurableSpace Ω
       push Not
       exact ⟨⟨0, hN⟩, Finset.mem_univ _, by simpa using M.potential_pos n _⟩
     have hSt : S ≠ ⊤ := ENNReal.sum_ne_top.2 fun _ _ ↦ ENNReal.ofReal_ne_top
-    rw [M.lintegral_particlePredictionLaw, Finset.prod_range_succ, ← hS]
+    rw [M.lintegral_particle_prediction_law, Finset.prod_range_succ, ← hS]
     simp only [hψ, hw]
     simp only [ENNReal.div_eq_inv_mul]
     calc _ = ((∏ x ∈ Finset.range n,
@@ -249,7 +250,7 @@ theorem lintegral_bootstrapWeight_mul_average {Ω X : Type*} [MeasurableSpace Ω
       _ = _ := by rw [ENNReal.inv_mul_cancel hN0 hNt, ENNReal.mul_inv_cancel hS0 hSt]; ring
 
 /-- GAPS 104.58: unbiased likelihood estimate for multinomial resampling. -/
-theorem integral_particleLikelihood_eq {Ω X : Type*} [MeasurableSpace Ω]
+theorem integral_particle_likelihood_eq {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (N : ℕ) (hN : 0 < N) (ξ : ℕ → Ω → Fin N → X)
@@ -265,7 +266,7 @@ theorem integral_particleLikelihood_eq {Ω X : Type*} [MeasurableSpace Ω]
   rw [integral_eq_lintegral_of_nonneg_ae (ae_of_all _ hnn) hmeas.aestronglyMeasurable,
     measureReal_def]
   congr 1
-  have h1 := lintegral_bootstrapWeight_mul_average P M N hN ξ hξ n
+  have h1 := lintegral_bootstrap_weight_mul_average P M N hN ξ hξ n
     (φ := fun _ ↦ (1 : ℝ≥0∞)) measurable_const
   have hN0 : (N : ℝ≥0∞) ≠ 0 := by exact_mod_cast hN.ne'
   simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, mul_one,
@@ -280,11 +281,11 @@ theorem integral_particleLikelihood_eq {Ω X : Type*} [MeasurableSpace Ω]
     (M.potential_pos p _).le, ENNReal.ofReal_natCast]
 
 /-- Feynman–Kac normalization starts from the specified prior law. -/
-@[simp] theorem FeynmanKacModel.unnormalizedLaw_zero {X : Type*} [MeasurableSpace X]
+@[simp] theorem FeynmanKacModel.unnormalized_law_zero {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) : M.unnormalizedLaw 0 = (M.initial : Measure X) := rfl
 
 /-- The particle likelihood of an empty observation sequence is one. -/
-@[simp] theorem FeynmanKacModel.particleLikelihood_zero {X : Type*} [MeasurableSpace X]
+@[simp] theorem FeynmanKacModel.particle_likelihood_zero {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) {N : ℕ} (particles : ℕ → Fin N → X) :
     M.particleLikelihood particles 0 = 1 := by simp [particleLikelihood]
 
@@ -324,7 +325,7 @@ theorem integral_sq_sum_comp_eval_sub_le {X : Type*} [MeasurableSpace X] {N : �
 
 /-- Integral of a bounded measurable function against the bootstrap prediction law: the
 potential-weighted average of the transition integrals from the current particles. -/
-theorem FeynmanKacModel.integral_particlePredictionLaw {X : Type*} [MeasurableSpace X]
+theorem FeynmanKacModel.integral_particle_prediction_law {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) {N : ℕ} (n : ℕ) (x : Fin N → X) {f : X → ℝ} (hf : Measurable f)
     {C : ℝ} (hC : ∀ y, |f y| ≤ C) :
     ∫ y, f y ∂M.particlePredictionLaw n x =
@@ -346,23 +347,23 @@ theorem FeynmanKacModel.integral_particlePredictionLaw {X : Type*} [MeasurableSp
 
 
 /-- Total mass recursion `γₙ₊₁(1) = γₙ(Gₙ)` of the unnormalized Feynman–Kac measures. -/
-theorem FeynmanKacModel.unnormalizedLaw_succ_univ {X : Type*} [MeasurableSpace X]
+theorem FeynmanKacModel.unnormalized_law_succ_univ {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) :
     M.unnormalizedLaw (n + 1) univ =
       ∫⁻ x, ENNReal.ofReal (M.potential n x) ∂M.unnormalizedLaw n := by
   have := M.isMarkov_transition n
-  have h := M.lintegral_unnormalizedLaw_succ n (φ := fun _ ↦ (1 : ℝ≥0∞)) measurable_const
+  have h := M.lintegral_unnormalized_law_succ n (φ := fun _ ↦ (1 : ℝ≥0∞)) measurable_const
   simpa only [lintegral_one, measure_univ, mul_one] using h
 
 /-- The unnormalized Feynman–Kac measures are finite. -/
 instance FeynmanKacModel.isFiniteMeasure_unnormalizedLaw {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) : IsFiniteMeasure (M.unnormalizedLaw n) := by
   induction n with
-  | zero => rw [FeynmanKacModel.unnormalizedLaw_zero]; infer_instance
+  | zero => rw [FeynmanKacModel.unnormalized_law_zero]; infer_instance
   | succ n ih =>
     constructor
     obtain ⟨a, b, -, hab⟩ := M.potential_bounds n
-    rw [M.unnormalizedLaw_succ_univ]
+    rw [M.unnormalized_law_succ_univ]
     calc ∫⁻ x, ENNReal.ofReal (M.potential n x) ∂M.unnormalizedLaw n
         ≤ ∫⁻ _, ENNReal.ofReal b ∂M.unnormalizedLaw n :=
           lintegral_mono fun x ↦ ENNReal.ofReal_le_ofReal (hab x).2
@@ -370,13 +371,13 @@ instance FeynmanKacModel.isFiniteMeasure_unnormalizedLaw {X : Type*} [Measurable
           rw [lintegral_const]; exact ENNReal.mul_lt_top ENNReal.ofReal_lt_top (measure_lt_top _ _)
 
 /-- The unnormalized Feynman–Kac measures have positive total mass. -/
-theorem FeynmanKacModel.unnormalizedLaw_univ_ne_zero {X : Type*} [MeasurableSpace X]
+theorem FeynmanKacModel.unnormalized_law_univ_ne_zero {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) : M.unnormalizedLaw n univ ≠ 0 := by
   induction n with
   | zero => simp
   | succ n ih =>
     obtain ⟨a, b, ha, hab⟩ := M.potential_bounds n
-    rw [M.unnormalizedLaw_succ_univ]
+    rw [M.unnormalized_law_succ_univ]
     refine ne_of_gt (lt_of_lt_of_le ?_ (lintegral_mono fun x ↦
       ENNReal.ofReal_le_ofReal (hab x).1))
     rw [lintegral_const]
@@ -387,10 +388,10 @@ instance FeynmanKacModel.isProbabilityMeasure_filterLaw {X : Type*} [MeasurableS
     (M : FeynmanKacModel X) (n : ℕ) : IsProbabilityMeasure (M.filterLaw n) := by
   constructor
   simp only [FeynmanKacModel.filterLaw, smul_apply, smul_eq_mul]
-  exact ENNReal.inv_mul_cancel (M.unnormalizedLaw_univ_ne_zero n) (measure_ne_top _ _)
+  exact ENNReal.inv_mul_cancel (M.unnormalized_law_univ_ne_zero n) (measure_ne_top _ _)
 
 /-- Real-valued recursion `γₙ₊₁(f) = γₙ(Gₙ Qₙ f)` for bounded measurable `f`. -/
-theorem FeynmanKacModel.integral_unnormalizedLaw_succ {X : Type*} [MeasurableSpace X]
+theorem FeynmanKacModel.integral_unnormalized_law_succ {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) {f : X → ℝ} (hf : Measurable f) {C : ℝ}
     (hC : ∀ y, |f y| ≤ C) :
     ∫ y, f y ∂M.unnormalizedLaw (n + 1) =
@@ -406,14 +407,14 @@ theorem FeynmanKacModel.integral_unnormalizedLaw_succ {X : Type*} [MeasurableSpa
   simp_rw [ENNReal.toReal_ofReal (M.potential_pos n _).le, smul_eq_mul]
 
 /-- Integrals against the filtering law are normalized integrals against `γₙ`. -/
-theorem FeynmanKacModel.integral_filterLaw {X : Type*} [MeasurableSpace X]
+theorem FeynmanKacModel.integral_filter_law {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) (f : X → ℝ) :
     ∫ y, f y ∂M.filterLaw n = ((M.unnormalizedLaw n).real univ)⁻¹ * ∫ y, f y ∂M.unnormalizedLaw n := by
   rw [FeynmanKacModel.filterLaw, integral_smul_measure, ENNReal.toReal_inv, smul_eq_mul,
     measureReal_def]
 
 /-- Filtering recursion `ηₙ₊₁(f) = ηₙ(Gₙ Qₙ f) / ηₙ(Gₙ)` for bounded measurable `f`. -/
-theorem FeynmanKacModel.integral_filterLaw_succ {X : Type*} [MeasurableSpace X]
+theorem FeynmanKacModel.integral_filter_law_succ {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) {f : X → ℝ} (hf : Measurable f) {C : ℝ}
     (hC : ∀ y, |f y| ≤ C) :
     ∫ y, f y ∂M.filterLaw (n + 1) =
@@ -422,15 +423,15 @@ theorem FeynmanKacModel.integral_filterLaw_succ {X : Type*} [MeasurableSpace X]
   have := M.isMarkov_transition n
   have h1 : (M.unnormalizedLaw (n + 1)).real univ =
       ∫ x, M.potential n x ∂M.unnormalizedLaw n := by
-    have := M.integral_unnormalizedLaw_succ n (f := fun _ ↦ (1 : ℝ)) measurable_const
+    have := M.integral_unnormalized_law_succ n (f := fun _ ↦ (1 : ℝ)) measurable_const
       (C := 1) (fun _ ↦ by simp)
     simpa using this
   have hc : ((M.unnormalizedLaw n).real univ)⁻¹ ≠ 0 := by
     refine inv_ne_zero ?_
     rw [measureReal_def, ENNReal.toReal_ne_zero]
-    exact ⟨M.unnormalizedLaw_univ_ne_zero n, measure_ne_top _ _⟩
-  rw [M.integral_filterLaw, M.integral_filterLaw, M.integral_filterLaw,
-    M.integral_unnormalizedLaw_succ n hf hC, h1, mul_div_mul_left _ _ hc, div_eq_inv_mul]
+    exact ⟨M.unnormalized_law_univ_ne_zero n, measure_ne_top _ _⟩
+  rw [M.integral_filter_law, M.integral_filter_law, M.integral_filter_law,
+    M.integral_unnormalized_law_succ n hf hC, h1, mul_div_mul_left _ _ hc, div_eq_inv_mul]
 
 
 /-- Conditional sampling step of the bootstrap filter: integrating a function of the past and
@@ -477,7 +478,7 @@ theorem integral_sq_sum_bootstrap_succ_sub_le {Ω X : Type*} [MeasurableSpace Ω
         (hQ.comp (measurable_pi_apply i))).div
       (Finset.measurable_sum _ fun i _ ↦ (M.measurable_potential n).comp (measurable_pi_apply i))
   have hpred (x : Fin N → X) : ∫ y, f y ∂M.particlePredictionLaw n x = m x :=
-    M.integral_particlePredictionLaw n x hf hC
+    M.integral_particle_prediction_law n x hf hC
   simp_rw [hpred]
   have hC0 : 0 ≤ C := (abs_nonneg _).trans (hC (Classical.arbitrary X))
   set H : (Fin (n + 1) → Fin N → X) × (Fin N → X) → ℝ≥0∞ := fun p ↦
@@ -497,7 +498,7 @@ theorem integral_sq_sum_bootstrap_succ_sub_le {Ω X : Type*} [MeasurableSpace Ω
   simp only [hH, Fin.val_last] at hL
   rw [hL]
   refine (lintegral_mono fun ω ↦ ?_).trans (by rw [lintegral_const, measure_univ, mul_one])
-  have := M.isProbabilityMeasure_particlePredictionLaw hN n (ξ n ω)
+  have := M.is_probability_measure_particle_prediction_law hN n (ξ n ω)
   have hint : Integrable (fun z : Fin N → X ↦ (∑ i, f (z i) - N * m (ξ n ω)) ^ 2)
       (Measure.pi fun _ : Fin N ↦ M.particlePredictionLaw n (ξ n ω)) := by
     refine Integrable.of_bound (((Finset.measurable_sum _ fun i _ ↦
@@ -592,10 +593,10 @@ theorem integral_sq_particle_average_succ_sub_le {Ω X : Type*} [MeasurableSpace
   set v : Ω → ℝ := fun ω ↦ (∑ i, G (ξ N n ω i)) / (N + 1) with hv
   set u' := ∫ x, g x ∂M.filterLaw n with hu'
   set v' := ∫ x, G x ∂M.filterLaw n with hv'
-  have hT : ∫ x, f x ∂M.filterLaw (n + 1) = u' / v' := M.integral_filterLaw_succ n hf hC
+  have hT : ∫ x, f x ∂M.filterLaw (n + 1) = u' / v' := M.integral_filter_law_succ n hf hC
   have hB (ω : Ω) : B ω = u ω / v ω := by
     simp only [hBdef, hu, hv]
-    rw [M.integral_particlePredictionLaw n _ hf hC, div_div_div_cancel_right₀ hN'.ne']
+    rw [M.integral_particle_prediction_law n _ hf hC, div_div_div_cancel_right₀ hN'.ne']
   have hum : Measurable u :=
     (Finset.measurable_sum _ fun i _ ↦ hgm.comp ((measurable_pi_apply i).comp (hmeas n))).div_const _
   have hvm : Measurable v :=
@@ -606,7 +607,7 @@ theorem integral_sq_particle_average_succ_sub_le {Ω X : Type*} [MeasurableSpace
   have hSm : Measurable fun ω ↦ ∑ i, f (ξ N (n + 1) ω i) :=
     Finset.measurable_sum _ fun i _ ↦ hf.comp ((measurable_pi_apply i).comp (hmeas (n + 1)))
   have hBb (ω : Ω) : |B ω| ≤ C := by
-    have := M.isProbabilityMeasure_particlePredictionLaw (N.succ_pos) n (ξ N n ω)
+    have := M.is_probability_measure_particle_prediction_law (N.succ_pos) n (ξ N n ω)
     have := norm_integral_le_of_norm_le_const (μ := M.particlePredictionLaw n (ξ N n ω))
       (f := f) (C := C) (ae_of_all _ fun y ↦ by simpa [Real.norm_eq_abs] using hC y)
     simpa [Real.norm_eq_abs] using this
@@ -707,7 +708,7 @@ theorem exists_integral_sq_particle_average_sub_le {Ω X : Type*} [MeasurableSpa
     refine ⟨1, zero_le_one, fun f hf C hC N ↦ ?_⟩
     have hN' : (0 : ℝ) < N + 1 := by positivity
     have h0 : ∫ x, f x ∂M.filterLaw 0 = ∫ x, f x ∂(M.initial : Measure X) := by
-      rw [M.integral_filterLaw, FeynmanKacModel.unnormalizedLaw_zero]; simp
+      rw [M.integral_filter_law, FeynmanKacModel.unnormalized_law_zero]; simp
     rw [h0]
     have hsm : Measurable fun z : Fin (N + 1) → X ↦
         ((∑ i, f (z i)) / (N + 1) - ∫ x, f x ∂(M.initial : Measure X)) ^ 2 :=
@@ -734,7 +735,7 @@ theorem exists_integral_sq_particle_average_sub_le {Ω X : Type*} [MeasurableSpa
 /-- GAPS 104.55: fixed-time consistency of the multinomial bootstrap particle filter. The proof
 combines the mean-square bound `exists_integral_sq_particle_average_sub_le` with Markov's
 inequality. -/
-theorem tendstoInMeasure_particle_average {Ω X : Type*} [MeasurableSpace Ω]
+theorem tendsto_in_measure_particle_average {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
     (ξ : ∀ N : ℕ, ℕ → Ω → Fin (N + 1) → X)
@@ -745,7 +746,7 @@ theorem tendstoInMeasure_particle_average {Ω X : Type*} [MeasurableSpace Ω]
       (fun _ ↦ ∫ x, f x ∂M.filterLaw n) := by
   obtain ⟨C, hC⟩ := hb
   obtain ⟨K, hK0, hK⟩ := exists_integral_sq_particle_average_sub_le P M ξ hξ n
-  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  rw [tendsto_in_measure_iff_measure_real_lt_dist]
   intro ε hε
   set c := ∫ x, f x ∂M.filterLaw n
   have hbound (N : ℕ) : P.real {ω | ε < dist ((∑ i, f (ξ N n ω i)) / (N + 1)) c} ≤

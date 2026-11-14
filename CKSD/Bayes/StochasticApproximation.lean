@@ -8,6 +8,7 @@ public import Mathlib.Probability.Martingale.Basic
 public import Mathlib.Probability.Martingale.Convergence
 public import Mathlib.Analysis.InnerProductSpace.Basic
 
+
 /-!
 # Stochastic approximation: Robbins–Monro and the ODE method
 
@@ -31,8 +32,8 @@ the interpolated process is piecewise linear between the times `tₙ = ∑_{k<n}
 
 * `CKSD.ae_tendsto_robbins_monro`: almost-sure convergence of Robbins–Monro under a strongly
   monotone Lipschitz field and bounded conditional noise variance (GAPS 104.40).
-* `CKSD.ae_isInternallyChainTransitive_limitSet`: Benaïm's limit-set theorem (GAPS 104.49).
-* `CKSD.ae_tendsto_equilibrium_of_chainTransitive`: convergence to an equilibrium when the only
+* `CKSD.ae_is_internally_chain_transitive_limit_set`: Benaïm's limit-set theorem (GAPS 104.49).
+* `CKSD.ae_tendsto_equilibrium_of_chain_transitive`: convergence to an equilibrium when the only
   internally chain transitive sets are equilibria (GAPS 104.49).
 * `CKSD.ae_asymptotic_pseudotrajectory`: the interpolated process is an asymptotic
   pseudotrajectory of the flow (GAPS 104.49).
@@ -61,7 +62,7 @@ namespace CKSD
 
 /-- Deterministic core of the Robbins–Siegmund argument: if `Vₙ/Pₙ + ∑_{k<n} c aₖ Vₖ/Pₖ₊₁ - Sₙ`
 converges, `Sₙ` converges, `1 ≤ Pₙ ≤ Pmax`, `aₙ > 0` and `∑ aₙ = ∞`, then `Vₙ → 0`. -/
-private theorem tendsto_zero_of_tendsto_robbinsSiegmund {V a P S : ℕ → ℝ} {Pmax c s y : ℝ}
+private theorem tendsto_zero_of_tendsto_robbins_siegmund {V a P S : ℕ → ℝ} {Pmax c s y : ℝ}
     (hV : ∀ n, 0 ≤ V n) (ha : ∀ n, 0 < a n)
     (hsum : Tendsto (fun n ↦ ∑ k ∈ Finset.range n, a k) atTop atTop)
     (hP1 : ∀ n, 1 ≤ P n) (hPb : ∀ n, P n ≤ Pmax) (hc : 0 < c)
@@ -149,7 +150,7 @@ variable {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E] [InnerProduc
 
 omit [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] in
 /-- The pointwise inner product of two square-integrable functions is integrable. -/
-private theorem integrable_inner_of_memLp_two {μ : Measure Ω} {f g : Ω → E} (hf : MemLp f 2 μ)
+private theorem integrable_inner_of_mem_lp_two {μ : Measure Ω} {f g : Ω → E} (hf : MemLp f 2 μ)
     (hg : MemLp g 2 μ) : Integrable (fun ω ↦ inner ℝ (f ω) (g ω)) μ := by
   have hfg : Integrable (fun ω ↦ ‖f ω‖ * ‖g ω‖) μ := hf.norm.integrable_mul hg.norm
   refine hfg.mono' (hf.aestronglyMeasurable.inner hg.aestronglyMeasurable) (ae_of_all _ fun ω ↦ ?_)
@@ -157,12 +158,12 @@ private theorem integrable_inner_of_memLp_two {μ : Measure Ω} {f g : Ω → E}
 
 omit [MeasurableSpace E] [BorelSpace E] in
 /-- A martingale difference is orthogonal to every square-integrable `Fₙ`-measurable function. -/
-private theorem integral_inner_eq_zero_of_condExp {μ : Measure Ω} [IsProbabilityMeasure μ]
+private theorem integral_inner_eq_zero_of_cond_exp {μ : Measure Ω} [IsProbabilityMeasure μ]
     {F : Filtration ℕ (inferInstance : MeasurableSpace Ω)} {n : ℕ} {N : Ω → E}
     (hN : MemLp N 2 μ) (hc : μ[N | F n] =ᵐ[μ] fun _ ↦ 0) {w : Ω → E}
     (hw : StronglyMeasurable[F n] w) (hw2 : MemLp w 2 μ) :
     ∫ ω, inner ℝ (w ω) (N ω) ∂μ = 0 := by
-  have hint := integrable_inner_of_memLp_two hw2 hN
+  have hint := integrable_inner_of_mem_lp_two hw2 hN
   rw [← integral_condExp (F.le n)]
   have h : μ[fun ω ↦ inner ℝ (w ω) (N ω) | F n] =ᵐ[μ]
       fun ω ↦ inner ℝ (w ω) ((μ[N | F n]) ω) :=
@@ -174,14 +175,14 @@ private theorem integral_inner_eq_zero_of_condExp {μ : Measure Ω} [IsProbabili
   rw [hω, inner_zero_right]
 
 omit [MeasurableSpace E] [BorelSpace E] in
-/-- Set-integral form of `integral_inner_eq_zero_of_condExp` over `Fₙ`-events. -/
-private theorem setIntegral_inner_eq_zero_of_condExp {μ : Measure Ω} [IsProbabilityMeasure μ]
+/-- Set-integral form of `integral_inner_eq_zero_of_cond_exp` over `Fₙ`-events. -/
+private theorem set_integral_inner_eq_zero_of_cond_exp {μ : Measure Ω} [IsProbabilityMeasure μ]
     {F : Filtration ℕ (inferInstance : MeasurableSpace Ω)} {n : ℕ} {N : Ω → E}
     (hN : MemLp N 2 μ) (hc : μ[N | F n] =ᵐ[μ] fun _ ↦ 0) {w : Ω → E}
     (hw : StronglyMeasurable[F n] w) (hw2 : MemLp w 2 μ) {s : Set Ω}
     (hs : MeasurableSet[F n] s) :
     ∫ ω in s, inner ℝ (w ω) (N ω) ∂μ = 0 := by
-  have h := integral_inner_eq_zero_of_condExp hN hc (hw.indicator hs)
+  have h := integral_inner_eq_zero_of_cond_exp hN hc (hw.indicator hs)
     (hw2.indicator (F.le n s hs).nullMeasurableSet)
   rw [← h, ← integral_indicator (F.le n s hs)]
   congr 1
@@ -190,7 +191,7 @@ private theorem setIntegral_inner_eq_zero_of_condExp {μ : Measure Ω} [IsProbab
 
 omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] in
 /-- Conditional second-moment bound integrated over an `Fₙ`-event. -/
-private theorem setIntegral_norm_sq_le_of_condExp {μ : Measure Ω} [IsProbabilityMeasure μ]
+private theorem set_integral_norm_sq_le_of_cond_exp {μ : Measure Ω} [IsProbabilityMeasure μ]
     {F : Filtration ℕ (inferInstance : MeasurableSpace Ω)} {n : ℕ} {N : Ω → E}
     (hN : MemLp N 2 μ) {K : ℝ} (hc : μ[(fun ω ↦ ‖N ω‖ ^ 2) | F n] ≤ᵐ[μ] fun _ ↦ K)
     {s : Set Ω} (hs : MeasurableSet[F n] s) :
@@ -204,7 +205,7 @@ private theorem setIntegral_norm_sq_le_of_condExp {μ : Measure Ω} [IsProbabili
 
 
 /-- The Robbins–Monro iterates are square integrable when the initial state is. -/
-private theorem memLp_two_robbinsMonro_iterate {μ : Measure Ω} [IsProbabilityMeasure μ]
+private theorem mem_lp_two_robbins_monro_iterate {μ : Measure Ω} [IsProbabilityMeasure μ]
     {F : Filtration ℕ (inferInstance : MeasurableSpace Ω)} {h : E → E} {a : ℕ → ℝ}
     {σ2 : E → ℝ} {θ M : ℕ → Ω → E} (hRM : IsRobbinsMonroScheme μ F h a σ2 θ M)
     (hθ2 : MemLp (θ 0) 2 μ) {L : ℝ≥0} (hL : LipschitzWith L h) (n : ℕ) :
@@ -241,7 +242,7 @@ private theorem norm_sub_smul_add_sq (x θ₀ H N : E) (a : ℝ) :
 
 /-- One-step drift inequality for the squared distance to the root, integrated over an
 `Fₙ`-event. -/
-private theorem setIntegral_sq_dist_succ_le {μ : Measure Ω} [IsProbabilityMeasure μ]
+private theorem set_integral_sq_dist_succ_le {μ : Measure Ω} [IsProbabilityMeasure μ]
     {F : Filtration ℕ (inferInstance : MeasurableSpace Ω)} {h : E → E} {a : ℕ → ℝ} {K : ℝ}
     {θ M : ℕ → Ω → E} (hRM : IsRobbinsMonroScheme μ F h a (fun _ ↦ K) θ M)
     (hθ2 : MemLp (θ 0) 2 μ) {L : ℝ≥0} (hL : LipschitzWith L h) {θ₀ : E} (hz : h θ₀ = 0)
@@ -250,7 +251,7 @@ private theorem setIntegral_sq_dist_succ_le {μ : Measure Ω} [IsProbabilityMeas
     ∫ ω in s, ‖θ (n + 1) ω - θ₀‖ ^ 2 ∂μ ≤
       (1 + a n ^ 2 * L ^ 2 - 2 * a n * m) * ∫ ω in s, ‖θ n ω - θ₀‖ ^ 2 ∂μ +
         a n ^ 2 * K * μ.real s := by
-  have hθn := memLp_two_robbinsMonro_iterate hRM hθ2 hL n
+  have hθn := mem_lp_two_robbins_monro_iterate hRM hθ2 hL n
   have hmF : StronglyMeasurable[F n] (θ n) := (hRM.measurable_iterate n).stronglyMeasurable
   have hm : Measurable (θ n) := (hRM.measurable_iterate n).mono (F.le n) le_rfl
   have hx : MemLp (fun ω ↦ θ n ω - θ₀) 2 μ := hθn.sub (memLp_const θ₀)
@@ -272,10 +273,10 @@ private theorem setIntegral_sq_dist_succ_le {μ : Measure Ω} [IsProbabilityMeas
   have hsq {f : Ω → E} (hf : MemLp f 2 μ) : Integrable (fun ω ↦ ‖f ω‖ ^ 2) μ :=
     (memLp_two_iff_integrable_sq_norm hf.aestronglyMeasurable).1 hf
   have hAint : Integrable A μ :=
-    (((hsq hx).sub ((integrable_inner_of_memLp_two hx hH).const_mul _)).add
+    (((hsq hx).sub ((integrable_inner_of_mem_lp_two hx hH).const_mul _)).add
       ((hsq hH).const_mul _)).add ((hsq hN).const_mul _)
   have hBint : Integrable (fun ω ↦ inner ℝ (w ω) (M (n + 1) ω)) μ :=
-    integrable_inner_of_memLp_two hw2 hN
+    integrable_inner_of_mem_lp_two hw2 hN
   have hpt : (fun ω ↦ ‖θ (n + 1) ω - θ₀‖ ^ 2) =ᵐ[μ]
       fun ω ↦ A ω + inner ℝ (w ω) (M (n + 1) ω) := by
     filter_upwards [hRM.recursion n] with ω hω
@@ -294,7 +295,7 @@ private theorem setIntegral_sq_dist_succ_le {μ : Measure Ω} [IsProbabilityMeas
   have hVint : Integrable (fun ω ↦ ‖θ n ω - θ₀‖ ^ 2) μ := hsq hx
   rw [setIntegral_congr_ae (F.le n s hs) (ae_imp_of_ae_restrict (ae_restrict_of_ae hpt)),
     integral_add hAint.integrableOn hBint.integrableOn,
-    setIntegral_inner_eq_zero_of_condExp hN (hRM.condExp_noise n) hwF hw2 hs, add_zero]
+    set_integral_inner_eq_zero_of_cond_exp hN (hRM.condExp_noise n) hwF hw2 hs, add_zero]
   calc ∫ ω in s, A ω ∂μ ≤ ∫ ω in s, ((1 + a n ^ 2 * L ^ 2 - 2 * a n * m) * ‖θ n ω - θ₀‖ ^ 2 +
         a n ^ 2 * ‖M (n + 1) ω‖ ^ 2) ∂μ :=
         setIntegral_mono hAint.integrableOn
@@ -304,13 +305,13 @@ private theorem setIntegral_sq_dist_succ_le {μ : Measure Ω} [IsProbabilityMeas
         rw [integral_add (hVint.const_mul _).integrableOn ((hsq hN).const_mul _).integrableOn,
           integral_const_mul, integral_const_mul]
     _ ≤ _ := by
-        have := setIntegral_norm_sq_le_of_condExp hN (hRM.condExp_sq_noise_le n) hs
+        have := set_integral_norm_sq_le_of_cond_exp hN (hRM.condExp_sq_noise_le n) hs
         have ha2 := sq_nonneg (a n)
         nlinarith
 
 /-- A real supermartingale bounded below by `-C` is bounded in `L¹`, with the bound expressed
 for its negation, a submartingale. -/
-private theorem eLpNorm_neg_le_of_supermartingale {μ : Measure Ω} [IsProbabilityMeasure μ]
+private theorem e_lp_norm_neg_le_of_supermartingale {μ : Measure Ω} [IsProbabilityMeasure μ]
     {F : Filtration ℕ (inferInstance : MeasurableSpace Ω)} {Y : ℕ → Ω → ℝ}
     (hsup : Supermartingale Y F μ) {C : ℝ} (hC : 0 ≤ C) (hlow : ∀ n ω, -C ≤ Y n ω) (n : ℕ) :
     eLpNorm ((-Y) n) 1 μ ≤ ENNReal.ofReal (∫ ω, Y 0 ω ∂μ + 2 * C) := by
@@ -426,7 +427,7 @@ theorem IsRobbinsMonroScheme.ae_exists_tendsto_sum_noise_proj
       (hsecond R) ((hRM.summable_sq_step.mul_right (‖L‖ ^ 2)).mul_right _)
   have hconv : ∀ R : ℕ, ∀ᵐ ω ∂μ, ∃ c,
       Tendsto (fun n ↦ ∑ k ∈ Finset.range n, D R k ω) atTop (𝓝 c) := fun R ↦
-    ae_exists_tendsto_sum_martingaleDifference μ F (D R) (hDm R) (hD2 R) (hDc R) (hsum R)
+    ae_exists_tendsto_sum_martingale_difference μ F (D R) (hDm R) (hD2 R) (hDc R) (hsum R)
   filter_upwards [ae_all_iff.2 hconv, hbdd] with ω hω hbω
   obtain ⟨B, hB⟩ := hbω
   obtain ⟨R, hR⟩ := exists_nat_ge B
@@ -496,7 +497,7 @@ theorem ae_tendsto_robbins_monro (μ : Measure Ω) [IsProbabilityMeasure μ]
           gcongr
           exact hsumsq.sum_le_tsum _ fun j _ ↦ sq_nonneg _
   -- Square integrability and measurability.
-  have hθ (n : ℕ) := memLp_two_robbinsMonro_iterate hRM hθ2 hL n
+  have hθ (n : ℕ) := mem_lp_two_robbins_monro_iterate hRM hθ2 hL n
   have hVint (n : ℕ) : Integrable (V n) μ :=
     (memLp_two_iff_integrable_sq_norm ((hθ n).sub (memLp_const θ₀)).aestronglyMeasurable).1
       ((hθ n).sub (memLp_const θ₀))
@@ -522,7 +523,7 @@ theorem ae_tendsto_robbins_monro (μ : Measure Ω) [IsProbabilityMeasure μ]
     ring
   have hsup : Supermartingale Y F μ := by
     refine supermartingale_of_setIntegral_succ_le hYadapt hYint fun n s hs ↦ ?_
-    have hstep := setIntegral_sq_dist_succ_le hRM hθ2 hL hz hdrift n hs
+    have hstep := set_integral_sq_dist_succ_le hRM hθ2 hL hz hdrift n hs
     set G : Ω → ℝ := fun ω ↦ V (n + 1) ω - (1 + a n ^ 2 * L ^ 2) * V n ω +
       2 * m * a n * V n ω - K * a n ^ 2 with hG
     have hGint : Integrable G μ :=
@@ -572,7 +573,7 @@ theorem ae_tendsto_robbins_monro (μ : Measure Ω) [IsProbabilityMeasure μ]
     have h3 := (abs_le.1 (hSb n)).2
     simp only [hY]
     linarith
-  have hbdd := eLpNorm_neg_le_of_supermartingale hsup hC₁0 hYlow
+  have hbdd := e_lp_norm_neg_le_of_supermartingale hsup hC₁0 hYlow
   have hconv := hsup.neg.ae_tendsto_limitProcess hbdd
   have hsumm : Summable fun k ↦ K * a k ^ 2 / P (k + 1) :=
     Summable.of_norm_bounded (hsumsq.mul_left |K|) hterm
@@ -581,7 +582,7 @@ theorem ae_tendsto_robbins_monro (μ : Measure Ω) [IsProbabilityMeasure μ]
   filter_upwards [hconv] with ω hω
   have hYω : Tendsto (fun n ↦ Y n ω) atTop (𝓝 (-(F.limitProcess (-Y) μ ω))) := by
     simpa using hω.neg
-  have hV0 := tendsto_zero_of_tendsto_robbinsSiegmund (V := fun n ↦ V n ω) (P := P) (c := 2 * m)
+  have hV0 := tendsto_zero_of_tendsto_robbins_siegmund (V := fun n ↦ V n ω) (P := P) (c := 2 * m)
     (fun n ↦ hVnn n ω) hRM.step_pos hRM.tendsto_sum_step hP1 hPb (by positivity) hSconv hYω
   rw [tendsto_iff_norm_sub_tendsto_zero]
   have := hV0.sqrt
@@ -594,7 +595,7 @@ theorem ae_tendsto_robbins_monro (μ : Measure Ω) [IsProbabilityMeasure μ]
 with conditional second moment at most `K(1 + ‖θₙ‖²)`, a Lipschitz field, and a.s. bounded iterates,
 the limit set is a.s. a compact connected internally chain transitive invariant set of the flow
 of `θ' = -h(θ)`. -/
-theorem ae_isInternallyChainTransitive_limitSet (μ : Measure Ω) [IsProbabilityMeasure μ]
+theorem ae_is_internally_chain_transitive_limit_set (μ : Measure Ω) [IsProbabilityMeasure μ]
     (F : Filtration ℕ (inferInstance : MeasurableSpace Ω)) (h : E → E) (a : ℕ → ℝ) (K : ℝ)
     (θ M : ℕ → Ω → E) (hRM : IsRobbinsMonroScheme μ F h a (fun x ↦ K * (1 + ‖x‖ ^ 2)) θ M)
     (L : ℝ≥0) (hL : LipschitzWith L h) (Φ : ℝ → E → E) (hΦ : IsFlowOf h Φ)
@@ -612,7 +613,7 @@ theorem ae_isInternallyChainTransitive_limitSet (μ : Measure Ω) [IsProbability
   have hSsucc (n : ℕ) : S (n + 1) - S n = a n • M (n + 1) ω := by
     dsimp [S]
     rw [Finset.sum_range_succ, add_sub_cancel_left]
-  apply limitSet_properties_of_stochasticApproximation hRM.step_pos ha0
+  apply limit_set_properties_of_stochastic_approximation hRM.step_pos ha0
     hRM.tendsto_sum_step h L hL Φ hΦ (θ · ω) S hc hbω
   intro n
   rw [hrecω n, hSsucc, smul_add]
@@ -620,7 +621,7 @@ theorem ae_isInternallyChainTransitive_limitSet (μ : Measure Ω) [IsProbability
 
 /-- GAPS 104.49: if the only compact connected internally chain transitive invariant sets are
 equilibria, the iterates converge almost surely to a possibly random equilibrium. -/
-theorem ae_tendsto_equilibrium_of_chainTransitive (μ : Measure Ω) [IsProbabilityMeasure μ]
+theorem ae_tendsto_equilibrium_of_chain_transitive (μ : Measure Ω) [IsProbabilityMeasure μ]
     (F : Filtration ℕ (inferInstance : MeasurableSpace Ω)) (h : E → E) (a : ℕ → ℝ) (K : ℝ)
     (θ M : ℕ → Ω → E) (hRM : IsRobbinsMonroScheme μ F h a (fun x ↦ K * (1 + ‖x‖ ^ 2)) θ M)
     (L : ℝ≥0) (hL : LipschitzWith L h) (Φ : ℝ → E → E) (hΦ : IsFlowOf h Φ)
@@ -628,10 +629,10 @@ theorem ae_tendsto_equilibrium_of_chainTransitive (μ : Measure Ω) [IsProbabili
     (hequil : ∀ A : Set E, IsCompact A → IsConnected A →
       IsInternallyChainTransitive Φ A → ∃ x, A = {x} ∧ h x = 0) :
     ∀ᵐ ω ∂μ, ∃ x, h x = 0 ∧ Tendsto (θ · ω) atTop (𝓝 x) := by
-  have hlimit := ae_isInternallyChainTransitive_limitSet μ F h a K θ M hRM L hL Φ hΦ hbdd
+  have hlimit := ae_is_internally_chain_transitive_limit_set μ F h a K θ M hRM L hL Φ hΦ hbdd
   filter_upwards [hlimit, hbdd] with ω hω hbω
   obtain ⟨x, hx, heq⟩ := hequil _ hω.1 hω.2.1 hω.2.2
-  exact ⟨x, heq, tendsto_of_limitSet_eq_singleton _ hbω x hx⟩
+  exact ⟨x, heq, tendsto_of_limit_set_eq_singleton _ hbω x hx⟩
 
 /-- GAPS 104.49: the interpolated process is almost surely an asymptotic pseudotrajectory of the
 flow: `sup_{0 ≤ u ≤ T} ‖θ̄(s + u) - Φᵤ(θ̄(s))‖ → 0` as `s → ∞`, for every `T > 0`. -/
@@ -654,7 +655,7 @@ theorem ae_asymptotic_pseudotrajectory (μ : Measure Ω) [IsProbabilityMeasure �
   have hSsucc (n : ℕ) : S (n + 1) - S n = a n • M (n + 1) ω := by
     dsimp [S]
     rw [Finset.sum_range_succ, add_sub_cancel_left]
-  apply asymptotic_pseudotrajectory_stochasticApproxInterp hRM.step_pos ha0
+  apply asymptotic_pseudotrajectory_stochastic_approx_interp hRM.step_pos ha0
     hRM.tendsto_sum_step h L hL Φ hΦ (θ · ω) S hc hbω _ T hT
   intro n
   rw [hrecω n, hSsucc, smul_add]
@@ -663,7 +664,7 @@ theorem ae_asymptotic_pseudotrajectory (μ : Measure Ω) [IsProbabilityMeasure �
 end Robbins
 
 /-- The interpolation times start at zero. -/
-@[simp] theorem stochasticApproxTime_zero (a : ℕ → ℝ) : stochasticApproxTime a 0 = 0 := by
+@[simp] theorem stochastic_approx_time_zero (a : ℕ → ℝ) : stochasticApproxTime a 0 = 0 := by
   simp [stochasticApproxTime]
 
 end CKSD

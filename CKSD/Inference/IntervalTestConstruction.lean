@@ -3,6 +3,7 @@ module
 public import TauCeti.Probability.Quantile
 public import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 
+
 /-!
 # Construction of two-sided interval tests
 
@@ -11,10 +12,10 @@ Real-variable ingredients of the two-sided interval tests in one-parameter expon
 
 ## Main results
 
-* `CKSD.exists_intervalWeight_integral_eq_setIntegral_quantile`: for a real probability law `μ`
+* `CKSD.exists_interval_weight_integral_eq_set_integral_quantile`: for a real probability law `μ`
   and levels `0 < a < b < 1`, a randomized interval weight in the quantiles `Q a ≤ Q b`
   integrates every `μ`-integrable function like the window `(a, b)` of levels.
-* `CKSD.exists_setIntegral_comp_quantile_eq_mul`: for a nondecreasing integrable `f` that is not
+* `CKSD.exists_set_integral_comp_quantile_eq_mul`: for a nondecreasing integrable `f` that is not
   almost everywhere constant, some window `(a, a + α)` of levels has
   `∫_{(a, a + α)} f (Q v) dv = α ∫ f dμ` (intermediate value theorem).
 * `CKSD.exists_mul_exp_add_mul_exp_le_one_iff`: for exponents `β₁ < 0 < β₂` and `c₁ ≤ c₂`, a
@@ -39,7 +40,7 @@ namespace CKSD
 
 /-- On a level set `S = {v ∈ (0, 1) | Q v = c}` of the quantile function, the constant weight
 `γ = |S ∩ (a, b)| / |S|` reproduces the integral over the window `(a, b)`. -/
-private theorem setIntegral_levelSet_quantile (μ : Measure ℝ) (a b c : ℝ) (ψ : ℝ → ℝ) :
+private theorem set_integral_level_set_quantile (μ : Measure ℝ) (a b c : ℝ) (ψ : ℝ → ℝ) :
     ∫ v in Ioo 0 1 ∩ μ.quantile ⁻¹' {c},
         volume.real (Ioo 0 1 ∩ μ.quantile ⁻¹' {c} ∩ Ioo a b) /
           volume.real (Ioo 0 1 ∩ μ.quantile ⁻¹' {c}) * ψ (μ.quantile v) =
@@ -65,7 +66,7 @@ private theorem setIntegral_levelSet_quantile (μ : Measure ℝ) (a b c : ℝ) (
 interval weight `w` (equal to `1` strictly between `c₁ ≤ c₂`, to `γᵢ ∈ [0, 1]` at `cᵢ`, and to `0`
 elsewhere) with `∫ w ψ dμ = ∫_{(a, b)} ψ (Q v) dv` for every `μ`-integrable `ψ`, where `Q` is the
 quantile function of `μ`. The endpoints are `cᵢ = Q a, Q b`. -/
-theorem exists_intervalWeight_integral_eq_setIntegral_quantile (μ : Measure ℝ)
+theorem exists_interval_weight_integral_eq_set_integral_quantile (μ : Measure ℝ)
     [IsProbabilityMeasure μ] {a b : ℝ} (ha : 0 < a) (hab : a < b) (hb : b < 1) :
     ∃ c₁ c₂ γ₁ γ₂ : ℝ, c₁ ≤ c₂ ∧ γ₁ ∈ Icc 0 1 ∧ γ₂ ∈ Icc 0 1 ∧
       ∀ ψ : ℝ → ℝ, Integrable ψ μ →
@@ -131,18 +132,18 @@ theorem exists_intervalWeight_integral_eq_setIntegral_quantile (μ : Measure ℝ
         setIntegral_union hdisj (hSm _) (hint2.mono_set (by simp [S]))
           (hint2.mono_set (by simp [S]))]
       congr 1
-      · rw [← setIntegral_levelSet_quantile μ a b c₁ ψ]
+      · rw [← set_integral_level_set_quantile μ a b c₁ ψ]
         refine setIntegral_congr_fun (hSm _) fun v hv ↦ ?_
         change I (Q v) * ψ (Q v) = γ c₁ * ψ (Q v)
         rw [show Q v = c₁ from hv.2, hIc₁]
-      · rw [← setIntegral_levelSet_quantile μ a b c₂ ψ]
+      · rw [← set_integral_level_set_quantile μ a b c₂ ψ]
         refine setIntegral_congr_fun (hSm _) fun v hv ↦ ?_
         change I (Q v) * ψ (Q v) = γ c₂ * ψ (Q v)
         rw [show Q v = c₂ from hv.2, hIc₂]
     · have hsplit : Ioo 0 1 ∩ Q ⁻¹' {c₁, c₂} = S c₁ := by
         ext v; simp only [S, mem_inter_iff, mem_preimage, mem_insert_iff, mem_singleton_iff, heq,
           or_self]
-      rw [hsplit, ← setIntegral_levelSet_quantile μ a b c₁ ψ]
+      rw [hsplit, ← set_integral_level_set_quantile μ a b c₁ ψ]
       refine setIntegral_congr_fun (hSm _) fun v hv ↦ ?_
       change I (Q v) * ψ (Q v) = γ c₁ * ψ (Q v)
       rw [show Q v = c₁ from hv.2, hIc₁]
@@ -166,26 +167,26 @@ theorem exists_intervalWeight_integral_eq_setIntegral_quantile (μ : Measure ℝ
 
 /-- For `h` integrable on `(0, 1)` and `0 ≤ x ≤ y ≤ 1`, the interval integral of the extension
 of `h` by zero over `[x, y]` is the integral of `h` over `(x, y)`. -/
-private theorem intervalIntegral_indicator_Ioo_eq {h : ℝ → ℝ} {x y : ℝ} (hx : 0 ≤ x)
+private theorem interval_integral_indicator_ioo_eq {h : ℝ → ℝ} {x y : ℝ} (hx : 0 ≤ x)
     (hxy : x ≤ y) (hy : y ≤ 1) :
     ∫ v in x..y, (Ioo 0 1).indicator h v = ∫ v in Ioo x y, h v := by
   rw [intervalIntegral.integral_of_le hxy, integral_Ioc_eq_integral_Ioo,
     setIntegral_indicator measurableSet_Ioo, inter_eq_left.2 (Ioo_subset_Ioo hx hy)]
 
 /-- Splitting the integral over `(0, 1)` at a level `β ∈ [0, 1]`. -/
-private theorem setIntegral_Ioo_split {h : ℝ → ℝ} (hh : IntegrableOn h (Ioo 0 1)) {β : ℝ}
+private theorem set_integral_ioo_split {h : ℝ → ℝ} (hh : IntegrableOn h (Ioo 0 1)) {β : ℝ}
     (hβ0 : 0 ≤ β) (hβ1 : β ≤ 1) :
     ∫ v in Ioo 0 1, h v = (∫ v in Ioo 0 β, h v) + ∫ v in Ioo β 1, h v := by
   have hi : ∀ x y, IntervalIntegrable ((Ioo 0 1).indicator h) volume x y := fun x y ↦
     ((integrable_indicator_iff measurableSet_Ioo).2 hh).intervalIntegrable
-  rw [← intervalIntegral_indicator_Ioo_eq le_rfl zero_le_one le_rfl,
-    ← intervalIntegral_indicator_Ioo_eq le_rfl hβ0 hβ1,
-    ← intervalIntegral_indicator_Ioo_eq hβ0 hβ1 le_rfl,
+  rw [← interval_integral_indicator_ioo_eq le_rfl zero_le_one le_rfl,
+    ← interval_integral_indicator_ioo_eq le_rfl hβ0 hβ1,
+    ← interval_integral_indicator_ioo_eq hβ0 hβ1 le_rfl,
     intervalIntegral.integral_add_adjacent_intervals (hi _ _) (hi _ _)]
 
 /-- For `h` monotone on `(0, 1)` and not almost everywhere constant there, the average of `h`
 over `(0, β)` is strictly below its average over `(0, 1)`. -/
-private theorem setIntegral_Ioo_lt_mul {h : ℝ → ℝ} (hh : IntegrableOn h (Ioo 0 1))
+private theorem set_integral_ioo_lt_mul {h : ℝ → ℝ} (hh : IntegrableOn h (Ioo 0 1))
     (hmono : MonotoneOn h (Ioo 0 1))
     (hnc : ¬ ∃ c, ∀ᵐ v ∂volume.restrict (Ioo (0 : ℝ) 1), h v = c) {β : ℝ} (hβ : β ∈ Ioo 0 1) :
     ∫ v in Ioo 0 β, h v < β * ∫ v in Ioo 0 1, h v := by
@@ -204,7 +205,7 @@ private theorem setIntegral_Ioo_lt_mul {h : ℝ → ℝ} (hh : IntegrableOn h (I
   have hB : B = (∫ v in Ioo β 1, h v) - (1 - β) * c := by
     rw [hBdef, integral_sub h2 (integrableOn_const (by simp)), setIntegral_const]
     simp [Real.volume_real_Ioo_of_le hβ.2.le]
-  rw [setIntegral_Ioo_split hh hβ.1.le hβ.2.le]
+  rw [set_integral_ioo_split hh hβ.1.le hβ.2.le]
   by_contra hle
   replace hle := not_lt.1 hle
   have hAB : β * B + (1 - β) * A = 0 := by
@@ -243,7 +244,7 @@ private theorem setIntegral_Ioo_lt_mul {h : ℝ → ℝ} (hh : IntegrableOn h (I
 levels inside `(0, 1)` satisfies `∫_{(a, a + α)} f (Q v) dv = α ∫ f dμ`, where `Q` is the quantile
 function of `μ`. The proof is the intermediate value theorem: the window integral is continuous
 in `a`, below `α ∫ f dμ` at `a = 0` and above it at `a = 1 - α`. -/
-theorem exists_setIntegral_comp_quantile_eq_mul (μ : Measure ℝ) [IsProbabilityMeasure μ]
+theorem exists_set_integral_comp_quantile_eq_mul (μ : Measure ℝ) [IsProbabilityMeasure μ]
     {f : ℝ → ℝ} (hf : Monotone f) (hfi : Integrable f μ) (hnc : ¬ ∃ c, ∀ᵐ t ∂μ, f t = c)
     {α : ℝ} (hα : α ∈ Ioo 0 1) :
     ∃ a, 0 < a ∧ a + α < 1 ∧
@@ -273,15 +274,15 @@ theorem exists_setIntegral_comp_quantile_eq_mul (μ : Measure ℝ) [IsProbabilit
   have hHeq : ∀ u, 0 ≤ u → u + α ≤ 1 → H u = ∫ v in Ioo u (u + α), h v := fun u hu hu1 ↦ by
     simp only [H]
     rw [intervalIntegral.integral_interval_sub_left (hi _ _) (hi _ _),
-      intervalIntegral_indicator_Ioo_eq hu (by linarith [hα.1]) hu1]
+      interval_integral_indicator_ioo_eq hu (by linarith [hα.1]) hu1]
   have hH0 : H 0 < α * ∫ t, f t ∂μ := by
     rw [hHeq 0 le_rfl (by linarith [hα.2]), zero_add, hm]
-    exact setIntegral_Ioo_lt_mul hh hmono hnc' hα
+    exact set_integral_ioo_lt_mul hh hmono hnc' hα
   have hH1 : α * ∫ t, f t ∂μ < H (1 - α) := by
     rw [hHeq (1 - α) (by linarith [hα.2]) (by linarith), sub_add_cancel, hm]
     have hβ : 1 - α ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hα.2], by linarith [hα.1]⟩
-    have h1 := setIntegral_Ioo_lt_mul hh hmono hnc' hβ
-    have h2 := setIntegral_Ioo_split hh hβ.1.le hβ.2.le
+    have h1 := set_integral_ioo_lt_mul hh hmono hnc' hβ
+    have h2 := set_integral_ioo_split hh hβ.1.le hβ.2.le
     linarith
   obtain ⟨a, ha, hHa⟩ := intermediate_value_Ioo (by linarith [hα.2] : (0 : ℝ) ≤ 1 - α)
     hHc.continuousOn ⟨hH0, hH1⟩

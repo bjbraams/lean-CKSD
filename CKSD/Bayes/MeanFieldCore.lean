@@ -9,6 +9,7 @@ public import Mathlib.Topology.ContinuousMap.SecondCountableSpace
 public import Mathlib.Topology.ContinuousMap.Interval
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 
+
 /-!
 # Core definitions for McKean–Vlasov and finite-particle equations
 
@@ -56,7 +57,7 @@ def IsIIDInitialAndDrivers {Ω : Type*} [MeasurableSpace Ω] {d : ℕ} (P : Meas
     iIndepFun (fun i ω ↦ (X₀ i ω, fun t ↦ W i t ω)) P
 
 /-- Countable collections of evaluations of two real Brownian motions have the same law. -/
-theorem identDistrib_countable_evals_of_isPreBrownianReal {Ω I : Type*} [MeasurableSpace Ω]
+theorem ident_distrib_countable_evals_of_is_pre_brownian_real {Ω I : Type*} [MeasurableSpace Ω]
     [Countable I] (P : Measure Ω) [IsProbabilityMeasure P]
     (B C : ℝ≥0 → Ω → ℝ) (hB : IsPreBrownianReal B P) (hC : IsPreBrownianReal C P)
     (t : I → ℝ≥0) :
@@ -74,13 +75,13 @@ theorem identDistrib_countable_evals_of_isPreBrownianReal {Ω I : Type*} [Measur
 
 /-- Countable evaluations of Euclidean Brownian drivers have a law independent of the chosen
 Brownian realization. -/
-theorem IsBrownianEuclidean.identDistrib_countable_evals {Ω I : Type*} [MeasurableSpace Ω]
+theorem IsBrownianEuclidean.ident_distrib_countable_evals {Ω I : Type*} [MeasurableSpace Ω]
     [Countable I] {d : ℕ} (P : Measure Ω) [IsProbabilityMeasure P]
     (B C : ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d))
     (hB : IsBrownianEuclidean B P) (hC : IsBrownianEuclidean C P) (t : I → ℝ≥0) :
     IdentDistrib (fun ω i ↦ B (t i) ω) (fun ω i ↦ C (t i) ω) P P := by
   have hcoord (j : Fin d) : IdentDistrib (fun ω i ↦ B (t i) ω j) (fun ω i ↦ C (t i) ω j) P P :=
-    identDistrib_countable_evals_of_isPreBrownianReal P _ _ (hB.1 j).toIsPreBrownianReal
+    ident_distrib_countable_evals_of_is_pre_brownian_real P _ _ (hB.1 j).toIsPreBrownianReal
       (hC.1 j).toIsPreBrownianReal t
   have hpost : Measurable (fun z : ℝ≥0 → ℝ ↦ fun i ↦ z (t i)) :=
     measurable_pi_iff.2 fun i ↦ measurable_pi_apply _
@@ -98,7 +99,7 @@ theorem IsBrownianEuclidean.identDistrib_countable_evals {Ω I : Type*} [Measura
 
 /-- Countably many evaluations of the initial state plus its Brownian driver are identically
 distributed across the independent input particles. -/
-theorem IsIIDInitialAndDrivers.identDistrib_forcing_evals
+theorem IsIIDInitialAndDrivers.ident_distrib_forcing_evals
     {Ω I : Type*} [MeasurableSpace Ω] [Countable I] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (X₀ : ℕ → Ω → EuclideanSpace ℝ (Fin d))
@@ -108,7 +109,7 @@ theorem IsIIDInitialAndDrivers.identDistrib_forcing_evals
     IdentDistrib (fun ω q ↦ X₀ i ω + W i (t q) ω) (fun ω q ↦ X₀ j ω + W j (t q) ω) P P := by
   have hinit : IdentDistrib (X₀ i) (X₀ j) P P :=
     ⟨(hiid.1 i).aemeasurable, (hiid.1 j).aemeasurable, (hiid.2.1 i).trans (hiid.2.1 j).symm⟩
-  have hdriver := IsBrownianEuclidean.identDistrib_countable_evals P (W i) (W j)
+  have hdriver := IsBrownianEuclidean.ident_distrib_countable_evals P (W i) (W j)
     (hiid.2.2.1 i) (hiid.2.2.1 j) t
   have hpost : Measurable (fun z : ℝ≥0 → EuclideanSpace ℝ (Fin d) ↦ fun q ↦ z (t q)) :=
     measurable_pi_iff.2 fun q ↦ measurable_pi_apply _
@@ -121,7 +122,7 @@ theorem IsIIDInitialAndDrivers.identDistrib_forcing_evals
   exact hpair.comp hsum
 
 /-- Countably sampled additive forcings are independent across the input particles. -/
-theorem IsIIDInitialAndDrivers.iIndepFun_forcing_evals
+theorem IsIIDInitialAndDrivers.i_indep_fun_forcing_evals
     {Ω I : Type*} [MeasurableSpace Ω] [Countable I] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (X₀ : ℕ → Ω → EuclideanSpace ℝ (Fin d))
@@ -166,7 +167,7 @@ def interactionDrift {d : ℕ} (b₀ : EuclideanSpace ℝ (Fin d) → EuclideanS
   b₀ x + ∫ y, K x y ∂μ
 
 /-- Euclidean Brownian paths remain almost surely continuous after the nonnegative-time projection. -/
-theorem IsBrownianEuclidean.ae_continuous_toNNReal {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
+theorem IsBrownianEuclidean.ae_continuous_to_nn_real {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     {P : Measure Ω} {B : ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d)} (hB : IsBrownianEuclidean B P) :
     ∀ᵐ ω ∂P, Continuous (fun t : ℝ ↦ B t.toNNReal ω) := by
   filter_upwards [ae_all_iff.2 (fun j : Fin d ↦ (hB.1 j).cont)] with ω hω
@@ -177,17 +178,17 @@ theorem IsBrownianEuclidean.ae_continuous_toNNReal {Ω : Type*} [MeasurableSpace
   rfl
 
 /-- On a continuous path, the continuous-map path constructor agrees with evaluation. -/
-theorem pathOn_apply_of_continuousOn {E : Type*} [TopologicalSpace E] [Zero E]
+theorem path_on_apply_of_continuous_on {E : Type*} [TopologicalSpace E] [Zero E]
     (T : ℝ) (f : ℝ → E) (hf : ContinuousOn f (Icc 0 T)) (t : Icc (0 : ℝ) T) :
     pathOn T f t = f t := by
   simp only [pathOn, dite_eq_left hf]
   rfl
 
 /-- Extending a constructed continuous path agrees with the original path on its interval. -/
-theorem pathOn_IccExtend_of_continuousOn {E : Type*} [TopologicalSpace E] [Zero E]
+theorem path_on_icc_extend_of_continuous_on {E : Type*} [TopologicalSpace E] [Zero E]
     {T : ℝ} (hT : 0 ≤ T) (f : ℝ → E) (hf : ContinuousOn f (Icc 0 T))
     (t : ℝ) (ht : t ∈ Icc 0 T) : (pathOn T f).IccExtend hT t = f t := by
   rw [ContinuousMap.coe_IccExtend, Set.IccExtend_of_mem (h := hT) (fun z ↦ pathOn T f z) ht]
-  exact pathOn_apply_of_continuousOn T f hf ⟨t, ht⟩
+  exact path_on_apply_of_continuous_on T f hf ⟨t, ht⟩
 
 end CKSD

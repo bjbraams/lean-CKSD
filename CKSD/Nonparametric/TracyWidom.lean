@@ -3,6 +3,7 @@ module
 public import CKSD.Nonparametric.EmpiricalCovariance
 public import Mathlib.Probability.ProductMeasure
 
+
 /-!
 # The Tracy–Widom law and the spiked covariance transition
 
@@ -68,7 +69,7 @@ def johnstoneScale (n p : ℕ) : ℝ :=
 /-- GAPS 103.38: Johnstone's Tracy–Widom limit for the largest eigenvalue of a white Wishart
 matrix as `n → ∞` with `p / n → y ∈ (0, ∞)` (so that `p → ∞` as well), in the form of
 convergence of distribution functions to the continuous limit `F₁`. -/
-theorem tendsto_largestSampleCovarianceEigenvalue_tracyWidom
+theorem tendsto_largest_sample_covariance_eigenvalue_tracy_widom
     (q : ℝ → ℝ) (hq : IsHastingsMcLeodSolution q)
     (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop)
     (y : ℝ) (hy : 0 < y) (hpn : Tendsto (fun k ↦ (p k : ℝ) / n k) atTop (𝓝 y)) (s : ℝ) :
@@ -90,7 +91,7 @@ def spikedDataMatrix (α : ℝ) (n p : ℕ) (ω : ℕ × ℕ → ℝ) : Fin n �
 eigenvalue converges almost surely to the bulk edge `(1 + √y) ^ 2`. Here `n → ∞` and
 `p / n → y > 0` (which force `p → ∞`). Scope: diagonal spiked
 covariance on the array coupling described in the module header. -/
-theorem ae_tendsto_largestEigenvalue_spiked_subcritical
+theorem ae_tendsto_largest_eigenvalue_spiked_subcritical
     (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop)
     (y : ℝ) (hy : 0 < y) (hpn : Tendsto (fun k ↦ (p k : ℝ) / n k) atTop (𝓝 y))
     (α : ℝ) (hα : 1 < α) (hαy : α ≤ 1 + Real.sqrt y) :
@@ -103,7 +104,7 @@ theorem ae_tendsto_largestEigenvalue_spiked_subcritical
 eigenvalue converges almost surely to `α + y α / (α - 1)`. Here `n → ∞` and `p / n → y > 0`
 (which force `p → ∞`). Scope: diagonal spiked covariance
 on the array coupling described in the module header. -/
-theorem ae_tendsto_largestEigenvalue_spiked_supercritical
+theorem ae_tendsto_largest_eigenvalue_spiked_supercritical
     (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop)
     (y : ℝ) (hy : 0 < y) (hpn : Tendsto (fun k ↦ (p k : ℝ) / n k) atTop (𝓝 y))
     (α : ℝ) (hαy : 1 + Real.sqrt y < α) :

@@ -5,6 +5,7 @@ public import Mathlib.Analysis.InnerProductSpace.Calculus
 public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 public import Mathlib.Analysis.Convex.Intrinsic
 
+
 /-!
 # Maximum likelihood in natural exponential families
 
@@ -14,12 +15,12 @@ product space `E` and statistic the identity (GAPS 101.69).
 
 ## Main results
 
-* `CKSD.exists_isMaxOn_logLikelihood_iff_mem_interior_convexHull_support`: the log likelihood
+* `CKSD.exists_is_max_on_log_likelihood_iff_mem_interior_convex_hull_support`: the log likelihood
   of an observation `t` attains its maximum on the natural parameter space if and only if `t`
   lies in the interior of the convex hull of the support of `ν`.
-* `CKSD.hasFDerivAt_logPartition_and_eq_of_isMaxOn`: a maximizer solves the likelihood equation
+* `CKSD.has_f_deriv_at_log_partition_and_eq_of_is_max_on`: a maximizer solves the likelihood equation
   `∇ logPartition ν id η = t` and is unique.
-* `CKSD.exists_ne_zero_forall_inner_le_of_notMem_interior`: a point outside the interior of a
+* `CKSD.exists_ne_zero_forall_inner_le_of_not_mem_interior`: a point outside the interior of a
   nonempty convex set is weakly separated from it.
 
 ## Implementation notes
@@ -56,7 +57,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 /-- A point outside the interior of a convex set `C` of a finite-dimensional inner product space
 is weakly separated from `C`: some `u ≠ 0` has `⟪u, x⟫ ≤ ⟪u, t⟫` for all `x ∈ C`. If `C` has
 empty interior it lies in a hyperplane `⟪u, ·⟫ = c`, and `±u` works. -/
-theorem exists_ne_zero_forall_inner_le_of_notMem_interior [FiniteDimensional ℝ E]
+theorem exists_ne_zero_forall_inner_le_of_not_mem_interior [FiniteDimensional ℝ E]
     {C : Set E} (hC : Convex ℝ C) (hCne : C.Nonempty) {t : E} (ht : t ∉ interior C) :
     ∃ u : E, u ≠ 0 ∧ ∀ x ∈ C, inner ℝ u x ≤ inner ℝ u t := by
   rcases (interior C).eq_empty_or_nonempty with hint | hint
@@ -84,7 +85,7 @@ theorem exists_ne_zero_forall_inner_le_of_notMem_interior [FiniteDimensional ℝ
     · simpa [InnerProductSpace.toDual_symm_apply] using hf x hx
 
 /-- A finite subset of the convex hull of `A` lies in the convex hull of a finite subset of `A`. -/
-private theorem exists_finset_subset_convexHull_of_finite (A : Set E) (P : Finset E)
+private theorem exists_finset_subset_convex_hull_of_finite (A : Set E) (P : Finset E)
     (hP : ↑P ⊆ convexHull ℝ A) : ∃ F : Finset E, ↑F ⊆ A ∧ ↑P ⊆ convexHull ℝ (F : Set E) := by
   classical
   induction P using Finset.induction_on with
@@ -116,7 +117,7 @@ private theorem exists_finset_forall_exists_inner_ge [FiniteDimensional ℝ E] {
     rw [Metric.mem_ball, dist_eq_norm, add_sub_cancel_left, norm_smul, b.orthonormal.1 p.1,
       mul_one, Real.norm_eq_abs, abs_mul]
     split_ifs <;> simp [abs_of_pos (half_pos hε)] <;> linarith)
-  obtain ⟨F, hFA, hPF⟩ := exists_finset_subset_convexHull_of_finite A
+  obtain ⟨F, hFA, hPF⟩ := exists_finset_subset_convex_hull_of_finite A
     (insert t (Finset.univ.image z)) (by
       intro x hx
       simp only [Finset.coe_insert, Finset.coe_image, Finset.coe_univ, image_univ,
@@ -211,7 +212,7 @@ private theorem exists_lintegral_exp_inner_sub_ge [FiniteDimensional ℝ E]
 family, then `t` is interior to the convex hull of the support: otherwise a separating direction
 `u` gives `⟪u, x⟫ ≤ ⟪u, t⟫` a.e., not a.e. equal, and moving the parameter from `η` to `η + u`
 strictly increases the likelihood. -/
-private theorem mem_interior_convexHull_support_of_isMaxOn [FiniteDimensional ℝ E]
+private theorem mem_interior_convex_hull_support_of_is_max_on [FiniteDimensional ℝ E]
     [MeasurableSpace E] [BorelSpace E]    (ν : Measure E) (hne : ν ≠ 0)
     (hminimal : IsMinimalExponentialFamily ν id) {t η : E}
     (hη : η ∈ naturalParameterSpace ν id)
@@ -219,7 +220,7 @@ private theorem mem_interior_convexHull_support_of_isMaxOn [FiniteDimensional �
       η) :
     t ∈ interior (convexHull ℝ ν.support) := by
   by_contra ht
-  obtain ⟨u, hu0, hu⟩ := exists_ne_zero_forall_inner_le_of_notMem_interior
+  obtain ⟨u, hu0, hu⟩ := exists_ne_zero_forall_inner_le_of_not_mem_interior
     (convex_convexHull ℝ _) ((Measure.nonempty_support hne).mono (subset_convexHull ℝ _)) ht
   have hle : ∀ᵐ x ∂ν, inner ℝ u x ≤ inner ℝ u t := by
     filter_upwards [Measure.support_mem_ae (μ := ν)] with x hx
@@ -264,7 +265,7 @@ private theorem mem_interior_convexHull_support_of_isMaxOn [FiniteDimensional �
 /-- If `t` is interior to the convex hull of the support of `ν`, the log likelihood of `t` attains
 its maximum on the natural parameter set: `η ↦ ∫⁻ exp ⟪η, x - t⟫ dν` is lower semicontinuous
 (Fatou) and coercive, so it attains its minimum, which is finite. -/
-private theorem exists_isMaxOn_of_mem_interior [FiniteDimensional ℝ E]
+private theorem exists_is_max_on_of_mem_interior [FiniteDimensional ℝ E]
     [MeasurableSpace E] [BorelSpace E]    (ν : Measure E) (hne : ν ≠ 0)
     (hNne : (naturalParameterSpace ν id).Nonempty) {t : E}
     (ht : t ∈ interior (convexHull ℝ ν.support)) :
@@ -345,7 +346,7 @@ whose natural parameter space `N` is nonempty, the log likelihood
 if `t` lies in the interior of the convex hull of the support of `ν`. Openness of `N` (regularity)
 is not needed: the shifted partition function `η ↦ ∫⁻ exp ⟪η, x - t⟫ dν` is lower semicontinuous
 and coercive on all of `E`, and is infinite off `N`. -/
-theorem exists_isMaxOn_logLikelihood_iff_mem_interior_convexHull_support
+theorem exists_is_max_on_log_likelihood_iff_mem_interior_convex_hull_support
     {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
     [MeasurableSpace E] [BorelSpace E] (ν : Measure E) [SigmaFinite ν] (hne : ν ≠ 0)
     (hminimal : IsMinimalExponentialFamily ν id)
@@ -353,8 +354,8 @@ theorem exists_isMaxOn_logLikelihood_iff_mem_interior_convexHull_support
     (∃ η ∈ naturalParameterSpace ν id,
         IsMaxOn (fun ζ ↦ inner ℝ ζ t - logPartition ν id ζ) (naturalParameterSpace ν id) η) ↔
       t ∈ interior (convexHull ℝ ν.support) :=
-  ⟨fun ⟨_, hη, hmax⟩ ↦ mem_interior_convexHull_support_of_isMaxOn ν hne hminimal hη hmax,
-    fun ht ↦ exists_isMaxOn_of_mem_interior ν hne hNne ht⟩
+  ⟨fun ⟨_, hη, hmax⟩ ↦ mem_interior_convex_hull_support_of_is_max_on ν hne hminimal hη hmax,
+    fun ht ↦ exists_is_max_on_of_mem_interior ν hne hNne ht⟩
 
 /-- Near an interior point `η` of the natural parameter set, `‖x‖ exp ⟪ζ, x⟫` has an integrable
 bound uniform in `ζ`; it uses the parameters `η ± K bᵢ` along an orthonormal basis. -/
@@ -439,7 +440,7 @@ private theorem exists_integrable_bound_norm_mul_exp_inner
 
 /-- The log partition function is Fréchet differentiable at interior points of the natural
 parameter space, by differentiation under the integral sign. -/
-private theorem exists_hasFDerivAt_logPartition
+private theorem exists_has_f_deriv_at_log_partition
     {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
     [MeasurableSpace E] [BorelSpace E] (ν : Measure E) (hne : ν ≠ 0) {η : E}
     (hη : naturalParameterSpace ν id ∈ 𝓝 η) :
@@ -471,7 +472,7 @@ private theorem exists_hasFDerivAt_logPartition
 /-- Strict midpoint convexity of the log partition function in a minimal family: the midpoint of
 two distinct natural parameters is a natural parameter, and the log partition function there lies
 strictly below the average. The proof is the equality case of the Cauchy–Schwarz inequality. -/
-private theorem logPartition_midpoint_lt
+private theorem log_partition_midpoint_lt
     {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     [MeasurableSpace E] [OpensMeasurableSpace E] (ν : Measure E) (hne : ν ≠ 0)
     (hminimal : IsMinimalExponentialFamily ν id) {ζ η : E}
@@ -552,7 +553,7 @@ private theorem logPartition_midpoint_lt
 space `N`, a maximizer `η ∈ N` of the log likelihood `ζ ↦ ⟪ζ, t⟫ - logPartition ν id ζ` solves the
 likelihood equation `∇ logPartition ν id η = t` (the mean of the law at `η` is `t`), and it is the
 unique maximizer on `N`. -/
-theorem hasFDerivAt_logPartition_and_eq_of_isMaxOn
+theorem has_f_deriv_at_log_partition_and_eq_of_is_max_on
     {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
     [MeasurableSpace E] [BorelSpace E] (ν : Measure E) [SigmaFinite ν] (hne : ν ≠ 0)
     (hminimal : IsMinimalExponentialFamily ν id) (hN : IsOpen (naturalParameterSpace ν id))
@@ -562,14 +563,14 @@ theorem hasFDerivAt_logPartition_and_eq_of_isMaxOn
       ∀ ζ ∈ naturalParameterSpace ν id,
         inner ℝ ζ t - logPartition ν id ζ = inner ℝ η t - logPartition ν id η → ζ = η := by
   refine ⟨?_, fun ζ hζ heq ↦ ?_⟩
-  · obtain ⟨A', hA⟩ := exists_hasFDerivAt_logPartition ν hne (hN.mem_nhds hη)
+  · obtain ⟨A', hA⟩ := exists_has_f_deriv_at_log_partition ν hne (hN.mem_nhds hη)
     have hlin : HasFDerivAt (fun ζ : E ↦ inner ℝ ζ t) (innerSL ℝ t) η :=
       (innerSL ℝ t).hasFDerivAt.congr_of_eventuallyEq
         (Eventually.of_forall fun ζ ↦ by simp [real_inner_comm])
     have h0 := (hmax.isLocalMax (hN.mem_nhds hη)).hasFDerivAt_eq_zero (hlin.sub hA)
     rwa [← sub_eq_zero.1 h0] at hA
   · by_contra hζη
-    obtain ⟨hmN, hlt⟩ := logPartition_midpoint_lt ν hne hminimal hζ hη hζη
+    obtain ⟨hmN, hlt⟩ := log_partition_midpoint_lt ν hne hminimal hζ hη hζη
     have h1 : inner ℝ ((2⁻¹ : ℝ) • (ζ + η)) t - logPartition ν id ((2⁻¹ : ℝ) • (ζ + η)) ≤
         inner ℝ η t - logPartition ν id η := hmax hmN
     rw [real_inner_smul_left, inner_add_left] at h1

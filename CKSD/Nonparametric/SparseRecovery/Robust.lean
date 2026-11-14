@@ -2,6 +2,7 @@ module
 
 public import CKSD.Nonparametric.SparseRecovery.Nullspace
 
+
 /-!
 # Stable sparse recovery from restricted isometry
 
@@ -16,10 +17,10 @@ guarantee for basis pursuit with noisy measurements.
 
 ## Main results
 
-* `CKSD.hasRobustNullspaceProperty_of_hasRestrictedIsometry`: the restricted isometry property
+* `CKSD.has_robust_nullspace_property_of_has_restricted_isometry`: the restricted isometry property
   of order `2 s` with constant `δ < 4 / √41` gives the robust null space property with
   constants `ρ(δ) < 1` and `τ(δ)`.
-* `CKSD.exists_basisPursuit_error_bound`: stable recovery by basis pursuit,
+* `CKSD.exists_basis_pursuit_error_bound`: stable recovery by basis pursuit,
   `‖b - β‖₁ ≤ C σ_s(β)₁ + D √s η` and `‖b - β‖₂ ≤ C σ_s(β)₁ / √s + D η`, with constants
   depending only on `δ`.
 
@@ -47,7 +48,7 @@ def HasRobustNullspaceProperty {n p : ℕ}
 
 /-- The tail blocks of a decreasing block decomposition are controlled by the lifting bound:
 `∑_{k ≥ 1} ‖v_{B_k}‖ ≤ (‖v‖₁ - ‖v_{B_0}‖₁) / √s + ‖v_{B_0}‖ / 4`. -/
-theorem sum_norm_blockVector_succ_le {p s : ℕ} (hs : 0 < s) (v : EuclideanSpace ℝ (Fin p))
+theorem sum_norm_block_vector_succ_le {p s : ℕ} (hs : 0 < s) (v : EuclideanSpace ℝ (Fin p))
     {ℓ : Fin p → ℕ} (hcmp : ∀ i j, ℓ j < ℓ i → |v i| ≤ |v j|)
     (hcard : ∀ k, (Finset.univ.filter fun j ↦ ℓ j = k).card ≤ s)
     (hfull : ∀ k, (∃ i, k < ℓ i) → (Finset.univ.filter fun j ↦ ℓ j = k).card = s)
@@ -59,14 +60,14 @@ theorem sum_norm_blockVector_succ_le {p s : ℕ} (hs : 0 < s) (v : EuclideanSpac
   set lev : ℕ → Finset (Fin p) := fun k ↦ Finset.univ.filter fun j ↦ ℓ j = k with hlev
   have hmemlev : ∀ k j, j ∈ lev k ↔ ℓ j = k := fun k j ↦ by simp [lev]
   set vk : ℕ → EuclideanSpace ℝ (Fin p) := blockVector ℓ v with hvk
-  have hnorm_sq : ∀ k, ‖vk k‖ ^ 2 = ∑ j ∈ lev k, v j ^ 2 := norm_blockVector_sq ℓ v
+  have hnorm_sq : ∀ k, ‖vk k‖ ^ 2 = ∑ j ∈ lev k, v j ^ 2 := norm_block_vector_sq ℓ v
   have hnorm : ∀ k, ‖vk k‖ = Real.sqrt (∑ j ∈ lev k, |v j| ^ 2) := by
     intro k
     simp only [sq_abs]
     rw [← hnorm_sq, Real.sqrt_sq (norm_nonneg _)]
   set L : ℕ → ℝ := fun k ↦ ∑ j ∈ lev k, |v j| with hL
   have hsumL : ∑ k ∈ Finset.range p, L k = restrictedL1Norm Finset.univ v :=
-    sum_range_sum_abs_eq_restrictedL1Norm ℓ hℓlt v
+    sum_range_sum_abs_eq_restricted_l1_norm ℓ hℓlt v
   have hLp : L p = 0 := by
     refine Finset.sum_eq_zero fun j hj ↦ ?_
     have := hℓlt j
@@ -185,7 +186,7 @@ property of order `2 s` with constant `δ < 4 / √41`, let `u` and the `w k` be
 the support of `u` disjoint from those of the `w k`, and suppose that
 `⟪A u, z⟫ = ‖A u‖² + ∑_{k < K} ⟪A u, A w_k⟫` (as for `z = A v` with `v = u + ∑ w_k`) and
 `∑_{k < K} ‖w_k‖ ≤ c / √s + ‖u‖ / 4`. Then `‖u‖ ≤ ρ(δ) c / √s + τ(δ) ‖z‖`. -/
-theorem norm_le_ripNullspaceRho_mul_add_of_hasRestrictedIsometry {n p s : ℕ} (hs : 0 < s)
+theorem norm_le_rip_nullspace_rho_mul_add_of_has_restricted_isometry {n p s : ℕ} (hs : 0 < s)
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
     {δ : ℝ} (hδ : δ ∈ Ico 0 (4 / Real.sqrt 41)) (hrip : HasRestrictedIsometry A (2 * s) δ)
     (u : EuclideanSpace ℝ (Fin p)) (w : ℕ → EuclideanSpace ℝ (Fin p)) (K : ℕ)
@@ -194,7 +195,7 @@ theorem norm_le_ripNullspaceRho_mul_add_of_hasRestrictedIsometry {n p s : ℕ} (
     (hz : ⟪A u, z⟫ = ‖A u‖ ^ 2 + ∑ k ∈ Finset.range K, ⟪A u, A (w k)⟫)
     {Sc : ℝ} (hSc0 : 0 ≤ Sc) (hX : ∑ k ∈ Finset.range K, ‖w k‖ ≤ Sc / Real.sqrt s + ‖u‖ / 4) :
     ‖u‖ ≤ ripNullspaceRho δ / Real.sqrt s * Sc + ripNullspaceTau δ * ‖z‖ := by
-  obtain ⟨hden, hρ0, hρ1, hτ0, hδ1⟩ := ripNullspace_constants hδ
+  obtain ⟨hden, hρ0, hρ1, hτ0, hδ1⟩ := rip_nullspace_constants hδ
   have hδ0 : 0 ≤ δ := hδ.1
   have hsqrt : 0 < Real.sqrt s := Real.sqrt_pos.mpr (by exact_mod_cast hs)
   set X := ∑ k ∈ Finset.range K, ‖w k‖ with hXdef
@@ -219,10 +220,10 @@ theorem norm_le_ripNullspaceRho_mul_add_of_hasRestrictedIsometry {n p s : ℕ} (
       |⟪A u, A (w k)⟫| ≤ Real.sqrt D * N0 * ‖w k‖ := by
     intro k _
     rcases hδ0.eq_or_lt with hδz | hδpos
-    · have := abs_inner_apply_le_of_hasRestrictedIsometry A δ hrip _ _ hu (hw k) (hdisj k)
+    · have := abs_inner_apply_le_of_has_restricted_isometry A δ hrip _ _ hu (hw k) (hdisj k)
       rw [← hδz, zero_mul, zero_mul] at this
       exact this.trans (by positivity)
-    · exact abs_inner_apply_le_sqrt_of_hasRestrictedIsometry A hδpos hrip _ _ hu (hw k)
+    · exact abs_inner_apply_le_sqrt_of_has_restricted_isometry A hδpos hrip _ _ hu (hw k)
         (hdisj k) t ht
   have hAsq : ‖A u‖ ^ 2 ≤ ‖A u‖ * ‖z‖ + Real.sqrt D * N0 * X := by
     have h0' := hz
@@ -296,13 +297,13 @@ theorem norm_le_ripNullspaceRho_mul_add_of_hasRestrictedIsometry {n p s : ℕ} (
 /-- GAPS 103.49, robust null space property: if `A` has the RIP of order `2 s` with constant
 `0 ≤ δ < 4 / √41`, then `‖v_S‖₂ ≤ ρ(δ) / √s ‖v_{Sᶜ}‖₁ + τ(δ) ‖A v‖` for every `v` and every set
 `S` of at most `s` coordinates. -/
-theorem hasRobustNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ} (hs : 0 < s)
+theorem has_robust_nullspace_property_of_has_restricted_isometry {n p s : ℕ} (hs : 0 < s)
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
     {δ : ℝ} (hδ : δ ∈ Ico 0 (4 / Real.sqrt 41)) (hrip : HasRestrictedIsometry A (2 * s) δ) :
     HasRobustNullspaceProperty A s (ripNullspaceRho δ) (ripNullspaceTau δ) := by
   classical
   intro v S hS
-  obtain ⟨-, hρ0, -, -, -⟩ := ripNullspace_constants hδ
+  obtain ⟨-, hρ0, -, -, -⟩ := rip_nullspace_constants hδ
   have hsqrt : 0 < Real.sqrt s := Real.sqrt_pos.mpr (by exact_mod_cast hs)
   obtain ⟨ℓ, hcmp, hcard, hfull, hℓlt⟩ := exists_decreasing_blocks (fun j ↦ v j) hs
   set B₀ := Finset.univ.filter fun j ↦ ℓ j = 0 with hB₀
@@ -312,13 +313,13 @@ theorem hasRobustNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ} (hs : 
     have : L₀ ≤ restrictedL1Norm Finset.univ v :=
       Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _) fun j _ _ ↦ abs_nonneg _
     linarith
-  have hmain := norm_le_ripNullspaceRho_mul_add_of_hasRestrictedIsometry hs A hδ hrip
+  have hmain := norm_le_rip_nullspace_rho_mul_add_of_has_restricted_isometry hs A hδ hrip
     (blockVector ℓ v 0) (fun k ↦ blockVector ℓ v (k + 1)) p
-    (sparsity_blockVector_le ℓ v 0 (hcard 0))
-    (fun k ↦ sparsity_blockVector_le ℓ v (k + 1) (hcard (k + 1)))
-    (fun k j ↦ blockVector_eq_zero_or_eq_zero ℓ v (by omega) j) (A v)
-    (inner_apply_blockVector_zero_apply A ℓ hℓlt v) hSc0
-    (sum_norm_blockVector_succ_le hs v hcmp hcard hfull hℓlt)
+    (sparsity_block_vector_le ℓ v 0 (hcard 0))
+    (fun k ↦ sparsity_block_vector_le ℓ v (k + 1) (hcard (k + 1)))
+    (fun k j ↦ block_vector_eq_zero_or_eq_zero ℓ v (by omega) j) (A v)
+    (inner_apply_block_vector_zero_apply A ℓ hℓlt v) hSc0
+    (sum_norm_block_vector_succ_le hs v hcmp hcard hfull hℓlt)
   -- comparison with an arbitrary set of at most `s` coordinates
   have h2 : ∑ j ∈ S, v j ^ 2 ≤ ∑ j ∈ B₀, v j ^ 2 :=
     sum_le_sum_filter_eq_zero_of_decreasing_blocks hcmp hfull S hS (fun j ↦ v j ^ 2)
@@ -329,10 +330,10 @@ theorem hasRobustNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ} (hs : 
     sum_le_sum_filter_eq_zero_of_decreasing_blocks hcmp hfull S hS (fun j ↦ |v j|)
       (fun j ↦ abs_nonneg _) fun _ _ h ↦ h
   have hSc_le : Sc ≤ restrictedL1Norm Sᶜ v := by
-    have := restrictedL1Norm_add_compl S v
+    have := restricted_l1_norm_add_compl S v
     rw [hSc]; linarith
   calc Real.sqrt (∑ j ∈ S, v j ^ 2) ≤ Real.sqrt (∑ j ∈ B₀, v j ^ 2) := Real.sqrt_le_sqrt h2
-    _ = ‖blockVector ℓ v 0‖ := by rw [← norm_blockVector_sq, Real.sqrt_sq (norm_nonneg _)]
+    _ = ‖blockVector ℓ v 0‖ := by rw [← norm_block_vector_sq, Real.sqrt_sq (norm_nonneg _)]
     _ ≤ _ := hmain
     _ ≤ _ := by gcongr
 
@@ -340,7 +341,7 @@ theorem hasRobustNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ} (hs : 
 `0 ≤ δ < 4 / √41` there are `C, D > 0` such that whenever `A` has the RIP of order `2 s` with
 constant `δ`, `‖A β - y‖ ≤ η`, and `b` is a basis pursuit estimate with residual bound `η`,
 `‖b - β‖₁ ≤ C σ_s(β)₁ + D √s η` and `‖b - β‖₂ ≤ C σ_s(β)₁ / √s + D η`. -/
-theorem exists_basisPursuit_error_bound
+theorem exists_basis_pursuit_error_bound
     (δ : ℝ) (hδ : δ ∈ Ico 0 (4 / Real.sqrt 41)) :
     ∃ C > 0, ∃ D > 0, ∀ (n p s : ℕ), 0 < s →
       ∀ A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n),
@@ -350,7 +351,7 @@ theorem exists_basisPursuit_error_bound
         restrictedL1Norm Finset.univ (b - β) ≤ C * bestSparseL1Error s β + D * Real.sqrt s * η ∧
         ‖b - β‖ ≤ C / Real.sqrt s * bestSparseL1Error s β + D * η := by
   classical
-  obtain ⟨_, hρ0, hρ1, hτ0, _⟩ := ripNullspace_constants hδ
+  obtain ⟨_, hρ0, hρ1, hτ0, _⟩ := rip_nullspace_constants hδ
   set ρ := ripNullspaceRho δ with hρ
   set τ := ripNullspaceTau δ with hτ
   have h1ρ : 0 < 1 - ρ := by linarith
@@ -370,7 +371,7 @@ theorem exists_basisPursuit_error_bound
     calc ‖(A b - y) - (A β - y)‖ ≤ ‖A b - y‖ + ‖A β - y‖ := norm_sub_le _ _
       _ ≤ 2 * η := by linarith
   have hbβ := hmin β hβ
-  have hnsp := hasRobustNullspaceProperty_of_hasRestrictedIsometry hs A hδ hrip
+  have hnsp := has_robust_nullspace_property_of_has_restricted_isometry hs A hδ hrip
   -- the `ℓ¹` bound against an arbitrary `s`-sparse vector
   have hl1w : ∀ w : EuclideanSpace ℝ (Fin p), sparsity w ≤ s →
       restrictedL1Norm Finset.univ v ≤
@@ -407,13 +408,13 @@ theorem exists_basisPursuit_error_bound
         _ ≤ restrictedL1Norm Finset.univ (β - w) :=
             Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
               fun j _ _ ↦ abs_nonneg _
-    have t1 := restrictedL1Norm_le_add_sub S β b
-    have t2 := restrictedL1Norm_le_add_sub Sᶜ v b
+    have t1 := restricted_l1_norm_le_add_sub S β b
+    have t2 := restricted_l1_norm_le_add_sub Sᶜ v b
     have e2 : b - v = β := by rw [hv]; abel
     rw [e2] at t2
-    have s1 := restrictedL1Norm_add_compl S β
-    have s2 := restrictedL1Norm_add_compl S b
-    have s3 := restrictedL1Norm_add_compl S v
+    have s1 := restricted_l1_norm_add_compl S β
+    have s2 := restricted_l1_norm_add_compl S b
+    have s3 := restricted_l1_norm_add_compl S v
     have hvSc : (1 - ρ) * restrictedL1Norm Sᶜ v ≤
         2 * restrictedL1Norm Sᶜ β + τ * Real.sqrt s * (2 * η) := by
       linarith

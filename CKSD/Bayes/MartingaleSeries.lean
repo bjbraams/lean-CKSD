@@ -4,6 +4,7 @@ public import CKSD.Bayes.Basic
 public import Mathlib.Probability.Martingale.Convergence
 public import Mathlib.MeasureTheory.Function.ConditionalExpectation.PullOut
 
+
 /-!
 # Almost-sure convergence of square-integrable martingale-difference series
 
@@ -25,7 +26,7 @@ variable {Ω : Type*} [MeasurableSpace Ω]
 
 /-- A real martingale-difference series converges almost surely when the expected squares of its
 increments are summable. -/
-theorem ae_exists_tendsto_sum_martingaleDifference
+theorem ae_exists_tendsto_sum_martingale_difference
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (F : Filtration ℕ (inferInstance : MeasurableSpace Ω)) (D : ℕ → Ω → ℝ)
     (hDm : ∀ n, StronglyMeasurable[F (n + 1)] (D n))

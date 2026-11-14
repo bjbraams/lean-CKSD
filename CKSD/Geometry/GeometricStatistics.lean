@@ -6,6 +6,7 @@ public import CKSD.Asymptotics.MultivariateCLT
 public import CKSD.Bayes.Basic
 public import TauCeti.Probability.Moments.Covariance
 
+
 /-!
 # Geometric statistics: Fréchet means, sampling, and multidimensional scaling
 
@@ -13,14 +14,14 @@ Cheeger's inequalities for weighted graphs (GAPS 108.1) are in `CKSD.Geometry.Ch
 
 ## Main results
 
-* `CKSD.existsUnique_frechet_mean_of_midpoint_inequality`: existence and uniqueness of the
+* `CKSD.exists_unique_frechet_mean_of_midpoint_inequality`: existence and uniqueness of the
   Fréchet mean in a complete space satisfying the CAT(0) midpoint inequality (GAPS 108.5).
-* `CKSD.isBoundedInProbability_hausdorff_sampling_error`: the Hausdorff sampling rate of a support
+* `CKSD.is_bounded_in_probability_hausdorff_sampling_error`: the Hausdorff sampling rate of a support
   under a uniform small-ball lower bound (GAPS 108.7).
-* `CKSD.posSemidef_double_centering_iff_sq_euclidean_distances`: Schoenberg's criterion for
+* `CKSD.pos_semidef_double_centering_iff_sq_euclidean_distances`: Schoenberg's criterion for
   Euclidean distance matrices, the basis of classical multidimensional scaling (GAPS 108.8).
 * `CKSD.extrinsic_mean_iff_nearest_expectation`,
-  `CKSD.tendstoInDistribution_projected_sampleAverage`: the extrinsic mean as the projection of the
+  `CKSD.tendsto_in_distribution_projected_sample_average`: the extrinsic mean as the projection of the
   Euclidean mean and its delta-method central limit theorem (GAPS 108.10).
 
 ## Main definitions
@@ -57,7 +58,7 @@ theorem integrable_dist_sq_of_integrable_dist_sq
 inequality: if a complete metric space has midpoints `mid x y` with
 `d(z, mid x y)² ≤ (d(z, x)² + d(z, y)²) / 2 - d(x, y)² / 4`, then every probability law with finite
 second moment has a unique Fréchet mean, a unique minimizer of `p ↦ ∫ d(p, x)² dP(x)`. -/
-theorem existsUnique_frechet_mean_of_midpoint_inequality
+theorem exists_unique_frechet_mean_of_midpoint_inequality
     {X : Type*} [MetricSpace X] [CompleteSpace X]
     [MeasurableSpace X] [BorelSpace X] (P : Measure X) [IsProbabilityMeasure P]
     (mid : X → X → X)
@@ -167,7 +168,7 @@ theorem existsUnique_frechet_mean_of_midpoint_inequality
 
 /-- For an i.i.d. sequence with law `P` and a measurable set `B`, the probability that none of
 the first `n` observations falls in `B` is `(1 - P(B))^n`. -/
-private theorem measureReal_forall_lt_notMem_eq_pow {Ω X : Type*} [MeasurableSpace Ω]
+private theorem measure_real_forall_lt_not_mem_eq_pow {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X)
     [IsProbabilityMeasure P] (Xn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ Xn P)
     {B : Set X} (hB : MeasurableSet B) (n : ℕ) :
@@ -186,7 +187,7 @@ private theorem measureReal_forall_lt_notMem_eq_pow {Ω X : Type*} [MeasurableSp
 law `P` is carried by a compact set `K` and gives every ball of radius `r < r₀` centered in `K`
 mass at least `c r^d`, then the Hausdorff distance between `K` and an i.i.d. sample of size `n` is
 `O_P((log n / n)^{1/d})`. -/
-theorem isBoundedInProbability_hausdorff_sampling_error
+theorem is_bounded_in_probability_hausdorff_sampling_error
     {Ω X : Type*} [MeasurableSpace Ω] [MetricSpace X]
     [MeasurableSpace X] [BorelSpace X] [SecondCountableTopology X]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X) [IsProbabilityMeasure P]
@@ -274,7 +275,7 @@ theorem isBoundedInProbability_hausdorff_sampling_error
     refine (measureReal_biUnion_finset_le _ _).trans ?_
     rw [← nsmul_eq_mul, ← Finset.sum_const]
     refine Finset.sum_le_sum fun z hz ↦ ?_
-    rw [measureReal_forall_lt_notMem_eq_pow μ P Xn hiid measurableSet_ball]
+    rw [measure_real_forall_lt_not_mem_eq_pow μ P Xn hiid measurableSet_ball]
     set q := P.real (Metric.ball z (t / 2))
     have hq1 : q ≤ 1 := measureReal_le_one
     calc (1 - q) ^ n ≤ Real.exp (-q) ^ n :=
@@ -326,7 +327,7 @@ noncomputable def centeringMatrix (n : ℕ) : Matrix (Fin n) (Fin n) ℝ :=
   1 - (n : ℝ)⁻¹ • Matrix.of (fun _ _ ↦ (1 : ℝ))
 
 /-- Entries of a doubly centered matrix. -/
-theorem centeringMatrix_mul_mul_apply {n : ℕ} (D : Matrix (Fin n) (Fin n) ℝ) (i j : Fin n) :
+theorem centering_matrix_mul_mul_apply {n : ℕ} (D : Matrix (Fin n) (Fin n) ℝ) (i j : Fin n) :
     (centeringMatrix n * D * centeringMatrix n) i j =
       D i j - (n : ℝ)⁻¹ * ∑ k, D k j - (n : ℝ)⁻¹ * ∑ k, D i k +
         (n : ℝ)⁻¹ ^ 2 * ∑ k, ∑ l, D k l := by
@@ -351,7 +352,7 @@ theorem sum_sub_sq_eq {n : ℕ} (a : Fin n → ℝ) (j : ℝ) :
 /-- One-coordinate form of the double-centering identity: for `c n = 1`, minus one half of the
 doubly centered squared differences `(a_i - a_j)²` is the product of the centered values
 `(a_i - ā)(a_j - ā)`. -/
-theorem neg_half_mul_doubleCentered_sq_sub_eq {n : ℕ} (a : Fin n → ℝ) (c : ℝ) (hc : c * n = 1)
+theorem neg_half_mul_double_centered_sq_sub_eq {n : ℕ} (a : Fin n → ℝ) (c : ℝ) (hc : c * n = 1)
     (i j : Fin n) :
     -(1 / 2 : ℝ) * ((a i - a j) ^ 2 - c * ∑ l, (a l - a j) ^ 2 - c * ∑ l, (a i - a l) ^ 2 +
       c ^ 2 * ∑ l, ∑ l', (a l - a l') ^ 2) =
@@ -371,7 +372,7 @@ theorem neg_half_mul_doubleCentered_sq_sub_eq {n : ℕ} (a : Fin n → ℝ) (c :
 `D` with zero diagonal is a matrix of squared Euclidean distances `‖x_i - x_j‖²` exactly when
 `-½ J D J` is positive semidefinite, where `J` is the centering matrix. The points can be taken in
 `ℝ^n`; classical multidimensional scaling recovers them from a square root of `-½ J D J`. -/
-theorem posSemidef_double_centering_iff_sq_euclidean_distances
+theorem pos_semidef_double_centering_iff_sq_euclidean_distances
     {n : ℕ} (D : Matrix (Fin n) (Fin n) ℝ)
     (hsym : D.IsSymm) (hdiag : ∀ i, D i i = 0) :
     let J := (1 : Matrix (Fin n) (Fin n) ℝ) - (n : ℝ)⁻¹ • Matrix.of (fun _ _ ↦ (1 : ℝ));
@@ -387,7 +388,7 @@ theorem posSemidef_double_centering_iff_sq_euclidean_distances
   set B := (-(1 / 2 : ℝ)) • (centeringMatrix n * D * centeringMatrix n) with hBdef
   have hB : ∀ i j, B i j = -(1 / 2 : ℝ) * (D i j - c * ∑ k, D k j - c * ∑ k, D i k +
       c ^ 2 * ∑ k, ∑ l, D k l) := fun i j ↦ by
-    rw [hBdef, Matrix.smul_apply, centeringMatrix_mul_mul_apply, smul_eq_mul]
+    rw [hBdef, Matrix.smul_apply, centering_matrix_mul_mul_apply, smul_eq_mul]
   have hcol : ∀ j, ∑ k, D k j = ∑ k, D j k := fun j ↦
     Finset.sum_congr rfl fun k _ ↦ hsym.apply j k
   constructor
@@ -427,7 +428,7 @@ theorem posSemidef_double_centering_iff_sq_euclidean_distances
       rw [hdouble, Finset.mul_sum, Finset.mul_sum, Finset.mul_sum, ← Finset.sum_sub_distrib,
         ← Finset.sum_sub_distrib, ← Finset.sum_add_distrib, Finset.mul_sum]
       exact Finset.sum_congr rfl fun q _ ↦ by
-        have := neg_half_mul_doubleCentered_sq_sub_eq (fun l ↦ x l q) c hc i j
+        have := neg_half_mul_double_centered_sq_sub_eq (fun l ↦ x l q) c hc i j
         simp only at this
         linarith
     rw [hBC]
@@ -451,7 +452,7 @@ theorem extrinsic_mean_iff_nearest_expectation {d : ℕ} (P : Measure (Euclidean
 sample with finite second moments, mean `m` and covariance matrix `C`, and a measurable map `proj`
 differentiable at `m` with derivative `D`, `√n (proj(X̄_n) - proj m)` converges in distribution to
 the image of `N(0, C)` under `D`. -/
-theorem tendstoInDistribution_projected_sampleAverage {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
+theorem tendsto_in_distribution_projected_sample_average {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (P : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure P]
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (hiid : IsIndependentIdenticallyDistributed μ X P)
@@ -461,10 +462,10 @@ theorem tendstoInDistribution_projected_sampleAverage {Ω : Type*} [MeasurableSp
     TendstoInDistribution
       (fun (n : ℕ) ω ↦ Real.sqrt n • (proj (sampleAverage X n ω) - proj (∫ x, x ∂P))) atTop id
       (fun _ ↦ μ) ((multivariateGaussian 0 (TauCeti.covMatrix P)).map D) :=
-  tendstoInDistribution_of_map_eq
-    (tendstoInDistribution_delta_method μ (fun n ω ↦ sampleAverage X n ω)
+  tendsto_in_distribution_of_map_eq
+    (tendsto_in_distribution_delta_method μ (fun n ω ↦ sampleAverage X n ω)
       (fun n ↦ (Finset.measurable_fun_sum _ fun i _ ↦ hiid.1 i).const_smul ((n : ℝ)⁻¹))
-      _ proj hm D hd (tendstoInDistribution_sqrt_smul_sampleAverage μ P X hiid h2)).1
+      _ proj hm D hd (tendsto_in_distribution_sqrt_smul_sample_average μ P X hiid h2)).1
     aemeasurable_id (by rw [Measure.map_id]; rfl)
 
 end CKSD

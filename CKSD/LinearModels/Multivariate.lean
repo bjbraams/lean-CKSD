@@ -13,6 +13,7 @@ public import TauCeti.Probability.Distributions.Wishart.Determinant
 public import CKSD.Inference.Testing
 public import CKSD.LinearModels.MultivariateSampleLaws
 
+
 /-!
 # Multivariate normal samples: Wishart and Hotelling laws, covariance likelihood
 
@@ -20,7 +21,7 @@ Exact distribution theory for samples from `N_p(μ, Σ)` and the Gaussian covari
 
 ## Main results
 
-* `CKSD.gaussian_sampleMean_scatterMatrix_wishart_and_hotelling`: for an i.i.d. normal sample,
+* `CKSD.gaussian_sample_mean_scatter_matrix_wishart_and_hotelling`: for an i.i.d. normal sample,
   the sample mean and the scatter matrix are independent, the scatter matrix is Wishart with
   `n - 1` degrees of freedom, and Hotelling's `T²`, suitably scaled, has an F law.
 * `CKSD.log_det_le_trace_sub_card`, `CKSD.log_det_eq_trace_sub_card_iff`: the spectral
@@ -28,7 +29,7 @@ Exact distribution theory for samples from `N_p(μ, Σ)` and the Gaussian covari
 * `CKSD.log_det_add_card_le_log_det_add_trace_mul_inv`,
   `CKSD.log_det_add_card_eq_log_det_add_trace_mul_inv_iff`: the criterion
   `C ↦ log det C + tr(S C⁻¹)` has the unique minimizer `C = S` over positive definite matrices.
-* `CKSD.gaussianNegLogLikelihood_sampleMean_le`, `CKSD.gaussianNegLogLikelihood_eq_iff`: the
+* `CKSD.gaussian_neg_log_likelihood_sample_mean_le`, `CKSD.gaussian_neg_log_likelihood_eq_iff`: the
   Gaussian likelihood of a sample with positive definite sample covariance has the unique
   maximizer (sample mean, sample covariance with divisor `n`).
 * `CKSD.wishart_determinant_law`: Bartlett's decomposition gives the law of `det W` for a
@@ -39,7 +40,7 @@ Exact distribution theory for samples from `N_p(μ, Σ)` and the Gaussian covari
 
 The sampling laws of 105.22 use the Helmert decomposition
 `CKSD.exists_helmert_decomposition` and Hotelling's law
-`CKSD.map_hotelling_multivariateGaussian_wishartGramMeasure` from
+`CKSD.map_hotelling_multivariate_gaussian_wishart_gram_measure` from
 `CKSD.LinearModels.MultivariateSampleLaws`.
 
 The correlation law conditions on the second sample: for a fixed non-constant second sample,
@@ -80,7 +81,7 @@ definite, the sample mean and the scatter matrix `A = ∑ᵢ (xᵢ - x̄)(xᵢ -
 `A` has the Wishart law `W_p(n - 1, Σ)`, and with `S = A / (n - 1)` the scaled Hotelling
 statistic `(n - p) / ((n - 1) p) · n (x̄ - m)ᵀ S⁻¹ (x̄ - m)` has the F law with `p` and `n - p`
 degrees of freedom. -/
-theorem gaussian_sampleMean_scatterMatrix_wishart_and_hotelling
+theorem gaussian_sample_mean_scatter_matrix_wishart_and_hotelling
     {n p : ℕ} (hp : 0 < p) (hn : p + 1 ≤ n)
     (m : EuclideanSpace ℝ (Fin p)) (Sigma : Matrix (Fin p) (Fin p) ℝ)
     (hS : Sigma.PosDef) :
@@ -149,7 +150,7 @@ theorem gaussian_sampleMean_scatterMatrix_wishart_and_hotelling
       have hsq : ((Real.sqrt n)⁻¹) ^ 2 = (n : ℝ)⁻¹ := by
         rw [inv_pow, Real.sq_sqrt (Nat.cast_nonneg n)]
       simp only [Function.comp_apply, S, hmean x, hscat x, add_sub_cancel_left,
-        matrix_inv_smul_of_ne_zero (inv_ne_zero hν0), inv_inv, matrixQuadraticForm_smul_smul, hsq,
+        matrix_inv_smul_of_ne_zero (inv_ne_zero hν0), inv_inv, matrix_quadratic_form_smul_smul, hsq,
         show n - 1 - p + 1 = n - p by omega]
       field_simp
     have hjoint : P.map (fun x ↦ (U x, TauCeti.Probability.wishartGram (Y x))) =
@@ -169,8 +170,8 @@ theorem gaussian_sampleMean_scatterMatrix_wishart_and_hotelling
       rw [h2, ← Measure.prod_swap, Measure.map_map hg measurable_swap]
       rfl
     rw [hstat, ← Measure.map_map (by exact (measurable_const.mul
-        measurable_matrixQuadraticForm_inv)) (hU.prodMk hWm), hjoint,
-      map_hotelling_multivariateGaussian_wishartGramMeasure hp (by omega) hS,
+        measurable_matrix_quadratic_form_inv)) (hU.prodMk hWm), hjoint,
+      map_hotelling_multivariate_gaussian_wishart_gram_measure hp (by omega) hS,
       show n - 1 - p + 1 = n - p by omega]
 
 /-- The spectral inequality `log det A ≤ tr A - dim` for a positive-definite real matrix,
@@ -223,10 +224,10 @@ private theorem log_det_add_trace_mul_inv_aux {p : ℕ}
     Real.log S.det + p ≤ Real.log C.det + (S * C⁻¹).trace ∧
       (Real.log S.det + p = Real.log C.det + (S * C⁻¹).trace ↔ C = S) := by
   let R := (CFC.sqrt C)⁻¹
-  have hRt := transpose_inv_sqrt_of_posSemidef hC.posSemidef
-  have hRR := inv_sqrt_mul_inv_sqrt_of_posSemidef hC.posSemidef
-  have hRu := isUnit_det_inv_sqrt_of_posDef hC
-  have hRC := inv_sqrt_mul_mul_inv_sqrt_of_posDef hC
+  have hRt := transpose_inv_sqrt_of_pos_semidef hC.posSemidef
+  have hRR := inv_sqrt_mul_inv_sqrt_of_pos_semidef hC.posSemidef
+  have hRu := is_unit_det_inv_sqrt_of_pos_def hC
+  have hRC := inv_sqrt_mul_mul_inv_sqrt_of_pos_def hC
   have hRunit : IsUnit R := (Matrix.isUnit_iff_isUnit_det R).2 hRu
   have hT : (R * S * R).PosDef := by
     have h := hS.conjTranspose_mul_mul_same (Matrix.mulVec_injective_iff_isUnit.2 hRunit)
@@ -274,21 +275,21 @@ theorem log_det_add_card_eq_log_det_add_trace_mul_inv_iff {p : ℕ}
   (log_det_add_trace_mul_inv_aux S C hS hC).2
 
 /-- The Euclidean quadratic form agrees with the coordinate dot product. -/
-theorem matrixQuadraticForm_eq_dotProduct {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ)
+theorem matrix_quadratic_form_eq_dot_product {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ)
     (v : EuclideanSpace ℝ (Fin p)) :
     matrixQuadraticForm A v = (A *ᵥ (v : Fin p → ℝ)) ⬝ᵥ (v : Fin p → ℝ) := by
   simp [matrixQuadraticForm, Matrix.toEuclideanCLM_apply,
     EuclideanSpace.inner_eq_star_dotProduct]
 
 /-- A nonempty finite sample has zero sum of deviations from its sample mean. -/
-theorem sum_sub_sampleMean_eq_zero {n p : ℕ} (hn : 0 < n)
+theorem sum_sub_sample_mean_eq_zero {n p : ℕ} (hn : 0 < n)
     (x : Fin n → EuclideanSpace ℝ (Fin p)) :
     ∑ i, (x i - sampleMean x) = 0 := by
   rw [Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin]
   simp [sampleMean, ← Nat.cast_smul_eq_nsmul ℝ, smul_smul, hn.ne']
 
 /-- Centering a quadratic sum at the sample mean separates its location error. -/
-theorem sum_matrixQuadraticForm_sub_eq {n p : ℕ} (hn : 0 < n)
+theorem sum_matrix_quadratic_form_sub_eq {n p : ℕ} (hn : 0 < n)
     (x : Fin n → EuclideanSpace ℝ (Fin p)) (m : EuclideanSpace ℝ (Fin p))
     (A : Matrix (Fin p) (Fin p) ℝ) :
     ∑ i, matrixQuadraticForm A (x i - m) =
@@ -297,11 +298,11 @@ theorem sum_matrixQuadraticForm_sub_eq {n p : ℕ} (hn : 0 < n)
   have hx : ∀ i, x i - m = (x i - sampleMean x) + (sampleMean x - m) := fun i ↦ by abel
   simp_rw [hx, matrixQuadraticForm, map_add, inner_add_left, inner_add_right]
   simp only [Finset.sum_add_distrib, ← sum_inner, ← inner_sum, ← map_sum,
-    sum_sub_sampleMean_eq_zero hn x, map_zero, inner_zero_right, inner_zero_left, add_zero, zero_add,
+    sum_sub_sample_mean_eq_zero hn x, map_zero, inner_zero_right, inner_zero_left, add_zero, zero_add,
     Finset.sum_const, Finset.card_univ, Fintype.card_fin, ← Nat.cast_smul_eq_nsmul ℝ, real_inner_smul_left]
 
 /-- A centered quadratic sum is the trace pairing of the scatter matrix and its coefficient. -/
-theorem sum_matrixQuadraticForm_sub_sampleMean_eq_trace {n p : ℕ}
+theorem sum_matrix_quadratic_form_sub_sample_mean_eq_trace {n p : ℕ}
     (x : Fin n → EuclideanSpace ℝ (Fin p)) (A : Matrix (Fin p) (Fin p) ℝ) :
     (∑ i, matrixQuadraticForm A (x i - sampleMean x)) = (scatterMatrix x * A).trace := by
   have hs : scatterMatrix x = ∑ i, Matrix.vecMulVec
@@ -309,13 +310,13 @@ theorem sum_matrixQuadraticForm_sub_sampleMean_eq_trace {n p : ℕ}
     ext j k
     simp [scatterMatrix, Matrix.sum_apply, Matrix.vecMulVec_apply, Pi.sub_apply]
   rw [Matrix.trace_mul_comm, hs, Matrix.mul_sum, Matrix.trace_sum]
-  simp_rw [Matrix.mul_vecMulVec, Matrix.trace_vecMulVec, matrixQuadraticForm_eq_dotProduct]
+  simp_rw [Matrix.mul_vecMulVec, Matrix.trace_vecMulVec, matrix_quadratic_form_eq_dot_product]
   rfl
 
 /-- A positive-definite real matrix has a positive quadratic form on every nonzero vector. -/
-theorem matrixQuadraticForm_pos {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ) (hA : A.PosDef)
+theorem matrix_quadratic_form_pos {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ) (hA : A.PosDef)
     (v : EuclideanSpace ℝ (Fin p)) (hv : v ≠ 0) : 0 < matrixQuadraticForm A v := by
-  rw [matrixQuadraticForm_eq_dotProduct, dotProduct_comm]
+  rw [matrix_quadratic_form_eq_dot_product, dotProduct_comm]
   have hv' : (v : Fin p → ℝ) ≠ 0 := by
     intro hvz
     apply hv
@@ -326,7 +327,7 @@ theorem matrixQuadraticForm_pos {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ) (hA :
 /-- The Gaussian negative log-likelihood of a sample with positive definite sample covariance
 `S = n⁻¹ ∑ᵢ (xᵢ - x̄)(xᵢ - x̄)ᵀ` is at least its value at `(x̄, S)`, with equality only there.
 The sample may be empty: then `S` is positive definite only in dimension zero. -/
-private theorem gaussianNegLogLikelihood_aux {n p : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin p))
+private theorem gaussian_neg_log_likelihood_aux {n p : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin p))
     (hS : ((n : ℝ)⁻¹ • scatterMatrix x).PosDef) (m : EuclideanSpace ℝ (Fin p))
     (C : Matrix (Fin p) (Fin p) ℝ) (hC : C.PosDef) :
     gaussianNegLogLikelihood x (sampleMean x) ((n : ℝ)⁻¹ • scatterMatrix x) ≤
@@ -354,7 +355,7 @@ private theorem gaussianNegLogLikelihood_aux {n p : ℕ} (x : Fin n → Euclidea
   have hsum : ∀ m C, (∑ i, matrixQuadraticForm C⁻¹ (x i - m)) =
       n * ((S * C⁻¹).trace + matrixQuadraticForm C⁻¹ (sampleMean x - m)) := by
     intro m C
-    rw [sum_matrixQuadraticForm_sub_eq hn x m C⁻¹, sum_matrixQuadraticForm_sub_sampleMean_eq_trace x C⁻¹,
+    rw [sum_matrix_quadratic_form_sub_eq hn x m C⁻¹, sum_matrix_quadratic_form_sub_sample_mean_eq_trace x C⁻¹,
       hs, Matrix.smul_mul, Matrix.trace_smul]
     simp only [smul_eq_mul]
     ring
@@ -375,7 +376,7 @@ private theorem gaussianNegLogLikelihood_aux {n p : ℕ} (x : Fin n → Euclidea
   have hq : 0 ≤ matrixQuadraticForm C⁻¹ (sampleMean x - m) := by
     by_cases he : sampleMean x - m = 0
     · simp [he, matrixQuadraticForm]
-    · exact (matrixQuadraticForm_pos C⁻¹ hC.inv _ he).le
+    · exact (matrix_quadratic_form_pos C⁻¹ hC.inv _ he).le
   rw [hbase, hNLL]
   refine ⟨mul_le_mul_of_nonneg_left (by linarith) (by positivity), ?_⟩
   constructor
@@ -385,7 +386,7 @@ private theorem gaussianNegLogLikelihood_aux {n p : ℕ} (x : Fin n → Euclidea
     have hm : m = sampleMean x := by
       by_contra hne
       have hv : sampleMean x - m ≠ 0 := sub_ne_zero.mpr (Ne.symm hne)
-      exact (matrixQuadraticForm_pos C⁻¹ hC.inv _ hv).ne' hqz
+      exact (matrix_quadratic_form_pos C⁻¹ hC.inv _ hv).ne' hqz
     exact ⟨hm, hcrit_eq.1 (by linarith)⟩
   · rintro ⟨rfl, rfl⟩
     simp [hSS, matrixQuadraticForm]
@@ -393,23 +394,23 @@ private theorem gaussianNegLogLikelihood_aux {n p : ℕ} (x : Fin n → Euclidea
 /-- GAPS 105.28: the Gaussian negative log-likelihood of a sample whose sample covariance
 `S = n⁻¹ ∑ᵢ (xᵢ - x̄)(xᵢ - x̄)ᵀ` is positive definite is minimized, over all means `m` and positive
 definite covariances `C`, at `(x̄, S)`. -/
-theorem gaussianNegLogLikelihood_sampleMean_le {n p : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin p))
+theorem gaussian_neg_log_likelihood_sample_mean_le {n p : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin p))
     (hS : ((n : ℝ)⁻¹ • scatterMatrix x).PosDef) (m : EuclideanSpace ℝ (Fin p))
     (C : Matrix (Fin p) (Fin p) ℝ) (hC : C.PosDef) :
     gaussianNegLogLikelihood x (sampleMean x) ((n : ℝ)⁻¹ • scatterMatrix x) ≤
       gaussianNegLogLikelihood x m C :=
-  (gaussianNegLogLikelihood_aux x hS m C hC).1
+  (gaussian_neg_log_likelihood_aux x hS m C hC).1
 
 /-- GAPS 105.28: the minimizer of the Gaussian negative log-likelihood is unique: for a sample
 whose sample covariance `S` (divisor `n`) is positive definite, the value at `(m, C)`, `C`
 positive definite, equals the value at `(x̄, S)` only if `m = x̄` and `C = S`. -/
-theorem gaussianNegLogLikelihood_eq_iff {n p : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin p))
+theorem gaussian_neg_log_likelihood_eq_iff {n p : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin p))
     (hS : ((n : ℝ)⁻¹ • scatterMatrix x).PosDef) (m : EuclideanSpace ℝ (Fin p))
     (C : Matrix (Fin p) (Fin p) ℝ) (hC : C.PosDef) :
     gaussianNegLogLikelihood x (sampleMean x) ((n : ℝ)⁻¹ • scatterMatrix x) =
         gaussianNegLogLikelihood x m C ↔
       m = sampleMean x ∧ C = (n : ℝ)⁻¹ • scatterMatrix x :=
-  (gaussianNegLogLikelihood_aux x hS m C hC).2
+  (gaussian_neg_log_likelihood_aux x hS m C hC).2
 
 /-- GAPS 105.31: for `p ≤ n` and positive definite `Σ`, the determinant of a Wishart matrix
 `W ∼ W_p(n, Σ)` has the law of `det Σ · ∏_{i<p} χ²_{n-i}` with independent chi-squared factors
@@ -436,26 +437,26 @@ private noncomputable def correlationStat (N : ℕ) (x y : Fin N → ℝ) : ℝ 
   Real.sqrt (N - 2 : ℕ) * r / Real.sqrt (1 - r ^ 2)
 
 /-- The sample correlation statistic is jointly measurable in the two samples. -/
-private theorem measurable_correlationStat (N : ℕ) :
+private theorem measurable_correlation_stat (N : ℕ) :
     Measurable (fun z : (Fin N → ℝ) × (Fin N → ℝ) ↦ correlationStat N z.1 z.2) := by
   unfold correlationStat
   fun_prop
 
 /-- The sample correlation statistic is measurable in the first sample. -/
-private theorem measurable_correlationStat_left (N : ℕ) (y : Fin N → ℝ) :
+private theorem measurable_correlation_stat_left (N : ℕ) (y : Fin N → ℝ) :
     Measurable (fun x ↦ correlationStat N x y) := by
   unfold correlationStat
   fun_prop
 
 /-- The Euclidean inner product in coordinates. -/
-private theorem inner_toLp_eq_sum {N : ℕ} (f g : Fin N → ℝ) :
+private theorem inner_to_lp_eq_sum {N : ℕ} (f g : Fin N → ℝ) :
     inner ℝ (WithLp.toLp 2 f : EuclideanSpace ℝ (Fin N)) (WithLp.toLp 2 g) = ∑ i, f i * g i := by
   rw [EuclideanSpace.inner_toLp_toLp]
   simp [dotProduct, mul_comm]
 
 /-- The algebraic core: with `Z = ⟨u, x⟩` and `V = ∑ (xᵢ - x̄)² - Z²`, the statistic equals
 `Z / √(V / (N - 2))`. -/
-private theorem correlationStat_eq {N : ℕ} (x y : Fin N → ℝ) (s Z V : ℝ) (hs : 0 < s)
+private theorem correlation_stat_eq {N : ℕ} (x y : Fin N → ℝ) (s Z V : ℝ) (hs : 0 < s)
     (hyy : ∑ i, (y i - (∑ j, y j) / N) ^ 2 = s ^ 2)
     (hxy : ∑ i, (x i - (∑ j, x j) / N) * (y i - (∑ j, y j) / N) = s * Z)
     (hV : V = ∑ i, (x i - (∑ j, x j) / N) ^ 2 - Z ^ 2) (hV0 : 0 ≤ V) :
@@ -492,7 +493,7 @@ private theorem correlationStat_eq {N : ℕ} (x y : Fin N → ℝ) (s Z V : ℝ)
 
 /-- For a fixed non-constant second sample `y`, the statistic of a standard Gaussian first
 sample has Student's law with `N - 2` degrees of freedom. -/
-private theorem map_correlationStat_left {N : ℕ} (hN : 2 < N) (y : Fin N → ℝ)
+private theorem map_correlation_stat_left {N : ℕ} (hN : 2 < N) (y : Fin N → ℝ)
     (hy : (fun i ↦ y i - (∑ j, y j) / N) ≠ 0) :
     (Measure.pi fun _ : Fin N ↦ gaussianReal 0 1).map (fun x ↦ correlationStat N x y) =
       TauCeti.Probability.studentTMeasure (N - 2 : ℕ) := by
@@ -518,19 +519,19 @@ private theorem map_correlationStat_left {N : ℕ} (hN : 2 < N) (y : Fin N → �
   have hsN : Real.sqrt N ^ 2 = N := Real.sq_sqrt (by positivity)
   have hsN0 : Real.sqrt N ≠ 0 := (Real.sqrt_pos.2 (by positivity)).ne'
   have he1 : inner ℝ e1 e1 = 1 := by
-    rw [inner_toLp_eq_sum]
+    rw [inner_to_lp_eq_sum]
     simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
     field_simp
     exact hsN.symm
   have hu : inner ℝ u u = 1 := by
-    rw [inner_toLp_eq_sum]
+    rw [inner_to_lp_eq_sum]
     have : ∑ i, s⁻¹ * yc i * (s⁻¹ * yc i) = (∑ i, yc i ^ 2) / s ^ 2 := by
       rw [Finset.sum_div]
       refine Finset.sum_congr rfl fun i _ ↦ ?_
       field_simp
     rw [this, hs2, div_self hss.ne']
   have he1u : inner ℝ e1 u = 0 := by
-    rw [inner_toLp_eq_sum, ← Finset.mul_sum, ← Finset.mul_sum, hsum_yc]
+    rw [inner_to_lp_eq_sum, ← Finset.mul_sum, ← Finset.mul_sum, hsum_yc]
     simp
   -- the subspaces `span {u}` and `span {e₁, u}ᗮ`
   let S2 : Submodule ℝ E := Submodule.span ℝ {e1, u}
@@ -587,7 +588,7 @@ private theorem map_correlationStat_left {N : ℕ} (hN : 2 < N) (y : Fin N → �
   -- the standardized sample and the two independent pieces
   let Y : (Fin N → ℝ) → E := fun x ↦ WithLp.toLp 2 x
   have hY : HasLaw Y (stdGaussian E) μ := by
-    have h := hasLaw_standardize_pi_gaussianReal N 0 1 one_pos
+    have h := has_law_standardize_pi_gaussian_real N 0 1 one_pos
     have hf : (fun x : Fin N → ℝ ↦ (WithLp.toLp 2 (fun i ↦ (x i - 0) / Real.sqrt ((1 : ℝ≥0) : ℝ)) :
         EuclideanSpace ℝ (Fin N))) = Y := by
       funext x
@@ -596,7 +597,7 @@ private theorem map_correlationStat_left {N : ℕ} (hN : 2 < N) (y : Fin N → �
   let Zf : (Fin N → ℝ) → ℝ := fun x ↦ inner ℝ u (Y x)
   let Vf : (Fin N → ℝ) → ℝ := fun x ↦ ‖L.orthogonalProjectionOnto (Y x)‖ ^ 2
   have hZ : HasLaw Zf (gaussianReal 0 1) μ :=
-    HasLaw.comp ⟨by fun_prop, stdGaussian_map_inner_of_norm_eq_one u hnu⟩ hY
+    HasLaw.comp ⟨by fun_prop, std_gaussian_map_inner_of_norm_eq_one u hnu⟩ hY
   have hV : HasLaw Vf (TauCeti.Probability.chiSquaredMeasure (N - 2 : ℕ)) μ := by
     have := hY.norm_sq_orthogonalProjectionOnto_stdGaussian L
     rwa [hfinL] at this
@@ -627,10 +628,10 @@ private theorem map_correlationStat_left {N : ℕ} (hN : 2 < N) (y : Fin N → �
   rw [← (TauCeti.Probability.hasLaw_studentT_of_gaussian_chiSquared hν hZV hZ hV).map_eq]
   congr 1
   funext x
-  have hZx : Zf x = ∑ i, s⁻¹ * yc i * x i := inner_toLp_eq_sum _ _
-  have hxx : inner ℝ (Y x) (Y x) = ∑ i, x i * x i := inner_toLp_eq_sum _ _
-  have he1x : inner ℝ e1 (Y x) = ∑ i, (Real.sqrt N)⁻¹ * x i := inner_toLp_eq_sum _ _
-  refine correlationStat_eq x y s (Zf x) (Vf x) hs hs2.symm ?_ ?_ (by positivity)
+  have hZx : Zf x = ∑ i, s⁻¹ * yc i * x i := inner_to_lp_eq_sum _ _
+  have hxx : inner ℝ (Y x) (Y x) = ∑ i, x i * x i := inner_to_lp_eq_sum _ _
+  have he1x : inner ℝ e1 (Y x) = ∑ i, (Real.sqrt N)⁻¹ * x i := inner_to_lp_eq_sum _ _
+  refine correlation_stat_eq x y s (Zf x) (Vf x) hs hs2.symm ?_ ?_ (by positivity)
   · show ∑ i, (x i - (∑ j, x j) / N) * yc i = _
     rw [hZx, Finset.mul_sum]
     have : ∀ i, (x i - (∑ j, x j) / N) * yc i = s * (s⁻¹ * yc i * x i) -
@@ -668,14 +669,14 @@ private theorem ae_sub_mean_ne_zero {N : ℕ} (hN : 2 ≤ N) :
       · simp [h01.symm]
     rw [norm_smul, h2, norm_inv, Real.norm_eq_abs, abs_of_pos (by positivity),
       inv_mul_cancel₀ (by positivity)]
-  have hY := hasLaw_standardize_pi_gaussianReal N 0 1 one_pos
+  have hY := has_law_standardize_pi_gaussian_real N 0 1 one_pos
   have hf : (fun x : Fin N → ℝ ↦ (WithLp.toLp 2 (fun i ↦ (x i - 0) / Real.sqrt ((1 : ℝ≥0) : ℝ)) :
       EuclideanSpace ℝ (Fin N))) = fun x ↦ WithLp.toLp 2 x := by
     funext x
     simp
   rw [hf] at hY
   have hZ : HasLaw (fun x : Fin N → ℝ ↦ inner ℝ w (WithLp.toLp 2 x : E)) (gaussianReal 0 1) μ :=
-    HasLaw.comp ⟨by fun_prop, stdGaussian_map_inner_of_norm_eq_one w hw⟩ hY
+    HasLaw.comp ⟨by fun_prop, std_gaussian_map_inner_of_norm_eq_one w hw⟩ hY
   have h0 : μ ((fun x : Fin N → ℝ ↦ inner ℝ w (WithLp.toLp 2 x : E)) ⁻¹' {0}) = 0 := by
     rw [← Measure.map_apply_of_aemeasurable hZ.aemeasurable (measurableSet_singleton 0),
       hZ.map_eq]
@@ -705,7 +706,7 @@ theorem gaussian_sample_correlation_student_law (N : ℕ) (hN : 2 < N) :
   set μ := Measure.pi fun _ : Fin N ↦ gaussianReal 0 1
   let e := MeasurableEquiv.arrowProdEquivProdArrow ℝ ℝ (Fin N)
   let F : (Fin N → ℝ) × (Fin N → ℝ) → ℝ := fun z ↦ correlationStat N z.1 z.2
-  have hF : Measurable F := measurable_correlationStat N
+  have hF : Measurable F := measurable_correlation_stat N
   have hfun : (fun x ↦ Real.sqrt (N - 2 : ℕ) * r x / Real.sqrt (1 - r x ^ 2)) = F ∘ e := rfl
   have he : P.map e = μ.prod μ :=
     (measurePreserving_arrowProdEquivProdArrow ℝ ℝ (Fin N) (fun _ ↦ gaussianReal 0 1)
@@ -716,8 +717,8 @@ theorem gaussian_sample_correlation_student_law (N : ℕ) (hN : 2 < N) :
   have hae : ∀ᵐ y ∂μ, μ ((fun x ↦ (x, y)) ⁻¹' (F ⁻¹' s)) =
       TauCeti.Probability.studentTMeasure (N - 2 : ℕ) s := by
     filter_upwards [ae_sub_mean_ne_zero hN.le] with y hy
-    rw [← map_correlationStat_left hN y hy,
-      Measure.map_apply (measurable_correlationStat_left N y) hs]
+    rw [← map_correlation_stat_left hN y hy,
+      Measure.map_apply (measurable_correlation_stat_left N y) hs]
     rfl
   rw [lintegral_congr_ae hae, lintegral_const, measure_univ, mul_one]
 

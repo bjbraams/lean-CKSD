@@ -6,6 +6,7 @@ public import Mathlib.Algebra.MvPolynomial.Funext
 public import Mathlib.Order.Prod.Lex.Basic
 public import Mathlib.Order.Filter.AtTopBot.Field
 
+
 /-!
 # Linear independence of Gaussian exponentials
 
@@ -29,7 +30,7 @@ open scoped Topology BigOperators RealInnerProductSpace
 namespace CKSD
 
 /-- A quadratic exponential tends to zero when its coefficient pair is lexicographically negative. -/
-theorem tendsto_exp_quadratic_atTop_zero {a b : ℝ}
+theorem tendsto_exp_quadratic_at_top_zero {a b : ℝ}
     (h : a < 0 ∨ a = 0 ∧ b < 0) :
     Tendsto (fun t : ℝ ↦ Real.exp (a*t^2+b*t)) atTop (𝓝 0) := by
   apply Real.tendsto_exp_atBot.comp
@@ -76,7 +77,7 @@ theorem coefficients_eq_zero_of_sum_exp_quadratic_eq_zero {ι : Type*} [Fintype 
         · exact Or.inl (sub_neg.2 ha)
         · exact Or.inr ⟨sub_eq_zero.2 ha, sub_neg.2 hb⟩
       simpa only [ite_eq_right hji, mul_zero] using
-        (tendsto_exp_quadratic_atTop_zero hlt').const_mul (c j)
+        (tendsto_exp_quadratic_at_top_zero hlt').const_mul (c j)
     · have hcj : c j = 0 := by simpa [s] using hj
       simp only [hcj, zero_mul, ite_eq_right hji]
       exact tendsto_const_nhds
@@ -104,7 +105,7 @@ noncomputable def gaussianParameterPolynomial {d : ℕ} (m : EuclideanSpace ℝ 
     ∑ i, ∑ j, MvPolynomial.C (S i j) * MvPolynomial.X i * MvPolynomial.X j
 
 /-- Evaluating the Gaussian parameter polynomial gives its mean and covariance quadratic form. -/
-theorem eval_gaussianParameterPolynomial {d : ℕ} (m x : EuclideanSpace ℝ (Fin d))
+theorem eval_gaussian_parameter_polynomial {d : ℕ} (m x : EuclideanSpace ℝ (Fin d))
     (S : Matrix (Fin d) (Fin d) ℝ) :
     MvPolynomial.eval (fun i ↦ x i) (gaussianParameterPolynomial m S) =
       ⟪x,m⟫ + ⟪x,S.toEuclideanLin x⟫ := by
@@ -126,13 +127,13 @@ namespace CKSD
 
 /-- The parameter polynomial determines the mean and every Hermitian covariance matrix.
 The odd part determines the mean, and polarization determines the covariance. -/
-theorem gaussianParameterPolynomial_injective {d : ℕ}
+theorem gaussian_parameter_polynomial_injective {d : ℕ}
     (m n : EuclideanSpace ℝ (Fin d)) (S T : Matrix (Fin d) (Fin d) ℝ)
     (hS : S.IsHermitian) (hT : T.IsHermitian)
     (hp : gaussianParameterPolynomial m S = gaussianParameterPolynomial n T) : m = n ∧ S = T := by
   have he (x : EuclideanSpace ℝ (Fin d)) :
       ⟪x,m⟫ + ⟪x,S.toEuclideanLin x⟫ = ⟪x,n⟫ + ⟪x,T.toEuclideanLin x⟫ := by
-    simpa only [eval_gaussianParameterPolynomial] using congrArg (MvPolynomial.eval (fun i ↦ x i)) hp
+    simpa only [eval_gaussian_parameter_polynomial] using congrArg (MvPolynomial.eval (fun i ↦ x i)) hp
   have hm (x : EuclideanSpace ℝ (Fin d)) : ⟪x,m⟫ = ⟪x,n⟫ := by
     have hneg := he (-x)
     simp only [map_neg, inner_neg_left, inner_neg_right, neg_neg] at hneg
@@ -165,7 +166,7 @@ namespace CKSD
 
 /-- A finite family of distinct real multivariate polynomials has an evaluation at which all
 values are distinct, since the product of their nonzero pairwise differences is nonzero. -/
-theorem exists_injective_eval_mvPolynomial {ι σ : Type*} [Fintype ι]
+theorem exists_injective_eval_mv_polynomial {ι σ : Type*} [Fintype ι]
     (p : ι → MvPolynomial σ ℝ) (hp : Function.Injective p) :
     ∃ x : σ → ℝ, Function.Injective fun i ↦ MvPolynomial.eval x (p i) := by
   classical
@@ -198,7 +199,7 @@ namespace CKSD
 /-- Distinct means and Hermitian covariance matrices give linearly independent Gaussian
 exponentials. A polynomial evaluation selects a separating line, and quadratic exponential
 growth proves linear independence on that line. -/
-theorem linearIndependent_gaussianExponents {ι : Type*} {d : ℕ}
+theorem linear_independent_gaussian_exponents {ι : Type*} {d : ℕ}
     (m : ι → EuclideanSpace ℝ (Fin d)) (S : ι → Matrix (Fin d) (Fin d) ℝ)
     (hS : ∀ i, (S i).IsHermitian) (hinj : Function.Injective fun i ↦ (m i,S i)) :
     LinearIndependent ℝ (fun i ↦ fun v : EuclideanSpace ℝ (Fin d) ↦
@@ -210,15 +211,15 @@ theorem linearIndependent_gaussianExponents {ι : Type*} {d : ℕ}
   have hp : Function.Injective p := by
     intro j k he
     apply Subtype.ext
-    obtain ⟨hm,hmat⟩ := gaussianParameterPolynomial_injective (m j) (m k) (S j) (S k)
+    obtain ⟨hm,hmat⟩ := gaussian_parameter_polynomial_injective (m j) (m k) (S j) (S k)
       (hS j) (hS k) he
     exact hinj (Prod.ext hm hmat)
-  obtain ⟨x,hx⟩ := exists_injective_eval_mvPolynomial p hp
+  obtain ⟨x,hx⟩ := exists_injective_eval_mv_polynomial p hp
   let v : EuclideanSpace ℝ (Fin d) := WithLp.toLp 2 x
   let a : s → ℝ := fun j ↦ ⟪v,(S j).toEuclideanLin v⟫ / 2
   let b : s → ℝ := fun j ↦ ⟪v,m j⟫
   have heval (j : s) : MvPolynomial.eval x (p j) = b j + 2 * a j := by
-    have h := eval_gaussianParameterPolynomial (m j) v (S j)
+    have h := eval_gaussian_parameter_polynomial (m j) v (S j)
     change MvPolynomial.eval x (p j) = _ at h
     rw [h]
     simp only [a,b]

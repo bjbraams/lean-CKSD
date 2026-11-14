@@ -1,4 +1,5 @@
 module
+
 public import TauCeti.Probability.Distributions.Gaussian.Density
 public import TauCeti.Probability.Distributions.Gaussian.Affine
 public import TauCeti.Probability.Distributions.Gaussian.Transforms
@@ -48,7 +49,7 @@ theorem covariance_quadratic_sub_covariance {I : Matrix (Fin d) (Fin d) ℝ}
   rw [hcross, real_inner_comm x h, real_inner_comm (I.toEuclideanLin h) h]
   ring
 /-- Gaussian likelihood ratios shift the mean by covariance times the tilt vector. -/
-theorem multivariateGaussian_withDensity_exp_inner
+theorem multivariate_gaussian_with_density_exp_inner
     {I : Matrix (Fin d) (Fin d) ℝ} (hI : I.PosDef) (h : E) :
     (multivariateGaussian (0:E) I).withDensity (fun x ↦ ENNReal.ofReal
       (Real.exp (inner ℝ h x-inner ℝ h (I.toEuclideanLin h)/2))) =
@@ -70,7 +71,7 @@ theorem multivariateGaussian_withDensity_exp_inner
   congr 2
   ring
 /-- The Gaussian score coordinate sends the shift experiment to covariance-shifted means. -/
-theorem map_covariance_multivariateGaussian_inverse
+theorem map_covariance_multivariate_gaussian_inverse
     {I : Matrix (Fin d) (Fin d) ℝ} (hI : I.PosDef) (h : E) :
     (multivariateGaussian h I⁻¹).map (Matrix.toEuclideanCLM (𝕜 := ℝ) I) =
       multivariateGaussian (I.toEuclideanLin h) I := by
@@ -84,14 +85,14 @@ theorem map_covariance_multivariateGaussian_inverse
   change (multivariateGaussian h I⁻¹).map (fun x ↦ I.toEuclideanLin x) = _
   simpa only [add_zero,hc] using he
 /-- Covariance coordinates identify the Gaussian shift experiment with its likelihood tilt. -/
-theorem map_gaussianShift_eq_withDensity
+theorem map_gaussian_shift_eq_with_density
     {I : Matrix (Fin d) (Fin d) ℝ} (hI : I.PosDef) (h : E) :
     (multivariateGaussian h I⁻¹).map (Matrix.toEuclideanCLM (𝕜 := ℝ) I) =
       (multivariateGaussian (0:E) I).withDensity (fun x ↦ ENNReal.ofReal
         (Real.exp (inner ℝ h x-inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h)/2))) := by
   have hc : Matrix.toEuclideanCLM (𝕜 := ℝ) I h = I.toEuclideanLin h := rfl
-  rw [hc, map_covariance_multivariateGaussian_inverse hI]
-  exact (multivariateGaussian_withDensity_exp_inner hI h).symm
+  rw [hc, map_covariance_multivariate_gaussian_inverse hI]
+  exact (multivariate_gaussian_with_density_exp_inner hI h).symm
 /-- The limiting Gaussian LAN likelihood ratio has expectation one. -/
 theorem integral_exp_inner_sub_half_covariance
     {I : Matrix (Fin d) (Fin d) ℝ} (hI : I.PosSemidef) (h : E) :
@@ -108,7 +109,7 @@ theorem integral_exp_inner_sub_half_covariance
   congr 1
   ring
 /-- A nonzero Gaussian LAN score has no atom at zero. -/
-theorem multivariateGaussian_affine_score_zero
+theorem multivariate_gaussian_affine_score_zero
     {I : Matrix (Fin d) (Fin d) ℝ} (hI : I.PosDef) (h : E) (hh : h ≠ 0) :
     multivariateGaussian (0:E) I
       {x | inner ℝ h x-inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h)/2=0} = 0 := by

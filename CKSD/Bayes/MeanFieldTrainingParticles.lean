@@ -1,4 +1,5 @@
 module
+
 public import CKSD.Bayes.MeanFieldChaosCoupling
 public import CKSD.Bayes.MeanFieldChaosEquations
 public import CKSD.Bayes.MeanFieldTrainingPaths
@@ -25,7 +26,7 @@ namespace CKSD
 variable {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 /-- A differentiable finite particle configuration satisfies its vector integral equation. -/
-theorem particle_vector_integral_eq_of_hasDerivAt
+theorem particle_vector_integral_eq_of_has_deriv_at
     {N : ℕ} (hN : 0<N) (b : E → Measure E → E) {L : ℝ}
     (hb : IsWassersteinLipschitzDrift b L) (ξ : Fin N → E) (x : ℝ → Fin N → E)
     (hx0 : x 0 = ξ) (hx : ∀ i t, HasDerivAt (fun s ↦ x s i)
@@ -37,13 +38,13 @@ theorem particle_vector_integral_eq_of_hasDerivAt
   have hc : Continuous x := continuous_iff_continuousAt.mpr fun t ↦ (hd t).continuousAt
   refine ⟨hc, fun t ↦ ?_⟩
   have hi := intervalIntegral.integral_eq_sub_of_hasDerivAt (a := (0:ℝ)) (b := t)
-    (fun s _ ↦ hd s) (((hb.lipschitzWith_particleDrift b hN).continuous.comp hc).intervalIntegrable 0 t)
+    (fun s _ ↦ hd s) (((hb.lipschitz_with_particle_drift b hN).continuous.comp hc).intervalIntegrable 0 t)
   rw [hx0] at hi
   dsimp only [F] at hi
   rw [hi]
   abel
 /-- Coordinate reference integral equations combine into a finite-vector equation. -/
-theorem reference_vector_integral_eq_on_Icc
+theorem reference_vector_integral_eq_on_icc
     (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0≤T)
     (b : E → Measure E → E) {L : ℝ} (hb : IsWassersteinLipschitzDrift b L)
     (Z : ℕ → Ω → C(Icc (0:ℝ) T,E)) (hZm : Measurable (Z 0)) (hZi : Integrable (Z 0) P)
@@ -60,10 +61,10 @@ theorem reference_vector_integral_eq_on_Icc
     have heq : (fun t x ↦ b x (P.map (fun z ↦ (Z 0 z).IccExtend hT t))) =
         nonlinearFrozenDrift P hT b (Z 0) hZm hZi := by
       funext t x
-      rw [nonlinearFrozenDrift, pathMarginalLaw_toMeasure]
+      rw [nonlinearFrozenDrift, path_marginal_law_to_measure]
     change Continuous (uncurry (fun t x ↦ b x (P.map (fun z ↦ (Z 0 z).IccExtend hT t))))
     rw [heq]
-    exact continuous_nonlinearFrozenDrift P hT b hb (Z 0) hZm hZi
+    exact continuous_nonlinear_frozen_drift P hT b hb (Z 0) hZm hZi
   have hv : Continuous (fun s ↦ fun j : Fin N ↦ b ((Z j ω).IccExtend hT s)
       (P.map (fun z ↦ (Z 0 z).IccExtend hT s))) := by
     apply continuous_pi
@@ -84,7 +85,7 @@ theorem reference_vector_integral_eq_on_Icc
   exact hZe j ω ⟨t,ht⟩
 /-- A deterministic particle/reference coupling controls all empirical marginal discrepancies
 by one empirical path-law discrepancy. Particle maps need not be measurable. -/
-theorem iSup_wassersteinEDist_particle_marginals_le
+theorem i_sup_wasserstein_e_dist_particle_marginals_le
     (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0≤T)
     (b : E → Measure E → E) {L : ℝ} (hb : IsWassersteinLipschitzDrift b L)
     (Z : ℕ → Ω → C(Icc (0:ℝ) T,E)) (hZm : Measurable (Z 0)) (hZi : Integrable (Z 0) P)
@@ -105,52 +106,52 @@ theorem iSup_wassersteinEDist_particle_marginals_le
   let y : ℝ → Fin N → E := fun t j ↦ (Z j ω).IccExtend hT t
   let C := (Real.toNNReal L : ℝ)*T*Real.exp (2*(Real.toNNReal L : ℝ)*T)
   let r := (TauCeti.wassersteinEDist 1 (empiricalMeasure N (fun j ↦ Z j ω)) (P.map (Z 0))).toReal
-  have hxc := particle_vector_integral_eq_of_hasDerivAt hN b hb (fun j ↦ ξ j ω) x
+  have hxc := particle_vector_integral_eq_of_has_deriv_at hN b hb (fun j ↦ ξ j ω) x
     (funext fun j ↦ (hθ N j j.isLt ω).1) (fun j t ↦ (hθ N j j.isLt ω).2 t)
   have hyc : Continuous y := continuous_pi fun j ↦ ((Z j ω).IccExtend hT).continuous
   have hμp (t : ℝ) : IsProbabilityMeasure (μ t) := inferInstance
   have hμi (t : ℝ) : Integrable (fun v ↦ ‖v‖) (μ t) := by
     exact (integrable_map_measure continuous_norm.aestronglyMeasurable
       (((ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)).comp hZm).aemeasurable)).2
-      (integrable_IccExtend_eval P hT (Z 0) hZm hZi t).norm
+      (integrable_icc_extend_eval P hT (Z 0) hZm hZi t).norm
   have hμb : Continuous (uncurry (fun t v ↦ b v (μ t))) := by
     have heq : (fun t x ↦ b x (μ t)) = nonlinearFrozenDrift P hT b (Z 0) hZm hZi := by
       funext t x
-      rw [nonlinearFrozenDrift, pathMarginalLaw_toMeasure]
+      rw [nonlinearFrozenDrift, path_marginal_law_to_measure]
     rw [heq]
-    exact continuous_nonlinearFrozenDrift P hT b hb (Z 0) hZm hZi
+    exact continuous_nonlinear_frozen_drift P hT b hb (Z 0) hZm hZi
   have hW (t : ℝ) : (TauCeti.wassersteinEDist 1 (empiricalMeasure N (y t)) (μ t)).toReal ≤ r := by
-    have h := wassersteinEDist_one_empirical_IccExtend_toReal_le hN hT
+    have h := wasserstein_e_dist_one_empirical_icc_extend_to_real_le hN hT
       (fun j ↦ Z j ω) (P.map (Z 0))
-      (wassersteinEDist_one_empirical_map_ne_top P hN (fun j ↦ Z j ω) (Z 0) hZm hZi) t
+      (wasserstein_e_dist_one_empirical_map_ne_top P hN (fun j ↦ Z j ω) (Z 0) hZm hZi) t
     have hE : Measurable (fun f : C(Icc (0:ℝ) T,E) ↦ f.IccExtend hT t) :=
       ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)
     rw [hE.aemeasurable.map_map_of_aemeasurable hZm.aemeasurable] at h
     exact h
   have hxy := norm_sub_le_of_particle_integral_eq hT hN b hb μ hμp hμi hμb x y
     (fun _ j ↦ ξ j ω) hxc.1 hyc (fun t _ ↦ hxc.2 t)
-    (fun t ht ↦ reference_vector_integral_eq_on_Icc P hT b hb Z hZm hZi ξ hZe N ω t ht)
+    (fun t ht ↦ reference_vector_integral_eq_on_icc P hT b hb Z hZm hZi ξ hZe N ω t ht)
     r ENNReal.toReal_nonneg (fun t _ ↦ hW t)
   apply iSup₂_le
   intro t ht
   let η := empiricalMeasure N (x t)
   let ζ := empiricalMeasure N (y t)
-  have hηp : IsProbabilityMeasure η := isProbabilityMeasure_empiricalMeasure hN _
-  have hζp : IsProbabilityMeasure ζ := isProbabilityMeasure_empiricalMeasure hN _
+  have hηp : IsProbabilityMeasure η := is_probability_measure_empirical_measure hN _
+  have hζp : IsProbabilityMeasure ζ := is_probability_measure_empirical_measure hN _
   have hηζ : TauCeti.wassersteinEDist 1 η ζ ≠ ∞ :=
     (TauCeti.hasFiniteMoment_iff_wassersteinEDist_ne_top_of_hasFiniteMoment measurable_edist
-      (hasFiniteMoment_one_empiricalMeasure hN (x t))).mp (hasFiniteMoment_one_empiricalMeasure hN (y t))
+      (has_finite_moment_one_empirical_measure hN (x t))).mp (has_finite_moment_one_empirical_measure hN (y t))
   have hζμ : TauCeti.wassersteinEDist 1 ζ (μ t) ≠ ∞ :=
-    wassersteinEDist_one_empirical_map_ne_top P hN (y t) _
+    wasserstein_e_dist_one_empirical_map_ne_top P hN (y t) _
       ((ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)).comp hZm)
-      (integrable_IccExtend_eval P hT (Z 0) hZm hZi t)
+      (integrable_icc_extend_eval P hT (Z 0) hZm hZi t)
   have htri := TauCeti.wassersteinEDist_triangle (p:=1) measurable_edist le_rfl η ζ (μ t)
   have hfin : TauCeti.wassersteinEDist 1 η (μ t) ≠ ∞ :=
     ne_top_of_le_ne_top (ENNReal.add_ne_top.mpr ⟨hηζ,hζμ⟩) htri
   apply (ENNReal.le_ofReal_iff_toReal_le hfin (by positivity : 0≤(C+1)*r)).mpr
   have hrtri := ENNReal.toReal_mono (ENNReal.add_ne_top.mpr ⟨hηζ,hζμ⟩) htri
   rw [ENNReal.toReal_add hηζ hζμ] at hrtri
-  have hηζb := wassersteinEDist_one_empirical_toReal_le_norm_sub hN (x t) (y t)
+  have hηζb := wasserstein_e_dist_one_empirical_to_real_le_norm_sub hN (x t) (y t)
   have hh := hxy t ht
   have hhW := hW t
   change (TauCeti.wassersteinEDist 1 η (μ t)).toReal ≤ (C+1)*r
@@ -158,7 +159,7 @@ theorem iSup_wassersteinEDist_particle_marginals_le
   nlinarith
 /-- Iid reference paths and differentiable interacting particles give almost-sure uniform
 first-Wasserstein convergence of the empirical marginals on a fixed compact time interval. -/
-theorem ae_tendsto_iSup_empirical_particle_marginals
+theorem ae_tendsto_i_sup_empirical_particle_marginals
     (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0≤T)
     (b : E → Measure E → E) {L : ℝ} (hb : IsWassersteinLipschitzDrift b L)
     (Z : ℕ → Ω → C(Icc (0:ℝ) T,E)) (hZm : ∀ i, Measurable (Z i)) (hZi : Integrable (Z 0) P)
@@ -184,5 +185,5 @@ theorem ae_tendsto_iSup_empirical_particle_marginals
   apply tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds hc
     (Eventually.of_forall fun _ ↦ zero_le)
   filter_upwards [eventually_gt_atTop (0:ℕ)] with N hN
-  exact iSup_wassersteinEDist_particle_marginals_le P hT b hb Z (hZm 0) hZi ξ hZe θ hθ hN ω
+  exact i_sup_wasserstein_e_dist_particle_marginals_le P hT b hb Z (hZm 0) hZi ξ hZe θ hθ hN ω
 end CKSD

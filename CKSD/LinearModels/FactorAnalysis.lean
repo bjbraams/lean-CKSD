@@ -5,6 +5,7 @@ public import CKSD.LinearModels.MultivariateTests
 public import Mathlib.Order.Hom.Set
 public import TauCeti.Analysis.Matrix.GramFactorization.Uniqueness
 
+
 /-!
 # Orthogonal factor models
 
@@ -25,11 +26,11 @@ are determined up to the signs of the columns.
 
 ## Main results
 
-* `CKSD.factorCovariance_mul_orthogonal`: rotating the factors does not change the covariance.
-* `CKSD.IsNormalizedFactorLoading.exists_eq_mul_factorColumnSigns`: normalized loadings with the
+* `CKSD.factor_covariance_mul_orthogonal`: rotating the factors does not change the covariance.
+* `CKSD.IsNormalizedFactorLoading.exists_eq_mul_factor_column_signs`: normalized loadings with the
   same common covariance agree up to column signs. The proof uses TauCeti's uniqueness of Gram
   factors and Mathlib's uniqueness of order embeddings with equal ranges.
-* `CKSD.tendstoInMeasure_factor_mle_of_compact`: consistency of the Gaussian
+* `CKSD.tendsto_in_measure_factor_mle_of_compact`: consistency of the Gaussian
   maximum-likelihood estimator on a compact identified parameter set. The proof combines a
   uniform criterion gap on the compact set, from the project inequality
   `log det S + p ≤ log det C + tr(S C⁻¹)` and its equality case, with the uniform
@@ -84,7 +85,7 @@ def loadingSignDistance {p m : ℕ} (L M : Matrix (Fin p) (Fin m) ℝ) : ℝ :=
       (Matrix.toEuclideanLin (𝕜 := ℝ) (L * factorColumnSigns s - M))‖)
 
 /-- Orthogonal rotations of factors do not change their implied covariance. -/
-theorem factorCovariance_mul_orthogonal {p m : ℕ}
+theorem factor_covariance_mul_orthogonal {p m : ℕ}
     (L : Matrix (Fin p) (Fin m) ℝ) (psi : Fin p → ℝ)
     (O : Matrix (Fin m) (Fin m) ℝ) (hO : O * O.transpose = 1) :
     factorCovariance (L * O) psi = factorCovariance L psi := by
@@ -98,7 +99,7 @@ theorem factorCovariance_mul_orthogonal {p m : ℕ}
 /-- GAPS 105.35: normalized loadings are identified up to column signs once both their common
 covariance `L Lᵀ` and the diagonal unique covariance `diag ψ` are specified: if `L` and `M` are
 normalized for `ψ` and `L Lᵀ = M Mᵀ`, then `M = L S` for a diagonal sign matrix `S`. -/
-theorem IsNormalizedFactorLoading.exists_eq_mul_factorColumnSigns {p m : ℕ}
+theorem IsNormalizedFactorLoading.exists_eq_mul_factor_column_signs {p m : ℕ}
     {L M : Matrix (Fin p) (Fin m) ℝ} {psi : Fin p → ℝ}
     (hL : IsNormalizedFactorLoading L psi) (hM : IsNormalizedFactorLoading M psi)
     (hcov : L * L.transpose = M * M.transpose) :
@@ -182,7 +183,7 @@ theorem IsNormalizedFactorLoading.exists_eq_mul_factorColumnSigns {p m : ℕ}
   rcases hsign i with h | h <;> simp [h]
 
 /-- Entries of a square matrix are bounded by its `L²` operator norm. -/
-private theorem abs_apply_le_l2_opNorm {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ) (i j : Fin p) :
+private theorem abs_apply_le_l2_op_norm {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ) (i j : Fin p) :
     |A i j| ≤ ‖A‖ := by
   have h := Matrix.l2_opNorm_mulVec A (EuclideanSpace.single j 1)
   set x := (EuclideanSpace.equiv (Fin p) ℝ).symm (A.mulVec (EuclideanSpace.single j (1 : ℝ)).ofLp)
@@ -196,29 +197,29 @@ private theorem abs_apply_le_l2_opNorm {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ
 private theorem abs_trace_mul_le {p : ℕ} (Δ M : Matrix (Fin p) (Fin p) ℝ) :
     |(Δ * M).trace| ≤ p * (‖Δ‖ * ‖M‖) := by
   calc |(Δ * M).trace| ≤ ∑ i, |(Δ * M) i i| := Finset.abs_sum_le_sum_abs _ _
-    _ ≤ ∑ _i : Fin p, ‖Δ * M‖ := Finset.sum_le_sum fun i _ ↦ abs_apply_le_l2_opNorm _ i i
+    _ ≤ ∑ _i : Fin p, ‖Δ * M‖ := Finset.sum_le_sum fun i _ ↦ abs_apply_le_l2_op_norm _ i i
     _ = p * ‖Δ * M‖ := by simp
     _ ≤ p * (‖Δ‖ * ‖M‖) := by gcongr; exact Matrix.l2_opNorm_mul Δ M
 
 /-- The implied covariance with positive unique variances is positive definite. -/
-private theorem posDef_factorCovariance {p m : ℕ} (L : Matrix (Fin p) (Fin m) ℝ)
+private theorem pos_def_factor_covariance {p m : ℕ} (L : Matrix (Fin p) (Fin m) ℝ)
     (psi : Fin p → ℝ) (h : ∀ i, 0 < psi i) : (factorCovariance L psi).PosDef := by
   have hL := Matrix.posSemidef_self_mul_conjTranspose L
   rw [Matrix.conjTranspose_eq_transpose_of_trivial] at hL
   exact Matrix.PosDef.posSemidef_add hL (Matrix.posDef_diagonal_iff.2 h)
 
 /-- The loading distance modulo signs is nonnegative. -/
-private theorem loadingSignDistance_nonneg {p m : ℕ} (L M : Matrix (Fin p) (Fin m) ℝ) :
+private theorem loading_sign_distance_nonneg {p m : ℕ} (L M : Matrix (Fin p) (Fin m) ℝ) :
     0 ≤ loadingSignDistance L M :=
   le_csInf (range_nonempty _) (by rintro _ ⟨s, rfl⟩; exact norm_nonneg _)
 
 /-- The loading distance modulo signs is at most the distance for any one sign matrix. -/
-private theorem loadingSignDistance_le {p m : ℕ} (L M : Matrix (Fin p) (Fin m) ℝ)
+private theorem loading_sign_distance_le {p m : ℕ} (L M : Matrix (Fin p) (Fin m) ℝ)
     (s : Fin m → Bool) : loadingSignDistance L M ≤ ‖L * factorColumnSigns s - M‖ :=
   csInf_le ⟨0, by rintro _ ⟨s, rfl⟩; exact norm_nonneg _⟩ ⟨s, rfl⟩
 
 /-- Superlevel sets of the loading distance modulo signs are closed. -/
-private theorem isClosed_le_loadingSignDistance {p m : ℕ} (M : Matrix (Fin p) (Fin m) ℝ)
+private theorem is_closed_le_loading_sign_distance {p m : ℕ} (M : Matrix (Fin p) (Fin m) ℝ)
     (ε : ℝ) : IsClosed {L : Matrix (Fin p) (Fin m) ℝ | ε ≤ loadingSignDistance L M} := by
   have h : {L : Matrix (Fin p) (Fin m) ℝ | ε ≤ loadingSignDistance L M} =
       ⋂ s : Fin m → Bool, {L | ε ≤ ‖L * factorColumnSigns s - M‖} := by
@@ -231,7 +232,7 @@ private theorem isClosed_le_loadingSignDistance {p m : ℕ} (M : Matrix (Fin p) 
     ((continuous_id.matrix_mul continuous_const).sub continuous_const).norm
 
 /-- Sign matrices square to the identity. -/
-private theorem factorColumnSigns_mul_self {m : ℕ} (s : Fin m → Bool) :
+private theorem factor_column_signs_mul_self {m : ℕ} (s : Fin m → Bool) :
     factorColumnSigns s * factorColumnSigns s = 1 := by
   rw [factorColumnSigns, Matrix.diagonal_mul_diagonal, ← Matrix.diagonal_one]
   congr 1
@@ -239,16 +240,16 @@ private theorem factorColumnSigns_mul_self {m : ℕ} (s : Fin m → Bool) :
   split_ifs <;> norm_num
 
 /-- The implied covariance depends continuously on the parameter. -/
-private theorem continuous_factorCovariance {p m : ℕ} :
+private theorem continuous_factor_covariance {p m : ℕ} :
     Continuous fun z : Matrix (Fin p) (Fin m) ℝ × (Fin p → ℝ) ↦ factorCovariance z.1 z.2 :=
   (continuous_fst.matrix_mul continuous_fst.matrix_transpose).add continuous_snd.matrix_diagonal
 
 /-- The inverse of the implied covariance is continuous where the covariance is nonsingular. -/
-private theorem continuousAt_factorCovariance_inv {p m : ℕ}
+private theorem continuous_at_factor_covariance_inv {p m : ℕ}
     (z : Matrix (Fin p) (Fin m) ℝ × (Fin p → ℝ)) (hz : (factorCovariance z.1 z.2).det ≠ 0) :
     ContinuousAt (fun z : Matrix (Fin p) (Fin m) ℝ × (Fin p → ℝ) ↦
       (factorCovariance z.1 z.2)⁻¹) z := by
-  refine (continuousAt_matrix_inv _ ?_).comp continuous_factorCovariance.continuousAt
+  refine (continuousAt_matrix_inv _ ?_).comp continuous_factor_covariance.continuousAt
   rw [Ring.inverse_eq_inv']
   exact continuousAt_inv₀ hz
 
@@ -256,7 +257,7 @@ private theorem continuousAt_factorCovariance_inv {p m : ℕ}
 distance at least `ε` from `(L₀, ψ₀)` (modulo column signs) have criterion value larger by a
 fixed `η > 0`. It combines compactness with the Gaussian likelihood inequality
 `log det S + p ≤ log det C + tr(S C⁻¹)` and its equality case. -/
-private theorem exists_factorLikelihoodCriterion_gap {p m : ℕ}
+private theorem exists_factor_likelihood_criterion_gap {p m : ℕ}
     (K : Set (Matrix (Fin p) (Fin m) ℝ × (Fin p → ℝ))) (hK : IsCompact K)
     (hpd : ∀ z ∈ K, (factorCovariance z.1 z.2).PosDef)
     (L₀ : Matrix (Fin p) (Fin m) ℝ) (psi₀ : Fin p → ℝ) (hmem : (L₀, psi₀) ∈ K)
@@ -271,18 +272,18 @@ private theorem exists_factorLikelihoodCriterion_gap {p m : ℕ}
     factorLikelihoodCriterion S₀ z.1 z.2 with hf
   have hfc : ContinuousOn f K := by
     intro z hz
-    have hlog := (continuous_factorCovariance.matrix_det.continuousAt (x := z)).log
+    have hlog := (continuous_factor_covariance.matrix_det.continuousAt (x := z)).log
       (hpd z hz).det_pos.ne'
     have hM : Continuous fun M : Matrix (Fin p) (Fin p) ℝ ↦ (S₀ * M).trace :=
       (continuous_const.matrix_mul continuous_id).matrix_trace
     have htr : ContinuousAt (fun z : Matrix (Fin p) (Fin m) ℝ × (Fin p → ℝ) ↦
         (S₀ * (factorCovariance z.1 z.2)⁻¹).trace) z :=
-      hM.continuousAt.comp (continuousAt_factorCovariance_inv z (hpd z hz).det_pos.ne')
+      hM.continuousAt.comp (continuous_at_factor_covariance_inv z (hpd z hz).det_pos.ne')
     exact (hlog.add htr).continuousWithinAt
   set B := K ∩ {z | ε ≤ dist z.2 psi₀ ∨ ε ≤ loadingSignDistance z.1 L₀}
   have hBc : IsCompact B := hK.inter_right
     ((isClosed_le continuous_const (continuous_snd.dist continuous_const)).union
-      ((isClosed_le_loadingSignDistance L₀ ε).preimage continuous_fst))
+      ((is_closed_le_loading_sign_distance L₀ ε).preimage continuous_fst))
   rcases B.eq_empty_or_nonempty with hB | hB
   · refine ⟨1, one_pos, fun z hz hbad ↦ ?_⟩
     have : z ∈ B := ⟨hz, hbad⟩
@@ -307,9 +308,9 @@ private theorem exists_factorLikelihoodCriterion_gap {p m : ℕ}
       rcases hz₁.2 with h | h
       · rw [hψ, dist_self] at h
         linarith
-      · have h' := loadingSignDistance_le z₁.1 L₀ s
+      · have h' := loading_sign_distance_le z₁.1 L₀ s
         rw [hL] at h
-        rw [hL, Matrix.mul_assoc, factorColumnSigns_mul_self, Matrix.mul_one, sub_self,
+        rw [hL, Matrix.mul_assoc, factor_column_signs_mul_self, Matrix.mul_one, sub_self,
           norm_zero] at h'
         linarith
   · have := hmin ⟨hz, hbad⟩
@@ -323,7 +324,7 @@ and on which `Σ₀` determines `ψ₀` and `L₀` up to column signs, then ever
 criterion over `K` has `ψ̂ₙ → ψ₀` and `L̂ₙ → L₀` modulo column signs, in probability.
 Compactness and the uniform lower bound on the unique variances are restrictions of this
 formulation; the unrestricted parameter space and asymptotic normality are not included. -/
-theorem tendstoInMeasure_factor_mle_of_compact
+theorem tendsto_in_measure_factor_mle_of_compact
     {Ω : Type*} [MeasurableSpace Ω] {p m : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (K : Set (Matrix (Fin p) (Fin m) ℝ × (Fin p → ℝ))) (hK : IsCompact K)
@@ -342,13 +343,13 @@ theorem tendstoInMeasure_factor_mle_of_compact
       TendstoInMeasure P (fun (n : ℕ) ω ↦ loadingSignDistance (T n ω).1 L₀) atTop (fun _ ↦ 0) := by
   set S₀ := factorCovariance L₀ psi₀ with hS₀
   have hpd : ∀ z ∈ K, (factorCovariance z.1 z.2).PosDef := fun z hz ↦
-    posDef_factorCovariance _ _ fun i ↦ ha.trans_le (hpos z hz i)
+    pos_def_factor_covariance _ _ fun i ↦ ha.trans_le (hpos z hz i)
   obtain ⟨Bd, hBd⟩ := hK.exists_bound_of_continuousOn fun z hz ↦
-    (continuousAt_factorCovariance_inv z (hpd z hz).det_pos.ne').continuousWithinAt
+    (continuous_at_factor_covariance_inv z (hpd z hz).det_pos.ne').continuousWithinAt
   have hbad : ∀ ε > 0, Tendsto (fun n ↦ P {ω | ε ≤ dist (T n ω).2 psi₀ ∨
       ε ≤ loadingSignDistance (T n ω).1 L₀}) atTop (𝓝 0) := by
     intro ε hε
-    obtain ⟨η, hη, hgap⟩ := exists_factorLikelihoodCriterion_gap K hK hpd L₀ psi₀ hmem
+    obtain ⟨η, hη, hgap⟩ := exists_factor_likelihood_criterion_gap K hK hpd L₀ psi₀ hmem
       hidentified ε hε
     set δ := η / (2 * (p * |Bd| + 1)) with hδ
     have hδpos : 0 < δ := by positivity
@@ -404,7 +405,7 @@ theorem tendstoInMeasure_factor_mle_of_compact
     refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds (hbad ε hε)
       (fun _ ↦ bot_le) fun n ↦ measure_mono fun ω hω ↦ Or.inr ?_
     simp only [mem_ofPred_eq, Real.dist_eq, sub_zero,
-      abs_of_nonneg (loadingSignDistance_nonneg _ _)] at hω
+      abs_of_nonneg (loading_sign_distance_nonneg _ _)] at hω
     exact hω
 
 end CKSD

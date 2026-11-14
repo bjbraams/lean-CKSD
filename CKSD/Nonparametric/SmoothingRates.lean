@@ -6,6 +6,7 @@ public import Mathlib.Analysis.Real.Pi.Bounds
 public import CKSD.Nonparametric.LowerBounds.Testing
 public import CKSD.Nonparametric.LowerBounds.Gaussian
 
+
 /-!
 # Regression smoothers and one-dimensional Hölder rates
 
@@ -19,7 +20,7 @@ statements. Pointwise density estimation is in `CKSD.Nonparametric.HolderDensity
 ## Main definitions
 
 * `CKSD.holderRegressionClass β L`: measurable functions with `|f x - f y| ≤ L |x - y|^β` on
-  `[0, 1]`; `CKSD.mem_holderRegressionClass_iff` identifies it with Mathlib's `HolderOnWith`.
+  `[0, 1]`; `CKSD.mem_holder_regression_class_iff` identifies it with Mathlib's `HolderOnWith`.
 * `CKSD.fixedDesignRegressionLaw`, `CKSD.fixedDesignRegressionRisk`,
   `CKSD.holderRegressionMinimaxRisk`: the Gaussian fixed-design regression experiment, the mean
   integrated squared error, and its minimax value.
@@ -27,11 +28,11 @@ statements. Pointwise density estimation is in `CKSD.Nonparametric.HolderDensity
 
 ## Main results
 
-* `CKSD.tendsto_nadarayaWatson_prediction_error_probability` (Stone's theorem).
-* `CKSD.fixedDesignLocalConstant_risk_le`: the upper bound for the regression risk. The
-  matching lower bound and the two-sided rate `CKSD.holderRegressionMinimaxRisk_bounds` are in
+* `CKSD.tendsto_nadaraya_watson_prediction_error_probability` (Stone's theorem).
+* `CKSD.fixed_design_local_constant_risk_le`: the upper bound for the regression risk. The
+  matching lower bound and the two-sided rate `CKSD.holder_regression_minimax_risk_bounds` are in
   `CKSD.Nonparametric.HolderRegressionMinimax`.
-* `CKSD.natCast_mul_bandwidth_mul_rate_eq_one`, `CKSD.sq_bandwidth_rpow_eq`: the bandwidth
+* `CKSD.nat_cast_mul_bandwidth_mul_rate_eq_one`, `CKSD.sq_bandwidth_rpow_eq`: the bandwidth
   `n^(-1/(2β+1))` balances variance and squared bias.
 
 Sources: GAPS 103.7 and 103.22.
@@ -56,7 +57,7 @@ def nadarayaWatsonSample {d n : ℕ} (K : EuclideanSpace ℝ (Fin d) → ℝ) (h
 /-- GAPS 103.7: universal prediction consistency of the Nadaraya–Watson estimator.
 The regression mean is given as a version of conditional expectation, with its `L²` property
 explicit. The kernel has upper and positive local lower ball bounds. -/
-theorem tendsto_nadarayaWatson_prediction_error_probability
+theorem tendsto_nadaraya_watson_prediction_error_probability
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ]
     (P : Measure (EuclideanSpace ℝ (Fin d) × ℝ)) [IsProbabilityMeasure P]
@@ -87,7 +88,7 @@ def holderRegressionClass (β L : ℝ) : Set (ℝ → ℝ) :=
 
 /-- Mathlib's Hölder condition for real functions on a set of reals, in terms of absolute
 values. -/
-theorem holderOnWith_iff_abs_sub_le {C r : ℝ≥0} {f : ℝ → ℝ} {s : Set ℝ} :
+theorem holder_on_with_iff_abs_sub_le {C r : ℝ≥0} {f : ℝ → ℝ} {s : Set ℝ} :
     HolderOnWith C r f s ↔ ∀ x ∈ s, ∀ y ∈ s, |f x - f y| ≤ C * |x - y| ^ (r : ℝ) := by
   refine ⟨fun h x hx y hy ↦ by simpa [Real.dist_eq] using h.dist_le hx hy, fun h x hx y hy ↦ ?_⟩
   rw [edist_dist, edist_dist, Real.dist_eq, Real.dist_eq,
@@ -97,9 +98,9 @@ theorem holderOnWith_iff_abs_sub_le {C r : ℝ≥0} {f : ℝ → ℝ} {s : Set �
 
 /-- For nonnegative parameters, the Hölder regression class consists of the measurable
 functions satisfying Mathlib's `HolderOnWith L β` on `[0, 1]`. -/
-theorem mem_holderRegressionClass_iff {β L : ℝ≥0} {f : ℝ → ℝ} :
+theorem mem_holder_regression_class_iff {β L : ℝ≥0} {f : ℝ → ℝ} :
     f ∈ holderRegressionClass β L ↔ Measurable f ∧ HolderOnWith L β f (Icc 0 1) := by
-  simp only [holderRegressionClass, mem_ofPred_eq, Real.rpow_eq_pow, holderOnWith_iff_abs_sub_le]
+  simp only [holderRegressionClass, mem_ofPred_eq, Real.rpow_eq_pow, holder_on_with_iff_abs_sub_le]
 
 /-- Fixed-design Gaussian regression law with noise standard deviation `σ`. -/
 def fixedDesignRegressionLaw (n : ℕ) (f : ℝ → ℝ) (σ : ℝ) : Measure (Fin n → ℝ) :=
@@ -170,7 +171,7 @@ theorem integral_sq_linear_gaussian {n : ℕ} (m : Fin n → ℝ) (v : ℝ≥0) 
 
 /-- On the grid `(i + 1) / n`, a window of half-width `h ≥ 1 / n` around a point of `[0, 1]`
 contains at least `n min(h, 1) / 2` design points. -/
-theorem card_fixedDesign_window_ge {n : ℕ} (hn : 0 < n) {h t : ℝ} (hh : 1 / (n : ℝ) ≤ h)
+theorem card_fixed_design_window_ge {n : ℕ} (hn : 0 < n) {h t : ℝ} (hh : 1 / (n : ℝ) ≤ h)
     (ht0 : 0 ≤ t) (ht1 : t ≤ 1) :
     (n : ℝ) * min h 1 / 2 ≤ ((Finset.univ : Finset (Fin n)).filter
       fun i ↦ |t - ((i.val + 1 : ℕ) : ℝ) / n| ≤ h).card := by
@@ -231,7 +232,7 @@ theorem card_fixedDesign_window_ge {n : ℕ} (hn : 0 < n) {h t : ℝ} (hh : 1 / 
 
 /-- The bandwidth `n^(-1/(2β+1))` balances the variance `1/(n h)` against the rate
 `n^(-2β/(2β+1))`: `n · n^(-1/(2β+1)) · n^(-2β/(2β+1)) = 1`. -/
-theorem natCast_mul_bandwidth_mul_rate_eq_one {n : ℕ} (hn : 0 < n) {β : ℝ} (hβ : 0 < β) :
+theorem nat_cast_mul_bandwidth_mul_rate_eq_one {n : ℕ} (hn : 0 < n) {β : ℝ} (hβ : 0 < β) :
     (n : ℝ) * (n : ℝ) ^ (-1 / (2 * β + 1)) * (n : ℝ) ^ (-2 * β / (2 * β + 1)) = 1 := by
   have hnR : (0 : ℝ) < n := by exact_mod_cast hn
   have hden : (2 * β + 1) ≠ 0 := by linarith
@@ -256,7 +257,7 @@ theorem sq_bandwidth_rpow_eq {n : ℕ} (hn : 0 < n) {β c : ℝ} (hβ : 0 < β) 
   · push_cast; field_simp
 
 /-- GAPS 103.22: a box-kernel local-constant estimator attains the `L²` rate for `0<β≤1`. -/
-theorem fixedDesignLocalConstant_risk_le (β L σ c : ℝ)
+theorem fixed_design_local_constant_risk_le (β L σ c : ℝ)
     (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) (hσ : 0 < σ) (hc : 1 ≤ c) :
     ∃ C > (0 : ℝ), ∀ n : ℕ, 0 < n → ∀ f ∈ holderRegressionClass β L,
       fixedDesignRegressionRisk (n := n) f σ
@@ -279,7 +280,7 @@ theorem fixedDesignLocalConstant_risk_le (β L σ c : ℝ)
   have hh0 : 0 < h := mul_pos hc0 he0
   have hden : (2 * β + 1) ≠ 0 := by linarith
   have hden' : 0 < 2 * β + 1 := by linarith
-  have hner : (n : ℝ) * e * r = 1 := natCast_mul_bandwidth_mul_rate_eq_one hn hβ0
+  have hner : (n : ℝ) * e * r = 1 := nat_cast_mul_bandwidth_mul_rate_eq_one hn hβ0
   have hpow : (h ^ β) ^ 2 = c ^ (2 * β) * r := sq_bandwidth_rpow_eq hn hβ0 hc0
   have hrn : 1 / (n : ℝ) ≤ r := by
     rw [hr, one_div, ← Real.rpow_neg_one]
@@ -309,7 +310,7 @@ theorem fixedDesignLocalConstant_risk_le (β L σ c : ℝ)
       simp only [hw, hx]
       split_ifs <;> simp
     have hNge : (n : ℝ) * min h 1 / 2 ≤ N :=
-      hNcard ▸ card_fixedDesign_window_ge hn hh1n ht.1 ht.2
+      hNcard ▸ card_fixed_design_window_ge hn hh1n ht.1 ht.2
     have hmin0 : 0 < min h 1 := lt_min hh0 one_pos
     have hNpos : 0 < N := lt_of_lt_of_le (by positivity) hNge
     set a : Fin n → ℝ := fun i ↦ w i / N with ha
@@ -402,7 +403,7 @@ theorem fixedDesignLocalConstant_risk_le (β L σ c : ℝ)
 
 
 /-- A Nadaraya–Watson predictor is nonnegative when observations and weights are nonnegative. -/
-theorem nadarayaWatson_nonneg {d n : ℕ} (K : EuclideanSpace ℝ (Fin d) → ℝ)
+theorem nadaraya_watson_nonneg {d n : ℕ} (K : EuclideanSpace ℝ (Fin d) → ℝ)
     (hK : ∀ x, 0 ≤ K x) (h : ℝ) (x : Fin n → EuclideanSpace ℝ (Fin d))
     (y : Fin n → ℝ) (hy : ∀ i, 0 ≤ y i) (t : EuclideanSpace ℝ (Fin d)) :
     0 ≤ nadarayaWatson K h x y t := by
@@ -410,7 +411,7 @@ theorem nadarayaWatson_nonneg {d n : ℕ} (K : EuclideanSpace ℝ (Fin d) → �
     (Finset.sum_nonneg fun i _ ↦ hK _)
 
 /-- A nonempty normalized set of kernel weights reproduces a constant response. -/
-theorem nadarayaWatson_const {d n : ℕ} (K : EuclideanSpace ℝ (Fin d) → ℝ)
+theorem nadaraya_watson_const {d n : ℕ} (K : EuclideanSpace ℝ (Fin d) → ℝ)
     (h : ℝ) (x : Fin n → EuclideanSpace ℝ (Fin d)) (c : ℝ)
     (t : EuclideanSpace ℝ (Fin d))
     (hden : (∑ i, K (h⁻¹ • (x i - t))) ≠ 0) :

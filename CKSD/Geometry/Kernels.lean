@@ -16,6 +16,7 @@ public import TauCeti.Probability.Moments.Covariance
 public import CKSD.Asymptotics.MultivariateCLT
 public import TauCeti.Probability.Distributions.Gaussian.Affine
 
+
 /-!
 # Kernel discrepancies: MMD, energy distance, HSIC, Stein identities
 
@@ -24,18 +25,18 @@ from distances. Random Fourier features (GAPS 108.74) are in `CKSD.Geometry.Rand
 
 ## Main results
 
-* `CKSD.squaredMMD_eq_norm_kernelMeanEmbedding_sub_sq`: for a positive semidefinite kernel the
+* `CKSD.squared_mmd_eq_norm_kernel_mean_embedding_sub_sq`: for a positive semidefinite kernel the
   squared MMD is the squared distance of TauCeti's kernel mean embeddings.
-* `CKSD.tendstoInDistribution_unbiasedSquaredMMD_null`,
-  `CKSD.tendstoInDistribution_unbiasedSquaredMMD_alternative`: null and alternative limit laws of
+* `CKSD.tendsto_in_distribution_unbiased_squared_mmd_null`,
+  `CKSD.tendsto_in_distribution_unbiased_squared_mmd_alternative`: null and alternative limit laws of
   the unbiased MMD estimator for a bounded finite-dimensional feature map (GAPS 108.61).
 * `CKSD.energy_distance_nonneg_eq_zero_iff_and_eq_squaredMMD`,
   `CKSD.distance_covariance_nonneg_eq_zero_iff_and_eq_squaredMMD`: energy distance and distance
   covariance (GAPS 108.62).
-* `CKSD.squaredMMD_joint_prod_eq_zero_iff_indepFun`: the HSIC independence criterion (GAPS 108.63).
-* `CKSD.isCharacteristicKernel_iff_spectral_measure_full_support`,
+* `CKSD.squared_mmd_joint_prod_eq_zero_iff_indep_fun`: the HSIC independence criterion (GAPS 108.63).
+* `CKSD.is_characteristic_kernel_iff_spectral_measure_full_support`,
   `CKSD.squaredMMD_quadratic_polynomial_eq`: criteria for characteristic kernels (GAPS 108.68).
-* `CKSD.tendsto_probabilityMeasure_iff_tendsto_squaredMMD_of_tight`: MMD metrizes weak
+* `CKSD.tendsto_probability_measure_iff_tendsto_squared_mmd_of_tight`: MMD metrizes weak
   convergence along tight sequences (GAPS 108.70).
 * `CKSD.integral_langevin_stein_operator_eq_zero`: the scalar Langevin Stein identity
   (GAPS 108.71).
@@ -78,7 +79,7 @@ theorem IsCharacteristicKernel.squaredMMD_eq_zero_iff {X : Type*} [MeasurableSpa
 /-- The unbiased squared MMD of an inner-product feature kernel, in terms of the two feature means
 `A = n⁻¹ ∑ φ(x_i)` and `B = n⁻¹ ∑ φ(y_i)`: for `n ≥ 2` it is `‖A - B‖²` plus the correction
 `(‖A‖² + ‖B‖² - n⁻¹ ∑ (‖φ(x_i)‖² + ‖φ(y_i)‖²)) / (n - 1)`. -/
-theorem unbiasedSquaredMMD_inner_eq {X E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+theorem unbiased_squared_mmd_inner_eq {X E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     (phi : X → E) {n : ℕ} (hn : 2 ≤ n) (x y : Fin n → X) :
     let A := (n : ℝ)⁻¹ • ∑ i, phi (x i)
     let B := (n : ℝ)⁻¹ • ∑ i, phi (y i)
@@ -194,7 +195,7 @@ private theorem ae_tendsto_average_comp_of_iid {Ω E F : Type*} [MeasurableSpace
 
 /-- The trace of the covariance matrix of a bounded measurable feature vector `φ(X)` is
 `E ‖φ(X)‖² - ‖E φ(X)‖²`. -/
-private theorem trace_covMatrix_map_eq {X : Type*} [MeasurableSpace X] {d : ℕ} (P : Measure X)
+private theorem trace_cov_matrix_map_eq {X : Type*} [MeasurableSpace X] {d : ℕ} (P : Measure X)
     [IsProbabilityMeasure P] (phi : X → EuclideanSpace ℝ (Fin d)) (hm : Measurable phi)
     (C : ℝ) (hC : ∀ x, ‖phi x‖ ≤ C) :
     Matrix.trace (TauCeti.covMatrix (P.map phi)) =
@@ -224,7 +225,7 @@ private theorem trace_covMatrix_map_eq {X : Type*} [MeasurableSpace X] {d : ℕ}
 `φ` and independent pairs `(X_i, Y_i)` with law `P ⊗ P`, the scaled mean difference
 `√n (φ̄_X - φ̄_Y)` converges in distribution to `N(0, 2C)`, `C` the covariance matrix of
 `φ(X_1)`. -/
-theorem tendstoInDistribution_sqrt_smul_sampleAverage_feature_sub
+theorem tendsto_in_distribution_sqrt_smul_sample_average_feature_sub
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X) [IsProbabilityMeasure P]
     (Xn Yn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ (fun i ω ↦ (Xn i ω, Yn i ω))
@@ -264,7 +265,7 @@ theorem tendstoInDistribution_sqrt_smul_sampleAverage_feature_sub
     simp only [Matrix.smul_apply, C, TauCeti.covMatrix_apply, smul_eq_mul]
     rw [covariance_map_fun (by fun_prop) (by fun_prop) hm.aemeasurable]
     simpa only [v, PiLp.sub_apply] using covariance_sub_prod_self P _ _ (hj i) (hj j)
-  have hclt := tendstoInDistribution_sqrt_smul_sampleAverage μ L V hiidV hL2
+  have hclt := tendsto_in_distribution_sqrt_smul_sample_average μ L V hiidV hL2
   simp only [hLmean, hcovL, sub_zero] at hclt
   exact hclt
 
@@ -273,7 +274,7 @@ theorem tendstoInDistribution_sqrt_smul_sampleAverage_feature_sub
 independent with law `P ⊗ P`. With `C` the covariance matrix of `φ(X_1)`, the scaled unbiased
 estimator `n MMD_u²` converges in distribution to `2 (‖Z‖² - tr C)` and the scaled plug-in estimator
 `n ‖φ̄_X - φ̄_Y‖²` to `2 ‖Z‖²`, where `Z ∼ N(0, C)`. -/
-theorem tendstoInDistribution_unbiasedSquaredMMD_null
+theorem tendsto_in_distribution_unbiased_squared_mmd_null
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure X) [IsProbabilityMeasure P]
     (Xn Yn : ℕ → Ω → X) (hiid : IsIndependentIdenticallyDistributed μ (fun i ω ↦ (Xn i ω, Yn i ω))
@@ -309,7 +310,7 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_null
   set Z : ℕ → Ω → X × X := fun i ω ↦ (Xn i ω, Yn i ω)
   set V : ℕ → Ω → EuclideanSpace ℝ (Fin d) := fun i ω ↦ phi (Xn i ω) - phi (Yn i ω)
   have hVm : ∀ i, Measurable (V i) := fun i ↦ (hm.comp (hXm i)).sub (hm.comp (hYm i))
-  have hclt := tendstoInDistribution_sqrt_smul_sampleAverage_feature_sub μ P Xn Yn hiid phi hm B hB
+  have hclt := tendsto_in_distribution_sqrt_smul_sample_average_feature_sub μ P Xn Yn hiid phi hm B hB
   set W : ℕ → Ω → EuclideanSpace ℝ (Fin d) := fun n ω ↦ Real.sqrt n • sampleAverage V n ω
   have hsa : ∀ n ω, sampleAverage (fun i ω ↦ phi (Xn i ω)) n ω -
       sampleAverage (fun i ω ↦ phi (Yn i ω)) n ω = sampleAverage V n ω := fun n ω ↦ by
@@ -357,7 +358,7 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_null
   rw [integral_add (hsq2.comp_fst P) (hsq2.comp_snd P), integral_fun_fst (fun x ↦ ‖phi x‖ ^ 2),
     integral_fun_snd (fun x ↦ ‖phi x‖ ^ 2)] at hS
   simp only [probReal_univ, one_smul] at hA hB' hS
-  have htr := trace_covMatrix_map_eq P phi hm B hB
+  have htr := trace_cov_matrix_map_eq P phi hm B hB
   have hinv : Tendsto (fun n : ℕ ↦ ((n : ℝ) - 1)⁻¹) atTop (𝓝 0) := by
     refine tendsto_inv_atTop_zero.comp ?_
     simpa only [sub_eq_add_neg] using
@@ -374,7 +375,7 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_null
     refine hR.congr' ?_
     filter_upwards [eventually_ge_atTop 2] with n hn
     have hnR : (2 : ℝ) ≤ n := by exact_mod_cast hn
-    have hmmd := unbiasedSquaredMMD_inner_eq phi hn (fun i ↦ Xn i.val ω) (fun i ↦ Yn i.val ω)
+    have hmmd := unbiased_squared_mmd_inner_eq phi hn (fun i ↦ Xn i.val ω) (fun i ↦ Yn i.val ω)
     simp only at hmmd
     rw [Fin.sum_univ_eq_sum_range (fun i ↦ phi (Xn i ω)),
       Fin.sum_univ_eq_sum_range (fun i ↦ phi (Yn i ω)),
@@ -396,7 +397,7 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_null
         (fun i ↦ Yn i.val ω)) = fun n ω ↦ ‖W n ω‖ ^ 2 + Y n ω := by
       funext n ω; simp only [Y]; ring
     rw [e1]
-    refine tendstoInDistribution_of_map_eq hsl aemeasurable_id ?_
+    refine tendsto_in_distribution_of_map_eq hsl aemeasurable_id ?_
     rw [Measure.map_id]
     change _ = (multivariateGaussian 0 ((2 : ℝ) • C)).map
       (fun w ↦ ‖w‖ ^ 2 + -2 * Matrix.trace C)
@@ -412,14 +413,14 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_null
       funext n ω
       simp only [Function.comp_apply, hsa, hnorm]
     rw [e2]
-    refine tendstoInDistribution_of_map_eq h2 aemeasurable_id ?_
+    refine tendsto_in_distribution_of_map_eq h2 aemeasurable_id ?_
     rw [Measure.map_id, Function.comp_id]
     simpa only [add_zero] using (hmapG 0).symm
 
 /-- The linear term of the alternative MMD central limit theorem: for a bounded measurable feature
 map `φ` into `ℝ^d`, `δ = E_P φ - E_Q φ` and `s(x, y) = 2 ⟨φ x - φ y - δ, δ⟩`, the statistic `s`
 is centered under `P ⊗ Q` and its second moment is `4 Var_P ⟨φ, δ⟩ + 4 Var_Q ⟨φ, δ⟩`. -/
-theorem integral_mmdLinearTerm {X : Type*} [MeasurableSpace X] {d : ℕ}
+theorem integral_mmd_linear_term {X : Type*} [MeasurableSpace X] {d : ℕ}
     (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (phi : X → EuclideanSpace ℝ (Fin d)) (hm : Measurable phi) (C : ℝ)
     (hC : ∀ x, ‖phi x‖ ≤ C) :
@@ -546,7 +547,7 @@ private theorem tendsto_sqrt_div_sub_one :
 `(X_i, Y_i)` be independent with law `P ⊗ Q` and `δ = E φ(X) - E φ(Y)`. Then
 `√n (MMD_u² - ‖δ‖²)` converges in distribution to the centered normal law with variance
 `4 Var_P ⟨φ, δ⟩ + 4 Var_Q ⟨φ, δ⟩`. -/
-theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
+theorem tendsto_in_distribution_unbiased_squared_mmd_alternative
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P Q : Measure X)
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
@@ -591,18 +592,18 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
     rw [integral_sub ((hint P inferInstance).comp_fst Q) ((hint Q inferInstance).comp_snd P),
       integral_fun_fst phi, integral_fun_snd phi]
     simp [delta]
-  have hclt := tendstoInDistribution_sqrt_smul_sampleAverage μ L V hiidV hL2
+  have hclt := tendsto_in_distribution_sqrt_smul_sample_average μ L V hiidV hL2
   rw [hLmean] at hclt
   set U : ℕ → Ω → ℝ := fun n ω ↦ ‖Real.sqrt n • (sampleAverage V n ω - delta)‖
   have hUb : IsBoundedInProbability μ U :=
-    isBoundedInProbability_of_tendstoInDistribution μ U (hclt.continuous_comp continuous_norm)
+    is_bounded_in_probability_of_tendsto_in_distribution μ U (hclt.continuous_comp continuous_norm)
   have hinv : Tendsto (fun n : ℕ ↦ (Real.sqrt n)⁻¹) atTop (𝓝 0) :=
     tendsto_inv_atTop_zero.comp (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop)
   have hT1 : TendstoInMeasure μ (fun (n : ℕ) ω ↦ U n ω * (U n ω * (Real.sqrt n)⁻¹)) atTop
       (fun _ ↦ 0) :=
-    tendstoInMeasure_mul_zero_of_isBoundedInProbability μ U _ hUb
-      (tendstoInMeasure_mul_zero_of_isBoundedInProbability μ U _ hUb
-        (tendstoInMeasure_const_of_tendsto μ _ hinv))
+    tendsto_in_measure_mul_zero_of_is_bounded_in_probability μ U _ hUb
+      (tendsto_in_measure_mul_zero_of_is_bounded_in_probability μ U _ hUb
+        (tendsto_in_measure_const_of_tendsto μ _ hinv))
   -- the bounded correction term of the unbiased estimator
   set R : ℕ → Ω → ℝ := fun n ω ↦
     ‖(n : ℝ)⁻¹ • ∑ i : Fin n, phi (Xn i ω)‖ ^ 2 + ‖(n : ℝ)⁻¹ • ∑ i : Fin n, phi (Yn i ω)‖ ^ 2 -
@@ -621,12 +622,12 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
     exact hε.le
   have hT2 : TendstoInMeasure μ (fun (n : ℕ) ω ↦ R n ω * (Real.sqrt n / (n - 1))) atTop
       (fun _ ↦ 0) :=
-    tendstoInMeasure_mul_zero_of_isBoundedInProbability μ R _ hRB
-      (tendstoInMeasure_const_of_tendsto μ _ tendsto_sqrt_div_sub_one)
+    tendsto_in_measure_mul_zero_of_is_bounded_in_probability μ R _ hRB
+      (tendsto_in_measure_const_of_tendsto μ _ tendsto_sqrt_div_sub_one)
   -- the linear term and its central limit theorem
   set s : X × X → ℝ := fun z ↦ 2 * inner ℝ (v z - delta) delta
   have hs : Measurable s := by fun_prop
-  obtain ⟨hs0, hs2⟩ := integral_mmdLinearTerm P Q phi hm C hC
+  obtain ⟨hs0, hs2⟩ := integral_mmd_linear_term P Q phi hm C hC
   have h2s : MemLp s 2 (P.prod Q) := by
     refine MemLp.of_bound hs.aestronglyMeasurable (2 * ((2 * C + ‖delta‖) * ‖delta‖))
       (ae_of_all _ fun z ↦ ?_)
@@ -637,11 +638,11 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
     refine (norm_sub_le _ _).trans ?_
     gcongr
     exact (norm_sub_le _ _).trans (by linarith [hC z.1, hC z.2])
-  have hS := tendstoInDistribution_inv_sqrt_mul_sum_of_iid μ (P.prod Q) Z hiid s hs h2s hs0
+  have hS := tendsto_in_distribution_inv_sqrt_mul_sum_of_iid μ (P.prod Q) Z hiid s hs h2s hs0
   rw [hs2] at hS
   -- Slutsky
-  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _ (fun n ↦ ?_)
-    (fun n ↦ ?_) hS ((tendstoInMeasure_add_zero μ _ _ hT1 hT2).congr' ?_ EventuallyEq.rfl)
+  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ _ _ (fun n ↦ ?_)
+    (fun n ↦ ?_) hS ((tendsto_in_measure_add_zero μ _ _ hT1 hT2).congr' ?_ EventuallyEq.rfl)
   · exact (Finset.measurable_sum _ fun i _ ↦ hs.comp (hiid.1 i)).const_mul _
   · refine (Measurable.sub ?_ measurable_const).const_mul _
     simp only [unbiasedSquaredMMD, k]
@@ -652,7 +653,7 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
   filter_upwards [eventually_ge_atTop 2] with n hn
   refine ae_of_all _ fun ω ↦ ?_
   have hnR : (2 : ℝ) ≤ n := by exact_mod_cast hn
-  have hmmd := unbiasedSquaredMMD_inner_eq phi hn (fun i ↦ Xn i.val ω) (fun i ↦ Yn i.val ω)
+  have hmmd := unbiased_squared_mmd_inner_eq phi hn (fun i ↦ Xn i.val ω) (fun i ↦ Yn i.val ω)
   simp only at hmmd
   set A := (n : ℝ)⁻¹ • ∑ i : Fin n, phi (Xn i ω)
   set B := (n : ℝ)⁻¹ • ∑ i : Fin n, phi (Yn i ω)
@@ -700,8 +701,8 @@ theorem energy_distance_nonneg_eq_zero_iff_and_eq_squaredMMD
     let D := 2 * (∫ z, ‖z.1 - z.2‖ ∂P.prod Q) - (∫ z, ‖z.1 - z.2‖ ∂P.prod P) -
       ∫ z, ‖z.1 - z.2‖ ∂Q.prod Q;
     0 ≤ D ∧ (D = 0 ↔ P = Q) ∧ D = 2 * squaredMMD distanceKernel P Q := by
-  obtain ⟨hnonneg, hzero⟩ := energyDistance_nonneg_eq_zero_iff P Q hP hQ
-  exact ⟨hnonneg, hzero, energyDistance_eq_two_mul_squaredMMD P Q hP hQ⟩
+  obtain ⟨hnonneg, hzero⟩ := energy_distance_nonneg_eq_zero_iff P Q hP hQ
+  exact ⟨hnonneg, hzero, energy_distance_eq_two_mul_squared_mmd P Q hP hQ⟩
 
 /-- GAPS 108.62: for a law `P` on `ℝ^d × ℝ^e` with finite second moments and marginals `μ, ν`, the
 squared distance covariance `V = E[A(X, X') B(Y, Y')]` of the doubly centered distances is
@@ -723,9 +724,9 @@ theorem distance_covariance_nonneg_eq_zero_iff_and_eq_squaredMMD {d e : ℕ}
       ((P.map Prod.fst).prod (P.map Prod.snd)).map Prod.fst := by simp
   have hsnd : P.map Prod.snd =
       ((P.map Prod.fst).prod (P.map Prod.snd)).map Prod.snd := by simp
-  obtain ⟨hnonneg, hzero⟩ := distanceProductKernel_squaredMMD_nonneg_eq_zero_iff
+  obtain ⟨hnonneg, hzero⟩ := distance_product_kernel_squared_mmd_nonneg_eq_zero_iff
     P ((P.map Prod.fst).prod (P.map Prod.snd)) hP hQ hfst hsnd
-  have hV := integral_centeredDistance_mul_eq_four_mul_squaredMMD P h2
+  have hV := integral_centered_distance_mul_eq_four_mul_squared_mmd P h2
   change _ = 4 * squaredMMD distanceProductKernel P _ at hV
   change 0 ≤ _ ∧ (_ = 0 ↔ _) ∧ _ = 4 * squaredMMD distanceProductKernel P _
   rw [hV]
@@ -735,7 +736,7 @@ theorem distance_covariance_nonneg_eq_zero_iff_and_eq_squaredMMD {d e : ℕ}
 /-- GAPS 108.63, independence criterion for a characteristic product-space kernel: for a bounded
 measurable characteristic kernel `k` on `X × Y` and a law `P` of a pair, the HSIC
 `MMD²(P, P_X ⊗ P_Y)` vanishes exactly when the two coordinates are independent under `P`. -/
-theorem squaredMMD_joint_prod_eq_zero_iff_indepFun
+theorem squared_mmd_joint_prod_eq_zero_iff_indep_fun
     {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
     (P : Measure (X × Y)) [IsProbabilityMeasure P] (k : (X × Y) → (X × Y) → ℝ)
     (hk : IsCharacteristicKernel k) (hkm : Measurable fun z : (X × Y) × (X × Y) ↦ k z.1 z.2)
@@ -751,13 +752,13 @@ theorem squaredMMD_joint_prod_eq_zero_iff_indepFun
 symmetric finite measure `L` on `ℝ^d`, `d ≥ 1`, the translation-invariant kernel
 `k(x, y) = ∫ cos ⟨w, x - y⟩ dL(w)` is characteristic exactly when every open ball has positive
 `L`-measure. -/
-theorem isCharacteristicKernel_iff_spectral_measure_full_support {d : ℕ} (hd : 0 < d)
+theorem is_characteristic_kernel_iff_spectral_measure_full_support {d : ℕ} (hd : 0 < d)
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsFiniteMeasure L]
     (hsym : L.map (fun x ↦ -x) = L) :
     let k := fun x y ↦ ∫ w, Real.cos (inner ℝ w (x - y)) ∂L;
     IsCharacteristicKernel k ↔ ∀ x, ∀ r > 0, 0 < L (Metric.ball x r) := by
   have : Nonempty (Fin d) := ⟨⟨0, hd⟩⟩
-  exact isCharacteristicKernel_spectral_iff L hsym
+  exact is_characteristic_kernel_spectral_iff L hsym
 
 /-- Products of two coordinates are integrable under a law with finite second moments. -/
 theorem integrable_coord_mul_coord {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
@@ -854,7 +855,7 @@ theorem squaredMMD_quadratic_polynomial_eq {d : ℕ} (P Q : Measure (EuclideanSp
   ring
 
 /-- For a bounded continuous kernel, squared MMD is continuous in its first probability law. -/
-theorem continuous_squaredMMD_probabilityMeasure {X : Type*} [MetricSpace X]
+theorem continuous_squared_mmd_probability_measure {X : Type*} [MetricSpace X]
     [SecondCountableTopology X] [MeasurableSpace X] [BorelSpace X]
     (k : X → X → ℝ) (hk : Continuous (Function.uncurry k))
     (hb : ∃ C, ∀ x y, |k x y| ≤ C) (Q : ProbabilityMeasure X) :
@@ -876,7 +877,7 @@ theorem continuous_squaredMMD_probabilityMeasure {X : Type*} [MetricSpace X]
 continuous characteristic kernel on a separable metric space and a uniformly tight sequence of
 probability laws `P n`, `P n → Q` weakly (in Mathlib's `ProbabilityMeasure` topology) exactly when
 `MMD²(P n, Q) → 0`. -/
-theorem tendsto_probabilityMeasure_iff_tendsto_squaredMMD_of_tight {X : Type*} [MetricSpace X]
+theorem tendsto_probability_measure_iff_tendsto_squared_mmd_of_tight {X : Type*} [MetricSpace X]
     [SecondCountableTopology X] [MeasurableSpace X] [BorelSpace X]
     (P : ℕ → Measure X) (Q : Measure X) (hP : ∀ n, IsProbabilityMeasure (P n))
     [IsProbabilityMeasure Q] (k : X → X → ℝ)
@@ -889,7 +890,7 @@ theorem tendsto_probabilityMeasure_iff_tendsto_squaredMMD_of_tight {X : Type*} [
   let Ps : ℕ → ProbabilityMeasure X := fun n ↦ ⟨P n, hP n⟩
   let Qs : ProbabilityMeasure X := ⟨Q, inferInstance⟩
   let F : ProbabilityMeasure X → ℝ := fun R ↦ squaredMMD k R Q
-  have hF : Continuous F := continuous_squaredMMD_probabilityMeasure k hk hb Qs
+  have hF : Continuous F := continuous_squared_mmd_probability_measure k hk hb Qs
   have hFQ : F Qs = 0 := by simp [F, Qs, squaredMMD]; ring
   change Tendsto Ps atTop (𝓝 Qs) ↔ _
   constructor

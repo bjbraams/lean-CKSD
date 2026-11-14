@@ -1,11 +1,9 @@
 module
 
 public import CKSD.Bayes.GaussianGibbs
-
 public import CKSD.Bayes.MALABasic
 public import CKSD.Bayes.MALAGaussianRejection
 public import CKSD.Bayes.MALAGaussianLowerBound
-
 public import CKSD.Bayes.Diffusion
 public import CKSD.Bayes.HamiltonianSampling
 public import CKSD.Bayes.ULAContraction
@@ -18,6 +16,9 @@ public import Mathlib.Analysis.Calculus.Gradient.Basic
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
 public import TauCeti.Probability.Concentration.PoincareLogSobolev
 public import TauCeti.Probability.Distributions.Uniform.Basic
+
+
+
 
 /-!
 # Unadjusted and Metropolis-adjusted Langevin algorithms
@@ -51,9 +52,9 @@ variable accepts `y` with probability `malaAcceptance`.
 
 * `CKSD.exists_ula_iteration_complexity`: ULA iteration complexity in `W₂` and in KL under strong
   convexity (GAPS 104.39).
-* `CKSD.exists_klDiv_ula_le_of_logSobolev`: the Vempala–Wibisono KL bound for ULA under a
+* `CKSD.exists_kl_div_ula_le_of_log_sobolev`: the Vempala–Wibisono KL bound for ULA under a
   logarithmic Sobolev inequality, for step sizes `h ≤ α / (4β²)` (GAPS 104.45).
-* `CKSD.exists_wasserstein_ula_le_of_stronglyConvex`: geometric `W₂` convergence of ULA up to a
+* `CKSD.exists_wasserstein_ula_le_of_strongly_convex`: geometric `W₂` convergence of ULA up to a
   bias of order `β √(dh) / α` (GAPS 104.45).
 * `CKSD.exists_mala_mixing_time_le`: the warm-start MALA upper bound (GAPS 104.47).
 * `CKSD.exists_mala_mixing_time_ge`: a lower bound with the target and curvature scale chosen
@@ -123,7 +124,7 @@ theorem exists_ula_iteration_complexity :
 `π` satisfies a logarithmic Sobolev inequality with constant `1/α` and `V` is `β`-smooth (not
 necessarily convex), there is a universal `C` such that for `0 < h ≤ α / (4β²)` and all `N`,
 `KL(μ_N ‖ π) ≤ e^{-α N h} KL(μ₀ ‖ π) + C β² d h / α`. -/
-theorem exists_klDiv_ula_le_of_logSobolev :
+theorem exists_kl_div_ula_le_of_log_sobolev :
     ∃ C : ℝ, 0 < C ∧
       ∀ (d : ℕ) (V : EuclideanSpace ℝ (Fin d) → ℝ)
         (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (α β : ℝ),
@@ -139,7 +140,7 @@ theorem exists_klDiv_ula_le_of_logSobolev :
 /-- GAPS 104.45: geometric `W₂` convergence of the unadjusted Langevin algorithm under
 `αI ⪯ ∇²V ⪯ βI`: there are universal `c, C` such that for `0 < h ≤ c / (βκ)` and all `N`,
 `W₂(μ_N, π) ≤ e^{-α N h / 2} W₂(μ₀, π) + C β √(d h) / α`. -/
-theorem exists_wasserstein_ula_le_of_stronglyConvex :
+theorem exists_wasserstein_ula_le_of_strongly_convex :
     ∃ c C : ℝ, 0 < c ∧ 0 < C ∧
       ∀ (d : ℕ) (V : EuclideanSpace ℝ (Fin d) → ℝ)
         (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (α β : ℝ),
@@ -153,7 +154,7 @@ theorem exists_wasserstein_ula_le_of_stronglyConvex :
   refine ⟨1/4, 12, by norm_num, by norm_num, ?_⟩
   intro d V G α β hα hV hmono μ hμ h hh hsize N
   have := hμ
-  have := isProbabilityMeasure_gibbsMeasure hV.integrable
+  have := is_probability_measure_gibbs_measure hV.integrable
   have hprob (k : ℕ) : IsProbabilityMeasure (ulaLaw G h μ k) := by
     induction k with
     | zero => simpa [ulaLaw] using hμ
@@ -161,11 +162,11 @@ theorem exists_wasserstein_ula_le_of_stronglyConvex :
       change IsProbabilityMeasure ((langevinStepLaw G h)^[k+1] μ)
       rw [Function.iterate_succ_apply']
       have : IsProbabilityMeasure ((langevinStepLaw G h)^[k] μ) := by simpa only [ulaLaw] using ih
-      exact isProbabilityMeasure_langevinStepLaw G h _
+      exact is_probability_measure_langevin_step_law G h _
   by_cases hd : d = 0
   · subst d
     have := hprob N
-    rw [wassersteinEDist_eq_zero_of_subsingleton (ulaLaw G h μ N) (gibbsMeasure V)]
+    rw [wasserstein_e_dist_eq_zero_of_subsingleton (ulaLaw G h μ N) (gibbsMeasure V)]
     exact zero_le
   have : NeZero d := ⟨hd⟩
   have hab : α ≤ β := monotonicity_le_lipschitz hV.lipschitz hmono
@@ -184,8 +185,8 @@ theorem exists_wasserstein_ula_le_of_stronglyConvex :
   have hαh : α*h ≤ 1 := by
     apply (mul_le_mul_iff_right₀ hα).1
     nlinarith
-  have hInv := measurePreserving_mechanicalFlow_gibbsMeasure V G hV.contDiff hV.hasGradientAt hG
-  have hrate := wassersteinEDist_iterate_langevinStepLaw_le (gibbsMeasure V) G hG hInv hα hmono hh.le
+  have hInv := measure_preserving_mechanical_flow_gibbs_measure V G hV.contDiff hV.hasGradientAt hG
+  have hrate := wasserstein_e_dist_iterate_langevin_step_law_le (gibbsMeasure V) G hG hInv hα hmono hh.le
     (by simpa only [Real.coe_toNNReal _ hβ.le] using hstep) hαh μ N
   simpa only [ulaLaw, Real.coe_toNNReal _ hβ.le] using hrate
 
@@ -211,7 +212,7 @@ local notation "E" => EuclideanSpace ℝ (Fin d)
 
 /-- Positive isotropic Gaussian precision gives the sampling hypotheses with every permitted
 curvature ratio at least one. The intrinsic Gaussian condition number remains one. -/
-theorem isSamplingPotential_and_stronglyMonotone_gaussianPrecision {α κ : ℝ}
+theorem is_sampling_potential_and_strongly_monotone_gaussian_precision {α κ : ℝ}
     (hα : 0 < α) (hκ : 1 ≤ κ) :
     IsSamplingPotential (d:=d) (gaussianPrecisionPotential α) (gaussianPrecisionGradient α) (κ*α) ∧
       IsStronglyMonotoneGradient (d:=d) (gaussianPrecisionGradient α) α := by
@@ -219,7 +220,7 @@ theorem isSamplingPotential_and_stronglyMonotone_gaussianPrecision {α κ : ℝ}
   · constructor
     · change ContDiff ℝ 2 (fun x:E ↦ α/2*‖x‖^2)
       exact contDiff_const.mul (contDiff_norm_sq ℝ)
-    · exact hasGradientAt_gaussianPrecisionPotential α
+    · exact has_gradient_at_gaussian_precision_potential α
     · intro x y
       change ‖α • x-α • y‖≤κ*α*‖x-y‖
       rw [← smul_sub,norm_smul,Real.norm_eq_abs,abs_of_pos hα]
@@ -253,13 +254,13 @@ theorem exists_mala_mixing_time_ge :
   intro a b _ _
   refine ⟨0,?_⟩
   intro d hd κ hκ _ M hM h hh ε hε
-  obtain ⟨q,hq,hqa⟩ := exists_pos_gaussianReal_tail_eq_quarter
+  obtain ⟨q,hq,hqa⟩ := exists_pos_gaussian_real_tail_eq_quarter
   let R : ℝ := κ*Real.sqrt d*(max (Real.log κ) (Real.log d))^(-3:ℤ)*Real.log ((1/4)/ε)
   let N : ℕ := ⌈R⌉₊
   obtain ⟨σ,hσ,μ,hμ,hμwarm,hfar⟩ := exists_scaled_gaussian_mala_far hq hqa hh
     (⟨0,hd⟩ : Fin d) N
   have hα : 0 < (σ⁻¹)^2 := by positivity
-  obtain ⟨hV, hG⟩ := isSamplingPotential_and_stronglyMonotone_gaussianPrecision
+  obtain ⟨hV, hG⟩ := is_sampling_potential_and_strongly_monotone_gaussian_precision
     (κ := κ) hα (by linarith)
   refine ⟨gaussianPrecisionPotential ((σ⁻¹)^2), gaussianPrecisionGradient ((σ⁻¹)^2),
     (σ⁻¹)^2, hα, hV, hG, μ, hμ, ?_, ?_⟩

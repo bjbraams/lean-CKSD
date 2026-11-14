@@ -4,6 +4,7 @@ public import CKSD.Geometry.TopologicalInference
 public import Mathlib.Topology.EMetricSpace.BoundedVariation
 public import Mathlib.Topology.Connected.PathConnected
 
+
 /-!
 # Geodesic approximation from neighbourhood graphs
 
@@ -22,9 +23,9 @@ The definitions are stated for a general (pseudo)metric space.
 
 ## Main results
 
-* `CKSD.eventually_sampleGraphEDist_intrinsicEDist_le`: convergence of graph geodesics on a
+* `CKSD.eventually_sample_graph_e_dist_intrinsic_e_dist_le`: convergence of graph geodesics on a
   submanifold of positive reach (GAPS 108.4).
-* `CKSD.intrinsicEDist_eq_edist_of_lengthPreserving`: the flat case (GAPS 108.4).
+* `CKSD.intrinsic_e_dist_eq_edist_of_length_preserving`: the flat case (GAPS 108.4).
 -/
 
 @[expose] public section
@@ -65,7 +66,7 @@ intrinsic distance. If `ε n → 0` and `δ n / ε n → 0`, then the shortest-p
 `ε n`-neighbourhood graphs converge to the intrinsic distances uniformly over pairs of sample
 points: for every `η > 0`, eventually `|d_{G_n}(x, y) - d_M(x, y)| ≤ η` for all `x, y ∈ S n`
 (stated as two one-sided bounds in `ℝ≥0∞`). -/
-theorem eventually_sampleGraphEDist_intrinsicEDist_le
+theorem eventually_sample_graph_e_dist_intrinsic_e_dist_le
     {D d : ℕ} {N : Type*} [TopologicalSpace N] [ChartedSpace (EuclideanSpace ℝ (Fin d)) N]
     [IsManifold (𝓡 d) ∞ N] [CompactSpace N] [ConnectedSpace N]
     {j : N → EuclideanSpace ℝ (Fin D)}
@@ -87,7 +88,7 @@ isometry for the intrinsic length structure). Then `d_M(x, y) = ‖φ x - φ y�
 Remark, not part of the statement: for `Ω ⊆ ℝ^d`, classical multidimensional scaling of the
 squared intrinsic distances of a finite sample then returns the points `φ(x_i)` up to a Euclidean
 isometry, by the Schoenberg criterion of Section 108.8. -/
-theorem intrinsicEDist_eq_edist_of_lengthPreserving [PseudoEMetricSpace X] {F : Type*}
+theorem intrinsic_e_dist_eq_edist_of_length_preserving [PseudoEMetricSpace X] {F : Type*}
     [NormedAddCommGroup F] [NormedSpace ℝ F] (M : Set X) (φ : X → F) (ψ : F → X)
     (hconv : Convex ℝ (φ '' M)) (hψφ : ∀ x ∈ M, ψ (φ x) = x)
     (hψ : ContinuousOn ψ (φ '' M))

@@ -2,6 +2,7 @@ module
 
 public import CKSD.LinearModels.DirectedGraphical.Basic.CausalGraph
 
+
 /-!
 # Trails in finite causal graphs
 
@@ -15,12 +16,12 @@ With `P` the ancestral closure of `C` and `N` the complement of `C`, this is the
 condition of d-separation. The main results are:
 
 * an active trail between `A` and `B` can be shortened to an active path, that is, to an
-  injective active trail (`CausalGraph.exists_injective_activeTrail`);
+  injective active trail (`CausalGraph.exists_injective_active_trail`);
 * a trail between `A` and `B` whose noncolliders avoid `C` and whose colliders lie in the
   ancestral closure of `A ∪ B ∪ C` can be turned into an active trail
-  (`CausalGraph.exists_activeTrail_of_semiActive`);
-* consequently neither an active trail (`CausalGraph.DSeparated.false_of_isTrailWith`) nor such
-  a semi-active trail (`CausalGraph.false_of_dSeparated_of_semiActiveTrail`) can join `A` and
+  (`CausalGraph.exists_active_trail_of_semi_active`);
+* consequently neither an active trail (`CausalGraph.DSeparated.false_of_is_trail_with`) nor such
+  a semi-active trail (`CausalGraph.false_of_d_separated_of_semi_active_trail`) can join `A` and
   `B` when they are d-separated by `C`.
 
 These are the graph-theoretic steps in the proof that a recursively factorizing mass function
@@ -75,7 +76,7 @@ theorem not_edge_of_edge (G : CausalGraph V) {a b : V} (h : G.edge a b) : ¬ G.e
 
 /-- The middle vertex of a triple is a noncollider when it has an arrow towards its right
 neighbour. -/
-theorem tripleStatus_of_edge_right (G : CausalGraph V) {P N : V → Prop} {a b c : V}
+theorem triple_status_of_edge_right (G : CausalGraph V) {P N : V → Prop} {a b c : V}
     (h : G.edge b c) (hN : N b) : G.TripleStatus P N a b c := by
   unfold TripleStatus
   rw [ite_eq_right fun hc ↦ G.not_edge_of_edge h hc.2]
@@ -83,24 +84,24 @@ theorem tripleStatus_of_edge_right (G : CausalGraph V) {P N : V → Prop} {a b c
 
 /-- The middle vertex of a triple is a noncollider when it has an arrow towards its left
 neighbour. -/
-theorem tripleStatus_of_edge_left (G : CausalGraph V) {P N : V → Prop} {a b c : V}
+theorem triple_status_of_edge_left (G : CausalGraph V) {P N : V → Prop} {a b c : V}
     (h : G.edge b a) (hN : N b) : G.TripleStatus P N a b c := by
   unfold TripleStatus
   rw [ite_eq_right fun hc ↦ G.not_edge_of_edge h hc.1]
   exact hN
 
 /-- The status of a triple does not depend on its orientation. -/
-theorem tripleStatus_comm (G : CausalGraph V) {P N : V → Prop} {a b c : V} :
+theorem triple_status_comm (G : CausalGraph V) {P N : V → Prop} {a b c : V} :
     G.TripleStatus P N a b c ↔ G.TripleStatus P N c b a := by
   unfold TripleStatus
   by_cases h1 : G.edge a b <;> by_cases h2 : G.edge c b <;> simp [h1, h2]
 
 /-- `trailAppend` agrees with the first trail up to its length. -/
-theorem trailAppend_of_le {n₁ k : ℕ} (q₁ q₂ : ℕ → V) (hk : k ≤ n₁) :
+theorem trail_append_of_le {n₁ k : ℕ} (q₁ q₂ : ℕ → V) (hk : k ≤ n₁) :
     trailAppend n₁ q₁ q₂ k = q₁ k := ite_eq_left hk
 
 /-- `trailAppend` agrees with the shifted second trail from the junction on. -/
-theorem trailAppend_of_ge {n₁ k : ℕ} {q₁ q₂ : ℕ → V} (hj : q₁ n₁ = q₂ 0) (hk : n₁ ≤ k) :
+theorem trail_append_of_ge {n₁ k : ℕ} {q₁ q₂ : ℕ → V} (hj : q₁ n₁ = q₂ 0) (hk : n₁ ≤ k) :
     trailAppend n₁ q₁ q₂ k = q₂ (k - n₁) := by
   unfold trailAppend
   split_ifs with h
@@ -129,7 +130,7 @@ theorem rev {n : ℕ} {q : ℕ → V} (h : G.IsTrailWith P N n q) :
     have e3 : n - (k + 2) = n - k - 2 := by omega
     rw [e1, e2] at this
     simp only [e3]
-    exact G.tripleStatus_comm.1 this
+    exact G.triple_status_comm.1 this
 
 /-- A suffix of a trail, shifted to start at `0`, is a trail. -/
 theorem shift {n m : ℕ} {q : ℕ → V} (h : G.IsTrailWith P N n q) (hm : m ≤ n) :
@@ -154,26 +155,26 @@ theorem append {n₁ n₂ : ℕ} {q₁ q₂ : ℕ → V} (h₁ : G.IsTrailWith P
     G.IsTrailWith P N (n₁ + n₂) (trailAppend n₁ q₁ q₂) := by
   refine ⟨fun k hk ↦ ?_, fun k hk ↦ ?_⟩
   · by_cases hk' : k + 1 ≤ n₁
-    · rw [trailAppend_of_le _ _ hk', trailAppend_of_le _ _ (by omega)]
+    · rw [trail_append_of_le _ _ hk', trail_append_of_le _ _ (by omega)]
       exact h₁.1 k (by omega)
-    · rw [trailAppend_of_ge hj (by omega), trailAppend_of_ge hj (by omega)]
+    · rw [trail_append_of_ge hj (by omega), trail_append_of_ge hj (by omega)]
       have e : k + 1 - n₁ = k - n₁ + 1 := by omega
       rw [e]
       exact h₂.1 _ (by omega)
   · by_cases hk' : k + 2 ≤ n₁
-    · rw [trailAppend_of_le _ _ hk', trailAppend_of_le _ _ (by omega),
-        trailAppend_of_le _ _ (by omega)]
+    · rw [trail_append_of_le _ _ hk', trail_append_of_le _ _ (by omega),
+        trail_append_of_le _ _ (by omega)]
       exact h₁.2 k hk'
     by_cases hk'' : n₁ ≤ k
-    · rw [trailAppend_of_ge hj hk'', trailAppend_of_ge hj (by omega),
-        trailAppend_of_ge hj (by omega)]
+    · rw [trail_append_of_ge hj hk'', trail_append_of_ge hj (by omega),
+        trail_append_of_ge hj (by omega)]
       have e1 : k + 1 - n₁ = k - n₁ + 1 := by omega
       have e2 : k + 2 - n₁ = k - n₁ + 2 := by omega
       rw [e1, e2]
       exact h₂.2 _ (by omega)
     · have e0 : k = n₁ - 1 := by omega
-      rw [trailAppend_of_le _ _ (by omega), trailAppend_of_le _ _ (by omega),
-        trailAppend_of_ge hj (by omega)]
+      rw [trail_append_of_le _ _ (by omega), trail_append_of_le _ _ (by omega),
+        trail_append_of_ge hj (by omega)]
       have e1 : k + 2 - n₁ = 1 := by omega
       have e2 : k + 1 = n₁ := by omega
       rw [e1, e2, e0]
@@ -189,21 +190,21 @@ theorem snoc {n : ℕ} {q : ℕ → V} {w : V} (h : G.IsTrailWith P N n q)
       obtain rfl : k = 0 := by omega
       simpa using hadj, fun k hk ↦ by omega⟩
   refine ⟨_, h.append h₂ (by simp) fun h1 _ ↦ by simpa using hst h1, ?_, ?_⟩
-  · exact fun k hk ↦ trailAppend_of_le _ _ hk
-  · rw [trailAppend_of_ge (by simp) (by omega)]
+  · exact fun k hk ↦ trail_append_of_le _ _ hk
+  · rw [trail_append_of_ge (by simp) (by omega)]
     simp
 
 end IsTrailWith
 
 /-- A forward directed chain is a trail whose interior vertices are all noncolliders. -/
-theorem isTrailWith_of_forward (G : CausalGraph V) {P N : V → Prop} {m : ℕ} {r : ℕ → V}
+theorem is_trail_with_of_forward (G : CausalGraph V) {P N : V → Prop} {m : ℕ} {r : ℕ → V}
     (hf : ∀ i < m, G.edge (r i) (r (i + 1))) (hN : ∀ i, 0 < i → i < m → N (r i)) :
     G.IsTrailWith P N m r :=
   ⟨fun k hk ↦ Or.inl (hf k hk), fun k hk ↦
-    G.tripleStatus_of_edge_right (hf (k + 1) (by omega)) (hN (k + 1) (by omega) (by omega))⟩
+    G.triple_status_of_edge_right (hf (k + 1) (by omega)) (hN (k + 1) (by omega) (by omega))⟩
 
 /-- Along a forward directed chain every later vertex is a descendant of the first. -/
-theorem isDescendant_of_forward (G : CausalGraph V) {m : ℕ} {r : ℕ → V}
+theorem is_descendant_of_forward (G : CausalGraph V) {m : ℕ} {r : ℕ → V}
     (hf : ∀ i < m, G.edge (r i) (r (i + 1))) :
     ∀ i, 0 < i → i ≤ m → G.IsDescendant (r 0) (r i) := by
   intro i
@@ -216,7 +217,7 @@ theorem isDescendant_of_forward (G : CausalGraph V) {m : ℕ} {r : ℕ → V}
     · exact Relation.TransGen.tail (ih hpos (by omega)) (hf i (by omega))
 
 /-- A nonempty directed path is a forward chain. -/
-theorem exists_forward_of_isDescendant (G : CausalGraph V) {u t : V}
+theorem exists_forward_of_is_descendant (G : CausalGraph V) {u t : V}
     (h : G.IsDescendant u t) :
     ∃ (m : ℕ) (r : ℕ → V), 0 < m ∧ r 0 = u ∧ r m = t ∧ ∀ i < m, G.edge (r i) (r (i + 1)) := by
   induction h with
@@ -237,20 +238,20 @@ theorem exists_forward_of_isDescendant (G : CausalGraph V) {u t : V}
 
 /-- If `v` lies outside the ancestral closure of `C` and is `t ∈ T` or an ancestor of some
 `t ∈ T`, then a directed path from `v` reaches `T` avoiding `C`. -/
-theorem forwardReach_of_not_memAncestorClosure (G : CausalGraph V) {C T : Set V} {v : V}
+theorem forward_reach_of_not_mem_ancestor_closure (G : CausalGraph V) {C T : Set V} {v : V}
     (hv : ¬ G.MemAncestorClosure C v) (ht : ∃ t ∈ T, t = v ∨ G.IsDescendant v t) :
     G.ForwardReach C T v := by
   obtain ⟨t, htT, rfl | hvt⟩ := ht
   · exact ⟨0, fun _ ↦ t, rfl, htT, fun i hi ↦ absurd hi (Nat.not_lt_zero _),
       fun i hi hi' ↦ by omega⟩
-  · obtain ⟨m, r, _, h0, hm, hf⟩ := G.exists_forward_of_isDescendant hvt
+  · obtain ⟨m, r, _, h0, hm, hf⟩ := G.exists_forward_of_is_descendant hvt
     refine ⟨m, r, h0, hm ▸ htT, hf, fun i hi hi' hC ↦ hv ⟨r i, hC, Or.inr ?_⟩⟩
     rw [← h0]
-    exact G.isDescendant_of_forward hf i hi hi'
+    exact G.is_descendant_of_forward hf i hi hi'
 
 /-- Junction step of the shortening argument: cutting a loop `q i = q j` out of an active trail
 leaves an admissible status at the junction. -/
-theorem tripleStatus_of_loop (G : CausalGraph V) {C : Set V} {n : ℕ} {q : ℕ → V}
+theorem triple_status_of_loop (G : CausalGraph V) {C : Set V} {n : ℕ} {q : ℕ → V}
     (h : G.IsTrailWith (G.MemAncestorClosure C) (· ∉ C) n q) {i j : ℕ} (hi : 0 < i)
     (hij : i < j) (hj : j < n) (hq : q i = q j) :
     G.TripleStatus (G.MemAncestorClosure C) (· ∉ C) (q (i - 1)) (q i) (q (j + 1)) := by
@@ -305,7 +306,7 @@ theorem tripleStatus_of_loop (G : CausalGraph V) {C : Set V} {n : ℕ} {q : ℕ 
     · exact he
   -- descendants along the forward run
   have hdesc : ∀ k, i < k → k ≤ m → G.IsDescendant (q i) (q k) := by
-    have := G.isDescendant_of_forward (r := fun k ↦ q (k + i)) (m := m - i)
+    have := G.is_descendant_of_forward (r := fun k ↦ q (k + i)) (m := m - i)
       (fun k hk ↦ by simpa [Nat.add_right_comm k 1 i] using hmin (k + i) (by omega) (by omega))
     intro k hk hkm
     have h' := this (k - i) (by omega) (by omega)
@@ -327,7 +328,7 @@ theorem tripleStatus_of_loop (G : CausalGraph V) {C : Set V} {n : ℕ} {q : ℕ 
   · exact (hdesc m hmi le_rfl).trans hz'
 
 /-- An active trail can be shortened to an injective active trail with the same endpoints. -/
-theorem exists_injective_activeTrail (G : CausalGraph V) (C : Set V) :
+theorem exists_injective_active_trail (G : CausalGraph V) (C : Set V) :
     ∀ (n : ℕ) (q : ℕ → V), G.IsTrailWith (G.MemAncestorClosure C) (· ∉ C) n q →
       ∃ (m : ℕ) (r : ℕ → V), G.IsTrailWith (G.MemAncestorClosure C) (· ∉ C) m r ∧
         r 0 = q 0 ∧ r m = q n ∧ ∀ i ≤ m, ∀ j ≤ m, r i = r j → i = j := by
@@ -375,7 +376,7 @@ theorem exists_injective_activeTrail (G : CausalGraph V) (C : Set V) :
         have e1 : k + 2 + d = j + 1 := by omega
         have e2 : k + 1 = i := by omega
         rw [e1, e2, e0]
-        exact G.tripleStatus_of_loop h (by omega) hij (by omega) hq
+        exact G.triple_status_of_loop h (by omega) hij (by omega) hq
   obtain ⟨m, r, hr, hr0, hrm, hrinj⟩ := ih (n - d) (by omega) q' htr
   refine ⟨m, r, hr, ?_, ?_, hrinj⟩
   · rw [hr0, hq'le 0 (Nat.zero_le _)]
@@ -384,7 +385,7 @@ theorem exists_injective_activeTrail (G : CausalGraph V) (C : Set V) :
     omega
 
 /-- An injective active trail is an active path. -/
-theorem isActivePath_of_isTrailWith (G : CausalGraph V) {C : Set V} {n : ℕ} {q : ℕ → V}
+theorem is_active_path_of_is_trail_with (G : CausalGraph V) {C : Set V} {n : ℕ} {q : ℕ → V}
     (h : G.IsTrailWith (G.MemAncestorClosure C) (· ∉ C) n q)
     (hinj : ∀ i ≤ n, ∀ j ≤ n, q i = q j → i = j) :
     G.IsActivePath C (fun i : Fin (n + 1) ↦ q i) := by
@@ -415,7 +416,7 @@ theorem exists_collider_of_forward_backward (G : CausalGraph V) {P N : V → Pro
       exact absurd hm.2.2 (G.not_edge_of_edge hfwd)
     · exact he
   have hdesc : G.IsDescendant (q i) (q (Nat.find hex)) := by
-    have := G.isDescendant_of_forward (r := fun k ↦ q (k + i)) (m := Nat.find hex - i)
+    have := G.is_descendant_of_forward (r := fun k ↦ q (k + i)) (m := Nat.find hex - i)
       (fun k hk ↦ by simpa [Nat.add_right_comm k 1 i] using hmin (k + i) (by omega) (by omega))
       (Nat.find hex - i) (by omega) le_rfl
     simpa [Nat.sub_add_cancel hm.1] using this
@@ -431,7 +432,7 @@ theorem exists_collider_of_forward_backward (G : CausalGraph V) {P N : V → Pro
   rwa [ite_eq_left ⟨hprev, hm.2.2⟩] at hs
 
 /-- An active path, read as a function on `ℕ`, is an injective active trail. -/
-theorem isTrailWith_of_isActivePath (G : CausalGraph V) {C : Set V} {n : ℕ}
+theorem is_trail_with_of_is_active_path (G : CausalGraph V) {C : Set V} {n : ℕ}
     {p : Fin (n + 1) → V} (h : G.IsActivePath C p) :
     G.IsTrailWith (G.MemAncestorClosure C) (· ∉ C) n (fun k ↦ p ⟨min k n, by omega⟩) ∧
       ∀ i ≤ n, ∀ j ≤ n, p ⟨min i n, by omega⟩ = p ⟨min j n, by omega⟩ → i = j := by
@@ -460,7 +461,7 @@ theorem isTrailWith_of_isActivePath (G : CausalGraph V) {C : Set V} {n : ℕ}
 /-- A trail between `A` and `B` whose noncolliders avoid `C` and whose colliders lie in a set
 `D` all of whose vertices outside the ancestral closure of `C` are ancestors of `A ∪ B` (or lie
 in it) can be modified into an active trail between `A` and `B`. -/
-theorem exists_activeTrail_of_semiActive (G : CausalGraph V) {A B C D : Set V}
+theorem exists_active_trail_of_semi_active (G : CausalGraph V) {A B C D : Set V}
     (hAC : ∀ a ∈ A, a ∉ C) (hBC : ∀ b ∈ B, b ∉ C)
     (hD : ∀ v ∈ D, ¬ G.MemAncestorClosure C v → ∃ t ∈ A ∪ B, t = v ∨ G.IsDescendant v t)
     {n : ℕ} {q : ℕ → V} (h : G.IsTrailWith (· ∈ D) (· ∉ C) n q) (h0 : q 0 ∈ A)
@@ -480,8 +481,8 @@ theorem exists_activeTrail_of_semiActive (G : CausalGraph V) {A B C D : Set V}
     rw [ite_eq_left ⟨he1, he2⟩] at hs
     obtain ⟨t, ht, ht'⟩ := hD _ hs hk
     rcases ht with ht | ht
-    · exact Or.inl (G.forwardReach_of_not_memAncestorClosure hk ⟨t, ht, ht'⟩)
-    · exact Or.inr (G.forwardReach_of_not_memAncestorClosure hk ⟨t, ht, ht'⟩)
+    · exact Or.inl (G.forward_reach_of_not_mem_ancestor_closure hk ⟨t, ht, ht'⟩)
+    · exact Or.inr (G.forward_reach_of_not_mem_ancestor_closure hk ⟨t, ht, ht'⟩)
   have hrefl : ∀ {T : Set V} {v : V}, v ∈ T → G.ForwardReach C T v := fun hv ↦
     ⟨0, fun _ ↦ _, rfl, hv, fun i hi ↦ absurd hi (Nat.not_lt_zero _), fun i hi hi' ↦ by omega⟩
   have hexB : ∃ k, (k = n ∨ bad k) ∧ G.ForwardReach C B (q k) := ⟨n, Or.inl rfl, hrefl hn⟩
@@ -508,9 +509,9 @@ theorem exists_activeTrail_of_semiActive (G : CausalGraph V) {A B C D : Set V}
   obtain ⟨mB, rB, hrB0, hrBm, hrBf, hrBC⟩ := hkB.2
   -- the three pieces
   have hT1 : G.IsTrailWith (G.MemAncestorClosure C) (· ∉ C) mA (fun k ↦ rA (mA - k)) :=
-    (G.isTrailWith_of_forward hrAf fun i hi hi' ↦ hrAC i hi hi'.le).rev
+    (G.is_trail_with_of_forward hrAf fun i hi hi' ↦ hrAC i hi hi'.le).rev
   have hT3 : G.IsTrailWith (G.MemAncestorClosure C) (· ∉ C) mB rB :=
-    G.isTrailWith_of_forward hrBf fun i hi hi' ↦ hrBC i hi hi'.le
+    G.is_trail_with_of_forward hrBf fun i hi hi' ↦ hrBC i hi hi'.le
   have hT2 : G.IsTrailWith (G.MemAncestorClosure C) (· ∉ C) (kB - kA) (fun k ↦ q (k + kA)) := by
     refine ⟨fun k hk ↦ ?_, fun k hk ↦ ?_⟩
     · have := h.1 (k + kA) (by omega)
@@ -531,43 +532,43 @@ theorem exists_activeTrail_of_semiActive (G : CausalGraph V) {A B C D : Set V}
     simp only [Nat.sub_self]
     have e : mA - (mA - 1) = 1 := by omega
     rw [e]
-    exact G.tripleStatus_of_edge_left (hrAf 0 h1) (by rw [hrA0]; exact hkAC)
+    exact G.triple_status_of_edge_left (hrAf 0 h1) (by rw [hrA0]; exact hkAC)
   have hjunc : trailAppend mA (fun k ↦ rA (mA - k)) (fun k ↦ q (k + kA)) (mA + (kB - kA)) =
       rB 0 := by
-    rw [trailAppend_of_ge (by simp [hrA0]) (by omega), hrB0]
+    rw [trail_append_of_ge (by simp [hrA0]) (by omega), hrB0]
     congr 1
     omega
   have hT := hT12.append hT3 hjunc fun _ h2 ↦ by
     rw [hjunc]
-    exact G.tripleStatus_of_edge_right (hrBf 0 h2) (hrB0 ▸ hkBC)
+    exact G.triple_status_of_edge_right (hrBf 0 h2) (hrB0 ▸ hkBC)
   refine ⟨_, _, hT, ?_, ?_⟩
-  · rw [trailAppend_of_le _ _ (Nat.zero_le _), trailAppend_of_le _ _ (Nat.zero_le _)]
+  · rw [trail_append_of_le _ _ (Nat.zero_le _), trail_append_of_le _ _ (Nat.zero_le _)]
     simpa using hrAm
-  · rw [trailAppend_of_ge hjunc (Nat.le_add_right _ _), Nat.add_sub_cancel_left]
+  · rw [trail_append_of_ge hjunc (Nat.le_add_right _ _), Nat.add_sub_cancel_left]
     exact hrBm
 
 /-- If `A` and `B` are d-separated by `C`, there is no active trail (repetitions allowed)
 from a vertex of `A` to a vertex of `B`: such a trail can be shortened to an active path. This is
 the bridge between trails on `ℕ` and the paths on `Fin (n + 1)` of `CausalGraph.IsActivePath`. -/
-theorem DSeparated.false_of_isTrailWith {G : CausalGraph V} {A B C : Set V}
+theorem DSeparated.false_of_is_trail_with {G : CausalGraph V} {A B C : Set V}
     (hsep : G.DSeparated A B C) {n : ℕ} {q : ℕ → V}
     (h : G.IsTrailWith (G.MemAncestorClosure C) (· ∉ C) n q) (h0 : q 0 ∈ A) (hn : q n ∈ B) :
     False := by
-  obtain ⟨m, r, hr, hr0, hrm, hinj⟩ := G.exists_injective_activeTrail C n q h
-  refine hsep m (fun i ↦ r i) ?_ ?_ (G.isActivePath_of_isTrailWith hr hinj)
+  obtain ⟨m, r, hr, hr0, hrm, hinj⟩ := G.exists_injective_active_trail C n q h
+  refine hsep m (fun i ↦ r i) ?_ ?_ (G.is_active_path_of_is_trail_with hr hinj)
   · simpa [hr0] using h0
   · simpa [hrm] using hn
 
 /-- If `A` and `B` are d-separated by `C`, there is no trail between `A` and `B` whose
 noncolliders avoid `C` and whose colliders lie in a set `D` all of whose vertices outside the
 ancestral closure of `C` are ancestors of `A ∪ B` or lie in it. -/
-theorem false_of_dSeparated_of_semiActiveTrail (G : CausalGraph V) {A B C D : Set V}
+theorem false_of_d_separated_of_semi_active_trail (G : CausalGraph V) {A B C D : Set V}
     (hsep : G.DSeparated A B C) (hAC : ∀ a ∈ A, a ∉ C) (hBC : ∀ b ∈ B, b ∉ C)
     (hD : ∀ v ∈ D, ¬ G.MemAncestorClosure C v → ∃ t ∈ A ∪ B, t = v ∨ G.IsDescendant v t)
     {n : ℕ} {q : ℕ → V} (h : G.IsTrailWith (· ∈ D) (· ∉ C) n q) (h0 : q 0 ∈ A)
     (hn : q n ∈ B) : False := by
-  obtain ⟨m, r, hr, hr0, hrm⟩ := G.exists_activeTrail_of_semiActive hAC hBC hD h h0 hn
-  exact hsep.false_of_isTrailWith hr hr0 hrm
+  obtain ⟨m, r, hr, hr0, hrm⟩ := G.exists_active_trail_of_semi_active hAC hBC hD h h0 hn
+  exact hsep.false_of_is_trail_with hr hr0 hrm
 
 end CausalGraph
 

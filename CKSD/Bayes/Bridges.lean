@@ -2,6 +2,7 @@ module
 
 public import TauCeti.InformationTheory.KullbackLeibler.Projection
 
+
 /-!
 # Half-bridges and alternating marginal projections
 
@@ -21,7 +22,7 @@ coupling.
 
 ## Main results
 
-* `CKSD.klDiv_bridgeIterate_step`: the entropy Pythagorean identity
+* `CKSD.kl_div_bridge_iterate_step`: the entropy Pythagorean identity
   `KL(σ ‖ Pⁿ) = KL(σ ‖ Pⁿ⁺¹) + KL(Pⁿ⁺¹ ‖ Pⁿ)` for every law `σ` with both marginals.
 
 Source: GAPS 104.77, in the scope of GAPS_EASY 104.77.
@@ -46,14 +47,14 @@ def bridgeIterate {Ω X Y : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
       else (bridgeIterate R start finish μ ν n).fitLaw start μ
 
 /-- The reference law is the zeroth iterate. -/
-@[simp] theorem bridgeIterate_zero {Ω X Y : Type*} [MeasurableSpace Ω]
+@[simp] theorem bridge_iterate_zero {Ω X Y : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [MeasurableSpace Y] (R : Measure Ω) (start : Ω → X)
     (finish : Ω → Y) (μ : Measure X) (ν : Measure Y) :
     bridgeIterate R start finish μ ν 0 = R := rfl
 
 /-- GAPS 104.77: the entropy Pythagorean identity for each step of the path-space iteration.
 It holds for every feasible competitor, without assuming it minimizes entropy. -/
-theorem klDiv_bridgeIterate_step {Ω X Y : Type*} [MeasurableSpace Ω]
+theorem kl_div_bridge_iterate_step {Ω X Y : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [MeasurableSpace Y] (R σ : Measure Ω) [IsFiniteMeasure σ]
     (start : Ω → X) (finish : Ω → Y) (hs : Measurable start) (hf : Measurable finish)
     (μ : Measure X) (ν : Measure Y) (hσs : σ.map start = μ) (hσf : σ.map finish = ν)

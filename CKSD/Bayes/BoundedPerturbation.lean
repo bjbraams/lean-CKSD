@@ -4,6 +4,7 @@ public import CKSD.Bayes.Diffusion
 public import TauCeti.Probability.Concentration.PoincareLogSobolev
 public import Mathlib.Probability.Moments.Variance
 
+
 /-!
 # Bounded perturbations of logarithmic Sobolev inequalities
 
@@ -32,7 +33,7 @@ def entropyIntegrand (x a : ℝ) : ℝ :=
   x * Real.log x - x * Real.log a - x + a
 
 /-- The entropy integrand is nonnegative for a nonnegative value and a positive reference. -/
-theorem entropyIntegrand_nonneg {x a : ℝ} (hx : 0 ≤ x) (ha : 0 < a) :
+theorem entropy_integrand_nonneg {x a : ℝ} (hx : 0 ≤ x) (ha : 0 < a) :
     0 ≤ entropyIntegrand x a := by
   rcases hx.eq_or_lt with rfl | hx
   · simpa [entropyIntegrand] using ha.le
@@ -44,14 +45,14 @@ theorem entropyIntegrand_nonneg {x a : ℝ} (hx : 0 ≤ x) (ha : 0 < a) :
   nlinarith
 
 /-- Integrability of the entropy integrand follows from integrability of its two moments. -/
-theorem integrable_entropyIntegrand {X : Type*} [MeasurableSpace X]
+theorem integrable_entropy_integrand {X : Type*} [MeasurableSpace X]
     (μ : Measure X) [IsFiniteMeasure μ] {f : X → ℝ} (hf : Integrable f μ)
     (hfl : Integrable (fun x ↦ f x * Real.log (f x)) μ) (a : ℝ) :
     Integrable (fun x ↦ entropyIntegrand (f x) a) μ :=
   ((hfl.sub (hf.mul_const (Real.log a))).sub hf).add (integrable_const a)
 
 /-- The integral of the entropy integrand differs from entropy by its value at the mean. -/
-theorem integral_entropyIntegrand {X : Type*} [MeasurableSpace X]
+theorem integral_entropy_integrand {X : Type*} [MeasurableSpace X]
     (μ : Measure X) [IsProbabilityMeasure μ] {f : X → ℝ} (hf : Integrable f μ)
     (hfl : Integrable (fun x ↦ f x * Real.log (f x)) μ) (a : ℝ) :
     (∫ x, entropyIntegrand (f x) a ∂μ) =
@@ -67,20 +68,20 @@ theorem integral_entropyIntegrand {X : Type*} [MeasurableSpace X]
   ring
 
 /-- Every positive reference value gives an upper bound on entropy. -/
-theorem entropy_le_integral_entropyIntegrand {X : Type*} [MeasurableSpace X]
+theorem entropy_le_integral_entropy_integrand {X : Type*} [MeasurableSpace X]
     (μ : Measure X) [IsProbabilityMeasure μ] {f : X → ℝ} (hf : Integrable f μ)
     (hfl : Integrable (fun x ↦ f x * Real.log (f x)) μ) (hf0 : 0 ≤ᵐ[μ] f)
     {a : ℝ} (ha : 0 < a) :
     μ.entropy f ≤ ∫ x, entropyIntegrand (f x) a ∂μ := by
-  rw [integral_entropyIntegrand μ hf hfl]
-  exact le_add_of_nonneg_right (entropyIntegrand_nonneg (integral_nonneg_of_ae hf0) ha)
+  rw [integral_entropy_integrand μ hf hfl]
+  exact le_add_of_nonneg_right (entropy_integrand_nonneg (integral_nonneg_of_ae hf0) ha)
 
 /-- Choosing the mean as reference recovers entropy exactly. -/
-theorem integral_entropyIntegrand_mean {X : Type*} [MeasurableSpace X]
+theorem integral_entropy_integrand_mean {X : Type*} [MeasurableSpace X]
     (μ : Measure X) [IsProbabilityMeasure μ] {f : X → ℝ} (hf : Integrable f μ)
     (hfl : Integrable (fun x ↦ f x * Real.log (f x)) μ) :
     (∫ x, entropyIntegrand (f x) (∫ y, f y ∂μ) ∂μ) = μ.entropy f := by
-  rw [integral_entropyIntegrand μ hf hfl]
+  rw [integral_entropy_integrand μ hf hfl]
   simp [entropyIntegrand]
 
 /-- Entropy respects almost-everywhere equality. -/
@@ -107,17 +108,17 @@ theorem entropy_le_mul_of_measure_le_smul {X : Type*} [MeasurableSpace X]
   have hm : 0 < ∫ x, f x ∂μ :=
     lt_of_le_of_ne (integral_nonneg_of_ae hf0) (Ne.symm hz)
   calc ν.entropy f ≤ ∫ x, entropyIntegrand (f x) (∫ y, f y ∂μ) ∂ν :=
-        entropy_le_integral_entropyIntegrand ν hfν hflν (hac.ae_le hf0) hm
+        entropy_le_integral_entropy_integrand ν hfν hflν (hac.ae_le hf0) hm
     _ ≤ ∫ x, entropyIntegrand (f x) (∫ y, f y ∂μ) ∂(ENNReal.ofReal A • μ) :=
-        integral_mono_measure hν (Measure.ae_smul_measure (hf0.mono fun x hx ↦ entropyIntegrand_nonneg hx hm) _)
-          ((integrable_entropyIntegrand μ hf hfl _).smul_measure ENNReal.ofReal_ne_top)
+        integral_mono_measure hν (Measure.ae_smul_measure (hf0.mono fun x hx ↦ entropy_integrand_nonneg hx hm) _)
+          ((integrable_entropy_integrand μ hf hfl _).smul_measure ENNReal.ofReal_ne_top)
     _ = A * μ.entropy f := by
         rw [integral_smul_measure, ENNReal.toReal_ofReal hA, smul_eq_mul,
-          integral_entropyIntegrand_mean μ hf hfl]
+          integral_entropy_integrand_mean μ hf hfl]
 
 /-- A logarithmic Sobolev inequality transfers between probability measures whose densities
 are bounded above and below. The constant is multiplied by the ratio of the bounds. -/
-theorem logSobolevInequality_of_measure_le_smul {E : Type*}
+theorem log_sobolev_inequality_of_measure_le_smul {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E]
     (μ ν : Measure E) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
     {A B C : ℝ} (hA : 0 ≤ A) (hB : 0 ≤ B) (hC : 0 ≤ C)
@@ -147,7 +148,7 @@ theorem logSobolevInequality_of_measure_le_smul {E : Type*}
     _ = _ := by ring
 
 /-- A lower bound on a change of potential bounds the ratio of the corresponding Gibbs laws. -/
-theorem gibbsMeasure_le_smul_of_sub_le {d : ℕ}
+theorem gibbs_measure_le_smul_of_sub_le {d : ℕ}
     {V W : EuclideanSpace ℝ (Fin d) → ℝ}
     (hV : Integrable (fun x ↦ Real.exp (-V x)))
     (hW : Integrable (fun x ↦ Real.exp (-W x)))
@@ -176,7 +177,7 @@ theorem gibbsMeasure_le_smul_of_sub_le {d : ℕ}
 
 /-- Holley–Stroock bounded perturbation: adding a bounded measurable potential multiplies a
 logarithmic Sobolev constant by at most the exponential of the potential's oscillation. -/
-theorem logSobolevInequality_gibbsMeasure_add {d : ℕ}
+theorem log_sobolev_inequality_gibbs_measure_add {d : ℕ}
     {V ψ : EuclideanSpace ℝ (Fin d) → ℝ}
     (hV : Integrable (fun x ↦ Real.exp (-V x))) (hVm : Measurable V)
     (hψ : Measurable ψ) {a b C : ℝ} (hab : ∀ x, ψ x ∈ Icc a b)
@@ -189,14 +190,14 @@ theorem logSobolevInequality_gibbsMeasure_add {d : ℕ}
     exact Real.exp_le_exp.2 (by linarith [(hab x).1])
   have hZV : 0 < ∫ x, Real.exp (-V x) := integral_exp_pos hV
   have hZW : 0 < ∫ x, Real.exp (-(V + ψ) x) := integral_exp_pos hW
-  have := isProbabilityMeasure_gibbsMeasure hV
-  have := isProbabilityMeasure_gibbsMeasure hW
-  have hν := gibbsMeasure_le_smul_of_sub_le hV hW (a := a)
+  have := is_probability_measure_gibbs_measure hV
+  have := is_probability_measure_gibbs_measure hW
+  have hν := gibbs_measure_le_smul_of_sub_le hV hW (a := a)
     (fun x ↦ by simpa using (hab x).1)
-  have hμ := gibbsMeasure_le_smul_of_sub_le hW hV (a := -b)
+  have hμ := gibbs_measure_le_smul_of_sub_le hW hV (a := -b)
     (fun x ↦ by dsimp only [Pi.add_apply]; linarith [(hab x).2])
   simp only [neg_neg] at hμ
-  have h := logSobolevInequality_of_measure_le_smul (gibbsMeasure V) (gibbsMeasure (V + ψ))
+  have h := log_sobolev_inequality_of_measure_le_smul (gibbsMeasure V) (gibbsMeasure (V + ψ))
     (A := Real.exp (-a) * (∫ x, Real.exp (-V x)) / (∫ x, Real.exp (-(V + ψ) x)))
     (B := Real.exp b * (∫ x, Real.exp (-(V + ψ) x)) / (∫ x, Real.exp (-V x)))
     (by positivity) (by positivity) hC hν hμ hLS

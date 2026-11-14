@@ -7,6 +7,7 @@ public import Statlib.Divergence.KullbackLeibler.Event
 public import Statlib.ForMathlib.InformationTheory.KullbackLeibler.Bernoulli
 public import Mathlib.InformationTheory.Hamming
 
+
 /-!
 # Testing lower bounds for minimax risk
 
@@ -16,16 +17,16 @@ statistical normalization `sup_A |P(A) - Q(A)|` (`CKSD.totalVariationDistance`).
 
 ## Main results
 
-* `CKSD.one_sub_totalVariationDistance_div_two_le_max_measureReal` (Le Cam's two-point
+* `CKSD.one_sub_total_variation_distance_div_two_le_max_measure_real` (Le Cam's two-point
   method): for `2s`-separated parameters, `max_i P_i(dist(T, θ_i) ≥ s) ≥ (1 - TV(P₀, P₁)) / 2`.
-* `CKSD.measureReal_mul_neg_log_sub_log_two_le_klDiv`: the binary data-processing bound
+* `CKSD.measure_real_mul_neg_log_sub_log_two_le_kl_div`: the binary data-processing bound
   `P(A) log(1 / Q(A)) - log 2 ≤ KL(P, Q)`, from Statlib's event chain rule and the Bernoulli
   Kullback–Leibler formula.
-* `CKSD.one_sub_div_log_le_sSup_measureReal` (Fano's method): for `M ≥ 2` parameters that are
+* `CKSD.one_sub_div_log_le_s_sup_measure_real` (Fano's method): for `M ≥ 2` parameters that are
   `2s`-separated, `max_j P_j(dist(T, θ_j) ≥ s) ≥ 1 - (M⁻¹ ∑_j KL(P_j, Q) + log 2) / log M`.
 * `CKSD.exists_hamming_packing` (Varshamov–Gilbert): for `m ≥ 8` there is a code in `{0,1}^m`
   containing `0`, of more than `2^(m/8)` words, with pairwise Hamming distance at least `m / 8`.
-* `CKSD.mul_one_sub_div_two_le_sSup_integral_hammingDist` (Assouad's lemma, total variation
+* `CKSD.mul_one_sub_div_two_le_s_sup_integral_hamming_dist` (Assouad's lemma, total variation
   form): if neighbouring vertices of the cube have laws at total variation at most `α`, every
   estimator has worst-case expected Hamming loss at least `m (1 - α) / 2`.
 
@@ -47,7 +48,7 @@ attribute [local instance] Classical.propDecidable
 /-- GAPS 103.39: Le Cam's two-point lower bound. If `dist θ₀ θ₁ ≥ 2 s`, every measurable
 estimator `T` satisfies `max_i P_i(dist(T, θ_i) ≥ s) ≥ (1 - TV(P₀, P₁)) / 2`, with total
 variation in the statistical normalization. -/
-theorem one_sub_totalVariationDistance_div_two_le_max_measureReal {X Θ : Type*}
+theorem one_sub_total_variation_distance_div_two_le_max_measure_real {X Θ : Type*}
     [MeasurableSpace X] [MetricSpace Θ] [MeasurableSpace Θ] [BorelSpace Θ]
     (P₀ P₁ : Measure X) [IsProbabilityMeasure P₀] [IsProbabilityMeasure P₁]
     (θ₀ θ₁ : Θ) (s : ℝ) (hsep : 2 * s ≤ dist θ₀ θ₁)
@@ -68,7 +69,7 @@ theorem one_sub_totalVariationDistance_div_two_le_max_measureReal {X Θ : Type*}
     change dist (T x) θ₀ < s at hx
     change s ≤ dist (T x) θ₁
     linarith
-  have htv := abs_measureReal_sub_le_totalVariationDistance P₀ P₁ B hB
+  have htv := abs_measure_real_sub_le_total_variation_distance P₀ P₁ B hB
   have hmass := measureReal_add_measureReal_compl (μ := P₀) hB
   rw [probReal_univ, hBc] at hmass
   have hother := measureReal_mono (μ := P₁) hsubset
@@ -82,7 +83,7 @@ theorem one_sub_totalVariationDistance_div_two_le_max_measureReal {X Θ : Type*}
 /-- Binary data processing for one event: if `KL(P, Q)` is finite, then
 `P(A) log (1 / Q(A)) - log 2 ≤ KL(P, Q)`. Uses Statlib's chain rule for an event and the
 binary Kullback-Leibler formula. -/
-theorem measureReal_mul_neg_log_sub_log_two_le_klDiv {X : Type*} [MeasurableSpace X]
+theorem measure_real_mul_neg_log_sub_log_two_le_kl_div {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (hKL : InformationTheory.klDiv P Q ≠ ∞) (A : Set X) (hA : MeasurableSet A) :
     P.real A * (-Real.log (Q.real A)) - Real.log 2 ≤ (InformationTheory.klDiv P Q).toReal := by
@@ -125,7 +126,7 @@ theorem measureReal_mul_neg_log_sub_log_two_le_klDiv {X : Type*} [MeasurableSpac
 distances at least `2 s` and laws `P_j` of finite Kullback–Leibler divergence from a reference
 probability `Q`, every measurable estimator satisfies
 `max_j P_j(dist(T, θ_j) ≥ s) ≥ 1 - (M⁻¹ ∑_j KL(P_j, Q) + log 2) / log M`. -/
-theorem one_sub_div_log_le_sSup_measureReal {X Θ : Type*} [MeasurableSpace X] [MetricSpace Θ]
+theorem one_sub_div_log_le_s_sup_measure_real {X Θ : Type*} [MeasurableSpace X] [MetricSpace Θ]
     [MeasurableSpace Θ] [BorelSpace Θ] (M : ℕ) (hM : 2 ≤ M)
     (θ : Fin M → Θ) (P : Fin M → Measure X) [∀ j, IsProbabilityMeasure (P j)]
     (Q : Measure X) [IsProbabilityMeasure Q] (hKL : ∀ j, InformationTheory.klDiv (P j) Q ≠ ∞)
@@ -198,7 +199,7 @@ theorem one_sub_div_log_le_sSup_measureReal {X Θ : Type*} [MeasurableSpace X] [
     have hevent : ∀ j, c * (-Real.log (Q.real (A j))) - Real.log 2 ≤
         (InformationTheory.klDiv (P j) Q).toReal := by
       intro j
-      have := measureReal_mul_neg_log_sub_log_two_le_klDiv (P j) Q (hKL j) (A j) (hA j)
+      have := measure_real_mul_neg_log_sub_log_two_le_kl_div (P j) Q (hKL j) (A j) (hA j)
       have := mul_le_mul_of_nonneg_right (hsucc j) (hneglog j)
       linarith
     have hsum := Finset.sum_le_sum fun j (_ : j ∈ Finset.univ) ↦ hevent j
@@ -210,7 +211,7 @@ theorem one_sub_div_log_le_sSup_measureReal {X Θ : Type*} [MeasurableSpace X] [
 
 /-- Exponential moment of the Hamming distance to a fixed binary word:
 `∑_y x ^ d(c, y) = (1 + x) ^ m`. -/
-theorem sum_pow_hammingDist_eq {m : ℕ} (c : Fin m → Bool) (x : ℝ) :
+theorem sum_pow_hamming_dist_eq {m : ℕ} (c : Fin m → Bool) (x : ℝ) :
     ∑ y : Fin m → Bool, x ^ hammingDist c y = (1 + x) ^ m := by
   classical
   simp only [hammingDist]
@@ -305,7 +306,7 @@ theorem exists_hamming_packing (m : ℕ) (hm : 8 ≤ m) :
       · positivity
     have hsum := Finset.sum_le_sum fun y (_ : y ∈ Finset.univ) ↦ hpt y
     rw [← Finset.sum_filter, Finset.sum_const, nsmul_eq_mul, mul_one, ← Finset.mul_sum] at hsum
-    have hexp := sum_pow_hammingDist_eq c (1 / 4 : ℝ)
+    have hexp := sum_pow_hamming_dist_eq c (1 / 4 : ℝ)
     simp only [hammingDist] at hexp
     simp only [hh] at hsum
     rw [hexp] at hsum
@@ -351,7 +352,7 @@ theorem exists_hamming_packing (m : ℕ) (hm : 8 ≤ m) :
 cube `{0,1}^m` satisfy `TV(P_w, P_w') ≤ α` whenever `w` and `w'` differ in one coordinate, then
 every measurable estimator `T` with values in the cube has worst-case expected Hamming loss
 `max_w E_w d(T, w) ≥ m (1 - α) / 2`. -/
-theorem mul_one_sub_div_two_le_sSup_integral_hammingDist {X : Type*} [MeasurableSpace X] (m : ℕ)
+theorem mul_one_sub_div_two_le_s_sup_integral_hamming_dist {X : Type*} [MeasurableSpace X] (m : ℕ)
     (P : (Fin m → Bool) → Measure X) [∀ w, IsProbabilityMeasure (P w)]
     (α : ℝ)
     (hnear : ∀ w w', hammingDist w w' = 1 → totalVariationDistance (P w) (P w') ≤ α)
@@ -403,7 +404,7 @@ theorem mul_one_sub_div_two_le_sSup_integral_hammingDist {X : Type*} [Measurable
       simp only [hflip_j, mem_ofPred_eq, mem_compl_iff]
       cases T x j <;> cases w j <;> simp
     rw [hset, probReal_compl_eq_one_sub (hmeas j (w j))]
-    have htv := abs_measureReal_sub_le_totalVariationDistance (P w) (P (flip j w))
+    have htv := abs_measure_real_sub_le_total_variation_distance (P w) (P (flip j w))
       {x | T x j ≠ w j} (hmeas j (w j))
     have := hnear w (flip j w) (hflip_card j w)
     have := neg_abs_le ((P w).real {x | T x j ≠ w j} - (P (flip j w)).real {x | T x j ≠ w j})
