@@ -6,7 +6,6 @@ import Mathlib.Probability.Kernel.Composition.WithDensity
 public import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
 public import Mathlib.MeasureTheory.Measure.FiniteMeasure
 import Mathlib.MeasureTheory.Integral.DominatedConvergence
-
 /-!
 # Weighted coupling limits for comparison of experiments
 
@@ -25,7 +24,7 @@ namespace CKSD
 
 /-- Weighting the first coordinate of a mapped composition product commutes with
 mixing the correspondingly weighted input law. -/
-theorem snd_with_density_map_comp_prod
+theorem snd_withDensity_map_compProd
     {X A C D : Type*} [MeasurableSpace X] [MeasurableSpace A]
     [MeasurableSpace C] [MeasurableSpace D]
     (μ : Measure X) [SFinite μ] (K : Kernel X A) [IsSFiniteKernel K]
@@ -38,7 +37,7 @@ theorem snd_with_density_map_comp_prod
   have hF : Measurable F := (hu.comp measurable_fst).prodMk (hv.comp measurable_snd)
   -- Expose the marginal map and local coordinate map for the composition identities.
   change (((μ ⊗ₘ K).map F).withDensity (w ∘ Prod.fst)).map Prod.snd = _
-  rw [← map_with_density_comp (μ ⊗ₘ K) hF (hw.comp measurable_fst)]
+  rw [← map_withDensity_comp (μ ⊗ₘ K) hF (hw.comp measurable_fst)]
   have he : (w ∘ Prod.fst) ∘ F = fun p : X × A ↦ (w ∘ u) p.1 := rfl
   rw [he, ← Measure.withDensity_compProd (hw.comp hu), Measure.map_map measurable_snd hF]
   have hs : Prod.snd ∘ F = v ∘ Prod.snd := rfl
@@ -49,7 +48,7 @@ theorem snd_with_density_map_comp_prod
 
 /-- Mapping both coordinates of a Markov composition product preserves the pushed-forward
 first marginal. -/
-theorem fst_map_comp_prod
+theorem fst_map_compProd
     {X A C D : Type*} [MeasurableSpace X] [MeasurableSpace A]
     [MeasurableSpace C] [MeasurableSpace D]
     (μ : Measure X) [SFinite μ] (K : Kernel X A) [IsMarkovKernel K]
@@ -67,7 +66,7 @@ theorem fst_map_comp_prod
   rw [Measure.fst_compProd]
 
 /-- Bounded continuous weighting and taking the second marginal preserve finite weak limits. -/
-theorem snd_with_density_eq_of_finite_measure_tendsto
+theorem snd_withDensity_eq_of_finiteMeasure_tendsto
     {C D : Type*} [MetricSpace C] [MetricSpace D]
     [MeasurableSpace C] [MeasurableSpace D] [BorelSpace C] [BorelSpace D]
     [SecondCountableTopology C] [SecondCountableTopology D]
@@ -107,7 +106,7 @@ theorem snd_with_density_eq_of_finite_measure_tendsto
 
 /-- Pointwise convergent measurable quantizations give weak convergence of every finite
 push-forward law. -/
-theorem finite_measure_tendsto_map_of_pointwise
+theorem finiteMeasure_tendsto_map_of_pointwise
     {C D : Type*} [MetricSpace C] [MetricSpace D]
     [MeasurableSpace C] [MeasurableSpace D] [BorelSpace C] [BorelSpace D]
     (μ : FiniteMeasure C) (f : ℕ → C → D) (hf : ∀ n, Measurable (f n))

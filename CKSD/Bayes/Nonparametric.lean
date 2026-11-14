@@ -9,7 +9,6 @@ public import Mathlib.MeasureTheory.Constructions.Polish.EmbeddingReal
 public import TauCeti.MeasureTheory.Measure.ProductKernel
 public import TauCeti.Probability.StrongLaw
 
-
 /-!
 # Random probability measures and posterior consistency
 
@@ -33,7 +32,7 @@ Posterior kernels are specified by disintegration, so statements apply to any ch
 
 ## Main results
 
-* `CKSD.ae_is_posterior_consistent_of_identifiable`: Doob's consistency theorem (GAPS 104.17).
+* `CKSD.ae_isPosteriorConsistent_of_identifiable`: Doob's consistency theorem (GAPS 104.17).
 
 Doob's theorem is proved on the joint law of parameter and sample. Identifiability makes the
 parameter a measurable function of the sample almost surely: the empirical distribution function
@@ -54,7 +53,9 @@ namespace CKSD
 
 /-- Finite-dimensional partition characterization of a Dirichlet process.
 `A` partitions a set of full base mass; this includes partitions with null cells after deleting
-them. -/
+them. The base measure `α` is meant to be finite, and every result about Dirichlet processes
+assumes `IsFiniteMeasure α`; for an infinite `α` a cell of infinite mass would enter the
+partition clause through the value `α.real (A i) = 0`. -/
 def IsDirichletProcess {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
     (μ : Measure Ω) (P : Ω → ProbabilityMeasure X) (α : Measure X) : Prop :=
   (∀ A, MeasurableSet A → Measurable (fun ω ↦ (P ω : Measure X) A)) ∧
@@ -89,11 +90,13 @@ def IsPosteriorKernel {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
   IsMarkovKernel post ∧
     (π ⊗ₘ P).map Prod.swap = (P ∘ₘ π) ⊗ₘ post
 
-/-- Posterior consistency at a parameter, with data given as an infinite sequence. -/
+/-- Posterior consistency at a parameter, with data given as an infinite sequence: for
+`law`-almost every data sequence, the posterior probability of every neighbourhood of `θ` tends
+to one. The exceptional null set does not depend on the neighbourhood. -/
 def IsPosteriorConsistent {Θ X : Type*} [TopologicalSpace Θ]
     [MeasurableSpace Θ] [MeasurableSpace X]
     (law : Measure (ℕ → X)) (post : ∀ n, Kernel (Fin n → X) Θ) (θ : Θ) : Prop :=
-  ∀ U ∈ 𝓝 θ, ∀ᵐ x ∂law, Tendsto (fun n ↦ (post n (fun i ↦ x i.val)).real U) atTop (𝓝 1)
+  ∀ᵐ x ∂law, ∀ U ∈ 𝓝 θ, Tendsto (fun n ↦ (post n (fun i ↦ x i.val)).real U) atTop (𝓝 1)
 
 /-- The i.i.d. sampling kernel `θ ↦ (P θ)^{⊗ℕ}`. -/
 private def iidKernel {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
@@ -118,7 +121,7 @@ private def cdfCoord {X : Type*} [MeasurableSpace X] (e : X → ℝ) (ν : Measu
 
 /-- For a Borel embedding `e` into `ℝ`, a probability measure is determined by its rational
 distribution-function values. -/
-private theorem eq_of_cdf_coord_eq {X : Type*} [MeasurableSpace X] {e : X → ℝ}
+private theorem eq_of_cdfCoord_eq {X : Type*} [MeasurableSpace X] {e : X → ℝ}
     (he : MeasurableEmbedding e) {ν ν' : Measure X} [IsProbabilityMeasure ν]
     [IsProbabilityMeasure ν'] (h : cdfCoord e ν = cdfCoord e ν') : ν = ν' := by
   have hmap : ν.map e = ν'.map e := by
@@ -143,7 +146,7 @@ private def empiricalCdfCoord {X : Type*} [MeasurableSpace X] (e : X → ℝ) (x
     (e ⁻¹' Iic (q : ℝ)).indicator (fun _ ↦ (1 : ℝ)) (x i)) atTop
 
 /-- The empirical distribution-function coordinates are measurable in the sample. -/
-private theorem measurable_empirical_cdf_coord {X : Type*} [MeasurableSpace X] {e : X → ℝ}
+private theorem measurable_empiricalCdfCoord {X : Type*} [MeasurableSpace X] {e : X → ℝ}
     (he : Measurable e) : Measurable (empiricalCdfCoord e) := by
   refine measurable_pi_iff.mpr fun q ↦ ?_
   refine Measurable.limsup fun n ↦ ?_
@@ -155,7 +158,7 @@ private theorem measurable_empirical_cdf_coord {X : Type*} [MeasurableSpace X] {
 
 /-- By the strong law of large numbers, the empirical distribution-function coordinates of an
 i.i.d. sample recover those of the sampling law almost surely. -/
-private theorem ae_empirical_cdf_coord_eq {X : Type*} [MeasurableSpace X] {e : X → ℝ}
+private theorem ae_empiricalCdfCoord_eq {X : Type*} [MeasurableSpace X] {e : X → ℝ}
     (he : Measurable e) (ν : Measure X) [IsProbabilityMeasure ν] :
     ∀ᵐ x ∂Measure.infinitePi (fun _ : ℕ ↦ ν), empiricalCdfCoord e x = cdfCoord e ν := by
   have h : ∀ q : ℚ, ∀ᵐ x ∂Measure.infinitePi (fun _ : ℕ ↦ ν),
@@ -181,13 +184,13 @@ private theorem exists_measurable_ae_eq_param {Θ X : Type*} [MeasurableSpace Θ
   have hΦm : Measurable Φ := measurable_pi_iff.mpr fun q ↦ by
     simp only [hΦ, cdfCoord, measureReal_def]
     exact (P.measurable_coe (he.measurable measurableSet_Iic)).ennreal_toReal
-  have hΦi : Injective Φ := fun θ θ' h ↦ hinj (eq_of_cdf_coord_eq he h)
+  have hΦi : Injective Φ := fun θ θ' h ↦ hinj (eq_of_cdfCoord_eq he h)
   have hemb := hΦm.measurableEmbedding hΦi
   refine ⟨extend Φ id (fun _ ↦ Classical.arbitrary Θ) ∘ empiricalCdfCoord e,
     (hemb.measurable_extend measurable_id measurable_const).comp
-      (measurable_empirical_cdf_coord he.measurable), fun θ ↦ ?_⟩
+      (measurable_empiricalCdfCoord he.measurable), fun θ ↦ ?_⟩
   change ∀ᵐ x ∂Measure.infinitePi (fun _ : ℕ ↦ P θ), _
-  filter_upwards [ae_empirical_cdf_coord_eq he.measurable (P θ)] with x hx
+  filter_upwards [ae_empiricalCdfCoord_eq he.measurable (P θ)] with x hx
   simp only [comp_apply, hx]
   exact hΦi.extend_apply id _ θ
 
@@ -196,13 +199,13 @@ private theorem exists_measurable_ae_eq_param {Θ X : Type*} [MeasurableSpace Θ
 private def samplePrefix {Θ X : Type*} (n : ℕ) (z : Θ × (ℕ → X)) : Fin n → X := fun i ↦ z.2 i
 
 /-- The first `n` observations depend measurably on the pair. -/
-private theorem measurable_sample_prefix {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
+private theorem measurable_samplePrefix {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
     (n : ℕ) : Measurable (samplePrefix (Θ := Θ) (X := X) n) :=
   Measurable.of_eval fun i ↦ (measurable_pi_apply (i : ℕ)).comp measurable_snd
 
 /-- The joint law of the first `n` observations and the parameter is the reversed joint law of the
 Bayesian model with `n` observations. -/
-private theorem map_sample_prefix_fst {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
+private theorem map_samplePrefix_fst {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
     (π : Measure Θ) [IsProbabilityMeasure π] (P : Kernel Θ X) [IsMarkovKernel P] (n : ℕ)
     (Q : Kernel Θ (Fin n → X)) (hQ : ∀ θ, Q θ = Measure.pi (fun _ : Fin n ↦ P θ)) :
     (π ⊗ₘ iidKernel P).map (fun z ↦ (samplePrefix n z, z.1)) = (π ⊗ₘ Q).map Prod.swap := by
@@ -217,7 +220,7 @@ private theorem map_sample_prefix_fst {Θ X : Type*} [MeasurableSpace Θ] [Measu
 
 /-- The posterior probability of a measurable set is a version of the conditional probability of
 the parameter lying in it given the first `n` observations. -/
-private theorem cond_exp_indicator_ae_eq_posterior {Θ X : Type*} [MeasurableSpace Θ]
+private theorem condExp_indicator_ae_eq_posterior {Θ X : Type*} [MeasurableSpace Θ]
     [MeasurableSpace X] [StandardBorelSpace Θ] [Nonempty Θ]
     (π : Measure Θ) [IsProbabilityMeasure π] (P : Kernel Θ X) [IsMarkovKernel P] (n : ℕ)
     (Q : Kernel Θ (Fin n → X)) (hQ : ∀ θ, Q θ = Measure.pi (fun _ : Fin n ↦ P θ))
@@ -229,10 +232,10 @@ private theorem cond_exp_indicator_ae_eq_posterior {Θ X : Type*} [MeasurableSpa
   obtain ⟨hmk, hdis⟩ := hpost
   have : IsMarkovKernel Q := ⟨fun θ ↦ by rw [hQ]; infer_instance⟩
   set J := π ⊗ₘ iidKernel P with hJ
-  have hX := measurable_sample_prefix (Θ := Θ) (X := X) n
+  have hX := measurable_samplePrefix (Θ := Θ) (X := X) n
   have hjoint : J.map (fun z ↦ (samplePrefix n z, z.1)) = J.map (samplePrefix n) ⊗ₘ post := by
     have h1 : J.map (fun z ↦ (samplePrefix n z, z.1)) = (Q ∘ₘ π) ⊗ₘ post := by
-      rw [hJ, map_sample_prefix_fst π P n Q hQ, hdis]
+      rw [hJ, map_samplePrefix_fst π P n Q hQ, hdis]
     have h2 : J.map (samplePrefix n) = Q ∘ₘ π := by
       rw [← Measure.fst_map_prodMk (Y := Prod.fst) hX, h1, Measure.fst_compProd]
       exact measurable_fst
@@ -262,10 +265,10 @@ private def sampleFiltration (Θ X : Type*) [MeasurableSpace Θ] [MeasurableSpac
       MeasurableSpace.comap (samplePrefix n) inferInstance
     rw [this, ← MeasurableSpace.comap_comp]
     exact MeasurableSpace.comap_mono hr.comap_le
-  le' n := (measurable_sample_prefix n).comap_le
+  le' n := (measurable_samplePrefix n).comap_le
 
 /-- The whole sample is measurable for the limit of the observation filtration. -/
-private theorem measurable_snd_i_sup_sample_filtration {Θ X : Type*} [MeasurableSpace Θ]
+private theorem measurable_snd_iSup_sampleFiltration {Θ X : Type*} [MeasurableSpace Θ]
     [MeasurableSpace X] :
     Measurable[⨆ n, sampleFiltration Θ X n] fun z : Θ × (ℕ → X) ↦ z.2 := by
   refine (@measurable_pi_iff _ _ _ (⨆ n, sampleFiltration Θ X n) _).mpr fun i ↦ ?_
@@ -293,7 +296,7 @@ private theorem ae_tendsto_posterior_indicator {Θ X : Type*} [MeasurableSpace �
   set g : Θ × (ℕ → X) → ℝ := fun z ↦ B.indicator (fun _ ↦ (1 : ℝ)) (G z.2) with hg
   have hgm' : Measurable (B.indicator fun _ : Θ ↦ (1 : ℝ)) := measurable_const.indicator hBm
   have hgm : StronglyMeasurable[⨆ n, sampleFiltration Θ X n] g :=
-    ((hgm'.comp hGm).comp measurable_snd_i_sup_sample_filtration).stronglyMeasurable
+    ((hgm'.comp hGm).comp measurable_snd_iSup_sampleFiltration).stronglyMeasurable
   have hgint : Integrable g J := by
     refine (integrable_const (1 : ℝ)).mono'
       ((hgm'.comp hGm).comp measurable_snd).aestronglyMeasurable (ae_of_all _ fun z ↦ ?_)
@@ -305,7 +308,7 @@ private theorem ae_tendsto_posterior_indicator {Θ X : Type*} [MeasurableSpace �
   have hn : ∀ n, J[g | sampleFiltration Θ X n] =ᵐ[J]
       fun z ↦ (post n (samplePrefix n z)).real B := fun n ↦
     (condExp_congr_ae hge).trans
-      (cond_exp_indicator_ae_eq_posterior π P n (Q n) (hQ n) (post n) (hpost n) hBm)
+      (condExp_indicator_ae_eq_posterior π P n (Q n) (hQ n) (post n) (hpost n) hBm)
   filter_upwards [hlevy, ae_all_iff.mpr hn, hge] with z h1 h2 h3
   have e : (fun n ↦ J[g | sampleFiltration Θ X n] z) =
       fun n ↦ (post n (samplePrefix n z)).real B := funext h2
@@ -315,7 +318,7 @@ private theorem ae_tendsto_posterior_indicator {Θ X : Type*} [MeasurableSpace �
 /-- GAPS 104.17: Doob's consistency theorem. For an identifiable model (`P` injective) on standard
 Borel spaces, any versions of the posteriors given the first `n` i.i.d. observations are
 consistent at `π`-almost every parameter. -/
-theorem ae_is_posterior_consistent_of_identifiable
+theorem ae_isPosteriorConsistent_of_identifiable
     {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
     [TopologicalSpace Θ] [PolishSpace Θ] [BorelSpace Θ]
     [StandardBorelSpace X] [Nonempty Θ]
@@ -338,10 +341,10 @@ theorem ae_is_posterior_consistent_of_identifiable
     (ae_ball_iff (TopologicalSpace.countable_countableBasis Θ)).mpr fun B hB ↦
       ae_tendsto_posterior_indicator π P Q hQ post hpost hGm hGJ
         (hbasis.isOpen hB).measurableSet
-  filter_upwards [Measure.ae_ae_of_ae_compProd hall] with θ hθ U hU
-  obtain ⟨B, hB𝓑, hθB, hBU⟩ := hbasis.mem_nhds_iff.mp hU
+  filter_upwards [Measure.ae_ae_of_ae_compProd hall] with θ hθ
   change ∀ᵐ x ∂Measure.infinitePi (fun _ : ℕ ↦ P θ), _ at hθ
-  filter_upwards [hθ] with x hx
+  filter_upwards [hθ] with x hx U hU
+  obtain ⟨B, hB𝓑, hθB, hBU⟩ := hbasis.mem_nhds_iff.mp hU
   have h1 := hx B hB𝓑
   rw [Set.indicator_of_mem hθB] at h1
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le h1 tendsto_const_nhds (fun n ↦ ?_) fun n ↦ ?_
@@ -365,12 +368,12 @@ def HasPosteriorContractionRate {Ω Θ : Type*} [MeasurableSpace Ω] [Measurable
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ (post n ω).real {θ | M * ε n ≤ ρ θ}) atTop (fun _ ↦ 0)
 
 /-- The initial empty sample leaves the Dirichlet base measure unchanged. -/
-@[simp] theorem dirichlet_posterior_base_empty {X : Type*} [MeasurableSpace X]
+@[simp] theorem dirichletPosteriorBase_empty {X : Type*} [MeasurableSpace X]
     (α : Measure X) (x : Fin 0 → X) : dirichletPosteriorBase α x = α := by
   simp [dirichletPosteriorBase]
 
 /-- Zeroth stick-breaking weight. -/
-@[simp] theorem stick_breaking_weight_zero (V : ℕ → ℝ) : stickBreakingWeight V 0 = V 0 := by
+@[simp] theorem stickBreakingWeight_zero (V : ℕ → ℝ) : stickBreakingWeight V 0 = V 0 := by
   simp [stickBreakingWeight]
 
 end CKSD

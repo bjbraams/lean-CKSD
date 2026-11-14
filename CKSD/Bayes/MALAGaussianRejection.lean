@@ -1,5 +1,4 @@
 module
-
 public import CKSD.Bayes.Diffusion
 public import TauCeti.Analysis.Calculus.Gradient
 public import Mathlib.Analysis.InnerProductSpace.PiL2
@@ -24,36 +23,41 @@ noncomputable section
 open MeasureTheory ProbabilityTheory Real Set
 open scoped NNReal ENNReal Topology RealInnerProductSpace
 namespace CKSD
-variable {d : ℕ}
-local notation "E" => EuclideanSpace ℝ (Fin d)
+section General
+variable {F : Type*} [NormedAddCommGroup F]
 /-- The centered isotropic Gaussian potential with precision `a`. -/
-@[expose] def gaussianPrecisionPotential (a : ℝ) (x : E) : ℝ := a / 2 * ‖x‖ ^ 2
+@[expose] def gaussianPrecisionPotential (a : ℝ) (x : F) : ℝ := a / 2 * ‖x‖ ^ 2
 /-- The potential as an explicit quadratic function. -/
-theorem gaussian_precision_potential_def (a : ℝ) :
-    gaussianPrecisionPotential (d := d) a = fun x ↦ a / 2 * ‖x‖ ^ 2 := rfl
+theorem gaussianPrecisionPotential_def (a : ℝ) :
+    gaussianPrecisionPotential (F := F) a = fun x ↦ a / 2 * ‖x‖ ^ 2 := rfl
 
 /-- Evaluation of the quadratic Gaussian potential. -/
-@[simp] theorem gaussian_precision_potential_apply (a : ℝ) (x : E) :
+@[simp] theorem gaussianPrecisionPotential_apply (a : ℝ) (x : F) :
     gaussianPrecisionPotential a x = a / 2 * ‖x‖ ^ 2 := rfl
 
+variable [InnerProductSpace ℝ F]
+
 /-- The gradient of the Gaussian potential with precision `a`. -/
-@[expose] def gaussianPrecisionGradient (a : ℝ) (x : E) : E := a • x
+@[expose] def gaussianPrecisionGradient (a : ℝ) (x : F) : F := a • x
 /-- The gradient as an explicit scalar linear map. -/
-theorem gaussian_precision_gradient_def (a : ℝ) :
-    gaussianPrecisionGradient (d := d) a = fun x ↦ a • x := rfl
+theorem gaussianPrecisionGradient_def (a : ℝ) :
+    gaussianPrecisionGradient (F := F) a = fun x ↦ a • x := rfl
 
 /-- Evaluation of the linear Gaussian gradient. -/
-@[simp] theorem gaussian_precision_gradient_apply (a : ℝ) (x : E) :
+@[simp] theorem gaussianPrecisionGradient_apply (a : ℝ) (x : F) :
     gaussianPrecisionGradient a x = a • x := rfl
 
 /-- The gradient identity for the isotropic Gaussian potential. -/
-theorem has_gradient_at_gaussian_precision_potential (a : ℝ) (x : E) :
+theorem hasGradientAt_gaussianPrecisionPotential [CompleteSpace F] (a : ℝ) (x : F) :
     HasGradientAt (gaussianPrecisionPotential a) (gaussianPrecisionGradient a x) x := by
-  rw [gaussian_precision_potential_def, gaussian_precision_gradient_apply]
+  rw [gaussianPrecisionPotential_def, gaussianPrecisionGradient_apply]
   simpa only [add_zero] using
     TauCeti.hasGradientAt_mul_norm_sq_add a 0 x
+end General
+variable {d : ℕ}
+local notation "E" => EuclideanSpace ℝ (Fin d)
 /-- The MALA log-acceptance ratio for an isotropic Gaussian is a difference of squared norms. -/
-theorem mala_acceptance_gaussian_precision (a : ℝ) {h : ℝ} (hh : 0 < h) (x y : E) :
+theorem malaAcceptance_gaussianPrecision (a : ℝ) {h : ℝ} (hh : 0 < h) (x y : E) :
     malaAcceptance (gaussianPrecisionPotential a) (gaussianPrecisionGradient a) h x y =
       min 1 (Real.exp ((h * a ^ 2 / 4) * (‖x‖ ^ 2 - ‖y‖ ^ 2))) := by
   unfold malaAcceptance gaussianPrecisionPotential gaussianPrecisionGradient
@@ -90,12 +94,12 @@ theorem norm_gaussian_proposal_ge {H a : ℝ} (hH : 4 ≤ H) (ha : 0 ≤ a) (x z
   nlinarith [mul_le_mul_of_nonneg_left hx hH0]
 /-- Uniformly away from zero, large Gaussian MALA steps have exponentially small acceptance
 on the typical proposal-noise event. -/
-theorem mala_acceptance_gaussian_one_le_exp {H a : ℝ} (hH : 4 ≤ H) (ha : 0 ≤ a) (x z : E)
+theorem malaAcceptance_gaussian_one_le_exp {H a : ℝ} (hH : 4 ≤ H) (ha : 0 ≤ a) (x z : E)
     (hx : a ≤ ‖x‖) (hz : ‖z‖ ≤ a * Real.sqrt H / 8) :
     malaAcceptance (gaussianPrecisionPotential 1) (gaussianPrecisionGradient 1) H x
       ((1 - H) • x + Real.sqrt (2 * H) • z) ≤ Real.exp ( - (H ^ 3 * a ^ 2 / 32)) := by
   have hH0 : 0 < H := by linarith
-  rw [mala_acceptance_gaussian_precision 1 hH0]
+  rw [malaAcceptance_gaussianPrecision 1 hH0]
   apply (min_le_right _ _).trans
   apply Real.exp_le_exp.mpr
   have hn := norm_gaussian_proposal_ge hH ha x z hx hz
@@ -114,13 +118,13 @@ theorem mala_acceptance_gaussian_one_le_exp {H a : ℝ} (hH : 4 ≤ H) (ha : 0 �
   have hlast := mul_le_mul_of_nonneg_left hb' hHquarter
   nlinarith
 /-- Rescaling a Gaussian target rescales the effective MALA step by inverse variance. -/
-theorem mala_acceptance_gaussian_rescale {σ h : ℝ} (hσ : 0 < σ) (hh : 0 < h) (x y : E) :
+theorem malaAcceptance_gaussian_rescale {σ h : ℝ} (hσ : 0 < σ) (hh : 0 < h) (x y : E) :
     malaAcceptance (gaussianPrecisionPotential ((σ⁻¹) ^ 2)) (gaussianPrecisionGradient ((σ⁻¹) ^ 2))
       h (σ • x) (σ • y) =
       malaAcceptance (gaussianPrecisionPotential 1) (gaussianPrecisionGradient 1)
         (h / σ ^ 2) x y := by
-  rw [mala_acceptance_gaussian_precision _ hh,
-    mala_acceptance_gaussian_precision 1 (div_pos hh (sq_pos_of_pos hσ))]
+  rw [malaAcceptance_gaussianPrecision _ hh,
+    malaAcceptance_gaussianPrecision 1 (div_pos hh (sq_pos_of_pos hσ))]
   congr 2
   simp only [norm_smul, Real.norm_eq_abs, mul_pow, sq_abs, one_pow, mul_one]
   field_simp

@@ -1,6 +1,0 @@
-module
-import CKSD.LinearModels.GLMAsymptotics.ExponentialDispersion
-open MeasureTheory ProbabilityTheory Filter Set
-open scoped NNReal ENNReal Topology BigOperators MatrixOrder InnerProductSpace RealInnerProductSpace
-namespace CKSD
-variable {p : ℕ}

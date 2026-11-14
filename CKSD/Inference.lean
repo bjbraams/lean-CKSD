@@ -20,16 +20,16 @@ public import CKSD.Inference.ExponentialFamilyMLE
 public import CKSD.Inference.MeanParametrization
 public import CKSD.Inference.ConditionalExponentialFamily
 
-
-namespace CKSD
-
 /-!
 # Section 101: Statistical inference
 
 Entry module for the CKSD formalization of Section 101 (core statistical inference).
 
-* `CKSD.Inference.Basic`, `CKSD.Inference.Model`: models, convergence interfaces, tests, estimators,
-  decision rules, and the classical optimality criteria.
+* `CKSD.Inference.Basic`, `CKSD.Inference.Model`, `CKSD.Inference.Density`: models, convergence
+  interfaces, tests, estimators, decision rules, the classical optimality criteria, and integrals
+  against laws with a real density.
+* `CKSD.Inference.LaplaceDeterminacy`: Laplace determinacy of finite measures, used for
+  completeness in exponential families.
 * `CKSD.Inference.Factorization`, `CKSD.Inference.Sufficiency`, `CKSD.Inference.ExponentialFamily`,
   `CKSD.Inference.ConditionalExponentialFamily`, `CKSD.Inference.LogPartition`: sufficiency,
   completeness, and exponential families (GAPS 101.1–101.6, 101.43, 101.46).
@@ -41,7 +41,11 @@ Entry module for the CKSD formalization of Section 101 (core statistical inferen
 * `CKSD.Inference.Decision`, `CKSD.Inference.Gaussian`, `CKSD.Inference.ExponentialFamilyMLE`,
   `CKSD.Inference.MeanParametrization`: decision theory, comparison of experiments, Gaussian models,
   and maximum likelihood in natural exponential families (GAPS 101.32–101.42, 101.57–101.69).
+* `CKSD.Inference.FiniteDecision`, `CKSD.Inference.ConvexGames`,
+  `CKSD.Inference.KernelDisintegration`, `CKSD.Inference.BlackwellFinite`,
+  `CKSD.Inference.BlackwellApproximation`, `CKSD.Inference.BlackwellCoupling`,
+  `CKSD.Inference.BlackwellJoint`, `CKSD.Inference.BlackwellPosterior`: compact risk sets and
+  saddle points for finite decision problems, common randomization kernels, and the finite,
+  approximation, coupling and posterior steps of Blackwell's comparison of experiments, imported
+  through `CKSD.Inference.Decision`.
 -/
-
-
-end CKSD

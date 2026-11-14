@@ -3,7 +3,6 @@ module
 public import CKSD.Nonparametric.Basic
 public import TauCeti.InformationTheory.KullbackLeibler.Pinsker
 
-
 /-!
 # Endpoint total variation from path relative entropy
 
@@ -12,7 +11,7 @@ path relative entropy is a separate statement. Pinsker's event inequality is imp
 
 ## Main results
 
-* `CKSD.total_variation_distance_map_le_sqrt_kl_div`: the total variation distance between the laws
+* `CKSD.totalVariationDistance_map_le_sqrt_klDiv`: the total variation distance between the laws
   of a measurable map is at most `√(KL / 2)` of the underlying laws.
 -/
 
@@ -26,7 +25,7 @@ open scoped ENNReal
 namespace CKSD
 
 /-- GAPS 104.68: endpoint total variation is at most the square root of half the path entropy. -/
-theorem total_variation_distance_map_le_sqrt_kl_div
+theorem totalVariationDistance_map_le_sqrt_klDiv
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
     (P Q : Measure Ω) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (e : Ω → X) (he : Measurable e) (hfin : klDiv P Q ≠ ∞) :

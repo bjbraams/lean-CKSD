@@ -17,9 +17,6 @@ public import CKSD.Nonparametric.LogConcave
 public import CKSD.Nonparametric.TracyWidom
 public import CKSD.Nonparametric.GraphicalModels
 
-
-namespace CKSD
-
 /-!
 # Section 103: Nonparametric and high-dimensional statistics
 
@@ -35,6 +32,3 @@ with the Gaussian projection tools of `CKSD.Nonparametric.GaussianProjection`,
 `CKSD.Nonparametric.TracyWidom`, `CKSD.Nonparametric.GraphicalModels`), and minimax lower bounds,
 sparse recovery, and covariance thresholding (`CKSD.Nonparametric.LowerBounds`).
 -/
-
-
-end CKSD

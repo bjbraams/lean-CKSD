@@ -9,7 +9,6 @@ public import TauCeti.Probability.Distributions.Gaussian.Transforms
 import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Order
 import Mathlib.Analysis.Matrix.Order
 
-
 /-!
 # Asymptotics of fixed-design convex regression M-estimators
 
@@ -28,13 +27,13 @@ The proof is the argument of Pollard (1991) and Hjort–Pollard: the convex proc
 for each `h` (a Chebyshev bound for the nonnegative remainders, whose variances are controlled
 by the `L²` continuity of `ψ`), the score `Uₙ = n^{-1/2} ∑ ψ(eᵢ) xᵢ` is asymptotically normal by
 the Lindeberg–Feller theorem and the Cramér–Wold device, and the convexity lemma
-`CKSD.tendsto_in_measure_sub_of_convex_on_of_is_min_on` locates the minimizer.
+`CKSD.tendstoInMeasure_sub_of_convexOn_of_isMinOn` locates the minimizer.
 
 ## Main results
 
-* `CKSD.tendsto_in_distribution_inv_sqrt_smul_sum_smul`: the Lindeberg central limit theorem for
+* `CKSD.tendstoInDistribution_inv_sqrt_smul_sum_smul`: the Lindeberg central limit theorem for
   the weighted score `n^{-1/2} ∑ ψ(eᵢ) xᵢ`.
-* `CKSD.tendsto_in_measure_and_tendsto_in_distribution_convex_regression`: linearization and
+* `CKSD.tendstoInMeasure_and_tendstoInDistribution_convexRegression`: linearization and
   asymptotic normality of fixed-design convex M-estimators.
 
 ## References
@@ -59,7 +58,7 @@ section Design
 variable {p : ℕ}
 
 /-- A design row of index `i < n` is bounded by the maximal row norm among the first `n`. -/
-private lemma norm_le_s_sup_range (x : ℕ → EuclideanSpace ℝ (Fin p)) {n i : ℕ} (hi : i < n) :
+private lemma norm_le_sSup_range (x : ℕ → EuclideanSpace ℝ (Fin p)) {n i : ℕ} (hi : i < n) :
     ‖x i‖ ≤ sSup (range fun j : Fin n ↦ ‖x j.val‖) :=
   le_csSup (finite_range _).bddAbove ⟨⟨i, hi⟩, rfl⟩
 
@@ -72,7 +71,7 @@ private lemma eventually_forall_abs_inv_sqrt_mul_inner_lt (x : ℕ → Euclidean
     ∀ᶠ n : ℕ in atTop, ∀ i < n, |(Real.sqrt n)⁻¹ * ⟪x i, h⟫_ℝ| < δ := by
   have hpos : 0 < δ / (‖h‖ + 1) := by positivity
   filter_upwards [hlev.eventually (gt_mem_nhds hpos)] with n hn i hi
-  have hS := norm_le_s_sup_range x hi
+  have hS := norm_le_sSup_range x hi
   set S := sSup (range fun j : Fin n ↦ ‖x j.val‖)
   have hsq : 0 ≤ (Real.sqrt n)⁻¹ := inv_nonneg.2 (Real.sqrt_nonneg _)
   have hcs := abs_real_inner_le_norm (x i) h
@@ -137,15 +136,27 @@ private lemma remainder_nonneg_and_le {ρ ψ : ℝ → ℝ} (hsub : ∀ u v, ρ 
   · nlinarith
   · nlinarith
 
+/-- A function lying above all of its supporting lines `v ↦ ρ u + ψ u * (v - u)` is convex. -/
+theorem convexOn_univ_of_forall_add_mul_sub_le {ρ ψ : ℝ → ℝ}
+    (hsub : ∀ u v, ρ u + ψ u * (v - u) ≤ ρ v) : ConvexOn ℝ univ ρ := by
+  refine ⟨convex_univ, fun x _ y _ a b ha hb hab ↦ ?_⟩
+  have h1 := hsub (a • x + b • y) x
+  have h2 := hsub (a • x + b • y) y
+  simp only [smul_eq_mul] at h1 h2 ⊢
+  have hb' : b = 1 - a := by linarith
+  subst hb'
+  nlinarith [mul_le_mul_of_nonneg_left h1 ha, mul_le_mul_of_nonneg_left h2 hb]
+
 /-- If `ψ(u - t) - ψ(u)` has second moment at most `W`, the convex remainder
 `ρ(u - t) - ρ(u) + t ψ(u)` is square integrable with second moment at most `t² W`. -/
-private lemma mem_lp_remainder_and_integral_sq_le {ρ ψ : ℝ → ℝ} (hconv : ConvexOn ℝ univ ρ)
+private lemma memLp_remainder_and_integral_sq_le {ρ ψ : ℝ → ℝ}
     (hψ : Measurable ψ) (hsub : ∀ u v, ρ u + ψ u * (v - u) ≤ ρ v) {u : Ω → ℝ}
     (hu : Measurable u) (t : ℝ) {W : ℝ} (hW0 : 0 ≤ W)
     (hW : ∫⁻ ω, ENNReal.ofReal ((ψ (u ω - t) - ψ (u ω)) ^ 2) ∂μ ≤ ENNReal.ofReal W) :
     MemLp (fun ω ↦ ρ (u ω - t) - ρ (u ω) + t * ψ (u ω)) 2 μ ∧
       ∫ ω, (ρ (u ω - t) - ρ (u ω) + t * ψ (u ω)) ^ 2 ∂μ ≤ t ^ 2 * W := by
-  have hρc : Continuous ρ := continuousOn_univ.1 (hconv.continuousOn isOpen_univ)
+  have hρc : Continuous ρ := continuousOn_univ.1
+    ((convexOn_univ_of_forall_add_mul_sub_le hsub).continuousOn isOpen_univ)
   set g : Ω → ℝ := fun ω ↦ ψ (u ω - t) - ψ (u ω) with hg
   have hgm : Measurable g := (hψ.comp (hu.sub_const t)).sub (hψ.comp hu)
   have hg2 : Integrable (fun ω ↦ g ω ^ 2) μ :=
@@ -188,7 +199,7 @@ variable [IsProbabilityMeasure μ]
 /-- The variance of the sum of the convex remainders of independent errors tends to zero when
 the shifts `tₙᵢ` are uniformly small and their squares have bounded sums. -/
 private lemma tendsto_variance_sum_remainder (e : ℕ → Ω → ℝ) (he : ∀ i, Measurable (e i))
-    (hind : iIndepFun e μ) {ρ ψ : ℝ → ℝ} (hconv : ConvexOn ℝ univ ρ) (hψ : Measurable ψ)
+    (hind : iIndepFun e μ) {ρ ψ : ℝ → ℝ} (hψ : Measurable ψ)
     (hsub : ∀ u v, ρ u + ψ u * (v - u) ≤ ρ v)
     (hw : ∀ η > 0, ∃ δ > 0, ∀ i t, |t| < δ →
       ∫⁻ ω, ENNReal.ofReal ((ψ (e i ω - t) - ψ (e i ω)) ^ 2) ∂μ ≤ ENNReal.ofReal η)
@@ -197,14 +208,15 @@ private lemma tendsto_variance_sum_remainder (e : ℕ → Ω → ℝ) (he : ∀ 
     Tendsto (fun n ↦ variance (fun ω ↦ ∑ i ∈ Finset.range n,
       (ρ (e i ω - t n i) - ρ (e i ω) + t n i * ψ (e i ω))) μ) atTop (𝓝 0) := by
   have ha0 : 0 ≤ a := ge_of_tendsto' ha fun n ↦ Finset.sum_nonneg fun i _ ↦ sq_nonneg _
-  have hρc : Continuous ρ := continuousOn_univ.1 (hconv.continuousOn isOpen_univ)
+  have hρc : Continuous ρ := continuousOn_univ.1
+    ((convexOn_univ_of_forall_add_mul_sub_le hsub).continuousOn isOpen_univ)
   refine tendsto_order.2 ⟨fun κ hκ ↦ Eventually.of_forall fun n ↦
     hκ.trans_le (variance_nonneg _ _), fun κ hκ ↦ ?_⟩
   set η : ℝ := κ / 2 / (a + 1) with hη
   have hη0 : 0 < η := by positivity
   obtain ⟨δ, hδ, hwδ⟩ := hw η hη0
   filter_upwards [ht δ hδ, ha.eventually (gt_mem_nhds (lt_add_one a))] with n hn hsum
-  have hD := fun i (hi : i ∈ Finset.range n) ↦ mem_lp_remainder_and_integral_sq_le hconv hψ hsub
+  have hD := fun i (hi : i ∈ Finset.range n) ↦ memLp_remainder_and_integral_sq_le hψ hsub
     (μ := μ) (he i) (t n i) hη0.le (hwδ i (t n i) (hn i (Finset.mem_range.1 hi)))
   have hfun : (fun ω ↦ ∑ i ∈ Finset.range n,
       (ρ (e i ω - t n i) - ρ (e i ω) + t n i * ψ (e i ω))) =
@@ -230,7 +242,7 @@ private lemma tendsto_variance_sum_remainder (e : ℕ → Ω → ℝ) (he : ∀ 
 /-- The expectation of the sum of the convex remainders tends to `b / 2` when the
 remainder means are uniformly `γᵢ t² / 2 + o(t²)` and `∑ γᵢ tₙᵢ² → b`. -/
 private lemma tendsto_integral_sum_remainder (e : ℕ → Ω → ℝ) (he : ∀ i, Measurable (e i))
-    {ρ ψ : ℝ → ℝ} (hconv : ConvexOn ℝ univ ρ) (hψ : Measurable ψ)
+    {ρ ψ : ℝ → ℝ} (hψ : Measurable ψ)
     (hsub : ∀ u v, ρ u + ψ u * (v - u) ≤ ρ v)
     (hw : ∀ η > 0, ∃ δ > 0, ∀ i t, |t| < δ →
       ∫⁻ ω, ENNReal.ofReal ((ψ (e i ω - t) - ψ (e i ω)) ^ 2) ∂μ ≤ ENNReal.ofReal η)
@@ -256,7 +268,7 @@ private lemma tendsto_integral_sum_remainder (e : ℕ → Ω → ℝ) (he : ∀ 
       ha.eventually (gt_mem_nhds (lt_add_one a))] with n hn hsum
     have hint : ∀ i ∈ Finset.range n, Integrable
         (fun ω ↦ ρ (e i ω - t n i) - ρ (e i ω) + t n i * ψ (e i ω)) μ := fun i hi ↦
-      ((mem_lp_remainder_and_integral_sq_le hconv hψ hsub (he i) (t n i) zero_le_one
+      ((memLp_remainder_and_integral_sq_le hψ hsub (he i) (t n i) zero_le_one
         (hw₁ i (t n i) ((hn i (Finset.mem_range.1 hi)).trans_le (min_le_left _ _))))).1.integrable
         one_le_two
     rw [integral_finsetSum _ hint, Real.dist_eq, sub_zero, Finset.sum_div, ← Finset.sum_sub_distrib]
@@ -277,7 +289,7 @@ uniformly small shifts `tₙᵢ` with `∑ tₙᵢ² → a` and `∑ γᵢ tₙ�
 `ρ(eᵢ - tₙᵢ) - ρ(eᵢ) + tₙᵢ ψ(eᵢ)` converges in probability to `b / 2`. -/
 private lemma tendsto_measure_abs_sum_remainder_sub (e : ℕ → Ω → ℝ)
     (he : ∀ i, Measurable (e i)) (hind : iIndepFun e μ) {ρ ψ : ℝ → ℝ}
-    (hconv : ConvexOn ℝ univ ρ) (hψ : Measurable ψ) (hsub : ∀ u v, ρ u + ψ u * (v - u) ≤ ρ v)
+    (hψ : Measurable ψ) (hsub : ∀ u v, ρ u + ψ u * (v - u) ≤ ρ v)
     (hw : ∀ η > 0, ∃ δ > 0, ∀ i t, |t| < δ →
       ∫⁻ ω, ENNReal.ofReal ((ψ (e i ω - t) - ψ (e i ω)) ^ 2) ∂μ ≤ ENNReal.ofReal η)
     (γ : ℕ → ℝ)
@@ -292,8 +304,8 @@ private lemma tendsto_measure_abs_sum_remainder_sub (e : ℕ → Ω → ℝ)
   set S : ℕ → Ω → ℝ := fun n ω ↦ ∑ i ∈ Finset.range n,
     (ρ (e i ω - t n i) - ρ (e i ω) + t n i * ψ (e i ω)) with hS
   obtain ⟨δ₁, hδ₁, hw₁⟩ := hw 1 one_pos
-  have hvar := tendsto_variance_sum_remainder e he hind hconv hψ hsub hw t ht ha
-  have hmean := tendsto_integral_sum_remainder e he hconv hψ hsub hw γ hm t ht ha hb
+  have hvar := tendsto_variance_sum_remainder e he hind hψ hsub hw t ht ha
+  have hmean := tendsto_integral_sum_remainder e he hψ hsub hw γ hm t ht ha hb
   have hlim : Tendsto (fun n ↦ ENNReal.ofReal (variance (S n) μ / (ε / 2) ^ 2)) atTop
       (𝓝 0) := by
     rw [← ENNReal.ofReal_zero]
@@ -303,7 +315,7 @@ private lemma tendsto_measure_abs_sum_remainder_sub (e : ℕ → Ω → ℝ)
     (Eventually.of_forall fun _ ↦ bot_le) ?_
   filter_upwards [ht δ₁ hδ₁, (Metric.tendsto_nhds.1 hmean) (ε / 2) (by positivity)] with n hn hmn
   have hL2 : MemLp (S n) 2 μ := memLp_finsetSum _ fun i hi ↦
-    (mem_lp_remainder_and_integral_sq_le hconv hψ hsub (he i) (t n i) zero_le_one
+    (memLp_remainder_and_integral_sq_le hψ hsub (he i) (t n i) zero_le_one
       (hw₁ i (t n i) (hn i (Finset.mem_range.1 hi)))).1
   refine (measure_mono fun ω hω ↦ ?_).trans (meas_ge_le_variance_div_sq hL2 (by positivity))
   simp only [mem_ofPred_eq] at hω ⊢
@@ -322,7 +334,7 @@ centred, of common variance `σ²`, and with uniformly integrable squares. If
 `n⁻¹ ∑_{i<n} xᵢ xᵢᵀ → D₀` and `maxᵢ ‖xᵢ‖ / √n → 0`, then
 `n^{-1/2} ∑_{i<n} ψ(eᵢ) xᵢ ⇒ N(0, σ² D₀)`. The proof applies the Lindeberg–Feller theorem to
 every scalar projection and concludes by the Cramér–Wold device. -/
-theorem tendsto_in_distribution_inv_sqrt_smul_sum_smul (μ : Measure Ω) [IsProbabilityMeasure μ]
+theorem tendstoInDistribution_inv_sqrt_smul_sum_smul (μ : Measure Ω) [IsProbabilityMeasure μ]
     (e : ℕ → Ω → ℝ) (he : ∀ i, Measurable (e i)) (hind : iIndepFun e μ) {ψ : ℝ → ℝ}
     (hψ : Measurable ψ) (hψ2 : ∀ i, MemLp (fun ω ↦ ψ (e i ω)) 2 μ)
     (hψ0 : ∀ i, ∫ ω, ψ (e i ω) ∂μ = 0) {σ2 : ℝ} (hψvar : ∀ i, ∫ ω, ψ (e i ω) ^ 2 ∂μ = σ2)
@@ -413,7 +425,8 @@ theorem tendsto_in_distribution_inv_sqrt_smul_sum_smul (μ : Measure Ω) [IsProb
       _ ≤ (q + 1) * η := mul_le_mul_of_nonneg_right hsum.le hη0.le
       _ = κ / 2 := by rw [hη]; field_simp
       _ < κ := half_lt_self hκ
-  have hlind := tendsto_in_distribution_sum_of_lindeberg_of_i_indep_fun μ X (fun n ↦ n) h2 h0
+  have hlind := tendstoInDistribution_sum_of_lindeberg_of_iIndepFun μ X (fun n ↦ n)
+    (fun n j _ ↦ h2 n j) (fun n j _ ↦ h0 n j)
     hindX (σ2 * q) hvar hlin
   have hfun : (fun (n : ℕ) ω ↦ ⟪(Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, ψ (e i ω) • x i, v⟫_ℝ) =
       fun n ω ↦ ∑ j ∈ Finset.range n, X n j ω := by
@@ -422,7 +435,7 @@ theorem tendsto_in_distribution_inv_sqrt_smul_sum_smul (μ : Measure Ω) [IsProb
     refine Finset.sum_congr rfl fun j _ ↦ ?_
     ring
   rw [hfun]
-  refine tendsto_in_distribution_of_map_eq hlind (by fun_prop) ?_
+  refine tendstoInDistribution_of_map_eq hlind (by fun_prop) ?_
   have hW : (fun z : EuclideanSpace ℝ (Fin p) ↦ ⟪id z, v⟫_ℝ) = fun z ↦ ⟪v, z⟫_ℝ :=
     funext fun z ↦ real_inner_comm _ _
   rw [hW, TauCeti.Probability.map_inner_multivariateGaussian 0 v hS, Measure.map_id,
@@ -437,7 +450,7 @@ section Curvature
 
 /-- A convex function on `ℝ` lies above its right-derivative tangent lines: if `ψ u` is the
 right derivative of the convex function `ρ` at `u`, then `ρ u + ψ u (v - u) ≤ ρ v` for all `v`. -/
-theorem add_mul_sub_le_of_convex_on_of_has_deriv_within_at {ρ : ℝ → ℝ} (hconv : ConvexOn ℝ univ ρ)
+theorem add_mul_sub_le_of_convexOn_of_hasDerivWithinAt {ρ : ℝ → ℝ} (hconv : ConvexOn ℝ univ ρ)
     {u ψu : ℝ} (hder : HasDerivWithinAt ρ ψu (Ioi u) u) (v : ℝ) :
     ρ u + ψu * (v - u) ≤ ρ v := by
   rcases lt_trichotomy u v with huv | rfl | hvu
@@ -455,13 +468,13 @@ theorem add_mul_sub_le_of_convex_on_of_has_deriv_within_at {ρ : ℝ → ℝ} (h
     linarith
 
 /-- The right derivative of a convex function on `ℝ` is monotone. -/
-theorem monotone_of_convex_on_of_has_deriv_within_at {ρ ψ : ℝ → ℝ} (hconv : ConvexOn ℝ univ ρ)
+theorem monotone_of_convexOn_of_hasDerivWithinAt {ρ ψ : ℝ → ℝ} (hconv : ConvexOn ℝ univ ρ)
     (hder : ∀ u, HasDerivWithinAt ρ (ψ u) (Ioi u) u) : Monotone ψ := by
   intro u v huv
   rcases eq_or_lt_of_le huv with rfl | huv
   · rfl
-  have h1 := add_mul_sub_le_of_convex_on_of_has_deriv_within_at hconv (hder u) v
-  have h2 := add_mul_sub_le_of_convex_on_of_has_deriv_within_at hconv (hder v) u
+  have h1 := add_mul_sub_le_of_convexOn_of_hasDerivWithinAt hconv (hder u) v
+  have h2 := add_mul_sub_le_of_convexOn_of_hasDerivWithinAt hconv (hder v) u
   nlinarith
 
 /-- **Curvature of the expected convex loss.** Let `ρ` be convex on `ℝ` with right derivative
@@ -475,7 +488,7 @@ theorem abs_integral_remainder_sub_le (P : Measure ℝ) [IsProbabilityMeasure P]
     (hη : 0 ≤ η) (hint : ∀ s, |s| ≤ |t| → Integrable (fun z ↦ ψ (z - s)) P)
     (hG : ∀ s, |s| ≤ |t| → |∫ z, ψ (z - s) ∂P + γ * s| ≤ η * |s|) :
     |∫ z, (ρ (z - t) - ρ z + t * ψ z) ∂P - γ * t ^ 2 / 2| ≤ η * t ^ 2 := by
-  have hmono := monotone_of_convex_on_of_has_deriv_within_at hconv hder
+  have hmono := monotone_of_convexOn_of_hasDerivWithinAt hconv hder
   have hρc : Continuous ρ := continuousOn_univ.1 (hconv.continuousOn isOpen_univ)
   have hsmall : ∀ s ∈ uIcc 0 t, |s| ≤ |t| := by
     intro s hs
@@ -563,7 +576,7 @@ variable {p : ℕ}
 open scoped MatrixOrder in
 /-- A positive definite matrix `D` has a uniformly positive quadratic form:
 `⟪h, D h⟫ ≥ c ‖h‖²` for some `c > 0` (the least eigenvalue). -/
-theorem exists_pos_mul_sq_le_inner_to_euclidean_clm {D : Matrix (Fin p) (Fin p) ℝ}
+theorem exists_pos_mul_sq_le_inner_toEuclideanCLM {D : Matrix (Fin p) (Fin p) ℝ}
     (hD : D.PosDef) :
     ∃ c > 0, ∀ h : EuclideanSpace ℝ (Fin p),
       c * ‖h‖ ^ 2 ≤ ⟪h, Matrix.toEuclideanCLM (𝕜 := ℝ) D h⟫_ℝ := by
@@ -587,7 +600,8 @@ theorem exists_pos_mul_sq_le_inner_to_euclidean_clm {D : Matrix (Fin p) (Fin p) 
   linarith
 
 /-- **Asymptotics of fixed-design convex regression M-estimators.** Let `eᵢ` be independent
-errors and `ρ` a convex loss with subgradient `ψ` (`ρ v ≥ ρ u + ψ u (v - u)`), with
+errors and `ρ` a loss with subgradient `ψ` (`ρ v ≥ ρ u + ψ u (v - u)`, which makes `ρ` convex),
+with
 
 * `ψ(eᵢ)` centred, square integrable with variance `σ²`, with uniformly integrable squares;
 * `L²` continuity uniform in `i`: `E (ψ(eᵢ - t) - ψ(eᵢ))² → 0` as `t → 0`;
@@ -597,10 +611,10 @@ errors and `ρ` a convex loss with subgradient `ψ` (`ρ v ≥ ρ u + ψ u (v - 
 Then every measurable minimizer `T̂ₙ` of `b ↦ ∑_{i<n} ρ(eᵢ - ⟪xᵢ, b - β⟫)` satisfies
 `√n (T̂ₙ - β) - D₁⁻¹ n^{-1/2} ∑ ψ(eᵢ) xᵢ → 0` in probability,
 `n^{-1/2} ∑ ψ(eᵢ) xᵢ ⇒ N(0, σ² D₀)` and `√n (T̂ₙ - β) ⇒ N(0, σ² D₁⁻¹ D₀ D₁⁻¹)`. -/
-theorem tendsto_in_measure_and_tendsto_in_distribution_convex_regression
+theorem tendstoInMeasure_and_tendstoInDistribution_convexRegression
     {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (e : ℕ → Ω → ℝ) (he : ∀ i, Measurable (e i)) (hind : iIndepFun e μ)
-    {ρ ψ : ℝ → ℝ} (hconv : ConvexOn ℝ univ ρ) (hψ : Measurable ψ)
+    {ρ ψ : ℝ → ℝ} (hψ : Measurable ψ)
     (hsub : ∀ u v, ρ u + ψ u * (v - u) ≤ ρ v)
     (hψ2 : ∀ i, MemLp (fun ω ↦ ψ (e i ω)) 2 μ) (hψ0 : ∀ i, ∫ ω, ψ (e i ω) ∂μ = 0)
     {σ2 : ℝ} (hψvar : ∀ i, ∫ ω, ψ (e i ω) ^ 2 ∂μ = σ2)
@@ -630,6 +644,7 @@ theorem tendsto_in_measure_and_tendsto_in_distribution_convex_regression
         ψ (e i ω) • x i) atTop id (fun _ ↦ μ) (multivariateGaussian 0 (σ2 • D₀)) ∧
       TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n • (T n ω - β)) atTop id (fun _ ↦ μ)
         (multivariateGaussian 0 (σ2 • (D₁⁻¹ * D₀ * D₁⁻¹))) := by
+  have hconv := convexOn_univ_of_forall_add_mul_sub_le hsub
   set A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin p) :=
     Matrix.toEuclideanCLM (𝕜 := ℝ) D₁ with hA_def
   set B : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin p) :=
@@ -641,10 +656,10 @@ theorem tendsto_in_measure_and_tendsto_in_distribution_convex_regression
     rfl
   have hAsymm : ∀ u v, ⟪A u, v⟫_ℝ = ⟪u, A v⟫_ℝ :=
     fun u v ↦ (Matrix.isSymmetric_toEuclideanLin_iff.2 hD₁.isHermitian) u v
-  obtain ⟨c, hc, hA⟩ := exists_pos_mul_sq_le_inner_to_euclidean_clm hD₁
+  obtain ⟨c, hc, hA⟩ := exists_pos_mul_sq_le_inner_toEuclideanCLM hD₁
   set U : ℕ → Ω → EuclideanSpace ℝ (Fin p) := fun n ω ↦
     (Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, ψ (e i ω) • x i with hU
-  have hclt := tendsto_in_distribution_inv_sqrt_smul_sum_smul μ e he hind hψ hψ2 hψ0 hψvar hUI x
+  have hclt := tendstoInDistribution_inv_sqrt_smul_sum_smul μ e he hind hψ hψ2 hψ0 hψvar hUI x
     hD₀ hdesign hlev
   set Z : ℕ → Ω → EuclideanSpace ℝ (Fin p) → ℝ := fun n ω h ↦ ∑ i ∈ Finset.range n,
     (ρ (e i ω - (Real.sqrt n)⁻¹ * ⟪x i, h⟫_ℝ) - ρ (e i ω)) with hZ
@@ -701,7 +716,7 @@ theorem tendsto_in_measure_and_tendsto_in_distribution_convex_regression
     have ha : Tendsto (fun n : ℕ ↦ ∑ i ∈ Finset.range n, ((Real.sqrt n)⁻¹ * ⟪x i, h⟫_ℝ) ^ 2)
         atTop (𝓝 (WithLp.ofLp h ⬝ᵥ D₀ *ᵥ WithLp.ofLp h)) := by
       simpa only [one_mul] using tendsto_sum_mul_sq_inv_sqrt_mul_inner x (fun _ ↦ 1) hdesign' h
-    exact tendsto_measure_abs_sum_remainder_sub e he hind hconv hψ hsub hw γ hm
+    exact tendsto_measure_abs_sum_remainder_sub e he hind hψ hsub hw γ hm
       (fun n i ↦ (Real.sqrt n)⁻¹ * ⟪x i, h⟫_ℝ)
       (fun δ hδ ↦ eventually_forall_abs_inv_sqrt_mul_inner_lt x hlev h hδ) ha
       (tendsto_sum_mul_sq_inv_sqrt_mul_inner x γ hweighted h) hε
@@ -709,12 +724,12 @@ theorem tendsto_in_measure_and_tendsto_in_distribution_convex_regression
     intro η hη
     rcases eq_or_ne η ⊤ with rfl | hηt
     · exact ⟨0, Eventually.of_forall fun _ ↦ le_top⟩
-    obtain ⟨M, -, hM⟩ := exists_measure_real_lt_norm_le_of_tendsto_in_distribution μ U hclt
+    obtain ⟨M, -, hM⟩ := exists_measureReal_lt_norm_le_of_tendstoInDistribution μ U hclt
       (ENNReal.toReal_pos hη.ne' hηt)
     refine ⟨M, hM.mono fun n hn ↦ ?_⟩
     rw [← ofReal_measureReal]
     exact (ENNReal.ofReal_le_iff_le_toReal hηt).2 hn
-  have hlin := tendsto_in_measure_sub_of_convex_on_of_is_min_on Z hZc U A B hAB hAsymm hc hA hpt
+  have hlin := tendstoInMeasure_sub_of_convexOn_of_isMinOn Z hZc U A B hAB hAsymm hc hA hpt
     htight α hmin'
   have hlin' : TendstoInMeasure μ (fun (n : ℕ) ω ↦ Real.sqrt n • (T n ω - β) -
       (Real.sqrt n)⁻¹ • Matrix.toEuclideanCLM (𝕜 := ℝ) D₁⁻¹
@@ -733,13 +748,13 @@ theorem tendsto_in_measure_and_tendsto_in_distribution_convex_regression
     rw [Matrix.transpose_nonsing_inv, (Matrix.isHermitian_iff_isSymm.1 hD₁.isHermitian).eq]
   have hlim : TendstoInDistribution (fun (n : ℕ) ↦ g ∘ U n) atTop id (fun _ ↦ μ)
       (multivariateGaussian 0 (σ2 • (D₁⁻¹ * D₀ * D₁⁻¹))) := by
-    refine tendsto_in_distribution_of_map_eq (hclt.continuous_comp hgc) aemeasurable_id ?_
+    refine tendstoInDistribution_of_map_eq (hclt.continuous_comp hgc) aemeasurable_id ?_
     rw [Measure.map_id, Function.comp_id, hmap, hsymm, Matrix.mul_smul, Matrix.smul_mul]
     simp
   have hUm : ∀ n, Measurable (U n) := fun n ↦ by
     have := fun i ↦ hψ.comp (he i)
     fun_prop
-  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ _ _
+  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _
     (fun n ↦ hgc.measurable.comp (hUm n)) (fun n ↦ by have := hT n; fun_prop)
     hlim ?_
   refine hlin.congr (fun n ↦ ae_of_all _ fun ω ↦ ?_) EventuallyEq.rfl

@@ -1,5 +1,4 @@
 module
-
 public import CKSD.Asymptotics.LikelihoodTransfer
 public import CKSD.Asymptotics.LikelihoodSingular
 public import CKSD.Asymptotics.LANApproximation
@@ -19,7 +18,7 @@ namespace CKSD
 /-- Le Cam's change-of-law lemma using the actual Radon–Nikodym density, without
 finite-sample absolute continuity. Unit mean of the limiting density forces the
 singular part of the alternatives to vanish. -/
-theorem tendsto_in_distribution_of_joint_rn_deriv
+theorem tendstoInDistribution_of_joint_rnDeriv
     {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
     {E : Type*} [MeasurableSpace E] [MetricSpace E] [BorelSpace E]
     [SecondCountableTopology E]
@@ -64,7 +63,7 @@ theorem tendsto_in_distribution_of_joint_rn_deriv
     dsimp only [μs]
     rw [integral_map (hpair n).aemeasurable (by fun_prop)]
     simp only [max_eq_right ENNReal.toReal_nonneg]
-  refine tendsto_in_distribution_id_iff.2 ⟨fun n ↦ (hS n).aemeasurable,
+  refine tendstoInDistribution_id_iff.2 ⟨fun n ↦ (hS n).aemeasurable,
     ProbabilityMeasure.tendsto_iff_forall_integral_tendsto.2 fun f ↦ ?_⟩
   simp only [ProbabilityMeasure.coe_mk]
   let F : BoundedContinuousFunction (E × ℝ) ℝ := f.compContinuous ⟨Prod.fst,continuous_fst⟩
@@ -88,7 +87,7 @@ theorem tendsto_in_distribution_of_joint_rn_deriv
       ∫ ω, ((Q n).rnDeriv (P n) ω).toReal * f (S n ω) ∂P n) atTop (𝓝 0) := by
     apply squeeze_zero_norm (fun n ↦ ?_) hgap
     rw [Real.norm_eq_abs]
-    exact abs_integral_sub_integral_rn_deriv_mul_le (P n) (Q n) _
+    exact abs_integral_sub_integral_rnDeriv_mul_le (P n) (Q n) _
       (f.continuous.measurable.comp (hS n)) ‖f‖ (fun ω ↦ f.norm_coe_le_norm _)
   have h := hdiff.add hkey
   simp only [sub_add_cancel,zero_add] at h
@@ -98,7 +97,7 @@ theorem tendsto_in_distribution_of_joint_rn_deriv
 
 
 /-- A closed null event under a real weak limit has asymptotically zero probability. -/
-theorem tendsto_measure_real_eq_zero_of_tendsto_in_distribution
+theorem tendsto_measureReal_eq_zero_of_tendstoInDistribution
     {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
     (P : ∀ n, Measure (Ω n)) [∀ n, IsProbabilityMeasure (P n)]
     (X : ∀ n, Ω n → ℝ) (hX : ∀ n, Measurable (X n))
@@ -119,7 +118,7 @@ theorem tendsto_measure_real_eq_zero_of_tendsto_in_distribution
   rfl
 
 /-- Tilting a statistic-density graph and projecting back is the original tilt. -/
-theorem map_fst_with_density_map_graph
+theorem map_fst_withDensity_map_graph
     {E : Type*} [MeasurableSpace E] (ρ : Measure E) (w : E → ℝ)
     (hw : Measurable w) (hw0 : ∀ x, 0 ≤ w x) :
     ((ρ.map (fun x ↦ (x,w x))).withDensity
@@ -135,7 +134,7 @@ theorem map_fst_with_density_map_graph
 
 /-- Weak convergence of a log likelihood with no limiting atom at zero also gives
 weak convergence of the actual likelihood, despite the convention `Real.log 0 = 0`. -/
-theorem tendsto_in_distribution_joint_rn_deriv_of_log
+theorem tendstoInDistribution_joint_rnDeriv_of_log
     {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
     {E : Type*} [MeasurableSpace E] [MetricSpace E] [BorelSpace E]
     [SecondCountableTopology E]
@@ -156,10 +155,10 @@ theorem tendsto_in_distribution_joint_rn_deriv_of_log
     refine ⟨fun n ↦ (hl n).aemeasurable,measurable_id.aemeasurable,?_⟩
     simp only [Measure.map_id]
     convert (hlim.continuous_comp continuous_snd).tendsto using 1; rfl
-  have hz := tendsto_measure_real_eq_zero_of_tendsto_in_distribution P _ hl ν.snd hloglim hzero
+  have hz := tendsto_measureReal_eq_zero_of_tendstoInDistribution P _ hl ν.snd hloglim hzero
   have hexp := hlim.continuous_comp
     (show Continuous (fun z : E × ℝ ↦ (z.1,Real.exp z.2)) by fun_prop)
-  have hRN := tendsto_in_distribution_of_dist_small_in_probability
+  have hRN := tendstoInDistribution_of_dist_small_in_probability
     (fun n ω ↦ (S n ω,((Q n).rnDeriv (P n) ω).toReal))
     (fun z : E × ℝ ↦ (z.1,Real.exp z.2)) hexp ?_
     (fun n ↦ ((hS n).prodMk (hm n)).aemeasurable)
@@ -180,7 +179,7 @@ theorem tendsto_in_distribution_joint_rn_deriv_of_log
     rw [heq,Real.log_zero]
 
 /-- A nonnegative integrable density of real mass one defines a probability measure. -/
-theorem is_probability_measure_with_density_of_real_integral_one
+theorem isProbabilityMeasure_withDensity_of_real_integral_one
     {E : Type*} [MeasurableSpace E] (ρ : Measure E) (w : E → ℝ)
     (hw0 : ∀ x, 0 ≤ w x) (hi : Integrable w ρ)
     (hm : ∫ x, w x ∂ρ = 1) :
@@ -190,7 +189,7 @@ theorem is_probability_measure_with_density_of_real_integral_one
     ← ofReal_integral_eq_lintegral_ofReal hi (ae_of_all _ hw0),hm,ENNReal.ofReal_one]
 
 /-- A limiting likelihood given by a density graph tilts the underlying joint limit. -/
-theorem tendsto_in_distribution_of_joint_rn_deriv_graph
+theorem tendstoInDistribution_of_joint_rnDeriv_graph
     {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
     {E : Type*} [MeasurableSpace E] [MetricSpace E] [BorelSpace E]
     [SecondCountableTopology E]
@@ -204,9 +203,9 @@ theorem tendsto_in_distribution_of_joint_rn_deriv_graph
       (fun n ω ↦ (S n ω,((Q n).rnDeriv (P n) ω).toReal)) atTop id P
       (ρ.map (fun x ↦ (x,w x)))) :
     TendstoInDistribution S atTop id Q (ρ.withDensity (fun x ↦ ENNReal.ofReal (w x))) := by
-  apply tendsto_in_distribution_of_joint_rn_deriv P Q S hS _ hlim
+  apply tendstoInDistribution_of_joint_rnDeriv P Q S hS _ hlim
   · rw [integral_map (by fun_prop) (by fun_prop)]
     simpa only [max_eq_right (hw0 _)] using hm
-  · exact map_fst_with_density_map_graph ρ w hw.measurable hw0
+  · exact map_fst_withDensity_map_graph ρ w hw.measurable hw0
 
 end CKSD

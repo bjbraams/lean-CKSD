@@ -2,7 +2,6 @@ module
 
 public import CKSD.Learning.Basic
 
-
 /-!
 # The Ledoux–Talagrand contraction inequality for finite classes
 
@@ -12,8 +11,8 @@ time, pairing each sign vector with the vector that flips the current coordinate
 
 ## Main results
 
-* `CKSD.s_sup_add_s_sup_le_of_lipschitz`: the one-coordinate contraction step.
-* `CKSD.sum_s_sup_rademacher_comp_le`: the contraction inequality.
+* `CKSD.sSup_add_sSup_le_of_lipschitz`: the one-coordinate contraction step.
+* `CKSD.sum_sSup_rademacher_comp_le`: the contraction inequality.
 -/
 
 @[expose] public section
@@ -27,7 +26,7 @@ namespace CKSD
 
 /-- One-coordinate contraction step: for an `L`-Lipschitz `φ` and `c ≥ 0`,
 `sup(a + cφ(u)) + sup(a - cφ(u)) ≤ sup(a + cLu) + sup(a - cLu)` over a finite index. -/
-theorem s_sup_add_s_sup_le_of_lipschitz {H : Type*} [Fintype H] [Nonempty H] (a u : H → ℝ)
+theorem sSup_add_sSup_le_of_lipschitz {H : Type*} [Fintype H] [Nonempty H] (a u : H → ℝ)
     (φ : ℝ → ℝ) {L c : ℝ} (hc : 0 ≤ c) (hφ : ∀ x y, |φ x - φ y| ≤ L * |x - y|) :
     sSup (range fun h ↦ a h + c * φ (u h)) + sSup (range fun h ↦ a h - c * φ (u h)) ≤
       sSup (range fun h ↦ a h + c * (L * u h)) + sSup (range fun h ↦ a h - c * (L * u h)) := by
@@ -51,7 +50,7 @@ theorem s_sup_add_s_sup_le_of_lipschitz {H : Type*} [Fintype H] [Nonempty H] (a 
 
 /-- Ledoux–Talagrand contraction for a finite class: composing the coordinates with an
 `L`-Lipschitz function multiplies the summed Rademacher suprema by at most `L`. -/
-theorem sum_s_sup_rademacher_comp_le {H : Type*} [Fintype H] [Nonempty H] (n : ℕ)
+theorem sum_sSup_rademacher_comp_le {H : Type*} [Fintype H] [Nonempty H] (n : ℕ)
     (t : H → Fin n → ℝ) (φ : ℝ → ℝ) {L : ℝ} (hL : 0 ≤ L)
     (hφ : ∀ x y, |φ x - φ y| ≤ L * |x - y|) :
     ∑ σ : Fin n → Bool, sSup (range fun h ↦
@@ -112,7 +111,7 @@ theorem sum_s_sup_rademacher_comp_le {H : Type*} [Fintype H] [Nonempty H] (n : �
           ((if fl σ j then (1 : ℝ) else -1) * w (k + 1) h j))
       simp only [hA, hflj, hwk, hwk1]
       have hc : (0 : ℝ) ≤ 1 / n := by positivity
-      have key := s_sup_add_s_sup_le_of_lipschitz (fun h ↦ A σ h / n) (fun h ↦ t h j) φ hc hφ
+      have key := sSup_add_sSup_le_of_lipschitz (fun h ↦ A σ h / n) (fun h ↦ t h j) φ hc hφ
       cases σ j
       · simp only [Bool.not_false, ite_true, Bool.false_eq_true, ite_false, neg_one_mul,
           one_mul, mul_neg, ← sub_eq_add_neg]

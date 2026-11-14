@@ -2,21 +2,22 @@ module
 
 public import CKSD.Geometry.Basic
 
-
 /-!
 # Cheeger's inequalities for weighted graphs
 
-For a connected weighted graph with nonnegative symmetric weights, the spectral gap `λ₂` of the
-normalized Laplacian and the Cheeger constant `h` satisfy `h² / 2 ≤ λ₂ ≤ 2 h`. The lower bound
-is proved by the discrete co-area formula applied to a weighted median shift of a second
-eigenvector, the upper bound by testing the Rayleigh quotient with the two-valued function of an
-optimal cut.
+For a connected weighted graph with nonnegative symmetric weights, the spectral gap `λ₁` of the
+normalized Laplacian (its smallest nonzero eigenvalue, `CKSD.spectralGap`) and the Cheeger
+constant `h` satisfy `λ₁ / 2 ≤ h ≤ √(2 λ₁)` and `1 - √(1 - h²) ≤ λ₁`. The bound `λ₁ ≤ 2 h` is
+proved by testing the Rayleigh quotient with the two-valued function of a cut. The bounds
+`h² ≤ 2 λ₁` and `h² ≤ λ₁ (2 - λ₁)` are proved, for every admissible test function of the Rayleigh
+principle, by the discrete co-area formula applied to the positive and negative parts of a
+weighted median shift.
 
 ## Main results
 
-* `CKSD.cheeger_constant_nonneg`, `CKSD.cheeger_constant_le_cut_weight_div`: basic bounds for the
+* `CKSD.cheegerConstant_nonneg`, `CKSD.cheegerConstant_le_cutWeight_div`: basic bounds for the
   Cheeger constant.
-* `CKSD.spectral_gap_cheeger_constant_bounds`: Cheeger's inequalities for the normalized Laplacian
+* `CKSD.spectralGap_cheegerConstant_bounds`: Cheeger's inequalities for the normalized Laplacian
   of a connected weighted graph (GAPS 108.1).
 
 ## References
@@ -42,7 +43,7 @@ open Finset
 variable {n : ℕ} (W : Matrix (Fin n) (Fin n) ℝ)
 
 /-- For nonnegative weights all conductance ratios of nonempty proper sets are nonnegative. -/
-private theorem conductance_ratio_nonneg (hpos : ∀ i j, 0 ≤ W i j) :
+private theorem conductanceRatio_nonneg (hpos : ∀ i j, 0 ≤ W i j) :
     ∀ r ∈ {r | ∃ S : Finset (Fin n), S.Nonempty ∧ S ≠ univ ∧
       r = cutWeight W S / min (graphVolume W S) (graphVolume W Sᶜ)}, 0 ≤ r := by
   rintro _ ⟨S, -, -, rfl⟩
@@ -50,17 +51,17 @@ private theorem conductance_ratio_nonneg (hpos : ∀ i j, 0 ≤ W i j) :
     exact sum_nonneg fun i _ ↦ sum_nonneg fun j _ ↦ hpos i j
 
 /-- For nonnegative weights the Cheeger constant is nonnegative. -/
-theorem cheeger_constant_nonneg (hpos : ∀ i j, 0 ≤ W i j) : 0 ≤ cheegerConstant W :=
-  Real.sInf_nonneg (conductance_ratio_nonneg W hpos)
+theorem cheegerConstant_nonneg (hpos : ∀ i j, 0 ≤ W i j) : 0 ≤ cheegerConstant W :=
+  Real.sInf_nonneg (conductanceRatio_nonneg W hpos)
 
 /-- For nonnegative weights the Cheeger constant is at most every conductance ratio. -/
-theorem cheeger_constant_le_cut_weight_div (hpos : ∀ i j, 0 ≤ W i j) {T : Finset (Fin n)}
+theorem cheegerConstant_le_cutWeight_div (hpos : ∀ i j, 0 ≤ W i j) {T : Finset (Fin n)}
     (hT : T.Nonempty) (hTu : T ≠ univ) :
     cheegerConstant W ≤ cutWeight W T / min (graphVolume W T) (graphVolume W Tᶜ) :=
-  csInf_le ⟨0, conductance_ratio_nonneg W hpos⟩ ⟨T, hT, hTu, rfl⟩
+  csInf_le ⟨0, conductanceRatio_nonneg W hpos⟩ ⟨T, hT, hTu, rfl⟩
 
 /-- In a connected weighted graph on at least two vertices every degree is positive. -/
-theorem weighted_degree_pos (hn : 2 ≤ n) (hpos : ∀ i j, 0 ≤ W i j)
+theorem weightedDegree_pos (hn : 2 ≤ n) (hpos : ∀ i j, 0 ≤ W i j)
     (hconn : ∀ S : Finset (Fin n), S.Nonempty → S ≠ univ → 0 < cutWeight W S) (i : Fin n) :
     0 < weightedDegree W i := by
   have : Nontrivial (Fin n) := Fin.nontrivial_iff_two_le.mpr hn
@@ -265,7 +266,7 @@ private theorem exists_weighted_median (hpos : ∀ i j, 0 ≤ W i j) (hn : 0 < n
 
 /-- Positive and negative parts split the Dirichlet energy: for all reals `x, y`,
 `(x⁺ - y⁺)² + (x⁻ - y⁻)² ≤ (x - y)²`. -/
-private theorem sq_sub_pos_part_add_sq_sub_neg_part_le (x y : ℝ) :
+private theorem sq_sub_posPart_add_sq_sub_negPart_le (x y : ℝ) :
     (max x 0 - max y 0) ^ 2 + (max (-x) 0 - max (-y) 0) ^ 2 ≤ (x - y) ^ 2 := by
   rcases le_total 0 x with hx | hx <;> rcases le_total 0 y with hy | hy <;>
     simp [hx, hy] <;> nlinarith
@@ -297,7 +298,7 @@ private theorem cheeger_sq_le_of_admissible (hW : ∀ i j, W i j = W j i) (hpos 
     gcongr with i _ j _
     rw [← mul_add]
     refine mul_le_mul_of_nonneg_left ?_ (hpos i j)
-    have := sq_sub_pos_part_add_sq_sub_neg_part_le (f i - c) (f j - c)
+    have := sq_sub_posPart_add_sq_sub_negPart_le (f i - c) (f j - c)
     rwa [sub_sub_sub_cancel_right] at this
   have hD : 1 ≤ Dof gp + Dof gm := by
     have hpt : ∀ i, weightedDegree W i * gp i ^ 2 + weightedDegree W i * gm i ^ 2 =
@@ -437,21 +438,21 @@ nonnegative weight matrix on `n ≥ 2` vertices in which every nonempty proper c
 weight, the spectral gap `λ₁` of the normalized Laplacian and the conductance `h` satisfy
 `λ₁ / 2 ≤ h ≤ √(2 λ₁)` and `1 - √(1 - h²) ≤ λ₁`. Under these hypotheses the sets defining `λ₁`
 and `h` are nonempty and bounded below, so no junk values occur. -/
-theorem spectral_gap_cheeger_constant_bounds {n : ℕ} (hn : 2 ≤ n) (W : Matrix (Fin n) (Fin n) ℝ)
+theorem spectralGap_cheegerConstant_bounds {n : ℕ} (hn : 2 ≤ n) (W : Matrix (Fin n) (Fin n) ℝ)
     (hsym : W.IsSymm) (hpos : ∀ i j, 0 ≤ W i j)
     (hconn : ∀ S : Finset (Fin n), S.Nonempty → S ≠ Finset.univ → 0 < cutWeight W S) :
     spectralGap W / 2 ≤ cheegerConstant W ∧ cheegerConstant W ≤ Real.sqrt (2 * spectralGap W) ∧
       1 - Real.sqrt (1 - cheegerConstant W ^ 2) ≤ spectralGap W := by
   have hW : ∀ i j, W i j = W j i := fun i j ↦ (hsym.apply i j).symm
   have hn0 : 0 < n := by omega
-  have hdeg := weighted_degree_pos W hn hpos hconn
+  have hdeg := weightedDegree_pos W hn hpos hconn
   have hvolpos : ∀ S : Finset (Fin n), S.Nonempty → 0 < graphVolume W S :=
     fun S hS ↦ sum_pos (fun i _ ↦ hdeg i) hS
   have hvolsplit : ∀ S : Finset (Fin n),
       graphVolume W S + graphVolume W Sᶜ = graphVolume W Finset.univ :=
     fun S ↦ sum_add_sum_compl S _
   set h := cheegerConstant W
-  have hh0 : 0 ≤ h := cheeger_constant_nonneg W hpos
+  have hh0 : 0 ≤ h := cheegerConstant_nonneg W hpos
   have hcompl : ∀ S : Finset (Fin n), S ≠ Finset.univ → Sᶜ.Nonempty := fun S hS ↦ by
     rw [Finset.nonempty_iff_ne_empty]
     exact fun h ↦ hS (Finset.compl_eq_empty_iff _ |>.mp h)
@@ -461,7 +462,7 @@ theorem spectral_gap_cheeger_constant_bounds {n : ℕ} (hn : 2 ≤ n) (W : Matri
     have hSu : S ≠ Finset.univ := by
       rintro rfl
       linarith [hvolpos _ hS]
-    have hle := cheeger_constant_le_cut_weight_div W hpos hS hSu
+    have hle := cheegerConstant_le_cutWeight_div W hpos hS hSu
     have hs := hvolsplit S
     rw [min_eq_left (by linarith)] at hle
     exact (le_div_iff₀ (hvolpos S hS)).mp hle

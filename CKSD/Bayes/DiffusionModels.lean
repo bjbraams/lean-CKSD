@@ -9,7 +9,6 @@ public import Mathlib.InformationTheory.KullbackLeibler.Basic
 public import Mathlib.Analysis.Calculus.LineDeriv.IntegrationByParts
 public import Mathlib.Probability.Distributions.Gaussian.Fernique
 
-
 /-!
 # Time reversal, diffusion sampling, and marginal-preserving dynamics
 
@@ -32,18 +31,18 @@ Schwartz Gaussian and applies the conditional-expectation identity for joint den
 
 ## Main results
 
-* `CKSD.probability_flow_is_continuity_equation_and_map`: the probability flow transports the
+* `CKSD.probabilityFlow_isContinuityEquation_and_map`: the probability flow transports the
   time-reversed marginals (GAPS 104.63).
-* `CKSD.kl_div_ddpm_law_le`: the KL bound for DDPM under a second-moment assumption (GAPS 104.75),
+* `CKSD.klDiv_ddpmLaw_le`: the KL bound for DDPM under a second-moment assumption (GAPS 104.75),
   with the step schedule `CKSD.exists_ddpm_geometric_schedule` and the parameter choice
-  `CKSD.ddpm_step_ratio_le_half`, `CKSD.div_two_mul_add_two_mul_ddpm_step_ratio_eq`,
-  `CKSD.one_add_inv_ddpm_step_ratio_mul_log`.
-* `CKSD.is_fokker_planck_solution_add_score_of_continuity_equation`: adding `ε ∇ log μₜ` to the drift
+  `CKSD.ddpmStepRatio_le_half`, `CKSD.div_two_mul_add_two_mul_ddpmStepRatio_eq`,
+  `CKSD.one_add_inv_ddpmStepRatio_mul_log`.
+* `CKSD.isFokkerPlanckSolution_add_score_of_continuityEquation`: adding `ε ∇ log μₜ` to the drift
   and noise of level `√(2ε)` preserves the marginals (GAPS 104.76).
-* `CKSD.map_marginal_preserving_diffusion`: the pathwise version at a constant noise level
+* `CKSD.map_marginalPreservingDiffusion`: the pathwise version at a constant noise level
   (GAPS 104.76).
-* `CKSD.stochastic_interpolant_score`,
-  `CKSD.stochastic_interpolant_integral_sub_eq_integral_velocity`: score and velocity of stochastic
+* `CKSD.stochasticInterpolant_score`,
+  `CKSD.stochasticInterpolant_integral_sub_eq_integral_velocity`: score and velocity of stochastic
   interpolants (GAPS 104.76).
 -/
 
@@ -74,7 +73,7 @@ with positive `C¹` densities solve the continuity equation with the probability
 every `(0, T')`, `T' < T`, and when that velocity is Lipschitz the continuous flow started from `p_T` has
 law `p_{T-t}`. The forward marginals are a weak Fokker–Planck solution with a finite initial second
 moment; the reverse-time stochastic equation is not part of this statement. -/
-theorem probability_flow_is_continuity_equation_and_map {d : ℕ} (T : ℝ) (hT : 0 < T)
+theorem probabilityFlow_isContinuityEquation_and_map {d : ℕ} (T : ℝ) (hT : 0 < T)
     (f : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (hf : Continuous (Function.uncurry f)) (Lf : ℝ≥0) (hfL : ∀ t, LipschitzWith Lf (f t))
     (g : ℝ → Matrix (Fin d) (Fin d) ℝ) (hg : Continuous g) (hginv : ∀ t, (g t).det ≠ 0)
@@ -125,7 +124,7 @@ def ddpmLaw {d : ℕ} (T : ℝ) (τ : ℕ → ℝ)
 /-- GAPS 104.75: relative-entropy bound for the DDPM sampler under only a finite second moment,
 for steps `hₙ ≤ h̄(T - τₙ)` with `h̄ ≤ 1/2`, early stopping `δ = T - τ_N`, and the accumulated score
 error `ε²_sc = ∑ hₙ 𝔼_{π_{T-τₙ}} ‖ŝ_{T-τₙ} - ∇ log π_{T-τₙ}‖²`. -/
-theorem kl_div_ddpm_law_le {d : ℕ} (π : Measure (EuclideanSpace ℝ (Fin d)))
+theorem klDiv_ddpmLaw_le {d : ℕ} (π : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure π] (hπ : Integrable (fun x ↦ ‖x‖ ^ 2) π) (T : ℝ) (N : ℕ)
     (τ : ℕ → ℝ) (hτ0 : τ 0 = 0) (hτ : ∀ n < N, τ n < τ (n + 1)) (hτN : τ N < T)
     (hbar : ℝ) (hbar0 : 0 < hbar) (hbar1 : hbar ≤ 1 / 2)
@@ -145,7 +144,7 @@ theorem kl_div_ddpm_law_le {d : ℕ} (π : Measure (EuclideanSpace ℝ (Fin d)))
 `τₙ = T - (1 - h̄)ⁿ T` for `n < N` and `τ_N = T - δ` satisfy the step hypothesis, and
 `N ≤ 1 + h̄⁻¹ log(T/δ)`. -/
 theorem exists_ddpm_geometric_schedule (T δ hbar : ℝ) (hδ : 0 < δ) (hδT : δ < T) (hbar0 : 0 < hbar)
-    (hbar1 : hbar ≤ 1 / 2) :
+    (hbar1 : hbar < 1) :
     ∃ N : ℕ, (1 - hbar) ^ N * T ≤ δ ∧ (∀ m < N, δ < (1 - hbar) ^ m * T) ∧
       let τ := fun n : ℕ ↦ if n < N then T - (1 - hbar) ^ n * T else T - δ
       1 ≤ N ∧ τ 0 = 0 ∧ T - τ N = δ ∧
@@ -211,17 +210,16 @@ theorem exists_ddpm_geometric_schedule (T δ hbar : ℝ) (hδ : 0 < δ) (hδT : 
 def ddpmStepRatio (d : ℕ) (ε T δ : ℝ) : ℝ := ε ^ 2 / (2 * d * (1 + Real.log (T / δ)))
 
 /-- GAPS 104.75: the parameter choice `h̄ = ε²/(2d(1 + log(T/δ)))` is positive for
-`0 < ε² ≤ d` and `0 < δ < T`. -/
-theorem ddpm_step_ratio_pos {d : ℕ} {ε T δ : ℝ} (hε : 0 < ε) (hεd : ε ^ 2 ≤ d) (hδ : 0 < δ)
+`ε ≠ 0`, `d > 0` and `0 < δ < T`. -/
+theorem ddpmStepRatio_pos {d : ℕ} {ε T δ : ℝ} (hε : ε ≠ 0) (hd : 0 < d) (hδ : 0 < δ)
     (hδT : δ < T) : 0 < ddpmStepRatio d ε T δ := by
-  have hd : (0 : ℝ) < d := (pow_pos hε 2).trans_le hεd
   have hL : 0 < Real.log (T / δ) := Real.log_pos ((one_lt_div hδ).2 hδT)
   unfold ddpmStepRatio
   positivity
 
 /-- GAPS 104.75: the parameter choice `h̄ = ε²/(2d(1 + log(T/δ)))` is admissible, `h̄ ≤ 1/2`, for
 `0 < ε² ≤ d` and `0 < δ < T`. -/
-theorem ddpm_step_ratio_le_half {d : ℕ} {ε T δ : ℝ} (hε : 0 < ε) (hεd : ε ^ 2 ≤ d) (hδ : 0 < δ)
+theorem ddpmStepRatio_le_half {d : ℕ} {ε T δ : ℝ} (hε : 0 < ε) (hεd : ε ^ 2 ≤ d) (hδ : 0 < δ)
     (hδT : δ < T) : ddpmStepRatio d ε T δ ≤ 1 / 2 := by
   have hd : (0 : ℝ) < d := (pow_pos hε 2).trans_le hεd
   have hL : 0 < Real.log (T / δ) := Real.log_pos ((one_lt_div hδ).2 hδT)
@@ -231,7 +229,7 @@ theorem ddpm_step_ratio_le_half {d : ℕ} {ε T δ : ℝ} (hε : 0 < ε) (hεd :
 
 /-- GAPS 104.75: with `T = m₂²/ε²` and `h̄ = ε²/(2d(1 + log(T/δ)))`, the deterministic part
 `m₂²/(2T) + 2h̄d(1 + log(T/δ))` of the KL bound equals `3ε²/2`. -/
-theorem div_two_mul_add_two_mul_ddpm_step_ratio_eq {d : ℕ} {m₂ ε δ : ℝ} (hε : 0 < ε)
+theorem div_two_mul_add_two_mul_ddpmStepRatio_eq {d : ℕ} {m₂ ε δ : ℝ} (hε : 0 < ε)
     (hεd : ε ^ 2 ≤ d) (hδ : 0 < δ) (hδT : δ < m₂ ^ 2 / ε ^ 2) :
     m₂ ^ 2 / (2 * (m₂ ^ 2 / ε ^ 2)) +
         2 * ddpmStepRatio d ε (m₂ ^ 2 / ε ^ 2) δ * d * (1 + Real.log (m₂ ^ 2 / ε ^ 2 / δ)) =
@@ -254,7 +252,7 @@ theorem div_two_mul_add_two_mul_ddpm_step_ratio_eq {d : ℕ} {m₂ ε δ : ℝ} 
 
 /-- GAPS 104.75: with `h̄ = ε²/(2d(1 + log(T/δ)))`, the schedule bound `1 + h̄⁻¹ log(T/δ)` on the
 number of steps equals `1 + 2dε⁻²(1 + log(T/δ)) log(T/δ)`. -/
-theorem one_add_inv_ddpm_step_ratio_mul_log (d : ℕ) (ε T δ : ℝ) :
+theorem one_add_inv_ddpmStepRatio_mul_log (d : ℕ) (ε T δ : ℝ) :
     1 + (ddpmStepRatio d ε T δ)⁻¹ * Real.log (T / δ) =
       1 + 2 * d / ε ^ 2 * (1 + Real.log (T / δ)) * Real.log (T / δ) := by
   simp only [ddpmStepRatio, inv_div]
@@ -348,13 +346,14 @@ theorem integral_fderiv_gradient_add_mul_laplacian_eq_zero {d : ℕ}
     · exact ((hfc.fderiv_apply (𝕜 := ℝ) (e i)).mul_right).add (hHc i).mul_left
 
 /-- GAPS 104.76: smooth positive densities solving the continuity equation with velocity `v` also
-solve the Fokker–Planck equation of `dX = (v + ε∇ log μ)(X) dt + √(2ε) dW`, for every continuous
-`ε ≥ 0`. Both equations are taken in the weak integral form on `[0, 1]`. -/
-theorem is_fokker_planck_solution_add_score_of_continuity_equation {d : ℕ}
+solve the Fokker–Planck equation with drift `v + ε∇ log μ` and diffusion matrix `2ε I`, that of
+`dX = (v + ε∇ log μ)(X) dt + √(2ε) dW` when `ε ≥ 0`. Both equations are taken in the weak
+integral form on `[0, 1]`; the identity holds for every coefficient `ε : ℝ → ℝ`, with no
+regularity or sign condition. -/
+theorem isFokkerPlanckSolution_add_score_of_continuityEquation {d : ℕ}
     (m : ℝ → EuclideanSpace ℝ (Fin d) → ℝ) (hm : ∀ t, ContDiff ℝ (⊤ : ℕ∞) (m t))
     (hmpos : ∀ t x, 0 < m t x)
     (v : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (ε : ℝ → ℝ)
-
     (hCE : IsFokkerPlanckSolution (fun t ↦ volume.withDensity fun x ↦ ENNReal.ofReal (m t x))
       v (fun _ _ ↦ 0) 1) :
     IsFokkerPlanckSolution (fun t ↦ volume.withDensity fun x ↦ ENNReal.ofReal (m t x))
@@ -442,7 +441,7 @@ theorem is_fokker_planck_solution_add_score_of_continuity_equation {d : ℕ}
 Lipschitz uniformly in `t ∈ [0, 1]` and `∫₀¹ ∫ ‖bₜ‖ dμₜ dt < ∞`, a continuous solution with
 interval-integrable pathwise drift of `Xₜ = X₀ + ∫₀ᵗ bₛ(Xₛ) ds + √(2ε) Wₜ`
 with `X₀ ∼ μ₀` independent of the Brownian motion has law `μₜ` for every `t ∈ [0, 1]`. -/
-theorem map_marginal_preserving_diffusion {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
+theorem map_marginalPreservingDiffusion {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (m : ℝ → EuclideanSpace ℝ (Fin d) → ℝ) (hm : ∀ t, ContDiff ℝ (⊤ : ℕ∞) (m t))
     (hmpos : ∀ t x, 0 < m t x)
@@ -471,15 +470,15 @@ theorem map_marginal_preserving_diffusion {Ω : Type*} [MeasurableSpace Ω] {d :
 /-- GAPS 104.76: the score of a stochastic interpolant. For `Xₜ = Iₜ(X₀, X₁) + γₜ Z` with standard
 normal `Z` independent of the coupling and `γₜ > 0`, the law of `Xₜ` has a smooth positive density
 `mₜ` and `∇ log mₜ(Xₜ) = -γₜ⁻¹ 𝔼[Z | Xₜ]` almost surely. -/
-theorem stochastic_interpolant_score {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
+theorem stochasticInterpolant_score {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (I : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (γ : ℝ → ℝ)
-    (hIm : ∀ t, Measurable fun w : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) ↦
+    (γ : ℝ → ℝ) (t : ℝ)
+    (hIm : Measurable fun w : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) ↦
       I t w.1 w.2)
     (X₀ X₁ Z : Ω → EuclideanSpace ℝ (Fin d)) (hX₀ : Measurable X₀) (hX₁ : Measurable X₁)
     (hZ : Measurable Z) (hZlaw : P.map Z = stdGaussian (EuclideanSpace ℝ (Fin d)))
-    (hind : IndepFun (fun ω ↦ (X₀ ω, X₁ ω)) Z P) (t : ℝ) (hγt : 0 < γ t) :
+    (hind : IndepFun (fun ω ↦ (X₀ ω, X₁ ω)) Z P) (hγt : 0 < γ t) :
     let X := fun ω ↦ I t (X₀ ω) (X₁ ω) + γ t • Z ω
     ∃ mt : EuclideanSpace ℝ (Fin d) → ℝ, ContDiff ℝ (⊤ : ℕ∞) mt ∧ (∀ x, 0 < mt x) ∧
       P.map X = volume.withDensity (fun x ↦ ENNReal.ofReal (mt x)) ∧
@@ -490,26 +489,26 @@ theorem stochastic_interpolant_score {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
   let ν := P.map Y
   let σ := γ t
   have hσ : 0 < σ := hγt
-  have hY : Measurable Y := (hIm t).comp (hX₀.prodMk hX₁)
+  have hY : Measurable Y := hIm.comp (hX₀.prodMk hX₁)
   have hXm : Measurable X := hY.add (hZ.const_smul σ)
   have hind' : IndepFun Y Z P := by
-    simpa [Y, Function.comp_def] using hind.comp (hIm t) measurable_id
+    simpa [Y, Function.comp_def] using hind.comp hIm measurable_id
   have hYZ : P.map (fun w ↦ (Y w, Z w)) = ν.prod (stdGaussian _) := by
     rw [hind'.map_prod_eq_prod_map_map hY.aemeasurable hZ.aemeasurable, hZlaw]
   let m := fun x ↦ ∫ y, gaussianSmoothingKernel σ (x - y) ∂ν
-  obtain ⟨hms, hmpos⟩ := smooth_positive_gaussian_smoothing ν hσ
+  obtain ⟨hms, hmpos⟩ := smooth_positive_gaussianSmoothing ν hσ
   have hXmLaw : P.map X = volume.withDensity (fun x ↦ ENNReal.ofReal (m x)) := by
     calc _ = (P.map (fun w ↦ (Y w, Z w))).map (fun p ↦ p.1 + σ • p.2) := by
             rw [Measure.map_map (by fun_prop) (hY.prodMk hZ)]
             rfl
-      _ = _ := by rw [hYZ, map_add_gaussian_eq_with_density ν hσ]
+      _ = _ := by rw [hYZ, map_add_gaussian_eq_withDensity ν hσ]
   refine ⟨m, hms, hmpos, hXmLaw, ?_⟩
   have hYX : P.map (fun w ↦ (Y w, X w)) = (ν.prod volume).withDensity
       (fun p ↦ ENNReal.ofReal (gaussianSmoothingKernel σ (p.2 - p.1))) := by
     calc _ = (P.map (fun w ↦ (Y w, Z w))).map (fun p ↦ (p.1, p.1 + σ • p.2)) := by
             rw [Measure.map_map (by fun_prop) (hY.prodMk hZ)]
             rfl
-      _ = _ := by rw [hYZ, map_pair_add_gaussian_eq_with_density ν hσ]
+      _ = _ := by rw [hYZ, map_pair_add_gaussian_eq_withDensity ν hσ]
   let H : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d) :=
     fun p ↦ σ⁻¹ • (p.2 - p.1)
   have hH : Measurable H := by fun_prop
@@ -519,16 +518,16 @@ theorem stochastic_interpolant_score {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
   have hZi : Integrable Z P := by
     have hi : Integrable id (P.map Z) := by rw [hZlaw]; exact IsGaussian.integrable_id
     exact hi.comp_measurable hZ
-  have hC := cond_exp_of_joint_density P ν volume Y X hY hXm
+  have hC := condExp_of_joint_density P ν volume Y X hY hXm
     (fun p ↦ gaussianSmoothingKernel σ (p.2 - p.1))
-    ((cont_diff_gaussian_smoothing_kernel hσ).continuous.measurable.comp
+    ((contDiff_gaussianSmoothingKernel hσ).continuous.measurable.comp
       (measurable_snd.sub measurable_fst))
-    (fun p ↦ (gaussian_smoothing_kernel_pos hσ _).le) m hms.continuous.measurable hmpos
+    (fun p ↦ (gaussianSmoothingKernel_pos hσ _).le) m hms.continuous.measurable hmpos
     hYX hXmLaw H hH (hHcomp ▸ hZi)
   rw [hHcomp] at hC
   filter_upwards [hC] with w hw
   rw [← hw, gradient_log_eq_inv_smul m (X w) (hms.differentiable (by simp) _) (hmpos _).ne',
-    gradient_gaussian_smoothing ν hσ]
+    gradient_gaussianSmoothing ν hσ]
   change (m (X w))⁻¹ • (-(σ ^ 2)⁻¹ • ∫ y, gaussianSmoothingKernel σ (X w - y) • (X w - y) ∂ν) =
     -σ⁻¹ • ((m (X w))⁻¹ • ∫ y, gaussianSmoothingKernel σ (X w - y) • (σ⁻¹ • (X w-y)) ∂ν)
   simp_rw [smul_comm (gaussianSmoothingKernel σ _) σ⁻¹, integral_smul, smul_smul]
@@ -543,7 +542,7 @@ unnecessary), and let `vₜ(Xₜ)` be, for every
 and `0 < a ≤ b < 1`, `𝔼 φ(X_b) - 𝔼 φ(X_a) = ∫ₐᵇ 𝔼[∇φ(Xₜ) · vₜ(Xₜ)] dt`. The square-integrability
 in `t` does not make `∂ₜIₜ` integrable at every fixed `t`, so the identity is stated in
 integrated form. -/
-theorem stochastic_interpolant_integral_sub_eq_integral_velocity {Ω : Type*} [MeasurableSpace Ω]
+theorem stochasticInterpolant_integral_sub_eq_integral_velocity {Ω : Type*} [MeasurableSpace Ω]
     {d : ℕ} (P : Measure Ω) [IsProbabilityMeasure P]
     (I dI : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (γ dγ : ℝ → ℝ)

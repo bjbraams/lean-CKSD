@@ -4,7 +4,6 @@ public import CKSD.Bayes.Nonparametric
 public import Mathlib.NumberTheory.Harmonic.Bounds
 public import Mathlib.Analysis.PSeries
 
-
 /-!
 # Pólya urn predictive laws and distinct values
 
@@ -20,10 +19,10 @@ counting process.
 
 ## Main results
 
-* `CKSD.integral_distinct_observation_count_polya`: the expected number of distinct values is
+* `CKSD.integral_distinctObservationCount_polya`: the expected number of distinct values is
   `∑_{i<n} θ / (θ + i)`, with `θ = α(X)`.
-* `CKSD.integral_sq_distinct_observation_count_sub_le_polya`: its variance is at most its mean.
-* `CKSD.ae_tendsto_distinct_observation_count_div_log_polya`: the number of distinct values grows
+* `CKSD.integral_sq_distinctObservationCount_sub_le_polya`: its variance is at most its mean.
+* `CKSD.ae_tendsto_distinctObservationCount_div_log_polya`: the number of distinct values grows
   like `θ log n` almost surely.
 
 Sources: GAPS 104.16.
@@ -53,7 +52,7 @@ def distinctObservationCount {Ω X : Type*} (Xn : ℕ → Ω → X) (n : ℕ) (�
   ((Finset.range n).image fun i ↦ Xn i ω).card
 
 /-- The distinct count increases by one exactly when the next observation is new. -/
-theorem distinct_observation_count_succ {Ω X : Type*} (Xn : ℕ → Ω → X) (n : ℕ) (ω : Ω) :
+theorem distinctObservationCount_succ {Ω X : Type*} (Xn : ℕ → Ω → X) (n : ℕ) (ω : Ω) :
     distinctObservationCount Xn (n + 1) ω = distinctObservationCount Xn n ω +
       if ∀ i < n, Xn n ω ≠ Xn i ω then 1 else 0 := by
   unfold distinctObservationCount
@@ -69,7 +68,7 @@ theorem distinct_observation_count_succ {Ω X : Type*} (Xn : ℕ → Ω → X) (
 
 /-- For an atomless base, the Pólya predictive law gives the complement of the observed values
 the mass `|α| / (|α| + n)`. -/
-theorem polya_predictive_law_compl_range {X : Type*} [MeasurableSpace X]
+theorem polyaPredictiveLaw_compl_range {X : Type*} [MeasurableSpace X]
     [MeasurableSingletonClass X] (α : Measure X) [IsFiniteMeasure α] [NullSingletonClass α]
     {n : ℕ}
     (y : Fin n → X) : polyaPredictiveLaw α y (range y)ᶜ = (α univ + n)⁻¹ * α univ := by
@@ -85,7 +84,7 @@ theorem polya_predictive_law_compl_range {X : Type*} [MeasurableSpace X]
 /-- Under a Pólya urn with atomless base `α`, the `n`-th observation is new with probability
 `|α| / (|α| + n)`: the predictive law gives the finitely many past values the mass of their
 atoms only, and `α` charges no finite set. -/
-theorem measure_real_new_observation_polya {Ω X : Type*} [MeasurableSpace Ω]
+theorem measureReal_newObservation_polya {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (α : Measure X) [IsFiniteMeasure α]
     [NullSingletonClass α] (Xn : ℕ → Ω → X)
@@ -108,7 +107,7 @@ theorem measure_real_new_observation_polya {Ω X : Type*} [MeasurableSpace Ω]
     have hpre : Prod.mk y ⁻¹' S = (range y)ᶜ := by
       ext x
       simp [hS, eq_comm]
-    rw [hpre, polya_predictive_law_compl_range]
+    rw [hpre, polyaPredictiveLaw_compl_range]
   have hmain : P {ω | ∀ i < n, Xn n ω ≠ Xn i ω} = (α univ + n)⁻¹ * α univ := by
     rw [hset, ← Measure.map_apply (hY.prodMk (hmeas n)) hSm,
       ← compProd_map_condDistrib hY.aemeasurable (hmeas n).aemeasurable,
@@ -124,18 +123,18 @@ theorem measure_real_new_observation_polya {Ω X : Type*} [MeasurableSpace Ω]
   simp
 
 /-- The distinct count is the number of indices at which a new value is observed. -/
-theorem distinct_observation_count_eq_sum_indicator {Ω X : Type*} (Xn : ℕ → Ω → X) (n : ℕ)
+theorem distinctObservationCount_eq_sum_indicator {Ω X : Type*} (Xn : ℕ → Ω → X) (n : ℕ)
     (ω : Ω) : (distinctObservationCount Xn n ω : ℝ) = ∑ i ∈ Finset.range n,
       {ω | ∀ j < i, Xn i ω ≠ Xn j ω}.indicator (fun _ ↦ (1 : ℝ)) ω := by
   induction n with
   | zero => simp [distinctObservationCount]
   | succ n ih =>
-    rw [distinct_observation_count_succ, Finset.sum_range_succ, ← ih, Nat.cast_add]
+    rw [distinctObservationCount_succ, Finset.sum_range_succ, ← ih, Nat.cast_add]
     congr 1
     by_cases h : ∀ j < n, Xn n ω ≠ Xn j ω <;> simp [h, Set.indicator]
 
 /-- GAPS 104.16: expected number of distinct observations under an atomless Pólya base. -/
-theorem integral_distinct_observation_count_polya {Ω X : Type*} [MeasurableSpace Ω]
+theorem integral_distinctObservationCount_polya {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (α : Measure X) [IsFiniteMeasure α]
     [NullSingletonClass α] (Xn : ℕ → Ω → X)
@@ -146,16 +145,16 @@ theorem integral_distinct_observation_count_polya {Ω X : Type*} [MeasurableSpac
     simp only [ofPred_forall]
     exact MeasurableSet.iInter fun j ↦ MeasurableSet.iInter fun _ ↦
       (measurableSet_eq_fun (hurn.1 i) (hurn.1 j)).compl
-  simp_rw [distinct_observation_count_eq_sum_indicator]
+  simp_rw [distinctObservationCount_eq_sum_indicator]
   rw [integral_finsetSum _ fun i _ ↦ (integrable_const 1).indicator (hm i)]
   refine Finset.sum_congr rfl fun i _ ↦ ?_
   rw [integral_indicator_const (1 : ℝ) (hm i), smul_eq_mul, mul_one,
-    measure_real_new_observation_polya P α Xn hurn i]
+    measureReal_newObservation_polya P α Xn hurn i]
 
 /-- Conditionally on the first `n` observations of a Pólya urn with atomless base, the `n`-th
 observation is new with probability `|α| / (|α| + n)`: for a bounded measurable function `F` of
 the past, `𝔼[F · 1{new}] = |α| / (|α| + n) · 𝔼[F]`. -/
-theorem integral_mul_indicator_new_observation_polya {Ω X : Type*} [MeasurableSpace Ω]
+theorem integral_mul_indicator_newObservation_polya {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (α : Measure X) [IsFiniteMeasure α]
     [NullSingletonClass α] (Xn : ℕ → Ω → X)
@@ -213,7 +212,7 @@ theorem integral_mul_indicator_new_observation_polya {Ω X : Type*} [MeasurableS
   filter_upwards [hcond n] with ω hω
   rw [hinner]
   simp only [hYdef] at hω ⊢
-  rw [hω, measureReal_def, polya_predictive_law_compl_range, ENNReal.toReal_mul,
+  rw [hω, measureReal_def, polyaPredictiveLaw_compl_range, ENNReal.toReal_mul,
     ENNReal.toReal_inv, ENNReal.toReal_add (measure_ne_top _ _) (ENNReal.natCast_ne_top n),
     ← measureReal_def]
   simp only [ENNReal.toReal_natCast]
@@ -222,7 +221,7 @@ theorem integral_mul_indicator_new_observation_polya {Ω X : Type*} [MeasurableS
 /-- Second moment of the centred distinct count of a Pólya urn: the increments of
 `Kₙ - ∑_{i<n} |α|/(|α|+i)` are orthogonal Bernoulli residuals, so its second moment is at most
 `∑_{i<n} |α|/(|α|+i)`. -/
-theorem integral_sq_distinct_observation_count_sub_le_polya {Ω X : Type*} [MeasurableSpace Ω]
+theorem integral_sq_distinctObservationCount_sub_le_polya {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (α : Measure X) [IsFiniteMeasure α]
     [NullSingletonClass α] (Xn : ℕ → Ω → X)
@@ -245,7 +244,7 @@ theorem integral_sq_distinct_observation_count_sub_le_polya {Ω X : Type*} [Meas
   have hIint (i : ℕ) : Integrable (I i) P := (integrable_const 1).indicator (hAm i)
   have hEI (i : ℕ) : ∫ ω, I i ω ∂P = p i := by
     rw [integral_indicator_const (1 : ℝ) (hAm i), smul_eq_mul, mul_one]
-    exact measure_real_new_observation_polya P α Xn hurn i
+    exact measureReal_newObservation_polya P α Xn hurn i
   induction n with
   | zero => simp [distinctObservationCount]
   | succ n ih =>
@@ -270,7 +269,7 @@ theorem integral_sq_distinct_observation_count_sub_le_polya {Ω X : Type*} [Meas
         _ = n := by simp
     have hMF (ω : Ω) : (distinctObservationCount Xn n ω : ℝ) - c =
         F (fun i : Fin n ↦ Xn i ω) := by
-      rw [distinct_observation_count_eq_sum_indicator, hF, ← Fin.sum_univ_eq_sum_range]
+      rw [distinctObservationCount_eq_sum_indicator, hF, ← Fin.sum_univ_eq_sum_range]
       congr 1
       refine Finset.sum_congr rfl fun i _ ↦ ?_
       simp only [Set.indicator, hB, mem_ofPred_eq]
@@ -289,7 +288,7 @@ theorem integral_sq_distinct_observation_count_sub_le_polya {Ω X : Type*} [Meas
     have horth : ∫ ω, F (fun i : Fin n ↦ Xn i ω) * (I n ω - p n) ∂P = 0 := by
       simp_rw [mul_sub]
       rw [integral_sub hFI (hFY.mul_const _), integral_mul_const,
-        integral_mul_indicator_new_observation_polya P α Xn hurn n F hFm (n + c) hFb]
+        integral_mul_indicator_newObservation_polya P α Xn hurn n F hFm (n + c) hFb]
       simp only [hp, hθ]
       ring
     have hD2 : ∫ ω, (I n ω - p n) ^ 2 ∂P ≤ p n := by
@@ -304,8 +303,8 @@ theorem integral_sq_distinct_observation_count_sub_le_polya {Ω X : Type*} [Meas
         ∑ i ∈ Finset.range (n + 1), p i) ^ 2 =
         F (fun i : Fin n ↦ Xn i ω) ^ 2 + 2 * (F (fun i : Fin n ↦ Xn i ω) * (I n ω - p n)) +
           (I n ω - p n) ^ 2 := by
-      rw [distinct_observation_count_eq_sum_indicator, Finset.sum_range_succ,
-        Finset.sum_range_succ, ← distinct_observation_count_eq_sum_indicator]
+      rw [distinctObservationCount_eq_sum_indicator, Finset.sum_range_succ,
+        Finset.sum_range_succ, ← distinctObservationCount_eq_sum_indicator]
       have := hMF ω
       simp only [hI, hA] at this ⊢
       rw [← this]
@@ -443,13 +442,18 @@ theorem exists_bounds_sum_div_add_log {θ : ℝ} (hθ : 0 < θ) :
 
 /-- GAPS 104.16: logarithmic almost-sure growth of the number of distinct values.
 The logarithm uses `n+1`, which has the same asymptotics and avoids its initial zero argument. -/
-theorem ae_tendsto_distinct_observation_count_div_log_polya
+theorem ae_tendsto_distinctObservationCount_div_log_polya
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (α : Measure X) [IsFiniteMeasure α]
-    [NullSingletonClass α] (hα : α ≠ 0) (Xn : ℕ → Ω → X)
+    [NullSingletonClass α] (Xn : ℕ → Ω → X)
     (hurn : IsPolyaUrnProcess P α Xn) :
     ∀ᵐ ω ∂P, Tendsto (fun n : ℕ ↦ (distinctObservationCount Xn n ω : ℝ) /
       Real.log (n + 1)) atTop (𝓝 (α.real univ)) := by
+  have hα : α ≠ 0 := by
+    rintro rfl
+    obtain ⟨ω, hω⟩ := (hurn.2 0).exists
+    have h := congrArg (fun ν : Measure X ↦ ν univ) hω
+    simp [polyaPredictiveLaw, dirichletPosteriorBase] at h
   set θ := α.real univ with hθdef
   have hθ : 0 < θ := ENNReal.toReal_pos ((Measure.measure_univ_ne_zero).2 hα) (measure_ne_top _ _)
   obtain ⟨D, hD0, hDb⟩ := exists_bounds_sum_div_add_log hθ
@@ -508,7 +512,7 @@ theorem ae_tendsto_distinct_observation_count_div_log_polya
   -- Chebyshev and Borel–Cantelli along the subsequence.
   set Z : ℕ → Ω → ℝ := fun k ω ↦ (distinctObservationCount Xn (s k) ω : ℝ) - c (s k) with hZ
   have hKm (n : ℕ) : Measurable fun ω ↦ (distinctObservationCount Xn n ω : ℝ) := by
-    simp_rw [distinct_observation_count_eq_sum_indicator]
+    simp_rw [distinctObservationCount_eq_sum_indicator]
     refine Finset.measurable_sum _ fun i _ ↦ measurable_const.indicator ?_
     simp only [ofPred_forall]
     exact MeasurableSet.iInter fun j ↦ MeasurableSet.iInter fun _ ↦
@@ -533,7 +537,7 @@ theorem ae_tendsto_distinct_observation_count_div_log_polya
     refine Summable.of_nonneg_of_le (fun k ↦ div_nonneg (integral_nonneg fun ω ↦ sq_nonneg _)
       (sq_nonneg _)) (fun k ↦ ?_) (((summable_nat_add_iff 1).2
         (Real.summable_one_div_nat_pow.2 one_lt_two)).mul_left B)
-    have hvar := integral_sq_distinct_observation_count_sub_le_polya P α Xn hurn (s k)
+    have hvar := integral_sq_distinctObservationCount_sub_le_polya P α Xn hurn (s k)
     have hLk := hLspos k
     have ha : 0 < ((k : ℝ) + 1) ^ 2 * Real.log 2 := by positivity
     have hck := (hDb (s k)).2
@@ -601,13 +605,13 @@ theorem ae_tendsto_distinct_observation_count_div_log_polya
     (distinctObservationCount Xn n ω : ℝ)) ?_ (fun m ↦ Nat.cast_nonneg _) ?_ s hsm
     (fun m hm ↦ hLpos1 m (le_trans (Nat.one_le_two_pow) hm)) hsub hratio
   · refine monotone_nat_of_le_succ fun n ↦ ?_
-    simp only [distinct_observation_count_succ, Nat.cast_add]
+    simp only [distinctObservationCount_succ, Nat.cast_add]
     split_ifs <;> simp
   · intro a b hab
     exact Real.log_le_log (by positivity) (by exact_mod_cast Nat.add_le_add_right hab 1)
 
 /-- No values have been observed before the first sample. -/
-@[simp] theorem distinct_observation_count_zero {Ω X : Type*} (Xn : ℕ → Ω → X) (ω : Ω) :
+@[simp] theorem distinctObservationCount_zero {Ω X : Type*} (Xn : ℕ → Ω → X) (ω : Ω) :
     distinctObservationCount Xn 0 ω = 0 := by simp [distinctObservationCount]
 
 end CKSD

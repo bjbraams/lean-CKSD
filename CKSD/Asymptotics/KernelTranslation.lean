@@ -1,5 +1,4 @@
 module
-
 public import Mathlib.MeasureTheory.Group.Prod
 public import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Borel
 public import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Separable

@@ -12,7 +12,6 @@ public import TauCeti.Probability.Distributions.FisherSnedecor.ChiSquared
 import TauCeti.Probability.Distributions.Gaussian.QuadraticForm
 import TauCeti.Probability.Distributions.Gaussian.Independence
 
-
 /-!
 # Gaussian linear models: Gauss–Markov and the residual law
 
@@ -25,12 +24,12 @@ The linear model `Y = μ + ε` on `ℝⁿ`, with mean `μ` in the range of an or
   Gauss–Markov comparison. If `P E[Y] = E[Y]`, then `⟪P a, Y⟫` is unbiased for the same
   functional as `⟪a, Y⟫`, and with uncorrelated coordinates of common variance it has no larger
   variance.
-* `CKSD.map_norm_sq_sub_div_eq_chi_squared`: for `Y ∼ N(μ, σ² I)` with `P μ = μ`, the scaled
+* `CKSD.map_norm_sq_sub_div_eq_chiSquared`: for `Y ∼ N(μ, σ² I)` with `P μ = μ`, the scaled
   residual sum of squares `‖Y - P Y‖² / σ²` has the chi-squared law with `n - rank P` degrees of
   freedom.
-* `CKSD.indep_fun_map_norm_sq_sub`: the fitted value `P Y` and the residual sum of squares are
+* `CKSD.indepFun_map_norm_sq_sub`: the fitted value `P Y` and the residual sum of squares are
   independent.
-* `CKSD.indep_fun_matrix_quadratic_form_iff`: the Craig–Sakamoto criterion for independence of
+* `CKSD.indepFun_matrixQuadraticForm_iff`: the Craig–Sakamoto criterion for independence of
   two Gaussian quadratic forms.
 
 The Craig–Sakamoto proof combines TauCeti's moment-generating function
@@ -70,7 +69,7 @@ theorem IsStarProjection.inner_map_left {E : Type*} [NormedAddCommGroup E]
   hP.isSelfAdjoint.isSymmetric x y
 
 /-- A star projection is the orthogonal projection onto its range. -/
-theorem IsStarProjection.star_projection_range_apply {E : Type*} [NormedAddCommGroup E]
+theorem IsStarProjection.starProjection_range_apply {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [CompleteSpace E] {P : E →L[ℝ] E} (hP : IsStarProjection P)
     [(LinearMap.range P.toLinearMap).HasOrthogonalProjection] (x : E) :
     (LinearMap.range P.toLinearMap).starProjection x = P x := by
@@ -111,18 +110,29 @@ theorem integral_inner_map_eq_of_map_integral_eq {Ω : Type*} [MeasurableSpace �
   rw [integral_inner hY, integral_inner hY, IsStarProjection.inner_map_left hP, hm]
 
 /-- GAPS 105.1, scalar Gauss–Markov comparison, variance: if the coordinates of `Y` are
-uncorrelated with common variance `v ≥ 0`, then for every star projection `P` the variance of
+uncorrelated with common variance `v`, then for every star projection `P` the variance of
 `⟪P a, Y⟫` is at most that of `⟪a, Y⟫`. Together with
 `integral_inner_map_eq_of_map_integral_eq` this says that projecting the coefficient vector of
 a linear unbiased estimator onto the model space does not increase its variance. -/
 theorem variance_inner_map_le {Ω : Type*} [MeasurableSpace Ω] {n : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (Y : Ω → EuclideanSpace ℝ (Fin n))
-    (hY : MemLp Y 2 μ) (v : ℝ) (hv : 0 ≤ v)
+    (hY : MemLp Y 2 μ) (v : ℝ)
     (hcov : ∀ i j, cov[fun ω ↦ Y ω i, fun ω ↦ Y ω j; μ] = if i = j then v else 0)
     (P : EuclideanSpace ℝ (Fin n) →L[ℝ] EuclideanSpace ℝ (Fin n)) (hP : IsStarProjection P)
     (a : EuclideanSpace ℝ (Fin n)) :
     Var[fun ω ↦ inner ℝ (P a) (Y ω); μ] ≤ Var[fun ω ↦ inner ℝ a (Y ω); μ] := by
   rw [variance_inner_of_covariance_eq μ Y hY v hcov, variance_inner_of_covariance_eq μ Y hY v hcov]
+  rcases isEmpty_or_nonempty (Fin n) with hn | hn
+  · simp [Subsingleton.elim a 0]
+  obtain ⟨i⟩ := hn
+  -- The common variance is the variance of any coordinate, hence nonnegative.
+  have hv : 0 ≤ v := by
+    have h := hcov i i
+    have hYi : MemLp (fun ω ↦ Y ω i) 2 μ := ContinuousLinearMap.comp_memLp'
+      (EuclideanSpace.proj i : EuclideanSpace ℝ (Fin n) →L[ℝ] ℝ) hY
+    simp only [↓reduceIte] at h
+    rw [covariance_self hYi.aestronglyMeasurable.aemeasurable] at h
+    exact h ▸ variance_nonneg _ _
   refine mul_le_mul_of_nonneg_left ?_ hv
   have horth : inner ℝ (P a) (a - P a) = 0 := by
     rw [inner_sub_right, IsStarProjection.inner_map_left hP a (P a),
@@ -136,7 +146,7 @@ theorem variance_inner_map_le {Ω : Type*} [MeasurableSpace Ω] {n : ℕ}
 
 /-- The Gaussian law `N(m, v I)` is the image of the standard Gaussian measure under
 `z ↦ m + √v z`. -/
-theorem multivariate_gaussian_smul_one_eq_map {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0) :
+theorem multivariateGaussian_smul_one_eq_map {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0) :
     multivariateGaussian m ((v : ℝ) • (1 : Matrix (Fin n) (Fin n) ℝ)) =
       (stdGaussian (EuclideanSpace ℝ (Fin n))).map (fun z ↦ m + Real.sqrt v • z) := by
   have h := TauCeti.Probability.map_add_smul_multivariateGaussian
@@ -146,13 +156,13 @@ theorem multivariate_gaussian_smul_one_eq_map {n : ℕ} (m : EuclideanSpace ℝ 
 
 /-- Under `N(m, v I)` with `v > 0`, the standardized vector `(x - m) / √v` is standard
 Gaussian. -/
-theorem has_law_smul_sub_multivariate_gaussian {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0)
+theorem hasLaw_smul_sub_multivariateGaussian {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0)
     (hv : 0 < v) :
     HasLaw (fun x ↦ (Real.sqrt v)⁻¹ • (x - m)) (stdGaussian (EuclideanSpace ℝ (Fin n)))
       (multivariateGaussian m ((v : ℝ) • (1 : Matrix (Fin n) (Fin n) ℝ))) := by
   have hs : 0 < Real.sqrt v := Real.sqrt_pos.mpr (by exact_mod_cast hv)
   refine ⟨by fun_prop, ?_⟩
-  rw [multivariate_gaussian_smul_one_eq_map, Measure.map_map (by fun_prop) (by fun_prop)]
+  rw [multivariateGaussian_smul_one_eq_map, Measure.map_map (by fun_prop) (by fun_prop)]
   have hid : (fun x ↦ (Real.sqrt v)⁻¹ • (x - m)) ∘ (fun z ↦ m + Real.sqrt v • z) = id := by
     funext z
     simp [smul_smul, hs.ne']
@@ -161,7 +171,7 @@ theorem has_law_smul_sub_multivariate_gaussian {n : ℕ} (m : EuclideanSpace ℝ
 /-- GAPS 105.2, residual chi-squared law: for `Y ∼ N(m, v I_n)` with `v > 0` and `m` in the
 range of the star projection `P`, the scaled residual sum of squares `‖Y - P Y‖² / v` has the
 chi-squared law with `n - rank P` degrees of freedom. -/
-theorem map_norm_sq_sub_div_eq_chi_squared {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0)
+theorem map_norm_sq_sub_div_eq_chiSquared {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0)
     (hv : 0 < v) (P : EuclideanSpace ℝ (Fin n) →L[ℝ] EuclideanSpace ℝ (Fin n))
     (hP : IsStarProjection P) (hm : P m = m) :
     (multivariateGaussian m ((v : ℝ) • (1 : Matrix (Fin n) (Fin n) ℝ))).map
@@ -174,11 +184,11 @@ theorem map_norm_sq_sub_div_eq_chi_squared {n : ℕ} (m : EuclideanSpace ℝ (Fi
     simp only [finrank_euclideanSpace_fin] at h
     omega
   have hs2 : Real.sqrt (v : ℝ) ^ 2 = v := Real.sq_sqrt v.coe_nonneg
-  have hZ := has_law_smul_sub_multivariate_gaussian m v hv
+  have hZ := hasLaw_smul_sub_multivariateGaussian m v hv
   have hnorm : ∀ x, ‖Kᗮ.orthogonalProjectionOnto ((Real.sqrt (v : ℝ))⁻¹ • (x - m))‖ ^ 2 = ‖x - P x‖ ^ 2 / v := by
     intro x
     change ‖Kᗮ.starProjection ((Real.sqrt (v : ℝ))⁻¹ • (x - m))‖ ^ 2 = _
-    rw [K.starProjection_orthogonal_val, IsStarProjection.star_projection_range_apply hP]
+    rw [K.starProjection_orthogonal_val, IsStarProjection.starProjection_range_apply hP]
     have hpt : (Real.sqrt (v : ℝ))⁻¹ • (x - m) - P ((Real.sqrt (v : ℝ))⁻¹ • (x - m)) = (Real.sqrt (v : ℝ))⁻¹ • (x - P x) := by
       simp only [map_smul, map_sub, hm]
       module
@@ -188,7 +198,7 @@ theorem map_norm_sq_sub_div_eq_chi_squared {n : ℕ} (m : EuclideanSpace ℝ (Fi
 /-- GAPS 105.2, projection independence: for `Y ∼ N(m, v I_n)` with `v > 0` and any star
 projection `P`, the fitted value `P Y` and the residual sum of squares `‖Y - P Y‖²` are
 independent. -/
-theorem indep_fun_map_norm_sq_sub {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0)
+theorem indepFun_map_norm_sq_sub {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0)
     (hv : 0 < v) (P : EuclideanSpace ℝ (Fin n) →L[ℝ] EuclideanSpace ℝ (Fin n))
     (hP : IsStarProjection P) :
     IndepFun P (fun x ↦ ‖x - P x‖ ^ 2)
@@ -196,7 +206,7 @@ theorem indep_fun_map_norm_sq_sub {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v 
   let K := LinearMap.range P.toLinearMap
   set s := Real.sqrt (v : ℝ)
   have hs : 0 < s := Real.sqrt_pos.mpr (by exact_mod_cast hv)
-  have hZ := has_law_smul_sub_multivariate_gaussian m v hv
+  have hZ := hasLaw_smul_sub_multivariateGaussian m v hv
   let Ks : Bool → Submodule ℝ (EuclideanSpace ℝ (Fin n)) := fun b ↦ if b then K else Kᗮ
   have horth : Pairwise fun i j ↦ (Ks i).IsOrtho (Ks j) := by
     intro i j hij
@@ -211,14 +221,14 @@ theorem indep_fun_map_norm_sq_sub {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v 
       EuclideanSpace ℝ (Fin n)) = P x := by
     intro x
     change P m + s • K.starProjection (s⁻¹ • (x - m)) = P x
-    rw [IsStarProjection.star_projection_range_apply hP]
+    rw [IsStarProjection.starProjection_range_apply hP]
     simp only [map_smul, map_sub, smul_smul, mul_inv_cancel₀ hs.ne', one_smul]
     abel
   have hres : ∀ x, ‖(m - P m) + s • (Kᗮ.orthogonalProjectionOnto (s⁻¹ • (x - m)) :
       EuclideanSpace ℝ (Fin n))‖ ^ 2 = ‖x - P x‖ ^ 2 := by
     intro x
     change ‖(m - P m) + s • Kᗮ.starProjection (s⁻¹ • (x - m))‖ ^ 2 = _
-    rw [K.starProjection_orthogonal_val, IsStarProjection.star_projection_range_apply hP]
+    rw [K.starProjection_orthogonal_val, IsStarProjection.starProjection_range_apply hP]
     congr 2
     simp only [map_smul, map_sub, smul_sub, smul_smul, mul_inv_cancel₀ hs.ne', one_smul]
     abel
@@ -342,7 +352,7 @@ private theorem trace_pow_eq_add_of_det_one_sub_smul {M P Q : Matrix ι ι ℝ} 
 
 /-- A Hermitian real matrix has a generalized inverse `P` with `A P A = A` (the functional
 calculus of `x ↦ x⁻¹`). -/
-private theorem exists_mul_mul_eq_self_of_is_hermitian {A : Matrix ι ι ℝ} (hA : A.IsHermitian) :
+private theorem exists_mul_mul_eq_self_of_isHermitian {A : Matrix ι ι ℝ} (hA : A.IsHermitian) :
     ∃ P : Matrix ι ι ℝ, A * P * A = A := by
   refine ⟨cfc (fun x : ℝ ↦ x⁻¹) A, ?_⟩
   have hc : ∀ f : ℝ → ℝ, ContinuousOn f (spectrum ℝ A) :=
@@ -357,7 +367,7 @@ private theorem exists_mul_mul_eq_self_of_is_hermitian {A : Matrix ι ι ℝ} (h
 
 /-- With `A P A = A` and `A` symmetric, the quadratic form of `A` factors through `x ↦ A x`:
 `xᵀ A x = (A x)ᵀ P (A x)`. -/
-private theorem matrix_quadratic_form_eq_comp {n : ℕ} {A P : Matrix (Fin n) (Fin n) ℝ} (hA : A.IsSymm)
+private theorem matrixQuadraticForm_eq_comp {n : ℕ} {A P : Matrix (Fin n) (Fin n) ℝ} (hA : A.IsSymm)
     (hP : A * P * A = A) (x : EuclideanSpace ℝ (Fin n)) :
     matrixQuadraticForm A x = matrixQuadraticForm P (A.toEuclideanLin x) := by
   have hform (M : Matrix (Fin n) (Fin n) ℝ) (v : EuclideanSpace ℝ (Fin n)) :
@@ -376,28 +386,28 @@ private theorem matrix_quadratic_form_eq_comp {n : ℕ} {A P : Matrix (Fin n) (F
 
 /-- The sufficiency half of Craig–Sakamoto: if `A Σ B = 0`, then `A Y` and `B Y` are
 independent, hence so are the quadratic forms, which factor through them. -/
-private theorem indep_fun_matrix_quadratic_form_of_mul_mul_eq_zero {n : ℕ}
+private theorem indepFun_matrixQuadraticForm_of_mul_mul_eq_zero {n : ℕ}
     {Sigma A B : Matrix (Fin n) (Fin n) ℝ} (hS : Sigma.PosSemidef) (hA : A.IsSymm)
     (hB : B.IsSymm) (h : A * Sigma * B = 0) :
     IndepFun (matrixQuadraticForm A) (matrixQuadraticForm B) (multivariateGaussian 0 Sigma) := by
   have hAH : A.IsHermitian := by rw [IsHermitian, conjTranspose_eq_transpose_of_trivial]; exact hA
   have hBH : B.IsHermitian := by rw [IsHermitian, conjTranspose_eq_transpose_of_trivial]; exact hB
-  obtain ⟨PA, hPA⟩ := exists_mul_mul_eq_self_of_is_hermitian hAH
-  obtain ⟨PB, hPB⟩ := exists_mul_mul_eq_self_of_is_hermitian hBH
+  obtain ⟨PA, hPA⟩ := exists_mul_mul_eq_self_of_isHermitian hAH
+  obtain ⟨PB, hPB⟩ := exists_mul_mul_eq_self_of_isHermitian hBH
   have hind := (TauCeti.Probability.indepFun_matrix_multivariateGaussian_iff 0 hS A B).2
     (by rw [hB.eq]; exact h)
-  have h' := hind.comp (measurable_matrix_quadratic_form PA) (measurable_matrix_quadratic_form PB)
+  have h' := hind.comp (measurable_matrixQuadraticForm PA) (measurable_matrixQuadraticForm PB)
   convert h' using 1
   · funext x
-    exact matrix_quadratic_form_eq_comp hA hPA x
+    exact matrixQuadraticForm_eq_comp hA hPA x
   · funext x
-    exact matrix_quadratic_form_eq_comp hB hPB x
+    exact matrixQuadraticForm_eq_comp hB hPB x
 
 open scoped RealInnerProductSpace in
 /-- The necessity half of Craig–Sakamoto: independence factors the moment-generating functions
 of `Q_A ± Q_B` near `0`, giving `det (1 - s(Ã ± B̃)) = det (1 - sÃ) det (1 ∓ sB̃)` for
 `Ã = √Σ A √Σ`, `B̃ = √Σ B √Σ`; the fourth trace powers then force `Ã B̃ = 0`. -/
-private theorem mul_mul_eq_zero_of_indep_fun_matrix_quadratic_form {n : ℕ}
+private theorem mul_mul_eq_zero_of_indepFun_matrixQuadraticForm {n : ℕ}
     {Sigma A B : Matrix (Fin n) (Fin n) ℝ} (hS : Sigma.PosDef) (hA : A.IsSymm) (hB : B.IsSymm)
     (hind : IndepFun (matrixQuadraticForm A) (matrixQuadraticForm B)
       (multivariateGaussian 0 Sigma)) :
@@ -411,7 +421,7 @@ private theorem mul_mul_eq_zero_of_indep_fun_matrix_quadratic_form {n : ℕ}
     rfl
   have hqm (Θ : Matrix (Fin n) (Fin n) ℝ) : Measurable (q Θ) := by
     rw [← hq]
-    exact measurable_matrix_quadratic_form Θ
+    exact measurable_matrixQuadraticForm Θ
   have hqadd (Θ Θ' : Matrix (Fin n) (Fin n) ℝ) : q (Θ + Θ') = q Θ + q Θ' := by
     funext x
     simp [q, map_add, inner_add_right]
@@ -505,11 +515,11 @@ end CraigSakamoto
 /-- GAPS 105.15, Craig–Sakamoto criterion: for `Y ∼ N(0, Σ)` with `Σ` positive definite and
 symmetric matrices `A`, `B`, the quadratic forms `Yᵀ A Y` and `Yᵀ B Y` are independent if and
 only if `A Σ B = 0`. -/
-theorem indep_fun_matrix_quadratic_form_iff {n : ℕ} (Sigma A B : Matrix (Fin n) (Fin n) ℝ)
+theorem indepFun_matrixQuadraticForm_iff {n : ℕ} (Sigma A B : Matrix (Fin n) (Fin n) ℝ)
     (hS : Sigma.PosDef) (hA : A.IsSymm) (hB : B.IsSymm) :
     IndepFun (matrixQuadraticForm A) (matrixQuadraticForm B)
       (multivariateGaussian 0 Sigma) ↔ A * Sigma * B = 0 :=
-  ⟨mul_mul_eq_zero_of_indep_fun_matrix_quadratic_form hS hA hB,
-    indep_fun_matrix_quadratic_form_of_mul_mul_eq_zero hS.posSemidef hA hB⟩
+  ⟨mul_mul_eq_zero_of_indepFun_matrixQuadraticForm hS hA hB,
+    indepFun_matrixQuadraticForm_of_mul_mul_eq_zero hS.posSemidef hA hB⟩
 
 end CKSD

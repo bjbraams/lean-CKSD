@@ -8,7 +8,6 @@ public import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
 public import TauCeti.Analysis.Calculus.LineDeriv.IntegrationByParts
 public import TauCeti.Probability.Distributions.Gaussian.Density
 
-
 /-!
 # Kinetic Langevin dynamics
 
@@ -36,9 +35,9 @@ Bregman divergence of `V`, with a Grönwall argument for the twisted norm.
 
 ## Main results
 
-* `CKSD.integral_kinetic_generator_eq_zero`: invariance of the Gibbs law.
-* `CKSD.exists_kinetic_generator_not_symmetric`: the dynamics is not reversible.
-* `CKSD.kinetic_coupling_norm_synchronous_le`: contraction of synchronous coupling.
+* `CKSD.integral_kineticGenerator_eq_zero`: invariance of the Gibbs law.
+* `CKSD.exists_kineticGenerator_not_symmetric`: the dynamics is not reversible.
+* `CKSD.kineticCouplingNorm_synchronous_le`: contraction of synchronous coupling.
 * `CKSD.exists_kinetic_hypocoercive_decay_of_poincare`,
   `CKSD.exists_kinetic_entropic_hypocoercive_decay`: `L²` and entropic hypocoercivity.
 
@@ -108,7 +107,7 @@ variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 
 /-- A smooth density and its logarithmic derivative for the kinetic Gibbs measure. -/
-theorem exists_has_density_kinetic_gibbs_measure (V : E → ℝ) (gradV : E → E) (β : ℝ)
+theorem exists_hasDensity_kineticGibbsMeasure (V : E → ℝ) (gradV : E → E) (β : ℝ)
     (hV : IsSamplingPotential V gradV β) :
     ∃ ρ : E × E → ℝ,
       HasDensity (kineticGibbsMeasure V) (volume.prod volume) ρ ∧
@@ -155,7 +154,7 @@ theorem exists_has_density_kinetic_gibbs_measure (V : E → ℝ) (gradV : E → 
     ring
 
 /-- Weighted divergence form of the kinetic generator has zero integral. -/
-theorem integral_mul_kinetic_generator_eq_zero_of_fderiv_density
+theorem integral_mul_kineticGenerator_eq_zero_of_fderiv_density
     (b : E → E) (hb : ContDiff ℝ 1 b) (γ : ℝ)
     (ρ : E × E → ℝ) (hρ : ContDiff ℝ 1 ρ)
     (hρder : ∀ z v, fderiv ℝ ρ z v = -(inner ℝ (b z.1) v.1 + inner ℝ z.2 v.2) * ρ z)
@@ -274,20 +273,20 @@ end Invariance
 
 /-- GAPS 104.48: invariance of `π ⊗ N(0, I)`, in the weak form `∫ Lf d𝛑 = 0` for smooth compactly
 supported `f`. -/
-theorem integral_kinetic_generator_eq_zero {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
+theorem integral_kineticGenerator_eq_zero {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (β γ : ℝ)
     (hV : IsSamplingPotential V gradV β)
     (f : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) → ℝ) (hf : ContDiff ℝ ∞ f)
     (hfc : HasCompactSupport f) :
     ∫ z, kineticGenerator gradV γ f z ∂kineticGibbsMeasure V = 0 := by
-  obtain ⟨ρ, hden, hρ, hρder⟩ := exists_has_density_kinetic_gibbs_measure V gradV β hV
+  obtain ⟨ρ, hden, hρ, hρder⟩ := exists_hasDensity_kineticGibbsMeasure V gradV β hV
   have hb : ContDiff ℝ 1 gradV := by
     have heq : gradV = gradient V := funext fun x ↦ (hV.hasGradientAt x).gradient.symm
     rw [heq]
     exact (InnerProductSpace.toDual ℝ (EuclideanSpace ℝ (Fin d))).symm.contDiff.comp
       (hV.contDiff.fderiv_right (by norm_num))
   rw [hden.integral_eq]
-  exact integral_mul_kinetic_generator_eq_zero_of_fderiv_density gradV hb γ ρ hρ hρder f
+  exact integral_mul_kineticGenerator_eq_zero_of_fderiv_density gradV hb γ ρ hρ hρder f
     (hf.of_le (by simp)) hfc
 
 section Irreversibility
@@ -312,7 +311,7 @@ private theorem fderiv_comp_fst_apply {c : E → ℝ} (hc : Differentiable ℝ c
 
 /-- Product rule for the kinetic generator with a factor depending on position only:
 `L(f·(c ∘ fst)) = f·(p·∇c) + c·Lf`, since the factor has no momentum derivatives. -/
-private theorem kinetic_generator_mul_comp_fst (gradV : E → E) (γ : ℝ) {c : E → ℝ}
+private theorem kineticGenerator_mul_comp_fst (gradV : E → E) (γ : ℝ) {c : E → ℝ}
     (hc : ContDiff ℝ 2 c) {f : E × E → ℝ} (hf : ContDiff ℝ 2 f) (z : E × E) :
     kineticGenerator gradV γ (fun z ↦ f z * c z.1) z =
       f z * fderiv ℝ c z.1 z.2 + c z.1 * kineticGenerator gradV γ f z := by
@@ -347,12 +346,12 @@ private theorem kinetic_generator_mul_comp_fst (gradV : E → E) (γ : ℝ) {c :
 
 
 /-- The kinetic generator is a local operator. -/
-private theorem kinetic_generator_congr {gradV : E → E} {γ : ℝ} {f₁ f₂ : E × E → ℝ} {z : E × E}
+private theorem kineticGenerator_congr {gradV : E → E} {γ : ℝ} {f₁ f₂ : E × E → ℝ} {z : E × E}
     (h : f₁ =ᶠ[nhds z] f₂) : kineticGenerator gradV γ f₁ z = kineticGenerator gradV γ f₂ z := by
   simp only [kineticGenerator, h.fderiv_eq, h.fderiv.fderiv_eq]
 
 /-- The kinetic generator of a `C²` function is continuous when `∇V` is continuous. -/
-private theorem continuous_kinetic_generator {gradV : E → E} (hb : Continuous gradV) (γ : ℝ)
+private theorem continuous_kineticGenerator {gradV : E → E} (hb : Continuous gradV) (γ : ℝ)
     {f : E × E → ℝ} (hf : ContDiff ℝ 2 f) : Continuous (kineticGenerator gradV γ f) := by
   have h1 : Continuous (fderiv ℝ f) := hf.continuous_fderiv two_ne_zero
   have h2 : Continuous (fderiv ℝ (fderiv ℝ f)) :=
@@ -364,7 +363,7 @@ private theorem continuous_kinetic_generator {gradV : E → E} (hb : Continuous 
 
 /-- The kinetic Gibbs law charges every nonempty open set: both factors have everywhere positive
 densities. -/
-private theorem is_open_pos_measure_kinetic_gibbs_measure {V : E → ℝ}
+private theorem isOpenPosMeasure_kineticGibbsMeasure {V : E → ℝ}
     (hV : Continuous V) (hint : Integrable (fun x ↦ Real.exp (-V x))) :
     (kineticGibbsMeasure V).IsOpenPosMeasure := by
   have hZ : 0 < ∫ x, Real.exp (-V x) :=
@@ -387,7 +386,7 @@ private theorem is_open_pos_measure_kinetic_gibbs_measure {V : E → ℝ}
 /-- Non-reversibility of the kinetic generator, with explicit test functions: for a bump `c` in
 position, `g ≈ c(x)` and `f = (p·∇c(x)) χ` with a bump `χ`, the product rule and invariance give
 `∫ g Lf = -∫ f Lg`, while `∫ f Lg = ∫ (p·∇c)² χ > 0`. -/
-private theorem exists_kinetic_generator_not_symmetric_aux (hd : 0 < d) (V : E → ℝ)
+private theorem exists_kineticGenerator_not_symmetric_aux (hd : 0 < d) (V : E → ℝ)
     (gradV : E → E) (β γ : ℝ) (hV : IsSamplingPotential V gradV β) :
     ∃ f g : E × E → ℝ,
       ContDiff ℝ ∞ f ∧ HasCompactSupport f ∧ ContDiff ℝ ∞ g ∧ HasCompactSupport g ∧
@@ -398,11 +397,11 @@ private theorem exists_kinetic_generator_not_symmetric_aux (hd : 0 < d) (V : E �
     rw [heq]
     exact (InnerProductSpace.toDual ℝ E).symm.continuous.comp
       (hV.contDiff.continuous_fderiv two_ne_zero)
-  have := is_probability_measure_gibbs_measure hV.integrable
+  have := isProbabilityMeasure_gibbsMeasure hV.integrable
   have : IsProbabilityMeasure (kineticGibbsMeasure V) := by
     unfold kineticGibbsMeasure
     infer_instance
-  have := is_open_pos_measure_kinetic_gibbs_measure hV.contDiff.continuous hV.integrable
+  have := isOpenPosMeasure_kineticGibbsMeasure hV.contDiff.continuous hV.integrable
   -- the position bump `c` and a point where its derivative does not vanish
   let bc : ContDiffBump (0 : E) := ⟨1, 2, one_pos, one_lt_two⟩
   set c : E → ℝ := ⇑bc with hc_def
@@ -454,12 +453,12 @@ private theorem exists_kinetic_generator_not_symmetric_aux (hd : 0 < d) (V : E �
     notMem_tsupport_iff_eventuallyEq.mp hz
   have hLG : ∀ z, kineticGenerator gradV γ G z = fderiv ℝ c z.1 z.2 := by
     intro z
-    have := kinetic_generator_mul_comp_fst gradV γ hc2 (contDiff_const (c := (1 : ℝ))) z
+    have := kineticGenerator_mul_comp_fst gradV γ hc2 (contDiff_const (c := (1 : ℝ))) z
     simpa [G, kineticGenerator] using this
   have hfLg : ∀ z, f z * kineticGenerator gradV γ g z = fderiv ℝ c z.1 z.2 ^ 2 * bχ z := by
     intro z
     by_cases hz : z ∈ tsupport f
-    · rw [kinetic_generator_congr (hU z hz), hLG]
+    · rw [kineticGenerator_congr (hU z hz), hLG]
       simp only [f]
       ring
     · have h0 : f z = 0 := (hfz z hz).eq_of_nhds
@@ -470,11 +469,11 @@ private theorem exists_kinetic_generator_not_symmetric_aux (hd : 0 < d) (V : E �
       kineticGenerator gradV γ (fun z ↦ f z * c z.1) z := by
     intro z
     by_cases hz : z ∈ tsupport f
-    · rw [kinetic_generator_congr (hU z hz), (hU z hz).eq_of_nhds, hLG,
-        kinetic_generator_mul_comp_fst gradV γ hc2 hf2]
+    · rw [kineticGenerator_congr (hU z hz), (hU z hz).eq_of_nhds, hLG,
+        kineticGenerator_mul_comp_fst gradV γ hc2 hf2]
     · have e := hfz z hz
       have e2 : (fun z ↦ f z * c z.1) =ᶠ[nhds z] 0 := e.mono fun y hy ↦ by simp [hy]
-      rw [kinetic_generator_congr e, kinetic_generator_congr e2, e.eq_of_nhds]
+      rw [kineticGenerator_congr e, kineticGenerator_congr e2, e.eq_of_nhds]
       simp [kineticGenerator]
   have hFc : Continuous fun z : E × E ↦ fderiv ℝ c z.1 z.2 ^ 2 * bχ z :=
     ((((hc2.continuous_fderiv two_ne_zero).comp continuous_fst).clm_apply continuous_snd).pow 2).mul
@@ -490,11 +489,11 @@ private theorem exists_kinetic_generator_not_symmetric_aux (hd : 0 < d) (V : E �
     simp_rw [hfLg]
     exact hFc.integrable_of_hasCompactSupport hFs
   have hint2 : Integrable (fun z ↦ g z * kineticGenerator gradV γ f z) (kineticGibbsMeasure V) :=
-    (hg.continuous.mul (continuous_kinetic_generator hb γ hf2)).integrable_of_hasCompactSupport
+    (hg.continuous.mul (continuous_kineticGenerator hb γ hf2)).integrable_of_hasCompactSupport
       hgc.mul_right
   have hsum := integral_add hint1 hint2
   simp_rw [hkey] at hsum
-  rw [integral_kinetic_generator_eq_zero V gradV β γ hV (fun z ↦ f z * c z.1)
+  rw [integral_kineticGenerator_eq_zero V gradV β γ hV (fun z ↦ f z * c z.1)
     (hf.mul (hc.comp contDiff_fst)) hfc.mul_right] at hsum
   refine ⟨f, g, hf, hfc, hg, hgc, ?_⟩
   linarith
@@ -503,7 +502,7 @@ end Irreversibility
 
 /-- GAPS 104.48: the kinetic Langevin diffusion is not reversible: its generator is not symmetric
 in `L²(𝛑)` on smooth compactly supported functions, in every positive dimension. -/
-theorem exists_kinetic_generator_not_symmetric {d : ℕ} (hd : 0 < d)
+theorem exists_kineticGenerator_not_symmetric {d : ℕ} (hd : 0 < d)
     (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (β γ : ℝ)
     (hV : IsSamplingPotential V gradV β) :
@@ -511,7 +510,7 @@ theorem exists_kinetic_generator_not_symmetric {d : ℕ} (hd : 0 < d)
       ContDiff ℝ ∞ f ∧ HasCompactSupport f ∧ ContDiff ℝ ∞ g ∧ HasCompactSupport g ∧
       ∫ z, f z * kineticGenerator gradV γ g z ∂kineticGibbsMeasure V ≠
         ∫ z, g z * kineticGenerator gradV γ f z ∂kineticGibbsMeasure V :=
-  exists_kinetic_generator_not_symmetric_aux hd V gradV β γ hV
+  exists_kineticGenerator_not_symmetric_aux hd V gradV β γ hV
 
 section Coupling
 
@@ -520,7 +519,7 @@ variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 
 /-- Derivative of a potential along the segment `t ↦ x + t • u`. -/
-private theorem has_deriv_at_comp_add_smul {V : E → ℝ} {gradV : E → E}
+private theorem hasDerivAt_comp_add_smul {V : E → ℝ} {gradV : E → E}
     (hgrad : ∀ x, HasGradientAt V (gradV x) x) (x u : E) (t : ℝ) :
     HasDerivAt (fun s : ℝ ↦ V (x + s • u)) ⟪gradV (x + t • u), u⟫ t := by
   have hl : HasDerivAt (fun s : ℝ ↦ x + s • u) u t := by
@@ -543,7 +542,7 @@ private theorem bregman_bounds {V : E → ℝ} {gradV : E → E} {α β : ℝ}
   have hx : x + (0 : ℝ) • u = x := by simp
   set φ : ℝ → ℝ := fun t ↦ V (x + t • u) - t * ⟪gradV x, u⟫ with hφ
   have hd (t : ℝ) : HasDerivAt φ (⟪gradV (x + t • u), u⟫ - ⟪gradV x, u⟫) t := by
-    have := (has_deriv_at_comp_add_smul hgrad x u t).sub ((hasDerivAt_id t).mul_const ⟪gradV x, u⟫)
+    have := (hasDerivAt_comp_add_smul hgrad x u t).sub ((hasDerivAt_id t).mul_const ⟪gradV x, u⟫)
     simp only [id, one_mul] at this
     exact this
   have hcont : Continuous φ := continuous_iff_continuousAt.2 fun t ↦ (hd t).continuousAt
@@ -816,10 +815,10 @@ end Coupling
 /-- GAPS 104.48: contraction of synchronous coupling in the twisted norm at rate `α/γ`, for
 `αI ⪯ ∇²V ⪯ βI` and `γ ≥ √(2β)`. The differences of two copies driven by one Brownian motion
 solve the noiseless integral equations given as hypotheses. -/
-theorem kinetic_coupling_norm_synchronous_le {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
+theorem kineticCouplingNorm_synchronous_le {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (α β γ : ℝ) (hα : 0 < α)
     (hV : IsSamplingPotential V gradV β) (hmono : IsStronglyMonotoneGradient gradV α)
-    (hγ : 0 < γ) (hγβ : Real.sqrt (2 * β) ≤ γ)
+    (hγβ : Real.sqrt (2 * β) ≤ γ)
     (x p y q : ℝ → EuclideanSpace ℝ (Fin d))
     (hx : Continuous x) (hp : Continuous p) (hy : Continuous y) (hq : Continuous q)
     (hdx : ∀ t ≥ 0, x t - y t = x 0 - y 0 + ∫ s in (0 : ℝ)..t, p s - q s)
@@ -845,6 +844,7 @@ theorem kinetic_coupling_norm_synchronous_le {d : ℕ} (V : EuclideanSpace ℝ (
     have h3 := real_inner_le_norm (gradV e - gradV 0) (e - 0)
     rw [sub_zero, he] at h1 h2 h3
     nlinarith
+  have hγ : 0 < γ := (Real.sqrt_pos.2 (by linarith)).trans_le hγβ
   have hgc : Continuous gradV := by
     have heq : gradV = gradient V := funext fun z ↦ (hV.hasGradientAt z).gradient.symm
     have hb : ContDiff ℝ 1 gradV := by

@@ -23,9 +23,6 @@ public import CKSD.Asymptotics.UStatisticsProjection
 public import CKSD.Asymptotics.LipschitzChaining
 public import CKSD.Asymptotics.LipschitzExpansion
 
-
-namespace CKSD
-
 /-!
 # Section 102: Asymptotic statistics
 
@@ -53,6 +50,3 @@ Entry module for the CKSD formalization of Section 102.
 * `CKSD.Asymptotics.HigherOrder`, `CKSD.Asymptotics.Expansions`, `CKSD.Asymptotics.Bootstrap`:
   robustness, Edgeworth and saddlepoint expansions, and the bootstrap.
 -/
-
-
-end CKSD

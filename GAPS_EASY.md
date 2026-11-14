@@ -2249,9 +2249,9 @@ standard Borel sample space, with $\Theta$ Polish,
 $\theta\mapsto P_\theta(A)$ measurable for every measurable $A$, and
 $\theta\mapsto P_\theta$ injective, and let $\Pi$ be a prior. For
 $X_1,X_2,\ldots$ independent with law $P_\theta$, there is a $\Pi$-null set
-$N$ such that for every $\theta\notin N$ and every neighbourhood $U$ of
-$\theta$, the posterior probability of $U$ tends to $1$,
-$P_\theta^\infty$-almost surely. Mathlib's Lévy upward theorem gives
+$N$ such that for every $\theta\notin N$, $P_\theta^\infty$-almost surely, the
+posterior probability of every neighbourhood $U$ of $\theta$ tends to $1$.
+Mathlib's Lévy upward theorem gives
 almost-sure convergence of the posterior probability of $U$ to its
 conditional expectation given the whole sequence; the remaining step is that
 $\theta$ is a measurable function of the sequence, which follows from
@@ -2298,8 +2298,9 @@ Neighbourhoods. $\Theta$ is second countable. Apply the last step to a
 countable base $(U_j)$ and let $N$ be the union of the countably many
 exceptional $\Pi$-null sets. For $\theta\notin N$ and a neighbourhood $U$
 choose $U_j$ with $\theta\in U_j\subset U$. Then
-$\Pi_n(U)\ge\Pi_n(U_j)\to1$ almost surely, because each $\Pi_n$ is a
-measure.
+$\Pi_n(U)\ge\Pi_n(U_j)\to1$, because each $\Pi_n$ is a measure. The
+$P_\theta^\infty$-null exceptional set is the union of those for the countably many
+$U_j$, so it does not depend on $U$.
 
 **Library results.** `MeasureTheory.Integrable.tendsto_ae_condExp` in
 `Mathlib/Probability/Martingale/Convergence.lean`;
@@ -5108,9 +5109,12 @@ characterization of extreme eigenvalues; no library defines the
 normalized Laplacian, conductance or Cheeger constant, and the sweep-cut
 argument for the upper bound is absent.
 
-**Scope.** Only the easy inequality $\lambda_1\le2h(G)$ is proved here. The
-sweep-cut upper bound $h(G)\le\sqrt{2\lambda_1}$ and the sharper bound
-$\lambda_1\ge1-\sqrt{1-h(G)^2}$ remain gaps.
+**Scope.** All three inequalities are proved here. The argument below gives
+the easy inequality $\lambda_1\le2h(G)$; the upper bound
+$h(G)\le\sqrt{2\lambda_1}$ and the sharper bound
+$\lambda_1\ge1-\sqrt{1-h(G)^2}$ follow from the co-area argument applied to
+the positive and negative parts of a weighted median shift of each
+admissible test function.
 
 **Argument.** The weighted graph, $\mathcal L$, volumes and $h(G)$ are new
 definitions. Connectedness with at least two vertices makes all degrees
@@ -5947,9 +5951,8 @@ TauCeti's volumetric bound on covering numbers of bounded sets in
 finite-dimensional normed spaces supplies the nets, and the argument is
 absent.
 
-**Scope.** The unbiasedness identity, the pointwise bound, and the MMD
-comparison on the event are proved here. The uniform bound remains a gap.
-The kernel is real-valued here, as the statement implies, so $\psi$ is real
+**Scope.** The unbiasedness identity, the pointwise bound, the uniform
+bound, and the MMD comparison on the event are proved here. The kernel is real-valued here, as the statement implies, so $\psi$ is real
 and even.
 
 **Argument.** Bochner's theorem gives

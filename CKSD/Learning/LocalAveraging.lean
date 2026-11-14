@@ -3,7 +3,6 @@ module
 public import CKSD.Learning.Basic
 public import Mathlib.Probability.Moments.Variance
 
-
 /-!
 # Nearest-neighbour rules and local averaging estimates
 
@@ -25,11 +24,11 @@ test pair.
 
 ## Main results
 
-* `CKSD.tendsto_one_nn_expected_error`: Cover–Hart convergence of the `1`-NN error (GAPS 107.14).
-* `CKSD.bayes_risk_le_nn_risk_le`: `R* ≤ L_NN ≤ 2R*(1 - R*)` (GAPS 107.14).
-* `CKSD.exists_tendsto_knn_expected_error`, `CKSD.tendsto_knn_expected_error_bayes_risk`: limits
+* `CKSD.tendsto_oneNN_expectedError`: Cover–Hart convergence of the `1`-NN error (GAPS 107.14).
+* `CKSD.bayesRisk_le_nnRisk_le`: `R* ≤ L_NN ≤ 2R*(1 - R*)` (GAPS 107.14).
+* `CKSD.exists_tendsto_knn_expectedError`, `CKSD.tendsto_knn_expectedError_bayesRisk`: limits
   for fixed odd `k` and Stone's universal consistency (GAPS 107.14).
-* `CKSD.tendsto_local_averaging_sq_error`: Stone's theorem for response-independent local
+* `CKSD.tendsto_localAveraging_sq_error`: Stone's theorem for response-independent local
   averaging (GAPS 107.20).
 -/
 
@@ -77,7 +76,7 @@ def nearestNeighborAsymptoticRisk {E : Type*} [MeasurableSpace E] (μ : Measure 
 
 /-- GAPS 107.14 (Cover–Hart): for every distribution on `ℝ^d × {0,1}`, the expected error of the
 `1`-nearest-neighbour rule converges to `L_NN = 𝔼[2η(X)(1 - η(X))]`. -/
-theorem tendsto_one_nn_expected_error {d : ℕ} (μ : Measure (EuclideanSpace ℝ (Fin d)))
+theorem tendsto_oneNN_expectedError {d : ℕ} (μ : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure μ] (η : EuclideanSpace ℝ (Fin d) → ℝ) (hη : Measurable η)
     (h01 : ∀ x, η x ∈ Icc 0 1) :
     Tendsto (fun n ↦ knnExpectedError μ η 1 n) atTop
@@ -85,7 +84,7 @@ theorem tendsto_one_nn_expected_error {d : ℕ} (μ : Measure (EuclideanSpace �
   sorry
 
 /-- GAPS 107.14, Cover–Hart inequalities `R* ≤ L_NN ≤ 2R*(1 - R*)`. -/
-theorem bayes_risk_le_nn_risk_le {E : Type*} [MeasurableSpace E] (μ : Measure E)
+theorem bayesRisk_le_nnRisk_le {E : Type*} [MeasurableSpace E] (μ : Measure E)
     [IsProbabilityMeasure μ] (η : E → ℝ) (hη : Measurable η) (h01 : ∀ x, η x ∈ Icc 0 1) :
     bayesClassificationRisk μ η ≤ nearestNeighborAsymptoticRisk μ η ∧
       nearestNeighborAsymptoticRisk μ η ≤
@@ -129,7 +128,7 @@ theorem bayes_risk_le_nn_risk_le {E : Type*} [MeasurableSpace E] (μ : Measure E
 
 /-- GAPS 107.14, fixed odd `k`: the limits `L_kNN` of the expected errors exist, are
 nonincreasing over odd `k`, and satisfy `R* ≤ L_kNN ≤ R* + 1/√(k e)`. -/
-theorem exists_tendsto_knn_expected_error {d : ℕ} (μ : Measure (EuclideanSpace ℝ (Fin d)))
+theorem exists_tendsto_knn_expectedError {d : ℕ} (μ : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure μ] (η : EuclideanSpace ℝ (Fin d) → ℝ) (hη : Measurable η)
     (h01 : ∀ x, η x ∈ Icc 0 1) :
     ∃ L : ℕ → ℝ, (∀ k, Odd k → Tendsto (fun n ↦ knnExpectedError μ η k n) atTop (𝓝 (L k))) ∧
@@ -140,7 +139,7 @@ theorem exists_tendsto_knn_expected_error {d : ℕ} (μ : Measure (EuclideanSpac
 
 /-- GAPS 107.14, universal consistency (Stone): if `kₙ → ∞` and `kₙ / n → 0`, the expected
 error of the `kₙ`-nearest-neighbour rule tends to the Bayes risk for every distribution. -/
-theorem tendsto_knn_expected_error_bayes_risk {d : ℕ} (μ : Measure (EuclideanSpace ℝ (Fin d)))
+theorem tendsto_knn_expectedError_bayesRisk {d : ℕ} (μ : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure μ] (η : EuclideanSpace ℝ (Fin d) → ℝ) (hη : Measurable η)
     (h01 : ∀ x, η x ∈ Icc 0 1) (k : ℕ → ℕ) (hk : Tendsto k atTop atTop)
     (hkn : Tendsto (fun n ↦ (k n : ℝ) / n) atTop (𝓝 0)) :
@@ -154,7 +153,7 @@ the query point `x`, the sample features `xs`, and independent randomness `u ∼
 the responses. Under the domination, localization, and vanishing-maximum conditions the
 estimate `mₙ(x) = ∑ᵢ wₙᵢ(x) Yᵢ` is consistent in `L²(P_X)` for the regression function `m`,
 characterized by `∫_{X ∈ s} Y = ∫_s m dP_X`. -/
-theorem tendsto_local_averaging_sq_error {d : ℕ}
+theorem tendsto_localAveraging_sq_error {d : ℕ}
     (P : Measure (EuclideanSpace ℝ (Fin d) × ℝ)) [IsProbabilityMeasure P]
     (hY : Integrable (fun z ↦ z.2 ^ 2) P) (m : EuclideanSpace ℝ (Fin d) → ℝ)
     (hm : Measurable m)

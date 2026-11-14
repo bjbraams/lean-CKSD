@@ -1,5 +1,4 @@
 module
-
 public import CKSD.LinearModels.BetaProductLimit
 public import TauCeti.Probability.Distributions.ChiSquared.Basic
 /-!
@@ -17,23 +16,24 @@ open scoped Topology BigOperators ENNReal NNReal
 namespace CKSD
 
 /-- Convergence in distribution transfers across eventually equal laws. -/
-theorem tendsto_in_distribution_of_eventually_map_eq
-    {Ω Ω' Ω'' : Type*} [MeasurableSpace Ω] [MeasurableSpace Ω'] [MeasurableSpace Ω'']
+theorem tendstoInDistribution_of_eventually_map_eq {ι Ω Ω' Ω'' E : Type*}
+    [MeasurableSpace Ω] [MeasurableSpace Ω'] [MeasurableSpace Ω''] [TopologicalSpace E]
+    [MeasurableSpace E] [OpensMeasurableSpace E] {l : Filter ι}
     (P : Measure Ω) [IsProbabilityMeasure P]
-    (Q : ℕ → Measure Ω') [∀ n, IsProbabilityMeasure (Q n)]
+    (Q : ι → Measure Ω') [∀ n, IsProbabilityMeasure (Q n)]
     (R : Measure Ω'') [IsProbabilityMeasure R]
-    (X : ℕ → Ω → ℝ) (Y : ℕ → Ω' → ℝ) (Z : Ω'' → ℝ)
+    (X : ι → Ω → E) (Y : ι → Ω' → E) (Z : Ω'' → E)
     (hXm : ∀ n, AEMeasurable (X n) P)
-    (hmap : ∀ᶠ n in atTop, P.map (X n) = (Q n).map (Y n))
-    (hY : TendstoInDistribution Y atTop Z Q R) :
-    TendstoInDistribution X atTop Z (fun _ ↦ P) R := by
+    (hmap : ∀ᶠ n in l, P.map (X n) = (Q n).map (Y n))
+    (hY : TendstoInDistribution Y l Z Q R) :
+    TendstoInDistribution X l Z (fun _ ↦ P) R := by
   refine ⟨hXm, hY.aemeasurable_limit, ?_⟩
   apply hY.tendsto.congr'
   filter_upwards [hmap] with n hn
   exact Subtype.ext hn.symm
 
 /-- A lower truncation of an affine growing Beta shape tends to infinity. -/
-theorem tendsto_max_one_nat_cast_sub_div_two (c : ℝ) :
+theorem tendsto_max_one_natCast_sub_div_two (c : ℝ) :
     Tendsto (fun n : ℕ ↦ max 1 (((n : ℝ) - c) / 2)) atTop atTop := by
   have h : Tendsto (fun n : ℕ ↦ ((n : ℝ) - c) / 2) atTop atTop :=
     by
@@ -42,7 +42,7 @@ theorem tendsto_max_one_nat_cast_sub_div_two (c : ℝ) :
   exact tendsto_atTop_mono (fun n ↦ le_max_right _ _) h
 
 /-- Two affine shape sequences with the same leading scale have asymptotic ratio one. -/
-theorem tendsto_max_one_nat_cast_div_two_ratio (c : ℝ) :
+theorem tendsto_max_one_natCast_div_two_ratio (c : ℝ) :
     Tendsto (fun n : ℕ ↦ max 1 ((n : ℝ) / 2) / max 1 (((n : ℝ) - c) / 2))
       atTop (𝓝 1) := by
   have hn : Tendsto (fun n : ℕ ↦ (n : ℝ) - c) atTop atTop :=
@@ -62,7 +62,7 @@ theorem tendsto_max_one_nat_cast_div_two_ratio (c : ℝ) :
 
 /-- A statistic with the growing-shape Beta-product law has the corresponding logarithmic
 Gamma limit; only eventual equality of laws is needed. -/
-theorem tendsto_in_distribution_neg_nat_cast_mul_log_of_beta_product_law
+theorem tendstoInDistribution_neg_natCast_mul_log_of_beta_product_law
     {ι Ω : Type*} [Fintype ι] [Nonempty ι] [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (c b : ι → ℝ) (hb : ∀ i, 0 < b i)
     (Z : ℕ → Ω → ℝ) (hZm : ∀ n, Measurable (Z n))
@@ -79,13 +79,13 @@ theorem tendsto_in_distribution_neg_nat_cast_mul_log_of_beta_product_law
   have ht (n : ℕ) : 0 < t n := lt_of_lt_of_le zero_lt_one (le_max_left _ _)
   have hbS : 0 < ∑ i, b i := Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty
   let Q : ℕ → Measure (ι → ℝ) := fun n ↦ Measure.pi fun i ↦ betaMeasure (a i n) (b i)
-  let : ∀ n, IsProbabilityMeasure (Q n) := fun n ↦ is_probability_measure_pi_beta _ _ (fun i ↦ ha i n) hb
+  let : ∀ n, IsProbabilityMeasure (Q n) := fun n ↦ isProbabilityMeasure_pi_beta _ _ (fun i ↦ ha i n) hb
   let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) 1) := isProbabilityMeasure_gammaMeasure hbS zero_lt_one
   let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) (1 / 2)) :=
     isProbabilityMeasure_gammaMeasure hbS (by norm_num)
-  have hbeta := tendsto_in_distribution_neg_mul_log_beta_product a b t ha hb ht
-    (fun i ↦ tendsto_max_one_nat_cast_sub_div_two (c i))
-    (fun i ↦ tendsto_max_one_nat_cast_div_two_ratio (c i))
+  have hbeta := tendstoInDistribution_neg_mul_log_beta_product a b t ha hb ht
+    (fun i ↦ tendsto_max_one_natCast_sub_div_two (c i))
+    (fun i ↦ tendsto_max_one_natCast_div_two_ratio (c i))
   have hdouble := hbeta.continuous_comp (g := fun x : ℝ ↦ 2 * x) (by fun_prop)
   have hdouble' : TendstoInDistribution (fun (n : ℕ) (x : ι → ℝ) ↦ 2 * (-(t n) * Real.log (∏ i, x i)))
       atTop id Q (gammaMeasure (∑ i, b i) (1 / 2)) := by
@@ -100,7 +100,7 @@ theorem tendsto_in_distribution_neg_nat_cast_mul_log_of_beta_product_law
         ⟨(gammaMeasure (∑ i, b i) (1 / 2)).map id, inferInstance⟩ := Subtype.ext hlimit
     rw [hlimitP] at hd
     exact hd
-  apply tendsto_in_distribution_of_eventually_map_eq P Q _
+  apply tendstoInDistribution_of_eventually_map_eq P Q _
     (fun (n : ℕ) ω ↦ -(n : ℝ) * Real.log (Z n ω)) _ id (fun n ↦ (by fun_prop : Measurable _).aemeasurable) _ hdouble'
   have hlarge : ∀ᶠ n : ℕ in atTop, (2 : ℝ) ≤ n :=
     tendsto_natCast_atTop_atTop.eventually_ge_atTop _

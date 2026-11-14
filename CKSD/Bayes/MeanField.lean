@@ -1,6 +1,6 @@
 module
-
 public import CKSD.Bayes.MeanFieldTrainingEvolution
+
 public import CKSD.Bayes.MeanFieldCore
 public import CKSD.Bayes.MeanFieldTrainingEmpirical
 public import CKSD.Bayes.MeanFieldTrainingParticles
@@ -48,7 +48,6 @@ public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 public import Mathlib.Analysis.Calculus.Gradient.Basic
 public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.Basic
 
-
 /-!
 # McKean–Vlasov systems and mean-field limits
 
@@ -63,21 +62,34 @@ equations, and its limit is a solution of TauCeti's continuity equation.
 
 ## Main definitions
 
-* `CKSD.IsMcKeanVlasovSolution`, `CKSD.IsParticleSystem`: the McKean–Vlasov equation and its
-  `N`-particle approximation, driven by the same Brownian motions.
-* `CKSD.meanFieldRisk`, `CKSD.meanFieldVelocity`: the population risk of a two-layer network in
-  mean-field parametrization and the velocity field of its gradient flow.
+* `CKSD.meanFieldRisk`, `CKSD.meanFieldPotential`: the population risk of a two-layer network in
+  mean-field parametrization and its first variation.
+
+The McKean–Vlasov equation and its `N`-particle approximation, `CKSD.IsMcKeanVlasovSolution` and
+`CKSD.IsParticleSystem`, are defined in `CKSD.Bayes.MeanFieldCore`, and the velocity field
+`CKSD.meanFieldVelocity` of the training flow in `CKSD.Bayes.MeanFieldTrainingDrift`.
 
 ## Main results
 
-* `CKSD.exists_unique_mc_kean_vlasov_and_particle_system`: well-posedness.
+* `CKSD.exists_unique_mcKeanVlasov_and_particleSystem`: well-posedness.
 * `CKSD.tendsto_particle_paths`: propagation of chaos, as weak convergence of path laws in
   Mathlib's `MeasureTheory.ProbabilityMeasure` topology.
 * `CKSD.exists_lintegral_sup_particle_sub_le`: quantitative propagation of chaos.
-* `CKSD.mean_field_risk_eq`, `CKSD.exists_mean_field_limit`: the quadratic expansion of the risk and
-  the mean-field limit of network training.
+* `CKSD.meanFieldRisk_eq`, `CKSD.hasGradientAt_meanFieldPotential_empiricalMeasure`,
+  `CKSD.exists_meanField_limit`: the quadratic expansion of the risk, the identification of the
+  particle velocity with the gradient of its first variation, and the mean-field limit of
+  network training.
 
 Sources: GAPS 104.51, 104.53, and 104.56.
+
+## References
+
+* A.-S. Sznitman, *Topics in propagation of chaos*, École d'Été de Probabilités de Saint-Flour
+  XIX—1989, Lecture Notes in Mathematics 1464, Springer, 1991, 165–251.
+* R. Carmona and F. Delarue, *Probabilistic Theory of Mean Field Games with Applications*, 2 vols.,
+  Springer, 2018.
+* S. Mei, A. Montanari and P.-M. Nguyen, *A mean field view of the landscape of two-layer neural
+  networks*, Proc. Natl. Acad. Sci. USA 115 (2018), E7665–E7671.
 -/
 
 @[expose] public section
@@ -96,13 +108,13 @@ attribute [local instance] Classical.propDecidable
 /-- GAPS 104.51: well-posedness. Under a Lipschitz drift, the McKean–Vlasov equation has a solution,
 unique up to indistinguishability among solutions with integrable marginals, and every particle
 system has a pathwise unique solution. -/
-theorem exists_unique_mc_kean_vlasov_and_particle_system {Ω : Type*} [MeasurableSpace Ω]
+theorem exists_unique_mcKeanVlasov_and_particleSystem {Ω : Type*} [MeasurableSpace Ω]
     {d : ℕ} (P : Measure Ω) [IsProbabilityMeasure P]
     (b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) →
       EuclideanSpace ℝ (Fin d)) (L : ℝ) (hb : IsWassersteinLipschitzDrift b L)
     (X₀ : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (W : ℕ → ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d))
     (μ₀ : Measure (EuclideanSpace ℝ (Fin d))) (hiid : IsIIDInitialAndDrivers P X₀ W μ₀)
-    (h2 : MemLp (X₀ 0) 2 P) :
+    (h1 : Integrable (X₀ 0) P) :
     (∀ i, ∃ Y, IsMcKeanVlasovSolution b (X₀ i) (W i) Y P ∧
       ∀ Y', IsMcKeanVlasovSolution b (X₀ i) (W i) Y' P → ∀ᵐ ω ∂P, ∀ t ≥ 0, Y' t ω = Y t ω) ∧
     ∀ N, ∃ X, IsParticleSystem b X₀ W N X P ∧
@@ -110,16 +122,16 @@ theorem exists_unique_mc_kean_vlasov_and_particle_system {Ω : Type*} [Measurabl
   have hξ (i : ℕ) : Integrable (X₀ i) P := by
     have hid : IdentDistrib (X₀ i) (X₀ 0) P P :=
       ⟨(hiid.1 i).aemeasurable, (hiid.1 0).aemeasurable, (hiid.2.1 i).trans (hiid.2.1 0).symm⟩
-    exact hid.integrable_iff.mpr (h2.integrable (by norm_num))
+    exact hid.integrable_iff.mpr h1
   constructor
   · intro i
-    obtain ⟨Y, hY⟩ := exists_mc_kean_vlasov_solution_of_compact_solutions P b hb (X₀ i) (W i)
+    obtain ⟨Y, hY⟩ := exists_mcKeanVlasovSolution_of_compact_solutions P b hb (X₀ i) (W i)
       (fun T hT ↦ exists_nonlinear_brownian_path_solution P hT b hb (X₀ i) (hξ i) (W i) (hiid.2.2.1 i))
     refine ⟨Y, hY, fun Y' hY' ↦ ?_⟩
     exact IsMcKeanVlasovSolution.ae_eq P b hb (X₀ i) (hξ i) (W i) (hiid.2.2.1 i) Y' Y hY' hY
   · intro N
-    obtain ⟨X, hX⟩ := exists_particle_system_of_wasserstein_lipschitz P b hb X₀ W μ₀ hiid N
-    exact ⟨X, hX, fun X' hX' ↦ IsParticleSystem.ae_eq_of_wasserstein_lipschitz P b hb X₀ W X' X hX' hX⟩
+    obtain ⟨X, hX⟩ := exists_particleSystem_of_wassersteinLipschitz P b hb X₀ W μ₀ hiid N
+    exact ⟨X, hX, fun X' hX' ↦ IsParticleSystem.ae_eq_of_wassersteinLipschitz P b hb X₀ W X' X hX' hX⟩
 
 /-- GAPS 104.51: propagation of chaos. For every horizon `T` and every `k`, the joint path law on
 `[0, T]` of the first `k` particles converges weakly to the `k`-fold product of the
@@ -132,7 +144,7 @@ theorem tendsto_particle_paths {Ω : Type*} [MeasurableSpace Ω]
       EuclideanSpace ℝ (Fin d)) (L : ℝ) (hb : IsWassersteinLipschitzDrift b L)
     (X₀ : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (W : ℕ → ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d))
     (μ₀ : Measure (EuclideanSpace ℝ (Fin d))) (hiid : IsIIDInitialAndDrivers P X₀ W μ₀)
-    (h2 : MemLp (X₀ 0) 2 P)
+    (hξ : Integrable (X₀ 0) P)
     (X : ℕ → ℕ → ℝ → Ω → EuclideanSpace ℝ (Fin d))
     (hX : ∀ N, IsParticleSystem b X₀ W N (X N) P)
     (Y : ℝ → Ω → EuclideanSpace ℝ (Fin d)) (hY : IsMcKeanVlasovSolution b (X₀ 0) (W 0) Y P)
@@ -141,8 +153,7 @@ theorem tendsto_particle_paths {Ω : Type*} [MeasurableSpace Ω]
       (fun N ↦ ⟨P.map fun ω (i : Fin k) ↦ pathOn T fun t ↦ X N i t ω, inferInstance⟩) atTop
       (𝓝 ⟨Measure.pi fun _ : Fin k ↦ P.map fun ω ↦ pathOn T fun t ↦ Y t ω, inferInstance⟩) := by
 
-  have hξ : Integrable (X₀ 0) P := h2.integrable (by norm_num)
-  obtain ⟨Z, hZm, hZi, hind, hidY, hZeq⟩ := exists_iid_mc_kean_vlasov_paths_on_icc
+  obtain ⟨Z, hZm, hZi, hind, hidY, hZeq⟩ := exists_iid_mcKeanVlasov_paths_on_Icc
     P b hb X₀ W μ₀ hiid hξ Y hY hT.le
   have hid (i : ℕ) : IdentDistrib (Z i) (Z 0) P P := (hidY i).trans (hidY 0).symm
   let r : ℕ → Ω → ℝ := fun N ω ↦
@@ -152,7 +163,7 @@ theorem tendsto_particle_paths {Ω : Type*} [MeasurableSpace Ω]
     ae_tendsto_empirical_wasserstein_one P Z hZm (hZi 0) hind hid
   have hbound (N : ℕ) (hN : 0 < N) : ∀ᵐ ω ∂P, ∀ i : Fin N,
       ‖pathOn T (fun t ↦ X N i t ω) - Z i ω‖ ≤ C * r N ω := by
-    filter_upwards [(hX N).ae_coupled_vector_integral_eq_on_icc P hT.le hN b hb
+    filter_upwards [(hX N).ae_coupled_vector_integral_eq_on_Icc P hT.le hN b hb
       X₀ W (X N) Z hZm (hZi 0) hid hZeq] with ω hω
     intro i
     exact norm_particle_path_sub_le_empirical_wasserstein P hT.le hN b hb
@@ -164,7 +175,7 @@ theorem tendsto_particle_paths {Ω : Type*} [MeasurableSpace Ω]
     filter_upwards [eventually_ge_atTop k] with N hN
     apply AEMeasurable.of_eval
     intro i
-    exact aemeasurable_path_on_of_ae_continuous P (X N i)
+    exact aemeasurable_pathOn_of_ae_continuous P (X N i)
       (fun t ↦ ((hX N).1 i t).aemeasurable)
       (((hX N).2 i (lt_of_lt_of_le i.isLt hN)).mono fun _ hω ↦ hω.1) hT.le
   have ht := tendsto_joint_image_laws_of_ae_uniform_bound P
@@ -186,7 +197,7 @@ theorem tendsto_particle_paths {Ω : Type*} [MeasurableSpace Ω]
 
 /-- With a bounded Lipschitz interaction, nonlinear solutions sharing the initial condition
 and Brownian forcing are indistinguishable; the Brownian property itself is not needed. -/
-theorem IsMcKeanVlasovSolution.ae_eq_of_interaction_drift
+theorem IsMcKeanVlasovSolution.ae_eq_of_interactionDrift
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ} (P : Measure Ω) [IsProbabilityMeasure P]
     (b₀ : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) {L₀ : ℝ≥0}
     (hb₀ : LipschitzWith L₀ b₀)
@@ -231,7 +242,7 @@ theorem IsMcKeanVlasovSolution.ae_eq_of_interaction_drift
     rw [hx', hy']
     abel
   have hzero (N : ℕ) : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) N, X t ω = Y t ω :=
-    ae_eq_on_icc_of_interaction_integral_eq P b₀ hb₀ K hK κ.coe_nonneg hKb X Y hX.1 hY.1
+    ae_eq_on_Icc_of_interaction_integral_eq P b₀ hb₀ K hK κ.coe_nonneg hKb X Y hX.1 hY.1
       hXc hYc heq (Nat.cast_nonneg N)
   filter_upwards [ae_all_iff.2 hzero] with ω hω
   intro t ht
@@ -241,7 +252,7 @@ theorem IsMcKeanVlasovSolution.ae_eq_of_interaction_drift
 
 
 /-- Averaging a bounded Lipschitz interaction preserves its Lipschitz constant in position. -/
-theorem lipschitz_with_integral_interaction {Ω E : Type*} [MeasurableSpace Ω]
+theorem lipschitzWith_integral_interaction {Ω E : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure Ω) [IsProbabilityMeasure P] (K : E → E → E)
@@ -256,7 +267,7 @@ theorem lipschitz_with_integral_interaction {Ω E : Type*} [MeasurableSpace Ω]
 
 /-- One nonlinear solution can be transported along the iid input forcings to iid continuous
 solution paths with the same marginal laws, on any fixed bounded time interval. -/
-theorem exists_iid_nonlinear_copies_on_icc {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
+theorem exists_iid_nonlinear_copies_on_Icc {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (b₀ : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) {L₀ : ℝ≥0}
     (hb₀ : LipschitzWith L₀ b₀)
@@ -281,7 +292,7 @@ theorem exists_iid_nonlinear_copies_on_icc {Ω : Type*} [MeasurableSpace Ω] {d 
   have hv : Continuous (Function.uncurry v) :=
     (hb₀.continuous.comp continuous_snd).add (continuous_integral_interaction P K hK.continuous hKb Y hY.1 hYc)
   have hvL (s : ℝ) : LipschitzWith (L₀ + L_K) (v s) :=
-    hb₀.add (lipschitz_with_integral_interaction P K hK hKb (Y s) (hY.1 s))
+    hb₀.add (lipschitzWith_integral_interaction P K hK hKb (Y s) (hY.1 s))
   have hmap (s : ℝ) (x : EuclideanSpace ℝ (Fin d)) :
       interactionDrift b₀ K x (P.map (Y s)) = v s x := by
     rw [interactionDrift, integral_map (hY.1 s).aemeasurable (f := fun y ↦ K x y)
@@ -295,32 +306,32 @@ theorem exists_iid_nonlinear_copies_on_icc {Ω : Type*} [MeasurableSpace Ω] {d 
     let t := Set.projIcc 0 T hT q
     change pathOn T (fun s ↦ Y s ω) t - (∫ s in (0 : ℝ)..t,
       v s ((pathOn T (fun s ↦ Y s ω)).IccExtend hT s)) = X₀ 0 ω + W 0 (times q) ω
-    rw [path_on_apply_of_continuous_on T (fun s ↦ Y s ω) hω.1.continuousOn t]
+    rw [pathOn_apply_of_continuousOn T (fun s ↦ Y s ω) hω.1.continuousOn t]
     have hint : (∫ s in (0 : ℝ)..t, v s ((pathOn T (fun s ↦ Y s ω)).IccExtend hT s)) =
         ∫ s in (0 : ℝ)..t, interactionDrift b₀ K (Y s ω) (P.map (Y s)) := by
       apply intervalIntegral.integral_congr
       intro s hs
       rw [uIcc_of_le t.2.1] at hs
       dsimp only
-      rw [path_on_icc_extend_of_continuous_on hT (fun s ↦ Y s ω) hω.1.continuousOn
+      rw [pathOn_IccExtend_of_continuousOn hT (fun s ↦ Y s ω) hω.1.continuousOn
         s ⟨hs.1, hs.2.trans t.2.2⟩, hmap]
     rw [hint, hω.2 t t.2.1]
     dsimp [times, t]
     abel
   obtain ⟨Zpath, hZm, hZind, hZid, hZeq⟩ := exists_iid_paths_of_forcing_coordinates P hT v hv hvL U
-    (hiid.i_indep_fun_forcing_evals P X₀ W μ₀ times)
-    (fun i ↦ hiid.ident_distrib_forcing_evals P X₀ W μ₀ times 0 i) Ypath hU₀
+    (hiid.iIndepFun_forcing_evals P X₀ W μ₀ times)
+    (fun i ↦ hiid.identDistrib_forcing_evals P X₀ W μ₀ times 0 i) Ypath hU₀
   let Z : ℕ → ℝ → Ω → EuclideanSpace ℝ (Fin d) := fun i t ω ↦ (Zpath i ω).IccExtend hT t
   have hEval (t : ℝ) : Measurable (fun f : C(Icc (0 : ℝ) T, EuclideanSpace ℝ (Fin d)) ↦ f.IccExtend hT t) :=
     ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)
   have hZmap (i : ℕ) (t : ℝ) (ht : t ∈ Icc 0 T) : P.map (Z i t) = P.map (Y t) := by
     have h := (hZid i).comp (hEval t)
     have hae : (fun ω ↦ (Ypath ω).IccExtend hT t) =ᵐ[P] Y t :=
-      hYc.mono fun ω hω ↦ path_on_icc_extend_of_continuous_on hT (fun s ↦ Y s ω) hω.continuousOn t ht
+      hYc.mono fun ω hω ↦ pathOn_IccExtend_of_continuousOn hT (fun s ↦ Y s ω) hω.continuousOn t ht
     exact (h.trans (IdentDistrib.of_ae_eq h.aemeasurable_snd hae)).map_eq
   refine ⟨Z, fun i t ↦ (hEval t).comp (hZm i), fun i ω ↦ (Zpath i ω).IccExtend hT |>.continuous,
     fun t ↦ hZind.comp (fun _ f ↦ f.IccExtend hT t) (fun _ ↦ hEval t), hZmap, fun i ↦ ?_⟩
-  filter_upwards [hZeq i, (hiid.2.2.1 i).ae_continuous_to_nn_real] with ω hω hB
+  filter_upwards [hZeq i, (hiid.2.2.1 i).ae_continuous_toNNReal] with ω hω hB
   have heq := eq_integral_of_forcing_coordinates hT v hv (Zpath i ω) (X₀ i ω)
     (fun t ↦ W i t.toNNReal ω) hB hω
   intro t ht
@@ -336,7 +347,7 @@ theorem exists_iid_nonlinear_copies_on_icc {Ω : Type*} [MeasurableSpace Ω] {d 
 
 /-- For bounded Lipschitz interactions, separately given nonlinear solutions with iid initial
 conditions and Brownian drivers are independent and identically distributed at each time. -/
-theorem IsMcKeanVlasovSolution.i_indep_fun_interaction_drift {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
+theorem IsMcKeanVlasovSolution.iIndepFun_interactionDrift {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (b₀ : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) {L₀ : ℝ≥0}
     (hb₀ : LipschitzWith L₀ b₀)
@@ -350,7 +361,7 @@ theorem IsMcKeanVlasovSolution.i_indep_fun_interaction_drift {Ω : Type*} [Measu
     (t : ℝ) (ht : 0 ≤ t) :
     iIndepFun (fun i ↦ Y i t) P ∧ ∀ i, P.map (Y i t) = P.map (Y 0 t) := by
   obtain ⟨Z, hZm, hZc, hZind, hZmap, hZeq⟩ :=
-    exists_iid_nonlinear_copies_on_icc P b₀ hb₀ K hK hKb X₀ W μ₀ hiid (Y 0) (hY 0) ht
+    exists_iid_nonlinear_copies_on_Icc P b₀ hb₀ K hK hKb X₀ W μ₀ hiid (Y 0) (hY 0) ht
   have hae (i : ℕ) : ∀ᵐ ω ∂P, ∀ s ∈ Icc (0 : ℝ) t, Y i s ω = Z i s ω := by
     let v : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d) :=
       fun s x ↦ ∫ z, K x (Y i s z) ∂P
@@ -370,7 +381,7 @@ theorem IsMcKeanVlasovSolution.i_indep_fun_interaction_drift {Ω : Type*} [Measu
       rw [interactionDrift, integral_map (hZm i s).aemeasurable
         (f := fun y ↦ K x y) (hK.continuous.measurable.comp
           ((measurable_const : Measurable fun _ : EuclideanSpace ℝ (Fin d) ↦ x).prodMk measurable_id)).aestronglyMeasurable]
-    apply ae_eq_of_interaction_integral_eq_on_icc P b₀ hb₀ K hK κ.coe_nonneg hKb
+    apply ae_eq_of_interaction_integral_eq_on_Icc P b₀ hb₀ K hK κ.coe_nonneg hKb
       (Y i) (Z i) (hY i).1 (hZm i) hYc hZc' ht
     filter_upwards [(hY i).2.2, hZeq i] with ω hω hZω
     intro s hs
@@ -397,7 +408,7 @@ theorem IsMcKeanVlasovSolution.i_indep_fun_interaction_drift {Ω : Type*} [Measu
 
 /-- Integrability and mean bound for time-integrated interaction fluctuations of nonlinear
 solutions driven by iid initial conditions and Brownian motions. -/
-theorem integrable_integral_sq_interaction_fluctuation_le_of_solutions {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
+theorem integrable_integral_sq_interactionFluctuation_le_of_solutions {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (b₀ : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) {L₀ : ℝ≥0}
     (hb₀ : LipschitzWith L₀ b₀)
@@ -412,13 +423,13 @@ theorem integrable_integral_sq_interaction_fluctuation_le_of_solutions {Ω : Typ
     Integrable (fun ω ↦ ∫ t in (0 : ℝ)..T, ‖interactionFluctuation P K Y N i t ω‖ ^ 2) P ∧
       (∫ ω, (∫ t in (0 : ℝ)..T, ‖interactionFluctuation P K Y N i t ω‖ ^ 2) ∂P) ≤
         T * (16 * (κ : ℝ) ^ 2 / (N : ℝ)) := by
-  apply integrable_integral_sq_interaction_fluctuation_le P K hK.continuous hKb Y
+  apply integrable_integral_sq_interactionFluctuation_le P K hK.continuous hKb Y
     (fun j ↦ (hY j).1) (fun j ↦ (hY j).2.2.mono fun _ hω ↦ hω.1) hN i hT
   intro s hs
-  have hi := IsMcKeanVlasovSolution.i_indep_fun_interaction_drift P b₀ hb₀ K hK hKb X₀ W μ₀ hiid Y hY s hs.1
+  have hi := IsMcKeanVlasovSolution.iIndepFun_interactionDrift P b₀ hb₀ K hK hKb X₀ W μ₀ hiid Y hY s hs.1
   let μ := P.map (Y 0 s)
   have : IsProbabilityMeasure μ := (Measure.isProbabilityMeasure_map_iff ((hY 0).1 s).aemeasurable).mpr inferInstance
-  have hvar := integral_norm_empirical_interaction_sub_sq_le P μ K hK.continuous.measurable κ hKb hN
+  have hvar := integral_norm_empiricalInteraction_sub_sq_le P μ K hK.continuous.measurable κ hKb hN
     (fun j : Fin N ↦ Y j s) (fun j ↦ (hY j).1 s)
     (iIndepFun.precomp Fin.val_injective hi.1) (fun j ↦ hi.2 j) i
   have hmap (x : EuclideanSpace ℝ (Fin d)) : (∫ z, K x z ∂μ) = ∫ z, K x (Y 0 s z) ∂P := by
@@ -480,7 +491,7 @@ theorem IsParticleSystem.ae_residual_integral_eq
     apply intervalIntegral.integral_congr
     intro s _
     change b₀ (X i s ω) + (∫ z, K (X i s ω) z ∂empiricalMeasure N (fun j : Fin N ↦ X j s ω)) = _
-    rw [integral_empirical_measure_vector]
+    rw [integral_empiricalMeasure_vector]
   have hYi : (∫ s in (0 : ℝ)..t, interactionDrift b₀ K (Y i s ω)
       (P.map (Y i s))) = ∫ s in (0 : ℝ)..t, G s := by
     apply intervalIntegral.integral_congr
@@ -511,7 +522,7 @@ theorem exists_lintegral_sup_particle_sub_le (T : ℝ) (L₀ L_K κ : ℝ≥0) :
       LipschitzWith L₀ b₀ → (∀ x y, ‖K x y‖ ≤ κ) → LipschitzWith L_K (Function.uncurry K) →
       ∀ (X₀ : ℕ → Ω → EuclideanSpace ℝ (Fin d))
         (W : ℕ → ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d)) (μ₀ : Measure (EuclideanSpace ℝ (Fin d))),
-        IsIIDInitialAndDrivers P X₀ W μ₀ → MemLp (X₀ 0) 2 P →
+        IsIIDInitialAndDrivers P X₀ W μ₀ →
       ∀ (X : ℕ → ℕ → ℝ → Ω → EuclideanSpace ℝ (Fin d))
         (Y : ℕ → ℝ → Ω → EuclideanSpace ℝ (Fin d)),
         (∀ N, IsParticleSystem (interactionDrift b₀ K) X₀ W N (X N) P) →
@@ -525,19 +536,18 @@ theorem exists_lintegral_sup_particle_sub_le (T : ℝ) (L₀ L_K κ : ℝ≥0) :
     (1 + ((L_K : ℝ) * R * Real.exp (((L₀ : ℝ) + L_K + L_K) * R)) ^ 2)
   have hA : 0 ≤ A := by dsimp [A]; positivity
   refine ⟨32 * A * R * (κ : ℝ) ^ 2, ?_⟩
-  intro Ω _ P _ d b₀ K hb₀ hKb hK X₀ W μ₀ hiid h2 X Y hX hY N i hi
-  clear h2
+  intro Ω _ P _ d b₀ K hb₀ hKb hK X₀ W μ₀ hiid X Y hX hY N i hi
   have hN : 0 < N := lt_of_le_of_lt (Nat.zero_le i) hi
   let i' : Fin N := ⟨i, hi⟩
   let f : Fin N → Ω → ℝ := fun j ω ↦ ∫ s in (0 : ℝ)..R, ‖interactionFluctuation P K Y N j s ω‖ ^ 2
-  have hfe (j : Fin N) := integrable_integral_sq_interaction_fluctuation_le_of_solutions
+  have hfe (j : Fin N) := integrable_integral_sq_interactionFluctuation_le_of_solutions
     P b₀ hb₀ K hK hKb X₀ W μ₀ hiid Y hY hN j hR
   have hfnn (j : Fin N) : ∀ᵐ ω ∂P, 0 ≤ f j ω :=
     ae_of_all _ fun ω ↦ intervalIntegral.integral_nonneg_of_forall hR (fun _ ↦ sq_nonneg _)
   have hmap (j : ℕ) (s : ℝ) (hs : 0 ≤ s) : P.map (Y j s) = P.map (Y 0 s) :=
-    (IsMcKeanVlasovSolution.i_indep_fun_interaction_drift P b₀ hb₀ K hK hKb X₀ W μ₀ hiid Y hY s hs).2 j
+    (IsMcKeanVlasovSolution.iIndepFun_interactionDrift P b₀ hb₀ K hK hKb X₀ W μ₀ hiid Y hY s hs).2 j
   have heq := IsParticleSystem.ae_residual_integral_eq P b₀ hb₀ K hK hKb X₀ W (X N) Y (hX N) hY hmap
-  have hcR := interaction_fluctuation_measurable_ae_continuous P K hK.continuous hKb Y
+  have hcR := interactionFluctuation_measurable_ae_continuous P K hK.continuous hKb Y
     (fun j ↦ (hY j).1) (fun j ↦ (hY j).2.2.mono fun _ hω ↦ hω.1) N
   have hbound : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T, ‖X N i t ω - Y i t ω‖ ^ 2 ≤
       A * (f i' ω + (N : ℝ)⁻¹ * ∑ j, f j ω) := by
@@ -549,7 +559,7 @@ theorem exists_lintegral_sup_particle_sub_le (T : ℝ) (L₀ L_K κ : ℝ≥0) :
       (fun j ↦ (hx j).1) (fun j ↦ (hy j).1) hr hR (fun j t ht ↦ hω j t ht.1)
     intro t ht
     exact hdet i' t ⟨ht.1, ht.2.trans hTR⟩
-  have hfin := lintegral_i_sup_enorm_sq_le_of_individual_add_average_bound P i' f
+  have hfin := lintegral_iSup_enorm_sq_le_of_individual_add_average_bound P i' f
     (fun j ↦ (hfe j).1) hfnn A (R * (16 * (κ : ℝ) ^ 2 / (N : ℝ))) hA
     (fun j ↦ (hfe j).2) (fun ω t ↦ X N i t ω - Y i t ω) (Icc (0 : ℝ) T) hbound
   convert hfin using 1
@@ -573,7 +583,7 @@ def meanFieldRisk {Z Θ : Type*} [MeasurableSpace Z] [MeasurableSpace Θ]
 
 /-- GAPS 104.53: the elementary expansion
 `R(ρ) = ½𝔼Y² - ∫ V dρ + ½ ∫∫ U dρ dρ` for a bounded measurable feature map. -/
-theorem mean_field_risk_eq {Z Θ : Type*} [MeasurableSpace Z] [MeasurableSpace Θ]
+theorem meanFieldRisk_eq {Z Θ : Type*} [MeasurableSpace Z] [MeasurableSpace Θ]
     (ν : Measure (Z × ℝ)) [IsProbabilityMeasure ν] (φ : Z → Θ → ℝ)
     (hφ : Measurable (Function.uncurry φ)) (B : ℝ) (hB : ∀ z θ, |φ z θ| ≤ B)
     (hY : Integrable (fun w : Z × ℝ ↦ w.2 ^ 2) ν) (ρ : Measure Θ) [IsProbabilityMeasure ρ] :
@@ -649,18 +659,48 @@ theorem mean_field_risk_eq {Z Θ : Type*} [MeasurableSpace Z] [MeasurableSpace �
   rw [hsum, hdif, integral_const_mul, hcross, hquad]
   ring
 
-/-- GAPS 104.53: mean-field limit of two-layer network training. With bounded Lipschitz gradients
-of `V` and `U`, the nonlinear continuity equation `∂ₜρ = ∇·(ρ∇_θΨ(·; ρ))` has a unique narrowly
-continuous probability solution with datum `ρ₀`, and the empirical measures of the time-scaled
-gradient flow from independent `ρ₀`-distributed initial particles converge to it in `W₁`, almost
-surely and uniformly on bounded time intervals. -/
-theorem exists_mean_field_limit {Z : Type*} [MeasurableSpace Z] {p : ℕ}
-    (ν : Measure (Z × ℝ)) [IsProbabilityMeasure ν] (φ : Z → EuclideanSpace ℝ (Fin p) → ℝ)
-    (hφ : Measurable (Function.uncurry φ)) (hY : Integrable (fun w : Z × ℝ ↦ w.2 ^ 2) ν)
+/-- First variation `Ψ(θ; ρ) = -V(θ) + ∫ U(θ, θ') ρ(dθ')` of the mean-field risk. -/
+def meanFieldPotential {Z Θ : Type*} [MeasurableSpace Z] [MeasurableSpace Θ]
+    (ν : Measure (Z × ℝ)) (φ : Z → Θ → ℝ) (ρ : Measure Θ) (θ : Θ) : ℝ :=
+  -meanFieldV ν φ θ + ∫ θ', meanFieldU ν φ θ θ' ∂ρ
+
+/-- GAPS 104.53: for the empirical measure `ρ_N` of `N` parameters, if `gradV` and `gradU` are
+the gradients of `V` and of `U` in its first argument, then the mean-field velocity is
+`-∇_θ Ψ(θ; ρ_N)`, so the particle equation of `CKSD.exists_meanField_limit` is the
+time-scaled gradient flow `θ̇ᵢ = -∇_θ Ψ(θᵢ; ρ_N)`. The further identity
+`∇_θ Ψ(θᵢ; ρ_N) = N ∇_{θᵢ} R(ρ_N)` is not formalized. -/
+theorem hasGradientAt_meanFieldPotential_empiricalMeasure {Z : Type*} [MeasurableSpace Z]
+    {p : ℕ} (ν : Measure (Z × ℝ)) (φ : Z → EuclideanSpace ℝ (Fin p) → ℝ)
     (gradV : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p))
     (gradU : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p))
-    (hgV : ∀ θ, HasGradientAt (meanFieldV ν φ) (gradV θ) θ)
-    (hgU : ∀ θ θ', HasGradientAt (fun η ↦ meanFieldU ν φ η θ') (gradU θ θ') θ)
+    {θ : EuclideanSpace ℝ (Fin p)} (hgV : HasGradientAt (meanFieldV ν φ) (gradV θ) θ)
+    {N : ℕ} (x : Fin N → EuclideanSpace ℝ (Fin p))
+    (hgU : ∀ j, HasGradientAt (fun η ↦ meanFieldU ν φ η (x j)) (gradU θ (x j)) θ) :
+    HasGradientAt (meanFieldPotential ν φ (empiricalMeasure N x))
+      (-meanFieldVelocity gradV gradU (empiricalMeasure N x) θ) θ := by
+  simp only [hasGradientAt_iff_hasFDerivAt] at hgV hgU ⊢
+  have h := hgV.neg.add
+    ((HasFDerivAt.fun_sum (u := Finset.univ) fun j _ ↦ hgU j).const_mul (N : ℝ)⁻¹)
+  convert h using 1
+  · funext η
+    simp only [meanFieldPotential, integral_empiricalMeasure_vector, smul_eq_mul]
+    rfl
+  · rw [meanFieldVelocity, integral_empiricalMeasure_vector]
+    ext v
+    simp [map_sum, Finset.mul_sum]
+    ring
+
+/-- GAPS 104.53: mean-field limit of two-layer network training. With bounded Lipschitz fields
+`gradV` and `gradU`, the nonlinear continuity equation `∂ₜρ = ∇·(ρ∇_θΨ(·; ρ))`, with
+`-∇_θΨ(·; ρ)` the velocity `CKSD.meanFieldVelocity gradV gradU ρ`, has a unique narrowly
+continuous probability solution with datum `ρ₀`, and the empirical measures of the time-scaled
+gradient flow from independent `ρ₀`-distributed initial particles converge to it in `W₁`, almost
+surely and uniformly on bounded time intervals. The statement uses only `gradV` and `gradU`;
+when they are the gradients of `V` and `U`, the particle equation is the gradient flow of the
+risk by `CKSD.hasGradientAt_meanFieldPotential_empiricalMeasure`. -/
+theorem exists_meanField_limit {p : ℕ}
+    (gradV : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p))
+    (gradU : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p))
     (B L : ℝ) (hVb : ∀ θ, ‖gradV θ‖ ≤ B) (hUb : ∀ θ θ', ‖gradU θ θ'‖ ≤ B)
     (hVl : ∀ θ η, ‖gradV θ - gradV η‖ ≤ L * ‖θ - η‖)
     (hUl : ∀ θ θ' η η', ‖gradU θ θ' - gradU η η'‖ ≤ L * (‖θ - η‖ + ‖θ' - η'‖))
@@ -683,13 +723,13 @@ theorem exists_mean_field_limit {Z : Type*} [MeasurableSpace Z] {p : ℕ}
             TauCeti.wassersteinEDist 1 (empiricalMeasure N fun j : Fin N ↦ θ N j t ω) (ρ t))
             atTop (𝓝 0) := by
   let b := fun x μ ↦ meanFieldVelocity gradV gradU μ x
-  have hb := is_wasserstein_lipschitz_drift_mean_field_velocity gradV gradU B L hVb hUb hVl hUl
+  have hb := isWassersteinLipschitzDrift_meanFieldVelocity gradV gradU B L hVb hUb hVl hUl
   have hL : 0 ≤ 2 * (Real.toNNReal L : ℝ) := mul_nonneg (by norm_num) (Real.toNNReal L).coe_nonneg
   let M := Real.toNNReal (2 * B)
   have hM (μ : Measure (EuclideanSpace ℝ (Fin p))) (hμ : IsProbabilityMeasure μ) (x) :
       ‖b x μ‖ ≤ (M : ℝ) := by
     have := hμ
-    exact (norm_mean_field_velocity_le gradV gradU B hVb hUb μ x).trans (Real.le_coe_toNNReal _)
+    exact (norm_meanFieldVelocity_le gradV gradU B hVb hUb μ x).trans (Real.le_coe_toNNReal _)
   obtain ⟨ρ,v,K,γ,hρ,huniq,hv,hvM,hγ,hγ0,hγd,hρlaw,hvρ⟩ :=
     exists_unique_nonlinear_continuity_solution_of_bound ρ₀ hρ₀ b hb hL M hM
   refine ⟨ρ,hρ,huniq,?_⟩
@@ -701,7 +741,7 @@ theorem exists_mean_field_limit {Z : Type*} [MeasurableSpace Z] {p : ℕ}
     exact hvM _
   have hvEq (t : ℝ) (ht : 0 ≤ t) (x) : v (t,x) = b x (ρ₀.map (fun y ↦ γ y t)) := by
     rw [hvρ t ht x,hρlaw t ht]
-  filter_upwards [ae_tendsto_i_sup_empirical_training_laws P ρ₀ hρ₀ ξ hiid b hb γ hγ hγ0 hγL
+  filter_upwards [ae_tendsto_iSup_empirical_training_laws P ρ₀ hρ₀ ξ hiid b hb γ hγ hγ0 hγL
     v hv.continuous hγd hvEq θ hθ] with ω hω
   intro T hT
   convert hω T hT using 1

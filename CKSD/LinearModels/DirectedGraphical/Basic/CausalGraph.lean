@@ -2,9 +2,8 @@ module
 
 public import CKSD.LinearModels.Basic
 
-
 /-!
-# Finite causal graphs and d-separation
+# Causal graphs and d-separation
 
 A causal graph on a vertex type `V` is a directed acyclic graph, given by an edge relation whose
 transitive closure is irreflexive. This file sets up the graph-theoretic vocabulary of directed
@@ -26,7 +25,7 @@ masses and its truncated version for interventions.
 
 ## Main results
 
-* `CKSD.markov_equivalent_iff_skeleton_and_colliders`: the Verma–Pearl theorem, two directed
+* `CKSD.markovEquivalent_iff_skeleton_and_colliders`: the Verma–Pearl theorem, two directed
   acyclic graphs on a finite vertex set are Markov equivalent if and only if they have the same
   skeleton and the same unshielded colliders.
 
@@ -43,7 +42,7 @@ with the single edge `a → a'`, and adding such a child to two graphs preserves
 their skeletons and of their unshielded colliders. Consequently, by the classical Verma–Pearl
 theorem for disjoint triples applied to the enlarged graphs, `MarkovEquivalent`, which
 quantifies over all triples, agrees with Markov equivalence in the usual sense (agreement on
-pairwise disjoint triples), and `markov_equivalent_iff_skeleton_and_colliders` holds as stated.
+pairwise disjoint triples), and `markovEquivalent_iff_skeleton_and_colliders` holds as stated.
 
 ## References
 
@@ -62,7 +61,8 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- Finite directed acyclic causal graph; acyclicity excludes every nonempty directed cycle. -/
+/-- Directed acyclic causal graph on a vertex type `V` (not assumed finite); acyclicity excludes
+every nonempty directed cycle. Finiteness is assumed separately where it is needed. -/
 structure CausalGraph (V : Type*) where
   /-- Directed edge relation. -/
   edge : V → V → Prop
@@ -132,7 +132,7 @@ def interventionMass {V S : Type*} [Fintype V] [DecidableEq V] [DecidableEq S]
 /-- GAPS 105.67 (Verma–Pearl): two directed acyclic graphs on a finite vertex set are Markov
 equivalent if and only if they have the same skeleton (adjacency relation) and the same
 unshielded colliders. -/
-theorem markov_equivalent_iff_skeleton_and_colliders {V : Type*} [Fintype V]
+theorem markovEquivalent_iff_skeleton_and_colliders {V : Type*} [Fintype V]
     (G H : CausalGraph V) :
     G.MarkovEquivalent H ↔
       (∀ u v, G.Adjacent u v ↔ H.Adjacent u v) ∧
@@ -140,7 +140,7 @@ theorem markov_equivalent_iff_skeleton_and_colliders {V : Type*} [Fintype V]
   sorry
 
 /-- Graphical Markov equivalence is reflexive. -/
-theorem CausalGraph.markov_equivalent_refl {V : Type*} (G : CausalGraph V) :
+theorem CausalGraph.markovEquivalent_refl {V : Type*} (G : CausalGraph V) :
     G.MarkovEquivalent G := fun _ _ _ ↦ Iff.rfl
 
 end CKSD

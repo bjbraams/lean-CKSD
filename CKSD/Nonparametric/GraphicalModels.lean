@@ -4,7 +4,6 @@ public import CKSD.Nonparametric.EmpiricalCovariance
 public import Mathlib.Probability.Moments.SubGaussian
 public import Mathlib.LinearAlgebra.Matrix.PosDef
 
-
 /-!
 # Gaussian graphical model selection
 
@@ -24,12 +23,17 @@ minimizes `tr(Θ Σ̂) - log det Θ + λ ∑_{j ≠ k} |Θ j k|` over positive d
 
 ## Main results
 
-* `CKSD.neighbourhood_selection_graph_recovery`: graph recovery by neighbourhood selection
+* `CKSD.neighbourhoodSelection_graph_recovery`: graph recovery by neighbourhood selection
   (stated).
-* `CKSD.graphical_lasso_frobenius_error_bound`: the Frobenius error bound for the graphical lasso
+* `CKSD.graphicalLasso_frobenius_error_bound`: the Frobenius error bound for the graphical lasso
   (stated).
 
 Source: GAPS 103.53 (Wainwright, Theorem 11.12 and Proposition 11.9).
+
+## References
+
+* M. J. Wainwright, *High-Dimensional Statistics: A Non-Asymptotic Viewpoint*, Cambridge University
+  Press, 2019, Proposition 11.9 and Theorem 11.12.
 -/
 
 @[expose] public section
@@ -95,7 +99,7 @@ includes no false edge and the "and" rule includes every edge with
 coefficients `-Θ j k / Θ j j` and `-Θ k j / Θ k k` below by `7 b λ`; this is the bound proved by
 Wainwright (2019), Theorem 11.12, whose statement puts `|Θ j k|` in its place although `Θ j j ≥ 1`
 is not bounded above. The lasso estimates `B x j` are arbitrary minimizers. -/
-theorem neighbourhood_selection_graph_recovery :
+theorem neighbourhoodSelection_graph_recovery :
     ∃ c₀ > (0 : ℝ), ∃ c₁ > (0 : ℝ), ∃ c₂ > (0 : ℝ), ∃ c₃ > (0 : ℝ),
       ∀ (p n m : ℕ), 0 < n → c₁ * m * Real.log p ≤ n →
       ∀ Sig : Matrix (Fin p) (Fin p) ℝ, Sig.PosDef → (∀ j, Sig j j ≤ 1) →
@@ -136,7 +140,7 @@ coordinates and at most `m` nonzero entries per row of `Θ = Σ⁻¹`. With
 `1 - 8 exp (-n δ² / 16)` the graphical lasso estimate `Θ̂` satisfies
 `‖Θ̂ - Θ‖_F² ≤ 9 (‖Θ‖ + 1)⁴ m p λ²`. The estimator `T x` is required to be a graphical lasso
 estimate whenever one exists; the operator norm is the Euclidean one. -/
-theorem graphical_lasso_frobenius_error_bound {p n : ℕ} (hn : 0 < n)
+theorem graphicalLasso_frobenius_error_bound {p n : ℕ} (hn : 0 < n)
     (P : Measure (EuclideanSpace ℝ (Fin p))) [IsProbabilityMeasure P] (σ : ℝ≥0)
     (hsub : ∀ j, HasSubgaussianMGF (fun x ↦ x j) (σ ^ 2) P)
     (hcov : (euclideanCovarianceMatrix P).PosDef) (m : ℕ)

@@ -8,7 +8,6 @@ public import TauCeti.Probability.Distributions.NoncentralChiSquared.Gaussian
 public import TauCeti.Probability.Distributions.NoncentralChiSquared.Convolution
 public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
 
-
 /-!
 # The F test for nested Gaussian linear models
 
@@ -24,13 +23,13 @@ projection (orthogonal projection) `P₁`, and the smaller model `P₀ μ = μ` 
 
 ## Main results
 
-* `CKSD.map_nested_f_statistic_eq_noncentral_f`: under the larger model `F` has the noncentral F
+* `CKSD.map_nestedFStatistic_eq_noncentralF`: under the larger model `F` has the noncentral F
   law with noncentrality `‖(P₁ - P₀) μ‖² / σ²` (TauCeti's `noncentralFMeasure`).
-* `CKSD.map_nested_f_statistic_eq_fisher_snedecor`: under the smaller model `F` has Fisher's F law
+* `CKSD.map_nestedFStatistic_eq_fisherSnedecor`: under the smaller model `F` has Fisher's F law
   with `r₁ - r₀` and `n - r₁` degrees of freedom.
-* `CKSD.strict_mono_noncentral_f_upper_tail`: the power `P(F > c)` is strictly increasing in the
+* `CKSD.strictMono_noncentralF_upper_tail`: the power `P(F > c)` is strictly increasing in the
   noncentrality.
-* `CKSD.f_test_is_uniformly_most_powerful_invariant`: the F test is uniformly most powerful among
+* `CKSD.fTest_isUniformlyMostPowerful_invariant`: the F test is uniformly most powerful among
   invariant level-`α` tests.
 
 The noncentral law uses TauCeti's shifted Gaussian squared-norm theorem together with the
@@ -55,7 +54,7 @@ namespace CKSD
 
 /-- The squared length of a shifted finite-dimensional standard Gaussian has noncentral
 chi-squared law. -/
-theorem has_law_norm_sq_add_std_gaussian
+theorem hasLaw_norm_sq_add_stdGaussian
     {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     {P : Measure Ω} {X : Ω → E} (hX : HasLaw X (stdGaussian E) P) (m : E) :
@@ -95,7 +94,7 @@ def IsNestedModelInvariantTest (P₀ P₁ : EuclideanSpace ℝ (Fin n) →L[ℝ]
 `r₁ - r₀` and `n - r₁` degrees of freedom and noncentrality
 `δ² = ‖(P₁ - P₀) μ‖² / σ²`; hence the power of any test based on it depends on `(μ, σ²)` only
 through `δ²`. -/
-theorem map_nested_f_statistic_eq_noncentral_f
+theorem map_nestedFStatistic_eq_noncentralF
     (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0) (hv : 0 < v)
     (P₀ P₁ : EuclideanSpace ℝ (Fin n) →L[ℝ] EuclideanSpace ℝ (Fin n))
     (hP₀ : IsStarProjection P₀) (hP₁ : IsStarProjection P₁)
@@ -133,7 +132,7 @@ theorem map_nested_f_statistic_eq_noncentral_f
     have h := Submodule.finrank_add_inf_finrank_orthogonal hle
     change r₀ + Module.finrank ℝ S = r₁ at h
     omega
-  have hP₁' : ∀ x, K₁.starProjection x = P₁ x := IsStarProjection.star_projection_range_apply hP₁
+  have hP₁' : ∀ x, K₁.starProjection x = P₁ x := IsStarProjection.starProjection_range_apply hP₁
   have hS : ∀ x, S.starProjection x = P₁ x - P₀ x := by
     intro x
     refine S.eq_starProjection_of_mem_of_inner_eq_zero ⟨?_, ?_⟩ ?_
@@ -159,7 +158,7 @@ theorem map_nested_f_statistic_eq_noncentral_f
   have hv' : (v : ℝ) ≠ 0 := by exact_mod_cast hv.ne'
   let Z : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n) := fun x ↦ t⁻¹ • (x - m)
   have hZ : HasLaw Z (stdGaussian (EuclideanSpace ℝ (Fin n))) G :=
-    has_law_smul_sub_multivariate_gaussian m v hv
+    hasLaw_smul_sub_multivariateGaussian m v hv
   let a : S := S.orthogonalProjectionOnto (t⁻¹ • m)
   have hvec : ∀ x, ((a + S.orthogonalProjectionOnto (Z x) : S) : EuclideanSpace ℝ (Fin n)) =
       t⁻¹ • (P₁ x - P₀ x) := by
@@ -176,12 +175,12 @@ theorem map_nested_f_statistic_eq_noncentral_f
     apply NNReal.eq
     rw [NNReal.coe_pow, coe_nnnorm, Real.coe_toNNReal _ (by positivity)]
     simpa [Z] using hNS m
-  have hnum := has_law_norm_sq_add_std_gaussian (hZ.orthogonalProjectionOnto_stdGaussian S) a
+  have hnum := hasLaw_norm_sq_add_stdGaussian (hZ.orthogonalProjectionOnto_stdGaussian S) a
   simp only [hNS, hSdim, hnc] at hnum
   have hden : HasLaw (fun x ↦ ‖x - P₁ x‖ ^ 2 / v)
       (TauCeti.Probability.chiSquaredMeasure (n - r₁ : ℕ)) G :=
-    ⟨by fun_prop, map_norm_sq_sub_div_eq_chi_squared m v hv P₁ hP₁ hm⟩
-  have hi := (indep_fun_map_norm_sq_sub m v hv P₁ hP₁).comp (φ := fun z ↦ ‖z - P₀ z‖ ^ 2 / v)
+    ⟨by fun_prop, map_norm_sq_sub_div_eq_chiSquared m v hv P₁ hP₁ hm⟩
+  have hi := (indepFun_map_norm_sq_sub m v hv P₁ hP₁).comp (φ := fun z ↦ ‖z - P₀ z‖ ^ 2 / v)
     (ψ := fun z : ℝ ↦ z / v) (by fun_prop) (by fun_prop)
   change IndepFun (fun x ↦ ‖P₁ x - P₀ (P₁ x)‖ ^ 2 / v)
     (fun x ↦ ‖x - P₁ x‖ ^ 2 / v) G at hi
@@ -203,8 +202,8 @@ theorem map_nested_f_statistic_eq_noncentral_f
 `P₁ P₀ = P₀` and `rank P₀ < rank P₁ < n`, the F statistic
 `(‖P₁ Y - P₀ Y‖² / (r₁ - r₀)) / (‖Y - P₁ Y‖² / (n - r₁))` has Fisher's F law with
 `r₁ - r₀` and `n - r₁` degrees of freedom. This is the case of zero noncentrality of
-`map_nested_f_statistic_eq_noncentral_f`. -/
-theorem map_nested_f_statistic_eq_fisher_snedecor
+`map_nestedFStatistic_eq_noncentralF`. -/
+theorem map_nestedFStatistic_eq_fisherSnedecor
     (m : EuclideanSpace ℝ (Fin n)) (v : ℝ≥0) (hv : 0 < v)
     (P₀ P₁ : EuclideanSpace ℝ (Fin n) →L[ℝ] EuclideanSpace ℝ (Fin n))
     (hP₀ : IsStarProjection P₀) (hP₁ : IsStarProjection P₁)
@@ -221,7 +220,7 @@ theorem map_nested_f_statistic_eq_fisher_snedecor
   have hm₁ : P₁ m = m := by
     calc P₁ m = P₁ (P₀ m) := by rw [hm]
       _ = m := by rw [hnest, hm]
-  rw [map_nested_f_statistic_eq_noncentral_f m v hv P₀ P₁ hP₀ hP₁ hnest hm₁ hr hrn, hm₁, hm,
+  rw [map_nestedFStatistic_eq_noncentralF m v hv P₀ P₁ hP₀ hP₁ hnest hm₁ hr hrn, hm₁, hm,
     sub_self, norm_zero]
   simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, zero_div,
     Real.toNNReal_zero]
@@ -229,7 +228,7 @@ theorem map_nested_f_statistic_eq_fisher_snedecor
 
 /-- GAPS 105.16: the power `P(F > c)` of the F test with critical value `c > 0` is strictly
 increasing in the noncentrality `δ²`. -/
-theorem strict_mono_noncentral_f_upper_tail (d₁ d₂ : ℝ) (hd₁ : 0 < d₁) (hd₂ : 0 < d₂) (c : ℝ)
+theorem strictMono_noncentralF_upper_tail (d₁ d₂ : ℝ) (hd₁ : 0 < d₁) (hd₂ : 0 < d₂) (c : ℝ)
     (hc : 0 < c) :
     StrictMono fun l : ℝ≥0 ↦ (TauCeti.Probability.noncentralFMeasure d₁ d₂ l).real (Ioi c) := by
   intro a b hab
@@ -334,7 +333,7 @@ The parameter is `(μ, σ²)` with `P₁ μ = μ` and `σ² > 0`; the null hypot
 The level `α` is defined by the critical value `c`; for `c ≤ 0` it equals `1` and the
 statement is trivial, so no restriction `0 < α < 1` is imposed. The average-power optimality
 among similar tests is not stated. -/
-theorem f_test_is_uniformly_most_powerful_invariant
+theorem fTest_isUniformlyMostPowerful_invariant
     (P₀ P₁ : EuclideanSpace ℝ (Fin n) →L[ℝ] EuclideanSpace ℝ (Fin n))
     (hP₀ : IsStarProjection P₀) (hP₁ : IsStarProjection P₁)
     (hnest : ∀ x, P₁ (P₀ x) = P₀ x)

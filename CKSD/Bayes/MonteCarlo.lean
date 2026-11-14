@@ -9,7 +9,6 @@ public import Mathlib.MeasureTheory.Group.Prod
 public import Mathlib.Analysis.SpecificLimits.FloorPow
 public import Mathlib.Analysis.PSeries
 
-
 /-!
 # Markov chain Monte Carlo on finite state spaces, and leapfrog integration
 
@@ -21,20 +20,20 @@ uniform over events `A`.
 
 ## Main results
 
-* `CKSD.metropolis_transition_mem_row_stochastic`, `CKSD.metropolis_transition_detailed_balance`,
-  `CKSD.sum_mul_metropolis_transition`: the Metropolis–Hastings matrix is row stochastic and
+* `CKSD.metropolisTransition_mem_rowStochastic`, `CKSD.metropolisTransition_detailedBalance`,
+  `CKSD.sum_mul_metropolisTransition`: the Metropolis–Hastings matrix is row stochastic and
   reversible with respect to its target, which is therefore invariant (GAPS 104.22).
 * `CKSD.abs_sum_pow_sub_le_of_minorization`: Doeblin's geometric bound under a minorization
   `K x y ≥ ε π y`.
-* `CKSD.abs_sum_independence_sampler_pow_sub_le`: the independence sampler converges at rate
+* `CKSD.abs_sum_independenceSampler_pow_sub_le`: the independence sampler converges at rate
   `(1 - 1/M)ⁿ` when `π ≤ M g` (GAPS 104.32).
-* `CKSD.measure_preserving_leapfrog_step_iterate`, `CKSD.leapfrog_step_iterate_reversible`: iterated
+* `CKSD.measurePreserving_leapfrogStep_iterate`, `CKSD.leapfrogStep_iterate_reversible`: iterated
   leapfrog steps preserve Lebesgue measure and are reversible under momentum flip (GAPS 104.35).
-* `CKSD.eventually_abs_metropolis_transition_pow_sub_le`: total-variation convergence of an
+* `CKSD.eventually_abs_metropolisTransition_pow_sub_le`: total-variation convergence of an
   irreducible aperiodic Metropolis–Hastings chain (GAPS 104.31).
-* `CKSD.ae_tendsto_sample_average_metropolis`: the ergodic theorem for such a chain, via the
-  Poisson equation `CKSD.exists_sub_mul_vec_eq_of_off_diag_pos` and the general
-  `CKSD.ae_tendsto_sample_average_of_sub_mul_vec_eq` (GAPS 104.31).
+* `CKSD.ae_tendsto_sampleAverage_metropolis`: the ergodic theorem for such a chain, via the
+  Poisson equation `CKSD.exists_sub_mulVec_eq_of_offDiag_pos` and the general
+  `CKSD.ae_tendsto_sampleAverage_of_sub_mulVec_eq` (GAPS 104.31).
 
 The central limit theorem for such chains is in `CKSD.Bayes.MarkovChainCLT`.
 -/
@@ -54,7 +53,7 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 omit [Fintype ι] [DecidableEq ι] in
 /-- The Metropolis–Hastings acceptance probability is at most one. -/
-theorem metropolis_acceptance_le_one (π : ι → ℝ) (q : Matrix ι ι ℝ) (x y : ι) :
+theorem metropolisAcceptance_le_one (π : ι → ℝ) (q : Matrix ι ι ℝ) (x y : ι) :
     metropolisAcceptance π q x y ≤ 1 := by
   unfold metropolisAcceptance
   split_ifs
@@ -63,7 +62,7 @@ theorem metropolis_acceptance_le_one (π : ι → ℝ) (q : Matrix ι ι ℝ) (x
 omit [Fintype ι] [DecidableEq ι] in
 /-- The Metropolis–Hastings acceptance probability is nonnegative for nonnegative weights and
 proposals. -/
-theorem metropolis_acceptance_nonneg {π : ι → ℝ} {q : Matrix ι ι ℝ} (hπ : ∀ x, 0 ≤ π x)
+theorem metropolisAcceptance_nonneg {π : ι → ℝ} {q : Matrix ι ι ℝ} (hπ : ∀ x, 0 ≤ π x)
     (hq : ∀ x y, 0 ≤ q x y) (x y : ι) : 0 ≤ metropolisAcceptance π q x y := by
   unfold metropolisAcceptance
   split_ifs
@@ -73,29 +72,29 @@ theorem metropolis_acceptance_nonneg {π : ι → ℝ} {q : Matrix ι ι ℝ} (h
 
 /-- Each row of the Metropolis–Hastings matrix sums to one, for arbitrary `π` and `q`, because
 the diagonal carries the rejected mass. -/
-theorem sum_metropolis_transition (π : ι → ℝ) (q : Matrix ι ι ℝ) (x : ι) :
+theorem sum_metropolisTransition (π : ι → ℝ) (q : Matrix ι ι ℝ) (x : ι) :
     ∑ y, metropolisTransition π q x y = 1 := by
   simp [metropolisTransition, Finset.sum_add_distrib]
 
 /-- GAPS 104.22: for nonnegative target weights and a row-stochastic proposal, the
 Metropolis–Hastings matrix is row stochastic. -/
-theorem metropolis_transition_mem_row_stochastic {π : ι → ℝ} {q : Matrix ι ι ℝ}
+theorem metropolisTransition_mem_rowStochastic {π : ι → ℝ} {q : Matrix ι ι ℝ}
     (hπ : ∀ x, 0 ≤ π x) (hq : q ∈ Matrix.rowStochastic ℝ ι) :
     metropolisTransition π q ∈ Matrix.rowStochastic ℝ ι := by
   have hq0 (x y : ι) : 0 ≤ q x y := Matrix.nonneg_of_mem_rowStochastic hq
-  refine Matrix.mem_rowStochastic_iff_sum.2 ⟨fun x y ↦ ?_, sum_metropolis_transition π q⟩
+  refine Matrix.mem_rowStochastic_iff_sum.2 ⟨fun x y ↦ ?_, sum_metropolisTransition π q⟩
   have hrow : ∑ z, q x z * metropolisAcceptance π q x z ≤ 1 :=
     calc _ ≤ ∑ z, q x z := Finset.sum_le_sum fun z _ ↦
-          mul_le_of_le_one_right (hq0 x z) (metropolis_acceptance_le_one π q x z)
+          mul_le_of_le_one_right (hq0 x z) (metropolisAcceptance_le_one π q x z)
       _ = 1 := Matrix.sum_row_of_mem_rowStochastic hq x
-  refine add_nonneg (mul_nonneg (hq0 x y) (metropolis_acceptance_nonneg hπ hq0 x y)) ?_
+  refine add_nonneg (mul_nonneg (hq0 x y) (metropolisAcceptance_nonneg hπ hq0 x y)) ?_
   split_ifs
   · exact sub_nonneg.mpr hrow
   · exact le_rfl
 
 /-- GAPS 104.22: detailed balance `π(x) P(x,y) = π(y) P(y,x)` of the Metropolis–Hastings matrix
 `P`, for nonnegative target weights (not necessarily normalized) and nonnegative proposals. -/
-theorem metropolis_transition_detailed_balance {π : ι → ℝ} {q : Matrix ι ι ℝ}
+theorem metropolisTransition_detailedBalance {π : ι → ℝ} {q : Matrix ι ι ℝ}
     (hπ : ∀ x, 0 ≤ π x) (hq : ∀ x y, 0 ≤ q x y) (x y : ι) :
     π x * metropolisTransition π q x y = π y * metropolisTransition π q y x := by
   have hflux (x y : ι) :
@@ -113,11 +112,11 @@ theorem metropolis_transition_detailed_balance {π : ι → ℝ} {q : Matrix ι 
 
 /-- GAPS 104.22: the target weights are invariant for the Metropolis–Hastings matrix,
 `∑ₓ π(x) P(x,y) = π(y)`. -/
-theorem sum_mul_metropolis_transition {π : ι → ℝ} {q : Matrix ι ι ℝ}
+theorem sum_mul_metropolisTransition {π : ι → ℝ} {q : Matrix ι ι ℝ}
     (hπ : ∀ x, 0 ≤ π x) (hq : ∀ x y, 0 ≤ q x y) (y : ι) :
     ∑ x, π x * metropolisTransition π q x y = π y := by
-  simp_rw [metropolis_transition_detailed_balance hπ hq _ y]
-  rw [← Finset.mul_sum, sum_metropolis_transition, mul_one]
+  simp_rw [metropolisTransition_detailedBalance hπ hq _ y]
+  rw [← Finset.mul_sum, sum_metropolisTransition, mul_one]
 
 /-- An invariant law of a square matrix is invariant for all of its powers. -/
 theorem sum_mul_pow_eq_of_stationary {π : ι → ℝ} {K : Matrix ι ι ℝ}
@@ -180,7 +179,7 @@ theorem abs_sum_pow_sub_le_of_minorization (π : ι → ℝ)
 `π` and a positive proposal density `g` with `π ≤ M g`, every row of the `n`-step
 Metropolis–Hastings matrix with proposal `q(x, y) = g(y)` is within `(1 - 1/M)ⁿ` of `π`,
 uniformly over events. The condition `π ≤ M g` forces `M ≥ 1`. -/
-theorem abs_sum_independence_sampler_pow_sub_le (π g : ι → ℝ)
+theorem abs_sum_independenceSampler_pow_sub_le (π g : ι → ℝ)
     (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
     (hg : ∀ x, 0 < g x) (hg1 : ∑ x, g x = 1)
     (M : ℝ) (hdom : ∀ x, π x ≤ M * g x)
@@ -201,7 +200,7 @@ theorem abs_sum_independence_sampler_pow_sub_le (π g : ι → ℝ)
     have hrej : 0 ≤ 1 - ∑ z, q x z * metropolisAcceptance π q x z := by
       have : ∑ z, q x z * metropolisAcceptance π q x z ≤ ∑ z, q x z :=
         Finset.sum_le_sum fun z _ ↦
-          mul_le_of_le_one_right (hg z).le (metropolis_acceptance_le_one π q x z)
+          mul_le_of_le_one_right (hg z).le (metropolisAcceptance_le_one π q x z)
       simp only [hq, hg1] at this ⊢
       linarith
     by_cases hxy : x = y
@@ -226,8 +225,8 @@ theorem abs_sum_independence_sampler_pow_sub_le (π g : ι → ℝ)
       rw [div_le_div_iff₀ hMpos (hπ x)]
       linarith [hdom x]
   exact abs_sum_pow_sub_le_of_minorization π _ (fun x ↦ (hπ x).le) hπ1
-    (sum_metropolis_transition π q)
-    (sum_mul_metropolis_transition (fun x ↦ (hπ x).le) fun _ y ↦ (hg y).le) _ hmin A n x
+    (sum_metropolisTransition π q)
+    (sum_mul_metropolisTransition (fun x ↦ (hπ x).le) fun _ y ↦ (hg y).le) _ hmin A n x
 
 end Metropolis
 
@@ -237,7 +236,7 @@ variable {d : ℕ}
 
 /-- A single leapfrog step preserves Lebesgue measure on phase space: it is the composition of
 two momentum kicks and a position drift, each a shear. -/
-theorem measure_preserving_leapfrog_step
+theorem measurePreserving_leapfrogStep
     (g : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (hg : Measurable g) (h : ℝ) :
     MeasurePreserving (leapfrogStep g h) volume volume := by
   let E := EuclideanSpace ℝ (Fin d)
@@ -270,14 +269,14 @@ theorem measure_preserving_leapfrog_step
   exact hK.comp (hD.comp hK)
 
 /-- GAPS 104.35: repeated leapfrog steps preserve Lebesgue measure on phase space. -/
-theorem measure_preserving_leapfrog_step_iterate
+theorem measurePreserving_leapfrogStep_iterate
     (g : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (hg : Measurable g) (h : ℝ)
     (L : ℕ) : MeasurePreserving ((leapfrogStep g h)^[L]) volume volume :=
-  (measure_preserving_leapfrog_step g hg h).iterate L
+  (measurePreserving_leapfrogStep g hg h).iterate L
 
 /-- A single leapfrog step is reversible: flipping the momentum after a step and stepping again
 returns the flipped initial point. -/
-theorem leapfrog_step_momentum_flip_leapfrog_step
+theorem leapfrogStep_momentumFlip_leapfrogStep
     (g : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (h : ℝ)
     (z : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d)) :
     leapfrogStep g h (momentumFlip (leapfrogStep g h z)) = momentumFlip z := by
@@ -296,7 +295,7 @@ theorem leapfrog_step_momentum_flip_leapfrog_step
 
 /-- GAPS 104.35: repeated leapfrog steps are reversible under momentum flip,
 `Φᴸ ∘ R ∘ Φᴸ = R` for `R (x, p) = (x, -p)`. -/
-theorem leapfrog_step_iterate_reversible
+theorem leapfrogStep_iterate_reversible
     (g : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (h : ℝ) (L : ℕ)
     (z : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d)) :
     (leapfrogStep g h)^[L] (momentumFlip ((leapfrogStep g h)^[L] z)) = momentumFlip z := by
@@ -304,7 +303,7 @@ theorem leapfrog_step_iterate_reversible
   | zero => rfl
   | succ n ih =>
       rw [Function.iterate_succ_apply', Function.iterate_succ_apply, ih,
-        leapfrog_step_momentum_flip_leapfrog_step]
+        leapfrogStep_momentumFlip_leapfrogStep]
 
 end Leapfrog
 
@@ -316,7 +315,7 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 The target is positive; irreducibility is taken in the sufficient form `q x y > 0` for `x ≠ y`,
 and aperiodicity in the sufficient form that some proposed move has acceptance below one.
 The convergence is uniform over events, which is total-variation convergence. -/
-theorem eventually_abs_metropolis_transition_pow_sub_le (π : ι → ℝ)
+theorem eventually_abs_metropolisTransition_pow_sub_le (π : ι → ℝ)
     (q : Matrix (ι) (ι) ℝ) (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
     (hq : q ∈ Matrix.rowStochastic ℝ ι)
     (hirr : ∀ x y, x ≠ y → 0 < q x y)
@@ -326,13 +325,13 @@ theorem eventually_abs_metropolis_transition_pow_sub_le (π : ι → ℝ)
   set P := metropolisTransition π q with hPdef
   have hq1 : ∀ x, ∑ y, q x y = 1 := Matrix.sum_row_of_mem_rowStochastic hq
   have hPmem : P ∈ Matrix.rowStochastic ℝ ι :=
-    metropolis_transition_mem_row_stochastic (fun x ↦ (hπ x).le) hq
+    metropolisTransition_mem_rowStochastic (fun x ↦ (hπ x).le) hq
   have hP0 (u z : ι) : 0 ≤ P u z := Matrix.nonneg_of_mem_rowStochastic hPmem
-  have hPst := sum_mul_metropolis_transition (fun x ↦ (hπ x).le)
+  have hPst := sum_mul_metropolisTransition (fun x ↦ (hπ x).le)
     (fun x y ↦ Matrix.nonneg_of_mem_rowStochastic hq (i := x) (j := y))
   replace hq (u z : ι) : 0 ≤ q u z := Matrix.nonneg_of_mem_rowStochastic hq
   obtain ⟨x₀, y₀, hqy₀, hacc₀⟩ := hap
-  have hacc_le := metropolis_acceptance_le_one π q
+  have hacc_le := metropolisAcceptance_le_one π q
   have hacc_pos (u z : ι) : 0 < metropolisAcceptance π q u z := by
     unfold metropolisAcceptance
     split_ifs with h0
@@ -437,7 +436,7 @@ theorem eventually_abs_metropolis_transition_pow_sub_le (π : ι → ℝ)
 
 omit [Fintype ι] [DecidableEq ι] in
 /-- The prefix `(X 0, …, X n)` of a measurable finite-state process is measurable. -/
-theorem measurable_fin_chain_prefix {Ω : Type*} [MeasurableSpace Ω]
+theorem measurable_finChainPrefix {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n)) (n : ℕ) :
     Measurable fun ω (i : Fin (n + 1)) ↦ X i ω :=
@@ -446,7 +445,7 @@ theorem measurable_fin_chain_prefix {Ω : Type*} [MeasurableSpace Ω]
 omit [DecidableEq ι] in
 /-- One-step Markov property of a finite-state chain given by its path probabilities: for a
 function `F` of the prefix `(X 0, …, X n)`, `𝔼[F · v(X (n+1))] = 𝔼[F · (K v)(X n)]`. -/
-theorem integral_mul_comp_succ_eq_mul_vec {Ω : Type*} [MeasurableSpace Ω]
+theorem integral_mul_comp_succ_eq_mulVec {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix (ι) (ι) ℝ)
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
@@ -456,10 +455,10 @@ theorem integral_mul_comp_succ_eq_mul_vec {Ω : Type*} [MeasurableSpace Ω]
     (n : ℕ) (F : (Fin (n + 1) → ι) → ℝ) (v : ι → ℝ) :
     ∫ ω, F (fun i : Fin (n + 1) ↦ X i ω) * v (X (n + 1) ω) ∂μ =
       ∫ ω, F (fun i : Fin (n + 1) ↦ X i ω) * (Matrix.mulVec K v) (X n ω) ∂μ := by
-  have hpre := measurable_fin_chain_prefix X hX n
-  rw [integral_comp_eq_sum_measure_real μ (fun ω ↦ ((fun i : Fin (n + 1) ↦ X i ω), X (n + 1) ω))
+  have hpre := measurable_finChainPrefix X hX n
+  rw [integral_comp_eq_sum_measureReal μ (fun ω ↦ ((fun i : Fin (n + 1) ↦ X i ω), X (n + 1) ω))
       (hpre.prodMk (hX (n + 1))) (fun z ↦ F z.1 * v z.2)]
-  have h2 := integral_comp_eq_sum_measure_real μ (fun ω (i : Fin (n + 1)) ↦ X i ω) hpre
+  have h2 := integral_comp_eq_sum_measureReal μ (fun ω (i : Fin (n + 1)) ↦ X i ω) hpre
       (fun z ↦ F z * (Matrix.mulVec K v) (z (Fin.last n)))
   simp only [Fin.val_last] at h2
   rw [h2, Fintype.sum_prod_type]
@@ -513,7 +512,7 @@ theorem integral_mul_comp_succ_eq_mul_vec {Ω : Type*} [MeasurableSpace Ω]
 omit [DecidableEq ι] in
 /-- Second moment of the martingale `∑_{i<n} (u(X (i+1)) - (K u)(X i))` of a finite-state chain:
 the increments are orthogonal, so a bound `B` on them gives `𝔼[Mₙ²] ≤ n B²`. -/
-theorem integral_sq_sum_markov_increment_le {Ω : Type*} [MeasurableSpace Ω]
+theorem integral_sq_sum_markovIncrement_le {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix (ι) (ι) ℝ)
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
@@ -526,7 +525,7 @@ theorem integral_sq_sum_markov_increment_le {Ω : Type*} [MeasurableSpace Ω]
   induction n with
   | zero => simp
   | succ n ih =>
-    have hpre := measurable_fin_chain_prefix X hX n
+    have hpre := measurable_finChainPrefix X hX n
     set F : (Fin (n + 1) → ι) → ℝ := fun z ↦
       ∑ i : Fin n, (u (z i.succ) - Matrix.mulVec K u (z i.castSucc)) with hF
     have hM (ω : Ω) : ∑ i ∈ Finset.range n, (u (X (i + 1) ω) - Matrix.mulVec K u (X i ω)) =
@@ -560,7 +559,7 @@ theorem integral_sq_sum_markov_increment_le {Ω : Type*} [MeasurableSpace Ω]
     have e2 := integral_add i1 i23
     simp only [Pi.add_apply] at e1
     rw [e1, e2, integral_const_mul,
-      integral_sub i2 i3, integral_mul_comp_succ_eq_mul_vec μ K X hX hstep n F u, sub_self,
+      integral_sub i2 i3, integral_mul_comp_succ_eq_mulVec μ K X hX hstep n F u, sub_self,
       mul_zero, add_zero]
     have hD : ∫ ω, (u (X (n + 1) ω) - Matrix.mulVec K u (X n ω)) ^ 2 ∂μ ≤ B ^ 2 := by
       calc _ ≤ ∫ _ω, B ^ 2 ∂μ := integral_mono i4 (integrable_const _) fun ω ↦ by
@@ -575,7 +574,7 @@ theorem integral_sq_sum_markov_increment_le {Ω : Type*} [MeasurableSpace Ω]
 positive invariant law `π`: every `π`-centred `g` is `u - P u` for some `u`. The solution is
 `u = ½ ∑ₖ Lᵏ g` for the lazy chain `L = (I + P)/2`, which converges geometrically by Doeblin's
 bound. -/
-theorem exists_sub_mul_vec_eq_of_off_diag_pos (π : ι → ℝ)
+theorem exists_sub_mulVec_eq_of_offDiag_pos (π : ι → ℝ)
     (P : Matrix (ι) (ι) ℝ) (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
     (hP : P ∈ Matrix.rowStochastic ℝ ι)
     (hPst : ∀ y, ∑ x, π x * P x y = π y) (hoff : ∀ x y, x ≠ y → 0 < P x y)
@@ -713,7 +712,7 @@ chain has transition matrix `P` and `u - P u = h - m`, then the sample averages 
 converge almost surely to `m`. The proof writes the centred partial sums as a martingale with
 orthogonal bounded increments plus a bounded remainder, and applies Chebyshev's inequality and
 the Borel–Cantelli lemma along the squares. -/
-theorem ae_tendsto_sample_average_of_sub_mul_vec_eq {Ω : Type*} [MeasurableSpace Ω]
+theorem ae_tendsto_sampleAverage_of_sub_mulVec_eq {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Matrix ι ι ℝ)
     (hP0 : ∀ x y, 0 ≤ P x y) (hP1 : ∀ x, ∑ y, P x y = 1)
@@ -785,7 +784,7 @@ theorem ae_tendsto_sample_average_of_sub_mul_vec_eq {Ω : Type*} [MeasurableSpac
           rw [integral_add ((hintM2 n).const_mul 2) (integrable_const _), integral_const_mul]
           simp
       _ ≤ 2 * (n * (2 * U) ^ 2) + 2 * (2 * U) ^ 2 := by
-          have := integral_sq_sum_markov_increment_le μ P X hX hstep u (2 * U) hB n
+          have := integral_sq_sum_markovIncrement_le μ P X hX hstep u (2 * U) hB n
           linarith
       _ ≤ (4 * (2 * U) ^ 2) * n := by nlinarith [sq_nonneg (2 * U)]
   -- Chebyshev and Borel–Cantelli along the squares `(k + 1)²`.
@@ -811,7 +810,7 @@ theorem ae_tendsto_sample_average_of_sub_mul_vec_eq {Ω : Type*} [MeasurableSpac
 
 /-- Off-diagonal entries of the Metropolis transition are positive when the target is positive
 and the proposal is positive off the diagonal. -/
-theorem metropolis_transition_pos_of_ne (π : ι → ℝ)
+theorem metropolisTransition_pos_of_ne (π : ι → ℝ)
     (q : Matrix (ι) (ι) ℝ) (hπ : ∀ x, 0 < π x)
     (hirr : ∀ x y, x ≠ y → 0 < q x y) (x y : ι) (hxy : x ≠ y) :
     0 < metropolisTransition π q x y := by
@@ -824,30 +823,31 @@ theorem metropolis_transition_pos_of_ne (π : ι → ℝ)
   simp only [metropolisTransition, hxy, ↓reduceIte, add_zero]
   exact mul_pos (hirr x y hxy) hacc
 
-/-- GAPS 104.31, finite-state ergodic theorem for Metropolis–Hastings from a fixed initial state.
-The chain is specified by its finite-dimensional path probabilities; irreducibility is taken in the
-sufficient form `q x y > 0` for `x ≠ y`. On a finite space every function is `π`-integrable. -/
-theorem ae_tendsto_sample_average_metropolis {Ω : Type*} [MeasurableSpace Ω]
+/-- GAPS 104.31, finite-state ergodic theorem for Metropolis–Hastings from an arbitrary initial
+law `ν` (a point mass `ν = 1_{x₀}` gives a fixed initial state). The chain is specified by its
+finite-dimensional path probabilities; irreducibility is taken in the sufficient form `q x y > 0`
+for `x ≠ y`. On a finite space every function is `π`-integrable. -/
+theorem ae_tendsto_sampleAverage_metropolis {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (π : ι → ℝ)
     (q : Matrix (ι) (ι) ℝ) (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
     (hq : q ∈ Matrix.rowStochastic ℝ ι)
     (hirr : ∀ x y, x ≠ y → 0 < q x y)
-    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n)) (x₀ : ι)
+    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n)) (ν : ι → ℝ)
     (hlaw : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n, X i ω = path i} = (if path 0 = x₀ then 1 else 0) *
+      μ.real {ω | ∀ i ≤ n, X i ω = path i} = ν (path 0) *
         ∏ i ∈ Finset.range n, metropolisTransition π q (path i) (path (i + 1)))
     (h : ι → ℝ) :
     ∀ᵐ ω ∂μ, Tendsto (fun n ↦ sampleAverage (fun i ω ↦ h (X i ω)) n ω) atTop
       (𝓝 (∑ x, π x * h x)) := by
   set P := metropolisTransition π q with hPdef
   have hPmem : P ∈ Matrix.rowStochastic ℝ ι :=
-    metropolis_transition_mem_row_stochastic (fun x ↦ (hπ x).le) hq
+    metropolisTransition_mem_rowStochastic (fun x ↦ (hπ x).le) hq
   have hP0 (x y : ι) : 0 ≤ P x y := Matrix.nonneg_of_mem_rowStochastic hPmem
-  have hP1 : ∀ x, ∑ y, P x y = 1 := sum_metropolis_transition π q
-  have hPst := sum_mul_metropolis_transition (fun x ↦ (hπ x).le)
+  have hP1 : ∀ x, ∑ y, P x y = 1 := sum_metropolisTransition π q
+  have hPst := sum_mul_metropolisTransition (fun x ↦ (hπ x).le)
     (fun x y ↦ Matrix.nonneg_of_mem_rowStochastic hq (i := x) (j := y))
-  have hoff : ∀ x y, x ≠ y → 0 < P x y := metropolis_transition_pos_of_ne π q hπ hirr
+  have hoff : ∀ x y, x ≠ y → 0 < P x y := metropolisTransition_pos_of_ne π q hπ hirr
   have hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
       μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
         μ.real {ω | ∀ i ≤ n, X i ω = path i} * P (path n) (path (n + 1)) := by
@@ -858,8 +858,8 @@ theorem ae_tendsto_sample_average_metropolis {Ω : Type*} [MeasurableSpace Ω]
   have hgc : ∑ x, π x * g x = 0 := by
     simp only [hg, mul_sub, Finset.sum_sub_distrib, ← Finset.sum_mul, hπ1, one_mul, hm,
       sub_self]
-  obtain ⟨u, hu⟩ := exists_sub_mul_vec_eq_of_off_diag_pos π P hπ hπ1 hPmem hPst hoff g hgc
-  exact ae_tendsto_sample_average_of_sub_mul_vec_eq μ P hP0 hP1 X hX hstep h m u hu
+  obtain ⟨u, hu⟩ := exists_sub_mulVec_eq_of_offDiag_pos π P hπ hπ1 hPmem hPst hoff g hgc
+  exact ae_tendsto_sampleAverage_of_sub_mulVec_eq μ P hP0 hP1 X hX hstep h m u hu
 
 end Ergodic
 

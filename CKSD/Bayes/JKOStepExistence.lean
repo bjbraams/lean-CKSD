@@ -1,5 +1,4 @@
 module
-
 public import CKSD.Bayes.JKOEnergy
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Resolvent
 /-!
@@ -16,6 +15,13 @@ Mathlib supplies extended-real topology and integration. Pinned TauCeti supplies
 and potential lower semicontinuity and the abstract resolvent theorem. This is the discrete
 existence part of GAPS 104.43, using the moment-compensated direct method for the whole Euclidean
 space rather than the compact-domain simplification in Santambrogio, Section 8.3.
+
+## Main results
+
+* `CKSD.jkoFreeEnergy_le_liminf_of_isBounded`: narrow lower semicontinuity of the free energy
+  along Wasserstein-bounded sequences.
+* `CKSD.exists_moreauYosida_jkoFreeEnergy_ne_bot`: the JKO Moreau envelope is bounded below.
+* `CKSD.nonempty_moreauYosidaResolvent_jkoFreeEnergy`: every positive JKO step has a minimizer.
 -/
 @[expose] public section
 noncomputable section
@@ -26,25 +32,25 @@ variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 /-- Adding the Gaussian quadratic correction leaves a narrowly lower-semicontinuous entropy
 and nonnegative potential, up to a finite normalization constant. -/
-theorem jko_free_energy_add_quadratic_eq (V : E → ℝ) {a : ℝ} (ha : 0<a)
+theorem jkoFreeEnergy_add_quadratic_eq (V : E → ℝ) {a : ℝ} (ha : 0<a)
     (μ : TauCeti.WassersteinSpace 2 E) :
     jkoFreeEnergy V μ+((a*(∫ x,‖x‖^2 ∂wassersteinLaw μ) : ℝ) : EReal) =
       (klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a*‖x‖^2))) : EReal) +
         TauCeti.potentialEnergy V (wassersteinLaw μ)+
           ((-Real.log (∫ x : E,Real.exp (-(a*‖x‖^2))) : ℝ) : EReal) := by
-  rw [jko_free_energy_eq_kl_div_gaussian_add V ha μ,add_assoc,← EReal.coe_add]
+  rw [jkoFreeEnergy_eq_klDiv_gaussian_add V ha μ,add_assoc,← EReal.coe_add]
   congr 1
   congr 1
   ring
 
 /-- The free energy is narrowly lower semicontinuous along any Wasserstein-bounded sequence. -/
-theorem jko_free_energy_le_liminf_of_is_bounded
+theorem jkoFreeEnergy_le_liminf_of_isBounded
     (V : E → ℝ) (hVc : Continuous V) (hV : ∀ x,0≤V x)
     {u : ℕ → TauCeti.WassersteinSpace 2 E} {ν : TauCeti.WassersteinSpace 2 E}
     (hu : Bornology.IsBounded (range u))
     (hlim : Tendsto (fun n ↦ (u n : ProbabilityMeasure E)) atTop (𝓝 (ν : ProbabilityMeasure E))) :
     jkoFreeEnergy V ν ≤ liminf (fun n ↦ jkoFreeEnergy V (u n)) atTop := by
-  obtain ⟨B,hB,hbound⟩ := exists_integral_norm_sq_le_of_is_bounded u hu
+  obtain ⟨B,hB,hbound⟩ := exists_integral_norm_sq_le_of_isBounded u hu
   apply ereal_le_liminf_of_positive_tilts
     (mn := fun n ↦ ∫ x,‖x‖^2 ∂wassersteinLaw (u n))
     (m := ∫ x,‖x‖^2 ∂wassersteinLaw ν)
@@ -79,12 +85,12 @@ theorem jko_free_energy_le_liminf_of_is_bounded
     change (klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a*‖x‖^2))) : EReal)+
       TauCeti.potentialEnergy V (wassersteinLaw μ)+
         ((-Real.log (∫ x : E,Real.exp (-(a*‖x‖^2))) : ℝ) : EReal) = _
-    exact (jko_free_energy_add_quadratic_eq V ha μ).symm
+    exact (jkoFreeEnergy_add_quadratic_eq V ha μ).symm
   have h := (hG.le_liminf (ν : ProbabilityMeasure E)).trans hlim.liminf_le_liminf_comp
   simpa only [Function.comp_def,hrep] using h
 /-- Gaussian moment compensation bounds the JKO Moreau envelope below at a Dirac law for
 every positive step size. -/
-theorem exists_moreau_yosida_jko_free_energy_ne_bot
+theorem exists_moreauYosida_jkoFreeEnergy_ne_bot
     (V : E → ℝ) (hV : ∀ x,0≤V x) (τ : ℝ≥0) (hτ : 0<τ) :
     ∃ δ : TauCeti.WassersteinSpace 2 E, TauCeti.moreauYosida (jkoFreeEnergy V) τ δ ≠ ⊥ := by
   have hmem : TauCeti.HasFiniteMoment 2 (diracProba (0:E) : Measure E) := by
@@ -119,15 +125,15 @@ theorem exists_moreau_yosida_jko_free_energy_ne_bot
         rw [← EReal.coe_add]
         congr 1
         ring
-    _ ≤ _ := add_le_add (jko_free_energy_gaussian_lower_bound V hV ha ν) le_rfl
+    _ ≤ _ := add_le_add (jkoFreeEnergy_gaussian_lower_bound V hV ha ν) le_rfl
 
 /-- Every positive JKO step for a continuous nonnegative potential has a minimizer. -/
-theorem nonempty_moreau_yosida_resolvent_jko_free_energy
+theorem nonempty_moreauYosidaResolvent_jkoFreeEnergy
     (V : E → ℝ) (hVc : Continuous V) (hV : ∀ x,0≤V x) (τ : ℝ≥0) (hτ : 0<τ)
     (μ : TauCeti.WassersteinSpace 2 E) :
     (TauCeti.moreauYosidaResolvent (jkoFreeEnergy V) τ μ).Nonempty := by
-  obtain ⟨δ,hδ⟩ := exists_moreau_yosida_jko_free_energy_ne_bot V hV (τ+1) (by positivity)
+  obtain ⟨δ,hδ⟩ := exists_moreauYosida_jkoFreeEnergy_ne_bot V hV (τ+1) (by positivity)
   exact TauCeti.WassersteinSpace.moreauYosidaResolvent_nonempty_of_properSpace
     (p := 2) (X := E) (φ := jkoFreeEnergy V) (τ₀ := τ+1) (μ₀ := δ)
-    (fun {v} {ν} hv hν ↦ jko_free_energy_le_liminf_of_is_bounded V hVc hV (u := v) (ν := ν) hv hν) hτ (lt_add_of_pos_right τ one_pos) hδ μ
+    (fun {v} {ν} hv hν ↦ jkoFreeEnergy_le_liminf_of_isBounded V hVc hV (u := v) (ν := ν) hv hν) hτ (lt_add_of_pos_right τ one_pos) hδ μ
 end CKSD

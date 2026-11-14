@@ -3,7 +3,6 @@ module
 public import CKSD.Nonparametric.EmpiricalCovariance
 public import Mathlib.Probability.ProductMeasure
 
-
 /-!
 # The Tracy–Widom law and the spiked covariance transition
 
@@ -22,6 +21,11 @@ sizes realized on one probability space through a doubly infinite array of indep
 standard normal variables, the observation matrix of size `n × p` being its upper-left block
 with the first column scaled by `√α`.
 Source: GAPS 103.38.
+
+## References
+
+* J. Yao, S. Zheng and Z. Bai, *Large Sample Covariance Matrices and High-Dimensional Data
+  Analysis*, Cambridge University Press, 2015.
 -/
 
 @[expose] public section
@@ -69,7 +73,7 @@ def johnstoneScale (n p : ℕ) : ℝ :=
 /-- GAPS 103.38: Johnstone's Tracy–Widom limit for the largest eigenvalue of a white Wishart
 matrix as `n → ∞` with `p / n → y ∈ (0, ∞)` (so that `p → ∞` as well), in the form of
 convergence of distribution functions to the continuous limit `F₁`. -/
-theorem tendsto_largest_sample_covariance_eigenvalue_tracy_widom
+theorem tendsto_largestSampleCovarianceEigenvalue_tracyWidom
     (q : ℝ → ℝ) (hq : IsHastingsMcLeodSolution q)
     (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop)
     (y : ℝ) (hy : 0 < y) (hpn : Tendsto (fun k ↦ (p k : ℝ) / n k) atTop (𝓝 y)) (s : ℝ) :
@@ -87,14 +91,16 @@ normal array. -/
 def spikedDataMatrix (α : ℝ) (n p : ℕ) (ω : ℕ × ℕ → ℝ) : Fin n → Fin p → ℝ :=
   fun i j ↦ (if j.val = 0 then Real.sqrt α else 1) * ω (i.val, j.val)
 
-/-- GAPS 103.38, subcritical spike: for `1 < α ≤ 1 + √y` the largest sample covariance
+/-- GAPS 103.38, subcritical spike: for `α ≤ 1 + √y` the largest sample covariance
 eigenvalue converges almost surely to the bulk edge `(1 + √y) ^ 2`. Here `n → ∞` and
-`p / n → y > 0` (which force `p → ∞`). Scope: diagonal spiked
-covariance on the array coupling described in the module header. -/
-theorem ae_tendsto_largest_eigenvalue_spiked_subcritical
+`p / n → y > 0` (which force `p → ∞`). No lower bound on `α` is needed: for `α ≤ 1` the largest
+eigenvalue lies between those of the null models of dimensions `p - 1` and `p`, and for `α < 0`
+the first column vanishes since `√α = 0`. Scope: diagonal spiked covariance on the array
+coupling described in the module header. -/
+theorem ae_tendsto_largestEigenvalue_spiked_subcritical
     (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop)
     (y : ℝ) (hy : 0 < y) (hpn : Tendsto (fun k ↦ (p k : ℝ) / n k) atTop (𝓝 y))
-    (α : ℝ) (hα : 1 < α) (hαy : α ≤ 1 + Real.sqrt y) :
+    (α : ℝ) (hαy : α ≤ 1 + Real.sqrt y) :
     ∀ᵐ ω ∂standardGaussianArrayLaw, Tendsto
       (fun k ↦ largestSampleCovarianceEigenvalue (spikedDataMatrix α (n k) (p k) ω)) atTop
       (𝓝 ((1 + Real.sqrt y) ^ 2)) := by
@@ -104,7 +110,7 @@ theorem ae_tendsto_largest_eigenvalue_spiked_subcritical
 eigenvalue converges almost surely to `α + y α / (α - 1)`. Here `n → ∞` and `p / n → y > 0`
 (which force `p → ∞`). Scope: diagonal spiked covariance
 on the array coupling described in the module header. -/
-theorem ae_tendsto_largest_eigenvalue_spiked_supercritical
+theorem ae_tendsto_largestEigenvalue_spiked_supercritical
     (n p : ℕ → ℕ) (hn : Tendsto n atTop atTop)
     (y : ℝ) (hy : 0 < y) (hpn : Tendsto (fun k ↦ (p k : ℝ) / n k) atTop (𝓝 y))
     (α : ℝ) (hαy : 1 + Real.sqrt y < α) :

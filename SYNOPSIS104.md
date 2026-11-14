@@ -296,9 +296,9 @@ $H=\alpha/|\alpha|$.
   $\Theta$. Assume $\theta\mapsto P_\theta(A)$ is measurable for every
   measurable $A$, and let $X_1,X_2,\ldots$ be independent with law
   $P_\theta$. If $\theta\mapsto P_\theta$ is injective, then there is a
-  $\Pi$-null set $N$ such that for every $\theta\notin N$ and every
-  neighborhood $U$ of $\theta$, the posterior probability of $U$ given
-  $X_1,\ldots,X_n$ tends to $1$, $P_\theta^\infty$-almost surely.
+  $\Pi$-null set $N$ such that for every $\theta\notin N$, $P_\theta^\infty$-almost
+  surely, the posterior probability given $X_1,\ldots,X_n$ of every
+  neighborhood $U$ of $\theta$ tends to $1$.
 
 * **18. Schwartz's theorem.** Let $\Pi$ be a prior on a set of probability
   densities relative to a $\sigma$-finite measure, let $X_1,X_2,\ldots$ be
@@ -766,7 +766,7 @@ where $\mu_n$ is the law of the $n$-th iterate.
   $c_3,c_4>0$ with the following property: for all $a,b>0$ there is
   $N_{a,b}$ such that whenever $d>N_{a,b}$, $3\le\kappa\le ad^b$,
   $M\ge12$, and $h>0$, some target with
-  $\alpha I\preceq\nabla^2V\preceq\beta I$ and some $M$-warm start give
+  $I\preceq\nabla^2V\preceq\kappa I$ and some $M$-warm start give
   the $\tfrac12$-lazy MALA with step $h$ an $\varepsilon$-mixing time
   at least
   $$\frac{c_3\kappa d^{1/2}}{(\max\{\log\kappa,\log d\})^3}
@@ -873,7 +873,7 @@ of the $N$ particles.
 * **51. Propagation of chaos.** Assume a drift globally Lipschitz in
   position and in $W_1$ of the measure, independent Brownian drivers,
   and independent identically distributed initial states with finite
-  second moment, independent of those drivers. Then the limiting equation
+  first moment, independent of those drivers. Then the limiting equation
   and the particle systems have unique strong solutions, and for every
   $T<\infty$ and every fixed $k$, the joint law of the paths on $[0,T]$ of
   the first $k$ particles converges weakly on
@@ -977,9 +977,9 @@ Feynman–Kac measures of CKMA SYNOPSIS08, item 36.
   particles with independent nonlinear copies using the same initial
   values and Brownian motions. For every finite $T$,
   $$\mathbb E\sup_{t\le T}\|X_t^{i,N}-\bar X_t^i\|^2\le C_T/N,$$
-  for independent identically distributed initial values with finite
-  second moment, where $C_T$ depends only on $T$, the Lipschitz constants
-  of $b_0$ and $K$, and $\sup|K|$.
+  for independent identically distributed initial values, where $C_T$
+  depends only on $T$, the Lipschitz constants of $b_0$ and $K$, and
+  $\sup|K|$.
 
 * **57. Prediction and Bayesian correction.** For a hidden Markov model,
   let $\eta_0$ be the law of the initial state, $M_t$ the state

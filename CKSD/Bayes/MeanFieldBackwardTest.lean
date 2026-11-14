@@ -1,5 +1,4 @@
 module
-
 public import TauCeti.Analysis.ODE.InitialCondition
 public import TauCeti.Analysis.Calculus.BumpFunction.SmoothApprox
 public import Mathlib.Analysis.Calculus.Deriv.Prod
@@ -25,7 +24,7 @@ namespace CKSD
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
 set_option backward.isDefEq.respectTransparency false in
 /-- The time coordinate of an augmented flow increases at unit speed. -/
-theorem global_solution_fst_eq_add
+theorem globalSolution_fst_eq_add
     (w : ℝ × E → ℝ × E) {K : ℝ≥0} (hw : LipschitzWith K w)
     (hwfst : ∀ q, (w q).1 = 1) (q : ℝ × E) (s : ℝ) :
     (ODE.globalSolution w hw q s).1 = q.1 + s := by
@@ -49,17 +48,17 @@ def backwardFlowTest (w : ℝ × E → ℝ × E) {K : ℝ≥0} (hw : LipschitzWi
   g ((ODE.globalSolution w hw q (T - q.1)).2)
 
 /-- The backward-flow test is constant along every augmented trajectory. -/
-theorem backward_flow_test_global_solution
+theorem backwardFlowTest_globalSolution
     (w : ℝ × E → ℝ × E) {K : ℝ≥0} (hw : LipschitzWith K w)
     (hwfst : ∀ q, (w q).1 = 1) (g : E → ℝ) (T : ℝ) (q : ℝ × E) (s : ℝ) :
     backwardFlowTest w hw g T (ODE.globalSolution w hw q s) = backwardFlowTest w hw g T q := by
-  rw [backwardFlowTest, global_solution_fst_eq_add w hw hwfst,
+  rw [backwardFlowTest, globalSolution_fst_eq_add w hw hwfst,
     ← ODE.globalSolution_add]
   congr 2
   ring_nf
 
 /-- A smooth vector field and smooth terminal test give a smooth backward-flow test. -/
-theorem cont_diff_backward_flow_test [FiniteDimensional ℝ E]
+theorem contDiff_backwardFlowTest [FiniteDimensional ℝ E]
     (w : ℝ × E → ℝ × E) {K : ℝ≥0} (hw : LipschitzWith K w)
     (hws : ContDiff ℝ ∞ w) (g : E → ℝ) (hg : ContDiff ℝ ∞ g) (T : ℝ) :
     ContDiff ℝ ∞ (backwardFlowTest w hw g T) := by
@@ -68,17 +67,17 @@ theorem cont_diff_backward_flow_test [FiniteDimensional ℝ E]
 
 set_option backward.isDefEq.respectTransparency false in
 /-- The backward-flow test solves the backward transport equation for the smooth field. -/
-theorem fderiv_backward_flow_test_apply_field [FiniteDimensional ℝ E]
+theorem fderiv_backwardFlowTest_apply_field [FiniteDimensional ℝ E]
     (w : ℝ × E → ℝ × E) {K : ℝ≥0} (hw : LipschitzWith K w)
     (hws : ContDiff ℝ ∞ w) (hwfst : ∀ q, (w q).1 = 1)
     (g : E → ℝ) (hg : ContDiff ℝ ∞ g) (T : ℝ) (q : ℝ × E) :
     fderiv ℝ (backwardFlowTest w hw g T) q (w q) = 0 := by
-  have hdiff := (cont_diff_backward_flow_test w hw hws g hg T).differentiable (by simp)
+  have hdiff := (contDiff_backwardFlowTest w hw hws g hg T).differentiable (by simp)
   have hd := (hdiff (ODE.globalSolution w hw q 0)).hasFDerivAt.comp_hasDerivAt 0
     (ODE.hasDerivAt_globalSolution w hw q 0)
   have heq : (fun s ↦ backwardFlowTest w hw g T (ODE.globalSolution w hw q s)) =
       (fun _ : ℝ ↦ backwardFlowTest w hw g T q) :=
-    funext fun s ↦ backward_flow_test_global_solution w hw hwfst g T q s
+    funext fun s ↦ backwardFlowTest_globalSolution w hw hwfst g T q s
   have hz : HasDerivAt (fun s ↦ backwardFlowTest w hw g T (ODE.globalSolution w hw q s)) 0 0 := by
     rw [heq]
     exact hasDerivAt_const _ _
@@ -86,18 +85,18 @@ theorem fderiv_backward_flow_test_apply_field [FiniteDimensional ℝ E]
   simpa only [ODE.globalSolution_zero] using huniq
 
 /-- The backward-flow test agrees with its prescribed terminal value. -/
-theorem backward_flow_test_terminal (w : ℝ × E → ℝ × E) {K : ℝ≥0}
+theorem backwardFlowTest_terminal (w : ℝ × E → ℝ × E) {K : ℝ≥0}
     (hw : LipschitzWith K w) (g : E → ℝ) (T : ℝ) (x : E) :
     backwardFlowTest w hw g T (T, x) = g x := by
   rw [backwardFlowTest, sub_self, ODE.globalSolution_zero]
 
 /-- A uniform bound on the terminal test bounds the backward-flow test at every space-time point. -/
-theorem norm_backward_flow_test_le (w : ℝ × E → ℝ × E) {K : ℝ≥0}
+theorem norm_backwardFlowTest_le (w : ℝ × E → ℝ × E) {K : ℝ≥0}
     (hw : LipschitzWith K w) (g : E → ℝ) (T M : ℝ) (hg : ∀ x, ‖g x‖ ≤ M) (q : ℝ × E) :
     ‖backwardFlowTest w hw g T q‖ ≤ M := hg _
 
 /-- A bounded vector field gives a uniform Lipschitz bound in flow time. -/
-theorem lipschitz_with_global_solution_time_of_bound
+theorem lipschitzWith_globalSolution_time_of_bound
     (w : ℝ × E → ℝ × E) {K M : ℝ≥0} (hw : LipschitzWith K w)
     (hM : ∀ q, ‖w q‖₊ ≤ M) (q : ℝ × E) :
     LipschitzWith M (ODE.globalSolution w hw q) := by
@@ -134,7 +133,7 @@ def boundedBackwardFlowTest (w : ℝ × E → ℝ × E) {K : ℝ≥0} (hw : Lips
 
 /-- The global Lipschitz bound of a clocked backward test depends only on uniform bounds of
 the clock, field and terminal test. -/
-theorem lipschitz_with_bounded_backward_flow_test
+theorem lipschitzWith_boundedBackwardFlowTest
     (w : ℝ × E → ℝ × E) {K M G J : ℝ≥0} (hw : LipschitzWith K w)
     (hM : ∀ q, ‖w q‖₊ ≤ M) (g : E → ℝ) (hg : LipschitzWith G g)
     (T : ℝ) (β : ℝ → ℝ) (hβ : LipschitzWith J β) (R : ℝ) (hR : ∀ t, |β t| ≤ R) :
@@ -158,7 +157,7 @@ theorem lipschitz_with_bounded_backward_flow_test
   let τ' := T - β q'.1
   have hτbound : |τ| ≤ |T| + R := (abs_sub _ _).trans (add_le_add_right (hR q.1) _)
   have hflow := ODE.dist_globalSolution_le w hw p p' τ
-  have htime := (lipschitz_with_global_solution_time_of_bound w hw hM p').dist_le_mul τ τ'
+  have htime := (lipschitzWith_globalSolution_time_of_bound w hw hM p').dist_le_mul τ τ'
   have hL := hP.dist_le_mul q q'
   have hL' := hτ.dist_le_mul q q'
   have hfull : dist (ODE.globalSolution w hw p τ) (ODE.globalSolution w hw p' τ') ≤
@@ -191,7 +190,7 @@ theorem lipschitz_with_bounded_backward_flow_test
 
 /-- On an open interval where the clock is the identity, the clocked and ordinary tests agree
 on a neighbourhood of every space-time point. -/
-theorem bounded_backward_flow_test_eventually_eq
+theorem boundedBackwardFlowTest_eventuallyEq
     (w : ℝ × E → ℝ × E) {K : ℝ≥0} (hw : LipschitzWith K w)
     (g : E → ℝ) (T : ℝ) (β : ℝ → ℝ) {a b : ℝ}
     (hβ : EqOn β id (Ioo a b)) (t : ℝ) (ht : t ∈ Ioo a b) (x : E) :
@@ -205,22 +204,22 @@ theorem bounded_backward_flow_test_eventually_eq
 
 /-- The clocked test satisfies the exact backward equation on intervals where the clock equals
 time. -/
-theorem fderiv_bounded_backward_flow_test_apply_field [FiniteDimensional ℝ E]
+theorem fderiv_boundedBackwardFlowTest_apply_field [FiniteDimensional ℝ E]
     (w : ℝ × E → ℝ × E) {K : ℝ≥0} (hw : LipschitzWith K w)
     (hws : ContDiff ℝ ∞ w) (hwfst : ∀ q, (w q).1 = 1)
     (g : E → ℝ) (hg : ContDiff ℝ ∞ g) (T : ℝ) (β : ℝ → ℝ) {a b : ℝ}
     (hβ : EqOn β id (Ioo a b)) (t : ℝ) (ht : t ∈ Ioo a b) (x : E) :
     fderiv ℝ (boundedBackwardFlowTest w hw g T β) (t, x) (w (t, x)) = 0 := by
-  rw [(bounded_backward_flow_test_eventually_eq w hw g T β hβ t ht x).fderiv_eq]
-  exact fderiv_backward_flow_test_apply_field w hw hws hwfst g hg T _
+  rw [(boundedBackwardFlowTest_eventuallyEq w hw g T β hβ t ht x).fderiv_eq]
+  exact fderiv_backwardFlowTest_apply_field w hw hws hwfst g hg T _
 
 /-- A bounded clocked test inherits the smoothness of the field, clock and terminal data. -/
-theorem cont_diff_bounded_backward_flow_test [FiniteDimensional ℝ E]
+theorem contDiff_boundedBackwardFlowTest [FiniteDimensional ℝ E]
     (w : ℝ × E → ℝ × E) {K : ℝ≥0} (hw : LipschitzWith K w)
     (hws : ContDiff ℝ ∞ w) (g : E → ℝ) (hg : ContDiff ℝ ∞ g)
     (T : ℝ) (β : ℝ → ℝ) (hβ : ContDiff ℝ ∞ β) :
     ContDiff ℝ ∞ (boundedBackwardFlowTest w hw g T β) :=
-  (cont_diff_backward_flow_test w hw hws g hg T).comp
+  (contDiff_backwardFlowTest w hw hws g hg T).comp
     ((hβ.comp contDiff_fst).prodMk contDiff_snd)
 
 set_option maxHeartbeats 800000 in
@@ -264,18 +263,18 @@ theorem exists_approximate_backward_test [FiniteDimensional ℝ E]
     simpa only [w, M', coe_nnnorm, Prod.norm_def, norm_one, NNReal.coe_max, NNReal.coe_one,
       NNReal.coe_add] using max_le_max (le_refl (1 : ℝ)) hvq
   let u := boundedBackwardFlowTest w hw g T β
-  have hus : ContDiff ℝ ∞ u := cont_diff_bounded_backward_flow_test w hw hws g hg T β hβs
-  have huLip : LipschitzWith C u := lipschitz_with_bounded_backward_flow_test w hw hwM g hgLip T β hβLip R hβR
+  have hus : ContDiff ℝ ∞ u := contDiff_boundedBackwardFlowTest w hw hws g hg T β hβs
+  have huLip : LipschitzWith C u := lipschitzWith_boundedBackwardFlowTest w hw hwM g hgLip T β hβLip R hβR
   have hDu (q : ℝ × E) : ‖fderiv ℝ u q‖ ≤ (C : ℝ) := norm_fderiv_le_of_lipschitz ℝ huLip
   refine ⟨u, hus.of_le (by simp), fun q ↦ hgA _, hDu, ?_, ?_⟩
   · intro x
     have ht : T ∈ Ioo (-1 : ℝ) (T + 1) := ⟨by linarith, by linarith⟩
     dsimp only [u, boundedBackwardFlowTest]
-    rw [hβid ht, id_eq, backward_flow_test_terminal]
+    rw [hβid ht, id_eq, backwardFlowTest_terminal]
   · intro t ht x
     have ht' : t ∈ Ioo (-1 : ℝ) (T + 1) := ⟨by linarith [ht.1], by linarith [ht.2]⟩
     have hzero : fderiv ℝ u (t, x) (w (t, x)) = 0 :=
-      fderiv_bounded_backward_flow_test_apply_field w hw hws (fun _ ↦ rfl) g hg T β hβid t ht' x
+      fderiv_boundedBackwardFlowTest_apply_field w hw hws (fun _ ↦ rfl) g hg T β hβid t ht' x
     have he : ‖(1, v (t, x)) - w (t, x)‖ ≤ δ := by
       have hc : ‖v (t, x) - v' (t, x)‖ ≤ δ := by
         simpa only [dist_comm, dist_eq_norm] using (hclose (t, x)).le

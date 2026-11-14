@@ -1,5 +1,4 @@
 module
-
 public import CKSD.LinearModels.WishartRatioMoments
 /-!
 # Gamma factors for block Wishart determinant ratios
@@ -18,7 +17,7 @@ open MeasureTheory ProbabilityTheory Set Filter
 open scoped ENNReal NNReal Topology BigOperators MatrixOrder
 namespace CKSD
 /-- The Gamma quotient for a block determinant ratio reduces to a shifted Wilks quotient. -/
-theorem multivariate_gamma_block_ratio {p q : ℕ} {a : ℝ}
+theorem multivariateGamma_block_ratio {p q : ℕ} {a : ℝ}
     (ha : ((p+q:ℕ):ℝ)-1 < 2*a) (k : ℕ) :
     TauCeti.multivariateGamma (p+q) (a+k) * TauCeti.multivariateGamma p a * TauCeti.multivariateGamma q a /
       (TauCeti.multivariateGamma (p+q) a * TauCeti.multivariateGamma p (a+k) * TauCeti.multivariateGamma q (a+k)) =
@@ -34,7 +33,7 @@ theorem multivariate_gamma_block_ratio {p q : ℕ} {a : ℝ}
   field_simp [(Real.rpow_pos_of_pos Real.pi_pos ((q:ℝ)*p/2)).ne',
     (TauCeti.multivariateGamma_pos hq).ne', (TauCeti.multivariateGamma_pos hqk).ne']
 /-- The determinant tilt normalizer separates into its scalar, scale and Gamma factors. -/
-theorem wishart_normalizer_shift_ratio {p : ℕ} (n : ℝ) (k : ℕ)
+theorem wishartNormalizer_shift_ratio {p : ℕ} (n : ℝ) (k : ℕ)
     {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) (hn : (p:ℝ)-1 < n) :
     wishartNormalizer (n+2*k) S / wishartNormalizer n S =
       2^((p:ℝ)*k) * S.det^k *
@@ -47,7 +46,7 @@ theorem wishart_normalizer_shift_ratio {p : ℕ} (n : ℝ) (k : ℕ)
     (Real.rpow_pos_of_pos hS.det_pos (n/2)).ne',
     (TauCeti.multivariateGamma_pos (show ((p:ℝ)-1)/2<n/2 by linarith)).ne']
 /-- Block-diagonal scale factors cancel against the shifted inverse determinant moments. -/
-theorem wishart_normalizer_block_ratio_mul_negative_moments {p q : ℕ}
+theorem wishartNormalizer_block_ratio_mul_negative_moments {p q : ℕ}
     (n : ℝ) (k : ℕ) {S : Matrix (Fin (p+q)) (Fin (p+q)) ℝ}
     {A : Matrix (Fin p) (Fin p) ℝ} {B : Matrix (Fin q) (Fin q) ℝ}
     (hS : S.PosDef) (hA : A.PosDef) (hB : B.PosDef)
@@ -59,7 +58,7 @@ theorem wishart_normalizer_block_ratio_mul_negative_moments {p q : ℕ}
         TauCeti.multivariateGamma q (n/2+k)) =
       TauCeti.multivariateGamma p (n/2-q/2+k) * TauCeti.multivariateGamma p (n/2) /
         (TauCeti.multivariateGamma p (n/2-q/2) * TauCeti.multivariateGamma p (n/2+k)) := by
-  rw [wishart_normalizer_shift_ratio n k hS hn, hdet]
+  rw [wishartNormalizer_shift_ratio n k hS hn, hdet]
   have hp : ((p:ℝ)-1)/2 < n/2+k := by
     push_cast at hn
     linarith [Nat.cast_nonneg (α := ℝ) q, Nat.cast_nonneg (α := ℝ) k]
@@ -71,7 +70,7 @@ theorem wishart_normalizer_block_ratio_mul_negative_moments {p q : ℕ}
     Real.rpow_neg two_pos.le, Real.rpow_neg two_pos.le,
     Real.rpow_neg hA.det_pos.le, Real.rpow_neg hB.det_pos.le,
     Real.rpow_natCast, Real.rpow_natCast]
-  have heq := multivariate_gamma_block_ratio (p := p) (q := q)
+  have heq := multivariateGamma_block_ratio (p := p) (q := q)
     (a := n/2) (by linarith) k
   convert heq using 1
   field_simp [(Real.rpow_pos_of_pos two_pos ((p:ℝ)*k)).ne',

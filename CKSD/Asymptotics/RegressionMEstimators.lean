@@ -9,13 +9,12 @@ import Mathlib.Analysis.Matrix.Order
 import TauCeti.Probability.Distributions.Gaussian.Affine
 public import CKSD.Asymptotics.MEstimatorNormality
 
-
 /-!
 # Fixed-design convex regression M-estimators
 
 Asymptotic linearization and normality of fixed-design convex regression M-estimators
 (GAPS 102.48), from the general convex-regression limit theorem
-`CKSD.tendsto_in_measure_and_tendsto_in_distribution_convex_regression`.
+`CKSD.tendstoInMeasure_and_tendstoInDistribution_convexRegression`.
 
 ## Main definitions
 
@@ -23,7 +22,7 @@ Asymptotic linearization and normality of fixed-design convex regression M-estim
 
 ## Main results
 
-* `CKSD.regression_m_estimator_asymptotic_linearization_and_normality`: the fixed-design convex
+* `CKSD.regression_mEstimator_asymptotic_linearization_and_normality`: the fixed-design convex
   regression case (GAPS 102.48).
 -/
 
@@ -114,7 +113,7 @@ private lemma exists_abs_integral_remainder_sub_le {P : Measure ℝ} [IsProbabil
 /-- GAPS 102.48: asymptotic linearization and normality of fixed-design convex M-estimators.
 The right derivative of `ρ` is `ψ`. The `L²` continuity of shifted scores is expressed by
 nonnegative extended integrals, so nonintegrable remainders cannot be assigned value zero. -/
-theorem regression_m_estimator_asymptotic_linearization_and_normality
+theorem regression_mEstimator_asymptotic_linearization_and_normality
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (ε : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ ε P)
@@ -169,9 +168,9 @@ theorem regression_m_estimator_asymptotic_linearization_and_normality
         ∑ i ∈ Finset.range n, ρ (ε i ω - inner ℝ (x i) (c - β)) := fun c ↦
       Finset.sum_congr rfl fun i _ ↦ by rw [inner_sub_right]; ring_nf
     simpa only [hobj] using hω b
-  obtain ⟨hlin, -, hdist⟩ := tendsto_in_measure_and_tendsto_in_distribution_convex_regression μ ε
-    hiid.1 hiid.2.1 hconv hψ
-    (fun u v ↦ add_mul_sub_le_of_convex_on_of_has_deriv_within_at hconv
+  obtain ⟨hlin, -, hdist⟩ := tendstoInMeasure_and_tendstoInDistribution_convexRegression μ ε
+    hiid.1 hiid.2.1 hψ
+    (fun u v ↦ add_mul_sub_le_of_convexOn_of_hasDerivWithinAt hconv
       ((hder u).mono Ioi_subset_Ici_self) v) hψ2'
     (fun i ↦ by rw [hlaw i ψ hψ, hψ0]) (σ2 := σ2)
     (fun i ↦ hlaw i (fun z ↦ ψ z ^ 2) (hψ.pow_const 2))
@@ -216,7 +215,7 @@ theorem regression_m_estimator_asymptotic_linearization_and_normality
     field_simp
 
 /-- The zero-sample convex regression objective has value zero. -/
-@[simp] theorem regression_m_objective_zero {d : ℕ} (ρ : ℝ → ℝ)
+@[simp] theorem regressionMObjective_zero {d : ℕ} (ρ : ℝ → ℝ)
     (x : ℕ → EuclideanSpace ℝ (Fin d)) (y : ℕ → ℝ) (β : EuclideanSpace ℝ (Fin d)) :
     regressionMObjective ρ x y 0 β = 0 := by simp [regressionMObjective]
 

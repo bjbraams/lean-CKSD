@@ -1,6 +1,5 @@
 module
 
-public import CKSD.LinearModels.DirectedGraphical.Basic.CausalGraph
 public import CKSD.LinearModels.CausalEfficiency
 public import CKSD.LinearModels.GaussianGraphical
 public import CKSD.LinearModels.Regression
@@ -17,15 +16,11 @@ public import CKSD.LinearModels.SurveySampling
 public import CKSD.LinearModels.CanonicalCorrelation
 public import CKSD.LinearModels.Decomposable
 public import CKSD.LinearModels.DecomposableGaussian
-public import CKSD.LinearModels.DirectedGraphical.Basic.ActiveTrails
 public import CKSD.LinearModels.DirectedGraphical
 public import CKSD.LinearModels.FTest
 public import CKSD.LinearModels.GFormula
 public import CKSD.LinearModels.GLMAsymptotics
 public import CKSD.LinearModels.StructuralEquations
-
-
-namespace CKSD
 
 /-!
 # Section 105: linear models, multivariate analysis, design, and causal inference
@@ -41,10 +36,8 @@ Entry module for the CKSD formalization of Section 105. It imports:
   (`GaussianGraphical`, `Decomposable`, `DecomposableGaussian`);
 * experimental design and survey sampling (`Design`, `SurveySampling`);
 * causal inference: potential outcomes, propensity scores, and efficient influence functions
-  (`CausalEfficiency`, `CausalAndSurvey`, `GFormula`), causal graphs and d-separation (`Causal`, `ActiveTrails`),
-  directed Markov properties and the do-calculus (`DirectedGraphical`), and structural equation
-  models (`StructuralEquations`).
+  (`CausalEfficiency`, `CausalAndSurvey`, `GFormula`), causal graphs and d-separation
+  (`DirectedGraphical.Basic.CausalGraph`, `DirectedGraphical.Basic.ActiveTrails`), directed
+  Markov properties and the do-calculus (`DirectedGraphical`), and structural equation models
+  (`StructuralEquations`); the causal-graph modules are imported through `DirectedGraphical`.
 -/
-
-
-end CKSD

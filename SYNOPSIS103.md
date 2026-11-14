@@ -171,7 +171,7 @@ is equivalent to a sequence model through an orthonormal basis.
   \le(2\log n+1)\Bigl(\sigma^2+\sum_{i=1}^n\min(\theta_i^2,\sigma^2)\Bigr).$$
 
 * **11. Grenander estimator.** Let $f$ be a density vanishing on
-  $(-\infty,0)$ and decreasing on $[0,\infty)$, with $f'(x_0)<0$ and $f$
+  $(-\infty,0)$ and decreasing on $(0,\infty)$, with $f'(x_0)<0$ and $f$
   continuous at $x_0>0$. The maximum
   likelihood estimator $\hat f_n$ is the left slope of the least concave
   majorant of $F_n$. Then
@@ -766,7 +766,7 @@ $n^{-1}X^\top X$. Write $y$ for a limit of $p/n$ in $(0,\infty)$.
   are independent $N(0,\Sigma)$ and $\Sigma$ has one eigenvalue $\alpha$
   and the remaining eigenvalues equal to $1$. As $p/n\to y$, the largest
   eigenvalue $\ell_{\max}$ of $n^{-1}X^\top X$ converges almost surely to
-  $(1+\sqrt y)^2$ when $1<\alpha\le1+\sqrt y$, and to
+  $(1+\sqrt y)^2$ when $0\le\alpha\le1+\sqrt y$, and to
   $\alpha+y\alpha/(\alpha-1)$ when $\alpha>1+\sqrt y$.
 
 ### Lower bounds, regularization, and multiplicity

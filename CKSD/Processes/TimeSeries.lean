@@ -7,9 +7,6 @@ public import CKSD.Processes.TimeSeries.LongRunVariance
 public import CKSD.Processes.TimeSeries.StationaryGaussian
 public import CKSD.Processes.TimeSeries.Garch
 
-
-namespace CKSD
-
 /-!
 # Stationary time series
 
@@ -29,6 +26,3 @@ Entry module for the time-series part of Section 106:
 Time indices are integers for stationary constructions and natural numbers for observation
 prefixes.
 -/
-
-
-end CKSD

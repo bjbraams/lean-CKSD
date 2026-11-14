@@ -1,5 +1,4 @@
 module
-
 public import TauCeti.MeasureTheory.Integral.PrekopaLeindler
 public import TauCeti.Probability.Distributions.Gaussian.Density
 public import TauCeti.Probability.Distributions.Gaussian.Symmetry
@@ -55,7 +54,7 @@ theorem measure_add_preimage_le_of_convex_symmetric
   rwa [haS,h0S] at hh
 
 /-- Standard Gaussian measures satisfy Prékopa–Leindler, including in dimension zero. -/
-theorem has_prekopa_leindler_std_gaussian
+theorem hasPrekopaLeindler_stdGaussian
     {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
     [MeasurableSpace E] [BorelSpace E] {θ : ℝ} (hθ₀ : 0 ≤ θ) (hθ₁ : θ ≤ 1) :
     (stdGaussian E).HasPrekopaLeindler θ := by
@@ -73,7 +72,7 @@ theorem has_prekopa_leindler_std_gaussian
   ring
 /-- A centered multivariate Gaussian inherits Prékopa–Leindler from the standard Gaussian
 through its covariance square-root map. Degenerate covariance is allowed. -/
-theorem has_prekopa_leindler_multivariate_gaussian_zero {d : ℕ}
+theorem hasPrekopaLeindler_multivariateGaussian_zero {d : ℕ}
     (S : Matrix (Fin d) (Fin d) ℝ) {θ : ℝ} (hθ₀ : 0 ≤ θ) (hθ₁ : θ ≤ 1) :
     (multivariateGaussian (0 : EuclideanSpace ℝ (Fin d)) S).HasPrekopaLeindler θ := by
   let A := Matrix.toEuclideanCLM (𝕜 := ℝ) (CFC.sqrt S)
@@ -81,11 +80,11 @@ theorem has_prekopa_leindler_multivariate_gaussian_zero {d : ℕ}
       (multivariateGaussian 0 S) := by
     refine ⟨A.continuous.measurable,?_⟩
     simp only [multivariateGaussian,zero_add,A]
-  exact (has_prekopa_leindler_std_gaussian hθ₀ hθ₁).map A hm (fun x y ↦ by simp)
+  exact (hasPrekopaLeindler_stdGaussian hθ₀ hθ₁).map A hm (fun x y ↦ by simp)
 
 /-- Anderson's inequality: translating a symmetric convex set cannot increase its mass under
 a centered multivariate Gaussian. -/
-theorem multivariate_gaussian_add_preimage_le {d : ℕ}
+theorem multivariateGaussian_add_preimage_le {d : ℕ}
     (S : Matrix (Fin d) (Fin d) ℝ) {C : Set (EuclideanSpace ℝ (Fin d))}
     (hCm : MeasurableSet C) (hCc : Convex ℝ C) (hCs : ∀ x ∈ C, -x ∈ C)
     (a : EuclideanSpace ℝ (Fin d)) :
@@ -93,10 +92,10 @@ theorem multivariate_gaussian_add_preimage_le {d : ℕ}
   have : (multivariateGaussian (0 : EuclideanSpace ℝ (Fin d)) S).IsNegInvariant :=
     ⟨IsGaussian.map_neg_eq_self _ (by simp only [integral_id_multivariateGaussian])⟩
   exact measure_add_preimage_le_of_convex_symmetric _
-    (fun {_} hθ₀ hθ₁ ↦ has_prekopa_leindler_multivariate_gaussian_zero S hθ₀ hθ₁) hCm hCc hCs a
+    (fun {_} hθ₀ hθ₁ ↦ hasPrekopaLeindler_multivariateGaussian_zero S hθ₀ hθ₁) hCm hCc hCs a
 /-- A measurable symmetric bowl-shaped loss has minimal Gaussian risk at zero shift. The
 loss may be unbounded or take the value infinity. -/
-theorem lintegral_multivariate_gaussian_loss_le_shift {d : ℕ}
+theorem lintegral_multivariateGaussian_loss_le_shift {d : ℕ}
     (S : Matrix (Fin d) (Fin d) ℝ) (loss : EuclideanSpace ℝ (Fin d) → ℝ≥0∞)
     (hm : Measurable loss) (hsym : ∀ x, loss (-x) = loss x)
     (hconv : ∀ c, Convex ℝ {x | loss x ≤ c}) (a : EuclideanSpace ℝ (Fin d)) :
@@ -118,7 +117,7 @@ theorem lintegral_multivariate_gaussian_loss_le_shift {d : ℕ}
       (le_max_left (loss x) (loss y)) (le_max_right (loss x) (loss y)) hb hc hbc
     exact lt_of_le_of_lt hh (max_lt_iff.mpr ⟨hx,hy⟩)
   have hCs : ∀ x ∈ C, -x ∈ C := by intro x hx; change loss (-x) < _; rwa [hsym]
-  have hmass := multivariate_gaussian_add_preimage_le S hCm hCc hCs a
+  have hmass := multivariateGaussian_add_preimage_le S hCm hCc hCs a
   have hpre : MeasurableSet ((fun x ↦ a+x) ⁻¹' C) := (measurable_const.add measurable_id) hCm
   have hh : μ Cᶜ ≤ μ ((fun x ↦ a+x) ⁻¹' C)ᶜ := by
     rw [measure_compl hCm (measure_ne_top _ _),measure_compl hpre (measure_ne_top _ _)]
@@ -127,7 +126,7 @@ theorem lintegral_multivariate_gaussian_loss_le_shift {d : ℕ}
 
 /-- Adding independent residual noise cannot reduce the Gaussian risk of a symmetric
 bowl-shaped loss. -/
-theorem lintegral_multivariate_gaussian_loss_le_convolution {d : ℕ}
+theorem lintegral_multivariateGaussian_loss_le_convolution {d : ℕ}
     (S : Matrix (Fin d) (Fin d) ℝ) (loss : EuclideanSpace ℝ (Fin d) → ℝ≥0∞)
     (hm : Measurable loss) (hsym : ∀ x, loss (-x) = loss x)
     (hconv : ∀ c, Convex ℝ {x | loss x ≤ c})
@@ -137,5 +136,5 @@ theorem lintegral_multivariate_gaussian_loss_le_convolution {d : ℕ}
   rw [Measure.conv_comm,Measure.lintegral_conv hm]
   calc
     _ = ∫⁻ _a, (∫⁻ x, loss x ∂multivariateGaussian 0 S) ∂M := by simp
-    _ ≤ _ := lintegral_mono (fun a ↦ lintegral_multivariate_gaussian_loss_le_shift S loss hm hsym hconv a)
+    _ ≤ _ := lintegral_mono (fun a ↦ lintegral_multivariateGaussian_loss_le_shift S loss hm hsym hconv a)
 end CKSD

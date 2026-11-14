@@ -7,7 +7,6 @@ public import TauCeti.MeasureTheory.OptimalTransport.GraphPlan.Convergence
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Moment
 public import TauCeti.MeasureTheory.Function.UniformIntegrable
 
-
 /-!
 # Stability of optimal quadratic transport maps
 
@@ -20,6 +19,13 @@ criterion and Mathlib's Vitali theorem upgrade this convergence to mean square.
 ## Main results
 
 * `CKSD.tendsto_integral_sq_optimal_map_sub`: `L²` stability of optimal maps (GAPS 108.42).
+
+## References
+
+* C. Villani, *Optimal transport, old and new*, Grundlehren der mathematischen Wissenschaften 338,
+  Springer, 2009, Corollary 5.23.
+* S. Chewi, J. Niles-Weed, P. Rigollet, *Statistical optimal transport*, École d'Été de
+  Probabilités de Saint-Flour XLIX (2019), Lecture Notes in Mathematics 2364, Springer, 2025.
 -/
 
 @[expose] public section
@@ -31,7 +37,7 @@ noncomputable section
 
 /-- Eventually uniformly small quadratic tails, together with finite individual moments,
 give uniform integrability; the finite initial segment causes no obstruction. -/
-lemma unif_integrable_of_eventually_small_tails
+lemma unifIntegrable_of_eventually_small_tails
     {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
     {μ : Measure Ω} {f : ℕ → Ω → E}
     (hf : ∀ n, MemLp (f n) 2 μ)
@@ -60,7 +66,7 @@ lemma unif_integrable_of_eventually_small_tails
 
 /-- Maps whose laws converge in quadratic Wasserstein distance are uniformly integrable
 in quadratic mean. The maps may be defined on any probability space. -/
-lemma unif_integrable_of_tendsto_wasserstein_law
+lemma unifIntegrable_of_tendsto_wasserstein_law
     {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E] [CompleteSpace E]
     {μ : Measure Ω} [IsProbabilityMeasure μ] {f : ℕ → Ω → E}
@@ -71,7 +77,7 @@ lemma unif_integrable_of_tendsto_wasserstein_law
   have hfm : ∀ n, MemLp (f n) 2 μ := fun n ↦
     TauCeti.memLp_of_hasFiniteMoment_map (hf n).aemeasurable
       (hlaw n ▸ (νs n).hasFiniteMoment)
-  apply unif_integrable_of_eventually_small_tails hfm
+  apply unifIntegrable_of_eventually_small_tails hfm
   intro ε hε
   obtain ⟨R, hR⟩ := TauCeti.WassersteinSpace.exists_setLIntegral_edist_rpow_le
     (by norm_num : (2 : ℝ≥0∞) ≠ ⊤) hconv (0 : E)
@@ -98,7 +104,7 @@ lemma unif_integrable_of_tendsto_wasserstein_law
 
 /-- Convergence in measure and quadratic Wasserstein convergence of the laws imply
 convergence in mean square. -/
-lemma tendsto_integral_norm_sq_sub_of_tendsto_in_measure_of_tendsto_wasserstein_law
+lemma tendsto_integral_norm_sq_sub_of_tendstoInMeasure_of_tendsto_wasserstein_law
     {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E] [CompleteSpace E]
     {μ : Measure Ω} [IsProbabilityMeasure μ] {f : ℕ → Ω → E} {g : Ω → E}
@@ -107,7 +113,7 @@ lemma tendsto_integral_norm_sq_sub_of_tendsto_in_measure_of_tendsto_wasserstein_
     (hlaw : ∀ n, μ.map (f n) = ((νs n : ProbabilityMeasure E) : Measure E))
     (hconv : Tendsto νs atTop (𝓝 ν)) (hfg : TendstoInMeasure μ f atTop g) :
     Tendsto (fun n ↦ ∫ x, ‖f n x - g x‖ ^ 2 ∂μ) atTop (𝓝 0) := by
-  have hUI := unif_integrable_of_tendsto_wasserstein_law hf νs ν hlaw hconv
+  have hUI := unifIntegrable_of_tendsto_wasserstein_law hf νs ν hlaw hconv
   have hLp := tendsto_Lp_finite_of_tendstoInMeasure (by norm_num : 1 ≤ (2 : ℝ≥0∞))
     (by norm_num) (fun n ↦ (hf n).aestronglyMeasurable) hg hUI hfg
   have h := ((ENNReal.continuousAt_toReal (by simp : (0 : ℝ≥0∞) ≠ ⊤)).tendsto.comp hLp).pow 2
@@ -129,7 +135,7 @@ lemma tendsto_integral_norm_sq_sub_of_tendsto_in_measure_of_tendsto_wasserstein_
 
 /-- Optimal graph plans from a fixed absolutely continuous Euclidean source converge weakly
 when their target laws converge in quadratic Wasserstein distance. -/
-lemma tendsto_graph_plan_of_is_optimal_coupling {d : ℕ}
+lemma tendsto_graphPlan_of_isOptimalCoupling {d : ℕ}
     (μ ν : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d)))
     (νs : ℕ → TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d)))
     (T : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
@@ -198,7 +204,7 @@ lemma tendsto_graph_plan_of_is_optimal_coupling {d : ℕ}
 
 /-- The real squared-displacement identity identifies an optimal quadratic graph coupling
 between finite-second-moment probability laws. -/
-lemma is_optimal_coupling_graph_plan_of_integral_norm_sq_eq
+lemma isOptimalCoupling_graphPlan_of_integral_norm_sq_eq
     {E : Type*} [NormedAddCommGroup E] [MeasurableSpace E] [BorelSpace E]
     [SecondCountableTopology E] [CompleteSpace E]
     (μ ν : TauCeti.WassersteinSpace 2 E) (T : E → E) (hT : Measurable T)
@@ -236,9 +242,10 @@ lemma is_optimal_coupling_graph_plan_of_integral_norm_sq_eq
 /-- GAPS 108.42: L2 stability of optimal maps with a fixed absolutely continuous source. Let `μ`
 be an absolutely continuous law with finite second moment, `T` and `Tₙ` measurable optimal maps
 from `μ` to laws `ν` and `νₙ` with finite second moments. If `W₂(νₙ, ν) → 0`, then
-`∫ ‖Tₙ - T‖² dμ → 0`. The laws `νₙ = (Tₙ)_# μ` are probability measures automatically. -/
+`∫ ‖Tₙ - T‖² dμ → 0`. The laws `ν = T_# μ` and `νₙ = (Tₙ)_# μ` are probability measures
+automatically. -/
 theorem tendsto_integral_sq_optimal_map_sub {d : ℕ}
-    (μ ν : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν]
+    (μ ν : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure μ]
     (νn : ℕ → Measure (EuclideanSpace ℝ (Fin d)))
     (hac : μ ≪ volume) (hμ2 : MemLp id 2 μ) (hν2 : MemLp id 2 ν)
     (hνn2 : ∀ n, MemLp id 2 (νn n))
@@ -252,6 +259,7 @@ theorem tendsto_integral_sq_optimal_map_sub {d : ℕ}
     (hconv : Tendsto (fun n ↦ (TauCeti.wassersteinEDist 2 (νn n) ν).toReal) atTop (𝓝 0)) :
     Tendsto (fun n ↦ ∫ x, ‖Tn n x - T x‖ ^ 2 ∂μ) atTop (𝓝 0) := by
   let E := EuclideanSpace ℝ (Fin d)
+  have : IsProbabilityMeasure ν := hpush ▸ inferInstance
   have : ∀ n, IsProbabilityMeasure (νn n) :=
     fun n ↦ hpushn n ▸ inferInstance
   let μw : TauCeti.WassersteinSpace 2 E := TauCeti.WassersteinSpace.mk ⟨μ, inferInstance⟩
@@ -274,14 +282,14 @@ theorem tendsto_integral_sq_optimal_map_sub {d : ℕ}
   have hp : TauCeti.IsOptimalCoupling (fun z ↦ edist z.1 z.2 ^ (2 : ℝ))
       (TauCeti.graphPlan T ((μw : ProbabilityMeasure E) : Measure E))
       ((μw : ProbabilityMeasure E) : Measure E) ((νw : ProbabilityMeasure E) : Measure E) :=
-    is_optimal_coupling_graph_plan_of_integral_norm_sq_eq μw νw T hT
+    isOptimalCoupling_graphPlan_of_integral_norm_sq_eq μw νw T hT
       (by simpa only [hm, hv] using hpush) (by simpa only [hm, hv] using hopt)
   have hpn : ∀ n, TauCeti.IsOptimalCoupling (fun z ↦ edist z.1 z.2 ^ (2 : ℝ))
       (TauCeti.graphPlan (Tn n) ((μw : ProbabilityMeasure E) : Measure E))
       ((μw : ProbabilityMeasure E) : Measure E) ((νws n : ProbabilityMeasure E) : Measure E) :=
-    fun n ↦ is_optimal_coupling_graph_plan_of_integral_norm_sq_eq μw (νws n) (Tn n) (hTn n)
+    fun n ↦ isOptimalCoupling_graphPlan_of_integral_norm_sq_eq μw (νws n) (Tn n) (hTn n)
       (by simpa only [hm, hs] using hpushn n) (by simpa only [hm, hs] using hoptn n)
-  have hg := tendsto_graph_plan_of_is_optimal_coupling μw νw νws T Tn
+  have hg := tendsto_graphPlan_of_isOptimalCoupling μw νw νws T Tn
     (by simpa only [hm] using hac) hp hpn hw
   have hmeas : TendstoInMeasure μ Tn atTop T := by
     have h := TauCeti.tendstoInMeasure_of_tendsto_map_prodMk_self
@@ -289,7 +297,7 @@ theorem tendsto_integral_sq_optimal_map_sub {d : ℕ}
     simpa only [hm] using h
   have hT2 : MemLp T 2 μ := TauCeti.memLp_of_hasFiniteMoment_map hT.aemeasurable
     (hpush ▸ (hv ▸ νw.hasFiniteMoment))
-  exact tendsto_integral_norm_sq_sub_of_tendsto_in_measure_of_tendsto_wasserstein_law
+  exact tendsto_integral_norm_sq_sub_of_tendstoInMeasure_of_tendsto_wasserstein_law
     hTn hT2 νws νw (fun n ↦ (hpushn n).trans (hs n).symm) hw hmeas
 
 end

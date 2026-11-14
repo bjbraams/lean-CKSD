@@ -3,7 +3,6 @@ module
 public import CKSD.Asymptotics.Basic
 public import Statlib.Divergence.TotalVariation.Event
 
-
 /-!
 # Basic notions of nonparametric and high-dimensional statistics
 
@@ -27,9 +26,9 @@ statistics, shape constraints, high-dimensional and sparse estimation).
 
 ## Main results
 
-* `CKSD.abs_measure_real_sub_le_total_variation_distance`: every event discrepancy is bounded by
+* `CKSD.abs_measureReal_sub_le_totalVariationDistance`: every event discrepancy is bounded by
   the total variation distance.
-* `CKSD.tv_dist_eq_two_mul_total_variation_distance`: for probability measures, Mathlib's
+* `CKSD.tvDist_eq_two_mul_totalVariationDistance`: for probability measures, Mathlib's
   `tvDist` is twice `totalVariationDistance` (via Statlib's `etvDist_eq_two_mul_iSup_sub`).
 -/
 
@@ -51,47 +50,48 @@ scoped instance rankMeasurableSpace (n : ℕ) : MeasurableSpace (Equiv.Perm (Fin
 
 /-- Total variation distance in the statistical convention, `sup_A |P(A) - Q(A)|` over
 measurable events `A`. For probability measures it is `tvDist P Q / 2`
-(`CKSD.tv_dist_eq_two_mul_total_variation_distance`). -/
+(`CKSD.tvDist_eq_two_mul_totalVariationDistance`). -/
 def totalVariationDistance {X : Type*} [MeasurableSpace X] (P Q : Measure X) : ℝ :=
   sSup {r : ℝ | ∃ A : Set X, MeasurableSet A ∧ r = |P.real A - Q.real A|}
 
-/-- Every measurable event difference is bounded by statistical total variation. -/
-theorem abs_measure_real_sub_le_total_variation_distance {X : Type*} [MeasurableSpace X]
-    (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
+/-- For finite measures, every measurable event difference is bounded by statistical total
+variation. -/
+theorem abs_measureReal_sub_le_totalVariationDistance {X : Type*} [MeasurableSpace X]
+    (P Q : Measure X) [IsFiniteMeasure P] [IsFiniteMeasure Q]
     (A : Set X) (hA : MeasurableSet A) :
     |P.real A - Q.real A| ≤ totalVariationDistance P Q := by
   apply le_csSup (show BddAbove {r : ℝ | ∃ B : Set X,
       MeasurableSet B ∧ r = |P.real B - Q.real B|} from ?_)
     (show |P.real A - Q.real A| ∈ {r : ℝ | ∃ B : Set X,
       MeasurableSet B ∧ r = |P.real B - Q.real B|} from ⟨A, hA, rfl⟩)
-  refine ⟨1, ?_⟩
+  refine ⟨P.real univ + Q.real univ, ?_⟩
   rintro r ⟨B, hB, rfl⟩
   apply abs_le.mpr
   constructor <;> linarith [measureReal_nonneg (μ := P) (s := B),
     measureReal_nonneg (μ := Q) (s := B),
-    measureReal_le_one (μ := P) (s := B), measureReal_le_one (μ := Q) (s := B)]
+    measureReal_mono (μ := P) (subset_univ B), measureReal_mono (μ := Q) (subset_univ B)]
 
-/-- The statistical total variation distance of probability measures is nonnegative. -/
-theorem total_variation_distance_nonneg {X : Type*} [MeasurableSpace X]
-    (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q] :
+/-- The statistical total variation distance of finite measures is nonnegative. -/
+theorem totalVariationDistance_nonneg {X : Type*} [MeasurableSpace X]
+    (P Q : Measure X) [IsFiniteMeasure P] [IsFiniteMeasure Q] :
     0 ≤ totalVariationDistance P Q :=
-  (abs_nonneg _).trans (abs_measure_real_sub_le_total_variation_distance P Q ∅ .empty)
+  (abs_nonneg _).trans (abs_measureReal_sub_le_totalVariationDistance P Q ∅ .empty)
 
 /-- For probability measures, Mathlib's total variation distance `tvDist` (the total variation
 norm of `P - Q`) is twice the statistical total variation distance `sup_A |P(A) - Q(A)|`. -/
-theorem tv_dist_eq_two_mul_total_variation_distance {X : Type*} [MeasurableSpace X]
+theorem tvDist_eq_two_mul_totalVariationDistance {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q] :
     tvDist P Q = 2 * totalVariationDistance P Q := by
   set S := ⨆ E, ⨆ (_ : MeasurableSet E), P E - Q E with hSdef
   have hSle : S ≤ 1 := iSup₂_le fun E _ ↦ tsub_le_self.trans prob_le_one
   have hStop : S ≠ ∞ := ne_top_of_le_ne_top ENNReal.one_ne_top hSle
-  have hT0 := total_variation_distance_nonneg P Q
+  have hT0 := totalVariationDistance_nonneg P Q
   have hS : S = ENNReal.ofReal (totalVariationDistance P Q) := by
     refine le_antisymm (iSup₂_le fun E hE ↦ ?_) ?_
     · rw [← ofReal_measureReal (μ := P) (s := E), ← ofReal_measureReal (μ := Q) (s := E),
         ← ENNReal.ofReal_sub _ measureReal_nonneg]
       exact ENNReal.ofReal_le_ofReal ((le_abs_self _).trans
-        (abs_measure_real_sub_le_total_variation_distance P Q E hE))
+        (abs_measureReal_sub_le_totalVariationDistance P Q E hE))
     · rw [ENNReal.ofReal_le_iff_le_toReal hStop]
       have key : ∀ E, MeasurableSet E → P.real E - Q.real E ≤ S.toReal := fun E hE ↦
         (ENNReal.le_toReal_sub (measure_ne_top Q E)).trans
@@ -126,7 +126,7 @@ def kernelDensityEstimator {Ω : Type*} (X : ℕ → Ω → ℝ) (K : ℝ → �
   finiteKernelDensityEstimator K (h n) (fun i : Fin n ↦ X i ω) t
 
 /-- The kernel density estimator of a sequence is a sum over the first `n` indices. -/
-theorem kernel_density_estimator_eq {Ω : Type*} (X : ℕ → Ω → ℝ) (K : ℝ → ℝ) (h : ℕ → ℝ)
+theorem kernelDensityEstimator_eq {Ω : Type*} (X : ℕ → Ω → ℝ) (K : ℝ → ℝ) (h : ℕ → ℝ)
     (n : ℕ) (ω : Ω) (t : ℝ) :
     kernelDensityEstimator X K h n ω t =
       (∑ i ∈ Finset.range n, K ((t - X i ω) / h n)) / ((n : ℝ) * h n) := by

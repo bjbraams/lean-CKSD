@@ -1,5 +1,4 @@
 module
-
 public import TauCeti.Probability.Distributions.Gaussian.Affine
 public import Mathlib.Probability.Kernel.Composition.MeasureComp
 /-!
@@ -32,7 +31,7 @@ theorem comp_map_comap_eq_map_comp_map
 variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 /-- Translating a Gaussian observation translates its mean without changing covariance. -/
-theorem map_add_multivariate_gaussian (a h : E) {S : Matrix (Fin d) (Fin d) ℝ}
+theorem map_add_multivariateGaussian (a h : E) {S : Matrix (Fin d) (Fin d) ℝ}
     (hS : S.PosSemidef) :
     (multivariateGaussian h S).map (fun x ↦ a+x) = multivariateGaussian (a+h) S := by
   have he := TauCeti.Probability.map_affine_multivariateGaussian h hS
@@ -41,12 +40,12 @@ theorem map_add_multivariate_gaussian (a h : E) {S : Matrix (Fin d) (Fin d) ℝ}
     Matrix.one_mul,Matrix.transpose_one,Matrix.mul_one,add_comm] using he
 /-- Translating the input and output of a Gaussian decision kernel preserves its averaged law
 up to the same shift of the Gaussian mean and output. -/
-theorem translated_kernel_comp_multivariate_gaussian
+theorem translatedKernel_comp_multivariateGaussian
     (K : Kernel E E) [IsMarkovKernel K] (a h : E)
     {S : Matrix (Fin d) (Fin d) ℝ} (hS : S.PosSemidef) :
     ((K.comap (fun x : E ↦ a+x) (measurable_const_add a)).map (fun y : E ↦ y-a)) ∘ₘ multivariateGaussian h S =
       (K ∘ₘ multivariateGaussian (a+h) S).map (fun y : E ↦ y-a) := by
   rw [comp_map_comap_eq_map_comp_map (multivariateGaussian h S) K
       (fun x : E ↦ a+x) (by fun_prop) (fun y : E ↦ y-a) (by fun_prop),
-    map_add_multivariate_gaussian a h hS]
+    map_add_multivariateGaussian a h hS]
 end CKSD

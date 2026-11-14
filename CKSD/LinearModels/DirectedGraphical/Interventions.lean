@@ -2,7 +2,6 @@ module
 
 public import CKSD.LinearModels.DirectedGraphical.Basic
 
-
 /-!
 # Marginal and interventional masses; rules 1 and 2 of the do-calculus
 
@@ -14,13 +13,13 @@ configuration `b` supplies all values occurring in a query.
 
 ## Main results
 
-* `CKSD.do_marginal_mass_eq_marginal_mass_of_non_descendant`: an intervention does not change the
+* `CKSD.doMarginalMass_eq_marginalMass_of_nonDescendant`: an intervention does not change the
   marginal law of the nondescendants of the intervened set.
 * Graph surgery lemmas relating back-door blocking, interception of directed paths, and
   d-separation in `G_{\bar X}` and `G_{\underline X}`.
-* `CKSD.cond_do_mass_rule_one`, `CKSD.cond_do_mass_rule_two`: rules 1 (insertion and deletion of
+* `CKSD.condDoMass_rule_one`, `CKSD.condDoMass_rule_two`: rules 1 (insertion and deletion of
   observations) and 2 (action/observation exchange) of Pearl's do-calculus. Rule 3 is
-  `CKSD.cond_do_mass_rule_three` in `CKSD.LinearModels.DirectedGraphical.DoCalculus`.
+  `CKSD.condDoMass_rule_three` in `CKSD.LinearModels.DirectedGraphical.DoCalculus`.
 
 ## References
 
@@ -45,7 +44,7 @@ variable {V S : Type*}
 /-! ### Marginal and interventional masses -/
 
 /-- A marginal mass depends only on the values of the point at the fixed coordinates. -/
-theorem marginal_mass_congr_point [Fintype V] [Fintype S] (p : (V → S) → ℝ) (E : Finset V)
+theorem marginalMass_congr_point [Fintype V] [Fintype S] (p : (V → S) → ℝ) (E : Finset V)
     {x x' : V → S} (h : ∀ v ∈ E, x v = x' v) : marginalMass p E x = marginalMass p E x' := by
   unfold marginalMass
   refine Finset.sum_congr rfl fun y _ ↦ ?_
@@ -54,7 +53,7 @@ theorem marginal_mass_congr_point [Fintype V] [Fintype S] (p : (V → S) → ℝ
   simp only [this]
 
 /-- Marginal masses of a nonnegative mass function are nonnegative. -/
-theorem marginal_mass_nonneg [Fintype V] [Fintype S] {p : (V → S) → ℝ} (hp : ∀ y, 0 ≤ p y)
+theorem marginalMass_nonneg [Fintype V] [Fintype S] {p : (V → S) → ℝ} (hp : ∀ y, 0 ≤ p y)
     (E : Finset V) (x : V → S) : 0 ≤ marginalMass p E x :=
   Finset.sum_nonneg fun y _ ↦ by
     split_ifs
@@ -62,7 +61,7 @@ theorem marginal_mass_nonneg [Fintype V] [Fintype S] {p : (V → S) → ℝ} (hp
     · exact le_rfl
 
 /-- Marginal masses decrease when more coordinates are fixed. -/
-theorem marginal_mass_anti [Fintype V] [Fintype S] {p : (V → S) → ℝ} (hp : ∀ y, 0 ≤ p y)
+theorem marginalMass_anti [Fintype V] [Fintype S] {p : (V → S) → ℝ} (hp : ∀ y, 0 ≤ p y)
     {E F : Finset V} (hEF : E ⊆ F) (x : V → S) : marginalMass p F x ≤ marginalMass p E x := by
   unfold marginalMass
   refine Finset.sum_le_sum fun y _ ↦ ?_
@@ -73,7 +72,7 @@ theorem marginal_mass_anti [Fintype V] [Fintype S] {p : (V → S) → ℝ} (hp :
   · exact le_rfl
 
 /-- Fixing coordinates on which the mass is concentrated does not change a marginal mass. -/
-theorem marginal_mass_union_of_support [Fintype V] [Fintype S] {p : (V → S) → ℝ}
+theorem marginalMass_union_of_support [Fintype V] [Fintype S] {p : (V → S) → ℝ}
     {X : Finset V} {x : V → S} (hsupp : ∀ y, p y ≠ 0 → ∀ v ∈ X, y v = x v) (E : Finset V) :
     marginalMass p (E ∪ X) x = marginalMass p E x := by
   unfold marginalMass
@@ -87,19 +86,19 @@ theorem marginal_mass_union_of_support [Fintype V] [Fintype S] {p : (V → S) �
     simp only [this]
 
 /-- `overwriteOn` leaves the coordinates outside the overwritten set unchanged. -/
-theorem overwrite_on_of_not_mem {B : Finset V} (b : B → S) (x : V → S) {v : V} (hv : v ∉ B) :
+theorem overwriteOn_of_notMem {B : Finset V} (b : B → S) (x : V → S) {v : V} (hv : v ∉ B) :
     overwriteOn B b x v = x v := by
   simp [overwriteOn, hv]
 
 /-- `overwriteOn` with the values of the configuration itself does nothing. -/
-theorem overwrite_on_self (B : Finset V) (x : V → S) : overwriteOn B (fun v ↦ x v) x = x := by
+theorem overwriteOn_self (B : Finset V) (x : V → S) : overwriteOn B (fun v ↦ x v) x = x := by
   funext v
   unfold overwriteOn
   split_ifs <;> rfl
 
 /-- The law of total probability: a marginal mass is the sum, over the values of a disjoint
 set `Z` of variables, of the marginal masses with `Z` fixed as well. -/
-theorem marginal_mass_eq_sum_overwrite_on [Fintype V] [Fintype S] (p : (V → S) → ℝ)
+theorem marginalMass_eq_sum_overwriteOn [Fintype V] [Fintype S] (p : (V → S) → ℝ)
     {E Z : Finset V} (hEZ : Disjoint E Z) (x : V → S) :
     marginalMass p E x = ∑ z : Z → S, marginalMass p (E ∪ Z) (overwriteOn Z z x) := by
   unfold marginalMass
@@ -112,7 +111,7 @@ theorem marginal_mass_eq_sum_overwrite_on [Fintype V] [Fintype S] (p : (V → S)
     · intro h
       refine ⟨fun v hv ↦ ?_, funext fun v ↦ ?_⟩
       · have := h v (Finset.mem_union_left _ hv)
-        rwa [overwrite_on_of_not_mem _ _ (Finset.disjoint_left.1 hEZ hv)] at this
+        rwa [overwriteOn_of_notMem _ _ (Finset.disjoint_left.1 hEZ hv)] at this
       · have := h v (Finset.mem_union_right _ v.2)
         simp only [overwriteOn, v.2, dite_true] at this
         exact this.symm
@@ -127,7 +126,7 @@ theorem marginal_mass_eq_sum_overwrite_on [Fintype V] [Fintype S] (p : (V → S)
   · simp
 
 /-- Interventional masses depend only on the intervention values on the intervened set. -/
-theorem intervention_mass_congr [Fintype V] (localMass : V → (V → S) → S → ℝ) (A : Finset V)
+theorem interventionMass_congr [Fintype V] (localMass : V → (V → S) → S → ℝ) (A : Finset V)
     {a a' : V → S} (h : ∀ v ∈ A, a v = a' v) :
     interventionMass localMass A a = interventionMass localMass A a' := by
   funext y
@@ -137,7 +136,7 @@ theorem intervention_mass_congr [Fintype V] (localMass : V → (V → S) → S �
   simp only [this]
 
 /-- The empty intervention leaves the recursive product mass unchanged. -/
-theorem intervention_mass_empty [Fintype V] (localMass : V → (V → S) → S → ℝ) (a : V → S) :
+theorem interventionMass_empty [Fintype V] (localMass : V → (V → S) → S → ℝ) (a : V → S) :
     interventionMass localMass ∅ a = directedFactorizationMass localMass := by
   funext y
   simp [interventionMass, directedFactorizationMass]
@@ -149,7 +148,7 @@ def intervenedLocalMass (localMass : V → (V → S) → S → ℝ) (X : Finset 
   fun v y s ↦ if v ∈ X then (if s = b v then 1 else 0) else localMass v y s
 
 /-- Intervened local masses form a local mass family. -/
-theorem is_local_mass_family_intervened_local_mass [Fintype S] {localMass : V → (V → S) → S → ℝ}
+theorem isLocalMassFamily_intervenedLocalMass [Fintype S] {localMass : V → (V → S) → S → ℝ}
     (hloc : IsLocalMassFamily localMass) (X : Finset V) (b : V → S) :
     IsLocalMassFamily (intervenedLocalMass localMass X b) := by
   refine ⟨fun v y s ↦ ?_, fun v y ↦ ?_⟩
@@ -165,7 +164,7 @@ theorem is_local_mass_family_intervened_local_mass [Fintype S] {localMass : V �
 
 /-- Intervened local masses respect the parents in the graph with the arrows into `X`
 removed. -/
-theorem respects_parents_intervened_local_mass (G : CausalGraph V)
+theorem respectsParents_intervenedLocalMass (G : CausalGraph V)
     {localMass : V → (V → S) → S → ℝ} (hpar : G.RespectsParents localMass) (X : Finset V)
     (b : V → S) : (G.removeIncoming ↑X).RespectsParents (intervenedLocalMass localMass X b) := by
   intro v x y h
@@ -177,7 +176,7 @@ theorem respects_parents_intervened_local_mass (G : CausalGraph V)
     simp [hv, this]
 
 /-- The truncated factorization is the recursive product of the intervened local masses. -/
-theorem directed_factorization_mass_intervened_local_mass [Fintype V]
+theorem directedFactorizationMass_intervenedLocalMass [Fintype V]
     (localMass : V → (V → S) → S → ℝ) (X : Finset V) (b : V → S) :
     directedFactorizationMass (intervenedLocalMass localMass X b) =
       interventionMass localMass X b := by
@@ -196,18 +195,18 @@ theorem directed_factorization_mass_intervened_local_mass [Fintype V]
   split_ifs <;> simp
 
 /-- Intervening on `X` after intervening on `Z` is intervening on `X ∪ Z`. -/
-theorem intervention_mass_intervened_local_mass [Fintype V] (localMass : V → (V → S) → S → ℝ)
+theorem interventionMass_intervenedLocalMass [Fintype V] (localMass : V → (V → S) → S → ℝ)
     (X Z : Finset V) (b : V → S) :
     interventionMass (intervenedLocalMass localMass Z b) X b =
       interventionMass localMass (X ∪ Z) b := by
-  rw [← directed_factorization_mass_intervened_local_mass,
-    ← directed_factorization_mass_intervened_local_mass]
+  rw [← directedFactorizationMass_intervenedLocalMass,
+    ← directedFactorizationMass_intervenedLocalMass]
   congr 1
   funext v y s
   by_cases h1 : v ∈ X <;> by_cases h2 : v ∈ Z <;> simp [intervenedLocalMass, h1, h2]
 
 /-- Interventional masses are nonnegative. -/
-theorem intervention_mass_nonneg [Fintype V] [Fintype S] {localMass : V → (V → S) → S → ℝ}
+theorem interventionMass_nonneg [Fintype V] [Fintype S] {localMass : V → (V → S) → S → ℝ}
     (hloc : IsLocalMassFamily localMass) (X : Finset V) (a y : V → S) :
     0 ≤ interventionMass localMass X a y := by
   unfold interventionMass
@@ -217,7 +216,7 @@ theorem intervention_mass_nonneg [Fintype V] [Fintype S] {localMass : V → (V �
 
 /-- The interventional mass under `do(X = a)` is concentrated on the configurations that agree
 with `a` on `X`. -/
-theorem intervention_mass_support [Fintype V] {localMass : V → (V → S) → S → ℝ}
+theorem interventionMass_support [Fintype V] {localMass : V → (V → S) → S → ℝ}
     {X : Finset V} {a y : V → S} (h : interventionMass localMass X a y ≠ 0) :
     ∀ v ∈ X, y v = a v := by
   unfold interventionMass at h
@@ -226,13 +225,13 @@ theorem intervention_mass_support [Fintype V] {localMass : V → (V → S) → S
   exact h rfl
 
 /-- Recursive product masses are nonnegative. -/
-theorem directed_factorization_mass_nonneg [Fintype V] [Fintype S]
+theorem directedFactorizationMass_nonneg [Fintype V] [Fintype S]
     {localMass : V → (V → S) → S → ℝ} (hloc : IsLocalMassFamily localMass) (y : V → S) :
     0 ≤ directedFactorizationMass localMass y :=
   Finset.prod_nonneg fun v _ ↦ hloc.1 v y (y v)
 
 /-- A recursive product of local masses has total mass one. -/
-theorem marginal_mass_empty_directed_factorization_mass [Fintype V] [Fintype S]
+theorem marginalMass_empty_directedFactorizationMass [Fintype V] [Fintype S]
     (G : CausalGraph V) {localMass : V → (V → S) → S → ℝ} (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (x : V → S) :
     marginalMass (directedFactorizationMass localMass) ∅ x = 1 := by
@@ -247,17 +246,17 @@ theorem marginal_mass_empty_directed_factorization_mass [Fintype V] [Fintype S]
   simp
 
 /-- An interventional mass has total mass one. -/
-theorem marginal_mass_empty_intervention_mass [Fintype V] [Fintype S] (G : CausalGraph V)
+theorem marginalMass_empty_interventionMass [Fintype V] [Fintype S] (G : CausalGraph V)
     {localMass : V → (V → S) → S → ℝ} (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (X : Finset V) (a x : V → S) :
     marginalMass (interventionMass localMass X a) ∅ x = 1 := by
-  rw [← directed_factorization_mass_intervened_local_mass]
-  exact marginal_mass_empty_directed_factorization_mass (G.removeIncoming ↑X)
-    (is_local_mass_family_intervened_local_mass hloc X a) (respects_parents_intervened_local_mass G hpar X a) x
+  rw [← directedFactorizationMass_intervenedLocalMass]
+  exact marginalMass_empty_directedFactorizationMass (G.removeIncoming ↑X)
+    (isLocalMassFamily_intervenedLocalMass hloc X a) (respectsParents_intervenedLocalMass G hpar X a) x
 
 /-- Conditional independence `Y ⊥ Z | X ∪ W`, for a mass concentrated on one value of `X`,
 in quotient form: `P(y | z, w) = P(y | w)`. -/
-theorem div_eq_div_of_cond_indep_mass [Fintype V] [Fintype S] {p : (V → S) → ℝ}
+theorem div_eq_div_of_condIndepMass [Fintype V] [Fintype S] {p : (V → S) → ℝ}
     (hp : ∀ y, 0 ≤ p y) {X Y Z W : Finset V} {b : V → S}
     (hsupp : ∀ y, p y ≠ 0 → ∀ v ∈ X, y v = b v) (hci : CondIndepMass p Y Z (X ∪ W))
     (hpos : 0 < marginalMass p (Z ∪ W) b) :
@@ -271,16 +270,16 @@ theorem div_eq_div_of_cond_indep_mass [Fintype V] [Fintype S] {p : (V → S) →
   have e4 : Z ∪ (X ∪ W) = (Z ∪ W) ∪ X := by
     ext v; simp only [Finset.mem_union]; tauto
   have e2 : X ∪ W = W ∪ X := Finset.union_comm _ _
-  rw [e1, e3, e4, e2, marginal_mass_union_of_support hsupp, marginal_mass_union_of_support hsupp,
-    marginal_mass_union_of_support hsupp, marginal_mass_union_of_support hsupp] at h
+  rw [e1, e3, e4, e2, marginalMass_union_of_support hsupp, marginalMass_union_of_support hsupp,
+    marginalMass_union_of_support hsupp, marginalMass_union_of_support hsupp] at h
   have hW : 0 < marginalMass p W b :=
-    lt_of_lt_of_le hpos (marginal_mass_anti hp Finset.subset_union_right b)
+    lt_of_lt_of_le hpos (marginalMass_anti hp Finset.subset_union_right b)
   rw [div_eq_div_iff hpos.ne' hW.ne']
   exact h
 
 /-- The interventional marginal of variables that are neither in `X` nor descendants of `X`
 equals their observational marginal. -/
-theorem do_marginal_mass_eq_marginal_mass_of_non_descendant [Fintype V] [Fintype S]
+theorem doMarginalMass_eq_marginalMass_of_nonDescendant [Fintype V] [Fintype S]
     (G : CausalGraph V) (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (X E : Finset V) (a x : V → S)
     (hE : ∀ v ∈ E, v ∉ X ∧ ∀ u ∈ X, ¬ G.IsDescendant u v) :
@@ -300,11 +299,11 @@ theorem do_marginal_mass_eq_marginal_mass_of_non_descendant [Fintype V] [Fintype
     · exact (hE u hv).1 hu
     · exact (hE v hv).2 u hu huv
   change marginalMass (interventionMass localMass X a) E x = _
-  rw [← directed_factorization_mass_intervened_local_mass]
+  rw [← directedFactorizationMass_intervenedLocalMass]
   unfold marginalMass directedFactorizationMass
   rw [sum_ite_prod_eq_sum_ite_prod_compl (G.removeIncoming ↑X) _
-      (is_local_mass_family_intervened_local_mass hloc X a)
-      (respects_parents_intervened_local_mass G hpar X a) x E U hclX hEU,
+      (isLocalMassFamily_intervenedLocalMass hloc X a)
+      (respectsParents_intervenedLocalMass G hpar X a) x E U hclX hEU,
     sum_ite_prod_eq_sum_ite_prod_compl G localMass hloc hpar x E U hclG hEU]
   refine Finset.sum_congr rfl fun y _ ↦ ?_
   split_ifs
@@ -346,7 +345,7 @@ theorem CausalGraph.IsActivePath.mono {G H : CausalGraph V} (hle : ∀ u v, H.ed
 
 /-- If every back-door path from `X` to `Y` is blocked by `W`, then in any subgraph with the
 arrows out of `X` removed, `Y` and `X` are d-separated by `W`. -/
-theorem CausalGraph.d_separated_remove_outgoing_of_blocks_backdoor_paths (G H : CausalGraph V)
+theorem CausalGraph.dSeparated_removeOutgoing_of_blocksBackdoorPaths (G H : CausalGraph V)
     (hle : ∀ u v, H.edge u v → G.edge u v) {X Y W : Set V} (hXY : Disjoint X Y)
     (hb : G.BlocksBackdoorPaths X Y W) : (H.removeOutgoing X).DSeparated Y X W := by
   intro n p h0 hn hp
@@ -364,16 +363,16 @@ theorem CausalGraph.d_separated_remove_outgoing_of_blocks_backdoor_paths (G H : 
 
 /-- If every back-door path from `X` to `Z` is blocked by the empty set, then no vertex of `X`
 is a descendant of a vertex of `Z`. -/
-theorem CausalGraph.not_is_descendant_of_blocks_backdoor_paths (G : CausalGraph V)
+theorem CausalGraph.not_isDescendant_of_blocksBackdoorPaths (G : CausalGraph V)
     {X Z : Set V} (hb : G.BlocksBackdoorPaths X Z ∅) :
     ∀ z ∈ Z, ∀ x ∈ X, ¬ G.IsDescendant z x := by
   intro z hz x hx hd
-  obtain ⟨m, r, hm, h0, hmx, hf⟩ := G.exists_forward_of_is_descendant hd
+  obtain ⟨m, r, hm, h0, hmx, hf⟩ := G.exists_forward_of_isDescendant hd
   have htr : G.IsTrailWith (G.MemAncestorClosure ∅) (· ∉ (∅ : Set V)) m (fun k ↦ r (m - k)) :=
-    (G.is_trail_with_of_forward hf fun i _ _ ↦ Set.notMem_empty _).rev
+    (G.isTrailWith_of_forward hf fun i _ _ ↦ Set.notMem_empty _).rev
   have hc : ∀ i j, i < j → j ≤ m → r i ≠ r j := by
     intro i j hij hjm heq
-    have := G.is_descendant_of_forward (r := fun k ↦ r (k + i)) (m := m - i)
+    have := G.isDescendant_of_forward (r := fun k ↦ r (k + i)) (m := m - i)
       (fun k hk ↦ by simpa [Nat.add_right_comm k 1 i] using hf (k + i) (by omega))
       (j - i) (by omega) (by omega)
     simp only [zero_add, Nat.sub_add_cancel hij.le] at this
@@ -385,18 +384,18 @@ theorem CausalGraph.not_is_descendant_of_blocks_backdoor_paths (G : CausalGraph 
     rcases Nat.lt_or_gt_of_ne hne with hlt | hlt
     · exact hc (m - j) (m - i) (by omega) (by omega) h.symm
     · exact hc (m - i) (m - j) (by omega) (by omega) h
-  have hpath := G.is_active_path_of_is_trail_with htr hinj
+  have hpath := G.isActivePath_of_isTrailWith htr hinj
   obtain ⟨n, rfl⟩ : ∃ n, m = n + 1 := ⟨m - 1, by omega⟩
   refine hb n (fun i ↦ r (n + 1 - i)) (by simpa [hmx] using hx) (by simpa [h0] using hz) ?_ hpath
   simpa using hf n (by omega)
 
 /-- If `Z` intercepts all directed paths from `X` to `Y`, then in the graph with the arrows
 into `Z` removed no vertex of `Y` is a descendant of a vertex of `X`. -/
-theorem CausalGraph.not_is_descendant_remove_incoming_of_intercepts (G : CausalGraph V)
+theorem CausalGraph.not_isDescendant_removeIncoming_of_intercepts (G : CausalGraph V)
     {X Y Z : Set V} (hXZ : Disjoint X Z) (hi : G.InterceptsDirectedPaths X Y Z) :
     ∀ v ∈ Y, ∀ u ∈ X, ¬ (G.removeIncoming Z).IsDescendant u v := by
   intro v hv u hu hd
-  obtain ⟨m, r, hm, h0, hmv, hf⟩ := (G.removeIncoming Z).exists_forward_of_is_descendant hd
+  obtain ⟨m, r, hm, h0, hmv, hf⟩ := (G.removeIncoming Z).exists_forward_of_isDescendant hd
   obtain ⟨i, hi'⟩ := hi m (fun i ↦ r i) (by simpa [h0] using hu) (by simpa [hmv] using hv)
     fun i ↦ by simpa using (hf i i.isLt).1
   rcases Nat.eq_zero_or_pos i.val with h | h
@@ -412,7 +411,7 @@ theorem CausalGraph.not_is_descendant_remove_incoming_of_intercepts (G : CausalG
 if `Y` and `Z` are d-separated by `X ∪ W` in `G_{\bar X}`, then
 `P(y | do(x), z, w) = P(y | do(x), w)`. The conditioning event `{Z = z, W = w}` has positive
 interventional probability. -/
-theorem cond_do_mass_rule_one [Fintype V] [Fintype S] (G : CausalGraph V)
+theorem condDoMass_rule_one [Fintype V] [Fintype S] (G : CausalGraph V)
     (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (X Y Z W : Finset V)
     (hdisj : Disjoint X Y ∧ Disjoint X Z ∧ Disjoint X W ∧ Disjoint Y Z ∧ Disjoint Y W ∧
@@ -421,14 +420,14 @@ theorem cond_do_mass_rule_one [Fintype V] [Fintype S] (G : CausalGraph V)
     (hpos : 0 < doMarginalMass localMass X b (Z ∪ W) b) :
     condDoMass localMass X Y (Z ∪ W) b = condDoMass localMass X Y W b := by
   obtain ⟨hXY, hXZ, hXW, hYZ, hYW, hZW⟩ := hdisj
-  have hci := cond_indep_mass_directed_factorization_mass_of_d_separated (G.removeIncoming ↑X)
-    (intervenedLocalMass localMass X b) (is_local_mass_family_intervened_local_mass hloc X b)
-    (respects_parents_intervened_local_mass G hpar X b) Y Z (X ∪ W)
+  have hci := condIndepMass_directedFactorizationMass_of_dSeparated (G.removeIncoming ↑X)
+    (intervenedLocalMass localMass X b) (isLocalMassFamily_intervenedLocalMass hloc X b)
+    (respectsParents_intervenedLocalMass G hpar X b) Y Z (X ∪ W)
     (Finset.disjoint_union_right.2 ⟨hXY.symm, hYW⟩)
     (Finset.disjoint_union_right.2 ⟨hXZ.symm, hZW⟩) hsep
-  rw [directed_factorization_mass_intervened_local_mass] at hci
-  exact div_eq_div_of_cond_indep_mass (intervention_mass_nonneg hloc X b)
-    (fun y hy ↦ intervention_mass_support hy) hci hpos
+  rw [directedFactorizationMass_intervenedLocalMass] at hci
+  exact div_eq_div_of_condIndepMass (interventionMass_nonneg hloc X b)
+    (fun y hy ↦ interventionMass_support hy) hci hpos
 
 /-- GAPS 105.64, rule 2 of the do-calculus (action/observation exchange):
 if `Y` and `Z` are d-separated by `X ∪ W` in `G_{\bar X \underline Z}`, then
@@ -437,7 +436,7 @@ probability under `do(x)`.
 
 The proof compares both sides with the mass in which the children of `Z` read the fixed values
 of `b` on `Z`; that mass factorizes along `G_{\bar X \underline Z}`. -/
-theorem cond_do_mass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
+theorem condDoMass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
     (localMass : V → (V → S) → S → ℝ) (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (X Y Z W : Finset V)
     (hdisj : Disjoint X Y ∧ Disjoint X Z ∧ Disjoint X W ∧ Disjoint Y Z ∧ Disjoint Y W ∧
@@ -449,13 +448,13 @@ theorem cond_do_mass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
   set G2 := (G.removeIncoming ↑X).removeOutgoing ↑Z with hG2
   let ow : (V → S) → V → S := fun y u ↦ if u ∈ Z then b u else y u
   let rloc : V → (V → S) → S → ℝ := fun v y s ↦ intervenedLocalMass localMass X b v (ow y) s
-  have hloc' := is_local_mass_family_intervened_local_mass hloc X b
+  have hloc' := isLocalMassFamily_intervenedLocalMass hloc X b
   have hrloc : IsLocalMassFamily rloc :=
     ⟨fun v y s ↦ hloc'.1 v _ s, fun v y ↦ hloc'.2 v _⟩
   have hrpar : G2.RespectsParents rloc := by
     intro v y y' h
     show intervenedLocalMass localMass X b v (ow y) = intervenedLocalMass localMass X b v (ow y')
-    apply respects_parents_intervened_local_mass G hpar X b v
+    apply respectsParents_intervenedLocalMass G hpar X b v
     intro u hu
     simp only [ow]
     split_ifs with huZ
@@ -470,7 +469,7 @@ theorem cond_do_mass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
     · rfl
   have hr_eq : ∀ y, (∀ v ∈ Z, y v = b v) → r y = q y := by
     intro y hy
-    simp only [r, q, ← directed_factorization_mass_intervened_local_mass]
+    simp only [r, q, ← directedFactorizationMass_intervenedLocalMass]
     unfold directedFactorizationMass
     simp only [rloc, how y hy]
   have hmargA : ∀ E, Z ⊆ E → marginalMass r E b = marginalMass q E b := by
@@ -491,7 +490,7 @@ theorem cond_do_mass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
     refine Finset.sum_congr rfl fun y _ ↦ ?_
     by_cases hyZ : ∀ v ∈ Z, y v = b v
     · have hprod : ∏ v ∈ Zᶜ, rloc v y (y v) = interventionMass localMass (X ∪ Z) b y := by
-        rw [← directed_factorization_mass_intervened_local_mass]
+        rw [← directedFactorizationMass_intervenedLocalMass]
         unfold directedFactorizationMass
         rw [← Finset.prod_subset (Finset.subset_univ Zᶜ)]
         · refine Finset.prod_congr rfl fun v hv ↦ ?_
@@ -510,10 +509,10 @@ theorem cond_do_mass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
         intro h
         exact hyZ fun v hv ↦ h v (Finset.mem_union_right _ hv)
       simp only [hyZ, and_false, ite_false, h0, ite_self]
-  have hci := cond_indep_mass_directed_factorization_mass_of_d_separated G2 rloc hrloc hrpar Y Z
+  have hci := condIndepMass_directedFactorizationMass_of_dSeparated G2 rloc hrloc hrpar Y Z
     (X ∪ W) (Finset.disjoint_union_right.2 ⟨hXY.symm, hYW⟩)
     (Finset.disjoint_union_right.2 ⟨hXZ.symm, hZW⟩) hsep
-  have hr0 : ∀ y, 0 ≤ r y := fun y ↦ directed_factorization_mass_nonneg hrloc y
+  have hr0 : ∀ y, 0 ≤ r y := fun y ↦ directedFactorizationMass_nonneg hrloc y
   have hrsupp : ∀ y, r y ≠ 0 → ∀ v ∈ X, y v = b v := by
     intro y hy v hv
     by_contra hne
@@ -523,7 +522,7 @@ theorem cond_do_mass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
   have hposr : 0 < marginalMass r (Z ∪ W) b := by
     rw [hmargA _ Finset.subset_union_left]
     exact hpos
-  have key := div_eq_div_of_cond_indep_mass hr0 hrsupp hci hposr
+  have key := div_eq_div_of_condIndepMass hr0 hrsupp hci hposr
   unfold condDoMass
   rw [← hmargB _ (Finset.disjoint_union_left.2 ⟨hYZ, hZW.symm⟩), ← hmargB _ hZW.symm]
   change _ = marginalMass q (Y ∪ (Z ∪ W)) b / marginalMass q (Z ∪ W) b

@@ -3,7 +3,6 @@ module
 public import CKSD.Inference.Basic
 public import TauCeti.Probability.Distributions.Wishart.Basic
 
-
 /-!
 # Linear models: common definitions
 
@@ -26,8 +25,8 @@ survey sampling (Section 105).
 
 ## Main results
 
-* `CKSD.measurable_matrix_quadratic_form`: quadratic forms are measurable.
-* `CKSD.matrix_inv_smul_of_ne_zero`: `(c • A)⁻¹ = c⁻¹ • A⁻¹` for `c ≠ 0`.
+* `CKSD.measurable_matrixQuadraticForm`: quadratic forms are measurable.
+* `CKSD.matrix_inv_smul`: `(c • A)⁻¹ = c⁻¹ • A⁻¹` for every scalar `c`.
 -/
 
 @[expose] public section
@@ -52,7 +51,7 @@ def matrixQuadraticForm {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ) (x : Euclidea
 
 /-- A quadratic form `x ↦ xᵀ P x` is measurable. -/
 @[fun_prop]
-theorem measurable_matrix_quadratic_form {n : ℕ} (P : Matrix (Fin n) (Fin n) ℝ) :
+theorem measurable_matrixQuadraticForm {n : ℕ} (P : Matrix (Fin n) (Fin n) ℝ) :
     Measurable (matrixQuadraticForm P) := by
   unfold matrixQuadraticForm
   exact (continuous_id.inner (Matrix.toEuclideanCLM (𝕜 := ℝ) P).continuous).measurable
@@ -92,10 +91,12 @@ exactly once. -/
 def OrthogonalLatinSquares {s : ℕ} (L M : Fin s → Fin s → Fin s) : Prop :=
   Function.Injective (fun z : Fin s × Fin s ↦ (L z.1 z.2, M z.1 z.2))
 
-/-- Inversion commutes with nonzero real scalar multiplication, `(c • A)⁻¹ = c⁻¹ • A⁻¹`, for
-invertible and singular matrices alike. -/
-theorem matrix_inv_smul_of_ne_zero {n : Type*} [Fintype n] [DecidableEq n] {c : ℝ} (hc : c ≠ 0)
-    (A : Matrix n n ℝ) : (c • A)⁻¹ = c⁻¹ • A⁻¹ := by
+/-- Inversion commutes with scalar multiplication over a field, `(c • A)⁻¹ = c⁻¹ • A⁻¹`, for
+every scalar `c` (including `c = 0`) and for invertible and singular matrices alike. -/
+theorem matrix_inv_smul {n K : Type*} [Fintype n] [DecidableEq n] [Field K] (c : K)
+    (A : Matrix n n K) : (c • A)⁻¹ = c⁻¹ • A⁻¹ := by
+  rcases eq_or_ne c 0 with rfl | hc
+  · simp
   by_cases h : IsUnit A.det
   · exact Matrix.inv_smul' A (Units.mk0 c hc) h
   · have h' : ¬ IsUnit (c • A).det := by

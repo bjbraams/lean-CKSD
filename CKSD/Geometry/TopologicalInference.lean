@@ -12,7 +12,6 @@ public import Mathlib.MeasureTheory.Measure.Hausdorff
 public import Mathlib.Topology.Homotopy.Basic
 public import Mathlib.Analysis.Convex.Hull
 
-
 /-!
 # Topological inference: reach, weak feature size, and Morse persistence
 
@@ -93,7 +92,7 @@ def offsetInclusion (P : Set E) {i j : ℝ} (h : i ≤ j) : C(cthickening i P, c
 nonempty with `d_H(P, M) = ε < √(3/20) τ`. For `r ∈ (2ε, √(3/5) τ)` the offset `P^r` contains
 `M` and strongly deformation retracts onto it. By the nerve theorem the Čech complex of radius `r` then has the
 homotopy type of `M`; the nerve theorem is not part of this statement. -/
-theorem exists_deformation_retraction_offset_of_hausdorff_dist_lt
+theorem exists_deformationRetraction_offset_of_hausdorffDist_lt
     {d : ℕ} {N : Type*} [TopologicalSpace N] [ChartedSpace (EuclideanSpace ℝ (Fin d)) N]
     [IsManifold (𝓡 d) ∞ N] [CompactSpace N] {j : N → E}
     (hj : Manifold.IsSmoothEmbedding (𝓡 d) 𝓘(ℝ, E) ∞ j)
@@ -108,15 +107,16 @@ theorem exists_deformation_retraction_offset_of_hausdorff_dist_lt
   sorry
 
 /-- GAPS 108.22, the sampling bound. Let `M = j(N) ⊂ ℝ^D` be a compact smooth `d`-dimensional
-submanifold without boundary and `c > 0`. There are `C, ε₀ > 0` such that for every law `μ`
+submanifold without boundary and `c > 0`; more generally, `j` may be any smooth immersion of a
+compact manifold without boundary. There are `C, ε₀ > 0` such that for every law `μ`
 concentrated on `M` with density at least `c` with respect to the `d`-dimensional Hausdorff
 measure on `M` (the Riemannian volume), all `ε ∈ (0, ε₀)`, `δ ∈ (0, 1)` and
 `n ≥ C ε^{-d} (log(1/ε) + log(1/δ))`, an independent sample of size `n` is `ε`-close to `M` in
 Hausdorff distance with probability at least `1 - δ`. -/
-theorem exists_sample_size_hausdorff_dist_le
+theorem exists_sample_size_hausdorffDist_le
     {d : ℕ} {N : Type*} [TopologicalSpace N] [ChartedSpace (EuclideanSpace ℝ (Fin d)) N]
     [IsManifold (𝓡 d) ∞ N] [CompactSpace N] {j : N → E}
-    (hj : Manifold.IsSmoothEmbedding (𝓡 d) 𝓘(ℝ, E) ∞ j) (c : ℝ) (hc : 0 < c) :
+    (hj : Manifold.IsImmersion (𝓡 d) 𝓘(ℝ, E) ∞ j) (c : ℝ) (hc : 0 < c) :
     ∃ C > 0, ∃ ε₀ > 0, ∀ μ : Measure E, IsProbabilityMeasure μ → μ (range j)ᶜ = 0 →
       (∀ s, MeasurableSet s → ENNReal.ofReal c * μH[d] (s ∩ range j) ≤ μ s) →
       ∀ ε ∈ Ioo 0 ε₀, ∀ δ ∈ Ioo (0 : ℝ) 1, ∀ n : ℕ,
@@ -125,7 +125,7 @@ theorem exists_sample_size_hausdorff_dist_le
           {x | hausdorffDist (range x) (range j) ≤ ε} := by
   -- small balls on `M` have Hausdorff measure `≥ α r^d`, hence `μ`-mass `≥ c α r^d`
   obtain ⟨α, hα, r₀, hr₀, hloc⟩ :=
-    exists_hausdorff_measure_ball_inter_range_ge_of_is_immersion hj.isImmersion
+    exists_hausdorffMeasure_ball_inter_range_ge_of_isImmersion hj
   set β := c * α
   have hβ : 0 < β := mul_pos hc hα
   set γ := β / 4 ^ d
@@ -138,7 +138,8 @@ theorem exists_sample_size_hausdorff_dist_le
   refine ⟨κ / γ, by positivity, min r₀ (Real.exp (-1)), lt_min hr₀ (Real.exp_pos _), ?_⟩
   intro μ hμ hμM hdens ε hε δ hδ n hn
   have hMm : MeasurableSet (range j) :=
-    (isCompact_range hj.isEmbedding.continuous).isClosed.measurableSet
+    (isCompact_range (continuous_iff_continuousAt.2 fun x ↦
+      (hj.isImmersionAt x).continuousAt)).isClosed.measurableSet
   obtain ⟨hε0, hε₀⟩ := hε
   have hεr : ε < r₀ := hε₀.trans_le (min_le_left _ _)
   have hεe : ε < Real.exp (-1) := hε₀.trans_le (min_le_right _ _)
@@ -147,7 +148,7 @@ theorem exists_sample_size_hausdorff_dist_le
     rintro _ ⟨y, rfl⟩ s ⟨hs0, hs⟩
     rw [mul_assoc, ENNReal.ofReal_mul hc.le]
     exact (mul_le_mul_right (hloc y s ⟨hs0, by linarith⟩) _).trans (hdens _ measurableSet_ball)
-  have hP := one_sub_le_measure_real_pi_hausdorff_dist_le μ hMm hμM hε0 hβ d n hball
+  have hP := one_sub_le_measureReal_pi_hausdorffDist_le μ hMm hμM hε0 hβ d n hball
   -- the numerical estimate
   set t := β * (ε / 4) ^ d
   have ht : t = γ * ε ^ d := by simp only [t, γ, div_pow]; ring
@@ -203,7 +204,7 @@ theorem exists_sample_size_hausdorff_dist_le
 gives the source statement. Offsets are closed thickenings; since `P` is finite and `K` compact,
 `d_H(K, P) = ε` gives the closed interleavings `K^a ⊆ P^{a+ε}` and `P^a ⊆ K^{a+ε}` used by the
 argument. The Čech-complex form follows by the nerve theorem and is not stated separately. -/
-theorem nonempty_range_offset_homology_equiv_of_weak_feature_size (k : Type) [Field k]
+theorem nonempty_range_offsetHomology_equiv_of_weakFeatureSize (k : Type) [Field k]
     (K : Set E) (hK : IsCompact K) (hKne : K.Nonempty) (τ : ℝ) (hτ : 0 < τ)
     (hwfs : ENNReal.ofReal τ ≤ weakFeatureSize K) (P : Finset E) (hPne : (P : Set E).Nonempty)
     (ε : ℝ) (hε : hausdorffDist K P = ε) (i j : ℝ) (hi : ε < i)
@@ -223,7 +224,7 @@ def sampleRipsFiltrationValue {N : ℕ} (x : Fin N → E) (σ : Finset (Fin N)) 
 least `τ > 0`, and `x` a finite sample with `d_H(K, {x_i}) < ε` for some `ε < τ/9`. If
 `2ε ≤ α ≤ (τ - ε)/4`, the image of `H_n(Rips(α/2)) → H_n(Rips(2α))` (diameter-`2r` parameter,
 simplicial homology over a field) is isomorphic to `H_n(K^r)` for every `r ∈ (0, τ)`. -/
-theorem nonempty_rips_persistent_homology_equiv_of_weak_feature_size (k : Type) [Field k]
+theorem nonempty_ripsPersistentHomology_equiv_of_weakFeatureSize (k : Type) [Field k]
     (K : Set E) (hK : IsCompact K) (hKne : K.Nonempty) (τ : ℝ) (hτ : 0 < τ)
     (hwfs : ENNReal.ofReal τ ≤ weakFeatureSize K) {N : ℕ} (hN : 0 < N) (x : Fin N → E)
     (ε : ℝ) (hε : hausdorffDist K (range x) < ε) (hετ : ε < τ / 9) (α : ℝ) (hα : 2 * ε ≤ α)
@@ -260,7 +261,7 @@ points is the number of degree-`q` bars plus the number of finite degree-`(q-1)`
 are exactly `β_q(M)` essential degree-`q` bars; and each critical value is an endpoint of exactly
 one bar. The homotopy-theoretic description (cell attachment at critical values) is not
 restated. -/
-theorem sublevel_homology_module_bars_of_is_morse (k : Type) [Field k] {f : M → ℝ}
+theorem sublevelHomologyModule_bars_of_isMorse (k : Type) [Field k] {f : M → ℝ}
     (hf : TauCeti.IsMorse (𝓡 m) f) (hinj : InjOn f (manifoldCriticalPoints m f))
     (α κ : ℕ → Type) [∀ q, Fintype (α q)] [∀ q, Fintype (κ q)]
     (D : ∀ q, FiniteDeathDiagram (α q)) (e : ∀ q, κ q → ℝ)

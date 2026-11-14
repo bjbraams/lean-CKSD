@@ -6,7 +6,6 @@ public import CKSD.Asymptotics.Lindeberg.Basic
 public import TauCeti.Analysis.Calculus.Taylor
 public import CKSD.Nonparametric.KernelDensityL1
 
-
 /-!
 # Empirical distribution functions, kernel density estimation, and rank statistics
 
@@ -22,29 +21,38 @@ and the exact moments of linear rank statistics under uniformly distributed rank
 
 ## Main results
 
-* `CKSD.measure_kolmogorov_smirnov_statistic_gt_le`: `P(√n ‖F_n - F‖_∞ > t) ≤ 2 exp(-2t²)`.
-* `CKSD.tendsto_in_distribution_kernel_density_estimator`: the bias-corrected central limit
+* `CKSD.measure_kolmogorovSmirnovStatistic_gt_le`: `P(√n ‖F_n - F‖_∞ > t) ≤ 2 exp(-2t²)`.
+* `CKSD.tendstoInDistribution_kernelDensityEstimator`: the bias-corrected central limit
   theorem for the kernel density estimator at a point.
-* `CKSD.ae_tendsto_integral_abs_kernel_density_estimator_sub`: `∫ |f̂_n - f| → 0` almost surely.
+* `CKSD.ae_tendsto_integral_abs_kernelDensityEstimator_sub`: `∫ |f̂_n - f| → 0` almost surely.
 * `CKSD.minimizer_mem_span_of_feature_vectors`: the representer theorem.
-* `CKSD.integral_linear_rank_statistic`, `CKSD.variance_linear_rank_statistic`: the mean
+* `CKSD.integral_linearRankStatistic`, `CKSD.variance_linearRankStatistic`: the mean
   `N c̄ ā` and the variance `(N - 1)⁻¹ ∑ (cᵢ - c̄)² ∑ (a(i) - ā)²` of a linear rank statistic.
 
 The kernel density central limit theorem applies the Lindeberg–Feller theorem
-`CKSD.tendsto_in_distribution_sum_of_lindeberg_of_i_indep_fun` to the centred kernel evaluations;
+`CKSD.tendstoInDistribution_sum_of_lindeberg_of_iIndepFun` to the centred kernel evaluations;
 the variance and bias are computed by the change of variables `x = t - h u`, Mathlib's dominated
 convergence theorem and Taylor expansions (Mathlib's `taylor_isLittleO_univ`, TauCeti's
 `TauCeti.abs_sub_taylorWithinEval_le`), and Slutsky's lemma
-`CKSD.tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable` removes the deterministic
+`CKSD.tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable` removes the deterministic
 bias term.
 
 The universal `L¹` consistency combines the expectation bound
-`CKSD.tendsto_integral_integral_abs_finite_kernel_density_estimator_sub` and the McDiarmid
-concentration bound `CKSD.measure_real_le_integral_abs_finite_kernel_density_estimator_sub_le` of
+`CKSD.tendsto_integral_integral_abs_finiteKernelDensityEstimator_sub` and the McDiarmid
+concentration bound `CKSD.measureReal_le_integral_abs_finiteKernelDensityEstimator_sub_le` of
 `CKSD.Nonparametric.KernelDensityL1` with Mathlib's Borel–Cantelli lemma
 `MeasureTheory.ae_eventually_notMem`.
 
 Sources: GAPS 103.1, 103.4, 103.5, 103.8, and 103.14.
+
+## References
+
+* A. W. van der Vaart, *Asymptotic Statistics*, Cambridge University Press, 1998, Chapters 13 and
+  19.
+* M. P. Wand and M. C. Jones, *Kernel Smoothing*, Chapman and Hall, 1995.
+* L. Devroye and L. Györfi, *Nonparametric Density Estimation: The L1 View*, Wiley, 1985.
+* G. Wahba, *Spline Models for Observational Data*, SIAM, 1990.
+* J. Hájek, Z. Šidák and P. K. Sen, *Theory of Rank Tests*, 2nd ed., Academic Press, 1999.
 -/
 
 @[expose] public section
@@ -64,10 +72,11 @@ attribute [local instance] Classical.propDecidable
 attribute [local instance] rankMeasurableSpace
 
 /-- GAPS 103.1: the Dvoretzky–Kiefer–Wolfowitz inequality with Massart's constant. For i.i.d.
-real observations and every `t > 0`, `P(√n sup_x |F_n(x) - F(x)| > t) ≤ 2 exp(-2 t²)`. -/
-theorem measure_kolmogorov_smirnov_statistic_gt_le {Ω : Type*} [MeasurableSpace Ω]
+real observations, every `n` and every `t > 0`, `P(√n sup_x |F_n(x) - F(x)| > t) ≤ 2 exp(-2 t²)`;
+for `n = 0` the event is empty. -/
+theorem measure_kolmogorovSmirnovStatistic_gt_le {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
-    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (n : ℕ) (hn : 0 < n)
+    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (n : ℕ)
     (t : ℝ) (ht : 0 < t) :
     μ.real {ω | t < Real.sqrt n * kolmogorovSmirnovStatistic X P n ω} ≤ 2 * Real.exp
       (-2 * t ^ 2) := by
@@ -85,7 +94,7 @@ private theorem abs_sub_sub_mul_deriv_le {f : ℝ → ℝ} (hf : ContDiff ℝ 2 
   rw [sub_sub]; simpa using h
 
 /-- Second-order Taylor expansion at `t` with a little-o remainder. -/
-private theorem is_little_o_sub_taylor_two {f : ℝ → ℝ} (hf : ContDiff ℝ 2 f) (t : ℝ) :
+private theorem isLittleO_sub_taylor_two {f : ℝ → ℝ} (hf : ContDiff ℝ 2 f) (t : ℝ) :
     (fun s ↦ f (t + s) - f t - s * deriv f t - s ^ 2 / 2 * deriv (deriv f) t) =o[𝓝 0]
       fun s ↦ s ^ 2 := by
   have h := (taylor_isLittleO_univ (x₀ := t) hf).comp_tendsto
@@ -108,16 +117,26 @@ private theorem integral_comp_div_mul_eq (F f : ℝ → ℝ) (t : ℝ) {h : ℝ}
     abs_of_pos hh, smul_eq_mul, h2]
   field_simp
 
-/-- Dominated convergence for kernel smoothing at a point: if `|G| ≤ c K` with `K`, `|u| K` and
-`u² K` integrable and `f` is `C²` with bounded `f''`, then `∫ G(u) f(t - h u) du → f(t) ∫ G`
+/-- If `K` and `u² K` are integrable, then so is `|u| K`, since `|u| ≤ (1 + u²) / 2`. -/
+private theorem integrable_abs_mul_of_integrable_sq_mul {K : ℝ → ℝ} (hKi : Integrable K)
+    (hK2 : Integrable fun u ↦ u ^ 2 * K u) : Integrable fun u ↦ |u| * K u := by
+  refine (hKi.norm.add hK2.norm).mono'
+    (continuous_abs.aestronglyMeasurable.mul hKi.aestronglyMeasurable) (ae_of_all _ fun u ↦ ?_)
+  have h1 : |u| ≤ 1 + u ^ 2 := by nlinarith [abs_nonneg u, sq_abs u]
+  simp only [Pi.add_apply, Real.norm_eq_abs, abs_mul, abs_abs, abs_pow, sq_abs]
+  nlinarith [mul_le_mul_of_nonneg_right h1 (abs_nonneg (K u))]
+
+/-- Dominated convergence for kernel smoothing at a point: if `|G| ≤ c K` with `K` and `u² K`
+integrable and `f` is `C²` with bounded `f''`, then `∫ G(u) f(t - h u) du → f(t) ∫ G`
 as `h → 0⁺`. -/
-private theorem tendsto_integral_mul_comp_sub_mul {f K G : ℝ → ℝ} (hfm : Measurable f)
+private theorem tendsto_integral_mul_comp_sub_mul {f K G : ℝ → ℝ}
     (hf : ContDiff ℝ 2 f) {C : ℝ} (hC : ∀ x, |deriv (deriv f) x| ≤ C)
-    (hKi : Integrable K) (hK1 : Integrable fun u ↦ |u| * K u)
-    (hK2 : Integrable fun u ↦ u ^ 2 * K u) (hGm : Measurable G) {c : ℝ}
+    (hKi : Integrable K) (hK2 : Integrable fun u ↦ u ^ 2 * K u) (hGm : Measurable G) {c : ℝ}
     (hG : ∀ u, |G u| ≤ c * K u) {h : ℕ → ℝ} (hh : ∀ n, 0 < h n)
     (hh0 : Tendsto h atTop (𝓝 0)) (t : ℝ) :
     Tendsto (fun n ↦ ∫ u, G u * f (t - h n * u)) atTop (𝓝 ((∫ u, G u) * f t)) := by
+  have hfm : Measurable f := hf.continuous.measurable
+  have hK1 := integrable_abs_mul_of_integrable_sq_mul hKi hK2
   have hC0 : 0 ≤ C := (abs_nonneg _).trans (hC 0)
   rw [← integral_mul_const]
   set D1 := deriv f t
@@ -163,13 +182,15 @@ private theorem integral_mul_eq_zero_of_symm {K : ℝ → ℝ} (hKsym : ∀ x, K
 /-- The bias of the kernel smoother is `o(h²)`: for a symmetric kernel `K ≥ 0` with
 `∫ K = 1` and `∫ u² K < ∞`, and a `C²` function `f` with bounded `f''`,
 `(∫ K(u) f(t - h u) du - f(t) - h² μ₂(K) f''(t) / 2) / h² → 0` as `h → 0⁺`. -/
-private theorem tendsto_bias_div_sq {f K : ℝ → ℝ} (hfm : Measurable f)
+private theorem tendsto_bias_div_sq {f K : ℝ → ℝ}
     (hf : ContDiff ℝ 2 f) {C : ℝ} (hC : ∀ x, |deriv (deriv f) x| ≤ C) (hKm : Measurable K)
-    (hK0 : ∀ u, 0 ≤ K u) (hKi : Integrable K) (hK1 : Integrable fun u ↦ |u| * K u)
+    (hK0 : ∀ u, 0 ≤ K u) (hKi : Integrable K)
     (hK2 : Integrable fun u ↦ u ^ 2 * K u) (hKsym : ∀ x, K (-x) = K x) (hK1' : ∫ u, K u = 1)
     {h : ℕ → ℝ} (hh : ∀ n, 0 < h n) (hh0 : Tendsto h atTop (𝓝 0)) (t : ℝ) :
     Tendsto (fun n ↦ ((∫ u, K u * f (t - h n * u)) - f t -
       h n ^ 2 / 2 * (∫ u, u ^ 2 * K u) * deriv (deriv f) t) / h n ^ 2) atTop (𝓝 0) := by
+  have hfm : Measurable f := hf.continuous.measurable
+  have hK1 := integrable_abs_mul_of_integrable_sq_mul hKi hK2
   set D1 := deriv f t
   set D2 := deriv (deriv f) t
   set R : ℝ → ℝ := fun s ↦ f (t + s) - f t - s * D1 - s ^ 2 / 2 * D2 with hR
@@ -211,7 +232,7 @@ private theorem tendsto_bias_div_sq {f K : ℝ → ℝ} (hfm : Measurable f)
     · exact (hint _).sub (hKi.const_mul _)
     · exact ((hint _).sub (hKi.const_mul _)).add (hKu.const_mul _)
   simp_rw [hid, ← integral_div]
-  have hlo := (is_little_o_sub_taylor_two hf t).tendsto_div_nhds_zero
+  have hlo := (isLittleO_sub_taylor_two hf t).tendsto_div_nhds_zero
   have hRm : Measurable R := by fun_prop
   have hmain := tendsto_integral_of_dominated_convergence (μ := volume)
     (F := fun n u ↦ K u * R (-(h n * u)) / h n ^ 2) (f := fun _ ↦ (0 : ℝ))
@@ -241,7 +262,7 @@ private theorem tendsto_bias_div_sq {f K : ℝ → ℝ} (hfm : Measurable f)
     ring
 
 /-- Integrals of `x ↦ F((t - x) / h)` against a law with density `f`. -/
-private theorem integral_comp_div_eq_of_has_density {P : Measure ℝ} {f : ℝ → ℝ}
+private theorem integral_comp_div_eq_of_hasDensity {P : Measure ℝ} {f : ℝ → ℝ}
     (hf : HasDensity P volume f) (F : ℝ → ℝ) (t : ℝ) {h : ℝ} (hh : 0 < h) :
     ∫ x, F ((t - x) / h) ∂P = h * ∫ u, F u * f (t - h * u) := by
   rw [hf.integral_eq]
@@ -253,7 +274,7 @@ bounded symmetric probability kernel `K` with finite second moment `μ₂(K)` an
 continuously differentiable density `f` with bounded `f''`, if `h → 0`, `nh → ∞`, and
 `nh⁵ = O(1)`, then `√(nh) (f̂_h(t) - f(t) - h² μ₂(K) f''(t) / 2) ⇒ N(0, R(K) f(t))` with
 `R(K) = ∫ K²`. When `f(t) = 0` the limit is the point mass at `0`. -/
-theorem tendsto_in_distribution_kernel_density_estimator {Ω : Type*} [MeasurableSpace Ω]
+theorem tendstoInDistribution_kernelDensityEstimator {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (f K : ℝ → ℝ)
     (hf : HasDensity P volume f) (hf2 : ContDiff ℝ 2 f)
@@ -271,14 +292,7 @@ theorem tendsto_in_distribution_kernel_density_estimator {Ω : Type*} [Measurabl
   obtain ⟨C, hC⟩ := hDb
   obtain ⟨CK, hCK⟩ := hKb
   obtain ⟨C5, hC5⟩ := hnh5
-  have hfm := hf.1
   have hKi : Integrable K := Integrable.of_integral_ne_zero (by rw [hK1]; norm_num)
-  have hK1i : Integrable fun u ↦ |u| * K u := by
-    refine (hKi.add hK2).mono' (by fun_prop) (ae_of_all _ fun u ↦ ?_)
-    rw [Real.norm_eq_abs, abs_mul, abs_abs, abs_of_nonneg (hKpos u)]
-    have : |u| ≤ 1 + u ^ 2 := by nlinarith [abs_nonneg u, sq_abs u]
-    simp only [Pi.add_apply]
-    nlinarith [hKpos u]
   have hKabs : ∀ x, |K x| ≤ CK := fun x ↦ by rw [abs_of_nonneg (hKpos x)]; exact hCK x
   set D2 := deriv (deriv f) t
   set μ₂ := ∫ u, u ^ 2 * K u
@@ -286,17 +300,17 @@ theorem tendsto_in_distribution_kernel_density_estimator {Ω : Type*} [Measurabl
   set A : ℕ → ℝ := fun n ↦ ∫ u, K u * f (t - h n * u) with hA
   set A2 : ℕ → ℝ := fun n ↦ ∫ u, K u ^ 2 * f (t - h n * u) with hA2
   have hAlim : Tendsto A atTop (𝓝 (f t)) := by
-    simpa [hK1] using tendsto_integral_mul_comp_sub_mul hfm hf2 hC hKi hK1i hK2 hKm
+    simpa [hK1] using tendsto_integral_mul_comp_sub_mul hf2 hC hKi hK2 hKm
       (c := 1) (fun u ↦ by rw [one_mul]; exact le_of_eq (abs_of_nonneg (hKpos u))) hh hh0 t
   have hA2lim : Tendsto A2 atTop (𝓝 ((∫ u, K u ^ 2) * f t)) :=
-    tendsto_integral_mul_comp_sub_mul hfm hf2 hC hKi hK1i hK2 (hKm.pow_const 2)
+    tendsto_integral_mul_comp_sub_mul hf2 hC hKi hK2 (hKm.pow_const 2)
       (c := CK) (fun u ↦ by
         rw [abs_of_nonneg (sq_nonneg _), sq]
         exact mul_le_mul_of_nonneg_right (hCK u) (hKpos u)) hh hh0 t
   -- the centred summands
   set m : ℕ → ℝ := fun n ↦ ∫ x, K ((t - x) / h n) ∂P with hm
   have hmA : ∀ n, m n = h n * A n := fun n ↦
-    integral_comp_div_eq_of_has_density hf K t (hh n)
+    integral_comp_div_eq_of_hasDensity hf K t (hh n)
   have hmabs : ∀ n, |m n| ≤ CK := fun n ↦ by
     have := norm_integral_le_of_norm_le_const (μ := P) (C := CK)
       (f := fun x ↦ K ((t - x) / h n)) (ae_of_all _ fun x ↦ hKabs _)
@@ -338,7 +352,7 @@ theorem tendsto_in_distribution_kernel_density_estimator {Ω : Type*} [Measurabl
       ∑ j ∈ Finset.range n, ∫ ω, Y n j ω ^ 2 ∂μ = A2 n - h n * A n ^ 2 := by
     intro n hn
     have hq : ∫ x, K ((t - x) / h n) ^ 2 ∂P = h n * A2 n :=
-      integral_comp_div_eq_of_has_density hf (fun u ↦ K u ^ 2) t (hh n)
+      integral_comp_div_eq_of_hasDensity hf (fun u ↦ K u ^ 2) t (hh n)
     have hKP : Integrable (fun x ↦ K ((t - x) / h n)) P := (hKL n).integrable one_le_two
     have hKP2 : Integrable (fun x ↦ K ((t - x) / h n) ^ 2) P := (hKL n).integrable_sq
     have hKP' : Integrable (fun x ↦ 2 * m n * K ((t - x) / h n)) P := hKP.const_mul _
@@ -384,7 +398,8 @@ theorem tendsto_in_distribution_kernel_density_estimator {Ω : Type*} [Measurabl
       · exact absurd hcon (not_lt.mpr ((hgb n _).trans hn.le))
       · rfl
     rw [this, integral_zero]
-  have hclt := tendsto_in_distribution_sum_of_lindeberg_of_i_indep_fun μ Y (fun n ↦ n) hY2 hY0 hind
+  have hclt := tendstoInDistribution_sum_of_lindeberg_of_iIndepFun μ Y (fun n ↦ n)
+    (fun n j _ ↦ hY2 n j) (fun n j _ ↦ hY0 n j) hind
     _ hvar hlin
   -- the deterministic bias term
   set c : ℕ → ℝ := fun n ↦ r n * (A n - f t - h n ^ 2 / 2 * μ₂ * D2) with hc
@@ -397,14 +412,14 @@ theorem tendsto_in_distribution_kernel_density_estimator {Ω : Type*} [Measurabl
     have hr2 : r n ^ 2 = n * h n := Real.sq_sqrt hnh0.le
     have hr0 : r n ≠ 0 := (Real.sqrt_pos.mpr hnh0).ne'
     have hh0' := (hh n).ne'
-    rw [kernel_density_estimator_eq]
+    rw [kernelDensityEstimator_eq]
     simp only [hY, hg, hc]
     rw [← Finset.sum_div, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_range,
       nsmul_eq_mul, hmA, ← mul_assoc, ← hr2]
     generalize (∑ i ∈ Finset.range n, K ((t - X i ω) / h n)) = S
     field_simp
     ring
-  have hQ := tendsto_bias_div_sq hfm hf2 hC hKm hKpos hKi hK1i hK2 hKsym hK1 hh hh0 t
+  have hQ := tendsto_bias_div_sq hf2 hC hKm hKpos hKi hK2 hKsym hK1 hh hh0 t
   have hcl : Tendsto c atTop (𝓝 0) := by
     refine squeeze_zero_norm' ?_ (by simpa using (hQ.abs.const_mul (Real.sqrt (max C5 0))))
     filter_upwards [hC5] with n hn
@@ -419,23 +434,23 @@ theorem tendsto_in_distribution_kernel_density_estimator {Ω : Type*} [Measurabl
     rw [this, Real.norm_eq_abs, abs_mul]
     exact mul_le_mul_of_nonneg_right hrh (abs_nonneg _)
   have hkde : ∀ n, Measurable fun ω ↦ kernelDensityEstimator X K h n ω t := fun n ↦ by
-    simp_rw [kernel_density_estimator_eq]
+    simp_rw [kernelDensityEstimator_eq]
     exact (Finset.measurable_sum _ fun i _ ↦
       hKm.comp ((measurable_const.sub (hiid.1 i)).div_const _)).div_const _
-  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ _ _
+  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _
     (fun n ↦ Finset.measurable_sum _ fun j _ ↦ hYm n j)
     (fun n ↦ (((hkde n).sub_const _).sub_const _).const_mul _) hclt ?_
   have : (fun (n : ℕ) ω ↦ r n * (kernelDensityEstimator X K h n ω t - f t -
       h n ^ 2 / 2 * μ₂ * D2) - ∑ j ∈ Finset.range n, Y n j ω) = fun n _ ↦ c n :=
     funext₂ hdiff
   rw [this]
-  exact tendsto_in_measure_const_of_tendsto μ c hcl
+  exact tendstoInMeasure_const_of_tendsto μ c hcl
 
 
 /-- GAPS 103.5: universal `L¹` consistency of the kernel density estimator, in dimension one.
 For a bounded compactly supported kernel with `∫ K = 1`, if `h → 0` and `nh → ∞`, then
 `∫ |f̂_n - f| → 0` almost surely for every density `f`. -/
-theorem ae_tendsto_integral_abs_kernel_density_estimator_sub {Ω : Type*} [MeasurableSpace Ω]
+theorem ae_tendsto_integral_abs_kernelDensityEstimator_sub {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (f K : ℝ → ℝ)
     (hf : HasDensity P volume f) (hKm : Measurable K) (hK1 : (∫ x, K x) = 1)
@@ -478,7 +493,7 @@ theorem ae_tendsto_integral_abs_kernel_density_estimator_sub {Ω : Type*} [Measu
     fun n x ↦ ∫ t, |finiteKernelDensityEstimator K (h n) x t - g t| with hJdef
   set E : ℕ → ℝ := fun n ↦ ∫ x, J n x ∂(Measure.pi fun _ : Fin n ↦ P) with hEdef
   have hE : Tendsto E atTop (𝓝 0) :=
-    tendsto_integral_integral_abs_finite_kernel_density_estimator_sub hKm hC hR hKc' hK1 hgm hg0
+    tendsto_integral_integral_abs_finiteKernelDensityEstimator_sub hKm hC hR hKc' hK1 hgm hg0
       hgint P hPg hh hh0 hnh
   -- the law of the first `n` observations is the product law
   have hmeasX : ∀ n, Measurable fun ω (i : Fin n) ↦ X i ω := fun n ↦
@@ -495,7 +510,7 @@ theorem ae_tendsto_integral_abs_kernel_density_estimator_sub {Ω : Type*} [Measu
     rcases Nat.eq_zero_or_pos n with rfl | hn
     · simp only [Nat.cast_zero, mul_zero, Real.exp_zero, ENNReal.ofReal_one]
       exact prob_le_one
-    have hmeasJ := measurable_integral_abs_finite_kernel_density_estimator_sub hKm hgm n (h n)
+    have hmeasJ := measurable_integral_abs_finiteKernelDensityEstimator_sub hKm hgm n (h n)
     have hS : MeasurableSet {x : Fin n → ℝ | 1 / ((k : ℝ) + 1) ≤ J n x - E n} :=
       measurableSet_le measurable_const (hmeasJ.sub_const _)
     have heq : μ {ω | 1 / ((k : ℝ) + 1) ≤ J n (fun i ↦ X i ω) - E n} =
@@ -503,7 +518,7 @@ theorem ae_tendsto_integral_abs_kernel_density_estimator_sub {Ω : Type*} [Measu
       rw [← hlaw n, Measure.map_apply (hmeasX n) hS]
       rfl
     rw [heq, ← ofReal_measureReal]
-    have hconc := measure_real_le_integral_abs_finite_kernel_density_estimator_sub_le
+    have hconc := measureReal_le_integral_abs_finiteKernelDensityEstimator_sub_le
       hKm hK hgm hgint hn (hh n) P (by positivity : (0 : ℝ) ≤ 1 / ((k : ℝ) + 1))
     refine ENNReal.ofReal_le_ofReal (hconc.trans_eq ?_)
     congr 1
@@ -563,7 +578,7 @@ theorem minimizer_mem_span_of_feature_vectors
   nlinarith [norm_nonneg f, norm_nonneg (S.starProjection f)]
 
 /-- Summing `f (σ i)` over all permutations: `n * ∑_σ f (σ i) = n! * ∑_k f k`. -/
-theorem nat_cast_mul_sum_perm_apply {n : ℕ} (f : Fin n → ℝ) (i : Fin n) :
+theorem natCast_mul_sum_perm_apply {n : ℕ} (f : Fin n → ℝ) (i : Fin n) :
     (n : ℝ) * ∑ σ : Equiv.Perm (Fin n), f (σ i) = n.factorial * ∑ k, f k := by
   have hind : ∀ i' : Fin n, ∑ σ : Equiv.Perm (Fin n), f (σ i') =
       ∑ σ : Equiv.Perm (Fin n), f (σ i) := by
@@ -582,7 +597,7 @@ theorem nat_cast_mul_sum_perm_apply {n : ℕ} (f : Fin n → ℝ) (i : Fin n) :
           nsmul_eq_mul]
 
 /-- Summing `a (σ i) a (σ j)` over permutations for `i ≠ j`. -/
-theorem nat_cast_mul_sum_perm_apply_mul_apply {n : ℕ} (a : Fin n → ℝ) (i j : Fin n)
+theorem natCast_mul_sum_perm_apply_mul_apply {n : ℕ} (a : Fin n → ℝ) (i j : Fin n)
     (hij : i ≠ j) :
     (n : ℝ) * (n - 1) * ∑ σ : Equiv.Perm (Fin n), a (σ i) * a (σ j) =
       n.factorial * ((∑ k, a k) ^ 2 - ∑ k, a k ^ 2) := by
@@ -593,7 +608,7 @@ theorem nat_cast_mul_sum_perm_apply_mul_apply {n : ℕ} (a : Fin n → ℝ) (i j
     simp only [Equiv.coe_mulRight, Equiv.Perm.mul_apply, Equiv.swap_apply_left]
     rw [Equiv.swap_apply_of_ne_of_ne hij hj'.symm]
   have hdiag : (n : ℝ) * F i = n.factorial * ∑ k, a k ^ 2 := by
-    have := nat_cast_mul_sum_perm_apply (fun k ↦ a k ^ 2) i
+    have := natCast_mul_sum_perm_apply (fun k ↦ a k ^ 2) i
     simpa [hF, sq] using this
   have htot : (n : ℝ) * ∑ j', F j' = n.factorial * (∑ k, a k) ^ 2 := by
     have hsum : ∑ j', F j' = ∑ σ : Equiv.Perm (Fin n), a (σ i) * ∑ k, a k := by
@@ -601,7 +616,7 @@ theorem nat_cast_mul_sum_perm_apply_mul_apply {n : ℕ} (a : Fin n → ℝ) (i j
       rw [Finset.sum_comm]
       refine Finset.sum_congr rfl fun σ _ ↦ ?_
       rw [← Finset.mul_sum, Equiv.sum_comp σ a]
-    rw [hsum, ← Finset.sum_mul, ← mul_assoc, nat_cast_mul_sum_perm_apply a i]
+    rw [hsum, ← Finset.sum_mul, ← mul_assoc, natCast_mul_sum_perm_apply a i]
     ring
   have hsplit : ∑ j', F j' = F i + ((n : ℝ) - 1) * F j := by
     rw [← Finset.add_sum_erase _ _ (Finset.mem_univ i)]
@@ -626,7 +641,7 @@ def linearRankStatistic {n : ℕ} (a c : Fin n → ℝ) (σ : Equiv.Perm (Fin n)
   ∑ i, c i * a (σ i)
 
 /-- The exact mean and variance of a linear rank statistic under uniform ranks. -/
-private theorem integral_and_variance_linear_rank_statistic (n : ℕ) (hn : 2 ≤ n)
+private theorem integral_and_variance_linearRankStatistic (n : ℕ) (hn : 2 ≤ n)
     (a c : Fin n → ℝ) :
     let P := uniformPermMeasure n;
     let abar := (∑ i, a i) / n;
@@ -656,7 +671,7 @@ private theorem integral_and_variance_linear_rank_statistic (n : ℕ) (hn : 2 �
   -- first moments
   have hsum1 : ∀ i, ∑ σ : Equiv.Perm (Fin n), a (σ i) = n.factorial * A / n := by
     intro i
-    rw [eq_div_iff hn0, mul_comm, nat_cast_mul_sum_perm_apply]
+    rw [eq_div_iff hn0, mul_comm, natCast_mul_sum_perm_apply]
   have hmean : ∫ σ, T σ ∂P = A * C / n := by
     rw [hint]
     simp only [T, linearRankStatistic]
@@ -674,9 +689,9 @@ private theorem integral_and_variance_linear_rank_statistic (n : ℕ) (hn : 2 �
     · subst h
       rw [eq_div_iff hn0, mul_comm]
       simp only [← sq]
-      exact nat_cast_mul_sum_perm_apply (fun k ↦ a k ^ 2) i
+      exact natCast_mul_sum_perm_apply (fun k ↦ a k ^ 2) i
     · rw [eq_div_iff (mul_ne_zero hn0 hn1), mul_comm]
-      exact nat_cast_mul_sum_perm_apply_mul_apply a i j h
+      exact natCast_mul_sum_perm_apply_mul_apply a i j h
   have hsq : ∑ σ, T σ ^ 2 = Sc * (n.factorial * Sa / n) +
       (C ^ 2 - Sc) * (n.factorial * (A ^ 2 - Sa) / (n * (n - 1))) := by
     set K : ℝ := n.factorial * (A ^ 2 - Sa) / (n * (n - 1)) with hK
@@ -741,16 +756,16 @@ private theorem integral_and_variance_linear_rank_statistic (n : ℕ) (hn : 2 �
 
 /-- GAPS 103.14: the mean of a linear rank statistic under uniform ranks,
 `E T_N = N c̄ ā`. -/
-theorem integral_linear_rank_statistic (n : ℕ) (hn : 2 ≤ n) (a c : Fin n → ℝ) :
+theorem integral_linearRankStatistic (n : ℕ) (hn : 2 ≤ n) (a c : Fin n → ℝ) :
     ∫ σ, linearRankStatistic a c σ ∂uniformPermMeasure n =
       (n : ℝ) * ((∑ i, a i) / n) * ((∑ i, c i) / n) :=
-  (integral_and_variance_linear_rank_statistic n hn a c).1
+  (integral_and_variance_linearRankStatistic n hn a c).1
 
 /-- GAPS 103.14: the variance of a linear rank statistic under uniform ranks,
 `Var T_N = (N - 1)⁻¹ ∑ᵢ (cᵢ - c̄)² ∑ᵢ (a(i) - ā)²`. -/
-theorem variance_linear_rank_statistic (n : ℕ) (hn : 2 ≤ n) (a c : Fin n → ℝ) :
+theorem variance_linearRankStatistic (n : ℕ) (hn : 2 ≤ n) (a c : Fin n → ℝ) :
     Var[linearRankStatistic a c; uniformPermMeasure n] =
       (∑ i, (c i - (∑ i, c i) / n) ^ 2) * (∑ i, (a i - (∑ i, a i) / n) ^ 2) / (n - 1 : ℕ) :=
-  (integral_and_variance_linear_rank_statistic n hn a c).2
+  (integral_and_variance_linearRankStatistic n hn a c).2
 
 end CKSD

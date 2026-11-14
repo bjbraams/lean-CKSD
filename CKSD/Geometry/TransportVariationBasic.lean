@@ -10,7 +10,6 @@ import TauCeti.MeasureTheory.Measure.LowerSemicontinuousLintegral
 import TauCeti.MeasureTheory.Function.Lusin
 import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.EulerLagrange
 
-
 /-!
 # Couplings and quadratic displacement costs
 
@@ -25,10 +24,17 @@ approximation, lower semicontinuity of integrals, and coupling integration formu
 
 ## Main results
 
-* `CKSD.exists_is_coupling_map_prod_map_eq`: lift a coupling through a measurable map.
-* `CKSD.lower_semicontinuous_integral_coupling_displacement_sq`: lower semicontinuity of costs.
+* `CKSD.exists_isCoupling_map_prodMap_eq`: lift a coupling through a measurable map.
+* `CKSD.lowerSemicontinuous_integral_coupling_displacement_sq`: lower semicontinuity of costs.
 * `CKSD.integral_norm_displacement_coupling_sq`: exact quadratic cost expansion.
 * `CKSD.abs_integral_inner_displacement_coupling_le`: uniform coefficient bound.
+
+## References
+
+* C. Villani, *Optimal transport, old and new*, Grundlehren der mathematischen Wissenschaften 338,
+  Springer, 2009.
+* S. Chewi, J. Niles-Weed, P. Rigollet, *Statistical optimal transport*, École d'Été de
+  Probabilités de Saint-Flour XLIX (2019), Lecture Notes in Mathematics 2364, Springer, 2025.
 -/
 
 public section
@@ -41,7 +47,7 @@ open scoped ENNReal RealInnerProductSpace
 namespace CKSD
 
 /-- A coupling out of a measurable pushforward lifts to a coupling out of the original law. -/
-theorem exists_is_coupling_map_prod_map_eq {X Y Z : Type*}
+theorem exists_isCoupling_map_prodMap_eq {X Y Z : Type*}
     [MeasurableSpace X] [StandardBorelSpace X] [MeasurableSpace Y] [MeasurableSpace Z]
       [MeasurableEq Z]
     (μ : Measure X) [IsFiniteMeasure μ] (ν : Measure Y) (f : X → Z) (hf : Measurable f)
@@ -91,7 +97,7 @@ namespace CKSD
 
 /-- Lower semicontinuity of the nonnegative extended-real coercion implies real lower
   semicontinuity. -/
-lemma lower_semicontinuous_of_ennreal_of_real {X : Type*} [TopologicalSpace X]
+lemma lowerSemicontinuous_of_ennreal_ofReal {X : Type*} [TopologicalSpace X]
     (f : X → ℝ) (hf : ∀ x, 0 ≤ f x)
     (h : LowerSemicontinuous fun x ↦ ENNReal.ofReal (f x)) : LowerSemicontinuous f := by
   intro x a hax
@@ -105,7 +111,7 @@ lemma lower_semicontinuous_of_ennreal_of_real {X : Type*} [TopologicalSpace X]
 /-- The nonnegative displacement cost is weakly lower semicontinuous on a family of plans with
 fixed first marginal, even when the vector field is merely measurable. Lusin sets for the fixed
 marginal provide the uniform continuity sets required by the portmanteau theorem. -/
-theorem lower_semicontinuous_lintegral_coupling_displacement {E : Type*}
+theorem lowerSemicontinuous_lintegral_coupling_displacement {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (μ ν : ProbabilityMeasure E) (v : E → E) (hv : Measurable v) (t : ℝ) :
@@ -246,7 +252,7 @@ namespace CKSD
 
 /-- The real quadratic displacement cost is lower semicontinuous on fixed-marginal couplings
 with finite second moments, for any measurable square-integrable displacement field. -/
-theorem lower_semicontinuous_integral_coupling_displacement_sq {E : Type*}
+theorem lowerSemicontinuous_integral_coupling_displacement_sq {E : Type*}
     [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (μ ν : ProbabilityMeasure E) (hμ : MemLp id 2 μ.toMeasure)
@@ -254,7 +260,7 @@ theorem lower_semicontinuous_integral_coupling_displacement_sq {E : Type*}
     (hv₂ : MemLp v 2 μ.toMeasure) (t : ℝ) :
     LowerSemicontinuous (fun γ : TauCeti.Coupling μ ν ↦
       ∫ z, ‖z.1 + t • v z.1 - z.2‖ ^ 2 ∂γ.1.toMeasure) := by
-  apply lower_semicontinuous_of_ennreal_of_real _
+  apply lowerSemicontinuous_of_ennreal_ofReal _
     (fun γ ↦ integral_nonneg fun z ↦ sq_nonneg _)
   have heq : (fun γ : TauCeti.Coupling μ ν ↦ ENNReal.ofReal
       (∫ z, ‖z.1 + t • v z.1 - z.2‖ ^ 2 ∂γ.1.toMeasure)) =
@@ -265,6 +271,6 @@ theorem lower_semicontinuous_integral_coupling_displacement_sq {E : Type*}
       (integrable_norm_displacement_coupling_sq γ.2 hμ hν hv₂ t)
       (Eventually.of_forall fun z ↦ sq_nonneg _)
   rw [heq]
-  exact lower_semicontinuous_lintegral_coupling_displacement μ ν v hv t
+  exact lowerSemicontinuous_lintegral_coupling_displacement μ ν v hv t
 
 end CKSD

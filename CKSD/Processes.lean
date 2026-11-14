@@ -16,9 +16,6 @@ public import CKSD.Processes.Kalman
 public import CKSD.Processes.Dependence
 public import CKSD.Processes.CountingProcesses
 
-
-namespace CKSD
-
 /-!
 # Section 106: Stochastic processes and time series
 
@@ -48,6 +45,3 @@ Entry module for the CKSD formalization of Section 106.
   regularly varying maxima, Pickands–Balkema–de Haan and the Hill estimator
   (GAPS 106.46–106.50).
 -/
-
-
-end CKSD

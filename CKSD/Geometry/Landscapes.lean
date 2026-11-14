@@ -3,7 +3,6 @@ module
 public import CKSD.Geometry.Persistence
 public import Mathlib.Probability.StrongLaw
 
-
 /-!
 # Strong law for persistence landscapes
 
@@ -20,7 +19,7 @@ The strong law covers the scope of GAPS_EASY 108.23; the identification of
 
 ## Main results
 
-* `CKSD.LandscapeLp.ae_tendsto_sample_average`: the strong law (GAPS 108.23).
+* `CKSD.LandscapeLp.ae_tendsto_sampleAverage`: the strong law (GAPS 108.23).
 -/
 
 @[expose] public section
@@ -38,21 +37,14 @@ abbrev landscapeMeasure : Measure (ℕ × ℝ) := Measure.count.prod volume
 /-- The Banach-space representation of persistence landscapes at exponent `p`. -/
 abbrev LandscapeLp (p : ℝ≥0∞) := Lp ℝ p landscapeMeasure
 
-/-- Borel measurable structure on the landscape Banach space. -/
-local instance landscapeMeasurableSpace (p : ℝ≥0∞) [Fact (1 ≤ p)] :
-    MeasurableSpace (LandscapeLp p) := borel _
-
-/-- The landscape measurable structure is its Borel structure. -/
-local instance landscapeBorelSpace (p : ℝ≥0∞) [Fact (1 ≤ p)] :
-    BorelSpace (LandscapeLp p) := ⟨rfl⟩
-
 /-- GAPS 108.23: strong law for integrable independent identically distributed landscapes: the
 sample averages of pairwise independent, identically distributed, integrable random elements of
 `LandscapeLp p` converge almost surely to the mean. Pairwise independence is sufficient, as in
-Mathlib's Etemadi strong law. -/
-theorem LandscapeLp.ae_tendsto_sample_average {Ω : Type*} [MeasurableSpace Ω]
-    (μ : Measure Ω) (p : ℝ≥0∞) [Fact (1 ≤ p)]
-    (X : ℕ → Ω → LandscapeLp p) (hint : Integrable (X 0) μ)
+Mathlib's Etemadi strong law. The landscape space carries any Borel measurable structure, for
+instance `borel (LandscapeLp p)`. -/
+theorem LandscapeLp.ae_tendsto_sampleAverage {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) (p : ℝ≥0∞) [Fact (1 ≤ p)] [MeasurableSpace (LandscapeLp p)]
+    [BorelSpace (LandscapeLp p)] (X : ℕ → Ω → LandscapeLp p) (hint : Integrable (X 0) μ)
     (hind : Pairwise (fun i j ↦ IndepFun (X i) (X j) μ))
     (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
     ∀ᵐ ω ∂μ, Tendsto (fun n ↦ sampleAverage X n ω) atTop (𝓝 (∫ ω, X 0 ω ∂μ)) :=

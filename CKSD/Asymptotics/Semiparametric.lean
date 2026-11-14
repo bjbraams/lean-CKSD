@@ -2,7 +2,6 @@ module
 
 public import CKSD.Asymptotics.QMDReference
 
-
 /-!
 # Semiparametric efficiency and adaptation
 
@@ -31,7 +30,7 @@ namespace CKSD
 /-! ### Semiparametric convolution bound -/
 
 /-- A score orthogonal to every nuisance score is its own efficient score. -/
-theorem efficient_score_eq_self_of_inner_eq_zero {X : Type*} [MeasurableSpace X] (P : Measure X)
+theorem efficientScore_eq_self_of_inner_eq_zero {X : Type*} [MeasurableSpace X] (P : Measure X)
     (scores : Set (Lp ℝ 2 P)) (s : Lp ℝ 2 P) (h : ∀ g ∈ scores, inner ℝ g s = 0) :
     efficientScore P scores s = s := by
   have hmem : s ∈ ((nuisanceTangentSpace P scores).toSubmodule)ᗮ := by
@@ -80,7 +79,7 @@ nuisance tangent space is the closure of `G`. If the efficient information matri
 definite, the limit law of every estimator sequence regular along these submodels is the
 convolution of `N(0, Ĩ⁻¹)` with a probability measure. The common reference measure `ν` is
 sigma-finite, so its Radon–Nikodym densities represent every dominated path law. -/
-theorem exists_convolution_of_is_regular_along_paths
+theorem exists_convolution_of_isRegularAlongPaths
     {X : Type*} [MeasurableSpace X] {k : ℕ} (P : Measure X) [IsProbabilityMeasure P]
     (ν : Measure X) [SigmaFinite ν] (θ : EuclideanSpace ℝ (Fin k)) (ℓ : Fin k → Lp ℝ 2 P)
     (G : Submodule ℝ (Lp ℝ 2 P))
@@ -99,10 +98,10 @@ theorem exists_convolution_of_is_regular_along_paths
   sorry
 
 /-- GAPS 102.34, efficiency part, in the setting of
-`exists_convolution_of_is_regular_along_paths`. A measurable estimator sequence is regular along
+`exists_convolution_of_isRegularAlongPaths`. A measurable estimator sequence is regular along
 all submodels with limit `N(0, Ĩ⁻¹)` if and only if it is asymptotically linear in the efficient
 influence function under `P`. The common dominating reference measure `ν` is sigma-finite. -/
-theorem is_regular_along_paths_gaussian_iff_asymptotically_linear
+theorem isRegularAlongPaths_gaussian_iff_asymptotically_linear
     {X : Type*} [MeasurableSpace X] {k : ℕ} (P : Measure X) [IsProbabilityMeasure P]
     (ν : Measure X) [SigmaFinite ν] (θ : EuclideanSpace ℝ (Fin k)) (ℓ : Fin k → Lp ℝ 2 P)
     (G : Submodule ℝ (Lp ℝ 2 P))
@@ -137,8 +136,6 @@ integrable derivative `η'`, chosen odd, and has finite Fisher information for l
 Choosing an odd version of the derivative is no restriction: the odd part of any version of the
 derivative of an even absolutely continuous function is again a version. -/
 structure IsSymmetricFiniteInformationDensity (η η' : ℝ → ℝ) : Prop where
-  /-- The density is measurable. -/
-  measurable : Measurable η
   /-- The density is nonnegative. -/
   nonneg : ∀ x, 0 ≤ η x
   /-- The density has total mass one. -/
@@ -156,8 +153,20 @@ structure IsSymmetricFiniteInformationDensity (η η' : ℝ → ℝ) : Prop wher
   /-- Finite Fisher information for location. -/
   integrable_fisher : Integrable fun x ↦ η' x ^ 2 / η x
 
+/-- A symmetric finite-information density is continuous, being absolutely continuous. -/
+theorem IsSymmetricFiniteInformationDensity.continuous {η η' : ℝ → ℝ}
+    (hη : IsSymmetricFiniteInformationDensity η η') : Continuous η := by
+  have h : η = fun x ↦ η 0 + ∫ t in (0 : ℝ)..x, η' t := funext hη.eq_integral_deriv
+  rw [h]
+  exact continuous_const.add (intervalIntegral.continuous_primitive hη.intervalIntegrable_deriv 0)
+
+/-- A symmetric finite-information density is measurable. -/
+theorem IsSymmetricFiniteInformationDensity.measurable {η η' : ℝ → ℝ}
+    (hη : IsSymmetricFiniteInformationDensity η η') : Measurable η :=
+  hη.continuous.measurable
+
 /-- The location laws of a symmetric finite-information density are probability measures. -/
-theorem IsSymmetricFiniteInformationDensity.is_probability_measure_location_law {η η' : ℝ → ℝ}
+theorem IsSymmetricFiniteInformationDensity.isProbabilityMeasure_locationLaw {η η' : ℝ → ℝ}
     (hη : IsSymmetricFiniteInformationDensity η η') (θ : ℝ) :
     IsProbabilityMeasure (locationLaw η θ) := by
   have hint : Integrable η := by
@@ -177,7 +186,7 @@ def symmetricNuisanceScores (P : Measure ℝ) (θ : ℝ) : Set (Lp ℝ 2 P) :=
   {g | (⇑g =ᵐ[P] fun x ↦ g (2 * θ - x)) ∧ ∫ x, g x ∂P = 0}
 
 /-- The reflection `x ↦ 2θ - x` preserves a symmetric location law centred at `θ`. -/
-theorem measure_preserving_reflect_location_law {η η' : ℝ → ℝ}
+theorem measurePreserving_reflect_locationLaw {η η' : ℝ → ℝ}
     (hη : IsSymmetricFiniteInformationDensity η η') (θ : ℝ) :
     MeasurePreserving (fun x ↦ 2 * θ - x) (locationLaw η θ) (locationLaw η θ) := by
   have hρ : MeasurePreserving (fun x : ℝ ↦ 2 * θ - x) volume volume :=
@@ -196,7 +205,7 @@ theorem measure_preserving_reflect_location_law {η η' : ℝ → ℝ}
 space the closed span of the mean-zero `L²` functions that are even about `θ` (the scores of
 symmetric perturbations of `η`), the location score is orthogonal to the nuisance tangent space,
 so it is the efficient score, and the efficient information is the Fisher information `I_η`. -/
-theorem efficient_score_location_score_eq {η η' : ℝ → ℝ}
+theorem efficientScore_locationScore_eq {η η' : ℝ → ℝ}
     (hη : IsSymmetricFiniteInformationDensity η η') (θ : ℝ)
     (hs : MemLp (locationScore η η' θ) 2 (locationLaw η θ)) :
     efficientScore (locationLaw η θ) (symmetricNuisanceScores (locationLaw η θ) θ)
@@ -206,13 +215,13 @@ theorem efficient_score_location_score_eq {η η' : ℝ → ℝ}
   set P := locationLaw η θ
   have hinner : ∀ a b : ℝ, inner ℝ a b = a * b := fun a b ↦ by
     rw [RCLike.inner_apply', conj_trivial]
-  have hρ := measure_preserving_reflect_location_law hη θ
+  have hρ := measurePreserving_reflect_locationLaw hη θ
   have hodd : ∀ x, locationScore η η' θ (2 * θ - x) = -locationScore η η' θ x := by
     intro x
     simp only [locationScore]
     rw [show 2 * θ - x - θ = -(x - θ) by ring, hη.symm, hη.deriv_odd, neg_div]
   have heff : efficientScore P (symmetricNuisanceScores P θ) (hs.toLp _) = hs.toLp _ := by
-    apply efficient_score_eq_self_of_inner_eq_zero
+    apply efficientScore_eq_self_of_inner_eq_zero
     intro g hg
     rw [MeasureTheory.L2.inner_def]
     set F : ℝ → ℝ := fun x ↦ inner ℝ (g x) ((hs.toLp _ : Lp ℝ 2 P) x)
@@ -255,7 +264,7 @@ theorem efficient_score_location_score_eq {η η' : ℝ → ℝ}
 symmetric density, that are asymptotically normal with the efficient variance `I_η⁻¹` at every
 symmetric density of finite Fisher information, regularly along local location alternatives
 `θ + h/√n`. The location laws are probability measures by
-`IsSymmetricFiniteInformationDensity.is_probability_measure_location_law`; the instance binder only
+`IsSymmetricFiniteInformationDensity.isProbabilityMeasure_locationLaw`; the instance binder only
 makes them available to the statement. Regularity along symmetric nuisance perturbations is
 outside this scope. -/
 theorem exists_adaptive_estimator_center_of_symmetry :

@@ -4,9 +4,6 @@ public import CKSD.Learning.PrivateEstimation.Mechanisms
 public import CKSD.Learning.PrivateEstimation.CentralLowerBounds
 public import CKSD.Learning.PrivateEstimation.Local
 
-
-namespace CKSD
-
 /-!
 # Private estimation of a bounded mean
 
@@ -21,6 +18,3 @@ the mean squared error.
 The Laplace law and its moments are TauCeti's (`TauCeti.Probability.laplaceMeasure`).
 Source: GAPS 107.66.
 -/
-
-
-end CKSD

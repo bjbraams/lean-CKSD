@@ -1,5 +1,4 @@
 module
-
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.BoltzmannEntropy
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.InternalEnergy.Basic
 public import Mathlib.Analysis.SpecialFunctions.Gaussian.FourierTransform
@@ -12,7 +11,8 @@ Gaussian change of reference expresses Boltzmann entropy as relative entropy plu
 moment correction. For a nonnegative potential this gives a finite lower bound on the free
 energy at every P2 law and characterizes its finite domain. Bounded Wasserstein families have
 uniformly bounded quadratic moments. An extended-real small-tilt lemma supports narrow lower
-semicontinuity without incorrectly treating bounded Wasserstein sets as compact.
+semicontinuity along Wasserstein-bounded sequences, which need not be relatively compact in
+`P₂`.
 
 Pinned TauCeti supplies Gaussian entropy tilting, moment identities and Wasserstein spaces;
 Mathlib supplies Gaussian integrability and extended-real order topology. These are the
@@ -20,6 +20,18 @@ Euclidean moment-compensation ingredients for the JKO direct method, GAPS 104.43
 Santambrogio, *Optimal Transport for Applied Mathematicians*, Section 8.3, and Villani,
 *Optimal Transport: Old and New*, Chapter 23 (the unbounded-domain estimates require the
 quadratic compensation used here).
+
+## Main results
+
+* `CKSD.jkoFreeEnergy_eq_klDiv_gaussian_add`: free energy as Gaussian relative entropy plus
+  potential energy and a second-moment correction.
+* `CKSD.jkoFreeEnergy_gaussian_lower_bound`, `CKSD.jkoFreeEnergy_ne_bot`: the quadratic lower
+  bound for a nonnegative potential.
+* `CKSD.jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential`: the finite domain of the free
+  energy.
+* `CKSD.ereal_le_liminf_of_positive_tilts`: lower semicontinuity from positive quadratic tilts.
+* `CKSD.exists_integral_norm_sq_le_of_isBounded`: Wasserstein-bounded sequences have uniformly
+  bounded second moments.
 -/
 @[expose] public section
 noncomputable section
@@ -64,7 +76,7 @@ theorem integrable_exp_neg_mul_norm_sq {a : ℝ} (ha : 0 < a) :
 
 /-- A quadratic change of reference identifies the free energy with Gaussian relative entropy
 plus potential energy and an explicit second-moment correction. -/
-theorem jko_free_energy_eq_kl_div_gaussian_add
+theorem jkoFreeEnergy_eq_klDiv_gaussian_add
     (V : E → ℝ) {a : ℝ} (ha : 0 < a) (μ : TauCeti.WassersteinSpace 2 E) :
     jkoFreeEnergy V μ =
       (klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a*‖x‖^2))) : EReal) +
@@ -83,7 +95,7 @@ theorem jko_free_energy_eq_kl_div_gaussian_add
   ac_rfl
 
 /-- A nonnegative potential gives the usual quadratic Gaussian lower bound on the free energy. -/
-theorem jko_free_energy_gaussian_lower_bound
+theorem jkoFreeEnergy_gaussian_lower_bound
     (V : E → ℝ) (hV : ∀ x, 0 ≤ V x) {a : ℝ} (ha : 0 < a)
     (μ : TauCeti.WassersteinSpace 2 E) :
     (((-a*(∫ x, ‖x‖^2 ∂wassersteinLaw μ)-
@@ -91,16 +103,16 @@ theorem jko_free_energy_gaussian_lower_bound
   have hp : 0 ≤ TauCeti.potentialEnergy V (wassersteinLaw μ) := by
     rw [TauCeti.potentialEnergy_of_nonneg_ae (ae_of_all _ hV)]
     exact EReal.coe_ennreal_nonneg _
-  rw [jko_free_energy_eq_kl_div_gaussian_add V ha μ]
+  rw [jkoFreeEnergy_eq_klDiv_gaussian_add V ha μ]
   have h0 : (0 : EReal) ≤ (klDiv (wassersteinLaw μ)
     (volume.tilted (fun x : E ↦ -(a*‖x‖^2))) : EReal) := EReal.coe_ennreal_nonneg _
   simpa only [zero_add, add_zero, add_comm] using add_le_add_right (add_nonneg h0 hp)
     (((-a*(∫ x, ‖x‖^2 ∂wassersteinLaw μ)-Real.log (∫ x : E, Real.exp (-(a*‖x‖^2)))) : ℝ) : EReal)
 
 /-- A nonnegative-potential free energy has no minus-infinite values on P2. -/
-theorem jko_free_energy_ne_bot (V : E → ℝ) (hV : ∀ x, 0 ≤ V x)
+theorem jkoFreeEnergy_ne_bot (V : E → ℝ) (hV : ∀ x, 0 ≤ V x)
     (μ : TauCeti.WassersteinSpace 2 E) : jkoFreeEnergy V μ ≠ ⊥ :=
-  ne_bot_of_le_ne_bot (EReal.coe_ne_bot _) (jko_free_energy_gaussian_lower_bound V hV zero_lt_one μ)
+  ne_bot_of_le_ne_bot (EReal.coe_ne_bot _) (jkoFreeEnergy_gaussian_lower_bound V hV zero_lt_one μ)
 /-- Lower semicontinuity after every positive quadratic tilt implies lower semicontinuity
 along a sequence with bounded quadratic moments. -/
 theorem ereal_le_liminf_of_positive_tilts {F : EReal} {u : ℕ → EReal} {m M : ℝ}
@@ -131,7 +143,7 @@ theorem ereal_le_liminf_of_positive_tilts {F : EReal} {u : ℕ → EReal} {m M :
     exact (EReal.addLECancellable_coe (a*M)).add_le_add_iff_right.mp hh
   exact hsr.le.trans (le_liminf_of_le (h := hev'))
 /-- Finite free energy is equivalent to finite Gaussian relative entropy and potential energy. -/
-theorem jko_free_energy_ne_top_iff_kl_div_gaussian_and_potential
+theorem jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential
     (V : E → ℝ) (hV : ∀ x, 0 ≤ V x) {a : ℝ} (ha : 0 < a)
     (μ : TauCeti.WassersteinSpace 2 E) :
     jkoFreeEnergy V μ ≠ ⊤ ↔
@@ -140,17 +152,17 @@ theorem jko_free_energy_ne_top_iff_kl_div_gaussian_and_potential
   have hp : TauCeti.potentialEnergy V (wassersteinLaw μ) ≠ ⊥ := by
     rw [TauCeti.potentialEnergy_of_nonneg_ae (ae_of_all _ hV)]
     exact EReal.coe_ennreal_ne_bot _
-  rw [jko_free_energy_eq_kl_div_gaussian_add V ha μ]
+  rw [jkoFreeEnergy_eq_klDiv_gaussian_add V ha μ]
   simpa only [ne_eq,EReal.add_coe_eq_top_iff,EReal.coe_ennreal_eq_top_iff] using
     EReal.add_ne_top_iff_ne_top₂ (EReal.coe_ennreal_ne_bot
       (klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a*‖x‖^2))))) hp
 
 /-- Finite free energy for a nonnegative continuous potential makes the potential integrable. -/
-theorem integrable_potential_of_jko_free_energy_ne_top
+theorem integrable_potential_of_jkoFreeEnergy_ne_top
     (V : E → ℝ) (hVc : Continuous V) (hV : ∀ x, 0 ≤ V x)
     (μ : TauCeti.WassersteinSpace 2 E) (hF : jkoFreeEnergy V μ ≠ ⊤) :
     Integrable V (wassersteinLaw μ) := by
-  have hp := ((jko_free_energy_ne_top_iff_kl_div_gaussian_and_potential V hV zero_lt_one μ).1 hF).2
+  have hp := ((jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential V hV zero_lt_one μ).1 hF).2
   apply (TauCeti.integrable_iff_potentialEnergy_ne_top_and_ne_bot hVc.aestronglyMeasurable).2
   refine ⟨hp, ?_⟩
   rw [TauCeti.potentialEnergy_of_nonneg_ae (ae_of_all _ hV)]
@@ -180,7 +192,7 @@ theorem integral_norm_sq_eq_wasserstein_dirac_sq (μ : TauCeti.WassersteinSpace 
   exact ht.symm
 
 /-- A Wasserstein-bounded sequence has uniformly bounded second moments. -/
-theorem exists_integral_norm_sq_le_of_is_bounded (v : ℕ → TauCeti.WassersteinSpace 2 E)
+theorem exists_integral_norm_sq_le_of_isBounded (v : ℕ → TauCeti.WassersteinSpace 2 E)
     (hv : Bornology.IsBounded (range v)) :
     ∃ B : ℝ, 0 ≤ B ∧ ∀ n, (∫ x, ‖x‖^2 ∂wassersteinLaw (v n)) ≤ B := by
   have hmem : TauCeti.HasFiniteMoment 2 (diracProba (0:E) : Measure E) := by

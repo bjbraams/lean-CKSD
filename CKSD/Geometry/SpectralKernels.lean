@@ -10,7 +10,6 @@ public import TauCeti.Probability.Density
 public import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
 public import Mathlib.Analysis.Normed.Module.RCLike.Real
 
-
 /-!
 # Characteristic translation-invariant spectral kernels
 
@@ -27,6 +26,21 @@ characteristic kernel exactly when its support is the whole space.
 
 Mathlib supplies the characteristic-function uniqueness theorem, Schwartz Fourier inversion and
 smooth bump functions. TauCeti supplies the real inverse-Fourier-transform and density bridges.
+
+## Main results
+
+* `CKSD.squaredMMD_spectralKernel_eq_integral`: the squared MMD of the cosine kernel of `L` is
+  `∫ |φ_P - φ_Q|² dL`.
+* `CKSD.isCharacteristicKernel_spectral_of_full_support`: a finite spectral measure charging every
+  open ball gives a characteristic kernel.
+* `CKSD.isCharacteristicKernel_spectral_iff`: for a finite symmetric spectral measure on a
+  positive-dimensional finite-dimensional space, the kernel is characteristic exactly when the
+  spectral measure charges every open ball.
+
+## References
+
+* B. K. Sriperumbudur, A. Gretton, K. Fukumizu, B. Schölkopf, G. R. G. Lanckriet, *Hilbert space
+  embeddings and metrics on probability measures*, J. Mach. Learn. Res. 11 (2010), 1517–1561.
 -/
 
 @[expose] public section
@@ -41,7 +55,7 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 omit [SecondCountableTopology E] in
 /-- The cosine moment is the real part of the characteristic function. -/
-theorem integral_cos_inner_eq_re_char_fun (μ : Measure E) [IsFiniteMeasure μ] (w : E) :
+theorem integral_cos_inner_eq_re_charFun (μ : Measure E) [IsFiniteMeasure μ] (w : E) :
     (∫ x, Real.cos (inner ℝ w x) ∂μ) = (charFun μ w).re := by
   have hint := (BoundedContinuousFunction.innerProbChar w).integrable μ
   have hre := Complex.reCLM.integral_comp_comm hint
@@ -55,7 +69,7 @@ theorem integral_cos_inner_eq_re_char_fun (μ : Measure E) [IsFiniteMeasure μ] 
 
 omit [SecondCountableTopology E] in
 /-- The sine moment is the imaginary part of the characteristic function. -/
-theorem integral_sin_inner_eq_im_char_fun (μ : Measure E) [IsFiniteMeasure μ] (w : E) :
+theorem integral_sin_inner_eq_im_charFun (μ : Measure E) [IsFiniteMeasure μ] (w : E) :
     (∫ x, Real.sin (inner ℝ w x) ∂μ) = (charFun μ w).im := by
   have hint := (BoundedContinuousFunction.innerProbChar w).integrable μ
   have him := Complex.imCLM.integral_comp_comm hint
@@ -89,13 +103,13 @@ theorem integral_cos_inner_sub_prod (P Q : Measure E) [IsFiniteMeasure P]
   rw [integral_add ((hc P).mul_prod (hc Q)) ((hs P).mul_prod (hs Q)),
     integral_prod_mul (fun x ↦ Real.cos (inner ℝ w x)) (fun x ↦ Real.cos (inner ℝ w x)),
     integral_prod_mul (fun x ↦ Real.sin (inner ℝ w x)) (fun x ↦ Real.sin (inner ℝ w x)),
-    integral_cos_inner_eq_re_char_fun,
-    integral_cos_inner_eq_re_char_fun, integral_sin_inner_eq_im_char_fun,
-    integral_sin_inner_eq_im_char_fun]
+    integral_cos_inner_eq_re_charFun,
+    integral_cos_inner_eq_re_charFun, integral_sin_inner_eq_im_charFun,
+    integral_sin_inner_eq_im_charFun]
 
 /-- Integrating a translation-invariant spectral kernel against a product law interchanges
 its spectral and observation integrals. -/
-theorem integral_spectral_kernel_prod (L P Q : Measure E) [IsFiniteMeasure L]
+theorem integral_spectralKernel_prod (L P Q : Measure E) [IsFiniteMeasure L]
     [IsFiniteMeasure P] [IsFiniteMeasure Q] :
     (∫ z : E × E, (∫ w, Real.cos (inner ℝ w (z.1 - z.2)) ∂L) ∂P.prod Q) =
       ∫ w, (charFun P w).re * (charFun Q w).re +
@@ -109,7 +123,7 @@ theorem integral_spectral_kernel_prod (L P Q : Measure E) [IsFiniteMeasure L]
 
 /-- The spectral expression for squared MMD is the weighted squared distance between
 characteristic functions. -/
-theorem squared_mmd_spectral_kernel_eq_integral (L P Q : Measure E) [IsFiniteMeasure L]
+theorem squaredMMD_spectralKernel_eq_integral (L P Q : Measure E) [IsFiniteMeasure L]
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q] :
     squaredMMD (fun x y ↦ ∫ w, Real.cos (inner ℝ w (x - y)) ∂L) P Q =
       ∫ w, ‖charFun P w - charFun Q w‖ ^ 2 ∂L := by
@@ -134,8 +148,8 @@ theorem squared_mmd_spectral_kernel_eq_integral (L P Q : Measure E) [IsFiniteMea
   have hmul : Integrable (fun w ↦ 2 *
       ((charFun P w).re * (charFun Q w).re + (charFun P w).im * (charFun Q w).im)) L :=
     (hint P Q).const_mul 2
-  rw [squaredMMD, integral_spectral_kernel_prod, integral_spectral_kernel_prod,
-    integral_spectral_kernel_prod, ← integral_add (hint P P) (hint Q Q),
+  rw [squaredMMD, integral_spectralKernel_prod, integral_spectralKernel_prod,
+    integral_spectralKernel_prod, ← integral_add (hint P P) (hint Q Q),
     ← integral_const_mul 2, ← integral_sub hsum hmul]
   apply integral_congr_ae
   apply ae_of_all
@@ -147,7 +161,7 @@ theorem squared_mmd_spectral_kernel_eq_integral (L P Q : Measure E) [IsFiniteMea
 
 /-- A spectral measure charging every ball produces a characteristic translation-invariant
 kernel, by uniqueness of characteristic functions. -/
-theorem is_characteristic_kernel_spectral_of_full_support [CompleteSpace E]
+theorem isCharacteristicKernel_spectral_of_full_support [CompleteSpace E]
     (L : Measure E) [IsFiniteMeasure L]
     (hfull : ∀ x, ∀ r > 0, 0 < L (Metric.ball x r)) :
     IsCharacteristicKernel (fun x y ↦ ∫ w, Real.cos (inner ℝ w (x - y)) ∂L) := by
@@ -160,7 +174,7 @@ theorem is_characteristic_kernel_spectral_of_full_support [CompleteSpace E]
   intro P Q hP hQ _ _ _
   have := hP
   have := hQ
-  rw [squared_mmd_spectral_kernel_eq_integral]
+  rw [squaredMMD_spectralKernel_eq_integral]
   constructor
   · intro hzero
     have hint : Integrable (fun w ↦ ‖charFun P w - charFun Q w‖ ^ 2) L := by
@@ -181,7 +195,7 @@ theorem is_characteristic_kernel_spectral_of_full_support [CompleteSpace E]
 
 /-- A nonzero even smooth Fourier perturbation vanishing at the origin is the difference of two
 probability characteristic functions up to a positive normalization. -/
-theorem exists_probability_measures_char_fun_sub_eq_of_even_bump [FiniteDimensional ℝ E]
+theorem exists_probabilityMeasures_charFun_sub_eq_of_even_bump [FiniteDimensional ℝ E]
     (ψ : E → ℝ) (hψ : ContDiff ℝ ∞ ψ) (hψc : HasCompactSupport ψ)
     (hψeven : ∀ x, ψ (-x) = ψ x) (hψ0 : ψ 0 = 0) (hψne : ∃ x, ψ x ≠ 0) :
     ∃ (P Q : Measure E) (Z : ℝ), IsProbabilityMeasure P ∧ IsProbabilityMeasure Q ∧
@@ -353,11 +367,11 @@ theorem exists_even_smooth_bump_of_spectral_gap [FiniteDimensional ℝ E] [Nontr
 
 /-- A translation-invariant kernel with a finite symmetric spectral measure is characteristic
 exactly when the spectral measure charges every open ball. -/
-theorem is_characteristic_kernel_spectral_iff [FiniteDimensional ℝ E] [Nontrivial E]
+theorem isCharacteristicKernel_spectral_iff [FiniteDimensional ℝ E] [Nontrivial E]
     (L : Measure E) [IsFiniteMeasure L] (hsym : L.map (fun w ↦ -w) = L) :
     IsCharacteristicKernel (fun x y ↦ ∫ w, Real.cos (inner ℝ w (x - y)) ∂L) ↔
       ∀ x, ∀ r > 0, 0 < L (Metric.ball x r) := by
-  refine ⟨?_, is_characteristic_kernel_spectral_of_full_support L⟩
+  refine ⟨?_, isCharacteristicKernel_spectral_of_full_support L⟩
   intro hk
   by_contra hnot
   push Not at hnot
@@ -366,7 +380,7 @@ theorem is_characteristic_kernel_spectral_iff [FiniteDimensional ℝ E] [Nontriv
   obtain ⟨ψ, hψ, hψc, hψeven, hψ0, hψne, hψL⟩ :=
     exists_even_smooth_bump_of_spectral_gap L hsym x r hr hgap0
   obtain ⟨P, Q, Z, hP, hQ, hZ, hPQ, hdiff⟩ :=
-    exists_probability_measures_char_fun_sub_eq_of_even_bump ψ hψ hψc hψeven hψ0 hψne
+    exists_probabilityMeasures_charFun_sub_eq_of_even_bump ψ hψ hψc hψeven hψ0 hψne
   have := hP
   have := hQ
   have hkm : Measurable (fun z : E × E ↦ ∫ w, Real.cos (inner ℝ w (z.1 - z.2)) ∂L) :=
@@ -380,7 +394,7 @@ theorem is_characteristic_kernel_spectral_iff [FiniteDimensional ℝ E] [Nontriv
       (ae_of_all _ fun w ↦ by simpa only [Real.norm_eq_abs] using Real.abs_cos_le_one _)
     simpa only [one_mul] using hb
   have hzero : squaredMMD (fun x y ↦ ∫ w, Real.cos (inner ℝ w (x - y)) ∂L) P Q = 0 := by
-    rw [squared_mmd_spectral_kernel_eq_integral]
+    rw [squaredMMD_spectralKernel_eq_integral]
     apply integral_eq_zero_of_ae
     filter_upwards [hψL] with w hw
     rw [hdiff, hw]

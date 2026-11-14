@@ -1,5 +1,4 @@
 module
-
 public import CKSD.Bayes.Diffusion
 import CKSD.Bayes.GaussianSmoothing
 import CKSD.Inference.Density
@@ -8,9 +7,18 @@ import TauCeti.Probability.Distributions.Gaussian.Quantile
 # Gaussian Gibbs laws and warm initializations
 
 The normalized Gibbs law of a positive isotropic quadratic potential is the corresponding
-scaled standard Gaussian. Normalization follows from the already proved Gaussian smoothing
-density, so no new Gaussian integral formula is needed. These adapters support Gaussian
+scaled standard Gaussian. Normalization follows from the Gaussian smoothing
+density of `CKSD.Bayes.GaussianSmoothing`. These adapters support Gaussian
 examples for Metropolis-adjusted Langevin lower bounds, GAPS 104.47.
+
+## Main results
+
+* `CKSD.gibbsMeasure_quadratic_eq_map_stdGaussian`: the Gibbs law of an isotropic quadratic
+  potential is a scaled standard Gaussian.
+* `CKSD.exists_pos_gaussianReal_tail_eq_quarter`: a positive threshold with standard Gaussian
+  upper-tail mass one quarter.
+* `CKSD.exists_quadraticGibbs_halfspace_warm_start`: a four-warm law of a scaled Gaussian
+  supported on an upper-quartile halfspace.
 -/
 public section
 noncomputable section
@@ -21,7 +29,7 @@ variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 
 /-- The Gibbs law of an isotropic quadratic potential is a scaled standard Gaussian. -/
-theorem gibbs_measure_quadratic_eq_map_std_gaussian {σ : ℝ} (hσ : 0 < σ) :
+theorem gibbsMeasure_quadratic_eq_map_stdGaussian {σ : ℝ} (hσ : 0 < σ) :
     gibbsMeasure (fun x : E ↦ (σ⁻¹) ^ 2 / 2 * ‖x‖ ^ 2) =
       (stdGaussian E).map (fun z ↦ σ • z) := by
   let V : E → ℝ := fun x ↦ (σ⁻¹) ^ 2 / 2 * ‖x‖ ^ 2
@@ -34,11 +42,11 @@ theorem gibbs_measure_quadratic_eq_map_std_gaussian {σ : ℝ} (hσ : 0 < σ) :
     field_simp
   have hmap : (stdGaussian E).map (fun z ↦ σ • z) =
       volume.withDensity (fun x ↦ ENNReal.ofReal (gaussianSmoothingKernel σ x)) := by
-    simpa only [zero_add, sub_zero] using map_affine_std_gaussian_eq_with_density hσ (0 : E)
+    simpa only [zero_add, sub_zero] using map_affine_stdGaussian_eq_withDensity hσ (0 : E)
   have hd : HasDensity ((stdGaussian E).map (fun z ↦ σ • z)) volume
       (gaussianSmoothingKernel σ) :=
-    ⟨(cont_diff_gaussian_smoothing_kernel hσ).continuous.measurable,
-      ae_of_all _ fun x ↦ (gaussian_smoothing_kernel_pos hσ x).le, hmap⟩
+    ⟨(contDiff_gaussianSmoothingKernel hσ).continuous.measurable,
+      ae_of_all _ fun x ↦ (gaussianSmoothingKernel_pos hσ x).le, hmap⟩
   have hnorm : c * (∫ x, Real.exp (-V x)) = 1 := by
     rw [← integral_const_mul]
     simpa only [← he] using hd.integral_eq_one
@@ -60,7 +68,7 @@ theorem gibbs_measure_quadratic_eq_map_std_gaussian {σ : ℝ} (hσ : 0 < σ) :
 
 set_option backward.isDefEq.respectTransparency.types false in
 /-- A fixed positive threshold has standard Gaussian upper-tail mass exactly one quarter. -/
-theorem exists_pos_gaussian_real_tail_eq_quarter :
+theorem exists_pos_gaussianReal_tail_eq_quarter :
     ∃ a : ℝ, 0 < a ∧ (gaussianReal 0 1).real (Ioi a) = 1 / 4 := by
   let a := (gaussianReal 0 1).quantile (3 / 4)
   have : NullSingletonClass (gaussianReal 0 1) := nullSingletonClass_gaussianReal one_ne_zero
@@ -78,7 +86,7 @@ theorem exists_pos_gaussian_real_tail_eq_quarter :
 set_option backward.isDefEq.respectTransparency.types false in
 /-- Conditioning a scaled isotropic Gaussian on a fixed upper-quartile halfspace gives a
 four-warm probability law supported on that halfspace. -/
-theorem exists_quadratic_gibbs_halfspace_warm_start {a σ : ℝ} (hσ : 0 < σ)
+theorem exists_quadraticGibbs_halfspace_warm_start {a σ : ℝ} (hσ : 0 < σ)
     (ha : (gaussianReal 0 1).real (Ioi a) = 1 / 4) (i : Fin d) :
     let π := gibbsMeasure (fun x : E ↦ (σ⁻¹) ^ 2 / 2 * ‖x‖ ^ 2)
     let A : Set E := {x | σ * a < x i}
@@ -89,7 +97,7 @@ theorem exists_quadratic_gibbs_halfspace_warm_start {a σ : ℝ} (hσ : 0 < σ)
   have hAm : MeasurableSet A := by apply measurableSet_lt <;> fun_prop
   have hπ : IsProbabilityMeasure π := by
     dsimp only [π]
-    rw [gibbs_measure_quadratic_eq_map_std_gaussian hσ]
+    rw [gibbsMeasure_quadratic_eq_map_stdGaussian hσ]
     infer_instance
   let := hπ
   have hcoord : HasLaw (fun x : E ↦ x i) (gaussianReal 0 1) (stdGaussian E) := by
@@ -99,7 +107,7 @@ theorem exists_quadratic_gibbs_halfspace_warm_start {a σ : ℝ} (hσ : 0 < σ)
         (S := (1 : Matrix (Fin d) (Fin d) ℝ)) Matrix.PosSemidef.one (i := i)).hasLaw
   have hmass : π.real A = 1 / 4 := by
     dsimp only [π]
-    rw [gibbs_measure_quadratic_eq_map_std_gaussian hσ,
+    rw [gibbsMeasure_quadratic_eq_map_stdGaussian hσ,
       map_measureReal_apply (by fun_prop) hAm]
     have he : (fun z : E ↦ σ • z) ⁻¹' A = (fun z : E ↦ z i) ⁻¹' Ioi a := by
       ext z

@@ -1,5 +1,4 @@
 module
-
 public import CKSD.Asymptotics.Basic
 public import Mathlib.MeasureTheory.Measure.Decomposition.IntegralRNDeriv
 /-!
@@ -16,7 +15,7 @@ open scoped ENNReal NNReal Topology
 namespace CKSD
 /-- The discrepancy between integration under an alternative law and its absolutely continuous
 likelihood contribution is controlled by the missing likelihood mass. -/
-theorem abs_integral_sub_integral_rn_deriv_mul_le
+theorem abs_integral_sub_integral_rnDeriv_mul_le
     {Ω : Type*} [MeasurableSpace Ω] (P Q : Measure Ω)
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (f : Ω → ℝ) (hf : Measurable f) (B : ℝ) (hB : ∀ x, ‖f x‖ ≤ B) :

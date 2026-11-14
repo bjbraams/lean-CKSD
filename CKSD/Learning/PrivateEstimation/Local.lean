@@ -2,7 +2,6 @@ module
 
 public import CKSD.Learning.PrivateEstimation.CentralLowerBounds
 
-
 /-!
 # Local private mean estimation
 
@@ -25,7 +24,7 @@ attribute [local instance] Classical.propDecidable
 
 /-- The total variation distance between `Ber(1, 0, a)` and `Ber(1, 0, b)` is at most
 `|a - b|`. -/
-theorem total_variation_distance_bernoulli_measure_le (a b : unitInterval) :
+theorem totalVariationDistance_bernoulliMeasure_le (a b : unitInterval) :
     totalVariationDistance (Ber((1 : ℝ), 0, a)) (Ber((1 : ℝ), 0, b)) ≤ |(a : ℝ) - b| := by
   unfold totalVariationDistance
   refine csSup_le ⟨_, ∅, MeasurableSet.empty, rfl⟩ ?_
@@ -41,7 +40,7 @@ theorem total_variation_distance_bernoulli_measure_le (a b : unitInterval) :
   · simp
 
 /-- A lower bound for the local mean risk on a set of estimates far from the mean. -/
-theorem of_real_mul_map_le_local_mean_risk {n : ℕ} (Q : Fin n → Kernel ℝ ℝ)
+theorem ofReal_mul_map_le_localMeanRisk {n : ℕ} (Q : Fin n → Kernel ℝ ℝ)
     {est : (Fin n → ℝ) → ℝ} (hest : Measurable est) (P : Measure ℝ) {B : Set ℝ}
     (hB : MeasurableSet B) {r : ℝ} (hr : ∀ y ∈ B, r ≤ (y - ∫ x, x ∂P) ^ 2) :
     ENNReal.ofReal r * ((Measure.pi fun i ↦ Q i ∘ₘ P).map est) B ≤ localMeanRisk Q est P := by
@@ -59,9 +58,9 @@ measurable estimator, some Bernoulli law `Ber(1, 0, p)` has mean squared error a
 `min(1, 1/(nε²)) / 768`. The two laws are `Ber(1/2)` and `Ber(1/2 + δ)` with
 `δ = min(1/2, 1/(4ε√n))`; the release laws of one individual are at Kullback–Leibler
 divergence at most `16 ε² δ²` by the contraction under local privacy (GAPS 107.75,
-`kl_div_comp_le_of_local_differential_privacy`), and Le Cam's method concludes as in the
+`klDiv_comp_le_of_local_differential_privacy`), and Le Cam's method concludes as in the
 central case. -/
-theorem exists_bernoulli_local_mean_risk_ge {n : ℕ} (hn : 0 < n) {ε : ℝ} (hε : ε ∈ Ioc (0 : ℝ) 1)
+theorem exists_bernoulli_localMeanRisk_ge {n : ℕ} (hn : 0 < n) {ε : ℝ} (hε : ε ∈ Ioc (0 : ℝ) 1)
     (Q : Fin n → Kernel ℝ ℝ) (hQ : ∀ i, IsMarkovKernel (Q i))
     (hpriv : ∀ i, IsDifferentiallyPrivate (fun _ _ : ℝ ↦ True) ε 0 (Q i))
     (est : (Fin n → ℝ) → ℝ) (hest : Measurable est) :
@@ -105,10 +104,10 @@ theorem exists_bernoulli_local_mean_risk_ge {n : ℕ} (hn : 0 < n) {ε : ℝ} (h
   have hKLi : ∀ i, InformationTheory.klDiv (Q i ∘ₘ Ber((1 : ℝ), 0, b))
       (Q i ∘ₘ Ber((1 : ℝ), 0, a)) ≤ ENNReal.ofReal (16 * ε ^ 2 * δ ^ 2) := by
     intro i
-    have h := kl_div_comp_le_of_local_differential_privacy (Q i) ε (hpriv i)
+    have h := klDiv_comp_le_of_local_differential_privacy (Q i) ε (hpriv i)
       (Ber((1 : ℝ), 0, b)) (Ber((1 : ℝ), 0, a))
     refine le_trans le_self_add (h.trans (ENNReal.ofReal_le_ofReal ?_))
-    have hTV := total_variation_distance_bernoulli_measure_le b a
+    have hTV := totalVariationDistance_bernoulliMeasure_le b a
     have hTV0 : 0 ≤ totalVariationDistance (Ber((1 : ℝ), 0, b)) (Ber((1 : ℝ), 0, a)) :=
       Real.sSup_nonneg (by rintro _ ⟨A, -, rfl⟩; exact abs_nonneg _)
     rw [hb, ha, show (1 / 2 + δ - 1 / 2 : ℝ) = δ by ring, abs_of_pos hδ0] at hTV
@@ -120,10 +119,10 @@ theorem exists_bernoulli_local_mean_risk_ge {n : ℕ} (hn : 0 < n) {ε : ℝ} (h
     have h1 : (Real.exp ε - 1) ^ 2 ≤ (2 * ε) ^ 2 := pow_le_pow_left₀ he0 he 2
     have h2 : totalVariationDistance (Ber((1 : ℝ), 0, b)) (Ber((1 : ℝ), 0, a)) ^ 2 ≤ δ ^ 2 :=
       pow_le_pow_left₀ hTV0 hTV 2
-    calc 4 * (Real.exp ε - 1) ^ 2 *
+    calc 2 * (Real.exp ε - 1) ^ 2 *
           totalVariationDistance (Ber((1 : ℝ), 0, b)) (Ber((1 : ℝ), 0, a)) ^ 2
-        ≤ 4 * (2 * ε) ^ 2 * δ ^ 2 := by gcongr
-      _ = 16 * ε ^ 2 * δ ^ 2 := by ring
+        ≤ 2 * (2 * ε) ^ 2 * δ ^ 2 := by gcongr
+      _ ≤ 16 * ε ^ 2 * δ ^ 2 := by nlinarith [sq_nonneg (ε * δ)]
   have hKL : InformationTheory.klDiv μb μa ≤ ENNReal.ofReal 1 := by
     rw [klDiv_pi]
     calc ∑ i, InformationTheory.klDiv (Q i ∘ₘ Ber((1 : ℝ), 0, b)) (Q i ∘ₘ Ber((1 : ℝ), 0, a))
@@ -141,15 +140,15 @@ theorem exists_bernoulli_local_mean_risk_ge {n : ℕ} (hn : 0 < n) {ε : ℝ} (h
     Real.exp_le_exp.mpr (by linarith)
   have hTV := tvDist_map_le μb μa hest
   have htest : 1 / 6 ≤ (μa.map est).real A + (μb.map est).real Aᶜ :=
-    one_div_six_le_measure_real_add_measure_real_compl (by linarith) hA
-  have hLa := of_real_mul_map_le_local_mean_risk Q hest (Ber((1 : ℝ), 0, a)) hA
+    one_div_six_le_measureReal_add_measureReal_compl (by linarith) hA
+  have hLa := ofReal_mul_map_le_localMeanRisk Q hest (Ber((1 : ℝ), 0, a)) hA
     (r := ((b - a : ℝ) / 2) ^ 2) fun y hy ↦ by
-      rw [integral_id_bernoulli_measure_one_zero]
+      rw [integral_id_bernoulliMeasure_one_zero]
       simp only [A, Set.mem_ofPred_eq] at hy
       nlinarith
-  have hLb := of_real_mul_map_le_local_mean_risk Q hest (Ber((1 : ℝ), 0, b)) hA.compl
+  have hLb := ofReal_mul_map_le_localMeanRisk Q hest (Ber((1 : ℝ), 0, b)) hA.compl
     (r := ((b - a : ℝ) / 2) ^ 2) fun y hy ↦ by
-      rw [integral_id_bernoulli_measure_one_zero]
+      rw [integral_id_bernoulliMeasure_one_zero]
       simp only [A, Set.mem_compl_iff, Set.mem_ofPred_eq, not_le] at hy
       nlinarith
   have hsum : ENNReal.ofReal (δ ^ 2 / 24) ≤
@@ -166,7 +165,7 @@ theorem exists_bernoulli_local_mean_risk_ge {n : ℕ} (hn : 0 < n) {ε : ℝ} (h
   have hfin : ∀ x : ℝ≥0∞, ENNReal.ofReal (δ ^ 2 / 24 / 2) ≤ x →
       ENNReal.ofReal (min 1 (1 / (n * ε ^ 2)) / 768) ≤ x := fun x hx ↦
     le_trans (ENNReal.ofReal_le_ofReal (by nlinarith)) hx
-  rcases of_real_half_le_or_of_of_real_le_add hsum with h | h
+  rcases ofReal_half_le_or_of_ofReal_le_add hsum with h | h
   · exact ⟨a, hfin _ h⟩
   · exact ⟨b, hfin _ h⟩
 
@@ -175,27 +174,27 @@ def localLaplaceKernel (ε : ℝ) : Kernel ℝ ℝ where
   toFun x := TauCeti.Probability.laplaceMeasure (clipUnit x) (2 / ε : ℝ)
   measurable' := by
     exact TauCeti.Probability.measurable_laplaceMeasure.comp
-      (f := fun x : ℝ ↦ (clipUnit x, (2 / ε : ℝ))) (measurable_clip_unit.prodMk measurable_const)
+      (f := fun x : ℝ ↦ (clipUnit x, (2 / ε : ℝ))) (measurable_clipUnit.prodMk measurable_const)
 
 /-- The local Laplace release kernel is a Markov kernel for positive `ε`. -/
-theorem is_markov_kernel_local_laplace_kernel {ε : ℝ} (hε : 0 < ε) :
+theorem isMarkovKernel_localLaplaceKernel {ε : ℝ} (hε : 0 < ε) :
     IsMarkovKernel (localLaplaceKernel ε) :=
   ⟨fun _ ↦ TauCeti.Probability.isProbabilityMeasure_laplaceMeasure (by positivity) _⟩
 
 /-- GAPS 107.66: the local Laplace release kernel is `ε`-locally differentially private. -/
-theorem is_differentially_private_local_laplace_kernel {ε : ℝ} (hε : 0 < ε) :
+theorem isDifferentiallyPrivate_localLaplaceKernel {ε : ℝ} (hε : 0 < ε) :
     IsDifferentiallyPrivate (fun _ _ : ℝ ↦ True) ε 0 (localLaplaceKernel ε) := by
-  refine is_differentially_private_of_eq_laplace_measure _ _ clipUnit (by positivity)
+  refine isDifferentiallyPrivate_of_eq_laplaceMeasure _ _ clipUnit (by positivity)
     (fun _ ↦ rfl) fun x x' _ ↦ ?_
-  have h1 := clip_unit_mem_icc x
-  have h2 := clip_unit_mem_icc x'
+  have h1 := clipUnit_mem_Icc x
+  have h2 := clipUnit_mem_Icc x'
   calc |clipUnit x - clipUnit x'| ≤ 2 := by
         rw [abs_le]; constructor <;> linarith [h1.1, h1.2, h2.1, h2.2]
     _ = ε * (2 / ε) := by field_simp
 
 /-- Under a law supported by `[-1,1]`, the squared deviation of a local Laplace release from
 the mean has lower integral at most `4 + 8/ε²`. -/
-theorem lintegral_sq_sub_local_laplace_le {ε : ℝ} (hε : 0 < ε) (P : Measure ℝ)
+theorem lintegral_sq_sub_localLaplace_le {ε : ℝ} (hε : 0 < ε) (P : Measure ℝ)
     [IsProbabilityMeasure P] (hP : P (Icc (-1) 1)ᶜ = 0) :
     ∫⁻ y, ENNReal.ofReal ((y - ∫ x, x ∂P) ^ 2) ∂(localLaplaceKernel ε ∘ₘ P) ≤
       ENNReal.ofReal (4 + 8 / ε ^ 2) := by
@@ -204,14 +203,14 @@ theorem lintegral_sq_sub_local_laplace_le {ε : ℝ} (hε : 0 < ε) (P : Measure
   have hb : 0 < b := by positivity
   have hθ := abs_integral_le_one_of_support P hP
   rw [abs_le] at hθ
-  have hclip := clip_unit_mem_icc
+  have hclip := clipUnit_mem_Icc
   rw [Measure.lintegral_bind (Kernel.aemeasurable _) (by fun_prop)]
   have hinner : ∀ x, ∫⁻ y, ENNReal.ofReal ((y - θ) ^ 2) ∂localLaplaceKernel ε x =
       ENNReal.ofReal ((clipUnit x - θ) ^ 2 + 2 * b ^ 2) := fun x ↦ by
     have hI : Integrable (fun y ↦ (y - θ) ^ 2) (localLaplaceKernel ε x) :=
-      integrable_sq_sub_laplace_measure hb _ _
+      integrable_sq_sub_laplaceMeasure hb _ _
     rw [← ofReal_integral_eq_lintegral_ofReal hI (ae_of_all _ fun _ ↦ sq_nonneg _)]
-    exact congrArg _ (integral_sq_sub_laplace_measure hb _ _)
+    exact congrArg _ (integral_sq_sub_laplaceMeasure hb _ _)
   simp_rw [hinner]
   calc ∫⁻ x, ENNReal.ofReal ((clipUnit x - θ) ^ 2 + 2 * b ^ 2) ∂P
       ≤ ∫⁻ _x, ENNReal.ofReal (4 + 8 / ε ^ 2) ∂P := by
@@ -223,7 +222,7 @@ theorem lintegral_sq_sub_local_laplace_le {ε : ℝ} (hε : 0 < ε) (P : Measure
 
 /-- Under a law supported by `[-1,1]`, a local Laplace release has mean equal to the mean of
 the law. -/
-theorem integral_id_local_laplace {ε : ℝ} (hε : 0 < ε) (P : Measure ℝ)
+theorem integral_id_localLaplace {ε : ℝ} (hε : 0 < ε) (P : Measure ℝ)
     (hP : P (Icc (-1) 1)ᶜ = 0)
     (hint : Integrable (fun y : ℝ ↦ y) (localLaplaceKernel ε ∘ₘ P)) :
     ∫ y, y ∂(localLaplaceKernel ε ∘ₘ P) = ∫ x, x ∂P := by
@@ -232,7 +231,7 @@ theorem integral_id_local_laplace {ε : ℝ} (hε : 0 < ε) (P : Measure ℝ)
     have hmem : ∀ᵐ x ∂P, x ∈ Icc (-1 : ℝ) 1 := measure_eq_zero_iff_ae_notMem.mp hP |>.mono
       fun x hx ↦ by simpa using hx
     filter_upwards [hmem] with x hx
-    exact clip_unit_of_mem hx
+    exact clipUnit_of_mem hx
   rw [Measure.comp_eq_comp_const_apply] at hint ⊢
   rw [Kernel.integral_comp hint]
   simp only [Kernel.const_apply]
@@ -244,16 +243,16 @@ theorem integral_id_local_laplace {ε : ℝ} (hε : 0 < ε) (P : Measure ℝ)
 
 /-- GAPS 107.66: on laws supported by `[-1,1]`, the sample mean of local Laplace releases has
 mean squared error at most `(4 + 8/ε²)/n`. -/
-theorem local_mean_risk_local_laplace_mean_le {n : ℕ} (hn : 0 < n) {ε : ℝ} (hε : 0 < ε)
+theorem localMeanRisk_localLaplace_mean_le {n : ℕ} (hn : 0 < n) {ε : ℝ} (hε : 0 < ε)
     (P : Measure ℝ) [IsProbabilityMeasure P] (hP : P (Icc (-1) 1)ᶜ = 0) :
     localMeanRisk (fun _ : Fin n ↦ localLaplaceKernel ε) (fun z ↦ (∑ i, z i) / n) P ≤
       ENNReal.ofReal ((4 + 8 / ε ^ 2) / n) := by
-  have := is_markov_kernel_local_laplace_kernel hε
+  have := isMarkovKernel_localLaplaceKernel hε
   set L : Measure ℝ := localLaplaceKernel ε ∘ₘ P with hL
   set θ := ∫ x, x ∂P
   set π : Measure (Fin n → ℝ) := Measure.pi fun _ : Fin n ↦ L
   have hnr : (0 : ℝ) < n := Nat.cast_pos.mpr hn
-  have hlin := lintegral_sq_sub_local_laplace_le hε P hP
+  have hlin := lintegral_sq_sub_localLaplace_le hε P hP
   have hsqI : Integrable (fun y : ℝ ↦ (y - θ) ^ 2) L := by
     refine ⟨(by fun_prop : Measurable fun y : ℝ ↦ (y - θ) ^ 2).aestronglyMeasurable, ?_⟩
     rw [hasFiniteIntegral_iff_ofReal (ae_of_all _ fun _ ↦ sq_nonneg _)]
@@ -263,7 +262,7 @@ theorem local_mean_risk_local_laplace_mean_le {n : ℕ} (hn : 0 < n) {ε : ℝ} 
   have hid2 : MemLp (fun y : ℝ ↦ y) 2 L := by
     convert hL2.add (memLp_const θ) using 1
     funext y; simp
-  have hmeanL : ∫ y, y ∂L = θ := integral_id_local_laplace hε P hP (hid2.integrable one_le_two)
+  have hmeanL : ∫ y, y ∂L = θ := integral_id_localLaplace hε P hP (hid2.integrable one_le_two)
   have hsqle : ∫ y, (y - θ) ^ 2 ∂L ≤ 4 + 8 / ε ^ 2 := by
     rw [integral_eq_lintegral_of_nonneg_ae (ae_of_all _ fun _ ↦ sq_nonneg _) (by fun_prop)]
     exact ENNReal.toReal_le_of_le_ofReal (by positivity) hlin
@@ -321,7 +320,7 @@ theorem local_mean_risk_local_laplace_mean_le {n : ℕ} (hn : 0 < n) {ε : ℝ} 
 every noninteractive protocol with `ε`-locally private release kernels and every measurable
 estimator has mean squared error at least `c min(1, 1/(nε²))` for some law on `[-1,1]`, and some
 such protocol has error at most `C min(1, 1/(nε²))` for every law on `[-1,1]`. -/
-theorem local_mean_risk_minimax_order :
+theorem localMeanRisk_minimax_order :
     ∃ c > (0 : ℝ), ∃ C > (0 : ℝ), ∀ n : ℕ, 0 < n → ∀ ε ∈ Ioc (0 : ℝ) 1,
       (∀ Q : Fin n → Kernel ℝ ℝ, (∀ i, IsMarkovKernel (Q i)) →
         (∀ i, IsDifferentiallyPrivate (fun _ _ : ℝ ↦ True) ε 0 (Q i)) →
@@ -335,14 +334,14 @@ theorem local_mean_risk_minimax_order :
             localMeanRisk Q est P ≤ ENNReal.ofReal (C * min 1 (1 / (n * ε ^ 2))) := by
   refine ⟨1 / 768, by norm_num, 12, by norm_num, fun n hn ε hε ↦ ⟨?_, ?_⟩⟩
   · intro Q hQ hpriv est hest
-    obtain ⟨p, hp⟩ := exists_bernoulli_local_mean_risk_ge hn hε Q hQ hpriv est hest
-    refine ⟨Ber((1 : ℝ), 0, p), inferInstance, bernoulli_measure_one_zero_compl_icc p, ?_⟩
+    obtain ⟨p, hp⟩ := exists_bernoulli_localMeanRisk_ge hn hε Q hQ hpriv est hest
+    refine ⟨Ber((1 : ℝ), 0, p), inferInstance, bernoulliMeasure_one_zero_compl_Icc p, ?_⟩
     rw [one_div_mul_eq_div]; exact hp
   have hε0 := hε.1
   have hnr : (0 : ℝ) < n := Nat.cast_pos.mpr hn
-  have := is_markov_kernel_local_laplace_kernel hε0
+  have := isMarkovKernel_localLaplaceKernel hε0
   refine ⟨fun _ ↦ localLaplaceKernel ε, fun _ ↦ this,
-    fun _ ↦ is_differentially_private_local_laplace_kernel hε0,
+    fun _ ↦ isDifferentiallyPrivate_localLaplaceKernel hε0,
     fun z ↦ if (n : ℝ) * ε ^ 2 < 1 then 0 else (∑ i, z i) / n, ?_, ?_⟩
   · split_ifs <;> fun_prop
   intro P hP hsupp
@@ -361,7 +360,7 @@ theorem local_mean_risk_minimax_order :
     push Not at hsmall
     have hmin : min 1 (1 / (n * ε ^ 2)) = 1 / (n * ε ^ 2) :=
       min_eq_right (by rw [div_le_iff₀ (by positivity)]; linarith)
-    refine (local_mean_risk_local_laplace_mean_le hn hε0 P hsupp).trans
+    refine (localMeanRisk_localLaplace_mean_le hn hε0 P hsupp).trans
       (ENNReal.ofReal_le_ofReal ?_)
     rw [hmin]
     have hε2 : ε ^ 2 ≤ 1 := by nlinarith [hε.2]

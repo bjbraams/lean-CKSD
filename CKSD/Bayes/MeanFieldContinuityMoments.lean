@@ -1,5 +1,4 @@
 module
-
 public import CKSD.Bayes.MeanFieldPathLaws
 public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.BenamouBrenier
 /-!
@@ -25,7 +24,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimension
   [MeasurableSpace E] [BorelSpace E]
 /-- A narrowly continuous finite-measure continuity-equation solution is at finite first
 Wasserstein distance between its endpoint laws. No moment of the second endpoint is assumed. -/
-theorem wasserstein_e_dist_one_ne_top_of_is_continuity_equation
+theorem wassersteinEDist_one_ne_top_of_isContinuityEquation
     {ν : ℝ → FiniteMeasure E} {v : ℝ → E → E} {a b : ℝ}
     (h : TauCeti.IsContinuityEquation (fun t ↦ (ν t : Measure E)) v a b)
     (hν : ContinuousOn ν (Icc a b)) (hab : a ≤ b)
@@ -38,7 +37,7 @@ theorem wasserstein_e_dist_one_ne_top_of_is_continuity_equation
 
 /-- Finite first moments propagate along narrowly continuous solutions of the continuity
 equation solely from the action integrability built into its definition. -/
-theorem integrable_norm_end_of_is_continuity_equation
+theorem integrable_norm_end_of_isContinuityEquation
     {ν : ℝ → FiniteMeasure E} {v : ℝ → E → E} {a b : ℝ}
     (h : TauCeti.IsContinuityEquation (fun t ↦ (ν t : Measure E)) v a b)
     (hν : ContinuousOn ν (Icc a b)) (hab : a ≤ b)
@@ -53,12 +52,12 @@ theorem integrable_norm_end_of_is_continuity_equation
     simpa only [edist_eq_enorm_sub, zero_sub, enorm_neg, id_eq] using
       (memLp_one_iff_integrable.mpr hiid).enorm
   have hm' := (TauCeti.hasFiniteMoment_iff_wassersteinEDist_ne_top_of_hasFiniteMoment
-    measurable_edist hm).2 (wasserstein_e_dist_one_ne_top_of_is_continuity_equation h hν hab)
+    measurable_edist hm).2 (wassersteinEDist_one_ne_top_of_isContinuityEquation h hν hab)
   have him := hm'.memLp_id.integrable (by norm_num : (1 : ℝ≥0∞) ≤ 1)
   simpa only [id_eq] using him.norm
 
 /-- Replacing time marginals only outside the equation interval preserves its weak identity. -/
-theorem is_continuity_equation_congr_measure_on_ioo
+theorem isContinuityEquation_congr_measure_on_Ioo
     {μ η : ℝ → Measure E} {v : ℝ → E → E} {a b : ℝ}
     (h : TauCeti.IsContinuityEquation μ v a b) (hη : Measurable η)
     (heq : ∀ t ∈ Ioo a b, η t = μ t) : TauCeti.IsContinuityEquation η v a b := by
@@ -86,14 +85,14 @@ def finiteMeasureNonnegExtension (μ : ℝ → Measure E)
 
 omit [NormedAddCommGroup E] [NormedSpace ℝ E] [FiniteDimensional ℝ E] [BorelSpace E] in
 /-- The extended finite measure has the prescribed nonnegative-time marginal. -/
-theorem finite_measure_nonneg_extension_to_measure (μ : ℝ → Measure E)
+theorem finiteMeasureNonnegExtension_toMeasure (μ : ℝ → Measure E)
     (hp : ∀ t ≥ 0, IsProbabilityMeasure (μ t)) (t : ℝ) :
     (finiteMeasureNonnegExtension μ hp t : Measure E) = μ (max 0 t) := rfl
 
 omit [NormedSpace ℝ E] [FiniteDimensional ℝ E] in
 /-- The nonnegative-time marginal family, continued constantly to negative times, is narrowly
 continuous whenever its bounded continuous tests are continuous on the nonnegative half-line. -/
-theorem continuous_finite_measure_nonneg_extension
+theorem continuous_finiteMeasure_nonneg_extension
     (μ : ℝ → Measure E) (hp : ∀ t ≥ 0, IsProbabilityMeasure (μ t))
     (hc : ∀ g : BoundedContinuousFunction E ℝ, ContinuousOn (fun t ↦ ∫ x, g x ∂μ t) (Ici 0)) :
     Continuous (finiteMeasureNonnegExtension μ hp) := by
@@ -104,7 +103,7 @@ theorem continuous_finite_measure_nonneg_extension
 
 /-- A narrowly continuous probability solution on nonnegative time has integrable norm at
 every time, provided the initial law has integrable norm. -/
-theorem integrable_norm_of_is_continuity_equation_on_nonneg
+theorem integrable_norm_of_isContinuityEquation_on_nonneg
     (μ : ℝ → Measure E) (hp : ∀ t ≥ 0, IsProbabilityMeasure (μ t))
     (hc : ∀ g : BoundedContinuousFunction E ℝ, ContinuousOn (fun t ↦ ∫ x, g x ∂μ t) (Ici 0))
     (v : ℝ → E → E)
@@ -114,21 +113,21 @@ theorem integrable_norm_of_is_continuity_equation_on_nonneg
   obtain rfl | ht := ht.eq_or_lt
   · exact hi
   let ν : ℝ → FiniteMeasure E := finiteMeasureNonnegExtension μ hp
-  have hν : Continuous ν := continuous_finite_measure_nonneg_extension μ hp hc
+  have hν : Continuous ν := continuous_finiteMeasure_nonneg_extension μ hp hc
   have hmeas : Measurable (fun s ↦ (ν s : Measure E)) :=
     (hce t ht).measurable.comp (continuous_const.max continuous_id).measurable
   have heq (s : ℝ) (hs : s ∈ Ioo (0 : ℝ) t) : (ν s : Measure E) = μ s := by
-    simp only [ν, finite_measure_nonneg_extension_to_measure, max_eq_right hs.1.le]
-  have hνce := is_continuity_equation_congr_measure_on_ioo (hce t ht) hmeas heq
-  let : IsProbabilityMeasure (ν 0 : Measure E) := by simpa only [ν, finite_measure_nonneg_extension_to_measure, max_self] using hp 0 le_rfl
-  let : IsProbabilityMeasure (ν t : Measure E) := by simpa only [ν, finite_measure_nonneg_extension_to_measure, max_eq_right ht.le] using hp t ht.le
-  have hi' : Integrable (fun x ↦ ‖x‖) (ν 0 : Measure E) := by simpa only [ν, finite_measure_nonneg_extension_to_measure, max_self] using hi
-  have hh := integrable_norm_end_of_is_continuity_equation hνce hν.continuousOn ht.le hi'
-  simpa only [ν, finite_measure_nonneg_extension_to_measure, max_eq_right ht.le] using hh
+    simp only [ν, finiteMeasureNonnegExtension_toMeasure, max_eq_right hs.1.le]
+  have hνce := isContinuityEquation_congr_measure_on_Ioo (hce t ht) hmeas heq
+  let : IsProbabilityMeasure (ν 0 : Measure E) := by simpa only [ν, finiteMeasureNonnegExtension_toMeasure, max_self] using hp 0 le_rfl
+  let : IsProbabilityMeasure (ν t : Measure E) := by simpa only [ν, finiteMeasureNonnegExtension_toMeasure, max_eq_right ht.le] using hp t ht.le
+  have hi' : Integrable (fun x ↦ ‖x‖) (ν 0 : Measure E) := by simpa only [ν, finiteMeasureNonnegExtension_toMeasure, max_self] using hi
+  have hh := integrable_norm_end_of_isContinuityEquation hνce hν.continuousOn ht.le hi'
+  simpa only [ν, finiteMeasureNonnegExtension_toMeasure, max_eq_right ht.le] using hh
 
 /-- Bounded velocity controls first-Wasserstein displacement without any endpoint moment
 hypotheses. -/
-theorem wasserstein_e_dist_one_le_of_is_continuity_equation_of_bound
+theorem wassersteinEDist_one_le_of_isContinuityEquation_of_bound
     {ν : ℝ → FiniteMeasure E} {v : ℝ → E → E} {a b : ℝ}
     (h : TauCeti.IsContinuityEquation (fun t ↦ (ν t : Measure E)) v a b)
     (hν : ContinuousOn ν (Icc a b)) (hab : a ≤ b)

@@ -7,7 +7,6 @@ public import Mathlib.MeasureTheory.SpecificCodomains.WithLp
 public import Mathlib.Probability.HasLaw
 public import Mathlib.Probability.Moments.Covariance
 
-
 /-!
 # U-statistic projections, variance and limit laws
 
@@ -16,9 +15,9 @@ kernels have an exact decomposition and variance, and finite-rank degenerate ker
 Gaussian-chaos limits. Sources: GAPS 102.8, 102.29 and 102.30, and `SYNOPSIS102.md`.
 The normalization is the ordered-injection convention of `CKSD.uStatistic`.
 The general-order central limit theorem combines the `O(n⁻²)` second-moment bound for the
-remainder of the Hájek projection (`CKSD.exists_integral_sq_u_statistic_sub_projection_le` in
+remainder of the Hájek projection (`CKSD.exists_integral_sq_uStatistic_sub_projection_le` in
 `CKSD.Asymptotics.UStatisticsProjection`), Chebyshev's inequality, the iid central limit theorem
-`CKSD.tendsto_in_distribution_inv_sqrt_mul_sum_of_iid` and Slutsky's lemma.
+`CKSD.tendstoInDistribution_inv_sqrt_mul_sum_of_iid` and Slutsky's lemma.
 The order-two proof uses Mathlib's finite-product `HasLaw` and integration adapters,
 `variance_sum_pi`, and the variance and covariance identities. Distinct degenerate kernel
 terms are orthogonal by integrating out a coordinate occurring in only one term.
@@ -42,7 +41,7 @@ attribute [local instance] Classical.propDecidable
 kernel `h` of order `m + 1` with mean `θ` and first projection `g(x) = E h(x, X₂, …) - θ`,
 `√n (Uₙ - θ)` converges in law to `N(0, (m + 1)² Var g)`. In the degenerate case `Var g = 0`
 the limit is the point mass at `0`. -/
-theorem tendsto_in_distribution_u_statistic_of_nondegenerate
+theorem tendstoInDistribution_uStatistic
     {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) [IsProbabilityMeasure P]
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P) (m : ℕ)
@@ -55,9 +54,9 @@ theorem tendsto_in_distribution_u_statistic_of_nondegenerate
       (uStatistic (m + 1) n h (fun i ↦ X i.val ω) - θ)) atTop id (fun _ ↦ μ)
       (gaussianReal 0 (Real.toNNReal (((m + 1 : ℕ) : ℝ) ^ 2 * Var[g; P]))) := by
   intro θ g
-  obtain ⟨C, hC⟩ := exists_integral_sq_u_statistic_sub_projection_le P h hmeas hsym h2 θ rfl g
+  obtain ⟨C, hC⟩ := exists_integral_sq_uStatistic_sub_projection_le P h hmeas hsym h2 θ rfl g
     fun _ ↦ rfl
-  obtain ⟨hgm, hg2, hg0, -⟩ := u_statistic_projection_spec P h hmeas h2 θ rfl g fun _ ↦ rfl
+  obtain ⟨hgm, hg2, hg0, -⟩ := uStatistic_projection_spec P h hmeas h2 θ rfl g fun _ ↦ rfl
   set k : ℝ := ((m + 1 : ℕ) : ℝ) with hk
   -- the law of the first `n` observations
   have hlaw : ∀ n : ℕ, MeasurePreserving (fun ω (i : Fin n) ↦ X i.val ω) μ
@@ -71,12 +70,12 @@ theorem tendsto_in_distribution_u_statistic_of_nondegenerate
     funext i
     exact hiid.2.2 i
   -- the central limit theorem for the projection
-  have hclt := (tendsto_in_distribution_inv_sqrt_mul_sum_of_iid μ P X hiid g hgm hg2
+  have hclt := (tendstoInDistribution_inv_sqrt_mul_sum_of_iid μ P X hiid g hgm hg2
     hg0).continuous_comp (g := fun z ↦ k * z) (by fun_prop)
   have hlim : TendstoInDistribution (fun (n : ℕ) ω ↦ k * ((Real.sqrt n)⁻¹ *
       ∑ i ∈ Finset.range n, g (X i ω))) atTop id (fun _ ↦ μ)
       (gaussianReal 0 (Real.toNNReal (k ^ 2 * Var[g; P]))) := by
-    refine tendsto_in_distribution_of_map_eq hclt aemeasurable_id ?_
+    refine tendstoInDistribution_of_map_eq hclt aemeasurable_id ?_
     rw [Measure.map_id, Function.comp_id, gaussianReal_map_const_mul, mul_zero,
       variance_of_integral_eq_zero hgm.aemeasurable hg0,
       Real.toNNReal_mul (sq_nonneg k), Real.toNNReal_of_nonneg (sq_nonneg k)]
@@ -90,7 +89,7 @@ theorem tendsto_in_distribution_u_statistic_of_nondegenerate
   have hYm : ∀ n : ℕ, Measurable (fun ω ↦ Real.sqrt n *
       (uStatistic (m + 1) n h (fun i ↦ X i.val ω) - θ)) := fun n ↦
     (((hUm n).comp (hlaw n).measurable).sub_const _).const_mul _
-  refine tendsto_in_distribution_of_tendsto_in_measure_sub_of_measurable μ _ _ hXm hYm hlim ?_
+  refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _ hXm hYm hlim ?_
   -- the remainder tends to zero in probability
   set R : (n : ℕ) → (Fin n → E) → ℝ := fun n x ↦ uStatistic (m + 1) n h x - θ -
     k / n * ∑ i, g (x i) with hR
@@ -105,13 +104,13 @@ theorem tendsto_in_distribution_u_statistic_of_nondegenerate
     simp only [R, hs]
     linear_combination (∑ i ∈ Finset.range n, g (X i ω)) * hsq
   simp_rw [hdiff]
-  rw [tendsto_in_measure_iff_measure_real_lt_dist]
+  rw [tendstoInMeasure_iff_measureReal_lt_dist]
   intro ε hε
   refine squeeze_zero' (Eventually.of_forall fun _ ↦ measureReal_nonneg)
     ((eventually_ge_atTop (2 * (m + 1))).mono fun n hn ↦ ?_)
     (tendsto_const_div_atTop_nhds_zero_nat (C / ε ^ 2))
   have hn0 : (0 : ℝ) < n := by exact_mod_cast (show 0 < n by omega)
-  have hRL2 := (mem_lp_u_statistic_sub_projection P h h2 θ hg2 n).comp_measurePreserving (hlaw n)
+  have hRL2 := (memLp_uStatistic_sub_projection P h h2 θ hg2 n).comp_measurePreserving (hlaw n)
   have hint : Integrable (fun ω ↦ (Real.sqrt n * R n (fun i ↦ X i.val ω)) ^ 2) μ := by
     simp_rw [mul_pow]
     exact hRL2.integrable_sq.const_mul _
@@ -122,7 +121,7 @@ theorem tendsto_in_distribution_u_statistic_of_nondegenerate
     congr 1
     have := integral_map (μ := μ) (hlaw n).measurable.aemeasurable (f := fun x ↦ R n x ^ 2)
       (by rw [(hlaw n).map_eq]
-          exact (mem_lp_u_statistic_sub_projection P h h2 θ hg2 n).aestronglyMeasurable.pow 2)
+          exact (memLp_uStatistic_sub_projection P h h2 θ hg2 n).aestronglyMeasurable.pow 2)
     rw [(hlaw n).map_eq] at this
     exact this.symm
   have hcheb := mul_meas_ge_le_integral_of_nonneg (Eventually.of_forall fun ω ↦ sq_nonneg _)
@@ -145,7 +144,7 @@ theorem tendsto_in_distribution_u_statistic_of_nondegenerate
 
 
 /-- The order-two ordered-injection sum is the sum over distinct ordered pairs. -/
-theorem u_statistic_two_eq_sum {E : Type*} {n : ℕ} (h : E × E → ℝ) (x : Fin n → E) :
+theorem uStatistic_two_eq_sum {E : Type*} {n : ℕ} (h : E × E → ℝ) (x : Fin n → E) :
     uStatistic 2 n (fun z ↦ h (z 0, z 1)) x =
       (n : ℝ)⁻¹ * ((n - 1 : ℕ) : ℝ)⁻¹ * ∑ i, ∑ j, if i = j then 0 else h (x i, x j) := by
   classical
@@ -184,14 +183,14 @@ theorem sum_pair_ne_left {n : ℕ} (g : Fin n → ℝ) :
     _ = _ := by rw [hn', Finset.mul_sum]
 
 /-- The order-two Hoeffding decomposition is a deterministic identity. -/
-theorem u_statistic_two_sub_eq {E : Type*} {n : ℕ} (hn : 2 ≤ n)
+theorem uStatistic_two_sub_eq {E : Type*} {n : ℕ} (hn : 2 ≤ n)
     (h : E × E → ℝ) (g : E → ℝ) (θ : ℝ) (x : Fin n → E) :
     uStatistic 2 n (fun z ↦ h (z 0, z 1)) x - θ =
       2 / n * ∑ i, g (x i) +
         uStatistic 2 n (fun z ↦ h (z 0, z 1) - θ - g (z 0) - g (z 1)) x := by
   classical
-  rw [u_statistic_two_eq_sum]
-  have hq := u_statistic_two_eq_sum (fun z : E × E ↦ h z - θ - g z.1 - g z.2) x
+  rw [uStatistic_two_eq_sum]
+  have hq := uStatistic_two_eq_sum (fun z : E × E ↦ h z - θ - g z.1 - g z.2) x
   change _ = _ + uStatistic 2 n (fun z ↦ (fun p : E × E ↦ h p - θ - g p.1 - g p.2) (z 0, z 1)) x
   rw [hq]
   have hsplit : (∑ i, ∑ j, if i = j then 0 else h (x i, x j) - θ - g (x i) - g (x j)) =
@@ -218,7 +217,7 @@ theorem u_statistic_two_sub_eq {E : Type*} {n : ℕ} (hn : 2 ≤ n)
 
 
 /-- Distinct coordinates under a finite product law have the product of their laws. -/
-theorem has_law_pi_pair {E : Type*} [MeasurableSpace E] (P : Measure E)
+theorem hasLaw_pi_pair {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P] {n : ℕ} (i j : Fin n) (hij : i ≠ j) :
     HasLaw (fun x : Fin n → E ↦ (x i, x j)) (P.prod P) (Measure.pi fun _ : Fin n ↦ P) := by
   have h := iIndepFun_pi (μ := fun _ : Fin n ↦ P) (X := fun _ ↦ id)
@@ -228,7 +227,7 @@ theorem has_law_pi_pair {E : Type*} [MeasurableSpace E] (P : Measure E)
     ⟨(measurable_pi_apply j).aemeasurable, (measurePreserving_eval _ j).map_eq⟩
 
 /-- The conditional integral of a square-integrable real kernel is square integrable. -/
-theorem mem_lp_integral_kernel {E : Type*} [MeasurableSpace E] (P : Measure E)
+theorem memLp_integral_kernel {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P] (h : E × E → ℝ) (hm : Measurable h) (h2 : MemLp h 2 (P.prod P)) :
     MemLp (fun x ↦ ∫ y, h (x,y) ∂P) 2 P := by
   apply (memLp_two_iff_integrable_sq
@@ -287,7 +286,7 @@ theorem integral_pair_mul_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure E
   let e := MeasurableEquiv.piFinSuccAbove (fun _ : Fin (n+1) ↦ E) i
   have he := measurePreserving_piFinSuccAbove (fun _ : Fin (n+1) ↦ P) i
   have hei := he.symm e
-  have hiq := (has_law_pi_pair P i j hij).memLp_fun_comp hq
+  have hiq := (hasLaw_pi_pair P i j hij).memLp_fun_comp hq
   have hint := hiq.integrable_mul hF
   have hint' := hei.integrable_comp_of_integrable hint
   have hsymm : (∫ x, q (x i, x j) * F x ∂(Measure.pi fun _ : Fin (n+1) ↦ P)) =
@@ -315,7 +314,7 @@ theorem integral_pair_mul_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure E
 
 
 /-- Inserting a different value at one coordinate leaves every other coordinate unchanged. -/
-theorem insert_nth_eq_of_ne {E : Type*} {n : ℕ} (i k : Fin (n+1)) (hik : i ≠ k)
+theorem insertNth_eq_of_ne {E : Type*} {n : ℕ} (i k : Fin (n+1)) (hik : i ≠ k)
     (a b : E) (z : Fin n → E) :
     (i.insertNth (α := fun _ ↦ E) a z) k = (i.insertNth (α := fun _ ↦ E) b z) k := by
   rcases i.eq_self_or_eq_succAbove k with h | ⟨k', rfl⟩
@@ -340,7 +339,7 @@ theorem integral_pair_mul_pair {E : Type*} [MeasurableSpace E] (P : Measure E)
       · rw [← hil, ← hjk, hs (x j) (x i)]; ring
     simp_rw [he]
     simpa only [Function.comp_apply, Pi.pow_apply] using
-      (has_law_pi_pair P i j hij).integral_comp (hq.aestronglyMeasurable.pow 2)
+      (hasLaw_pi_pair P i j hij).integral_comp (hq.aestronglyMeasurable.pow 2)
   rw [ite_eq_right heq]
   cases n with
   | zero => exact Fin.elim0 i
@@ -348,10 +347,10 @@ theorem integral_pair_mul_pair {E : Type*} [MeasurableSpace E] (P : Measure E)
     have horth (a b : Fin (n+1)) (hab : a ≠ b) (hak : a ≠ k) (hal : a ≠ l) :
         (∫ x, q (x a, x b) * q (x k, x l) ∂(Measure.pi fun _ : Fin (n+1) ↦ P)) = 0 := by
       apply integral_pair_mul_eq_zero P a b hab q hq hzero
-        (fun x ↦ q (x k, x l)) ((has_law_pi_pair P k l hkl).memLp_fun_comp hq)
+        (fun x ↦ q (x k, x l)) ((hasLaw_pi_pair P k l hkl).memLp_fun_comp hq)
       intro t u z
       congr 1
-      exact Prod.ext (insert_nth_eq_of_ne a k hak t u z) (insert_nth_eq_of_ne a l hal t u z)
+      exact Prod.ext (insertNth_eq_of_ne a k hak t u z) (insertNth_eq_of_ne a l hal t u z)
     by_cases hi : i ≠ k ∧ i ≠ l
     · exact horth i j hij hi.1 hi.2
     have hj : j ≠ k ∧ j ≠ l := by aesop
@@ -372,11 +371,11 @@ theorem integral_pair_mul_single {E : Type*} [MeasurableSpace E] (P : Measure E)
     by_cases hik : i ≠ k
     · apply integral_pair_mul_eq_zero P i j hij q hq hzero (fun x ↦ g (x k)) hgk
       intro t u z
-      rw [insert_nth_eq_of_ne i k hik t u z]
+      rw [insertNth_eq_of_ne i k hik t u z]
     · have hik' : i = k := not_not.1 hik
       have hjk : j ≠ k := by subst k; exact hij.symm
       have hh := integral_pair_mul_eq_zero P j i hij.symm q hq hzero (fun x ↦ g (x k)) hgk
-        (fun t u z ↦ congrArg g (insert_nth_eq_of_ne j k hjk t u z))
+        (fun t u z ↦ congrArg g (insertNth_eq_of_ne j k hjk t u z))
       calc (∫ x, q (x i, x j) * g (x k) ∂(Measure.pi fun _ : Fin (n+1) ↦ P)) =
           ∫ x, q (x j, x i) * g (x k) ∂(Measure.pi fun _ : Fin (n+1) ↦ P) :=
             integral_congr_ae (ae_of_all _ fun x ↦ by dsimp only; rw [hs (x i) (x j)])
@@ -384,7 +383,7 @@ theorem integral_pair_mul_single {E : Type*} [MeasurableSpace E] (P : Measure E)
 
 
 /-- The sum of a square-integrable kernel over distinct coordinate pairs is square integrable. -/
-theorem mem_lp_sum_pairs {E : Type*} [MeasurableSpace E] (P : Measure E)
+theorem memLp_sum_pairs {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P] (q : E × E → ℝ) (hq : MemLp q 2 (P.prod P)) (n : ℕ) :
     MemLp (fun x : Fin n → E ↦ ∑ i, ∑ j, if i = j then 0 else q (x i, x j)) 2
       (Measure.pi fun _ : Fin n ↦ P) := by
@@ -396,7 +395,7 @@ theorem mem_lp_sum_pairs {E : Type*} [MeasurableSpace E] (P : Measure E)
   by_cases hij : i = j
   · simp only [hij, ite_true]; exact memLp_const (0 : ℝ)
   · simp only [hij, ite_false]
-    exact (has_law_pi_pair P i j hij).memLp_fun_comp hq
+    exact (hasLaw_pi_pair P i j hij).memLp_fun_comp hq
 
 /-- Degenerate pair sums have mean zero. -/
 theorem integral_sum_pairs_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure E)
@@ -413,7 +412,7 @@ theorem integral_sum_pairs_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure 
     by_cases hij : i = j
     · simp only [hij, ite_true]; exact integrable_const (0 : ℝ)
     · simp only [hij, ite_false]
-      exact (has_law_pi_pair P i j hij).integrable_fun_comp (hq.integrable (by norm_num))
+      exact (hasLaw_pi_pair P i j hij).integrable_fun_comp (hq.integrable (by norm_num))
   rw [integral_finsetSum _ (fun i _ ↦ integrable_finsetSum _ (fun j _ ↦ hint i j))]
   apply Finset.sum_eq_zero
   intro i _
@@ -424,7 +423,7 @@ theorem integral_sum_pairs_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure 
   · simp [hij]
   · simp only [hij, ite_false]
     simpa only [Function.comp_apply, hz] using
-      (has_law_pi_pair P i j hij).integral_comp hq.aestronglyMeasurable
+      (hasLaw_pi_pair P i j hij).integral_comp hq.aestronglyMeasurable
 
 /-- The second moment of a degenerate symmetric ordered-pair sum. -/
 theorem integral_sq_sum_pairs {E : Type*} [MeasurableSpace E] (P : Measure E)
@@ -441,7 +440,7 @@ theorem integral_sq_sum_pairs {E : Type*} [MeasurableSpace E] (P : Measure E)
     dsimp only [A]
     by_cases hij : i = j
     · simp only [hij, ite_true]; exact memLp_const (0 : ℝ)
-    · simp only [hij, ite_false]; exact (has_law_pi_pair P i j hij).memLp_fun_comp hq
+    · simp only [hij, ite_false]; exact (hasLaw_pi_pair P i j hij).memLp_fun_comp hq
   have hterm (i j k l : Fin n) :
       (∫ x, A i j x * A k l x ∂(Measure.pi fun _ : Fin n ↦ P)) =
         if i = j then 0 else if k = i ∧ l = j then V else if k = j ∧ l = i then V else 0 := by
@@ -505,7 +504,7 @@ theorem integral_sum_pairs_mul_sum_eq_zero {E : Type*} [MeasurableSpace E] (P : 
     dsimp only [A]
     by_cases hij : i = j
     · simp only [hij, ite_true]; exact memLp_const (0 : ℝ)
-    · simp only [hij, ite_false]; exact (has_law_pi_pair P i j hij).memLp_fun_comp hq
+    · simp only [hij, ite_false]; exact (hasLaw_pi_pair P i j hij).memLp_fun_comp hq
   have hG : MemLp (fun x : Fin n → E ↦ ∑ k, g (x k)) 2 (Measure.pi fun _ : Fin n ↦ P) :=
     memLp_finsetSum _ fun k _ ↦ hg.comp_measurePreserving (measurePreserving_eval _ k)
   have he (i j : Fin n) :
@@ -516,7 +515,7 @@ theorem integral_sum_pairs_mul_sum_eq_zero {E : Type*} [MeasurableSpace E] (P : 
     simp_rw [Finset.mul_sum]
     have hint (k : Fin n) : Integrable (fun x : Fin n → E ↦ q (x i, x j) * g (x k))
         (Measure.pi fun _ : Fin n ↦ P) :=
-      ((has_law_pi_pair P i j hij).memLp_fun_comp hq).integrable_mul
+      ((hasLaw_pi_pair P i j hij).memLp_fun_comp hq).integrable_mul
         (hg.comp_measurePreserving (measurePreserving_eval _ k))
     rw [integral_finsetSum _ (fun k _ ↦ hint k)]
     simp_rw [integral_pair_mul_single P i j _ hij q hq hs hzero g hg]
@@ -532,7 +531,7 @@ theorem integral_sum_pairs_mul_sum_eq_zero {E : Type*} [MeasurableSpace E] (P : 
   simp
 
 /-- GAPS 102.29: order-two Hoeffding decomposition, including the exact variance. -/
-theorem u_statistic_hoeffding_decomposition_and_variance {E : Type*} [MeasurableSpace E]
+theorem uStatistic_hoeffding_decomposition_and_variance {E : Type*} [MeasurableSpace E]
     (P : Measure E) [IsProbabilityMeasure P] (h : E × E → ℝ)
     (hm : Measurable h) (h2 : MemLp h 2 (P.prod P)) (hs : ∀ x y, h (x,y) = h (y,x))
     (n : ℕ) (hn : 2 ≤ n) :
@@ -552,12 +551,12 @@ theorem u_statistic_hoeffding_decomposition_and_variance {E : Type*} [Measurable
   let U := fun x : Fin n → E ↦ uStatistic 2 n (fun z ↦ h (z 0, z 1)) x
   change (∀ᵐ x ∂(Measure.pi fun _ : Fin n ↦ P), U x - θ = 2 / n * (∑ i, g (x i)) +
       uStatistic 2 n (fun z ↦ q (z 0, z 1)) x) ∧ _
-  refine ⟨ae_of_all _ (u_statistic_two_sub_eq hn h g θ), ?_⟩
+  refine ⟨ae_of_all _ (uStatistic_two_sub_eq hn h g θ), ?_⟩
   let μ := Measure.pi fun _ : Fin n ↦ P
   let G := fun x : Fin n → E ↦ ∑ i, g (x i)
   let S := fun x : Fin n → E ↦ ∑ i, ∑ j, if i = j then 0 else q (x i, x j)
   let c : ℝ := (n : ℝ)⁻¹ * ((n - 1 : ℕ) : ℝ)⁻¹
-  have hg : MemLp g 2 P := (mem_lp_integral_kernel P h hm h2).sub (memLp_const θ)
+  have hg : MemLp g 2 P := (memLp_integral_kernel P h hm h2).sub (memLp_const θ)
   have hq : MemLp q 2 (P.prod P) :=
     ((h2.sub (memLp_const θ)).sub (hg.comp_measurePreserving measurePreserving_fst)).sub
       (hg.comp_measurePreserving measurePreserving_snd)
@@ -567,7 +566,7 @@ theorem u_statistic_hoeffding_decomposition_and_variance {E : Type*} [Measurable
     rw [hs x y]
     ring
   obtain ⟨-, hq0⟩ := integral_hoeffding_kernel_eq_zero P h h2 hs
-  have hS : MemLp S 2 μ := mem_lp_sum_pairs P q hq n
+  have hS : MemLp S 2 μ := memLp_sum_pairs P q hq n
   have hG : MemLp G 2 μ :=
     memLp_finsetSum _ fun i _ ↦ hg.comp_measurePreserving (measurePreserving_eval _ i)
   have hS0 : (∫ x, S x ∂μ) = 0 := integral_sum_pairs_eq_zero P q hq hq0 n
@@ -586,8 +585,8 @@ theorem u_statistic_hoeffding_decomposition_and_variance {E : Type*} [Measurable
         simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
   have hU : U = fun x ↦ ((2 / n) * G x + c * S x) + θ := by
     funext x
-    have hd := u_statistic_two_sub_eq hn h g θ x
-    have hqsum := u_statistic_two_eq_sum q x
+    have hd := uStatistic_two_sub_eq hn h g θ x
+    have hqsum := uStatistic_two_eq_sum q x
     change U x - θ = 2 / n * G x + uStatistic 2 n (fun z ↦ q (z 0, z 1)) x at hd
     rw [hqsum] at hd
     change U x - θ = 2 / n * G x + c * S x at hd
@@ -610,7 +609,7 @@ theorem u_statistic_hoeffding_decomposition_and_variance {E : Type*} [Measurable
 
 /-- The finite-rank quadratic U-statistic is a difference between squared sample sums and
 sample sums of squares. The identity includes sample sizes zero and one. -/
-theorem u_statistic_two_finite_rank_eq {E : Type*} (r n : ℕ) (a : Fin r → ℝ)
+theorem uStatistic_two_finite_rank_eq {E : Type*} (r n : ℕ) (a : Fin r → ℝ)
     (e : Fin r → E → ℝ) (x : Fin n → E) :
     (n : ℝ) * uStatistic 2 n (fun z ↦ ∑ j, a j * e j (z 0) * e j (z 1)) x =
       ((n : ℝ) / (n - 1 : ℕ)) *
@@ -643,7 +642,7 @@ theorem u_statistic_two_finite_rank_eq {E : Type*} (r n : ℕ) (a : Fin r → �
     intro j _
     simp_rw [← Finset.mul_sum]
     rw [hsum]
-  rw [u_statistic_two_eq_sum (fun z : E × E ↦ ∑ j, a j * e j z.1 * e j z.2)]
+  rw [uStatistic_two_eq_sum (fun z : E × E ↦ ∑ j, a j * e j z.1 * e j z.2)]
   rw [hswap]
   have hsqrt : ((Real.sqrt n)⁻¹) ^ 2 = (n : ℝ)⁻¹ := by
     rw [inv_pow, Real.sq_sqrt (Nat.cast_nonneg n)]
@@ -664,7 +663,7 @@ theorem u_statistic_two_finite_rank_eq {E : Type*} (r n : ℕ) (a : Fin r → �
 
 /-- A finite-rank quadratic kernel has the Gaussian-chaos limit whenever its vector of
 normalized scores has the standard Gaussian limit. -/
-theorem tendsto_in_distribution_u_statistic_finite_rank_of_scores
+theorem tendstoInDistribution_uStatistic_finite_rank_of_scores
     {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
@@ -732,7 +731,7 @@ theorem tendsto_in_distribution_u_statistic_finite_rank_of_scores
       (φ (WithLp.toLp 2 (fun j ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, e j (X i ω))) - R n ω)) = Y n := by
     intro n
     funext ω
-    have h := u_statistic_two_finite_rank_eq r n a e (fun i ↦ X i.val ω)
+    have h := uStatistic_two_finite_rank_eq r n a e (fun i ↦ X i.val ω)
     dsimp only [φ, R, c, Y, s]
     have heq (j : Fin r) : (∑ i : Fin n, e j (X i.val ω)) =
         ∑ i ∈ Finset.range n, e j (X i ω) :=
@@ -746,7 +745,7 @@ theorem tendsto_in_distribution_u_statistic_finite_rank_of_scores
       (stdGaussian (EuclideanSpace ℝ (Fin r))) :=
     hscaled.congr (fun n ↦ ae_of_all _ fun ω ↦ congrFun (hYe n) ω)
       (ae_of_all _ fun z ↦ by simp only [Function.comp_apply, id_eq, one_mul])
-  refine tendsto_in_distribution_of_map_eq hlimit aemeasurable_id ?_
+  refine tendstoInDistribution_of_map_eq hlimit aemeasurable_id ?_
   rw [Measure.map_id, ← map_pi_eq_stdGaussian, Measure.map_map (by fun_prop) (by fun_prop)]
   congr 1
   funext z
@@ -755,7 +754,7 @@ theorem tendsto_in_distribution_u_statistic_finite_rank_of_scores
 
 
 /-- GAPS 102.30: finite-rank degenerate quadratic kernels have Gaussian-chaos limits. -/
-theorem tendsto_in_distribution_u_statistic_of_finite_rank_degenerate
+theorem tendstoInDistribution_uStatistic_of_finite_rank_degenerate
     {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) [IsProbabilityMeasure P]
     (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P) (r : ℕ) (a : Fin r → ℝ)
@@ -791,9 +790,9 @@ theorem tendsto_in_distribution_u_statistic_of_finite_rank_degenerate
     rw [(hXlaw 0).covariance_fun_comp (he i).aemeasurable (he j).aemeasurable,
       covariance_eq_sub (he i) (he j), he0, he0, zero_mul, sub_zero]
     simpa only [Matrix.one_apply, Pi.mul_apply] using hortho i j
-  have hclt := tendsto_in_distribution_inv_sqrt_smul_sum_sub_of_iid μ V hV2 hVind hVident
+  have hclt := tendstoInDistribution_inv_sqrt_smul_sum_sub_of_iid μ V hV2 hVind hVident
   simp only [hVmean, hcov, multivariateGaussian_zero_one] at hclt
-  apply tendsto_in_distribution_u_statistic_finite_rank_of_scores μ P X hiid r a e he
+  apply tendstoInDistribution_uStatistic_finite_rank_of_scores μ P X hiid r a e he
     (fun j ↦ by simpa only [← pow_two, ite_true] using hortho j j)
   convert hclt using 1
   funext n ω

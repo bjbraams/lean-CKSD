@@ -1583,7 +1583,7 @@ weights $Y_i$ by $K_h(X_i-x)/\sum_jK_h(X_j-x)$.
   ellipsoids, and every part of the theorem are missing.
 
 * **103.11. Grenander estimator.** Let $f$ be a density vanishing on
-  $(-\infty,0)$ and decreasing on $[0,\infty)$, continuous at $x_0>0$
+  $(-\infty,0)$ and decreasing on $(0,\infty)$, continuous at $x_0>0$
   with $f'(x_0)<0$. The maximum
   likelihood estimator $\hat f_n$ among decreasing densities is the left
   slope of the least concave majorant of $F_n$, and
@@ -1883,7 +1883,7 @@ count false and all rejections.
   where $F_1$ is the Tracy–Widom law of the Gaussian orthogonal ensemble. In
   the spiked model with rows $N(0,\Sigma)$ and one eigenvalue $\alpha$ of
   $\Sigma$, the rest $1$, $\ell_{\max}\to(1+\sqrt y)^2$ almost surely when
-  $1<\alpha\le1+\sqrt y$ and $\ell_{\max}\to\alpha+y\alpha/(\alpha-1)$ when
+  $0\le\alpha\le1+\sqrt y$ and $\ell_{\max}\to\alpha+y\alpha/(\alpha-1)$ when
   $\alpha>1+\sqrt y$. TauCeti has the Wishart laws, sample second-moment
   matrices with polynomial entrywise deviation bounds, the Marchenko–Pastur
   law as a measure with its density and atom, the Gaussian orthogonal and
@@ -2266,9 +2266,9 @@ $N(\varepsilon,\mathcal F,h)$ for covering numbers.
   Polish, $\theta\mapsto P_\theta(A)$ measurable for every measurable $A$,
   and $\theta\mapsto P_\theta$ injective, and let $\Pi$ be a prior. For
   $X_1,X_2,\ldots$ independent with law $P_\theta$, there is a $\Pi$-null
-  set $N$ such that for every $\theta\notin N$ and every neighbourhood $U$
-  of $\theta$, the posterior probability of $U$ tends to $1$,
-  $P_\theta^\infty$-almost surely. Mathlib's Lévy upward theorem gives
+  set $N$ such that for every $\theta\notin N$, $P_\theta^\infty$-almost
+  surely, the posterior probability of every neighbourhood $U$ of $\theta$
+  tends to $1$. Mathlib's Lévy upward theorem gives
   almost-sure convergence of the posterior probability of $U$ to its
   conditional expectation given the whole sequence; the remaining step is
   that $\theta$ is a measurable function of the sequence, which follows from
@@ -2540,8 +2540,9 @@ $\|\mu_n-\pi\|_{\mathrm{TV}}\le\varepsilon$.
   most $c_1\kappa d^{1/2}\Lambda^3$ from every $M$-warm start. Conversely,
   there are universal $c_3,c_4>0$ such that for all $a,b>0$ there is
   $N_{a,b}$ with the property that whenever $d>N_{a,b}$,
-  $3\le\kappa\le ad^b$, $M\ge12$, and $h>0$, some such target and some
-  $M$-warm start give an $\varepsilon$-mixing time at least
+  $3\le\kappa\le ad^b$, $M\ge12$, and $h>0$, some target with
+  $I\preceq\nabla^2V\preceq\kappa I$ and some $M$-warm start give an
+  $\varepsilon$-mixing time at least
   $c_3\kappa d^{1/2}(\max\{\log\kappa,\log d\})^{-3}\log(c_4/\varepsilon)$.
   No part is present.
 
@@ -2610,7 +2611,7 @@ likelihood weights.
 
 * **104.51. Propagation of chaos.** Assume a drift globally Lipschitz in
   position and in $W_1$ of the measure, independent Brownian drivers, and
-  independent identically distributed initial states of finite second
+  independent identically distributed initial states of finite first
   moment, independent of the drivers. Then the limiting equation and the
   particle systems have unique strong solutions, and for every $T<\infty$
   and fixed $k$ the joint path law on $[0,T]$ of the first $k$ particles
@@ -2649,8 +2650,8 @@ likelihood weights.
   $b(x,\mu)=b_0(x)+\int K(x,y)\mu(dy)$ with $b_0$ globally Lipschitz and $K$
   bounded and globally Lipschitz, and couple the particles with independent
   nonlinear copies $\bar X^i$ using the same initial values and Brownian
-  motions. For independent identically distributed initial values of finite
-  second moment and every finite $T$,
+  motions. For independent identically distributed initial values and every
+  finite $T$,
   $\mathbb E\sup_{t\le T}\|X_t^{i,N}-\bar X_t^i\|^2\le C_T/N$, with $C_T$
   depending only on $T$, the Lipschitz constants, and $\sup|K|$. The
   coupling argument needs stochastic differential equations, which are

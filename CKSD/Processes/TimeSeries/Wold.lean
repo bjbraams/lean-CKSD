@@ -5,7 +5,6 @@ public import Mathlib.Analysis.Normed.Operator.Extend
 public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
 public import TauCeti.Analysis.InnerProductSpace.LinearCombination
 
-
 /-!
 # Hilbert-space Wold decomposition
 
@@ -31,7 +30,7 @@ that the innovations are shifts of each other and have constant norm, and expand
 
 * `CKSD.Wold.wold`: the decomposition in terms of the innovations.
 * `CKSD.exists_wold_decomposition` (GAPS 106.2): the decomposition for a weakly stationary
-  sequence (`CKSD.IsWeaklyStationary`).
+  sequence (`CKSD.IsWeaklyStationary`), with the orthogonal projections onto the closed pasts.
 
 The causal autoregression part of GAPS 106.2 is not covered.
 -/
@@ -73,7 +72,7 @@ theorem mem_past_self (t : ℤ) : X t ∈ past X t :=
   Submodule.le_topologicalClosure _ (Submodule.subset_span ⟨t, le_rfl, rfl⟩)
 
 /-- The closed past is closed. -/
-theorem is_closed_past (t : ℤ) : IsClosed (past X t : Set H) :=
+theorem isClosed_past (t : ℤ) : IsClosed (past X t : Set H) :=
   Submodule.isClosed_topologicalClosure _
 
 /-- The closed past lies in the closed span. -/
@@ -95,7 +94,7 @@ theorem inner_eq_zero_of_forall_le {z : H} {t : ℤ} (hz : ∀ s ≤ t, ⟪z, X 
   exact (Submodule.mem_orthogonal_singleton_iff_inner_right).1 (hle hy)
 
 /-- The closed span is closed. -/
-theorem is_closed_hull : IsClosed (hull X : Set H) := Submodule.isClosed_topologicalClosure _
+theorem isClosed_hull : IsClosed (hull X : Set H) := Submodule.isClosed_topologicalClosure _
 
 /-- `X_t` lies in the closed span. -/
 theorem mem_hull (t : ℤ) : X t ∈ hull X :=
@@ -106,7 +105,7 @@ section Shift
 variable [CompleteSpace H]
 
 /-- The closed span of a sequence in a Hilbert space is complete. -/
-instance : CompleteSpace (hull X) := (is_closed_hull X).completeSpace_coe
+instance : CompleteSpace (hull X) := (isClosed_hull X).completeSpace_coe
 
 /-- The coefficient map `c ↦ ∑ c_t X_t` into the closed span. -/
 def coeffMap : (ℤ →₀ ℝ) →ₗ[ℝ] hull X :=
@@ -118,7 +117,7 @@ def shiftedCoeffMap : (ℤ →₀ ℝ) →ₗ[ℝ] hull X :=
 
 omit [CompleteSpace H] in
 /-- The finite linear combinations of the `X_t` are dense in the closed span. -/
-theorem dense_range_coeff_map : DenseRange (coeffMap X) := by
+theorem denseRange_coeffMap : DenseRange (coeffMap X) := by
   intro k
   rw [Topology.IsInducing.subtypeVal.closure_eq_preimage_closure_image, Set.mem_preimage]
   have himage :
@@ -140,7 +139,7 @@ variable {X}
 
 omit [CompleteSpace H] in
 /-- Under a stationary Gram matrix, shifting the coefficients preserves norms. -/
-theorem norm_shifted_coeff_map (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (f : ℤ →₀ ℝ) :
+theorem norm_shiftedCoeffMap (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (f : ℤ →₀ ℝ) :
     ‖shiftedCoeffMap X f‖ = ‖coeffMap X f‖ :=
   f.norm_linearCombination_eq_of_inner_eq fun a b ↦ by
     change ⟪X (a + 1), X (b + 1)⟫ = ⟪X a, X b⟫
@@ -150,28 +149,28 @@ theorem norm_shifted_coeff_map (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), 
 
 omit [CompleteSpace H] in
 /-- The shifted coefficient map is bounded by the coefficient map. -/
-theorem exists_bound_shifted_coeff_map (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) :
+theorem exists_bound_shiftedCoeffMap (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) :
     ∃ C, ∀ f, ‖shiftedCoeffMap X f‖ ≤ C * ‖coeffMap X f‖ :=
-  ⟨1, fun f ↦ by rw [norm_shifted_coeff_map hstat f, one_mul]⟩
+  ⟨1, fun f ↦ by rw [norm_shiftedCoeffMap hstat f, one_mul]⟩
 
 /-- With a stationary Gram matrix, the shift `X_t ↦ X_{t+1}` is a linear isometry of the
 closed span. -/
 def shiftIsometry (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) : hull X →ₗᵢ[ℝ] hull X :=
   LinearIsometry.mk ((shiftedCoeffMap X).extendOfNorm (coeffMap X)).toLinearMap fun x ↦ by
-    refine (dense_range_coeff_map X).induction_on x
+    refine (denseRange_coeffMap X).induction_on x
       (isClosed_eq ((shiftedCoeffMap X).extendOfNorm (coeffMap X)).continuous.norm
         continuous_norm) ?_
     intro f
     exact calc
       ‖(shiftedCoeffMap X).extendOfNorm (coeffMap X) (coeffMap X f)‖ = ‖shiftedCoeffMap X f‖ :=
-        congrArg norm (LinearMap.extendOfNorm_eq (dense_range_coeff_map X)
-          (exists_bound_shifted_coeff_map hstat) f)
-      _ = ‖coeffMap X f‖ := norm_shifted_coeff_map hstat f
+        congrArg norm (LinearMap.extendOfNorm_eq (denseRange_coeffMap X)
+          (exists_bound_shiftedCoeffMap hstat) f)
+      _ = ‖coeffMap X f‖ := norm_shiftedCoeffMap hstat f
 
 /-- The shift isometry sends `X_t` to `X_{t+1}`. -/
-theorem shift_isometry_apply (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (t : ℤ) :
+theorem shiftIsometry_apply (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (t : ℤ) :
     shiftIsometry hstat ⟨X t, mem_hull X t⟩ = ⟨X (t + 1), mem_hull X (t + 1)⟩ := by
-  have h := LinearMap.extendOfNorm_eq (dense_range_coeff_map X) (exists_bound_shifted_coeff_map hstat)
+  have h := LinearMap.extendOfNorm_eq (denseRange_coeffMap X) (exists_bound_shiftedCoeffMap hstat)
     (Finsupp.single t 1)
   simp only [coeffMap, shiftedCoeffMap, Finsupp.linearCombination_single, one_smul] at h
   exact h
@@ -191,7 +190,7 @@ theorem shift_apply_of_mem {x : H} (hx : x ∈ hull X) :
 
 /-- The shift sends `X_t` to `X_{t+1}`. -/
 theorem shift_apply_X (t : ℤ) : shift hstat (X t) = X (t + 1) := by
-  rw [shift_apply_of_mem hstat (mem_hull X t), shift_isometry_apply]
+  rw [shift_apply_of_mem hstat (mem_hull X t), shiftIsometry_apply]
 
 /-- The shift preserves inner products on the closed span. -/
 theorem inner_shift_shift {x y : H} (hx : x ∈ hull X) (hy : y ∈ hull X) :
@@ -203,7 +202,7 @@ theorem inner_shift_shift {x y : H} (hx : x ∈ hull X) (hy : y ∈ hull X) :
 theorem shift_mem_past {x : H} {t : ℤ} (hx : x ∈ past X t) : shift hstat x ∈ past X (t + 1) := by
   have hle : past X t ≤ (past X (t + 1)).comap (shift hstat).toLinearMap := by
     refine Submodule.topologicalClosure_minimal _ ?_
-      ((is_closed_past X (t + 1)).preimage (shift hstat).continuous)
+      ((isClosed_past X (t + 1)).preimage (shift hstat).continuous)
     refine Submodule.span_le.2 ?_
     rintro _ ⟨s, hs, rfl⟩
     change shift hstat (X s) ∈ past X (t + 1)
@@ -395,7 +394,7 @@ omit [CompleteSpace H] hstat hproj in
 /-- A countable sum of elements of a closed past lies in that closed past. -/
 theorem tsum_mem_past {f : ℕ → H} {t : ℤ} (hf : ∀ j, f j ∈ past X t) : ∑' j, f j ∈ past X t := by
   by_cases h : Summable f
-  · exact (is_closed_past X t).mem_of_tendsto h.hasSum
+  · exact (isClosed_past X t).mem_of_tendsto h.hasSum
       (Eventually.of_forall fun s ↦ Submodule.sum_mem _ fun j _ ↦ hf j)
   · rw [tsum_eq_zero_of_not_summable h]
     exact Submodule.zero_mem _
@@ -482,19 +481,27 @@ end Innovations
 
 end Wold
 
+/-- In a Hilbert space the closed pasts of a sequence are complete, so they carry orthogonal
+projections. -/
+instance Wold.completeSpace_past {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H]
+    [CompleteSpace H] (X : ℤ → H) (t : ℤ) : CompleteSpace (Wold.past X t) :=
+  (Wold.isClosed_past X t).completeSpace_coe
+
 /-- GAPS 106.2, Wold decomposition of a weakly stationary sequence `X` in a real Hilbert space.
-Let `P t` be the orthogonal projections onto the closed pasts `past X t` and
-`e t = X t - P (t - 1) (X t)` the innovations, with `e 0 ≠ 0`. There are coefficients `a` with
-`a 0 = 1` and `∑ a_j² < ∞`, and a sequence `V` lying in every closed past (the remote past) and
-orthogonal to every innovation, such that `X t = ∑_j a_j e (t - j) + V t`. -/
+Let `P t` be the orthogonal projections (`Submodule.starProjection`) onto the closed pasts
+`past X t` and `e t = X t - P (t - 1) (X t)` the innovations, with `e 0 ≠ 0`. There are
+coefficients `a` with `a 0 = 1` and `∑ a_j² < ∞`, and a sequence `V` lying in every closed past
+(the remote past) and orthogonal to every innovation, such that `X t = ∑_j a_j e (t - j) + V t`. -/
 theorem exists_wold_decomposition {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℝ H]
-    [CompleteSpace H] (X : ℤ → H) (hstat : IsWeaklyStationary ℝ X) (P : ℤ → H →L[ℝ] H)
-    (hproj : ∀ t x, P t x ∈ Wold.past X t ∧ ∀ y ∈ Wold.past X t, inner ℝ (x - P t x) y = 0)
-    (he : 0 < ‖Wold.innov P X 0‖) :
+    [CompleteSpace H] (X : ℤ → H) (hstat : IsWeaklyStationary ℝ X)
+    (he : Wold.innov (fun t ↦ (Wold.past X t).starProjection) X 0 ≠ 0) :
+    let e := Wold.innov (fun t ↦ (Wold.past X t).starProjection) X
     ∃ (a : ℕ → ℝ) (V : ℤ → H), a 0 = 1 ∧ Summable (fun j ↦ a j ^ 2) ∧
-      (∀ t s, V t ∈ Wold.past X s) ∧ (∀ t s, inner ℝ (V t) (Wold.innov P X s) = 0) ∧
-      ∀ t, Tendsto (fun n ↦ (∑ j ∈ Finset.range n, a j • Wold.innov P X (t - j)) + V t) atTop
+      (∀ t s, V t ∈ Wold.past X s) ∧ (∀ t s, inner ℝ (V t) (e s) = 0) ∧
+      ∀ t, Tendsto (fun n ↦ (∑ j ∈ Finset.range n, a j • e (t - j)) + V t) atTop
         (𝓝 (X t)) :=
-  Wold.wold (fun s t ↦ hstat.inner_eq_inner_sub_zero s t) P hproj he
+  Wold.wold (fun s t ↦ hstat.inner_eq_inner_sub_zero s t) _
+    (fun _ x ↦ ⟨Submodule.starProjection_apply_mem _ x,
+      fun y hy ↦ Submodule.starProjection_inner_eq_zero x y hy⟩) (norm_pos_iff.2 he)
 
 end CKSD

@@ -1,5 +1,4 @@
 module
-
 public import CKSD.Bayes.LangevinSampling
 public import TauCeti.MeasureTheory.Integral.PrekopaLeindler
 public import Mathlib.Analysis.Calculus.ParametricIntegral
@@ -14,6 +13,18 @@ entropy-energy constant `1 / (2 * m)`.
 
 The Prékopa–Leindler inequality is imported from TauCeti. Mathlib supplies dominated
 parametric differentiation, scalar calculus and integration.
+
+## Main results
+
+* `CKSD.potential_add_inner_add_le`, `CKSD.potential_interpolation_le`: tangent paraboloids and
+  strong-convexity interpolation from a strongly monotone gradient.
+* `CKSD.integrable_exp_neg_of_isStronglyMonotoneGradient`: `e^{-V}` is integrable for a
+  potential with strongly monotone gradient.
+* `CKSD.integral_exponential_interpolation_le`: the Prékopa–Leindler interpolation estimate.
+* `CKSD.hasDerivAt_integral_exponential_perturbation`: differentiation of a bounded exponential
+  perturbation under the integral.
+* `CKSD.entropy_exponential_le_of_quadratic_upper_bound`: the sharp entropy-energy inequality
+  with constant `1 / (2 * m)` for bounded log-density perturbations.
 -/
 
 @[expose] public section
@@ -56,6 +67,44 @@ theorem potential_add_inner_add_le {E : Type*} [NormedAddCommGroup E] [InnerProd
   dsimp only [φ, v] at h01
   simp only [zero_smul, add_zero, zero_mul, one_smul, one_mul, sub_self, one_pow,
     ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, add_sub_cancel] at h01
+  linarith
+
+/-- Quadratic lower bound from a strongly monotone gradient:
+`V x ≥ V 0 + ⟪∇V(0), x⟫ + (α/2) ‖x‖²`. -/
+theorem add_inner_add_le_of_isStronglyMonotoneGradient {E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] [CompleteSpace E] {V : E → ℝ} {gradV : E → E} {α : ℝ}
+    (hgrad : ∀ x, HasGradientAt V (gradV x) x)
+    (hα : ∀ x y, α * ‖x - y‖ ^ 2 ≤ inner ℝ (gradV x - gradV y) (x - y)) (x : E) :
+    V 0 + inner ℝ (gradV 0) x + α / 2 * ‖x‖ ^ 2 ≤ V x := by
+  simpa only [sub_zero] using potential_add_inner_add_le V gradV α hgrad hα 0 x
+
+/-- For a potential with a strongly monotone gradient (`∇²V ⪰ αI` with `α > 0`), the Gibbs
+density `e^{-V}` is integrable, by the quadratic lower bound
+`add_inner_add_le_of_isStronglyMonotoneGradient` and Gaussian integrability. -/
+theorem integrable_exp_neg_of_isStronglyMonotoneGradient {E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
+    {V : E → ℝ} {gradV : E → E} {α : ℝ}
+    (hgrad : ∀ x, HasGradientAt V (gradV x) x)
+    (hα : ∀ x y, α * ‖x - y‖ ^ 2 ≤ inner ℝ (gradV x - gradV y) (x - y))
+    (hα0 : 0 < α) : Integrable (fun x ↦ Real.exp (-V x)) := by
+  have hG := GaussianFourier.integrable_cexp_neg_mul_sq_norm_add
+    (V := E) (b := ((α / 2 : ℝ) : ℂ)) (by simpa using half_pos hα0) (-1) (gradV 0)
+  have hG' : Integrable (fun x : E ↦
+      Real.exp (-(α / 2) * ‖x‖ ^ 2 - inner ℝ (gradV 0) x)) := by
+    refine hG.norm.congr (ae_of_all _ fun x ↦ ?_)
+    dsimp only
+    rw [Complex.norm_exp]
+    congr 1
+    simp only [Complex.add_re, Complex.mul_re, Complex.neg_re, Complex.ofReal_re,
+      Complex.neg_im, Complex.ofReal_im, Complex.one_re, Complex.one_im, ← Complex.ofReal_pow]
+    ring
+  have hVc : Continuous V :=
+    continuous_iff_continuousAt.2 fun x ↦ (hgrad x).hasFDerivAt.continuousAt
+  refine (hG'.const_mul (Real.exp (-V 0))).mono' (hVc.neg.rexp.aestronglyMeasurable)
+    (ae_of_all _ fun x ↦ ?_)
+  rw [Real.norm_eq_abs, Real.abs_exp, ← Real.exp_add]
+  refine Real.exp_le_exp.2 ?_
+  have := add_inner_add_le_of_isStronglyMonotoneGradient hgrad hα x
   linarith
 
 /-- Tangent paraboloids imply the strong convexity interpolation inequality. -/
@@ -160,14 +209,15 @@ theorem integral_exponential_interpolation_le {E : Type*} [NormedAddCommGroup E]
   exact (ENNReal.ofReal_le_ofReal_iff (by positivity)).1 h
 
 /-- Differentiate a bounded exponential perturbation under a finite-density integral. -/
-theorem has_deriv_at_integral_exponential_perturbation {E : Type*} [MeasurableSpace E]
+theorem hasDerivAt_integral_exponential_perturbation {E : Type*} [MeasurableSpace E]
     (μ : Measure E) (V g h : E → ℝ) (hV : Measurable V) (hg : Measurable g) (hh : Measurable h)
-    {M : ℝ} (_hM : 0 ≤ M) (hgM : ∀ x, |g x| ≤ M) (hhM : ∀ x, |h x| ≤ M)
+    {M : ℝ} (hgM : ∀ x, |g x| ≤ M) (hhM : ∀ x, |h x| ≤ M)
     (hint : Integrable (fun x ↦ Real.exp (-V x)) μ)
-    (c c' : ℝ → ℝ) (hc0 : c 0 = 0) (hcc : ContinuousAt c 0) (hc'c : ContinuousAt c' 0)
+    (c c' : ℝ → ℝ) (hc0 : c 0 = 0) (hc'c : ContinuousAt c' 0)
     (hcd : ∀ᶠ t in 𝓝 (0 : ℝ), HasDerivAt c (c' t) t) :
     HasDerivAt (fun t ↦ ∫ x, Real.exp ((1 - t) * g x + c t * h x - V x) ∂μ)
       (∫ x, Real.exp (g x - V x) * (-g x + c' 0 * h x) ∂μ) 0 := by
+  have hcc : ContinuousAt c 0 := hcd.self_of_nhds.continuousAt
   let B := |c' 0| + 1
   let s := {t : ℝ | |t| < 1 ∧ |c t| < 1 ∧ |c' t| < B ∧ HasDerivAt c (c' t) t}
   have hs : s ∈ 𝓝 (0 : ℝ) := by
@@ -217,7 +267,7 @@ theorem has_deriv_at_integral_exponential_perturbation {E : Type*} [MeasurableSp
   simpa only [F', hc0, sub_zero, one_mul, zero_mul, add_zero] using hder
 
 /-- Right-hand comparison of differentiable functions compares derivatives at a contact point. -/
-theorem has_deriv_at_le_of_eventually_le_right {F J : ℝ → ℝ} {f j : ℝ}
+theorem hasDerivAt_le_of_eventually_le_right {F J : ℝ → ℝ} {f j : ℝ}
     (hF : HasDerivAt F f 0) (hJ : HasDerivAt J j 0) (heq : F 0 = J 0)
     (hle : ∀ᶠ t in 𝓝[>] (0 : ℝ), F t ≤ J t) : f ≤ j := by
   apply le_of_tendsto_of_tendsto (hasDerivAt_iff_tendsto_slope_left_right.1 hF).2
@@ -236,12 +286,12 @@ theorem entropy_exponential_le_of_quadratic_upper_bound {E : Type*} [NormedAddCo
     (g : E → ℝ) (Dg : E → E →L[ℝ] ℝ) (H : ℝ)
     (hg : ∀ x z, g x ≤ g z + Dg z (x - z) + H / 2 * ‖x - z‖ ^ 2)
     (hgm : Measurable g) (hDgm : Measurable fun x ↦ ‖Dg x‖)
-    {M : ℝ} (hM : 0 ≤ M) (hgM : ∀ x, |g x| ≤ M) (hDgM : ∀ x, ‖Dg x‖ ^ 2 ≤ M)
-    (hZ : Integrable (fun x ↦ Real.exp (-V x))) :
+    {M : ℝ} (hgM : ∀ x, |g x| ≤ M) (hDgM : ∀ x, ‖Dg x‖ ^ 2 ≤ M) :
     (∫ x, Real.exp (g x - V x) * g x) -
         (∫ x, Real.exp (g x - V x)) *
           (Real.log (∫ x, Real.exp (g x - V x)) - Real.log (∫ x, Real.exp (-V x))) ≤
       (1 / (2 * m)) * ∫ x, Real.exp (g x - V x) * ‖Dg x‖ ^ 2 := by
+  have hZ := integrable_exp_neg_of_isStronglyMonotoneGradient hG hm hm0
   have hVm : Measurable V :=
     (continuous_iff_continuousAt.2 fun x ↦ (hG x).hasFDerivAt.continuousAt).measurable
   have hI : Integrable (fun x ↦ Real.exp (g x - V x)) := by
@@ -269,7 +319,6 @@ theorem entropy_exponential_le_of_quadratic_upper_bound {E : Type*} [NormedAddCo
     change HasDerivAt c (((1 - 2 * t) * (2 * (m - t * H)) - t * (1 - t) * (-2 * H)) /
       (2 * (m - t * H)) ^ 2) t at hd
     exact hd.congr_deriv (by dsimp [c']; ring)
-  have hcc : ContinuousAt c 0 := (hcd 0 (by simpa using hm0.ne')).continuousAt
   have hc'c : ContinuousAt c' 0 := by
     dsimp [c']
     fun_prop (disch := simp [hm0.ne'])
@@ -279,9 +328,9 @@ theorem entropy_exponential_le_of_quadratic_upper_bound {E : Type*} [NormedAddCo
   have hc'0 : c' 0 = 1 / (2 * m) := by dsimp [c']; field_simp [hm0.ne']; ring
   let F : ℝ → ℝ := fun t ↦ Real.exp ((1 - t) * Real.log A + t * Real.log Z)
   let J : ℝ → ℝ := fun t ↦ ∫ x, Real.exp ((1 - t) * g x + c t * ‖Dg x‖ ^ 2 - V x)
-  have hderJ := has_deriv_at_integral_exponential_perturbation volume V g (fun x ↦ ‖Dg x‖ ^ 2)
-    hVm hgm (hDgm.pow_const (2 : ℕ)) hM hgM (fun x ↦ by rw [abs_of_nonneg (sq_nonneg _)]; exact hDgM x)
-    hZ c c' hc0 hcc hc'c hct
+  have hderJ := hasDerivAt_integral_exponential_perturbation volume V g (fun x ↦ ‖Dg x‖ ^ 2)
+    hVm hgm (hDgm.pow_const (2 : ℕ)) hgM
+    (fun x ↦ by rw [abs_of_nonneg (sq_nonneg _)]; exact hDgM x) hZ c c' hc0 hc'c hct
   rw [hc'0] at hderJ
   have hderF : HasDerivAt F (A * (-Real.log A + Real.log Z)) 0 := by
     have hd := (((hasDerivAt_const 0 1).sub (hasDerivAt_id 0)).mul_const (Real.log A)).add
@@ -305,7 +354,7 @@ theorem entropy_exponential_le_of_quadratic_upper_bound {E : Type*} [NormedAddCo
       ht.1.le ht.2.le htm hI hZ hJ
     simpa only [F, J, A, Z, c, Real.rpow_def_of_pos hA, Real.rpow_def_of_pos hZ0,
       ← Real.exp_add, mul_comm] using h
-  have hder := has_deriv_at_le_of_eventually_le_right hderF hderJ heq hle
+  have hder := hasDerivAt_le_of_eventually_le_right hderF hderJ heq hle
   have hgg : Integrable (fun x ↦ Real.exp (g x - V x) * g x) :=
     hI.mul_bdd hgm.aestronglyMeasurable (ae_of_all _ fun x ↦ by simpa only [Real.norm_eq_abs] using hgM x)
   have hgd : Integrable (fun x ↦ Real.exp (g x - V x) * ‖Dg x‖ ^ 2) :=

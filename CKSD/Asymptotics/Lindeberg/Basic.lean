@@ -6,7 +6,6 @@ public import Mathlib.Probability.Distributions.Gaussian.Real
 public import Mathlib.Probability.Independence.CharacteristicFunction
 import TauCeti.Algebra.Order.BigOperators.ProdSubProd
 
-
 /-!
 # The Lindeberg–Feller central limit theorem
 
@@ -24,12 +23,12 @@ row sum with `exp (-(∑ σ²) t² / 2)`, and Lévy's continuity theorem
 
 ## Main results
 
-* `CKSD.norm_cexp_of_real_mul_i_sub_le`: `‖exp (i x) - (1 + i x - x² / 2)‖ ≤ |x|³ / 3` and
+* `CKSD.norm_cexp_ofReal_mul_I_sub_le`: `‖exp (i x) - (1 + i x - x² / 2)‖ ≤ |x|³ / 3` and
   `≤ 2 x²`.
-* `CKSD.norm_cexp_of_real_mul_i_sub_le_lindeberg`: the truncated form of this bound.
-* `CKSD.norm_char_fun_map_sub_one_sub_le`: Lindeberg's bound for one centred variable.
-* `CKSD.tendsto_in_distribution_sum_of_lindeberg`: the Lindeberg–Feller central limit theorem.
-* `CKSD.tendsto_in_distribution_sum_of_lindeberg_of_i_indep_fun`: the same for rows that are
+* `CKSD.norm_cexp_ofReal_mul_I_sub_le_lindeberg`: the truncated form of this bound.
+* `CKSD.norm_charFun_map_sub_one_sub_le`: Lindeberg's bound for one centred variable.
+* `CKSD.tendstoInDistribution_sum_of_lindeberg`: the Lindeberg–Feller central limit theorem.
+* `CKSD.tendstoInDistribution_sum_of_lindeberg_of_iIndepFun`: the same for rows that are
   independent sequences.
 
 ## References
@@ -101,7 +100,7 @@ private theorem abs_sin_sub_le_sq (x : ℝ) : |Real.sin x - x| ≤ x ^ 2 := by
 
 /-- The second-order Taylor remainder of `x ↦ exp (i x)`:
 `‖exp (i x) - (1 + i x - x² / 2)‖ ≤ min (|x|³ / 3) (2 x²)`. -/
-theorem norm_cexp_of_real_mul_i_sub_le (x : ℝ) :
+theorem norm_cexp_ofReal_mul_I_sub_le (x : ℝ) :
     ‖cexp (x * I) - (1 + x * I - x ^ 2 / 2)‖ ≤ |x| ^ 3 / 3 ∧
       ‖cexp (x * I) - (1 + x * I - x ^ 2 / 2)‖ ≤ 2 * x ^ 2 := by
   set z := cexp (x * I) - (1 + x * I - x ^ 2 / 2)
@@ -123,10 +122,10 @@ theorem norm_cexp_of_real_mul_i_sub_le (x : ℝ) :
 
 /-- The truncated form of the Taylor bound used in Lindeberg's argument: for `ε ≥ 0`,
 `‖exp (i t x) - (1 + i t x - (t x)² / 2)‖ ≤ |t|³ ε x² / 3 + 2 t² x² 1{|x| > ε}`. -/
-theorem norm_cexp_of_real_mul_i_sub_le_lindeberg {ε : ℝ} (hε : 0 ≤ ε) (t x : ℝ) :
+theorem norm_cexp_ofReal_mul_I_sub_le_lindeberg {ε : ℝ} (hε : 0 ≤ ε) (t x : ℝ) :
     ‖cexp (↑(t * x) * I) - (1 + ↑(t * x) * I - ↑(t * x) ^ 2 / 2)‖ ≤
       |t| ^ 3 * ε / 3 * x ^ 2 + 2 * t ^ 2 * (if ε < |x| then x ^ 2 else 0) := by
-  obtain ⟨b3, b2⟩ := norm_cexp_of_real_mul_i_sub_le (t * x)
+  obtain ⟨b3, b2⟩ := norm_cexp_ofReal_mul_I_sub_le (t * x)
   split_ifs with hxε
   · refine b2.trans ?_
     have : 0 ≤ |t| ^ 3 * ε / 3 * x ^ 2 := by positivity
@@ -141,7 +140,7 @@ theorem norm_cexp_of_real_mul_i_sub_le_lindeberg {ε : ℝ} (hε : 0 ≤ ε) (t 
     nlinarith
 
 /-- For `a ≥ 0`, `|exp (-a) - (1 - a)| ≤ a²`. -/
-theorem Real.abs_exp_neg_sub_one_sub_le_sq {a : ℝ} (ha : 0 ≤ a) :
+theorem abs_exp_neg_sub_one_sub_le_sq {a : ℝ} (ha : 0 ≤ a) :
     |Real.exp (-a) - (1 - a)| ≤ a ^ 2 := by
   rcases le_or_gt a 1 with h | h
   · have := Real.abs_exp_sub_one_sub_id_le (x := -a) (by rw [abs_neg, abs_of_nonneg ha]; exact h)
@@ -155,7 +154,7 @@ theorem Real.abs_exp_neg_sub_one_sub_le_sq {a : ℝ} (ha : 0 ≤ a) :
 
 /-- Lindeberg's bound for one centred square-integrable variable `Y`: for every `ε ≥ 0`,
 `‖φ_Y(t) - (1 - 𝔼[Y²] t² / 2)‖ ≤ |t|³ ε 𝔼[Y²] / 3 + 2 t² 𝔼[Y² ; |Y| > ε]`. -/
-theorem norm_char_fun_map_sub_one_sub_le {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+theorem norm_charFun_map_sub_one_sub_le {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
     [IsProbabilityMeasure μ] {Y : Ω → ℝ} (hY : MemLp Y 2 μ) (h0 : ∫ ω, Y ω ∂μ = 0)
     {ε : ℝ} (hε : 0 ≤ ε) (t : ℝ) :
     ‖charFun (μ.map Y) t - (1 - ((∫ ω, Y ω ^ 2 ∂μ : ℝ) : ℂ) * t ^ 2 / 2)‖ ≤
@@ -212,7 +211,7 @@ theorem norm_char_fun_map_sub_one_sub_le {Ω : Type*} [MeasurableSpace Ω] {μ :
   refine (norm_integral_le_of_norm_le ((hY2.const_mul (|t| ^ 3 * ε / 3)).add
     (hT.const_mul (2 * t ^ 2)))
     (ae_of_all _ fun ω ↦ ?_)).trans_eq ?_
-  · exact norm_cexp_of_real_mul_i_sub_le_lindeberg hε t (Y ω)
+  · exact norm_cexp_ofReal_mul_I_sub_le_lindeberg hε t (Y ω)
   · simp only [Pi.add_apply]
     rw [integral_add (hY2.const_mul _) (hT.const_mul _), integral_const_mul, integral_const_mul]
 
@@ -251,7 +250,7 @@ variables `Y j`, `j ∈ s`, with variances `σⱼ²`, every `ε ≥ 0` and every
 `‖∏ⱼ φ_{Yⱼ}(t) - exp (-(∑ⱼ σⱼ²) t² / 2)‖` is at most
 `|t|³ ε (∑ σⱼ²) / 3 + 2 t² Lₛ(ε) + t⁴ (∑ σⱼ²) (ε² + Lₛ(ε)) / 4`, where
 `Lₛ(ε) = ∑ⱼ 𝔼[Yⱼ² ; |Yⱼ| > ε]`. -/
-theorem norm_prod_char_fun_sub_exp_le {Ω ι : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+theorem norm_prod_charFun_sub_exp_le {Ω ι : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
     [IsProbabilityMeasure μ] (s : Finset ι) (Y : ι → Ω → ℝ) (h2 : ∀ j ∈ s, MemLp (Y j) 2 μ)
     (h0 : ∀ j ∈ s, ∫ ω, Y j ω ∂μ = 0) {ε : ℝ} (hε : 0 ≤ ε) (t : ℝ) :
     ‖∏ j ∈ s, charFun (μ.map (Y j)) t -
@@ -282,10 +281,10 @@ theorem norm_prod_char_fun_sub_exp_le {Ω ι : Type*} [MeasurableSpace Ω] {μ :
       |t| ^ 3 * ε / 3 * σ2 j + 2 * t ^ 2 * Lj j + t ^ 4 / 4 * σ2 j *
         (ε ^ 2 + ∑ i ∈ s, Lj i) := by
     intro j hj
-    have h1 := norm_char_fun_map_sub_one_sub_le (h2 j hj) (h0 j hj) hε t
+    have h1 := norm_charFun_map_sub_one_sub_le (h2 j hj) (h0 j hj) hε t
     have h3 : ‖((1 - a j : ℝ) : ℂ) - (Real.exp (-a j) : ℂ)‖ ≤ a j ^ 2 := by
       rw [← ofReal_sub, norm_real, Real.norm_eq_abs, abs_sub_comm]
-      exact Real.abs_exp_neg_sub_one_sub_le_sq (ha0 j)
+      exact abs_exp_neg_sub_one_sub_le_sq (ha0 j)
     have hcast : ((1 - a j : ℝ) : ℂ) = 1 - ((σ2 j : ℝ) : ℂ) * t ^ 2 / 2 := by
       simp only [a]; push_cast; ring
     rw [hcast] at h3
@@ -308,18 +307,19 @@ variables. Let `X n 0, …, X n (k n - 1)` be independent, centred and square in
 each `n`. If `∑ⱼ 𝔼[X_{n,j}²] → v` and the Lindeberg condition
 `∑ⱼ 𝔼[X_{n,j}² ; |X_{n,j}| > ε] → 0` holds for every `ε > 0`, then the row sums
 `∑ⱼ X_{n,j}` converge in distribution to `N(0, v)`. -/
-theorem tendsto_in_distribution_sum_of_lindeberg {Ω : Type*} [MeasurableSpace Ω]
+theorem tendstoInDistribution_sum_of_lindeberg {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℕ → ℕ → Ω → ℝ) (k : ℕ → ℕ)
-    (h2 : ∀ n j, MemLp (X n j) 2 μ) (h0 : ∀ n j, ∫ ω, X n j ω ∂μ = 0)
+    (h2 : ∀ n, ∀ j < k n, MemLp (X n j) 2 μ) (h0 : ∀ n, ∀ j < k n, ∫ ω, X n j ω ∂μ = 0)
     (hind : ∀ n, iIndepFun (fun j : Finset.range (k n) ↦ X n j) μ) (v : ℝ)
     (hvar : Tendsto (fun n ↦ ∑ j ∈ Finset.range (k n), ∫ ω, X n j ω ^ 2 ∂μ) atTop (𝓝 v))
     (hlin : ∀ ε > 0, Tendsto (fun n ↦ ∑ j ∈ Finset.range (k n),
       ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ) atTop (𝓝 0)) :
     TendstoInDistribution (fun n ω ↦ ∑ j ∈ Finset.range (k n), X n j ω) atTop id
       (fun _ ↦ μ) (gaussianReal 0 v.toNNReal) := by
-  have hm : ∀ n j, AEMeasurable (X n j) μ := fun n j ↦ (h2 n j).aemeasurable
+  have hm : ∀ n, ∀ j ∈ Finset.range (k n), AEMeasurable (X n j) μ := fun n j hj ↦
+    (h2 n j (Finset.mem_range.1 hj)).aemeasurable
   refine TendstoInDistribution.of_tendsto_charFun
-    (fun n ↦ Finset.aemeasurable_fun_sum _ fun j _ ↦ hm n j) aemeasurable_id fun t ↦ ?_
+    (fun n ↦ Finset.aemeasurable_fun_sum _ fun j hj ↦ hm n j hj) aemeasurable_id fun t ↦ ?_
   set s : ℕ → ℝ := fun n ↦ ∑ j ∈ Finset.range (k n), ∫ ω, X n j ω ^ 2 ∂μ with hs
   set L : ℝ → ℕ → ℝ := fun ε n ↦ ∑ j ∈ Finset.range (k n),
     ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ with hL
@@ -328,7 +328,7 @@ theorem tendsto_in_distribution_sum_of_lindeberg {Ω : Type*} [MeasurableSpace �
   have hv0 : 0 ≤ v := ge_of_tendsto' hvar hs0
   have hprod : ∀ n, charFun (μ.map fun ω ↦ ∑ j ∈ Finset.range (k n), X n j ω) t =
       ∏ j ∈ Finset.range (k n), charFun (μ.map (X n j)) t := fun n ↦ by
-    rw [(hind n).charFun_map_fun_finsetSum_eq_prod (fun j _ ↦ hm n j), Finset.prod_apply]
+    rw [(hind n).charFun_map_fun_finsetSum_eq_prod (fun j hj ↦ hm n j hj), Finset.prod_apply]
   have hlim : charFun ((gaussianReal 0 v.toNNReal).map id) t =
       (Real.exp (-(v * t ^ 2 / 2)) : ℂ) := by
     rw [Measure.map_id, charFun_gaussianReal, ofReal_exp, Real.coe_toNNReal _ hv0]
@@ -357,23 +357,24 @@ theorem tendsto_in_distribution_sum_of_lindeberg {Ω : Type*} [MeasurableSpace �
       simp only [B]; ring
     filter_upwards [hBn.eventually (gt_mem_nhds hεδ)] with n hn
     rw [Real.dist_eq, sub_zero, abs_of_nonneg (norm_nonneg _)]
-    exact (norm_prod_char_fun_sub_exp_le _ (X n) (fun j _ ↦ h2 n j) (fun j _ ↦ h0 n j)
+    exact (norm_prod_charFun_sub_exp_le _ (X n) (fun j hj ↦ h2 n j (Finset.mem_range.1 hj))
+      (fun j hj ↦ h0 n j (Finset.mem_range.1 hj))
       hε0'.le t).trans_lt hn
   simpa using hD.add hG
 
 /-- The Lindeberg–Feller central limit theorem for rows that are independent sequences: if
 each row `X n` is an independent family, the row sums over `j < k n` converge in distribution to
-`N(0, v)` under the hypotheses of `CKSD.tendsto_in_distribution_sum_of_lindeberg`. -/
-theorem tendsto_in_distribution_sum_of_lindeberg_of_i_indep_fun {Ω : Type*} [MeasurableSpace Ω]
+`N(0, v)` under the hypotheses of `CKSD.tendstoInDistribution_sum_of_lindeberg`. -/
+theorem tendstoInDistribution_sum_of_lindeberg_of_iIndepFun {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℕ → ℕ → Ω → ℝ) (k : ℕ → ℕ)
-    (h2 : ∀ n j, MemLp (X n j) 2 μ) (h0 : ∀ n j, ∫ ω, X n j ω ∂μ = 0)
+    (h2 : ∀ n, ∀ j < k n, MemLp (X n j) 2 μ) (h0 : ∀ n, ∀ j < k n, ∫ ω, X n j ω ∂μ = 0)
     (hind : ∀ n, iIndepFun (X n) μ) (v : ℝ)
     (hvar : Tendsto (fun n ↦ ∑ j ∈ Finset.range (k n), ∫ ω, X n j ω ^ 2 ∂μ) atTop (𝓝 v))
     (hlin : ∀ ε > 0, Tendsto (fun n ↦ ∑ j ∈ Finset.range (k n),
       ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ) atTop (𝓝 0)) :
     TendstoInDistribution (fun n ω ↦ ∑ j ∈ Finset.range (k n), X n j ω) atTop id
       (fun _ ↦ μ) (gaussianReal 0 v.toNNReal) :=
-  tendsto_in_distribution_sum_of_lindeberg μ X k h2 h0
+  tendstoInDistribution_sum_of_lindeberg μ X k h2 h0
     (fun n ↦ (hind n).precomp Subtype.val_injective) v hvar hlin
 
 end CKSD

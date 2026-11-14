@@ -1,5 +1,4 @@
 module
-
 public import CKSD.Bayes.MALABasic
 public import CKSD.Bayes.MALAGaussianRejection
 public import CKSD.Bayes.GaussianGibbs
@@ -29,7 +28,7 @@ variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 
 /-- A probability law on Euclidean space gives arbitrarily high mass to a bounded ball. -/
-theorem exists_closed_ball_real_ge (μ : Measure E) [IsProbabilityMeasure μ]
+theorem exists_closedBall_real_ge (μ : Measure E) [IsProbabilityMeasure μ]
     {r : ℝ} (hr : 0 < r) :
     ∃ R : ℝ, 0 ≤ R ∧ 1 - r ≤ μ.real (Metric.closedBall 0 R) := by
   have htight : IsTightMeasureSet {μ} := isTightMeasureSet_singleton
@@ -63,7 +62,7 @@ theorem exists_large_gaussian_step {a r R : ℝ} (ha : 0 < a) (hr : 0 < r) :
   exact ⟨H, hH, hR, he⟩
 
 /-- Uniform small acceptance on a high-probability noise event gives a real retained-mass bound. -/
-theorem mala_step_law_real_apply_ge_of_acceptance_lt
+theorem malaStepLaw_real_apply_ge_of_acceptance_lt
     (V : E → ℝ) (G : E → E) (h : ℝ) (hV : Measurable V) (hG : Measurable G)
     (μ : Measure E) [IsProbabilityMeasure μ] (A B : Set E) (hA : MeasurableSet A)
     {r : ℝ} (hr : 0 ≤ r) (hr1 : r ≤ 1)
@@ -71,8 +70,8 @@ theorem mala_step_law_real_apply_ge_of_acceptance_lt
     (hacc : ∀x∈A, ∀z∈B, malaAcceptance V G h x
       (x - h • G x + Real.sqrt (2 * h) • z) < r) :
     (1 - 2 * r) * μ.real A ≤ (malaStepLaw V G h μ).real A := by
-  have hp := mala_step_law_apply_ge_of_acceptance_lt V G h hV hG μ A B hA r hr hacc
-  have hm := is_probability_measure_mala_step_law V G h hV hG μ
+  have hp := malaStepLaw_apply_ge_of_acceptance_lt V G h hV hG μ A B hA r hr hacc
+  have hm := isProbabilityMeasure_malaStepLaw V G h hV hG μ
   have hp' : μ.real A * (stdGaussian E).real B * (1 - r) ≤
       (malaStepLaw V G h μ).real A := by
     simpa only [Measure.real, ENNReal.toReal_mul, ENNReal.toReal_ofReal (sub_nonneg.mpr hr1)]
@@ -83,7 +82,7 @@ theorem mala_step_law_real_apply_ge_of_acceptance_lt
   nlinarith
 
 /-- The retained-mass bound iterates, and every lazy MALA iterate is a probability law. -/
-theorem mala_step_law_iterate_real_apply_ge
+theorem malaStepLaw_iterate_real_apply_ge
     (V : E → ℝ) (G : E → E) (h : ℝ) (hV : Measurable V) (hG : Measurable G)
     (μ : Measure E) [IsProbabilityMeasure μ] (A B : Set E) (hA : MeasurableSet A)
     {r : ℝ} (hr : 0 ≤ r) (hr1 : r ≤ 1 / 2)
@@ -98,19 +97,19 @@ theorem mala_step_law_iterate_real_apply_ge
     exact ⟨inferInstance, le_rfl⟩
   | succ n ih =>
     have := ih.1
-    have := is_probability_measure_mala_step_law V G h hV hG ((malaStepLaw V G h)^[n] μ)
+    have := isProbabilityMeasure_malaStepLaw V G h hV hG ((malaStepLaw V G h)^[n] μ)
     rw [Function.iterate_succ_apply']
     refine ⟨inferInstance, ?_⟩
     calc
       _ = (1 - 2 * r) * ((1 - 2 * r) ^ n * μ.real A) := by ring
       _ ≤ (1 - 2 * r) * ((malaStepLaw V G h)^[n] μ).real A :=
         mul_le_mul_of_nonneg_left ih.2 (by linarith)
-      _ ≤ _ := mala_step_law_real_apply_ge_of_acceptance_lt V G h hV hG _ A B hA hr
+      _ ≤ _ := malaStepLaw_real_apply_ge_of_acceptance_lt V G h hV hG _ A B hA hr
         (by linarith) hB hacc
 
 /-- A warm event retaining seven eighths of its mass stays far from a target
 giving it at most half. -/
-theorem mala_step_law_iterate_far_of_acceptance_lt
+theorem malaStepLaw_iterate_far_of_acceptance_lt
     (V : E → ℝ) (G : E → E) (h : ℝ) (hV : Measurable V) (hG : Measurable G)
     (μ π : Measure E) [IsProbabilityMeasure μ] [IsProbabilityMeasure π]
     (A B : Set E) (hA : MeasurableSet A) (hμ : μ.real A = 1) (hπ : π.real A ≤ 1 / 2)
@@ -120,7 +119,7 @@ theorem mala_step_law_iterate_far_of_acceptance_lt
       (x - h • G x + Real.sqrt (2 * h) • z) < r)
     (n : ℕ) (hn : n ≤ N) :
     3 / 8 ≤ totalVariationDistance ((malaStepLaw V G h)^[n] μ) π := by
-  have hi := mala_step_law_iterate_real_apply_ge V G h hV hG μ A B hA hr hr1 hB hacc n
+  have hi := malaStepLaw_iterate_real_apply_ge V G h hV hG μ A B hA hr hr1 hB hacc n
   have := hi.1
   have hp : 1 - 2 * r * (n : ℝ) ≤ (1 - 2 * r) ^ n := by
     convert one_add_mul_le_pow (by linarith : ( - 2 : ℝ) ≤ - 2 * r) n using 1 <;> ring
@@ -129,7 +128,7 @@ theorem mala_step_law_iterate_far_of_acceptance_lt
     rw [hμ, mul_one] at hi2
     have hn' : (n : ℝ) ≤ N := by exact_mod_cast hn
     nlinarith [mul_le_mul_of_nonneg_left hn' (by positivity : 0 ≤ 2 * r)]
-  have htv := abs_measure_real_sub_le_total_variation_distance
+  have htv := abs_measureReal_sub_le_totalVariationDistance
     ((malaStepLaw V G h)^[n] μ) π A hA
   have hab := le_abs_self (((malaStepLaw V G h)^[n] μ).real A - π.real A)
   linarith
@@ -154,14 +153,14 @@ theorem exists_scaled_gaussian_mala_far {a h : ℝ} (ha : 0 < a)
     dsimp [r]
     field_simp
     nlinarith [Nat.cast_nonneg (α := ℝ) N]
-  obtain ⟨R, hR0, hR⟩ := exists_closed_ball_real_ge (stdGaussian E) hr
+  obtain ⟨R, hR0, hR⟩ := exists_closedBall_real_ge (stdGaussian E) hr
   obtain ⟨H, hH, hRH, hHe⟩ := exists_large_gaussian_step (R := R) ha hr
   have hH0 : 0 < H := by linarith
   let σ := Real.sqrt (h / H)
   have hσ : 0 < σ := Real.sqrt_pos.mpr (div_pos hh hH0)
   have hs2 : σ ^ 2 = h / H := Real.sq_sqrt (div_pos hh hH0).le
   have hscaled : h / σ ^ 2 = H := by rw [hs2]; field_simp
-  obtain ⟨μ, hμ, hμwarm, hμA, hπA⟩ := exists_quadratic_gibbs_halfspace_warm_start hσ hqa i
+  obtain ⟨μ, hμ, hμwarm, hμA, hπA⟩ := exists_quadraticGibbs_halfspace_warm_start hσ hqa i
   have := hμ
   let V : E → ℝ := gaussianPrecisionPotential ((σ⁻¹) ^ 2)
   let G : E → E := gaussianPrecisionGradient ((σ⁻¹) ^ 2)
@@ -169,16 +168,16 @@ theorem exists_scaled_gaussian_mala_far {a h : ℝ} (ha : 0 < a)
   let B : Set E := Metric.closedBall 0 R
   have hπ : IsProbabilityMeasure (gibbsMeasure V) := by
     dsimp only [V]
-    rw [gaussian_precision_potential_def, gibbs_measure_quadratic_eq_map_std_gaussian hσ]
+    rw [gaussianPrecisionPotential_def, gibbsMeasure_quadratic_eq_map_stdGaussian hσ]
     infer_instance
   have := hπ
   have hV : Measurable V := by
     dsimp only [V]
-    rw [gaussian_precision_potential_def]
+    rw [gaussianPrecisionPotential_def]
     fun_prop
   have hG : Measurable G := by
     dsimp only [G]
-    rw [gaussian_precision_gradient_def]
+    rw [gaussianPrecisionGradient_def]
     fun_prop
   have hAm : MeasurableSet A := by apply measurableSet_lt <;> fun_prop
   have hacc : ∀x∈A, ∀z∈B, malaAcceptance V G h x
@@ -199,11 +198,11 @@ theorem exists_scaled_gaussian_mala_far {a h : ℝ} (ha : 0 < a)
       have hzball : z ∈ Metric.closedBall 0 R := hz
       simpa only [Metric.mem_closedBall, dist_zero_right] using hzball
     dsimp only [V, G]
-    rw [hxu, gaussian_proposal_rescale hσ hh, mala_acceptance_gaussian_rescale hσ hh, hscaled]
-    exact (mala_acceptance_gaussian_one_le_exp hH ha.le u z hu hz').trans_lt hHe
+    rw [hxu, gaussian_proposal_rescale hσ hh, malaAcceptance_gaussian_rescale hσ hh, hscaled]
+    exact (malaAcceptance_gaussian_one_le_exp hH ha.le u z hu hz').trans_lt hHe
   refine ⟨σ, hσ, μ, hμ, hμwarm, ?_⟩
   intro n hn
-  apply mala_step_law_iterate_far_of_acceptance_lt V G h hV hG μ (gibbsMeasure V)
+  apply malaStepLaw_iterate_far_of_acceptance_lt V G h hV hG μ (gibbsMeasure V)
     A B hAm _ _ N hr.le hr1 hrN hR hacc n hn
   · simp only [Measure.real, A, hμA, ENNReal.toReal_one]
   · have hπreal : (gibbsMeasure V).real A = 1 / 4 := hπA

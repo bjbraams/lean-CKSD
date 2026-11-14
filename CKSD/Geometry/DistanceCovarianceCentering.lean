@@ -1,5 +1,4 @@
 module
-
 public import CKSD.Geometry.DistanceKernel
 /-!
 # Double centering and distance covariance
@@ -10,6 +9,24 @@ Fubini and the independent marginal product then identify distance covariance wi
 the squared maximum mean discrepancy of the product distance kernel.
 
 The arguments use Mathlib's product-integral and square-integrable product APIs.
+
+## Main results
+
+* `CKSD.integral_double_centered_kernels`: double centering of two symmetric square-integrable
+  kernels.
+* `CKSD.centeredDistance_eq_neg_two_mul_centered_kernel`: centered distances are minus twice the
+  centered distance kernels.
+* `CKSD.squaredMMD_distanceProductKernel_prod_marginals`: the product distance-kernel MMD between
+  a joint law and the product of its marginals, in terms of the kernel means.
+* `CKSD.integral_centeredDistance_mul_eq_four_mul_squaredMMD`: distance covariance is four times
+  that MMD.
+
+## References
+
+* G. J. Székely, M. L. Rizzo, N. K. Bakirov, *Measuring and testing dependence by correlation of
+  distances*, Ann. Statist. 35 (2007), 2769–2794.
+* D. Sejdinovic, B. Sriperumbudur, A. Gretton, K. Fukumizu, *Equivalence of distance-based and
+  RKHS-based statistics in hypothesis testing*, Ann. Statist. 41 (2013), 2263–2291.
 -/
 
 @[expose] public section
@@ -33,17 +50,19 @@ theorem integral_sub_sub_add_mul {Z : Type*} [MeasurableSpace Z]
   simp only [Pi.sub_apply, Pi.mul_apply] at h1 h2 h3
   rw [h3, h2, h1, integral_const_mul]
 
-/-- Integrating a symmetric kernel against a one-coordinate weight uses its marginal mean. -/
+/-- Integrating a kernel against a weight in the first coordinate uses its marginal mean in the
+second coordinate. -/
 theorem integral_kernel_mul_fst {Z : Type*} [MeasurableSpace Z]
-    (μ : Measure Z) [IsProbabilityMeasure μ] (a : Z → Z → ℝ) (b : Z → ℝ)
+    (μ : Measure Z) [SFinite μ] (a : Z → Z → ℝ) (b : Z → ℝ)
     (h : Integrable (fun z : Z × Z ↦ a z.1 z.2 * b z.1) (μ.prod μ)) :
     (∫ z, a z.1 z.2 * b z.1 ∂μ.prod μ) = ∫ x, (∫ y, a x y ∂μ) * b x ∂μ := by
   rw [integral_prod _ h]
   simp_rw [integral_mul_const]
 
-/-- Symmetry permits the same marginal reduction in the second coordinate. -/
+/-- For a symmetric kernel the same marginal reduction applies to a weight in the second
+coordinate. -/
 theorem integral_kernel_mul_snd {Z : Type*} [MeasurableSpace Z]
-    (μ : Measure Z) [IsProbabilityMeasure μ] (a : Z → Z → ℝ) (b : Z → ℝ)
+    (μ : Measure Z) [SFinite μ] (a : Z → Z → ℝ) (b : Z → ℝ)
     (ha : ∀ x y, a x y = a y x)
     (h : Integrable (fun z : Z × Z ↦ a z.1 z.2 * b z.2) (μ.prod μ)) :
     (∫ z, a z.1 z.2 * b z.2 ∂μ.prod μ) = ∫ x, (∫ y, a x y ∂μ) * b x ∂μ := by
@@ -150,7 +169,7 @@ theorem integral_double_centered_kernels {Z : Type*} [MeasurableSpace Z]
     _ = _ := by simpa only [mul_comm] using hlast
 
 /-- The mean of a distance-kernel section in terms of the mean distance. -/
-theorem integral_distance_kernel_right {E : Type*} [NormedAddCommGroup E]
+theorem integral_distanceKernel_right {E : Type*} [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure E) [IsProbabilityMeasure P] (hP : Integrable (fun x ↦ ‖x‖) P) (x : E) :
     (∫ y, distanceKernel x y ∂P) =
@@ -164,21 +183,21 @@ theorem integral_distance_kernel_right {E : Type*} [NormedAddCommGroup E]
   simp
 
 /-- A centered distance is minus twice the centered distance kernel. -/
-theorem centered_distance_eq_neg_two_mul_centered_kernel {E : Type*} [NormedAddCommGroup E]
+theorem centeredDistance_eq_neg_two_mul_centered_kernel {E : Type*} [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure E) [IsProbabilityMeasure P] (hP : Integrable (fun x ↦ ‖x‖) P) (x y : E) :
     centeredDistance P x y = -2 * (distanceKernel x y -
       (∫ z, distanceKernel x z ∂P) - (∫ z, distanceKernel y z ∂P) +
       (∫ z, ∫ w, distanceKernel z w ∂P ∂P)) := by
-  rw [← integral_prod _ (integrable_distance_kernel_prod P P hP),
-    integral_distance_kernel_prod P P hP hP, integral_distance_kernel_right P hP x,
-    integral_distance_kernel_right P hP y]
+  rw [← integral_prod _ (integrable_distanceKernel_prod P P hP),
+    integral_distanceKernel_prod P P hP hP, integral_distanceKernel_right P hP x,
+    integral_distanceKernel_right P hP y]
   unfold centeredDistance distanceKernel
   simp_rw [dist_eq_norm, norm_sub_rev _ y]
   ring
 
 /-- Kernel means dominated by a coordinate norm retain its second moment. -/
-theorem mem_lp_kernel_mean_of_dominated {Z : Type*} [MeasurableSpace Z]
+theorem memLp_kernelMean_of_dominated {Z : Type*} [MeasurableSpace Z]
     (P : Measure Z) [IsProbabilityMeasure P] (a : Z → Z → ℝ) (w : Z → ℝ)
     (ha : Measurable (Function.uncurry a)) (hw : MemLp w 2 P)
     (hbd : ∀ x y, ‖a x y‖ ≤ w x) :
@@ -209,7 +228,7 @@ theorem integrable_norm_prod_marginals {E F : Type*} [NormedAddCommGroup E]
     (le_add_of_nonneg_left (norm_nonneg _))
 
 /-- Distance-kernel means are measurable. -/
-theorem measurable_integral_distance_kernel {E : Type*} [NormedAddCommGroup E]
+theorem measurable_integral_distanceKernel {E : Type*} [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     (P : Measure E) [SFinite P] : Measurable (fun x ↦ ∫ y, distanceKernel x y ∂P) := by
   have hm : StronglyMeasurable (Function.uncurry (distanceKernel : E → E → ℝ)) := by
@@ -218,7 +237,7 @@ theorem measurable_integral_distance_kernel {E : Type*} [NormedAddCommGroup E]
   exact hm.integral_prod_right.measurable
 
 /-- Independent marginal averaging factors the product distance kernel. -/
-theorem integral_distance_product_kernel_prod_marginals_right {E F : Type*} [NormedAddCommGroup E]
+theorem integral_distanceProductKernel_prod_marginals_right {E F : Type*} [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     [NormedAddCommGroup F] [MeasurableSpace F] [BorelSpace F] [SecondCountableTopology F]
     (P : Measure (E × F)) [IsProbabilityMeasure P] (x : E × F) :
@@ -230,7 +249,7 @@ theorem integral_distance_product_kernel_prod_marginals_right {E F : Type*} [Nor
     integral_map (by fun_prop) (by unfold distanceKernel; fun_prop)]
 
 /-- Product-kernel MMD against the independent marginals has the double-centering expansion. -/
-theorem squared_mmd_distance_product_kernel_prod_marginals {E F : Type*} [NormedAddCommGroup E]
+theorem squaredMMD_distanceProductKernel_prod_marginals {E F : Type*} [NormedAddCommGroup E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     [NormedAddCommGroup F] [MeasurableSpace F] [BorelSpace F] [SecondCountableTopology F]
     (P : Measure (E × F)) [IsProbabilityMeasure P]
@@ -244,27 +263,27 @@ theorem squared_mmd_distance_product_kernel_prod_marginals {E F : Type*} [Normed
   let Q := (P.map Prod.fst).prod (P.map Prod.snd)
   have hQ := integrable_norm_prod_marginals P hP
   have hinner (x : E × F) : (∫ y, distanceProductKernel x y ∂Q) = α x.1 * β x.2 := by
-    rw [integral_distance_product_kernel_prod_marginals_right]
+    rw [integral_distanceProductKernel_prod_marginals_right]
     dsimp only [α, β]
     rw [integral_map (by fun_prop) (by unfold distanceKernel; fun_prop),
       integral_map (by fun_prop) (by unfold distanceKernel; fun_prop)]
   have hpq : (∫ z, distanceProductKernel z.1 z.2 ∂P.prod Q) = ∫ z, α z.1 * β z.2 ∂P := by
-    rw [integral_prod _ (integrable_distance_product_kernel_prod P Q hP hQ)]
+    rw [integral_prod _ (integrable_distanceProductKernel_prod P Q hP hQ)]
     simp_rw [hinner]
   have hqq : (∫ z, distanceProductKernel z.1 z.2 ∂Q.prod Q) =
       (∫ z, α z.1 ∂P) * (∫ z, β z.2 ∂P) := by
-    rw [integral_prod _ (integrable_distance_product_kernel_prod Q Q hQ hQ)]
+    rw [integral_prod _ (integrable_distanceProductKernel_prod Q Q hQ hQ)]
     simp_rw [hinner]
     change (∫ z, α z.1 * β z.2 ∂(P.map Prod.fst).prod (P.map Prod.snd)) = _
     rw [integral_prod_mul, integral_map (by fun_prop)
-      (measurable_integral_distance_kernel _).aestronglyMeasurable,
-      integral_map (by fun_prop) (measurable_integral_distance_kernel _).aestronglyMeasurable]
+      (measurable_integral_distanceKernel _).aestronglyMeasurable,
+      integral_map (by fun_prop) (measurable_integral_distanceKernel _).aestronglyMeasurable]
   unfold squaredMMD
   rw [hpq, hqq]
   ring
 
 /-- Distance covariance equals four times the product distance-kernel MMD. -/
-theorem integral_centered_distance_mul_eq_four_mul_squared_mmd
+theorem integral_centeredDistance_mul_eq_four_mul_squaredMMD
     {E F : Type*} [NormedAddCommGroup E] [MeasurableSpace E] [BorelSpace E]
     [SecondCountableTopology E] [NormedAddCommGroup F] [MeasurableSpace F] [BorelSpace F]
     [SecondCountableTopology F] (P : Measure (E × F)) [IsProbabilityMeasure P]
@@ -285,19 +304,19 @@ theorem integral_centered_distance_mul_eq_four_mul_squared_mmd
   have ha : Measurable (Function.uncurry a) := by dsimp [a]; unfold distanceKernel; fun_prop
   have hb : Measurable (Function.uncurry b) := by dsimp [b]; unfold distanceKernel; fun_prop
   have hba (x y : E × F) : ‖a x y‖ ≤ ‖x.1‖ := by
-    rw [Real.norm_eq_abs, abs_of_nonneg (distance_kernel_nonneg_le _ _).1]
-    exact (distance_kernel_nonneg_le _ _).2.1
+    rw [Real.norm_eq_abs, abs_of_nonneg (distanceKernel_nonneg_le _ _).1]
+    exact (distanceKernel_nonneg_le _ _).2.1
   have hbb (x y : E × F) : ‖b x y‖ ≤ ‖x.2‖ := by
-    rw [Real.norm_eq_abs, abs_of_nonneg (distance_kernel_nonneg_le _ _).1]
-    exact (distance_kernel_nonneg_le _ _).2.1
+    rw [Real.norm_eq_abs, abs_of_nonneg (distanceKernel_nonneg_le _ _).1]
+    exact (distanceKernel_nonneg_le _ _).2.1
   have hA : MemLp (fun z : (E × F) × (E × F) ↦ a z.1 z.2) 2 (P.prod P) :=
     (hx.norm.comp_fst P).mono' ha.aestronglyMeasurable (ae_of_all _ fun z ↦ hba z.1 z.2)
   have hB : MemLp (fun z : (E × F) × (E × F) ↦ b z.1 z.2) 2 (P.prod P) :=
     (hy.norm.comp_fst P).mono' hb.aestronglyMeasurable (ae_of_all _ fun z ↦ hbb z.1 z.2)
-  have hα : MemLp α 2 P := mem_lp_kernel_mean_of_dominated P a _ ha hx.norm hba
-  have hβ : MemLp β 2 P := mem_lp_kernel_mean_of_dominated P b _ hb hy.norm hbb
+  have hα : MemLp α 2 P := memLp_kernelMean_of_dominated P a _ ha hx.norm hba
+  have hβ : MemLp β 2 P := memLp_kernelMean_of_dominated P b _ hb hy.norm hbb
   have hcan := integral_double_centered_kernels P a b
-    (fun x y ↦ distance_kernel_comm _ _) (fun x y ↦ distance_kernel_comm _ _) hA hB hα hβ
+    (fun x y ↦ distanceKernel_comm _ _) (fun x y ↦ distanceKernel_comm _ _) hA hB hα hβ
   change (∫ z, (a z.1 z.2 - α z.1 - α z.2 + c) *
     (b z.1 z.2 - β z.1 - β z.2 + d) ∂P.prod P) = _ at hcan
   have hμ : Integrable (fun x : E ↦ ‖x‖) (P.map Prod.fst) :=
@@ -310,17 +329,17 @@ theorem integral_centered_distance_mul_eq_four_mul_squared_mmd
       ∫ z, distanceKernel x z.2 ∂P := integral_map (by fun_prop) (by unfold distanceKernel; fun_prop)
   have hcentx (x y : E × F) : centeredDistance (P.map Prod.fst) x.1 y.1 =
       -2 * (a x y - α x - α y + c) := by
-    rw [centered_distance_eq_neg_two_mul_centered_kernel _ hμ,
-      integral_map (by fun_prop) (measurable_integral_distance_kernel _).aestronglyMeasurable]
+    rw [centeredDistance_eq_neg_two_mul_centered_kernel _ hμ,
+      integral_map (by fun_prop) (measurable_integral_distanceKernel _).aestronglyMeasurable]
     simp_rw [hxmean]
     rfl
   have hcenty (x y : E × F) : centeredDistance (P.map Prod.snd) x.2 y.2 =
       -2 * (b x y - β x - β y + d) := by
-    rw [centered_distance_eq_neg_two_mul_centered_kernel _ hν,
-      integral_map (by fun_prop) (measurable_integral_distance_kernel _).aestronglyMeasurable]
+    rw [centeredDistance_eq_neg_two_mul_centered_kernel _ hν,
+      integral_map (by fun_prop) (measurable_integral_distanceKernel _).aestronglyMeasurable]
     simp_rw [hymean]
     rfl
-  have hmmd := squared_mmd_distance_product_kernel_prod_marginals P
+  have hmmd := squaredMMD_distanceProductKernel_prod_marginals P
     ((h2.integrable (by norm_num)).norm)
   simp_rw [hxmean, hymean] at hmmd
   change squaredMMD distanceProductKernel P ((P.map Prod.fst).prod (P.map Prod.snd)) =

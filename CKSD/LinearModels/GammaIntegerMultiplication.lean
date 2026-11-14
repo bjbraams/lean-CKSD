@@ -1,5 +1,4 @@
 module
-
 public import TauCeti.Analysis.SpecialFunctions.Gamma
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Logic.Equiv.Fin.Basic

@@ -7,9 +7,6 @@ public import CKSD.Learning.Generalization.Classification
 public import CKSD.Learning.Generalization.Stability
 public import CKSD.Learning.Generalization.Contraction
 
-
-namespace CKSD
-
 /-!
 # Concentration, prediction coverage, and statistical learning guarantees
 
@@ -17,6 +14,3 @@ Risk concentration and Rademacher complexity bounds, the contraction inequality,
 weights, exchangeable-rank coverage, classification, and uniform stability. Sources: GAPS 107.1,
 107.2, 107.5–107.8, 107.11, and 107.12.
 -/
-
-
-end CKSD

@@ -11,7 +11,6 @@ public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.BenamouB
 public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.PlanInterpolation
 public import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Map
 
-
 /-!
 # Langevin dynamics: invariance, contraction, entropy decay, and score matching
 
@@ -22,10 +21,10 @@ models.
 
 * `CKSD.integral_langevin_generator_eq_zero`: the Gibbs law `e^{-V}/Z` on `ℝ` is invariant for the
   scalar Langevin generator `f'' - V' f'` on compactly supported test functions (GAPS 104.37).
-* `CKSD.dist_synchronous_langevin_le_exp`: two solutions of `dX = b(X) dt + dW` driven by the same
-  noise contract at rate `m` when `b` is `m`-monotone, `⟪b x - b y, x - y⟫ ≥ m ‖x - y‖²`
+* `CKSD.dist_synchronous_langevin_le_exp`: two solutions of `dX = -b(X) dt + dW` driven by the
+  same noise contract at rate `m` when `b` is `m`-monotone, `⟪b x - b y, x - y⟫ ≥ m ‖x - y‖²`
   (GAPS 104.38).
-* `CKSD.le_exp_neg_mul_of_has_deriv_at_neg_of_two_mul_le`: the Grönwall step behind exponential
+* `CKSD.le_exp_neg_mul_of_hasDerivAt_neg_of_two_mul_le`: the Grönwall step behind exponential
   entropy decay: `E' = -I` and `2m E ≤ I` give `E t ≤ e^{-2mt} E 0` (GAPS 104.41).
 * `CKSD.integral_sq_sub_score_div_two_eq`: Hyvärinen's score-matching identity (GAPS 104.64).
 * `CKSD.wasserstein_le_barycentric_velocity_action`: the barycentric velocity of a straight
@@ -76,15 +75,15 @@ theorem integral_langevin_generator_eq_zero (V f : ℝ → ℝ) (hV : ContDiff �
 /-- GAPS 104.38: synchronous coupling. If `x` and `y` solve `x t = x 0 - ∫₀ᵗ b(x s) ds + W t`
 with the same continuous forcing `W` (so that their difference solves the integral equation below)
 and `⟪b x - b y, x - y⟫ ≥ m ‖x - y‖²`, then `‖x t - y t‖ ≤ e^{-mt} ‖x 0 - y 0‖`. The coefficient `m`
-may be any real number; `m > 0` gives contraction. -/
-theorem dist_synchronous_langevin_le_exp {d : ℕ}
-    (b : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (hb : Continuous b)
+may be any real number; `m > 0` gives contraction. The state space is any real Hilbert space. -/
+theorem dist_synchronous_langevin_le_exp {H : Type*} [NormedAddCommGroup H]
+    [InnerProductSpace ℝ H] [CompleteSpace H] (b : H → H) (hb : Continuous b)
     (m : ℝ)
     (hmono : ∀ x y, m * ‖x - y‖ ^ 2 ≤ inner ℝ (b x - b y) (x - y))
-    (x y : ℝ → EuclideanSpace ℝ (Fin d)) (hx : Continuous x) (hy : Continuous y)
+    (x y : ℝ → H) (hx : Continuous x) (hy : Continuous y)
     (heq : ∀ t ≥ 0, x t - y t = x 0 - y 0 - ∫ s in (0 : ℝ)..t, b (x s) - b (y s)) :
     ∀ t ≥ 0, ‖x t - y t‖ ≤ Real.exp (-m * t) * ‖x 0 - y 0‖ := by
-  set G : ℝ → EuclideanSpace ℝ (Fin d) := fun s ↦ b (x s) - b (y s) with hGdef
+  set G : ℝ → H := fun s ↦ b (x s) - b (y s) with hGdef
   have hG : Continuous G := (hb.comp hx).sub (hb.comp hy)
   have hΔc : Continuous fun t ↦ x t - y t := hx.sub hy
   -- For positive times the difference solves `Δ' = -(b(x) - b(y))`.
@@ -145,7 +144,7 @@ theorem dist_synchronous_langevin_le_exp {d : ℕ}
 with `E' = -I` on `(0, ∞)` (dissipation of relative entropy by Fisher information) and
 `2m E ≤ I` (a logarithmic Sobolev inequality), then `E t ≤ e^{-2mt} E 0` for `t ≥ 0`. The
 coefficient `m` may be any real number. -/
-theorem le_exp_neg_mul_of_has_deriv_at_neg_of_two_mul_le (E I : ℝ → ℝ) (m : ℝ)
+theorem le_exp_neg_mul_of_hasDerivAt_neg_of_two_mul_le (E I : ℝ → ℝ) (m : ℝ)
     (hE : ContinuousOn E (Ici 0))
     (hder : ∀ t > 0, HasDerivAt E (-I t) t)
     (hlsi : ∀ t > 0, 2 * m * E t ≤ I t) :
@@ -255,7 +254,7 @@ theorem integral_sq_sub_score_div_two_eq (P : Measure ℝ) [IsProbabilityMeasure
 /-- Slice conditional expectations give the conditional expectation on the product space: if
 `v t (X t ·)` is a version of `𝔼[W | X t]` for `ρ`-almost every `t`, then `(t, ω) ↦ v t (X t ω)` is
 a version of `𝔼[W | (t, X t)]` under `ρ ⊗ π`. -/
-theorem cond_exp_prod_of_cond_exp_slices
+theorem condExp_prod_of_condExp_slices
     {T Ω Y E : Type*} [MeasurableSpace T] [MeasurableSpace Ω] [MeasurableSpace Y]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
@@ -335,7 +334,7 @@ theorem wasserstein_le_barycentric_velocity_action {d : ℕ}
     filter_upwards [ae_restrict_mem measurableSet_Ioo] with t ht
     exact hcond t ⟨ht.1.le, ht.2.le⟩
   -- Identify the supplied slice-wise conditional velocity with TauCeti's space-time version.
-  have hprod := cond_exp_prod_of_cond_exp_slices ρ π Xt hXt v hv _ hW hc
+  have hprod := condExp_prod_of_condExp_slices ρ π Xt hXt v hv _ hW hc
   obtain ⟨u, hce, hcu, _⟩ :=
     TauCeti.exists_isContinuityEquation_map_smul_fst_add_smul_snd π
       (by simpa only [← hasFiniteIntegral_iff_enorm] using hW.2)
