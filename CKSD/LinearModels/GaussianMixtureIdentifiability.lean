@@ -28,7 +28,8 @@ open scoped Topology BigOperators RealInnerProductSpace
 
 namespace CKSD
 
-/-- A quadratic exponential tends to zero when its coefficient pair is lexicographically negative. -/
+/-- A quadratic exponential tends to zero when its coefficient pair is lexicographically negative.
+-/
 theorem tendsto_exp_quadratic_atTop_zero {a b : ℝ}
     (h : a < 0 ∨ a = 0 ∧ b < 0) :
     Tendsto (fun t : ℝ ↦ Real.exp (a*t^2+b*t)) atTop (𝓝 0) := by
@@ -132,7 +133,8 @@ theorem gaussianParameterPolynomial_injective {d : ℕ}
     (hp : gaussianParameterPolynomial m S = gaussianParameterPolynomial n T) : m = n ∧ S = T := by
   have he (x : EuclideanSpace ℝ (Fin d)) :
       ⟪x,m⟫ + ⟪x,S.toEuclideanLin x⟫ = ⟪x,n⟫ + ⟪x,T.toEuclideanLin x⟫ := by
-    simpa only [eval_gaussianParameterPolynomial] using congrArg (MvPolynomial.eval (fun i ↦ x i)) hp
+    simpa only [eval_gaussianParameterPolynomial] using congrArg (MvPolynomial.eval (fun i ↦ x i))
+        hp
   have hm (x : EuclideanSpace ℝ (Fin d)) : ⟪x,m⟫ = ⟪x,n⟫ := by
     have hneg := he (-x)
     simp only [map_neg, inner_neg_left, inner_neg_right, neg_neg] at hneg
@@ -219,14 +221,13 @@ theorem linearIndependent_gaussianExponents {ι : Type*} {d : ℕ}
   let b : s → ℝ := fun j ↦ ⟪v,m j⟫
   have heval (j : s) : MvPolynomial.eval x (p j) = b j + 2 * a j := by
     have h := eval_gaussianParameterPolynomial (m j) v (S j)
-    change MvPolynomial.eval x (p j) = _ at h
     rw [h]
     simp only [a,b]
     ring
   have hab : Function.Injective fun j : s ↦ (a j,b j) := by
     intro j k he
     apply hx
-    change MvPolynomial.eval x (p j) = MvPolynomial.eval x (p k)
+    dsimp only
     rw [heval,heval]
     rw [show a j = a k from congrArg Prod.fst he, show b j = b k from congrArg Prod.snd he]
   have heq (t : ℝ) : ∑ j : s, c j * Real.exp (a j * t^2+b j*t) = 0 := by

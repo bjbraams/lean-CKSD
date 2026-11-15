@@ -43,10 +43,108 @@ theorem measure_le_outerExpectation_div {Ω : Type*} [MeasurableSpace Ω] (μ : 
         exact (h ω hω).trans (hfg ω)
     _ ≤ ∫⁻ ω, g ω ∂μ := mul_meas_ge_le_lintegral₀ hg.aemeasurable t
 
+/-- **Peeling step of the rate theorem.** Let `t` satisfy the quadratic separation
+`M t - M θ₀ ≤ -c d(t, θ₀)²`, maximize `Mₙ(ω, ·)` up to `R ≤ K / r²` with `2K ≤ c 4^N`, and
+satisfy `2^N < r d(t, θ₀)` and `2 d(t, θ₀) < δ₀`. Then for some shell index `j` the radius
+`2^{j+N+1} / r` is below `δ₀` and the local modulus at that radius is at least
+`c 4^{j+N} / (2 r²)`. -/
+theorem exists_le_centredCriterionModulus_of_lt_mul_dist {Ω Θ : Type*} [PseudoMetricSpace Θ]
+    (M : Θ → ℝ) (Mn : Ω → Θ → ℝ) (θ₀ : Θ) (ω : Ω) {t : Θ} {c r R K δ₀ : ℝ} {N : ℕ}
+    (hc : 0 < c) (hr : 0 < r) (hcurv : M t - M θ₀ ≤ -(c * dist t θ₀ ^ 2))
+    (hopt : Mn ω θ₀ - R ≤ Mn ω t) (hRK : R ≤ K / r ^ 2) (hN : 2 * K ≤ c * 4 ^ N)
+    (hω : (2 : ℝ) ^ N < r * dist t θ₀) (hδ₀ : 2 * dist t θ₀ < δ₀) :
+    ∃ j : ℕ, (2 : ℝ) ^ (j + N + 1) / r < δ₀ ∧
+      ENNReal.ofReal (c * 4 ^ (j + N) / (2 * r ^ 2)) ≤
+        centredCriterionModulus M Mn θ₀ ((2 : ℝ) ^ (j + N + 1) / r) ω := by
+  set d := dist t θ₀ with hd
+  have hd0 : 0 ≤ d := dist_nonneg
+  have h1 : (1 : ℝ) ≤ r * d := le_trans (one_le_pow₀ (by norm_num)) hω.le
+  obtain ⟨k, hk1, hk2⟩ := exists_nat_pow_near h1 (show (1 : ℝ) < 2 by norm_num)
+  have hkN : N ≤ k := by
+    by_contra hlt
+    push Not at hlt
+    have : (2 : ℝ) ^ (k + 1) ≤ 2 ^ N := pow_le_pow_right₀ (by norm_num) hlt
+    linarith
+  obtain ⟨j, rfl⟩ : ∃ j, k = j + N := ⟨k - N, by omega⟩
+  have hdδ : d < (2 : ℝ) ^ (j + N + 1) / r := by
+    rw [lt_div_iff₀ hr, mul_comm]; exact hk2
+  have hδ0 : (2 : ℝ) ^ (j + N + 1) / r < δ₀ := by
+    rw [div_lt_iff₀ hr]
+    have : (2 : ℝ) ^ (j + N + 1) ≤ 2 * (r * d) := by rw [pow_succ]; linarith
+    nlinarith
+  refine ⟨j, hδ0, ?_⟩
+  have hd2 : (4 : ℝ) ^ (j + N) / r ^ 2 ≤ d ^ 2 := by
+    rw [div_le_iff₀ (by positivity), show (4 : ℝ) = 2 ^ 2 by norm_num, ← pow_mul,
+      mul_comm 2, pow_mul]
+    calc ((2 : ℝ) ^ (j + N)) ^ 2 ≤ (r * d) ^ 2 := pow_le_pow_left₀ (by positivity) hk1 2
+      _ = d ^ 2 * r ^ 2 := by ring
+  have h4N : (4 : ℝ) ^ N ≤ 4 ^ (j + N) := pow_le_pow_right₀ (by norm_num) (by omega)
+  have hval : c * 4 ^ (j + N) / (2 * r ^ 2) ≤
+      |(Mn ω t - M t) - (Mn ω θ₀ - M θ₀)| := by
+    refine le_trans ?_ (le_abs_self _)
+    have hcd : c * ((4 : ℝ) ^ (j + N) / r ^ 2) ≤ c * d ^ 2 :=
+      mul_le_mul_of_nonneg_left hd2 hc.le
+    have hK' : K / r ^ 2 ≤ c * 4 ^ (j + N) / (2 * r ^ 2) := by
+      rw [div_le_div_iff₀ (by positivity) (by positivity)]
+      have h2K : 2 * K ≤ c * 4 ^ (j + N) := hN.trans (mul_le_mul_of_nonneg_left h4N hc.le)
+      have := mul_le_mul_of_nonneg_right h2K (pow_pos hr 2).le
+      linarith
+    have : c * 4 ^ (j + N) / (2 * r ^ 2) = c * ((4 : ℝ) ^ (j + N) / r ^ 2) -
+        c * 4 ^ (j + N) / (2 * r ^ 2) := by field_simp; ring
+    linarith
+  calc ENNReal.ofReal (c * 4 ^ (j + N) / (2 * r ^ 2))
+      ≤ ENNReal.ofReal |(Mn ω t - M t) - (Mn ω θ₀ - M θ₀)| :=
+        ENNReal.ofReal_le_ofReal hval
+    _ ≤ centredCriterionModulus M Mn θ₀ ((2 : ℝ) ^ (j + N + 1) / r) ω :=
+        le_iSup₂ (f := fun θ (_ : dist θ θ₀ < (2 : ℝ) ^ (j + N + 1) / r) ↦
+          ENNReal.ofReal |(Mn ω θ - M θ) - (Mn ω θ₀ - M θ₀)|) t hdδ
+
+/-- **Scaling step of the rate theorem.** If `δ ↦ φ(δ) / δ^a` is decreasing on `(0, ∞)` and
+`r² φ(1/r) ≤ s`, then at the dyadic radius `δ = 2^{k+1} / r`,
+`C φ(δ) ≤ b ρ^k · (c 4^k / (2 r²)) · s` with `b = 2 · 2^a |C| / c` and `ρ = 2^a / 4`. -/
+theorem mul_le_of_antitoneOn_div_rpow {φ : ℝ → ℝ} {a : ℝ}
+    (hφ : AntitoneOn (fun δ ↦ φ δ / δ ^ a) (Ioi 0)) {C c r s : ℝ} (hC : 0 ≤ C) (hc : 0 < c)
+    (hr : 0 < r) (hs : 0 < s) (hrate : r ^ 2 * φ (1 / r) ≤ s) (k : ℕ) :
+    C * φ ((2 : ℝ) ^ (k + 1) / r) ≤
+      2 * 2 ^ a * |C| / c * ((2 : ℝ) ^ a / 4) ^ k * (c * 4 ^ k / (2 * r ^ 2)) * s := by
+  set δk : ℝ := (2 : ℝ) ^ (k + 1) / r with hδk
+  have hδpos : 0 < δk := by positivity
+  have hrδ : r * δk = 2 ^ (k + 1) := by rw [hδk]; field_simp
+  have hle : 1 / r ≤ δk := by
+    rw [hδk, div_le_div_iff_of_pos_right hr]
+    exact one_le_pow₀ (by norm_num)
+  have hanti : φ δk / δk ^ a ≤ φ (1 / r) / (1 / r) ^ a :=
+    hφ (show (0 : ℝ) < 1 / r by positivity) hδpos hle
+  have hF : (δk / (1 / r)) ^ a = ((2 : ℝ) ^ a) ^ (k + 1) := by
+    have : δk / (1 / r) = (2 : ℝ) ^ (k + 1) := by rw [← hrδ]; field_simp
+    rw [this, ← Real.rpow_pow_comm (by norm_num)]
+  have hscale : φ δk ≤ φ (1 / r) * ((2 : ℝ) ^ a) ^ (k + 1) := by
+    rw [← hF, Real.div_rpow hδpos.le (by positivity)]
+    rw [div_le_div_iff₀ (Real.rpow_pos_of_pos hδpos a)
+      (Real.rpow_pos_of_pos (by positivity) a)] at hanti
+    have hpos1 : 0 < (1 / r) ^ a := Real.rpow_pos_of_pos (by positivity) a
+    rw [mul_div_assoc', le_div_iff₀ hpos1]
+    linarith
+  have hF0 : 0 ≤ ((2 : ℝ) ^ a) ^ (k + 1) := by positivity
+  have hφmax : max (φ δk) 0 ≤ ((2 : ℝ) ^ a) ^ (k + 1) * (s / r ^ 2) := by
+    have h1 : φ (1 / r) ≤ s / r ^ 2 := by
+      rw [le_div_iff₀ (by positivity), mul_comm]; exact hrate
+    refine max_le ?_ (by positivity)
+    calc φ δk ≤ φ (1 / r) * ((2 : ℝ) ^ a) ^ (k + 1) := hscale
+      _ ≤ s / r ^ 2 * ((2 : ℝ) ^ a) ^ (k + 1) := mul_le_mul_of_nonneg_right h1 hF0
+      _ = _ := mul_comm _ _
+  calc C * φ δk ≤ |C| * max (φ δk) 0 := by
+        rw [abs_of_nonneg hC]; exact mul_le_mul_of_nonneg_left (le_max_left _ _) hC
+    _ ≤ |C| * (((2 : ℝ) ^ a) ^ (k + 1) * (s / r ^ 2)) :=
+        mul_le_mul_of_nonneg_left hφmax (abs_nonneg C)
+    _ = _ := by
+        rw [div_pow, pow_succ]
+        field_simp
+
 /-- GAPS 102.25: the rate theorem for `M`-estimators. Suppose the deterministic criterion has
 quadratic separation `M θ - M θ₀ ≤ -c d(θ,θ₀)²` near `θ₀`, and that for every `n ≥ 1` and all
 `δ` in a fixed interval `(0, δ₀)`, the outer expectation of the local modulus of `Mₙ - M` is at
-most `C φₙ(δ)/√n` with a constant `C ≥ 0`, where `δ ↦ φₙ(δ)/δ^a` is decreasing on `(0,∞)` for
+most `C φₙ(δ) / √n` with a constant `C ≥ 0`, where `δ ↦ φₙ(δ) / δ^a` is decreasing on `(0,∞)` for
 a fixed `a < 2`. If `rₙ² φₙ(1/rₙ) ≤ √n`, the estimator maximizes `Mₙ` up to `O_P(rₙ⁻²)`, and it
 is consistent in outer probability, then `rₙ d(Tₙ, θ₀) = O_P(1)`. -/
 theorem isBoundedInProbability_rate_mEstimator {Ω Θ : Type*} [MeasurableSpace Ω]
@@ -104,54 +202,14 @@ theorem isBoundedInProbability_rate_mEstimator {Ω Θ : Type*} [MeasurableSpace 
     by_contra hcon
     simp only [mem_union, mem_iUnion, not_or, not_exists, mem_ofPred_eq, not_lt] at hcon hω
     obtain ⟨⟨hRK, hdη⟩, hA⟩ := hcon
-    set d := dist (T n ω) θ₀ with hd
-    have hd0 : 0 ≤ d := dist_nonneg
     rw [abs_of_nonneg (by positivity)] at hω
-    have h1 : (1 : ℝ) ≤ r n * d := le_trans (one_le_pow₀ (by norm_num)) hω.le
-    obtain ⟨k, hk1, hk2⟩ := exists_nat_pow_near h1 (show (1 : ℝ) < 2 by norm_num)
-    have hkN : N ≤ k := by
-      by_contra hlt
-      push Not at hlt
-      have : (2 : ℝ) ^ (k + 1) ≤ 2 ^ N := pow_le_pow_right₀ (by norm_num) hlt
-      linarith
-    obtain ⟨j, rfl⟩ : ∃ j, k = j + N := ⟨k - N, by omega⟩
-    have hdδ : d < (2 : ℝ) ^ (j + N + 1) / r n := by
-      rw [lt_div_iff₀ hrn, mul_comm]; exact hk2
-    have hδ0 : (2 : ℝ) ^ (j + N + 1) / r n < δ₀ := by
-      rw [div_lt_iff₀ hrn]
-      have : (2 : ℝ) ^ (j + N + 1) ≤ 2 * (r n * d) := by rw [pow_succ]; linarith
-      nlinarith
-    refine hA j ⟨hδ0, ?_⟩
-    have hcurv' := hcurv (T n ω) (lt_of_le_of_lt hdη hη'η)
-    have hoptω := hopt n ω
     have hRle : R n ω ≤ K / r n ^ 2 := by
       rw [le_div_iff₀ (by positivity), mul_comm]
       exact (le_abs_self _).trans hRK
-    have hd2 : (4 : ℝ) ^ (j + N) / r n ^ 2 ≤ d ^ 2 := by
-      rw [div_le_iff₀ (by positivity), show (4 : ℝ) = 2 ^ 2 by norm_num, ← pow_mul,
-        mul_comm 2, pow_mul]
-      calc ((2 : ℝ) ^ (j + N)) ^ 2 ≤ (r n * d) ^ 2 := pow_le_pow_left₀ (by positivity) hk1 2
-        _ = d ^ 2 * r n ^ 2 := by ring
-    have h4N : (4 : ℝ) ^ N ≤ 4 ^ (j + N) := pow_le_pow_right₀ (by norm_num) (by omega)
-    have hval : c * 4 ^ (j + N) / (2 * r n ^ 2) ≤
-        |(Mn n ω (T n ω) - M (T n ω)) - (Mn n ω θ₀ - M θ₀)| := by
-      refine le_trans ?_ (le_abs_self _)
-      have hcd : c * ((4 : ℝ) ^ (j + N) / r n ^ 2) ≤ c * d ^ 2 :=
-        mul_le_mul_of_nonneg_left hd2 hc.le
-      have hK' : K / r n ^ 2 ≤ c * 4 ^ (j + N) / (2 * r n ^ 2) := by
-        rw [div_le_div_iff₀ (by positivity) (by positivity)]
-        have h2K : 2 * K ≤ c * 4 ^ (j + N) := hN2.trans (mul_le_mul_of_nonneg_left h4N hc.le)
-        have := mul_le_mul_of_nonneg_right h2K (pow_pos hrn 2).le
-        linarith
-      have : c * 4 ^ (j + N) / (2 * r n ^ 2) = c * ((4 : ℝ) ^ (j + N) / r n ^ 2) -
-          c * 4 ^ (j + N) / (2 * r n ^ 2) := by field_simp; ring
-      linarith
-    calc ENNReal.ofReal (c * 4 ^ (j + N) / (2 * r n ^ 2))
-        ≤ ENNReal.ofReal |(Mn n ω (T n ω) - M (T n ω)) - (Mn n ω θ₀ - M θ₀)| :=
-          ENNReal.ofReal_le_ofReal hval
-      _ ≤ centredCriterionModulus M (Mn n) θ₀ ((2 : ℝ) ^ (j + N + 1) / r n) ω :=
-          le_iSup₂ (f := fun θ (_ : dist θ θ₀ < (2 : ℝ) ^ (j + N + 1) / r n) ↦
-            ENNReal.ofReal |(Mn n ω θ - M θ) - (Mn n ω θ₀ - M θ₀)|) (T n ω) hdδ
+    obtain ⟨j, hj⟩ := exists_le_centredCriterionModulus_of_lt_mul_dist M (Mn n) θ₀ ω hc hrn
+      (hcurv (T n ω) (lt_of_le_of_lt hdη hη'η)) (hopt n ω) hRle hN2 hω
+      (δ₀ := δ₀) (by linarith)
+    exact hA j hj
   have hAkb : ∀ j, μ (Ak (j + N)) ≤ ENNReal.ofReal (b * ρ ^ (j + N)) := by
     intro j
     set k := j + N
@@ -170,42 +228,9 @@ theorem isBoundedInProbability_rate_mEstimator {Ω Θ : Type*} [MeasurableSpace 
     refine ENNReal.div_le_of_le_mul ?_
     rw [← ENNReal.ofReal_mul (by positivity)]
     refine ENNReal.ofReal_le_ofReal ?_
-    -- scaling of `φ` between `1 / r n` and `δk`
-    have hsn : 0 < Real.sqrt n := Real.sqrt_pos.2 (by exact_mod_cast hn1)
-    have hrδ : r n * δk = 2 ^ (k + 1) := by rw [hδk]; field_simp
-    have hle : 1 / r n ≤ δk := by
-      rw [hδk, div_le_div_iff_of_pos_right hrn]
-      exact one_le_pow₀ (by norm_num)
-    have hanti : φ n δk / δk ^ a ≤ φ n (1 / r n) / (1 / r n) ^ a :=
-      hφ n (show (0 : ℝ) < 1 / r n by positivity) hδpos hle
-    have hF : (δk / (1 / r n)) ^ a = ((2 : ℝ) ^ a) ^ (k + 1) := by
-      have : δk / (1 / r n) = (2 : ℝ) ^ (k + 1) := by rw [← hrδ]; field_simp
-      rw [this, ← Real.rpow_pow_comm (by norm_num)]
-    have hscale : φ n δk ≤ φ n (1 / r n) * ((2 : ℝ) ^ a) ^ (k + 1) := by
-      rw [← hF, Real.div_rpow hδpos.le (by positivity)]
-      rw [div_le_div_iff₀ (Real.rpow_pos_of_pos hδpos a)
-        (Real.rpow_pos_of_pos (by positivity) a)] at hanti
-      have hpos1 : 0 < (1 / r n) ^ a := Real.rpow_pos_of_pos (by positivity) a
-      rw [mul_div_assoc', le_div_iff₀ hpos1]
-      linarith
-    have hF0 : 0 ≤ ((2 : ℝ) ^ a) ^ (k + 1) := by positivity
-    have hφmax : max (φ n δk) 0 ≤ ((2 : ℝ) ^ a) ^ (k + 1) * (Real.sqrt n / r n ^ 2) := by
-      have h1 : φ n (1 / r n) ≤ Real.sqrt n / r n ^ 2 := by
-        rw [le_div_iff₀ (by positivity), mul_comm]; exact hrate n hn1
-      refine max_le ?_ (by positivity)
-      calc φ n δk ≤ φ n (1 / r n) * ((2 : ℝ) ^ a) ^ (k + 1) := hscale
-        _ ≤ Real.sqrt n / r n ^ 2 * ((2 : ℝ) ^ a) ^ (k + 1) :=
-            mul_le_mul_of_nonneg_right h1 hF0
-        _ = _ := mul_comm _ _
-    have hCφ : C * φ n δk ≤ |C| * (((2 : ℝ) ^ a) ^ (k + 1) * (Real.sqrt n / r n ^ 2)) :=
-      calc C * φ n δk ≤ |C| * max (φ n δk) 0 := by
-            rw [abs_of_nonneg hC]; exact mul_le_mul_of_nonneg_left (le_max_left _ _) hC
-        _ ≤ _ := mul_le_mul_of_nonneg_left hφmax (abs_nonneg C)
-    rw [div_le_iff₀ hsn]
-    calc C * φ n δk ≤ |C| * (((2 : ℝ) ^ a) ^ (k + 1) * (Real.sqrt n / r n ^ 2)) := hCφ
-      _ = b * ρ ^ k * (c * 4 ^ k / (2 * r n ^ 2)) * Real.sqrt n := by
-          rw [hb, hρ, div_pow, pow_succ]
-          field_simp
+    rw [div_le_iff₀ (Real.sqrt_pos.2 (by exact_mod_cast hn1))]
+    exact mul_le_of_antitoneOn_div_rpow (hφ n) hC hc hrn
+      (Real.sqrt_pos.2 (by exact_mod_cast hn1)) (hrate n hn1) k
   have hU : μ.real (⋃ j, Ak (j + N)) ≤ b * ρ ^ N / (1 - ρ) := by
     have hsum : Summable fun j : ℕ ↦ b * ρ ^ (j + N) := by
       simp_rw [pow_add]
@@ -228,6 +253,5 @@ theorem isBoundedInProbability_rate_mEstimator {Ω Θ : Type*} [MeasurableSpace 
         (measureReal_union_le _ _).trans (add_le_add (measureReal_union_le _ _) le_rfl)
     _ ≤ ε / 3 + ε / 3 + ε / 3 := by gcongr; linarith
     _ = ε := by ring
-
 
 end CKSD

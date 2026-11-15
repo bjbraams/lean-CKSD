@@ -237,7 +237,7 @@ theorem integral_id_localLaplace {ε : ℝ} (hε : 0 < ε) (P : Measure ℝ)
   simp only [Kernel.const_apply]
   refine integral_congr_ae ?_
   filter_upwards [hae] with x hx
-  change ∫ y, y ∂TauCeti.Probability.laplaceMeasure (clipUnit x) (2 / ε) = x
+  simp only [localLaplaceKernel, Kernel.coe_mk]
   rw [TauCeti.Probability.integral_id_laplaceMeasure, hx]
   exact hb
 

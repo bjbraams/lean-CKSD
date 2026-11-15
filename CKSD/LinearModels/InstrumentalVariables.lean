@@ -590,9 +590,7 @@ theorem tendstoInDistribution_twoStageLeastSquares
     · simp only [hTdef, Nat.cast_zero, Real.sqrt_zero, zero_smul]
       exact measurable_const
     · have : T n = fun ω ↦ Real.sqrt n • (instrumentMomentEstimator (Vn n ω) - beta) :=
-        funext fun ω ↦ by
-          show Real.sqrt n • (_ - beta) = _
-          rw [hest n ω hn]
+        funext fun ω ↦ by simp only [hTdef]; rw [hest n ω hn]
       rw [this]
       exact ((measurable_instrumentMomentEstimator.comp (hVm n)).sub_const _).const_smul
         (Real.sqrt n)

@@ -90,8 +90,8 @@ def offsetInclusion (P : Set E) {i j : ℝ} (h : i ≤ j) : C(cthickening i P, c
 /-- GAPS 108.22, deformation retraction of offsets. Let `M = j(N) ⊂ ℝ^D` be a compact smooth
 `d`-dimensional submanifold without boundary with reach at least `τ > 0`, and `P ⊆ M` finite and
 nonempty with `d_H(P, M) = ε < √(3/20) τ`. For `r ∈ (2ε, √(3/5) τ)` the offset `P^r` contains
-`M` and strongly deformation retracts onto it. By the nerve theorem the Čech complex of radius `r` then has the
-homotopy type of `M`; the nerve theorem is not part of this statement. -/
+`M` and strongly deformation retracts onto it. By the nerve theorem the Čech complex of radius `r`
+then has the homotopy type of `M`; the nerve theorem is not part of this statement. -/
 theorem exists_deformationRetraction_offset_of_hausdorffDist_lt
     {d : ℕ} {N : Type*} [TopologicalSpace N] [ChartedSpace (EuclideanSpace ℝ (Fin d)) N]
     [IsManifold (𝓡 d) ∞ N] [CompactSpace N] {j : N → E}

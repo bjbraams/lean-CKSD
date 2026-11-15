@@ -172,7 +172,7 @@ theorem le_exp_neg_mul_of_hasDerivAt_neg_of_two_mul_le (E I : ℝ → ℝ) (m : 
   have hscaled := mul_le_mul_of_nonneg_left hbound (Real.exp_pos (-2 * m * t)).le
   have hcancel : Real.exp (-2 * m * t) * Real.exp (2 * m * t) = 1 := by
     rw [← Real.exp_add]
-    convert Real.exp_zero using 1; ring
+    convert Real.exp_zero using 1; ring_nf
   rwa [← mul_assoc, hcancel, one_mul] at hscaled
 
 /-- GAPS 104.64: Hyvärinen's score-matching identity on `ℝ`. For a positive `C¹` density `p` with
@@ -298,6 +298,7 @@ theorem condExp_prod_of_condExp_slices
     exact ⟨(fun y ↦ (t, y)) ⁻¹' A, measurable_prodMk_left hA, rfl⟩
   have hXt : Measurable (X t) := hX.comp measurable_prodMk_left
   have hAt' := hXt.comap_le _ hAt
+  -- Restate the sections of the product indicators as indicators of `{ω | (t, X t ω) ∈ A}`.
   change (∫ ω, ({ω | (t, X t ω) ∈ A}.indicator (fun ω ↦ v t (X t ω))) ω ∂π) =
     ∫ ω, ({ω | (t, X t ω) ∈ A}.indicator W) ω ∂π
   rw [integral_indicator hAt', integral_indicator hAt',
@@ -340,7 +341,6 @@ theorem wasserstein_le_barycentric_velocity_action {d : ℕ}
       (by simpa only [← hasFiniteIntegral_iff_enorm] using hW.2)
   have heq : ∀ᵐ q : ℝ × (EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d)) ∂ρ.prod π,
       u q.1 (Xt q.1 q.2) = v q.1 (Xt q.1 q.2) := by
-    change (fun q ↦ u q.1 (Xt q.1 q.2)) =ᵐ[ρ.prod π] _
     exact (Filter.EventuallyEq.of_eq hcu).trans hprod.symm
   have hce' : TauCeti.IsContinuityEquation (fun t ↦ π.map (Xt t)) v 0 1 := by
     apply hce.congr hv
@@ -361,7 +361,8 @@ theorem wasserstein_le_barycentric_velocity_action {d : ℕ}
     (P.continuous_map_of_forall_continuous (fun _ ↦ by fun_prop) fun _ ↦ by fun_prop)
   have hceν : TauCeti.IsContinuityEquation (fun t ↦ (ν t : Measure _)) v 0 1 := by
     simpa only [hν] using hce'
-  have : IsProbabilityMeasure (ν 0 : Measure (EuclideanSpace ℝ (Fin d))) := by rw [hν]; infer_instance
+  have : IsProbabilityMeasure (ν 0 : Measure (EuclideanSpace ℝ (Fin d))) := by
+    rw [hν]; infer_instance
   have hlow := hceν.wassersteinEDist_rpow_le hνc.continuousOn zero_le_one
     (p := 2) (by norm_num) (by norm_num)
   have hsq (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
@@ -375,10 +376,12 @@ theorem wasserstein_le_barycentric_velocity_action {d : ℕ}
         ∫ z, ‖π[(fun z ↦ z.2 - z.1) | MeasurableSpace.comap (Xt t) inferInstance] z‖ ^ 2 ∂π :=
           integral_congr_ae ((hcond t ht).mono fun z hz ↦ by dsimp only at hz ⊢; rw [hz])
       _ ≤ _ := by
-        exact_mod_cast integral_norm_condExp_rpow_le (m := MeasurableSpace.comap (Xt t) inferInstance)
+        exact_mod_cast integral_norm_condExp_rpow_le
+          (m := MeasurableSpace.comap (Xt t) inferInstance)
           (p := 2) (by norm_num) (by simpa using hW2.integrable_norm_pow (by norm_num))
   have hAm : Measurable (fun t ↦ ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π) :=
-    ((hv.comp (measurable_fst.prodMk hXt)).norm.pow_const 2).stronglyMeasurable.integral_prod_right.measurable
+    ((hv.comp (measurable_fst.prodMk hXt)).norm.pow_const
+      2).stronglyMeasurable.integral_prod_right.measurable
   have hAint : Integrable (fun t ↦ ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π) ρ := by
     refine (integrable_const (∫ z, ‖z.2 - z.1‖ ^ 2 ∂π)).mono' hAm.aestronglyMeasurable ?_
     filter_upwards [ae_restrict_mem measurableSet_Ioo] with t ht
@@ -402,7 +405,8 @@ theorem wasserstein_le_barycentric_velocity_action {d : ℕ}
   constructor
   · simp only [hν] at hlow
     simp only [Xt, sub_zero, zero_smul, one_smul, add_zero, sub_self, zero_add] at hlow
-    norm_num only [ENNReal.toReal_ofNat, sub_zero, Real.one_rpow, ENNReal.ofReal_one, one_mul] at hlow
+    norm_num only [ENNReal.toReal_ofNat, sub_zero, Real.one_rpow, ENNReal.ofReal_one,
+      one_mul] at hlow
     rw [hact, ENNReal.rpow_two] at hlow
     have := ENNReal.toReal_mono ENNReal.ofReal_ne_top hlow
     have hAnn : 0 ≤ (∫ t in Ioo (0 : ℝ) 1, ∫ z, ‖v t (Xt t z)‖ ^ 2 ∂π) :=

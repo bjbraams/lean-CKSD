@@ -450,7 +450,7 @@ private theorem integral_mul_response_eq (P : Measure (Bool × X × ℝ)) [IsPro
     _ = _ := integral_congr_ae (by filter_upwards [hce] with w h; simp [← h])
 
 /-- Hölder's inequality for a weighted product of covariate functions: if `π ≥ δ > 0`, then
-`‖E[u(X) v(X)/π(X)]‖ ≤ δ⁻¹ ‖u‖_{L²(P_X)} ‖v‖_{L²(P_X)}`. -/
+`‖E[u(X) v(X) / π(X)]‖ ≤ δ⁻¹ ‖u‖_{L²(P_X)} ‖v‖_{L²(P_X)}`. -/
 private theorem enorm_integral_comp_mul_div_le {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
     {Xv : Ω → X} (hX : Measurable Xv) {u v π : X → ℝ} (hu : Measurable u) (hv : Measurable v)
     (hπ : Measurable π) {δ : ℝ} (hδ : 0 < δ) (hπδ : ∀ x, δ ≤ π x) :
@@ -478,9 +478,23 @@ private theorem enorm_integral_comp_mul_div_le {Ω : Type*} [MeasurableSpace Ω]
         simpa using this
     _ = _ := by rw [mul_assoc]
 
+/-- A function supported on the observed records `R = 1` and dominated there by a multiple
+of an integrable function is integrable. -/
+private theorem integrable_ite_observed_of_norm_le {P : Measure (Bool × X × ℝ)}
+    {f g : Bool × X × ℝ → ℝ} {c : ℝ} (hg : Integrable g P) (hf : Measurable f)
+    (hfg : ∀ w, ‖f w‖ ≤ c * ‖g w‖) :
+    Integrable (fun w ↦ if w.1 = true then f w else 0) P := by
+  have hS : MeasurableSet {w : Bool × X × ℝ | w.1 = true} :=
+    measurable_fst (measurableSet_singleton true)
+  refine (hg.norm.const_mul c).mono' ((Measurable.ite hS hf measurable_const).aestronglyMeasurable)
+    (Eventually.of_forall fun w ↦ ?_)
+  split_ifs
+  · exact hfg w
+  · rw [norm_zero]; exact (norm_nonneg _).trans (hfg w)
+
 /-- **Bias of the augmented inverse-probability score.** Under missingness at random, for
 nuisance values `(m, π)` with `π ≥ δ` and `m - m₀, π - π₀ ∈ L²(P_X)`, the mean of the difference
-of the scores at `(m, π)` and `(m₀, π₀)` is `E[(m - m₀)(π - π₀)/π](X)`, so it is bounded by
+of the scores at `(m, π)` and `(m₀, π₀)` is `E[(m - m₀)(π - π₀) / π](X)`, so it is bounded by
 `δ⁻¹ ‖m - m₀‖₂ ‖π - π₀‖₂`. -/
 private theorem enorm_integral_missingMeanScore_sub_le (P : Measure (Bool × X × ℝ))
     [IsProbabilityMeasure P] (hY : MemLp (fun w : Bool × X × ℝ ↦ w.2.2) 2 P)
@@ -518,46 +532,29 @@ private theorem enorm_integral_missingMeanScore_sub_le (P : Measure (Bool × X �
   have huX : MemLp u 2 (P.map fun w ↦ w.2.1) := hu
   have huL : MemLp (fun w : Bool × X × ℝ ↦ u w.2.1) 2 P :=
     (memLp_map_measure_iff hum.aestronglyMeasurable hX.aemeasurable).1 huX
-  have hS : MeasurableSet {w : Bool × X × ℝ | w.1 = true} :=
-    measurable_fst (measurableSet_singleton true)
   have hui : Integrable (fun w : Bool × X × ℝ ↦ u w.2.1) P := huL.integrable one_le_two
   have hm₀i := integrable_of_regression P hYi m₀ hm₀m hreg
   have htr := integral_ite_observed_eq P π₀ hπ₀m hπ₀0 hmar
   -- The first part: `u(X) (1 - R/π(X))`.
   have hF1 : Measurable fun p : X × ℝ ↦ u p.1 / π p.1 := by fun_prop
   have hA1 : Integrable (fun w : Bool × X × ℝ ↦ if w.1 = true then u w.2.1 / π w.2.1 else 0)
-      P := by
-    refine (hui.norm.const_mul δ⁻¹).mono'
-      ((Measurable.ite hS (by fun_prop) measurable_const).aestronglyMeasurable)
-      (Eventually.of_forall fun w ↦ ?_)
-    split_ifs
-    · rw [norm_div, Real.norm_eq_abs (π _), abs_of_pos (hπ0 _), div_eq_mul_one_div, mul_comm]
-      exact mul_le_mul_of_nonneg_right (hinv _) (norm_nonneg _)
-    · rw [norm_zero]; positivity
+      P := integrable_ite_observed_of_norm_le hui (by fun_prop) fun w ↦ by
+    rw [norm_div, Real.norm_eq_abs (π _), abs_of_pos (hπ0 _), div_eq_mul_one_div, mul_comm]
+    exact mul_le_mul_of_nonneg_right (hinv _) (norm_nonneg _)
   have hA1' := (htr _ hF1).2.1 hA1
   -- The second part: `R (Y - m₀(X)) k(X)`.
   have hF2 : Measurable fun p : X × ℝ ↦ (p.2 - m₀ p.1) * k p.1 := by fun_prop
   have hA2 : Integrable (fun w : Bool × X × ℝ ↦
-      if w.1 = true then (w.2.2 - m₀ w.2.1) * k w.2.1 else 0) P := by
-    refine ((hYi.sub hm₀i).norm.const_mul δ⁻¹).mono'
-      ((Measurable.ite hS (by fun_prop) measurable_const).aestronglyMeasurable)
-      (Eventually.of_forall fun w ↦ ?_)
-    simp only [Pi.sub_apply]
-    split_ifs
-    · rw [norm_mul, mul_comm]
+      if w.1 = true then (w.2.2 - m₀ w.2.1) * k w.2.1 else 0) P :=
+    integrable_ite_observed_of_norm_le (hYi.sub hm₀i) (by fun_prop) fun w ↦ by
+      rw [norm_mul, mul_comm]
       exact mul_le_mul_of_nonneg_right (hkb _) (norm_nonneg _)
-    · rw [norm_zero]; positivity
   have hA2' := (htr _ hF2).2.1 hA2
   have hF3 : Measurable fun p : X × ℝ ↦ m₀ p.1 * k p.1 := by fun_prop
   have hA3 : Integrable (fun w : Bool × X × ℝ ↦ if w.1 = true then m₀ w.2.1 * k w.2.1 else 0)
-      P := by
-    refine (hm₀i.norm.const_mul δ⁻¹).mono'
-      ((Measurable.ite hS (by fun_prop) measurable_const).aestronglyMeasurable)
-      (Eventually.of_forall fun w ↦ ?_)
-    split_ifs
-    · rw [norm_mul, mul_comm]
-      exact mul_le_mul_of_nonneg_right (hkb _) (norm_nonneg _)
-    · rw [norm_zero]; positivity
+      P := integrable_ite_observed_of_norm_le hm₀i (by fun_prop) fun w ↦ by
+    rw [norm_mul, mul_comm]
+    exact mul_le_mul_of_nonneg_right (hkb _) (norm_nonneg _)
   have hA3' := (htr _ hF3).2.1 hA3
   have hkY : Integrable (fun w : Bool × X × ℝ ↦ (π₀ w.2.1 * k w.2.1) * w.2.2) P := by
     refine (hA2'.add hA3').congr (Eventually.of_forall fun w ↦ ?_)
@@ -718,6 +715,84 @@ private theorem sqrt_mul_abs_le_of_enorm_le {s c δ ε : ℝ} (hs : 0 ≤ s) (h�
         congr 1; field_simp
   exact (ENNReal.ofReal_le_ofReal_iff (by positivity)).1 h
 
+/-- Measurability of the difference between the augmented inverse-probability score with
+nuisance values trained on the observed data `(Rⱼ, Xⱼ, Rⱼ Yⱼ)` of a training sample and the
+score with the true nuisance functions, jointly in the training sample and the new point. -/
+private theorem measurable_missingMeanScore_observed_sub {T : Type*}
+    (tr : (T → Bool × X × ℝ) → (X → ℝ) × (X → ℝ))
+    (h₁ : Measurable fun p : (T → Bool × X × ℝ) × X ↦ (tr p.1).1 p.2)
+    (h₂ : Measurable fun p : (T → Bool × X × ℝ) × X ↦ (tr p.1).2 p.2) {m₀ π₀ : X → ℝ}
+    (hm₀m : Measurable m₀) (hπ₀m : Measurable π₀) :
+    Measurable fun p : (T → Bool × X × ℝ) × (Bool × X × ℝ) ↦
+      missingMeanScore (tr fun j ↦ missingDataObservation (p.1 j)).1
+        (tr fun j ↦ missingDataObservation (p.1 j)).2 p.2.2.1 p.2.1 p.2.2.2 -
+      missingMeanScore m₀ π₀ p.2.2.1 p.2.1 p.2.2.2 := by
+  have hΦ : Measurable fun z : T → Bool × X × ℝ ↦ fun j ↦ missingDataObservation (z j) :=
+    measurable_pi_iff.2 fun j ↦ measurable_missingDataObservation.comp (measurable_pi_apply j)
+  exact measurable_missingMeanScore_sub
+    (h := fun z : T → Bool × X × ℝ ↦ tr fun j ↦ missingDataObservation (z j))
+    (h₁.comp ((hΦ.comp measurable_fst).prodMk measurable_snd))
+    (h₂.comp ((hΦ.comp measurable_fst).prodMk measurable_snd)) hm₀m hπ₀m
+
+/-- Choice of the Chebyshev threshold for one fold: given `ε > 0` and `e > 0` there are `r` and
+`η > 0` with `r ≤ e / 2` and `|A| η² / (ε √n / 2)² ≤ r` whenever `|A| ≤ n`, `n ≥ 1`. -/
+theorem exists_ofReal_mul_sq_div_sq_le {ε : ℝ} (hε : 0 < ε) {e : ℝ≥0∞} (he : 0 < e) :
+    ∃ r η : ℝ, 0 < η ∧ ENNReal.ofReal r ≤ e / 2 ∧ ∀ (n : ℕ) (a : ℝ), 1 ≤ n → a ≤ n →
+      ENNReal.ofReal (a * η ^ 2 / (ε / 2 * Real.sqrt n) ^ 2) ≤ ENNReal.ofReal r := by
+  set e₁ : ℝ≥0∞ := min e 1 with he₁def
+  have he₁ : 0 < e₁ := lt_min he one_pos
+  have he₁t : e₁ ≠ ∞ := ((min_le_right _ _).trans_lt ENNReal.one_lt_top).ne
+  set r : ℝ := e₁.toReal / 2 with hrdef
+  have hr : 0 < r := div_pos (ENNReal.toReal_pos he₁.ne' he₁t) two_pos
+  set η : ℝ := ε / 2 * Real.sqrt r with hηdef
+  have hη : 0 < η := by positivity
+  have hηr : η ^ 2 / (ε / 2) ^ 2 = r := by
+    rw [hηdef, mul_pow, Real.sq_sqrt hr.le]; field_simp
+  refine ⟨r, η, hη, ?_, fun n a hn ha ↦ ENNReal.ofReal_le_ofReal ?_⟩
+  · rw [hrdef, ENNReal.ofReal_div_of_pos two_pos, ENNReal.ofReal_toReal he₁t,
+      ENNReal.ofReal_ofNat]
+    exact ENNReal.div_le_div_right (min_le_left _ _) 2
+  have hn' : (0 : ℝ) < n := by exact_mod_cast hn
+  have e : (ε / 2 * Real.sqrt n) ^ 2 = (ε / 2) ^ 2 * n := by
+    rw [mul_pow, Real.sq_sqrt (Nat.cast_nonneg _)]
+  rw [e, ← hηr, div_le_div_iff₀ (by positivity) (by positivity)]
+  have : 0 ≤ η ^ 2 * (ε / 2) ^ 2 := by positivity
+  nlinarith
+
+/-- Deterministic step for one fold with fixed nuisance values `(m, π)`, `π ≥ δ`: if
+`‖m - m₀‖₂ ≤ 1`, `√n ‖m - m₀‖₂ ‖π - π₀‖₂ ≤ ε δ / 2` and `|A| ≤ n`, and the scaled fold sum of
+score differences `D` exceeds `ε`, then the centred fold sum `∑_{i ∈ A} (D(wᵢ) - E D)` exceeds
+`ε √n / 2`. -/
+private theorem lt_abs_sum_sub_integral_of_lt_abs_inv_mul_sum {ι : Type*}
+    (P : Measure (Bool × X × ℝ)) [IsProbabilityMeasure P]
+    (hY : MemLp (fun w : Bool × X × ℝ ↦ w.2.2) 2 P)
+    (π₀ m₀ : X → ℝ) (hπ₀m : Measurable π₀) (hm₀m : Measurable m₀) {δ : ℝ} (hδ : 0 < δ)
+    (hπ₀ : ∀ x, δ ≤ π₀ x)
+    (hmar : ∀ A B, MeasurableSet A → MeasurableSet B →
+      P.real {w | w.1 = true ∧ w.2.1 ∈ A ∧ w.2.2 ∈ B} =
+        ∫ w in {w : Bool × X × ℝ | w.2.1 ∈ A ∧ w.2.2 ∈ B}, π₀ w.2.1 ∂P)
+    (hreg : ∀ A, MeasurableSet A →
+      (∫ w in {w : Bool × X × ℝ | w.2.1 ∈ A}, w.2.2 ∂P) =
+        ∫ w in {w : Bool × X × ℝ | w.2.1 ∈ A}, m₀ w.2.1 ∂P)
+    (m π : X → ℝ) (hm : Measurable m) (hπ : Measurable π) (hπδ : ∀ x, δ ≤ π x)
+    {s ε : ℝ} (hs : 0 < s) (hε : 0 ≤ ε) (A : Finset ι) (hA : (A.card : ℝ) ≤ s * s)
+    (w : ι → Bool × X × ℝ)
+    (hu1 : eLpNorm (fun x ↦ m x - m₀ x) 2 (P.map fun w ↦ w.2.1) ≤ ENNReal.ofReal 1)
+    (hp : ENNReal.ofReal s * eLpNorm (fun x ↦ m x - m₀ x) 2 (P.map fun w ↦ w.2.1) *
+      eLpNorm (fun x ↦ π x - π₀ x) 2 (P.map fun w ↦ w.2.1) ≤ ENNReal.ofReal (ε * δ / 2))
+    (h : ε < |s⁻¹ * ∑ i ∈ A, (missingMeanScore m π (w i).2.1 (w i).1 (w i).2.2 -
+      missingMeanScore m₀ π₀ (w i).2.1 (w i).1 (w i).2.2)|) :
+    ε / 2 * s < |∑ i ∈ A, ((missingMeanScore m π (w i).2.1 (w i).1 (w i).2.2 -
+      missingMeanScore m₀ π₀ (w i).2.1 (w i).1 (w i).2.2) -
+        ∫ y, (missingMeanScore m π y.2.1 y.1 y.2.2 -
+          missingMeanScore m₀ π₀ y.2.1 y.1 y.2.2) ∂P)| := by
+  have hbias := enorm_integral_missingMeanScore_sub_le P hY π₀ m₀ hπ₀m hm₀m hδ hπ₀ hmar hreg
+    _ _ hm hπ hπδ (hu1.trans_lt ENNReal.ofReal_lt_top)
+  have hc := sqrt_mul_abs_le_of_enorm_le hs.le hδ hε hbias hp
+  rw [Finset.sum_sub_distrib, Finset.sum_const, nsmul_eq_mul]
+  refine lt_abs_of_lt_abs_inv_mul_add hs (Nat.cast_nonneg _) hA hc ?_
+  rwa [sub_add_cancel]
+
 /-- **One fold of the cross-fitted estimator.** For a fold `k`, the scaled fold sum of the
 differences between the scores with estimated and with true nuisance functions tends to zero
 in probability. The centred part is controlled by Chebyshev's inequality given the training
@@ -767,19 +842,7 @@ private theorem tendsto_measure_lt_abs_fold_term {Ω : Type*} [MeasurableSpace �
       atTop (𝓝 0) := by
   rw [ENNReal.tendsto_nhds_zero]
   intro e he
-  set e₁ : ℝ≥0∞ := min e 1 with he₁def
-  have he₁ : 0 < e₁ := lt_min he one_pos
-  have he₁t : e₁ ≠ ∞ := ((min_le_right _ _).trans_lt ENNReal.one_lt_top).ne
-  set r : ℝ := e₁.toReal / 2 with hrdef
-  have hr : 0 < r := div_pos (ENNReal.toReal_pos he₁.ne' he₁t) two_pos
-  set η : ℝ := ε / 2 * Real.sqrt r with hηdef
-  have hη : 0 < η := by positivity
-  have hηr : η ^ 2 / (ε / 2) ^ 2 = r := by
-    rw [hηdef, mul_pow, Real.sq_sqrt hr.le]; field_simp
-  have hrle : ENNReal.ofReal r ≤ e / 2 := by
-    rw [hrdef, ENNReal.ofReal_div_of_pos two_pos, ENNReal.ofReal_toReal he₁t,
-      ENNReal.ofReal_ofNat]
-    exact ENNReal.div_le_div_right (min_le_left _ _) 2
+  obtain ⟨r, η, hη, hrle, hrem⟩ := exists_ofReal_mul_sq_div_sq_le hε he
   have hlim := (h4 η hη).add (((h1 1 one_pos).add (h2 1 one_pos)).add
     (h3 (ε * δ / 2) (by positivity)))
   simp only [add_zero] at hlim
@@ -790,24 +853,13 @@ private theorem tendsto_measure_lt_abs_fold_term {Ω : Type*} [MeasurableSpace �
     ⟨_, rfl⟩
   have hdisj : ∀ i ∈ A, i ∉ (split n).trainingIndices k := fun i hi hiT ↦ by
     subst hA; exact hiT (Finset.mem_filter.1 hi).2
-  have hΦ : Measurable fun z : (split n).trainingIndices k → Bool × X × ℝ ↦
-      fun j ↦ missingDataObservation (z j) :=
-    measurable_pi_iff.2 fun j ↦ measurable_missingDataObservation.comp (measurable_pi_apply j)
   obtain ⟨G, hGdef⟩ : ∃ G : ((split n).trainingIndices k → Bool × X × ℝ) × (Bool × X × ℝ) → ℝ,
       G = fun p ↦ missingMeanScore (train n k fun j ↦ missingDataObservation (p.1 j)).1
         (train n k fun j ↦ missingDataObservation (p.1 j)).2 p.2.2.1 p.2.1 p.2.2.2 -
       missingMeanScore m₀ π₀ p.2.2.1 p.2.1 p.2.2.2 := ⟨_, rfl⟩
-  have hg₁ : Measurable fun p : ((split n).trainingIndices k → Bool × X × ℝ) × X ↦
-      (train n k fun j ↦ missingDataObservation (p.1 j)).1 p.2 :=
-    (htrain₁ n k).comp ((hΦ.comp measurable_fst).prodMk measurable_snd)
-  have hg₂ : Measurable fun p : ((split n).trainingIndices k → Bool × X × ℝ) × X ↦
-      (train n k fun j ↦ missingDataObservation (p.1 j)).2 p.2 :=
-    (htrain₂ n k).comp ((hΦ.comp measurable_fst).prodMk measurable_snd)
-  have hG : Measurable G := by
-    rw [hGdef]
-    exact measurable_missingMeanScore_sub
-      (h := fun z : (split n).trainingIndices k → Bool × X × ℝ ↦
-        train n k fun j ↦ missingDataObservation (z j)) hg₁ hg₂ hm₀m hπ₀m
+  have hG : Measurable G :=
+    hGdef ▸ measurable_missingMeanScore_observed_sub (train n k) (htrain₁ n k) (htrain₂ n k)
+      hm₀m hπ₀m
   have hsn : 0 < Real.sqrt n := Real.sqrt_pos.2 (by exact_mod_cast hn)
   have hsq : Real.sqrt n * Real.sqrt n = n := Real.mul_self_sqrt (Nat.cast_nonneg _)
   have hcard : (A.card : ℝ) ≤ Real.sqrt n * Real.sqrt n := by
@@ -831,16 +883,6 @@ private theorem tendsto_measure_lt_abs_fold_term {Ω : Type*} [MeasurableSpace �
     by_contra h
     exact (not_lt.2 (lintegral_ofReal_sq_le_of_eLpNorm_le (hDm ω).aestronglyMeasurable hη.le
       (not_lt.1 h))) hω
-  have hrem : ENNReal.ofReal (A.card * η ^ 2 / (ε / 2 * Real.sqrt n) ^ 2) ≤
-      ENNReal.ofReal r := by
-    refine ENNReal.ofReal_le_ofReal ?_
-    have hn' : (0 : ℝ) < n := by exact_mod_cast hn
-    have hcn : (A.card : ℝ) ≤ n := hsq ▸ hcard
-    have e : (ε / 2 * Real.sqrt n) ^ 2 = (ε / 2) ^ 2 * n := by
-      rw [mul_pow, Real.sq_sqrt (Nat.cast_nonneg _)]
-    rw [e, ← hηr, div_le_div_iff₀ (by positivity) (by positivity)]
-    have : 0 ≤ η ^ 2 * (ε / 2) ^ 2 := by positivity
-    nlinarith
   obtain ⟨eu, heu⟩ : ∃ eu : Ω → ℝ≥0∞, ∀ ω, eLpNorm (fun x ↦
       (train n k fun j ↦ missingDataObservation (W j.val ω)).1 x - m₀ x) 2
         (P.map fun w ↦ w.2.1) = eu ω := ⟨_, fun _ ↦ rfl⟩
@@ -874,29 +916,20 @@ private theorem tendsto_measure_lt_abs_fold_term {Ω : Type*} [MeasurableSpace �
       (htrain₁ n k).comp (measurable_const.prodMk measurable_id)
     have hπ : Measurable fun x ↦ (train n k fun j ↦ missingDataObservation (W j.val ω)).2 x :=
       (htrain₂ n k).comp (measurable_const.prodMk measurable_id)
-    have hbias := enorm_integral_missingMeanScore_sub_le P hY π₀ m₀ hπ₀m hm₀m hδ hπ₀ hmar hreg
-      _ _ hm hπ (hπhat n k _) ((heu ω).trans_le hu1 |>.trans_lt ENNReal.ofReal_lt_top)
-    rw [heu, hev, hDω] at hbias
-    have hc := sqrt_mul_abs_le_of_enorm_le hsn.le hδ hε.le hbias hp
     simp only [mem_ofPred_eq] at hω ⊢
-    have hsplit : ∑ i ∈ Finset.univ.filter (fun i ↦ (split n).fold i = k),
-        (missingMeanScore (train n k fun j ↦ missingDataObservation (W j.val ω)).1
-          (train n k fun j ↦ missingDataObservation (W j.val ω)).2 (W i ω).2.1 (W i ω).1
-            (W i ω).2.2 - missingMeanScore m₀ π₀ (W i ω).2.1 (W i ω).1 (W i ω).2.2) =
-        ∑ i ∈ A, (D ω (W i ω) - ∫ y, D ω y ∂P) + A.card * ∫ y, D ω y ∂P := by
-      have e : ∑ i ∈ A, (D ω (W i ω) - ∫ y, D ω y ∂P) + A.card * ∫ y, D ω y ∂P =
-          ∑ i ∈ A, D ω (W i ω) := by
-        rw [Finset.sum_sub_distrib, Finset.sum_const, nsmul_eq_mul, sub_add_cancel]
-      rw [e, hA, hD]
-    rw [hsplit] at hω
-    exact lt_abs_of_lt_abs_inv_mul_add hsn (Nat.cast_nonneg _) hcard hc hω
+    rw [← heu, ← hev] at hp
+    rw [← heu] at hu1
+    rw [← hA] at hω
+    rw [hD]
+    exact lt_abs_sum_sub_integral_of_lt_abs_inv_mul_sum P hY π₀ m₀ hπ₀m hm₀m hδ hπ₀ hmar hreg
+      _ _ hm hπ (hπhat n k _) hsn hε.le A hcard (fun i ↦ W i ω) hu1 hp hω
   calc _ ≤ _ := measure_mono hsub
     _ ≤ _ := measure_union_le _ _
     _ ≤ (μ {ω | ENNReal.ofReal η < eLpNorm (D ω) 2 P} + ENNReal.ofReal r) +
         (μ {ω | ENNReal.ofReal 1 < eu ω} + μ {ω | ENNReal.ofReal 1 < ev ω} +
           μ {ω | ENNReal.ofReal (ε * δ / 2) < ENNReal.ofReal (Real.sqrt n) * eu ω * ev ω}) := by
       gcongr
-      · exact hF.trans (add_le_add (measure_mono hbad) hrem)
+      · exact hF.trans (add_le_add (measure_mono hbad) (hrem n _ hn (hsq ▸ hcard)))
       · exact (measure_union_le _ _).trans (add_le_add (measure_union_le _ _) le_rfl)
     _ = (μ {ω | ENNReal.ofReal η < eLpNorm (D ω) 2 P} +
         (μ {ω | ENNReal.ofReal 1 < eu ω} + μ {ω | ENNReal.ofReal 1 < ev ω} +

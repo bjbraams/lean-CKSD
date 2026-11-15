@@ -80,10 +80,11 @@ theorem tendsto_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero
   sorry
 
 /-- GAPS 108.72(d): for `d ≥ 3` and the standard Gaussian target (score `b x = -x`), let `k` be a
-symmetric `C²` kernel which, together with `∇_x k`, `∇_y k` and `⟨∇_x, ∇_y⟩ k`, is bounded, and whose decay
-function `γ(r)` (the supremum of `|k|`, `‖∇_x k‖` and `|⟨∇_x, ∇_y⟩ k|` over `‖x - y‖ ≥ r`) is
-`o(r^{-α})` with `α = (1/2 - 1/d)⁻¹`. Then some sequence of laws with finite second moments has
-kernel Stein discrepancy tending to zero without converging weakly to the standard Gaussian.
+symmetric `C²` kernel which, together with `∇_x k`, `∇_y k` and `⟨∇_x, ∇_y⟩ k`, is bounded, and
+whose decay function `γ(r)` (the supremum of `|k|`, `‖∇_x k‖` and `|⟨∇_x, ∇_y⟩ k|` over
+`‖x - y‖ ≥ r`) is `o(r^{-α})` with `α = (1/2 - 1/d)⁻¹`. Then some sequence of laws with finite
+second moments has kernel Stein discrepancy tending to zero without converging weakly to the
+standard Gaussian.
 This covers the Gaussian, Matérn and Wendland kernels. The `C²` hypothesis strengthens the
 source's continuity requirement on the listed derivatives. Symmetry, which holds for the
 reproducing kernels of the source, makes `∇_y k(x, y)` decay together with `∇_x k`; positive

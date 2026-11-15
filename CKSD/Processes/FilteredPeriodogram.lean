@@ -382,8 +382,6 @@ theorem IsIIDNoise.tendstoInDistribution_periodogram_filter_div {Ω : Type*}
   have e3 : R n ω * (R n ω * c n) = (n : ℝ)⁻¹ * ‖dZ n ω‖ ^ 2 * c n := by
     simp only [R]; rw [← hsqrt]; ring
   rw [e1, e2, e3]
-  change _ = (2 * Real.pi * n)⁻¹ * ‖dX n ω‖ ^ 2 / (σsq / (2 * Real.pi) * ‖T (x j)‖ ^ 2) -
-    ‖dZ n ω‖ ^ 2 / n / σsq
   simp only [c, K]
   generalize ‖dX n ω‖ = A
   generalize ‖dZ n ω‖ = B

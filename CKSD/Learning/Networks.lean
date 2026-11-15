@@ -357,7 +357,7 @@ private theorem sum_layerSup_succ_le {σ : ℝ → ℝ} (hσ : LipschitzWith 1 �
     rw [hA0] at h10 h20
     refine csSup_le (range_nonempty _) ?_
     rintro _ ⟨h, rfl⟩
-    show |A s h| ≤ _
+    dsimp only
     rcases abs_cases (A s h) with ⟨he, -⟩ | ⟨he, -⟩
     · rw [he]; linarith [h1 h]
     · rw [he, ← hAfl]; linarith [h2 h]
@@ -388,6 +388,7 @@ private theorem sum_layerSup_succ_le {σ : ℝ → ℝ} (hσ : LipschitzWith 1 �
       obtain ⟨s', r⟩ := p
       refine le_trans ?_ (le_layerSup hσ hhom hC x hℓ.le s (hθs s'))
       rw [norm_sumAct]
+      -- unfolds the local definitions `B` and `t` at `some (s', r)`
       show ∑ i, sgnR s i * ∑ k, unitRow ((θs s').weight ℓ r) k *
         denseActivation σ (θs s') (x i) ℓ k ≤ _
       have hre : ∑ i, sgnR s i * ∑ k, unitRow ((θs s').weight ℓ r) k *
@@ -528,8 +529,6 @@ theorem empiricalRademacherComplexity_biasFree_le (σ : ℝ → ℝ) (hσ : Lips
         {θ | (∀ ℓ, θ.bias ℓ = 0) ∧ θ.outBias = 0 ∧
           (∀ ℓ < H, ∑ i, ∑ j, θ.weight ℓ i j ^ 2 ≤ C ^ 2) ∧ ∑ j, θ.outWeight j ^ 2 ≤ C ^ 2}) x ≤
       2 ^ H * C ^ (H + 1) / Real.sqrt n := by
-  change empiricalRademacherComplexityOfSet n
-    ((fun θ : DenseNetParams w H ↦ denseNetOutput σ θ) '' biasFreeSet w H C) x ≤ _
   unfold empiricalRademacherComplexityOfSet
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · simp only [Nat.cast_zero, div_zero, Real.sqrt_zero]
@@ -794,7 +793,6 @@ theorem tendstoInDistribution_wide_network_gaussian (d m : ℕ) (Cb CW : ℝ)
       congr 1
       ring
     rw [integral_cexp_wideLayer N g hg]
-    change _ = _ * (↑(∫ u, Real.exp (-(Real.sqrt (CW / N) ^ 2 * g u ^ 2 / 2)) ∂unitLaw) : ℂ) ^ N
     rw [hX, Function.comp_apply, Complex.ofReal_pow]
   · have hIg : ∫ ω, g ω ^ 2 ∂unitLaw = ∫ θ, (∑ i, t i * F i θ) ^ 2 ∂unitLaw := rfl
     have harg : (↑(inner ℝ t 0) * Complex.I - ↑(t.ofLp ⬝ᵥ K2 *ᵥ t.ofLp) / 2 : ℂ) =

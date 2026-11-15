@@ -9,7 +9,7 @@ import Mathlib.MeasureTheory.Measure.TightNormed
 For every positive physical step and finite budget, a sufficiently concentrated isotropic
 Gaussian target makes typical proposals from an upper-quartile halfspace reject. A four-warm
 law supported on that halfspace retains enough mass to stay at total variation distance at
-least `3/8` throughout the budget. The target scale is chosen after the step and budget.
+least `3 / 8` throughout the budget. The target scale is chosen after the step and budget.
 
 Mathlib tightness supplies a bounded high-probability Gaussian noise event and its Bernoulli
 inequality controls retained mass over iterations. The Gaussian acceptance algebra and warm
@@ -52,7 +52,7 @@ theorem exists_large_gaussian_step {a r R : ℝ} (ha : 0 < a) (hr : 0 < r) :
   have hrad : Tendsto (fun H : ℝ ↦ a * Real.sqrt H / 8) atTop atTop := by
     exact (Real.tendsto_sqrt_atTop.const_mul_atTop ha).atTop_div_const (by norm_num)
   have hpow : Tendsto (fun H : ℝ ↦ H ^ 3 * a ^ 2 / 32) atTop atTop := by
-    exact ((tendsto_pow_atTop (by decide : (3 : ℕ)≠0)).atTop_mul_const
+    exact ((tendsto_pow_atTop (by decide : (3 : ℕ) ≠ 0)).atTop_mul_const
       (sq_pos_of_pos ha)).atTop_div_const (by norm_num)
   have hexp : Tendsto (fun H : ℝ ↦ Real.exp ( - (H ^ 3 * a ^ 2 / 32))) atTop (𝓝 0) :=
     Real.tendsto_exp_atBot.comp (tendsto_neg_atTop_atBot.comp hpow)

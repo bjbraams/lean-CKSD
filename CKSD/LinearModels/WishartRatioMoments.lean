@@ -38,7 +38,8 @@ theorem withDensity_det_pow_wishartGramMeasure {p e : ℕ}
 theorem integral_det_ratio_pow_wishartGram_prod {p e : ℕ}
     (h : ℕ) {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) (he : p ≤ e) (k : ℕ) :
     (∫ z, ((z.1 : Matrix (Fin p) (Fin p) ℝ).det /
-      ((z.1 + z.2 : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) : Matrix (Fin p) (Fin p) ℝ).det) ^ k
+      ((z.1 + z.2 : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) : Matrix (Fin p) (Fin p)
+          ℝ).det) ^ k
       ∂(TauCeti.Probability.wishartGramMeasure e S).prod
         (TauCeti.Probability.wishartGramMeasure h S)) =
       (wishartNormalizer ((e:ℝ)+2*k) S / wishartNormalizer e S) *
@@ -55,11 +56,11 @@ theorem integral_det_ratio_pow_wishartGram_prod {p e : ℕ}
   have hf : Measurable f := by dsimp [f]; fun_prop
   have hweight : (μ.prod ν).withDensity (fun z ↦ f z.1) = ENNReal.ofReal C • (μ'.prod ν) := by
     rw [← prod_withDensity_left hf]
-    change ((TauCeti.Probability.wishartGramMeasure e S).withDensity f).prod ν = _
     rw [withDensity_det_pow_wishartGramMeasure hS he k, Measure.prod_smul_left]
   have hpos : ∀ᵐ z : E × E ∂μ.prod ν, (z.1 : Matrix (Fin p) (Fin p) ℝ).PosDef := by
     apply (Measure.ae_prod_iff_ae_ae
-      (TauCeti.measurableSet_setOfPred_posDef.preimage (measurable_subtype_coe.comp measurable_fst))).2
+      (TauCeti.measurableSet_setOfPred_posDef.preimage
+          (measurable_subtype_coe.comp measurable_fst))).2
     filter_upwards [TauCeti.Probability.ae_posDef_wishartGramMeasure hS he] with A hA
     exact ae_of_all _ fun _ ↦ hA
   have hweighted : (∫ z, g z ∂(μ.prod ν).withDensity (fun z ↦ f z.1)) =
@@ -104,16 +105,19 @@ theorem wishart_normalizer_ratio_mul_negative_moment {p : ℕ}
   rw [show (n+2*(k:ℝ))*(p:ℝ)/2 = n*(p:ℝ)/2+(p:ℝ)*k by ring,
     show (n+2*(k:ℝ))/2 = n/2+k by ring,
     Real.rpow_add two_pos, Real.rpow_add hS.det_pos, Real.rpow_natCast,
-    mul_neg, Real.rpow_neg (by norm_num : (0:ℝ) ≤ 2), Real.rpow_neg hS.det_pos.le, Real.rpow_natCast]
+    mul_neg, Real.rpow_neg (by norm_num : (0:ℝ) ≤ 2), Real.rpow_neg hS.det_pos.le,
+        Real.rpow_natCast]
   field_simp [(Real.rpow_pos_of_pos two_pos (n*(p:ℝ)/2)).ne',
     (Real.rpow_pos_of_pos two_pos ((p:ℝ)*k)).ne',
     (Real.rpow_pos_of_pos hS.det_pos (n/2)).ne', pow_ne_zero k hS.det_pos.ne', hG₀.ne', hG₁.ne']
 
-/-- The natural moments of a Wishart determinant ratio are a quotient of multivariate Gamma values. -/
+/-- The natural moments of a Wishart determinant ratio are a quotient of multivariate Gamma values.
+-/
 theorem integral_det_ratio_pow_wishartGram_prod_eq_gamma {p e h : ℕ}
     {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef) (he : p ≤ e) (k : ℕ) :
     (∫ z, ((z.1 : Matrix (Fin p) (Fin p) ℝ).det /
-      ((z.1 + z.2 : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) : Matrix (Fin p) (Fin p) ℝ).det) ^ k
+      ((z.1 + z.2 : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)) : Matrix (Fin p) (Fin p)
+          ℝ).det) ^ k
       ∂(TauCeti.Probability.wishartGramMeasure e S).prod
         (TauCeti.Probability.wishartGramMeasure h S)) =
       TauCeti.multivariateGamma p ((e:ℝ)/2+k) * TauCeti.multivariateGamma p (((e:ℝ)+h)/2) /

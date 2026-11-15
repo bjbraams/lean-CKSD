@@ -54,7 +54,8 @@ theorem continuous_meanPathDistance_of_integrable (P : Measure Ω) {T : ℝ} (hT
       ((U ω).norm_coe_le_norm (Set.projIcc 0 T hT t))
       ((V ω).norm_coe_le_norm (Set.projIcc 0 T hT t)))
   · exact hUi.norm.add hVi.norm
-  · exact ae_of_all _ fun ω ↦ (((U ω).IccExtend hT).continuous.sub ((V ω).IccExtend hT).continuous).norm
+  · exact ae_of_all _ fun ω ↦
+      (((U ω).IccExtend hT).continuous.sub ((V ω).IccExtend hT).continuous).norm
 
 /-- Measurable integrable random paths have a continuous mean pointwise distance. -/
 theorem continuous_meanPathDistance (P : Measure Ω) {T : ℝ} (hT : 0 ≤ T)

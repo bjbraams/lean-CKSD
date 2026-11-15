@@ -93,7 +93,8 @@ theorem norm_sub_le_of_bounded_interactions_on_Icc {E : Type*}
         intervalIntegral.integral_mono ht.1 (hF.norm.intervalIntegrable _ _)
           (((hφ.const_mul _).add continuous_const).intervalIntegrable _ _) hnorm
       _ = L * (∫ s in (0 : ℝ)..t, ‖x s - y s‖) + 2 * κ * t := by
-        rw [intervalIntegral.integral_add ((hφ.const_mul _).intervalIntegrable _ _) (continuous_const.intervalIntegrable _ _),
+        rw [intervalIntegral.integral_add ((hφ.const_mul _).intervalIntegrable _ _)
+            (continuous_const.intervalIntegrable _ _),
           intervalIntegral.integral_const_mul, intervalIntegral.integral_const]
         simp only [sub_zero, smul_eq_mul]
         ring
@@ -135,7 +136,8 @@ theorem norm_integral_interaction_sub_le {Ω E : Type*} [MeasurableSpace Ω]
     ‖(∫ ω, K x (Y ω) ∂P) - ∫ ω, K y (Z ω) ∂P‖ ≤
       L * (‖x - y‖ + ∫ ω, ‖Y ω - Z ω‖ ∂P) := by
   have hi (x : E) (Y : Ω → E) (hY : Measurable Y) : Integrable (fun ω ↦ K x (Y ω)) P :=
-    Integrable.of_bound (hK.continuous.measurable.comp (measurable_const.prodMk hY)).aestronglyMeasurable
+    Integrable.of_bound
+      (hK.continuous.measurable.comp (measurable_const.prodMk hY)).aestronglyMeasurable
       κ (ae_of_all _ fun ω ↦ hκ _ _)
   rw [← integral_sub (hi x Y hY) (hi y Z hZ)]
   calc ‖∫ ω, K x (Y ω) - K y (Z ω) ∂P‖ ≤ ∫ ω, ‖K x (Y ω) - K y (Z ω)‖ ∂P :=
@@ -146,8 +148,7 @@ theorem norm_integral_interaction_sub_le {Ω E : Type*} [MeasurableSpace Ω]
       intro ω
       refine (hK.norm_sub_le (x, Y ω) (y, Z ω)).trans ?_
       apply mul_le_mul_of_nonneg_left ?_ L.coe_nonneg
-      simp only [Prod.norm_def, Prod.fst_sub, Prod.snd_sub]
-      change max ‖x - y‖ ‖Y ω - Z ω‖ ≤ ‖x - y‖ + ‖Y ω - Z ω‖
+      simp only [Prod.norm_def, Prod.fst_sub, Prod.snd_sub, Pi.add_apply]
       apply max_le <;> nlinarith [norm_nonneg (x - y), norm_nonneg (Y ω - Z ω)]
     _ = _ := by
       rw [integral_const_mul, integral_add (integrable_const _) hYZ]
@@ -181,7 +182,8 @@ theorem aestronglyMeasurable_uncurry_of_ae_continuous {Ω E : Type*} [Measurable
   simp [Function.uncurry, Z, hp]
 
 /-- An integrable random envelope suffices for the stochastic integral Grönwall zero criterion. -/
-theorem ae_eq_zero_of_le_integral_add_integral_mean_of_integrable_bound {Ω : Type*} [MeasurableSpace Ω]
+theorem ae_eq_zero_of_le_integral_add_integral_mean_of_integrable_bound
+    {Ω : Type*} [MeasurableSpace Ω]
     (P : Measure Ω) [IsProbabilityMeasure P] (X : ℝ → Ω → ℝ)
     (hX : ∀ t, Measurable (X t)) (hX0 : ∀ t ω, 0 ≤ X t ω)
     (hcont : ∀ᵐ ω ∂P, Continuous (fun t ↦ X t ω))
@@ -213,13 +215,15 @@ theorem ae_eq_zero_of_le_integral_add_integral_mean_of_integrable_bound {Ω : Ty
       have htime : ∀ᵐ s ∂ν, s ∈ Ioc (0 : ℝ) t := ae_restrict_mem measurableSet_Ioc
       filter_upwards [(Measure.quasiMeasurePreserving_fst (ν := P)).ae htime,
         (Measure.quasiMeasurePreserving_snd (μ := ν)).ae hbound] with z hz hω
-      change |X z.1 z.2| ≤ D z.2
+      simp only [Function.uncurry, Real.norm_eq_abs]
       rw [abs_of_nonneg (hX0 z.1 z.2)]
       exact hω z.1 ⟨hz.1.le, hz.2.trans ht.2⟩
     have hinner : Integrable (fun ω ↦ ∫ s in (0 : ℝ)..t, X s ω) P := by
-      simpa only [intervalIntegral.integral_of_le ht.1, ν, Function.uncurry] using hprod.integral_prod_right
+      simpa only [intervalIntegral.integral_of_le ht.1, ν, Function.uncurry] using
+        hprod.integral_prod_right
     have hswap : (∫ ω, (∫ s in (0 : ℝ)..t, X s ω) ∂P) = ∫ s in (0 : ℝ)..t, F s := by
-      simpa only [intervalIntegral.integral_of_le ht.1, F, ν, Function.uncurry] using (integral_integral_swap hprod).symm
+      simpa only [intervalIntegral.integral_of_le ht.1, F, ν, Function.uncurry] using
+        (integral_integral_swap hprod).symm
     calc F t ≤ ∫ ω, A * (∫ s in (0 : ℝ)..t, X s ω) + B * (∫ s in (0 : ℝ)..t, F s) ∂P :=
         integral_mono_ae (hInt t ht) ((hinner.const_mul A).add (integrable_const _))
           (hineq.mono fun ω hω ↦ hω t ht)
@@ -284,8 +288,10 @@ theorem ae_eq_of_interaction_integral_eq_on_Icc {Ω E : Type*} [MeasurableSpace 
     ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T, X t ω = Y t ω := by
   let v : ℝ → E → E := fun t x ↦ ∫ z, K x (X t z) ∂P
   let w : ℝ → E → E := fun t x ↦ ∫ z, K x (Y t z) ∂P
-  have hv : Continuous (Function.uncurry v) := continuous_integral_interaction P K hK.continuous hKb X hX hXc
-  have hw : Continuous (Function.uncurry w) := continuous_integral_interaction P K hK.continuous hKb Y hY hYc
+  have hv : Continuous (Function.uncurry v) :=
+    continuous_integral_interaction P K hK.continuous hKb X hX hXc
+  have hw : Continuous (Function.uncurry w) :=
+    continuous_integral_interaction P K hK.continuous hKb Y hY hYc
   have hvb : ∀ t x, ‖v t x‖ ≤ κ := fun t x ↦ norm_integral_interaction_le P K hKb (X t) x
   have hwb : ∀ t x, ‖w t x‖ ≤ κ := fun t x ↦ norm_integral_interaction_le P K hKb (Y t) x
   let δ : ℝ → Ω → ℝ := fun t ω ↦ ‖X t ω - Y t ω‖
@@ -319,7 +325,8 @@ theorem ae_eq_of_interaction_integral_eq_on_Icc {Ω E : Type*} [MeasurableSpace 
     filter_upwards [hXc, hYc, heq] with ω hx hy hω
     intro t ht
     let H : ℝ → E := fun s ↦ (b₀ (X s ω) + v s (X s ω)) - (b₀ (Y s ω) + w s (Y s ω))
-    have hH : Continuous H := (hb₀.continuous.comp hx |>.add (hv.comp (continuous_id.prodMk hx))).sub
+    have hH : Continuous H :=
+      (hb₀.continuous.comp hx |>.add (hv.comp (continuous_id.prodMk hx))).sub
       (hb₀.continuous.comp hy |>.add (hw.comp (continuous_id.prodMk hy)))
     have hδcont : Continuous (fun s ↦ δ s ω) := (hx.sub hy).norm
     have hFi : IntervalIntegrable F volume 0 t :=
@@ -334,10 +341,8 @@ theorem ae_eq_of_interaction_integral_eq_on_Icc {Ω E : Type*} [MeasurableSpace 
         rw [show b₀ (X s ω) + v s (X s ω) - (b₀ (Y s ω) + w s (Y s ω)) =
           (b₀ (X s ω) - b₀ (Y s ω)) + (v s (X s ω) - w s (Y s ω)) by abel]
         exact norm_add_le _ _
-      change ‖v s (X s ω) - w s (Y s ω)‖ ≤ L_K * (δ s ω + F s) at hk
-      change ‖b₀ (X s ω) - b₀ (Y s ω)‖ ≤ L₀ * δ s ω at hb
       linarith
-    change ‖X t ω - Y t ω‖ ≤ _
+    dsimp only [δ]
     rw [hω t ht]
     calc ‖∫ s in (0 : ℝ)..t, H s‖ ≤ ∫ s in (0 : ℝ)..t, ‖H s‖ :=
         intervalIntegral.norm_integral_le_integral_norm ht.1
@@ -346,7 +351,8 @@ theorem ae_eq_of_interaction_integral_eq_on_Icc {Ω E : Type*} [MeasurableSpace 
           (((hδcont.intervalIntegrable _ _).const_mul _).add (hFi.const_mul _)) hHi
       _ = _ := by
         rw [intervalIntegral.integral_add ((hδcont.intervalIntegrable _ _).const_mul _)
-            (hFi.const_mul _), intervalIntegral.integral_const_mul, intervalIntegral.integral_const_mul]
+            (hFi.const_mul _), intervalIntegral.integral_const_mul,
+            intervalIntegral.integral_const_mul]
   have hzero := ae_eq_zero_of_le_integral_add_integral_mean P δ hδm
     (fun _ _ ↦ norm_nonneg _) hδc hT (by positivity) L_K.coe_nonneg hbound hineq
   filter_upwards [hzero] with ω hω

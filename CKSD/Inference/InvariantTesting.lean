@@ -79,8 +79,10 @@ theorem hasDerivAt_integral_mul_exp (μ : Measure X)
   obtain ⟨δ, hδ, hball⟩ := Metric.isOpen_iff.1 hU η₀ hη₀
   set ε := δ / 3 with hεdef
   have hε : 0 < ε := by positivity
-  have hp : η₀ + 2 * ε ∈ U := hball (by rw [Metric.mem_ball, Real.dist_eq]; rw [abs_lt]; constructor <;> linarith)
-  have hm : η₀ - 2 * ε ∈ U := hball (by rw [Metric.mem_ball, Real.dist_eq]; rw [abs_lt]; constructor <;> linarith)
+  have hp : η₀ + 2 * ε ∈ U := hball (by
+    rw [Metric.mem_ball, Real.dist_eq, abs_lt]; constructor <;> linarith)
+  have hm : η₀ - 2 * ε ∈ U := hball (by
+    rw [Metric.mem_ball, Real.dist_eq, abs_lt]; constructor <;> linarith)
   have hbint : Integrable (fun x ↦ (h x * Real.exp ((η₀ + 2 * ε) * T x) +
       h x * Real.exp ((η₀ - 2 * ε) * T x)) / ε) μ :=
     ((hint _ hp).add (hint _ hm)).div_const ε
@@ -145,8 +147,7 @@ theorem exists_chord_of_const_mul_exp {a d c₁ c₂ : ℝ} (ha : 0 ≤ a) (hc :
     have : G c₁ - (G c₂ - G c₁) / (c₂ - c₁) * c₁ + (G c₂ - G c₁) / (c₂ - c₁) * t - G t =
         ((c₂ - t) * G c₁ + (t - c₁) * G c₂ - (c₂ - c₁) * G t) / (c₂ - c₁) := by
       field_simp; ring
-    change 0 ≤ G c₁ - (G c₂ - G c₁) / (c₂ - c₁) * c₁ + (G c₂ - G c₁) / (c₂ - c₁) * t - G t
-    rw [this]
+    rw [show a * Real.exp (d * t) = G t from rfl, this]
     exact div_nonneg (by linarith) hpos.le
   · intro ht
     have hpos : 0 < c₂ - c₁ := by linarith
@@ -164,10 +165,93 @@ theorem exists_chord_of_const_mul_exp {a d c₁ c₂ : ℝ} (ha : 0 ≤ a) (hc :
     have : G t - (G c₁ - (G c₂ - G c₁) / (c₂ - c₁) * c₁ + (G c₂ - G c₁) / (c₂ - c₁) * t) =
         ((c₂ - c₁) * G t - ((c₂ - t) * G c₁ + (t - c₁) * G c₂)) / (c₂ - c₁) := by
       field_simp; ring
-    change 0 ≤ G t - (G c₁ - (G c₂ - G c₁) / (c₂ - c₁) * c₁ + (G c₂ - G c₁) / (c₂ - c₁) * t)
-    rw [this]
+    rw [show a * Real.exp (d * t) = G t from rfl, this]
     exact div_nonneg (by linarith) hpos.le
 
+
+/-- The Neyman–Pearson comparison behind GAPS 101.45: in a one-parameter exponential family, a
+test `φ` rejecting where `T < c₁` or `T > c₂` and accepting where `c₁ < T < c₂` is at least as
+powerful at every `η` as any test `ψ` with the same size and the same moment `∫ T ψ` at `η₀`. -/
+theorem integral_le_integral_of_two_tail_of_moment_eq (μ : Measure X) (T h : X → ℝ)
+    (hpos : ∀ x, 0 ≤ h x) (A : ℝ → ℝ) (U : Set ℝ) (P : U → Measure X)
+    (hP : ∀ η, IsProbabilityMeasure (P η))
+    (hf : ∀ η, HasDensity (P η) μ (fun x ↦ h x * Real.exp (η.val * T x - A η.val)))
+    (η₀ η : U) {c₁ c₂ : ℝ} (hcrit : c₁ < c₂) (φ : X → ℝ) (hφ : IsStatisticalTest φ)
+    (htail : ∀ x, (T x < c₁ ∨ c₂ < T x → φ x = 1) ∧
+      (c₁ < T x ∧ T x < c₂ → φ x = 0))
+    (hTint : Integrable T (P η₀)) (ψ : X → ℝ) (hψ : IsStatisticalTest ψ)
+    (hsize : (∫ x, ψ x ∂P η₀) = ∫ x, φ x ∂P η₀)
+    (hmom : (∫ x, T x * ψ x ∂P η₀) = ∫ x, T x * φ x ∂P η₀) :
+    (∫ x, ψ x ∂P η) ≤ ∫ x, φ x ∂P η := by
+  have := hP η
+  have := hP η₀
+  let f : ℝ → X → ℝ := fun η x ↦ h x * Real.exp (η * T x - A η)
+  have hfnn : ∀ η x, 0 ≤ f η x := fun η x ↦ mul_nonneg (hpos x) (Real.exp_pos _).le
+  have hfint : ∀ η : U, Integrable (f η) μ := fun η ↦ (hf η).integrable
+  have hint_eq : ∀ (η : U) (g : X → ℝ), (∫ x, g x ∂P η) = ∫ x, g x * f η x ∂μ := by
+    intro η g
+    rw [(hf η).integral_eq]
+    exact integral_congr_ae (ae_of_all _ fun x ↦ mul_comm _ _)
+  have hTf : Integrable (fun x ↦ T x * f η₀ x) μ := by
+    have := (hf η₀).2.2 ▸ hTint
+    rw [integrable_withDensity_iff_integrable_smul' (hf η₀).1.ennreal_ofReal
+      (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)] at this
+    refine this.congr (ae_of_all _ fun x ↦ ?_)
+    simp only [ENNReal.toReal_ofReal (hfnn _ x), smul_eq_mul, f]
+    ring
+  obtain ⟨k₀, k₁, hk⟩ := exists_chord_of_const_mul_exp (a := Real.exp (A η₀ - A η))
+    (d := η.val - η₀.val) (Real.exp_pos _).le hcrit
+  have hratio : ∀ x, f η x = Real.exp (A η₀ - A η) * Real.exp ((η.val - η₀.val) * T x) *
+      f η₀ x := by
+    intro x
+    simp only [f]
+    rw [show η.val * T x - A η = (A η₀ - A η) + (η.val - η₀.val) * T x + (η₀.val * T x - A η₀)
+      by ring, Real.exp_add, Real.exp_add]
+    ring
+  have hsize' : (∫ x, ψ x * f η₀ x ∂μ) = ∫ x, φ x * f η₀ x ∂μ := by
+    rw [← hint_eq, ← hint_eq, hsize]
+  have hmom' : (∫ x, ψ x * (T x * f η₀ x) ∂μ) = ∫ x, φ x * (T x * f η₀ x) ∂μ := by
+    have h1 : ∀ g : X → ℝ, (∫ x, g x * (T x * f η₀ x) ∂μ) = ∫ x, T x * g x ∂P η₀ := by
+      intro g
+      rw [hint_eq]
+      exact integral_congr_ae (ae_of_all _ fun x ↦ by ring)
+    rw [h1, h1, hmom]
+  have hNP := integral_le_of_generalized_neyman_pearson μ (f η)
+    ![f η₀, fun x ↦ T x * f η₀ x] ![k₀, k₁] (hfint η)
+    (fun i ↦ by fin_cases i; exacts [hfint η₀, hTf]) φ ψ hφ hψ ?_ ?_
+  · rw [hint_eq, hint_eq]
+    exact hNP
+  · refine ae_of_all _ fun x ↦ ⟨fun hlt ↦ ?_, fun hlt ↦ ?_⟩
+    · simp only [Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one,
+        Matrix.cons_val_fin_one] at hlt
+      rw [hratio x] at hlt
+      have hfx : 0 < f η₀ x := by
+        rcases (hfnn η₀ x).lt_or_eq with h' | h'
+        · exact h'
+        · rw [← h'] at hlt; simp at hlt
+      have : k₀ + k₁ * T x < Real.exp (A η₀ - A η) * Real.exp ((η.val - η₀.val) * T x) := by
+        nlinarith
+      apply (htail x).1
+      by_contra hcon
+      rw [not_or, not_lt, not_lt] at hcon
+      exact absurd ((hk (T x)).1 hcon.1 hcon.2) (not_le.2 this)
+    · simp only [Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one,
+        Matrix.cons_val_fin_one] at hlt
+      rw [hratio x] at hlt
+      have hfx : 0 < f η₀ x := by
+        rcases (hfnn η₀ x).lt_or_eq with h' | h'
+        · exact h'
+        · rw [← h'] at hlt; simp at hlt
+      have : Real.exp (A η₀ - A η) * Real.exp ((η.val - η₀.val) * T x) < k₀ + k₁ * T x := by
+        nlinarith
+      apply (htail x).2
+      by_contra hcon
+      rw [not_and_or, not_lt, not_lt] at hcon
+      exact absurd ((hk (T x)).2 hcon) (not_le.2 this)
+  · intro i
+    fin_cases i
+    · simp [hsize']
+    · simp [hmom']
 
 /-- GAPS 101.45: the two-tail exponential-family test satisfying the two moment constraints is
 UMPU. The proof applies `integral_le_of_generalized_neyman_pearson` with the chord of the
@@ -188,79 +272,17 @@ theorem isUniformlyMostPowerfulUnbiasedTest_of_two_tail_moment_constraints
     IsUniformlyMostPowerfulUnbiasedTest P {η₀} {η | η ≠ η₀} α φ := by
   obtain ⟨hTint, hφsize, hφmom⟩ := hmom
   let f : ℝ → X → ℝ := fun η x ↦ h x * Real.exp (η * T x - A η)
-  have hfnn : ∀ η x, 0 ≤ f η x := fun η x ↦ mul_nonneg (hpos x) (Real.exp_pos _).le
   have hfint : ∀ η : U, Integrable (f η) μ := fun η ↦ (hf η).integrable
   have hint_eq : ∀ (η : U) (g : X → ℝ), (∫ x, g x ∂P η) = ∫ x, g x * f η x ∂μ := by
     intro η g
     rw [(hf η).integral_eq]
     exact integral_congr_ae (ae_of_all _ fun x ↦ mul_comm _ _)
-  -- the test of level `α` with the same two moments as `φ` at `η₀` is beaten by `φ`
-  have hTf : Integrable (fun x ↦ T x * f η₀ x) μ := by
-    have := (hf η₀).2.2 ▸ hTint
-    rw [integrable_withDensity_iff_integrable_smul' (hf η₀).1.ennreal_ofReal
-      (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)] at this
-    refine this.congr (ae_of_all _ fun x ↦ ?_)
-    simp only [ENNReal.toReal_ofReal (hfnn _ x), smul_eq_mul, f]
-    ring
+  -- a test of level `α` with the same two moments as `φ` at `η₀` is beaten by `φ`
   have hcomp : ∀ η : U, ∀ ψ : X → ℝ, IsStatisticalTest ψ → (∫ x, ψ x ∂P η₀) = α →
       (∫ x, T x * ψ x ∂P η₀) = α * ∫ x, T x ∂P η₀ →
-      (∫ x, ψ x ∂P η) ≤ ∫ x, φ x ∂P η := by
-    intro η ψ hψ hψsize hψmom
-    obtain ⟨k₀, k₁, hk⟩ := exists_chord_of_const_mul_exp (a := Real.exp (A η₀ - A η))
-      (d := η.val - η₀.val) (Real.exp_pos _).le hcrit
-    have hratio : ∀ x, f η x = Real.exp (A η₀ - A η) * Real.exp ((η.val - η₀.val) * T x) *
-        f η₀ x := by
-      intro x
-      simp only [f]
-      rw [show η.val * T x - A η = (A η₀ - A η) + (η.val - η₀.val) * T x + (η₀.val * T x - A η₀)
-        by ring, Real.exp_add, Real.exp_add]
-      ring
-    have hsize' : (∫ x, ψ x * f η₀ x ∂μ) = ∫ x, φ x * f η₀ x ∂μ := by
-      rw [← hint_eq, ← hint_eq, hψsize, hφsize]
-    have hmom' : (∫ x, ψ x * (T x * f η₀ x) ∂μ) = ∫ x, φ x * (T x * f η₀ x) ∂μ := by
-      have h1 : ∀ g : X → ℝ, (∫ x, g x * (T x * f η₀ x) ∂μ) = ∫ x, T x * g x ∂P η₀ := by
-        intro g
-        rw [hint_eq]
-        exact integral_congr_ae (ae_of_all _ fun x ↦ by ring)
-      rw [h1, h1, hψmom, hφmom]
-    have hNP := integral_le_of_generalized_neyman_pearson μ (f η)
-      ![f η₀, fun x ↦ T x * f η₀ x] ![k₀, k₁] (hfint η)
-      (fun i ↦ by fin_cases i; exacts [hfint η₀, hTf]) φ ψ hφ hψ ?_ ?_
-    · rw [hint_eq, hint_eq]
-      exact hNP
-    · refine ae_of_all _ fun x ↦ ⟨fun hlt ↦ ?_, fun hlt ↦ ?_⟩
-      · simp only [Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one,
-          Matrix.cons_val_fin_one] at hlt
-        rw [hratio x] at hlt
-        have hfx : 0 < f η₀ x := by
-          rcases (hfnn η₀ x).lt_or_eq with h' | h'
-          · exact h'
-          · rw [← h'] at hlt; simp at hlt
-        have : k₀ + k₁ * T x < Real.exp (A η₀ - A η) * Real.exp ((η.val - η₀.val) * T x) := by
-          nlinarith
-        apply (htail x).1
-        by_contra hcon
-        rw [not_or, not_lt, not_lt] at hcon
-        exact absurd ((hk (T x)).1 hcon.1 hcon.2) (not_le.2 this)
-      · simp only [Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one,
-          Matrix.cons_val_fin_one] at hlt
-        rw [hratio x] at hlt
-        have hfx : 0 < f η₀ x := by
-          rcases (hfnn η₀ x).lt_or_eq with h' | h'
-          · exact h'
-          · rw [← h'] at hlt; simp at hlt
-        have : Real.exp (A η₀ - A η) * Real.exp ((η.val - η₀.val) * T x) < k₀ + k₁ * T x := by
-          nlinarith
-        apply (htail x).2
-        by_contra hcon
-        rw [not_and_or, not_lt, not_lt] at hcon
-        exact absurd ((hk (T x)).2 hcon) (not_le.2 this)
-    · intro i
-      fin_cases i
-      · change k₀ * (∫ x, ψ x * f η₀ x ∂μ) ≤ k₀ * ∫ x, φ x * f η₀ x ∂μ
-        rw [hsize']
-      · change k₁ * (∫ x, ψ x * (T x * f η₀ x) ∂μ) ≤ k₁ * ∫ x, φ x * (T x * f η₀ x) ∂μ
-        rw [hmom']
+      (∫ x, ψ x ∂P η) ≤ ∫ x, φ x ∂P η := fun η ψ hψ hψsize hψmom ↦
+    integral_le_integral_of_two_tail_of_moment_eq μ T h hpos A U P hP hf η₀ η hcrit φ hφ htail
+      hTint ψ hψ (hψsize.trans hφsize.symm) (hψmom.trans hφmom.symm)
   -- moments under `P η` in terms of the unnormalized Laplace integrals
   have hrel : ∀ (η : U) (g : X → ℝ), (∫ x, g x ∂P η) =
       Real.exp (-A η) * ∫ x, g x * h x * Real.exp (η.val * T x) ∂μ := by

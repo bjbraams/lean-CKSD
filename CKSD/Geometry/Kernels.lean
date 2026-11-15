@@ -250,6 +250,7 @@ theorem tendstoInDistribution_sqrt_smul_sampleAverage_feature_sub
     refine MemLp.of_bound hv.aestronglyMeasurable (2 * B) (ae_of_all _ fun z ↦ ?_)
     exact (norm_sub_le _ _).trans (by linarith [hB z.1, hB z.2])
   have hLmean : ∫ x, x ∂L = 0 := by
+    -- unfold the local law `L` as an image measure
     change ∫ x, id x ∂((P.prod P).map v) = 0
     rw [integral_map hv.aemeasurable aestronglyMeasurable_id]
     simp only [v, id]
@@ -268,6 +269,36 @@ theorem tendstoInDistribution_sqrt_smul_sampleAverage_feature_sub
   have hclt := tendstoInDistribution_sqrt_smul_sampleAverage μ L V hiidV hL2
   simp only [hLmean, hcovL, sub_zero] at hclt
   exact hclt
+
+/-- The unbiased squared MMD of the inner-product kernel of a measurable feature map is a
+measurable function of measurable samples. -/
+theorem measurable_unbiasedSquaredMMD_inner {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
+    {d : ℕ} (phi : X → EuclideanSpace ℝ (Fin d)) (hm : Measurable phi) {Xn Yn : ℕ → Ω → X}
+    (hXm : ∀ i, Measurable (Xn i)) (hYm : ∀ i, Measurable (Yn i)) (n : ℕ) :
+    Measurable (fun ω ↦ unbiasedSquaredMMD (fun x y ↦ inner ℝ (phi x) (phi y)) n
+      (fun i ↦ Xn i.val ω) (fun i ↦ Yn i.val ω)) := by
+  simp only [unbiasedSquaredMMD]
+  refine Measurable.sub (Measurable.div_const ?_ _) (Measurable.const_mul ?_ _)
+  · exact Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ by
+      split_ifs <;> fun_prop
+  · exact Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ by fun_prop
+
+/-- Doubling the covariance of a centered Gaussian: the law of `‖W‖² + c` for
+`W ∼ N(0, 2 C)` is the law of `2 ‖Z‖² + c` for `Z ∼ N(0, C)`. -/
+theorem map_multivariateGaussian_two_smul_norm_sq_add {d : ℕ}
+    {C : Matrix (Fin d) (Fin d) ℝ} (hC : C.PosSemidef) (c : ℝ) :
+    (multivariateGaussian 0 ((2 : ℝ) • C)).map (fun w ↦ ‖w‖ ^ 2 + c) =
+      (multivariateGaussian 0 C).map (fun z ↦ 2 * ‖z‖ ^ 2 + c) := by
+  have hG : multivariateGaussian 0 ((2 : ℝ) • C) =
+      (multivariateGaussian 0 C).map (fun z ↦ Real.sqrt 2 • z) := by
+    have := TauCeti.Probability.map_add_smul_multivariateGaussian 0 hC 0 (Real.sqrt 2)
+    simp only [zero_add, smul_zero, Real.sq_sqrt (show (0 : ℝ) ≤ 2 by norm_num)] at this
+    exact this.symm
+  rw [hG, Measure.map_map (by fun_prop) (by fun_prop)]
+  congr 1
+  funext z
+  simp only [Function.comp_apply, norm_smul, Real.norm_eq_abs,
+    abs_of_nonneg (Real.sqrt_nonneg _), mul_pow, Real.sq_sqrt (show (0 : ℝ) ≤ 2 by norm_num)]
 
 /-- GAPS 108.61, the null limit of MMD for a bounded finite-dimensional feature map. Let
 `φ : X → ℝ^d` be bounded and measurable, `k(x, y) = ⟨φ x, φ y⟩`, and let the pairs `(X_i, Y_i)` be
@@ -301,11 +332,6 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_null
     rw [memLp_map_measure_iff aestronglyMeasurable_id hm.aemeasurable]
     exact MemLp.of_bound hm.aestronglyMeasurable B (ae_of_all _ hB)
   have hCpsd : C.PosSemidef := TauCeti.posSemidef_covMatrix _ hphi2
-  have hG : multivariateGaussian 0 ((2 : ℝ) • C) =
-      (multivariateGaussian 0 C).map (fun z ↦ Real.sqrt 2 • z) := by
-    have := TauCeti.Probability.map_add_smul_multivariateGaussian 0 hCpsd 0 (Real.sqrt 2)
-    simp only [zero_add, smul_zero, Real.sq_sqrt (show (0 : ℝ) ≤ 2 by norm_num)] at this
-    exact this.symm
   -- the central limit theorem for `V i = φ(X_i) - φ(Y_i)`
   set Z : ℕ → Ω → X × X := fun i ω ↦ (Xn i ω, Yn i ω)
   set V : ℕ → Ω → EuclideanSpace ℝ (Fin d) := fun i ω ↦ phi (Xn i ω) - phi (Yn i ω)
@@ -321,22 +347,9 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_null
   have hWm : ∀ n, Measurable (W n) := fun n ↦ by
     have := Finset.measurable_fun_sum (Finset.range n) fun i _ ↦ hVm i
     exact (this.const_smul ((n : ℝ)⁻¹)).const_smul (Real.sqrt n)
-  have hmapG : ∀ c : ℝ, (multivariateGaussian 0 ((2 : ℝ) • C)).map (fun w ↦ ‖w‖ ^ 2 + c) =
-      (multivariateGaussian 0 C).map (fun z ↦ 2 * ‖z‖ ^ 2 + c) := by
-    intro c
-    rw [hG, Measure.map_map (by fun_prop) (by fun_prop)]
-    congr 1
-    funext z
-    simp only [Function.comp_apply, norm_smul, Real.norm_eq_abs,
-      abs_of_nonneg (Real.sqrt_nonneg _), mul_pow, Real.sq_sqrt (show (0 : ℝ) ≤ 2 by norm_num)]
+  have hmapG := map_multivariateGaussian_two_smul_norm_sq_add hCpsd
   have hmmdm : ∀ n, Measurable (fun ω ↦ unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω)
-      (fun i ↦ Yn i.val ω)) := by
-    intro n
-    simp only [unbiasedSquaredMMD, k]
-    refine Measurable.sub (Measurable.div_const ?_ _) (Measurable.const_mul ?_ _)
-    · exact Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ by
-        split_ifs <;> fun_prop
-    · exact Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ by fun_prop
+      (fun i ↦ Yn i.val ω)) := measurable_unbiasedSquaredMMD_inner phi hm hXm hYm
   -- the remainder `n MMD_u² - n ‖φ̄_X - φ̄_Y‖²` and its almost sure limit `-2 tr C`
   set Y : ℕ → Ω → ℝ := fun n ω ↦ (n : ℝ) * unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω)
     (fun i ↦ Yn i.val ω) - ‖W n ω‖ ^ 2
@@ -399,6 +412,7 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_null
     rw [e1]
     refine tendstoInDistribution_of_map_eq hsl aemeasurable_id ?_
     rw [Measure.map_id]
+    -- name the limit law in the form used by `hmapG`
     change _ = (multivariateGaussian 0 ((2 : ℝ) • C)).map
       (fun w ↦ ‖w‖ ^ 2 + -2 * Matrix.trace C)
     rw [hmapG]
@@ -442,6 +456,7 @@ theorem integral_mmdLinearTerm {X : Type*} [MeasurableSpace X] {d : ℕ}
         ∫ x, inner ℝ (phi x) δ ∂R = inner ℝ δ (∫ x, phi x ∂R) := fun R hR ↦ by
       simp_rw [real_inner_comm δ]
       exact integral_inner (hint R hR) δ
+    -- unfold the local means `mP`, `mQ`
     change _ = (∫ x, inner ℝ (phi x) δ ∂P) - ∫ x, inner ℝ (phi x) δ ∂Q
     rw [e P inferInstance, e Q inferInstance, ← inner_sub_right]
   set a : X → ℝ := fun x ↦ g x - mP
@@ -586,6 +601,7 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
     refine MemLp.of_bound hv.aestronglyMeasurable (2 * C) (ae_of_all _ fun z ↦ ?_)
     exact (norm_sub_le _ _).trans (by linarith [hC z.1, hC z.2])
   have hLmean : ∫ x, x ∂L = delta := by
+    -- unfold the local law `L` as an image measure
     change ∫ x, id x ∂((P.prod Q).map v) = delta
     rw [integral_map hv.aemeasurable aestronglyMeasurable_id]
     simp only [v, id]
@@ -644,12 +660,8 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
   refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _ (fun n ↦ ?_)
     (fun n ↦ ?_) hS ((tendstoInMeasure_add_zero μ _ _ hT1 hT2).congr' ?_ EventuallyEq.rfl)
   · exact (Finset.measurable_sum _ fun i _ ↦ hs.comp (hiid.1 i)).const_mul _
-  · refine (Measurable.sub ?_ measurable_const).const_mul _
-    simp only [unbiasedSquaredMMD, k]
-    refine Measurable.sub (Measurable.div_const ?_ _) (Measurable.const_mul ?_ _)
-    · exact Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ by
-        split_ifs <;> fun_prop
-    · exact Finset.measurable_sum _ fun i _ ↦ Finset.measurable_sum _ fun j _ ↦ by fun_prop
+  · exact ((measurable_unbiasedSquaredMMD_inner phi hm hXm hYm n).sub
+      measurable_const).const_mul _
   filter_upwards [eventually_ge_atTop 2] with n hn
   refine ae_of_all _ fun ω ↦ ?_
   have hnR : (2 : ℝ) ≤ n := by exact_mod_cast hn
@@ -666,7 +678,6 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
   have hsS : ∑ i ∈ Finset.range n, s (Z i ω) = 2 * n * inner ℝ (A - B - delta) delta := by
     simp only [s]
     rw [← Finset.mul_sum, ← sum_inner, Finset.sum_sub_distrib]
-    change 2 * inner ℝ (∑ i ∈ Finset.range n, V i ω - ∑ _i ∈ Finset.range n, delta) delta = _
     rw [hsumV, Finset.sum_const, Finset.card_range, ← Nat.cast_smul_eq_nsmul ℝ, ← smul_sub,
       real_inner_smul_left]
     ring
@@ -679,6 +690,7 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
     have := norm_add_sq_real (A - B - delta) delta
     rw [sub_add_cancel] at this
     rw [this]
+  -- unfold the local abbreviations of the decomposition to expose `U`, `R` and `s` for `rw`
   show U n ω * (U n ω * (Real.sqrt n)⁻¹) + R n ω * (Real.sqrt n / (n - 1)) =
     Real.sqrt n * (unbiasedSquaredMMD k n (fun i ↦ Xn i.val ω) (fun i ↦ Yn i.val ω) -
       ‖delta‖ ^ 2) - (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, s (Z i ω)
@@ -692,15 +704,14 @@ theorem tendstoInDistribution_unbiasedSquaredMMD_alternative
   ring
 
 /-- GAPS 108.62: for laws `P, Q` on `ℝ^d` with finite first moments, the energy distance
-`D = 2 E‖X - Y‖ - E‖X - X'‖ - E‖Y - Y'‖` is nonnegative, vanishes exactly when `P = Q`, and equals
-twice the squared MMD of the distance kernel `CKSD.distanceKernel`. -/
+`energyDistance P Q = 2 E‖X - Y‖ - E‖X - X'‖ - E‖Y - Y'‖` is nonnegative, vanishes exactly when
+`P = Q`, and equals twice the squared MMD of the distance kernel `CKSD.distanceKernel`. -/
 theorem energy_distance_nonneg_eq_zero_iff_and_eq_squaredMMD
     {d : ℕ} (P Q : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     (hP : Integrable (fun x ↦ ‖x‖) P) (hQ : Integrable (fun x ↦ ‖x‖) Q) :
-    let D := 2 * (∫ z, ‖z.1 - z.2‖ ∂P.prod Q) - (∫ z, ‖z.1 - z.2‖ ∂P.prod P) -
-      ∫ z, ‖z.1 - z.2‖ ∂Q.prod Q;
-    0 ≤ D ∧ (D = 0 ↔ P = Q) ∧ D = 2 * squaredMMD distanceKernel P Q := by
+    0 ≤ energyDistance P Q ∧ (energyDistance P Q = 0 ↔ P = Q) ∧
+      energyDistance P Q = 2 * squaredMMD distanceKernel P Q := by
   obtain ⟨hnonneg, hzero⟩ := energyDistance_nonneg_eq_zero_iff P Q hP hQ
   exact ⟨hnonneg, hzero, energyDistance_eq_two_mul_squaredMMD P Q hP hQ⟩
 
@@ -727,8 +738,6 @@ theorem distance_covariance_nonneg_eq_zero_iff_and_eq_squaredMMD {d e : ℕ}
   obtain ⟨hnonneg, hzero⟩ := distanceProductKernel_squaredMMD_nonneg_eq_zero_iff
     P ((P.map Prod.fst).prod (P.map Prod.snd)) hP hQ hfst hsnd
   have hV := integral_centeredDistance_mul_eq_four_mul_squaredMMD P h2
-  change _ = 4 * squaredMMD distanceProductKernel P _ at hV
-  change 0 ≤ _ ∧ (_ = 0 ↔ _) ∧ _ = 4 * squaredMMD distanceProductKernel P _
   rw [hV]
   exact ⟨mul_nonneg (by norm_num) hnonneg, by simpa only [mul_eq_zero, OfNat.ofNat_ne_zero,
     false_or] using hzero, rfl⟩
@@ -854,6 +863,7 @@ theorem continuous_squaredMMD_probabilityMeasure {X : Type*} [MetricSpace X]
   obtain ⟨C, hC⟩ := hb
   let f : BoundedContinuousFunction (X × X) ℝ :=
     ⟨⟨Function.uncurry k, hk⟩, ⟨2 * C, fun x y ↦ by
+      -- unfold the distance of the uncurried kernel values
       change |k x.1 x.2 - k y.1 y.2| ≤ 2 * C
       exact (abs_sub _ _).trans (by linarith [hC x.1 x.2, hC y.1 y.2])⟩⟩
   have heval := ProbabilityMeasure.continuous_integral_boundedContinuousFunction f
@@ -883,14 +893,12 @@ theorem tendsto_probabilityMeasure_iff_tendsto_squaredMMD_of_tight {X : Type*} [
   let F : ProbabilityMeasure X → ℝ := fun R ↦ squaredMMD k R Q
   have hF : Continuous F := continuous_squaredMMD_probabilityMeasure k hk hb Qs
   have hFQ : F Qs = 0 := by simp [F, Qs, squaredMMD]; ring
-  change Tendsto Ps atTop (𝓝 Qs) ↔ _
   constructor
   · intro h
     have hlim : Tendsto (fun n ↦ F (Ps n)) atTop (𝓝 (F Qs)) :=
       hF.continuousAt.tendsto.comp h
     rw [hFQ] at hlim
     exact hlim.congr' (Eventually.of_forall fun n ↦ by
-      change squaredMMD k ((Ps n : ProbabilityMeasure X) : Measure X) Q = _
       exact congrArg (fun R : Measure X ↦ squaredMMD k R Q)
         (ProbabilityMeasure.coe_mk (P n) (hP n)))
   · intro hzero

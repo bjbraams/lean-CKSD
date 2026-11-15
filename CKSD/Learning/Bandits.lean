@@ -690,6 +690,7 @@ theorem exists_ucb1_banditRegret_le :
     have hAt : A t R = banditFirstArgmax fun k ↦ armSampleAverage R' k (armPlayCount A k t R) R +
         Real.sqrt (2 * Real.log t / armPlayCount A k t R) := by
       rw [← hidx]
+      -- unfolds `banditArmProcess` to the UCB1 rule applied to the history
       show ucb1Policy K t (banditHistory (ucb1Policy K) () R t) () = _
       exact ucb1Policy_of_le K ht _
     rw [hAt]

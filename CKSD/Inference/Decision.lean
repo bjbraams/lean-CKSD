@@ -70,6 +70,7 @@ theorem exists_statistical_game_saddle_point [Fintype Θ] [Nonempty Θ] [Measura
   let := hμ
   have hdom (θ : Θ) : P θ ≤ μ := by
     intro s
+    -- `change` unfolds a definition that `simp` does not see through
     change P θ s ≤ (∑ θ', P θ') s
     simp only [FunLike.coe_sum, Finset.sum_apply]
     exact Finset.single_le_sum (f := fun θ' : Θ ↦ P θ' s)
@@ -81,6 +82,7 @@ theorem exists_statistical_game_saddle_point [Fintype Θ] [Nonempty Θ] [Measura
     exists_compact_convex_game_saddle_point hcompact hconv ⟨risk P L δ₀, δ₀, rfl⟩
   let ν : Measure Θ := ∑ θ, ENNReal.ofReal (w θ) • Measure.dirac θ
   have hν : IsProbabilityMeasure ν := ⟨by
+    -- `change` unfolds a definition that `simp` does not see through
     change (∑ θ, ENNReal.ofReal (w θ) • Measure.dirac θ) univ = 1
     simp only [FunLike.coe_sum, Finset.sum_apply, smul_apply, measure_univ, smul_eq_mul, mul_one]
     rw [← ENNReal.ofReal_sum_of_nonneg (fun θ _ ↦ hwn θ), hws, ENNReal.ofReal_one]⟩
@@ -88,17 +90,14 @@ theorem exists_statistical_game_saddle_point [Fintype Θ] [Nonempty Θ] [Measura
   have hint (r : Θ → ℝ) : Integrable r ν :=
     ⟨(measurable_of_countable r).aestronglyMeasurable, HasFiniteIntegral.of_finite⟩
   have hint_eq (r : Θ → ℝ) : (∫ θ, r θ ∂ν) = ∑ θ, w θ * r θ := by
-    change (∫ θ, r θ ∂(∑ θ, ENNReal.ofReal (w θ) • Measure.dirac θ)) = _
     rw [integral_finsetSum_measure fun θ _ ↦
       (integrable_dirac (by finiteness)).smul_measure ENNReal.ofReal_ne_top]
     simp only [integral_smul_measure, ENNReal.toReal_ofReal (hwn _), integral_dirac,
       smul_eq_mul]
   refine ⟨δ, ⟨ν, hν⟩, ⟨hint _, fun δ' _ ↦ ?_⟩, fun θ ↦ ?_⟩
-  · change (∫ θ, risk P L δ θ ∂ν) ≤ ∫ θ, risk P L δ' θ ∂ν
-    rw [hint_eq, hint_eq, hδ]
+  · rw [ProbabilityMeasure.coe_mk, hint_eq, hint_eq, hδ]
     exact hwmin _ ⟨δ', rfl⟩
-  · change risk P L δ θ ≤ ∫ θ', risk P L δ θ' ∂ν
-    rw [hint_eq, hδ]
+  · rw [ProbabilityMeasure.coe_mk, hint_eq, hδ]
     exact hwmax θ
 
 /-- GAPS 101.37: the complete class theorem for a finite parameter set, in risk-set form. Let `C`
@@ -164,7 +163,6 @@ theorem exists_admissible_bayes_risk_le_of_closed_convex {d : ℕ} (hd : 0 < d) 
       simp only [t]
       rw [div_mul_eq_mul_div, div_neg, mul_div_assoc, div_self hneg.ne, mul_one]
     have h3 := le_abs_self (f y - u)
-    change u ≤ f y + t * w' i at h1
     linarith
   have hfy : f y ≤ u := by
     by_contra hlt
@@ -226,6 +224,7 @@ theorem exists_equivariant_rule_risk_eq_average {G A : Type*} [Group G] [Fintype
       (Kernel.measurable_coe δ ((hA g) hs)).comp (hX g⁻¹)).const_mul c
   let K : Kernel X A := ⟨μ, hμm⟩
   have hK : IsMarkovKernel K := ⟨fun x ↦ ⟨by
+    -- `change` exposes the syntactic form that the following `rw` matches
     change μ x univ = 1
     rw [hμ x univ MeasurableSet.univ]
     simp only [preimage_univ, measure_univ, Finset.sum_const, Finset.card_univ, nsmul_eq_mul,
@@ -233,6 +232,7 @@ theorem exists_equivariant_rule_risk_eq_average {G A : Type*} [Group G] [Fintype
     exact ENNReal.inv_mul_cancel hcard (ENNReal.natCast_ne_top _)⟩⟩
   refine ⟨⟨K, hK⟩, fun g x ↦ ?_, fun θ ↦ ?_⟩
   · ext s hs
+    -- `change` exposes the syntactic form that the following `rw` matches
     change μ (g • x) s = (μ x).map (fun a ↦ g • a) s
     rw [Measure.map_apply (hA g) hs, hμ _ _ hs, hμ _ _ ((hA g) hs)]
     congr 1
@@ -264,6 +264,7 @@ theorem exists_equivariant_rule_risk_eq_average {G A : Type*} [Group G] [Fintype
       rw [← integral_map (f := F g) (hX g⁻¹).aemeasurable (hFm g).aestronglyMeasurable,
         hmodel]
       rfl
+    -- `change` unfolds a definition that `simp` does not see through
     change (∫ x, ∫ a, L θ a ∂μ x ∂P θ) = _
     simp_rw [hinner]
     rw [integral_const_mul, integral_finsetSum (f := fun g x ↦ F g (g⁻¹ • x)) Finset.univ fun g _ ↦

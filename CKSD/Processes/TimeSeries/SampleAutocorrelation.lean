@@ -254,7 +254,7 @@ private theorem tendstoInMeasure_inv_mul_sum_lag_products {Ω : Type*} [Measurab
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ (n : ℝ)⁻¹ * ∑ k ∈ Finset.range (n - b),
       (X (k + a) ω - ∫ x, x ∂P) * (X (k + a') ω - ∫ x, x ∂P)) atTop (fun _ ↦ 0) := by
   set c := ∫ x, x ∂P
-  set s4 := (∫ x, (x - c) ^ 2 ∂P) ^ 2
+  set s4 := (∫ x, (x - c) ^ 2 ∂P) ^ 2 with hs4
   set Z : ℕ → Ω → ℝ := fun k ω ↦ (X (k + a) ω - c) * (X (k + a') ω - c)
   have hZ := fun k ↦ memLp_mul_and_integral_sq_of_iid hiid hP2 c (i := k + a) (j := k + a')
     (by omega)
@@ -263,8 +263,7 @@ private theorem tendstoInMeasure_inv_mul_sum_lag_products {Ω : Type*} [Measurab
     rcases lt_trichotomy j k with h | rfl | h
     · simp only [h.ne, ↓reduceIte]; exact integral_mul_lag_products_of_lt hiid hP2 haa h
     · simp only [↓reduceIte]
-      show _ = (∫ x, (x - c) ^ 2 ∂P) ^ 2
-      rw [← (hZ j).2]; congr 1; ext ω; ring
+      rw [hs4, ← (hZ j).2]; congr 1; ext ω; ring
     · simp only [h.ne', ↓reduceIte]
       rw [← integral_mul_lag_products_of_lt hiid hP2 haa h]
       congr 1; ext ω; simp only [Z]; ring
@@ -369,6 +368,7 @@ private theorem condExp_mul_comp_pastSigma {Ω : Type*} [MeasurableSpace Ω]
     (pastSigma_le hiid.1 j) (hφ.comp (comap_measurable (X j))).stronglyMeasurable
     (indep_comap_pastSigma hiid.1 hiid.2.1 j)
   filter_upwards [h1, h2] with ω h1 h2
+  -- restate the goal in the `Pi.mul` form in which `h1` is stated
   change μ[f * fun ω ↦ φ (X j ω) | pastSigma X j] ω = _
   rw [h1, Pi.mul_apply, h2, integral_comp_of_iid hiid j hφ]
 
@@ -875,7 +875,6 @@ theorem tendstoInDistribution_sample_autocorrelations {Ω : Type*} [MeasurableSp
   refine (tendstoInDistribution_of_map_eq hT (by fun_prop) hlaw).congr
     (fun n ↦ ae_of_all _ fun ω ↦ ?_) (ae_of_all _ fun _ ↦ rfl)
   simp only [PiLp.inner_apply, Pi.add_apply]
-  change (M n ω + (A n ω - M n ω)) * _ = _
   rw [add_sub_cancel, hA, Finset.sum_mul]
   refine Finset.sum_congr rfl fun i _ ↦ ?_
   rw [RCLike.inner_apply, conj_trivial]

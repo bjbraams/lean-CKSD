@@ -383,8 +383,7 @@ private theorem measurable_regDecode_comp {β L : ℝ} (hβ : 0 < β) {m n : ℕ
   rw [measurable_pi_iff]
   intro j
   apply measurable_to_bool
-  show MeasurableSet {y | regDecode β L m (T y) j = true}
-  simp only [regDecode, decide_eq_true_eq]
+  simp only [Set.preimage, Set.mem_singleton_iff, regDecode, decide_eq_true_eq]
   refine measurableSet_lt ?_ ?_
   · refine Measurable.lintegral_prod_right' (f := fun p : (Fin n → ℝ) × ℝ ↦
       ENNReal.ofReal ((T p.1 p.2 - tentFun β L m j p.2) ^ 2)) ?_

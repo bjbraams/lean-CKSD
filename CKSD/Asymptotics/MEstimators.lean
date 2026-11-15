@@ -167,7 +167,8 @@ theorem exists_ball_measurable_dominating_integral_lt {X Θ : Type*} [Measurable
       (tendsto_one_div_add_atTop_nhds_zero_nat).eventually (eventually_lt_nhds hδ)
     filter_upwards [hev] with k hk
     have := hne k
-    refine lt_of_le_of_lt (ciSup_le fun t ↦ ?_) (show m θ x + (a - m θ x) / 2 < a by linarith)
+    refine lt_of_le_of_lt (ciSup_le fun t ↦ ?_)
+      (show m θ x + (a - m θ x) / 2 < a by linarith)
     have ht : dist (t : Θ) θ < δ := lt_trans (Metric.mem_ball.1 t.2.2) hk
     have := hδm t ht
     rw [Real.dist_eq] at this
@@ -181,6 +182,23 @@ theorem exists_ball_measurable_dominating_integral_lt {X Θ : Type*} [Measurable
       (ae_of_all _ hlim)
   obtain ⟨k, hk⟩ := (hDCT.eventually (eventually_lt_nhds hc)).exists
   exact ⟨ρ k, hρ k, w k, hwm k, hwint k, hupper k, hk⟩
+
+/-- Gibbs' inequality for laws with positive densities: if `P ≠ P₀` have positive densities `f`
+and `f₀` with respect to `ν` and both log-densities are `P₀`-integrable, then
+`∫ log f dP₀ < ∫ log f₀ dP₀`. -/
+private theorem integral_log_lt_integral_log_of_hasDensity {X : Type*} [MeasurableSpace X]
+    (ν : Measure X) {P P₀ : Measure X} [IsProbabilityMeasure P] [IsProbabilityMeasure P₀]
+    {f f₀ : X → ℝ} (hf : HasDensity P ν f) (hf₀ : HasDensity P₀ ν f₀) (hpos : ∀ x, 0 < f x)
+    (hpos₀ : ∀ x, 0 < f₀ x) (hi : Integrable (fun x ↦ Real.log (f x)) P₀)
+    (hi0 : Integrable (fun x ↦ Real.log (f₀ x)) P₀) (hne : P ≠ P₀) :
+    ∫ x, Real.log (f x) ∂P₀ < ∫ x, Real.log (f₀ x) ∂P₀ := by
+  have hP0' : IsProbabilityMeasure (ν.withDensity fun x ↦ ENNReal.ofReal (f₀ x)) := by
+    rw [← hf₀.2.2]; infer_instance
+  have hP' : IsProbabilityMeasure (ν.withDensity fun x ↦ ENNReal.ofReal (f x)) := by
+    rw [← hf.2.2]; infer_instance
+  rw [hf₀.2.2] at hi0 hi ⊢
+  exact integral_log_lt_integral_log_of_withDensity_ne ν f₀ f hf₀.1 hf.1 hpos₀ hpos hP0' hP' hi0
+    hi (by rwa [← hf.2.2, ← hf₀.2.2])
 
 /-- GAPS 102.2: Wald consistency with continuous positive densities on a compact parameter space.
 The log-likelihood envelope is integrable at the true law; identifiability concerns the laws,
@@ -212,21 +230,10 @@ theorem tendstoInMeasure_mle_of_compact
     hB.mono' (hmm θ).aestronglyMeasurable (ae_of_all _ fun x ↦ by
       rw [Real.norm_eq_abs]; exact henv θ x)
   set Mpop : Θ → ℝ := fun θ ↦ ∫ x, m θ x ∂P₀ with hMpop
-  have hgibbs : ∀ θ, θ ≠ θ₀ → Mpop θ < Mpop θ₀ := by
-    intro θ hθ
-    have hP0eq := (hf θ₀).2.2
-    have hPeq := (hf θ).2.2
-    have hne : P θ ≠ P θ₀ := fun h ↦ hθ (hid h)
-    have hP0' : IsProbabilityMeasure (ν.withDensity fun x ↦ ENNReal.ofReal (f θ₀ x)) :=
-      hP0eq ▸ hP θ₀
-    have hP' : IsProbabilityMeasure (ν.withDensity fun x ↦ ENNReal.ofReal (f θ x)) :=
-      hPeq ▸ hP θ
-    have hi0 := hmi θ₀
-    have hi := hmi θ
-    simp only [hMpop, hP₀, hmdef] at hi0 hi ⊢
-    rw [hP0eq] at hi0 hi ⊢
-    exact integral_log_lt_integral_log_of_withDensity_ne ν (f θ₀) (f θ) (hf θ₀).1 (hf θ).1
-      (hpos θ₀) (hpos θ) hP0' hP' hi0 hi (by rwa [← hPeq, ← hP0eq])
+  have hgibbs : ∀ θ, θ ≠ θ₀ → Mpop θ < Mpop θ₀ := fun θ hθ ↦
+    have := hP θ
+    integral_log_lt_integral_log_of_hasDensity ν (hf θ) (hf θ₀) (hpos θ) (hpos θ₀) (hmi θ)
+      (hmi θ₀) fun h ↦ hθ (hid h)
   -- Local dominating functions.
   have hloc : ∀ θ, ∃ ρ > 0, ∃ w : X → ℝ, Measurable w ∧ Integrable w P₀ ∧
       (∀ θ' ∈ Metric.ball θ ρ, ∀ x, m θ' x ≤ w x) ∧ (θ ≠ θ₀ → ∫ x, w x ∂P₀ < Mpop θ₀) := by

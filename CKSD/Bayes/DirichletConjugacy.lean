@@ -623,6 +623,7 @@ theorem ae_map_posterior_eq_dirichletMeasure (α : Measure X) [IsFiniteMeasure �
         have hcnt : (fun i ↦ α.real (A i) + sampleCount x (A i)) =
             fun i ↦ α.real (A i) + cellCount c i := funext fun i ↦ by
           rw [sampleCount_eq_cellCount hAd (fun l ↦ hc l (hx l (mem_univ l))) i]
+        -- Unfold the kernel `K` to its Dirichlet measure, the pattern for `rw [hcnt]`.
         show dirichletMeasure _ U = _
         rw [hcnt]
       rw [setLIntegral_congr_fun hS hK, setLIntegral_const, hνS B hBm]

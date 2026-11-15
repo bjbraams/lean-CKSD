@@ -232,6 +232,147 @@ theorem tendsto_local_normal_power {Ω : Type*} [MeasurableSpace Ω]
     ext x; simp [le_sub_iff_add_le]
   rw [hcdf, ← compl_Iic, probReal_compl_eq_one_sub measurableSet_Iic]
 
+/-- If `D τ ≥ 0` and `D τ = o(τ ^ 2)` as `τ → 0`, then `n D(h / √n) → 0` for every `h`. -/
+theorem tendsto_natCast_mul_apply_div_sqrt_of_isLittleO {D : ℝ → ℝ} (hD0 : ∀ τ, 0 ≤ D τ)
+    (hD : Asymptotics.IsLittleO (𝓝 0) D (fun τ : ℝ ↦ τ ^ 2)) (h : ℝ) :
+    Tendsto (fun n : ℕ ↦ n * D (h / Real.sqrt n)) atTop (𝓝 0) := by
+  have hsqrt : Tendsto (fun n : ℕ ↦ Real.sqrt n) atTop atTop :=
+    Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop
+  have htn : Tendsto (fun n : ℕ ↦ h / Real.sqrt n) atTop (𝓝 0) :=
+    tendsto_const_nhds.div_atTop hsqrt
+  refine Metric.tendsto_atTop.2 fun ε hε ↦ ?_
+  have hc : 0 < ε / 2 / (h ^ 2 + 1) := by positivity
+  obtain ⟨N, hN⟩ :=
+    ((htn.eventually (hD.def hc)).and (eventually_ge_atTop 1)).exists_forall_of_atTop
+  refine ⟨N, fun n hn ↦ ?_⟩
+  obtain ⟨hb, hn1⟩ := hN n hn
+  have hnt2 : (n : ℝ) * (h / Real.sqrt n) ^ 2 = h ^ 2 := by
+    have : (0 : ℝ) < n := by exact_mod_cast hn1
+    rw [div_pow, Real.sq_sqrt this.le]
+    field_simp
+  rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (hD0 _),
+    abs_of_nonneg (sq_nonneg _)] at hb
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (mul_nonneg (Nat.cast_nonneg n) (hD0 _))]
+  calc (n : ℝ) * D (h / Real.sqrt n) ≤ n * (ε / 2 / (h ^ 2 + 1) * (h / Real.sqrt n) ^ 2) :=
+        mul_le_mul_of_nonneg_left hb (Nat.cast_nonneg n)
+    _ = ε / 2 / (h ^ 2 + 1) * h ^ 2 := by rw [← hnt2]; ring
+    _ < ε := by
+        rw [div_mul_eq_mul_div, div_lt_iff₀ (by positivity)]
+        nlinarith [sq_nonneg h]
+
+/-- Fixed-step identities for the root likelihood ratio. Let `p₀` and `q` be strictly positive
+densities of `P` and `Q` with respect to `ν`, let `ℓ̇` be square integrable under `P` with
+`I = E_P[ℓ̇²]`, and let `t` be real. Put `g = √(q / p₀) - 1`, `u = g - t / 2 · ℓ̇` and
+`v = √q - √p₀ - t / 2 · ℓ̇ √p₀`. Then `u ∈ L²(P)`, `E_P[u²] = ∫ v² dν`, and
+`E_P[g] = -(t² I / 4 + t c + ∫ v² dν) / 2` for some `c` with `|c| ≤ √I √(∫ v² dν)`. -/
+theorem memLp_and_integral_sqrt_likelihood_ratio_eq
+    {E : Type*} [MeasurableSpace E] (nu P Q : Measure E) [IsProbabilityMeasure P]
+    [IsProbabilityMeasure Q] {p₀ q : E → ℝ} (hp : HasDensity P nu p₀) (hq : HasDensity Q nu q)
+    (hp₀pos : ∀ x, 0 < p₀ x) (hqpos : ∀ x, 0 < q x) {score : E → ℝ}
+    (hs : Measurable score) (hs2 : MemLp score 2 P) (t : ℝ) :
+    MemLp (fun x ↦ Real.sqrt (q x / p₀ x) - 1 - t / 2 * score x) 2 P ∧
+    ∫ x, (Real.sqrt (q x / p₀ x) - 1 - t / 2 * score x) ^ 2 ∂P =
+      ∫ x, (Real.sqrt (q x) - Real.sqrt (p₀ x) - t / 2 * score x * Real.sqrt (p₀ x)) ^ 2 ∂nu ∧
+    ∃ c, |c| ≤ Real.sqrt (∫ x, score x ^ 2 ∂P) * Real.sqrt (∫ x, (Real.sqrt (q x) -
+        Real.sqrt (p₀ x) - t / 2 * score x * Real.sqrt (p₀ x)) ^ 2 ∂nu) ∧
+      ∫ x, (Real.sqrt (q x / p₀ x) - 1) ∂P = -(1 / 2) * (t ^ 2 / 4 * ∫ x, score x ^ 2 ∂P +
+        t * c + ∫ x, (Real.sqrt (q x) - Real.sqrt (p₀ x) -
+          t / 2 * score x * Real.sqrt (p₀ x)) ^ 2 ∂nu) := by
+  set I := ∫ x, score x ^ 2 ∂P with hI
+  set g : E → ℝ := fun x ↦ Real.sqrt (q x / p₀ x) - 1 with hg
+  set u : E → ℝ := fun x ↦ g x - t / 2 * score x with hu
+  set v : E → ℝ := fun x ↦
+    Real.sqrt (q x) - Real.sqrt (p₀ x) - t / 2 * score x * Real.sqrt (p₀ x) with hv
+  have hp₀m : Measurable p₀ := hp.1
+  have hqm : Measurable q := hq.1
+  have hgm : Measurable g := ((hqm.div hp₀m).sqrt).sub_const 1
+  have hum : Measurable u := hgm.sub (hs.const_mul _)
+  have hp₀i : Integrable p₀ nu := hp.integrable
+  have hp₀1 : ∫ x, p₀ x ∂nu = 1 := hp.integral_eq_one
+  have hqi : Integrable q nu := hq.integrable
+  have hq1 : ∫ x, q x ∂nu = 1 := hq.integral_eq_one
+  -- `v = √p₀ u` and `v² = p₀ u²`
+  have hvu : ∀ x, v x = Real.sqrt (p₀ x) * u x := by
+    intro x
+    have hs0' : Real.sqrt (p₀ x) ≠ 0 := (Real.sqrt_pos.2 (hp₀pos x)).ne'
+    simp only [hv, hu, hg]
+    rw [Real.sqrt_div' _ (hp₀pos x).le]
+    field_simp
+  have hvsq : ∀ x, v x ^ 2 = p₀ x * u x ^ 2 := fun x ↦ by
+    rw [hvu, mul_pow, Real.sq_sqrt (hp₀pos x).le]
+  have hs2P : Integrable (fun x ↦ score x ^ 2) P := hs2.integrable_sq
+  have hsν : Integrable (fun x ↦ (score x * Real.sqrt (p₀ x)) ^ 2) nu ∧
+      ∫ x, (score x * Real.sqrt (p₀ x)) ^ 2 ∂nu = I := by
+    have e : (fun x ↦ (score x * Real.sqrt (p₀ x)) ^ 2) = fun x ↦ p₀ x * score x ^ 2 := by
+      funext x; rw [mul_pow, Real.sq_sqrt (hp₀pos x).le, mul_comm]
+    rw [e]
+    exact ⟨(hp.integrable_iff _).1 hs2P, (hp.integral_eq _).symm⟩
+  have hvm : Measurable v := (hqm.sqrt.sub hp₀m.sqrt).sub ((hs.const_mul _).mul hp₀m.sqrt)
+  have hv2 : Integrable (fun x ↦ v x ^ 2) nu := by
+    refine (((hqi.add hp₀i).add (hsν.1.const_mul ((t / 2) ^ 2))).const_mul 3).mono'
+      (hvm.pow_const 2).aestronglyMeasurable (ae_of_all _ fun x ↦ ?_)
+    rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]
+    have key : ∀ a b c : ℝ, (a - b - c) ^ 2 ≤ 3 * (a ^ 2 + b ^ 2 + c ^ 2) := fun a b c ↦ by
+      nlinarith [sq_nonneg (a + b), sq_nonneg (a + c), sq_nonneg (b - c)]
+    calc v x ^ 2 ≤ 3 * (Real.sqrt (q x) ^ 2 + Real.sqrt (p₀ x) ^ 2 +
+          (t / 2 * score x * Real.sqrt (p₀ x)) ^ 2) := key _ _ _
+      _ = 3 * (q x + p₀ x + (t / 2) ^ 2 * (score x * Real.sqrt (p₀ x)) ^ 2) := by
+          rw [Real.sq_sqrt (hqpos x).le, Real.sq_sqrt (hp₀pos x).le]; ring
+  have hu2 : Integrable (fun x ↦ u x ^ 2) P ∧ ∫ x, u x ^ 2 ∂P = ∫ x, v x ^ 2 ∂nu := by
+    have h1 := hp.integrable_iff (fun x ↦ u x ^ 2)
+    have h2 := hp.integral_eq (fun x ↦ u x ^ 2)
+    have e : (fun x ↦ p₀ x * u x ^ 2) = fun x ↦ v x ^ 2 := by
+      funext x; rw [hvsq]
+    rw [e] at h1 h2
+    exact ⟨h1.2 hv2, h2⟩
+  have hu2' : MemLp u 2 P := (memLp_two_iff_integrable_sq hum.aestronglyMeasurable).2 hu2.1
+  -- the mean of `g`
+  set a : E → ℝ := fun x ↦ score x * Real.sqrt (p₀ x) with ha
+  have ham : Measurable a := hs.mul hp₀m.sqrt
+  have hav : |∫ x, a x * v x ∂nu| ≤ Real.sqrt I * Real.sqrt (∫ x, v x ^ 2 ∂nu) := by
+    have := abs_integral_mul_le_sqrt_mul_sqrt nu a v ham.aestronglyMeasurable
+      hvm.aestronglyMeasurable hsν.1 hv2
+    rwa [hsν.2] at this
+  have havi : Integrable (fun x ↦ a x * v x) nu := by
+    refine ((hsν.1.add hv2).div_const 2).mono' (ham.mul hvm).aestronglyMeasurable
+      (ae_of_all _ fun x ↦ ?_)
+    rw [Real.norm_eq_abs, abs_mul, Pi.add_apply]
+    nlinarith [sq_nonneg (|a x| - |v x|), sq_abs (a x), sq_abs (v x)]
+  have hsplit : (fun x ↦ (Real.sqrt (q x) - Real.sqrt (p₀ x)) ^ 2) =
+      fun x ↦ (t ^ 2 / 4 * a x ^ 2 + t * (a x * v x)) + v x ^ 2 := by
+    funext x
+    simp only [hv, ha]
+    ring
+  have hwi : Integrable (fun x ↦ (Real.sqrt (q x) - Real.sqrt (p₀ x)) ^ 2) nu := by
+    rw [hsplit]
+    exact ((hsν.1.const_mul _).add (havi.const_mul _)).add hv2
+  have hw : ∫ x, (Real.sqrt (q x) - Real.sqrt (p₀ x)) ^ 2 ∂nu =
+      t ^ 2 / 4 * I + t * ∫ x, a x * v x ∂nu + ∫ x, v x ^ 2 ∂nu := by
+    have hI' : ∫ x, a x ^ 2 ∂nu = I := hsν.2
+    have ha2 : Integrable (fun x ↦ a x ^ 2) nu := hsν.1
+    rw [hsplit, integral_add (f := fun x ↦ t ^ 2 / 4 * a x ^ 2 + t * (a x * v x))
+      (g := fun x ↦ v x ^ 2) ((ha2.const_mul _).add (havi.const_mul _)) hv2,
+      integral_add (f := fun x ↦ t ^ 2 / 4 * a x ^ 2) (g := fun x ↦ t * (a x * v x))
+        (ha2.const_mul _) (havi.const_mul _), integral_const_mul, integral_const_mul, hI']
+  have hgeq : ∀ x, p₀ x * g x =
+      (q x - p₀ x - (Real.sqrt (q x) - Real.sqrt (p₀ x)) ^ 2) / 2 := by
+    intro x
+    have hs0' : Real.sqrt (p₀ x) ≠ 0 := (Real.sqrt_pos.2 (hp₀pos x)).ne'
+    simp only [hg]
+    rw [Real.sqrt_div' _ (hp₀pos x).le]
+    have e1 := Real.sq_sqrt (hqpos x).le
+    have e2 := Real.sq_sqrt (hp₀pos x).le
+    field_simp
+    linear_combination (Real.sqrt (p₀ x) - 2 * Real.sqrt (q x)) * e2 + Real.sqrt (p₀ x) * e1
+  have hgint : ∫ x, g x ∂P = -(1 / 2) * ∫ x, (Real.sqrt (q x) - Real.sqrt (p₀ x)) ^ 2 ∂nu := by
+    rw [hp.integral_eq g]
+    simp_rw [hgeq]
+    rw [integral_div, integral_sub (f := fun x ↦ q x - p₀ x)
+      (g := fun x ↦ (Real.sqrt (q x) - Real.sqrt (p₀ x)) ^ 2) (hqi.sub hp₀i) hwi,
+      integral_sub hqi hp₀i, hq1, hp₀1]
+    ring
+  exact ⟨hu2', hu2.2, ∫ x, a x * v x ∂nu, hav, hgint.trans (by rw [hw])⟩
+
 /-- The deterministic step of LAN under differentiability in quadratic mean. For the root
 likelihood ratios `gₙ = √(f (θ₀ + h / √n) / f θ₀) - 1` and their linearizations
 `uₙ = gₙ - (h / √n) / 2 · ℓ̇` with the score `ℓ̇`, each `uₙ` is in `L²(P θ₀)`,
@@ -249,188 +390,52 @@ theorem memLp_and_tendsto_sqrt_likelihood_ratio_of_dqm
       h / Real.sqrt n / 2 * score x) 2 (P theta₀)) ∧
     Tendsto (fun n : ℕ ↦ (n : ℝ) * ∫ x, (Real.sqrt (f (theta₀ + h / Real.sqrt n) x /
       f theta₀ x) - 1 - h / Real.sqrt n / 2 * score x) ^ 2 ∂P theta₀) atTop (𝓝 0) ∧
-    Tendsto (fun n : ℕ ↦ (n : ℝ) * ∫ x, (Real.sqrt (f (theta₀ + h / Real.sqrt n) x / f theta₀ x) - 1)
-      ∂P theta₀) atTop (𝓝 (-(h ^ 2 * (∫ x, score x ^ 2 ∂P theta₀) / 8))) := by
+    Tendsto (fun n : ℕ ↦ (n : ℝ) * ∫ x, (Real.sqrt (f (theta₀ + h / Real.sqrt n) x /
+      f theta₀ x) - 1) ∂P theta₀) atTop (𝓝 (-(h ^ 2 * (∫ x, score x ^ 2 ∂P theta₀) / 8))) := by
   have hP0 := hP theta₀
+  have key := fun n : ℕ ↦
+    have := hP (theta₀ + h / Real.sqrt n)
+    memLp_and_integral_sqrt_likelihood_ratio_eq nu (P theta₀) (P (theta₀ + h / Real.sqrt n))
+      (hf theta₀) (hf _) (hpos theta₀) (hpos _) hs hs2 (h / Real.sqrt n)
+  choose hu2 hu2D c hc hgint using key
   set I := ∫ x, score x ^ 2 ∂P theta₀ with hI
-  set p₀ : E → ℝ := f theta₀ with hp₀
-  set t : ℕ → ℝ := fun n ↦ h / Real.sqrt n with ht
-  set q : ℕ → E → ℝ := fun n ↦ f (theta₀ + t n) with hq
-  set g : ℕ → E → ℝ := fun n x ↦ Real.sqrt (q n x / p₀ x) - 1 with hg
-  set u : ℕ → E → ℝ := fun n x ↦ g n x - t n / 2 * score x with hu
-  set v : ℕ → E → ℝ := fun n x ↦
-    Real.sqrt (q n x) - Real.sqrt (p₀ x) - t n / 2 * score x * Real.sqrt (p₀ x) with hv
   set D : ℝ → ℝ := fun τ ↦ ∫ x, (Real.sqrt (f (theta₀ + τ) x) - Real.sqrt (f theta₀ x) -
     τ / 2 * score x * Real.sqrt (f theta₀ x)) ^ 2 ∂nu with hD
-  have hp₀pos : ∀ x, 0 < p₀ x := hpos theta₀
-  have hqpos : ∀ n x, 0 < q n x := fun n ↦ hpos _
-  have hp₀m : Measurable p₀ := (hf theta₀).1
-  have hqm : ∀ n, Measurable (q n) := fun n ↦ (hf _).1
-  have hgm : ∀ n, Measurable (g n) := fun n ↦
-    (((hqm n).div hp₀m).sqrt).sub_const 1
-  have hum : ∀ n, Measurable (u n) := fun n ↦ (hgm n).sub (hs.const_mul _)
-  -- densities
-  have hp₀i : Integrable p₀ nu := HasDensity.integrable (hf theta₀)
-  have hp₀1 : ∫ x, p₀ x ∂nu = 1 := HasDensity.integral_eq_one (hf theta₀)
-  have hqi1 : ∀ n, Integrable (q n) nu ∧ ∫ x, q n x ∂nu = 1 := fun n ↦ by
-    have := hP (theta₀ + t n)
-    exact ⟨HasDensity.integrable (hf _), HasDensity.integral_eq_one (hf _)⟩
-  have hdens : ∀ φ : E → ℝ, (Integrable φ (P theta₀) ↔ Integrable (fun x ↦ p₀ x * φ x) nu) ∧
-      ∫ x, φ x ∂P theta₀ = ∫ x, p₀ x * φ x ∂nu :=
-    fun φ ↦ ⟨HasDensity.integrable_iff (hf theta₀) φ, HasDensity.integral_eq (hf theta₀) φ⟩
-  -- `v = √p₀ u` and `v² = p₀ u²`
-  have hvu : ∀ n x, v n x = Real.sqrt (p₀ x) * u n x := by
-    intro n x
-    have hs0' : Real.sqrt (p₀ x) ≠ 0 := (Real.sqrt_pos.2 (hp₀pos x)).ne'
-    simp only [hv, hu, hg]
-    rw [Real.sqrt_div' _ (hp₀pos x).le]
-    field_simp
-  have hvsq : ∀ n x, v n x ^ 2 = p₀ x * u n x ^ 2 := by
-    intro n x
-    rw [hvu, mul_pow, Real.sq_sqrt (hp₀pos x).le]
-  have hs2P : Integrable (fun x ↦ score x ^ 2) (P theta₀) := hs2.integrable_sq
-  have hsν : Integrable (fun x ↦ (score x * Real.sqrt (p₀ x)) ^ 2) nu ∧
-      ∫ x, (score x * Real.sqrt (p₀ x)) ^ 2 ∂nu = I := by
-    have e : (fun x ↦ (score x * Real.sqrt (p₀ x)) ^ 2) = fun x ↦ p₀ x * score x ^ 2 := by
-      funext x; rw [mul_pow, Real.sq_sqrt (hp₀pos x).le, mul_comm]
-    obtain ⟨h1, h2⟩ := hdens (fun x ↦ score x ^ 2)
-    rw [e]
-    exact ⟨h1.1 hs2P, h2.symm⟩
-  have hvm : ∀ n, Measurable (v n) := fun n ↦
-    (((hqm n).sqrt.sub hp₀m.sqrt).sub ((hs.const_mul _).mul hp₀m.sqrt))
-  have hv2 : ∀ n, Integrable (fun x ↦ v n x ^ 2) nu := by
-    intro n
-    refine (((((hqi1 n).1.add hp₀i).add (hsν.1.const_mul ((t n / 2) ^ 2))).const_mul 3)).mono'
-      ((hvm n).pow_const 2).aestronglyMeasurable (ae_of_all _ fun x ↦ ?_)
-    rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]
-    have key : ∀ a b c : ℝ, (a - b - c) ^ 2 ≤ 3 * (a ^ 2 + b ^ 2 + c ^ 2) := fun a b c ↦ by
-      nlinarith [sq_nonneg (a + b), sq_nonneg (a + c), sq_nonneg (b - c)]
-    show v n x ^ 2 ≤ 3 * (q n x + p₀ x + (t n / 2) ^ 2 * (score x * Real.sqrt (p₀ x)) ^ 2)
-    calc v n x ^ 2 ≤ 3 * (Real.sqrt (q n x) ^ 2 + Real.sqrt (p₀ x) ^ 2 +
-          (t n / 2 * score x * Real.sqrt (p₀ x)) ^ 2) := key _ _ _
-      _ = 3 * (q n x + p₀ x + (t n / 2) ^ 2 * (score x * Real.sqrt (p₀ x)) ^ 2) := by
-          rw [Real.sq_sqrt (hqpos n x).le, Real.sq_sqrt (hp₀pos x).le]; ring
-  have hu2 : ∀ n, Integrable (fun x ↦ u n x ^ 2) (P theta₀) ∧
-      ∫ x, u n x ^ 2 ∂P theta₀ = D (t n) := by
-    intro n
-    obtain ⟨h1, h2⟩ := hdens (fun x ↦ u n x ^ 2)
-    have e : (fun x ↦ p₀ x * u n x ^ 2) = fun x ↦ v n x ^ 2 := by
-      funext x; rw [hvsq]
-    rw [e] at h1 h2
-    exact ⟨h1.2 (hv2 n), h2⟩
-  have hu2' : ∀ n, MemLp (u n) 2 (P theta₀) := fun n ↦
-    (memLp_two_iff_integrable_sq (hum n).aestronglyMeasurable).2 (hu2 n).1
-  have hsqrt : Tendsto (fun n : ℕ ↦ Real.sqrt n) atTop atTop :=
-    Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop
-  have htn : Tendsto t atTop (𝓝 0) := tendsto_const_nhds.div_atTop hsqrt
-  have hnt2 : ∀ n : ℕ, 1 ≤ n → (n : ℝ) * t n ^ 2 = h ^ 2 := by
-    intro n hn
-    have : (0 : ℝ) < n := by exact_mod_cast hn
-    simp only [ht, div_pow, Real.sq_sqrt this.le]
-    field_simp
-  have hD0 : ∀ τ, 0 ≤ D τ := fun τ ↦ integral_nonneg fun _ ↦ sq_nonneg _
-  have hnD : Tendsto (fun n : ℕ ↦ n * D (t n)) atTop (𝓝 0) := by
-    refine Metric.tendsto_atTop.2 fun ε hε ↦ ?_
-    have hc : 0 < ε / 2 / (h ^ 2 + 1) := by positivity
-    have hev := htn.eventually (hdqm.def hc)
-    obtain ⟨N, hN⟩ := (hev.and (eventually_ge_atTop 1)).exists_forall_of_atTop
-    refine ⟨N, fun n hn ↦ ?_⟩
-    obtain ⟨hb, hn1⟩ := hN n hn
-    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_of_nonneg (hD0 _),
-      abs_of_nonneg (sq_nonneg _)] at hb
-    rw [Real.dist_eq, sub_zero, abs_of_nonneg (mul_nonneg (Nat.cast_nonneg n) (hD0 _))]
-    calc (n : ℝ) * D (t n) ≤ n * (ε / 2 / (h ^ 2 + 1) * t n ^ 2) :=
-          mul_le_mul_of_nonneg_left hb (Nat.cast_nonneg n)
-      _ = ε / 2 / (h ^ 2 + 1) * h ^ 2 := by rw [← hnt2 n hn1]; ring
-      _ < ε := by
-          rw [div_mul_eq_mul_div, div_lt_iff₀ (by positivity)]
-          nlinarith [sq_nonneg h]
-  -- the mean of `gₙ`
-  set a : E → ℝ := fun x ↦ score x * Real.sqrt (p₀ x) with ha
-  have ham : Measurable a := hs.mul hp₀m.sqrt
-  have hav : ∀ n, |∫ x, a x * v n x ∂nu| ≤ Real.sqrt I * Real.sqrt (D (t n)) := by
-    intro n
-    have := abs_integral_mul_le_sqrt_mul_sqrt nu a (v n) ham.aestronglyMeasurable
-      (hvm n).aestronglyMeasurable hsν.1 (hv2 n)
-    rwa [hsν.2] at this
-  have havi : ∀ n, Integrable (fun x ↦ a x * v n x) nu := by
-    intro n
-    refine ((hsν.1.add (hv2 n)).div_const 2).mono' (ham.mul (hvm n)).aestronglyMeasurable
-      (ae_of_all _ fun x ↦ ?_)
-    rw [Real.norm_eq_abs, abs_mul]
-    show |a x| * |v n x| ≤ (a x ^ 2 + v n x ^ 2) / 2
-    nlinarith [sq_nonneg (|a x| - |v n x|), sq_abs (a x), sq_abs (v n x)]
-  have hw : ∀ n, ∫ x, (Real.sqrt (q n x) - Real.sqrt (p₀ x)) ^ 2 ∂nu =
-      t n ^ 2 / 4 * I + t n * ∫ x, a x * v n x ∂nu + D (t n) := by
-    intro n
-    have e : (fun x ↦ (Real.sqrt (q n x) - Real.sqrt (p₀ x)) ^ 2) =
-        fun x ↦ (t n ^ 2 / 4 * a x ^ 2 + t n * (a x * v n x)) + v n x ^ 2 := by
-      funext x
-      simp only [hv, ha]
-      ring
-    have hI' : ∫ x, a x ^ 2 ∂nu = I := hsν.2
-    have ha2 : Integrable (fun x ↦ a x ^ 2) nu := hsν.1
-    rw [e, integral_add (f := fun x ↦ t n ^ 2 / 4 * a x ^ 2 + t n * (a x * v n x))
-      (g := fun x ↦ v n x ^ 2) ((ha2.const_mul _).add ((havi n).const_mul _)) (hv2 n),
-      integral_add (f := fun x ↦ t n ^ 2 / 4 * a x ^ 2) (g := fun x ↦ t n * (a x * v n x))
-        (ha2.const_mul _) ((havi n).const_mul _), integral_const_mul, integral_const_mul, hI']
-  have hwi : ∀ n, Integrable (fun x ↦ (Real.sqrt (q n x) - Real.sqrt (p₀ x)) ^ 2) nu := by
-    intro n
-    have e : (fun x ↦ (Real.sqrt (q n x) - Real.sqrt (p₀ x)) ^ 2) =
-        fun x ↦ (t n ^ 2 / 4 * a x ^ 2 + t n * (a x * v n x)) + v n x ^ 2 := by
-      funext x
-      simp only [hv, ha]
-      ring
-    rw [e]
-    exact ((hsν.1.const_mul _).add ((havi n).const_mul _)).add (hv2 n)
-  have hgeq : ∀ n x, p₀ x * g n x =
-      (q n x - p₀ x - (Real.sqrt (q n x) - Real.sqrt (p₀ x)) ^ 2) / 2 := by
-    intro n x
-    have hs0' : Real.sqrt (p₀ x) ≠ 0 := (Real.sqrt_pos.2 (hp₀pos x)).ne'
-    simp only [hg]
-    rw [Real.sqrt_div' _ (hp₀pos x).le]
-    have e1 := Real.sq_sqrt (hqpos n x).le
-    have e2 := Real.sq_sqrt (hp₀pos x).le
-    field_simp
-    linear_combination (Real.sqrt (p₀ x) - 2 * Real.sqrt (q n x)) * e2 + Real.sqrt (p₀ x) * e1
-  have hgint : ∀ n, ∫ x, g n x ∂P theta₀ =
-      -(1 / 2) * ∫ x, (Real.sqrt (q n x) - Real.sqrt (p₀ x)) ^ 2 ∂nu := by
-    intro n
-    rw [(hdens (g n)).2]
-    simp_rw [hgeq]
-    rw [integral_div, integral_sub (f := fun x ↦ q n x - p₀ x)
-      (g := fun x ↦ (Real.sqrt (q n x) - Real.sqrt (p₀ x)) ^ 2) ((hqi1 n).1.sub hp₀i) (hwi n),
-      integral_sub (hqi1 n).1 hp₀i, (hqi1 n).2, hp₀1]
-    ring
-  have hgmean : Tendsto (fun n : ℕ ↦ n * ∫ x, g n x ∂P theta₀) atTop (𝓝 (-(h ^ 2 * I / 8))) := by
-    have hcross : Tendsto (fun n : ℕ ↦ n * t n * ∫ x, a x * v n x ∂nu) atTop (𝓝 0) := by
-      have hb : Tendsto (fun n : ℕ ↦ |h| * Real.sqrt I * Real.sqrt (n * D (t n))) atTop (𝓝 0) := by
-        have := ((Real.continuous_sqrt.tendsto 0).comp hnD).const_mul (|h| * Real.sqrt I)
-        simpa using this
-      refine squeeze_zero_norm' ?_ hb
-      filter_upwards [eventually_ge_atTop 1] with n hn
-      have hn0 : (0 : ℝ) < n := by exact_mod_cast hn
-      rw [Real.norm_eq_abs, abs_mul, abs_mul, abs_of_pos hn0, Real.sqrt_mul hn0.le]
-      have hnt : (n : ℝ) * |t n| = |h| * Real.sqrt n := by
-        simp only [ht, abs_div, abs_of_pos (Real.sqrt_pos.2 hn0)]
-        field_simp
-        rw [Real.sq_sqrt hn0.le]
-        ring
-      calc (n : ℝ) * |t n| * |∫ x, a x * v n x ∂nu|
-          ≤ (n : ℝ) * |t n| * (Real.sqrt I * Real.sqrt (D (t n))) := by gcongr; exact hav n
-        _ = |h| * Real.sqrt I * (Real.sqrt n * Real.sqrt (D (t n))) := by rw [hnt]; ring
-    have hlim : Tendsto (fun n : ℕ ↦ -(1 / 2) * (h ^ 2 / 4 * I + n * t n * ∫ x, a x * v n x ∂nu +
-        n * D (t n))) atTop (𝓝 (-(h ^ 2 * I / 8))) := by
-      have := (((tendsto_const_nhds (x := h ^ 2 / 4 * I)).add hcross).add hnD).const_mul
-        (-(1 / 2))
-      rwa [show -(1 / 2) * (h ^ 2 / 4 * I + 0 + 0) = -(h ^ 2 * I / 8) by ring] at this
-    refine hlim.congr' ?_
+  have hnD : Tendsto (fun n : ℕ ↦ n * D (h / Real.sqrt n)) atTop (𝓝 0) :=
+    tendsto_natCast_mul_apply_div_sqrt_of_isLittleO
+      (fun τ ↦ integral_nonneg fun _ ↦ sq_nonneg _) hdqm h
+  have hcross : Tendsto (fun n : ℕ ↦ n * (h / Real.sqrt n) * c n) atTop (𝓝 0) := by
+    have hb : Tendsto (fun n : ℕ ↦ |h| * Real.sqrt I * Real.sqrt (n * D (h / Real.sqrt n)))
+        atTop (𝓝 0) := by
+      simpa using ((Real.continuous_sqrt.tendsto 0).comp hnD).const_mul (|h| * Real.sqrt I)
+    refine squeeze_zero_norm' ?_ hb
     filter_upwards [eventually_ge_atTop 1] with n hn
-    rw [hgint, hw]
-    have := hnt2 n hn
-    simp only [ht] at this ⊢
-    linear_combination ((1 / 8) * I) * this
-  exact ⟨hu2', hnD.congr fun n ↦ by rw [(hu2 n).2], hgmean⟩
+    have hn0 : (0 : ℝ) < n := by exact_mod_cast hn
+    rw [Real.norm_eq_abs, abs_mul, abs_mul, abs_of_pos hn0, Real.sqrt_mul hn0.le]
+    have hnt : (n : ℝ) * |h / Real.sqrt n| = |h| * Real.sqrt n := by
+      rw [abs_div, abs_of_pos (Real.sqrt_pos.2 hn0)]
+      field_simp
+      rw [Real.sq_sqrt hn0.le]
+      ring
+    calc (n : ℝ) * |h / Real.sqrt n| * |c n|
+        ≤ (n : ℝ) * |h / Real.sqrt n| * (Real.sqrt I * Real.sqrt (D (h / Real.sqrt n))) := by
+          gcongr; exact hc n
+      _ = |h| * Real.sqrt I * (Real.sqrt n * Real.sqrt (D (h / Real.sqrt n))) := by
+          rw [hnt]; ring
+  have hlim : Tendsto (fun n : ℕ ↦ -(1 / 2) * (h ^ 2 / 4 * I + n * (h / Real.sqrt n) * c n +
+      n * D (h / Real.sqrt n))) atTop (𝓝 (-(h ^ 2 * I / 8))) := by
+    have := (((tendsto_const_nhds (x := h ^ 2 / 4 * I)).add hcross).add hnD).const_mul
+      (-(1 / 2))
+    rwa [show -(1 / 2) * (h ^ 2 / 4 * I + 0 + 0) = -(h ^ 2 * I / 8) by ring] at this
+  refine ⟨hu2, hnD.congr fun n ↦ congrArg (fun y ↦ (n : ℝ) * y) (hu2D n).symm,
+    hlim.congr' ?_⟩
+  filter_upwards [eventually_ge_atTop 1] with n hn
+  have hn0 : (0 : ℝ) < n := by exact_mod_cast hn
+  have hnt2 : (n : ℝ) * (h / Real.sqrt n) ^ 2 = h ^ 2 := by
+    rw [div_pow, Real.sq_sqrt hn0.le]
+    field_simp
+  rw [hgint n]
+  linear_combination ((1 / 8) * I) * hnt2
 
 /-- Under differentiability in quadratic mean with common strictly positive densities, the score
 is centred: `E[ℓ̇] = 0` under `P θ₀` (van der Vaart, *Asymptotic Statistics*, Theorem 7.2). -/
@@ -489,12 +494,204 @@ theorem integral_score_eq_zero_of_dqm
   have := tendsto_nhds_unique ha hlim
   linarith
 
+/-- Tail bound for a triangular array `gₙ = uₙ + (h / √n) / 2 · s` with `s` square integrable
+and `n E[uₙ²] → 0`: for every `ε > 0`, `n P(|gₙ| > ε) → 0`. -/
+theorem tendsto_natCast_mul_measureReal_lt_abs_of_eq_add {E : Type*} [MeasurableSpace E]
+    (P : Measure E) [IsFiniteMeasure P] {s : E → ℝ} (hs : Measurable s)
+    (hs2 : Integrable (fun x ↦ s x ^ 2) P) {g u : ℕ → E → ℝ} (h : ℝ)
+    (hgu : ∀ n x, g n x = u n x + h / Real.sqrt n / 2 * s x)
+    (hu2 : ∀ n, Integrable (fun x ↦ u n x ^ 2) P)
+    (hnDu : Tendsto (fun n : ℕ ↦ n * ∫ x, u n x ^ 2 ∂P) atTop (𝓝 0)) {ε : ℝ} (hε : 0 < ε) :
+    Tendsto (fun n : ℕ ↦ n * P.real {x | ε < |g n x|}) atTop (𝓝 0) := by
+  set c := ε / (|h| + 1) with hc_def
+  have hc : 0 < c := by positivity
+  have h1 := tendsto_mul_measureReal_lt_abs_of_integrable_sq P s hs hs2 hc
+  have h2 : Tendsto (fun n : ℕ ↦ n * (∫ x, u n x ^ 2 ∂P) / (ε / 2) ^ 2) atTop (𝓝 0) := by
+    simpa using hnDu.div_const ((ε / 2) ^ 2)
+  refine squeeze_zero' (Eventually.of_forall fun n ↦ by positivity) ?_
+    (by simpa using h1.add h2)
+  filter_upwards [eventually_ge_atTop 1] with n hn
+  have hn0 : (0 : ℝ) < n := by exact_mod_cast hn
+  have hsn := Real.sqrt_pos.2 hn0
+  have hsub : {x | ε < |g n x|} ⊆
+      {x | c * Real.sqrt n < |s x|} ∪ {x | (ε / 2) ^ 2 ≤ u n x ^ 2} := by
+    intro x hx
+    simp only [mem_ofPred_eq, mem_union] at hx ⊢
+    by_contra hcon
+    push Not at hcon
+    obtain ⟨h1, h2⟩ := hcon
+    have hu' : |u n x| < ε / 2 := abs_lt_of_sq_lt_sq h2 (by positivity)
+    have ht' : |h / Real.sqrt n / 2 * s x| ≤ ε / 2 := by
+      simp only [abs_mul, abs_div, abs_two, abs_of_pos hsn]
+      calc |h| / Real.sqrt n / 2 * |s x| ≤ |h| / Real.sqrt n / 2 * (c * Real.sqrt n) := by
+            gcongr
+        _ = |h| * c / 2 := by field_simp
+        _ ≤ ε / 2 := by
+            rw [hc_def, mul_div_assoc', div_le_div_iff_of_pos_right two_pos,
+              div_le_iff₀ (by positivity)]
+            nlinarith [abs_nonneg h]
+    rw [hgu] at hx
+    linarith [abs_add_le (u n x) (h / Real.sqrt n / 2 * s x)]
+  have hmk := mul_meas_ge_le_integral_of_nonneg (μ := P) (f := fun x ↦ u n x ^ 2)
+    (ae_of_all _ fun _ ↦ sq_nonneg _) (hu2 n) ((ε / 2) ^ 2)
+  have hmk' : P.real {x | (ε / 2) ^ 2 ≤ u n x ^ 2} ≤ (∫ x, u n x ^ 2 ∂P) / (ε / 2) ^ 2 := by
+    rw [le_div_iff₀ (by positivity)]; linarith [hmk]
+  calc (n : ℝ) * P.real {x | ε < |g n x|}
+      ≤ n * (P.real {x | c * Real.sqrt n < |s x|} + P.real {x | (ε / 2) ^ 2 ≤ u n x ^ 2}) :=
+        mul_le_mul_of_nonneg_left ((measureReal_mono hsub).trans (measureReal_union_le _ _))
+          (Nat.cast_nonneg n)
+    _ ≤ n * P.real {x | c * Real.sqrt n < |s x|} + n * (∫ x, u n x ^ 2 ∂P) / (ε / 2) ^ 2 := by
+        rw [mul_add, mul_div_assoc]
+        gcongr
+
+/-- The largest summand of an i.i.d. triangular array is negligible: if `X` is i.i.d. with law
+`P`, each `gₙ` is measurable, and `n P(|gₙ| > ε) → 0` for every `ε > 0`, then
+`maxᵢ<n |gₙ(Xᵢ)| → 0` in probability. -/
+theorem tendstoInMeasure_sup_nnnorm_of_iid {Ω E : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace E] (mu : Measure Ω) [IsProbabilityMeasure mu] (P : Measure E)
+    (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed mu X P) {g : ℕ → E → ℝ}
+    (hgm : ∀ n, Measurable (g n))
+    (hgtail : ∀ ε > 0, Tendsto (fun n : ℕ ↦ n * P.real {x | ε < |g n x|}) atTop (𝓝 0)) :
+    TendstoInMeasure mu (fun (n : ℕ) w ↦
+      (((Finset.range n).sup fun i ↦ ‖g n (X i w)‖₊ : ℝ≥0) : ℝ)) atTop (fun _ ↦ 0) := by
+  rw [tendstoInMeasure_iff_measureReal_lt_dist]
+  intro ε hε
+  refine squeeze_zero (fun _ ↦ measureReal_nonneg) (fun n ↦ ?_) (hgtail ε hε)
+  calc mu.real {w | ε < dist (((Finset.range n).sup fun i ↦ ‖g n (X i w)‖₊ : ℝ≥0) : ℝ) 0}
+      ≤ mu.real (⋃ i ∈ Finset.range n, {w | ε < |g n (X i w)|}) := by
+        refine measureReal_mono ?_ (measure_ne_top _ _)
+        intro w hw
+        simp only [mem_ofPred_eq, Real.dist_eq, sub_zero, NNReal.abs_eq] at hw
+        simp only [mem_iUnion, mem_ofPred_eq, exists_prop]
+        by_contra hcon
+        push Not at hcon
+        have hsup : ((Finset.range n).sup fun i ↦ ‖g n (X i w)‖₊) ≤ ε.toNNReal :=
+          Finset.sup_le fun i hi ↦ (Real.le_toNNReal_iff_coe_le hε.le).2 (by
+            rw [coe_nnnorm, Real.norm_eq_abs]; exact hcon i hi)
+        have := (Real.le_toNNReal_iff_coe_le hε.le).1 hsup
+        linarith
+    _ ≤ ∑ i ∈ Finset.range n, mu.real {w | ε < |g n (X i w)|} :=
+        measureReal_biUnion_finset_le _ _
+    _ = n * P.real {x | ε < |g n x|} := by
+        have : ∀ i, mu.real {w | ε < |g n (X i w)|} = P.real {x | ε < |g n x|} := fun i ↦ by
+          have hms : MeasurableSet {x | ε < |g n x|} :=
+            measurableSet_lt measurable_const (continuous_abs.measurable.comp (hgm n))
+          rw [← hiid.2.2 i, map_measureReal_apply (hiid.1 i) hms]
+          rfl
+        simp [this]
+
+/-- Sum of squares of an i.i.d. triangular array `gₙ = uₙ + (h / √n) / 2 · s` with `s`
+square integrable and `n E[uₙ²] → 0`: `∑ᵢ<n gₙ(Xᵢ)² → h² E[s²] / 4` in probability. -/
+theorem tendstoInMeasure_sum_sq_sub_of_eq_add_of_iid {Ω E : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace E] (mu : Measure Ω) [IsProbabilityMeasure mu] (P : Measure E)
+    [IsProbabilityMeasure P] (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed mu X P)
+    {s : E → ℝ} (hs : Measurable s) (hs2 : Integrable (fun x ↦ s x ^ 2) P)
+    {g u : ℕ → E → ℝ} (h : ℝ) (hgu : ∀ n x, g n x = u n x + h / Real.sqrt n / 2 * s x)
+    (hum : ∀ n, Measurable (u n)) (hu2 : ∀ n, Integrable (fun x ↦ u n x ^ 2) P)
+    (hnDu : Tendsto (fun n : ℕ ↦ n * ∫ x, u n x ^ 2 ∂P) atTop (𝓝 0)) :
+    TendstoInMeasure mu (fun (n : ℕ) w ↦ ∑ i ∈ Finset.range n, g n (X i w) ^ 2 -
+      h ^ 2 * (∫ x, s x ^ 2 ∂P) / 4) atTop (fun _ ↦ 0) := by
+  set I := ∫ x, s x ^ 2 ∂P with hI
+  set t : ℕ → ℝ := fun n ↦ h / Real.sqrt n with ht
+  set B2 : ℕ → Ω → ℝ := fun n w ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, s (X i w) ^ 2 with hB2
+  have hB2lim : TendstoInMeasure mu B2 atTop (fun _ ↦ I) :=
+    tendstoInMeasure_sampleMean_of_iid mu P X hiid (fun x ↦ s x ^ 2) (hs.pow_const 2) hs2
+  set U2 : ℕ → Ω → ℝ := fun n w ↦ ∑ i ∈ Finset.range n, u n (X i w) ^ 2 with hU2
+  have hU2lim : TendstoInMeasure mu U2 atTop (fun _ ↦ 0) :=
+    tendstoInMeasure_sum_sq_of_iid mu P X hiid u hum hu2 hnDu
+  have ht2 : ∀ n : ℕ, t n ^ 2 = h ^ 2 * (n : ℝ)⁻¹ := fun n ↦ by
+    simp only [ht, div_pow, Real.sq_sqrt (Nat.cast_nonneg _)]
+    ring
+  have hA : TendstoInMeasure mu (fun (n : ℕ) w ↦ h ^ 2 / 4 * (B2 n w - I)) atTop (fun _ ↦ 0) :=
+    tendstoInMeasure_const_mul_zero mu _ _ (by
+      rw [tendstoInMeasure_iff_measureReal_lt_dist] at hB2lim ⊢
+      intro ε hε; simpa [Real.dist_eq] using hB2lim ε hε)
+  have hsq1 : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt (h ^ 2 * B2 n w))
+      atTop (fun _ ↦ Real.sqrt (h ^ 2 * I)) :=
+    tendstoInMeasure_comp_of_continuousAt mu B2 I (fun y ↦ Real.sqrt (h ^ 2 * y))
+      (Real.continuous_sqrt.comp (continuous_const.mul continuous_id)).continuousAt hB2lim
+  have hsq2 : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt (U2 n w)) atTop (fun _ ↦ 0) := by
+    have := tendstoInMeasure_comp_of_continuousAt mu U2 0 Real.sqrt
+      Real.continuous_sqrt.continuousAt hU2lim
+    simpa using this
+  have hX := tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _
+    (isBoundedInProbability_of_tendstoInMeasure mu _ _ hsq1) hsq2
+  have hC : TendstoInMeasure mu (fun (n : ℕ) w ↦
+      t n * ∑ i ∈ Finset.range n, s (X i w) * u n (X i w)) atTop (fun _ ↦ 0) := by
+    refine tendstoInMeasure_zero_of_abs_le mu _ _ (fun _ _ ↦ (0 : ℝ)) one_pos
+      (Eventually.of_forall fun n ↦ ae_of_all _ fun w _ ↦ ?_) hX
+      (tendstoInMeasure_const_of_tendsto mu _ tendsto_const_nhds)
+    have hcs := Finset.sum_mul_sq_le_sq_mul_sq (Finset.range n) (fun i ↦ s (X i w))
+      (fun i ↦ u n (X i w))
+    have hB2e : h ^ 2 * B2 n w = t n ^ 2 * ∑ i ∈ Finset.range n, s (X i w) ^ 2 := by
+      rw [ht2]; simp only [hB2]; ring
+    have hnn : 0 ≤ h ^ 2 * B2 n w := by
+      rw [hB2e]; exact mul_nonneg (sq_nonneg _) (Finset.sum_nonneg fun i _ ↦ sq_nonneg _)
+    rw [abs_of_nonneg (mul_nonneg (Real.sqrt_nonneg _) (Real.sqrt_nonneg _)),
+      ← Real.sqrt_mul hnn, hB2e, ← Real.sqrt_sq_eq_abs]
+    apply Real.sqrt_le_sqrt
+    calc (t n * ∑ i ∈ Finset.range n, s (X i w) * u n (X i w)) ^ 2
+        = t n ^ 2 * (∑ i ∈ Finset.range n, s (X i w) * u n (X i w)) ^ 2 := by ring
+      _ ≤ t n ^ 2 * ((∑ i ∈ Finset.range n, s (X i w) ^ 2) *
+          ∑ i ∈ Finset.range n, u n (X i w) ^ 2) :=
+        mul_le_mul_of_nonneg_left hcs (sq_nonneg _)
+      _ = t n ^ 2 * (∑ i ∈ Finset.range n, s (X i w) ^ 2) * U2 n w := by
+        simp only [hU2]; ring
+  have := tendstoInMeasure_add_zero mu _ _ (tendstoInMeasure_add_zero mu _ _ hU2lim hC) hA
+  convert this using 3 with n w
+  have hG2e : ∑ i ∈ Finset.range n, g n (X i w) ^ 2 = U2 n w +
+      t n * ∑ i ∈ Finset.range n, s (X i w) * u n (X i w) +
+        t n ^ 2 / 4 * ∑ i ∈ Finset.range n, s (X i w) ^ 2 := by
+    simp only [hU2, Finset.mul_sum, ← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun i _ ↦ by rw [hgu]; ring
+  rw [hG2e, ht2]
+  simp only [hB2]
+  ring
+
+/-- The logarithmic remainder of a triangular array: if `∑ᵢ<n Gₙᵢ²` converges in probability to
+a constant and `maxᵢ<n |Gₙᵢ| → 0` in probability, then
+`∑ᵢ<n (2 log (1 + Gₙᵢ) - (2 Gₙᵢ - Gₙᵢ²)) → 0` in probability. -/
+theorem tendstoInMeasure_sum_two_mul_log_one_add_sub {Ω : Type*} [MeasurableSpace Ω]
+    (mu : Measure Ω) [IsProbabilityMeasure mu] (G : ℕ → ℕ → Ω → ℝ) {c : ℝ}
+    (hG2 : TendstoInMeasure mu (fun (n : ℕ) w ↦ ∑ i ∈ Finset.range n, G n i w ^ 2) atTop
+      (fun _ ↦ c))
+    (hM : TendstoInMeasure mu (fun (n : ℕ) w ↦
+      (((Finset.range n).sup fun i ↦ ‖G n i w‖₊ : ℝ≥0) : ℝ)) atTop (fun _ ↦ 0)) :
+    TendstoInMeasure mu (fun (n : ℕ) w ↦ ∑ i ∈ Finset.range n,
+      (2 * Real.log (1 + G n i w) - (2 * G n i w - G n i w ^ 2))) atTop (fun _ ↦ 0) := by
+  set M : ℕ → Ω → ℝ := fun n w ↦
+    (((Finset.range n).sup fun i ↦ ‖G n i w‖₊ : ℝ≥0) : ℝ) with hMdef
+  have hM0 : ∀ n w, 0 ≤ M n w := fun n w ↦ NNReal.coe_nonneg _
+  have hMle : ∀ n w, ∀ i ∈ Finset.range n, |G n i w| ≤ M n w := by
+    intro n w i hi
+    have := Finset.le_sup (f := fun i ↦ ‖G n i w‖₊) hi
+    rwa [← NNReal.coe_le_coe, coe_nnnorm, Real.norm_eq_abs] at this
+  have hX := tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _
+    (isBoundedInProbability_of_tendstoInMeasure mu _ _ hG2)
+    (tendstoInMeasure_const_mul_zero mu M 4 hM)
+  refine tendstoInMeasure_zero_of_abs_le mu _ _ M (by norm_num : (0 : ℝ) < 1 / 2)
+    (Eventually.of_forall fun n ↦ ae_of_all _ fun w hMw ↦ ?_) hX hM
+  rw [abs_of_nonneg (hM0 n w)] at hMw
+  have hG2nn : 0 ≤ ∑ i ∈ Finset.range n, G n i w ^ 2 := Finset.sum_nonneg fun i _ ↦ sq_nonneg _
+  rw [abs_of_nonneg (mul_nonneg hG2nn (by linarith [hM0 n w]))]
+  calc |∑ i ∈ Finset.range n, (2 * Real.log (1 + G n i w) - (2 * G n i w - G n i w ^ 2))|
+      ≤ ∑ i ∈ Finset.range n, |2 * Real.log (1 + G n i w) - (2 * G n i w - G n i w ^ 2)| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ i ∈ Finset.range n, 4 * |G n i w| ^ 3 := Finset.sum_le_sum fun i hi ↦
+        abs_two_mul_log_one_add_sub_le ((hMle n w i hi).trans hMw.le)
+    _ ≤ ∑ i ∈ Finset.range n, G n i w ^ 2 * (4 * M n w) := Finset.sum_le_sum fun i hi ↦ by
+        have h1 := hMle n w i hi
+        rw [← sq_abs (G n i w)]
+        have h2 := abs_nonneg (G n i w)
+        nlinarith [mul_le_mul_of_nonneg_left h1 (sq_nonneg |G n i w|)]
+    _ = (∑ i ∈ Finset.range n, G n i w ^ 2) * (4 * M n w) := by rw [Finset.sum_mul]
+
 /-- GAPS 102.13: differentiability in quadratic mean implies local asymptotic normality, for a
 scalar parameter and common strictly positive densities. If `√f θ` is differentiable in
 quadratic mean at `θ₀` with square-integrable score `ℓ̇` (which is then centred) and
 `I = E[ℓ̇²]`, then for an i.i.d. sample from `P θ₀` and every `h`, the log likelihood ratio
 of `θ₀ + h / √n` against `θ₀` satisfies
-`∑ log (f (θ₀ + h/√n) (Xᵢ) / f θ₀ (Xᵢ)) = (h / √n) ∑ ℓ̇(Xᵢ) - h² I / 2 + o_P(1)`.
+`∑ log (f (θ₀ + h / √n) (Xᵢ) / f θ₀ (Xᵢ)) = (h / √n) ∑ ℓ̇(Xᵢ) - h² I / 2 + o_P(1)`.
 The proof follows van der Vaart, *Asymptotic Statistics*, Theorem 7.2. -/
 theorem tendstoInMeasure_log_likelihood_ratio_sub_of_dqm
     {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
@@ -514,7 +711,6 @@ theorem tendstoInMeasure_log_likelihood_ratio_sub_of_dqm
   have hP0 := hP theta₀
   have hs0 := integral_score_eq_zero_of_dqm nu P hP f hf hpos theta₀ score hs hs2 hdqm
   set I := ∫ x, score x ^ 2 ∂P theta₀ with hI
-  obtain ⟨hXm, hind, hlaw⟩ := hiid
   obtain ⟨hu2'', hnDu', hgmean'⟩ :=
     memLp_and_tendsto_sqrt_likelihood_ratio_of_dqm nu P hP f hf hpos theta₀ score hs hs2 hdqm h
   set p₀ : E → ℝ := f theta₀ with hp₀
@@ -522,10 +718,6 @@ theorem tendstoInMeasure_log_likelihood_ratio_sub_of_dqm
   set q : ℕ → E → ℝ := fun n ↦ f (theta₀ + t n) with hq
   set g : ℕ → E → ℝ := fun n x ↦ Real.sqrt (q n x / p₀ x) - 1 with hg
   set u : ℕ → E → ℝ := fun n x ↦ g n x - t n / 2 * score x with hu
-  set v : ℕ → E → ℝ := fun n x ↦
-    Real.sqrt (q n x) - Real.sqrt (p₀ x) - t n / 2 * score x * Real.sqrt (p₀ x) with hv
-  set D : ℝ → ℝ := fun τ ↦ ∫ x, (Real.sqrt (f (theta₀ + τ) x) - Real.sqrt (f theta₀ x) -
-    τ / 2 * score x * Real.sqrt (f theta₀ x)) ^ 2 ∂nu with hD
   have hp₀pos : ∀ x, 0 < p₀ x := hpos theta₀
   have hqpos : ∀ n x, 0 < q n x := fun n ↦ hpos _
   have hgm : ∀ n, Measurable (g n) := fun n ↦
@@ -536,9 +728,8 @@ theorem tendstoInMeasure_log_likelihood_ratio_sub_of_dqm
   have hu2 : ∀ n, Integrable (fun x ↦ u n x ^ 2) (P theta₀) := fun n ↦ (hu2' n).integrable_sq
   have hgmean : Tendsto (fun n : ℕ ↦ n * ∫ x, g n x ∂P theta₀) atTop (𝓝 (-(h ^ 2 * I / 8))) :=
     hgmean'
-  have hnDu' : Tendsto (fun n : ℕ ↦ n * ∫ x, u n x ^ 2 ∂P theta₀) atTop (𝓝 0) := hnDu'
+  have hnDu : Tendsto (fun n : ℕ ↦ n * ∫ x, u n x ^ 2 ∂P theta₀) atTop (𝓝 0) := hnDu'
   -- sample-level quantities
-  have hiid' : IsIndependentIdenticallyDistributed mu X (P theta₀) := ⟨hXm, hind, hlaw⟩
   set Z : ℕ → Ω → ℝ := fun n w ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, score (X i w) with hZ
   set G1 : ℕ → Ω → ℝ := fun n w ↦ ∑ i ∈ Finset.range n, g n (X i w) with hG1
   set G2 : ℕ → Ω → ℝ := fun n w ↦ ∑ i ∈ Finset.range n, g n (X i w) ^ 2 with hG2
@@ -551,10 +742,10 @@ theorem tendstoInMeasure_log_likelihood_ratio_sub_of_dqm
   have hui : ∀ n, ∫ x, u n x ∂P theta₀ = ∫ x, g n x ∂P theta₀ := fun n ↦ by
     simp only [hu]
     rw [integral_sub (hgi n) (hs1.const_mul _), integral_const_mul, hs0, mul_zero, sub_zero]
-  have hnDu := hnDu'
+  -- the linear term
   have hF2 : TendstoInMeasure mu
       (fun (n : ℕ) w ↦ G1 n w - h / 2 * Z n w + h ^ 2 * I / 8) atTop (fun _ ↦ 0) := by
-    have h1 := tendstoInMeasure_sum_sub_of_iid mu (P theta₀) X hiid' u hum hu2' hnDu
+    have h1 := tendstoInMeasure_sum_sub_of_iid mu (P theta₀) X hiid u hum hu2' hnDu
     have h2 := tendstoInMeasure_const_of_tendsto mu
       (fun n : ℕ ↦ n * ∫ x, g n x ∂P theta₀ + h ^ 2 * I / 8)
       (by convert hgmean.add_const (h ^ 2 * I / 8) using 2; ring)
@@ -567,148 +758,11 @@ theorem tendstoInMeasure_log_likelihood_ratio_sub_of_dqm
     rw [hsplit, hui]
     simp only [hZ, ht]
     ring
-  -- the sum of squares
-  have hsqm : Measurable (fun x ↦ score x ^ 2) := hs.pow_const 2
-  set B2 : ℕ → Ω → ℝ := fun n w ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, score (X i w) ^ 2 with hB2
-  have hB2lim : TendstoInMeasure mu B2 atTop (fun _ ↦ I) :=
-    tendstoInMeasure_sampleMean_of_iid mu (P theta₀) X hiid' (fun x ↦ score x ^ 2) hsqm
-      hs2P
-  set U2 : ℕ → Ω → ℝ := fun n w ↦ ∑ i ∈ Finset.range n, u n (X i w) ^ 2 with hU2
-  have hU2lim : TendstoInMeasure mu U2 atTop (fun _ ↦ 0) :=
-    tendstoInMeasure_sum_sq_of_iid mu (P theta₀) X hiid' u hum hu2 hnDu
-  have ht2 : ∀ n : ℕ, t n ^ 2 = h ^ 2 * (n : ℝ)⁻¹ := fun n ↦ by
-    simp only [ht, div_pow, Real.sq_sqrt (Nat.cast_nonneg _)]
-    ring
-  have hF3 : TendstoInMeasure mu (fun (n : ℕ) w ↦ G2 n w - h ^ 2 * I / 4) atTop (fun _ ↦ 0) := by
-    have hA : TendstoInMeasure mu (fun (n : ℕ) w ↦ h ^ 2 / 4 * (B2 n w - I)) atTop (fun _ ↦ 0) :=
-      tendstoInMeasure_const_mul_zero mu _ _ (by
-        rw [tendstoInMeasure_iff_measureReal_lt_dist] at hB2lim ⊢
-        intro ε hε; simpa [Real.dist_eq] using hB2lim ε hε)
-    have hsq1 : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt (h ^ 2 * B2 n w))
-        atTop (fun _ ↦ Real.sqrt (h ^ 2 * I)) :=
-      tendstoInMeasure_comp_of_continuousAt mu B2 I (fun y ↦ Real.sqrt (h ^ 2 * y))
-        (Real.continuous_sqrt.comp (continuous_const.mul continuous_id)).continuousAt hB2lim
-    have hsq2 : TendstoInMeasure mu (fun (n : ℕ) w ↦ Real.sqrt (U2 n w)) atTop (fun _ ↦ 0) := by
-      have := tendstoInMeasure_comp_of_continuousAt mu U2 0 Real.sqrt
-        Real.continuous_sqrt.continuousAt hU2lim
-      simpa using this
-    have hX := tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _
-      (isBoundedInProbability_of_tendstoInMeasure mu _ _ hsq1) hsq2
-    have hC : TendstoInMeasure mu (fun (n : ℕ) w ↦
-        t n * ∑ i ∈ Finset.range n, score (X i w) * u n (X i w)) atTop (fun _ ↦ 0) := by
-      refine tendstoInMeasure_zero_of_abs_le mu _ _ (fun _ _ ↦ (0 : ℝ)) one_pos
-        (Eventually.of_forall fun n ↦ ae_of_all _ fun w _ ↦ ?_) hX
-        (tendstoInMeasure_const_of_tendsto mu _ tendsto_const_nhds)
-      have hcs := Finset.sum_mul_sq_le_sq_mul_sq (Finset.range n) (fun i ↦ score (X i w))
-        (fun i ↦ u n (X i w))
-      have hB2e : h ^ 2 * B2 n w = t n ^ 2 * ∑ i ∈ Finset.range n, score (X i w) ^ 2 := by
-        rw [ht2]; simp only [hB2]; ring
-      have hnn : 0 ≤ h ^ 2 * B2 n w := by
-        rw [hB2e]; exact mul_nonneg (sq_nonneg _) (Finset.sum_nonneg fun i _ ↦ sq_nonneg _)
-      rw [abs_of_nonneg (mul_nonneg (Real.sqrt_nonneg _) (Real.sqrt_nonneg _)),
-        ← Real.sqrt_mul hnn, hB2e, ← Real.sqrt_sq_eq_abs]
-      apply Real.sqrt_le_sqrt
-      calc (t n * ∑ i ∈ Finset.range n, score (X i w) * u n (X i w)) ^ 2
-          = t n ^ 2 * (∑ i ∈ Finset.range n, score (X i w) * u n (X i w)) ^ 2 := by ring
-        _ ≤ t n ^ 2 * ((∑ i ∈ Finset.range n, score (X i w) ^ 2) *
-            ∑ i ∈ Finset.range n, u n (X i w) ^ 2) :=
-          mul_le_mul_of_nonneg_left hcs (sq_nonneg _)
-        _ = t n ^ 2 * (∑ i ∈ Finset.range n, score (X i w) ^ 2) * U2 n w := by
-          simp only [hU2]; ring
-    have := tendstoInMeasure_add_zero mu _ _
-      (tendstoInMeasure_add_zero mu _ _ hU2lim hC) hA
-    convert this using 3 with n w
-    have hG2e : G2 n w = U2 n w + t n * ∑ i ∈ Finset.range n, score (X i w) * u n (X i w) +
-        t n ^ 2 / 4 * ∑ i ∈ Finset.range n, score (X i w) ^ 2 := by
-      simp only [hG2, hU2, Finset.mul_sum, ← Finset.sum_add_distrib]
-      exact Finset.sum_congr rfl fun i _ ↦ by rw [hgu]; ring
-    rw [hG2e, ht2]
-    simp only [hB2]
-    ring
-  -- the largest summand
-  set M : ℕ → Ω → ℝ := fun n w ↦
-    (((Finset.range n).sup fun i ↦ ‖g n (X i w)‖₊ : ℝ≥0) : ℝ) with hM
-  have hM0 : ∀ n w, 0 ≤ M n w := fun n w ↦ NNReal.coe_nonneg _
-  have hMle : ∀ n w, ∀ i ∈ Finset.range n, |g n (X i w)| ≤ M n w := by
-    intro n w i hi
-    have := Finset.le_sup (f := fun i ↦ ‖g n (X i w)‖₊) hi
-    rw [← NNReal.coe_le_coe, coe_nnnorm, Real.norm_eq_abs] at this
-    exact this
-  have hgtail : ∀ ε > 0, Tendsto (fun n : ℕ ↦ n * (P theta₀).real {x | ε < |g n x|}) atTop
-      (𝓝 0) := by
-    intro ε hε
-    set c := ε / (|h| + 1) with hc_def
-    have hc : 0 < c := by positivity
-    have h1 := tendsto_mul_measureReal_lt_abs_of_integrable_sq (P theta₀) score hs hs2P hc
-    have h2 : Tendsto (fun n : ℕ ↦ n * (∫ x, u n x ^ 2 ∂P theta₀) / (ε / 2) ^ 2) atTop (𝓝 0) := by
-      simpa using hnDu.div_const ((ε / 2) ^ 2)
-    refine squeeze_zero' (Eventually.of_forall fun n ↦ by positivity) ?_
-      (by simpa using h1.add h2)
-    filter_upwards [eventually_ge_atTop 1] with n hn
-    have hn0 : (0 : ℝ) < n := by exact_mod_cast hn
-    have hsn := Real.sqrt_pos.2 hn0
-    have hsub : {x | ε < |g n x|} ⊆
-        {x | c * Real.sqrt n < |score x|} ∪ {x | (ε / 2) ^ 2 ≤ u n x ^ 2} := by
-      intro x hx
-      simp only [mem_ofPred_eq, mem_union] at hx ⊢
-      by_contra hcon
-      push Not at hcon
-      obtain ⟨h1, h2⟩ := hcon
-      have hu' : |u n x| < ε / 2 := abs_lt_of_sq_lt_sq h2 (by positivity)
-      have ht' : |t n / 2 * score x| ≤ ε / 2 := by
-        rw [abs_mul, abs_div, abs_two]
-        simp only [ht, abs_div, abs_of_pos hsn]
-        calc |h| / Real.sqrt n / 2 * |score x| ≤ |h| / Real.sqrt n / 2 * (c * Real.sqrt n) := by
-              gcongr
-          _ = |h| * c / 2 := by field_simp
-          _ ≤ ε / 2 := by
-              rw [hc_def, mul_div_assoc', div_le_div_iff_of_pos_right two_pos,
-                div_le_iff₀ (by positivity)]
-              nlinarith [abs_nonneg h]
-      rw [hgu] at hx
-      linarith [abs_add_le (u n x) (t n / 2 * score x)]
-    have hmk := mul_meas_ge_le_integral_of_nonneg (μ := P theta₀) (f := fun x ↦ u n x ^ 2)
-      (ae_of_all _ fun _ ↦ sq_nonneg _) (hu2 n) ((ε / 2) ^ 2)
-    have hmk' : (P theta₀).real {x | (ε / 2) ^ 2 ≤ u n x ^ 2} ≤
-        (∫ x, u n x ^ 2 ∂P theta₀) / (ε / 2) ^ 2 := by
-      rw [le_div_iff₀ (by positivity)]; linarith [hmk]
-    calc (n : ℝ) * (P theta₀).real {x | ε < |g n x|}
-        ≤ n * ((P theta₀).real {x | c * Real.sqrt n < |score x|} +
-            (P theta₀).real {x | (ε / 2) ^ 2 ≤ u n x ^ 2}) :=
-          mul_le_mul_of_nonneg_left ((measureReal_mono hsub).trans (measureReal_union_le _ _))
-            (Nat.cast_nonneg n)
-      _ ≤ n * (P theta₀).real {x | c * Real.sqrt n < |score x|} +
-            n * (∫ x, u n x ^ 2 ∂P theta₀) / (ε / 2) ^ 2 := by
-          rw [mul_add, mul_div_assoc]
-          gcongr
-  have hF4 : TendstoInMeasure mu M atTop (fun _ ↦ 0) := by
-    rw [tendstoInMeasure_iff_measureReal_lt_dist]
-    intro ε hε
-    refine squeeze_zero (fun _ ↦ measureReal_nonneg) (fun n ↦ ?_) (hgtail ε hε)
-    calc mu.real {w | ε < dist (M n w) 0}
-        ≤ mu.real (⋃ i ∈ Finset.range n, {w | ε < |g n (X i w)|}) := by
-          refine measureReal_mono ?_ (measure_ne_top _ _)
-          intro w hw
-          simp only [mem_ofPred_eq, Real.dist_eq, sub_zero, abs_of_nonneg (hM0 n w)] at hw
-          simp only [mem_iUnion, mem_ofPred_eq, exists_prop]
-          by_contra hcon
-          push Not at hcon
-          have hsup : ((Finset.range n).sup fun i ↦ ‖g n (X i w)‖₊) ≤ ε.toNNReal :=
-            Finset.sup_le fun i hi ↦ (Real.le_toNNReal_iff_coe_le hε.le).2 (by
-              rw [coe_nnnorm, Real.norm_eq_abs]; exact hcon i hi)
-          have := (Real.le_toNNReal_iff_coe_le hε.le).1 hsup
-          simp only [hM] at hw
-          linarith
-      _ ≤ ∑ i ∈ Finset.range n, mu.real {w | ε < |g n (X i w)|} :=
-          measureReal_biUnion_finset_le _ _
-      _ = n * (P theta₀).real {x | ε < |g n x|} := by
-          have : ∀ i, mu.real {w | ε < |g n (X i w)|} = (P theta₀).real {x | ε < |g n x|} :=
-            fun i ↦ by
-              have hms : MeasurableSet {x | ε < |g n x|} :=
-                measurableSet_lt measurable_const (continuous_abs.measurable.comp (hgm n))
-              rw [← hlaw i, map_measureReal_apply (hXm i) hms]
-              rfl
-          simp [this]
+  -- the sum of squares and the largest summand
+  have hF3 : TendstoInMeasure mu (fun (n : ℕ) w ↦ G2 n w - h ^ 2 * I / 4) atTop (fun _ ↦ 0) :=
+    tendstoInMeasure_sum_sq_sub_of_eq_add_of_iid mu (P theta₀) X hiid hs hs2P h hgu hum hu2 hnDu
+  have hF4 := tendstoInMeasure_sup_nnnorm_of_iid mu (P theta₀) X hiid hgm fun ε hε ↦
+    tendsto_natCast_mul_measureReal_lt_abs_of_eq_add (P theta₀) hs hs2P h hgu hu2 hnDu hε
   -- the logarithmic remainder
   have hG2lim : TendstoInMeasure mu G2 atTop (fun _ ↦ h ^ 2 * I / 4) := by
     rw [tendstoInMeasure_iff_measureReal_lt_dist] at hF3 ⊢
@@ -716,40 +770,20 @@ theorem tendstoInMeasure_log_likelihood_ratio_sub_of_dqm
   set R : ℕ → Ω → ℝ := fun n w ↦
     ∑ i ∈ Finset.range n, Real.log (q n (X i w) / p₀ (X i w)) - (2 * G1 n w - G2 n w) with hR
   have hR0 : TendstoInMeasure mu R atTop (fun _ ↦ 0) := by
-    have hX := tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _
-      (isBoundedInProbability_of_tendstoInMeasure mu _ _ hG2lim)
-      (tendstoInMeasure_const_mul_zero mu M 4 hF4)
-    refine tendstoInMeasure_zero_of_abs_le mu _ _ M (by norm_num : (0 : ℝ) < 1 / 2)
-      (Eventually.of_forall fun n ↦ ae_of_all _ fun w hMw ↦ ?_) hX hF4
-    rw [abs_of_nonneg (hM0 n w)] at hMw
+    have := tendstoInMeasure_sum_two_mul_log_one_add_sub mu (fun n i w ↦ g n (X i w)) hG2lim
+      hF4
+    convert this using 3 with n w
     have hlog : ∀ i, Real.log (q n (X i w) / p₀ (X i w)) = 2 * Real.log (1 + g n (X i w)) := by
       intro i
       simp only [hg, add_sub_cancel]
       rw [Real.log_sqrt (div_pos (hqpos _ _) (hp₀pos _)).le]
       ring
-    have hRe : R n w = ∑ i ∈ Finset.range n,
-        (2 * Real.log (1 + g n (X i w)) - (2 * g n (X i w) - g n (X i w) ^ 2)) := by
-      simp only [hR, hG1, hG2]
-      rw [Finset.sum_congr rfl fun i _ ↦ hlog i,
-        Finset.sum_sub_distrib (f := fun i ↦ 2 * Real.log (1 + g n (X i w)))
-          (g := fun i ↦ 2 * g n (X i w) - g n (X i w) ^ 2),
-        Finset.sum_sub_distrib (f := fun i ↦ 2 * g n (X i w)) (g := fun i ↦ g n (X i w) ^ 2),
-        ← Finset.mul_sum, ← Finset.mul_sum]
-    have hG2nn : 0 ≤ G2 n w := Finset.sum_nonneg fun i _ ↦ sq_nonneg _
-    rw [hRe, abs_of_nonneg (mul_nonneg hG2nn (by linarith [hM0 n w]))]
-    calc |∑ i ∈ Finset.range n,
-          (2 * Real.log (1 + g n (X i w)) - (2 * g n (X i w) - g n (X i w) ^ 2))|
-        ≤ ∑ i ∈ Finset.range n,
-          |2 * Real.log (1 + g n (X i w)) - (2 * g n (X i w) - g n (X i w) ^ 2)| :=
-          Finset.abs_sum_le_sum_abs _ _
-      _ ≤ ∑ i ∈ Finset.range n, 4 * |g n (X i w)| ^ 3 := Finset.sum_le_sum fun i hi ↦
-          abs_two_mul_log_one_add_sub_le ((hMle n w i hi).trans hMw.le)
-      _ ≤ ∑ i ∈ Finset.range n, g n (X i w) ^ 2 * (4 * M n w) := Finset.sum_le_sum fun i hi ↦ by
-          have h1 := hMle n w i hi
-          rw [← sq_abs (g n (X i w))]
-          have h2 := abs_nonneg (g n (X i w))
-          nlinarith [mul_le_mul_of_nonneg_left h1 (sq_nonneg |g n (X i w)|)]
-      _ = G2 n w * (4 * M n w) := by simp only [hG2, Finset.sum_mul]
+    simp only [hR, hG1, hG2]
+    rw [Finset.sum_congr rfl fun i _ ↦ hlog i,
+      Finset.sum_sub_distrib (f := fun i ↦ 2 * Real.log (1 + g n (X i w)))
+        (g := fun i ↦ 2 * g n (X i w) - g n (X i w) ^ 2),
+      Finset.sum_sub_distrib (f := fun i ↦ 2 * g n (X i w)) (g := fun i ↦ g n (X i w) ^ 2),
+      ← Finset.mul_sum, ← Finset.mul_sum]
   have := tendstoInMeasure_add_zero mu _ _
     (tendstoInMeasure_add_zero mu _ _ hR0 (tendstoInMeasure_const_mul_zero mu _ 2 hF2))
     (tendstoInMeasure_const_mul_zero mu _ (-1) hF3)
@@ -758,7 +792,7 @@ theorem tendstoInMeasure_log_likelihood_ratio_sub_of_dqm
   ring
 
 /-- GAPS 102.13: local asymptotic normality from differentiability in quadratic mean, with the
-central sequence: the normalized score sum `n^{-1/2} ∑ ℓ̇(Xᵢ)` converges in law to `N(0, I)`, and
+central sequence: the normalized score sum `(√n)⁻¹ ∑ ℓ̇(Xᵢ)` converges in law to `N(0, I)`, and
 the log likelihood ratio has the expansion of
 `tendstoInMeasure_log_likelihood_ratio_sub_of_dqm`. -/
 theorem tendstoInDistribution_score_and_log_likelihood_ratio_expansion_of_dqm

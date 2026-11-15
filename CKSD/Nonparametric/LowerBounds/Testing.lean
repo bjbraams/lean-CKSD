@@ -71,8 +71,7 @@ theorem one_sub_totalVariationDistance_div_two_le_max_measureReal {X Θ : Type*}
     intro x hx
     have hdist := dist_triangle θ₀ (T x) θ₁
     rw [dist_comm θ₀ (T x)] at hdist
-    change dist (T x) θ₀ < s at hx
-    change s ≤ dist (T x) θ₁
+    simp only [B, mem_ofPred_eq] at hx ⊢
     linarith
   have htv := abs_measureReal_sub_le_totalVariationDistance P₀ P₁ B hB
   have hmass := measureReal_add_measureReal_compl (μ := P₀) hB
@@ -292,6 +291,7 @@ theorem exists_hamming_packing (m : ℕ) (hm : 8 ≤ m) :
   have ht0 : 0 < t := by linarith
   have ht8 : t ^ 8 = 2 ^ m := by
     rw [ht]
+    -- restate `Real.rpow 2 d` as `2 ^ d` so that the rpow lemmas below match
     change ((2 : ℝ) ^ d) ^ (8 : ℕ) = _
     rw [← Real.rpow_natCast, ← Real.rpow_mul (by norm_num)]
     rw [show d * ((8 : ℕ) : ℝ) = (m : ℝ) by rw [hd]; push_cast; ring, Real.rpow_natCast]
@@ -350,7 +350,6 @@ theorem exists_hamming_packing (m : ℕ) (hm : 8 ≤ m) :
     nlinarith [pow_pos ht0 3, pow_pos ht0 5]
   have h4 : 4 ≤ t * t := by nlinarith
   have h3 : t + 1 ≤ t ^ 3 := by nlinarith [mul_le_mul_of_nonneg_left h4 ht0.le]
-  change t ≤ _
   linarith
 
 /-- GAPS 103.46: Assouad's lemma in total variation form. If the laws `P_w` indexed by the

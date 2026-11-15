@@ -103,6 +103,7 @@ theorem sum_sSup_rademacher_comp_le {H : Type*} [Fintype H] [Nonempty H] (n : �
       intro σ
       simp only [Q]
       simp_rw [hdec k, hdec (k + 1), hAk1]
+      -- beta-reduces the decomposed suprema so that `hA`, `hflj` and `hwk` rewrite them
       change sSup (range fun h ↦ A σ h / n + 1 / n * ((if σ j then (1 : ℝ) else -1) *
           w k h j)) + sSup (range fun h ↦ A (fl σ) h / n + 1 / n *
           ((if fl σ j then (1 : ℝ) else -1) * w k h j)) ≤

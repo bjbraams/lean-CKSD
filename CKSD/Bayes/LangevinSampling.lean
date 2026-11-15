@@ -150,7 +150,7 @@ theorem exists_wasserstein_ula_le_of_stronglyConvex :
             ENNReal.ofReal (Real.exp (-(α * N * h / 2))) *
                 TauCeti.wassersteinEDist 2 μ₀ (gibbsMeasure V) +
               ENNReal.ofReal (C * β * Real.sqrt (d * h) / α) := by
-  refine ⟨1/4, 12, by norm_num, by norm_num, ?_⟩
+  refine ⟨1 / 4, 12, by norm_num, by norm_num, ?_⟩
   intro d V G α β hα hV hmono μ hμ h hh hsize N
   have := hμ
   have := isProbabilityMeasure_gibbsMeasure hV.integrable
@@ -158,8 +158,7 @@ theorem exists_wasserstein_ula_le_of_stronglyConvex :
     induction k with
     | zero => simpa [ulaLaw] using hμ
     | succ k ih =>
-      change IsProbabilityMeasure ((langevinStepLaw G h)^[k+1] μ)
-      rw [Function.iterate_succ_apply']
+      rw [ulaLaw, Function.iterate_succ_apply']
       have : IsProbabilityMeasure ((langevinStepLaw G h)^[k] μ) := by simpa only [ulaLaw] using ih
       exact isProbabilityMeasure_langevinStepLaw G h _
   by_cases hd : d = 0
@@ -174,13 +173,14 @@ theorem exists_wasserstein_ula_le_of_stronglyConvex :
     apply LipschitzWith.of_dist_le_mul
     intro x y
     simpa only [dist_eq_norm, Real.coe_toNNReal _ hβ.le] using hV.lipschitz x y
-  have hid : (1/4 : ℝ)/(β*(β/α)) = α/(4*β^2) := by
+  have hid : (1 / 4 : ℝ) / (β * (β / α)) = α / (4 * β ^ 2) := by
     field_simp [hα.ne', hβ.ne']
   rw [hid] at hsize
-  have hsize' := (le_div_iff₀ (by positivity : 0 < 4*β^2)).1 hsize
-  have hstep : h*β^2 ≤ α := by nlinarith
+  have hsize' := (le_div_iff₀ (by positivity : 0 < 4 * β ^ 2)).1 hsize
+  have hstep : h * β ^ 2 ≤ α := by nlinarith
   have hInv := measurePreserving_mechanicalFlow_gibbsMeasure V G hV.contDiff hV.hasGradientAt hG
-  have hrate := wassersteinEDist_iterate_langevinStepLaw_le (gibbsMeasure V) G hG hInv hα hmono hh.le
+  have hrate :=
+    wassersteinEDist_iterate_langevinStepLaw_le (gibbsMeasure V) G hG hInv hα hmono hh.le
     (by simpa only [Real.coe_toNNReal _ hβ.le] using hstep) μ N
   simpa only [ulaLaw, Real.coe_toNNReal _ hβ.le] using hrate
 
@@ -208,23 +208,24 @@ local notation "E" => EuclideanSpace ℝ (Fin d)
 curvature ratio at least one. The intrinsic Gaussian condition number remains one. -/
 theorem isSamplingPotential_and_stronglyMonotone_gaussianPrecision {α κ : ℝ}
     (hα : 0 < α) (hκ : 1 ≤ κ) :
-    IsSamplingPotential (d:=d) (gaussianPrecisionPotential α) (gaussianPrecisionGradient α) (κ*α) ∧
-      IsStronglyMonotoneGradient (d:=d) (gaussianPrecisionGradient α) α := by
+    IsSamplingPotential (d := d) (gaussianPrecisionPotential α) (gaussianPrecisionGradient α)
+        (κ * α) ∧
+      IsStronglyMonotoneGradient (d := d) (gaussianPrecisionGradient α) α := by
   constructor
   · constructor
-    · change ContDiff ℝ 2 (fun x:E ↦ α/2*‖x‖^2)
+    · rw [gaussianPrecisionPotential_def]
       exact contDiff_const.mul (contDiff_norm_sq ℝ)
     · exact hasGradientAt_gaussianPrecisionPotential α
     · intro x y
-      change ‖α • x-α • y‖≤κ*α*‖x-y‖
-      rw [← smul_sub,norm_smul,Real.norm_eq_abs,abs_of_pos hα]
-      have hm := mul_nonneg (sub_nonneg.mpr hκ) (mul_nonneg hα.le (norm_nonneg (x-y)))
+      simp only [gaussianPrecisionGradient_apply]
+      rw [← smul_sub, norm_smul, Real.norm_eq_abs, abs_of_pos hα]
+      have hm := mul_nonneg (sub_nonneg.mpr hκ) (mul_nonneg hα.le (norm_nonneg (x - y)))
       nlinarith
-    · change Integrable (fun x:E ↦ Real.exp (-(α/2*‖x‖^2)))
+    · simp only [gaussianPrecisionPotential_apply]
       exact integrable_exp_neg_mul_norm_sq (by positivity)
   · intro x y
-    change α*‖x-y‖^2 ≤ inner ℝ (α • x-α • y) (x-y)
-    rw [← smul_sub,real_inner_smul_left,real_inner_self_eq_norm_sq]
+    simp only [gaussianPrecisionGradient_apply]
+    rw [← smul_sub, real_inner_smul_left, real_inner_self_eq_norm_sq]
 
 /-- A weak, scale-adaptive form of the lower bound in GAPS 104.47 for lazy MALA. For each step
 size `h` and accuracy `ε`, the target, the curvature scale `α`, and the warm initialization are
@@ -249,41 +250,42 @@ theorem exists_mala_mixing_time_ge :
             ∀ n : ℕ, (n : ℝ) < c₃ * κ * Real.sqrt d *
                 (max (Real.log κ) (Real.log d)) ^ (-3 : ℤ) * Real.log (c₄ / ε) →
               ε < totalVariationDistance ((malaStepLaw V gradV h)^[n] μ₀) (gibbsMeasure V) := by
-  refine ⟨1,1/4,by norm_num,by norm_num,?_⟩
+  refine ⟨1, 1 / 4, by norm_num, by norm_num, ?_⟩
   intro a b _ _
-  refine ⟨0,?_⟩
+  refine ⟨0, ?_⟩
   intro d hd κ hκ _ M hM h hh ε hε
-  obtain ⟨q,hq,hqa⟩ := exists_pos_gaussianReal_tail_eq_quarter
-  let R : ℝ := κ*Real.sqrt d*(max (Real.log κ) (Real.log d))^(-3:ℤ)*Real.log ((1/4)/ε)
+  obtain ⟨q, hq, hqa⟩ := exists_pos_gaussianReal_tail_eq_quarter
+  let R : ℝ :=
+    κ * Real.sqrt d * (max (Real.log κ) (Real.log d)) ^ (-3 : ℤ) * Real.log ((1 / 4) / ε)
   let N : ℕ := ⌈R⌉₊
-  obtain ⟨σ,hσ,μ,hμ,hμwarm,hfar⟩ := exists_scaled_gaussian_mala_far hq hqa hh
-    (⟨0,hd⟩ : Fin d) N
-  have hα : 0 < (σ⁻¹)^2 := by positivity
+  obtain ⟨σ, hσ, μ, hμ, hμwarm, hfar⟩ := exists_scaled_gaussian_mala_far hq hqa hh
+    (⟨0, hd⟩ : Fin d) N
+  have hα : 0 < (σ⁻¹) ^ 2 := by positivity
   obtain ⟨hV, hG⟩ := isSamplingPotential_and_stronglyMonotone_gaussianPrecision
     (κ := κ) hα (by linarith)
-  refine ⟨gaussianPrecisionPotential ((σ⁻¹)^2), gaussianPrecisionGradient ((σ⁻¹)^2),
-    (σ⁻¹)^2, hα, hV, hG, μ, hμ, ?_, ?_⟩
+  refine ⟨gaussianPrecisionPotential ((σ⁻¹) ^ 2), gaussianPrecisionGradient ((σ⁻¹) ^ 2),
+    (σ⁻¹) ^ 2, hα, hV, hG, μ, hμ, ?_, ?_⟩
   · apply hμwarm.trans
-    have h4 : (4:ℝ≥0∞)≤ENNReal.ofReal M := by
+    have h4 : (4 : ℝ≥0∞) ≤ ENNReal.ofReal M := by
       simpa only [ENNReal.ofReal_ofNat] using
-        ENNReal.ofReal_le_ofReal (by linarith : (4:ℝ)≤M)
+        ENNReal.ofReal_le_ofReal (by linarith : (4 : ℝ) ≤ M)
     intro s
-    change (4:ℝ≥0∞)*_≤ENNReal.ofReal M*_
+    simp only [smul_apply, smul_eq_mul]
     gcongr
   · intro n hn
-    have hnR : (n:ℝ)<R := by simpa only [one_mul] using hn
-    have hnN : n≤N := by exact_mod_cast (hnR.le.trans (Nat.le_ceil R))
-    have hlog : 0<Real.log ((1/4)/ε) := by
-      have hcoef : 0≤κ*Real.sqrt d*(max (Real.log κ) (Real.log d))^(-3:ℤ) := by
+    have hnR : (n : ℝ) < R := by simpa only [one_mul] using hn
+    have hnN : n ≤ N := by exact_mod_cast (hnR.le.trans (Nat.le_ceil R))
+    have hlog : 0 < Real.log ((1 / 4) / ε) := by
+      have hcoef : 0 ≤ κ * Real.sqrt d * (max (Real.log κ) (Real.log d)) ^ (-3 : ℤ) := by
         apply mul_nonneg (mul_nonneg (by linarith) (Real.sqrt_nonneg _))
         apply zpow_nonneg
         exact le_max_of_le_left (Real.log_nonneg (by linarith))
       by_contra hnot
-      have hR : R≤0 := mul_nonpos_of_nonneg_of_nonpos hcoef (le_of_not_gt hnot)
+      have hR : R ≤ 0 := mul_nonpos_of_nonneg_of_nonpos hcoef (le_of_not_gt hnot)
       exact (not_lt_of_ge (Nat.cast_nonneg n)) (hnR.trans_le hR)
-    have hεq : ε<1/4 := by
-      have hratio : 1<(1/4)/ε := (Real.log_pos_iff (div_pos (by norm_num) hε.1).le).mp hlog
+    have hεq : ε < 1 / 4 := by
+      have hratio : 1 < (1 / 4) / ε := (Real.log_pos_iff (div_pos (by norm_num) hε.1).le).mp hlog
       simpa only [one_mul] using (lt_div_iff₀ hε.1).mp hratio
-    exact hεq.trans_le ((by norm_num : (1/4:ℝ)≤3/8).trans (hfar n hnN))
+    exact hεq.trans_le ((by norm_num : (1 / 4 : ℝ) ≤ 3 / 8).trans (hfar n hnN))
 
 end CKSD

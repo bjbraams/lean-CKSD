@@ -114,10 +114,9 @@ theorem integral_double_centered_kernels {Z : Type*} [MeasurableSpace Z]
       ((hα.comp_snd μ).integrable (by norm_num))) (integrable_const c)
     simp only [Pi.sub_apply] at h1 h2 h3
     rw [h3, h2, h1]
-    change (∫ z, a z.1 z.2 ∂μ.prod μ) - (∫ z : Z × Z, α z.1 ∂μ.prod μ) -
-      (∫ z : Z × Z, α z.2 ∂μ.prod μ) + (∫ _ : Z × Z, c ∂μ.prod μ) = 0
     rw [hmeanA, integral_fun_fst α, integral_fun_snd α]
     simp only [integral_const, probReal_univ, one_smul]
+    -- fold the integrals into the local constant `c`
     change c - c - c + c = 0
     ring
   have hzero1 : (∫ z, ac z * β z.1 ∂μ.prod μ) = 0 := by
@@ -128,11 +127,8 @@ theorem integral_double_centered_kernels {Z : Type*} [MeasurableSpace Z]
       show (∫ z : Z × Z, α z.2 * β z.1 ∂μ.prod μ) = c * d by
         rw [show (fun z : Z × Z ↦ α z.2 * β z.1) = fun z ↦ β z.1 * α z.2 by
           funext z; ring, integral_prod_mul]; dsimp [c,d]; ring]
-    change (∫ x, α x * β x ∂μ) - (∫ x, α x * β x ∂μ) - c*d +
-      c * (∫ z : Z × Z, β z.1 ∂μ.prod μ) = 0
     rw [integral_fun_fst β]
     simp only [probReal_univ, one_smul]
-    change (∫ x, α x * β x ∂μ) - (∫ x, α x * β x ∂μ) - c * d + c * d = 0
     ring
   have hzero2 : (∫ z, ac z * β z.2 ∂μ.prod μ) = 0 := by
     rw [integral_sub_sub_add_mul _ _ _ _ _ hA (hα.comp_fst μ) (hα.comp_snd μ)
@@ -140,14 +136,11 @@ theorem integral_double_centered_kernels {Z : Type*} [MeasurableSpace Z]
     rw [integral_prod_mul (μ := μ) (ν := μ) α β]
     rw [show (∫ z : Z × Z, α z.2 * β z.2 ∂μ.prod μ) = ∫ x, α x * β x ∂μ by
       simpa using (integral_fun_snd (μ := μ) (ν := μ) (fun x ↦ α x * β x))]
-    change (∫ x, α x * β x ∂μ) - c*d - (∫ x, α x * β x ∂μ) +
-      c * (∫ z : Z × Z, β z.2 ∂μ.prod μ) = 0
     rw [integral_fun_snd β]
     simp only [probReal_univ, one_smul]
-    change (∫ x, α x * β x ∂μ) - c*d - (∫ x, α x * β x ∂μ) + c*d = 0
     ring
   have hlast : (∫ z, ac z * b z.1 z.2 ∂μ.prod μ) =
-      (∫ z, a z.1 z.2 * b z.1 z.2 ∂μ.prod μ) - 2*(∫ x, α x * β x ∂μ) + c*d := by
+      (∫ z, a z.1 z.2 * b z.1 z.2 ∂μ.prod μ) - 2 * (∫ x, α x * β x ∂μ) + c * d := by
     rw [integral_sub_sub_add_mul _ _ _ _ _ hA (hα.comp_fst μ) (hα.comp_snd μ) hB c]
     have ht1 : (∫ z, α z.1 * b z.1 z.2 ∂μ.prod μ) = ∫ x, α x * β x ∂μ := by
       simpa only [mul_comm] using hba
@@ -223,7 +216,6 @@ theorem integrable_norm_prod_marginals {E F : Type*} [NormedAddCommGroup E]
     (integrable_map_measure (by fun_prop) (by fun_prop)).2 hsnd
   refine ((hμ.comp_fst _).add (hν.comp_snd _)).mono' (by fun_prop) (ae_of_all _ fun z ↦ ?_)
   simp only [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _)]
-  change max ‖z.1‖ ‖z.2‖ ≤ _
   exact max_le (le_add_of_nonneg_right (norm_nonneg _))
     (le_add_of_nonneg_left (norm_nonneg _))
 
@@ -243,8 +235,7 @@ theorem integral_distanceProductKernel_prod_marginals_right {E F : Type*} [Norme
     (P : Measure (E × F)) [IsProbabilityMeasure P] (x : E × F) :
     (∫ y, distanceProductKernel x y ∂(P.map Prod.fst).prod (P.map Prod.snd)) =
       (∫ y, distanceKernel x.1 y.1 ∂P) * (∫ y, distanceKernel x.2 y.2 ∂P) := by
-  change (∫ y, distanceKernel x.1 y.1 * distanceKernel x.2 y.2
-    ∂(P.map Prod.fst).prod (P.map Prod.snd)) = _
+  unfold distanceProductKernel
   rw [integral_prod_mul, integral_map (by fun_prop) (by unfold distanceKernel; fun_prop),
     integral_map (by fun_prop) (by unfold distanceKernel; fun_prop)]
 
@@ -274,7 +265,6 @@ theorem squaredMMD_distanceProductKernel_prod_marginals {E F : Type*} [NormedAdd
       (∫ z, α z.1 ∂P) * (∫ z, β z.2 ∂P) := by
     rw [integral_prod _ (integrable_distanceProductKernel_prod Q Q hQ hQ)]
     simp_rw [hinner]
-    change (∫ z, α z.1 * β z.2 ∂(P.map Prod.fst).prod (P.map Prod.snd)) = _
     rw [integral_prod_mul, integral_map (by fun_prop)
       (measurable_integral_distanceKernel _).aestronglyMeasurable,
       integral_map (by fun_prop) (measurable_integral_distanceKernel _).aestronglyMeasurable]
@@ -317,16 +307,16 @@ theorem integral_centeredDistance_mul_eq_four_mul_squaredMMD
   have hβ : MemLp β 2 P := memLp_kernelMean_of_dominated P b _ hb hy.norm hbb
   have hcan := integral_double_centered_kernels P a b
     (fun x y ↦ distanceKernel_comm _ _) (fun x y ↦ distanceKernel_comm _ _) hA hB hα hβ
-  change (∫ z, (a z.1 z.2 - α z.1 - α z.2 + c) *
-    (b z.1 z.2 - β z.1 - β z.2 + d) ∂P.prod P) = _ at hcan
   have hμ : Integrable (fun x : E ↦ ‖x‖) (P.map Prod.fst) :=
     (integrable_map_measure (by fun_prop) (by fun_prop)).2 (hx.norm.integrable (by norm_num))
   have hν : Integrable (fun x : F ↦ ‖x‖) (P.map Prod.snd) :=
     (integrable_map_measure (by fun_prop) (by fun_prop)).2 (hy.norm.integrable (by norm_num))
   have hxmean (x : E) : (∫ z, distanceKernel x z ∂P.map Prod.fst) =
-      ∫ z, distanceKernel x z.1 ∂P := integral_map (by fun_prop) (by unfold distanceKernel; fun_prop)
+      ∫ z, distanceKernel x z.1 ∂P :=
+    integral_map (by fun_prop) (by unfold distanceKernel; fun_prop)
   have hymean (x : F) : (∫ z, distanceKernel x z ∂P.map Prod.snd) =
-      ∫ z, distanceKernel x z.2 ∂P := integral_map (by fun_prop) (by unfold distanceKernel; fun_prop)
+      ∫ z, distanceKernel x z.2 ∂P :=
+    integral_map (by fun_prop) (by unfold distanceKernel; fun_prop)
   have hcentx (x y : E × F) : centeredDistance (P.map Prod.fst) x.1 y.1 =
       -2 * (a x y - α x - α y + c) := by
     rw [centeredDistance_eq_neg_two_mul_centered_kernel _ hμ,
@@ -342,8 +332,9 @@ theorem integral_centeredDistance_mul_eq_four_mul_squaredMMD
   have hmmd := squaredMMD_distanceProductKernel_prod_marginals P
     ((h2.integrable (by norm_num)).norm)
   simp_rw [hxmean, hymean] at hmmd
+  -- fold the expanded integrals into the local abbreviations `a`, `b`, `α`, `β`, `c`, `d`
   change squaredMMD distanceProductKernel P ((P.map Prod.fst).prod (P.map Prod.snd)) =
-    (∫ z, a z.1 z.2 * b z.1 z.2 ∂P.prod P) - 2 * (∫ z, α z * β z ∂P) + c*d at hmmd
+    (∫ z, a z.1 z.2 * b z.1 z.2 ∂P.prod P) - 2 * (∫ z, α z * β z ∂P) + c * d at hmmd
   rw [hmmd, ← hcan, ← integral_const_mul]
   congr 1
   funext z

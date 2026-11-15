@@ -351,9 +351,14 @@ theorem isUniformlyMostPowerfulUnbiasedTest_conditional_two_sided {l : ℕ} (ν 
     (htail : ∀ x, (T x < c₁ (S x) ∨ c₂ (S x) < T x → φ x = 1) ∧
       (c₁ (S x) < T x ∧ T x < c₂ (S x) → φ x = 0)) :
     let P := fun θ : U ↦ splitExponentialFamilyMeasure ν T S θ.val.1 θ.val.2;
-    (P θ₀)[φ | (inferInstance : MeasurableSpace (EuclideanSpace ℝ (Fin l))).comap S] =ᵐ[P θ₀] (fun _ ↦ α) →
-    (P θ₀)[fun x ↦ T x * φ x | (inferInstance : MeasurableSpace (EuclideanSpace ℝ (Fin l))).comap S] =ᵐ[P θ₀] (fun x ↦ α * (P θ₀)[T | (inferInstance : MeasurableSpace (EuclideanSpace ℝ (Fin l))).comap S] x) →
-    IsUniformlyMostPowerfulUnbiasedTest P {θ | θ.val.1 = θ₀.val.1} {θ | θ.val.1 ≠ θ₀.val.1} α φ := by
+    (P θ₀)[φ | (inferInstance : MeasurableSpace (EuclideanSpace ℝ (Fin l))).comap S] =ᵐ[P θ₀]
+      (fun _ ↦ α) →
+    (P θ₀)[fun x ↦ T x * φ x |
+        (inferInstance : MeasurableSpace (EuclideanSpace ℝ (Fin l))).comap S] =ᵐ[P θ₀]
+      (fun x ↦ α *
+        (P θ₀)[T | (inferInstance : MeasurableSpace (EuclideanSpace ℝ (Fin l))).comap S] x) →
+    IsUniformlyMostPowerfulUnbiasedTest P {θ | θ.val.1 = θ₀.val.1} {θ | θ.val.1 ≠ θ₀.val.1} α
+      φ := by
   sorry
 
 /-- GAPS 101.46, one-sided part: in the setting of
@@ -369,8 +374,10 @@ theorem isUniformlyMostPowerfulUnbiasedTest_conditional_one_sided {l : ℕ} (ν 
     (c : EuclideanSpace ℝ (Fin l) → ℝ) (φ : X → ℝ) (hφ : IsStatisticalTest φ)
     (htail : ∀ x, (c (S x) < T x → φ x = 1) ∧ (T x < c (S x) → φ x = 0)) :
     let P := fun θ : U ↦ splitExponentialFamilyMeasure ν T S θ.val.1 θ.val.2;
-    (P θ₀)[φ | (inferInstance : MeasurableSpace (EuclideanSpace ℝ (Fin l))).comap S] =ᵐ[P θ₀] (fun _ ↦ α) →
-    IsUniformlyMostPowerfulUnbiasedTest P {θ | θ.val.1 ≤ θ₀.val.1} {θ | θ₀.val.1 < θ.val.1} α φ := by
+    (P θ₀)[φ | (inferInstance : MeasurableSpace (EuclideanSpace ℝ (Fin l))).comap S] =ᵐ[P θ₀]
+      (fun _ ↦ α) →
+    IsUniformlyMostPowerfulUnbiasedTest P {θ | θ.val.1 ≤ θ₀.val.1} {θ | θ₀.val.1 < θ.val.1} α
+      φ := by
   sorry
 
 end CKSD

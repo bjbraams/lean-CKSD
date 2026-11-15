@@ -278,6 +278,7 @@ theorem integral_ite_le_mul_eq_intervalIntegral (F : Measure ℝ) [IsProbability
     · have hneg : s < 0 := lt_of_le_of_ne (not_lt.1 hpos) hs0
       simp [hst, hpos, hs hneg]
   · simp [hst]
+
 /-- Positivity and monotonicity of the at-risk probabilities `F[s, ∞)`, `C₀[s, ∞)` and of
 `y(s) = F[s, ∞) C₀[s, ∞)` up to a time `t` with `F[t, ∞) C₀[t, ∞) > 0`. -/
 private theorem atRisk_bounds (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
@@ -358,6 +359,63 @@ private theorem intervalIntegral_eq_integral_atRiskKernel (F C₀ : Measure ℝ)
     field_simp
   · simp [hs]
 
+/-- The Hájek projection term of the Nelson–Aalen influence function. Suppose `0 ≤ A ≤ 1`
+vanishes off `{x ≤ t}`, `0 ≤ y ≤ 1`, `y` is bounded below by `y(t) > 0` on `(-∞, t]`, and
+integrating `A Φ(x)` against `P` amounts to integrating `Φ 1_{(-∞, t]}` against `f w`. Then
+`∫ A(z) / y(x z)² (1{x z ≤ u} - y(x z)) dP(z) = ∫ k(s) 1{s ≤ u} ds - ∫ A / y(x) dP`
+with `k(s) = f(s) 1{s ≤ t} w(s) / y(s)²`. -/
+private theorem integral_div_sq_mul_ite_sub_eq {E : Type*} [MeasurableSpace E] (P : Measure E)
+    [IsFiniteMeasure P] {x : E → ℝ} (hx : Measurable x) {A : E → ℝ} (hA : Measurable A)
+    (hA0 : ∀ z, 0 ≤ A z) (hA1 : ∀ z, A z ≤ 1) {t : ℝ} (hAt : ∀ z, A z ≠ 0 → x z ≤ t)
+    {y : ℝ → ℝ} (hym : Measurable y) (hy0 : ∀ s, 0 ≤ y s) (hy1 : ∀ s, y s ≤ 1) (hyt : 0 < y t)
+    (hys : ∀ s ≤ t, y t ≤ y s) {f w : ℝ → ℝ}
+    (hAx : ∀ Φ : ℝ → ℝ, Measurable Φ → ∀ M, (∀ s ≤ t, |Φ s| ≤ M) →
+      ∫ z, A z * Φ (x z) ∂P = ∫ s, f s * ((if s ≤ t then Φ s else 0) * w s)) (u : ℝ) :
+    ∫ z, A z / y (x z) ^ 2 * ((if x z ≤ u then 1 else 0) - y (x z)) ∂P =
+      (∫ s, f s * ((if s ≤ t then (y s ^ 2)⁻¹ else 0) * w s) * (if s ≤ u then 1 else 0)) -
+        ∫ z, A z / y (x z) ∂P := by
+  have hbdd (G : E → ℝ) (hG : Measurable G) (M : ℝ) (hM : ∀ z, |G z| ≤ M) : Integrable G P :=
+    Integrable.of_bound hG.aestronglyMeasurable M (ae_of_all _ fun z ↦ by
+      rw [Real.norm_eq_abs]; exact hM z)
+  have ha2m : Measurable fun z ↦ A z / y (x z) ^ 2 := hA.div ((hym.comp hx).pow_const 2)
+  have hAy2b (z : E) : |A z / y (x z) ^ 2| ≤ 1 / y t ^ 2 :=
+    abs_div_pow_le_one_div_pow (hA0 z) (hA1 z) hyt (fun hz ↦ hys _ (hAt z hz)) 2
+  have hI : Measurable fun z : E ↦ (if x z ≤ u then (1 : ℝ) else 0) :=
+    Measurable.ite (measurableSet_le hx measurable_const) measurable_const measurable_const
+  have h1 := hbdd (fun z ↦ A z / y (x z) ^ 2 * (if x z ≤ u then (1 : ℝ) else 0))
+    (ha2m.mul hI) (1 / y t ^ 2) fun z ↦ by
+    rw [abs_mul]
+    exact (mul_le_of_le_one_right (abs_nonneg _) (by split_ifs <;> simp)).trans (hAy2b z)
+  have h2 := hbdd (fun z ↦ A z / y (x z) ^ 2 * y (x z)) (ha2m.mul (hym.comp hx))
+    (1 / y t ^ 2) fun z ↦ by
+    rw [abs_mul]
+    exact (mul_le_of_le_one_right (abs_nonneg _) (by
+      rw [abs_of_nonneg (hy0 _)]; exact hy1 _)).trans (hAy2b z)
+  have e1 : ∫ z, A z / y (x z) ^ 2 * (if x z ≤ u then (1 : ℝ) else 0) ∂P =
+      ∫ s, f s * ((if s ≤ t then (y s ^ 2)⁻¹ else 0) * w s) * (if s ≤ u then 1 else 0) := by
+    have hΦ : Measurable fun s ↦ (y s ^ 2)⁻¹ * (if s ≤ u then (1 : ℝ) else 0) :=
+      (hym.pow_const 2).inv.mul (Measurable.ite (measurableSet_le measurable_id
+        measurable_const) measurable_const measurable_const)
+    have hyspos (s : ℝ) (hs : s ≤ t) : 0 < y s := hyt.trans_le (hys s hs)
+    have := hAx _ hΦ (1 / y t ^ 2) fun s hs ↦ by
+      rw [abs_mul, abs_of_pos (inv_pos.2 (pow_pos (hyspos s hs) 2)), one_div]
+      exact (mul_le_of_le_one_right (inv_pos.2 (pow_pos (hyspos s hs) 2)).le
+        (by split_ifs <;> simp)).trans (inv_anti₀ (by positivity)
+          (pow_le_pow_left₀ hyt.le (hys s hs) 2))
+    convert this using 1
+    · exact integral_congr_ae (ae_of_all _ fun z ↦ by simp only; ring)
+    · refine integral_congr_ae (ae_of_all _ fun s ↦ ?_)
+      simp only
+      split_ifs <;> ring
+  have e2 : ∫ z, A z / y (x z) ^ 2 * y (x z) ∂P = ∫ z, A z / y (x z) ∂P := by
+    refine integral_congr_ae (ae_of_all _ fun z ↦ ?_)
+    by_cases hyz : y (x z) = 0
+    · simp [hyz]
+    · simp only
+      field_simp
+  simp_rw [mul_sub]
+  rw [integral_sub h1 h2, e1, e2]
+
 /-- The asymptotic variance of the Nelson–Aalen estimator: for the random censoring model
 with observed time `x = min(T, C)`, failure-by-`t` indicator `A`, and at-risk probability
 `y(s) = F[s, ∞) C₀[s, ∞)`, the variance `∫ ψ²` of the influence function
@@ -425,53 +483,12 @@ private theorem nelsonAalenVariance_eq_integral_sq (F C₀ : Measure ℝ) [IsPro
       rw [Real.norm_eq_abs]; exact hM z)
   have hAyle (z : ℝ × ℝ) (hz : A z ≠ 0) : y t ≤ y (x z) := hys _ (hAt z hz)
   have ha1m : Measurable fun z ↦ A z / y (x z) := hA.div (hym.comp hx)
-  have ha2m : Measurable fun z ↦ A z / y (x z) ^ 2 := hA.div ((hym.comp hx).pow_const 2)
   have hAyb (z : ℝ × ℝ) : |A z / y (x z)| ≤ 1 / y t := by
-    by_cases hz : A z = 0
-    · simp [hz, hyt.le]
-    rw [abs_of_nonneg (div_nonneg (hA0 z) (hy0 _))]
-    exact div_le_div₀ zero_le_one (hA1 z) hyt (hAyle z hz)
-  have hAy2b (z : ℝ × ℝ) : |A z / y (x z) ^ 2| ≤ 1 / y t ^ 2 := by
-    by_cases hz : A z = 0
-    · simp [hz]; positivity
-    rw [abs_of_nonneg (div_nonneg (hA0 z) (sq_nonneg _))]
-    exact div_le_div₀ zero_le_one (hA1 z) (by positivity)
-      (pow_le_pow_left₀ hyt.le (hAyle z hz) 2)
+    simpa using abs_div_pow_le_one_div_pow (hA0 z) (hA1 z) hyt (hAyle z) 1
   -- the projection term is `c(x) - θ`
   have hb (z' : ℝ × ℝ) : ∫ z, A z / y (x z) ^ 2 * ((if x z ≤ x z' then 1 else 0) - y (x z)) ∂P =
-      c (x z') - ∫ z, A z / y (x z) ∂P := by
-    have hI : Measurable fun z : ℝ × ℝ ↦ (if x z ≤ x z' then (1 : ℝ) else 0) :=
-      Measurable.ite (measurableSet_le hx measurable_const) measurable_const measurable_const
-    have h1 := hbdd (fun z ↦ A z / y (x z) ^ 2 * (if x z ≤ x z' then (1 : ℝ) else 0))
-      (ha2m.mul hI) (1 / y t ^ 2) fun z ↦ by
-      rw [abs_mul]
-      exact (mul_le_of_le_one_right (abs_nonneg _) (by split_ifs <;> simp)).trans (hAy2b z)
-    have h2 := hbdd (fun z ↦ A z / y (x z) ^ 2 * y (x z)) (ha2m.mul (hym.comp hx))
-      (1 / y t ^ 2) fun z ↦ by
-      rw [abs_mul]
-      exact (mul_le_of_le_one_right (abs_nonneg _) (by
-        rw [abs_of_nonneg (hy0 _)]; exact hy1 _)).trans (hAy2b z)
-    simp_rw [mul_sub]
-    rw [integral_sub h1 h2]
-    congr 1
-    · have hΦ : Measurable fun s ↦ (y s ^ 2)⁻¹ * (if s ≤ x z' then (1 : ℝ) else 0) :=
-        (hym.pow_const 2).inv.mul (Measurable.ite (measurableSet_le measurable_id
-          measurable_const) measurable_const measurable_const)
-      have := hAx _ hΦ (1 / y t ^ 2) fun s hs ↦ by
-        rw [abs_mul, abs_of_pos (inv_pos.2 (pow_pos (hyspos s hs) 2)), one_div]
-        exact (mul_le_of_le_one_right (inv_pos.2 (pow_pos (hyspos s hs) 2)).le
-          (by split_ifs <;> simp)).trans (inv_anti₀ (by positivity)
-            (pow_le_pow_left₀ hyt.le (hys s hs) 2))
-      convert this using 1
-      · exact integral_congr_ae (ae_of_all _ fun z ↦ by simp only; ring)
-      · refine integral_congr_ae (ae_of_all _ fun s ↦ ?_)
-        simp only [hkt]
-        split_ifs <;> ring
-    · refine integral_congr_ae (ae_of_all _ fun z ↦ ?_)
-      by_cases hyz : y (x z) = 0
-      · simp [hyz]
-      · simp only
-        field_simp
+      c (x z') - ∫ z, A z / y (x z) ∂P :=
+    integral_div_sq_mul_ite_sub_eq P hx hA hA0 hA1 hAt hym hy0 hy1 hyt hys hAx (x z')
   have hψ (z : ℝ × ℝ) : A z / y (x z) - ∫ z, A z / y (x z) ∂P -
       ∫ z₁, A z₁ / y (x z₁) ^ 2 * ((if x z₁ ≤ x z then 1 else 0) - y (x z₁)) ∂P =
         A z / y (x z) - c (x z) := by
@@ -695,7 +712,6 @@ theorem one_sub_cdf_eq_exp_neg_integral_of_hasDensity (F : Measure ℝ) [IsProba
     have hs1 : 1 - Φ s ≠ 0 := (hpos.trans_le (hlow s hs)).ne'
     have hd := (((h1 0).const_sub 1).log hs1).add (h2 hs 0 (by simp))
     convert hd using 1
-    change (0 : ℝ) = -f s / (1 - Φ s) + f s / (1 - Φ s)
     ring
   obtain ⟨c, hc⟩ := hΨac.const_of_ae_hasDerivAt_zero hder
   have hΨ0 : Ψ 0 = 0 := by simp [hΨ, hΦ]
@@ -848,25 +864,9 @@ theorem tendstoInDistribution_kaplanMeierEstimator {Ω : Type*} [MeasurableSpace
   -- the at-risk proportion at `t` obeys the law of large numbers
   set y := F.real (Ici t) * C₀.real (Ici t) with hydef
   have hy : 0 < y := mul_pos hFt hCt
-  set r : ℝ × ℝ → ℝ := fun z ↦ if t ≤ min z.1 z.2 then 1 else 0 with hrdef
-  have hrm : Measurable r := Measurable.ite
-    (measurableSet_le measurable_const (measurable_fst.min measurable_snd)) measurable_const
-    measurable_const
-  have hri : Integrable r (F.prod C₀) := (integrable_const (1 : ℝ)).mono'
-    hrm.aestronglyMeasurable (ae_of_all _ fun z ↦ by simp only [hrdef]; split_ifs <;> simp)
-  have hrint : ∫ z, r z ∂(F.prod C₀) = y := by
-    have : r = {z : ℝ × ℝ | t ≤ min z.1 z.2}.indicator 1 := by
-      funext z; simp [hrdef, Set.indicator_apply]
-    rw [this, integral_indicator_one
-      (measurableSet_le measurable_const (measurable_fst.min measurable_snd)),
-      measureReal_le_min_prod]
-  have hW := tendstoInMeasure_sampleMean_of_iid μ (F.prod C₀) (fun i ω ↦ (T i ω, C i ω))
-    hcens.iid r hrm hri
-  have hU : TendstoInMeasure μ (fun (n : ℕ) ω ↦
-      (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, r (T i ω, C i ω) - y) atTop (fun _ ↦ 0) := by
-    rw [tendstoInMeasure_iff_dist] at hW ⊢
-    intro ε hε
-    simpa only [Real.dist_eq, sub_zero, hrint] using hW ε hε
+  have hU := tendstoInMeasure_riskSetFraction_sub μ (F.prod C₀) (fun i ω ↦ (T i ω, C i ω))
+    hcens.iid (fun z ↦ min z.1 z.2) (measurable_fst.min measurable_snd)
+    (fun s ↦ F.real (Ici s) * C₀.real (Ici s)) (fun s ↦ (measureReal_le_min_prod F C₀ s).symm) t
   have hlim : Tendsto (fun n : ℕ ↦ 4 / (y ^ 2 * Real.sqrt n)) atTop (𝓝 0) :=
     tendsto_const_nhds.div_atTop ((Real.tendsto_sqrt_atTop.comp
       tendsto_natCast_atTop_atTop).const_mul_atTop (by positivity))
@@ -876,20 +876,19 @@ theorem tendstoInDistribution_kaplanMeierEstimator {Ω : Type*} [MeasurableSpace
   refine ae_of_all _ fun ω hω ↦ ?_
   have hn' : (0 : ℝ) < n := by exact_mod_cast hn
   set M := ((Finset.range n).filter fun j ↦ t ≤ min (T j ω) (C j ω)).card with hMdef
-  have hMcast : (M : ℝ) = ∑ i ∈ Finset.range n, r (T i ω, C i ω) := by
+  have hMcast : (M : ℝ) =
+      ∑ i ∈ Finset.range n, if t ≤ min (T i ω) (C i ω) then (1 : ℝ) else 0 := by
     rw [hMdef, Finset.natCast_card_filter]
   have hMlow : y / 2 * n < M := by
     have h1 := (abs_lt.1 hω).1
-    have h2 : y / 2 < (n : ℝ)⁻¹ * M := by rw [hMcast]; linarith
-    rwa [inv_mul_eq_div, lt_div_iff₀ hn'] at h2
+    have h2 : y / 2 < M / (n : ℝ) := by rw [hMcast]; linarith
+    rwa [lt_div_iff₀ hn'] at h2
   have hK : (M : ℝ) ≤ ((max M 1 : ℕ) : ℝ) := by exact_mod_cast le_max_left _ _
   have hb := abs_kaplanMeierEstimator_sub_exp_neg_le T C n ω t
   rw [← hMdef] at hb
   have hr0 : 0 < Real.sqrt n := Real.sqrt_pos.2 hn'
   have hr2 : Real.sqrt n ^ 2 = n := Real.sq_sqrt hn'.le
-  change |Real.sqrt n * (kaplanMeierEstimator T C n ω t - S) -
-    Real.sqrt n * (Real.exp (-nelsonAalenEstimator T C n ω t) - Real.exp (-Λ))| ≤
-      |4 / (y ^ 2 * Real.sqrt n)|
+  simp only [Pi.neg_apply]
   rw [← hS, ← mul_sub, show kaplanMeierEstimator T C n ω t - S -
       (Real.exp (-nelsonAalenEstimator T C n ω t) - S) =
       kaplanMeierEstimator T C n ω t - Real.exp (-nelsonAalenEstimator T C n ω t) by ring,

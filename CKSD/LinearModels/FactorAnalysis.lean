@@ -106,7 +106,8 @@ theorem IsNormalizedFactorLoading.exists_eq_mul_factorColumnSigns {p m : ℕ}
   classical
   obtain ⟨a, ha, _, hLa⟩ := hL
   obtain ⟨b, hb, _, hMb⟩ := hM
-  have hgram : L.transpose.conjTranspose * L.transpose = M.transpose.conjTranspose * M.transpose := by
+  have hgram : L.transpose.conjTranspose * L.transpose = M.transpose.conjTranspose *
+      M.transpose := by
     simpa only [Matrix.conjTranspose_eq_transpose_of_trivial, Matrix.transpose_transpose] using hcov
   obtain ⟨U, hU⟩ := TauCeti.conjTranspose_mul_self_eq_iff_exists_unitary_mul.mp hgram
   let Q : Matrix (Fin m) (Fin m) ℝ := (U : Matrix (Fin m) (Fin m) ℝ).transpose

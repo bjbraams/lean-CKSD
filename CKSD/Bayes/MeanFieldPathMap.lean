@@ -41,6 +41,12 @@ def pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
       exact (hcont.integral_hasStrictDerivAt 0 t).hasDerivAt.continuousAt
     exact f.continuous.sub (hprim.comp continuous_subtype_val)
 
+/-- Evaluation of the forcing map subtracts the integrated drift from the path. -/
+theorem pathForcingMap_apply {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
+    (hv : Continuous (Function.uncurry v)) (f : C(Icc (0 : ℝ) T, E)) (t : Icc (0 : ℝ) T) :
+    pathForcingMap hT v hv f t = f t - ∫ s in (0 : ℝ)..t, v s (f.IccExtend hT s) :=
+  rfl
+
 /-- The map recovering a solution's forcing is Lipschitz in the uniform path norm. -/
 theorem lipschitzWith_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
     (hv : Continuous (Function.uncurry v)) {L : ℝ≥0} (hvL : ∀ s, LipschitzWith L (v s)) :
@@ -50,8 +56,7 @@ theorem lipschitzWith_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E →
   intro f g
   apply ContinuousMap.dist_le_iff_of_nonempty.2
   intro t
-  change dist (f t - ∫ s in (0 : ℝ)..t, v s (f.IccExtend hT s))
-      (g t - ∫ s in (0 : ℝ)..t, v s (g.IccExtend hT s)) ≤ _
+  rw [pathForcingMap_apply, pathForcingMap_apply]
   have hfi : IntervalIntegrable (fun s ↦ v s (f.IccExtend hT s)) volume 0 t :=
     (hv.comp (continuous_id.prodMk (f.IccExtend hT).continuous)).intervalIntegrable _ _
   have hgi : IntervalIntegrable (fun s ↦ v s (g.IccExtend hT s)) volume 0 t :=
@@ -66,15 +71,12 @@ theorem lipschitzWith_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E →
         rw [uIoc_of_le t.2.1] at hs
         exact ⟨hs.1.le, hs.2.trans t.2.2⟩
       rw [ContinuousMap.coe_IccExtend, ContinuousMap.coe_IccExtend,
-        Set.IccExtend_of_mem (h := hT) (fun z ↦ f z) hs', Set.IccExtend_of_mem (h := hT) (fun z ↦ g z) hs']
+        Set.IccExtend_of_mem (h := hT) (fun z ↦ f z) hs',
+        Set.IccExtend_of_mem (h := hT) (fun z ↦ g z) hs']
       refine (hvL s).norm_sub_le _ _ |>.trans ?_
       apply mul_le_mul_of_nonneg_left ?_ L.coe_nonneg
       simpa only [dist_eq_norm] using ContinuousMap.dist_apply_le_dist (f := f) (g := g) ⟨s, hs'⟩
-  rw [dist_eq_norm,
-    show (f t - ∫ s in (0 : ℝ)..t, v s (f.IccExtend hT s)) -
-      (g t - ∫ s in (0 : ℝ)..t, v s (g.IccExtend hT s)) =
-      (f t - g t) - ((∫ s in (0 : ℝ)..t, v s (f.IccExtend hT s)) -
-        ∫ s in (0 : ℝ)..t, v s (g.IccExtend hT s)) by abel]
+  rw [dist_eq_norm, sub_sub_sub_comm]
   calc
     ‖(f t - g t) - ((∫ s in (0 : ℝ)..t, v s (f.IccExtend hT s)) -
         ∫ s in (0 : ℝ)..t, v s (g.IccExtend hT s))‖ ≤
@@ -102,17 +104,14 @@ theorem injective_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
   have hφ : Continuous (fun t ↦ ‖x t - y t‖) := (hx.sub hy).norm
   have hΔ (t : ℝ) (ht : t ∈ Icc 0 T) : x t - y t = ∫ s in (0 : ℝ)..t, v s (x s) - v s (y s) := by
     have hpoint := congrArg (fun z : C(Icc (0 : ℝ) T, E) ↦ z ⟨t, ht⟩) heq
-    change f ⟨t, ht⟩ - (∫ s in (0 : ℝ)..t, v s (x s)) =
-      g ⟨t, ht⟩ - (∫ s in (0 : ℝ)..t, v s (y s)) at hpoint
     have hxi : IntervalIntegrable (fun s ↦ v s (x s)) volume 0 t :=
       (hv.comp (continuous_id.prodMk hx)).intervalIntegrable _ _
     have hyi : IntervalIntegrable (fun s ↦ v s (y s)) volume 0 t :=
       (hv.comp (continuous_id.prodMk hy)).intervalIntegrable _ _
     rw [intervalIntegral.integral_sub hxi hyi]
-    change (f.IccExtend hT) t - (g.IccExtend hT) t = _
-    rw [ContinuousMap.coe_IccExtend, ContinuousMap.coe_IccExtend,
-      Set.IccExtend_of_mem (h := hT) (fun z ↦ f z) ht,
-      Set.IccExtend_of_mem (h := hT) (fun z ↦ g z) ht]
+    have hxt : x t = f ⟨t, ht⟩ := Set.IccExtend_of_mem (h := hT) (fun z ↦ f z) ht
+    have hyt : y t = g ⟨t, ht⟩ := Set.IccExtend_of_mem (h := hT) (fun z ↦ g z) ht
+    rw [hxt, hyt]
     apply sub_eq_sub_iff_add_eq_add.mpr
     simpa only [add_comm] using sub_eq_sub_iff_add_eq_add.mp hpoint
   have hineq (t : ℝ) (ht : t ∈ Icc 0 T) : ‖x t - y t‖ ≤ 0 + L * ∫ s in (0 : ℝ)..t, ‖x s - y s‖ := by
@@ -121,13 +120,15 @@ theorem injective_pathForcingMap {T : ℝ} (hT : 0 ≤ T) (v : ℝ → E → E)
         intervalIntegral.norm_integral_le_integral_norm ht.1
       _ ≤ ∫ s in (0 : ℝ)..t, (L : ℝ) * ‖x s - y s‖ :=
         intervalIntegral.integral_mono ht.1
-          (((hv.comp (continuous_id.prodMk hx)).sub (hv.comp (continuous_id.prodMk hy))).norm.intervalIntegrable _ _)
+          (((hv.comp (continuous_id.prodMk hx)).sub
+            (hv.comp (continuous_id.prodMk hy))).norm.intervalIntegrable _ _)
           ((hφ.const_mul _).intervalIntegrable _ _) (fun s ↦ (hvL s).norm_sub_le _ _)
       _ = _ := intervalIntegral.integral_const_mul _ _
   have hzero := TauCeti.le_mul_exp_of_le_add_mul_integral hφ.continuousOn L.coe_nonneg hineq
   apply ContinuousMap.ext
   intro t
-  have hn : ‖x t - y t‖ = 0 := le_antisymm (by simpa only [zero_mul] using hzero t t.2) (norm_nonneg _)
+  have hn : ‖x t - y t‖ = 0 :=
+    le_antisymm (by simpa only [zero_mul] using hzero t t.2) (norm_nonneg _)
   have hxy := sub_eq_zero.mp (norm_eq_zero.mp hn)
   simpa only [x, y, ContinuousMap.coe_IccExtend, Set.IccExtend_of_mem (h := hT) (fun z ↦ f z) t.2,
     Set.IccExtend_of_mem (h := hT) (fun z ↦ g z) t.2] using hxy
@@ -171,14 +172,16 @@ def pathOfRationalCoordinates [MeasurableSpace E] [BorelSpace E] [SecondCountabl
 
 omit [NormedSpace ℝ E] in
 /-- Reconstructing the coordinates of a continuous path returns that path. -/
-theorem pathOfRationalCoordinates_apply [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+theorem pathOfRationalCoordinates_apply
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     {T : ℝ} (hT : 0 ≤ T) (f : C(Icc (0 : ℝ) T, E)) :
     pathOfRationalCoordinates hT (pathRationalCoordinates hT f) = f :=
   (measurableEmbedding_pathRationalCoordinates hT).leftInverse_invFun f
 
 omit [NormedSpace ℝ E] in
 /-- The reconstruction of continuous paths from countably many coordinates is measurable. -/
-theorem measurable_pathOfRationalCoordinates [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+theorem measurable_pathOfRationalCoordinates
+    [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
     {T : ℝ} (hT : 0 ≤ T) : Measurable (pathOfRationalCoordinates (E := E) hT) :=
   (measurableEmbedding_pathRationalCoordinates hT).measurable_invFun
 

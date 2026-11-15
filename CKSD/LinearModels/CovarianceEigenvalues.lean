@@ -29,15 +29,19 @@ theorem abs_simple_matrix_eigenvalue_sub_rayleigh_le {p : ℕ}
       (4 * Real.sqrt 2 / δ) * ‖B - A‖ ^ 2 := by
   let T := Matrix.toEuclideanCLM (𝕜 := ℝ) A
   let S := Matrix.toEuclideanCLM (𝕜 := ℝ) B
-  have hT : LinearMap.IsSymmetric (T : EuclideanSpace ℝ (Fin p) →ₗ[ℝ] EuclideanSpace ℝ (Fin p)) := by
+  have hT : LinearMap.IsSymmetric
+      (T : EuclideanSpace ℝ (Fin p) →ₗ[ℝ] EuclideanSpace ℝ (Fin p)) := by
     exact Matrix.isSymmetric_toEuclideanLin_iff.2 hA
-  have hS : LinearMap.IsSymmetric (S : EuclideanSpace ℝ (Fin p) →ₗ[ℝ] EuclideanSpace ℝ (Fin p)) := by
+  have hS : LinearMap.IsSymmetric
+      (S : EuclideanSpace ℝ (Fin p) →ₗ[ℝ] EuclideanSpace ℝ (Fin p)) := by
     exact Matrix.isSymmetric_toEuclideanLin_iff.2 hB
   let e : Fin p ≃ Fin (Fintype.card (Fin p)) := finCongr (Fintype.card_fin p).symm
-  have hla (i : Fin p) : hT.eigenvalues finrank_euclideanSpace (e i) = symmetricMatrixEigenvalues A i := by
+  have hla (i : Fin p) : hT.eigenvalues finrank_euclideanSpace (e i) =
+      symmetricMatrixEigenvalues A i := by
     simp only [symmetricMatrixEigenvalues, dite_eq_left hA, Matrix.IsHermitian.eigenvalues₀]
     rfl
-  have hlb (i : Fin p) : hS.eigenvalues finrank_euclideanSpace (e i) = symmetricMatrixEigenvalues B i := by
+  have hlb (i : Fin p) : hS.eigenvalues finrank_euclideanSpace (e i) =
+      symmetricMatrixEigenvalues B i := by
     simp only [symmetricMatrixEigenvalues, dite_eq_left hB, Matrix.IsHermitian.eigenvalues₀]
     rfl
   have hh := abs_simple_eigenvalue_sub_rayleigh_le T S hT hS finrank_euclideanSpace
@@ -63,7 +67,7 @@ theorem norm_matrix_le_card_mul_entrySum {p : ℕ} (A : Matrix (Fin p) (Fin p) �
   rw [← Matrix.l2_opNorm_toEuclideanCLM]
   apply ContinuousLinearMap.opNorm_le_bound _ (by unfold entrySum; positivity)
   intro x
-  change ‖Matrix.toEuclideanLin A x‖ ≤ _
+  rw [← ContinuousLinearMap.coe_coe, Matrix.coe_toEuclideanCLM_eq_toEuclideanLin]
   simpa only [Fintype.card_fin] using
     Matrix.norm_toEuclideanLin_le_of_entry_le_square he x
 
@@ -149,7 +153,8 @@ theorem simple_empirical_covariance_eigenvalue_asymptotics
       tendstoInMeasure_const_mul_zero μ _ _
         (tendstoInMeasure_sqrt_mul_sampleCoordMean_mul hiid h4 i j)
   refine tendstoInMeasure_zero_of_abs_le μ _ _ (fun _ _ ↦ 0) one_pos ?_
-    (tendstoInMeasure_add_zero μ _ _ hrem hR) (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
+    (tendstoInMeasure_add_zero μ _ _ hrem hR)
+        (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
   filter_upwards [eventually_gt_atTop 0] with n hn
   filter_upwards with ω _
   apply le_of_eq
@@ -219,14 +224,12 @@ theorem variance_sq_inner_gaussian_eigenvector {d : ℕ}
       _ = ∫ x, (toDualMap ℝ _ v) (x - P[id]) ^ 4 ∂P := by
         congr 1
         funext x
-        change (inner ℝ (x - ∫ z, z ∂P) v ^ 2) ^ 2 =
-          inner ℝ v (x - ∫ z, z ∂P) ^ 4
-        rw [real_inner_comm v]
+        simp only [InnerProductSpace.toDualMap_apply_apply, id_eq, real_inner_comm v]
         ring
       _ = lambda ^ 2 * 3 := h
       _ = _ := by ring
   rw [variance_eq_sub (by rw [hY]; exact (memLp_quadStat h4 v).add (memLp_const _)), hmean]
-  change (∫ x, (inner ℝ (x - ∫ z, z ∂P) v ^ 2) ^ 2 ∂P) - lambda ^ 2 = _
+  simp only [Pi.pow_apply]
   rw [hm4]
   ring
 

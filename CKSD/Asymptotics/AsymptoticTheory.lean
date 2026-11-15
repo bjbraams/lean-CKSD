@@ -63,7 +63,7 @@ theorem tendstoInMeasure_mEstimator {Ω Θ : Type*} [MeasurableSpace Ω]
         {ω | δ / 8 < |e n ω|} ∪ {ω | δ / 4 < |r n ω|} := by
       filter_upwards [hunif n, hopt n] with ω hu ho
       intro hdist
-      change δ / 8 < |e n ω| ∨ δ / 4 < |r n ω|
+      simp only [Set.mem_union, Set.mem_ofPred_eq]
       by_contra hfalse
       have heabs : |e n ω| ≤ δ / 8 := le_of_not_gt fun h ↦ hfalse (Or.inl h)
       have hrabs : |r n ω| ≤ δ / 4 := le_of_not_gt fun h ↦ hfalse (Or.inr h)
@@ -188,8 +188,8 @@ theorem tendstoInDistribution_pearson_statistic {Ω : Type*} [MeasurableSpace Ω
   set Y : ℕ → Ω → EuclideanSpace ℝ (Fin k) := fun j ω ↦ φ (X j ω) with hY
   have hYm : ∀ j, Measurable (Y j) := fun j ↦ hφm.comp (hXm j)
   have hYlaw : ∀ j, μ.map (Y j) = Pk.map φ := fun j ↦ by
-    change μ.map (φ ∘ X j) = _
-    rw [← Measure.map_map hφm (hXm j), hlaw j]
+    rw [← hlaw j, Measure.map_map hφm (hXm j)]
+    rfl
   have hYind : iIndepFun Y μ := hind.comp (fun _ ↦ φ) (fun _ ↦ hφm)
   have hYid : ∀ j, IdentDistrib (Y j) (Y 0) μ μ := fun j ↦
     ⟨(hYm j).aemeasurable, (hYm 0).aemeasurable, by rw [hYlaw, hYlaw]⟩
@@ -199,7 +199,7 @@ theorem tendstoInDistribution_pearson_statistic {Ω : Type*} [MeasurableSpace Ω
   have hinner : ∀ x l, inner ℝ x (φ l) = (r l)⁻¹ * x l - inner ℝ x u := fun x l ↦ by
     simp [φ, inner_sub_right, inner_smul_right, EuclideanSpace.inner_single_right]
   have hmean : ∫ ω, Y 0 ω ∂μ = 0 := by
-    change ∫ ω, φ (X 0 ω) ∂μ = 0
+    simp only [hY]
     rw [← integral_map (hXm 0).aemeasurable hφm.aestronglyMeasurable, hlaw 0,
       integral_categorical p (fun i ↦ (hp i).le)]
     ext i
@@ -286,7 +286,7 @@ theorem tendstoInMeasure_argmax_of_compact
     · obtain ⟨m, hm, hmax⟩ := hclosed.isCompact.exists_isMaxOn hne hc.continuousOn
       have hmne : m ≠ θ := by
         intro heq
-        change ε ≤ dist m θ at hm
+        simp only [K, Set.mem_ofPred_eq] at hm
         rw [heq, dist_self] at hm
         exact (not_le_of_gt hε) hm
       refine ⟨M θ - M m, sub_pos.mpr (huniq m hmne), ?_⟩

@@ -60,7 +60,8 @@ theorem integrable_norm_sub_prod {E : Type*} [NormedAddCommGroup E]
     (hP : Integrable (fun x ↦ ‖x‖) P) (hQ : Integrable (fun x ↦ ‖x‖) Q) :
     Integrable (fun z : E × E ↦ ‖z.1 - z.2‖) (P.prod Q) := by
   refine ((hP.comp_fst Q).add (hQ.comp_snd P)).mono' (by fun_prop) (ae_of_all _ fun z ↦ ?_)
-  simpa only [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _), Pi.add_apply] using norm_sub_le z.1 z.2
+  simpa only [Real.norm_eq_abs, abs_of_nonneg (norm_nonneg _), Pi.add_apply] using
+    norm_sub_le z.1 z.2
 
 /-- The probability that two independent real observations lie on opposite sides of a cutoff. -/
 theorem measure_symmDiff_real_prod_eq_cdf (P Q : Measure ℝ)
@@ -108,7 +109,8 @@ theorem integral_abs_sub_prod_eq_integral_cdf (P Q : Measure ℝ)
     exact hi.lintegral_lt_top
   refine ⟨hfi, ?_⟩
   have hreal := congrArg ENNReal.toReal hl
-  rw [← integral_eq_lintegral_of_nonneg_ae (ae_of_all _ fun z ↦ abs_nonneg _) hi.aestronglyMeasurable,
+  rw [← integral_eq_lintegral_of_nonneg_ae (ae_of_all _ fun z ↦ abs_nonneg _)
+      hi.aestronglyMeasurable,
     ← integral_eq_lintegral_of_nonneg_ae (ae_of_all _ hnon) hfi.aestronglyMeasurable] at hreal
   exact hreal
 
@@ -212,6 +214,7 @@ theorem integral_abs_inner_stdGaussian {E : Type*} [NormedAddCommGroup E]
     exact ae_of_all _ fun w ↦ by simp [real_inner_comm]
   rw [heq, hmap, TauCeti.Probability.integral_abs_gaussianReal,
     Real.toNNReal_of_nonneg (sq_nonneg _)]
+  -- normalize the coercion of `(‖v‖ ^ 2).toNNReal` back to `ℝ`
   change Real.sqrt (2 * ‖v‖ ^ 2 / Real.pi) = Real.sqrt (2 / Real.pi) * ‖v‖
   rw [show 2 * ‖v‖ ^ 2 / Real.pi = (2 / Real.pi) * ‖v‖ ^ 2 by ring,
     Real.sqrt_mul (by positivity), Real.sqrt_sq_eq_abs, abs_of_nonneg (norm_nonneg _)]
@@ -226,7 +229,8 @@ theorem integral_gaussian_projected_distance {E : Type*} [NormedAddCommGroup E]
       (∫ w, ∫ z : E × E, |inner ℝ w (z.1 - z.2)| ∂P.prod Q ∂stdGaussian E) =
         Real.sqrt (2 / Real.pi) * ∫ z : E × E, ‖z.1 - z.2‖ ∂P.prod Q := by
   have hdist := integrable_norm_sub_prod P Q hP hQ
-  have hG : Integrable (fun w : E ↦ ‖w‖) (stdGaussian E) := (IsGaussian.integrable_id : Integrable id (stdGaussian E)).norm
+  have hG : Integrable (fun w : E ↦ ‖w‖) (stdGaussian E) :=
+    (IsGaussian.integrable_id : Integrable id (stdGaussian E)).norm
   have hint : Integrable (fun p : E × (E × E) ↦ |inner ℝ p.1 (p.2.1 - p.2.2)|)
       ((stdGaussian E).prod (P.prod Q)) := by
     refine (hG.mul_prod hdist).mono' (by fun_prop) (ae_of_all _ fun p ↦ ?_)
@@ -282,10 +286,7 @@ theorem energyDistance_nonneg_eq_zero_iff {E : Type*} [NormedAddCommGroup E]
     (hPQ.const_mul 2).sub hPP
   have hD : Integrable D (stdGaussian E) := hmid.sub hQQ
   have hmean : (∫ w, D w ∂stdGaussian E) = Real.sqrt (2 / Real.pi) * energyDistance P Q := by
-    change (∫ w, (2 * J P Q w - J P P w) - J Q Q w ∂stdGaussian E) = _
     rw [integral_sub hmid hQQ, integral_sub (hPQ.const_mul 2) hPP, integral_const_mul]
-    change 2 * (∫ w, J P Q w ∂stdGaussian E) - (∫ w, J P P w ∂stdGaussian E) -
-      (∫ w, J Q Q w ∂stdGaussian E) = _
     rw [show (∫ w, J P Q w ∂stdGaussian E) = _ from ePQ,
       show (∫ w, J P P w ∂stdGaussian E) = _ from ePP,
       show (∫ w, J Q Q w ∂stdGaussian E) = _ from eQQ]
@@ -331,6 +332,7 @@ theorem integral_distanceKernel_prod {E : Type*} [NormedAddCommGroup E]
     (hP : Integrable (fun x ↦ ‖x‖) P) (hQ : Integrable (fun x ↦ ‖x‖) Q) :
     (∫ z : E × E, distanceKernel z.1 z.2 ∂P.prod Q) =
       ((∫ x, ‖x‖ ∂P) + (∫ y, ‖y‖ ∂Q) - (∫ z : E × E, ‖z.1 - z.2‖ ∂P.prod Q)) / 2 := by
+  -- unfold the kernel in the integrand
   change (∫ z : E × E, (‖z.1‖ + ‖z.2‖ - ‖z.1 - z.2‖) / 2 ∂P.prod Q) = _
   have hsum : Integrable (fun z : E × E ↦ ‖z.1‖ + ‖z.2‖) (P.prod Q) :=
     (hP.comp_fst Q).add (hQ.comp_snd P)

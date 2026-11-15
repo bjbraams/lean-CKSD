@@ -138,7 +138,8 @@ the dimension by one. -/
 theorem lowerLeftRank_eq_add_dimColumnPart {D : Matrix (Fin m) (Fin m) 𝕜} {dim : Fin m → ℕ}
     (hD : ∀ i j, D i j ≠ 0 → dim i + 1 = dim j) (q a b : ℕ) :
     lowerLeftRank D a b =
-      lowerLeftRank (dimColumnPart D dim q) a b + lowerLeftRank (dimColumnPartCompl D dim q) a b := by
+      lowerLeftRank (dimColumnPart D dim q) a b +
+        lowerLeftRank (dimColumnPartCompl D dim q) a b := by
   unfold lowerLeftRank
   have hsum : lowerLeftPart D a b = lowerLeftPart (dimColumnPart D dim q) a b +
       lowerLeftPart (dimColumnPartCompl D dim q) a b := by

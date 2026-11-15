@@ -220,4 +220,163 @@ theorem klFun_le_sq_sub_one {x : ℝ} (hx : 0 ≤ x) : InformationTheory.klFun x
   have := Real.log_le_sub_one_of_pos hpos
   nlinarith [mul_le_mul_of_nonneg_left this hpos.le]
 
+/-- A weighted average with nonnegative weights summing to one stays within `B` of `y` when
+every point carrying positive weight does. -/
+theorem abs_sum_mul_sub_le_of_sum_eq_one {ι : Type*} (s : Finset ι) (a g : ι → ℝ) (y B : ℝ)
+    (ha0 : ∀ i ∈ s, 0 ≤ a i) (hsum : ∑ i ∈ s, a i = 1)
+    (hg : ∀ i ∈ s, a i ≠ 0 → |g i - y| ≤ B) :
+    |∑ i ∈ s, a i * g i - y| ≤ B := by
+  have e1 : ∑ i ∈ s, a i * g i - y = ∑ i ∈ s, a i * (g i - y) := by
+    simp only [mul_sub, Finset.sum_sub_distrib, ← Finset.sum_mul, hsum, one_mul]
+  rw [e1]
+  calc |∑ i ∈ s, a i * (g i - y)| ≤ ∑ i ∈ s, |a i * (g i - y)| :=
+        Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ i ∈ s, a i * B := by
+        refine Finset.sum_le_sum fun i hi ↦ ?_
+        rw [abs_mul, abs_of_nonneg (ha0 i hi)]
+        by_cases hai : a i = 0
+        · simp [hai]
+        · exact mul_le_mul_of_nonneg_left (hg i hi hai) (ha0 i hi)
+    _ = B := by rw [← Finset.sum_mul, hsum, one_mul]
+
+/-- A countable sum of nonnegative functions has integral at most `a` when the `i`-th summand
+has integral at most `a w i` for weights with `∑ w i ≤ 1`. -/
+theorem lintegral_tsum_le_of_le_mul {α ι : Type*} [Countable ι] [MeasurableSpace α]
+    {μ : Measure α} {F : ι → α → ℝ≥0∞} (hF : ∀ i, AEMeasurable (F i) μ) {a : ℝ≥0∞}
+    {w : ι → ℝ≥0∞} (hw : ∑' i, w i ≤ 1) (h : ∀ i, ∫⁻ x, F i x ∂μ ≤ a * w i) :
+    ∫⁻ x, ∑' i, F i x ∂μ ≤ a := by
+  rw [lintegral_tsum hF]
+  calc ∑' i, ∫⁻ x, F i x ∂μ ≤ ∑' i, a * w i := tsum_le_tsum h
+    _ = a * ∑' i, w i := ENNReal.tsum_mul_left
+    _ ≤ a * 1 := by gcongr
+    _ = a := mul_one _
+
+/-- An oracle bound valid for every comparison index passes to the infimum: if
+`X ≤ C (B i + c)` for all `i`, with `B i ≥ 0`, `c ≥ 0` and `C > 0`, then
+`X ≤ C (inf_i B i + c)`. -/
+theorem le_ofReal_mul_iInf_add {ι : Type*} [Nonempty ι] {X : ℝ≥0∞} {C c : ℝ} (hC : 0 < C)
+    (hc : 0 ≤ c) (B : ι → ℝ) (hB : ∀ i, 0 ≤ B i)
+    (h : ∀ i, X ≤ ENNReal.ofReal (C * (B i + c))) :
+    X ≤ ENNReal.ofReal (C * ((⨅ i, B i) + c)) := by
+  obtain ⟨i₀⟩ := (inferInstance : Nonempty ι)
+  have hfin : X ≠ ∞ := ne_top_of_le_ne_top ENNReal.ofReal_ne_top (h i₀)
+  rw [← ENNReal.ofReal_toReal hfin]
+  apply ENNReal.ofReal_le_ofReal
+  have hr : ∀ i, X.toReal / C - c ≤ B i := by
+    intro i
+    have := ENNReal.toReal_mono ENNReal.ofReal_ne_top (h i)
+    rw [ENNReal.toReal_ofReal (by have := hB i; positivity), ← div_le_iff₀' hC] at this
+    linarith
+  have := le_ciInf hr
+  rw [div_sub' hC.ne', div_le_iff₀ hC] at this
+  linarith
+
+/-- A function that agrees on `[a, t]`, for some `a < t`, with an affine function of slope `σ`
+has left derivative `σ` at `t`. -/
+theorem derivWithin_Iio_eq_of_eq_affine {G : ℝ → ℝ} {a t c σ : ℝ} (hat : a < t)
+    (h : ∀ u, a ≤ u → u ≤ t → G u = c + σ * (u - a)) : derivWithin G (Iio t) t = σ := by
+  have hL : HasDerivWithinAt (fun u ↦ c + σ * (u - a)) σ (Iio t) t := by
+    simpa using ((((hasDerivAt_id t).sub_const a).const_mul σ).const_add c).hasDerivWithinAt
+  have hEq : G =ᶠ[𝓝[<] t] (fun u ↦ c + σ * (u - a)) :=
+    Filter.eventuallyEq_of_mem (Ioo_mem_nhdsLT hat) fun u hu ↦ h u hu.1.le hu.2.le
+  exact (hL.congr_of_eventuallyEq hEq (h t hat.le le_rfl)).derivWithin
+    (uniqueDiffWithinAt_Iio t)
+
+/-- A point of `(y 0, y k]` lies in one of the cells `(y j, y (j + 1)]`, `j < k`. -/
+theorem exists_mem_Ioc_of_grid {k : ℕ} {y : ℕ → ℝ} {t : ℝ} (ht : y 0 < t) (htk : t ≤ y k) :
+    ∃ j < k, t ∈ Ioc (y j) (y (j + 1)) := by
+  classical
+  have hex : ∃ l, t ≤ y l ∧ l ≤ k := ⟨k, htk, le_rfl⟩
+  obtain ⟨hl1, hl2⟩ := Nat.find_spec hex
+  have hl0 : Nat.find hex ≠ 0 := fun h ↦ by rw [h] at hl1; linarith
+  refine ⟨Nat.find hex - 1, by omega, ?_, by rw [Nat.sub_add_cancel (by omega)]; exact hl1⟩
+  by_contra hc
+  push Not at hc
+  exact Nat.find_min hex (show Nat.find hex - 1 < Nat.find hex by omega) ⟨hc, by omega⟩
+
+/-- The step function with value `s m` on the cell `(y m, y (m + 1)]` of a strictly increasing
+grid `y 0 < ⋯ < y k` takes the value `s j` on the cell `(y j, y (j + 1)]`. -/
+theorem sum_indicator_Ioc_eq_of_mem {k : ℕ} {y : ℕ → ℝ} (s : ℕ → ℝ)
+    (hymono : StrictMonoOn y (Iic k)) {j : ℕ} (hj : j < k) {t : ℝ}
+    (ht : t ∈ Ioc (y j) (y (j + 1))) :
+    ∑ m ∈ Finset.range k, (Ioc (y m) (y (m + 1))).indicator (fun _ ↦ s m) t = s j := by
+  rw [Finset.sum_eq_single j, indicator_of_mem ht]
+  · intro m hm hmj
+    have hm' := Finset.mem_range.mp hm
+    refine indicator_of_notMem (fun hmem ↦ ?_) _
+    rcases lt_or_gt_of_ne hmj with h | h
+    · linarith [hmem.2, ht.1, hymono.monotoneOn (mem_Iic.mpr (by omega : m + 1 ≤ k))
+        (mem_Iic.mpr hj.le) (by omega : m + 1 ≤ j)]
+    · linarith [hmem.1, ht.2, hymono.monotoneOn (mem_Iic.mpr (by omega : j + 1 ≤ k))
+        (mem_Iic.mpr hm'.le) (by omega : j + 1 ≤ m)]
+  · intro h; exact absurd (Finset.mem_range.mpr hj) h
+
+/-- The step function on the cells `(y j, y (j + 1)]` of a monotone grid `y 0 ≤ ⋯ ≤ y k`
+vanishes outside `(y 0, y k]`. -/
+theorem sum_indicator_Ioc_eq_zero_of_notMem {k : ℕ} {y : ℕ → ℝ} (s : ℕ → ℝ)
+    (hymono : MonotoneOn y (Iic k)) {t : ℝ} (ht : t ∉ Ioc (y 0) (y k)) :
+    ∑ m ∈ Finset.range k, (Ioc (y m) (y (m + 1))).indicator (fun _ ↦ s m) t = 0 := by
+  refine Finset.sum_eq_zero fun j hj ↦ indicator_of_notMem (fun hmem ↦ ht ⟨?_, ?_⟩) _
+  all_goals have hj' := Finset.mem_range.mp hj
+  · exact (hymono (mem_Iic.mpr (Nat.zero_le k)) (mem_Iic.mpr hj'.le) (Nat.zero_le j)).trans_lt
+      hmem.1
+  · exact hmem.2.trans (hymono (mem_Iic.mpr (by omega)) (mem_Iic.mpr le_rfl) (by omega))
+
+/-- If the ratios `b i / a i` of nonnegative numbers `b i` to positive numbers `a i`, `i < n`,
+have sum at most `n`, then `∏ b i ≤ ∏ a i`: this is the arithmetic-geometric mean inequality
+for the ratios. -/
+theorem prod_le_prod_of_sum_div_le {n : ℕ} {a b : ℕ → ℝ} (ha : ∀ i < n, 0 < a i)
+    (hb : ∀ i < n, 0 ≤ b i) (h : ∑ i ∈ Finset.range n, b i / a i ≤ n) :
+    ∏ i ∈ Finset.range n, b i ≤ ∏ i ∈ Finset.range n, a i := by
+  have hprod0 : 0 ≤ ∏ i ∈ Finset.range n, a i :=
+    Finset.prod_nonneg fun i hi ↦ (ha i (Finset.mem_range.mp hi)).le
+  by_cases hz : ∃ i < n, b i = 0
+  · obtain ⟨i, hi, hbi⟩ := hz
+    rw [Finset.prod_eq_zero (Finset.mem_range.mpr hi) hbi]
+    exact hprod0
+  push Not at hz
+  have hpos : ∀ i ∈ Finset.range n, 0 < b i / a i := fun i hi ↦
+    div_pos ((hb i (Finset.mem_range.mp hi)).lt_of_ne (hz i (Finset.mem_range.mp hi)).symm)
+      (ha i (Finset.mem_range.mp hi))
+  have hu : ∏ i ∈ Finset.range n, (b i / a i) ≤ 1 := by
+    have hlog : Real.log (∏ i ∈ Finset.range n, (b i / a i)) ≤ 0 := by
+      rw [Real.log_prod fun i hi ↦ (hpos i hi).ne']
+      calc ∑ i ∈ Finset.range n, Real.log (b i / a i)
+          ≤ ∑ i ∈ Finset.range n, (b i / a i - 1) :=
+            Finset.sum_le_sum fun i hi ↦ Real.log_le_sub_one_of_pos (hpos i hi)
+        _ = ∑ i ∈ Finset.range n, b i / a i - n := by
+            rw [Finset.sum_sub_distrib]; simp
+        _ ≤ 0 := by linarith
+    by_contra hc
+    push Not at hc
+    exact absurd hlog (not_le.mpr (Real.log_pos hc))
+  have hsplit : ∏ i ∈ Finset.range n, b i =
+      (∏ i ∈ Finset.range n, a i) * ∏ i ∈ Finset.range n, (b i / a i) := by
+    rw [← Finset.prod_mul_distrib]
+    refine Finset.prod_congr rfl fun i hi ↦ ?_
+    field_simp [(ha i (Finset.mem_range.mp hi)).ne']
+  rw [hsplit]
+  calc _ ≤ (∏ i ∈ Finset.range n, a i) * 1 := mul_le_mul_of_nonneg_left hu hprod0
+    _ = _ := mul_one _
+
+/-- A bias of order `h ^ 2` is negligible at the scale `√(n h)` when `n h ^ 5` stays bounded:
+if `b n / h n ^ 2 → 0` and eventually `n * h n ^ 5 ≤ C`, then `√(n * h n) * b n → 0`. -/
+theorem tendsto_sqrt_mul_mul_of_tendsto_div_sq {h b : ℕ → ℝ} (hh : ∀ n, 0 < h n) {C : ℝ}
+    (hC : ∀ᶠ n : ℕ in atTop, (n : ℝ) * h n ^ 5 ≤ C)
+    (hb : Tendsto (fun n ↦ b n / h n ^ 2) atTop (𝓝 0)) :
+    Tendsto (fun n : ℕ ↦ Real.sqrt ((n : ℝ) * h n) * b n) atTop (𝓝 0) := by
+  refine squeeze_zero_norm' ?_ (by simpa using (hb.abs.const_mul (Real.sqrt (max C 0))))
+  filter_upwards [hC] with n hn
+  have hh0' := (hh n).ne'
+  have hrh : |Real.sqrt ((n : ℝ) * h n) * h n ^ 2| ≤ Real.sqrt (max C 0) := by
+    refine Real.abs_le_sqrt ?_
+    rw [mul_pow, Real.sq_sqrt (by have := hh n; positivity)]
+    calc (n : ℝ) * h n * (h n ^ 2) ^ 2 = n * h n ^ 5 := by ring
+      _ ≤ max C 0 := hn.trans (le_max_left _ _)
+  have : Real.sqrt ((n : ℝ) * h n) * b n =
+      Real.sqrt ((n : ℝ) * h n) * h n ^ 2 * (b n / h n ^ 2) := by
+    field_simp
+  rw [this, Real.norm_eq_abs, abs_mul]
+  exact mul_le_mul_of_nonneg_right hrh (abs_nonneg _)
+
 end CKSD

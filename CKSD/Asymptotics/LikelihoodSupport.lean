@@ -84,7 +84,7 @@ theorem abs_integral_mul_le_sqrt_mul_sqrt {α : Type*} [MeasurableSpace α] (ν 
     have := hpt 1 one_pos x
     rw [Real.norm_eq_abs]
     simp only [one_mul, div_one] at this
-    show |a x * b x| ≤ (a x ^ 2 + b x ^ 2) / 2
+    simp only [Pi.add_apply]
     linarith
   refine le_sqrt_mul_sqrt_of_forall_two_mul_le (integral_nonneg fun _ ↦ sq_nonneg _)
     (integral_nonneg fun _ ↦ sq_nonneg _) fun δ hδ ↦ ?_
@@ -99,7 +99,8 @@ theorem abs_integral_mul_le_sqrt_mul_sqrt {α : Type*} [MeasurableSpace α] (ν 
 /-- Chebyshev's inequality for a sum of a measurable square-integrable statistic of an iid
 sequence. -/
 theorem measureReal_le_abs_sum_sub_le_of_iid {Ω E : Type*} [MeasurableSpace Ω]
-    [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
+    [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) (X : ℕ → Ω → E)
+    (hiid : IsIndependentIdenticallyDistributed μ X P)
     (φ : E → ℝ) (hφ : Measurable φ) (h2 : MemLp φ 2 P) (n : ℕ) {ε : ℝ} (hε : 0 < ε) :
     μ.real {ω | ε ≤ |∑ i ∈ Finset.range n, φ (X i ω) - n * ∫ x, φ x ∂P|} ≤
       n * (∫ x, φ x ^ 2 ∂P) / ε ^ 2 := by
@@ -115,7 +116,8 @@ theorem measureReal_le_abs_sum_sub_le_of_iid {Ω E : Type*} [MeasurableSpace Ω]
     simp [hY, Finset.sum_apply]
   have hY2 : MemLp Y 2 μ := memLp_finsetSum' _ fun i _ ↦ h2i i
   have hmeanY : μ[Y] = n * ∫ x, φ x ∂P := by
-    rw [show μ[Y] = ∫ ω, ∑ i ∈ Finset.range n, (φ ∘ X i) ω ∂μ by simp only [hY, Finset.sum_apply],
+    rw [show μ[Y] = ∫ ω, ∑ i ∈ Finset.range n, (φ ∘ X i) ω ∂μ by
+        simp only [hY, Finset.sum_apply],
       integral_finsetSum _ fun i _ ↦ (h2i i).integrable one_le_two]
     have : ∀ i, ∫ ω, (φ ∘ X i) ω ∂μ = ∫ x, φ x ∂P := fun i ↦ by
       rw [← hiid.2.2 i, integral_map (hm i).aemeasurable hφ.aestronglyMeasurable]; rfl

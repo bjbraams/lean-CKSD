@@ -60,6 +60,7 @@ theorem measure_eq_of_integral_exp_inner_eq {E : Type*} [NormedAddCommGroup E]
   have hball : Metric.ball (0 : ℝ) c ∈ 𝓝 (0 : ℝ) := Metric.ball_mem_nhds 0 hc
   refine TauCeti.Measure.ext_of_mgf ?_ ?_
   · refine mem_interior_iff_mem_nhds.2 (Filter.mem_of_superset hball fun s hs ↦ ?_)
+    -- `change` exposes the syntactic form that the following `rw` matches
     change Integrable (fun y ↦ Real.exp (s * id y)) (μ₁.map fun t ↦ inner ℝ t w)
     rw [integrable_map_measure (by fun_prop) hw.aemeasurable]
     simpa [Function.comp_def, hexp] using hint _ (hsmall s hs)

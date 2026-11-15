@@ -469,6 +469,28 @@ theorem mul_bernsteinExponent_le {β γ t c : ℝ} (hβ : 0 < β) (hγ : 0 ≤ �
     _ ≤ 2 * c * t ^ 2 * (c * (β + γ * t)) := key
     _ = (c * t) ^ 2 * (2 * (β + γ * t)) := by ring
 
+/-- Dilation by `c ≥ 1` inside the Bernstein exponent beats dilation of the exponent:
+`e^{-φ(t c)} ≤ e^{-φ(t) c}`. -/
+theorem exp_neg_bernsteinExponent_mul_le {β γ t c : ℝ} (hβ : 0 < β) (hγ : 0 ≤ γ) (ht : 0 ≤ t)
+    (hc : 1 ≤ c) :
+    Real.exp (-bernsteinExponent β γ (t * c)) ≤ Real.exp (-(bernsteinExponent β γ t * c)) := by
+  rw [Real.exp_le_exp, neg_le_neg_iff, mul_comm, mul_comm t]
+  exact mul_bernsteinExponent_le hβ hγ ht hc
+
+/-- The Bernstein tails at the dyadic levels `a 2ʲ` decay geometrically:
+`e^{-φ(a 2ʲ)} ≤ (e^{-φ(a)})^{j + 1}`. -/
+theorem exp_neg_bernsteinExponent_mul_two_pow_le {β γ a : ℝ} (hβ : 0 < β) (hγ : 0 ≤ γ)
+    (ha : 0 ≤ a) (j : ℕ) :
+    Real.exp (-bernsteinExponent β γ (a * 2 ^ j)) ≤
+      Real.exp (-bernsteinExponent β γ a) ^ (j + 1) := by
+  rw [← Real.exp_nat_mul, Real.exp_le_exp, mul_neg, neg_le_neg_iff]
+  have hj : ((j + 1 : ℕ) : ℝ) ≤ 2 ^ j := by exact_mod_cast Nat.lt_two_pow_self
+  have hφ : 0 ≤ bernsteinExponent β γ a := by unfold bernsteinExponent; positivity
+  calc ((j + 1 : ℕ) : ℝ) * bernsteinExponent β γ a ≤ 2 ^ j * bernsteinExponent β γ a := by
+        gcongr
+    _ ≤ bernsteinExponent β γ (a * 2 ^ j) := by
+      rw [mul_comm a]; exact mul_bernsteinExponent_le hβ hγ ha (one_le_pow₀ (by norm_num))
+
 /-- The empirical envelope of a nonnegative function is nonnegative. -/
 theorem empiricalEnvelope_nonneg {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
     (Xn : ℕ → Ω → X) (n : ℕ) {F : X → ℝ} (hF : ∀ x, 0 ≤ F x) (ω : Ω) :
@@ -483,6 +505,134 @@ theorem empiricalEnvelope_const_mul {Ω X : Type*} [MeasurableSpace X] (P : Meas
     empiricalEnvelope P Xn n (fun x ↦ c * F x) ω = c * empiricalEnvelope P Xn n F ω := by
   simp only [empiricalEnvelope, integral_const_mul, ← Finset.mul_sum]
   ring
+
+/-- **Bernstein bound for one increment of a Lipschitz family.** For two parameters `u, v` with
+`|f u - f v| ≤ ‖u - v‖ L`, the event `‖u - v‖ ((j + 1) A + Wₙ) < |Gₙ f u - Gₙ f v|`, where `Wₙ` is
+the empirical envelope of the part of `L` above `ε √n`, has probability at most
+`2 e^{-(j + 1) φ(A)}`, with `φ` the Bernstein exponent with `β = ∫ L² + 1` and `γ = 2ε/3`. -/
+theorem measureReal_abs_empiricalProcess_sub_gt_le_of_lipschitz {Ω X : Type*}
+    [MeasurableSpace Ω] [MeasurableSpace X] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (P : Measure X) [IsProbabilityMeasure P] (Xn : ℕ → Ω → X)
+    (hiid : IsIndependentIdenticallyDistributed μ Xn P) {d : ℕ}
+    (f : EuclideanSpace ℝ (Fin d) → X → ℝ) (u v : EuclideanSpace ℝ (Fin d))
+    (hfmu : Measurable (f u)) (hfmv : Measurable (f v)) (hfiu : Integrable (f u) P)
+    (hfiv : Integrable (f v) P) (L : X → ℝ) (hLm : Measurable L) (hL0 : ∀ x, 0 ≤ L x)
+    (hL2 : MemLp L 2 P) (hlip : ∀ x, |f u x - f v x| ≤ L x * ‖u - v‖)
+    {ε : ℝ} (hε : 0 < ε) {n : ℕ} (hn : 0 < n) {A : ℝ} (hA : 0 ≤ A) (j : ℕ) :
+    μ.real {ω | ‖u - v‖ * ((j + 1) * A +
+        empiricalEnvelope P Xn n ({x | ε * Real.sqrt n < L x}.indicator L) ω) <
+        |empiricalProcess P Xn n (f u) ω - empiricalProcess P Xn n (f v) ω|} ≤
+      2 * Real.exp (-bernsteinExponent (∫ x, L x ^ 2 ∂P + 1) (2 * ε / 3) A) ^ (j + 1) := by
+  set β : ℝ := ∫ x, L x ^ 2 ∂P + 1 with hβ
+  have hβ0 : 0 < β := by
+    have : 0 ≤ ∫ x, L x ^ 2 ∂P := integral_nonneg fun x ↦ sq_nonneg _
+    linarith
+  set κ : ℝ := ε * Real.sqrt n with hκ
+  set Lt : X → ℝ := {x | κ < L x}.indicator L with hLt
+  have hLt0 : ∀ x, 0 ≤ Lt x := fun x ↦ Set.indicator_nonneg (fun x _ ↦ hL0 x) x
+  have hLi : Integrable L P := hL2.integrable one_le_two
+  have hLti : Integrable Lt P := hLi.indicator (measurableSet_lt measurable_const hLm)
+  set W : Ω → ℝ := empiricalEnvelope P Xn n Lt with hW
+  set S : EuclideanSpace ℝ (Fin d) → Ω → ℝ := fun θ ω ↦ empiricalProcess P Xn n (f θ) ω
+    with hS
+  set p : ℝ := Real.exp (-bernsteinExponent β (2 * ε / 3) A) with hp
+  set t : ℝ := (j + 1) * A with ht
+  have ht0 : 0 ≤ t := by positivity
+  rcases eq_or_ne u v with rfl | huv
+  · have : {ω | ‖u - u‖ * (t + W ω) < |S u ω - S u ω|} = ∅ := by
+      ext ω; simp
+    rw [this, measureReal_empty]; positivity
+  set σ : ℝ := ‖u - v‖ with hσ
+  have hσ0 : 0 < σ := norm_pos_iff.2 (sub_ne_zero.2 huv)
+  set D : X → ℝ := fun x ↦ f u x - f v x with hD
+  have hDm : Measurable D := hfmu.sub hfmv
+  have hDb : ∀ x, |D x| ≤ σ * L x := fun x ↦ by
+    rw [mul_comm]; exact hlip x
+  set g : X → ℝ := {x | κ < L x}ᶜ.indicator D with hg
+  set h : X → ℝ := {x | κ < L x}.indicator D with hh
+  have hmeasL : MeasurableSet {x | κ < L x} := measurableSet_lt measurable_const hLm
+  have hgm : Measurable g := hDm.indicator hmeasL.compl
+  have hgh : ∀ x, D x = g x + h x := fun x ↦ by
+    simp only [hg, hh]
+    by_cases hx : κ < L x
+    · simp [Set.indicator_of_mem, hx]
+    · simp [Set.indicator_of_notMem, hx]
+  have hgb : ∀ x, |g x| ≤ σ * κ := fun x ↦ by
+    simp only [hg]
+    by_cases hx : κ < L x
+    · simp [hx]; positivity
+    · simp only [Set.indicator_of_mem (show x ∈ {x | κ < L x}ᶜ from hx)]
+      refine (hDb x).trans ?_
+      exact mul_le_mul_of_nonneg_left (not_lt.1 hx) hσ0.le
+  have hhb : ∀ x, |h x| ≤ σ * Lt x := fun x ↦ by
+    simp only [hh, hLt]
+    by_cases hx : κ < L x
+    · simp only [Set.indicator_of_mem (show x ∈ {x | κ < L x} from hx)]; exact hDb x
+    · simp [Set.indicator_of_notMem, hx]
+  have hgi : Integrable g P := Integrable.of_bound hgm.aestronglyMeasurable (σ * κ)
+    (ae_of_all _ fun x ↦ by rw [Real.norm_eq_abs]; exact hgb x)
+  have hhi : Integrable h P := (hLti.const_mul σ).mono'
+    (hDm.indicator hmeasL).aestronglyMeasurable
+    (ae_of_all _ fun x ↦ by rw [Real.norm_eq_abs]; exact hhb x)
+  have hg2 : ∫ x, g x ^ 2 ∂P ≤ σ ^ 2 * β := by
+    have hle : ∀ x, g x ^ 2 ≤ σ ^ 2 * L x ^ 2 := fun x ↦ by
+      have : |g x| ≤ σ * L x := by
+        simp only [hg]
+        by_cases hx : κ < L x
+        · simp [hx]; exact mul_nonneg hσ0.le (hL0 x)
+        · simp only [Set.indicator_of_mem (show x ∈ {x | κ < L x}ᶜ from hx)]; exact hDb x
+      rw [← sq_abs, ← mul_pow]; exact pow_le_pow_left₀ (abs_nonneg _) this 2
+    calc ∫ x, g x ^ 2 ∂P ≤ ∫ x, σ ^ 2 * L x ^ 2 ∂P :=
+          integral_mono_of_nonneg (ae_of_all _ fun x ↦ sq_nonneg _)
+            (hL2.integrable_sq.const_mul _) (ae_of_all _ hle)
+      _ = σ ^ 2 * ∫ x, L x ^ 2 ∂P := integral_const_mul _ _
+      _ ≤ σ ^ 2 * β := by gcongr; linarith
+  have hsplit : ∀ ω, S u ω - S v ω =
+      empiricalProcess P Xn n g ω + empiricalProcess P Xn n h ω := fun ω ↦ by
+    simp only [hS]
+    rw [← empiricalProcess_sub P Xn n hfiu hfiv, ← empiricalProcess_add P Xn n
+      hgi hhi]
+    simp only [← hgh]
+    rfl
+  have hhW : ∀ ω, |empiricalProcess P Xn n h ω| ≤ σ * W ω := fun ω ↦ by
+    have := abs_empiricalProcess_le P Xn n h (fun x ↦ σ * Lt x) (hLti.const_mul σ) hhb ω
+    rw [hW, ← empiricalEnvelope_const_mul]
+    exact this
+  have hsub : {ω | σ * (t + W ω) < |S u ω - S v ω|} ⊆
+      {ω | σ * t ≤ |empiricalProcess P Xn n g ω|} := by
+    intro ω hω
+    simp only [mem_ofPred_eq] at hω ⊢
+    rw [hsplit] at hω
+    have := abs_add_le (empiricalProcess P Xn n g ω) (empiricalProcess P Xn n h ω)
+    have := hhW ω
+    nlinarith
+  have hbern := measureReal_le_abs_empiricalProcess_le μ P Xn hiid g hgm hgb hg2
+    (by positivity) hn (t := σ * t) (by positivity)
+  refine (measureReal_mono hsub).trans (hbern.trans ?_)
+  have hexp : Real.exp (-bernsteinExponent β (2 * ε / 3) A) ^ (j + 1) =
+      Real.exp (-((j + 1 : ℝ) * bernsteinExponent β (2 * ε / 3) A)) := by
+    rw [← Real.exp_nat_mul]; push_cast; ring_nf
+  rw [hp, hexp]
+  gcongr 2 * Real.exp ?_
+  rw [neg_div, neg_le_neg_iff]
+  have hmono := mul_bernsteinExponent_le (β := β) (γ := 2 * ε / 3) (t := A)
+    (c := (j + 1 : ℝ)) hβ0 (by positivity) hA (by linarith [(Nat.cast_nonneg j : (0 : ℝ) ≤ j)])
+  refine hmono.trans (le_of_eq ?_)
+  simp only [bernsteinExponent, ht]
+  have hκ' : σ * κ * (σ * ((j + 1) * A)) / (3 * Real.sqrt n) =
+      σ ^ 2 * (ε * ((j + 1) * A) / 3) := by
+    simp only [hκ]; field_simp
+  rw [show 2 * (σ * κ) * (σ * ((↑j + 1) * A)) / (3 * Real.sqrt ↑n) =
+    2 * (σ * κ * (σ * ((j + 1) * A)) / (3 * Real.sqrt n)) by ring, hκ']
+  field_simp
+
+/-- The chaining remainder of a nonnegative envelope is nonnegative. -/
+theorem lipschitzChainRemainder_nonneg {Ω X : Type*} [MeasurableSpace X] (P : Measure X)
+    (Xn : ℕ → Ω → X) {L : X → ℝ} (hL0 : ∀ x, 0 ≤ L x) (ε : ℝ) (n : ℕ) (ω : Ω) :
+    0 ≤ lipschitzChainRemainder P Xn L ε n ω :=
+  add_nonneg (empiricalEnvelope_nonneg P Xn n
+    (fun x ↦ Set.indicator_nonneg (fun x _ ↦ hL0 x) x) ω)
+    (mul_nonneg (by positivity) (empiricalEnvelope_nonneg P Xn n hL0 ω))
 
 /-- **Maximal inequality for Lipschitz families.** Let `θ ↦ f θ` be a family of integrable
 functions on a half-open cube of width `w` anchored at `a`, Lipschitz in `θ` with a nonnegative
@@ -508,129 +658,34 @@ theorem measureReal_exists_abs_empiricalProcess_sub_gt_le {Ω X : Type*} [Measur
       2 * ∑ k ∈ Finset.range n,
         (2 ^ d * Real.exp (-bernsteinExponent (∫ x, L x ^ 2 ∂P + 1) (2 * ε / 3) A)) ^ (k + 1) := by
   set β : ℝ := ∫ x, L x ^ 2 ∂P + 1 with hβ
-  have hβ0 : 0 < β := by
-    have : 0 ≤ ∫ x, L x ^ 2 ∂P := integral_nonneg fun x ↦ sq_nonneg _
-    linarith
   set κ : ℝ := ε * Real.sqrt n with hκ
-  have hsn : 0 < Real.sqrt n := Real.sqrt_pos.2 (by exact_mod_cast hn)
   set Lt : X → ℝ := {x | κ < L x}.indicator L with hLt
-  have hLtm : Measurable Lt := hLm.indicator (measurableSet_lt measurable_const hLm)
   have hLt0 : ∀ x, 0 ≤ Lt x := fun x ↦ Set.indicator_nonneg (fun x _ ↦ hL0 x) x
   have hLi : Integrable L P := hL2.integrable one_le_two
-  have hLti : Integrable Lt P := hLi.indicator (measurableSet_lt measurable_const hLm)
   set W : Ω → ℝ := empiricalEnvelope P Xn n Lt with hW
   have hW0 : ∀ ω, 0 ≤ W ω := empiricalEnvelope_nonneg P Xn n hLt0
   set S : EuclideanSpace ℝ (Fin d) → Ω → ℝ := fun θ ω ↦ empiricalProcess P Xn n (f θ) ω
     with hS
   set p : ℝ := Real.exp (-bernsteinExponent β (2 * ε / 3) A) with hp
-  have hp0 : 0 ≤ p := (Real.exp_pos _).le
   -- The increment bound required by the chaining lemma.
   have hinc : ∀ u ∈ halfOpenCube a w, ∀ v ∈ halfOpenCube a w, ∀ j : ℕ,
-      μ.real {ω | ‖u - v‖ * ((j + 1) * A + W ω) < |S u ω - S v ω|} ≤ 2 * p ^ (j + 1) := by
-    intro u hu v hv j
-    set t : ℝ := (j + 1) * A with ht
-    have ht0 : 0 ≤ t := by positivity
-    rcases eq_or_ne u v with rfl | huv
-    · have : {ω | ‖u - u‖ * (t + W ω) < |S u ω - S u ω|} = ∅ := by
-        ext ω; simp
-      rw [this, measureReal_empty]; positivity
-    set σ : ℝ := ‖u - v‖ with hσ
-    have hσ0 : 0 < σ := norm_pos_iff.2 (sub_ne_zero.2 huv)
-    set D : X → ℝ := fun x ↦ f u x - f v x with hD
-    have hDm : Measurable D := (hfm u hu).sub (hfm v hv)
-    have hDb : ∀ x, |D x| ≤ σ * L x := fun x ↦ by
-      rw [mul_comm]; exact hlip u hu v hv x
-    set g : X → ℝ := {x | κ < L x}ᶜ.indicator D with hg
-    set h : X → ℝ := {x | κ < L x}.indicator D with hh
-    have hmeasL : MeasurableSet {x | κ < L x} := measurableSet_lt measurable_const hLm
-    have hgm : Measurable g := hDm.indicator hmeasL.compl
-    have hgh : ∀ x, D x = g x + h x := fun x ↦ by
-      simp only [hg, hh]
-      by_cases hx : κ < L x
-      · simp [Set.indicator_of_mem, hx]
-      · simp [Set.indicator_of_notMem, hx]
-    have hgb : ∀ x, |g x| ≤ σ * κ := fun x ↦ by
-      simp only [hg]
-      by_cases hx : κ < L x
-      · simp [hx]; positivity
-      · simp only [Set.indicator_of_mem (show x ∈ {x | κ < L x}ᶜ from hx)]
-        refine (hDb x).trans ?_
-        exact mul_le_mul_of_nonneg_left (not_lt.1 hx) hσ0.le
-    have hhb : ∀ x, |h x| ≤ σ * Lt x := fun x ↦ by
-      simp only [hh, hLt]
-      by_cases hx : κ < L x
-      · simp only [Set.indicator_of_mem (show x ∈ {x | κ < L x} from hx)]; exact hDb x
-      · simp [Set.indicator_of_notMem, hx]
-    have hgi : Integrable g P := Integrable.of_bound hgm.aestronglyMeasurable (σ * κ)
-      (ae_of_all _ fun x ↦ by rw [Real.norm_eq_abs]; exact hgb x)
-    have hhi : Integrable h P := (hLti.const_mul σ).mono'
-      (hDm.indicator hmeasL).aestronglyMeasurable
-      (ae_of_all _ fun x ↦ by rw [Real.norm_eq_abs]; exact hhb x)
-    have hg2 : ∫ x, g x ^ 2 ∂P ≤ σ ^ 2 * β := by
-      have hle : ∀ x, g x ^ 2 ≤ σ ^ 2 * L x ^ 2 := fun x ↦ by
-        have : |g x| ≤ σ * L x := by
-          simp only [hg]
-          by_cases hx : κ < L x
-          · simp [hx]; exact mul_nonneg hσ0.le (hL0 x)
-          · simp only [Set.indicator_of_mem (show x ∈ {x | κ < L x}ᶜ from hx)]; exact hDb x
-        rw [← sq_abs, ← mul_pow]; exact pow_le_pow_left₀ (abs_nonneg _) this 2
-      calc ∫ x, g x ^ 2 ∂P ≤ ∫ x, σ ^ 2 * L x ^ 2 ∂P :=
-            integral_mono_of_nonneg (ae_of_all _ fun x ↦ sq_nonneg _)
-              (hL2.integrable_sq.const_mul _) (ae_of_all _ hle)
-        _ = σ ^ 2 * ∫ x, L x ^ 2 ∂P := integral_const_mul _ _
-        _ ≤ σ ^ 2 * β := by gcongr; linarith
-    have hsplit : ∀ ω, S u ω - S v ω =
-        empiricalProcess P Xn n g ω + empiricalProcess P Xn n h ω := fun ω ↦ by
-      simp only [hS]
-      rw [← empiricalProcess_sub P Xn n (hfi u hu) (hfi v hv), ← empiricalProcess_add P Xn n
-        hgi hhi]
-      simp only [← hgh]
-      rfl
-    have hhW : ∀ ω, |empiricalProcess P Xn n h ω| ≤ σ * W ω := fun ω ↦ by
-      have := abs_empiricalProcess_le P Xn n h (fun x ↦ σ * Lt x) (hLti.const_mul σ) hhb ω
-      rw [hW, ← empiricalEnvelope_const_mul]
-      exact this
-    have hsub : {ω | σ * (t + W ω) < |S u ω - S v ω|} ⊆
-        {ω | σ * t ≤ |empiricalProcess P Xn n g ω|} := by
-      intro ω hω
-      simp only [mem_ofPred_eq] at hω ⊢
-      rw [hsplit] at hω
-      have := abs_add_le (empiricalProcess P Xn n g ω) (empiricalProcess P Xn n h ω)
-      have := hhW ω
-      nlinarith
-    have hbern := measureReal_le_abs_empiricalProcess_le μ P Xn hiid g hgm hgb hg2
-      (by positivity) hn (t := σ * t) (by positivity)
-    refine (measureReal_mono hsub).trans (hbern.trans ?_)
-    have hexp : Real.exp (-bernsteinExponent β (2 * ε / 3) A) ^ (j + 1) =
-        Real.exp (-((j + 1 : ℝ) * bernsteinExponent β (2 * ε / 3) A)) := by
-      rw [← Real.exp_nat_mul]; push_cast; ring_nf
-    rw [hp, hexp]
-    gcongr 2 * Real.exp ?_
-    rw [neg_div, neg_le_neg_iff]
-    have hmono := mul_bernsteinExponent_le (β := β) (γ := 2 * ε / 3) (t := A)
-      (c := (j + 1 : ℝ)) hβ0 (by positivity) hA (by linarith [(Nat.cast_nonneg j : (0 : ℝ) ≤ j)])
-    refine hmono.trans (le_of_eq ?_)
-    simp only [bernsteinExponent, ht]
-    have hκ' : σ * κ * (σ * ((j + 1) * A)) / (3 * Real.sqrt n) =
-        σ ^ 2 * (ε * ((j + 1) * A) / 3) := by
-      simp only [hκ]; field_simp
-    rw [show 2 * (σ * κ) * (σ * ((↑j + 1) * A)) / (3 * Real.sqrt ↑n) =
-      2 * (σ * κ * (σ * ((j + 1) * A)) / (3 * Real.sqrt n)) by ring, hκ']
-    field_simp
+      μ.real {ω | ‖u - v‖ * ((j + 1) * A + W ω) < |S u ω - S v ω|} ≤ 2 * p ^ (j + 1) :=
+    fun u hu v hv j ↦ measureReal_abs_empiricalProcess_sub_gt_le_of_lipschitz μ P Xn hiid f u v
+      (hfm u hu) (hfm v hv) (hfi u hu) (hfi v hv) L hLm hL0 hL2 (hlip u hu v hv) hε hn hA j
   have hchain := measureReal_exists_cube_chain_le μ S a hw W hW0 hA hinc n
   refine (measureReal_mono ?_).trans hchain
   rintro ω ⟨θ, hθ, hlt⟩
   refine ⟨θ, hθ, ?_⟩
   set πθ := cubeGridPoint a w n (cubeIndex a w n θ)
   have hπ : πθ ∈ halfOpenCube a w := cubeGridPoint_mem hw (cubeIndex_mem hw hθ n)
-  have hres : |S θ ω - S πθ ω| ≤ Real.sqrt d * w * ((2 ^ n)⁻¹ * empiricalEnvelope P Xn n L ω) := by
+  have hres : |S θ ω - S πθ ω| ≤
+      Real.sqrt d * w * ((2 ^ n)⁻¹ * empiricalEnvelope P Xn n L ω) := by
     simp only [hS]
     rw [← empiricalProcess_sub P Xn n (hfi θ hθ) (hfi πθ hπ)]
     have hb : ∀ x, |f θ x - f πθ x| ≤ ‖θ - πθ‖ * L x := fun x ↦ by
       rw [mul_comm]; exact hlip θ hθ πθ hπ x
-    refine (abs_empiricalProcess_le P Xn n _ _ (hLi.const_mul _) hb ω).trans ?_
-    change empiricalEnvelope P Xn n (fun x ↦ ‖θ - πθ‖ * L x) ω ≤ _
-    rw [empiricalEnvelope_const_mul]
+    refine ((abs_empiricalProcess_le P Xn n _ _ (hLi.const_mul _) hb ω).trans_eq
+      (empiricalEnvelope_const_mul P Xn n _ L ω)).trans ?_
     have h1 := norm_sub_cubeGridPoint_cubeIndex_le a θ hw n
     have h2 := empiricalEnvelope_nonneg P Xn n hL0 ω
     calc ‖θ - πθ‖ * empiricalEnvelope P Xn n L ω
@@ -638,7 +693,6 @@ theorem measureReal_exists_abs_empiricalProcess_sub_gt_le {Ω X : Type*} [Measur
       _ = _ := by ring
   have htri := abs_sub_le (S θ ω) (S πθ ω) (S a ω)
   simp only [lipschitzChainRemainder] at hlt
-  show Real.sqrt d * w * (2 * A + W ω) < |S πθ ω - S a ω|
   have e : Real.sqrt d * w * (2 * A + (W ω + (2 ^ n)⁻¹ * empiricalEnvelope P Xn n L ω)) =
       Real.sqrt d * w * (2 * A + W ω) +
         Real.sqrt d * w * ((2 ^ n)⁻¹ * empiricalEnvelope P Xn n L ω) := by ring
@@ -792,6 +846,28 @@ theorem two_mul_sum_range_pow_succ_le {q : ℝ} (hq0 : 0 ≤ q) (hq : q ≤ 1 / 
     nlinarith
   rw [h]
   nlinarith
+
+/-- **Maximal inequality for Lipschitz families, summed form.** Under the hypotheses of
+`measureReal_exists_abs_empiricalProcess_sub_gt_le`, if `q = 2ᵈ e^{-φ(A)} ≤ 1/2` then the
+probability of the oscillation event is at most `4 q`. -/
+theorem measureReal_exists_abs_empiricalProcess_sub_gt_le_four_mul {Ω X : Type*}
+    [MeasurableSpace Ω] [MeasurableSpace X] (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (P : Measure X) [IsProbabilityMeasure P] (Xn : ℕ → Ω → X)
+    (hiid : IsIndependentIdenticallyDistributed μ Xn P) {d : ℕ}
+    (f : EuclideanSpace ℝ (Fin d) → X → ℝ) (a : EuclideanSpace ℝ (Fin d)) {w : ℝ}
+    (hw : 0 < w) (hfm : ∀ θ ∈ halfOpenCube a w, Measurable (f θ))
+    (hfi : ∀ θ ∈ halfOpenCube a w, Integrable (f θ) P)
+    (L : X → ℝ) (hLm : Measurable L) (hL0 : ∀ x, 0 ≤ L x) (hL2 : MemLp L 2 P)
+    (hlip : ∀ u ∈ halfOpenCube a w, ∀ v ∈ halfOpenCube a w, ∀ x,
+      |f u x - f v x| ≤ L x * ‖u - v‖)
+    {ε : ℝ} (hε : 0 < ε) {n : ℕ} (hn : 0 < n) {A : ℝ} (hA : 0 ≤ A)
+    (hq : 2 ^ d * Real.exp (-bernsteinExponent (∫ x, L x ^ 2 ∂P + 1) (2 * ε / 3) A) ≤ 1 / 2) :
+    μ.real {ω | ∃ θ ∈ halfOpenCube a w,
+      Real.sqrt d * w * (2 * A + lipschitzChainRemainder P Xn L ε n ω) <
+        |empiricalProcess P Xn n (f θ) ω - empiricalProcess P Xn n (f a) ω|} ≤
+      4 * (2 ^ d * Real.exp (-bernsteinExponent (∫ x, L x ^ 2 ∂P + 1) (2 * ε / 3) A)) :=
+  (measureReal_exists_abs_empiricalProcess_sub_gt_le μ P Xn hiid f a hw hfm hfi L hLm hL0 hL2
+    hlip hε hn hA).trans (two_mul_sum_range_pow_succ_le (by positivity) hq n)
 
 /-- Scaling a half-open cube: if `h ∈ ∏ [uᵢ, uᵢ + w)` and `c > 0`, then
 `θ₀ + c h ∈ ∏ [θ₀ᵢ + c uᵢ, θ₀ᵢ + c uᵢ + c w)`. -/

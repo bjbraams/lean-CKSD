@@ -95,7 +95,7 @@ theorem measureReal_sum_blockSample_ge_le (Q : Measure X) [IsProbabilityMeasure 
   set c := ∫ z, g z ∂(Measure.pi fun _ : Fin k ↦ Q)
   have hmean : ∀ j, μ[fun ω ↦ g (blockSample k j ω)] = c := by
     intro j
-    change ∫ ω, g (blockSample k j ω) ∂μ = ∫ z, g z ∂(Measure.pi fun _ : Fin k ↦ Q)
+    simp only [c]
     rw [← infinitePi_map_blockSample Q k j, integral_map (by fun_prop) hg.aestronglyMeasurable]
   have hind : iIndepFun (fun j ω ↦ g (blockSample k j ω) - c) μ :=
     (iIndepFun_blockSample Q k).comp (fun _ z ↦ g z - c) (fun _ ↦ hg.sub_const _)
@@ -204,7 +204,6 @@ theorem exists_exponentiallyConsistent_tests {Θ : Type*} (P : Θ → Measure X)
   constructor
   · have hl := hlaw θ₀ id measurable_id
     simp only [id] at hl
-    show (∫ x, (E n).indicator 1 (ext n x) ∂(Measure.pi fun _ : Fin n ↦ P θ₀)) ≤ _
     rw [hl, integral_indicator_one (hE n)]
     refine le_trans ?_ (le_trans (measureReal_sum_blockSample_ge_le (P θ₀) k m (hφ k).1
       (a := 0) (fun z ↦ by simpa using (hφ k).2 z)) hexp)
@@ -214,7 +213,6 @@ theorem exists_exponentiallyConsistent_tests {Θ : Type*} (P : Θ → Measure X)
     nlinarith
   · intro θ hθ
     have hl := hlaw θ (fun t ↦ 1 - t) (measurable_const.sub measurable_id)
-    show (∫ x, 1 - (E n).indicator 1 (ext n x) ∂(Measure.pi fun _ : Fin n ↦ P θ)) ≤ _
     rw [hl]
     have hb : 3 / 4 ≤ ∫ z, φ k z ∂(Measure.pi fun _ : Fin k ↦ P θ) := by
       have := hkA θ hθ

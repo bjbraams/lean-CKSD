@@ -408,7 +408,6 @@ private theorem sum_dist_blockEstimate_sq_le (h : s * m ≤ p) (a : ℝ)
     have := (blockIndex_inj h).mp hq
     exact Prod.ext this.1 this.2
   set g : Fin p → ℝ := fun i ↦ (T (WithLp.toLp 2 x) i - blockMean h a J i) ^ 2 with hg
-  change ∑ b, ∑ j, g (blockIndex h b j) ≤ ∑ i, g i
   calc ∑ b, ∑ j, g (blockIndex h b j) = ∑ q : Fin s × Fin m, g (blockIndex h q.1 q.2) :=
         (Fintype.sum_prod_type (fun q : Fin s × Fin m ↦ g (blockIndex h q.1 q.2))).symm
     _ = ∑ i ∈ Finset.univ.image (fun q : Fin s × Fin m ↦ blockIndex h q.1 q.2), g i :=

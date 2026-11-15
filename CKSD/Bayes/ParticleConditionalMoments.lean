@@ -23,9 +23,10 @@ theorem measurable_particle_sampling_error
     (M : FeynmanKacModel X) {N : ℕ} (ξ : ℕ → Ω → Fin N → X)
     (hξ : ∀ n, Measurable (ξ n)) (n : ℕ) {f : X → ℝ} (hf : Measurable f)
     {B : ℝ} (hfb : ∀ y, |f y| ≤ B) :
-    Measurable (fun ω ↦ (∑ i,f (ξ n ω i))/(N:ℝ)-M.pathPredMean (fun q ↦ ξ q ω) n f) := by
+    Measurable (fun ω ↦ (∑ i, f (ξ n ω i)) / (N : ℝ) - M.pathPredMean (fun q ↦ ξ q ω) n f) := by
   have hpath : Measurable (fun ω (q : ℕ) ↦ ξ q ω) := measurable_pi_iff.2 hξ
-  exact ((Finset.measurable_fun_sum _ fun i _ ↦ hf.comp ((measurable_pi_apply i).comp (hξ n))).div_const _).sub
+  exact ((Finset.measurable_fun_sum _ fun i _ ↦ hf.comp
+      ((measurable_pi_apply i).comp (hξ n))).div_const _).sub
     ((M.measurable_pathPredMean n hf hfb).comp hpath)
 
 /-- Local sampling errors are bounded independently of the particle path. -/
@@ -33,7 +34,7 @@ theorem abs_particle_sampling_error_le
     {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X) {N : ℕ} (hN : 0 < N)
     (x : ℕ → Fin N → X) (n : ℕ) {f : X → ℝ}
     {B : ℝ} (hfb : ∀ y, |f y| ≤ B) :
-    |(∑ i,f (x n i))/(N:ℝ)-M.pathPredMean x n f| ≤ 2*B := by
+    |(∑ i, f (x n i)) / (N : ℝ) - M.pathPredMean x n f| ≤ 2 * B := by
   have := M.isProbabilityMeasure_pathPredictionLaw hN x n
   have hp : |M.pathPredMean x n f| ≤ B := by
     rw [← M.integral_pathPredictionLaw x n f]
@@ -48,47 +49,51 @@ theorem lpNorm_particle_sampling_error_le
     {p : ℝ} (hp : 1 ≤ p) {f : X → ℝ} (hf : Measurable f) {B L : ℝ}
     (hfb : ∀ y, |f y| ≤ B) (hL : 0 ≤ L)
     (hlocal : ∀ (ν : Measure X), IsProbabilityMeasure ν →
-      lpNorm (fun z : Fin N → X ↦ (∑ i,f (z i))/(N:ℝ)-∫ x,f x ∂ν)
+      lpNorm (fun z : Fin N → X ↦ (∑ i, f (z i)) / (N : ℝ) - ∫ x, f x ∂ν)
         (ENNReal.ofReal p) (Measure.pi (fun _ : Fin N ↦ ν)) ≤ L)
     (n : ℕ) :
-    lpNorm (fun ω ↦ (∑ i,f (ξ n ω i))/(N:ℝ)-M.pathPredMean (fun q ↦ ξ q ω) n f)
+    lpNorm (fun ω ↦ (∑ i, f (ξ n ω i)) / (N : ℝ) - M.pathPredMean (fun q ↦ ξ q ω) n f)
       (ENNReal.ofReal p) P ≤ L := by
   have hp0 : 0 < p := lt_of_lt_of_le zero_lt_one hp
   have hpow (ν : Measure X) (hν : IsProbabilityMeasure ν) :
-      (∫ z : Fin N → X, |(∑ i,f (z i))/(N:ℝ)-∫ x,f x ∂ν|^p
-        ∂Measure.pi (fun _ : Fin N ↦ ν)) ≤ L^p := by
+      (∫ z : Fin N → X, |(∑ i, f (z i)) / (N : ℝ) - ∫ x, f x ∂ν| ^ p
+        ∂Measure.pi (fun _ : Fin N ↦ ν)) ≤ L ^ p := by
     let _ := hν
-    have hm : Measurable (fun z : Fin N → X ↦ (∑ i,f (z i))/(N:ℝ)-∫ x,f x ∂ν) :=
-      ((Finset.measurable_fun_sum _ fun i _ ↦ hf.comp (measurable_pi_apply i)).div_const _).sub measurable_const
+    have hm : Measurable (fun z : Fin N → X ↦ (∑ i, f (z i)) / (N : ℝ) - ∫ x, f x ∂ν) :=
+      ((Finset.measurable_fun_sum _ fun i _ ↦
+        hf.comp (measurable_pi_apply i)).div_const _).sub measurable_const
     have h := Real.rpow_le_rpow (lpNorm_nonneg (f := fun z : Fin N → X ↦
-      (∑ i,f (z i))/(N:ℝ)-∫ x,f x ∂ν) (p := ENNReal.ofReal p) (μ := Measure.pi (fun _ : Fin N ↦ ν)))
+      (∑ i, f (z i)) / (N : ℝ) - ∫ x, f x ∂ν) (p := ENNReal.ofReal p)
+        (μ := Measure.pi (fun _ : Fin N ↦ ν)))
       (hlocal ν hν) hp0.le
     rw [lpNorm_ofReal_eq_integral_abs_rpow _ hp0 hm.aestronglyMeasurable,
       ← Real.rpow_mul (integral_nonneg fun _ ↦ Real.rpow_nonneg (abs_nonneg _) _),
-      one_div,inv_mul_cancel₀ hp0.ne',Real.rpow_one] at h
+      one_div, inv_mul_cancel₀ hp0.ne', Real.rpow_one] at h
     exact h
-  have hmoment : (∫ ω, |(∑ i,f (ξ n ω i))/(N:ℝ)-
-      M.pathPredMean (fun q ↦ ξ q ω) n f|^p ∂P) ≤ L^p := by
+  have hmoment : (∫ ω, |(∑ i, f (ξ n ω i)) / (N : ℝ) -
+      M.pathPredMean (fun q ↦ ξ q ω) n f| ^ p ∂P) ≤ L ^ p := by
     cases n with
     | zero =>
-      have hm : Measurable (fun z : Fin N → X ↦ |(∑ i,f (z i))/(N:ℝ)-∫ x,f x ∂(M.initial : Measure X)|^p) := by
+      have hm : Measurable (fun z : Fin N → X ↦
+          |(∑ i, f (z i)) / (N : ℝ) - ∫ x, f x ∂(M.initial : Measure X)| ^ p) := by
         fun_prop
-      change (∫ ω, |(∑ i,f (ξ 0 ω i))/(N:ℝ)-∫ x,f x ∂(M.initial : Measure X)|^p ∂P) ≤ _
-      rw [← integral_map (hξ.1 0).aemeasurable hm.aestronglyMeasurable,hξ.2.1]
+      -- `change` exposes the integrand as a function of `ξ 0` for `integral_map`.
+      change (∫ ω, |(∑ i, f (ξ 0 ω i)) / (N : ℝ) - ∫ x, f x ∂(M.initial : Measure X)| ^ p ∂P) ≤ _
+      rw [← integral_map (hξ.1 0).aemeasurable hm.aestronglyMeasurable, hξ.2.1]
       exact hpow M.initial inferInstance
     | succ n =>
-      let c : (Fin N → X) → ℝ := fun x ↦ ∫ y,f y ∂M.particlePredictionLaw n x
+      let c : (Fin N → X) → ℝ := fun x ↦ ∫ y, f y ∂M.particlePredictionLaw n x
       have hcm : Measurable c := M.measurable_integral_particlePredictionLaw n hf hfb
-      let H : (Fin (n+1) → Fin N → X) × (Fin N → X) → ℝ :=
-        fun z ↦ |(∑ i,f (z.2 i))/(N:ℝ)-c (z.1 (Fin.last n))|^p
+      let H : (Fin (n + 1) → Fin N → X) × (Fin N → X) → ℝ :=
+        fun z ↦ |(∑ i, f (z.2 i)) / (N : ℝ) - c (z.1 (Fin.last n))| ^ p
       have hHm : Measurable H := by
-        have hs : Measurable (fun z : (Fin (n+1) → Fin N → X) × (Fin N → X) ↦
-            (∑ i,f (z.2 i))/(N:ℝ)) :=
+        have hs : Measurable (fun z : (Fin (n + 1) → Fin N → X) × (Fin N → X) ↦
+            (∑ i, f (z.2 i)) / (N : ℝ)) :=
           (Finset.measurable_fun_sum _ fun i _ ↦
             hf.comp ((measurable_pi_apply i).comp measurable_snd)).div_const _
         exact (continuous_abs.measurable.comp
           (hs.sub (hcm.comp ((measurable_pi_apply _).comp measurable_fst)))).pow_const p
-      have hHb (z : (Fin (n+1) → Fin N → X) × (Fin N → X)) : |H z| ≤ (2*B)^p := by
+      have hHb (z : (Fin (n + 1) → Fin N → X) × (Fin N → X)) : |H z| ≤ (2 * B) ^ p := by
         have := M.isProbabilityMeasure_particlePredictionLaw hN n (z.1 (Fin.last n))
         have hcp : |c (z.1 (Fin.last n))| ≤ B := abs_integral_le_of_abs_le hfb
         dsimp only [H]
@@ -97,22 +102,24 @@ theorem lpNorm_particle_sampling_error_le
           ((abs_sub _ _).trans (by linarith [abs_sum_div_le hN fun i ↦ hfb (z.2 i)])) hp0.le
       have hInt := integral_bootstrap_succ P M N ξ hξ n H hHm.stronglyMeasurable
         fun z ↦ (Real.norm_eq_abs _).trans_le (hHb z)
-      change (∫ ω, H ((fun i : Fin (n+1) ↦ ξ i ω),ξ (n+1) ω) ∂P) ≤ _
+      -- `change` exposes the integrand as `H` of the path and next generation.
+      change (∫ ω, H ((fun i : Fin (n + 1) ↦ ξ i ω), ξ (n + 1) ω) ∂P) ≤ _
       rw [hInt]
       calc
-        (∫ ω, ∫ z, H ((fun i : Fin (n+1) ↦ ξ i ω),z)
-          ∂Measure.pi (fun _ : Fin N ↦ M.particlePredictionLaw n (ξ n ω)) ∂P) ≤ (∫ _ : Ω,L^p ∂P) := by
+        (∫ ω, ∫ z, H ((fun i : Fin (n + 1) ↦ ξ i ω), z)
+          ∂Measure.pi (fun _ : Fin N ↦ M.particlePredictionLaw n (ξ n ω)) ∂P) ≤
+              (∫ _ : Ω, L ^ p ∂P) := by
           apply integral_mono_of_nonneg
             (ae_of_all _ fun ω ↦ integral_nonneg fun z ↦ Real.rpow_nonneg (abs_nonneg _) _)
             (integrable_const _)
           exact ae_of_all _ fun ω ↦ hpow (M.particlePredictionLaw n (ξ n ω))
             (M.isProbabilityMeasure_particlePredictionLaw hN n (ξ n ω))
-        _ = L^p := by simp
+        _ = L ^ p := by simp
   rw [lpNorm_ofReal_eq_integral_abs_rpow P hp0
     (measurable_particle_sampling_error M ξ hξ.1 n hf hfb).aestronglyMeasurable]
   have h := Real.rpow_le_rpow (integral_nonneg fun _ ↦ Real.rpow_nonneg (abs_nonneg _) _) hmoment
-    (by positivity : 0 ≤ 1/p)
-  rw [← Real.rpow_mul hL,one_div,mul_inv_cancel₀ hp0.ne',Real.rpow_one] at h
+    (by positivity : 0 ≤ 1 / p)
+  rw [← Real.rpow_mul hL, one_div, mul_inv_cancel₀ hp0.ne', Real.rpow_one] at h
   simpa only [one_div] using h
 
 end CKSD

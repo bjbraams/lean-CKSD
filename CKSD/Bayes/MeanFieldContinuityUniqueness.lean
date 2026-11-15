@@ -63,7 +63,8 @@ theorem integral_eq_of_isContinuityEquation_of_bounded_lipschitz
           (μ := (κ t : Measure E)) (ae_of_all _ fun x ↦ hres t ⟨ht.1.le, ht.2⟩ x)
     have hm := hbound μ hμ hμp hμce
     have hn := hbound ν hν hνp hνce
-    have heq0 : (∫ x, u (0, x) ∂(μ 0 : Measure E)) = ∫ x, u (0, x) ∂(ν 0 : Measure E) := by rw [hinit]
+    have heq0 : (∫ x, u (0, x) ∂(μ 0 : Measure E)) = ∫ x, u (0, x) ∂(ν 0 : Measure E) := by
+      rw [hinit]
     calc
       _ = ‖((∫ x, g x ∂(μ T : Measure E)) - ∫ x, u (0, x) ∂(μ 0 : Measure E)) -
           ((∫ x, g x ∂(ν T : Measure E)) - ∫ x, u (0, x) ∂(ν 0 : Measure E))‖ := by
@@ -118,24 +119,21 @@ theorem eq_of_isContinuityEquation_of_bounded_lipschitz
     μ ν hμ hν hμp hνp hμce hνce hinit (fun x ↦ Real.sin (ℓ x))
     (Real.contDiff_sin.comp ℓ.contDiff) (Real.lipschitzWith_sin.comp ℓ.lipschitzWith)
     1 (fun x ↦ by simpa only [Real.norm_eq_abs] using Real.abs_sin_le_one (ℓ x))
-  have hint (κ : FiniteMeasure H) : Integrable (fun x : H ↦ Complex.exp (inner ℝ x z * Complex.I)) (κ : Measure H) := by
+  have hint (κ : FiniteMeasure H) :
+      Integrable (fun x : H ↦ Complex.exp (inner ℝ x z * Complex.I)) (κ : Measure H) := by
     apply Integrable.of_bound (by fun_prop) 1
     exact ae_of_all _ fun x ↦ by simp
   rw [charFun_apply, charFun_apply]
   apply Complex.ext
-  · change RCLike.re (∫ x : H, Complex.exp (inner ℝ x z * Complex.I) ∂(μ T : Measure H)) =
-      RCLike.re (∫ x : H, Complex.exp (inner ℝ x z * Complex.I) ∂(ν T : Measure H))
-    rw [← integral_re (hint (μ T)), ← integral_re (hint (ν T))]
+  · rw [← RCLike.re_to_complex, ← RCLike.re_to_complex, ← integral_re (hint (μ T)),
+      ← integral_re (hint (ν T))]
     have heqRe (x : H) : RCLike.re (Complex.exp (inner ℝ x z * Complex.I)) = Real.cos (ℓ x) := by
-      change (Complex.exp (inner ℝ x z * Complex.I)).re = Real.cos (ℓ x)
       simp [Complex.exp_re, ℓ, real_inner_comm]
     simp_rw [heqRe]
     exact hc
-  · change RCLike.im (∫ x : H, Complex.exp (inner ℝ x z * Complex.I) ∂(μ T : Measure H)) =
-      RCLike.im (∫ x : H, Complex.exp (inner ℝ x z * Complex.I) ∂(ν T : Measure H))
-    rw [← integral_im (hint (μ T)), ← integral_im (hint (ν T))]
+  · rw [← RCLike.im_to_complex, ← RCLike.im_to_complex, ← integral_im (hint (μ T)),
+      ← integral_im (hint (ν T))]
     have heqIm (x : H) : RCLike.im (Complex.exp (inner ℝ x z * Complex.I)) = Real.sin (ℓ x) := by
-      change (Complex.exp (inner ℝ x z * Complex.I)).im = Real.sin (ℓ x)
       simp [Complex.exp_im, ℓ, real_inner_comm]
     simp_rw [heqIm]
     exact hs

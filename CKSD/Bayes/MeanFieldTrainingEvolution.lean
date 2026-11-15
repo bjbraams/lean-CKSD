@@ -25,14 +25,15 @@ open scoped NNReal ENNReal Topology
 namespace CKSD
 variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
-/-- Bounded continuous characteristics with their own marginal drift are nonlinear integral solutions. -/
+/-- Bounded continuous characteristics with their own marginal drift are nonlinear integral
+solutions. -/
 theorem isMcKeanVlasovSolution_of_bounded_characteristics
     (P : Measure E) [IsProbabilityMeasure P] (hi : Integrable (fun x ↦ ‖x‖) P)
     (b : E → Measure E → E) (v : ℝ × E → E) (hv : Continuous v)
     (M : ℝ≥0) (hM : ∀ q, ‖v q‖₊ ≤ M)
     (γ : E → ℝ → E) (hγ : Continuous (uncurry γ)) (hγ0 : ∀ x, γ x 0 = x)
     (hγd : ∀ x t, HasDerivAt (γ x) (v (t, γ x t)) t)
-    (heq : ∀ t ≥ 0, ∀ x, v (t,x) = b x (P.map (fun z ↦ γ z t))) :
+    (heq : ∀ t ≥ 0, ∀ x, v (t, x) = b x (P.map (fun z ↦ γ z t))) :
     IsMcKeanVlasovSolution b id (fun _ _ ↦ 0) (fun t x ↦ γ x t) P := by
   have hm (t : ℝ) : Measurable (fun x ↦ γ x t) :=
     (hγ.comp (continuous_id.prodMk continuous_const)).measurable
@@ -52,16 +53,16 @@ theorem isMcKeanVlasovSolution_of_bounded_characteristics
       exact (norm_le_norm_add_norm_sub x (γ x t)).trans
         (add_le_add le_rfl (by simpa only [norm_sub_rev] using hh))
   · intro t ht
-    have hvc : Continuous (fun s ↦ v (s,γ x s)) := hv.comp (continuous_id.prodMk (hc x))
+    have hvc : Continuous (fun s ↦ v (s, γ x s)) := hv.comp (continuous_id.prodMk (hc x))
     have hf := intervalIntegral.integral_eq_sub_of_hasDerivAt
       (fun s _ ↦ hγd x s) (hvc.intervalIntegrable 0 t)
-    have he : (∫ s in (0 : ℝ)..t, v (s,γ x s)) =
+    have he : (∫ s in (0 : ℝ)..t, v (s, γ x s)) =
         ∫ s in (0 : ℝ)..t, b (γ x s) (P.map (fun z ↦ γ z s)) := by
       apply intervalIntegral.integral_congr
       intro s hs
       exact heq s (by simpa only [min_eq_left ht] using hs.1) _
     rw [he, hγ0] at hf
-    change γ x t = x + _ + 0
+    dsimp only [id]
     rw [hf]
     abel
 
@@ -72,19 +73,20 @@ theorem IsMcKeanVlasovSolution.ae_eq_characteristics
     (v : ℝ × E → E) {K : ℝ≥0} (hv : LipschitzWith K v)
     (γ : E → ℝ → E) (hγ : Continuous (uncurry γ)) (hγ0 : ∀ x, γ x 0 = x)
     (hγd : ∀ x t, HasDerivAt (γ x) (v (t, γ x t)) t)
-    (heq : ∀ t ≥ 0, ∀ x, v (t,x) = b x (P.map (Y t))) :
+    (heq : ∀ t ≥ 0, ∀ x, v (t, x) = b x (P.map (Y t))) :
     ∀ᵐ x ∂P, ∀ t ≥ 0, Y t x = γ x t := by
   filter_upwards [hY.2.2] with x hx
   have hgc : Continuous (γ x) := hγ.comp (continuous_const.prodMk continuous_id)
   have hcY := hv.continuous.comp (continuous_id.prodMk hx.1)
   have hcγ := hv.continuous.comp (continuous_id.prodMk hgc)
   intro t ht
-  have hLip (s : ℝ) (_hs : s ∈ Icc (0 : ℝ) t) : LipschitzWith K (fun z ↦ v (s,z)) := by
-    simpa only [zero_le_one, max_eq_right, mul_one, Function.comp_def, id_eq] using hv.comp ((LipschitzWith.const s).prodMk LipschitzWith.id)
-  have hbound := norm_sub_le_of_spatially_lipschitz_integral_eq (fun s z ↦ v (s,z)) K ht
+  have hLip (s : ℝ) (_hs : s ∈ Icc (0 : ℝ) t) : LipschitzWith K (fun z ↦ v (s, z)) := by
+    simpa only [zero_le_one, max_eq_right, mul_one, Function.comp_def, id_eq] using
+      hv.comp ((LipschitzWith.const s).prodMk LipschitzWith.id)
+  have hbound := norm_sub_le_of_spatially_lipschitz_integral_eq (fun s z ↦ v (s, z)) K ht
     (T := t) (R := 0) le_rfl hLip (fun s ↦ Y s x) (γ x) (fun _ ↦ x) (fun _ ↦ x)
     hx.1 hgc hcY.aestronglyMeasurable hcγ.aestronglyMeasurable
-    (fun _ _ ↦ by simp) ?_ ?_ t ⟨ht,le_rfl⟩
+    (fun _ _ ↦ by simp) ?_ ?_ t ⟨ht, le_rfl⟩
   · have hz : ‖Y t x - γ x t‖ = 0 := le_antisymm (by simpa using hbound) (norm_nonneg _)
     exact sub_eq_zero.mp (norm_eq_zero.mp hz)
   · intro r hr
@@ -99,7 +101,8 @@ theorem IsMcKeanVlasovSolution.ae_eq_characteristics
     rw [hγ0] at hf
     rw [hf]
     abel
-/-- Narrowly continuous probability solutions of a nonlinear continuity equation on nonnegative time. -/
+/-- Narrowly continuous probability solutions of a nonlinear continuity equation on nonnegative
+time. -/
 def IsNonlinearContinuitySolution (b : E → Measure E → E) (P : Measure E)
     (ρ : ℝ → Measure E) : Prop :=
   (∀ t ≥ 0, IsProbabilityMeasure (ρ t)) ∧ ρ 0 = P ∧
@@ -117,36 +120,37 @@ theorem exists_unique_nonlinear_continuity_solution_of_bound
       IsNonlinearContinuitySolution b P ρ ∧
       (∀ σ, IsNonlinearContinuitySolution b P σ → ∀ t ≥ 0, σ t = ρ t) ∧
       LipschitzWith K v ∧ (∀ q, ‖v q‖₊ ≤ M) ∧ Continuous (uncurry γ) ∧
-      (∀ x, γ x 0 = x) ∧ (∀ x t, HasDerivAt (γ x) (v (t,γ x t)) t) ∧
+      (∀ x, γ x 0 = x) ∧ (∀ x t, HasDerivAt (γ x) (v (t, γ x t)) t) ∧
       (∀ t ≥ 0, ρ t = P.map (fun x ↦ γ x t)) ∧
-      (∀ t ≥ 0, ∀ x, v (t,x) = b x (ρ t)) := by
+      (∀ t ≥ 0, ∀ x, v (t, x) = b x (ρ t)) := by
   have hid : Integrable (id : E → E) P := (integrable_norm_iff aestronglyMeasurable_id).1 hi
-  obtain ⟨Y,hY⟩ := exists_mcKeanVlasovSolution_zero_forcing P b hb id measurable_id hid
+  obtain ⟨Y, hY⟩ := exists_mcKeanVlasovSolution_zero_forcing P b hb id measurable_id hid
   let μ : ℝ → Measure E := fun t ↦ P.map (Y t)
   have hμp (t : ℝ) (_ht : 0 ≤ t) : IsProbabilityMeasure (μ t) := inferInstance
   have hμi (t : ℝ) (ht : 0 ≤ t) : Integrable (fun x ↦ ‖x‖) (μ t) :=
-    (integrable_map_measure continuous_norm.aestronglyMeasurable (hY.1 t).aemeasurable).2 (hY.2.1 t ht)
+    (integrable_map_measure continuous_norm.aestronglyMeasurable (hY.1 t).aemeasurable).2
+      (hY.2.1 t ht)
   let v : ℝ × E → E := fun q ↦ b q.2 (μ (max 0 q.1))
   have hv := hb.lipschitzWith_nonneg_marginalDrift_of_wasserstein_bound b hL μ hμp hμi
     M M.coe_nonneg (fun s hs t ht ↦
       hY.wassersteinEDist_toReal_le_of_zero_forcing_of_bound P b hb id Y M hM s hs t ht)
   have hvM (q : ℝ × E) : ‖v q‖₊ ≤ M := by
     exact_mod_cast hM (μ (max 0 q.1)) inferInstance q.2
-  obtain ⟨γ,hγ,hγ0,hγd,hγce,hγc,_⟩ :=
+  obtain ⟨γ, hγ, hγ0, hγd, hγce, hγc, _⟩ :=
     exists_flow_representation_of_bounded_lipschitz v hv hvM P
-  have hvμ (t : ℝ) (ht : 0 ≤ t) (x : E) : v (t,x) = b x (μ t) := by
-    simp only [v,max_eq_right ht]
+  have hvμ (t : ℝ) (ht : 0 ≤ t) (x : E) : v (t, x) = b x (μ t) := by
+    simp only [v, max_eq_right ht]
   have hYγ := hY.ae_eq_characteristics P b Y v hv γ hγ hγ0 hγd hvμ
   have hμγ (t : ℝ) (ht : 0 ≤ t) : μ t = P.map (fun x ↦ γ x t) :=
     Measure.map_congr (hYγ.mono fun x hx ↦ hx t ht)
   let ρ : ℝ → Measure E := fun t ↦ P.map (fun x ↦ γ x (max 0 t))
   have hρlaw (t : ℝ) (ht : 0 ≤ t) : ρ t = P.map (fun x ↦ γ x t) := by
-    simp only [ρ,max_eq_right ht]
-  have hvρall (t : ℝ) (x : E) : v (t,x) = b x (ρ t) := by
-    change b x (μ (max 0 t)) = b x (P.map (fun z ↦ γ z (max 0 t)))
+    simp only [ρ, max_eq_right ht]
+  have hvρall (t : ℝ) (x : E) : v (t, x) = b x (ρ t) := by
+    simp only [v, ρ]
     rw [hμγ _ (le_max_left _ _)]
-  have hvγ (t : ℝ) (ht : 0 ≤ t) (x : E) : v (t,x) = b x (P.map (fun z ↦ γ z t)) := by
-    rw [hvμ t ht x,hμγ t ht]
+  have hvγ (t : ℝ) (ht : 0 ≤ t) (x : E) : v (t, x) = b x (P.map (fun z ↦ γ z t)) := by
+    rw [hvμ t ht x, hμγ t ht]
   have hγMV := isMcKeanVlasovSolution_of_bounded_characteristics P hi b v hv.continuous M hvM
     γ hγ hγ0 hγd hvγ
   have hρm : Measurable ρ :=
@@ -159,9 +163,9 @@ theorem exists_unique_nonlinear_continuity_solution_of_bound
   have hρc (g : BoundedContinuousFunction E ℝ) :
       Continuous (fun t ↦ ∫ x, g x ∂ρ t) :=
     (hγc g).comp (continuous_const.max continuous_id)
-  refine ⟨ρ,v,_,γ,⟨(fun _ _ ↦ inferInstance),?_,(fun g ↦ (hρc g).continuousOn),hρce⟩,
-    ?_,hv,hvM,hγ,hγ0,hγd,hρlaw,(fun t _ x ↦ hvρall t x)⟩
-  · simp only [ρ,max_self,hγ0,Measure.map_id']
+  refine ⟨ρ, v, _, γ, ⟨(fun _ _ ↦ inferInstance), ?_, (fun g ↦ (hρc g).continuousOn), hρce⟩,
+    ?_, hv, hvM, hγ, hγ0, hγd, hρlaw, (fun t _ x ↦ hvρall t x)⟩
+  · simp only [ρ, max_self, hγ0, Measure.map_id']
   · intro σ hσ t ht
     have hσi0 : Integrable (fun x ↦ ‖x‖) (σ 0) := by rw [hσ.2.1]; exact hi
     let w : ℝ × E → E := fun q ↦ b q.2 (σ (max 0 q.1))
@@ -169,21 +173,21 @@ theorem exists_unique_nonlinear_continuity_solution_of_bound
       hσi0 M M.coe_nonneg (fun t ht x ↦ hM (σ t) (hσ.1 t ht) x)
     have hwM (q : ℝ × E) : ‖w q‖₊ ≤ M := by
       exact_mod_cast hM (σ (max 0 q.1)) (hσ.1 _ (le_max_left _ _)) q.2
-    have hwσ (s : ℝ) (hs : 0 ≤ s) (x : E) : w (s,x) = b x (σ s) := by
-      simp only [w,max_eq_right hs]
+    have hwσ (s : ℝ) (hs : 0 ≤ s) (x : E) : w (s, x) = b x (σ s) := by
+      simp only [w, max_eq_right hs]
     have hσce (T : ℝ) (hT : 0 < T) :
-        TauCeti.IsContinuityEquation σ (fun s x ↦ w (s,x)) 0 T :=
+        TauCeti.IsContinuityEquation σ (fun s x ↦ w (s, x)) 0 T :=
       (hσ.2.2.2 T hT).congr hw.continuous.measurable
         (ae_of_all _ fun s hs ↦ ae_of_all _ fun x ↦ (hwσ s hs.1.le x).symm)
-    obtain ⟨η,hη,hη0,hηd,_,_,hησ⟩ :=
+    obtain ⟨η, hη, hη0, hηd, _, _, hησ⟩ :=
       exists_flow_representation_of_bounded_lipschitz w hw hwM P
     have hσlaw := hησ σ hσ.1 hσ.2.2.1 hσce hσ.2.1
-    have hwη (s : ℝ) (hs : 0 ≤ s) (x : E) : w (s,x) = b x (P.map (fun z ↦ η z s)) := by
-      rw [hwσ s hs x,hσlaw s hs]
+    have hwη (s : ℝ) (hs : 0 ≤ s) (x : E) : w (s, x) = b x (P.map (fun z ↦ η z s)) := by
+      rw [hwσ s hs x, hσlaw s hs]
     have hηMV := isMcKeanVlasovSolution_of_bounded_characteristics P hi b w hw.continuous M hwM
       η hη hη0 hηd hwη
     have he := hγMV.ae_eq_of_zero_forcing_of_bound P b hb id hid
       (fun t x ↦ γ x t) (fun t x ↦ η x t) hηMV M hM
-    rw [hσlaw t ht,hρlaw t ht]
+    rw [hσlaw t ht, hρlaw t ht]
     exact Measure.map_congr (he.mono fun x hx ↦ (hx t ht).symm)
 end CKSD

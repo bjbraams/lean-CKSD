@@ -262,6 +262,39 @@ theorem sq_bandwidth_rpow_eq {n : ℕ} (hn : 0 < n) {β c : ℝ} (hβ : 0 < β) 
   · push_cast; ring
   · push_cast; field_simp
 
+/-- Arithmetic of the variance term: if a window holds `N ≥ n min(h, 1) / 2` design points,
+where `h = c e`, `n e r = 1` and `1 / n ≤ r`, then `1 / N ≤ 2 (1 / c + 1) r`. -/
+theorem one_div_le_of_mul_min_le {n N c e r : ℝ} (hn : 0 < n) (hN : 0 < N) (hc : 0 < c)
+    (he : 0 < e) (hner : n * e * r = 1) (hrn : 1 / n ≤ r) (hNge : n * min (c * e) 1 / 2 ≤ N) :
+    1 / N ≤ 2 * (1 / c + 1) * r := by
+  have hh0 : 0 < c * e := mul_pos hc he
+  have h1 : 1 / N ≤ 2 / (n * min (c * e) 1) := by
+    rw [div_le_div_iff₀ hN (by positivity)]; linarith
+  have h2 : 1 / min (c * e) 1 ≤ 1 / (c * e) + 1 := by
+    rcases le_total (c * e) 1 with h' | h'
+    · rw [min_eq_left h']; linarith [one_pos (α := ℝ)]
+    · rw [min_eq_right h', div_one]; linarith [(one_div_pos.mpr hh0).le]
+  have h3 : 1 / (n * (c * e)) = r / c := by
+    field_simp; linarith [hner]
+  calc 1 / N ≤ 2 / (n * min (c * e) 1) := h1
+    _ = 2 * (1 / n) * (1 / min (c * e) 1) := by field_simp
+    _ ≤ 2 * (1 / n) * (1 / (c * e) + 1) := by gcongr
+    _ = 2 * (1 / (n * (c * e)) + 1 / n) := by field_simp
+    _ ≤ 2 * (r / c + r) := by rw [h3]; gcongr
+    _ = 2 * (1 / c + 1) * r := by ring
+
+/-- The box-kernel local-constant estimator is jointly measurable in the observations and the
+evaluation point. -/
+theorem measurable_fixedDesignLocalConstant {n : ℕ} (h : ℝ) :
+    Measurable (fun p : (Fin n → ℝ) × ℝ ↦ fixedDesignLocalConstant h p.1 p.2) := by
+  unfold fixedDesignLocalConstant
+  have hwm : ∀ i : Fin n, Measurable (fun p : (Fin n → ℝ) × ℝ ↦
+      if |p.2 - ((i.val + 1 : ℕ) : ℝ) / n| ≤ h then (1 : ℝ) else 0) := fun i ↦
+    Measurable.ite (measurableSet_le (continuous_abs.measurable.comp
+      (measurable_snd.sub_const _)) measurable_const) measurable_const measurable_const
+  exact (Finset.measurable_sum _ fun i _ ↦ (hwm i).mul
+    ((measurable_pi_apply i).comp measurable_fst)).div (Finset.measurable_sum _ fun i _ ↦ hwm i)
+
 /-- GAPS 103.22: a box-kernel local-constant estimator attains the `L²` rate for `0<β≤1`. -/
 theorem fixedDesignLocalConstant_risk_le (β L σ c : ℝ)
     (hβ : β ∈ Ioc (0 : ℝ) 1) (hL : 0 < L) (hσ : 0 < σ) (hc : 1 ≤ c) :
@@ -347,55 +380,27 @@ theorem fixedDesignLocalConstant_risk_le (β L σ c : ℝ)
     have ha0 : ∀ i, 0 ≤ a i := fun i ↦ by
       rcases hw01 i with h' | ⟨h', -⟩ <;> simp only [ha, h'] <;> positivity
     have hbias : |∑ i, a i * f (x i) - f t| ≤ L * h ^ β := by
-      have e1 : ∑ i, a i * f (x i) - f t = ∑ i, a i * (f (x i) - f t) := by
-        simp only [mul_sub, Finset.sum_sub_distrib, ← Finset.sum_mul, hsuma, one_mul]
-      rw [e1]
-      calc |∑ i, a i * (f (x i) - f t)| ≤ ∑ i, |a i * (f (x i) - f t)| :=
-            Finset.abs_sum_le_sum_abs _ _
-        _ ≤ ∑ i, a i * (L * h ^ β) := by
-            refine Finset.sum_le_sum fun i _ ↦ ?_
-            rw [abs_mul, abs_of_nonneg (ha0 i)]
-            rcases hw01 i with h' | ⟨-, hd⟩
-            · simp [ha, h']
-            · refine mul_le_mul_of_nonneg_left ?_ (ha0 i)
-              refine (hfh (x i) (hx01 i) t ht).trans ?_
-              refine mul_le_mul_of_nonneg_left ?_ hL.le
-              rw [abs_sub_comm]
-              exact Real.rpow_le_rpow (abs_nonneg _) hd hβ0.le
-        _ = L * h ^ β := by rw [← Finset.sum_mul, hsuma, one_mul]
+      refine abs_sum_mul_sub_le_of_sum_eq_one _ a (fun i ↦ f (x i)) (f t) _
+        (fun i _ ↦ ha0 i) hsuma fun i _ hai ↦ ?_
+      rcases hw01 i with h' | ⟨-, hd⟩
+      · simp [ha, h'] at hai
+      · refine (hfh (x i) (hx01 i) t ht).trans ?_
+        refine mul_le_mul_of_nonneg_left ?_ hL.le
+        rw [abs_sub_comm]
+        exact Real.rpow_le_rpow (abs_nonneg _) hd hβ0.le
     have hb2 : (∑ i, a i * f (x i) - f t) ^ 2 ≤ L ^ 2 * c ^ (2 * β) * r := by
       rw [← sq_abs]
       calc |∑ i, a i * f (x i) - f t| ^ 2 ≤ (L * h ^ β) ^ 2 :=
             pow_le_pow_left₀ (abs_nonneg _) hbias 2
         _ = L ^ 2 * c ^ (2 * β) * r := by rw [mul_pow, hpow]; ring
-    have hinvN : 1 / N ≤ 2 * (1 / c + 1) * r := by
-      have h1 : 1 / N ≤ 2 / ((n : ℝ) * min h 1) := by
-        rw [div_le_div_iff₀ hNpos (by positivity)]; linarith
-      have h2 : 1 / min h 1 ≤ 1 / h + 1 := by
-        rcases le_total h 1 with h' | h'
-        · rw [min_eq_left h']; linarith [one_pos (α := ℝ)]
-        · rw [min_eq_right h', div_one]; linarith [(one_div_pos.mpr hh0).le]
-      have h3 : 1 / ((n : ℝ) * h) = r / c := by
-        rw [hh]; field_simp; linarith [hner]
-      calc 1 / N ≤ 2 / ((n : ℝ) * min h 1) := h1
-        _ = 2 * (1 / n) * (1 / min h 1) := by field_simp
-        _ ≤ 2 * (1 / n) * (1 / h + 1) := by gcongr
-        _ = 2 * (1 / ((n : ℝ) * h) + 1 / n) := by field_simp
-        _ ≤ 2 * (r / c + r) := by rw [h3]; gcongr
-        _ = 2 * (1 / c + 1) * r := by ring
+    have hinvN : 1 / N ≤ 2 * (1 / c + 1) * r :=
+      one_div_le_of_mul_min_le hnR hNpos hc0 he0 hner hrn hNge
     rw [hsuma2]
     have hσ2 : σ ^ 2 * (1 / N) ≤ σ ^ 2 * (2 * (1 / c + 1) * r) :=
       mul_le_mul_of_nonneg_left hinvN (sq_nonneg σ)
     rw [hBd]
     nlinarith
-  have hmeasT : Measurable (fun p : (Fin n → ℝ) × ℝ ↦ fixedDesignLocalConstant h p.1 p.2) := by
-    unfold fixedDesignLocalConstant
-    have hwm : ∀ i : Fin n, Measurable (fun p : (Fin n → ℝ) × ℝ ↦
-        if |p.2 - ((i.val + 1 : ℕ) : ℝ) / n| ≤ h then (1 : ℝ) else 0) := fun i ↦
-      Measurable.ite (measurableSet_le (continuous_abs.measurable.comp
-        (measurable_snd.sub_const _)) measurable_const) measurable_const measurable_const
-    exact (Finset.measurable_sum _ fun i _ ↦ (hwm i).mul
-      ((measurable_pi_apply i).comp measurable_fst)).div (Finset.measurable_sum _ fun i _ ↦ hwm i)
+  have hmeasT := measurable_fixedDesignLocalConstant (n := n) h
   have : IsProbabilityMeasure (fixedDesignRegressionLaw n f σ) := by
     unfold fixedDesignRegressionLaw; infer_instance
   unfold fixedDesignRegressionRisk

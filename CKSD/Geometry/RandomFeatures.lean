@@ -88,7 +88,8 @@ theorem randomFourierFeatureTerm_mem_Icc {d : ℕ} (x y : EuclideanSpace ℝ (Fi
 theorem integral_randomFourierFeatureTerm {d : ℕ}
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
     (x y : EuclideanSpace ℝ (Fin d)) :
-    ∫ s, randomFourierFeatureTerm x y s ∂L.prod uniformPhase = ∫ w, Real.cos (inner ℝ w (x - y)) ∂L := by
+    ∫ s, randomFourierFeatureTerm x y s ∂L.prod uniformPhase =
+      ∫ w, Real.cos (inner ℝ w (x - y)) ∂L := by
   have hint : Integrable (randomFourierFeatureTerm x y) (L.prod uniformPhase) := by
     refine Integrable.of_bound (C := 2)
       (continuous_randomFourierFeatureTerm x y).measurable.aestronglyMeasurable
@@ -157,7 +158,8 @@ independent sample of frequencies `w_j ∼ L` and uniform phases `b_j ∈ [0, 2�
 theorem integral_randomFourierFeatureKernel {d : ℕ} (D : ℕ) (hD : 1 ≤ D)
     (L : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure L]
     (x y : EuclideanSpace ℝ (Fin d)) :
-    ∫ sample, randomFourierFeatureKernel sample x y ∂(Measure.pi fun _ : Fin D ↦ L.prod uniformPhase) =
+    ∫ sample, randomFourierFeatureKernel sample x y
+        ∂(Measure.pi fun _ : Fin D ↦ L.prod uniformPhase) =
       ∫ w, Real.cos (inner ℝ w (x - y)) ∂L := by
   have hmeas : Measurable (randomFourierFeatureTerm x y) :=
     (continuous_randomFourierFeatureTerm x y).measurable
@@ -212,7 +214,8 @@ theorem measureReal_abs_randomFourierFeatureKernel_sub_ge_le {d : ℕ} (D : ℕ)
     congr 1; ring
   have hup := measureReal_pi_sum_sub_integral_ge_le D (L.prod uniformPhase) hmeas
     (randomFourierFeatureTerm_mem_Icc x y) he
-  have hlo := measureReal_pi_sum_sub_integral_ge_le D (L.prod uniformPhase) hmeas.neg (a := -2) (b := 2)
+  have hlo := measureReal_pi_sum_sub_integral_ge_le D (L.prod uniformPhase) hmeas.neg
+    (a := -2) (b := 2)
     (fun s ↦ by
       have := randomFourierFeatureTerm_mem_Icc x y s
       exact ⟨by simp only [Pi.neg_apply]; linarith [this.2],
@@ -401,6 +404,7 @@ private theorem exists_finset_cover_card_sq_le {d : ℕ} {M : Set (EuclideanSpac
   refine ⟨N, fun x hx ↦ ?_, ?_⟩
   · obtain ⟨c, hc, hxc⟩ := hNcov hx
     refine ⟨c, hc, ?_⟩
+    -- unfold membership in the entourage `{(x, y) | edist x y ≤ ε'}`
     change edist x c ≤ (ε' : ℝ≥0∞) at hxc
     rw [edist_nndist, ENNReal.coe_le_coe, ← NNReal.coe_le_coe, coe_nndist, hε'r] at hxc
     rwa [← dist_eq_norm]
@@ -456,7 +460,6 @@ private theorem measureReal_lipschitz_bad_le {d D : ℕ} (hD : 1 ≤ D)
     have : 0 < 1 - 16 * u := by linarith
     positivity
   set Bad := {s : Fin D → EuclideanSpace ℝ (Fin d) × ℝ | epsilon / 4 ≤ (2 * S s + sigma) * r}
-  show P.real Bad ≤ 80 * u
   have hBadsub : Bad ⊆ {s | c₀ ≤ Q s} := by
     intro s hs
     simp only [Bad, mem_ofPred_eq] at hs ⊢
@@ -615,8 +618,6 @@ theorem measure_uniform_randomFourierFeatureKernel_error_le {d : ℕ} (D : ℕ) 
       mul_le_mul_of_nonneg_left hδ (add_nonneg (mul_nonneg zero_le_two (hS0 s)) hσ0)
     have hxy' : epsilon ≤
         |randomFourierFeatureKernel s x y - ∫ w, Real.cos (inner ℝ w (x - y)) ∂L| := hxy
-    show 3 * epsilon / 4 ≤
-      |randomFourierFeatureKernel s a b - ∫ w, Real.cos (inner ℝ w (a - b)) ∂L|
     have h2 := hlip.trans h1
     exact le_abs_of_le_abs_of_abs_sub_le hxy' h2 hs
   have hU : P.real (⋃ c ∈ N ×ˢ N, Ctr c) ≤ F := by

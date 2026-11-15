@@ -94,14 +94,14 @@ theorem IsSublevelDiagram.relabel {K : PreAbstractSimplicialComplex ι} {f h : F
       (fun i hi ↦ ?_)
     · have hi' := (Finset.mem_filter.mp hi).2
       refine Finset.mem_filter.mpr ⟨Finset.mem_univ _, ?_⟩
-      change f (sb i.1) ≤ a ∧ b < f (sd i.1) at hi'
       rw [← hsb, ← hsd, ← ha' _ (hsbK _), ← not_le, ← hb' _ (hsdK _), not_le]
       exact hi'
     · have hi' := (Finset.mem_filter.mp hi).2
       rw [← hsb, ← hsd, ← ha' _ (hsbK _), ← not_le, ← hb' _ (hsdK _), not_le] at hi'
       exact ⟨⟨i, lt_of_le_of_lt hi'.1 (lt_of_le_of_lt hab hi'.2)⟩,
         Finset.mem_filter.mpr ⟨Finset.mem_univ _, hi'⟩, rfl⟩
-  · refine Finset.card_bij (fun k _ ↦ k) (fun k hk ↦ ?_) (fun _ _ _ _ h ↦ h) (fun k hk ↦ ⟨k, ?_, rfl⟩)
+  · refine Finset.card_bij (fun k _ ↦ k) (fun k hk ↦ ?_) (fun _ _ _ _ h ↦ h)
+      (fun k hk ↦ ⟨k, ?_, rfl⟩)
     · have hk' := (Finset.mem_filter.mp hk).2
       refine Finset.mem_filter.mpr ⟨Finset.mem_univ _, ?_⟩
       rw [← hse, ← ha' _ (hseK _)] at hk'
@@ -146,7 +146,6 @@ theorem fullBottleneckEDist_le_of_ordered (K : PreAbstractSimplicialComplex ι)
         right_unique := fun x y z hx hy ↦ Subtype.ext (hx.trans hy.symm) }
     refine max_le ((iInf_le _ M).trans (M.cost_le _ _ ?_ ?_ ?_)) ?_
     · rintro ⟨i, hi⟩ ⟨j, hj⟩ hij
-      change i = j at hij
       subst hij
       exact ENNReal.ofReal_le_ofReal (max_le (hδ _ (hsbK i)) (hδ _ (hsdK i)))
     · rintro ⟨i, hi⟩ hx
@@ -510,24 +509,16 @@ theorem diagramWassersteinEDist_eq_zero_of_isSublevelDiagram {K : PreAbstractSim
     rw [← hD a b hab, ← hE a b hab]
   exact diagramWassersteinEDist_eq_zero_of_equiv hq σ hσ τ hτ
 
-/-- `q`-Wasserstein stability when the two functions are ordered by a common function `h` that is
-injective on `K`. The bars of the diagram of `h` have distinct endpoint simplices, and matching
-the relabelled bars with the same label costs at most `∑_{σ ∈ K} |f σ - g σ|^q`. -/
-theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex ι)
-    {f g h : Finset ι → ℝ} (hinj : ∀ σ ∈ K, ∀ τ ∈ K, h σ = h τ → σ = τ)
-    (hfh : ∀ σ ∈ K, ∀ τ ∈ K, h σ ≤ h τ → f σ ≤ f τ)
-    (hgh : ∀ σ ∈ K, ∀ τ ∈ K, h σ ≤ h τ → g σ ≤ g τ) (p : ℕ) {q : ℝ} (hq : 1 ≤ q)
-    {α β κ κ' : Type*} [Fintype α] [Fintype β] [Fintype κ] [Fintype κ']
-    {D : FiniteDeathDiagram α} {e : κ → ℝ} {E : FiniteDeathDiagram β} {e' : κ' → ℝ}
-    (hD : IsSublevelDiagram 𝕜 K f p D e) (hE : IsSublevelDiagram 𝕜 K g p E e') :
-    diagramWassersteinEDist q D e E e' ≤
-      (∑ σ ∈ Finset.univ.filter (· ∈ K), ENNReal.ofReal |f σ - g σ| ^ q) ^ (1 / q) := by
-  have hq0 : 0 < q := by linarith
-  obtain ⟨n, r, Dh, eh, hDh, hb, hd, he⟩ := exists_isSublevelDiagram_and_values 𝕜 K h p
-  choose sb hsbK hsb using hb
-  choose sd hsdK hsd using hd
-  choose se hseK hse using he
-  -- the endpoint simplices are distinct
+/-- For `h` injective on `K`, the endpoint simplices of the bars of a diagram of `h` are
+pairwise distinct: the birth simplices, death simplices and essential simplices together form
+an injective family. -/
+theorem IsSublevelDiagram.injective_endpoints {K : PreAbstractSimplicialComplex ι}
+    {h : Finset ι → ℝ} (hinj : ∀ σ ∈ K, ∀ τ ∈ K, h σ = h τ → σ = τ) {p : ℕ} {α κ : Type*}
+    [Fintype α] [Fintype κ] {Dh : FiniteDeathDiagram α} {eh : κ → ℝ}
+    (hDh : IsSublevelDiagram 𝕜 K h p Dh eh) {sb sd : α → Finset ι} {se : κ → Finset ι}
+    (hsbK : ∀ i, sb i ∈ K) (hsb : ∀ i, h (sb i) = Dh.birth i) (hsdK : ∀ i, sd i ∈ K)
+    (hsd : ∀ i, h (sd i) = Dh.death i) (hseK : ∀ k, se k ∈ K) (hse : ∀ k, h (se k) = eh k) :
+    Function.Injective (Sum.elim sb (Sum.elim sd se)) := by
   have hB := fun i ↦ card_birth_add_card_essential_le 𝕜 K hinj hDh (hsbK i)
   have hE' := fun k ↦ card_birth_add_card_essential_le 𝕜 K hinj hDh (hseK k)
   have hDd := fun i ↦ card_death_le 𝕜 K hinj hDh (hsdK i)
@@ -572,17 +563,30 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
     have h2 := Finset.card_pos.mpr ⟨k, show k ∈ Finset.univ.filter fun l ↦ eh l = h (sb i) by
       rw [hik]; exact hmeme k⟩
     split_ifs at this <;> omega
-  -- the relabelled diagrams
-  have hDf := hDh.relabel 𝕜 hfh sb sd se hsbK hsb hsdK hsd hseK hse
-  have hDg := hDh.relabel 𝕜 hgh sb sd se hsbK hsb hsdK hsd hseK hse
-  have h1 := diagramWassersteinEDist_eq_zero_of_isSublevelDiagram 𝕜 hq0 hD hDf
-  have h3 := diagramWassersteinEDist_eq_zero_of_isSublevelDiagram 𝕜 hq0 hDg hE
+  rintro (i | i | k) (j | j | l) hxy <;> simp only [Sum.elim_inl, Sum.elim_inr] at hxy
+  · rw [hsb_inj i j hxy]
+  · have := hcb i; rw [hxy, hcd j] at this; omega
+  · exact absurd hxy (hsb_se i l)
+  · have := hcb j; rw [← hxy, hcd i] at this; omega
+  · rw [hsd_inj i j hxy]
+  · have := hce l; rw [← hxy, hcd i] at this; omega
+  · exact absurd hxy.symm (hsb_se j k)
+  · have := hce k; rw [hxy, hcd j] at this; omega
+  · rw [hse_inj k l hxy]
+
+omit [LinearOrder ι] in
+/-- Matching relabelled bars with the same label: if the endpoint simplices `sb`, `sd`, `se` form
+an injective family in `K`, the `q`-Wasserstein distance between the relabelled diagrams of `f`
+and `g` is at most `(∑_{σ ∈ K} |f σ - g σ|^q)^(1/q)`. -/
+theorem diagramWassersteinEDist_relabelDiagram_le (K : PreAbstractSimplicialComplex ι)
+    (f g : Finset ι → ℝ) {q : ℝ} (hq0 : 0 < q) {α κ : Type*} [Fintype α] [Fintype κ]
+    {sb sd : α → Finset ι} {se : κ → Finset ι} (hsbK : ∀ i, sb i ∈ K) (hsdK : ∀ i, sd i ∈ K)
+    (hseK : ∀ k, se k ∈ K) (hφinj : Function.Injective (Sum.elim sb (Sum.elim sd se))) :
+    diagramWassersteinEDist q (relabelDiagram f sb sd) (fun k ↦ f (se k))
+      (relabelDiagram g sb sd) (fun k ↦ g (se k)) ≤
+      (∑ σ ∈ Finset.univ.filter (· ∈ K), ENNReal.ofReal |f σ - g σ| ^ q) ^ (1 / q) := by
   set G : Finset ι → ℝ≥0∞ := fun σ ↦ ENNReal.ofReal |f σ - g σ| ^ q
-  set U : Fin n → ℝ≥0∞ := fun i ↦ G (sb i) + G (sd i)
-  have hle : ∀ i, g (sb i) ≤ g (sd i) := fun i ↦
-    hgh _ (hsbK i) _ (hsdK i) (by rw [hsb, hsd]; exact (Dh.birth_lt_death i).le)
-  have hle' : ∀ i, f (sb i) ≤ f (sd i) := fun i ↦
-    hfh _ (hsbK i) _ (hsdK i) (by rw [hsb, hsd]; exact (Dh.birth_lt_death i).le)
+  set U : α → ℝ≥0∞ := fun i ↦ G (sb i) + G (sd i)
   have hW : ∀ i, ENNReal.ofReal (max |f (sb i) - g (sb i)| |f (sd i) - g (sd i)|) ^ q ≤ U i := by
     intro i
     rcases le_total |f (sb i) - g (sb i)| |f (sd i) - g (sd i)| with hab | hab
@@ -624,7 +628,7 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
       have h5 := neg_abs_le (f (sd i) - g (sd i))
       simp only [relabelDiagram]
       linarith [not_lt.mp hfi]
-  have hsub : ∀ (P : Fin n → Prop) (F : Fin n → ℝ≥0∞),
+  have hsub : ∀ (P : α → Prop) (F : α → ℝ≥0∞),
       ∑ x : {i // P i}, F x.1 = ∑ i, if P i then F i else 0 := fun P F ↦ by
     rw [← Finset.sum_filter]
     exact (Finset.sum_subtype _ (by simp) F).symm
@@ -640,20 +644,11 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
         hsub (fun i ↦ g (sb i) < g (sd i)) (fun i ↦ if f (sb i) < f (sd i) then 0 else U i),
         ← Finset.sum_add_distrib]
       exact Finset.sum_le_sum fun i _ ↦ by split_ifs <;> simp
-    set φ : Fin n ⊕ Fin n ⊕ Fin r → Finset ι := Sum.elim sb (Sum.elim sd se)
-    have hφ : ∀ x ∈ (Finset.univ : Finset (Fin n ⊕ Fin n ⊕ Fin r)),
-        ∀ y ∈ (Finset.univ : Finset (Fin n ⊕ Fin n ⊕ Fin r)), φ x = φ y → x = y := by
-      rintro (i | i | k) - (j | j | l) - hxy <;> simp only [φ, Sum.elim_inl, Sum.elim_inr] at hxy
-      · rw [hsb_inj i j hxy]
-      · have := hcb i; rw [hxy, hcd j] at this; omega
-      · exact absurd hxy (hsb_se i l)
-      · have := hcb j; rw [← hxy, hcd i] at this; omega
-      · rw [hsd_inj i j hxy]
-      · have := hce l; rw [← hxy, hcd i] at this; omega
-      · exact absurd hxy.symm (hsb_se j k)
-      · have := hce k; rw [hxy, hcd j] at this; omega
-      · rw [hse_inj k l hxy]
-    have himg : (Finset.univ : Finset (Fin n ⊕ Fin n ⊕ Fin r)).image φ ⊆
+    set φ : α ⊕ α ⊕ κ → Finset ι := Sum.elim sb (Sum.elim sd se)
+    have hφ : ∀ x ∈ (Finset.univ : Finset (α ⊕ α ⊕ κ)),
+        ∀ y ∈ (Finset.univ : Finset (α ⊕ α ⊕ κ)), φ x = φ y → x = y :=
+      fun x _ y _ hxy ↦ hφinj hxy
+    have himg : (Finset.univ : Finset (α ⊕ α ⊕ κ)).image φ ⊆
         Finset.univ.filter (· ∈ K) := by
       intro σ hσ
       obtain ⟨x, -, rfl⟩ := Finset.mem_image.mp hσ
@@ -664,11 +659,33 @@ theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex 
           rfl
       _ = ∑ σ ∈ Finset.univ.image φ, G σ := (Finset.sum_image hφ).symm
       _ ≤ _ := Finset.sum_le_sum_of_subset himg
-  have h2 : diagramWassersteinEDist q (relabelDiagram f sb sd) (fun k ↦ f (se k))
-      (relabelDiagram g sb sd) (fun k ↦ g (se k)) ≤
-      (∑ σ ∈ Finset.univ.filter (· ∈ K), G σ) ^ (1 / q) :=
-    (iInf_le_of_le M (iInf_le _ (Equiv.refl _))).trans
+  exact (iInf_le_of_le M (iInf_le _ (Equiv.refl _))).trans
       (ENNReal.rpow_le_rpow hcost (by positivity))
+/-- `q`-Wasserstein stability when the two functions are ordered by a common function `h` that is
+injective on `K`. The bars of the diagram of `h` have distinct endpoint simplices, and matching
+the relabelled bars with the same label costs at most `∑_{σ ∈ K} |f σ - g σ|^q`. -/
+theorem diagramWassersteinEDist_le_of_ordered (K : PreAbstractSimplicialComplex ι)
+    {f g h : Finset ι → ℝ} (hinj : ∀ σ ∈ K, ∀ τ ∈ K, h σ = h τ → σ = τ)
+    (hfh : ∀ σ ∈ K, ∀ τ ∈ K, h σ ≤ h τ → f σ ≤ f τ)
+    (hgh : ∀ σ ∈ K, ∀ τ ∈ K, h σ ≤ h τ → g σ ≤ g τ) (p : ℕ) {q : ℝ} (hq : 1 ≤ q)
+    {α β κ κ' : Type*} [Fintype α] [Fintype β] [Fintype κ] [Fintype κ']
+    {D : FiniteDeathDiagram α} {e : κ → ℝ} {E : FiniteDeathDiagram β} {e' : κ' → ℝ}
+    (hD : IsSublevelDiagram 𝕜 K f p D e) (hE : IsSublevelDiagram 𝕜 K g p E e') :
+    diagramWassersteinEDist q D e E e' ≤
+      (∑ σ ∈ Finset.univ.filter (· ∈ K), ENNReal.ofReal |f σ - g σ| ^ q) ^ (1 / q) := by
+  have hq0 : 0 < q := by linarith
+  obtain ⟨n, r, Dh, eh, hDh, hb, hd, he⟩ := exists_isSublevelDiagram_and_values 𝕜 K h p
+  choose sb hsbK hsb using hb
+  choose sd hsdK hsd using hd
+  choose se hseK hse using he
+  -- the endpoint simplices are distinct
+  have hφinj := hDh.injective_endpoints 𝕜 hinj hsbK hsb hsdK hsd hseK hse
+  -- the relabelled diagrams
+  have hDf := hDh.relabel 𝕜 hfh sb sd se hsbK hsb hsdK hsd hseK hse
+  have hDg := hDh.relabel 𝕜 hgh sb sd se hsbK hsb hsdK hsd hseK hse
+  have h1 := diagramWassersteinEDist_eq_zero_of_isSublevelDiagram 𝕜 hq0 hD hDf
+  have h3 := diagramWassersteinEDist_eq_zero_of_isSublevelDiagram 𝕜 hq0 hDg hE
+  have h2 := diagramWassersteinEDist_relabelDiagram_le K f g hq0 hsbK hsdK hseK hφinj
   calc diagramWassersteinEDist q D e E e'
       ≤ diagramWassersteinEDist q D e (relabelDiagram f sb sd) (fun k ↦ f (se k)) +
           diagramWassersteinEDist q (relabelDiagram f sb sd) (fun k ↦ f (se k)) E e' :=
@@ -743,7 +760,8 @@ theorem diagramWassersteinEDist_le_of_card_discordantPairs_le (K : PreAbstractSi
         (∑ σ ∈ Finset.univ.filter (· ∈ K), ENNReal.ofReal |u σ| ^ q) ^ (1 / q) =
           ENNReal.ofReal c * S ^ (1 / q) := by
       intro c hc u hu
-      have : ∀ σ, ENNReal.ofReal |u σ| ^ q = ENNReal.ofReal c ^ q * ENNReal.ofReal |f σ - g σ| ^ q :=
+      have : ∀ σ, ENNReal.ofReal |u σ| ^ q =
+          ENNReal.ofReal c ^ q * ENNReal.ofReal |f σ - g σ| ^ q :=
         fun σ ↦ by
           rw [hu, abs_mul, abs_of_nonneg hc, ENNReal.ofReal_mul hc,
             ENNReal.mul_rpow_of_nonneg _ _ hq0.le]

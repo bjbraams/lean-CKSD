@@ -54,7 +54,6 @@ theorem integral_norm_sum_centeredInteraction_sq_le
   have hX2 (j : ι) : MemLp (X j) 2 ν := MemLp.of_bound (hXm j).aestronglyMeasurable _
     (ae_of_all _ fun z ↦ hXbound j z)
   have hXmean (j : ι) : (∫ z, X j z ∂ν) = 0 := by
-    change (∫ z : ι → E, K x (z j) - m ∂Measure.pi (fun _ : ι ↦ μ)) = 0
     rw [integral_comp_eval (μ := fun _ : ι ↦ μ) (i := j) (f := fun y : E ↦ K x y - m)
       (show Measurable (fun y : E ↦ K x y - m) from hm.sub measurable_const).aestronglyMeasurable]
     rw [integral_sub hKi (integrable_const m), integral_const]
@@ -64,7 +63,6 @@ theorem integral_norm_sum_centeredInteraction_sq_le
   have heq := TauCeti.integral_norm_sum_sq_of_pairwise_indepFun (μ := ν) (X := X)
     (s := Finset.univ) (fun j _ ↦ hX2 j) (fun j _ ↦ hXmean j)
     (fun j _ k _ hjk ↦ hind.indepFun hjk)
-  change (∫ z, ‖∑ j, X j z‖ ^ 2 ∂ν) ≤ _
   rw [heq]
   calc ∑ j : ι, ∫ z, ‖X j z‖ ^ 2 ∂ν ≤ ∑ _ : ι, (4 * (κ : ℝ) ^ 2) := by
           apply Finset.sum_le_sum
@@ -78,6 +76,52 @@ theorem integral_norm_sum_centeredInteraction_sq_le
             _ = _ := by simp
     _ = _ := by simp
 
+
+/-- For a frozen location, independent samples and a vector `c` of norm at most `2κ`, the
+expected squared norm of `c` plus the centered interaction sum is at most `8κ² + 8κ² n`,
+where `n` is the number of samples. -/
+theorem integral_norm_add_sum_centeredInteraction_sq_le
+    (μ : Measure E) [IsProbabilityMeasure μ] (K : E → E → E)
+    (hKm : Measurable (Function.uncurry K)) (κ : ℝ≥0) (hK : ∀ x y, ‖K x y‖ ≤ κ)
+    {ι : Type*} [Fintype ι] (x c : E) (hc : ‖c‖ ≤ 2 * κ) :
+    ∫ z : ι → E, ‖c + ∑ j : ι, (K x (z j) - ∫ y, K x y ∂μ)‖ ^ 2
+      ∂Measure.pi (fun _ : ι ↦ μ) ≤
+      8 * (κ : ℝ) ^ 2 + 2 * ((Fintype.card ι : ℝ) * (4 * (κ : ℝ) ^ 2)) := by
+  let ν := Measure.pi (fun _ : ι ↦ μ)
+  let m := ∫ y, K x y ∂μ
+  have hm : Measurable (K x) := hKm.comp (measurable_const.prodMk measurable_id)
+  have hmb : ‖m‖ ≤ κ := by
+    have hKi : Integrable (K x) μ := Integrable.of_bound hm.aestronglyMeasurable κ
+      (ae_of_all _ fun y ↦ hK x y)
+    calc ‖m‖ ≤ ∫ y, ‖K x y‖ ∂μ := norm_integral_le_integral_norm _
+      _ ≤ ∫ _ : E, (κ : ℝ) ∂μ := integral_mono hKi.norm (integrable_const _) (hK x)
+      _ = κ := by simp
+  have hS2 : MemLp (fun z : ι → E ↦ ∑ j : ι, (K x (z j) - m)) 2 ν :=
+    memLp_finsetSum _ fun j _ ↦ MemLp.of_bound
+      ((hm.comp (measurable_pi_apply j)).sub measurable_const).aestronglyMeasurable
+      (2 * κ) (ae_of_all _ fun z ↦ (norm_sub_le _ _).trans (by linarith [hK x (z j)]))
+  have hFS2 : MemLp (fun z : ι → E ↦ c + ∑ j : ι, (K x (z j) - m)) 2 ν :=
+    (memLp_const c).add hS2
+  have hintS : Integrable (fun z : ι → E ↦ ‖∑ j : ι, (K x (z j) - m)‖ ^ 2) ν :=
+    (memLp_two_iff_integrable_sq_norm hS2.aestronglyMeasurable).1 hS2
+  calc (∫ z : ι → E, ‖c + ∑ j : ι, (K x (z j) - m)‖ ^ 2 ∂ν) ≤
+        ∫ z : ι → E, 8 * (κ : ℝ) ^ 2 + 2 * ‖∑ j : ι, (K x (z j) - m)‖ ^ 2 ∂ν := by
+          apply integral_mono
+            ((memLp_two_iff_integrable_sq_norm hFS2.aestronglyMeasurable).1 hFS2)
+            ((integrable_const _).add (hintS.const_mul 2))
+          intro z
+          simp only [Pi.add_apply]
+          have htri := norm_add_le c (∑ j : ι, (K x (z j) - m))
+          have hsquare : ‖c + ∑ j : ι, (K x (z j) - m)‖ ^ 2 ≤
+              (‖c‖ + ‖∑ j : ι, (K x (z j) - m)‖) ^ 2 :=
+            (sq_le_sq₀ (norm_nonneg _) (by positivity)).2 htri
+          nlinarith [hc, norm_nonneg c, sq_nonneg (‖c‖ - ‖∑ j : ι, (K x (z j) - m)‖), κ.coe_nonneg]
+    _ = 8 * (κ : ℝ) ^ 2 + 2 * (∫ z : ι → E, ‖∑ j : ι, (K x (z j) - m)‖ ^ 2 ∂ν) := by
+      have ha := integral_add (integrable_const (8 * (κ : ℝ) ^ 2)) (hintS.const_mul 2)
+      have hconst : (∫ _ : ι → E, 8 * (κ : ℝ) ^ 2 ∂ν) = 8 * (κ : ℝ) ^ 2 := by simp
+      rw [ha, hconst, integral_const_mul]
+    _ ≤ _ := add_le_add le_rfl (mul_le_mul_of_nonneg_left
+        (integral_norm_sum_centeredInteraction_sq_le μ K hKm κ hK x) (by norm_num))
 
 /-- In an iid sample, the interaction average seen by one sampled particle differs from its
 population counterpart in mean square by at most `16κ²/N`, including the self-interaction term. -/
@@ -120,40 +164,14 @@ theorem integral_norm_empiricalInteraction_sub_sq_le
     (memLp_two_iff_integrable_sq_norm hF2.aestronglyMeasurable).1 hF2
   have hfixed (x : E) : (∫ z : T → E, ‖F (x, z)‖ ^ 2 ∂ν) ≤
       16 * (κ : ℝ) ^ 2 * N := by
-    have hS2 : MemLp (fun z : T → E ↦ ∑ j : T, C x (z j)) 2 ν :=
-      memLp_finsetSum _ fun j _ ↦ MemLp.of_bound
-        (hCm.comp (measurable_const.prodMk (measurable_pi_apply j))).aestronglyMeasurable
-        (2 * κ) (ae_of_all _ fun z ↦ hCb x (z j))
-    have hFS2 : MemLp (fun z : T → E ↦ F (x, z)) 2 ν := (memLp_const (C x x)).add hS2
-    have hintS : Integrable (fun z : T → E ↦ ‖∑ j : T, C x (z j)‖ ^ 2) ν :=
-      (memLp_two_iff_integrable_sq_norm hS2.aestronglyMeasurable).1 hS2
-    calc (∫ z : T → E, ‖F (x, z)‖ ^ 2 ∂ν) ≤
-          ∫ z : T → E, 8 * (κ : ℝ) ^ 2 + 2 * ‖∑ j : T, C x (z j)‖ ^ 2 ∂ν := by
-            apply integral_mono
-              ((memLp_two_iff_integrable_sq_norm hFS2.aestronglyMeasurable).1 hFS2)
-              ((integrable_const _).add (hintS.const_mul 2))
-            intro z
-            change ‖C x x + ∑ j : T, C x (z j)‖ ^ 2 ≤
-              8 * (κ : ℝ) ^ 2 + 2 * ‖∑ j : T, C x (z j)‖ ^ 2
-            have htri := norm_add_le (C x x) (∑ j : T, C x (z j))
-            have hsquare : ‖C x x + ∑ j : T, C x (z j)‖ ^ 2 ≤
-                (‖C x x‖ + ‖∑ j : T, C x (z j)‖) ^ 2 :=
-              (sq_le_sq₀ (norm_nonneg _) (by positivity)).2 htri
-            nlinarith [hCb x x, norm_nonneg (C x x),
-              sq_nonneg (‖C x x‖ - ‖∑ j : T, C x (z j)‖), κ.coe_nonneg]
-      _ = 8 * (κ : ℝ) ^ 2 + 2 * (∫ z : T → E, ‖∑ j : T, C x (z j)‖ ^ 2 ∂ν) := by
-        have ha := integral_add (integrable_const (8 * (κ : ℝ) ^ 2)) (hintS.const_mul 2)
-        have hconst : (∫ _ : T → E, 8 * (κ : ℝ) ^ 2 ∂ν) = 8 * (κ : ℝ) ^ 2 := by simp
-        rw [ha, hconst, integral_const_mul]
-      _ ≤ 8 * (κ : ℝ) ^ 2 + 2 * ((Fintype.card T : ℝ) * (4 * (κ : ℝ) ^ 2)) := by
-        have hb := integral_norm_sum_centeredInteraction_sq_le μ K hKm κ hK (ι := T) x
-        exact add_le_add le_rfl (mul_le_mul_of_nonneg_left hb (by norm_num))
-      _ ≤ 16 * (κ : ℝ) ^ 2 * N := by
-        have hcard : Fintype.card T ≤ N := by
-          simpa using Fintype.card_le_of_injective (f := (Subtype.val : T → Fin N)) Subtype.val_injective
-        have hcard' : (Fintype.card T : ℝ) ≤ N := by exact_mod_cast hcard
-        have hn' : (1 : ℝ) ≤ N := by exact_mod_cast hn
-        nlinarith [sq_nonneg (κ : ℝ), mul_le_mul_of_nonneg_right hcard' (sq_nonneg (κ : ℝ))]
+    refine (integral_norm_add_sum_centeredInteraction_sq_le μ K hKm κ hK (ι := T) x
+      (C x x) (hCb x x)).trans ?_
+    have hcard : Fintype.card T ≤ N := by
+      simpa using Fintype.card_le_of_injective (f := (Subtype.val : T → Fin N))
+        Subtype.val_injective
+    have hcard' : (Fintype.card T : ℝ) ≤ N := by exact_mod_cast hcard
+    have hn' : (1 : ℝ) ≤ N := by exact_mod_cast hn
+    nlinarith [sq_nonneg (κ : ℝ), mul_le_mul_of_nonneg_right hcard' (sq_nonneg (κ : ℝ))]
   have hprod : (∫ p, ‖F p‖ ^ 2 ∂μ.prod ν) ≤ 16 * (κ : ℝ) ^ 2 * N := by
     rw [integral_prod _ hGint]
     calc (∫ x, ∫ z : T → E, ‖F (x, z)‖ ^ 2 ∂ν ∂μ) ≤
@@ -173,12 +191,12 @@ theorem integral_norm_empiricalInteraction_sub_sq_le
       (Finset.disjoint_singleton_left.2 (by simp [T])) hYm
     exact hh.comp (φ := fun v : ({i} : Finset (Fin N)) → E ↦
       v ⟨i, Finset.mem_singleton_self i⟩) (ψ := id)
-      (measurable_pi_apply (⟨i, Finset.mem_singleton_self i⟩ : ({i} : Finset (Fin N)))) measurable_id
+      (measurable_pi_apply (⟨i, Finset.mem_singleton_self i⟩ : ({i} : Finset (Fin N))))
+      measurable_id
   have hpair : P.map (fun ω ↦ (Y i ω, Z ω)) = μ.prod ν := by
     rw [hind'.map_prod_eq_prod_map_map (hYm i).aemeasurable hZm.aemeasurable, hlaw i, hZlaw]
   have hsplit (ω : Ω) : (∑ j : Fin N, C (Y i ω) (Y j ω)) = F (Y i ω, Z ω) := by
-    change (∑ j : Fin N, C (Y i ω) (Y j ω)) =
-      C (Y i ω) (Y i ω) + ∑ j : T, C (Y i ω) (Y j ω)
+    simp only [F, Z]
     rw [Finset.sum_coe_sort T (fun j ↦ C (Y i ω) (Y j ω))]
     have hh := Finset.sum_erase_add Finset.univ (fun j ↦ C (Y i ω) (Y j ω)) (Finset.mem_univ i)
     simp [T]
@@ -189,11 +207,11 @@ theorem integral_norm_empiricalInteraction_sub_sq_le
       (hFm.norm.pow_const 2).aestronglyMeasurable, hpair]
     exact hprod
   have hn0 : (N : ℝ) ≠ 0 := Nat.cast_ne_zero.2 hn.ne'
-  have hident (ω : Ω) : ((N : ℝ)⁻¹ • ∑ j, K (Y i ω) (Y j ω)) - m (Y i ω) =
+  have hident (ω : Ω) : ((N : ℝ)⁻¹ • ∑ j, K (Y i ω) (Y j ω)) - ∫ z, K (Y i ω) z ∂μ =
       (N : ℝ)⁻¹ • ∑ j : Fin N, C (Y i ω) (Y j ω) := by
-    simp only [C, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ,
-      Fintype.card_fin, ← Nat.cast_smul_eq_nsmul ℝ, smul_sub, smul_smul, inv_mul_cancel₀ hn0, one_smul]
-  change (∫ ω, ‖((N : ℝ)⁻¹ • ∑ j, K (Y i ω) (Y j ω)) - m (Y i ω)‖ ^ 2 ∂P) ≤ _
+    simp only [C, m, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ,
+      Fintype.card_fin, ← Nat.cast_smul_eq_nsmul ℝ, smul_sub, smul_smul, inv_mul_cancel₀ hn0,
+      one_smul]
   simp_rw [hident, norm_smul,
     Real.norm_of_nonneg (show 0 ≤ (N : ℝ)⁻¹ from inv_nonneg.2 (Nat.cast_nonneg N)), mul_pow]
   rw [integral_const_mul]

@@ -315,7 +315,8 @@ theorem measureReal_dyadic_chain_le {Ω : Type*} [MeasurableSpace Ω] (μ : Meas
 
 /-- Stochastic equicontinuity of the empirical process of a scalar parameter family with a
 square-integrable Lipschitz envelope: evaluated at a consistent random parameter `Tₙ`, the
-normalised centred partial-sum increment `n^{-1/2} ∑ᵢ (ψ_{Tₙ} - ψ_{θ₀})(Xᵢ) - √n (P ψ_{Tₙ} - P ψ_{θ₀})`
+normalised centred partial-sum increment
+`n ^ (-1/2) ∑ᵢ (ψ_{Tₙ} - ψ_{θ₀})(Xᵢ) - √n (P ψ_{Tₙ} - P ψ_{θ₀})`
 tends to `0` in probability. The proof is a dyadic chaining argument with Chebyshev's inequality
 at each level. -/
 theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableSpace Ω]
@@ -336,15 +337,8 @@ theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableS
     ∑ i ∈ Finset.range n, psi θ (X i ω) - n * ∫ x, psi θ x ∂P with hSdef
   set K : ℝ := ∫ x, M x ^ 2 ∂P with hK
   have hK0 : 0 ≤ K := integral_nonneg fun x ↦ sq_nonneg _
-  have hMnn : ∀ x, 0 ≤ M x := fun x ↦ by
-    have h := hlip x theta₀ (theta₀ + r / 2) (by simpa using hr)
-      (by rw [add_sub_cancel_left, abs_of_pos (half_pos hr)]; linarith)
-    have hp : 0 < |theta₀ - (theta₀ + r / 2)| := by
-      rw [abs_pos]; linarith
-    by_contra hneg
-    push Not at hneg
-    have := mul_neg_of_neg_of_pos hneg hp
-    linarith [abs_nonneg (psi theta₀ x - psi (theta₀ + r / 2) x)]
+  have hMnn : ∀ x, 0 ≤ M x := fun x ↦
+    nonneg_of_forall_abs_sub_le_mul_abs_sub (f := fun a ↦ psi a x) hr (hlip x)
   set M' : E → ℝ := hM.aestronglyMeasurable.mk M with hM'def
   have hM'm : Measurable M' := hM.aestronglyMeasurable.stronglyMeasurable_mk.measurable
   have hMM' : M =ᵐ[P] M' := hM.aestronglyMeasurable.ae_eq_mk
@@ -378,19 +372,7 @@ theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableS
     ((htδ.eventually (gt_mem_nhds (by positivity : (0 : ℝ) < η / 3))).and
       (Ioo_mem_nhdsGT hr)).exists
   set u : ℕ → ℝ := fun n ↦ δ * Real.sqrt n / 2 ^ n with hu
-  have hulim : Tendsto u atTop (𝓝 0) := by
-    have h1 := (tendsto_pow_const_div_const_pow_of_one_lt 1 (by norm_num : (1 : ℝ) < 2)).const_mul δ
-    rw [mul_zero] at h1
-    refine squeeze_zero (fun n ↦ by positivity) (fun n ↦ ?_) h1
-    simp only [hu, pow_one]
-    rw [mul_div_assoc]
-    gcongr
-    rcases Nat.eq_zero_or_pos n with h | h
-    · simp [h]
-    · have h1 : (1 : ℝ) ≤ n := by exact_mod_cast h
-      have := Real.sqrt_le_sqrt h1
-      rw [Real.sqrt_one] at this
-      nlinarith [Real.mul_self_sqrt (Nat.cast_nonneg (α := ℝ) n)]
+  have hulim : Tendsto u atTop (𝓝 0) := tendsto_mul_sqrt_div_two_pow hδ0.le
   have hR := tendstoInMeasure_mul_zero_of_isBoundedInProbability μ V (fun n _ ↦ u n) hVb
     (tendstoInMeasure_const_of_tendsto μ u hulim)
   rw [tendstoInMeasure_iff_measureReal_lt_dist] at hR
@@ -522,7 +504,8 @@ theorem zEstimator_asymptotic_linearization_and_normality
     rwa [hρ0] at this
   set W : ℕ → Ω → ℝ := fun n w ↦ Real.sqrt n * (T n w - theta₀) with hW
   have hF0 : F theta₀ = 0 := h0
-  have hid : ∀ (n : ℕ) (w : Ω), Real.sqrt n * F (T n w) = D * W n w + W n w * ρ (T n w) := fun n w ↦ by
+  have hid : ∀ (n : ℕ) (w : Ω),
+      Real.sqrt n * F (T n w) = D * W n w + W n w * ρ (T n w) := fun n w ↦ by
     by_cases h : T n w = theta₀
     · simp [hW, h, hF0]
     · have : ρ (T n w) = (T n w - theta₀)⁻¹ * (F (T n w) - F theta₀) - D := by
@@ -538,38 +521,9 @@ theorem zEstimator_asymptotic_linearization_and_normality
     convert hE1 using 3 with n w
     simp only [hEv]
     rw [hid]
-  have hWb : IsBoundedInProbability mu W := by
-    rw [tendstoInMeasure_iff_measureReal_lt_dist] at hE hρT
-    intro ε hε
-    obtain ⟨C₁, hC₁, hZev⟩ := hZb (ε / 3) (by positivity)
-    have hDp : 0 < |D| := abs_pos.2 hD
-    refine ⟨2 * (1 + C₁) / |D|, by positivity, ?_⟩
-    filter_upwards [hZev, (hE 1 one_pos).eventually (eventually_le_nhds (by positivity :
-      0 < ε / 3)), (hρT (|D| / 4) (by positivity)).eventually (eventually_le_nhds (by positivity :
-      0 < ε / 3))] with n h1 h2 h3
-    have hsub : {w | 2 * (1 + C₁) / |D| < |W n w|} ⊆
-        ({w | C₁ < |Z n w|} ∪ {w | 1 < dist (Ev n w) 0}) ∪
-          {w | |D| / 4 < dist (ρ (T n w)) 0} := by
-      intro w hw
-      by_contra hcon
-      simp only [mem_union, mem_ofPred_eq, not_or, not_lt, Real.dist_eq, sub_zero] at hcon hw
-      obtain ⟨⟨c1, c2⟩, c3⟩ := hcon
-      have hfac : W n w * (D + ρ (T n w)) = Ev n w - Z n w := by simp only [hEv]; ring
-      have hlow : 3 * |D| / 4 ≤ |D + ρ (T n w)| := by
-        have := abs_sub_abs_le_abs_sub D (-ρ (T n w))
-        rw [sub_neg_eq_add, abs_neg] at this
-        linarith
-      have hup : |W n w| * |D + ρ (T n w)| ≤ 1 + C₁ := by
-        rw [← abs_mul, hfac]
-        exact (abs_sub _ _).trans (by linarith)
-      have hW0 := abs_nonneg (W n w)
-      rw [div_lt_iff₀ hDp] at hw
-      nlinarith
-    calc _ ≤ _ := measureReal_mono hsub
-      _ ≤ ε / 3 + ε / 3 + ε / 3 := by
-        refine (measureReal_union_le _ _).trans (add_le_add ?_ h3)
-        exact (measureReal_union_le _ _).trans (add_le_add h1 h2)
-      _ = ε := by ring
+  have hWb : IsBoundedInProbability mu W :=
+    isBoundedInProbability_of_tendstoInMeasure_const_mul_add_mul_add mu W Z
+      (fun n w ↦ ρ (T n w)) D hD hZb hρT hE
   have hWρ := tendstoInMeasure_mul_zero_of_isBoundedInProbability mu W _ hWb hρT
   have hDWZ : TendstoInMeasure mu (fun (n : ℕ) w ↦ D * W n w + Z n w) atTop (fun _ ↦ 0) := by
     have := tendstoInMeasure_add_zero mu _ _ hE

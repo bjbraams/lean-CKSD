@@ -36,7 +36,8 @@ theorem norm_sub_le_exp_mul_integral_of_forced_eq_on_path
       Real.exp ((K : ℝ) * T) * ∫ s in (0 : ℝ)..t, a s := by
   let w' : ℝ → E → E := fun t z ↦ v t z + (w t (y t) - v t (y t))
   have hw' : Continuous (Function.uncurry w') := hv.add
-    (((hw.comp (continuous_id.prodMk hy)).sub (hv.comp (continuous_id.prodMk hy))).comp continuous_fst)
+    (((hw.comp (continuous_id.prodMk hy)).sub
+      (hv.comp (continuous_id.prodMk hy))).comp continuous_fst)
   have heq (s : ℝ) : w' s (y s) = w s (y s) := by dsimp [w']; abel
   apply norm_sub_le_exp_mul_integral_of_forced_eq v w' hv hw' hvK a ha ha0
     (fun s hs z ↦ ?_) x y F hx hy hxe
@@ -90,7 +91,8 @@ theorem norm_sub_le_of_particle_integral_eq
       (isProbabilityMeasure_empiricalMeasure hN _) (hμp t)
       (integrable_norm_empiricalMeasure hN _) (hμi t)
     simp only [sub_self, norm_zero, zero_add] at hh
-    have hnn : 0 ≤ (TauCeti.wassersteinEDist 1 (empiricalMeasure N (y t)) (μ t)).toReal := ENNReal.toReal_nonneg
+    have hnn : 0 ≤ (TauCeti.wassersteinEDist 1 (empiricalMeasure N (y t)) (μ t)).toReal :=
+      ENNReal.toReal_nonneg
     exact hh.trans ((mul_le_mul_of_nonneg_right (Real.le_coe_toNNReal L) hnn).trans
       (mul_le_mul_of_nonneg_left (hW t ht) K.coe_nonneg))
   have hg := norm_sub_le_exp_mul_integral_of_forced_eq_on_path v w hv hw hvK
@@ -102,7 +104,8 @@ theorem norm_sub_le_of_particle_integral_eq
     NNReal.coe_ofNat] at h
   calc ‖x t - y t‖ ≤ Real.exp (2 * (K : ℝ) * T) * (t * ((K : ℝ) * r)) := h
     _ ≤ Real.exp (2 * (K : ℝ) * T) * (T * ((K : ℝ) * r)) :=
-      mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right ht.2 (mul_nonneg K.coe_nonneg hr)) (Real.exp_pos _).le
+      mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right ht.2 (mul_nonneg K.coe_nonneg hr))
+        (Real.exp_pos _).le
     _ = _ := by dsimp [K]; ring
 end ParticleComparison
 

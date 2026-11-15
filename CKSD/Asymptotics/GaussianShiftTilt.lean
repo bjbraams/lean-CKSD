@@ -32,8 +32,8 @@ theorem inv_covariance_apply_covariance {I : Matrix (Fin d) (Fin d) ℝ} (hI : I
 /-- Completing the square in a Gaussian covariance quadratic form. -/
 theorem covariance_quadratic_sub_covariance {I : Matrix (Fin d) (Fin d) ℝ}
     (hI : I.PosDef) (h x : E) :
-    inner ℝ (x-I.toEuclideanLin h) (I⁻¹.toEuclideanLin (x-I.toEuclideanLin h)) =
-      inner ℝ x (I⁻¹.toEuclideanLin x)-2*inner ℝ h x+inner ℝ h (I.toEuclideanLin h) := by
+    inner ℝ (x - I.toEuclideanLin h) (I⁻¹.toEuclideanLin (x - I.toEuclideanLin h)) =
+      inner ℝ x (I⁻¹.toEuclideanLin x) - 2 * inner ℝ h x + inner ℝ h (I.toEuclideanLin h) := by
   have hs := Matrix.isSymmetric_toEuclideanLin_iff.mpr hI.isHermitian
   have hcross : inner ℝ (I.toEuclideanLin h) (I⁻¹.toEuclideanLin x) = inner ℝ h x := by
     rw [hs h (I⁻¹.toEuclideanLin x)]
@@ -50,8 +50,8 @@ theorem covariance_quadratic_sub_covariance {I : Matrix (Fin d) (Fin d) ℝ}
 /-- Gaussian likelihood ratios shift the mean by covariance times the tilt vector. -/
 theorem multivariateGaussian_withDensity_exp_inner
     {I : Matrix (Fin d) (Fin d) ℝ} (hI : I.PosDef) (h : E) :
-    (multivariateGaussian (0:E) I).withDensity (fun x ↦ ENNReal.ofReal
-      (Real.exp (inner ℝ h x-inner ℝ h (I.toEuclideanLin h)/2))) =
+    (multivariateGaussian (0 : E) I).withDensity (fun x ↦ ENNReal.ofReal
+      (Real.exp (inner ℝ h x - inner ℝ h (I.toEuclideanLin h) / 2))) =
       multivariateGaussian (I.toEuclideanLin h) I := by
   rw [TauCeti.Probability.multivariateGaussian_eq_withDensity hI,
     TauCeti.Probability.multivariateGaussian_eq_withDensity hI]
@@ -78,40 +78,40 @@ theorem map_covariance_multivariateGaussian_inverse
     ext i j
     simpa only [Matrix.transpose_apply, Matrix.conjTranspose_apply, star_trivial] using
       congrArg (fun A : Matrix (Fin d) (Fin d) ℝ ↦ A i j) hI.isHermitian.eq
-  have hc : I*I⁻¹*I.transpose=I := by
-    rw [I.mul_nonsing_inv (isUnit_iff_ne_zero.mpr hI.det_pos.ne'),Matrix.one_mul,ht]
-  have he := TauCeti.Probability.map_affine_multivariateGaussian h hI.inv.posSemidef I (0:E)
-  change (multivariateGaussian h I⁻¹).map (fun x ↦ I.toEuclideanLin x) = _
-  simpa only [add_zero,hc] using he
+  have hc : I * I⁻¹ * I.transpose = I := by
+    rw [I.mul_nonsing_inv (isUnit_iff_ne_zero.mpr hI.det_pos.ne'), Matrix.one_mul, ht]
+  have he := TauCeti.Probability.map_affine_multivariateGaussian h hI.inv.posSemidef I (0 : E)
+  rw [← ContinuousLinearMap.coe_coe, Matrix.coe_toEuclideanCLM_eq_toEuclideanLin]
+  simpa only [add_zero, hc] using he
 /-- Covariance coordinates identify the Gaussian shift experiment with its likelihood tilt. -/
 theorem map_gaussianShift_eq_withDensity
     {I : Matrix (Fin d) (Fin d) ℝ} (hI : I.PosDef) (h : E) :
     (multivariateGaussian h I⁻¹).map (Matrix.toEuclideanCLM (𝕜 := ℝ) I) =
-      (multivariateGaussian (0:E) I).withDensity (fun x ↦ ENNReal.ofReal
-        (Real.exp (inner ℝ h x-inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h)/2))) := by
+      (multivariateGaussian (0 : E) I).withDensity (fun x ↦ ENNReal.ofReal
+        (Real.exp (inner ℝ h x - inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h) / 2))) := by
   have hc : Matrix.toEuclideanCLM (𝕜 := ℝ) I h = I.toEuclideanLin h := rfl
   rw [hc, map_covariance_multivariateGaussian_inverse hI]
   exact (multivariateGaussian_withDensity_exp_inner hI h).symm
 /-- The limiting Gaussian LAN likelihood ratio has expectation one. -/
 theorem integral_exp_inner_sub_half_covariance
     {I : Matrix (Fin d) (Fin d) ℝ} (hI : I.PosSemidef) (h : E) :
-    (∫ x, Real.exp (inner ℝ h x-inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h)/2)
-      ∂multivariateGaussian (0:E) I) = 1 := by
+    (∫ x, Real.exp (inner ℝ h x - inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h) / 2)
+      ∂multivariateGaussian (0 : E) I) = 1 := by
   have hc : Matrix.toEuclideanCLM (𝕜 := ℝ) I h = I.toEuclideanLin h := rfl
   rw [hc]
-  simp_rw [sub_eq_add_neg,Real.exp_add]
+  simp_rw [sub_eq_add_neg, Real.exp_add]
   rw [integral_mul_const]
-  have he := TauCeti.Probability.mgf_inner_multivariateGaussian (0:E) h hI 1
-  simp only [mgf,one_mul,inner_zero_right,one_pow,mul_zero,zero_add] at he
-  rw [he,← Real.exp_add]
+  have he := TauCeti.Probability.mgf_inner_multivariateGaussian (0 : E) h hI 1
+  simp only [mgf, one_mul, inner_zero_right, one_pow, mul_zero, zero_add] at he
+  rw [he, ← Real.exp_add]
   convert Real.exp_zero using 1
   congr 1
   ring
 /-- A nonzero Gaussian LAN score has no atom at zero. -/
 theorem multivariateGaussian_affine_score_eq_zero
     {I : Matrix (Fin d) (Fin d) ℝ} (hI : I.PosDef) (h : E) (hh : h ≠ 0) :
-    multivariateGaussian (0:E) I
-      {x | inner ℝ h x-inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h)/2=0} = 0 := by
+    multivariateGaussian (0 : E) I
+      {x | inner ℝ h x - inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h) / 2 = 0} = 0 := by
   have hc : Matrix.toEuclideanCLM (𝕜 := ℝ) I h = I.toEuclideanLin h := rfl
   rw [hc]
   have hn : h.ofLp ≠ 0 := by
@@ -120,16 +120,16 @@ theorem multivariateGaussian_affine_score_eq_zero
     apply WithLp.ofLp_injective
     simpa using h0
   have hq : 0 < inner ℝ h (I.toEuclideanLin h) := by
-    simpa [EuclideanSpace.inner_eq_star_dotProduct,Matrix.toEuclideanLin,
-      Matrix.ofLp_toLpLin,Matrix.toLin'_apply,dotProduct_comm] using hI.dotProduct_mulVec_pos hn
+    simpa [EuclideanSpace.inner_eq_star_dotProduct, Matrix.toEuclideanLin,
+      Matrix.ofLp_toLpLin, Matrix.toLin'_apply, dotProduct_comm] using hI.dotProduct_mulVec_pos hn
   have hvar : (inner ℝ h (I.toEuclideanLin h)).toNNReal ≠ 0 := by
     exact (Real.toNNReal_pos.mpr hq).ne'
-  let := nullSingletonClass_gaussianReal (μ := (0:ℝ)) hvar
-  have hmap := TauCeti.Probability.map_inner_multivariateGaussian (0:E) h hI.posSemidef
+  let := nullSingletonClass_gaussianReal (μ := (0 : ℝ)) hvar
+  have hmap := TauCeti.Probability.map_inner_multivariateGaussian (0 : E) h hI.posSemidef
   simp only [inner_zero_right] at hmap
-  have heq : {x | inner ℝ h x-inner ℝ h (I.toEuclideanLin h)/2=0} =
-      (fun x : E ↦ inner ℝ h x) ⁻¹' {inner ℝ h (I.toEuclideanLin h)/2} := by
+  have heq : {x | inner ℝ h x - inner ℝ h (I.toEuclideanLin h) / 2 = 0} =
+      (fun x : E ↦ inner ℝ h x) ⁻¹' {inner ℝ h (I.toEuclideanLin h) / 2} := by
     ext x
-    simp only [Set.mem_ofPred_eq,Set.mem_preimage,Set.mem_singleton_iff,sub_eq_zero]
-  rw [heq,← Measure.map_apply (by fun_prop) (measurableSet_singleton _),hmap,measure_singleton]
+    simp only [Set.mem_ofPred_eq, Set.mem_preimage, Set.mem_singleton_iff, sub_eq_zero]
+  rw [heq, ← Measure.map_apply (by fun_prop) (measurableSet_singleton _), hmap, measure_singleton]
 end CKSD

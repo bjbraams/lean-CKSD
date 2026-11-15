@@ -209,7 +209,8 @@ theorem essentialBottleneckEDist_triangle {κ κ' κ'' : Type*} (e : κ → ℝ)
 theorem fullBottleneckEDist_triangle {α β γ κ κ' κ'' : Type*} (D : FiniteDeathDiagram α)
     (e : κ → ℝ) (E : FiniteDeathDiagram β) (e' : κ' → ℝ) (F : FiniteDeathDiagram γ)
     (e'' : κ'' → ℝ) :
-    fullBottleneckEDist D e F e'' ≤ fullBottleneckEDist D e E e' + fullBottleneckEDist E e' F e'' := by
+    fullBottleneckEDist D e F e'' ≤
+      fullBottleneckEDist D e E e' + fullBottleneckEDist E e' F e'' := by
   unfold fullBottleneckEDist
   refine max_le ((bottleneckEDist_triangle D E F).trans
     (add_le_add (le_max_left _ _) (le_max_left _ _))) ?_
@@ -415,8 +416,7 @@ theorem fullBottleneckEDist_eq_zero_of_card_eq {α β κ κ' : Type*} [Fintype �
       right_unique := fun i j k hi hj ↦ σ.injective (hi.symm.trans hj) }
   refine le_antisymm (max_le ?_ ?_) bot_le
   · refine (iInf_le _ M).trans (M.cost_le D E (fun i j hij ↦ ?_) (fun i hi ↦ ?_) (fun j hj ↦ ?_))
-    · change j = σ i at hij
-      subst hij
+    · subst hij
       simp [hb, hd]
     · exact absurd ⟨σ i, rfl⟩ hi
     · exact absurd ⟨σ.symm j, by simp [M]⟩ hj
@@ -504,6 +504,73 @@ private theorem sum_dite_exists_eq {γ β : Type*} [Fintype γ] [Fintype β] (R 
   rw [Finset.sum_comm]
   simp_rw [h2]
 
+namespace DiagramMatching
+
+variable {α β γ : Type*} (M : DiagramMatching α β) (N : DiagramMatching β γ)
+  (D : FiniteDeathDiagram α) (E : FiniteDeathDiagram β) (F : FiniteDeathDiagram γ)
+
+/-- The left term of a composite matching is at most the left term of the first matching plus
+the left term of the second matching at the partner, if there is one. -/
+theorem leftCost_trans_le (i : α) :
+    (M.trans N).leftCost D F i ≤ M.leftCost D E i +
+      (if h : ∃ j, M.relates i j then N.leftCost E F h.choose else 0) := by
+  by_cases hi : ∃ j, M.relates i j
+  · have hij : M.relates i hi.choose := hi.choose_spec
+    rw [dite_eq_left hi, M.leftCost_of_relates D E hij]
+    by_cases hj : ∃ k, N.relates hi.choose k
+    · obtain ⟨k, hjk⟩ := hj
+      rw [(M.trans N).leftCost_of_relates D F ⟨_, hij, hjk⟩, N.leftCost_of_relates E F hjk,
+        ← ENNReal.ofReal_add (by positivity) (by positivity)]
+      exact ENNReal.ofReal_le_ofReal (max_abs_sub_le_add _ _ _ _ _ _)
+    · have hnot : ¬ ∃ k, (M.trans N).relates i k := by
+        rintro ⟨k, j', h1, h2⟩
+        obtain rfl := M.left_unique _ _ _ hij h1
+        exact hj ⟨k, h2⟩
+      have hlt := E.birth_lt_death hi.choose
+      rw [(M.trans N).leftCost_of_not D F hnot, N.leftCost_of_not E F hj,
+        ← ENNReal.ofReal_add (by positivity) (by linarith)]
+      refine ENNReal.ofReal_le_ofReal ?_
+      linarith [half_sub_le_max_add_half (D.birth i) (D.death i) (E.birth hi.choose)
+        (E.death hi.choose)]
+  · have hnot : ¬ ∃ k, (M.trans N).relates i k := by
+      rintro ⟨k, j', h1, -⟩
+      exact hi ⟨j', h1⟩
+    rw [dite_eq_right hi, add_zero, (M.trans N).leftCost_of_not D F hnot,
+      M.leftCost_of_not D E hi]
+
+/-- The right term of a composite matching is at most the sum of the right term of the first
+matching at the partner and a residual term of the second matching. -/
+theorem rightCost_trans_le (k : γ) :
+    (M.trans N).rightCost F k ≤
+      (if h : ∃ j, N.relates j k then M.rightCost E h.choose else 0) +
+      (if h : ∃ j, N.relates j k then
+        (if ∃ i, M.relates i h.choose then 0 else N.leftCost E F h.choose)
+      else N.rightCost F k) := by
+  by_cases hk : ∃ j, N.relates j k
+  · have hjk : N.relates hk.choose k := hk.choose_spec
+    rw [dite_eq_left hk, dite_eq_left hk]
+    by_cases hj : ∃ i, M.relates i hk.choose
+    · obtain ⟨i, hij⟩ := hj
+      rw [(M.trans N).rightCost_of_relates F (i := i) ⟨_, hij, hjk⟩]
+      exact bot_le
+    · have hnot : ¬ ∃ i, (M.trans N).relates i k := by
+        rintro ⟨i, j', h1, h2⟩
+        obtain rfl := N.right_unique _ _ _ h2 hjk
+        exact hj ⟨i, h1⟩
+      have hlt := E.birth_lt_death hk.choose
+      rw [ite_eq_right hj, M.rightCost_of_not E hj, N.leftCost_of_relates E F hjk,
+        (M.trans N).rightCost_of_not F hnot, ← ENNReal.ofReal_add (by linarith) (by positivity)]
+      refine ENNReal.ofReal_le_ofReal ?_
+      linarith [half_sub_le_half_add_max (E.birth hk.choose) (E.death hk.choose)
+        (F.birth k) (F.death k)]
+  · have hnot : ¬ ∃ i, (M.trans N).relates i k := by
+      rintro ⟨i, j', -, h2⟩
+      exact hk ⟨j', h2⟩
+    rw [dite_eq_right hk, dite_eq_right hk, zero_add, (M.trans N).rightCost_of_not F hnot,
+      N.rightCost_of_not F hk]
+
+end DiagramMatching
+
 /-- A power of a conditional with zero default, for a positive exponent. -/
 private theorem dite_rpow_eq {p : Prop} [Decidable p] {q : ℝ} (hq : 0 < q) (x : p → ℝ≥0∞) :
     (if h : p then x h else 0) ^ q = if h : p then x h ^ q else 0 := by
@@ -535,66 +602,16 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
     rfl
   have hTAB : ∀ x, T x ≤ A x + B x := by
     rintro (i | k | k)
-    · change (M.trans N).leftCost D F i ≤ M.leftCost D E i +
-        (if h : ∃ j, M.relates i j then N.leftCost E F h.choose else 0)
-      by_cases hi : ∃ j, M.relates i j
-      · have hij : M.relates i hi.choose := hi.choose_spec
-        rw [dite_eq_left hi, M.leftCost_of_relates D E hij]
-        by_cases hj : ∃ k, N.relates hi.choose k
-        · obtain ⟨k, hjk⟩ := hj
-          rw [(M.trans N).leftCost_of_relates D F ⟨_, hij, hjk⟩, N.leftCost_of_relates E F hjk,
-            ← ENNReal.ofReal_add (by positivity) (by positivity)]
-          exact ENNReal.ofReal_le_ofReal (max_abs_sub_le_add _ _ _ _ _ _)
-        · have hnot : ¬ ∃ k, (M.trans N).relates i k := by
-            rintro ⟨k, j', h1, h2⟩
-            obtain rfl := M.left_unique _ _ _ hij h1
-            exact hj ⟨k, h2⟩
-          have hlt := E.birth_lt_death hi.choose
-          rw [(M.trans N).leftCost_of_not D F hnot, N.leftCost_of_not E F hj,
-            ← ENNReal.ofReal_add (by positivity) (by linarith)]
-          refine ENNReal.ofReal_le_ofReal ?_
-          linarith [half_sub_le_max_add_half (D.birth i) (D.death i) (E.birth hi.choose)
-            (E.death hi.choose)]
-      · have hnot : ¬ ∃ k, (M.trans N).relates i k := by
-          rintro ⟨k, j', h1, -⟩
-          exact hi ⟨j', h1⟩
-        rw [dite_eq_right hi, add_zero, (M.trans N).leftCost_of_not D F hnot,
-          M.leftCost_of_not D E hi]
-    · change (M.trans N).rightCost F k ≤
-        (if h : ∃ j, N.relates j k then M.rightCost E h.choose else 0) +
-        (if h : ∃ j, N.relates j k then
-          (if ∃ i, M.relates i h.choose then 0 else N.leftCost E F h.choose)
-        else N.rightCost F k)
-      by_cases hk : ∃ j, N.relates j k
-      · have hjk : N.relates hk.choose k := hk.choose_spec
-        rw [dite_eq_left hk, dite_eq_left hk]
-        by_cases hj : ∃ i, M.relates i hk.choose
-        · obtain ⟨i, hij⟩ := hj
-          rw [(M.trans N).rightCost_of_relates F (i := i) ⟨_, hij, hjk⟩]
-          exact bot_le
-        · have hnot : ¬ ∃ i, (M.trans N).relates i k := by
-            rintro ⟨i, j', h1, h2⟩
-            obtain rfl := N.right_unique _ _ _ h2 hjk
-            exact hj ⟨i, h1⟩
-          have hlt := E.birth_lt_death hk.choose
-          rw [ite_eq_right hj, M.rightCost_of_not E hj, N.leftCost_of_relates E F hjk,
-            (M.trans N).rightCost_of_not F hnot, ← ENNReal.ofReal_add (by linarith) (by positivity)]
-          refine ENNReal.ofReal_le_ofReal ?_
-          linarith [half_sub_le_half_add_max (E.birth hk.choose) (E.death hk.choose)
-            (F.birth k) (F.death k)]
-      · have hnot : ¬ ∃ i, (M.trans N).relates i k := by
-          rintro ⟨i, j', -, h2⟩
-          exact hk ⟨j', h2⟩
-        rw [dite_eq_right hk, dite_eq_right hk, zero_add, (M.trans N).rightCost_of_not F hnot,
-          N.rightCost_of_not F hk]
-    · change ENNReal.ofReal |e k - e'' (τ (σ k))| ≤ ENNReal.ofReal |e k - e' (σ k)| +
-        ENNReal.ofReal |e' (σ k) - e'' (τ (σ k))|
-      rw [← ENNReal.ofReal_add (abs_nonneg _) (abs_nonneg _)]
-      exact ENNReal.ofReal_le_ofReal (abs_sub_le _ _ _)
+    · dsimp only [T, A, B, Sum.elim_inl]
+      convert M.leftCost_trans_le N D E F i
+    · dsimp only [T, A, B, Sum.elim_inl, Sum.elim_inr]
+      convert M.rightCost_trans_le N E F k
+    · exact (ENNReal.ofReal_le_ofReal (abs_sub_le _ _ _)).trans_eq
+        (ENNReal.ofReal_add (abs_nonneg _) (abs_nonneg _))
   have hA : ∑ x, A x ^ q ≤ diagramWassersteinCost q M σ D e E e' := by
     rw [diagramWassersteinCost_eq, Fintype.sum_sum_type, Fintype.sum_sum_type, ← add_assoc]
     refine add_le_add (add_le_add le_rfl ?_) le_rfl
-    change ∑ k, (if h : ∃ j, N.relates j k then M.rightCost E h.choose else 0) ^ q ≤ _
+    simp only [A, Sum.elim_inl, Sum.elim_inr]
     simp_rw [dite_rpow_eq hq0]
     rw [sum_dite_exists_eq (fun k j ↦ N.relates j k) (fun k j j' h h' ↦ N.right_unique _ _ _ h h')
       (fun k k' j h h' ↦ N.left_unique _ _ _ h h') (fun j ↦ M.rightCost E j ^ q)]
@@ -603,7 +620,7 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
     rw [diagramWassersteinCost_eq, Fintype.sum_sum_type, Fintype.sum_sum_type]
     have h1 : ∑ i, B (.inl i) ^ q =
         ∑ j, (if ∃ i, M.relates i j then N.leftCost E F j ^ q else 0) := by
-      change ∑ i, (if h : ∃ j, M.relates i j then N.leftCost E F h.choose else 0) ^ q = _
+      simp only [B, Sum.elim_inl]
       simp_rw [dite_rpow_eq hq0]
       exact sum_dite_exists_eq M.relates (fun i j j' h h' ↦ M.left_unique _ _ _ h h')
         (fun i i' j h h' ↦ M.right_unique _ _ _ h h') (fun j ↦ N.leftCost E F j ^ q)
@@ -614,9 +631,7 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
           (if ∃ i, M.relates i h.choose then 0 else N.leftCost E F h.choose ^ q) else 0) +
           N.rightCost F k ^ q := by
         intro k
-        change (if h : ∃ j, N.relates j k then
-          (if ∃ i, M.relates i h.choose then 0 else N.leftCost E F h.choose)
-          else N.rightCost F k) ^ q ≤ _
+        simp only [B, Sum.elim_inl, Sum.elim_inr]
         split_ifs <;> simp [ENNReal.zero_rpow_of_pos hq0]
       refine (Finset.sum_le_sum fun k _ ↦ hpt k).trans ?_
       rw [Finset.sum_add_distrib]

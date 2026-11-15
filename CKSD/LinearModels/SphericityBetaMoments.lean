@@ -43,11 +43,8 @@ theorem sphericity_gamma_moment_eq_product {p : ℕ} (hp : 0 < p) {a : ℝ}
   rw [hrewrite, gamma_mul_add_nat_mul_div hp ha0 k]
   have hcanc : C / (C * ∏ i, Q i) = 1 / (∏ i, Q i) := by
     simpa only [mul_one] using mul_div_mul_left (1:ℝ) (∏ i, Q i) hC
-  change (TauCeti.multivariateGamma p (a+k) / TauCeti.multivariateGamma p a) *
-    (C / (C * ∏ i, Q i)) = _
-  rw [hcanc, TauCeti.multivariateGamma_div_multivariateGamma, mul_one_div]
-  change (∏ i, R i) / (∏ i, Q i) = _
-  rw [← Finset.prod_div_distrib]
+  rw [hcanc, TauCeti.multivariateGamma_div_multivariateGamma, mul_one_div,
+    ← Finset.prod_div_distrib (f := R) (g := Q)]
   have hpair (i : Fin p) : R i / Q i =
       Real.Gamma (a-i.val/2+k)*Real.Gamma (a+i.val/(p:ℝ)) /
         (Real.Gamma (a-i.val/2)*Real.Gamma (a+i.val/(p:ℝ)+k)) := by

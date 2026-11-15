@@ -396,6 +396,7 @@ theorem tendsto_integral_of_le_of_tendstoInMeasure {Ω : Type*} {mΩ : Measurabl
   have hNn := hN n hn
   simp only [Function.comp_apply] at hNn
   rw [Real.dist_eq, sub_zero, abs_of_nonneg h0]
+  -- `change` folds `ENNReal.toReal (μ s)` into `μ.real s` for `linarith`.
   change B * μ.real s < δ / 2 at hNn
   linarith
 
@@ -415,7 +416,7 @@ theorem tendstoInMeasure_of_ae_eq_of_measure_tendsto_zero {Ω : Type*} {mΩ : Me
   by_cases h : ω ∈ E n
   · exact Or.inr h
   · left
-    change ε ≤ dist (Z n ω) (g ω)
+    simp only [Set.mem_ofPred_eq] at hmem ⊢
     rw [← hω h]; exact hmem
 
 /-- If `Vₙ ≥ 0` almost surely and `Vₙ → v` in probability, then `v ≥ 0`. -/
@@ -432,7 +433,6 @@ theorem nonneg_of_tendstoInMeasure_of_nonneg {Ω : Type*} {mΩ : MeasurableSpace
     refine measure_mono_ae ?_
     filter_upwards [hV0 n] with ω hω _
     have h0 : (0 : ℝ) ≤ V n ω := hω
-    change -v ≤ dist (V n ω) v
     rw [Real.dist_eq, abs_of_nonneg (by linarith)]
     linarith
   simp only [h1] at h
@@ -660,7 +660,7 @@ theorem mul_zero_or_one_martingaleDifference {Ω : Type*} {𝓕 𝓖 mΩ : Measu
   · have := condExp_mul_of_stronglyMeasurable_left hι (h2'.integrable one_le_two)
       (h2.integrable one_le_two)
     filter_upwards [this, h0] with ω h1 h2
-    change μ[ι * Y | 𝓕] ω = 0
+    rw [← Pi.mul_def]
     rw [h1, Pi.mul_apply, h2, Pi.zero_apply, mul_zero]
   · have heq : (fun ω ↦ (ι ω * Y ω) ^ 2) = ι * fun ω ↦ Y ω ^ 2 := by
       ext ω; rcases hι01 ω with h | h <;> simp [h]

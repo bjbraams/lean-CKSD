@@ -196,6 +196,52 @@ theorem integral_comp_sub_div {h : ℝ} (hh : 0 < h) (x : ℝ) (ψ : ℝ → ℝ
   rw [integral_sub_left_eq_self (fun z ↦ ψ (z / h)) volume x, Measure.integral_comp_div ψ h,
     abs_of_pos hh, smul_eq_mul]
 
+/-- Bias of the kernel estimator on the Hölder class: for a density `f ≤ B` with
+`|f y - f z| ≤ L |y - z|^β` and a kernel with `∫ K = 1`, the expected rescaled kernel differs
+from `f x` by at most `L h^β ∫ |u|^β |K u|`. -/
+theorem abs_integral_kernel_densityLaw_sub_le {β L B : ℝ} {f K : ℝ → ℝ} (hfm : Measurable f)
+    (hf0 : ∀ y, 0 ≤ f y) (hfB : ∀ y, f y ≤ B) (hfh : ∀ y z, |f y - f z| ≤ L * |y - z| ^ β)
+    (hKi : Integrable K volume) (hK1 : (∫ u, K u) = 1)
+    (hKm : Integrable (fun u ↦ |u| ^ β * |K u|) volume) {h : ℝ} (hh0 : 0 < h) (x : ℝ) :
+    |∫ y, K ((x - y) / h) / h ∂densityLaw f - f x| ≤ L * h ^ β * ∫ u, |u| ^ β * |K u| := by
+  have hψ : Integrable (fun u ↦ f (x - h * u) * K u) volume :=
+    hKi.bdd_mul
+      (hfm.comp (measurable_const.sub (measurable_const.mul measurable_id))).aestronglyMeasurable
+      (c := B) (Filter.Eventually.of_forall fun u ↦ by
+        rw [Real.norm_eq_abs, abs_of_nonneg (hf0 _)]; exact hfB _)
+  have hmean : ∫ y, K ((x - y) / h) / h ∂densityLaw f = ∫ u, f (x - h * u) * K u := by
+    rw [integral_densityLaw hfm hf0]
+    have e1 : ∀ y, f y * (K ((x - y) / h) / h) =
+        1 / h * (fun u ↦ f (x - h * u) * K u) ((x - y) / h) := by
+      intro y
+      dsimp only
+      have : x - h * ((x - y) / h) = y := by field_simp; ring
+      rw [this]; ring
+    simp_rw [e1]
+    have hcv := integral_comp_sub_div hh0 x (fun u ↦ f (x - h * u) * K u)
+    rw [integral_const_mul, hcv]
+    field_simp
+  rw [hmean]
+  have e2 : (∫ u, f (x - h * u) * K u) - f x = ∫ u, (f (x - h * u) - f x) * K u := by
+    have h3 : ∫ u, (f (x - h * u) - f x) * K u =
+        (∫ u, f (x - h * u) * K u) - ∫ u, f x * K u := by
+      rw [← integral_sub hψ (hKi.const_mul (f x))]; congr 1; ext u; ring
+    rw [h3, integral_const_mul, hK1, mul_one]
+  rw [e2]
+  have hb : ∀ u, ‖(f (x - h * u) - f x) * K u‖ ≤ L * h ^ β * (|u| ^ β * |K u|) := by
+    intro u
+    rw [Real.norm_eq_abs, abs_mul]
+    have h1 := hfh (x - h * u) x
+    have h2 : |x - h * u - x| = h * |u| := by
+      rw [show x - h * u - x = -(h * u) by ring, abs_neg, abs_mul, abs_of_pos hh0]
+    rw [h2, Real.mul_rpow hh0.le (abs_nonneg u)] at h1
+    calc |f (x - h * u) - f x| * |K u| ≤ L * (h ^ β * |u| ^ β) * |K u| :=
+          mul_le_mul_of_nonneg_right h1 (abs_nonneg _)
+      _ = _ := by ring
+  calc |∫ u, (f (x - h * u) - f x) * K u| ≤ ∫ u, L * h ^ β * (|u| ^ β * |K u|) :=
+        norm_integral_le_of_norm_le (hKm.const_mul _) (Filter.Eventually.of_forall hb)
+    _ = L * h ^ β * ∫ u, |u| ^ β * |K u| := integral_const_mul _ _
+
 /-- GAPS 103.26: the kernel upper bound for pointwise Hölder density risk with `0<β≤1`.
 The moment condition is the order-zero kernel condition appropriate in this range. -/
 theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
@@ -260,43 +306,8 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
       integrable_densityLaw_iff hfm hf0]
     exact hg2int
   -- bias
-  have hψ : Integrable (fun u ↦ f (x - h * u) * K u) volume :=
-    hKi.bdd_mul
-      (hfm.comp (measurable_const.sub (measurable_const.mul measurable_id))).aestronglyMeasurable
-      (c := B) (Filter.Eventually.of_forall fun u ↦ by
-        rw [Real.norm_eq_abs, abs_of_nonneg (hf0 _)]; exact hfB _)
-  have hmean : ∫ y, g y ∂densityLaw f = ∫ u, f (x - h * u) * K u := by
-    rw [integral_densityLaw hfm hf0]
-    have e1 : ∀ y, f y * g y = 1 / h * (fun u ↦ f (x - h * u) * K u) ((x - y) / h) := by
-      intro y
-      simp only [hg]
-      have : x - h * ((x - y) / h) = y := by field_simp; ring
-      rw [this]; ring
-    simp_rw [e1]
-    have hcv := integral_comp_sub_div hh0 x (fun u ↦ f (x - h * u) * K u)
-    rw [integral_const_mul, hcv]
-    field_simp
-  have hbias : |∫ y, g y ∂densityLaw f - f x| ≤ L * h ^ β * MK := by
-    rw [hmean]
-    have e2 : (∫ u, f (x - h * u) * K u) - f x = ∫ u, (f (x - h * u) - f x) * K u := by
-      have h3 : ∫ u, (f (x - h * u) - f x) * K u =
-          (∫ u, f (x - h * u) * K u) - ∫ u, f x * K u := by
-        rw [← integral_sub hψ (hKi.const_mul (f x))]; congr 1; ext u; ring
-      rw [h3, integral_const_mul, hK1, mul_one]
-    rw [e2]
-    have hb : ∀ u, ‖(f (x - h * u) - f x) * K u‖ ≤ L * h ^ β * (|u| ^ β * |K u|) := by
-      intro u
-      rw [Real.norm_eq_abs, abs_mul]
-      have h1 := hfh (x - h * u) x
-      have h2 : |x - h * u - x| = h * |u| := by
-        rw [show x - h * u - x = -(h * u) by ring, abs_neg, abs_mul, abs_of_pos hh0]
-      rw [h2, Real.mul_rpow hh0.le (abs_nonneg u)] at h1
-      calc |f (x - h * u) - f x| * |K u| ≤ L * (h ^ β * |u| ^ β) * |K u| :=
-            mul_le_mul_of_nonneg_right h1 (abs_nonneg _)
-        _ = _ := by ring
-    calc |∫ u, (f (x - h * u) - f x) * K u| ≤ ∫ u, L * h ^ β * (|u| ^ β * |K u|) :=
-          norm_integral_le_of_norm_le (hKm.const_mul _) (Filter.Eventually.of_forall hb)
-      _ = L * h ^ β * MK := integral_const_mul _ _
+  have hbias : |∫ y, g y ∂densityLaw f - f x| ≤ L * h ^ β * MK :=
+    abs_integral_kernel_densityLaw_sub_le hfm hf0 hfB hfh hKi hK1 hKm hh0 x
   obtain ⟨hWL2, hmse⟩ := integral_sq_sampleMean_sub_le hn hgL2 (f x)
   have hest : ∀ sample : Fin n → ℝ,
       finiteKernelDensityEstimator K h sample x = (∑ i, g (sample i)) / n := by

@@ -91,8 +91,6 @@ theorem hasDensity_finiteLikelihoodMap {Θ X : Type*} [Fintype Θ] [MeasurableSp
     simpa only [Pi.one_apply, ENNReal.toReal_one] using ENNReal.toReal_mono ENNReal.one_ne_top hx
   -- Expand only the clamped coordinate after changing the reference density.
   rw [finiteLikelihoodMap_apply]
-  change (P θ).rnDeriv (finiteDominatingMeasure P) x =
-    ENNReal.ofReal (min 1 (((P θ).rnDeriv (finiteDominatingMeasure P) x).toReal))
   rw [min_eq_right hreal, ENNReal.ofReal_toReal (ne_top_of_le_ne_top ENNReal.one_ne_top hx)]
 
 /-- In a standard Borel sample space, the finite likelihood vector is sufficient. -/

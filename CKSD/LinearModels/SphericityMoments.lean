@@ -22,7 +22,8 @@ namespace CKSD
 theorem map_trace_wishartGramMeasure_smul_one {p : ℕ} (hp : 0 < p) (ν : ℕ) (hν : 0 < ν)
     (v : ℝ) (hv : 0 < v) :
     (TauCeti.Probability.wishartGramMeasure ν (v • (1 : Matrix (Fin p) (Fin p) ℝ))).map
-      (fun A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦ (A : Matrix (Fin p) (Fin p) ℝ).trace) =
+      (fun A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦
+          (A : Matrix (Fin p) (Fin p) ℝ).trace) =
         gammaMeasure ((ν : ℝ) * p / 2) (1 / (2 * v)) := by
   let E := selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)
   let S : Matrix (Fin p) (Fin p) ℝ := v • 1
@@ -33,9 +34,9 @@ theorem map_trace_wishartGramMeasure_smul_one {p : ℕ} (hp : 0 < p) (ν : ℕ) 
   have hrate : 0 < 1 / (2 * v) := by positivity
   let : IsProbabilityMeasure (gammaMeasure ((ν : ℝ) * p / 2) (1 / (2 * v))) :=
     isProbabilityMeasure_gammaMeasure hshape hrate
-  have hS : S.PosSemidef := (Matrix.PosSemidef.one : (1 : Matrix (Fin p) (Fin p) ℝ).PosSemidef).smul hv.le
+  have hS : S.PosSemidef :=
+      (Matrix.PosSemidef.one : (1 : Matrix (Fin p) (Fin p) ℝ).PosSemidef).smul hv.le
   have hroot : CFC.sqrt S * CFC.sqrt S = S := CFC.sqrt_mul_sqrt_self S hS.nonneg
-  change (TauCeti.Probability.wishartGramMeasure ν S).map f = _
   symm
   apply TauCeti.Measure.ext_of_mgf
   · rw [TauCeti.Probability.integrableExpSet_id_gammaMeasure hshape hrate, interior_Iio]
@@ -51,11 +52,13 @@ theorem map_trace_wishartGramMeasure_smul_one {p : ℕ} (hp : 0 < p) (ν : ℕ) 
       dsimp only [S]
       rw [smul_smul]
       module
-    have hpencil : (1 - (2 * t) • (CFC.sqrt S * (θ : Matrix (Fin p) (Fin p) ℝ) * CFC.sqrt S)).PosDef := by
+    have hpencil :
+        (1 - (2 * t) • (CFC.sqrt S * (θ : Matrix (Fin p) (Fin p) ℝ) * CFC.sqrt S)).PosDef := by
       rw [hmat]
       exact (Matrix.PosDef.one : (1 : Matrix (Fin p) (Fin p) ℝ).PosDef).smul hcoef
     have hw := TauCeti.Probability.mgf_trace_mul_wishartGramMeasure_sqrt (Θ := θ) ν S hpencil
-    have htr : (fun A : E ↦ ((θ : Matrix (Fin p) (Fin p) ℝ) * (A : Matrix (Fin p) (Fin p) ℝ)).trace) = f := by
+    have htr : (fun A : E ↦ ((θ : Matrix (Fin p) (Fin p) ℝ) * (A : Matrix (Fin p) (Fin p) ℝ)).trace)
+        = f := by
       funext A
       dsimp only [θ, f]
       rw [Matrix.one_mul]
@@ -64,8 +67,7 @@ theorem map_trace_wishartGramMeasure_smul_one {p : ℕ} (hp : 0 < p) (ν : ℕ) 
     rw [← Real.rpow_natCast, ← Real.rpow_mul hcoef.le] at hw
     rw [TauCeti.Probability.mgf_id_gammaMeasure hshape hrate ht,
       mgf_map hfm.aemeasurable (by fun_prop)]
-    change (1 - t / (1 / (2 * v))) ^ (-((ν : ℝ) * p / 2)) = mgf f (TauCeti.Probability.wishartGramMeasure ν S) t
-    rw [hw]
+    rw [Function.id_comp, hw]
     have hrdiv : t / (1 / (2 * v)) = 2 * t * v := by field_simp [hv.ne']
     rw [hrdiv]
     congr 1
@@ -124,7 +126,8 @@ theorem integral_det_trace_ratio_pow_wishartGramMeasure {p e : ℕ}
   let g : E → ℝ := fun A ↦ ((A : Matrix (Fin p) (Fin p) ℝ).trace ^ (p * k))⁻¹
   have hS : S.PosDef := (Matrix.PosDef.one : (1 : Matrix (Fin p) (Fin p) ℝ).PosDef).smul hv
   have hen : (p : ℝ) - 1 < e := (sub_one_lt _).trans_le (Nat.cast_le.2 he)
-  have hC : 0 ≤ C := (div_pos (wishartNormalizer_pos hS (by linarith [(Nat.cast_nonneg k : (0 : ℝ) ≤ k)]))
+  have hC : 0 ≤ C :=
+      (div_pos (wishartNormalizer_pos hS (by linarith [(Nat.cast_nonneg k : (0 : ℝ) ≤ k)]))
     (wishartNormalizer_pos hS hen)).le
   have hweighted : (∫ A, g A ∂μ.withDensity
       (fun A ↦ ENNReal.ofReal ((A : Matrix (Fin p) (Fin p) ℝ).det ^ k))) =
@@ -145,8 +148,6 @@ theorem integral_det_trace_ratio_pow_wishartGramMeasure {p e : ℕ}
       rw [div_pow, ← pow_mul, div_pow, div_div_eq_mul_div, div_eq_mul_inv]
       ring
   rw [hratio, ← hweighted]
-  change _ * (∫ A, g A ∂(TauCeti.Probability.wishartGramMeasure e S).withDensity
-    (fun A ↦ ENNReal.ofReal ((A : Matrix (Fin p) (Fin p) ℝ).det ^ k))) = _
   rw [withDensity_det_pow_wishartGramMeasure hS he k, integral_smul_measure,
     ENNReal.toReal_ofReal hC, smul_eq_mul]
   have he' : 0 < e + 2 * k := lt_of_lt_of_le hp (by omega)
@@ -154,7 +155,8 @@ theorem integral_det_trace_ratio_pow_wishartGramMeasure {p e : ℕ}
   have hgintegral : (∫ A : E, g A ∂μ') =
       (1 / (2 * v)) ^ (p * k) * Real.Gamma ((e : ℝ) * p / 2) /
         Real.Gamma (((e + 2 * k : ℕ) : ℝ) * p / 2) := by
-    rw [← integral_map (by fun_prop : Measurable (fun A : E ↦ (A : Matrix (Fin p) (Fin p) ℝ).trace)).aemeasurable
+    rw [← integral_map
+        (by fun_prop : Measurable (fun A : E ↦ (A : Matrix (Fin p) (Fin p) ℝ).trace)).aemeasurable
       (by fun_prop : AEStronglyMeasurable (fun x : ℝ ↦ (x ^ (p * k))⁻¹)
         ((TauCeti.Probability.wishartGramMeasure (e + 2 * k) S).map
           (fun A : E ↦ (A : Matrix (Fin p) (Fin p) ℝ).trace)))]
@@ -165,7 +167,7 @@ theorem integral_det_trace_ratio_pow_wishartGramMeasure {p e : ℕ}
       nlinarith)]
     congr 2
     push_cast
-    ring
+    ring_nf
   rw [hgintegral]
   ring
 
@@ -175,7 +177,8 @@ theorem wishartNormalizer_spherical_shift_ratio_mul_rate_pow {p : ℕ} (n v : �
     (wishartNormalizer (n + 2 * k) (v • (1 : Matrix (Fin p) (Fin p) ℝ)) /
       wishartNormalizer n (v • (1 : Matrix (Fin p) (Fin p) ℝ))) * (1 / (2 * v)) ^ (p * k) =
       TauCeti.multivariateGamma p (n / 2 + k) / TauCeti.multivariateGamma p (n / 2) := by
-  have hbase : 0 < TauCeti.multivariateGamma p (n / 2) := TauCeti.multivariateGamma_pos (by linarith)
+  have hbase : 0 < TauCeti.multivariateGamma p (n / 2) :=
+      TauCeti.multivariateGamma_pos (by linarith)
   have h2v : 0 < 2 * v := by positivity
   rw [wishartNormalizer_smul_one _ _ hv, wishartNormalizer_smul_one _ _ hv,
     show (n + 2 * (k : ℝ)) * p / 2 = n * p / 2 + (p * k : ℕ) by push_cast; ring,
@@ -191,16 +194,19 @@ theorem integral_det_trace_ratio_pow_wishartGram_eq_gamma {p e : ℕ}
         ∂TauCeti.Probability.wishartGramMeasure e (v • 1)) =
       (p : ℝ) ^ (p * k) * TauCeti.multivariateGamma p ((e : ℝ) / 2 + k) *
         Real.Gamma ((p : ℝ) * ((e : ℝ) / 2)) /
-        (TauCeti.multivariateGamma p ((e : ℝ) / 2) * Real.Gamma ((p : ℝ) * ((e : ℝ) / 2) + p * k)) := by
+        (TauCeti.multivariateGamma p ((e : ℝ) / 2) *
+            Real.Gamma ((p : ℝ) * ((e : ℝ) / 2) + p * k)) := by
   have hen : (p : ℝ) - 1 < e := (sub_one_lt _).trans_le (Nat.cast_le.2 he)
   have hcancel := wishartNormalizer_spherical_shift_ratio_mul_rate_pow (p := p) e v hv hen k
   rw [integral_det_trace_ratio_pow_wishartGramMeasure hp he v hv k]
-  have hshape : (((e + 2 * k : ℕ) : ℝ) * p / 2) = (p : ℝ) * ((e : ℝ) / 2) + p * k := by push_cast; ring
+  have hshape : (((e + 2 * k : ℕ) : ℝ) * p / 2) = (p : ℝ) * ((e : ℝ) / 2) + p * k :=
+      by push_cast; ring
   rw [hshape, show (e : ℝ) * p / 2 = (p : ℝ) * ((e : ℝ) / 2) by ring]
   calc _ = (p : ℝ) ^ (p * k) *
       ((wishartNormalizer ((e : ℝ) + 2 * k) (v • (1 : Matrix (Fin p) (Fin p) ℝ)) /
         wishartNormalizer e (v • (1 : Matrix (Fin p) (Fin p) ℝ))) * (1 / (2 * v)) ^ (p * k)) *
-          Real.Gamma ((p : ℝ) * ((e : ℝ) / 2)) / Real.Gamma ((p : ℝ) * ((e : ℝ) / 2) + p * k) := by ring
+          Real.Gamma ((p : ℝ) * ((e : ℝ) / 2)) / Real.Gamma ((p : ℝ) * ((e : ℝ) / 2) + p * k) :=
+              by ring
     _ = _ := by rw [hcancel]; ring
 
 end CKSD

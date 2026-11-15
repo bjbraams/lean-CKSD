@@ -433,7 +433,7 @@ theorem isTrailWith_of_isActivePath (G : CausalGraph V) {C : Set V} {n : ℕ}
       Fin.ext (by simp; omega)
     have e2 : (⟨min (k + 1) n, by omega⟩ : Fin (n + 1)) = (⟨k, hk⟩ : Fin n).succ :=
       Fin.ext (by simp; omega)
-    show G.Adjacent (p ⟨min k n, _⟩) (p ⟨min (k + 1) n, _⟩)
+    dsimp only
     rw [e1, e2]
     exact this
   · have := h.2.2 ⟨k, by omega⟩
@@ -442,7 +442,7 @@ theorem isTrailWith_of_isActivePath (G : CausalGraph V) {C : Set V} {n : ℕ}
       Fin.ext (by simp; omega)
     have e3 : (⟨min (k + 2) n, by omega⟩ : Fin (n + 1)) = ⟨k + 2, by omega⟩ :=
       Fin.ext (by simp; omega)
-    show G.TripleStatus _ _ (p ⟨min k n, _⟩) (p ⟨min (k + 1) n, _⟩) (p ⟨min (k + 2) n, _⟩)
+    dsimp only
     rw [e1, e2, e3]
     exact this
   · have := Fin.ext_iff.1 (h.1 hij)
@@ -495,7 +495,8 @@ theorem exists_activeTrail_of_semiActive (G : CausalGraph V) {A B C D : Set V}
     · exact hBC _ hn
     · exact fun hC ↦ hk ⟨q k, hC, Or.inl rfl⟩
   have hkAC : q kA ∉ C := hnC kA (hkA.1.elim Or.inl fun hb ↦ Or.inr (Or.inr hb))
-  have hkBC : q kB ∉ C := hnC kB (hkB.1.elim (fun h ↦ Or.inr (Or.inl h)) fun hb ↦ Or.inr (Or.inr hb))
+  have hkBC : q kB ∉ C :=
+      hnC kB (hkB.1.elim (fun h ↦ Or.inr (Or.inl h)) fun hb ↦ Or.inr (Or.inr hb))
   obtain ⟨mA, rA, hrA0, hrAm, hrAf, hrAC⟩ := hkA.2
   obtain ⟨mB, rB, hrB0, hrBm, hrBf, hrBC⟩ := hkB.2
   -- the three pieces

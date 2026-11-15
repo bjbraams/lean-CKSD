@@ -122,10 +122,7 @@ theorem GaussianMixtureModel.exists_equiv_of_law_eq {d k l : ℕ}
     apply hlin.finsuppLinearCombination_injective
     funext v
     have ht := congrArg (fun μ ↦ mgf (fun x ↦ ⟪v,x⟫) μ 1) h
-    change mgf (fun x ↦ ⟪v,x⟫) (TauCeti.Probability.multivariateGaussianMixtureMeasure
-        M.weights M.mean M.covariance) 1 =
-      mgf (fun x ↦ ⟪v,x⟫) (TauCeti.Probability.multivariateGaussianMixtureMeasure
-        N.weights N.mean N.covariance) 1 at ht
+    simp only [GaussianMixtureModel.law] at ht
     rw [TauCeti.Probability.mgf_inner_multivariateGaussianMixtureMeasure
       (fun i _ ↦ (M.covariance_posDef i).posSemidef),
       TauCeti.Probability.mgf_inner_multivariateGaussianMixtureMeasure
@@ -199,7 +196,8 @@ theorem GaussianMixtureModel.not_bddAbove_logLikelihood {d n : ℕ} (hd : 0 < d)
     have : -s = 0 := by rw [← Real.exp_eq_one_iff]; exact h
     linarith
   let w : StdSimplex ℝ≥0 (Fin 2) :=
-    StdSimplex.duple 0 1 (s := 1 / 2) (t := 1 / 2) (by positivity) (by positivity) (by rw [add_halves])
+    StdSimplex.duple 0 1 (s := 1 / 2) (t := 1 / 2) (by positivity) (by positivity)
+        (by rw [add_halves])
   have hw : ∀ i, (w.weights i : ℝ) = 1 / 2 := by
     intro i
     fin_cases i <;> simp [w, StdSimplex.duple]

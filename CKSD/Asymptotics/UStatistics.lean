@@ -22,7 +22,8 @@ The order-two proof uses Mathlib's finite-product `HasLaw` and integration adapt
 `variance_sum_pi`, and the variance and covariance identities. Distinct degenerate kernel
 terms are orthogonal by integrating out a coordinate occurring in only one term.
 The finite-rank limit uses the Euclidean CLT from `CKSD.Asymptotics.MultivariateCLT`,
-Mathlib's `strong_law_ae`, and `TendstoInDistribution.continuous_comp_prodMk_of_tendstoInMeasure_const`
+Mathlib's `strong_law_ae`, and
+`TendstoInDistribution.continuous_comp_prodMk_of_tendstoInMeasure_const`
 for the sample second moments and deterministic normalization.
 -/
 
@@ -191,7 +192,7 @@ theorem uStatistic_two_sub_eq {E : Type*} {n : ℕ} (hn : 2 ≤ n)
   classical
   rw [uStatistic_two_eq_sum]
   have hq := uStatistic_two_eq_sum (fun z : E × E ↦ h z - θ - g z.1 - g z.2) x
-  change _ = _ + uStatistic 2 n (fun z ↦ (fun p : E × E ↦ h p - θ - g p.1 - g p.2) (z 0, z 1)) x
+  beta_reduce at hq
   rw [hq]
   have hsplit : (∑ i, ∑ j, if i = j then 0 else h (x i, x j) - θ - g (x i) - g (x j)) =
       (∑ i, ∑ j, if i = j then 0 else h (x i, x j)) -
@@ -229,15 +230,15 @@ theorem hasLaw_pi_pair {E : Type*} [MeasurableSpace E] (P : Measure E)
 /-- The conditional integral of a square-integrable real kernel is square integrable. -/
 theorem memLp_integral_kernel {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P] (h : E × E → ℝ) (hm : Measurable h) (h2 : MemLp h 2 (P.prod P)) :
-    MemLp (fun x ↦ ∫ y, h (x,y) ∂P) 2 P := by
+    MemLp (fun x ↦ ∫ y, h (x, y) ∂P) 2 P := by
   apply (memLp_two_iff_integrable_sq
     hm.stronglyMeasurable.integral_prod_right'.aestronglyMeasurable).2
   have hb := h2.integrable_sq.integral_prod_left
   apply hb.mono' (hm.stronglyMeasurable.integral_prod_right'.pow 2).aestronglyMeasurable
   filter_upwards [h2.integrable_sq.prod_right_ae] with x hx
-  have hx2 : MemLp (fun y ↦ h (x,y)) 2 P :=
+  have hx2 : MemLp (fun y ↦ h (x, y)) 2 P :=
     (memLp_two_iff_integrable_sq (hm.comp measurable_prodMk_left).aestronglyMeasurable).2 hx
-  have hv := ProbabilityTheory.variance_nonneg (fun y ↦ h (x,y)) P
+  have hv := ProbabilityTheory.variance_nonneg (fun y ↦ h (x, y)) P
   rw [ProbabilityTheory.variance_eq_sub hx2] at hv
   simp only [Pi.pow_apply] at hv ⊢
   rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]
@@ -246,14 +247,13 @@ theorem memLp_integral_kernel {E : Type*} [MeasurableSpace E] (P : Measure E)
 /-- A centered conditional kernel has zero first-coordinate integral. -/
 theorem integral_hoeffding_kernel_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P] (h : E × E → ℝ) (h2 : MemLp h 2 (P.prod P))
-    (hs : ∀ x y, h (x,y) = h (y,x)) :
+    (hs : ∀ x y, h (x, y) = h (y, x)) :
     let θ := ∫ z, h z ∂P.prod P
-    let g := fun x ↦ (∫ y, h (x,y) ∂P) - θ
+    let g := fun x ↦ (∫ y, h (x, y) ∂P) - θ
     let q := fun z : E × E ↦ h z - θ - g z.1 - g z.2
-    (∫ x, g x ∂P) = 0 ∧ ∀ᵐ y ∂P, (∫ x, q (x,y) ∂P) = 0 := by
-  let θ := ∫ z, h z ∂P.prod P
-  let g := fun x ↦ (∫ y, h (x,y) ∂P) - θ
-  change (∫ x, g x ∂P) = 0 ∧ ∀ᵐ y ∂P, (∫ x, h (x,y) - θ - g x - g y ∂P) = 0
+    (∫ x, g x ∂P) = 0 ∧ ∀ᵐ y ∂P, (∫ x, q (x, y) ∂P) = 0 := by
+  intro θ g q
+  dsimp only [q]
   have hi := h2.integrable (by norm_num : (1 : ℝ≥0∞) ≤ 2)
   have hgi : Integrable g P := hi.integral_prod_left.sub (integrable_const θ)
   have hg0 : (∫ x, g x ∂P) = 0 := by
@@ -262,10 +262,10 @@ theorem integral_hoeffding_kernel_eq_zero {E : Type*} [MeasurableSpace E] (P : M
     simp [θ]
   refine ⟨hg0, ?_⟩
   filter_upwards [hi.prod_left_ae] with y hy
-  calc (∫ x, h (x,y) - θ - g x - g y ∂P) =
-        (∫ x, h (x,y) - θ - g x ∂P) - ∫ x, g y ∂P :=
+  calc (∫ x, h (x, y) - θ - g x - g y ∂P) =
+        (∫ x, h (x, y) - θ - g x ∂P) - ∫ x, g y ∂P :=
       integral_sub ((hy.sub (integrable_const θ)).sub hgi) (integrable_const (g y))
-    _ = ((∫ x, h (x,y) ∂P) - θ) - (∫ x, g x ∂P) - g y := by
+    _ = ((∫ x, h (x, y) ∂P) - θ) - (∫ x, g x ∂P) - g y := by
       have e1 := integral_sub (hy.sub (integrable_const θ)) hgi
       have e2 := integral_sub hy (integrable_const θ)
       simp only [Pi.sub_apply] at e1 e2
@@ -277,20 +277,20 @@ theorem integral_hoeffding_kernel_eq_zero {E : Type*} [MeasurableSpace E] (P : M
 /-- A centered pair kernel is orthogonal to any square-integrable function not using its first
 coordinate. -/
 theorem integral_pair_mul_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure E)
-    [IsProbabilityMeasure P] {n : ℕ} (i j : Fin (n+1)) (hij : i ≠ j)
+    [IsProbabilityMeasure P] {n : ℕ} (i j : Fin (n + 1)) (hij : i ≠ j)
     (q : E × E → ℝ) (hq : MemLp q 2 (P.prod P))
-    (hzero : ∀ᵐ y ∂P, (∫ x, q (x,y) ∂P) = 0)
-    (F : (Fin (n+1) → E) → ℝ) (hF : MemLp F 2 (Measure.pi fun _ ↦ P))
+    (hzero : ∀ᵐ y ∂P, (∫ x, q (x, y) ∂P) = 0)
+    (F : (Fin (n + 1) → E) → ℝ) (hF : MemLp F 2 (Measure.pi fun _ ↦ P))
     (hnot : ∀ (a b : E) (z : Fin n → E), F (i.insertNth a z) = F (i.insertNth b z)) :
-    (∫ x, q (x i, x j) * F x ∂(Measure.pi fun _ : Fin (n+1) ↦ P)) = 0 := by
-  let e := MeasurableEquiv.piFinSuccAbove (fun _ : Fin (n+1) ↦ E) i
-  have he := measurePreserving_piFinSuccAbove (fun _ : Fin (n+1) ↦ P) i
+    (∫ x, q (x i, x j) * F x ∂(Measure.pi fun _ : Fin (n + 1) ↦ P)) = 0 := by
+  let e := MeasurableEquiv.piFinSuccAbove (fun _ : Fin (n + 1) ↦ E) i
+  have he := measurePreserving_piFinSuccAbove (fun _ : Fin (n + 1) ↦ P) i
   have hei := he.symm e
   have hiq := (hasLaw_pi_pair P i j hij).memLp_fun_comp hq
   have hint := hiq.integrable_mul hF
   have hint' := hei.integrable_comp_of_integrable hint
-  have hsymm : (∫ x, q (x i, x j) * F x ∂(Measure.pi fun _ : Fin (n+1) ↦ P)) =
-      ∫ z, ∫ t, q ((e.symm (t,z)) i, (e.symm (t,z)) j) * F (e.symm (t,z)) ∂P
+  have hsymm : (∫ x, q (x i, x j) * F x ∂(Measure.pi fun _ : Fin (n + 1) ↦ P)) =
+      ∫ z, ∫ t, q ((e.symm (t, z)) i, (e.symm (t, z)) j) * F (e.symm (t, z)) ∂P
         ∂(Measure.pi fun _ : Fin n ↦ P) := by
     rw [← hei.integral_comp' (fun x ↦ q (x i, x j) * F x)]
     exact integral_prod_symm _ hint'
@@ -305,16 +305,17 @@ theorem integral_pair_mul_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure E
   filter_upwards [hae] with z hz
   have hnE := nonempty_of_isProbabilityMeasure P
   obtain ⟨a⟩ := hnE
-  have hFn : ∀ t : E, F (e.symm (t,z)) = F (i.insertNth a z) := fun t ↦ hnot t a z
-  change (∫ t, q ((e.symm (t,z)) i, (e.symm (t,z)) j) * F (e.symm (t,z)) ∂P) = 0
+  have hFn : ∀ t : E, F (e.symm (t, z)) = F (i.insertNth a z) := fun t ↦ hnot t a z
   simp_rw [hFn]
-  change (∫ t, q ((i.insertNth (α := fun _ ↦ E) t z) i, (i.insertNth (α := fun _ ↦ E) t z) j) * F (i.insertNth a z) ∂P) = 0
+  -- `change` unfolds `e.symm` to `Fin.insertNth`, which no simp lemma states for this `e`.
+  change (∫ t, q ((i.insertNth (α := fun _ ↦ E) t z) i, (i.insertNth (α := fun _ ↦ E) t z) j) *
+    F (i.insertNth a z) ∂P) = 0
   simp only [← hj', Fin.insertNth_apply_same, Fin.insertNth_apply_succAbove]
   rw [integral_mul_const, hz, zero_mul]
 
 
 /-- Inserting a different value at one coordinate leaves every other coordinate unchanged. -/
-theorem insertNth_eq_of_ne {E : Type*} {n : ℕ} (i k : Fin (n+1)) (hik : i ≠ k)
+theorem insertNth_eq_of_ne {E : Type*} {n : ℕ} (i k : Fin (n + 1)) (hik : i ≠ k)
     (a b : E) (z : Fin n → E) :
     (i.insertNth (α := fun _ ↦ E) a z) k = (i.insertNth (α := fun _ ↦ E) b z) k := by
   rcases i.eq_self_or_eq_succAbove k with h | ⟨k', rfl⟩
@@ -325,8 +326,8 @@ theorem insertNth_eq_of_ne {E : Type*} {n : ℕ} (i k : Fin (n+1)) (hik : i ≠ 
 coincide. -/
 theorem integral_pair_mul_pair {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P] {n : ℕ} (i j k l : Fin n) (hij : i ≠ j) (hkl : k ≠ l)
-    (q : E × E → ℝ) (hq : MemLp q 2 (P.prod P)) (hs : ∀ x y, q (x,y) = q (y,x))
-    (hzero : ∀ᵐ y ∂P, (∫ x, q (x,y) ∂P) = 0) :
+    (q : E × E → ℝ) (hq : MemLp q 2 (P.prod P)) (hs : ∀ x y, q (x, y) = q (y, x))
+    (hzero : ∀ᵐ y ∂P, (∫ x, q (x, y) ∂P) = 0) :
     (∫ x, q (x i, x j) * q (x k, x l) ∂(Measure.pi fun _ : Fin n ↦ P)) =
       if (i = k ∧ j = l) ∨ (i = l ∧ j = k) then ∫ z, q z ^ 2 ∂P.prod P else 0 := by
   classical
@@ -334,7 +335,7 @@ theorem integral_pair_mul_pair {E : Type*} [MeasurableSpace E] (P : Measure E)
   · rw [ite_eq_left heq]
     have he : ∀ x : Fin n → E, q (x i, x j) * q (x k, x l) = q (x i, x j) ^ 2 := by
       intro x
-      rcases heq with ⟨hik,hjl⟩ | ⟨hil,hjk⟩
+      rcases heq with ⟨hik, hjl⟩ | ⟨hil, hjk⟩
       · rw [← hik, ← hjl]; ring
       · rw [← hil, ← hjk, hs (x j) (x i)]; ring
     simp_rw [he]
@@ -344,8 +345,8 @@ theorem integral_pair_mul_pair {E : Type*} [MeasurableSpace E] (P : Measure E)
   cases n with
   | zero => exact Fin.elim0 i
   | succ n =>
-    have horth (a b : Fin (n+1)) (hab : a ≠ b) (hak : a ≠ k) (hal : a ≠ l) :
-        (∫ x, q (x a, x b) * q (x k, x l) ∂(Measure.pi fun _ : Fin (n+1) ↦ P)) = 0 := by
+    have horth (a b : Fin (n + 1)) (hab : a ≠ b) (hak : a ≠ k) (hal : a ≠ l) :
+        (∫ x, q (x a, x b) * q (x k, x l) ∂(Measure.pi fun _ : Fin (n + 1) ↦ P)) = 0 := by
       apply integral_pair_mul_eq_zero P a b hab q hq hzero
         (fun x ↦ q (x k, x l)) ((hasLaw_pi_pair P k l hkl).memLp_fun_comp hq)
       intro t u z
@@ -360,14 +361,14 @@ theorem integral_pair_mul_pair {E : Type*} [MeasurableSpace E] (P : Measure E)
 /-- A centered symmetric pair kernel is orthogonal to each one-coordinate function. -/
 theorem integral_pair_mul_single {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P] {n : ℕ} (i j k : Fin n) (hij : i ≠ j)
-    (q : E × E → ℝ) (hq : MemLp q 2 (P.prod P)) (hs : ∀ x y, q (x,y) = q (y,x))
-    (hzero : ∀ᵐ y ∂P, (∫ x, q (x,y) ∂P) = 0) (g : E → ℝ) (hg : MemLp g 2 P) :
+    (q : E × E → ℝ) (hq : MemLp q 2 (P.prod P)) (hs : ∀ x y, q (x, y) = q (y, x))
+    (hzero : ∀ᵐ y ∂P, (∫ x, q (x, y) ∂P) = 0) (g : E → ℝ) (hg : MemLp g 2 P) :
     (∫ x, q (x i, x j) * g (x k) ∂(Measure.pi fun _ : Fin n ↦ P)) = 0 := by
   classical
   cases n with
   | zero => exact Fin.elim0 i
   | succ n =>
-    have hgk := hg.comp_measurePreserving (measurePreserving_eval (fun _ : Fin (n+1) ↦ P) k)
+    have hgk := hg.comp_measurePreserving (measurePreserving_eval (fun _ : Fin (n + 1) ↦ P) k)
     by_cases hik : i ≠ k
     · apply integral_pair_mul_eq_zero P i j hij q hq hzero (fun x ↦ g (x k)) hgk
       intro t u z
@@ -376,8 +377,8 @@ theorem integral_pair_mul_single {E : Type*} [MeasurableSpace E] (P : Measure E)
       have hjk : j ≠ k := by subst k; exact hij.symm
       have hh := integral_pair_mul_eq_zero P j i hij.symm q hq hzero (fun x ↦ g (x k)) hgk
         (fun t u z ↦ congrArg g (insertNth_eq_of_ne j k hjk t u z))
-      calc (∫ x, q (x i, x j) * g (x k) ∂(Measure.pi fun _ : Fin (n+1) ↦ P)) =
-          ∫ x, q (x j, x i) * g (x k) ∂(Measure.pi fun _ : Fin (n+1) ↦ P) :=
+      calc (∫ x, q (x i, x j) * g (x k) ∂(Measure.pi fun _ : Fin (n + 1) ↦ P)) =
+          ∫ x, q (x j, x i) * g (x k) ∂(Measure.pi fun _ : Fin (n + 1) ↦ P) :=
             integral_congr_ae (ae_of_all _ fun x ↦ by dsimp only; rw [hs (x i) (x j)])
         _ = 0 := hh
 
@@ -400,7 +401,7 @@ theorem memLp_sum_pairs {E : Type*} [MeasurableSpace E] (P : Measure E)
 /-- Degenerate pair sums have mean zero. -/
 theorem integral_sum_pairs_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P] (q : E × E → ℝ) (hq : MemLp q 2 (P.prod P))
-    (hzero : ∀ᵐ y ∂P, (∫ x, q (x,y) ∂P) = 0) (n : ℕ) :
+    (hzero : ∀ᵐ y ∂P, (∫ x, q (x, y) ∂P) = 0) (n : ℕ) :
     (∫ x : Fin n → E, ∑ i, ∑ j, if i = j then 0 else q (x i, x j)
       ∂(Measure.pi fun _ : Fin n ↦ P)) = 0 := by
   classical
@@ -428,8 +429,8 @@ theorem integral_sum_pairs_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure 
 /-- The second moment of a degenerate symmetric ordered-pair sum. -/
 theorem integral_sq_sum_pairs {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P] (q : E × E → ℝ) (hq : MemLp q 2 (P.prod P))
-    (hs : ∀ x y, q (x,y) = q (y,x))
-    (hzero : ∀ᵐ y ∂P, (∫ x, q (x,y) ∂P) = 0) (n : ℕ) :
+    (hs : ∀ x y, q (x, y) = q (y, x))
+    (hzero : ∀ᵐ y ∂P, (∫ x, q (x, y) ∂P) = 0) (n : ℕ) :
     (∫ x : Fin n → E, (∑ i, ∑ j, if i = j then 0 else q (x i, x j)) ^ 2
       ∂(Measure.pi fun _ : Fin n ↦ P)) =
       2 * n * (n - 1 : ℕ) * ∫ z, q z ^ 2 ∂P.prod P := by
@@ -472,17 +473,18 @@ theorem integral_sq_sum_pairs {E : Type*} [MeasurableSpace E] (P : Measure E)
       ∑ i, ∑ j, ∑ k, ∑ l, A i j x * A k l x := by
     rw [pow_two, Finset.sum_mul]
     simp_rw [Finset.sum_mul, Finset.mul_sum]
+  -- `change` folds the local definition `A`, so that `hpoint` applies.
   change (∫ x, (∑ i, ∑ j, A i j x) ^ 2 ∂(Measure.pi fun _ : Fin n ↦ P)) = _
   simp_rw [hpoint]
   rw [integral_finsetSum _ (fun i _ ↦ integrable_finsetSum _ (fun j _ ↦
     integrable_finsetSum _ (fun k _ ↦ integrable_finsetSum _ (fun l _ ↦
       hint i j k l))))]
-  conv_lhs => enter [2,i]; rw [integral_finsetSum _ (fun j _ ↦
+  conv_lhs => enter [2, i]; rw [integral_finsetSum _ (fun j _ ↦
     integrable_finsetSum _ (fun k _ ↦ integrable_finsetSum _ (fun l _ ↦
       hint i j k l)))]
-  conv_lhs => enter [2,i,2,j]; rw [integral_finsetSum _ (fun k _ ↦
+  conv_lhs => enter [2, i, 2, j]; rw [integral_finsetSum _ (fun k _ ↦
     integrable_finsetSum _ (fun l _ ↦ hint i j k l))]
-  conv_lhs => enter [2,i,2,j,2,k]; rw [integral_finsetSum _ (fun l _ ↦
+  conv_lhs => enter [2, i, 2, j, 2, k]; rw [integral_finsetSum _ (fun l _ ↦
     hint i j k l)]
   simp_rw [hsum]
   rw [sum_pair_ne_left]
@@ -494,8 +496,8 @@ theorem integral_sq_sum_pairs {E : Type*} [MeasurableSpace E] (P : Measure E)
 function. -/
 theorem integral_sum_pairs_mul_sum_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure E)
     [IsProbabilityMeasure P] (q : E × E → ℝ) (hq : MemLp q 2 (P.prod P))
-    (hs : ∀ x y, q (x,y) = q (y,x))
-    (hzero : ∀ᵐ y ∂P, (∫ x, q (x,y) ∂P) = 0) (g : E → ℝ) (hg : MemLp g 2 P) (n : ℕ) :
+    (hs : ∀ x y, q (x, y) = q (y, x))
+    (hzero : ∀ᵐ y ∂P, (∫ x, q (x, y) ∂P) = 0) (g : E → ℝ) (hg : MemLp g 2 P) (n : ℕ) :
     (∫ x : Fin n → E, (∑ i, ∑ j, if i = j then 0 else q (x i, x j)) * (∑ k, g (x k))
       ∂(Measure.pi fun _ : Fin n ↦ P)) = 0 := by
   classical
@@ -520,23 +522,21 @@ theorem integral_sum_pairs_mul_sum_eq_zero {E : Type*} [MeasurableSpace E] (P : 
     rw [integral_finsetSum _ (fun k _ ↦ hint k)]
     simp_rw [integral_pair_mul_single P i j _ hij q hq hs hzero g hg]
     simp
-  change (∫ x : Fin n → E, (∑ i, ∑ j, A i j x) * (∑ k, g (x k))
-    ∂(Measure.pi fun _ : Fin n ↦ P)) = 0
   simp_rw [Finset.sum_mul]
   have hint (i j : Fin n) : Integrable (fun x : Fin n → E ↦ A i j x * (∑ k, g (x k)))
       (Measure.pi fun _ : Fin n ↦ P) := (hA i j).integrable_mul hG
   rw [integral_finsetSum _ (fun i _ ↦ integrable_finsetSum _ (fun j _ ↦ hint i j))]
-  conv_lhs => enter [2,i]; rw [integral_finsetSum _ (fun j _ ↦ hint i j)]
+  conv_lhs => enter [2, i]; rw [integral_finsetSum _ (fun j _ ↦ hint i j)]
   simp_rw [he]
   simp
 
 /-- GAPS 102.29: order-two Hoeffding decomposition, including the exact variance. -/
 theorem uStatistic_hoeffding_decomposition_and_variance {E : Type*} [MeasurableSpace E]
     (P : Measure E) [IsProbabilityMeasure P] (h : E × E → ℝ)
-    (hm : Measurable h) (h2 : MemLp h 2 (P.prod P)) (hs : ∀ x y, h (x,y) = h (y,x))
+    (hm : Measurable h) (h2 : MemLp h 2 (P.prod P)) (hs : ∀ x y, h (x, y) = h (y, x))
     (n : ℕ) (hn : 2 ≤ n) :
     let θ := ∫ z, h z ∂P.prod P;
-    let g := fun x ↦ (∫ y, h (x,y) ∂P) - θ;
+    let g := fun x ↦ (∫ y, h (x, y) ∂P) - θ;
     let q := fun z : E × E ↦ h z - θ - g z.1 - g z.2;
     let U := fun x : Fin n → E ↦ uStatistic 2 n (fun z ↦ h (z 0, z 1)) x;
     (∀ᵐ x ∂(Measure.pi fun _ : Fin n ↦ P),
@@ -545,12 +545,7 @@ theorem uStatistic_hoeffding_decomposition_and_variance {E : Type*} [MeasurableS
     Var[U; Measure.pi fun _ : Fin n ↦ P] =
       4 / n * Var[g; P] + 2 / ((n : ℝ) * (n - 1 : ℕ)) * ∫ z, q z ^ 2 ∂P.prod P := by
   classical
-  let θ := ∫ z, h z ∂P.prod P
-  let g := fun x ↦ (∫ y, h (x,y) ∂P) - θ
-  let q := fun z : E × E ↦ h z - θ - g z.1 - g z.2
-  let U := fun x : Fin n → E ↦ uStatistic 2 n (fun z ↦ h (z 0, z 1)) x
-  change (∀ᵐ x ∂(Measure.pi fun _ : Fin n ↦ P), U x - θ = 2 / n * (∑ i, g (x i)) +
-      uStatistic 2 n (fun z ↦ q (z 0, z 1)) x) ∧ _
+  intro θ g q U
   refine ⟨ae_of_all _ (uStatistic_two_sub_eq hn h g θ), ?_⟩
   let μ := Measure.pi fun _ : Fin n ↦ P
   let G := fun x : Fin n → E ↦ ∑ i, g (x i)
@@ -560,7 +555,7 @@ theorem uStatistic_hoeffding_decomposition_and_variance {E : Type*} [MeasurableS
   have hq : MemLp q 2 (P.prod P) :=
     ((h2.sub (memLp_const θ)).sub (hg.comp_measurePreserving measurePreserving_fst)).sub
       (hg.comp_measurePreserving measurePreserving_snd)
-  have hqs : ∀ x y, q (x,y) = q (y,x) := by
+  have hqs : ∀ x y, q (x, y) = q (y, x) := by
     intro x y
     dsimp only [q]
     rw [hs x y]
@@ -574,24 +569,27 @@ theorem uStatistic_hoeffding_decomposition_and_variance {E : Type*} [MeasurableS
     integral_sq_sum_pairs P q hq hqs hq0 n
   have hcov : ProbabilityTheory.covariance S G μ = 0 := by
     rw [covariance_eq_sub hS hG]
-    change (∫ x, S x * G x ∂μ) - (∫ x, S x ∂μ) * (∫ x, G x ∂μ) = 0
     rw [hS0, zero_mul, sub_zero]
     exact integral_sum_pairs_mul_sum_eq_zero P q hq hqs hq0 g hg n
   have hGvar : ProbabilityTheory.variance G μ = n * Var[g; P] := by
     calc ProbabilityTheory.variance G μ = ∑ i : Fin n, ProbabilityTheory.variance g P := by
           rw [show G = ∑ i : Fin n, (fun x : Fin n → E ↦ g (x i)) by funext x; simp [G]]
-          exact ProbabilityTheory.variance_sum_pi (μ := fun _ : Fin n ↦ P) (X := fun _ ↦ g) (fun _ ↦ hg)
+          exact ProbabilityTheory.variance_sum_pi (μ := fun _ : Fin n ↦ P) (X := fun _ ↦ g)
+            (fun _ ↦ hg)
       _ = n * Var[g; P] := by
         simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
   have hU : U = fun x ↦ ((2 / n) * G x + c * S x) + θ := by
     funext x
     have hd := uStatistic_two_sub_eq hn h g θ x
     have hqsum := uStatistic_two_eq_sum q x
+    -- `change` folds the local definitions `U`, `G`, `S` and `c`, for `rw` and `linarith`.
     change U x - θ = 2 / n * G x + uStatistic 2 n (fun z ↦ q (z 0, z 1)) x at hd
     rw [hqsum] at hd
     change U x - θ = 2 / n * G x + c * S x at hd
     linarith
-  have hU2 : MemLp U 2 μ := by rw [hU]; exact ((hG.const_mul _).add (hS.const_mul _)).add (memLp_const θ)
+  have hU2 : MemLp U 2 μ := by
+    rw [hU]; exact ((hG.const_mul _).add (hS.const_mul _)).add (memLp_const θ)
+  -- `change` folds the local measure `μ` so that `rw` with `hU` and `μ`-lemmas applies.
   change Var[U; μ] = _
   have hshift := ProbabilityTheory.variance_add_const
     (X := fun x ↦ (2 / n) * G x + c * S x)
@@ -636,7 +634,7 @@ theorem uStatistic_two_finite_rank_eq {E : Type*} (r n : ℕ) (a : Fin r → ℝ
         ∑ j, a j * (if i = k then 0 else e j (x i) * e j (x k)) := by
       split_ifs <;> simp [mul_assoc]
     simp_rw [hp]
-    conv_lhs => enter [2,i]; rw [Finset.sum_comm]
+    conv_lhs => enter [2, i]; rw [Finset.sum_comm]
     rw [Finset.sum_comm]
     apply Finset.sum_congr rfl
     intro j _
@@ -728,7 +726,8 @@ theorem tendstoInDistribution_uStatistic_finite_rank_of_scores
   let Y := fun (n : ℕ) (ω : Ω) ↦ (n : ℝ) * uStatistic 2 n
     (fun z ↦ ∑ j, a j * e j (z 0) * e j (z 1)) (fun i ↦ X i.val ω)
   have hYe : ∀ n, (fun ω ↦ c n *
-      (φ (WithLp.toLp 2 (fun j ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, e j (X i ω))) - R n ω)) = Y n := by
+      (φ (WithLp.toLp 2 (fun j ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, e j (X i ω))) -
+        R n ω)) = Y n := by
     intro n
     funext ω
     have h := uStatistic_two_finite_rank_eq r n a e (fun i ↦ X i.val ω)
@@ -785,8 +784,9 @@ theorem tendstoInDistribution_uStatistic_of_finite_rank_degenerate
       (hXlaw 0).integral_comp (he j).aestronglyMeasurable
   have hcov : TauCeti.covMatrix (μ.map (V 0)) = (1 : Matrix (Fin r) (Fin r) ℝ) := by
     ext i j
-    rw [TauCeti.covMatrix_apply, covariance_map_fun (by fun_prop) (by fun_prop) (hVlaw 0).aemeasurable]
-    change ProbabilityTheory.covariance (fun ω ↦ e i (X 0 ω)) (fun ω ↦ e j (X 0 ω)) μ = _
+    rw [TauCeti.covMatrix_apply,
+      covariance_map_fun (by fun_prop) (by fun_prop) (hVlaw 0).aemeasurable]
+    simp only [V, v]
     rw [(hXlaw 0).covariance_fun_comp (he i).aemeasurable (he j).aemeasurable,
       covariance_eq_sub (he i) (he j), he0, he0, zero_mul, sub_zero]
     simpa only [Matrix.one_apply, Pi.mul_apply] using hortho i j

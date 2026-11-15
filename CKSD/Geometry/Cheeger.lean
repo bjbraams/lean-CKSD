@@ -122,8 +122,7 @@ private theorem mul_sum_le_sum_sum_mul_max_sub (hpos : ∀ i j, 0 ≤ W i j) (h 
   obtain ⟨i₀, hi₀S, hi₀⟩ := S.exists_mem_eq_inf' hSne a
   have hmS : ∀ i ∈ S, m ≤ a i := fun i hi ↦ S.inf'_le a hi
   have hmpos : 0 < m := by
-    change 0 < S.inf' hSne a
-    rw [hi₀]; exact (mem_filter.mp hi₀S).2
+    rw [show m = a i₀ from hi₀]; exact (mem_filter.mp hi₀S).2
   have hnotS : ∀ i, i ∉ S → a i = 0 := fun i hi ↦
     le_antisymm (not_lt.mp fun h ↦ hi (by simp [hS, h])) (ha i)
   set a' : Fin n → ℝ := fun i ↦ if i ∈ S then a i - m else 0
@@ -221,7 +220,6 @@ private theorem sq_mul_sq_le_of_support (hW : ∀ i j, W i j = W j i) (hpos : �
   rw [habs, hplus] at hCS
   have h2E : ∑ i, ∑ j, W i j * (g i - g j) ^ 2 = 2 * E := by simp only [E]; ring
   rw [h2E] at hCS
-  change (2 * P) ^ 2 ≤ 2 * E * (4 * D - 2 * E) at hCS
   have : (h * D) ^ 2 ≤ P ^ 2 := pow_le_pow_left₀ (mul_nonneg hh hD) hco 2
   linarith [show (2 * P) ^ 2 = 4 * P ^ 2 by ring, show (h * D) ^ 2 = h ^ 2 * D ^ 2 by ring,
     show 2 * E * (4 * D - 2 * E) = 4 * (E * (2 * D - E)) by ring]
@@ -344,6 +342,7 @@ private theorem cheeger_sq_le_of_admissible (hW : ∀ i j, W i j = W j i) (hpos 
     · nlinarith [hno gp hsuppp h0, key gm hsuppm]
   have hcore := sq_mul_sq_le_of_support W hW hpos h hh hcut g hgsupp
   simp only at hcore
+  -- fold the expanded sums back into the local abbreviations `Dof` and `Eof`
   change h ^ 2 * Dof g ^ 2 ≤ Eof g * (2 * Dof g - Eof g) at hcore
   have hEg := hEnn g
   have hD2 : 0 < Dof g ^ 2 := pow_pos hgD 2

@@ -115,8 +115,8 @@ theorem lintegral_ofReal_sq_add_gaussianReal (c d μ : ℝ) (v : ℝ≥0) {s : �
   have hmean : ∫ x, (c * x - d) ∂gaussianReal μ v = c * μ - d := by
     have h1 : Integrable (fun x : ℝ ↦ c * x) (gaussianReal μ v) :=
       ((memLp_id_gaussianReal 1).integrable le_rfl).const_mul c
-    rw [integral_sub h1 (integrable_const d), integral_const_mul, integral_id_gaussianReal, integral_const,
-      probReal_univ, one_smul]
+    rw [integral_sub h1 (integrable_const d), integral_const_mul, integral_id_gaussianReal,
+      integral_const, probReal_univ, one_smul]
   have hv2 : Var[fun x : ℝ ↦ c * x - d; gaussianReal μ v] = c ^ 2 * v := by
     rw [variance_sub_const (by fun_prop), variance_const_mul, variance_fun_id_gaussianReal]
   rw [hv2, hmean] at hvar
@@ -240,7 +240,8 @@ theorem gaussianSeqPosterior_term_le {a β c₀ κj x n : ℝ} (ha : 0 ≤ a) (h
     let r := 2 * β / (2 * β + 2 * a + 1)
     (lam * κj / D * κj - 1) ^ 2 ≤ c₀ ^ 2 * x ^ r * n ^ (2 * β) ∧
       (lam * κj / D) ^ 2 * x ≤ lam * x / D ∧
-      lam * x / D ≤ c₀ ^ 2 * 2 ^ (1 + 2 * β) * (x ^ (-1 / (2 * β + 2 * a + 1)) + n) ^ (-(1 + 2 * β)) := by
+      lam * x / D ≤
+        c₀ ^ 2 * 2 ^ (1 + 2 * β) * (x ^ (-1 / (2 * β + 2 * a + 1)) + n) ^ (-(1 + 2 * β)) := by
   intro lam D r
   set p := 2 * β + 2 * a + 1 with hp
   set q := 1 + 2 * β with hq
@@ -396,7 +397,8 @@ theorem tsum_gaussianSeqPosterior_risk_le {a β R c₀ : ℝ} (ha : 0 ≤ a) (h�
         tsum_le_tsum hpt
     _ = ENNReal.ofReal (c₀ ^ 2 * x ^ r) *
           ∑' j : ℕ, ENNReal.ofReal (((j : ℝ) + 1) ^ (2 * β) * f₀ j ^ 2) +
-        ENNReal.ofReal (2 * (c₀ ^ 2 * 2 ^ q)) * ∑' j : ℕ, ENNReal.ofReal ((T + (j + 1)) ^ (-q)) := by
+        ENNReal.ofReal (2 * (c₀ ^ 2 * 2 ^ q)) *
+          ∑' j : ℕ, ENNReal.ofReal ((T + (j + 1)) ^ (-q)) := by
         rw [tsum_add, ENNReal.tsum_mul_left, ENNReal.tsum_mul_left]
     _ ≤ ENNReal.ofReal (c₀ ^ 2 * x ^ r) * ENNReal.ofReal (R ^ 2) +
         ENNReal.ofReal (2 * (c₀ ^ 2 * 2 ^ q)) * ENNReal.ofReal (T ^ (1 - q) / (q - 1)) := by

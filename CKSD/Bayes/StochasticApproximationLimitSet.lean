@@ -45,7 +45,8 @@ theorem dist_le_exp_of_global_trajectories {F : E → E} {L : ℝ≥0}
     have hqcont : Continuous q := continuous_iff_continuousAt.2 fun s ↦ (hq s).continuousAt
     have hb := dist_le_of_trajectories_ODE (v := fun _ x ↦ v x) (K := L)
       (fun _ ↦ hv) hpcont.continuousOn (fun s _ ↦ (hp s).hasDerivWithinAt)
-      hqcont.continuousOn (fun s _ ↦ (hq s).hasDerivWithinAt) (le_refl (dist (p 0) (q 0))) r ⟨hr, le_rfl⟩
+      hqcont.continuousOn (fun s _ ↦ (hq s).hasDerivWithinAt) (le_refl (dist (p 0) (q 0))) r
+          ⟨hr, le_rfl⟩
     simpa only [sub_zero] using hb
   rcases le_total 0 t with ht | ht
   · simpa only [abs_of_nonneg ht] using hpos hL hf hg t ht
@@ -163,7 +164,8 @@ theorem tendsto_shift_sub_flow_of_apt {h : E → E} {L : ℝ≥0} (hL : Lipschit
     simpa only [dist_eq_norm, sub_zero] using hh.trans_lt (half_lt_self hε)
   rcases le_total 0 t with ht | ht
   · exact hpos t ht
-  · have hshift : Tendsto (fun s : ℝ ↦ s + t) atTop atTop := tendsto_atTop_add_const_right _ _ tendsto_id
+  · have hshift : Tendsto (fun s : ℝ ↦ s + t) atTop atTop :=
+      tendsto_atTop_add_const_right _ _ tendsto_id
     have he := (hpos (-t) (neg_nonneg.2 ht)).comp hshift
     apply squeeze_zero_norm (fun s ↦ ?_)
       (by simpa using he.norm.const_mul (Real.exp ((L : ℝ) * |t|)))
@@ -238,6 +240,24 @@ theorem eventually_exists_clusterPoint_near {u : ℝ → E} {K : Set E}
   exact ⟨z, hz, by simpa only [dist_eq_norm] using hsz⟩
 
 
+/-- An interval length `D ≥ T > 0` splits into `n ≥ 1` equal pieces of length in `[T, 2T]`. -/
+theorem exists_nat_pos_le_div_le_two_mul {T D : ℝ} (hT : 0 < T) (hD : T ≤ D) :
+    ∃ n : ℕ, 0 < n ∧ T ≤ D / n ∧ D / n ≤ 2 * T := by
+  have hratio : 1 ≤ D / T := (le_div_iff₀ hT).2 (by linarith)
+  let n := ⌊D / T⌋₊
+  have hn1 : 1 ≤ n := Nat.le_floor (by simpa using hratio)
+  have hn : 0 < n := lt_of_lt_of_le Nat.zero_lt_one hn1
+  have hnR : (0 : ℝ) < n := Nat.cast_pos.2 hn
+  have hnR1 : (1 : ℝ) ≤ n := by exact_mod_cast hn1
+  have hnle : (n : ℝ) ≤ D / T := Nat.floor_le (by positivity)
+  have hlt : D / T < (n : ℝ) + 1 := Nat.lt_floor_add_one _
+  refine ⟨n, hn, ?_, ?_⟩
+  · rw [le_div_iff₀ hnR]
+    simpa only [mul_comm] using (le_div_iff₀ hT).1 hnle
+  · rw [div_le_iff₀ hnR]
+    have hdlt : D < ((n : ℝ) + 1) * T := (div_lt_iff₀ hT).1 hlt
+    nlinarith
+
 /-- The cluster set at infinity of a confined asymptotic pseudotrajectory is internally chain
 transitive. Long late curve segments give chains with flight times between `T` and `2T`. -/
 theorem isInternallyChainTransitive_clusterSet_of_apt {h : E → E} {L : ℝ≥0}
@@ -263,25 +283,10 @@ theorem isInternallyChainTransitive_clusterSet_of_apt {h : E → E} {L : ℝ≥0
   have hby' : ‖u b - y‖ < δ := by simpa only [Metric.mem_ball, dist_eq_norm] using hby
   let D := b - a
   have hD : T ≤ D := by dsimp [D]; linarith
-  have hratio : 1 ≤ D / T := (le_div_iff₀ hT).2 (by linarith)
-  let n := ⌊D / T⌋₊
-  have hn1 : 1 ≤ n := Nat.le_floor (by simpa using hratio)
-  have hn : 0 < n := lt_of_lt_of_le Nat.zero_lt_one hn1
+  obtain ⟨n, hn, hqT, hq2⟩ := exists_nat_pos_le_div_le_two_mul hT hD
   have hnR : (0 : ℝ) < n := Nat.cast_pos.2 hn
-  have hnR1 : (1 : ℝ) ≤ n := by exact_mod_cast hn1
-  have hnle : (n : ℝ) ≤ D / T := Nat.floor_le (by positivity)
-  have hlt : D / T < (n : ℝ) + 1 := Nat.lt_floor_add_one _
   let q := D / n
-  have hqT : T ≤ q := by
-    dsimp [q]
-    rw [le_div_iff₀ hnR]
-    simpa only [mul_comm] using (le_div_iff₀ hT).1 hnle
   have hq0 : 0 < q := hT.trans_le hqT
-  have hq2 : q ≤ 2 * T := by
-    dsimp [q]
-    rw [div_le_iff₀ hnR]
-    have hdlt : D < ((n : ℝ) + 1) * T := (div_lt_iff₀ hT).1 hlt
-    nlinarith
   let τ : ℕ → ℝ := fun j ↦ a + (j : ℝ) * q
   have hτge (j : ℕ) : S ≤ τ j := by
     dsimp [τ]
@@ -388,7 +393,8 @@ theorem limitSet_properties_of_stochasticApproxInterp [ProperSpace E]
     {h : E → E} {L : ℝ≥0} (hL : LipschitzWith L h) {Φ : ℝ → E → E} (hΦ : IsFlowOf h Φ)
     (hapt : ∀ T > 0, ∀ ε > 0, ∀ᶠ s in atTop, ∀ r ∈ Icc 0 T,
       ‖stochasticApproxInterp a x (s + r) - Φ r (stochasticApproxInterp a x s)‖ ≤ ε) :
-    IsCompact (limitSet x) ∧ IsConnected (limitSet x) ∧ IsInternallyChainTransitive Φ (limitSet x) := by
+    IsCompact (limitSet x) ∧ IsConnected (limitSet x) ∧ IsInternallyChainTransitive Φ
+        (limitSet x) := by
   obtain ⟨R, hR⟩ := hbdd
   have hmap : MapsTo (stochasticApproxInterp a x) (Ici 0) (Metric.closedBall 0 (3 * R)) := by
     intro s hs
@@ -409,7 +415,8 @@ theorem limitSet_properties_of_stochasticApproximation [ProperSpace E]
     (x S : ℕ → E) {c : E} (hS : Tendsto S atTop (𝓝 c))
     (hbdd : BddAbove (range fun n ↦ ‖x n‖))
     (hrec : ∀ n, x (n + 1) = x n - a n • h (x n) - (S (n + 1) - S n)) :
-    IsCompact (limitSet x) ∧ IsConnected (limitSet x) ∧ IsInternallyChainTransitive Φ (limitSet x) := by
+    IsCompact (limitSet x) ∧ IsConnected (limitSet x) ∧ IsInternallyChainTransitive Φ
+        (limitSet x) := by
   obtain ⟨R, hR⟩ := hbdd
   let B := ‖h 0‖ + (L : ℝ) * max R 0
   have hB (n : ℕ) : ‖h (x n)‖ ≤ B := by

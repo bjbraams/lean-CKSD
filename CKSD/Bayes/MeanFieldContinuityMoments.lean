@@ -98,7 +98,6 @@ theorem continuous_finiteMeasure_nonneg_extension
     Continuous (finiteMeasureNonnegExtension μ hp) := by
   apply FiniteMeasure.continuous_iff_forall_continuous_integral.2
   intro g
-  change Continuous (fun t ↦ ∫ x, g x ∂μ (max 0 t))
   exact (hc g).comp_continuous (continuous_const.max continuous_id) fun t ↦ le_max_left _ _
 
 /-- A narrowly continuous probability solution on nonnegative time has integrable norm at
@@ -119,9 +118,12 @@ theorem integrable_norm_of_isContinuityEquation_on_nonneg
   have heq (s : ℝ) (hs : s ∈ Ioo (0 : ℝ) t) : (ν s : Measure E) = μ s := by
     simp only [ν, finiteMeasureNonnegExtension_toMeasure, max_eq_right hs.1.le]
   have hνce := isContinuityEquation_congr_measure_on_Ioo (hce t ht) hmeas heq
-  let : IsProbabilityMeasure (ν 0 : Measure E) := by simpa only [ν, finiteMeasureNonnegExtension_toMeasure, max_self] using hp 0 le_rfl
-  let : IsProbabilityMeasure (ν t : Measure E) := by simpa only [ν, finiteMeasureNonnegExtension_toMeasure, max_eq_right ht.le] using hp t ht.le
-  have hi' : Integrable (fun x ↦ ‖x‖) (ν 0 : Measure E) := by simpa only [ν, finiteMeasureNonnegExtension_toMeasure, max_self] using hi
+  let : IsProbabilityMeasure (ν 0 : Measure E) := by
+    simpa only [ν, finiteMeasureNonnegExtension_toMeasure, max_self] using hp 0 le_rfl
+  let : IsProbabilityMeasure (ν t : Measure E) := by
+    simpa only [ν, finiteMeasureNonnegExtension_toMeasure, max_eq_right ht.le] using hp t ht.le
+  have hi' : Integrable (fun x ↦ ‖x‖) (ν 0 : Measure E) := by
+    simpa only [ν, finiteMeasureNonnegExtension_toMeasure, max_self] using hi
   have hh := integrable_norm_end_of_isContinuityEquation hνce hν.continuousOn ht.le hi'
   simpa only [ν, finiteMeasureNonnegExtension_toMeasure, max_eq_right ht.le] using hh
 

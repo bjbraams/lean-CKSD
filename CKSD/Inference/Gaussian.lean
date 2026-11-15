@@ -90,6 +90,7 @@ theorem gaussian_integration_by_parts {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)
   have hφnn : ∀ x, 0 ≤ φ x := TauCeti.Probability.multivariateGaussianPDFReal_nonneg _ _
   have hden : HasDensity P volume φ :=
     ⟨hφm, ae_of_all _ hφnn, by
+      -- `change` exposes the syntactic form that the following `rw` matches
       show multivariateGaussian θ ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)) = _
       rw [TauCeti.Probability.multivariateGaussian_eq_withDensity hS θ,
         TauCeti.Probability.multivariateGaussianPDF_def]⟩
@@ -192,7 +193,6 @@ private theorem multivariateGaussian_one_density {p : ℕ} (θ : EuclideanSpace 
   refine ⟨hφm, hφnn, fun x ↦ ?_, hden, ?_⟩
   · have h := multivariateGaussianPDFReal_smul_one θ 1 one_pos x
     simp only [NNReal.coe_one, one_smul] at h
-    change φ x ≤ φ θ
     rw [show φ x = _ from h]
     exact mul_le_of_le_one_right (hφnn θ) (Real.exp_le_one_iff.2 (by
       have := sq_nonneg ‖x - θ‖; simp only [inv_one, one_mul]; linarith))
@@ -301,6 +301,7 @@ private theorem integral_inner_inv_norm_sq_add_smul {p : ℕ} (θ : EuclideanSpa
     rw [Finset.sum_sub_distrib, ← Finset.sum_div, ← Finset.mul_sum,
       ← EuclideanSpace.real_norm_sq_eq]
     simp
+  -- `change` unfolds a definition that `simp` does not see through
   change ∫ x, inner ℝ (x - θ) (g x) ∂P = _
   simp_rw [hlhs, hrhs]
   rw [integral_finsetSum (f := fun i x ↦ (x i - θ i) * g x i) _
@@ -434,6 +435,7 @@ theorem james_stein_risk_eq_and_lt {p : ℕ} (hp : 3 ≤ p) (θ : EuclideanSpace
       have h2 := (tendsto_const_nhds (x := x - θ)).sub h
       have h3 := (continuous_norm.tendsto _).comp h2 |>.pow 2
       have hδ : δ x - θ = x - θ - c • ((‖x‖ ^ 2)⁻¹ • x) := by
+        -- `change` exposes the syntactic form that the following `rw` matches
         change (1 - ((p : ℝ) - 2) / ‖x‖ ^ 2) • x - θ = _
         rw [sub_smul, one_smul, div_eq_mul_inv, mul_smul]
         abel

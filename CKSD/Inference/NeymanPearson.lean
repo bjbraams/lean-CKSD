@@ -98,42 +98,25 @@ theorem integral_le_of_generalized_neyman_pearson {m : ℕ} (μ : Measure X) (f�
   rw [hleft] at hmono
   linarith
 
-/-- GAPS 101.14: the Neyman–Pearson lemma, existence and sufficiency. For laws `P₀`, `P₁` with
-densities `f₀`, `f₁` with respect to `μ` and a size `α ∈ (0, 1)`, there are `k ≥ 0` and a test `φ`
-of exact size `α` under `P₀` with `φ = 1` on `{f₁ > k f₀}` and `φ = 0` on `{f₁ < k f₀}`; it is
-most powerful at level `α`. The almost-everywhere uniqueness of most powerful tests is not
-included. -/
-theorem exists_neyman_pearson_test (P₀ P₁ μ : Measure X) [IsProbabilityMeasure P₀]
-    [IsProbabilityMeasure P₁] (f₀ f₁ : X → ℝ)
-    (h₀ : HasDensity P₀ μ f₀) (h₁ : HasDensity P₁ μ f₁)
-    (α : ℝ) (hα : α ∈ Ioo 0 1) :
-    ∃ k : ℝ, 0 ≤ k ∧ ∃ φ : X → ℝ, IsStatisticalTest φ ∧
-      (∫ x, φ x ∂P₀) = α ∧
-      (∀ᵐ x ∂μ, (k * f₀ x < f₁ x → φ x = 1) ∧
-        (f₁ x < k * f₀ x → φ x = 0)) ∧
-      ∀ ψ, IsStatisticalTest ψ → (∫ x, ψ x ∂P₀) ≤ α →
-        (∫ x, ψ x ∂P₁) ≤ ∫ x, φ x ∂P₁ := by
-  -- `f₀` is positive and `f₁` nonnegative `P₀`-almost everywhere
-  have hpos0 : ∀ᵐ x ∂P₀, 0 < f₀ x := by
-    rw [ae_iff]
-    have hm : MeasurableSet {x | ¬ 0 < f₀ x} := (measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const h₀.1).compl
-    rw [h₀.2.2, withDensity_apply _ hm]
-    refine (setLIntegral_congr_fun hm fun x hx ↦ ?_).trans lintegral_zero
-    exact ENNReal.ofReal_eq_zero.2 (not_lt.1 hx)
-  have hac : P₀ ≪ μ := h₀.2.2 ▸ withDensity_absolutelyContinuous μ _
-  have hnn1 : ∀ᵐ x ∂P₀, 0 ≤ f₁ x := hac.ae_le h₁.2.1
-  -- the strict and weak likelihood-ratio regions, intersected with `{0 < f₀}`
+/-- The critical value of the Neyman–Pearson test: if `f₀ > 0` and `f₁ ≥ 0` hold
+`P₀`-almost everywhere and `α ∈ (0, 1)`, there is `k ≥ 0` with
+`P₀ {f₀ > 0, f₁ > k f₀} ≤ α ≤ P₀ {f₀ > 0, f₁ ≥ k f₀}`, namely the infimum of the `k ≥ 0` with
+`P₀ {f₀ > 0, f₁ > k f₀} ≤ α`. -/
+theorem exists_neyman_pearson_threshold (P₀ : Measure X) [IsProbabilityMeasure P₀]
+    {f₀ f₁ : X → ℝ} (hf₀ : Measurable f₀) (hf₁ : Measurable f₁) (hpos0 : ∀ᵐ x ∂P₀, 0 < f₀ x)
+    (hnn1 : ∀ᵐ x ∂P₀, 0 ≤ f₁ x) {α : ℝ} (hα : α ∈ Ioo 0 1) :
+    ∃ k : ℝ, 0 ≤ k ∧ P₀ {x | 0 < f₀ x ∧ k * f₀ x < f₁ x} ≤ ENNReal.ofReal α ∧
+      ENNReal.ofReal α ≤ P₀ {x | 0 < f₀ x ∧ k * f₀ x ≤ f₁ x} := by
   let S' : ℝ → Set X := fun k ↦ {x | 0 < f₀ x ∧ k * f₀ x < f₁ x}
   let T' : ℝ → Set X := fun k ↦ {x | 0 < f₀ x ∧ k * f₀ x ≤ f₁ x}
   have hpm : MeasurableSet {x | 0 < f₀ x} :=
-    measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const h₀.1
+    measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const hf₀
   have hS'm (k : ℝ) : MeasurableSet (S' k) :=
-    hpm.inter (measurableSet_lt (f := fun x ↦ k * f₀ x) (h₀.1.const_mul k) h₁.1)
+    hpm.inter (measurableSet_lt (f := fun x ↦ k * f₀ x) (hf₀.const_mul k) hf₁)
   have hT'm (k : ℝ) : MeasurableSet (T' k) :=
-    hpm.inter (measurableSet_le (f := fun x ↦ k * f₀ x) (h₀.1.const_mul k) h₁.1)
+    hpm.inter (measurableSet_le (f := fun x ↦ k * f₀ x) (hf₀.const_mul k) hf₁)
   have hanti {k k' : ℝ} (hkk : k ≤ k') : S' k' ⊆ S' k := fun x hx ↦
     ⟨hx.1, lt_of_le_of_lt (mul_le_mul_of_nonneg_right hkk hx.1.le) hx.2⟩
-  have hST (k : ℝ) : S' k ⊆ T' k := fun x hx ↦ ⟨hx.1, hx.2.le⟩
   have hαpos : (0 : ℝ≥0∞) < ENNReal.ofReal α := ENNReal.ofReal_pos.2 hα.1
   -- the masses of `S' n` tend to zero
   have hlim : Tendsto (fun n : ℕ ↦ P₀ (S' n)) atTop (𝓝 0) := by
@@ -177,7 +160,8 @@ theorem exists_neyman_pearson_test (P₀ P₁ μ : Measure X) [IsProbabilityMeas
     rw [hU, hmono.measure_iUnion]
     refine iSup_le fun m ↦ ?_
     obtain ⟨k', hk'K, hk'lt⟩ := exists_lt_of_csInf_lt hKne
-      (show sInf K < k + 1 / ((m : ℝ) + 1) by rw [← hkdef]; linarith [show (0 : ℝ) < 1 / ((m : ℝ) + 1) by positivity])
+      (show sInf K < k + 1 / ((m : ℝ) + 1) by
+        rw [← hkdef]; linarith [show (0 : ℝ) < 1 / ((m : ℝ) + 1) by positivity])
     exact (measure_mono (hanti hk'lt.le)).trans hk'K.2
   -- left limit: the weak region at `k` has mass at least `α`
   have hleft : ENNReal.ofReal α ≤ P₀ (T' k) := by
@@ -185,7 +169,8 @@ theorem exists_neyman_pearson_test (P₀ P₁ μ : Measure X) [IsProbabilityMeas
     · let kk : ℕ → ℝ := fun m ↦ k - k / ((m : ℝ) + 2)
       have hkk_lt (m : ℕ) : kk m < k := sub_lt_self _ (by positivity)
       have hkk_nn (m : ℕ) : 0 ≤ kk m := by
-        have : k / ((m : ℝ) + 2) ≤ k := div_le_self hk0 (by linarith [(m.cast_nonneg : (0 : ℝ) ≤ m)])
+        have : k / ((m : ℝ) + 2) ≤ k :=
+          div_le_self hk0 (by linarith [(m.cast_nonneg : (0 : ℝ) ≤ m)])
         simp only [kk]; linarith
       have hbig (m : ℕ) : ENNReal.ofReal α < P₀ (S' (kk m)) := by
         by_contra h
@@ -229,9 +214,46 @@ theorem exists_neyman_pearson_test (P₀ P₁ μ : Measure X) [IsProbabilityMeas
         exact ae_iff.1 hall
       rw [h1]
       exact ENNReal.ofReal_le_one.2 hα.2.le
+  exact ⟨k, hk0, hright, hleft⟩
+
+/-- GAPS 101.14: the Neyman–Pearson lemma, existence and sufficiency. For laws `P₀`, `P₁` with
+densities `f₀`, `f₁` with respect to `μ` and a size `α ∈ (0, 1)`, there are `k ≥ 0` and a test `φ`
+of exact size `α` under `P₀` with `φ = 1` on `{f₁ > k f₀}` and `φ = 0` on `{f₁ < k f₀}`; it is
+most powerful at level `α`. The almost-everywhere uniqueness of most powerful tests is not
+included. -/
+theorem exists_neyman_pearson_test (P₀ P₁ μ : Measure X) [IsProbabilityMeasure P₀]
+    [IsProbabilityMeasure P₁] (f₀ f₁ : X → ℝ)
+    (h₀ : HasDensity P₀ μ f₀) (h₁ : HasDensity P₁ μ f₁)
+    (α : ℝ) (hα : α ∈ Ioo 0 1) :
+    ∃ k : ℝ, 0 ≤ k ∧ ∃ φ : X → ℝ, IsStatisticalTest φ ∧
+      (∫ x, φ x ∂P₀) = α ∧
+      (∀ᵐ x ∂μ, (k * f₀ x < f₁ x → φ x = 1) ∧
+        (f₁ x < k * f₀ x → φ x = 0)) ∧
+      ∀ ψ, IsStatisticalTest ψ → (∫ x, ψ x ∂P₀) ≤ α →
+        (∫ x, ψ x ∂P₁) ≤ ∫ x, φ x ∂P₁ := by
+  -- `f₀` is positive and `f₁` nonnegative `P₀`-almost everywhere
+  have hpos0 : ∀ᵐ x ∂P₀, 0 < f₀ x := by
+    rw [ae_iff]
+    have hm : MeasurableSet {x | ¬ 0 < f₀ x} :=
+      (measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const h₀.1).compl
+    rw [h₀.2.2, withDensity_apply _ hm]
+    refine (setLIntegral_congr_fun hm fun x hx ↦ ?_).trans lintegral_zero
+    exact ENNReal.ofReal_eq_zero.2 (not_lt.1 hx)
+  have hac : P₀ ≪ μ := h₀.2.2 ▸ withDensity_absolutelyContinuous μ _
+  have hnn1 : ∀ᵐ x ∂P₀, 0 ≤ f₁ x := hac.ae_le h₁.2.1
+  obtain ⟨k, hk0, hright, hleft⟩ :=
+    exists_neyman_pearson_threshold P₀ h₀.1 h₁.1 hpos0 hnn1 hα
+  -- the strict and weak likelihood-ratio regions at `k`, intersected with `{0 < f₀}`
+  set S' : Set X := {x | 0 < f₀ x ∧ k * f₀ x < f₁ x}
+  set T' : Set X := {x | 0 < f₀ x ∧ k * f₀ x ≤ f₁ x}
+  have hpm : MeasurableSet {x | 0 < f₀ x} :=
+    measurableSet_lt (f := fun _ ↦ (0 : ℝ)) measurable_const h₀.1
+  have hS'm : MeasurableSet S' :=
+    hpm.inter (measurableSet_lt (f := fun x ↦ k * f₀ x) (h₀.1.const_mul k) h₁.1)
+  have hST : S' ⊆ T' := fun x hx ↦ ⟨hx.1, hx.2.le⟩
   -- the randomization constant
-  set a := P₀.real (S' k) with ha
-  set t := P₀.real (T' k) with ht
+  set a := P₀.real (S') with ha
+  set t := P₀.real (T') with ht
   have haα : a ≤ α := ENNReal.toReal_le_of_le_ofReal hα.1.le hright
   have hαt : α ≤ t := (ENNReal.ofReal_le_iff_le_toReal (measure_ne_top _ _)).1 hleft
   let γ : ℝ := if t - a = 0 then 0 else (α - a) / (t - a)
@@ -271,14 +293,14 @@ theorem exists_neyman_pearson_test (P₀ P₁ μ : Measure X) [IsProbabilityMeas
     filter_upwards [hpos0] with x hx
     exact propext ⟨fun h ↦ ⟨hx, h⟩, fun h ↦ h.2⟩
   have hEa : P₀.real E = t - a := by
-    have hE' : E =ᵐ[P₀] (T' k \ S' k : Set X) := by
+    have hE' : E =ᵐ[P₀] (T' \ S' : Set X) := by
       filter_upwards [hpos0] with x hx
       refine propext ⟨fun h ↦ ⟨⟨hx, h.symm ▸ le_rfl⟩, fun h' ↦ ?_⟩, fun h ↦ ?_⟩
       · have := h'.2
         simp only [E, mem_ofPred_eq] at h
         linarith
       · exact le_antisymm (not_lt.1 fun h' ↦ h.2 ⟨hx, h'⟩) h.1.2
-    rw [measureReal_congr hE', measureReal_sdiff (hST k) (hS'm k)]
+    rw [measureReal_congr hE', measureReal_sdiff hST hS'm]
   have hsize : (∫ x, φ x ∂P₀) = α := by
     rw [hφeq, integral_add ((integrable_const (1 : ℝ)).indicator hSm)
       ((integrable_const γ).indicator hEm), integral_indicator_const _ hSm,
@@ -301,8 +323,9 @@ theorem exists_neyman_pearson_test (P₀ P₁ μ : Measure X) [IsProbabilityMeas
       exact mul_le_mul_of_nonneg_left hle hk0
 
 /-- The Neyman–Pearson step of the Karlin–Rubin theorem: for laws `Pa`, `Pb` with a positive
-density `fa` and a nonnegative density `fb` whose ratio `fb / fa` is a nondecreasing function of `T`, the threshold test in `T` is
-at least as powerful under `Pb` as every test whose size under `Pa` does not exceed its own. -/
+density `fa` and a nonnegative density `fb` whose ratio `fb / fa` is a nondecreasing function of
+`T`, the threshold test in `T` is at least as powerful under `Pb` as every test whose size under
+`Pa` does not exceed its own. -/
 theorem integral_le_integral_thresholdTest_of_monotone_likelihood_ratio (μ : Measure X)
     (Pa Pb : Measure X) [IsProbabilityMeasure Pa] [IsProbabilityMeasure Pb] (fa fb : X → ℝ)
     (ha : HasDensity Pa μ fa) (hb : HasDensity Pb μ fb) (hpos : ∀ x, 0 < fa x)
@@ -473,8 +496,8 @@ theorem exists_integral_thresholdTest_eq (P : Measure X) [IsProbabilityMeasure P
   rw [ProbabilityTheory.cdf_eq_real] at hle
   rw [map_measureReal_apply hT measurableSet_Iio] at hlt
   rw [map_measureReal_apply hT measurableSet_Iic] at hle
-  change P.real {x | T x < c} ≤ 1 - β at hlt
-  change 1 - β ≤ P.real {x | T x ≤ c} at hle
+  simp only [Set.preimage, Set.mem_Iio] at hlt
+  simp only [Set.preimage, Set.mem_Iic] at hle
   have hm1 : MeasurableSet {x | T x ≤ c} := measurableSet_le hT measurable_const
   have hgt : P.real {x | c < T x} = 1 - P.real {x | T x ≤ c} := by
     rw [← probReal_compl_eq_one_sub hm1]

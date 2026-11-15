@@ -8,7 +8,7 @@ public import CKSD.Processes.Kalman.Recursion
 Under `KalmanModel.GaussianInputs`, prediction and filtering errors are centred Gaussian
 and independent of the preceding observation record. The update lemmas yield conditional
 state laws, independent innovations and the product predictive density in
-`KalmanModel.kalman_filter`.
+`KalmanModel.condDistrib_state_eq_multivariateGaussian`.
 Gaussian shift and conditioning tools are provided by `CKSD.Processes.GaussianConditioning`.
 Source: GAPS 106.7.
 -/
@@ -374,6 +374,7 @@ theorem map_obsPrefix_eq_withDensity (n : ℕ) :
         (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ κ) (Fin.last n)).symm
     have he : ∀ q, e q = Fin.snoc q.1 q.2 := by
       intro q
+      -- unfold `e` to the inverse of `piFinSuccAbove` applied to the swapped pair
       change (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ κ)
         (Fin.last n)).symm (q.2, q.1) = _
       rw [MeasurableEquiv.piFinSuccAbove_symm_apply, Fin.insertNthEquiv_apply,
@@ -383,6 +384,7 @@ theorem map_obsPrefix_eq_withDensity (n : ℕ) :
           M.innovation x₀ w v n ω) := by
       funext ω
       rw [M.obsPrefix_succ_eq x₀ w v n ω, Function.comp_apply]
+      -- unfold `e` to the inverse of `piFinSuccAbove` applied to the swapped pair
       change _ = (MeasurableEquiv.piFinSuccAbove (fun _ ↦ EuclideanSpace ℝ κ)
         (Fin.last n)).symm (g (M.obsPrefix x₀ w v n ω) + M.innovation x₀ w v n ω,
           M.obsPrefix x₀ w v n ω)
@@ -418,8 +420,8 @@ covariances. Conditionally on `y_0, …, y_t`, the state `x_t` is Gaussian with 
 mean and covariance and `x_{t+1}` with the predicted ones; the innovations
 `y_t - H_t x_{t|t-1}` are independent with laws `N(0, Σ_t)`; and the density of
 `(y_0, …, y_{n-1})` is the product of the one-step predictive densities. -/
-theorem KalmanModel.kalman_filter {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
-    [IsProbabilityMeasure P] {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ]
+theorem KalmanModel.condDistrib_state_eq_multivariateGaussian {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P] {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ]
     [DecidableEq κ] (M : KalmanModel ι κ) (hQ : ∀ t, (M.stateCov t).PosSemidef)
     (hR : ∀ t, (M.obsCov t).PosSemidef) (hP₀ : M.initCov.PosSemidef)
     (x₀ : Ω → EuclideanSpace ℝ ι) (w : ℕ → Ω → EuclideanSpace ℝ ι)

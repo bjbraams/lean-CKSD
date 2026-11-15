@@ -25,13 +25,12 @@ theorem comp_eq_conv_of_ae_eq_map_add
     (K : Kernel E E) [IsMarkovKernel K]
     (hK : ∀ᵐ x ∂μ, K x = M.map (fun y ↦ x + y)) : K ∘ₘ μ = μ.conv M := by
   ext s hs
-  change μ.bind (fun x ↦ K x) s = _
   rw [Measure.bind_apply hs K.aemeasurable]
-  rw [Measure.conv,Measure.map_apply measurable_add hs,
+  rw [Measure.conv, Measure.map_apply measurable_add hs,
     Measure.prod_apply (measurable_add hs)]
   apply lintegral_congr_ae
   filter_upwards [hK] with x hx
   have hm : Measurable (fun y : E ↦ x + y) := measurable_const.add measurable_id
-  rw [hx,Measure.map_apply hm hs]
+  rw [hx, Measure.map_apply hm hs]
   rfl
 end CKSD

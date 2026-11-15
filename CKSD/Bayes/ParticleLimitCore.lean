@@ -20,7 +20,7 @@ matching the normalization of the filtering laws of `CKSD.FeynmanKacModel`.
 ## Main results
 
 * `CKSD.FeynmanKacModel.integral_backwardOperator`: the semigroup identity
-  `γₚ(Q_{p,p+m} f) = γ_{p+m}(f)`.
+  `γₚ(Q_{p, p + m} f) = γ_{p + m}(f)`.
 * `CKSD.sqrt_mul_particleLikelihood_mul_average_sub`: the telescoping decomposition of the
   particle error into local errors.
 * `CKSD.tendstoInDistribution_particle_average`,
@@ -49,7 +49,7 @@ def FeynmanKacModel.backwardOperator {X : Type*} [MeasurableSpace X]
       ∫ y, M.backwardOperator (p + 1) m f y ∂M.transition p x
 
 /-- Asymptotic variance of the bootstrap particle average of `f` at time `n`:
-`∑_{p ≤ n} 𝛈ₚ((Q_{p,n}(f - 𝛈ₙ f))²) / 𝛈ₚ(Q_{p,n} 1)²`, with `𝛈ₚ` the filtering law and `Q_{p,n}`
+`∑_{p ≤ n} 𝛈ₚ((Q_{p, n}(f - 𝛈ₙ f))²) / 𝛈ₚ(Q_{p, n} 1)²`, with `𝛈ₚ` the filtering law and `Q_{p, n}`
 the backwards operator over `n - p` transitions from time `p`. -/
 def FeynmanKacModel.particleAverageAsymptoticVariance {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) (f : X → ℝ) : ℝ :=
@@ -59,7 +59,7 @@ def FeynmanKacModel.particleAverageAsymptoticVariance {X : Type*} [MeasurableSpa
       (∫ x, M.backwardOperator p (n - p) (fun _ ↦ 1) x ∂M.filterLaw p) ^ 2
 
 /-- Asymptotic variance of the particle likelihood estimate at time `n`, normalized by the true
-likelihood: `∑_{p ≤ n} (𝛈ₚ((Q_{p,n} 1)²) / 𝛈ₚ(Q_{p,n} 1)² - 1)`. -/
+likelihood: `∑_{p ≤ n} (𝛈ₚ((Q_{p, n} 1)²) / 𝛈ₚ(Q_{p, n} 1)² - 1)`. -/
 def FeynmanKacModel.particleLikelihoodAsymptoticVariance {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) : ℝ :=
   ∑ p ∈ Finset.range (n + 1),
@@ -110,12 +110,12 @@ private theorem measurable_and_bounded_backwardOperator (M : FeynmanKacModel X) 
     have := M.isMarkov_transition p
     refine ⟨(M.measurable_potential p).mul (M.measurable_integral_transition p hm), b * K,
       fun x ↦ ?_⟩
-    change |M.potential p x * ∫ y, M.backwardOperator (p + 1) m f y ∂M.transition p x| ≤ b * K
+    simp only [FeynmanKacModel.backwardOperator]
     rw [abs_mul, abs_of_pos (ha.trans_le (hab x).1)]
     exact mul_le_mul (hab x).2 (abs_integral_le_of_abs_le hK) (abs_nonneg _)
       ((ha.trans_le (hab x).1).le.trans (hab x).2)
 
-/-- Semigroup property of the backwards operator: `γₚ(Q_{p,p+m} f) = γ_{p+m}(f)`. -/
+/-- Semigroup property of the backwards operator: `γₚ(Q_{p, p + m} f) = γ_{p + m}(f)`. -/
 theorem integral_backwardOperator (M : FeynmanKacModel X) (p m : ℕ) {f : X → ℝ}
     (hf : Measurable f) {C : ℝ} (hC : ∀ x, |f x| ≤ C) :
     ∫ x, M.backwardOperator p m f x ∂M.unnormalizedLaw p = ∫ x, f x ∂M.unnormalizedLaw (p + m) := by
@@ -140,7 +140,7 @@ private theorem sum_range_sub_eq_of_succ_eq (a b : ℕ → ℝ) (n : ℕ)
 
 /-- Telescoping decomposition of the particle error along a path: the scaled error
 `√N (γᴺₙ(h) - γₙ(h))` of the particle approximation of the unnormalized measure is the sum of the
-local errors of the generations `p ≤ n` in the directions `Q_{p,n} h`. -/
+local errors of the generations `p ≤ n` in the directions `Q_{p, n} h`. -/
 theorem sqrt_mul_particleLikelihood_mul_average_sub (M : FeynmanKacModel X) {N : ℕ}
     (x : ℕ → Fin (N + 1) → X) (n : ℕ) {h : X → ℝ} (hh : Measurable h) {C : ℝ}
     (hC : ∀ y, |h y| ≤ C) :
@@ -188,7 +188,7 @@ section Limits
 
 variable {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
 
-/-- The functions `Q_{p,n} h`, `p ∈ ℕ`, are uniformly bounded. -/
+/-- The functions `Q_{p, n} h`, `p ∈ ℕ`, are uniformly bounded. -/
 private theorem exists_abs_backwardOperator_sub_le (M : FeynmanKacModel X) (n : ℕ) {h : X → ℝ}
     (hh : Measurable h) {C : ℝ} (hC : ∀ x, |h x| ≤ C) :
     ∃ B, ∀ p x, |M.backwardOperator p (n - p) h x| ≤ B := by
@@ -208,7 +208,7 @@ private theorem unnormalizedLaw_real_univ_pos (M : FeynmanKacModel X) (p : ℕ) 
     0 < (M.unnormalizedLaw p).real univ :=
   ENNReal.toReal_pos (M.unnormalizedLaw_univ_ne_zero p) (measure_ne_top _ _)
 
-/-- `𝛈ₚ(Q_{p,n} h) = γₙ(h) / γₚ(1)` for `p ≤ n`. -/
+/-- `𝛈ₚ(Q_{p, n} h) = γₙ(h) / γₚ(1)` for `p ≤ n`. -/
 private theorem integral_backwardOperator_filterLaw (M : FeynmanKacModel X) {p n : ℕ}
     (hpn : p ≤ n) {h : X → ℝ} (hh : Measurable h) {C : ℝ} (hC : ∀ x, |h x| ≤ C) :
     ∫ x, M.backwardOperator p (n - p) h x ∂M.filterLaw p =

@@ -219,8 +219,8 @@ theorem tendsto_mul_one_sub_cdf_tailQuantile (P : Measure ℝ) [IsProbabilityMea
     have hy0 : 0 < y := Real.rpow_pos_of_pos hz0 γ
     have hy1 : y < 1 := Real.rpow_lt_one hz0.le hz1 hγ
     have hlimy : Real.rpow y (-1 / γ) = z⁻¹ := by
-      change (z ^ γ) ^ (-1 / γ) = z⁻¹
-      rw [← Real.rpow_mul hz0.le, show γ * (-1 / γ) = -1 by field_simp, Real.rpow_neg_one]
+      rw [Real.rpow_eq_pow, hy, ← Real.rpow_mul hz0.le, show γ * (-1 / γ) = -1 by field_simp,
+        Real.rpow_neg_one]
     have hinv : Tendsto (fun n ↦ Fb (a n) / Fb (a n * y)) atTop (𝓝 z) := by
       have := ((hrv.2 y hy0).comp ha_top).inv₀ (by rw [hlimy]; positivity)
       rw [hlimy, inv_inv] at this

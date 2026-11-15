@@ -61,11 +61,11 @@ def wassersteinDensity {d : ℕ} (ν : TauCeti.WassersteinSpace 2 (EuclideanSpac
 /-- A law in the quadratic Wasserstein space is a probability measure. -/
 instance isProbabilityMeasure_wassersteinLaw (μ : TauCeti.WassersteinSpace 2 E) :
     IsProbabilityMeasure (wassersteinLaw μ) := by
-  change IsProbabilityMeasure (((μ : ProbabilityMeasure E) : Measure E))
+  unfold wassersteinLaw
   infer_instance
 /-- Every centered Gaussian envelope on Euclidean space is integrable. -/
 theorem integrable_exp_neg_mul_norm_sq {a : ℝ} (ha : 0 < a) :
-    Integrable (fun x : E ↦ Real.exp (-(a*‖x‖^2))) := by
+    Integrable (fun x : E ↦ Real.exp (-(a * ‖x‖ ^ 2))) := by
   have h := GaussianFourier.integrable_cexp_neg_mul_sq_norm_add
     (V := E) (b := (a : ℂ)) (by simpa using ha) 0 0
   apply h.norm.congr
@@ -79,18 +79,18 @@ plus potential energy and an explicit second-moment correction. -/
 theorem jkoFreeEnergy_eq_klDiv_gaussian_add
     (V : E → ℝ) {a : ℝ} (ha : 0 < a) (μ : TauCeti.WassersteinSpace 2 E) :
     jkoFreeEnergy V μ =
-      (klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a*‖x‖^2))) : EReal) +
+      (klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a * ‖x‖ ^ 2))) : EReal) +
         TauCeti.potentialEnergy V (wassersteinLaw μ) +
-          ((-a*(∫ x, ‖x‖^2 ∂wassersteinLaw μ)-
-            Real.log (∫ x : E, Real.exp (-(a*‖x‖^2))) : ℝ) : EReal) := by
+          ((-a * (∫ x, ‖x‖ ^ 2 ∂wassersteinLaw μ) -
+            Real.log (∫ x : E, Real.exp (-(a * ‖x‖ ^ 2))) : ℝ) : EReal) := by
   have h := TauCeti.WassersteinSpace.boltzmannEntropy_eq_klDiv_tilted_add (p := 2)
-    (m := (volume : Measure E)) (a := a) (x₀ := (0:E)) (by norm_num)
-    (by simpa only [ENNReal.toReal_ofNat,Real.rpow_two,dist_zero_right] using
+    (m := (volume : Measure E)) (a := a) (x₀ := (0 : E)) (by norm_num)
+    (by simpa only [ENNReal.toReal_ofNat, Real.rpow_two, dist_zero_right] using
       integrable_exp_neg_mul_norm_sq (d := d) ha) μ
-  simp only [ENNReal.toReal_ofNat,Real.rpow_two,dist_zero_right] at h
+  simp only [ENNReal.toReal_ofNat, Real.rpow_two, dist_zero_right] at h
+  -- Fold `wassersteinLaw μ` in `h`, the pattern of `jkoFreeEnergy`.
   change TauCeti.boltzmannEntropy volume (wassersteinLaw μ) = _ at h
   rw [jkoFreeEnergy, h]
-  change (klDiv _ _ : EReal)+((- (a*_) - _ : ℝ) : EReal)+_ = _
   rw [neg_mul]
   ac_rfl
 
@@ -98,16 +98,17 @@ theorem jkoFreeEnergy_eq_klDiv_gaussian_add
 theorem jkoFreeEnergy_gaussian_lower_bound
     (V : E → ℝ) (hV : ∀ x, 0 ≤ V x) {a : ℝ} (ha : 0 < a)
     (μ : TauCeti.WassersteinSpace 2 E) :
-    (((-a*(∫ x, ‖x‖^2 ∂wassersteinLaw μ)-
-      Real.log (∫ x : E, Real.exp (-(a*‖x‖^2)))) : ℝ) : EReal) ≤ jkoFreeEnergy V μ := by
+    (((-a * (∫ x, ‖x‖ ^ 2 ∂wassersteinLaw μ) -
+      Real.log (∫ x : E, Real.exp (-(a * ‖x‖ ^ 2)))) : ℝ) : EReal) ≤ jkoFreeEnergy V μ := by
   have hp : 0 ≤ TauCeti.potentialEnergy V (wassersteinLaw μ) := by
     rw [TauCeti.potentialEnergy_of_nonneg_ae (ae_of_all _ hV)]
     exact EReal.coe_ennreal_nonneg _
   rw [jkoFreeEnergy_eq_klDiv_gaussian_add V ha μ]
   have h0 : (0 : EReal) ≤ (klDiv (wassersteinLaw μ)
-    (volume.tilted (fun x : E ↦ -(a*‖x‖^2))) : EReal) := EReal.coe_ennreal_nonneg _
+    (volume.tilted (fun x : E ↦ -(a * ‖x‖ ^ 2))) : EReal) := EReal.coe_ennreal_nonneg _
   simpa only [zero_add, add_zero, add_comm] using add_le_add_right (add_nonneg h0 hp)
-    (((-a*(∫ x, ‖x‖^2 ∂wassersteinLaw μ)-Real.log (∫ x : E, Real.exp (-(a*‖x‖^2)))) : ℝ) : EReal)
+    (((-a * (∫ x, ‖x‖ ^ 2 ∂wassersteinLaw μ) -
+      Real.log (∫ x : E, Real.exp (-(a * ‖x‖ ^ 2)))) : ℝ) : EReal)
 
 /-- A nonnegative-potential free energy has no minus-infinite values on P2. -/
 theorem jkoFreeEnergy_ne_bot (V : E → ℝ) (hV : ∀ x, 0 ≤ V x)
@@ -117,45 +118,45 @@ theorem jkoFreeEnergy_ne_bot (V : E → ℝ) (hV : ∀ x, 0 ≤ V x)
 along a sequence with bounded quadratic moments. -/
 theorem ereal_le_liminf_of_positive_tilts {F : EReal} {u : ℕ → EReal} {m M : ℝ}
     {mn : ℕ → ℝ} (hm : 0 ≤ m) (hM : 0 ≤ M) (hmn : ∀ n, mn n ≤ M)
-    (htilt : ∀ a > 0, F + ((a*m : ℝ) : EReal) ≤
-      liminf (fun n ↦ u n+((a*mn n : ℝ) : EReal)) atTop) : F ≤ liminf u atTop := by
+    (htilt : ∀ a > 0, F + ((a * m : ℝ) : EReal) ≤
+      liminf (fun n ↦ u n + ((a * mn n : ℝ) : EReal)) atTop) : F ≤ liminf u atTop := by
   apply le_of_forall_lt_imp_le_of_dense
   intro s hs
   obtain ⟨r, hsr, hrF⟩ := EReal.exists_between_coe_real hs
   obtain ⟨R, hrR, hRF⟩ := EReal.exists_between_coe_real hrF
-  have hgap : 0 < R-r := sub_pos.mpr (EReal.coe_lt_coe_iff.mp hrR)
-  let a : ℝ := (R-r)/(M+1)
+  have hgap : 0 < R - r := sub_pos.mpr (EReal.coe_lt_coe_iff.mp hrR)
+  let a : ℝ := (R - r) / (M + 1)
   have ha : 0 < a := div_pos hgap (by linarith)
-  have hid : a*(M+1)=R-r := by dsimp [a]; exact div_mul_cancel₀ _ (by linarith)
-  have har : r+a*M < R := by nlinarith
-  have hcomp : ((r+a*M : ℝ) : EReal) < F + ((a*m : ℝ) : EReal) :=
+  have hid : a * (M + 1) = R - r := by dsimp [a]; exact div_mul_cancel₀ _ (by linarith)
+  have har : r + a * M < R := by nlinarith
+  have hcomp : ((r + a * M : ℝ) : EReal) < F + ((a * m : ℝ) : EReal) :=
     ((EReal.coe_lt_coe_iff.mpr har).trans hRF).trans_le
       (le_add_of_nonneg_right (by exact_mod_cast mul_nonneg ha.le hm))
   have hev := eventually_lt_of_lt_liminf (hcomp.trans_le (htilt a ha))
   have hev' : ∀ᶠ n in atTop, (r : EReal) ≤ u n := by
     filter_upwards [hev] with n hn
-    have ht : ((r+a*M : ℝ) : EReal) < u n+((a*M : ℝ) : EReal) :=
+    have ht : ((r + a * M : ℝ) : EReal) < u n + ((a * M : ℝ) : EReal) :=
       hn.trans_le (by
         apply add_le_add le_rfl
         exact_mod_cast mul_le_mul_of_nonneg_left (hmn n) ha.le)
-    have hh : (r : EReal)+((a*M : ℝ) : EReal) ≤ u n+((a*M : ℝ) : EReal) := by
+    have hh : (r : EReal) + ((a * M : ℝ) : EReal) ≤ u n + ((a * M : ℝ) : EReal) := by
       simpa only [EReal.coe_add] using ht.le
-    exact (EReal.addLECancellable_coe (a*M)).add_le_add_iff_right.mp hh
+    exact (EReal.addLECancellable_coe (a * M)).add_le_add_iff_right.mp hh
   exact hsr.le.trans (le_liminf_of_le (h := hev'))
 /-- Finite free energy is equivalent to finite Gaussian relative entropy and potential energy. -/
 theorem jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential
     (V : E → ℝ) (hV : ∀ x, 0 ≤ V x) {a : ℝ} (ha : 0 < a)
     (μ : TauCeti.WassersteinSpace 2 E) :
     jkoFreeEnergy V μ ≠ ⊤ ↔
-      klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a*‖x‖^2))) ≠ ∞ ∧
+      klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a * ‖x‖ ^ 2))) ≠ ∞ ∧
         TauCeti.potentialEnergy V (wassersteinLaw μ) ≠ ⊤ := by
   have hp : TauCeti.potentialEnergy V (wassersteinLaw μ) ≠ ⊥ := by
     rw [TauCeti.potentialEnergy_of_nonneg_ae (ae_of_all _ hV)]
     exact EReal.coe_ennreal_ne_bot _
   rw [jkoFreeEnergy_eq_klDiv_gaussian_add V ha μ]
-  simpa only [ne_eq,EReal.add_coe_eq_top_iff,EReal.coe_ennreal_eq_top_iff] using
+  simpa only [ne_eq, EReal.add_coe_eq_top_iff, EReal.coe_ennreal_eq_top_iff] using
     EReal.add_ne_top_iff_ne_top₂ (EReal.coe_ennreal_ne_bot
-      (klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a*‖x‖^2))))) hp
+      (klDiv (wassersteinLaw μ) (volume.tilted (fun x : E ↦ -(a * ‖x‖ ^ 2))))) hp
 
 /-- Finite free energy for a nonnegative continuous potential makes the potential integrable. -/
 theorem integrable_potential_of_jkoFreeEnergy_ne_top
@@ -170,42 +171,41 @@ theorem integrable_potential_of_jkoFreeEnergy_ne_top
 
 /-- The second moment is the square of the quadratic Wasserstein distance from the origin. -/
 theorem integral_norm_sq_eq_wasserstein_dirac_sq (μ : TauCeti.WassersteinSpace 2 E) :
-    (∫ x, ‖x‖^2 ∂wassersteinLaw μ) =
-      (TauCeti.wassersteinEDist 2 (Measure.dirac (0:E)) (wassersteinLaw μ)).toReal^2 := by
-  have hi : Integrable (fun x : E ↦ ‖x‖^2) (wassersteinLaw μ) := by
-    change Integrable (fun x : E ↦ ‖x‖^2) ((μ : ProbabilityMeasure E) : Measure E)
-    simpa only [ENNReal.toReal_ofNat,Real.rpow_two,dist_zero_right] using
-      TauCeti.WassersteinSpace.integrable_dist_rpow (p := 2) (by norm_num) μ (0:E)
+    (∫ x, ‖x‖ ^ 2 ∂wassersteinLaw μ) =
+      (TauCeti.wassersteinEDist 2 (Measure.dirac (0 : E)) (wassersteinLaw μ)).toReal ^ 2 := by
+  have hi : Integrable (fun x : E ↦ ‖x‖ ^ 2) (wassersteinLaw μ) := by
+    unfold wassersteinLaw
+    simpa only [ENNReal.toReal_ofNat, Real.rpow_two, dist_zero_right] using
+      TauCeti.WassersteinSpace.integrable_dist_rpow (p := 2) (by norm_num) μ (0 : E)
   have hp := TauCeti.eLpNorm_rpow_eq_lintegral (p := (2 : ℝ≥0∞))
-    (f := fun x : E ↦ edist (0:E) x) (μ := wassersteinLaw μ) (by norm_num) (by norm_num)
+    (f := fun x : E ↦ edist (0 : E) x) (μ := wassersteinLaw μ) (by norm_num) (by norm_num)
     (by fun_prop)
-  norm_num only [ENNReal.toReal_ofNat,ENNReal.rpow_two,enorm_eq_self] at hp
-  have heq : (TauCeti.wassersteinEDist 2 (Measure.dirac (0:E)) (wassersteinLaw μ))^2 =
-      ENNReal.ofReal (∫ x, ‖x‖^2 ∂wassersteinLaw μ) := by
+  norm_num only [ENNReal.toReal_ofNat, ENNReal.rpow_two, enorm_eq_self] at hp
+  have heq : (TauCeti.wassersteinEDist 2 (Measure.dirac (0 : E)) (wassersteinLaw μ)) ^ 2 =
+      ENNReal.ofReal (∫ x, ‖x‖ ^ 2 ∂wassersteinLaw μ) := by
     rw [TauCeti.wassersteinEDist_dirac_left measurable_edist]
     rw [hp, ofReal_integral_eq_lintegral_ofReal hi (ae_of_all _ fun _ ↦ sq_nonneg _)]
     apply lintegral_congr
     intro x
-    simp only [edist_dist,dist_zero_left,ENNReal.ofReal_pow (norm_nonneg _)]
+    simp only [edist_dist, dist_zero_left, ENNReal.ofReal_pow (norm_nonneg _)]
   have ht := congrArg ENNReal.toReal heq
-  rw [ENNReal.toReal_pow,ENNReal.toReal_ofReal (integral_nonneg fun _ ↦ sq_nonneg _)] at ht
+  rw [ENNReal.toReal_pow, ENNReal.toReal_ofReal (integral_nonneg fun _ ↦ sq_nonneg _)] at ht
   exact ht.symm
 
 /-- A Wasserstein-bounded sequence has uniformly bounded second moments. -/
 theorem exists_integral_norm_sq_le_of_isBounded (v : ℕ → TauCeti.WassersteinSpace 2 E)
     (hv : Bornology.IsBounded (range v)) :
-    ∃ B : ℝ, 0 ≤ B ∧ ∀ n, (∫ x, ‖x‖^2 ∂wassersteinLaw (v n)) ≤ B := by
-  have hmem : TauCeti.HasFiniteMoment 2 (diracProba (0:E) : Measure E) := by
-    change TauCeti.HasFiniteMoment 2 (Measure.dirac (0:E))
-    exact TauCeti.hasFiniteMoment_dirac 2 (0:E)
-  let δ : TauCeti.WassersteinSpace 2 E := TauCeti.WassersteinSpace.mk (diracProba (0:E)) hmem
-  have hδ : wassersteinLaw δ = Measure.dirac (0:E) := by
-    exact congrArg ProbabilityMeasure.toMeasure (TauCeti.WassersteinSpace.coe_mk (diracProba (0:E)) hmem)
-  obtain ⟨R,hR⟩ := (Metric.isBounded_iff_subset_closedBall δ).1 hv
-  refine ⟨R^2,sq_nonneg _,fun n ↦ ?_⟩
+    ∃ B : ℝ, 0 ≤ B ∧ ∀ n, (∫ x, ‖x‖ ^ 2 ∂wassersteinLaw (v n)) ≤ B := by
+  have hmem : TauCeti.HasFiniteMoment 2 (diracProba (0 : E) : Measure E) := by
+    exact TauCeti.hasFiniteMoment_dirac 2 (0 : E)
+  let δ : TauCeti.WassersteinSpace 2 E := TauCeti.WassersteinSpace.mk (diracProba (0 : E)) hmem
+  have hδ : wassersteinLaw δ = Measure.dirac (0 : E) := by
+    exact congrArg ProbabilityMeasure.toMeasure
+      (TauCeti.WassersteinSpace.coe_mk (diracProba (0 : E)) hmem)
+  obtain ⟨R, hR⟩ := (Metric.isBounded_iff_subset_closedBall δ).1 hv
+  refine ⟨R ^ 2, sq_nonneg _, fun n ↦ ?_⟩
   rw [integral_norm_sq_eq_wasserstein_dirac_sq, ← hδ]
-  change (TauCeti.wassersteinEDist 2 ((δ : ProbabilityMeasure E) : Measure E)
-    ((v n : ProbabilityMeasure E) : Measure E)).toReal^2 ≤ R^2
+  unfold wassersteinLaw
   rw [← TauCeti.WassersteinSpace.dist_def]
   exact pow_le_pow_left₀ (dist_nonneg (x := δ) (y := v n))
     (by simpa only [dist_comm] using Metric.mem_closedBall.1 (hR (mem_range_self n))) 2

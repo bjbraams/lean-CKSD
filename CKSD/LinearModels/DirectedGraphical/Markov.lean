@@ -353,8 +353,7 @@ theorem doMarginalMass_eq_backdoor [Fintype V] [Fintype S] (G : CausalGraph V)
       (Finset.disjoint_coe.2 hXY) hbd.2
   have hp0 : ∀ y, 0 ≤ directedFactorizationMass localMass y :=
     directedFactorizationMass_nonneg hloc
-  change marginalMass (interventionMass localMass X b) Y b = _
-  rw [marginalMass_eq_sum_overwriteOn _ hYZ]
+  rw [doMarginalMass_eq_marginalMass_interventionMass, marginalMass_eq_sum_overwriteOn _ hYZ]
   refine Finset.sum_congr rfl fun z _ ↦ ?_
   set c := overwriteOn Z z b with hc
   have hcX : ∀ v ∈ X, c v = b v := fun v hv ↦
@@ -367,14 +366,9 @@ theorem doMarginalMass_eq_backdoor [Fintype V] [Fintype S] (G : CausalGraph V)
   have hrule := condDoMass_rule_two G localMass hloc hpar ∅ Y X Z
     ⟨Finset.disjoint_empty_left _, Finset.disjoint_empty_left _, Finset.disjoint_empty_left _,
       hXY.symm, hYZ, hXZ⟩ hsep c (by
-      change 0 < marginalMass (interventionMass localMass ∅ c) (X ∪ Z) c
-      rw [interventionMass_empty]
+      rw [doMarginalMass_eq_marginalMass_interventionMass, interventionMass_empty]
       exact hposZ z)
-  unfold condDoMass at hrule
-  change marginalMass (interventionMass localMass (∅ ∪ X) c) (Y ∪ Z) c /
-      marginalMass (interventionMass localMass (∅ ∪ X) c) Z c =
-    marginalMass (interventionMass localMass ∅ c) (Y ∪ (X ∪ Z)) c /
-      marginalMass (interventionMass localMass ∅ c) (X ∪ Z) c at hrule
+  simp only [condDoMass, doMarginalMass_eq_marginalMass_interventionMass] at hrule
   rw [Finset.empty_union, interventionMass_empty, interventionMass_congr localMass X hcX,
     hZm] at hrule
   unfold condMass
@@ -403,8 +397,7 @@ theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
   obtain ⟨hint, hbXZ, hbZY⟩ := hfd
   have hp0 : ∀ y, 0 ≤ directedFactorizationMass localMass y :=
     directedFactorizationMass_nonneg hloc
-  change marginalMass (interventionMass localMass X b) Y b = _
-  rw [marginalMass_eq_sum_overwriteOn _ hYZ]
+  rw [doMarginalMass_eq_marginalMass_interventionMass, marginalMass_eq_sum_overwriteOn _ hYZ]
   refine Finset.sum_congr rfl fun z _ ↦ ?_
   set c := overwriteOn Z z b with hc
   have hcX : ∀ v ∈ X, c v = b v := fun v hv ↦
@@ -428,15 +421,11 @@ theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
       ⟨Finset.disjoint_empty_left _, Finset.disjoint_empty_left _,
         Finset.disjoint_empty_left _, hXZ.symm, Finset.disjoint_empty_right _,
         Finset.disjoint_empty_right _⟩ hsep1 c (by
-        change 0 < marginalMass (interventionMass localMass ∅ c) (X ∪ ∅) c
-        rw [interventionMass_empty, Finset.union_empty]
+        rw [doMarginalMass_eq_marginalMass_interventionMass, interventionMass_empty,
+          Finset.union_empty]
         exact hposXc)
-    unfold condDoMass at hrule
-    change marginalMass (interventionMass localMass (∅ ∪ X) c) (Z ∪ ∅) c /
-        marginalMass (interventionMass localMass (∅ ∪ X) c) ∅ c =
-      marginalMass (interventionMass localMass ∅ c) (Z ∪ (X ∪ ∅)) c /
-        marginalMass (interventionMass localMass ∅ c) (X ∪ ∅) c at hrule
-    simp only [Finset.empty_union, Finset.union_empty] at hrule
+    simp only [condDoMass, doMarginalMass_eq_marginalMass_interventionMass, Finset.empty_union,
+      Finset.union_empty] at hrule
     rw [marginalMass_empty_interventionMass G hloc hpar, div_one, interventionMass_empty,
       interventionMass_congr localMass X hcX] at hrule
     rw [hrule]
@@ -457,15 +446,11 @@ theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
     have hrule := condDoMass_rule_two G localMass hloc hpar X Y Z ∅
       ⟨hXY, hXZ, Finset.disjoint_empty_right _, hYZ, Finset.disjoint_empty_right _,
         Finset.disjoint_empty_right _⟩ hsep2 c (by
-        change 0 < marginalMass (interventionMass localMass X c) (Z ∪ ∅) c
-        rw [Finset.union_empty, interventionMass_congr localMass X hcX]
+        rw [doMarginalMass_eq_marginalMass_interventionMass, Finset.union_empty,
+          interventionMass_congr localMass X hcX]
         exact hposZdo)
-    unfold condDoMass at hrule
-    change marginalMass (interventionMass localMass (X ∪ Z) c) (Y ∪ ∅) c /
-        marginalMass (interventionMass localMass (X ∪ Z) c) ∅ c =
-      marginalMass (interventionMass localMass X c) (Y ∪ (Z ∪ ∅)) c /
-        marginalMass (interventionMass localMass X c) (Z ∪ ∅) c at hrule
-    simp only [Finset.union_empty] at hrule
+    simp only [condDoMass, doMarginalMass_eq_marginalMass_interventionMass, Finset.union_empty]
+      at hrule
     rw [marginalMass_empty_interventionMass G hloc hpar, div_one,
       interventionMass_congr localMass X hcX] at hrule
     exact hrule.symm
@@ -478,9 +463,8 @@ theorem doMarginalMass_eq_frontdoor [Fintype V] [Fintype S] (G : CausalGraph V)
         ⟨fun h ↦ Finset.disjoint_left.1 hXY h hv, fun u hu ↦
           G.not_isDescendant_removeIncoming_of_intercepts (Finset.disjoint_coe.2 hXZ) hint
             v hv u hu⟩
-    change marginalMass (interventionMass (intervenedLocalMass localMass Z c) X c) Y c =
-      marginalMass (directedFactorizationMass (intervenedLocalMass localMass Z c)) Y c at this
-    rw [interventionMass_intervenedLocalMass, directedFactorizationMass_intervenedLocalMass]
+    rw [doMarginalMass_eq_marginalMass_interventionMass, interventionMass_intervenedLocalMass,
+      directedFactorizationMass_intervenedLocalMass]
       at this
     exact this
   -- back-door adjustment for the effect of `Z` on `Y`, adjusting for `X`

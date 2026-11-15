@@ -120,7 +120,8 @@ theorem entropy_le_mul_of_measure_le_smul {X : Type*} [MeasurableSpace X]
   calc ν.entropy f ≤ ∫ x, entropyIntegrand (f x) (∫ y, f y ∂μ) ∂ν :=
         entropy_le_integral_entropyIntegrand ν hfν hflν (hac.ae_le hf0) hm
     _ ≤ ∫ x, entropyIntegrand (f x) (∫ y, f y ∂μ) ∂(ENNReal.ofReal A • μ) :=
-        integral_mono_measure hν (Measure.ae_smul_measure (hf0.mono fun x hx ↦ entropyIntegrand_nonneg hx hm) _)
+        integral_mono_measure hν
+          (Measure.ae_smul_measure (hf0.mono fun x hx ↦ entropyIntegrand_nonneg hx hm) _)
           ((integrable_entropyIntegrand μ hf hfl _).smul_measure ENNReal.ofReal_ne_top)
     _ = A * μ.entropy f := by
         rw [integral_smul_measure, ENNReal.toReal_ofReal hA, smul_eq_mul,
@@ -172,7 +173,7 @@ theorem gibbsMeasure_le_smul_of_sub_le {d : ℕ}
   apply withDensity_mono
   apply ae_of_all
   intro x
-  change ENNReal.ofReal _ ≤ ENNReal.ofReal _ * ENNReal.ofReal _
+  simp only [Pi.smul_apply, smul_eq_mul]
   rw [← ENNReal.ofReal_mul (by positivity)]
   apply ENNReal.ofReal_le_ofReal
   have he : Real.exp (-W x) ≤ Real.exp (-a) * Real.exp (-V x) := by

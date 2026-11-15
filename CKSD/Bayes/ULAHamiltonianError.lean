@@ -48,7 +48,8 @@ theorem lintegral_norm_sq_stdGaussian :
       exact integrable_finsetSum _ fun i _ ↦
         (memLp_two_iff_integrable_sq (by fun_prop)).1
           (TauCeti.Probability.memLp_inner_stdGaussian (b i) 2 (by simp))
-  rw [← ofReal_integral_eq_lintegral_ofReal hi (ae_of_all _ fun _ ↦ sq_nonneg _), integral_norm_sq_stdGaussian]
+  rw [← ofReal_integral_eq_lintegral_ofReal hi (ae_of_all _ fun _ ↦ sq_nonneg _),
+      integral_norm_sq_stdGaussian]
   simp
 
 /-- A phase-law preserving mechanical flow has stationary Gaussian momentum second moments. -/
@@ -77,26 +78,30 @@ theorem lintegral_mechanical_position_error_sq_le
   have hAm : Measurable (fun z : (E × E) × ℝ ↦ ENNReal.ofReal (A z.2 z.1)) := by
     exact (ENNReal.measurable_ofReal.comp hAc.measurable).comp measurable_swap
   have hbound (z : E × E) : ‖(mechanicalFlow G hG T z).1 -
-      (z.1 + T • z.2 - (T^2/2) • G z.1)‖^2 ≤ (L : ℝ)^2*T^5*∫ s in (0 : ℝ)..T, A s z := by
-    have hc := (mechanicalFlow G hG).continuous continuous_id (continuous_const : Continuous (fun _ : ℝ ↦ z))
+      (z.1 + T • z.2 - (T ^ 2 / 2) • G z.1)‖ ^ 2 ≤
+        (L : ℝ) ^ 2 * T ^ 5 * ∫ s in (0 : ℝ)..T, A s z := by
+    have hc := (mechanicalFlow G hG).continuous continuous_id
+        (continuous_const : Continuous (fun _ : ℝ ↦ z))
     have hh := mechanical_position_error_sq_le G hG
       (fun s ↦ (mechanicalFlow G hG s z).1) (fun s ↦ (mechanicalFlow G hG s z).2)
-      hc.fst hc.snd (fun t _ ↦ by simpa only [Flow.map_zero, id_eq] using mechanicalFlow_fst_eq G hG z t)
+      hc.fst hc.snd
+      (fun t _ ↦ by simpa only [Flow.map_zero, id_eq] using mechanicalFlow_fst_eq G hG z t)
       (fun t _ ↦ by simpa only [Flow.map_zero, id_eq] using mechanicalFlow_snd_eq G hG z t) hT
     simpa only [Flow.map_zero, id_eq] using hh
   have hint (z : E × E) :
-      ENNReal.ofReal (∫ s in (0 : ℝ)..T, A s z) = ∫⁻ s in Ioc (0 : ℝ) T, ENNReal.ofReal (A s z) := by
+      ENNReal.ofReal (∫ s in (0 : ℝ)..T, A s z) =
+        ∫⁻ s in Ioc (0 : ℝ) T, ENNReal.ofReal (A s z) := by
     rw [intervalIntegral.integral_of_le hT]
     exact ofReal_integral_eq_lintegral_ofReal
       (((hAc.comp (continuous_id.prodMk continuous_const)).integrableOn_Ioc))
       (ae_of_all _ fun _ ↦ sq_nonneg _)
-  calc _ ≤ ∫⁻ z : E × E, ENNReal.ofReal ((L : ℝ)^2*T^5*∫ s in (0 : ℝ)..T, A s z) ∂P :=
+  calc _ ≤ ∫⁻ z : E × E, ENNReal.ofReal ((L : ℝ) ^ 2 * T ^ 5 * ∫ s in (0 : ℝ)..T, A s z) ∂P :=
       lintegral_mono fun z ↦ ENNReal.ofReal_le_ofReal (hbound z)
-    _ = ENNReal.ofReal ((L : ℝ)^2*T^5) *
+    _ = ENNReal.ofReal ((L : ℝ) ^ 2 * T ^ 5) *
         ∫⁻ z : E × E, ∫⁻ s in Ioc (0 : ℝ) T, ENNReal.ofReal (A s z) ∂volume ∂P := by
-      simp_rw [ENNReal.ofReal_mul (by positivity : 0 ≤ (L : ℝ)^2*T^5), hint]
+      simp_rw [ENNReal.ofReal_mul (by positivity : 0 ≤ (L : ℝ) ^ 2 * T ^ 5), hint]
       exact lintegral_const_mul' _ _ ENNReal.ofReal_ne_top
-    _ = ENNReal.ofReal ((L : ℝ)^2*T^5) *
+    _ = ENNReal.ofReal ((L : ℝ) ^ 2 * T ^ 5) *
         ∫⁻ s in Ioc (0 : ℝ) T, ∫⁻ z : E × E, ENNReal.ofReal (A s z) ∂P := by
       rw [lintegral_lintegral_swap hAm.aemeasurable]
     _ = _ := by
@@ -104,8 +109,9 @@ theorem lintegral_mechanical_position_error_sq_le
         fun s ↦ lintegral_momentum_mechanicalFlow_sq π G hG hInv s]
       rw [lintegral_const]
       simp only [Measure.restrict_apply_univ, Real.volume_Ioc, sub_zero]
-      rw [← ENNReal.ofReal_natCast, ← ENNReal.ofReal_mul (by positivity : 0 ≤ (Module.finrank ℝ E : ℝ)),
-        ← ENNReal.ofReal_mul (by positivity : 0 ≤ (L : ℝ)^2*T^5)]
+      rw [← ENNReal.ofReal_natCast, ← ENNReal.ofReal_mul
+          (by positivity : 0 ≤ (Module.finrank ℝ E : ℝ)),
+        ← ENNReal.ofReal_mul (by positivity : 0 ≤ (L : ℝ) ^ 2 * T ^ 5)]
       congr 1
       ring
 end CKSD

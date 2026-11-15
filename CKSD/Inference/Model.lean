@@ -171,6 +171,7 @@ theorem hasConfidenceCoverage_confidenceSetOfTests {Θ X : Type*} [MeasurableSpa
     HasConfidenceCoverage P (confidenceSetOfTests reject) α := by
   intro θ
   refine ⟨(hm θ).compl, ?_⟩
+  -- `change` exposes the syntactic form that the following `rw` matches
   change 1 - α ≤ (P θ).real (reject θ)ᶜ
   rw [measureReal_compl (hm θ)]
   simpa using sub_le_sub_left (hlevel θ) 1

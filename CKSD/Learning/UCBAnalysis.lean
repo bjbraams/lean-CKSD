@@ -543,6 +543,7 @@ theorem integral_regret_le_of_ucb (P : Measure Ω) [IsProbabilityMeasure P]
           Real.log T / (∫ ω, R star 0 ω ∂P - ∫ ω, R i 0 ω ∂P) else 0) +
         (1 + Real.pi ^ 2 / 3) * ∑ i, (∫ ω, R star 0 ω ∂P - ∫ ω, R i 0 ω ∂P) := by
   set mu : Fin K → ℝ := fun i ↦ ∫ ω, R i 0 ω ∂P
+  -- folds `mu` into the integrals of the bound arms, which `set` does not abstract
   change ∫ ω, ∑ t ∈ Finset.range T, (mu star - mu (A t ω)) ∂P ≤
     8 * (∑ i, if mu i < mu star then Real.log T / (mu star - mu i) else 0) +
       (1 + Real.pi ^ 2 / 3) * ∑ i, (mu star - mu i)

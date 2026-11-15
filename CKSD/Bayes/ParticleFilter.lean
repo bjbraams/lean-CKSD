@@ -29,7 +29,7 @@ potential-weighted mixture of the transitions from the current particles (multin
 * `CKSD.integral_particleLikelihood_eq`: the particle likelihood estimate is unbiased
   (GAPS 104.58).
 * `CKSD.exists_integral_sq_particle_average_sub_le`: the mean-square error of the particle
-  average at a fixed time is `O(1/N)`, uniformly over test functions bounded by a constant.
+  average at a fixed time is `O(1 / N)`, uniformly over test functions bounded by a constant.
 * `CKSD.tendstoInMeasure_particle_average`: fixed-time consistency of the bootstrap
   filter (GAPS 104.55).
 -/
@@ -47,7 +47,7 @@ namespace CKSD
 structure FeynmanKacModel (X : Type*) [MeasurableSpace X] where
   /-- Initial probability law. -/
   initial : ProbabilityMeasure X
-  /-- Transition kernel from generation `n` to generation `n+1`. -/
+  /-- Transition kernel from generation `n` to generation `n + 1`. -/
   transition : ℕ → Kernel X X
   /-- Each transition is Markov. -/
   isMarkov_transition : ∀ n, IsMarkovKernel (transition n)
@@ -169,7 +169,6 @@ theorem lintegral_mul_sum_bootstrap_succ {Ω X : Type*} [MeasurableSpace Ω]
   have hlhs : ∫⁻ ω, F (Y ω) * ∑ i, φ (ξ (n + 1) ω i) ∂P =
       ∫⁻ p, H p ∂(P.map fun ω ↦ (Y ω, ξ (n + 1) ω)) := by
     rw [lintegral_map hHm (hY.prodMk (hmeas (n + 1)))]
-  change ∫⁻ ω, F (Y ω) * ∑ i, φ (ξ (n + 1) ω i) ∂P = _
   rw [hlhs, ← compProd_map_condDistrib hY.aemeasurable (hmeas (n + 1)).aemeasurable,
     Measure.lintegral_compProd hHm, lintegral_map _ hY]
   · refine lintegral_congr_ae ?_
@@ -410,7 +409,8 @@ theorem FeynmanKacModel.integral_unnormalizedLaw_succ {X : Type*} [MeasurableSpa
 /-- Integrals against the filtering law are normalized integrals against `γₙ`. -/
 theorem FeynmanKacModel.integral_filterLaw {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) (n : ℕ) (f : X → ℝ) :
-    ∫ y, f y ∂M.filterLaw n = ((M.unnormalizedLaw n).real univ)⁻¹ * ∫ y, f y ∂M.unnormalizedLaw n := by
+    ∫ y, f y ∂M.filterLaw n = ((M.unnormalizedLaw n).real univ)⁻¹ * ∫ y,
+        f y ∂M.unnormalizedLaw n := by
   rw [FeynmanKacModel.filterLaw, integral_smul_measure, ENNReal.toReal_inv, smul_eq_mul,
     measureReal_def]
 
@@ -448,7 +448,6 @@ theorem lintegral_bootstrap_succ {Ω X : Type*} [MeasurableSpace Ω]
   obtain ⟨hmeas, -, hcond⟩ := hξ
   set Y : Ω → Fin (n + 1) → Fin N → X := fun ω i ↦ ξ i ω with hYdef
   have hY : Measurable Y := measurable_pi_iff.2 fun i ↦ hmeas i
-  change ∫⁻ ω, H (Y ω, ξ (n + 1) ω) ∂P = ∫⁻ ω, ∫⁻ z, H (Y ω, z) ∂_ ∂P
   rw [← lintegral_map hH (hY.prodMk (hmeas (n + 1))),
     ← compProd_map_condDistrib hY.aemeasurable (hmeas (n + 1)).aemeasurable,
     Measure.lintegral_compProd hH, lintegral_map _ hY]
@@ -474,7 +473,6 @@ theorem integral_bootstrap_succ {Ω X E : Type*} [MeasurableSpace Ω]
   obtain ⟨hmeas, -, hcond⟩ := hξ
   set Y : Ω → Fin (n + 1) → Fin N → X := fun ω i ↦ ξ i ω with hYdef
   have hY : Measurable Y := measurable_pi_iff.2 fun i ↦ hmeas i
-  change ∫ ω, H (Y ω, ξ (n + 1) ω) ∂P = ∫ ω, ∫ z, H (Y ω, z) ∂_ ∂P
   have hint : Integrable H ((P.map Y) ⊗ₘ condDistrib (ξ (n + 1)) Y P) :=
     Integrable.of_bound hH.aestronglyMeasurable C (ae_of_all _ hC)
   rw [← integral_map (hY.prodMk (hmeas (n + 1))).aemeasurable hH.aestronglyMeasurable,
@@ -568,7 +566,7 @@ theorem abs_sum_div_succ_le {N : ℕ} {f : Fin (N + 1) → ℝ} {C : ℝ} (hf : 
   simpa using abs_sum_div_le N.succ_pos hf
 
 /-- First-order ratio estimate with a common positive lower bound `a` on the denominators: if
-`v, v' ≥ a > 0` and `|u'| ≤ D v'`, then `|u/v - u'/v'| ≤ (|u - u'| + D |v - v'|)/a`. -/
+`v, v' ≥ a > 0` and `|u'| ≤ D v'`, then `|u / v - u' / v'| ≤ (|u - u'| + D |v - v'|) / a`. -/
 theorem abs_div_sub_div_le_of_bound {a u v u' v' D : ℝ}
     (ha : 0 < a) (hv : a ≤ v) (hv' : a ≤ v') (hu' : |u'| ≤ D * v') :
     |u / v - u' / v'| ≤ (|u - u'| + D * |v - v'|) / a := by
@@ -591,7 +589,7 @@ theorem abs_div_sub_div_le_of_bound {a u v u' v' D : ℝ}
   exact div_le_div₀ (by positivity) hnum ha hv
 
 /-- Elementary ratio estimate used for the Feynman–Kac selection step: if `v, v' ≥ a > 0` and
-`|u'| ≤ C v'`, then `(u/v - u'/v')² ≤ 2((u-u')² + C²(v-v')²)/a²`. It is the square of
+`|u'| ≤ C v'`, then `(u / v - u' / v')² ≤ 2((u - u')² + C²(v - v')²) / a²`. It is the square of
 `abs_div_sub_div_le_of_bound`. -/
 theorem sq_div_sub_div_le {a u v u' v' C : ℝ} (ha : 0 < a) (hv : a ≤ v) (hv' : a ≤ v')
     (hu' : |u'| ≤ C * v') :
@@ -606,6 +604,27 @@ theorem sq_div_sub_div_le {a u v u' v' C : ℝ} (ha : 0 < a) (hv : a ≤ v) (hv'
       have e1 : |u - u'| ^ 2 = (u - u') ^ 2 := sq_abs _
       have e2 : |v - v'| ^ 2 = (v - v') ^ 2 := sq_abs _
       nlinarith [sq_nonneg (|u - u'| - C * |v - v'|)]
+
+/-- Pointwise splitting of the one-step particle error: with `S / L` the particle average, the
+selection ratio `u / v` and its limit `u' / v'`,
+`(S / L - u' / v')² ≤ 2 (S - L u / v)² / L² + 4 (u - u')² / a² + 4 C² (v - v')² / a²`. -/
+theorem sq_div_sub_div_le_add {a u v u' v' C S L : ℝ} (ha : 0 < a) (hv : a ≤ v) (hv' : a ≤ v')
+    (hu' : |u'| ≤ C * v') (hL : 0 < L) :
+    (S / L - u' / v') ^ 2 ≤
+      2 / L ^ 2 * (S - L * (u / v)) ^ 2 +
+        (4 / a ^ 2 * (u - u') ^ 2 + 4 * C ^ 2 / a ^ 2 * (v - v') ^ 2) := by
+  have h1 : S / L - u / v = (S - L * (u / v)) / L := by field_simp
+  have h2 := sq_div_sub_div_le ha hv hv' hu' (u := u)
+  have h3 : (S / L - u' / v') ^ 2 ≤ 2 * (S / L - u / v) ^ 2 + 2 * (u / v - u' / v') ^ 2 := by
+    nlinarith [sq_nonneg (S / L - u / v - (u / v - u' / v'))]
+  rw [h1, div_pow] at h3
+  calc _ ≤ _ := h3
+    _ = 2 / L ^ 2 * (S - L * (u / v)) ^ 2 + 2 * (u / v - u' / v') ^ 2 := by ring
+    _ ≤ _ := by
+      gcongr
+      calc 2 * (u / v - u' / v') ^ 2 ≤ 2 * (2 * ((u - u') ^ 2 + C ^ 2 * (v - v') ^ 2) / a ^ 2) := by
+            gcongr
+        _ = _ := by ring
 
 /-- Induction step of the mean-square bound for the bootstrap particle filter. If at time `n`
 the particle average of every measurable `f` with `|f| ≤ C` has mean-square error at most
@@ -662,9 +681,11 @@ theorem integral_sq_particle_average_succ_sub_le {Ω X : Type*} [MeasurableSpace
     simp only [hBdef, hu, hv]
     rw [M.integral_particlePredictionLaw n _ hf hC, div_div_div_cancel_right₀ hN'.ne']
   have hum : Measurable u :=
-    (Finset.measurable_sum _ fun i _ ↦ hgm.comp ((measurable_pi_apply i).comp (hmeas n))).div_const _
+    (Finset.measurable_sum _ fun i _ ↦
+      hgm.comp ((measurable_pi_apply i).comp (hmeas n))).div_const _
   have hvm : Measurable v :=
-    (Finset.measurable_sum _ fun i _ ↦ hGm.comp ((measurable_pi_apply i).comp (hmeas n))).div_const _
+    (Finset.measurable_sum _ fun i _ ↦
+      hGm.comp ((measurable_pi_apply i).comp (hmeas n))).div_const _
   have hBm : Measurable B := by
     have : B = fun ω ↦ u ω / v ω := funext hB
     rw [this]; exact hum.div hvm
@@ -699,21 +720,8 @@ theorem integral_sq_particle_average_succ_sub_le {Ω X : Type*} [MeasurableSpace
   have hpt (ω : Ω) : (A ω - u' / v') ^ 2 ≤
       2 / (N + 1) ^ 2 * (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2 +
         (4 / a ^ 2 * (u ω - u') ^ 2 + 4 * C ^ 2 / a ^ 2 * (v ω - v') ^ 2) := by
-    have h1 : A ω - B ω = (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) / (N + 1) := by
-      simp only [hA]; field_simp
-    have h2 := sq_div_sub_div_le ha (hvlow ω) hvlow' hu'b (u := u ω)
-    rw [← hB] at h2
-    have h3 : (A ω - u' / v') ^ 2 ≤ 2 * (A ω - B ω) ^ 2 + 2 * (B ω - u' / v') ^ 2 := by
-      nlinarith [sq_nonneg (A ω - B ω - (B ω - u' / v'))]
-    rw [h1, div_pow] at h3
-    calc _ ≤ _ := h3
-      _ = 2 / (N + 1) ^ 2 * (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2 +
-          2 * (B ω - u' / v') ^ 2 := by ring
-      _ ≤ _ := by
-        gcongr
-        calc 2 * (B ω - u' / v') ^ 2 ≤ 2 * (2 * ((u ω - u') ^ 2 + C ^ 2 * (v ω - v') ^ 2) / a ^ 2) := by
-              gcongr
-          _ = _ := by ring
+    rw [hB]
+    exact sq_div_sub_div_le_add ha (hvlow ω) hvlow' hu'b hN'
   -- integrability
   have hI1 : Integrable (fun ω ↦ (∑ i, f (ξ N (n + 1) ω i) - (N + 1) * B ω) ^ 2) P :=
     hsq _ (hSm.sub (measurable_const.mul hBm)) ((N + 1) * C + (N + 1) * C) fun ω ↦ by

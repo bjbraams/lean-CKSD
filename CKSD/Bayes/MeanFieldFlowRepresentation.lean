@@ -66,10 +66,10 @@ theorem exists_flow_law_of_bounded_lipschitz (v : ℝ × E → E) {K M : ℝ≥0
   have hzero (x : E) : γ x 0 = x := by simp only [γ, ODE.globalSolution_zero]
   have hd (x : E) (t : ℝ) : HasDerivAt (γ x) (v (t, γ x t)) t := by
     have hh := (ContinuousLinearMap.snd ℝ ℝ E).hasFDerivAt.comp_hasDerivAt t
-      (ODE.hasDerivAt_globalSolution w hw (0,x) t)
-    change HasDerivAt (γ x)
-      (v ((ODE.globalSolution w hw (0,x) t).1, γ x t)) t at hh
-    have ht := globalSolution_fst_eq_add w hw (fun _ ↦ rfl) (0,x) t
+      (ODE.hasDerivAt_globalSolution w hw (0, x) t)
+    simp only [ContinuousLinearMap.coe_snd', Function.comp_def, w] at hh
+    rw [← Prod.mk.eta (p := ODE.globalSolution w hw (0, x) t)] at hh
+    have ht := globalSolution_fst_eq_add w hw (fun _ ↦ rfl) (0, x) t
     simp only [zero_add] at ht
     rwa [ht] at hh
   have hγL (x : E) : LipschitzWith M (γ x) := by
@@ -80,7 +80,8 @@ theorem exists_flow_law_of_bounded_lipschitz (v : ℝ × E → E) {K M : ℝ≥0
       exact hM _
   refine ⟨γ, hγ, hzero, hd, ?_, continuous_integral_map_of_continuous_curves P γ hγ⟩
   intro T _hT
-  apply TauCeti.isContinuityEquation_map P (v := fun t x ↦ v (t,x)) hγ.measurable hv.continuous.measurable
+  apply TauCeti.isContinuityEquation_map P (v := fun t x ↦ v (t, x)) hγ.measurable
+    hv.continuous.measurable
     (ae_of_all _ fun x ↦ (hγL x).lipschitzOnWith.absolutelyContinuousOnInterval)
     (ae_of_all _ fun x ↦ ae_of_all _ fun t _ ↦ hd x t)
   have hbound : (∫⁻ x, ∫⁻ t in Ioo (0 : ℝ) T, ‖v (t, γ x t)‖ₑ ∂volume ∂P) ≤
@@ -89,7 +90,6 @@ theorem exists_flow_law_of_bounded_lipschitz (v : ℝ × E → E) {K M : ℝ≥0
     intro x
     apply lintegral_mono
     intro t
-    change (‖v (t, γ x t)‖₊ : ℝ≥0∞) ≤ (M : ℝ≥0∞)
     exact ENNReal.coe_le_coe.mpr (hM _)
   apply lt_of_le_of_lt hbound
   simp only [lintegral_const, Measure.restrict_apply_univ, measure_univ, mul_one]
@@ -108,8 +108,8 @@ theorem eq_on_nonneg_of_isContinuityEquation_of_bounded_lipschitz
       ContinuousOn (fun t ↦ ∫ x, g x ∂μ t) (Ici 0))
     (hνc : ∀ g : BoundedContinuousFunction H ℝ,
       ContinuousOn (fun t ↦ ∫ x, g x ∂ν t) (Ici 0))
-    (hμce : ∀ T > 0, TauCeti.IsContinuityEquation μ (fun t x ↦ v (t,x)) 0 T)
-    (hνce : ∀ T > 0, TauCeti.IsContinuityEquation ν (fun t x ↦ v (t,x)) 0 T)
+    (hμce : ∀ T > 0, TauCeti.IsContinuityEquation μ (fun t x ↦ v (t, x)) 0 T)
+    (hνce : ∀ T > 0, TauCeti.IsContinuityEquation ν (fun t x ↦ v (t, x)) 0 T)
     (hinit : μ 0 = ν 0) (t : ℝ) (ht : 0 ≤ t) : μ t = ν t := by
   obtain rfl | ht := ht.eq_or_lt
   · exact hinit
@@ -117,26 +117,25 @@ theorem eq_on_nonneg_of_isContinuityEquation_of_bounded_lipschitz
   let ν' := finiteMeasureNonnegExtension ν hνp
   have hμc' : Continuous μ' := continuous_finiteMeasure_nonneg_extension μ hμp hμc
   have hνc' : Continuous ν' := continuous_finiteMeasure_nonneg_extension ν hνp hνc
-  have hμce' : TauCeti.IsContinuityEquation (fun s ↦ (μ' s : Measure H)) (fun s x ↦ v (s,x)) 0 t := by
+  have hμce' :
+      TauCeti.IsContinuityEquation (fun s ↦ (μ' s : Measure H)) (fun s x ↦ v (s, x)) 0 t := by
     apply isContinuityEquation_congr_measure_on_Ioo (hμce t ht)
       ((hμce t ht).measurable.comp (continuous_const.max continuous_id).measurable)
     intro s hs
-    change μ (max 0 s) = μ s
-    rw [max_eq_right hs.1.le]
-  have hνce' : TauCeti.IsContinuityEquation (fun s ↦ (ν' s : Measure H)) (fun s x ↦ v (s,x)) 0 t := by
+    rw [Function.comp_apply, id_eq, max_eq_right hs.1.le]
+  have hνce' :
+      TauCeti.IsContinuityEquation (fun s ↦ (ν' s : Measure H)) (fun s x ↦ v (s, x)) 0 t := by
     apply isContinuityEquation_congr_measure_on_Ioo (hνce t ht)
       ((hνce t ht).measurable.comp (continuous_const.max continuous_id).measurable)
     intro s hs
-    change ν (max 0 s) = ν s
-    rw [max_eq_right hs.1.le]
+    rw [Function.comp_apply, id_eq, max_eq_right hs.1.le]
   have hpμ (s : ℝ) (_hs : s ∈ Icc (0 : ℝ) t) : IsProbabilityMeasure (μ' s : Measure H) :=
     hμp (max 0 s) (le_max_left _ _)
   have hpν (s : ℝ) (_hs : s ∈ Icc (0 : ℝ) t) : IsProbabilityMeasure (ν' s : Measure H) :=
     hνp (max 0 s) (le_max_left _ _)
   have hinit' : μ' 0 = ν' 0 := by
-    apply Subtype.ext
-    change μ (max 0 0) = ν (max 0 0)
-    simpa only [max_self] using hinit
+    apply FiniteMeasure.toMeasure_injective
+    simpa only [μ', ν', finiteMeasureNonnegExtension_toMeasure, max_self] using hinit
   have heq := eq_of_isContinuityEquation_of_bounded_lipschitz ht.le v hv hM μ' ν'
     hμc'.continuousOn hνc'.continuousOn hpμ hpν hμce' hνce' hinit'
   have hh := congrArg (fun κ : FiniteMeasure H ↦ (κ : Measure H)) heq
@@ -156,7 +155,7 @@ theorem exists_flow_representation_of_bounded_lipschitz
         (∀ t ≥ 0, IsProbabilityMeasure (σ t)) →
         (∀ g : BoundedContinuousFunction H ℝ,
           ContinuousOn (fun t ↦ ∫ x, g x ∂σ t) (Ici 0)) →
-        (∀ T > 0, TauCeti.IsContinuityEquation σ (fun t x ↦ v (t,x)) 0 T) →
+        (∀ T > 0, TauCeti.IsContinuityEquation σ (fun t x ↦ v (t, x)) 0 T) →
         σ 0 = P → ∀ t ≥ 0, σ t = P.map (fun x ↦ γ x t) := by
   obtain ⟨γ, hγ, hzero, hd, hce, hc⟩ := exists_flow_law_of_bounded_lipschitz v hv hM P
   refine ⟨γ, hγ, hzero, hd, hce, hc, ?_⟩

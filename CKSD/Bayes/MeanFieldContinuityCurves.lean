@@ -82,7 +82,8 @@ theorem IsWassersteinLipschitzDrift.lipschitzWith_nonneg_marginalDrift_of_wasser
     (hp _ (le_max_left _ _)) (hp _ (le_max_left _ _))
     (hi' _ (le_max_left _ _)) (hi' _ (le_max_left _ _))
   calc
-    _ ≤ L * (‖q.2 - q'.2‖ + (TauCeti.wassersteinEDist 1 (μ (max 0 q.1)) (μ (max 0 q'.1))).toReal) := hh
+    _ ≤ L * (‖q.2 - q'.2‖ +
+        (TauCeti.wassersteinEDist 1 (μ (max 0 q.1)) (μ (max 0 q'.1))).toReal) := hh
     _ ≤ L * (dist q q' + B * dist q q') := mul_le_mul_of_nonneg_left
       (add_le_add hx (hWr.trans (mul_le_mul_of_nonneg_left ht hB))) hL
     _ = (L * (B + 1)) * dist q q' := by ring

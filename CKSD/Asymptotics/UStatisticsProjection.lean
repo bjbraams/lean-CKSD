@@ -163,7 +163,8 @@ variable {E : Type*} [MeasurableSpace E]
 
 /-- Reindexing an iid product measure along an injection `f : Fin k → Fin n` gives the iid
 product measure: `x ↦ x ∘ f` maps `Pⁿ` to `Pᵏ`. -/
-private theorem measurePreserving_pi_comp_injective (P : Measure E) [IsProbabilityMeasure P] {k n : ℕ}
+private theorem measurePreserving_pi_comp_injective (P : Measure E) [IsProbabilityMeasure P]
+    {k n : ℕ}
     {f : Fin k → Fin n} (hf : Function.Injective f) :
     MeasurePreserving (fun x : Fin n → E ↦ x ∘ f) (Measure.pi fun _ ↦ P)
       (Measure.pi fun _ ↦ P) := by
@@ -173,7 +174,7 @@ private theorem measurePreserving_pi_comp_injective (P : Measure E) [IsProbabili
   refine ⟨by fun_prop, ?_⟩
   have := (iIndepFun_iff_map_fun_eq_pi_map
     (fun j ↦ (measurable_pi_apply (f j)).aemeasurable)).1 hind
-  change Measure.map (fun (ω : Fin n → E) (i : Fin k) ↦ ω (f i)) _ = _
+  simp only [Function.comp_def]
   rw [this]
   congr 1
   funext j
@@ -302,7 +303,7 @@ theorem uStatistic_projection_spec (P : Measure E) [IsProbabilityMeasure P] {m :
     exact (memLp_integral_prod_right _ _ H hHm hH2).sub (memLp_const θ)
   · rw [hgeq, integral_sub hHi.integral_prod_left (integrable_const θ), ← integral_prod _ hHi,
       hHe]
-    change (∫ z, h (e.symm z) ∂_) - _ = 0
+    simp only [Function.comp_apply]
     rw [hes.integral_comp' (g := h), ← hθ]
     simp
 
@@ -350,6 +351,7 @@ private theorem uStatistic_degenerateKernel_spec (P : Measure E) [IsProbabilityM
     Finset.sum_eq_zero fun j' _ ↦ hgz j', integral_sub hA' (integrable_const _),
     integral_sub ha (integrable_const θ), hg a]
   simp only [integral_const, probReal_univ, one_smul]
+  -- `change` identifies the `Fin.cases` form of `hg` with `Fin.cons`, definitionally.
   change (∫ y, h (Fin.cons a y) ∂_) - θ - ((∫ y, h (Fin.cons a y) ∂_) - θ) - 0 = 0
   ring
 

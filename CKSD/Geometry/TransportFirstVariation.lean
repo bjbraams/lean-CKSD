@@ -155,8 +155,6 @@ theorem hasDerivAt_wasserstein_sq_displacement [FiniteDimensional ℝ E]
     have heq := (TauCeti.isOptimalCoupling_norm_sub_sq_div_two_of_edist_rpow_two ho).unique
       (ρ := ρ) hac (TauCeti.isOptimalCoupling_norm_sub_sq_div_two_of_edist_rpow_two hgo)
       (TauCeti.transportCost_norm_sub_sq_div_two_ne_top μ ν)
-    -- Identify the two underlying optimal measures before rewriting their integrals.
-    change γ.1.toMeasure = g.1.toMeasure at heq
     -- Expand the named linear coefficient for the measure substitution.
     change 2 * (∫ z, inner ℝ (z.1 - z.2) (v z.1) ∂γ.1.toMeasure) = D
     rw [heq]

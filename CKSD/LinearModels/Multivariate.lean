@@ -187,7 +187,8 @@ private theorem log_det_le_trace_sub_card_aux {ι : Type*} [Fintype ι] [Decidab
     rw [hA.isHermitian.trace_eq_sum_eigenvalues, Finset.sum_sub_distrib]
     simp
   have hle : ∀ i ∈ Finset.univ, Real.log (hA.isHermitian.eigenvalues i) ≤
-      hA.isHermitian.eigenvalues i - 1 := fun i _ ↦ Real.log_le_sub_one_of_pos (hA.eigenvalues_pos i)
+      hA.isHermitian.eigenvalues i - 1 :=
+          fun i _ ↦ Real.log_le_sub_one_of_pos (hA.eigenvalues_pos i)
   refine ⟨by rw [hlog, htrace]; exact Finset.sum_le_sum hle, ?_⟩
   constructor
   · intro he
@@ -290,8 +291,10 @@ theorem sum_matrixQuadraticForm_sub_eq {n p : ℕ} (hn : 0 < n)
   have hx : ∀ i, x i - m = (x i - sampleMean x) + (sampleMean x - m) := fun i ↦ by abel
   simp_rw [hx, matrixQuadraticForm, map_add, inner_add_left, inner_add_right]
   simp only [Finset.sum_add_distrib, ← sum_inner, ← inner_sum, ← map_sum,
-    sum_sub_sampleMean_eq_zero hn x, map_zero, inner_zero_right, inner_zero_left, add_zero, zero_add,
-    Finset.sum_const, Finset.card_univ, Fintype.card_fin, ← Nat.cast_smul_eq_nsmul ℝ, real_inner_smul_left]
+    sum_sub_sampleMean_eq_zero hn x, map_zero, inner_zero_right, inner_zero_left, add_zero,
+        zero_add,
+    Finset.sum_const, Finset.card_univ, Fintype.card_fin, ← Nat.cast_smul_eq_nsmul ℝ,
+        real_inner_smul_left]
 
 /-- A centered quadratic sum is the trace pairing of the scatter matrix and its coefficient. -/
 theorem sum_matrixQuadraticForm_sub_sampleMean_eq_trace {n p : ℕ}
@@ -347,7 +350,8 @@ private theorem gaussianNegLogLikelihood_aux {n p : ℕ} (x : Fin n → Euclidea
   have hsum : ∀ m C, (∑ i, matrixQuadraticForm C⁻¹ (x i - m)) =
       n * ((S * C⁻¹).trace + matrixQuadraticForm C⁻¹ (sampleMean x - m)) := by
     intro m C
-    rw [sum_matrixQuadraticForm_sub_eq hn x m C⁻¹, sum_matrixQuadraticForm_sub_sampleMean_eq_trace x C⁻¹,
+    rw [sum_matrixQuadraticForm_sub_eq hn x m C⁻¹,
+        sum_matrixQuadraticForm_sub_sampleMean_eq_trace x C⁻¹,
       hs, Matrix.smul_mul, Matrix.trace_smul]
     simp only [smul_eq_mul]
     ring
@@ -420,6 +424,24 @@ theorem wishart_determinant_law {p : ℕ} (n : ℕ) (hn : p ≤ n)
   have hcast : ∀ i : Fin p, ((n - i.val : ℕ) : ℝ) = (n : ℝ) - i.val :=
     fun i ↦ Nat.cast_sub (by omega)
   simpa only [hcast] using TauCeti.Probability.map_det_nonsingularWishartMeasure hS hdeg
+
+/-- For a standard Gaussian vector `Y` and orthogonal subspaces `K ⟂ L`, the orthogonal
+projections of `Y` onto `K` and onto `L` are independent. -/
+theorem indepFun_orthogonalProjectionOnto_of_isOrtho {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {N : ℕ} {Y : Ω → EuclideanSpace ℝ (Fin N)}
+    (hY : HasLaw Y (stdGaussian (EuclideanSpace ℝ (Fin N))) μ)
+    {K L : Submodule ℝ (EuclideanSpace ℝ (Fin N))} (hKL : K ⟂ L) :
+    IndepFun (fun x ↦ K.orthogonalProjectionOnto (Y x))
+      (fun x ↦ L.orthogonalProjectionOnto (Y x)) μ := by
+  have hK2 : Pairwise fun i j : Bool ↦ (bif i then K else L) ⟂ (bif j then K else L) := by
+    intro i j hij
+    cases i <;> cases j
+    · exact absurd rfl hij
+    · exact hKL.symm
+    · exact hKL
+    · exact absurd rfl hij
+  exact (hY.iIndepFun_orthogonalProjectionOnto_stdGaussian (fun b ↦ bif b then K else L)
+    hK2).indepFun (i := true) (j := false) (by decide)
 
 /-- The sample correlation statistic `√(N - 2) r / √(1 - r²)` of paired samples `x`, `y`. -/
 private noncomputable def correlationStat (N : ℕ) (x y : Fin N → ℝ) : ℝ :=
@@ -526,12 +548,6 @@ private theorem map_correlationStat_left {N : ℕ} (hN : 2 < N) (y : Fin N → �
   have he1u : inner ℝ e1 u = 0 := by
     rw [inner_toLp_eq_sum, ← Finset.mul_sum, ← Finset.mul_sum, hsum_yc]
     simp
-  -- the subspaces `span {u}` and `span {e₁, u}ᗮ`
-  let S2 : Submodule ℝ E := Submodule.span ℝ {e1, u}
-  let K : Submodule ℝ E := Submodule.span ℝ {u}
-  let L : Submodule ℝ E := S2ᗮ
-  have hKS : K ≤ S2 := Submodule.span_mono (by simp)
-  have hKL : K ⟂ L := (Submodule.isOrtho_orthogonal_right S2).mono_left hKS
   have hne1 : ‖e1‖ = 1 := by
     have h := real_inner_self_eq_norm_sq e1
     rw [he1] at h
@@ -540,44 +556,17 @@ private theorem map_correlationStat_left {N : ℕ} (hN : 2 < N) (y : Fin N → �
     have h := real_inner_self_eq_norm_sq u
     rw [hu] at h
     exact ((pow_eq_one_iff_of_nonneg (norm_nonneg _) two_ne_zero).1 h.symm)
-  have hON : Orthonormal ℝ ![e1, u] := by
-    rw [orthonormal_iff_ite]
-    intro i j
-    fin_cases i <;> fin_cases j <;> simp [hne1, hnu, he1u, real_inner_comm]
-  have hfin2 : Module.finrank ℝ S2 = 2 := by
-    have := finrank_span_eq_card hON.linearIndependent
-    have hr : Set.range ![e1, u] = {e1, u} := by
-      rw [Matrix.range_cons, Matrix.range_cons, Matrix.range_empty, Set.union_empty,
-        Set.singleton_union]
-    rw [hr] at this
-    simpa using this
+  -- the subspaces `span {u}` and `span {e₁, u}ᗮ`
+  let S2 : Submodule ℝ E := Submodule.span ℝ {e1, u}
+  let K : Submodule ℝ E := Submodule.span ℝ {u}
+  let L : Submodule ℝ E := S2ᗮ
+  have hKS : K ≤ S2 := Submodule.span_mono (by simp)
+  have hKL : K ⟂ L := (Submodule.isOrtho_orthogonal_right S2).mono_left hKS
   have hfinL : Module.finrank ℝ L = N - 2 := by
-    show Module.finrank ℝ S2ᗮ = N - 2
-    have := Submodule.finrank_add_finrank_orthogonal S2
-    rw [hfin2, finrank_euclideanSpace_fin] at this
-    omega
-  have hproj : ∀ X : E, L.starProjection X = X - inner ℝ e1 X • e1 - inner ℝ u X • u := by
-    intro X
-    refine Submodule.eq_starProjection_of_mem_of_inner_eq_zero ?_ fun w hw ↦ ?_
-    · rw [Submodule.mem_orthogonal]
-      intro v hv
-      obtain ⟨α, β, rfl⟩ := Submodule.mem_span_pair.1 hv
-      simp only [inner_add_left, inner_smul_left, inner_sub_right, inner_smul_right, he1, hu,
-        he1u, real_inner_comm e1 u, RCLike.conj_to_real]
-      ring
-    · have hmem : inner ℝ e1 X • e1 + inner ℝ u X • u ∈ S2 :=
-        S2.add_mem (S2.smul_mem _ (Submodule.subset_span (by simp)))
-          (S2.smul_mem _ (Submodule.subset_span (by simp)))
-      rw [show X - (X - inner ℝ e1 X • e1 - inner ℝ u X • u) =
-        inner ℝ e1 X • e1 + inner ℝ u X • u by abel]
-      exact Submodule.inner_right_of_mem_orthogonal hmem hw
+    rw [finrank_orthogonal_span_pair hne1 hnu he1u, finrank_euclideanSpace_fin]
   have hnormL : ∀ X : E, ‖L.orthogonalProjectionOnto X‖ ^ 2 =
-      inner ℝ X X - inner ℝ e1 X ^ 2 - inner ℝ u X ^ 2 := by
-    intro X
-    rw [← Submodule.norm_coe, ← Submodule.starProjection_apply, hproj, ← real_inner_self_eq_norm_sq]
-    simp only [inner_sub_left, inner_sub_right, inner_smul_left, inner_smul_right, he1, hu,
-      he1u, real_inner_comm e1 u, real_inner_comm X e1, real_inner_comm X u, RCLike.conj_to_real]
-    ring
+      inner ℝ X X - inner ℝ e1 X ^ 2 - inner ℝ u X ^ 2 :=
+    norm_sq_orthogonalProjectionOnto_orthogonal_span_pair hne1 hnu he1u
   -- the standardized sample and the two independent pieces
   let Y : (Fin N → ℝ) → E := fun x ↦ WithLp.toLp 2 x
   have hY : HasLaw Y (stdGaussian E) μ := by
@@ -594,17 +583,7 @@ private theorem map_correlationStat_left {N : ℕ} (hN : 2 < N) (y : Fin N → �
   have hV : HasLaw Vf (TauCeti.Probability.chiSquaredMeasure (N - 2 : ℕ)) μ := by
     have := hY.norm_sq_orthogonalProjectionOnto_stdGaussian L
     rwa [hfinL] at this
-  have hK2 : Pairwise fun i j : Bool ↦ (bif i then K else L) ⟂ (bif j then K else L) := by
-    intro i j hij
-    cases i <;> cases j
-    · exact absurd rfl hij
-    · exact hKL.symm
-    · exact hKL
-    · exact absurd rfl hij
-  have hTF : IndepFun (fun x ↦ K.orthogonalProjectionOnto (Y x))
-      (fun x ↦ L.orthogonalProjectionOnto (Y x)) μ :=
-    (hY.iIndepFun_orthogonalProjectionOnto_stdGaussian (fun b ↦ bif b then K else L) hK2).indepFun
-      (i := true) (j := false) (by decide)
+  have hTF := indepFun_orthogonalProjectionOnto_of_isOrtho hY hKL
   have hZV : IndepFun Zf Vf μ := by
     have := hTF.comp (φ := fun z : K ↦ inner ℝ u (z : E)) (ψ := fun z : L ↦ ‖z‖ ^ 2)
       (by fun_prop) (by fun_prop)
@@ -625,11 +604,10 @@ private theorem map_correlationStat_left {N : ℕ} (hN : 2 < N) (y : Fin N → �
   have hxx : inner ℝ (Y x) (Y x) = ∑ i, x i * x i := inner_toLp_eq_sum _ _
   have he1x : inner ℝ e1 (Y x) = ∑ i, (Real.sqrt N)⁻¹ * x i := inner_toLp_eq_sum _ _
   refine correlationStat_eq x y s (Zf x) (Vf x) hs hs2.symm ?_ ?_ (by positivity)
-  · show ∑ i, (x i - (∑ j, x j) / N) * yc i = _
-    rw [hZx, Finset.mul_sum]
-    have : ∀ i, (x i - (∑ j, x j) / N) * yc i = s * (s⁻¹ * yc i * x i) -
+  · rw [hZx, Finset.mul_sum]
+    have : ∀ i, (x i - (∑ j, x j) / N) * (y i - (∑ j, y j) / N) = s * (s⁻¹ * yc i * x i) -
         (∑ j, x j) / N * yc i := fun i ↦ by
-      rw [← mul_assoc s, ← mul_assoc s, mul_inv_cancel₀ hs.ne', one_mul]
+      rw [← mul_assoc s, ← mul_assoc s, mul_inv_cancel₀ hs.ne', one_mul, hyc]
       ring
     simp only [this, Finset.sum_sub_distrib, ← Finset.mul_sum, hsum_yc, mul_zero, sub_zero]
   · simp only [Vf, hnormL, hxx, he1x, ← Finset.mul_sum, sub_sq, Finset.sum_add_distrib,

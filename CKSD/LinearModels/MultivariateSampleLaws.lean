@@ -104,7 +104,7 @@ def sampleColumnsEquiv : (κ → EuclideanSpace ℝ (Fin p)) ≃ᵐ Matrix (Fin 
   right_inv X := by ext i k; simp [sampleColumns]
   measurable_toFun := measurable_sampleColumns
   measurable_invFun := by
-    show Measurable (fun (X : Matrix (Fin p) κ ℝ) (k : κ) ↦ WithLp.toLp 2 fun i ↦ X i k)
+    rw [Equiv.coe_fn_symm_mk]
     fun_prop
 
 /-- Sample columns of independent `N(M_k, Σ)` vectors are matrix normal `MN(M, Σ, 1)`. -/
@@ -166,10 +166,8 @@ theorem map_orthogonalMix_pi_multivariateGaussian {ι : Type*} [Fintype ι] [Dec
   have hmap : ((Measure.pi fun _ : ι ↦ multivariateGaussian m S).map
       (fun x k ↦ ∑ i, B i k • (x i - m))).map sampleColumnsEquiv =
       (Measure.pi fun _ : κ ↦ multivariateGaussian 0 S).map sampleColumnsEquiv := by
-    change _ = Measure.map sampleColumns _
-    rw [h0]
-    change Measure.map sampleColumns _ = _
-    rw [Measure.map_map measurable_sampleColumns hmeasY, hfun,
+    simp only [sampleColumnsEquiv, MeasurableEquiv.coe_mk, Equiv.coe_fn_mk]
+    rw [h0, Measure.map_map measurable_sampleColumns hmeasY, hfun,
       ← Measure.map_map (by fun_prop) measurable_sampleColumns, hx,
       TauCeti.Probability.map_mul_mul_add_matrixNormalMeasure Mm hS Matrix.PosSemidef.one]
     simp [hB]

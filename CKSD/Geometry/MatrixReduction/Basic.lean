@@ -112,7 +112,6 @@ theorem lowerLeftRank_mul_le (A V : Matrix (Fin m) (Fin m) 𝕜) (hV : V.BlockTr
     · simp [hl]
   have : lowerLeftPart (A * V) a b = lowerLeftPart A a b * (V * Q) := by
     rw [lowerLeftPart_eq_mul, lowerLeftPart_eq_mul]
-    change P * (A * V) * Q = P * A * Q * (V * Q)
     calc P * (A * V) * Q = P * A * (V * Q) := by simp only [Matrix.mul_assoc]
       _ = P * A * (Q * V * Q) := by rw [hVQ]
       _ = P * A * Q * (V * Q) := by simp only [Matrix.mul_assoc]
@@ -174,6 +173,7 @@ theorem rank_eq_card_of_isReducedMatrix {M : Matrix (Fin m) (Fin m) 𝕜}
     · intro h
       exact absurd hl₀.1 h
   rw [rank_eq_finrank_span_cols]
+  -- the columns of `M` are, by definition, the rows of `Mᵀ`
   change finrank 𝕜 (Submodule.span 𝕜 (Set.range Mᵀ)) = _
   have hspan : Submodule.span 𝕜 (Set.range Mᵀ) = Submodule.span 𝕜 (Set.range v) := by
     apply le_antisymm

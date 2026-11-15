@@ -90,7 +90,9 @@ theorem stochasticApproxInterp_eq_of_mem_Icc {E : Type*} [AddCommGroup E] [Modul
   by_cases htop : s = stochasticApproxTime a (n + 1)
   · subst s
     have hi := stochasticApproxIndex_eq ha ht (n := n + 1)
-      (s := stochasticApproxTime a (n + 1)) ⟨le_rfl, strictMono_stochasticApproxTime ha (Nat.lt_succ_self _)⟩
+      (s := stochasticApproxTime a (n + 1)) ⟨le_rfl, strictMono_stochasticApproxTime ha
+          (Nat.lt_succ_self _)⟩
+    -- `change` unfolds the interpolation at a grid time (no simp lemma does this).
     change x (stochasticApproxIndex a (stochasticApproxTime a (n + 1))) +
       ((stochasticApproxTime a (n + 1) -
           stochasticApproxTime a (stochasticApproxIndex a (stochasticApproxTime a (n + 1)))) /
@@ -100,6 +102,7 @@ theorem stochasticApproxInterp_eq_of_mem_Icc {E : Type*} [AddCommGroup E] [Modul
     rw [hi, sub_self, zero_div, zero_smul, add_zero, stochasticApproxTime_succ,
       add_sub_cancel_left, div_self (ha n).ne', one_smul, add_sub_cancel]
   · have hi := stochasticApproxIndex_eq ha ht ⟨hs.1, lt_of_le_of_ne hs.2 htop⟩
+    -- `change` unfolds the interpolation definition between grid times.
     change x (stochasticApproxIndex a s) +
       ((s - stochasticApproxTime a (stochasticApproxIndex a s)) / a (stochasticApproxIndex a s)) •
       (x (stochasticApproxIndex a s + 1) - x (stochasticApproxIndex a s)) = _
@@ -125,7 +128,8 @@ theorem continuousOn_stochasticApproxInterp_Icc {a : ℕ → ℝ} (ha : ∀ n, 0
       (Icc (stochasticApproxTime a k) (stochasticApproxTime a (k + 1))) := by
     have hh : Continuous (fun s : ℝ ↦ x k +
         ((s - stochasticApproxTime a k) / a k) • (x (k + 1) - x k)) :=
-      continuous_const.add ((continuous_id.sub continuous_const).div_const _ |>.smul continuous_const)
+      continuous_const.add ((continuous_id.sub continuous_const).div_const _ |>.smul
+          continuous_const)
     exact hh.continuousOn.congr fun s hs ↦ stochasticApproxInterp_eq_of_mem_Icc ha ht x hs
   induction n with
   | zero => simp [stochasticApproxTime]
@@ -254,7 +258,6 @@ theorem asymptotic_pseudotrajectory_of_approx_ode
       convert ((hasDerivAt_id u).const_add s).hasDerivWithinAt using 1; simp
     have hh := (hd (s + u) (add_nonneg hs0 hu.1)).scomp u hshift
       (show MapsTo (fun r : ℝ ↦ s + r) (Ici u) (Ici (s + u)) from fun r hr ↦ by
-        change s + u ≤ s + r
         exact add_le_add le_rfl hr)
     simpa only [Function.comp_def, one_smul] using hh
   have hflow : ContinuousOn (fun u ↦ Φ u (x s)) (Icc 0 T) :=

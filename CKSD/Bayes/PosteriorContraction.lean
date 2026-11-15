@@ -29,8 +29,8 @@ the convention `h² = ∫ (√p - √q)²` of `GAPS.md`.
 
 * `CKSD.tendstoInMeasure_posterior_compl_of_kl_support`: Schwartz's posterior
   consistency theorem (GAPS 104.18).
-* `CKSD.exists_posterior_hellinger_contraction`: the Ghosal–Ghosh–van der Vaart contraction
-  theorem in Hellinger distance (GAPS 104.19).
+* `CKSD.hasPosteriorContractionRate_statisticalHellingerDistance`: the Ghosal–Ghosh–van der
+  Vaart contraction theorem in Hellinger distance (GAPS 104.19).
 -/
 
 @[expose] public section
@@ -67,7 +67,7 @@ private theorem measurable_lintegral_ofReal_prod {Θ X : Type*} [MeasurableSpace
     (ENNReal.measurable_ofReal.comp (Finset.measurable_prod _ fun i _ ↦
       hf.comp (measurable_snd.prodMk ((measurable_pi_apply i).comp measurable_fst))))
 
-/-- The `n`-fold product of a dominated law has the product density with respect to `μ^n`,
+/-- The `n`-fold product of a dominated law has the product density with respect to `μ ^ n`,
 almost everywhere equal to `ofReal (∏ᵢ f θ (xᵢ))`. This uses TauCeti's `pi_withDensity`. -/
 private theorem pi_eq_withDensity_ofReal_prod {Θ X : Type*} [MeasurableSpace X]
     (μ : Measure X) [SigmaFinite μ] (P : Θ → Measure X) [∀ θ, IsProbabilityMeasure (P θ)]
@@ -181,6 +181,74 @@ private theorem lintegral_one_sub_test_mul_numerator_le {Θ X : Type*} [Measurab
     lintegral_tested_numerator_le_add_prior_compl π μ P f hf hdensity θ₀ Uᶜ univ
       MeasurableSet.univ n ψ hψ (fun θ hθ _ ↦ hb θ hθ)
 
+/-- If the normalized mass `D⁻¹ N` is at least `ε`, the evidence `D` is at least `L τ`, and
+`t < 1 / 2`, then `(1 - t) N / L` is at least `ε τ / 2`. -/
+theorem ofReal_div_two_mul_le_of_le_toReal_inv_mul {N D : ℝ≥0∞} {L τ ε t : ℝ}
+    (hε : 0 < ε) (hτ : 0 < τ) (hL : 0 < L) (ht : t < 1 / 2)
+    (hD : ENNReal.ofReal (L * τ) ≤ D) (hpost : ε ≤ (D⁻¹ * N).toReal) :
+    ENNReal.ofReal (ε / 2 * τ) ≤ ENNReal.ofReal (1 - t) * (N / ENNReal.ofReal L) := by
+  have hlow : 0 < ENNReal.ofReal (L * τ) := ENNReal.ofReal_pos.2 (mul_pos hL hτ)
+  have hDpos : D ≠ 0 := (hlow.trans_le hD).ne'
+  have hDtop : D ≠ ∞ := by
+    intro h
+    rw [h] at hpost
+    simp at hpost
+    linarith
+  have hNge : ENNReal.ofReal ε * D ≤ N := by
+    have := ENNReal.ofReal_le_of_le_toReal hpost
+    calc ENNReal.ofReal ε * D ≤ (D⁻¹ * N) * D := mul_le_mul_left this _
+      _ = N := by rw [mul_comm _ N, mul_assoc, ENNReal.inv_mul_cancel hDpos hDtop, mul_one]
+  have hK : ENNReal.ofReal (ε / 2 * τ) =
+      ENNReal.ofReal (1 / 2) * (ENNReal.ofReal ε * ENNReal.ofReal τ) := by
+    rw [← ENNReal.ofReal_mul hε.le, ← ENNReal.ofReal_mul (by norm_num)]
+    congr 1
+    ring
+  rw [hK]
+  refine mul_le_mul' (ENNReal.ofReal_le_ofReal (by linarith)) ?_
+  rw [ENNReal.le_div_iff_mul_le (Or.inl (by simp [hL])) (Or.inl ENNReal.ofReal_ne_top)]
+  calc ENNReal.ofReal ε * ENNReal.ofReal τ * ENNReal.ofReal L
+      = ENNReal.ofReal ε * ENNReal.ofReal (L * τ) := by
+        rw [ENNReal.ofReal_mul hL.le]; ring
+    _ ≤ ENNReal.ofReal ε * D := mul_le_mul_right hD _
+    _ ≤ N := hNge
+
+/-- Markov's inequality for a test applied to the first `n` coordinates of an i.i.d. sequence:
+the probability that `ψ ≥ 1 / 2` is at most `2 𝔼 ψ`. -/
+private theorem infinitePi_half_le_test_le {X : Type*} [MeasurableSpace X] (Q : Measure X)
+    [IsProbabilityMeasure Q] (n : ℕ) (ψ : (Fin n → X) → ℝ) (hψ : IsStatisticalTest ψ) :
+    (Measure.infinitePi fun _ : ℕ ↦ Q) {ω | 1 / 2 ≤ ψ (fun i : Fin n ↦ ω i)} ≤
+      ENNReal.ofReal (∫ x, ψ x ∂(Measure.pi fun _ : Fin n ↦ Q)) / ENNReal.ofReal (1 / 2) := by
+  set Pinf := Measure.infinitePi fun _ : ℕ ↦ Q
+  let r : (ℕ → X) → (Fin n → X) := fun ω i ↦ ω i
+  have hr : Measurable r := measurable_pi_iff.2 fun _ ↦ measurable_pi_apply _
+  have hm : Measurable fun ω ↦ ENNReal.ofReal (ψ (r ω)) :=
+    ENNReal.measurable_ofReal.comp (hψ.1.comp hr)
+  have hint : Integrable ψ (Measure.pi fun _ : Fin n ↦ Q) :=
+    Integrable.of_mem_Icc 0 1 hψ.1.aemeasurable (ae_of_all _ hψ.2)
+  calc Pinf {ω | 1 / 2 ≤ ψ (r ω)}
+      ≤ Pinf {ω | ENNReal.ofReal (1 / 2) ≤ ENNReal.ofReal (ψ (r ω))} :=
+        measure_mono fun ω hω ↦ ENNReal.ofReal_le_ofReal hω
+    _ ≤ (∫⁻ ω, ENNReal.ofReal (ψ (r ω)) ∂Pinf) / ENNReal.ofReal (1 / 2) :=
+        meas_ge_le_lintegral_div hm.aemeasurable (by norm_num) ENNReal.ofReal_ne_top
+    _ = _ := by
+        have hm' : Measurable fun x ↦ ENNReal.ofReal (ψ x) :=
+          ENNReal.measurable_ofReal.comp hψ.1
+        rw [← lintegral_map hm' hr, infinitePi_map_fin_val Q n,
+          ← ofReal_integral_eq_lintegral_ofReal hint (ae_of_all _ fun x ↦ (hψ.2 x).1)]
+
+/-- If `g ≤ 0` is a null event under `Q`, then almost surely no coordinate of an i.i.d. `Q`
+sequence satisfies `g ≤ 0`. -/
+theorem infinitePi_exists_nonpos_eq_zero {X : Type*} [MeasurableSpace X] (Q : Measure X)
+    [IsProbabilityMeasure Q] (g : X → ℝ) (hg : Measurable g) (h0 : Q {x | g x ≤ 0} = 0) :
+    (Measure.infinitePi fun _ : ℕ ↦ Q) {ω | ∃ i, g (ω i) ≤ 0} = 0 := by
+  have : {ω : ℕ → X | ∃ i, g (ω i) ≤ 0} = ⋃ i, (fun ω : ℕ → X ↦ ω i) ⁻¹' {x | g x ≤ 0} := by
+    ext ω; simp
+  rw [this, measure_iUnion_null_iff]
+  intro i
+  rw [← Measure.map_apply (measurable_pi_apply i) (measurableSet_le hg measurable_const),
+    Measure.infinitePi_map_eval]
+  exact h0
+
 /-- Vanishing test error and a tested likelihood numerator small relative to an evidence lower
 bound imply vanishing posterior mass for varying measurable exceptional sets. -/
 theorem tendstoInMeasure_posterior_of_testedNumerator
@@ -219,15 +287,11 @@ theorem tendstoInMeasure_posterior_of_testedNumerator
   have hKpos : ∀ n, 0 < K n := fun n ↦ mul_pos (div_pos hε (by norm_num)) (hτ n)
   let G : ∀ n : ℕ, (Fin n → X) → ℝ≥0∞ := fun n x ↦
     ENNReal.ofReal (1 - ψ n x) * (N n x / ENNReal.ofReal (L₀ n x))
-  have hG : ∀ n, Measurable (G n) := by
-    intro n
-    have hN : Measurable (N n) := Measurable.lintegral_prod_right'
-      (f := fun p : (Fin n → X) × Θ ↦ ENNReal.ofReal (∏ i, f p.2 (p.1 i)))
-      (ENNReal.measurable_ofReal.comp (Finset.measurable_prod _ fun i _ ↦
-        hf.comp (measurable_snd.prodMk ((measurable_pi_apply i).comp measurable_fst))))
-    exact (ENNReal.measurable_ofReal.comp (measurable_const.sub (hψ n).1)).mul
-      (hN.div (ENNReal.measurable_ofReal.comp (Finset.measurable_prod _ fun i _ ↦
-        (hf.comp (measurable_const.prodMk measurable_id)).comp (measurable_pi_apply i))))
+  have hG : ∀ n, Measurable (G n) := fun n ↦
+    (ENNReal.measurable_ofReal.comp (measurable_const.sub (hψ n).1)).mul
+      ((measurable_lintegral_ofReal_prod (π.restrict (A n)) f hf n).div
+        (ENNReal.measurable_ofReal.comp (Finset.measurable_prod _ fun i _ ↦
+          (hf.comp (measurable_const.prodMk measurable_id)).comp (measurable_pi_apply i))))
   have hpost : ∀ n (x : Fin n → X),
       (dominatedPosterior π f x).real (A n) = ((D n x)⁻¹ * N n x).toReal := by
     intro n x
@@ -247,57 +311,13 @@ theorem tendstoInMeasure_posterior_of_testedNumerator
     simp only [E1, E2, E3, E4, Set.mem_union, not_or, Set.mem_ofPred_eq, not_le, not_lt,
       not_exists] at hcon
     obtain ⟨⟨⟨hc1, hc2⟩, hc3⟩, hc4⟩ := hcon
-    have hL0pos : 0 < L₀ n (r n ω) := Finset.prod_pos fun i _ ↦ hc3 i
-    have hlow : 0 < ENNReal.ofReal (L₀ n (r n ω) * τ n) :=
-      ENNReal.ofReal_pos.2 (mul_pos hL0pos (hτ n))
-    have hDpos : D n (r n ω) ≠ 0 := (hlow.trans_le hc2).ne'
-    have hDtop : D n (r n ω) ≠ ∞ := by
-      intro h
-      change ε ≤ ((D n (r n ω))⁻¹ * N n (r n ω)).toReal at hω
-      rw [h] at hω
-      simp at hω
-      linarith
-    have hNge : ENNReal.ofReal ε * D n (r n ω) ≤ N n (r n ω) := by
-      have := ENNReal.ofReal_le_of_le_toReal hω
-      calc ENNReal.ofReal ε * D n (r n ω)
-          ≤ ((D n (r n ω))⁻¹ * N n (r n ω)) * D n (r n ω) := mul_le_mul_left this _
-        _ = N n (r n ω) := by
-          rw [mul_comm _ (N n (r n ω)), mul_assoc, ENNReal.inv_mul_cancel hDpos hDtop,
-            mul_one]
-    have hK : ENNReal.ofReal (K n) = ENNReal.ofReal (1 / 2) *
-        (ENNReal.ofReal ε * ENNReal.ofReal (τ n)) := by
-      rw [← ENNReal.ofReal_mul hε.le, ← ENNReal.ofReal_mul (by norm_num)]
-      congr 1
-      dsimp [K]
-      ring
-    refine absurd hc4 (not_lt.2 ?_)
-    rw [hK]
-    refine mul_le_mul' (ENNReal.ofReal_le_ofReal (by linarith)) ?_
-    rw [ENNReal.le_div_iff_mul_le (Or.inl (by simp [hL0pos])) (Or.inl ENNReal.ofReal_ne_top)]
-    calc ENNReal.ofReal ε * ENNReal.ofReal (τ n) * ENNReal.ofReal (L₀ n (r n ω))
-        = ENNReal.ofReal ε * ENNReal.ofReal (L₀ n (r n ω) * τ n) := by
-          rw [ENNReal.ofReal_mul hL0pos.le]; ring
-      _ ≤ ENNReal.ofReal ε * D n (r n ω) := mul_le_mul_right hc2 _
-      _ ≤ N n (r n ω) := hNge
+    exact absurd hc4 (not_lt.2 (ofReal_div_two_mul_le_of_le_toReal_inv_mul hε (hτ n)
+      (Finset.prod_pos fun i _ ↦ hc3 i) hc1 hc2 hω))
   have hmap : ∀ n, Pinf.map (r n) = Measure.pi fun _ : Fin n ↦ P θ₀ := fun n ↦
     infinitePi_map_fin_val (P θ₀) n
   have hE1 : ∀ n : ℕ, Pinf (E1 n) ≤
       ENNReal.ofReal (∫ x, ψ n x ∂(Measure.pi fun _ : Fin n ↦ P θ₀)) /
-        ENNReal.ofReal (1 / 2) := by
-    intro n
-    have hm : Measurable fun ω ↦ ENNReal.ofReal (ψ n (r n ω)) :=
-      ENNReal.measurable_ofReal.comp ((hψ n).1.comp (hr n))
-    have hint : Integrable (ψ n) (Measure.pi fun _ : Fin n ↦ P θ₀) :=
-      Integrable.of_mem_Icc 0 1 (hψ n).1.aemeasurable (ae_of_all _ (hψ n).2)
-    calc Pinf (E1 n) ≤ Pinf {ω | ENNReal.ofReal (1 / 2) ≤ ENNReal.ofReal (ψ n (r n ω))} :=
-          measure_mono fun ω hω ↦ ENNReal.ofReal_le_ofReal hω
-      _ ≤ (∫⁻ ω, ENNReal.ofReal (ψ n (r n ω)) ∂Pinf) / ENNReal.ofReal (1 / 2) :=
-          meas_ge_le_lintegral_div hm.aemeasurable (by norm_num) ENNReal.ofReal_ne_top
-      _ = _ := by
-          have hm' : Measurable fun x ↦ ENNReal.ofReal (ψ n x) :=
-            ENNReal.measurable_ofReal.comp (hψ n).1
-          rw [← lintegral_map hm' (hr n), hmap n,
-            ← ofReal_integral_eq_lintegral_ofReal hint (ae_of_all _ fun x ↦ ((hψ n).2 x).1)]
+        ENNReal.ofReal (1 / 2) := fun n ↦ infinitePi_half_le_test_le (P θ₀) n (ψ n) (hψ n)
   have hE4 : ∀ n : ℕ, Pinf (E4 n) ≤ ENNReal.ofReal (b n / K n) := by
     intro n
     rw [ENNReal.ofReal_div_of_pos (hKpos n)]
@@ -308,15 +328,8 @@ theorem tendstoInMeasure_posterior_of_testedNumerator
           refine ENNReal.div_le_div_right ?_ _
           rw [← lintegral_map (hG n) (hr n), hmap n]
           exact hnum n
-  have hE3 : Pinf E3 = 0 := by
-    have hf0m : Measurable (f θ₀) := hf.comp (measurable_const.prodMk measurable_id)
-    have : E3 = ⋃ i, (fun ω : ℕ → X ↦ ω i) ⁻¹' {x | f θ₀ x ≤ 0} := by ext ω; simp [E3]
-    rw [this, measure_iUnion_null_iff]
-    intro i
-    rw [← Measure.map_apply (measurable_pi_apply i)
-      (measurableSet_le hf0m measurable_const),
-      Measure.infinitePi_map_eval]
-    exact hfpos
+  have hE3 : Pinf E3 = 0 := infinitePi_exists_nonpos_eq_zero (P θ₀) (f θ₀)
+    (hf.comp (measurable_const.prodMk measurable_id)) hfpos
   have hlim1 : Tendsto (fun n : ℕ ↦
       ENNReal.ofReal (∫ x, ψ n x ∂(Measure.pi fun _ : Fin n ↦ P θ₀)) /
         ENNReal.ofReal (1 / 2)) atTop (𝓝 0) := by
@@ -509,6 +522,34 @@ theorem hasPosteriorContractionRate_of_sieve_tests
     exact hev
 
 
+/-- The truncated sum `min 1 (∑ᵢ uᵢ)` of finitely many tests is a test whose type I error is at
+most the sum of the type I errors and whose type II error is at most that of each `uᵢ`. -/
+theorem exists_test_integral_le_sum_and_one_sub_le {ι X : Type*} [Fintype ι] [MeasurableSpace X]
+    (u : ι → X → ℝ) (hu : ∀ i, IsStatisticalTest (u i)) :
+    ∃ ψ : X → ℝ, IsStatisticalTest ψ ∧
+      (∀ (μ : Measure X) [IsProbabilityMeasure μ], ∫ x, ψ x ∂μ ≤ ∑ i, ∫ x, u i x ∂μ) ∧
+      ∀ (μ : Measure X) [IsProbabilityMeasure μ] (i : ι),
+        ∫ x, 1 - ψ x ∂μ ≤ ∫ x, 1 - u i x ∂μ := by
+  classical
+  let ψ : X → ℝ := fun x ↦ min 1 (∑ i, u i x)
+  have hψ : IsStatisticalTest ψ := by
+    refine ⟨measurable_const.min (Finset.measurable_sum _ fun i _ ↦ (hu i).1), fun x ↦ ?_⟩
+    exact ⟨le_min zero_le_one (Finset.sum_nonneg fun i _ ↦ ((hu i).2 x).1), min_le_left _ _⟩
+  have huint (i : ι) (μ : Measure X) [IsProbabilityMeasure μ] : Integrable (u i) μ :=
+    Integrable.of_mem_Icc 0 1 (hu i).1.aemeasurable (ae_of_all _ (hu i).2)
+  have hψint (μ : Measure X) [IsProbabilityMeasure μ] : Integrable ψ μ :=
+    Integrable.of_mem_Icc 0 1 hψ.1.aemeasurable (ae_of_all _ hψ.2)
+  refine ⟨ψ, hψ, fun μ _ ↦ ?_, fun μ _ i ↦ ?_⟩
+  · calc (∫ x, ψ x ∂μ) ≤ ∫ x, ∑ i, u i x ∂μ :=
+          integral_mono (hψint μ) (integrable_finsetSum _ fun i _ ↦ huint i μ)
+            fun x ↦ min_le_right _ _
+      _ = ∑ i, ∫ x, u i x ∂μ := integral_finsetSum _ fun i _ ↦ huint i μ
+  · have hψge (x : X) : u i x ≤ ψ x := by
+      refine le_min ((hu i).2 x).2 ?_
+      exact Finset.single_le_sum (fun j _ ↦ ((hu j).2 x).1) (Finset.mem_univ i)
+    exact integral_mono ((integrable_const 1).sub (hψint μ))
+      ((integrable_const 1).sub (huint i μ)) fun x ↦ sub_le_sub_left (hψge x) 1
+
 /-- Robust tests of Hellinger balls and finite sieve covers give exponentially consistent sieve
 tests at a sufficiently large multiple of the covering radius. -/
 theorem exists_hellinger_sieve_tests_of_ball_tests
@@ -572,21 +613,10 @@ theorem exists_hellinger_sieve_tests_of_ball_tests
       · refine ⟨fun _ ↦ 0, ⟨measurable_const, fun _ ↦ ⟨le_rfl, zero_le_one⟩⟩,
           by simp only [integral_zero]; exact (Real.exp_pos _).le, fun h ↦ (hi h).elim⟩
     choose u hu hI hII using hper
-    let ψ : (Fin n → X) → ℝ := fun x ↦ min 1 (∑ i, u i x)
-    have hψ : IsStatisticalTest ψ := by
-      refine ⟨measurable_const.min (Finset.measurable_sum _ fun i _ ↦ (hu i).1), fun x ↦ ?_⟩
-      exact ⟨le_min zero_le_one (Finset.sum_nonneg fun i _ ↦ ((hu i).2 x).1), min_le_left _ _⟩
-    have huint (i : Fin m) (θ : Θ) : Integrable (u i) (Measure.pi fun _ : Fin n ↦ P θ) :=
-      Integrable.of_mem_Icc 0 1 (hu i).1.aemeasurable (ae_of_all _ (hu i).2)
-    have hψint (θ : Θ) : Integrable ψ (Measure.pi fun _ : Fin n ↦ P θ) :=
-      Integrable.of_mem_Icc 0 1 hψ.1.aemeasurable (ae_of_all _ hψ.2)
+    obtain ⟨ψ, hψ, hψI, hψII⟩ := exists_test_integral_le_sum_and_one_sub_le u hu
     refine ⟨ψ, hψ, ?_, ?_⟩
     · calc (∫ x, ψ x ∂(Measure.pi fun _ : Fin n ↦ P θ₀)) ≤
-            ∫ x, ∑ i, u i x ∂(Measure.pi fun _ : Fin n ↦ P θ₀) :=
-              integral_mono (hψint θ₀) (integrable_finsetSum _ fun i _ ↦ huint i θ₀)
-                fun x ↦ min_le_right _ _
-        _ = ∑ i, ∫ x, u i x ∂(Measure.pi fun _ : Fin n ↦ P θ₀) :=
-              integral_finsetSum _ fun i _ ↦ huint i θ₀
+            ∑ i, ∫ x, u i x ∂(Measure.pi fun _ : Fin n ↦ P θ₀) := hψI _
         _ ≤ ∑ _i : Fin m, E := Finset.sum_le_sum fun i _ ↦ hI i
         _ = (m : ℝ) * E := by simp
         _ ≤ Real.exp ((n : ℝ) * ε n ^ 2) * E :=
@@ -604,16 +634,8 @@ theorem exists_hellinger_sieve_tests_of_ball_tests
         nlinarith [hε n]
       have hrad : statisticalHellingerDistance (P θ) (P (center i)) ≤ d i / 8 := by
         nlinarith [hε n]
-      have hψge (x : Fin n → X) : u i x ≤ ψ x := by
-        refine le_min ((hu i).2 x).2 ?_
-        exact Finset.single_le_sum (fun j _ ↦ ((hu j).2 x).1) (Finset.mem_univ i)
-      have hintψ : Integrable (fun x ↦ 1 - ψ x) (Measure.pi fun _ : Fin n ↦ P θ) :=
-        (integrable_const 1).sub (hψint θ)
-      have hintu : Integrable (fun x ↦ 1 - u i x) (Measure.pi fun _ : Fin n ↦ P θ) :=
-        (integrable_const 1).sub (huint i θ)
       calc (∫ x, 1 - ψ x ∂(Measure.pi fun _ : Fin n ↦ P θ)) ≤
-            ∫ x, 1 - u i x ∂(Measure.pi fun _ : Fin n ↦ P θ) :=
-              integral_mono hintψ hintu fun x ↦ sub_le_sub_left (hψge x) 1
+            ∫ x, 1 - u i x ∂(Measure.pi fun _ : Fin n ↦ P θ) := hψII _ i
         _ ≤ E := hII i hact θ hrad
         _ ≤ Real.exp (-(C + 4) * (n : ℝ) * ε n ^ 2) := by
               apply Real.exp_le_exp.2
@@ -630,12 +652,12 @@ theorem exists_hellinger_sieve_tests_of_ball_tests
 
 
 /-- GAPS 104.19: the Ghosal–Ghosh–van der Vaart theorem. Suppose `εₙ > 0` with `n εₙ² → ∞`, the
-sieves `Θₙ` have `εₙ/2`-Hellinger covers of cardinality at most `e^{n εₙ²}`, the prior mass outside
-`Θₙ` is at most `e^{-(C+4) n εₙ²}`, and the prior mass of the Kullback–Leibler neighbourhood
-`{KL ≤ εₙ², V₂ ≤ εₙ²}` is at least `e^{-C n εₙ²}`. Then the posterior contracts at rate `εₙ` in
-Hellinger distance. The finite-cover condition spells out the entropy bound without imposing a
-metric on parameter labels. The classical hypothesis `εₙ → 0` is not needed. -/
-theorem exists_posterior_hellinger_contraction
+sieves `Θₙ` have `εₙ / 2`-Hellinger covers of cardinality at most `e ^ {n εₙ²}`, the prior mass
+outside `Θₙ` is at most `e ^ {-(C + 4) n εₙ²}`, and the prior mass of the Kullback–Leibler
+neighbourhood `{KL ≤ εₙ², V₂ ≤ εₙ²}` is at least `e ^ {-C n εₙ²}`. Then the posterior contracts at
+rate `εₙ` in Hellinger distance. The finite-cover condition spells out the entropy bound without
+imposing a metric on parameter labels. The classical hypothesis `εₙ → 0` is not needed. -/
+theorem hasPosteriorContractionRate_statisticalHellingerDistance
     {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
     (π : Measure Θ) [IsProbabilityMeasure π] (μ : Measure X) [SigmaFinite μ]
     (P : Θ → Measure X) [∀ θ, IsProbabilityMeasure (P θ)]

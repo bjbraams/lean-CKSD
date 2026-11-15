@@ -132,7 +132,6 @@ def gaussianShiftKernel (S : Matrix ι ι ℝ) :
     ProbabilityTheory.Kernel (EuclideanSpace ℝ ι) (EuclideanSpace ℝ ι) where
   toFun m := multivariateGaussian m S
   measurable' := by
-    change Measurable (Function.uncurry multivariateGaussian ∘ fun m ↦ (m, S))
     exact measurable_multivariateGaussian.comp (measurable_id.prodMk measurable_const)
 
 omit [Fintype κ] [Fintype τ] [Fintype σ] [DecidableEq κ] [DecidableEq τ] [DecidableEq σ] in

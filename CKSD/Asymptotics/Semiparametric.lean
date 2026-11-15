@@ -34,6 +34,7 @@ theorem efficientScore_eq_self_of_inner_eq_zero {X : Type*} [MeasurableSpace X] 
     (scores : Set (Lp ℝ 2 P)) (s : Lp ℝ 2 P) (h : ∀ g ∈ scores, inner ℝ g s = 0) :
     efficientScore P scores s = s := by
   have hmem : s ∈ ((nuisanceTangentSpace P scores).toSubmodule)ᗮ := by
+    -- `change` unfolds the structure `nuisanceTangentSpace`, which has no simp lemma.
     change s ∈ ((Submodule.span ℝ scores).topologicalClosure)ᗮ
     rw [Submodule.orthogonal_closure, Submodule.mem_orthogonal]
     intro u hu

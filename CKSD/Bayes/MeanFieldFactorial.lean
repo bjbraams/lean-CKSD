@@ -23,21 +23,21 @@ theorem auxiliary_distance_iterate_le_pow_div_factorial
     (hstep : ∀ x y t, t ∈ Icc (0 : ℝ) T →
       q (G x) (G y) t ≤ a * ∫ s in (0 : ℝ)..t, q x y s)
     (n : ℕ) (x y : X) (t : ℝ) (ht : t ∈ Icc (0 : ℝ) T) :
-    q (G^[n] x) (G^[n] y) t ≤ (a * t)^n / n ! * dist x y := by
+    q (G^[n] x) (G^[n] y) t ≤ (a * t) ^ n / n ! * dist x y := by
   induction n generalizing t with
   | zero => simpa using hbase x y t ht
   | succ n ih =>
     rw [iterate_succ_apply', iterate_succ_apply']
     calc _ ≤ a * ∫ s in (0 : ℝ)..t, q (G^[n] x) (G^[n] y) s := hstep _ _ t ht
-      _ ≤ a * ∫ s in (0 : ℝ)..t, (a * s)^n / n ! * dist x y := by
+      _ ≤ a * ∫ s in (0 : ℝ)..t, (a * s) ^ n / n ! * dist x y := by
         apply mul_le_mul_of_nonneg_left _ ha
         apply intervalIntegral.integral_mono_on ht.1 ((hq _ _).intervalIntegrable _ _)
           (Continuous.intervalIntegrable (by fun_prop) _ _)
         intro s hs
         exact ih s ⟨hs.1, hs.2.trans ht.2⟩
       _ = _ := by
-        have heq : (∫ s in (0 : ℝ)..t, (a*s)^n / n ! * dist x y) =
-            a^n * dist x y / n ! * ∫ s in (0 : ℝ)..t, s^n := by
+        have heq : (∫ s in (0 : ℝ)..t, (a * s) ^ n / n ! * dist x y) =
+            a ^ n * dist x y / n ! * ∫ s in (0 : ℝ)..t, s ^ n := by
           rw [← intervalIntegral.integral_const_mul]
           congr 1
           ext s
@@ -56,21 +56,21 @@ theorem dist_iterate_le_pow_div_factorial_of_integral_estimates
       q (G x) (G y) t ≤ a * ∫ s in (0 : ℝ)..t, q x y s)
     (hdist : ∀ x y, dist (G x) (G y) ≤ a * ∫ s in (0 : ℝ)..T, q x y s)
     (n : ℕ) (x y : X) :
-    dist (G^[n] x) (G^[n] y) ≤ (a * T)^n / n ! * dist x y := by
+    dist (G^[n] x) (G^[n] y) ≤ (a * T) ^ n / n ! * dist x y := by
   cases n with
   | zero => simp
   | succ n =>
     rw [iterate_succ_apply', iterate_succ_apply']
     calc _ ≤ a * ∫ s in (0 : ℝ)..T, q (G^[n] x) (G^[n] y) s := hdist _ _
-      _ ≤ a * ∫ s in (0 : ℝ)..T, (a*s)^n / n ! * dist x y := by
+      _ ≤ a * ∫ s in (0 : ℝ)..T, (a * s) ^ n / n ! * dist x y := by
         apply mul_le_mul_of_nonneg_left _ ha
         apply intervalIntegral.integral_mono_on hT ((hq _ _).intervalIntegrable _ _)
           (Continuous.intervalIntegrable (by fun_prop) _ _)
         intro s hs
         exact auxiliary_distance_iterate_le_pow_div_factorial G q ha hq hbase hstep n x y s hs
       _ = _ := by
-        have heq : (∫ s in (0 : ℝ)..T, (a*s)^n / n ! * dist x y) =
-            a^n * dist x y / n ! * ∫ s in (0 : ℝ)..T, s^n := by
+        have heq : (∫ s in (0 : ℝ)..T, (a * s) ^ n / n ! * dist x y) =
+            a ^ n * dist x y / n ! * ∫ s in (0 : ℝ)..T, s ^ n := by
           rw [← intervalIntegral.integral_const_mul]
           congr 1
           ext s
@@ -89,9 +89,9 @@ theorem exists_contractingWith_iterate_of_integral_estimates
       q (G x) (G y) t ≤ a * ∫ s in (0 : ℝ)..t, q x y s)
     (hdist : ∀ x y, dist (G x) (G y) ≤ a * ∫ s in (0 : ℝ)..T, q x y s) :
     ∃ (n : ℕ) (C : ℝ≥0), ContractingWith C G^[n] := by
-  obtain ⟨n, hn⟩ := FloorSemiring.tendsto_pow_div_factorial_atTop (a*T)
+  obtain ⟨n, hn⟩ := FloorSemiring.tendsto_pow_div_factorial_atTop (a * T)
     |>.eventually (gt_mem_nhds zero_lt_one) |>.exists
-  have h0 : 0 ≤ (a*T)^n / n ! := by positivity
+  have h0 : 0 ≤ (a * T) ^ n / n ! := by positivity
   refine ⟨n, ⟨_, h0⟩, hn, LipschitzWith.of_dist_le_mul fun x y ↦ ?_⟩
   exact dist_iterate_le_pow_div_factorial_of_integral_estimates G q ha hT hq hbase hstep hdist n x y
 end CKSD

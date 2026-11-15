@@ -270,6 +270,120 @@ theorem persistentBettiOfMatrix_eq_card {D R V : Matrix (Fin m) (Fin m) 𝕜}
   unfold persistentBettiOfMatrix
   omega
 
+/-- If `low_R(j) = i`, adding `σ_i` raises the Betti number in its dimension: `σ_i` is
+positive. -/
+theorem IsColumnLow.persistentBettiOfMatrix_succ_low_eq
+    {D R V : Matrix (Fin m) (Fin m) 𝕜}
+    {dim : Fin m → ℕ} (hD : IsFilteredBoundaryMatrix D dim) (h : IsMatrixReduction D R V)
+    {i j : Fin m} (hij : IsColumnLow R i j) :
+    persistentBettiOfMatrix D dim (dim i) (i.val + 1) (i.val + 1) =
+      persistentBettiOfMatrix D dim (dim i) i.val i.val + 1 := by
+  have hdD : ∀ i j, D i j ≠ 0 → dim i + 1 = dim j := fun i j h ↦ (hD.lt_and_dim_of_ne_zero i j h).2
+  have hlt : ∀ i j, D i j ≠ 0 → i < j := fun i j h ↦ (hD.lt_and_dim_of_ne_zero i j h).1
+  have hij' : i < j := hij.lt hlt h
+  have hzi := hij.col_eq_zero hD.mul_self_eq_zero h
+  rw [persistentBettiOfMatrix_eq_card hD h, persistentBettiOfMatrix_eq_card hD h]
+  have hT : (Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧
+        (∀ l, ¬ IsColumnLow R j' l) ∧ dim j' = dim i ∧ j'.val < i.val + 1) =
+      Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧
+        (∀ l, ¬ IsColumnLow R j' l) ∧ dim j' = dim i ∧ j'.val < i.val := by
+    ext j'
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+    constructor
+    · rintro ⟨h1, h2, h3, h4⟩
+      refine ⟨h1, h2, h3, ?_⟩
+      rcases Nat.lt_succ_iff_lt_or_eq.mp h4 with h4 | h4
+      · exact h4
+      · exact absurd hij (Fin.ext h4 ▸ h2 j)
+    · rintro ⟨h1, h2, h3, h4⟩
+      exact ⟨h1, h2, h3, by omega⟩
+  have hS : (Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧ dim i' = dim i ∧
+        i'.val < i.val + 1 ∧ i.val + 1 ≤ l.val) =
+      insert j (Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧ dim i' = dim i ∧
+        i'.val < i.val ∧ i.val ≤ l.val) := by
+    ext l
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert]
+    constructor
+    · rintro ⟨i', hi', hd, h1, h2⟩
+      rcases Nat.lt_succ_iff_lt_or_eq.mp h1 with h1 | h1
+      · exact Or.inr ⟨i', hi', hd, h1, by omega⟩
+      · have : i' = i := Fin.ext h1
+        subst this
+        exact Or.inl (h.reduced _ _ _ hi' hij)
+    · rintro (rfl | ⟨i', hi', hd, h1, h2⟩)
+      · exact ⟨i, hij, rfl, by omega, by have := Fin.lt_def.mp hij'; omega⟩
+      · refine ⟨i', hi', hd, by omega, ?_⟩
+        rcases Nat.lt_or_eq_of_le h2 with h2 | h2
+        · omega
+        · have : l = i := Fin.ext h2.symm
+          subst this
+          exact absurd (hzi i') hi'.1
+  have hjS : j ∉ Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧
+      dim i' = dim i ∧ i'.val < i.val ∧ i.val ≤ l.val := by
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, not_exists, not_and]
+    intro i' hi' _ h1
+    have := hij.unique hi'
+    subst this
+    omega
+  rw [hT, hS, Finset.card_insert_of_notMem hjS]
+  ring
+
+/-- If `low_R(j) = i`, adding `σ_j` lowers the Betti number in the dimension of `σ_i`: `σ_j` is
+negative. -/
+theorem IsColumnLow.persistentBettiOfMatrix_succ_col_add_one_eq
+    {D R V : Matrix (Fin m) (Fin m) 𝕜}
+    {dim : Fin m → ℕ} (hD : IsFilteredBoundaryMatrix D dim) (h : IsMatrixReduction D R V)
+    {i j : Fin m} (hij : IsColumnLow R i j) :
+    persistentBettiOfMatrix D dim (dim i) (j.val + 1) (j.val + 1) + 1 =
+      persistentBettiOfMatrix D dim (dim i) j.val j.val := by
+  have hdD : ∀ i j, D i j ≠ 0 → dim i + 1 = dim j := fun i j h ↦ (hD.lt_and_dim_of_ne_zero i j h).2
+  have hlt : ∀ i j, D i j ≠ 0 → i < j := fun i j h ↦ (hD.lt_and_dim_of_ne_zero i j h).1
+  have hdim := hij.dim_eq hdD h
+  have hij' : i < j := hij.lt hlt h
+  rw [persistentBettiOfMatrix_eq_card hD h, persistentBettiOfMatrix_eq_card hD h]
+  have hT : (Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧
+        (∀ l, ¬ IsColumnLow R j' l) ∧ dim j' = dim i ∧ j'.val < j.val + 1) =
+      Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧
+        (∀ l, ¬ IsColumnLow R j' l) ∧ dim j' = dim i ∧ j'.val < j.val := by
+    ext j'
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+    constructor
+    · rintro ⟨h1, h2, h3, h4⟩
+      refine ⟨h1, h2, h3, ?_⟩
+      rcases Nat.lt_succ_iff_lt_or_eq.mp h4 with h4 | h4
+      · exact h4
+      · have : j' = j := Fin.ext h4
+        subst this
+        omega
+    · rintro ⟨h1, h2, h3, h4⟩
+      exact ⟨h1, h2, h3, by omega⟩
+  have hS : (Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧ dim i' = dim i ∧
+        i'.val < j.val ∧ j.val ≤ l.val) =
+      insert j (Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧ dim i' = dim i ∧
+        i'.val < j.val + 1 ∧ j.val + 1 ≤ l.val) := by
+    ext l
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert]
+    constructor
+    · rintro ⟨i', hi', hd, h1, h2⟩
+      rcases Nat.lt_or_eq_of_le h2 with h2 | h2
+      · exact Or.inr ⟨i', hi', hd, by omega, by omega⟩
+      · exact Or.inl (Fin.ext h2.symm)
+    · rintro (rfl | ⟨i', hi', hd, h1, h2⟩)
+      · exact ⟨i, hij, rfl, Fin.lt_def.mp hij', le_rfl⟩
+      · refine ⟨i', hi', hd, ?_, by omega⟩
+        rcases Nat.lt_succ_iff_lt_or_eq.mp h1 with h1 | h1
+        · exact h1
+        · have : i' = j := Fin.ext h1
+          subst this
+          omega
+  have hjS : j ∉ Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧
+      dim i' = dim i ∧ i'.val < j.val + 1 ∧ j.val + 1 ≤ l.val := by
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, not_exists, not_and]
+    intro _ _ _ _ h2
+    omega
+  rw [hT, hS, Finset.card_insert_of_notMem hjS]
+  ring
+
 /-- GAPS 108.32, homological meaning of the pairing (indices from `0`; the subcomplex `K_a`
 consists of the first `a` simplices). If `low_R(j) = i`, then `σ_j` has dimension one more than
 `σ_i`, adding `σ_i` raises the Betti number in its dimension (`σ_i` is positive) and adding `σ_j`
@@ -287,98 +401,7 @@ theorem IsColumnLow.dim_eq_and_persistentBettiOfMatrix_eq {D R V : Matrix (Fin m
       persistentBettiOfMatrix D dim (dim i) (j.val + 1) (j.val + 1) + 1 =
         persistentBettiOfMatrix D dim (dim i) j.val j.val := by
   have hdD : ∀ i j, D i j ≠ 0 → dim i + 1 = dim j := fun i j h ↦ (hD.lt_and_dim_of_ne_zero i j h).2
-  have hlt : ∀ i j, D i j ≠ 0 → i < j := fun i j h ↦ (hD.lt_and_dim_of_ne_zero i j h).1
-  have hdim := hij.dim_eq hdD h
-  have hij' : i < j := hij.lt hlt h
-  have hzi := hij.col_eq_zero hD.mul_self_eq_zero h
-  refine ⟨hdim, ?_, ?_⟩
-  · rw [persistentBettiOfMatrix_eq_card hD h, persistentBettiOfMatrix_eq_card hD h]
-    have hT : (Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧
-          (∀ l, ¬ IsColumnLow R j' l) ∧ dim j' = dim i ∧ j'.val < i.val + 1) =
-        Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧
-          (∀ l, ¬ IsColumnLow R j' l) ∧ dim j' = dim i ∧ j'.val < i.val := by
-      ext j'
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-      constructor
-      · rintro ⟨h1, h2, h3, h4⟩
-        refine ⟨h1, h2, h3, ?_⟩
-        rcases Nat.lt_succ_iff_lt_or_eq.mp h4 with h4 | h4
-        · exact h4
-        · exact absurd hij (Fin.ext h4 ▸ h2 j)
-      · rintro ⟨h1, h2, h3, h4⟩
-        exact ⟨h1, h2, h3, by omega⟩
-    have hS : (Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧ dim i' = dim i ∧
-          i'.val < i.val + 1 ∧ i.val + 1 ≤ l.val) =
-        insert j (Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧ dim i' = dim i ∧
-          i'.val < i.val ∧ i.val ≤ l.val) := by
-      ext l
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert]
-      constructor
-      · rintro ⟨i', hi', hd, h1, h2⟩
-        rcases Nat.lt_succ_iff_lt_or_eq.mp h1 with h1 | h1
-        · exact Or.inr ⟨i', hi', hd, h1, by omega⟩
-        · have : i' = i := Fin.ext h1
-          subst this
-          exact Or.inl (h.reduced _ _ _ hi' hij)
-      · rintro (rfl | ⟨i', hi', hd, h1, h2⟩)
-        · exact ⟨i, hij, rfl, by omega, by have := Fin.lt_def.mp hij'; omega⟩
-        · refine ⟨i', hi', hd, by omega, ?_⟩
-          rcases Nat.lt_or_eq_of_le h2 with h2 | h2
-          · omega
-          · have : l = i := Fin.ext h2.symm
-            subst this
-            exact absurd (hzi i') hi'.1
-    have hjS : j ∉ Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧
-        dim i' = dim i ∧ i'.val < i.val ∧ i.val ≤ l.val := by
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and, not_exists, not_and]
-      intro i' hi' _ h1
-      have := hij.unique hi'
-      subst this
-      omega
-    rw [hT, hS, Finset.card_insert_of_notMem hjS]
-    ring
-  · rw [persistentBettiOfMatrix_eq_card hD h, persistentBettiOfMatrix_eq_card hD h]
-    have hT : (Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧
-          (∀ l, ¬ IsColumnLow R j' l) ∧ dim j' = dim i ∧ j'.val < j.val + 1) =
-        Finset.univ.filter fun j' : Fin m ↦ (∀ k, R k j' = 0) ∧
-          (∀ l, ¬ IsColumnLow R j' l) ∧ dim j' = dim i ∧ j'.val < j.val := by
-      ext j'
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-      constructor
-      · rintro ⟨h1, h2, h3, h4⟩
-        refine ⟨h1, h2, h3, ?_⟩
-        rcases Nat.lt_succ_iff_lt_or_eq.mp h4 with h4 | h4
-        · exact h4
-        · have : j' = j := Fin.ext h4
-          subst this
-          omega
-      · rintro ⟨h1, h2, h3, h4⟩
-        exact ⟨h1, h2, h3, by omega⟩
-    have hS : (Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧ dim i' = dim i ∧
-          i'.val < j.val ∧ j.val ≤ l.val) =
-        insert j (Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧ dim i' = dim i ∧
-          i'.val < j.val + 1 ∧ j.val + 1 ≤ l.val) := by
-      ext l
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_insert]
-      constructor
-      · rintro ⟨i', hi', hd, h1, h2⟩
-        rcases Nat.lt_or_eq_of_le h2 with h2 | h2
-        · exact Or.inr ⟨i', hi', hd, by omega, by omega⟩
-        · exact Or.inl (Fin.ext h2.symm)
-      · rintro (rfl | ⟨i', hi', hd, h1, h2⟩)
-        · exact ⟨i, hij, rfl, Fin.lt_def.mp hij', le_rfl⟩
-        · refine ⟨i', hi', hd, ?_, by omega⟩
-          rcases Nat.lt_succ_iff_lt_or_eq.mp h1 with h1 | h1
-          · exact h1
-          · have : i' = j := Fin.ext h1
-            subst this
-            omega
-    have hjS : j ∉ Finset.univ.filter fun l : Fin m ↦ ∃ i', IsColumnLow R i' l ∧
-        dim i' = dim i ∧ i'.val < j.val + 1 ∧ j.val + 1 ≤ l.val := by
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and, not_exists, not_and]
-      intro _ _ _ _ h2
-      omega
-    rw [hT, hS, Finset.card_insert_of_notMem hjS]
-    ring
+  exact ⟨hij.dim_eq hdD h, hij.persistentBettiOfMatrix_succ_low_eq hD h,
+    hij.persistentBettiOfMatrix_succ_col_add_one_eq hD h⟩
 
 end CKSD

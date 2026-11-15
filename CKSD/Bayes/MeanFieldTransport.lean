@@ -59,11 +59,13 @@ theorem exists_iid_paths_of_forcing_coordinates {Ω E : Type*} [MeasurableSpace 
   have hCoords : Measurable (pathRationalCoordinates (E := E) hT) :=
     (measurableEmbedding_pathRationalCoordinates hT).measurable
   have hΦ : Measurable (pathForcingMap hT v hv) := emb.measurable
-  have hGood : MeasurableSet {u : ℚ → E | pathRationalCoordinates hT (pathForcingMap hT v hv (S u)) = u} :=
+  have hGood :
+      MeasurableSet {u : ℚ → E | pathRationalCoordinates hT (pathForcingMap hT v hv (S u)) = u} :=
     measurableSet_eq_fun (hCoords.comp (hΦ.comp hS)) measurable_id
-  have hGood₀ : ∀ᵐ ω ∂P, pathRationalCoordinates hT (pathForcingMap hT v hv (S (U 0 ω))) = U 0 ω := by
+  have hGood₀ :
+      ∀ᵐ ω ∂P, pathRationalCoordinates hT (pathForcingMap hT v hv (S (U 0 ω))) = U 0 ω := by
     filter_upwards [hR₀, hU₀] with ω hω hUω
-    change pathRationalCoordinates hT (pathForcingMap hT v hv (R 0 ω)) = U 0 ω
+    simp only [R] at hω
     rw [hω]
     exact hUω
   refine ⟨Z, hZ, hindZ, hZid, fun i ↦ ?_⟩
@@ -72,7 +74,8 @@ theorem exists_iid_paths_of_forcing_coordinates {Ω E : Type*} [MeasurableSpace 
   rw [← hZω]
   exact hω
 
-/-- Equality of the forcing at projected rational times yields the whole pathwise integral equation. -/
+/-- Equality of the forcing at projected rational times yields the whole pathwise integral
+equation. -/
 theorem eq_integral_of_forcing_coordinates {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E] [CompleteSpace E]
     [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
@@ -82,12 +85,13 @@ theorem eq_integral_of_forcing_coordinates {E : Type*}
       fun q : ℚ ↦ ξ + B (Set.projIcc 0 T hT q)) :
     ∀ t ∈ Icc (0 : ℝ) T, (f.IccExtend hT) t =
       ξ + (∫ s in (0 : ℝ)..t, v s ((f.IccExtend hT) s)) + B t := by
-  let g : C(Icc (0 : ℝ) T, E) := ⟨fun t ↦ ξ + B t, continuous_const.add (hB.comp continuous_subtype_val)⟩
+  let g : C(Icc (0 : ℝ) T, E) :=
+    ⟨fun t ↦ ξ + B t, continuous_const.add (hB.comp continuous_subtype_val)⟩
   have hΦ : pathForcingMap hT v hv f = g :=
     (measurableEmbedding_pathRationalCoordinates hT).injective heq
   intro t ht
   have hpoint := congrArg (fun z : C(Icc (0 : ℝ) T, E) ↦ z ⟨t, ht⟩) hΦ
-  change f ⟨t, ht⟩ - (∫ s in (0 : ℝ)..t, v s ((f.IccExtend hT) s)) = ξ + B t at hpoint
+  simp only [pathForcingMap_apply, g, ContinuousMap.coe_mk] at hpoint
   rw [ContinuousMap.coe_IccExtend, Set.IccExtend_of_mem (h := hT) (fun z ↦ f z) ht]
   have h := sub_eq_iff_eq_add.mp hpoint
   rw [h]

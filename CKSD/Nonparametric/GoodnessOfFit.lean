@@ -173,7 +173,6 @@ theorem map_cramerVonMisesStatistic_eq_uniform (P : Measure ℝ) [IsProbabilityM
           unfold finiteEmpiricalCDF
           congr 2
           refine congrArg Finset.card (Finset.filter_congr fun i _ ↦ ?_)
-          show Q (u i) ≤ Q s ↔ u i ≤ s
           rw [hQ, Measure.quantile_le_iff P (hu i).1 (hu i).2, ← hQ, hFQ]
   -- assemble
   rw [pi_eq_map_pi_quantile P n, Measure.map_map (measurable_cramerVonMisesStatistic P n)

@@ -198,7 +198,8 @@ private theorem exploreWeight_cons (x y : ℝ) (m : ℕ) (a : Finset V) (N : Fin
   unfold exploreWeight
   by_cases h : a ⊆ s.1ᶜ ∧ ExploreValid m N (exploreStep a s)
   · have hv := hval.mpr h
-    rw [ite_eq_left hv, ite_eq_left h.1, ite_eq_left h.2, card_exploreFound_succ hv, card_exploreMissed_succ hv]
+    rw [ite_eq_left hv, ite_eq_left h.1, ite_eq_left h.2, card_exploreFound_succ hv,
+      card_exploreMissed_succ hv]
     simp only [Fin.cons_zero, Fin.tail_cons]
     ring
   · rw [ite_eq_right (fun hv ↦ h (hval.mp hv))]

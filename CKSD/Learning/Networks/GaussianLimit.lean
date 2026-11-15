@@ -72,7 +72,6 @@ theorem integral_cexp_wideLayer {U : Type*} [Fintype U] (N : ℕ) (g : (U → �
     cexp (↑(a * θ (Sum.inr (Sum.inr ())) + c * ∑ k, θ (Sum.inr (Sum.inl k)) *
         g (fun i ↦ θ (Sum.inl (k, i)))) * I)
   have hFm : Measurable F := by fun_prop
-  change ∫ θ, F θ ∂_ = _
   rw [← (measurePreserving_sumPiEquivProdPi_symm (fun _ ↦ μ)).integral_comp']
   have hint : Integrable (fun p ↦ F ((MeasurableEquiv.sumPiEquivProdPi _).symm p))
       ((Measure.pi fun _ : Fin N × U ↦ μ).prod (Measure.pi fun _ : Fin N ⊕ Unit ↦ μ)) := by

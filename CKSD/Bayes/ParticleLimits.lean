@@ -39,18 +39,19 @@ theorem exists_uniform_particle_moment_bound {Ω X : Type*} [MeasurableSpace Ω]
       Real.sqrt (N + 1) * Real.rpow
         (∫ ω, |(∑ i, f (ξ n ω i)) / (N + 1) - ∫ x, f x ∂M.filterLaw n| ^ p ∂P) (1 / p) ≤ C := by
   have hp0 : 0 < p := lt_of_lt_of_le zero_lt_one hp
-  obtain ⟨C,hC,hbound⟩ := exists_uniform_particle_lpNorm_bound P M hG hM hpotential htransition p hp
-  refine ⟨C,hC,fun N ξ hξ n f hf hosc ↦ ?_⟩
-  have hFm : Measurable (fun ω ↦ (∑ i,f (ξ n ω i))/(N+1)-∫ x,f x ∂M.filterLaw n) :=
-    ((Finset.measurable_fun_sum _ fun i _ ↦ hf.comp ((measurable_pi_apply i).comp (hξ.1 n))).div_const _).sub
-      measurable_const
-  have hLp : lpNorm (fun ω ↦ (∑ i,f (ξ n ω i))/(N+1)-∫ x,f x ∂M.filterLaw n)
-      (ENNReal.ofReal p) P ≤ C/Real.sqrt (N+1) := by
-    simpa only [Nat.cast_add,Nat.cast_one] using hbound (N+1) (by omega) ξ hξ n f hf hosc
+  obtain ⟨C, hC, hbound⟩ :=
+      exists_uniform_particle_lpNorm_bound P M hG hM hpotential htransition p hp
+  refine ⟨C, hC, fun N ξ hξ n f hf hosc ↦ ?_⟩
+  have hFm : Measurable (fun ω ↦ (∑ i, f (ξ n ω i)) / (N + 1) - ∫ x, f x ∂M.filterLaw n) :=
+    ((Finset.measurable_fun_sum _ fun i _ ↦
+      hf.comp ((measurable_pi_apply i).comp (hξ.1 n))).div_const _).sub measurable_const
+  have hLp : lpNorm (fun ω ↦ (∑ i, f (ξ n ω i)) / (N + 1) - ∫ x, f x ∂M.filterLaw n)
+      (ENNReal.ofReal p) P ≤ C / Real.sqrt (N + 1) := by
+    simpa only [Nat.cast_add, Nat.cast_one] using hbound (N + 1) (by omega) ξ hξ n f hf hosc
   rw [lpNorm_ofReal_eq_integral_abs_rpow P hp0 hFm.aestronglyMeasurable] at hLp
-  have hs : 0 < Real.sqrt (N+1) := by positivity
+  have hs : 0 < Real.sqrt (N + 1) := by positivity
   have h := mul_le_mul_of_nonneg_left hLp hs.le
-  have hscale : Real.sqrt (N+1)*(C/Real.sqrt (N+1))=C := by field_simp [hs.ne']
+  have hscale : Real.sqrt (N + 1) * (C / Real.sqrt (N + 1)) = C := by field_simp [hs.ne']
   rw [hscale] at h
   exact h
 

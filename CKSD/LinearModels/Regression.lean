@@ -35,7 +35,8 @@ The linear model `Y = μ + ε` on `ℝⁿ`, with mean `μ` in the range of an or
 The Craig–Sakamoto proof combines TauCeti's moment-generating function
 `det (1 - 2t √Σ Θ √Σ) ^ (-1/2)` of a Gaussian quadratic form and its independence criterion for
 linear images with a characteristic-polynomial comparison of fourth trace powers. The exact
-F law of nested models is in `CKSD.LinearModels.FTest`. The residual law uses TauCeti's projection and affine-image results for standard Gaussian measures.
+F law of nested models is in `CKSD.LinearModels.FTest`. The residual law uses TauCeti's projection
+and affine-image results for standard Gaussian measures.
 
 ## References
 
@@ -185,11 +186,13 @@ theorem map_norm_sq_sub_div_eq_chiSquared {n : ℕ} (m : EuclideanSpace ℝ (Fin
     omega
   have hs2 : Real.sqrt (v : ℝ) ^ 2 = v := Real.sq_sqrt v.coe_nonneg
   have hZ := hasLaw_smul_sub_multivariateGaussian m v hv
-  have hnorm : ∀ x, ‖Kᗮ.orthogonalProjectionOnto ((Real.sqrt (v : ℝ))⁻¹ • (x - m))‖ ^ 2 = ‖x - P x‖ ^ 2 / v := by
+  have hnorm : ∀ x,
+      ‖Kᗮ.orthogonalProjectionOnto ((Real.sqrt (v : ℝ))⁻¹ • (x - m))‖ ^ 2 = ‖x - P x‖ ^ 2 / v := by
     intro x
-    change ‖Kᗮ.starProjection ((Real.sqrt (v : ℝ))⁻¹ • (x - m))‖ ^ 2 = _
-    rw [K.starProjection_orthogonal_val, IsStarProjection.starProjection_range_apply hP]
-    have hpt : (Real.sqrt (v : ℝ))⁻¹ • (x - m) - P ((Real.sqrt (v : ℝ))⁻¹ • (x - m)) = (Real.sqrt (v : ℝ))⁻¹ • (x - P x) := by
+    rw [← Submodule.norm_coe, Submodule.coe_orthogonalProjectionOnto_apply,
+      K.starProjection_orthogonal_val, IsStarProjection.starProjection_range_apply hP]
+    have hpt : (Real.sqrt (v : ℝ))⁻¹ • (x - m) - P ((Real.sqrt (v : ℝ))⁻¹ • (x - m)) =
+        (Real.sqrt (v : ℝ))⁻¹ • (x - P x) := by
       simp only [map_smul, map_sub, hm]
       module
     rw [hpt, norm_smul, Real.norm_eq_abs, mul_pow, sq_abs, inv_pow, hs2, div_eq_inv_mul]
@@ -220,21 +223,22 @@ theorem indepFun_map_norm_sq_sub {n : ℕ} (m : EuclideanSpace ℝ (Fin n)) (v :
   have hfit : ∀ x, P m + s • (K.orthogonalProjectionOnto (s⁻¹ • (x - m)) :
       EuclideanSpace ℝ (Fin n)) = P x := by
     intro x
-    change P m + s • K.starProjection (s⁻¹ • (x - m)) = P x
-    rw [IsStarProjection.starProjection_range_apply hP]
+    rw [Submodule.coe_orthogonalProjectionOnto_apply,
+      IsStarProjection.starProjection_range_apply hP]
     simp only [map_smul, map_sub, smul_smul, mul_inv_cancel₀ hs.ne', one_smul]
     abel
   have hres : ∀ x, ‖(m - P m) + s • (Kᗮ.orthogonalProjectionOnto (s⁻¹ • (x - m)) :
       EuclideanSpace ℝ (Fin n))‖ ^ 2 = ‖x - P x‖ ^ 2 := by
     intro x
-    change ‖(m - P m) + s • Kᗮ.starProjection (s⁻¹ • (x - m))‖ ^ 2 = _
-    rw [K.starProjection_orthogonal_val, IsStarProjection.starProjection_range_apply hP]
+    rw [Submodule.coe_orthogonalProjectionOnto_apply, K.starProjection_orthogonal_val,
+      IsStarProjection.starProjection_range_apply hP]
     congr 2
     simp only [map_smul, map_sub, smul_sub, smul_smul, mul_inv_cancel₀ hs.ne', one_smul]
     abel
   have h := hi.comp (φ := fun z : K ↦ P m + s • (z : EuclideanSpace ℝ (Fin n)))
     (ψ := fun z : Kᗮ ↦ ‖(m - P m) + s • (z : EuclideanSpace ℝ (Fin n))‖ ^ 2)
     (by fun_prop) (by fun_prop)
+  -- reduces `Ks true`, `Ks false` to `K`, `Kᗮ`; `simp` cannot, the projection instances depend
   change IndepFun (fun x ↦ P m + s • (K.orthogonalProjectionOnto (s⁻¹ • (x - m)) :
       EuclideanSpace ℝ (Fin n)))
     (fun x ↦ ‖(m - P m) + s • (Kᗮ.orthogonalProjectionOnto (s⁻¹ • (x - m)) :

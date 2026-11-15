@@ -146,9 +146,8 @@ private theorem horvitzThompson_aux
   rw [← Finset.sum_sub_distrib]
   apply Finset.sum_congr rfl
   intro j _
-  change pij i j * (y i / pi i * (y j / pi j)) - y i * y j = _
-  change _ = (pij i j - pi i * pi j) * y i * y j / (pi i * pi j)
-  field_simp [hpi0 i, hpi0 j]
+  simp only [pi]
+  field_simp [(hp i).ne', (hp j).ne']
 
 /-- Unbiasedness of the Horvitz–Thompson variance estimator, with the inclusion probabilities
 as local definitions. -/
@@ -256,8 +255,6 @@ private theorem senYatesGrundy_aux
     intro j _
     simp only [c, w, pi, pij, div_eq_mul_inv, mul_inv_rev]
     ring
-  change Var[fun s ↦ ∑ i ∈ s, y i / pi i; P] =
-    -(1 / 2 : ℝ) * ∑ i, ∑ j, c i j * (w i - w j) ^ 2
   rw [hvar, hdiff]
   ring
 
@@ -568,8 +565,6 @@ private theorem neymanAllocation_aux {ι : Type*} [Fintype ι] (a : ι → ℝ) 
       ring
     simp_rw [hterm, Finset.sum_add_distrib, Finset.sum_sub_distrib,
       ← Finset.mul_sum]
-    change (∑ i, a i ^ 2 / x i) - (2 * S / n) * S + (S / n) ^ 2 *
-      (∑ i, x i) = _
     rw [hxsum]
     field_simp
     ring
@@ -601,7 +596,6 @@ private theorem neymanAllocation_aux {ι : Type*} [Fintype ι] (a : ι → ℝ) 
       intro i _
       dsimp [q]
       rw [heq i]
-      change (a i - (S / n) * (n * a i / S)) ^ 2 / _ = 0
       have : a i - (S / n) * (n * a i / S) = 0 := by
         field_simp
         ring

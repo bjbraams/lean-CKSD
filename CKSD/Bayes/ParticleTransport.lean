@@ -24,7 +24,7 @@ theorem FeynmanKacModel.integrable_backwardOperator
     {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X) (μ : Measure X) [IsProbabilityMeasure μ]
     (p m : ℕ) {f : X → ℝ} (hf : Measurable f) {C : ℝ} (hfb : ∀ x, |f x| ≤ C) :
     Integrable (M.backwardOperator p m f) μ := by
-  obtain ⟨a,b,ha,hab⟩ := M.exists_backwardOperator_one_bounds p m
+  obtain ⟨a, b, ha, hab⟩ := M.exists_backwardOperator_one_bounds p m
   apply Integrable.of_bound (M.measurable_backwardOperator p m hf).aestronglyMeasurable (|C| * b)
   apply ae_of_all
   intro x
@@ -36,10 +36,11 @@ theorem FeynmanKacModel.integrable_backwardOperator
 theorem FeynmanKacModel.integral_backwardOperator_one_pos
     {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X) (μ : Measure X) [IsProbabilityMeasure μ]
     (p m : ℕ) : 0 < ∫ x, M.backwardOperator p m (fun _ ↦ 1) x ∂μ := by
-  obtain ⟨a,b,ha,hab⟩ := M.exists_backwardOperator_one_bounds p m
+  obtain ⟨a, b, ha, hab⟩ := M.exists_backwardOperator_one_bounds p m
   apply ha.trans_le
   simpa using integral_mono_ae (integrable_const a)
-    (M.integrable_backwardOperator μ p m (f := fun _ : X ↦ (1:ℝ)) measurable_const (C := 1) (fun _ ↦ by norm_num))
+    (M.integrable_backwardOperator μ p m (f := fun _ : X ↦ (1 : ℝ)) measurable_const (C := 1)
+        (fun _ ↦ by norm_num))
     (ae_of_all _ fun x ↦ (hab x).1)
 
 /-- Normalized Feynman–Kac transport starting from an arbitrary finite law. -/
@@ -59,7 +60,8 @@ theorem FeynmanKacModel.normalizedTransport_initial
     (n : ℕ) {f : X → ℝ} (hf : Measurable f) {C : ℝ} (hfb : ∀ x, |f x| ≤ C) :
     M.normalizedTransport 0 n (M.initial : Measure X) f = ∫ x, f x ∂M.filterLaw n := by
   have hfγ := M.integral_backwardOperator 0 n hf hfb
-  have h1γ := M.integral_backwardOperator 0 n (f := fun _ : X ↦ (1:ℝ)) measurable_const (C := 1) (fun _ ↦ by norm_num)
+  have h1γ := M.integral_backwardOperator 0 n (f := fun _ : X ↦ (1 : ℝ)) measurable_const (C := 1)
+      (fun _ ↦ by norm_num)
   simp only [zero_add, FeynmanKacModel.unnormalizedLaw_zero] at hfγ h1γ
   rw [FeynmanKacModel.normalizedTransport, hfγ, h1γ, M.integral_filterLaw,
     integral_const, smul_eq_mul, mul_one, div_eq_mul_inv, mul_comm]
@@ -78,7 +80,7 @@ theorem FeynmanKacModel.normalizedTransport_empiricalMeasure
 def FeynmanKacModel.pathPredictionLaw {X : Type*} [MeasurableSpace X]
     (M : FeynmanKacModel X) {N : ℕ} (x : ℕ → Fin N → X) : ℕ → Measure X
   | 0 => M.initial
-  | p+1 => M.particlePredictionLaw p (x p)
+  | p + 1 => M.particlePredictionLaw p (x p)
 
 /-- Every path prediction law is a probability law for a nonempty particle population. -/
 theorem FeynmanKacModel.isProbabilityMeasure_pathPredictionLaw
@@ -100,13 +102,13 @@ theorem FeynmanKacModel.normalizedTransport_particlePredictionLaw
     {X : Type*} [MeasurableSpace X] [MeasurableSingletonClass X]
     (M : FeynmanKacModel X) {N : ℕ} (hN : 0 < N) (p m : ℕ) (x : Fin N → X)
     {f : X → ℝ} (hf : Measurable f) {C : ℝ} (hfb : ∀ y, |f y| ≤ C) :
-    M.normalizedTransport (p+1) m (M.particlePredictionLaw p x) f =
-      M.normalizedTransport p (m+1) (empiricalMeasure N x) f := by
-  obtain ⟨a,b,ha,hab⟩ := M.exists_backwardOperator_one_bounds (p+1) m
-  have h1b (y : X) : |M.backwardOperator (p+1) m (fun _ ↦ 1) y| ≤ b := by
+    M.normalizedTransport (p + 1) m (M.particlePredictionLaw p x) f =
+      M.normalizedTransport p (m + 1) (empiricalMeasure N x) f := by
+  obtain ⟨a, b, ha, hab⟩ := M.exists_backwardOperator_one_bounds (p + 1) m
+  have h1b (y : X) : |M.backwardOperator (p + 1) m (fun _ ↦ 1) y| ≤ b := by
     rw [abs_of_pos (ha.trans_le (hab y).1)]
     exact (hab y).2
-  have hfb' (y : X) : |M.backwardOperator (p+1) m f y| ≤ |C| * b :=
+  have hfb' (y : X) : |M.backwardOperator (p + 1) m f y| ≤ |C| * b :=
     (M.abs_backwardOperator_le_mul_one _ _ hfb y).trans
       (mul_le_mul (le_abs_self C) (hab y).2 (ha.trans_le (hab y).1).le (abs_nonneg C))
   have hsum : 0 < ∑ i, M.potential p (x i) := by
@@ -124,7 +126,8 @@ theorem FeynmanKacModel.abs_normalizedTransport_le
     {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X) (μ : Measure X) [IsProbabilityMeasure μ]
     (p m : ℕ) {f : X → ℝ} {C : ℝ} (hfb : ∀ x, |f x| ≤ C) :
     |M.normalizedTransport p m μ f| ≤ C := by
-  have hgi := M.integrable_backwardOperator μ p m (f := fun _ : X ↦ (1:ℝ)) measurable_const (C := 1) (fun _ ↦ by norm_num)
+  have hgi := M.integrable_backwardOperator μ p m (f := fun _ : X ↦ (1 : ℝ)) measurable_const
+      (C := 1) (fun _ ↦ by norm_num)
   rw [FeynmanKacModel.normalizedTransport, abs_div,
     abs_of_pos (M.integral_backwardOperator_one_pos μ p m),
     div_le_iff₀ (M.integral_backwardOperator_one_pos μ p m)]
@@ -138,14 +141,14 @@ theorem FeynmanKacModel.particle_average_sub_filter_eq_sum_normalizedTransport
     {X : Type*} [MeasurableSpace X] [MeasurableSingletonClass X]
     (M : FeynmanKacModel X) {N : ℕ} (hN : 0 < N) (x : ℕ → Fin N → X)
     (n : ℕ) {f : X → ℝ} (hf : Measurable f) {C : ℝ} (hfb : ∀ y, |f y| ≤ C) :
-    (∑ i, f (x n i))/(N:ℝ) - (∫ y, f y ∂M.filterLaw n) =
-      ∑ p ∈ Finset.range (n+1),
-        (M.normalizedTransport p (n-p) (empiricalMeasure N (x p)) f -
-          M.normalizedTransport p (n-p) (M.pathPredictionLaw x p) f) := by
+    (∑ i, f (x n i)) / (N : ℝ) - (∫ y, f y ∂M.filterLaw n) =
+      ∑ p ∈ Finset.range (n + 1),
+        (M.normalizedTransport p (n - p) (empiricalMeasure N (x p)) f -
+          M.normalizedTransport p (n - p) (M.pathPredictionLaw x p) f) := by
   let _ (p : ℕ) : IsProbabilityMeasure (empiricalMeasure N (x p)) :=
     isProbabilityMeasure_empiricalMeasure hN _
   have htel (a b : ℕ → ℝ) (k : ℕ) :
-      (∀ p < k, b (p+1) = a p) → (∑ p ∈ Finset.range (k+1), (a p-b p)) = a k-b 0 := by
+      (∀ p < k, b (p + 1) = a p) → (∑ p ∈ Finset.range (k + 1), (a p - b p)) = a k - b 0 := by
     induction k with
     | zero => intro _; simp
     | succ k ih =>
@@ -153,12 +156,11 @@ theorem FeynmanKacModel.particle_average_sub_filter_eq_sum_normalizedTransport
       rw [Finset.sum_range_succ, ih (fun p hp ↦ h p (by omega)), h k (by omega)]
       ring
   have hs := htel
-    (fun p ↦ M.normalizedTransport p (n-p) (empiricalMeasure N (x p)) f)
-    (fun p ↦ M.normalizedTransport p (n-p) (M.pathPredictionLaw x p) f) n
+    (fun p ↦ M.normalizedTransport p (n - p) (empiricalMeasure N (x p)) f)
+    (fun p ↦ M.normalizedTransport p (n - p) (M.pathPredictionLaw x p) f) n
     (fun p hp ↦ by
-      change M.normalizedTransport (p+1) (n-(p+1)) (M.particlePredictionLaw p (x p)) f = _
-      rw [show n-p = n-(p+1)+1 by omega]
-      exact M.normalizedTransport_particlePredictionLaw hN p (n-(p+1)) (x p) hf hfb)
+      rw [show n - p = n - (p + 1) + 1 by omega]
+      exact M.normalizedTransport_particlePredictionLaw hN p (n - (p + 1)) (x p) hf hfb)
   simp only [Nat.sub_self, Nat.sub_zero, FeynmanKacModel.pathPredictionLaw] at hs
   rw [M.normalizedTransport_zero, M.normalizedTransport_initial n hf hfb,
     integral_empiricalMeasure_vector, smul_eq_mul] at hs
@@ -172,56 +174,59 @@ theorem FeynmanKacModel.exists_normalizedTransport_test_pair
     (htransition : ∀ n x y A, MeasurableSet A →
       ENNReal.ofReal εM * M.transition n y A ≤ M.transition n x A)
     (p m : ℕ) {f : X → ℝ} (hf : Measurable f) {C : ℝ}
-    (hfb : ∀ x, |f x| ≤ C) (hosc : ∀ x y, |f x-f y| ≤ 1) :
+    (hfb : ∀ x, |f x| ≤ C) (hosc : ∀ x y, |f x - f y| ≤ 1) :
     ∃ a : ℝ, ∃ g v : X → ℝ, Measurable g ∧ Measurable v ∧
-      (∀ x, g x ∈ Icc (εM*εG) (1/(εM*εG))) ∧
-      (∀ x, |v x| ≤ (1-εM^2)^m * g x) ∧
+      (∀ x, g x ∈ Icc (εM * εG) (1 / (εM * εG))) ∧
+      (∀ x, |v x| ≤ (1 - εM ^ 2) ^ m * g x) ∧
       (∀ μ : Measure X, IsProbabilityMeasure μ →
-        M.normalizedTransport p m μ f = a + (∫ x, v x ∂μ)/(∫ x, g x ∂μ)) := by
+        M.normalizedTransport p m μ f = a + (∫ x, v x ∂μ) / (∫ x, g x ∂μ)) := by
   let x₀ := Classical.arbitrary X
   let g₀ := M.backwardOperator p m (fun _ ↦ 1) x₀
   let a := M.normalizedBackwardOperator p m f x₀
-  let g : X → ℝ := fun x ↦ M.backwardOperator p m (fun _ ↦ 1) x/g₀
-  let v : X → ℝ := fun x ↦ g x*(M.normalizedBackwardOperator p m f x-a)
+  let g : X → ℝ := fun x ↦ M.backwardOperator p m (fun _ ↦ 1) x / g₀
+  let v : X → ℝ := fun x ↦ g x * (M.normalizedBackwardOperator p m f x - a)
   have hg₀ : 0 < g₀ := M.backwardOperator_one_pos p m x₀
-  have hα : 0 < εM*εG := mul_pos hM.1 hG.1
-  have hg (x : X) : g x ∈ Icc (εM*εG) (1/(εM*εG)) := by
+  have hα : 0 < εM * εG := mul_pos hM.1 hG.1
+  have hg (x : X) : g x ∈ Icc (εM * εG) (1 / (εM * εG)) := by
     constructor
-    · rw [show g x=M.backwardOperator p m (fun _ ↦ 1) x/g₀ from rfl,le_div_iff₀ hg₀]
+    · rw [show g x = M.backwardOperator p m (fun _ ↦ 1) x / g₀ from rfl, le_div_iff₀ hg₀]
       exact M.mul_backwardOperator_one_le hG hM hpotential htransition p m x x₀
-    · rw [show g x=M.backwardOperator p m (fun _ ↦ 1) x/g₀ from rfl,div_le_iff₀ hg₀]
+    · rw [show g x = M.backwardOperator p m (fun _ ↦ 1) x / g₀ from rfl, div_le_iff₀ hg₀]
       have h := M.mul_backwardOperator_one_le hG hM hpotential htransition p m x₀ x
       calc
-        M.backwardOperator p m (fun _ ↦ 1) x ≤ g₀/(εM*εG) := by
+        M.backwardOperator p m (fun _ ↦ 1) x ≤ g₀ / (εM * εG) := by
           apply (le_div_iff₀ hα).2
           dsimp only [g₀]
           nlinarith [h]
-        _ = (1/(εM*εG))*g₀ := by ring
+        _ = (1 / (εM * εG)) * g₀ := by ring
   have hgpos (x : X) : 0 < g x := hα.trans_le (hg x).1
   have hgm : Measurable g := (M.measurable_backwardOperator p m measurable_const).div_const g₀
   have hKm : Measurable (M.normalizedBackwardOperator p m f) :=
     (M.measurable_backwardOperator p m hf).div (M.measurable_backwardOperator p m measurable_const)
   have hvm : Measurable v := hgm.mul (hKm.sub_const a)
-  refine ⟨a,g,v,hgm,hvm,hg,fun x ↦ ?_,fun μ hμ ↦ ?_⟩
+  refine ⟨a, g, v, hgm, hvm, hg, fun x ↦ ?_, fun μ hμ ↦ ?_⟩
   · dsimp only [v]
-    rw [abs_mul,abs_of_pos (hgpos x),mul_comm]
+    rw [abs_mul, abs_of_pos (hgpos x), mul_comm]
     have h := M.abs_normalizedBackwardOperator_sub_le hM htransition p m hf hfb hosc x x₀
     simpa only [mul_one] using mul_le_mul_of_nonneg_right h (hgpos x).le
   · let _ : IsProbabilityMeasure μ := hμ
     have hQfi := M.integrable_backwardOperator μ p m hf hfb
-    have hQ1i := M.integrable_backwardOperator μ p m (f := fun _ : X ↦ (1:ℝ)) measurable_const (C := 1) (fun _ ↦ by norm_num)
+    have hQ1i := M.integrable_backwardOperator μ p m (f := fun _ : X ↦ (1 : ℝ)) measurable_const
+        (C := 1) (fun _ ↦ by norm_num)
     have hQ1pos := M.integral_backwardOperator_one_pos μ p m
-    have hvEq : v = fun x ↦ (M.backwardOperator p m f x-a*M.backwardOperator p m (fun _ ↦ 1) x)/g₀ := by
+    have hvEq : v = fun x ↦
+        (M.backwardOperator p m f x - a * M.backwardOperator p m (fun _ ↦ 1) x) / g₀ := by
       funext x
-      dsimp only [v,g,FeynmanKacModel.normalizedBackwardOperator]
-      field_simp [(M.backwardOperator_one_pos p m x).ne',hg₀.ne']
-    have hgiEq : (∫ x, g x ∂μ) = (∫ x, M.backwardOperator p m (fun _ ↦ 1) x ∂μ)/g₀ := by
+      dsimp only [v, g, FeynmanKacModel.normalizedBackwardOperator]
+      field_simp [(M.backwardOperator_one_pos p m x).ne', hg₀.ne']
+    have hgiEq : (∫ x, g x ∂μ) = (∫ x, M.backwardOperator p m (fun _ ↦ 1) x ∂μ) / g₀ := by
       exact integral_div g₀ _
     have hviEq : (∫ x, v x ∂μ) =
-        ((∫ x, M.backwardOperator p m f x ∂μ)-a*(∫ x, M.backwardOperator p m (fun _ ↦ 1) x ∂μ))/g₀ := by
-      rw [hvEq,integral_div,integral_sub hQfi (hQ1i.const_mul a),integral_const_mul]
-    rw [hgiEq,hviEq,FeynmanKacModel.normalizedTransport]
-    field_simp [hg₀.ne',hQ1pos.ne']
+        ((∫ x, M.backwardOperator p m f x ∂μ) -
+          a * (∫ x, M.backwardOperator p m (fun _ ↦ 1) x ∂μ)) / g₀ := by
+      rw [hvEq, integral_div, integral_sub hQfi (hQ1i.const_mul a), integral_const_mul]
+    rw [hgiEq, hviEq, FeynmanKacModel.normalizedTransport]
+    field_simp [hg₀.ne', hQ1pos.ne']
     ring
 
 end CKSD

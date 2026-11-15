@@ -37,6 +37,7 @@ omit [IsFiniteMeasure μ] in
 theorem convex_l2OrderInterval (u : Lp ℝ 2 μ) : Convex ℝ (Icc 0 u) := by
   intro f hf g hg a b ha hb hab
   rw [mem_Icc, ← Lp.coeFn_nonneg, ← Lp.coeFn_le]
+  -- `change` exposes the syntactic form that the following `rw` matches
   change (∀ᵐ x ∂μ, 0 ≤ (a • f + b • g) x) ∧
     (∀ᵐ x ∂μ, (a • f + b • g) x ≤ u x)
   rw [← eventually_and]
@@ -45,8 +46,6 @@ theorem convex_l2OrderInterval (u : Lp ℝ 2 μ) : Convex ℝ (Icc 0 u) := by
     Lp.coeFn_nonneg g |>.2 hg.1, Lp.coeFn_le f u |>.2 hf.2,
     Lp.coeFn_le g u |>.2 hg.2] with x h1 h2 h3 hf0 hg0 hfu hgu
   rw [h3, Pi.add_apply, h1, h2, Pi.smul_apply, Pi.smul_apply, smul_eq_mul, smul_eq_mul]
-  change 0 ≤ f x at hf0
-  change 0 ≤ g x at hg0
   exact ⟨add_nonneg (mul_nonneg ha hf0) (mul_nonneg hb hg0),
     (add_le_add (mul_le_mul_of_nonneg_left hfu ha)
       (mul_le_mul_of_nonneg_left hgu hb)).trans_eq (by rw [← add_mul, hab, one_mul])⟩
@@ -73,7 +72,6 @@ theorem continuous_weak_l2Inner (z : Lp ℝ 2 μ) :
 /-- The constant-one element of real `L²` is nonnegative. -/
 theorem l2Const_one_nonneg : 0 ≤ Lp.const 2 μ (1 : ℝ) := by
   rw [← Lp.coeFn_nonneg]
-  change ∀ᵐ x ∂μ, 0 ≤ (Lp.const 2 μ (1 : ℝ)) x
   filter_upwards [Lp.coeFn_const 2 μ (1 : ℝ)] with x hx
   rw [hx]
   norm_num
@@ -103,6 +101,7 @@ theorem convex_weakDecisionSimplex {A : Type*} [Fintype A] :
     exact ((convex_l2OrderInterval μ (Lp.const 2 μ (1 : ℝ))).linear_image
       (toWeakSpace ℝ (Lp ℝ 2 μ)).toLinearMap) (hf i) (hg i) ha hb hab
   · intro f hf g hg a b ha hb hab
+    -- `change` exposes the syntactic form that the following `rw` matches
     change ∑ i, (a • f i + b • g i) = _
     rw [Finset.sum_add_distrib, ← Finset.smul_sum, ← Finset.smul_sum, hf, hg, ← add_smul,
       hab, one_smul]
@@ -119,7 +118,8 @@ theorem memLp_decision_weight (δ : RandomizedDecisionRule X A) (a : A) :
     MemLp (fun x ↦ (δ.val x).real {a}) 2 μ := by
   let := δ.property
   apply MemLp.of_bound
-    ((Kernel.measurable_coe δ.val (measurableSet_singleton a)).ennreal_toReal.aestronglyMeasurable) 1
+    ((Kernel.measurable_coe δ.val (measurableSet_singleton a)).ennreal_toReal.aestronglyMeasurable)
+    1
   exact ae_of_all _ fun x ↦ by
     rw [Real.norm_eq_abs, abs_of_nonneg ENNReal.toReal_nonneg]
     exact measureReal_le_one
@@ -136,16 +136,16 @@ theorem decisionWeights_mem_weakDecisionSimplex (δ : RandomizedDecisionRule X A
   · intro a
     refine ⟨_, ⟨?_, ?_⟩, rfl⟩
     · rw [← Lp.coeFn_nonneg]
-      change ∀ᵐ x ∂μ, 0 ≤ ((memLp_decision_weight μ δ a).toLp _) x
       filter_upwards [MemLp.coeFn_toLp (memLp_decision_weight μ δ a)] with x hx
       rw [hx]
       exact measureReal_nonneg
     · rw [← Lp.coeFn_le]
-      change ∀ᵐ x ∂μ, ((memLp_decision_weight μ δ a).toLp _) x ≤ (Lp.const 2 μ (1 : ℝ)) x
-      filter_upwards [MemLp.coeFn_toLp (memLp_decision_weight μ δ a), Lp.coeFn_const 2 μ (1 : ℝ)] with x hx hy
+      filter_upwards [MemLp.coeFn_toLp (memLp_decision_weight μ δ a),
+        Lp.coeFn_const 2 μ (1 : ℝ)] with x hx hy
       rw [hx, hy]
       exact measureReal_le_one
-  · change ∑ a, toWeakSpace ℝ _ _ = _
+  · -- unfold `decisionWeights` and membership in the simplex
+    change ∑ a, toWeakSpace ℝ _ _ = _
     rw [← map_sum]
     congr 1
     apply Lp.ext
@@ -163,7 +163,8 @@ variable {X A : Type*} [MeasurableSpace X] (μ : Measure X) [IsFiniteMeasure μ]
   [Fintype A] [Nonempty A] [MeasurableSpace A] [MeasurableSingletonClass A]
 
 /-- Every weak `L²` point of the decision simplex is represented by a Markov kernel. -/
-theorem exists_decisionRule_of_weakDecisionSimplex (f : A → WeakSpace ℝ (Lp ℝ 2 μ)) (hf : f ∈ weakDecisionSimplex μ) :
+theorem exists_decisionRule_of_weakDecisionSimplex (f : A → WeakSpace ℝ (Lp ℝ 2 μ))
+    (hf : f ∈ weakDecisionSimplex μ) :
     ∃ δ : RandomizedDecisionRule X A, decisionWeights μ δ = f := by
   classical
   let g : A → Lp ℝ 2 μ := fun a ↦ (toWeakSpace ℝ _).symm (f a)
@@ -207,15 +208,18 @@ theorem exists_decisionRule_of_weakDecisionSimplex (f : A → WeakSpace ℝ (Lp 
         simp only [FunLike.coe_sum, Finset.sum_apply, smul_apply, smul_eq_mul]
         exact Finset.measurable_sum _ fun a _ ↦ (hwm a).ennreal_ofReal.mul_const _⟩
   have hK : IsMarkovKernel K := ⟨fun x ↦ ⟨by
+    -- `change` unfolds a definition that `simp` does not see through
     change (∑ a, ENNReal.ofReal (w x a) • Measure.dirac a) univ = 1
     simp only [FunLike.coe_sum, Finset.sum_apply, smul_apply, measure_univ, smul_eq_mul, mul_one]
     rw [← ENNReal.ofReal_sum_of_nonneg (fun a _ ↦ hwn x a), hws, ENNReal.ofReal_one]⟩⟩
   have hweight (x : X) (a : A) : (K x).real {a} = w x a := by
+    -- `change` unfolds a definition that `simp` does not see through
     change ((∑ b, ENNReal.ofReal (w x b) • Measure.dirac b) {a}).toReal = _
     simp only [FunLike.coe_sum, Finset.sum_apply, smul_apply, smul_eq_mul]
     simp [Pi.single_apply, mul_ite, ENNReal.toReal_ofReal (hwn x a)]
   refine ⟨⟨K, hK⟩, funext fun a ↦ ?_⟩
   apply (toWeakSpace ℝ _).symm.injective
+  -- `change` exposes the syntactic form that the following `rw` matches
   change (memLp_decision_weight μ ⟨K, hK⟩ a).toLp _ = g a
   apply Lp.ext
   filter_upwards [MemLp.coeFn_toLp (memLp_decision_weight μ ⟨K, hK⟩ a), hEae] with x hx hE
@@ -252,6 +256,7 @@ theorem risk_eq_sum_l2Inner {Θ A : Type*} [Fintype A] [MeasurableSpace A]
     have hint : Integrable (L θ) (δ.val x) :=
       ⟨(measurable_of_countable (L θ)).aestronglyMeasurable, HasFiniteIntegral.of_finite⟩
     simpa only [smul_eq_mul, mul_comm] using integral_fintype hint
+  -- `change` unfolds a definition that `simp` does not see through
   change (∫ x, ∫ a, L θ a ∂δ.val x ∂P θ) = _
   simp_rw [hin]
   rw [integral_finsetSum _ (fun a _ ↦ (hi a).const_mul (L θ a))]
@@ -259,6 +264,7 @@ theorem risk_eq_sum_l2Inner {Θ A : Type*} [Fintype A] [MeasurableSpace A]
   intro a _
   rw [integral_const_mul]
   congr 1
+  -- `change` unfolds the definitions that close the goal by defeq
   change (∫ x, (δ.val x).real {a} ∂P θ) = inner ℝ (l2DominatedDensity μ (P θ) (hP θ))
     ((memLp_decision_weight μ δ a).toLp _)
   rw [L2.inner_def]

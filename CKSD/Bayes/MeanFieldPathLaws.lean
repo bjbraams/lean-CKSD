@@ -51,8 +51,10 @@ def pathMarginalLaw (P : Measure Ω) [IsProbabilityMeasure P] {T : ℝ} (hT : 0 
     (U : Ω → C(Icc (0 : ℝ) T, E)) (hUm : Measurable U) (hUi : Integrable U P) (t : ℝ) :
     TauCeti.WassersteinSpace 1 E :=
   TauCeti.WassersteinSpace.mk
-    (ProbabilityMeasure.map (⟨P, inferInstance⟩ : ProbabilityMeasure Ω) (fun ω ↦ (U ω).IccExtend hT t))
-    (hasFiniteMoment_one_map_of_integrable P _ ((ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)).comp hUm)
+    (ProbabilityMeasure.map (⟨P, inferInstance⟩ : ProbabilityMeasure Ω)
+      (fun ω ↦ (U ω).IccExtend hT t))
+    (hasFiniteMoment_one_map_of_integrable P _
+      ((ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)).comp hUm)
       (integrable_IccExtend_eval P hT U hUm hUi t))
 
 omit [NormedSpace ℝ E] [CompleteSpace E] in
@@ -85,7 +87,8 @@ theorem continuous_pathMarginalLaw (P : Measure Ω) [IsProbabilityMeasure P] {T 
     · exact hUi.norm.const_mul 2
     · exact ae_of_all _ fun ω ↦ (((U ω).IccExtend hT).continuous.comp continuous_fst |>.sub
         (((U ω).IccExtend hT).continuous.comp continuous_snd)).norm
-  have hW (s t : ℝ) : dist (pathMarginalLaw P hT U hUm hUi s) (pathMarginalLaw P hT U hUm hUi t) ≤ D (s, t) := by
+  have hW (s t : ℝ) :
+      dist (pathMarginalLaw P hT U hUm hUi s) (pathMarginalLaw P hT U hUm hUi t) ≤ D (s, t) := by
     rw [TauCeti.WassersteinSpace.dist_def, pathMarginalLaw_toMeasure, pathMarginalLaw_toMeasure]
     exact wassersteinEDist_one_map_toReal_le_integral_norm_sub P (hYm s).aestronglyMeasurable
       (hYm t).aestronglyMeasurable ((integrable_IccExtend_eval P hT U hUm hUi s).sub
@@ -96,7 +99,8 @@ theorem continuous_pathMarginalLaw (P : Measure Ω) [IsProbabilityMeasure P] {T 
   intro ε hε
   have hlim : Tendsto (fun s ↦ D (s, t)) (𝓝 t) (𝓝 0) := by
     simpa only [Function.comp_def, id_eq, D, sub_self, norm_zero, integral_zero] using
-      (hDc.comp (continuous_id.prodMk (continuous_const : Continuous (fun _ : ℝ ↦ t)))).continuousAt.tendsto (x := t)
+      (hDc.comp (continuous_id.prodMk
+        (continuous_const : Continuous (fun _ : ℝ ↦ t)))).continuousAt.tendsto (x := t)
   filter_upwards [hlim.eventually (gt_mem_nhds hε)] with s hs
   exact (hW s t).trans_lt hs
 end CKSD

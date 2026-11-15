@@ -10,7 +10,7 @@ Tools for the fixed-time central limit theorems of the bootstrap particle filter
 `x : ℕ → Fin N → X` of particle generations, the local error of generation `p` in the direction
 of a bounded function `φ p` is the centred sum `∑ᵢ (φ p (x p i) - ηᴺ̃ₚ(φ p))`, where `ηᴺ̃ₚ` is the
 prediction law from the previous generation (the initial law for `p = 0`). Weighted by the
-particle likelihood and scaled by `N^{-1/2}`, the sum over `p ≤ m` of the local errors converges
+particle likelihood and scaled by `N ^ {-1 / 2}`, the sum over `p ≤ m` of the local errors converges
 in law to a centred normal law.
 
 Given the past, the next generation consists of independent draws from the prediction law, so the
@@ -46,7 +46,7 @@ namespace CKSD
 variable {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
 
 /-- For `N` independent draws from `ν`, the characteristic function of `∑ⱼ g(zⱼ)` is the `N`-th
-power of that of `g`: `∫ exp (i u ∑ⱼ g(zⱼ)) = (∫ exp (i u g) dν)^N`. -/
+power of that of `g`: `∫ exp (i u ∑ⱼ g(zⱼ)) = (∫ exp (i u g) dν) ^ N`. -/
 theorem integral_cexp_sum_pi (ν : Measure X) [IsProbabilityMeasure ν] (N : ℕ) (g : X → ℝ)
     (u : ℝ) :
     ∫ z, cexp (u * (∑ j, g (z j) : ℝ) * I) ∂Measure.pi (fun _ : Fin N ↦ ν) =
@@ -113,7 +113,7 @@ def pathPredMean (M : FeynmanKacModel X) {N : ℕ} (x : ℕ → Fin N → X) : �
   | p + 1, g => ∫ y, g y ∂M.particlePredictionLaw p (x p)
 
 /-- Local error of generation `p` in the direction `φ p`, weighted by the particle likelihood
-and scaled by `N^{-1/2}`: `Lᴺₚ ∑ᵢ (φₚ(xₚⁱ) - ηᴺ̃ₚ(φₚ)) / √N`. -/
+and scaled by `N ^ {-1 / 2}`: `Lᴺₚ ∑ᵢ (φₚ(xₚⁱ) - ηᴺ̃ₚ(φₚ)) / √N`. -/
 def localError (M : FeynmanKacModel X) {N : ℕ} (φ : ℕ → X → ℝ) (x : ℕ → Fin N → X)
     (p : ℕ) : ℝ :=
   M.particleLikelihood x p * (∑ i, (φ p (x p i) - M.pathPredMean x p (φ p))) / Real.sqrt N
@@ -233,7 +233,7 @@ private theorem tendsto_integral_abs_mul_sub_mul {μ : Measure Ω} [IsProbabilit
       (ae_of_all _ fun ω ↦ ?_)
     · exact ((hint _ b KB (hBm N) (hB N)).const_mul KA).add
         ((hint _ a KA (hAm N) (hA N)).const_mul Kb)
-    · show |A N ω * B N ω - a * b| ≤ KA * |B N ω - b| + Kb * |A N ω - a|
+    · dsimp only
       have e : A N ω * B N ω - a * b = A N ω * (B N ω - b) + b * (A N ω - a) := by ring
       rw [e]
       refine (abs_add_le _ _).trans ?_
@@ -267,7 +267,7 @@ private theorem tendsto_integral_abs_div_sub_div {μ : Measure Ω} [IsProbabilit
       (ae_of_all _ fun ω ↦ ?_)
     · exact ((hint _ a KA (hAm N) (hA N)).const_mul _).add
         ((hint _ b KB (hBm N) (hB N)).const_mul _)
-    · show |A N ω / B N ω - a / b| ≤ 1 / c * |A N ω - a| + |a| / c ^ 2 * |B N ω - b|
+    · dsimp only
       have hab : |a| ≤ |a| / c * b := by
         rw [div_mul_eq_mul_div, le_div_iff₀ hc]
         exact mul_le_mul_of_nonneg_left hbc (abs_nonneg a)
@@ -438,7 +438,7 @@ theorem aestronglyMeasurable_integral_bootstrap_succ [StandardBorelSpace X] [Non
 
 /-- Uniform Gaussian approximation of the characteristic function of a normalized sum of `N + 1`
 independent copies of a bounded variable: with `|g| ≤ B`, `σ² = ∫ (g - ν g)² dν` and
-`|s| ≤ S`, the error is at most `S³ (2B)(2B)² / (3 √(N+1)) + S⁴ (2B)⁴ / (4 (N+1))`. -/
+`|s| ≤ S`, the error is at most `S³ (2B)(2B)² / (3 √(N + 1)) + S⁴ (2B)⁴ / (4 (N + 1))`. -/
 theorem norm_integral_cexp_pow_sub_gaussian_le (ν : Measure X) [IsProbabilityMeasure ν]
     {g : X → ℝ} (hg : Measurable g) {B : ℝ} (hB : ∀ x, |g x| ≤ B) (N : ℕ) {s S : ℝ}
     (hs : |s| ≤ S) :
@@ -542,7 +542,7 @@ private theorem tendsto_integral_abs_sub_sub {μ : Measure Ω} [IsProbabilityMea
   rw [← integral_add (hint _ a KA (hAm N) (hA N)) (hint _ b KB (hBm N) (hB N))]
   refine integral_mono_of_nonneg (ae_of_all _ fun _ ↦ abs_nonneg _)
     ((hint _ a KA (hAm N) (hA N)).add (hint _ b KB (hBm N) (hB N))) (ae_of_all _ fun ω ↦ ?_)
-  show |(A N ω - B N ω) - (a - b)| ≤ |A N ω - a| + |B N ω - b|
+  dsimp only
   rw [show (A N ω - B N ω) - (a - b) = (A N ω - a) - (B N ω - b) by ring]
   exact abs_sub _ _
 
@@ -645,6 +645,7 @@ theorem tendsto_integral_norm_gaussianFactor_sub [StandardBorelSpace X] [Nonempt
         ((hm2m N).sub ((hm1m N).mul (hm1m N)))).sub measurable_const)).aestronglyMeasurable
       (ae_of_all _ fun ω ↦ ?_)) _
     rw [Real.norm_eq_abs]
+    -- `change` unfolds the composed absolute-value integrand.
     change |(|L N ω * L N ω * (m2 N ω - m1 N ω * m1 N ω) - Γ * Γ * (e2 - e1 * e1)|)| ≤ _
     rw [abs_abs]
     refine (abs_sub _ _).trans (add_le_add ?_ le_rfl)

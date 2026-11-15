@@ -182,6 +182,50 @@ private theorem measureReal_forall_lt_notMem_eq_pow {Ω X : Type*} [MeasurableSp
       probReal_compl_eq_one_sub hB]
   exact (Finset.prod_congr rfl fun i _ ↦ h i).trans (by simp)
 
+/-- A finite sample in `K` that meets the ball of radius `t / 2` around every point of a
+`t / 2`-net `F` of `K` is within Hausdorff distance `t` of `K`. -/
+theorem hausdorffDist_range_le_of_finset_net {X : Type*} [MetricSpace X] {K : Set X}
+    {F : Finset X} {t : ℝ} (ht : 0 ≤ t) (hFnet : ∀ y ∈ K, ∃ z ∈ F, dist y z < t / 2) {n : ℕ}
+    (x : Fin n → X) (hxK : ∀ i, x i ∈ K) (hx : ∀ z ∈ F, ∃ i, x i ∈ Metric.ball z (t / 2)) :
+    Metric.hausdorffDist (range x) K ≤ t := by
+  refine Metric.hausdorffDist_le_of_mem_dist ht ?_ ?_
+  · rintro _ ⟨i, rfl⟩
+    exact ⟨_, hxK i, by rw [dist_self]; exact ht⟩
+  · intro y hy
+    obtain ⟨z, hzF, hyz⟩ := hFnet y hy
+    obtain ⟨i, hiz⟩ := hx z hzF
+    refine ⟨_, ⟨i, rfl⟩, ?_⟩
+    rw [Metric.mem_ball] at hiz
+    linarith [dist_triangle y z (x i), dist_comm z (x i)]
+
+/-- The tail bound `K₀ (n / log (n + 1)) e^{-2 log (n + 1)} ≤ ε` for `n ≥ N > K₀ / (ε log 2)`. -/
+theorem mul_div_log_mul_exp_neg_two_mul_log_le {K₀ ε : ℝ} (hK₀ : 0 < K₀) (hε : 0 < ε)
+    {N n : ℕ} (hN : K₀ / (ε * Real.log 2) < N) (hnN' : N ≤ n) (hn1 : 1 ≤ n) :
+    K₀ * (n / Real.log (n + 1)) * Real.exp (-(2 * Real.log (n + 1))) ≤ ε := by
+  have hnR : (0 : ℝ) < n := by exact_mod_cast hn1
+  have hL : 0 < Real.log (n + 1) := Real.log_pos (by linarith)
+  have he : Real.exp (-(2 * Real.log (n + 1))) = ((n : ℝ) + 1)⁻¹ ^ 2 := by
+    rw [← Real.log_rpow (by positivity) 2, ← Real.log_inv, Real.exp_log (by positivity)]
+    norm_num
+  rw [he]
+  have hn1R : (1 : ℝ) ≤ n := by exact_mod_cast hn1
+  have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
+  have hNn : K₀ / (ε * Real.log 2) < n + 1 := by
+    linarith [show (N : ℝ) ≤ n by exact_mod_cast hnN']
+  rw [div_lt_iff₀ (by positivity)] at hNn
+  have key : K₀ * (n / Real.log (n + 1)) * ((n : ℝ) + 1)⁻¹ ^ 2 ≤
+      K₀ / (Real.log 2 * (n + 1)) := by
+    have h1 : (n : ℝ) / Real.log (n + 1) ≤ (n + 1) / Real.log 2 :=
+      div_le_div₀ (by positivity) (by linarith) hl2
+        (Real.log_le_log (by norm_num) (by linarith))
+    have hK₀' := hK₀.le
+    calc K₀ * (n / Real.log (n + 1)) * ((n : ℝ) + 1)⁻¹ ^ 2
+        ≤ K₀ * ((n + 1) / Real.log 2) * ((n : ℝ) + 1)⁻¹ ^ 2 := by gcongr
+      _ = K₀ / (Real.log 2 * (n + 1)) := by field_simp
+  refine key.trans ?_
+  rw [div_le_iff₀ (by positivity)]
+  nlinarith
+
 /-- GAPS 108.7, noiseless Hausdorff sampling rate from a uniform small-ball lower bound: if a
 law `P` is carried by a compact set `K` and gives every ball of radius `r < r₀` centered in `K`
 mass at least `c r^d`, then the Hausdorff distance between `K` and an i.i.d. sample of size `n` is
@@ -230,7 +274,7 @@ theorem isBoundedInProbability_hausdorff_sampling_error
   have hL : 0 < Real.log (n + 1) := Real.log_pos (by linarith)
   have hrn : 0 < r n := Real.rpow_pos_of_pos (div_pos hL hnR) _
   have hrd : r n ^ d = Real.log (n + 1) / n := by
-    change ((Real.log (n + 1) / n) ^ (1 / d)) ^ d = _
+    simp only [hr_def, Real.rpow_eq_pow]
     rw [one_div, Real.rpow_inv_rpow (div_pos hL hnR).le hd.ne']
   set t := C * r n with ht_def
   have ht : 0 < t := mul_pos hCpos hrn
@@ -255,15 +299,12 @@ theorem isBoundedInProbability_hausdorff_sampling_error
     simp only [A, B, mem_union, mem_iUnion, mem_preimage, mem_compl_iff, Finset.mem_range,
       mem_ofPred_eq, not_or, not_exists, not_forall, not_not] at hnot
     obtain ⟨hK', hB'⟩ := hnot
-    refine absurd (Metric.hausdorffDist_le_of_mem_dist ht.le ?_ ?_) (not_le.mpr hω)
-    · rintro _ ⟨i, rfl⟩
-      exact ⟨_, hK' i i.2, by rw [dist_self]; exact ht.le⟩
-    · intro y hy
-      obtain ⟨z, hzF, hyz⟩ := hFnet y hy
-      obtain ⟨i, hi, hiz⟩ := hB' z hzF
-      refine ⟨_, ⟨⟨i, hi⟩, rfl⟩, ?_⟩
-      rw [Metric.mem_ball] at hiz
-      linarith [dist_triangle y z (Xn i ω), dist_comm z (Xn i ω)]
+    refine absurd (hausdorffDist_range_le_of_finset_net (F := F) ht.le (fun y hy ↦ ?_)
+      (fun i ↦ Xn i.val ω) (fun i ↦ hK' i i.2) fun z hz ↦ ?_) (not_le.mpr hω)
+    · obtain ⟨z, hzF, hyz⟩ := hFnet y hy
+      exact ⟨z, hzF, by linarith⟩
+    · obtain ⟨i, hi, hiz⟩ := hB' z hz
+      exact ⟨⟨i, hi⟩, hiz⟩
   have hKm : MeasurableSet K := hK.isClosed.measurableSet
   have hA : μ.real A = 0 := by
     refine le_antisymm ((measureReal_biUnion_finset_le _ _).trans ?_) measureReal_nonneg
@@ -299,27 +340,7 @@ theorem isBoundedInProbability_hausdorff_sampling_error
     _ ≤ K₀ * (n / Real.log (n + 1)) * Real.exp (-(2 * Real.log (n + 1))) := by
         rw [zero_add, hpn]
         exact mul_le_mul_of_nonneg_right hFb (Real.exp_pos _).le
-    _ ≤ ε := by
-        have he : Real.exp (-(2 * Real.log (n + 1))) = ((n : ℝ) + 1)⁻¹ ^ 2 := by
-          rw [← Real.log_rpow (by positivity) 2, ← Real.log_inv, Real.exp_log (by positivity)]
-          norm_num
-        rw [he]
-        have hn1R : (1 : ℝ) ≤ n := by exact_mod_cast hn1
-        have hl2 : 0 < Real.log 2 := Real.log_pos (by norm_num)
-        have hNn : K₀ / (ε * Real.log 2) < n + 1 := by
-          linarith [show (N : ℝ) ≤ n by exact_mod_cast hnN']
-        rw [div_lt_iff₀ (by positivity)] at hNn
-        have key : K₀ * (n / Real.log (n + 1)) * ((n : ℝ) + 1)⁻¹ ^ 2 ≤
-            K₀ / (Real.log 2 * (n + 1)) := by
-          have h1 : (n : ℝ) / Real.log (n + 1) ≤ (n + 1) / Real.log 2 :=
-            div_le_div₀ (by positivity) (by linarith) hl2
-              (Real.log_le_log (by norm_num) (by linarith))
-          calc K₀ * (n / Real.log (n + 1)) * ((n : ℝ) + 1)⁻¹ ^ 2
-              ≤ K₀ * ((n + 1) / Real.log 2) * ((n : ℝ) + 1)⁻¹ ^ 2 := by gcongr
-            _ = K₀ / (Real.log 2 * (n + 1)) := by field_simp
-        refine key.trans ?_
-        rw [div_le_iff₀ (by positivity)]
-        nlinarith
+    _ ≤ ε := mul_div_log_mul_exp_neg_two_mul_log_le hK₀pos hε hN hnN' hn1
 
 /-- The centering matrix `J = I - 11ᵀ/n`. -/
 noncomputable def centeringMatrix (n : ℕ) : Matrix (Fin n) (Fin n) ℝ :=
@@ -374,11 +395,8 @@ theorem neg_half_mul_doubleCentered_sq_sub_eq {n : ℕ} (a : Fin n → ℝ) (c :
 theorem posSemidef_double_centering_iff_sq_euclidean_distances
     {n : ℕ} (D : Matrix (Fin n) (Fin n) ℝ)
     (hsym : D.IsSymm) (hdiag : ∀ i, D i i = 0) :
-    let J := (1 : Matrix (Fin n) (Fin n) ℝ) - (n : ℝ)⁻¹ • Matrix.of (fun _ _ ↦ (1 : ℝ));
-    ((-(1 / 2 : ℝ)) • (J * D * J)).PosSemidef ↔
+    ((-(1 / 2 : ℝ)) • (centeringMatrix n * D * centeringMatrix n)).PosSemidef ↔
       ∃ x : Fin n → EuclideanSpace ℝ (Fin n), ∀ i j, D i j = ‖x i - x j‖ ^ 2 := by
-  intro J
-  change ((-(1 / 2 : ℝ)) • (centeringMatrix n * D * centeringMatrix n)).PosSemidef ↔ _
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · exact ⟨fun _ ↦ ⟨Fin.elim0, fun i ↦ i.elim0⟩,
       fun _ ↦ by convert Matrix.PosSemidef.zero; exact Subsingleton.elim _ _⟩

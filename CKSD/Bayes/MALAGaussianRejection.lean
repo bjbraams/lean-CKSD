@@ -6,8 +6,8 @@ public import Mathlib.Analysis.InnerProductSpace.PiL2
 # Large-step rejection for isotropic Gaussian MALA
 
 For a Gaussian potential of precision `a`, the MALA log-acceptance ratio is
-`h*a^2*(norm(x)^2-norm(y)^2)/4`. At a large effective step size, proposals from states bounded
-away from zero have exponentially small acceptance on a high-probability noise event.
+`h * a ^ 2 * (norm(x) ^ 2 - norm(y) ^ 2) / 4`. At a large effective step size, proposals from
+states bounded away from zero have exponentially small acceptance on a high-probability noise event.
 Simultaneous target/state rescaling reduces any physical step size to this regime.
 
 The estimates support the quantifier order of the MALA lower-bound statement in GAPS 104.47:

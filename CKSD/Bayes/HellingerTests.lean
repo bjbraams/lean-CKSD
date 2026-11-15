@@ -55,7 +55,8 @@ theorem measureReal_centered_hellingerScore_sum_ge_le {X : Type*} [MeasurableSpa
   have hInt (i : Fin n) (F : X → ℝ) (hF : Measurable F) :
       ∫ x : Fin n → X, F (x i) ∂ν = ∫ x, F x ∂P := by
     have hi := integral_map (measurePreserving_eval (fun _ : Fin n ↦ P) i).aemeasurable
-      (f := F) (by rw [(measurePreserving_eval (fun _ : Fin n ↦ P) i).map_eq]; exact hF.aestronglyMeasurable)
+      (f := F) (by
+        rw [(measurePreserving_eval (fun _ : Fin n ↦ P) i).map_eq]; exact hF.aestronglyMeasurable)
     rw [(measurePreserving_eval (fun _ : Fin n ↦ P) i).map_eq] at hi
     exact hi.symm
   have hYmean (i : Fin n) : ∫ x, Y i x ∂ν = 0 := by
@@ -116,12 +117,13 @@ theorem exists_hellinger_ball_test {X : Type*} [MeasurableSpace X]
   refine ⟨A.indicator 1, ⟨measurable_one.indicator hAm, fun x ↦ ?_⟩, ?_, ?_⟩
   · by_cases hx : x ∈ A <;> simp [Set.indicator, hx]
   · rw [integral_indicator_one hAm]
-    refine (measureReal_mono (μ := Measure.pi fun _ : Fin n ↦ P) (s₁ := A) (s₂ := {x | (n : ℝ) * h ^ 2 / 5 ≤
-      ∑ i, (T (x i) - ∫ z, T z ∂P)}) ?_).trans ?_
+    refine (measureReal_mono (μ := Measure.pi fun _ : Fin n ↦ P) (s₁ := A)
+      (s₂ := {x | (n : ℝ) * h ^ 2 / 5 ≤ ∑ i, (T (x i) - ∫ z, T z ∂P)}) ?_).trans ?_
     · intro x hx
-      change (n : ℝ) * (mP + h ^ 2 / 2) ≤ ∑ i, T (x i) at hx
+      simp only [A, Set.mem_ofPred_eq] at hx
       simp only [Set.mem_ofPred_eq, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_univ,
         Fintype.card_fin, nsmul_eq_mul]
+      -- Fold the mean `mP` so that `nlinarith` matches it with `hx`.
       change (n : ℝ) * h ^ 2 / 5 ≤ (∑ i, T (x i)) - n * mP
       nlinarith [mul_nonneg (Nat.cast_nonneg n) (sq_nonneg h)]
     · exact measureReal_centered_hellingerScore_sum_ge_le P T hTm hTb h hpos
@@ -135,27 +137,29 @@ theorem exists_hellinger_ball_test {X : Type*} [MeasurableSpace X]
   have hρ2 : ρ ^ 2 ≤ h ^ 2 / 64 := by
     have hsq := mul_self_le_mul_self hρ0 hρ
     nlinarith
-  have hμdiff := abs_integral_sub_le_hellinger hQ hR T hTm hTb hpos.le hsecondQ
+  have hμdiff : |mR - mQ| ≤ 2 * ρ * h + ρ ^ 2 :=
+    abs_integral_sub_le_hellinger hQ hR T hTm hTb hpos.le hsecondQ
   have hcross : 2 * ρ * h ≤ h ^ 2 / 4 := by
     have := mul_le_mul_of_nonneg_right hρ hpos.le
     nlinarith
   have hmeanR : mP + 7 / 10 * h ^ 2 ≤ mR := by
     have hl := neg_abs_le (mR - mQ)
-    change |mR - mQ| ≤ 2 * ρ * h + ρ ^ 2 at hμdiff
     nlinarith [sq_nonneg h]
   have hsecondR : ∫ x, T x ^ 2 ∂R ≤ 3 * h ^ 2 := by
     have hv := integral_sq_le_of_hellinger hQ hR T hTm hTb
     nlinarith [sq_nonneg h]
   rw [integral_sub (f := fun _ : Fin n → X ↦ (1 : ℝ)) (g := A.indicator 1)
-      (integrable_const _) (Integrable.indicator (f := (1 : (Fin n → X) → ℝ)) (integrable_const _) hAm),
+      (integrable_const _)
+      (Integrable.indicator (f := (1 : (Fin n → X) → ℝ)) (integrable_const _) hAm),
     integral_const, probReal_univ, smul_eq_mul, mul_one, integral_indicator_one hAm,
     ← probReal_compl_eq_one_sub hAm]
-  refine (measureReal_mono (μ := Measure.pi fun _ : Fin n ↦ R) (s₁ := Aᶜ) (s₂ := {x | (n : ℝ) * h ^ 2 / 5 ≤
-    ∑ i, (-T (x i) - ∫ z, -T z ∂R)}) ?_).trans ?_
+  refine (measureReal_mono (μ := Measure.pi fun _ : Fin n ↦ R) (s₁ := Aᶜ)
+    (s₂ := {x | (n : ℝ) * h ^ 2 / 5 ≤ ∑ i, (-T (x i) - ∫ z, -T z ∂R)}) ?_).trans ?_
   · intro x hx
     simp only [Set.mem_compl_iff, A, Set.mem_ofPred_eq, not_le] at hx
-    simp only [Set.mem_ofPred_eq, integral_neg, sub_neg_eq_add, Finset.sum_add_distrib, Finset.sum_neg_distrib,
-      Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    simp only [Set.mem_ofPred_eq, integral_neg, sub_neg_eq_add, Finset.sum_add_distrib,
+      Finset.sum_neg_distrib, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    -- Fold the mean `mR` so that `nlinarith` matches it with `hmeanR`.
     change (n : ℝ) * h ^ 2 / 5 ≤ -(∑ i, T (x i)) + n * mR
     have := mul_le_mul_of_nonneg_left hmeanR (Nat.cast_nonneg n)
     nlinarith

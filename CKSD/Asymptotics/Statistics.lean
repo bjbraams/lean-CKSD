@@ -8,7 +8,8 @@ public import Statlib.Inference.QMD
 
 Quadratic-mean differentiability is an adapter of Statlib's definition. Tangent spaces and
 efficient scores use Mathlib's closed-span and orthogonal-projection constructions. Splitting
-and resampling are explicit operations on samples; no asymptotic conclusions enter their definitions.
+and resampling are explicit operations on samples; no asymptotic conclusions enter their
+definitions.
 Sources: GAPS 102.11, 102.24–102.25, 102.34, 102.39–102.60.
 -/
 

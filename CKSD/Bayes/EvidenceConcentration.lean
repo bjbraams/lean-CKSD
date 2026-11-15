@@ -48,7 +48,8 @@ theorem measure_sum_lt_neg_two_mul_le {X : Type*} [MeasurableSpace X]
     hg2.comp_measurePreserving (measurePreserving_eval (fun _ : Fin n ↦ P) i)
   have hS : MemLp S 2 ν := memLp_finsetSum _ fun i _ ↦ hcoord i
   have hES : ∫ x, S x ∂ν = n * ∫ x, g x ∂P := by
-    rw [show S = fun x ↦ ∑ i, g (x i) from rfl, integral_finsetSum _ fun i _ ↦ (hcoord i).integrable (by norm_num)]
+    rw [show S = fun x ↦ ∑ i, g (x i) from rfl,
+      integral_finsetSum _ fun i _ ↦ (hcoord i).integrable (by norm_num)]
     have hcoordInt (i : Fin n) : ∫ x : Fin n → X, g (x i) ∂ν = ∫ x, g x ∂P := by
       have h := integral_map (measurePreserving_eval (fun _ : Fin n ↦ P) i).aemeasurable
         (f := g) (by
@@ -66,7 +67,8 @@ theorem measure_sum_lt_neg_two_mul_le {X : Type*} [MeasurableSpace X]
       rw [hfun]
       simpa [ν] using heq
     rw [hEq]
-    exact mul_le_mul_of_nonneg_left ((variance_le_expectation_sq hg.aestronglyMeasurable).trans hsecond) (Nat.cast_nonneg n)
+    exact mul_le_mul_of_nonneg_left
+      ((variance_le_expectation_sq hg.aestronglyMeasurable).trans hsecond) (Nat.cast_nonneg n)
   have hnd : 0 < (n : ℝ) * δ := mul_pos (by exact_mod_cast hn) hδ
   have hsub : {x | (∑ i, g (x i)) < -2 * n * δ} ⊆
       {x | (n : ℝ) * δ ≤ |S x - ∫ y, S y ∂ν|} := by
@@ -74,7 +76,7 @@ theorem measure_sum_lt_neg_two_mul_le {X : Type*} [MeasurableSpace X]
     have hESlow : -(n : ℝ) * δ ≤ ∫ y, S y ∂ν := by
       rw [hES]; nlinarith [mul_le_mul_of_nonneg_left hmean (Nat.cast_nonneg n)]
     apply le_trans _ (neg_le_abs (S x - ∫ y, S y ∂ν))
-    change ∑ i, g (x i) < -2 * n * δ at hx
+    rw [Set.mem_ofPred_eq] at hx
     dsimp [S]
     linarith
   refine (measure_mono hsub).trans ((meas_ge_le_variance_div_sq hS hnd).trans ?_)
@@ -126,11 +128,13 @@ theorem measure_sum_log_ratio_lt_le {X : Type*} [MeasurableSpace X]
     linarith
   have hvar : ∫ x, g x ^ 2 ∂P ≤ δ := by
     have heq : (∫ x, g x ^ 2 ∂P) = (logLikelihoodRatioSecondMoment P Q).toReal := by
-      rw [integral_eq_lintegral_of_nonneg_ae (ae_of_all _ fun x ↦ sq_nonneg _) (hg.pow_const 2).aestronglyMeasurable]
+      rw [integral_eq_lintegral_of_nonneg_ae (ae_of_all _ fun x ↦ sq_nonneg _)
+        (hg.pow_const 2).aestronglyMeasurable]
       congr 1
       apply lintegral_congr_ae
       have hae := llr_ae_eq_log_sub_log hP hQ (klDiv_ne_top_iff.1 hKLfin).1
       filter_upwards [hae] with x hx
+      -- Fold `llr P Q x`, which `lintegral_congr_ae` exposes unfolded, as the pattern for `rw`.
       change ENNReal.ofReal (g x ^ 2) = ENNReal.ofReal (llr P Q x ^ 2)
       rw [hx]
       congr 1
@@ -170,11 +174,11 @@ theorem measure_infinitePi_evidence_lt_le {Θ X : Type*} [MeasurableSpace Θ]
       ne_top_of_le_ne_top ENNReal.ofReal_ne_top (hKL θ hθ)
     have hPQ := (klDiv_ne_top_iff.1 hKLfin).1
     have hsub : {ω | ¬ good θ ω} ≤ᵐ[Pinf]
-        {ω | (∑ i ∈ Finset.range n, (Real.log (f θ (ω i)) - Real.log (f θ₀ (ω i)))) < -2 * n * δ} := by
+        {ω | (∑ i ∈ Finset.range n, (Real.log (f θ (ω i)) - Real.log (f θ₀ (ω i)))) <
+          -2 * n * δ} := by
       filter_upwards [ae_forall_apply_infinitePi (hPQ.ae_le (hdensity θ).ae_pos),
         ae_forall_apply_infinitePi (hdensity θ₀).ae_pos] with ω h1 h2
       intro hω
-      change ¬ good θ ω at hω
       by_contra h
       apply hω
       refine ⟨fun i _ ↦ h1 i, fun i _ ↦ h2 i, ?_⟩

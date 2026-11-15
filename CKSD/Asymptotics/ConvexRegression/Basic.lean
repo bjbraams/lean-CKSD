@@ -327,6 +327,65 @@ section Score
 
 variable {p : ℕ} {Ω : Type*} [MeasurableSpace Ω]
 
+/-- **Lindeberg condition for a weighted triangular array.** If the variables `Yⱼ` have
+uniformly integrable squares, and the weights `cₙⱼ` have bounded square sums
+`∑_{j<n} cₙⱼ² → q` and are uniformly negligible (`maxⱼ |cₙⱼ| → 0`), then the array
+`Xₙⱼ = cₙⱼ Yⱼ` satisfies the Lindeberg condition. -/
+theorem tendsto_sum_integral_ite_lt_abs_mul_sq {μ : Measure Ω} {Y : ℕ → Ω → ℝ}
+    (hY2 : ∀ j, MemLp (Y j) 2 μ)
+    (hUI : ∀ η > 0, ∃ K : ℝ, ∀ j, ∫ ω, (if K < |Y j ω| then Y j ω ^ 2 else 0) ∂μ ≤ η)
+    (c : ℕ → ℕ → ℝ) {q : ℝ} (hq : Tendsto (fun n ↦ ∑ j ∈ Finset.range n, c n j ^ 2) atTop (𝓝 q))
+    (hc : ∀ δ > 0, ∀ᶠ n in atTop, ∀ j < n, |c n j| < δ) {ε : ℝ} (hε : 0 < ε) :
+    Tendsto (fun n ↦ ∑ j ∈ Finset.range n,
+      ∫ ω, (if ε < |c n j * Y j ω| then (c n j * Y j ω) ^ 2 else 0) ∂μ) atTop (𝓝 0) := by
+  have hq0 : 0 ≤ q := ge_of_tendsto' hq fun n ↦ Finset.sum_nonneg fun j _ ↦ sq_nonneg _
+  set X : ℕ → ℕ → Ω → ℝ := fun n j ω ↦ c n j * Y j ω with hX
+  have h2 : ∀ n j, MemLp (X n j) 2 μ := fun n j ↦ (hY2 j).const_mul (c n j)
+  rw [Metric.tendsto_nhds]
+  intro κ hκ
+  set η : ℝ := κ / 2 / (q + 1) with hη
+  have hη0 : 0 < η := by positivity
+  obtain ⟨K, hK⟩ := hUI η hη0
+  filter_upwards [hc _ (by positivity : 0 < ε / (|K| + 1)),
+    hq.eventually (gt_mem_nhds (lt_add_one q))] with n hn hsum
+  have hterm : ∀ j < n, ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ ≤
+      c n j ^ 2 * η := by
+    intro j hj
+    have hcj : |c n j| * |K| < ε := by
+      have := hn j hj
+      rw [lt_div_iff₀ (by positivity)] at this
+      nlinarith [abs_nonneg (c n j)]
+    calc ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ
+        ≤ ∫ ω, c n j ^ 2 * (if K < |Y j ω| then Y j ω ^ 2 else 0) ∂μ := by
+          refine integral_mono (integrable_ite_lt_abs_sq (h2 n j) ε)
+            ((integrable_ite_lt_abs_sq (hY2 j) K).const_mul _) fun ω ↦ ?_
+          simp only [hX]
+          by_cases h1 : ε < |c n j * Y j ω|
+          · have hKψ : K < |Y j ω| := by
+              by_contra hle
+              push Not at hle
+              rw [abs_mul] at h1
+              have : |c n j| * |Y j ω| ≤ |c n j| * |K| :=
+                mul_le_mul_of_nonneg_left (hle.trans (le_abs_self K)) (abs_nonneg _)
+              linarith
+            simp only [h1, hKψ, ↓reduceIte, mul_pow, le_refl]
+          · simp only [h1, ↓reduceIte]
+            exact mul_nonneg (sq_nonneg _) (by split_ifs <;> positivity)
+      _ = c n j ^ 2 * ∫ ω, (if K < |Y j ω| then Y j ω ^ 2 else 0) ∂μ :=
+          integral_const_mul _ _
+      _ ≤ c n j ^ 2 * η := mul_le_mul_of_nonneg_left (hK j) (sq_nonneg _)
+  have hnonneg : 0 ≤ ∑ j ∈ Finset.range n,
+      ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ :=
+    Finset.sum_nonneg fun j _ ↦ integral_nonneg fun ω ↦ by split_ifs <;> positivity
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg hnonneg]
+  calc ∑ j ∈ Finset.range n, ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ
+      ≤ ∑ j ∈ Finset.range n, c n j ^ 2 * η :=
+        Finset.sum_le_sum fun j hj ↦ hterm j (Finset.mem_range.1 hj)
+    _ = (∑ j ∈ Finset.range n, c n j ^ 2) * η := by rw [Finset.sum_mul]
+    _ ≤ (q + 1) * η := mul_le_mul_of_nonneg_right hsum.le hη0.le
+    _ = κ / 2 := by rw [hη]; field_simp
+    _ < κ := half_lt_self hκ
+
 /-- **Central limit theorem for the weighted score.** Let `eᵢ` be independent, with `ψ(eᵢ)`
 centred, of common variance `σ²`, and with uniformly integrable squares. If
 `n⁻¹ ∑_{i<n} xᵢ xᵢᵀ → D₀` and `maxᵢ ‖xᵢ‖ / √n → 0`, then
@@ -376,53 +435,9 @@ theorem tendstoInDistribution_inv_sqrt_smul_sum_smul (μ : Measure Ω) [IsProbab
       ring
     simpa only [this] using hq.const_mul σ2
   have hlin : ∀ ε > 0, Tendsto (fun n ↦ ∑ j ∈ Finset.range n,
-      ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ) atTop (𝓝 0) := by
-    intro ε hε
-    rw [Metric.tendsto_nhds]
-    intro κ hκ
-    set η : ℝ := κ / 2 / (q + 1) with hη
-    have hη0 : 0 < η := by positivity
-    obtain ⟨K, hK⟩ := hUI η hη0
-    filter_upwards [eventually_forall_abs_inv_sqrt_mul_inner_lt x hlev v
-      (by positivity : 0 < ε / (|K| + 1)), hq.eventually (gt_mem_nhds (lt_add_one q))]
-      with n hn hsum
-    have hterm : ∀ j < n, ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ ≤
-        c n j ^ 2 * η := by
-      intro j hj
-      have hcj : |c n j| * |K| < ε := by
-        have := hn j hj
-        rw [lt_div_iff₀ (by positivity)] at this
-        nlinarith [abs_nonneg (c n j)]
-      calc ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ
-          ≤ ∫ ω, c n j ^ 2 * (if K < |ψ (e j ω)| then ψ (e j ω) ^ 2 else 0) ∂μ := by
-            refine integral_mono (integrable_ite_lt_abs_sq (h2 n j) ε)
-              ((integrable_ite_lt_abs_sq (hψ2 j) K).const_mul _) fun ω ↦ ?_
-            simp only [hX]
-            by_cases h1 : ε < |c n j * ψ (e j ω)|
-            · have hKψ : K < |ψ (e j ω)| := by
-                by_contra hle
-                push Not at hle
-                rw [abs_mul] at h1
-                have : |c n j| * |ψ (e j ω)| ≤ |c n j| * |K| :=
-                  mul_le_mul_of_nonneg_left (hle.trans (le_abs_self K)) (abs_nonneg _)
-                linarith
-              simp only [h1, hKψ, ↓reduceIte, mul_pow, le_refl]
-            · simp only [h1, ↓reduceIte]
-              exact mul_nonneg (sq_nonneg _) (by split_ifs <;> positivity)
-        _ = c n j ^ 2 * ∫ ω, (if K < |ψ (e j ω)| then ψ (e j ω) ^ 2 else 0) ∂μ :=
-            integral_const_mul _ _
-        _ ≤ c n j ^ 2 * η := mul_le_mul_of_nonneg_left (hK j) (sq_nonneg _)
-    have hnonneg : 0 ≤ ∑ j ∈ Finset.range n,
-        ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ :=
-      Finset.sum_nonneg fun j _ ↦ integral_nonneg fun ω ↦ by split_ifs <;> positivity
-    rw [Real.dist_eq, sub_zero, abs_of_nonneg hnonneg]
-    calc ∑ j ∈ Finset.range n, ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ
-        ≤ ∑ j ∈ Finset.range n, c n j ^ 2 * η :=
-          Finset.sum_le_sum fun j hj ↦ hterm j (Finset.mem_range.1 hj)
-      _ = (∑ j ∈ Finset.range n, c n j ^ 2) * η := by rw [Finset.sum_mul]
-      _ ≤ (q + 1) * η := mul_le_mul_of_nonneg_right hsum.le hη0.le
-      _ = κ / 2 := by rw [hη]; field_simp
-      _ < κ := half_lt_self hκ
+      ∫ ω, (if ε < |X n j ω| then X n j ω ^ 2 else 0) ∂μ) atTop (𝓝 0) := fun ε hε ↦
+    tendsto_sum_integral_ite_lt_abs_mul_sq hψ2 hUI c hq
+      (fun δ hδ ↦ eventually_forall_abs_inv_sqrt_mul_inner_lt x hlev v hδ) hε
   have hlind := tendstoInDistribution_sum_of_lindeberg_of_iIndepFun μ X (fun n ↦ n)
     (fun n j _ ↦ h2 n j) (fun n j _ ↦ h0 n j)
     hindX (σ2 * q) hvar hlin
@@ -439,8 +454,7 @@ theorem tendstoInDistribution_inv_sqrt_smul_sum_smul (μ : Measure Ω) [IsProbab
   rw [hW, TauCeti.Probability.map_inner_multivariateGaussian 0 v hS, Measure.map_id,
     inner_zero_right, ← coe_toEuclideanCLM_eq_toEuclideanLin]
   congr 2
-  change ⟪v, toEuclideanCLM (𝕜 := ℝ) (σ2 • D₀) v⟫_ℝ = σ2 * q
-  rw [inner_toEuclideanCLM, smul_mulVec, dotProduct_smul, smul_eq_mul]
+  rw [ContinuousLinearMap.coe_coe, inner_toEuclideanCLM, smul_mulVec, dotProduct_smul, smul_eq_mul]
 
 end Score
 
@@ -570,6 +584,41 @@ section Main
 
 variable {p : ℕ}
 
+/-- For a convex `ρ`, the regression process `h ↦ ∑_{i ∈ s} (ρ(aᵢ - c ⟪xᵢ, h⟫) - ρ(aᵢ))` is
+convex. -/
+theorem convexOn_sum_sub_mul_inner {ρ : ℝ → ℝ} (hconv : ConvexOn ℝ univ ρ) (a : ℕ → ℝ)
+    (x : ℕ → EuclideanSpace ℝ (Fin p)) (c : ℝ) (s : Finset ℕ) :
+    ConvexOn ℝ univ fun h ↦ ∑ i ∈ s, (ρ (a i - c * ⟪x i, h⟫_ℝ) - ρ (a i)) := by
+  refine ⟨convex_univ, fun u _ v _ α β hα hβ hαβ ↦ ?_⟩
+  simp only [smul_eq_mul, Finset.mul_sum, ← Finset.sum_add_distrib]
+  refine Finset.sum_le_sum fun i _ ↦ ?_
+  have key : a i - c * ⟪x i, α • u + β • v⟫_ℝ =
+      α • (a i - c * ⟪x i, u⟫_ℝ) + β • (a i - c * ⟪x i, v⟫_ℝ) := by
+    simp only [inner_add_right, inner_smul_right, smul_eq_mul]
+    linear_combination (-(a i)) * hαβ
+  have hρ := hconv.2 (mem_univ (a i - c * ⟪x i, u⟫_ℝ)) (mem_univ (a i - c * ⟪x i, v⟫_ℝ))
+    hα hβ hαβ
+  rw [key]
+  simp only [smul_eq_mul] at hρ ⊢
+  have : (α + β) * ρ (a i) = ρ (a i) := by rw [hαβ, one_mul]
+  nlinarith
+
+/-- A linear image of an asymptotically centred Gaussian sequence: if `Uₙ ⇒ N(0, S)` then
+`M Uₙ ⇒ N(0, M S Mᵀ)`. -/
+theorem tendstoInDistribution_toEuclideanLin_comp {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {U : ℕ → Ω → EuclideanSpace ℝ (Fin p)}
+    {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosSemidef)
+    (hU : TendstoInDistribution U atTop id (fun _ ↦ μ) (multivariateGaussian 0 S))
+    (M : Matrix (Fin p) (Fin p) ℝ) :
+    TendstoInDistribution (fun n ω ↦ M.toEuclideanLin (U n ω)) atTop id
+      (fun _ ↦ μ) (multivariateGaussian 0 (M * S * M.transpose)) := by
+  have hmap := TauCeti.Probability.map_affine_multivariateGaussian 0 hS M 0
+  simp only [add_zero, map_zero] at hmap
+  refine tendstoInDistribution_of_map_eq
+    (hU.continuous_comp (LinearMap.continuous_of_finiteDimensional M.toEuclideanLin))
+    aemeasurable_id ?_
+  rw [Measure.map_id, Function.comp_id, ← hmap]
+
 /-- **Asymptotics of fixed-design convex regression M-estimators.** Let `eᵢ` be independent
 errors and `ρ` a loss with subgradient `ψ` (`ρ v ≥ ρ u + ψ u (v - u)`, which makes `ρ` convex),
 with
@@ -622,8 +671,7 @@ theorem tendstoInMeasure_and_tendstoInDistribution_convexRegression
     Matrix.toEuclideanCLM (𝕜 := ℝ) D₁⁻¹ with hB_def
   have hdet : IsUnit D₁.det := (Matrix.isUnit_iff_isUnit_det _).1 hD₁.isUnit
   have hAB : ∀ u, A (B u) = u := fun u ↦ by
-    change (Matrix.toEuclideanCLM (𝕜 := ℝ) D₁ * Matrix.toEuclideanCLM (𝕜 := ℝ) D₁⁻¹) u = u
-    rw [← map_mul, Matrix.mul_nonsing_inv _ hdet, map_one]
+    rw [hA_def, hB_def, ← mul_apply_eq_comp, ← map_mul, Matrix.mul_nonsing_inv _ hdet, map_one]
     rfl
   have hAsymm : ∀ u v, ⟪A u, v⟫_ℝ = ⟪u, A v⟫_ℝ :=
     fun u v ↦ (Matrix.isSymmetric_toEuclideanLin_iff.2 hD₁.isHermitian) u v
@@ -634,22 +682,8 @@ theorem tendstoInMeasure_and_tendstoInDistribution_convexRegression
     hD₀ hdesign hlev
   set Z : ℕ → Ω → EuclideanSpace ℝ (Fin p) → ℝ := fun n ω h ↦ ∑ i ∈ Finset.range n,
     (ρ (e i ω - (Real.sqrt n)⁻¹ * ⟪x i, h⟫_ℝ) - ρ (e i ω)) with hZ
-  have hZc : ∀ n ω, ConvexOn ℝ univ (Z n ω) := by
-    intro n ω
-    refine ⟨convex_univ, fun u _ v _ a b ha hb hab ↦ ?_⟩
-    simp only [hZ, smul_eq_mul, Finset.mul_sum, ← Finset.sum_add_distrib]
-    refine Finset.sum_le_sum fun i _ ↦ ?_
-    have key : e i ω - (Real.sqrt n)⁻¹ * ⟪x i, a • u + b • v⟫_ℝ =
-        a • (e i ω - (Real.sqrt n)⁻¹ * ⟪x i, u⟫_ℝ) +
-          b • (e i ω - (Real.sqrt n)⁻¹ * ⟪x i, v⟫_ℝ) := by
-      simp only [inner_add_right, inner_smul_right, smul_eq_mul]
-      linear_combination (-(e i ω)) * hab
-    have hρ := hconv.2 (mem_univ (e i ω - (Real.sqrt n)⁻¹ * ⟪x i, u⟫_ℝ))
-      (mem_univ (e i ω - (Real.sqrt n)⁻¹ * ⟪x i, v⟫_ℝ)) ha hb hab
-    rw [key]
-    simp only [smul_eq_mul] at hρ ⊢
-    have : (a + b) * ρ (e i ω) = ρ (e i ω) := by rw [hab, one_mul]
-    nlinarith
+  have hZc : ∀ n ω, ConvexOn ℝ univ (Z n ω) := fun n ω ↦
+    convexOn_sum_sub_mul_inner hconv (fun i ↦ e i ω) x (Real.sqrt n)⁻¹ (Finset.range n)
   set α : ℕ → Ω → EuclideanSpace ℝ (Fin p) := fun n ω ↦ Real.sqrt n • (T n ω - β) with hα
   have hmin' : ∀ᶠ n in atTop, ∀ᵐ ω ∂μ, ∀ h, Z n ω (α n ω) ≤ Z n ω h := by
     filter_upwards [eventually_gt_atTop 0] with n hn
@@ -711,25 +745,18 @@ theorem tendstoInMeasure_and_tendstoInDistribution_convexRegression
   -- the limit law of `√n (T̂ₙ - β)`
   have hσ : 0 ≤ σ2 := hψvar 0 ▸ integral_nonneg fun _ ↦ sq_nonneg _
   have hS : (σ2 • D₀).PosSemidef := hD₀.smul hσ
-  set g : EuclideanSpace ℝ (Fin p) → EuclideanSpace ℝ (Fin p) :=
-    fun y ↦ (D₁⁻¹).toEuclideanLin y + 0 with hg
-  have hgc : Continuous g := (LinearMap.continuous_of_finiteDimensional _).add continuous_const
-  have hmap := TauCeti.Probability.map_affine_multivariateGaussian 0 hS D₁⁻¹ 0
   have hsymm : D₁⁻¹.transpose = D₁⁻¹ := by
     rw [Matrix.transpose_nonsing_inv, (Matrix.isHermitian_iff_isSymm.1 hD₁.isHermitian).eq]
-  have hlim : TendstoInDistribution (fun (n : ℕ) ↦ g ∘ U n) atTop id (fun _ ↦ μ)
-      (multivariateGaussian 0 (σ2 • (D₁⁻¹ * D₀ * D₁⁻¹))) := by
-    refine tendstoInDistribution_of_map_eq (hclt.continuous_comp hgc) aemeasurable_id ?_
-    rw [Measure.map_id, Function.comp_id, hmap, hsymm, Matrix.mul_smul, Matrix.smul_mul]
-    simp
+  have hlim := tendstoInDistribution_toEuclideanLin_comp hS hclt D₁⁻¹
+  rw [hsymm, Matrix.mul_smul, Matrix.smul_mul] at hlim
   have hUm : ∀ n, Measurable (U n) := fun n ↦ by
     have := fun i ↦ hψ.comp (he i)
     fun_prop
   refine tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable μ _ _
-    (fun n ↦ hgc.measurable.comp (hUm n)) (fun n ↦ by have := hT n; fun_prop)
-    hlim ?_
+    (fun n ↦ (LinearMap.continuous_of_finiteDimensional _).measurable.comp (hUm n))
+    (fun n ↦ by have := hT n; fun_prop) hlim ?_
   refine hlin.congr (fun n ↦ ae_of_all _ fun ω ↦ ?_) EventuallyEq.rfl
-  simp only [hα, hg, Function.comp_apply, add_zero, hB_def,
+  simp only [hα, Function.comp_apply, hB_def,
     ← Matrix.coe_toEuclideanCLM_eq_toEuclideanLin]
   rfl
 

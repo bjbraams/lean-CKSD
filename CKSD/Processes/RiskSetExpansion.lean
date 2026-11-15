@@ -19,6 +19,8 @@ by second-moment bounds.
   sums of kernels with mean zero in one or both arguments.
 * `CKSD.tendstoInMeasure_zero_of_integral_le`, `CKSD.tendstoInMeasure_zero_of_integral_sq_le`:
   Markov's and Chebyshev's inequalities in sequential form.
+* `CKSD.tendstoInMeasure_riskSetFraction_sub`: consistency of the at-risk fraction.
+* `CKSD.tendstoInMeasure_riskSet_remainder`: the quadratic remainder is negligible.
 * `CKSD.tendstoInDistribution_sqrt_mul_riskSetSum_sub`: the central limit theorem for
   risk-set estimators.
 -/
@@ -325,6 +327,145 @@ theorem tendstoInMeasure_sqrt_mul_sum_sum_div_of_iid {Ω E : Type*} [MeasurableS
           mul_le_mul_of_nonneg_left hV (by positivity)
       _ = 3 * B ^ 2 / n := by field_simp
 
+/-- The risk-set kernel `g(z, z') = 1{x z ≤ x z'} - y(x z)` is jointly measurable. -/
+theorem measurable_uncurry_riskSetKernel {E : Type*} [MeasurableSpace E] {x : E → ℝ}
+    (hx : Measurable x) {y : ℝ → ℝ} (hym : Measurable y) :
+    Measurable (Function.uncurry fun z z' : E ↦ (if x z ≤ x z' then (1 : ℝ) else 0) - y (x z)) :=
+  (Measurable.ite (measurableSet_le (hx.comp measurable_fst) (hx.comp measurable_snd))
+    measurable_const measurable_const).sub ((hym.comp hx).comp measurable_fst)
+
+/-- With `y(s) = P(x ≥ s)`, the risk-set kernel `g(z, z') = 1{x z ≤ x z'} - y(x z)` has
+`P`-mean zero in its second argument. -/
+theorem integral_riskSetKernel_eq_zero {E : Type*} [MeasurableSpace E] (P : Measure E)
+    [IsProbabilityMeasure P] {x : E → ℝ} (hx : Measurable x) {y : ℝ → ℝ}
+    (hy : ∀ s, y s = P.real {z | s ≤ x z}) (z : E) :
+    ∫ z', ((if x z ≤ x z' then (1 : ℝ) else 0) - y (x z)) ∂P = 0 := by
+  have hS : MeasurableSet {z' | x z ≤ x z'} := measurableSet_le measurable_const hx
+  have hind : (fun z' ↦ (if x z ≤ x z' then (1 : ℝ) else 0)) = {z' | x z ≤ x z'}.indicator 1 := by
+    funext z'; simp [Set.indicator_apply]
+  have hI : Integrable (fun z' ↦ if x z ≤ x z' then (1 : ℝ) else 0) P := by
+    rw [hind]; exact (integrable_const (1 : ℝ)).indicator hS
+  rw [integral_sub hI (integrable_const _), hind, integral_indicator_one hS, integral_const, ← hy]
+  simp
+
+/-- The squared deviations of the risk-set fractions are negligible: with
+`Yᵢ = n⁻¹ #{j < n : x(Z i) ≤ x(Z j)}` and `y(s) = P(x ≥ s)`,
+`√n n⁻¹ ∑_{i<n} (Yᵢ - y(x(Z i)))² → 0` in probability. -/
+theorem tendstoInMeasure_sqrt_div_mul_sum_sq_riskSetFraction_sub {Ω E : Type*}
+    [MeasurableSpace Ω] [MeasurableSpace E]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) [IsProbabilityMeasure P]
+    (Z : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ Z P)
+    (x : E → ℝ) (hx : Measurable x) (y : ℝ → ℝ) (hy : ∀ s, y s = P.real {z | s ≤ x z}) :
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦ Real.sqrt n / n * ∑ i ∈ Finset.range n,
+      ((∑ j ∈ Finset.range n, if x (Z i ω) ≤ x (Z j ω) then (1 : ℝ) else 0) / n -
+        y (x (Z i ω))) ^ 2) atTop fun _ ↦ 0 := by
+  have hyanti : Antitone y := fun s s' hss' ↦ by
+    rw [hy, hy]
+    exact measureReal_mono fun z (hz : s' ≤ x z) ↦ (hss'.trans hz : s ≤ x z)
+  have hy0 (s : ℝ) : 0 ≤ y s := by rw [hy]; exact measureReal_nonneg
+  have hy1 (s : ℝ) : y s ≤ 1 := by rw [hy]; exact measureReal_le_one
+  have hym : Measurable y := hyanti.measurable
+  set g : E → E → ℝ := fun z z' ↦ (if x z ≤ x z' then 1 else 0) - y (x z) with hg
+  set Y : ℕ → ℕ → Ω → ℝ := fun n i ω ↦
+    (∑ j ∈ Finset.range n, if x (Z i ω) ≤ x (Z j ω) then (1 : ℝ) else 0) / n with hYdef
+  have hdev (n : ℕ) (hn : 0 < n) (i : ℕ) (ω : Ω) :
+      Y n i ω - y (x (Z i ω)) = (∑ j ∈ Finset.range n, g (Z i ω) (Z j ω)) / n := by
+    have hn' : (n : ℝ) ≠ 0 := by positivity
+    simp only [hYdef, hg, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_range,
+      nsmul_eq_mul]
+    field_simp
+  have hYm (n i : ℕ) : Measurable (Y n i) :=
+    (Finset.measurable_fun_sum _ fun j _ ↦ Measurable.ite
+      (measurableSet_le (hx.comp (hiid.1 i)) (hx.comp (hiid.1 j)))
+      measurable_const measurable_const).div_const _
+  have hD1 (n i : ℕ) (ω : Ω) : (Y n i ω - y (x (Z i ω))) ^ 2 ≤ 1 := by
+    have := sum_range_ite_one_zero_div_mem_Icc n fun j ↦ x (Z i ω) ≤ x (Z j ω)
+    have h1 : |Y n i ω - y (x (Z i ω))| ≤ 1 := by
+      rw [abs_le]; constructor <;> linarith [hy0 (x (Z i ω)), hy1 (x (Z i ω)), this.1, this.2]
+    calc _ = |Y n i ω - y (x (Z i ω))| ^ 2 := (sq_abs _).symm
+      _ ≤ 1 ^ 2 := pow_le_pow_left₀ (abs_nonneg _) h1 2
+      _ = 1 := one_pow 2
+  have hDint (n i : ℕ) : Integrable (fun ω ↦ (Y n i ω - y (x (Z i ω))) ^ 2) μ :=
+    Integrable.of_bound (((hYm n i).sub ((hym.comp hx).comp (hiid.1 i))).pow_const 2
+      ).aestronglyMeasurable 1 (ae_of_all _ fun ω ↦ by
+        rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]; exact hD1 n i ω)
+  refine tendstoInMeasure_zero_of_integral_le μ _
+    (fun n ω ↦ mul_nonneg (by positivity) (Finset.sum_nonneg fun i _ ↦ sq_nonneg _))
+    (fun n ↦ (integrable_finsetSum _ fun i _ ↦ hDint n i).const_mul _)
+    (fun n ↦ (Real.sqrt n)⁻¹)
+    (tendsto_inv_atTop_zero.comp (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop))
+    ?_
+  filter_upwards [eventually_gt_atTop 0] with n hn
+  have hn' : (0 : ℝ) < n := by exact_mod_cast hn
+  have hterm (i : ℕ) : ∫ ω, (Y n i ω - y (x (Z i ω))) ^ 2 ∂μ ≤ 1 / n := by
+    simp_rw [hdev n hn i, div_pow]
+    rw [integral_div]
+    have := integral_sq_sum_le_of_iid μ P Z hiid g (measurable_uncurry_riskSetKernel hx hym) 1
+      (fun z z' ↦ abs_ite_one_zero_sub_le_one _ (hy0 _) (hy1 _))
+      (integral_riskSetKernel_eq_zero P hx hy) i n
+    rw [div_le_div_iff₀ (by positivity) hn']
+    nlinarith
+  rw [integral_const_mul, integral_finsetSum _ fun i _ ↦ hDint n i]
+  calc Real.sqrt n / n * ∑ i ∈ Finset.range n, ∫ ω, (Y n i ω - y (x (Z i ω))) ^ 2 ∂μ
+      ≤ Real.sqrt n / n * ∑ _i ∈ Finset.range n, 1 / (n : ℝ) :=
+        mul_le_mul_of_nonneg_left (Finset.sum_le_sum fun i _ ↦ hterm i) (by positivity)
+    _ = (Real.sqrt n)⁻¹ := by
+        have hs : Real.sqrt n ^ 2 = n := Real.sq_sqrt hn'.le
+        have hs0 : 0 < Real.sqrt n := Real.sqrt_pos.2 hn'
+        simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+        field_simp
+        exact hs
+
+/-- The at-risk fraction at a fixed time is consistent: with `y(s) = P(x ≥ s)`,
+`n⁻¹ #{j < n : t ≤ x(Z j)} → y(t)` in probability. -/
+theorem tendstoInMeasure_riskSetFraction_sub {Ω E : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace E]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E) [IsProbabilityMeasure P]
+    (Z : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ Z P)
+    (x : E → ℝ) (hx : Measurable x) (y : ℝ → ℝ) (hy : ∀ s, y s = P.real {z | s ≤ x z})
+    (t : ℝ) :
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦
+      (∑ j ∈ Finset.range n, if t ≤ x (Z j ω) then (1 : ℝ) else 0) / n - y t)
+      atTop fun _ ↦ 0 := by
+  have hs : Measurable fun z ↦ (if t ≤ x z then (1 : ℝ) else 0) :=
+    Measurable.ite (measurableSet_le measurable_const hx) measurable_const measurable_const
+  have hS : MeasurableSet {z | t ≤ x z} := measurableSet_le measurable_const hx
+  have hind : (fun z ↦ (if t ≤ x z then (1 : ℝ) else 0)) = {z | t ≤ x z}.indicator 1 := by
+    funext z; simp [Set.indicator_apply]
+  have hint : Integrable (fun z ↦ (if t ≤ x z then (1 : ℝ) else 0)) P := by
+    rw [hind]; exact (integrable_const (1 : ℝ)).indicator hS
+  have hmean : ∫ z, (if t ≤ x z then (1 : ℝ) else 0) ∂P = y t := by
+    rw [hind, integral_indicator_one hS, ← hy]
+  have hlln := tendstoInMeasure_sampleMean_of_iid μ P Z hiid _ hs hint
+  rw [hmean] at hlln
+  rw [tendstoInMeasure_iff_norm] at hlln ⊢
+  intro ε hε
+  refine (hlln ε hε).congr fun n ↦ ?_
+  congr 1
+  ext ω
+  simp [div_eq_inv_mul]
+
+/-- One term of the quadratic remainder of the risk-set expansion: if `0 ≤ A ≤ 1`, `0 ≤ Y`,
+`y_t > 0`, `y_t / 2 < Y_t`, and `A ≠ 0` forces `y_t ≤ y` and `Y_t ≤ Y`, then
+`0 ≤ A (Y - y)² / (y² Y) ≤ 2 / y_t³ (Y - y)²`. -/
+theorem mul_sq_div_mul_le_two_div_pow_three_mul_sq {A Y y yt Yt : ℝ} (hA0 : 0 ≤ A)
+    (hA1 : A ≤ 1) (hY0 : 0 ≤ Y) (hyt : 0 < yt) (hYt : yt / 2 < Yt)
+    (hAy : A ≠ 0 → yt ≤ y ∧ Yt ≤ Y) :
+    0 ≤ A * (Y - y) ^ 2 / (y ^ 2 * Y) ∧
+      A * (Y - y) ^ 2 / (y ^ 2 * Y) ≤ 2 / yt ^ 3 * (Y - y) ^ 2 := by
+  refine ⟨div_nonneg (mul_nonneg hA0 (sq_nonneg _)) (mul_nonneg (sq_nonneg _) hY0), ?_⟩
+  by_cases hA : A = 0
+  · rw [hA, zero_mul, zero_div]
+    exact mul_nonneg (by positivity) (sq_nonneg _)
+  obtain ⟨hyi, hYi⟩ := hAy hA
+  have hden : yt ^ 2 * (yt / 2) ≤ y ^ 2 * Y :=
+    mul_le_mul (pow_le_pow_left₀ hyt.le hyi 2) (hYt.le.trans hYi) (by positivity)
+      (by positivity)
+  calc A * (Y - y) ^ 2 / (y ^ 2 * Y) ≤ 1 * (Y - y) ^ 2 / (yt ^ 2 * (yt / 2)) :=
+        div_le_div₀ (mul_nonneg zero_le_one (sq_nonneg _))
+          (mul_le_mul_of_nonneg_right hA1 (sq_nonneg _)) (by positivity) hden
+    _ = 2 / yt ^ 3 * (Y - y) ^ 2 := by field_simp
+
 /-- The quadratic remainder of the risk-set expansion is negligible: with
 `Yᵢ = n⁻¹ #{j < n : x(Z i) ≤ x(Z j)}` and `y(s) = P(x ≥ s)`, the sum
 `√n n⁻¹ ∑_{i<n} A(Z i) (Yᵢ - y(x(Z i)))² / (y(x(Z i))² Yᵢ)` tends to zero in probability when
@@ -343,147 +484,31 @@ theorem tendstoInMeasure_riskSet_remainder {Ω E : Type*} [MeasurableSpace Ω] [
   have hyanti : Antitone y := fun s s' hss' ↦ by
     rw [hy, hy]
     exact measureReal_mono fun z (hz : s' ≤ x z) ↦ (hss'.trans hz : s ≤ x z)
-  have hy0 (s : ℝ) : 0 ≤ y s := by rw [hy]; exact measureReal_nonneg
-  have hy1 (s : ℝ) : y s ≤ 1 := by rw [hy]; exact measureReal_le_one
-  have hym : Measurable y := hyanti.measurable
-  set g : E → E → ℝ := fun z z' ↦ (if x z ≤ x z' then 1 else 0) - y (x z) with hg
-  have hgm : Measurable (Function.uncurry g) :=
-    (Measurable.ite (measurableSet_le (hx.comp measurable_fst) (hx.comp measurable_snd))
-      measurable_const measurable_const).sub ((hym.comp hx).comp measurable_fst)
-  have hgB (z z' : E) : |g z z'| ≤ 1 := by
-    simp only [hg]
-    rw [abs_le]
-    constructor <;> split_ifs <;> linarith [hy0 (x z), hy1 (x z)]
-  have hg0 (z : E) : ∫ z', g z z' ∂P = 0 := by
-    have hS : MeasurableSet {z' | x z ≤ x z'} := measurableSet_le measurable_const hx
-    have : (fun z' ↦ (if x z ≤ x z' then (1 : ℝ) else 0)) = {z' | x z ≤ x z'}.indicator 1 := by
-      funext z'; simp [Set.indicator_apply]
-    have hI : Integrable (fun z' ↦ if x z ≤ x z' then (1 : ℝ) else 0) P := by
-      rw [this]; exact (integrable_const (1 : ℝ)).indicator hS
-    simp only [hg]
-    rw [integral_sub hI (integrable_const _), this, integral_indicator_one hS, integral_const,
-      ← hy]
-    simp
-  -- the risk-set fractions and their deviations
   set Y : ℕ → ℕ → Ω → ℝ := fun n i ω ↦
     (∑ j ∈ Finset.range n, if x (Z i ω) ≤ x (Z j ω) then (1 : ℝ) else 0) / n with hYdef
-  have hY01 (n i : ℕ) (ω : Ω) : 0 ≤ Y n i ω ∧ Y n i ω ≤ 1 := by
-    have h0 : 0 ≤ ∑ j ∈ Finset.range n, if x (Z i ω) ≤ x (Z j ω) then (1 : ℝ) else 0 :=
-      Finset.sum_nonneg fun j _ ↦ by split_ifs <;> norm_num
-    have h1 : ∑ j ∈ Finset.range n, (if x (Z i ω) ≤ x (Z j ω) then (1 : ℝ) else 0) ≤ n := by
-      calc _ ≤ ∑ _j ∈ Finset.range n, (1 : ℝ) :=
-            Finset.sum_le_sum fun j _ ↦ by split_ifs <;> norm_num
-        _ = n := by simp
-    refine ⟨div_nonneg h0 (Nat.cast_nonneg n), ?_⟩
-    rcases Nat.eq_zero_or_pos n with rfl | hn
-    · simp [hYdef]
-    exact div_le_one_of_le₀ h1 (Nat.cast_nonneg n)
-  have hdev (n : ℕ) (hn : 0 < n) (i : ℕ) (ω : Ω) :
-      Y n i ω - y (x (Z i ω)) = (∑ j ∈ Finset.range n, g (Z i ω) (Z j ω)) / n := by
-    have hn' : (n : ℝ) ≠ 0 := by positivity
-    simp only [hYdef, hg, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_range,
-      nsmul_eq_mul]
-    field_simp
-  have hIm (i j : ℕ) : Measurable fun ω ↦ (if x (Z i ω) ≤ x (Z j ω) then (1 : ℝ) else 0) :=
-    Measurable.ite (measurableSet_le (hx.comp (hiid.1 i)) (hx.comp (hiid.1 j)))
-      measurable_const measurable_const
-  have hYm (n i : ℕ) : Measurable (Y n i) :=
-    (Finset.measurable_fun_sum _ fun j _ ↦ hIm i j).div_const _
-  have hDm (n i : ℕ) : Measurable fun ω ↦ (Y n i ω - y (x (Z i ω))) ^ 2 :=
-    ((hYm n i).sub ((hym.comp hx).comp (hiid.1 i))).pow_const 2
-  have hD1 (n i : ℕ) (ω : Ω) : (Y n i ω - y (x (Z i ω))) ^ 2 ≤ 1 := by
-    have := hY01 n i ω
-    have h1 : |Y n i ω - y (x (Z i ω))| ≤ 1 := by
-      rw [abs_le]; constructor <;> linarith [hy0 (x (Z i ω)), hy1 (x (Z i ω))]
-    calc _ = |Y n i ω - y (x (Z i ω))| ^ 2 := (sq_abs _).symm
-      _ ≤ 1 ^ 2 := pow_le_pow_left₀ (abs_nonneg _) h1 2
-      _ = 1 := one_pow 2
-  have hDint (n i : ℕ) : Integrable (fun ω ↦ (Y n i ω - y (x (Z i ω))) ^ 2) μ :=
-    Integrable.of_bound (hDm n i).aestronglyMeasurable 1 (ae_of_all _ fun ω ↦ by
-      rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]; exact hD1 n i ω)
   set W : ℕ → Ω → ℝ := fun n ω ↦ Real.sqrt n / n * ∑ i ∈ Finset.range n,
     (Y n i ω - y (x (Z i ω))) ^ 2 with hW
-  have hWlim : TendstoInMeasure μ W atTop fun _ ↦ 0 := by
-    refine tendstoInMeasure_zero_of_integral_le μ W
-      (fun n ω ↦ mul_nonneg (by positivity) (Finset.sum_nonneg fun i _ ↦ sq_nonneg _))
-      (fun n ↦ (integrable_finsetSum _ fun i _ ↦ hDint n i).const_mul _)
-      (fun n ↦ (Real.sqrt n)⁻¹)
-      (tendsto_inv_atTop_zero.comp (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop))
-      ?_
-    filter_upwards [eventually_gt_atTop 0] with n hn
-    have hn' : (0 : ℝ) < n := by exact_mod_cast hn
-    have hterm (i : ℕ) : ∫ ω, (Y n i ω - y (x (Z i ω))) ^ 2 ∂μ ≤ 1 / n := by
-      simp_rw [hdev n hn i, div_pow]
-      rw [integral_div]
-      have := integral_sq_sum_le_of_iid μ P Z hiid g hgm 1 hgB hg0 i n
-      rw [div_le_div_iff₀ (by positivity) hn']
-      nlinarith
-    simp only [hW]
-    rw [integral_const_mul, integral_finsetSum _ fun i _ ↦ hDint n i]
-    calc Real.sqrt n / n * ∑ i ∈ Finset.range n, ∫ ω, (Y n i ω - y (x (Z i ω))) ^ 2 ∂μ
-        ≤ Real.sqrt n / n * ∑ _i ∈ Finset.range n, 1 / (n : ℝ) :=
-          mul_le_mul_of_nonneg_left (Finset.sum_le_sum fun i _ ↦ hterm i) (by positivity)
-      _ = (Real.sqrt n)⁻¹ := by
-          have hs : Real.sqrt n ^ 2 = n := Real.sq_sqrt hn'.le
-          have hs0 : 0 < Real.sqrt n := Real.sqrt_pos.2 hn'
-          simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
-          field_simp
-          exact hs
-  -- the at-risk fraction at `t`
+  have hWlim : TendstoInMeasure μ W atTop fun _ ↦ 0 :=
+    tendstoInMeasure_sqrt_div_mul_sum_sq_riskSetFraction_sub μ P Z hiid x hx y hy
   set Yt : ℕ → Ω → ℝ := fun n ω ↦
     (∑ j ∈ Finset.range n, if t ≤ x (Z j ω) then (1 : ℝ) else 0) / n with hYt
-  have hU : TendstoInMeasure μ (fun n ω ↦ Yt n ω - y t) atTop fun _ ↦ 0 := by
-    have hs : Measurable fun z ↦ (if t ≤ x z then (1 : ℝ) else 0) :=
-      Measurable.ite (measurableSet_le measurable_const hx) measurable_const measurable_const
-    have hS : MeasurableSet {z | t ≤ x z} := measurableSet_le measurable_const hx
-    have hind : (fun z ↦ (if t ≤ x z then (1 : ℝ) else 0)) = {z | t ≤ x z}.indicator 1 := by
-      funext z; simp [Set.indicator_apply]
-    have hint : Integrable (fun z ↦ (if t ≤ x z then (1 : ℝ) else 0)) P := by
-      rw [hind]; exact (integrable_const (1 : ℝ)).indicator hS
-    have hmean : ∫ z, (if t ≤ x z then (1 : ℝ) else 0) ∂P = y t := by
-      rw [hind, integral_indicator_one hS, ← hy]
-    have hlln := tendstoInMeasure_sampleMean_of_iid μ P Z hiid _ hs hint
-    rw [hmean] at hlln
-    rw [tendstoInMeasure_iff_norm] at hlln ⊢
-    intro ε hε
-    refine (hlln ε hε).congr fun n ↦ ?_
-    congr 1
-    ext ω
-    simp [hYt, div_eq_inv_mul]
   refine tendstoInMeasure_zero_of_abs_le μ (fun n ω ↦ 2 / y t ^ 3 * W n ω) _
-    (fun n ω ↦ Yt n ω - y t) (half_pos hyt) ?_ (tendstoInMeasure_const_mul_zero μ W _ hWlim) hU
+    (fun n ω ↦ Yt n ω - y t) (half_pos hyt) ?_ (tendstoInMeasure_const_mul_zero μ W _ hWlim)
+    (tendstoInMeasure_riskSetFraction_sub μ P Z hiid x hx y hy t)
   filter_upwards [eventually_gt_atTop 0] with n hn
   refine ae_of_all _ fun ω hω ↦ ?_
   have hn' : (0 : ℝ) < n := by exact_mod_cast hn
   have hYtω : y t / 2 < Yt n ω := by
     rw [abs_lt] at hω; linarith
-  have hterm (i : ℕ) : 0 ≤ A (Z i ω) * (Y n i ω - y (x (Z i ω))) ^ 2 /
-        (y (x (Z i ω)) ^ 2 * Y n i ω) ∧
-      A (Z i ω) * (Y n i ω - y (x (Z i ω))) ^ 2 / (y (x (Z i ω)) ^ 2 * Y n i ω) ≤
-        2 / y t ^ 3 * (Y n i ω - y (x (Z i ω))) ^ 2 := by
-    refine ⟨div_nonneg (mul_nonneg (hA0 _) (sq_nonneg _))
-      (mul_nonneg (sq_nonneg _) (hY01 n i ω).1), ?_⟩
-    by_cases hAi : A (Z i ω) = 0
-    · rw [hAi, zero_mul, zero_div]
-      exact mul_nonneg (by positivity) (sq_nonneg _)
-    have hxt := hAt _ hAi
-    have hyi : y t ≤ y (x (Z i ω)) := hyanti hxt
-    have hYi : Yt n ω ≤ Y n i ω := by
-      refine div_le_div_of_nonneg_right (Finset.sum_le_sum fun j _ ↦ ?_) hn'.le
+  have hterm (i : ℕ) := mul_sq_div_mul_le_two_div_pow_three_mul_sq (hA0 (Z i ω)) (hA1 _)
+    (sum_range_ite_one_zero_div_mem_Icc n fun j ↦ x (Z i ω) ≤ x (Z j ω)).1 hyt hYtω
+    (Y := Y n i ω) (y := y (x (Z i ω))) fun hAi ↦ by
+      have hxt := hAt _ hAi
+      refine ⟨hyanti hxt, div_le_div_of_nonneg_right (Finset.sum_le_sum fun j _ ↦ ?_) hn'.le⟩
       split_ifs with h1 h2 <;> first | exact absurd (hxt.trans h1) h2 | norm_num
-    have hden : y t ^ 2 * (y t / 2) ≤ y (x (Z i ω)) ^ 2 * Y n i ω :=
-      mul_le_mul (pow_le_pow_left₀ hyt.le hyi 2) (hYtω.le.trans hYi) (by positivity)
-        (by positivity)
-    calc A (Z i ω) * (Y n i ω - y (x (Z i ω))) ^ 2 / (y (x (Z i ω)) ^ 2 * Y n i ω)
-        ≤ 1 * (Y n i ω - y (x (Z i ω))) ^ 2 / (y t ^ 2 * (y t / 2)) :=
-          div_le_div₀ (mul_nonneg zero_le_one (sq_nonneg _))
-            (mul_le_mul_of_nonneg_right (hA1 _) (sq_nonneg _)) (by positivity) hden
-      _ = 2 / y t ^ 3 * (Y n i ω - y (x (Z i ω))) ^ 2 := by
-          field_simp
   have hsum0 := Finset.sum_nonneg fun i (_ : i ∈ Finset.range n) ↦ (hterm i).1
   rw [abs_of_nonneg (mul_nonneg (by positivity) hsum0), abs_of_nonneg (mul_nonneg
     (by positivity) (mul_nonneg (by positivity) (Finset.sum_nonneg fun i _ ↦ sq_nonneg _)))]
-  simp only [hW]
   rw [mul_left_comm, Finset.mul_sum (s := Finset.range n) (a := 2 / y t ^ 3)]
   exact mul_le_mul_of_nonneg_left (Finset.sum_le_sum fun i _ ↦ (hterm i).2) (by positivity)
 
@@ -569,33 +594,14 @@ theorem tendstoInDistribution_sqrt_mul_riskSetSum_sub {Ω E : Type*} [Measurable
   have hym : Measurable y := hyanti.measurable
   have hyA (z : E) (hz : A z ≠ 0) : y t ≤ y (x z) := hyanti (hAt z hz)
   set g : E → E → ℝ := fun z z' ↦ (if x z ≤ x z' then 1 else 0) - y (x z) with hg
-  have hgm : Measurable (Function.uncurry g) :=
-    (Measurable.ite (measurableSet_le (hx.comp measurable_fst) (hx.comp measurable_snd))
-      measurable_const measurable_const).sub ((hym.comp hx).comp measurable_fst)
-  have hgB (z z' : E) : |g z z'| ≤ 1 := by
-    simp only [hg]
-    rw [abs_le]
-    constructor <;> split_ifs <;> linarith [hy0 (x z), hy1 (x z)]
-  have hg0 (z : E) : ∫ z', g z z' ∂P = 0 := by
-    have hS : MeasurableSet {z' | x z ≤ x z'} := measurableSet_le measurable_const hx
-    have hind : (fun z' ↦ (if x z ≤ x z' then (1 : ℝ) else 0)) =
-        {z' | x z ≤ x z'}.indicator 1 := by
-      funext z'; simp [Set.indicator_apply]
-    have hI : Integrable (fun z' ↦ if x z ≤ x z' then (1 : ℝ) else 0) P := by
-      rw [hind]; exact (integrable_const (1 : ℝ)).indicator hS
-    simp only [hg]
-    rw [integral_sub hI (integrable_const _), hind, integral_indicator_one hS, integral_const,
-      ← hy]
-    simp
+  have hgm : Measurable (Function.uncurry g) := measurable_uncurry_riskSetKernel hx hym
+  have hgB (z z' : E) : |g z z'| ≤ 1 := abs_ite_one_zero_sub_le_one _ (hy0 _) (hy1 _)
+  have hg0 (z : E) : ∫ z', g z z' ∂P = 0 := integral_riskSetKernel_eq_zero P hx hy z
   -- bounds on the weights
   set c := 1 / y t ^ 2 with hc
   have hc0 : 0 ≤ c := by positivity
   have ha_bd (z : E) : |a z| ≤ c := by
-    by_cases hz : A z = 0
-    · simp [a, hz, hc0]
-    have h1 := hyA z hz
-    rw [abs_of_nonneg (div_nonneg (hA0 z) (sq_nonneg _))]
-    exact div_le_div₀ zero_le_one (hA1 z) (by positivity) (pow_le_pow_left₀ hyt.le h1 2)
+    simpa [hc] using abs_div_pow_le_one_div_pow (hA0 z) (hA1 z) hyt (hyA z) 2
   have ham : Measurable a := hA.div ((hym.comp hx).pow_const 2)
   set F : E → E → ℝ := fun z z' ↦ a z * g z z' with hF
   have hFm : Measurable (Function.uncurry F) := (ham.comp measurable_fst).mul hgm
@@ -608,43 +614,22 @@ theorem tendstoInDistribution_sqrt_mul_riskSetSum_sub {Ω E : Type*} [Measurable
     have := norm_integral_le_of_norm_le_const (μ := P) (f := fun z ↦ F z z')
       (ae_of_all _ fun z ↦ by rw [Real.norm_eq_abs]; exact hFB z z')
     simpa [Real.norm_eq_abs] using this
-  have hFint : Integrable (Function.uncurry F) (P.prod P) :=
-    Integrable.of_bound hFm.aestronglyMeasurable c
-      (ae_of_all _ fun p ↦ by rw [Real.norm_eq_abs]; exact hFB p.1 p.2)
-  have hb0 : ∫ z', b z' ∂P = 0 := by
-    have := integral_integral_swap (μ := P) (ν := P) (f := F) hFint
-    simp only [b]
-    rw [← this]
-    simp [hF, integral_const_mul, hg0]
+  have hbint : Integrable b P := Integrable.of_bound hbm.aestronglyMeasurable c
+    (ae_of_all _ fun z' ↦ by rw [Real.norm_eq_abs]; exact hb_bd z')
+  have hproj := integral_integral_left_eq_zero_and_integral_sub_eq_zero P hFm hFB
+    fun z ↦ by simp [hF, integral_const_mul, hg0]
+  have hb0 : ∫ z', b z' ∂P = 0 := hproj.1
   -- the degenerate kernel
   set H : E → E → ℝ := fun z z' ↦ F z z' - b z' with hH
   have hHm : Measurable (Function.uncurry H) := hFm.sub (hbm.comp measurable_snd)
   have hHB (z z' : E) : |H z z'| ≤ 2 * c :=
     (abs_sub _ _).trans (by linarith [hFB z z', hb_bd z'])
-  have hFi1 (z' : E) : Integrable (fun z ↦ F z z') P :=
-    Integrable.of_bound (hFm.comp (measurable_id.prodMk measurable_const)).aestronglyMeasurable c
-      (ae_of_all _ fun z ↦ by rw [Real.norm_eq_abs]; exact hFB z z')
-  have hFi2 (z : E) : Integrable (fun z' ↦ F z z') P :=
-    Integrable.of_bound (hFm.comp (measurable_const.prodMk measurable_id)).aestronglyMeasurable c
-      (ae_of_all _ fun z' ↦ by rw [Real.norm_eq_abs]; exact hFB z z')
-  have hbint : Integrable b P := Integrable.of_bound hbm.aestronglyMeasurable c
-    (ae_of_all _ fun z' ↦ by rw [Real.norm_eq_abs]; exact hb_bd z')
-  have hH1 (z' : E) : ∫ z, H z z' ∂P = 0 := by
-    simp only [hH]
-    rw [integral_sub (hFi1 z') (integrable_const _), integral_const]
-    simp only [probReal_univ, one_smul]
-    exact sub_eq_zero.2 rfl
-  have hH2 (z : E) : ∫ z', H z z' ∂P = 0 := by
-    simp only [hH]
-    rw [integral_sub (hFi2 z) hbint, hb0]
-    simp [hF, integral_const_mul, hg0]
+  have hH1 (z' : E) : ∫ z, H z z' ∂P = 0 := hproj.2.1 z'
+  have hH2 (z : E) : ∫ z', H z z' ∂P = 0 := hproj.2.2 z
   -- the influence function
   set ψ : E → ℝ := fun z ↦ A z / y (x z) - θ - b z with hψ
   have hAy_bd (z : E) : |A z / y (x z)| ≤ 1 / y t := by
-    by_cases hz : A z = 0
-    · simp [hz, hyt.le]
-    rw [abs_of_nonneg (div_nonneg (hA0 z) (hy0 _))]
-    exact div_le_div₀ zero_le_one (hA1 z) hyt (hyA z hz)
+    simpa using abs_div_pow_le_one_div_pow (hA0 z) (hA1 z) hyt (hyA z) 1
   have hAym : Measurable fun z ↦ A z / y (x z) := hA.div (hym.comp hx)
   have hAyint : Integrable (fun z ↦ A z / y (x z)) P :=
     Integrable.of_bound hAym.aestronglyMeasurable (1 / y t)

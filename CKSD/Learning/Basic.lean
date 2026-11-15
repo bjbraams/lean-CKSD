@@ -122,4 +122,20 @@ theorem sum_mul_log_sub_log_nonneg {ι : Type*} (S : Finset ι) {p q : ι → �
   have := Finset.sum_le_sum h
   rwa [Finset.sum_sub_distrib, hpq, sub_self] at this
 
+
+/-- Balancing identity for a learning rate: with `η = √(2a / b)` for `a, b > 0`,
+`a / η + (η / 2) b = √(2 b a)`. -/
+theorem div_sqrt_add_sqrt_div_two_mul {a b : ℝ} (ha : 0 < a) (hb : 0 < b) :
+    a / Real.sqrt (2 * a / b) + Real.sqrt (2 * a / b) / 2 * b = Real.sqrt (2 * b * a) := by
+  set η := Real.sqrt (2 * a / b)
+  have hη : 0 < η := Real.sqrt_pos.mpr (by positivity)
+  have hη2 : η ^ 2 = 2 * a / b := Real.sq_sqrt (by positivity)
+  have hs : Real.sqrt (2 * b * a) = η * b := by
+    rw [show 2 * b * a = (η * b) ^ 2 by rw [mul_pow, hη2]; field_simp]
+    exact Real.sqrt_sq (by positivity)
+  have h2 : η ^ 2 * b = 2 * a := by rw [hη2]; field_simp
+  rw [hs]
+  field_simp
+  linear_combination -h2
+
 end CKSD

@@ -282,6 +282,7 @@ theorem isSufficientStatistic_of_factorization [StandardBorelSpace X] [Nonempty 
   filter_upwards [hfin, hzero, hfac θ, ae_all_iff.2 fun n ↦ hfac (θs n)] with x hxfin hx0 hxθ hxn
   have hρx : ρ x = G (T x) * ENNReal.ofReal (h x) := by
     simp only [ρ, G, hxn, ENNReal.ofReal_mul ((hg _).2 _), ← mul_assoc, ENNReal.tsum_mul_right]
+  -- `change` exposes the syntactic form that the following `rw` matches
   change ENNReal.ofReal (f θ x) = ρ x * r (T x)
   by_cases hρ0 : ρ x = 0
   · rw [hx0 hρ0, hρ0, zero_mul]

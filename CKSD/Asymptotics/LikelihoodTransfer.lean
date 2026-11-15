@@ -21,8 +21,10 @@ def clipBCF (k : ℝ) (hk : 0 ≤ k) : BoundedContinuousFunction ℝ ℝ :=
   BoundedContinuousFunction.mkOfBound ⟨fun x ↦ max 0 (min x k), by fun_prop⟩ (2 * k) (by
     intro x y
     simp only [ContinuousMap.coe_mk, Real.dist_eq]
-    have h1 : 0 ≤ max 0 (min x k) ∧ max 0 (min x k) ≤ k := ⟨le_max_left _ _, max_le hk (min_le_right _ _)⟩
-    have h2 : 0 ≤ max 0 (min y k) ∧ max 0 (min y k) ≤ k := ⟨le_max_left _ _, max_le hk (min_le_right _ _)⟩
+    have h1 : 0 ≤ max 0 (min x k) ∧ max 0 (min x k) ≤ k :=
+      ⟨le_max_left _ _, max_le hk (min_le_right _ _)⟩
+    have h2 : 0 ≤ max 0 (min y k) ∧ max 0 (min y k) ≤ k :=
+      ⟨le_max_left _ _, max_le hk (min_le_right _ _)⟩
     rw [abs_le]; constructor <;> linarith [h1.1, h1.2, h2.1, h2.2])
 
 /-- Weighted weak convergence: if probability measures `μₙ` converge weakly to `ν` and a
@@ -69,7 +71,8 @@ theorem tendsto_integral_mul_of_tendsto_of_integral_le_one {X : Type*} [Topologi
     · rw [integral_const_mul, integral_sub hwm (htint m k)]
       exact mul_le_mul_of_nonneg_left (sub_le_sub_right h1 _) (norm_nonneg f)
   have hD : Tendsto (fun k : ℕ ↦ ∫ x, t k x ∂ν) atTop (𝓝 (∫ x, w x ∂ν)) := by
-    refine tendsto_integral_of_dominated_convergence w (fun k ↦ (t k).continuous.aestronglyMeasurable)
+    refine tendsto_integral_of_dominated_convergence w
+      (fun k ↦ (t k).continuous.aestronglyMeasurable)
       hνint (fun k ↦ ae_of_all _ fun x ↦ ?_) (ae_of_all _ fun x ↦ ?_)
     · rw [ht, Real.norm_eq_abs, abs_of_nonneg (le_min (hw0 x) (Nat.cast_nonneg k))]
       exact min_le_left _ _

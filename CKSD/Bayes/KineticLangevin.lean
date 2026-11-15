@@ -185,6 +185,7 @@ theorem integral_mul_kineticGenerator_eq_zero_of_fderiv_density
         ((EuclideanSpace.proj i).comp (ContinuousLinearMap.snd ℝ E E)) z :=
       (EuclideanSpace.proj (𝕜 := ℝ) (ι := Fin d) i).hasFDerivAt.comp z
         ((ContinuousLinearMap.snd ℝ E E).hasFDerivAt)
+    -- Write `A i` as a pointwise product, the form of the product rule below.
     change fderiv ℝ ((ρ * fun z ↦ z.2 i) * f) z (ex i) = _
     rw [(((hρ.differentiable one_ne_zero z).hasFDerivAt.mul hcoord).mul
         (hf1.differentiable one_ne_zero z).hasFDerivAt).fderiv]
@@ -200,6 +201,7 @@ theorem integral_mul_kineticGenerator_eq_zero_of_fderiv_density
           (ContinuousLinearMap.fst ℝ E E))) z :=
       (EuclideanSpace.proj (𝕜 := ℝ) (ι := Fin d) i).hasFDerivAt.comp z
         ((hb.differentiable one_ne_zero z.1).hasFDerivAt.comp z hasFDerivAt_fst)
+    -- Write `B i` as a pointwise product, the form of the product rule below.
     change fderiv ℝ ((ρ * fun z ↦ b z.1 i) * f) z (ep i) = _
     rw [(((hρ.differentiable one_ne_zero z).hasFDerivAt.mul hcoord).mul
         (hf1.differentiable one_ne_zero z).hasFDerivAt).fderiv]
@@ -216,6 +218,7 @@ theorem integral_mul_kineticGenerator_eq_zero_of_fderiv_density
           (fderiv ℝ (fderiv ℝ f) z)) z :=
       ((ContinuousLinearMap.apply ℝ ℝ (ep i))).hasFDerivAt.comp z
         (hfd.differentiable one_ne_zero z).hasFDerivAt
+    -- Write `C i` as a pointwise product, the form of the product rule below.
     change fderiv ℝ (ρ * fun z ↦ fderiv ℝ f z (ep i)) z (ep i) = _
     rw [(((hρ.differentiable one_ne_zero z).hasFDerivAt).mul hd).fderiv]
     simp only [add_apply, smul_apply,
@@ -226,6 +229,7 @@ theorem integral_mul_kineticGenerator_eq_zero_of_fderiv_density
   have hvec (a b : E) : (a, b) = ∑ i, (a i • ex i + b i • ep i) := by
     have he (a : E) : (∑ i, a i • EuclideanSpace.single i 1) = a := by
       ext j
+      -- Read the coordinate as the continuous linear projection, which commutes with sums.
       change (EuclideanSpace.proj (𝕜 := ℝ) (ι := Fin d) j)
         (∑ i, a i • EuclideanSpace.single i 1) = _
       simp [map_sum, PiLp.single_apply]

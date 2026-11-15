@@ -184,6 +184,8 @@ theorem norm_charFun_map_sub_one_sub_le {Ω : Type*} [MeasurableSpace Ω] {μ : 
   have hP2 : Integrable (fun ω ↦ (↑(t * Y ω) : ℂ) ^ 2 / 2) μ := by
     have := ((hY2.const_mul (t ^ 2)).ofReal (𝕜 := ℂ)).div_const 2
     refine this.congr (ae_of_all _ fun ω ↦ ?_)
+    -- `show` fixes the cast form of the left side; without it `push_cast` leaves mismatched
+    -- instances that `ring` cannot close.
     show ((t ^ 2 * Y ω ^ 2 : ℝ) : ℂ) / 2 = _
     push_cast; ring
   have hP12 : Integrable (fun ω ↦ (1 : ℂ) + ↑(t * Y ω) * I) μ := (integrable_const _).add hP1

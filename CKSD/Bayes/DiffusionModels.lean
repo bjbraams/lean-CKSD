@@ -71,9 +71,9 @@ def probabilityFlowVelocity {d : ℕ} (T : ℝ)
 
 /-- GAPS 104.63, probability-flow part: the time-reversed marginals `qₜ = p_{T-t}` of a diffusion
 with positive `C¹` densities solve the continuity equation with the probability-flow velocity on
-every `(0, T')`, `T' < T`, and when that velocity is Lipschitz the continuous flow started from `p_T` has
-law `p_{T-t}`. The forward marginals are a weak Fokker–Planck solution with a finite initial second
-moment; the reverse-time stochastic equation is not part of this statement. -/
+every `(0, T')`, `T' < T`, and when that velocity is Lipschitz the continuous flow started from
+`p_T` has law `p_{T-t}`. The forward marginals are a weak Fokker–Planck solution with a finite
+initial second moment; the reverse-time stochastic equation is not part of this statement. -/
 theorem probabilityFlow_isContinuityEquation_and_map {d : ℕ} (T : ℝ) (hT : 0 < T)
     (f : ℝ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (hf : Continuous (Function.uncurry f)) (Lf : ℝ≥0) (hfL : ∀ t, LipschitzWith Lf (f t))
@@ -287,6 +287,7 @@ theorem integral_fderiv_gradient_add_mul_laplacian_eq_zero {d : ℕ}
     ∫ x, (fderiv ℝ f x (gradient m x) + m x * ∑ i, fderiv ℝ (fderiv ℝ f) x
       (EuclideanSpace.single i 1) (EuclideanSpace.single i 1)) = 0 := by
   set e : Fin d → EuclideanSpace ℝ (Fin d) := fun i ↦ EuclideanSpace.single i 1 with he
+  -- Fold `EuclideanSpace.single i 1` into `e i`; `set` does not rewrite under the binder.
   show ∫ x, (fderiv ℝ f x (gradient m x) +
     m x * ∑ i, fderiv ℝ (fderiv ℝ f) x (e i) (e i)) = 0
   have hmd : Differentiable ℝ m := hm.differentiable (by norm_num)
@@ -529,8 +530,9 @@ theorem stochasticInterpolant_score {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
   filter_upwards [hC] with w hw
   rw [← hw, gradient_log_eq_inv_smul m (X w) (hms.differentiable (by simp) _) (hmpos _).ne',
     gradient_gaussianSmoothing ν hσ]
+  -- Unfold the score to the explicit kernel integrals that `simp_rw` rewrites.
   change (m (X w))⁻¹ • (-(σ ^ 2)⁻¹ • ∫ y, gaussianSmoothingKernel σ (X w - y) • (X w - y) ∂ν) =
-    -σ⁻¹ • ((m (X w))⁻¹ • ∫ y, gaussianSmoothingKernel σ (X w - y) • (σ⁻¹ • (X w-y)) ∂ν)
+    -σ⁻¹ • ((m (X w))⁻¹ • ∫ y, gaussianSmoothingKernel σ (X w - y) • (σ⁻¹ • (X w - y)) ∂ν)
   simp_rw [smul_comm (gaussianSmoothingKernel σ _) σ⁻¹, integral_smul, smul_smul]
   congr 1
   field_simp

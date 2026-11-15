@@ -67,7 +67,8 @@ theorem IsMcKeanVlasovSolution.ae_norm_sub_le_of_zero_forcing_of_bound
   have hi (r : ℝ) (hr : 0 ≤ r) : IntervalIntegrable F volume 0 r := by
     apply (intervalIntegrable_iff_integrableOn_Ioc_of_le hr).2
     apply Integrable.of_bound
-      (hFm.mono_measure (Measure.restrict_mono_set _ (show Ioc (0 : ℝ) r ⊆ Ici 0 from fun _ hs ↦ hs.1.le))) M
+      (hFm.mono_measure (Measure.restrict_mono_set _
+        (show Ioc (0 : ℝ) r ⊆ Ici 0 from fun _ hs ↦ hs.1.le))) M
     exact ae_of_all _ hFbound
   have he (r : ℝ) (hr : 0 ≤ r) : Y r ω = ξ ω + ∫ q in (0 : ℝ)..r, F q := by
     simpa only [add_zero] using hω.2 r hr
@@ -99,8 +100,10 @@ theorem IsMcKeanVlasovSolution.wassersteinEDist_toReal_le_of_zero_forcing_of_bou
     (M : ℝ≥0) (hM : ∀ μ, IsProbabilityMeasure μ → ∀ x, ‖b x μ‖ ≤ M)
     (s : ℝ) (hs : 0 ≤ s) (t : ℝ) (ht : 0 ≤ t) :
     (TauCeti.wassersteinEDist 1 (P.map (Y s)) (P.map (Y t))).toReal ≤ (M : ℝ) * |t - s| := by
-  have his : Integrable (Y s) P := (integrable_norm_iff (hY.1 s).aestronglyMeasurable).1 (hY.2.1 s hs)
-  have hit : Integrable (Y t) P := (integrable_norm_iff (hY.1 t).aestronglyMeasurable).1 (hY.2.1 t ht)
+  have his : Integrable (Y s) P :=
+    (integrable_norm_iff (hY.1 s).aestronglyMeasurable).1 (hY.2.1 s hs)
+  have hit : Integrable (Y t) P :=
+    (integrable_norm_iff (hY.1 t).aestronglyMeasurable).1 (hY.2.1 t ht)
   have hW := wassersteinEDist_one_map_toReal_le_integral_norm_sub P
     (hY.1 s).aestronglyMeasurable (hY.1 t).aestronglyMeasurable (his.sub hit)
   have hbd := (hY.ae_norm_sub_le_of_zero_forcing_of_bound P b hb ξ Y M hM).mono
@@ -127,7 +130,8 @@ theorem IsMcKeanVlasovSolution.ae_norm_le_of_zero_forcing_of_bound
   have hi := intervalIntegral.norm_integral_le_of_norm_le_const (a := 0) (b := t)
     (f := fun s ↦ b (Y s ω) (P.map (Y s))) (C := (M : ℝ)) (fun _ _ ↦ hM _ inferInstance _)
   simp only [sub_zero, abs_of_nonneg ht.1] at hi
-  exact (norm_add_le _ _).trans (add_le_add le_rfl (hi.trans (mul_le_mul_of_nonneg_left ht.2 M.coe_nonneg)))
+  exact (norm_add_le _ _).trans
+    (add_le_add le_rfl (hi.trans (mul_le_mul_of_nonneg_left ht.2 M.coe_nonneg)))
 
 /-- Bounded-drift nonlinear solutions with the same initial state and zero forcing are
 indistinguishable on each compact nonnegative interval. -/

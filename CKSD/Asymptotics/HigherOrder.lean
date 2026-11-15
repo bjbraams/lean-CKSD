@@ -526,7 +526,7 @@ private theorem tendsto_charFun_bootstrapLaw (x : ℕ → ℝ) (m σ2 : ℝ)
           · linarith
       _ = ε / 2 := by field_simp
   have hB : |s ^ 2 * (σ2 - v n) / (2 * n)| ≤ ε / 2 * (1 / n) := by
-    rw [abs_div, abs_mul, abs_of_nonneg (sq_nonneg s), abs_of_pos (by positivity : (0:ℝ) < 2 * n),
+    rw [abs_div, abs_mul, abs_of_nonneg (sq_nonneg s), abs_of_pos (by positivity : (0 : ℝ) < 2 * n),
       abs_sub_comm]
     rw [div_le_iff₀ (by positivity)]
     have : s ^ 2 * |v n - σ2| ≤ K * (ε / K) := mul_le_mul (by linarith) h3 (abs_nonneg _) hK0.le
@@ -605,7 +605,8 @@ private theorem kolmogorovDistance_eq_iSup_rat (P Q : Measure ℝ) :
     have hu : Tendsto (fun k ↦ (q k : ℝ)) atTop (𝓝[>] t) := by
       refine tendsto_nhdsWithin_iff.2 ⟨?_, Eventually.of_forall fun k ↦ hq1 k⟩
       have h0 : Tendsto (fun k : ℕ ↦ t + 1 / ((k : ℝ) + 1)) atTop (𝓝 t) := by
-        simpa using (tendsto_const_nhds (x := t)).add (tendsto_one_div_add_atTop_nhds_zero_nat (𝕜 := ℝ))
+        simpa using (tendsto_const_nhds (x := t)).add
+          (tendsto_one_div_add_atTop_nhds_zero_nat (𝕜 := ℝ))
       exact tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds h0
         (fun k ↦ (hq1 k).le) fun k ↦ (hq2 k).le
     exact le_of_tendsto' (hc.tendsto.comp hu) fun k ↦ le_ciSup hB (q k)
@@ -623,7 +624,8 @@ private theorem measurable_kolmogorovDistance_bootstrap {Ω : Type*} [Measurable
     refine Measure.measurable_of_measurable_coe _ fun s hs ↦ ?_
     simp only [empiricalMeasure, smul_apply, smul_eq_mul, FunLike.coe_sum, Finset.sum_apply]
     refine Measurable.const_mul (Finset.measurable_sum _ fun i _ ↦ ?_) _
-    exact (Measure.measurable_coe hs).comp (Measure.measurable_dirac.comp ((measurable_pi_apply i).comp hx))
+    exact (Measure.measurable_coe hs).comp
+      (Measure.measurable_dirac.comp ((measurable_pi_apply i).comp hx))
   let ν : Ω → ProbabilityMeasure ℝ := fun ω ↦
     ⟨empiricalMeasure n (x ω), isProbabilityMeasure_empiricalMeasure hn (x ω)⟩
   have hν : Measurable ν := hE.subtype_mk

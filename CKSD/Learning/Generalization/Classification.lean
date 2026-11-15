@@ -148,8 +148,8 @@ theorem integrable_classificationLoss {X : Type*} [MeasurableSpace X]
 theorem measurable_decide_half_le {X : Type*} [MeasurableSpace X] {a : X → ℝ}
     (ha : Measurable a) : Measurable fun x ↦ decide ((1 / 2 : ℝ) ≤ a x) := by
   apply measurable_to_bool
-  change MeasurableSet {x | decide ((1 / 2 : ℝ) ≤ a x) = true}
-  simpa only [decide_eq_true_eq] using (measurableSet_le measurable_const ha)
+  simpa only [preimage, mem_singleton_iff, decide_eq_true_eq] using
+    measurableSet_le measurable_const ha
 
 /-- GAPS 107.8: the exact excess Bayes classification risk identity. For a regression function
 `η` with values in `[0,1]` and any measurable classifier `g`, the excess risk of `g` over the
@@ -163,9 +163,7 @@ theorem classificationRisk_sub_bayes_risk_eq {X : Type*} [MeasurableSpace X]
   dsimp only
   let star : X → Bool := fun x ↦ decide ((1 / 2 : ℝ) ≤ η x)
   have hstar : Measurable star := measurable_decide_half_le hη
-  change (∫ x, (if g x then 1 - η x else η x) ∂P) -
-      (∫ x, (if star x then 1 - η x else η x) ∂P) =
-    ∫ x, if g x ≠ star x then |2 * η x - 1| else 0 ∂P
+  unfold classificationRisk
   rw [← integral_sub (integrable_classificationLoss P η hη hrange g hg)
     (integrable_classificationLoss P η hη hrange star hstar)]
   apply integral_congr_ae
@@ -195,8 +193,7 @@ theorem classificationRisk_plugin_sub_bayes_risk_le {X : Type*} [MeasurableSpace
   have hiη : Integrable η P := by
     simpa only [Bool.false_eq_true, ite_false] using
       integrable_classificationLoss P η hη hrange (fun _ ↦ false) measurable_const
-  change (∫ x, (if ga x then 1 - η x else η x) ∂P) -
-      (∫ x, (if star x then 1 - η x else η x) ∂P) ≤ _
+  unfold classificationRisk
   rw [← integral_sub (integrable_classificationLoss P η hη hrange ga hga)
     (integrable_classificationLoss P η hη hrange star hstar), ← integral_const_mul]
   apply integral_mono
@@ -219,7 +216,6 @@ theorem surrogate_minimizer_sign_of_convex (phi : ℝ → ℝ) (hc : ConvexOn �
     (u : ℝ) (hmin : ∀ v, eta * phi (-u) + (1 - eta) * phi u ≤
       eta * phi (-v) + (1 - eta) * phi v) : 0 < (eta - 1 / 2) * u := by
   let C : ℝ → ℝ := fun v ↦ eta * phi (-v) + (1 - eta) * phi v
-  change ∀ v, C u ≤ C v at hmin
   have hcneg : ConvexOn ℝ univ (fun v ↦ phi (-v)) := by
     simpa only [preimage_univ, Function.comp_def, LinearMap.neg_apply, LinearMap.id_apply] using
       hc.comp_linearMap (-(LinearMap.id : ℝ →ₗ[ℝ] ℝ))

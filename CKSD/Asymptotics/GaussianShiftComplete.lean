@@ -40,10 +40,10 @@ theorem ae_eq_zero_of_integral_multivariateGaussian_eq_zero
       rw [TauCeti.Probability.integrableExpSet_inner_multivariateGaussian 0 η S]
       exact mem_univ _
     have hmgf := TauCeti.Probability.mgf_inner_multivariateGaussian (0 : E) η hS.posSemidef 1
-    simp only [mgf,one_mul,inner_zero_right,one_pow,mul_zero,zero_add] at hmgf
-    refine ⟨?_,?_,Real.exp_pos _⟩
-    · simpa only [integrableExpSet,mem_ofPred_eq,one_mul,id_eq] using hi
-    · simpa only [Z,P,id_eq,div_eq_mul_inv,mul_comm,one_mul] using hmgf.symm
+    simp only [mgf, one_mul, inner_zero_right, one_pow, mul_zero, zero_add] at hmgf
+    refine ⟨?_, ?_, Real.exp_pos _⟩
+    · simpa only [integrableExpSet, mem_ofPred_eq, one_mul, id_eq] using hi
+    · simpa only [Z, P, id_eq, div_eq_mul_inv, mul_comm, one_mul] using hmgf.symm
   have hc := isCompleteStatistic_withDensity_exp_inner P id measurable_id univ isOpen_univ
     Set.univ_nonempty Z hZ
   have htilt (η : E) : P.withDensity
@@ -58,7 +58,7 @@ theorem ae_eq_zero_of_integral_multivariateGaussian_eq_zero
     dsimp only
     rw [htilt η]
     exact ⟨by simpa only [Function.comp_id] using hfi (S.toEuclideanLin η),
-      hzero (S.toEuclideanLin η)⟩) ⟨0,mem_univ _⟩
+      hzero (S.toEuclideanLin η)⟩) ⟨0, mem_univ _⟩
   dsimp only at hz
   rw [htilt 0] at hz
   simp only [map_zero] at hz
@@ -73,7 +73,7 @@ theorem isCompleteStatistic_multivariateGaussian_location
   intro f hf hzero h
   have hvol := ae_eq_zero_of_integral_multivariateGaussian_eq_zero hS f hf
     (fun k ↦ by simpa only [Function.comp_id] using (hzero k).1) (fun k ↦ (hzero k).2)
-  change ∀ᵐ x ∂multivariateGaussian h S, f x = 0
+  dsimp only [id_eq]
   rw [TauCeti.Probability.multivariateGaussian_eq_withDensity hS]
   exact (withDensity_absolutelyContinuous _ _).ae_le hvol
 
@@ -104,6 +104,6 @@ theorem isBoundedlyCompleteStatistic_multivariateGaussian_location
     {S : Matrix (Fin d) (Fin d) ℝ} (hS : S.PosDef) :
     IsBoundedlyCompleteStatistic (fun h : E ↦ multivariateGaussian h S) id := by
   intro f hf hbound hzero k
-  obtain ⟨M,hM⟩ := hbound
+  obtain ⟨M, hM⟩ := hbound
   exact ae_gaussian_eq_zero_of_bounded_integral_multivariateGaussian_eq_zero hS f hf M hM hzero k
 end CKSD

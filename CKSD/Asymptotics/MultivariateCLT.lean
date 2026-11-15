@@ -42,7 +42,8 @@ theorem tendstoInDistribution_inv_sqrt_smul_sum_sub_of_iid {Ω : Type*} [Measura
   have hZn : ∀ n : ℕ, AEMeasurable (fun ω ↦ (Real.sqrt n)⁻¹ •
       ((∑ i ∈ Finset.range n, X i ω) - (n : ℝ) • ∫ ω, X 0 ω ∂μ)) μ := by
     intro n
-    exact ((Finset.aemeasurable_fun_sum _ fun i _ ↦ hXm i).sub aemeasurable_const).const_smul ((Real.sqrt n)⁻¹ : ℝ)
+    exact ((Finset.aemeasurable_fun_sum _ fun i _ ↦ hXm i).sub aemeasurable_const).const_smul
+      ((Real.sqrt n)⁻¹ : ℝ)
   apply _root_.TendstoInDistribution.of_inner aemeasurable_id hZn
   intro t
   let s : E → ℝ := fun x ↦ inner ℝ x t
@@ -56,7 +57,7 @@ theorem tendstoInDistribution_inv_sqrt_smul_sum_sub_of_iid {Ω : Type*} [Measura
     have he := covarianceBilin_self h2P t
     rw [TauCeti.covarianceBilin_eq_covMatrix P h2P t t] at he
     have hmap : Var[fun x : E ↦ inner ℝ t x; P] = Var[s ∘ X 0; μ] := by
-      change Var[fun x : E ↦ inner ℝ t x; μ.map (X 0)] = _
+      dsimp only [P]
       rw [variance_map (by fun_prop) (hXm 0)]
       congr 1
       ext ω
@@ -118,7 +119,8 @@ theorem tendstoInDistribution_sqrt_smul_sampleAverage
     by_cases hn : n = 0
     · simp [hn]
     have hnR : (n : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hn
-    have hs : Real.sqrt (n : ℝ) ≠ 0 := (Real.sqrt_pos.mpr (Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn))).ne'
+    have hs : Real.sqrt (n : ℝ) ≠ 0 :=
+      (Real.sqrt_pos.mpr (Nat.cast_pos.mpr (Nat.pos_of_ne_zero hn))).ne'
     have hs2 := Real.sq_sqrt (Nat.cast_nonneg n : (0 : ℝ) ≤ n)
     simp only [smul_sub, smul_smul, sampleAverage]
     congr 1 <;> congr 1 <;> field_simp <;> nlinarith

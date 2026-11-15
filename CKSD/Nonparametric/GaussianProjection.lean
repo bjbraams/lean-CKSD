@@ -91,7 +91,8 @@ theorem lintegral_exp_sq_div_gaussianReal {σ : ℝ} (hσ : σ ≠ 0) :
     (measurable_gaussianPDF _ _) (by fun_prop)]
   have hpt : ∀ w : ℝ, (gaussianPDF 0 (Real.toNNReal (σ ^ 2)) * fun w ↦
       ENNReal.ofReal (Real.exp (w ^ 2 / (4 * σ ^ 2)))) w =
-      ENNReal.ofReal ((Real.sqrt (2 * Real.pi * σ ^ 2))⁻¹ * Real.exp (-(1 / (4 * σ ^ 2)) * w ^ 2)) := by
+      ENNReal.ofReal ((Real.sqrt (2 * Real.pi * σ ^ 2))⁻¹ *
+        Real.exp (-(1 / (4 * σ ^ 2)) * w ^ 2)) := by
     intro w
     simp only [Pi.mul_apply, gaussianPDF, gaussianPDFReal, hvv, sub_zero]
     rw [← ENNReal.ofReal_mul (by positivity), mul_assoc, ← Real.exp_add]
@@ -143,6 +144,7 @@ theorem lintegral_exp_sum_sq_inner_multivariateGaussian {n : ℕ} (v : ι → Eu
       F ∘ fun ε ↦ L.toEuclideanLin ε := by
     funext ε; simp [hF, hL]
   rw [hlhs]
+  -- unfold `F ∘ _` to the pointwise form that `lintegral_map` matches
   change ∫⁻ ε, F (L.toEuclideanLin ε)
     ∂(multivariateGaussian 0 (σ ^ 2 • (1 : Matrix (Fin n) (Fin n) ℝ))) = _
   rw [← lintegral_map hFm (by fun_prop), hmap, multivariateGaussian_smul_one_eq_map_pi,

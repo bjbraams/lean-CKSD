@@ -52,6 +52,7 @@ theorem tendsto_log_Gamma_add_sub_log_Gamma_sub_mul_log {b : ℝ} (hb : 0 < b) :
       (sub_nonneg.2 hθ1) hθ0 (sub_add_cancel 1 θ)
     have he1 : (1 - θ) * x + θ * (x + N) = x + b := by dsimp [θ]; field_simp; ring
     simp only [Function.comp_apply, smul_eq_mul, he1] at hu
+    -- folds `Real.log (Real.Gamma _)` into the local `F _` so that `hFNat` rewrites
     change F (x + b) ≤ (1 - θ) * F x + θ * F (x + N) at hu
     rw [hFNat hx] at hu
     have hsum0 := hsum x 0 hx (le_refl 0)
@@ -61,6 +62,7 @@ theorem tendsto_log_Gamma_add_sub_log_Gamma_sub_mul_log {b : ℝ} (hb : 0 < b) :
       (show (0 : ℝ) < x + b + N by positivity) hθ0 (sub_nonneg.2 hθ1) (add_sub_cancel θ 1)
     have he2 : θ * (x + b) + (1 - θ) * (x + b + N) = x + N := by dsimp [θ]; field_simp; ring
     simp only [Function.comp_apply, smul_eq_mul, he2] at hl
+    -- folds `Real.log (Real.Gamma _)` into the local `F _` so that `hFNat` rewrites
     change F (x + N) ≤ θ * F (x + b) + (1 - θ) * F (x + b + N) at hl
     rw [hFNat hx, hFNat (show 0 < x + b by positivity), hsum0, hsum x b hx hb.le] at hl
     have hθN : θ * N = b := by dsimp [θ]; field_simp
@@ -71,8 +73,10 @@ theorem tendsto_log_Gamma_add_sub_log_Gamma_sub_mul_log {b : ℝ} (hb : 0 < b) :
       have hi : Tendsto (fun x : ℝ ↦ 1 + (c + k) / x) atTop (𝓝 1) := by
         simpa only [mul_zero, add_zero, div_eq_mul_inv] using
           tendsto_const_nhds.add (tendsto_inv_atTop_zero.const_mul (c + k))
-      simpa only [Real.log_one, Function.comp_def] using (Real.continuousAt_log one_ne_zero).tendsto.comp hi
-    simpa only [S, Finset.sum_const_zero] using tendsto_finsetSum (Finset.range N) (fun k _ ↦ hterm k)
+      simpa only [Real.log_one, Function.comp_def] using
+          (Real.continuousAt_log one_ne_zero).tendsto.comp hi
+    simpa only [S, Finset.sum_const_zero] using tendsto_finsetSum (Finset.range N)
+        (fun k _ ↦ hterm k)
   have hlo := (hSlim 0).sub ((hSlim b).const_mul (1 - θ))
   have hup := (hSlim 0).const_mul θ
   simp only [mul_zero, sub_zero] at hlo hup
@@ -85,7 +89,8 @@ theorem tendsto_log_Gamma_add_sub_log_Gamma_sub_mul_log {b : ℝ} (hb : 0 < b) :
 /-- The Gamma ratio has its standard power asymptotic along arbitrary positive real arguments. -/
 theorem tendsto_Gamma_add_div_mul_rpow {b : ℝ} (hb : 0 < b) :
     Tendsto (fun x : ℝ ↦ Real.Gamma (x + b) / (Real.Gamma x * x ^ b)) atTop (𝓝 1) := by
-  have h := Real.continuous_exp.tendsto 0 |>.comp (tendsto_log_Gamma_add_sub_log_Gamma_sub_mul_log hb)
+  have h :=
+      Real.continuous_exp.tendsto 0 |>.comp (tendsto_log_Gamma_add_sub_log_Gamma_sub_mul_log hb)
   simp only [Real.exp_zero] at h
   apply h.congr'
   filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx

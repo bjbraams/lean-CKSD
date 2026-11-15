@@ -133,10 +133,12 @@ theorem exists_intervalWeight_integral_eq_setIntegral_quantile (μ : Measure ℝ
       congr 1
       · rw [← setIntegral_levelSet_quantile μ a b c₁ ψ]
         refine setIntegral_congr_fun (hSm _) fun v hv ↦ ?_
+        -- `change` unfolds the definitions that close the goal by defeq
         change I (Q v) * ψ (Q v) = γ c₁ * ψ (Q v)
         rw [show Q v = c₁ from hv.2, hIc₁]
       · rw [← setIntegral_levelSet_quantile μ a b c₂ ψ]
         refine setIntegral_congr_fun (hSm _) fun v hv ↦ ?_
+        -- `change` unfolds the definitions that close the goal by defeq
         change I (Q v) * ψ (Q v) = γ c₂ * ψ (Q v)
         rw [show Q v = c₂ from hv.2, hIc₂]
     · have hsplit : Ioo 0 1 ∩ Q ⁻¹' {c₁, c₂} = S c₁ := by
@@ -144,6 +146,7 @@ theorem exists_intervalWeight_integral_eq_setIntegral_quantile (μ : Measure ℝ
           or_self]
       rw [hsplit, ← setIntegral_levelSet_quantile μ a b c₁ ψ]
       refine setIntegral_congr_fun (hSm _) fun v hv ↦ ?_
+      -- `change` unfolds the definitions that close the goal by defeq
       change I (Q v) * ψ (Q v) = γ c₁ * ψ (Q v)
       rw [show Q v = c₁ from hv.2, hIc₁]
   · -- Off the level sets the weight is the indicator of the window.
@@ -335,6 +338,7 @@ theorem exists_mul_exp_add_mul_exp_le_one_iff {β₁ β₂ c₁ c₂ : ℝ} (hβ
       have ht' : (c₂ - t) / (c₂ - c₁) * c₁ + (t - c₁) / (c₂ - c₁) * c₂ = t := by
         field_simp; ring
       rw [ht'] at h
+      -- `change` exposes the syntactic form that the following `rw` matches
       change g t ≤ _ * g c₁ + _ * g c₂ at h
       rw [hg₁, hg₂] at h
       calc g t ≤ _ := h
@@ -348,11 +352,11 @@ theorem exists_mul_exp_add_mul_exp_le_one_iff {β₁ β₂ c₁ c₂ : ℝ} (hβ
           have ht' : (c₂ - c₁) / (c₂ - t) * t + (c₁ - t) / (c₂ - t) * c₂ = c₁ := by
             field_simp; ring
           rw [ht'] at h
+          -- `change` exposes the syntactic form that the following `rw` matches
           change g c₁ ≤ _ * g t + _ * g c₂ at h
           rw [hg₁, hg₂] at h
           have ha : 0 < (c₂ - c₁) / (c₂ - t) := div_pos hd hd'
           have hsum : (c₂ - c₁) / (c₂ - t) + (c₁ - t) / (c₂ - t) = 1 := by field_simp; ring
-          change 1 ≤ g t
           nlinarith
         · rw [ht]; exact hg₁.ge
       · rcases ht.lt_or_eq with ht | ht
@@ -362,11 +366,11 @@ theorem exists_mul_exp_add_mul_exp_le_one_iff {β₁ β₂ c₁ c₂ : ℝ} (hβ
           have ht' : (t - c₂) / (t - c₁) * c₁ + (c₂ - c₁) / (t - c₁) * t = c₂ := by
             field_simp; ring
           rw [ht'] at h
+          -- `change` exposes the syntactic form that the following `rw` matches
           change g c₂ ≤ _ * g c₁ + _ * g t at h
           rw [hg₁, hg₂] at h
           have hb : 0 < (c₂ - c₁) / (t - c₁) := div_pos hd hd'
           have hsum : (t - c₂) / (t - c₁) + (c₂ - c₁) / (t - c₁) = 1 := by field_simp; ring
-          change 1 ≤ g t
           nlinarith
         · rw [← ht]; exact hg₂.ge
   · subst heq

@@ -26,26 +26,27 @@ theorem comp_map_comap_eq_map_comp_map
     (f : A → B) (hf : Measurable f) (g : C → D) (hg : Measurable g) :
     ((K.comap f hf).map g) ∘ₘ μ = (K ∘ₘ μ.map f).map g := by
   rw [← Measure.map_comp μ (K.comap f hf) hg,
-    ← Kernel.comp_deterministic_eq_comap,← Measure.comp_assoc,
+    ← Kernel.comp_deterministic_eq_comap, ← Measure.comp_assoc,
     Measure.deterministic_comp_eq_map hf]
 variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)
 /-- Translating a Gaussian observation translates its mean without changing covariance. -/
 theorem map_add_multivariateGaussian (a h : E) {S : Matrix (Fin d) (Fin d) ℝ}
     (hS : S.PosSemidef) :
-    (multivariateGaussian h S).map (fun x ↦ a+x) = multivariateGaussian (a+h) S := by
+    (multivariateGaussian h S).map (fun x ↦ a + x) = multivariateGaussian (a + h) S := by
   have he := TauCeti.Probability.map_affine_multivariateGaussian h hS
     (1 : Matrix (Fin d) (Fin d) ℝ) a
-  simpa only [Matrix.toEuclideanLin,Matrix.toLpLin_one,LinearMap.id_apply,
-    Matrix.one_mul,Matrix.transpose_one,Matrix.mul_one,add_comm] using he
+  simpa only [Matrix.toEuclideanLin, Matrix.toLpLin_one, LinearMap.id_apply,
+    Matrix.one_mul, Matrix.transpose_one, Matrix.mul_one, add_comm] using he
 /-- Translating the input and output of a Gaussian decision kernel preserves its averaged law
 up to the same shift of the Gaussian mean and output. -/
 theorem translatedKernel_comp_multivariateGaussian
     (K : Kernel E E) [IsMarkovKernel K] (a h : E)
     {S : Matrix (Fin d) (Fin d) ℝ} (hS : S.PosSemidef) :
-    ((K.comap (fun x : E ↦ a+x) (measurable_const_add a)).map (fun y : E ↦ y-a)) ∘ₘ multivariateGaussian h S =
-      (K ∘ₘ multivariateGaussian (a+h) S).map (fun y : E ↦ y-a) := by
+    ((K.comap (fun x : E ↦ a + x) (measurable_const_add a)).map (fun y : E ↦ y - a)) ∘ₘ
+        multivariateGaussian h S =
+      (K ∘ₘ multivariateGaussian (a + h) S).map (fun y : E ↦ y - a) := by
   rw [comp_map_comap_eq_map_comp_map (multivariateGaussian h S) K
-      (fun x : E ↦ a+x) (by fun_prop) (fun y : E ↦ y-a) (by fun_prop),
+      (fun x : E ↦ a + x) (by fun_prop) (fun y : E ↦ y - a) (by fun_prop),
     map_add_multivariateGaussian a h hS]
 end CKSD

@@ -31,10 +31,11 @@ namespace CKSD
 theorem norm_integral_sub_integral_le_mul_wassersteinEDist_one
     {X F : Type*} [PseudoMetricSpace X] [MeasurableSpace X]
     [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
-    (μ ν : Measure X) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] {K : ℝ≥0} (f : X → F) (hf : LipschitzWith K f)
+    (μ ν : Measure X) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] {K : ℝ≥0} (f : X → F)
+    (hf : LipschitzWith K f)
     (hμ : Integrable f μ) (hν : Integrable f ν)
     (hW : TauCeti.wassersteinEDist 1 μ ν ≠ ∞) :
-    ‖(∫ x, f x ∂μ) - ∫ x, f x ∂ν‖ ≤ (K:ℝ) * (TauCeti.wassersteinEDist 1 μ ν).toReal := by
+    ‖(∫ x, f x ∂μ) - ∫ x, f x ∂ν‖ ≤ (K : ℝ) * (TauCeti.wassersteinEDist 1 μ ν).toReal := by
   obtain ⟨g, hg, hgv⟩ := exists_dual_vector'' ℝ ((∫ x, f x ∂μ) - ∫ x, f x ∂ν)
   by_cases hK : K = 0
   · subst K
@@ -43,10 +44,11 @@ theorem norm_integral_sub_integral_le_mul_wassersteinEDist_one
     have heq : f = fun _ ↦ f x₀ := funext fun x ↦ hc x x₀
     rw [heq]
     simp
-  have hKpos : 0 < (K:ℝ) := NNReal.coe_pos.mpr (pos_iff_ne_zero.mpr hK)
+  have hKpos : 0 < (K : ℝ) := NNReal.coe_pos.mpr (pos_iff_ne_zero.mpr hK)
   have hgl : LipschitzWith 1 g := g.lipschitzWith.weaken (by exact_mod_cast hg)
-  have hgf : LipschitzWith K (fun x ↦ g (f x)) := by simpa only [one_mul, Function.comp_def] using hgl.comp hf
-  have hs : LipschitzWith 1 (fun x ↦ (K:ℝ)⁻¹ * g (f x)) := by
+  have hgf : LipschitzWith K (fun x ↦ g (f x)) := by
+    simpa only [one_mul, Function.comp_def] using hgl.comp hf
+  have hs : LipschitzWith 1 (fun x ↦ (K : ℝ)⁻¹ * g (f x)) := by
     apply LipschitzWith.of_dist_le_mul
     intro x y
     simp only [Real.dist_eq, one_mul, NNReal.coe_one]
@@ -57,14 +59,14 @@ theorem norm_integral_sub_integral_le_mul_wassersteinEDist_one
       (by field_simp)
   have h := TauCeti.ofReal_integral_sub_integral_le_wassersteinEDist_one hs
     ((g.integrable_comp hμ).const_mul _) ((g.integrable_comp hν).const_mul _)
-  have hr : (K:ℝ)⁻¹ * ‖(∫ x, f x ∂μ) - ∫ x, f x ∂ν‖ ≤
+  have hr : (K : ℝ)⁻¹ * ‖(∫ x, f x ∂μ) - ∫ x, f x ∂ν‖ ≤
       (TauCeti.wassersteinEDist 1 μ ν).toReal := by
     have hh := ENNReal.toReal_mono hW h
     rw [integral_const_mul, integral_const_mul, g.integral_comp_comm hμ,
       g.integral_comp_comm hν, ← mul_sub, ← map_sub, hgv] at hh
     simpa only [RCLike.ofReal_real_eq_id, id_eq,
       ENNReal.toReal_ofReal (mul_nonneg (inv_nonneg.mpr hKpos.le) (norm_nonneg _))] using hh
-  have hr' : ‖(∫ x, f x ∂μ) - ∫ x, f x ∂ν‖ / (K:ℝ) ≤
+  have hr' : ‖(∫ x, f x ∂μ) - ∫ x, f x ∂ν‖ / (K : ℝ) ≤
       (TauCeti.wassersteinEDist 1 μ ν).toReal := by
     simpa only [div_eq_mul_inv, mul_comm] using hr
   simpa only [mul_comm] using (div_le_iff₀ hKpos).mp hr' 
@@ -116,7 +118,7 @@ theorem isWassersteinLipschitzDrift_meanFieldVelocity
   let := hμp
   let := hνp
   let K : ℝ≥0 := Real.toNNReal L
-  have hLK : L ≤ (K:ℝ) := Real.le_coe_toNNReal L
+  have hLK : L ≤ (K : ℝ) := Real.le_coe_toNNReal L
   have hμid : Integrable (id : E → E) μ :=
     hμ.mono' aestronglyMeasurable_id (ae_of_all _ fun _ ↦ le_rfl)
   have hνid : Integrable (id : E → E) ν :=
@@ -129,19 +131,19 @@ theorem isWassersteinLipschitzDrift_meanFieldVelocity
     measurable_edist hμmom).mp hνmom
   have hi (z : E) (η : Measure E) [IsFiniteMeasure η] : Integrable (gradU z) η :=
     integrable_meanFieldInteraction gradU B L hUb hUl η z
-  have hsame : ‖(∫ z, gradU x z ∂μ) - ∫ z, gradU y z ∂μ‖ ≤ (K:ℝ)*‖x-y‖ := by
+  have hsame : ‖(∫ z, gradU x z ∂μ) - ∫ z, gradU y z ∂μ‖ ≤ (K : ℝ)*‖x-y‖ := by
     rw [← integral_sub (hi x μ) (hi y μ)]
-    have hb : ∀ᵐ z ∂μ, ‖gradU x z - gradU y z‖ ≤ (K:ℝ)*‖x-y‖ := by
+    have hb : ∀ᵐ z ∂μ, ‖gradU x z - gradU y z‖ ≤ (K : ℝ)*‖x-y‖ := by
       refine ae_of_all _ fun z ↦ ?_
       have h := hUl x z y z
       simp only [sub_self, norm_zero, add_zero] at h
       exact h.trans (mul_le_mul_of_nonneg_right hLK (norm_nonneg _))
     simpa only [probReal_univ, mul_one] using norm_integral_le_of_norm_le_const hb
   have hlaw : ‖(∫ z, gradU y z ∂μ) - ∫ z, gradU y z ∂ν‖ ≤
-      (K:ℝ) * (TauCeti.wassersteinEDist 1 μ ν).toReal :=
+      (K : ℝ) * (TauCeti.wassersteinEDist 1 μ ν).toReal :=
     norm_integral_sub_integral_le_mul_wassersteinEDist_one μ ν (gradU y)
       (lipschitzWith_meanFieldInteraction gradU L hUl y) (hi y μ) (hi y ν) hW
-  have hV : ‖gradV x-gradV y‖ ≤ (K:ℝ)*‖x-y‖ :=
+  have hV : ‖gradV x-gradV y‖ ≤ (K : ℝ)*‖x-y‖ :=
     (hVl x y).trans (mul_le_mul_of_nonneg_right hLK (norm_nonneg _))
   have heq : meanFieldVelocity gradV gradU μ x - meanFieldVelocity gradV gradU ν y =
       (gradV x-gradV y) - (((∫ z, gradU x z ∂μ) - ∫ z, gradU y z ∂μ) +

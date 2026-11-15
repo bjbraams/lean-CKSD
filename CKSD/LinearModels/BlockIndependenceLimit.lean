@@ -6,7 +6,8 @@ public import CKSD.LinearModels.SphericityLimit
 
 A block determinant ratio with `p` Beta factors of shapes `(n-q-1-i)/2` and `q/2` has
 likelihood-ratio limit chi-squared with `p*q` degrees of freedom. The input law is the two-block
-case of Muirhead, *Aspects of Multivariate Statistical Theory*, Theorem 11.2.4, printed pages 533–534
+case of Muirhead, *Aspects of Multivariate Statistical Theory*, Theorem 11.2.4, printed pages
+533–534
 (PDF pages 559–560 of the local 2005 copy), and Anderson, *An Introduction to Multivariate
 Statistical Analysis*, Theorem 9.3.3, printed page 388 (PDF page 406 of the local third edition).
 
@@ -29,7 +30,8 @@ theorem tendstoInDistribution_block_independence_of_beta_product_laws
       (Measure.pi (fun i : Fin p ↦ betaMeasure
         ((((n-1:ℕ):ℝ)-(q:ℝ)-i.val)/2) ((q:ℝ)/2))).map (fun x ↦ ∏ i, x i)) :
     TendstoInDistribution (fun (n : ℕ) ω ↦ -(n:ℝ) * Real.log
-      (blockIndependenceRatio (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω)))) atTop id (fun _ ↦ P)
+      (blockIndependenceRatio (sampleCovarianceMatrix (fun i : Fin n ↦ X i.val ω)))) atTop id
+          (fun _ ↦ P)
       (TauCeti.Probability.chiSquaredMeasure (p*q:ℕ)) := by
   let : Nonempty (Fin p) := Fin.pos_iff_nonempty.1 hp
   let c : Fin p → ℝ := fun i ↦ (q:ℝ)+1+i.val
@@ -55,7 +57,8 @@ theorem tendstoInDistribution_block_independence_of_beta_product_laws
     congr 2
     ring
   let : IsProbabilityMeasure (gammaMeasure (∑ i,b i) (1/2)) :=
-    isProbabilityMeasure_gammaMeasure (Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty) (by norm_num)
+    isProbabilityMeasure_gammaMeasure (Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty)
+        (by norm_num)
   have hlim := tendstoInDistribution_neg_natCast_mul_log_of_beta_product_law P c b hb Z hZm hmap
   have hGamma : gammaMeasure (∑ i,b i) (1/2) = TauCeti.Probability.chiSquaredMeasure (p*q:ℕ) := by
     rw [TauCeti.Probability.chiSquaredMeasure_eq_gammaMeasure (by exact_mod_cast Nat.mul_pos hp hq)]

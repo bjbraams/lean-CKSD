@@ -346,19 +346,8 @@ theorem tendstoInDistribution_fourierTrig_sum {Ω : Type*} [MeasurableSpace Ω]
         tendsto_nhdsWithin_iff.2 ⟨by simpa using hc0.mul_const (S + 1), hpos⟩
       exact (tendsto_inv_nhdsGT_zero.comp h0).const_mul_atTop hε |>.congr fun n ↦ by
         simp [hτ, div_eq_mul_inv]
-    have hg : Tendsto (fun n ↦ g (τ n)) atTop (𝓝 0) := by
-      have h := tendsto_integral_filter_of_dominated_convergence (fun ω ↦ Z 0 ω ^ 2)
-        (F := fun n ω ↦ if τ n < |Z 0 ω| then Z 0 ω ^ 2 else 0) (f := fun _ ↦ 0)
-        (Eventually.of_forall fun n ↦ (Measurable.ite (measurableSet_lt measurable_const
-          (continuous_abs.measurable.comp (hZ.measurable 0))) ((hZ.measurable 0).pow_const 2)
-          measurable_const).aestronglyMeasurable)
-        (Eventually.of_forall fun n ↦ ae_of_all _ fun ω ↦ by
-          split_ifs <;> simp [sq_nonneg])
-        (hZ.memLp_two 0).integrable_sq
-        (ae_of_all _ fun ω ↦ tendsto_const_nhds.congr' (by
-          filter_upwards [hτ.eventually_gt_atTop |Z 0 ω|] with n hn
-          simp only [ite_eq_right (not_lt.2 hn.le)]))
-      simpa using h
+    have hg : Tendsto (fun n ↦ g (τ n)) atTop (𝓝 0) :=
+      tendsto_integral_ite_lt_abs_sq (hZ.memLp_two 0) (hZ.measurable 0) hτ
     refine squeeze_zero' (Eventually.of_forall fun n ↦ Finset.sum_nonneg fun t _ ↦
       integral_nonneg fun ω ↦ by simp only; split_ifs <;> positivity) ?_
       (by simpa using hg.const_mul (‖s‖ ^ 2 / σsq))

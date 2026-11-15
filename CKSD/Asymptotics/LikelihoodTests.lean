@@ -23,12 +23,14 @@ regularity hypotheses are bundled in `CKSD.IsRegularScalarLikelihoodModel`.
 The proofs realize the sample as the first `n` coordinates of Mathlib's infinite product measure
 `Measure.infinitePi` and use the asymptotic linearization of the likelihood root
 `mle_asymptotic_linearization_and_normality` (GAPS 102.3), Mathlib's strong law and central
-limit theorem through the adapters of `CKSD.Asymptotics.Estimators`, and a second-order Taylor expansion
-of the sample log likelihood. All three statistics reduce to `Zₙ² / I(θ₀)` for the normalized
-score `Zₙ`. Under local alternatives, the joint law of a statistic and the log likelihood ratio is
-transported by Le Cam's third lemma `tendstoInDistribution_of_log_likelihood_ratio`
-(GAPS 102.14); the product densities use TauCeti's `TauCeti.pi_withDensity`, and the limit is
-identified by TauCeti's `TauCeti.Probability.gaussianReal_map_sq_noncentral`.
+limit theorem through the adapters of `CKSD.Asymptotics.Estimators`, and a second-order Taylor
+expansion of the sample log likelihood, whose remainder is controlled by
+`tendstoInMeasure_sum_sub_taylor_two_of_iid`. All three statistics reduce to `Zₙ² / I(θ₀)` for
+the normalized score `Zₙ`. Under local alternatives, the joint law of a statistic and the log
+likelihood ratio is transported by Le Cam's third lemma
+`tendstoInDistribution_of_log_likelihood_ratio` (GAPS 102.14); the product densities use
+TauCeti's `TauCeti.pi_withDensity`, and the limit is identified by TauCeti's
+`TauCeti.Probability.gaussianReal_map_sq_noncentral`.
 -/
 
 @[expose] public section
@@ -57,8 +59,8 @@ def scalarScoreStatistic {E : Type*} (f : ℝ → E → ℝ) (I : ℝ → ℝ) {
   deriv (sampleLogLikelihood f x) θ₀ ^ 2 / (n * I θ₀)
 
 /-- The coordinate process of the infinite product of a probability law is iid with that law. -/
-theorem isIndependentIdenticallyDistributed_infinitePi_eval {E : Type*} [MeasurableSpace E] (P : Measure E)
-    [IsProbabilityMeasure P] :
+theorem isIndependentIdenticallyDistributed_infinitePi_eval {E : Type*} [MeasurableSpace E]
+    (P : Measure E) [IsProbabilityMeasure P] :
     IsIndependentIdenticallyDistributed (Measure.infinitePi fun _ : ℕ ↦ P) (fun i ω ↦ ω i) P :=
   ⟨fun i ↦ measurable_pi_apply i,
     iIndepFun_infinitePi (P := fun _ : ℕ ↦ P) (X := fun _ ↦ id) (fun _ ↦ measurable_id),
@@ -175,7 +177,8 @@ theorem pi_eq_withDensity_exp_sum_log_sub {E : Type*} [MeasurableSpace E] (P : �
     (hP : ∀ θ, IsProbabilityMeasure (P θ)) (ν : Measure E) (f : ℝ → E → ℝ)
     (hf : ∀ θ, HasDensity (P θ) ν (f θ)) (hpos : ∀ θ x, 0 < f θ x) (θ θ₀ : ℝ) (n : ℕ) :
     Measure.pi (fun _ : Fin n ↦ P θ) = (Measure.pi fun _ : Fin n ↦ P θ₀).withDensity
-      (fun x ↦ ENNReal.ofReal (Real.exp (∑ i, (Real.log (f θ (x i)) - Real.log (f θ₀ (x i)))))) := by
+      (fun x ↦ ENNReal.ofReal
+        (Real.exp (∑ i, (Real.log (f θ (x i)) - Real.log (f θ₀ (x i)))))) := by
   have hrm : Measurable (fun y ↦ ENNReal.ofReal (f θ y / f θ₀ y)) :=
     ((hf θ).1.div (hf θ₀).1).ennreal_ofReal
   have h1 : P θ = (P θ₀).withDensity (fun y ↦ ENNReal.ofReal (f θ y / f θ₀ y)) := by
@@ -290,6 +293,92 @@ theorem tendstoInMeasure_prodMk_zero {Ω : Type*} [MeasurableSpace Ω]
   simp only [mem_ofPred_eq, mem_union, Prod.dist_eq, Prod.fst_zero, Prod.snd_zero,
     lt_max_iff] at hω ⊢
   exact hω
+
+/-- The deterministic local steps `h / √n`, viewed as random variables, tend to zero in
+probability, and their rescalings `√n (h / √n)` are bounded in probability. -/
+theorem tendstoInMeasure_div_sqrt_and_isBoundedInProbability {Ω : Type*} [MeasurableSpace Ω]
+    (mu : Measure Ω) [IsFiniteMeasure mu] (h : ℝ) :
+    TendstoInMeasure mu (fun (n : ℕ) (_ : Ω) ↦ h / Real.sqrt n) atTop (fun _ ↦ 0) ∧
+      IsBoundedInProbability mu (fun (n : ℕ) (_ : Ω) ↦ Real.sqrt n * (h / Real.sqrt n)) := by
+  have hs0 : Tendsto (fun n : ℕ ↦ (Real.sqrt n)⁻¹) atTop (𝓝 0) :=
+    tendsto_inv_atTop_zero.comp (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop)
+  refine ⟨tendstoInMeasure_const_of_tendsto mu _ (by
+    simpa [div_eq_mul_inv] using hs0.const_mul h), ?_⟩
+  refine isBoundedInProbability_of_tendstoInMeasure mu _ h ?_
+  have h0 := tendstoInMeasure_const_of_tendsto mu
+    (fun n : ℕ ↦ Real.sqrt n * (h / Real.sqrt n) - h)
+    (tendsto_const_nhds.congr' ((eventually_ge_atTop 1).mono fun n hn ↦ by
+      have : Real.sqrt n ≠ 0 := (Real.sqrt_pos.2 (by exact_mod_cast hn)).ne'
+      field_simp
+      ring))
+  rw [tendstoInMeasure_iff_measureReal_lt_dist] at h0 ⊢
+  intro ε hε; simpa [Real.dist_eq] using h0 ε hε
+
+/-- Negligibility of the second-order Taylor remainder of an i.i.d. log-likelihood sum. Let `ℓ`
+be `C³` in the parameter with third derivative dominated by an integrable `M` on
+`|θ - θ₀| < r`, and let `Dₙ → 0` in probability with `√n Dₙ` bounded in probability. Then
+`∑ᵢ<n (ℓ(θ₀ + Dₙ, Xᵢ) - ℓ(θ₀, Xᵢ)) - (Dₙ ∑ᵢ ℓ̇(θ₀, Xᵢ) + Dₙ² / 2 ∑ᵢ ℓ̈(θ₀, Xᵢ)) → 0`
+in probability. -/
+theorem tendstoInMeasure_sum_sub_taylor_two_of_iid
+    {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
+    (mu : Measure Ω) [IsProbabilityMeasure mu] (P : Measure E)
+    (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed mu X P) (ell : ℝ → E → ℝ)
+    (hsmooth : ∀ x, ContDiff ℝ 3 (fun theta ↦ ell theta x)) (theta₀ r : ℝ) (hr : 0 < r)
+    (M : E → ℝ) (hM : Integrable M P)
+    (henv : ∀ x theta, |theta - theta₀| < r →
+      |deriv (deriv (deriv (fun t ↦ ell t x))) theta| ≤ M x)
+    (D : ℕ → Ω → ℝ) (hD : TendstoInMeasure mu D atTop (fun _ ↦ 0))
+    (hDB : IsBoundedInProbability mu (fun (n : ℕ) w ↦ Real.sqrt n * D n w)) :
+    TendstoInMeasure mu (fun (n : ℕ) w ↦
+      ∑ i ∈ Finset.range n, (ell (theta₀ + D n w) (X i w) - ell theta₀ (X i w)) -
+        (D n w * ∑ i ∈ Finset.range n, deriv (fun t ↦ ell t (X i w)) theta₀ +
+          D n w ^ 2 / 2 * ∑ i ∈ Finset.range n, deriv (deriv (fun t ↦ ell t (X i w))) theta₀))
+      atTop (fun _ ↦ 0) := by
+  obtain ⟨hXm, hind, hlaw⟩ := hiid
+  set M' : E → ℝ := hM.aestronglyMeasurable.mk M with hM'def
+  have hM'm : Measurable M' := hM.aestronglyMeasurable.stronglyMeasurable_mk.measurable
+  have hMM' : M =ᵐ[P] M' := hM.aestronglyMeasurable.ae_eq_mk
+  have hM'i : Integrable M' P := hM.congr hMM'
+  have hMae : ∀ᵐ w ∂mu, ∀ i, M (X i w) = M' (X i w) := by
+    rw [ae_all_iff]
+    intro i
+    have : ∀ᵐ x ∂(mu.map (X i)), M x = M' x := by rw [hlaw i]; exact hMM'
+    exact ae_of_ae_map (hXm i).aemeasurable this
+  have hM0 : ∀ x, 0 ≤ M x := fun x ↦ (abs_nonneg _).trans (henv x theta₀ (by simpa using hr))
+  have hAB : IsBoundedInProbability mu
+      (fun (n : ℕ) w ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, M' (X i w)) :=
+    isBoundedInProbability_of_tendstoInMeasure mu _ _
+      (tendstoInMeasure_sampleMean_of_iid mu P X ⟨hXm, hind, hlaw⟩ M' hM'm hM'i)
+  have hX := tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _ hDB
+    (tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _ hDB
+      (tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _ hAB hD))
+  refine tendstoInMeasure_zero_of_abs_le mu _ _ D hr ?_ hX hD
+  filter_upwards [eventually_ge_atTop 1] with n hn
+  filter_upwards [hMae] with w hw hdr
+  have hn0 : (n : ℝ) ≠ 0 := by positivity
+  have ht : |theta₀ + D n w - theta₀| < r := by rwa [add_sub_cancel_left]
+  have hsum0 : 0 ≤ ∑ i ∈ Finset.range n, M' (X i w) :=
+    Finset.sum_nonneg fun i _ ↦ hw i ▸ hM0 _
+  have hsplit : ∑ i ∈ Finset.range n, (ell (theta₀ + D n w) (X i w) - ell theta₀ (X i w)) -
+      (D n w * ∑ i ∈ Finset.range n, deriv (fun t ↦ ell t (X i w)) theta₀ +
+        D n w ^ 2 / 2 * ∑ i ∈ Finset.range n, deriv (deriv (fun t ↦ ell t (X i w))) theta₀) =
+      ∑ i ∈ Finset.range n, (ell (theta₀ + D n w) (X i w) - ell theta₀ (X i w) -
+        D n w * deriv (fun t ↦ ell t (X i w)) theta₀ -
+          D n w ^ 2 / 2 * deriv (deriv (fun t ↦ ell t (X i w))) theta₀) := by
+    rw [Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib, ← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl fun i _ ↦ by ring
+  have hprod : Real.sqrt n * D n w * (Real.sqrt n * D n w *
+      ((n : ℝ)⁻¹ * (∑ i ∈ Finset.range n, M' (X i w)) * D n w)) =
+      Real.sqrt n ^ 2 * (n : ℝ)⁻¹ * (D n w ^ 3 * ∑ i ∈ Finset.range n, M' (X i w)) := by ring
+  rw [hsplit, hprod, Real.sq_sqrt (Nat.cast_nonneg n), mul_inv_cancel₀ hn0, one_mul, abs_mul,
+    abs_pow, abs_of_nonneg hsum0, Finset.mul_sum]
+  refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun i _ ↦ ?_)
+  have h := abs_sub_taylor_two_le (fun t ↦ ell t (X i w)) (hsmooth _) theta₀ r (M (X i w))
+    (fun t ht ↦ henv _ t ht) _ ht
+  rw [add_sub_cancel_left] at h
+  rw [← hw i, mul_comm (|D n w| ^ 3)]
+  exact h
+
 /-- Second-order expansions behind the likelihood-ratio, Wald, and score tests of a scalar
 simple null, on one probability space carrying an iid sample. Under the hypotheses of
 `mle_asymptotic_linearization_and_normality`, with `aₙ = √n (Tₙ - θ₀)` and the normalized
@@ -336,7 +425,6 @@ theorem likelihood_test_expansions_of_iid
             deriv (fun t ↦ ell t (X i w)) theta₀) - h ^ 2 * I / 2)) atTop (fun _ ↦ 0) := by
   obtain ⟨hrem, ha⟩ := mle_asymptotic_linearization_and_normality mu P X hiid ell hm hsmooth
     theta₀ I hI r hr M hM henv hscore hmean hvar hhess hinfo T hT hcons hroot
-  obtain ⟨hXm, hind, hlaw⟩ := hiid
   have hc3 : ∀ x, ContDiff ℝ (2 + 1) (fun t ↦ ell t x) := hsmooth
   have hdiff : ∀ x, Differentiable ℝ (fun t ↦ ell t x) := fun x ↦
     (contDiff_succ_iff_deriv.1 (hc3 x)).1
@@ -349,38 +437,20 @@ theorem likelihood_test_expansions_of_iid
     measurable_deriv_param ell hm hdiff
   have hHm : Measurable H :=
     measurable_deriv_param (fun t x ↦ deriv (fun s ↦ ell s x) t) hℓ1m hdiff1 theta₀
-  set M' : E → ℝ := hM.aestronglyMeasurable.mk M with hM'def
-  have hM'm : Measurable M' := hM.aestronglyMeasurable.stronglyMeasurable_mk.measurable
-  have hMM' : M =ᵐ[P] M' := hM.aestronglyMeasurable.ae_eq_mk
-  have hM'i : Integrable M' P := hM.congr hMM'
-  have hMae : ∀ᵐ w ∂mu, ∀ i, M (X i w) = M' (X i w) := by
-    rw [ae_all_iff]
-    intro i
-    have : ∀ᵐ x ∂(mu.map (X i)), M x = M' x := by rw [hlaw i]; exact hMM'
-    exact ae_of_ae_map (hXm i).aemeasurable this
-  have hM0 : ∀ x, 0 ≤ M x := fun x ↦ (abs_nonneg _).trans (henv x theta₀ (by simpa using hr))
   set Z : ℕ → Ω → ℝ := fun n w ↦ (Real.sqrt n)⁻¹ * ∑ i ∈ Finset.range n, S (X i w) with hZ
   set B : ℕ → Ω → ℝ := fun n w ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, H (X i w) with hB
-  set A : ℕ → Ω → ℝ := fun n w ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, M' (X i w) with hA
   set a : ℕ → Ω → ℝ := fun n w ↦ Real.sqrt n * (T n w - theta₀) with ha_def
-  have hZm : ∀ n, Measurable (Z n) := fun n ↦
-    (Finset.measurable_fun_sum _ fun i _ ↦ hSm.comp (hXm i)).const_mul _
   have hZlim : TendstoInDistribution Z atTop id (fun _ ↦ mu)
       (gaussianReal 0 (Real.toNNReal I)) := by
-    have := tendstoInDistribution_inv_sqrt_mul_sum_of_iid mu P X ⟨hXm, hind, hlaw⟩ S hSm
-      hscore hmean
+    have := tendstoInDistribution_inv_sqrt_mul_sum_of_iid mu P X hiid S hSm hscore hmean
     rwa [hvar] at this
   have hBlim : TendstoInMeasure mu B atTop (fun _ ↦ -I) := by
-    have := tendstoInMeasure_sampleMean_of_iid mu P X ⟨hXm, hind, hlaw⟩ H hHm hhess
+    have := tendstoInMeasure_sampleMean_of_iid mu P X hiid H hHm hhess
     rwa [hinfo] at this
-  have hAlim : TendstoInMeasure mu A atTop (fun _ ↦ ∫ x, M' x ∂P) :=
-    tendstoInMeasure_sampleMean_of_iid mu P X ⟨hXm, hind, hlaw⟩ M' hM'm hM'i
   have haB : IsBoundedInProbability mu a :=
     isBoundedInProbability_of_tendstoInDistribution mu a ha
   have hZB : IsBoundedInProbability mu Z :=
     isBoundedInProbability_of_tendstoInDistribution mu Z hZlim
-  have hAB : IsBoundedInProbability mu A :=
-    isBoundedInProbability_of_tendstoInMeasure mu A _ hAlim
   have hd : TendstoInMeasure mu (fun (n : ℕ) w ↦ T n w - theta₀) atTop (fun _ ↦ 0) := by
     rw [tendstoInMeasure_iff_measureReal_lt_dist] at hcons ⊢
     intro ε hε; simpa [Real.dist_eq] using hcons ε hε
@@ -393,32 +463,9 @@ theorem likelihood_test_expansions_of_iid
     ring
   have hsn : ∀ n : ℕ, 1 ≤ n → 0 < Real.sqrt n := fun n hn ↦
     Real.sqrt_pos.2 (by exact_mod_cast hn)
-  have hnsq : ∀ n : ℕ, ((n : ℝ)) = Real.sqrt n ^ 2 := fun n ↦
-    (Real.sq_sqrt (Nat.cast_nonneg n)).symm
-  have hM'0 : ∀ᵐ w ∂mu, ∀ i, 0 ≤ M' (X i w) := by
-    filter_upwards [hMae] with w hw i
-    rw [← hw i]; exact hM0 _
-  -- Taylor remainder bound for the sample log likelihood at a point `t` near `theta₀`
-  have hTay : ∀ (n : ℕ) (w : Ω), (∀ i, M (X i w) = M' (X i w)) → ∀ t : ℝ, |t - theta₀| < r →
-      |∑ i ∈ Finset.range n, (ell t (X i w) - ell theta₀ (X i w)) -
-        ((t - theta₀) * ∑ i ∈ Finset.range n, S (X i w) +
-          (t - theta₀) ^ 2 / 2 * ∑ i ∈ Finset.range n, H (X i w))| ≤
-        |t - theta₀| ^ 3 * ∑ i ∈ Finset.range n, M' (X i w) := by
-    intro n w hw t ht
-    have hsplit : ∑ i ∈ Finset.range n, (ell t (X i w) - ell theta₀ (X i w)) -
-        ((t - theta₀) * ∑ i ∈ Finset.range n, S (X i w) +
-          (t - theta₀) ^ 2 / 2 * ∑ i ∈ Finset.range n, H (X i w)) =
-        ∑ i ∈ Finset.range n, (ell t (X i w) - ell theta₀ (X i w) - (t - theta₀) * S (X i w) -
-          (t - theta₀) ^ 2 / 2 * H (X i w)) := by
-      rw [Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib, ← Finset.sum_sub_distrib]
-      refine Finset.sum_congr rfl fun i _ ↦ ?_
-      ring
-    rw [hsplit, Finset.mul_sum]
-    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun i _ ↦ ?_)
-    have h := abs_sub_taylor_two_le (fun t ↦ ell t (X i w)) (hsmooth _) theta₀ r (M (X i w))
-      (fun t ht ↦ henv _ t ht) t ht
-    rw [← hw i, mul_comm (|t - theta₀| ^ 3)]
-    exact h
+  have hinv : ∀ n : ℕ, ((n : ℝ))⁻¹ = (Real.sqrt n ^ 2)⁻¹ := fun n ↦ by
+    rw [Real.sq_sqrt (Nat.cast_nonneg n)]
+  -- the likelihood-ratio statistic, through the Taylor remainder at `Tₙ`
   have hLR : TendstoInMeasure mu (fun (n : ℕ) w ↦
       2 * ∑ i ∈ Finset.range n, (ell (T n w) (X i w) - ell theta₀ (X i w)) -
         I * a n w ^ 2) atTop (fun _ ↦ 0) := by
@@ -430,46 +477,17 @@ theorem likelihood_test_expansions_of_iid
         atTop (fun _ ↦ 0) :=
       tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _ haB
         (tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _ haB hBI)
-    have hX3 : TendstoInMeasure mu
-        (fun (n : ℕ) w ↦ 2 * (a n w * (a n w * (A n w * (T n w - theta₀))))) atTop (fun _ ↦ 0) :=
-      tendstoInMeasure_const_mul_zero mu _ _
-        (tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _ haB
-          (tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _ haB
-            (tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _ hAB hd)))
-    have h3 : TendstoInMeasure mu (fun (n : ℕ) w ↦
-        (2 * ∑ i ∈ Finset.range n, (ell (T n w) (X i w) - ell theta₀ (X i w)) -
-          I * a n w ^ 2) - (-2 * I) * (a n w * (a n w - Z n w / I)) -
-          a n w * (a n w * (B n w + I))) atTop (fun _ ↦ 0) := by
-      refine tendstoInMeasure_zero_of_abs_le mu _ _ (fun n w ↦ T n w - theta₀) hr ?_
-        hX3 hd
-      filter_upwards [eventually_ge_atTop 1] with n hn
-      filter_upwards [hMae, hM'0] with w hw hw0 hdr
-      have hb := hTay n w hw (T n w) hdr
-      have hs := hsn n hn
-      have hsum0 : 0 ≤ ∑ i ∈ Finset.range n, M' (X i w) := Finset.sum_nonneg fun i _ ↦ hw0 i
-      have key : ∀ s d sS sH L : ℝ, s ≠ 0 →
-          (2 * L - I * (s * d) ^ 2) - (-2 * I) * (s * d * (s * d - (s⁻¹ * sS) / I)) -
-            s * d * (s * d * ((s ^ 2)⁻¹ * sH + I)) = 2 * (L - (d * sS + d ^ 2 / 2 * sH)) := by
-        intro s d sS sH L hs0
-        field_simp
-        ring
-      have key2 : ∀ s d sM : ℝ, s ≠ 0 →
-          2 * (s * d * (s * d * ((s ^ 2)⁻¹ * sM * d))) = 2 * (d ^ 3 * sM) := by
-        intro s d sM hs0
-        field_simp
-      have hinv : ((n : ℝ))⁻¹ = (Real.sqrt n ^ 2)⁻¹ := by rw [← hnsq n]
-      have heq := key (Real.sqrt n) (T n w - theta₀) (∑ i ∈ Finset.range n, S (X i w))
-        (∑ i ∈ Finset.range n, H (X i w))
-        (∑ i ∈ Finset.range n, (ell (T n w) (X i w) - ell theta₀ (X i w))) hs.ne'
-      have heq2 := key2 (Real.sqrt n) (T n w - theta₀) (∑ i ∈ Finset.range n, M' (X i w)) hs.ne'
-      simp only [ha_def, hZ, hB, hA, hinv]
-      rw [heq, heq2, abs_mul, abs_mul, abs_mul, abs_pow, abs_of_nonneg hsum0]
-      gcongr
-    have := tendstoInMeasure_add_zero mu _ _
-      (tendstoInMeasure_add_zero mu _ _ h1 h2) h3
+    have h3 := tendstoInMeasure_const_mul_zero mu _ 2
+      (tendstoInMeasure_sum_sub_taylor_two_of_iid mu P X hiid ell hsmooth theta₀ r hr M hM
+        henv (fun n w ↦ T n w - theta₀) hd haB)
+    have := tendstoInMeasure_add_zero mu _ _ (tendstoInMeasure_add_zero mu _ _ h1 h2) h3
     convert this using 3 with n w
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · simp [ha_def, hZ, hB]
+    have hs := (hsn n hn).ne'
+    simp only [ha_def, hZ, hB, hinv n, add_sub_cancel]
+    field_simp
     ring
-  have hinv : ∀ n : ℕ, ((n : ℝ))⁻¹ = (Real.sqrt n ^ 2)⁻¹ := fun n ↦ by rw [← hnsq n]
   have hSc : TendstoInMeasure mu (fun (n : ℕ) w ↦ Z n w ^ 2 / I - I * a n w ^ 2)
       atTop (fun _ ↦ 0) := by
     have h1 := tendstoInMeasure_const_mul_zero mu _ (-1)
@@ -493,47 +511,23 @@ theorem likelihood_test_expansions_of_iid
       (tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _ haB hJT)
     convert this using 3 with n w
     ring
+  -- the log likelihood ratio, through the Taylor remainder at `θ₀ + h / √n`
   have hLam : ∀ h : ℝ, TendstoInMeasure mu (fun (n : ℕ) w ↦
       ∑ i ∈ Finset.range n, (ell (theta₀ + h / Real.sqrt n) (X i w) - ell theta₀ (X i w)) -
         (h * Z n w - h ^ 2 * I / 2)) atTop (fun _ ↦ 0) := by
     intro h
-    have hs0 : Tendsto (fun n : ℕ ↦ (Real.sqrt n)⁻¹) atTop (𝓝 0) :=
-      tendsto_inv_atTop_zero.comp (Real.tendsto_sqrt_atTop.comp tendsto_natCast_atTop_atTop)
-    have hU : TendstoInMeasure mu (fun (n : ℕ) _ ↦ h / Real.sqrt n) atTop (fun _ ↦ 0) :=
-      tendstoInMeasure_const_of_tendsto mu _ (by
-        simpa [div_eq_mul_inv] using hs0.const_mul h)
+    obtain ⟨hU, hUB⟩ := tendstoInMeasure_div_sqrt_and_isBoundedInProbability mu h
     have h1 := tendstoInMeasure_const_mul_zero mu _ (h ^ 2 / 2) hBI
-    have hX : TendstoInMeasure mu
-        (fun (n : ℕ) w ↦ |h| ^ 3 * (A n w * (Real.sqrt n)⁻¹)) atTop (fun _ ↦ 0) :=
-      tendstoInMeasure_const_mul_zero mu _ _
-        (tendstoInMeasure_mul_zero_of_isBoundedInProbability mu _ _ hAB
-          (tendstoInMeasure_const_of_tendsto mu _ hs0))
-    have h2 : TendstoInMeasure mu (fun (n : ℕ) w ↦
-        (∑ i ∈ Finset.range n, (ell (theta₀ + h / Real.sqrt n) (X i w) - ell theta₀ (X i w)) -
-          (h * Z n w - h ^ 2 * I / 2)) - h ^ 2 / 2 * (B n w + I)) atTop (fun _ ↦ 0) := by
-      refine tendstoInMeasure_zero_of_abs_le mu _ _ (fun n _ ↦ h / Real.sqrt n) hr ?_
-        hX hU
-      filter_upwards [eventually_ge_atTop 1] with n hn
-      filter_upwards [hMae, hM'0] with w hw hw0 hdr
-      have hs := hsn n hn
-      have hsum0 : 0 ≤ ∑ i ∈ Finset.range n, M' (X i w) := Finset.sum_nonneg fun i _ ↦ hw0 i
-      have hb := hTay n w hw (theta₀ + h / Real.sqrt n) (by simpa using hdr)
-      rw [add_sub_cancel_left] at hb
-      have key3 : ∀ s sS sH L : ℝ, s ≠ 0 →
-          (L - (h * (s⁻¹ * sS) - h ^ 2 * I / 2)) - h ^ 2 / 2 * ((s ^ 2)⁻¹ * sH + I) =
-            L - (h / s * sS + (h / s) ^ 2 / 2 * sH) := by
-        intro s sS sH L hs0
-        field_simp
-        ring
-      have key4 : |h| ^ 3 * ((Real.sqrt n ^ 2)⁻¹ * (∑ i ∈ Finset.range n, M' (X i w)) *
-          (Real.sqrt n)⁻¹) = |h / Real.sqrt n| ^ 3 * ∑ i ∈ Finset.range n, M' (X i w) := by
-        rw [abs_div, abs_of_pos hs]
-        field_simp
-      simp only [hZ, hB, hA, hinv]
-      rw [key3 _ _ _ _ hs.ne', key4, abs_of_nonneg (mul_nonneg (by positivity) hsum0)]
-      exact hb
+    have h2 := tendstoInMeasure_sum_sub_taylor_two_of_iid mu P X hiid ell hsmooth theta₀ r hr
+      M hM henv (fun n _ ↦ h / Real.sqrt n) hU hUB
     have := tendstoInMeasure_add_zero mu _ _ h1 h2
     convert this using 3 with n w
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · simp [hZ, hB]
+      ring
+    have hs := (hsn n hn).ne'
+    simp only [hZ, hB, hinv n]
+    field_simp
     ring
   exact ⟨ha, hZlim, hLR, hSc, hJ, hLam⟩
 
@@ -601,7 +595,8 @@ theorem likelihood_tests_sub_score_sq_infinitePi
   obtain ⟨hf, hpos, hsmooth, hIc, hI, hr, hM, henv, hscore, hmean, hhess, hinfo⟩ := hreg
   have hP0 := hP θ₀
   set X : ℕ → (ℕ → E) → E := fun i ω ↦ ω i with hX
-  have hiid : IsIndependentIdenticallyDistributed μ X (P θ₀) := isIndependentIdenticallyDistributed_infinitePi_eval (P θ₀)
+  have hiid : IsIndependentIdenticallyDistributed μ X (P θ₀) :=
+    isIndependentIdenticallyDistributed_infinitePi_eval (P θ₀)
   have hρm : ∀ n, Measurable (fun ω : ℕ → E ↦ fun i : Fin n ↦ X i ω) := fun n ↦
     measurable_pi_iff.2 fun i : Fin n ↦ hiid.1 i
   set ell : ℝ → E → ℝ := fun θ x ↦ Real.log (f θ x) with hell
@@ -805,7 +800,9 @@ theorem tendstoInDistribution_likelihoodRatio_wald_score_noncentralChiSquared
   set ψ : ℝ → ℝ × ℝ := fun z ↦ (z ^ 2 / I θ₀, h * z - h ^ 2 * I θ₀ / 2) with hψ
   have hψc : Continuous ψ := by fun_prop
   set ν₂ : Measure (ℝ × ℝ) := (gaussianReal 0 (Real.toNNReal (I θ₀))).map ψ with hν₂
-  have hν₂p : IsProbabilityMeasure ν₂ := by rw [hν₂]; exact (Measure.isProbabilityMeasure_map_iff hψc.measurable.aemeasurable).2 inferInstance
+  have hν₂p : IsProbabilityMeasure ν₂ := by
+    rw [hν₂]
+    exact (Measure.isProbabilityMeasure_map_iff hψc.measurable.aemeasurable).2 inferInstance
   obtain ⟨hlaw, hmean1⟩ := noncentral_limit_of_tilt hI h
   set Λ : ∀ n, (Fin n → E) → ℝ := fun n x ↦
     ∑ i, (Real.log (f (θ₀ + h / Real.sqrt n) (x i)) - Real.log (f θ₀ (x i))) with hΛdef

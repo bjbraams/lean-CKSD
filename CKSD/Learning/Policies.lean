@@ -18,20 +18,28 @@ exit times attain the supremum over all stopping times `τ ≥ 1`.
 
 ## Main definitions
 
-* `CKSD.IsStationaryPolicy`, `CKSD.policyTransition`, `CKSD.policyReward`,
-  `CKSD.policyValue`, `CKSD.policyActionValue`, `CKSD.policyAdvantage`,
-  `CKSD.policyObjective`, `CKSD.optimalObjective`: stationary policies and their values.
-* `CKSD.naturalPolicyGradientIterate`: natural policy gradient with softmax policies.
-* `CKSD.FiniteMarkovBandit`, `CKSD.gittinsIndex`, `CKSD.banditPolicyValue`: Markov bandits and
-  the Gittins index.
+* `CKSD.IsStationaryPolicy`: stationary randomized policies.
+* `CKSD.FiniteMarkovDecisionProcess.policyTransition`,
+  `CKSD.FiniteMarkovDecisionProcess.policyReward`,
+  `CKSD.FiniteMarkovDecisionProcess.policyValue`,
+  `CKSD.FiniteMarkovDecisionProcess.policyActionValue`,
+  `CKSD.FiniteMarkovDecisionProcess.policyAdvantage`,
+  `CKSD.FiniteMarkovDecisionProcess.policyObjective`,
+  `CKSD.FiniteMarkovDecisionProcess.optimalObjective`: values of stationary policies.
+* `CKSD.FiniteMarkovDecisionProcess.naturalPolicyGradientIterate`: natural policy gradient
+  with softmax policies.
+* `CKSD.FiniteMarkovBandit`, `CKSD.FiniteMarkovBandit.gittinsIndex`,
+  `CKSD.FiniteMarkovBandit.banditPolicyValue`: Markov bandits and the Gittins index.
 
 ## Main results
 
-* `CKSD.policyValue_sub_eq`: the performance-difference identity.
-* `CKSD.policyObjective_sub_le_of_log_update`: the mirror-descent bound for logarithmic policy
-  updates.
-* `CKSD.optimalObjective_sub_npg_le`: convergence of natural policy gradient (GAPS 107.61).
-* `CKSD.banditPolicyValue_le_of_gittins`: the Gittins index theorem (GAPS 107.51).
+* `CKSD.FiniteMarkovDecisionProcess.policyValue_sub_eq`: the performance-difference identity.
+* `CKSD.FiniteMarkovDecisionProcess.policyObjective_sub_le_of_log_update`: the mirror-descent
+  bound for logarithmic policy updates.
+* `CKSD.FiniteMarkovDecisionProcess.optimalObjective_sub_npg_le`: convergence of natural
+  policy gradient (GAPS 107.61).
+* `CKSD.FiniteMarkovBandit.banditPolicyValue_le_of_gittins`: the Gittins index theorem
+  (GAPS 107.51).
 -/
 
 @[expose] public section
@@ -48,6 +56,8 @@ variable {S A : Type*} [Fintype S] [DecidableEq S] [Fintype A]
 /-- A stationary randomized policy: each row is a probability vector. -/
 def IsStationaryPolicy (π : S → A → ℝ) : Prop :=
   (∀ i b, 0 ≤ π i b) ∧ ∀ i, ∑ b, π i b = 1
+
+namespace FiniteMarkovDecisionProcess
 
 /-- State transition matrix under a stationary randomized policy. -/
 def policyTransition (M : FiniteMarkovDecisionProcess S A) (π : S → A → ℝ) :
@@ -449,6 +459,8 @@ theorem optimalObjective_sub_npg_le [Nonempty A] (M : FiniteMarkovDecisionProces
   have := hbound πs hπs
   linarith
 
+end FiniteMarkovDecisionProcess
+
 /-- A finite Markov bandit: arms indexed by `ι` on a common finite state space `X`, each with a
 stochastic transition matrix and a reward function, and a discount `β ∈ [0,1)`. Only the played
 arm moves. -/
@@ -469,6 +481,8 @@ structure FiniteMarkovBandit (ι X : Type*) [Fintype X] where
   reward : ι → X → ℝ
 
 variable {ι X : Type*} [Fintype ι] [DecidableEq ι] [Fintype X] [DecidableEq X]
+
+namespace FiniteMarkovBandit
 
 /-- Expected discounted reward and discounted time until the first exit time `τ ≥ 1` from the
 continuation set `C`, for arm `k` started in each state. -/
@@ -504,5 +518,7 @@ theorem banditPolicyValue_le_of_gittins (B : FiniteMarkovBandit ι X)
     (π : (ι → X) → ι) (x : ι → X) :
     banditPolicyValue B π x ≤ banditPolicyValue B πG x := by
   sorry
+
+end FiniteMarkovBandit
 
 end CKSD

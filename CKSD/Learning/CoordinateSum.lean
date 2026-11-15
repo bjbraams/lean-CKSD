@@ -173,7 +173,7 @@ theorem coordSum_mul_left {D : Finset V} (g h : (V → S) → R) {x : V → S}
   unfold coordSum
   rw [Finset.mul_sum]
   exact Finset.sum_congr rfl fun x' hx' ↦ by
-    show g x' * h x' = _
+    dsimp only
     rw [hg x' (Finset.mem_filter.mp hx').2]
 
 /-- A factor that does not depend on the coordinates in `D` comes out of `coordSum D` on the
@@ -184,7 +184,7 @@ theorem coordSum_mul_right {D : Finset V} (h g : (V → S) → R) {x : V → S}
   unfold coordSum
   rw [Finset.sum_mul]
   exact Finset.sum_congr rfl fun x' hx' ↦ by
-    show h x' * g x' = _
+    dsimp only
     rw [hg x' (Finset.mem_filter.mp hx').2]
 
 end Semiring

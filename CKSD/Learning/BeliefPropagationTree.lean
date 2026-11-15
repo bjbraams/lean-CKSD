@@ -11,8 +11,10 @@ positive scale (GAPS 107.23).
 
 ## Main results
 
-* `CKSD.exists_beliefPropagation_exact_on_tree`: existence of an exact BP fixed point on a tree.
-* `CKSD.beliefPropagation_tree_unique_up_to_scale`: uniqueness of BP messages up to scale.
+* `CKSD.PairwiseGraphicalModel.exists_beliefPropagation_exact_on_tree`: existence of an exact
+  BP fixed point on a tree.
+* `CKSD.PairwiseGraphicalModel.beliefPropagation_tree_unique_up_to_scale`: uniqueness of BP
+  messages up to scale.
 
 ## Implementation notes
 
@@ -222,6 +224,8 @@ private theorem treeParent_mem_insert_treeBranch (hG : G.IsTree) {i j u : V} (hi
 
 end TreeBranch
 
+namespace PairwiseGraphicalModel
+
 variable {V S : Type*} [Fintype V] [LinearOrder V] [Fintype S]
 
 /-- The factor of vertex `u` in the weight of a tree model rooted at `r`: its vertex potential
@@ -429,7 +433,7 @@ private theorem bpTreeMessage_eq (M : PairwiseGraphicalModel V S) (htree : M.gra
   have hjU : j ∉ U := by
     simp only [U, Finset.mem_biUnion, Finset.mem_erase, not_exists, not_and]
     exact fun k hk ↦ not_mem_treeBranch_of_ne htree hij hk.1
-  show coordSum (treeBranch M.graph i j) (bpBranchWeight M i j) (fun _ ↦ b) = _
+  rw [bpTreeMessage]
   rw [treeBranch_eq_insert htree hij, Finset.insert_eq,
     coordSum_union (Finset.disjoint_singleton_left.mpr hiU), coordSum_singleton]
   refine Finset.sum_congr rfl fun a _ ↦ ?_
@@ -651,5 +655,7 @@ theorem beliefPropagation_tree_unique_up_to_scale (M : PairwiseGraphicalModel V 
   simp_rw [hprod, mul_left_comm _ (∏ k ∈ (M.graph.neighborFinset i).erase j, c k),
     ← Finset.mul_sum]
   field_simp
+
+end PairwiseGraphicalModel
 
 end CKSD

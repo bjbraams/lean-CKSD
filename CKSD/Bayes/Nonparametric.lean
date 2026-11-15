@@ -98,7 +98,7 @@ def IsPosteriorConsistent {Θ X : Type*} [TopologicalSpace Θ]
     (law : Measure (ℕ → X)) (post : ∀ n, Kernel (Fin n → X) Θ) (θ : Θ) : Prop :=
   ∀ᵐ x ∂law, ∀ U ∈ 𝓝 θ, Tendsto (fun n ↦ (post n (fun i ↦ x i.val)).real U) atTop (𝓝 1)
 
-/-- The i.i.d. sampling kernel `θ ↦ (P θ)^{⊗ℕ}`. -/
+/-- The i.i.d. sampling kernel `θ ↦ (P θ) ^ {⊗ℕ}`. -/
 private def iidKernel {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
     (P : Kernel Θ X) [IsMarkovKernel P] : Kernel Θ (ℕ → X) where
   toFun θ := Measure.infinitePi fun _ : ℕ ↦ P θ
@@ -111,6 +111,7 @@ private def iidKernel {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
 private instance {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
     (P : Kernel Θ X) [IsMarkovKernel P] : IsMarkovKernel (iidKernel P) :=
   ⟨fun θ ↦ by
+    -- `change` unfolds `iidKernel` at `θ`.
     change IsProbabilityMeasure (Measure.infinitePi fun _ : ℕ ↦ P θ)
     infer_instance⟩
 
@@ -189,7 +190,6 @@ private theorem exists_measurable_ae_eq_param {Θ X : Type*} [MeasurableSpace Θ
   refine ⟨extend Φ id (fun _ ↦ Classical.arbitrary Θ) ∘ empiricalCdfCoord e,
     (hemb.measurable_extend measurable_id measurable_const).comp
       (measurable_empiricalCdfCoord he.measurable), fun θ ↦ ?_⟩
-  change ∀ᵐ x ∂Measure.infinitePi (fun _ : ℕ ↦ P θ), _
   filter_upwards [ae_empiricalCdfCoord_eq he.measurable (P θ)] with x hx
   simp only [comp_apply, hx]
   exact hΦi.extend_apply id _ θ
@@ -261,6 +261,7 @@ private def sampleFiltration (Θ X : Type*) [MeasurableSpace Θ] [MeasurableSpac
       Measurable.of_eval fun i ↦ measurable_pi_apply _
     have : samplePrefix (Θ := Θ) (X := X) m =
         (fun y : Fin n → X ↦ fun i : Fin m ↦ y (Fin.castLE hmn i)) ∘ samplePrefix n := rfl
+    -- `show` unfolds the filtration fields to the comap inequality.
     show MeasurableSpace.comap (samplePrefix m) inferInstance ≤
       MeasurableSpace.comap (samplePrefix n) inferInstance
     rw [this, ← MeasurableSpace.comap_comp]
@@ -342,7 +343,6 @@ theorem ae_isPosteriorConsistent_of_identifiable
       ae_tendsto_posterior_indicator π P Q hQ post hpost hGm hGJ
         (hbasis.isOpen hB).measurableSet
   filter_upwards [Measure.ae_ae_of_ae_compProd hall] with θ hθ
-  change ∀ᵐ x ∂Measure.infinitePi (fun _ : ℕ ↦ P θ), _ at hθ
   filter_upwards [hθ] with x hx U hU
   obtain ⟨B, hB𝓑, hθB, hBU⟩ := hbasis.mem_nhds_iff.mp hU
   have h1 := hx B hB𝓑
@@ -353,7 +353,7 @@ theorem ae_isPosteriorConsistent_of_identifiable
   · have := (hpost n).1
     exact measureReal_le_one
 
-/-- Second moment `∫ (log dP/dQ)² dP` of the log-likelihood ratio, used in the Kullback–Leibler
+/-- Second moment `∫ (log dP / dQ)² dP` of the log-likelihood ratio, used in the Kullback–Leibler
 neighbourhoods of posterior contraction theory. -/
 def logLikelihoodRatioSecondMoment {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) : ℝ≥0∞ :=

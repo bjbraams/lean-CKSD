@@ -56,7 +56,8 @@ variable {Θ X S V : Type*} [MeasurableSpace X] [MeasurableSpace S]
 /-- GAPS 101.1: factorization on a standard Borel sample space and an arbitrary measurable
 statistic space. -/
 theorem isSufficientStatistic_iff_exists_factorization
-    [StandardBorelSpace X] [Nonempty X] [Nonempty Θ] (P : Θ → Measure X) (μ : Measure X) [SigmaFinite μ]
+    [StandardBorelSpace X] [Nonempty X] [Nonempty Θ] (P : Θ → Measure X) (μ : Measure X)
+    [SigmaFinite μ]
     (hP : ∀ θ, IsProbabilityMeasure (P θ)) (f : Θ → X → ℝ)
     (hf : ∀ θ, HasDensity (P θ) μ (f θ)) (T : X → S) (hT : Measurable T) :
     IsSufficientStatistic P T ↔ ∃ (g : Θ → S → ℝ) (h : X → ℝ),
@@ -76,9 +77,11 @@ theorem convex_naturalParameterSpace {H : Type*} [NormedAddCommGroup H]
   intro η hη ζ hζ a b ha hb hab
   replace hη : Integrable (fun t ↦ Real.exp (inner ℝ η t)) ν := hη
   replace hζ : Integrable (fun t ↦ Real.exp (inner ℝ ζ t)) ν := hζ
+  -- unfold membership in `naturalParameterSpace`
   change Integrable (fun t ↦ Real.exp (inner ℝ (a • η + b • ζ) t)) ν
   apply ((hη.const_mul a).add (hζ.const_mul b)).mono'
-  · exact (by fun_prop : Continuous (fun t ↦ Real.exp (inner ℝ (a • η + b • ζ) t))).aestronglyMeasurable
+  · exact (by fun_prop : Continuous (fun t ↦ Real.exp (inner ℝ (a • η + b • ζ) t))
+      ).aestronglyMeasurable
   · filter_upwards [] with t
     rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
     simpa only [inner_add_left, real_inner_smul_left, smul_eq_mul, Pi.add_apply] using

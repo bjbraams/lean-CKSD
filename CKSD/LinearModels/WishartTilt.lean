@@ -37,7 +37,7 @@ theorem det_pow_mul_wishartPDFReal {p : ℕ} {n : ℝ} {S : Matrix (Fin p) (Fin 
   by_cases hA : (A : Matrix (Fin p) (Fin p) ℝ).PosDef
   · rw [TauCeti.Probability.nonsingularWishartPDFReal_of_posDef _ _ hA,
       TauCeti.Probability.nonsingularWishartPDFReal_of_posDef _ _ hA]
-    change _ * (_ * _ / wishartNormalizer n S) = _ * (_ * _ / wishartNormalizer (n+2*k) S)
+    rw [← wishartNormalizer, ← wishartNormalizer]
     have hp : (A : Matrix (Fin p) (Fin p) ℝ).det ^ ((n+2*k-(p:ℝ)-1)/2) =
         (A : Matrix (Fin p) (Fin p) ℝ).det ^ k *
           (A : Matrix (Fin p) (Fin p) ℝ).det ^ ((n-(p:ℝ)-1)/2) := by

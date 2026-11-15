@@ -94,7 +94,7 @@ private theorem abs_integral_sub_apply_zero_le {L : Measure E} [IsProbabilityMea
 
 /-- The contraction estimate behind uniqueness for the affine fixed-point equation
 `Y =ᵈ b(S) + c(S) Y`: two solutions concentrated on the ball of radius `R` have `K`-Lipschitz
-means within `2 K R q^m` for every `m`, where `q = E c(S)`. -/
+means within `2 K R q ^ m` for every `m`, where `q = E c(S)`. -/
 private theorem abs_integral_sub_le_of_affine_fixedPoint (ρ : Measure S) [IsProbabilityMeasure ρ]
     {b : S → E} {c : S → ℝ} (hb : Measurable b) (hc : Measurable c) (hc0 : ∀ᵐ s ∂ρ, 0 ≤ c s)
     (hci : Integrable c ρ) {L₁ L₂ : Measure E} [IsProbabilityMeasure L₁] [IsProbabilityMeasure L₂]
@@ -280,6 +280,7 @@ theorem map_prod_betaMeasure_dirichletMeasure_eq_add_single [Nonempty ι] {a : �
       (a + Pi.single j 1 : ι → ℝ) := by
     funext i
     rw [Finset.sum_filter, Fintype.sum_option]
+    -- `show` reduces the `Option.elim` terms left by `Fintype.sum_option`.
     show (if j = i then (1 : ℝ) else 0) + ∑ l, (if l = i then a l else 0) =
       a i + Pi.single (M := fun _ ↦ ℝ) j 1 i
     rw [Finset.sum_ite_eq' Finset.univ i a]
@@ -693,6 +694,7 @@ private theorem norm_sbCells_le (A : Fin k → Set X) {w : (ℕ → ℝ) × (ℕ
     refine ENNReal.toReal_le_of_le_ofReal zero_le_one ?_
     rw [ENNReal.ofReal_one]
     exact (measure_mono (subset_univ _)).trans (stickBreakingMeasure_univ_le_one hw _)
+  -- `change` unfolds the pointwise norm of the evaluation map.
   change ‖(stickBreakingMeasure w.1 w.2).real (A i)‖ ^ 2 ≤ 1
   rw [Real.norm_eq_abs, abs_of_nonneg h0]
   nlinarith
@@ -721,7 +723,7 @@ private theorem sum_measureReal_cells (α : Measure X) [IsFiniteMeasure α] {A :
     add_zero]
 
 /-- **The Dirichlet law solves the stick-breaking equation for a partition.** With
-`(V, θ) ~ Beta(1, |α|) ⊗ α/|α|` independent of `Y ~ Dir(α(A₁), …, α(A_k))`, the vector
+`(V, θ) ~ Beta(1, |α|) ⊗ α / |α|` independent of `Y ~ Dir(α(A₁), …, α(A_k))`, the vector
 `V e(θ) + (1 - V) Y`, where `e(θ)` is the indicator vector of the cell of `θ`, is again
 `Dir(α(A₁), …, α(A_k))`; stated in integrated form. -/
 private theorem integral_dirichletMeasure_eq_stick (α : Measure X) [IsFiniteMeasure α]
@@ -853,7 +855,6 @@ theorem map_stickBreakingMeasure_cells_eq_dirichletMeasure (α : Measure X) [IsF
   set M := (Measure.infinitePi fun _ : ℕ ↦ β).prod (Measure.infinitePi fun _ : ℕ ↦ G)
   have hΦ := measurable_sbCells hAm
   have := (Measure.isProbabilityMeasure_map_iff (μ := M) hΦ.aemeasurable).mpr inferInstance
-  change M.map (sbCells A) = _
   have hβ : ∀ᵐ x ∂β, x ∈ Icc (0 : ℝ) 1 := ae_mem_Icc_betaMeasure 1 (α.real univ)
   have hρ : ∀ᵐ s ∂β.prod G, s.1 ∈ Icc (0 : ℝ) 1 := Measure.quasiMeasurePreserving_fst.ae hβ
   have hb : Measurable fun s : ℝ × X ↦ s.1 • cellMasses A (Measure.dirac s.2) :=

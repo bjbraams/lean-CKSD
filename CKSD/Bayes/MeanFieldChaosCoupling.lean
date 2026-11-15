@@ -66,7 +66,8 @@ theorem norm_particle_path_sub_le_empirical_wasserstein
   have hg := norm_sub_le_of_particle_integral_eq hT hN b hb μ hμp hμi hμb
     x y f hx hy hxe hze r ENNReal.toReal_nonneg hW
   have hc : 0 ≤ (Real.toNNReal L : ℝ) * T * Real.exp (2 * (Real.toNNReal L : ℝ) * T) * r :=
-    mul_nonneg (mul_nonneg (mul_nonneg (Real.toNNReal L).coe_nonneg hT) (Real.exp_pos _).le) ENNReal.toReal_nonneg
+    mul_nonneg (mul_nonneg (mul_nonneg (Real.toNNReal L).coe_nonneg hT) (Real.exp_pos _).le)
+      ENNReal.toReal_nonneg
   apply (ContinuousMap.norm_le _ hc).2
   intro t
   have hh := (norm_le_pi_norm (x t - y t) i).trans (hg t t.2)

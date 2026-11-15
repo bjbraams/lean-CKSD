@@ -4,7 +4,7 @@ public import Mathlib.MeasureTheory.Measure.Sub
 /-!
 # Oscillation contraction of positively weighted probability means
 
-Mutual minorization by `ε` implies contraction by `1-ε²` after any common bounded positive
+Mutual minorization by `ε` implies contraction by `1 - ε²` after any common bounded positive
 weighting. The proof separates the nonnegative measure remainder and integrates a centered
 function bounded by its oscillation. This is the one-step mechanism underlying the normalized
 Feynman–Kac contraction in Del Moral, *Feynman–Kac Formulae*, Proposition 4.3.3 and
@@ -43,7 +43,7 @@ theorem abs_sub_weighted_mean_le_of_oscillation {X : Type*} [MeasurableSpace X]
   have hgi : Integrable g μ := Integrable.of_bound hg.aestronglyMeasurable b
     (ae_of_all _ fun y ↦ by simpa only [Real.norm_eq_abs, abs_of_nonneg (hg0 y)] using (hgb y).2)
   have hgfi : Integrable (fun y ↦ g y * f y) μ := Integrable.of_bound
-    (hg.mul hf).aestronglyMeasurable (b*C) (ae_of_all _ fun y ↦ by
+    (hg.mul hf).aestronglyMeasurable (b * C) (ae_of_all _ fun y ↦ by
       rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (hg0 y)]
       exact mul_le_mul (hgb y).2 (hfb y) (abs_nonneg _) ((hg0 y).trans (hgb y).2))
   have hI : 0 < ∫ y, g y ∂μ := ha.trans_le (by
@@ -52,13 +52,13 @@ theorem abs_sub_weighted_mean_le_of_oscillation {X : Type*} [MeasurableSpace X]
   have hId : (∫ y, g y * (f x - f y) ∂μ) = f x * (∫ y, g y ∂μ) - ∫ y, g y * f y ∂μ := by
     simp_rw [mul_sub]
     rw [integral_sub (hgi.mul_const _) hgfi, integral_mul_const, mul_comm]
-  have hEq : f x - (∫ y, g y*f y ∂μ)/(∫ y, g y ∂μ) =
-      (∫ y, g y*(f x-f y) ∂μ)/(∫ y, g y ∂μ) := by
+  have hEq : f x - (∫ y, g y * f y ∂μ) / (∫ y, g y ∂μ) =
+      (∫ y, g y * (f x - f y) ∂μ) / (∫ y, g y ∂μ) := by
     rw [hId]
     field_simp
   rw [hEq, abs_div, abs_of_pos hI, div_le_iff₀ hI]
   calc
-    |(∫ y, g y*(f x-f y) ∂μ)| ≤ (∫ y, D*g y ∂μ) := by
+    |(∫ y, g y * (f x - f y) ∂μ)| ≤ (∫ y, D * g y ∂μ) := by
       rw [← Real.norm_eq_abs]
       apply norm_integral_le_of_norm_le (hgi.const_mul D)
       exact ae_of_all _ fun y ↦ by
@@ -75,7 +75,7 @@ theorem abs_weighted_mean_sub_weighted_mean_le_of_minorization
     (ha : 0 < a) (hgb : ∀ x, g x ∈ Icc a b) (hfb : ∀ x, |f x| ≤ C)
     (hosc : ∀ x y, |f x - f y| ≤ D) :
     |(∫ x, g x * f x ∂μ) / (∫ x, g x ∂μ) -
-      (∫ x, g x * f x ∂ν) / (∫ x, g x ∂ν)| ≤ (1 - ε^2) * D := by
+      (∫ x, g x * f x ∂ν) / (∫ x, g x ∂ν)| ≤ (1 - ε ^ 2) * D := by
   have hg0 : ∀ x, 0 ≤ g x := fun x ↦ (ha.trans_le (hgb x).1).le
   have hb0 : 0 ≤ b := (hg0 (Classical.arbitrary X)).trans (hgb _).2
   have hD0 : 0 ≤ D := by simpa using hosc (Classical.arbitrary X) (Classical.arbitrary X)
@@ -87,7 +87,7 @@ theorem abs_weighted_mean_sub_weighted_mean_le_of_minorization
     simpa only [integral_const, measureReal_def, measure_univ, ENNReal.toReal_one, one_smul] using
       integral_mono_ae (integrable_const a) (hgi π) (ae_of_all _ fun x ↦ (hgb x).1)
   have hgfi (π : Measure X) [IsProbabilityMeasure π] : Integrable (fun x ↦ g x * f x) π :=
-    Integrable.of_bound (hg.mul hf).aestronglyMeasurable (b*C) (ae_of_all _ fun x ↦ by
+    Integrable.of_bound (hg.mul hf).aestronglyMeasurable (b * C) (ae_of_all _ fun x ↦ by
       rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (hg0 x)]
       exact mul_le_mul (hgb x).2 (hfb x) (abs_nonneg _) hb0)
   let c := (∫ x, g x * f x ∂ν) / (∫ x, g x ∂ν)
@@ -96,41 +96,40 @@ theorem abs_weighted_mean_sub_weighted_mean_le_of_minorization
     abs_sub_weighted_mean_le_of_oscillation ν hg hf ha hgb hfb hosc x
   have hcenti (π : Measure X) [IsProbabilityMeasure π] :
       Integrable (fun x ↦ g x * (f x - c)) π := by
-    have heq : (fun x ↦ g x * (f x-c)) = fun x ↦ g x*f x - g x*c := by
+    have heq : (fun x ↦ g x * (f x - c)) = fun x ↦ g x * f x - g x * c := by
       funext x
       ring
     rw [heq]
     exact (hgfi π).sub ((hgi π).mul_const c)
   have hcentInt (π : Measure X) [IsProbabilityMeasure π] :
-      (∫ x, g x * (f x-c) ∂π) = (∫ x, g x*f x ∂π) - c * ∫ x, g x ∂π := by
+      (∫ x, g x * (f x - c) ∂π) = (∫ x, g x * f x ∂π) - c * ∫ x, g x ∂π := by
     simp_rw [mul_sub]
     rw [integral_sub (hgfi π) ((hgi π).mul_const c), integral_mul_const, mul_comm]
-  have hzero : (∫ x, g x * (f x-c) ∂ν) = 0 := by
+  have hzero : (∫ x, g x * (f x - c) ∂ν) = 0 := by
     rw [hcentInt]
     dsimp [c]
     field_simp [(hI ν).ne']
     ring
-  have hnum : (∫ x, g x * (f x-c) ∂rem) =
-      (∫ x, g x*f x ∂μ) - c * ∫ x, g x ∂μ := by
+  have hnum : (∫ x, g x * (f x - c) ∂rem) =
+      (∫ x, g x * f x ∂μ) - c * ∫ x, g x ∂μ := by
     rw [integral_sub_smul_measure_of_le μ ν hε.1.le hμν (hcenti μ) (hcenti ν),
       hzero, mul_zero, sub_zero, hcentInt]
   have hcomp : ε * (∫ x, g x ∂μ) ≤ (∫ x, g x ∂ν) := by
     have h := integral_mono_measure hνμ (ae_of_all _ hg0) (hgi ν)
     rw [integral_smul_measure, ENNReal.toReal_ofReal hε.1.le, smul_eq_mul] at h
     exact h
-  have hloss : (∫ x, g x ∂rem) ≤ (1-ε^2) * ∫ x, g x ∂μ := by
+  have hloss : (∫ x, g x ∂rem) ≤ (1 - ε ^ 2) * ∫ x, g x ∂μ := by
     rw [integral_sub_smul_measure_of_le μ ν hε.1.le hμν (hgi μ) (hgi ν)]
     nlinarith [mul_le_mul_of_nonneg_left hcomp hε.1.le]
-  have hnorm : |∫ x, g x * (f x-c) ∂rem| ≤ D * ∫ x, g x ∂rem := by
+  have hnorm : |∫ x, g x * (f x - c) ∂rem| ≤ D * ∫ x, g x ∂rem := by
     rw [← integral_const_mul]
     rw [← Real.norm_eq_abs]
     apply norm_integral_le_of_norm_le (((hgi μ).mono_measure Measure.sub_le).const_mul D)
     exact ae_of_all _ fun x ↦ by
       rw [Real.norm_eq_abs, abs_mul, abs_of_nonneg (hg0 x)]
       simpa only [mul_comm] using mul_le_mul_of_nonneg_left (hcent x) (hg0 x)
-  change |(∫ x, g x*f x ∂μ)/(∫ x, g x ∂μ) - c| ≤ _
-  have hEq : (∫ x, g x*f x ∂μ)/(∫ x, g x ∂μ) - c =
-      (∫ x, g x*(f x-c) ∂rem)/(∫ x, g x ∂μ) := by
+  have hEq : (∫ x, g x * f x ∂μ) / (∫ x, g x ∂μ) - c =
+      (∫ x, g x * (f x - c) ∂rem) / (∫ x, g x ∂μ) := by
     rw [hnum]
     field_simp [(hI μ).ne']
   rw [hEq, abs_div, abs_of_pos (hI μ), div_le_iff₀ (hI μ)]

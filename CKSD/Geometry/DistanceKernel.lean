@@ -172,6 +172,7 @@ theorem distanceKernel_sum_nonneg_of_sum_eq_zero {E ι : Type*} [NormedAddCommGr
         integral_finite_atomic_prod x x an bn han hbn _]
     rw [show an = fun i ↦ a i / A from rfl, show bn = fun i ↦ b i / A from rfl,
       hscale, hscale, hscale]
+  -- fold the expanded double sum into the local abbreviation `B`
   change 0 ≤ B c c
   have hfin : B c c = A ^ 2 * squaredMMD distanceKernel P Q := by
     rw [hrep, hdiff]
@@ -239,12 +240,10 @@ theorem measure_eq_of_integral_distanceKernel_eq {E : Type*} [NormedAddCommGroup
   let Q' := c⁻¹ • Q
   have hP' : IsProbabilityMeasure P' := by
     constructor
-    change c⁻¹ * P univ = 1
     exact ENNReal.inv_mul_cancel hc hctop
   have hQ' : IsProbabilityMeasure Q' := by
     constructor
-    change c⁻¹ * Q univ = 1
-    rw [← hmass]
+    rw [FunLike.coe_smul, Pi.smul_apply, smul_eq_mul, ← hmass]
     exact ENNReal.inv_mul_cancel hc hctop
   have := hP'
   have := hQ'
@@ -334,7 +333,8 @@ theorem integrable_distanceProductFeature {E F : Type*} [NormedAddCommGroup E]
   have hkc : Continuous (Function.uncurry (distanceProductKernel : (E × F) → (E × F) → ℝ)) := by
     unfold distanceProductKernel distanceKernel
     fun_prop
-  refine hP.mono' (hk.continuous_kolmogorovFeature hkc).aestronglyMeasurable (ae_of_all _ fun z ↦ ?_)
+  refine hP.mono' (hk.continuous_kolmogorovFeature hkc).aestronglyMeasurable
+    (ae_of_all _ fun z ↦ ?_)
   have hdiag : ‖hk.kolmogorovFeature z‖ ^ 2 = ‖z.1‖ * ‖z.2‖ := by
     rw [hk.norm_kolmogorovFeature_sq]
     simp [distanceProductKernel, distanceKernel]

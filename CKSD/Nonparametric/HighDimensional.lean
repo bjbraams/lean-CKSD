@@ -350,7 +350,7 @@ theorem tendstoInDistribution_hilbert_sampleAverage {Ω H : Type*} [MeasurableSp
       simp [m]
     refine (tendstoInDistribution_inv_sqrt_mul_sum_of_iid μ P X hiid _ hs hs2 hs0).congr
       (fun n ↦ ae_of_all _ fun ω ↦ ?_) (ae_of_all _ fun _ ↦ rfl)
-    show _ = inner ℝ t (Z n ω)
+    dsimp only
     rw [hZeq n ω, inner_smul_right, inner_sum]
   have htight := isTightMeasureSet_range_map_of_eq_normalizedSum hiid h2 hZeq hZm hZ2
   -- a limit point `G` of the laws, by Prokhorov's theorem
@@ -386,6 +386,7 @@ theorem tendstoInDistribution_hilbert_sampleAverage {Ω H : Type*} [MeasurableSp
     intro t
     have h1 : ∀ n, charFun (ν n : Measure H) t =
         charFun (μ.map (fun ω ↦ inner ℝ t (Z n ω))) (1 : ℝ) := fun n ↦ by
+      -- unfold the coercion of the probability measure `ν n` for the `rw` below
       change charFun (μ.map (Z n)) t = _
       rw [charFun_map_eq_charFun_map_inner_one (hZm n).aemeasurable]
       simp_rw [real_inner_comm t]

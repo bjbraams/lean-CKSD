@@ -116,31 +116,26 @@ theorem map_wilksLambda_wishart_eq_beta_product {p : ℕ}
   let _ (i : Fin p) : IsProbabilityMeasure (betaMeasure (((e:ℝ)-i.val)/2) ((h:ℝ)/2)) :=
     isProbabilityMeasureBeta (ha i) hb
   let E := selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ)
-  let f : E × E → ℝ := fun z ↦ (z.1 : Matrix (Fin p) (Fin p) ℝ).det /
-    ((z.1+z.2 : E) : Matrix (Fin p) (Fin p) ℝ).det
-  let g : (Fin p → ℝ) → ℝ := fun v ↦ ∏ i, v i
+  set f : E × E → ℝ := fun z ↦ wilksLambda z.1.val z.2.val
+  set g : (Fin p → ℝ) → ℝ := fun v ↦ ∏ i, v i
   have hd1 : Measurable (fun z : E × E ↦ (z.1 : Matrix (Fin p) (Fin p) ℝ).det) :=
     continuous_id.matrix_det.measurable.comp (measurable_subtype_coe.comp measurable_fst)
   have hd2 : Measurable (fun z : E × E ↦ ((z.1+z.2 : E) : Matrix (Fin p) (Fin p) ℝ).det) :=
     continuous_id.matrix_det.measurable.comp (measurable_subtype_coe.comp
       (measurable_fst.add measurable_snd))
   have hf : Measurable f := by
-    simpa only [Function.comp_def, f] using measurable_div.comp (hd1.prodMk hd2)
+    simpa only [Function.comp_def, f, wilksLambda, Submodule.coe_add] using
+      measurable_div.comp (hd1.prodMk hd2)
   have hg : Measurable g := Finset.measurable_fun_prod _ fun i _ ↦ measurable_pi_apply i
-  change ((TauCeti.Probability.wishartGramMeasure e Sigma).prod
-    (TauCeti.Probability.wishartGramMeasure h Sigma)).map f =
-    (Measure.pi fun i : Fin p ↦ betaMeasure (((e:ℝ)-i.val)/2) ((h:ℝ)/2)).map g
   apply TauCeti.Measure.ext_of_forall_integral_pow_eq_of_support (K := Icc (0:ℝ) 1) isCompact_Icc
-  · change ∀ᵐ x ∂_, x ∈ Icc (0:ℝ) 1
-    apply (ae_map_iff hf.aemeasurable measurableSet_Icc).2
+  · apply (ae_map_iff hf.aemeasurable measurableSet_Icc).2
     apply (Measure.ae_prod_iff_ae_ae (hf measurableSet_Icc)).2
     filter_upwards [TauCeti.Probability.ae_posDef_wishartGramMeasure hSigma he] with A hA
     filter_upwards [TauCeti.Probability.ae_posSemidef_wishartGramMeasure h Sigma] with B hB
-    dsimp [f]
+    dsimp [f, wilksLambda]
     exact ⟨div_nonneg hA.det_pos.le (hA.add_posSemidef hB).det_pos.le,
       (div_le_one (hA.add_posSemidef hB).det_pos).2 (hA.posSemidef.det_le_det_add hB)⟩
-  · change ∀ᵐ x ∂_, x ∈ Icc (0:ℝ) 1
-    apply (ae_map_iff hg.aemeasurable measurableSet_Icc).2
+  · apply (ae_map_iff hg.aemeasurable measurableSet_Icc).2
     have hv : ∀ᵐ v ∂Measure.pi (fun i : Fin p ↦ betaMeasure (((e:ℝ)-i.val)/2) ((h:ℝ)/2)),
         ∀ i, v i ∈ Icc (0:ℝ) 1 :=
       ae_all_iff.2 fun i ↦ Measure.tendsto_eval_ae_ae.eventually
@@ -250,9 +245,11 @@ theorem tendstoInDistribution_sphericity_likelihood_ratio
       ((measurable_sampleCovarianceMatrix (n := n) (p := p)).comp
         (Measurable.of_eval fun i ↦ hiid.1 i.val))
   have hlaw (n : ℕ) : P.map (fun ω (i : Fin n) ↦ X i.val ω) =
-      Measure.pi (fun _ : Fin n ↦ multivariateGaussian m ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ))) := by
+      Measure.pi
+          (fun _ : Fin n ↦ multivariateGaussian m ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ))) := by
     have hind : iIndepFun (fun (i : Fin n) ω ↦ X i.val ω) P := hiid.2.1.precomp Fin.val_injective
-    refine ((iIndepFun_iff_map_fun_eq_pi_map (fun i : Fin n ↦ (hiid.1 i.val).aemeasurable)).1 hind).trans ?_
+    refine ((iIndepFun_iff_map_fun_eq_pi_map (fun i : Fin n ↦ (hiid.1 i.val).aemeasurable)).1
+        hind).trans ?_
     congr 1
     funext i
     exact hiid.2.2 i
@@ -262,14 +259,13 @@ theorem tendstoInDistribution_sphericity_likelihood_ratio
     filter_upwards [eventually_ge_atTop (p+3)] with n hn
     have hn0 : p+1 ≤ n := by omega
     have hS : ((v : ℝ) • (1 : Matrix (Fin p) (Fin p) ℝ)).PosDef := Matrix.PosDef.one.smul hv
-    have harray : Measurable (fun ω (i : Fin n) ↦ X i.val ω) := Measurable.of_eval fun i ↦ hiid.1 i.val
+    have harray : Measurable (fun ω (i : Fin n) ↦ X i.val ω) :=
+        Measurable.of_eval fun i ↦ hiid.1 i.val
     have hratio : Measurable (fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦
         sphericityRatio (sampleCovarianceMatrix x)) :=
       (measurable_sphericityRatio p).comp measurable_sampleCovarianceMatrix
-    change P.map ((fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦
-      sphericityRatio (sampleCovarianceMatrix x)) ∘ (fun ω (i : Fin n) ↦ X i.val ω)) = _
-    rw [← Measure.map_map hratio harray, hlaw,
-      map_sphericityRatio_sampleCovarianceMatrix_eq_wishart hp0 hn0 m _ hS,
+    refine (Measure.map_map hratio harray).symm.trans ?_
+    rw [hlaw, map_sphericityRatio_sampleCovarianceMatrix_eq_wishart hp0 hn0 m _ hS,
       map_sphericityRatio_wishart_eq_beta_product hp0 (by omega : p ≤ n-1) v hv]
     congr 1
     congr 1
@@ -281,7 +277,8 @@ theorem tendstoInDistribution_sphericity_likelihood_ratio
     congr 2
     ring
   let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) (1 / 2)) :=
-    isProbabilityMeasure_gammaMeasure (Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty) (by norm_num)
+    isProbabilityMeasure_gammaMeasure (Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty)
+        (by norm_num)
   have hlim := tendstoInDistribution_neg_natCast_mul_log_of_beta_product_law P c b hb Z hZm hmap
   have hGamma : gammaMeasure (∑ i, b i) (1 / 2) =
       TauCeti.Probability.chiSquaredMeasure (p * (p+1)/2-1 : ℕ) := by
@@ -291,7 +288,8 @@ theorem tendstoInDistribution_sphericity_likelihood_ratio
     rw [TauCeti.Probability.chiSquaredMeasure_eq_gammaMeasure (by exact_mod_cast hd)]
     rw [show (∑ i, b i) = ((p * (p+1)/2-1 : ℕ) : ℝ)/2 from sum_sphericity_beta_second_shape hp]
   refine ⟨hlim.forall_aemeasurable, measurable_id.aemeasurable, ?_⟩
-  have hlimitP : (⟨(gammaMeasure (∑ i, b i) (1 / 2)).map id, inferInstance⟩ : ProbabilityMeasure ℝ) =
+  have hlimitP : (⟨(gammaMeasure (∑ i, b i) (1 / 2)).map id, inferInstance⟩ : ProbabilityMeasure ℝ)
+      =
       ⟨(TauCeti.Probability.chiSquaredMeasure (p * (p+1)/2-1 : ℕ)).map id, inferInstance⟩ :=
     Subtype.ext (congrArg (Measure.map id) hGamma)
   have ht := hlim.tendsto
@@ -314,21 +312,23 @@ theorem tendstoInDistribution_block_independence_likelihood_ratio
       (TauCeti.Probability.chiSquaredMeasure (p * q : ℕ)) := by
   apply tendstoInDistribution_block_independence_of_beta_product_laws hp hq P X hiid.1
   intro n hn
-  have harray : Measurable (fun ω (i : Fin n) ↦ X i.val ω) := Measurable.of_eval fun i ↦ hiid.1 i.val
+  have harray : Measurable (fun ω (i : Fin n) ↦ X i.val ω) :=
+      Measurable.of_eval fun i ↦ hiid.1 i.val
   have hlaw : P.map (fun ω (i : Fin n) ↦ X i.val ω) =
       Measure.pi (fun _ : Fin n ↦ multivariateGaussian m Sigma) := by
     have hind : iIndepFun (fun i : Fin n ↦ X i.val) P := hiid.2.1.precomp Fin.val_injective
-    refine ((iIndepFun_iff_map_fun_eq_pi_map (fun i : Fin n ↦ (hiid.1 i.val).aemeasurable)).1 hind).trans ?_
+    refine ((iIndepFun_iff_map_fun_eq_pi_map (fun i : Fin n ↦ (hiid.1 i.val).aemeasurable)).1
+        hind).trans ?_
     congr 1
     funext i
     exact hiid.2.2 i
   have hratio : Measurable (fun x : Fin n → EuclideanSpace ℝ (Fin (p+q)) ↦
       blockIndependenceRatio (sampleCovarianceMatrix x)) :=
     (measurable_blockIndependenceRatio p q).comp measurable_sampleCovarianceMatrix
-  change P.map ((fun x : Fin n → EuclideanSpace ℝ (Fin (p+q)) ↦
-    blockIndependenceRatio (sampleCovarianceMatrix x)) ∘ (fun ω (i : Fin n) ↦ X i.val ω)) = _
-  rw [← Measure.map_map hratio harray, hlaw,
-    map_blockIndependenceRatio_sampleCovarianceMatrix_eq_wishart (by omega : 0<p+q) hn m Sigma hSigma,
+  refine (Measure.map_map hratio harray).symm.trans ?_
+  rw [hlaw,
+    map_blockIndependenceRatio_sampleCovarianceMatrix_eq_wishart (by omega : 0<p+q) hn m Sigma
+        hSigma,
     map_blockIndependenceRatio_wishart_eq_beta_product hq (by omega : p+q≤n-1) Sigma hSigma
       (by ext i j; exact hblock i j)]
 
@@ -403,7 +403,8 @@ theorem multivariateHypothesisRoots_eq_iff_congruent {p : ℕ}
   have hRu' := isUnit_det_inv_sqrt_of_posDef hE'
   set R := (CFC.sqrt E)⁻¹
   set R' := (CFC.sqrt E')⁻¹
-  have hpsd : ∀ {S K : Matrix (Fin p) (Fin p) ℝ}, Sᵀ = S → K.PosSemidef → (S * K * S).PosSemidef := by
+  have hpsd : ∀ {S K : Matrix (Fin p) (Fin p) ℝ},
+      Sᵀ = S → K.PosSemidef → (S * K * S).PosSemidef := by
     intro S K hS hK
     have := hK.conjTranspose_mul_mul_same S
     rwa [conjTranspose_eq_transpose_of_trivial, hS] at this

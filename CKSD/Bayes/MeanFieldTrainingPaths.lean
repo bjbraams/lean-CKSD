@@ -18,7 +18,8 @@ noncomputable section
 open MeasureTheory ProbabilityTheory Set Filter Function
 open scoped ENNReal NNReal Topology BigOperators
 namespace CKSD
-variable {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E] [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
+variable {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E] [MeasurableSpace E]
+  [BorelSpace E] [SecondCountableTopology E]
 
 omit [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E] in
 /-- Restricting a jointly continuous characteristic family to a compact time interval gives a
@@ -31,7 +32,7 @@ theorem continuous_pathOn_parameter (γ : E → ℝ → E) (hγ : Continuous (un
       fun z ↦ γ z.1 z.2 := by
     funext z
     exact pathOn_apply_of_continuousOn T (γ z.1) (hc _).continuousOn z.2
-  change Continuous (fun z : E × Icc (0 : ℝ) T ↦ pathOn T (γ z.1) z.2)
+  simp only [uncurry_def]
   rw [heq]
   exact hγ.comp (continuous_fst.prodMk (continuous_subtype_val.comp continuous_snd))
 
@@ -98,8 +99,7 @@ theorem exists_iid_training_paths_on_Icc (P : Measure Ω) [IsProbabilityMeasure 
     have hm : Measurable (fun x ↦ γ x t) :=
       (hγ.comp (continuous_id.prodMk continuous_const)).measurable
     simp_rw [heval i _ t ht]
-    change P.map ((fun x ↦ γ x t) ∘ ξ i) = _
-    rw [← Measure.map_map hm (hξm i), hlaw i]
+    rw [← hlaw i, Measure.map_map hm (hξm i), Function.comp_def]
 section IntegralEquation
 variable [NormedSpace ℝ E] [CompleteSpace E]
 omit [BorelSpace E] [SecondCountableTopology E] in
@@ -111,7 +111,7 @@ theorem training_path_integral_eq
     (v : ℝ × E → E) (hv : Continuous v)
     (hd : ∀ x t, HasDerivAt (γ x) (v (t, γ x t)) t)
     (hzero : ∀ x, γ x 0 = x) (b : E → Measure E → E)
-    (hvEq : ∀ t ≥ 0, ∀ x, v (t,x) = b x (ρ₀.map (fun y ↦ γ y t)))
+    (hvEq : ∀ t ≥ 0, ∀ x, v (t, x) = b x (ρ₀.map (fun y ↦ γ y t)))
     (Z : ℕ → Ω → C(Icc (0 : ℝ) T, E))
     (hZeval : ∀ i ω t, t ∈ Icc (0 : ℝ) T → (Z i ω).IccExtend hT t = γ (ξ i ω) t)
     (hZmap : ∀ t, t ∈ Icc (0 : ℝ) T →
@@ -133,8 +133,7 @@ theorem training_path_integral_eq
     intro s hs
     rw [uIcc_of_le ht.1] at hs
     have hsT : s ∈ Icc (0 : ℝ) T := ⟨hs.1, hs.2.trans ht.2⟩
-    change b ((Z i ω).IccExtend hT s) (P.map (fun z ↦ (Z 0 z).IccExtend hT s)) =
-      v (s, γ (ξ i ω) s)
+    dsimp only
     rw [hZeval i ω s hsT, hZmap s hsT, hvEq s hs.1]
   rw [heq, hInt, hzero, hZeval i ω t ht]
   abel

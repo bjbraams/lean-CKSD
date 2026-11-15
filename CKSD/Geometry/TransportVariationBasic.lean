@@ -61,8 +61,6 @@ theorem exists_isCoupling_map_prodMap_eq {X Y Z : Type*}
     (TauCeti.snd_graphPlan hf.aemeasurable).trans hπ.fst_eq.symm
   obtain ⟨σ, hσpair, hσsnd⟩ := TauCeti.Measure.exists_glue_of_standardBorel_left
     (TauCeti.graphPlan f μ) π hpg
-  -- Express the glued marginal using its named measurable projection.
-  change σ.map J = TauCeti.graphPlan f μ at hσpair
   have hσfst : σ.map (fun z : X × Z × Y ↦ z.1) = μ := by
     calc σ.map (fun z : X × Z × Y ↦ z.1) = (σ.map J).fst := by
             rw [Measure.fst, Measure.map_map measurable_fst hJ]
@@ -127,9 +125,7 @@ theorem lowerSemicontinuous_lintegral_coupling_displacement {E : Type*}
       obtain ⟨F, -, hF, hsmall, hvF⟩ := hv.exists_isClosed_measure_sdiff_lt_continuousOn
         (μ := μ.toMeasure) MeasurableSet.univ (measure_ne_top _ _) hε
       refine ⟨F ×ˢ univ, hF.prod isClosed_univ, ?_, ?_⟩
-      · -- Write the Lusin-set restriction in coordinates to apply continuity rules.
-        change ContinuousOn (fun z : E × E ↦ (z.1, v z.1, z.2)) (F ×ˢ univ)
-        have hvC : ContinuousOn (fun z : E × E ↦ v z.1) (F ×ˢ univ) :=
+      · have hvC : ContinuousOn (fun z : E × E ↦ v z.1) (F ×ˢ univ) :=
           hvF.comp continuousOn_fst (fun _ hz ↦ hz.1)
         exact continuousOn_fst.prodMk (hvC.prodMk continuousOn_snd)
       · intro γ hγ

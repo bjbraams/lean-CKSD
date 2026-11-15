@@ -252,7 +252,8 @@ theorem marginalMass_empty_interventionMass [Fintype V] [Fintype S] (G : CausalG
     marginalMass (interventionMass localMass X a) ∅ x = 1 := by
   rw [← directedFactorizationMass_intervenedLocalMass]
   exact marginalMass_empty_directedFactorizationMass (G.removeIncoming ↑X)
-    (isLocalMassFamily_intervenedLocalMass hloc X a) (respectsParents_intervenedLocalMass G hpar X a) x
+    (isLocalMassFamily_intervenedLocalMass hloc X a)
+        (respectsParents_intervenedLocalMass G hpar X a) x
 
 /-- Conditional independence `Y ⊥ Z | X ∪ W`, for a mass concentrated on one value of `X`,
 in quotient form: `P(y | z, w) = P(y | w)`. -/
@@ -298,8 +299,8 @@ theorem doMarginalMass_eq_marginalMass_of_nonDescendant [Fintype V] [Fintype S]
     obtain ⟨u, hu, rfl | huv⟩ := hvU
     · exact (hE u hv).1 hu
     · exact (hE v hv).2 u hu huv
-  change marginalMass (interventionMass localMass X a) E x = _
-  rw [← directedFactorizationMass_intervenedLocalMass]
+  rw [doMarginalMass_eq_marginalMass_interventionMass,
+    ← directedFactorizationMass_intervenedLocalMass]
   unfold marginalMass directedFactorizationMass
   rw [sum_ite_prod_eq_sum_ite_prod_compl (G.removeIncoming ↑X) _
       (isLocalMassFamily_intervenedLocalMass hloc X a)
@@ -453,7 +454,6 @@ theorem condDoMass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
     ⟨fun v y s ↦ hloc'.1 v _ s, fun v y ↦ hloc'.2 v _⟩
   have hrpar : G2.RespectsParents rloc := by
     intro v y y' h
-    show intervenedLocalMass localMass X b v (ow y) = intervenedLocalMass localMass X b v (ow y')
     apply respectsParents_intervenedLocalMass G hpar X b v
     intro u hu
     simp only [ow]
@@ -525,7 +525,7 @@ theorem condDoMass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
   have key := div_eq_div_of_condIndepMass hr0 hrsupp hci hposr
   unfold condDoMass
   rw [← hmargB _ (Finset.disjoint_union_left.2 ⟨hYZ, hZW.symm⟩), ← hmargB _ hZW.symm]
-  change _ = marginalMass q (Y ∪ (Z ∪ W)) b / marginalMass q (Z ∪ W) b
+  simp only [doMarginalMass_eq_marginalMass_interventionMass]
   rw [← hmargA _ (fun v hv ↦ by simp [hv]), ← hmargA _ Finset.subset_union_left]
   exact key.symm
 

@@ -57,11 +57,9 @@ theorem sum_sum_eq_tsum_lagCountWeight (γ : ℤ → ℝ) (n : ℕ) :
     rw [← Finset.sum_fiberwise_of_maps_to (fun p hp ↦ Finset.mem_image_of_mem g hp)]
     refine Finset.sum_congr rfl fun h _ ↦ ?_
     rw [Finset.sum_congr rfl (g := fun _ ↦ γ h) (fun p hp ↦ by
-      show γ (g p) = γ h
       rw [(Finset.mem_filter.1 hp).2])]
     simp
   rw [tsum_eq_sum hsupp, ← Finset.sum_product']
-  change (n : ℝ)⁻¹ * ∑ p ∈ s, γ (g p) = _
   rw [hfib, Finset.mul_sum]
   refine Finset.sum_congr rfl fun h _ ↦ ?_
   simp only [lagCountWeight, s, g]

@@ -175,7 +175,8 @@ def interactionDrift {d : ℕ} (b₀ : EuclideanSpace ℝ (Fin d) → EuclideanS
     EuclideanSpace ℝ (Fin d) :=
   b₀ x + ∫ y, K x y ∂μ
 
-/-- Euclidean Brownian paths remain almost surely continuous after the nonnegative-time projection. -/
+/-- Euclidean Brownian paths remain almost surely continuous after the nonnegative-time
+projection. -/
 theorem IsBrownianEuclidean.ae_continuous_toNNReal {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     {P : Measure Ω} {B : ℝ≥0 → Ω → EuclideanSpace ℝ (Fin d)} (hB : IsBrownianEuclidean B P) :
     ∀ᵐ ω ∂P, Continuous (fun t : ℝ ↦ B t.toNNReal ω) := by

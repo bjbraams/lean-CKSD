@@ -16,11 +16,11 @@ Gaussian densities are TauCeti's `multivariateGaussianPDF`.
 
 ## Main results
 
-* `CKSD.KalmanModel.kalman_filter` (GAPS 106.7): conditionally on `y_0, …, y_t`, the state
-  `x_t` is Gaussian with mean `x_{t|t}` and covariance `P_{t|t}`, and `x_{t+1}` with mean
-  `x_{t+1|t}` and covariance `P_{t+1|t}`; the innovations are independent with laws
-  `N(0, Σ_t)`; and the density of `(y_0, …, y_{n-1})` is the product of the one-step predictive
-  densities.
+* `CKSD.KalmanModel.condDistrib_state_eq_multivariateGaussian` (GAPS 106.7): conditionally on
+  `y_0, …, y_t`, the state `x_t` is Gaussian with mean `x_{t|t}` and covariance `P_{t|t}`, and
+  `x_{t+1}` with mean `x_{t+1|t}` and covariance `P_{t+1|t}`; the innovations are independent
+  with laws `N(0, Σ_t)`; and the density of `(y_0, …, y_{n-1})` is the product of the one-step
+  predictive densities.
 
 ## Proof outline
 

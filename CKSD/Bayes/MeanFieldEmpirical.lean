@@ -72,10 +72,8 @@ theorem ae_tendsto_empirical_wasserstein_one
   have hr : Tendsto (fun n ↦ (TauCeti.wassersteinEDist 1
       (empiricalMeasure (n + 1) (fun j ↦ Z j ω)) (P.map (Z 0))).toReal) atTop (𝓝 0) := by
     have hr0 := (ENNReal.tendsto_toReal (by simp : (0 : ℝ≥0∞) ≠ ∞)).comp hω
-    change Tendsto (fun n ↦ (TauCeti.wassersteinEDist 1
-      (TauCeti.Probability.empiricalMeasure (fun i ↦ Z i ω) n : Measure E)
-      (P.map (Z 0))).toReal) atTop (𝓝 (0 : ℝ≥0∞).toReal) at hr0
-    simpa only [← empiricalMeasure_succ_eq_tauCeti, ENNReal.toReal_zero] using hr0
+    simpa only [Function.comp_def, μ, ProbabilityMeasure.coe_mk, ← empiricalMeasure_succ_eq_tauCeti,
+      ENNReal.toReal_zero] using hr0
   apply (hr.comp (tendsto_sub_atTop_nat 1)).congr'
   filter_upwards [eventually_ge_atTop (1 : ℕ)] with N hN
   exact congrArg (fun M : ℕ ↦

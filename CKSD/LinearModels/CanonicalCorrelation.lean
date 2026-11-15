@@ -251,8 +251,8 @@ theorem exists_dotProduct_self_eq_one_and_mulVec_eq_norm {m n : ℕ} (hn : 0 < n
   · have hbound : ‖K‖ ≤ Real.sqrt (f y₀) := by
       rw [l2_opNorm_def]
       refine ContinuousLinearMap.opNorm_le_bound _ (Real.sqrt_nonneg _) fun v ↦ ?_
-      change ‖toEuclideanLin K v‖ ≤ _
-      rw [norm_euclideanSpace_eq_sqrt_dotProduct, Matrix.ofLp_toLpLin, Matrix.toLin'_apply]
+      rw [LinearEquiv.trans_apply, LinearMap.coe_toContinuousLinearMap',
+        norm_euclideanSpace_eq_sqrt_dotProduct, Matrix.ofLp_toLpLin, Matrix.toLin'_apply]
       rcases eq_or_ne v 0 with rfl | hv
       · simp
       have hv' : 0 < ‖v‖ := norm_pos_iff.2 hv
@@ -314,8 +314,8 @@ theorem norm_canonicalCorrelationMatrix_le_one (Suu : Matrix (Fin p) (Fin p) ℝ
     simpa [dotProduct] using Finset.sum_nonneg fun i _ ↦ mul_self_nonneg (w i)
   rw [l2_opNorm_def]
   refine ContinuousLinearMap.opNorm_le_bound _ zero_le_one fun y ↦ ?_
-  change ‖toEuclideanLin K y‖ ≤ 1 * ‖y‖
-  rw [one_mul, norm_euclideanSpace_eq_sqrt_dotProduct, norm_euclideanSpace_eq_sqrt_dotProduct,
+  rw [LinearEquiv.trans_apply, LinearMap.coe_toContinuousLinearMap', one_mul,
+    norm_euclideanSpace_eq_sqrt_dotProduct, norm_euclideanSpace_eq_sqrt_dotProduct,
     Matrix.ofLp_toLpLin, Matrix.toLin'_apply]
   apply Real.sqrt_le_sqrt
   set w := K *ᵥ y.ofLp

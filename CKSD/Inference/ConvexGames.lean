@@ -56,7 +56,6 @@ theorem exists_compact_convex_game_saddle_point {Θ : Type*} [Fintype Θ] [Nonem
       · subst j; simp
       · simp [Pi.single_eq_of_ne hj]
     rw [heq, map_smul]
-    change z i * a i = a i * z i
     ring
   have hconst (r : ℝ) : f (fun _ ↦ r) = r * ∑ i, a i := by
     rw [hf_apply, Finset.mul_sum]
@@ -64,7 +63,7 @@ theorem exists_compact_convex_game_saddle_point {Θ : Type*} [Fintype Θ] [Nonem
     intro i _
     ring
   let q : Θ → ℝ := fun _ ↦ t - 1
-  have hq : q ∈ S := fun i _ ↦ by change t - 1 < t; linarith
+  have hq : q ∈ S := fun i _ ↦ sub_one_lt t
   have haq : f q < u := hfS q hq
   have ha : ∀ i, 0 ≤ a i := by
     intro i
@@ -74,6 +73,7 @@ theorem exists_compact_convex_game_saddle_point {Θ : Type*} [Fintype Θ] [Nonem
     have hc : c ≤ 0 := div_nonpos_of_nonneg_of_nonpos (by linarith) hai.le
     have hzS : q + c • Pi.single i 1 ∈ S := by
       intro j _
+      -- `change` unfolds the definitions so that `linarith` sees the atoms
       change q j + c * (Pi.single i (1 : ℝ) : Θ → ℝ) j < t
       by_cases hj : j = i
       · subst j; simp only [Pi.single_eq_same]; dsimp [q]; linarith
@@ -81,7 +81,6 @@ theorem exists_compact_convex_game_saddle_point {Θ : Type*} [Fintype Θ] [Nonem
         exact hq j (mem_univ _)
     have hbad := hfS _ hzS
     rw [map_add, map_smul] at hbad
-    change f q + c * a i < u at hbad
     dsimp [c] at hbad
     rw [div_mul_cancel₀ _ hai.ne] at hbad
     linarith

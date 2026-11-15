@@ -121,6 +121,7 @@ private theorem exists_integrable_exp_inner_add_mul_norm [FiniteDimensional ℝ 
       have := Real.exp_le_exp.2 (by linarith : inner ℝ η x + r * ‖x‖ ≤
         inner ℝ η x - K * inner ℝ (b j) x)
       linarith [Real.exp_pos (inner ℝ η x + K * inner ℝ (b j) x)]
+  -- `change` unfolds the definitions so that `linarith` sees the atoms
   change Real.exp (inner ℝ η x + r * ‖x‖) ≤ _
   linarith [Real.exp_pos (inner ℝ η x)]
 

@@ -337,7 +337,8 @@ private lemma integral_add_mul_ite_sub_lt_zero (Q : Measure ℝ) [IsProbabilityM
     ext y; simp [Set.indicator, sub_neg]
   have hI : Integrable ((Iio c).indicator (1 : ℝ → ℝ)) Q :=
     (integrable_const (1 : ℝ)).indicator measurableSet_Iio
-  rw [h, integral_add (integrable_const _) (hI.const_mul B), integral_const_mul, integral_indicator_one measurableSet_Iio]
+  rw [h, integral_add (integrable_const _) (hI.const_mul B), integral_const_mul,
+      integral_indicator_one measurableSet_Iio]
   simp
 
 /-- Distribution function increments are integrals of the density:
@@ -394,6 +395,36 @@ private lemma lintegral_sq_quantileScore_sub_le {Ω : Type*} [MeasurableSpace Ω
     _ = Q (Icc (θ - |t|) (θ + |t|)) := by
         rw [lintegral_indicator_one hS, ← hlaw, Measure.map_apply hY measurableSet_Icc]
     _ ≤ _ := measure_Icc_le_of_hasDensity hf hC hfC
+
+/-- Uniform `L²` continuity of the quantile score over a family of responses `Yᵢ` whose
+densities `fᵢ` are at most `b` at `θᵢ` and equicontinuous there: for every `η > 0` there is
+`δ > 0` with `E (ψ_τ(Yᵢ - θᵢ - t) - ψ_τ(Yᵢ - θᵢ))² ≤ η` for all `i` and `|t| < δ`. -/
+private lemma exists_lintegral_sq_quantileScore_sub_le {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) (Q : ℕ → Measure ℝ) (f : ℕ → ℝ → ℝ)
+    (hf : ∀ i, HasDensity (Q i) volume (f i)) (Y : ℕ → Ω → ℝ) (hY : ∀ i, Measurable (Y i))
+    (hlaw : ∀ i, P.map (Y i) = Q i) (θ : ℕ → ℝ) (tau b : ℝ) (hb0 : 0 ≤ b)
+    (hbound : ∀ i, f i (θ i) ≤ b)
+    (hequi : ∀ eps > 0, ∃ delta > 0, ∀ i t, |t - θ i| < delta → |f i t - f i (θ i)| < eps)
+    {η : ℝ} (hη : 0 < η) :
+    ∃ δ > 0, ∀ i t, |t| < δ →
+      ∫⁻ ω, ENNReal.ofReal (((tau - if Y i ω - θ i - t < 0 then 1 else 0) -
+        (tau - if Y i ω - θ i < 0 then 1 else 0)) ^ 2) ∂P ≤ ENNReal.ofReal η := by
+  obtain ⟨δe, hδe, hequi1⟩ := hequi 1 one_pos
+  refine ⟨min δe (η / (2 * (b + 1))), lt_min hδe (by positivity), fun i t ht ↦ ?_⟩
+  have hfC : ∀ y ∈ Icc (θ i - |t|) (θ i + |t|), f i y ≤ b + 1 := by
+    intro y hy
+    have hyt : |y - θ i| < δe :=
+      (abs_sub_le_iff.2 ⟨by linarith [hy.2], by linarith [hy.1]⟩).trans_lt
+        (ht.trans_le (min_le_left _ _))
+    have h1 := hequi1 i y hyt
+    have h2 := hbound i
+    rw [abs_lt] at h1
+    linarith
+  refine (lintegral_sq_quantileScore_sub_le P (hY i) (hlaw i) (hf i) tau (θ i) t (b + 1)
+    (by linarith) hfC).trans (ENNReal.ofReal_le_ofReal ?_)
+  have h := ht.trans_le (min_le_right _ _)
+  rw [lt_div_iff₀ (by positivity)] at h
+  nlinarith [abs_nonneg t]
 
 /-- Curvature of the expected check loss: if `Y` has density `f`, `τ`-quantile `θ`, and
 `|f y - f θ| ≤ η` for `|y - θ| ≤ |t|`, then
@@ -473,6 +504,43 @@ private lemma abs_integral_quantileRemainder_sub_le {Ω : Type*} [MeasurableSpac
   rwa [e]
 
 end QuantileRegressionAsymptotics
+
+/-- If the design moments `n⁻¹ ∑ᵢ xᵢ xᵢᵀ` converge to a positive definite `D₀` and the weighted
+moments `n⁻¹ ∑ᵢ wᵢ xᵢ xᵢᵀ` with weights `wᵢ ≥ a > 0` converge to `D₁`, then `D₁` is positive
+definite. -/
+theorem posDef_of_tendsto_weightedDesignMoment {p : ℕ} (x : ℕ → EuclideanSpace ℝ (Fin p))
+    (w : ℕ → ℝ) {a : ℝ} (ha : 0 < a) (hw : ∀ i, a ≤ w i) {D₀ D₁ : Matrix (Fin p) (Fin p) ℝ}
+    (hD₀ : D₀.PosDef) (hdesign : Tendsto (weightedDesignMoment x (fun _ ↦ 1)) atTop (𝓝 D₀))
+    (hweighted : Tendsto (weightedDesignMoment x w) atTop (𝓝 D₁)) :
+    D₁.PosDef := by
+  have hentry : ∀ (w : ℕ → ℝ) {M : Matrix (Fin p) (Fin p) ℝ},
+      Tendsto (weightedDesignMoment x w) atTop (𝓝 M) → ∀ j k,
+      Tendsto (fun n ↦ weightedDesignMoment x w n j k) atTop (𝓝 (M j k)) :=
+    fun w M hM j k ↦ ((continuous_id.matrix_elem j k).tendsto M).comp hM
+  have hsymm : D₁.IsHermitian := by
+    rw [Matrix.isHermitian_iff_isSymm]
+    ext j k
+    refine tendsto_nhds_unique ((hentry _ hweighted k j).congr fun n ↦ ?_)
+      (hentry _ hweighted j k)
+    simp only [weightedDesignMoment]
+    congr 1
+    exact Finset.sum_congr rfl fun i _ ↦ by ring
+  refine Matrix.posDef_iff_dotProduct_mulVec.2 ⟨hsymm, fun v hv ↦ ?_⟩
+  simp only [star_trivial]
+  have h1 := tendsto_sum_mul_sq_inv_sqrt_mul_inner x w hweighted (WithLp.toLp 2 v)
+  have h0 := tendsto_sum_mul_sq_inv_sqrt_mul_inner x (fun _ ↦ 1) hdesign (WithLp.toLp 2 v)
+  have hle : ∀ n : ℕ, a * ∑ i ∈ Finset.range n,
+      (fun _ ↦ (1 : ℝ)) i * ((Real.sqrt n)⁻¹ * inner ℝ (x i) (WithLp.toLp 2 v)) ^ 2 ≤
+      ∑ i ∈ Finset.range n,
+        w i * ((Real.sqrt n)⁻¹ * inner ℝ (x i) (WithLp.toLp 2 v)) ^ 2 := fun n ↦ by
+    rw [Finset.mul_sum]
+    exact Finset.sum_le_sum fun i _ ↦ by
+      simp only [one_mul]
+      exact mul_le_mul_of_nonneg_right (hw i) (sq_nonneg _)
+  have hlim := le_of_tendsto_of_tendsto' (h0.const_mul a) h1 hle
+  have hpos := (Matrix.posDef_iff_dotProduct_mulVec.1 hD₀).2 hv
+  simp only [star_trivial] at hpos
+  nlinarith
 
 /-- GAPS 105.5: fixed-design quantile-regression central limit theorem. Let the responses
 `Yᵢ` be independent with laws `Qᵢ` having densities `fᵢ`, with `τ`-quantile `⟪xᵢ, β⟫`, and
@@ -554,24 +622,9 @@ theorem tendstoInDistribution_quantile_regression
       (hasDerivWithinAt_quantileCheckLoss tau u) v
   have hb0 : 0 ≤ b := (ha.le.trans (hbound 0).1).trans (hbound 0).2
   have hw : ∀ η > 0, ∃ δ > 0, ∀ i t, |t| < δ →
-      ∫⁻ ω, ENNReal.ofReal ((ψ (e i ω - t) - ψ (e i ω)) ^ 2) ∂P ≤ ENNReal.ofReal η := by
-    intro η hη
-    obtain ⟨δe, hδe, hequi1⟩ := hequi 1 one_pos
-    refine ⟨min δe (η / (2 * (b + 1))), lt_min hδe (by positivity), fun i t ht ↦ ?_⟩
-    have hfC : ∀ y ∈ Icc (θ i - |t|) (θ i + |t|), f i y ≤ b + 1 := by
-      intro y hy
-      have hyt : |y - θ i| < δe :=
-        (abs_sub_le_iff.2 ⟨by linarith [hy.2], by linarith [hy.1]⟩).trans_lt
-          (ht.trans_le (min_le_left _ _))
-      have h1 := hequi1 i y hyt
-      have h2 := (hbound i).2
-      rw [abs_lt] at h1
-      linarith
-    refine (lintegral_sq_quantileScore_sub_le P (hY i) (hlaw i) (hf i) tau (θ i) t (b + 1)
-      (by linarith) hfC).trans (ENNReal.ofReal_le_ofReal ?_)
-    have h := ht.trans_le (min_le_right _ _)
-    rw [lt_div_iff₀ (by positivity)] at h
-    nlinarith [abs_nonneg t]
+      ∫⁻ ω, ENNReal.ofReal ((ψ (e i ω - t) - ψ (e i ω)) ^ 2) ∂P ≤ ENNReal.ofReal η :=
+    fun η hη ↦ exists_lintegral_sq_quantileScore_sub_le P Q f hf Y hY hlaw θ tau b hb0
+      (fun i ↦ (hbound i).2) hequi hη
   have hm : ∀ η > 0, ∃ δ > 0, ∀ i t, |t| < δ →
       |∫ ω, (quantileCheckLoss tau (e i ω - t) - quantileCheckLoss tau (e i ω) +
         t * ψ (e i ω)) ∂P - f i (θ i) * t ^ 2 / 2| ≤ η * t ^ 2 := by
@@ -586,36 +639,8 @@ theorem tendstoInDistribution_quantile_regression
     convert hdesign using 2 with n
     ext j k
     simp [weightedDesignMoment]
-  have hD₁ : D₁.PosDef := by
-    have hentry : ∀ (w : ℕ → ℝ) {M : Matrix (Fin p) (Fin p) ℝ},
-        Tendsto (weightedDesignMoment x w) atTop (𝓝 M) → ∀ j k,
-        Tendsto (fun n ↦ weightedDesignMoment x w n j k) atTop (𝓝 (M j k)) :=
-      fun w M hM j k ↦ ((continuous_id.matrix_elem j k).tendsto M).comp hM
-    have hsymm : D₁.IsHermitian := by
-      rw [Matrix.isHermitian_iff_isSymm]
-      ext j k
-      refine tendsto_nhds_unique ((hentry _ hweighted k j).congr fun n ↦ ?_)
-        (hentry _ hweighted j k)
-      simp only [weightedDesignMoment]
-      congr 1
-      exact Finset.sum_congr rfl fun i _ ↦ by ring
-    refine Matrix.posDef_iff_dotProduct_mulVec.2 ⟨hsymm, fun v hv ↦ ?_⟩
-    simp only [star_trivial]
-    have h1 := tendsto_sum_mul_sq_inv_sqrt_mul_inner x (fun i ↦ f i (θ i)) hweighted
-      (WithLp.toLp 2 v)
-    have h0 := tendsto_sum_mul_sq_inv_sqrt_mul_inner x (fun _ ↦ 1) hdesign (WithLp.toLp 2 v)
-    have hle : ∀ n : ℕ, a * ∑ i ∈ Finset.range n,
-        (fun _ ↦ (1 : ℝ)) i * ((Real.sqrt n)⁻¹ * inner ℝ (x i) (WithLp.toLp 2 v)) ^ 2 ≤
-        ∑ i ∈ Finset.range n,
-          f i (θ i) * ((Real.sqrt n)⁻¹ * inner ℝ (x i) (WithLp.toLp 2 v)) ^ 2 := fun n ↦ by
-      rw [Finset.mul_sum]
-      exact Finset.sum_le_sum fun i _ ↦ by
-        simp only [one_mul]
-        exact mul_le_mul_of_nonneg_right (hbound i).1 (sq_nonneg _)
-    have hlim := le_of_tendsto_of_tendsto' (h0.const_mul a) h1 hle
-    have hpos := (Matrix.posDef_iff_dotProduct_mulVec.1 hD₀).2 hv
-    simp only [star_trivial] at hpos
-    nlinarith
+  have hD₁ : D₁.PosDef :=
+    posDef_of_tendsto_weightedDesignMoment x _ ha (fun i ↦ (hbound i).1) hD₀ hdesign hweighted
   have hmin' : ∀ n : ℕ, 0 < n → ∀ᵐ ω ∂P, ∀ c, ∑ i ∈ Finset.range n,
       quantileCheckLoss tau (e i ω - inner ℝ (x i) (T n ω - beta)) ≤
         ∑ i ∈ Finset.range n, quantileCheckLoss tau (e i ω - inner ℝ (x i) (c - beta)) := by

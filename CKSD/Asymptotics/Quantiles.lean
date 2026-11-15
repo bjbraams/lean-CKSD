@@ -65,8 +65,7 @@ theorem le_empiricalCDF_of_sampleQuantile_lt {Ω : Type*} (X : ℕ → Ω → �
   obtain ⟨h1, h0⟩ := empiricalCDF_extremes X n hn ω
   set A := {t | p ≤ empiricalCDF X n ω t} with hA
   have hne : A.Nonempty := ⟨∑ i ∈ Finset.range n, |X i ω|, by
-    show p ≤ empiricalCDF X n ω _
-    rw [h1]; exact hp1⟩
+    simpa only [hA, Set.mem_ofPred_eq, h1] using hp1⟩
   have hbdd : BddBelow A := by
     refine ⟨-∑ i ∈ Finset.range n, |X i ω|, fun a ha ↦ ?_⟩
     by_contra h
@@ -219,7 +218,8 @@ theorem tendstoInMeasure_sqrt_mul_empiricalCDF_sub {Ω : Type*} [MeasurableSpace
   rw [empiricalCDF_eq_sum, empiricalCDF_eq_sum]
   simp only [hφ, integral_const_mul]
   rw [integral_sub (hint _) (hint _)]
-  simp only [hind, integral_ite_le_eq_measureReal_Iic, ← cdf_eq_real, ← Finset.mul_sum, Finset.sum_sub_distrib, ha]
+  simp only [hind, integral_ite_le_eq_measureReal_Iic, ← cdf_eq_real, ← Finset.mul_sum,
+    Finset.sum_sub_distrib, ha]
   have e1 : (n : ℝ) * (Real.sqrt n)⁻¹ = Real.sqrt n := by
     rw [mul_comm, inv_mul_eq_div, Real.div_sqrt]
   have e2 := sqrt_mul_inv_natCast n

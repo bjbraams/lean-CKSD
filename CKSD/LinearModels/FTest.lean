@@ -65,7 +65,8 @@ theorem hasLaw_norm_sq_add_stdGaussian
       (stdGaussian (EuclideanSpace ℝ (Fin (Module.finrank ℝ E)))) P :=
     (HasLaw.mk (by fun_prop) (stdGaussian_map e)).fun_comp hX
   have ha : HasLaw (fun z : EuclideanSpace ℝ (Fin (Module.finrank ℝ E)) ↦ e m + z)
-      (multivariateGaussian (e m) 1) (stdGaussian (EuclideanSpace ℝ (Fin (Module.finrank ℝ E)))) := by
+      (multivariateGaussian (e m) 1)
+          (stdGaussian (EuclideanSpace ℝ (Fin (Module.finrank ℝ E)))) := by
     refine ⟨by fun_prop, ?_⟩
     have h := TauCeti.Probability.map_add_smul_multivariateGaussian
       (0 : EuclideanSpace ℝ (Fin (Module.finrank ℝ E))) (Matrix.PosSemidef.one) (e m) 1
@@ -129,17 +130,15 @@ theorem map_nestedFStatistic_eq_noncentralF
     rintro _ ⟨x, rfl⟩
     exact ⟨P₀ x, hnest x⟩
   have hSdim : Module.finrank ℝ S = r₁ - r₀ := by
-    have h := Submodule.finrank_add_inf_finrank_orthogonal hle
-    change r₀ + Module.finrank ℝ S = r₁ at h
-    omega
+    exact Nat.eq_sub_of_add_eq' (Submodule.finrank_add_inf_finrank_orthogonal hle)
   have hP₁' : ∀ x, K₁.starProjection x = P₁ x := IsStarProjection.starProjection_range_apply hP₁
   have hS : ∀ x, S.starProjection x = P₁ x - P₀ x := by
     intro x
     refine S.eq_starProjection_of_mem_of_inner_eq_zero ⟨?_, ?_⟩ ?_
     · refine (Submodule.mem_orthogonal' K₀ _).mpr ?_
       rintro _ ⟨y, rfl⟩
-      change inner ℝ (P₁ x - P₀ x) (P₀ y) = 0
-      rw [inner_sub_left, ← (hsym (P₁ x) y).1, ← (hsym (P₀ x) y).1, hcomm, (hid x).1, sub_self]
+      rw [ContinuousLinearMap.coe_coe, inner_sub_left, ← (hsym (P₁ x) y).1, ← (hsym (P₀ x) y).1,
+        hcomm, (hid x).1, sub_self]
     · refine ⟨x - P₀ x, ?_⟩
       change P₁ (x - P₀ x) = P₁ x - P₀ x
       rw [map_sub, hnest]
@@ -163,14 +162,14 @@ theorem map_nestedFStatistic_eq_noncentralF
   have hvec : ∀ x, ((a + S.orthogonalProjectionOnto (Z x) : S) : EuclideanSpace ℝ (Fin n)) =
       t⁻¹ • (P₁ x - P₀ x) := by
     intro x
-    change S.starProjection (t⁻¹ • m) + S.starProjection (Z x) = _
+    simp only [a, Submodule.coe_add, Submodule.coe_orthogonalProjectionOnto_apply]
     rw [← map_add]
     have hz : t⁻¹ • m + Z x = t⁻¹ • x := by dsimp [Z]; module
     rw [hz, map_smul, hS]
   have hNS : ∀ x, ‖a + S.orthogonalProjectionOnto (Z x)‖ ^ 2 = ‖P₁ x - P₀ x‖ ^ 2 / v := by
     intro x
-    change ‖((a + S.orthogonalProjectionOnto (Z x) : S) : EuclideanSpace ℝ (Fin n))‖ ^ 2 = _
-    rw [hvec, norm_smul, Real.norm_eq_abs, mul_pow, sq_abs, inv_pow, ht2, div_eq_inv_mul]
+    rw [← Submodule.norm_coe, hvec, norm_smul, Real.norm_eq_abs, mul_pow, sq_abs, inv_pow, ht2,
+      div_eq_inv_mul]
   have hnc : ‖a‖₊ ^ 2 = Real.toNNReal (‖P₁ m - P₀ m‖ ^ 2 / v) := by
     apply NNReal.eq
     rw [NNReal.coe_pow, coe_nnnorm, Real.coe_toNNReal _ (by positivity)]
@@ -182,9 +181,7 @@ theorem map_nestedFStatistic_eq_noncentralF
     ⟨by fun_prop, map_norm_sq_sub_div_eq_chiSquared m v hv P₁ hP₁ hm⟩
   have hi := (indepFun_map_norm_sq_sub m v hv P₁ hP₁).comp (φ := fun z ↦ ‖z - P₀ z‖ ^ 2 / v)
     (ψ := fun z : ℝ ↦ z / v) (by fun_prop) (by fun_prop)
-  change IndepFun (fun x ↦ ‖P₁ x - P₀ (P₁ x)‖ ^ 2 / v)
-    (fun x ↦ ‖x - P₁ x‖ ^ 2 / v) G at hi
-  simp only [hcomm] at hi
+  simp only [Function.comp_def, hcomm] at hi
   have h := TauCeti.Probability.hasLaw_noncentralF_of_noncentralChiSquared
     (by exact_mod_cast Nat.sub_pos_of_lt hr) (by exact_mod_cast Nat.sub_pos_of_lt hrn)
     hi hnum hden
@@ -237,7 +234,8 @@ theorem strictMono_noncentralF_upper_tail (d₁ d₂ : ℝ) (hd₁ : 0 < d₁) (
   let D := TauCeti.Probability.chiSquaredMeasure d₂
   let R := (μ.prod ν).prod D
   let _ := TauCeti.Probability.isProbabilityMeasure_noncentralChiSquaredMeasure hd₁.le a
-  let _ := TauCeti.Probability.isProbabilityMeasure_noncentralChiSquaredMeasure (k := 0) (by norm_num) (b - a)
+  let _ := TauCeti.Probability.isProbabilityMeasure_noncentralChiSquaredMeasure (k := 0)
+      (by norm_num) (b - a)
   let _ := TauCeti.Probability.isProbabilityMeasure_chiSquaredMeasure hd₂.le
   let U : (ℝ × ℝ) × ℝ → ℝ := fun z ↦ z.1.1
   let V : (ℝ × ℝ) × ℝ → ℝ := fun z ↦ z.1.1 + z.1.2
@@ -249,12 +247,14 @@ theorem strictMono_noncentralF_upper_tail (d₁ d₂ : ℝ) (hd₁ : 0 < d₁) (
   have hsum : HasLaw (fun z : ℝ × ℝ ↦ z.1 + z.2)
       (TauCeti.Probability.noncentralChiSquaredMeasure d₁ b) (μ.prod ν) := by
     refine ⟨by fun_prop, ?_⟩
-    rw [← Measure.conv, TauCeti.Probability.noncentralChiSquaredMeasure_conv_noncentralChiSquaredMeasure
+    rw [← Measure.conv,
+        TauCeti.Probability.noncentralChiSquaredMeasure_conv_noncentralChiSquaredMeasure
       hd₁.le (by norm_num), add_zero, add_tsub_cancel_of_le hab.le]
   have hV : HasLaw V (TauCeti.Probability.noncentralChiSquaredMeasure d₁ b) R :=
     hsum.fun_comp measurePreserving_fst.hasLaw
   have hUW : IndepFun U W R := indepFun_prod measurable_fst measurable_id
-  have hVW : IndepFun V W R := indepFun_prod (X := fun z : ℝ × ℝ ↦ z.1 + z.2) (by fun_prop) measurable_id
+  have hVW : IndepFun V W R :=
+      indepFun_prod (X := fun z : ℝ × ℝ ↦ z.1 + z.2) (by fun_prop) measurable_id
   have hA := TauCeti.Probability.hasLaw_noncentralF_of_noncentralChiSquared hd₁ hd₂ hUW hU hW
   have hB := TauCeti.Probability.hasLaw_noncentralF_of_noncentralChiSquared hd₁ hd₂ hVW hV hW
   let A : Set ((ℝ × ℝ) × ℝ) := {z | c < U z / d₁ / (W z / d₂)}
@@ -284,7 +284,8 @@ theorem strictMono_noncentralF_upper_tail (d₁ d₂ : ℝ) (hd₁ : 0 < d₁) (
   have hνpos : 0 < ν (Ioo (2 * d₁ * c) (3 * d₁ * c)) := by
     apply (Measure.mem_support_iff_forall (5 * d₁ * c / 2)).1 ?_ _
       (Ioo_mem_nhds (by nlinarith [mul_pos hd₁ hc]) (by nlinarith [mul_pos hd₁ hc]))
-    simp [ν, TauCeti.Probability.support_noncentralChiSquaredMeasure, tsub_pos_iff_lt.mpr hab |>.ne']
+    simp [ν, TauCeti.Probability.support_noncentralChiSquaredMeasure,
+        tsub_pos_iff_lt.mpr hab |>.ne']
     positivity
   have hDpos : 0 < D (Ioo d₂ (2 * d₂)) := by
     apply (Measure.mem_support_iff_forall (3 * d₂ / 2)).1 ?_ _
@@ -293,13 +294,12 @@ theorem strictMono_noncentralF_upper_tail (d₁ d₂ : ℝ) (hd₁ : 0 < d₁) (
     positivity
   have hEpos : 0 < R.real E := by
     apply ENNReal.toReal_pos (ne_of_gt ?_) (measure_ne_top _ _)
-    change 0 < ((μ.prod ν).prod D) _
     rw [Measure.prod_prod, Measure.prod_prod]
     exact ENNReal.mul_pos (ENNReal.mul_pos hμpos.ne' hνpos.ne').ne' hDpos.ne'
   have hEA : Disjoint A E := by
     rw [Set.disjoint_left]
     intro z hz hzE
-    change c < z.1.1 / d₁ / (z.2 / d₂) at hz
+    simp only [A, U, W, Set.mem_ofPred_eq] at hz
     rcases hzE with ⟨⟨⟨hu0, hu⟩, hv⟩, hz2⟩
     have hden : 0 < z.2 / d₂ := div_pos (hd₂.trans hz2.1) hd₂
     rw [lt_div_iff₀ hden, lt_div_iff₀ hd₁] at hz
@@ -307,7 +307,7 @@ theorem strictMono_noncentralF_upper_tail (d₁ d₂ : ℝ) (hd₁ : 0 < d₁) (
     nlinarith [mul_pos hd₁ hc, mul_pos (mul_pos hd₁ hc) (sub_pos.mpr hratio)]
   have hEB : E ⊆ B := by
     intro z hz
-    change c < (z.1.1 + z.1.2) / d₁ / (z.2 / d₂)
+    simp only [B, V, W, Set.mem_ofPred_eq]
     have hden : 0 < z.2 / d₂ := div_pos (hd₂.trans hz.2.1) hd₂
     rw [lt_div_iff₀ hden, lt_div_iff₀ hd₁]
     have hratio : z.2 / d₂ < 2 := (div_lt_iff₀ hd₂).2 (by simpa using hz.2.2)

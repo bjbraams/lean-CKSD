@@ -255,6 +255,116 @@ theorem exp3WeightLowerBound_le {K : ℕ} (hK : 0 < K) {η : ℝ} (hη : 0 < η)
           mul_le_mul (ih j) hexp (Real.exp_pos _).le (hpos t j).le
       _ ≤ _ := hge
 
+/-- Exp3 probabilities given by the exponential-weights recursion at an outcome `ω` are
+positive. -/
+theorem exp3_prob_pos {Ω : Type*} {K : ℕ} (hK : 0 < K) {η : ℝ} {loss : ℕ → Fin K → ℝ}
+    {p : ℕ → Ω → Fin K → ℝ} {A : ℕ → Ω → Fin K} {ω : Ω}
+    (hrec : ∀ t i, p t ω i = Real.exp (-η * exp3EstimatedCumulativeLoss loss p A t i ω) /
+      ∑ j, Real.exp (-η * exp3EstimatedCumulativeLoss loss p A t j ω)) (t : ℕ) (i : Fin K) :
+    0 < p t ω i := by
+  rw [hrec t i]
+  exact div_pos (Real.exp_pos _)
+    (Finset.sum_pos (fun j _ ↦ Real.exp_pos _) ⟨⟨0, hK⟩, Finset.mem_univ _⟩)
+
+/-- Exp3 probabilities given by the exponential-weights recursion at an outcome `ω` sum to
+one whenever there is at least one arm. -/
+theorem exp3_prob_sum_eq_one {Ω : Type*} {K : ℕ} (hK : 0 < K) {η : ℝ} {loss : ℕ → Fin K → ℝ}
+    {p : ℕ → Ω → Fin K → ℝ} {A : ℕ → Ω → Fin K} {ω : Ω}
+    (hrec : ∀ t i, p t ω i = Real.exp (-η * exp3EstimatedCumulativeLoss loss p A t i ω) /
+      ∑ j, Real.exp (-η * exp3EstimatedCumulativeLoss loss p A t j ω)) (t : ℕ) :
+    ∑ i, p t ω i = 1 := by
+  simp_rw [hrec t]
+  rw [← Finset.sum_div]
+  exact div_self (Finset.sum_pos (fun j _ ↦ Real.exp_pos _) ⟨⟨0, hK⟩, Finset.mem_univ _⟩).ne'
+
+/-- Exp3 probabilities given by the exponential-weights recursion at an outcome `ω` stay above
+the deterministic sequence `exp3WeightLowerBound K η`. -/
+theorem exp3WeightLowerBound_le_of_rec {Ω : Type*} {K : ℕ} (hK : 0 < K) {η : ℝ} (hη : 0 < η)
+    {loss : ℕ → Fin K → ℝ} (hloss : ∀ t i, loss t i ∈ Icc 0 1)
+    {p : ℕ → Ω → Fin K → ℝ} {A : ℕ → Ω → Fin K} {ω : Ω}
+    (hrec : ∀ t i, p t ω i = Real.exp (-η * exp3EstimatedCumulativeLoss loss p A t i ω) /
+      ∑ j, Real.exp (-η * exp3EstimatedCumulativeLoss loss p A t j ω)) (t : ℕ) (j : Fin K) :
+    exp3WeightLowerBound K η t ≤ p t ω j := by
+  have hpos := exp3_prob_pos hK hrec
+  refine exp3WeightLowerBound_le hK hη (fun t j ↦ if A t ω = j then loss t j / p t ω j else 0)
+    (fun t j ↦ p t ω j) (fun t j ↦ ?_) (fun t j ↦ ?_) hrec t j
+  · split_ifs
+    · exact div_nonneg (hloss t j).1 (hpos t j).le
+    · exact le_rfl
+  · split_ifs
+    · exact div_le_div_of_nonneg_right (hloss t j).2 (hpos t j).le
+    · exact (one_div_pos.mpr (hpos t j)).le
+
+/-- Pathwise Exp3 regret against the importance-weighted loss of a fixed arm: at each outcome
+`ω` at which the exponential-weights recursion holds, the incurred loss minus the estimated
+cumulative loss of arm `i` is at most `log K / η` plus `η / 2` times the sum of the
+importance-weighted squared losses. -/
+theorem sum_loss_sub_exp3EstimatedCumulativeLoss_le {Ω : Type*} {K : ℕ} (hK : 0 < K) {η : ℝ}
+    (hη : 0 < η) {loss : ℕ → Fin K → ℝ} (hloss : ∀ t i, loss t i ∈ Icc 0 1)
+    {p : ℕ → Ω → Fin K → ℝ} {A : ℕ → Ω → Fin K} {ω : Ω}
+    (hrec : ∀ t i, p t ω i = Real.exp (-η * exp3EstimatedCumulativeLoss loss p A t i ω) /
+      ∑ j, Real.exp (-η * exp3EstimatedCumulativeLoss loss p A t j ω)) (T : ℕ) (i : Fin K) :
+    ∑ t ∈ Finset.range T, loss t (A t ω) - exp3EstimatedCumulativeLoss loss p A T i ω ≤
+      Real.log K / η + η / 2 * ∑ t ∈ Finset.range T, ∑ j,
+        (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j) := by
+  have hpos := exp3_prob_pos hK hrec
+  set lh : ℕ → Fin K → ℝ := fun t j ↦ if A t ω = j then loss t j / p t ω j else 0
+  have hlh0 : ∀ t j, 0 ≤ lh t j := fun t j ↦ by
+    simp only [lh]; split_ifs
+    · exact div_nonneg (hloss t j).1 (hpos t j).le
+    · exact le_rfl
+  have hplh : ∀ t, ∑ j, p t ω j * lh t j = loss t (A t ω) := fun t ↦ by
+    rw [Finset.sum_eq_single (A t ω)]
+    · simp only [lh, ↓reduceIte]; field_simp [(hpos t (A t ω)).ne']
+    · intro j _ hj; simp [lh, Ne.symm hj]
+    · intro h; exact absurd (Finset.mem_univ _) h
+  have hplh2 : ∀ t j, p t ω j * lh t j ^ 2 =
+      (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j) := fun t j ↦ by
+    simp only [lh]; split_ifs
+    · field_simp [(hpos t j).ne']
+    · simp
+  have h := sum_sum_mul_sub_le_of_exponential_weights hK hη lh hlh0 (fun t j ↦ p t ω j) hrec T i
+  simp only [hplh, hplh2] at h
+  exact h
+
+/-- Integrability of an importance-weighted indicator: if `q ≥ c > 0` is measurable and
+`r ∈ [0, 1]`, then `ω ↦ 1_{A ω = j} r / q ω` is integrable. -/
+theorem integrable_indicator_mul_div {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω)
+    [IsFiniteMeasure P] {K : ℕ} {A : Ω → Fin K} (hA : Measurable A) (j : Fin K) {q : Ω → ℝ}
+    (hq : Measurable q) {c : ℝ} (hc : 0 < c) (hcq : ∀ ω, c ≤ q ω) {r : ℝ}
+    (hr : r ∈ Icc (0 : ℝ) 1) :
+    Integrable (fun ω ↦ (if A ω = j then (1 : ℝ) else 0) * (r / q ω)) P := by
+  have hXm : Measurable fun ω ↦ if A ω = j then (1 : ℝ) else 0 :=
+    Measurable.ite (hA (measurableSet_singleton j)) measurable_const measurable_const
+  refine Integrable.of_bound (hXm.mul (measurable_const.div hq)).aestronglyMeasurable (1 / c)
+    (ae_of_all _ fun ω ↦ ?_)
+  have hq0 : 0 < q ω := hc.trans_le (hcq ω)
+  rw [Real.norm_eq_abs, abs_mul]
+  have hb : |r / q ω| ≤ 1 / c := by
+    rw [abs_of_nonneg (div_nonneg hr.1 hq0.le)]
+    exact (div_le_div_of_nonneg_right hr.2 hq0.le).trans (one_div_le_one_div_of_le hc (hcq ω))
+  split_ifs
+  · simpa using hb
+  · simp only [abs_zero, zero_mul]; exact (one_div_pos.mpr hc).le
+
+/-- Unbiasedness of importance weighting: if `P[1_{A = j} | 𝓕] = q` with `q ≥ c > 0`
+`𝓕`-measurable and `r ∈ [0, 1]`, then `∫ 1_{A = j} r / q = r`. -/
+theorem integral_indicator_mul_div_eq {Ω : Type*} {m : MeasurableSpace Ω}
+    [mΩ : MeasurableSpace Ω] (hm : m ≤ mΩ) (P : Measure Ω) [IsProbabilityMeasure P] {K : ℕ}
+    {A : Ω → Fin K} (hA : Measurable A) (j : Fin K) {q : Ω → ℝ} (hqm : Measurable[m] q)
+    (hq : P[(fun ω ↦ if A ω = j then (1 : ℝ) else 0) | m] =ᵐ[P] q) {c : ℝ} (hc : 0 < c)
+    (hcq : ∀ ω, c ≤ q ω) {r : ℝ} (hr : r ∈ Icc (0 : ℝ) 1) :
+    ∫ ω, (if A ω = j then (1 : ℝ) else 0) * (r / q ω) ∂P = r := by
+  have hb : ∀ ω, |r / q ω| ≤ 1 / c := fun ω ↦ by
+    have hq0 : 0 < q ω := hc.trans_le (hcq ω)
+    rw [abs_of_nonneg (div_nonneg hr.1 hq0.le)]
+    exact (div_le_div_of_nonneg_right hr.2 hq0.le).trans (one_div_le_one_div_of_le hc (hcq ω))
+  rw [integral_indicator_mul_eq_of_condExp hm P A hA j _ hq (fun ω ↦ r / q ω)
+    (hqm.const_div r).stronglyMeasurable hb]
+  have : ∀ ω, q ω * (r / q ω) = r := fun ω ↦ by
+    field_simp [(hc.trans_le (hcq ω)).ne']
+  simp only [this, integral_const, probReal_univ, one_smul]
+
 /-- GAPS 107.52: expected Exp3 regret against an oblivious loss sequence. The arm `A t` is
 drawn with conditional probabilities `p t` given the past `F t`, and `p t` is the exponential-
 weights distribution, with learning rate `η = √(2 log K / (T K))`, of the importance-weighted
@@ -279,89 +389,30 @@ theorem integral_regret_le_of_exp3 {Ω : Type*} [MeasurableSpace Ω]
   have hK0 : 0 < K := by omega
   have hKr : (2 : ℝ) ≤ K := by exact_mod_cast hK
   have hlogK : 0 < Real.log K := Real.log_pos (by linarith)
-  have hTr : (0 : ℝ) < T := by exact_mod_cast hT
+  have hTK : (0 : ℝ) < T * K := by positivity
   have hη : 0 < η := Real.sqrt_pos.mpr (by positivity)
-  -- estimated losses
-  set lh : ℕ → Ω → Fin K → ℝ := fun t ω j ↦ if A t ω = j then loss t j / p t ω j else 0
-    with hlh_def
-  have hrec' : ∀ ω t j, p t ω j = Real.exp (-η * ∑ s ∈ Finset.range t, lh s ω j) /
-      ∑ j', Real.exp (-η * ∑ s ∈ Finset.range t, lh s ω j') := fun ω t j ↦ hrec t ω j
-  have hW : ∀ ω t, 0 < ∑ j', Real.exp (-η * ∑ s ∈ Finset.range t, lh s ω j') := fun _ _ ↦
-    Finset.sum_pos (fun j _ ↦ Real.exp_pos _) ⟨⟨0, hK0⟩, Finset.mem_univ _⟩
-  have hpos : ∀ t ω i, 0 < p t ω i := fun t ω i ↦ by
-    rw [hrec' ω t i]; exact div_pos (Real.exp_pos _) (hW ω t)
-  have hsum : ∀ t ω, ∑ i, p t ω i = 1 := fun t ω ↦ by
-    simp_rw [hrec' ω t]; rw [← Finset.sum_div, div_self (hW ω t).ne']
-  have hlh0 : ∀ t ω j, 0 ≤ lh t ω j := fun t ω j ↦ by
-    simp only [lh]; split_ifs
-    · exact div_nonneg (hloss t j).1 (hpos t ω j).le
-    · exact le_rfl
-  have hlh1 : ∀ t ω j, lh t ω j ≤ 1 / p t ω j := fun t ω j ↦ by
-    simp only [lh]; split_ifs
-    · exact div_le_div_of_nonneg_right (hloss t j).2 (hpos t ω j).le
-    · exact (one_div_pos.mpr (hpos t ω j)).le
-  -- deterministic lower bounds on the probabilities
+  have hrec' : ∀ ω t j, p t ω j = Real.exp (-η * exp3EstimatedCumulativeLoss loss p A t j ω) /
+      ∑ j', Real.exp (-η * exp3EstimatedCumulativeLoss loss p A t j' ω) := fun ω t j ↦
+    hrec t ω j
+  have hpos : ∀ t ω i, 0 < p t ω i := fun t ω i ↦ exp3_prob_pos hK0 (hrec' ω) t i
   set c := exp3WeightLowerBound K η
-  have hc : ∀ t, 0 < c t ∧ ∀ ω j, c t ≤ p t ω j := fun t ↦
-    ⟨exp3WeightLowerBound_pos hK0 η t, fun ω ↦ exp3WeightLowerBound_le hK0 hη (lh · ω)
-      (fun t j ↦ p t ω j) (fun t j ↦ hlh0 t ω j) (fun t j ↦ hlh1 t ω j) (hrec' ω) t⟩
-  -- measurability
+  have hc : ∀ t, 0 < c t := exp3WeightLowerBound_pos hK0 η
+  have hcp : ∀ t ω j, c t ≤ p t ω j := fun t ω j ↦
+    exp3WeightLowerBound_le_of_rec hK0 hη hloss (hrec' ω) t j
   have hpm : ∀ t j, Measurable[F t] fun ω ↦ p t ω j := fun t j ↦
     (measurable_pi_apply j).comp (hp t)
   have hAm : ∀ t, Measurable (A t) := fun t ↦ (hA t).mono (F.le (t + 1)) le_rfl
-  -- the conditional-probability identities
   have hg : ∀ t j (r : ℝ), r ∈ Icc (0 : ℝ) 1 →
-      ∫ ω, (if A t ω = j then (1 : ℝ) else 0) * (r / p t ω j) ∂P = r := by
-    intro t j r hr
-    have hgm : StronglyMeasurable[F t] fun ω ↦ r / p t ω j :=
-      (measurable_const.div (hpm t j)).stronglyMeasurable
-    have hb : ∀ ω, |r / p t ω j| ≤ 1 / c t := fun ω ↦ by
-      rw [abs_of_nonneg (div_nonneg hr.1 (hpos t ω j).le)]
-      exact (div_le_div_of_nonneg_right hr.2 (hpos t ω j).le).trans
-        (one_div_le_one_div_of_le (hc t).1 ((hc t).2 ω j))
-    rw [integral_indicator_mul_eq_of_condExp (F.le t) P (A t) (hAm t) j _ (hchoice t j) _ hgm hb]
-    have : ∀ ω, p t ω j * (r / p t ω j) = r := fun ω ↦ by
-      field_simp [(hpos t ω j).ne']
-    simp only [this, integral_const, probReal_univ, one_smul]
-  -- pointwise identities
-  have hplh : ∀ t ω, ∑ j, p t ω j * lh t ω j = loss t (A t ω) := fun t ω ↦ by
-    rw [Finset.sum_eq_single (A t ω)]
-    · simp only [lh, ↓reduceIte]; field_simp [(hpos t ω (A t ω)).ne']
-    · intro j _ hj; simp [lh, Ne.symm hj]
-    · intro h; exact absurd (Finset.mem_univ _) h
-  have hplh2 : ∀ t ω j, p t ω j * lh t ω j ^ 2 =
-      (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j) := fun t ω j ↦ by
-    simp only [lh]; split_ifs
-    · field_simp [(hpos t ω j).ne']
-    · simp
-  have hlhi : ∀ t ω j, lh t ω j =
-      (if A t ω = j then (1 : ℝ) else 0) * (loss t j / p t ω j) := fun t ω j ↦ by
-    simp only [lh]; split_ifs <;> simp
-  have hpt : ∀ ω, ∑ t ∈ Finset.range T, loss t (A t ω) - ∑ t ∈ Finset.range T, lh t ω i ≤
-      Real.log K / η + η / 2 * ∑ t ∈ Finset.range T, ∑ j,
-        (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j) := fun ω ↦ by
-    have h := sum_sum_mul_sub_le_of_exponential_weights hK0 hη (lh · ω) (fun t j ↦ hlh0 t ω j)
-      (fun t j ↦ p t ω j) (hrec' ω) T i
-    simp only [hplh, hplh2] at h
-    exact h
-  -- integrability of the bounded measurable pieces
+      ∫ ω, (if A t ω = j then (1 : ℝ) else 0) * (r / p t ω j) ∂P = r := fun t j _ hr ↦
+    integral_indicator_mul_div_eq (F.le t) P (hAm t) j (hpm t j) (hchoice t j) (hc t)
+      (fun ω ↦ hcp t ω j) hr
   have hterm : ∀ t j (r : ℝ), r ∈ Icc (0 : ℝ) 1 →
-      Integrable (fun ω ↦ (if A t ω = j then (1 : ℝ) else 0) * (r / p t ω j)) P := by
-    intro t j r hr
-    have hXm : Measurable fun ω ↦ if A t ω = j then (1 : ℝ) else 0 :=
-      Measurable.ite ((hAm t) (measurableSet_singleton j)) measurable_const measurable_const
-    have hgm : Measurable fun ω ↦ r / p t ω j :=
-      measurable_const.div ((hpm t j).mono (F.le t) le_rfl)
-    refine Integrable.of_bound (hXm.mul hgm).aestronglyMeasurable (1 / c t)
-      (ae_of_all _ fun ω ↦ ?_)
-    rw [Real.norm_eq_abs, abs_mul]
-    have hb : |r / p t ω j| ≤ 1 / c t := by
-      rw [abs_of_nonneg (div_nonneg hr.1 (hpos t ω j).le)]
-      exact (div_le_div_of_nonneg_right hr.2 (hpos t ω j).le).trans
-        (one_div_le_one_div_of_le (hc t).1 ((hc t).2 ω j))
-    split_ifs
-    · simpa using hb
-    · simp only [abs_zero, zero_mul]; exact (one_div_pos.mpr (hc t).1).le
+      Integrable (fun ω ↦ (if A t ω = j then (1 : ℝ) else 0) * (r / p t ω j)) P :=
+    fun t j _ hr ↦ integrable_indicator_mul_div P (hAm t) j ((hpm t j).mono (F.le t) le_rfl)
+      (hc t) (fun ω ↦ hcp t ω j) hr
+  have hlhi : ∀ ω, exp3EstimatedCumulativeLoss loss p A T i ω = ∑ t ∈ Finset.range T,
+      (if A t ω = i then (1 : ℝ) else 0) * (loss t i / p t ω i) := fun ω ↦
+    Finset.sum_congr rfl fun t _ ↦ by split_ifs <;> simp
   have hsq : ∀ t j, loss t j ^ 2 ∈ Icc (0 : ℝ) 1 := fun t j ↦
     ⟨sq_nonneg _, by nlinarith [(hloss t j).1, (hloss t j).2]⟩
   have hXint : Integrable (fun ω ↦ ∑ t ∈ Finset.range T, loss t (A t ω)) P := by
@@ -378,15 +429,16 @@ theorem integral_regret_le_of_exp3 {Ω : Type*} [MeasurableSpace Ω]
     refine (hterm t j _ (hloss t j)).mul_of_top_left ?_
     refine memLp_top_of_bound ((hpm t j).mono (F.le t) le_rfl).aestronglyMeasurable 1
       (ae_of_all _ fun ω ↦ ?_)
-    rw [Real.norm_eq_abs, abs_of_pos (hpos t ω j), ← hsum t ω]
+    rw [Real.norm_eq_abs, abs_of_pos (hpos t ω j), ← exp3_prob_sum_eq_one hK0 (hrec' ω) t]
     exact Finset.single_le_sum (fun j' _ ↦ (hpos t ω j').le) (Finset.mem_univ j)
-  have hYint : Integrable (fun ω ↦ ∑ t ∈ Finset.range T, lh t ω i) P := by
+  have hYint : Integrable (fun ω ↦ exp3EstimatedCumulativeLoss loss p A T i ω) P := by
     simp only [hlhi]
     exact integrable_finsetSum _ fun t _ ↦ hterm t i _ (hloss t i)
   have hZint : Integrable (fun ω ↦ ∑ t ∈ Finset.range T, ∑ j,
       (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j)) P :=
     integrable_finsetSum _ fun t _ ↦ integrable_finsetSum _ fun j _ ↦ hterm t j _ (hsq t j)
-  have hY : ∫ ω, ∑ t ∈ Finset.range T, lh t ω i ∂P = ∑ t ∈ Finset.range T, loss t i := by
+  have hY : ∫ ω, exp3EstimatedCumulativeLoss loss p A T i ω ∂P =
+      ∑ t ∈ Finset.range T, loss t i := by
     simp only [hlhi]
     rw [integral_finsetSum _ fun t _ ↦ hterm t i _ (hloss t i)]
     exact Finset.sum_congr rfl fun t _ ↦ hg t i _ (hloss t i)
@@ -402,24 +454,17 @@ theorem integral_regret_le_of_exp3 {Ω : Type*} [MeasurableSpace Ω]
       _ ≤ ∑ t ∈ Finset.range T, ∑ j : Fin K, (1 : ℝ) :=
           Finset.sum_le_sum fun t _ ↦ Finset.sum_le_sum fun j _ ↦ (hsq t j).2
       _ = T * K := by simp
-  have hint : ∫ ω, (∑ t ∈ Finset.range T, loss t (A t ω) - ∑ t ∈ Finset.range T, lh t ω i) ∂P ≤
+  have hint : ∫ ω, (∑ t ∈ Finset.range T, loss t (A t ω) -
+        exp3EstimatedCumulativeLoss loss p A T i ω) ∂P ≤
       ∫ ω, (Real.log K / η + η / 2 * ∑ t ∈ Finset.range T, ∑ j,
         (if A t ω = j then (1 : ℝ) else 0) * (loss t j ^ 2 / p t ω j)) ∂P :=
     integral_mono (hXint.sub hYint)
-      ((integrable_const (Real.log K / η)).add (hZint.const_mul (η / 2))) hpt
+      ((integrable_const (Real.log K / η)).add (hZint.const_mul (η / 2)))
+      fun ω ↦ sum_loss_sub_exp3EstimatedCumulativeLoss_le hK0 hη hloss (hrec' ω) T i
   rw [integral_sub hXint hYint, integral_add (integrable_const _) (hZint.const_mul _),
     integral_const_mul, integral_const, probReal_univ, one_smul, hY] at hint
-  have hη2 : η ^ 2 = 2 * Real.log K / (T * K) := Real.sq_sqrt (by positivity)
-  have hTK : (0 : ℝ) < T * K := by positivity
   have hfinal : Real.log K / η + η / 2 * (T * K) = Real.sqrt (2 * T * K * Real.log K) := by
-    have hs : Real.sqrt (2 * T * K * Real.log K) = η * (T * K) := by
-      rw [show (2 : ℝ) * T * K * Real.log K = (η * (T * K)) ^ 2 by
-        rw [mul_pow, hη2]; field_simp]
-      exact Real.sqrt_sq (by positivity)
-    have h2 : η ^ 2 * (T * K) = 2 * Real.log K := by rw [hη2]; field_simp
-    rw [hs]
-    field_simp
-    linear_combination -h2
+    rw [hη_def, div_sqrt_add_sqrt_div_two_mul hlogK hTK, ← mul_assoc]
   calc _ ≤ Real.log K / η + η / 2 * (T * K) := by
         nlinarith [mul_le_mul_of_nonneg_left hZ (by positivity : (0 : ℝ) ≤ η / 2)]
     _ = _ := hfinal

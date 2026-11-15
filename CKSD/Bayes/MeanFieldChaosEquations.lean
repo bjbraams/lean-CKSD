@@ -37,7 +37,8 @@ theorem IsParticleSystem.ae_coupled_vector_integral_eq_on_Icc
     (hZid : ∀ i, IdentDistrib (Z i) (Z 0) P P)
     (hZeq : ∀ i, ∀ᵐ ω ∂P, ∀ t : Icc (0 : ℝ) T,
       Z i ω t = X₀ i ω + (∫ s in (0 : ℝ)..t,
-        b ((Z i ω).IccExtend hT s) (P.map (fun z ↦ (Z i z).IccExtend hT s))) + W i (t : ℝ).toNNReal ω) :
+        b ((Z i ω).IccExtend hT s) (P.map (fun z ↦ (Z i z).IccExtend hT s))) +
+          W i (t : ℝ).toNNReal ω) :
     ∀ᵐ ω ∂P,
       Continuous (fun t ↦ fun j : Fin N ↦ X j t ω) ∧
       Continuous (fun t ↦ fun j : Fin N ↦ (Z j ω).IccExtend hT t) ∧
@@ -57,9 +58,7 @@ theorem IsParticleSystem.ae_coupled_vector_integral_eq_on_Icc
     have hc' : Continuous (fun p : ℝ × E ↦ b p.2 (P.map (fun z ↦ (Z 0 z).IccExtend hT p.1))) := by
       convert hc using 1
       funext p
-      change b p.2 (P.map (fun z ↦ (Z 0 z).IccExtend hT p.1)) =
-        nonlinearFrozenDrift P hT b (Z 0) (hZm 0) hZi p.1 p.2
-      rw [nonlinearFrozenDrift, pathMarginalLaw_toMeasure]
+      simp only [Function.uncurry_def, nonlinearFrozenDrift, pathMarginalLaw_toMeasure]
     apply continuous_pi
     intro j
     exact hc'.comp (continuous_fst.prodMk ((continuous_apply j).comp continuous_snd))
@@ -75,26 +74,31 @@ theorem IsParticleSystem.ae_coupled_vector_integral_eq_on_Icc
   have hyc : Continuous y := continuous_pi fun j ↦ ((Z j ω).IccExtend hT).continuous
   refine ⟨hxc, hyc, ?_, ?_⟩
   · intro t ht
-    have hi : IntervalIntegrable (fun s ↦ v (x s)) volume 0 t := (hv.continuous.comp hxc).intervalIntegrable _ _
+    have hi : IntervalIntegrable (fun s ↦ v (x s)) volume 0 t :=
+      (hv.continuous.comp hxc).intervalIntegrable _ _
     funext j
     have hp := (ContinuousLinearMap.proj j : (Fin N → E) →L[ℝ] E).intervalIntegral_comp_comm hi
+    -- `change` unfolds the local drift `v` and evaluates the coordinate projection in `hp`.
     change (∫ s in (0 : ℝ)..t, b (X j s ω) (empiricalMeasure N (fun l : Fin N ↦ X l s ω))) =
-      (∫ s in (0 : ℝ)..t, fun l : Fin N ↦ b (X l s ω) (empiricalMeasure N (fun m : Fin N ↦ X m s ω))) j at hp
-    change X j t ω = X₀ j ω + W j t.toNNReal ω + _
-    rw [← hp, (hx j).2 t ht.1]
+      (∫ s in (0 : ℝ)..t, fun l : Fin N ↦
+        b (X l s ω) (empiricalMeasure N (fun m : Fin N ↦ X m s ω))) j at hp
+    rw [Pi.add_apply, ← hp, (hx j).2 t ht.1]
     abel
   · intro t ht
     have hi : IntervalIntegrable (fun s ↦ w s (y s)) volume 0 t :=
       (hw.comp (continuous_id.prodMk hyc)).intervalIntegrable _ _
     funext j
     have hp := (ContinuousLinearMap.proj j : (Fin N → E) →L[ℝ] E).intervalIntegral_comp_comm hi
-    change (∫ s in (0 : ℝ)..t, b ((Z j ω).IccExtend hT s) (P.map (fun z ↦ (Z 0 z).IccExtend hT s))) =
-      (∫ s in (0 : ℝ)..t, fun l : Fin N ↦ b ((Z l ω).IccExtend hT s) (P.map (fun z ↦ (Z 0 z).IccExtend hT s))) j at hp
+    -- `change` unfolds the local drift `w` and evaluates the coordinate projection in `hp`.
+    change (∫ s in (0 : ℝ)..t,
+        b ((Z j ω).IccExtend hT s) (P.map (fun z ↦ (Z 0 z).IccExtend hT s))) =
+      (∫ s in (0 : ℝ)..t, fun l : Fin N ↦
+        b ((Z l ω).IccExtend hT s) (P.map (fun z ↦ (Z 0 z).IccExtend hT s))) j at hp
     have hzt : (Z j ω).IccExtend hT t = Z j ω ⟨t, ht⟩ :=
       Set.IccExtend_of_mem (h := hT) (fun z ↦ Z j ω z) ht
-    change (Z j ω).IccExtend hT t = X₀ j ω + W j t.toNNReal ω + _
-    rw [hzt, ← hp, hz j ⟨t, ht⟩]
-    have he : (∫ s in (0 : ℝ)..t, b ((Z j ω).IccExtend hT s) (P.map (fun z ↦ (Z j z).IccExtend hT s))) =
+    rw [Pi.add_apply, hzt, ← hp, hz j ⟨t, ht⟩]
+    have he : (∫ s in (0 : ℝ)..t,
+          b ((Z j ω).IccExtend hT s) (P.map (fun z ↦ (Z j z).IccExtend hT s))) =
         ∫ s in (0 : ℝ)..t, b ((Z j ω).IccExtend hT s) (P.map (fun z ↦ (Z 0 z).IccExtend hT s)) := by
       apply intervalIntegral.integral_congr
       intro s hs

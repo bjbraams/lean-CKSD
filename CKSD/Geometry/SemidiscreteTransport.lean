@@ -185,6 +185,7 @@ private theorem volume_tie_eq_zero (y : Fin k → EuclideanSpace ℝ (Fin d)) (g
     linarith
   have hsub : S ⊆ A := by
     intro x hx
+    -- unfold the local definition of the hyperplane `A`
     change x ∈ AffineSubspace.mk' x0 (LinearMap.ker (innerₛₗ ℝ w))
     rw [AffineSubspace.mem_mk', LinearMap.mem_ker, innerₛₗ_apply_apply, vsub_eq_sub,
       real_inner_comm, inner_sub_left]
@@ -408,6 +409,7 @@ theorem concaveOn_semidiscreteTransportDual (hk : 0 < k)
         a * (‖x - y j‖ ^ 2 - g j) + c * (‖x - y j‖ ^ 2 - h j) := by
       simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
       linear_combination (-(‖x - y j‖ ^ 2)) * hac
+    -- beta-reduce the potential to expose the left-hand side of `e` for `rw`
     show _ ≤ ‖x - y j‖ ^ 2 - (a • g + c • h) j
     rw [e]
     exact add_le_add (mul_le_mul_of_nonneg_left h1 ha) (mul_le_mul_of_nonneg_left h2 hc)

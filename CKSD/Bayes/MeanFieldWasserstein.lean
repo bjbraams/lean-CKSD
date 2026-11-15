@@ -39,12 +39,13 @@ theorem wassersteinEDist_one_map_toReal_le_integral_norm_sub {Ω E : Type*} [Mea
     (hf : AEStronglyMeasurable f P) (hg : AEStronglyMeasurable g P)
     (hfg : Integrable (fun ω ↦ f ω - g ω) P) :
     (TauCeti.wassersteinEDist 1 (P.map f) (P.map g)).toReal ≤ ∫ ω, ‖f ω - g ω‖ ∂P := by
-  have hc := TauCeti.isCoupling_map_prodMk_of_aemeasurable (γ := P) hf.aemeasurable hg.aemeasurable rfl rfl
+  have hc := TauCeti.isCoupling_map_prodMk_of_aemeasurable (γ := P) hf.aemeasurable
+    hg.aemeasurable rfl rfl
   have hW := TauCeti.wassersteinEDist_le hc 1
   rw [eLpNorm_map_measure continuous_edist.aestronglyMeasurable (hf.prodMk hg).aemeasurable] at hW
   have he : eLpNorm ((fun z : E × E ↦ edist z.1 z.2) ∘ fun ω ↦ (f ω, g ω)) 1 P =
       ENNReal.ofReal (∫ ω, ‖f ω - g ω‖ ∂P) := by
-    change eLpNorm (fun ω ↦ edist (f ω) (g ω)) 1 P = _
+    simp only [Function.comp_def]
     rw [eLpNorm_one_eq_lintegral_enorm (continuous_edist.comp_aestronglyMeasurable₂ hf hg),
       ofReal_integral_norm_eq_lintegral_enorm hfg]
     apply lintegral_congr
@@ -58,7 +59,8 @@ configuration norm. -/
 theorem wassersteinEDist_one_empirical_toReal_le_norm_sub {E : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [BorelSpace E]
     [SecondCountableTopology E] {N : ℕ} (hN : 0 < N) (x y : Fin N → E) :
-    (TauCeti.wassersteinEDist 1 (empiricalMeasure N x) (empiricalMeasure N y)).toReal ≤ ‖x - y‖ := by
+    (TauCeti.wassersteinEDist 1 (empiricalMeasure N x) (empiricalMeasure N y)).toReal ≤
+      ‖x - y‖ := by
   let P : Measure (Fin N) := empiricalMeasure N id
   have : IsProbabilityMeasure P := isProbabilityMeasure_empiricalMeasure hN id
   have hmap (z : Fin N → E) : P.map z = empiricalMeasure N z :=
@@ -69,7 +71,9 @@ theorem wassersteinEDist_one_empirical_toReal_le_norm_sub {E : Type*}
   rw [← hmap x, ← hmap y]
   calc _ ≤ ∫ j, ‖x j - y j‖ ∂P := by
           exact wassersteinEDist_one_map_toReal_le_integral_norm_sub P
-            (measurable_of_finite _).aestronglyMeasurable (measurable_of_finite _).aestronglyMeasurable hi
-    _ ≤ ∫ _ : Fin N, ‖x - y‖ ∂P := integral_mono hi.norm (integrable_const _) (fun j ↦ norm_le_pi_norm (x - y) j)
+            (measurable_of_finite _).aestronglyMeasurable
+            (measurable_of_finite _).aestronglyMeasurable hi
+    _ ≤ ∫ _ : Fin N, ‖x - y‖ ∂P :=
+      integral_mono hi.norm (integrable_const _) (fun j ↦ norm_le_pi_norm (x - y) j)
     _ = _ := by simp
 end CKSD

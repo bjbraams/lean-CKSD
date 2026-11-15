@@ -102,12 +102,11 @@ theorem tendsto_integral_abs_integral_mul_comp_sub_mul_sub {f K : ℝ → ℝ} (
     have hFint : Integrable (fun p : ℝ × ℝ ↦ |K p.2| * |f (p.1 - h * p.2) - f p.1|)
         (volume.prod volume) := by
       refine (integrable_prod_iff' hFm.aestronglyMeasurable).2 ⟨ae_of_all _ fun u ↦ ?_, ?_⟩
-      · show Integrable (fun t ↦ |K u| * |f (t - h * u) - f t|) volume
+      · dsimp only
         exact (((hf.comp_sub_right (h * u)).sub hf).abs).const_mul _
       · refine Integrable.mono' (hK.abs.mul_const (2 * ∫ t, |f t|)) ?_ (ae_of_all _ fun u ↦ ?_)
         · exact (hFm.norm.stronglyMeasurable.integral_prod_left' (μ := volume)).aestronglyMeasurable
-        · show ‖∫ t, ‖|K u| * |f (t - h * u) - f t|‖‖ ≤ |K u| * (2 * ∫ t, |f t|)
-          simp only [norm_mul, Real.norm_eq_abs, abs_abs]
+        · simp only [norm_mul, Real.norm_eq_abs, abs_abs]
           rw [integral_const_mul, abs_of_nonneg (mul_nonneg (abs_nonneg _) (hω0 _))]
           exact mul_le_mul_of_nonneg_left (hωle (h * u)) (abs_nonneg _)
     have hinner : ∀ t, (∫ u, K u * f (t - h * u)) - f t =
@@ -421,6 +420,38 @@ private lemma integral_abs_finiteKernelDensityEstimator_le {K : ℝ → ℝ} (hK
         rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
         field_simp
 
+/-- The `L¹` error integrand `(x, t) ↦ |f̂_n(x)(t) - f(t)|` of the kernel density estimator is
+jointly integrable for the product of the sample law and Lebesgue measure. -/
+private lemma integrable_uncurry_abs_finiteKernelDensityEstimator_sub {K f : ℝ → ℝ}
+    (hKm : Measurable K) (hK : Integrable K) (hfm : Measurable f) (hf : Integrable f) {n : ℕ}
+    {h : ℝ} (hh : 0 < h) (P : Measure ℝ) [IsProbabilityMeasure P] :
+    Integrable (Function.uncurry fun (x : Fin n → ℝ) (t : ℝ) ↦
+      |finiteKernelDensityEstimator K h x t - f t|)
+      ((Measure.pi fun _ : Fin n ↦ P).prod volume) := by
+  have hfk : ∀ x t, finiteKernelDensityEstimator K h x t =
+      (n : ℝ)⁻¹ * ∑ i, K ((t - x i) / h) / h := finiteKernelDensityEstimator_eq_mean K h
+  have hFm : Measurable (Function.uncurry fun (x : Fin n → ℝ) (t : ℝ) ↦
+      |finiteKernelDensityEstimator K h x t - f t|) := by
+    simp only [Function.uncurry_def]
+    simp_rw [hfk]
+    fun_prop
+  refine (integrable_prod_iff hFm.aestronglyMeasurable).2 ⟨ae_of_all _ fun x ↦
+    ((integrable_finiteKernelDensityEstimator hK hh x).sub hf).abs, ?_⟩
+  refine Integrable.of_bound
+    (hFm.norm.stronglyMeasurable.integral_prod_right' (ν := volume)).aestronglyMeasurable
+    ((∫ u, |K u|) + ∫ t, |f t|) (ae_of_all _ fun x ↦ ?_)
+  simp only [Function.uncurry_apply_pair, Real.norm_eq_abs, abs_abs]
+  rw [abs_of_nonneg (integral_nonneg fun _ ↦ abs_nonneg _)]
+  calc ∫ t, |finiteKernelDensityEstimator K h x t - f t|
+      ≤ ∫ t, (|finiteKernelDensityEstimator K h x t| + |f t|) :=
+        integral_mono ((integrable_finiteKernelDensityEstimator hK hh x).sub hf).abs
+          ((integrable_finiteKernelDensityEstimator hK hh x).abs.add hf.abs)
+          fun t ↦ abs_sub _ _
+    _ = (∫ t, |finiteKernelDensityEstimator K h x t|) + ∫ t, |f t| :=
+        integral_add (integrable_finiteKernelDensityEstimator hK hh x).abs hf.abs
+    _ ≤ (∫ u, |K u|) + ∫ t, |f t| :=
+        add_le_add_left (integral_abs_finiteKernelDensityEstimator_le hK hh x) _
+
 /-- **Expectation bound for the `L¹` error of the kernel density estimator.** For `n ≥ 1`
 observations from `P`, `0 < h ≤ 1`, `λ > 0` and `M ≥ 0`, with `g(t) = ∫ K((t - y)/h)/h dP(y)`,
 `E ∫ |f̂_n - f| ≤ ∫ |g - f| + C ∫|K| / (2 λ n h) + λ M + 2 ∫|K| · P(|y| > M - R)`. -/
@@ -533,29 +564,8 @@ private lemma integral_integral_abs_finiteKernelDensityEstimator_sub_le {K f : �
     have := div_le_div_of_nonneg_right this (by positivity : (0 : ℝ) ≤ 2 * lam)
     linarith
   -- assemble
-  have hFint : Integrable (Function.uncurry fun (x : Fin n → ℝ) (t : ℝ) ↦
-      |finiteKernelDensityEstimator K h x t - f t|) (π.prod volume) := by
-    have hFm : Measurable (Function.uncurry fun (x : Fin n → ℝ) (t : ℝ) ↦
-        |finiteKernelDensityEstimator K h x t - f t|) := by
-      simp only [Function.uncurry_def]
-      simp_rw [hfk]
-      fun_prop
-    refine (integrable_prod_iff hFm.aestronglyMeasurable).2 ⟨ae_of_all _ fun x ↦
-      ((integrable_finiteKernelDensityEstimator hK hh x).sub hf).abs, ?_⟩
-    refine Integrable.of_bound
-      (hFm.norm.stronglyMeasurable.integral_prod_right' (ν := volume)).aestronglyMeasurable
-      ((∫ u, |K u|) + ∫ t, |f t|) (ae_of_all _ fun x ↦ ?_)
-    simp only [Function.uncurry_apply_pair, Real.norm_eq_abs, abs_abs]
-    rw [abs_of_nonneg (integral_nonneg fun _ ↦ abs_nonneg _)]
-    calc ∫ t, |finiteKernelDensityEstimator K h x t - f t|
-        ≤ ∫ t, (|finiteKernelDensityEstimator K h x t| + |f t|) :=
-          integral_mono ((integrable_finiteKernelDensityEstimator hK hh x).sub hf).abs
-            ((integrable_finiteKernelDensityEstimator hK hh x).abs.add hf.abs)
-            fun t ↦ abs_sub _ _
-      _ = (∫ t, |finiteKernelDensityEstimator K h x t|) + ∫ t, |f t| :=
-          integral_add (integrable_finiteKernelDensityEstimator hK hh x).abs hf.abs
-      _ ≤ (∫ u, |K u|) + ∫ t, |f t| :=
-          add_le_add_left (integral_abs_finiteKernelDensityEstimator_le hK hh x) _
+  have hFint :=
+    integrable_uncurry_abs_finiteKernelDensityEstimator_sub (n := n) hKm hK hfm hf hh P
   rw [integral_integral_swap hFint]
   have hmain : ∫ t, ∫ x, |finiteKernelDensityEstimator K h x t - f t| ∂π ≤
       ∫ t, (|g t - f t| + U t) :=
@@ -564,7 +574,6 @@ private lemma integral_integral_abs_finiteKernelDensityEstimator_sub_le {K f : �
   have hgf : Integrable (fun t ↦ |g t - f t|) := (hgint.sub hf).abs
   have hsplit : ∫ t, (|g t - f t| + U t) = (∫ t, |g t - f t|) + ∫ t, U t :=
     integral_add hgf hUint
-  change _ ≤ (∫ t, |g t - f t|) + _ + _ + _
   linarith
 
 /-- For a law `P` with nonnegative density `f`, the expected rescaled kernel is the smoothed

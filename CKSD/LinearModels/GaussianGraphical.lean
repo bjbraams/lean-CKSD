@@ -191,7 +191,8 @@ private theorem sum_eq_add_add_sum_otherCoords {i j : ι} (hij : i ≠ j) (h : �
 
 /-- For a positive definite `2 × 2` matrix `M`, the off-diagonal entry of `M⁻¹` vanishes exactly
 when that of `M` does. -/
-private theorem inv_apply_one_zero_eq_zero_iff {M : Matrix (Fin 2) (Fin 2) ℝ} (hM : M.PosDef) :
+private theorem inv_apply_one_zero_eq_zero_iff {M : Matrix (Fin 2) (Fin 2) ℝ}
+    (hM : M.PosDef) :
     M⁻¹ 1 0 = 0 ↔ M 1 0 = 0 := by
   have hu : IsUnit M.det := hM.det_pos.ne'.isUnit
   have h1 := congrFun (congrFun (Matrix.mul_nonsing_inv M hu) 1) 0

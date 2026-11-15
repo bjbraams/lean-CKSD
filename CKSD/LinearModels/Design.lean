@@ -29,7 +29,8 @@ randomization tests, balanced incomplete block designs, and mutually orthogonal 
   (Kiefer–Wolfowitz equivalence theorem).
 * `CKSD.sum_ite_randomizationPValue_le`: randomization p-values are conservative,
   `P(p ≤ α) ≤ α`, ties included.
-* `CKSD.fisher_inequality`: a balanced incomplete block design has at least as many blocks as
+* `CKSD.points_le_blocks_of_balancedIncompleteBlockDesign`: a balanced incomplete block design has
+  at least as many blocks as
   points (Fisher's inequality).
 * `CKSD.card_le_sub_one_of_orthogonalLatinSquares`: at most `s - 1` mutually orthogonal Latin
   squares of order `s ≥ 2` exist, and `CKSD.exists_orthogonalLatinSquares_of_isPrimePow`: for a
@@ -38,7 +39,8 @@ randomization tests, balanced incomplete block designs, and mutually orthogonal 
 The Kiefer–Wolfowitz theorem uses Mathlib's matrix determinant lemma
 `Matrix.det_add_replicateCol_mul_replicateRow` and the Gaussian likelihood inequality
 `CKSD.log_det_add_card_le_log_det_add_trace_mul_inv`. The proof of Fisher's inequality uses
-Mathlib's rank bounds `Matrix.rank_mul_le_left` and `Matrix.rank_le_width`; the complete families of orthogonal Latin squares use Mathlib's
+Mathlib's rank bounds `Matrix.rank_mul_le_left` and `Matrix.rank_le_width`; the complete families of
+orthogonal Latin squares use Mathlib's
 `GaloisField` and its cardinality `GaloisField.card`.
 
 ## References
@@ -125,7 +127,8 @@ open Matrix in
 towards a design point `i` gives `det M = (1 - t)^{p-1} (1 + (q - 1) t) det M(w)` with
 `q = fᵢᵀ M(w)⁻¹ fᵢ` (matrix determinant lemma), which exceeds `det M(w)` for small `t > 0`
 unless `q ≤ p`. -/
-private theorem matrixQuadraticForm_inv_le_of_forall_det_le {ι : Type*} [Fintype ι] [DecidableEq ι] {p : ℕ}
+private theorem matrixQuadraticForm_inv_le_of_forall_det_le {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {p : ℕ}
     (f : ι → EuclideanSpace ℝ (Fin p)) (w : ι → ℝ)
     (hw : ∀ i, 0 ≤ w i) (hw1 : ∑ i, w i = 1) (hM : (designInformationMatrix f w).PosDef)
     (hmax : ∀ a, (∀ i, 0 ≤ a i) → (∑ i, a i = 1) →
@@ -278,7 +281,7 @@ theorem sum_ite_randomizationPValue_le {ι : Type*} [Fintype ι] (w T : ι → �
 /-- GAPS 105.42, Fisher's inequality: in a balanced incomplete block design on `v` points with
 `b` blocks of size `k < v`, every point in `r > 0` blocks and every pair of distinct points in
 `ell` blocks, there are at least as many blocks as points, `v ≤ b`. -/
-theorem fisher_inequality
+theorem points_le_blocks_of_balancedIncompleteBlockDesign
     (v b k r ell : ℕ) (hkv : k < v)
     (hr : 0 < r) (B : Fin b → Finset (Fin v))
     (hsize : ∀ j, (B j).card = k)

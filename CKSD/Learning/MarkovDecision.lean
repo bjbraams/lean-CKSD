@@ -14,18 +14,23 @@ discount `γ ∈ [0,1)`, expected rewards `r(i,b)` and row-stochastic transition
 ## Main definitions
 
 * `CKSD.FiniteMarkovDecisionProcess`: the model.
-* `CKSD.bellmanOperator`: the Bellman optimality operator
+* `CKSD.FiniteMarkovDecisionProcess.bellmanOperator`: the Bellman optimality operator
   `(TV)(i) = max_b (r(i,b) + γ ∑ⱼ P(j | i,b) V(j))`.
-* `CKSD.optimalStateValue`: its unique fixed point, the optimal value function.
+* `CKSD.FiniteMarkovDecisionProcess.optimalStateValue`: its unique fixed point, the optimal
+  value function.
 
 ## Main results
 
-* `CKSD.bellmanOperator_contractingWith`: `T` is a `γ`-contraction in the sup norm.
-* `CKSD.bellmanOperator_optimalStateValue`, `CKSD.exists_greedy_optimalStateValue`,
-  `CKSD.optimalStateValue_le_of_forall_le`, `CKSD.sum_mul_optimalStateValue_le`,
-  `CKSD.sum_mul_optimalStateValue_eq_iff`: Bellman optimality, existence of a greedy stationary
-  deterministic policy, and the primal linear program `min ∑ ρ U` over superharmonic `U`,
-  whose unique minimizer for positive weights is the optimal value (GAPS 107.58).
+* `CKSD.FiniteMarkovDecisionProcess.bellmanOperator_contractingWith`: `T` is a
+  `γ`-contraction in the sup norm.
+* `CKSD.FiniteMarkovDecisionProcess.bellmanOperator_optimalStateValue`,
+  `CKSD.FiniteMarkovDecisionProcess.exists_greedy_optimalStateValue`,
+  `CKSD.FiniteMarkovDecisionProcess.optimalStateValue_le_of_forall_le`,
+  `CKSD.FiniteMarkovDecisionProcess.sum_mul_optimalStateValue_le`,
+  `CKSD.FiniteMarkovDecisionProcess.sum_mul_optimalStateValue_eq_iff`: Bellman optimality,
+  existence of a greedy stationary deterministic policy, and the primal linear program
+  `min ∑ ρ U` over superharmonic `U`, whose unique minimizer for positive weights is the
+  optimal value (GAPS 107.58).
 * `CKSD.isUnit_one_sub_smul_of_mem_rowStochastic` and the resolvent lemmas: for a
   row-stochastic `H` and `0 ≤ γ < 1` the resolvent `(I - γH)⁻¹` exists, is positive and
   monotone, and has sup-norm at most `1/(1-γ)`.
@@ -77,11 +82,6 @@ theorem FiniteMarkovDecisionProcess.discount_mem_Ico (M : FiniteMarkovDecisionPr
     M.discount ∈ Ico 0 1 :=
   ⟨M.discount_nonneg, M.discount_lt_one⟩
 
-/-- The Bellman optimality operator `(TV)(i) = ⨆_b (r(i,b) + γ ∑ⱼ P(j | i,b) V(j))`. The real
-supremum is a maximum for a nonempty finite action set (and `0` for an empty one). -/
-def bellmanOperator (M : FiniteMarkovDecisionProcess S A) (V : S → ℝ) (i : S) : ℝ :=
-  ⨆ b : A, M.reward i b + M.discount * ∑ j, M.transition i b j * V j
-
 /-- A probability average of values bounded by `c` is bounded by `c`. -/
 theorem sum_mul_le_of_sum_eq_one {ι : Type*} [Fintype ι] (p : ι → ℝ) (hp : ∀ j, 0 ≤ p j)
     (hp1 : ∑ j, p j = 1) (v : ι → ℝ) (c : ℝ) (hv : ∀ j, v j ≤ c) : ∑ j, p j * v j ≤ c := by
@@ -93,6 +93,13 @@ theorem sum_mul_le_of_sum_eq_one {ι : Type*} [Fintype ι] (p : ι → ℝ) (hp 
 private theorem ciSup_le_ciSup_add {ι : Type*} [Finite ι] [Nonempty ι] (f g : ι → ℝ) (c : ℝ)
     (h : ∀ b, f b ≤ g b + c) : ⨆ b, f b ≤ (⨆ b, g b) + c :=
   ciSup_le fun b ↦ (h b).trans (by linarith [le_ciSup (finite_range g).bddAbove b])
+
+namespace FiniteMarkovDecisionProcess
+
+/-- The Bellman optimality operator `(TV)(i) = ⨆_b (r(i,b) + γ ∑ⱼ P(j | i,b) V(j))`. The real
+supremum is a maximum for a nonempty finite action set (and `0` for an empty one). -/
+def bellmanOperator (M : FiniteMarkovDecisionProcess S A) (V : S → ℝ) (i : S) : ℝ :=
+  ⨆ b : A, M.reward i b + M.discount * ∑ j, M.transition i b j * V j
 
 section Bellman
 
@@ -114,6 +121,7 @@ theorem bellmanOperator_contractingWith :
   refine ⟨NNReal.coe_lt_coe.mp (by rw [NNReal.coe_one]; exact M.discount_lt_one),
     LipschitzWith.of_dist_le_mul fun V U ↦ ?_⟩
   rw [dist_eq_norm, dist_eq_norm]
+  -- the Lipschitz constant `⟨γ, _⟩ : ℝ≥0` coerces to `γ` only by unfolding
   change _ ≤ M.discount * _
   refine (pi_norm_le_iff_of_nonneg (by positivity [M.discount_nonneg])).mpr fun i ↦ ?_
   rw [Real.norm_eq_abs, abs_le]
@@ -192,6 +200,8 @@ theorem sum_mul_optimalStateValue_eq_iff {ρ : S → ℝ} (hρ : ∀ i, 0 < ρ i
   · linarith
 
 end Bellman
+
+end FiniteMarkovDecisionProcess
 
 /-! ### Resolvents of row-stochastic matrices -/
 

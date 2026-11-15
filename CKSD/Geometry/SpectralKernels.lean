@@ -59,6 +59,7 @@ theorem integral_cos_inner_eq_re_charFun (μ : Measure E) [IsFiniteMeasure μ] (
     (∫ x, Real.cos (inner ℝ w x) ∂μ) = (charFun μ w).re := by
   have hint := (BoundedContinuousFunction.innerProbChar w).integrable μ
   have hre := Complex.reCLM.integral_comp_comm hint
+  -- `Complex.reCLM` applied pointwise is `Complex.re`
   change (∫ x, ((BoundedContinuousFunction.innerProbChar w) x).re ∂μ) =
     (∫ x, (BoundedContinuousFunction.innerProbChar w) x ∂μ).re at hre
   rw [charFun_eq_integral_innerProbChar, ← hre]
@@ -73,6 +74,7 @@ theorem integral_sin_inner_eq_im_charFun (μ : Measure E) [IsFiniteMeasure μ] (
     (∫ x, Real.sin (inner ℝ w x) ∂μ) = (charFun μ w).im := by
   have hint := (BoundedContinuousFunction.innerProbChar w).integrable μ
   have him := Complex.imCLM.integral_comp_comm hint
+  -- `Complex.imCLM` applied pointwise is `Complex.im`
   change (∫ x, ((BoundedContinuousFunction.innerProbChar w) x).im ∂μ) =
     (∫ x, (BoundedContinuousFunction.innerProbChar w) x ∂μ).im at him
   rw [charFun_eq_integral_innerProbChar, ← him]
@@ -225,6 +227,7 @@ theorem exists_probabilityMeasures_charFun_sub_eq_of_even_bump [FiniteDimensiona
     simp [Φ, smul_neg, hψeven]
   have hΦi : Integrable Φ := hΦ.continuous.integrable_of_hasCompactSupport hΦc
   have hGre (x : E) : G x = (g x : ℂ) := by
+    -- unfold the local functions `G` and `g`
     change (𝓕⁻ F) x = (((𝓕⁻ F) x).re : ℂ)
     rw [SchwartzMap.fourierInv_coe]
     exact TauCeti.fourierInv_eq_re_of_map_neg_eq_conj Φ hΦeven hΦi x
@@ -283,12 +286,10 @@ theorem exists_probabilityMeasures_charFun_sub_eq_of_even_bump [FiniteDimensiona
   let Q := volume.withDensity fun x ↦ ENNReal.ofReal (q x)
   have hP : IsProbabilityMeasure P := by
     constructor
-    change (volume.withDensity fun x ↦ ENNReal.ofReal (p x)) univ = 1
     rw [withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ,
       ← ofReal_integral_eq_lintegral_ofReal hpi (ae_of_all _ hp0), hp1, ENNReal.ofReal_one]
   have hQ : IsProbabilityMeasure Q := by
     constructor
-    change (volume.withDensity fun x ↦ ENNReal.ofReal (q x)) univ = 1
     rw [withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ,
       ← ofReal_integral_eq_lintegral_ofReal hqi (ae_of_all _ hq0), hq1, ENNReal.ofReal_one]
   have hdiff (w : E) : charFun P w - charFun Q w = (ψ w : ℂ) / Z := by
@@ -345,7 +346,7 @@ theorem exists_even_smooth_bump_of_spectral_gap [FiniteDimensional ℝ E] [Nontr
     intro w hw
     have ht := dist_triangle w c x
     have hw' : dist w c < ρ := hw
-    change dist w x < r
+    rw [Metric.mem_ball]
     linarith
   have hball : L (Metric.ball c ρ) = 0 := measure_mono_null hsub hgap
   have hnegball : L ((fun w : E ↦ -w) ⁻¹' Metric.ball c ρ) = 0 := by
@@ -354,7 +355,6 @@ theorem exists_even_smooth_bump_of_spectral_gap [FiniteDimensional ℝ E] [Nontr
   let ψ : E → ℝ := fun w ↦ b w + b (-w)
   have hb0 : b 0 = 0 := by
     apply b.zero_of_le_dist
-    change ρ ≤ dist 0 c
     rw [dist_zero_left]
     linarith [norm_nonneg c]
   have hbneg : HasCompactSupport (fun w ↦ b (-w)) := by
@@ -394,8 +394,8 @@ theorem isCharacteristicKernel_spectral_iff [FiniteDimensional ℝ E] [Nontrivia
   have := hP
   have := hQ
   have hkm : Measurable (fun z : E × E ↦ ∫ w, Real.cos (inner ℝ w (z.1 - z.2)) ∂L) :=
-    (show Measurable (fun z : (E × E) × E ↦
-      Real.cos (inner ℝ z.2 (z.1.1 - z.1.2))) from by fun_prop).stronglyMeasurable.integral_prod_right'.measurable
+    (show Measurable (fun z : (E × E) × E ↦ Real.cos (inner ℝ z.2 (z.1.1 - z.1.2))) from
+      by fun_prop).stronglyMeasurable.integral_prod_right'.measurable
   have hint (μ ν : Measure E) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
       Integrable (fun z : E × E ↦ ∫ w, Real.cos (inner ℝ w (z.1 - z.2)) ∂L) (μ.prod ν) := by
     refine Integrable.of_bound hkm.aestronglyMeasurable (L.real univ) (ae_of_all _ fun z ↦ ?_)

@@ -42,7 +42,8 @@ theorem wasserstein_dist_sq_le_half_add_half (μ ν η ζ : P₂)
     dist μ ζ ^ 2 ≤ (dist μ ν ^ 2 + dist μ η ^ 2) / 2 := by
   have h := TauCeti.wassersteinEDist_smul_add_smul_rpow_le (p := (2 : ℝ≥0∞))
     measurable_edist (by norm_num) (by norm_num)
-    (a := (1 / 2 : ℝ≥0∞)) (b := (1 / 2 : ℝ≥0∞)) (by simpa only [one_div] using ENNReal.inv_two_add_inv_two)
+    (a := (1 / 2 : ℝ≥0∞)) (b := (1 / 2 : ℝ≥0∞))
+    (by simpa only [one_div] using ENNReal.inv_two_add_inv_two)
     (wassersteinLaw μ) (wassersteinLaw ν) (wassersteinLaw η)
   rw [← hζ] at h
   simp only [wassersteinLaw, ← TauCeti.WassersteinSpace.edist_def] at h
@@ -59,12 +60,13 @@ theorem integral_wasserstein_half_mixture (ν η ζ : P₂)
     (f : E → ℝ) (hν : Integrable f (wassersteinLaw ν)) (hη : Integrable f (wassersteinLaw η)) :
     ∫ x, f x ∂wassersteinLaw ζ = ((∫ x, f x ∂wassersteinLaw ν) +
       ∫ x, f x ∂wassersteinLaw η) / 2 := by
-  rw [hζ,integral_add_measure (hν.smul_measure (by finiteness)) (hη.smul_measure (by finiteness))]
-  simp only [integral_smul_measure,ENNReal.toReal_div,ENNReal.toReal_one,
-    ENNReal.toReal_ofNat,smul_eq_mul]
+  rw [hζ, integral_add_measure (hν.smul_measure (by finiteness)) (hη.smul_measure (by finiteness))]
+  simp only [integral_smul_measure, ENNReal.toReal_div, ENNReal.toReal_one,
+    ENNReal.toReal_ofNat, smul_eq_mul]
   ring
 
-/-- The free energy is strictly convex along ordinary half mixtures of distinct finite-energy laws. -/
+/-- The free energy is strictly convex along ordinary half mixtures of distinct finite-energy
+laws. -/
 theorem jkoFreeEnergy_toReal_half_mixture_lt
     (V : E → ℝ) (hVc : Continuous V) (hV : ∀ x, 0 ≤ V x)
     (ν η ζ : P₂) (hν : jkoFreeEnergy V ν ≠ ⊤) (hη : jkoFreeEnergy V η ≠ ⊤)
@@ -73,23 +75,23 @@ theorem jkoFreeEnergy_toReal_half_mixture_lt
       (1 / 2 : ℝ≥0∞) • wassersteinLaw η) :
     jkoFreeEnergy V ζ ≠ ⊤ ∧ (jkoFreeEnergy V ζ).toReal <
       ((jkoFreeEnergy V ν).toReal + (jkoFreeEnergy V η).toReal) / 2 := by
-  let G : Measure E := volume.tilted (fun x : E ↦ -((1 : ℝ)*‖x‖^2))
+  let G : Measure E := volume.tilted (fun x : E ↦ -((1 : ℝ) * ‖x‖ ^ 2))
   have hG := integrable_exp_neg_mul_norm_sq (d := d) zero_lt_one
   have : IsProbabilityMeasure G := isProbabilityMeasure_tilted hG
-  have hνK := ((jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential V hV zero_lt_one ν).1 hν).1
-  have hηK := ((jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential V hV zero_lt_one η).1 hη).1
-  change klDiv (wassersteinLaw ν) G ≠ ∞ at hνK
-  change klDiv (wassersteinLaw η) G ≠ ∞ at hηK
+  have hνK : klDiv (wassersteinLaw ν) G ≠ ∞ :=
+    ((jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential V hV zero_lt_one ν).1 hν).1
+  have hηK : klDiv (wassersteinLaw η) G ≠ ∞ :=
+    ((jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential V hV zero_lt_one η).1 hη).1
   have hnm : wassersteinLaw ν ≠ wassersteinLaw η := fun he ↦ hne
     (TauCeti.WassersteinSpace.ext (ProbabilityMeasure.toMeasure_injective he))
   have hh := TauCeti.klDiv_smul_add_smul_lt (ρ := G) (μ := wassersteinLaw ν)
-    (ν := wassersteinLaw η) (a := (1/2 : ℝ≥0)) (b := (1/2 : ℝ≥0))
+    (ν := wassersteinLaw η) (a := (1 / 2 : ℝ≥0)) (b := (1 / 2 : ℝ≥0))
     (by norm_num) (by norm_num) (by norm_num) hνK hηK hnm
   have hζNN : (1 / 2 : ℝ≥0) • wassersteinLaw ν + (1 / 2 : ℝ≥0) • wassersteinLaw η =
       wassersteinLaw ζ := by
     rw [hζ]
     ext s hs
-    simp only [add_apply,smul_apply,Measure.nnreal_smul_coe_apply,smul_eq_mul]
+    simp only [add_apply, smul_apply, Measure.nnreal_smul_coe_apply, smul_eq_mul]
     congr 2 <;> norm_num
   rw [hζNN] at hh
   have hζK : klDiv (wassersteinLaw ζ) G ≠ ∞ := ne_top_of_lt hh
@@ -105,22 +107,23 @@ theorem jkoFreeEnergy_toReal_half_mixture_lt
     (jkoFreeEnergy_ne_top_iff_klDiv_gaussian_and_potential V hV zero_lt_one ζ).2
       ⟨hζK, by rw [TauCeti.potentialEnergy_of_integrable hζV]; exact EReal.coe_ne_top _⟩
   refine ⟨hζF, ?_⟩
-  have hmi (μ : P₂) : Integrable (fun x : E ↦ ‖x‖^2) (wassersteinLaw μ) := by
-    change Integrable (fun x : E ↦ ‖x‖^2) ((μ : ProbabilityMeasure E) : Measure E)
-    simpa only [ENNReal.toReal_ofNat,Real.rpow_two,dist_zero_right] using
-      TauCeti.WassersteinSpace.integrable_dist_rpow (p := 2) (by norm_num) μ (0:E)
+  have hmi (μ : P₂) : Integrable (fun x : E ↦ ‖x‖ ^ 2) (wassersteinLaw μ) := by
+    unfold wassersteinLaw
+    simpa only [ENNReal.toReal_ofNat, Real.rpow_two, dist_zero_right] using
+      TauCeti.WassersteinSpace.integrable_dist_rpow (p := 2) (by norm_num) μ (0 : E)
   have hmV := integral_wasserstein_half_mixture ν η ζ hζ V hνV hηV
-  have hmM := integral_wasserstein_half_mixture ν η ζ hζ (fun x : E ↦ ‖x‖^2) (hmi ν) (hmi η)
-  have hreal (μ : P₂) (hμK : klDiv (wassersteinLaw μ) G ≠ ∞) (hμV : Integrable V (wassersteinLaw μ)) :
+  have hmM := integral_wasserstein_half_mixture ν η ζ hζ (fun x : E ↦ ‖x‖ ^ 2) (hmi ν) (hmi η)
+  have hreal (μ : P₂) (hμK : klDiv (wassersteinLaw μ) G ≠ ∞)
+      (hμV : Integrable V (wassersteinLaw μ)) :
       (jkoFreeEnergy V μ).toReal = (klDiv (wassersteinLaw μ) G).toReal +
-        (∫ x, V x ∂wassersteinLaw μ) - (∫ x, ‖x‖^2 ∂wassersteinLaw μ) -
-        Real.log (∫ x : E, Real.exp (-((1:ℝ)*‖x‖^2))) := by
+        (∫ x, V x ∂wassersteinLaw μ) - (∫ x, ‖x‖ ^ 2 ∂wassersteinLaw μ) -
+        Real.log (∫ x : E, Real.exp (-((1 : ℝ) * ‖x‖ ^ 2))) := by
     rw [jkoFreeEnergy_eq_klDiv_gaussian_add V zero_lt_one μ,
-      TauCeti.potentialEnergy_of_integrable hμV,← EReal.coe_ennreal_toReal hμK]
-    simp only [← EReal.coe_add,EReal.toReal_coe,one_mul]
+      TauCeti.potentialEnergy_of_integrable hμV, ← EReal.coe_ennreal_toReal hμK]
+    simp only [← EReal.coe_add, EReal.toReal_coe, one_mul]
     ring
-  rw [hreal ζ hζK hζV,hreal ν hνK hνV,hreal η hηK hηV]
-  rw [hmV,hmM]
+  rw [hreal ζ hζK hζV, hreal ν hνK hνV, hreal η hηK hηV]
+  rw [hmV, hmM]
   norm_num at hKreal
   linarith
 /-- A nonnegative continuous-potential JKO step has at most one minimizer, by ordinary-mixture
@@ -134,16 +137,17 @@ theorem subsingleton_moreauYosidaResolvent_jkoFreeEnergy
     have hh := TauCeti.moreauYosida_le (jkoFreeEnergy V) τ (x := μ) (y := ρ₀) (edist_ne_top _ _)
     apply ne_top_of_le_ne_top ?_ hh
     rw [TauCeti.coe_edist_sq_div_eq_coe_dist_sq_div hτ]
-    simpa only [ne_eq,EReal.add_coe_eq_top_iff] using hF
+    simpa only [ne_eq, EReal.add_coe_eq_top_iff] using hF
   intro ν hν η hη
   by_contra hne
   have hνF := TauCeti.apply_ne_top_of_mem_moreauYosidaResolvent hν hmy
   have hηF := TauCeti.apply_ne_top_of_mem_moreauYosidaResolvent hη hmy
-  obtain ⟨ζ,hζ⟩ := TauCeti.WassersteinSpace.exists_coe_eq_smul_add_smul (p := (2 : ℝ≥0∞))
-    (a := (1/2 : ℝ≥0∞)) (b := (1/2 : ℝ≥0∞))
-    (by simpa only [one_div] using ENNReal.inv_two_add_inv_two) ν η
-  change wassersteinLaw ζ = (1/2 : ℝ≥0∞) • wassersteinLaw ν + (1/2 : ℝ≥0∞) • wassersteinLaw η at hζ
-  obtain ⟨hζF,hstrict⟩ := jkoFreeEnergy_toReal_half_mixture_lt V hVc hV ν η ζ hνF hηF hne hζ
+  obtain ⟨ζ, hζ⟩ : ∃ ζ : P₂, wassersteinLaw ζ =
+      (1 / 2 : ℝ≥0∞) • wassersteinLaw ν + (1 / 2 : ℝ≥0∞) • wassersteinLaw η :=
+    TauCeti.WassersteinSpace.exists_coe_eq_smul_add_smul (p := (2 : ℝ≥0∞))
+      (a := (1 / 2 : ℝ≥0∞)) (b := (1 / 2 : ℝ≥0∞))
+      (by simpa only [one_div] using ENNReal.inv_two_add_inv_two) ν η
+  obtain ⟨hζF, hstrict⟩ := jkoFreeEnergy_toReal_half_mixture_lt V hVc hV ν η ζ hνF hηF hne hζ
   have hcost := wasserstein_dist_sq_le_half_add_half μ ν η ζ hζ
   have hreal (ξ : P₂) (hξ : jkoFreeEnergy V ξ ≠ ⊤) :
       jkoFreeEnergy V ξ = ((jkoFreeEnergy V ξ).toReal : EReal) :=

@@ -35,7 +35,8 @@ open scoped NNReal ENNReal Topology BigOperators
 namespace CKSD
 
 /-- A solution with integrable initial state and Brownian forcing admits an integrable random
-bound uniform on each compact time interval, under exactly the pointwise moment solution predicate. -/
+bound uniform on each compact time interval, under exactly the pointwise moment solution
+predicate. -/
 theorem IsMcKeanVlasovSolution.exists_integrable_uniform_bound
     {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
@@ -48,7 +49,8 @@ theorem IsMcKeanVlasovSolution.exists_integrable_uniform_bound
     ∃ D : Ω → ℝ, Integrable D P ∧ ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T, ‖Y t ω‖ ≤ D ω := by
   have hc := hY.2.2.mono fun ω hω ↦ hω.1
   have hm (s : ℝ) (hs : 0 ≤ s) : Integrable (fun z ↦ ‖z‖) (P.map (Y s)) :=
-    (integrable_map_measure continuous_norm.aestronglyMeasurable (hY.1 s).aemeasurable).2 (hY.2.1 s hs)
+    (integrable_map_measure continuous_norm.aestronglyMeasurable (hY.1 s).aemeasurable).2
+      (hY.2.1 s hs)
   have hLip (s : ℝ) (hs : s ∈ Icc (0 : ℝ) T) : LipschitzWith (Real.toNNReal L)
       (fun x ↦ b x (P.map (Y s))) := by
     have : IsProbabilityMeasure (P.map (Y s)) := (Measure.isProbabilityMeasure_map_iff
@@ -90,19 +92,24 @@ theorem ae_intervalIntegrable_wasserstein_drift_of_bound
   let A := (Real.toNNReal L : ℝ)
   let C := ‖b 0 (Measure.dirac (0 : E))‖
   have hm (s : ℝ) (hs : s ∈ Icc (0 : ℝ) T) : Integrable (fun z ↦ ‖z‖) (P.map (Y s)) :=
-    (integrable_map_measure continuous_norm.aestronglyMeasurable (hYm s).aemeasurable).2 (hYint s hs)
+    (integrable_map_measure continuous_norm.aestronglyMeasurable (hYm s).aemeasurable).2
+      (hYint s hs)
   have hgrowth (s : ℝ) (hs : s ∈ Icc (0 : ℝ) T) (z : E) :
       ‖b z (P.map (Y s))‖ ≤ C + A * (‖z‖ + ∫ ω, ‖Y s ω‖ ∂P) := by
     have hpm : IsProbabilityMeasure (P.map (Y s)) := (Measure.isProbabilityMeasure_map_iff
       (hYm s).aemeasurable).2 inferInstance
-    have hYi : Integrable (Y s) P := (integrable_norm_iff (hYm s).aestronglyMeasurable).1 (hYint s hs)
+    have hYi : Integrable (Y s) P :=
+      (integrable_norm_iff (hYm s).aestronglyMeasurable).1 (hYint s hs)
     have hwass := wassersteinEDist_one_map_toReal_le_integral_norm_sub P
       (hYm s).aestronglyMeasurable aestronglyMeasurable_const (hYi.sub (integrable_const (0 : E)))
     simp only [sub_zero, Measure.map_const, measure_univ, one_smul] at hwass
-    have h0 : Integrable (fun z : E ↦ ‖z‖) (Measure.dirac (0 : E)) := integrable_dirac (by finiteness)
+    have h0 : Integrable (fun z : E ↦ ‖z‖) (Measure.dirac (0 : E)) :=
+      integrable_dirac (by finiteness)
     have hh := hb z 0 (P.map (Y s)) (Measure.dirac (0 : E)) hpm inferInstance (hm s hs) h0
     rw [sub_zero] at hh
-    have hnn : 0 ≤ ‖z‖ + (TauCeti.wassersteinEDist 1 (P.map (Y s)) (Measure.dirac (0 : E))).toReal := by positivity
+    have hnn :
+        0 ≤ ‖z‖ + (TauCeti.wassersteinEDist 1 (P.map (Y s)) (Measure.dirac (0 : E))).toReal := by
+      positivity
     calc ‖b z (P.map (Y s))‖ ≤ ‖b z (P.map (Y s)) - b 0 (Measure.dirac (0 : E))‖ + C :=
         norm_le_norm_sub_add _ _
       _ ≤ A * (‖z‖ + ∫ ω, ‖Y s ω‖ ∂P) + C := by
@@ -121,7 +128,8 @@ theorem ae_intervalIntegrable_wasserstein_drift_of_bound
     exact (hgrowth s hs' _).trans (add_le_add le_rfl (mul_le_mul_of_nonneg_left
       (add_le_add (hboundω s hs') (hmean s hs')) (Real.toNNReal L).coe_nonneg))
   intro t ht
-  exact (intervalIntegrable_iff_integrableOn_Ioc_of_le ht.1).2 (hint.mono_set (Ioc_subset_Ioc le_rfl ht.2))
+  exact (intervalIntegrable_iff_integrableOn_Ioc_of_le ht.1).2
+    (hint.mono_set (Ioc_subset_Ioc le_rfl ht.2))
 
 /-- A local integrable envelope makes a nonlinear solution drift interval-integrable. -/
 theorem IsMcKeanVlasovSolution.ae_intervalIntegrable_drift_of_bound
@@ -143,6 +151,39 @@ theorem IsMcKeanVlasovSolution.ae_intervalIntegrable_drift_of_bound
       (fun s ↦ Y s ω) hω).mono_measure (Measure.restrict_mono_set _ (fun _ hs ↦ hs.1.le))
   exact ae_intervalIntegrable_wasserstein_drift_of_bound P b hb Y hY.1 hT
     (fun t ht ↦ hY.2.1 t ht.1) hbm D hD hbound
+
+/-- A Wasserstein-Lipschitz drift evaluated at the laws of two integrable random vectors
+differs by at most `L⁺` times the distance of the locations plus the mean distance of the
+random vectors. -/
+theorem IsWassersteinLipschitzDrift.norm_sub_map_le
+    {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
+    (P : Measure Ω) [IsProbabilityMeasure P]
+    {b : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) →
+      EuclideanSpace ℝ (Fin d)}
+    {L : ℝ} (hb : IsWassersteinLipschitzDrift b L)
+    {U V : Ω → EuclideanSpace ℝ (Fin d)} (hUm : Measurable U) (hVm : Measurable V)
+    (hUi : Integrable (fun ω ↦ ‖U ω‖) P) (hVi : Integrable (fun ω ↦ ‖V ω‖) P)
+    (x y : EuclideanSpace ℝ (Fin d)) :
+    ‖b x (P.map U) - b y (P.map V)‖ ≤
+      (Real.toNNReal L : ℝ) * (‖x - y‖ + ∫ ω, ‖U ω - V ω‖ ∂P) := by
+  have hpmU : IsProbabilityMeasure (P.map U) :=
+    (Measure.isProbabilityMeasure_map_iff hUm.aemeasurable).2 inferInstance
+  have hpmV : IsProbabilityMeasure (P.map V) :=
+    (Measure.isProbabilityMeasure_map_iff hVm.aemeasurable).2 inferInstance
+  have hmU : Integrable (fun z ↦ ‖z‖) (P.map U) :=
+    (integrable_map_measure continuous_norm.aestronglyMeasurable hUm.aemeasurable).2 hUi
+  have hmV : Integrable (fun z ↦ ‖z‖) (P.map V) :=
+    (integrable_map_measure continuous_norm.aestronglyMeasurable hVm.aemeasurable).2 hVi
+  have hdiff : Integrable (fun ω ↦ U ω - V ω) P :=
+    ((integrable_norm_iff hUm.aestronglyMeasurable).1 hUi).sub
+      ((integrable_norm_iff hVm.aestronglyMeasurable).1 hVi)
+  have hwass := wassersteinEDist_one_map_toReal_le_integral_norm_sub P
+    hUm.aestronglyMeasurable hVm.aestronglyMeasurable hdiff
+  have hh := hb x y (P.map U) (P.map V) hpmU hpmV hmU hmV
+  have hnn : 0 ≤ ‖x - y‖ + (TauCeti.wassersteinEDist 1 (P.map U) (P.map V)).toReal :=
+    add_nonneg (norm_nonneg _) ENNReal.toReal_nonneg
+  exact (hh.trans (mul_le_mul_of_nonneg_right (Real.le_coe_toNNReal L) hnn)).trans
+    (mul_le_mul_of_nonneg_left (add_le_add le_rfl hwass) (Real.toNNReal L).coe_nonneg)
 
 /-- Two locally integrably bounded nonlinear integral equations with the same additive forcing
 and a Wasserstein-Lipschitz drift agree almost surely on their common compact time interval. -/
@@ -196,26 +237,12 @@ theorem ae_eq_of_wasserstein_integral_eq_on_Icc
     · exact hDi
     · exact hΔc.mono fun ω hω ↦ hω.continuousOn
   have hbd (s : ℝ) (hs : s ∈ Icc (0 : ℝ) T) (ω : Ω) :
-      ‖b (Y s ω) (P.map (Y s)) - b (Z s ω) (P.map (Z s))‖ ≤ A * (Δ s ω + F s) := by
-    have hpmY : IsProbabilityMeasure (P.map (Y s)) :=
-      (Measure.isProbabilityMeasure_map_iff (hYm s).aemeasurable).2 inferInstance
-    have hpmZ : IsProbabilityMeasure (P.map (Z s)) :=
-      (Measure.isProbabilityMeasure_map_iff (hZm s).aemeasurable).2 inferInstance
-    have hmY : Integrable (fun z ↦ ‖z‖) (P.map (Y s)) :=
-      (integrable_map_measure continuous_norm.aestronglyMeasurable (hYm s).aemeasurable).2 (hYnorm s hs)
-    have hmZ : Integrable (fun z ↦ ‖z‖) (P.map (Z s)) :=
-      (integrable_map_measure continuous_norm.aestronglyMeasurable (hZm s).aemeasurable).2 (hZnorm s hs)
-    have hdiff : Integrable (fun ω ↦ Y s ω - Z s ω) P :=
-      (integrable_norm_iff ((hYm s).sub (hZm s)).aestronglyMeasurable).1 (hΔi s hs)
-    have hwass := wassersteinEDist_one_map_toReal_le_integral_norm_sub P
-      (hYm s).aestronglyMeasurable (hZm s).aestronglyMeasurable hdiff
-    have hh := hb (Y s ω) (Z s ω) (P.map (Y s)) (P.map (Z s)) hpmY hpmZ hmY hmZ
-    have hnn : 0 ≤ Δ s ω + (TauCeti.wassersteinEDist 1 (P.map (Y s)) (P.map (Z s))).toReal := by
-      exact add_nonneg (norm_nonneg _) ENNReal.toReal_nonneg
-    exact (hh.trans (mul_le_mul_of_nonneg_right (Real.le_coe_toNNReal L) hnn)).trans
-      (mul_le_mul_of_nonneg_left (add_le_add le_rfl hwass) (Real.toNNReal L).coe_nonneg)
-  have hYint := ae_intervalIntegrable_wasserstein_drift_of_bound P b hb Y hYm hT hYnorm hbmY DY hDYi hDY
-  have hZint := ae_intervalIntegrable_wasserstein_drift_of_bound P b hb Z hZm hT hZnorm hbmZ DZ hDZi hDZ
+      ‖b (Y s ω) (P.map (Y s)) - b (Z s ω) (P.map (Z s))‖ ≤ A * (Δ s ω + F s) :=
+    hb.norm_sub_map_le P (hYm s) (hZm s) (hYnorm s hs) (hZnorm s hs) _ _
+  have hYint := ae_intervalIntegrable_wasserstein_drift_of_bound P b hb Y hYm hT hYnorm hbmY
+    DY hDYi hDY
+  have hZint := ae_intervalIntegrable_wasserstein_drift_of_bound P b hb Z hZm hT hZnorm hbmZ
+    DZ hDZi hDZ
   have hineq : ∀ᵐ ω ∂P, ∀ t ∈ Icc (0 : ℝ) T, Δ t ω ≤
       A * (∫ s in (0 : ℝ)..t, Δ s ω) + A * (∫ s in (0 : ℝ)..t, F s) := by
     filter_upwards [heq, hYc, hZc, hYint, hZint] with ω heqω hy hz hyi hzi
@@ -230,7 +257,7 @@ theorem ae_eq_of_wasserstein_integral_eq_on_Icc
       exact (hFc.integrableOn_Icc.mono_set hsub).intervalIntegrable
     have hΔci : IntervalIntegrable (fun s ↦ Δ s ω) volume 0 t :=
       (hy.sub hz).norm.intervalIntegrable _ _
-    change ‖Y t ω - Z t ω‖ ≤ _
+    dsimp only [Δ]
     rw [heq]
     calc _ ≤ ∫ s in (0 : ℝ)..t, ‖b (Y s ω) (P.map (Y s)) - b (Z s ω) (P.map (Z s))‖ :=
           intervalIntegral.norm_integral_le_integral_norm ht.1

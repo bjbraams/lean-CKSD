@@ -140,15 +140,18 @@ theorem gaussian_sample_mean_residual_laws (n : ℕ) (hn : 2 ≤ n) (m : ℝ) (v
   intro P mean ss
   let one : EuclideanSpace ℝ (Fin n) := WithLp.toLp 2 (fun _ ↦ 1)
   let K : Submodule ℝ (EuclideanSpace ℝ (Fin n)) := ℝ ∙ one
-  let Y : (Fin n → ℝ) → EuclideanSpace ℝ (Fin n) := fun x ↦ WithLp.toLp 2 (fun i ↦ (x i - m) / Real.sqrt v)
-  have hY : HasLaw Y (stdGaussian (EuclideanSpace ℝ (Fin n))) P := hasLaw_standardize_pi_gaussianReal n m v hv
+  let Y : (Fin n → ℝ) → EuclideanSpace ℝ (Fin n) := fun x ↦
+    WithLp.toLp 2 (fun i ↦ (x i - m) / Real.sqrt v)
+  have hY : HasLaw Y (stdGaussian (EuclideanSpace ℝ (Fin n))) P :=
+    hasLaw_standardize_pi_gaussianReal n m v hv
   have hn0 : (n : ℝ) ≠ 0 := by positivity
   have hsv : Real.sqrt v ≠ 0 := (Real.sqrt_pos.2 (NNReal.coe_pos.2 hv)).ne'
   have hinner : ∀ y : EuclideanSpace ℝ (Fin n), inner ℝ one y = ∑ i, y i := by
     intro y; rw [EuclideanSpace.inner_eq_star_dotProduct]; simp [one, dotProduct]
   have hone : ‖one‖ ^ 2 = n := by
     rw [EuclideanSpace.real_norm_sq_eq]; simp [one]
-  have hprojK : ∀ y : EuclideanSpace ℝ (Fin n), (K.starProjection y) = (inner ℝ one y / n) • one := by
+  have hprojK : ∀ y : EuclideanSpace ℝ (Fin n),
+      (K.starProjection y) = (inner ℝ one y / n) • one := by
     intro y; rw [Submodule.starProjection_singleton, hone]; simp
   -- the residual sum of squares is `v` times the squared length of the residual projection
   have hss : ∀ x, ss x = v * ‖Kᗮ.orthogonalProjectionOnto (Y x)‖ ^ 2 := by
@@ -166,7 +169,8 @@ theorem gaussian_sample_mean_residual_laws (n : ℕ) (hn : 2 ≤ n) (m : ℝ) (v
     rw [hv2]
     ring
   -- the sample mean is a function of the projection onto the constants
-  have hmean : ∀ x, mean x = m + Real.sqrt v * (inner ℝ one (K.orthogonalProjectionOnto (Y x) : EuclideanSpace ℝ (Fin n)) / n) := by
+  have hmean : ∀ x, mean x = m + Real.sqrt v *
+      (inner ℝ one (K.orthogonalProjectionOnto (Y x) : EuclideanSpace ℝ (Fin n)) / n) := by
     intro x
     rw [Submodule.coe_orthogonalProjectionOnto_apply,
       ← Submodule.inner_starProjection_left_eq_right,
@@ -511,6 +515,7 @@ theorem exists_ump_interval_test {X : Type*} [MeasurableSpace X]
   · -- Level `α` on the two-sided null hypothesis.
     have hα' : α ∈ Icc (0 : ℝ) 1 := ⟨hα.1.le, hα.2.le⟩
     intro θ hθ
+    -- `change` unfolds a definition that `simp` does not see through
     change ∫ x, φ x ∂F.law θ ≤ α
     rcases hθ with h | h
     · rcases h.lt_or_eq with h | h
@@ -649,6 +654,7 @@ theorem exists_one_sided_test_risk_le {X : Type*} [MeasurableSpace X]
         rw [h1]
         have h0 : (∫ x, (1 - φ x) ∂P θ₀) = 0 := by
           rw [hφ.integral_one_sub]
+          -- `change` unfolds the definitions so that `linarith` sees the atoms
           change 1 - testPower P φ θ₀ = 0
           linarith
         have h2 := integral_eq_zero_of_integral_eq_zero_of_pos_density (hf θ₀) (hf θ) (hpos θ₀)

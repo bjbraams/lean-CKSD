@@ -28,7 +28,7 @@ that the innovations are shifts of each other and have constant norm, and expand
 
 ## Main results
 
-* `CKSD.Wold.wold`: the decomposition in terms of the innovations.
+* `CKSD.Wold.exists_innov_decomposition`: the decomposition in terms of the innovations.
 * `CKSD.exists_wold_decomposition` (GAPS 106.2): the decomposition for a weakly stationary
   sequence (`CKSD.IsWeaklyStationary`), with the orthogonal projections onto the closed pasts.
 
@@ -124,6 +124,7 @@ theorem denseRange_coeffMap : DenseRange (coeffMap X) := by
       Subtype.val '' Set.range (coeffMap X) = (Submodule.span ℝ (Set.range X) : Set H) := by
     have h1 : ∀ f, ((coeffMap X f : hull X) : H) = Finsupp.linearCombination ℝ X f := by
       intro f
+      -- `coeffMap X f` is a linear combination with its codomain restricted to `hull X`
       change (hull X).subtype (Finsupp.linearCombination ℝ _ f) = _
       rw [Finsupp.apply_linearCombination]
       rfl
@@ -142,6 +143,7 @@ omit [CompleteSpace H] in
 theorem norm_shiftedCoeffMap (hstat : ∀ s t, ⟪X s, X t⟫ = ⟪X (s - t), X 0⟫) (f : ℤ →₀ ℝ) :
     ‖shiftedCoeffMap X f‖ = ‖coeffMap X f‖ :=
   f.norm_linearCombination_eq_of_inner_eq fun a b ↦ by
+    -- the inner product of elements of `hull X` is that of the underlying vectors
     change ⟪X (a + 1), X (b + 1)⟫ = ⟪X a, X b⟫
     rw [hstat, hstat a b]
     congr 2
@@ -205,8 +207,7 @@ theorem shift_mem_past {x : H} {t : ℤ} (hx : x ∈ past X t) : shift hstat x �
       ((isClosed_past X (t + 1)).preimage (shift hstat).continuous)
     refine Submodule.span_le.2 ?_
     rintro _ ⟨s, hs, rfl⟩
-    change shift hstat (X s) ∈ past X (t + 1)
-    rw [shift_apply_X]
+    rw [SetLike.mem_coe, Submodule.mem_comap, ContinuousLinearMap.coe_coe, shift_apply_X]
     exact past_mono X (by omega) (mem_past_self X (s + 1))
   exact hle hx
 
@@ -400,7 +401,7 @@ theorem tsum_mem_past {f : ℕ → H} {t : ℤ} (hf : ∀ j, f j ∈ past X t) :
     exact Submodule.zero_mem _
 
 /-- Wold decomposition, in terms of the innovations. -/
-theorem wold (he : 0 < ‖innov P X 0‖) :
+theorem exists_innov_decomposition (he : 0 < ‖innov P X 0‖) :
     ∃ (a : ℕ → ℝ) (V : ℤ → H), a 0 = 1 ∧ Summable (fun j ↦ a j ^ 2) ∧
       (∀ t s, V t ∈ past X s) ∧ (∀ t s, ⟪V t, innov P X s⟫ = 0) ∧
       ∀ t, Tendsto (fun n ↦ (∑ j ∈ Finset.range n, a j • innov P X (t - j)) + V t) atTop
@@ -437,7 +438,7 @@ theorem wold (he : 0 < ‖innov P X 0‖) :
       rw [h0, mul_zero, mul_zero]
   have hA : Summable fun j ↦ a j ^ 2 := by
     refine ((hu 0).inner_products_summable (x := X 0)).mul_left (c⁻¹ ^ 2) |>.congr fun j ↦ ?_
-    show c⁻¹ ^ 2 * ‖⟪c⁻¹ • innov P X (0 - j), X 0⟫‖ ^ 2 = (⟪X 0, innov P X (-j)⟫ / c ^ 2) ^ 2
+    simp only [a]
     rw [zero_sub, real_inner_smul_left, real_inner_comm, Real.norm_eq_abs, sq_abs]
     field_simp
   have hS : ∀ t : ℤ, Summable fun j : ℕ ↦ a j • innov P X (t - j) := fun t ↦ by
@@ -500,7 +501,7 @@ theorem exists_wold_decomposition {H : Type*} [NormedAddCommGroup H] [InnerProdu
       (∀ t s, V t ∈ Wold.past X s) ∧ (∀ t s, inner ℝ (V t) (e s) = 0) ∧
       ∀ t, Tendsto (fun n ↦ (∑ j ∈ Finset.range n, a j • e (t - j)) + V t) atTop
         (𝓝 (X t)) :=
-  Wold.wold (fun s t ↦ hstat.inner_eq_inner_sub_zero s t) _
+  Wold.exists_innov_decomposition (fun s t ↦ hstat.inner_eq_inner_sub_zero s t) _
     (fun _ x ↦ ⟨Submodule.starProjection_apply_mem _ x,
       fun y hy ↦ Submodule.starProjection_inner_eq_zero x y hy⟩) (norm_pos_iff.2 he)
 

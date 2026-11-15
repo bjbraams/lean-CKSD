@@ -31,12 +31,14 @@ theorem measurable_sphericityRatio (p : ℕ) :
   unfold sphericityRatio
   fun_prop
 /-- The finite Euclidean sample mean is Borel measurable. -/
-theorem measurable_sampleMean {n p : ℕ} : Measurable (sampleMean : (Fin n → EuclideanSpace ℝ (Fin p)) → EuclideanSpace ℝ (Fin p)) := by
+theorem measurable_sampleMean {n p : ℕ} : Measurable
+    (sampleMean : (Fin n → EuclideanSpace ℝ (Fin p)) → EuclideanSpace ℝ (Fin p)) := by
   unfold sampleMean
   fun_prop
 
 /-- The finite centered scatter matrix is Borel measurable. -/
-theorem measurable_scatterMatrix {n p : ℕ} : Measurable (scatterMatrix : (Fin n → EuclideanSpace ℝ (Fin p)) → Matrix (Fin p) (Fin p) ℝ) := by
+theorem measurable_scatterMatrix {n p : ℕ} : Measurable
+    (scatterMatrix : (Fin n → EuclideanSpace ℝ (Fin p)) → Matrix (Fin p) (Fin p) ℝ) := by
   unfold scatterMatrix
   apply Measurable.of_eval
   intro j
@@ -44,15 +46,18 @@ theorem measurable_scatterMatrix {n p : ℕ} : Measurable (scatterMatrix : (Fin 
   intro l
   apply Finset.measurable_fun_sum
   intro i _
-  exact ((((PiLp.continuous_apply 2 (fun _ : Fin p ↦ ℝ) j).measurable) |>.comp (measurable_pi_apply i)).sub
+  exact ((((PiLp.continuous_apply 2 (fun _ : Fin p ↦ ℝ) j).measurable) |>.comp
+      (measurable_pi_apply i)).sub
     ((((PiLp.continuous_apply 2 (fun _ : Fin p ↦ ℝ) j).measurable)).comp measurable_sampleMean)).mul
-    ((((PiLp.continuous_apply 2 (fun _ : Fin p ↦ ℝ) l).measurable) |>.comp (measurable_pi_apply i)).sub
+    ((((PiLp.continuous_apply 2 (fun _ : Fin p ↦ ℝ) l).measurable) |>.comp
+        (measurable_pi_apply i)).sub
       ((((PiLp.continuous_apply 2 (fun _ : Fin p ↦ ℝ) l).measurable)).comp measurable_sampleMean))
 
 /-- The sample covariance with divisor `n` is Borel measurable, including an empty sample. -/
 theorem measurable_sampleCovarianceMatrix {n p : ℕ} :
-    Measurable (sampleCovarianceMatrix : (Fin n → EuclideanSpace ℝ (Fin p)) → Matrix (Fin p) (Fin p) ℝ) := by
-  change Measurable (fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦ (n:ℝ)⁻¹ • scatterMatrix x)
+    Measurable
+        (sampleCovarianceMatrix : (Fin n → EuclideanSpace ℝ (Fin p)) →
+        Matrix (Fin p) (Fin p) ℝ) := by
   exact (measurable_const (a := (n:ℝ)⁻¹)).smul (measurable_scatterMatrix (n := n) (p := p))
 
 set_option maxHeartbeats 800000 in
@@ -65,14 +70,12 @@ theorem map_sphericityRatio_sampleCovarianceMatrix_eq_wishart
       (TauCeti.Probability.wishartGramMeasure (n-1) Sigma).map
         (fun A ↦ sphericityRatio (A.val : Matrix (Fin p) (Fin p) ℝ)) := by
   have hn0 : (n:ℝ) ≠ 0 := by exact_mod_cast (by omega : n ≠ 0)
-  have heq : (fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦ sphericityRatio (sampleCovarianceMatrix x)) =
-      fun x ↦ sphericityRatio (scatterMatrix x) := by
+  have heq : (fun x : Fin n → EuclideanSpace ℝ (Fin p) ↦ sphericityRatio (sampleCovarianceMatrix x))
+      =
+      sphericityRatio ∘ scatterMatrix := by
     funext x
     exact sphericityRatio_smul _ (inv_ne_zero hn0)
-  rw [heq]
-  change (Measure.pi (fun _ : Fin n ↦ multivariateGaussian m Sigma)).map
-    (sphericityRatio ∘ scatterMatrix) = _
-  rw [← Measure.map_map (measurable_sphericityRatio p) measurable_scatterMatrix,
+  rw [heq, ← Measure.map_map (measurable_sphericityRatio p) measurable_scatterMatrix,
     (gaussian_sampleMean_scatterMatrix_wishart_and_hotelling hp hn m Sigma hS).2.1,
     Measure.map_map (measurable_sphericityRatio p) measurable_subtype_coe]
   rfl

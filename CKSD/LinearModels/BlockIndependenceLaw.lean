@@ -26,7 +26,8 @@ theorem map_blockIndependenceRatio_wishart_eq_beta_product {p q ν : ℕ}
     (S : Matrix (Fin (p+q)) (Fin (p+q)) ℝ) (hS : S.PosDef)
     (hblock : S.submatrix (Fin.castAdd q) (Fin.natAdd p) = 0) :
     (TauCeti.Probability.wishartGramMeasure ν S).map
-      (fun A : selfAdjoint.submodule ℝ (Matrix (Fin (p+q)) (Fin (p+q)) ℝ) ↦ blockIndependenceRatio A.val) =
+      (fun A : selfAdjoint.submodule ℝ (Matrix (Fin (p+q)) (Fin (p+q)) ℝ) ↦
+          blockIndependenceRatio A.val) =
       (Measure.pi fun i : Fin p ↦ betaMeasure (((ν:ℝ)-(q:ℝ)-i.val)/2) ((q:ℝ)/2)).map
         (fun x : Fin p → ℝ ↦ ∏ i, x i) := by
   have ha (i : Fin p) : 0 < ((ν:ℝ)-(q:ℝ)-i.val)/2 := by
@@ -41,15 +42,11 @@ theorem map_blockIndependenceRatio_wishart_eq_beta_product {p q ν : ℕ}
   let g : (Fin p → ℝ) → ℝ := fun x ↦ ∏ i, x i
   have hf : Measurable f := (measurable_blockIndependenceRatio p q).comp measurable_subtype_coe
   have hg : Measurable g := by dsimp [g]; fun_prop
-  change (TauCeti.Probability.wishartGramMeasure ν S).map f =
-    (Measure.pi fun i : Fin p ↦ betaMeasure (((ν:ℝ)-(q:ℝ)-i.val)/2) ((q:ℝ)/2)).map g
   apply TauCeti.Measure.ext_of_forall_integral_pow_eq_of_support (K := Icc (0:ℝ) 1) isCompact_Icc
-  · change ∀ᵐ x ∂_, x ∈ Icc (0:ℝ) 1
-    apply (ae_map_iff hf.aemeasurable measurableSet_Icc).2
+  · apply (ae_map_iff hf.aemeasurable measurableSet_Icc).2
     filter_upwards [TauCeti.Probability.ae_posDef_wishartGramMeasure hS hν] with A hA
     exact ⟨(blockIndependenceRatio_mem_Ioc hA).1.le, (blockIndependenceRatio_mem_Ioc hA).2⟩
-  · change ∀ᵐ x ∂_, x ∈ Icc (0:ℝ) 1
-    apply (ae_map_iff hg.aemeasurable measurableSet_Icc).2
+  · apply (ae_map_iff hg.aemeasurable measurableSet_Icc).2
     have hv : ∀ᵐ x ∂Measure.pi (fun i : Fin p ↦ betaMeasure (((ν:ℝ)-(q:ℝ)-i.val)/2) ((q:ℝ)/2)),
         ∀ i, x i ∈ Icc (0:ℝ) 1 :=
       ae_all_iff.2 fun i ↦ Measure.tendsto_eval_ae_ae.eventually

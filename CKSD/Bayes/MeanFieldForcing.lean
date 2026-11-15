@@ -16,7 +16,8 @@ noncomputable section
 open MeasureTheory ProbabilityTheory Set Filter Function
 open scoped NNReal ENNReal Topology
 namespace CKSD
-/-- Integrably bounded continuous forcing admits an integrable measurable continuous-path version. -/
+/-- Integrably bounded continuous forcing admits an integrable measurable continuous-path
+version. -/
 theorem exists_integrable_measurable_continuousPath_version
     {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
     [CompleteSpace E] [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
@@ -43,7 +44,7 @@ theorem exists_integrable_brownian_forcing_path
     {T : ℝ} (hT : 0 ≤ T) :
     ∃ F : Ω → C(Icc (0 : ℝ) T, EuclideanSpace ℝ (Fin d)),
       Measurable F ∧ Integrable F P ∧
-        ∀ᵐ ω ∂P, ∀ t : Icc (0 : ℝ) T, F ω t = ξ ω + W (t:ℝ).toNNReal ω := by
+        ∀ᵐ ω ∂P, ∀ t : Icc (0 : ℝ) T, F ω t = ξ ω + W (t : ℝ).toNNReal ω := by
   have hWm (t : ℝ≥0) : AEMeasurable (W t) P := by
     have hc : AEMeasurable (fun ω (j : Fin d) ↦ W t ω j) P :=
       AEMeasurable.of_eval fun j ↦ (hW.1 j).toIsPreBrownianReal.aemeasurable t

@@ -96,8 +96,7 @@ theorem measure_uniform_empirical_risk_deviation_le
         {x | (n : ℝ) * epsilon ≤ ∑ i, Z i x} ∪
           {x | (n : ℝ) * epsilon ≤ -(∑ i, Z i x)} := by
       intro x hx
-      change epsilon < |(∑ i, f h (x i)) / n - m| at hx
-      change (n : ℝ) * epsilon ≤ ∑ i, Z i x ∨ (n : ℝ) * epsilon ≤ -(∑ i, Z i x)
+      rw [mem_ofPred_eq] at hx
       have hid : (∑ i, f h (x i)) / n - m = (∑ i, Z i x) / n := by
         rw [hsum_eq]
         field_simp [ne_of_gt hnreal]
@@ -117,7 +116,6 @@ theorem measure_uniform_empirical_risk_deviation_le
       _ ≤ Q.real {x | (n : ℝ) * epsilon ≤ ∑ i, Z i x} +
           Q.real {x | (n : ℝ) * epsilon ≤ -(∑ i, Z i x)} := measureReal_union_le _ _
       _ ≤ _ := by linarith
-  change Q.real _ ≤ _
   rw [show {x : Fin n → X | ∃ h, |(∑ i, f h (x i)) / n - ∫ z, f h z ∂P| > epsilon} =
     ⋃ h, {x | |(∑ i, f h (x i)) / n - ∫ z, f h z ∂P| > epsilon} by ext x; simp]
   calc
@@ -265,13 +263,8 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
     simpa using this
   have hmean : ∀ h, ∫ x, g h x ∂Pn = ∫ z, f h z ∂P := by
     intro h
-    have hi : ∀ i, ∫ x, f h (x i) ∂Pn = ∫ z, f h z ∂P := by
-      intro i
-      have hp := measurePreserving_eval (fun _ : Fin n ↦ P) i
-      have heq := (integral_map hp.measurable.aemeasurable
-        (by rw [hp.map_eq]; exact (hm h).aestronglyMeasurable)).symm
-      rw [hp.map_eq] at heq
-      exact heq
+    have hi : ∀ i, ∫ x, f h (x i) ∂Pn = ∫ z, f h z ∂P := fun i ↦
+      integral_comp_eval (hm h).aestronglyMeasurable
     have hint : ∀ i, Integrable (fun x : Fin n → X ↦ f h (x i)) Pn := fun i ↦
       Integrable.of_bound ((hm h).comp (measurable_pi_apply i)).aestronglyMeasurable 1
         (ae_of_all _ fun x ↦ hb h (x i))
@@ -287,7 +280,8 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
   have hGb : ∀ p, |G p| ≤ 2 := fun p ↦ abs_sSup_range_le fun h ↦ by
     calc |g h p.1 - g h p.2| ≤ |g h p.1| + |g h p.2| := abs_sub _ _
       _ ≤ 2 := by linarith [hgb h p.1, hgb h p.2]
-  have hGi : Integrable G (Pn.prod Pn) := Integrable.of_bound hGm.aestronglyMeasurable 2 (ae_of_all _ hGb)
+  have hGi : Integrable G (Pn.prod Pn) :=
+    Integrable.of_bound hGm.aestronglyMeasurable 2 (ae_of_all _ hGb)
   -- step 1: replace the mean by the ghost sample
   have hstep1 : ∀ x, sSup (range fun h ↦ g h x - ∫ z, f h z ∂P) ≤ ∫ x', G (x, x') ∂Pn := by
     intro x
@@ -297,7 +291,7 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
       (ae_of_all _ (hgb h))
     have : g h x - ∫ z, f h z ∂P = ∫ x', (g h x - g h x') ∂Pn := by
       rw [integral_sub (integrable_const _) hgi, integral_const, probReal_univ, one_smul, hmean]
-    change g h x - ∫ z, f h z ∂P ≤ _
+    dsimp only
     rw [this]
     refine integral_mono ((integrable_const _).sub hgi)
       (Integrable.of_bound (hGm.comp measurable_prodMk_left).aestronglyMeasurable 2
@@ -361,15 +355,8 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
       fun σ _ ↦ hT σ, Finset.sum_const, nsmul_eq_mul, hcard, ← mul_assoc, ← mul_pow,
       inv_mul_cancel₀ two_ne_zero, one_pow, one_mul]
   have hfinal : ∫ p, (Rad p.1 + Rad p.2) ∂(Pn.prod Pn) = 2 * ∫ x, Rad x ∂Pn := by
-    have h1 : ∫ p, Rad p.1 ∂(Pn.prod Pn) = ∫ x, Rad x ∂Pn := by
-      have hmp : MeasurePreserving Prod.fst (Pn.prod Pn) Pn := measurePreserving_fst
-      rw [← integral_map hmp.measurable.aemeasurable
-        (by rw [hmp.map_eq]; exact hRm.aestronglyMeasurable), hmp.map_eq]
-    have h2 : ∫ p, Rad p.2 ∂(Pn.prod Pn) = ∫ x, Rad x ∂Pn := by
-      have hmp : MeasurePreserving Prod.snd (Pn.prod Pn) Pn := measurePreserving_snd
-      rw [← integral_map hmp.measurable.aemeasurable
-        (by rw [hmp.map_eq]; exact hRm.aestronglyMeasurable), hmp.map_eq]
-    rw [integral_add (hRi.comp_fst Pn) (hRi.comp_snd Pn), h1, h2]
+    rw [integral_add (hRi.comp_fst Pn) (hRi.comp_snd Pn), integral_fun_fst, integral_fun_snd,
+      probReal_univ, one_smul]
     ring
   calc _ ≤ ∫ p, G p ∂(Pn.prod Pn) := hlhs
     _ = _ := havg
@@ -413,7 +400,6 @@ theorem measureReal_integral_add_le_sSup_le {H X : Type*} [Fintype H] [Nonempty 
     (fun _ ↦ 1 / n) hbd
   have hset : {x | ∫ y, F y ∂Pn + t ≤ F x} = {x | t ≤ F x - ∫ y, F y ∂Pn} := by
     ext x; simp only [mem_ofPred_eq]; constructor <;> intro h <;> linarith
-  change Pn.real {x | ∫ y, F y ∂Pn + t ≤ F x} ≤ _
   rw [hset]
   refine (hsub.measure_ge_le ht).trans_eq ?_
   congr 1

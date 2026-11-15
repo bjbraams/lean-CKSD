@@ -26,8 +26,10 @@ local notation "E" => EuclideanSpace ℝ (Fin d)
 /-- A common-source coupling bounds the distance between random-path marginal laws. -/
 theorem dist_pathMarginalLaw_le_meanPathDistance (P : Measure Ω) [IsProbabilityMeasure P]
     {T : ℝ} (hT : 0 ≤ T) (U V : Ω → C(Icc (0 : ℝ) T, E))
-    (hUm : Measurable U) (hVm : Measurable V) (hUi : Integrable U P) (hVi : Integrable V P) (t : ℝ) :
-    dist (pathMarginalLaw P hT U hUm hUi t) (pathMarginalLaw P hT V hVm hVi t) ≤ meanPathDistance P hT U V t := by
+    (hUm : Measurable U) (hVm : Measurable V) (hUi : Integrable U P) (hVi : Integrable V P)
+    (t : ℝ) :
+    dist (pathMarginalLaw P hT U hUm hUi t) (pathMarginalLaw P hT V hVm hVi t) ≤
+      meanPathDistance P hT U V t := by
   rw [TauCeti.WassersteinSpace.dist_def, pathMarginalLaw_toMeasure, pathMarginalLaw_toMeasure]
   exact wassersteinEDist_one_map_toReal_le_integral_norm_sub P
     ((ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)).comp hUm).aestronglyMeasurable
@@ -38,20 +40,27 @@ theorem dist_pathMarginalLaw_le_meanPathDistance (P : Measure Ω) [IsProbability
 theorem norm_sub_nonlinearFrozenDrift_le (P : Measure Ω) [IsProbabilityMeasure P]
     {T : ℝ} (hT : 0 ≤ T) (b : E → Measure E → E) {L : ℝ}
     (hb : IsWassersteinLipschitzDrift b L) (U V : Ω → C(Icc (0 : ℝ) T, E))
-    (hUm : Measurable U) (hVm : Measurable V) (hUi : Integrable U P) (hVi : Integrable V P) (t : ℝ) (x : E) :
+    (hUm : Measurable U) (hVm : Measurable V) (hUi : Integrable U P) (hVi : Integrable V P)
+    (t : ℝ) (x : E) :
     ‖nonlinearFrozenDrift P hT b U hUm hUi t x - nonlinearFrozenDrift P hT b V hVm hVi t x‖ ≤
       (Real.toNNReal L : ℝ) * meanPathDistance P hT U V t := by
   let μ := pathMarginalLaw P hT U hUm hUi t
   let ν := pathMarginalLaw P hT V hVm hVi t
-  have hm (σ : TauCeti.WassersteinSpace 1 E) : Integrable (fun z ↦ ‖z‖) ((σ : ProbabilityMeasure E) : Measure E) := by
-    simpa only [id_eq] using (TauCeti.WassersteinSpace.hasFiniteMoment σ).memLp_id.integrable (by norm_num) |>.norm
-  have hh := hb x x ((μ : ProbabilityMeasure E) : Measure E) ((ν : ProbabilityMeasure E) : Measure E)
+  have hm (σ : TauCeti.WassersteinSpace 1 E) :
+      Integrable (fun z ↦ ‖z‖) ((σ : ProbabilityMeasure E) : Measure E) := by
+    simpa only [id_eq] using
+      (TauCeti.WassersteinSpace.hasFiniteMoment σ).memLp_id.integrable (by norm_num) |>.norm
+  have hh := hb x x ((μ : ProbabilityMeasure E) : Measure E)
+    ((ν : ProbabilityMeasure E) : Measure E)
     inferInstance inferInstance (hm μ) (hm ν)
   have h : ‖nonlinearFrozenDrift P hT b U hUm hUi t x - nonlinearFrozenDrift P hT b V hVm hVi t x‖ ≤
       L * dist μ ν := by
-    simpa only [nonlinearFrozenDrift, TauCeti.WassersteinSpace.dist_def, sub_self, norm_zero, zero_add] using hh
+    simpa only [nonlinearFrozenDrift, TauCeti.WassersteinSpace.dist_def, sub_self, norm_zero,
+      zero_add] using hh
   exact h.trans ((mul_le_mul_of_nonneg_right (Real.le_coe_toNNReal L) dist_nonneg).trans
-    (mul_le_mul_of_nonneg_left (dist_pathMarginalLaw_le_meanPathDistance P hT U V hUm hVm hUi hVi t) (Real.toNNReal L).coe_nonneg))
+    (mul_le_mul_of_nonneg_left
+      (dist_pathMarginalLaw_le_meanPathDistance P hT U V hUm hVm hUi hVi t)
+      (Real.toNNReal L).coe_nonneg))
 
 /-- With the same additive forcing, frozen-law solutions are controlled by the integrated mean
 pointwise distance between their input random paths. -/

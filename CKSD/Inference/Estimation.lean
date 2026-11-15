@@ -238,7 +238,6 @@ theorem isMinimumVarianceUnbiasedEstimator_iff_covariance_eq_zero
       rw [integral_sub (hW'.2 t).1 (hW.2 t).1, (hW'.2 t).2, (hW.2 t).2, sub_self]
     have hU2 (t : Θ) : MemLp U 2 (P t) := (hW'2 t).sub (hW2 t)
     have hzero := hcov U hU hU2 θ
-    change ProbabilityTheory.covariance W U (P θ) = 0 at hzero
     have hadd := ProbabilityTheory.variance_fun_add (hW2 θ) (hU2 θ)
     have hid : (fun x ↦ W x + U x) = W' := by
       funext x

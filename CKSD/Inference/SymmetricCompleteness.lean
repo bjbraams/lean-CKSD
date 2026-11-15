@@ -119,6 +119,39 @@ theorem integral_pi_comp_equiv_of_symmetric {n : ℕ} (μ : Fin n → Measure X)
   beta_reduce
   rw [this, hsym]
 
+/-- Möbius inversion over images: if the sums of `a` over the maps `τ : κ → ι` with values in
+`S` vanish for every `S`, then so do the sums over the maps with image exactly `S`. -/
+theorem sum_filter_image_eq_eq_zero {κ ι M : Type*} [Fintype κ] [DecidableEq κ] [Fintype ι]
+    [DecidableEq ι] [AddCommMonoid M] (a : (κ → ι) → M)
+    (hB : ∀ S : Finset ι, ∑ τ ∈ (Finset.univ : Finset (κ → ι)).filter (fun τ ↦ ∀ j, τ j ∈ S),
+      a τ = 0)
+    (S : Finset ι) :
+    ∑ τ ∈ (Finset.univ : Finset (κ → ι)).filter (fun τ ↦ Finset.univ.image τ = S), a τ = 0 := by
+  have hfib : ∀ S T : Finset ι, T ⊆ S →
+      ((Finset.univ : Finset (κ → ι)).filter (fun τ ↦ ∀ j, τ j ∈ S)).filter
+        (fun τ ↦ Finset.univ.image τ = T) =
+      (Finset.univ : Finset (κ → ι)).filter (fun τ ↦ Finset.univ.image τ = T) := by
+    intro S T hTS
+    ext τ
+    simp only [Finset.filter_filter, Finset.mem_filter, Finset.mem_univ, true_and]
+    constructor
+    · exact fun h ↦ h.2
+    · rintro rfl
+      exact ⟨fun j ↦ hTS (Finset.mem_image_of_mem _ (Finset.mem_univ j)), rfl⟩
+  induction S using Finset.strongInduction with
+  | H S ih =>
+    have hsplit := Finset.sum_fiberwise_of_maps_to
+      (s := (Finset.univ : Finset (κ → ι)).filter (fun τ ↦ ∀ j, τ j ∈ S))
+      (t := S.powerset) (g := fun τ ↦ Finset.univ.image τ)
+      (fun τ hτ ↦ Finset.mem_powerset.2 fun i hi ↦ by
+        obtain ⟨j, -, rfl⟩ := Finset.mem_image.1 hi
+        exact (Finset.mem_filter.1 hτ).2 j) a
+    rw [hB S, Finset.sum_eq_single_of_mem S (Finset.mem_powerset_self S) fun T hT hTS ↦ by
+      rw [hfib S T (Finset.mem_powerset.1 hT)]
+      exact ih T (Finset.ssubset_iff_subset_ne.2 ⟨Finset.mem_powerset.1 hT, hTS⟩),
+      hfib S S subset_rfl] at hsplit
+    exact hsplit
+
 /-- Let `C` be closed under binary mixtures and let `g` be a symmetric function of `n ≥ 1`
 coordinates that is integrable with mean zero under `Pⁿ` for every `P ∈ C`. Then `g` is
 integrable with mean zero under every product `Q₁ ⊗ ⋯ ⊗ Qₙ` with all `Qᵢ ∈ C`. The proof
@@ -197,33 +230,9 @@ private theorem integrable_and_integral_pi_eq_zero {C : Set (ProbabilityMeasure 
       positivity
     exact (mul_eq_zero.1 h).resolve_left hpos
   -- Möbius inversion: the sums over maps with range exactly `S` vanish
-  have hfib : ∀ S T : Finset (Fin n), T ⊆ S →
-      ((Finset.univ : Finset (Fin n → Fin n)).filter (fun τ ↦ ∀ j, τ j ∈ S)).filter
-        (fun τ ↦ Finset.univ.image τ = T) =
-      (Finset.univ : Finset (Fin n → Fin n)).filter (fun τ ↦ Finset.univ.image τ = T) := by
-    intro S T hTS
-    ext τ
-    simp only [Finset.filter_filter, Finset.mem_filter, Finset.mem_univ, true_and]
-    constructor
-    · exact fun h ↦ h.2
-    · rintro rfl
-      exact ⟨fun j ↦ hTS (Finset.mem_image_of_mem _ (Finset.mem_univ j)), rfl⟩
   have hA : ∀ S : Finset (Fin n), ∑ τ ∈ (Finset.univ : Finset (Fin n → Fin n)).filter
-      (fun τ ↦ Finset.univ.image τ = S), a τ = 0 := by
-    intro S
-    induction S using Finset.strongInduction with
-    | H S ih =>
-      have hsplit := Finset.sum_fiberwise_of_maps_to
-        (s := (Finset.univ : Finset (Fin n → Fin n)).filter (fun τ ↦ ∀ j, τ j ∈ S))
-        (t := S.powerset) (g := fun τ ↦ Finset.univ.image τ)
-        (fun τ hτ ↦ Finset.mem_powerset.2 fun i hi ↦ by
-          obtain ⟨j, -, rfl⟩ := Finset.mem_image.1 hi
-          exact (Finset.mem_filter.1 hτ).2 j) a
-      rw [hB S, Finset.sum_eq_single_of_mem S (Finset.mem_powerset_self S) fun T hT hTS ↦ by
-        rw [hfib S T (Finset.mem_powerset.1 hT)]
-        exact ih T (Finset.ssubset_iff_subset_ne.2 ⟨Finset.mem_powerset.1 hT, hTS⟩),
-        hfib S S subset_rfl] at hsplit
-      exact hsplit
+      (fun τ ↦ Finset.univ.image τ = S), a τ = 0 := fun S ↦ by
+    convert sum_filter_image_eq_eq_zero a (fun S ↦ by convert hB S) S
   have hU := hA Finset.univ
   have heq : ∀ τ ∈ (Finset.univ : Finset (Fin n → Fin n)).filter
       (fun τ ↦ Finset.univ.image τ = Finset.univ), a τ = a id := by

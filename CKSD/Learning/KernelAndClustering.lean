@@ -399,7 +399,7 @@ theorem ridgePrediction_oracle_bounds :
       intro z hz
       have h1 : bound < (K + 2 * sigma ^ 2 * S z) / n := lt_of_lt_of_le hz (hpt z)
       rw [lt_div_iff₀ hn', hbn, hK] at h1
-      show 2 * a ≤ S z
+      rw [mem_ofPred_eq]
       rw [ha, ← mul_div_assoc, div_le_iff₀ (by positivity)]
       nlinarith
     refine (measureReal_mono hsub).trans ?_

@@ -151,7 +151,6 @@ theorem eq_blockVector_zero_add_sum {p : ℕ} (ℓ : Fin p → ℕ) (hℓ : ∀ 
     v = blockVector ℓ v 0 + ∑ k ∈ Finset.range p, blockVector ℓ v (k + 1) := by
   ext j
   simp only [PiLp.add_apply, WithLp.ofLp_sum, Finset.sum_apply]
-  change v j = blockVector ℓ v 0 j + ∑ c ∈ Finset.range p, blockVector ℓ v (c + 1) j
   simp only [blockVector_apply]
   rcases Nat.eq_zero_or_pos (ℓ j) with h0 | h0
   · rw [ite_eq_left h0, Finset.sum_eq_zero fun k _ ↦ ite_eq_right (by omega)]; ring

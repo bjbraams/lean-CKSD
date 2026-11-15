@@ -245,6 +245,7 @@ theorem exists_isDirichletProcessLaw {X : Type*} [MeasurableSpace X] [StandardBo
   have hind : IndepFun (fun w k ↦ w.1 k) (fun w k ↦ w.2 k) M :=
     (indepFun_iff_map_prod_eq_prod_map_map measurable_fst.aemeasurable
       measurable_snd.aemeasurable).mpr (by
+        -- The pair of coordinate maps is `id` only up to eta, which `rw` does not see.
         change M.map id = (M.map Prod.fst).prod (M.map Prod.snd)
         rw [Measure.map_id, hfst, hsnd])
   have hDP := isDirichletProcess_stickBreaking M α _ _ hV hθ hind P hPm hP

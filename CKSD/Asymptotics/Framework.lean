@@ -50,8 +50,9 @@ are Mathlib's `MeasureTheory.Measure.conv`.
 ## References
 
 van der Vaart, *Asymptotic Statistics*, Chapters 7, 8 and 20 (asymptotic representation,
-convolution and local asymptotic minimax theorems, functional delta method); Čencov, *Statistical Decision Rules and Optimal
-Inference*, for congruent embeddings. The functional delta method uses Mathlib's closed-set portmanteau theorem
+convolution and local asymptotic minimax theorems, functional delta method); Čencov,
+*Statistical Decision Rules and Optimal Inference*, for congruent embeddings. The functional
+delta method uses Mathlib's closed-set portmanteau theorem
 (`ProbabilityMeasure.limsup_measure_closed_le_of_tendsto`, `tendsto_of_forall_isClosed_limsup_le'`).
 -/
 @[expose] public section
@@ -144,14 +145,14 @@ theorem exists_gaussian_shift_kernel_of_local_limits
     ∃ K : Kernel (EuclideanSpace ℝ (Fin d)) S, IsMarkovKernel K ∧
       ∀ h, L h = K ∘ₘ multivariateGaussian h I⁻¹ := by
   let : MetricSpace S := TopologicalSpace.completelyMetrizableMetric S
-  rcases hLAN with ⟨hI,hΔ,hΔlim,hrem⟩
-  obtain ⟨φ,hφ,ρ,hjoint,hfst,hsnd⟩ :=
+  rcases hLAN with ⟨hI, hΔ, hΔlim, hrem⟩
+  obtain ⟨φ, hφ, ρ, hjoint, hfst, hsnd⟩ :=
     exists_joint_subsequence_limit_of_marginal_limits
       (fun n ↦ (P n 0 : Measure (Ω n))) Δ T hΔ hT
       (multivariateGaussian 0 I) (L 0) hΔlim (hlim 0)
   apply exists_markovKernel_of_map_eq_tilted_joint_laws (ρ : Measure (_ × S))
     (fun h x ↦ ENNReal.ofReal (Real.exp
-      (inner ℝ h x-inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h)/2)))
+      (inner ℝ h x - inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h) / 2)))
     (fun h ↦ by fun_prop) (Matrix.toEuclideanCLM (𝕜 := ℝ) I) (by fun_prop)
     (fun h ↦ multivariateGaussian h I⁻¹) L
   · intro h
@@ -162,7 +163,7 @@ theorem exists_gaussian_shift_kernel_of_local_limits
     · subst h
       simpa using hsnd.symm
     let a : EuclideanSpace ℝ (Fin d) → ℝ := fun x ↦
-      inner ℝ h x-inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h)/2
+      inner ℝ h x - inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h) / 2
     let w : EuclideanSpace ℝ (Fin d) × S → ℝ := fun p ↦ Real.exp (a p.1)
     have ha : Continuous a := by dsimp [a]; fun_prop
     have hw : Continuous w := by dsimp [w]; fun_prop
@@ -170,7 +171,7 @@ theorem exists_gaussian_shift_kernel_of_local_limits
     have hm : ∫ p, w p ∂(ρ : Measure (_ × S)) = 1 := by
       calc
         _ = ∫ x, Real.exp (a x) ∂(ρ : Measure (_ × S)).fst := by
-          rw [Measure.fst,integral_map measurable_fst.aemeasurable (by fun_prop)]
+          rw [Measure.fst, integral_map measurable_fst.aemeasurable (by fun_prop)]
         _ = 1 := by
           rw [hfst]
           exact integral_exp_inner_sub_half_covariance hI.posSemidef h
@@ -183,66 +184,63 @@ theorem exists_gaussian_shift_kernel_of_local_limits
     let P0 : ∀ n, Measure (Ω (φ n)) := fun n ↦ (P (φ n) 0 : Measure _)
     let Q : ∀ n, Measure (Ω (φ n)) := fun n ↦ (P (φ n) h : Measure _)
     let U : ∀ n, Ω (φ n) → EuclideanSpace ℝ (Fin d) × S :=
-      fun n ω ↦ (Δ (φ n) ω,T (φ n) ω)
+      fun n ω ↦ (Δ (φ n) ω, T (φ n) ω)
     let Λ : ∀ n, Ω (φ n) → ℝ :=
       fun n ω ↦ Real.log (((Q n).rnDeriv (P0 n) ω).toReal)
     have hU (n : ℕ) : Measurable (U n) := (hΔ _).prodMk (hT _)
     have hΛ (n : ℕ) : Measurable (Λ n) :=
       Real.measurable_log.comp (Measure.measurable_rnDeriv _ _).ennreal_toReal
     let f : EuclideanSpace ℝ (Fin d) × S → (EuclideanSpace ℝ (Fin d) × S) × ℝ :=
-      fun p ↦ (p,a p.1)
+      fun p ↦ (p, a p.1)
     have hf : Continuous f := by dsimp [f]; fun_prop
     have hbase := hjoint.continuous_comp hf
     have hlograw := tendstoInDistribution_of_dist_small_in_probability
-      (fun n ω ↦ (U n ω,Λ n ω)) f hbase ?_
+      (fun n ω ↦ (U n ω, Λ n ω)) f hbase ?_
       (fun n ↦ ((hU n).prodMk (hΛ n)).aemeasurable)
-    · have hlog : TendstoInDistribution (fun n ω ↦ (U n ω,Λ n ω)) atTop id P0
+    · have hlog : TendstoInDistribution (fun n ω ↦ (U n ω, Λ n ω)) atTop id P0
           ((ρ : Measure (_ × S)).map f) := by
         refine ⟨fun n ↦ ((hU n).prodMk (hΛ n)).aemeasurable,
-          measurable_id.aemeasurable,?_⟩
+          measurable_id.aemeasurable, ?_⟩
         simpa only [Measure.map_id] using hlograw.tendsto
       have hzero : ((ρ : Measure (_ × S)).map f).snd {0} = 0 := by
-        rw [Measure.snd,Measure.map_map measurable_snd hf.measurable,
+        rw [Measure.snd, Measure.map_map measurable_snd hf.measurable,
           Measure.map_apply (measurable_snd.comp hf.measurable) (measurableSet_singleton 0)]
-        change (ρ : Measure (_ × S)) (Prod.fst ⁻¹' {x | a x = 0}) = 0
-        change (ρ : Measure (_ × S)) (Prod.fst ⁻¹' (a ⁻¹' ({0} : Set ℝ))) = 0
-        rw [← Measure.map_apply measurable_fst (ha.measurable (measurableSet_singleton 0))]
-        change (ρ : Measure (_ × S)).fst {x | a x = 0} = 0
-        rw [hfst]
-        exact multivariateGaussian_affine_score_eq_zero hI h hh
+        have h0 := multivariateGaussian_affine_score_eq_zero hI h hh
+        rw [← hfst, Measure.fst_apply (s := {x | a x = 0})
+          (ha.measurable (measurableSet_singleton 0))] at h0
+        exact h0
       have hRN := tendstoInDistribution_joint_rnDeriv_of_log P0 Q U hU _ hlog hzero
       have hgraph : (((ρ : Measure (_ × S)).map f).map
-          (fun z ↦ (z.1,Real.exp z.2))) =
-          (ρ : Measure (_ × S)).map (fun p ↦ (p,w p)) := by
+          (fun z ↦ (z.1, Real.exp z.2))) =
+          (ρ : Measure (_ × S)).map (fun p ↦ (p, w p)) := by
         rw [Measure.map_map (by fun_prop) hf.measurable]
         rfl
       have hRN' : TendstoInDistribution
-          (fun n ω ↦ (U n ω,((Q n).rnDeriv (P0 n) ω).toReal)) atTop id P0
-          ((ρ : Measure (_ × S)).map (fun p ↦ (p,w p))) := by
+          (fun n ω ↦ (U n ω, ((Q n).rnDeriv (P0 n) ω).toReal)) atTop id P0
+          ((ρ : Measure (_ × S)).map (fun p ↦ (p, w p))) := by
         simpa only [hgraph] using hRN
       have hchange := tendstoInDistribution_of_joint_rnDeriv_graph
         P0 Q U hU (ρ : Measure (_ × S)) w hw hw0 hm hRN'
       have hsub : TendstoInDistribution (fun n ↦ T (φ n)) atTop id Q (L h) :=
-        ⟨fun n ↦ (hT _).aemeasurable,measurable_id.aemeasurable,
+        ⟨fun n ↦ (hT _).aemeasurable, measurable_id.aemeasurable,
           (hlim h).tendsto.comp hφ.tendsto_atTop⟩
       have heq := tendstoInDistribution_unique (fun n ↦ T (φ n)) hsub
         (hchange.continuous_comp continuous_snd)
-      simpa only [Function.comp_def,Measure.map_id,Measure.snd,id_eq,w,a] using heq
+      simpa only [Function.comp_def, Measure.map_id, Measure.snd, id_eq, w, a] using heq
     · intro ε hε
-      have htail := (hrem h (ε/2) (by positivity)).comp hφ.tendsto_atTop
+      have htail := (hrem h (ε / 2) (by positivity)).comp hφ.tendsto_atTop
       apply squeeze_zero (fun n ↦ measureReal_nonneg) (fun n ↦ ?_) htail
       apply measureReal_mono ?_ (measure_ne_top _ _)
       intro ω hω
-      have hω' : ε ≤ |Λ n ω-a (Δ (φ n) ω)| := by
-        simpa only [f,U,Function.comp_apply,dist_prod_same_left,Real.dist_eq,
+      have hω' : ε ≤ |Λ n ω - a (Δ (φ n) ω)| := by
+        simpa only [f, U, Function.comp_apply, dist_prod_same_left, Real.dist_eq,
           Set.mem_ofPred_eq] using hω
-      have heq : Λ n ω-a (Δ (φ n) ω) =
+      have heq : Λ n ω - a (Δ (φ n) ω) =
           Real.log (((P (φ n) h : Measure _).rnDeriv (P (φ n) 0) ω).toReal) -
-          inner ℝ h (Δ (φ n) ω) + inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h)/2 := by
-        dsimp [Λ,Q,P0,a]
+          inner ℝ h (Δ (φ n) ω) + inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h) / 2 := by
+        dsimp [Λ, Q, P0, a]
         ring
-      change ε/2 < |Real.log (((P (φ n) h : Measure _).rnDeriv (P (φ n) 0) ω).toReal) -
-        inner ℝ h (Δ (φ n) ω) + inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) I h)/2|
+      simp only [Set.mem_ofPred_eq]
       rw [← heq]
       exact (half_lt_self hε).trans_le hω'
 
@@ -259,19 +257,19 @@ theorem exists_convolution_of_isRegularEstimator
     ∃ M : Measure (EuclideanSpace ℝ (Fin d)), IsProbabilityMeasure M ∧
       L = (multivariateGaussian 0 I⁻¹).conv M := by
   let Lh : EuclideanSpace ℝ (Fin d) → Measure (EuclideanSpace ℝ (Fin d)) :=
-    fun h ↦ L.map (fun y ↦ h+y)
+    fun h ↦ L.map (fun y ↦ h + y)
   have : ∀ h, IsProbabilityMeasure (Lh h) := fun h ↦ by dsimp [Lh]; infer_instance
   have hlim (h : EuclideanSpace ℝ (Fin d)) : TendstoInDistribution T atTop id
       (fun n ↦ (P n h : Measure (Ω n))) (Lh h) := by
-    have hc := (hreg.2 h).continuous_comp (g := fun y ↦ h+y) (by fun_prop)
+    have hc := (hreg.2 h).continuous_comp (g := fun y ↦ h + y) (by fun_prop)
     have hl := tendstoInDistribution_of_map_eq hc
-      (μ'' := L.map (fun y ↦ h+y)) (W := id) aemeasurable_id (by rw [Measure.map_id]; rfl)
-    have heq : (fun n ↦ (fun y ↦ h+y) ∘ (fun ω ↦ T n ω-h)) = T := by
+      (μ'' := L.map (fun y ↦ h + y)) (W := id) aemeasurable_id (by rw [Measure.map_id]; rfl)
+    have heq : (fun n ↦ (fun y ↦ h + y) ∘ (fun ω ↦ T n ω - h)) = T := by
       funext n ω
       dsimp only [Function.comp_def]
       abel
     rwa [heq] at hl
-  obtain ⟨K,hK,hLaw⟩ := exists_gaussian_shift_kernel_of_local_limits P I Δ hLAN T hreg.1 Lh hlim
+  obtain ⟨K, hK, hLaw⟩ := exists_gaussian_shift_kernel_of_local_limits P I Δ hLAN T hreg.1 Lh hlim
   have := hK
   exact exists_convolution_of_gaussian_shift_kernel hLAN.1.inv K L (fun h ↦ (hLaw h).symm)
 
@@ -337,7 +335,7 @@ theorem tendstoInDistribution_of_hasHadamardFDerivAt
     intro k
     have hle : ∀ n ≥ k, (PY n : Measure F) Fc ≤ (PZ n : Measure E) (C k) := by
       intro n hn
-      change μ.map (Y n) Fc ≤ μ.map (Z n) (C k)
+      simp only [PY, PZ, ProbabilityMeasure.coe_mk]
       rw [Measure.map_apply (hYm n) hFc.measurableSet,
         Measure.map_apply (hZm n) (hCc k).measurableSet]
       refine measure_mono fun ω hω ↦ subset_closure ?_
@@ -379,7 +377,7 @@ theorem tendstoInDistribution_of_hasHadamardFDerivAt
   have hD0c : G (D₀ : Set E)ᶜ = 0 := by
     rw [prob_compl_eq_one_sub hclosed.measurableSet, hsupp, tsub_self]
   refine hlimsup.trans ?_
-  change G (⋂ k, C k) ≤ G.map D Fc
+  simp only [PGD, ProbabilityMeasure.coe_mk]
   rw [Measure.map_apply D.continuous.measurable hFc.measurableSet]
   calc G (⋂ k, C k) ≤ G (((⋂ k, C k) ∩ D₀) ∪ (D₀ : Set E)ᶜ) := by
         refine measure_mono fun v hv ↦ ?_
@@ -408,14 +406,11 @@ def simplexTangentSpace (ι : Type*) [Fintype ι] : Submodule ℝ (ι → ℝ) w
   zero_mem' := by simp
   add_mem' := by
     intro u v hu hv
-    change (∑ i, u i) = 0 at hu
-    change (∑ i, v i) = 0 at hv
-    change (∑ i, (u i + v i)) = 0
+    simp only [Set.mem_ofPred_eq, Pi.add_apply] at hu hv ⊢
     rw [Finset.sum_add_distrib, hu, hv, add_zero]
   smul_mem' := by
     intro a u hu
-    change (∑ i, u i) = 0 at hu
-    change (∑ i, a * u i) = 0
+    simp only [Set.mem_ofPred_eq, Pi.smul_apply, smul_eq_mul] at hu ⊢
     rw [← Finset.mul_sum, hu, mul_zero]
 
 /-- A congruent embedding splits each input category into a block of output categories, with
@@ -479,7 +474,8 @@ theorem isContiguous_iff_contiguous5 {Ω : Type*} [MeasurableSpace Ω]
   · intro h A hA hP
     apply NNReal.tendsto_coe.mp
     have hp := NNReal.tendsto_coe.mpr hP
-    have hq := h A hA (by simpa only [ProbabilityMeasure.measureReal_eq_coe_coeFn, NNReal.coe_zero] using hp)
+    have hq := h A hA
+      (by simpa only [ProbabilityMeasure.measureReal_eq_coe_coeFn, NNReal.coe_zero] using hp)
     simpa only [ProbabilityMeasure.measureReal_eq_coe_coeFn, NNReal.coe_zero] using hq
   · intro h A hA hP
     have hp : Tendsto (fun n ↦ P n (A n)) atTop (𝓝 0) := by

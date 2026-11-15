@@ -45,7 +45,8 @@ theorem norm_sub_le_exp_mul_integral_of_forced_eq
         intro r hr
         have hrT : r ∈ Icc (0 : ℝ) T := ⟨hr.1, hr.2.trans hs.2⟩
         calc ‖v r (x r) - w r (y r)‖ ≤
-              ‖v r (x r) - v r (y r)‖ + ‖v r (y r) - w r (y r)‖ := by simpa only [dist_eq_norm] using dist_triangle (v r (x r)) (v r (y r)) (w r (y r))
+              ‖v r (x r) - v r (y r)‖ + ‖v r (y r) - w r (y r)‖ := by
+                simpa only [dist_eq_norm] using dist_triangle (v r (x r)) (v r (y r)) (w r (y r))
           _ ≤ (K : ℝ) * ‖x r - y r‖ + a r :=
             add_le_add ((hvK r).norm_sub_le _ _) (hvw r hrT (y r))
           _ = _ := add_comm _ _
@@ -64,7 +65,8 @@ theorem norm_sub_le_exp_mul_integral_of_forced_eq
       _ (ha.intervalIntegrable _ _)
     exact (ae_restrict_iff' measurableSet_Ioc).2 (ae_of_all _ fun r hr ↦
       ha0 r ⟨hr.1.le, hr.2.trans ht.2⟩)
-  have hgr := TauCeti.le_mul_exp_of_le_add_mul_integral hφ.continuousOn K.coe_nonneg hi t ⟨ht.1, le_rfl⟩
+  have hgr :=
+    TauCeti.le_mul_exp_of_le_add_mul_integral hφ.continuousOn K.coe_nonneg hi t ⟨ht.1, le_rfl⟩
   simp only [sub_zero] at hgr
   calc _ ≤ A * Real.exp ((K : ℝ) * t) := hgr
     _ ≤ A * Real.exp ((K : ℝ) * T) := mul_le_mul_of_nonneg_left

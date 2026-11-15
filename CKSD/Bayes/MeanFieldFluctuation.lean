@@ -33,14 +33,16 @@ theorem integrable_integral_and_integral_le_mul_of_bounded_process
     have htime : ∀ᵐ t ∂ν, t ∈ Ioc (0 : ℝ) T := ae_restrict_mem measurableSet_Ioc
     filter_upwards [(Measure.quasiMeasurePreserving_fst (ν := P)).ae htime,
       (Measure.quasiMeasurePreserving_snd (μ := ν)).ae hbound] with z hz hω
-    change |f z.1 z.2| ≤ D
+    simp only [Function.uncurry, Real.norm_eq_abs]
     rw [abs_of_nonneg (hf0 z.1 z.2)]
     exact hω z.1 ⟨hz.1.le, hz.2⟩
   have hint : Integrable (fun ω ↦ ∫ t in (0 : ℝ)..T, f t ω) P := by
-    simpa only [intervalIntegral.integral_of_le hT, ν, Function.uncurry] using hprod.integral_prod_right
+    simpa only [intervalIntegral.integral_of_le hT, ν, Function.uncurry] using
+      hprod.integral_prod_right
   have hswap : (∫ ω, (∫ t in (0 : ℝ)..T, f t ω) ∂P) =
       ∫ t in (0 : ℝ)..T, ∫ ω, f t ω ∂P := by
-    simpa only [intervalIntegral.integral_of_le hT, ν, Function.uncurry] using (integral_integral_swap hprod).symm
+    simpa only [intervalIntegral.integral_of_le hT, ν, Function.uncurry] using
+      (integral_integral_swap hprod).symm
   have htimeInt : IntervalIntegrable (fun t ↦ ∫ ω, f t ω ∂P) volume 0 T := by
     rw [intervalIntegrable_iff_integrableOn_Ioc_of_le hT]
     exact hprod.integral_prod_left
@@ -72,15 +74,15 @@ theorem interactionFluctuation_measurable_ae_continuous {Ω E : Type*} [Measurab
   constructor
   · intro i t
     have hmean' : StronglyMeasurable (Function.uncurry (fun x z ↦ K x (Y 0 t z))) :=
-      (hK.measurable.comp (measurable_fst.prodMk ((hYm 0 t).comp measurable_snd))).stronglyMeasurable
+      (hK.measurable.comp
+        (measurable_fst.prodMk ((hYm 0 t).comp measurable_snd))).stronglyMeasurable
     have hmean : Measurable (fun x ↦ ∫ z, K x (Y 0 t z) ∂P) := hmean'.integral_prod_right.measurable
-    change Measurable (fun ω ↦ (N : ℝ)⁻¹ • ∑ j : Fin N, K (Y i t ω) (Y j t ω) - ∫ z, K (Y i t ω) (Y 0 t z) ∂P)
     exact ((Finset.measurable_sum (Finset.univ : Finset (Fin N)) fun j _ ↦
       hK.measurable.comp ((hYm i t).prodMk (hYm j t))).const_smul _).sub (hmean.comp (hYm i t))
   · intro i
     filter_upwards [ae_all_iff.2 hYc] with ω hω
-    change Continuous (fun t ↦ (N : ℝ)⁻¹ • ∑ j : Fin N, K (Y i t ω) (Y j t ω) - ∫ z, K (Y i t ω) (Y 0 t z) ∂P)
-    exact ((continuous_finsetSum (Finset.univ : Finset (Fin N)) fun j _ ↦ hK.comp ((hω i).prodMk (hω j))).const_smul _).sub
+    exact ((continuous_finsetSum (Finset.univ : Finset (Fin N)) fun j _ ↦
+      hK.comp ((hω i).prodMk (hω j))).const_smul _).sub
       (hv.comp (continuous_id.prodMk (hω i)))
 
 /-- A bounded interaction gives an absolute bound on the empirical fluctuation, independent

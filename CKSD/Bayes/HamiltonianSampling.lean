@@ -46,8 +46,9 @@ omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] in
 /-- A Lipschitz force gives a globally Lipschitz Hamiltonian velocity. -/
 theorem lipschitzWith_mechanicalVelocity {G : E → E} {L : ℝ≥0} (hG : LipschitzWith L G) :
     LipschitzWith (max 1 L) (mechanicalVelocity G) := by
-  change LipschitzWith (max 1 L) (fun z : E × E ↦ (z.2, -G z.1))
-  simpa only [mul_one, Function.comp_def, Pi.neg_apply] using LipschitzWith.prod_snd.prodMk (hG.comp LipschitzWith.prod_fst).neg
+  unfold mechanicalVelocity
+  simpa only [mul_one, Function.comp_def, Pi.neg_apply] using
+    LipschitzWith.prod_snd.prodMk (hG.comp LipschitzWith.prod_fst).neg
 
 /-- The derivative of mechanical energy consists of the potential gradient and momentum. -/
 theorem hasFDerivAt_mechanicalHamiltonian (V : E → ℝ) (G : E → E)
@@ -72,7 +73,8 @@ theorem hamiltonianVectorField_mechanicalHamiltonian (V : E → ℝ) (G : E → 
     (TauCeti.stdSymplecticForm (V := E)).hamiltonianVectorField (mechanicalHamiltonian V) =
       mechanicalVelocity G := by
   funext z
-  exact TauCeti.stdSymplecticForm_hamiltonianVectorField (hasFDerivAt_mechanicalHamiltonian V G hG z)
+  exact TauCeti.stdSymplecticForm_hamiltonianVectorField
+    (hasFDerivAt_mechanicalHamiltonian V G hG z)
 
 omit [FiniteDimensional ℝ E] in
 /-- Mechanical energy is twice continuously differentiable for a C2 potential. -/
@@ -89,8 +91,10 @@ theorem mechanicalFlow_eq_hamiltonianFlow (V : E → ℝ) (G : E → E)
     (hgrad : ∀ x, HasGradientAt V (G x) x) {L : ℝ≥0} (hG : LipschitzWith L G) :
     let hX : LipschitzWith (max 1 L)
       ((TauCeti.stdSymplecticForm (V := E)).hamiltonianVectorField (mechanicalHamiltonian V)) :=
-      (hamiltonianVectorField_mechanicalHamiltonian V G hgrad).symm ▸ lipschitzWith_mechanicalVelocity hG;
-    mechanicalFlow G hG = (TauCeti.stdSymplecticForm (V := E)).hamiltonianFlow (mechanicalHamiltonian V) hX := by
+      (hamiltonianVectorField_mechanicalHamiltonian V G hgrad).symm ▸
+        lipschitzWith_mechanicalVelocity hG;
+    mechanicalFlow G hG =
+      (TauCeti.stdSymplecticForm (V := E)).hamiltonianFlow (mechanicalHamiltonian V) hX := by
   dsimp only
   apply Flow.ext
   intro t z
@@ -99,9 +103,12 @@ theorem mechanicalFlow_eq_hamiltonianFlow (V : E → ℝ) (G : E → E)
       lipschitzWith_mechanicalVelocity hG) z s
   have hd (s : ℝ) : HasDerivAt
       (fun r ↦ (TauCeti.stdSymplecticForm (V := E)).hamiltonianFlow (mechanicalHamiltonian V)
-        ((hamiltonianVectorField_mechanicalHamiltonian V G hgrad).symm ▸ lipschitzWith_mechanicalVelocity hG) r z)
-      (mechanicalVelocity G ((TauCeti.stdSymplecticForm (V := E)).hamiltonianFlow (mechanicalHamiltonian V)
-        ((hamiltonianVectorField_mechanicalHamiltonian V G hgrad).symm ▸ lipschitzWith_mechanicalVelocity hG) s z)) s :=
+        ((hamiltonianVectorField_mechanicalHamiltonian V G hgrad).symm ▸
+          lipschitzWith_mechanicalVelocity hG) r z)
+      (mechanicalVelocity G
+        ((TauCeti.stdSymplecticForm (V := E)).hamiltonianFlow (mechanicalHamiltonian V)
+          ((hamiltonianVectorField_mechanicalHamiltonian V G hgrad).symm ▸
+            lipschitzWith_mechanicalVelocity hG) s z)) s :=
     (hder s).congr_deriv (congrFun (hamiltonianVectorField_mechanicalHamiltonian V G hgrad) _)
   have hc := TauCeti.eq_flowOfLipschitz (lipschitzWith_mechanicalVelocity hG) hd t
   simpa only [Flow.map_zero, id_eq, mechanicalFlow] using hc.symm
@@ -122,9 +129,12 @@ theorem mechanicalFlow_fst_eq (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L 
   have hc : Continuous (fun s ↦ mechanicalVelocity G (mechanicalFlow G hG s z)) :=
     (lipschitzWith_mechanicalVelocity hG).continuous.comp
       ((mechanicalFlow G hG).continuous continuous_id continuous_const)
-  have hi := (ContinuousLinearMap.fst ℝ E E).intervalIntegral_comp_comm (hc.intervalIntegrable (μ := volume) 0 t)
+  have hi := (ContinuousLinearMap.fst ℝ E E).intervalIntegral_comp_comm
+    (hc.intervalIntegrable (μ := volume) 0 t)
+  -- Write the first coordinate of the integral as `fst` applied to it, the pattern of `hi`.
   change (mechanicalFlow G hG t z).1 = z.1 +
-    (ContinuousLinearMap.fst ℝ E E) (∫ s in (0 : ℝ)..t, mechanicalVelocity G (mechanicalFlow G hG s z)) at h
+    (ContinuousLinearMap.fst ℝ E E)
+      (∫ s in (0 : ℝ)..t, mechanicalVelocity G (mechanicalFlow G hG s z)) at h
   rw [← hi] at h
   exact h
 
@@ -137,10 +147,14 @@ theorem mechanicalFlow_snd_eq (G : E → E) {L : ℝ≥0} (hG : LipschitzWith L 
   have hc : Continuous (fun s ↦ mechanicalVelocity G (mechanicalFlow G hG s z)) :=
     (lipschitzWith_mechanicalVelocity hG).continuous.comp
       ((mechanicalFlow G hG).continuous continuous_id continuous_const)
-  have hi := (ContinuousLinearMap.snd ℝ E E).intervalIntegral_comp_comm (hc.intervalIntegrable (μ := volume) 0 t)
+  have hi := (ContinuousLinearMap.snd ℝ E E).intervalIntegral_comp_comm
+    (hc.intervalIntegrable (μ := volume) 0 t)
+  -- Write the second coordinate of the integral as `snd` applied to it, the pattern of `hi`.
   change (mechanicalFlow G hG t z).2 = z.2 +
-    (ContinuousLinearMap.snd ℝ E E) (∫ s in (0 : ℝ)..t, mechanicalVelocity G (mechanicalFlow G hG s z)) at h
+    (ContinuousLinearMap.snd ℝ E E)
+      (∫ s in (0 : ℝ)..t, mechanicalVelocity G (mechanicalFlow G hG s z)) at h
   rw [← hi] at h
+  -- Evaluate `snd` of the mechanical velocity inside the integral.
   change (mechanicalFlow G hG t z).2 = z.2 + ∫ s in (0 : ℝ)..t, -G (mechanicalFlow G hG s z).1 at h
   simpa only [intervalIntegral.integral_neg, sub_eq_add_neg] using h
 omit [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] in
@@ -187,8 +201,10 @@ theorem mechanical_position_error_sq_le [NormedSpace ℝ E] [CompleteSpace E] (G
   let r : ℝ → E := fun s ↦ p s - p 0 + s • G (q 0)
   have hrc : Continuous r := by dsimp [r]; fun_prop
   have hr_eq (s : ℝ) (hs : 0 ≤ s) : r s = -∫ u in (0 : ℝ)..s, G (q u) - G (q 0) := by
-    have hi : IntervalIntegrable (fun u ↦ G (q u)) volume 0 s := (hG.continuous.comp hq).intervalIntegrable _ _
-    rw [intervalIntegral.integral_sub hi (continuous_const.intervalIntegrable _ _), intervalIntegral.integral_const]
+    have hi : IntervalIntegrable (fun u ↦ G (q u)) volume 0 s :=
+      (hG.continuous.comp hq).intervalIntegrable _ _
+    rw [intervalIntegral.integral_sub hi (continuous_const.intervalIntegrable _ _),
+      intervalIntegral.integral_const]
     dsimp only [r]
     rw [hpq s hs]
     simp only [sub_zero]
@@ -202,11 +218,14 @@ theorem mechanical_position_error_sq_le [NormedSpace ℝ E] [CompleteSpace E] (G
           (hmove u ⟨hu.1.le, hu.2.trans hs.2⟩) L.coe_nonneg))
     simpa only [sub_zero, Real.norm_eq_abs, abs_of_nonneg hs.1, mul_comm] using hh
   have herr : q T - (q 0 + T • p 0 - (T ^ 2 / 2) • G (q 0)) = ∫ s in (0 : ℝ)..T, r s := by
-    change _ = ∫ s in (0 : ℝ)..T, p s - p 0 + s • G (q 0)
-    have h1 : IntervalIntegrable (fun s ↦ p s - p 0) volume 0 T := (hp.sub continuous_const).intervalIntegrable _ _
-    have h2 : IntervalIntegrable (fun s : ℝ ↦ s • G (q 0)) volume 0 T := (continuous_id.smul continuous_const).intervalIntegrable _ _
+    dsimp only [r]
+    have h1 : IntervalIntegrable (fun s ↦ p s - p 0) volume 0 T :=
+      (hp.sub continuous_const).intervalIntegrable _ _
+    have h2 : IntervalIntegrable (fun s : ℝ ↦ s • G (q 0)) volume 0 T :=
+      (continuous_id.smul continuous_const).intervalIntegrable _ _
     rw [intervalIntegral.integral_add h1 h2,
-      intervalIntegral.integral_sub (hp.intervalIntegrable _ _) (continuous_const.intervalIntegrable _ _),
+      intervalIntegral.integral_sub (hp.intervalIntegrable _ _)
+        (continuous_const.intervalIntegrable _ _),
       intervalIntegral.integral_const, intervalIntegral.integral_smul_const, _root_.integral_id]
     rw [hqp T hT]
     simp only [sub_zero, zero_pow (by norm_num : 2 ≠ 0), sub_zero]
@@ -224,6 +243,6 @@ theorem mechanical_position_error_sq_le [NormedSpace ℝ E] [CompleteSpace E] (G
     pow_le_pow_left₀ (norm_nonneg _) hnorm 2
   calc _ ≤ (T ^ 2 / 2 * ((L : ℝ) * B)) ^ 2 := hh
     _ = (L : ℝ) ^ 2 * T ^ 5 * A / 4 := by rw [mul_pow, mul_pow, hB2]; ring
-    _ ≤ _ := by change _ ≤ (L : ℝ) ^ 2 * T ^ 5 * A; nlinarith [mul_nonneg (sq_nonneg (L : ℝ)) (mul_nonneg (pow_nonneg hT 5) hA)]
+    _ ≤ _ := div_le_self (mul_nonneg (by positivity) hA) (by norm_num)
 
 end CKSD

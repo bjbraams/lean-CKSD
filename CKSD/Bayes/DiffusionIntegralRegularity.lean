@@ -64,6 +64,5 @@ theorem intervalIntegral_translating_rotation_eq_zero
   apply intervalIntegral_eq_zero_of_nonmeasurable_component a ht ha _
     (PiLp.proj 2 (fun _ : Fin 2 ↦ ℝ) (0 : Fin 2)) 1 (-x 1) (neg_ne_zero.mpr hx)
   intro s
-  change 1 - a s * x 1 = 1 + a s * -x 1
-  ring
+  simp [sub_eq_add_neg]
 end CKSD

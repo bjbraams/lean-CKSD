@@ -209,6 +209,97 @@ theorem measure_iSup_supermartingale_ge_le {Ω : Type*} [MeasurableSpace Ω]
     _ = ENNReal.ofReal α + ε := by
         rw [one_div_one_div, ENNReal.ofReal_add hα.le ε.coe_nonneg, ENNReal.ofReal_coe_nnreal]
 
+/-- The key estimate in Kolmogorov's maximal inequality: on the event `A k` that the partial
+sums `S_j = ∑_{i<j} Y_i` first reach `c` in absolute value at `j = k`, the second moment of
+`S_r`, `k ≤ r`, is at least `c² P(A k)`; the increment `S_r - S_k` is independent of
+`S_k 1_{A k}` and centred. -/
+private theorem sq_mul_measureReal_firstPassage_le {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (Y : ℕ → Ω → ℝ) (hm : ∀ i, Measurable (Y i))
+    (hind : iIndepFun Y μ) (h2 : ∀ i, MemLp (Y i) 2 μ) (h0 : ∀ i, ∫ ω, Y i ω ∂μ = 0)
+    {c : ℝ} (hc : 0 < c) {k r : ℕ} (hk : k ≤ r) :
+    c ^ 2 * μ.real {ω | c ≤ |∑ i ∈ Finset.range k, Y i ω| ∧
+        ∀ i < k, |∑ j ∈ Finset.range i, Y j ω| < c} ≤
+      ∫ ω, {ω | c ≤ |∑ i ∈ Finset.range k, Y i ω| ∧
+        ∀ i < k, |∑ j ∈ Finset.range i, Y j ω| < c}.indicator
+          (fun ω ↦ (∑ i ∈ Finset.range r, Y i ω) ^ 2) ω ∂μ := by
+  set S : ℕ → Ω → ℝ := fun j ω ↦ ∑ i ∈ Finset.range j, Y i ω with hS
+  have hSm : ∀ j, Measurable (S j) := fun j ↦ Finset.measurable_fun_sum _ fun i _ ↦ hm i
+  have hS2 : ∀ j, MemLp (S j) 2 μ := fun j ↦ memLp_finsetSum _ fun i _ ↦ h2 i
+  let A : ℕ → Set Ω := fun k ↦ {ω | c ≤ |S k ω| ∧ ∀ i < k, |S i ω| < c}
+  have hAm : ∀ k, MeasurableSet (A k) := fun k ↦ by
+    have : A k = {ω | c ≤ |S k ω|} ∩ ⋂ i ∈ Finset.range k, {ω | |S i ω| < c} := by
+      ext ω; simp [A]
+    rw [this]
+    exact (measurableSet_le measurable_const (continuous_abs.measurable.comp (hSm k))).inter
+      (Finset.measurableSet_biInter _ fun i _ ↦
+        measurableSet_lt (continuous_abs.measurable.comp (hSm i)) measurable_const)
+  set D : Ω → ℝ := fun ω ↦ S r ω - S k ω
+  have hD : D = fun ω ↦ ∑ i ∈ Finset.Ico k r, Y i ω := by
+    funext ω; simp only [D, hS]; rw [Finset.sum_Ico_eq_sub _ hk]
+  have hD2 : MemLp D 2 μ := (hS2 r).sub (hS2 k)
+  have hD0 : ∫ ω, D ω ∂μ = 0 := by
+    rw [hD, integral_finsetSum _ fun i _ ↦ (h2 i).integrable one_le_two]
+    simp [h0]
+  let U : Ω → ℝ := (A k).indicator (S k)
+  have hU2 : MemLp U 2 μ := (hS2 k).indicator (hAm k).nullMeasurableSet
+  have hUm : Measurable[⨆ i ∈ {i | i < k}, MeasurableSpace.comap (Y i) inferInstance] U := by
+    have hA' : MeasurableSet[⨆ i ∈ {i | i < k}, MeasurableSpace.comap (Y i) inferInstance]
+        (A k) := by
+      have : A k = {ω | c ≤ |S k ω|} ∩ ⋂ i ∈ Finset.range k, {ω | |S i ω| < c} := by
+        ext ω; simp [A]
+      rw [this]
+      have hSm' : ∀ j ≤ k, Measurable[⨆ i ∈ {i | i < k},
+          MeasurableSpace.comap (Y i) inferInstance] (S j) := fun j hj ↦
+        measurable_biSup_sum _ fun i hi ↦ by simp at hi ⊢; omega
+      exact (measurableSet_le measurable_const
+        (continuous_abs.measurable.comp (hSm' k le_rfl))).inter
+        (Finset.measurableSet_biInter _ fun i hi ↦ measurableSet_lt
+          (continuous_abs.measurable.comp (hSm' i (Finset.mem_range.1 hi).le)) measurable_const)
+    exact (measurable_biSup_sum (S := {i | i < k}) (Y := Y) (Finset.range k)
+      fun i hi ↦ by simpa using hi).indicator hA'
+  have hDm : Measurable[⨆ i ∈ {i | k ≤ i}, MeasurableSpace.comap (Y i) inferInstance] D := by
+    rw [hD]
+    exact measurable_biSup_sum _ fun i hi ↦ by simp at hi ⊢; omega
+  have hUD : IndepFun U D μ := indepFun_of_measurable_biSup hm hind
+    (Set.disjoint_left.2 fun i (hi : i < k) (hi' : k ≤ i) ↦ by omega) hUm hDm
+  have hcross : ∫ ω, U ω * D ω ∂μ = 0 := by
+    have := IndepFun.integral_mul_eq_mul_integral hUD hU2.aestronglyMeasurable
+      hD2.aestronglyMeasurable
+    simpa [hD0] using this
+  have hpt : ∀ ω, (A k).indicator (fun ω ↦ S r ω ^ 2) ω =
+      (A k).indicator (fun ω ↦ S k ω ^ 2) ω + 2 * (U ω * D ω) +
+        (A k).indicator (fun ω ↦ D ω ^ 2) ω := by
+    intro ω
+    by_cases h : ω ∈ A k
+    · simp only [Set.indicator_of_mem h, U, D]; ring
+    · simp [Set.indicator_of_notMem h, U]
+  have hI1 : Integrable ((A k).indicator fun ω ↦ S k ω ^ 2) μ :=
+    (hS2 k).integrable_sq.indicator (hAm k)
+  have hI2 : Integrable (fun ω ↦ U ω * D ω) μ := hU2.integrable_mul hD2
+  have hI3 : Integrable ((A k).indicator fun ω ↦ D ω ^ 2) μ :=
+    hD2.integrable_sq.indicator (hAm k)
+  have hsplit : ∫ ω, ((A k).indicator (fun ω ↦ S k ω ^ 2) ω + 2 * (U ω * D ω) +
+      (A k).indicator (fun ω ↦ D ω ^ 2) ω) ∂μ =
+      ∫ ω, (A k).indicator (fun ω ↦ S k ω ^ 2) ω ∂μ + 2 * ∫ ω, U ω * D ω ∂μ +
+        ∫ ω, (A k).indicator (fun ω ↦ D ω ^ 2) ω ∂μ := by
+    have hI12 : Integrable (fun ω ↦ (A k).indicator (fun ω ↦ S k ω ^ 2) ω +
+        2 * (U ω * D ω)) μ := hI1.add (hI2.const_mul 2)
+    have hI2' : Integrable (fun ω ↦ 2 * (U ω * D ω)) μ := hI2.const_mul 2
+    rw [integral_add hI12 hI3, integral_add hI1 hI2', integral_const_mul]
+  rw [integral_congr_ae (ae_of_all _ hpt), hsplit, hcross]
+  have h3 : 0 ≤ ∫ ω, (A k).indicator (fun ω ↦ D ω ^ 2) ω ∂μ :=
+    integral_nonneg fun ω ↦ Set.indicator_nonneg (fun _ _ ↦ sq_nonneg _) ω
+  have h1 : c ^ 2 * μ.real (A k) ≤ ∫ ω, (A k).indicator (fun ω ↦ S k ω ^ 2) ω ∂μ := by
+    rw [mul_comm, ← smul_eq_mul, ← integral_indicator_const _ (hAm k)]
+    refine integral_mono ((integrable_const _).indicator (hAm k)) hI1 fun ω ↦ ?_
+    by_cases h : ω ∈ A k
+    · simp only [Set.indicator_of_mem h]
+      have := h.1
+      rw [← sq_abs (S k ω)]
+      exact pow_le_pow_left₀ hc.le this 2
+    · simp [Set.indicator_of_notMem h]
+  linarith
+
 /-- **Kolmogorov's maximal inequality** for independent, centred, square-integrable variables. -/
 theorem sq_mul_measureReal_exists_le_abs_sum_le {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (Y : ℕ → Ω → ℝ) (hm : ∀ i, Measurable (Y i))
@@ -241,75 +332,8 @@ theorem sq_mul_measureReal_exists_le_abs_sum_le {Ω : Type*} [MeasurableSpace Ω
     rcases lt_or_gt_of_ne hne with hlt | hlt
     · exact absurd h.1 (not_le.2 (h'.2 k hlt))
     · exact absurd h'.1 (not_le.2 (h.2 k' hlt))
-  -- the key estimate on each `A k`
-  have hkey : ∀ k ≤ r, c ^ 2 * μ.real (A k) ≤ ∫ ω, (A k).indicator (fun ω ↦ S r ω ^ 2) ω ∂μ := by
-    intro k hk
-    set D : Ω → ℝ := fun ω ↦ S r ω - S k ω
-    have hD : D = fun ω ↦ ∑ i ∈ Finset.Ico k r, Y i ω := by
-      funext ω; simp only [D, hS]; rw [Finset.sum_Ico_eq_sub _ hk]
-    have hD2 : MemLp D 2 μ := (hS2 r).sub (hS2 k)
-    have hD0 : ∫ ω, D ω ∂μ = 0 := by
-      rw [hD, integral_finsetSum _ fun i _ ↦ (h2 i).integrable one_le_two]
-      simp [h0]
-    let U : Ω → ℝ := (A k).indicator (S k)
-    have hU2 : MemLp U 2 μ := (hS2 k).indicator (hAm k).nullMeasurableSet
-    have hUm : Measurable[⨆ i ∈ {i | i < k}, MeasurableSpace.comap (Y i) inferInstance] U := by
-      have hA' : MeasurableSet[⨆ i ∈ {i | i < k}, MeasurableSpace.comap (Y i) inferInstance]
-          (A k) := by
-        have : A k = {ω | c ≤ |S k ω|} ∩ ⋂ i ∈ Finset.range k, {ω | |S i ω| < c} := by
-          ext ω; simp [A]
-        rw [this]
-        have hSm' : ∀ j ≤ k, Measurable[⨆ i ∈ {i | i < k},
-            MeasurableSpace.comap (Y i) inferInstance] (S j) := fun j hj ↦
-          measurable_biSup_sum _ fun i hi ↦ by simp at hi ⊢; omega
-        exact (measurableSet_le measurable_const
-          (continuous_abs.measurable.comp (hSm' k le_rfl))).inter
-          (Finset.measurableSet_biInter _ fun i hi ↦ measurableSet_lt
-            (continuous_abs.measurable.comp (hSm' i (Finset.mem_range.1 hi).le)) measurable_const)
-      exact (measurable_biSup_sum (S := {i | i < k}) (Y := Y) (Finset.range k)
-        fun i hi ↦ by simpa using hi).indicator hA'
-    have hDm : Measurable[⨆ i ∈ {i | k ≤ i}, MeasurableSpace.comap (Y i) inferInstance] D := by
-      rw [hD]
-      exact measurable_biSup_sum _ fun i hi ↦ by simp at hi ⊢; omega
-    have hUD : IndepFun U D μ := indepFun_of_measurable_biSup hm hind
-      (Set.disjoint_left.2 fun i (hi : i < k) (hi' : k ≤ i) ↦ by omega) hUm hDm
-    have hcross : ∫ ω, U ω * D ω ∂μ = 0 := by
-      have := IndepFun.integral_mul_eq_mul_integral hUD hU2.aestronglyMeasurable
-        hD2.aestronglyMeasurable
-      simpa [hD0] using this
-    have hpt : ∀ ω, (A k).indicator (fun ω ↦ S r ω ^ 2) ω =
-        (A k).indicator (fun ω ↦ S k ω ^ 2) ω + 2 * (U ω * D ω) +
-          (A k).indicator (fun ω ↦ D ω ^ 2) ω := by
-      intro ω
-      by_cases h : ω ∈ A k
-      · simp only [Set.indicator_of_mem h, U, D]; ring
-      · simp [Set.indicator_of_notMem h, U]
-    have hI1 : Integrable ((A k).indicator fun ω ↦ S k ω ^ 2) μ :=
-      (hS2 k).integrable_sq.indicator (hAm k)
-    have hI2 : Integrable (fun ω ↦ U ω * D ω) μ := hU2.integrable_mul hD2
-    have hI3 : Integrable ((A k).indicator fun ω ↦ D ω ^ 2) μ :=
-      hD2.integrable_sq.indicator (hAm k)
-    have hsplit : ∫ ω, ((A k).indicator (fun ω ↦ S k ω ^ 2) ω + 2 * (U ω * D ω) +
-        (A k).indicator (fun ω ↦ D ω ^ 2) ω) ∂μ =
-        ∫ ω, (A k).indicator (fun ω ↦ S k ω ^ 2) ω ∂μ + 2 * ∫ ω, U ω * D ω ∂μ +
-          ∫ ω, (A k).indicator (fun ω ↦ D ω ^ 2) ω ∂μ := by
-      have hI12 : Integrable (fun ω ↦ (A k).indicator (fun ω ↦ S k ω ^ 2) ω +
-          2 * (U ω * D ω)) μ := hI1.add (hI2.const_mul 2)
-      have hI2' : Integrable (fun ω ↦ 2 * (U ω * D ω)) μ := hI2.const_mul 2
-      rw [integral_add hI12 hI3, integral_add hI1 hI2', integral_const_mul]
-    rw [integral_congr_ae (ae_of_all _ hpt), hsplit, hcross]
-    have h3 : 0 ≤ ∫ ω, (A k).indicator (fun ω ↦ D ω ^ 2) ω ∂μ :=
-      integral_nonneg fun ω ↦ Set.indicator_nonneg (fun _ _ ↦ sq_nonneg _) ω
-    have h1 : c ^ 2 * μ.real (A k) ≤ ∫ ω, (A k).indicator (fun ω ↦ S k ω ^ 2) ω ∂μ := by
-      rw [mul_comm, ← smul_eq_mul, ← integral_indicator_const _ (hAm k)]
-      refine integral_mono ((integrable_const _).indicator (hAm k)) hI1 fun ω ↦ ?_
-      by_cases h : ω ∈ A k
-      · simp only [Set.indicator_of_mem h]
-        have := h.1
-        rw [← sq_abs (S k ω)]
-        exact pow_le_pow_left₀ hc.le this 2
-      · simp [Set.indicator_of_notMem h]
-    linarith
+  have hkey : ∀ k ≤ r, c ^ 2 * μ.real (A k) ≤ ∫ ω, (A k).indicator (fun ω ↦ S r ω ^ 2) ω ∂μ :=
+    fun k hk ↦ sq_mul_measureReal_firstPassage_le μ Y hm hind h2 h0 hc hk
   calc c ^ 2 * μ.real {ω | ∃ j ≤ r, c ≤ |S j ω|}
       ≤ c ^ 2 * ∑ k ∈ Finset.range (r + 1), μ.real (A k) := by
         gcongr
@@ -485,8 +509,6 @@ theorem tendstoInMeasure_sum_randomIndex_sub {Ω : Type*} [MeasurableSpace Ω]
           conv_lhs => rw [hNa, hMa, hsplit, hsplit]
           ring
         have hsq : 0 < Real.sqrt (M n) := Real.sqrt_pos.2 hMpos
-        change ε < |((∑ i ∈ Finset.range (N n ω), Y i ω) - ∑ i ∈ Finset.range (M n), Y i ω) /
-          Real.sqrt (M n)| at hω
         rw [hdiff, abs_div, abs_of_pos hsq, lt_div_iff₀ hsq] at hω
         have := abs_sub _ _ |>.trans_lt (add_lt_add h1 h2)
         linarith

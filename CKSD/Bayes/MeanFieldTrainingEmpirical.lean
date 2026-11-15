@@ -27,20 +27,20 @@ theorem ae_tendsto_iSup_empirical_training_laws_on_Icc
     (hρ : Integrable (fun x : E ↦ ‖x‖) ρ₀)
     (ξ : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed P ξ ρ₀)
     (b : E → Measure E → E) {L : ℝ} (hb : IsWassersteinLipschitzDrift b L)
-    (γ : E → ℝ → E) (hγ : Continuous (uncurry γ)) (hzero : ∀ x, γ x 0=x)
+    (γ : E → ℝ → E) (hγ : Continuous (uncurry γ)) (hzero : ∀ x, γ x 0 = x)
     {M : ℝ≥0} (hγL : ∀ x, LipschitzWith M (γ x))
     (v : ℝ × E → E) (hv : Continuous v)
-    (hd : ∀ x t, HasDerivAt (γ x) (v (t,γ x t)) t)
-    (hvEq : ∀ t ≥ 0, ∀ x, v (t,x)=b x (ρ₀.map (fun y ↦ γ y t)))
+    (hd : ∀ x t, HasDerivAt (γ x) (v (t, γ x t)) t)
+    (hvEq : ∀ t ≥ 0, ∀ x, v (t, x) = b x (ρ₀.map (fun y ↦ γ y t)))
     (θ : ℕ → ℕ → ℝ → Ω → E)
-    (hθ : ∀ N, ∀ i<N, ∀ ω, θ N i 0 ω=ξ i ω ∧ ∀ t, HasDerivAt (fun s ↦ θ N i s ω)
+    (hθ : ∀ N, ∀ i < N, ∀ ω, θ N i 0 ω = ξ i ω ∧ ∀ t, HasDerivAt (fun s ↦ θ N i s ω)
       (b (θ N i t ω) (empiricalMeasure N (fun j : Fin N ↦ θ N j t ω))) t)
-    {T : ℝ} (hT : 0≤T) :
-    ∀ᵐ ω ∂P, Tendsto (fun N ↦ ⨆ t∈Icc (0:ℝ) T, TauCeti.wassersteinEDist 1
+    {T : ℝ} (hT : 0 ≤ T) :
+    ∀ᵐ ω ∂P, Tendsto (fun N ↦ ⨆ t ∈ Icc (0 : ℝ) T, TauCeti.wassersteinEDist 1
       (empiricalMeasure N (fun j : Fin N ↦ θ N j t ω)) (ρ₀.map (fun y ↦ γ y t))) atTop (𝓝 0) := by
-  obtain ⟨Z,hZdef,hZm,hZi,hind,hid,hZmap,hZeval⟩ :=
+  obtain ⟨Z, hZdef, hZm, hZi, hind, hid, hZmap, hZeval⟩ :=
     exists_iid_training_paths_on_Icc P ρ₀ hρ ξ hiid.1 hiid.2.1 hiid.2.2 hT γ hγ hγL hzero
-  have hZe (i : ℕ) (ω : Ω) (t : Icc (0:ℝ) T) : Z i ω t = ξ i ω + ∫ s in (0:ℝ)..t,
+  have hZe (i : ℕ) (ω : Ω) (t : Icc (0 : ℝ) T) : Z i ω t = ξ i ω + ∫ s in (0 : ℝ)..t,
       b ((Z i ω).IccExtend hT s) (P.map (fun z ↦ (Z 0 z).IccExtend hT s)) := by
     have h := training_path_integral_eq P ρ₀ ξ hT γ v hv hd hzero b hvEq Z hZeval
       (fun t ht ↦ hZmap 0 t ht) i ω t t.2
@@ -63,28 +63,29 @@ theorem ae_tendsto_iSup_empirical_training_laws
     (hρ : Integrable (fun x : E ↦ ‖x‖) ρ₀)
     (ξ : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed P ξ ρ₀)
     (b : E → Measure E → E) {L : ℝ} (hb : IsWassersteinLipschitzDrift b L)
-    (γ : E → ℝ → E) (hγ : Continuous (uncurry γ)) (hzero : ∀ x, γ x 0=x)
+    (γ : E → ℝ → E) (hγ : Continuous (uncurry γ)) (hzero : ∀ x, γ x 0 = x)
     {M : ℝ≥0} (hγL : ∀ x, LipschitzWith M (γ x))
     (v : ℝ × E → E) (hv : Continuous v)
-    (hd : ∀ x t, HasDerivAt (γ x) (v (t,γ x t)) t)
-    (hvEq : ∀ t ≥ 0, ∀ x, v (t,x)=b x (ρ₀.map (fun y ↦ γ y t)))
+    (hd : ∀ x t, HasDerivAt (γ x) (v (t, γ x t)) t)
+    (hvEq : ∀ t ≥ 0, ∀ x, v (t, x) = b x (ρ₀.map (fun y ↦ γ y t)))
     (θ : ℕ → ℕ → ℝ → Ω → E)
-    (hθ : ∀ N, ∀ i<N, ∀ ω, θ N i 0 ω=ξ i ω ∧ ∀ t, HasDerivAt (fun s ↦ θ N i s ω)
+    (hθ : ∀ N, ∀ i < N, ∀ ω, θ N i 0 ω = ξ i ω ∧ ∀ t, HasDerivAt (fun s ↦ θ N i s ω)
       (b (θ N i t ω) (empiricalMeasure N (fun j : Fin N ↦ θ N j t ω))) t) :
-    ∀ᵐ ω ∂P, ∀ T>0, Tendsto (fun N ↦ ⨆ t∈Icc (0:ℝ) T, TauCeti.wassersteinEDist 1
+    ∀ᵐ ω ∂P, ∀ T > 0, Tendsto (fun N ↦ ⨆ t ∈ Icc (0 : ℝ) T, TauCeti.wassersteinEDist 1
       (empiricalMeasure N (fun j : Fin N ↦ θ N j t ω)) (ρ₀.map (fun y ↦ γ y t))) atTop (𝓝 0) := by
-  have hall (n : ℕ) : ∀ᵐ ω ∂P, Tendsto (fun N ↦ ⨆ t∈Icc (0:ℝ) ((n:ℝ)+1),
+  have hall (n : ℕ) : ∀ᵐ ω ∂P, Tendsto (fun N ↦ ⨆ t ∈ Icc (0 : ℝ) ((n : ℝ) + 1),
       TauCeti.wassersteinEDist 1 (empiricalMeasure N (fun j : Fin N ↦ θ N j t ω))
         (ρ₀.map (fun y ↦ γ y t))) atTop (𝓝 0) :=
     ae_tendsto_iSup_empirical_training_laws_on_Icc P ρ₀ hρ ξ hiid b hb γ hγ hzero hγL
       v hv hd hvEq θ hθ (by positivity)
   filter_upwards [ae_all_iff.mpr hall] with ω hω
   intro T hT
-  obtain ⟨n,hn⟩ := exists_nat_ge T
-  have hTn : T ≤ (n:ℝ)+1 := by linarith
+  obtain ⟨n, hn⟩ := exists_nat_ge T
+  have hTn : T ≤ (n : ℝ) + 1 := by linarith
   apply tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds (hω n) (fun _ ↦ zero_le)
   intro N
   apply iSup₂_le
   intro t ht
-  exact le_iSup_of_le t (le_iSup_of_le (⟨ht.1,ht.2.trans hTn⟩ : t∈Icc (0:ℝ) ((n:ℝ)+1)) le_rfl)
+  exact le_iSup_of_le t
+    (le_iSup_of_le (⟨ht.1, ht.2.trans hTn⟩ : t ∈ Icc (0 : ℝ) ((n : ℝ) + 1)) le_rfl)
 end CKSD

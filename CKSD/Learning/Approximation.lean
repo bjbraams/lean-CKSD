@@ -72,7 +72,7 @@ theorem integral_norm_sub_integral_sq_le {S H : Type*} [MeasurableSpace S]
     (ν : Measure S) [IsProbabilityMeasure ν]
     (f : S → H) (hf : MemLp f 2 ν) :
     (∫ s, ‖f s - ∫ t, f t ∂ν‖ ^ 2 ∂ν) ≤ ∫ s, ‖f s‖ ^ 2 ∂ν := by
-  let m := ∫ s, f s ∂ν
+  set m := ∫ s, f s ∂ν
   have hi := hf.integrable one_le_two
   have hs := (memLp_two_iff_integrable_sq_norm hf.aestronglyMeasurable).1 hf
   have hin : Integrable (fun s ↦ inner ℝ m (f s)) ν := hi.const_inner m
@@ -89,7 +89,6 @@ theorem integral_norm_sub_integral_sq_le {S H : Type*} [MeasurableSpace S]
       integral_sub hs hmul, integral_const_mul, integral_inner hi]
     simp only [m, integral_const, probReal_univ, one_smul, real_inner_self_eq_norm_sq]
     ring
-  change (∫ s, ‖f s - m‖ ^ 2 ∂ν) ≤ _
   rw [hexp]
   exact sub_le_self _ (sq_nonneg _)
 

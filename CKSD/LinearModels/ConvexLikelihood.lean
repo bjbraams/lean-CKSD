@@ -192,7 +192,8 @@ theorem tendstoInDistribution_convex_deviance (P : Measure Ω) [IsProbabilityMea
     refine tendstoInDistribution_of_map_eq
       (hclt.continuous_comp (g := fun x : E ↦ ‖Kᗮ.starProjection x‖^2) (by fun_prop))
       aemeasurable_id ?_
-    simpa only [Function.comp_id,Measure.map_id] using Kᗮ.map_norm_sq_starProjection_stdGaussian.symm
+    simpa only [Function.comp_id,Measure.map_id] using
+        Kᗮ.map_norm_sq_starProjection_stdGaussian.symm
   exact tendstoInDistribution_of_tendstoInMeasure_sub_of_measurable P W D
     (fun n ↦ by have := hUm n; fun_prop) hDm hW herr'
 
@@ -202,7 +203,8 @@ namespace CKSD
 
 /-- A positive definite information matrix and positive dispersion admit an invertible
 linear whitening change of coordinates, with the corresponding score and quadratic identities. -/
-theorem exists_glm_whitening {p : ℕ} {J : Matrix (Fin p) (Fin p) ℝ} (hJ : J.PosDef) {φ : ℝ} (hφ : 0 < φ) :
+theorem exists_glm_whitening {p : ℕ} {J : Matrix (Fin p) (Fin p) ℝ} (hJ : J.PosDef) {φ : ℝ}
+    (hφ : 0 < φ) :
     let S := CFC.sqrt J⁻¹
     ∃ F : EuclideanSpace ℝ (Fin p) ≃ₗ[ℝ] EuclideanSpace ℝ (Fin p),
       (∀ z, F z = Real.sqrt φ • S.toEuclideanLin z) ∧
@@ -219,7 +221,8 @@ theorem exists_glm_whitening {p : ℕ} {J : Matrix (Fin p) (Fin p) ℝ} (hJ : J.
     rw [← hSS, Matrix.det_mul] at hd
     exact isUnit_of_mul_isUnit_left hd
   have hSJS : S*J*S=1 := by
-    have hj : J=(S*S)⁻¹ := by rw [hSS,Matrix.nonsing_inv_nonsing_inv _ ((Matrix.isUnit_iff_isUnit_det _).1 hJ.isUnit)]
+    have hj : J=(S*S)⁻¹ :=
+        by rw [hSS,Matrix.nonsing_inv_nonsing_inv _ ((Matrix.isUnit_iff_isUnit_det _).1 hJ.isUnit)]
     rw [hj,Matrix.mul_inv_rev,← Matrix.mul_assoc,Matrix.mul_nonsing_inv _ hSdet,
       Matrix.one_mul,Matrix.nonsing_inv_mul _ hSdet]
   have hsφ : Real.sqrt φ ≠ 0 := Real.sqrt_ne_zero'.2 hφ
@@ -229,9 +232,7 @@ theorem exists_glm_whitening {p : ℕ} {J : Matrix (Fin p) (Fin p) ℝ} (hJ : J.
   let F := Matrix.toLinearEquiv (EuclideanSpace.basisFun (Fin p) ℝ).toBasis
     ((Real.sqrt φ) • S) hMdet
   have hF (z) : F z = Real.sqrt φ • S.toEuclideanLin z := by
-    change (Matrix.toLin (EuclideanSpace.basisFun (Fin p) ℝ).toBasis
-      (EuclideanSpace.basisFun (Fin p) ℝ).toBasis ((Real.sqrt φ) • S)) z = _
-    rw [← Matrix.toEuclideanLin_eq_toLin_orthonormal]
+    rw [Matrix.toLinearEquiv_apply, ← Matrix.toEuclideanLin_eq_toLin_orthonormal]
     simp only [map_smul,LinearMap.smul_apply]
   refine ⟨F,hF,?_,?_⟩
   · intro u z
@@ -243,12 +244,20 @@ theorem exists_glm_whitening {p : ℕ} {J : Matrix (Fin p) (Fin p) ℝ} (hJ : J.
   · intro z
     rw [hF,map_smul,real_inner_smul_left,real_inner_smul_right,hsym z]
     have he : S.toEuclideanLin (J.toEuclideanLin (S.toEuclideanLin z)) = z := by
-      change ((Matrix.toLpLinAlgEquiv 2 S * Matrix.toLpLinAlgEquiv 2 J *
-        Matrix.toLpLinAlgEquiv 2 S) z) = z
-      rw [← map_mul,← map_mul,hSJS,map_one]
-      rfl
+      rw [← LinearMap.comp_apply, ← LinearMap.comp_apply, ← Matrix.toLpLin_mul_same,
+        ← Matrix.toLpLin_mul_same, hSJS, Matrix.toLpLin_one, LinearMap.id_apply]
     rw [he,real_inner_self_eq_norm_sq]
     have hs2 : (Real.sqrt φ)^2=φ := Real.sq_sqrt hφ.le
     rw [← mul_assoc,← pow_two,hs2,mul_div_cancel_left₀ _ hφ.ne']
+
+/-- The orthogonal complement of the image of a subspace `L` of `ℝᵖ` under a linear
+automorphism has dimension `p - dim L`. -/
+theorem finrank_orthogonal_map_linearEquiv {p : ℕ} (L : Submodule ℝ (EuclideanSpace ℝ (Fin p)))
+    (F : EuclideanSpace ℝ (Fin p) ≃ₗ[ℝ] EuclideanSpace ℝ (Fin p)) :
+    Module.finrank ℝ (L.map F.toLinearMap)ᗮ = p - Module.finrank ℝ L := by
+  have hdim1 := (L.map F.toLinearMap).finrank_add_finrank_orthogonal
+  have hdim2 : Module.finrank ℝ (L.map F.toLinearMap) = Module.finrank ℝ L := F.finrank_map_eq L
+  simp only [finrank_euclideanSpace, Fintype.card_fin, hdim2] at hdim1
+  omega
 
 end CKSD

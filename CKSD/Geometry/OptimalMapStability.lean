@@ -59,7 +59,8 @@ lemma unifIntegrable_of_eventually_small_tails
     rw [eLpNorm_indicator_eq_eLpNorm_restrict,
       eLpNorm_indicator_eq_eLpNorm_restrict]
     · exact eLpNorm_mono_measure _ (Measure.restrict_mono_set μ fun x hx ↦ hCD.trans hx)
-    all_goals exact (nullMeasurableSet_le aemeasurable_const (hf n).aestronglyMeasurable.nnnorm.aemeasurable)
+    all_goals exact (nullMeasurableSet_le aemeasurable_const
+      (hf n).aestronglyMeasurable.nnnorm.aemeasurable)
   by_cases hn : N ≤ n
   · exact (hmono R _ (le_max_left _ _)).trans (hN n hn)
   · exact (hmono S _ (le_max_right _ _)).trans (hS ⟨n, by omega⟩)
@@ -122,6 +123,7 @@ lemma tendsto_integral_norm_sq_sub_of_tendstoInMeasure_of_tendsto_wasserstein_la
   have hfn : MemLp (f n - g) 2 μ :=
     (TauCeti.memLp_of_hasFiniteMoment_map (hf n).aemeasurable
       (hlaw n ▸ (νs n).hasFiniteMoment)).sub hg
+  -- unfold the squared `L²` distance of the congruence goal to its integrand
   change (eLpNorm (f n - g) 2 μ).toReal ^ 2 = ∫ x, ‖(f n - g) x‖ ^ 2 ∂μ
   rw [integral_eq_lintegral_of_nonneg_ae (ae_of_all _ fun x ↦ sq_nonneg _)
     (hfn.norm.aestronglyMeasurable.pow 2)]
@@ -140,23 +142,32 @@ lemma tendsto_graphPlan_of_isOptimalCoupling {d : ℕ}
     (νs : ℕ → TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d)))
     (T : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
     (Ts : ℕ → EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
-    (hac : ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))) ≪ volume)
+    (hac : ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) :
+      Measure (EuclideanSpace ℝ (Fin d))) ≪ volume)
     (hopt : TauCeti.IsOptimalCoupling (fun z ↦ edist z.1 z.2 ^ (2 : ℝ))
-      (TauCeti.graphPlan T ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))))
-      ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))) ((ν : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))))
+      (TauCeti.graphPlan T
+        ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))))
+      ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))
+      ((ν : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))))
     (hoptn : ∀ n, TauCeti.IsOptimalCoupling (fun z ↦ edist z.1 z.2 ^ (2 : ℝ))
-      (TauCeti.graphPlan (Ts n) ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))))
-      ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))) ((νs n : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))))
+      (TauCeti.graphPlan (Ts n)
+        ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))))
+      ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))
+      ((νs n : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))))
     (hconv : Tendsto νs atTop (𝓝 ν)) :
-    Tendsto (fun n ↦ (μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))).map fun x ↦ (x, Ts n x)) atTop
+    Tendsto (fun n ↦ (μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))).map fun x ↦ (x, Ts n x))
+      atTop
       (𝓝 ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))).map fun x ↦ (x, T x))) := by
   let E := EuclideanSpace ℝ (Fin d)
   let c : E × E → ℝ≥0∞ := fun z ↦ edist z.1 z.2 ^ (2 : ℝ)
   have hc : Continuous c := ENNReal.continuous_rpow_const.comp (continuous_fst.edist continuous_snd)
   have hv : Tendsto (fun n ↦ TauCeti.transportCost c
-      ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))) ((νs n : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))))
-      atTop (𝓝 (TauCeti.transportCost c ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))
-        ((ν : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))))) := by
+      ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))
+      ((νs n : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))))
+      atTop (𝓝 (TauCeti.transportCost c
+        ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))
+        ((ν : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))))
+      := by
     simp only [c, ← ENNReal.toReal_ofNat 2,
       ← TauCeti.wassersteinEDist_rpow_eq_transportCost measurable_edist two_ne_zero
         ENNReal.ofNat_ne_top, ← TauCeti.WassersteinSpace.edist_def]
@@ -166,10 +177,13 @@ lemma tendsto_graphPlan_of_isOptimalCoupling {d : ℕ}
     TauCeti.WassersteinSpace.continuous_toProbabilityMeasure.continuousAt.tendsto.comp hconv
   have hfin : TauCeti.transportCost
       (fun z : E × E ↦ ENNReal.ofReal (‖z.1 - z.2‖ ^ 2 / 2))
-      ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))) ((ν : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))) ≠ ⊤ := by
+      ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))
+      ((ν : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))
+      ≠ ⊤ := by
     have hs := TauCeti.wassersteinEDist_rpow_eq_transportCost measurable_edist
       (by norm_num : (2 : ℝ≥0∞) ≠ 0) (by norm_num)
-      ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d))) ((ν : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))
+      ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))
+      ((ν : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)))
     rw [ENNReal.toReal_ofNat,
       funext TauCeti.edist_rpow_two_eq_two_mul_ofReal_norm_sub_sq_div_two,
       TauCeti.transportCost_const_mul two_ne_zero ENNReal.ofNat_ne_top] at hs
@@ -197,9 +211,6 @@ lemma tendsto_graphPlan_of_isOptimalCoupling {d : ℕ}
     simpa only [TauCeti.toMeasure_map_prodMk_self] using huniq
   refine ⟨ms, ?_⟩
   rw [hπeq] at hπ
-  change Tendsto (fun n ↦ (μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))).map
-    fun x ↦ (x, Ts (ns (ms n)) x)) atTop
-    (𝓝 ((μ : ProbabilityMeasure (EuclideanSpace ℝ (Fin d))).map fun x ↦ (x, T x))) at hπ
   exact hπ
 
 /-- The real squared-displacement identity identifies an optimal quadratic graph coupling

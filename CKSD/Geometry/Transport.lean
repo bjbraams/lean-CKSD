@@ -150,6 +150,7 @@ theorem exists_measure_preserving_isometryEquiv_of_zero_distortion
   let e : X ≃ᵢ Y :=
     { Equiv.ofBijective f ⟨hiso.injective, hfsurj⟩ with isometry_toFun := hiso }
   refine ⟨e, ?_⟩
+  -- the coercion of `e` to a function is `f` by definition
   change μ.map f = ν
   rw [← hfst, Measure.map_map hiso.continuous.measurable measurable_fst, ← hsnd]
   have hsupport : ∀ᵐ z ∂π, z ∈ π.support := π.support_mem_ae
@@ -351,7 +352,7 @@ theorem rpow_div_le_wassersteinEDist_volume_cube {d : ℕ} (hd : 1 ≤ d) (n : �
         rw [Metric.mem_ball, ← edist_lt_ofReal]; exact hi⟩
     have hpow : (n : ℝ) * (2 * t) ^ d = (1 / 2) ^ d := by
       have h1 : (Real.rpow n (-(1 / (d : ℝ)))) ^ d = (n : ℝ)⁻¹ := by
-        change ((n : ℝ) ^ (-(1 / (d : ℝ)))) ^ d = _
+        rw [Real.rpow_eq_pow]
         rw [← Real.rpow_mul_natCast hnR.le, show -(1 / (d : ℝ)) * d = -1 by field_simp,
           Real.rpow_neg_one]
       have : 2 * t = Real.rpow n (-(1 / (d : ℝ))) * (1 / 2) := by simp only [t]; ring

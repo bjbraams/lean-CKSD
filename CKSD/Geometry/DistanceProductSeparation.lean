@@ -62,7 +62,8 @@ theorem integral_distanceWeightedFst (P : Measure (E × F)) (y : F) (f : E → �
     (hf : Measurable f) :
     (∫ x, f x ∂distanceWeightedFst P y) = ∫ z, distanceKernel y z.2 * f z.1 ∂P := by
   rw [distanceWeightedFst, integral_map measurable_fst.aemeasurable hf.aestronglyMeasurable,
-    TauCeti.Probability.integral_withDensity_ofReal (ρ := fun z : E × F ↦ distanceKernel y z.2) (by unfold distanceKernel; fun_prop)
+    TauCeti.Probability.integral_withDensity_ofReal (ρ := fun z : E × F ↦ distanceKernel y z.2)
+      (by unfold distanceKernel; fun_prop)
       (ae_of_all _ fun z ↦ (distanceKernel_nonneg_le y z.2).1)]
   rfl
 
@@ -71,12 +72,14 @@ theorem integrable_norm_distanceWeightedFst (P : Measure (E × F)) [IsFiniteMeas
     (hP : Integrable (fun z ↦ ‖z‖) P) (y : F) :
     Integrable (fun x ↦ ‖x‖) (distanceWeightedFst P y) := by
   rw [distanceWeightedFst, integrable_map_measure (by fun_prop) measurable_fst.aemeasurable,
-    TauCeti.Probability.integrable_withDensity_ofReal_iff (ρ := fun z : E × F ↦ distanceKernel y z.2) (by unfold distanceKernel; fun_prop)
+    TauCeti.Probability.integrable_withDensity_ofReal_iff
+      (ρ := fun z : E × F ↦ distanceKernel y z.2) (by unfold distanceKernel; fun_prop)
       (ae_of_all _ fun z ↦ (distanceKernel_nonneg_le y z.2).1)]
   refine (hP.const_mul ‖y‖).mono' (by unfold distanceKernel; fun_prop) (ae_of_all _ fun z ↦ ?_)
   simp only [Function.comp_apply, smul_eq_mul, Real.norm_eq_abs, abs_mul, abs_norm,
     abs_of_nonneg (distanceKernel_nonneg_le y z.2).1]
-  exact mul_le_mul (distanceKernel_nonneg_le y z.2).2.1 (norm_fst_le z) (norm_nonneg _) (norm_nonneg _)
+  exact mul_le_mul (distanceKernel_nonneg_le y z.2).2.1 (norm_fst_le z) (norm_nonneg _)
+    (norm_nonneg _)
 
 /-- The total mass of a weighted marginal depends only on the opposite marginal. -/
 theorem distanceWeightedFst_univ_eq (P Q : Measure (E × F)) [IsFiniteMeasure P] [IsFiniteMeasure Q]
@@ -86,7 +89,7 @@ theorem distanceWeightedFst_univ_eq (P Q : Measure (E × F)) [IsFiniteMeasure P]
   have hP := integral_distanceWeightedFst P y (fun _ ↦ 1) measurable_const
   have hQ := integral_distanceWeightedFst Q y (fun _ ↦ 1) measurable_const
   simp only [integral_const, smul_eq_mul, mul_one] at hP hQ
-  change (distanceWeightedFst P y).real univ = (distanceWeightedFst Q y).real univ
+  rw [← measureReal_def, ← measureReal_def]
   rw [hP, hQ, ← integral_map measurable_snd.aemeasurable (by unfold distanceKernel; fun_prop),
     ← integral_map measurable_snd.aemeasurable (by unfold distanceKernel; fun_prop), hsnd]
 
@@ -113,7 +116,8 @@ theorem real_distanceWeightedFst_apply (P : Measure (E × F)) [IsFiniteMeasure P
     (ae_of_all _ fun z ↦ (distanceKernel_nonneg_le y z.2).1)
     (measurable_fst hA) (integrable_distanceKernel_snd P y).integrableOn
 
-/-- Restricting to a first-coordinate event preserves integrability of the second-coordinate norm. -/
+/-- Restricting to a first-coordinate event preserves integrability of the second-coordinate
+norm. -/
 theorem integrable_norm_map_snd_restrict (P : Measure (E × F))
     (hP : Integrable (fun z ↦ ‖z‖) P) (A : Set E) :
     Integrable (fun y ↦ ‖y‖) ((P.restrict (Prod.fst ⁻¹' A)).map Prod.snd) := by
@@ -151,7 +155,8 @@ theorem measure_eq_of_integral_distanceProductKernel_eq (P Q : Measure (E × F))
   simpa only [Measure.map_apply measurable_snd hB, Measure.restrict_apply (measurable_snd hB),
     he] using hm
 
-/-- The product distance-kernel discrepancy is nonnegative and separates laws with fixed marginals. -/
+/-- The product distance-kernel discrepancy is nonnegative and separates laws with fixed
+marginals. -/
 theorem distanceProductKernel_squaredMMD_nonneg_eq_zero_iff (P Q : Measure (E × F))
     [IsFiniteMeasure P] [IsFiniteMeasure Q]
     (hP : Integrable (fun z ↦ ‖z‖) P) (hQ : Integrable (fun z ↦ ‖z‖) Q)

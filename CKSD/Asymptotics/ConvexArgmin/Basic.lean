@@ -101,8 +101,9 @@ private lemma exists_finset_abs_sub_lt_of_convexOn [FiniteDimensional ℝ E] {q 
   classical
   set r : ℝ := max R 1 with hr_def
   have hr : 0 < r := lt_of_lt_of_le one_pos (le_max_right _ _)
-  obtain ⟨F, hF, -⟩ := (convex_closedBall (0 : E) (3 * r)).exists_subset_interior_convexHull_finset_of_isCompact
-    (isCompact_closedBall 0 (3 * r)) (t := univ) Filter.univ_mem
+  obtain ⟨F, hF, -⟩ :=
+    (convex_closedBall (0 : E) (3 * r)).exists_subset_interior_convexHull_finset_of_isCompact
+      (isCompact_closedBall 0 (3 * r)) (t := univ) Filter.univ_mem
   set K : ℝ := ∑ v ∈ F, (|q v| + 1) + 2 * (|q 0| + 1) with hK
   have hK0 : 0 ≤ K := by
     have : 0 ≤ ∑ v ∈ F, (|q v| + 1) := Finset.sum_nonneg fun v _ ↦ by positivity

@@ -269,33 +269,42 @@ private theorem integral_comp_div_eq_of_hasDensity {P : Measure ℝ} {f : ℝ �
   simp_rw [mul_comm (f _)]
   exact integral_comp_div_mul_eq F f t hh
 
-/-- GAPS 103.4: the pointwise central limit theorem for the kernel density estimator. For a
-bounded symmetric probability kernel `K` with finite second moment `μ₂(K)` and a twice
-continuously differentiable density `f` with bounded `f''`, if `h → 0`, `nh → ∞`, and
-`nh⁵ = O(1)`, then `√(nh) (f̂_h(t) - f(t) - h² μ₂(K) f''(t) / 2) ⇒ N(0, R(K) f(t))` with
-`R(K) = ∫ K²`. When `f(t) = 0` the limit is the point mass at `0`. -/
-theorem tendstoInDistribution_kernelDensityEstimator {Ω : Type*} [MeasurableSpace Ω]
+/-- The Lindeberg sums of a triangular array bounded by constants `B n → 0` vanish eventually:
+for every `ε > 0`, `∑_{j < N n} ∫ Y n j ^ 2 * 1{ε < |Y n j|} → 0`. -/
+theorem tendsto_lindebergSum_of_abs_le {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+    {Y : ℕ → ℕ → Ω → ℝ} {N : ℕ → ℕ} {B : ℕ → ℝ} (hY : ∀ n j ω, |Y n j ω| ≤ B n)
+    (hB : Tendsto B atTop (𝓝 0)) {ε : ℝ} (hε : 0 < ε) :
+    Tendsto (fun n ↦ ∑ j ∈ Finset.range (N n),
+      ∫ ω, (if ε < |Y n j ω| then Y n j ω ^ 2 else 0) ∂μ) atTop (𝓝 0) := by
+  refine tendsto_const_nhds.congr' ?_
+  filter_upwards [hB.eventually (gt_mem_nhds hε)] with n hn
+  symm
+  refine Finset.sum_eq_zero fun j _ ↦ ?_
+  have : (fun ω ↦ if ε < |Y n j ω| then Y n j ω ^ 2 else 0) = fun _ ↦ 0 := by
+    ext ω
+    split_ifs with hcon
+    · exact absurd hcon (not_lt.mpr ((hY n j ω).trans hn.le))
+    · rfl
+  rw [this, integral_zero]
+
+/-- The central limit theorem for the centred kernel summands: under the hypotheses of
+`tendstoInDistribution_kernelDensityEstimator` without the bias conditions, the row sums
+`∑_{j < n} (K((t - X_j) / h_n) - E K((t - X) / h_n)) / √(n h_n)` converge in distribution to
+`N(0, R(K) f(t))`. -/
+private theorem tendstoInDistribution_sum_kernel_centred {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
-    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (f K : ℝ → ℝ)
-    (hf : HasDensity P volume f) (hf2 : ContDiff ℝ 2 f)
-    (hDb : ∃ C, ∀ x, |deriv (deriv f) x| ≤ C)
-    (hKm : Measurable K) (hKpos : ∀ x, 0 ≤ K x) (hKsym : ∀ x, K (-x) = K x)
-    (hKb : ∃ C, ∀ x, K x ≤ C) (hK1 : (∫ x, K x) = 1) (hK2 : Integrable (fun x ↦ x ^ 2 * K x) volume)
-    (h : ℕ → ℝ) (hh : ∀ n : ℕ, 0 < h n) (hh0 : Tendsto h atTop (𝓝 0))
-    (hnh : Tendsto (fun n : ℕ ↦ (n : ℝ) * h n) atTop atTop)
-    (hnh5 : ∃ C, ∀ᶠ n : ℕ in atTop, (n : ℝ) * h n ^ 5 ≤ C)
+    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) {f K : ℝ → ℝ}
+    (hf : HasDensity P volume f) (hf2 : ContDiff ℝ 2 f) {C : ℝ}
+    (hC : ∀ x, |deriv (deriv f) x| ≤ C) (hKm : Measurable K) (hKpos : ∀ x, 0 ≤ K x) {CK : ℝ}
+    (hCK : ∀ x, K x ≤ CK) (hK1 : (∫ x, K x) = 1)
+    (hK2 : Integrable (fun x ↦ x ^ 2 * K x) volume) {h : ℕ → ℝ} (hh : ∀ n : ℕ, 0 < h n)
+    (hh0 : Tendsto h atTop (𝓝 0)) (hnh : Tendsto (fun n : ℕ ↦ (n : ℝ) * h n) atTop atTop)
     (t : ℝ) :
-    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt ((n : ℝ) * h n) *
-      (kernelDensityEstimator X K h n ω t - f t - h n ^ 2 / 2 *
-        (∫ u, u ^ 2 * K u) * deriv (deriv f) t)) atTop id (fun _ ↦ μ)
-      (gaussianReal 0 (Real.toNNReal ((∫ u, K u ^ 2) * f t))) := by
-  obtain ⟨C, hC⟩ := hDb
-  obtain ⟨CK, hCK⟩ := hKb
-  obtain ⟨C5, hC5⟩ := hnh5
+    TendstoInDistribution (fun (n : ℕ) ω ↦ ∑ j ∈ Finset.range n,
+      (K ((t - X j ω) / h n) - ∫ x, K ((t - x) / h n) ∂P) / Real.sqrt ((n : ℝ) * h n))
+      atTop id (fun _ ↦ μ) (gaussianReal 0 (Real.toNNReal ((∫ u, K u ^ 2) * f t))) := by
   have hKi : Integrable K := Integrable.of_integral_ne_zero (by rw [hK1]; norm_num)
   have hKabs : ∀ x, |K x| ≤ CK := fun x ↦ by rw [abs_of_nonneg (hKpos x)]; exact hCK x
-  set D2 := deriv (deriv f) t
-  set μ₂ := ∫ u, u ^ 2 * K u
   -- the smoothed density and second moment
   set A : ℕ → ℝ := fun n ↦ ∫ u, K u * f (t - h n * u) with hA
   set A2 : ℕ → ℝ := fun n ↦ ∫ u, K u ^ 2 * f (t - h n * u) with hA2
@@ -353,11 +362,6 @@ theorem tendstoInDistribution_kernelDensityEstimator {Ω : Type*} [MeasurableSpa
     intro n hn
     have hq : ∫ x, K ((t - x) / h n) ^ 2 ∂P = h n * A2 n :=
       integral_comp_div_eq_of_hasDensity hf (fun u ↦ K u ^ 2) t (hh n)
-    have hKP : Integrable (fun x ↦ K ((t - x) / h n)) P := (hKL n).integrable one_le_two
-    have hKP2 : Integrable (fun x ↦ K ((t - x) / h n) ^ 2) P := (hKL n).integrable_sq
-    have hKP' : Integrable (fun x ↦ 2 * m n * K ((t - x) / h n)) P := hKP.const_mul _
-    have hI1 : Integrable (fun x ↦ K ((t - x) / h n) ^ 2 - 2 * m n * K ((t - x) / h n)) P :=
-      hKP2.sub hKP'
     have hnh0 : 0 < (n : ℝ) * h n := mul_pos (Nat.cast_pos.mpr hn) (hh n)
     have hterm : ∀ j, ∫ ω, Y n j ω ^ 2 ∂μ = (h n * A2 n - m n ^ 2) / (n * h n) := by
       intro j
@@ -365,13 +369,10 @@ theorem tendstoInDistribution_kernelDensityEstimator {Ω : Type*} [MeasurableSpa
       simp only [hg, hr, div_pow]
       rw [integral_div, Real.sq_sqrt hnh0.le]
       congr 1
-      have hexp : ∀ x, (K ((t - x) / h n) - m n) ^ 2 =
-          K ((t - x) / h n) ^ 2 - 2 * m n * K ((t - x) / h n) + m n ^ 2 := fun x ↦ by ring
-      simp_rw [hexp]
-      rw [integral_add hI1 (integrable_const _), integral_sub hKP2 hKP', integral_const_mul,
-        integral_const, hq]
-      simp only [hm, probReal_univ, smul_eq_mul, one_mul]
-      ring
+      have hv := (variance_eq_integral (hKL n).aestronglyMeasurable.aemeasurable).symm.trans
+        (variance_eq_sub (hKL n))
+      simp only [Pi.pow_apply, hq] at hv
+      exact hv
     rw [Finset.sum_congr rfl fun j _ ↦ hterm j, Finset.sum_const, Finset.card_range,
       nsmul_eq_mul, hmA]
     have hh0' := (hh n).ne'
@@ -386,21 +387,51 @@ theorem tendstoInDistribution_kernelDensityEstimator {Ω : Type*} [MeasurableSpa
     have := (tendsto_inv_atTop_zero.comp (Real.tendsto_sqrt_atTop.comp hnh)).const_mul (2 * CK)
     simpa [hr, div_eq_mul_inv] using this
   have hlin : ∀ ε > 0, Tendsto (fun n ↦ ∑ j ∈ Finset.range n,
-      ∫ ω, (if ε < |Y n j ω| then Y n j ω ^ 2 else 0) ∂μ) atTop (𝓝 0) := by
-    intro ε hε
-    refine tendsto_const_nhds.congr' ?_
-    filter_upwards [hr_lim.eventually (gt_mem_nhds hε)] with n hn
-    symm
-    refine Finset.sum_eq_zero fun j _ ↦ ?_
-    have : (fun ω ↦ if ε < |Y n j ω| then Y n j ω ^ 2 else 0) = fun _ ↦ 0 := by
-      ext ω
-      split_ifs with hcon
-      · exact absurd hcon (not_lt.mpr ((hgb n _).trans hn.le))
-      · rfl
-    rw [this, integral_zero]
+      ∫ ω, (if ε < |Y n j ω| then Y n j ω ^ 2 else 0) ∂μ) atTop (𝓝 0) := fun ε hε ↦
+    tendsto_lindebergSum_of_abs_le (N := fun n ↦ n) (fun n j ω ↦ hgb n (X j ω)) hr_lim hε
   have hclt := tendstoInDistribution_sum_of_lindeberg_of_iIndepFun μ Y (fun n ↦ n)
     (fun n j _ ↦ hY2 n j) (fun n j _ ↦ hY0 n j) hind
     _ hvar hlin
+  exact hclt
+
+/-- GAPS 103.4: the pointwise central limit theorem for the kernel density estimator. For a
+bounded symmetric probability kernel `K` with finite second moment `μ₂(K)` and a twice
+continuously differentiable density `f` with bounded `f''`, if `h → 0`, `nh → ∞`, and
+`nh⁵ = O(1)`, then `√(nh) (f̂_h(t) - f(t) - h² μ₂(K) f''(t) / 2) ⇒ N(0, R(K) f(t))` with
+`R(K) = ∫ K²`. When `f(t) = 0` the limit is the point mass at `0`. -/
+theorem tendstoInDistribution_kernelDensityEstimator {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (f K : ℝ → ℝ)
+    (hf : HasDensity P volume f) (hf2 : ContDiff ℝ 2 f)
+    (hDb : ∃ C, ∀ x, |deriv (deriv f) x| ≤ C)
+    (hKm : Measurable K) (hKpos : ∀ x, 0 ≤ K x) (hKsym : ∀ x, K (-x) = K x)
+    (hKb : ∃ C, ∀ x, K x ≤ C) (hK1 : (∫ x, K x) = 1) (hK2 : Integrable (fun x ↦ x ^ 2 * K x) volume)
+    (h : ℕ → ℝ) (hh : ∀ n : ℕ, 0 < h n) (hh0 : Tendsto h atTop (𝓝 0))
+    (hnh : Tendsto (fun n : ℕ ↦ (n : ℝ) * h n) atTop atTop)
+    (hnh5 : ∃ C, ∀ᶠ n : ℕ in atTop, (n : ℝ) * h n ^ 5 ≤ C)
+    (t : ℝ) :
+    TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt ((n : ℝ) * h n) *
+      (kernelDensityEstimator X K h n ω t - f t - h n ^ 2 / 2 *
+        (∫ u, u ^ 2 * K u) * deriv (deriv f) t)) atTop id (fun _ ↦ μ)
+      (gaussianReal 0 (Real.toNNReal ((∫ u, K u ^ 2) * f t))) := by
+  obtain ⟨C, hC⟩ := hDb
+  obtain ⟨CK, hCK⟩ := hKb
+  obtain ⟨C5, hC5⟩ := hnh5
+  have hKi : Integrable K := Integrable.of_integral_ne_zero (by rw [hK1]; norm_num)
+  set D2 := deriv (deriv f) t
+  set μ₂ := ∫ u, u ^ 2 * K u
+  set A : ℕ → ℝ := fun n ↦ ∫ u, K u * f (t - h n * u) with hA
+  set m : ℕ → ℝ := fun n ↦ ∫ x, K ((t - x) / h n) ∂P with hm
+  have hmA : ∀ n, m n = h n * A n := fun n ↦
+    integral_comp_div_eq_of_hasDensity hf K t (hh n)
+  set r : ℕ → ℝ := fun n ↦ Real.sqrt ((n : ℝ) * h n) with hr
+  set Y : ℕ → ℕ → Ω → ℝ := fun n j ω ↦ (K ((t - X j ω) / h n) - m n) / r n with hY
+  have hYm : ∀ n j, Measurable (Y n j) := fun n j ↦
+    ((hKm.comp ((measurable_const.sub (hiid.1 j)).div_const _)).sub_const _).div_const _
+  have hclt : TendstoInDistribution (fun n ω ↦ ∑ j ∈ Finset.range n, Y n j ω) atTop id
+      (fun _ ↦ μ) (gaussianReal 0 (Real.toNNReal ((∫ u, K u ^ 2) * f t))) :=
+    tendstoInDistribution_sum_kernel_centred μ P X hiid hf hf2 hC hKm hKpos hCK hK1 hK2 hh hh0
+      hnh t
   -- the deterministic bias term
   set c : ℕ → ℝ := fun n ↦ r n * (A n - f t - h n ^ 2 / 2 * μ₂ * D2) with hc
   have hdiff : ∀ (n : ℕ) (ω : Ω), r n * (kernelDensityEstimator X K h n ω t - f t -
@@ -413,26 +444,14 @@ theorem tendstoInDistribution_kernelDensityEstimator {Ω : Type*} [MeasurableSpa
     have hr0 : r n ≠ 0 := (Real.sqrt_pos.mpr hnh0).ne'
     have hh0' := (hh n).ne'
     rw [kernelDensityEstimator_eq]
-    simp only [hY, hg, hc]
+    simp only [hY, hc]
     rw [← Finset.sum_div, Finset.sum_sub_distrib, Finset.sum_const, Finset.card_range,
       nsmul_eq_mul, hmA, ← mul_assoc, ← hr2]
     generalize (∑ i ∈ Finset.range n, K ((t - X i ω) / h n)) = S
     field_simp
     ring
   have hQ := tendsto_bias_div_sq hf2 hC hKm hKpos hKi hK2 hKsym hK1 hh hh0 t
-  have hcl : Tendsto c atTop (𝓝 0) := by
-    refine squeeze_zero_norm' ?_ (by simpa using (hQ.abs.const_mul (Real.sqrt (max C5 0))))
-    filter_upwards [hC5] with n hn
-    have hh0' := (hh n).ne'
-    have hrh : |r n * h n ^ 2| ≤ Real.sqrt (max C5 0) := by
-      refine Real.abs_le_sqrt ?_
-      rw [mul_pow, Real.sq_sqrt (by have := hh n; positivity)]
-      calc (n : ℝ) * h n * (h n ^ 2) ^ 2 = n * h n ^ 5 := by ring
-        _ ≤ max C5 0 := hn.trans (le_max_left _ _)
-    have : c n = r n * h n ^ 2 * ((A n - f t - h n ^ 2 / 2 * μ₂ * D2) / h n ^ 2) := by
-      simp only [hc]; field_simp
-    rw [this, Real.norm_eq_abs, abs_mul]
-    exact mul_le_mul_of_nonneg_right hrh (abs_nonneg _)
+  have hcl : Tendsto c atTop (𝓝 0) := tendsto_sqrt_mul_mul_of_tendsto_div_sq hh hC5 hQ
   have hkde : ∀ n, Measurable fun ω ↦ kernelDensityEstimator X K h n ω t := fun n ↦ by
     simp_rw [kernelDensityEstimator_eq]
     exact (Finset.measurable_sum _ fun i _ ↦
@@ -628,6 +647,7 @@ theorem natCast_mul_sum_perm_apply_mul_apply {n : ℕ} (a : Fin n → ℝ) (i j 
     push_cast [this]
     ring
   rw [hsplit] at htot
+  -- fold the permutation sum back into the abbreviation `F j` for `linear_combination`
   change (n : ℝ) * (n - 1) * F j = _
   linear_combination htot - hdiag
 

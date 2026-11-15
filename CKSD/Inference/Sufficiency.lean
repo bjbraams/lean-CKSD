@@ -12,7 +12,8 @@ structure (GAPS 101.49).
 
 ## Main results
 
-* `CKSD.integral_comp_mul_eq_integral_comp_mul_integral_kernel`, `CKSD.integral_indicator_comp_mul_eq`.
+* `CKSD.integral_comp_mul_eq_integral_comp_mul_integral_kernel`,
+  `CKSD.integral_indicator_comp_mul_eq`.
 * `CKSD.integral_comp_eq_integral_integral`: integrals against a mixture `P ∘ₘ Λ`.
 * `CKSD.ae_integral_kernel_eq_of_isBoundedlyCompleteStatistic`: under bounded completeness, a
   bounded function with constant mean has constant conditional mean `∫ φ dK(T)`.

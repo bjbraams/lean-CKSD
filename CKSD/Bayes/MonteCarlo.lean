@@ -26,7 +26,7 @@ uniform over events `A`.
 * `CKSD.abs_sum_pow_sub_le_of_minorization`: Doeblin's geometric bound under a minorization
   `K x y ≥ ε π y`.
 * `CKSD.abs_sum_independenceSampler_pow_sub_le`: the independence sampler converges at rate
-  `(1 - 1/M)ⁿ` when `π ≤ M g` (GAPS 104.32).
+  `(1 - 1 / M)ⁿ` when `π ≤ M g` (GAPS 104.32).
 * `CKSD.measurePreserving_leapfrogStep_iterate`, `CKSD.leapfrogStep_iterate_reversible`: iterated
   leapfrog steps preserve Lebesgue measure and are reversible under momentum flip (GAPS 104.35).
 * `CKSD.eventually_abs_metropolisTransition_pow_sub_le`: total-variation convergence of an
@@ -92,7 +92,7 @@ theorem metropolisTransition_mem_rowStochastic {π : ι → ℝ} {q : Matrix ι 
   · exact sub_nonneg.mpr hrow
   · exact le_rfl
 
-/-- GAPS 104.22: detailed balance `π(x) P(x,y) = π(y) P(y,x)` of the Metropolis–Hastings matrix
+/-- GAPS 104.22: detailed balance `π(x) P(x, y) = π(y) P(y, x)` of the Metropolis–Hastings matrix
 `P`, for nonnegative target weights (not necessarily normalized) and nonnegative proposals. -/
 theorem metropolisTransition_detailedBalance {π : ι → ℝ} {q : Matrix ι ι ℝ}
     (hπ : ∀ x, 0 ≤ π x) (hq : ∀ x y, 0 ≤ q x y) (x y : ι) :
@@ -111,7 +111,7 @@ theorem metropolisTransition_detailedBalance {π : ι → ℝ} {q : Matrix ι ι
     simp only [← mul_assoc, hflux, min_comm]
 
 /-- GAPS 104.22: the target weights are invariant for the Metropolis–Hastings matrix,
-`∑ₓ π(x) P(x,y) = π(y)`. -/
+`∑ₓ π(x) P(x, y) = π(y)`. -/
 theorem sum_mul_metropolisTransition {π : ι → ℝ} {q : Matrix ι ι ℝ}
     (hπ : ∀ x, 0 ≤ π x) (hq : ∀ x y, 0 ≤ q x y) (y : ι) :
     ∑ x, π x * metropolisTransition π q x y = π y := by
@@ -177,7 +177,7 @@ theorem abs_sum_pow_sub_le_of_minorization (π : ι → ℝ)
 
 /-- GAPS 104.32: uniform convergence rate of the independence sampler. For a positive target
 `π` and a positive proposal density `g` with `π ≤ M g`, every row of the `n`-step
-Metropolis–Hastings matrix with proposal `q(x, y) = g(y)` is within `(1 - 1/M)ⁿ` of `π`,
+Metropolis–Hastings matrix with proposal `q(x, y) = g(y)` is within `(1 - 1 / M)ⁿ` of `π`,
 uniformly over events. The condition `π ≤ M g` forces `M ≥ 1`. -/
 theorem abs_sum_independenceSampler_pow_sub_le (π g : ι → ℝ)
     (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
@@ -311,6 +311,27 @@ section Ergodic
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
+/-- A nonnegative matrix that can reach a state `x₀` from everywhere in one step and leave it to
+everywhere in one step has a strictly positive third power. -/
+theorem pow_three_apply_pos_of_pos_through {P : Matrix ι ι ℝ} {x₀ : ι}
+    (hP0 : ∀ u z, 0 ≤ P u z) (hto : ∀ u, 0 < P u x₀) (hfrom : ∀ z, 0 < P x₀ z) (u z : ι) :
+    0 < (P ^ 3) u z := by
+  have hK : (P ^ 3) u z = ∑ b, (∑ a, P u a * P a b) * P b z := by
+    rw [pow_succ, pow_two, Matrix.mul_apply]
+    simp only [Matrix.mul_apply]
+  rw [hK]
+  have hin (b : ι) : 0 ≤ ∑ a, P u a * P a b :=
+    Finset.sum_nonneg fun a _ ↦ mul_nonneg (hP0 u a) (hP0 a b)
+  calc
+    0 < (P u x₀ * P x₀ x₀) * P x₀ z := mul_pos (mul_pos (hto u) (hto x₀)) (hfrom z)
+    _ ≤ (∑ a, P u a * P a x₀) * P x₀ z := by
+      refine mul_le_mul_of_nonneg_right ?_ (hP0 x₀ z)
+      exact Finset.single_le_sum (f := fun a ↦ P u a * P a x₀)
+        (fun a _ ↦ mul_nonneg (hP0 u a) (hP0 a x₀)) (Finset.mem_univ x₀)
+    _ ≤ ∑ b, (∑ a, P u a * P a b) * P b z :=
+      Finset.single_le_sum (f := fun b ↦ (∑ a, P u a * P a b) * P b z)
+        (fun b _ ↦ mul_nonneg (hin b) (hP0 b z)) (Finset.mem_univ x₀)
+
 /-- GAPS 104.31, finite-state form of total-variation convergence of Metropolis–Hastings.
 The target is positive; irreducibility is taken in the sufficient form `q x y > 0` for `x ≠ y`,
 and aperiodicity in the sufficient form that some proposed move has acceptance below one.
@@ -367,22 +388,7 @@ theorem eventually_abs_metropolisTransition_pow_sub_le (π : ι → ℝ)
     · exact hoff x₀ z h
   -- Three steps through `x₀` give a strictly positive matrix.
   set K := P ^ 3 with hKdef
-  have hKpos (u z : ι) : 0 < K u z := by
-    have hK : K u z = ∑ b, (∑ a, P u a * P a b) * P b z := by
-      rw [hKdef, pow_succ, pow_two, Matrix.mul_apply]
-      simp only [Matrix.mul_apply]
-    rw [hK]
-    have hin (b : ι) : 0 ≤ ∑ a, P u a * P a b :=
-      Finset.sum_nonneg fun a _ ↦ mul_nonneg (hP0 u a) (hP0 a b)
-    calc
-      0 < (P u x₀ * P x₀ x₀) * P x₀ z := mul_pos (mul_pos (hto u) hdiag) (hfrom z)
-      _ ≤ (∑ a, P u a * P a x₀) * P x₀ z := by
-        refine mul_le_mul_of_nonneg_right ?_ (hP0 x₀ z)
-        exact Finset.single_le_sum (f := fun a ↦ P u a * P a x₀)
-          (fun a _ ↦ mul_nonneg (hP0 u a) (hP0 a x₀)) (Finset.mem_univ x₀)
-      _ ≤ ∑ b, (∑ a, P u a * P a b) * P b z :=
-        Finset.single_le_sum (f := fun b ↦ (∑ a, P u a * P a b) * P b z)
-          (fun b _ ↦ mul_nonneg (hin b) (hP0 b z)) (Finset.mem_univ x₀)
+  have hKpos (u z : ι) : 0 < K u z := pow_three_apply_pos_of_pos_through hP0 hto hfrom u z
   have hK0 (u z : ι) : 0 ≤ K u z := Matrix.nonneg_of_mem_rowStochastic (pow_mem hPmem 3)
   have hK1 : ∀ u, ∑ z, K u z = 1 := Matrix.sum_row_of_mem_rowStochastic (pow_mem hPmem 3)
   have hKst := sum_mul_pow_eq_of_stationary hPst 3
@@ -464,7 +470,7 @@ theorem HasTransitionMatrix.measureReal_eq {Ω : Type*} [MeasurableSpace Ω] {μ
 
 omit [Fintype ι] [DecidableEq ι] in
 /-- A chain with initial weights `ν` and path probabilities
-`ν(path 0) ∏_{i<n} K(path i, path (i+1))` has transition matrix `K`. -/
+`ν(path 0) ∏_{i<n} K(path i, path (i + 1))` has transition matrix `K`. -/
 theorem HasTransitionMatrix.of_measureReal_eq_prod {Ω : Type*} [MeasurableSpace Ω]
     {μ : Measure Ω} {K : Matrix ι ι ℝ} {X : ℕ → Ω → ι} (ν : ι → ℝ)
     (hlaw : ∀ n : ℕ, ∀ path : ℕ → ι,
@@ -476,7 +482,7 @@ theorem HasTransitionMatrix.of_measureReal_eq_prod {Ω : Type*} [MeasurableSpace
 
 omit [DecidableEq ι] in
 /-- One-step Markov property of a finite-state chain given by its path probabilities: for a
-function `F` of the prefix `(X 0, …, X n)`, `𝔼[F · v(X (n+1))] = 𝔼[F · (K v)(X n)]`. -/
+function `F` of the prefix `(X 0, …, X n)`, `𝔼[F · v(X (n + 1))] = 𝔼[F · (K v)(X n)]`. -/
 theorem integral_mul_comp_succ_eq_mulVec {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix (ι) (ι) ℝ)
@@ -540,7 +546,7 @@ theorem integral_mul_comp_succ_eq_mulVec {Ω : Type*} [MeasurableSpace Ω]
   ring
 
 omit [DecidableEq ι] in
-/-- Second moment of the martingale `∑_{i<n} (u(X (i+1)) - (K u)(X i))` of a finite-state chain:
+/-- Second moment of the martingale `∑_{i<n} (u(X (i + 1)) - (K u)(X i))` of a finite-state chain:
 the increments are orthogonal, so a bound `B` on them gives `𝔼[Mₙ²] ≤ n B²`. -/
 theorem integral_sq_sum_markovIncrement_le {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
@@ -600,7 +606,7 @@ theorem integral_sq_sum_markovIncrement_le {Ω : Type*} [MeasurableSpace Ω]
 
 /-- Poisson equation for a finite stochastic matrix with positive off-diagonal entries and a
 positive invariant law `π`: every `π`-centred `g` is `u - P u` for some `u`. The solution is
-`u = ½ ∑ₖ Lᵏ g` for the lazy chain `L = (I + P)/2`, which converges geometrically by Doeblin's
+`u = ½ ∑ₖ Lᵏ g` for the lazy chain `L = (I + P) / 2`, which converges geometrically by Doeblin's
 bound. -/
 theorem exists_sub_mulVec_eq_of_offDiag_pos (π : ι → ℝ)
     (P : Matrix (ι) (ι) ℝ) (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
@@ -688,7 +694,7 @@ theorem exists_sub_mulVec_eq_of_offDiag_pos (π : ι → ℝ)
   rw [hPu, hPw, hLw]
   ring
 /-- For a bounded real sequence, convergence of the centred averages along the squares
-`(k+1)²` implies convergence of all averages, by monotonicity of the shifted partial sums. -/
+`(k + 1)²` implies convergence of all averages, by monotonicity of the shifted partial sums. -/
 theorem tendsto_avg_of_tendsto_sum_sq_div {a : ℕ → ℝ} {H l : ℝ} (ha : ∀ i, |a i| ≤ H)
     (hsq : Tendsto (fun k : ℕ ↦ (∑ i ∈ Finset.range ((k + 1) ^ 2), (a i - l)) /
       (((k + 1) ^ 2 : ℕ) : ℝ)) atTop (𝓝 0)) :

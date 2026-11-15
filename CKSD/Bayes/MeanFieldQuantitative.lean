@@ -103,7 +103,8 @@ theorem finite_coupling_gronwall_sq {N : ℕ} (hN : 0 < N) (u r : Fin N → ℝ 
   have hR (i : Fin N) : 0 ≤ R i := intervalIntegral.integral_nonneg hT (fun s _ ↦ hr0 i s)
   have hV (i : Fin N) : 0 ≤ V i := intervalIntegral.integral_nonneg hT (fun s _ ↦ sq_nonneg _)
   have hB : 0 ≤ B := mul_nonneg (by positivity) (Finset.sum_nonneg fun i _ ↦ hV i)
-  have hsq (i : Fin N) : R i ^ 2 ≤ T * V i := sq_intervalIntegral_le_length_mul_integral_sq _ (hr i) hT
+  have hsq (i : Fin N) : R i ^ 2 ≤ T * V i :=
+    sq_intervalIntegral_le_length_mul_integral_sq _ (hr i) hT
   have hAsq : A ^ 2 ≤ T * B := by
     calc A ^ 2 ≤ (N : ℝ)⁻¹ * ∑ j, R j ^ 2 := by
             simpa only [Finset.card_univ, Fintype.card_fin, div_eq_inv_mul] using
@@ -120,11 +121,13 @@ theorem finite_coupling_gronwall_sq {N : ℕ} (hN : 0 < N) (u r : Fin N → ℝ 
   have hsq1 : u i t ^ 2 ≤ (R i + q * A) ^ 2 * Real.exp (a * T) ^ 2 := by
     rw [← mul_pow]
     exact pow_le_pow_left₀ (hu0 i t) hbnd 2
-  have hsq2 : (R i + q * A) ^ 2 ≤ 2 * (R i ^ 2 + q ^ 2 * A ^ 2) := by nlinarith [sq_nonneg (R i - q * A)]
+  have hsq2 : (R i + q * A) ^ 2 ≤ 2 * (R i ^ 2 + q ^ 2 * A ^ 2) := by
+    nlinarith [sq_nonneg (R i - q * A)]
   have hsq3 : R i ^ 2 + q ^ 2 * A ^ 2 ≤ T * (V i + q ^ 2 * B) := by
     have := mul_le_mul_of_nonneg_left hAsq (sq_nonneg q)
     nlinarith [hsq i]
-  have hsq4 : V i + q ^ 2 * B ≤ (1 + q ^ 2) * (V i + B) := by nlinarith [mul_nonneg (sq_nonneg q) (hV i)]
+  have hsq4 : V i + q ^ 2 * B ≤ (1 + q ^ 2) * (V i + B) := by
+    nlinarith [mul_nonneg (sq_nonneg q) (hV i)]
   calc u i t ^ 2 ≤ (2 * T * (1 + q ^ 2) * (V i + B)) * Real.exp (a * T) ^ 2 := by
         exact hsq1.trans (mul_le_mul_of_nonneg_right
           (hsq2.trans (by nlinarith [hsq3, mul_le_mul_of_nonneg_left hsq4 hT])) (sq_nonneg _))
@@ -147,7 +150,6 @@ theorem norm_mean_interaction_sub_le {E : Type*} [NormedAddCommGroup E] [NormedS
       intro j _
       refine (hK.norm_sub_le (x i, x j) (y i, y j)).trans ?_
       apply mul_le_mul_of_nonneg_left _ L.coe_nonneg
-      change max ‖x i - y i‖ ‖x j - y j‖ ≤ _
       exact max_le_add_of_nonneg (norm_nonneg _) (norm_nonneg _)
     _ = _ := by
       simp only [← Finset.mul_sum, Finset.sum_add_distrib, Finset.sum_const, Finset.card_univ,

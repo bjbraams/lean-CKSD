@@ -54,8 +54,8 @@ namespace CKSD
 and bounded there between positive constants (the upper bound is automatic by continuity on the
 compact interval, and `a < b` follows because `μ` has a density and total mass one). For an
 i.i.d. sample of law `μ`, `n W₂²(μ_n, μ)` converges in distribution to
-`∫₀¹ B⁰(u)² / f(F⁻¹(u))² du`, where `B⁰(u) = W(u) - u W(1)` is the Brownian bridge built from any Brownian motion `W`; consequently
-`√n W₂(μ_n, μ)` is bounded in probability. -/
+`∫₀¹ B⁰(u)² / f(F⁻¹(u))² du`, where `B⁰(u) = W(u) - u W(1)` is the Brownian bridge built from
+any Brownian motion `W`; consequently `√n W₂(μ_n, μ)` is bounded in probability. -/
 theorem tendstoInDistribution_mul_wasserstein_sq_empiricalMeasure
     {Ω Ω' : Type*} [MeasurableSpace Ω] [MeasurableSpace Ω'] (P : Measure Ω) [IsProbabilityMeasure P]
     (μ : Measure ℝ) [IsProbabilityMeasure μ] (a b : ℝ) (f : ℝ → ℝ)

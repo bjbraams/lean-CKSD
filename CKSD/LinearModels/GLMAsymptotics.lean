@@ -228,6 +228,14 @@ private lemma iteratedDeriv_two_nonneg (θ : ℝ) :
   rw [h] at h0
   exact nonneg_of_mul_nonneg_right (by linarith) hφ
 
+/-- A `C³` cumulant function of an exponential dispersion family is convex on `ℝ`. -/
+private lemma convexOn_univ_cumulant (hb : ContDiff ℝ 3 b) : ConvexOn ℝ univ b := by
+  refine convexOn_univ_of_deriv2_nonneg (hb.differentiable (by norm_num)) ?_ fun x ↦ ?_
+  · have := hb.differentiable_iteratedDeriv 1 (by norm_num)
+    rwa [iteratedDeriv_one] at this
+  · rw [← iteratedDeriv_eq_iterate]
+    exact iteratedDeriv_two_nonneg hφ hlaw x
+
 end ExponentialDispersion
 
 section RandomDesign
@@ -348,6 +356,21 @@ private lemma integrable_of_continuous (hR : ∀ᵐ x ∂Px, ‖x‖ ≤ R) {E :
     (hR.mono fun x hx ↦ hC x (mem_closedBall_zero_iff.2 hx))
 
 variable {κ : Kernel (EuclideanSpace ℝ (Fin p)) ℝ} [IsMarkovKernel κ]
+
+/-- If the pairs `(Xᵢ, Yᵢ)` are i.i.d. with law `Px ⊗ κ` and `‖x‖ ≤ R` holds `Px`-almost
+surely, then almost surely every covariate satisfies `‖Xᵢ‖ ≤ max R 0`. -/
+theorem ae_forall_norm_le_max_of_iid {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω}
+    (hR : ∀ᵐ x ∂Px, ‖x‖ ≤ R) {X : ℕ → Ω → EuclideanSpace ℝ (Fin p)} {Y : ℕ → Ω → ℝ}
+    (hiid : IsIndependentIdenticallyDistributed P (fun i ω ↦ (X i ω, Y i ω)) (Px ⊗ₘ κ)) :
+    ∀ᵐ ω ∂P, ∀ i, ‖X i ω‖ ≤ max R 0 := by
+  refine ae_all_iff.2 fun i ↦ ?_
+  have h1 : ∀ᵐ z ∂(Px ⊗ₘ κ), ‖z.1‖ ≤ max R 0 := by
+    have hh := hR
+    rw [← Measure.fst_compProd Px κ] at hh
+    exact (ae_of_ae_map measurable_fst.aemeasurable hh).mono fun z hz ↦
+      hz.trans (le_max_left _ _)
+  rw [← hiid.2.2 i] at h1
+  exact ae_of_ae_map (hiid.1 i).aemeasurable h1
 
 /-- Integrals of functions of the covariate alone against `Px ⊗ κ`. -/
 private lemma integral_comp_fst_compProd {g : EuclideanSpace ℝ (Fin p) → ℝ} (hg : Continuous g) :
@@ -484,7 +507,6 @@ private lemma tendstoInMeasure_glmProcess {Ω : Type*} [MeasurableSpace Ω]
   set Z : ℕ → Ω → EuclideanSpace ℝ (Fin p) → ℝ := fun n ω h ↦ ∑ i ∈ Finset.range n,
     (b (inner ℝ (X i ω) (β + (Real.sqrt n)⁻¹ • h)) - b (inner ℝ (X i ω) β) -
       Y i ω * inner ℝ (X i ω) ((Real.sqrt n)⁻¹ • h)) with hZ
-  change TendstoInMeasure P (fun (n : ℕ) ω ↦ Z n ω h + ⟪U n ω, h⟫_ℝ - ⟪h, A h⟫_ℝ / 2) atTop _
   set q := ⟪h, A h⟫_ℝ with hq_def
   set sfun : EuclideanSpace ℝ (Fin p) × ℝ → ℝ :=
     fun z ↦ iteratedDeriv 2 b (inner ℝ z.1 β) * inner ℝ z.1 h ^ 2 with hsfun
@@ -741,8 +763,8 @@ private theorem tendstoInDistribution_canonicalGLM_score {Ω : Type*} [Measurabl
   rw [hW, TauCeti.Probability.map_inner_multivariateGaussian 0 v hS, Measure.map_id,
     inner_zero_right, ← Matrix.coe_toEuclideanCLM_eq_toEuclideanLin, hsq]
   congr 2
-  change ⟪v, Matrix.toEuclideanCLM (𝕜 := ℝ) (φ • J) v⟫_ℝ = _
-  rw [Matrix.inner_toEuclideanCLM, Matrix.smul_mulVec, dotProduct_smul, smul_eq_mul]
+  rw [ContinuousLinearMap.coe_coe, Matrix.inner_toEuclideanCLM, Matrix.smul_mulVec, dotProduct_smul,
+    smul_eq_mul]
 
 /-- GAPS 105.3, canonical-link form: for independent and identically distributed pairs
 `(xᵢ, Yᵢ)` whose response given the covariate is exponential-dispersion with natural parameter
@@ -787,23 +809,9 @@ theorem tendstoInDistribution_canonicalGLM_root {Ω : Type*} [MeasurableSpace Ω
   have hd1 : Continuous (deriv b) := hb.continuous_deriv (by norm_num)
   have hb2 : Continuous (iteratedDeriv 2 b) := hb.continuous_iteratedDeriv 2 (by norm_num)
   have hdiff : Differentiable ℝ b := hb.differentiable (by norm_num)
-  have hbconv : ConvexOn ℝ univ b := by
-    refine convexOn_univ_of_deriv2_nonneg hdiff ?_ fun x ↦ ?_
-    · have := hb.differentiable_iteratedDeriv 1 (by norm_num)
-      rwa [iteratedDeriv_one] at this
-    · rw [← iteratedDeriv_eq_iterate]
-      exact iteratedDeriv_two_nonneg hφ hlaw x
+  have hbconv : ConvexOn ℝ univ b := convexOn_univ_cumulant hφ hlaw hb
   -- covariates are bounded almost surely
-  set R0 := max R 0 with hR0
-  have haeR : ∀ᵐ ω ∂P, ∀ i, ‖X i ω‖ ≤ R0 := by
-    refine ae_all_iff.2 fun i ↦ ?_
-    have h1 : ∀ᵐ z ∂(Px ⊗ₘ κ), ‖z.1‖ ≤ R0 := by
-      have := hR
-      rw [← Measure.fst_compProd Px κ] at this
-      exact (ae_of_ae_map measurable_fst.aemeasurable this).mono fun z hz ↦
-        hz.trans (le_max_left _ _)
-    rw [← hlawZ i] at h1
-    exact ae_of_ae_map (hZm i).aemeasurable h1
+  have haeR := ae_forall_norm_le_max_of_iid hR hiid'
   -- the information operator
   set A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin p) :=
     Matrix.toEuclideanCLM (𝕜 := ℝ) J with hA_def
@@ -811,9 +819,8 @@ theorem tendstoInDistribution_canonicalGLM_root {Ω : Type*} [MeasurableSpace Ω
     Matrix.toEuclideanCLM (𝕜 := ℝ) J⁻¹ with hB_def
   have hdet : IsUnit J.det := (Matrix.isUnit_iff_isUnit_det _).1 hJ.isUnit
   have hAB : ∀ u, A (B u) = u := fun u ↦ by
-    change (Matrix.toEuclideanCLM (𝕜 := ℝ) J * Matrix.toEuclideanCLM (𝕜 := ℝ) J⁻¹) u = u
-    rw [← map_mul, Matrix.mul_nonsing_inv _ hdet, map_one]
-    rfl
+    rw [hA_def, hB_def, ← mul_apply_eq_comp, ← map_mul,
+      Matrix.mul_nonsing_inv _ hdet, map_one, one_apply_eq_self]
   have hAsymm : ∀ u v, ⟪A u, v⟫_ℝ = ⟪u, A v⟫_ℝ :=
     fun u v ↦ (Matrix.isSymmetric_toEuclideanLin_iff.2 hJ.isHermitian) u v
   obtain ⟨c, hc, hA⟩ := exists_pos_mul_sq_le_inner_toEuclideanCLM hJ
@@ -885,6 +892,73 @@ theorem tendstoInDistribution_canonicalGLM_root {Ω : Type*} [MeasurableSpace Ω
   exact tendstoInDistribution_studentized_glm P hJ hφ α
     (fun n ↦ by have := hβm n; fun_prop) hlim1 φhat hφm hφcons
 
+/-- Whitening of the score limit: if `Uₙ ⇒ N(0, φ J)` with `J` positive definite and `φ > 0`,
+then `φ^{-1/2} J^{-1/2} Uₙ` converges in distribution to the standard Gaussian law. -/
+private theorem tendstoInDistribution_whitened_glm {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P] {J : Matrix (Fin p) (Fin p) ℝ} (hJ : J.PosDef)
+    {φ : ℝ} (hφ : 0 < φ) (U : ℕ → Ω → EuclideanSpace ℝ (Fin p)) (hUm : ∀ n, Measurable (U n))
+    (hclt : TendstoInDistribution U atTop id (fun _ ↦ P) (multivariateGaussian 0 (φ • J))) :
+    TendstoInDistribution (fun n ω ↦ (Real.sqrt φ)⁻¹ • (CFC.sqrt J⁻¹).toEuclideanLin (U n ω))
+      atTop id (fun _ ↦ P) (stdGaussian (EuclideanSpace ℝ (Fin p))) := by
+  have hJJ : J⁻¹⁻¹ = J :=
+    Matrix.nonsing_inv_nonsing_inv _ ((Matrix.isUnit_iff_isUnit_det _).1 hJ.isUnit)
+  have hc : TendstoInMeasure P (fun (_ : ℕ) (_ : Ω) ↦ φ) atTop (fun _ ↦ φ) := by
+    rw [tendstoInMeasure_iff_norm]
+    intro ε hε
+    simp [hε.not_ge]
+  have hh := tendstoInDistribution_studentized_glm P hJ.inv hφ U hUm
+    (by simpa only [hJJ] using hclt) (fun _ _ ↦ φ) (fun _ ↦ measurable_const) hc
+  simpa only [multivariateGaussian_zero_one] using hh
+
+/-- Pointwise convergence of the whitened canonical GLM process: if `F` is a whitening map as in
+`CKSD.exists_glm_whitening`, then `Zₙ(F h) / φ + ⟪Wₙ, h⟫ → ‖h‖² / 2` in probability, where `Zₙ`
+is the rescaled process of `tendstoInMeasure_glmProcess` and `Wₙ = φ^{-1/2} J^{-1/2} Uₙ` the
+whitened score. -/
+private lemma tendsto_measure_whitened_glmProcess {Ω : Type*} [MeasurableSpace Ω]
+    (P : Measure Ω) [IsProbabilityMeasure P] {Px : Measure (EuclideanSpace ℝ (Fin p))}
+    [IsProbabilityMeasure Px] {κ : Kernel (EuclideanSpace ℝ (Fin p)) ℝ} [IsMarkovKernel κ]
+    {b : ℝ → ℝ} (hb : ContDiff ℝ 3 b) {φ R : ℝ} (hR : ∀ᵐ x ∂Px, ‖x‖ ≤ R)
+    (β : EuclideanSpace ℝ (Fin p)) (X : ℕ → Ω → EuclideanSpace ℝ (Fin p)) (Y : ℕ → Ω → ℝ)
+    (hiid : IsIndependentIdenticallyDistributed P (fun i ω ↦ (X i ω, Y i ω)) (Px ⊗ₘ κ))
+    (F : EuclideanSpace ℝ (Fin p) ≃ₗ[ℝ] EuclideanSpace ℝ (Fin p))
+    (hFlinear : ∀ u z, ⟪u, F z⟫_ℝ / φ =
+      ⟪(Real.sqrt φ)⁻¹ • (CFC.sqrt (canonicalGLMInformation Px b β)⁻¹).toEuclideanLin u, z⟫_ℝ)
+    (hFquad : ∀ z,
+      ⟪F z, (canonicalGLMInformation Px b β).toEuclideanLin (F z)⟫_ℝ / φ = ‖z‖ ^ 2)
+    (h : EuclideanSpace ℝ (Fin p)) {ε : ℝ} (hε : 0 < ε) :
+    Tendsto (fun n : ℕ ↦ P {ω | ε ≤ |(∑ i ∈ Finset.range n,
+        (b (inner ℝ (X i ω) (β + (Real.sqrt n)⁻¹ • F h)) - b (inner ℝ (X i ω) β) -
+          Y i ω * inner ℝ (X i ω) ((Real.sqrt n)⁻¹ • F h))) / φ +
+        ⟪(Real.sqrt φ)⁻¹ • (CFC.sqrt (canonicalGLMInformation Px b β)⁻¹).toEuclideanLin
+          ((Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n,
+            (Y i ω - deriv b (inner ℝ (X i ω) β)) • X i ω), h⟫_ℝ - ‖h‖ ^ 2 / 2|})
+      atTop (𝓝 0) := by
+  have hh := tendstoInMeasure_glmProcess P hb hR β X Y hiid
+    (ae_forall_norm_le_max_of_iid hR hiid) (F h)
+  refine ((tendstoInMeasure_iff_dist.1 (tendstoInMeasure_const_mul_zero P _ φ⁻¹ hh)) ε hε).congr
+    fun n ↦ ?_
+  congr 1
+  ext ω
+  simp only [Set.mem_ofPred_eq, Real.dist_eq, sub_zero]
+  rw [← hFlinear, ← hFquad, ← Matrix.coe_toEuclideanCLM_eq_toEuclideanLin,
+    ContinuousLinearMap.coe_coe]
+  ring_nf
+
+/-- The rescaled canonical GLM process is a difference of log likelihoods:
+`(∑_{i<n} [b(⟪xᵢ, β + h/√n⟫) - b(⟪xᵢ, β⟫) - yᵢ ⟪xᵢ, h/√n⟫]) / φ = ℓₙ(β) - ℓₙ(β + h/√n)`. -/
+private lemma canonicalGLMProcess_div_eq (b : ℝ → ℝ) (φ : ℝ) (n : ℕ)
+    (x : ℕ → EuclideanSpace ℝ (Fin p)) (y : ℕ → ℝ) (β h : EuclideanSpace ℝ (Fin p)) :
+    (∑ i ∈ Finset.range n, (b (inner ℝ (x i) (β + (Real.sqrt n)⁻¹ • h)) -
+        b (inner ℝ (x i) β) - y i * inner ℝ (x i) ((Real.sqrt n)⁻¹ • h))) / φ =
+      canonicalGLMLogLikelihood b φ n x y β -
+        canonicalGLMLogLikelihood b φ n x y (β + (Real.sqrt n)⁻¹ • h) := by
+  simp only [canonicalGLMLogLikelihood, ← Finset.sum_div]
+  rw [← sub_div, ← Finset.sum_sub_distrib]
+  congr 1
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  simp only [inner_add_right]
+  ring
+
 /-- GAPS 105.3, deviance test for nested canonical-link models with known dispersion: if the
 true coefficient lies in a subspace `L`, `β̂` is a measurable root of the full likelihood
 equations and `β̃` a measurable maximizer of the likelihood over `L`, then the scaled deviance
@@ -919,146 +993,97 @@ theorem tendstoInDistribution_canonicalGLM_deviance {Ω : Type*} [MeasurableSpac
   classical
   let J := canonicalGLMInformation Px b β
   let S := CFC.sqrt J⁻¹
-  obtain ⟨F,hF,hFlinear,hFquad⟩ := exists_glm_whitening hJ hφ
+  obtain ⟨F, hF, hFlinear, hFquad⟩ := exists_glm_whitening hJ hφ
   let K := L.map F.symm.toLinearMap
   let U := fun (n : ℕ) w ↦ (Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n,
-    (Y i w-deriv b (inner ℝ (X i w) β)) • X i w
-  obtain ⟨hUm,hclt⟩ := tendstoInDistribution_canonicalGLM_score P ν b hb φ hφ hlaw Px κ β
+    (Y i w - deriv b (inner ℝ (X i w) β)) • X i w
+  obtain ⟨hUm, hclt⟩ := tendstoInDistribution_canonicalGLM_score P ν b hb φ hφ hlaw Px κ β
     hκ R hR X Y hiid hJ
-  change (∀ n, Measurable (U n)) at hUm
-  change TendstoInDistribution U atTop id (fun _ ↦ P) (multivariateGaussian 0 (φ • J)) at hclt
   let W := fun (n : ℕ) w ↦ (Real.sqrt φ)⁻¹ • S.toEuclideanLin (U n w)
-  have hWm : ∀ n, Measurable (W n) := fun n ↦ by
-    change Measurable ((fun x : EuclideanSpace ℝ (Fin p) ↦
-      (Real.sqrt φ)⁻¹ • S.toEuclideanLin x) ∘ U n)
-    exact ((LinearMap.continuous_of_finiteDimensional S.toEuclideanLin).const_smul
+  have hWm : ∀ n, Measurable (W n) := fun n ↦
+    ((LinearMap.continuous_of_finiteDimensional S.toEuclideanLin).const_smul
       (Real.sqrt φ)⁻¹).measurable.comp (hUm n)
   have hWclt : TendstoInDistribution W atTop id (fun _ ↦ P)
-      (stdGaussian (EuclideanSpace ℝ (Fin p))) := by
-    have hJJ : J⁻¹⁻¹=J := Matrix.nonsing_inv_nonsing_inv _ ((Matrix.isUnit_iff_isUnit_det _).1 hJ.isUnit)
-    have hc : TendstoInMeasure P (fun (_ : ℕ) (_ : Ω) ↦ φ) atTop (fun _ ↦ φ) := by
-      rw [tendstoInMeasure_iff_norm]
-      intro ε hε
-      simp [hε.not_ge]
-    have hJlocal : J.PosDef := hJ
-    have hh := tendstoInDistribution_studentized_glm P hJlocal.inv hφ U hUm
-      (by simpa only [hJJ] using hclt) (fun _ _ ↦ φ) (fun _ ↦ measurable_const) hc
-    simpa only [multivariateGaussian_zero_one] using hh
+      (stdGaussian (EuclideanSpace ℝ (Fin p))) :=
+    tendstoInDistribution_whitened_glm P hJ hφ U hUm hclt
   have hXm : ∀ i, Measurable (X i) := fun i ↦ measurable_fst.comp (hiid.1 i)
   have hYm : ∀ i, Measurable (Y i) := fun i ↦ measurable_snd.comp (hiid.1 i)
   have hdiff : Differentiable ℝ b := hb.differentiable (by norm_num)
-  have hbconv : ConvexOn ℝ univ b := by
-    refine convexOn_univ_of_deriv2_nonneg hdiff ?_ fun x ↦ ?_
-    · have := hb.differentiable_iteratedDeriv 1 (by norm_num)
-      rwa [iteratedDeriv_one] at this
-    · rw [← iteratedDeriv_eq_iterate]
-      exact iteratedDeriv_two_nonneg hφ hlaw x
-  have haeR : ∀ᵐ w ∂P, ∀ i, ‖X i w‖ ≤ max R 0 := by
-    refine ae_all_iff.2 fun i ↦ ?_
-    have h1 : ∀ᵐ z ∂(Px ⊗ₘ κ), ‖z.1‖ ≤ max R 0 := by
-      have hh := hR
-      rw [← Measure.fst_compProd Px κ] at hh
-      exact (ae_of_ae_map measurable_fst.aemeasurable hh).mono fun z hz ↦
-        hz.trans (le_max_left _ _)
-    rw [← hiid.2.2 i] at h1
-    exact ae_of_ae_map (hiid.1 i).aemeasurable h1
+  have hbconv : ConvexOn ℝ univ b := convexOn_univ_cumulant hφ hlaw hb
   let Z0 := fun (n : ℕ) w h ↦ ∑ i ∈ Finset.range n,
-    (b (inner ℝ (X i w) (β+(Real.sqrt n)⁻¹ • h))-b (inner ℝ (X i w) β)-
+    (b (inner ℝ (X i w) (β + (Real.sqrt n)⁻¹ • h)) - b (inner ℝ (X i w) β) -
       Y i w * inner ℝ (X i w) ((Real.sqrt n)⁻¹ • h))
-  let Z := fun (n : ℕ) w h ↦ Z0 n w (F h)/φ
+  let Z := fun (n : ℕ) w h ↦ Z0 n w (F h) / φ
   have hZc : ∀ n w, ConvexOn ℝ univ (Z n w) := by
     intro n w
     have hh := convexOn_canonicalGLMProcess hbconv β (fun i ↦ X i w) (fun i ↦ Y i w) n
     refine ⟨convex_univ, fun x _ y _ a b ha hb hab ↦ ?_⟩
     have hxy := hh.2 (mem_univ (F x)) (mem_univ (F y)) ha hb hab
     have hscaled := div_le_div_of_nonneg_right hxy hφ.le
-    simpa only [Z,Z0,map_add,map_smul,smul_eq_mul,add_div,mul_div_assoc] using hscaled
+    simpa only [Z, Z0, map_add, map_smul, smul_eq_mul, add_div, mul_div_assoc] using hscaled
   have hpt : ∀ h, ∀ ε > 0, Tendsto (fun n ↦
-      P {w | ε ≤ |Z n w h+inner ℝ (W n w) h-‖h‖^2/2|}) atTop (𝓝 0) := by
-    intro h ε hε
-    have hh := tendstoInMeasure_glmProcess P hb hR β X Y hiid haeR (F h)
-    have hscaled := tendstoInMeasure_const_mul_zero P _ φ⁻¹ hh
-    have heq (n) (w) : φ⁻¹ * (Z0 n w (F h)+inner ℝ (U n w) (F h)-
-        inner ℝ (F h) (J.toEuclideanLin (F h))/2) =
-        Z n w h+inner ℝ (W n w) h-‖h‖^2/2 := by
-      rw [← hFlinear,← hFquad]
-      dsimp only [Z]
-      ring
-    have hscaled' : TendstoInMeasure P (fun n w ↦ Z n w h+inner ℝ (W n w) h-‖h‖^2/2)
-        atTop (fun _ ↦ 0) := by
-      refine hscaled.congr (fun n ↦ ae_of_all _ fun w ↦ ?_) EventuallyEq.rfl
-      simpa only [Z0,U,J,← Matrix.coe_toEuclideanCLM_eq_toEuclideanLin, ContinuousLinearMap.coe_coe] using heq n w
-    simpa only [Real.dist_eq,sub_zero] using (tendstoInMeasure_iff_dist.1 hscaled') ε hε
-  let α := fun (n : ℕ) w ↦ F.symm (Real.sqrt n • (βhat n w-β))
-  let β0 := fun (n : ℕ) w ↦ F.symm (Real.sqrt n • (βtilde n w-β))
-  have hβ0mem (n) (w) (hw : βtilde n w ∈ L) : β0 n w ∈ K := by
-    exact Submodule.mem_map.2 ⟨Real.sqrt n • (βtilde n w-β),
-      L.smul_mem _ (L.sub_mem hw hβL),rfl⟩
-  let βK := fun (n : ℕ) w ↦ if hh : β0 n w ∈ K then (⟨β0 n w,hh⟩ : K) else 0
-  have hβKcoe (n) (w) (hw : βtilde n w ∈ L) : (βK n w : EuclideanSpace ℝ (Fin p)) = β0 n w := by
-    simp only [βK,dite_eq_left (hβ0mem n w hw)]
+      P {w | ε ≤ |Z n w h + inner ℝ (W n w) h - ‖h‖ ^ 2 / 2|}) atTop (𝓝 0) :=
+    fun h _ hε ↦ tendsto_measure_whitened_glmProcess P hb hR β X Y hiid F hFlinear hFquad h hε
+  let α := fun (n : ℕ) w ↦ F.symm (Real.sqrt n • (βhat n w - β))
+  let β0 := fun (n : ℕ) w ↦ F.symm (Real.sqrt n • (βtilde n w - β))
+  have hβ0mem (n) (w) (hw : βtilde n w ∈ L) : β0 n w ∈ K :=
+    Submodule.mem_map.2 ⟨Real.sqrt n • (βtilde n w - β), L.smul_mem _ (L.sub_mem hw hβL), rfl⟩
+  let βK := fun (n : ℕ) w ↦ if hh : β0 n w ∈ K then (⟨β0 n w, hh⟩ : K) else 0
+  have hβKcoe (n) (w) (hw : βtilde n w ∈ L) :
+      (βK n w : EuclideanSpace ℝ (Fin p)) = β0 n w := by
+    simp only [βK, dite_eq_left (hβ0mem n w hw)]
   have hZLL (n) (w) (h) : Z n w h =
-      canonicalGLMLogLikelihood b φ n (fun i ↦ X i w) (fun i ↦ Y i w) β-
+      canonicalGLMLogLikelihood b φ n (fun i ↦ X i w) (fun i ↦ Y i w) β -
       canonicalGLMLogLikelihood b φ n (fun i ↦ X i w) (fun i ↦ Y i w)
-        (β+(Real.sqrt n)⁻¹ • F h) := by
-    simp only [Z,Z0,canonicalGLMLogLikelihood,← Finset.sum_div]
-    rw [← sub_div,← Finset.sum_sub_distrib]
-    congr 1
-    apply Finset.sum_congr rfl
-    intro i _
-    simp only [inner_add_right]
-    ring
-  have hαcenter (n : ℕ) (hn : 0 < n) (w) : β+(Real.sqrt n)⁻¹ • F (α n w)=βhat n w := by
-    simp only [α,F.apply_symm_apply,smul_smul,
-      inv_mul_cancel₀ (Real.sqrt_ne_zero'.2 (Nat.cast_pos.2 hn)),one_smul,add_sub_cancel]
+        (β + (Real.sqrt n)⁻¹ • F h) :=
+    canonicalGLMProcess_div_eq b φ n _ _ β (F h)
+  have hαcenter (n : ℕ) (hn : 0 < n) (w) : β + (Real.sqrt n)⁻¹ • F (α n w) = βhat n w := by
+    simp only [α, F.apply_symm_apply, smul_smul,
+      inv_mul_cancel₀ (Real.sqrt_ne_zero'.2 (Nat.cast_pos.2 hn)), one_smul, add_sub_cancel]
   have hβcenter (n : ℕ) (hn : 0 < n) (w) (hw : βtilde n w ∈ L) :
-      β+(Real.sqrt n)⁻¹ • F (βK n w)=βtilde n w := by
+      β + (Real.sqrt n)⁻¹ • F (βK n w) = βtilde n w := by
     rw [hβKcoe n w hw]
-    simp only [β0,F.apply_symm_apply,smul_smul,
-      inv_mul_cancel₀ (Real.sqrt_ne_zero'.2 (Nat.cast_pos.2 hn)),one_smul,add_sub_cancel]
+    simp only [β0, F.apply_symm_apply, smul_smul,
+      inv_mul_cancel₀ (Real.sqrt_ne_zero'.2 (Nat.cast_pos.2 hn)), one_smul, add_sub_cancel]
   have hminα : ∀ᶠ n in atTop, ∀ᵐ w ∂P, ∀ h, Z n w (α n w) ≤ Z n w h := by
     filter_upwards [eventually_ge_atTop 1] with n hn
     filter_upwards [hroot n hn] with w hw h
     have hle := canonicalGLMProcess_le_of_isCanonicalGLMRoot hdiff hbconv β _ _ hn hw (F h)
     have hdiv := div_le_div_of_nonneg_right hle hφ.le
-    simpa only [Z,Z0,α,F.apply_symm_apply] using hdiv
+    simpa only [Z, Z0, α, F.apply_symm_apply] using hdiv
   have hminβ : ∀ᶠ n in atTop, ∀ᵐ w ∂P, ∀ h : K, Z n w (βK n w) ≤ Z n w h := by
     filter_upwards [eventually_ge_atTop 1] with n hn
     filter_upwards [hmax n] with w hw h
     have hFh : F (h : EuclideanSpace ℝ (Fin p)) ∈ L := by
-      obtain ⟨v,hv,he⟩ := Submodule.mem_map.1 h.property
+      obtain ⟨v, hv, he⟩ := Submodule.mem_map.1 h.property
       rw [← he]
-      change F (F.symm v) ∈ L
-      simpa only [F.apply_symm_apply] using hv
-    have hnew : β+(Real.sqrt n)⁻¹ • F (h : EuclideanSpace ℝ (Fin p)) ∈ L :=
+      simpa only [LinearEquiv.coe_coe, F.apply_symm_apply] using hv
+    have hnew : β + (Real.sqrt n)⁻¹ • F (h : EuclideanSpace ℝ (Fin p)) ∈ L :=
       L.add_mem hβL (L.smul_mem _ hFh)
     have hh := hw.2 _ hnew
-    rw [hZLL,hZLL,hβcenter n (by omega) w hw.1]
+    rw [hZLL, hZLL, hβcenter n (by omega) w hw.1]
     linarith
-  let D := fun (n : ℕ) w ↦ 2*(canonicalGLMLogLikelihood b φ n (fun i ↦ X i w)
-    (fun i ↦ Y i w) (βhat n w)-canonicalGLMLogLikelihood b φ n (fun i ↦ X i w)
+  let D := fun (n : ℕ) w ↦ 2 * (canonicalGLMLogLikelihood b φ n (fun i ↦ X i w)
+    (fun i ↦ Y i w) (βhat n w) - canonicalGLMLogLikelihood b φ n (fun i ↦ X i w)
       (fun i ↦ Y i w) (βtilde n w))
   have hDm : ∀ n, Measurable (D n) := by
     intro n
     have hβ := hβm n
     have hβ' := hβm' n
     have hm_b := hb.continuous.measurable
-    dsimp only [D,canonicalGLMLogLikelihood]
+    dsimp only [D, canonicalGLMLogLikelihood]
     fun_prop
-  have hDeq (n : ℕ) : D n =ᵐ[P] fun w ↦ -2*(Z n w (α n w)-Z n w (βK n w)) := by
+  have hDeq (n : ℕ) : D n =ᵐ[P] fun w ↦ -2 * (Z n w (α n w) - Z n w (βK n w)) := by
     filter_upwards [hmax n] with w hw
     rcases Nat.eq_zero_or_pos n with rfl | hn
-    · simp [D,Z,Z0,canonicalGLMLogLikelihood]
-    · rw [hZLL,hZLL,hαcenter n hn w,hβcenter n hn w hw.1]
+    · simp [D, Z, Z0, canonicalGLMLogLikelihood]
+    · rw [hZLL, hZLL, hαcenter n hn w, hβcenter n hn w hw.1]
       dsimp only [D]
       ring
-  have hdim : Module.finrank ℝ Kᗮ = p-Module.finrank ℝ L := by
-    have hdim1 := K.finrank_add_finrank_orthogonal
-    have hdim2 : Module.finrank ℝ K = Module.finrank ℝ L := F.symm.finrank_map_eq L
-    simp only [finrank_euclideanSpace,Fintype.card_fin,hdim2] at hdim1
-    omega
   have hlimit := tendstoInDistribution_convex_deviance P Z hZc W hWm hWclt hpt K α βK
     hminα hminβ D hDm hDeq
+  have hdim : Module.finrank ℝ Kᗮ = p - Module.finrank ℝ L :=
+    finrank_orthogonal_map_linearEquiv L F.symm
   simpa only [hdim] using hlimit
 
 end CKSD

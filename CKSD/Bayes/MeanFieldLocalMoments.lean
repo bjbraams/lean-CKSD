@@ -67,7 +67,8 @@ theorem norm_sub_le_of_spatially_lipschitz_integral_eq {E : Type*}
           (∫ s in (0 : ℝ)..t, b s (y s)) from intervalIntegral.integral_sub hxi hyi]
         abel
       rw [heq]
-      calc ‖f t - g t + ∫ s in (0 : ℝ)..t, d s‖ ≤ ‖f t - g t‖ + ‖∫ s in (0 : ℝ)..t, d s‖ := norm_add_le _ _
+      calc ‖f t - g t + ∫ s in (0 : ℝ)..t, d s‖ ≤ ‖f t - g t‖ + ‖∫ s in (0 : ℝ)..t, d s‖ :=
+            norm_add_le _ _
         _ ≤ R + ∫ s in (0 : ℝ)..t, ‖d s‖ :=
           add_le_add (hforcing t ht) (intervalIntegral.norm_integral_le_integral_norm ht.1)
         _ ≤ R + ∫ s in (0 : ℝ)..t, (L : ℝ) * ‖x s - y s‖ := by

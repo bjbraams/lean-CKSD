@@ -48,7 +48,7 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 /-- One-step Markov property for a function of the last two states of a finite-state chain given
 by its path probabilities: for a function `F` of the prefix `(X 0, …, X n)`,
-`𝔼[F · φ(X n, X (n+1))] = 𝔼[F · ∑_y K(X n, y) φ(X n, y)]`. -/
+`𝔼[F · φ(X n, X (n + 1))] = 𝔼[F · ∑_y K(X n, y) φ(X n, y)]`. -/
 theorem integral_mul_comp_pair_succ_eq {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix ι ι ℝ)
@@ -117,7 +117,7 @@ theorem measurable_chainFiltration {Ω : Type*} [MeasurableSpace Ω]
   ((measurable_of_finite G).comp (comap_measurable _)).stronglyMeasurable
 
 /-- Markov property in conditional form: given the prefix `(X 0, …, X n)`, the conditional
-expectation of `φ(X n, X (n+1))` is `∑_y K(X n, y) φ(X n, y)`. -/
+expectation of `φ(X n, X (n + 1))` is `∑_y K(X n, y) φ(X n, y)`. -/
 theorem condExp_comp_pair_succ_ae_eq {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix ι ι ℝ)
@@ -220,9 +220,9 @@ theorem exists_sub_mulVec_eq_of_pos (π : ι → ℝ) (K : Matrix ι ι ℝ)
   simp
 
 /-- Martingale central limit theorem for the increments of a stationary finite-state chain with a
-positive transition matrix `K`: for every `u`, `n^{-1/2} ∑_{i<n} (u(X_{i+1}) - (K u)(X_i))`
+positive transition matrix `K`: for every `u`, `n ^ {-1 / 2} ∑_{i<n} (u(X_{i + 1}) - (K u)(X_i))`
 converges in law to the centred normal law with variance
-`∑ₓ π(x) ∑_y K(x,y) (u(y) - (K u)(x))²`. The conditional variances are functions of the current
+`∑ₓ π(x) ∑_y K(x, y) (u(y) - (K u)(x))²`. The conditional variances are functions of the current
 state, whose averages converge by the ergodic theorem, and the increments are bounded, so the
 conditional Lindeberg terms vanish for large `n`. -/
 private theorem tendstoInDistribution_sum_markovIncrement_div_sqrt {Ω : Type*}
@@ -325,7 +325,7 @@ private theorem tendstoInDistribution_sum_markovIncrement_div_sqrt {Ω : Type*}
 /-- For a stationary finite-state chain with a positive transition matrix and a solution `u` of
 the Poisson equation `u - K u = f - m`, the normalized sample averages `√n (n⁻¹ ∑_{i<n} f(Xᵢ) - m)`
 converge in law to the centred normal law with variance
-`∑ₓ π(x) ∑_y K(x,y) (u(y) - (K u)(x))²`: they differ from the normalized martingale of
+`∑ₓ π(x) ∑_y K(x, y) (u(y) - (K u)(x))²`: they differ from the normalized martingale of
 `tendstoInDistribution_sum_markovIncrement_div_sqrt` by `(u(X₀) - u(Xₙ)) / √n`. -/
 private theorem tendstoInDistribution_sqrt_mul_sampleAverage_sub_of_poisson {Ω : Type*}
     [MeasurableSpace Ω]
@@ -389,13 +389,63 @@ private theorem tendstoInDistribution_sqrt_mul_sampleAverage_sub_of_poisson {Ω 
   field_simp
   rw [this]
 
+omit [DecidableEq ι] in
+/-- For a chain given by its path probabilities, the law of `X 0` is `π`:
+`𝔼[a(X 0)] = ∑ₓ π(x) a(x)`. -/
+theorem integral_comp_zero_eq_sum_of_measureReal_eq_prod {Ω : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
+    (π : ι → ℝ) (K : Matrix ι ι ℝ)
+    (hlaw : ∀ n : ℕ, ∀ path : ℕ → ι,
+      μ.real {ω | ∀ i ≤ n, X i ω = path i} = π (path 0) *
+        ∏ i ∈ Finset.range n, K (path i) (path (i + 1)))
+    (a : ι → ℝ) : ∫ ω, a (X 0 ω) ∂μ = ∑ x, π x * a x := by
+  rw [integral_comp_eq_sum_measureReal μ (X 0) (hX 0) a]
+  refine Finset.sum_congr rfl fun x _ ↦ ?_
+  have hset : X 0 ⁻¹' {x} = {ω | ∀ i ≤ 0, X i ω = (fun _ ↦ x) i} := by
+    ext ω; simp
+  rw [hset, hlaw]
+  simp
+
+/-- Path probabilities of a chain with positive initial weights force `π` to be a probability
+vector and `K` to be row-stochastic. -/
+theorem sum_eq_one_and_sum_row_eq_one_of_measureReal_eq_prod {Ω : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    (μ : Measure Ω) [IsProbabilityMeasure μ]
+    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
+    (π : ι → ℝ) (K : Matrix ι ι ℝ)
+    (hπ : ∀ x, 0 < π x)
+    (hlaw : ∀ n : ℕ, ∀ path : ℕ → ι,
+      μ.real {ω | ∀ i ≤ n, X i ω = path i} = π (path 0) *
+        ∏ i ∈ Finset.range n, K (path i) (path (i + 1))) :
+    ∑ x, π x = 1 ∧ ∀ x₀, ∑ y, K x₀ y = 1 := by
+  have hstep : HasTransitionMatrix μ K X := .of_measureReal_eq_prod π hlaw
+  have hE0 := integral_comp_zero_eq_sum_of_measureReal_eq_prod μ X hX π K hlaw
+  have hEk (a v : ι → ℝ) (k : ℕ) : ∫ ω, a (X 0 ω) * v (X k ω) ∂μ =
+      ∑ x, π x * (a x * Matrix.mulVec (K ^ k) v x) := by
+    rw [integral_mul_comp_eq_pow_mulVec μ K X hX hstep a v k,
+      hE0 fun x ↦ a x * Matrix.mulVec (K ^ k) v x]
+  refine ⟨by simpa using (hE0 fun _ ↦ 1).symm, fun x₀ ↦ ?_⟩
+  have h1 := hEk (fun x ↦ if x = x₀ then 1 else 0) 1 1
+  simp only [Pi.one_apply, mul_one] at h1
+  rw [hE0 fun x ↦ if x = x₀ then 1 else 0] at h1
+  simp only [pow_one, mul_ite, mul_zero, ite_mul, one_mul, zero_mul, mul_one,
+    Finset.sum_ite_eq', Finset.mem_univ, ite_true] at h1
+  have hK1' : Matrix.mulVec K 1 x₀ = ∑ y, K x₀ y := by
+    simp [Matrix.mulVec, dotProduct]
+  rw [hK1'] at h1
+  have h := (hπ x₀).ne'
+  field_simp at h1
+  linarith
+
 /-- GAPS 104.24: central limit theorem for a stationary Markov chain on a finite space with a
 positive transition matrix `K` and invariant law `π`. The series of autocovariances of `f(Xₖ)`
 converges absolutely, and `√n (n⁻¹ ∑_{i<n} f(Xᵢ) - π f)` converges in law to the centred normal
 law with variance `σ² = Var f(X₀) + 2 ∑_{k ≥ 1} Cov(f(X₀), f(Xₖ))`. The proof solves the Poisson
 equation `u - K u = f - π f` by `u = ∑ₖ Kᵏ (f - π f)`, writes the centred sums as a martingale
 plus a bounded remainder, and identifies `σ²` with the martingale variance
-`∑ₓ π(x) ∑_y K(x,y) (u(y) - (K u)(x))²`. -/
+`∑ₓ π(x) ∑_y K(x, y) (u(y) - (K u)(x))²`. -/
 theorem tendstoInDistribution_finite_markov_chain_sum {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ]
@@ -417,32 +467,13 @@ theorem tendstoInDistribution_finite_markov_chain_sum {Ω : Type*} [MeasurableSp
   intro m sigmaSq
   have hstep : HasTransitionMatrix μ K X := .of_measureReal_eq_prod π hlaw
   -- moments of the stationary chain
-  have hE0 (a : ι → ℝ) : ∫ ω, a (X 0 ω) ∂μ = ∑ x, π x * a x := by
-    rw [integral_comp_eq_sum_measureReal μ (X 0) (hX 0) a]
-    refine Finset.sum_congr rfl fun x _ ↦ ?_
-    have hset : X 0 ⁻¹' {x} = {ω | ∀ i ≤ 0, X i ω = (fun _ ↦ x) i} := by
-      ext ω; simp
-    rw [hset, hlaw]
-    simp
+  have hE0 := integral_comp_zero_eq_sum_of_measureReal_eq_prod μ X hX π K hlaw
   have hEk (a v : ι → ℝ) (k : ℕ) : ∫ ω, a (X 0 ω) * v (X k ω) ∂μ =
       ∑ x, π x * (a x * Matrix.mulVec (K ^ k) v x) := by
     rw [integral_mul_comp_eq_pow_mulVec μ K X hX hstep a v k,
       hE0 fun x ↦ a x * Matrix.mulVec (K ^ k) v x]
   -- the law of the chain forces `π` to be a probability vector and `K` to be stochastic
-  have hπ1 : ∑ x, π x = 1 := by
-    simpa using (hE0 fun _ ↦ 1).symm
-  have hK1 (x₀ : ι) : ∑ y, K x₀ y = 1 := by
-    have h1 := hEk (fun x ↦ if x = x₀ then 1 else 0) 1 1
-    simp only [Pi.one_apply, mul_one] at h1
-    rw [hE0 fun x ↦ if x = x₀ then 1 else 0] at h1
-    simp only [pow_one, mul_ite, mul_zero, ite_mul, one_mul, zero_mul, mul_one,
-      Finset.sum_ite_eq', Finset.mem_univ, ite_true] at h1
-    have hK1' : Matrix.mulVec K 1 x₀ = ∑ y, K x₀ y := by
-      simp [Matrix.mulVec, dotProduct]
-    rw [hK1'] at h1
-    have h := (hπ x₀).ne'
-    field_simp at h1
-    linarith
+  obtain ⟨hπ1, hK1⟩ := sum_eq_one_and_sum_row_eq_one_of_measureReal_eq_prod μ X hX π K hπ hlaw
   set g : ι → ℝ := fun x ↦ f x - m with hg
   have hgc : ∑ x, π x * g x = 0 := by
     simp only [hg, mul_sub, Finset.sum_sub_distrib, ← Finset.sum_mul, hπ1, one_mul, m,

@@ -173,6 +173,85 @@ private theorem sqrt_mul_norm_sub_le_of_shell {d : ℕ} (G : EuclideanSpace ℝ 
   rw [hρ, hpow1, hpow] at hGd
   exact shell_false hs hc hsd (by positivity) hkey hGd hr hjlow hf
 
+/-- For `c > 0`, eventually `1 + 8 b 2ʲ ≤ c 4ʲ / 8`. -/
+private theorem eventually_one_add_mul_two_pow_le (b : ℝ) {c : ℝ} (hc : 0 < c) :
+    ∀ᶠ j : ℕ in atTop, 1 + 8 * b * 2 ^ j ≤ c * 4 ^ j / 8 := by
+  have h2 := (tendsto_pow_atTop_atTop_of_one_lt (by norm_num : (1 : ℝ) < 2)).eventually_ge_atTop
+    (max 1 (8 * (8 * b + 1) / c))
+  filter_upwards [h2] with j hj
+  have hx1 : 1 ≤ (2 : ℝ) ^ j := (le_max_left _ _).trans hj
+  have hx2 : 8 * (8 * b + 1) / c ≤ 2 ^ j := (le_max_right _ _).trans hj
+  have h4 : (4 : ℝ) ^ j = 2 ^ j * 2 ^ j := by rw [← mul_pow]; norm_num
+  rw [div_le_iff₀ hc] at hx2
+  rw [h4]
+  nlinarith
+
+/-- The choice of the shell levels in the peeling argument: for `0 ≤ ρ < 1`, `c > 0` and
+`η > 0` there are levels `J₁ ≤ J₀` such that, from `J₁` on, `C ρ^{j+1} ≤ 1/2` and
+`1 + 8 b 2ʲ ≤ c 4ʲ / 8`, and the tail `4 C ρ^{J₀+2} / (1 - ρ)` is at most `η / 4`. -/
+private theorem exists_shell_levels {ρ : ℝ} (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1) (C b : ℝ) {c η : ℝ}
+    (hc : 0 < c) (hη : 0 < η) :
+    ∃ J₁ J₀ : ℕ, (∀ j ≥ J₁, C * ρ ^ (j + 1) ≤ 1 / 2 ∧ 1 + 8 * b * 2 ^ j ≤ c * 4 ^ j / 8) ∧
+      4 * C * (ρ ^ (J₀ + 2) / (1 - ρ)) ≤ η / 4 ∧ J₁ ≤ J₀ := by
+  have hev1 : ∀ᶠ j : ℕ in atTop, C * ρ ^ (j + 1) ≤ 1 / 2 := by
+    have := ((tendsto_pow_atTop_nhds_zero_of_lt_one hρ0 hρ1).comp
+      (tendsto_add_atTop_nat 1)).const_mul C
+    rw [mul_zero] at this
+    exact this.eventually (eventually_le_nhds (by norm_num))
+  have hev3 : ∀ᶠ J : ℕ in atTop, 4 * C * (ρ ^ (J + 2) / (1 - ρ)) ≤ η / 4 := by
+    have := (((tendsto_pow_atTop_nhds_zero_of_lt_one hρ0 hρ1).comp
+      (tendsto_add_atTop_nat 2)).div_const (1 - ρ)).const_mul (4 * C)
+    rw [zero_div, mul_zero] at this
+    exact this.eventually (eventually_le_nhds (by positivity))
+  obtain ⟨J₁, hJ₁⟩ := eventually_atTop.1 (hev1.and (eventually_one_add_mul_two_pow_le b hc))
+  obtain ⟨J₀, hJ₀3, hJ₀1⟩ := (hev3.and (eventually_ge_atTop J₁)).exists
+  exact ⟨J₁, J₀, hJ₁, hJ₀3, hJ₀1⟩
+
+/-- `4 √d min (δ₁ / 2) (r₀ / (8 (√d + 1))) < r₀` for `r₀ > 0`, with `sd = √d ≥ 0`. -/
+private theorem four_mul_mul_min_div_lt {sd r₀ : ℝ} (hsd : 0 ≤ sd) (hr₀ : 0 < r₀) (δ₁ : ℝ) :
+    4 * sd * min (δ₁ / 2) (r₀ / (8 * (sd + 1))) < r₀ := by
+  have h1 : min (δ₁ / 2) (r₀ / (8 * (sd + 1))) ≤ r₀ / (8 * (sd + 1)) := min_le_right _ _
+  have h2 : 4 * sd * (r₀ / (8 * (sd + 1))) < r₀ := by
+    rw [show 4 * sd * (r₀ / (8 * (sd + 1))) = r₀ * (sd / (2 * (sd + 1))) by field_simp; ring]
+    have : sd / (2 * (sd + 1)) < 1 := by rw [div_lt_one (by positivity)]; linarith
+    nlinarith
+  nlinarith [mul_le_mul_of_nonneg_left h1 (by positivity : (0 : ℝ) ≤ 4 * sd)]
+
+/-- The geometric tail of the shell probabilities: for `0 ≤ ρ < 1`, `C ≥ 0` and
+`S ⊆ [J + 1, M + 1]`, `∑_{j ∈ S} 4 C ρ^{j+1} ≤ 4 C ρ^{J+2} / (1 - ρ)`. -/
+private theorem sum_four_mul_mul_pow_succ_le {ρ C : ℝ} (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1)
+    (hC : 0 ≤ C) {S : Finset ℕ} {J M : ℕ} (hS : S ⊆ Finset.Icc (J + 1) (M + 1)) :
+    ∑ j ∈ S, 4 * (C * ρ ^ (j + 1)) ≤ 4 * C * (ρ ^ (J + 2) / (1 - ρ)) := by
+  calc ∑ j ∈ S, 4 * (C * ρ ^ (j + 1))
+      ≤ ∑ j ∈ Finset.Icc (J + 1) (M + 1), 4 * (C * ρ ^ (j + 1)) :=
+        Finset.sum_le_sum_of_subset_of_nonneg hS fun j _ _ ↦ by positivity
+    _ = 4 * C * ρ * ∑ j ∈ Finset.Icc (J + 1) (M + 1), ρ ^ j := by
+      rw [Finset.mul_sum]; exact Finset.sum_congr rfl fun j _ ↦ by ring
+    _ ≤ 4 * C * ρ * (ρ ^ (J + 1) / (1 - ρ)) := by
+      gcongr; exact sum_Icc_pow_le hρ0 hρ1 _ _
+    _ = 4 * C * (ρ ^ (J + 2) / (1 - ρ)) := by ring
+
+/-- A union bound that discards a null set:
+`P(N ∪ A ∪ B ∪ C ∪ D) ≤ P(A) + P(B) + P(C) + P(D)` when `P(N) = 0`. -/
+theorem measureReal_null_union_union_union_union_le {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsFiniteMeasure μ] {N : Set Ω} (hN : μ N = 0) (A B C D : Set Ω) :
+    μ.real (N ∪ A ∪ B ∪ C ∪ D) ≤ μ.real A + μ.real B + μ.real C + μ.real D := by
+  refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
+  refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
+  refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
+  refine (measureReal_union_le _ _).trans ?_
+  simp [measureReal_def, hN]
+
+/-- A union bound that discards a null set:
+`P(N ∪ A ∪ B ∪ C ∪ ⋃_{j ∈ S} F j) ≤ P(A) + P(B) + P(C) + ∑_{j ∈ S} P(F j)` when `P(N) = 0`. -/
+theorem measureReal_null_union_union_union_union_biUnion_le {Ω ι : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsFiniteMeasure μ] {N : Set Ω} (hN : μ N = 0) (A B C : Set Ω)
+    (S : Finset ι) (F : ι → Set Ω) :
+    μ.real (N ∪ A ∪ B ∪ C ∪ ⋃ j ∈ S, F j) ≤
+      μ.real A + μ.real B + μ.real C + ∑ j ∈ S, μ.real (F j) :=
+  (measureReal_null_union_union_union_union_le μ hN A B C _).trans
+    (add_le_add le_rfl (measureReal_biUnion_finset_le _ _))
+
 /-- **Rate of convergence of a Lipschitz M-estimator.** For a criterion family `f θ` that is
 Lipschitz near `θ₀` with a square-integrable envelope, whose population criterion separates
 quadratically, `∫ f θ - ∫ f θ₀ ≤ -c ‖θ - θ₀‖²` near `θ₀`, a consistent approximate maximizer
@@ -209,13 +288,7 @@ private theorem exists_measureReal_lt_sqrt_mul_norm_sub_le {Ω X : Type*} [Measu
   set δ : ℝ := min (δ₁ / 2) (r₀ / (8 * (sd + 1))) with hδ
   have hδ0 : 0 < δ := lt_min (by positivity) (by positivity)
   have hδδ₁ : δ < δ₁ := (min_le_left _ _).trans_lt (by linarith)
-  have hδr : 4 * sd * δ < r₀ := by
-    have h1 : δ ≤ r₀ / (8 * (sd + 1)) := min_le_right _ _
-    have h2 : 4 * sd * (r₀ / (8 * (sd + 1))) < r₀ := by
-      rw [show 4 * sd * (r₀ / (8 * (sd + 1))) = r₀ * (sd / (2 * (sd + 1))) by field_simp; ring]
-      have : sd / (2 * (sd + 1)) < 1 := by rw [div_lt_one (by positivity)]; linarith
-      nlinarith
-    nlinarith
+  have hδr : 4 * sd * δ < r₀ := four_mul_mul_min_div_lt hsd0.le hr₀ δ₁
   set β : ℝ := ∫ x, L x ^ 2 ∂P + 1 with hβ
   have hβ0 : 0 < β := by
     have : 0 ≤ ∫ x, L x ^ 2 ∂P := integral_nonneg fun x ↦ sq_nonneg _
@@ -228,40 +301,10 @@ private theorem exists_measureReal_lt_sqrt_mul_norm_sub_le {Ω X : Type*} [Measu
   have hρ0 : 0 ≤ ρ := (Real.exp_pos _).le
   have hρ1 : ρ < 1 := by rw [hρ, Real.exp_lt_one_iff]; linarith
   set q : ℕ → ℝ := fun j ↦ 2 ^ d * Real.exp (-φ (a * 2 ^ j)) with hq
-  have hqρ : ∀ j, q j ≤ 2 ^ d * ρ ^ (j + 1) := by
-    intro j
-    simp only [hq, hρ]
-    gcongr
-    rw [← Real.exp_nat_mul, Real.exp_le_exp, mul_neg, neg_le_neg_iff]
-    have hj : ((j + 1 : ℕ) : ℝ) ≤ 2 ^ j := by exact_mod_cast Nat.lt_two_pow_self
-    have := mul_bernsteinExponent_le (β := β) (γ := 2 * 1 / 3) (t := a) (c := 2 ^ j) hβ0
-      (by norm_num) ha0.le (one_le_pow₀ (by norm_num))
-    calc ((j + 1 : ℕ) : ℝ) * φ a ≤ 2 ^ j * φ a := by gcongr
-      _ ≤ φ (a * 2 ^ j) := by rw [mul_comm a]; exact this
+  have hqρ : ∀ j, q j ≤ 2 ^ d * ρ ^ (j + 1) := fun j ↦ mul_le_mul_of_nonneg_left
+    (exp_neg_bernsteinExponent_mul_two_pow_le hβ0 (by norm_num) ha0.le j) (by positivity)
   -- Conditions on the shell index.
-  have hev1 : ∀ᶠ j : ℕ in atTop, 2 ^ d * ρ ^ (j + 1) ≤ 1 / 2 := by
-    have := ((tendsto_pow_atTop_nhds_zero_of_lt_one hρ0 hρ1).comp
-      (tendsto_add_atTop_nat 1)).const_mul
-      ((2 : ℝ) ^ d)
-    rw [mul_zero] at this
-    exact this.eventually (eventually_le_nhds (by norm_num))
-  have hev2 : ∀ᶠ j : ℕ in atTop, 1 + 8 * sd * 2 ^ j ≤ c * 4 ^ j / 8 := by
-    have h2 := (tendsto_pow_atTop_atTop_of_one_lt (by norm_num : (1 : ℝ) < 2)).eventually_ge_atTop
-      (max 1 (8 * (8 * sd + 1) / c))
-    filter_upwards [h2] with j hj
-    have hx1 : 1 ≤ (2 : ℝ) ^ j := (le_max_left _ _).trans hj
-    have hx2 : 8 * (8 * sd + 1) / c ≤ 2 ^ j := (le_max_right _ _).trans hj
-    have h4 : (4 : ℝ) ^ j = 2 ^ j * 2 ^ j := by rw [← mul_pow]; norm_num
-    rw [div_le_iff₀ hc] at hx2
-    rw [h4]
-    nlinarith
-  have hev3 : ∀ᶠ J : ℕ in atTop, 4 * 2 ^ d * (ρ ^ (J + 2) / (1 - ρ)) ≤ η / 4 := by
-    have := (((tendsto_pow_atTop_nhds_zero_of_lt_one hρ0 hρ1).comp
-      (tendsto_add_atTop_nat 2)).div_const (1 - ρ)).const_mul (4 * 2 ^ d)
-    rw [zero_div, mul_zero] at this
-    exact this.eventually (eventually_le_nhds (by positivity))
-  obtain ⟨J₁, hJ₁⟩ := eventually_atTop.1 (hev1.and hev2)
-  obtain ⟨J₀, hJ₀3, hJ₀1⟩ := (hev3.and (eventually_ge_atTop J₁)).exists
+  obtain ⟨J₁, J₀, hJ₁, hJ₀3, hJ₀1⟩ := exists_shell_levels hρ0 hρ1 (2 ^ d) sd hc hη
   refine ⟨2 ^ J₀, ?_⟩
   have hrem := tendstoInMeasure_lipschitzChainRemainder μ P Xn hiid L hLm hL0 hL2 one_pos
   rw [tendstoInMeasure_iff_measureReal_lt_dist] at hrem hcons hr
@@ -287,14 +330,11 @@ private theorem exists_measureReal_lt_sqrt_mul_norm_sub_le {Ω X : Type*} [Measu
     have hball : ∀ θ ∈ centredCube θ₀ (ρj j), θ ∈ Metric.ball θ₀ r₀ := fun θ hθ ↦ by
       rw [Metric.mem_ball, dist_eq_norm]
       exact (norm_sub_le_of_mem_centredCube hθ).trans_lt hj.2
-    have hmax := measureReal_exists_abs_empiricalProcess_sub_gt_le μ P Xn hiid f (anc j)
+    exact measureReal_exists_abs_empiricalProcess_sub_gt_le_four_mul μ P Xn hiid f (anc j)
       (w := 2 * ρj j) (by positivity) (fun θ hθ ↦ hfm θ (hball θ hθ))
       (fun θ hθ ↦ hfi θ (hball θ hθ)) L hLm hL0 hL2
       (fun u hu v hv x ↦ hlip u (hball u hu) v (hball v hv) x) one_pos hn1
-      (A := a * 2 ^ j) (by positivity)
-    refine hmax.trans ?_
-    have hq0 : 0 ≤ q j := by positivity
-    exact two_mul_sum_range_pow_succ_le hq0 ((hqρ j).trans (hJ₁ j (by omega)).1) n
+      (A := a * 2 ^ j) (by positivity) ((hqρ j).trans (hJ₁ j (by omega)).1)
   set N : Set Ω := {ω | ¬ (empiricalCriterion f Xn n ω θ₀ - r n ω ≤
     empiricalCriterion f Xn n ω (T n ω))} with hN
   have hNnull : μ N = 0 := by
@@ -333,31 +373,15 @@ private theorem exists_measureReal_lt_sqrt_mul_norm_sub_le {Ω X : Type*} [Measu
       exact ⟨⟨by omega, hjM⟩, hjr⟩)
     simp only [hF, mem_ofPred_eq, not_exists, not_and, not_lt] at hF1
     exact hF1 u hu
-  calc μ.real {ω | (2 : ℝ) ^ J₀ < Real.sqrt n * ‖T n ω - θ₀‖}
-      ≤ μ.real (N ∪ {ω | δ < dist (T n ω) θ₀} ∪ {ω | 1 < dist ((n : ℝ) * r n ω) 0} ∪
-        {ω | 1 < dist (Rn ω) 0} ∪ ⋃ j ∈ S, F j) := measureReal_mono hsub (measure_ne_top _ _)
-    _ ≤ μ.real N + μ.real {ω | δ < dist (T n ω) θ₀} +
-        μ.real {ω | 1 < dist ((n : ℝ) * r n ω) 0} + μ.real {ω | 1 < dist (Rn ω) 0} +
-        ∑ j ∈ S, μ.real (F j) := by
-      refine (measureReal_union_le _ _).trans (add_le_add ?_ (measureReal_biUnion_finset_le _ _))
-      refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
-      refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
-      exact measureReal_union_le _ _
-    _ ≤ 0 + η / 4 + η / 4 + η / 4 + η / 4 := by
-      rw [measureReal_def, hNnull, ENNReal.toReal_zero]
-      gcongr
-      calc ∑ j ∈ S, μ.real (F j) ≤ ∑ j ∈ S, 4 * q j := Finset.sum_le_sum hFj
-        _ ≤ ∑ j ∈ Finset.Icc (J₀ + 1) (M + 1), 4 * (2 ^ d * ρ ^ (j + 1)) :=
-          (Finset.sum_le_sum fun j _ ↦ by linarith [hqρ j]).trans
-            (Finset.sum_le_sum_of_subset_of_nonneg (Finset.filter_subset _ _)
-              fun j _ _ ↦ by positivity)
-        _ = 4 * 2 ^ d * ρ * ∑ j ∈ Finset.Icc (J₀ + 1) (M + 1), ρ ^ j := by
-          rw [Finset.mul_sum]; exact Finset.sum_congr rfl fun j _ ↦ by ring
-        _ ≤ 4 * 2 ^ d * ρ * (ρ ^ (J₀ + 1) / (1 - ρ)) := by
-          gcongr; exact sum_Icc_pow_le hρ0 hρ1 _ _
-        _ = 4 * 2 ^ d * (ρ ^ (J₀ + 2) / (1 - ρ)) := by ring
-        _ ≤ η / 4 := hJ₀3
-    _ = η := by ring
+  have hFS : ∑ j ∈ S, μ.real (F j) ≤ η / 4 :=
+    calc ∑ j ∈ S, μ.real (F j) ≤ ∑ j ∈ S, 4 * (2 ^ d * ρ ^ (j + 1)) :=
+          Finset.sum_le_sum fun j hj ↦ (hFj j hj).trans (by linarith [hqρ j])
+      _ ≤ 4 * 2 ^ d * (ρ ^ (J₀ + 2) / (1 - ρ)) :=
+          sum_four_mul_mul_pow_succ_le hρ0 hρ1 (by positivity) (Finset.filter_subset _ _)
+      _ ≤ η / 4 := hJ₀3
+  have hU := measureReal_null_union_union_union_union_biUnion_le μ hNnull
+    {ω | δ < dist (T n ω) θ₀} {ω | 1 < dist ((n : ℝ) * r n ω) 0} {ω | 1 < dist (Rn ω) 0} S F
+  linarith [measureReal_mono hsub (measure_ne_top μ _)]
 
 /-- A symmetric matrix gives a symmetric bilinear form: `⟪x, V y⟫ = ⟪y, V x⟫`. -/
 private theorem inner_toEuclideanCLM_comm {d : ℕ} {V : Matrix (Fin d) (Fin d) ℝ}
@@ -466,6 +490,24 @@ private theorem le_of_half_mul_sq_le {c ε x τ ρ : ℝ} (hc : 0 < c) (hε : 0 
   push Not at hlt
   have : ε ^ 2 < x ^ 2 := by nlinarith
   nlinarith
+
+/-- The local quadratic approximation of the scaled empirical criterion: if the population
+increment is within `τ / 2` of `Q` and the empirical-process increment within `τ / 2` of `I`,
+then `n (Mₙ θ - Mₙ θ₀)` is within `τ` of `Q + I`. -/
+private theorem abs_nat_mul_empiricalCriterion_sub_sub_le {Ω X : Type*} [MeasurableSpace X]
+    {d : ℕ} (P : Measure X) (f : EuclideanSpace ℝ (Fin d) → X → ℝ) (Xn : ℕ → Ω → X) {n : ℕ}
+    (hn : 0 < n) (ω : Ω) (θ θ₀ : EuclideanSpace ℝ (Fin d)) {Q I τ : ℝ}
+    (h1 : |(n : ℝ) * (∫ x, f θ x ∂P - ∫ x, f θ₀ x ∂P) - Q| ≤ τ / 2)
+    (h2 : |Real.sqrt n * (empiricalProcess P Xn n (f θ) ω - empiricalProcess P Xn n (f θ₀) ω) -
+      I| ≤ τ / 2) :
+    |(n : ℝ) * (empiricalCriterion f Xn n ω θ - empiricalCriterion f Xn n ω θ₀) - (Q + I)| ≤
+      τ := by
+  rw [nat_mul_empiricalCriterion_sub P f Xn hn ω θ θ₀]
+  calc _ = |((n : ℝ) * (∫ x, f θ x ∂P - ∫ x, f θ₀ x ∂P) - Q) +
+        (Real.sqrt n * (empiricalProcess P Xn n (f θ) ω - empiricalProcess P Xn n (f θ₀) ω) -
+          I)| := by ring_nf
+    _ ≤ τ / 2 + τ / 2 := (abs_add_le _ _).trans (add_le_add h1 h2)
+    _ = τ := by ring
 
 /-- **Asymptotic linearity of Lipschitz M-estimators** (van der Vaart, *Asymptotic Statistics*,
 Theorem 5.23), given the `√n` rate. In the setting of
@@ -583,21 +625,7 @@ private theorem tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz {Ω X : Type*}
         |Φ h - (inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) / 2 + inner ℝ h (Δ n ω))| ≤
           τ := by
       intro h hhR
-      have e := nat_mul_empiricalCriterion_sub P f Xn hn1 ω (θ₀ + (Real.sqrt n)⁻¹ • h) θ₀
-      have h1 := hpop h hhR
-      have h2 := hUω h hhR
-      simp only [hΦ, e]
-      simp only [hG] at h2
-      have := abs_add_le ((n : ℝ) * (∫ x, f (θ₀ + (Real.sqrt n)⁻¹ • h) x ∂P - ∫ x, f θ₀ x ∂P) -
-        inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) / 2)
-        (Real.sqrt n * (empiricalProcess P Xn n (f (θ₀ + (Real.sqrt n)⁻¹ • h)) ω -
-          empiricalProcess P Xn n (f θ₀) ω) - inner ℝ h (Δ n ω))
-      calc _ = |((n : ℝ) * (∫ x, f (θ₀ + (Real.sqrt n)⁻¹ • h) x ∂P - ∫ x, f θ₀ x ∂P) -
-            inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) / 2) +
-            (Real.sqrt n * (empiricalProcess P Xn n (f (θ₀ + (Real.sqrt n)⁻¹ • h)) ω -
-            empiricalProcess P Xn n (f θ₀) ω) - inner ℝ h (Δ n ω))| := by ring_nf
-        _ ≤ τ / 2 + τ / 2 := this.trans (add_le_add h1 h2)
-        _ = τ := by ring
+      exact abs_nat_mul_empiricalCriterion_sub_sub_le P f Xn hn1 ω _ θ₀ (hpop h hhR) (hUω h hhR)
     have hoptn : Φ hh - (n : ℝ) * r n ω ≤ Φ hn := by
       have := hoptω (θ₀ + (Real.sqrt n)⁻¹ • hh)
       rw [hTeq] at this
@@ -615,25 +643,9 @@ private theorem tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz {Ω X : Type*}
       rw [hhh, sub_neg_eq_add]
     rw [heq] at hfinal
     exact (le_of_half_mul_sq_le hc hε (norm_nonneg _) hτ hnr hfinal).not_gt hω
-  calc _ ≤ μ.real (N ∪ {ω | RT < Real.sqrt n * ‖T n ω - θ₀‖} ∪ {ω | K₀ < ‖Δ n ω‖} ∪
-        {ω | ∃ h : EuclideanSpace ℝ (Fin d), ‖h‖ ≤ R ∧
-          τ / 2 < |Real.sqrt n * (G n (θ₀ + (Real.sqrt n)⁻¹ • h) ω - G n θ₀ ω) -
-            inner ℝ h (Δ n ω)|} ∪ {ω | τ < dist ((n : ℝ) * r n ω) 0}) :=
-        measureReal_mono hsub (measure_ne_top _ _)
-    _ ≤ μ.real N + μ.real {ω | RT < Real.sqrt n * ‖T n ω - θ₀‖} +
-        μ.real {ω | K₀ < ‖Δ n ω‖} +
-        μ.real {ω | ∃ h : EuclideanSpace ℝ (Fin d), ‖h‖ ≤ R ∧
-          τ / 2 < |Real.sqrt n * (G n (θ₀ + (Real.sqrt n)⁻¹ • h) ω - G n θ₀ ω) -
-            inner ℝ h (Δ n ω)|} + μ.real {ω | τ < dist ((n : ℝ) * r n ω) 0} := by
-      refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
-      refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
-      refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
-      exact measureReal_union_le _ _
-    _ ≤ 0 + η / 5 + η / 5 + η / 5 + η / 5 := by
-      rw [measureReal_def, hNnull, ENNReal.toReal_zero]
-      gcongr
-    _ ≤ η := by linarith
-
+  refine (measureReal_mono hsub (measure_ne_top _ _)).trans
+    ((measureReal_null_union_union_union_union_le μ hNnull _ _ _ _).trans ?_)
+  linarith
 
 /-- The coordinates of a centred square-integrable score have mean zero. -/
 private theorem integral_apply_eq_zero {X : Type*} [MeasurableSpace X] {d : ℕ} {P : Measure X}
@@ -789,6 +801,26 @@ theorem integral_score_eq_zero_of_isLittleO_populationCriterion
   have := congrArg (fun L : EuclideanSpace ℝ (Fin d) →L[ℝ] ℝ ↦ L (∫ x, score x ∂P)) huniq
   exact inner_self_eq_zero.1 this
 
+/-- Quadratic separation from a quadratic expansion: if
+`F (θ₀ + h) - F θ₀ = ⟪h, V h⟫ / 2 + o(‖h‖²)` with `V` negative definite, then for some `c > 0`
+and `δ₁ > 0`, `F θ - F θ₀ ≤ -c ‖θ - θ₀‖²` whenever `‖θ - θ₀‖ < δ₁`. -/
+private theorem exists_sub_le_neg_mul_sq_of_isLittleO {d : ℕ} {V : Matrix (Fin d) (Fin d) ℝ}
+    (hV : (-V).PosDef) (F : EuclideanSpace ℝ (Fin d) → ℝ) (θ₀ : EuclideanSpace ℝ (Fin d))
+    (hquad : Asymptotics.IsLittleO (𝓝 0)
+      (fun h : EuclideanSpace ℝ (Fin d) ↦ F (θ₀ + h) - F θ₀ -
+          inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) / 2)
+      (fun h : EuclideanSpace ℝ (Fin d) ↦ ‖h‖ ^ 2)) :
+    ∃ c > 0, ∃ δ₁ > 0, ∀ θ, ‖θ - θ₀‖ < δ₁ → F θ - F θ₀ ≤ -(c * ‖θ - θ₀‖ ^ 2) := by
+  obtain ⟨c, hc, hcV⟩ := exists_pos_inner_toEuclideanCLM_le hV
+  obtain ⟨δ₁, hδ₁, hQ⟩ := Metric.eventually_nhds_iff.1 (hquad.def (by positivity : 0 < c / 4))
+  refine ⟨c / 4, by positivity, δ₁, hδ₁, fun θ hθ ↦ ?_⟩
+  have h1 := hQ (show dist (θ - θ₀) 0 < δ₁ by rwa [dist_zero_right])
+  rw [add_sub_cancel, Real.norm_eq_abs, norm_pow, norm_norm] at h1
+  have h2 := hcV (θ - θ₀)
+  have h3 := le_abs_self (F θ - F θ₀ -
+    inner ℝ (θ - θ₀) (Matrix.toEuclideanCLM (𝕜 := ℝ) V (θ - θ₀)) / 2)
+  linarith
+
 /-- GAPS 102.24: local asymptotic linearity and normality of multivariate M-estimators.
 The negative-definite matrix `V` is the Hessian of the population criterion through its
 quadratic little-o expansion. The empirical optimization error is `o_P(1/n)`. -/
@@ -881,17 +913,8 @@ theorem mEstimator_asymptotic_linearization_and_normality
           inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) / 2)
       (fun h : EuclideanSpace ℝ (Fin d) ↦ ‖h‖ ^ 2) := by
     simpa only [populationCriterion, hfint] using hquad
-  obtain ⟨c, hc, hcV⟩ := exists_pos_inner_toEuclideanCLM_le hV
-  obtain ⟨δ₁, hδ₁, hQ⟩ := Metric.eventually_nhds_iff.1 (hquadf.def (by positivity : 0 < c / 4))
-  have hcurv : ∀ θ, ‖θ - θ₀‖ < δ₁ →
-      ∫ x, f θ x ∂P - ∫ x, f θ₀ x ∂P ≤ -(c / 4 * ‖θ - θ₀‖ ^ 2) := by
-    intro θ hθ
-    have h1 := hQ (show dist (θ - θ₀) 0 < δ₁ by rwa [dist_zero_right])
-    rw [add_sub_cancel, Real.norm_eq_abs, norm_pow, norm_norm] at h1
-    have h2 := hcV (θ - θ₀)
-    have h3 := le_abs_self (∫ x, f θ x ∂P - ∫ x, f θ₀ x ∂P -
-      inner ℝ (θ - θ₀) (Matrix.toEuclideanCLM (𝕜 := ℝ) V (θ - θ₀)) / 2)
-    linarith
+  obtain ⟨c, hc, δ₁, hδ₁, hcurv⟩ :=
+    exists_sub_le_neg_mul_sq_of_isLittleO hV (fun θ ↦ ∫ x, f θ x ∂P) θ₀ hquadf
   have hclt := tendstoInDistribution_inv_sqrt_smul_sum_score μ P Xn hiid hsm hs2 hs0'
   have hΔ : ∀ η > 0, ∃ K, ∀ᶠ n : ℕ in atTop,
       μ.real {ω | K < ‖(Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω)‖} ≤ η :=
@@ -899,7 +922,7 @@ theorem mEstimator_asymptotic_linearization_and_normality
       obtain ⟨M, -, hM⟩ := exists_measureReal_lt_norm_le_of_tendstoInDistribution μ _ hclt hη
       exact ⟨M, hM⟩
   have hrate := exists_measureReal_lt_sqrt_mul_norm_sub_le μ P Xn hiid f θ₀ hr₀ hfm hfi L hLm
-    hL0 hL2 hlipf (by positivity : 0 < c / 4) hδ₁ hcurv T hcons r hr
+    hL0 hL2 hlipf hc hδ₁ hcurv T hcons r hr
     (fun n hn ↦ (hoptf n hn).mono fun ω h ↦ h θ₀)
   have hlin := tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz μ P Xn hiid f θ₀ hr₀ hfm hfi L
     hLm hL0 hL2 hlipf s hsm hs2 hs0' hdf hΔ V hV hquadf T hrate r hr hoptf

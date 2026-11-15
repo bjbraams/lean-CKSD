@@ -378,7 +378,8 @@ private theorem tendstoInMeasure_empiricalCovariance_sub
   have hc := tendstoInMeasure_const_mul_zero μ _ (-1)
     (tendstoInMeasure_sampleCoordMean_mul hiid h4 i j)
   refine tendstoInMeasure_zero_of_abs_le μ _ _ (fun _ _ ↦ 0) one_pos ?_
-    (tendstoInMeasure_add_zero μ _ _ ha hc) (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
+    (tendstoInMeasure_add_zero μ _ _ ha hc)
+    (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
   filter_upwards [eventually_gt_atTop 0] with n hn
   filter_upwards with ω _
   rw [empiricalCovarianceMatrix_sub_eq P X hn ω i j]
@@ -409,7 +410,8 @@ theorem tendstoInMeasure_entrySum (hiid : IsIndependentIdenticallyDistributed μ
   refine tendstoInMeasure_finsetSum_zero _ fun i _ ↦ tendstoInMeasure_finsetSum_zero _ fun j _ ↦ ?_
   exact tendstoInMeasure_zero_of_abs_le μ _ _ (fun _ _ ↦ 0) one_pos
     (Filter.Eventually.of_forall fun n ↦ Filter.Eventually.of_forall fun ω _ ↦ by rw [abs_abs])
-    (tendstoInMeasure_empiricalCovariance_sub hiid h4 i j) (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
+    (tendstoInMeasure_empiricalCovariance_sub hiid h4 i j)
+    (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
 
 /-- The entrywise `ℓ¹` error of the empirical covariance is `O_P(n^{-1/2})`. -/
 theorem isBoundedInProbability_sqrt_mul_entrySum

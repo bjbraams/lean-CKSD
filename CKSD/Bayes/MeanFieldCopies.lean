@@ -40,7 +40,8 @@ theorem exists_iid_mcKeanVlasov_paths_on_Icc {Ω : Type*} [MeasurableSpace Ω] {
       (∀ i, IdentDistrib (Z i) (fun ω ↦ pathOn T (fun t ↦ Y t ω)) P P) ∧
       ∀ i, ∀ᵐ ω ∂P, ∀ t : Icc (0 : ℝ) T,
         Z i ω t = X₀ i ω + (∫ s in (0 : ℝ)..t,
-          b ((Z i ω).IccExtend hT s) (P.map (fun z ↦ (Z i z).IccExtend hT s))) + W i (t : ℝ).toNNReal ω := by
+          b ((Z i ω).IccExtend hT s) (P.map (fun z ↦ (Z i z).IccExtend hT s))) +
+            W i (t : ℝ).toNNReal ω := by
   have hYc := hY.2.2.mono fun _ hω ↦ hω.1
   obtain ⟨D, hDi, hD⟩ := IsMcKeanVlasovSolution.exists_integrable_uniform_bound P b hb
     (X₀ 0) hξ (W 0) (hiid.2.2.1 0) Y hY hT
@@ -65,15 +66,14 @@ theorem exists_iid_mcKeanVlasov_paths_on_Icc {Ω : Type*} [MeasurableSpace Ω] {
   have hvL := lipschitzWith_nonlinearFrozenDrift P hT b hb S hSm hSi
   have hmap (t : ℝ) (ht : t ∈ Icc (0 : ℝ) T) (x : EuclideanSpace ℝ (Fin d)) :
       b x (P.map (Y t)) = v t x := by
-    change b x (P.map (Y t)) = nonlinearFrozenDrift P hT b S hSm hSi t x
-    rw [nonlinearFrozenDrift, pathMarginalLaw_toMeasure, hSmap t ht]
+    simp only [v, nonlinearFrozenDrift, pathMarginalLaw_toMeasure, hSmap t ht]
   let times : ℚ → ℝ≥0 := fun q ↦ (Set.projIcc 0 T hT q : ℝ).toNNReal
   let U : ℕ → Ω → ℚ → EuclideanSpace ℝ (Fin d) := fun i ω q ↦ X₀ i ω + W i (times q) ω
   have hU₀ : (fun ω ↦ pathRationalCoordinates hT (pathForcingMap hT v hv (S ω))) =ᵐ[P] U 0 := by
     filter_upwards [hSext, hY.2.2] with ω hSω hω
     funext q
-    let t := Set.projIcc 0 T hT q
-    change S ω t - (∫ s in (0 : ℝ)..t, v s ((S ω).IccExtend hT s)) = X₀ 0 ω + W 0 (times q) ω
+    simp only [pathRationalCoordinates, pathForcingMap_apply, U]
+    set t := Set.projIcc 0 T hT q
     have hSt : S ω t = Y t ω := by
       simpa only [ContinuousMap.coe_IccExtend, Set.IccExtend_of_mem (h := hT) (fun z ↦ S ω z) t.2]
         using hSω t t.2
@@ -92,7 +92,8 @@ theorem exists_iid_mcKeanVlasov_paths_on_Icc {Ω : Type*} [MeasurableSpace Ω] {
   obtain ⟨Z, hZm, hZind, hZid, hZeq⟩ := exists_iid_paths_of_forcing_coordinates P hT v hv hvL U
     (IsIIDInitialAndDrivers.iIndepFun_forcing_evals P X₀ W μ₀ hiid times)
     (fun i ↦ IsIIDInitialAndDrivers.identDistrib_forcing_evals P X₀ W μ₀ hiid times 0 i) S hU₀
-  have hEval (s : ℝ) : Measurable (fun f : C(Icc (0 : ℝ) T, EuclideanSpace ℝ (Fin d)) ↦ f.IccExtend hT s) :=
+  have hEval (s : ℝ) :
+      Measurable (fun f : C(Icc (0 : ℝ) T, EuclideanSpace ℝ (Fin d)) ↦ f.IccExtend hT s) :=
     ContinuousMap.measurable_eval (Set.projIcc 0 T hT s)
   have hZmap (i : ℕ) (s : ℝ) : P.map (fun ω ↦ (Z i ω).IccExtend hT s) =
       P.map (fun ω ↦ (S ω).IccExtend hT s) := ((hZid i).comp (hEval s)).map_eq
@@ -108,7 +109,6 @@ theorem exists_iid_mcKeanVlasov_paths_on_Icc {Ω : Type*} [MeasurableSpace Ω] {
   congr 2
   apply intervalIntegral.integral_congr
   intro s hs
-  dsimp only
-  change nonlinearFrozenDrift P hT b S hSm hSi s ((Z i ω).IccExtend hT s) = _
-  rw [nonlinearFrozenDrift, pathMarginalLaw_toMeasure, hZmap i s]
+  dsimp only [v]
+  rw [nonlinearFrozenDrift, pathMarginalLaw_toMeasure, hZmap i s, ContinuousMap.coe_IccExtend]
 end CKSD

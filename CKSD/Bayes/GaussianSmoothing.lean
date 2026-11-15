@@ -50,18 +50,22 @@ variable {E F : Type u} [NormedAddCommGroup E] [NormedSpace ℝ E]
 /-- A translate of a Schwartz function is integrable under every finite measure. -/
 theorem integrable_schwartz_sub (ν : Measure E) [IsFiniteMeasure ν] (f : 𝓢(E, F)) (x : E) :
     Integrable (fun y ↦ f (x - y)) ν := by
-  refine Integrable.of_bound (f.continuous.comp (continuous_const.sub continuous_id)).aestronglyMeasurable
+  refine Integrable.of_bound
+    (f.continuous.comp (continuous_const.sub continuous_id)).aestronglyMeasurable
     (SchwartzMap.seminorm ℝ 0 0 f) (ae_of_all _ fun y ↦ ?_)
   exact f.norm_le_seminorm ℝ (x - y)
 
-/-- Differentiation commutes with averaging translates of a Schwartz function under a finite measure. -/
-theorem hasFDerivAt_integral_schwartz_sub (ν : Measure E) [IsFiniteMeasure ν] (f : 𝓢(E, F)) (x : E) :
+/-- Differentiation commutes with averaging translates of a Schwartz function under a finite
+measure. -/
+theorem hasFDerivAt_integral_schwartz_sub (ν : Measure E) [IsFiniteMeasure ν] (f : 𝓢(E, F))
+    (x : E) :
     HasFDerivAt (fun x ↦ ∫ y, f (x - y) ∂ν)
       (∫ y, fderiv ℝ f (x - y) ∂ν) x := by
   have hcont : Continuous (fderiv ℝ f) := (f.smooth ⊤).continuous_fderiv (by simp)
   refine hasFDerivAt_integral_of_dominated_of_fderiv_le (𝕜 := ℝ)
-    (F := fun x y ↦ f (x - y)) (F' := fun x y ↦ fderiv ℝ f (x - y)) (μ := ν) (s := univ) (bound := fun _ ↦
-    SchwartzMap.seminorm ℝ 0 1 f) (Filter.univ_mem) ?_ ?_ ?_ ?_ (integrable_const _) ?_
+    (F := fun x y ↦ f (x - y)) (F' := fun x y ↦ fderiv ℝ f (x - y)) (μ := ν) (s := univ)
+    (bound := fun _ ↦ SchwartzMap.seminorm ℝ 0 1 f) (Filter.univ_mem) ?_ ?_ ?_ ?_
+    (integrable_const _) ?_
   · exact Eventually.of_forall fun x ↦
       (f.continuous.comp (continuous_const.sub continuous_id)).aestronglyMeasurable
   · exact Integrable.of_bound
@@ -80,9 +84,9 @@ theorem contDiff_integral_schwartz_sub_nat (ν : Measure E) [IsFiniteMeasure ν]
     (f : 𝓢(E, F)) : ContDiff ℝ n (fun x ↦ ∫ y, f (x - y) ∂ν) := by
   induction n generalizing F with
   | zero =>
-    change ContDiff ℝ 0 _
-    rw [contDiff_zero]
-    exact Differentiable.continuous (fun x ↦ (hasFDerivAt_integral_schwartz_sub ν f x).differentiableAt)
+    rw [Nat.cast_zero, contDiff_zero]
+    exact Differentiable.continuous
+      (fun x ↦ (hasFDerivAt_integral_schwartz_sub ν f x).differentiableAt)
   | succ n ih =>
     rw [show ((n + 1 : ℕ) : WithTop ℕ∞) = (n : WithTop ℕ∞) + 1 by simp,
       contDiff_succ_iff_fderiv]
@@ -112,12 +116,13 @@ def gaussianSmoothingKernel {E : Type*} [NormedAddCommGroup E]
   |σ|⁻¹ ^ Module.finrank ℝ E * (2 * Real.pi) ^ (-(Module.finrank ℝ E : ℝ) / 2) *
     Real.exp (-‖x‖ ^ 2 / (2 * σ ^ 2))
 
-/-- At positive scale the isotropic Gaussian density is a Schwartz function, using TauCeti's Gaussian. -/
-theorem exists_schwartz_gaussianSmoothingKernel {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-    [FiniteDimensional ℝ E] {σ : ℝ} (hσ : 0 < σ) :
+/-- At positive scale the isotropic Gaussian density is a Schwartz function, using TauCeti's
+Gaussian. -/
+theorem exists_schwartz_gaussianSmoothingKernel {E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] {σ : ℝ} (hσ : 0 < σ) :
     ∃ f : 𝓢(E, ℝ), (f : E → ℝ) = gaussianSmoothingKernel σ := by
   have hb : 0 < (((2 * σ ^ 2)⁻¹ : ℝ) : ℂ).re := by
-    change 0 < (2 * σ ^ 2)⁻¹
+    rw [Complex.ofReal_re]
     positivity
   refine ⟨(|σ|⁻¹ ^ Module.finrank ℝ E *
     (2 * Real.pi) ^ (-(Module.finrank ℝ E : ℝ) / 2)) •
@@ -132,8 +137,9 @@ theorem exists_schwartz_gaussianSmoothingKernel {E : Type*} [NormedAddCommGroup 
 
 /-- An affine image of the standard Gaussian has the translated isotropic Gaussian density.
 The change of variables uses TauCeti's `Measure.map_affine_withDensity`. -/
-theorem map_affine_stdGaussian_eq_withDensity {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-    [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] {σ : ℝ} (hσ : 0 < σ) (y : E) :
+theorem map_affine_stdGaussian_eq_withDensity {E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E] {σ : ℝ}
+    (hσ : 0 < σ) (y : E) :
     (stdGaussian E).map (fun z ↦ y + σ • z) =
       volume.withDensity (fun x ↦ ENNReal.ofReal (gaussianSmoothingKernel σ (x - y))) := by
   let A : E ≃L[ℝ] E := ContinuousLinearEquiv.smulLeft (Units.mk0 σ hσ.ne')
@@ -196,11 +202,12 @@ theorem smooth_positive_gaussianSmoothing (ν : Measure E) [IsProbabilityMeasure
     apply (integral_pos_iff_support_of_nonneg (fun y ↦ (gaussianSmoothingKernel_pos hσ _).le) hi).2
     have hsupp : Function.support (fun y ↦ gaussianSmoothingKernel σ (x - y)) = univ := by
       ext y
-      simp [Function.mem_support, (gaussianSmoothingKernel_pos hσ (x-y)).ne']
+      simp [Function.mem_support, (gaussianSmoothingKernel_pos hσ (x - y)).ne']
     rw [hsupp, measure_univ]
     exact zero_lt_one
 
-/-- The law of the sum of independent signals and Gaussian noise has the averaged Gaussian density. -/
+/-- The law of the sum of independent signals and Gaussian noise has the averaged Gaussian
+density. -/
 theorem map_add_gaussian_eq_withDensity (ν : Measure E) [IsProbabilityMeasure ν]
     {σ : ℝ} (hσ : 0 < σ) :
     (ν.prod (stdGaussian E)).map (fun p ↦ p.1 + σ • p.2) =
@@ -213,10 +220,13 @@ theorem map_add_gaussian_eq_withDensity (ν : Measure E) [IsProbabilityMeasure �
     obtain ⟨f, hf⟩ := exists_schwartz_gaussianSmoothingKernel (E := E) hσ
     simpa only [hf] using integrable_schwartz_sub ν f x
   ext s hs
-  rw [Measure.map_apply (by fun_prop) hs, Measure.prod_apply ((by fun_prop : Measurable (fun p : E × E ↦ p.1 + σ • p.2)) hs), withDensity_apply _ hs]
+  rw [Measure.map_apply (by fun_prop) hs,
+    Measure.prod_apply ((by fun_prop : Measurable (fun p : E × E ↦ p.1 + σ • p.2)) hs),
+    withDensity_apply _ hs]
   have hpt (y : E) : (stdGaussian E) (Prod.mk y ⁻¹' ((fun p : E × E ↦ p.1 + σ • p.2) ⁻¹' s)) =
       ∫⁻ x in s, ENNReal.ofReal (gaussianSmoothingKernel σ (x - y)) := by
     have h := congrArg (fun μ : Measure E ↦ μ s) (map_affine_stdGaussian_eq_withDensity hσ y)
+    -- Compose the two preimages, which `simpa` does not do.
     change (stdGaussian E) ((fun z ↦ y + σ • z) ⁻¹' s) = _
     simpa only [Measure.map_apply (by fun_prop : Measurable (fun z : E ↦ y + σ • z)) hs,
       withDensity_apply _ hs] using h
@@ -271,7 +281,6 @@ theorem condExp_of_joint_density (P : Measure Ω) [IsProbabilityMeasure P]
   · intro s hs _
     exact hgPi.integrableOn
   · rintro _ ⟨s, hs, rfl⟩ _
-    change ∫ w in X ⁻¹' s, g (X w) ∂P = ∫ w in X ⁻¹' s, H (Y w, X w) ∂P
     rw [← setIntegral_map hs hgm.aestronglyMeasurable hX.aemeasurable, hXm,
       setIntegral_withDensity_eq_setIntegral_toReal_smul₀ hm.ennreal_ofReal.aemeasurable
         (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top) g hs]
@@ -337,15 +346,17 @@ theorem gradient_gaussianSmoothing (ν : Measure E) [IsProbabilityMeasure ν]
   have hd : fderiv ℝ (fun x ↦ ∫ y, gaussianSmoothingKernel σ (x - y) ∂ν) x =
       ∫ y, fderiv ℝ (gaussianSmoothingKernel σ : E → ℝ) (x - y) ∂ν := by
     simpa only [hf] using (hasFDerivAt_integral_schwartz_sub ν f x).fderiv
-  have hi : Integrable (fun y ↦ fderiv ℝ (gaussianSmoothingKernel σ : E → ℝ) (x-y)) ν := by
+  have hi : Integrable (fun y ↦ fderiv ℝ (gaussianSmoothingKernel σ : E → ℝ) (x - y)) ν := by
     simpa only [SchwartzMap.fderivCLM_apply, hf] using
       integrable_schwartz_sub ν (SchwartzMap.fderivCLM ℝ E ℝ f) x
   simp only [gradient, hd]
+  -- View `toDual.symm` as a continuous linear map, the form `integral_comp_comm` rewrites.
   change ((InnerProductSpace.toDual ℝ E).symm.toContinuousLinearMap) (∫ y,
-    fderiv ℝ (gaussianSmoothingKernel σ : E → ℝ) (x-y) ∂ν) = _
+    fderiv ℝ (gaussianSmoothingKernel σ : E → ℝ) (x - y) ∂ν) = _
   rw [← ContinuousLinearMap.integral_comp_comm _ hi]
   simp only [fderiv_gaussianSmoothingKernel hσ, map_smul]
-  have hpt (y : E) : (InnerProductSpace.toDual ℝ E).symm.toContinuousLinearMap (innerSL ℝ y) = y := by
+  have hpt (y : E) :
+      (InnerProductSpace.toDual ℝ E).symm.toContinuousLinearMap (innerSL ℝ y) = y := by
     exact (InnerProductSpace.toDual ℝ E).symm_apply_apply y
   simp only [hpt]
   rw [← integral_smul]
@@ -364,7 +375,8 @@ likelihood density relative to signal law times Lebesgue measure. -/
 theorem map_pair_add_gaussian_eq_withDensity (ν : Measure E) [IsProbabilityMeasure ν]
     {σ : ℝ} (hσ : 0 < σ) :
     (ν.prod (stdGaussian E)).map (fun p ↦ (p.1, p.1 + σ • p.2)) =
-      (ν.prod volume).withDensity (fun p ↦ ENNReal.ofReal (gaussianSmoothingKernel σ (p.2 - p.1))) := by
+      (ν.prod volume).withDensity
+        (fun p ↦ ENNReal.ofReal (gaussianSmoothingKernel σ (p.2 - p.1))) := by
   have hq : Continuous (gaussianSmoothingKernel σ : E → ℝ) :=
     (contDiff_gaussianSmoothingKernel hσ).continuous
   have hj : Measurable (fun p : E × E ↦ ENNReal.ofReal (gaussianSmoothingKernel σ (p.2 - p.1))) :=
@@ -382,6 +394,6 @@ theorem map_pair_add_gaussian_eq_withDensity (ν : Measure E) [IsProbabilityMeas
   convert h using 1
   · rfl
   · apply lintegral_congr_ae (ae_of_all _ fun x ↦ ?_)
-    by_cases hx : (y,x) ∈ s <;> simp [hx]
+    by_cases hx : (y, x) ∈ s <;> simp [hx]
 
 end CKSD

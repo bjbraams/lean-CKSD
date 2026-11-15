@@ -126,12 +126,14 @@ theorem exists_unique_mcKeanVlasov_and_particleSystem {Ω : Type*} [MeasurableSp
   constructor
   · intro i
     obtain ⟨Y, hY⟩ := exists_mcKeanVlasovSolution_of_compact_solutions P b hb (X₀ i) (W i)
-      (fun T hT ↦ exists_nonlinear_brownian_path_solution P hT b hb (X₀ i) (hξ i) (W i) (hiid.2.2.1 i))
+      (fun T hT ↦
+        exists_nonlinear_brownian_path_solution P hT b hb (X₀ i) (hξ i) (W i) (hiid.2.2.1 i))
     refine ⟨Y, hY, fun Y' hY' ↦ ?_⟩
     exact IsMcKeanVlasovSolution.ae_eq P b hb (X₀ i) (hξ i) (W i) (hiid.2.2.1 i) Y' Y hY' hY
   · intro N
     obtain ⟨X, hX⟩ := exists_particleSystem_of_wassersteinLipschitz P b hb X₀ W μ₀ hiid N
-    exact ⟨X, hX, fun X' hX' ↦ IsParticleSystem.ae_eq_of_wassersteinLipschitz P b hb X₀ W X' X hX' hX⟩
+    exact ⟨X, hX, fun X' hX' ↦
+      IsParticleSystem.ae_eq_of_wassersteinLipschitz P b hb X₀ W X' X hX' hX⟩
 
 /-- GAPS 104.51: propagation of chaos. For every horizon `T` and every `k`, the joint path law on
 `[0, T]` of the first `k` particles converges weakly to the `k`-fold product of the
@@ -214,18 +216,22 @@ theorem IsMcKeanVlasovSolution.ae_eq_of_interactionDrift
     fun t x ↦ ∫ z, K x (Y t z) ∂P
   have hXc := hX.2.2.mono fun _ hω ↦ hω.1
   have hYc := hY.2.2.mono fun _ hω ↦ hω.1
-  have hv : Continuous (Function.uncurry v) := continuous_integral_interaction P K hK.continuous hKb X hX.1 hXc
-  have hw : Continuous (Function.uncurry w) := continuous_integral_interaction P K hK.continuous hKb Y hY.1 hYc
+  have hv : Continuous (Function.uncurry v) :=
+    continuous_integral_interaction P K hK.continuous hKb X hX.1 hXc
+  have hw : Continuous (Function.uncurry w) :=
+    continuous_integral_interaction P K hK.continuous hKb Y hY.1 hYc
   have hmapX (s : ℝ) (x : EuclideanSpace ℝ (Fin d)) :
       interactionDrift b₀ K x (P.map (X s)) = b₀ x + v s x := by
     rw [interactionDrift, integral_map (hX.1 s).aemeasurable
       (f := fun y ↦ K x y) (hK.continuous.measurable.comp
-        ((measurable_const : Measurable fun _ : EuclideanSpace ℝ (Fin d) ↦ x).prodMk measurable_id)).aestronglyMeasurable]
+        ((measurable_const : Measurable fun _ : EuclideanSpace ℝ (Fin d) ↦ x).prodMk
+          measurable_id)).aestronglyMeasurable]
   have hmapY (s : ℝ) (x : EuclideanSpace ℝ (Fin d)) :
       interactionDrift b₀ K x (P.map (Y s)) = b₀ x + w s x := by
     rw [interactionDrift, integral_map (hY.1 s).aemeasurable
       (f := fun y ↦ K x y) (hK.continuous.measurable.comp
-        ((measurable_const : Measurable fun _ : EuclideanSpace ℝ (Fin d) ↦ x).prodMk measurable_id)).aestronglyMeasurable]
+        ((measurable_const : Measurable fun _ : EuclideanSpace ℝ (Fin d) ↦ x).prodMk
+          measurable_id)).aestronglyMeasurable]
   have heq : ∀ᵐ ω ∂P, ∀ t ≥ 0, X t ω - Y t ω = ∫ s in (0 : ℝ)..t,
       (b₀ (X s ω) + v s (X s ω)) - (b₀ (Y s ω) + w s (Y s ω)) := by
     filter_upwards [hX.2.2, hY.2.2] with ω hx hy
@@ -263,7 +269,8 @@ theorem lipschitzWith_integral_interaction {Ω E : Type*} [MeasurableSpace Ω]
   intro x y
   simpa only [dist_eq_norm, sub_self, norm_zero, integral_zero, add_zero] using
     norm_integral_interaction_sub_le P K hK hKb Y Y hY hY
-      (by simpa only [sub_self, norm_zero] using (integrable_const (0 : ℝ) : Integrable (fun _ : Ω ↦ (0 : ℝ)) P)) x y
+      (by simpa only [sub_self, norm_zero] using
+        (integrable_const (0 : ℝ) : Integrable (fun _ : Ω ↦ (0 : ℝ)) P)) x y
 
 /-- One nonlinear solution can be transported along the iid input forcings to iid continuous
 solution paths with the same marginal laws, on any fixed bounded time interval. -/
@@ -290,22 +297,24 @@ theorem exists_iid_nonlinear_copies_on_Icc {Ω : Type*} [MeasurableSpace Ω] {d 
     fun t x ↦ b₀ x + ∫ z, K x (Y t z) ∂P
   have hYc : ∀ᵐ ω ∂P, Continuous (fun t ↦ Y t ω) := hY.2.2.mono fun ω hω ↦ hω.1
   have hv : Continuous (Function.uncurry v) :=
-    (hb₀.continuous.comp continuous_snd).add (continuous_integral_interaction P K hK.continuous hKb Y hY.1 hYc)
+    (hb₀.continuous.comp continuous_snd).add
+      (continuous_integral_interaction P K hK.continuous hKb Y hY.1 hYc)
   have hvL (s : ℝ) : LipschitzWith (L₀ + L_K) (v s) :=
     hb₀.add (lipschitzWith_integral_interaction P K hK hKb (Y s) (hY.1 s))
   have hmap (s : ℝ) (x : EuclideanSpace ℝ (Fin d)) :
       interactionDrift b₀ K x (P.map (Y s)) = v s x := by
     rw [interactionDrift, integral_map (hY.1 s).aemeasurable (f := fun y ↦ K x y)
-      (hK.continuous.measurable.comp ((measurable_const : Measurable fun _ : EuclideanSpace ℝ (Fin d) ↦ x).prodMk measurable_id)).aestronglyMeasurable]
+      (hK.continuous.measurable.comp ((measurable_const :
+        Measurable fun _ : EuclideanSpace ℝ (Fin d) ↦ x).prodMk
+          measurable_id)).aestronglyMeasurable]
   let times : ℚ → ℝ≥0 := fun q ↦ (Set.projIcc 0 T hT q : ℝ).toNNReal
   let U : ℕ → Ω → ℚ → EuclideanSpace ℝ (Fin d) := fun i ω q ↦ X₀ i ω + W i (times q) ω
   let Ypath : Ω → C(Icc (0 : ℝ) T, EuclideanSpace ℝ (Fin d)) := fun ω ↦ pathOn T (fun t ↦ Y t ω)
   have hU₀ : (fun ω ↦ pathRationalCoordinates hT (pathForcingMap hT v hv (Ypath ω))) =ᵐ[P] U 0 := by
     filter_upwards [hY.2.2] with ω hω
     funext q
-    let t := Set.projIcc 0 T hT q
-    change pathOn T (fun s ↦ Y s ω) t - (∫ s in (0 : ℝ)..t,
-      v s ((pathOn T (fun s ↦ Y s ω)).IccExtend hT s)) = X₀ 0 ω + W 0 (times q) ω
+    simp only [pathRationalCoordinates, pathForcingMap_apply, U, Ypath]
+    set t := Set.projIcc 0 T hT q
     rw [pathOn_apply_of_continuousOn T (fun s ↦ Y s ω) hω.1.continuousOn t]
     have hint : (∫ s in (0 : ℝ)..t, v s ((pathOn T (fun s ↦ Y s ω)).IccExtend hT s)) =
         ∫ s in (0 : ℝ)..t, interactionDrift b₀ K (Y s ω) (P.map (Y s)) := by
@@ -322,7 +331,8 @@ theorem exists_iid_nonlinear_copies_on_Icc {Ω : Type*} [MeasurableSpace Ω] {d 
     (hiid.iIndepFun_forcing_evals P X₀ W μ₀ times)
     (fun i ↦ hiid.identDistrib_forcing_evals P X₀ W μ₀ times 0 i) Ypath hU₀
   let Z : ℕ → ℝ → Ω → EuclideanSpace ℝ (Fin d) := fun i t ω ↦ (Zpath i ω).IccExtend hT t
-  have hEval (t : ℝ) : Measurable (fun f : C(Icc (0 : ℝ) T, EuclideanSpace ℝ (Fin d)) ↦ f.IccExtend hT t) :=
+  have hEval (t : ℝ) :
+      Measurable (fun f : C(Icc (0 : ℝ) T, EuclideanSpace ℝ (Fin d)) ↦ f.IccExtend hT t) :=
     ContinuousMap.measurable_eval (Set.projIcc 0 T hT t)
   have hZmap (i : ℕ) (t : ℝ) (ht : t ∈ Icc 0 T) : P.map (Z i t) = P.map (Y t) := by
     have h := (hZid i).comp (hEval t)
@@ -335,14 +345,13 @@ theorem exists_iid_nonlinear_copies_on_Icc {Ω : Type*} [MeasurableSpace Ω] {d 
   have heq := eq_integral_of_forcing_coordinates hT v hv (Zpath i ω) (X₀ i ω)
     (fun t ↦ W i t.toNNReal ω) hB hω
   intro t ht
-  change (Zpath i ω).IccExtend hT t = _
+  dsimp only [Z]
   rw [heq t ht]
   congr 2
   apply intervalIntegral.integral_congr
   intro s hs
   rw [uIcc_of_le ht.1] at hs
   dsimp only
-  change v s (Z i s ω) = interactionDrift b₀ K (Z i s ω) (P.map (Z i s))
   rw [hZmap i s ⟨hs.1, hs.2.trans ht.2⟩, hmap]
 
 /-- For bounded Lipschitz interactions, separately given nonlinear solutions with iid initial
@@ -375,12 +384,14 @@ theorem IsMcKeanVlasovSolution.iIndepFun_interactionDrift {Ω : Type*} [Measurab
         interactionDrift b₀ K x (P.map (Y i s)) = b₀ x + v s x := by
       rw [interactionDrift, integral_map ((hY i).1 s).aemeasurable
         (f := fun y ↦ K x y) (hK.continuous.measurable.comp
-          ((measurable_const : Measurable fun _ : EuclideanSpace ℝ (Fin d) ↦ x).prodMk measurable_id)).aestronglyMeasurable]
+          ((measurable_const : Measurable fun _ : EuclideanSpace ℝ (Fin d) ↦ x).prodMk
+            measurable_id)).aestronglyMeasurable]
     have hmapZ (s : ℝ) (x : EuclideanSpace ℝ (Fin d)) :
         interactionDrift b₀ K x (P.map (Z i s)) = b₀ x + w s x := by
       rw [interactionDrift, integral_map (hZm i s).aemeasurable
         (f := fun y ↦ K x y) (hK.continuous.measurable.comp
-          ((measurable_const : Measurable fun _ : EuclideanSpace ℝ (Fin d) ↦ x).prodMk measurable_id)).aestronglyMeasurable]
+          ((measurable_const : Measurable fun _ : EuclideanSpace ℝ (Fin d) ↦ x).prodMk
+            measurable_id)).aestronglyMeasurable]
     apply ae_eq_of_interaction_integral_eq_on_Icc P b₀ hb₀ K hK κ.coe_nonneg hKb
       (Y i) (Z i) (hY i).1 (hZm i) hYc hZc' ht
     filter_upwards [(hY i).2.2, hZeq i] with ω hω hZω
@@ -408,7 +419,8 @@ theorem IsMcKeanVlasovSolution.iIndepFun_interactionDrift {Ω : Type*} [Measurab
 
 /-- Integrability and mean bound for time-integrated interaction fluctuations of nonlinear
 solutions driven by iid initial conditions and Brownian motions. -/
-theorem integrable_integral_sq_interactionFluctuation_le_of_solutions {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
+theorem integrable_integral_sq_interactionFluctuation_le_of_solutions
+    {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
     (P : Measure Ω) [IsProbabilityMeasure P]
     (b₀ : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) {L₀ : ℝ≥0}
     (hb₀ : LipschitzWith L₀ b₀)
@@ -426,9 +438,11 @@ theorem integrable_integral_sq_interactionFluctuation_le_of_solutions {Ω : Type
   apply integrable_integral_sq_interactionFluctuation_le P K hK.continuous hKb Y
     (fun j ↦ (hY j).1) (fun j ↦ (hY j).2.2.mono fun _ hω ↦ hω.1) hN i hT
   intro s hs
-  have hi := IsMcKeanVlasovSolution.iIndepFun_interactionDrift P b₀ hb₀ K hK hKb X₀ W μ₀ hiid Y hY s hs.1
+  have hi := IsMcKeanVlasovSolution.iIndepFun_interactionDrift P b₀ hb₀ K hK hKb X₀ W μ₀ hiid
+    Y hY s hs.1
   let μ := P.map (Y 0 s)
-  have : IsProbabilityMeasure μ := (Measure.isProbabilityMeasure_map_iff ((hY 0).1 s).aemeasurable).mpr inferInstance
+  have : IsProbabilityMeasure μ :=
+    (Measure.isProbabilityMeasure_map_iff ((hY 0).1 s).aemeasurable).mpr inferInstance
   have hvar := integral_norm_empiricalInteraction_sub_sq_le P μ K hK.continuous.measurable κ hKb hN
     (fun j : Fin N ↦ Y j s) (fun j ↦ (hY j).1 s)
     (iIndepFun.precomp Fin.val_injective hi.1) (fun j ↦ hi.2 j) i
@@ -490,8 +504,8 @@ theorem IsParticleSystem.ae_residual_integral_eq
       (empiricalMeasure N fun j : Fin N ↦ X j s ω)) = ∫ s in (0 : ℝ)..t, F s := by
     apply intervalIntegral.integral_congr
     intro s _
-    change b₀ (X i s ω) + (∫ z, K (X i s ω) z ∂empiricalMeasure N (fun j : Fin N ↦ X j s ω)) = _
-    rw [integral_empiricalMeasure_vector]
+    dsimp only
+    rw [interactionDrift, integral_empiricalMeasure_vector]
   have hYi : (∫ s in (0 : ℝ)..t, interactionDrift b₀ K (Y i s ω)
       (P.map (Y i s))) = ∫ s in (0 : ℝ)..t, G s := by
     apply intervalIntegral.integral_congr
@@ -606,7 +620,8 @@ theorem meanFieldRisk_eq {Z Θ : Type*} [MeasurableSpace Z] [MeasurableSpace Θ]
     simp only [Pi.add_apply]
     nlinarith
   have hyf : Integrable (fun w : Z × ℝ ↦ w.2 * f w.1) ν := by
-    refine (hY1.abs.const_mul B).mono' (measurable_snd.mul (hfm.comp measurable_fst)).aestronglyMeasurable
+    refine (hY1.abs.const_mul B).mono'
+      (measurable_snd.mul (hfm.comp measurable_fst)).aestronglyMeasurable
       (ae_of_all _ fun w ↦ ?_)
     rw [Real.norm_eq_abs, abs_mul, mul_comm]
     exact mul_le_mul_of_nonneg_right (hfB w.1) (abs_nonneg _)
@@ -651,8 +666,9 @@ theorem meanFieldRisk_eq {Z Θ : Type*} [MeasurableSpace Z] [MeasurableSpace Θ]
         exact mul_le_mul (hB _ _) (hfB _) (abs_nonneg _) ((abs_nonneg _).trans (hB q.1.1 q.2))
   have hpt (w : Z × ℝ) : (w.2 - f w.1) ^ 2 = w.2 ^ 2 - 2 * (w.2 * f w.1) + f w.1 ^ 2 := by
     ring
-  show (1 / 2 : ℝ) * ∫ w, (w.2 - f w.1) ^ 2 ∂ν = _
-  simp_rw [hpt]
+  have hf (z : Z) : ∫ θ, φ z θ ∂ρ = f z := by rw [hfdef]
+  rw [meanFieldRisk]
+  simp_rw [hf, hpt]
   have hsum := integral_add (hY.sub (hyf.const_mul 2)) hf2
   have hdif := integral_sub hY (hyf.const_mul 2)
   simp only [Pi.sub_apply] at hsum hdif
@@ -730,17 +746,17 @@ theorem exists_meanField_limit {p : ℕ}
       ‖b x μ‖ ≤ (M : ℝ) := by
     have := hμ
     exact (norm_meanFieldVelocity_le gradV gradU B hVb hUb μ x).trans (Real.le_coe_toNNReal _)
-  obtain ⟨ρ,v,K,γ,hρ,huniq,hv,hvM,hγ,hγ0,hγd,hρlaw,hvρ⟩ :=
+  obtain ⟨ρ, v, K, γ, hρ, huniq, hv, hvM, hγ, hγ0, hγd, hρlaw, hvρ⟩ :=
     exists_unique_nonlinear_continuity_solution_of_bound ρ₀ hρ₀ b hb hL M hM
-  refine ⟨ρ,hρ,huniq,?_⟩
+  refine ⟨ρ, hρ, huniq, ?_⟩
   intro Ω _ P _ ξ hiid θ hθ
   have hγL (x) : LipschitzWith M (γ x) := by
     apply lipschitzWith_of_nnnorm_deriv_le (fun t ↦ (hγd x t).differentiableAt)
     intro t
     rw [(hγd x t).deriv]
     exact hvM _
-  have hvEq (t : ℝ) (ht : 0 ≤ t) (x) : v (t,x) = b x (ρ₀.map (fun y ↦ γ y t)) := by
-    rw [hvρ t ht x,hρlaw t ht]
+  have hvEq (t : ℝ) (ht : 0 ≤ t) (x) : v (t, x) = b x (ρ₀.map (fun y ↦ γ y t)) := by
+    rw [hvρ t ht x, hρlaw t ht]
   filter_upwards [ae_tendsto_iSup_empirical_training_laws P ρ₀ hρ₀ ξ hiid b hb γ hγ hγ0 hγL
     v hv.continuous hγd hvEq θ hθ] with ω hω
   intro T hT

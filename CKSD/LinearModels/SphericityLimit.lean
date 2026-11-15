@@ -38,7 +38,8 @@ theorem tendsto_max_one_natCast_sub_div_two (c : ℝ) :
   have h : Tendsto (fun n : ℕ ↦ ((n : ℝ) - c) / 2) atTop atTop :=
     by
       simpa only [sub_eq_add_neg] using
-        ((tendsto_atTop_add_const_right atTop (-c) tendsto_natCast_atTop_atTop)).atTop_div_const (by norm_num : (0:ℝ)<2)
+        ((tendsto_atTop_add_const_right atTop (-c) tendsto_natCast_atTop_atTop)).atTop_div_const
+            (by norm_num : (0:ℝ)<2)
   exact tendsto_atTop_mono (fun n ↦ le_max_right _ _) h
 
 /-- Two affine shape sequences with the same leading scale have asymptotic ratio one. -/
@@ -46,7 +47,8 @@ theorem tendsto_max_one_natCast_div_two_ratio (c : ℝ) :
     Tendsto (fun n : ℕ ↦ max 1 ((n : ℝ) / 2) / max 1 (((n : ℝ) - c) / 2))
       atTop (𝓝 1) := by
   have hn : Tendsto (fun n : ℕ ↦ (n : ℝ) - c) atTop atTop :=
-    by simpa only [sub_eq_add_neg] using (tendsto_atTop_add_const_right atTop (-c) tendsto_natCast_atTop_atTop)
+    by simpa only [sub_eq_add_neg] using
+        (tendsto_atTop_add_const_right atTop (-c) tendsto_natCast_atTop_atTop)
   have hlim : Tendsto (fun n : ℕ ↦ 1 + c / ((n : ℝ) - c)) atTop (𝓝 1) := by
     simpa only [add_zero] using tendsto_const_nhds.add ((tendsto_const_nhds (x := c)).div_atTop hn)
   apply hlim.congr'
@@ -70,7 +72,8 @@ theorem tendstoInDistribution_neg_natCast_mul_log_of_beta_product_law
       (Measure.pi fun i ↦ betaMeasure (max 1 (((n : ℝ) - c i) / 2)) (b i)).map
         (fun x : ι → ℝ ↦ ∏ i, x i)) :
     let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) (1 / 2)) :=
-      isProbabilityMeasure_gammaMeasure (Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty) (by norm_num);
+      isProbabilityMeasure_gammaMeasure (Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty)
+          (by norm_num);
     TendstoInDistribution (fun (n : ℕ) ω ↦ -(n : ℝ) * Real.log (Z n ω)) atTop id
       (fun _ ↦ P) (gammaMeasure (∑ i, b i) (1 / 2)) := by
   let a : ι → ℕ → ℝ := fun i n ↦ max 1 (((n : ℝ) - c i) / 2)
@@ -79,15 +82,18 @@ theorem tendstoInDistribution_neg_natCast_mul_log_of_beta_product_law
   have ht (n : ℕ) : 0 < t n := lt_of_lt_of_le zero_lt_one (le_max_left _ _)
   have hbS : 0 < ∑ i, b i := Finset.sum_pos (fun i _ ↦ hb i) Finset.univ_nonempty
   let Q : ℕ → Measure (ι → ℝ) := fun n ↦ Measure.pi fun i ↦ betaMeasure (a i n) (b i)
-  let : ∀ n, IsProbabilityMeasure (Q n) := fun n ↦ isProbabilityMeasure_pi_beta _ _ (fun i ↦ ha i n) hb
-  let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) 1) := isProbabilityMeasure_gammaMeasure hbS zero_lt_one
+  let : ∀ n, IsProbabilityMeasure (Q n) :=
+      fun n ↦ isProbabilityMeasure_pi_beta _ _ (fun i ↦ ha i n) hb
+  let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) 1) :=
+      isProbabilityMeasure_gammaMeasure hbS zero_lt_one
   let : IsProbabilityMeasure (gammaMeasure (∑ i, b i) (1 / 2)) :=
     isProbabilityMeasure_gammaMeasure hbS (by norm_num)
   have hbeta := tendstoInDistribution_neg_mul_log_beta_product a b t ha hb ht
     (fun i ↦ tendsto_max_one_natCast_sub_div_two (c i))
     (fun i ↦ tendsto_max_one_natCast_div_two_ratio (c i))
   have hdouble := hbeta.continuous_comp (g := fun x : ℝ ↦ 2 * x) (by fun_prop)
-  have hdouble' : TendstoInDistribution (fun (n : ℕ) (x : ι → ℝ) ↦ 2 * (-(t n) * Real.log (∏ i, x i)))
+  have hdouble' : TendstoInDistribution
+      (fun (n : ℕ) (x : ι → ℝ) ↦ 2 * (-(t n) * Real.log (∏ i, x i)))
       atTop id Q (gammaMeasure (∑ i, b i) (1 / 2)) := by
     refine ⟨fun _ ↦ by fun_prop, measurable_id.aemeasurable, ?_⟩
     have hscale := TauCeti.Probability.gammaMeasure_map_const_mul hbS zero_lt_one
@@ -96,12 +102,15 @@ theorem tendstoInDistribution_neg_natCast_mul_log_of_beta_product_law
         (gammaMeasure (∑ i, b i) (1 / 2)).map id := by
       simpa only [Function.comp_id, Measure.map_id] using hscale
     have hd := hdouble.tendsto
-    have hlimitP : (⟨(gammaMeasure (∑ i, b i) 1).map ((fun x : ℝ ↦ 2 * x) ∘ id), inferInstance⟩ : ProbabilityMeasure ℝ) =
+    have hlimitP :
+        (⟨(gammaMeasure (∑ i, b i) 1).map ((fun x : ℝ ↦ 2 * x) ∘ id), inferInstance⟩ :
+        ProbabilityMeasure ℝ) =
         ⟨(gammaMeasure (∑ i, b i) (1 / 2)).map id, inferInstance⟩ := Subtype.ext hlimit
     rw [hlimitP] at hd
     exact hd
   apply tendstoInDistribution_of_eventually_map_eq P Q _
-    (fun (n : ℕ) ω ↦ -(n : ℝ) * Real.log (Z n ω)) _ id (fun n ↦ (by fun_prop : Measurable _).aemeasurable) _ hdouble'
+    (fun (n : ℕ) ω ↦ -(n : ℝ) * Real.log (Z n ω)) _ id
+        (fun n ↦ (by fun_prop : Measurable _).aemeasurable) _ hdouble'
   have hlarge : ∀ᶠ n : ℕ in atTop, (2 : ℝ) ≤ n :=
     tendsto_natCast_atTop_atTop.eventually_ge_atTop _
   filter_upwards [hmap, hlarge] with n hn hn2

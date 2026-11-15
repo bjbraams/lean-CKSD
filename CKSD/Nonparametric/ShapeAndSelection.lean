@@ -67,7 +67,7 @@ def isotonicCone (n : ℕ) : Set (Fin n → ℝ) := {θ | Monotone θ}
 /-- The isotonic cone is convex. -/
 theorem convex_isotonicCone (n : ℕ) : Convex ℝ (isotonicCone n) := by
   intro x hx y hy a b ha hb _ i j hij
-  change a * x i + b * y i ≤ a * x j + b * y j
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul]
   have hx' := hx hij
   have hy' := hy hij
   nlinarith [mul_nonneg ha (sub_nonneg.mpr hx'), mul_nonneg hb (sub_nonneg.mpr hy')]
@@ -286,7 +286,7 @@ theorem isIsotonicRegressionEstimator_isotonicLeastSquares {n : ℕ} (y : Fin n 
     · rw [h]; exact hS0
     refine le_antisymm (hneg _) (hjump _ h a₀.isLt ?_)
     set q : Fin n := ⟨(a₀ : ℕ) - 1, by omega⟩
-    have hq : q < a₀ := by change (a₀ : ℕ) - 1 < a₀; omega
+    have hq : q < a₀ := by simp only [q, Fin.lt_def]; omega
     have hqE : q ∉ E := fun hq' ↦ absurd (E.min'_le q hq') (not_le.mpr hq)
     have hne : θ q ≠ θ i := by simpa [E] using hqE
     have hle : θ q ≤ θ a₀ := hθ.1 hq.le
@@ -296,7 +296,7 @@ theorem isIsotonicRegressionEstimator_isotonicLeastSquares {n : ℕ} (y : Fin n 
     by_cases h : (b₀ : ℕ) + 1 < n
     · refine le_antisymm (hneg _) (hjump _ (by omega) h ?_)
       set q : Fin n := ⟨(b₀ : ℕ) + 1, h⟩
-      have hq : b₀ < q := by change (b₀ : ℕ) < b₀ + 1; omega
+      have hq : b₀ < q := by simp only [q, Fin.lt_def]; omega
       have hqE : q ∉ E := fun hq' ↦ absurd (E.le_max' q hq') (not_le.mpr hq)
       have hne : θ q ≠ θ i := by simpa [E] using hqE
       have hle : θ b₀ ≤ θ q := hθ.1 hq.le
@@ -588,8 +588,7 @@ private theorem measurable_isoDecode (n m : ℕ) : Measurable (isoDecode n m) :=
   rw [measurable_pi_iff]
   intro j
   apply measurable_to_bool
-  show MeasurableSet {t | isoDecode n m t j = true}
-  simp only [isoDecode, decide_eq_true_eq]
+  simp only [Set.preimage, Set.mem_singleton_iff, isoDecode, decide_eq_true_eq]
   exact measurableSet_lt (by fun_prop) (by fun_prop)
 
 /-- Assouad's bound for isotonic regression: with `m³ ≤ n`, every measurable estimator has
@@ -869,15 +868,9 @@ theorem selectedProjectionRisk_oracle_bound :
   set Z : EuclideanSpace ℝ (Fin n) → ℝ≥0∞ := fun ε ↦ ∑' m', ENNReal.ofReal (z m' ε) with hZ
   have hZm : Measurable Z :=
     Measurable.tsum fun m' ↦ ENNReal.measurable_ofReal.comp (hzc m').measurable
-  have hZint : ∫⁻ ε, Z ε ∂μ₀ ≤ ENNReal.ofReal (16 * Real.sqrt 2 * σ ^ 2) := by
-    simp only [hZ]
-    rw [lintegral_tsum (f := fun m' ε ↦ ENNReal.ofReal (z m' ε)) fun m' ↦
-      (ENNReal.measurable_ofReal.comp (hzc m').measurable).aemeasurable]
-    calc ∑' m', ∫⁻ ε, ENNReal.ofReal (z m' ε) ∂μ₀
-        ≤ ∑' m', ENNReal.ofReal (16 * Real.sqrt 2 * σ ^ 2) * π m' := tsum_le_tsum hzint
-      _ = ENNReal.ofReal (16 * Real.sqrt 2 * σ ^ 2) * ∑' m', (π m' : ℝ≥0∞) := ENNReal.tsum_mul_left
-      _ ≤ ENNReal.ofReal (16 * Real.sqrt 2 * σ ^ 2) * 1 := by gcongr
-      _ = _ := mul_one _
+  have hZint : ∫⁻ ε, Z ε ∂μ₀ ≤ ENNReal.ofReal (16 * Real.sqrt 2 * σ ^ 2) :=
+    lintegral_tsum_le_of_le_mul (fun m' ↦
+      (ENNReal.measurable_ofReal.comp (hzc m').measurable).aemeasurable) hπsum hzint
   have hZfin : ∫⁻ ε, Z ε ∂μ₀ ≠ ∞ := ne_top_of_le_ne_top ENNReal.ofReal_ne_top hZint
   have hZae : ∀ᵐ ε ∂μ₀, Z ε < ∞ := ae_lt_top hZm hZfin
   -- change of variables `y = f + ε`
@@ -965,19 +958,7 @@ theorem selectedProjectionRisk_oracle_bound :
           have : σ ^ 2 / n * n = σ ^ 2 := by field_simp
           nlinarith [mul_nonneg hb hnR.le, sq_nonneg σ]
   -- optimize over the comparison model
-  obtain ⟨m₀⟩ := (inferInstance : Nonempty M)
-  have hfin : selectedProjectionRisk S select f σ ≠ ∞ :=
-    ne_top_of_le_ne_top ENNReal.ofReal_ne_top (hm m₀)
-  rw [← ENNReal.ofReal_toReal hfin]
-  apply ENNReal.ofReal_le_ofReal
-  set r := (selectedProjectionRisk S select f σ).toReal
-  have hr : ∀ m, r / 23 - σ ^ 2 / n ≤ ‖f - projectionModelFit S m f‖ ^ 2 / n + pen m := by
-    intro m
-    have := ENNReal.toReal_mono ENNReal.ofReal_ne_top (hm m)
-    rw [ENNReal.toReal_ofReal (by have := hB m; positivity)] at this
-    linarith
-  have := le_ciInf hr
-  linarith
+  exact le_ofReal_mul_iInf_add (by norm_num) (by positivity) _ hB hm
 
 /-- The fitted value equals the response exactly when the response lies in the selected
 model. -/

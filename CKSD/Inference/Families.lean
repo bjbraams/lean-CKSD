@@ -290,12 +290,9 @@ theorem map_sort_eq_and_indepFun_orderStatistics {n : ℕ} (P : Measure ℝ)
     apply propext
     constructor
     · intro h
-      change Tuple.sort x = τ at h
-      change StrictMono (x ∘ τ)
       rw [← h]
       exact (Tuple.monotone_sort x).strictMono_of_injective (hx.comp (Tuple.sort x).injective)
     · intro h
-      change StrictMono (x ∘ τ) at h
       have heq := Tuple.unique_monotone (Tuple.monotone_sort x) h.monotone
       exact DFunLike.ext _ _ fun i ↦ hx (congrFun heq i)
   -- each sorting permutation carries the same part of the law of the order statistics
@@ -352,7 +349,6 @@ theorem map_sort_eq_and_indepFun_orderStatistics {n : ℕ} (P : Measure ℝ)
     have hpre' : Tuple.sort ⁻¹' s ∩ S ⁻¹' t =
         ⋃ τ ∈ s.toFinset, ({x | Tuple.sort x = τ} ∩ S ⁻¹' t) := by
       rw [hpre, Set.iUnion₂_inter]
-    change μ (Tuple.sort ⁻¹' s ∩ S ⁻¹' t) = μ (Tuple.sort ⁻¹' s) * μ (S ⁻¹' t)
     rw [hpre', hpre, measure_biUnion_finset (fun τ _ τ' _ hττ' ↦ ?_)
       (fun τ _ ↦ (measurableSet_setOf_sort_eq τ).inter (hS ht)),
       measure_biUnion_finset (hdisj s) (fun τ _ ↦ measurableSet_setOf_sort_eq τ),

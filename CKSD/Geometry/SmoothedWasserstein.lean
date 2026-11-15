@@ -151,7 +151,8 @@ theorem integrable_norm_mul_isoGaussianPDF {s : ℝ} (hs : 0 < s) :
 
 /-- The Gaussian smoothing of a probability measure is a probability measure. -/
 instance isProbabilityMeasure_gaussianSmoothing (sigma : ℝ)
-    (ν : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure ν] : IsProbabilityMeasure (gaussianSmoothing sigma ν) := by
+    (ν : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure ν] :
+    IsProbabilityMeasure (gaussianSmoothing sigma ν) := by
   unfold gaussianSmoothing
   exact (Measure.isProbabilityMeasure_map_iff (by fun_prop)).2 inferInstance
 
@@ -522,6 +523,7 @@ theorem lintegral_lintegral_smoothedDensity_le (hs : sigma ≠ 0)
         have hgB : ∀ᵐ y ∂P, |g y| ≤ B x := hae.mono fun y hy ↦ by
           rw [abs_of_nonneg (hφ0 _)]; exact isoGaussianPDF_sub_le_of_mem_unitCube hs x hy
         have key := integral_abs_sampleMean_sub_le P hgm (hBpos x) hgB hn
+        -- restate the integrand through the local abbreviation `g`
         change ∫⁻ X, ENNReal.ofReal (‖x‖ * |(n : ℝ)⁻¹ * ∑ i, g (X i) - ∫ y, g y ∂P|)
           ∂(Measure.pi fun _ : Fin n ↦ P) ≤ _
         have hZi : Integrable (fun X : Fin n → EuclideanSpace ℝ (Fin d) ↦

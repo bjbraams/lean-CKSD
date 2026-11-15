@@ -46,16 +46,17 @@ theorem exists_nonlinear_path_solution (P : Measure Ω) [IsProbabilityMeasure P]
   obtain ⟨n, C, hC⟩ := exists_contractingWith_iterate_of_integral_estimates G q ha hT
     (fun U V ↦ continuous_meanPathDistance_L1 P hT U V)
     (fun U V t _ ↦ by simpa only [dist_eq_norm] using meanPathDistance_le_norm_sub P hT U V t)
-    (fun U V t ht ↦ meanPathDistance_le_integral_of_ae_bound P hT (G U) (G V) a (q U V) (hbound U V) t ht)
+    (fun U V t ht ↦
+      meanPathDistance_le_integral_of_ae_bound P hT (G U) (G V) a (q U V) (hbound U V) t ht)
     (fun U V ↦ dist_L1_le_integral_of_ae_bound P hT (G U) (G V) a ha (q U V)
-      (continuous_meanPathDistance_L1 P hT U V) (fun s _ ↦ meanPathDistance_nonneg P hT U V s) (hbound U V))
+      (continuous_meanPathDistance_L1 P hT U V) (fun s _ ↦ meanPathDistance_nonneg P hT U V s)
+      (hbound U V))
   obtain ⟨U, hU⟩ : ∃ U, Function.IsFixedPt G U := ⟨_, hC.isFixedPt_fixedPoint_iterate⟩
-  change G U = U at hU
   have hraw : (U : Ω → C(Icc (0 : ℝ) T, E)) =ᵐ[P]
       fun ω ↦ frozenPathSolutionMap P hT b hb U (Lp.stronglyMeasurable U).measurable
         (L1.integrable_coeFn U) (F ω) := by
     have h := nonlinearPathPicard_ae_eq P hT b hb F hFm hFi U
-    change (G U : Ω → C(Icc (0 : ℝ) T, E)) =ᵐ[P] _ at h
+    simp only [G, Function.IsFixedPt] at hU
     rwa [hU] at h
   refine ⟨U, (Lp.stronglyMeasurable U).measurable, L1.integrable_coeFn U, ?_⟩
   filter_upwards [hraw] with ω hω

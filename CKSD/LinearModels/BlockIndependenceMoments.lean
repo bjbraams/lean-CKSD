@@ -28,17 +28,20 @@ theorem integral_blockIndependenceRatio_pow_wishartGramMeasure
       (wishartNormalizer ((ν:ℝ)+2*k) S / wishartNormalizer ν S) *
         (∫ A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ),
           (A : Matrix (Fin p) (Fin p) ℝ).det ^ (-(k:ℝ))
-          ∂TauCeti.Probability.wishartGramMeasure (ν+2*k) (S.submatrix (Fin.castAdd q) (Fin.castAdd q))) *
+          ∂TauCeti.Probability.wishartGramMeasure (ν+2*k)
+              (S.submatrix (Fin.castAdd q) (Fin.castAdd q))) *
         (∫ A : selfAdjoint.submodule ℝ (Matrix (Fin q) (Fin q) ℝ),
           (A : Matrix (Fin q) (Fin q) ℝ).det ^ (-(k:ℝ))
-          ∂TauCeti.Probability.wishartGramMeasure (ν+2*k) (S.submatrix (Fin.natAdd p) (Fin.natAdd p))) := by
+          ∂TauCeti.Probability.wishartGramMeasure (ν+2*k)
+              (S.submatrix (Fin.natAdd p) (Fin.natAdd p))) := by
   let E := selfAdjoint.submodule ℝ (Matrix (Fin (p+q)) (Fin (p+q)) ℝ)
   let μ := TauCeti.Probability.wishartGramMeasure ν S
   let μ' := TauCeti.Probability.wishartGramMeasure (ν+2*k) S
   let C := wishartNormalizer ((ν:ℝ)+2*k) S / wishartNormalizer ν S
   let f : E → ℝ≥0∞ := fun A ↦ ENNReal.ofReal ((A : Matrix (Fin (p+q)) (Fin (p+q)) ℝ).det ^ k)
   let g : E → ℝ := fun A ↦
-    ((A : Matrix (Fin (p+q)) (Fin (p+q)) ℝ).submatrix (Fin.castAdd q) (Fin.castAdd q)).det ^ (-(k:ℝ)) *
+    ((A : Matrix (Fin (p+q)) (Fin (p+q)) ℝ).submatrix (Fin.castAdd q) (Fin.castAdd q)).det ^
+        (-(k:ℝ)) *
     ((A : Matrix (Fin (p+q)) (Fin (p+q)) ℝ).submatrix (Fin.natAdd p) (Fin.natAdd p)).det ^ (-(k:ℝ))
   have hf : Measurable f := by dsimp [f]; fun_prop
   have hweight : μ.withDensity f = ENNReal.ofReal C • μ' :=
@@ -61,8 +64,10 @@ theorem integral_blockIndependenceRatio_pow_wishartGramMeasure
   rw [← hweighted, hweight, integral_smul_measure, ENNReal.toReal_ofReal hC, smul_eq_mul, mul_assoc]
   congr 1
   let π := fun A : E ↦
-    (Matrix.symmetricCongruenceLinearMap ((1 : Matrix (Fin (p+q)) (Fin (p+q)) ℝ).submatrix (Fin.castAdd q) id) A,
-      Matrix.symmetricCongruenceLinearMap ((1 : Matrix (Fin (p+q)) (Fin (p+q)) ℝ).submatrix (Fin.natAdd p) id) A)
+    (Matrix.symmetricCongruenceLinearMap
+        ((1 : Matrix (Fin (p+q)) (Fin (p+q)) ℝ).submatrix (Fin.castAdd q) id) A,
+      Matrix.symmetricCongruenceLinearMap
+          ((1 : Matrix (Fin (p+q)) (Fin (p+q)) ℝ).submatrix (Fin.natAdd p) id) A)
   let gp := fun z : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ×
       selfAdjoint.submodule ℝ (Matrix (Fin q) (Fin q) ℝ) ↦
     (z.1 : Matrix (Fin p) (Fin p) ℝ).det ^ (-(k:ℝ)) *
@@ -72,17 +77,12 @@ theorem integral_blockIndependenceRatio_pow_wishartGramMeasure
     dsimp [g, gp, π]
     rw [coe_symmetricCongruenceLinearMap_submatrix_one,
       coe_symmetricCongruenceLinearMap_submatrix_one]
-  rw [hg]
-  change (∫ A, gp (π A) ∂μ') = _
+  simp only [hg, Function.comp_apply]
   have hgp : Measurable gp := by dsimp [gp]; fun_prop
   rw [← integral_map (by fun_prop : Measurable π).aemeasurable hgp.aestronglyMeasurable]
   have hpair := map_pair_principalBlocks_wishartGramMeasure (ν+2*k) hS.posSemidef
     (Fin.castAdd q) (Fin.natAdd p) hblock
-  change μ'.map π = _ at hpair
   rw [hpair]
-  change (∫ z : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ×
-      selfAdjoint.submodule ℝ (Matrix (Fin q) (Fin q) ℝ), (z.1 : Matrix (Fin p) (Fin p) ℝ).det ^ (-(k:ℝ)) *
-    (z.2 : Matrix (Fin q) (Fin q) ℝ).det ^ (-(k:ℝ)) ∂_) = _
   exact integral_prod_mul (L := ℝ)
     (fun A : selfAdjoint.submodule ℝ (Matrix (Fin p) (Fin p) ℝ) ↦
       (A : Matrix (Fin p) (Fin p) ℝ).det ^ (-(k:ℝ)))

@@ -256,7 +256,6 @@ theorem abs_distanceToMeasure_sub_le_wasserstein {d : ℕ}
       intervalIntegral.integral_of_le hm.1.le, ← Real.sqrt_div' _ hm.1.le]
     congr 2
     refine setIntegral_congr_fun measurableSet_Ioc fun u hu ↦ ?_
-    show massRadius R u x ^ 2 = (R.map f).quantile u ^ 2
     rw [massRadius_eq_quantile_map_dist R x hu.1.le]
   rw [hdtm P hqPm, hdtm Q hqQm, ← sub_div, abs_div, abs_of_pos (Real.sqrt_pos.mpr hm.1)]
   gcongr

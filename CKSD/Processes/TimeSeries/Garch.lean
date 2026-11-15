@@ -335,7 +335,6 @@ theorem covariance_garchProcess (hε : IsIIDNoise μ ε 1) (ha₀ : 0 ≤ a₀) 
     rw [hfun, IndepFun.integral_mul_eq_mul_integral hind'
       ((hmeasP.mono (pastSigmaAlgebra_le hm _) le_rfl).aestronglyMeasurable)
       (hm t).aestronglyMeasurable, hε.integral_eq_zero t, mul_zero]
-  change ProbabilityTheory.covariance (X s) (X t) μ = _
   rw [covariance_eq_sub (memLp_garchProcess hε ha₀ ha hb hab s)
     (memLp_garchProcess hε ha₀ ha hb hab t), hEX s, hEX t, mul_zero, sub_zero]
   simp only [Pi.mul_apply]

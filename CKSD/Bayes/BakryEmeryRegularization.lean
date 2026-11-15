@@ -35,7 +35,8 @@ open scoped ENNReal NNReal Topology BigOperators ContDiff
 namespace CKSD
 
 /-- A Lipschitz derivative gives a global quadratic upper Taylor bound. -/
-theorem quadratic_upper_bound_of_lipschitz_fderiv {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+theorem quadratic_upper_bound_of_lipschitz_fderiv {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E]
     (g : E → ℝ) (hg : Differentiable ℝ g) {L : ℝ≥0}
     (hL : LipschitzWith L (fderiv ℝ g)) (x z : E) :
     g x ≤ g z + fderiv ℝ g z (x - z) + (L : ℝ) * ‖x - z‖ ^ 2 := by
@@ -47,11 +48,11 @@ theorem quadratic_upper_bound_of_lipschitz_fderiv {E : Type*} [NormedAddCommGrou
       ‖fderiv ℝ g y - fderiv ℝ g z‖ ≤ (L : ℝ) * ‖x - z‖ := by
     refine (hL.norm_sub_le y z).trans ?_
     exact mul_le_mul_of_nonneg_left (mem_closedBall_iff_norm.1 hy) L.coe_nonneg
-  have h := (convex_closedBall z ‖x - z‖).norm_image_sub_le_of_norm_hasFDerivWithin_le (x := z) (y := x)
+  have h := (convex_closedBall z ‖x - z‖).norm_image_sub_le_of_norm_hasFDerivWithin_le
+    (x := z) (y := x)
     (fun y _ ↦ (hFd y).hasFDerivWithinAt) hbd
     (Metric.mem_closedBall_self (norm_nonneg _))
     (mem_closedBall_iff_norm.2 le_rfl)
-  change ‖F x - F z‖ ≤ (L : ℝ) * ‖x - z‖ * ‖x - z‖ at h
   have hle := (le_abs_self (F x - F z)).trans (by simpa only [Real.norm_eq_abs] using h)
   dsimp [F] at hle
   simp only [sub_self, map_zero, sub_zero] at hle
@@ -88,7 +89,8 @@ theorem entropy_gibbs_exponential_le {d : ℕ}
   have hVm : Measurable V :=
     (continuous_iff_continuousAt.2 fun x ↦ (hG x).hasFDerivAt.continuousAt).measurable
   have hI : Integrable (fun x ↦ Real.exp (g x - V x)) := by
-    refine (hZ.const_mul (Real.exp M)).mono' ((hgm.sub hVm).exp.aestronglyMeasurable) (ae_of_all _ fun x ↦ ?_)
+    refine (hZ.const_mul (Real.exp M)).mono' ((hgm.sub hVm).exp.aestronglyMeasurable)
+      (ae_of_all _ fun x ↦ ?_)
     rw [Real.norm_eq_abs, Real.abs_exp, ← Real.exp_add]
     exact Real.exp_le_exp.2 (by linarith [(le_abs_self (g x)).trans (hgM x)])
   have hA : 0 < ∫ x, Real.exp (g x - V x) := integral_exp_pos hI
@@ -106,7 +108,8 @@ theorem entropy_gibbs_exponential_le {d : ℕ}
     rw [integral_gibbsMeasure V hVm hZ]
     congr 1
     apply integral_congr_ae
-    exact ae_of_all _ fun x ↦ by dsimp only; rw [Real.log_exp, ← mul_assoc, ← Real.exp_add]; congr 2; ring
+    exact ae_of_all _ fun x ↦ by
+      dsimp only; rw [Real.log_exp, ← mul_assoc, ← Real.exp_add]; congr 2; ring
   have henergy : (∫ x, Real.exp (g x) * ‖Dg x‖ ^ 2 ∂gibbsMeasure V) =
       (∫ x, Real.exp (g x - V x) * ‖Dg x‖ ^ 2) / ∫ x, Real.exp (-V x) := by
     rw [integral_gibbsMeasure V hVm hZ]
@@ -117,7 +120,8 @@ theorem entropy_gibbs_exponential_le {d : ℕ}
   have hh := div_le_div_of_nonneg_right hmain hZ0.le
   convert hh using 1 <;> ring
 
-/-- A smooth function constant off a compact set has bounded derivative and a quadratic upper bound. -/
+/-- A smooth function constant off a compact set has bounded derivative and a quadratic upper
+bound. -/
 theorem exists_bounded_quadratic_upper_bound {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     (g : E → ℝ) (hg : ContDiff ℝ ∞ g) (c : ℝ) (hc : HasCompactSupport (fun x ↦ g x - c)) :
     ∃ M H : ℝ, 0 ≤ M ∧ (∀ x, |g x| ≤ M) ∧ (∀ x, ‖fderiv ℝ g x‖ ^ 2 ≤ M) ∧
@@ -181,7 +185,8 @@ theorem tendsto_entropy_of_dominated_convergence {X : Type*} [MeasurableSpace X]
   have hlog := tendsto_integral_of_dominated_convergence D
     (fun n ↦ Real.continuous_mul_log.comp_aestronglyMeasurable (hfm n)) hD hfD
     (hfg.mono fun x hx ↦ (Real.continuous_mul_log.tendsto _).comp hx)
-  simpa only [Measure.entropy_def,Function.comp_apply] using hlog.sub ((Real.continuous_mul_log.tendsto _).comp hmean)
+  simpa only [Measure.entropy_def, Function.comp_apply] using
+    hlog.sub ((Real.continuous_mul_log.tendsto _).comp hmean)
 
 /-- Regularization of a square preserves the sharp gradient-energy upper bound. -/
 theorem regularized_log_gradient_energy_le {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
@@ -221,7 +226,8 @@ theorem entropy_gibbs_regularized_sq_le {d : ℕ}
     funext fun x ↦ Real.exp_log (by positivity)
   simp_rw [show ∀ x, Real.exp (g x) = ε + f x ^ 2 from fun x ↦ congrFun hexp x] at hmain
   have : IsProbabilityMeasure (gibbsMeasure V) := isProbabilityMeasure_gibbsMeasure hZ
-  obtain ⟨C, hC⟩ := (hf.continuous_fderiv (by simp)).bounded_above_of_compact_support (hfc.fderiv (𝕜 := ℝ))
+  obtain ⟨C, hC⟩ := (hf.continuous_fderiv (by simp)).bounded_above_of_compact_support
+    (hfc.fderiv (𝕜 := ℝ))
   have hDint : Integrable (fun x ↦ ‖fderiv ℝ f x‖ ^ 2) (gibbsMeasure V) := by
     refine Integrable.of_bound (by fun_prop) (C ^ 2) (ae_of_all _ fun x ↦ ?_)
     rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]
@@ -240,7 +246,8 @@ theorem entropy_gibbs_regularized_sq_le {d : ℕ}
     _ ≤ (2 / m) * ∫ x, ‖fderiv ℝ f x‖ ^ 2 ∂gibbsMeasure V := by
       convert hh using 1; ring
 
-/-- Adding positive constants tending to zero preserves the entropy of a bounded nonnegative function. -/
+/-- Adding positive constants tending to zero preserves the entropy of a bounded nonnegative
+function. -/
 theorem tendsto_entropy_add_inv {X : Type*} [MeasurableSpace X]
     (μ : Measure X) [IsFiniteMeasure μ] (q : X → ℝ) (hq : Measurable q)
     {C : ℝ} (hqC : ∀ x, q x ∈ Icc 0 C) :
@@ -251,8 +258,9 @@ theorem tendsto_entropy_add_inv {X : Type*} [MeasurableSpace X]
     constructor
     · positivity
     · exact (div_le_one (by positivity)).2 (by have := Nat.cast_nonneg (α := ℝ) n; linarith)
-  apply tendsto_entropy_of_dominated_convergence μ (fun n x ↦ 1 / ((n : ℝ) + 1) + q x) q (fun _ ↦ 1 + C) (fun _ ↦ D)
-    (fun n ↦ (measurable_const.add hq).aestronglyMeasurable) (integrable_const _) (integrable_const _)
+  apply tendsto_entropy_of_dominated_convergence μ (fun n x ↦ 1 / ((n : ℝ) + 1) + q x) q
+    (fun _ ↦ 1 + C) (fun _ ↦ D) (fun n ↦ (measurable_const.add hq).aestronglyMeasurable)
+    (integrable_const _) (integrable_const _)
   · intro n
     refine ae_of_all _ fun x ↦ ?_
     rw [Real.norm_eq_abs, abs_of_nonneg (by linarith [(heps n).1, (hqC x).1])]

@@ -18,17 +18,19 @@ Mathlib's `SimpleGraph`.
 
 * `CKSD.PairwiseGraphicalModel`: a positive pairwise model, with its weights, partition function
   and normalized masses.
-* `CKSD.IsLocallyConsistentBelief`, `CKSD.betheFreeEnergy`, `CKSD.IsBetheStationary`: the local
-  polytope and the Bethe variational problem.
-* `CKSD.IsBeliefPropagationFixedPoint`, `CKSD.beliefPropagationNode`,
-  `CKSD.beliefPropagationEdge`: belief propagation and its beliefs.
+* `CKSD.PairwiseGraphicalModel.IsLocallyConsistentBelief`,
+  `CKSD.PairwiseGraphicalModel.betheFreeEnergy`, `CKSD.PairwiseGraphicalModel.IsBetheStationary`:
+  the local polytope and the Bethe variational problem.
+* `CKSD.PairwiseGraphicalModel.IsBeliefPropagationFixedPoint`,
+  `CKSD.PairwiseGraphicalModel.beliefPropagationNode`,
+  `CKSD.PairwiseGraphicalModel.beliefPropagationEdge`: belief propagation and its beliefs.
 
 ## Main results
 
-* `CKSD.isBetheStationary_iff_exists_beliefPropagationFixedPoint`: Bethe stationary points are
-  BP beliefs (GAPS 107.19).
-* `CKSD.isBetheStationary_of_beliefPropagation`: interior beliefs given by the BP formulas from
-  any positive messages are Bethe stationary.
+* `CKSD.PairwiseGraphicalModel.isBetheStationary_iff_exists_beliefPropagationFixedPoint`: Bethe
+  stationary points are BP beliefs (GAPS 107.19).
+* `CKSD.PairwiseGraphicalModel.isBetheStationary_of_beliefPropagation`: interior beliefs given by
+  the BP formulas from any positive messages are Bethe stationary.
 
 Exactness and uniqueness of belief propagation on trees are in
 `CKSD.Learning.BeliefPropagationTree`.
@@ -84,6 +86,13 @@ def PairwiseGraphicalModel.mass (M : PairwiseGraphicalModel V S)
 abbrev LocalBeliefTables (V S : Type*) :=
   (V → S → ℝ) × (V → V → S → S → ℝ)
 
+/-- Shannon entropy `∑ᵢ -pᵢ log pᵢ` of a real table, with `0 log 0 = 0` (Mathlib's
+`Real.negMulLog`). -/
+def finiteTableEntropy {ι : Type*} [Fintype ι] (p : ι → ℝ) : ℝ :=
+  ∑ i, Real.negMulLog (p i)
+
+namespace PairwiseGraphicalModel
+
 /-- The local polytope of a finite pairwise model. -/
 def IsLocallyConsistentBelief (M : PairwiseGraphicalModel V S)
     (B : LocalBeliefTables V S) : Prop :=
@@ -107,11 +116,6 @@ def IsLocalBeliefDirection (M : PairwiseGraphicalModel V S)
     (∀ a, ∑ b, D.2 i j a b = D.1 i a) ∧
     (∀ b, ∑ a, D.2 i j a b = D.1 j b) ∧
     ∀ a b, D.2 i j a b = D.2 j i b a
-
-/-- Shannon entropy `∑ᵢ -pᵢ log pᵢ` of a real table, with `0 log 0 = 0` (Mathlib's
-`Real.negMulLog`). -/
-def finiteTableEntropy {ι : Type*} [Fintype ι] (p : ι → ℝ) : ℝ :=
-  ∑ i, Real.negMulLog (p i)
 
 /-- Bethe entropy of local node and edge tables. -/
 def betheEntropy (M : PairwiseGraphicalModel V S)
@@ -353,7 +357,7 @@ private theorem isLocalBeliefDirection_test (M : PairwiseGraphicalModel V S)
     exact (hc k l hkl x).symm
   · rw [Finset.sum_add_distrib, ← Finset.sum_mul, ← Finset.sum_mul, ← Finset.mul_sum,
       ← Finset.mul_sum, hf]
-    show _ = D₁ l y
+    dsimp only
     rw [hc l k hkl.symm y]
     ring
 
@@ -538,7 +542,7 @@ private theorem exists_beliefPropagationFixedPoint_of_isBetheStationary
         Real.exp (K i) * h2
     rw [Finset.sum_congr rfl fun a _ ↦ hterm a, ← Finset.mul_sum,
       (hB.1.2.2 i j h).2.2.1 b]
-    show B.1 j b / betheRatio M B j i b s₀ = _
+    simp only [m, betheMessage]
     rw [betheRatio_symm M B hB h]
     have := hR h s₀ s₀
     have := hR h s₀ b
@@ -685,7 +689,7 @@ theorem isBetheStationary_iff_exists_beliefPropagationFixedPoint
 
 omit [Fintype S] in
 /-- Every finite positive graphical-model configuration has positive weight. -/
-theorem PairwiseGraphicalModel.weight_pos (M : PairwiseGraphicalModel V S)
+theorem weight_pos (M : PairwiseGraphicalModel V S)
     (x : V → S) : 0 < M.weight x := by
   unfold weight
   apply mul_pos
@@ -693,5 +697,7 @@ theorem PairwiseGraphicalModel.weight_pos (M : PairwiseGraphicalModel V S)
   · apply Finset.prod_pos
     intro e he
     exact M.edgePotential_pos e.1 e.2 (Finset.mem_filter.mp he).2.2 (x e.1) (x e.2)
+
+end PairwiseGraphicalModel
 
 end CKSD

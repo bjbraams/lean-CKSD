@@ -112,6 +112,42 @@ private lemma sum_smul_algebraMap {ι : Type*} [Fintype ι] (w x : ι → ℝ) :
   refine Finset.sum_congr rfl fun i _ ↦ ?_
   rw [Algebra.smul_def, map_mul]
 
+/-- An order interval `[a I, b I]` of real matrices with `0 ≤ a` is compact. -/
+theorem isCompact_Icc_algebraMap {a b : ℝ} (ha : 0 ≤ a) :
+    IsCompact (Icc (algebraMap ℝ (Matrix n n ℝ) a) (algebraMap ℝ _ b)) := by
+  have hK0 : ∀ S ∈ Icc (algebraMap ℝ (Matrix n n ℝ) a) (algebraMap ℝ _ b), 0 ≤ S :=
+    fun S hS ↦ le_trans (by
+      rw [Algebra.algebraMap_eq_smul_one]
+      exact smul_nonneg ha (Matrix.nonneg_iff_posSemidef.2 Matrix.PosSemidef.one)) hS.1
+  set P : Set (Matrix n n ℝ) := {S | ∀ i j, S i j ∈ Icc (-b) b}
+  have hP : IsCompact P := by
+    have h : IsCompact (Set.pi univ fun _ : n ↦ Set.pi univ fun _ : n ↦ Icc (-b) b) :=
+      isCompact_univ_pi fun _ ↦ isCompact_univ_pi fun _ ↦ isCompact_Icc
+    have hPeq : P = (Set.pi univ fun _ : n ↦ Set.pi univ fun _ : n ↦ Icc (-b) b :
+        Set (Matrix n n ℝ)) := by
+      ext S; exact ⟨fun h i _ j _ ↦ h i j, fun h i j ↦ h i trivial j trivial⟩
+    rw [hPeq]; exact h
+  refine hP.of_isClosed_subset isClosed_Icc fun S hS i j ↦ ?_
+  exact abs_le.1 (abs_apply_le_of_nonneg_of_le_algebraMap (hK0 S hS) hS.2 i j)
+
+/-- For a positive semidefinite real matrix `A`, the map `S ↦ (S^{1/2} A S^{1/2})^{1/2}` is
+continuous on positive semidefinite matrices. -/
+theorem continuousOn_sqrt_sqrt_mul_mul_sqrt {A : Matrix n n ℝ} (hA : 0 ≤ A) :
+    ContinuousOn (fun S ↦ CFC.sqrt (CFC.sqrt S * A * CFC.sqrt S)) {S | 0 ≤ S} := by
+  have hsq : ContinuousOn (cfc Real.sqrt : Matrix n n ℝ → Matrix n n ℝ) {A | A.IsHermitian} :=
+    TauCeti.continuousOn_matrix_cfc Real.continuous_sqrt
+  have h1 : ContinuousOn (fun S ↦ cfc Real.sqrt S) {S : Matrix n n ℝ | 0 ≤ S} :=
+    hsq.mono fun S (hS : 0 ≤ S) ↦ hS.isSelfAdjoint
+  have hterm : ContinuousOn
+      (fun S ↦ cfc Real.sqrt (cfc Real.sqrt S * A * cfc Real.sqrt S)) {S | 0 ≤ S} := by
+    refine hsq.comp ((h1.mul continuousOn_const).mul h1) fun S _ ↦ ?_
+    have hX : IsSelfAdjoint (cfc Real.sqrt S) := cfc_predicate _ _
+    exact (hA.isSelfAdjoint.conjugate_self hX : _)
+  refine hterm.congr fun S hS ↦ ?_
+  have hS0 : 0 ≤ S := hS
+  have h0 : 0 ≤ CFC.sqrt S * A * CFC.sqrt S := conjugate_nonneg_of_nonneg hA (CFC.sqrt_nonneg S)
+  rw [CFC.sqrt_eq_real_sqrt _ h0, cfcₙ_eq_cfc, CFC.sqrt_eq_real_sqrt S hS0, cfcₙ_eq_cfc]
+
 /-- Existence of a solution of the Gaussian barycenter fixed-point equation: for nonnegative
 weights `w` summing to one and positive definite real matrices `A i`, there is a positive definite
 `S` with `S = ∑ i, w i • (S^{1/2} A i S^{1/2})^{1/2}`. If `α_i I ≤ A_i ≤ β_i I`, the map on the
@@ -186,42 +222,10 @@ theorem exists_posDef_eq_sum_smul_sqrt_mul_mul_sqrt {ι : Type*} [Fintype ι] (w
             refine Finset.sum_congr rfl fun i _ ↦ by ring
   -- continuity of `Φ` on `K`
   have hK0 : ∀ S ∈ K, 0 ≤ S := fun S hS ↦ (hnonneg ha.le).trans hS.1
-  have hsq : ContinuousOn (cfc Real.sqrt : Matrix n n ℝ → Matrix n n ℝ) {A | A.IsHermitian} :=
-    TauCeti.continuousOn_matrix_cfc Real.continuous_sqrt
-  have hherm : ∀ S ∈ K, S.IsHermitian := fun S hS ↦ (hK0 S hS).isSelfAdjoint
-  have hcont : ContinuousOn Φ K := by
-    have h1 : ContinuousOn (fun S ↦ cfc Real.sqrt S) K := hsq.mono hherm
-    have heq : EqOn Φ (fun S ↦ ∑ i, w i • cfc Real.sqrt
-        (cfc Real.sqrt S * A i * cfc Real.sqrt S)) K := by
-      intro S hS
-      simp only [Φ]
-      refine Finset.sum_congr rfl fun i _ ↦ ?_
-      have h0 := (hnonneg (mul_nonneg (hα i).le ha.le)).trans (hinner S hS i).1
-      rw [CFC.sqrt_eq_real_sqrt _ h0, cfcₙ_eq_cfc, CFC.sqrt_eq_real_sqrt S (hK0 S hS),
-        cfcₙ_eq_cfc]
-    have hterm : ∀ i, ContinuousOn
-        (fun S ↦ cfc Real.sqrt (cfc Real.sqrt S * A i * cfc Real.sqrt S)) K := by
-      intro i
-      refine hsq.comp ((h1.mul continuousOn_const).mul h1) fun S _ ↦ ?_
-      have hX : IsSelfAdjoint (cfc Real.sqrt S) := cfc_predicate _ _
-      exact ((hA i).isHermitian.isSelfAdjoint.conjugate_self hX : _)
-    have hterm' : ∀ i, ContinuousOn
-        (fun S ↦ w i • cfc Real.sqrt (cfc Real.sqrt S * A i * cfc Real.sqrt S)) K :=
-      fun i ↦ (hterm i).const_smul (w i)
-    exact (continuousOn_finsetSum Finset.univ fun i _ ↦ hterm' i).congr heq
+  have hcont : ContinuousOn Φ K := continuousOn_finsetSum Finset.univ fun i _ ↦
+    (((continuousOn_sqrt_sqrt_mul_mul_sqrt (hA i).posSemidef.nonneg).mono hK0).const_smul (w i))
   -- compactness and convexity of `K`
-  have hKc : IsCompact K := by
-    set P : Set (Matrix n n ℝ) := {S | ∀ i j, S i j ∈ Icc (-b) b}
-    have hP : IsCompact P := by
-      have h : IsCompact (Set.pi univ fun _ : n ↦ Set.pi univ fun _ : n ↦ Icc (-b) b) :=
-        isCompact_univ_pi fun _ ↦ isCompact_univ_pi fun _ ↦ isCompact_Icc
-      have hPeq : P = (Set.pi univ fun _ : n ↦ Set.pi univ fun _ : n ↦ Icc (-b) b :
-          Set (Matrix n n ℝ)) := by
-        ext S; exact ⟨fun h i _ j _ ↦ h i j, fun h i j ↦ h i trivial j trivial⟩
-      rw [hPeq]; exact h
-    have hsub : K ⊆ P := fun S hS i j ↦
-      abs_le.1 (abs_apply_le_of_nonneg_of_le_algebraMap (hK0 S hS) hS.2 i j)
-    exact hP.of_isClosed_subset isClosed_Icc hsub
+  have hKc : IsCompact K := isCompact_Icc_algebraMap ha.le
   have hKne : K.Nonempty := ⟨algebraMap ℝ _ a, le_rfl, by
     rw [← sub_nonneg, ← map_sub]; exact hnonneg (sub_nonneg.2 hab)⟩
   let _ : NormedAddCommGroup (Matrix n n ℝ) := Matrix.normedAddCommGroup

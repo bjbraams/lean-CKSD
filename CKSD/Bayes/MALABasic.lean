@@ -18,8 +18,8 @@ noncomputable section
 open MeasureTheory ProbabilityTheory Set
 open scoped ENNReal NNReal Topology
 namespace CKSD
-/-- One step of the `1/2`-lazy Metropolis-adjusted Langevin algorithm acting on laws: the image
-of `μ ⊗ N(0, I) ⊗ U(0,1) ⊗ U(0,1)` under the lazy accept–reject map. -/
+/-- One step of the `1 / 2`-lazy Metropolis-adjusted Langevin algorithm acting on laws: the image
+of `μ ⊗ N(0, I) ⊗ U(0, 1) ⊗ U(0, 1)` under the lazy accept–reject map. -/
 @[expose] def malaStepLaw {d : ℕ} (V : EuclideanSpace ℝ (Fin d) → ℝ)
     (gradV : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d)) (h : ℝ)
     (μ : Measure (EuclideanSpace ℝ (Fin d))) : Measure (EuclideanSpace ℝ (Fin d)) :=
@@ -60,8 +60,6 @@ theorem measurable_malaStepMap {d : ℕ}
     unfold malaAcceptance
     fun_prop
   -- Name the sampled state and proposal before applying the measurable conditional rule.
-  change Measurable (fun w ↦ if w.2 ≤ 1 / 2 then X w else
-    if w.1.2 ≤ malaAcceptance V G h (X w) (Y w) then Y w else X w)
   exact Measurable.ite (measurableSet_le measurable_snd measurable_const) hX
     (Measurable.ite (measurableSet_le (measurable_snd.comp measurable_fst) hAcc) hY hX)
 

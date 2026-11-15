@@ -31,14 +31,12 @@ theorem globalSolution_fst_eq_add
   have hd (r : ℝ) : HasDerivAt (fun r ↦ (ODE.globalSolution w hw q r).1) 1 r := by
     have h := (ContinuousLinearMap.fst ℝ ℝ E).hasFDerivAt.comp_hasDerivAt r
       (ODE.hasDerivAt_globalSolution w hw q r)
-    change HasDerivAt (fun r ↦ (ODE.globalSolution w hw q r).1)
-      (w (ODE.globalSolution w hw q r)).1 r at h
+    simp only [ContinuousLinearMap.coe_fst', Function.comp_def] at h
     rwa [hwfst] at h
   have hd0 (r : ℝ) : HasDerivAt (fun r ↦ (ODE.globalSolution w hw q r).1 - r) 0 r := by
     convert (hd r).sub (hasDerivAt_id r) using 1 <;> first | rfl | simp only [sub_self]
   have hh := is_const_of_deriv_eq_zero (fun r ↦ (hd0 r).differentiableAt) (fun r ↦ (hd0 r).deriv)
   have heq := hh s 0
-  change (ODE.globalSolution w hw q s).1 - s = (ODE.globalSolution w hw q 0).1 - 0 at heq
   rw [ODE.globalSolution_zero, sub_zero] at heq
   exact sub_eq_iff_eq_add.1 heq
 
@@ -63,7 +61,8 @@ theorem contDiff_backwardFlowTest [FiniteDimensional ℝ E]
     (hws : ContDiff ℝ ∞ w) (g : E → ℝ) (hg : ContDiff ℝ ∞ g) (T : ℝ) :
     ContDiff ℝ ∞ (backwardFlowTest w hw g T) := by
   have hflow := ODE.contDiff_globalSolution w hw (n := (⊤ : ℕ∞)) (by simpa using hws)
-  exact hg.comp (contDiff_snd.comp (hflow.comp (contDiff_id.prodMk (contDiff_const.sub contDiff_fst))))
+  exact hg.comp (contDiff_snd.comp
+    (hflow.comp (contDiff_id.prodMk (contDiff_const.sub contDiff_fst))))
 
 set_option backward.isDefEq.respectTransparency false in
 /-- The backward-flow test solves the backward transport equation for the smooth field. -/
@@ -123,7 +122,7 @@ theorem exists_smooth_bounded_clock {T : ℝ} (hT : 0 ≤ T) :
   · intro t ht
     have hη : η t = 1 := η.one_of_mem_closedBall (by
       rw [Metric.mem_closedBall, Real.dist_eq, sub_zero, abs_le]
-      exact ⟨by change -(T + 1) ≤ t; linarith [ht.1], by change t ≤ T + 1; linarith [ht.2]⟩)
+      exact ⟨by linarith [ht.1], by linarith [ht.2]⟩)
     simp only [β, hη, one_mul, id_eq]
 
 /-- A bounded smooth clock makes backward transport tests well-behaved on the whole time line. -/
@@ -144,7 +143,8 @@ theorem lipschitzWith_boundedBackwardFlowTest
     simpa only [mul_one, Function.comp_def] using hβ.comp LipschitzWith.prod_fst
   have hP : LipschitzWith (J + 1) (fun q : ℝ × E ↦ (β q.1, q.2)) := by
     apply (ha.prodMk LipschitzWith.prod_snd).weaken
-    exact max_le (le_add_of_nonneg_right zero_le_one) (le_add_of_nonneg_left (show (0 : ℝ≥0) ≤ J from zero_le))
+    exact max_le (le_add_of_nonneg_right zero_le_one)
+      (le_add_of_nonneg_left (show (0 : ℝ≥0) ≤ J from zero_le))
   have hτ : LipschitzWith J (fun q : ℝ × E ↦ T - β q.1) := by
     apply LipschitzWith.of_dist_le_mul
     intro q q'
@@ -179,7 +179,8 @@ theorem lipschitzWith_boundedBackwardFlowTest
   have hproj : dist (ODE.globalSolution w hw p τ).2 (ODE.globalSolution w hw p' τ').2 ≤
       dist (ODE.globalSolution w hw p τ) (ODE.globalSolution w hw p' τ') := by
     simpa only [NNReal.coe_one, one_mul] using
-      (LipschitzWith.prod_snd.dist_le_mul (ODE.globalSolution w hw p τ) (ODE.globalSolution w hw p' τ'))
+      (LipschitzWith.prod_snd.dist_le_mul (ODE.globalSolution w hw p τ)
+        (ODE.globalSolution w hw p' τ'))
   have hout : dist (boundedBackwardFlowTest w hw g T β q)
       (boundedBackwardFlowTest w hw g T β q') ≤ (G : ℝ) *
         ((Real.exp ((K : ℝ) * (|T| + R)) * ((J : ℝ) + 1) + (M : ℝ) * J) * dist q q') := by
@@ -246,8 +247,7 @@ theorem exists_approximate_backward_test [FiniteDimensional ℝ E]
   have hw : LipschitzWith K w := by
     apply LipschitzWith.of_dist_le_mul
     intro q q'
-    change max (dist (1 : ℝ) 1) (dist (v' q) (v' q')) ≤ _
-    rw [dist_self]
+    simp only [w, Prod.dist_eq, dist_self]
     exact max_le (by positivity) (hv'Lip.dist_le_mul q q')
   have hws : ContDiff ℝ ∞ w := contDiff_const.prodMk hv's
   have hwM (q : ℝ × E) : ‖w q‖₊ ≤ M' := by
@@ -264,7 +264,8 @@ theorem exists_approximate_backward_test [FiniteDimensional ℝ E]
       NNReal.coe_add] using max_le_max (le_refl (1 : ℝ)) hvq
   let u := boundedBackwardFlowTest w hw g T β
   have hus : ContDiff ℝ ∞ u := contDiff_boundedBackwardFlowTest w hw hws g hg T β hβs
-  have huLip : LipschitzWith C u := lipschitzWith_boundedBackwardFlowTest w hw hwM g hgLip T β hβLip R hβR
+  have huLip : LipschitzWith C u :=
+    lipschitzWith_boundedBackwardFlowTest w hw hwM g hgLip T β hβLip R hβR
   have hDu (q : ℝ × E) : ‖fderiv ℝ u q‖ ≤ (C : ℝ) := norm_fderiv_le_of_lipschitz ℝ huLip
   refine ⟨u, hus.of_le (by simp), fun q ↦ hgA _, hDu, ?_, ?_⟩
   · intro x
@@ -278,7 +279,8 @@ theorem exists_approximate_backward_test [FiniteDimensional ℝ E]
     have he : ‖(1, v (t, x)) - w (t, x)‖ ≤ δ := by
       have hc : ‖v (t, x) - v' (t, x)‖ ≤ δ := by
         simpa only [dist_comm, dist_eq_norm] using (hclose (t, x)).le
-      simpa only [w, Prod.mk_sub_mk, sub_self, Prod.norm_def, norm_zero, max_eq_right (norm_nonneg _)] using hc
+      simpa only [w, Prod.mk_sub_mk, sub_self, Prod.norm_def, norm_zero,
+        max_eq_right (norm_nonneg _)] using hc
     calc
       ‖fderiv ℝ u (t, x) (1, v (t, x))‖ =
           ‖fderiv ℝ u (t, x) ((1, v (t, x)) - w (t, x))‖ := by rw [map_sub, hzero, sub_zero]

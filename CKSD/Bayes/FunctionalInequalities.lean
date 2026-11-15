@@ -142,6 +142,174 @@ theorem integrable_comp_of_abs_le {E : Type*} [TopologicalSpace E] [MeasurableSp
   exact Integrable.of_bound (hF.comp hg).aestronglyMeasurable B
     (ae_of_all _ fun x ↦ hB _ (abs_le.1 (hG x)))
 
+/-- Pointwise second-order lower bound behind the entropy expansion of `(1 + εg)²`: with
+`t = 2εy + ε²y²` and `T = 2εm₁ + ε²m₂`, the remainder `(t - T)²/2 + R(t) - R(T)`, where
+`R(s) = (1 + s) log(1 + s) - s - s²/2`, is at least `2ε²(y - m₁)² - 220ε³G³`. -/
+theorem two_mul_sq_mul_sq_sub_le_of_abs_le {ε G y m₁ m₂ t T : ℝ} (hε : 0 < ε)
+    (hεG : ε * G ≤ 1 / 6) (hy : |y| ≤ G) (hm₁ : |m₁| ≤ G) (hm₂ : 0 ≤ m₂) (hm₂G : m₂ ≤ G ^ 2)
+    (ht : t = 2 * ε * y + ε ^ 2 * y ^ 2) (hT : T = 2 * ε * m₁ + ε ^ 2 * m₂) :
+    2 * ε ^ 2 * (y - m₁) ^ 2 - 220 * ε ^ 3 * G ^ 3 ≤
+      (t - T) ^ 2 / 2 + ((1 + t) * Real.log (1 + t) - t - t ^ 2 / 2) -
+        ((1 + T) * Real.log (1 + T) - T - T ^ 2 / 2) := by
+  have hG : 0 ≤ G := (abs_nonneg _).trans hy
+  have hεG1 : ε * G ≤ 1 := by linarith
+  have hy2 : y ^ 2 ≤ G ^ 2 := by
+    rw [← sq_abs]; exact pow_le_pow_left₀ (abs_nonneg _) hy 2
+  have hRb {s : ℝ} (hs : |s| ≤ 3 * ε * G) :
+      |(1 + s) * Real.log (1 + s) - s - s ^ 2 / 2| ≤ 108 * ε ^ 3 * G ^ 3 := by
+    calc _ ≤ 4 * |s| ^ 3 := abs_one_add_mul_log_one_add_sub_le (by linarith)
+      _ ≤ 4 * (3 * ε * G) ^ 3 := by gcongr
+      _ = 108 * ε ^ 3 * G ^ 3 := by ring
+  have htb : |t| ≤ 3 * ε * G := by
+    have h1 : |t| ≤ 2 * ε * |y| + ε ^ 2 * |y| ^ 2 := by
+      rw [ht]
+      refine (abs_add_le _ _).trans (le_of_eq ?_)
+      simp only [abs_mul, abs_pow, abs_of_pos hε, abs_two]
+    have h3 : ε * |y| ≤ ε * G := mul_le_mul_of_nonneg_left hy hε.le
+    have h4 : (ε * |y|) * (ε * |y|) ≤ ε * |y| :=
+      mul_le_of_le_one_right (by positivity) (by linarith)
+    calc |t| ≤ 2 * ε * |y| + ε ^ 2 * |y| ^ 2 := h1
+      _ = 2 * (ε * |y|) + (ε * |y|) * (ε * |y|) := by ring
+      _ ≤ 3 * (ε * G) := by linarith
+      _ = 3 * ε * G := by ring
+  have hTb : |T| ≤ 3 * ε * G := by
+    have h1 : |T| ≤ 2 * ε * |m₁| + ε ^ 2 * m₂ := by
+      rw [hT]
+      refine (abs_add_le _ _).trans (le_of_eq ?_)
+      simp only [abs_mul, abs_pow, abs_of_pos hε, abs_two, abs_of_nonneg hm₂]
+    have h3 : ε * |m₁| ≤ ε * G := mul_le_mul_of_nonneg_left hm₁ hε.le
+    have h4 : ε ^ 2 * m₂ ≤ (ε * G) * (ε * G) := by
+      calc ε ^ 2 * m₂ ≤ ε ^ 2 * G ^ 2 := mul_le_mul_of_nonneg_left hm₂G (sq_nonneg ε)
+        _ = (ε * G) * (ε * G) := by ring
+    have h5 : (ε * G) * (ε * G) ≤ ε * G := mul_le_of_le_one_right (by positivity) hεG1
+    linarith
+  have hdiff : t - T = 2 * ε * (y - m₁) + ε ^ 2 * (y ^ 2 - m₂) := by
+    rw [ht, hT]; ring
+  have ha : |2 * ε * (y - m₁)| ≤ 4 * ε * G := by
+    rw [abs_mul, abs_mul, abs_two, abs_of_pos hε]
+    have : |y - m₁| ≤ 2 * G := (abs_sub _ _).trans (by linarith)
+    nlinarith
+  have hb : |ε ^ 2 * (y ^ 2 - m₂)| ≤ ε ^ 2 * G ^ 2 := by
+    rw [abs_mul, abs_pow, abs_of_pos hε]
+    refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+    rw [abs_le]
+    constructor <;> nlinarith [sq_nonneg y]
+  have hR1 := hRb htb
+  have hR2 := hRb hTb
+  have hsq : (2 * ε * (y - m₁)) ^ 2 / 2 - |2 * ε * (y - m₁)| *
+      |ε ^ 2 * (y ^ 2 - m₂)| ≤ (t - T) ^ 2 / 2 := by
+    rw [hdiff]
+    set a := 2 * ε * (y - m₁)
+    set b := ε ^ 2 * (y ^ 2 - m₂)
+    have hab : -(|a| * |b|) ≤ a * b := by rw [← abs_mul]; exact neg_abs_le _
+    have hexp : (a + b) ^ 2 / 2 = a ^ 2 / 2 + a * b + b ^ 2 / 2 := by ring
+    rw [hexp]
+    linarith [sq_nonneg b]
+  have hprod : |2 * ε * (y - m₁)| * |ε ^ 2 * (y ^ 2 - m₂)| ≤
+      4 * ε * G * (ε ^ 2 * G ^ 2) :=
+    mul_le_mul ha hb (abs_nonneg _) (by positivity)
+  rw [abs_le] at hR1 hR2
+  nlinarith [hR1.1, hR2.2]
+
+/-- The second-order step of `variance_le_of_logSobolevInequality_of_abs_le`: for `|g| ≤ G` and
+`0 < ε`, `εG ≤ 1/6`, the logarithmic Sobolev inequality applied to `1 + εg` gives
+`2ε² Var g - 220ε³G³ ≤ 2C ε² ∫ ‖Dg‖²`. -/
+theorem two_mul_sq_mul_variance_sub_le_of_logSobolevInequality {E : Type*}
+    [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [OpensMeasurableSpace E]
+    (μ : Measure E) [IsProbabilityMeasure μ] {C : ℝ} (h : μ.LogSobolevInequality C) (g : E → ℝ)
+    (hg : ContDiff ℝ ∞ g) (G : ℝ) (hG : ∀ x, |g x| ≤ G)
+    (hdg : MemLp (fun x ↦ ‖fderiv ℝ g x‖) 2 μ) (ε : ℝ) (hε : 0 < ε) (hεG : ε * G ≤ 1 / 6) :
+    2 * ε ^ 2 * ProbabilityTheory.variance g μ - 220 * ε ^ 3 * G ^ 3 ≤
+      2 * C * (ε ^ 2 * ∫ x, ‖fderiv ℝ g x‖ ^ 2 ∂μ) := by
+  have hgc : Continuous g := hg.continuous
+  have hint {F : ℝ → ℝ} (hF : Continuous F) : Integrable (fun x ↦ F (g x)) μ :=
+    integrable_comp_of_abs_le μ hgc hG hF
+  set f : E → ℝ := fun x ↦ 1 + ε * g x with hf
+  have hfn (x : E) : ‖fderiv ℝ f x‖ = ε * ‖fderiv ℝ g x‖ := by
+    have hd : DifferentiableAt ℝ g x := hg.differentiable (by simp) x
+    simp only [hf]
+    rw [fderiv_const_add, fderiv_const_mul hd, norm_smul, Real.norm_eq_abs, abs_of_pos hε]
+  have hcont2 : Continuous fun y : ℝ ↦ (1 + ε * y) ^ 2 := by fun_prop
+  have hLS := h.apply f (contDiff_const.add (contDiff_const.mul hg))
+    (by simp_rw [hfn]; exact hdg.const_mul ε) (hint hcont2)
+    (hint (Real.continuous_mul_log.comp hcont2))
+  simp_rw [hfn, mul_pow] at hLS
+  rw [integral_const_mul] at hLS
+  refine le_trans ?_ hLS
+  -- Second-order expansion of the entropy of `(1 + ε g)²`.
+  set t : ℝ → ℝ := fun y ↦ 2 * ε * y + ε ^ 2 * y ^ 2 with ht
+  have htc : Continuous t := by fun_prop
+  set R : ℝ → ℝ := fun s ↦ (1 + s) * Real.log (1 + s) - s - s ^ 2 / 2 with hR
+  have hRc : Continuous R := by
+    have : Continuous fun s : ℝ ↦ (1 + s) * Real.log (1 + s) :=
+      Real.continuous_mul_log.comp (by fun_prop)
+    fun_prop
+  set m1 := ∫ x, g x ∂μ with hm1
+  set m2 := ∫ x, g x ^ 2 ∂μ with hm2
+  set T := ∫ x, t (g x) ∂μ with hT
+  have hTeq : T = 2 * ε * m1 + ε ^ 2 * m2 := by
+    have i1 : Integrable (fun x ↦ 2 * ε * g x) μ := hint (F := fun y ↦ 2 * ε * y) (by fun_prop)
+    have i2 : Integrable (fun x ↦ ε ^ 2 * g x ^ 2) μ :=
+      hint (F := fun y ↦ ε ^ 2 * y ^ 2) (by fun_prop)
+    simp only [hT, ht]
+    rw [integral_add i1 i2, integral_const_mul, integral_const_mul]
+  have hm1b : |m1| ≤ G := by
+    have := norm_integral_le_of_norm_le_const (μ := μ) (f := g) (C := G)
+      (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using hG x)
+    simpa [Real.norm_eq_abs] using this
+  have hy2 (x : E) : g x ^ 2 ≤ G ^ 2 := by
+    rw [← sq_abs]; exact pow_le_pow_left₀ (abs_nonneg _) (hG x) 2
+  have hm2b : 0 ≤ m2 ∧ m2 ≤ G ^ 2 := by
+    refine ⟨integral_nonneg fun x ↦ sq_nonneg _, ?_⟩
+    calc m2 ≤ ∫ _x, G ^ 2 ∂μ := integral_mono (hint (continuous_pow 2))
+          (integrable_const _) hy2
+      _ = G ^ 2 := by simp
+  set Q : ℝ → ℝ := fun y ↦ (t y - T) ^ 2 / 2 + R (t y) - R T with hQ
+  have hQc : Continuous Q := by fun_prop
+  have hpt (x : E) : f x ^ 2 * Real.log (f x ^ 2) - (1 + T) * Real.log (1 + T) =
+      (1 + T) * (t (g x) - T) + Q (g x) := by
+    have hfx : f x ^ 2 = 1 + t (g x) := by simp only [hf, ht]; ring
+    rw [hfx]
+    simp only [hQ, hR]
+    ring
+  have hent : MeasureTheory.Measure.entropy μ (fun x ↦ f x ^ 2) = ∫ x, Q (g x) ∂μ := by
+    have hfint : ∫ x, f x ^ 2 ∂μ = 1 + T := by
+      have : (fun x ↦ f x ^ 2) = fun x ↦ 1 + t (g x) := by
+        funext x; simp only [hf, ht]; ring
+      rw [this, integral_add (integrable_const _) (hint htc), integral_const]
+      simp [hT]
+    rw [MeasureTheory.Measure.entropy_def, hfint]
+    have h1 : ∫ x, f x ^ 2 * Real.log (f x ^ 2) ∂μ - (1 + T) * Real.log (1 + T) =
+        ∫ x, (f x ^ 2 * Real.log (f x ^ 2) - (1 + T) * Real.log (1 + T)) ∂μ := by
+      have iL : Integrable (fun x ↦ f x ^ 2 * Real.log (f x ^ 2)) μ :=
+        hint (F := fun y ↦ (1 + ε * y) ^ 2 * Real.log ((1 + ε * y) ^ 2))
+          (Real.continuous_mul_log.comp hcont2)
+      rw [integral_sub iL (integrable_const _), integral_const]
+      simp
+    rw [h1]
+    simp_rw [hpt]
+    have iA : Integrable (fun x ↦ (1 + T) * (t (g x) - T)) μ :=
+      hint (F := fun y ↦ (1 + T) * (t y - T)) (by fun_prop)
+    have iT : Integrable (fun x ↦ t (g x)) μ := hint htc
+    rw [integral_add iA (hint hQc), integral_const_mul, integral_sub iT (integrable_const T),
+      integral_const]
+    simp [← hT]
+  rw [hent]
+  have hlow (x : E) : 2 * ε ^ 2 * (g x - m1) ^ 2 - 220 * ε ^ 3 * G ^ 3 ≤ Q (g x) :=
+    two_mul_sq_mul_sq_sub_le_of_abs_le hε hεG (hG x) hm1b hm2b.1 hm2b.2 rfl hTeq
+  have iV : Integrable (fun x ↦ (g x - m1) ^ 2) μ :=
+    hint (F := fun y ↦ (y - m1) ^ 2) (by fun_prop)
+  have iW : Integrable (fun x ↦ 2 * ε ^ 2 * (g x - m1) ^ 2 - 220 * ε ^ 3 * G ^ 3) μ :=
+    (iV.const_mul _).sub (integrable_const _)
+  have hVeq : ProbabilityTheory.variance g μ = ∫ x, (g x - m1) ^ 2 ∂μ :=
+    variance_eq_integral hgc.aemeasurable
+  calc 2 * ε ^ 2 * ProbabilityTheory.variance g μ - 220 * ε ^ 3 * G ^ 3 =
+        ∫ x, (2 * ε ^ 2 * (g x - m1) ^ 2 - 220 * ε ^ 3 * G ^ 3) ∂μ := by
+        rw [integral_sub (iV.const_mul _) (integrable_const _), integral_const_mul,
+          integral_const, hVeq]
+        simp
+    _ ≤ ∫ x, Q (g x) ∂μ := integral_mono iW (hint hQc) hlow
+
 /-- A logarithmic Sobolev inequality with constant `C` gives the Poincaré bound with constant `C`
 for bounded smooth test functions: apply it to `1 + εg` and expand the entropy to second order
 in `ε`. -/
@@ -151,150 +319,11 @@ theorem variance_le_of_logSobolevInequality_of_abs_le {E : Type*} [NormedAddComm
     (hg : ContDiff ℝ ∞ g) (G : ℝ) (hG : ∀ x, |g x| ≤ G)
     (hdg : MemLp (fun x ↦ ‖fderiv ℝ g x‖) 2 μ) :
     ProbabilityTheory.variance g μ ≤ C * ∫ x, ‖fderiv ℝ g x‖ ^ 2 ∂μ := by
-  have hgc : Continuous g := hg.continuous
   have hG0 : 0 ≤ G := (abs_nonneg _).trans (hG 0)
   set G' := G + 1 with hG'
   have hG'0 : 0 < G' := by linarith
   set V := ProbabilityTheory.variance g μ with hV
   set D := ∫ x, ‖fderiv ℝ g x‖ ^ 2 ∂μ with hD
-  have hint {F : ℝ → ℝ} (hF : Continuous F) : Integrable (fun x ↦ F (g x)) μ :=
-    integrable_comp_of_abs_le μ hgc hG hF
-  have key (ε : ℝ) (hε : 0 < ε) (hεG : ε * G' ≤ 1 / 6) :
-      2 * ε ^ 2 * V - 220 * ε ^ 3 * G' ^ 3 ≤ 2 * C * (ε ^ 2 * D) := by
-    set f : E → ℝ := fun x ↦ 1 + ε * g x with hf
-    have hfn (x : E) : ‖fderiv ℝ f x‖ = ε * ‖fderiv ℝ g x‖ := by
-      have hd : DifferentiableAt ℝ g x := hg.differentiable (by simp) x
-      simp only [hf]
-      rw [fderiv_const_add, fderiv_const_mul hd, norm_smul, Real.norm_eq_abs, abs_of_pos hε]
-    have hcont2 : Continuous fun y : ℝ ↦ (1 + ε * y) ^ 2 := by fun_prop
-    have hLS := h.apply f (contDiff_const.add (contDiff_const.mul hg))
-      (by simp_rw [hfn]; exact hdg.const_mul ε) (hint hcont2)
-      (hint (Real.continuous_mul_log.comp hcont2))
-    simp_rw [hfn, mul_pow] at hLS
-    rw [integral_const_mul] at hLS
-    refine le_trans ?_ hLS
-    -- Second-order expansion of the entropy of `(1 + ε g)²`.
-    set t : ℝ → ℝ := fun y ↦ 2 * ε * y + ε ^ 2 * y ^ 2 with ht
-    have htc : Continuous t := by fun_prop
-    set R : ℝ → ℝ := fun s ↦ (1 + s) * Real.log (1 + s) - s - s ^ 2 / 2 with hR
-    have hRc : Continuous R := by
-      have : Continuous fun s : ℝ ↦ (1 + s) * Real.log (1 + s) :=
-        Real.continuous_mul_log.comp (by fun_prop)
-      fun_prop
-    set m1 := ∫ x, g x ∂μ with hm1
-    set m2 := ∫ x, g x ^ 2 ∂μ with hm2
-    set T := ∫ x, t (g x) ∂μ with hT
-    have hTeq : T = 2 * ε * m1 + ε ^ 2 * m2 := by
-      have i1 : Integrable (fun x ↦ 2 * ε * g x) μ := hint (F := fun y ↦ 2 * ε * y) (by fun_prop)
-      have i2 : Integrable (fun x ↦ ε ^ 2 * g x ^ 2) μ :=
-        hint (F := fun y ↦ ε ^ 2 * y ^ 2) (by fun_prop)
-      simp only [hT, ht]
-      rw [integral_add i1 i2, integral_const_mul, integral_const_mul]
-    have hm1b : |m1| ≤ G := by
-      have := norm_integral_le_of_norm_le_const (μ := μ) (f := g) (C := G)
-        (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using hG x)
-      simpa [Real.norm_eq_abs] using this
-    have hy2 (x : E) : g x ^ 2 ≤ G ^ 2 := by
-      rw [← sq_abs]; exact pow_le_pow_left₀ (abs_nonneg _) (hG x) 2
-    have hm2b : 0 ≤ m2 ∧ m2 ≤ G ^ 2 := by
-      refine ⟨integral_nonneg fun x ↦ sq_nonneg _, ?_⟩
-      calc m2 ≤ ∫ _x, G ^ 2 ∂μ := integral_mono (hint (continuous_pow 2))
-            (integrable_const _) hy2
-        _ = G ^ 2 := by simp
-    have htb (x : E) : |t (g x)| ≤ 3 * ε * G' := by
-      have hgx := (hG x).trans (by linarith : G ≤ G')
-      have h1 : |t (g x)| ≤ 2 * ε * |g x| + ε ^ 2 * |g x| ^ 2 := by
-        refine (abs_add_le _ _).trans (le_of_eq ?_)
-        simp only [abs_mul, abs_pow, abs_of_pos hε, abs_two]
-      have h3 : ε * |g x| ≤ ε * G' := mul_le_mul_of_nonneg_left hgx hε.le
-      have h2 : ε * |g x| ≤ 1 := by linarith
-      have h4 : (ε * |g x|) * (ε * |g x|) ≤ ε * |g x| :=
-        mul_le_of_le_one_right (by positivity) h2
-      calc |t (g x)| ≤ 2 * ε * |g x| + ε ^ 2 * |g x| ^ 2 := h1
-        _ = 2 * (ε * |g x|) + (ε * |g x|) * (ε * |g x|) := by ring
-        _ ≤ 3 * (ε * G') := by linarith
-        _ = 3 * ε * G' := by ring
-    have hTb : |T| ≤ 3 * ε * G' := by
-      have := norm_integral_le_of_norm_le_const (μ := μ) (f := fun x ↦ t (g x))
-        (C := 3 * ε * G') (ae_of_all _ fun x ↦ by simpa [Real.norm_eq_abs] using htb x)
-      simpa [Real.norm_eq_abs] using this
-    have hRb {s : ℝ} (hs : |s| ≤ 3 * ε * G') : |R s| ≤ 108 * ε ^ 3 * G' ^ 3 := by
-      have := abs_one_add_mul_log_one_add_sub_le (s := s) (by linarith)
-      calc |R s| ≤ 4 * |s| ^ 3 := this
-        _ ≤ 4 * (3 * ε * G') ^ 3 := by gcongr
-        _ = 108 * ε ^ 3 * G' ^ 3 := by ring
-    set Q : ℝ → ℝ := fun y ↦ (t y - T) ^ 2 / 2 + R (t y) - R T with hQ
-    have hQc : Continuous Q := by fun_prop
-    have hpt (x : E) : f x ^ 2 * Real.log (f x ^ 2) - (1 + T) * Real.log (1 + T) =
-        (1 + T) * (t (g x) - T) + Q (g x) := by
-      have hfx : f x ^ 2 = 1 + t (g x) := by simp only [hf, ht]; ring
-      rw [hfx]
-      simp only [hQ, hR]
-      ring
-    have hent : MeasureTheory.Measure.entropy μ (fun x ↦ f x ^ 2) = ∫ x, Q (g x) ∂μ := by
-      have hfint : ∫ x, f x ^ 2 ∂μ = 1 + T := by
-        have : (fun x ↦ f x ^ 2) = fun x ↦ 1 + t (g x) := by
-          funext x; simp only [hf, ht]; ring
-        rw [this, integral_add (integrable_const _) (hint htc), integral_const]
-        simp [hT]
-      rw [MeasureTheory.Measure.entropy_def, hfint]
-      have h1 : ∫ x, f x ^ 2 * Real.log (f x ^ 2) ∂μ - (1 + T) * Real.log (1 + T) =
-          ∫ x, (f x ^ 2 * Real.log (f x ^ 2) - (1 + T) * Real.log (1 + T)) ∂μ := by
-        have iL : Integrable (fun x ↦ f x ^ 2 * Real.log (f x ^ 2)) μ :=
-          hint (F := fun y ↦ (1 + ε * y) ^ 2 * Real.log ((1 + ε * y) ^ 2))
-            (Real.continuous_mul_log.comp hcont2)
-        rw [integral_sub iL (integrable_const _), integral_const]
-        simp
-      rw [h1]
-      simp_rw [hpt]
-      have iA : Integrable (fun x ↦ (1 + T) * (t (g x) - T)) μ :=
-        hint (F := fun y ↦ (1 + T) * (t y - T)) (by fun_prop)
-      have iT : Integrable (fun x ↦ t (g x)) μ := hint htc
-      rw [integral_add iA (hint hQc), integral_const_mul, integral_sub iT (integrable_const T),
-        integral_const]
-      simp [← hT]
-    rw [hent]
-    have hlow (x : E) : 2 * ε ^ 2 * (g x - m1) ^ 2 - 220 * ε ^ 3 * G' ^ 3 ≤ Q (g x) := by
-      have hdiff : t (g x) - T = 2 * ε * (g x - m1) + ε ^ 2 * (g x ^ 2 - m2) := by
-        rw [hTeq]; simp only [ht]; ring
-      have ha : |2 * ε * (g x - m1)| ≤ 4 * ε * G' := by
-        rw [abs_mul, abs_mul, abs_two, abs_of_pos hε]
-        have : |g x - m1| ≤ 2 * G' :=
-          (abs_sub _ _).trans (by linarith [hG x, hm1b])
-        nlinarith
-      have hb : |ε ^ 2 * (g x ^ 2 - m2)| ≤ ε ^ 2 * G' ^ 2 := by
-        rw [abs_mul, abs_pow, abs_of_pos hε]
-        refine mul_le_mul_of_nonneg_left ?_ (by positivity)
-        rw [abs_le]
-        constructor <;> nlinarith [hy2 x, hm2b.1, hm2b.2, sq_nonneg (g x)]
-      have hR1 := hRb (htb x)
-      have hR2 := hRb hTb
-      have hsq : (2 * ε * (g x - m1)) ^ 2 / 2 - |2 * ε * (g x - m1)| *
-          |ε ^ 2 * (g x ^ 2 - m2)| ≤ (t (g x) - T) ^ 2 / 2 := by
-        rw [hdiff]
-        set a := 2 * ε * (g x - m1)
-        set b := ε ^ 2 * (g x ^ 2 - m2)
-        have hab : -(|a| * |b|) ≤ a * b := by rw [← abs_mul]; exact neg_abs_le _
-        have hexp : (a + b) ^ 2 / 2 = a ^ 2 / 2 + a * b + b ^ 2 / 2 := by ring
-        rw [hexp]
-        linarith [sq_nonneg b]
-      have hprod : |2 * ε * (g x - m1)| * |ε ^ 2 * (g x ^ 2 - m2)| ≤
-          4 * ε * G' * (ε ^ 2 * G' ^ 2) :=
-        mul_le_mul ha hb (abs_nonneg _) (by positivity)
-      simp only [hQ]
-      rw [abs_le] at hR1 hR2
-      nlinarith [hR1.1, hR2.2]
-    have iV : Integrable (fun x ↦ (g x - m1) ^ 2) μ :=
-      hint (F := fun y ↦ (y - m1) ^ 2) (by fun_prop)
-    have iW : Integrable (fun x ↦ 2 * ε ^ 2 * (g x - m1) ^ 2 - 220 * ε ^ 3 * G' ^ 3) μ :=
-      (iV.const_mul _).sub (integrable_const _)
-    have hVeq : V = ∫ x, (g x - m1) ^ 2 ∂μ := by rw [hV, variance_eq_integral hgc.aemeasurable]
-    calc 2 * ε ^ 2 * V - 220 * ε ^ 3 * G' ^ 3 =
-          ∫ x, (2 * ε ^ 2 * (g x - m1) ^ 2 - 220 * ε ^ 3 * G' ^ 3) ∂μ := by
-          rw [integral_sub (iV.const_mul _) (integrable_const _), integral_const_mul,
-            integral_const, hVeq]
-          simp
-      _ ≤ ∫ x, Q (g x) ∂μ := integral_mono iW (hint hQc) hlow
   refine le_of_forall_pos_le_add fun δ hδ ↦ ?_
   set ε := min (1 / (6 * G')) (δ / (110 * G' ^ 3)) with hεdef
   have hε : 0 < ε := lt_min (by positivity) (by positivity)
@@ -305,7 +334,8 @@ theorem variance_le_of_logSobolevInequality_of_abs_le {E : Type*} [NormedAddComm
     calc 110 * ε * G' ^ 3 ≤ 110 * (δ / (110 * G' ^ 3)) * G' ^ 3 := by
           gcongr; exact min_le_right _ _
       _ = δ := by field_simp
-  have := key ε hε hεG
+  have := two_mul_sq_mul_variance_sub_le_of_logSobolevInequality μ h g hg G'
+    (fun x ↦ (hG x).trans (by linarith)) hdg ε hε hεG
   have hε2 : 0 < 2 * ε ^ 2 := by positivity
   have : V ≤ C * D + 110 * ε * G' ^ 3 := by
     have h' : 2 * ε ^ 2 * V ≤ 2 * ε ^ 2 * (C * D + 110 * ε * G' ^ 3) := by nlinarith
@@ -479,12 +509,12 @@ theorem poincareInequality_gibbsMeasure_of_bounded_perturbation {d : ℕ}
 /-- Every positive JKO step has a unique minimizer for a continuous nonnegative potential and
 one finite-energy comparison law. -/
 theorem existsUnique_mem_moreauYosidaResolvent_jkoFreeEnergy {d : ℕ}
-    (V : EuclideanSpace ℝ (Fin d) → ℝ) (hVc : Continuous V) (hV : ∀ x,0≤V x)
+    (V : EuclideanSpace ℝ (Fin d) → ℝ) (hVc : Continuous V) (hV : ∀ x, 0 ≤ V x)
     (ρ₀ : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d))) (hF : jkoFreeEnergy V ρ₀ ≠ ⊤)
-    (τ : ℝ≥0) (hτ : 0<τ) (μ : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d))) :
-    ∃! ν,ν ∈ TauCeti.moreauYosidaResolvent (jkoFreeEnergy V) τ μ := by
-  obtain ⟨ν,hν⟩ := nonempty_moreauYosidaResolvent_jkoFreeEnergy V hVc hV τ hτ μ
-  refine ⟨ν,hν,fun η hη ↦ ?_⟩
+    (τ : ℝ≥0) (hτ : 0 < τ) (μ : TauCeti.WassersteinSpace 2 (EuclideanSpace ℝ (Fin d))) :
+    ∃! ν, ν ∈ TauCeti.moreauYosidaResolvent (jkoFreeEnergy V) τ μ := by
+  obtain ⟨ν, hν⟩ := nonempty_moreauYosidaResolvent_jkoFreeEnergy V hVc hV τ hτ μ
+  refine ⟨ν, hν, fun η hη ↦ ?_⟩
   exact subsingleton_moreauYosidaResolvent_jkoFreeEnergy V hVc hV ρ₀ hF τ hτ μ hη hν
 
 /-- GAPS 104.43: the Jordan–Kinderlehrer–Otto theorem. Every JKO step for the free energy has a

@@ -157,7 +157,6 @@ theorem condIndepFun_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [Standa
       (X ⁻¹' t).indicator fun _ ↦ (1 : ℝ)) P := by
     rw [← indicator_inter_one]
     exact (integrable_const 1).indicator ((hA hs).inter (hX ht))
-  change P[(A ⁻¹' s ∩ X ⁻¹' t).indicator fun _ ↦ (1 : ℝ) | _] =ᵐ[P] _
   rw [indicator_inter_one]
   refine condExp_mul_ae_eq_of_le hGF hX.comap_le P
     (aestronglyMeasurable_condExp_indicator_treatment P hA hX s) ?_
@@ -182,11 +181,9 @@ theorem condIndepFun_of_propensityScore {Ω S : Type*} [MeasurableSpace Ω] [Sta
     (aestronglyMeasurable_condExp_indicator_treatment P hA hX s)
     (V := (Y ⁻¹' t).indicator fun _ ↦ (1 : ℝ)) (by
       have h' := hind t s ht hs
-      change P[(Y ⁻¹' t ∩ A ⁻¹' s).indicator fun _ ↦ (1 : ℝ) | _] =ᵐ[P] _ at h'
       rw [indicator_inter_one, mul_comm] at h'
       filter_upwards [h'] with ω hω
       rw [hω, Pi.mul_apply, mul_comm])
-  change P[(Y ⁻¹' t ∩ A ⁻¹' s).indicator fun _ ↦ (1 : ℝ) | _] =ᵐ[P] _
   rw [indicator_inter_one, mul_comm]
   filter_upwards [h] with ω hω
   rw [hω, Pi.mul_apply, mul_comm]
@@ -402,9 +399,8 @@ private theorem integral_and_variance_finiteStrataTreatmentInfluence
       (g := fun ω ↦ (c x + d x a * (Y ω - m x a)) ^ 2) (fun ω hω ↦ by rw [heq x a hω])]
     refine Eq.trans (setIntegral_affine_centred P hY (hpos x a) (c x) (d x a)).2 ?_
     congr 2
-    show _ = (∫ ω in S x a, (Y ω - m x a) ^ 2 ∂P) / P.real (S x a) * P.real (S x a)
-    rw [div_mul_cancel₀ _ (hpos x a).ne']
-    rfl
+    rw [hvdef, hpdef, stratumOutcomeVariance, stratumOutcomeMean, ← hSdef,
+      div_mul_cancel₀ _ (hpos x a).ne']
   have hmean : (∫ ω, φ ω ∂P) = 0 := by
     rw [integral_eq_sum_treatmentStratum P hX hA _ fun x a ↦
       (hYS x a).congr_fun (heq x a).symm (hmeas x a)]

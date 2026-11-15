@@ -19,8 +19,10 @@ namespace CKSD
 /-- The Gamma quotient for a block determinant ratio reduces to a shifted Wilks quotient. -/
 theorem multivariateGamma_block_ratio {p q : ℕ} {a : ℝ}
     (ha : ((p+q:ℕ):ℝ)-1 < 2*a) (k : ℕ) :
-    TauCeti.multivariateGamma (p+q) (a+k) * TauCeti.multivariateGamma p a * TauCeti.multivariateGamma q a /
-      (TauCeti.multivariateGamma (p+q) a * TauCeti.multivariateGamma p (a+k) * TauCeti.multivariateGamma q (a+k)) =
+    TauCeti.multivariateGamma (p+q) (a+k) * TauCeti.multivariateGamma p a *
+        TauCeti.multivariateGamma q a /
+      (TauCeti.multivariateGamma (p+q) a * TauCeti.multivariateGamma p (a+k) *
+          TauCeti.multivariateGamma q (a+k)) =
       TauCeti.multivariateGamma p (a-q/2+k) * TauCeti.multivariateGamma p a /
         (TauCeti.multivariateGamma p (a-q/2) * TauCeti.multivariateGamma p (a+k)) := by
   have hq : ((q:ℝ)-1)/2 < a := by

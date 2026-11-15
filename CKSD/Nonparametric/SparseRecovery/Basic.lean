@@ -61,7 +61,6 @@ theorem restrictedL1Norm_le_add_sub {p : ℕ} (S : Finset (Fin p))
   rw [← Finset.sum_add_distrib]
   apply Finset.sum_le_sum
   intro j hj
-  change |x j| ≤ |y j| + |y j - x j|
   calc
     |x j| = |y j + (x j - y j)| := by congr 1; ring
     _ ≤ |y j| + |x j - y j| := abs_add_le _ _
@@ -114,11 +113,9 @@ theorem hasNullspaceProperty_iff {n p : ℕ}
       intro j hj
       simp [β, hj]
     have hab : A b = A β := by
-      change A (β - δ) = A β
-      rw [map_sub, hnull, sub_zero]
+      simp only [b, map_sub, hnull, sub_zero]
     have hbne : b ≠ β := by
       intro h
-      change β - δ = β at h
       exact hne (sub_eq_self.mp h)
     have hlt := hunique β hβ b hab hbne
     have hβs : restrictedL1Norm S β = restrictedL1Norm S δ := by

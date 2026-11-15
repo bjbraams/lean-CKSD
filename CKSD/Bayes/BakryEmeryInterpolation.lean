@@ -34,7 +34,8 @@ open scoped ENNReal NNReal Topology BigOperators ContDiff
 namespace CKSD
 
 /-- A strongly monotone gradient gives a lower tangent paraboloid at every base point. -/
-theorem potential_add_inner_add_le {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+theorem potential_add_inner_add_le {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+    [CompleteSpace E]
     (V : E → ℝ) (G : E → E) (m : ℝ) (hG : ∀ x, HasGradientAt V (G x) x)
     (hm : ∀ x y, m * ‖x - y‖ ^ 2 ≤ inner ℝ (G x - G y) (x - y)) (x y : E) :
     V x + inner ℝ (G x) (y - x) + m / 2 * ‖y - x‖ ^ 2 ≤ V y := by
@@ -45,7 +46,8 @@ theorem potential_add_inner_add_le {E : Type*} [NormedAddCommGroup E] [InnerProd
     have h1 : HasDerivAt (fun s : ℝ ↦ V (x + s • v)) (inner ℝ (G (x + t • v)) v) t := by
       have := (hG (x + t • v)).hasFDerivAt.comp_hasDerivAt t
         (((hasDerivAt_id t).smul_const v).const_add x)
-      simpa only [Function.comp_def, id_eq, one_smul, InnerProductSpace.toDual_apply_apply] using! this
+      simpa only [Function.comp_def, id_eq, one_smul, InnerProductSpace.toDual_apply_apply]
+        using! this
     have h2 := ((h1.sub_const (V x)).sub ((hasDerivAt_id t).mul_const (inner ℝ (G x) v))).sub
       (((hasDerivAt_pow 2 t).const_mul (m / 2)).mul_const (‖v‖ ^ 2))
     refine (h2.congr_deriv ?_).congr_of_eventuallyEq (Eventually.of_forall fun s ↦ rfl)
@@ -108,7 +110,8 @@ theorem integrable_exp_neg_of_isStronglyMonotoneGradient {E : Type*} [NormedAddC
   linarith
 
 /-- Tangent paraboloids imply the strong convexity interpolation inequality. -/
-theorem potential_interpolation_le {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
+theorem potential_interpolation_le {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+    [CompleteSpace E]
     (V : E → ℝ) (G : E → E) (m : ℝ) (hG : ∀ x, HasGradientAt V (G x) x)
     (hm : ∀ x y, m * ‖x - y‖ ^ 2 ≤ inner ℝ (G x - G y) (x - y))
     (x y : E) {t : ℝ} (ht0 : 0 ≤ t) (ht1 : t ≤ 1) :
@@ -146,10 +149,10 @@ theorem exponential_interpolation_exponent_le {E : Type*} [NormedAddCommGroup E]
       (1 - t) * g z + (t * (1 - t) / (2 * (m - t * H))) * ‖Dg z‖ ^ 2 - V z := by
   intro z
   have hz := potential_interpolation_le V G m hG hm x y ht0 ht1
-  change V z ≤ _ at hz
   have hxz : x - z = t • (x - y) := by dsimp [z]; module
   have htg := hg x z
-  rw [hxz, map_smul, smul_eq_mul, norm_smul, Real.norm_eq_abs, abs_of_nonneg ht0, mul_pow] at htg
+  rw [hxz, map_smul, smul_eq_mul, norm_smul, Real.norm_eq_abs, abs_of_nonneg ht0,
+    mul_pow] at htg
   have hd : Dg z (x - y) ≤ ‖Dg z‖ * ‖x - y‖ :=
     (le_abs_self _).trans ((Dg z).le_opNorm _)
   have htg' : g x ≤ g z + t * (‖Dg z‖ * ‖x - y‖) + H / 2 * (t ^ 2 * ‖x - y‖ ^ 2) := by
@@ -193,12 +196,14 @@ theorem integral_exponential_interpolation_le {E : Type*} [NormedAddCommGroup E]
       Real.log_exp, Real.log_exp, ← ENNReal.ofReal_mul (Real.exp_pos _).le, ← Real.exp_add]
     apply ENNReal.ofReal_le_ofReal
     apply Real.exp_le_exp.2
-    simpa only [mul_comm] using exponential_interpolation_exponent_le V G m hG hm g Dg H hg x y ht0 ht1 hc
+    simpa only [mul_comm] using
+      exponential_interpolation_exponent_le V G m hG hm g Dg H hg x y ht0 ht1 hc
   rw [Measure.hasPrekopaLeindler_def] at hPL
   have h := hPL ((hgm.sub hVm).exp.ennreal_ofReal) (hVm.neg.exp.ennreal_ofReal)
     (show Measurable (fun x : E ↦ ENNReal.ofReal (Real.exp ((1 - t) * g x +
       (t * (1 - t) / (2 * (m - t * H))) * ‖Dg x‖ ^ 2 - V x))) from
-        (((hgm.const_mul _).add ((hDgm.pow_const (2 : ℕ)).const_mul _)).sub hVm).exp.ennreal_ofReal) hpoint
+        (((hgm.const_mul _).add ((hDgm.pow_const (2 : ℕ)).const_mul _)).sub
+          hVm).exp.ennreal_ofReal) hpoint
   simp only [Pi.sub_apply, Pi.neg_apply, ENNReal.rpow_eq_pow] at h
   rw [← ofReal_integral_eq_lintegral_ofReal hI (ae_of_all _ fun x ↦ (Real.exp_pos _).le),
     ← ofReal_integral_eq_lintegral_ofReal hZ (ae_of_all _ fun x ↦ (Real.exp_pos _).le),
@@ -223,8 +228,10 @@ theorem hasDerivAt_integral_exponential_perturbation {E : Type*} [MeasurableSpac
   have hs : s ∈ 𝓝 (0 : ℝ) := by
     have h1 : ∀ᶠ t in 𝓝 (0 : ℝ), |t| < 1 :=
       (continuousAt_id.abs).eventually (gt_mem_nhds (by norm_num))
-    have h2 : ∀ᶠ t in 𝓝 (0 : ℝ), |c t| < 1 := hcc.abs.eventually (gt_mem_nhds (by change |c 0| < 1; rw [hc0]; norm_num))
-    have h3 : ∀ᶠ t in 𝓝 (0 : ℝ), |c' t| < B := hc'c.abs.eventually (gt_mem_nhds (by dsimp [B]; linarith))
+    have h2 : ∀ᶠ t in 𝓝 (0 : ℝ), |c t| < 1 :=
+      hcc.abs.eventually (gt_mem_nhds (by simp [hc0]))
+    have h3 : ∀ᶠ t in 𝓝 (0 : ℝ), |c' t| < B :=
+      hc'c.abs.eventually (gt_mem_nhds (by dsimp [B]; linarith))
     exact h1.and (h2.and (h3.and hcd))
   let F := fun t x ↦ Real.exp ((1 - t) * g x + c t * h x - V x)
   let F' := fun t x ↦ Real.exp ((1 - t) * g x + c t * h x - V x) * (-g x + c' t * h x)
@@ -234,7 +241,8 @@ theorem hasDerivAt_integral_exponential_perturbation {E : Type*} [MeasurableSpac
     rw [hc0, zero_mul, add_zero, sub_zero, one_mul, Real.abs_exp, ← Real.exp_add]
     apply Real.exp_le_exp.2
     linarith [(le_abs_self (g x)).trans (hgM x)]
-  have hbound : ∀ᵐ x ∂μ, ∀ t ∈ s, ‖F' t x‖ ≤ Real.exp (3 * M) * Real.exp (-V x) * (M + B * M) := by
+  have hbound :
+      ∀ᵐ x ∂μ, ∀ t ∈ s, ‖F' t x‖ ≤ Real.exp (3 * M) * Real.exp (-V x) * (M + B * M) := by
     refine ae_of_all _ fun x t ht ↦ ?_
     have ht1 : |1 - t| ≤ 2 := by
       have := abs_sub 1 t
@@ -248,7 +256,8 @@ theorem hasDerivAt_integral_exponential_perturbation {E : Type*} [MeasurableSpac
     have hD : |-g x + c' t * h x| ≤ M + B * M := by
       refine (abs_add_le _ _).trans ?_
       rw [abs_neg, abs_mul]
-      exact add_le_add (hgM x) (mul_le_mul ht.2.2.1.le (hhM x) (abs_nonneg _) (by dsimp [B]; positivity))
+      exact add_le_add (hgM x)
+        (mul_le_mul ht.2.2.1.le (hhM x) (abs_nonneg _) (by dsimp [B]; positivity))
     dsimp [F']
     rw [abs_mul, Real.abs_exp]
     apply mul_le_mul _ hD (abs_nonneg _) (by positivity)
@@ -260,7 +269,8 @@ theorem hasDerivAt_integral_exponential_perturbation {E : Type*} [MeasurableSpac
       ((ht.2.2.2).mul_const (h x)) |>.sub_const (V x)
     dsimp [F, F']
     simpa only [Pi.sub_apply, Pi.add_apply, id_eq, sub_zero, zero_sub, neg_one_mul] using hd.exp
-  obtain ⟨_, hder⟩ := hasDerivAt_integral_of_dominated_loc_of_deriv_le (μ := μ) (F := F) (F' := F') hs
+  obtain ⟨_, hder⟩ :=
+    hasDerivAt_integral_of_dominated_loc_of_deriv_le (μ := μ) (F := F) (F' := F') hs
     (Eventually.of_forall fun t ↦ by dsimp [F]; fun_prop) hF0
     (show AEStronglyMeasurable (F' 0) μ by dsimp [F']; fun_prop)
     hbound ((hint.const_mul (Real.exp (3 * M))).mul_const (M + B * M)) hdiff
@@ -295,7 +305,8 @@ theorem entropy_exponential_le_of_quadratic_upper_bound {E : Type*} [NormedAddCo
   have hVm : Measurable V :=
     (continuous_iff_continuousAt.2 fun x ↦ (hG x).hasFDerivAt.continuousAt).measurable
   have hI : Integrable (fun x ↦ Real.exp (g x - V x)) := by
-    refine (hZ.const_mul (Real.exp M)).mono' ((hgm.sub hVm).exp.aestronglyMeasurable) (ae_of_all _ fun x ↦ ?_)
+    refine (hZ.const_mul (Real.exp M)).mono' ((hgm.sub hVm).exp.aestronglyMeasurable)
+      (ae_of_all _ fun x ↦ ?_)
     rw [Real.norm_eq_abs, Real.abs_exp, ← Real.exp_add]
     exact Real.exp_le_exp.2 (by linarith [(le_abs_self (g x)).trans (hgM x)])
   let A := ∫ x, Real.exp (g x - V x)
@@ -309,21 +320,18 @@ theorem entropy_exponential_le_of_quadratic_upper_bound {E : Type*} [NormedAddCo
   have hcd (t : ℝ) (ht : m - t * H ≠ 0) : HasDerivAt c (c' t) t := by
     have h1 : HasDerivAt (fun t : ℝ ↦ t * (1 - t)) (1 - 2 * t) t := by
       have hd := (hasDerivAt_id t).mul ((hasDerivAt_const t 1).sub (hasDerivAt_id t))
-      change HasDerivAt (fun s : ℝ ↦ s * (1 - s)) (1 * (1 - t) + t * (0 - 1)) t at hd
-      exact hd.congr_deriv (by ring)
+      exact hd.congr_deriv (by simp only [Pi.sub_apply, id_eq]; ring)
     have h2 : HasDerivAt (fun t : ℝ ↦ 2 * (m - t * H)) (-2 * H) t := by
       have hd := (((hasDerivAt_const t m).sub ((hasDerivAt_id t).mul_const H)).const_mul 2)
-      change HasDerivAt (fun s : ℝ ↦ 2 * (m - s * H)) (2 * (0 - 1 * H)) t at hd
       exact hd.congr_deriv (by ring)
     have hd := h1.div h2 (mul_ne_zero (by norm_num) ht)
-    change HasDerivAt c (((1 - 2 * t) * (2 * (m - t * H)) - t * (1 - t) * (-2 * H)) /
-      (2 * (m - t * H)) ^ 2) t at hd
     exact hd.congr_deriv (by dsimp [c']; ring)
   have hc'c : ContinuousAt c' 0 := by
     dsimp [c']
     fun_prop (disch := simp [hm0.ne'])
   have hpos : ∀ᶠ t in 𝓝 (0 : ℝ), 0 < m - t * H :=
-    (continuous_const.sub (continuous_id.mul_const H)).continuousAt.eventually (lt_mem_nhds (by change (0 : ℝ) < m - 0 * H; simpa using hm0))
+    (continuous_const.sub (continuous_id.mul_const H)).continuousAt.eventually
+      (lt_mem_nhds (by simpa using hm0))
   have hct : ∀ᶠ t in 𝓝 (0 : ℝ), HasDerivAt c (c' t) t := hpos.mono fun t ht ↦ hcd t ht.ne'
   have hc'0 : c' 0 = 1 / (2 * m) := by dsimp [c']; field_simp [hm0.ne']; ring
   let F : ℝ → ℝ := fun t ↦ Real.exp ((1 - t) * Real.log A + t * Real.log Z)
@@ -356,20 +364,20 @@ theorem entropy_exponential_le_of_quadratic_upper_bound {E : Type*} [NormedAddCo
       ← Real.exp_add, mul_comm] using h
   have hder := hasDerivAt_le_of_eventually_le_right hderF hderJ heq hle
   have hgg : Integrable (fun x ↦ Real.exp (g x - V x) * g x) :=
-    hI.mul_bdd hgm.aestronglyMeasurable (ae_of_all _ fun x ↦ by simpa only [Real.norm_eq_abs] using hgM x)
+    hI.mul_bdd hgm.aestronglyMeasurable
+      (ae_of_all _ fun x ↦ by simpa only [Real.norm_eq_abs] using hgM x)
   have hgd : Integrable (fun x ↦ Real.exp (g x - V x) * ‖Dg x‖ ^ 2) :=
     hI.mul_bdd (hDgm.pow_const (2 : ℕ)).aestronglyMeasurable
       (ae_of_all _ fun x ↦ by rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]; exact hDgM x)
   have he : (∫ x, Real.exp (g x - V x) * (-g x + (1 / (2 * m)) * ‖Dg x‖ ^ 2)) =
-      -(∫ x, Real.exp (g x - V x) * g x) + (1 / (2 * m)) * ∫ x, Real.exp (g x - V x) * ‖Dg x‖ ^ 2 := by
+      -(∫ x, Real.exp (g x - V x) * g x) +
+        (1 / (2 * m)) * ∫ x, Real.exp (g x - V x) * ‖Dg x‖ ^ 2 := by
     simp_rw [mul_add, mul_neg, ← mul_assoc, mul_comm _ (1 / (2 * m)), mul_assoc]
     have hneg : Integrable (fun x ↦ -(Real.exp (g x - V x) * g x)) := hgg.neg
     have hmul : Integrable (fun x ↦ (1 / (2 * m)) * (Real.exp (g x - V x) * ‖Dg x‖ ^ 2)) :=
       hgd.const_mul _
     rw [integral_add hneg hmul, integral_neg, integral_const_mul]
   rw [he] at hder
-  change A * (-Real.log A + Real.log Z) ≤ _ at hder
-  change _ - A * (Real.log A - Real.log Z) ≤ _
   nlinarith
 
 end CKSD

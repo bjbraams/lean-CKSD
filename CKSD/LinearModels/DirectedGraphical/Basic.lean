@@ -151,6 +151,12 @@ def doMarginalMass [Fintype V] [Fintype S] (localMass : V → (V → S) → S �
     (x : V → S) (B : Finset V) (y : V → S) : ℝ :=
   ∑ w, if ∀ v ∈ B, w v = y v then interventionMass localMass X x w else 0
 
+/-- The interventional marginal is the marginal of the truncated factorization. -/
+theorem doMarginalMass_eq_marginalMass_interventionMass [Fintype V] [Fintype S]
+    (localMass : V → (V → S) → S → ℝ) (X : Finset V) (x : V → S) (B : Finset V) (y : V → S) :
+    doMarginalMass localMass X x B y = marginalMass (interventionMass localMass X x) B y :=
+  rfl
+
 /-- Interventional conditional probability `P(y | do(x), w)`, all values read from `b`. -/
 def condDoMass [Fintype V] [Fintype S] (localMass : V → (V → S) → S → ℝ) (X Y W : Finset V)
     (b : V → S) : ℝ :=

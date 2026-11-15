@@ -689,4 +689,73 @@ theorem exists_pos_mul_sq_le_inner_toEuclideanCLM {ι : Type*} [Fintype ι] [Dec
   rw [h2, h3]
   linarith
 
+/-- A Lipschitz constant on a nondegenerate interval around `θ₀` is nonnegative. -/
+theorem nonneg_of_forall_abs_sub_le_mul_abs_sub {f : ℝ → ℝ} {θ₀ r c : ℝ} (hr : 0 < r)
+    (hlip : ∀ a b, |a - θ₀| < r → |b - θ₀| < r → |f a - f b| ≤ c * |a - b|) : 0 ≤ c := by
+  have h := hlip θ₀ (θ₀ + r / 2) (by simpa using hr)
+    (by rw [add_sub_cancel_left, abs_of_pos (half_pos hr)]; linarith)
+  have hp : 0 < |θ₀ - (θ₀ + r / 2)| := by
+    rw [abs_pos]; linarith
+  by_contra hneg
+  push Not at hneg
+  have := mul_neg_of_neg_of_pos hneg hp
+  linarith [abs_nonneg (f θ₀ - f (θ₀ + r / 2))]
+
+/-- For `δ ≥ 0`, the sequence `δ √n / 2 ^ n` tends to zero. -/
+theorem tendsto_mul_sqrt_div_two_pow {δ : ℝ} (hδ : 0 ≤ δ) :
+    Tendsto (fun n : ℕ ↦ δ * Real.sqrt n / 2 ^ n) atTop (𝓝 0) := by
+  have h1 := (tendsto_pow_const_div_const_pow_of_one_lt 1 (by norm_num : (1 : ℝ) < 2)).const_mul δ
+  rw [mul_zero] at h1
+  refine squeeze_zero (fun n ↦ by positivity) (fun n ↦ ?_) h1
+  simp only [pow_one]
+  rw [mul_div_assoc]
+  gcongr
+  rcases Nat.eq_zero_or_pos n with h | h
+  · simp [h]
+  · have h1 : (1 : ℝ) ≤ n := by exact_mod_cast h
+    have := Real.sqrt_le_sqrt h1
+    rw [Real.sqrt_one] at this
+    nlinarith [Real.mul_self_sqrt (Nat.cast_nonneg (α := ℝ) n)]
+
+/-- If `D * Wₙ + Wₙ * Rₙ + Zₙ → 0` in probability, with `D ≠ 0`, `Zₙ` bounded in probability and
+`Rₙ → 0` in probability, then `Wₙ` is bounded in probability. -/
+theorem isBoundedInProbability_of_tendstoInMeasure_const_mul_add_mul_add
+    {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsFiniteMeasure μ] (W Z R : ℕ → Ω → ℝ)
+    (D : ℝ) (hD : D ≠ 0)
+    (hZb : IsBoundedInProbability μ Z) (hR : TendstoInMeasure μ R atTop (fun _ ↦ 0))
+    (hE : TendstoInMeasure μ (fun n w ↦ D * W n w + W n w * R n w + Z n w) atTop
+      (fun _ ↦ 0)) :
+    IsBoundedInProbability μ W := by
+  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hE hR
+  intro ε hε
+  obtain ⟨C₁, hC₁, hZev⟩ := hZb (ε / 3) (by positivity)
+  have hDp : 0 < |D| := abs_pos.2 hD
+  refine ⟨2 * (1 + C₁) / |D|, by positivity, ?_⟩
+  filter_upwards [hZev, (hE 1 one_pos).eventually (eventually_le_nhds (by positivity :
+    0 < ε / 3)), (hR (|D| / 4) (by positivity)).eventually (eventually_le_nhds (by positivity :
+    0 < ε / 3))] with n h1 h2 h3
+  have hsub : {w | 2 * (1 + C₁) / |D| < |W n w|} ⊆
+      ({w | C₁ < |Z n w|} ∪ {w | 1 < dist (D * W n w + W n w * R n w + Z n w) 0}) ∪
+        {w | |D| / 4 < dist (R n w) 0} := by
+    intro w hw
+    by_contra hcon
+    simp only [mem_union, mem_ofPred_eq, not_or, not_lt, Real.dist_eq, sub_zero] at hcon hw
+    obtain ⟨⟨c1, c2⟩, c3⟩ := hcon
+    have hfac : W n w * (D + R n w) = (D * W n w + W n w * R n w + Z n w) - Z n w := by ring
+    have hlow : 3 * |D| / 4 ≤ |D + R n w| := by
+      have := abs_sub_abs_le_abs_sub D (-R n w)
+      rw [sub_neg_eq_add, abs_neg] at this
+      linarith
+    have hup : |W n w| * |D + R n w| ≤ 1 + C₁ := by
+      rw [← abs_mul, hfac]
+      exact (abs_sub _ _).trans (by linarith)
+    have hW0 := abs_nonneg (W n w)
+    rw [div_lt_iff₀ hDp] at hw
+    nlinarith
+  calc _ ≤ _ := measureReal_mono hsub
+    _ ≤ ε / 3 + ε / 3 + ε / 3 := by
+      refine (measureReal_union_le _ _).trans (add_le_add ?_ h3)
+      exact (measureReal_union_le _ _).trans (add_le_add h1 h2)
+    _ = ε := by ring
+
 end CKSD

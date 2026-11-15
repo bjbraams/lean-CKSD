@@ -57,9 +57,11 @@ theorem ae_exists_tendsto_sum_martingaleDifference
     intro n
     rw [hsum]
     have hh := condExp_add (hSi n) ((hD2 n).integrable one_le_two) (F n)
+    -- `change` unfolds the partial sum to match `condExp_add`.
     change (fun ω ↦ S n ω) =ᵐ[μ] μ[S n + D n | F n]
     filter_upwards [hh, hc n] with ω hω hzero
     rw [hω]
+    -- `change` unfolds the pointwise sum of conditional expectations.
     change S n ω = μ[S n | F n] ω + μ[D n | F n] ω
     rw [hzero, add_zero,
       condExp_of_stronglyMeasurable (F.le n) (hSm n) (hSi n)]
@@ -69,8 +71,10 @@ theorem ae_exists_tendsto_sum_martingaleDifference
     rw [← integral_condExp (F.le n)]
     have hh := condExp_mul_of_stronglyMeasurable_left (hSm n) hint
       ((hD2 n).integrable one_le_two)
+    -- `change` exposes the product as the conditional-expectation integrand.
     change (∫ ω, μ[S n * D n | F n] ω ∂μ) = 0
     rw [integral_congr_ae hh]
+    -- `change` unfolds the pointwise product left by `integral_congr_ae`.
     change (∫ ω, S n ω * μ[D n | F n] ω ∂μ) = 0
     have hz : (fun ω ↦ S n ω * μ[D n | F n] ω) =ᵐ[μ] fun _ ↦ 0 := by
       filter_upwards [hc n] with ω hω

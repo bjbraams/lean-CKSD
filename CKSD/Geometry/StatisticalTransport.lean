@@ -211,11 +211,13 @@ theorem satisfiesWassersteinKarcherEquation_of_minimizer {d k : ℕ} (hk : 0 < k
   have hmin' := hmin (P.map (fun x ↦ x - (1 : ℝ) • g x))
     inferInstance hmap2
   simp only [wassersteinBarycenterEnergy, ← hlaw] at hmin'
+  -- restate the descent bound through the local gradient `g`
   change _ ≤ -(1 - 1 ^ 2 / 2) * ∫ x, ‖g x‖ ^ 2 ∂P at hdescent
   have hzero : (∫ x, ‖g x‖ ^ 2 ∂P) = 0 := by
     have hnonneg : 0 ≤ ∫ x, ‖g x‖ ^ 2 ∂P := integral_nonneg fun x ↦ sq_nonneg _
     simp only [wassersteinBarycenterEnergy] at hdescent
     norm_num [g, wassersteinBarycenterGradient] at hmin' hdescent hnonneg
+    -- unfold the local gradient `g` in the goal, as `norm_num` did in the hypotheses
     change (∫ x, ‖x - (k : ℝ)⁻¹ • ∑ i, T i x‖ ^ 2 ∂P) = 0
     linarith
   have hae := (integral_eq_zero_iff_of_nonneg (fun x ↦ sq_nonneg ‖g x‖)

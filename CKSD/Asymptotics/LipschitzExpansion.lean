@@ -277,6 +277,199 @@ private theorem abs_mul_sub_sub_inner_le_of_anchor {d : ℕ}
   rw [abs_mul, abs_of_pos hs] at t1
   linarith
 
+/-- The deterministic core of the uniform local expansion. Cover `[-2R, 2R)ᵈ` by the `2ᵏᵈ`
+dyadic cells of level `k` with anchors `u z`. If the oscillation of `G` on each scaled cell
+`θ₀ + c • (cell z)` is controlled and the expansion `s (G(θ₀ + c u) - G θ₀) ≈ ⟪u, Δ⟫` holds up to
+`ε / 4` at every anchor, then it holds up to `5 ε / 8` at every `h` with `‖h‖ ≤ R`. Here
+`s c = 1`. -/
+private theorem abs_mul_sub_sub_inner_le_of_cells {d : ℕ} (G : EuclideanSpace ℝ (Fin d) → ℝ)
+    (θ₀ h Δ : EuclideanSpace ℝ (Fin d)) {R s c A Rm KΔ ε : ℝ} (k : ℕ) (hR : 0 < R)
+    (hs : 0 < s) (hcs : s * c = 1) (hc0 : 0 < c) (hRm0 : 0 ≤ Rm) (hRm1 : Rm ≤ 1)
+    (hhR : ‖h‖ ≤ R)
+    (hE : ∀ z ∈ Fintype.piFinset fun _ : Fin d ↦ Finset.Ico (0 : ℤ) (2 ^ k),
+      ∀ θ ∈ halfOpenCube (θ₀ + c • cubeGridPoint (WithLp.toLp 2 fun _ ↦ -(2 * R)) (4 * R) k z)
+        (c * (4 * R / 2 ^ k)),
+      |G θ - G (θ₀ + c • cubeGridPoint (WithLp.toLp 2 fun _ ↦ -(2 * R)) (4 * R) k z)| ≤
+        Real.sqrt d * (c * (4 * R / 2 ^ k)) * (2 * A + Rm))
+    (hD : ∀ z ∈ Fintype.piFinset fun _ : Fin d ↦ Finset.Ico (0 : ℤ) (2 ^ k),
+      |s * (G (θ₀ + c • cubeGridPoint (WithLp.toLp 2 fun _ ↦ -(2 * R)) (4 * R) k z) - G θ₀) -
+        inner ℝ (cubeGridPoint (WithLp.toLp 2 fun _ ↦ -(2 * R)) (4 * R) k z) Δ| ≤ ε / 4)
+    (hΔ : ‖Δ‖ ≤ KΔ) (hk : Real.sqrt d * (4 * R / 2 ^ k) * KΔ ≤ ε / 8)
+    (hk' : Real.sqrt d * (4 * R / 2 ^ k) ≤ ε / 8)
+    (hA : Real.sqrt d * (4 * R / 2 ^ k) * (2 * A) = ε / 8) :
+    |s * (G (θ₀ + c • h) - G θ₀) - inner ℝ h Δ| ≤ 5 * ε / 8 := by
+  set w₀ : ℝ := 4 * R with hw₀
+  have hw₀0 : 0 < w₀ := by positivity
+  set a₀ : EuclideanSpace ℝ (Fin d) := WithLp.toLp 2 fun _ ↦ -(2 * R) with ha₀
+  set wk : ℝ := w₀ / 2 ^ k with hwk
+  set u : (Fin d → ℤ) → EuclideanSpace ℝ (Fin d) := cubeGridPoint a₀ w₀ k with hu
+  have hhcube : h ∈ halfOpenCube a₀ w₀ := by
+    intro i
+    have := (PiLp.norm_apply_le h i).trans hhR
+    rw [Real.norm_eq_abs, abs_le] at this
+    simp only [ha₀, PiLp.toLp_apply, hw₀]
+    constructor <;> linarith
+  set z := cubeIndex a₀ w₀ k h with hzdef
+  have hz := cubeIndex_mem hw₀0 hhcube k
+  have hhu : h ∈ halfOpenCube (u z) wk := fun i ↦ by
+    obtain ⟨h1, h2⟩ := sub_cubeGridPoint_cubeIndex_mem a₀ h hw₀0 k i
+    constructor <;> simp only [hu, hzdef] <;> linarith
+  have hhu' : ‖h - u z‖ ≤ Real.sqrt d * wk := by
+    refine norm_le_sqrt_card_mul_of_abs_le _ fun i ↦ ?_
+    obtain ⟨g1, g2⟩ := hhu i
+    rw [PiLp.sub_apply, abs_of_nonneg (by linarith)]
+    linarith
+  exact abs_mul_sub_sub_inner_le_of_anchor G θ₀ h (u z) Δ hs hcs (Real.sqrt_nonneg _)
+    (by positivity) hRm0 hRm1 (hE z hz _ (add_smul_mem_halfOpenCube hhu θ₀ hc0)) (hD z hz)
+    hhu' hΔ hk hk' hA
+
+/-- A union bound over finitely many events: if each `E z` has probability at most `a` with
+`#Z a ≤ η / 4`, each `D z` has probability at most `η / (4 #Z)`, and `B` and `C` each have
+probability at most `η / 4`, then the union of all of them has probability at most `η`. -/
+theorem measureReal_biUnion_union_biUnion_union_union_le {Ω ι : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsFiniteMeasure μ] {Z : Finset ι} (hZ : Z.Nonempty) (E D : ι → Set Ω)
+    (B C : Set Ω) {a η : ℝ} (hE : ∀ z ∈ Z, μ.real (E z) ≤ a) (ha : Z.card * a ≤ η / 4)
+    (hD : ∀ z ∈ Z, μ.real (D z) ≤ η / (4 * Z.card)) (hB : μ.real B ≤ η / 4)
+    (hC : μ.real C ≤ η / 4) :
+    μ.real ((⋃ z ∈ Z, E z) ∪ (⋃ z ∈ Z, D z) ∪ B ∪ C) ≤ η := by
+  calc _
+    _ ≤ ∑ z ∈ Z, μ.real (E z) + ∑ z ∈ Z, μ.real (D z) + μ.real B + μ.real C := by
+      refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
+      refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
+      exact (measureReal_union_le _ _).trans (add_le_add (measureReal_biUnion_finset_le _ _)
+        (measureReal_biUnion_finset_le _ _))
+    _ ≤ ∑ _z ∈ Z, a + ∑ _z ∈ Z, η / (4 * Z.card) + η / 4 + η / 4 := by
+      gcongr with z hz z hz
+      · exact hE z hz
+      · exact hD z hz
+    _ ≤ η := by
+      rw [Finset.sum_const, Finset.sum_const, nsmul_eq_mul, nsmul_eq_mul]
+      have hZpos : (0 : ℝ) < Z.card := by exact_mod_cast hZ.card_pos
+      have e2 : (Z.card : ℝ) * (η / (4 * Z.card)) = η / 4 := by field_simp
+      rw [e2]
+      linarith
+
+/-- The estimate at a fixed sample size in the uniform local expansion. Fix a dyadic level `k`
+and a level `A` for the maximal inequality, with the cell width `4R / 2ᵏ` small (`hA`, `hk`,
+`hkK`) and the Bernstein tails summable over the `2ᵏᵈ` cells (`hq`, `hZq`). If at sample size `n`
+the expansions at the cell anchors, the chaining remainder and the normalized score are
+controlled in probability, then the expansion fails by more than `ε` somewhere on `‖h‖ ≤ R` with
+probability at most `η`. -/
+private theorem measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner_le
+    {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] (μ : Measure Ω)
+    [IsProbabilityMeasure μ] (P : Measure X) [IsProbabilityMeasure P] (Xn : ℕ → Ω → X)
+    (hiid : IsIndependentIdenticallyDistributed μ Xn P) {d : ℕ}
+    (f : EuclideanSpace ℝ (Fin d) → X → ℝ) (θ₀ : EuclideanSpace ℝ (Fin d)) {r₀ : ℝ}
+    (hfm : ∀ θ ∈ Metric.ball θ₀ r₀, Measurable (f θ))
+    (hfi : ∀ θ ∈ Metric.ball θ₀ r₀, Integrable (f θ) P) (L : X → ℝ) (hLm : Measurable L)
+    (hL0 : ∀ x, 0 ≤ L x) (hL2 : MemLp L 2 P)
+    (hlip : ∀ u ∈ Metric.ball θ₀ r₀, ∀ v ∈ Metric.ball θ₀ r₀, ∀ x,
+      |f u x - f v x| ≤ L x * ‖u - v‖)
+    (s : X → EuclideanSpace ℝ (Fin d)) {R ε η A K₀ K : ℝ} (hR : 0 < R) (hε : 0 < ε) (k n : ℕ)
+    (hn : 1 ≤ n) (hA0 : 0 ≤ A) (hA : Real.sqrt d * (4 * R / 2 ^ k) * (2 * A) = ε / 8)
+    (hk : Real.sqrt d * (4 * R / 2 ^ k) ≤ ε / 8)
+    (hkK : Real.sqrt d * (4 * R / 2 ^ k) * K ≤ ε / 8) (hK : K₀ ≤ K)
+    (hq : 2 ^ d * Real.exp (-bernsteinExponent (∫ x, L x ^ 2 ∂P + 1) (2 * 1 / 3) A) ≤ 1 / 2)
+    (hZq : ((2 : ℝ) ^ k) ^ d *
+      (4 * (2 ^ d * Real.exp (-bernsteinExponent (∫ x, L x ^ 2 ∂P + 1) (2 * 1 / 3) A))) ≤ η / 4)
+    (hnr : (Real.sqrt n)⁻¹ * (Real.sqrt d * (2 * R)) < r₀)
+    (hnA : ∀ z ∈ Fintype.piFinset fun _ : Fin d ↦ Finset.Ico (0 : ℤ) (2 ^ k),
+      μ.real {ω | ε / 4 < dist (Real.sqrt n * (empiricalProcess P Xn n
+        (f (θ₀ + (Real.sqrt n)⁻¹ • cubeGridPoint (WithLp.toLp 2 fun _ ↦ -(2 * R)) (4 * R) k z))
+          ω - empiricalProcess P Xn n (f θ₀) ω) -
+        inner ℝ (cubeGridPoint (WithLp.toLp 2 fun _ ↦ -(2 * R)) (4 * R) k z)
+          ((Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω))) 0} ≤
+        η / (4 * (Fintype.piFinset fun _ : Fin d ↦ Finset.Ico (0 : ℤ) (2 ^ k)).card))
+    (hnR : μ.real {ω | 1 < dist (lipschitzChainRemainder P Xn L 1 n ω) 0} ≤ η / 4)
+    (hnΔ : μ.real {ω | K₀ < ‖(Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω)‖} ≤ η / 4) :
+    μ.real {ω | ∃ h : EuclideanSpace ℝ (Fin d), ‖h‖ ≤ R ∧
+      ε < |Real.sqrt n * (empiricalProcess P Xn n (f (θ₀ + (Real.sqrt n)⁻¹ • h)) ω -
+        empiricalProcess P Xn n (f θ₀) ω) -
+        inner ℝ h ((Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω))|} ≤ η := by
+  set Δ : Ω → EuclideanSpace ℝ (Fin d) := fun ω ↦
+    (Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω) with hΔdef
+  set G : EuclideanSpace ℝ (Fin d) → Ω → ℝ := fun θ ω ↦ empiricalProcess P Xn n (f θ) ω
+    with hG
+  set wk : ℝ := 4 * R / 2 ^ k with hwk
+  have hwk0 : 0 < wk := by positivity
+  set Z : Finset (Fin d → ℤ) := Fintype.piFinset fun _ : Fin d ↦ Finset.Ico (0 : ℤ) (2 ^ k)
+    with hZ
+  set u : (Fin d → ℤ) → EuclideanSpace ℝ (Fin d) :=
+    cubeGridPoint (WithLp.toLp 2 fun _ ↦ -(2 * R)) (4 * R) k with hu
+  have hsn : 0 < Real.sqrt n := Real.sqrt_pos.2 (by exact_mod_cast hn)
+  set c : ℝ := (Real.sqrt n)⁻¹ with hc
+  have hc0 : 0 < c := inv_pos.2 hsn
+  have hcs : Real.sqrt n * c = 1 := mul_inv_cancel₀ hsn.ne'
+  -- Cells and their containment in the ball.
+  set cell : (Fin d → ℤ) → Set (EuclideanSpace ℝ (Fin d)) := fun z ↦
+    halfOpenCube (θ₀ + c • u z) (c * wk) with hcell
+  have hcellball : ∀ z ∈ Z, ∀ θ ∈ cell z, θ ∈ Metric.ball θ₀ r₀ := fun z hz θ hθ ↦ by
+    rw [Metric.mem_ball, dist_eq_norm]
+    exact (norm_sub_le_of_mem_halfOpenCube_add_smul_cubeGridPoint hR hc0 hz hθ).trans_lt hnr
+  -- Probability of a large oscillation in some cell.
+  set E : (Fin d → ℤ) → Set Ω := fun z ↦ {ω | ∃ θ ∈ cell z,
+    Real.sqrt d * (c * wk) * (2 * A + lipschitzChainRemainder P Xn L 1 n ω) <
+      |G θ ω - G (θ₀ + c • u z) ω|} with hE
+  have hEz : ∀ z ∈ Z, μ.real (E z) ≤
+      4 * (2 ^ d * Real.exp (-bernsteinExponent (∫ x, L x ^ 2 ∂P + 1) (2 * 1 / 3) A)) := by
+    intro z hz
+    have hcellm : ∀ θ ∈ cell z, θ ∈ Metric.ball θ₀ r₀ := hcellball z hz
+    exact measureReal_exists_abs_empiricalProcess_sub_gt_le_four_mul μ P Xn hiid f
+      (θ₀ + c • u z) (w := c * wk) (by positivity) (fun θ hθ ↦ hfm θ (hcellm θ hθ))
+      (fun θ hθ ↦ hfi θ (hcellm θ hθ)) L hLm hL0 hL2
+      (fun a ha b hb x ↦ hlip a (hcellm a ha) b (hcellm b hb) x) one_pos hn hA0 hq
+  set D : (Fin d → ℤ) → Set Ω := fun z ↦ {ω | ε / 4 < dist (Real.sqrt n *
+      (G (θ₀ + (Real.sqrt n)⁻¹ • u z) ω - G θ₀ ω) - inner ℝ (u z) (Δ ω)) 0} with hD
+  have hsub : {ω | ∃ h : EuclideanSpace ℝ (Fin d), ‖h‖ ≤ R ∧
+      ε < |Real.sqrt n * (empiricalProcess P Xn n (f (θ₀ + (Real.sqrt n)⁻¹ • h)) ω -
+        empiricalProcess P Xn n (f θ₀) ω) -
+        inner ℝ h ((Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω))|} ⊆
+      (⋃ z ∈ Z, E z) ∪ (⋃ z ∈ Z, D z) ∪
+        {ω | 1 < dist (lipschitzChainRemainder P Xn L 1 n ω) 0} ∪ {ω | K₀ < ‖Δ ω‖} := by
+    rintro ω ⟨h, hhR, hlt⟩
+    by_contra hcon
+    simp only [mem_union, mem_iUnion, not_or, not_exists, mem_ofPred_eq, not_lt] at hcon
+    obtain ⟨⟨⟨hnE, hnD⟩, hnRω⟩, hnΔω⟩ := hcon
+    have hR1 : lipschitzChainRemainder P Xn L 1 n ω ≤ 1 := by
+      have := hnRω
+      rw [Real.dist_eq, sub_zero] at this
+      exact (le_abs_self _).trans this
+    have hle := abs_mul_sub_sub_inner_le_of_cells (fun θ ↦ G θ ω) θ₀ h (Δ ω) k hR hsn hcs
+      hc0 (lipschitzChainRemainder_nonneg P Xn hL0 1 n ω) hR1 hhR
+      (fun z hz θ hθ ↦ by
+        have := hnE z hz
+        simp only [hE, mem_ofPred_eq, not_exists, not_and, not_lt] at this
+        exact this θ hθ)
+      (fun z hz ↦ by
+        have := hnD z hz
+        simp only [hD, mem_ofPred_eq, not_lt, Real.dist_eq, sub_zero] at this
+        exact this) (hnΔω.trans hK) hkK hk hA
+    linarith
+  refine (measureReal_mono hsub (measure_ne_top _ _)).trans
+    (measureReal_biUnion_union_biUnion_union_union_le μ ⟨0, ?_⟩ E D _ _ hEz ?_ hnA hnR hnΔ)
+  · simp only [hZ, Fintype.mem_piFinset, Finset.mem_Ico]
+    exact fun _ ↦ ⟨le_rfl, by positivity⟩
+  rw [card_piFinset_Ico_two_pow d k]
+  exact hZq
+
+/-- In dimension zero the remainder of the local expansion vanishes, so the event that it
+exceeds `ε > 0` is empty. -/
+private theorem setOf_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner_eq_empty
+    {Ω X : Type*} [MeasurableSpace X] (P : Measure X) (Xn : ℕ → Ω → X)
+    (f : EuclideanSpace ℝ (Fin 0) → X → ℝ) (θ₀ : EuclideanSpace ℝ (Fin 0))
+    (s : X → EuclideanSpace ℝ (Fin 0)) {R ε : ℝ} (hε : 0 < ε) (n : ℕ) :
+    {ω | ∃ h : EuclideanSpace ℝ (Fin 0), ‖h‖ ≤ R ∧
+      ε < |Real.sqrt n * (empiricalProcess P Xn n (f (θ₀ + (Real.sqrt n)⁻¹ • h)) ω -
+        empiricalProcess P Xn n (f θ₀) ω) -
+        inner ℝ h ((Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω))|} = ∅ := by
+  ext ω
+  simp only [mem_ofPred_eq, mem_empty_iff_false, iff_false, not_exists, not_and, not_lt]
+  intro h _
+  have h0 : h = 0 := Subsingleton.elim _ _
+  subst h0
+  simp only [smul_zero, add_zero, sub_self, mul_zero, inner_zero_left, abs_zero]
+  exact hε.le
+
 /-- **Uniform local expansion of the empirical process.** In the setting of
 `tendstoInMeasure_sqrt_mul_empiricalProcess_sub_sub_inner`, with `n^{-1/2} ∑ s(Xᵢ)` bounded in
 probability, for every `R > 0` the remainder
@@ -309,19 +502,8 @@ theorem tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner {
     with hG
   rcases Nat.eq_zero_or_pos d with hd0 | hdpos
   · subst hd0
-    have hempty : ∀ n : ℕ, {ω | ∃ h : EuclideanSpace ℝ (Fin 0), ‖h‖ ≤ R ∧
-        ε < |Real.sqrt n * (empiricalProcess P Xn n (f (θ₀ + (Real.sqrt n)⁻¹ • h)) ω -
-          empiricalProcess P Xn n (f θ₀) ω) -
-          inner ℝ h ((Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω))|} = ∅ := by
-      intro n
-      ext ω
-      simp only [mem_ofPred_eq, mem_empty_iff_false, iff_false, not_exists, not_and, not_lt]
-      intro h _
-      have h0 : h = 0 := Subsingleton.elim _ _
-      subst h0
-      simp only [smul_zero, add_zero, sub_self, mul_zero, inner_zero_left, abs_zero]
-      exact hε.le
-    simp_rw [hempty, measureReal_empty]
+    simp_rw [setOf_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner_eq_empty P Xn f θ₀ s hε,
+      measureReal_empty]
     exact tendsto_const_nhds
   have hsd : 0 < Real.sqrt d := Real.sqrt_pos.2 (by exact_mod_cast hdpos)
   refine tendsto_zero_of_forall_eventually_le (fun n ↦ measureReal_nonneg) fun η hη ↦ ?_
@@ -343,25 +525,34 @@ theorem tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner {
   set qk : ℕ → ℝ := fun k ↦ 2 ^ d * Real.exp (-φ (Ak k)) with hqk
   have hφpos : 0 < φ cA := by
     simp only [hφ, bernsteinExponent]; positivity
-  have hq_le : ∀ k, qk k ≤ 2 ^ d * Real.exp (-(φ cA * 2 ^ k)) := by
-    intro k
-    simp only [hqk]
-    gcongr
-    have := mul_bernsteinExponent_le (β := β) (γ := 2 * 1 / 3) (t := cA) (c := 2 ^ k) hβ0
-      (by norm_num) hcA0.le (one_le_pow₀ (by norm_num))
-    simp only [hAk, hφ]
-    rw [mul_comm cA, mul_comm (bernsteinExponent β (2 * 1 / 3) cA)]
-    exact this
+  have hq_le : ∀ k, qk k ≤ 2 ^ d * Real.exp (-(φ cA * 2 ^ k)) := fun k ↦
+    mul_le_mul_of_nonneg_left (exp_neg_bernsteinExponent_mul_le hβ0 (by norm_num) hcA0.le
+      (one_le_pow₀ (by norm_num))) (by positivity)
   obtain ⟨k, hk1, hk2, hk3, hk4⟩ := exists_dyadic_level hφpos d (Real.sqrt d) w₀
     (by positivity : (0 : ℝ) < η / 4) (by positivity : (0 : ℝ) < ε / 8)
     (by positivity : (0 : ℝ) < ε / (8 * KΔ))
-  set wk : ℝ := w₀ / 2 ^ k with hwk
-  have hwk0 : 0 < wk := by positivity
+  have hkK : Real.sqrt d * (w₀ / 2 ^ k) * KΔ ≤ ε / 8 := by
+    have := hk4
+    rw [le_div_iff₀ (by positivity)] at this
+    linarith
+  have hAk' : Real.sqrt d * (w₀ / 2 ^ k) * (2 * Ak k) = ε / 8 := by
+    have key : ∀ a b e p : ℝ, 0 < a → 0 < b → 0 < p →
+        a * (b / p) * (2 * (e / (16 * a * b) * p)) = e / 8 := by
+      intro a b e p ha hb hp
+      field_simp
+      ring
+    exact key _ _ _ _ hsd hw₀0 (by positivity)
+  have hZq : ((2 : ℝ) ^ k) ^ d * (4 * qk k) ≤ η / 4 := by
+    refine le_trans ?_ hk1
+    have := hq_le k
+    have hp : (0 : ℝ) ≤ ((2 : ℝ) ^ k) ^ d := by positivity
+    calc ((2 : ℝ) ^ k) ^ d * (4 * qk k)
+        ≤ ((2 : ℝ) ^ k) ^ d * (4 * (2 ^ d * Real.exp (-(φ cA * 2 ^ k)))) := by gcongr
+      _ = _ := by ring
   set Z : Finset (Fin d → ℤ) := Fintype.piFinset fun _ : Fin d ↦ Finset.Ico (0 : ℤ) (2 ^ k)
     with hZ
   set u : (Fin d → ℤ) → EuclideanSpace ℝ (Fin d) := cubeGridPoint a₀ w₀ k with hu
-  have hZcard : (Z.card : ℝ) = (2 ^ k) ^ d := card_piFinset_Ico_two_pow d k
-  have hZpos : 0 < (Z.card : ℝ) := by rw [hZcard]; positivity
+  have hZpos : 0 < (Z.card : ℝ) := by rw [card_piFinset_Ico_two_pow d k]; positivity
   -- Pointwise expansions at the cell anchors.
   have hanchor : ∀ z ∈ Z, ∀ᶠ n : ℕ in atTop, μ.real {ω | ε / 4 < dist (Real.sqrt n *
       (G n (θ₀ + (Real.sqrt n)⁻¹ • u z) ω - G n θ₀ ω) - inner ℝ (u z) (Δ n ω)) 0} ≤
@@ -379,124 +570,8 @@ theorem tendsto_measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner {
   filter_upwards [hK₀, (Filter.eventually_all_finset Z).2 hanchor, hrad,
     (hrem 1 one_pos).eventually (eventually_le_nhds (by positivity : (0 : ℝ) < η / 4)),
     eventually_ge_atTop 1] with n hnΔ hnA hnr hnR hn1
-  have hsn : 0 < Real.sqrt n := Real.sqrt_pos.2 (by exact_mod_cast hn1)
-  set c : ℝ := (Real.sqrt n)⁻¹ with hc
-  have hc0 : 0 < c := inv_pos.2 hsn
-  have hcs : Real.sqrt n * c = 1 := mul_inv_cancel₀ hsn.ne'
-  -- Cells and their containment in the ball.
-  set cell : (Fin d → ℤ) → Set (EuclideanSpace ℝ (Fin d)) := fun z ↦
-    halfOpenCube (θ₀ + c • u z) (c * wk) with hcell
-  have hcellball : ∀ z ∈ Z, ∀ θ ∈ cell z, θ ∈ Metric.ball θ₀ r₀ := fun z hz θ hθ ↦ by
-    rw [Metric.mem_ball, dist_eq_norm]
-    exact (norm_sub_le_of_mem_halfOpenCube_add_smul_cubeGridPoint hR hc0 hz hθ).trans_lt hnr
-  -- Probability of a large oscillation in some cell.
-  set E : (Fin d → ℤ) → Set Ω := fun z ↦ {ω | ∃ θ ∈ cell z,
-    Real.sqrt d * (c * wk) * (2 * Ak k + lipschitzChainRemainder P Xn L 1 n ω) <
-      |G n θ ω - G n (θ₀ + c • u z) ω|} with hE
-  have hEz : ∀ z ∈ Z, μ.real (E z) ≤ 4 * qk k := by
-    intro z hz
-    have hcellm : ∀ θ ∈ cell z, θ ∈ Metric.ball θ₀ r₀ := hcellball z hz
-    have hmax := measureReal_exists_abs_empiricalProcess_sub_gt_le μ P Xn hiid f
-      (θ₀ + c • u z) (w := c * wk) (by positivity) (fun θ hθ ↦ hfm θ (hcellm θ hθ))
-      (fun θ hθ ↦ hfi θ (hcellm θ hθ)) L hLm hL0 hL2
-      (fun a ha b hb x ↦ hlip a (hcellm a ha) b (hcellm b hb) x) one_pos hn1
-      (A := Ak k) (by positivity)
-    refine hmax.trans ?_
-    have hq0 : 0 ≤ 2 ^ d * Real.exp (-bernsteinExponent (∫ x, L x ^ 2 ∂P + 1) (2 * 1 / 3)
-      (Ak k)) := by positivity
-    exact two_mul_sum_range_pow_succ_le hq0 ((hq_le k).trans hk2) n
-  set D : (Fin d → ℤ) → Set Ω := fun z ↦ {ω | ε / 4 < dist (Real.sqrt n *
-      (G n (θ₀ + (Real.sqrt n)⁻¹ • u z) ω - G n θ₀ ω) - inner ℝ (u z) (Δ n ω)) 0} with hD
-  have hsub : {ω | ∃ h : EuclideanSpace ℝ (Fin d), ‖h‖ ≤ R ∧
-      ε < |Real.sqrt n * (empiricalProcess P Xn n (f (θ₀ + (Real.sqrt n)⁻¹ • h)) ω -
-        empiricalProcess P Xn n (f θ₀) ω) -
-        inner ℝ h ((Real.sqrt n)⁻¹ • ∑ i ∈ Finset.range n, s (Xn i ω))|} ⊆
-      (⋃ z ∈ Z, E z) ∪ (⋃ z ∈ Z, D z) ∪
-        {ω | 1 < dist (lipschitzChainRemainder P Xn L 1 n ω) 0} ∪
-        {ω | K₀ < ‖Δ n ω‖} := by
-    rintro ω ⟨h, hhR, hlt⟩
-    by_contra hcon
-    simp only [mem_union, mem_iUnion, not_or, not_exists, mem_ofPred_eq, not_lt] at hcon
-    obtain ⟨⟨⟨hnE, hnD⟩, hnRω⟩, hnΔω⟩ := hcon
-    have hhcube : h ∈ halfOpenCube a₀ w₀ := by
-      intro i
-      have := (PiLp.norm_apply_le h i).trans hhR
-      rw [Real.norm_eq_abs, abs_le] at this
-      simp only [ha₀, PiLp.toLp_apply, hw₀]
-      constructor <;> linarith
-    set z := cubeIndex a₀ w₀ k h with hzdef
-    have hz : z ∈ Z := cubeIndex_mem hw₀0 hhcube k
-    have hhu : h ∈ halfOpenCube (u z) wk := fun i ↦ by
-      obtain ⟨h1, h2⟩ := sub_cubeGridPoint_cubeIndex_mem a₀ h hw₀0 k i
-      constructor <;> simp only [hu, hzdef] <;> linarith
-    set θ := θ₀ + c • h with hθ
-    have hθcell : θ ∈ cell z := add_smul_mem_halfOpenCube hhu θ₀ hc0
-    have h1 : |G n θ ω - G n (θ₀ + c • u z) ω| ≤
-        Real.sqrt d * (c * wk) * (2 * Ak k + lipschitzChainRemainder P Xn L 1 n ω) := by
-      have := hnE z hz
-      simp only [hE, mem_ofPred_eq, not_exists, not_and, not_lt] at this
-      exact this θ hθcell
-    have h2 : |Real.sqrt n * (G n (θ₀ + c • u z) ω - G n θ₀ ω) - inner ℝ (u z) (Δ n ω)| ≤
-        ε / 4 := by
-      have := hnD z hz
-      simp only [hD, mem_ofPred_eq, not_lt, Real.dist_eq, sub_zero] at this
-      exact this
-    have hR1 : lipschitzChainRemainder P Xn L 1 n ω ≤ 1 := by
-      have := hnRω
-      rw [Real.dist_eq, sub_zero] at this
-      exact (le_abs_self _).trans this
-    have hhu' : ‖h - u z‖ ≤ Real.sqrt d * wk := by
-      refine norm_le_sqrt_card_mul_of_abs_le _ fun i ↦ ?_
-      obtain ⟨g1, g2⟩ := hhu i
-      rw [PiLp.sub_apply, abs_of_nonneg (by linarith)]
-      linarith
-    have hkε : Real.sqrt d * wk * KΔ ≤ ε / 8 := by
-      have := hk4
-      rw [le_div_iff₀ (by positivity)] at this
-      linarith
-    have hAk' : Real.sqrt d * wk * (2 * Ak k) = ε / 8 := by
-      have key : ∀ a b e p : ℝ, 0 < a → 0 < b → 0 < p →
-          a * (b / p) * (2 * (e / (16 * a * b) * p)) = e / 8 := by
-        intro a b e p ha hb hp
-        field_simp
-        ring
-      exact key _ _ _ _ hsd hw₀0 (by positivity)
-    have hR0 : 0 ≤ lipschitzChainRemainder P Xn L 1 n ω :=
-      add_nonneg (empiricalEnvelope_nonneg P Xn n
-        (fun x ↦ Set.indicator_nonneg (fun x _ ↦ hL0 x) x) ω)
-        (mul_nonneg (by positivity) (empiricalEnvelope_nonneg P Xn n hL0 ω))
-    have hle : |Real.sqrt n * (G n θ ω - G n θ₀ ω) - inner ℝ h (Δ n ω)| ≤ 5 * ε / 8 :=
-      abs_mul_sub_sub_inner_le_of_anchor (fun θ ↦ G n θ ω) θ₀ h (u z) (Δ n ω) hsn hcs hsd.le
-        hwk0.le hR0 hR1 h1 h2 hhu' (hnΔω.trans hK₀Δ) hkε hk3 hAk'
-    have hlt' : ε < |Real.sqrt n * (G n θ ω - G n θ₀ ω) - inner ℝ h (Δ n ω)| := hlt
-    linarith
-  calc _ ≤ μ.real ((⋃ z ∈ Z, E z) ∪ (⋃ z ∈ Z, D z) ∪
-        {ω | 1 < dist (lipschitzChainRemainder P Xn L 1 n ω) 0} ∪
-        {ω | K₀ < ‖Δ n ω‖}) := measureReal_mono hsub (measure_ne_top _ _)
-    _ ≤ ∑ z ∈ Z, μ.real (E z) + ∑ z ∈ Z, μ.real (D z) +
-        μ.real {ω | 1 < dist (lipschitzChainRemainder P Xn L 1 n ω) 0} +
-        μ.real {ω | K₀ < ‖Δ n ω‖} := by
-      refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
-      refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
-      exact (measureReal_union_le _ _).trans (add_le_add (measureReal_biUnion_finset_le _ _)
-        (measureReal_biUnion_finset_le _ _))
-    _ ≤ ∑ _z ∈ Z, 4 * qk k + ∑ _z ∈ Z, η / (4 * Z.card) + η / 4 + η / 4 := by
-      gcongr with z hz z hz
-      · exact hEz z hz
-      · exact hnA z hz
-    _ ≤ η / 4 + η / 4 + η / 4 + η / 4 := by
-      rw [Finset.sum_const, Finset.sum_const, nsmul_eq_mul, nsmul_eq_mul]
-      have e2 : (Z.card : ℝ) * (η / (4 * Z.card)) = η / 4 := by field_simp
-      have e1 : (Z.card : ℝ) * (4 * qk k) ≤ η / 4 := by
-        rw [hZcard]
-        refine le_trans ?_ hk1
-        have := hq_le k
-        have hp : (0 : ℝ) ≤ ((2 : ℝ) ^ k) ^ d := by positivity
-        calc ((2 : ℝ) ^ k) ^ d * (4 * qk k)
-            ≤ ((2 : ℝ) ^ k) ^ d * (4 * (2 ^ d * Real.exp (-(φ cA * 2 ^ k)))) := by gcongr
-          _ = _ := by ring
-      rw [e2]
-      linarith
-    _ = η := by ring
+  exact measureReal_exists_abs_sqrt_mul_empiricalProcess_sub_sub_inner_le μ P Xn hiid f θ₀ hfm
+    hfi L hLm hL0 hL2 hlip s hR hε k n hn1 (by positivity) hAk' hk3 hkK hK₀Δ ((hq_le k).trans hk2)
+    hZq hnr hnA hnR hnΔ
 
 end CKSD

@@ -59,7 +59,7 @@ open scoped ENNReal NNReal Topology BigOperators
 
 namespace CKSD
 
-/-- Deterministic core of the Robbins–Siegmund argument: if `Vₙ/Pₙ + ∑_{k<n} c aₖ Vₖ/Pₖ₊₁ - Sₙ`
+/-- Deterministic core of the Robbins–Siegmund argument: if `Vₙ / Pₙ + ∑_{k<n} c aₖ Vₖ / Pₖ₊₁ - Sₙ`
 converges, `Sₙ` converges, `1 ≤ Pₙ ≤ Pmax`, `aₙ > 0` and `∑ aₙ = ∞`, then `Vₙ → 0`. -/
 private theorem tendsto_zero_of_tendsto_robbinsSiegmund {V a P S : ℕ → ℝ} {Pmax c s y : ℝ}
     (hV : ∀ n, 0 ≤ V n) (ha : ∀ n, 0 < a n)
@@ -122,6 +122,7 @@ private theorem tendsto_zero_of_tendsto_robbinsSiegmund {V a P S : ℕ → ℝ} 
                 linarith
               nlinarith
           _ ≤ B n := by
+              -- `show` unfolds `B n` to its defining sum.
               show _ ≤ ∑ k ∈ Finset.range n, c * a k * V k / P (k + 1)
               rw [← Finset.sum_range_add_sum_Ico _ hn]
               exact le_add_of_nonneg_left (Finset.sum_nonneg fun k _ ↦ hterm k)
@@ -371,11 +372,13 @@ theorem IsRobbinsMonroScheme.ae_exists_tendsto_sum_noise_proj
   have hDc (R n : ℕ) : μ[D R n | F n] =ᵐ[μ] fun _ ↦ 0 := by
     have hmul : μ[(fun ω ↦ a n * L (M (n + 1) ω)) | F n] =ᵐ[μ] fun _ ↦ 0 := by
       have hh := condExp_smul (μ := μ) (a n) (L ∘ M (n + 1)) (F n)
+      -- `change` writes the product as a scalar multiple for `condExp_smul`.
       change μ[(a n) • (L ∘ M (n + 1)) | F n] =ᵐ[μ] fun _ ↦ 0
       filter_upwards [hh, hLc n] with ω hω hzero
       simpa only [Pi.smul_apply, smul_eq_mul, hzero, mul_zero] using hω
     have hh := condExp_indicator (((hL2 n).integrable one_le_two).const_mul (a n)) (hA R n)
     filter_upwards [hh, hmul] with ω hω hzero
+    -- `change` exposes the indicator form for `condExp_indicator`.
     change μ[(A R n).indicator (fun x ↦ a n * (L ∘ M (n + 1)) x) | F n] ω = 0
     rw [hω]
     by_cases hmem : ω ∈ A R n <;> simp [hmem, hzero]
@@ -411,6 +414,7 @@ theorem IsRobbinsMonroScheme.ae_exists_tendsto_sum_noise_proj
             apply integral_mono (((hL2 n).const_mul (a n)).integrable_sq.integrableOn)
               ((hN.const_mul _).integrableOn)
             intro ω
+            -- `change` unfolds the composed noise term pointwise.
             change (a n * L (M (n + 1) ω)) ^ 2 ≤
               (a n) ^ 2 * ‖L‖ ^ 2 * ‖M (n + 1) ω‖ ^ 2
             have hh := L.le_opNorm (M (n + 1) ω)
@@ -462,6 +466,23 @@ theorem IsRobbinsMonroScheme.ae_exists_tendsto_sum_noise
   ext i
   simp [L, map_sum, map_smul]
 
+/-- If `∑ aⱼ²` converges, the partial products `∏_{j<n} (1 + aⱼ² L²)` are bounded by
+`exp (L² ∑' aⱼ²)`. -/
+theorem prod_one_add_sq_mul_le_exp_tsum {a : ℕ → ℝ} (hsumsq : Summable fun k ↦ a k ^ 2) (L : ℝ)
+    (n : ℕ) :
+    ∏ j ∈ Finset.range n, (1 + a j ^ 2 * L ^ 2) ≤ Real.exp (L ^ 2 * ∑' k, a k ^ 2) := by
+  calc ∏ j ∈ Finset.range n, (1 + a j ^ 2 * L ^ 2)
+      ≤ ∏ j ∈ Finset.range n, Real.exp (a j ^ 2 * L ^ 2) :=
+        Finset.prod_le_prod₀ (fun j _ ↦ by positivity) fun j _ ↦ by
+          linarith [Real.add_one_le_exp (a j ^ 2 * L ^ 2)]
+    _ = Real.exp (L ^ 2 * ∑ j ∈ Finset.range n, a j ^ 2) := by
+        rw [← Real.exp_sum, Finset.mul_sum]
+        congr 1
+        exact Finset.sum_congr rfl fun j _ ↦ mul_comm _ _
+    _ ≤ Real.exp (L ^ 2 * ∑' k, a k ^ 2) := by
+        gcongr
+        exact hsumsq.sum_le_tsum _ fun j _ ↦ sq_nonneg _
+
 /-- GAPS 104.40: almost-sure convergence of the Robbins–Monro recursion. If `h` is Lipschitz with
 `h θ⋆ = 0` and `⟪θ - θ⋆, h θ⟫ ≥ m ‖θ - θ⋆‖²` for some `m > 0`, the initial state is square
 integrable, and the conditional noise variance is bounded by a constant `K`, then `θₙ → θ⋆`
@@ -484,17 +505,7 @@ theorem ae_tendsto_robbins_monro (μ : Measure Ω) [IsProbabilityMeasure μ]
   have hPsucc (n : ℕ) : P (n + 1) = P n * (1 + a n ^ 2 * L ^ 2) := Finset.prod_range_succ _ _
   set sa2 := ∑' k, a k ^ 2
   have hsumsq := hRM.summable_sq_step
-  have hPb (n : ℕ) : P n ≤ Real.exp (L ^ 2 * sa2) := by
-    calc P n ≤ ∏ j ∈ Finset.range n, Real.exp (a j ^ 2 * L ^ 2) :=
-          Finset.prod_le_prod₀ (fun j _ ↦ by positivity) fun j _ ↦ by
-            linarith [Real.add_one_le_exp (a j ^ 2 * L ^ 2)]
-      _ = Real.exp (L ^ 2 * ∑ j ∈ Finset.range n, a j ^ 2) := by
-          rw [← Real.exp_sum, Finset.mul_sum]
-          congr 1
-          exact Finset.sum_congr rfl fun j _ ↦ mul_comm _ _
-      _ ≤ Real.exp (L ^ 2 * sa2) := by
-          gcongr
-          exact hsumsq.sum_le_tsum _ fun j _ ↦ sq_nonneg _
+  have hPb (n : ℕ) : P n ≤ Real.exp (L ^ 2 * sa2) := prod_one_add_sq_mul_le_exp_tsum hsumsq L n
   -- Square integrability and measurability.
   have hθ (n : ℕ) := memLp_two_robbinsMonro_iterate hRM hθ2 hL n
   have hVint (n : ℕ) : Integrable (V n) μ :=

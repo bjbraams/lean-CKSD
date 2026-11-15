@@ -268,10 +268,12 @@ private theorem IntervalBasis.nonempty_basis_quotient {K : Type*} [Field K]
     · exact ⟨fun hJ ↦ by_contra fun hI ↦ h2' x hI hx hJ, fun hI ↦ h4' x hI hx⟩
   · intro hj
     refine ⟨⟨mem_iInter.mpr fun s ↦ ?_, mem_iInter.mpr fun u ↦ ?_⟩, ?_⟩
-    · show s.1 ∈ B.support j.1
+    · -- unfold the membership in the index set to expose `B.support j.1` for `rw`
+      show s.1 ∈ B.support j.1
       rw [hj]
       exact s.2.1
-    · show u.1 ∉ B.support j.1
+    · -- unfold the membership in the index set to expose `B.support j.1` for `rw`
+      show u.1 ∉ B.support j.1
       rw [hj]
       exact u.2.1
     · rintro (h | h) <;> obtain ⟨x, hx⟩ := mem_iUnion.mp h

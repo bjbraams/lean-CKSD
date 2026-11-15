@@ -283,6 +283,132 @@ theorem CausalGraph.not_isDescendant_removeIncoming_mem (G : CausalGraph V) {X :
   obtain ⟨c, -, hc⟩ := Relation.TransGen.tail'_iff.1 h
   exact hc.2 hx
 
+/-- A vertex of `V` in the ancestral closure of `X ∪ W` in the augmented graph of `G_{\bar X}`
+lies in `X ∪ W` or is an ancestor in `G_{\bar X}` of a vertex of `W`. -/
+theorem CausalGraph.memAncestorClosure_augment_removeIncoming (G : CausalGraph V)
+    (X Z W : Finset V) {c : V}
+    (hc : ((G.removeIncoming ↑X).augment Z).MemAncestorClosure (some '' ↑(X ∪ W)) (some c)) :
+    c ∈ X ∪ W ∨ ∃ w ∈ W, (G.removeIncoming ↑X).IsDescendant c w := by
+  obtain ⟨z, ⟨z', hz', rfl⟩, h⟩ := hc
+  rcases h with h | h
+  · exact Or.inl (Option.some_injective _ h ▸ hz')
+  · have hd := (G.removeIncoming ↑X).isDescendant_of_augment Z h
+    rcases Finset.mem_union.1 hz' with hx | hw
+    · exact absurd hd (G.not_isDescendant_removeIncoming_mem (by simpa using hx))
+    · exact Or.inr ⟨z', hw, hd⟩
+
+/-- No vertex in the ancestral closure of `X ∪ W` in the augmented graph of `G_{\bar X}` lies in
+`Z(W)`, the vertices of `Z` that are not ancestors of `W` in `G_{\bar X}`. -/
+theorem CausalGraph.not_mem_nonAncestorPart_of_memAncestorClosure_augment (G : CausalGraph V)
+    {X Z W : Finset V} (hXZ : Disjoint X Z) (hZW : Disjoint Z W) {c : V}
+    (hc : ((G.removeIncoming ↑X).augment Z).MemAncestorClosure (some '' ↑(X ∪ W)) (some c)) :
+    c ∉ G.nonAncestorPart ↑X ↑Z ↑W := by
+  intro hcZ
+  rcases G.memAncestorClosure_augment_removeIncoming X Z W hc with h | ⟨w, hw, hd⟩
+  · rcases Finset.mem_union.1 h with h | h
+    · exact Finset.disjoint_left.1 hXZ h hcZ.1
+    · exact Finset.disjoint_left.1 hZW hcZ.1 h
+  · exact hcZ.2 w hw hd
+
+/-- In the proof of rule 3: on an active trail `q` of the augmented graph of `G_{\bar X}` that
+starts at the indicator and then enters `Z`, the last visit `q k = r 0` to `Z` is not entered by
+an arrow `r 1 → r 0` into a vertex of `Z(W)`. -/
+private theorem CausalGraph.not_mem_nonAncestorPart_of_lastVisit (G : CausalGraph V)
+    {X Z W : Finset V} (hXZ : Disjoint X Z) (hZW : Disjoint Z W) {n k : ℕ}
+    {q : ℕ → Option V} {r : ℕ → V}
+    (htr : ((G.removeIncoming ↑X).augment Z).IsTrailWith
+      (((G.removeIncoming ↑X).augment Z).MemAncestorClosure (some '' ↑(X ∪ W)))
+      (· ∉ some '' (↑(X ∪ W) : Set V)) n q)
+    (hq0 : q 0 = none) (hq1 : ∃ z ∈ Z, q 1 = some z) (hk1 : 1 ≤ k) (hkn : k < n)
+    (hqk : q k = some (r 0)) (hqk1 : q (k + 1) = some (r 1))
+    (hback : (G.removeIncoming ↑X).edge (r 1) (r 0)) :
+    r 0 ∉ G.nonAncestorPart ↑X ↑Z ↑W := by
+  set G' := G.removeIncoming ↑X with hG'
+  set A := G'.augment Z with hA
+  intro hZ1'
+  have hs := htr.2 (k - 1) (by omega)
+  rw [show k - 1 + 1 = k by omega, show k - 1 + 2 = k + 1 by omega] at hs
+  unfold CausalGraph.TripleStatus at hs
+  have hin : A.edge (q (k + 1)) (q k) := by
+    rw [hqk, hqk1]
+    exact (G'.augment_edge_some Z _ _).2 hback
+  by_cases hcol : A.edge (q (k - 1)) (q k)
+  · rw [ite_eq_left ⟨hcol, hin⟩, hqk] at hs
+    exact G.not_mem_nonAncestorPart_of_memAncestorClosure_augment hXZ hZW hs hZ1'
+  · have hout : A.edge (q k) (q (k - 1)) := by
+      rcases htr.1 (k - 1) (by omega) with h | h
+      · rw [show k - 1 + 1 = k by omega] at h
+        exact absurd h hcol
+      · rwa [show k - 1 + 1 = k by omega] at h
+    have htk := (htr.trunc hkn.le).rev
+    obtain ⟨m, hm0, hmk, hP, hdesc⟩ := A.exists_collider_of_forward_backward htk hk1 le_rfl
+      (by simpa [show k - (0 + 1) = k - 1 by omega] using hout)
+      (by
+        simp only [Nat.sub_self, show k - (k - 1) = 1 by omega]
+        obtain ⟨z, hz, hqz⟩ := hq1
+        rw [hq0, hqz]
+        exact (G'.augment_edge_none Z z).2 hz)
+    simp only [Nat.sub_zero] at hP hdesc
+    rw [hqk] at hdesc
+    obtain ⟨c, hc, hc'⟩ := hP
+    obtain ⟨c', hc'C, rfl⟩ := hc
+    have hd : A.IsDescendant (some (r 0)) (some c') := by
+      rcases hc' with h | h
+      · rw [h]; exact hdesc
+      · exact hdesc.trans h
+    exact G.not_mem_nonAncestorPart_of_memAncestorClosure_augment hXZ hZW
+      ⟨some c', ⟨c', hc'C, rfl⟩, Or.inr hd⟩ hZ1'
+
+/-- In the proof of rule 3: the part `r` of an active trail `q` of the augmented graph of
+`G_{\bar X}` after its last visit `q k` to `Z` is an active trail of `G_{\bar X, \overline{Z(W)}}`
+given `X ∪ W`. -/
+private theorem CausalGraph.isTrailWith_removeIncoming_nonAncestorPart (G : CausalGraph V)
+    {X Z W : Finset V} (hZW : Disjoint Z W) {n k : ℕ} {q : ℕ → Option V} {r : ℕ → V}
+    (htr : ((G.removeIncoming ↑X).augment Z).IsTrailWith
+      (((G.removeIncoming ↑X).augment Z).MemAncestorClosure (some '' ↑(X ∪ W)))
+      (· ∉ some '' (↑(X ∪ W) : Set V)) n q)
+    (hkn : k < n) (hr : ∀ i, i ≤ n - k → q (i + k) = some (r i))
+    (hrZ : ∀ i, 0 < i → i ≤ n - k → r i ∉ Z)
+    (hfirst : (G.removeIncoming ↑X).edge (r 1) (r 0) → r 0 ∉ G.nonAncestorPart ↑X ↑Z ↑W) :
+    (G.removeIncoming (↑X ∪ G.nonAncestorPart ↑X ↑Z ↑W)).IsTrailWith
+      ((G.removeIncoming (↑X ∪ G.nonAncestorPart ↑X ↑Z ↑W)).MemAncestorClosure ↑(X ∪ W))
+      (· ∉ (↑(X ∪ W) : Set V)) (n - k) r := by
+  set G' := G.removeIncoming ↑X with hG'
+  set G3 := G.removeIncoming (↑X ∪ G.nonAncestorPart ↑X ↑Z ↑W) with hG3
+  set A := G'.augment Z with hA
+  have hG3edge : ∀ u v, G'.edge u v → v ∉ G.nonAncestorPart ↑X ↑Z ↑W → G3.edge u v :=
+    fun u v h hv ↦ ⟨h.1, fun h' ↦ h'.elim h.2 hv⟩
+  refine ⟨fun i hi ↦ ?_, fun i hi ↦ ?_⟩
+  · have ha := htr.1 (i + k) (by omega)
+    rw [hr i (by omega), show i + k + 1 = i + 1 + k by omega, hr (i + 1) (by omega)] at ha
+    rcases ha with h | h
+    · exact Or.inl (hG3edge _ _ ((G'.augment_edge_some Z _ _).1 h)
+        fun h' ↦ hrZ (i + 1) (by omega) (by omega) h'.1)
+    · refine Or.inr (hG3edge _ _ ((G'.augment_edge_some Z _ _).1 h) fun h' ↦ ?_)
+      rcases Nat.eq_zero_or_pos i with rfl | hpos
+      · exact hfirst ((G'.augment_edge_some Z _ _).1 h) h'
+      · exact hrZ i hpos (by omega) h'.1
+  · have hs := htr.2 (i + k) (by omega)
+    rw [hr i (by omega), show i + k + 1 = i + 1 + k by omega, hr (i + 1) (by omega),
+      show i + k + 2 = i + 2 + k by omega, hr (i + 2) (by omega)] at hs
+    have hcZ : r (i + 1) ∉ G.nonAncestorPart ↑X ↑Z ↑W :=
+      fun h' ↦ hrZ (i + 1) (by omega) (by omega) h'.1
+    have e1 : A.edge (some (r i)) (some (r (i + 1))) ↔ G3.edge (r i) (r (i + 1)) := by
+      rw [G'.augment_edge_some]
+      exact ⟨fun h ↦ hG3edge _ _ h hcZ, fun h ↦ ⟨h.1, fun hx ↦ h.2 (Or.inl hx)⟩⟩
+    have e2 : A.edge (some (r (i + 2))) (some (r (i + 1))) ↔
+        G3.edge (r (i + 2)) (r (i + 1)) := by
+      rw [G'.augment_edge_some]
+      exact ⟨fun h ↦ hG3edge _ _ h hcZ, fun h ↦ ⟨h.1, fun hx ↦ h.2 (Or.inl hx)⟩⟩
+    unfold CausalGraph.TripleStatus at hs ⊢
+    rw [e1, e2] at hs
+    split_ifs at hs ⊢ with hcol
+    · rcases G.memAncestorClosure_augment_removeIncoming X Z W hs with h | ⟨w, hw, hd⟩
+      · exact ⟨_, h, Or.inl rfl⟩
+      · exact ⟨w, Finset.mem_union_right _ hw, Or.inr
+          (G.transGen_removeIncoming_nonAncestorPart (Finset.disjoint_coe.2 hZW) _ _ hd hw)⟩
+    · exact fun h ↦ hs ⟨_, h, rfl⟩
+
 /-- The graph-theoretic step of rule 3: if `Y` and `Z` are d-separated by `X ∪ W` in
 `G_{\bar X, \overline{Z(W)}}`, then `Y` and the intervention indicator are d-separated by
 `X ∪ W` in the augmented graph of `G_{\bar X}`. -/
@@ -294,28 +420,6 @@ theorem CausalGraph.dSeparated_augment_of_rule_three (G : CausalGraph V)
   set G3 := G.removeIncoming (↑X ∪ G.nonAncestorPart ↑X ↑Z ↑W) with hG3
   set A := G'.augment Z with hA
   set Cp : Set (Option V) := some '' ↑(X ∪ W) with hCp
-  have hZ1 : ∀ z, z ∈ G.nonAncestorPart ↑X ↑Z ↑W ↔
-      z ∈ Z ∧ ∀ w ∈ W, ¬ G'.IsDescendant z w := fun z ↦ Iff.rfl
-  -- closures in the augmented graph
-  have hclos : ∀ c : V, A.MemAncestorClosure Cp (some c) →
-      c ∈ X ∪ W ∨ ∃ w ∈ W, G'.IsDescendant c w := by
-    rintro c ⟨z, ⟨z', hz', rfl⟩, h⟩
-    rcases h with h | h
-    · exact Or.inl (Option.some_injective _ h ▸ hz')
-    · have hd := G'.isDescendant_of_augment Z h
-      rcases Finset.mem_union.1 hz' with hx | hw
-      · exact absurd hd (G.not_isDescendant_removeIncoming_mem (by simpa using hx))
-      · exact Or.inr ⟨z', hw, hd⟩
-  have hnotZ1 : ∀ c : V, A.MemAncestorClosure Cp (some c) →
-      c ∉ G.nonAncestorPart ↑X ↑Z ↑W := by
-    intro c hc hcZ
-    rcases hclos c hc with h | ⟨w, hw, hd⟩
-    · rcases Finset.mem_union.1 h with h | h
-      · exact Finset.disjoint_left.1 hXZ h hcZ.1
-      · exact Finset.disjoint_left.1 hZW hcZ.1 h
-    · exact hcZ.2 w hw hd
-  have hG3edge : ∀ u v, G'.edge u v → v ∉ G.nonAncestorPart ↑X ↑Z ↑W → G3.edge u v :=
-    fun u v h hv ↦ ⟨h.1, fun h' ↦ h'.elim h.2 hv⟩
   intro n p h0 hn hp
   -- read the reversed path as a trail starting at the indicator
   obtain ⟨htr, hinj⟩ := A.isTrailWith_of_isActivePath hp.rev
@@ -324,7 +428,7 @@ theorem CausalGraph.dSeparated_augment_of_rule_three (G : CausalGraph V)
   obtain ⟨yv, hyv, hqn⟩ : ∃ yv ∈ Y, q n = some yv := by
     obtain ⟨yv, hyv, h⟩ := h0
     refine ⟨yv, hyv, ?_⟩
-    show p (Fin.rev ⟨min n n, by omega⟩) = some yv
+    simp only [hq, Function.comp_apply]
     rw [show Fin.rev (⟨min n n, by omega⟩ : Fin (n + 1)) = 0 from Fin.ext (by simp)]
     exact h.symm
   have hn0 : 0 < n := by
@@ -385,74 +489,11 @@ theorem CausalGraph.dSeparated_augment_of_rule_three (G : CausalGraph V)
     rw [Nat.sub_add_cancel hkn.le, hqn] at this
     exact Option.some_injective _ this ▸ hyv
   -- the arrow at the last vertex of `Z` does not point into a vertex of `Z(W)`
-  have hfirst : G'.edge (r 1) (r 0) → r 0 ∉ G.nonAncestorPart ↑X ↑Z ↑W := by
-    intro hback hZ1'
-    have hqk : q k = some (r 0) := by simpa using hr 0 (Nat.zero_le _)
-    have hqk1 : q (k + 1) = some (r 1) := by simpa [add_comm] using hr 1 (by omega)
-    have hs := htr.2 (k - 1) (by omega)
-    rw [show k - 1 + 1 = k by omega, show k - 1 + 2 = k + 1 by omega] at hs
-    unfold CausalGraph.TripleStatus at hs
-    have hin : A.edge (q (k + 1)) (q k) := by
-      rw [hqk, hqk1]
-      exact (G'.augment_edge_some Z _ _).2 hback
-    by_cases hcol : A.edge (q (k - 1)) (q k)
-    · rw [ite_eq_left ⟨hcol, hin⟩, hqk] at hs
-      exact hnotZ1 _ hs hZ1'
-    · have hout : A.edge (q k) (q (k - 1)) := by
-        rcases htr.1 (k - 1) (by omega) with h | h
-        · rw [show k - 1 + 1 = k by omega] at h
-          exact absurd h hcol
-        · rwa [show k - 1 + 1 = k by omega] at h
-      have htk := (htr.trunc hkn.le).rev
-      obtain ⟨m, hm0, hmk, hP, hdesc⟩ := A.exists_collider_of_forward_backward htk hk1 le_rfl
-        (by simpa [show k - (0 + 1) = k - 1 by omega] using hout)
-        (by
-          simp only [Nat.sub_self, show k - (k - 1) = 1 by omega]
-          obtain ⟨z, hz, hqz⟩ := hq1
-          rw [hq0, hqz]
-          exact (G'.augment_edge_none Z z).2 hz)
-      simp only [Nat.sub_zero] at hP hdesc
-      rw [hqk] at hdesc
-      obtain ⟨c, hc, hc'⟩ := hP
-      obtain ⟨c', hc'C, rfl⟩ := hc
-      have hd : A.IsDescendant (some (r 0)) (some c') := by
-        rcases hc' with h | h
-        · rw [h]; exact hdesc
-        · exact hdesc.trans h
-      exact hnotZ1 _ ⟨some c', ⟨c', hc'C, rfl⟩, Or.inr hd⟩ hZ1'
+  have hfirst : G'.edge (r 1) (r 0) → r 0 ∉ G.nonAncestorPart ↑X ↑Z ↑W :=
+    G.not_mem_nonAncestorPart_of_lastVisit hXZ hZW htr hq0 hq1 hk1 hkn
+      (by simpa using hr 0 (Nat.zero_le _)) (by simpa [add_comm] using hr 1 (by omega))
   -- the remaining trail is active in `G_{\bar X, \overline{Z(W)}}`
-  have hrtr : G3.IsTrailWith (G3.MemAncestorClosure ↑(X ∪ W)) (· ∉ (↑(X ∪ W) : Set V))
-      (n - k) r := by
-    refine ⟨fun i hi ↦ ?_, fun i hi ↦ ?_⟩
-    · have ha := htr.1 (i + k) (by omega)
-      rw [hr i (by omega), show i + k + 1 = i + 1 + k by omega, hr (i + 1) (by omega)] at ha
-      rcases ha with h | h
-      · exact Or.inl (hG3edge _ _ ((G'.augment_edge_some Z _ _).1 h)
-          fun h' ↦ hrZ (i + 1) (by omega) (by omega) h'.1)
-      · refine Or.inr (hG3edge _ _ ((G'.augment_edge_some Z _ _).1 h) fun h' ↦ ?_)
-        rcases Nat.eq_zero_or_pos i with rfl | hpos
-        · exact hfirst ((G'.augment_edge_some Z _ _).1 h) h'
-        · exact hrZ i hpos (by omega) h'.1
-    · have hs := htr.2 (i + k) (by omega)
-      rw [hr i (by omega), show i + k + 1 = i + 1 + k by omega, hr (i + 1) (by omega),
-        show i + k + 2 = i + 2 + k by omega, hr (i + 2) (by omega)] at hs
-      have hcZ : r (i + 1) ∉ G.nonAncestorPart ↑X ↑Z ↑W :=
-        fun h' ↦ hrZ (i + 1) (by omega) (by omega) h'.1
-      have e1 : A.edge (some (r i)) (some (r (i + 1))) ↔ G3.edge (r i) (r (i + 1)) := by
-        rw [G'.augment_edge_some]
-        exact ⟨fun h ↦ hG3edge _ _ h hcZ, fun h ↦ ⟨h.1, fun hx ↦ h.2 (Or.inl hx)⟩⟩
-      have e2 : A.edge (some (r (i + 2))) (some (r (i + 1))) ↔
-          G3.edge (r (i + 2)) (r (i + 1)) := by
-        rw [G'.augment_edge_some]
-        exact ⟨fun h ↦ hG3edge _ _ h hcZ, fun h ↦ ⟨h.1, fun hx ↦ h.2 (Or.inl hx)⟩⟩
-      unfold CausalGraph.TripleStatus at hs ⊢
-      rw [e1, e2] at hs
-      split_ifs at hs ⊢ with hcol
-      · rcases hclos _ hs with h | ⟨w, hw, hd⟩
-        · exact ⟨_, h, Or.inl rfl⟩
-        · exact ⟨w, Finset.mem_union_right _ hw, Or.inr
-            (G.transGen_removeIncoming_nonAncestorPart (Finset.disjoint_coe.2 hZW) _ _ hd hw)⟩
-      · exact fun h ↦ hs ⟨_, h, rfl⟩
+  have hrtr := G.isTrailWith_removeIncoming_nonAncestorPart hZW htr hkn hr hrZ hfirst
   exact hsep.symm.false_of_isTrailWith hrtr hr0 hrn
 
 /-- GAPS 105.64, rule 3 of the do-calculus (insertion and deletion of actions):
@@ -524,11 +565,7 @@ theorem condDoMass_rule_three [Fintype V] [Fintype S] (G : CausalGraph V)
   have e2 : X ∪ W = W ∪ X := Finset.union_comm _ _
   rw [e1, e2, marginalMass_union_of_support hsX, marginalMass_union_of_support hsX,
     marginalMass_union_of_support hsXZ, marginalMass_union_of_support hsXZ] at hci
-  unfold condDoMass
-  change marginalMass (interventionMass localMass (X ∪ Z) b) (Y ∪ W) b /
-      marginalMass (interventionMass localMass (X ∪ Z) b) W b =
-    marginalMass (interventionMass localMass X b) (Y ∪ W) b /
-      marginalMass (interventionMass localMass X b) W b
+  simp only [condDoMass, doMarginalMass_eq_marginalMass_interventionMass]
   have hp0 : 0 < marginalMass (interventionMass localMass X b) W b := hpos
   have hp1 : 0 < marginalMass (interventionMass localMass (X ∪ Z) b) W b := hpos'
   rw [div_eq_div_iff hp1.ne' hp0.ne']

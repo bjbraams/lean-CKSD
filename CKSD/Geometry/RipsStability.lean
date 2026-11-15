@@ -116,6 +116,7 @@ theorem simplicialTwinHomotopy_mem_sublevelChains {K : PreAbstractSimplicialComp
     {c : Finset ι → 𝕜} (hc : c ∈ sublevelChains 𝕜 K F q a) :
     simplicialTwinHomotopy 𝕜 v w c ∈ sublevelChains 𝕜 K F (q + 1) a := by
   intro ρ hρ
+  -- unfold the linear map `simplicialTwinHomotopy` at `ρ`
   change (if w ∈ ρ ∧ v ∈ ρ then simplexIncidence 𝕜 (ρ.erase v) ρ * c (ρ.erase v) else 0) ≠ 0
     at hρ
   split_ifs at hρ with hwv
@@ -155,12 +156,14 @@ theorem simplicialBoundary_simplicialTwinHomotopy_apply {v w : ι} (c : Finset �
     {σ : Finset ι} (hwσ : w ∈ σ) (hvσ : v ∉ σ) :
     simplicialBoundary 𝕜 (simplicialTwinHomotopy 𝕜 v w c) σ = c σ := by
   rw [simplicialBoundary_apply_of_twin 𝕜 (fun τ _ hvτ ↦ ?_) hwσ hvσ]
-  · change simplexIncidence 𝕜 σ (insert v σ) * (if w ∈ insert v σ ∧ v ∈ insert v σ then
+  · -- unfold the linear map `simplicialTwinHomotopy` at `insert v σ`
+    change simplexIncidence 𝕜 σ (insert v σ) * (if w ∈ insert v σ ∧ v ∈ insert v σ then
       simplexIncidence 𝕜 ((insert v σ).erase v) (insert v σ) * c ((insert v σ).erase v) else 0) = _
     rw [ite_eq_left ⟨Finset.mem_insert_of_mem hwσ, Finset.mem_insert_self v σ⟩,
       Finset.erase_insert hvσ, ← mul_assoc, simplexIncidence_insert_mul_self 𝕜 hvσ ⟨w, hwσ⟩,
       one_mul]
-  · change (if w ∈ τ ∧ v ∈ τ then _ else 0) = 0
+  · -- unfold the linear map `simplicialTwinHomotopy` at `τ`
+    change (if w ∈ τ ∧ v ∈ τ then _ else 0) = 0
     rw [ite_eq_right (fun h ↦ absurd h.2 hvτ)]
 
 /-- A chain vanishing on the simplices containing `w` but not `v`, whose boundary vanishes on
@@ -299,6 +302,7 @@ omit [Fintype V] in
 /-- Transported chains take the original coefficient on the image of a simplex. -/
 theorem simplicialChainMap_apply_map (s : X ↪o V) (c : Finset X → 𝕜) (μ : Finset X) :
     simplicialChainMap 𝕜 s c (μ.map s.toEmbedding) = c μ := by
+  -- unfold the linear map `simplicialChainMap` to its defining sum
   change ∑ σ, (if σ.map s.toEmbedding = μ.map s.toEmbedding then (1 : 𝕜) else 0) * c σ = c μ
   rw [Finset.sum_eq_single μ]
   · simp
@@ -310,6 +314,7 @@ omit [Fintype V] in
 /-- Transported chains vanish off the image of the vertex embedding. -/
 theorem simplicialChainMap_apply_of_notMem (s : X ↪o V) (c : Finset X → 𝕜) {ρ : Finset V}
     (hρ : ∀ μ : Finset X, μ.map s.toEmbedding ≠ ρ) : simplicialChainMap 𝕜 s c ρ = 0 := by
+  -- unfold the linear map `simplicialChainMap` to its defining sum
   change ∑ σ, (if σ.map s.toEmbedding = ρ then (1 : 𝕜) else 0) * c σ = 0
   exact Finset.sum_eq_zero fun σ _ ↦ by rw [ite_eq_right (hρ σ), zero_mul]
 
@@ -596,12 +601,14 @@ theorem fullBottleneckEDist_rips_le_ghDist (𝕜 : Type*) [Field 𝕜] {X Y : Ty
   let πY : V → Y := fun v ↦ (pr v.1).2
   let sX : X ↪o V := OrderEmbedding.ofStrictMono
     (fun x ↦ ⟨toLex (.inl (toLex (x, yX x))), hyX x⟩) fun x x' h ↦ by
+      -- the order on the subtype `V` is the lexicographic order of the ambient sum
       change toLex (Sum.inl (toLex (x, yX x)) : (X ×ₗ Y) ⊕ (Y ×ₗ X)) <
         toLex (Sum.inl (toLex (x', yX x')))
       rw [Sum.Lex.inl_lt_inl_iff, Prod.Lex.toLex_lt_toLex]
       exact Or.inl h
   let sY : Y ↪o V := OrderEmbedding.ofStrictMono
     (fun y ↦ ⟨toLex (.inr (toLex (y, xY y))), hxY y⟩) fun y y' h ↦ by
+      -- the order on the subtype `V` is the lexicographic order of the ambient sum
       change toLex (Sum.inr (toLex (y, xY y)) : (X ×ₗ Y) ⊕ (Y ×ₗ X)) <
         toLex (Sum.inr (toLex (y', xY y')))
       rw [Sum.Lex.inr_lt_inr_iff, Prod.Lex.toLex_lt_toLex]

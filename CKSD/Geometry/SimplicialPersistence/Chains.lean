@@ -116,6 +116,142 @@ theorem sum_fin_ite_le_eq_sum_range {M : Type*} [AddCommMonoid M] (F : ℕ → M
   simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
   omega
 
+/-- Level functions for a monotone finite sequence `c 0 ≤ ⋯ ≤ c (n - 1)` of reals: levels
+`tl 0 < c s` and `tl (s + 1) = c s`, monotone up to `n`, and a level index `k a ≤ n` counting the
+values at most `a`, so that `c s ≤ a` exactly when `c s ≤ tl (k a)`. -/
+theorem exists_levels_of_monotone {n : ℕ} {c : Fin n → ℝ} (hc : Monotone c) :
+    ∃ (tl : ℕ → ℝ) (k : ℝ → ℕ), (∀ s, tl 0 < c s) ∧ (∀ s : Fin n, tl (s.val + 1) = c s) ∧
+      (∀ i i', i ≤ i' → i' ≤ n → tl i ≤ tl i') ∧ (∀ a, k a ≤ n) ∧
+      (∀ a (s : Fin n), c s ≤ a ↔ s.val < k a) ∧ Monotone k ∧
+      ∀ a (s : Fin n), c s ≤ a ↔ c s ≤ tl (k a) := by
+  obtain ⟨t0, ht0⟩ : ∃ t0 : ℝ, ∀ s, t0 < c s := by
+    obtain ⟨M, hM⟩ := Finite.exists_ge c
+    exact ⟨M - 1, fun s ↦ by linarith [hM s]⟩
+  set tl : ℕ → ℝ := fun i ↦ if h : i ≠ 0 ∧ i ≤ n then c ⟨i - 1, by omega⟩ else t0
+  have htl0 : tl 0 = t0 := by simp [tl]
+  have htls : ∀ s : Fin n, tl (s.val + 1) = c s := by
+    intro s
+    simp only [tl]
+    rw [dite_eq_left ⟨by omega, s.2⟩]
+    rfl
+  have htls' : ∀ i (hi : 0 < i) (hin : i ≤ n), tl i = c ⟨i - 1, by omega⟩ := by
+    intro i hi hin
+    have := htls ⟨i - 1, by omega⟩
+    simpa only [show i - 1 + 1 = i by omega] using this
+  set k : ℝ → ℕ := fun a ↦ (Finset.univ.filter fun s : Fin n ↦ c s ≤ a).card
+  have hk_le : ∀ a, k a ≤ n := fun a ↦ (Finset.card_filter_le _ _).trans (by simp)
+  have hk_iff : ∀ a (s : Fin n), c s ≤ a ↔ s.val < k a := by
+    intro a s
+    constructor
+    · intro hs
+      have hsub : Finset.Iic s ⊆ Finset.univ.filter fun s : Fin n ↦ c s ≤ a := by
+        intro i hi
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+        exact (hc (Finset.mem_Iic.mp hi)).trans hs
+      have := Finset.card_le_card hsub
+      rw [Fin.card_Iic] at this
+      simp only [k]
+      omega
+    · intro hs
+      by_contra hcon
+      have hsub : (Finset.univ.filter fun s : Fin n ↦ c s ≤ a) ⊆ Finset.Iio s := by
+        intro i hi
+        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi
+        simp only [Finset.mem_Iio]
+        by_contra hle
+        exact hcon ((hc (not_lt.mp hle)).trans hi)
+      have := Finset.card_le_card hsub
+      rw [Fin.card_Iio] at this
+      simp only [k] at hs
+      omega
+  refine ⟨tl, k, htl0 ▸ ht0, htls, ?_, hk_le, hk_iff, ?_, ?_⟩
+  · intro i i' hii' hi'
+    rcases Nat.eq_zero_or_pos i with rfl | hi
+    · rcases Nat.eq_zero_or_pos i' with rfl | hi''
+      · exact le_rfl
+      · rw [htl0, htls' i' hi'' hi']
+        exact (ht0 _).le
+    · rw [htls' i hi (hii'.trans hi'), htls' i' (by omega) hi']
+      exact hc (Fin.mk_le_mk.mpr (by omega))
+  · intro a b hab
+    exact Finset.card_le_card fun s hs ↦ by
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hs ⊢
+      exact hs.trans hab
+  · intro a s
+    rcases Nat.eq_zero_or_pos (k a) with h0 | hpos
+    · rw [h0, htl0, hk_iff a s, h0]
+      simp only [not_lt_zero, false_iff, not_le]
+      exact ht0 s
+    · have hka := hk_le a
+      have hlast : c ⟨k a - 1, by omega⟩ ≤ a := (hk_iff a _).mpr (by simp only; omega)
+      rw [htls' (k a) hpos hka]
+      constructor
+      · intro hs
+        exact hc (Fin.mk_le_mk.mpr (by have := (hk_iff a s).mp hs; omega))
+      · intro hs
+        exact hs.trans hlast
+
+/-- Counting the finite bars `[c s, c u)`, `s < u`, with multiplicities `m s u ≥ 0` that are born
+by `a` and die after `b`, through a level index `k` of the monotone sequence `c`. -/
+theorem card_filter_sigma_toNat_eq_sum_sum {n : ℕ} (c : Fin n → ℝ) (k : ℝ → ℕ)
+    (hk : ∀ a (s : Fin n), c s ≤ a ↔ s.val < k a) (m : ℕ → ℕ → ℤ)
+    (hm : ∀ s u, s < n → u < n → 0 ≤ m s u) {a b : ℝ} (hka : k a ≤ n) (hkab : k a ≤ k b) :
+    ((Finset.univ.filter fun x : (Σ q : Fin n × Fin n,
+        Fin (if q.1 < q.2 then (m q.1 q.2).toNat else 0)) ↦ c x.1.1 ≤ a ∧ b < c x.1.2).card : ℤ) =
+      ∑ s ∈ Finset.range (k a), ∑ t ∈ Finset.range (n - k b), m s (k b + t) := by
+  set M : Fin n × Fin n → ℕ := fun q ↦ if q.1 < q.2 then (m q.1 q.2).toNat else 0
+  rw [card_filter_sigma_fin M (fun q ↦ c q.1 ≤ a ∧ b < c q.2)]
+  push_cast
+  rw [Fintype.sum_prod_type]
+  have hterm : ∀ s u : Fin n, (if c s ≤ a ∧ b < c u then ((M (s, u) : ℕ) : ℤ) else 0) =
+      if s.val < k a then (if k b ≤ u.val then m s u else 0) else 0 := by
+    intro s u
+    have hbu : b < c u ↔ k b ≤ u.val := by
+      rw [← not_le, hk b u, not_lt]
+    by_cases hs : s.val < k a
+    · have h1 : c s ≤ a := (hk a s).mpr hs
+      by_cases hu : k b ≤ u.val
+      · have h2 : b < c u := hbu.mpr hu
+        have hsu : s < u := Fin.lt_def.mpr (by omega)
+        simp only [h1, h2, hs, hu, and_self, ite_true, M, hsu]
+        exact Int.toNat_of_nonneg (hm _ _ s.2 u.2)
+      · have h2 : ¬ b < c u := fun h ↦ hu (hbu.mp h)
+        simp [h2, hu]
+    · have h1 : ¬ c s ≤ a := fun h ↦ hs ((hk a s).mp h)
+      simp [h1, hs]
+  simp_rw [hterm]
+  have hout : ∀ s : Fin n, (∑ u : Fin n,
+      (if s.val < k a then (if k b ≤ u.val then m s u else 0) else 0)) =
+      if s.val < k a then ∑ u : Fin n, (if k b ≤ u.val then m s u else 0) else 0 := by
+    intro s
+    split_ifs <;> simp
+  simp_rw [hout]
+  rw [sum_fin_ite_lt_eq_sum_range (fun s ↦ ∑ u : Fin n,
+    (if k b ≤ u.val then m s u else 0)) hka]
+  refine Finset.sum_congr rfl fun s _ ↦ ?_
+  exact sum_fin_ite_le_eq_sum_range (fun u ↦ m s u)
+
+/-- Counting the essential bars `[c s, ∞)` with multiplicities `e s ≥ 0` that are born by `a`,
+through a level index `k` of the monotone sequence `c`. -/
+theorem card_filter_sigma_toNat_eq_sum {n : ℕ} (c : Fin n → ℝ) (k : ℝ → ℕ)
+    (hk : ∀ a (s : Fin n), c s ≤ a ↔ s.val < k a) (e : ℕ → ℤ) (he : ∀ s, s < n → 0 ≤ e s)
+    {a : ℝ} (hka : k a ≤ n) :
+    ((Finset.univ.filter fun y : (Σ s : Fin n, Fin (e s).toNat) ↦ c y.1 ≤ a).card : ℤ) =
+      ∑ s ∈ Finset.range (k a), e s := by
+  rw [card_filter_sigma_fin (fun s : Fin n ↦ (e s).toNat) (fun s ↦ c s ≤ a)]
+  push_cast
+  have hterm : ∀ s : Fin n, (if c s ≤ a then (((e s).toNat : ℕ) : ℤ) else 0) =
+      if s.val < k a then e s else 0 := by
+    intro s
+    by_cases hs : s.val < k a
+    · have h1 : c s ≤ a := (hk a s).mpr hs
+      simp only [h1, hs, ite_true]
+      exact Int.toNat_of_nonneg (he _ s.2)
+    · have h1 : ¬ c s ≤ a := fun h ↦ hs ((hk a s).mp h)
+      simp [h1, hs]
+  simp_rw [hterm]
+  exact sum_fin_ite_lt_eq_sum_range e hka
+
 section Chains
 
 variable {ι : Type*} [Fintype ι] [LinearOrder ι] (𝕜 : Type*) [Field 𝕜]
@@ -255,9 +391,6 @@ theorem exists_isSublevelDiagram_and_values (K : PreAbstractSimplicialComplex ι
   set n := T.card
   set c := T.orderEmbOfFin rfl
   have hc_mem : ∀ s, c s ∈ T := fun s ↦ T.orderEmbOfFin_mem rfl s
-  obtain ⟨t0, ht0⟩ : ∃ t0 : ℝ, ∀ s, t0 < c s := by
-    obtain ⟨M, hM⟩ := Finite.exists_ge c
-    exact ⟨M - 1, fun s ↦ by linarith [hM s]⟩
   have hval : ∀ σ ∈ K, ∃ s, c s = f σ := by
     intro σ hσ
     have hT : f σ ∈ T := Finset.mem_image_of_mem f (by simpa using hσ)
@@ -265,73 +398,14 @@ theorem exists_isSublevelDiagram_and_values (K : PreAbstractSimplicialComplex ι
       rw [T.range_orderEmbOfFin rfl]
       exact hT
     exact hT'
-  -- levels: `tl 0` lies below all values, `tl (s + 1) = c s`
-  set tl : ℕ → ℝ := fun i ↦ if h : i ≠ 0 ∧ i ≤ n then c ⟨i - 1, by omega⟩ else t0
-  have htl0 : tl 0 = t0 := by simp [tl]
-  have htls : ∀ s : Fin n, tl (s.val + 1) = c s := by
-    intro s
-    simp only [tl]
-    rw [dite_eq_left ⟨by omega, s.2⟩]
-    rfl
-  have htl_mono : ∀ i i', i ≤ i' → i' ≤ n → tl i ≤ tl i' := by
-    intro i i' hii' hi'
-    rcases Nat.eq_zero_or_pos i with rfl | hi
-    · rw [htl0]
-      rcases Nat.eq_zero_or_pos i' with rfl | hi''
-      · rw [htl0]
-      · have := htls ⟨i' - 1, by omega⟩
-        simp only [show i' - 1 + 1 = i' by omega] at this
-        rw [this]
-        exact (ht0 _).le
-    · have e1 := htls ⟨i - 1, by omega⟩
-      have e2 := htls ⟨i' - 1, by omega⟩
-      simp only [show i - 1 + 1 = i by omega, show i' - 1 + 1 = i' by omega] at e1 e2
-      rw [e1, e2]
-      exact c.monotone (Fin.mk_le_mk.mpr (by omega))
-  -- the level index of a real number
-  set k : ℝ → ℕ := fun a ↦ (Finset.univ.filter fun s : Fin n ↦ c s ≤ a).card
-  have hk_le : ∀ a, k a ≤ n := fun a ↦ (Finset.card_filter_le _ _).trans (by simp)
-  have hk_iff : ∀ a (s : Fin n), c s ≤ a ↔ s.val < k a := by
-    intro a s
-    constructor
-    · intro hs
-      have hsub : Finset.Iic s ⊆ Finset.univ.filter fun s : Fin n ↦ c s ≤ a := by
-        intro i hi
-        simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-        exact (c.monotone (Finset.mem_Iic.mp hi)).trans hs
-      have := Finset.card_le_card hsub
-      rw [Fin.card_Iic] at this
-      simp only [k]
-      omega
-    · intro hs
-      by_contra hcon
-      have hsub : (Finset.univ.filter fun s : Fin n ↦ c s ≤ a) ⊆ Finset.Iio s := by
-        intro i hi
-        simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi
-        simp only [Finset.mem_Iio]
-        by_contra hle
-        exact hcon ((c.monotone (not_lt.mp hle)).trans hi)
-      have := Finset.card_le_card hsub
-      rw [Fin.card_Iio] at this
-      simp only [k] at hs
-      omega
-  have hk_mono : ∀ a b, a ≤ b → k a ≤ k b := fun a b hab ↦
-    Finset.card_le_card fun s hs ↦ by
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hs ⊢
-      exact hs.trans hab
+  -- levels: `tl 0` lies below all values, `tl (s + 1) = c s`; `k a` is the level index of `a`
+  obtain ⟨tl, k, ht0, -, htl_mono, hk_le, hk_iff, hk_mono, hk_level⟩ :=
+    exists_levels_of_monotone c.monotone
   have hlevel : ∀ a, ∀ σ ∈ K, f σ ≤ a ↔ f σ ≤ tl (k a) := by
     intro a σ hσ
     obtain ⟨s, hs⟩ := hval σ hσ
-    rw [← hs, hk_iff a s]
-    rcases Nat.eq_zero_or_pos (k a) with h0 | hpos
-    · rw [h0, htl0]
-      simp only [not_lt_zero, false_iff, not_le]
-      exact ht0 s
-    · have e1 := htls ⟨k a - 1, by have := hk_le a; omega⟩
-      simp only [show k a - 1 + 1 = k a by omega] at e1
-      rw [e1, c.le_iff_le, Fin.le_def]
-      simp only
-      omega
+    rw [← hs]
+    exact hk_level a s
   -- the rank function on level indices
   set r : ℕ → ℕ → ℤ := fun i j ↦ sublevelPersistentBetti 𝕜 K f p (tl i) (tl j)
   have hr : ∀ i j, r i j = (finrank 𝕜 (sublevelCycles 𝕜 K f p (tl i)) : ℤ) -
@@ -347,7 +421,7 @@ theorem exists_isSublevelDiagram_and_values (K : PreAbstractSimplicialComplex ι
       by_contra hσ
       obtain ⟨h1, -, h3⟩ := hx σ hσ
       obtain ⟨s, hs⟩ := hval σ h1
-      rw [htl0, ← hs] at h3
+      rw [← hs] at h3
       exact absurd h3 (not_le.mpr (ht0 s))
     have hZ0 : sublevelCycles 𝕜 K f p (tl 0) = ⊥ := by
       unfold sublevelCycles
@@ -392,59 +466,14 @@ theorem exists_isSublevelDiagram_and_values (K : PreAbstractSimplicialComplex ι
     intro a b hab
     have hka := hk_le a
     have hkb := hk_le b
-    have hkab := hk_mono a b hab
     rw [sublevelPersistentBetti_congr_fun 𝕜 K p (hlevel a) (hlevel b)]
     have h1 : ((Finset.univ.filter fun x : (Σ q : Fin n × Fin n, Fin (M q)) ↦
         D0.birth x ≤ a ∧ b < D0.death x).card : ℤ) =
-        ∑ s ∈ Finset.range (k a), ∑ t ∈ Finset.range (n - k b), m' s (k b + t) := by
-      change ((Finset.univ.filter fun x : (Σ q : Fin n × Fin n, Fin (M q)) ↦
-        c x.1.1 ≤ a ∧ b < c x.1.2).card : ℤ) = _
-      rw [card_filter_sigma_fin M (fun q ↦ c q.1 ≤ a ∧ b < c q.2)]
-      push_cast
-      rw [Fintype.sum_prod_type]
-      have hterm : ∀ s u : Fin n, (if c s ≤ a ∧ b < c u then ((M (s, u) : ℕ) : ℤ) else 0) =
-          if s.val < k a then (if k b ≤ u.val then m' s u else 0) else 0 := by
-        intro s u
-        have hbu : b < c u ↔ k b ≤ u.val := by
-          rw [← not_le, hk_iff b u, not_lt]
-        by_cases hs : s.val < k a
-        · have h1 : c s ≤ a := (hk_iff a s).mpr hs
-          by_cases hu : k b ≤ u.val
-          · have h2 : b < c u := hbu.mpr hu
-            have hsu : s < u := Fin.lt_def.mpr (by omega)
-            simp only [h1, h2, hs, hu, and_self, ite_true, M, hsu]
-            exact Int.toNat_of_nonneg (hm' _ _ s.2 u.2)
-          · have h2 : ¬ b < c u := fun h ↦ hu (hbu.mp h)
-            simp [h2, hu]
-        · have h1 : ¬ c s ≤ a := fun h ↦ hs ((hk_iff a s).mp h)
-          simp [h1, hs]
-      simp_rw [hterm]
-      have hout : ∀ s : Fin n, (∑ u : Fin n,
-          (if s.val < k a then (if k b ≤ u.val then m' s u else 0) else 0)) =
-          if s.val < k a then ∑ u : Fin n, (if k b ≤ u.val then m' s u else 0) else 0 := by
-        intro s
-        split_ifs <;> simp
-      simp_rw [hout]
-      rw [sum_fin_ite_lt_eq_sum_range (fun s ↦ ∑ u : Fin n,
-        (if k b ≤ u.val then m' s u else 0)) hka]
-      refine Finset.sum_congr rfl fun s _ ↦ ?_
-      exact sum_fin_ite_le_eq_sum_range (fun u ↦ m' s u)
+        ∑ s ∈ Finset.range (k a), ∑ t ∈ Finset.range (n - k b), m' s (k b + t) :=
+      card_filter_sigma_toNat_eq_sum_sum c k hk_iff m' hm' hka (hk_mono hab)
     have h2 : ((Finset.univ.filter fun y : (Σ s : Fin n, Fin (E s)) ↦ e0 y ≤ a).card : ℤ) =
-        ∑ s ∈ Finset.range (k a), e' s := by
-      change ((Finset.univ.filter fun y : (Σ s : Fin n, Fin (E s)) ↦ c y.1 ≤ a).card : ℤ) = _
-      rw [card_filter_sigma_fin E (fun s ↦ c s ≤ a)]
-      push_cast
-      have hterm : ∀ s : Fin n, (if c s ≤ a then ((E s : ℕ) : ℤ) else 0) =
-          if s.val < k a then e' s else 0 := by
-        intro s
-        by_cases hs : s.val < k a
-        · have h1 : c s ≤ a := (hk_iff a s).mpr hs
-          simp only [h1, hs, ite_true, E]
-          exact Int.toNat_of_nonneg (he' _ s.2)
-        · have h1 : ¬ c s ≤ a := fun h ↦ hs ((hk_iff a s).mp h)
-          simp [h1, hs]
-      simp_rw [hterm]
-      exact sum_fin_ite_lt_eq_sum_range e' hka
+        ∑ s ∈ Finset.range (k a), e' s :=
+      card_filter_sigma_toNat_eq_sum c k hk_iff e' he' hka
     have htel := eq_sum_sum_add_sum_of_eq_zero r hr0 (k a) (k b) n hkb
     zify
     rw [h1, h2]
@@ -536,8 +565,8 @@ theorem sum_simplexIncidence_mul_simplexIncidence [Fintype ι] (ρ σ : Finset �
   rw [← Finset.sum_subset (Finset.subset_univ (σ.image fun x ↦ σ.erase x))]
   swap
   · intro τ _ hτ
-    rw [simplexIncidence_eq_zero 𝕜 (σ := σ) (fun x hx h ↦ hτ (Finset.mem_image.mpr ⟨x, hx, h.symm⟩)),
-      mul_zero]
+    rw [simplexIncidence_eq_zero 𝕜 (σ := σ)
+      (fun x hx h ↦ hτ (Finset.mem_image.mpr ⟨x, hx, h.symm⟩)), mul_zero]
   rw [Finset.sum_image hinj]
   by_cases hA : ∃ u ∈ σ, ∃ v ∈ σ, u < v ∧ ρ = (σ.erase u).erase v
   · obtain ⟨u, hu, v, hv, huv, rfl⟩ := hA

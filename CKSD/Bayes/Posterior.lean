@@ -28,9 +28,9 @@ Laplace approximation of posterior normalizing constants.
 * `CKSD.tendstoInMeasure_totalVariationDistance_normalPosterior`: Bernstein–von Mises in
   the normal location model (GAPS 104.1).
 * `CKSD.integral_exp_neg_inner_toEuclideanCLM_div_two`: the Gaussian integral
-  `∫ exp(-⟪y, H y⟫/2) dy = (2π)^{d/2} / √(det H)`.
+  `∫ exp(-⟪y, H y⟫/2) dy = (2π) ^ {d / 2} / √(det H)`.
 * `CKSD.tendsto_laplace_approximation`: Laplace's method on a compact set
-  `n^{d/2} ∫_K a e^{-n f} → a(m) (2π)^{d/2} / √(det ∇²f(m))` (GAPS 104.5).
+  `n ^ {d / 2} ∫_K a e ^ {-n f} → a(m) (2π) ^ {d / 2} / √(det ∇²f(m))` (GAPS 104.5).
 
 The Bernstein–von Mises theorem is proved by an explicit `L¹` comparison of the posterior
 density with the Gaussian density near the sample mean, combined with Mathlib's strong law of
@@ -85,7 +85,7 @@ theorem volume_highest_density_region_le {Ω : Type*} [MeasurableSpace Ω] (ν :
   gcongr
 
 /-- GAPS 104.14: Tweedie's formula. For `X | θ ~ N(θ, v)` and an arbitrary probability prior `π`
-with marginal density `m(x) = ∫ φ_{θ,v}(x) dπ(θ)`, the posterior mean is `x + v (log m)'(x)`. -/
+with marginal density `m(x) = ∫ φ_{θ, v}(x) dπ(θ)`, the posterior mean is `x + v (log m)'(x)`. -/
 theorem integral_mul_gaussianPDFReal_div_eq_add_mul_deriv_log (π : Measure ℝ)
     [IsProbabilityMeasure π] (v : ℝ≥0) (hv : 0 < v) (x : ℝ) :
     let m := fun t ↦ ∫ θ, gaussianPDFReal θ v t ∂π;
@@ -161,7 +161,7 @@ theorem integral_mul_gaussianPDFReal_div_eq_add_mul_deriv_log (π : Measure ℝ)
       ((∫ θ, -(x - θ) / (v : ℝ) * gaussianPDFReal θ v x ∂π) / m x) x :=
     hm'.log hmpos.ne'
   rw [hlog.deriv]
-  -- `θ φ = x φ + v · (-(x - θ)/v) φ`.
+  -- `θ φ = x φ + v · (-(x - θ) / v) φ`.
   have hsplit : (∫ θ, θ * gaussianPDFReal θ v x ∂π) =
       x * m x + v * ∫ θ, -(x - θ) / (v : ℝ) * gaussianPDFReal θ v x ∂π := by
     have hpt : (fun θ ↦ θ * gaussianPDFReal θ v x) = fun θ ↦
@@ -218,7 +218,6 @@ theorem ae_tendsto_robbins_estimator {Ω : Type*} [MeasurableSpace Ω]
       calc
         _ = ∫ t, f t ∂P := (hmap.comp hf).integral_eq
         _ = P.real {j} := by
-          change (∫ t, ({j} : Set ℕ).indicator (fun _ ↦ (1 : ℝ)) t ∂P) = _
           rw [integral_indicator (measurableSet_singleton j), setIntegral_const]
           simp
     have hlln := strong_law_ae_real (fun i ω ↦ f (X i ω)) hint
@@ -420,6 +419,20 @@ private theorem eventually_exp_tail_le {δ p₀ c : ℝ} (hδ : 0 < δ) (hc : 0 
   exact div_nonneg hb.le hsb.le
 
 
+/-- Rescaling a Gaussian: if `n > 0`, then `N(0, v)` is the image of `N(m, v / n)` under
+`θ ↦ √n (θ - m)`. -/
+theorem gaussianReal_eq_map_sqrt_mul_sub (v : ℝ≥0) (m : ℝ) {n : ℕ} (hn0 : (0 : ℝ) < n) :
+    gaussianReal 0 v = (gaussianReal m (v / n)).map fun θ ↦ Real.sqrt n * (θ - m) := by
+  have h2 : (fun θ ↦ Real.sqrt n * (θ - m)) = (fun x ↦ Real.sqrt n * x) ∘ (fun x ↦ x - m) := rfl
+  rw [h2, ← Measure.map_map (by fun_prop) (by fun_prop), gaussianReal_map_sub_const,
+    gaussianReal_map_const_mul]
+  congr 1
+  · simp
+  · ext
+    simp only [NNReal.coe_mul, NNReal.coe_mk, NNReal.coe_div, NNReal.coe_natCast]
+    rw [Real.sq_sqrt hn0.le]
+    field_simp
+
 /-- Deterministic core of the Bernstein–von Mises theorem in the normal location model: the total
 variation bound holds uniformly over posterior centres `m` near the true parameter, for all large
 `n`. -/
@@ -489,16 +502,8 @@ private theorem exists_tv_normalPosterior_le (prior : ℝ → ℝ) (hmeas : Meas
   have hvn : v / (n : ℝ≥0) ≠ 0 := by
     have : (n : ℝ≥0) ≠ 0 := by exact_mod_cast hn0.ne'
     exact div_ne_zero hv.ne' this
-  have hG : gaussianReal 0 v = (gaussianReal m (v / n)).map T := by
-    have h2 : T = (fun x ↦ Real.sqrt n * x) ∘ (fun x ↦ x - m) := rfl
-    rw [h2, ← Measure.map_map (by fun_prop) (by fun_prop), gaussianReal_map_sub_const,
-      gaussianReal_map_const_mul]
-    congr 1
-    · simp
-    · ext
-      simp only [NNReal.coe_mul, NNReal.coe_mk, NNReal.coe_div, NNReal.coe_natCast]
-      rw [Real.sq_sqrt hn0.le]
-      field_simp
+  have hG : gaussianReal 0 v = (gaussianReal m (v / n)).map T :=
+    gaussianReal_eq_map_sqrt_mul_sub v m hn0
   have hGd : gaussianReal m (v / n) =
       volume.withDensity (fun θ ↦ ENNReal.ofReal (E θ / I)) := by
     rw [gaussianReal_of_var_ne_zero _ hvn, gaussianPDF_def]
@@ -582,7 +587,7 @@ theorem tendstoInMeasure_totalVariationDistance_normalPosterior {Ω : Type*}
   linarith
 
 /-- Gaussian integral for a positive definite matrix `H`:
-`∫ exp(-⟪y, H y⟫/2) dy = (2π)^{d/2} / √(det H)`, from the normalization of TauCeti's
+`∫ exp(-⟪y, H y⟫/2) dy = (2π) ^ {d / 2} / √(det H)`, from the normalization of TauCeti's
 multivariate normal density with covariance `H⁻¹`. -/
 theorem integral_exp_neg_inner_toEuclideanCLM_div_two {d : ℕ} {H : Matrix (Fin d) (Fin d) ℝ}
     (hH : H.PosDef) :
@@ -655,6 +660,7 @@ theorem exists_pos_mul_norm_sq_le_inner_toEuclideanCLM {d : ℕ}
     simp only [Set.mem_ofPred_eq] at h1
     have h2 : q v = ‖v‖ ^ 2 * q (‖v‖⁻¹ • v) := by
       rw [hhom, ← mul_assoc, ← mul_pow, mul_inv_cancel₀ hnv.ne', one_pow, one_mul]
+    -- `change` folds the expanded quadratic form back into `q`.
     change q u₀ * ‖v‖ ^ 2 ≤ q v
     rw [h2, mul_comm]
     exact mul_le_mul_of_nonneg_left h1 (by positivity)
@@ -746,9 +752,65 @@ theorem exists_pos_mul_norm_sub_sq_le_of_isCompact {E : Type*} [NormedAddCommGro
       _ ≤ f x := hηA x hxA
 
 
+/-- Second-order behaviour at a critical zero: if `f` is `C²` with `f m = 0`, `Df(m) = 0` and
+Hessian `⟪u, T v⟫`, and `sₙ > 0` with `(n + 1) sₙ² = 1`, then
+`(n + 1) f(m + sₙ y) → ⟪y, T y⟫ / 2`. -/
+theorem tendsto_natCast_add_one_mul_apply_add_smul {E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] {f : E → ℝ} (hf : ContDiff ℝ 2 f) {m : E} (hmin : f m = 0)
+    (hd : fderiv ℝ f m = 0) (T : E →L[ℝ] E)
+    (hhess : ∀ u v, fderiv ℝ (fderiv ℝ f) m u v = inner ℝ u (T v)) {s : ℕ → ℝ}
+    (hs0 : ∀ n, 0 < s n) (hs2 : ∀ n : ℕ, ((n : ℝ) + 1) * s n ^ 2 = 1)
+    (hslim : Tendsto s atTop (𝓝 0)) (y : E) :
+    Tendsto (fun n : ℕ ↦ ((n : ℝ) + 1) * f (m + s n • y)) atTop
+      (𝓝 (inner ℝ y (T y) / 2)) := by
+  have hsy : Tendsto (fun n ↦ s n • y) atTop (𝓝 0) := by simpa using hslim.smul_const y
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨δ', hδ', hT'⟩ := exists_abs_sub_half_fderiv_fderiv_le hf hmin hd
+    (ε := ε / (2 * (‖y‖ ^ 2 + 1))) (by positivity)
+  obtain ⟨N, hN⟩ := Metric.tendsto_atTop.1 hsy δ' hδ'
+  refine ⟨N, fun n hn ↦ ?_⟩
+  have h1 := hN n hn
+  rw [dist_zero_right] at h1
+  have h2 := hT' _ h1
+  rw [hhess, map_smul, inner_smul_left, inner_smul_right,
+    norm_smul, Real.norm_eq_abs, abs_of_pos (hs0 n), mul_pow] at h2
+  simp only [conj_trivial] at h2
+  rw [Real.dist_eq]
+  have e : ((n : ℝ) + 1) * f (m + s n • y) - inner ℝ y (T y) / 2 =
+      ((n : ℝ) + 1) * (f (m + s n • y) - 1 / 2 * (s n * (s n * inner ℝ y (T y)))) := by
+    have := hs2 n
+    linear_combination (inner ℝ y (T y) / 2) * this
+  rw [e, abs_mul, abs_of_pos (by positivity)]
+  calc ((n : ℝ) + 1) * |f (m + s n • y) - 1 / 2 * (s n * (s n * inner ℝ y (T y)))|
+      ≤ ((n : ℝ) + 1) * (ε / (2 * (‖y‖ ^ 2 + 1)) * (s n ^ 2 * ‖y‖ ^ 2)) :=
+        mul_le_mul_of_nonneg_left h2 (by positivity)
+    _ = ε / (2 * (‖y‖ ^ 2 + 1)) * ‖y‖ ^ 2 := by
+        have := hs2 n
+        linear_combination (ε / (2 * (‖y‖ ^ 2 + 1)) * ‖y‖ ^ 2) * this
+    _ < ε := by
+        rw [div_mul_eq_mul_div, div_lt_iff₀ (by positivity)]
+        nlinarith [sq_nonneg ‖y‖]
+
+/-- Change of variables `x = m + y / √(n + 1)` in `ℝᵈ`:
+`(n + 1) ^ {d / 2} ∫_K g = ∫ 1_K g (m + y / √(n + 1)) dy`. -/
+theorem rpow_mul_setIntegral_eq_integral_indicator_add_smul {d : ℕ}
+    {K : Set (EuclideanSpace ℝ (Fin d))} (hK : MeasurableSet K)
+    (g : EuclideanSpace ℝ (Fin d) → ℝ) (m : EuclideanSpace ℝ (Fin d)) (n : ℕ) :
+    Real.rpow ((n + 1 : ℕ) : ℝ) ((d : ℝ) / 2) * ∫ x in K, g x =
+      ∫ y, K.indicator g (m + (Real.sqrt ((n : ℝ) + 1))⁻¹ • y) := by
+  rw [Measure.integral_comp_smul volume (fun z ↦ K.indicator g (m + z)),
+    integral_add_left_eq_self (fun z ↦ K.indicator g z) m (μ := volume),
+    integral_indicator hK, finrank_euclideanSpace_fin, smul_eq_mul]
+  congr 1
+  rw [inv_pow, inv_inv, abs_of_pos (by positivity), Real.sqrt_eq_rpow, ← Real.rpow_natCast,
+    ← Real.rpow_mul (by positivity)]
+  push_cast
+  congr 1; ring
+
 /-- GAPS 104.5: Laplace's method on a compact region `K`. If `f` is `C²` with `f(m) = 0` at an
 interior point `m`, `f > 0` on `K \ {m}`, and `∇²f(m) = H` is positive definite, then for `a`
-continuous on `K`, `n^{d/2} ∫_K a e^{-n f} → a(m) (2π)^{d/2} / √(det H)`. This is the
+continuous on `K`, `n ^ {d / 2} ∫_K a e ^ {-n f} → a(m) (2π) ^ {d / 2} / √(det H)`. This is the
 deterministic core of the approximation; the random-likelihood and BIC conclusions of the source
 require additional probabilistic hypotheses. -/
 theorem tendsto_laplace_approximation
@@ -800,17 +862,8 @@ theorem tendsto_laplace_approximation
     rw [← Set.piecewise_eq_indicator]
     exact ContinuousOn.measurable_piecewise (ha.mul (by fun_prop)) continuousOn_const hKmeas
   have hFeq (n : ℕ) : Real.rpow ((n + 1 : ℕ) : ℝ) ((d : ℝ) / 2) * ∫ x in K, g (n + 1) x =
-      ∫ y, F n y := by
-    simp only [hF]
-    rw [Measure.integral_comp_smul volume (fun z ↦ K.indicator (g (n + 1)) (m + z)) (s n),
-      integral_add_left_eq_self (fun z ↦ K.indicator (g (n + 1)) z) m (μ := volume),
-      integral_indicator hKmeas, finrank_euclideanSpace_fin, smul_eq_mul]
-    congr 1
-    simp only [hs]
-    rw [inv_pow, inv_inv, abs_of_pos (by positivity), Real.sqrt_eq_rpow, ← Real.rpow_natCast,
-      ← Real.rpow_mul (by positivity)]
-    push_cast
-    congr 1; ring
+      ∫ y, F n y :=
+    rpow_mul_setIntegral_eq_integral_indicator_add_smul hKmeas (g (n + 1)) m n
   -- domination
   have hbound (n : ℕ) (y : EuclideanSpace ℝ (Fin d)) :
       ‖F n y‖ ≤ A * Real.exp (-c * ‖y‖ ^ 2) := by
@@ -842,39 +895,12 @@ theorem tendsto_laplace_approximation
       (𝓝 (a m * Real.exp (-inner ℝ y (H' y) / 2))) := by
     have hx : Tendsto (fun n ↦ m + s n • y) atTop (𝓝 m) := by
       simpa using tendsto_const_nhds.add (hslim.smul_const y)
-    have hsy : Tendsto (fun n ↦ s n • y) atTop (𝓝 0) := by simpa using hslim.smul_const y
     have hev : ∀ᶠ n in atTop, m + s n • y ∈ K := hx.eventually_mem hKm
     have ha' : Tendsto (fun n ↦ a (m + s n • y)) atTop (𝓝 (a m)) :=
       ((ha.continuousAt hKm).tendsto).comp hx
     have hf' : Tendsto (fun n : ℕ ↦ ((n : ℝ) + 1) * f (m + s n • y)) atTop
-        (𝓝 (inner ℝ y (H' y) / 2)) := by
-      rw [Metric.tendsto_atTop]
-      intro ε hε
-      obtain ⟨δ', hδ', hT'⟩ := exists_abs_sub_half_fderiv_fderiv_le hf hmin hd
-        (ε := ε / (2 * (‖y‖ ^ 2 + 1))) (by positivity)
-      obtain ⟨N, hN⟩ := Metric.tendsto_atTop.1 hsy δ' hδ'
-      refine ⟨N, fun n hn ↦ ?_⟩
-      have h1 := hN n hn
-      rw [dist_zero_right] at h1
-      have h2 := hT' _ h1
-      rw [hhess, map_smul, inner_smul_left, inner_smul_right,
-        norm_smul, Real.norm_eq_abs, abs_of_pos (hs0 n), mul_pow] at h2
-      simp only [conj_trivial] at h2
-      rw [Real.dist_eq]
-      have e : ((n : ℝ) + 1) * f (m + s n • y) - inner ℝ y (H' y) / 2 =
-          ((n : ℝ) + 1) * (f (m + s n • y) - 1 / 2 * (s n * (s n * inner ℝ y (H' y)))) := by
-        have := hs2 n
-        linear_combination (inner ℝ y (H' y) / 2) * this
-      rw [e, abs_mul, abs_of_pos (by positivity)]
-      calc ((n : ℝ) + 1) * |f (m + s n • y) - 1 / 2 * (s n * (s n * inner ℝ y (H' y)))|
-          ≤ ((n : ℝ) + 1) * (ε / (2 * (‖y‖ ^ 2 + 1)) * (s n ^ 2 * ‖y‖ ^ 2)) :=
-            mul_le_mul_of_nonneg_left h2 (by positivity)
-        _ = ε / (2 * (‖y‖ ^ 2 + 1)) * ‖y‖ ^ 2 := by
-            have := hs2 n
-            linear_combination (ε / (2 * (‖y‖ ^ 2 + 1)) * ‖y‖ ^ 2) * this
-        _ < ε := by
-            rw [div_mul_eq_mul_div, div_lt_iff₀ (by positivity)]
-            nlinarith [sq_nonneg ‖y‖]
+        (𝓝 (inner ℝ y (H' y) / 2)) :=
+      tendsto_natCast_add_one_mul_apply_add_smul hf hmin hd H' hhess hs0 hs2 hslim y
     have hexp : Tendsto (fun n : ℕ ↦ Real.exp (-((n : ℝ) + 1) * f (m + s n • y))) atTop
         (𝓝 (Real.exp (-inner ℝ y (H' y) / 2))) := by
       have := (Real.continuous_exp.tendsto _).comp hf'.neg

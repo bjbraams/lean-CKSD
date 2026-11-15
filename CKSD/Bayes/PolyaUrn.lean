@@ -202,6 +202,7 @@ theorem integral_mul_indicator_newObservation_polya {Ω X : Type*} [MeasurableSp
   have hG : StronglyMeasurable fun y ↦ ∫ x, H (y, x) ∂κ y :=
     StronglyMeasurable.integral_kernel_prod_right (f := fun y x ↦ H (y, x))
       hHm.stronglyMeasurable
+  -- `change` folds the past into `Y` so that `hpt` rewrites the integrand.
   change ∫ ω, F (Y ω) * {ω | ∀ i < n, Xn n ω ≠ Xn i ω}.indicator (fun _ ↦ (1 : ℝ)) ω ∂P = _
   simp_rw [hpt]
   rw [← integral_map (hY.prodMk (hmeas n)).aemeasurable hHm.aestronglyMeasurable,
@@ -219,8 +220,8 @@ theorem integral_mul_indicator_newObservation_polya {Ω X : Type*} [MeasurableSp
   ring
 
 /-- Second moment of the centred distinct count of a Pólya urn: the increments of
-`Kₙ - ∑_{i<n} |α|/(|α|+i)` are orthogonal Bernoulli residuals, so its second moment is at most
-`∑_{i<n} |α|/(|α|+i)`. -/
+`Kₙ - ∑_{i<n} |α| / (|α| + i)` are orthogonal Bernoulli residuals, so its second moment is at most
+`∑_{i<n} |α| / (|α| + i)`. -/
 theorem integral_sq_distinctObservationCount_sub_le_polya {Ω X : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
     (P : Measure Ω) [IsProbabilityMeasure P] (α : Measure X) [IsFiniteMeasure α]
@@ -389,7 +390,7 @@ theorem tendsto_div_of_monotone_of_tendsto_subseq {u L : ℕ → ℝ} {l : ℝ} 
       _ ≤ u (s (κ m + 1)) / L (s (κ m)) :=
           div_le_div_of_nonneg_left (hu0 _) hLk (hL (hκle m hm))
 
-/-- The sums `∑_{i<n} θ/(θ+i)` are `θ log(n+1)` up to a bounded error, by comparison with the
+/-- The sums `∑_{i<n} θ / (θ + i)` are `θ log(n + 1)` up to a bounded error, by comparison with the
 harmonic numbers. -/
 theorem exists_bounds_sum_div_add_log {θ : ℝ} (hθ : 0 < θ) :
     ∃ D : ℝ, 0 ≤ D ∧ ∀ n : ℕ,
@@ -440,24 +441,12 @@ theorem exists_bounds_sum_div_add_log {θ : ℝ} (hθ : 0 < θ) :
   rw [abs_le] at hdiff
   constructor <;> nlinarith
 
-/-- GAPS 104.16: logarithmic almost-sure growth of the number of distinct values.
-The logarithm uses `n+1`, which has the same asymptotics and avoids its initial zero argument. -/
-theorem ae_tendsto_distinctObservationCount_div_log_polya
-    {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
-    (P : Measure Ω) [IsProbabilityMeasure P] (α : Measure X) [IsFiniteMeasure α]
-    [NullSingletonClass α] (Xn : ℕ → Ω → X)
-    (hurn : IsPolyaUrnProcess P α Xn) :
-    ∀ᵐ ω ∂P, Tendsto (fun n : ℕ ↦ (distinctObservationCount Xn n ω : ℝ) /
-      Real.log (n + 1)) atTop (𝓝 (α.real univ)) := by
-  have hα : α ≠ 0 := by
-    rintro rfl
-    obtain ⟨ω, hω⟩ := (hurn.2 0).exists
-    have h := congrArg (fun ν : Measure X ↦ ν univ) hω
-    simp [polyaPredictiveLaw, dirichletPosteriorBase] at h
-  set θ := α.real univ with hθdef
-  have hθ : 0 < θ := ENNReal.toReal_pos ((Measure.measure_univ_ne_zero).2 hα) (measure_ne_top _ _)
-  obtain ⟨D, hD0, hDb⟩ := exists_bounds_sum_div_add_log hθ
-  set c : ℕ → ℝ := fun n ↦ ∑ i ∈ Finset.range n, θ / (θ + i) with hc
+/-- The normalized sums `(∑_{i<n} θ / (θ + i)) / log(n + 1)` tend to `θ`. -/
+theorem tendsto_sum_div_add_div_log {θ : ℝ} (hθ : 0 < θ) :
+    Tendsto (fun n : ℕ ↦ (∑ i ∈ Finset.range n, θ / (θ + i)) / Real.log (n + 1)) atTop
+      (𝓝 θ) := by
+  obtain ⟨D, -, hDb⟩ := exists_bounds_sum_div_add_log hθ
+  set c : ℕ → ℝ := fun n ↦ ∑ i ∈ Finset.range n, θ / (θ + i)
   set L : ℕ → ℝ := fun n ↦ Real.log (n + 1) with hL
   have hLtop : Tendsto L atTop atTop :=
     Real.tendsto_log_atTop.comp (tendsto_atTop_add_const_right _ 1 tendsto_natCast_atTop_atTop)
@@ -466,63 +455,189 @@ theorem ae_tendsto_distinctObservationCount_div_log_polya
     simp only [hL]
     exact Real.log_pos (by have : (1 : ℝ) ≤ n := by exact_mod_cast hn
                            linarith)
-  have hclim : Tendsto (fun n ↦ c n / L n) atTop (𝓝 θ) := by
-    have hlo : Tendsto (fun n ↦ θ - D * (L n)⁻¹) atTop (𝓝 θ) := by
-      simpa using tendsto_const_nhds.sub (hLinv.const_mul D)
-    have hhi : Tendsto (fun n ↦ θ + (θ + D) * (L n)⁻¹) atTop (𝓝 θ) := by
-      simpa using tendsto_const_nhds.add (hLinv.const_mul (θ + D))
-    refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlo hhi ?_ ?_
-    · filter_upwards [eventually_ge_atTop 1] with n hn
-      have hLn := hLpos1 n hn
-      rw [le_div_iff₀ hLn]
-      have := (hDb n).1
-      have h1 : (θ - D * (L n)⁻¹) * L n = θ * L n - D := by field_simp
-      rw [h1]
-      exact this
-    · filter_upwards [eventually_ge_atTop 1] with n hn
-      have hLn := hLpos1 n hn
-      rw [div_le_iff₀ hLn]
-      have := (hDb n).2
-      have h1 : (θ + (θ + D) * (L n)⁻¹) * L n = θ * L n + (θ + D) := by field_simp
-      rw [h1]
-      simp only [hc, hL] at this ⊢
-      linarith
-  -- The subsequence `s k = 2^((k+1)²)`.
+  have hlo : Tendsto (fun n ↦ θ - D * (L n)⁻¹) atTop (𝓝 θ) := by
+    simpa using tendsto_const_nhds.sub (hLinv.const_mul D)
+  have hhi : Tendsto (fun n ↦ θ + (θ + D) * (L n)⁻¹) atTop (𝓝 θ) := by
+    simpa using tendsto_const_nhds.add (hLinv.const_mul (θ + D))
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le' hlo hhi ?_ ?_
+  · filter_upwards [eventually_ge_atTop 1] with n hn
+    have hLn := hLpos1 n hn
+    rw [le_div_iff₀ hLn]
+    have := (hDb n).1
+    have h1 : (θ - D * (L n)⁻¹) * L n = θ * L n - D := by field_simp
+    rw [h1]
+    exact this
+  · filter_upwards [eventually_ge_atTop 1] with n hn
+    have hLn := hLpos1 n hn
+    rw [div_le_iff₀ hLn]
+    have := (hDb n).2
+    have h1 : (θ + (θ + D) * (L n)⁻¹) * L n = θ * L n + (θ + D) := by field_simp
+    rw [h1]
+    simp only [hL] at this ⊢
+    linarith
+
+/-- Along `n = 2 ^ ((k + 1)²)`, `log(n + 1)` lies between `(k + 1)² log 2` and
+`((k + 1)² + 1) log 2`. -/
+theorem log_two_pow_sq_add_one_bounds (k : ℕ) :
+    ((k : ℝ) + 1) ^ 2 * Real.log 2 ≤ Real.log (((2 ^ ((k + 1) ^ 2) : ℕ) : ℝ) + 1) ∧
+      Real.log (((2 ^ ((k + 1) ^ 2) : ℕ) : ℝ) + 1) ≤ (((k : ℝ) + 1) ^ 2 + 1) * Real.log 2 := by
+  push_cast
+  have hp : (1 : ℝ) ≤ 2 ^ ((k + 1) ^ 2) := one_le_pow₀ one_le_two
+  have e1 : Real.log ((2 : ℝ) ^ ((k + 1) ^ 2)) = ((k : ℝ) + 1) ^ 2 * Real.log 2 := by
+    rw [Real.log_pow]; push_cast; ring
+  have e2 : Real.log ((2 : ℝ) ^ ((k + 1) ^ 2 + 1)) =
+      (((k : ℝ) + 1) ^ 2 + 1) * Real.log 2 := by
+    rw [Real.log_pow]; push_cast; ring
+  constructor
+  · rw [← e1]
+    exact Real.log_le_log (by positivity) (by linarith)
+  · rw [← e2]
+    exact Real.log_le_log (by positivity) (by rw [pow_succ (2 : ℝ) ((k + 1) ^ 2)]; linarith)
+
+/-- Along `sₖ = 2 ^ ((k + 1)²)`, the ratio `log(sₖ₊₁ + 1) / log(sₖ + 1)` tends to `1`. -/
+theorem tendsto_log_two_pow_sq_succ_div_log :
+    Tendsto (fun k : ℕ ↦ Real.log (((2 ^ ((k + 1 + 1) ^ 2) : ℕ) : ℝ) + 1) /
+      Real.log (((2 ^ ((k + 1) ^ 2) : ℕ) : ℝ) + 1)) atTop (𝓝 1) := by
+  have hLspos (k : ℕ) : 0 < Real.log (((2 ^ ((k + 1) ^ 2) : ℕ) : ℝ) + 1) :=
+    lt_of_lt_of_le (by positivity [Real.log_pos one_lt_two]) (log_two_pow_sq_add_one_bounds k).1
+  have hq : Tendsto (fun k : ℕ ↦ (1 + 1 / ((k : ℝ) + 1)) ^ 2 + (1 / ((k : ℝ) + 1)) ^ 2)
+      atTop (𝓝 ((1 + 0) ^ 2 + 0 ^ 2)) :=
+    ((tendsto_const_nhds.add tendsto_one_div_add_atTop_nhds_zero_nat).pow 2).add
+      (tendsto_one_div_add_atTop_nhds_zero_nat.pow 2)
+  rw [show ((1 : ℝ) + 0) ^ 2 + 0 ^ 2 = 1 by norm_num] at hq
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hq (fun k ↦ ?_)
+    (fun k ↦ ?_)
+  · rw [le_div_iff₀ (hLspos k), one_mul]
+    have : 2 ^ ((k + 1) ^ 2) ≤ 2 ^ ((k + 1 + 1) ^ 2) :=
+      Nat.pow_le_pow_right (by norm_num) (Nat.pow_le_pow_left (by omega) 2)
+    exact Real.log_le_log (by positivity) (by exact_mod_cast Nat.add_le_add_right this 1)
+  · rw [div_le_iff₀ (hLspos k)]
+    have h1 := (log_two_pow_sq_add_one_bounds (k + 1)).2
+    have h2 := (log_two_pow_sq_add_one_bounds k).1
+    have hk : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+    calc Real.log (((2 ^ ((k + 1 + 1) ^ 2) : ℕ) : ℝ) + 1)
+        ≤ ((((k + 1 : ℕ) : ℝ) + 1) ^ 2 + 1) * Real.log 2 := h1
+      _ = ((1 + 1 / ((k : ℝ) + 1)) ^ 2 + (1 / ((k : ℝ) + 1)) ^ 2) *
+          (((k : ℝ) + 1) ^ 2 * Real.log 2) := by push_cast; field_simp
+      _ ≤ _ := mul_le_mul_of_nonneg_left h2 (by positivity)
+
+/-- The Pólya base measure of a Pólya urn process has positive total mass. -/
+theorem measureReal_univ_pos_of_isPolyaUrnProcess {Ω X : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X] (P : Measure Ω) [IsProbabilityMeasure P]
+        (α : Measure X)
+    [IsFiniteMeasure α] (Xn : ℕ → Ω → X) (hurn : IsPolyaUrnProcess P α Xn) :
+    0 < α.real univ := by
+  have hα : α ≠ 0 := by
+    rintro rfl
+    obtain ⟨ω, hω⟩ := (hurn.2 0).exists
+    have h := congrArg (fun ν : Measure X ↦ ν univ) hω
+    simp [polyaPredictiveLaw, dirichletPosteriorBase] at h
+  exact ENNReal.toReal_pos ((Measure.measure_univ_ne_zero).2 hα) (measure_ne_top _ _)
+
+/-- The distinct count is a measurable function of the sample path. -/
+theorem measurable_distinctObservationCount {Ω X : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace X] [MeasurableEq X]
+    (Xn : ℕ → Ω → X) (hXn : ∀ i, Measurable (Xn i)) (n : ℕ) :
+    Measurable fun ω ↦ (distinctObservationCount Xn n ω : ℝ) := by
+  simp_rw [distinctObservationCount_eq_sum_indicator]
+  refine Finset.measurable_sum _ fun i _ ↦ measurable_const.indicator ?_
+  simp only [ofPred_forall]
+  exact MeasurableSet.iInter fun j ↦ MeasurableSet.iInter fun _ ↦
+    (measurableSet_eq_fun (hXn i) (hXn j)).compl
+
+/-- Along `sₖ = 2 ^ ((k + 1)²)`, the second moments of the centred distinct counts of a Pólya urn,
+divided by `log(sₖ + 1)²`, are summable. -/
+theorem summable_integral_sq_distinctObservationCount_sub_div_polya {Ω X : Type*}
+    [MeasurableSpace Ω] [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
+    (P : Measure Ω) [IsProbabilityMeasure P] (α : Measure X) [IsFiniteMeasure α]
+    [NullSingletonClass α] (Xn : ℕ → Ω → X) (hurn : IsPolyaUrnProcess P α Xn) :
+    Summable fun k : ℕ ↦ (∫ ω, ((distinctObservationCount Xn (2 ^ ((k + 1) ^ 2)) ω : ℝ) -
+        ∑ i ∈ Finset.range (2 ^ ((k + 1) ^ 2)), α.real univ / (α.real univ + i)) ^ 2 ∂P) /
+      Real.log (((2 ^ ((k + 1) ^ 2) : ℕ) : ℝ) + 1) ^ 2 := by
+  set θ := α.real univ with hθdef
+  have hθ : 0 < θ := measureReal_univ_pos_of_isPolyaUrnProcess P α Xn hurn
+  obtain ⟨D, hD0, hDb⟩ := exists_bounds_sum_div_add_log hθ
+  set c : ℕ → ℝ := fun n ↦ ∑ i ∈ Finset.range n, θ / (θ + i) with hc
+  set L : ℕ → ℝ := fun n ↦ Real.log (n + 1) with hL
+  set s : ℕ → ℕ := fun k ↦ 2 ^ ((k + 1) ^ 2) with hs
+  have hlog2 : 0 < Real.log 2 := Real.log_pos one_lt_two
+  have hLs (k : ℕ) : ((k : ℝ) + 1) ^ 2 * Real.log 2 ≤ L (s k) ∧
+      L (s k) ≤ (((k : ℝ) + 1) ^ 2 + 1) * Real.log 2 := log_two_pow_sq_add_one_bounds k
+  have hLspos (k : ℕ) : 0 < L (s k) :=
+    lt_of_lt_of_le (by positivity) (hLs k).1
+  set B := (θ + D) / Real.log 2 ^ 2 + θ / Real.log 2 with hB
+  refine Summable.of_nonneg_of_le (fun k ↦ div_nonneg (integral_nonneg fun ω ↦ sq_nonneg _)
+    (sq_nonneg _)) (fun k ↦ ?_) (((summable_nat_add_iff 1).2
+      (Real.summable_one_div_nat_pow.2 one_lt_two)).mul_left B)
+  have hvar := integral_sq_distinctObservationCount_sub_le_polya P α Xn hurn (s k)
+  have hLk := hLspos k
+  have ha : 0 < ((k : ℝ) + 1) ^ 2 * Real.log 2 := by positivity
+  have hck := (hDb (s k)).2
+  calc (∫ ω, ((distinctObservationCount Xn (s k) ω : ℝ) - c (s k)) ^ 2 ∂P) / L (s k) ^ 2
+      ≤ c (s k) / L (s k) ^ 2 := div_le_div_of_nonneg_right hvar (sq_nonneg _)
+    _ ≤ (θ * (1 + L (s k)) + D) / L (s k) ^ 2 :=
+        div_le_div_of_nonneg_right hck (sq_nonneg _)
+    _ = (θ + D) / L (s k) ^ 2 + θ / L (s k) := by field_simp; ring
+    _ ≤ (θ + D) / (((k : ℝ) + 1) ^ 2 * Real.log 2) ^ 2 +
+          θ / (((k : ℝ) + 1) ^ 2 * Real.log 2) := by
+        gcongr
+        · exact (hLs k).1
+        · exact (hLs k).1
+    _ ≤ B * (1 / (((k + 1 : ℕ) : ℝ)) ^ 2) := by
+        have hk1 : (1 : ℝ) ≤ ((k : ℝ) + 1) ^ 2 :=
+          one_le_pow₀ (by linarith [(Nat.cast_nonneg k : (0 : ℝ) ≤ k)])
+        have hk0 : (0 : ℝ) < ((k : ℝ) + 1) ^ 2 := by positivity
+        have t1 : (θ + D) / (((k : ℝ) + 1) ^ 2 * Real.log 2) ^ 2 ≤
+            (θ + D) / Real.log 2 ^ 2 * (1 / ((k : ℝ) + 1) ^ 2) := by
+          rw [div_mul_div_comm, mul_one]
+          apply div_le_div_of_nonneg_left (by positivity) (by positivity)
+          have h5 : ((k : ℝ) + 1) ^ 2 ≤ ((k : ℝ) + 1) ^ 2 * ((k : ℝ) + 1) ^ 2 :=
+            le_mul_of_one_le_right hk0.le hk1
+          calc Real.log 2 ^ 2 * ((k : ℝ) + 1) ^ 2
+              ≤ Real.log 2 ^ 2 * (((k : ℝ) + 1) ^ 2 * ((k : ℝ) + 1) ^ 2) :=
+                mul_le_mul_of_nonneg_left h5 (by positivity)
+            _ = (((k : ℝ) + 1) ^ 2 * Real.log 2) ^ 2 := by ring
+        have t2 : θ / (((k : ℝ) + 1) ^ 2 * Real.log 2) =
+            θ / Real.log 2 * (1 / ((k : ℝ) + 1) ^ 2) := by
+          field_simp
+        push_cast
+        rw [hB, add_mul]
+        linarith
+
+/-- GAPS 104.16: logarithmic almost-sure growth of the number of distinct values.
+The logarithm uses `n + 1`, which has the same asymptotics and avoids its initial zero argument. -/
+theorem ae_tendsto_distinctObservationCount_div_log_polya
+    {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
+    (P : Measure Ω) [IsProbabilityMeasure P] (α : Measure X) [IsFiniteMeasure α]
+    [NullSingletonClass α] (Xn : ℕ → Ω → X)
+    (hurn : IsPolyaUrnProcess P α Xn) :
+    ∀ᵐ ω ∂P, Tendsto (fun n : ℕ ↦ (distinctObservationCount Xn n ω : ℝ) /
+      Real.log (n + 1)) atTop (𝓝 (α.real univ)) := by
+  set θ := α.real univ with hθdef
+  have hθ : 0 < θ := measureReal_univ_pos_of_isPolyaUrnProcess P α Xn hurn
+  set c : ℕ → ℝ := fun n ↦ ∑ i ∈ Finset.range n, θ / (θ + i) with hc
+  set L : ℕ → ℝ := fun n ↦ Real.log (n + 1) with hL
+  have hLpos1 (n : ℕ) (hn : 1 ≤ n) : 0 < L n := by
+    simp only [hL]
+    exact Real.log_pos (by have : (1 : ℝ) ≤ n := by exact_mod_cast hn
+                           linarith)
+  have hclim : Tendsto (fun n ↦ c n / L n) atTop (𝓝 θ) := tendsto_sum_div_add_div_log hθ
+  -- The subsequence `s k = 2 ^ ((k + 1)²)`.
   set s : ℕ → ℕ := fun k ↦ 2 ^ ((k + 1) ^ 2) with hs
   have hsm : StrictMono s := fun a b hab ↦
     Nat.pow_lt_pow_right (by norm_num) (Nat.pow_lt_pow_left (by omega) (by norm_num))
-  have hlog2 : 0 < Real.log 2 := Real.log_pos one_lt_two
-  have hLs (k : ℕ) : ((k : ℝ) + 1) ^ 2 * Real.log 2 ≤ L (s k) ∧
-      L (s k) ≤ (((k : ℝ) + 1) ^ 2 + 1) * Real.log 2 := by
-    simp only [hL, hs]
-    push_cast
-    have hp : (1 : ℝ) ≤ 2 ^ ((k + 1) ^ 2) := one_le_pow₀ one_le_two
-    have e1 : Real.log ((2 : ℝ) ^ ((k + 1) ^ 2)) = ((k : ℝ) + 1) ^ 2 * Real.log 2 := by
-      rw [Real.log_pow]; push_cast; ring
-    have e2 : Real.log ((2 : ℝ) ^ ((k + 1) ^ 2 + 1)) =
-        (((k : ℝ) + 1) ^ 2 + 1) * Real.log 2 := by
-      rw [Real.log_pow]; push_cast; ring
-    constructor
-    · rw [← e1]
-      exact Real.log_le_log (by positivity) (by linarith)
-    · rw [← e2]
-      exact Real.log_le_log (by positivity) (by rw [pow_succ (2 : ℝ) ((k + 1) ^ 2)]; linarith)
   have hLspos (k : ℕ) : 0 < L (s k) :=
-    lt_of_lt_of_le (by positivity) (hLs k).1
+    lt_of_lt_of_le (by positivity [Real.log_pos one_lt_two])
+      (log_two_pow_sq_add_one_bounds k).1
   -- Chebyshev and Borel–Cantelli along the subsequence.
   set Z : ℕ → Ω → ℝ := fun k ω ↦ (distinctObservationCount Xn (s k) ω : ℝ) - c (s k) with hZ
-  have hKm (n : ℕ) : Measurable fun ω ↦ (distinctObservationCount Xn n ω : ℝ) := by
-    simp_rw [distinctObservationCount_eq_sum_indicator]
-    refine Finset.measurable_sum _ fun i _ ↦ measurable_const.indicator ?_
-    simp only [ofPred_forall]
-    exact MeasurableSet.iInter fun j ↦ MeasurableSet.iInter fun _ ↦
-      (measurableSet_eq_fun (hurn.1 i) (hurn.1 j)).compl
   have hKle (n : ℕ) (ω : Ω) : (distinctObservationCount Xn n ω : ℝ) ≤ n := by
     exact_mod_cast (Finset.card_image_le).trans (by simp)
   have hc0 (n : ℕ) : 0 ≤ c n := Finset.sum_nonneg fun i _ ↦ by positivity
   have hint (k : ℕ) : Integrable (fun ω ↦ Z k ω ^ 2) P := by
-    refine Integrable.of_bound (((hKm _).sub_const _).pow_const 2).aestronglyMeasurable
-      ((s k + c (s k)) ^ 2) (ae_of_all _ fun ω ↦ ?_)
+    refine Integrable.of_bound
+      (((measurable_distinctObservationCount Xn hurn.1 _).sub_const _).pow_const
+        2).aestronglyMeasurable ((s k + c (s k)) ^ 2) (ae_of_all _ fun ω ↦ ?_)
     rw [Real.norm_eq_abs, abs_pow]
     refine pow_le_pow_left₀ (abs_nonneg _) ?_ 2
     simp only [hZ]
@@ -532,47 +647,8 @@ theorem ae_tendsto_distinctObservationCount_div_log_polya
     have h4 : (0 : ℝ) ≤ (s k : ℝ) := Nat.cast_nonneg _
     rw [abs_le]
     constructor <;> linarith
-  have hsum : Summable fun k ↦ (∫ ω, Z k ω ^ 2 ∂P) / L (s k) ^ 2 := by
-    set B := (θ + D) / Real.log 2 ^ 2 + θ / Real.log 2 with hB
-    refine Summable.of_nonneg_of_le (fun k ↦ div_nonneg (integral_nonneg fun ω ↦ sq_nonneg _)
-      (sq_nonneg _)) (fun k ↦ ?_) (((summable_nat_add_iff 1).2
-        (Real.summable_one_div_nat_pow.2 one_lt_two)).mul_left B)
-    have hvar := integral_sq_distinctObservationCount_sub_le_polya P α Xn hurn (s k)
-    have hLk := hLspos k
-    have ha : 0 < ((k : ℝ) + 1) ^ 2 * Real.log 2 := by positivity
-    have hck := (hDb (s k)).2
-    simp only [hZ]
-    calc (∫ ω, ((distinctObservationCount Xn (s k) ω : ℝ) - c (s k)) ^ 2 ∂P) / L (s k) ^ 2
-        ≤ c (s k) / L (s k) ^ 2 := div_le_div_of_nonneg_right hvar (sq_nonneg _)
-      _ ≤ (θ * (1 + L (s k)) + D) / L (s k) ^ 2 :=
-          div_le_div_of_nonneg_right hck (sq_nonneg _)
-      _ = (θ + D) / L (s k) ^ 2 + θ / L (s k) := by field_simp; ring
-      _ ≤ (θ + D) / (((k : ℝ) + 1) ^ 2 * Real.log 2) ^ 2 +
-            θ / (((k : ℝ) + 1) ^ 2 * Real.log 2) := by
-          gcongr
-          · exact (hLs k).1
-          · exact (hLs k).1
-      _ ≤ B * (1 / (((k + 1 : ℕ) : ℝ)) ^ 2) := by
-          have hk1 : (1 : ℝ) ≤ ((k : ℝ) + 1) ^ 2 :=
-            one_le_pow₀ (by linarith [(Nat.cast_nonneg k : (0 : ℝ) ≤ k)])
-          have hk0 : (0 : ℝ) < ((k : ℝ) + 1) ^ 2 := by positivity
-          have t1 : (θ + D) / (((k : ℝ) + 1) ^ 2 * Real.log 2) ^ 2 ≤
-              (θ + D) / Real.log 2 ^ 2 * (1 / ((k : ℝ) + 1) ^ 2) := by
-            rw [div_mul_div_comm, mul_one]
-            apply div_le_div_of_nonneg_left (by positivity) (by positivity)
-            have h5 : ((k : ℝ) + 1) ^ 2 ≤ ((k : ℝ) + 1) ^ 2 * ((k : ℝ) + 1) ^ 2 :=
-              le_mul_of_one_le_right hk0.le hk1
-            calc Real.log 2 ^ 2 * ((k : ℝ) + 1) ^ 2
-                ≤ Real.log 2 ^ 2 * (((k : ℝ) + 1) ^ 2 * ((k : ℝ) + 1) ^ 2) :=
-                  mul_le_mul_of_nonneg_left h5 (by positivity)
-              _ = (((k : ℝ) + 1) ^ 2 * Real.log 2) ^ 2 := by ring
-          have t2 : θ / (((k : ℝ) + 1) ^ 2 * Real.log 2) =
-              θ / Real.log 2 * (1 / ((k : ℝ) + 1) ^ 2) := by
-            field_simp
-          push_cast
-          rw [hB, add_mul]
-          linarith
-  have hae := ae_tendsto_div_of_summable_integral_sq_div P Z (fun k ↦ L (s k)) hLspos hint hsum
+  have hae := ae_tendsto_div_of_summable_integral_sq_div P Z (fun k ↦ L (s k)) hLspos hint
+    (summable_integral_sq_distinctObservationCount_sub_div_polya P α Xn hurn)
   filter_upwards [hae] with ω hω
   have hsub : Tendsto (fun k ↦ (distinctObservationCount Xn (s k) ω : ℝ) / L (s k)) atTop
       (𝓝 θ) := by
@@ -581,29 +657,10 @@ theorem ae_tendsto_distinctObservationCount_div_log_polya
     refine this.congr fun k ↦ ?_
     simp only [hZ, Function.comp_apply]
     ring
-  have hratio : Tendsto (fun k ↦ L (s (k + 1)) / L (s k)) atTop (𝓝 1) := by
-    have hq : Tendsto (fun k : ℕ ↦ (1 + 1 / ((k : ℝ) + 1)) ^ 2 + (1 / ((k : ℝ) + 1)) ^ 2)
-        atTop (𝓝 ((1 + 0) ^ 2 + 0 ^ 2)) :=
-      ((tendsto_const_nhds.add tendsto_one_div_add_atTop_nhds_zero_nat).pow 2).add
-        (tendsto_one_div_add_atTop_nhds_zero_nat.pow 2)
-    rw [show ((1 : ℝ) + 0) ^ 2 + 0 ^ 2 = 1 by norm_num] at hq
-    refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hq (fun k ↦ ?_)
-      (fun k ↦ ?_)
-    · rw [le_div_iff₀ (hLspos k), one_mul]
-      have := hsm.monotone (Nat.le_succ k)
-      simp only [hL]
-      exact Real.log_le_log (by positivity) (by exact_mod_cast Nat.add_le_add_right this 1)
-    · rw [div_le_iff₀ (hLspos k)]
-      have h1 := (hLs (k + 1)).2
-      have h2 := (hLs k).1
-      have hk : (0 : ℝ) < (k : ℝ) + 1 := by positivity
-      calc L (s (k + 1)) ≤ ((((k + 1 : ℕ) : ℝ) + 1) ^ 2 + 1) * Real.log 2 := h1
-        _ = ((1 + 1 / ((k : ℝ) + 1)) ^ 2 + (1 / ((k : ℝ) + 1)) ^ 2) *
-            (((k : ℝ) + 1) ^ 2 * Real.log 2) := by push_cast; field_simp
-        _ ≤ _ := mul_le_mul_of_nonneg_left h2 (by positivity)
   refine tendsto_div_of_monotone_of_tendsto_subseq (u := fun n ↦
     (distinctObservationCount Xn n ω : ℝ)) ?_ (fun m ↦ Nat.cast_nonneg _) ?_ s hsm
-    (fun m hm ↦ hLpos1 m (le_trans (Nat.one_le_two_pow) hm)) hsub hratio
+    (fun m hm ↦ hLpos1 m (le_trans (Nat.one_le_two_pow) hm)) hsub
+    tendsto_log_two_pow_sq_succ_div_log
   · refine monotone_nat_of_le_succ fun n ↦ ?_
     simp only [distinctObservationCount_succ, Nat.cast_add]
     split_ifs <;> simp
