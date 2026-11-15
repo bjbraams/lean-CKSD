@@ -329,15 +329,6 @@ theorem finiteKernelDensityEstimator_risk_le (β L c : ℝ)
     _ ≤ (L ^ 2 * c ^ (2 * β) * MK ^ 2 + B * K2 / c + 1) * r := by
         nlinarith
 
-/-- `klFun t ≤ (t - 1)²` for `t ≥ 0`, from `log t ≤ t - 1`. -/
-private theorem klFun_le_sq_of_nonneg {t : ℝ} (ht : 0 ≤ t) :
-    InformationTheory.klFun t ≤ (t - 1) ^ 2 := by
-  rw [InformationTheory.klFun_apply]
-  rcases ht.eq_or_lt with h | h
-  · subst h; simp
-  have := Real.log_le_sub_one_of_pos h
-  nlinarith
-
 /-- Kullback–Leibler divergence between laws with densities, bounded by the chi-square
 integral: `KL(f₁, f₀) ≤ ∫ (f₁ - f₀)² / f₀` for a positive density `f₀`. -/
 theorem klDiv_densityLaw_le {f₀ f₁ : ℝ → ℝ} (hm₀ : Measurable f₀) (hm₁ : Measurable f₁)
@@ -367,7 +358,7 @@ theorem klDiv_densityLaw_le {f₀ f₁ : ℝ → ℝ} (hm₀ : Measurable f₀) 
         rw [hy, ENNReal.toReal_ofReal (div_nonneg (h₁ y) (hpos y).le)]
     _ ≤ ∫⁻ y, ENNReal.ofReal ((r y - 1) ^ 2) ∂densityLaw f₀ :=
         lintegral_mono fun y ↦ ENNReal.ofReal_le_ofReal
-          (klFun_le_sq_of_nonneg (div_nonneg (h₁ y) (hpos y).le))
+          (klFun_le_sq_sub_one (div_nonneg (h₁ y) (hpos y).le))
     _ = ∫⁻ y, ENNReal.ofReal ((f₁ y - f₀ y) ^ 2 / f₀ y) := by
         rw [densityLaw, lintegral_withDensity_eq_lintegral_mul _ hm₀.ennreal_ofReal
           (by fun_prop)]

@@ -15,7 +15,7 @@ with `n / 2` vertices labelled `true` (natural division, so the groups differ by
 vertex when `n` is odd) and then includes each unordered pair independently, with probability
 `p` within groups and `q` between groups. All its probabilities are finite sums. Edge
 probabilities outside `[0,1]`, which can occur for small `n` in the scalings `a log n / n`, are
-clamped to `[0,1]`; this does not affect any limit.
+clamped to `[0,1]` by Mathlib's projection `Set.projIcc`; this does not affect any limit.
 
 The binomial random graph is Mathlib's `SimpleGraph.binomialRandom`. Graphon models, joint
 sampling laws, and the Diaconis–Janson mixture theorem for laws invariant under all permutations
@@ -35,11 +35,6 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
-/-- A real number clamped to the unit interval (Mathlib's projection `Set.projIcc`), used as an
-edge probability. -/
-def clampUnitInterval (x : ℝ) : unitInterval :=
-  Set.projIcc 0 1 zero_le_one x
-
 /-- Labellings of `Fin n` with exactly `n / 2` vertices in the group `true`. -/
 def balancedLabelings (n : ℕ) : Finset (Fin n → Bool) :=
   Finset.univ.filter fun σ ↦ (Finset.univ.filter fun i ↦ σ i = true).card = n / 2
@@ -48,7 +43,7 @@ def balancedLabelings (n : ℕ) : Finset (Fin n → Bool) :=
 independent edges with probability `p` within and `q` between groups (both clamped). -/
 def blockModelGraphProb {n : ℕ} (p q : ℝ) (σ : Fin n → Bool) (G : SimpleGraph (Fin n)) : ℝ :=
   ∏ e ∈ (Finset.univ.filter fun e : Fin n × Fin n ↦ e.1 < e.2),
-    let r : ℝ := (clampUnitInterval (if σ e.1 = σ e.2 then p else q) : ℝ)
+    let r : ℝ := (Set.projIcc (0 : ℝ) 1 zero_le_one (if σ e.1 = σ e.2 then p else q) : ℝ)
     if G.Adj e.1 e.2 then r else 1 - r
 
 /-- Joint mass of a labelling and a graph under the symmetric two-group block model. -/
@@ -114,24 +109,12 @@ theorem blockModel_binomialRandom_mutually_contiguous (a b : ℝ) (ha : 0 < a) (
     (A : ∀ n : ℕ, Set (SimpleGraph (Fin n))) :
     Tendsto (fun n : ℕ ↦ blockModelGraphLaw n (a / n) (b / n) (A n)) atTop (𝓝 0) ↔
       Tendsto (fun n : ℕ ↦ SimpleGraph.binomialRandom (Fin n)
-        (clampUnitInterval ((a + b) / (2 * n))) (A n)) atTop (𝓝 0) := by
+        (Set.projIcc (0 : ℝ) 1 zero_le_one ((a + b) / (2 * n))) (A n)) atTop (𝓝 0) := by
   sorry
-
-/-- Number of vertices in the connected component of `v`. -/
-def componentSize {n : ℕ} (G : SimpleGraph (Fin n)) (v : Fin n) : ℕ :=
-  (G.connectedComponentMk v).supp.ncard
 
 /-- Number of vertices of a largest connected component (zero for the empty vertex set). -/
 def largestComponentSize {n : ℕ} (G : SimpleGraph (Fin n)) : ℕ :=
   Finset.univ.sup (componentSize G)
-
-/-- GAPS 107.47, subcritical phase: for `p = c/n` with `0 ≤ c < 1`, all components have at
-most `C log n` vertices with probability tending to one. -/
-theorem exists_tendsto_binomialRandom_components_le_log (c : ℝ) (hc0 : 0 ≤ c) (hc : c < 1) :
-    ∃ C > (0 : ℝ), Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
-      (clampUnitInterval (c / n))).real {G | ∀ v, (componentSize G v : ℝ) ≤ C * Real.log n})
-      atTop (𝓝 1) :=
-  exists_tendsto_binomialRandom_components_le_log' c hc0 hc
 
 /-- GAPS 107.47, supercritical phase: for `p = c/n` with `c > 1`, the largest component has
 size `ζ n + o(n)` in probability, with `ζ ∈ (0,1)` the root of `1 - ζ = e^{-cζ}`, and any two
@@ -140,31 +123,13 @@ to one. -/
 theorem binomialRandom_giant_component (c : ℝ) (hc : 1 < c) (ζ : ℝ) (hζ : ζ ∈ Ioo 0 1)
     (hroot : 1 - ζ = Real.exp (-c * ζ)) :
     (∀ δ > (0 : ℝ), Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
-      (clampUnitInterval (c / n))).real {G | δ < |(largestComponentSize G : ℝ) / n - ζ|})
-      atTop (𝓝 0)) ∧
+      (Set.projIcc (0 : ℝ) 1 zero_le_one (c / n))).real
+        {G | δ < |(largestComponentSize G : ℝ) / n - ζ|}) atTop (𝓝 0)) ∧
     ∃ C > (0 : ℝ), Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
-      (clampUnitInterval (c / n))).real {G | ∀ v w, ¬ G.Reachable v w →
+      (Set.projIcc (0 : ℝ) 1 zero_le_one (c / n))).real {G | ∀ v w, ¬ G.Reachable v w →
         (min (componentSize G v) (componentSize G w) : ℝ) ≤ C * Real.log n})
       atTop (𝓝 1) := by
   sorry
-
-/-- GAPS 107.47, connectivity threshold: for `p = (log n + xₙ)/n`, connectivity has probability
-tending to one if `xₙ → ∞`, isolated vertices have probability tending to one if `xₙ → -∞`,
-and for constant `xₙ = x` the probability of connectivity tends to `exp(-e^{-x})`. -/
-theorem binomialRandom_connectivity_threshold :
-    (∀ x : ℕ → ℝ, Tendsto x atTop atTop →
-      Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
-        (clampUnitInterval ((Real.log n + x n) / n))).real {G | G.Connected}) atTop (𝓝 1)) ∧
-    (∀ x : ℕ → ℝ, Tendsto x atTop atBot →
-      Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
-        (clampUnitInterval ((Real.log n + x n) / n))).real {G | ∃ v, ∀ w, ¬ G.Adj v w})
-        atTop (𝓝 1)) ∧
-    ∀ x : ℝ, Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
-        (clampUnitInterval ((Real.log n + x) / n))).real {G | G.Connected})
-        atTop (𝓝 (Real.exp (-Real.exp (-x)))) :=
-  ⟨tendsto_binomialRandom_connected_of_tendsto_atTop,
-    tendsto_binomialRandom_exists_isolated_of_tendsto_atBot,
-    tendsto_binomialRandom_connected_threshold⟩
 
 /-! ### Exchangeable random graphs on `ℕ` -/
 

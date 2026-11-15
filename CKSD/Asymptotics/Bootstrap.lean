@@ -2,6 +2,7 @@ module
 
 public import CKSD.Asymptotics.Expansions
 public import Mathlib.Probability.BrownianMotion.Basic
+import CKSD.Bayes.Basic
 
 /-!
 # Bootstrap of the empirical distribution function and of the studentized mean
@@ -16,6 +17,12 @@ supremum distance. The `F`-Brownian bridge is `t ↦ W(F t) - F t · W 1` for a 
 The second-order accuracy of the studentized bootstrap is stated for the studentized mean in
 dimension one, with the convention of `studentizedStatistic` that the statistic is zero when
 the estimated standard deviation vanishes. Sources: GAPS 102.52 and 102.60.
+
+The finite-sample empirical distribution function `sampleEmpiricalCDF` and mean
+`finiteSampleMean` are related to `CKSD.empiricalCDF` and `CKSD.empiricalMeasure` by
+`empiricalCDF_eq_sampleEmpiricalCDF`, `sampleEmpiricalCDF_eq_cdf_empiricalMeasure` and
+`finiteSampleMean_eq_integral_empiricalMeasure`; the empirical-measure integrals use
+`CKSD.integral_empiricalMeasure_vector`.
 -/
 
 @[expose] public section
@@ -37,6 +44,35 @@ def finiteSampleMean {n : ℕ} (x : Fin n → ℝ) : ℝ := (∑ i, x i) / n
 /-- Standard deviation of a finite sample with divisor `n`. -/
 def finiteSampleSD {n : ℕ} (x : Fin n → ℝ) : ℝ :=
   Real.sqrt ((∑ i, (x i - finiteSampleMean x) ^ 2) / n)
+
+/-- The empirical distribution function of the first `n` terms of a sequence is that of the
+finite sample `(X i ω)_{i < n}`. -/
+theorem empiricalCDF_eq_sampleEmpiricalCDF {Ω : Type*} (X : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω)
+    (t : ℝ) : empiricalCDF X n ω t = sampleEmpiricalCDF (fun i : Fin n ↦ X i ω) t := by
+  rw [empiricalCDF, sampleEmpiricalCDF, Finset.card_filter, Finset.card_filter,
+    Fin.sum_univ_eq_sum_range (fun i ↦ if X i ω ≤ t then 1 else 0) n]
+
+/-- The empirical distribution function of a finite sample is the empirical measure of the
+half-line `(-∞, t]`; both vanish for the empty sample. -/
+theorem sampleEmpiricalCDF_eq_measureReal_empiricalMeasure {n : ℕ} (x : Fin n → ℝ) (t : ℝ) :
+    sampleEmpiricalCDF x t = (empiricalMeasure n x).real (Iic t) := by
+  rw [← integral_indicator_one measurableSet_Iic, integral_empiricalMeasure_vector,
+    sampleEmpiricalCDF, smul_eq_mul, div_eq_inv_mul]
+  congr 1
+  simp [Set.indicator_apply, Finset.sum_boole]
+
+/-- For a nonempty sample, the empirical distribution function is the distribution function
+`ProbabilityTheory.cdf` of the empirical measure. -/
+theorem sampleEmpiricalCDF_eq_cdf_empiricalMeasure {n : ℕ} (hn : 0 < n) (x : Fin n → ℝ)
+    (t : ℝ) : sampleEmpiricalCDF x t = cdf (empiricalMeasure n x) t := by
+  have := isProbabilityMeasure_empiricalMeasure hn x
+  rw [cdf_eq_real, sampleEmpiricalCDF_eq_measureReal_empiricalMeasure]
+
+/-- The mean of a finite sample is the mean of its empirical measure; both vanish for the empty
+sample. -/
+theorem finiteSampleMean_eq_integral_empiricalMeasure {n : ℕ} (x : Fin n → ℝ) :
+    finiteSampleMean x = ∫ y, y ∂empiricalMeasure n x := by
+  rw [integral_empiricalMeasure_vector, finiteSampleMean, smul_eq_mul, div_eq_inv_mul]
 
 /-- Extended supremum distance between real functions on the line. -/
 def supEDist (u v : ℝ → ℝ) : ℝ≥0∞ := ⨆ t, ENNReal.ofReal |u t - v t|

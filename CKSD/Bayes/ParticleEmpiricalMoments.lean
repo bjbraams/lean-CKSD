@@ -18,7 +18,8 @@ noncomputable section
 open MeasureTheory ProbabilityTheory Set Filter
 open scoped NNReal ENNReal Topology BigOperators Nat
 namespace CKSD
-/-- Real-power moments are the real-valued finite-exponent `Lᵖ` norm. -/
+/-- Real-power moments are the real-valued finite-exponent `Lᵖ` norm: the `ENNReal.ofReal p`
+case of Mathlib's `lpNorm_eq_integral_norm_rpow_toReal`. -/
 theorem lpNorm_ofReal_eq_integral_abs_rpow
     {Ω : Type*} [MeasurableSpace Ω] (P : Measure Ω) {p : ℝ} (hp : 0 < p)
     {f : Ω → ℝ} (hf : AEStronglyMeasurable f P) :

@@ -92,7 +92,7 @@ theorem integral_cexp_sum_localError_succ [StandardBorelSpace X] [Nonempty X]
   have hH : Measurable fun yz : (Fin (m + 1) → Fin (N + 1) → X) × (Fin (N + 1) → X) ↦
       cexp (t * (∑ p ∈ Finset.range (m + 1 + 1), M.localError φ (extendPath yz) p : ℝ) * I) := by
     fun_prop
-  have key := integral_bootstrap_succ P M (N + 1) ξ hξ m _ hH (C := 1)
+  have key := integral_bootstrap_succ P M (N + 1) ξ hξ m _ hH.stronglyMeasurable (C := 1)
     fun yz ↦ (norm_cexp_mul_mul_I _ _).le
   have hinner : ∀ ω, ∫ z, cexp (t * (∑ p ∈ Finset.range (m + 1 + 1),
         M.localError φ (extendPath ((fun i : Fin (m + 1) ↦ ξ i ω), z)) p : ℝ) * I)

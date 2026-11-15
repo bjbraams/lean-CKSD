@@ -195,6 +195,79 @@ theorem IsMonotoneOnFaces.convexComb {K : PreAbstractSimplicialComplex ι} {f g 
   have := mul_le_mul_of_nonneg_left h2 ht0
   linarith
 
+omit [LinearOrder ι] in
+/-- Without discordant pairs, `f` and `g` are both ordered by `f + g` on `K`. -/
+theorem le_and_le_of_discordantPairs_eq_empty {K : PreAbstractSimplicialComplex ι}
+    {f g : Finset ι → ℝ} (h0 : discordantPairs K f g = ∅) {σ τ : Finset ι} (hσ : σ ∈ K)
+    (hτ : τ ∈ K) (hle : f σ + g σ ≤ f τ + g τ) : f σ ≤ f τ ∧ g σ ≤ g τ := by
+  have hnot : ∀ σ ∈ K, ∀ τ ∈ K, f σ < f τ → g σ ≤ g τ := fun σ hσ τ hτ hf ↦
+    le_of_not_gt fun hg ↦ by
+      have : (σ, τ) ∈ discordantPairs K f g := by simp [discordantPairs, hσ, hτ, hf, hg]
+      simp [h0] at this
+  refine ⟨le_of_not_gt fun hc ↦ ?_, le_of_not_gt fun hc ↦ ?_⟩
+  · linarith [hnot τ hτ σ hσ hc]
+  · rcases lt_or_ge (f σ) (f τ) with h | h
+    · linarith [hnot σ hσ τ hτ h]
+    · linarith
+
+omit [LinearOrder ι] in
+/-- The induction step of the stability proofs: if `f` and `g` have a discordant pair, some
+convex combination `m = (1 - t) f + t g` with `0 < t < 1` ties that pair, so the discordant pairs
+of `f, m` and of `m, g` form proper subsets of those of `f, g`. -/
+theorem exists_convexComb_discordantPairs_ssubset {K : PreAbstractSimplicialComplex ι}
+    {f g : Finset ι → ℝ} (hne : (discordantPairs K f g).Nonempty) :
+    ∃ t : ℝ, 0 < t ∧ t < 1 ∧
+      discordantPairs K f (fun ρ ↦ (1 - t) * f ρ + t * g ρ) ⊂ discordantPairs K f g ∧
+      discordantPairs K (fun ρ ↦ (1 - t) * f ρ + t * g ρ) g ⊂ discordantPairs K f g := by
+  obtain ⟨⟨σ, τ⟩, hq⟩ := hne
+  have hst := hq
+  simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hq
+  obtain ⟨hσ, hτ, hf0, hg0⟩ := hq
+  set d0 := f σ - f τ
+  set d1 := g σ - g τ
+  have hd0 : d0 < 0 := by simp only [d0]; linarith
+  have hd1 : 0 < d1 := by simp only [d1]; linarith
+  set t := d0 / (d0 - d1)
+  have ht0 : 0 < t := div_pos_of_neg_of_neg hd0 (by linarith)
+  have ht1 : t < 1 := by
+    rw [div_lt_one_of_neg (by linarith)]
+    linarith
+  have hzero : (1 - t) * d0 + t * d1 = 0 := by
+    have hne : d0 - d1 ≠ 0 := (show d0 - d1 < 0 by linarith).ne
+    simp only [t]
+    field_simp
+    ring
+  set m : Finset ι → ℝ := fun ρ ↦ (1 - t) * f ρ + t * g ρ
+  have hmστ : m σ = m τ := by
+    simp only [m]
+    simp only [d0, d1] at hzero
+    linarith
+  refine ⟨t, ht0, ht1, ?_, ?_⟩
+  · refine Finset.ssubset_iff_subset_ne.mpr ⟨fun q hq ↦ ?_, fun heq ↦ ?_⟩
+    · simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
+      obtain ⟨h1, h2, h3, h4⟩ := hq
+      refine ⟨h1, h2, h3, ?_⟩
+      by_contra hc
+      push Not at hc
+      have := mul_le_mul_of_nonneg_left hc ht0.le
+      have := mul_lt_mul_of_pos_left h3 (sub_pos.mpr ht1)
+      linarith
+    · rw [← heq] at hst
+      simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hst
+      exact absurd hst.2.2.2 (by simp only [m] at hmστ; rw [hmστ]; exact lt_irrefl _)
+  · refine Finset.ssubset_iff_subset_ne.mpr ⟨fun q hq ↦ ?_, fun heq ↦ ?_⟩
+    · simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
+      obtain ⟨h1, h2, h3, h4⟩ := hq
+      refine ⟨h1, h2, ?_, h4⟩
+      by_contra hc
+      push Not at hc
+      have := mul_le_mul_of_nonneg_left hc (sub_pos.mpr ht1).le
+      have := mul_lt_mul_of_pos_left h4 ht0
+      linarith
+    · rw [← heq] at hst
+      simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hst
+      exact absurd hst.2.2.1 (by simp only [m] at hmστ; rw [hmστ]; exact lt_irrefl _)
+
 /-- Bottleneck stability for `Fin`-indexed diagrams, by strong induction on the number of
 discordant pairs: without discordant pairs, `f` and `g` are both ordered by `f + g`; otherwise an
 intermediate convex combination `m` resolves one discordant pair and has fewer discordant pairs with
@@ -209,79 +282,16 @@ theorem fullBottleneckEDist_le_of_card_discordantPairs_le (K : PreAbstractSimpli
   induction N using Nat.strong_induction_on with
   | _ N ih =>
   intro f g hN δ hδ n r n' r' D e E e' hD hE
-  rcases (discordantPairs K f g).eq_empty_or_nonempty with h0 | ⟨⟨σ, τ⟩, hq⟩
-  · have hnot : ∀ σ ∈ K, ∀ τ ∈ K, ¬ (f σ < f τ ∧ g τ < g σ) := by
-      intro σ hσ τ hτ hc
-      have : (σ, τ) ∈ discordantPairs K f g := by
-        simp [discordantPairs, hσ, hτ, hc.1, hc.2]
-      simp [h0] at this
-    refine fullBottleneckEDist_le_of_ordered 𝕜 K (h := fun ρ ↦ f ρ + g ρ) ?_ ?_ p hδ hD hE
-    · intro σ hσ τ hτ hle
-      by_contra hc
-      have := hnot τ hτ σ hσ
-      push Not at hc this
-      linarith [this hc]
-    · intro σ hσ τ hτ hle
-      by_contra hc
-      have := hnot σ hσ τ hτ
-      push Not at hc this
-      have h' : f τ ≤ f σ := by
-        by_contra h''
-        exact absurd (this (not_le.mp h'')) (not_le.mpr hc)
-      linarith
-  · simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hq
-    obtain ⟨hσ, hτ, hf0, hg0⟩ := hq
-    set d0 := f σ - f τ
-    set d1 := g σ - g τ
-    have hd0 : d0 < 0 := by simp only [d0]; linarith
-    have hd1 : 0 < d1 := by simp only [d1]; linarith
-    set t := d0 / (d0 - d1)
-    have ht0 : 0 < t := div_pos_of_neg_of_neg hd0 (by linarith)
-    have ht1 : t < 1 := by
-      rw [div_lt_one_of_neg (by linarith)]
-      linarith
-    have hzero : (1 - t) * d0 + t * d1 = 0 := by
-      have hne : d0 - d1 ≠ 0 := (show d0 - d1 < 0 by linarith).ne
-      simp only [t]
-      field_simp
-      ring
+  rcases (discordantPairs K f g).eq_empty_or_nonempty with h0 | hne
+  · exact fullBottleneckEDist_le_of_ordered 𝕜 K (h := fun ρ ↦ f ρ + g ρ)
+      (fun σ hσ τ hτ hle ↦ (le_and_le_of_discordantPairs_eq_empty h0 hσ hτ hle).1)
+      (fun σ hσ τ hτ hle ↦ (le_and_le_of_discordantPairs_eq_empty h0 hσ hτ hle).2) p hδ hD hE
+  · have hδ0 : 0 ≤ δ := by
+      obtain ⟨⟨σ, τ⟩, hq⟩ := hne
+      simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hq
+      exact (abs_nonneg _).trans (hδ σ hq.1)
+    obtain ⟨t, ht0, ht1, hfm, hmg⟩ := exists_convexComb_discordantPairs_ssubset hne
     set m : Finset ι → ℝ := fun ρ ↦ (1 - t) * f ρ + t * g ρ
-    have hδ0 : 0 ≤ δ := (abs_nonneg _).trans (hδ σ hσ)
-    have hst : (σ, τ) ∈ discordantPairs K f g := by
-      simp [discordantPairs, hσ, hτ, hf0, hg0]
-    have hmστ : m σ = m τ := by
-      simp only [m]
-      simp only [d0, d1] at hzero
-      linarith
-    -- the discordant pairs of `f, m` and of `m, g` are discordant pairs of `f, g`
-    have hfm : discordantPairs K f m ⊂ discordantPairs K f g := by
-      refine Finset.ssubset_iff_subset_ne.mpr ⟨fun q hq ↦ ?_, fun heq ↦ ?_⟩
-      · simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-        obtain ⟨h1, h2, h3, h4⟩ := hq
-        refine ⟨h1, h2, h3, ?_⟩
-        by_contra hc
-        push Not at hc
-        simp only [m] at h4
-        have := mul_le_mul_of_nonneg_left hc ht0.le
-        have := mul_lt_mul_of_pos_left h3 (sub_pos.mpr ht1)
-        linarith
-      · rw [← heq] at hst
-        simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hst
-        exact absurd hst.2.2.2 (by rw [hmστ]; exact lt_irrefl _)
-    have hmg : discordantPairs K m g ⊂ discordantPairs K f g := by
-      refine Finset.ssubset_iff_subset_ne.mpr ⟨fun q hq ↦ ?_, fun heq ↦ ?_⟩
-      · simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-        obtain ⟨h1, h2, h3, h4⟩ := hq
-        refine ⟨h1, h2, ?_, h4⟩
-        by_contra hc
-        push Not at hc
-        simp only [m] at h3
-        have := mul_le_mul_of_nonneg_left hc (sub_pos.mpr ht1).le
-        have := mul_lt_mul_of_pos_left h4 ht0
-        linarith
-      · rw [← heq] at hst
-        simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hst
-        exact absurd hst.2.2.1 (by rw [hmστ]; exact lt_irrefl _)
     have hδfm : ∀ ρ ∈ K, |f ρ - m ρ| ≤ t * δ := by
       intro ρ hρ
       have : f ρ - m ρ = t * (f ρ - g ρ) := by simp only [m]; ring
@@ -719,80 +729,15 @@ theorem diagramWassersteinEDist_le_of_card_discordantPairs_le (K : PreAbstractSi
   induction N using Nat.strong_induction_on with
   | _ N ih =>
   intro f g hN n r n' r' D e E e' hD hE
-  rcases (discordantPairs K f g).eq_empty_or_nonempty with h0 | ⟨⟨σ, τ⟩, hq'⟩
-  · have hnot : ∀ σ ∈ K, ∀ τ ∈ K, ¬ (f σ < f τ ∧ g τ < g σ) := by
-      intro σ hσ τ hτ hc
-      have : (σ, τ) ∈ discordantPairs K f g := by
-        simp [discordantPairs, hσ, hτ, hc.1, hc.2]
-      simp [h0] at this
-    obtain ⟨h', hinj, hord⟩ := exists_injective_ordered K (fun ρ ↦ f ρ + g ρ)
-    refine diagramWassersteinEDist_le_of_ordered 𝕜 K hinj ?_ ?_ p hq hD hE
-    · intro σ hσ τ hτ hle
-      have hle' := hord σ hσ τ hτ hle
-      by_contra hc
-      have := hnot τ hτ σ hσ
-      push Not at hc this
-      linarith [this hc]
-    · intro σ hσ τ hτ hle
-      have hle' := hord σ hσ τ hτ hle
-      by_contra hc
-      have := hnot σ hσ τ hτ
-      push Not at hc this
-      have h' : f τ ≤ f σ := by
-        by_contra h''
-        exact absurd (this (not_le.mp h'')) (not_le.mpr hc)
-      linarith
-  · simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hq'
-    obtain ⟨hσ, hτ, hf0, hg0⟩ := hq'
-    set d0 := f σ - f τ
-    set d1 := g σ - g τ
-    have hd0 : d0 < 0 := by simp only [d0]; linarith
-    have hd1 : 0 < d1 := by simp only [d1]; linarith
-    set t := d0 / (d0 - d1)
-    have ht0 : 0 < t := div_pos_of_neg_of_neg hd0 (by linarith)
-    have ht1 : t < 1 := by
-      rw [div_lt_one_of_neg (by linarith)]
-      linarith
-    have hzero : (1 - t) * d0 + t * d1 = 0 := by
-      have hne : d0 - d1 ≠ 0 := (show d0 - d1 < 0 by linarith).ne
-      simp only [t]
-      field_simp
-      ring
+  rcases (discordantPairs K f g).eq_empty_or_nonempty with h0 | hne
+  · obtain ⟨h', hinj, hord⟩ := exists_injective_ordered K (fun ρ ↦ f ρ + g ρ)
+    exact diagramWassersteinEDist_le_of_ordered 𝕜 K hinj
+      (fun σ hσ τ hτ hle ↦ (le_and_le_of_discordantPairs_eq_empty h0 hσ hτ
+        (hord σ hσ τ hτ hle)).1)
+      (fun σ hσ τ hτ hle ↦ (le_and_le_of_discordantPairs_eq_empty h0 hσ hτ
+        (hord σ hσ τ hτ hle)).2) p hq hD hE
+  · obtain ⟨t, ht0, ht1, hfm, hmg⟩ := exists_convexComb_discordantPairs_ssubset hne
     set m : Finset ι → ℝ := fun ρ ↦ (1 - t) * f ρ + t * g ρ
-    have hst : (σ, τ) ∈ discordantPairs K f g := by
-      simp [discordantPairs, hσ, hτ, hf0, hg0]
-    have hmστ : m σ = m τ := by
-      simp only [m]
-      simp only [d0, d1] at hzero
-      linarith
-    have hfm : discordantPairs K f m ⊂ discordantPairs K f g := by
-      refine Finset.ssubset_iff_subset_ne.mpr ⟨fun q hq ↦ ?_, fun heq ↦ ?_⟩
-      · simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-        obtain ⟨h1, h2, h3, h4⟩ := hq
-        refine ⟨h1, h2, h3, ?_⟩
-        by_contra hc
-        push Not at hc
-        simp only [m] at h4
-        have := mul_le_mul_of_nonneg_left hc ht0.le
-        have := mul_lt_mul_of_pos_left h3 (sub_pos.mpr ht1)
-        linarith
-      · rw [← heq] at hst
-        simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hst
-        exact absurd hst.2.2.2 (by rw [hmστ]; exact lt_irrefl _)
-    have hmg : discordantPairs K m g ⊂ discordantPairs K f g := by
-      refine Finset.ssubset_iff_subset_ne.mpr ⟨fun q hq ↦ ?_, fun heq ↦ ?_⟩
-      · simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-        obtain ⟨h1, h2, h3, h4⟩ := hq
-        refine ⟨h1, h2, ?_, h4⟩
-        by_contra hc
-        push Not at hc
-        simp only [m] at h3
-        have := mul_le_mul_of_nonneg_left hc (sub_pos.mpr ht1).le
-        have := mul_lt_mul_of_pos_left h4 ht0
-        linarith
-      · rw [← heq] at hst
-        simp only [discordantPairs, Finset.mem_filter, Finset.mem_univ, true_and] at hst
-        exact absurd hst.2.2.1 (by rw [hmστ]; exact lt_irrefl _)
     set S := ∑ σ ∈ Finset.univ.filter (· ∈ K), ENNReal.ofReal |f σ - g σ| ^ q
     have hscale : ∀ c : ℝ, 0 ≤ c → ∀ u : Finset ι → ℝ, (∀ ρ, u ρ = c * (f ρ - g ρ)) →
         (∑ σ ∈ Finset.univ.filter (· ∈ K), ENNReal.ofReal |u σ| ^ q) ^ (1 / q) =

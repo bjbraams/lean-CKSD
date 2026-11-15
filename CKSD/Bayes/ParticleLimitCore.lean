@@ -112,7 +112,7 @@ private theorem measurable_and_bounded_backwardOperator (M : FeynmanKacModel X) 
       fun x ↦ ?_⟩
     change |M.potential p x * ∫ y, M.backwardOperator (p + 1) m f y ∂M.transition p x| ≤ b * K
     rw [abs_mul, abs_of_pos (ha.trans_le (hab x).1)]
-    exact mul_le_mul (hab x).2 (abs_integral_le_of_abs_le hm hK) (abs_nonneg _)
+    exact mul_le_mul (hab x).2 (abs_integral_le_of_abs_le hK) (abs_nonneg _)
       ((ha.trans_le (hab x).1).le.trans (hab x).2)
 
 /-- Semigroup property of the backwards operator: `γₚ(Q_{p,p+m} f) = γ_{p+m}(f)`. -/

@@ -442,6 +442,38 @@ theorem measurable_finChainPrefix {Ω : Type*} [MeasurableSpace Ω]
     Measurable fun ω (i : Fin (n + 1)) ↦ X i ω :=
   measurable_pi_iff.2 fun i ↦ hX i
 
+omit [Fintype ι] [DecidableEq ι] in
+/-- A process `X` with values in `ι` has transition matrix `K` under `μ` when its path
+probabilities factor step by step: the probability of following a path up to time `n + 1` is
+the probability of following it up to time `n` times `K (path n) (path (n + 1))`. The initial
+law is not specified. -/
+def HasTransitionMatrix {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) (K : Matrix ι ι ℝ)
+    (X : ℕ → Ω → ι) : Prop :=
+  ∀ n : ℕ, ∀ path : ℕ → ι,
+    μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
+      μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1))
+
+omit [Fintype ι] [DecidableEq ι] in
+/-- The defining step-by-step factorization of the path probabilities. -/
+theorem HasTransitionMatrix.measureReal_eq {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+    {K : Matrix ι ι ℝ} {X : ℕ → Ω → ι} (h : HasTransitionMatrix μ K X) (n : ℕ)
+    (path : ℕ → ι) :
+    μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
+      μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1)) :=
+  h n path
+
+omit [Fintype ι] [DecidableEq ι] in
+/-- A chain with initial weights `ν` and path probabilities
+`ν(path 0) ∏_{i<n} K(path i, path (i+1))` has transition matrix `K`. -/
+theorem HasTransitionMatrix.of_measureReal_eq_prod {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {K : Matrix ι ι ℝ} {X : ℕ → Ω → ι} (ν : ι → ℝ)
+    (hlaw : ∀ n : ℕ, ∀ path : ℕ → ι,
+      μ.real {ω | ∀ i ≤ n, X i ω = path i} = ν (path 0) *
+        ∏ i ∈ Finset.range n, K (path i) (path (i + 1))) :
+    HasTransitionMatrix μ K X := by
+  intro n path
+  rw [hlaw, hlaw, Finset.prod_range_succ, mul_assoc]
+
 omit [DecidableEq ι] in
 /-- One-step Markov property of a finite-state chain given by its path probabilities: for a
 function `F` of the prefix `(X 0, …, X n)`, `𝔼[F · v(X (n+1))] = 𝔼[F · (K v)(X n)]`. -/
@@ -449,9 +481,7 @@ theorem integral_mul_comp_succ_eq_mulVec {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix (ι) (ι) ℝ)
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
-    (hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
-        μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1)))
+    (hstep : HasTransitionMatrix μ K X)
     (n : ℕ) (F : (Fin (n + 1) → ι) → ℝ) (v : ι → ℝ) :
     ∫ ω, F (fun i : Fin (n + 1) ↦ X i ω) * v (X (n + 1) ω) ∂μ =
       ∫ ω, F (fun i : Fin (n + 1) ↦ X i ω) * (Matrix.mulVec K v) (X n ω) ∂μ := by
@@ -496,7 +526,7 @@ theorem integral_mul_comp_succ_eq_mulVec {Ω : Type*} [MeasurableSpace Ω]
       simpa [hpath, Nat.lt_succ_iff.mp i.2] using this
   have hlast : path n = z (Fin.last n) := by
     simp [hpath, Fin.last]
-  simp_rw [hset, hstep]
+  simp_rw [hset, hstep.measureReal_eq]
   have hpre0 (y : ι) : {ω | ∀ i ≤ n, X i ω = Function.update path (n + 1) y i} =
       (fun ω (i : Fin (n + 1)) ↦ X i ω) ⁻¹' {z} := by
     rw [hset0]
@@ -516,9 +546,7 @@ theorem integral_sq_sum_markovIncrement_le {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix (ι) (ι) ℝ)
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
-    (hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
-        μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1)))
+    (hstep : HasTransitionMatrix μ K X)
     (u : ι → ℝ) (B : ℝ) (hB : ∀ x y, |u y - Matrix.mulVec K u x| ≤ B) (n : ℕ) :
     ∫ ω, (∑ i ∈ Finset.range n, (u (X (i + 1) ω) - Matrix.mulVec K u (X i ω))) ^ 2 ∂μ ≤
       n * B ^ 2 := by
@@ -717,9 +745,7 @@ theorem ae_tendsto_sampleAverage_of_sub_mulVec_eq {Ω : Type*} [MeasurableSpace 
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Matrix ι ι ℝ)
     (hP0 : ∀ x y, 0 ≤ P x y) (hP1 : ∀ x, ∑ y, P x y = 1)
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
-    (hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
-        μ.real {ω | ∀ i ≤ n, X i ω = path i} * P (path n) (path (n + 1)))
+    (hstep : HasTransitionMatrix μ P X)
     (h : ι → ℝ) (m : ℝ) (u : ι → ℝ) (hu : ∀ x, u x - Matrix.mulVec P u x = h x - m) :
     ∀ᵐ ω ∂μ, Tendsto (fun n ↦ sampleAverage (fun i ω ↦ h (X i ω)) n ω) atTop (𝓝 m) := by
   set U := ∑ y, |u y| with hU
@@ -848,11 +874,7 @@ theorem ae_tendsto_sampleAverage_metropolis {Ω : Type*} [MeasurableSpace Ω]
   have hPst := sum_mul_metropolisTransition (fun x ↦ (hπ x).le)
     (fun x y ↦ Matrix.nonneg_of_mem_rowStochastic hq (i := x) (j := y))
   have hoff : ∀ x y, x ≠ y → 0 < P x y := metropolisTransition_pos_of_ne π q hπ hirr
-  have hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
-        μ.real {ω | ∀ i ≤ n, X i ω = path i} * P (path n) (path (n + 1)) := by
-    intro n path
-    rw [hlaw, hlaw, Finset.prod_range_succ, mul_assoc]
+  have hstep : HasTransitionMatrix μ P X := .of_measureReal_eq_prod ν hlaw
   set m := ∑ x, π x * h x with hm
   set g : ι → ℝ := fun x ↦ h x - m with hg
   have hgc : ∑ x, π x * g x = 0 := by

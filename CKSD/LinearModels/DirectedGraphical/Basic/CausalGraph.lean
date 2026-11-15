@@ -69,6 +69,15 @@ structure CausalGraph (V : Type*) where
   /-- No nonempty directed path returns to its initial vertex. -/
   acyclic : ∀ v, ¬ Relation.TransGen edge v v
 
+/-- A directed acyclic graph has no loops. -/
+theorem CausalGraph.not_edge_self {V : Type*} (G : CausalGraph V) (v : V) : ¬ G.edge v v :=
+  fun h ↦ G.acyclic v (Relation.TransGen.single h)
+
+/-- A directed acyclic graph has no two-cycles. -/
+theorem CausalGraph.not_edge_of_edge {V : Type*} (G : CausalGraph V) {a b : V}
+    (h : G.edge a b) : ¬ G.edge b a :=
+  fun h' ↦ G.acyclic a (Relation.TransGen.tail (Relation.TransGen.single h) h')
+
 /-- Parents of a vertex in a causal graph. -/
 def CausalGraph.parents {V : Type*} (G : CausalGraph V) (v : V) : Set V :=
   {u | G.edge u v}

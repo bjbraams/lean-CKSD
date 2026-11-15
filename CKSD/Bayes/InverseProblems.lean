@@ -28,6 +28,8 @@ overlap at least `2e^{-2}/√(2π)`.
   estimator and the Sobolev ellipsoid `∑ⱼ (j + 1)^{2β} fⱼ² ≤ R²`.
 * `CKSD.gaussianSeqPosterior κ β ε y`: the posterior under the Gaussian prior
   `fⱼ ∼ N(0, (j + 1)^{-1-2β})`.
+* `CKSD.gaussianSeqPosteriorRisk κ β x f₀ j`: the expected posterior squared error in
+  coordinate `j` with noise variance `x = ε²`.
 
 ## Main results
 
@@ -70,6 +72,26 @@ def gaussianSeqPosterior (κ : ℕ → ℝ) (β ε : ℝ) (y : ℕ → ℝ) : Me
         (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2))
       ((((j : ℝ) + 1) ^ (-1 - 2 * β)) * ε ^ 2 /
         (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2)).toNNReal
+
+/-- Expected posterior squared error in coordinate `j` of the Gaussian sequence model with noise
+variance `x = ε²`: squared bias plus variance of the posterior mean, plus the posterior variance
+of `gaussianSeqPosterior`. -/
+def gaussianSeqPosteriorRisk (κ : ℕ → ℝ) (β x : ℝ) (f₀ : ℕ → ℝ) (j : ℕ) : ℝ :=
+  (((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j / (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x) *
+      (κ j * f₀ j) - f₀ j) ^ 2 +
+    (((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j /
+      (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x)) ^ 2 * x +
+    ((j : ℝ) + 1) ^ (-1 - 2 * β) * x / (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x)
+
+/-- Defining formula of `gaussianSeqPosteriorRisk`. -/
+theorem gaussianSeqPosteriorRisk_def (κ : ℕ → ℝ) (β x : ℝ) (f₀ : ℕ → ℝ) (j : ℕ) :
+    gaussianSeqPosteriorRisk κ β x f₀ j =
+      (((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j / (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x) *
+          (κ j * f₀ j) - f₀ j) ^ 2 +
+        (((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j /
+          (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x)) ^ 2 * x +
+        ((j : ℝ) + 1) ^ (-1 - 2 * β) * x / (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x) :=
+  rfl
 
 /-- Polynomially decaying singular values: `c₀⁻¹ j^{-a} ≤ κⱼ ≤ c₀ j^{-a}`, `j ≥ 1`. -/
 def HasPolynomialSingularValues (κ : ℕ → ℝ) (a c₀ : ℝ) : Prop :=
@@ -162,13 +184,8 @@ over coordinates of squared bias, variance of the posterior mean, and posterior 
 theorem lintegral_lintegral_seqDistSq_gaussianSeqPosterior (κ : ℕ → ℝ) (β : ℝ) {ε : ℝ}
     (hε : 0 < ε) (f₀ : ℕ → ℝ) :
     ∫⁻ y, ∫⁻ f, seqDistSq f f₀ ∂gaussianSeqPosterior κ β ε y ∂inverseProblemLaw κ ε f₀ =
-      ∑' j : ℕ, ENNReal.ofReal
-        ((((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j / (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2) *
-            (κ j * f₀ j) - f₀ j) ^ 2 +
-          (((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j /
-            (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2)) ^ 2 * ε ^ 2 +
-          ((j : ℝ) + 1) ^ (-1 - 2 * β) * ε ^ 2 /
-            (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2)) := by
+      ∑' j : ℕ, ENNReal.ofReal (gaussianSeqPosteriorRisk κ β (ε ^ 2) f₀ j) := by
+  simp only [gaussianSeqPosteriorRisk_def]
   set lam : ℕ → ℝ := fun j ↦ ((j : ℝ) + 1) ^ (-1 - 2 * β) with hlam
   set D : ℕ → ℝ := fun j ↦ κ j ^ 2 * lam j + ε ^ 2 with hD
   have hlam0 (j : ℕ) : 0 ≤ lam j := Real.rpow_nonneg (by positivity) _
@@ -339,13 +356,7 @@ at most `(c₀² R² + c₀² 2^{1+2β}/β) (ε²)^r` with `r = 2β/(2β+2a+1)`.
 theorem tsum_gaussianSeqPosterior_risk_le {a β R c₀ : ℝ} (ha : 0 ≤ a) (hβ : 0 < β)
     (hc₀ : 1 ≤ c₀) {κ : ℕ → ℝ} (hκ : HasPolynomialSingularValues κ a c₀) {ε : ℝ} (hε : 0 < ε)
     {f₀ : ℕ → ℝ} (hf₀ : f₀ ∈ inverseProblemSobolevBall β R) :
-    ∑' j : ℕ, ENNReal.ofReal
-        ((((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j / (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2) *
-            (κ j * f₀ j) - f₀ j) ^ 2 +
-          (((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j /
-            (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2)) ^ 2 * ε ^ 2 +
-          ((j : ℝ) + 1) ^ (-1 - 2 * β) * ε ^ 2 /
-            (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2)) ≤
+    ∑' j : ℕ, ENNReal.ofReal (gaussianSeqPosteriorRisk κ β (ε ^ 2) f₀ j) ≤
       ENNReal.ofReal ((c₀ ^ 2 * R ^ 2 + c₀ ^ 2 * 2 ^ (1 + 2 * β) / β) *
         (ε ^ 2) ^ (2 * β / (2 * β + 2 * a + 1))) := by
   set x := ε ^ 2 with hxdef
@@ -357,15 +368,10 @@ theorem tsum_gaussianSeqPosterior_risk_le {a β R c₀ : ℝ} (ha : 0 ≤ a) (h�
   have hT0 : 0 < T := Real.rpow_pos_of_pos hx _
   have hp0 : 0 < p := by positivity
   have hxr : 0 ≤ x ^ r := Real.rpow_nonneg hx.le _
-  have hpt (j : ℕ) : ENNReal.ofReal
-        ((((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j / (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x) *
-            (κ j * f₀ j) - f₀ j) ^ 2 +
-          (((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j /
-            (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x)) ^ 2 * x +
-          ((j : ℝ) + 1) ^ (-1 - 2 * β) * x /
-            (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x)) ≤
+  have hpt (j : ℕ) : ENNReal.ofReal (gaussianSeqPosteriorRisk κ β x f₀ j) ≤
       ENNReal.ofReal (c₀ ^ 2 * x ^ r) * ENNReal.ofReal (((j : ℝ) + 1) ^ (2 * β) * f₀ j ^ 2) +
         ENNReal.ofReal (2 * (c₀ ^ 2 * 2 ^ q)) * ENNReal.ofReal ((T + (j + 1)) ^ (-q)) := by
+    rw [gaussianSeqPosteriorRisk_def]
     have h := gaussianSeqPosterior_term_le ha hβ hc₀ hx
       (by have := Nat.cast_nonneg (α := ℝ) j; linarith : (1 : ℝ) ≤ (j : ℝ) + 1) (hκ j)
     dsimp only at h
@@ -723,13 +729,8 @@ the expected posterior squared distance. -/
 private theorem inverseProblemRisk_gaussianSeqPosteriorMean_le (κ : ℕ → ℝ) (β : ℝ) {ε : ℝ}
     (hε : 0 < ε) (f₀ : ℕ → ℝ) :
     inverseProblemRisk κ ε (gaussianSeqPosteriorMean κ β ε) f₀ ≤
-      ∑' j : ℕ, ENNReal.ofReal
-        ((((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j / (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2) *
-            (κ j * f₀ j) - f₀ j) ^ 2 +
-          (((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j /
-            (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2)) ^ 2 * ε ^ 2 +
-          ((j : ℝ) + 1) ^ (-1 - 2 * β) * ε ^ 2 /
-            (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2)) := by
+      ∑' j : ℕ, ENNReal.ofReal (gaussianSeqPosteriorRisk κ β (ε ^ 2) f₀ j) := by
+  simp only [gaussianSeqPosteriorRisk_def]
   set m : ℕ → ℝ := fun j ↦ ((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j /
     (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + ε ^ 2) with hm
   simp only [inverseProblemRisk, seqDistSq]

@@ -1,6 +1,7 @@
 module
 
-public import CKSD.Bayes.MeanField
+public import CKSD.Bayes.MeanFieldCore
+public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.Basic
 public import CKSD.Bayes.DiffusionPathRegularity
 public import CKSD.Bayes.DiffusionIntegralRegularity
 public import CKSD.Bayes.Diffusion
@@ -534,6 +535,29 @@ theorem stochasticInterpolant_score {Ω : Type*} [MeasurableSpace Ω] {d : ℕ}
   congr 1
   field_simp
 
+/-- A family `g t ω` with finite mixed second moment `∫∫ ‖g t ω‖² dP dμ` under a finite measure
+`μ` in `t` and a probability measure `P` in `ω` is jointly integrable. -/
+theorem integrable_prod_of_lintegral_lintegral_enorm_sq_lt_top {α Ω E : Type*}
+    [MeasurableSpace α] [MeasurableSpace Ω] [NormedAddCommGroup E] {μ : Measure α}
+    [IsFiniteMeasure μ] {P : Measure Ω} [IsProbabilityMeasure P] {g : α → Ω → E}
+    (hg : AEStronglyMeasurable (Function.uncurry g) (μ.prod P))
+    (h2 : ∫⁻ t, ∫⁻ ω, ‖g t ω‖ₑ ^ 2 ∂P ∂μ < ∞) :
+    Integrable (Function.uncurry g) (μ.prod P) := by
+  refine ⟨hg, ?_⟩
+  rw [HasFiniteIntegral, lintegral_prod (f := fun p ↦ ‖Function.uncurry g p‖ₑ) hg.enorm]
+  have hpt (x : E) : ‖x‖ₑ ≤ 1 + ‖x‖ₑ ^ 2 := by
+    by_cases h : ‖x‖ₑ ≤ 1
+    · exact le_add_right h
+    · exact (le_self_pow₀ (not_le.1 h).le two_ne_zero).trans le_add_self
+  calc ∫⁻ t, ∫⁻ ω, ‖g t ω‖ₑ ∂P ∂μ ≤ ∫⁻ t, (1 + ∫⁻ ω, ‖g t ω‖ₑ ^ 2 ∂P) ∂μ := by
+        refine lintegral_mono fun t ↦ ?_
+        calc ∫⁻ ω, ‖g t ω‖ₑ ∂P ≤ ∫⁻ ω, (1 + ‖g t ω‖ₑ ^ 2) ∂P := lintegral_mono fun ω ↦ hpt _
+          _ = _ := by rw [lintegral_add_left measurable_const, lintegral_const, measure_univ,
+              one_mul]
+    _ < ∞ := by
+        rw [lintegral_add_left measurable_const, lintegral_const]
+        exact ENNReal.add_lt_top.2 ⟨by simp, h2⟩
+
 /-- GAPS 104.76: the velocity of a stochastic interpolant, in the weak form of the continuity
 equation. Let `Xₜ = Iₜ(X₀, X₁) + γₜ Z` with `I` and `γ` continuously differentiable in `t`,
 and `∫₀¹ 𝔼‖∂ₜIₜ(X₀, X₁)‖² dt < ∞` (continuity of `γ̇` makes a bound on `∫₀¹ γ̇ₜ² dt`
@@ -597,26 +621,12 @@ theorem stochasticInterpolant_integral_sub_eq_integral_velocity {Ω : Type*} [Me
   have hdIjm : Measurable (Function.uncurry fun t ω ↦ dI t (X₀ ω) (X₁ ω)) :=
     measurable_uncurry_of_continuous_of_measurable (fun ω ↦ hdIc _ _) hdIm'
   -- integrability of the drift of the interpolation
-  have hdIint : Integrable (fun p : ℝ × Ω ↦ dI p.1 (X₀ p.2) (X₁ p.2)) (μ.prod P) := by
-    refine ⟨hdIjm.aestronglyMeasurable, ?_⟩
-    rw [HasFiniteIntegral, lintegral_prod (f := fun p : ℝ × Ω ↦ ‖dI p.1 (X₀ p.2) (X₁ p.2)‖ₑ)
-      hdIjm.enorm.aemeasurable]
-    have hpt (x : EuclideanSpace ℝ (Fin d)) : ‖x‖ₑ ≤ 1 + ‖x‖ₑ ^ 2 := by
-      by_cases h : ‖x‖ₑ ≤ 1
-      · exact le_add_right h
-      · exact (le_self_pow₀ (not_le.1 h).le two_ne_zero).trans le_add_self
-    calc ∫⁻ t, ∫⁻ ω, ‖dI t (X₀ ω) (X₁ ω)‖ₑ ∂P ∂μ
-        ≤ ∫⁻ t in Icc (0 : ℝ) 1, ∫⁻ ω, ‖dI t (X₀ ω) (X₁ ω)‖ₑ ∂P :=
-          lintegral_mono_set (Ioc_subset_Icc_self.trans (Icc_subset_Icc ha.1.le hb.2.le))
-      _ ≤ ∫⁻ t in Icc (0 : ℝ) 1, (1 + ∫⁻ ω, ‖dI t (X₀ ω) (X₁ ω)‖ₑ ^ 2 ∂P) := by
-          refine lintegral_mono fun t ↦ ?_
-          calc ∫⁻ ω, ‖dI t (X₀ ω) (X₁ ω)‖ₑ ∂P ≤ ∫⁻ ω, (1 + ‖dI t (X₀ ω) (X₁ ω)‖ₑ ^ 2) ∂P :=
-                lintegral_mono fun ω ↦ hpt _
-            _ = _ := by
-                rw [lintegral_add_left measurable_const, lintegral_const, measure_univ, one_mul]
-      _ < ∞ := by
-          rw [lintegral_add_left measurable_const, lintegral_const]
-          exact ENNReal.add_lt_top.2 ⟨by simp, hdI2⟩
+  have : IsFiniteMeasure μ := by rw [hμ]; infer_instance
+  have hdIint : Integrable (fun p : ℝ × Ω ↦ dI p.1 (X₀ p.2) (X₁ p.2)) (μ.prod P) :=
+    integrable_prod_of_lintegral_lintegral_enorm_sq_lt_top
+      (g := fun t ω ↦ dI t (X₀ ω) (X₁ ω)) hdIjm.aestronglyMeasurable
+      ((lintegral_mono_set (Ioc_subset_Icc_self.trans (Icc_subset_Icc ha.1.le hb.2.le))).trans_lt
+        hdI2)
   have hZint : Integrable Z P := by
     have := (IsGaussian.memLp_id (stdGaussian (EuclideanSpace ℝ (Fin d))) 1
       (by simp)).integrable le_rfl

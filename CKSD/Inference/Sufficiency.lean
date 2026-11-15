@@ -27,13 +27,6 @@ namespace CKSD
 
 variable {X S : Type*} [MeasurableSpace X] [MeasurableSpace S]
 
-/-- A bounded measurable real function is integrable for a finite measure. -/
-theorem integrable_of_measurable_of_abs_le {Y : Type*} [MeasurableSpace Y] (μ : Measure Y)
-    [IsFiniteMeasure μ] {f : Y → ℝ} (hf : Measurable f) {C : ℝ} (hC : ∀ y, |f y| ≤ C) :
-    Integrable f μ :=
-  Integrable.of_bound (C := C) hf.aestronglyMeasurable (ae_of_all _ fun y ↦ by
-    rw [Real.norm_eq_abs]; exact hC y)
-
 /-- If the joint law of `(T, X)` under `μ` is the law of `T` composed with the Markov kernel `K`,
 then `∫ g(T) φ dμ = ∫ g(T) (∫ φ dK(T)) dμ` for bounded measurable `g` and `φ`. -/
 theorem integral_comp_mul_eq_integral_comp_mul_integral_kernel (μ : Measure X)
@@ -54,7 +47,8 @@ theorem integral_comp_mul_eq_integral_comp_mul_integral_kernel (μ : Measure X)
         rw [integral_map hTX.aemeasurable hprod.aestronglyMeasurable]
     _ = ∫ s, ∫ y, g s * φ y ∂K s ∂(μ.map T) := by
         rw [hK, Measure.integral_compProd]
-        exact integrable_of_measurable_of_abs_le _ hprod hbound
+        exact Integrable.of_bound hprod.aestronglyMeasurable _
+          (ae_of_all _ fun p ↦ (Real.norm_eq_abs _).trans_le (hbound p))
     _ = ∫ s, g s * ∫ y, φ y ∂K s ∂(μ.map T) := by
         simp_rw [integral_const_mul]
     _ = ∫ x, g (T x) * ∫ y, φ y ∂K (T x) ∂μ := by
@@ -147,7 +141,8 @@ theorem ae_integral_kernel_eq_of_isBoundedlyCompleteStatistic {Θ : Type*}
       have h1 := integral_indicator_comp_mul_eq (P θ') hT K (hK θ') MeasurableSet.univ hφ hφb
       simp only [indicator_univ, Pi.one_apply, one_mul] at h1
       rw [integral_sub (f := fun x ↦ r (T x))
-        (integrable_of_measurable_of_abs_le _ (hr.comp hT) fun x ↦ hrb (T x))
+        (Integrable.of_bound (hr.comp hT).aestronglyMeasurable _
+          (ae_of_all _ fun x ↦ (Real.norm_eq_abs _).trans_le (hrb (T x))))
         (integrable_const α), ← h1, hα, integral_const]
       simp) θ
   exact hzero.mono fun x hx ↦ sub_eq_zero.1 hx

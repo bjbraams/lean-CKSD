@@ -4,6 +4,8 @@ public import CKSD.Inference.Basic
 public import Mathlib.MeasureTheory.Measure.Portmanteau
 public import Mathlib.Probability.StrongLaw
 public import Mathlib.Probability.CentralLimitTheorem
+import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Order
+import Mathlib.Analysis.Matrix.Order
 
 /-!
 # Asymptotic foundations
@@ -29,6 +31,10 @@ The foundational layer of Section 102, imported by the other statistics sections
 * `CKSD.tendstoInDistribution_delta_method`: the delta method (GAPS 102.1).
 * `CKSD.tendstoInDistribution_inv_sqrt_mul_sum_of_iid`: the iid central limit theorem for a
   centred square-integrable statistic.
+* `CKSD.tendsto_kolmogorovDistance_of_tendsto_cdf`: Pólya's theorem, pointwise convergence of
+  distribution functions to a continuous limit implies convergence in Kolmogorov distance.
+* `CKSD.exists_pos_mul_sq_le_inner_toEuclideanCLM`: a positive definite matrix has a uniformly
+  positive quadratic form, `c ‖h‖² ≤ ⟪h, D h⟫` with `c > 0`.
 
 Sources: Section 102 of `GAPS.md`, `SYNOPSIS102.md`, and `STRUCTURE102.md`.
 -/
@@ -545,5 +551,142 @@ theorem tendstoInDistribution_inv_sqrt_mul_sum_of_iid {Ω E : Type*} [Measurable
   rw [hmean, hvar] at hclt
   refine hclt.congr (fun n ↦ ae_of_all _ fun ω ↦ ?_) (ae_of_all _ fun _ ↦ rfl)
   simp
+
+/-- Pólya's theorem: pointwise convergence of distribution functions to a continuous
+distribution function implies convergence in Kolmogorov distance. -/
+theorem tendsto_kolmogorovDistance_of_tendsto_cdf (ν : ℕ → Measure ℝ) (ρ : Measure ℝ)
+    (hc : Continuous (cdf ρ)) (h : ∀ t, Tendsto (fun n ↦ cdf (ν n) t) atTop (𝓝 (cdf ρ t))) :
+    Tendsto (fun n ↦ kolmogorovDistance (ν n) ρ) atTop (𝓝 0) := by
+  rw [Metric.tendsto_atTop]
+  intro ε hε
+  obtain ⟨M, hM⟩ := exists_nat_gt (4 / ε + 2)
+  have hM0 : (0 : ℝ) < M := by have : 0 < 4 / ε := by positivity
+                               linarith
+  have hMε : 3 / (M : ℝ) < ε := by
+    rw [div_lt_iff₀ hM0]
+    have : 4 / ε < M := by linarith
+    rw [div_lt_iff₀ hε] at this
+    linarith
+  set F := cdf ρ
+  have hgrid : ∀ k ∈ Finset.Ioo 0 M, ∃ s, F s = (k : ℝ) / M := by
+    intro k hk
+    rw [Finset.mem_Ioo] at hk
+    have hk0 : (0 : ℝ) < k / M := div_pos (by exact_mod_cast hk.1) hM0
+    have hk1 : (k : ℝ) / M < 1 := (div_lt_one hM0).2 (by exact_mod_cast hk.2)
+    obtain ⟨a, ha⟩ := ((tendsto_cdf_atBot (μ := ρ)).eventually (gt_mem_nhds hk0)).exists
+    obtain ⟨b, hb⟩ := ((tendsto_cdf_atTop (μ := ρ)).eventually (lt_mem_nhds hk1)).exists
+    exact intermediate_value_univ a b hc ⟨ha.le, hb.le⟩
+  choose! g hg using hgrid
+  have hev : ∀ᶠ n in atTop, ∀ k ∈ Finset.Ioo 0 M, |cdf (ν n) (g k) - F (g k)| < 1 / M := by
+    rw [Finset.eventually_all]
+    intro k _
+    have := (h (g k)).sub_const (F (g k))
+    rw [sub_self] at this
+    filter_upwards [this.eventually (Metric.ball_mem_nhds 0 (by positivity : (0 : ℝ) < 1 / M))]
+      with n hn
+    simpa [Real.dist_eq] using hn
+  obtain ⟨N, hN⟩ := eventually_atTop.1 hev
+  refine ⟨N, fun n hn ↦ ?_⟩
+  have hpt : ∀ t, |cdf (ν n) t - F t| ≤ 3 / M := by
+    intro t
+    set G := cdf (ν n)
+    set k := ⌊(M : ℝ) * F t⌋₊ with hk
+    have hFt0 := cdf_nonneg (μ := ρ) t
+    have hFt1 := cdf_le_one (μ := ρ) t
+    have hkle : (k : ℝ) ≤ M * F t := Nat.floor_le (by positivity)
+    have hklt : M * F t < k + 1 := Nat.lt_floor_add_one _
+    have hkM : k ≤ M := by
+      have : (k : ℝ) ≤ M := hkle.trans (by nlinarith)
+      exact_mod_cast this
+    have hG0 := cdf_nonneg (μ := ν n) t
+    have hG1 := cdf_le_one (μ := ν n) t
+    have hlo : k / (M : ℝ) ≤ F t := by rw [div_le_iff₀ hM0]; linarith
+    have hhi : F t < (k + 1) / (M : ℝ) := by rw [lt_div_iff₀ hM0]; linarith
+    rw [abs_le]
+    constructor
+    · -- lower bound on `G t - F t`
+      by_cases hk2 : 2 ≤ k
+      · have hmem : k - 1 ∈ Finset.Ioo 0 M := Finset.mem_Ioo.2 ⟨by omega, by omega⟩
+        have hgk := hg (k - 1) hmem
+        have hcast : ((k - 1 : ℕ) : ℝ) = k - 1 := by
+          rw [Nat.cast_sub (by omega)]; simp
+        rw [hcast] at hgk
+        have hlt : g (k - 1) < t := by
+          refine lt_of_not_ge fun hle ↦ ?_
+          have := monotone_cdf (μ := ρ) hle
+          rw [hgk] at this
+          have : (k : ℝ) / M ≤ (k - 1) / M := hlo.trans this
+          rw [div_le_div_iff_of_pos_right hM0] at this
+          linarith
+        have h1 := monotone_cdf (μ := ν n) hlt.le
+        have h2 := hN n hn (k - 1) hmem
+        rw [hgk, abs_lt] at h2
+        have h3 : (k + 1) / (M : ℝ) - ((k - 1) / M - 1 / M) = 3 / M := by ring
+        linarith
+      · have : (k : ℝ) ≤ 1 := by exact_mod_cast (by omega : k ≤ 1)
+        have : F t < 2 / M := hhi.trans_le (by
+          rw [div_le_div_iff_of_pos_right hM0]; linarith)
+        have : (2 : ℝ) / M ≤ 3 / M := by rw [div_le_div_iff_of_pos_right hM0]; norm_num
+        linarith
+    · -- upper bound on `G t - F t`
+      by_cases hk1 : k + 1 < M
+      · have hmem : k + 1 ∈ Finset.Ioo 0 M := Finset.mem_Ioo.2 ⟨by omega, hk1⟩
+        have hgk := hg (k + 1) hmem
+        push_cast at hgk
+        have hlt : t < g (k + 1) := by
+          refine lt_of_not_ge fun hle ↦ ?_
+          have := monotone_cdf (μ := ρ) hle
+          rw [hgk] at this
+          linarith
+        have h1 := monotone_cdf (μ := ν n) hlt.le
+        have h2 := hN n hn (k + 1) hmem
+        rw [hgk, abs_lt] at h2
+        have h3 : (k + 1) / (M : ℝ) + 1 / M - k / M = 2 / M := by ring
+        have : (2 : ℝ) / M ≤ 3 / M := by rw [div_le_div_iff_of_pos_right hM0]; norm_num
+        linarith
+      · have hkM' : (M : ℝ) ≤ k + 1 := by exact_mod_cast (by omega : M ≤ k + 1)
+        have : 1 - 1 / (M : ℝ) ≤ F t := by
+          refine le_trans ?_ hlo
+          rw [one_sub_div hM0.ne', div_le_div_iff_of_pos_right hM0]; linarith
+        have : (1 : ℝ) / M ≤ 3 / M := by rw [div_le_div_iff_of_pos_right hM0]; norm_num
+        linarith
+  have hKD0 : 0 ≤ kolmogorovDistance (ν n) ρ :=
+    Real.sSup_nonneg (by rintro _ ⟨t, rfl⟩; exact abs_nonneg _)
+  have hKD : kolmogorovDistance (ν n) ρ ≤ 3 / M :=
+    csSup_le (range_nonempty _) (by rintro _ ⟨t, rfl⟩; exact hpt t)
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg hKD0]
+  exact hKD.trans_lt hMε
+
+/-- A positive definite real matrix dominates a positive multiple of the identity:
+`Σ - c • 1` is positive semidefinite for some `c > 0`. For a nonempty index type `c` is any
+positive number below the least eigenvalue; for an empty one every `c` works. -/
+theorem exists_pos_posSemidef_sub_smul_one {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {Sig : Matrix ι ι ℝ} (hSig : Sig.PosDef) :
+    ∃ c : ℝ, 0 < c ∧ (Sig - c • (1 : Matrix ι ι ℝ)).PosSemidef := by
+  rcases isEmpty_or_nonempty ι with _ | _
+  · exact ⟨1, one_pos, by rw [Subsingleton.elim (Sig - _) 0]; exact .zero⟩
+  obtain ⟨r, hr, hle⟩ := (CFC.exists_pos_algebraMap_le_iff Sig hSig.isHermitian.isSelfAdjoint).2
+    fun x hx ↦ hSig.isStrictlyPositive.spectrum_pos hx
+  refine ⟨r, hr, ?_⟩
+  rw [← Matrix.le_iff]
+  simpa [Algebra.algebraMap_eq_smul_one] using hle
+
+open scoped InnerProductSpace in
+/-- A positive definite matrix `D` has a uniformly positive quadratic form:
+`c ‖h‖² ≤ ⟪h, D h⟫` for some `c > 0` (any positive number below the least eigenvalue). -/
+theorem exists_pos_mul_sq_le_inner_toEuclideanCLM {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {D : Matrix ι ι ℝ} (hD : D.PosDef) :
+    ∃ c > 0, ∀ h : EuclideanSpace ℝ ι,
+      c * ‖h‖ ^ 2 ≤ ⟪h, Matrix.toEuclideanCLM (𝕜 := ℝ) D h⟫_ℝ := by
+  obtain ⟨r, hr, hps⟩ := exists_pos_posSemidef_sub_smul_one hD
+  refine ⟨r, hr, fun h ↦ ?_⟩
+  have h1 := hps.dotProduct_mulVec_nonneg (WithLp.ofLp h)
+  have h2 := Matrix.inner_toEuclideanCLM D h h
+  have h3 : ‖h‖ ^ 2 = WithLp.ofLp h ⬝ᵥ WithLp.ofLp h := by
+    rw [← real_inner_self_eq_norm_sq, EuclideanSpace.inner_eq_star_dotProduct]
+    simp
+  simp [Matrix.sub_mulVec, dotProduct_sub, Matrix.smul_mulVec, dotProduct_smul] at h1
+  rw [h2, h3]
+  linarith
 
 end CKSD

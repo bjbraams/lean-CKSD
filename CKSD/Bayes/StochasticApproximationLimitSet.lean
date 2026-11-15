@@ -92,6 +92,46 @@ theorem IsFlowOf.continuous_apply {h : E → E} {L : ℝ≥0} (hL : LipschitzWit
       mul_lt_mul_of_pos_left hy (Real.exp_pos _)
     _ = ε := by field_simp
 
+/-- A Lipschitz autonomous flow is jointly continuous in time and initial point. -/
+theorem IsFlowOf.continuous_uncurry {h : E → E} {L : ℝ≥0} (hL : LipschitzWith L h)
+    {Φ : ℝ → E → E} (hΦ : IsFlowOf h Φ) : Continuous (Function.uncurry Φ) := by
+  rw [continuous_iff_continuousAt]
+  rintro ⟨t₀, x₀⟩
+  have hc : Continuous fun t ↦ Φ t x₀ :=
+    continuous_iff_continuousAt.2 fun t ↦ ((hΦ x₀).2 t).continuousAt
+  have h1 : Tendsto (fun p : ℝ × E ↦ Φ p.1 p.2 - Φ p.1 x₀) (𝓝 (t₀, x₀)) (𝓝 0) := by
+    refine squeeze_zero_norm (fun p ↦ hΦ.norm_sub_le_exp hL p.1 p.2 x₀) ?_
+    have hcont : Continuous fun p : ℝ × E ↦ Real.exp ((L : ℝ) * |p.1|) * ‖p.2 - x₀‖ := by
+      fun_prop
+    simpa using hcont.tendsto (t₀, x₀)
+  have h2 : Tendsto (fun p : ℝ × E ↦ Φ p.1 x₀) (𝓝 (t₀, x₀)) (𝓝 (Φ t₀ x₀)) :=
+    (hc.tendsto t₀).comp (continuous_fst.tendsto _)
+  have h3 := h1.add h2
+  simp only [sub_add_cancel, zero_add] at h3
+  exact h3
+
+/-- The solution family of a Lipschitz autonomous ODE as a Mathlib `Flow` of the additive group
+`ℝ`. -/
+def IsFlowOf.toFlow {h : E → E} {L : ℝ≥0} (hL : LipschitzWith L h) {Φ : ℝ → E → E}
+    (hΦ : IsFlowOf h Φ) : Flow ℝ E where
+  toFun := Φ
+  cont' := hΦ.continuous_uncurry hL
+  map_add' t s x := (hΦ.map_add hL t s x).symm
+  map_zero' x := (hΦ x).1
+
+/-- The Mathlib flow built from a flow of `h` acts as the original family of maps. -/
+@[simp]
+theorem IsFlowOf.coe_toFlow {h : E → E} {L : ℝ≥0} (hL : LipschitzWith L h) {Φ : ℝ → E → E}
+    (hΦ : IsFlowOf h Φ) : ⇑(hΦ.toFlow hL) = Φ :=
+  rfl
+
+/-- For a Lipschitz flow, invariance in the sense `Φₜ(A) = A` for all `t` agrees with Mathlib's
+`IsInvariant` (`Φₜ` maps `A` into `A` for all `t`), by `Flow.isInvariant_iff_image_eq`. -/
+theorem IsFlowOf.isInvariant_iff_isInvariantSet {h : E → E} {L : ℝ≥0}
+    (hL : LipschitzWith L h) {Φ : ℝ → E → E} (hΦ : IsFlowOf h Φ) (A : Set E) :
+    IsInvariant Φ A ↔ IsInvariantSet Φ A :=
+  (hΦ.toFlow hL).isInvariant_iff_image_eq A
+
 omit [NormedSpace ℝ E] in
 /-- Functions whose difference tends to zero have the same cluster points along a countably
 generated filter. -/

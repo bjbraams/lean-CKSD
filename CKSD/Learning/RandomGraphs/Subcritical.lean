@@ -23,7 +23,7 @@ most `(c' e^{1-c'})^m`, a geometric rate below one.
 
 * `CKSD.binomialRandom_real_reachableSet_card_le`: the exponential tail bound for the size of the
   component of a vertex.
-* `CKSD.exists_tendsto_binomialRandom_components_le_log'`: the subcritical phase of GAPS 107.47.
+* `CKSD.exists_tendsto_binomialRandom_components_le_log`: the subcritical phase of GAPS 107.47.
 -/
 
 @[expose] public section
@@ -505,13 +505,18 @@ theorem binomialRandom_real_exists_large_component_le (p : I) (m : ℕ) {lam : �
     binomialRandom_real_reachableSet_card_le p v m hlam).trans (le_of_eq ?_)
   rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
 
+/-- Number of vertices in the connected component of `v`. -/
+def componentSize {n : ℕ} (G : SimpleGraph (Fin n)) (v : Fin n) : ℕ :=
+  (G.connectedComponentMk v).supp.ncard
+
 /-- GAPS 107.47, subcritical phase: for `p = c/n` with `0 ≤ c < 1`, all components of
 `G(n, p)` have at most `C log n` vertices with probability tending to one. -/
-theorem exists_tendsto_binomialRandom_components_le_log' (c : ℝ) (hc0 : 0 ≤ c) (hc : c < 1) :
+theorem exists_tendsto_binomialRandom_components_le_log (c : ℝ) (hc0 : 0 ≤ c) (hc : c < 1) :
     ∃ C > (0 : ℝ), Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
       (Set.projIcc (0 : ℝ) 1 zero_le_one (c / n))).real
-        {G | ∀ v, ((G.connectedComponentMk v).supp.ncard : ℝ) ≤ C * Real.log n})
+        {G | ∀ v, (componentSize G v : ℝ) ≤ C * Real.log n})
       atTop (𝓝 1) := by
+  simp only [componentSize]
   set c' := max c (1 / 2) with hc'
   have hc'0 : 0 < c' := lt_of_lt_of_le (by norm_num) (le_max_right _ _)
   have hc'1 : c' < 1 := max_lt hc (by norm_num)

@@ -12,7 +12,8 @@ the corresponding bound by the uniform configuration norm. These estimates conne
 Wasserstein-Lipschitz mean-field drift to ordinary finite-dimensional Lipschitz vector fields.
 
 The coupling and transport-cost bound are from pinned TauCeti's
-`MeasureTheory.OptimalTransport.Coupling` and `Wasserstein.Basic`; Mathlib supplies pushforward
+`MeasureTheory.OptimalTransport.Coupling` and `Wasserstein.Basic`; pushforwards of empirical laws
+use TauCeti's `TauCeti.Probability.map_empiricalFiniteMeasure`. Mathlib supplies pushforward
 integration and the first-moment identities.
 -/
 
@@ -21,6 +22,16 @@ noncomputable section
 open MeasureTheory Set Filter
 open scoped ENNReal NNReal Topology BigOperators
 namespace CKSD
+/-- Pushforward of an empirical law is the empirical law of the mapped atoms, from TauCeti's
+`TauCeti.Probability.map_empiricalFiniteMeasure` through
+`CKSD.empiricalMeasure_eq_empiricalFiniteMeasure`; for `N = 0` both sides are zero. -/
+theorem map_empiricalMeasure {A B : Type*} [MeasurableSpace A] [MeasurableSpace B]
+    (N : ℕ) (x : Fin N → A) (f : A → B) (hf : Measurable f) :
+    (empiricalMeasure N x).map f = empiricalMeasure N (fun j ↦ f (x j)) := by
+  rw [empiricalMeasure_eq_empiricalFiniteMeasure, empiricalMeasure_eq_empiricalFiniteMeasure,
+    ← FiniteMeasure.toMeasure_map, TauCeti.Probability.map_empiricalFiniteMeasure hf]
+  rfl
+
 /-- The common-source coupling bounds first Wasserstein distance by mean pointwise distance. -/
 theorem wassersteinEDist_one_map_toReal_le_integral_norm_sub {Ω E : Type*} [MeasurableSpace Ω]
     [NormedAddCommGroup E] [NormedSpace ℝ E] [MeasurableSpace E] [BorelSpace E]
@@ -50,13 +61,8 @@ theorem wassersteinEDist_one_empirical_toReal_le_norm_sub {E : Type*}
     (TauCeti.wassersteinEDist 1 (empiricalMeasure N x) (empiricalMeasure N y)).toReal ≤ ‖x - y‖ := by
   let P : Measure (Fin N) := empiricalMeasure N id
   have : IsProbabilityMeasure P := isProbabilityMeasure_empiricalMeasure hN id
-  have hmap (z : Fin N → E) : P.map z = empiricalMeasure N z := by
-    dsimp only [P]
-    rw [empiricalMeasure, Measure.map_smul,
-      Measure.map_finset_sum' (measurable_of_finite z).aemeasurable]
-    · simp only [id_eq, Measure.map_dirac' (measurable_of_finite z)]
-      rfl
-    · exact (measurable_of_finite z).aemeasurable
+  have hmap (z : Fin N → E) : P.map z = empiricalMeasure N z :=
+    map_empiricalMeasure N id z (measurable_of_finite z)
   have hi : Integrable (fun j ↦ x j - y j) P :=
     Integrable.of_bound (measurable_of_finite _).aestronglyMeasurable ‖x - y‖
       (ae_of_all _ fun j ↦ norm_le_pi_norm (x - y) j)

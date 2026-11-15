@@ -1,6 +1,6 @@
 module
 
-public import CKSD.Learning.PrivateEstimation.CentralLowerBounds
+public import CKSD.Learning.PrivateEstimation.Mechanisms
 
 /-!
 # Local private mean estimation

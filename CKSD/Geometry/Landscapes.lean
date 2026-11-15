@@ -39,9 +39,9 @@ abbrev LandscapeLp (p : ℝ≥0∞) := Lp ℝ p landscapeMeasure
 
 /-- GAPS 108.23: strong law for integrable independent identically distributed landscapes: the
 sample averages of pairwise independent, identically distributed, integrable random elements of
-`LandscapeLp p` converge almost surely to the mean. Pairwise independence is sufficient, as in
-Mathlib's Etemadi strong law. The landscape space carries any Borel measurable structure, for
-instance `borel (LandscapeLp p)`. -/
+`LandscapeLp p` converge almost surely to the mean. It is Mathlib's Etemadi strong law
+`ProbabilityTheory.strong_law_ae`, with pairwise independence. The landscape space carries any
+Borel measurable structure, for instance `borel (LandscapeLp p)`. -/
 theorem LandscapeLp.ae_tendsto_sampleAverage {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (p : ℝ≥0∞) [Fact (1 ≤ p)] [MeasurableSpace (LandscapeLp p)]
     [BorelSpace (LandscapeLp p)] (X : ℕ → Ω → LandscapeLp p) (hint : Integrable (X 0) μ)

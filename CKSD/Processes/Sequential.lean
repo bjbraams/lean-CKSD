@@ -588,7 +588,7 @@ theorem tendstoInDistribution_random_sampleAverage {Ω : Type*} [MeasurableSpace
     TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt (N n ω) *
       (sampleAverage X (N n ω) ω - ∫ x, x ∂P) / Real.sqrt (Var[id; P]))
       atTop id (fun _ ↦ μ) (gaussianReal 0 1) := by
-  have h2 : MemLp id 2 P := memLp_id_two_of_variance_pos hv
+  have h2 : MemLp id 2 P := memLp_two_of_variance_ne_zero aestronglyMeasurable_id hv.ne'
   set m : ℝ := ∫ x, x ∂P with hmdef
   set σ : ℝ := Real.sqrt (Var[id; P]) with hσdef
   have hσ : 0 < σ := Real.sqrt_pos.2 hv

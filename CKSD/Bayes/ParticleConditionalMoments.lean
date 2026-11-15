@@ -5,9 +5,8 @@ public import CKSD.Bayes.ParticleTransport
 # Conditional moments of bootstrap sampling errors
 
 A probability-uniform iid empirical `Lᵖ` bound transfers to each generation of the bootstrap
-particle system by conditioning on its entire past. Bounded real conditional integration is
-obtained from the existing complex integration theorem; taking real powers and integrating
-the conditional product-law estimate gives the claimed norm bound.
+particle system by conditioning on its entire past (`CKSD.integral_bootstrap_succ`); taking
+real powers and integrating the conditional product-law estimate gives the claimed norm bound.
 
 This is the conditional use of Del Moral, *Feynman–Kac Formulae*, Lemma 7.3.3 in the proof of
 Theorem 7.4.4, printed pages 245–246 (PDF pages 258–259 of the local 2004 copy). Mathlib
@@ -18,32 +17,6 @@ noncomputable section
 open MeasureTheory ProbabilityTheory Set Filter
 open scoped NNReal ENNReal Topology BigOperators Nat
 namespace CKSD
-/-- Conditional bootstrap integration for bounded real functions of the past and next sample. -/
-theorem integral_bootstrap_succ_real
-    {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
-    (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
-    (N : ℕ) (ξ : ℕ → Ω → Fin N → X) (hξ : IsBootstrapParticleSystem P M N ξ) (n : ℕ)
-    (H : (Fin (n+1) → Fin N → X) × (Fin N → X) → ℝ) (hH : Measurable H) {C : ℝ}
-    (hC : ∀ z, |H z| ≤ C) :
-    (∫ ω, H ((fun i : Fin (n+1) ↦ ξ i ω),ξ (n+1) ω) ∂P) =
-      ∫ ω, ∫ z, H ((fun i : Fin (n+1) ↦ ξ i ω),z)
-        ∂Measure.pi (fun _ : Fin N ↦ M.particlePredictionLaw n (ξ n ω)) ∂P := by
-  apply Complex.ofReal_injective
-  have h := integral_bootstrap_succ P M N ξ hξ n (fun z ↦ (H z : ℂ))
-    (Complex.continuous_ofReal.measurable.comp hH) (C := C)
-    (fun z ↦ by simpa only [Complex.norm_real,Real.norm_eq_abs] using hC z)
-  simpa only [integral_complex_ofReal] using h
-
-/-- A nonempty finite empirical average preserves an absolute bound. -/
-theorem abs_finite_average_le {X : Type*} {N : ℕ} (hN : 0 < N)
-    (x : Fin N → X) {f : X → ℝ} {B : ℝ} (hfb : ∀ y, |f y| ≤ B) :
-    |(∑ i,f (x i))/(N:ℝ)| ≤ B := by
-  have hn : (0:ℝ)<N := Nat.cast_pos.2 hN
-  rw [abs_div,abs_of_pos hn,div_le_iff₀ hn]
-  refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
-  simpa only [Finset.sum_const,Finset.card_univ,Fintype.card_fin,nsmul_eq_mul,mul_comm] using
-    Finset.sum_le_sum (s := Finset.univ) (f := fun i ↦ |f (x i)|) (g := fun _ ↦ B) (fun i _ ↦ hfb (x i))
-
 /-- A local bootstrap sampling error is a measurable random variable. -/
 theorem measurable_particle_sampling_error
     {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
@@ -58,14 +31,14 @@ theorem measurable_particle_sampling_error
 /-- Local sampling errors are bounded independently of the particle path. -/
 theorem abs_particle_sampling_error_le
     {X : Type*} [MeasurableSpace X] (M : FeynmanKacModel X) {N : ℕ} (hN : 0 < N)
-    (x : ℕ → Fin N → X) (n : ℕ) {f : X → ℝ} (hf : Measurable f)
+    (x : ℕ → Fin N → X) (n : ℕ) {f : X → ℝ}
     {B : ℝ} (hfb : ∀ y, |f y| ≤ B) :
     |(∑ i,f (x n i))/(N:ℝ)-M.pathPredMean x n f| ≤ 2*B := by
   have := M.isProbabilityMeasure_pathPredictionLaw hN x n
   have hp : |M.pathPredMean x n f| ≤ B := by
     rw [← M.integral_pathPredictionLaw x n f]
-    exact abs_integral_le_of_abs_le hf hfb
-  exact (abs_sub _ _).trans (by linarith [abs_finite_average_le hN (x n) hfb])
+    exact abs_integral_le_of_abs_le hfb
+  exact (abs_sub _ _).trans (by linarith [abs_sum_div_le hN fun i ↦ hfb (x n i)])
 
 /-- A probability-uniform iid `Lᵖ` bound passes to every conditional bootstrap sampling step. -/
 theorem lpNorm_particle_sampling_error_le
@@ -117,12 +90,13 @@ theorem lpNorm_particle_sampling_error_le
           (hs.sub (hcm.comp ((measurable_pi_apply _).comp measurable_fst)))).pow_const p
       have hHb (z : (Fin (n+1) → Fin N → X) × (Fin N → X)) : |H z| ≤ (2*B)^p := by
         have := M.isProbabilityMeasure_particlePredictionLaw hN n (z.1 (Fin.last n))
-        have hcp : |c (z.1 (Fin.last n))| ≤ B := abs_integral_le_of_abs_le hf hfb
+        have hcp : |c (z.1 (Fin.last n))| ≤ B := abs_integral_le_of_abs_le hfb
         dsimp only [H]
         rw [abs_of_nonneg (Real.rpow_nonneg (abs_nonneg _) _)]
         exact Real.rpow_le_rpow (abs_nonneg _)
-          ((abs_sub _ _).trans (by linarith [abs_finite_average_le hN z.2 hfb])) hp0.le
-      have hInt := integral_bootstrap_succ_real P M N ξ hξ n H hHm hHb
+          ((abs_sub _ _).trans (by linarith [abs_sum_div_le hN fun i ↦ hfb (z.2 i)])) hp0.le
+      have hInt := integral_bootstrap_succ P M N ξ hξ n H hHm.stronglyMeasurable
+        fun z ↦ (Real.norm_eq_abs _).trans_le (hHb z)
       change (∫ ω, H ((fun i : Fin (n+1) ↦ ξ i ω),ξ (n+1) ω) ∂P) ≤ _
       rw [hInt]
       calc

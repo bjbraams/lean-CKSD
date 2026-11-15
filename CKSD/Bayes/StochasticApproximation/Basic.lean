@@ -21,12 +21,14 @@ open scoped ENNReal NNReal Topology BigOperators
 
 namespace CKSD
 
-/-- `Φ` is the flow of `θ' = -h(θ)`. -/
+/-- `Φ` is the flow of `θ' = -h(θ)`. For Lipschitz `h` it is a Mathlib `Flow`
+(`CKSD.IsFlowOf.toFlow`). -/
 def IsFlowOf {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (h : E → E)
     (Φ : ℝ → E → E) : Prop :=
   ∀ x, Φ 0 x = x ∧ ∀ t, HasDerivAt (fun s ↦ Φ s x) (-h (Φ t x)) t
 
-/-- A set invariant under the flow for all real times, `Φₜ(A) = A`. -/
+/-- A set invariant under the flow for all real times, `Φₜ(A) = A`. For a Lipschitz flow this
+is Mathlib's `IsInvariant` (`CKSD.IsFlowOf.isInvariant_iff_isInvariantSet`). -/
 def IsInvariantSet {E : Type*} (Φ : ℝ → E → E) (A : Set E) : Prop :=
   ∀ t, Φ t '' A = A
 

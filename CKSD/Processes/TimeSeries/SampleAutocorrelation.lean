@@ -796,7 +796,7 @@ private theorem tendstoInMeasure_lag_remainder {Ω : Type*} [MeasurableSpace Ω]
 finite positive variance, the normalized sample autocorrelations
 `√n ρ̂(h) = √n γ̂(h) / γ̂(0)` at lags `h = 1, …, m` converge jointly in law to independent
 standard normal variables. Finite variance follows from `0 < Var`
-(`memLp_id_two_of_variance_pos`). -/
+(Mathlib's `ProbabilityTheory.memLp_two_of_variance_ne_zero`). -/
 theorem tendstoInDistribution_sample_autocorrelations {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
     (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P)
@@ -805,7 +805,7 @@ theorem tendstoInDistribution_sample_autocorrelations {Ω : Type*} [MeasurableSp
       Real.sqrt n * sampleAutocovariance X (i.val + 1) n ω / sampleAutocovariance X 0 n ω))
       atTop id (fun _ ↦ μ)
       (stdGaussian (EuclideanSpace ℝ (Fin m))) := by
-  have hP2 : MemLp id 2 P := memLp_id_two_of_variance_pos hv
+  have hP2 : MemLp id 2 P := memLp_two_of_variance_ne_zero aestronglyMeasurable_id hv.ne'
   set c := ∫ x, x ∂P with hc
   set σ2 := ∫ x, (x - c) ^ 2 ∂P with hσ2
   have hσ0 : 0 < σ2 := by

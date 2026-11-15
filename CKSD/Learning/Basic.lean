@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Nonparametric.Basic
+public import Mathlib.InformationTheory.KullbackLeibler.KLFun
 
 /-!
 # Basic objects of statistical learning
@@ -21,6 +22,11 @@ of the catalogue).
   neighbouring relation.
 * `CKSD.armPlayCount`, `CKSD.armSampleAverage`: play counts and prefix reward averages of a
   multi-armed bandit.
+
+## Main results
+
+* `CKSD.sum_mul_log_sub_log_nonneg`: Gibbs' inequality for finite sums, from Mathlib's
+  `InformationTheory.klFun_nonneg`.
 
 ## Conventions
 
@@ -94,5 +100,26 @@ def armPlayCount {Ω : Type*} {K : ℕ} (A : ℕ → Ω → Fin K) (i : Fin K) (
 (equal to `0` for `n = 0`). -/
 def armSampleAverage {Ω : Type*} {K : ℕ} (R : Fin K → ℕ → Ω → ℝ)
     (i : Fin K) (n : ℕ) (ω : Ω) : ℝ := (∑ j ∈ Finset.range n, R i j ω) / n
+
+/-- Gibbs' inequality for finite sums: if `p ≥ 0` and `q > 0` on `S` have equal totals, then
+`∑ p (log p - log q) ≥ 0`. Each term is at least `p - q`, since `q · klFun (p / q) ≥ 0`
+(Mathlib's `InformationTheory.klFun_nonneg`). -/
+theorem sum_mul_log_sub_log_nonneg {ι : Type*} (S : Finset ι) {p q : ι → ℝ}
+    (hp : ∀ i ∈ S, 0 ≤ p i) (hq : ∀ i ∈ S, 0 < q i) (hpq : ∑ i ∈ S, p i = ∑ i ∈ S, q i) :
+    0 ≤ ∑ i ∈ S, p i * (Real.log (p i) - Real.log (q i)) := by
+  have h : ∀ i ∈ S, p i - q i ≤ p i * (Real.log (p i) - Real.log (q i)) := by
+    intro i hi
+    have hq0 := hq i hi
+    rcases (hp i hi).eq_or_lt with h0 | hpos
+    · rw [← h0, zero_mul]; linarith
+    have hk := mul_nonneg hq0.le
+      (InformationTheory.klFun_nonneg (div_nonneg (hp i hi) hq0.le))
+    rw [InformationTheory.klFun_apply, Real.log_div hpos.ne' hq0.ne'] at hk
+    have e : q i * (p i / q i * (Real.log (p i) - Real.log (q i)) + 1 - p i / q i) =
+        p i * (Real.log (p i) - Real.log (q i)) + q i - p i := by
+      field_simp
+    linarith
+  have := Finset.sum_le_sum h
+  rwa [Finset.sum_sub_distrib, hpq, sub_self] at this
 
 end CKSD

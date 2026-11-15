@@ -26,6 +26,10 @@ public import CKSD.Inference.LogPartition
   parameter set with nonempty interior (GAPS 101.5).
 * `CKSD.exists_exponential_family_of_monotone_sufficient_statistics`: the Pitman–Koopman–Darmois
   theorem with monotone sufficient statistics (GAPS 101.6).
+* `CKSD.RealExponentialFamily.cumulant_eq_logPartition`,
+  `CKSD.RealExponentialFamily.law_eq_exponentialFamilyMeasure`,
+  `CKSD.RealExponentialFamily.domain_subset_naturalParameterSpace`: a scalar family is the
+  natural exponential family of `CKSD.Inference.Model` with `E = ℝ`.
 
 ## Implementation notes
 
@@ -334,5 +338,28 @@ def RealExponentialFamily.law {X : Type*} [MeasurableSpace X]
     (F : RealExponentialFamily X) (η : F.domain) : Measure X :=
   F.base.withDensity (fun x ↦ ENNReal.ofReal
     (Real.exp (η.val * F.statistic x - F.cumulant η.val)))
+
+/-- The cumulant of a scalar exponential family is the log partition function `CKSD.logPartition`
+of the natural exponential family with base `F.base` and statistic `F.statistic`. -/
+theorem RealExponentialFamily.cumulant_eq_logPartition {X : Type*} [MeasurableSpace X]
+    (F : RealExponentialFamily X) (η : ℝ) :
+    F.cumulant η = logPartition F.base F.statistic η := by
+  simp only [RealExponentialFamily.cumulant, logPartition, Real.inner_apply]
+
+/-- The law of a scalar exponential family is the natural exponential law
+`CKSD.exponentialFamilyMeasure` with base `F.base` and statistic `F.statistic`. -/
+theorem RealExponentialFamily.law_eq_exponentialFamilyMeasure {X : Type*} [MeasurableSpace X]
+    (F : RealExponentialFamily X) (η : F.domain) :
+    F.law η = exponentialFamilyMeasure F.base F.statistic η := by
+  simp only [RealExponentialFamily.law, exponentialFamilyMeasure, Real.inner_apply,
+    F.cumulant_eq_logPartition]
+
+/-- The parameter domain of a scalar exponential family lies in the natural parameter space
+`CKSD.naturalParameterSpace` of its base and statistic. -/
+theorem RealExponentialFamily.domain_subset_naturalParameterSpace {X : Type*}
+    [MeasurableSpace X] (F : RealExponentialFamily X) :
+    F.domain ⊆ naturalParameterSpace F.base F.statistic := fun η hη ↦ by
+  simpa only [naturalParameterSpace, Real.inner_apply, Set.mem_ofPred_eq] using
+    F.integrable_exp η hη
 
 end CKSD

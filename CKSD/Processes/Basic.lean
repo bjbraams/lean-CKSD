@@ -26,9 +26,8 @@ Common notions for Section 106 (dependent data and stochastic models).
 
 * `CKSD.IsWeaklyStationary.inner_eq_inner_sub_zero`: the equivalent form
   `⟪X s, X t⟫ = ⟪X (s - t), X 0⟫`.
-* `CKSD.IsIIDNoise.memLp_two`, `CKSD.IsIIDNoise.integral_eq_zero'`,
-  `CKSD.IsIIDNoise.integral_sq'`: the moments of every term, not only of `Z 0`.
-* `CKSD.memLp_id_two_of_variance_pos`: a law with positive variance is square integrable.
+* `CKSD.IsIIDNoise.memLp_two`, `CKSD.IsIIDNoise.integral_eq_zero`,
+  `CKSD.IsIIDNoise.integral_sq`: the moments of every term, not only of `Z 0`.
 
 ## Conventions
 
@@ -77,9 +76,9 @@ structure IsIIDNoise {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) (Z : �
   /-- All `Z t` have the law of `Z 0`. -/
   map_eq : ∀ t, μ.map (Z t) = μ.map (Z 0)
   /-- The noise is centred. -/
-  integral_eq_zero : ∫ ω, Z 0 ω ∂μ = 0
+  integral_zero_eq_zero : ∫ ω, Z 0 ω ∂μ = 0
   /-- The noise has variance `σ²`. -/
-  integral_sq : ∫ ω, Z 0 ω ^ 2 ∂μ = σsq
+  integral_zero_sq : ∫ ω, Z 0 ω ^ 2 ∂μ = σsq
   /-- The variance is positive. -/
   pos : 0 < σsq
 
@@ -95,32 +94,19 @@ theorem identDistrib (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : IdentDistrib (Z t) 
 theorem memLp_two (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : MemLp (Z t) 2 μ := by
   have h0 : MemLp (Z 0) 2 μ := by
     refine (memLp_two_iff_integrable_sq (hZ.measurable 0).aestronglyMeasurable).2 ?_
-    exact Integrable.of_integral_ne_zero (by rw [hZ.integral_sq]; exact hZ.pos.ne')
+    exact Integrable.of_integral_ne_zero (by rw [hZ.integral_zero_sq]; exact hZ.pos.ne')
   exact (hZ.identDistrib t).memLp_iff.2 h0
 
 /-- Every term of an iid noise sequence is centred. -/
-theorem integral_eq_zero' (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : ∫ ω, Z t ω ∂μ = 0 := by
-  rw [(hZ.identDistrib t).integral_eq, hZ.integral_eq_zero]
+theorem integral_eq_zero (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : ∫ ω, Z t ω ∂μ = 0 := by
+  rw [(hZ.identDistrib t).integral_eq, hZ.integral_zero_eq_zero]
 
 /-- Every term of an iid noise sequence has second moment `σ²`. -/
-theorem integral_sq' (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : ∫ ω, Z t ω ^ 2 ∂μ = σsq := by
-  rw [← hZ.integral_sq]
+theorem integral_sq (hZ : IsIIDNoise μ Z σsq) (t : ℤ) : ∫ ω, Z t ω ^ 2 ∂μ = σsq := by
+  rw [← hZ.integral_zero_sq]
   exact ((hZ.identDistrib t).comp (measurable_id.pow_const 2)).integral_eq
 
 end IsIIDNoise
-
-/-- A real law with positive variance has a finite second moment: `0 < Var(P)` forces the
-integrand `(x - 𝔼x)²` to be integrable, since a Bochner integral of a non-integrable function
-is `0`. -/
-theorem memLp_id_two_of_variance_pos {P : Measure ℝ} [IsProbabilityMeasure P]
-    (hv : 0 < Var[id; P]) : MemLp id 2 P := by
-  rw [variance_eq_integral aemeasurable_id] at hv
-  have hint : Integrable (fun x : ℝ ↦ (x - ∫ y, id y ∂P) ^ 2) P :=
-    Integrable.of_integral_ne_zero hv.ne'
-  have h : MemLp (fun x : ℝ ↦ x - ∫ y, id y ∂P) 2 P :=
-    (memLp_two_iff_integrable_sq (by fun_prop)).2 hint
-  refine (h.add (memLp_const (∫ y, id y ∂P))).congr_norm (by fun_prop) (ae_of_all _ fun x ↦ ?_)
-  simp
 
 /-- The sample autocovariance `γ̂(h) = n⁻¹ ∑_{i < n - h} (X_{i+h} - X̄_n)(X_i - X̄_n)` at lag
 `h` of `X 0, …, X (n - 1)`, with the sample mean `X̄_n` and divisor `n`. -/

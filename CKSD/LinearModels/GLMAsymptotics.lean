@@ -82,85 +82,6 @@ section ExponentialDispersion
 
 variable {ν : Measure ℝ} {b : ℝ → ℝ} {φ : ℝ}
 
-/-- The Laplace transform of the dominating measure: `∫ e^{s y} ν(dy) = exp (b(φ s) / φ)`. -/
-private lemma lintegral_exp_mul_eq (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) (s : ℝ) :
-    ∫⁻ y, ENNReal.ofReal (Real.exp (s * y)) ∂ν = ENNReal.ofReal (Real.exp (b (φ * s) / φ)) := by
-  have h := (hlaw (φ * s)).measure_univ
-  rw [exponentialDispersionLaw, withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ] at h
-  have hpt : ∀ y, ENNReal.ofReal (Real.exp (s * y)) =
-      ENNReal.ofReal (Real.exp ((y * (φ * s) - b (φ * s)) / φ)) *
-        ENNReal.ofReal (Real.exp (b (φ * s) / φ)) := fun y ↦ by
-    rw [← ENNReal.ofReal_mul (Real.exp_pos _).le, ← Real.exp_add]
-    congr 2
-    field_simp
-    ring
-  simp_rw [hpt]
-  rw [lintegral_mul_const _ (by fun_prop), h, one_mul]
-
-/-- The exponential moments of the dominating measure are all finite. -/
-private lemma integrable_exp_mul (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) (s : ℝ) :
-    Integrable (fun y ↦ Real.exp (s * y)) ν :=
-  ⟨(by fun_prop : Measurable fun y : ℝ ↦ Real.exp (s * y)).aestronglyMeasurable,
-    (hasFiniteIntegral_iff_ofReal (ae_of_all _ fun _ ↦ (Real.exp_pos _).le)).2
-      (by rw [lintegral_exp_mul_eq hφ hlaw]; exact ENNReal.ofReal_lt_top)⟩
-
-/-- Every real `s` lies in the interior of the set where `exp (s y)` is `ν`-integrable, since
-that set is all of `ℝ`. -/
-private lemma mem_interior_integrableExpSet (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) (s : ℝ) :
-    s ∈ interior (integrableExpSet id ν) := by
-  have : integrableExpSet id ν = univ :=
-    eq_univ_of_forall fun t ↦ by simpa [integrableExpSet] using integrable_exp_mul hφ hlaw t
-  rw [this, interior_univ]; trivial
-
-/-- `mgf ν (s) = exp (b(φ s) / φ)`. -/
-private lemma mgf_id_eq (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) (s : ℝ) :
-    mgf id ν s = Real.exp (b (φ * s) / φ) := by
-  rw [mgf, integral_eq_lintegral_of_nonneg_ae (ae_of_all _ fun _ ↦ (Real.exp_pos _).le)
-    (by fun_prop : Measurable fun y : ℝ ↦ Real.exp (s * id y)).aestronglyMeasurable]
-  simp only [id]
-  rw [lintegral_exp_mul_eq hφ hlaw, ENNReal.toReal_ofReal (Real.exp_pos _).le]
-
-/-- The cumulant function is a rescaled cumulant generating function:
-`b θ = φ · cgf_ν (θ / φ)`. -/
-private lemma eq_mul_cgf (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) :
-    b = fun θ ↦ φ * cgf id ν (φ⁻¹ * θ) := by
-  funext θ
-  rw [cgf, mgf_id_eq hφ hlaw, Real.log_exp, mul_inv_cancel_left₀ hφ.ne']
-  field_simp
-
-/-- The cumulant generating function of the dominating measure is smooth of every order. -/
-private lemma contDiff_cgf (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) {n : WithTop ℕ∞} :
-    ContDiff ℝ n (cgf id ν) :=
-  AnalyticOnNhd.contDiff fun s _ ↦ analyticOnNhd_cgf s (mem_interior_integrableExpSet hφ hlaw s)
-
-/-- The first derivative of the cumulant function in terms of the cumulant generating function:
-`b'(θ) = cgf_ν'(θ / φ)`. -/
-private lemma deriv_eq_deriv_cgf (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) (θ : ℝ) :
-    deriv b θ = deriv (cgf id ν) (φ⁻¹ * θ) := by
-  have hd : DifferentiableAt ℝ (cgf id ν) (φ⁻¹ * θ) :=
-    (contDiff_cgf hφ hlaw (n := 1)).differentiable one_ne_zero _
-  have h := (hd.hasDerivAt.comp θ ((hasDerivAt_id θ).const_mul φ⁻¹)).const_mul φ
-  have h' : HasDerivAt (fun θ ↦ φ * cgf id ν (φ⁻¹ * θ)) (deriv (cgf id ν) (φ⁻¹ * θ)) θ := by
-    simp only [Function.comp_def, mul_one] at h
-    rwa [← mul_assoc, mul_comm φ, mul_assoc, mul_inv_cancel₀ hφ.ne', mul_one] at h
-  rw [eq_mul_cgf hφ hlaw, h'.deriv]
-
-/-- The second derivative of the cumulant function in terms of the cumulant generating function:
-`b''(θ) = φ⁻¹ cgf_ν''(θ / φ)`. -/
-private lemma iteratedDeriv_two_eq (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) (θ : ℝ) :
-    iteratedDeriv 2 b θ = φ⁻¹ * iteratedDeriv 2 (cgf id ν) (φ⁻¹ * θ) := by
-  rw [eq_mul_cgf hφ hlaw, iteratedDeriv_const_mul_field,
-    iteratedDeriv_comp_const_mul (contDiff_cgf hφ hlaw) φ⁻¹]
-  field_simp
-
 /-- Integrals against the exponential dispersion law. -/
 private lemma integral_exponentialDispersionLaw (g : ℝ → ℝ) (θ : ℝ) :
     ∫ y, g y ∂(exponentialDispersionLaw ν b φ θ) =
@@ -186,9 +107,82 @@ private lemma integrable_exponentialDispersionLaw_iff {g : ℝ → ℝ} (θ : �
   refine integrable_congr (ae_of_all _ fun y ↦ ?_)
   simp [NNReal.smul_def, Real.coe_toNNReal _ (Real.exp_pos _).le]
 
+variable (hφ : 0 < φ) (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ))
+include hφ hlaw
+
+/-- The Laplace transform of the dominating measure: `∫ e^{s y} ν(dy) = exp (b(φ s) / φ)`. -/
+private lemma lintegral_exp_mul_eq (s : ℝ) :
+    ∫⁻ y, ENNReal.ofReal (Real.exp (s * y)) ∂ν = ENNReal.ofReal (Real.exp (b (φ * s) / φ)) := by
+  have h := (hlaw (φ * s)).measure_univ
+  rw [exponentialDispersionLaw, withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ] at h
+  have hpt : ∀ y, ENNReal.ofReal (Real.exp (s * y)) =
+      ENNReal.ofReal (Real.exp ((y * (φ * s) - b (φ * s)) / φ)) *
+        ENNReal.ofReal (Real.exp (b (φ * s) / φ)) := fun y ↦ by
+    rw [← ENNReal.ofReal_mul (Real.exp_pos _).le, ← Real.exp_add]
+    congr 2
+    field_simp
+    ring
+  simp_rw [hpt]
+  rw [lintegral_mul_const _ (by fun_prop), h, one_mul]
+
+/-- The exponential moments of the dominating measure are all finite. -/
+private lemma integrable_exp_mul (s : ℝ) :
+    Integrable (fun y ↦ Real.exp (s * y)) ν :=
+  ⟨(by fun_prop : Measurable fun y : ℝ ↦ Real.exp (s * y)).aestronglyMeasurable,
+    (hasFiniteIntegral_iff_ofReal (ae_of_all _ fun _ ↦ (Real.exp_pos _).le)).2
+      (by rw [lintegral_exp_mul_eq hφ hlaw]; exact ENNReal.ofReal_lt_top)⟩
+
+/-- Every real `s` lies in the interior of the set where `exp (s y)` is `ν`-integrable, since
+that set is all of `ℝ`. -/
+private lemma mem_interior_integrableExpSet (s : ℝ) :
+    s ∈ interior (integrableExpSet id ν) := by
+  have : integrableExpSet id ν = univ :=
+    eq_univ_of_forall fun t ↦ by simpa [integrableExpSet] using integrable_exp_mul hφ hlaw t
+  rw [this, interior_univ]; trivial
+
+/-- `mgf ν (s) = exp (b(φ s) / φ)`. -/
+private lemma mgf_id_eq (s : ℝ) :
+    mgf id ν s = Real.exp (b (φ * s) / φ) := by
+  rw [mgf, integral_eq_lintegral_of_nonneg_ae (ae_of_all _ fun _ ↦ (Real.exp_pos _).le)
+    (by fun_prop : Measurable fun y : ℝ ↦ Real.exp (s * id y)).aestronglyMeasurable]
+  simp only [id]
+  rw [lintegral_exp_mul_eq hφ hlaw, ENNReal.toReal_ofReal (Real.exp_pos _).le]
+
+/-- The cumulant function is a rescaled cumulant generating function:
+`b θ = φ · cgf_ν (θ / φ)`. -/
+private lemma eq_mul_cgf :
+    b = fun θ ↦ φ * cgf id ν (φ⁻¹ * θ) := by
+  funext θ
+  rw [cgf, mgf_id_eq hφ hlaw, Real.log_exp, mul_inv_cancel_left₀ hφ.ne']
+  field_simp
+
+/-- The cumulant generating function of the dominating measure is smooth of every order. -/
+private lemma contDiff_cgf {n : WithTop ℕ∞} :
+    ContDiff ℝ n (cgf id ν) :=
+  AnalyticOnNhd.contDiff fun s _ ↦ analyticOnNhd_cgf s (mem_interior_integrableExpSet hφ hlaw s)
+
+/-- The first derivative of the cumulant function in terms of the cumulant generating function:
+`b'(θ) = cgf_ν'(θ / φ)`. -/
+private lemma deriv_eq_deriv_cgf (θ : ℝ) :
+    deriv b θ = deriv (cgf id ν) (φ⁻¹ * θ) := by
+  have hd : DifferentiableAt ℝ (cgf id ν) (φ⁻¹ * θ) :=
+    (contDiff_cgf hφ hlaw (n := 1)).differentiable one_ne_zero _
+  have h := (hd.hasDerivAt.comp θ ((hasDerivAt_id θ).const_mul φ⁻¹)).const_mul φ
+  have h' : HasDerivAt (fun θ ↦ φ * cgf id ν (φ⁻¹ * θ)) (deriv (cgf id ν) (φ⁻¹ * θ)) θ := by
+    simp only [Function.comp_def, mul_one] at h
+    rwa [← mul_assoc, mul_comm φ, mul_assoc, mul_inv_cancel₀ hφ.ne', mul_one] at h
+  rw [eq_mul_cgf hφ hlaw, h'.deriv]
+
+/-- The second derivative of the cumulant function in terms of the cumulant generating function:
+`b''(θ) = φ⁻¹ cgf_ν''(θ / φ)`. -/
+private lemma iteratedDeriv_two_eq (θ : ℝ) :
+    iteratedDeriv 2 b θ = φ⁻¹ * iteratedDeriv 2 (cgf id ν) (φ⁻¹ * θ) := by
+  rw [eq_mul_cgf hφ hlaw, iteratedDeriv_const_mul_field,
+    iteratedDeriv_comp_const_mul (contDiff_cgf hφ hlaw) φ⁻¹]
+  field_simp
+
 /-- The density factorizes as `exp(s y) / mgf(s)` with `s = θ / φ`. -/
-private lemma exp_div_eq (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) (θ y : ℝ) :
+private lemma exp_div_eq (θ y : ℝ) :
     Real.exp ((y * θ - b θ) / φ) = Real.exp (φ⁻¹ * θ * id y) / mgf id ν (φ⁻¹ * θ) := by
   rw [mgf_id_eq hφ hlaw, mul_inv_cancel_left₀ hφ.ne', ← Real.exp_sub]
   congr 1
@@ -196,8 +190,7 @@ private lemma exp_div_eq (hφ : 0 < φ)
   field_simp
 
 /-- Polynomial moments of the exponential dispersion law are finite. -/
-private lemma integrable_pow_exponentialDispersionLaw (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) (θ : ℝ) (k : ℕ) :
+private lemma integrable_pow_exponentialDispersionLaw (θ : ℝ) (k : ℕ) :
     Integrable (fun y ↦ y ^ k) (exponentialDispersionLaw ν b φ θ) := by
   rw [integrable_exponentialDispersionLaw_iff]
   have h := (integrable_pow_mul_exp_of_mem_interior_integrableExpSet
@@ -207,8 +200,7 @@ private lemma integrable_pow_exponentialDispersionLaw (hφ : 0 < φ)
   ring
 
 /-- The mean of the exponential dispersion law is `b'(θ)`. -/
-private lemma integral_id_exponentialDispersionLaw (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) (θ : ℝ) :
+private lemma integral_id_exponentialDispersionLaw (θ : ℝ) :
     ∫ y, y ∂(exponentialDispersionLaw ν b φ θ) = deriv b θ := by
   rw [integral_exponentialDispersionLaw, deriv_eq_deriv_cgf hφ hlaw,
     deriv_cgf (mem_interior_integrableExpSet hφ hlaw _), ← integral_div]
@@ -217,8 +209,7 @@ private lemma integral_id_exponentialDispersionLaw (hφ : 0 < φ)
   ring
 
 /-- The variance of the exponential dispersion law is `φ b''(θ)`. -/
-private lemma integral_sq_sub_exponentialDispersionLaw (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) (θ : ℝ) :
+private lemma integral_sq_sub_exponentialDispersionLaw (θ : ℝ) :
     ∫ y, (y - deriv b θ) ^ 2 ∂(exponentialDispersionLaw ν b φ θ) =
       φ * iteratedDeriv 2 b θ := by
   rw [integral_exponentialDispersionLaw, iteratedDeriv_two_eq hφ hlaw,
@@ -229,8 +220,7 @@ private lemma integral_sq_sub_exponentialDispersionLaw (hφ : 0 < φ)
   ring
 
 /-- The cumulant function is convex: `b'' ≥ 0`. -/
-private lemma iteratedDeriv_two_nonneg (hφ : 0 < φ)
-    (hlaw : ∀ θ, IsProbabilityMeasure (exponentialDispersionLaw ν b φ θ)) (θ : ℝ) :
+private lemma iteratedDeriv_two_nonneg (θ : ℝ) :
     0 ≤ iteratedDeriv 2 b θ := by
   have h := integral_sq_sub_exponentialDispersionLaw hφ hlaw θ
   have h0 : 0 ≤ ∫ y, (y - deriv b θ) ^ 2 ∂(exponentialDispersionLaw ν b φ θ) :=
@@ -359,13 +349,10 @@ private lemma integrable_of_continuous (hR : ∀ᵐ x ∂Px, ‖x‖ ≤ R) {E :
 
 variable {κ : Kernel (EuclideanSpace ℝ (Fin p)) ℝ} [IsMarkovKernel κ]
 
-/-- The covariate marginal of `Px ⊗ κ` is `Px`. -/
-private lemma map_fst_compProd : (Px ⊗ₘ κ).map Prod.fst = Px := Measure.fst_compProd Px κ
-
 /-- Integrals of functions of the covariate alone against `Px ⊗ κ`. -/
 private lemma integral_comp_fst_compProd {g : EuclideanSpace ℝ (Fin p) → ℝ} (hg : Continuous g) :
     ∫ z, g z.1 ∂(Px ⊗ₘ κ) = ∫ x, g x ∂Px := by
-  conv_rhs => rw [← map_fst_compProd (Px := Px) (κ := κ)]
+  conv_rhs => rw [← Measure.fst_compProd Px κ]
   exact (integral_map measurable_fst.aemeasurable hg.aestronglyMeasurable).symm
 
 open Matrix in
@@ -509,8 +496,8 @@ private lemma tendstoInMeasure_glmProcess {Ω : Type*} [MeasurableSpace Ω]
       Matrix.inner_toEuclideanCLM]
   have hsint : Integrable sfun (Px ⊗ₘ κ) := by
     have : Integrable (fun x : EuclideanSpace ℝ (Fin p) ↦
-        iteratedDeriv 2 b (inner ℝ x β) * inner ℝ x h ^ 2) ((Px ⊗ₘ κ).map Prod.fst) := by
-      rw [map_fst_compProd]
+        iteratedDeriv 2 b (inner ℝ x β) * inner ℝ x h ^ 2) (Px ⊗ₘ κ).fst := by
+      rw [Measure.fst_compProd]
       exact integrable_of_continuous hR hgc
     exact this.comp_measurable measurable_fst
   have hwlln := tendstoInMeasure_sampleMean_of_iid P (Px ⊗ₘ κ) _ hiid' sfun
@@ -812,7 +799,7 @@ theorem tendstoInDistribution_canonicalGLM_root {Ω : Type*} [MeasurableSpace Ω
     refine ae_all_iff.2 fun i ↦ ?_
     have h1 : ∀ᵐ z ∂(Px ⊗ₘ κ), ‖z.1‖ ≤ R0 := by
       have := hR
-      rw [← map_fst_compProd (Px := Px) (κ := κ)] at this
+      rw [← Measure.fst_compProd Px κ] at this
       exact (ae_of_ae_map measurable_fst.aemeasurable this).mono fun z hz ↦
         hz.trans (le_max_left _ _)
     rw [← hlawZ i] at h1
@@ -970,7 +957,7 @@ theorem tendstoInDistribution_canonicalGLM_deviance {Ω : Type*} [MeasurableSpac
     refine ae_all_iff.2 fun i ↦ ?_
     have h1 : ∀ᵐ z ∂(Px ⊗ₘ κ), ‖z.1‖ ≤ max R 0 := by
       have hh := hR
-      rw [← map_fst_compProd (Px := Px) (κ := κ)] at hh
+      rw [← Measure.fst_compProd Px κ] at hh
       exact (ae_of_ae_map measurable_fst.aemeasurable hh).mono fun z hz ↦
         hz.trans (le_max_left _ _)
     rw [← hiid.2.2 i] at h1

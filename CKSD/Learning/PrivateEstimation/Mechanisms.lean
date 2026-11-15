@@ -32,6 +32,9 @@ Laplace laws and moments use TauCeti.
   (GAPS 107.66).
 * `CKSD.centralMeanRisk_laplaceMeanMechanism_le`: its risk bound `1/n + 8/(nε)²` (GAPS 107.66).
 * `CKSD.exists_centralMeanRisk_le`: the central minimax upper bound (GAPS 107.66).
+* `CKSD.integral_bernoulliMeasure_one_zero`,
+  `CKSD.one_div_six_le_measureReal_add_measureReal_compl`: Bernoulli alternatives and the
+  testing step shared by the central and local lower bounds.
 -/
 
 @[expose] public section
@@ -357,5 +360,76 @@ theorem exists_centralMeanRisk_le (n : ℕ) (hn : 0 < n) (ε : ℝ) (hε : 0 < �
     have h8 : 8 / (n * ε) ^ 2 = 8 * (1 / (n * ε) ^ 2) := by ring
     have hpos : 0 ≤ 1 / (n : ℝ) := by positivity
     linarith
+
+/-! ### Bernoulli alternatives and testing bounds for the lower bounds -/
+
+/-- Integrals against the Bernoulli law `Ber(1, 0, p)` on the real line. -/
+theorem integral_bernoulliMeasure_one_zero (p : unitInterval) (f : ℝ → ℝ) :
+    ∫ x, f x ∂(Ber((1 : ℝ), 0, p)) = p * f 1 + (1 - p) * f 0 := by
+  rw [bernoulliMeasure_def, integral_add_measure, integral_smul_nnreal_measure,
+    integral_smul_nnreal_measure, integral_dirac, integral_dirac]
+  · simp [NNReal.smul_def, unitInterval.coe_symm_eq]
+  · exact (integrable_dirac (by simp)).smul_measure_nnreal
+  · exact (integrable_dirac (by simp)).smul_measure_nnreal
+
+/-- The Bernoulli law `Ber(1, 0, p)` has mean `p`. -/
+theorem integral_id_bernoulliMeasure_one_zero (p : unitInterval) :
+    ∫ x, x ∂(Ber((1 : ℝ), 0, p)) = p := by
+  rw [integral_bernoulliMeasure_one_zero p fun x ↦ x]
+  ring
+
+/-- The Bernoulli law `Ber(1, 0, p)` is supported by `[-1,1]`. -/
+theorem bernoulliMeasure_one_zero_compl_Icc (p : unitInterval) :
+    (Ber((1 : ℝ), 0, p)) (Icc (-1) 1)ᶜ = 0 :=
+  bernoulliMeasure_apply_of_notMem_of_notMem p measurableSet_Icc.compl
+    (by simp) (by simp)
+
+/-- If a sum is at least `r`, one of the two terms is at least `r / 2`. -/
+theorem ofReal_half_le_or_of_ofReal_le_add {x y : ℝ≥0∞} {r : ℝ} (h : ENNReal.ofReal r ≤ x + y) :
+    ENNReal.ofReal (r / 2) ≤ x ∨ ENNReal.ofReal (r / 2) ≤ y := by
+  rcases le_or_gt r 0 with hr | hr
+  · left
+    rw [ENNReal.ofReal_of_nonpos (by linarith)]
+    exact zero_le
+  by_contra hc
+  push Not at hc
+  have := ENNReal.add_lt_add hc.1 hc.2
+  rw [← ENNReal.ofReal_add (by positivity) (by positivity), add_halves] at this
+  exact absurd h (not_le.mpr this)
+
+/-- The event bound from the total variation distance: `2 (Q A - Q' A) ≤ tvDist Q Q'`. -/
+theorem two_mul_measureReal_sub_le_tvDist {Y : Type*} [MeasurableSpace Y] {Q Q' : Measure Y}
+    [IsProbabilityMeasure Q] [IsProbabilityMeasure Q'] {A : Set Y} (hA : MeasurableSet A) :
+    2 * (Q.real A - Q'.real A) ≤ tvDist Q Q' := by
+  have hf : ∀ (ξ : Measure Y) [IsProbabilityMeasure ξ],
+      ∫ y, (2 * A.indicator (1 : Y → ℝ) y - 1) ∂ξ = 2 * ξ.real A - 1 := by
+    intro ξ _
+    have hI : Integrable (A.indicator (1 : Y → ℝ)) ξ := (integrable_const (1 : ℝ)).indicator hA
+    rw [integral_sub (hI.const_mul 2) (integrable_const 1), integral_const_mul,
+      integral_indicator_one hA]
+    simp
+  have h := integral_sub_integral_le_tvDist (μ := Q) (ν := Q')
+    (f := fun y ↦ 2 * A.indicator (1 : Y → ℝ) y - 1)
+    ((((measurable_const.indicator hA).const_mul 2).sub_const 1).aestronglyMeasurable)
+    (ae_of_all _ fun y ↦ by
+      by_cases hy : y ∈ A
+      · simp [indicator_of_mem hy]; norm_num
+      · simp [indicator_of_notMem hy])
+  rw [hf Q, hf Q'] at h
+  linarith
+
+/-- The testing step of Le Cam's method after the Bretagnolle–Huber inequality: if
+`e⁻¹ ≤ 2 - tvDist Q' Q`, then every test errs with total probability at least `1/6`, that is,
+`1/6 ≤ Q A + Q' Aᶜ` for every event `A`. -/
+theorem one_div_six_le_measureReal_add_measureReal_compl {Y : Type*} [MeasurableSpace Y]
+    {Q Q' : Measure Y} [IsProbabilityMeasure Q] [IsProbabilityMeasure Q']
+    (hTV : Real.exp (-1) ≤ 2 - tvDist Q' Q) {A : Set Y} (hA : MeasurableSet A) :
+    1 / 6 ≤ Q.real A + Q'.real Aᶜ := by
+  have hev := two_mul_measureReal_sub_le_tvDist (Q := Q') (Q' := Q) hA
+  have he3 : 1 / 3 ≤ Real.exp (-1) := by
+    rw [Real.exp_neg, one_div]
+    exact inv_anti₀ (Real.exp_pos 1) (by linarith [Real.exp_one_lt_d9])
+  rw [measureReal_compl hA, probReal_univ]
+  linarith
 
 end CKSD

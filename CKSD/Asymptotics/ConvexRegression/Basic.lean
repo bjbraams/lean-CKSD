@@ -6,8 +6,6 @@ public import CKSD.Asymptotics.Lindeberg.Basic
 public import Mathlib.Probability.CramerWold
 public import TauCeti.Probability.Distributions.Gaussian.Affine
 public import TauCeti.Probability.Distributions.Gaussian.Transforms
-import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Order
-import Mathlib.Analysis.Matrix.Order
 
 /-!
 # Asymptotics of fixed-design convex regression M-estimators
@@ -467,15 +465,14 @@ theorem add_mul_sub_le_of_convexOn_of_hasDerivWithinAt {ρ : ℝ → ℝ} (hconv
     rw [div_le_iff₀ (sub_pos.2 hvu)] at h
     linarith
 
-/-- The right derivative of a convex function on `ℝ` is monotone. -/
+/-- The right derivative of a convex function on `ℝ` is monotone; Mathlib's
+`ConvexOn.monotoneOn_rightDeriv`, for a right derivative given by `HasDerivWithinAt`. -/
 theorem monotone_of_convexOn_of_hasDerivWithinAt {ρ ψ : ℝ → ℝ} (hconv : ConvexOn ℝ univ ρ)
     (hder : ∀ u, HasDerivWithinAt ρ (ψ u) (Ioi u) u) : Monotone ψ := by
   intro u v huv
-  rcases eq_or_lt_of_le huv with rfl | huv
-  · rfl
-  have h1 := add_mul_sub_le_of_convexOn_of_hasDerivWithinAt hconv (hder u) v
-  have h2 := add_mul_sub_le_of_convexOn_of_hasDerivWithinAt hconv (hder v) u
-  nlinarith
+  rw [← (hder u).derivWithin (uniqueDiffWithinAt_Ioi u),
+    ← (hder v).derivWithin (uniqueDiffWithinAt_Ioi v)]
+  exact hconv.monotoneOn_rightDeriv (by simp) (by simp) huv
 
 /-- **Curvature of the expected convex loss.** Let `ρ` be convex on `ℝ` with right derivative
 `ψ`, `Z ∼ P` with `E ψ(Z) = 0`, and suppose that `G(s) = E ψ(Z - s)` satisfies
@@ -572,32 +569,6 @@ end Curvature
 section Main
 
 variable {p : ℕ}
-
-open scoped MatrixOrder in
-/-- A positive definite matrix `D` has a uniformly positive quadratic form:
-`⟪h, D h⟫ ≥ c ‖h‖²` for some `c > 0` (the least eigenvalue). -/
-theorem exists_pos_mul_sq_le_inner_toEuclideanCLM {D : Matrix (Fin p) (Fin p) ℝ}
-    (hD : D.PosDef) :
-    ∃ c > 0, ∀ h : EuclideanSpace ℝ (Fin p),
-      c * ‖h‖ ^ 2 ≤ ⟪h, Matrix.toEuclideanCLM (𝕜 := ℝ) D h⟫_ℝ := by
-  rcases isEmpty_or_nonempty (Fin p) with hp | hp
-  · refine ⟨1, one_pos, fun h ↦ ?_⟩
-    have : h = 0 := Subsingleton.elim _ _
-    subst this; simp
-  obtain ⟨r, hr, hle⟩ := (CFC.exists_pos_algebraMap_le_iff D
-    hD.isHermitian.isSelfAdjoint).2 fun x hx ↦ hD.isStrictlyPositive.spectrum_pos hx
-  have hps : (D - r • (1 : Matrix (Fin p) (Fin p) ℝ)).PosSemidef := by
-    rw [← Matrix.le_iff]
-    simpa [Algebra.algebraMap_eq_smul_one] using hle
-  refine ⟨r, hr, fun h ↦ ?_⟩
-  have h1 := hps.dotProduct_mulVec_nonneg (WithLp.ofLp h)
-  have h2 := Matrix.inner_toEuclideanCLM D h h
-  have h3 : ‖h‖ ^ 2 = WithLp.ofLp h ⬝ᵥ WithLp.ofLp h := by
-    rw [← real_inner_self_eq_norm_sq, EuclideanSpace.inner_eq_star_dotProduct]
-    simp
-  simp [Matrix.sub_mulVec, dotProduct_sub, Matrix.smul_mulVec, dotProduct_smul] at h1
-  rw [h2, h3]
-  linarith
 
 /-- **Asymptotics of fixed-design convex regression M-estimators.** Let `eᵢ` be independent
 errors and `ρ` a loss with subgradient `ψ` (`ρ v ≥ ρ u + ψ u (v - u)`, which makes `ρ` convex),

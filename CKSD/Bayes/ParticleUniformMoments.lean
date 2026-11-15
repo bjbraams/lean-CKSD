@@ -104,10 +104,10 @@ theorem exists_uniform_particle_lpNorm_bound
   have hEv (q : ℕ) : Measurable (E (v q) q) := measurable_particle_sampling_error M ξ hξ.1 q (hvm q) (hVabs q)
   have hMg (q : ℕ) : MemLp (E (g q) q) (ENNReal.ofReal p) P :=
     MemLp.of_bound (hEg q).aestronglyMeasurable (2*(1/α)) (ae_of_all _ fun ω ↦ by
-      simpa only [Real.norm_eq_abs] using abs_particle_sampling_error_le M hN (fun r ↦ ξ r ω) q (hgm q) (hGabs q))
+      simpa only [Real.norm_eq_abs] using abs_particle_sampling_error_le M hN (fun r ↦ ξ r ω) q (hGabs q))
   have hMv (q : ℕ) : MemLp (E (v q) q) (ENNReal.ofReal p) P :=
     MemLp.of_bound (hEv q).aestronglyMeasurable (2*(d q/α)) (ae_of_all _ fun ω ↦ by
-      simpa only [Real.norm_eq_abs] using abs_particle_sampling_error_le M hN (fun r ↦ ξ r ω) q (hvm q) (hVabs q))
+      simpa only [Real.norm_eq_abs] using abs_particle_sampling_error_le M hN (fun r ↦ ξ r ω) q (hVabs q))
   have hMgb (q : ℕ) : MemLp (fun ω ↦ |E (g q) q ω|) (ENNReal.ofReal p) P := by
     simpa only [Real.norm_eq_abs] using (hMg q).norm
   have hMvb (q : ℕ) : MemLp (fun ω ↦ |E (v q) q ω|) (ENNReal.ofReal p) P := by

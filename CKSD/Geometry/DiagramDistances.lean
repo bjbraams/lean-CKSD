@@ -68,6 +68,30 @@ def diagramWassersteinEDist {α β κ κ' : Type*} [Fintype α] [Fintype β] [Fi
     (D : FiniteDeathDiagram α) (e : κ → ℝ) (E : FiniteDeathDiagram β) (e' : κ' → ℝ) : ℝ≥0∞ :=
   ⨅ M : DiagramMatching α β, ⨅ σ : κ ≃ κ', diagramWassersteinCost q M σ D e E e' ^ (1 / q)
 
+/-- The triangle inequality for the matching cost `max |b - b'| |d - d'|` of two bars. -/
+private theorem max_abs_sub_le_add (b d b' d' b'' d'' : ℝ) :
+    max |b - b''| |d - d''| ≤ max |b - b'| |d - d'| + max |b' - b''| |d' - d''| :=
+  max_le ((abs_sub_le _ b' _).trans (add_le_add (le_max_left _ _) (le_max_left _ _)))
+    ((abs_sub_le _ d' _).trans (add_le_add (le_max_right _ _) (le_max_right _ _)))
+
+/-- The diagonal distance `(d - b) / 2` of a bar is at most the matching cost to a second bar plus
+the diagonal distance of the second bar. -/
+private theorem half_sub_le_max_add_half (b d b' d' : ℝ) :
+    (d - b) / 2 ≤ max |b - b'| |d - d'| + (d' - b') / 2 := by
+  have h1 := le_abs_self (d - d')
+  have h2 := neg_abs_le (b - b')
+  have h3 := le_max_left |b - b'| |d - d'|
+  have h4 := le_max_right |b - b'| |d - d'|
+  linarith
+
+/-- The diagonal distance of the second bar is at most that of the first plus their matching
+cost. -/
+private theorem half_sub_le_half_add_max (b d b' d' : ℝ) :
+    (d' - b') / 2 ≤ (d - b) / 2 + max |b - b'| |d - d'| := by
+  have := half_sub_le_max_add_half b' d' b d
+  rw [abs_sub_comm b', abs_sub_comm d'] at this
+  linarith
+
 namespace DiagramMatching
 
 variable {α β γ : Type*} (M : DiagramMatching α β) (D : FiniteDeathDiagram α)
@@ -137,11 +161,7 @@ theorem cost_trans_le (N : DiagramMatching β γ) (F : FiniteDeathDiagram γ) :
     have hN := N.ofReal_le_cost_of_relates E F h2
     refine le_trans ?_ (add_le_add hM hN)
     rw [← ENNReal.ofReal_add (by positivity) (by positivity)]
-    refine ENNReal.ofReal_le_ofReal (max_le ?_ ?_)
-    · exact (abs_sub_le _ (E.birth j) _).trans
-        (add_le_add (le_max_left _ _) (le_max_left _ _))
-    · exact (abs_sub_le _ (E.death j) _).trans
-        (add_le_add (le_max_right _ _) (le_max_right _ _))
+    exact ENNReal.ofReal_le_ofReal (max_abs_sub_le_add _ _ _ _ _ _)
   · intro i hi
     by_cases hj : ∃ j, M.relates i j
     · obtain ⟨j, hij⟩ := hj
@@ -151,11 +171,7 @@ theorem cost_trans_le (N : DiagramMatching β γ) (F : FiniteDeathDiagram γ) :
       refine le_trans ?_ (add_le_add hM hN)
       rw [← ENNReal.ofReal_add (by positivity) (le_of_lt (by linarith [E.birth_lt_death j]))]
       refine ENNReal.ofReal_le_ofReal ?_
-      have h1 := le_abs_self (D.death i - E.death j)
-      have h2 := neg_abs_le (D.birth i - E.birth j)
-      have h3 := le_max_left |D.birth i - E.birth j| |D.death i - E.death j|
-      have h4 := le_max_right |D.birth i - E.birth j| |D.death i - E.death j|
-      linarith
+      linarith [half_sub_le_max_add_half (D.birth i) (D.death i) (E.birth j) (E.death j)]
     · exact (M.ofReal_le_cost_of_not_left D E hj).trans le_self_add
   · intro k hk
     by_cases hj : ∃ j, N.relates j k
@@ -166,11 +182,7 @@ theorem cost_trans_le (N : DiagramMatching β γ) (F : FiniteDeathDiagram γ) :
       refine le_trans ?_ (add_le_add hM hN)
       rw [← ENNReal.ofReal_add (le_of_lt (by linarith [E.birth_lt_death j])) (by positivity)]
       refine ENNReal.ofReal_le_ofReal ?_
-      have h1 := neg_abs_le (E.death j - F.death k)
-      have h2 := le_abs_self (E.birth j - F.birth k)
-      have h3 := le_max_left |E.birth j - F.birth k| |E.death j - F.death k|
-      have h4 := le_max_right |E.birth j - F.birth k| |E.death j - F.death k|
-      linarith
+      linarith [half_sub_le_half_add_max (E.birth j) (E.death j) (F.birth k) (F.death k)]
     · exact (N.ofReal_le_cost_of_not_right E F hj).trans le_add_self
 
 end DiagramMatching
@@ -532,11 +544,7 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
         · obtain ⟨k, hjk⟩ := hj
           rw [(M.trans N).leftCost_of_relates D F ⟨_, hij, hjk⟩, N.leftCost_of_relates E F hjk,
             ← ENNReal.ofReal_add (by positivity) (by positivity)]
-          refine ENNReal.ofReal_le_ofReal (max_le ?_ ?_)
-          · exact (abs_sub_le _ (E.birth hi.choose) _).trans
-              (add_le_add (le_max_left _ _) (le_max_left _ _))
-          · exact (abs_sub_le _ (E.death hi.choose) _).trans
-              (add_le_add (le_max_right _ _) (le_max_right _ _))
+          exact ENNReal.ofReal_le_ofReal (max_abs_sub_le_add _ _ _ _ _ _)
         · have hnot : ¬ ∃ k, (M.trans N).relates i k := by
             rintro ⟨k, j', h1, h2⟩
             obtain rfl := M.left_unique _ _ _ hij h1
@@ -545,11 +553,8 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
           rw [(M.trans N).leftCost_of_not D F hnot, N.leftCost_of_not E F hj,
             ← ENNReal.ofReal_add (by positivity) (by linarith)]
           refine ENNReal.ofReal_le_ofReal ?_
-          have h1 := le_abs_self (D.death i - E.death hi.choose)
-          have h2 := neg_abs_le (D.birth i - E.birth hi.choose)
-          have h3 := le_max_left |D.birth i - E.birth hi.choose| |D.death i - E.death hi.choose|
-          have h4 := le_max_right |D.birth i - E.birth hi.choose| |D.death i - E.death hi.choose|
-          linarith
+          linarith [half_sub_le_max_add_half (D.birth i) (D.death i) (E.birth hi.choose)
+            (E.death hi.choose)]
       · have hnot : ¬ ∃ k, (M.trans N).relates i k := by
           rintro ⟨k, j', h1, -⟩
           exact hi ⟨j', h1⟩
@@ -575,11 +580,8 @@ theorem diagramWassersteinCost_trans_rpow_le {α β γ κ κ' κ'' : Type*} [Fin
           rw [ite_eq_right hj, M.rightCost_of_not E hj, N.leftCost_of_relates E F hjk,
             (M.trans N).rightCost_of_not F hnot, ← ENNReal.ofReal_add (by linarith) (by positivity)]
           refine ENNReal.ofReal_le_ofReal ?_
-          have h1 := neg_abs_le (E.death hk.choose - F.death k)
-          have h2 := le_abs_self (E.birth hk.choose - F.birth k)
-          have h3 := le_max_left |E.birth hk.choose - F.birth k| |E.death hk.choose - F.death k|
-          have h4 := le_max_right |E.birth hk.choose - F.birth k| |E.death hk.choose - F.death k|
-          linarith
+          linarith [half_sub_le_half_add_max (E.birth hk.choose) (E.death hk.choose)
+            (F.birth k) (F.death k)]
       · have hnot : ¬ ∃ i, (M.trans N).relates i k := by
           rintro ⟨i, j', -, h2⟩
           exact hk ⟨j', h2⟩

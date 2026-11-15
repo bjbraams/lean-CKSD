@@ -35,12 +35,6 @@ namespace CKSD
 
 variable {X : Type*} [MeasurableSpace X]
 
-/-- The first `n` coordinates of an i.i.d. sequence with law `P` have the `n`-fold product law. -/
-theorem infinitePi_map_fin_val (P : Measure X) [IsProbabilityMeasure P] (n : ℕ) :
-    (Measure.infinitePi fun _ : ℕ ↦ P).map (fun ω (i : Fin n) ↦ ω i) =
-      Measure.pi fun _ : Fin n ↦ P := by
-  rw [Measure.map_infinitePi_infinitePi_of_inj Fin.val_injective, Measure.infinitePi_eq_pi]
-
 /-- The `j`-th block of length `k` of a sequence: the coordinates `j k, …, j k + k - 1`. -/
 def blockSample (k j : ℕ) (ω : ℕ → X) : Fin k → X := fun i ↦ ω (j * k + i)
 
@@ -56,6 +50,15 @@ theorem infinitePi_map_blockSample (P : Measure X) [IsProbabilityMeasure P] (k j
     fun a b h ↦ Fin.ext (by simpa using h)
   rw [← Measure.infinitePi_eq_pi]
   exact Measure.map_infinitePi_infinitePi_of_inj (P := fun _ : ℕ ↦ P) hinj
+
+/-- The first `n` coordinates of an i.i.d. sequence with law `P` have the `n`-fold product law:
+the block `j = 0` of `infinitePi_map_blockSample`. -/
+theorem infinitePi_map_fin_val (P : Measure X) [IsProbabilityMeasure P] (n : ℕ) :
+    (Measure.infinitePi fun _ : ℕ ↦ P).map (fun ω (i : Fin n) ↦ ω i) =
+      Measure.pi fun _ : Fin n ↦ P := by
+  have h : (fun ω (i : Fin n) ↦ ω i) = blockSample (X := X) n 0 := by
+    ext ω i; simp [blockSample]
+  rw [h, infinitePi_map_blockSample]
 
 /-- The consecutive blocks of length `k` of an i.i.d. sequence are independent. -/
 theorem iIndepFun_blockSample (P : Measure X) [IsProbabilityMeasure P] (k : ℕ) :

@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Geometry.Basic
+public import CKSD.Bayes.Basic
 public import Mathlib.MeasureTheory.Order.Group.Lattice
 public import Mathlib.Probability.Distributions.Gaussian.Fernique
 public import TauCeti.Probability.Distributions.Gaussian.Density
@@ -40,13 +41,15 @@ namespace CKSD
 
 variable {d : ℕ}
 
+/-- The density of `N(0, s I)` on `ℝ^d`. -/
+noncomputable def isoGaussianPDF (d : ℕ) (s : ℝ) : EuclideanSpace ℝ (Fin d) → ℝ :=
+  TauCeti.Probability.multivariateGaussianPDFReal 0 (s • (1 : Matrix (Fin d) (Fin d) ℝ))
 
-/-- The density of `N(0, s I)` is `c_s exp(-‖z‖² / (2 s))` with `c_s` its value at the origin. -/
-theorem multivariateGaussianPDFReal_zero_smul_one {s : ℝ} (hs : 0 < s)
-    (z : EuclideanSpace ℝ (Fin d)) :
-    TauCeti.Probability.multivariateGaussianPDFReal 0 (s • (1 : Matrix (Fin d) (Fin d) ℝ)) z =
-      TauCeti.Probability.multivariateGaussianPDFReal 0 (s • (1 : Matrix (Fin d) (Fin d) ℝ)) 0 *
-        Real.exp (-(‖z‖ ^ 2 / (2 * s))) := by
+/-- The density of `N(0, s I)` in the form `c_s exp(-‖z‖² / (2 s))`, with `c_s` its value at the
+origin. -/
+theorem isoGaussianPDF_eq {s : ℝ} (hs : 0 < s) (z : EuclideanSpace ℝ (Fin d)) :
+    isoGaussianPDF d s z = isoGaussianPDF d s 0 * Real.exp (-(‖z‖ ^ 2 / (2 * s))) := by
+  unfold isoGaussianPDF
   have hinv : (s • (1 : Matrix (Fin d) (Fin d) ℝ))⁻¹ = s⁻¹ • 1 := by
     refine Matrix.inv_eq_left_inv ?_
     rw [smul_mul_smul_comm, inv_mul_cancel₀ hs.ne', one_mul, one_smul]
@@ -60,16 +63,6 @@ theorem multivariateGaussianPDFReal_zero_smul_one {s : ℝ} (hs : 0 < s)
   rw [show -(s⁻¹ * 0 ^ 2) / 2 = 0 by ring, Real.exp_zero, mul_one]
   congr 2
   field_simp
-
-
-/-- The density of `N(0, s I)` on `ℝ^d`. -/
-noncomputable def isoGaussianPDF (d : ℕ) (s : ℝ) : EuclideanSpace ℝ (Fin d) → ℝ :=
-  TauCeti.Probability.multivariateGaussianPDFReal 0 (s • (1 : Matrix (Fin d) (Fin d) ℝ))
-
-/-- The density of `N(0, s I)` in the form `c_s exp(-‖z‖² / (2 s))`. -/
-theorem isoGaussianPDF_eq {s : ℝ} (hs : 0 < s) (z : EuclideanSpace ℝ (Fin d)) :
-    isoGaussianPDF d s z = isoGaussianPDF d s 0 * Real.exp (-(‖z‖ ^ 2 / (2 * s))) :=
-  multivariateGaussianPDFReal_zero_smul_one hs z
 
 /-- A positive multiple of the identity is positive definite. -/
 private theorem posDef_smul_one {s : ℝ} (hs : 0 < s) :
@@ -142,33 +135,30 @@ theorem integral_multivariateGaussian_smul_one {s : ℝ} (hs : 0 < s)
   refine integral_congr_ae (ae_of_all _ fun z ↦ ?_)
   simp [ENNReal.toReal_ofReal (isoGaussianPDF_pos hs z).le]
 
+/-- The norm is integrable under a centred multivariate Gaussian law. -/
+theorem integrable_norm_multivariateGaussian (s : ℝ) :
+    Integrable (fun x ↦ ‖x‖) (multivariateGaussian (0 : EuclideanSpace ℝ (Fin d)) (s • 1)) :=
+  (IsGaussian.memLp_two_id.integrable one_le_two).norm
+
 /-- `‖x‖` times the density of `N(0, s I)` is Lebesgue integrable. -/
 theorem integrable_norm_mul_isoGaussianPDF {s : ℝ} (hs : 0 < s) :
     Integrable (fun x : EuclideanSpace ℝ (Fin d) ↦ ‖x‖ * isoGaussianPDF d s x) := by
-  have hG : Integrable (fun x ↦ ‖x‖)
-      (multivariateGaussian (0 : EuclideanSpace ℝ (Fin d)) (s • 1)) :=
-    (IsGaussian.memLp_two_id.integrable one_le_two).norm
+  have hG := integrable_norm_multivariateGaussian (d := d) s
   rw [multivariateGaussian_smul_one_eq_withDensity hs, integrable_withDensity_iff_integrable_smul'
     (measurable_isoGaussianPDF hs).ennreal_ofReal (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)] at hG
   refine hG.congr (ae_of_all _ fun x ↦ ?_)
   simp [ENNReal.toReal_ofReal (isoGaussianPDF_pos hs x).le, mul_comm]
 
 /-- The Gaussian smoothing of a probability measure is a probability measure. -/
-theorem isProbabilityMeasure_gaussianSmoothing (sigma : ℝ) (ν : Measure (EuclideanSpace ℝ (Fin d)))
-    [IsProbabilityMeasure ν] : IsProbabilityMeasure (gaussianSmoothing sigma ν) := by
+instance isProbabilityMeasure_gaussianSmoothing (sigma : ℝ)
+    (ν : Measure (EuclideanSpace ℝ (Fin d))) [IsProbabilityMeasure ν] : IsProbabilityMeasure (gaussianSmoothing sigma ν) := by
   unfold gaussianSmoothing
   exact (Measure.isProbabilityMeasure_map_iff (by fun_prop)).2 inferInstance
-
-/-- The norm is integrable under a centred multivariate Gaussian law. -/
-theorem integrable_norm_multivariateGaussian (s : ℝ) :
-    Integrable (fun x ↦ ‖x‖) (multivariateGaussian (0 : EuclideanSpace ℝ (Fin d)) (s • 1)) :=
-  (IsGaussian.memLp_two_id.integrable one_le_two).norm
 
 /-- The Gaussian smoothing of a law with finite first moment has finite first moment. -/
 theorem hasFiniteMoment_gaussianSmoothing (sigma : ℝ) (ν : Measure (EuclideanSpace ℝ (Fin d)))
     [IsProbabilityMeasure ν] (hν : Integrable (fun x ↦ ‖x‖) ν) :
     TauCeti.HasFiniteMoment 1 (gaussianSmoothing sigma ν) := by
-  have := isProbabilityMeasure_gaussianSmoothing sigma ν
   rw [TauCeti.hasFiniteMoment_iff_lintegral_edist_rpow_ne_top one_ne_zero ENNReal.one_ne_top 0]
   simp only [ENNReal.toReal_one, ENNReal.rpow_one]
   set G := multivariateGaussian (0 : EuclideanSpace ℝ (Fin d)) (sigma ^ 2 • 1)
@@ -223,7 +213,6 @@ theorem integral_abs_sampleMean_sub_le {X : Type*} [MeasurableSpace X] (P : Meas
   set μ := Measure.pi fun _ : Fin n ↦ P
   set m := ∫ y, g y ∂P
   have hnR : (0 : ℝ) < n := by exact_mod_cast hn
-  have hsn : 0 < Real.sqrt n := Real.sqrt_pos.2 hnR
   have hgL : MemLp g 2 P := MemLp.of_bound hg.aestronglyMeasurable B
     (hgB.mono fun y hy ↦ by rwa [Real.norm_eq_abs])
   have hgi : Integrable g P := hgL.integrable one_le_two
@@ -282,42 +271,16 @@ theorem integral_abs_sampleMean_sub_le {X : Type*} [MeasurableSpace X] (P : Meas
         _ = B := by simp
     calc |Z ω| ≤ |(n : ℝ)⁻¹ * S ω| + |m| := abs_sub _ _
       _ ≤ 2 * B := by linarith
-  have hZi : Integrable Z μ := Integrable.of_bound hZm.aestronglyMeasurable (2 * B)
-    (hZb.mono fun ω h ↦ by rwa [Real.norm_eq_abs])
-  have hZ2i : Integrable (fun ω ↦ Z ω ^ 2) μ := by
-    refine Integrable.of_bound (hZm.pow_const 2).aestronglyMeasurable ((2 * B) ^ 2)
-      (hZb.mono fun ω h ↦ ?_)
-    rw [Real.norm_eq_abs, abs_pow]
-    exact pow_le_pow_left₀ (abs_nonneg _) h 2
-  -- `|Z| ≤ (Z² / t + t) / 2`
-  set t := B / Real.sqrt n
-  have ht : 0 < t := div_pos hB hsn
-  have hpt : ∀ ω, |Z ω| ≤ (Z ω ^ 2 / t + t) / 2 := fun ω ↦ by
-    have h := sq_nonneg (|Z ω| - t)
-    have h2 : 2 * t * |Z ω| ≤ Z ω ^ 2 + t ^ 2 := by
-      rw [← sq_abs (Z ω)]; linarith [h, show (|Z ω| - t) ^ 2 = |Z ω| ^ 2 - 2 * t * |Z ω| + t ^ 2
-        by ring]
-    have h3 : (Z ω ^ 2 / t + t) / 2 = (Z ω ^ 2 + t ^ 2) / (2 * t) := by field_simp
-    rw [h3, le_div_iff₀ (by positivity)]
+  -- `(E |Z|)² ≤ E Z²` since the variance of `|Z|` is nonnegative
+  have hZL : MemLp (fun ω ↦ |Z ω|) 2 μ := MemLp.of_bound hZm.abs.aestronglyMeasurable (2 * B)
+    (hZb.mono fun ω h ↦ by rwa [Real.norm_eq_abs, abs_abs])
+  have hsq : (∫ ω, |Z ω| ∂μ) ^ 2 ≤ B ^ 2 / n := by
+    have h := variance_nonneg (fun ω ↦ |Z ω|) μ
+    rw [variance_eq_sub hZL] at h
+    simp only [Pi.pow_apply, sq_abs] at h
     linarith
-  have hA : ∫ ω, |Z ω| ∂μ ≤ ∫ ω, (Z ω ^ 2 / t + t) / 2 ∂μ :=
-    integral_mono hZi.abs (((hZ2i.div_const t).add (integrable_const t)).div_const 2) hpt
-  have hB' : ∫ ω, (Z ω ^ 2 / t + t) / 2 ∂μ = ((∫ ω, Z ω ^ 2 ∂μ) / t + t) / 2 := by
-    rw [integral_div, integral_add (hZ2i.div_const t) (integrable_const t), integral_div]
-    simp
-  have hC : ((∫ ω, Z ω ^ 2 ∂μ) / t + t) / 2 ≤ (B ^ 2 / n / t + t) / 2 := by
-    have := div_le_div_of_nonneg_right hZ2 ht.le
-    linarith
-  have hsq : Real.sqrt n ^ 2 = n := Real.sq_sqrt hnR.le
-  have hD : B ^ 2 / n / t = t := by
-    rw [div_eq_iff ht.ne']
-    simp only [t]
-    rw [div_mul_div_comm, ← sq, ← sq, hsq]
-  have hE : ∫ ω, |Z ω| ∂μ ≤ t := by
-    have := hA.trans (hB'.le.trans hC)
-    rw [hD] at this
-    linarith
-  exact hE
+  calc ∫ ω, |Z ω| ∂μ ≤ Real.sqrt (B ^ 2 / n) := (le_abs_self _).trans (Real.abs_le_sqrt hsq)
+    _ = B / Real.sqrt n := by rw [Real.sqrt_div' _ hnR.le, Real.sqrt_sq hB.le]
 
 /-- The cube `[-1, 1]^d` in `ℝ^d`. -/
 def unitCube (d : ℕ) : Set (EuclideanSpace ℝ (Fin d)) := {x | ∀ i, x i ∈ Icc (-1 : ℝ) 1}
@@ -347,17 +310,6 @@ theorem integrable_empiricalMeasure {n : ℕ} (x : Fin n → EuclideanSpace ℝ 
   rw [empiricalMeasure]
   refine Integrable.smul_measure (integrable_finsetSum_measure.2 fun i _ ↦
     integrable_dirac (by simp)) (by simp [hn.ne'])
-
-/-- The integral against an empirical measure is the sample average. -/
-theorem integral_empiricalMeasure {n : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin d))
-    (f : EuclideanSpace ℝ (Fin d) → ℝ) :
-    ∫ y, f y ∂(empiricalMeasure n x) = (n : ℝ)⁻¹ * ∑ i, f (x i) := by
-  rcases Nat.eq_zero_or_pos n with rfl | hn
-  · simp [empiricalMeasure]
-  rw [empiricalMeasure, integral_smul_measure, integral_finsetSum_measure]
-  · simp
-  · intro i _
-    exact integrable_dirac (by simp)
 
 section Smoothed
 
@@ -440,8 +392,6 @@ theorem wassersteinEDist_one_gaussianSmoothing_le (hs : sigma ≠ 0)
     refine Integrable.of_bound (by fun_prop) (Real.sqrt d) (hae.mono fun y hy ↦ ?_)
     rw [Real.norm_eq_abs, abs_norm]
     simpa using Real.abs_le_sqrt (norm_sq_le_of_mem_unitCube hy)
-  have := isProbabilityMeasure_gaussianSmoothing sigma P
-  have := isProbabilityMeasure_gaussianSmoothing sigma (empiricalMeasure n X)
   rw [TauCeti.wassersteinEDist_one_eq_iSup_apply_eq_zero
     (hasFiniteMoment_gaussianSmoothing sigma _ (integrable_empiricalMeasure X _))
     (hasFiniteMoment_gaussianSmoothing sigma P hPint) 0]
@@ -481,7 +431,7 @@ theorem wassersteinEDist_one_gaussianSmoothing_le (hs : sigma ≠ 0)
   have hemp : ∫ x, f x ∂(gaussianSmoothing sigma (empiricalMeasure n X)) =
       ∫ x, f x * pX x := by
     rw [integral_gaussianSmoothing_eq hs _ (integrable_empiricalMeasure X _) hf.continuous hfb,
-      integral_empiricalMeasure]
+      integral_empiricalMeasure_vector, smul_eq_mul]
     have hi : ∀ i, Integrable (fun x ↦ f x * φ (x - X i)) := fun i ↦
       hint _ (hφm.comp (measurable_id.sub_const _)) fun x ↦ by
         rw [abs_of_nonneg (hφ0 _)]; exact isoGaussianPDF_sub_le_of_mem_unitCube hs x (hX i)

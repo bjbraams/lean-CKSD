@@ -184,25 +184,6 @@ theorem policyValue_mem_Icc (M : FiniteMarkovDecisionProcess S A)
   have := inv_one_sub_smul_mulVec_mono hPr hγ0 hγ1 (v := fun _ ↦ 1) hr1 i
   rwa [inv_one_sub_smul_mulVec_const hPr hγ0 hγ1] at this
 
-/-- Gibbs' inequality for positive probability vectors: `∑ p (log p - log q) ≥ 0`. -/
-theorem sum_mul_log_sub_log_nonneg {ι : Type*} (S : Finset ι) {p q : ι → ℝ}
-    (hp : ∀ i ∈ S, 0 < p i) (hq : ∀ i ∈ S, 0 < q i) (hpq : ∑ i ∈ S, p i = ∑ i ∈ S, q i) :
-    0 ≤ ∑ i ∈ S, p i * (Real.log (p i) - Real.log (q i)) := by
-  have h : ∀ i ∈ S, p i * (Real.log (q i) - Real.log (p i)) ≤ q i - p i := by
-    intro i hi
-    rw [← Real.log_div (hq i hi).ne' (hp i hi).ne']
-    have := Real.log_le_sub_one_of_pos (div_pos (hq i hi) (hp i hi))
-    calc p i * Real.log (q i / p i) ≤ p i * (q i / p i - 1) :=
-          mul_le_mul_of_nonneg_left this (hp i hi).le
-      _ = q i - p i := by rw [mul_sub, mul_div_cancel₀ _ (hp i hi).ne', mul_one]
-  have := Finset.sum_le_sum h
-  rw [Finset.sum_sub_distrib, hpq, sub_self] at this
-  have heq : ∑ i ∈ S, p i * (Real.log (p i) - Real.log (q i)) =
-      -∑ i ∈ S, p i * (Real.log (q i) - Real.log (p i)) := by
-    rw [← Finset.sum_neg_distrib]
-    exact Finset.sum_congr rfl fun _ _ ↦ by ring
-  linarith
-
 /-- The normalizer `Z(i) = ∑_b π(b | i) exp(η A^π(i,b) / (1-γ))` of a natural policy gradient
 step from a stationary policy is at least `1`. -/
 theorem one_le_sum_mul_exp_policyAdvantage (M : FiniteMarkovDecisionProcess S A)
@@ -291,7 +272,7 @@ theorem mul_log_le_policyValue_sub_of_log_update (M : FiniteMarkovDecisionProces
       rw [Finset.sum_mul, ← Finset.sum_add_distrib, Finset.mul_sum]
       exact Finset.sum_congr rfl fun b _ ↦ by rw [hA]; ring
     have hgibbs := sum_mul_log_sub_log_nonneg Finset.univ
-      (fun b _ ↦ hpos' i b) (fun b _ ↦ hpos i b) (by rw [hsum' i, hsum i])
+      (fun b _ ↦ (hpos' i b).le) (fun b _ ↦ hpos i b) (by rw [hsum' i, hsum i])
     rw [hgi, hsum' i, one_mul]
     nlinarith
   have hg0 : ∀ i, 0 ≤ ∑ b, π' i b * policyAdvantage M π i b := fun i ↦

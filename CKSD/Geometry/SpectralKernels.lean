@@ -81,12 +81,25 @@ theorem integral_sin_inner_eq_im_charFun (μ : Measure E) [IsFiniteMeasure μ] (
   intro x
   simp [BoundedContinuousFunction.innerProbChar_apply, Complex.exp_im, real_inner_comm]
 
+/-- The cosine of an a.e. strongly measurable real function is integrable under a finite
+measure, being bounded by one. -/
+theorem integrable_cos_comp {X : Type*} [MeasurableSpace X] {μ : Measure X} [IsFiniteMeasure μ]
+    {f : X → ℝ} (hf : AEStronglyMeasurable f μ) : Integrable (fun x ↦ Real.cos (f x)) μ :=
+  Integrable.of_bound (Real.continuous_cos.comp_aestronglyMeasurable hf) 1
+    (ae_of_all _ fun x ↦ by simpa only [Real.norm_eq_abs] using Real.abs_cos_le_one (f x))
+
+/-- The sine of an a.e. strongly measurable real function is integrable under a finite measure,
+being bounded by one. -/
+theorem integrable_sin_comp {X : Type*} [MeasurableSpace X] {μ : Measure X} [IsFiniteMeasure μ]
+    {f : X → ℝ} (hf : AEStronglyMeasurable f μ) : Integrable (fun x ↦ Real.sin (f x)) μ :=
+  Integrable.of_bound (Real.continuous_sin.comp_aestronglyMeasurable hf) 1
+    (ae_of_all _ fun x ↦ by simpa only [Real.norm_eq_abs] using Real.abs_sin_le_one (f x))
+
 /-- The cosine of a projected difference is integrable under every finite product law. -/
 theorem integrable_cos_inner_sub_prod (P Q : Measure E) [IsFiniteMeasure P]
     [IsFiniteMeasure Q] (w : E) :
     Integrable (fun z : E × E ↦ Real.cos (inner ℝ w (z.1 - z.2))) (P.prod Q) :=
-  Integrable.of_bound (by fun_prop) 1 (ae_of_all _ fun z ↦ by
-    simpa only [Real.norm_eq_abs] using Real.abs_cos_le_one (inner ℝ w (z.1 - z.2)))
+  integrable_cos_comp (by fun_prop)
 
 /-- The product-law cosine moment is the Euclidean pairing of characteristic functions. -/
 theorem integral_cos_inner_sub_prod (P Q : Measure E) [IsFiniteMeasure P]
@@ -94,11 +107,9 @@ theorem integral_cos_inner_sub_prod (P Q : Measure E) [IsFiniteMeasure P]
     (∫ z : E × E, Real.cos (inner ℝ w (z.1 - z.2)) ∂P.prod Q) =
       (charFun P w).re * (charFun Q w).re + (charFun P w).im * (charFun Q w).im := by
   have hc (μ : Measure E) [IsFiniteMeasure μ] : Integrable (fun x ↦ Real.cos (inner ℝ w x)) μ :=
-    Integrable.of_bound (by fun_prop) 1 (ae_of_all _ fun x ↦ by
-      simpa only [Real.norm_eq_abs] using Real.abs_cos_le_one (inner ℝ w x))
+    integrable_cos_comp (by fun_prop)
   have hs (μ : Measure E) [IsFiniteMeasure μ] : Integrable (fun x ↦ Real.sin (inner ℝ w x)) μ :=
-    Integrable.of_bound (by fun_prop) 1 (ae_of_all _ fun x ↦ by
-      simpa only [Real.norm_eq_abs] using Real.abs_sin_le_one (inner ℝ w x))
+    integrable_sin_comp (by fun_prop)
   simp_rw [inner_sub_right, Real.cos_sub]
   rw [integral_add ((hc P).mul_prod (hc Q)) ((hs P).mul_prod (hs Q)),
     integral_prod_mul (fun x ↦ Real.cos (inner ℝ w x)) (fun x ↦ Real.cos (inner ℝ w x)),
@@ -115,8 +126,7 @@ theorem integral_spectralKernel_prod (L P Q : Measure E) [IsFiniteMeasure L]
       ∫ w, (charFun P w).re * (charFun Q w).re +
         (charFun P w).im * (charFun Q w).im ∂L := by
   have hint : Integrable (fun z : E × (E × E) ↦ Real.cos (inner ℝ z.1 (z.2.1 - z.2.2)))
-      (L.prod (P.prod Q)) := Integrable.of_bound (by fun_prop) 1 (ae_of_all _ fun z ↦ by
-        simpa only [Real.norm_eq_abs] using Real.abs_cos_le_one _)
+      (L.prod (P.prod Q)) := integrable_cos_comp (by fun_prop)
   rw [← integral_integral_swap hint]
   apply integral_congr_ae
   exact ae_of_all _ fun w ↦ integral_cos_inner_sub_prod P Q w

@@ -161,44 +161,20 @@ theorem measure_infinitePi_evidence_lt_le {Θ X : Type*} [MeasurableSpace Θ]
           ENNReal.ofReal (2 / (n * δ)) := by
   let γ := 2 * δ
   set Pinf := Measure.infinitePi (fun _ : ℕ ↦ P θ₀)
-  let good : ℕ → Θ → (ℕ → X) → Prop := fun n θ ω ↦
+  let good : Θ → (ℕ → X) → Prop := fun θ ω ↦
     (∀ i ∈ Finset.range n, 0 < f θ (ω i)) ∧ (∀ i ∈ Finset.range n, 0 < f θ₀ (ω i)) ∧
       -(γ * n) ≤ ∑ i ∈ Finset.range n, (Real.log (f θ (ω i)) - Real.log (f θ₀ (ω i)))
-  have hfω : ∀ i, Measurable fun p : Θ × (ℕ → X) ↦ f p.1 (p.2 i) :=
-    fun i ↦ hf.comp (measurable_fst.prodMk ((measurable_pi_apply i).comp measurable_snd))
-  have hfω' : ∀ i, Measurable fun p : Θ × (ℕ → X) ↦ f θ₀ (p.2 i) :=
-    fun i ↦ (hdensity θ₀).1.comp ((measurable_pi_apply i).comp measurable_snd)
-  have hgood : ∀ n, MeasurableSet {p : Θ × (ℕ → X) | good n p.1 p.2} := by
-    intro n
-    have : {p : Θ × (ℕ → X) | good n p.1 p.2} =
-        (⋂ i ∈ Finset.range n, {p | 0 < f p.1 (p.2 i)}) ∩
-          (⋂ i ∈ Finset.range n, {p | 0 < f θ₀ (p.2 i)}) ∩
-          {p | -(γ * n) ≤
-            ∑ i ∈ Finset.range n, (Real.log (f p.1 (p.2 i)) - Real.log (f θ₀ (p.2 i)))} := by
-      ext p; simp [good, and_assoc]
-    rw [this]
-    refine ((Finset.measurableSet_biInter _ fun i _ ↦
-      measurableSet_lt measurable_const (hfω i)).inter
-      (Finset.measurableSet_biInter _ fun i _ ↦ measurableSet_lt measurable_const (hfω' i))).inter
-      (measurableSet_le measurable_const ?_)
-    exact Finset.measurable_sum _ fun i _ ↦ (hfω i).log.sub (hfω' i).log
-  have hcoord : ∀ q : X → Prop, (∀ᵐ x ∂(P θ₀), q x) → ∀ᵐ ω ∂Pinf, ∀ i, q (ω i) := by
-    intro q hq
-    rw [ae_all_iff]
-    intro i
-    exact ae_of_ae_map (measurable_pi_apply i).aemeasurable
-      (by rwa [Measure.infinitePi_map_eval])
-  have hbad : ∀ θ ∈ B, Pinf {ω | ¬ good n θ ω} ≤ ENNReal.ofReal (1 / (n * δ)) := by
+  have hbad : ∀ θ ∈ B, Pinf {ω | ¬ good θ ω} ≤ ENNReal.ofReal (1 / (n * δ)) := by
     intro θ hθ
     have hKLfin : klDiv (P θ₀) (P θ) ≠ ∞ :=
       ne_top_of_le_ne_top ENNReal.ofReal_ne_top (hKL θ hθ)
     have hPQ := (klDiv_ne_top_iff.1 hKLfin).1
-    have hsub : {ω | ¬ good n θ ω} ≤ᵐ[Pinf]
+    have hsub : {ω | ¬ good θ ω} ≤ᵐ[Pinf]
         {ω | (∑ i ∈ Finset.range n, (Real.log (f θ (ω i)) - Real.log (f θ₀ (ω i)))) < -2 * n * δ} := by
-      filter_upwards [hcoord _ (hPQ.ae_le (hdensity θ).ae_pos),
-        hcoord _ (hdensity θ₀).ae_pos] with ω h1 h2
+      filter_upwards [ae_forall_apply_infinitePi (hPQ.ae_le (hdensity θ).ae_pos),
+        ae_forall_apply_infinitePi (hdensity θ₀).ae_pos] with ω h1 h2
       intro hω
-      change ¬ good n θ ω at hω
+      change ¬ good θ ω at hω
       by_contra h
       apply hω
       refine ⟨fun i _ ↦ h1 i, fun i _ ↦ h2 i, ?_⟩
@@ -207,72 +183,15 @@ theorem measure_infinitePi_evidence_lt_le {Θ X : Type*} [MeasurableSpace Θ]
     exact (measure_mono_ae hsub).trans
       (measure_sum_log_ratio_lt_le (hdensity θ₀) (hdensity θ) δ hδ (hKL θ hθ)
         (hsecond θ hθ) n hn)
-  -- the joint bad set and Tonelli's theorem
-  let T : ℕ → Set (Θ × (ℕ → X)) := fun n ↦ {p | p.1 ∈ B ∧ ¬ good n p.1 p.2}
-  have hT : ∀ n, MeasurableSet (T n) := fun n ↦
-    (measurable_fst hBm).inter (hgood n).compl
-  have hTon : ∀ n, ∫⁻ ω, π ((fun θ ↦ (θ, ω)) ⁻¹' T n) ∂Pinf =
-      ∫⁻ θ, B.indicator (fun θ ↦ Pinf {ω | ¬ good n θ ω}) θ ∂π := by
-    intro n
-    rw [← Measure.prod_apply_symm (hT n), Measure.prod_apply (hT n)]
-    refine lintegral_congr fun θ ↦ ?_
-    by_cases hθ : θ ∈ B
-    · simp [T, hθ, Set.indicator]
-    · simp [T, hθ]
-  have hbound : (∫⁻ ω, π ((fun θ ↦ (θ, ω)) ⁻¹' T n) ∂Pinf) ≤
-      ENNReal.ofReal (1 / (n * δ)) * π B := by
-    rw [hTon n, lintegral_indicator hBm]
-    calc ∫⁻ θ in B, Pinf {ω | ¬ good n θ ω} ∂π ≤
+  have hbound : (∫⁻ θ in B, Pinf {ω | ¬ good θ ω} ∂π) ≤ ENNReal.ofReal (1 / (n * δ)) * π B :=
+    calc ∫⁻ θ in B, Pinf {ω | ¬ good θ ω} ∂π ≤
         ∫⁻ _ in B, ENNReal.ofReal (1 / (n * δ)) ∂π :=
           setLIntegral_mono measurable_const fun θ hθ ↦ hbad θ hθ
       _ = _ := by rw [setLIntegral_const]
   by_cases hπB : π B = 0
   · simp [hπB]
-  have hπB2 : π B / 2 ≠ 0 := by simp [hπB]
-  have hπB2' : π B / 2 ≠ ∞ := ENNReal.div_ne_top (measure_ne_top _ _) (by norm_num)
-  have hsub : ∀ n : ℕ, {ω | ∫⁻ θ, ENNReal.ofReal (∏ i : Fin n, f θ (ω i)) ∂π <
-      π B / 2 * ENNReal.ofReal ((∏ i : Fin n, f θ₀ (ω i)) * Real.exp (-γ * n))} ⊆
-      {ω | π B / 2 ≤ π ((fun θ ↦ (θ, ω)) ⁻¹' T n)} := by
-    intro n ω hω
-    simp only [Set.mem_ofPred_eq] at hω ⊢
-    by_contra hlt
-    push Not at hlt
-    set G := {θ | θ ∈ B ∧ good n θ ω}
-    have hGm : MeasurableSet G :=
-      ((measurable_fst hBm).inter (hgood n)).preimage measurable_prodMk_right
-    have hsplit : π B = π G + π ((fun θ ↦ (θ, ω)) ⁻¹' T n) := by
-      rw [← measure_union _ ((hT n).preimage measurable_prodMk_right)]
-      · congr 1; ext θ; simp only [G, T, Set.mem_union, Set.mem_ofPred_eq, Set.mem_preimage]; tauto
-      · rw [Set.disjoint_left]; intro θ h1 h2; exact h2.2 h1.2
-    have hG : π B / 2 ≤ π G := by
-      by_contra h
-      push Not at h
-      have := ENNReal.add_lt_add h hlt
-      rw [ENNReal.add_halves, ← hsplit] at this
-      exact lt_irrefl _ this
-    have hF : Measurable fun θ ↦ ENNReal.ofReal (∏ i : Fin n, f θ (ω i)) :=
-      ENNReal.measurable_ofReal.comp (Finset.measurable_prod _ fun i _ ↦
-        hf.comp (measurable_id.prodMk measurable_const))
-    have hle : π B / 2 * ENNReal.ofReal ((∏ i : Fin n, f θ₀ (ω i)) * Real.exp (-γ * n)) ≤
-        ∫⁻ θ, ENNReal.ofReal (∏ i : Fin n, f θ (ω i)) ∂π := by
-      calc π B / 2 * ENNReal.ofReal ((∏ i : Fin n, f θ₀ (ω i)) * Real.exp (-γ * n))
-          ≤ π G * ENNReal.ofReal ((∏ i : Fin n, f θ₀ (ω i)) * Real.exp (-γ * n)) :=
-            mul_le_mul_left hG _
-        _ = ∫⁻ _ in G, ENNReal.ofReal ((∏ i : Fin n, f θ₀ (ω i)) * Real.exp (-γ * n)) ∂π := by
-            rw [setLIntegral_const, mul_comm]
-        _ ≤ ∫⁻ θ in G, ENNReal.ofReal (∏ i : Fin n, f θ (ω i)) ∂π := by
-            refine setLIntegral_mono hF fun θ hθ ↦ ENNReal.ofReal_le_ofReal ?_
-            refine prod_mul_exp_le_prod (fun i ↦ hθ.2.2.1 i (Finset.mem_range.2 i.2))
-              (fun i ↦ hθ.2.1 i (Finset.mem_range.2 i.2)) ?_
-            have := hθ.2.2.2
-            rwa [Finset.sum_range] at this
-        _ ≤ ∫⁻ θ, ENNReal.ofReal (∏ i : Fin n, f θ (ω i)) ∂π := setLIntegral_le_lintegral _ _
-    exact absurd hω (not_lt.2 hle)
-  have hmarkov : ∀ n, Pinf {ω | π B / 2 ≤ π ((fun θ ↦ (θ, ω)) ⁻¹' T n)} ≤
-      (∫⁻ ω, π ((fun θ ↦ (θ, ω)) ⁻¹' T n) ∂Pinf) / (π B / 2) := fun n ↦
-    meas_ge_le_lintegral_div (measurable_measure_prodMk_right (hT n)).aemeasurable hπB2 hπB2'
-  refine (measure_mono (hsub n)).trans ((hmarkov n).trans ?_)
-  calc (∫⁻ ω, π ((fun θ ↦ (θ, ω)) ⁻¹' T n) ∂Pinf) / (π B / 2) ≤
+  refine (measure_evidence_lt_le_setLIntegral π Pinf f hf θ₀ hBm γ n).trans ?_
+  calc (∫⁻ θ in B, Pinf {ω | ¬ good θ ω} ∂π) / (π B / 2) ≤
       (ENNReal.ofReal (1 / (n * δ)) * π B) / (π B / 2) := by gcongr
     _ = ENNReal.ofReal (2 / (n * δ)) := by
       rw [div_eq_mul_inv, mul_assoc, ← div_eq_mul_inv,

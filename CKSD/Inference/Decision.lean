@@ -251,7 +251,8 @@ theorem exists_equivariant_rule_risk_eq_average {G A : Type*} [Group G] [Fintype
     have hinner (x : X) : (∫ a, L θ a ∂μ x) = c.toReal * ∑ g : G, F g (g⁻¹ • x) := by
       simp only [μ]
       rw [integral_smul_measure, integral_finsetSum_measure (fun g _ ↦
-        integrable_of_measurable_of_abs_le _ (hm θ) (hb θ)), smul_eq_mul]
+        Integrable.of_bound (hm θ).aestronglyMeasurable _
+          (ae_of_all _ fun a ↦ (Real.norm_eq_abs _).trans_le (hb θ a))), smul_eq_mul]
       congr 1
       refine Finset.sum_congr rfl fun g _ ↦ ?_
       rw [integral_map (hA g).aemeasurable (hm θ).aestronglyMeasurable]
@@ -266,7 +267,8 @@ theorem exists_equivariant_rule_risk_eq_average {G A : Type*} [Group G] [Fintype
     change (∫ x, ∫ a, L θ a ∂μ x ∂P θ) = _
     simp_rw [hinner]
     rw [integral_const_mul, integral_finsetSum (f := fun g x ↦ F g (g⁻¹ • x)) Finset.univ fun g _ ↦
-      integrable_of_measurable_of_abs_le _ ((hFm g).comp (hX g⁻¹)) fun x ↦ hFb g _]
+      Integrable.of_bound ((hFm g).comp (hX g⁻¹)).aestronglyMeasurable _
+        (ae_of_all _ fun x ↦ (Real.norm_eq_abs _).trans_le (hFb g _))]
     simp_rw [hterm]
     rw [Fintype.sum_equiv (Equiv.inv G) (fun g ↦ risk P L ⟨δ, hδ⟩ (g⁻¹ • θ))
       (fun g ↦ risk P L ⟨δ, hδ⟩ (g • θ)) (fun g ↦ rfl)]

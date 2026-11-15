@@ -232,13 +232,13 @@ theorem integral_garchVariance (hε : IsIIDNoise μ ε 1) (ha : 0 ≤ a) (hb : 0
     (hab : a + b < 1) (t : ℤ) : ∫ ω, garchVariance a₀ a b ε t ω ∂μ = a₀ / (1 - a - b) := by
   simp only [garchVariance]
   rw [integral_const_mul, integral_tsum_garchTerm hε.measurable hε.iIndepFun hε.map_eq
-    hε.integral_sq ha hb hab t, div_eq_mul_inv]
+    hε.integral_zero_sq ha hb hab t, div_eq_mul_inv]
   ring_nf
 
 /-- The GARCH conditional variance is integrable. -/
 theorem integrable_garchVariance (hε : IsIIDNoise μ ε 1) (ha : 0 ≤ a) (hb : 0 ≤ b)
     (hab : a + b < 1) (t : ℤ) : Integrable (garchVariance a₀ a b ε t) μ :=
-  (integrable_tsum_garchTerm hε.measurable hε.iIndepFun hε.map_eq hε.integral_sq ha hb hab
+  (integrable_tsum_garchTerm hε.measurable hε.iIndepFun hε.map_eq hε.integral_zero_sq ha hb hab
     t).const_mul a₀
 
 /-- GAPS 106.18: the GARCH recursion `σ_t² = a₀ + a X_{t-1}² + b σ_{t-1}²` holds almost surely. -/
@@ -246,7 +246,7 @@ theorem garchVariance_ae_eq (hε : IsIIDNoise μ ε 1) (ha₀ : 0 ≤ a₀) (ha 
     (hab : a + b < 1) (t : ℤ) :
     ∀ᵐ ω ∂μ, garchVariance a₀ a b ε t ω = a₀ + a * garchProcess a₀ a b ε (t - 1) ω ^ 2 +
       b * garchVariance a₀ a b ε (t - 1) ω := by
-  filter_upwards [ae_summable_garchTerm hε.measurable hε.iIndepFun hε.map_eq hε.integral_sq
+  filter_upwards [ae_summable_garchTerm hε.measurable hε.iIndepFun hε.map_eq hε.integral_zero_sq
     ha hb hab (t - 1)] with ω hω
   have hshift : ∀ n, garchTerm a b ε t (n + 1) ω =
       garchTerm a b ε (t - 1) n ω * (b + a * ε (t - 1) ω ^ 2) := by
@@ -313,7 +313,7 @@ theorem covariance_garchProcess (hε : IsIIDNoise μ ε 1) (ha₀ : 0 ≤ a₀) 
     rw [show X t = (fun ω ↦ Real.sqrt (V t ω)) * ε t from rfl,
       IndepFun.integral_mul_eq_mul_integral hind'
         (Real.continuous_sqrt.measurable.comp (hVmeas t)).aestronglyMeasurable
-        (hm t).aestronglyMeasurable, hε.integral_eq_zero' t, mul_zero]
+        (hm t).aestronglyMeasurable, hε.integral_eq_zero t, mul_zero]
   have hX2 : ∀ t, (fun ω ↦ X t ω * X t ω) = V t * fun ω ↦ ε t ω ^ 2 := fun t ↦ by
     funext ω
     simp only [X, V, garchProcess, Pi.mul_apply]
@@ -324,7 +324,7 @@ theorem covariance_garchProcess (hε : IsIIDNoise μ ε 1) (ha₀ : 0 ≤ a₀) 
   have hEX2 : ∀ t, ∫ ω, X t ω * X t ω ∂μ = a₀ / (1 - a - b) := fun t ↦ by
     rw [hX2 t, IndepFun.integral_mul_eq_mul_integral (hindV2 t) (hVmeas t).aestronglyMeasurable
       ((hm t).pow_const 2).aestronglyMeasurable, integral_garchVariance hε ha hb hab,
-      hε.integral_sq' t, mul_one]
+      hε.integral_sq t, mul_one]
   have hcross : ∀ s t, s < t → ∫ ω, X s ω * X t ω ∂μ = 0 := fun s t hst ↦ by
     have hmeasP : Measurable[pastSigmaAlgebra ε (t - 1)] fun ω ↦ X s ω * Real.sqrt (V t ω) :=
       (hXP s t hst).mul (hsqrtP t)
@@ -334,7 +334,7 @@ theorem covariance_garchProcess (hε : IsIIDNoise μ ε 1) (ha₀ : 0 ≤ a₀) 
       funext ω; simp only [X, V, garchProcess, Pi.mul_apply]; ring
     rw [hfun, IndepFun.integral_mul_eq_mul_integral hind'
       ((hmeasP.mono (pastSigmaAlgebra_le hm _) le_rfl).aestronglyMeasurable)
-      (hm t).aestronglyMeasurable, hε.integral_eq_zero' t, mul_zero]
+      (hm t).aestronglyMeasurable, hε.integral_eq_zero t, mul_zero]
   change ProbabilityTheory.covariance (X s) (X t) μ = _
   rw [covariance_eq_sub (memLp_garchProcess hε ha₀ ha hb hab s)
     (memLp_garchProcess hε ha₀ ha hb hab t), hEX s, hEX t, mul_zero, sub_zero]

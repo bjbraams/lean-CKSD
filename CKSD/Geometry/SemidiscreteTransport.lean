@@ -144,7 +144,7 @@ theorem integrable_norm_sub_sq {P : Measure (EuclideanSpace ℝ (Fin d))} [IsFin
     (h2 : MemLp id 2 P) (z : EuclideanSpace ℝ (Fin d)) :
     Integrable (fun x ↦ ‖x - z‖ ^ 2) P := by
   have : MemLp (fun x : EuclideanSpace ℝ (Fin d) ↦ x - z) 2 P := h2.sub (memLp_const z)
-  exact (memLp_two_iff_integrable_sq_norm (by fun_prop)).mp this
+  exact this.norm.integrable_sq
 
 /-- For a law with finite second moment, the potential is integrable. -/
 theorem integrable_semidiscretePotential (hk : 0 < k) {P : Measure (EuclideanSpace ℝ (Fin d))}

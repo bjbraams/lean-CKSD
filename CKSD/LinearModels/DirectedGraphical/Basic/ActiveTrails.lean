@@ -65,14 +65,6 @@ def ForwardReach (G : CausalGraph V) (C T : Set V) (v : V) : Prop :=
 def trailAppend (n₁ : ℕ) (q₁ q₂ : ℕ → V) : ℕ → V :=
   fun k ↦ if k ≤ n₁ then q₁ k else q₂ (k - n₁)
 
-/-- A directed acyclic graph has no loops. -/
-theorem not_edge_self (G : CausalGraph V) (v : V) : ¬ G.edge v v :=
-  fun h ↦ G.acyclic v (Relation.TransGen.single h)
-
-/-- A directed acyclic graph has no two-cycles. -/
-theorem not_edge_of_edge (G : CausalGraph V) {a b : V} (h : G.edge a b) : ¬ G.edge b a :=
-  fun h' ↦ G.acyclic a (Relation.TransGen.tail (Relation.TransGen.single h) h')
-
 /-- The middle vertex of a triple is a noncollider when it has an arrow towards its right
 neighbour. -/
 theorem tripleStatus_of_edge_right (G : CausalGraph V) {P N : V → Prop} {a b c : V}

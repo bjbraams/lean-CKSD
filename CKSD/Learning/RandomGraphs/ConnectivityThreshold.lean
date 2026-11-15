@@ -25,7 +25,7 @@ one if `xₙ → -∞`, and for constant `xₙ = x` is connected with probabilit
 * `CKSD.tendsto_binomialRandom_connected_of_tendsto_atTop`,
   `CKSD.tendsto_binomialRandom_exists_isolated_of_tendsto_atBot`,
   `CKSD.tendsto_binomialRandom_connected_threshold`: the three parts of the connectivity
-  threshold (GAPS 107.47).
+  threshold (GAPS 107.47), combined in `CKSD.binomialRandom_connectivity_threshold`.
 
 The Poisson-limit lemma `ProbabilityTheory.tendsto_choose_mul_pow_atTop` and the exponential
 series are Mathlib's.
@@ -473,5 +473,24 @@ theorem tendsto_binomialRandom_exists_isolated_of_tendsto_atBot (x : ℕ → ℝ
   refine this.congr fun n ↦ ?_
   simp only [hP0]
   rw [hcompl, probReal_compl_eq_one_sub (DiscreteMeasurableSpace.forall_measurableSet _)]
+
+/-- GAPS 107.47, connectivity threshold: for `p = (log n + xₙ)/n`, connectivity has probability
+tending to one if `xₙ → ∞`, isolated vertices have probability tending to one if `xₙ → -∞`,
+and for constant `xₙ = x` the probability of connectivity tends to `exp(-e^{-x})`. -/
+theorem binomialRandom_connectivity_threshold :
+    (∀ x : ℕ → ℝ, Tendsto x atTop atTop →
+      Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
+        (Set.projIcc (0 : ℝ) 1 zero_le_one ((Real.log n + x n) / n))).real {G | G.Connected})
+        atTop (𝓝 1)) ∧
+    (∀ x : ℕ → ℝ, Tendsto x atTop atBot →
+      Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
+        (Set.projIcc (0 : ℝ) 1 zero_le_one ((Real.log n + x n) / n))).real
+          {G | ∃ v, ∀ w, ¬ G.Adj v w}) atTop (𝓝 1)) ∧
+    ∀ x : ℝ, Tendsto (fun n : ℕ ↦ (SimpleGraph.binomialRandom (Fin n)
+        (Set.projIcc (0 : ℝ) 1 zero_le_one ((Real.log n + x) / n))).real {G | G.Connected})
+        atTop (𝓝 (Real.exp (-Real.exp (-x)))) :=
+  ⟨tendsto_binomialRandom_connected_of_tendsto_atTop,
+    tendsto_binomialRandom_exists_isolated_of_tendsto_atBot,
+    tendsto_binomialRandom_connected_threshold⟩
 
 end CKSD

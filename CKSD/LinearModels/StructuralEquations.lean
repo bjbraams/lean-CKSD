@@ -114,10 +114,6 @@ theorem CausalGraph.edge_eq_of_linearSEMLaw_eq_of_nonGaussian [Fintype V] [Decid
     G.edge = H.edge := by
   sorry
 
-/-- In a causal graph there are no self-loops. -/
-private theorem CausalGraph.not_edge_self' (G : CausalGraph V) (v : V) : ¬ G.edge v v :=
-  fun h ↦ G.acyclic v (Relation.TransGen.single h)
-
 /-- Every nonempty finite set of vertices contains a vertex with no child in the set. -/
 private theorem CausalGraph.exists_sink_mem [Finite V] (G : CausalGraph V) {W : Finset V}
     (hW : W.Nonempty) : ∃ j ∈ W, ∀ k ∈ W, ¬ G.edge j k := by
@@ -135,7 +131,7 @@ private def rowGram [Fintype V] (W : Finset V) (A : Matrix V V ℝ) : Matrix V V
 /-- The diagonal of a linear SEM matrix vanishes. -/
 theorem CausalGraph.IsLinearSEMMatrix.apply_self {G : CausalGraph V} {B : Matrix V V ℝ}
     (hB : G.IsLinearSEMMatrix B) (j : V) : B j j = 0 :=
-  not_not.1 fun h ↦ G.not_edge_self' j ((hB j j).1 h)
+  not_not.1 fun h ↦ G.not_edge_self j ((hB j j).1 h)
 
 /-- For a sink `j` of `G` within `W`, the `j`-th column of `1 - B` vanishes on `W` off `j`. -/
 private theorem one_sub_apply_sink [DecidableEq V] {G : CausalGraph V} {B : Matrix V V ℝ}

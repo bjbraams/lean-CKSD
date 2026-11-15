@@ -390,8 +390,10 @@ theorem leading_empirical_covariance_eigenvalue_asymptotics
     tendstoInMeasure_finsetSum_zero _ fun i _ ↦ tendstoInMeasure_finsetSum_zero _ fun j _ ↦
       tendstoInMeasure_const_mul_zero μ _ _
         (tendstoInMeasure_sqrt_mul_sampleCoordMean_mul hiid h4 i j)
-  refine tendstoInMeasure_zero_of_abs_le' (tendstoInMeasure_add_zero μ _ _ hrem hR) ?_
-  filter_upwards [eventually_gt_atTop 0] with n hn ω
+  refine tendstoInMeasure_zero_of_abs_le μ _ _ (fun _ _ ↦ 0) one_pos ?_
+    (tendstoInMeasure_add_zero μ _ _ hrem hR) (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
+  filter_upwards [eventually_gt_atTop 0] with n hn
+  filter_upwards with ω _
   apply le_of_eq
   congr 1
   set A := empiricalCovarianceMatrix X n ω

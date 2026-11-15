@@ -176,7 +176,9 @@ theorem map_orderStatistic_eq_withDensity {n : ℕ} (j : Fin n) (P : Measure ℝ
   -- the law of the order statistic, computed by its distribution function
   have hfin : IsFiniteMeasure (P.withDensity (fun x ↦ ENNReal.ofReal (h (F x)))) := by
     refine isFiniteMeasure_withDensity_ofReal ?_
-    refine (integrable_of_measurable_of_abs_le P (C := c) (hhm.comp hFm) fun x ↦ ?_).2
+    refine (Integrable.of_bound (μ := P) (hhm.comp hFm).aestronglyMeasurable c
+      (ae_of_all _ fun x ↦ ?_)).2
+    rw [Real.norm_eq_abs]
     have h0 := ProbabilityTheory.cdf_nonneg P x
     have h1 := ProbabilityTheory.cdf_le_one P x
     rw [Function.comp_apply, abs_of_nonneg (hhF x)]

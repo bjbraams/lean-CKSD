@@ -232,15 +232,6 @@ private theorem IsBoundedInProbability.of_abs_le {X Y : ℕ → Ω → ℝ} (hX 
   refine le_trans (measureReal_mono fun ω (hω : C < |Y n ω|) ↦ ?_) hn
   exact (show C < |X n ω| from hω.trans_le (hn' ω))
 
-/-- Eventual pointwise domination by a sequence tending to zero in probability. -/
-theorem tendstoInMeasure_zero_of_abs_le' [IsFiniteMeasure μ] {X Y : ℕ → Ω → ℝ}
-    (hX : TendstoInMeasure μ X atTop (fun _ ↦ 0))
-    (h : ∀ᶠ n in atTop, ∀ ω, |Y n ω| ≤ |X n ω|) :
-    TendstoInMeasure μ Y atTop (fun _ ↦ 0) :=
-  tendstoInMeasure_zero_of_abs_le μ X Y (fun _ _ ↦ 0) one_pos
-    (h.mono fun _ hn ↦ Filter.Eventually.of_forall fun ω _ ↦ hn ω) hX
-    (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
-
 /-- Finite sums of sequences tending to zero in probability tend to zero in probability. -/
 theorem tendstoInMeasure_finsetSum_zero [IsFiniteMeasure μ] {ι : Type*} (s : Finset ι)
     {X : ι → ℕ → Ω → ℝ} (hX : ∀ i ∈ s, TendstoInMeasure μ (X i) atTop (fun _ ↦ 0)) :
@@ -386,8 +377,10 @@ private theorem tendstoInMeasure_empiricalCovariance_sub
       (memLp_centeredProduct h4 i j) (integral_centeredProduct h4 i j)
   have hc := tendstoInMeasure_const_mul_zero μ _ (-1)
     (tendstoInMeasure_sampleCoordMean_mul hiid h4 i j)
-  refine tendstoInMeasure_zero_of_abs_le' (tendstoInMeasure_add_zero μ _ _ ha hc) ?_
-  filter_upwards [eventually_gt_atTop 0] with n hn ω
+  refine tendstoInMeasure_zero_of_abs_le μ _ _ (fun _ _ ↦ 0) one_pos ?_
+    (tendstoInMeasure_add_zero μ _ _ ha hc) (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
+  filter_upwards [eventually_gt_atTop 0] with n hn
+  filter_upwards with ω _
   rw [empiricalCovarianceMatrix_sub_eq P X hn ω i j]
   apply le_of_eq; congr 1; ring
 
@@ -414,8 +407,9 @@ theorem tendstoInMeasure_entrySum (hiid : IsIndependentIdenticallyDistributed μ
       euclideanCovarianceMatrix P)) atTop (fun _ ↦ 0) := by
   simp only [entrySum, Matrix.sub_apply]
   refine tendstoInMeasure_finsetSum_zero _ fun i _ ↦ tendstoInMeasure_finsetSum_zero _ fun j _ ↦ ?_
-  exact tendstoInMeasure_zero_of_abs_le' (tendstoInMeasure_empiricalCovariance_sub hiid h4 i j)
-    (Filter.Eventually.of_forall fun n ω ↦ by rw [abs_abs])
+  exact tendstoInMeasure_zero_of_abs_le μ _ _ (fun _ _ ↦ 0) one_pos
+    (Filter.Eventually.of_forall fun n ↦ Filter.Eventually.of_forall fun ω _ ↦ by rw [abs_abs])
+    (tendstoInMeasure_empiricalCovariance_sub hiid h4 i j) (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ 0) tendsto_const_nhds)
 
 /-- The entrywise `ℓ¹` error of the empirical covariance is `O_P(n^{-1/2})`. -/
 theorem isBoundedInProbability_sqrt_mul_entrySum

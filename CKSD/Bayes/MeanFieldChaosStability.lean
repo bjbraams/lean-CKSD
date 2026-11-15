@@ -108,15 +108,6 @@ end ParticleComparison
 
 section Evaluation
 variable [MeasurableSpace E] [BorelSpace E] [SecondCountableTopology E]
-/-- Pushforward of an empirical law is the empirical law of the mapped atoms. -/
-theorem map_empiricalMeasure {A B : Type*} [MeasurableSpace A] [MeasurableSpace B]
-    (N : ℕ) (x : Fin N → A) (f : A → B) (hf : Measurable f) :
-    (empiricalMeasure N x).map f = empiricalMeasure N (fun j ↦ f (x j)) := by
-  rw [empiricalMeasure, Measure.map_smul, Measure.map_finset_sum' hf.aemeasurable]
-  · simp only [Measure.map_dirac' hf]
-    rfl
-  · exact hf.aemeasurable
-
 omit [NormedSpace ℝ E] in
 /-- Evaluation at any projected time cannot increase first-Wasserstein distance of path laws. -/
 theorem wassersteinEDist_one_IccExtend_map_le {T : ℝ} (hT : 0 ≤ T) (t : ℝ)

@@ -5,7 +5,7 @@ public import Mathlib.Probability.ProductMeasure
 public import Mathlib.Analysis.Complex.ExponentialBounds
 public import CKSD.Nonparametric.LowerBounds.Testing
 public import CKSD.Nonparametric.LowerBounds.Gaussian
-public import TauCeti.Probability.Distributions.Gaussian.Affine
+public import CKSD.Nonparametric.GaussianProjection
 
 /-!
 # Gaussian sequence, regression, and sparse estimation models
@@ -39,9 +39,8 @@ minimax risks are infima over measurable estimators of suprema of such risks.
   disjoint blocks of `m = ⌊p / s⌋` coordinates and combines an averaged Fano inequality (for
   `m ≥ 1024`) or a two-point bound (otherwise) in each block with averaging over the product of
   the block hypotheses.
-* `CKSD.sparseGaussianLaw_eq_map_pi`: `N(θ, σ² I_p)` is the product of its coordinate laws, from
-  TauCeti's `TauCeti.Probability.map_affine_multivariateGaussian` and
-  `TauCeti.Probability.multivariateGaussian_one_eq_map_pi`.
+* `CKSD.sparseGaussianLaw_eq_map_pi`: `N(θ, σ² I_p)` is the product of its coordinate laws, the
+  case `ι = Fin p` of `CKSD.multivariateGaussian_smul_one_eq_map_pi`.
 * `CKSD.sum_measureReal_le_of_klDiv_le`: Fano's inequality in averaged form,
   `∑_j P_j(A_j) ≤ m / 4 + m (K + log 2) / log (m / 4)` for disjoint events.
 * `CKSD.lintegral_softThreshold_sub_sq_le`, `CKSD.lintegral_softThreshold_sq_le`: the Gaussian
@@ -163,33 +162,8 @@ variable {p s m : ℕ}
 `N(θ_i, σ²)`, transported to Euclidean space. -/
 theorem sparseGaussianLaw_eq_map_pi {p : ℕ} (θ : EuclideanSpace ℝ (Fin p)) (σ : ℝ) :
     sparseGaussianLaw θ σ =
-      (Measure.pi fun i ↦ gaussianReal (θ i) (Real.toNNReal (σ ^ 2))).map (WithLp.toLp 2) := by
-  have haff := TauCeti.Probability.map_affine_multivariateGaussian (0 : EuclideanSpace ℝ (Fin p))
-    Matrix.PosSemidef.one (σ • (1 : Matrix (Fin p) (Fin p) ℝ)) θ
-  have hcov : σ • (1 : Matrix (Fin p) (Fin p) ℝ) * 1 *
-      (σ • (1 : Matrix (Fin p) (Fin p) ℝ)).transpose
-      = σ ^ 2 • (1 : Matrix (Fin p) (Fin p) ℝ) := by
-    rw [Matrix.transpose_smul, Matrix.transpose_one, Matrix.mul_one, smul_mul_smul,
-      Matrix.mul_one, sq]
-  rw [hcov, map_zero, zero_add] at haff
-  rw [sparseGaussianLaw, ← haff, TauCeti.Probability.multivariateGaussian_one_eq_map_pi,
-    Measure.map_map (by fun_prop) (by fun_prop)]
-  have hpi : (Measure.pi fun i : Fin p ↦ gaussianReal ((0 : EuclideanSpace ℝ (Fin p)) i) 1).map
-      (fun x i ↦ σ * x i + θ i) =
-        Measure.pi fun i ↦ gaussianReal (θ i) (Real.toNNReal (σ ^ 2)) := by
-    rw [Measure.pi_map_pi (f := fun i (x : ℝ) ↦ σ * x + θ i) (fun _ ↦ by fun_prop)]
-    congr 1; funext i
-    have : (fun x : ℝ ↦ σ * x + θ i) = (fun x ↦ x + θ i) ∘ (fun x ↦ σ * x) := rfl
-    rw [this, ← Measure.map_map (by fun_prop) (by fun_prop), gaussianReal_map_const_mul,
-      gaussianReal_map_add_const]
-    simp only [PiLp.zero_apply, mul_zero, zero_add, mul_one]
-    congr 1
-    ext; simp [sq_nonneg]
-  rw [← hpi, Measure.map_map (by fun_prop) (by fun_prop)]
-  congr 1
-  funext x
-  ext i
-  simp [Matrix.toEuclideanLin, add_comm]
+      (Measure.pi fun i ↦ gaussianReal (θ i) (Real.toNNReal (σ ^ 2))).map (WithLp.toLp 2) :=
+  multivariateGaussian_smul_one_eq_map_pi θ σ
 
 /-- Position of coordinate `j` of block `b` among the first `s m` coordinates. -/
 private def blockIndex (h : s * m ≤ p) (b : Fin s) (j : Fin m) : Fin p :=

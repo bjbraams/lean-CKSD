@@ -273,13 +273,6 @@ theorem log_det_add_card_eq_log_det_add_trace_mul_inv_iff {ι : Type*} [Fintype 
     Real.log S.det + Fintype.card ι = Real.log C.det + (S * C⁻¹).trace ↔ C = S :=
   (log_det_add_trace_mul_inv_aux S C hS hC).2
 
-/-- The Euclidean quadratic form agrees with the coordinate dot product. -/
-theorem matrixQuadraticForm_eq_dotProduct {p : ℕ} (A : Matrix (Fin p) (Fin p) ℝ)
-    (v : EuclideanSpace ℝ (Fin p)) :
-    matrixQuadraticForm A v = (A *ᵥ (v : Fin p → ℝ)) ⬝ᵥ (v : Fin p → ℝ) := by
-  simp [matrixQuadraticForm, Matrix.toEuclideanCLM_apply,
-    EuclideanSpace.inner_eq_star_dotProduct]
-
 /-- A nonempty finite sample has zero sum of deviations from its sample mean. -/
 theorem sum_sub_sampleMean_eq_zero {n p : ℕ} (hn : 0 < n)
     (x : Fin n → EuclideanSpace ℝ (Fin p)) :

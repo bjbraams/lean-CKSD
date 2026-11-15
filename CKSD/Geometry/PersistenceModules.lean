@@ -493,7 +493,9 @@ theorem interleavingEDist_le_fullBottleneckEDist {K : Type*} [Field K]
     · rintro (i | k) (j | k') (j' | k'') h h' <;> simp only [DiagramMatching.sumRel] at h h' ⊢
       · exact congrArg _ (M.right_unique _ _ _ h h')
       · exact congrArg _ (σ.injective (h.trans h'.symm))
-    · rintro (i | k) (j | k') h s t hst hs1 ht1 <;> simp only [DiagramMatching.sumRel] at h
+    -- the two directions of each condition have the same proof
+    iterate 2
+      rintro (i | k) (j | k') h s t hst hs1 ht1 <;> simp only [DiagramMatching.sumRel] at h
       · obtain ⟨hb, hd⟩ := hm i j h
         rw [abs_le] at hb hd
         simp only [hBU, hBV, mem_Ico] at hs1 ht1 ⊢
@@ -502,25 +504,8 @@ theorem interleavingEDist_le_fullBottleneckEDist {K : Type*} [Field K]
         have := abs_le.mp (hs k)
         simp only [hBU', hBV', mem_Ici] at hs1 ht1 ⊢
         constructor <;> linarith
-    · rintro (i | k) (j | k') h s t hst hs1 ht1 <;> simp only [DiagramMatching.sumRel] at h
-      · obtain ⟨hb, hd⟩ := hm i j h
-        rw [abs_le] at hb hd
-        simp only [hBU, hBV, mem_Ico] at hs1 ht1 ⊢
-        refine ⟨⟨?_, ?_⟩, ?_, ?_⟩ <;> linarith
-      · subst h
-        have := abs_le.mp (hs k)
-        simp only [hBU', hBV', mem_Ici] at hs1 ht1 ⊢
-        constructor <;> linarith
-    · rintro (i | k) (j | k') h t ht1 ht2 <;> simp only [DiagramMatching.sumRel] at h
-      · obtain ⟨hb, hd⟩ := hm i j h
-        rw [abs_le] at hb hd
-        simp only [hBU, hBV, mem_Ico] at ht1 ht2 ⊢
-        constructor <;> linarith
-      · subst h
-        have := abs_le.mp (hs k)
-        simp only [hBU', hBV', mem_Ici] at ht1 ht2 ⊢
-        linarith
-    · rintro (i | k) (j | k') h t ht1 ht2 <;> simp only [DiagramMatching.sumRel] at h
+    iterate 2
+      rintro (i | k) (j | k') h t ht1 ht2 <;> simp only [DiagramMatching.sumRel] at h
       · obtain ⟨hb, hd⟩ := hm i j h
         rw [abs_le] at hb hd
         simp only [hBU, hBV, mem_Ico] at ht1 ht2 ⊢

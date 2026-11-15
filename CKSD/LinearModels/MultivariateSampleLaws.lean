@@ -473,7 +473,7 @@ theorem map_quadForm_div_quadForm_inv_wishartGramMeasure {ν : ℕ}
 
 omit [Fintype κ] [DecidableEq κ] in
 /-- The Euclidean quadratic form as a coordinate dot product. -/
-theorem matrixQuadraticForm_eq_mulVec_dotProduct (A : Matrix (Fin p) (Fin p) ℝ)
+theorem matrixQuadraticForm_eq_dotProduct (A : Matrix (Fin p) (Fin p) ℝ)
     (v : EuclideanSpace ℝ (Fin p)) :
     matrixQuadraticForm A v = (A *ᵥ (v : Fin p → ℝ)) ⬝ᵥ (v : Fin p → ℝ) := by
   simp [matrixQuadraticForm, Matrix.toEuclideanCLM_apply,
@@ -503,7 +503,7 @@ theorem map_quadForm_inv_multivariateGaussian {S : Matrix (Fin p) (Fin p) ℝ} (
       (fun x : EuclideanSpace ℝ (Fin p) ↦ 0 + Matrix.toEuclideanCLM (𝕜 := ℝ) R x) =
       fun x ↦ ‖x‖ ^ 2 := by
     funext x
-    simp only [Function.comp_apply, zero_add, matrixQuadraticForm_eq_mulVec_dotProduct,
+    simp only [Function.comp_apply, zero_add, matrixQuadraticForm_eq_dotProduct,
       Matrix.toEuclideanCLM_apply, Matrix.ofLp_toLpLin, Matrix.toLin'_apply]
     rw [← real_inner_self_eq_norm_sq, EuclideanSpace.inner_eq_star_dotProduct, star_trivial,
       Matrix.dotProduct_mulVec, ← Matrix.mulVec_transpose, hRt, Matrix.mulVec_mulVec,
@@ -547,7 +547,7 @@ private theorem quadForm_pos {S : Matrix (Fin p) (Fin p) ℝ} (hS : S.PosDef)
   have hu' : (u : Fin p → ℝ) ≠ 0 := fun h ↦ hu (WithLp.ofLp_injective 2 (by simpa using h))
   have := hS.dotProduct_mulVec_pos hu'
   simp only [star_trivial] at this
-  rw [matrixQuadraticForm_eq_mulVec_dotProduct, dotProduct_comm]
+  rw [matrixQuadraticForm_eq_dotProduct, dotProduct_comm]
   exact this
 
 omit [Fintype κ] [DecidableEq κ] in

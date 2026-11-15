@@ -769,17 +769,6 @@ theorem integrable_coord_mul_coord {d : ℕ} (P : Measure (EuclideanSpace ℝ (F
   exact mul_le_mul (by simpa using PiLp.norm_apply_le x i) (by simpa using PiLp.norm_apply_le x j)
     (abs_nonneg _) (norm_nonneg _)
 
-/-- Coordinates are integrable under a law with integrable identity. -/
-theorem integrable_coord {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
-    (h1 : Integrable id P) (i : Fin d) : Integrable (fun x ↦ x i) P :=
-  (EuclideanSpace.proj i : EuclideanSpace ℝ (Fin d) →L[ℝ] ℝ).integrable_comp h1
-
-/-- The coordinates of the mean are the means of the coordinates. -/
-theorem integral_coord {d : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
-    (h1 : Integrable id P) (i : Fin d) : (∫ x, x ∂P) i = ∫ x, x i ∂P := by
-  have := (EuclideanSpace.proj i : EuclideanSpace ℝ (Fin d) →L[ℝ] ℝ).integral_comp_comm h1
-  simpa using this.symm
-
 /-- The product-measure integral of the quadratic polynomial kernel `(1 + ⟨x, y⟩)²` in terms of
 first and second moments. -/
 theorem integral_quadratic_kernel_prod {d : ℕ} (P Q : Measure (EuclideanSpace ℝ (Fin d)))
@@ -801,7 +790,7 @@ theorem integral_quadratic_kernel_prod {d : ℕ} (P Q : Measure (EuclideanSpace 
   simp_rw [hpt]
   have hlin : ∀ i, Integrable (fun z : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) ↦
       z.1 i * z.2 i) (P.prod Q) := fun i ↦
-    (integrable_coord P hP1 i).mul_prod (integrable_coord Q hQ1 i)
+    (hP1.eval_piLp i).mul_prod (hQ1.eval_piLp i)
   have hquad : ∀ i j, Integrable (fun z : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) ↦
       (z.1 i * z.1 j) * (z.2 i * z.2 j)) (P.prod Q) := fun i j ↦
     (integrable_coord_mul_coord P hP i j).mul_prod (integrable_coord_mul_coord Q hQ i j)
@@ -847,7 +836,9 @@ theorem squaredMMD_quadratic_polynomial_eq {d : ℕ} (P Q : Measure (EuclideanSp
   rw [integral_quadratic_kernel_prod P P hP hP, integral_quadratic_kernel_prod Q Q hQ hQ,
     integral_quadratic_kernel_prod P Q hP hQ, EuclideanSpace.norm_sq_eq]
   have hm : ∀ i, m i = (∫ x, x i ∂P) - ∫ x, x i ∂Q := fun i ↦ by
-    simp only [m, PiLp.sub_apply, integral_coord P hP1, integral_coord Q hQ1]
+    simp only [m, PiLp.sub_apply]
+    rw [eval_integral_piLp (f := fun x ↦ x) hP1.eval_piLp,
+      eval_integral_piLp (f := fun x ↦ x) hQ1.eval_piLp]
   simp only [hm, Real.norm_eq_abs, sq_abs]
   simp only [sub_sq, Finset.sum_add_distrib, Finset.sum_sub_distrib, Finset.mul_sum]
   ring_nf

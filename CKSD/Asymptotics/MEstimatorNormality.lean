@@ -4,8 +4,6 @@ public import CKSD.Asymptotics.MEstimators
 import CKSD.Asymptotics.ConvexRegression.Basic
 import CKSD.Asymptotics.LipschitzExpansion
 import CKSD.Asymptotics.MultivariateCLT
-import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Order
-import Mathlib.Analysis.Matrix.Order
 import TauCeti.Probability.Distributions.Gaussian.Affine
 
 /-!
@@ -44,32 +42,17 @@ section MEstimatorNormality
 
 attribute [local instance] Classical.propDecidable
 
-open scoped MatrixOrder in
 /-- A negative definite matrix `V` has a uniformly negative quadratic form:
-`⟪h, V h⟫ ≤ -c ‖h‖²` for some `c > 0`. The spectral bound is the argument of
-`exists_pos_posSemidef_sub_smul_one` in `CKSD.LinearModels.Decomposable`. -/
+`⟪h, V h⟫ ≤ -c ‖h‖²` for some `c > 0`; the case `-V` of
+`CKSD.exists_pos_mul_sq_le_inner_toEuclideanCLM`. -/
 private theorem exists_pos_inner_toEuclideanCLM_le {d : ℕ} {V : Matrix (Fin d) (Fin d) ℝ}
     (hV : (-V).PosDef) :
     ∃ c > 0, ∀ h : EuclideanSpace ℝ (Fin d),
       inner ℝ h (Matrix.toEuclideanCLM (𝕜 := ℝ) V h) ≤ -(c * ‖h‖ ^ 2) := by
-  rcases isEmpty_or_nonempty (Fin d) with hd | hd
-  · refine ⟨1, one_pos, fun h ↦ ?_⟩
-    have : h = 0 := Subsingleton.elim _ _
-    subst this; simp
-  obtain ⟨r, hr, hle⟩ := (CFC.exists_pos_algebraMap_le_iff (-V)
-    hV.isHermitian.isSelfAdjoint).2 fun x hx ↦ hV.isStrictlyPositive.spectrum_pos hx
-  have hps : (-V - r • (1 : Matrix (Fin d) (Fin d) ℝ)).PosSemidef := by
-    rw [← Matrix.le_iff]
-    simpa [Algebra.algebraMap_eq_smul_one] using hle
-  refine ⟨r, hr, fun h ↦ ?_⟩
-  have h1 := hps.dotProduct_mulVec_nonneg (WithLp.ofLp h)
-  have h2 := Matrix.inner_toEuclideanCLM V h h
-  have h3 : ‖h‖ ^ 2 = WithLp.ofLp h ⬝ᵥ WithLp.ofLp h := by
-    rw [← real_inner_self_eq_norm_sq, EuclideanSpace.inner_eq_star_dotProduct]
-    simp
-  simp [Matrix.sub_mulVec, Matrix.neg_mulVec, dotProduct_sub, dotProduct_neg,
-    Matrix.smul_mulVec, dotProduct_smul] at h1
-  rw [h2, h3]
+  obtain ⟨c, hc, hcV⟩ := exists_pos_mul_sq_le_inner_toEuclideanCLM hV
+  refine ⟨c, hc, fun h ↦ ?_⟩
+  have := hcV h
+  rw [map_neg, neg_apply, inner_neg_right] at this
   linarith
 
 /-- The empirical criterion in terms of the empirical process:
@@ -442,16 +425,6 @@ private theorem half_mul_norm_sub_sq_le {d : ℕ} {V : Matrix (Fin d) (Fin d) �
   obtain ⟨h2a, h2b⟩ := h2
   nlinarith
 
-/-- `V V⁻¹ = 1` on vectors, for an invertible (here negative definite) matrix. -/
-private theorem toEuclideanCLM_toEuclideanCLM_inv {d : ℕ} {V : Matrix (Fin d) (Fin d) ℝ}
-    (hV : (-V).PosDef) (y : EuclideanSpace ℝ (Fin d)) :
-    Matrix.toEuclideanCLM (𝕜 := ℝ) V (Matrix.toEuclideanCLM (𝕜 := ℝ) V⁻¹ y) = y := by
-  have hU : IsUnit V := by simpa using hV.isUnit.neg
-  have hdet : IsUnit V.det := (Matrix.isUnit_iff_isUnit_det V).1 hU
-  apply WithLp.ofLp_injective
-  rw [Matrix.ofLp_toEuclideanCLM, Matrix.ofLp_toEuclideanCLM, Matrix.mulVec_mulVec,
-    Matrix.mul_nonsing_inv V hdet, Matrix.one_mulVec]
-
 /-- Rescaling a quadratic expansion: if `|F v - ⟪v, V v⟫ / 2| ≤ κ ‖v‖²` for `‖v‖ < δq` and
 `n^{-1/2} R < δq`, then `|n F(n^{-1/2} h) - ⟪h, V h⟫ / 2| ≤ κ R²` for `‖h‖ ≤ R`. -/
 private theorem abs_nat_mul_sub_inner_toEuclideanCLM_le {d : ℕ} (V : Matrix (Fin d) (Fin d) ℝ)
@@ -632,7 +605,9 @@ private theorem tendstoInMeasure_sqrt_smul_sub_add_of_lipschitz {Ω X : Type*}
       have hn0 : (0 : ℝ) ≤ n := Nat.cast_nonneg _
       nlinarith
     have hhΔ : Matrix.toEuclideanCLM (𝕜 := ℝ) V hh = -Δ n ω := by
-      rw [hhh, map_neg, toEuclideanCLM_toEuclideanCLM_inv hV]
+      have hdet : IsUnit V.det := (Matrix.isUnit_iff_isUnit_det V).1 (by simpa using hV.isUnit.neg)
+      rw [hhh, map_neg, ← mul_apply_eq_comp, ← map_mul, Matrix.mul_nonsing_inv V hdet,
+        map_one, one_apply_eq_self]
     have hfinal := half_mul_norm_sub_sq_le hVt hcV hn hh (Δ n ω) hhΔ Φ (happrox hn hhnR)
       (happrox hh hhhR) hoptn
     have hnr : (n : ℝ) * r n ω ≤ τ := (le_abs_self _).trans hrω

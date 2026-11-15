@@ -3,7 +3,7 @@ public import TauCeti.Geometry.Symplectic.Hamiltonian.Flow
 public import TauCeti.Geometry.Symplectic.Hamiltonian.Standard
 public import Mathlib.Analysis.InnerProductSpace.Calculus
 public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
-public import CKSD.Bayes.MeanFieldQuantitative
+import TauCeti.MeasureTheory.Integral.Bochner.Basic
 /-!
 # Mechanical Hamiltonian flow and Euler position error
 
@@ -14,9 +14,11 @@ time integral of squared momentum. This supports the stationary Hamiltonian coup
 of the ULA Wasserstein estimate (GAPS 104.45).
 
 The Hamiltonian-flow theory is pinned TauCeti; the deterministic integral estimate uses
-Mathlib calculus and the local continuous-time Cauchy-Schwarz lemma. The short-Hamiltonian-step
-comparison supplies an alternative to the stationary diffusion coupling in Chewi,
-Log-Concave Sampling, August 20, 2026, Theorem 4.1.2; ideal HMC invariance is discussed in Section 5.2.
+Mathlib calculus and TauCeti's Cauchy-Schwarz inequality for set integrals,
+`TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq`. The
+short-Hamiltonian-step comparison supplies an alternative to the stationary diffusion coupling
+in Chewi, Log-Concave Sampling, August 20, 2026, Theorem 4.1.2; ideal HMC invariance is
+discussed in Section 5.2.
 
 ## Main results
 
@@ -147,7 +149,12 @@ theorem norm_intervalIntegral_sq_le [NormedSpace ℝ E] (f : ℝ → E) (hf : Co
     (hT : 0 ≤ T) :
     ‖∫ s in (0 : ℝ)..T, f s‖ ^ 2 ≤ T * ∫ s in (0 : ℝ)..T, ‖f s‖ ^ 2 := by
   have hn := intervalIntegral.norm_integral_le_integral_norm (μ := volume) (f := f) hT
-  have hp := sq_intervalIntegral_le_length_mul_integral_sq (fun s ↦ ‖f s‖) hf.norm hT
+  have hp : (∫ s in (0 : ℝ)..T, ‖f s‖) ^ 2 ≤ T * ∫ s in (0 : ℝ)..T, ‖f s‖ ^ 2 := by
+    have h := TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq
+      (μ := volume) (fun s ↦ ‖f s‖) (Set.Ioc 0 T) measure_Ioc_lt_top.ne hf.norm.integrableOn_Ioc
+      (hf.norm.pow 2).integrableOn_Ioc
+    rwa [Real.volume_real_Ioc_of_le hT, sub_zero, ← intervalIntegral.integral_of_le hT,
+      ← intervalIntegral.integral_of_le hT] at h
   have hi := intervalIntegral.integral_nonneg (μ := volume) hT (fun s _ ↦ norm_nonneg (f s))
   nlinarith [norm_nonneg (∫ s in (0 : ℝ)..T, f s)]
 

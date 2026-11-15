@@ -165,7 +165,7 @@ lemma integrable_norm_displacement_coupling_sq (hγ : TauCeti.IsCoupling γ μ �
   have hsnd := hν.comp_measurePreserving hγ.measurePreserving_snd
   have hvec := hv.comp_measurePreserving hγ.measurePreserving_fst
   have h := (hfst.add (hvec.const_smul t)).sub hsnd
-  exact (memLp_two_iff_integrable_sq_norm h.aestronglyMeasurable).mp h
+  exact h.norm.integrable_sq
 
 omit [CompleteSpace E] in
 /-- Exact quadratic expansion of a coupling cost along a square-integrable displacement. -/
@@ -177,11 +177,9 @@ lemma integral_norm_displacement_coupling_sq (hγ : TauCeti.IsCoupling γ μ ν)
         t ^ 2 * ∫ x, ‖v x‖ ^ 2 ∂μ := by
   have hd := (hμ.comp_measurePreserving hγ.measurePreserving_fst).sub
     (hν.comp_measurePreserving hγ.measurePreserving_snd)
-  have hdi : Integrable (fun z : E × E ↦ ‖z.1 - z.2‖ ^ 2) γ :=
-    (memLp_two_iff_integrable_sq_norm hd.aestronglyMeasurable).mp hd
+  have hdi : Integrable (fun z : E × E ↦ ‖z.1 - z.2‖ ^ 2) γ := hd.norm.integrable_sq
   have hvi := hv.comp_measurePreserving hγ.measurePreserving_fst
-  have hv₂ : Integrable (fun z : E × E ↦ ‖v z.1‖ ^ 2) γ :=
-    (memLp_two_iff_integrable_sq_norm hvi.aestronglyMeasurable).mp hvi
+  have hv₂ : Integrable (fun z : E × E ↦ ‖v z.1‖ ^ 2) γ := hvi.norm.integrable_sq
   have hin := hγ.integrable_inner_sub_comp_fst hdi hv
   have hpt : (fun z : E × E ↦ ‖z.1 + t • v z.1 - z.2‖ ^ 2) = fun z ↦
       (‖z.1 - z.2‖ ^ 2 + 2 * t * inner ℝ (z.1 - z.2) (v z.1)) + t ^ 2 * ‖v z.1‖ ^ 2 := by
@@ -211,15 +209,11 @@ lemma abs_integral_inner_displacement_coupling_le (hγ : TauCeti.IsCoupling γ �
   have hfst := hμ.comp_measurePreserving hγ.measurePreserving_fst
   have hsnd := hν.comp_measurePreserving hγ.measurePreserving_snd
   have hvγ := hv.comp_measurePreserving hγ.measurePreserving_fst
-  have hi₁ : Integrable (fun z : E × E ↦ ‖z.1‖ ^ 2) γ := (memLp_two_iff_integrable_sq_norm
-    hfst.aestronglyMeasurable).mp hfst
-  have hi₂ : Integrable (fun z : E × E ↦ ‖z.2‖ ^ 2) γ := (memLp_two_iff_integrable_sq_norm
-    hsnd.aestronglyMeasurable).mp hsnd
-  have hi₃ : Integrable (fun z : E × E ↦ ‖v z.1‖ ^ 2) γ := (memLp_two_iff_integrable_sq_norm
-    hvγ.aestronglyMeasurable).mp hvγ
+  have hi₁ : Integrable (fun z : E × E ↦ ‖z.1‖ ^ 2) γ := hfst.norm.integrable_sq
+  have hi₂ : Integrable (fun z : E × E ↦ ‖z.2‖ ^ 2) γ := hsnd.norm.integrable_sq
+  have hi₃ : Integrable (fun z : E × E ↦ ‖v z.1‖ ^ 2) γ := hvγ.norm.integrable_sq
   have hd := hfst.sub hsnd
-  have hdi : Integrable (fun z : E × E ↦ ‖z.1 - z.2‖ ^ 2) γ :=
-    (memLp_two_iff_integrable_sq_norm hd.aestronglyMeasurable).mp hd
+  have hdi : Integrable (fun z : E × E ↦ ‖z.1 - z.2‖ ^ 2) γ := hd.norm.integrable_sq
   have hin := hγ.integrable_inner_sub_comp_fst hdi hv
   have hpt (z : E × E) : 2 * |inner ℝ (z.1 - z.2) (v z.1)| ≤
       2 * ‖z.1‖ ^ 2 + 2 * ‖z.2‖ ^ 2 + ‖v z.1‖ ^ 2 := by

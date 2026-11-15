@@ -274,14 +274,8 @@ theorem ae_isDirichletProcessLaw_posterior {X : Type*} [MeasurableSpace X]
     (hQ : ∀ θ, Q θ = Measure.pi fun _ : Fin n ↦ (θ : Measure X))
     (post : Kernel (Fin n → X) (ProbabilityMeasure X)) (hpost : IsPosteriorKernel prior Q post) :
     ∀ᵐ x ∂(Q ∘ₘ prior), IsDirichletProcessLaw (post x) (dirichletPosteriorBase α x) := by
-  refine ae_isDirichletProcess_posterior α hα prior hprior Q hQ post hpost fun x ↦ ?_
-  have : IsFiniteMeasure (dirichletPosteriorBase α x) := by
-    unfold dirichletPosteriorBase
-    infer_instance
-  refine exists_isDirichletProcessLaw _ fun h ↦ hα ?_
-  have : α ≤ dirichletPosteriorBase α x := Measure.le_add_right le_rfl
-  rw [h] at this
-  exact le_antisymm this (Measure.zero_le _)
+  exact ae_isDirichletProcess_posterior α hα prior hprior Q hQ post hpost fun x ↦
+    exists_isDirichletProcessLaw _ (dirichletPosteriorBase_ne_zero hα x)
 
 /-- GAPS 104.15: the Blackwell–MacQueen predictive law is the posterior mean of the random
 measure, granted posterior conjugacy (`ae_isDirichletProcessLaw_posterior`). -/
@@ -293,15 +287,8 @@ theorem ae_integral_posterior_eq_polyaPredictiveLaw {X : Type*} [MeasurableSpace
     ∀ᵐ x ∂ν, ∀ A, MeasurableSet A →
       ∫ θ, (θ : Measure X).real A ∂(post x) = (polyaPredictiveLaw α x).real A := by
   filter_upwards [hconj] with x hx A hA
-  have hβne : dirichletPosteriorBase α x ≠ 0 := by
-    intro h
-    apply hα
-    have : α ≤ dirichletPosteriorBase α x := Measure.le_add_right le_rfl
-    rw [h] at this
-    exact le_antisymm this (Measure.zero_le _)
-  have hfin : IsFiniteMeasure (dirichletPosteriorBase α x) := by
-    unfold dirichletPosteriorBase; infer_instance
-  have hmean := integral_measureReal_of_isDirichletProcess (post x) id _ hβne hx A hA
+  have hmean := integral_measureReal_of_isDirichletProcess (post x) id _
+    (dirichletPosteriorBase_ne_zero hα x) hx A hA
   simp only [id] at hmean
   rw [hmean]
   have hu : dirichletPosteriorBase α x univ = α univ + n := by

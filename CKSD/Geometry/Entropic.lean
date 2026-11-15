@@ -106,9 +106,10 @@ theorem realSinkhornDivergence_independent_lower_bound
   · exact key a b h hb
   · exact (key b a h ha).symm
 
-/-- GAPS 108.44: nonnegativity of a shifted real-cost Sinkhorn divergence, using TauCeti: on a
-compact space, if the shifted cost is bounded and its Gibbs kernel `exp(-c/ε)` is positive
-semidefinite and continuous, then the divergence is nonnegative for all probability laws. -/
+/-- GAPS 108.44: nonnegativity of a shifted real-cost Sinkhorn divergence: on a compact space, if
+the shifted cost is bounded and its Gibbs kernel `exp(-c/ε)` is positive semidefinite and
+continuous, then the divergence is nonnegative for all probability laws. This is TauCeti's
+`TauCeti.sinkhornDivergence_nonneg` applied to the shifted cost. -/
 theorem realSinkhornDivergence_nonneg {X : Type*} [MeasurableSpace X] [TopologicalSpace X]
     [CompactSpace X] [OpensMeasurableSpace X] (c : X × X → ℝ) (lower : ℝ)
     (hc : Measurable c) (C : ℝ≥0) (hbound : ∀ z, shiftedEntropicCost c lower z ≤ C)
@@ -117,8 +118,7 @@ theorem realSinkhornDivergence_nonneg {X : Type*} [MeasurableSpace X] [Topologic
     (hcont : Continuous (Function.uncurry
       (TauCeti.entropicGibbsKernel (shiftedEntropicCost c lower) ε)))
     (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q] :
-    0 ≤ realSinkhornDivergence c lower ε P Q := by
-  exact TauCeti.sinkhornDivergence_nonneg
-    (by unfold shiftedEntropicCost; fun_prop) hbound hε hpd hcont
+    0 ≤ realSinkhornDivergence c lower ε P Q :=
+  TauCeti.sinkhornDivergence_nonneg (by unfold shiftedEntropicCost; fun_prop) hbound hε hpd hcont
 
 end CKSD

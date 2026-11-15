@@ -71,6 +71,8 @@ Specific proof reuse includes:
 - The Gaussian-mixture model reuses TauCeti's general finite multivariate
   Gaussian mixture law, density, probability instance, and density theorem
   from `TauCeti/Probability/Distributions/Gaussian/Mixture/Multivariate.lean`.
+- `HasTransitionMatrix.isMarkovChain` targets TauCeti's `TauCeti.Probability.IsMarkovChain` from
+  `TauCeti/Probability/MarkovChain/Filtered.lean`.
 - `integral_le_of_generalized_neyman_pearson` uses Mathlib's bounded
   integrable products, integral monotonicity, and finite-sum integral.
   The UMVU covariance characterization uses Mathlib's variance/covariance
@@ -339,7 +341,9 @@ statistical adapter:
   F law as the zero-noncentrality case of the nested F theorem; `covMatrix` and
   `Matrix.PosSemidef.kernelMeanEmbedding` with `norm_kernelMeanEmbedding_sub_sq`, which
   identify the squared MMD with a squared embedding distance; and `Measure.fitLaw`,
-  `klDiv_fitLaw` and `eq_fitLaw_of_klDiv_le` in the Schrödinger-bridge half steps.
+  `klDiv_fitLaw` and `eq_fitLaw_of_klDiv_le` in the Schrödinger-bridge half steps;
+  `Probability.empiricalFiniteMeasure` and `Probability.empiricalMeasureOfFintype` for the
+  empirical measure, through `empiricalMeasure_eq_empiricalFiniteMeasure`.
 - Statlib: `InformationTheory.klBerReal` for Bernoulli divergences in bandit lower bounds,
   and `etvDist_eq_two_mul_iSup_sub` for the total-variation bridge.
 
@@ -681,3 +685,10 @@ countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
   and Brenier uniqueness. TauCeti supplies optimal plans, gluing, coupling
   compactness and lower semicontinuity under common Lusin sets. This retains
   measurable square-integrable displacement fields without imposing continuity.
+- `CKSD.norm_intervalIntegral_sq_le` uses TauCeti's Cauchy–Schwarz inequality for set integrals,
+  `TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq` from
+  `TauCeti/MeasureTheory/Integral/Bochner/Basic.lean`.
+- The interval Cauchy–Schwarz bound in `Bayes/MeanFieldQuantitative.lean` uses TauCeti's
+  `TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq`.
+- Pushforwards of empirical laws (`CKSD.map_empiricalMeasure`, `Bayes/MeanFieldWasserstein.lean`)
+  use TauCeti's `TauCeti.Probability.map_empiricalFiniteMeasure`.

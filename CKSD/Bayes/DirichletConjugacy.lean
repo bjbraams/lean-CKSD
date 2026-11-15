@@ -55,6 +55,16 @@ namespace CKSD
 
 open TauCeti TauCeti.Probability
 
+/-- A set of positive mass under a finite measure has positive real mass. -/
+theorem measureReal_pos_of_pos {X : Type*} [MeasurableSpace X] {α : Measure X}
+    [IsFiniteMeasure α] {A : Set X} (hA : 0 < α A) : 0 < α.real A :=
+  ENNReal.toReal_pos hA.ne' (measure_ne_top _ _)
+
+/-- A Dirichlet parameter `α(A) + c` with `α(A) > 0` and a nonnegative count `c` is positive. -/
+theorem measureReal_add_pos {X : Type*} [MeasurableSpace X] {α : Measure X}
+    [IsFiniteMeasure α] {A : Set X} (hA : 0 < α A) {c : ℝ} (hc : 0 ≤ c) : 0 < α.real A + c :=
+  add_pos_of_pos_of_nonneg (measureReal_pos_of_pos hA) hc
+
 section MultinomialDirichlet
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
@@ -140,8 +150,7 @@ theorem map_cells_eq_dirichletMeasure {ι : Type*} [Fintype ι] [Nonempty ι] {�
   have hmeas : Measurable fun ω ↦ WithLp.toLp 2 fun i ↦ (P ω : Measure X).real ((A ∘ e.symm) i) :=
     (WithLp.measurable_toLp 2 _).comp (measurable_pi_iff.mpr fun i ↦
       (hP.1 _ (hAm _)).ennreal_toReal)
-  have hpos : ∀ i, 0 < α.real ((A ∘ e.symm) i) := fun i ↦
-    ENNReal.toReal_pos (hApos _).ne' (measure_ne_top _ _)
+  have hpos : ∀ i, 0 < α.real ((A ∘ e.symm) i) := fun i ↦ measureReal_pos_of_pos (hApos _)
   have hagg := map_euclideanFiberSum_dirichletMeasure e.symm.surjective hpos
   have hfib : ∀ (v : Fin (Fintype.card ι) → ℝ) (i : ι),
       ∑ j with e.symm j = i, v j = v (e i) := fun v i ↦ by
@@ -272,8 +281,7 @@ theorem integral_mul_prod_measureReal_of_isDirichletProcess {κ : Type*} [Fintyp
         ∫ y, H y ∂dirichletMeasure (fun k ↦ α.real (R k) + cellCount p k) := by
   have hmap := map_cells_eq_dirichletMeasure hP hRm hRd hRc hRpos
   have hm := measurable_toLp_measureReal hP.1 hRm
-  have hpos : ∀ k, 0 < α.real (R k) := fun k ↦
-    ENNReal.toReal_pos (hRpos k).ne' (measure_ne_top _ _)
+  have hpos : ∀ k, 0 < α.real (R k) := fun k ↦ measureReal_pos_of_pos (hRpos k)
   have hprod : Measurable fun y : EuclideanSpace ℝ κ ↦ ∏ l, y (p l) :=
     Finset.measurable_prod _ fun l _ ↦ by fun_prop
   have e1 : ∫ ω, H (WithLp.toLp 2 fun k ↦ (P ω : Measure X).real (R k)) *
@@ -430,8 +438,7 @@ theorem integral_mul_prod_measureReal_of_subset {ι : Type*} [Fintype ι] [Decid
       by_contra h
       exact hp (Finset.prod_eq_zero (Finset.mem_univ l) (by simp [h]))
     have hb : ∀ k : κ, 0 < α.real (refineCell A B k.1) + cellCount p k := fun k ↦
-      add_pos_of_pos_of_nonneg (ENNReal.toReal_pos k.2.ne' (measure_ne_top _ _))
-        (cellCount_nonneg p k)
+      measureReal_add_pos k.2 (cellCount_nonneg p k)
     rw [← integral_map (measurable_euclideanFiberSum _).aemeasurable hH.aestronglyMeasurable,
       map_euclideanFiberSum_dirichletMeasure hf hb]
     congr 2
@@ -562,8 +569,7 @@ theorem ae_map_posterior_eq_dirichletMeasure (α : Measure X) [IsFiniteMeasure �
       WithLp.toLp 2 fun i ↦ (θ : Measure X).real (A i) :=
     measurable_toLp_measureReal (P := id) hprior.1 hAm
   have hb : ∀ (x : Fin n → X) i, 0 < α.real (A i) + sampleCount x (A i) := fun x i ↦
-    add_pos_of_pos_of_nonneg (ENNReal.toReal_pos (hApos i).ne' (measure_ne_top _ _))
-      (sampleCount_nonneg x _)
+    measureReal_add_pos (hApos i) (sampleCount_nonneg x _)
   let K : Kernel (Fin n → X) (EuclideanSpace ℝ ι) :=
     ⟨fun x ↦ dirichletMeasure fun i ↦ α.real (A i) + sampleCount x (A i),
       measurable_dirichletMeasure.comp
@@ -609,8 +615,7 @@ theorem ae_map_posterior_eq_dirichletMeasure (α : Measure X) [IsFiniteMeasure �
     by_cases hc : ∀ l, ∃ i, B l ⊆ A i
     · choose c hc using hc
       have hbc : ∀ i, 0 < α.real (A i) + cellCount c i := fun i ↦
-        add_pos_of_pos_of_nonneg (ENNReal.toReal_pos (hApos i).ne' (measure_ne_top _ _))
-          (cellCount_nonneg c i)
+        measureReal_add_pos (hApos i) (cellCount_nonneg c i)
       have := isProbabilityMeasure_dirichletMeasure hbc
       have hK : ∀ x ∈ univ.pi B,
           K x U = dirichletMeasure (fun i ↦ α.real (A i) + cellCount c i) U := by
@@ -802,6 +807,22 @@ open MeasurableSpace
 
 variable {X : Type*} [MeasurableSpace X]
 
+/-- The posterior base measure `α + ∑ₗ δ_{xₗ}` of a finite measure is finite. -/
+instance isFiniteMeasure_dirichletPosteriorBase (α : Measure X) [IsFiniteMeasure α] {n : ℕ}
+    (x : Fin n → X) : IsFiniteMeasure (dirichletPosteriorBase α x) := by
+  unfold dirichletPosteriorBase
+  infer_instance
+
+/-- The prior base measure is dominated by the posterior base measure. -/
+theorem le_dirichletPosteriorBase (α : Measure X) {n : ℕ} (x : Fin n → X) :
+    α ≤ dirichletPosteriorBase α x :=
+  Measure.le_add_right le_rfl
+
+/-- The posterior base measure of a nonzero base measure is nonzero. -/
+theorem dirichletPosteriorBase_ne_zero {α : Measure X} (hα : α ≠ 0) {n : ℕ} (x : Fin n → X) :
+    dirichletPosteriorBase α x ≠ 0 := fun h ↦
+  hα (le_antisymm (h ▸ le_dirichletPosteriorBase α x) (Measure.zero_le _))
+
 /-- The posterior base measure of a measurable set is its prior mass plus its sample count. -/
 theorem measureReal_dirichletPosteriorBase (α : Measure X) [IsFiniteMeasure α] {n : ℕ}
     (x : Fin n → X) {A : Set X} (hA : MeasurableSet A) :
@@ -965,9 +986,6 @@ theorem ae_isDirichletProcess_posterior [CountablyGenerated X] (α : Measure X)
       (hdisj m) (hcompl m α fun u hu ↦ hnot hu) fun u ↦ u.2
   filter_upwards [hG1, hG2, hG3] with x h1 h2 h3
   obtain ⟨D, hDprob, hD⟩ := hex x
-  have : IsFiniteMeasure (dirichletPosteriorBase α x) := by
-    unfold dirichletPosteriorBase
-    infer_instance
   have hβnull : ∀ m (u : memPartition t m), α u.1 = 0 → dirichletPosteriorBase α x u.1 = 0 := by
     intro m u hu
     simp only [dirichletPosteriorBase, add_apply, hu, zero_add, sum_apply]
@@ -984,7 +1002,7 @@ theorem ae_isDirichletProcess_posterior [CountablyGenerated X] (α : Measure X)
       have := map_cells_eq_dirichletMeasure hD
         (A := fun u : {u : memPartition t m // 0 < α u.1} ↦ (u.1 : Set X)) (fun u ↦ hcell m u.1)
         (hdisj m) (hcompl m _ fun u hu ↦ hβnull m u (hnot hu)) fun u ↦
-          lt_of_lt_of_le u.2 (by simp only [dirichletPosteriorBase, add_apply]; exact le_self_add)
+          lt_of_lt_of_le u.2 (Measure.le_iff'.1 (le_dirichletPosteriorBase α x) _)
       simp only [id_eq] at this
       rw [this]
       congr 1

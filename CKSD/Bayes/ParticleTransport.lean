@@ -163,28 +163,6 @@ theorem FeynmanKacModel.particle_average_sub_filter_eq_sum_normalizedTransport
   rw [M.normalizedTransport_zero, M.normalizedTransport_initial n hf hfb,
     integral_empiricalMeasure_vector, smul_eq_mul] at hs
   simpa only [FeynmanKacModel.pathPredictionLaw, div_eq_mul_inv, mul_comm] using hs.symm
-/-- A first-order ratio estimate with a common positive denominator lower bound. -/
-theorem abs_div_sub_div_le_of_bound {a u v u' v' D : ℝ}
-    (ha : 0 < a) (hv : a ≤ v) (hv' : a ≤ v') (hu' : |u'| ≤ D*v') :
-    |u/v-u'/v'| ≤ (|u-u'|+D*|v-v'|)/a := by
-  have hv0 := ha.trans_le hv
-  have hv'0 := ha.trans_le hv'
-  let r := u'/v'
-  have hr : |r| ≤ D := by
-    rw [show r=u'/v' from rfl,abs_div,abs_of_pos hv'0,div_le_iff₀ hv'0]
-    exact hu'
-  have heq : u/v-u'/v' = ((u-u')-r*(v-v'))/v := by
-    dsimp [r]
-    field_simp
-    ring
-  rw [heq,abs_div,abs_of_pos hv0]
-  have hnum : |(u-u')-r*(v-v')| ≤ |u-u'|+D*|v-v'| := by
-    refine (abs_sub _ _).trans ?_
-    rw [abs_mul]
-    exact add_le_add le_rfl (mul_le_mul_of_nonneg_right hr (abs_nonneg _))
-  have hD0 : 0 ≤ D := (abs_nonneg r).trans hr
-  exact div_le_div₀ (by positivity) hnum ha hv
-
 /-- Deterministic bounded test functions reduce each normalized transport discrepancy to
 ordinary empirical discrepancies, with constants uniform in the horizon. -/
 theorem FeynmanKacModel.exists_normalizedTransport_test_pair

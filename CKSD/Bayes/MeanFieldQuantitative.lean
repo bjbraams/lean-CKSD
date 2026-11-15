@@ -1,6 +1,7 @@
 module
 public import CKSD.Bayes.MeanFieldCoupling
 public import Mathlib.Algebra.Order.Chebyshev
+import TauCeti.MeasureTheory.Integral.Bochner.Basic
 /-!
 # Quantitative synchronous coupling with residual forcing
 
@@ -10,7 +11,9 @@ Jensen then bound each squared error by the particle's residual energy and the m
 energy, with a constant depending only on time and the two drift Lipschitz constants.
 
 Mathlib supplies interval integration and finite-sum Jensen; TauCeti supplies the integral
-Grönwall inequality. No probabilistic assumptions enter these deterministic estimates.
+Grönwall inequality and the set-integral Cauchy–Schwarz bound
+`TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq`. No probabilistic
+assumptions enter these deterministic estimates.
 -/
 
 @[expose] public section
@@ -71,34 +74,15 @@ theorem finite_coupling_gronwall {N : ℕ} (hN : 0 < N) (u : Fin N → ℝ → �
   exact mul_le_mul_of_nonneg_left (Real.exp_le_exp.2 (mul_le_mul_of_nonneg_left ht.2 ha))
     (add_nonneg (hR i) (by positivity))
 
-/-- Cauchy–Schwarz for a continuous scalar integral on a finite time interval. -/
+/-- Cauchy–Schwarz for a continuous scalar integral on a finite time interval, from TauCeti's
+`TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq` on `Ioc 0 T`. -/
 theorem sq_intervalIntegral_le_length_mul_integral_sq (r : ℝ → ℝ) (hr : Continuous r)
     {T : ℝ} (hT : 0 ≤ T) :
     (∫ s in (0 : ℝ)..T, r s) ^ 2 ≤ T * ∫ s in (0 : ℝ)..T, r s ^ 2 := by
-  rcases hT.eq_or_lt with rfl | hT
-  · simp
-  let c := ∫ s in (0 : ℝ)..T, r s
-  have hnon := intervalIntegral.integral_nonneg (μ := volume) hT.le
-    (fun s _ ↦ sq_nonneg (T * r s - c))
-  have heq : (∫ s in (0 : ℝ)..T, (T * r s - c) ^ 2) =
-      T ^ 2 * (∫ s in (0 : ℝ)..T, r s ^ 2) - T * c ^ 2 := by
-    calc _ = ∫ s in (0 : ℝ)..T, T ^ 2 * r s ^ 2 - (2 * T * c) * r s + c ^ 2 := by
-              congr 1
-              funext s
-              ring
-      _ = _ := by
-        have h1 : IntervalIntegrable (fun s ↦ T ^ 2 * r s ^ 2) volume 0 T :=
-          (show Continuous (fun s ↦ T ^ 2 * r s ^ 2) by fun_prop).intervalIntegrable _ _
-        have h2 : IntervalIntegrable (fun s ↦ (2 * T * c) * r s) volume 0 T :=
-          (hr.const_mul _).intervalIntegrable _ _
-        rw [intervalIntegral.integral_add (h1.sub h2) (continuous_const.intervalIntegrable _ _),
-          intervalIntegral.integral_sub h1 h2, intervalIntegral.integral_const_mul,
-          intervalIntegral.integral_const_mul, intervalIntegral.integral_const]
-        simp only [sub_zero, smul_eq_mul]
-        change T ^ 2 * _ - 2 * T * c * c + T * c ^ 2 = _
-        ring
-  rw [heq] at hnon
-  nlinarith
+  have h := TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq (μ := volume) r
+    (Ioc 0 T) measure_Ioc_lt_top.ne hr.integrableOn_Ioc (hr.pow 2).integrableOn_Ioc
+  rwa [Real.volume_real_Ioc_of_le hT, sub_zero, ← intervalIntegral.integral_of_le hT,
+    ← intervalIntegral.integral_of_le hT] at h
 
 /-- Squared averaged coupling errors are controlled by individual and averaged residual energy. -/
 theorem finite_coupling_gronwall_sq {N : ℕ} (hN : 0 < N) (u r : Fin N → ℝ → ℝ)

@@ -80,15 +80,6 @@ theorem one_sub_cdf_eq_measureReal_Ici_of_hasDensity (F : Measure ℝ) [IsProbab
   rw [cdf_eq_real, h2]
   linarith
 
-/-- Integration against a law with a real density `f`: `∫ g dF = ∫ f g`. -/
-theorem integral_eq_integral_mul_of_hasDensity (F : Measure ℝ) (f : ℝ → ℝ)
-    (hf : HasDensity F volume f) (g : ℝ → ℝ) : ∫ s, g s ∂F = ∫ s, f s * g s := by
-  rw [hf.2.2, integral_withDensity_eq_integral_toReal_smul hf.1.ennreal_ofReal
-    (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
-  refine integral_congr_ae ?_
-  filter_upwards [hf.2.1] with s hs
-  simp [ENNReal.toReal_ofReal hs]
-
 /-- Under random censoring, `∫ 1{T ≤ C} φ(T) d(F ⊗ C₀) = ∫ f(s) φ(s) C₀[s, ∞) ds` for a bounded
 measurable `φ` and a density `f` of `F`. -/
 theorem integral_ite_fst_le_snd_prod (F C₀ : Measure ℝ) [IsProbabilityMeasure F]
@@ -111,7 +102,7 @@ theorem integral_ite_fst_le_snd_prod (F C₀ : Measure ℝ) [IsProbabilityMeasur
       funext c; simp [Set.indicator_apply]
     rw [this, integral_indicator_const _ measurableSet_Ici, smul_eq_mul, mul_comm]
   simp_rw [hinner]
-  exact integral_eq_integral_mul_of_hasDensity F f hf _
+  exact hf.integral_eq _
 
 /-- The at-risk probability under random censoring:
 `P(min(T, C) ≥ s) = F[s, ∞) C₀[s, ∞)`. -/
@@ -636,7 +627,7 @@ theorem cdf_eq_intervalIntegral_of_hasDensity (F : Measure ℝ) [IsProbabilityMe
   have h := integral_ite_le_mul_eq_intervalIntegral F f hf hF (fun _ ↦ 1) s hs
   simp only [mul_one] at h
   rw [← h, cdf_eq_real, ← integral_indicator_one measurableSet_Iic,
-    integral_eq_integral_mul_of_hasDensity F f hf]
+    hf.integral_eq]
   refine integral_congr_ae (ae_of_all _ fun u ↦ ?_)
   by_cases hu : u ≤ s <;> simp [hu]
 

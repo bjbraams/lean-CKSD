@@ -10,6 +10,7 @@ public import Mathlib.Probability.StrongLaw
 public import TauCeti.Probability.Cdf
 public import TauCeti.MeasureTheory.Measure.ProductKernel
 import TauCeti.Probability.Distributions.Gaussian.Basic
+import CKSD.Bayes.Basic
 import TauCeti.Probability.Distributions.Gaussian.Moments
 
 /-!
@@ -36,7 +37,8 @@ Singh (1981): along a sample path where the strong law holds for `X` and `X²`, 
 characteristic functions converge (Mathlib's `Complex.tendsto_pow_exp_of_isLittleO_sub_add_div`
 and the Taylor bound `Complex.exp_bound`), Lévy's continuity theorem
 (`ProbabilityMeasure.tendsto_iff_tendsto_charFun`) and the portmanteau theorem give pointwise
-convergence of distribution functions, and Pólya's theorem upgrades this to the Kolmogorov
+convergence of distribution functions, and Pólya's theorem
+(`CKSD.tendsto_kolmogorovDistance_of_tendsto_cdf`) upgrades this to the Kolmogorov
 distance using TauCeti's `Measure.continuous_cdf_of_noAtoms`. Measurability of the random
 Kolmogorov distance uses TauCeti's `measurable_probabilityMeasure_pi_const_toMeasure`, and the
 strong law is Mathlib's `strong_law_ae`.
@@ -295,120 +297,6 @@ theorem exists_uniform_edgeworth_expansion {Ω : Type*} [MeasurableSpace Ω]
           ρ / (6 * Real.sqrt n))| ≤ e n := by
   sorry
 
-/-- Pólya's theorem: pointwise convergence of distribution functions to a continuous
-distribution function implies convergence in Kolmogorov distance. -/
-private theorem tendsto_kolmogorovDistance_of_tendsto_cdf (ν : ℕ → Measure ℝ) (ρ : Measure ℝ)
-    (hc : Continuous (cdf ρ)) (h : ∀ t, Tendsto (fun n ↦ cdf (ν n) t) atTop (𝓝 (cdf ρ t))) :
-    Tendsto (fun n ↦ kolmogorovDistance (ν n) ρ) atTop (𝓝 0) := by
-  rw [Metric.tendsto_atTop]
-  intro ε hε
-  obtain ⟨M, hM⟩ := exists_nat_gt (4 / ε + 2)
-  have hM0 : (0 : ℝ) < M := by have : 0 < 4 / ε := by positivity
-                               linarith
-  have hMε : 3 / (M : ℝ) < ε := by
-    rw [div_lt_iff₀ hM0]
-    have : 4 / ε < M := by linarith
-    rw [div_lt_iff₀ hε] at this
-    linarith
-  set F := cdf ρ
-  have hgrid : ∀ k ∈ Finset.Ioo 0 M, ∃ s, F s = (k : ℝ) / M := by
-    intro k hk
-    rw [Finset.mem_Ioo] at hk
-    have hk0 : (0 : ℝ) < k / M := div_pos (by exact_mod_cast hk.1) hM0
-    have hk1 : (k : ℝ) / M < 1 := (div_lt_one hM0).2 (by exact_mod_cast hk.2)
-    obtain ⟨a, ha⟩ := ((tendsto_cdf_atBot (μ := ρ)).eventually (gt_mem_nhds hk0)).exists
-    obtain ⟨b, hb⟩ := ((tendsto_cdf_atTop (μ := ρ)).eventually (lt_mem_nhds hk1)).exists
-    exact intermediate_value_univ a b hc ⟨ha.le, hb.le⟩
-  choose! g hg using hgrid
-  have hev : ∀ᶠ n in atTop, ∀ k ∈ Finset.Ioo 0 M, |cdf (ν n) (g k) - F (g k)| < 1 / M := by
-    rw [Finset.eventually_all]
-    intro k _
-    have := (h (g k)).sub_const (F (g k))
-    rw [sub_self] at this
-    filter_upwards [this.eventually (Metric.ball_mem_nhds 0 (by positivity : (0 : ℝ) < 1 / M))]
-      with n hn
-    simpa [Real.dist_eq] using hn
-  obtain ⟨N, hN⟩ := eventually_atTop.1 hev
-  refine ⟨N, fun n hn ↦ ?_⟩
-  have hpt : ∀ t, |cdf (ν n) t - F t| ≤ 3 / M := by
-    intro t
-    set G := cdf (ν n)
-    set k := ⌊(M : ℝ) * F t⌋₊ with hk
-    have hFt0 := cdf_nonneg (μ := ρ) t
-    have hFt1 := cdf_le_one (μ := ρ) t
-    have hkle : (k : ℝ) ≤ M * F t := Nat.floor_le (by positivity)
-    have hklt : M * F t < k + 1 := Nat.lt_floor_add_one _
-    have hkM : k ≤ M := by
-      have : (k : ℝ) ≤ M := hkle.trans (by nlinarith)
-      exact_mod_cast this
-    have hG0 := cdf_nonneg (μ := ν n) t
-    have hG1 := cdf_le_one (μ := ν n) t
-    have hlo : k / (M : ℝ) ≤ F t := by rw [div_le_iff₀ hM0]; linarith
-    have hhi : F t < (k + 1) / (M : ℝ) := by rw [lt_div_iff₀ hM0]; linarith
-    rw [abs_le]
-    constructor
-    · -- lower bound on `G t - F t`
-      by_cases hk2 : 2 ≤ k
-      · have hmem : k - 1 ∈ Finset.Ioo 0 M := Finset.mem_Ioo.2 ⟨by omega, by omega⟩
-        have hgk := hg (k - 1) hmem
-        have hcast : ((k - 1 : ℕ) : ℝ) = k - 1 := by
-          rw [Nat.cast_sub (by omega)]; simp
-        rw [hcast] at hgk
-        have hlt : g (k - 1) < t := by
-          refine lt_of_not_ge fun hle ↦ ?_
-          have := monotone_cdf (μ := ρ) hle
-          rw [hgk] at this
-          have : (k : ℝ) / M ≤ (k - 1) / M := hlo.trans this
-          rw [div_le_div_iff_of_pos_right hM0] at this
-          linarith
-        have h1 := monotone_cdf (μ := ν n) hlt.le
-        have h2 := hN n hn (k - 1) hmem
-        rw [hgk, abs_lt] at h2
-        have h3 : (k + 1) / (M : ℝ) - ((k - 1) / M - 1 / M) = 3 / M := by ring
-        linarith
-      · have : (k : ℝ) ≤ 1 := by exact_mod_cast (by omega : k ≤ 1)
-        have : F t < 2 / M := hhi.trans_le (by
-          rw [div_le_div_iff_of_pos_right hM0]; linarith)
-        have : (2 : ℝ) / M ≤ 3 / M := by rw [div_le_div_iff_of_pos_right hM0]; norm_num
-        linarith
-    · -- upper bound on `G t - F t`
-      by_cases hk1 : k + 1 < M
-      · have hmem : k + 1 ∈ Finset.Ioo 0 M := Finset.mem_Ioo.2 ⟨by omega, hk1⟩
-        have hgk := hg (k + 1) hmem
-        push_cast at hgk
-        have hlt : t < g (k + 1) := by
-          refine lt_of_not_ge fun hle ↦ ?_
-          have := monotone_cdf (μ := ρ) hle
-          rw [hgk] at this
-          linarith
-        have h1 := monotone_cdf (μ := ν n) hlt.le
-        have h2 := hN n hn (k + 1) hmem
-        rw [hgk, abs_lt] at h2
-        have h3 : (k + 1) / (M : ℝ) + 1 / M - k / M = 2 / M := by ring
-        have : (2 : ℝ) / M ≤ 3 / M := by rw [div_le_div_iff_of_pos_right hM0]; norm_num
-        linarith
-      · have hkM' : (M : ℝ) ≤ k + 1 := by exact_mod_cast (by omega : M ≤ k + 1)
-        have : 1 - 1 / (M : ℝ) ≤ F t := by
-          refine le_trans ?_ hlo
-          rw [one_sub_div hM0.ne', div_le_div_iff_of_pos_right hM0]; linarith
-        have : (1 : ℝ) / M ≤ 3 / M := by rw [div_le_div_iff_of_pos_right hM0]; norm_num
-        linarith
-  have hKD0 : 0 ≤ kolmogorovDistance (ν n) ρ :=
-    Real.sSup_nonneg (by rintro _ ⟨t, rfl⟩; exact abs_nonneg _)
-  have hKD : kolmogorovDistance (ν n) ρ ≤ 3 / M :=
-    csSup_le (range_nonempty _) (by rintro _ ⟨t, rfl⟩; exact hpt t)
-  rw [Real.dist_eq, sub_zero, abs_of_nonneg hKD0]
-  exact hKD.trans_lt hMε
-
-/-- The integral against the empirical measure is the sample average. -/
-private theorem integral_empiricalMeasure_fin {n : ℕ} (x : Fin n → ℝ) {F : Type*} [NormedAddCommGroup F]
-    [NormedSpace ℝ F] [CompleteSpace F] (f : ℝ → F) :
-    ∫ y, f y ∂(empiricalMeasure n x) = (n : ℝ)⁻¹ • ∑ i, f (x i) := by
-  rw [empiricalMeasure, integral_smul_measure, integral_finsetSum_measure]
-  · simp
-  · intro i _
-    exact integrable_dirac (by simp)
-
 /-- The characteristic function of the bootstrap law of `√n (X̄*ₙ - c)` is the `n`-th power of
 the empirical characteristic function of the scaled centred sample. -/
 private theorem charFun_bootstrap {n : ℕ} (hn : 0 < n) (x : Fin n → ℝ) (c s : ℝ) :
@@ -430,7 +318,7 @@ private theorem charFun_bootstrap {n : ℕ} (hn : 0 < n) (x : Fin n → ℝ) (c 
   simp_rw [hf, Complex.ofReal_sum, Finset.mul_sum, Finset.sum_mul, Complex.exp_sum]
   rw [integral_fintype_prod_eq_prod (f := fun _ y ↦ Complex.exp
     ((s : ℂ) * (((Real.sqrt n)⁻¹ * (y - c) : ℝ) : ℂ) * Complex.I))]
-  rw [Finset.prod_const, Finset.card_univ, Fintype.card_fin, integral_empiricalMeasure_fin]
+  rw [Finset.prod_const, Finset.card_univ, Fintype.card_fin, integral_empiricalMeasure_vector]
   congr 1
   simp only [Complex.real_smul, Complex.ofReal_inv, Complex.ofReal_natCast]
   rw [Finset.mul_sum]

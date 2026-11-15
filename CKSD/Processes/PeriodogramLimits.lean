@@ -272,7 +272,7 @@ theorem tendstoInDistribution_fourierTrig_sum {Ω : Type*} [MeasurableSpace Ω]
   have hclt := tendstoInDistribution_sum_of_lindeberg_of_iIndepFun μ
     (fun n t ω ↦ a n t * Z t ω) (fun n ↦ n)
     (fun n t _ ↦ (hZ.memLp_two t).const_mul _)
-    (fun n t _ ↦ by rw [integral_const_mul, hZ.integral_eq_zero', mul_zero])
+    (fun n t _ ↦ by rw [integral_const_mul, hZ.integral_eq_zero, mul_zero])
     (fun n ↦ (hZ.iIndepFun.precomp Nat.cast_injective).comp (fun t x ↦ a n t * x)
       fun t ↦ measurable_const.mul measurable_id)
     (‖s‖ ^ 2) ?_ ?_
@@ -282,7 +282,7 @@ theorem tendstoInDistribution_fourierTrig_sum {Ω : Type*} [MeasurableSpace Ω]
     exact map_inner_stdGaussian s
   · refine tendsto_const_nhds.congr' ?_
     filter_upwards [hsq] with n hn
-    simp_rw [mul_pow, integral_const_mul, hZ.integral_sq', ← Finset.sum_mul, hn]
+    simp_rw [mul_pow, integral_const_mul, hZ.integral_sq, ← Finset.sum_mul, hn]
     field_simp
   · intro ε hε
     set S : ℝ := ∑ p, |s p| with hS
@@ -423,12 +423,12 @@ theorem IsIIDNoise.integral_sq_sum_mul {Ω : Type*} [MeasurableSpace Ω]
     · subst htu
       have : (fun ω ↦ a t * Z (s t) ω * (a t * Z (s t) ω)) = fun ω ↦ a t ^ 2 * Z (s t) ω ^ 2 := by
         funext ω; ring
-      rw [this, integral_const_mul, hZ.integral_sq']; ring
+      rw [this, integral_const_mul, hZ.integral_sq]; ring
     · have hind : IndepFun (Z (s t)) (Z (s u)) μ :=
         hZ.iIndepFun.indepFun (hs.ne htu)
       have h := IndepFun.integral_fun_mul_eq_mul_integral hind
         (hZ.measurable _).aestronglyMeasurable (hZ.measurable _).aestronglyMeasurable
-      rw [hZ.integral_eq_zero', zero_mul] at h
+      rw [hZ.integral_eq_zero, zero_mul] at h
       have : (fun ω ↦ a t * Z (s t) ω * (a u * Z (s u) ω)) =
           fun ω ↦ (a t * a u) * (Z (s t) ω * Z (s u) ω) := by funext ω; ring
       rw [this, integral_const_mul, h, mul_zero]
@@ -619,7 +619,7 @@ private theorem norm_dft_filter_sub_le (ψ : ℤ → ℝ) (hψ : Summable fun j 
 theorem IsIIDNoise.integral_abs_le_sqrt {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
     [IsProbabilityMeasure μ] {Z : ℤ → Ω → ℝ} {σsq : ℝ} (hZ : IsIIDNoise μ Z σsq) (t : ℤ) :
     ∫ ω, |Z t ω| ∂μ ≤ Real.sqrt σsq :=
-  (integral_abs_le_sqrt_integral_sq (hZ.memLp_two t)).trans_eq (by rw [hZ.integral_sq' t])
+  (integral_abs_le_sqrt_integral_sq (hZ.memLp_two t)).trans_eq (by rw [hZ.integral_sq t])
 
 /-- For iid noise and an absolutely summable filter, almost surely
 `∑_j |ψ_j| |Z_{s-j}| < ∞` for every `s`. -/

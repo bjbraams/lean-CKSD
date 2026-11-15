@@ -201,12 +201,6 @@ theorem abs_sSup_range_le {H : Type*} [Finite H] [Nonempty H] {u : H → ℝ} {C
     fun k ↦ by simpa using h k
   rwa [range_const, csSup_singleton, sub_zero] at this
 
-/-- A measurable function bounded in absolute value is integrable for a finite measure. -/
-theorem integrable_of_abs_le {α : Type*} [MeasurableSpace α] (μ : Measure α) [IsFiniteMeasure μ]
-    {g : α → ℝ} (hg : Measurable g) {C : ℝ} (hb : ∀ x, |g x| ≤ C) : Integrable g μ :=
-  Integrable.of_bound hg.aestronglyMeasurable C (ae_of_all _ fun x ↦ by
-    rw [Real.norm_eq_abs]; exact hb x)
-
 /-- An average `(∑ᵢ aᵢ uᵢ)/n` with `|aᵢ| ≤ 1` and `|uᵢ| ≤ C`, `C ≥ 0`, lies in `[-C,C]`. -/
 theorem abs_sum_mul_div_le {n : ℕ} (a u : Fin n → ℝ) {C : ℝ} (hC : 0 ≤ C)
     (ha : ∀ i, |a i| ≤ 1) (hu : ∀ i, |u i| ≤ C) : |(∑ i, a i * u i) / n| ≤ C := by
@@ -279,7 +273,8 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
       rw [hp.map_eq] at heq
       exact heq
     have hint : ∀ i, Integrable (fun x : Fin n → X ↦ f h (x i)) Pn := fun i ↦
-      integrable_of_abs_le _ ((hm h).comp (measurable_pi_apply i)) fun x ↦ hb h (x i)
+      Integrable.of_bound ((hm h).comp (measurable_pi_apply i)).aestronglyMeasurable 1
+        (ae_of_all _ fun x ↦ hb h (x i))
     simp only [g]
     rw [integral_div, integral_finsetSum _ fun i _ ↦ hint i]
     simp only [hi, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
@@ -292,24 +287,27 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
   have hGb : ∀ p, |G p| ≤ 2 := fun p ↦ abs_sSup_range_le fun h ↦ by
     calc |g h p.1 - g h p.2| ≤ |g h p.1| + |g h p.2| := abs_sub _ _
       _ ≤ 2 := by linarith [hgb h p.1, hgb h p.2]
-  have hGi : Integrable G (Pn.prod Pn) := integrable_of_abs_le _ hGm hGb
+  have hGi : Integrable G (Pn.prod Pn) := Integrable.of_bound hGm.aestronglyMeasurable 2 (ae_of_all _ hGb)
   -- step 1: replace the mean by the ghost sample
   have hstep1 : ∀ x, sSup (range fun h ↦ g h x - ∫ z, f h z ∂P) ≤ ∫ x', G (x, x') ∂Pn := by
     intro x
     refine csSup_le (range_nonempty _) ?_
     rintro _ ⟨h, rfl⟩
-    have hgi : Integrable (g h) Pn := integrable_of_abs_le _ (hgm h) (hgb h)
+    have hgi : Integrable (g h) Pn := Integrable.of_bound (hgm h).aestronglyMeasurable 1
+      (ae_of_all _ (hgb h))
     have : g h x - ∫ z, f h z ∂P = ∫ x', (g h x - g h x') ∂Pn := by
       rw [integral_sub (integrable_const _) hgi, integral_const, probReal_univ, one_smul, hmean]
     change g h x - ∫ z, f h z ∂P ≤ _
     rw [this]
     refine integral_mono ((integrable_const _).sub hgi)
-      (integrable_of_abs_le _ (hGm.comp measurable_prodMk_left) fun x' ↦ hGb _) fun x' ↦ ?_
+      (Integrable.of_bound (hGm.comp measurable_prodMk_left).aestronglyMeasurable 2
+        (ae_of_all _ fun x' ↦ hGb _)) fun x' ↦ ?_
     exact le_csSup (finite_range _).bddAbove ⟨h, rfl⟩
   have hlhs : ∫ x, sSup (range fun h ↦ g h x - ∫ z, f h z ∂P) ∂Pn ≤ ∫ p, G p ∂(Pn.prod Pn) := by
     rw [integral_prod _ hGi]
-    refine integral_mono (integrable_of_abs_le _ (C := 2) (Measurable.iSup fun h ↦
-      (hgm h).sub measurable_const) fun x ↦ abs_sSup_range_le fun h ↦ ?_)
+    refine integral_mono (Integrable.of_bound (Measurable.iSup fun h ↦
+      (hgm h).sub measurable_const).aestronglyMeasurable 2
+      (ae_of_all _ fun x ↦ abs_sSup_range_le fun h ↦ ?_))
       (hGi.integral_prod_left) hstep1
     have hI : |∫ z, f h z ∂P| ≤ 1 := by
       have := norm_integral_le_of_norm_le_const (μ := P) (C := 1)
@@ -331,7 +329,7 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
     Measurable.iSup fun h ↦ hu σ h
   have hRm : Measurable Rad := measurable_empiricalRademacherComplexity n f hm
   have hRb : ∀ x, |Rad x| ≤ 1 := abs_empiricalRademacherComplexity_le n f zero_le_one hb
-  have hRi : Integrable Rad Pn := integrable_of_abs_le _ hRm hRb
+  have hRi : Integrable Rad Pn := Integrable.of_bound hRm.aestronglyMeasurable 1 (ae_of_all _ hRb)
   -- pointwise bound of the sign average
   have hpt : ∀ p, (2 : ℝ)⁻¹ ^ n * ∑ σ : Fin n → Bool, G (T σ p) ≤ Rad p.1 + Rad p.2 := by
     intro p
@@ -354,8 +352,9 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
   have hcard : ((Finset.univ : Finset (Fin n → Bool)).card : ℝ) = 2 ^ n := by
     simp [Finset.card_univ, Fintype.card_bool]
   have hTi : ∀ σ, Integrable (fun p ↦ G (T σ p)) (Pn.prod Pn) := fun σ ↦
-    integrable_of_abs_le _ (g := fun p ↦ G (T σ p))
-      (hGm.comp (measurePreserving_ghostSwap P n σ).measurable) fun p ↦ hGb _
+    Integrable.of_bound
+      (hGm.comp (measurePreserving_ghostSwap P n σ).measurable).aestronglyMeasurable 2
+      (ae_of_all _ fun p ↦ hGb _)
   have havg : ∫ p, G p ∂(Pn.prod Pn) =
       ∫ p, (2 : ℝ)⁻¹ ^ n * ∑ σ : Fin n → Bool, G (T σ p) ∂(Pn.prod Pn) := by
     rw [integral_const_mul, integral_finsetSum _ fun σ _ ↦ hTi σ, ← Finset.sum_congr rfl
@@ -370,21 +369,14 @@ theorem integral_sSup_sub_le_two_mul_rademacher {H X : Type*} [Fintype H] [Nonem
       have hmp : MeasurePreserving Prod.snd (Pn.prod Pn) Pn := measurePreserving_snd
       rw [← integral_map hmp.measurable.aemeasurable
         (by rw [hmp.map_eq]; exact hRm.aestronglyMeasurable), hmp.map_eq]
-    rw [integral_add
-      (integrable_of_abs_le _ (g := fun p : (Fin n → X) × (Fin n → X) ↦ Rad p.1)
-        (hRm.comp measurable_fst) fun p ↦ hRb _)
-      (integrable_of_abs_le _ (g := fun p : (Fin n → X) × (Fin n → X) ↦ Rad p.2)
-        (hRm.comp measurable_snd) fun p ↦ hRb _), h1, h2]
+    rw [integral_add (hRi.comp_fst Pn) (hRi.comp_snd Pn), h1, h2]
     ring
   calc _ ≤ ∫ p, G p ∂(Pn.prod Pn) := hlhs
     _ = _ := havg
     _ ≤ ∫ p, (Rad p.1 + Rad p.2) ∂(Pn.prod Pn) := by
         refine integral_mono ?_ ?_ hpt
         · exact (integrable_finsetSum _ fun σ _ ↦ hTi σ).const_mul _
-        · exact (integrable_of_abs_le _ (g := fun p : (Fin n → X) × (Fin n → X) ↦ Rad p.1)
-            (hRm.comp measurable_fst) fun p ↦ hRb _).add
-              (integrable_of_abs_le _ (g := fun p : (Fin n → X) × (Fin n → X) ↦ Rad p.2)
-                (hRm.comp measurable_snd) fun p ↦ hRb _)
+        · exact (hRi.comp_fst Pn).add (hRi.comp_snd Pn)
     _ = 2 * ∫ x, Rad x ∂Pn := hfinal
 
 /-- McDiarmid tail for the supremum of the centered empirical means of a finite class whose

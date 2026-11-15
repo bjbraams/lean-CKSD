@@ -67,11 +67,6 @@ namespace GaussianInputs
 variable (h : M.GaussianInputs P x₀ w v)
 include h
 
-omit [IsProbabilityMeasure P] in
-/-- Every predicted covariance is positive semidefinite. -/
-theorem predCov_posSemidef' (t : ℕ) : (M.predCov t).PosSemidef :=
-  M.predCov_posSemidef h.stateCov_posSemidef h.obsCov_posSemidef h.initCov_posSemidef t
-
 /-- The prediction error and the observation record at time `t` are jointly almost everywhere
 measurable, and the observation noise at time `t` is independent of them. -/
 theorem aemeasurable_indepFun_predErr (t : ℕ) :
@@ -118,7 +113,8 @@ theorem measurement_update (t : ℕ)
       IndepFun (M.filtErr x₀ w v t) (M.obsPrefix x₀ w v (t + 1)) P ∧
       IndepFun (M.innovation x₀ w v t) (M.obsPrefix x₀ w v t) P := by
   obtain ⟨hm, hF⟩ := h.aemeasurable_indepFun_predErr t
-  have hPt := h.predCov_posSemidef' t
+  have hPt :=
+    M.predCov_posSemidef h.stateCov_posSemidef h.obsCov_posSemidef h.initCov_posSemidef t
   have hRt := h.obsCov_posSemidef t
   have hvt := h.hasLaw_obsNoise t
   have hεv : IndepFun (M.predErr x₀ w v t) (v t) P :=
@@ -289,8 +285,9 @@ theorem condDistrib_state_succ (t : ℕ) :
   rw [hx]
   exact condDistrib_add_eq_multivariateGaussian
     (M.measurable_predMean_extendObservations (t + 1) (t + 1))
-    (h.aemeasurable_indepFun_predErr (t + 1)).1.snd (h.predCov_posSemidef' (t + 1)) hlaw
-    hind.symm
+    (h.aemeasurable_indepFun_predErr (t + 1)).1.snd
+    (M.predCov_posSemidef h.stateCov_posSemidef h.obsCov_posSemidef h.initCov_posSemidef (t + 1))
+    hlaw hind.symm
 
 /-- The innovation at time `t` has law `N(0, Σ_t)`. -/
 theorem hasLaw_innovation (t : ℕ) :

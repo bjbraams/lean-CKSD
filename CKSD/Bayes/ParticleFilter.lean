@@ -22,6 +22,8 @@ potential-weighted mixture of the transitions from the current particles (multin
 
 ## Main results
 
+* `CKSD.lintegral_bootstrap_succ`, `CKSD.integral_bootstrap_succ`: one conditional sampling
+  step, for nonnegative functions and for bounded functions with values in a normed space.
 * `CKSD.lintegral_bootstrapWeight_mul_average`: unbiasedness of the particle approximation of the
   unnormalized measures.
 * `CKSD.integral_particleLikelihood_eq`: the particle likelihood estimate is unbiased
@@ -456,6 +458,35 @@ theorem lintegral_bootstrap_succ {Ω X : Type*} [MeasurableSpace Ω]
     rw [hω]
   · exact Measurable.lintegral_kernel_prod_right (f := fun y z ↦ H (y, z)) hH
 
+/-- Conditional sampling step of the bootstrap filter for bounded functions with values in a
+normed space: integrating a function of the past and the next generation equals integrating it
+against the product prediction law. -/
+theorem integral_bootstrap_succ {Ω X E : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace X] [StandardBorelSpace X] [Nonempty X]
+    [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
+    (N : ℕ) (ξ : ℕ → Ω → Fin N → X) (hξ : IsBootstrapParticleSystem P M N ξ) (n : ℕ)
+    (H : (Fin (n + 1) → Fin N → X) × (Fin N → X) → E) (hH : StronglyMeasurable H) {C : ℝ}
+    (hC : ∀ z, ‖H z‖ ≤ C) :
+    ∫ ω, H ((fun i : Fin (n + 1) ↦ ξ i ω), ξ (n + 1) ω) ∂P =
+      ∫ ω, ∫ z, H ((fun i : Fin (n + 1) ↦ ξ i ω), z)
+        ∂Measure.pi (fun _ : Fin N ↦ M.particlePredictionLaw n (ξ n ω)) ∂P := by
+  obtain ⟨hmeas, -, hcond⟩ := hξ
+  set Y : Ω → Fin (n + 1) → Fin N → X := fun ω i ↦ ξ i ω with hYdef
+  have hY : Measurable Y := measurable_pi_iff.2 fun i ↦ hmeas i
+  change ∫ ω, H (Y ω, ξ (n + 1) ω) ∂P = ∫ ω, ∫ z, H (Y ω, z) ∂_ ∂P
+  have hint : Integrable H ((P.map Y) ⊗ₘ condDistrib (ξ (n + 1)) Y P) :=
+    Integrable.of_bound hH.aestronglyMeasurable C (ae_of_all _ hC)
+  rw [← integral_map (hY.prodMk (hmeas (n + 1))).aemeasurable hH.aestronglyMeasurable,
+    ← compProd_map_condDistrib hY.aemeasurable (hmeas (n + 1)).aemeasurable,
+    Measure.integral_compProd hint,
+    integral_map hY.aemeasurable]
+  · refine integral_congr_ae ?_
+    filter_upwards [hcond n] with ω hω
+    simp only [hYdef] at hω ⊢
+    rw [hω]
+  · exact hH.integral_kernel_prod_right'.aestronglyMeasurable
+
 /-- Conditional variance bound for one resampling step: with `|f| ≤ C`,
 `𝔼[(∑ᵢ f(ξₙ₊₁ⁱ) - N Φₙ(ηᴺₙ)(f))²] ≤ N C²`, where `Φₙ(ηᴺₙ)` is the prediction law. -/
 theorem integral_sq_sum_bootstrap_succ_sub_le {Ω X : Type*} [MeasurableSpace Ω]
@@ -522,25 +553,59 @@ theorem integral_sq_sum_bootstrap_succ_sub_le {Ω X : Type*} [MeasurableSpace Ω
   exact integral_sq_sum_comp_eval_sub_le _ hf hC
 
 
+/-- An average of finitely many numbers bounded by `C` in absolute value is bounded by `C`. -/
+theorem abs_sum_div_le {N : ℕ} (hN : 0 < N) {f : Fin N → ℝ} {C : ℝ} (hf : ∀ i, |f i| ≤ C) :
+    |(∑ i, f i) / N| ≤ C := by
+  have hn : (0 : ℝ) < N := Nat.cast_pos.2 hN
+  rw [abs_div, abs_of_pos hn, div_le_iff₀ hn]
+  refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+  calc ∑ i, |f i| ≤ ∑ _i : Fin N, C := Finset.sum_le_sum fun i _ ↦ hf i
+    _ = C * N := by simp [mul_comm]
+
+/-- `abs_sum_div_le` for `N + 1` terms, with the denominator written as `N + 1`. -/
+theorem abs_sum_div_succ_le {N : ℕ} {f : Fin (N + 1) → ℝ} {C : ℝ} (hf : ∀ i, |f i| ≤ C) :
+    |(∑ i, f i) / (N + 1)| ≤ C := by
+  simpa using abs_sum_div_le N.succ_pos hf
+
+/-- First-order ratio estimate with a common positive lower bound `a` on the denominators: if
+`v, v' ≥ a > 0` and `|u'| ≤ D v'`, then `|u/v - u'/v'| ≤ (|u - u'| + D |v - v'|)/a`. -/
+theorem abs_div_sub_div_le_of_bound {a u v u' v' D : ℝ}
+    (ha : 0 < a) (hv : a ≤ v) (hv' : a ≤ v') (hu' : |u'| ≤ D * v') :
+    |u / v - u' / v'| ≤ (|u - u'| + D * |v - v'|) / a := by
+  have hv0 := ha.trans_le hv
+  have hv'0 := ha.trans_le hv'
+  set r := u' / v' with hrdef
+  have hr : |r| ≤ D := by
+    rw [hrdef, abs_div, abs_of_pos hv'0, div_le_iff₀ hv'0]
+    exact hu'
+  have heq : u / v - r = ((u - u') - r * (v - v')) / v := by
+    rw [hrdef]
+    field_simp
+    ring
+  rw [heq, abs_div, abs_of_pos hv0]
+  have hnum : |(u - u') - r * (v - v')| ≤ |u - u'| + D * |v - v'| := by
+    refine (abs_sub _ _).trans ?_
+    rw [abs_mul]
+    exact add_le_add le_rfl (mul_le_mul_of_nonneg_right hr (abs_nonneg _))
+  have hD0 : 0 ≤ D := (abs_nonneg r).trans hr
+  exact div_le_div₀ (by positivity) hnum ha hv
+
 /-- Elementary ratio estimate used for the Feynman–Kac selection step: if `v, v' ≥ a > 0` and
-`|u'| ≤ C v'`, then `(u/v - u'/v')² ≤ 2((u-u')² + C²(v-v')²)/a²`. -/
+`|u'| ≤ C v'`, then `(u/v - u'/v')² ≤ 2((u-u')² + C²(v-v')²)/a²`. It is the square of
+`abs_div_sub_div_le_of_bound`. -/
 theorem sq_div_sub_div_le {a u v u' v' C : ℝ} (ha : 0 < a) (hv : a ≤ v) (hv' : a ≤ v')
     (hu' : |u'| ≤ C * v') :
     (u / v - u' / v') ^ 2 ≤ 2 * ((u - u') ^ 2 + C ^ 2 * (v - v') ^ 2) / a ^ 2 := by
-  have hv0 : 0 < v := ha.trans_le hv
-  have hv'0 : 0 < v' := ha.trans_le hv'
-  set r := u' / v' with hr
-  have hrC : |r| ≤ C := by rw [hr, abs_div, abs_of_pos hv'0, div_le_iff₀ hv'0]; exact hu'
-  have key : u / v - r = ((u - u') - r * (v - v')) / v := by
-    rw [hr]; field_simp; ring
-  rw [key, div_pow]
-  have hr2 : r ^ 2 ≤ C ^ 2 := by
-    rw [← sq_abs r]; exact pow_le_pow_left₀ (abs_nonneg _) hrC 2
-  have h1 : ((u - u') - r * (v - v')) ^ 2 ≤ 2 * ((u - u') ^ 2 + C ^ 2 * (v - v') ^ 2) := by
-    nlinarith [sq_nonneg ((u - u') + r * (v - v')), sq_nonneg (v - v'),
-      mul_le_mul_of_nonneg_right hr2 (sq_nonneg (v - v'))]
-  exact div_le_div₀ (by positivity) h1 (by positivity)
-    (pow_le_pow_left₀ ha.le hv 2)
+  have h := abs_div_sub_div_le_of_bound ha hv hv' hu' (u := u)
+  have hC0 : 0 ≤ C := nonneg_of_mul_nonneg_left ((abs_nonneg u').trans hu') (ha.trans_le hv')
+  calc (u / v - u' / v') ^ 2 = |u / v - u' / v'| ^ 2 := (sq_abs _).symm
+    _ ≤ ((|u - u'| + C * |v - v'|) / a) ^ 2 := pow_le_pow_left₀ (abs_nonneg _) h 2
+    _ = (|u - u'| + C * |v - v'|) ^ 2 / a ^ 2 := div_pow _ _ _
+    _ ≤ 2 * ((u - u') ^ 2 + C ^ 2 * (v - v') ^ 2) / a ^ 2 := by
+      gcongr
+      have e1 : |u - u'| ^ 2 = (u - u') ^ 2 := sq_abs _
+      have e2 : |v - v'| ^ 2 = (v - v') ^ 2 := sq_abs _
+      nlinarith [sq_nonneg (|u - u'| - C * |v - v'|)]
 
 /-- Induction step of the mean-square bound for the bootstrap particle filter. If at time `n`
 the particle average of every measurable `f` with `|f| ≤ C` has mean-square error at most
@@ -750,7 +815,6 @@ theorem tendstoInMeasure_particle_average {Ω X : Type*} [MeasurableSpace Ω]
   set c := ∫ x, f x ∂M.filterLaw n
   have hbound (N : ℕ) : P.real {ω | ε < dist ((∑ i, f (ξ N n ω i)) / (N + 1)) c} ≤
       K * C ^ 2 / ε ^ 2 * (1 / ((N : ℝ) + 1)) := by
-    have hN' : (0 : ℝ) < N + 1 := by positivity
     set Y : Ω → ℝ := fun ω ↦ ((∑ i, f (ξ N n ω i)) / (N + 1) - c) ^ 2 with hY
     have hYm : Measurable Y := (((Finset.measurable_sum _ fun i _ ↦
       hf.comp ((measurable_pi_apply i).comp ((hξ N).1 n))).div_const _).sub
@@ -760,9 +824,7 @@ theorem tendstoInMeasure_particle_average {Ω X : Type*} [MeasurableSpace Ω]
         (ae_of_all _ fun ω ↦ ?_)
       rw [Real.norm_eq_abs, hY, abs_pow]
       refine pow_le_pow_left₀ (abs_nonneg _) ((abs_sub _ _).trans (add_le_add ?_ le_rfl)) 2
-      rw [abs_div, abs_of_pos hN', div_le_iff₀ hN', mul_comm]
-      refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
-      simpa using Finset.sum_le_sum fun i (_ : i ∈ Finset.univ) ↦ hC (ξ N n ω i)
+      exact abs_sum_div_succ_le fun i ↦ hC (ξ N n ω i)
     have hM := mul_meas_ge_le_integral_of_nonneg (ae_of_all _ fun ω ↦ sq_nonneg _) hYi (ε ^ 2)
     have hsub : {ω | ε < dist ((∑ i, f (ξ N n ω i)) / (N + 1)) c} ⊆ {ω | ε ^ 2 ≤ Y ω} := by
       intro ω hω

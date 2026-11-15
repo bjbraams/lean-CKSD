@@ -61,10 +61,6 @@ theorem integral_mul_ofReal_condExp {Ω : Type*} {m mΩ : MeasurableSpace Ω} {�
     _ = ∫ ω, B (W ω) ((μ[g | m]) ω) ∂μ := integral_congr_ae h
     _ = _ := by simp_rw [hB]
 
-/-- Complex coercion preserves integrability. -/
-private theorem integrable_ofReal_complex {Ω : Type*} {mΩ : MeasurableSpace Ω} {μ : Measure Ω}
-    {g : Ω → ℝ} (hg : Integrable g μ) : Integrable (fun ω ↦ (g ω : ℂ)) μ := hg.ofReal
-
 /-- The conditional Taylor estimate behind one step of the martingale telescoping argument.
 Let `W` be a bounded `𝓕`-measurable complex factor, `Y` a square-integrable variable with
 `𝔼[Y | 𝓕] = 0`, conditional variance `σ ∈ [0, B]` and conditional truncated second moment `ℓ`.
@@ -97,7 +93,7 @@ private theorem norm_integral_mul_cexp_sub_le {Ω : Type*} {𝓕 mΩ : Measurabl
     exact pow_le_pow_left₀ (by have := hω.1; positivity)
       (mul_le_mul_of_nonneg_left hω.2 (by positivity)) 2
   have hWint : ∀ {g : Ω → ℝ}, Integrable g μ → Integrable (fun ω ↦ W ω * (g ω : ℂ)) μ :=
-    fun hg ↦ (integrable_ofReal_complex hg).bdd_mul hWae hWb
+    fun hg ↦ (hg.ofReal (𝕜 := ℂ)).bdd_mul hWae hWb
   have hWi : Integrable W μ := Integrable.of_bound hWae c hWb
   -- the martingale-difference and conditional-variance identities
   have hEX : ∫ ω, W ω * (Y ω : ℂ) ∂μ = 0 := by

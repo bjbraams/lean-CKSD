@@ -115,11 +115,12 @@ theorem measure_margin_generalization_error_le {H X : Type*} [Fintype H] [Nonemp
       (abs_marginLoss_sub_le hρ)) (by positivity)
   have hRadF : ∫ x, empiricalRademacherComplexity n F x ∂Pn ≤ 1 / ρ * rad := by
     rw [← integral_const_mul]
-    refine integral_mono (integrable_of_abs_le _
-      (measurable_empiricalRademacherComplexity n F hFm)
-      (abs_empiricalRademacherComplexity_le n F zero_le_one hFb))
-      ((integrable_of_abs_le _ (measurable_empiricalRademacherComplexity n _ hsm)
-        (abs_empiricalRademacherComplexity_le n _ hB hsb)).const_mul _) hcontr
+    refine integral_mono (Integrable.of_bound
+      (measurable_empiricalRademacherComplexity n F hFm).aestronglyMeasurable 1
+      (ae_of_all _ (abs_empiricalRademacherComplexity_le n F zero_le_one hFb)))
+      ((Integrable.of_bound
+        (measurable_empiricalRademacherComplexity n _ hsm).aestronglyMeasurable _
+        (ae_of_all _ (abs_empiricalRademacherComplexity_le n _ hB hsb))).const_mul _) hcontr
   -- tail
   set tt := Real.sqrt (Real.log (1 / δ) / (2 * n)) with htt
   have htail := measureReal_integral_add_le_sSup_le P F hFm hFosc n hn (Real.sqrt_nonneg _)
@@ -143,8 +144,8 @@ theorem measure_margin_generalization_error_le {H X : Type*} [Fintype H] [Nonemp
     have hS : MeasurableSet {z | signedMargin f h z ≤ 0} :=
       measurableSet_le (hsm h) measurable_const
     rw [← integral_indicator_one hS]
-    refine integral_mono ((integrable_const 1).indicator hS) (integrable_of_abs_le _
-      (hφm h) (C := 1) fun z ↦ by simpa [F] using hFb h z) fun z ↦ ?_
+    refine integral_mono ((integrable_const 1).indicator hS) (Integrable.of_bound
+      (hφm h).aestronglyMeasurable 1 (ae_of_all _ fun z ↦ by simpa [F] using hFb h z)) fun z ↦ ?_
     by_cases hz : z ∈ {z | signedMargin f h z ≤ 0}
     · rw [indicator_of_mem hz, Pi.one_apply, marginLoss_eq_one_of_nonpos hρ hz]
     · rw [indicator_of_notMem hz]; exact (marginLoss_mem_Icc _ _).1

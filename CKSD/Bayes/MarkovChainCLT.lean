@@ -9,6 +9,7 @@ public import Mathlib.MeasureTheory.Group.Prod
 public import Mathlib.Analysis.SpecificLimits.FloorPow
 public import Mathlib.Analysis.PSeries
 public import CKSD.Bayes.MonteCarlo
+public import TauCeti.Probability.MarkovChain.Filtered
 
 /-!
 # Central limit theorem for finite-state Markov chains
@@ -24,6 +25,8 @@ transition matrix. The chain is the one of `CKSD.Bayes.MonteCarlo`.
 ## Main results
 
 * `CKSD.condExp_comp_pair_succ_ae_eq`: the Markov property in conditional form.
+* `CKSD.HasTransitionMatrix.isMarkovChain`: such a chain is a Markov chain in the sense of
+  pinned TauCeti's `TauCeti.Probability.IsMarkovChain` relative to `CKSD.chainFiltration`.
 * `CKSD.exists_sub_mulVec_eq_of_pos`: the Poisson equation for a positive transition matrix.
 * `CKSD.tendstoInDistribution_finite_markov_chain_sum`: the central limit theorem for a
   stationary chain with a positive transition matrix (GAPS 104.24), via the Poisson equation
@@ -50,9 +53,7 @@ theorem integral_mul_comp_pair_succ_eq {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix ι ι ℝ)
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
-    (hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
-        μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1)))
+    (hstep : HasTransitionMatrix μ K X)
     (n : ℕ) (F : (Fin (n + 1) → ι) → ℝ) (φ : ι → ι → ℝ) :
     ∫ ω, F (fun i : Fin (n + 1) ↦ X i ω) * φ (X n ω) (X (n + 1) ω) ∂μ =
       ∫ ω, F (fun i : Fin (n + 1) ↦ X i ω) * ∑ y, K (X n ω) y * φ (X n ω) y ∂μ := by
@@ -81,9 +82,7 @@ theorem integral_mul_comp_eq_pow_mulVec {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix ι ι ℝ)
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
-    (hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
-        μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1)))
+    (hstep : HasTransitionMatrix μ K X)
     (a v : ι → ℝ) (k : ℕ) :
     ∫ ω, a (X 0 ω) * v (X k ω) ∂μ = ∫ ω, a (X 0 ω) * Matrix.mulVec (K ^ k) v (X 0 ω) ∂μ := by
   induction k generalizing v with
@@ -123,9 +122,7 @@ theorem condExp_comp_pair_succ_ae_eq {Ω : Type*} [MeasurableSpace Ω]
     [MeasurableSpace ι] [MeasurableSingletonClass ι]
     (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix ι ι ℝ)
     (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
-    (hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
-        μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1)))
+    (hstep : HasTransitionMatrix μ K X)
     (n : ℕ) (φ : ι → ι → ℝ) :
     μ[fun ω ↦ φ (X n ω) (X (n + 1) ω) | chainFiltration X hX n] =ᵐ[μ]
       fun ω ↦ ∑ y, K (X n ω) y * φ (X n ω) y := by
@@ -144,6 +141,21 @@ theorem condExp_comp_pair_succ_ae_eq {Ω : Type*} [MeasurableSpace Ω]
       by_cases hω : (fun i : Fin (n + 1) ↦ X i ω) ∈ S <;> simp [hω]
   · exact (measurable_chainFiltration X hX n
       (fun z ↦ ∑ y, K (z (Fin.last n)) y * φ (z (Fin.last n)) y)).aestronglyMeasurable
+
+/-- Bridge to TauCeti's filtration-relative Markov chains (`TauCeti.Probability.IsMarkovChain`):
+a finite-state process with transition matrix `K` is a Markov chain relative to its natural
+filtration for every Markov kernel `κ` whose transition probabilities are the entries of `K`. -/
+theorem HasTransitionMatrix.isMarkovChain {Ω : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    {μ : Measure Ω} [IsProbabilityMeasure μ] {K : Matrix ι ι ℝ} {X : ℕ → Ω → ι}
+    (h : HasTransitionMatrix μ K X) (hX : ∀ n, Measurable (X n))
+    (κ : Kernel ι ι) [IsMarkovKernel κ] (hκ : ∀ x y, (κ x).real {y} = K x y) :
+    TauCeti.Probability.IsMarkovChain (chainFiltration X hX) X κ μ := by
+  refine ⟨fun n ↦ (measurable_pi_apply (Fin.last n)).comp
+    (comap_measurable fun ω (i : Fin (n + 1)) ↦ X i ω), fun n f _ _ ↦ ?_⟩
+  refine (condExp_comp_pair_succ_ae_eq μ K X hX h n fun _ y ↦ f y).trans
+    (ae_of_all _ fun ω ↦ ?_)
+  simp only [integral_fintype Integrable.of_finite, hκ, smul_eq_mul]
 
 /-- Geometric decay of `Kᵏ g` for a positive stochastic matrix `K` with invariant law `π` and a
 `π`-centred `g`. -/
@@ -207,17 +219,6 @@ theorem exists_sub_mulVec_eq_of_pos (π : ι → ℝ) (K : Matrix ι ι ℝ)
   rw [(hsum x).tsum_eq_zero_add]
   simp
 
-omit [DecidableEq ι] in
-/-- A real function of a measurable finite-valued map is in every `Lᵖ`. -/
-private theorem memLp_comp_of_fintype {Ω β : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
-    [IsFiniteMeasure μ] [Fintype β] [MeasurableSpace β] [MeasurableSingletonClass β]
-    (Y : Ω → β) (hY : Measurable Y) (F : β → ℝ) (p : ℝ≥0∞) :
-    MemLp (fun ω ↦ F (Y ω)) p μ :=
-  MemLp.of_bound ((measurable_of_finite F).comp hY).aestronglyMeasurable (∑ b, |F b|)
-    (ae_of_all _ fun ω ↦ by
-      simpa [Real.norm_eq_abs] using Finset.single_le_sum (f := fun b ↦ |F b|)
-        (fun _ _ ↦ abs_nonneg _) (Finset.mem_univ (Y ω)))
-
 /-- Martingale central limit theorem for the increments of a stationary finite-state chain with a
 positive transition matrix `K`: for every `u`, `n^{-1/2} ∑_{i<n} (u(X_{i+1}) - (K u)(X_i))`
 converges in law to the centred normal law with variance
@@ -233,9 +234,7 @@ private theorem tendstoInDistribution_sum_markovIncrement_div_sqrt {Ω : Type*}
     (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
     (hK : ∀ x y, 0 < K x y) (hK1 : ∀ x, ∑ y, K x y = 1)
     (hstat : ∀ y, (∑ x, π x * K x y) = π y)
-    (hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
-        μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1))) (u : ι → ℝ) :
+    (hstep : HasTransitionMatrix μ K X) (u : ι → ℝ) :
     TendstoInDistribution (fun (n : ℕ) ω ↦ ∑ i ∈ Finset.range n,
         (u (X (i + 1) ω) - Matrix.mulVec K u (X i ω)) / Real.sqrt n) atTop id (fun _ ↦ μ)
       (gaussianReal 0 (∑ x, π x * ∑ y, K x y * (u y - Matrix.mulVec K u x) ^ 2).toNNReal) := by
@@ -304,8 +303,8 @@ private theorem tendstoInDistribution_sum_markovIncrement_div_sqrt {Ω : Type*}
   exact tendstoInDistribution_sum_of_sum_condVar_le μ Fn Xa σ2 ℓ (fun n ↦ n)
     (fun n i _ ↦ measurable_chainFiltration X hX (i + 1)
       (fun z ↦ (u (z (Fin.last (i + 1))) - Ku (z ⟨i, by omega⟩)) / Real.sqrt n))
-    (fun n i _ ↦ memLp_comp_of_fintype μ (fun ω ↦ (X i ω, X (i + 1) ω))
-      ((hX i).prodMk (hX (i + 1))) (fun z ↦ (u z.2 - Ku z.1) / Real.sqrt n) 2)
+    (fun n i _ ↦ MemLp.of_discrete.comp_of_map (g := fun z : ι × ι ↦ (u z.2 - Ku z.1) /
+      Real.sqrt n) ((hX i).prodMk (hX (i + 1))).aemeasurable)
     (fun n i _ ↦ by
       refine (condExp_comp_pair_succ_ae_eq μ K X hX hstep i
         (fun x y ↦ (u y - Ku x) / Real.sqrt n)).trans (ae_of_all _ fun ω ↦ ?_)
@@ -337,9 +336,7 @@ private theorem tendstoInDistribution_sqrt_mul_sampleAverage_sub_of_poisson {Ω 
     (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
     (hK : ∀ x y, 0 < K x y) (hK1 : ∀ x, ∑ y, K x y = 1)
     (hstat : ∀ y, (∑ x, π x * K x y) = π y)
-    (hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
-        μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1)))
+    (hstep : HasTransitionMatrix μ K X)
     (f : ι → ℝ) (m : ℝ) (u : ι → ℝ) (hu : ∀ x, u x - Matrix.mulVec K u x = f x - m) :
     TendstoInDistribution (fun (n : ℕ) ω ↦ Real.sqrt n * (sampleAverage (fun i ω ↦ f
         (X i ω)) n ω - m)) atTop id (fun _ ↦ μ)
@@ -418,11 +415,7 @@ theorem tendstoInDistribution_finite_markov_chain_sum {Ω : Type*} [MeasurableSp
         (X i ω)) n ω - m)) atTop id (fun _ ↦ μ)
         (gaussianReal 0 (Real.toNNReal sigmaSq)) := by
   intro m sigmaSq
-  have hstep : ∀ n : ℕ, ∀ path : ℕ → ι,
-      μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
-        μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1)) := by
-    intro n path
-    rw [hlaw, hlaw, Finset.prod_range_succ, mul_assoc]
+  have hstep : HasTransitionMatrix μ K X := .of_measureReal_eq_prod π hlaw
   -- moments of the stationary chain
   have hE0 (a : ι → ℝ) : ∫ ω, a (X 0 ω) ∂μ = ∑ x, π x * a x := by
     rw [integral_comp_eq_sum_measureReal μ (X 0) (hX 0) a]

@@ -4,6 +4,8 @@ public import CKSD.Inference.Basic
 public import Mathlib.Probability.Kernel.WithDensity
 public import CKSD.Inference.Factorization
 public import CKSD.Inference.LaplaceDeterminacy
+public import CKSD.Inference.Model
+public import Mathlib.Analysis.InnerProductSpace.ProdL2
 
 /-!
 # Conditional exponential families and conditional tests
@@ -19,6 +21,11 @@ law of `T` given `S` and the conditional UMPU tests in the presence of a nuisanc
 * `CKSD.IsMinimalSplitStatistic`.
 
 ## Main results
+
+* `CKSD.splitLogPartition_eq_logPartition`,
+  `CKSD.splitExponentialFamilyMeasure_eq_exponentialFamilyMeasure`: the split family is the
+  natural exponential family (`CKSD.logPartition`, `CKSD.exponentialFamilyMeasure`) with
+  statistic `(T, S)` and parameter `(η, ζ)` in the `L²` product `WithLp 2 (E × F)`.
 
 * `CKSD.exists_kernel_conditional_exponential_family`: the conditional law of `T` given `S` is a
   parameter-free exponential tilt depending only on `η` (GAPS 101.43).
@@ -55,6 +62,23 @@ def splitExponentialFamilyMeasure (ν : Measure X) (T : X → E) (S : X → F) (
     Measure X :=
   ν.withDensity (fun x ↦ ENNReal.ofReal
     (Real.exp (inner ℝ η (T x) + inner ℝ ζ (S x) - splitLogPartition ν T S η ζ)))
+
+/-- The split log partition function is the log partition function of the natural exponential
+family with statistic `(T, S)` in the `L²` product `WithLp 2 (E × F)`. -/
+theorem splitLogPartition_eq_logPartition (ν : Measure X) (T : X → E) (S : X → F) (η : E)
+    (ζ : F) :
+    splitLogPartition ν T S η ζ =
+      logPartition ν (fun x ↦ WithLp.toLp 2 (T x, S x)) (WithLp.toLp 2 (η, ζ)) := by
+  simp [splitLogPartition, logPartition]
+
+/-- The split exponential law is the natural exponential law with statistic `(T, S)` and natural
+parameter `(η, ζ)` in the `L²` product `WithLp 2 (E × F)`. -/
+theorem splitExponentialFamilyMeasure_eq_exponentialFamilyMeasure (ν : Measure X) (T : X → E)
+    (S : X → F) (η : E) (ζ : F) :
+    splitExponentialFamilyMeasure ν T S η ζ =
+      exponentialFamilyMeasure ν (fun x ↦ WithLp.toLp 2 (T x, S x)) (WithLp.toLp 2 (η, ζ)) := by
+  simp [splitExponentialFamilyMeasure, exponentialFamilyMeasure,
+    splitLogPartition_eq_logPartition]
 
 /-- The exponential tilt of a family of measures `ν_s` by the parameter `η`, normalized in each
 fibre: the kernel `s ↦ exp(η·t - A_s(η)) ν_s(dt)` with `A_s(η) = log ∫ exp(η·t) ν_s(dt)`. -/

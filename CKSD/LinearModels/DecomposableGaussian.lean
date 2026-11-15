@@ -6,8 +6,6 @@ public import Mathlib.Combinatorics.SimpleGraph.Clique
 public import Mathlib.Combinatorics.SimpleGraph.Paths
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import CKSD.LinearModels.Multivariate
-import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Order
-import Mathlib.Analysis.Matrix.Order
 public import CKSD.LinearModels.Decomposable
 
 /-!
@@ -123,16 +121,6 @@ theorem isConcentrationMLE_inv_of_apply_eq (G : SimpleGraph ι) {n : ℕ}
     hdet Sig hSig]
   linarith
 
-open scoped MatrixOrder in
-/-- A positive definite matrix dominates a positive multiple of the identity. -/
-theorem exists_pos_posSemidef_sub_smul_one {Sig : Matrix ι ι ℝ} [Nonempty ι] (hSig : Sig.PosDef) :
-    ∃ c : ℝ, 0 < c ∧ (Sig - c • (1 : Matrix ι ι ℝ)).PosSemidef := by
-  obtain ⟨r, hr, hle⟩ := (CFC.exists_pos_algebraMap_le_iff Sig hSig.isHermitian.isSelfAdjoint).2
-    fun x hx ↦ hSig.isStrictlyPositive.spectrum_pos hx
-  refine ⟨r, hr, ?_⟩
-  rw [← Matrix.le_iff]
-  simpa [Algebra.algebraMap_eq_smul_one] using hle
-
 /-- The symmetric matrix with ones at `(i, j)` and `(j, i)`. -/
 private def symmSingle (i j : ι) : Matrix ι ι ℝ := single i j 1 + single j i 1
 
@@ -146,7 +134,6 @@ private theorem symmSingle_mulVec (i j : ι) (x : ι → ℝ) :
 positive semidefinite. -/
 private theorem posSemidef_add_smul_symmSingle {Sig : Matrix ι ι ℝ} (hSig : Sig.PosDef) {i j : ι}
     (hij : i ≠ j) : ∃ δ > 0, ∀ t : ℝ, |t| ≤ δ → (Sig + t • symmSingle i j).PosSemidef := by
-  have : Nonempty ι := ⟨i⟩
   obtain ⟨c, hc, hpsd⟩ := exists_pos_posSemidef_sub_smul_one hSig
   refine ⟨c, hc, fun t ht ↦ ?_⟩
   have hE : (symmSingle i j).IsHermitian := by

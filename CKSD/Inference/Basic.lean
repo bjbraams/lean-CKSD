@@ -18,6 +18,7 @@ public import Mathlib.Tactic
 public import TauCeti.Probability.Distributions.ChiSquared.Basic
 public import TauCeti.Probability.Distributions.StudentT.Basic
 public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
+public import TauCeti.Probability.Process.EmpiricalMeasure
 
 /-!
 # Statistical models and convergence interfaces
@@ -60,6 +61,11 @@ topology, characterized by `MeasureTheory.ProbabilityMeasure.tendsto_iff_forall_
   integrable for every finite measure, with mean in `[0, 1]` under a probability measure.
 * `CKSD.isProbabilityMeasure_empiricalMeasure`: the empirical measure of a nonempty sample is a
   probability measure.
+* `CKSD.empiricalMeasure_eq_empiricalFiniteMeasure`,
+  `CKSD.empiricalMeasure_eq_empiricalMeasureOfFintype`: the empirical measure is the measure
+  underlying TauCeti's `TauCeti.Probability.empiricalFiniteMeasure` (and, for a nonempty
+  sample, `TauCeti.Probability.empiricalMeasureOfFintype`), so TauCeti's empirical-measure API
+  (evaluation, integration, pushforward, Wasserstein consistency) applies to it.
 
 ## Conventions
 
@@ -188,6 +194,23 @@ theorem isProbabilityMeasure_empiricalMeasure {E : Type*} [MeasurableSpace E] {n
   constructor
   simp [empiricalMeasure]
   exact ENNReal.inv_mul_cancel (by exact_mod_cast hn.ne') (ENNReal.natCast_ne_top n)
+
+/-- The empirical measure is the measure underlying TauCeti's empirical finite measure
+`TauCeti.Probability.empiricalFiniteMeasure` of the sample; for the empty sample both are zero. -/
+theorem empiricalMeasure_eq_empiricalFiniteMeasure {E : Type*} [MeasurableSpace E] (n : ℕ)
+    (x : Fin n → E) :
+    empiricalMeasure n x = (TauCeti.Probability.empiricalFiniteMeasure x : Measure E) := by
+  rw [empiricalMeasure, TauCeti.Probability.empiricalFiniteMeasure_toMeasure, Fintype.card_fin,
+    Finset.smul_sum]
+
+/-- The empirical measure of a nonempty sample is the measure underlying TauCeti's empirical
+probability measure `TauCeti.Probability.empiricalMeasureOfFintype`. -/
+theorem empiricalMeasure_eq_empiricalMeasureOfFintype {E : Type*} [MeasurableSpace E] {n : ℕ}
+    [NeZero n] (x : Fin n → E) :
+    empiricalMeasure n x = (TauCeti.Probability.empiricalMeasureOfFintype x : Measure E) := by
+  rw [TauCeti.Probability.empiricalMeasureOfFintype_toMeasure,
+    ← TauCeti.Probability.empiricalFiniteMeasure_toMeasure,
+    empiricalMeasure_eq_empiricalFiniteMeasure]
 
 /-- The empirical average of the first `n` observations of a sequence. -/
 def sampleAverage {Ω E : Type*} [AddCommMonoid E] [Module ℝ E]

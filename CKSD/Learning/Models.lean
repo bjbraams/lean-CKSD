@@ -55,25 +55,13 @@ theorem sum_mul_sub_mul_log_le_log_sum_exp (a : ι → ℝ) (w : ι → ℝ) (hw
   set Z := ∑ i, Real.exp (a i)
   have hZ : 0 < Z := Finset.sum_pos (fun i _ ↦ Real.exp_pos _) Finset.univ_nonempty
   have hq1 : ∑ i, Real.exp (a i) / Z = 1 := by rw [← Finset.sum_div, div_self hZ.ne']
-  have hpt : ∀ i, w i * a i - w i * Real.log (w i) ≤
-      w i * Real.log Z + (Real.exp (a i) / Z - w i) := by
-    intro i
-    rcases (hw i).lt_or_eq with hpos | hzero
-    · have hq : 0 < Real.exp (a i) / Z := div_pos (Real.exp_pos _) hZ
-      have hl := Real.log_le_sub_one_of_pos (div_pos hq hpos)
-      rw [Real.log_div hq.ne' hpos.ne', Real.log_div (Real.exp_pos _).ne' hZ.ne',
-        Real.log_exp] at hl
-      have := mul_le_mul_of_nonneg_left hl hpos.le
-      have hc : w i * (Real.exp (a i) / Z / w i - 1) = Real.exp (a i) / Z - w i := by
-        field_simp
-      rw [hc] at this
-      nlinarith
-    · rw [← hzero]; simp only [zero_mul, sub_zero, zero_add]; positivity
-  calc (∑ i, (w i * a i - w i * Real.log (w i)))
-      ≤ ∑ i, (w i * Real.log Z + (Real.exp (a i) / Z - w i)) := Finset.sum_le_sum fun i _ ↦ hpt i
-    _ = Real.log Z := by
-      rw [Finset.sum_add_distrib, ← Finset.sum_mul, hw1, Finset.sum_sub_distrib, hq1, hw1]
-      ring
+  have h := sum_mul_log_sub_log_nonneg Finset.univ (fun i _ ↦ hw i)
+    (fun i _ ↦ div_pos (Real.exp_pos (a i)) hZ) (by rw [hw1, hq1])
+  have e : ∀ i ∈ Finset.univ, w i * (Real.log (w i) - Real.log (Real.exp (a i) / Z)) =
+      Real.log Z * w i - (w i * a i - w i * Real.log (w i)) := fun i _ ↦ by
+    rw [Real.log_div (Real.exp_pos _).ne' hZ.ne', Real.log_exp]; ring
+  rw [Finset.sum_congr rfl e, Finset.sum_sub_distrib, ← Finset.mul_sum, hw1, mul_one] at h
+  linarith
 
 /-- GAPS 107.26, finite-state entropy variational formula for the log partition function,
 attainment: the Gibbs (softmax) vector `exp aᵢ / Z` attains `log Z`. -/
@@ -136,7 +124,8 @@ end LogSumExp
 /-- GAPS 107.30, finite-width tangent-kernel training dynamics for a differentiable model: along
 the gradient flow `θ' = -n⁻¹ Dfᵀ (f(θ) - y)` of the empirical squared loss on `n` outputs, the
 predictions evolve by `(f ∘ θ)' = -n⁻¹ Df Dfᵀ (f(θ) - y)`, with tangent kernel `Df Dfᵀ`. The
-parameter and output spaces are arbitrary real Hilbert spaces. -/
+parameter and output spaces are arbitrary real Hilbert spaces. This is the chain rule
+`HasFDerivAt.comp_hasDerivAt` of Mathlib, specialized to the gradient-flow velocity. -/
 theorem hasDerivAt_predictions_of_gradient_flow {E F : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [CompleteSpace E] [NormedAddCommGroup F] [InnerProductSpace ℝ F]
     [CompleteSpace F] (n : ℕ) (f : E → F) (theta : ℝ → E) (y : F) (t : ℝ) (D : E →L[ℝ] F)

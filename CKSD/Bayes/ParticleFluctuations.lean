@@ -28,7 +28,6 @@ in `CKSD.Bayes.ParticleCentralLimit`.
 
 ## Main results
 
-* `CKSD.integral_bootstrap_succ`: one conditional sampling step for bounded complex functions.
 * `CKSD.tendsto_integral_abs_particleLikelihood_sub`: mean-absolute consistency of the particle
   likelihood estimates.
 * `CKSD.tendsto_integral_norm_gaussianFactor_sub`: the random Gaussian factors converge in mean
@@ -46,33 +45,6 @@ namespace CKSD
 
 variable {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
 
-/-- Conditional sampling step of the bootstrap filter for bounded complex functions: integrating
-a function of the past and the next generation equals integrating it against the product
-prediction law. -/
-theorem integral_bootstrap_succ [StandardBorelSpace X] [Nonempty X]
-    (P : Measure Ω) [IsProbabilityMeasure P] (M : FeynmanKacModel X)
-    (N : ℕ) (ξ : ℕ → Ω → Fin N → X) (hξ : IsBootstrapParticleSystem P M N ξ) (n : ℕ)
-    (H : (Fin (n + 1) → Fin N → X) × (Fin N → X) → ℂ) (hH : Measurable H) {C : ℝ}
-    (hC : ∀ z, ‖H z‖ ≤ C) :
-    ∫ ω, H ((fun i : Fin (n + 1) ↦ ξ i ω), ξ (n + 1) ω) ∂P =
-      ∫ ω, ∫ z, H ((fun i : Fin (n + 1) ↦ ξ i ω), z)
-        ∂Measure.pi (fun _ : Fin N ↦ M.particlePredictionLaw n (ξ n ω)) ∂P := by
-  obtain ⟨hmeas, -, hcond⟩ := hξ
-  set Y : Ω → Fin (n + 1) → Fin N → X := fun ω i ↦ ξ i ω with hYdef
-  have hY : Measurable Y := measurable_pi_iff.2 fun i ↦ hmeas i
-  change ∫ ω, H (Y ω, ξ (n + 1) ω) ∂P = ∫ ω, ∫ z, H (Y ω, z) ∂_ ∂P
-  have hint : Integrable H ((P.map Y) ⊗ₘ condDistrib (ξ (n + 1)) Y P) :=
-    Integrable.of_bound hH.aestronglyMeasurable C (ae_of_all _ hC)
-  rw [← integral_map (hY.prodMk (hmeas (n + 1))).aemeasurable hH.aestronglyMeasurable,
-    ← compProd_map_condDistrib hY.aemeasurable (hmeas (n + 1)).aemeasurable,
-    Measure.integral_compProd hint,
-    integral_map hY.aemeasurable]
-  · refine integral_congr_ae ?_
-    filter_upwards [hcond n] with ω hω
-    simp only [hYdef] at hω ⊢
-    rw [hω]
-  · exact hH.stronglyMeasurable.integral_kernel_prod_right'.aestronglyMeasurable
-
 /-- For `N` independent draws from `ν`, the characteristic function of `∑ⱼ g(zⱼ)` is the `N`-th
 power of that of `g`: `∫ exp (i u ∑ⱼ g(zⱼ)) = (∫ exp (i u g) dν)^N`. -/
 theorem integral_cexp_sum_pi (ν : Measure X) [IsProbabilityMeasure ν] (N : ℕ) (g : X → ℝ)
@@ -80,16 +52,14 @@ theorem integral_cexp_sum_pi (ν : Measure X) [IsProbabilityMeasure ν] (N : ℕ
     ∫ z, cexp (u * (∑ j, g (z j) : ℝ) * I) ∂Measure.pi (fun _ : Fin N ↦ ν) =
       (∫ x, cexp (u * g x * I) ∂ν) ^ N := by
   have h : ∀ z : Fin N → X, cexp (u * (∑ j, g (z j) : ℝ) * I) =
-      ∏ j, (fun (_ : Fin N) x ↦ cexp (u * g x * I)) j (z j) := by
+      ∏ j, cexp (u * g (z j) * I) := by
     intro z
     rw [← Complex.exp_sum]
     congr 1
     push_cast
     rw [Finset.mul_sum, Finset.sum_mul]
   simp_rw [h]
-  refine (integral_fintype_prod_eq_prod (𝕜 := ℂ)
-    (fun (_ : Fin N) (x : X) ↦ cexp (u * g x * I))).trans ?_
-  simp
+  simpa using integral_fintype_prod_eq_pow (ι := Fin N) (fun x ↦ cexp (u * g x * I)) (μ := ν)
 
 /-- Lindeberg's estimate for `N` independent copies of a bounded variable: if `|g| ≤ B` and
 `σ² = ∫ (g - ν g)² dν`, the `N`-th power of the characteristic function of `g - ν g` at `u`
@@ -288,7 +258,6 @@ private theorem tendsto_integral_abs_div_sub_div {μ : Measure Ω} [IsProbabilit
       (K + |d|) (ae_of_all _ fun ω ↦ by
         rw [Real.norm_eq_abs, abs_abs]
         exact (abs_sub _ _).trans (by linarith [hK ω]))
-  have hb0 : 0 < b := hc.trans_le hbc
   have hlim := (hAl.const_mul (1 / c)).add (hBl.const_mul (|a| / c ^ 2))
   rw [mul_zero, mul_zero, add_zero] at hlim
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hlim
@@ -299,33 +268,13 @@ private theorem tendsto_integral_abs_div_sub_div {μ : Measure Ω} [IsProbabilit
     · exact ((hint _ a KA (hAm N) (hA N)).const_mul _).add
         ((hint _ b KB (hBm N) (hB N)).const_mul _)
     · show |A N ω / B N ω - a / b| ≤ 1 / c * |A N ω - a| + |a| / c ^ 2 * |B N ω - b|
-      have hB0 : 0 < B N ω := hc.trans_le (hBc N ω)
-      have e : A N ω / B N ω - a / b =
-          (A N ω - a) / B N ω + a * (b - B N ω) / (B N ω * b) := by
-        field_simp; ring
-      rw [e]
-      refine (abs_add_le _ _).trans (add_le_add ?_ ?_)
-      · rw [abs_div, abs_of_pos hB0, div_eq_mul_inv, mul_comm, one_div]
-        gcongr
-        exact hBc N ω
-      · rw [abs_div, abs_mul, abs_of_pos (mul_pos hB0 hb0), abs_sub_comm b, mul_div_assoc,
-          div_eq_mul_inv]
-        have hcc : c ^ 2 ≤ B N ω * b := by nlinarith [hBc N ω]
-        have hinv : (B N ω * b)⁻¹ ≤ (c ^ 2)⁻¹ := inv_anti₀ (by positivity) hcc
-        calc |a| * (|B N ω - b| * (B N ω * b)⁻¹) ≤ |a| * (|B N ω - b| * (c ^ 2)⁻¹) := by
-              gcongr
-          _ = |a| / c ^ 2 * |B N ω - b| := by ring
+      have hab : |a| ≤ |a| / c * b := by
+        rw [div_mul_eq_mul_div, le_div_iff₀ hc]
+        exact mul_le_mul_of_nonneg_left hbc (abs_nonneg a)
+      refine (abs_div_sub_div_le_of_bound hc (hBc N ω) hbc hab).trans_eq ?_
+      ring
   · exact (hint _ a KA (hAm N) (hA N)).const_mul _
   · exact (hint _ b KB (hBm N) (hB N)).const_mul _
-
-/-- An average of numbers bounded by `C` in absolute value is bounded by `C`. -/
-private theorem abs_sum_div_le {N : ℕ} {f : Fin (N + 1) → ℝ} {C : ℝ} (hf : ∀ i, |f i| ≤ C) :
-    |(∑ i, f i) / (N + 1)| ≤ C := by
-  have hN : (0 : ℝ) < N + 1 := by positivity
-  rw [abs_div, abs_of_pos hN, div_le_iff₀ hN]
-  refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
-  calc ∑ i, |f i| ≤ ∑ _i : Fin (N + 1), C := Finset.sum_le_sum fun i _ ↦ hf i
-    _ = C * (N + 1) := by simp [mul_comm]
 
 /-- An average of numbers at least `a` is at least `a`. -/
 private theorem le_sum_div {N : ℕ} {f : Fin (N + 1) → ℝ} {a : ℝ} (hf : ∀ i, a ≤ f i) :
@@ -335,14 +284,12 @@ private theorem le_sum_div {N : ℕ} {f : Fin (N + 1) → ℝ} {a : ℝ} (hf : �
   calc a * (N + 1) = ∑ _i : Fin (N + 1), a := by simp [mul_comm]
     _ ≤ ∑ i, f i := Finset.sum_le_sum fun i _ ↦ hf i
 
-/-- The integral of a function bounded by `C` against a probability measure is bounded by `C`. -/
+/-- The integral of a function bounded by `C` against a probability measure is bounded by `C`;
+the real case of Mathlib's `norm_integral_le_of_norm_le_const`. -/
 theorem abs_integral_le_of_abs_le {ν : Measure X} [IsProbabilityMeasure ν] {g : X → ℝ}
-    (hg : Measurable g) {C : ℝ} (hC : ∀ x, |g x| ≤ C) : |∫ x, g x ∂ν| ≤ C := by
-  refine (abs_integral_le_integral_abs).trans ?_
-  calc ∫ y, |g y| ∂ν ≤ ∫ _, C ∂ν :=
-        integral_mono (Integrable.of_bound hg.aestronglyMeasurable C
-          (ae_of_all _ fun x ↦ hC x)).abs (integrable_const _) fun y ↦ hC y
-    _ = C := by simp
+    {C : ℝ} (hC : ∀ x, |g x| ≤ C) : |∫ x, g x ∂ν| ≤ C := by
+  simpa using norm_integral_le_of_norm_le_const (μ := ν) (f := g)
+    (ae_of_all _ fun x ↦ by simpa using hC x)
 
 /-- Mean-absolute consistency of the bootstrap particle averages at a fixed time. -/
 theorem tendsto_integral_abs_particle_average_sub [StandardBorelSpace X] [Nonempty X]
@@ -361,8 +308,8 @@ theorem tendsto_integral_abs_particle_average_sub [StandardBorelSpace X] [Nonemp
     ((Finset.measurable_sum _ fun i _ ↦
       hg.comp ((measurable_pi_apply i).comp ((hξ N).1 p))).div_const _).sub measurable_const
   have hYb : ∀ ω, |(∑ i, g (ξ N p ω i)) / (N + 1) - ∫ x, g x ∂M.filterLaw p| ≤ C + C :=
-    fun ω ↦ (abs_sub _ _).trans (add_le_add (abs_sum_div_le fun i ↦ hC _)
-      (abs_integral_le_of_abs_le hg hC))
+    fun ω ↦ (abs_sub _ _).trans (add_le_add (abs_sum_div_succ_le fun i ↦ hC _)
+      (abs_integral_le_of_abs_le hC))
   have h1 := sq_integral_abs_le_integral_sq (μ := P) hYm hYb
   have h2 := hK g hg C hC N
   rw [← Real.sqrt_sq (integral_nonneg fun _ ↦ abs_nonneg _)]
@@ -411,15 +358,15 @@ theorem tendsto_integral_abs_particleLikelihood_sub [StandardBorelSpace X] [None
       push_cast; rfl
     refine ⟨⟨K * b, fun N ω ↦ ?_⟩, ?_⟩
     · rw [hsucc, abs_mul]
-      exact mul_le_mul (hK N ω) (abs_sum_div_le fun i ↦ hGb _) (abs_nonneg _)
+      exact mul_le_mul (hK N ω) (abs_sum_div_succ_le fun i ↦ hGb _) (abs_nonneg _)
         ((abs_nonneg _).trans (hK N ω))
     · simp_rw [hsucc, M.unnormalizedLaw_real_univ_succ]
       exact tendsto_integral_abs_mul_sub_mul
         (fun N ↦ (M.measurable_particleLikelihood p).comp (hpath N))
         (fun N ↦ (Finset.measurable_sum _ fun i _ ↦ (M.measurable_potential p).comp
           ((measurable_pi_apply i).comp ((hξ N).1 p))).div_const _)
-        hK (fun N ω ↦ abs_sum_div_le fun i ↦ hGb _)
-        (abs_integral_le_of_abs_le (M.measurable_potential p) hGb) hl
+        hK (fun N ω ↦ abs_sum_div_succ_le fun i ↦ hGb _)
+        (abs_integral_le_of_abs_le hGb) hl
         (tendsto_integral_abs_particle_average_sub P M ξ hξ p (M.measurable_potential p) hGb)
 
 /-- Mean-absolute consistency of the prediction integrals along the particle path. -/
@@ -445,7 +392,7 @@ theorem tendsto_integral_abs_pathPredMean_sub [StandardBorelSpace X] [Nonempty X
       (M.measurable_potential p).mul (M.measurable_integral_transition p hg)
     have hhb : ∀ x, |h x| ≤ b * C := fun x ↦ by
       rw [hh, abs_mul]
-      exact mul_le_mul (hGb x) (abs_integral_le_of_abs_le hg hC) (abs_nonneg _)
+      exact mul_le_mul (hGb x) (abs_integral_le_of_abs_le hC) (abs_nonneg _)
         ((abs_nonneg _).trans (hGb x))
     have hpred : ∀ N ω, M.pathPredMean (fun q ↦ ξ N q ω) (p + 1) g =
         ((∑ i, h (ξ N p ω i)) / (N + 1)) / ((∑ i, M.potential p (ξ N p ω i)) / (N + 1)) := by
@@ -466,7 +413,8 @@ theorem tendsto_integral_abs_pathPredMean_sub [StandardBorelSpace X] [Nonempty X
         hhm.comp ((measurable_pi_apply i).comp ((hξ N).1 p))).div_const _)
       (fun N ↦ (Finset.measurable_sum _ fun i _ ↦ (M.measurable_potential p).comp
         ((measurable_pi_apply i).comp ((hξ N).1 p))).div_const _)
-      (fun N ω ↦ abs_sum_div_le fun i ↦ hhb _) (fun N ω ↦ abs_sum_div_le fun i ↦ hGb _)
+      (fun N ω ↦ abs_sum_div_succ_le fun i ↦ hhb _)
+      (fun N ω ↦ abs_sum_div_succ_le fun i ↦ hGb _)
       ha (fun N ω ↦ le_sum_div fun i ↦ (hab _).1) hGa
       (tendsto_integral_abs_particle_average_sub P M ξ hξ p hhm hhb)
       (tendsto_integral_abs_particle_average_sub P M ξ hξ p (M.measurable_potential p) hGb)
@@ -505,7 +453,7 @@ theorem norm_integral_cexp_pow_sub_gaussian_le (ν : Measure X) [IsProbabilityMe
     Integrable.of_bound hg.aestronglyMeasurable B (ae_of_all _ fun x ↦ hB x)
   have hσ0 : 0 ≤ σ2 := integral_nonneg fun _ ↦ sq_nonneg _
   have hσB : σ2 ≤ (2 * B) ^ 2 := by
-    have hc := abs_integral_le_of_abs_le hg hB (ν := ν)
+    have hc := abs_integral_le_of_abs_le hB (ν := ν)
     calc σ2 ≤ ∫ _, (2 * B) ^ 2 ∂ν := by
           refine integral_mono_of_nonneg (ae_of_all _ fun _ ↦ sq_nonneg _) (integrable_const _)
             (ae_of_all _ fun x ↦ ?_)
@@ -563,7 +511,8 @@ theorem norm_integral_cexp_pow_sub_gaussian_le (ν : Measure X) [IsProbabilityMe
       S ^ 4 / 4 * (2 * B) ^ 2 * (2 * B) ^ 2 / (N + 1) := by ring
   linarith
 
-/-- Variance identity `∫ (g - ν g)² dν = ν(g²) - (ν g)²` for bounded measurable `g`. -/
+/-- Variance identity `∫ (g - ν g)² dν = ν(g²) - (ν g)²` for bounded measurable `g`, from
+Mathlib's `variance_eq_integral` and `variance_eq_sub`. -/
 theorem integral_sub_integral_sq {ν : Measure X} [IsProbabilityMeasure ν] {g : X → ℝ}
     (hg : Measurable g) {B : ℝ} (hB : ∀ x, |g x| ≤ B) :
     ∫ x, (g x - ∫ y, g y ∂ν) ^ 2 ∂ν = ∫ x, g x ^ 2 ∂ν - (∫ y, g y ∂ν) ^ 2 := by
@@ -651,10 +600,10 @@ theorem tendsto_integral_norm_gaussianFactor_sub [StandardBorelSpace X] [Nonempt
     rw [hm2d]; exact (M.measurable_integral_particlePredictionLaw p hφ2m hφ2b).comp ((hξ N).1 p)
   have hm1b : ∀ N ω, |m1 N ω| ≤ B := fun N ω ↦ by
     have := hpred N ω
-    rw [hm1d]; exact abs_integral_le_of_abs_le (hφ _) (hB _)
+    rw [hm1d]; exact abs_integral_le_of_abs_le (hB _)
   have hm2b : ∀ N ω, |m2 N ω| ≤ B ^ 2 := fun N ω ↦ by
     have := hpred N ω
-    rw [hm2d]; exact abs_integral_le_of_abs_le hφ2m hφ2b
+    rw [hm2d]; exact abs_integral_le_of_abs_le hφ2b
   have hl1 : Tendsto (fun N ↦ ∫ ω, |m1 N ω - e1| ∂P) atTop (𝓝 0) := by
     have := tendsto_integral_abs_pathPredMean_sub P M ξ hξ (p + 1) (hφ (p + 1)) (hB _)
     simp only [FeynmanKacModel.pathPredMean_succ] at this
@@ -667,7 +616,7 @@ theorem tendsto_integral_norm_gaussianFactor_sub [StandardBorelSpace X] [Nonempt
   have hΓ' : Tendsto (fun N ↦ ∫ ω, |L N ω - Γ| ∂P) atTop (𝓝 0) := by
     rw [hLd, hΓd]; exact hΓ
   have he1b : |e1| ≤ B := by
-    rw [he1d]; exact abs_integral_le_of_abs_le (hφ _) (hB _)
+    rw [he1d]; exact abs_integral_le_of_abs_le (hB _)
   -- the variance part
   have hLL := tendsto_integral_abs_mul_sub_mul (μ := P) hLm hLm hK' hK' le_rfl hΓ' hΓ'
   have h11 := tendsto_integral_abs_mul_sub_mul (μ := P) hm1m hm1m hm1b hm1b he1b hl1 hl1

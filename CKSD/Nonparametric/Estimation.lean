@@ -93,6 +93,22 @@ private theorem abs_sub_sub_mul_deriv_le {f : ℝ → ℝ} (hf : ContDiff ℝ 2 
   rw [htay, add_sub_cancel_left, sq_abs] at h
   rw [sub_sub]; simpa using h
 
+/-- Taylor bound along a scaled direction: if `|f''| ≤ C`, then
+`|f (t - a u)| ≤ |f t| + |a| |f'(t)| |u| + C a² u² / 2`. -/
+private theorem abs_comp_sub_mul_le {f : ℝ → ℝ} (hf : ContDiff ℝ 2 f) {C : ℝ}
+    (hC : ∀ x, |deriv (deriv f) x| ≤ C) (t a u : ℝ) :
+    |f (t - a * u)| ≤ |f t| + |a| * |deriv f t| * |u| + C * a ^ 2 / 2 * u ^ 2 := by
+  have hT := abs_sub_sub_mul_deriv_le hf hC t (-(a * u))
+  rw [← sub_eq_add_neg] at hT
+  have := abs_sub_abs_le_abs_sub (f (t - a * u)) (f t + -(a * u) * deriv f t)
+  have h4 : |f t + -(a * u) * deriv f t| ≤ |f t| + |a| * |deriv f t| * |u| := by
+    refine (abs_add_le _ _).trans_eq ?_
+    rw [abs_mul, abs_neg, abs_mul]; ring
+  rw [show f (t - a * u) - (f t + -(a * u) * deriv f t) =
+    f (t - a * u) - f t - -(a * u) * deriv f t by ring] at this
+  have : C * (-(a * u)) ^ 2 / 2 = C * a ^ 2 / 2 * u ^ 2 := by ring
+  linarith
+
 /-- Second-order Taylor expansion at `t` with a little-o remainder. -/
 private theorem isLittleO_sub_taylor_two {f : ℝ → ℝ} (hf : ContDiff ℝ 2 f) (t : ℝ) :
     (fun s ↦ f (t + s) - f t - s * deriv f t - s ^ 2 / 2 * deriv (deriv f) t) =o[𝓝 0]
@@ -147,21 +163,14 @@ private theorem tendsto_integral_mul_comp_sub_mul {f K G : ℝ → ℝ}
       (hGm.mul (hfm.comp (by fun_prop))).aestronglyMeasurable
   · filter_upwards [hh0.eventually (eventually_le_nhds one_pos)] with n hn
     refine ae_of_all _ fun u ↦ ?_
-    have hT := abs_sub_sub_mul_deriv_le hf hC t (-(h n * u))
-    rw [← sub_eq_add_neg] at hT
-    have hu1 : |h n * u| ≤ |u| := by
-      rw [abs_mul, abs_of_pos (hh n)]; exact mul_le_of_le_one_left (abs_nonneg _) hn
     have hf' : |f (t - h n * u)| ≤ |f t| + |u| * |D1| + C * u ^ 2 / 2 := by
-      have h1 : |-(h n * u) * D1| ≤ |u| * |D1| := by
-        rw [abs_mul, abs_neg]; exact mul_le_mul_of_nonneg_right hu1 (abs_nonneg _)
-      have h2 : C * (-(h n * u)) ^ 2 / 2 ≤ C * u ^ 2 / 2 := by
-        rw [neg_sq, ← sq_abs, ← sq_abs u]
-        gcongr
-      have := abs_sub_abs_le_abs_sub (f (t - h n * u)) (f t + -(h n * u) * D1)
-      have h3 : |f t + -(h n * u) * D1| ≤ |f t| + |-(h n * u) * D1| := abs_add_le _ _
-      rw [show f (t - h n * u) - (f t + -(h n * u) * D1) =
-        f (t - h n * u) - f t - -(h n * u) * D1 by ring] at this
-      linarith
+      have hT : |f (t - h n * u)| ≤ |f t| + |h n| * |D1| * |u| + C * h n ^ 2 / 2 * u ^ 2 :=
+        abs_comp_sub_mul_le hf hC t (h n) u
+      rw [abs_of_pos (hh n)] at hT
+      have h1 := mul_le_mul_of_nonneg_right hn (mul_nonneg (abs_nonneg D1) (abs_nonneg u))
+      have h2 := mul_nonneg (mul_nonneg hC0 (sub_nonneg.2 (pow_le_one₀ (hh n).le hn (n := 2))))
+        (sq_nonneg u)
+      nlinarith
     rw [Real.norm_eq_abs, abs_mul]
     calc |G u| * |f (t - h n * u)| ≤ (c * K u) * (|f t| + |u| * |D1| + C * u ^ 2 / 2) :=
           mul_le_mul (hG u) hf' (abs_nonneg _) ((abs_nonneg _).trans (hG u))
@@ -207,17 +216,8 @@ private theorem tendsto_bias_div_sq {f K : ℝ → ℝ}
     refine (((hKi.const_mul (|f t|)).add (hK1.const_mul (|a| * |D1|))).add
       (hK2.const_mul (C * a ^ 2 / 2))).mono' (hKm.mul (hfm.comp (by fun_prop))).aestronglyMeasurable
       (ae_of_all _ fun u ↦ ?_)
-    have hT := abs_sub_sub_mul_deriv_le hf hC t (-(a * u))
-    rw [← sub_eq_add_neg] at hT
-    have h3 : |f (t - a * u)| ≤ |f t| + |a| * |D1| * |u| + C * a ^ 2 / 2 * u ^ 2 := by
-      have := abs_sub_abs_le_abs_sub (f (t - a * u)) (f t + -(a * u) * D1)
-      have h4 : |f t + -(a * u) * D1| ≤ |f t| + |a| * |D1| * |u| := by
-        refine (abs_add_le _ _).trans_eq ?_
-        rw [abs_mul, abs_neg, abs_mul]; ring
-      rw [show f (t - a * u) - (f t + -(a * u) * D1) =
-        f (t - a * u) - f t - -(a * u) * D1 by ring] at this
-      have : C * (-(a * u)) ^ 2 / 2 = C * a ^ 2 / 2 * u ^ 2 := by ring
-      linarith
+    have h3 : |f (t - a * u)| ≤ |f t| + |a| * |D1| * |u| + C * a ^ 2 / 2 * u ^ 2 :=
+      abs_comp_sub_mul_le hf hC t a u
     simp only [Pi.add_apply, Real.norm_eq_abs, abs_mul, abs_of_nonneg (hK0 u)]
     nlinarith [hK0 u]
   have hid : ∀ n, (∫ u, K u * f (t - h n * u)) - f t -

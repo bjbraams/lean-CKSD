@@ -17,7 +17,8 @@ with their common chi-squared limit under the null and their common noncentral c
 limit under local alternatives. The limit laws are TauCeti's chi-squared and noncentral
 chi-squared measures. The estimators are functions of the sample of size `n`, so that the
 laws under the null and under local alternatives are product measures on `Fin n → E`.
-Sources: GAPS 102.11, with the smoothness and envelope hypotheses of GAPS 102.3.
+Sources: GAPS 102.11, with the smoothness and envelope hypotheses of GAPS 102.3; these
+regularity hypotheses are bundled in `CKSD.IsRegularScalarLikelihoodModel`.
 
 The proofs realize the sample as the first `n` coordinates of Mathlib's infinite product measure
 `Measure.infinitePi` and use the asymptotic linearization of the likelihood root
@@ -536,6 +537,30 @@ theorem likelihood_test_expansions_of_iid
     ring
   exact ⟨ha, hZlim, hLR, hSc, hJ, hLam⟩
 
+/-- The regularity hypotheses of the scalar likelihood tests at `θ₀` (GAPS 102.11, with the
+smoothness and envelope hypotheses of GAPS 102.3), for laws `P θ` that are probability
+measures: the `P θ` have positive densities `f θ` with respect to `ν`, `θ ↦ log f θ x` is `C³`,
+the Fisher information is positive and continuous at `θ₀`, the third derivative of `log f` is
+dominated on `|θ - θ₀| < r` (with `r > 0`) by a `P θ₀`-integrable `M`, the score at `θ₀` is
+centred and square integrable, and the second derivative of `log f` at `θ₀` is integrable with
+`E ∂²log f = -I(θ₀)`. -/
+structure IsRegularScalarLikelihoodModel {E : Type*} [MeasurableSpace E] (P : ℝ → Measure E)
+    (ν : Measure E) (f : ℝ → E → ℝ) (θ₀ r : ℝ) (M : E → ℝ) : Prop where
+  hasDensity : ∀ θ, HasDensity (P θ) ν (f θ)
+  pos : ∀ θ x, 0 < f θ x
+  contDiff : ∀ x, ContDiff ℝ 3 (fun θ ↦ Real.log (f θ x))
+  continuousAt_fisherInformation : ContinuousAt (fisherInformation P f) θ₀
+  fisherInformation_pos : 0 < fisherInformation P f θ₀
+  radius_pos : 0 < r
+  integrable_envelope : Integrable M (P θ₀)
+  abs_deriv_le_envelope : ∀ x θ, |θ - θ₀| < r →
+    |deriv (deriv (deriv (fun t ↦ Real.log (f t x)))) θ| ≤ M x
+  memLp_score : MemLp (likelihoodScore f θ₀) 2 (P θ₀)
+  integral_score : (∫ x, likelihoodScore f θ₀ x ∂P θ₀) = 0
+  integrable_hessian : Integrable (fun x ↦ deriv (deriv (fun t ↦ Real.log (f t x))) θ₀) (P θ₀)
+  integral_hessian : (∫ x, deriv (deriv (fun t ↦ Real.log (f t x))) θ₀ ∂P θ₀) =
+    -fisherInformation P f θ₀
+
 /-- Reduction of the scalar likelihood tests to the squared normalized score, on the coordinate
 process of the infinite product `P θ₀ ^ ℕ`. Under the hypotheses of
 `tendstoInDistribution_likelihoodRatio_wald_score_chiSquared`, the three statistics are
@@ -545,18 +570,8 @@ measurable, the normalized score `Zₙ` of the first `n` coordinates converges i
 `h Zₙ - h² I(θ₀) / 2 + o_P(1)`. -/
 theorem likelihood_tests_sub_score_sq_infinitePi
     {E : Type*} [MeasurableSpace E] (P : ℝ → Measure E) (hP : ∀ θ, IsProbabilityMeasure (P θ))
-    (ν : Measure E) [SigmaFinite ν] (f : ℝ → E → ℝ) (hf : ∀ θ, HasDensity (P θ) ν (f θ))
-    (hpos : ∀ θ x, 0 < f θ x) (hsmooth : ∀ x, ContDiff ℝ 3 (fun θ ↦ Real.log (f θ x)))
-    (θ₀ : ℝ) (hIc : ContinuousAt (fisherInformation P f) θ₀)
-    (hI : 0 < fisherInformation P f θ₀) (r : ℝ) (hr : 0 < r) (M : E → ℝ)
-    (hM : Integrable M (P θ₀))
-    (henv : ∀ x θ, |θ - θ₀| < r →
-      |deriv (deriv (deriv (fun t ↦ Real.log (f t x)))) θ| ≤ M x)
-    (hscore : MemLp (likelihoodScore f θ₀) 2 (P θ₀))
-    (hmean : (∫ x, likelihoodScore f θ₀ x ∂P θ₀) = 0)
-    (hhess : Integrable (fun x ↦ deriv (deriv (fun t ↦ Real.log (f t x))) θ₀) (P θ₀))
-    (hinfo : (∫ x, deriv (deriv (fun t ↦ Real.log (f t x))) θ₀ ∂P θ₀) =
-      -fisherInformation P f θ₀)
+    (ν : Measure E) [SigmaFinite ν] (f : ℝ → E → ℝ) (θ₀ r : ℝ) (M : E → ℝ)
+    (hreg : IsRegularScalarLikelihoodModel P ν f θ₀ r M)
     (T : ∀ n, (Fin n → E) → ℝ) (hT : ∀ n, Measurable (T n))
     (hcons : TendstoInProbabilityZero (fun n ↦ Measure.pi fun _ : Fin n ↦ P θ₀)
       (fun n x ↦ T n x - θ₀))
@@ -583,6 +598,7 @@ theorem likelihood_tests_sub_score_sq_infinitePi
         (∑ i : Fin n, (Real.log (f (θ₀ + h / Real.sqrt n) (ω i)) - Real.log (f θ₀ (ω i)))) -
           (h * Z n ω - h ^ 2 * I θ₀ / 2)) atTop (fun _ ↦ 0) := by
   intro I μ Z LR W S
+  obtain ⟨hf, hpos, hsmooth, hIc, hI, hr, hM, henv, hscore, hmean, hhess, hinfo⟩ := hreg
   have hP0 := hP θ₀
   set X : ℕ → (ℕ → E) → E := fun i ω ↦ ω i with hX
   have hiid : IsIndependentIdenticallyDistributed μ X (P θ₀) := isIndependentIdenticallyDistributed_infinitePi_eval (P θ₀)
@@ -680,18 +696,8 @@ from the likelihood-ratio statistic by `o_P(1)`. Composite nulls with `q < k` ar
 this scope. -/
 theorem tendstoInDistribution_likelihoodRatio_wald_score_chiSquared
     {E : Type*} [MeasurableSpace E] (P : ℝ → Measure E) (hP : ∀ θ, IsProbabilityMeasure (P θ))
-    (ν : Measure E) [SigmaFinite ν] (f : ℝ → E → ℝ) (hf : ∀ θ, HasDensity (P θ) ν (f θ))
-    (hpos : ∀ θ x, 0 < f θ x) (hsmooth : ∀ x, ContDiff ℝ 3 (fun θ ↦ Real.log (f θ x)))
-    (θ₀ : ℝ) (hIc : ContinuousAt (fisherInformation P f) θ₀)
-    (hI : 0 < fisherInformation P f θ₀) (r : ℝ) (hr : 0 < r) (M : E → ℝ)
-    (hM : Integrable M (P θ₀))
-    (henv : ∀ x θ, |θ - θ₀| < r →
-      |deriv (deriv (deriv (fun t ↦ Real.log (f t x)))) θ| ≤ M x)
-    (hscore : MemLp (likelihoodScore f θ₀) 2 (P θ₀))
-    (hmean : (∫ x, likelihoodScore f θ₀ x ∂P θ₀) = 0)
-    (hhess : Integrable (fun x ↦ deriv (deriv (fun t ↦ Real.log (f t x))) θ₀) (P θ₀))
-    (hinfo : (∫ x, deriv (deriv (fun t ↦ Real.log (f t x))) θ₀ ∂P θ₀) =
-      -fisherInformation P f θ₀)
+    (ν : Measure E) [SigmaFinite ν] (f : ℝ → E → ℝ) (θ₀ r : ℝ) (M : E → ℝ)
+    (hreg : IsRegularScalarLikelihoodModel P ν f θ₀ r M)
     (T : ∀ n, (Fin n → E) → ℝ) (hT : ∀ n, Measurable (T n))
     (hcons : TendstoInProbabilityZero (fun n ↦ Measure.pi fun _ : Fin n ↦ P θ₀)
       (fun n x ↦ T n x - θ₀))
@@ -713,10 +719,11 @@ theorem tendstoInDistribution_likelihoodRatio_wald_score_chiSquared
       TendstoInProbabilityZero (fun n ↦ Measure.pi fun _ : Fin n ↦ P θ₀)
         (fun n x ↦ LR n x - S n x) := by
   intro I LR W S
+  obtain ⟨hf, hpos, hsmooth, hIc, hI, hr, hM, henv, hscore, hmean, hhess, hinfo⟩ := hreg
   have hP0 := hP θ₀
   obtain ⟨hLRm, hWm, hSm, hZm, hZlim, hLRd, hWd, hSd, -⟩ :=
-    likelihood_tests_sub_score_sq_infinitePi P hP ν f hf hpos hsmooth θ₀ hIc hI r hr M hM henv
-      hscore hmean hhess hinfo T hT hcons hmax
+    likelihood_tests_sub_score_sq_infinitePi P hP ν f θ₀ r M
+      ⟨hf, hpos, hsmooth, hIc, hI, hr, hM, henv, hscore, hmean, hhess, hinfo⟩ T hT hcons hmax
   set μ : Measure (ℕ → E) := Measure.infinitePi fun _ : ℕ ↦ P θ₀ with hμ
   have hiid : IsIndependentIdenticallyDistributed μ (fun i ω ↦ ω i) (P θ₀) :=
     isIndependentIdenticallyDistributed_infinitePi_eval (P θ₀)
@@ -766,18 +773,8 @@ at `θ₀` with the likelihood score, then under `P (θ₀ + h / √n)` each of 
 converges in law to the noncentral `χ²₁` with noncentrality `h² I(θ₀)`. -/
 theorem tendstoInDistribution_likelihoodRatio_wald_score_noncentralChiSquared
     {E : Type*} [MeasurableSpace E] (P : ℝ → Measure E) (hP : ∀ θ, IsProbabilityMeasure (P θ))
-    (ν : Measure E) [SigmaFinite ν] (f : ℝ → E → ℝ) (hf : ∀ θ, HasDensity (P θ) ν (f θ))
-    (hpos : ∀ θ x, 0 < f θ x) (hsmooth : ∀ x, ContDiff ℝ 3 (fun θ ↦ Real.log (f θ x)))
-    (θ₀ : ℝ) (hIc : ContinuousAt (fisherInformation P f) θ₀)
-    (hI : 0 < fisherInformation P f θ₀) (r : ℝ) (hr : 0 < r) (M : E → ℝ)
-    (hM : Integrable M (P θ₀))
-    (henv : ∀ x θ, |θ - θ₀| < r →
-      |deriv (deriv (deriv (fun t ↦ Real.log (f t x)))) θ| ≤ M x)
-    (hscore : MemLp (likelihoodScore f θ₀) 2 (P θ₀))
-    (hmean : (∫ x, likelihoodScore f θ₀ x ∂P θ₀) = 0)
-    (hhess : Integrable (fun x ↦ deriv (deriv (fun t ↦ Real.log (f t x))) θ₀) (P θ₀))
-    (hinfo : (∫ x, deriv (deriv (fun t ↦ Real.log (f t x))) θ₀ ∂P θ₀) =
-      -fisherInformation P f θ₀)
+    (ν : Measure E) [SigmaFinite ν] (f : ℝ → E → ℝ) (θ₀ r : ℝ) (M : E → ℝ)
+    (hreg : IsRegularScalarLikelihoodModel P ν f θ₀ r M)
     (T : ∀ n, (Fin n → E) → ℝ) (hT : ∀ n, Measurable (T n))
     (hcons : TendstoInProbabilityZero (fun n ↦ Measure.pi fun _ : Fin n ↦ P θ₀)
       (fun n x ↦ T n x - θ₀))
@@ -793,10 +790,11 @@ theorem tendstoInDistribution_likelihoodRatio_wald_score_noncentralChiSquared
     TendstoInDistribution LR atTop id Q L ∧ TendstoInDistribution W atTop id Q L ∧
       TendstoInDistribution S atTop id Q L := by
   intro I LR W S Q L
+  obtain ⟨hf, hpos, hsmooth, hIc, hI, hr, hM, henv, hscore, hmean, hhess, hinfo⟩ := hreg
   have hP0 := hP θ₀
   obtain ⟨hLRm, hWm, hSm, hZm, hZlim, hLRd, hWd, hSd, hΛ⟩ :=
-    likelihood_tests_sub_score_sq_infinitePi P hP ν f hf hpos hsmooth θ₀ hIc hI r hr M hM henv
-      hscore hmean hhess hinfo T hT hcons hmax
+    likelihood_tests_sub_score_sq_infinitePi P hP ν f θ₀ r M
+      ⟨hf, hpos, hsmooth, hIc, hI, hr, hM, henv, hscore, hmean, hhess, hinfo⟩ T hT hcons hmax
   set μ : Measure (ℕ → E) := Measure.infinitePi fun _ : ℕ ↦ P θ₀ with hμ
   have hiid : IsIndependentIdenticallyDistributed μ (fun i ω ↦ ω i) (P θ₀) :=
     isIndependentIdenticallyDistributed_infinitePi_eval (P θ₀)

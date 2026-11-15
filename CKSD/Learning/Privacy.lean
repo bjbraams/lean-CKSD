@@ -6,8 +6,6 @@ public import CKSD.Nonparametric.Basic
 public import Mathlib.MeasureTheory.Integral.Layercake
 public import CKSD.Nonparametric.LowerBounds
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
-public import Statlib.Divergence.TotalVariation.Integral
-public import Statlib.Divergence.TotalVariation.Event
 
 /-!
 # Differential privacy: composition and local privacy
@@ -19,8 +17,6 @@ divergences under a locally private channel.
 
 * `CKSD.isDifferentiallyPrivate_compProd`: basic composition of two adaptive releases
   (GAPS 107.65).
-* `CKSD.abs_integral_sub_integral_le_mul_totalVariationDistance`: expectations of bounded
-  functions under two laws differ by at most the bound times their total variation distance.
 * `CKSD.abs_measureReal_comp_sub_le_of_local_privacy`: event-wise multiplicative closeness of
   the output laws of a locally private channel.
 * `CKSD.klDiv_le_ofReal_sq_of_abs_measureReal_sub_le`: a `χ²`-type bound for the
@@ -121,49 +117,6 @@ theorem isDifferentiallyPrivate_compProd {D Y Z : Type*} [MeasurableSpace D] [Me
     _ ≤ c₁ * (c₂ * ∫⁻ y, g d' y ∂M d') + ENNReal.ofReal d₁ + ENNReal.ofReal d₂ := by gcongr
     _ = _ := by rw [mul_assoc, add_assoc]
 
-/-- A measurable function with values in `[0, c]` has expectations under two probability
-measures differing by at most `c` times their total variation distance. -/
-theorem abs_integral_sub_integral_le_mul_totalVariationDistance {X : Type*} [MeasurableSpace X]
-    (P₁ P₂ : Measure X) [IsProbabilityMeasure P₁] [IsProbabilityMeasure P₂] {ψ : X → ℝ}
-    {c : ℝ} (hψ : Measurable ψ) (h0 : ∀ x, 0 ≤ ψ x) (hc : ∀ x, ψ x ≤ c) :
-    |∫ x, ψ x ∂P₁ - ∫ x, ψ x ∂P₂| ≤ c * totalVariationDistance P₁ P₂ := by
-  obtain ⟨x₀⟩ := nonempty_of_isProbabilityMeasure P₁
-  have hc0 : 0 ≤ c := (h0 x₀).trans (hc x₀)
-  have htv := (tvDist_eq_two_mul_totalVariationDistance P₁ P₂).le
-  rcases hc0.eq_or_lt with rfl | hcpos
-  · have : ψ = fun _ ↦ 0 := funext fun x ↦ le_antisymm (hc x) (h0 x)
-    simp [this]
-  have hint : ∀ P : Measure X, [IsProbabilityMeasure P] → Integrable ψ P := fun P _ ↦
-    Integrable.of_bound hψ.aestronglyMeasurable c (Eventually.of_forall fun x ↦ by
-      rw [Real.norm_eq_abs, abs_of_nonneg (h0 x)]; exact hc x)
-  set f : X → ℝ := fun x ↦ 2 / c * ψ x - 1
-  have hf : ∀ x, |f x| ≤ 1 := fun x ↦ by
-    have h1 := h0 x; have h2 := hc x
-    rw [abs_le]; constructor
-    · simp only [f]; have : 0 ≤ 2 / c * ψ x := by positivity
-      linarith
-    · simp only [f]; have : 2 / c * ψ x ≤ 2 := by
-        rw [div_mul_eq_mul_div, div_le_iff₀ hcpos]; linarith
-      linarith
-  have hfi : ∀ P : Measure X, [IsProbabilityMeasure P] →
-      ∫ x, f x ∂P = 2 / c * ∫ x, ψ x ∂P - 1 := fun P _ ↦ by
-    simp only [f]
-    rw [integral_sub ((hint P).const_mul _) (integrable_const _), integral_const_mul]
-    simp
-  have h1 := integral_sub_integral_le_tvDist (μ := P₁) (ν := P₂) (f := f)
-    (by fun_prop) (ae_of_all _ hf)
-  have h2 := integral_sub_integral_le_tvDist (μ := P₁) (ν := P₂) (f := fun x ↦ - f x)
-    (by fun_prop) (ae_of_all _ fun x ↦ by rw [abs_neg]; exact hf x)
-  rw [integral_neg, integral_neg, hfi, hfi] at h2
-  rw [hfi, hfi] at h1
-  have key : |2 / c * (∫ x, ψ x ∂P₁ - ∫ x, ψ x ∂P₂)| ≤ 2 * totalVariationDistance P₁ P₂ := by
-    rw [abs_le]; constructor <;> nlinarith
-  rw [abs_mul, abs_of_pos (by positivity)] at key
-  have : 2 / c * |∫ x, ψ x ∂P₁ - ∫ x, ψ x ∂P₂| * (c / 2) ≤
-      2 * totalVariationDistance P₁ P₂ * (c / 2) := by gcongr
-  field_simp at this
-  linarith
-
 /-- A pure `ε`-locally private Markov kernel on a nonempty space has `e^ε ≥ 1`: apply the
 privacy inequality to the whole output space. -/
 theorem one_le_exp_of_local_privacy {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
@@ -229,14 +182,6 @@ theorem abs_measureReal_comp_sub_le_of_local_privacy {X Y : Type*} [MeasurableSp
   · calc _ ≤ (Real.exp ε - 1) * m * totalVariationDistance P₁ P₂ := hψ
       _ = (Real.exp ε - 1) * totalVariationDistance P₁ P₂ * m := by ring
       _ ≤ _ := by gcongr; exact hmP P₁
-
-/-- The Kullback–Leibler function is dominated by the `χ²` integrand on `[0, ∞)`. -/
-theorem klFun_le_sq_sub_one {x : ℝ} (hx : 0 ≤ x) : InformationTheory.klFun x ≤ (x - 1) ^ 2 := by
-  rw [InformationTheory.klFun_apply]
-  rcases hx.eq_or_lt with rfl | hpos
-  · simp
-  have := Real.log_le_sub_one_of_pos hpos
-  nlinarith [mul_le_mul_of_nonneg_left this hpos.le]
 
 /-- If two probability measures satisfy `|μ A - ν A| ≤ δ ν A` for every event, then
 `KL(μ ‖ ν) ≤ δ²`. -/
