@@ -1,10 +1,12 @@
 module
 
-public import CKSD.Learning.Algorithms
+import CKSD.Learning.Algorithms
 public import Mathlib.Analysis.Fourier.FourierTransform
-public import Mathlib.Analysis.SpecialFunctions.Sigmoid
-public import Mathlib.MeasureTheory.Integral.Average
-public import TauCeti.Probability.Moments.SampleMean
+import Mathlib.Analysis.SpecialFunctions.Sigmoid
+import TauCeti.Probability.Moments.SampleMean
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.Analysis.Calculus.ContDiff.Defs
+import Mathlib.Analysis.Convex.Deriv
 
 /-!
 # Neural approximation and Fourier moment classes
@@ -32,7 +34,7 @@ The feature-sampling argument uses TauCeti's Hilbert-space sample-mean variance 
 Sources: GAPS 107.28 and 107.36.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -256,14 +258,14 @@ theorem reluLinearInterpolant_eq_of_mem (f : ℝ → ℝ) {N : ℕ} (hN : 0 < N)
     have hk : j + 1 ≤ k + 1 := by have := (Finset.mem_Ico.mp hk).1; omega
     have : x ≤ ((k + 1 : ℕ) : ℝ) / N :=
       hx.2.trans (div_le_div_of_nonneg_right (by exact_mod_cast hk) hNr.le)
-    rw [relu, max_eq_left (by linarith), mul_zero]
+    rw [relu_def, max_eq_left (by linarith), mul_zero]
   rw [hzero, add_zero]
   congr 1
   refine Finset.sum_congr rfl fun k hk ↦ ?_
   have hk : k + 1 ≤ j := Finset.mem_range.mp hk
   have : ((k + 1 : ℕ) : ℝ) / N ≤ x :=
     (div_le_div_of_nonneg_right (by exact_mod_cast hk) hNr.le).trans hx.1
-  rw [relu, max_eq_right (by linarith)]
+  rw [relu_def, max_eq_right (by linarith)]
 
 /-- GAPS 107.36, one-dimensional `C²` scope: a fixed-grid ReLU network has uniform `N⁻²` error.
 The architecture has `N-1` hinges plus an affine term. General Sobolev spaces, dimensions, and
@@ -324,7 +326,7 @@ theorem barronFourierMoment_nonneg {d : ℕ} (f : EuclideanSpace ℝ (Fin d) →
     intro j _
     have hnonneg : 0 ≤ (((j + 1 : ℕ) : ℝ) / N) := by positivity
     have hrelu : relu (0 - ((j + 1 : ℕ) : ℝ) / N) = 0 := by
-      unfold relu
+      simp only [relu_def]
       exact max_eq_left (by linarith)
     rw [hrelu, mul_zero]
   rw [hz, add_zero]

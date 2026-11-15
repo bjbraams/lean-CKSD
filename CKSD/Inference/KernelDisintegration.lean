@@ -1,8 +1,8 @@
 module
-public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 public import Mathlib.Probability.Kernel.Disintegration.StandardBorel
-public import Mathlib.Probability.Kernel.Composition.WithDensity
-public import Mathlib.Probability.Kernel.Composition.MeasureComp
+import Mathlib.Probability.Kernel.Composition.WithDensity
+import Mathlib.Probability.Kernel.Composition.MeasureComp
+public import Mathlib.Probability.Kernel.Composition.CompNotation
 /-!
 # Common randomization kernels from tilted joint laws
 

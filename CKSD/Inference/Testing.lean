@@ -1,12 +1,14 @@
 module
 
-public import CKSD.Inference.NeymanPearson
-public import CKSD.Inference.IntervalTestConstruction
-public import CKSD.Inference.Model
+import CKSD.Inference.NeymanPearson
+import CKSD.Inference.IntervalTestConstruction
 public import CKSD.Inference.ExponentialFamily
-public import CKSD.Inference.Sufficiency
-public import TauCeti.Probability.Distributions.Gaussian.Projection
-public import TauCeti.Probability.Distributions.StudentT.ChiSquared
+import CKSD.Inference.Sufficiency
+import TauCeti.Probability.Distributions.Gaussian.Projection
+import TauCeti.Probability.Distributions.StudentT.ChiSquared
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+public import TauCeti.Probability.Distributions.StudentT.Basic
+import CKSD.Inference.Density
 
 /-!
 # Uniformly most powerful tests
@@ -43,7 +45,7 @@ exponential families, least favorable mixtures, and the Gaussian sample laws beh
   optimality and the level from the generalized Neyman–Pearson lemma
   `CKSD.integral_le_of_generalized_neyman_pearson` with exponential-sum thresholds.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -306,7 +308,7 @@ private theorem integral_exp_mul_pos {θ : ℝ} (hθ : θ ∈ F.domain) :
 private theorem exp_mul_sub_cumulant {θ : ℝ} (hθ : θ ∈ F.domain) (x : X) :
     Real.exp (θ * F.statistic x - F.cumulant θ) =
       (∫ x, Real.exp (θ * F.statistic x) ∂F.base)⁻¹ * Real.exp (θ * F.statistic x) := by
-  rw [Real.exp_sub, cumulant, Real.exp_log (F.integral_exp_mul_pos hθ), div_eq_inv_mul]
+  rw [Real.exp_sub, cumulant_def, Real.exp_log (F.integral_exp_mul_pos hθ), div_eq_inv_mul]
 
 /-- The density `e^{θ T - A(θ)}` is integrable. -/
 private theorem integrable_density {θ : ℝ} (hθ : θ ∈ F.domain) :
@@ -328,20 +330,23 @@ private theorem measurable_density (θ : ℝ) :
 
 /-- Integrals against the law at `η` are integrals against the base measure with density. -/
 private theorem integral_law (η : F.domain) (φ : X → ℝ) :
-    ∫ x, φ x ∂F.law η = ∫ x, Real.exp (η.val * F.statistic x - F.cumulant η.val) * φ x ∂F.base :=
-  integral_withDensity_ofReal F.base (F.measurable_density η.val) (fun _ ↦ (Real.exp_pos _).le) φ
+    ∫ x, φ x ∂F.law η = ∫ x, Real.exp (η.val * F.statistic x - F.cumulant η.val) * φ x ∂F.base := by
+  rw [law_def]
+  exact integral_withDensity_ofReal F.base (F.measurable_density η.val)
+    (fun _ ↦ (Real.exp_pos _).le) φ
 
 /-- Integrability against the law at `η`. -/
 private theorem integrable_law_iff (η : F.domain) (φ : X → ℝ) :
     Integrable φ (F.law η) ↔
-      Integrable (fun x ↦ Real.exp (η.val * F.statistic x - F.cumulant η.val) * φ x) F.base :=
-  integrable_withDensity_ofReal_iff F.base (F.measurable_density η.val)
+      Integrable (fun x ↦ Real.exp (η.val * F.statistic x - F.cumulant η.val) * φ x) F.base := by
+  rw [law_def]
+  exact integrable_withDensity_ofReal_iff F.base (F.measurable_density η.val)
     (fun _ ↦ (Real.exp_pos _).le) φ
 
 /-- The laws of a regular scalar exponential family are probability measures. -/
 private theorem isProbabilityMeasure_law (η : F.domain) : IsProbabilityMeasure (F.law η) := by
   constructor
-  rw [law, withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ,
+  rw [law_def, withDensity_apply _ MeasurableSet.univ, Measure.restrict_univ,
     ← ofReal_integral_eq_lintegral_ofReal (F.integrable_density η.2)
       (ae_of_all _ fun _ ↦ (Real.exp_pos _).le), F.integral_density η.2, ENNReal.ofReal_one]
 
@@ -457,9 +462,11 @@ private theorem exists_intervalTest_integral_eq (η₁ η₂ : F.domain) (hη : 
     obtain ⟨x₀, hx₀⟩ := hc.exists
     have hT : ∀ᵐ x ∂F.law η₁, F.statistic x = F.statistic x₀ :=
       hc.mono fun x hx ↦ hLmono.injective (hx.trans hx₀.symm)
-    have hac : F.base ≪ F.law η₁ := withDensity_absolutelyContinuous'
-      (F.measurable_density η₁.val).ennreal_ofReal.aemeasurable
-      (ae_of_all _ fun x ↦ by simp [Real.exp_pos])
+    have hac : F.base ≪ F.law η₁ := by
+      rw [law_def]
+      exact withDensity_absolutelyContinuous'
+        (F.measurable_density η₁.val).ennreal_ofReal.aemeasurable
+        (ae_of_all _ fun x ↦ by simp [Real.exp_pos])
     exact F.nonconstant (F.statistic x₀) (hac.ae_le hT)
   -- The two-point size construction.
   obtain ⟨a, ha0, ha1, ha⟩ := exists_setIntegral_comp_quantile_eq_mul μ₁ hLmono.monotone hLi
@@ -630,7 +637,7 @@ theorem exists_one_sided_test_risk_le {X : Type*} [MeasurableSpace X]
     · -- a genuine threshold
       obtain ⟨c, γ, hγ, hsize⟩ := exists_integral_thresholdTest_eq (P θ₀) hT ⟨hβ0, hβ1⟩
       have hreal : thresholdTest (fun x ↦ (T x : EReal)) (c : EReal) γ = thresholdTest T c γ := by
-        funext x; simp only [thresholdTest, EReal.coe_lt_coe_iff, EReal.coe_eq_coe_iff]
+        funext x; simp only [thresholdTest_apply, EReal.coe_lt_coe_iff, EReal.coe_eq_coe_iff]
       have hthr := isStatisticalTest_thresholdTest hT c hγ
       refine ⟨(c : EReal), γ, hγ, hψtest c γ hγ, hfinal _ ?_ ?_ ?_⟩ <;> rw [hreal]
       · intro θ hθ
@@ -648,19 +655,18 @@ theorem exists_one_sided_test_risk_le {X : Type*} [MeasurableSpace X]
     · -- size one: reject always
       have h1 : ∀ θ, testPower P (thresholdTest (fun x ↦ (T x : EReal)) ⊥ 0) θ = 1 := by
         intro θ
-        simp [testPower, thresholdTest, EReal.bot_lt_coe]
+        simp [testPower_def, thresholdTest_apply, EReal.bot_lt_coe]
       refine ⟨⊥, 0, h01, hψtest ⊥ 0 h01, hfinal _ ?_ ?_ ?_⟩
       · intro θ _
         rw [h1]
         have h0 : (∫ x, (1 - φ x) ∂P θ₀) = 0 := by
           rw [hφ.integral_one_sub]
-          -- `change` unfolds the definitions so that `linarith` sees the atoms
-          change 1 - testPower P φ θ₀ = 0
+          have := testPower_def P φ θ₀
           linarith
         have h2 := integral_eq_zero_of_integral_eq_zero_of_pos_density (hf θ₀) (hf θ) (hpos θ₀)
           hφ.one_sub.1 hφ.one_sub.nonneg hφ.one_sub.le_one h0
         rw [hφ.integral_one_sub] at h2
-        unfold testPower
+        rw [testPower_def]
         linarith
       · intro θ _
         rw [h1]; exact (hφb θ).2
@@ -668,7 +674,7 @@ theorem exists_one_sided_test_risk_le {X : Type*} [MeasurableSpace X]
   · -- size zero: never reject
     have h1 : ∀ θ, testPower P (thresholdTest (fun x ↦ (T x : EReal)) ⊤ 0) θ = 0 := by
       intro θ
-      simp [testPower, thresholdTest]
+      simp [testPower_def, thresholdTest_apply]
     refine ⟨⊤, 0, h01, hψtest ⊤ 0 h01, hfinal _ ?_ ?_ ?_⟩
     · intro θ _
       rw [h1]; exact (hφb θ).1
@@ -676,8 +682,7 @@ theorem exists_one_sided_test_risk_le {X : Type*} [MeasurableSpace X]
       rw [h1]
       have h2 := integral_eq_zero_of_integral_eq_zero_of_pos_density (hf θ₀) (hf θ) (hpos θ₀)
         hφ.1 hφ.nonneg hφ.le_one hβ0.symm
-      unfold testPower
-      rw [h2]
+      rw [testPower_def, h2]
     · rw [h1]; exact hβ0
 
 /-- GAPS 101.54: least favorable distributions, sufficiency part. Let `Λ` be a prior on the

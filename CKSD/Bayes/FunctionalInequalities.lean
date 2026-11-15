@@ -1,16 +1,13 @@
 module
 
-public import CKSD.Bayes.LangevinSampling
-public import CKSD.Bayes.JKOEnergy
-public import CKSD.Bayes.JKOStepExistence
-public import CKSD.Bayes.JKOStepUniqueness
-public import CKSD.Bayes.BoundedPerturbation
-public import CKSD.Bayes.BakryEmeryCutoff
-public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
-public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Resolvent
-public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.InternalEnergy.Basic
-public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
-public import Mathlib.Analysis.SpecialFunctions.Trigonometric.ArctanDeriv
+public import CKSD.Bayes.Langevin.Sampling
+public import CKSD.Bayes.JKO.Energy
+import CKSD.Bayes.JKO.StepExistence
+import CKSD.Bayes.JKO.StepUniqueness
+import CKSD.Bayes.BoundedPerturbation
+import CKSD.Bayes.BakryEmery.Cutoff
+import CKSD.Bayes.BakryEmery.Interpolation
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 
 /-!
 # Langevin flows, functional inequalities, and the JKO scheme
@@ -44,7 +41,7 @@ built from TauCeti's Boltzmann entropy relative to Lebesgue measure and potentia
 Sources: GAPS 104.43 and 104.44.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

@@ -1,12 +1,15 @@
 module
 
 public import Mathlib.Probability.Combinatorics.BinomialRandomGraph.Defs
-public import TauCeti.Combinatorics.SimpleGraph.Measurable
-public import Mathlib.Combinatorics.SimpleGraph.Acyclic
+import TauCeti.Combinatorics.SimpleGraph.Measurable
+import Mathlib.Combinatorics.SimpleGraph.Acyclic
+import Mathlib.Algebra.Order.Field.GeomSum
+public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
+import Mathlib.MeasureTheory.Covering.Besicovitch
 public import Mathlib.Analysis.SpecialFunctions.Exponential
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import Mathlib.Data.Nat.Choose.Cast
-public import Mathlib.Algebra.Order.Field.GeomSum
 public import Mathlib.Probability.Distributions.Poisson.PoissonLimitThm
 
 /-!
@@ -37,7 +40,7 @@ The limits along the threshold sequence, and the three parts of the connectivity
 (GAPS 107.47), are in `CKSD.Learning.RandomGraphs.ConnectivityThreshold`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -112,9 +115,23 @@ open scoped Classical in
 def isolatedVertices (G : SimpleGraph V) : Finset V :=
   Finset.univ.filter fun v ↦ ∀ w, ¬ G.Adj v w
 
+omit [DecidableEq V] in
+open scoped Classical in
+/-- The defining formula of `CKSD.isolatedVertices`. -/
+theorem isolatedVertices_def (G : SimpleGraph V) :
+    isolatedVertices G = Finset.univ.filter fun v ↦ ∀ w, ¬ G.Adj v w := by
+  rw [isolatedVertices]
+
 /-- The non-loop pairs incident to a vertex set `J`. -/
 def incidentEdges (J : Finset V) : Finset (Sym2 V) :=
   ((J ×ˢ (Finset.univ : Finset V)).image fun x : V × V ↦ s(x.1, x.2)).filter fun e ↦ ¬ e.IsDiag
+
+/-- The defining formula of `CKSD.incidentEdges`. -/
+theorem incidentEdges_def (J : Finset V) :
+    incidentEdges J =
+      ((J ×ˢ (Finset.univ : Finset V)).image fun x : V × V ↦ s(x.1, x.2)).filter
+        fun e ↦ ¬ e.IsDiag := by
+  rw [incidentEdges]
 
 /-- A vertex set `J` consists of isolated vertices exactly when no pair incident to `J` is an
 edge. -/
@@ -186,6 +203,13 @@ theorem le_card_incidentEdges (J : Finset V) :
 `Sⱼ = ∑_{|J| = j} P(J consists of isolated vertices)`. -/
 def isolatedMoment (p : I) (j : ℕ) : ℝ :=
   ∑ J ∈ Finset.powersetCard j (Finset.univ : Finset V), (1 - (p : ℝ)) ^ (incidentEdges J).card
+
+/-- The defining formula of `CKSD.isolatedMoment`. -/
+theorem isolatedMoment_def (p : I) (j : ℕ) :
+    isolatedMoment (V := V) p j =
+      ∑ J ∈ Finset.powersetCard j (Finset.univ : Finset V),
+        (1 - (p : ℝ)) ^ (incidentEdges J).card := by
+  rw [isolatedMoment]
 
 /-- The `j`-th binomial moment of the number of isolated vertices is `isolatedMoment p j`. -/
 theorem integral_choose_card_isolatedVertices (p : I) (j : ℕ) :
@@ -272,9 +296,21 @@ theorem binomialRandom_real_isolatedVertices_eq_empty_mul_le (p : I) :
 def internalPairs (S : Finset V) : Finset (Sym2 V) :=
   ((S ×ˢ S).image (fun x : V × V ↦ s(x.1, x.2))).filter fun e ↦ ¬ e.IsDiag
 
+omit [Fintype V] in
+/-- The defining formula of `CKSD.internalPairs`. -/
+theorem internalPairs_def (S : Finset V) :
+    internalPairs S =
+      ((S ×ˢ S).image (fun x : V × V ↦ s(x.1, x.2))).filter fun e ↦ ¬ e.IsDiag := by
+  rw [internalPairs]
+
 /-- The pairs joining `S` to its complement. -/
 def boundaryPairs (S : Finset V) : Finset (Sym2 V) :=
   (S ×ˢ Sᶜ).image (fun x : V × V ↦ s(x.1, x.2))
+
+/-- The defining formula of `CKSD.boundaryPairs`. -/
+theorem boundaryPairs_def (S : Finset V) :
+    boundaryPairs S = (S ×ˢ Sᶜ).image (fun x : V × V ↦ s(x.1, x.2)) := by
+  rw [boundaryPairs]
 
 omit [Fintype V] in
 /-- There are at most `|S|²` internal pairs. -/

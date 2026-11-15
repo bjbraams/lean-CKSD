@@ -1,8 +1,9 @@
 module
 
 public import CKSD.Inference.Model
-public import CKSD.Inference.NeymanPearson
-public import CKSD.Inference.Sufficiency
+import CKSD.Inference.NeymanPearson
+import CKSD.Inference.Sufficiency
+import CKSD.Inference.Density
 
 /-!
 # Unbiased tests, Neyman structure, and maximal invariants
@@ -30,7 +31,7 @@ asserted.
 
 * E. L. Lehmann and J. P. Romano, *Testing Statistical Hypotheses*, Sections 4.2, 4.3 and 6.2.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -385,7 +386,8 @@ theorem condExp_eq_const_of_isSimilarTest (P : Θ → Measure X) (hP : ∀ θ, I
     (P θ)[φ | (inferInstance : MeasurableSpace S).comap T] =ᵐ[P θ] fun _ ↦ α := by
   obtain ⟨hT, K, hKm, hK⟩ := hs
   obtain ⟨hφ, hsim⟩ := hsim'
-  replace hsim : ∀ θ, (∫ x, φ x ∂P θ) = α := fun θ ↦ hsim θ (mem_univ θ)
+  replace hsim : ∀ θ, (∫ x, φ x ∂P θ) = α := fun θ ↦
+    (testPower_def P φ θ).symm.trans (hsim θ (mem_univ θ))
   have hφb : ∀ x, |φ x| ≤ 1 := hφ.abs_le_one
   have hzero := ae_integral_kernel_eq_of_isBoundedlyCompleteStatistic P hP hT hc K hK hφ.1 hφb
     α hsim θ

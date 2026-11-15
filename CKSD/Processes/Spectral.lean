@@ -1,9 +1,9 @@
 module
 
 public import CKSD.Processes.Basic
-public import CKSD.Processes.FilteredPeriodogram
-public import Mathlib.Probability.Distributions.Exponential
-public import Mathlib.Analysis.Calculus.Gradient.Basic
+import CKSD.Processes.FilteredPeriodogram
+import Mathlib.Analysis.Calculus.Gradient.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 
 /-!
 # Spectral analysis of stationary processes
@@ -47,7 +47,7 @@ the Fourier transform of `F`.
   measure is the spectral measure of a mean-square continuous weakly stationary field.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

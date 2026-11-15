@@ -1,11 +1,9 @@
 module
 
-public import CKSD.Learning.Basic
 public import CKSD.Learning.RandomGraphs.Subcritical
 public import CKSD.Learning.RandomGraphs.ConnectivityThreshold
-public import Mathlib.Probability.Combinatorics.BinomialRandomGraph.Defs
-public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
-public import TauCeti.Combinatorics.DenseGraphLimits.ExchangeableGraphLaw.Infinite.Mixture
+import TauCeti.Combinatorics.DenseGraphLimits.ExchangeableGraphLaw.Infinite.Mixture
+public import TauCeti.Combinatorics.DenseGraphLimits.ExchangeableGraphLaw.Infinite.Sampling
 
 /-!
 # Block models, binomial random graphs, and exchangeable graphs
@@ -24,7 +22,7 @@ of `ℕ` are TauCeti's (`TauCeti.DenseGraphLimits`).
 Sources: GAPS 107.41, 107.42, 107.43, and 107.47.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

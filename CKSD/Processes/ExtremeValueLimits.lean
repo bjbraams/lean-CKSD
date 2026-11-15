@@ -1,10 +1,12 @@
 module
 
-public import CKSD.Processes.Extremes
-public import TauCeti.Probability.Distributions.OrderStatistic.Basic
-public import TauCeti.Probability.Distributions.GeneralizedExtremeValue.Cdf
-public import TauCeti.Probability.Distributions.GeneralizedPareto.Cdf
-public import TauCeti.Probability.Distributions.GeneralizedPareto.Threshold
+import CKSD.Processes.Extremes
+import TauCeti.Probability.Distributions.GeneralizedPareto.Threshold
+public import CKSD.Inference.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Real
+public import TauCeti.Probability.Distributions.GeneralizedPareto.Basic
+import TauCeti.Data.Fin.Tuple.OrderStatistic
+import TauCeti.Probability.Distributions.GeneralizedExtremeValue.Basic
 
 /-!
 # Threshold excesses and the Hill estimator
@@ -37,7 +39,7 @@ allowed.
   laws, from TauCeti.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

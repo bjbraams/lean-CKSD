@@ -1,7 +1,7 @@
 module
 
-public import CKSD.Processes.Basic
-public import Mathlib.Analysis.Normed.Group.Tannery
+import Mathlib.Analysis.Normed.Group.Tannery
+public import CKSD.Inference.Basic
 
 /-!
 # Long-run variance of a sample mean
@@ -22,7 +22,7 @@ tend to `1`, and passes to the limit by Tannery's theorem.
 * `CKSD.tendsto_mul_variance_sampleAverage` (GAPS 106.12): `n Var(X̄_n) → ∑_h γ(h)`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

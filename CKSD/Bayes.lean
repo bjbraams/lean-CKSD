@@ -1,31 +1,34 @@
-module
+module -- shake: keep-all
 
-public import CKSD.Bayes.TestingBounds
+public import CKSD.Bayes.Diffusion.TotalVariation
 public import CKSD.Bayes.Bridges
 public import CKSD.Bayes.Nonparametric
-public import CKSD.Bayes.ParticleFilter
-public import CKSD.Bayes.Diffusion
+public import CKSD.Bayes.Particle
+public import CKSD.Bayes.Diffusion.Basic
 public import CKSD.Bayes.PolyaUrn
 public import CKSD.Bayes.PosteriorContraction
 public import CKSD.Bayes.ExponentialTests
-public import CKSD.Bayes.EvidenceBounds
-public import CKSD.Bayes.ParticleLimits
-public import CKSD.Bayes.ParticleFluctuations
-public import CKSD.Bayes.ParticleCentralLimit
-public import CKSD.Bayes.Posterior
-public import CKSD.Bayes.MonteCarlo
-public import CKSD.Bayes.MarkovChainCLT
+public import CKSD.Bayes.Evidence.Bounds
+public import CKSD.Bayes.Posterior.Basic
+public import CKSD.Bayes.Posterior.BernsteinVonMises
+public import CKSD.Bayes.Posterior.Laplace
+public import CKSD.Bayes.MonteCarlo.MetropolisHastings
+public import CKSD.Bayes.MonteCarlo.MarkovChainCLT
 public import CKSD.Bayes.Dynamics
-public import CKSD.Bayes.StickBreaking
-public import CKSD.Bayes.DirichletConjugacy
-public import CKSD.Bayes.DirichletProcess
+public import CKSD.Bayes.Dirichlet.StickBreaking
+public import CKSD.Bayes.Dirichlet.Conjugacy
+public import CKSD.Bayes.Dirichlet.Process
 public import CKSD.Bayes.InverseProblems
-public import CKSD.Bayes.LangevinSampling
+public import CKSD.Bayes.Langevin.Sampling
 public import CKSD.Bayes.FunctionalInequalities
-public import CKSD.Bayes.KineticLangevin
+public import CKSD.Bayes.Langevin.Kinetic
+public import CKSD.Bayes.Langevin.Hamiltonian.Leapfrog
 public import CKSD.Bayes.StochasticApproximation
 public import CKSD.Bayes.MeanField
-public import CKSD.Bayes.DiffusionModels
+public import CKSD.Bayes.Diffusion.Models
+public import CKSD.Bayes.Diffusion.IntegralRegularity
+public import CKSD.Bayes.Diffusion.PathRegularity
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 
 /-!
 # Section 104: Bayesian statistics and computation

@@ -1,7 +1,7 @@
 module
 
 public import CKSD.Geometry.MatrixReduction.Filtered
-public import CKSD.Geometry.FiniteCombinatorics
+import CKSD.Geometry.FiniteCombinatorics
 
 /-!
 # Persistent Betti numbers from a reduced boundary matrix
@@ -16,7 +16,7 @@ filtered boundary matrix, including the unpaired essential classes.
   (GAPS 108.32).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -29,7 +29,7 @@ attribute [local instance] Classical.propDecidable
 variable {𝕜 : Type*} [Field 𝕜] {m : ℕ}
 
 /-- Rank–nullity for the restriction of a linear map to a subspace. -/
-theorem Submodule.finrank_map_add_finrank_inf_ker {V W : Type*} [AddCommGroup V] [Module 𝕜 V]
+theorem finrank_map_add_finrank_inf_ker {V W : Type*} [AddCommGroup V] [Module 𝕜 V]
     [FiniteDimensional 𝕜 V] [AddCommGroup W] [Module 𝕜 W] (f : V →ₗ[𝕜] W) (p : Submodule 𝕜 V) :
     finrank 𝕜 (p.map f) + finrank 𝕜 ↥(p ⊓ LinearMap.ker f) = finrank 𝕜 p := by
   have h := LinearMap.finrank_range_add_finrank_ker (f.domRestrict p)
@@ -77,7 +77,7 @@ theorem map_filteredChains_eq_range (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin
   rw [filteredChains_eq_range, ← LinearMap.range_comp, ← Matrix.mulVecLin_mul]
   congr 2
   ext k l
-  simp only [mul_diagonal, lowerLeftPart, dimColumnPart, of_apply, zero_le, true_and]
+  simp only [mul_diagonal, lowerLeftPart_apply, dimColumnPart, of_apply, zero_le, true_and]
   by_cases h1 : l.val < a <;> by_cases h2 : dim l = p <;> simp [h1, h2]
 
 /-- Dimension of the cycles of the subcomplex formed by the first `a` simplices. -/
@@ -85,11 +85,11 @@ theorem finrank_filteredCycles_add (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin 
     (p a : ℕ) :
     finrank 𝕜 (filteredCycles D dim p a) + lowerLeftRank (dimColumnPart D dim p) 0 a =
       (Finset.univ.filter fun k : Fin m ↦ k.val < a ∧ dim k = p).card := by
-  have h := Submodule.finrank_map_add_finrank_inf_ker D.mulVecLin (filteredChains (𝕜 := 𝕜) dim p a)
+  have h := finrank_map_add_finrank_inf_ker D.mulVecLin (filteredChains (𝕜 := 𝕜) dim p a)
   rw [map_filteredChains_eq_range] at h
   have h2 : filteredCycles D dim p a = filteredChains dim p a ⊓ LinearMap.ker D.mulVecLin := rfl
   rw [← finrank_filteredChains (𝕜 := 𝕜), h2]
-  unfold lowerLeftRank Matrix.rank
+  simp only [lowerLeftRank_def]; unfold Matrix.rank
   omega
 
 /-- Dimension of the cycles of `K_a` that bound in `K_b`. -/
@@ -130,19 +130,19 @@ theorem finrank_filteredCycles_inf_filteredBoundaries_add {D : Matrix (Fin m) (F
         exact hk this
       · simp only [Matrix.mulVecLin_apply, mulVec_mulVec,
           hD.mul_self_eq_zero, zero_mulVec]
-  have h := Submodule.finrank_map_add_finrank_inf_ker Pa.mulVecLin B
+  have h := finrank_map_add_finrank_inf_ker Pa.mulVecLin B
   rw [← hinf] at h
   have hmap : B.map Pa.mulVecLin =
       LinearMap.range (lowerLeftPart (dimColumnPart D dim (p + 1)) a b).mulVecLin := by
     rw [hB, ← LinearMap.range_comp, ← Matrix.mulVecLin_mul]
     congr 2
     ext k l
-    simp only [Pa, diagonal_mul, lowerLeftPart, dimColumnPart, of_apply, zero_le, true_and]
+    simp only [Pa, diagonal_mul, lowerLeftPart_apply, dimColumnPart, of_apply, zero_le, true_and]
     by_cases h1 : a ≤ k.val <;> simp [h1]
   have hfB : finrank 𝕜 B = (lowerLeftPart (dimColumnPart D dim (p + 1)) 0 b).rank := by
     rw [hB]; rfl
   rw [hmap, ← Matrix.rank] at h
-  unfold lowerLeftRank
+  simp only [lowerLeftRank_def]
   omega
 
 /-- A statement about the low of a column can be read off at any low of that column. -/
@@ -267,7 +267,7 @@ theorem persistentBettiOfMatrix_eq_card {D R V : Matrix (Fin m) (Fin m) 𝕜}
       obtain ⟨-, -, i', ha', hi'⟩ := hS
       have : a ≤ i.val := by rw [hi.unique hi']; exact ha'
       omega)
-  unfold persistentBettiOfMatrix
+  simp only [persistentBettiOfMatrix_def]
   omega
 
 /-- If `low_R(j) = i`, adding `σ_i` raises the Betti number in its dimension: `σ_i` is

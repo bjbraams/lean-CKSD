@@ -1,6 +1,8 @@
 module
 
-public import CKSD.Asymptotics.QMDReference
+public import CKSD.Asymptotics.Basic
+public import CKSD.Asymptotics.Statistics
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 
 /-!
 # Semiparametric efficiency and adaptation
@@ -18,7 +20,7 @@ density. Sources: GAPS 102.34 and 102.41. Cross-fitted estimation of a missing m
 (GAPS 102.39) is in `CKSD.Asymptotics.CrossFitting`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -34,8 +36,7 @@ theorem efficientScore_eq_self_of_inner_eq_zero {X : Type*} [MeasurableSpace X] 
     (scores : Set (Lp ℝ 2 P)) (s : Lp ℝ 2 P) (h : ∀ g ∈ scores, inner ℝ g s = 0) :
     efficientScore P scores s = s := by
   have hmem : s ∈ ((nuisanceTangentSpace P scores).toSubmodule)ᗮ := by
-    -- `change` unfolds the structure `nuisanceTangentSpace`, which has no simp lemma.
-    change s ∈ ((Submodule.span ℝ scores).topologicalClosure)ᗮ
+    rw [toSubmodule_nuisanceTangentSpace]
     rw [Submodule.orthogonal_closure, Submodule.mem_orthogonal]
     intro u hu
     induction hu using Submodule.span_induction with
@@ -43,8 +44,7 @@ theorem efficientScore_eq_self_of_inner_eq_zero {X : Type*} [MeasurableSpace X] 
     | zero => simp
     | add x y _ _ hx hy => rw [inner_add_left, hx, hy, add_zero]
     | smul a x _ hx => rw [inner_smul_left, hx, mul_zero]
-  unfold efficientScore
-  rw [(Submodule.starProjection_apply_eq_zero_iff _).mpr hmem, sub_zero]
+  rw [efficientScore_def, (Submodule.starProjection_apply_eq_zero_iff _).mpr hmem, sub_zero]
 
 
 /-- Efficient information matrix `Ĩ_ij = ⟨ℓ̃_i, ℓ̃_j⟩` of a vector of `L²` scores, where `ℓ̃`
@@ -240,7 +240,7 @@ theorem efficientScore_locationScore_eq {η η' : ℝ → ℝ}
     rw [integral_congr_ae hFae', integral_neg] at hint
     linarith
   refine ⟨heff, ?_⟩
-  rw [efficientInformation, heff, ← real_inner_self_eq_norm_sq, MeasureTheory.L2.inner_def]
+  rw [efficientInformation_def, heff, ← real_inner_self_eq_norm_sq, MeasureTheory.L2.inner_def]
   have h1 : (fun x ↦ inner ℝ ((hs.toLp _ : Lp ℝ 2 P) x) ((hs.toLp _ : Lp ℝ 2 P) x))
       =ᵐ[P] fun x ↦ locationScore η η' θ x ^ 2 := by
     filter_upwards [hs.coeFn_toLp] with x hx

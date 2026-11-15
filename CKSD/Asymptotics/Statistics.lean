@@ -1,7 +1,10 @@
 module
 
-public import CKSD.Asymptotics.Framework
 public import Statlib.Inference.QMD
+public import Mathlib.MeasureTheory.Function.L2Space
+import CKSD.Inference.Basic
+import Mathlib.Analysis.CStarAlgebra.Matrix
+import Mathlib.Probability.Distributions.Gaussian.Real
 
 /-!
 # Statistical functionals, cross-fitting, and resampling
@@ -13,7 +16,7 @@ definitions.
 Sources: GAPS 102.11, 102.24–102.25, 102.34, 102.39–102.60.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -35,15 +38,33 @@ def nuisanceTangentSpace {X : Type*} [MeasurableSpace X] (P : Measure X)
   __ := (Submodule.span ℝ scores).topologicalClosure
   isClosed' := (Submodule.span ℝ scores).isClosed_topologicalClosure
 
+/-- The nuisance tangent space is the closed linear span of the nuisance scores. -/
+theorem toSubmodule_nuisanceTangentSpace {X : Type*} [MeasurableSpace X] (P : Measure X)
+    (scores : Set (Lp ℝ 2 P)) :
+    (nuisanceTangentSpace P scores).toSubmodule = (Submodule.span ℝ scores).topologicalClosure := by
+  unfold nuisanceTangentSpace; rfl
+
 /-- Efficient score as the residual after projecting out the nuisance tangent space. -/
 def efficientScore {X : Type*} [MeasurableSpace X] (P : Measure X)
     (scores : Set (Lp ℝ 2 P)) (score : Lp ℝ 2 P) : Lp ℝ 2 P :=
   score - (nuisanceTangentSpace P scores).toSubmodule.starProjection score
 
+/-- The efficient score is the score minus its projection on the nuisance tangent space. -/
+theorem efficientScore_def {X : Type*} [MeasurableSpace X] (P : Measure X)
+    (scores : Set (Lp ℝ 2 P)) (score : Lp ℝ 2 P) : efficientScore P scores score =
+      score - (nuisanceTangentSpace P scores).toSubmodule.starProjection score := by
+  rw [efficientScore]
+
 /-- Efficient information for a scalar score. -/
 def efficientInformation {X : Type*} [MeasurableSpace X] (P : Measure X)
     (scores : Set (Lp ℝ 2 P)) (score : Lp ℝ 2 P) : ℝ :=
   ‖efficientScore P scores score‖ ^ 2
+
+/-- The efficient information is the squared norm of the efficient score. -/
+theorem efficientInformation_def {X : Type*} [MeasurableSpace X] (P : Measure X)
+    (scores : Set (Lp ℝ 2 P)) (score : Lp ℝ 2 P) :
+    efficientInformation P scores score = ‖efficientScore P scores score‖ ^ 2 := by
+  rw [efficientInformation]
 
 /-- Contamination path for a probability law and one contaminating observation. -/
 def contaminationLaw {X : Type*} [MeasurableSpace X] (P : Measure X) (x : X) (ε : ℝ) : Measure X :=
@@ -58,13 +79,19 @@ def influenceFunction {X : Type*} [MeasurableSpace X]
 def missingMeanScore {X : Type*} (m π : X → ℝ) (x : X) (observed : Bool) (y : ℝ) : ℝ :=
   m x + if observed then (y - m x) / π x else 0
 
+/-- Unfolding of the augmented inverse-probability score. -/
+theorem missingMeanScore_def {X : Type*} (m π : X → ℝ) (x : X) (observed : Bool) (y : ℝ) :
+    missingMeanScore m π x observed y = m x + if observed = true then (y - m x) / π x else 0 := by
+  rw [missingMeanScore]
+
 /-- A finite partition of a sample into labeled folds. Empty folds are allowed in the definition. -/
 structure SampleSplit (n K : ℕ) where
   /-- Fold label of each observation. -/
   fold : Fin n → Fin K
 
 /-- Training indices for a fold are all indices outside that fold. -/
-def SampleSplit.trainingIndices {n K : ℕ} (split : SampleSplit n K) (k : Fin K) : Set (Fin n) :=
+@[expose] def SampleSplit.trainingIndices {n K : ℕ} (split : SampleSplit n K) (k : Fin K) :
+    Set (Fin n) :=
   {i | split.fold i ≠ k}
 
 /-- Cross-fitted average with nuisance estimates trained exclusively on the other folds. -/
@@ -73,13 +100,30 @@ def crossFittedAverage {X H : Type*} {n K : ℕ} (split : SampleSplit n K)
     (score : H → X → ℝ) (x : Fin n → X) : ℝ :=
   (∑ i, score (train (split.fold i) (fun j ↦ x j.val)) (x i)) / n
 
+/-- The cross-fitted average is the mean of the scores with out-of-fold nuisance estimates. -/
+theorem crossFittedAverage_def {X H : Type*} {n K : ℕ} (split : SampleSplit n K)
+    (train : ∀ k : Fin K, (split.trainingIndices k → X) → H) (score : H → X → ℝ)
+    (x : Fin n → X) : crossFittedAverage split train score x =
+      (∑ i, score (train (split.fold i) (fun j ↦ x j.val)) (x i)) / n := by
+  rw [crossFittedAverage]
+
 /-- Log likelihood of a finite iid sample with a given single-observation density. -/
 def sampleLogLikelihood {Θ X : Type*} {n : ℕ} (f : Θ → X → ℝ)
     (x : Fin n → X) (θ : Θ) : ℝ := ∑ i, Real.log (f θ (x i))
 
+/-- The sample log likelihood is the sum of the log densities of the observations. -/
+theorem sampleLogLikelihood_def {Θ X : Type*} {n : ℕ} (f : Θ → X → ℝ) (x : Fin n → X) (θ : Θ) :
+    sampleLogLikelihood f x θ = ∑ i, Real.log (f θ (x i)) := by
+  rw [sampleLogLikelihood]
+
 /-- Likelihood-ratio statistic comparing two specified log-likelihood values. -/
 def likelihoodRatioStatistic (unrestricted restricted : ℝ) : ℝ :=
   2 * (unrestricted - restricted)
+
+/-- The likelihood-ratio statistic is twice the difference of the log likelihoods. -/
+theorem likelihoodRatioStatistic_def (unrestricted restricted : ℝ) :
+    likelihoodRatioStatistic unrestricted restricted = 2 * (unrestricted - restricted) := by
+  rw [likelihoodRatioStatistic]
 
 /-- Wald quadratic statistic with the estimated covariance of the parameter estimate. -/
 def waldStatistic {d : ℕ} (estimate target : EuclideanSpace ℝ (Fin d))

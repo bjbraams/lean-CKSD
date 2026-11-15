@@ -1,7 +1,9 @@
 module
 
-public import CKSD.Nonparametric.EmpiricalCovariance
-public import Mathlib.Probability.ProductMeasure
+import CKSD.Nonparametric.EmpiricalCovariance
+import Mathlib.Probability.ProductMeasure
+public import Mathlib.Analysis.Real.Sqrt
+public import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
 
 /-!
 # The Tracy–Widom law and the spiked covariance transition
@@ -28,7 +30,7 @@ Source: GAPS 103.38.
   Analysis*, Cambridge University Press, 2015.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

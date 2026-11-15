@@ -1,5 +1,8 @@
 module
 
+public import Mathlib.Analysis.InnerProductSpace.Basic
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+import TauCeti.Probability.McDiarmid
 public import CKSD.Learning.Generalization.Concentration
 
 /-!
@@ -19,7 +22,7 @@ losses, following Bousquet and Elisseeff. A learning algorithm is represented by
   bound (GAPS 107.12).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

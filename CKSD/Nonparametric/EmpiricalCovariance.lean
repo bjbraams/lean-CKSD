@@ -1,6 +1,9 @@
 module
 
 public import CKSD.Nonparametric.EmpiricalCovariance.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Real
+import CKSD.Asymptotics.Basic
+import CKSD.Nonparametric.Basic
 
 /-!
 # Empirical covariance and simple leading principal components
@@ -34,7 +37,7 @@ Source: GAPS 103.30.
   to Linear Operators*, Wiley, 2015.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -54,7 +57,7 @@ def leadingRayleighValue {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ) : ℝ :=
 private theorem abs_inner_toEuclideanCLM_le {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ)
     (x y : EuclideanSpace ℝ (Fin d)) :
     |inner ℝ x (Matrix.toEuclideanCLM (𝕜 := ℝ) A y)| ≤ entrySum A * (‖x‖ * ‖y‖) := by
-  rw [inner_toEuclideanCLM_eq_sum, entrySum, Finset.sum_mul]
+  rw [inner_toEuclideanCLM_eq_sum, entrySum_def, Finset.sum_mul]
   refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun i _ ↦ ?_)
   rw [Finset.sum_mul]
   refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun j _ ↦ ?_)
@@ -91,7 +94,7 @@ private theorem rayleigh_perturbation_le {d : ℕ} {S E : Matrix (Fin d) (Fin d)
   set Sf := Matrix.toEuclideanCLM (𝕜 := ℝ) S
   set F := Matrix.toEuclideanCLM (𝕜 := ℝ) E
   set ε := entrySum E
-  have hε0 : 0 ≤ ε := Finset.sum_nonneg fun i _ ↦ Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+  have hε0 : 0 ≤ ε := entrySum_nonneg _
   have hvv : inner ℝ v v = (1 : ℝ) := by rw [real_inner_self_eq_norm_sq, hv]; norm_num
   have hbv : inner ℝ b v = (0 : ℝ) := by
     simp only [b, inner_sub_left, real_inner_smul_left, hvv, mul_one, a, sub_self]
@@ -195,13 +198,13 @@ private theorem leadingRayleighValue_le_add {d : ℕ} (A B : Matrix (Fin d) (Fin
     have hA := leadingRayleighValue_eq_zero hne A
     have hB := leadingRayleighValue_eq_zero hne B
     rw [hA, hB, zero_add]
-    exact Finset.sum_nonneg fun i _ ↦ Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+    exact entrySum_nonneg _
 
 /-- The leading Rayleigh value is a continuous function of the matrix. -/
 private theorem continuous_leadingRayleighValue (d : ℕ) :
     Continuous (leadingRayleighValue (d := d)) := by
   have hes : Continuous (fun A : Matrix (Fin d) (Fin d) ℝ ↦ entrySum A) := by
-    unfold entrySum
+    simp only [entrySum_def]
     exact continuous_finsetSum _ fun i _ ↦ continuous_finsetSum _ fun j _ ↦
       ((continuous_apply j).comp (continuous_apply i)).abs
   rw [continuous_iff_continuousAt]
@@ -212,13 +215,13 @@ private theorem continuous_leadingRayleighValue (d : ℕ) :
     have h1 := leadingRayleighValue_le_add B A
     have h2 := leadingRayleighValue_le_add A B
     have e : entrySum (A - B) = entrySum (B - A) := by
-      unfold entrySum
+      simp only [entrySum_def]
       refine Finset.sum_congr rfl fun i _ ↦ Finset.sum_congr rfl fun j _ ↦ ?_
       rw [Matrix.sub_apply, Matrix.sub_apply, abs_sub_comm]
     constructor <;> linarith
   · have : Continuous fun B : Matrix (Fin d) (Fin d) ℝ ↦ entrySum (B - A) :=
       hes.comp (continuous_id.sub continuous_const)
-    simpa [entrySum] using this.tendsto A
+    simpa [entrySum_def] using this.tendsto A
 
 /-- Leading eigenvalue perturbation: under the hypotheses of `rayleigh_perturbation_le`, the
 leading Rayleigh value of `A` exceeds `⟪v, A v⟫` by at most `2 ε² / gap`, `ε = ∑ |(A - S)ᵢⱼ|`. -/
@@ -264,7 +267,7 @@ private theorem norm_sub_le_of_inner_le {d : ℕ} {S A : Matrix (Fin d) (Fin d) 
   set β := ‖b‖
   set ε := entrySum (A - S)
   have hβ0 : 0 ≤ β := norm_nonneg _
-  have hε0 : 0 ≤ ε := Finset.sum_nonneg fun i _ ↦ Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+  have hε0 : 0 ≤ ε := entrySum_nonneg _
   have hβ : β ≤ 4 * ε / gap := by
     rw [le_div_iff₀ hgap]
     by_contra hc
@@ -412,7 +415,7 @@ theorem leading_empirical_covariance_eigenvalue_asymptotics
       rw [show (n : ℝ)⁻¹ = (Real.sqrt n)⁻¹ * (Real.sqrt n)⁻¹ by
         rw [← mul_inv, Real.mul_self_sqrt hnR.le]]
       field_simp
-    simp only [quadStat, sampleProdMean, ← mul_assoc, hs]
+    simp only [quadStat_def, sampleProdMean_def, ← mul_assoc, hs]
     simp only [Finset.mul_sum, Finset.sum_mul]
     rw [Finset.sum_comm]
     refine Finset.sum_congr rfl fun x _ ↦ ?_
@@ -468,8 +471,7 @@ theorem isBoundedInProbability_leading_empirical_eigenvector_error
     exact le_leadingRayleighValue A hv
   have h := norm_sub_le_of_inner_le hS hv hgap heig hother hε (hwunit n ω) (hsign n ω) hlead
   have hsq : 0 ≤ Real.sqrt n := Real.sqrt_nonneg _
-  have hes : 0 ≤ entrySum (A - euclideanCovarianceMatrix P) :=
-    Finset.sum_nonneg fun i _ ↦ Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+  have hes : 0 ≤ entrySum (A - euclideanCovarianceMatrix P) := entrySum_nonneg _
   rw [abs_of_nonneg (mul_nonneg hsq (norm_nonneg _)), abs_of_nonneg (mul_nonneg hsq hes)]
   calc Real.sqrt n * ‖w n ω - v‖ ≤ Real.sqrt n * (8 * entrySum (A - euclideanCovarianceMatrix P) /
         gap) := mul_le_mul_of_nonneg_left h hsq
@@ -480,14 +482,14 @@ theorem isBoundedInProbability_leading_empirical_eigenvector_error
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (ω : Ω) :
     empiricalCovarianceMatrix X 0 ω = 0 := by
   ext i j
-  simp [empiricalCovarianceMatrix]
+  simp [empiricalCovarianceMatrix_apply]
 
 /-- An empirical covariance matrix is symmetric, for every sample including the empty one. -/
 theorem empiricalCovarianceMatrix_isSymm {Ω : Type*} {d : ℕ}
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (n : ℕ) (ω : Ω) :
     (empiricalCovarianceMatrix X n ω).IsSymm := by
   ext i j
-  simp only [Matrix.transpose_apply, empiricalCovarianceMatrix]
+  simp only [Matrix.transpose_apply, empiricalCovarianceMatrix_apply]
   congr 1
   apply Finset.sum_congr rfl
   intro k _

@@ -1,10 +1,10 @@
 module
 
-public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
-public import Mathlib.MeasureTheory.Measure.LevyConvergence
+import Mathlib.MeasureTheory.Measure.LevyConvergence
 public import Mathlib.Probability.Distributions.Gaussian.Real
-public import Mathlib.Probability.Independence.CharacteristicFunction
+import Mathlib.Probability.Independence.CharacteristicFunction
 import TauCeti.Algebra.Order.BigOperators.ProdSubProd
+public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
 
 /-!
 # The Lindeberg–Feller central limit theorem
@@ -38,7 +38,7 @@ row sum with `exp (-(∑ σ²) t² / 2)`, and Lévy's continuity theorem
 * P. Billingsley, *Probability and Measure*, 3rd ed., Wiley, 1995, Theorem 27.2.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

@@ -15,11 +15,11 @@ reductions with the grading (used for GAPS 108.32).
 
 ## Main results
 
-* `CKSD.Matrix.rank_add_of_disjoint_supports`, `CKSD.lowerLeftRank_eq_add_dimColumnPart`.
+* `CKSD.rank_add_of_disjoint_supports`, `CKSD.lowerLeftRank_eq_add_dimColumnPart`.
 * `CKSD.IsColumnLow.dim_eq`, `CKSD.IsColumnLow.col_eq_zero`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -41,7 +41,7 @@ structure IsFilteredBoundaryMatrix (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin 
   lt_and_dim_of_ne_zero : ∀ i j, D i j ≠ 0 → i < j ∧ dim i + 1 = dim j
 
 /-- Chains of dimension `p` of the subcomplex formed by the first `a` simplices. -/
-def filteredChains (dim : Fin m → ℕ) (p a : ℕ) : Submodule 𝕜 (Fin m → 𝕜) where
+@[expose] def filteredChains (dim : Fin m → ℕ) (p a : ℕ) : Submodule 𝕜 (Fin m → 𝕜) where
   carrier := {c | ∀ k, c k ≠ 0 → k.val < a ∧ dim k = p}
   zero_mem' := by simp
   add_mem' := by
@@ -54,12 +54,12 @@ def filteredChains (dim : Fin m → ℕ) (p a : ℕ) : Submodule 𝕜 (Fin m →
     exact hc k (right_ne_zero_of_mul (by simpa using hk))
 
 /-- Cycles of dimension `p` of the subcomplex formed by the first `a` simplices. -/
-def filteredCycles (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (p a : ℕ) :
+@[expose] def filteredCycles (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (p a : ℕ) :
     Submodule 𝕜 (Fin m → 𝕜) :=
   filteredChains dim p a ⊓ LinearMap.ker D.mulVecLin
 
 /-- Boundaries of dimension `p` of the subcomplex formed by the first `b` simplices. -/
-def filteredBoundaries (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (p b : ℕ) :
+@[expose] def filteredBoundaries (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (p b : ℕ) :
     Submodule 𝕜 (Fin m → 𝕜) :=
   (filteredChains dim (p + 1) b).map D.mulVecLin
 
@@ -70,8 +70,15 @@ def persistentBettiOfMatrix (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → �
   finrank 𝕜 (filteredCycles D dim p a) -
     finrank 𝕜 ↥(filteredCycles D dim p a ⊓ filteredBoundaries D dim p b)
 
+/-- The defining formula of `CKSD.persistentBettiOfMatrix`. -/
+theorem persistentBettiOfMatrix_def (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ)
+    (p a b : ℕ) :
+    persistentBettiOfMatrix D dim p a b = finrank 𝕜 (filteredCycles D dim p a) -
+      finrank 𝕜 ↥(filteredCycles D dim p a ⊓ filteredBoundaries D dim p b) := by
+  rw [persistentBettiOfMatrix]
+
 /-- Matrices with disjoint row supports and disjoint column supports have additive rank. -/
-theorem Matrix.rank_add_of_disjoint_supports {A B : Matrix (Fin m) (Fin m) 𝕜}
+theorem rank_add_of_disjoint_supports {A B : Matrix (Fin m) (Fin m) 𝕜}
     (hcol : ∀ k l, A k l ≠ 0 → ∀ k', B k' l = 0) (hrow : ∀ k l, A k l ≠ 0 → ∀ l', B k l' = 0) :
     (A + B).rank = A.rank + B.rank := by
   classical
@@ -124,12 +131,12 @@ theorem Matrix.rank_add_of_disjoint_supports {A B : Matrix (Fin m) (Fin m) 𝕜}
   rw [hsup, ← Submodule.finrank_sup_add_finrank_inf_eq, hinf, finrank_bot, add_zero]
 
 /-- The part of `D` in the columns of dimension `q`. -/
-def dimColumnPart (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (q : ℕ) :
+@[expose] def dimColumnPart (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (q : ℕ) :
     Matrix (Fin m) (Fin m) 𝕜 :=
   Matrix.of fun k l ↦ if dim l = q then D k l else 0
 
 /-- The part of `D` in the columns of dimension other than `q`. -/
-def dimColumnPartCompl (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (q : ℕ) :
+@[expose] def dimColumnPartCompl (D : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (q : ℕ) :
     Matrix (Fin m) (Fin m) 𝕜 :=
   Matrix.of fun k l ↦ if dim l = q then 0 else D k l
 
@@ -140,19 +147,20 @@ theorem lowerLeftRank_eq_add_dimColumnPart {D : Matrix (Fin m) (Fin m) 𝕜} {di
     lowerLeftRank D a b =
       lowerLeftRank (dimColumnPart D dim q) a b +
         lowerLeftRank (dimColumnPartCompl D dim q) a b := by
-  unfold lowerLeftRank
+  simp only [lowerLeftRank_def]
   have hsum : lowerLeftPart D a b = lowerLeftPart (dimColumnPart D dim q) a b +
       lowerLeftPart (dimColumnPartCompl D dim q) a b := by
     ext k l
-    simp only [lowerLeftPart, dimColumnPart, dimColumnPartCompl, of_apply]
+    simp only [Matrix.add_apply, lowerLeftPart_apply, dimColumnPart, dimColumnPartCompl,
+      of_apply]
     by_cases h1 : a ≤ k.val ∧ l.val < b <;> by_cases h2 : dim l = q <;> simp [h1, h2]
   rw [hsum]
-  apply Matrix.rank_add_of_disjoint_supports
+  apply rank_add_of_disjoint_supports
   · intro k l hkl k'
-    simp only [lowerLeftPart, dimColumnPart, dimColumnPartCompl, of_apply] at hkl ⊢
+    simp only [lowerLeftPart_apply, dimColumnPart, dimColumnPartCompl, of_apply] at hkl ⊢
     split_ifs at hkl ⊢ <;> simp_all
   · intro k l hkl l'
-    simp only [lowerLeftPart, dimColumnPart, dimColumnPartCompl, of_apply] at hkl ⊢
+    simp only [lowerLeftPart_apply, dimColumnPart, dimColumnPartCompl, of_apply] at hkl ⊢
     split_ifs at hkl ⊢ with h1 h2 h3 h4 h5 <;> simp_all
     by_contra hne
     have e1 := hD k l (by simpa [h2] using hkl)
@@ -162,10 +170,10 @@ theorem lowerLeftRank_eq_add_dimColumnPart {D : Matrix (Fin m) (Fin m) 𝕜} {di
 /-- Adding a zero column does not change lower-left ranks. -/
 theorem lowerLeftRank_succ_of_col_eq_zero {M : Matrix (Fin m) (Fin m) 𝕜} {l : Fin m}
     (hl : ∀ k, M k l = 0) (a : ℕ) : lowerLeftRank M a (l.val + 1) = lowerLeftRank M a l.val := by
-  unfold lowerLeftRank
+  simp only [lowerLeftRank_def]
   congr 1
   ext k l'
-  simp only [lowerLeftPart, of_apply]
+  simp only [lowerLeftPart_apply]
   by_cases h : l' = l
   · subst h; simp [hl]
   · have : l'.val < l.val + 1 ↔ l'.val < l.val := by
@@ -176,10 +184,10 @@ theorem lowerLeftRank_succ_of_col_eq_zero {M : Matrix (Fin m) (Fin m) 𝕜} {l :
 /-- Adding a zero row does not change lower-left ranks. -/
 theorem lowerLeftRank_of_row_eq_zero {M : Matrix (Fin m) (Fin m) 𝕜} {k : Fin m}
     (hk : ∀ l, M k l = 0) (b : ℕ) : lowerLeftRank M k.val b = lowerLeftRank M (k.val + 1) b := by
-  unfold lowerLeftRank
+  simp only [lowerLeftRank_def]
   congr 1
   ext k' l
-  simp only [lowerLeftPart, of_apply]
+  simp only [lowerLeftPart_apply]
   by_cases h : k' = k
   · subst h; simp [hk]
   · have : k.val ≤ k'.val ↔ k.val + 1 ≤ k'.val := by
@@ -190,14 +198,14 @@ theorem lowerLeftRank_of_row_eq_zero {M : Matrix (Fin m) (Fin m) 𝕜} {k : Fin 
 /-- The pairing combination vanishes at a zero column. -/
 theorem pairingRankCombination_eq_zero_of_col {M : Matrix (Fin m) (Fin m) 𝕜} {i l : Fin m}
     (hl : ∀ k, M k l = 0) : pairingRankCombination M i l = 0 := by
-  unfold pairingRankCombination
+  simp only [pairingRankCombination_def]
   rw [lowerLeftRank_succ_of_col_eq_zero hl, lowerLeftRank_succ_of_col_eq_zero hl]
   ring
 
 /-- The pairing combination vanishes at a zero row. -/
 theorem pairingRankCombination_eq_zero_of_row {M : Matrix (Fin m) (Fin m) 𝕜} {i l : Fin m}
     (hi : ∀ k, M i k = 0) : pairingRankCombination M i l = 0 := by
-  unfold pairingRankCombination
+  simp only [pairingRankCombination_def]
   rw [lowerLeftRank_of_row_eq_zero hi, lowerLeftRank_of_row_eq_zero hi]
   ring
 
@@ -211,7 +219,7 @@ theorem IsColumnLow.dim_eq {D R V : Matrix (Fin m) (Fin m) 𝕜} {dim : Fin m �
   have hsplit : pairingRankCombination D i j =
       pairingRankCombination (dimColumnPart D dim (dim j)) i j +
         pairingRankCombination (dimColumnPartCompl D dim (dim j)) i j := by
-    unfold pairingRankCombination
+    simp only [pairingRankCombination_def]
     simp only [lowerLeftRank_eq_add_dimColumnPart hD (dim j)]
     push_cast
     ring
@@ -245,13 +253,13 @@ theorem IsColumnLow.lt {D R V : Matrix (Fin m) (Fin m) 𝕜}
 
 /-- The matrix obtained from a column reduction `R` by keeping the columns of dimension `q` and,
 in them, the rows of dimension `q - 1`. -/
-def dimReducedPart (R : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (q : ℕ) :
+@[expose] def dimReducedPart (R : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (q : ℕ) :
     Matrix (Fin m) (Fin m) 𝕜 :=
   Matrix.of fun k l ↦ if dim l = q ∧ dim k + 1 = q then R k l else 0
 
 /-- The transformation matrix of `dimReducedPart`: the columns of `V` of dimension `q`, and
 standard basis vectors in the other columns. -/
-def dimTransformPart (V : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (q : ℕ) :
+@[expose] def dimTransformPart (V : Matrix (Fin m) (Fin m) 𝕜) (dim : Fin m → ℕ) (q : ℕ) :
     Matrix (Fin m) (Fin m) 𝕜 :=
   Matrix.of fun k l ↦ if dim l = q then V k l else if k = l then 1 else 0
 
@@ -385,8 +393,8 @@ theorem IsColumnLow.col_eq_zero {D R V : Matrix (Fin m) (Fin m) 𝕜} (hDD : D *
   have hrank : D.rank = Fintype.card {l : Fin m // ∃ i, IsColumnLow R i l} := by
     have h0 := lowerLeftRank_eq_of_isMatrixReduction h 0 m
     have hfull : ∀ M : Matrix (Fin m) (Fin m) 𝕜, lowerLeftPart M 0 m = M := by
-      intro M; ext k l; simp [lowerLeftPart]
-    unfold lowerLeftRank at h0
+      intro M; ext k l; simp [lowerLeftPart_apply]
+    simp only [lowerLeftRank_def] at h0
     rw [hfull, hfull] at h0
     rw [← h0, rank_eq_card_of_isReducedMatrix h.reduced]
   have hcardZ : Fintype.card Z + Fintype.card {l : Fin m // ∃ i, IsColumnLow R i l} = m := by

@@ -1,5 +1,6 @@
 module
 
+public import Mathlib.Analysis.InnerProductSpace.PiL2
 public import CKSD.Processes.Basic
 
 /-!
@@ -25,7 +26,7 @@ mean and covariance recursions use `P_{0|-1}` as the initial covariance.
 Source: GAPS 106.7.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -57,60 +58,60 @@ variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq
   (M : KalmanModel ι κ)
 
 /-- Innovation covariance `H_t C H_tᵀ + R_t` for a predicted covariance `C`. -/
-def innovCovOf (t : ℕ) (C : Matrix ι ι ℝ) : Matrix κ κ ℝ :=
+@[expose] def innovCovOf (t : ℕ) (C : Matrix ι ι ℝ) : Matrix κ κ ℝ :=
   M.observation t * C * (M.observation t).transpose + M.obsCov t
 
 /-- Kalman gain `C H_tᵀ (H_t C H_tᵀ + R_t)⁻¹` for a predicted covariance `C`. -/
-def gainOf (t : ℕ) (C : Matrix ι ι ℝ) : Matrix ι κ ℝ :=
+@[expose] def gainOf (t : ℕ) (C : Matrix ι ι ℝ) : Matrix ι κ ℝ :=
   C * (M.observation t).transpose * (M.innovCovOf t C)⁻¹
 
 /-- Filtered covariance `C - K_t H_t C` for a predicted covariance `C`. -/
-def filtCovOf (t : ℕ) (C : Matrix ι ι ℝ) : Matrix ι ι ℝ :=
+@[expose] def filtCovOf (t : ℕ) (C : Matrix ι ι ℝ) : Matrix ι ι ℝ :=
   C - M.gainOf t C * M.observation t * C
 
 /-- Predicted covariances `P_{t|t-1}`, with `P_{0|-1}` the initial covariance. -/
-def predCov : ℕ → Matrix ι ι ℝ
+@[expose] def predCov : ℕ → Matrix ι ι ℝ
   | 0 => M.initCov
   | t + 1 => M.transition t * M.filtCovOf t (predCov t) * (M.transition t).transpose +
       M.stateCov t
 
 /-- Innovation covariances `Σ_t = H_t P_{t|t-1} H_tᵀ + R_t`. -/
-def innovCov (t : ℕ) : Matrix κ κ ℝ := M.innovCovOf t (M.predCov t)
+@[expose] def innovCov (t : ℕ) : Matrix κ κ ℝ := M.innovCovOf t (M.predCov t)
 
 /-- Kalman gains `K_t = P_{t|t-1} H_tᵀ Σ_t⁻¹`. -/
-def gain (t : ℕ) : Matrix ι κ ℝ := M.gainOf t (M.predCov t)
+@[expose] def gain (t : ℕ) : Matrix ι κ ℝ := M.gainOf t (M.predCov t)
 
 /-- Filtered covariances `P_{t|t} = P_{t|t-1} - K_t H_t P_{t|t-1}`. -/
-def filtCov (t : ℕ) : Matrix ι ι ℝ := M.filtCovOf t (M.predCov t)
+@[expose] def filtCov (t : ℕ) : Matrix ι ι ℝ := M.filtCovOf t (M.predCov t)
 
 /-- Predicted means `x_{t|t-1}` as functions of the observations, with `x_{0|-1}` the initial
 mean and `x_{t+1|t} = F_t x_{t|t}`. -/
-def predMean (y : ℕ → EuclideanSpace ℝ κ) : ℕ → EuclideanSpace ℝ ι
+@[expose] def predMean (y : ℕ → EuclideanSpace ℝ κ) : ℕ → EuclideanSpace ℝ ι
   | 0 => M.initMean
   | t + 1 => Matrix.toEuclideanLin (M.transition t)
       (predMean y t + Matrix.toEuclideanLin (M.gain t)
         (y t - Matrix.toEuclideanLin (M.observation t) (predMean y t)))
 
 /-- Filtered means `x_{t|t} = x_{t|t-1} + K_t (y_t - H_t x_{t|t-1})`. -/
-def filtMean (y : ℕ → EuclideanSpace ℝ κ) (t : ℕ) : EuclideanSpace ℝ ι :=
+@[expose] def filtMean (y : ℕ → EuclideanSpace ℝ κ) (t : ℕ) : EuclideanSpace ℝ ι :=
   M.predMean y t + Matrix.toEuclideanLin (M.gain t)
     (y t - Matrix.toEuclideanLin (M.observation t) (M.predMean y t))
 
 /-- The state process `x_0 = x₀`, `x_{t+1} = F_t x_t + w_t`. -/
-def state {Ω : Type*} (x₀ : Ω → EuclideanSpace ℝ ι)
+@[expose] def state {Ω : Type*} (x₀ : Ω → EuclideanSpace ℝ ι)
     (w : ℕ → Ω → EuclideanSpace ℝ ι) : ℕ → Ω → EuclideanSpace ℝ ι
   | 0 => x₀
   | t + 1 => fun ω ↦ Matrix.toEuclideanLin (M.transition t) (state x₀ w t ω) + w t ω
 
 /-- The observation process `y_t = H_t x_t + v_t`. -/
-def observationProcess {Ω : Type*} (x : ℕ → Ω → EuclideanSpace ℝ ι)
+@[expose] def observationProcess {Ω : Type*} (x : ℕ → Ω → EuclideanSpace ℝ ι)
     (v : ℕ → Ω → EuclideanSpace ℝ κ) (t : ℕ) (ω : Ω) : EuclideanSpace ℝ κ :=
   Matrix.toEuclideanLin (M.observation t) (x t ω) + v t ω
 
 end KalmanModel
 
 /-- Extension of a finite observation record `y_0, …, y_{n-1}` by zeros. -/
-def extendObservations {E : Type*} [Zero E] {n : ℕ} (ys : Fin n → E) (i : ℕ) : E :=
+@[expose] def extendObservations {E : Type*} [Zero E] {n : ℕ} (ys : Fin n → E) (i : ℕ) : E :=
   if h : i < n then ys ⟨i, h⟩ else 0
 
 end CKSD

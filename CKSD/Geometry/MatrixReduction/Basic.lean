@@ -1,8 +1,6 @@
 module
 
 public import Mathlib.LinearAlgebra.Matrix.Rank
-public import Mathlib.LinearAlgebra.Matrix.Block
-public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 
 /-!
 # Column reductions of finite matrices
@@ -22,7 +20,7 @@ column operations. These algebraic constructions allow empty index types.
 * `CKSD.isColumnLow_iff_of_isMatrixReduction`: independence of the reduction (GAPS 108.32).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -35,11 +33,11 @@ attribute [local instance] Classical.propDecidable
 variable {𝕜 : Type*} [Field 𝕜] {m : ℕ}
 
 /-- Row `i` carries the lowest nonzero entry of column `j`. -/
-def IsColumnLow (R : Matrix (Fin m) (Fin m) 𝕜) (i j : Fin m) : Prop :=
+@[expose] def IsColumnLow (R : Matrix (Fin m) (Fin m) 𝕜) (i j : Fin m) : Prop :=
   R i j ≠ 0 ∧ ∀ k, i < k → R k j = 0
 
 /-- A matrix is reduced when distinct nonzero columns have distinct lows. -/
-def IsReducedMatrix (R : Matrix (Fin m) (Fin m) 𝕜) : Prop :=
+@[expose] def IsReducedMatrix (R : Matrix (Fin m) (Fin m) 𝕜) : Prop :=
   ∀ i j j', IsColumnLow R i j → IsColumnLow R i j' → j = j'
 
 /-- `R = D V` is a column reduction of `D`: `V` is upper triangular with nonzero diagonal (hence
@@ -58,9 +56,19 @@ structure IsMatrixReduction (D R V : Matrix (Fin m) (Fin m) 𝕜) : Prop where
 def lowerLeftPart (D : Matrix (Fin m) (Fin m) 𝕜) (a b : ℕ) : Matrix (Fin m) (Fin m) 𝕜 :=
   Matrix.of fun k l ↦ if a ≤ k.val ∧ l.val < b then D k l else 0
 
+/-- The entries of `CKSD.lowerLeftPart`. -/
+theorem lowerLeftPart_apply (D : Matrix (Fin m) (Fin m) 𝕜) (a b : ℕ) (k l : Fin m) :
+    lowerLeftPart D a b k l = if a ≤ k.val ∧ l.val < b then D k l else 0 := by
+  rw [lowerLeftPart, Matrix.of_apply]
+
 /-- Rank of the lower-left submatrix of rows `a, a+1, …` and columns `0, …, b-1`. -/
 def lowerLeftRank (D : Matrix (Fin m) (Fin m) 𝕜) (a b : ℕ) : ℕ :=
   (lowerLeftPart D a b).rank
+
+/-- The defining formula of `CKSD.lowerLeftRank`. -/
+theorem lowerLeftRank_def (D : Matrix (Fin m) (Fin m) 𝕜) (a b : ℕ) :
+    lowerLeftRank D a b = (lowerLeftPart D a b).rank := by
+  rw [lowerLeftRank]
 
 /-- A column has at most one low. -/
 theorem IsColumnLow.unique {R : Matrix (Fin m) (Fin m) 𝕜} {i i' j : Fin m}
@@ -239,6 +247,13 @@ theorem lowerLeftRank_eq_card_of_isReducedMatrix {R : Matrix (Fin m) (Fin m) �
 def pairingRankCombination (D : Matrix (Fin m) (Fin m) 𝕜) (i j : Fin m) : ℤ :=
   (lowerLeftRank D i.val (j.val + 1) : ℤ) - lowerLeftRank D (i.val + 1) (j.val + 1) +
     lowerLeftRank D (i.val + 1) j.val - lowerLeftRank D i.val j.val
+
+/-- The defining formula of `CKSD.pairingRankCombination`. -/
+theorem pairingRankCombination_def (D : Matrix (Fin m) (Fin m) 𝕜) (i j : Fin m) :
+    pairingRankCombination D i j =
+      (lowerLeftRank D i.val (j.val + 1) : ℤ) - lowerLeftRank D (i.val + 1) (j.val + 1) +
+        lowerLeftRank D (i.val + 1) j.val - lowerLeftRank D i.val j.val := by
+  rw [pairingRankCombination]
 
 /-- The pairing combination of ranks is the indicator of the lows of any column reduction. -/
 theorem pairingRankCombination_eq_ite {D R V : Matrix (Fin m) (Fin m) 𝕜}

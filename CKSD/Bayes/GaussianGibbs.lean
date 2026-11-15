@@ -1,8 +1,8 @@
 module
-public import CKSD.Bayes.Diffusion
+public import CKSD.Bayes.Diffusion.Basic
 import CKSD.Bayes.GaussianSmoothing
 import CKSD.Inference.Density
-import TauCeti.Probability.Distributions.Gaussian.Quantile
+import TauCeti.Probability.Distributions.Gaussian.Cdf
 /-!
 # Gaussian Gibbs laws and warm initializations
 
@@ -36,7 +36,7 @@ theorem gibbsMeasure_quadratic_eq_map_stdGaussian {σ : ℝ} (hσ : 0 < σ) :
   let c : ℝ := |σ|⁻¹ ^ Module.finrank ℝ E *
     (2 * Real.pi) ^ (-(Module.finrank ℝ E : ℝ) / 2)
   have he (x : E) : gaussianSmoothingKernel σ x = c * Real.exp (-V x) := by
-    unfold gaussianSmoothingKernel
+    rw [gaussianSmoothingKernel_def]
     dsimp only [c, V]
     congr 2
     field_simp
@@ -54,9 +54,7 @@ theorem gibbsMeasure_quadratic_eq_map_stdGaussian {σ : ℝ} (hσ : 0 < σ) :
     intro h
     simp only [h, mul_zero] at hnorm
     norm_num at hnorm
-  rw [hmap]
-  -- Expand only the Gibbs normalization; the two density functions are then compared.
-  change volume.withDensity (fun x ↦ ENNReal.ofReal (Real.exp (-V x) / (∫ y, Real.exp (-V y)))) = _
+  rw [hmap, gibbsMeasure_def]
   apply withDensity_congr_ae
   refine ae_of_all _ fun x ↦ ?_
   dsimp only

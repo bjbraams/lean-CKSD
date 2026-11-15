@@ -1,5 +1,8 @@
 module
 
+public import Mathlib.Analysis.InnerProductSpace.Basic
+public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
+import Mathlib.MeasureTheory.Function.AEEqOfIntegral
 public import CKSD.Inference.Basic
 
 /-!
@@ -23,7 +26,7 @@ measurable box `B`, and a π-λ argument gives `g = 0` almost everywhere.
 * `CKSD.ae_eq_zero_pi_of_isCompleteStatistic_of_convex`: the completeness of symmetric statistics.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

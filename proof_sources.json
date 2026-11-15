@@ -794,11 +794,11 @@
       },
       "formalization_status": "proved; scoped statement and source comparison retained",
       "lean_support": [
-        "CKSD.Inference.BlackwellFinite",
-        "CKSD.Inference.BlackwellPosterior",
-        "CKSD.Inference.BlackwellApproximation",
-        "CKSD.Inference.BlackwellCoupling",
-        "CKSD.Inference.BlackwellJoint",
+        "CKSD.Inference.Blackwell.Finite",
+        "CKSD.Inference.Blackwell.Posterior",
+        "CKSD.Inference.Blackwell.Approximation",
+        "CKSD.Inference.Blackwell.Coupling",
+        "CKSD.Inference.Blackwell.Joint",
         "CKSD.Inference.KernelDisintegration"
       ]
     },
@@ -900,7 +900,7 @@
         },
         {
           "name": "CKSD.tendstoInDistribution_of_log_likelihood_ratio",
-          "source": "CKSD/Asymptotics/Experiments.lean",
+          "source": "CKSD/Asymptotics/LAN/LeCam.lean",
           "verification": "source declaration inspected; existing project theorem"
         }
       ],
@@ -908,24 +908,16 @@
         "CKSD.exists_gaussian_shift_kernel_of_local_limits": "proved"
       },
       "lean_files": {
-        "CKSD.exists_gaussian_shift_kernel_of_local_limits": "CKSD/Asymptotics/Framework.lean"
+        "CKSD.exists_gaussian_shift_kernel_of_local_limits": "CKSD/Asymptotics/LAN/Representation.lean"
       },
       "formalization_status": "proved; original LAN statement with arbitrary nonempty Polish Borel output and varying sample spaces",
-      "lean_support": {
-        "files": [
-          "CKSD/Asymptotics/RepresentationKernel.lean",
-          "CKSD/Asymptotics/LANJointLimit.lean",
-          "CKSD/Asymptotics/LikelihoodTransfer.lean",
-          "CKSD/Asymptotics/LikelihoodSingular.lean",
-          "CKSD/Asymptotics/LANLikelihood.lean",
-          "CKSD/Asymptotics/LANApproximation.lean",
-          "CKSD/Asymptotics/GaussianShiftTilt.lean"
-        ],
-        "imported_by": "CKSD/Asymptotics/Framework.lean",
-        "role": "Joint tightness, arbitrary Polish-output likelihood transfer, singular-mass control, Gaussian tilting and a common conditional-kernel representation.",
-        "validation": "Original target and supporting declarations compile; axiom closures use only propext, Classical.choice and Quot.sound.",
-        "limitations": "A LAN asymptotic representation result; no finite-sample domination, iid or QMD assumption is added."
-      }
+      "lean_support": [
+        "files",
+        "imported_by",
+        "role",
+        "validation",
+        "limitations"
+      ]
     },
     {
       "gaps": [
@@ -1002,28 +994,17 @@
         "CKSD.exists_convolution_of_isRegularEstimator": "proved"
       },
       "lean_files": {
-        "CKSD.exists_convolution_of_isRegularEstimator": "CKSD/Asymptotics/Framework.lean"
+        "CKSD.exists_convolution_of_isRegularEstimator": "CKSD/Asymptotics/LAN/Representation.lean"
       },
       "formalization_status": "proved; original LAN convolution statement without finite-moment assumptions",
-      "lean_support": {
-        "files": [
-          "CKSD/Asymptotics/GaussianShiftComplete.lean",
-          "CKSD/Asymptotics/GaussianKernelTranslation.lean",
-          "CKSD/Asymptotics/KernelTranslation.lean",
-          "CKSD/Asymptotics/KernelConvolution.lean",
-          "CKSD/Asymptotics/ConvolutionKernel.lean"
-        ],
-        "theorems": [
-          "CKSD.isBoundedlyCompleteStatistic_multivariateGaussian_location",
-          "CKSD.ae_eq_kernel_of_multivariateGaussian_comp_eq",
-          "CKSD.exists_ae_eq_const_kernel_of_forall_add_ae_eq",
-          "CKSD.exists_convolution_of_gaussian_shift_kernel"
-        ],
-        "imported_by": "CKSD/Asymptotics/Framework.lean",
-        "role": "Gaussian completeness, rowwise kernel identification, Haar almost-everywhere constancy and a convolution adapter.",
-        "validation": "Original target and helper modules compile with only the usual classical axioms; no admitted dependency.",
-        "limitations": "Regular-estimator convolution is proved. This does not prove the separate minimax theorem for arbitrary estimator sequences."
-      }
+      "lean_support": [
+        "files",
+        "theorems",
+        "imported_by",
+        "role",
+        "validation",
+        "limitations"
+      ]
     },
     {
       "gaps": [
@@ -1103,20 +1084,16 @@
         "CKSD.gaussian_risk_le_local_asymptotic_minimax": "admitted"
       },
       "lean_files": {
-        "CKSD.gaussian_risk_le_local_asymptotic_minimax": "CKSD/Asymptotics/Framework.lean"
+        "CKSD.gaussian_risk_le_local_asymptotic_minimax": "CKSD/Asymptotics/LAN/Representation.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded",
-      "lean_support": {
-        "file": "CKSD/Asymptotics/GaussianAnderson.lean",
-        "theorems": [
-          "CKSD.multivariateGaussian_add_preimage_le",
-          "CKSD.lintegral_multivariateGaussian_loss_le_shift",
-          "CKSD.lintegral_multivariateGaussian_loss_le_convolution"
-        ],
-        "role": "Gaussian mass comparison for symmetric convex sets and layer-cake risk comparison for every measurable symmetric bowl-shaped loss.",
-        "validation": "Strict module checks, full build and standard classical axiom closure audit.",
-        "limitations": "These are Gaussian-experiment prerequisites. Finite-experiment asymptotic minimax transfer and removal of estimator tightness remain."
-      }
+      "lean_support": [
+        "file",
+        "theorems",
+        "role",
+        "validation",
+        "limitations"
+      ]
     },
     {
       "gaps": [
@@ -1252,7 +1229,7 @@
         },
         {
           "name": "CKSD.tendstoInDistribution_score_and_log_likelihood_ratio_expansion_of_dqm",
-          "source": "CKSD/Asymptotics/Experiments.lean",
+          "source": "CKSD/Asymptotics/LAN/LeCam.lean",
           "verification": "source declaration inspected; existing project theorem"
         }
       ],
@@ -1418,7 +1395,7 @@
         },
         {
           "name": "CKSD.tendstoInDistribution_score_and_log_likelihood_ratio_expansion_of_dqm",
-          "source": "CKSD/Asymptotics/Experiments.lean",
+          "source": "CKSD/Asymptotics/LAN/LeCam.lean",
           "verification": "source declaration inspected; existing project theorem"
         }
       ],
@@ -1526,7 +1503,7 @@
         "CKSD.exists_uniform_edgeworth_expansion": "admitted"
       },
       "lean_files": {
-        "CKSD.exists_uniform_edgeworth_expansion": "CKSD/Asymptotics/HigherOrder.lean"
+        "CKSD.exists_uniform_edgeworth_expansion": "CKSD/Asymptotics/Expansions.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -1902,7 +1879,7 @@
         "CKSD.tendstoInDistribution_grenanderEstimator": "admitted"
       },
       "lean_files": {
-        "CKSD.tendstoInDistribution_grenanderEstimator": "CKSD/Nonparametric/Grenander.lean"
+        "CKSD.tendstoInDistribution_grenanderEstimator": "CKSD/Nonparametric/Density/Grenander.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -1942,7 +1919,7 @@
         "CKSD.isotonicGaussianRisk_le": "admitted"
       },
       "lean_files": {
-        "CKSD.isotonicGaussianRisk_le": "CKSD/Nonparametric/ShapeAndSelection.lean"
+        "CKSD.isotonicGaussianRisk_le": "CKSD/Nonparametric/IsotonicRegression.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -1986,7 +1963,7 @@
         "CKSD.existsUnique_isLogConcaveProjection": "admitted"
       },
       "lean_files": {
-        "CKSD.existsUnique_isLogConcaveProjection": "CKSD/Nonparametric/LogConcave.lean"
+        "CKSD.existsUnique_isLogConcaveProjection": "CKSD/Nonparametric/Density/LogConcave.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -2028,7 +2005,7 @@
         "CKSD.existsUnique_logConcaveMLE_tent": "admitted"
       },
       "lean_files": {
-        "CKSD.existsUnique_logConcaveMLE_tent": "CKSD/Nonparametric/LogConcave.lean"
+        "CKSD.existsUnique_logConcaveMLE_tent": "CKSD/Nonparametric/Density/LogConcave.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -2070,7 +2047,7 @@
         "CKSD.logConcaveMLE_hellingerRisk_le": "admitted"
       },
       "lean_files": {
-        "CKSD.logConcaveMLE_hellingerRisk_le": "CKSD/Nonparametric/LogConcave.lean"
+        "CKSD.logConcaveMLE_hellingerRisk_le": "CKSD/Nonparametric/Density/LogConcave.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -2112,7 +2089,7 @@
         "CKSD.logConcave_minimax_hellingerRisk_lower_bound": "admitted"
       },
       "lean_files": {
-        "CKSD.logConcave_minimax_hellingerRisk_lower_bound": "CKSD/Nonparametric/LogConcave.lean"
+        "CKSD.logConcave_minimax_hellingerRisk_lower_bound": "CKSD/Nonparametric/Density/LogConcave.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -2269,7 +2246,7 @@
         "CKSD.graphicalLasso_frobenius_error_bound": "admitted"
       },
       "lean_files": {
-        "CKSD.graphicalLasso_frobenius_error_bound": "CKSD/Nonparametric/GraphicalModels.lean"
+        "CKSD.graphicalLasso_frobenius_error_bound": "CKSD/Nonparametric/HighDimensional/GraphicalModels.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -2311,7 +2288,7 @@
         "CKSD.neighbourhoodSelection_graph_recovery": "admitted"
       },
       "lean_files": {
-        "CKSD.neighbourhoodSelection_graph_recovery": "CKSD/Nonparametric/GraphicalModels.lean"
+        "CKSD.neighbourhoodSelection_graph_recovery": "CKSD/Nonparametric/HighDimensional/GraphicalModels.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -2393,7 +2370,7 @@
         "CKSD.exists_ula_iteration_complexity": "admitted"
       },
       "lean_files": {
-        "CKSD.exists_ula_iteration_complexity": "CKSD/Bayes/LangevinSampling.lean"
+        "CKSD.exists_ula_iteration_complexity": "CKSD/Bayes/Langevin/Sampling.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -2533,22 +2510,14 @@
         "CKSD.jko_scheme_tendsto_fokkerPlanck": "CKSD/Bayes/FunctionalInequalities.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded",
-      "lean_support": {
-        "files": [
-          "CKSD/Bayes/JKOEnergy.lean",
-          "CKSD/Bayes/JKOStepExistence.lean",
-          "CKSD/Bayes/JKOStepUniqueness.lean"
-        ],
-        "theorems": [
-          "CKSD.nonempty_moreauYosidaResolvent_jkoFreeEnergy",
-          "CKSD.subsingleton_moreauYosidaResolvent_jkoFreeEnergy",
-          "CKSD.existsUnique_mem_moreauYosidaResolvent_jkoFreeEnergy"
-        ],
-        "imported_by": "CKSD/Bayes/FunctionalInequalities.lean",
-        "role": "Gaussian entropy compensation proves narrow lower semicontinuity on Wasserstein-bounded sequences and all-step existence. Strict entropy convexity and mixture convexity of squared transport cost prove uniqueness without convexity of V.",
-        "validation": "The step theorems compile with only the usual classical axioms; the original combined convergence target still has one direct admission.",
-        "limitations": "Santambrogio Proposition 8.5 is on a compact domain. The local Euclidean proof supplies Gaussian moment compensation rather than transferring compact-domain entropy bounds unchanged."
-      }
+      "lean_support": [
+        "files",
+        "theorems",
+        "imported_by",
+        "role",
+        "validation",
+        "limitations"
+      ]
     },
     {
       "gaps": [
@@ -2930,7 +2899,7 @@
         "CKSD.exists_klDiv_ula_le_of_logSobolev": "admitted"
       },
       "lean_files": {
-        "CKSD.exists_klDiv_ula_le_of_logSobolev": "CKSD/Bayes/LangevinSampling.lean"
+        "CKSD.exists_klDiv_ula_le_of_logSobolev": "CKSD/Bayes/Langevin/Sampling.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -3032,15 +3001,15 @@
         "CKSD.exists_wasserstein_ula_le_of_stronglyConvex": "proved"
       },
       "lean_files": {
-        "CKSD.exists_wasserstein_ula_le_of_stronglyConvex": "CKSD/Bayes/LangevinSampling.lean"
+        "CKSD.exists_wasserstein_ula_le_of_stronglyConvex": "CKSD/Bayes/Langevin/Sampling.lean"
       },
       "formalization_status": "proved; no admitted dependencies",
       "lean_support": [
-        "CKSD/Bayes/HamiltonianSampling.lean",
-        "CKSD/Bayes/HamiltonianInvariant.lean",
-        "CKSD/Bayes/ULAHamiltonianError.lean",
-        "CKSD/Bayes/ULAContraction.lean",
-        "CKSD/Bayes/ULATransport.lean"
+        "CKSD/Bayes/Langevin/Hamiltonian/Flow.lean",
+        "CKSD/Bayes/Langevin/Hamiltonian/Invariant.lean",
+        "CKSD/Bayes/Langevin/ULA/HamiltonianError.lean",
+        "CKSD/Bayes/Langevin/ULA/Contraction.lean",
+        "CKSD/Bayes/Langevin/ULA/Transport.lean"
       ]
     },
     {
@@ -3096,16 +3065,16 @@
         "CKSD.exists_mala_mixing_time_ge": "proved"
       },
       "lean_files": {
-        "CKSD.exists_mala_mixing_time_ge": "CKSD/Bayes/LangevinSampling.lean"
+        "CKSD.exists_mala_mixing_time_ge": "CKSD/Bayes/Langevin/Sampling.lean"
       },
       "formalization_status": "proved; scoped statement and source comparison retained",
       "bridgeLeanSupport": {
         "files": [
-          "CKSD/Bayes/MALABasic.lean",
-          "CKSD/Bayes/MALAGaussianRejection.lean",
-          "CKSD/Bayes/MALAGaussianLowerBound.lean",
+          "CKSD/Bayes/Langevin/MALA/Basic.lean",
+          "CKSD/Bayes/Langevin/MALA/GaussianRejection.lean",
+          "CKSD/Bayes/Langevin/MALA/GaussianLowerBound.lean",
           "CKSD/Bayes/GaussianGibbs.lean",
-          "CKSD/Bayes/LangevinSampling.lean"
+          "CKSD/Bayes/Langevin/Sampling.lean"
         ],
         "declarations": [
           "CKSD.malaAcceptance_gaussianPrecision",
@@ -3201,7 +3170,7 @@
         "CKSD.exists_mala_mixing_time_le": "admitted"
       },
       "lean_files": {
-        "CKSD.exists_mala_mixing_time_le": "CKSD/Bayes/LangevinSampling.lean"
+        "CKSD.exists_mala_mixing_time_le": "CKSD/Bayes/Langevin/Sampling.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -3290,7 +3259,7 @@
         "CKSD.exists_kinetic_entropic_hypocoercive_decay": "admitted"
       },
       "lean_files": {
-        "CKSD.exists_kinetic_entropic_hypocoercive_decay": "CKSD/Bayes/KineticLangevin.lean"
+        "CKSD.exists_kinetic_entropic_hypocoercive_decay": "CKSD/Bayes/Langevin/Kinetic.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -3399,7 +3368,7 @@
         },
         {
           "name": "CKSD.integral_mul_kineticGenerator_eq_zero_of_fderiv_density",
-          "module": "CKSD.Bayes.KineticLangevin",
+          "module": "CKSD.Bayes.Langevin.Kinetic",
           "role": "Existing local weighted generator calculation can support the required adjoint identities",
           "verification": "Declaration and hypotheses read in the pinned local source; this reading task did not add imports or run a new axiom audit"
         }
@@ -3409,7 +3378,7 @@
         "CKSD.exists_kinetic_hypocoercive_decay_of_poincare": "admitted"
       },
       "lean_files": {
-        "CKSD.exists_kinetic_hypocoercive_decay_of_poincare": "CKSD/Bayes/KineticLangevin.lean"
+        "CKSD.exists_kinetic_hypocoercive_decay_of_poincare": "CKSD/Bayes/Langevin/Kinetic.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -3487,21 +3456,21 @@
         "CKSD.exists_meanField_limit": "proved"
       },
       "lean_files": {
-        "CKSD.exists_meanField_limit": "CKSD/Bayes/MeanField.lean"
+        "CKSD.exists_meanField_limit": "CKSD/Bayes/MeanField/Training/Limit.lean"
       },
       "formalization_status": "proved; no admitted dependencies",
       "lean_support": [
-        "CKSD/Bayes/MeanFieldTrainingDrift.lean",
-        "CKSD/Bayes/MeanFieldContinuityMoments.lean",
-        "CKSD/Bayes/MeanFieldBackwardTest.lean",
-        "CKSD/Bayes/MeanFieldContinuityUniqueness.lean",
-        "CKSD/Bayes/MeanFieldFlowRepresentation.lean",
-        "CKSD/Bayes/MeanFieldContinuityCurves.lean",
-        "CKSD/Bayes/MeanFieldZeroNoise.lean",
-        "CKSD/Bayes/MeanFieldTrainingEvolution.lean",
-        "CKSD/Bayes/MeanFieldTrainingPaths.lean",
-        "CKSD/Bayes/MeanFieldTrainingParticles.lean",
-        "CKSD/Bayes/MeanFieldTrainingEmpirical.lean"
+        "CKSD/Bayes/MeanField/Training/Drift.lean",
+        "CKSD/Bayes/MeanField/Continuity/Moments.lean",
+        "CKSD/Bayes/MeanField/Continuity/BackwardTest.lean",
+        "CKSD/Bayes/MeanField/Continuity/Uniqueness.lean",
+        "CKSD/Bayes/MeanField/Continuity/FlowRepresentation.lean",
+        "CKSD/Bayes/MeanField/Continuity/Curves.lean",
+        "CKSD/Bayes/MeanField/ZeroNoise.lean",
+        "CKSD/Bayes/MeanField/Training/Evolution.lean",
+        "CKSD/Bayes/MeanField/Training/Paths.lean",
+        "CKSD/Bayes/MeanField/Training/Particles.lean",
+        "CKSD/Bayes/MeanField/Training/Empirical.lean"
       ]
     },
     {
@@ -3576,18 +3545,18 @@
         "CKSD.exists_uniform_particle_moment_bound": "proved"
       },
       "lean_files": {
-        "CKSD.exists_uniform_particle_moment_bound": "CKSD/Bayes/ParticleLimits.lean"
+        "CKSD.exists_uniform_particle_moment_bound": "CKSD/Bayes/Particle/Limits.lean"
       },
       "formalization_status": "proved; no admitted dependencies",
       "lean_support": [
-        "CKSD/Bayes/ParticleLimitCore.lean",
-        "CKSD/Bayes/ParticleOscillation.lean",
-        "CKSD/Bayes/ParticleMixing.lean",
-        "CKSD/Bayes/ParticleTransport.lean",
-        "CKSD/Bayes/ParticleSamplingMoments.lean",
-        "CKSD/Bayes/ParticleEmpiricalMoments.lean",
-        "CKSD/Bayes/ParticleConditionalMoments.lean",
-        "CKSD/Bayes/ParticleUniformMoments.lean"
+        "CKSD/Bayes/Particle/LimitCore.lean",
+        "CKSD/Bayes/Particle/Oscillation.lean",
+        "CKSD/Bayes/Particle/Mixing.lean",
+        "CKSD/Bayes/Particle/Transport.lean",
+        "CKSD/Bayes/Particle/SamplingMoments.lean",
+        "CKSD/Bayes/Particle/EmpiricalMoments.lean",
+        "CKSD/Bayes/Particle/ConditionalMoments.lean",
+        "CKSD/Bayes/Particle/UniformMoments.lean"
       ]
     },
     {
@@ -3636,15 +3605,15 @@
         "CKSD.probabilityFlow_isContinuityEquation_and_map": "admitted"
       },
       "lean_files": {
-        "CKSD.probabilityFlow_isContinuityEquation_and_map": "CKSD/Bayes/DiffusionModels.lean"
+        "CKSD.probabilityFlow_isContinuityEquation_and_map": "CKSD/Bayes/Diffusion/Models.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded",
-      "lean_support": {
-        "file": "CKSD/Bayes/DiffusionPathRegularity.lean",
-        "role": "A fixed-time jump can have zero right derivative everywhere; two checked right-derivative lemmas isolate this obstruction.",
-        "validation": "Strict Lean checks and standard classical axiom audit pass.",
-        "limitations": "The obstruction kernels are formalized; complete Gaussian stochastic counterexamples are not packaged as Lean theorems."
-      }
+      "lean_support": [
+        "file",
+        "role",
+        "validation",
+        "limitations"
+      ]
     },
     {
       "gaps": [
@@ -3684,7 +3653,7 @@
         "CKSD.klDiv_ddpmLaw_le": "admitted"
       },
       "lean_files": {
-        "CKSD.klDiv_ddpmLaw_le": "CKSD/Bayes/DiffusionModels.lean"
+        "CKSD.klDiv_ddpmLaw_le": "CKSD/Bayes/Diffusion/Models.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -3742,15 +3711,15 @@
         "CKSD.map_marginalPreservingDiffusion": "admitted"
       },
       "lean_files": {
-        "CKSD.map_marginalPreservingDiffusion": "CKSD/Bayes/DiffusionModels.lean"
+        "CKSD.map_marginalPreservingDiffusion": "CKSD/Bayes/Diffusion/Models.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded",
-      "lean_support": {
-        "file": "CKSD/Bayes/DiffusionIntegralRegularity.lean",
-        "role": "Two checked lemmas isolate nonmeasurable component recovery and the resulting totalized zero Bochner integral.",
-        "validation": "Strict Lean checks and standard classical axiom audit pass.",
-        "limitations": "The obstruction kernels are formalized; complete Gaussian stochastic counterexamples are not packaged as Lean theorems."
-      }
+      "lean_support": [
+        "file",
+        "role",
+        "validation",
+        "limitations"
+      ]
     },
     {
       "gaps": [
@@ -3910,7 +3879,7 @@
         "CKSD.tendstoInDistribution_block_independence_likelihood_ratio": "proved"
       },
       "lean_files": {
-        "CKSD.tendstoInDistribution_block_independence_likelihood_ratio": "CKSD/LinearModels/MultivariateTests.lean"
+        "CKSD.tendstoInDistribution_block_independence_likelihood_ratio": "CKSD/LinearModels/Multivariate/Tests.lean"
       },
       "formalization_status": "proved",
       "proof_components": [
@@ -3989,7 +3958,7 @@
         "CKSD.CausalGraph.edge_eq_of_additiveNoiseLaw_eq": "admitted"
       },
       "lean_files": {
-        "CKSD.CausalGraph.edge_eq_of_additiveNoiseLaw_eq": "CKSD/LinearModels/StructuralEquations.lean"
+        "CKSD.CausalGraph.edge_eq_of_additiveNoiseLaw_eq": "CKSD/LinearModels/Causal/StructuralEquations.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -4027,7 +3996,7 @@
         "CKSD.CausalGraph.edge_eq_of_linearSEMLaw_eq_of_nonGaussian": "admitted"
       },
       "lean_files": {
-        "CKSD.CausalGraph.edge_eq_of_linearSEMLaw_eq_of_nonGaussian": "CKSD/LinearModels/StructuralEquations.lean"
+        "CKSD.CausalGraph.edge_eq_of_linearSEMLaw_eq_of_nonGaussian": "CKSD/LinearModels/Causal/StructuralEquations.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -4065,7 +4034,7 @@
         "CKSD.CausalGraph.exists_linearGaussianSEM_iff_markovEquivalent": "admitted"
       },
       "lean_files": {
-        "CKSD.CausalGraph.exists_linearGaussianSEM_iff_markovEquivalent": "CKSD/LinearModels/StructuralEquations.lean"
+        "CKSD.CausalGraph.exists_linearGaussianSEM_iff_markovEquivalent": "CKSD/LinearModels/Causal/StructuralEquations.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5165,7 +5134,7 @@
         "CKSD.lai_robbins_lower_bound": "admitted"
       },
       "lean_files": {
-        "CKSD.lai_robbins_lower_bound": "CKSD/Learning/Bandits.lean"
+        "CKSD.lai_robbins_lower_bound": "CKSD/Learning/Bandits/Stochastic.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5214,7 +5183,7 @@
         "CKSD.banditPolicyValue_le_of_gittins": "admitted"
       },
       "lean_files": {
-        "CKSD.banditPolicyValue_le_of_gittins": "CKSD/Learning/Policies.lean"
+        "CKSD.banditPolicyValue_le_of_gittins": "CKSD/Learning/Bandits/Gittins.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5244,7 +5213,7 @@
         "CKSD.tendsto_thompson_regret_div_log": "admitted"
       },
       "lean_files": {
-        "CKSD.tendsto_thompson_regret_div_log": "CKSD/Learning/Bandits.lean"
+        "CKSD.tendsto_thompson_regret_div_log": "CKSD/Learning/Bandits/Stochastic.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5297,7 +5266,7 @@
         "CKSD.ae_tendsto_asynchronous_stochastic_approximation": "admitted"
       },
       "lean_files": {
-        "CKSD.ae_tendsto_asynchronous_stochastic_approximation": "CKSD/Learning/MarkovDecision.lean"
+        "CKSD.ae_tendsto_asynchronous_stochastic_approximation": "CKSD/Learning/Reinforcement/MarkovDecision.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5345,7 +5314,7 @@
         "CKSD.exists_bernoulli_banditRegret_ge": "admitted"
       },
       "lean_files": {
-        "CKSD.exists_bernoulli_banditRegret_ge": "CKSD/Learning/Bandits.lean"
+        "CKSD.exists_bernoulli_banditRegret_ge": "CKSD/Learning/Bandits/Stochastic.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5409,7 +5378,7 @@
         "CKSD.exists_linUCB_regret_le": "admitted"
       },
       "lean_files": {
-        "CKSD.exists_linUCB_regret_le": "CKSD/Learning/Bandits.lean"
+        "CKSD.exists_linUCB_regret_le": "CKSD/Learning/Bandits/Stochastic.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5451,7 +5420,7 @@
         "CKSD.measure_exists_selfNormalized_gt_le": "admitted"
       },
       "lean_files": {
-        "CKSD.measure_exists_selfNormalized_gt_le": "CKSD/Learning/Bandits.lean"
+        "CKSD.measure_exists_selfNormalized_gt_le": "CKSD/Learning/Bandits/Stochastic.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5548,7 +5517,7 @@
         "CKSD.exists_intervalBasis_of_isPointwiseFiniteDimensional": "admitted"
       },
       "lean_files": {
-        "CKSD.exists_intervalBasis_of_isPointwiseFiniteDimensional": "CKSD/Geometry/PersistenceModules.lean"
+        "CKSD.exists_intervalBasis_of_isPointwiseFiniteDimensional": "CKSD/Geometry/Persistence/Modules.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5620,7 +5589,7 @@
         "CKSD.interleavingEDist_eq_fullBottleneckEDist": "admitted"
       },
       "lean_files": {
-        "CKSD.interleavingEDist_eq_fullBottleneckEDist": "CKSD/Geometry/PersistenceModules.lean"
+        "CKSD.interleavingEDist_eq_fullBottleneckEDist": "CKSD/Geometry/Persistence/Modules.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5663,7 +5632,7 @@
         "CKSD.exists_deformationRetraction_offset_of_hausdorffDist_lt": "admitted"
       },
       "lean_files": {
-        "CKSD.exists_deformationRetraction_offset_of_hausdorffDist_lt": "CKSD/Geometry/TopologicalInference.lean"
+        "CKSD.exists_deformationRetraction_offset_of_hausdorffDist_lt": "CKSD/Geometry/Persistence/TopologicalInference.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5742,7 +5711,7 @@
         "CKSD.sublevelHomologyModule_bars_of_isMorse": "admitted"
       },
       "lean_files": {
-        "CKSD.sublevelHomologyModule_bars_of_isMorse": "CKSD/Geometry/TopologicalInference.lean"
+        "CKSD.sublevelHomologyModule_bars_of_isMorse": "CKSD/Geometry/Persistence/TopologicalInference.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5808,7 +5777,7 @@
         "CKSD.nonempty_range_offsetHomology_equiv_of_weakFeatureSize": "admitted"
       },
       "lean_files": {
-        "CKSD.nonempty_range_offsetHomology_equiv_of_weakFeatureSize": "CKSD/Geometry/TopologicalInference.lean"
+        "CKSD.nonempty_range_offsetHomology_equiv_of_weakFeatureSize": "CKSD/Geometry/Persistence/TopologicalInference.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5850,7 +5819,7 @@
         "CKSD.nonempty_ripsPersistentHomology_equiv_of_weakFeatureSize": "admitted"
       },
       "lean_files": {
-        "CKSD.nonempty_ripsPersistentHomology_equiv_of_weakFeatureSize": "CKSD/Geometry/TopologicalInference.lean"
+        "CKSD.nonempty_ripsPersistentHomology_equiv_of_weakFeatureSize": "CKSD/Geometry/Persistence/TopologicalInference.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5904,7 +5873,7 @@
         "CKSD.integral_empirical_wasserstein_rpow_le": "admitted"
       },
       "lean_files": {
-        "CKSD.integral_empirical_wasserstein_rpow_le": "CKSD/Geometry/Transport.lean"
+        "CKSD.integral_empirical_wasserstein_rpow_le": "CKSD/Geometry/Transport/Statistical.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -5949,7 +5918,7 @@
         "CKSD.tendstoInDistribution_mul_wasserstein_sq_empiricalMeasure": "admitted"
       },
       "lean_files": {
-        "CKSD.tendstoInDistribution_mul_wasserstein_sq_empiricalMeasure": "CKSD/Geometry/TransportRates.lean"
+        "CKSD.tendstoInDistribution_mul_wasserstein_sq_empiricalMeasure": "CKSD/Geometry/Transport/Rates.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -6004,7 +5973,7 @@
         "CKSD.lintegral_transportMapRisk_semidualEstimator_le": "admitted"
       },
       "lean_files": {
-        "CKSD.lintegral_transportMapRisk_semidualEstimator_le": "CKSD/Geometry/TransportRates.lean"
+        "CKSD.lintegral_transportMapRisk_semidualEstimator_le": "CKSD/Geometry/Transport/Rates.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -6085,7 +6054,7 @@
         "CKSD.lintegral_transportMapRisk_semidualEstimator_le_of_poincare": "admitted"
       },
       "lean_files": {
-        "CKSD.lintegral_transportMapRisk_semidualEstimator_le_of_poincare": "CKSD/Geometry/TransportRates.lean"
+        "CKSD.lintegral_transportMapRisk_semidualEstimator_le_of_poincare": "CKSD/Geometry/Transport/Rates.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -6144,7 +6113,7 @@
         "CKSD.quadraticEntropicTransport_empirical_bounds": "admitted"
       },
       "lean_files": {
-        "CKSD.quadraticEntropicTransport_empirical_bounds": "CKSD/Geometry/StatisticalTransport.lean"
+        "CKSD.quadraticEntropicTransport_empirical_bounds": "CKSD/Geometry/Transport/Entropic.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -6220,7 +6189,7 @@
         "CKSD.hasDerivAt_wassersteinBarycenterEnergy_displacement": "proved"
       },
       "lean_files": {
-        "CKSD.hasDerivAt_wassersteinBarycenterEnergy_displacement": "CKSD/Geometry/StatisticalTransport.lean"
+        "CKSD.hasDerivAt_wassersteinBarycenterEnergy_displacement": "CKSD/Geometry/Transport/Barycenter.lean"
       },
       "formalization_status": "proved; scoped statement and source comparison retained"
     },
@@ -6250,7 +6219,7 @@
         "CKSD.exists_not_tendsto_of_kernelSteinDiscrepancySq_tendsto_zero": "admitted"
       },
       "lean_files": {
-        "CKSD.exists_not_tendsto_of_kernelSteinDiscrepancySq_tendsto_zero": "CKSD/Geometry/SteinDiscrepancy.lean"
+        "CKSD.exists_not_tendsto_of_kernelSteinDiscrepancySq_tendsto_zero": "CKSD/Geometry/Kernels/SteinDiscrepancy.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     },
@@ -6278,7 +6247,7 @@
         "CKSD.tendsto_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero": "admitted"
       },
       "lean_files": {
-        "CKSD.tendsto_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero": "CKSD/Geometry/SteinDiscrepancy.lean"
+        "CKSD.tendsto_of_kernelSteinDiscrepancySq_inverseMultiquadric_tendsto_zero": "CKSD/Geometry/Kernels/SteinDiscrepancy.lean"
       },
       "formalization_status": "admitted; source evidence and scope limitations recorded"
     }

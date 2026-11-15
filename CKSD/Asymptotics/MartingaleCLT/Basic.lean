@@ -1,8 +1,13 @@
 module
 
-public import CKSD.Asymptotics.Basic
-public import CKSD.Asymptotics.Lindeberg.Basic
-public import Mathlib.Probability.Martingale.Basic
+import CKSD.Asymptotics.Basic
+import CKSD.Asymptotics.Lindeberg.Basic
+public import Mathlib.Analysis.CStarAlgebra.Classes
+public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
+public import Mathlib.Probability.Distributions.Gaussian.Real
+public import Mathlib.Probability.Process.Filtration
+import Mathlib.MeasureTheory.Function.ConditionalExpectation.PullOut
+import Mathlib.MeasureTheory.Measure.LevyConvergence
 
 /-!
 # Martingale central limit theorem: bounded conditional variances
@@ -37,7 +42,7 @@ condition, and then `𝔼 exp (i t S_k) → exp (-t² v / 2)`.
   1980, Section 3.2.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

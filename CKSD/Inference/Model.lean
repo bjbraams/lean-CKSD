@@ -36,7 +36,7 @@ Bayes and minimax rules are defined so that junk values of Bochner integrals and
 suprema play no role: a Bayes rule has integrable risk and is compared with rules with integrable
 risk, and a minimax rule has bounded risk and is compared with rules with bounded risk.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -55,6 +55,7 @@ measurable structure on the parameter space. -/
 abbrev StatisticalExperiment (Θ X : Type*) [MeasurableSpace X] := Θ → ProbabilityMeasure X
 
 /-- An ancillary statistic: a measurable `T` whose law `(P θ).map T` does not depend on `θ`. -/
+@[expose]
 def IsAncillaryStatistic {Θ X S : Type*} [MeasurableSpace X] [MeasurableSpace S]
     (P : Θ → Measure X) (T : X → S) : Prop :=
   Measurable T ∧ ∀ θ θ', (P θ).map T = (P θ').map T
@@ -62,6 +63,7 @@ def IsAncillaryStatistic {Θ X S : Type*} [MeasurableSpace X] [MeasurableSpace S
 /-- A uniformly minimum variance unbiased estimator of `g`: `W` is a square-integrable unbiased
 estimator of `g` and, at every `θ`, its variance is at most that of every square-integrable
 unbiased estimator of `g`. -/
+@[expose]
 def IsMinimumVarianceUnbiasedEstimator {Θ X : Type*} [MeasurableSpace X]
     (P : Θ → Measure X) (W : X → ℝ) (g : Θ → ℝ) : Prop :=
   IsUnbiasedEstimator P W g ∧ (∀ θ, MemLp W 2 (P θ)) ∧
@@ -69,17 +71,25 @@ def IsMinimumVarianceUnbiasedEstimator {Θ X : Type*} [MeasurableSpace X]
       ∀ θ, Var[W; P θ] ≤ Var[W'; P θ]
 
 /-- The power `θ ↦ ∫ φ dP θ` of a randomized test `φ`. -/
+@[expose]
 def testPower {Θ X : Type*} [MeasurableSpace X]
     (P : Θ → Measure X) (φ : X → ℝ) (θ : Θ) : ℝ := ∫ x, φ x ∂P θ
 
+/-- Defining equation of `testPower`. -/
+theorem testPower_def {Θ X : Type*} [MeasurableSpace X]
+    (P : Θ → Measure X) (φ : X → ℝ) (θ : Θ) : testPower P φ θ = ∫ x, φ x ∂P θ := by
+  rw [testPower]
+
 /-- `φ` is a test of level `α` for the null hypothesis `H₀`: its power is at most `α` at every
 `θ ∈ H₀`. This is stated pointwise, so no supremum over a possibly empty `H₀` is taken. -/
+@[expose]
 def HasTestLevel {Θ X : Type*} [MeasurableSpace X]
     (P : Θ → Measure X) (H₀ : Set Θ) (α : ℝ) (φ : X → ℝ) : Prop :=
   IsStatisticalTest φ ∧ ∀ θ ∈ H₀, testPower P φ θ ≤ α
 
 /-- `φ` is similar of size `α` on `B`: its power equals `α` at every `θ ∈ B` (typically the
 boundary of the null hypothesis). -/
+@[expose]
 def IsSimilarTest {Θ X : Type*} [MeasurableSpace X]
     (P : Θ → Measure X) (B : Set Θ) (α : ℝ) (φ : X → ℝ) : Prop :=
   IsStatisticalTest φ ∧ ∀ θ ∈ B, testPower P φ θ = α
@@ -92,12 +102,14 @@ def HasConfidenceCoverage {Θ X : Type*} [MeasurableSpace X]
 
 /-- `δ` is admissible in the class `D` of rules with risk functions `R`: no `δ'` has risk at most
 that of `δ` everywhere and strictly smaller somewhere. -/
+@[expose]
 def IsAdmissibleRisk {Θ D : Type*} (R : D → Θ → ℝ) (δ : D) : Prop :=
   ¬ ∃ δ', (∀ θ, R δ' θ ≤ R δ θ) ∧ ∃ θ, R δ' θ < R δ θ
 
 /-- `δ` is a Bayes rule for the prior (or weight measure) `π` in the class `D` of rules with risk
 functions `R`: the risk of `δ` is `π`-integrable, and its integrated risk `∫ R δ dπ` is at most
 that of every rule whose risk is `π`-integrable. -/
+@[expose]
 def IsBayesRule {Θ D : Type*} [MeasurableSpace Θ]
     (R : D → Θ → ℝ) (π : Measure Θ) (δ : D) : Prop :=
   Integrable (R δ) π ∧ ∀ δ', Integrable (R δ') π → (∫ θ, R δ θ ∂π) ≤ ∫ θ, R δ' θ ∂π
@@ -111,11 +123,13 @@ def IsMinimaxRule {Θ D : Type*} (R : D → Θ → ℝ) (δ : D) : Prop :=
 
 /-- The experiment `Q` is a garbling of `P`: one Markov kernel `K` maps every `P θ` to `Q θ`,
 `Q θ = K ∘ₘ P θ`. -/
+@[expose]
 def IsGarbling {Θ X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
     (P : Θ → Measure X) (Q : Θ → Measure Y) : Prop :=
   ∃ K : Kernel X Y, IsMarkovKernel K ∧ ∀ θ, Q θ = K ∘ₘ P θ
 
 /-- The score `∂/∂θ log f(θ, x)` of a likelihood `f` in a real parameter `θ`. -/
+@[expose]
 def likelihoodScore {X : Type*} (f : ℝ → X → ℝ) (θ : ℝ) (x : X) : ℝ :=
   deriv (fun t ↦ Real.log (f t x)) θ
 
@@ -125,19 +139,33 @@ def fisherInformation {X : Type*} [MeasurableSpace X]
     (P : ℝ → Measure X) (f : ℝ → X → ℝ) (θ : ℝ) : ℝ :=
   ∫ x, likelihoodScore f θ x ^ 2 ∂P θ
 
+/-- Defining equation of `fisherInformation`. -/
+theorem fisherInformation_def {X : Type*} [MeasurableSpace X]
+    (P : ℝ → Measure X) (f : ℝ → X → ℝ) (θ : ℝ) :
+    fisherInformation P f θ = ∫ x, likelihoodScore f θ x ^ 2 ∂P θ := by
+  rw [fisherInformation]
+
 /-- The information matrix `(∫ sᵢ sⱼ dP)ᵢⱼ` of a vector score `s`. -/
 def fisherInformationMatrix {X : Type*} [MeasurableSpace X] {d : ℕ}
     (P : Measure X) (score : X → EuclideanSpace ℝ (Fin d)) : Matrix (Fin d) (Fin d) ℝ :=
   fun i j ↦ ∫ x, score x i * score x j ∂P
 
+/-- Entries of `fisherInformationMatrix`. -/
+theorem fisherInformationMatrix_apply {X : Type*} [MeasurableSpace X] {d : ℕ}
+    (P : Measure X) (score : X → EuclideanSpace ℝ (Fin d)) (i j : Fin d) :
+    fisherInformationMatrix P score i j = ∫ x, score x i * score x j ∂P := by
+  rw [fisherInformationMatrix]
+
 /-- The natural parameter space `{η | ∫ exp ⟪η, T⟫ dν < ∞}` of the natural exponential family
 with base measure `ν` and statistic `T`. -/
+@[expose]
 def naturalParameterSpace {X E : Type*} [MeasurableSpace X] [NormedAddCommGroup E]
     [InnerProductSpace ℝ E]
     (ν : Measure X) (T : X → E) : Set E :=
   {η | Integrable (fun x ↦ Real.exp (inner ℝ η (T x))) ν}
 
 /-- The log partition function `η ↦ log ∫ exp ⟪η, T⟫ dν` of a natural exponential family. -/
+@[expose]
 def logPartition {X E : Type*} [MeasurableSpace X] [NormedAddCommGroup E]
     [InnerProductSpace ℝ E]
     (ν : Measure X) (T : X → E) (η : E) : ℝ :=
@@ -150,8 +178,16 @@ def exponentialFamilyMeasure {X E : Type*} [MeasurableSpace X] [NormedAddCommGro
     (ν : Measure X) (T : X → E) (η : E) : Measure X :=
   ν.withDensity (fun x ↦ ENNReal.ofReal (Real.exp (inner ℝ η (T x) - logPartition ν T η)))
 
+/-- Defining equation of `exponentialFamilyMeasure`. -/
+theorem exponentialFamilyMeasure_def {X E : Type*} [MeasurableSpace X] [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] (ν : Measure X) (T : X → E) (η : E) :
+    exponentialFamilyMeasure ν T η =
+      ν.withDensity (fun x ↦ ENNReal.ofReal (Real.exp (inner ℝ η (T x) - logPartition ν T η))) := by
+  rw [exponentialFamilyMeasure]
+
 /-- A minimal natural exponential family: no nonzero linear functional `⟪u, T⟫` of the statistic
 is `ν`-almost everywhere constant. -/
+@[expose]
 def IsMinimalExponentialFamily {X E : Type*} [MeasurableSpace X] [NormedAddCommGroup E]
     [InnerProductSpace ℝ E]
     (ν : Measure X) (T : X → E) : Prop :=

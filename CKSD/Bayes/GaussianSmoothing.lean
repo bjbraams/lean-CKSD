@@ -1,12 +1,12 @@
 module
 
-public import Mathlib.Analysis.Distribution.SchwartzSpace.Deriv
-public import Mathlib.Analysis.Calculus.ParametricIntegral
+import Mathlib.Analysis.Distribution.SchwartzSpace.Deriv
+import Mathlib.Analysis.Calculus.ParametricIntegral
 public import Mathlib.Analysis.Calculus.Gradient.Basic
-public import Mathlib.Analysis.InnerProductSpace.Calculus
-public import Mathlib.MeasureTheory.Function.ConditionalExpectation.Basic
+import Mathlib.Analysis.InnerProductSpace.Calculus
 public import TauCeti.Analysis.Distribution.SchwartzSpace.Gaussian
-public import TauCeti.Probability.Distributions.Gaussian.Density
+import TauCeti.Probability.Distributions.Gaussian.Density
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 
 /-!
 # Gaussian smoothing and conditional scores
@@ -33,7 +33,7 @@ TauCeti's `stdGaussian_eq_withDensity_norm` and `Measure.map_affine_withDensity`
 * `CKSD.gradient_gaussianSmoothing`: the gradient of a Gaussian convolution.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -115,6 +115,14 @@ def gaussianSmoothingKernel {E : Type*} [NormedAddCommGroup E]
     [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] (σ : ℝ) (x : E) : ℝ :=
   |σ|⁻¹ ^ Module.finrank ℝ E * (2 * Real.pi) ^ (-(Module.finrank ℝ E : ℝ) / 2) *
     Real.exp (-‖x‖ ^ 2 / (2 * σ ^ 2))
+
+/-- Defining formula of `gaussianSmoothingKernel`. -/
+theorem gaussianSmoothingKernel_def {E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] [FiniteDimensional ℝ E] (σ : ℝ) (x : E) :
+    gaussianSmoothingKernel σ x =
+      |σ|⁻¹ ^ Module.finrank ℝ E * (2 * Real.pi) ^ (-(Module.finrank ℝ E : ℝ) / 2) *
+        Real.exp (-‖x‖ ^ 2 / (2 * σ ^ 2)) := by
+  rw [gaussianSmoothingKernel]
 
 /-- At positive scale the isotropic Gaussian density is a Schwartz function, using TauCeti's
 Gaussian. -/

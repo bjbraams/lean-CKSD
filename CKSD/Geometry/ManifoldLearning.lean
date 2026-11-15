@@ -1,8 +1,9 @@
 module
 
-public import CKSD.Geometry.TopologicalInference
+public import CKSD.Geometry.Reach
+public import Mathlib.Geometry.Manifold.SmoothEmbedding
+public import Mathlib.Geometry.Manifold.Instances.Real
 public import Mathlib.Topology.EMetricSpace.BoundedVariation
-public import Mathlib.Topology.Connected.PathConnected
 
 /-!
 # Geodesic approximation from neighbourhood graphs
@@ -27,7 +28,7 @@ The definitions are stated for a general (pseudo)metric space.
 * `CKSD.intrinsicEDist_eq_edist_of_lengthPreserving`: the flat case (GAPS 108.4).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

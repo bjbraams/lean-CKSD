@@ -22,7 +22,7 @@ graph-theoretic basis of constraint-based causal discovery (PC algorithm).
 Source: GAPS 105.70.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -61,17 +61,17 @@ theorem CausalGraph.adjacent_iff_forall_not_dSeparated [Fintype V] (G : CausalGr
       fun hwv ↦ G.not_adjacent_self v (by subst hwv; exact Or.inl hw)⟩
   rcases G.dSeparated_parents_of_not_adjacent huv hadj with hs | hs
   · refine h (G.parentFinset u) ?_ ?_ ?_
-    · simp only [CausalGraph.parentFinset, Finset.mem_filter, Finset.mem_univ, true_and]
+    · simp only [CausalGraph.parentFinset_def, Finset.mem_filter, Finset.mem_univ, true_and]
       exact fun hw ↦ (hnu u hw).1 rfl
-    · simp only [CausalGraph.parentFinset, Finset.mem_filter, Finset.mem_univ, true_and]
+    · simp only [CausalGraph.parentFinset_def, Finset.mem_filter, Finset.mem_univ, true_and]
       exact fun hw ↦ (hnu v hw).2 rfl
-    · simpa [CausalGraph.parentFinset, CausalGraph.parents] using hs
+    · simpa [CausalGraph.parentFinset_def, CausalGraph.parents] using hs
   · refine h (G.parentFinset v) ?_ ?_ ?_
-    · simp only [CausalGraph.parentFinset, Finset.mem_filter, Finset.mem_univ, true_and]
+    · simp only [CausalGraph.parentFinset_def, Finset.mem_filter, Finset.mem_univ, true_and]
       exact fun hw ↦ (hnv u hw).1 rfl
-    · simp only [CausalGraph.parentFinset, Finset.mem_filter, Finset.mem_univ, true_and]
+    · simp only [CausalGraph.parentFinset_def, Finset.mem_filter, Finset.mem_univ, true_and]
       exact fun hw ↦ (hnv v hw).2 rfl
-    · simpa [CausalGraph.parentFinset, CausalGraph.parents] using hs
+    · simpa [CausalGraph.parentFinset_def, CausalGraph.parents] using hs
 
 /-- GAPS 105.70: in a skeleton path `u - v - w` with distinct endpoints, if `S`
 d-separates `u` and `w`, then `u → v ← w` exactly when `v ∉ S`. -/

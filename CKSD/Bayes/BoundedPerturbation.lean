@@ -1,8 +1,7 @@
 module
 
-public import CKSD.Bayes.Diffusion
+public import CKSD.Bayes.Diffusion.Basic
 public import TauCeti.Probability.Concentration.PoincareLogSobolev
-public import Mathlib.Probability.Moments.Variance
 
 /-!
 # Bounded perturbations of logarithmic Sobolev inequalities
@@ -31,7 +30,7 @@ TauCeti's entropy and logarithmic Sobolev predicates.
   with values in `[a, b]` multiplies the constant by at most `exp (b - a)`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 open MeasureTheory ProbabilityTheory Set
@@ -168,8 +167,7 @@ theorem gibbsMeasure_le_smul_of_sub_le {d : ℕ}
       (Real.exp (-a) * (∫ x, Real.exp (-V x)) / (∫ x, Real.exp (-W x))) • gibbsMeasure V := by
   have hZV : 0 < ∫ x, Real.exp (-V x) := integral_exp_pos hV
   have hZW : 0 < ∫ x, Real.exp (-W x) := integral_exp_pos hW
-  unfold gibbsMeasure
-  rw [← withDensity_smul' _ _ ENNReal.ofReal_ne_top]
+  rw [gibbsMeasure_def, gibbsMeasure_def, ← withDensity_smul' _ _ ENNReal.ofReal_ne_top]
   apply withDensity_mono
   apply ae_of_all
   intro x

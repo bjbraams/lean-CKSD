@@ -2,9 +2,8 @@ module
 
 public import CKSD.Nonparametric.Models
 public import Mathlib.Topology.MetricSpace.Holder
-public import Mathlib.Analysis.Real.Pi.Bounds
-public import CKSD.Nonparametric.LowerBounds.Testing
-public import CKSD.Nonparametric.LowerBounds.Gaussian
+public import Mathlib.Order.CompletePartialOrder
+public import Mathlib.Probability.Distributions.Gaussian.Real
 
 /-!
 # Regression smoothers and one-dimensional Hölder rates
@@ -14,7 +13,7 @@ Stone's consistency theorem for the Nadaraya–Watson estimator, and the upper b
 attained by box-kernel local averaging. The fixed design samples at `(i + 1) / n`. Minimax
 risks are infima over measurable estimators of suprema of `ℝ≥0∞`-valued risks. The
 higher-order local-polynomial and Sobolev parts of the catalogue entries are outside these
-statements. Pointwise density estimation is in `CKSD.Nonparametric.HolderDensityMinimax`.
+statements. Pointwise density estimation is in `CKSD.Nonparametric.Density.HolderMinimax`.
 
 ## Main definitions
 
@@ -44,7 +43,7 @@ Sources: GAPS 103.7 and 103.22.
   Corollaries 2.3 and 2.5.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -88,7 +87,7 @@ theorem tendsto_nadarayaWatson_prediction_error_probability
 
 /-- Measurable functions on the line with the Hölder bound `|f x - f y| ≤ L |x - y|^β` on the
 unit interval. There is no bound on an additive constant. -/
-def holderRegressionClass (β L : ℝ) : Set (ℝ → ℝ) :=
+@[expose] def holderRegressionClass (β L : ℝ) : Set (ℝ → ℝ) :=
   {f | Measurable f ∧ ∀ x ∈ Icc (0 : ℝ) 1, ∀ y ∈ Icc (0 : ℝ) 1,
     |f x - f y| ≤ L * Real.rpow |x - y| β}
 
@@ -113,21 +112,48 @@ def fixedDesignRegressionLaw (n : ℕ) (f : ℝ → ℝ) (σ : ℝ) : Measure (F
   Measure.pi (fun i ↦ gaussianReal (f (((i.val + 1 : ℕ) : ℝ) / n))
     (Real.toNNReal (σ ^ 2)))
 
+/-- The fixed-design law is the product of Gaussian laws centred at the regression values. -/
+theorem fixedDesignRegressionLaw_def (n : ℕ) (f : ℝ → ℝ) (σ : ℝ) :
+    fixedDesignRegressionLaw n f σ = Measure.pi (fun i : Fin n ↦
+      gaussianReal (f (((i.val + 1 : ℕ) : ℝ) / n)) (Real.toNNReal (σ ^ 2))) := by
+  rw [fixedDesignRegressionLaw]
+
 /-- Mean integrated squared error of a predictor under the fixed-design Gaussian experiment. -/
 def fixedDesignRegressionRisk {n : ℕ} (f : ℝ → ℝ) (σ : ℝ)
     (estimate : (Fin n → ℝ) → ℝ → ℝ) : ℝ≥0∞ :=
   ∫⁻ y, (∫⁻ t in Icc (0 : ℝ) 1, ENNReal.ofReal ((estimate y t - f t) ^ 2))
     ∂fixedDesignRegressionLaw n f σ
 
+/-- The fixed-design risk is the expected integrated squared error on `[0, 1]`. -/
+theorem fixedDesignRegressionRisk_def {n : ℕ} (f : ℝ → ℝ) (σ : ℝ)
+    (estimate : (Fin n → ℝ) → ℝ → ℝ) : fixedDesignRegressionRisk f σ estimate =
+      ∫⁻ y, (∫⁻ t in Icc (0 : ℝ) 1, ENNReal.ofReal ((estimate y t - f t) ^ 2))
+        ∂fixedDesignRegressionLaw n f σ := by
+  rw [fixedDesignRegressionRisk]
+
 /-- Fixed-design Hölder minimax mean integrated squared risk over jointly measurable estimators. -/
 def holderRegressionMinimaxRisk (n : ℕ) (β L σ : ℝ) : ℝ≥0∞ :=
   ⨅ T : {T : (Fin n → ℝ) → ℝ → ℝ // Measurable (Function.uncurry T)},
     ⨆ f : holderRegressionClass β L, fixedDesignRegressionRisk f.val σ T.val
 
+/-- The minimax risk is the infimum over measurable estimators of the worst-case risk. -/
+theorem holderRegressionMinimaxRisk_def (n : ℕ) (β L σ : ℝ) :
+    holderRegressionMinimaxRisk n β L σ =
+      ⨅ T : {T : (Fin n → ℝ) → ℝ → ℝ // Measurable (Function.uncurry T)},
+        ⨆ f : holderRegressionClass β L, fixedDesignRegressionRisk f.val σ T.val := by
+  rw [holderRegressionMinimaxRisk]
+
 /-- Box-kernel local-constant regression on the fixed design. -/
 def fixedDesignLocalConstant {n : ℕ} (h : ℝ) (y : Fin n → ℝ) (t : ℝ) : ℝ :=
   let w := fun i : Fin n ↦ if |t - ((i.val + 1 : ℕ) : ℝ) / n| ≤ h then (1 : ℝ) else 0
   (∑ i, w i * y i) / (∑ i, w i)
+
+/-- The local-constant estimate is the average of the responses at design points within `h`. -/
+theorem fixedDesignLocalConstant_def {n : ℕ} (h : ℝ) (y : Fin n → ℝ) (t : ℝ) :
+    fixedDesignLocalConstant h y t =
+      (∑ i : Fin n, (if |t - ((i.val + 1 : ℕ) : ℝ) / n| ≤ h then (1 : ℝ) else 0) * y i) /
+        (∑ i : Fin n, if |t - ((i.val + 1 : ℕ) : ℝ) / n| ≤ h then (1 : ℝ) else 0) := by
+  rw [fixedDesignLocalConstant]
 
 /-- Mean squared error of a linear statistic of independent Gaussian observations with common
 variance `v`: the variance `v ∑ aᵢ²` plus the squared bias. -/
@@ -418,6 +444,7 @@ theorem nadarayaWatson_nonneg {d n : ℕ} (K : EuclideanSpace ℝ (Fin d) → �
     (hK : ∀ x, 0 ≤ K x) (h : ℝ) (x : Fin n → EuclideanSpace ℝ (Fin d))
     (y : Fin n → ℝ) (hy : ∀ i, 0 ≤ y i) (t : EuclideanSpace ℝ (Fin d)) :
     0 ≤ nadarayaWatson K h x y t := by
+  rw [nadarayaWatson_def]
   exact div_nonneg (Finset.sum_nonneg fun i _ ↦ mul_nonneg (hK _) (hy i))
     (Finset.sum_nonneg fun i _ ↦ hK _)
 
@@ -427,7 +454,7 @@ theorem nadarayaWatson_const {d n : ℕ} (K : EuclideanSpace ℝ (Fin d) → ℝ
     (t : EuclideanSpace ℝ (Fin d))
     (hden : (∑ i, K (h⁻¹ • (x i - t))) ≠ 0) :
     nadarayaWatson K h x (fun _ ↦ c) t = c := by
-  unfold nadarayaWatson
+  simp only [nadarayaWatson_def]
   rw [← Finset.sum_mul, mul_div_cancel_left₀ _ hden]
 
 end CKSD

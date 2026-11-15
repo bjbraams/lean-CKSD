@@ -1,8 +1,9 @@
 module
 
 public import CKSD.Bayes.Nonparametric
-public import Mathlib.NumberTheory.Harmonic.Bounds
-public import Mathlib.Analysis.PSeries
+import Mathlib.NumberTheory.Harmonic.Bounds
+import Mathlib.Analysis.PSeries
+import CKSD.Bayes.Basic
 
 /-!
 # Pólya urn predictive laws and distinct values
@@ -28,7 +29,7 @@ counting process.
 Sources: GAPS 104.16.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -73,7 +74,7 @@ theorem polyaPredictiveLaw_compl_range {X : Type*} [MeasurableSpace X]
     {n : ℕ}
     (y : Fin n → X) : polyaPredictiveLaw α y (range y)ᶜ = (α univ + n)⁻¹ * α univ := by
   have hmc : MeasurableSet (range y)ᶜ := (Set.finite_range y).measurableSet.compl
-  rw [polyaPredictiveLaw, smul_apply, smul_eq_mul, dirichletPosteriorBase,
+  rw [polyaPredictiveLaw_def, smul_apply, smul_eq_mul, dirichletPosteriorBase_def,
     add_apply, FunLike.coe_sum, Finset.sum_apply]
   congr 1
   rw [measure_compl (Set.finite_range y).measurableSet (measure_ne_top _ _),
@@ -531,7 +532,7 @@ theorem measureReal_univ_pos_of_isPolyaUrnProcess {Ω X : Type*} [MeasurableSpac
     rintro rfl
     obtain ⟨ω, hω⟩ := (hurn.2 0).exists
     have h := congrArg (fun ν : Measure X ↦ ν univ) hω
-    simp [polyaPredictiveLaw, dirichletPosteriorBase] at h
+    simp [polyaPredictiveLaw_def] at h
   exact ENNReal.toReal_pos ((Measure.measure_univ_ne_zero).2 hα) (measure_ne_top _ _)
 
 /-- The distinct count is a measurable function of the sample path. -/

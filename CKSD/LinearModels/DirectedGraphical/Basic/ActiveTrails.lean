@@ -27,7 +27,7 @@ These are the graph-theoretic steps in the proof that a recursively factorizing 
 satisfies the global directed Markov property (Lauritzen, *Graphical Models*, 1996, §3.2).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -43,21 +43,21 @@ namespace CausalGraph
 
 /-- Status of the middle vertex `b` of consecutive trail vertices `a, b, c`: if `b` is a
 collider (`a → b ← c`) it must satisfy `P`, otherwise it must satisfy `N`. -/
-def TripleStatus (G : CausalGraph V) (P N : V → Prop) (a b c : V) : Prop :=
+@[expose] def TripleStatus (G : CausalGraph V) (P N : V → Prop) (a b c : V) : Prop :=
   if G.edge a b ∧ G.edge c b then P b else N b
 
 /-- A trail `q 0, …, q n` whose interior colliders satisfy `P` and whose interior noncolliders
 satisfy `N`. Repeated vertices are allowed. -/
-def IsTrailWith (G : CausalGraph V) (P N : V → Prop) (n : ℕ) (q : ℕ → V) : Prop :=
+@[expose] def IsTrailWith (G : CausalGraph V) (P N : V → Prop) (n : ℕ) (q : ℕ → V) : Prop :=
   (∀ k < n, G.Adjacent (q k) (q (k + 1))) ∧
     ∀ k, k + 2 ≤ n → G.TripleStatus P N (q k) (q (k + 1)) (q (k + 2))
 
 /-- A vertex lies in `C` or is an ancestor of a vertex of `C`. -/
-def MemAncestorClosure (G : CausalGraph V) (C : Set V) (v : V) : Prop :=
+@[expose] def MemAncestorClosure (G : CausalGraph V) (C : Set V) (v : V) : Prop :=
   ∃ z ∈ C, z = v ∨ G.IsDescendant v z
 
 /-- A directed path from `v` to a vertex of `T` whose vertices after `v` avoid `C`. -/
-def ForwardReach (G : CausalGraph V) (C T : Set V) (v : V) : Prop :=
+@[expose] def ForwardReach (G : CausalGraph V) (C T : Set V) (v : V) : Prop :=
   ∃ (m : ℕ) (r : ℕ → V), r 0 = v ∧ r m ∈ T ∧ (∀ i < m, G.edge (r i) (r (i + 1))) ∧
     ∀ i, 0 < i → i ≤ m → r i ∉ C
 

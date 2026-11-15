@@ -1,7 +1,9 @@
 module
 
 public import CKSD.Processes.Kalman.Model
-public import CKSD.Processes.GaussianConditioning
+import CKSD.Processes.GaussianConditioning
+public import Mathlib.CategoryTheory.Category.Basic
+public import TauCeti.Probability.Distributions.Gaussian.Density
 
 /-!
 # Kalman covariance and error identities
@@ -11,7 +13,7 @@ covariance propagation, and measurable dependence of prediction/filtering errors
 The state is indexed from zero and observation records are extended by zero. Source: GAPS 106.7.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -145,7 +147,7 @@ variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq
 
 /-- The product of the one-step predictive densities `∏_{i<n} φ(y_i; H_i x_{i|i-1}, Σ_i)` of an
 observation record `(y_0, …, y_{n-1})`. -/
-def innovDensity (n : ℕ) (ys : Fin n → EuclideanSpace ℝ κ) : ℝ≥0∞ :=
+@[expose] def innovDensity (n : ℕ) (ys : Fin n → EuclideanSpace ℝ κ) : ℝ≥0∞ :=
   ∏ i : Fin n, TauCeti.Probability.multivariateGaussianPDF
     (Matrix.toEuclideanLin (M.observation i) (M.predMean (extendObservations ys) i))
     (M.innovCov i) (ys i)
@@ -311,22 +313,22 @@ variable {Ω : Type*} (x₀ : Ω → EuclideanSpace ℝ ι) (w : ℕ → Ω → 
   (v : ℕ → Ω → EuclideanSpace ℝ κ)
 
 /-- The observation process `y_t = H_t x_t + v_t` driven by `x₀`, `w`, and `v`. -/
-def obsProc : ℕ → Ω → EuclideanSpace ℝ κ := M.observationProcess (M.state x₀ w) v
+@[expose] def obsProc : ℕ → Ω → EuclideanSpace ℝ κ := M.observationProcess (M.state x₀ w) v
 
 /-- The observation record `(y_0, …, y_{n-1})`. -/
-def obsPrefix (n : ℕ) (ω : Ω) : Fin n → EuclideanSpace ℝ κ :=
+@[expose] def obsPrefix (n : ℕ) (ω : Ω) : Fin n → EuclideanSpace ℝ κ :=
   fun i ↦ M.obsProc x₀ w v i ω
 
 /-- The prediction error `x_t - x_{t|t-1}`. -/
-def predErr (t : ℕ) (ω : Ω) : EuclideanSpace ℝ ι :=
+@[expose] def predErr (t : ℕ) (ω : Ω) : EuclideanSpace ℝ ι :=
   M.state x₀ w t ω - M.predMean (fun i ↦ M.obsProc x₀ w v i ω) t
 
 /-- The filtering error `x_t - x_{t|t}`. -/
-def filtErr (t : ℕ) (ω : Ω) : EuclideanSpace ℝ ι :=
+@[expose] def filtErr (t : ℕ) (ω : Ω) : EuclideanSpace ℝ ι :=
   M.state x₀ w t ω - M.filtMean (fun i ↦ M.obsProc x₀ w v i ω) t
 
 /-- The innovation `y_t - H_t x_{t|t-1}`. -/
-def innovation (t : ℕ) (ω : Ω) : EuclideanSpace ℝ κ :=
+@[expose] def innovation (t : ℕ) (ω : Ω) : EuclideanSpace ℝ κ :=
   M.obsProc x₀ w v t ω -
     Matrix.toEuclideanLin (M.observation t) (M.predMean (fun i ↦ M.obsProc x₀ w v i ω) t)
 

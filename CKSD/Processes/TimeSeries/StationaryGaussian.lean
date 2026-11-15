@@ -1,9 +1,8 @@
 module
 
-public import CKSD.Processes.Basic
 public import Mathlib.MeasureTheory.Constructions.KolmogorovExtension
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
-public import TauCeti.Probability.Distributions.Gaussian.Affine
+import TauCeti.Probability.Distributions.Gaussian.Affine
 
 /-!
 # Stationary Gaussian processes
@@ -31,7 +30,7 @@ The construction uses Mathlib's Kolmogorov extension theorem and TauCeti's affin
 multivariate Gaussian laws.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -50,7 +49,8 @@ def euclideanSelect {ι κ : Type*} (σ : κ → ι) :
 
 /-- Coordinates of a coordinate selection. -/
 @[simp] theorem euclideanSelect_apply {ι κ : Type*} (σ : κ → ι)
-    (x : EuclideanSpace ℝ ι) (k : κ) : euclideanSelect σ x k = x (σ k) := rfl
+    (x : EuclideanSpace ℝ ι) (k : κ) : euclideanSelect σ x k = x (σ k) := by
+    unfold euclideanSelect; rfl
 
 /-- The image of a centred multivariate Gaussian law under the coordinate selection
 `x ↦ (x (σ k))_k`, with `σ` not necessarily injective, is the centred Gaussian law with covariance

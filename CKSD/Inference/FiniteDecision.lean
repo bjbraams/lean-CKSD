@@ -1,12 +1,9 @@
 module
 
-public import CKSD.Inference.Model
-public import Mathlib.Analysis.LocallyConvex.WeakSpace
-public import Mathlib.MeasureTheory.Function.L2Space
-public import Mathlib.MeasureTheory.Function.LpOrder
-public import Mathlib.MeasureTheory.Function.LpSpace.Indicator
-public import TauCeti.Analysis.Convex.Uniform.Basic
-public import TauCeti.Analysis.Normed.Module.Dual.Reflexive.WeakCompact
+import Mathlib.Analysis.LocallyConvex.WeakSpace
+import TauCeti.Analysis.Convex.Uniform.Basic
+import TauCeti.Analysis.Normed.Module.Dual.Reflexive.WeakCompact
+public import CKSD.Inference.Basic
 
 /-!
 # Compact risk sets for finite decision problems
@@ -24,7 +21,7 @@ uses TauCeti's Milman–Pettis theorem and its compactness theorem for closed bo
 subsets of reflexive spaces.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 open MeasureTheory ProbabilityTheory Set Filter
@@ -208,12 +205,10 @@ theorem exists_decisionRule_of_weakDecisionSimplex (f : A → WeakSpace ℝ (Lp 
         simp only [FunLike.coe_sum, Finset.sum_apply, smul_apply, smul_eq_mul]
         exact Finset.measurable_sum _ fun a _ ↦ (hwm a).ennreal_ofReal.mul_const _⟩
   have hK : IsMarkovKernel K := ⟨fun x ↦ ⟨by
-    -- `change` unfolds a definition that `simp` does not see through
     change (∑ a, ENNReal.ofReal (w x a) • Measure.dirac a) univ = 1
     simp only [FunLike.coe_sum, Finset.sum_apply, smul_apply, measure_univ, smul_eq_mul, mul_one]
     rw [← ENNReal.ofReal_sum_of_nonneg (fun a _ ↦ hwn x a), hws, ENNReal.ofReal_one]⟩⟩
   have hweight (x : X) (a : A) : (K x).real {a} = w x a := by
-    -- `change` unfolds a definition that `simp` does not see through
     change ((∑ b, ENNReal.ofReal (w x b) • Measure.dirac b) {a}).toReal = _
     simp only [FunLike.coe_sum, Finset.sum_apply, smul_apply, smul_eq_mul]
     simp [Pi.single_apply, mul_ite, ENNReal.toReal_ofReal (hwn x a)]
@@ -256,8 +251,7 @@ theorem risk_eq_sum_l2Inner {Θ A : Type*} [Fintype A] [MeasurableSpace A]
     have hint : Integrable (L θ) (δ.val x) :=
       ⟨(measurable_of_countable (L θ)).aestronglyMeasurable, HasFiniteIntegral.of_finite⟩
     simpa only [smul_eq_mul, mul_comm] using integral_fintype hint
-  -- `change` unfolds a definition that `simp` does not see through
-  change (∫ x, ∫ a, L θ a ∂δ.val x ∂P θ) = _
+  rw [risk_def]
   simp_rw [hin]
   rw [integral_finsetSum _ (fun a _ ↦ (hi a).const_mul (L θ a))]
   apply Finset.sum_congr rfl

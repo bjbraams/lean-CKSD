@@ -1,8 +1,12 @@
 module
 
 public import CKSD.Learning.Algorithms
-public import TauCeti.Probability.Distributions.Gaussian.ChiSquared
-public import TauCeti.Probability.Distributions.Gaussian.L2
+import TauCeti.Probability.Distributions.Gaussian.ChiSquared
+import TauCeti.Probability.Distributions.Gaussian.L2
+public import CKSD.Inference.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import CKSD.Asymptotics.Basic
+import Mathlib.Probability.StrongLaw
 
 /-!
 # Kernel ridge regression and compact-support clustering
@@ -26,7 +30,7 @@ Matrices, Gaussian laws, and Hausdorff distance are Mathlib APIs.
   (GAPS 107.16).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -592,7 +596,8 @@ theorem ae_tendsto_kmeans_centers_of_compact
     Integrable.of_bound (hmeas c).aestronglyMeasurable (Metric.diam K ^ 2)
       (hPK.mono fun x hx ↦ by rw [Real.norm_eq_abs]; exact hbound x hx c)
   set R : (Fin k → K) → ℝ := fun c ↦ ∫ x, φ x c ∂P with hR
-  have hRdef : ∀ c : Fin k → K, kmeansRisk P (fun i ↦ (c i).val) = R c := fun c ↦ rfl
+  have hRdef : ∀ c : Fin k → K, kmeansRisk P (fun i ↦ (c i).val) = R c := fun c ↦ by
+    rw [kmeansRisk_def]; rfl
   have hRlip : ∀ c c' : Fin k → K, |R c - R c'| ≤ L * dist c c' := by
     intro c c'
     rw [hR, ← integral_sub (hint c) (hint c')]
@@ -676,7 +681,7 @@ theorem ae_tendsto_kmeans_centers_of_compact
 theorem kmeansRisk_comp_perm {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X]
     {k : ℕ} (P : Measure X) (c : Fin k → X) (σ : Equiv.Perm (Fin k)) :
     kmeansRisk P (c ∘ σ) = kmeansRisk P c := by
-  unfold kmeansRisk
+  simp only [kmeansRisk_def]
   congr 1 with x
   exact congrArg sInf (EquivLike.range_comp (fun j ↦ dist x (c j) ^ 2) σ)
 

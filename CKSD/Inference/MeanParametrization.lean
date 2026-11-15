@@ -1,9 +1,9 @@
 module
 
-public import CKSD.Inference.ExponentialFamily
-public import CKSD.Inference.LogPartition
-public import CKSD.Inference.ExponentialFamilyMLE
-public import Mathlib.Analysis.Calculus.MeanValue
+import CKSD.Inference.ExponentialFamily
+import CKSD.Inference.LogPartition
+import CKSD.Inference.ExponentialFamilyMLE
+public import CKSD.Inference.Model
 
 /-!
 # The mean map of a natural exponential family
@@ -30,7 +30,7 @@ The gradient of the log partition function is converted to a vector through a fi
 basis; injectivity follows from the mean value theorem along segments, and the location of the
 mean from a separating hyperplane together with minimality.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -68,8 +68,9 @@ variable [MeasurableSpace E] [BorelSpace E]
 omit [FiniteDimensional ℝ E] in
 /-- The base measure is absolutely continuous with respect to every law of the family. -/
 private theorem absolutelyContinuous_exponentialFamilyMeasure (ν : Measure E) (η : E) :
-    ν ≪ exponentialFamilyMeasure ν id η :=
-  withDensity_absolutelyContinuous' (by fun_prop) (ae_of_all _ fun x ↦ by simp [Real.exp_pos])
+    ν ≪ exponentialFamilyMeasure ν id η := by
+  rw [exponentialFamilyMeasure_def]
+  exact withDensity_absolutelyContinuous' (by fun_prop) (ae_of_all _ fun x ↦ by simp [Real.exp_pos])
 
 /-- In a minimal family the covariance form of an interior law is positive definite. -/
 private theorem covariance_inner_pos (ν : Measure E) (hne : ν ≠ 0)
@@ -186,7 +187,9 @@ theorem mean_exponentialFamilyMeasure_mem_interior_convexHull_support (ν : Meas
     (convex_convexHull ℝ ν.support) (hsupp.mono (subset_convexHull ℝ _)) ht
   set P := exponentialFamilyMeasure ν id η
   have := isProbabilityMeasure_exponentialFamilyMeasure ν hne hη'
-  have hPν : P ≪ ν := withDensity_absolutelyContinuous _ _
+  have hPν : P ≪ ν := by
+    rw [show P = _ from exponentialFamilyMeasure_def ν id η]
+    exact withDensity_absolutelyContinuous _ _
   have hle : ∀ᵐ x ∂P, inner ℝ u x ≤ inner ℝ u m := hPν.ae_le <|
     (show ∀ᵐ x ∂ν, x ∈ ν.support from Measure.support_mem_ae).mono fun x hx ↦
       hsep x (subset_convexHull ℝ _ hx)

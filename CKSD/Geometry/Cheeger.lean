@@ -26,7 +26,7 @@ weighted median shift.
   AMS, 1997.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -51,14 +51,16 @@ private theorem conductanceRatio_nonneg (hpos : ∀ i j, 0 ≤ W i j) :
     exact sum_nonneg fun i _ ↦ sum_nonneg fun j _ ↦ hpos i j
 
 /-- For nonnegative weights the Cheeger constant is nonnegative. -/
-theorem cheegerConstant_nonneg (hpos : ∀ i j, 0 ≤ W i j) : 0 ≤ cheegerConstant W :=
-  Real.sInf_nonneg (conductanceRatio_nonneg W hpos)
+theorem cheegerConstant_nonneg (hpos : ∀ i j, 0 ≤ W i j) : 0 ≤ cheegerConstant W := by
+  rw [cheegerConstant_def]
+  exact Real.sInf_nonneg (conductanceRatio_nonneg W hpos)
 
 /-- For nonnegative weights the Cheeger constant is at most every conductance ratio. -/
 theorem cheegerConstant_le_cutWeight_div (hpos : ∀ i j, 0 ≤ W i j) {T : Finset (Fin n)}
     (hT : T.Nonempty) (hTu : T ≠ univ) :
-    cheegerConstant W ≤ cutWeight W T / min (graphVolume W T) (graphVolume W Tᶜ) :=
-  csInf_le ⟨0, conductanceRatio_nonneg W hpos⟩ ⟨T, hT, hTu, rfl⟩
+    cheegerConstant W ≤ cutWeight W T / min (graphVolume W T) (graphVolume W Tᶜ) := by
+  rw [cheegerConstant_def]
+  exact csInf_le ⟨0, conductanceRatio_nonneg W hpos⟩ ⟨T, hT, hTu, rfl⟩
 
 /-- In a connected weighted graph on at least two vertices every degree is positive. -/
 theorem weightedDegree_pos (hn : 2 ≤ n) (hpos : ∀ i j, 0 ≤ W i j)
@@ -473,7 +475,7 @@ theorem spectralGap_cheegerConstant_bounds {n : ℕ} (hn : 2 ≤ n) (W : Matrix 
     (hvolpos _ (singleton_nonempty _)) (hvolpos _ (hcompl _ hS₀u))
   set Λ := {r | ∃ f : Fin n → ℝ, (∑ i, weightedDegree W i * f i) = 0 ∧
     (∑ i, weightedDegree W i * f i ^ 2) = 1 ∧ r = (∑ i, ∑ j, W i j * (f i - f j) ^ 2) / 2}
-  have hΛ : spectralGap W = sInf Λ := rfl
+  have hΛ : spectralGap W = sInf Λ := spectralGap_def W
   have hne : Λ.Nonempty := ⟨_, f₀, hf₀0, hf₀1, rfl⟩
   have hbdd : BddBelow Λ := by
     refine ⟨0, ?_⟩
@@ -487,11 +489,12 @@ theorem spectralGap_cheegerConstant_bounds {n : ℕ} (hn : 2 ≤ n) (W : Matrix 
     have : h ^ 2 / 2 ≤ sInf Λ := le_csInf hne fun r hr ↦ by linarith [(hcore r hr).1]
     rw [hΛ]; linarith
   refine ⟨?_, ?_, ?_⟩
-  · refine le_csInf ⟨_, {i₀}, singleton_nonempty _, hS₀u, rfl⟩ ?_
+  · rw [show h = sInf _ from cheegerConstant_def W]
+    refine le_csInf ⟨_, {i₀}, singleton_nonempty _, hS₀u, rfl⟩ ?_
     rintro _ ⟨S, hS, hSu, rfl⟩
     obtain ⟨f, hf0, hf1, hfE⟩ := exists_admissible_energy_le W hW hpos S (hvolpos _ hS)
       (hvolpos _ (hcompl _ hSu))
-    have : spectralGap W ≤ _ := csInf_le hbdd ⟨f, hf0, hf1, rfl⟩
+    have : spectralGap W ≤ _ := hΛ ▸ csInf_le hbdd ⟨f, hf0, hf1, rfl⟩
     linarith
   · calc h = Real.sqrt (h ^ 2) := (Real.sqrt_sq hh0).symm
       _ ≤ Real.sqrt (2 * spectralGap W) := Real.sqrt_le_sqrt hgap2

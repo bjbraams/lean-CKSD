@@ -1,13 +1,11 @@
 module
 
-public import CKSD.Learning.Basic
-public import CKSD.Asymptotics.Basic
-public import CKSD.Nonparametric.Basic
-public import TauCeti.Probability.Distributions.Wishart.Inverse.Moments
-public import TauCeti.Probability.Distributions.Wishart.Agreement
-public import TauCeti.Probability.Distributions.Gaussian.L2
-public import TauCeti.Probability.Distributions.Gaussian.Multivariate
-public import TauCeti.Analysis.Matrix.MeasurableSpace
+import CKSD.Learning.Basic
+import TauCeti.Probability.Distributions.Wishart.Inverse.Moments
+import TauCeti.Probability.Distributions.Wishart.Agreement
+import TauCeti.Probability.Distributions.Gaussian.L2
+public import Mathlib.Analysis.LocallyConvex.AbsConvexOpen
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 
 /-!
 # Log partition functions, tangent-kernel dynamics and least squares
@@ -32,7 +30,7 @@ estimator, and the implicit bias of gradient descent on least squares.
   component is preserved (GAPS 107.40).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

@@ -1,6 +1,8 @@
 module
 
 public import CKSD.Nonparametric.SparseRecovery.Basic
+import Mathlib.Algebra.Order.Chebyshev
+import Mathlib.Data.Fin.Tuple.Sort
 
 /-!
 # Restricted isometry and the null space property
@@ -35,7 +37,7 @@ Sources: GAPS 103.48 and 103.49.
 * S. Foucart and H. Rauhut, *A Mathematical Introduction to Compressive Sensing*, Birkhäuser, 2013.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -116,12 +118,14 @@ def blockVector {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p))
 
 /-- Coordinates of a block vector. -/
 theorem blockVector_apply {p : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p)) (k : ℕ)
-    (j : Fin p) : blockVector ℓ v k j = if ℓ j = k then v j else 0 := rfl
+    (j : Fin p) : blockVector ℓ v k j = if ℓ j = k then v j else 0 := by
+  unfold blockVector; rfl
 
 /-- A block vector is supported in its block. -/
 theorem sparsity_blockVector_le {p s : ℕ} (ℓ : Fin p → ℕ) (v : EuclideanSpace ℝ (Fin p))
     (k : ℕ) (hcard : (Finset.univ.filter fun j ↦ ℓ j = k).card ≤ s) :
     sparsity (blockVector ℓ v k) ≤ s := by
+  rw [sparsity_def]
   refine le_trans (Finset.card_le_card ?_) hcard
   intro j hj
   simp only [Finset.mem_filter, Finset.mem_univ, true_and, blockVector_apply] at hj ⊢
@@ -164,8 +168,9 @@ theorem eq_blockVector_zero_add_sum {p : ℕ} (ℓ : Fin p → ℕ) (hℓ : ∀ 
 theorem sum_range_sum_abs_eq_restrictedL1Norm {p : ℕ} (ℓ : Fin p → ℕ) (hℓ : ∀ j, ℓ j < p)
     (v : EuclideanSpace ℝ (Fin p)) :
     ∑ k ∈ Finset.range p, ∑ j ∈ Finset.univ.filter (fun j ↦ ℓ j = k), |v j| =
-      restrictedL1Norm Finset.univ v :=
-  Finset.sum_fiberwise_of_maps_to (fun j _ ↦ Finset.mem_range.mpr (hℓ j)) _
+      restrictedL1Norm Finset.univ v := by
+  rw [restrictedL1Norm_def]
+  exact Finset.sum_fiberwise_of_maps_to (fun j _ ↦ Finset.mem_range.mpr (hℓ j)) _
 
 /-- Expanding `⟪A v₀, A v⟫` over the blocks of `v`, where `v₀` is the leading block. -/
 theorem inner_apply_blockVector_zero_apply {n p : ℕ}
@@ -247,15 +252,15 @@ theorem hasNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ}
       push Not at h
       exact hne (PiLp.ext fun j ↦ by simp [h j])
     calc (0 : ℝ) < |v j| := abs_pos.mpr hj
-      _ ≤ restrictedL1Norm Finset.univ v :=
+      _ ≤ restrictedL1Norm Finset.univ v := (restrictedL1Norm_def _ v).symm ▸
         Finset.single_le_sum (f := fun j ↦ |v j|) (fun j _ ↦ abs_nonneg _) (Finset.mem_univ j)
   have hsplit := restrictedL1Norm_add_compl S v
-  have hS0 : 0 ≤ restrictedL1Norm S v := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
-  have hSc0 : 0 ≤ restrictedL1Norm Sᶜ v := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+  have hS0 : 0 ≤ restrictedL1Norm S v := restrictedL1Norm_nonneg _ _
+  have hSc0 : 0 ≤ restrictedL1Norm Sᶜ v := restrictedL1Norm_nonneg _ _
   rcases Nat.eq_zero_or_pos s with rfl | hs
   · have : S = ∅ := Finset.card_eq_zero.mp (Nat.le_zero.mp hS)
     subst this
-    have h0 : restrictedL1Norm ∅ v = 0 := Finset.sum_empty
+    have h0 : restrictedL1Norm ∅ v = 0 := by rw [restrictedL1Norm_def, Finset.sum_empty]
     linarith
   -- the key estimate `(1 - δ) ‖v_S‖₁ ≤ δ ‖v‖₁`
   have hkey : (1 - δ) * restrictedL1Norm S v ≤ δ * restrictedL1Norm Finset.univ v := by
@@ -327,7 +332,7 @@ theorem hasNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ}
             gcongr
             exact_mod_cast hcard 0
     -- the first block carries the largest entries
-    have hSB : restrictedL1Norm S v ≤ L 0 :=
+    have hSB : restrictedL1Norm S v ≤ L 0 := (restrictedL1Norm_def S v).symm ▸
       sum_le_sum_filter_eq_zero_of_decreasing_blocks hcmp hfull S hS (fun j ↦ |v j|)
         (fun j ↦ abs_nonneg _) fun _ _ h ↦ h
     have hsq : Real.sqrt s * X ≤ restrictedL1Norm Finset.univ v := by
@@ -475,10 +480,20 @@ theorem abs_inner_apply_le_sqrt_of_hasRestrictedIsometry {n p s : ℕ}
 isometry analysis of basis pursuit. -/
 def ripNullspaceRho (δ : ℝ) : ℝ := 4 * δ / (4 * Real.sqrt (1 - δ ^ 2) - δ)
 
+/-- The robust null space constant `ρ(δ)` is `4 δ / (4 √(1 - δ²) - δ)`. -/
+theorem ripNullspaceRho_def (δ : ℝ) :
+    ripNullspaceRho δ = 4 * δ / (4 * Real.sqrt (1 - δ ^ 2) - δ) := by
+  rw [ripNullspaceRho]
+
 /-- The robust null space constant `τ(δ) = √(1 + δ) / (√(1 - δ²) - δ / 4)` written as
 `4 √(1 - δ²) / ((4 √(1 - δ²) - δ) √(1 - δ))`. -/
 def ripNullspaceTau (δ : ℝ) : ℝ :=
   4 * Real.sqrt (1 - δ ^ 2) / ((4 * Real.sqrt (1 - δ ^ 2) - δ) * Real.sqrt (1 - δ))
+
+/-- The robust null space constant `τ(δ)` is `4 √(1 - δ²) / ((4 √(1 - δ²) - δ) √(1 - δ))`. -/
+theorem ripNullspaceTau_def (δ : ℝ) : ripNullspaceTau δ =
+    4 * Real.sqrt (1 - δ ^ 2) / ((4 * Real.sqrt (1 - δ ^ 2) - δ) * Real.sqrt (1 - δ)) := by
+  rw [ripNullspaceTau]
 
 /-- The constants of the robust null space property: for `0 ≤ δ < 4 / √41`,
 `0 ≤ ρ(δ) < 1` and `τ(δ) > 0`. -/

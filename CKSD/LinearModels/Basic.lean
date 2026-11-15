@@ -1,5 +1,8 @@
 module
 
+public import Mathlib.Analysis.CStarAlgebra.Matrix
+public import Mathlib.Analysis.Normed.Lp.MeasurableSpace
+public import Mathlib.MeasureTheory.Measure.Count
 public import CKSD.Inference.Basic
 public import TauCeti.Probability.Distributions.Wishart.Basic
 
@@ -32,7 +35,7 @@ survey sampling (Section 105).
   an orthonormal pair and the squared norm of the projection onto it.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -52,6 +55,12 @@ scoped instance finiteSampleMeasurableSpace (N : ℕ) : MeasurableSpace (Finset 
 def matrixQuadraticForm {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ) (x : EuclideanSpace ℝ (Fin d)) : ℝ :=
   inner ℝ x (Matrix.toEuclideanCLM (𝕜 := ℝ) A x)
 
+/-- Defining equation of `matrixQuadraticForm`. -/
+theorem matrixQuadraticForm_def {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ)
+    (x : EuclideanSpace ℝ (Fin d)) :
+    matrixQuadraticForm A x = inner ℝ x (Matrix.toEuclideanCLM (𝕜 := ℝ) A x) := by
+  rw [matrixQuadraticForm]
+
 /-- A quadratic form `x ↦ xᵀ P x` is measurable. -/
 @[fun_prop]
 theorem measurable_matrixQuadraticForm {n : ℕ} (P : Matrix (Fin n) (Fin n) ℝ) :
@@ -63,35 +72,67 @@ theorem measurable_matrixQuadraticForm {n : ℕ} (P : Matrix (Fin n) (Fin n) ℝ
 def sampleMean {n d : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin d)) : EuclideanSpace ℝ (Fin d) :=
   (n : ℝ)⁻¹ • ∑ i, x i
 
+/-- Defining equation of `sampleMean`. -/
+theorem sampleMean_def {n d : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin d)) :
+    sampleMean x = (n : ℝ)⁻¹ • ∑ i, x i := by
+  rw [sampleMean]
+
 /-- Centered scatter matrix of a finite Euclidean sample. -/
 def scatterMatrix {n d : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin d)) : Matrix (Fin d) (Fin d) ℝ :=
   fun j k ↦ ∑ i, (x i j - sampleMean x j) * (x i k - sampleMean x k)
+
+/-- Entries of `scatterMatrix`. -/
+theorem scatterMatrix_apply {n d : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin d)) (j k : Fin d) :
+    scatterMatrix x j k = ∑ i, (x i j - sampleMean x j) * (x i k - sampleMean x k) := by
+  rw [scatterMatrix]
 
 /-- Negative Gaussian log-likelihood up to its constant term. -/
 def gaussianNegLogLikelihood {n d : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin d))
     (m : EuclideanSpace ℝ (Fin d)) (C : Matrix (Fin d) (Fin d) ℝ) : ℝ :=
   (n : ℝ) / 2 * Real.log C.det + (∑ i, matrixQuadraticForm C⁻¹ (x i - m)) / 2
 
+/-- Defining equation of `gaussianNegLogLikelihood`. -/
+theorem gaussianNegLogLikelihood_def {n d : ℕ} (x : Fin n → EuclideanSpace ℝ (Fin d))
+    (m : EuclideanSpace ℝ (Fin d)) (C : Matrix (Fin d) (Fin d) ℝ) :
+    gaussianNegLogLikelihood x m C =
+      (n : ℝ) / 2 * Real.log C.det + (∑ i, matrixQuadraticForm C⁻¹ (x i - m)) / 2 := by
+  rw [gaussianNegLogLikelihood]
+
 /-- Simple random sampling without replacement: the uniform law on the subsets of size `n` of a
 population of `N` units. It is a probability measure when `n ≤ N`. -/
 def simpleRandomSampleDesign (N n : ℕ) : Measure (Finset (Fin N)) :=
   (Nat.choose N n : ℝ≥0∞)⁻¹ • Measure.count.restrict {s | s.card = n}
 
+/-- Defining equation of `simpleRandomSampleDesign`. -/
+theorem simpleRandomSampleDesign_def (N n : ℕ) :
+    simpleRandomSampleDesign N n =
+      (Nat.choose N n : ℝ≥0∞)⁻¹ • Measure.count.restrict {s | s.card = n} := by
+  rw [simpleRandomSampleDesign]
+
 /-- Finite-population mean. -/
 def populationMean {N : ℕ} (y : Fin N → ℝ) : ℝ := (∑ i, y i) / N
+
+/-- Defining equation of `populationMean`. -/
+theorem populationMean_def {N : ℕ} (y : Fin N → ℝ) : populationMean y = (∑ i, y i) / N := by
+  rw [populationMean]
 
 /-- Finite-population variance with divisor `N-1`. -/
 def populationVariance {N : ℕ} (y : Fin N → ℝ) : ℝ :=
   (∑ i, (y i - populationMean y) ^ 2) / (N - 1 : ℕ)
 
+/-- Defining equation of `populationVariance`. -/
+theorem populationVariance_def {N : ℕ} (y : Fin N → ℝ) :
+    populationVariance y = (∑ i, (y i - populationMean y) ^ 2) / (N - 1 : ℕ) := by
+  rw [populationVariance]
+
 /-- A Latin square of order `s`: every symbol occurs exactly once in each row and in each
 column. -/
-def IsLatinSquare {s : ℕ} (L : Fin s → Fin s → Fin s) : Prop :=
+@[expose] def IsLatinSquare {s : ℕ} (L : Fin s → Fin s → Fin s) : Prop :=
   (∀ i, Function.Bijective (L i)) ∧ ∀ j, Function.Bijective (fun i ↦ L i j)
 
 /-- Two Latin squares are orthogonal when superposing them gives every ordered pair of symbols
 exactly once. -/
-def OrthogonalLatinSquares {s : ℕ} (L M : Fin s → Fin s → Fin s) : Prop :=
+@[expose] def OrthogonalLatinSquares {s : ℕ} (L M : Fin s → Fin s → Fin s) : Prop :=
   Function.Injective (fun z : Fin s × Fin s ↦ (L z.1 z.2, M z.1 z.2))
 
 /-- Inversion commutes with scalar multiplication over a field, `(c • A)⁻¹ = c⁻¹ • A⁻¹`, for

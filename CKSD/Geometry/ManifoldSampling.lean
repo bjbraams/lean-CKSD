@@ -1,15 +1,12 @@
 module
 
-public import Mathlib.Geometry.Euclidean.Volume.Measure
+import Mathlib.Geometry.Euclidean.Volume.Measure
 public import Mathlib.Geometry.Manifold.Immersion
-public import Mathlib.Geometry.Manifold.ContMDiff.Atlas
-public import Mathlib.Geometry.Manifold.ContMDiff.NormedSpace
 public import Mathlib.Geometry.Manifold.Instances.Real
-public import Mathlib.Analysis.Calculus.ContDiff.RCLike
-public import Mathlib.MeasureTheory.Constructions.Pi
-public import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
-public import Mathlib.Topology.MetricSpace.HausdorffDistance
-public import Mathlib.Analysis.SpecialFunctions.Exp
+import Mathlib.Analysis.Calculus.ContDiff.RCLike
+import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
+public import Mathlib.Analysis.Normed.Lp.MeasurableSpace
+public import Mathlib.MeasureTheory.Measure.Hausdorff
 
 /-!
 # Sampling nets and small balls on immersed manifolds
@@ -35,7 +32,7 @@ Hausdorff measure of a small image ball is comparable with the Lebesgue measure 
   `μH[d] (B(j x, r) ∩ j(N)) ≥ a r^d` on a compact immersed manifold.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

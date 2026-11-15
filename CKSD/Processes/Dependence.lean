@@ -1,6 +1,9 @@
 module
 
-public import CKSD.Processes.Independence
+import CKSD.Processes.Independence
+public import CKSD.Asymptotics.Basic
+public import Mathlib.Order.CompletePartialOrder
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 
 /-!
 # Strong mixing, the moving-block bootstrap, and Stein's prediction theorem
@@ -33,7 +36,7 @@ of `ψ` from the first `n` coordinates computed under covariance `k` has coeffic
   asymptotically efficient prediction under equivalent Gaussian laws.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

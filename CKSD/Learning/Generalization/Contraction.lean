@@ -1,5 +1,8 @@
 module
 
+public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
+public import Mathlib.Algebra.Order.Archimedean.Real.Basic
+public import Mathlib.Data.Fintype.Pi
 public import CKSD.Learning.Basic
 
 /-!
@@ -15,7 +18,7 @@ time, pairing each sign vector with the vector that flips the current coordinate
 * `CKSD.sum_sSup_rademacher_comp_le`: the contraction inequality.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

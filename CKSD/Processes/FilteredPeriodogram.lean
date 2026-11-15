@@ -1,16 +1,9 @@
 module
 
 public import CKSD.Processes.Basic
-public import CKSD.Asymptotics.Basic
-public import CKSD.Asymptotics.Lindeberg.Basic
-public import Mathlib.Probability.CramerWold
-public import Mathlib.Probability.ProductMeasure
-public import Mathlib.Probability.Independence.Integration
-public import Mathlib.Analysis.Normed.Group.Tannery
-public import TauCeti.Probability.Distributions.Gaussian.ChiSquared
-public import TauCeti.Probability.Distributions.ChiSquared.Basic
-public import TauCeti.Probability.Distributions.Exponential.Basic
-public import CKSD.Processes.PeriodogramLimits
+import CKSD.Asymptotics.Basic
+import CKSD.Processes.PeriodogramLimits
+public import Mathlib.Analysis.CStarAlgebra.Classes
 
 /-!
 # Limit law of the normalized periodogram of a linear process
@@ -31,7 +24,7 @@ Slutsky's lemma combine the two.
   normalized periodogram at Fourier frequencies.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -243,10 +236,11 @@ private theorem sq_norm_dft_eq_fourierTrig (z : ℕ → ℝ) {σsq : ℝ} (hσ :
     ring
   have hc : ∑ t ∈ Finset.range n, z t * fourierTrig 0 (2 * Real.pi * k * t / n) =
       ∑ t ∈ Finset.range n, z t * Real.cos (t * (2 * Real.pi * (k : ℝ) / n)) :=
-    Finset.sum_congr rfl fun t _ ↦ by simp only [fourierTrig, ↓reduceIte]; rw [harg]
+    Finset.sum_congr rfl fun t _ ↦ by simp only [fourierTrig_def, ↓reduceIte]; rw [harg]
   have hs : ∑ t ∈ Finset.range n, z t * fourierTrig 1 (2 * Real.pi * k * t / n) =
       ∑ t ∈ Finset.range n, z t * Real.sin (t * (2 * Real.pi * (k : ℝ) / n)) :=
-    Finset.sum_congr rfl fun t _ ↦ by simp only [fourierTrig, one_ne_zero, ↓reduceIte]; rw [harg]
+    Finset.sum_congr rfl fun t _ ↦ by
+      simp only [fourierTrig_def, one_ne_zero, ↓reduceIte]; rw [harg]
   rw [hc, hs, sq_norm_sum_range_mul_cexp, mul_pow, mul_pow,
     Real.sq_sqrt (div_pos two_pos (mul_pos hn' hσ)).le]
   generalize ∑ t ∈ Finset.range n, z t * Real.cos (t * (2 * Real.pi * (k : ℝ) / n)) = C

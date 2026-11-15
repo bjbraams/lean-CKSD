@@ -1,9 +1,11 @@
 module
 
-public import CKSD.Asymptotics.Basic
-public import Statlib.Divergence.TotalVariation.Event
-public import Statlib.Divergence.TotalVariation.Integral
+import CKSD.Asymptotics.Basic
+import Statlib.Divergence.TotalVariation.Event
+import Statlib.Divergence.TotalVariation.Integral
 public import Mathlib.InformationTheory.KullbackLeibler.KLFun
+public import CKSD.Inference.Basic
+public import Mathlib.MeasureTheory.Measure.TotalVariation.Defs
 
 /-!
 # Basic notions of nonparametric and high-dimensional statistics
@@ -37,9 +39,14 @@ statistics, shape constraints, high-dimensional and sparse estimation).
   total variation distance (via Statlib's `integral_sub_integral_le_tvDist`).
 * `CKSD.klFun_le_sq_sub_one`: the Kullback–Leibler function is dominated by the `χ²`
   integrand on `[0, ∞)`, the pointwise step of the bound `KL ≤ χ²`.
+* `CKSD.IsBoundedInProbability.add`, `CKSD.isBoundedInProbability_finsetSum`,
+  `CKSD.IsBoundedInProbability.of_abs_le`,
+  `CKSD.IsBoundedInProbability.of_abs_le_of_tendstoInMeasure`,
+  `CKSD.tendstoInMeasure_finsetSum_zero`: closure properties of boundedness in probability and of
+  convergence in probability to zero, for real-valued sequences on a finite measure space.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -60,6 +67,12 @@ measurable events `A`. For probability measures it is `tvDist P Q / 2`
 (`CKSD.tvDist_eq_two_mul_totalVariationDistance`). -/
 def totalVariationDistance {X : Type*} [MeasurableSpace X] (P Q : Measure X) : ℝ :=
   sSup {r : ℝ | ∃ A : Set X, MeasurableSet A ∧ r = |P.real A - Q.real A|}
+
+/-- The total variation distance is the supremum of the event differences. -/
+theorem totalVariationDistance_def {X : Type*} [MeasurableSpace X] (P Q : Measure X) :
+    totalVariationDistance P Q =
+      sSup {r : ℝ | ∃ A : Set X, MeasurableSet A ∧ r = |P.real A - Q.real A|} := by
+  rw [totalVariationDistance]
 
 /-- For finite measures, every measurable event difference is bounded by statistical total
 variation. -/
@@ -171,36 +184,78 @@ def finiteKernelDensityEstimator {n : ℕ} (K : ℝ → ℝ) (h : ℝ)
     (sample : Fin n → ℝ) (t : ℝ) : ℝ :=
   (∑ i, K ((t - sample i) / h)) / ((n : ℝ) * h)
 
+/-- The finite-sample kernel density estimator is `(n h)⁻¹ ∑ᵢ K((t - xᵢ) / h)`. -/
+theorem finiteKernelDensityEstimator_def {n : ℕ} (K : ℝ → ℝ) (h : ℝ) (sample : Fin n → ℝ)
+    (t : ℝ) : finiteKernelDensityEstimator K h sample t =
+      (∑ i, K ((t - sample i) / h)) / ((n : ℝ) * h) := by
+  rw [finiteKernelDensityEstimator]
+
 /-- The kernel density estimator at `t` built from the first `n` observations of the sequence
 `X` with bandwidth `h n`. -/
 def kernelDensityEstimator {Ω : Type*} (X : ℕ → Ω → ℝ) (K : ℝ → ℝ) (h : ℕ → ℝ)
     (n : ℕ) (ω : Ω) (t : ℝ) : ℝ :=
   finiteKernelDensityEstimator K (h n) (fun i : Fin n ↦ X i ω) t
 
+/-- The kernel density estimator of a sequence is the finite-sample estimator of its first `n`
+observations. -/
+theorem kernelDensityEstimator_def {Ω : Type*} (X : ℕ → Ω → ℝ) (K : ℝ → ℝ) (h : ℕ → ℝ)
+    (n : ℕ) (ω : Ω) (t : ℝ) : kernelDensityEstimator X K h n ω t =
+      finiteKernelDensityEstimator K (h n) (fun i : Fin n ↦ X i ω) t := by
+  rw [kernelDensityEstimator]
+
 /-- The kernel density estimator of a sequence is a sum over the first `n` indices. -/
 theorem kernelDensityEstimator_eq {Ω : Type*} (X : ℕ → Ω → ℝ) (K : ℝ → ℝ) (h : ℕ → ℝ)
     (n : ℕ) (ω : Ω) (t : ℝ) :
     kernelDensityEstimator X K h n ω t =
       (∑ i ∈ Finset.range n, K ((t - X i ω) / h n)) / ((n : ℝ) * h n) := by
-  rw [kernelDensityEstimator, finiteKernelDensityEstimator,
+  rw [kernelDensityEstimator, finiteKernelDensityEstimator_def,
     Finset.sum_range (fun i ↦ K ((t - X i ω) / h n))]
 
 /-- The coordinate `ℓ¹` norm `∑_{j ∈ S} |x j|` restricted to a set `S` of coordinates. -/
 def restrictedL1Norm {p : ℕ} (S : Finset (Fin p)) (x : EuclideanSpace ℝ (Fin p)) : ℝ :=
   ∑ j ∈ S, |x j|
 
+/-- The restricted `ℓ¹` norm is the sum of the absolute coordinates in `S`. -/
+theorem restrictedL1Norm_def {p : ℕ} (S : Finset (Fin p)) (x : EuclideanSpace ℝ (Fin p)) :
+    restrictedL1Norm S x = ∑ j ∈ S, |x j| := by
+  rw [restrictedL1Norm]
+
+/-- The restricted `ℓ¹` norm is nonnegative. -/
+theorem restrictedL1Norm_nonneg {p : ℕ} (S : Finset (Fin p)) (x : EuclideanSpace ℝ (Fin p)) :
+    0 ≤ restrictedL1Norm S x := by
+  rw [restrictedL1Norm_def]
+  exact Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+
+/-- The restricted `ℓ¹` norm is at most the full `ℓ¹` norm. -/
+theorem restrictedL1Norm_le_univ {p : ℕ} (S : Finset (Fin p)) (x : EuclideanSpace ℝ (Fin p)) :
+    restrictedL1Norm S x ≤ restrictedL1Norm Finset.univ x := by
+  rw [restrictedL1Norm_def, restrictedL1Norm_def]
+  exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _) fun j _ _ ↦ abs_nonneg _
+
 /-- The number of nonzero coordinates of a finite-dimensional vector. -/
 def sparsity {p : ℕ} (x : EuclideanSpace ℝ (Fin p)) : ℕ :=
   (Finset.univ.filter fun j ↦ x j ≠ 0).card
+
+/-- The sparsity is the number of nonzero coordinates. -/
+theorem sparsity_def {p : ℕ} (x : EuclideanSpace ℝ (Fin p)) :
+    sparsity x = (Finset.univ.filter fun j ↦ x j ≠ 0).card := by
+  rw [sparsity]
 
 /-- The best `s`-term approximation error `σ_s(x)₁ = inf {‖x - y‖₁ : y is s-sparse}`. -/
 def bestSparseL1Error {p : ℕ} (s : ℕ) (x : EuclideanSpace ℝ (Fin p)) : ℝ :=
   ⨅ y : {y : EuclideanSpace ℝ (Fin p) // sparsity y ≤ s}, restrictedL1Norm Finset.univ (x - y.val)
 
+/-- The best `s`-term error is the infimum of the `ℓ¹` distances to `s`-sparse vectors. -/
+theorem bestSparseL1Error_def {p : ℕ} (s : ℕ) (x : EuclideanSpace ℝ (Fin p)) :
+    bestSparseL1Error s x = ⨅ y : {y : EuclideanSpace ℝ (Fin p) // sparsity y ≤ s},
+      restrictedL1Norm Finset.univ (x - y.val) := by
+  rw [bestSparseL1Error]
+
 /-- `A` has the restricted isometry property of order `s` with constant `δ`:
 `(1 - δ) ‖x‖² ≤ ‖A x‖² ≤ (1 + δ) ‖x‖²` for every `s`-sparse `x`. The constant is a parameter,
 not the infimum of admissible constants. -/
-def HasRestrictedIsometry {p n : ℕ} (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
+@[expose] def HasRestrictedIsometry {p n : ℕ}
+    (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n))
     (s : ℕ) (δ : ℝ) : Prop :=
   ∀ x, sparsity x ≤ s →
     (1 - δ) * ‖x‖ ^ 2 ≤ ‖A x‖ ^ 2 ∧ ‖A x‖ ^ 2 ≤ (1 + δ) * ‖x‖ ^ 2
@@ -210,6 +265,12 @@ least `k` of the p-values are at most `k α / m`, with value `0` when no `k ≥ 
 def benjaminiHochbergCount {m : ℕ} (p : Fin m → ℝ) (α : ℝ) : ℕ :=
   ((Finset.range (m + 1)).filter fun k : ℕ ↦
     k ≤ (Finset.univ.filter fun i ↦ p i ≤ (k : ℝ) * α / m).card).sup id
+
+/-- The Benjamini–Hochberg count is the largest qualifying `k ≤ m`. -/
+theorem benjaminiHochbergCount_def {m : ℕ} (p : Fin m → ℝ) (α : ℝ) :
+    benjaminiHochbergCount p α = ((Finset.range (m + 1)).filter fun k : ℕ ↦
+      k ≤ (Finset.univ.filter fun i ↦ p i ≤ (k : ℝ) * α / m).card).sup id := by
+  rw [benjaminiHochbergCount]
 
 /-- The Kullback–Leibler function is dominated by the `χ²` integrand on `[0, ∞)`:
 `klFun x ≤ (x - 1)²` for `x ≥ 0`, from `log x ≤ x - 1`. -/
@@ -378,5 +439,93 @@ theorem tendsto_sqrt_mul_mul_of_tendsto_div_sq {h b : ℕ → ℝ} (hh : ∀ n, 
     field_simp
   rw [this, Real.norm_eq_abs, abs_mul]
   exact mul_le_mul_of_nonneg_right hrh (abs_nonneg _)
+
+section BoundedInProbability
+
+variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+
+/-- Sums of sequences bounded in probability are bounded in probability. -/
+theorem IsBoundedInProbability.add [IsFiniteMeasure μ] {X Y : ℕ → Ω → ℝ}
+    (hX : IsBoundedInProbability μ X) (hY : IsBoundedInProbability μ Y) :
+    IsBoundedInProbability μ (fun n ω ↦ X n ω + Y n ω) := by
+  intro ε hε
+  obtain ⟨C₁, hC₁, h₁⟩ := hX (ε / 2) (half_pos hε)
+  obtain ⟨C₂, hC₂, h₂⟩ := hY (ε / 2) (half_pos hε)
+  refine ⟨C₁ + C₂, by positivity, ?_⟩
+  filter_upwards [h₁, h₂] with n hn₁ hn₂
+  calc μ.real {ω | C₁ + C₂ < |X n ω + Y n ω|}
+      ≤ μ.real ({ω | C₁ < |X n ω|} ∪ {ω | C₂ < |Y n ω|}) := by
+        refine measureReal_mono (fun ω (hω : C₁ + C₂ < |X n ω + Y n ω|) ↦ ?_)
+        by_contra h
+        simp only [mem_union, mem_ofPred_eq, not_or, not_lt] at h
+        have := abs_add_le (X n ω) (Y n ω)
+        linarith [h.1, h.2]
+    _ ≤ μ.real {ω | C₁ < |X n ω|} + μ.real {ω | C₂ < |Y n ω|} := measureReal_union_le _ _
+    _ ≤ ε := by linarith
+
+/-- Eventual pointwise domination preserves boundedness in probability. -/
+theorem IsBoundedInProbability.of_abs_le {X Y : ℕ → Ω → ℝ} (hX : IsBoundedInProbability μ X)
+    (h : ∀ᶠ n in atTop, ∀ ω, |Y n ω| ≤ |X n ω|) [IsFiniteMeasure μ] :
+    IsBoundedInProbability μ Y := by
+  intro ε hε
+  obtain ⟨C, hC, hev⟩ := hX ε hε
+  refine ⟨C, hC, ?_⟩
+  filter_upwards [hev, h] with n hn hn'
+  refine le_trans (measureReal_mono fun ω (hω : C < |Y n ω|) ↦ ?_) hn
+  exact (show C < |X n ω| from hω.trans_le (hn' ω))
+
+/-- Finite sums of sequences tending to zero in probability tend to zero in probability. -/
+theorem tendstoInMeasure_finsetSum_zero [IsFiniteMeasure μ] {ι : Type*} (s : Finset ι)
+    {X : ι → ℕ → Ω → ℝ} (hX : ∀ i ∈ s, TendstoInMeasure μ (X i) atTop (fun _ ↦ 0)) :
+    TendstoInMeasure μ (fun n ω ↦ ∑ i ∈ s, X i n ω) atTop (fun _ ↦ 0) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty =>
+    simpa using tendstoInMeasure_const_of_tendsto μ (fun _ ↦ (0 : ℝ)) tendsto_const_nhds
+  | insert a s ha ih =>
+    simp only [Finset.sum_insert ha]
+    exact tendstoInMeasure_add_zero μ _ _ (hX a (Finset.mem_insert_self a s))
+      (ih fun i hi ↦ hX i (Finset.mem_insert_of_mem hi))
+
+/-- Finite sums of sequences bounded in probability are bounded in probability. -/
+theorem isBoundedInProbability_finsetSum [IsFiniteMeasure μ] {ι : Type*} (s : Finset ι)
+    {X : ι → ℕ → Ω → ℝ} (hX : ∀ i ∈ s, IsBoundedInProbability μ (X i)) :
+    IsBoundedInProbability μ (fun n ω ↦ ∑ i ∈ s, X i n ω) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty =>
+    simp only [Finset.sum_empty]
+    exact isBoundedInProbability_of_tendstoInMeasure μ _ 0
+      (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ (0 : ℝ)) tendsto_const_nhds)
+  | insert a s ha ih =>
+    simp only [Finset.sum_insert ha]
+    exact (hX a (Finset.mem_insert_self a s)).add
+      (ih fun i hi ↦ hX i (Finset.mem_insert_of_mem hi))
+
+/-- If `|Yₙ| ≤ K |Vₙ|` whenever `|Uₙ| < δ`, with `Vₙ` bounded and `Uₙ → 0` in probability, then
+`Yₙ` is bounded in probability. -/
+theorem IsBoundedInProbability.of_abs_le_of_tendstoInMeasure [IsFiniteMeasure μ]
+    {V U Y : ℕ → Ω → ℝ} (hV : IsBoundedInProbability μ V)
+    (hU : TendstoInMeasure μ U atTop (fun _ ↦ 0)) {δ K : ℝ} (hδ : 0 < δ) (hK : 0 ≤ K)
+    (h : ∀ n ω, |U n ω| < δ → |Y n ω| ≤ K * |V n ω|) :
+    IsBoundedInProbability μ Y := by
+  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hU
+  intro ε hε
+  obtain ⟨C, hC, hev⟩ := hV (ε / 2) (half_pos hε)
+  refine ⟨(K + 1) * C, by positivity, ?_⟩
+  have hU' := (hU (δ / 2) (half_pos hδ)).eventually (eventually_le_nhds (half_pos hε))
+  filter_upwards [hev, hU'] with n hn hn'
+  calc μ.real {ω | (K + 1) * C < |Y n ω|}
+      ≤ μ.real ({ω | C < |V n ω|} ∪ {ω | δ / 2 < dist (U n ω) 0}) := by
+        refine measureReal_mono (fun ω (hω : (K + 1) * C < |Y n ω|) ↦ ?_)
+        by_contra hc
+        simp only [mem_union, mem_ofPred_eq, not_or, not_lt, Real.dist_eq, sub_zero] at hc
+        have := h n ω (by linarith [hc.2])
+        nlinarith [hc.1, abs_nonneg (V n ω)]
+    _ ≤ μ.real {ω | C < |V n ω|} + μ.real {ω | δ / 2 < dist (U n ω) 0} :=
+        measureReal_union_le _ _
+    _ ≤ ε := by linarith
+
+end BoundedInProbability
 
 end CKSD

@@ -1,4 +1,4 @@
-module
+module -- shake: keep-all
 
 public import CKSD.LinearModels.DirectedGraphical.Basic
 public import CKSD.LinearModels.DirectedGraphical.Interventions

@@ -1,13 +1,17 @@
 module
 
 public import CKSD.Asymptotics.Statistics
-public import CKSD.Inference.Density
-public import CKSD.Asymptotics.Estimators
-public import CKSD.Asymptotics.Experiments
+import CKSD.Inference.Density
+import CKSD.Asymptotics.MEstimation.MaximumLikelihood
+import CKSD.Asymptotics.LAN.LeCam
 public import TauCeti.Probability.Distributions.NoncentralChiSquared.Basic
-public import TauCeti.Probability.Distributions.NoncentralChiSquared.Gaussian
-public import TauCeti.MeasureTheory.Measure.PiWithDensity
-public import Mathlib.Probability.Independence.InfinitePi
+import TauCeti.Probability.Distributions.NoncentralChiSquared.Gaussian
+import TauCeti.MeasureTheory.Measure.PiWithDensity
+import Mathlib.Probability.Independence.InfinitePi
+public import CKSD.Asymptotics.Basic
+public import CKSD.Inference.Model
+public import Mathlib.Probability.ProductMeasure
+import CKSD.Asymptotics.LikelihoodSupport
 
 /-!
 # Likelihood-ratio, Wald, and score tests
@@ -23,7 +27,7 @@ regularity hypotheses are bundled in `CKSD.IsRegularScalarLikelihoodModel`.
 The proofs realize the sample as the first `n` coordinates of Mathlib's infinite product measure
 `Measure.infinitePi` and use the asymptotic linearization of the likelihood root
 `mle_asymptotic_linearization_and_normality` (GAPS 102.3), Mathlib's strong law and central
-limit theorem through the adapters of `CKSD.Asymptotics.Estimators`, and a second-order Taylor
+limit theorem through the adapters of `CKSD.Asymptotics.Basic`, and a second-order Taylor
 expansion of the sample log likelihood, whose remainder is controlled by
 `tendstoInMeasure_sum_sub_taylor_two_of_iid`. All three statistics reduce to `Zₙ² / I(θ₀)` for
 the normalized score `Zₙ`. Under local alternatives, the joint law of a statistic and the log
@@ -33,7 +37,7 @@ TauCeti's `TauCeti.pi_withDensity`, and the limit is identified by TauCeti's
 `TauCeti.Probability.gaussianReal_map_sq_noncentral`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -144,7 +148,7 @@ theorem measurable_fisherInformation {E : Type*} [MeasurableSpace E] (P : ℝ �
       (fun θ ↦ (hf θ).1.mul ((hscm θ).pow_const 2))
   have heq : fisherInformation P f = fun θ ↦ ∫ x, G θ x ∂ν := by
     funext θ
-    rw [fisherInformation, (hf θ).2.2, integral_withDensity_eq_integral_toReal_smul
+    rw [fisherInformation_def, (hf θ).2.2, integral_withDensity_eq_integral_toReal_smul
       (hf θ).1.ennreal_ofReal (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
     congr 1
     funext x
@@ -156,8 +160,7 @@ theorem measurable_fisherInformation {E : Type*} [MeasurableSpace E] (P : ℝ �
 theorem deriv_sampleLogLikelihood {E : Type*} (f : ℝ → E → ℝ)
     (hdiff : ∀ x, Differentiable ℝ (fun t ↦ Real.log (f t x))) {n : ℕ} (x : Fin n → E)
     (θ : ℝ) : deriv (sampleLogLikelihood f x) θ = ∑ i, likelihoodScore f θ (x i) := by
-  unfold sampleLogLikelihood
-  rw [deriv_fun_sum fun i _ ↦ (hdiff (x i)) θ]
+  rw [funext (sampleLogLikelihood_def f x), deriv_fun_sum fun i _ ↦ (hdiff (x i)) θ]
   rfl
 
 /-- At a global maximizer of a sample log likelihood that is differentiable in the parameter,
@@ -623,12 +626,15 @@ theorem likelihood_tests_sub_score_sq_infinitePi
     rw [← Fin.sum_univ_eq_sum_range (fun i ↦ deriv (fun t ↦ ell t (X i ω)) (T' n ω)) n]
     exact this
   obtain ⟨-, hZlim, hLR, hSc, hJ, hLam⟩ := likelihood_test_expansions_of_iid μ (P θ₀) X hiid ell
-    hm hsmooth θ₀ (I θ₀) hI r hr M hM henv hscore hmean rfl hhess hinfo T' hT' hcons' hroot'
+    hm hsmooth θ₀ (I θ₀) hI r hr M hM henv hscore hmean (fisherInformation_def P f θ₀).symm
+    hhess hinfo T' hT' hcons' hroot'
   have hsLLm : ∀ n (t : (Fin n → E) → ℝ), Measurable t →
-      Measurable (fun x : Fin n → E ↦ sampleLogLikelihood f x (t x)) := fun n t ht ↦
-    Finset.measurable_sum _ fun i _ ↦ hellm.comp (ht.prodMk (measurable_pi_apply i))
-  have hLRm : ∀ n, Measurable (LR n) := fun n ↦
-    ((hsLLm n _ (hT n)).sub (hsLLm n _ measurable_const)).const_mul 2
+      Measurable (fun x : Fin n → E ↦ sampleLogLikelihood f x (t x)) := fun n t ht ↦ by
+    simp only [sampleLogLikelihood_def]
+    exact Finset.measurable_sum _ fun i _ ↦ hellm.comp (ht.prodMk (measurable_pi_apply i))
+  have hLRm : ∀ n, Measurable (LR n) := fun n ↦ by
+    simp only [LR, likelihoodRatioStatistic_def]
+    exact ((hsLLm n _ (hT n)).sub (hsLLm n _ measurable_const)).const_mul 2
   have hIm : Measurable I := measurable_fisherInformation P ν f hf hpos hsmooth
   have hWm : ∀ n, Measurable (W n) := fun n ↦
     (((hT n).sub_const θ₀).pow_const 2).const_mul _ |>.mul (hIm.comp (hT n))
@@ -649,7 +655,7 @@ theorem likelihood_tests_sub_score_sq_infinitePi
   have hLRd : TendstoInMeasure μ
       (fun (n : ℕ) ω ↦ LR n (fun i : Fin n ↦ X i ω) - Xq n ω) atTop (fun _ ↦ 0) := by
     convert hLR using 3 with n ω
-    simp only [LR, likelihoodRatioStatistic, sampleLogLikelihood, ← Finset.sum_sub_distrib]
+    simp only [LR, likelihoodRatioStatistic_def, sampleLogLikelihood_def, ← Finset.sum_sub_distrib]
     rw [Fin.sum_univ_eq_sum_range (fun i ↦ Real.log (f (T' n ω) (X i ω)) -
       Real.log (f θ₀ (X i ω))) n]
   have hWd : TendstoInMeasure μ

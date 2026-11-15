@@ -1,6 +1,5 @@
 module
 
-public import CKSD.Learning.Basic
 public import CKSD.Processes.Models
 public import TauCeti.Probability.Distributions.Laplace.Basic
 
@@ -36,7 +35,7 @@ neural predictors, `k`-means, and the AboveThreshold mechanism.
 Sources: Sections 107A–107D of `GAPS.md`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -51,20 +50,40 @@ attribute [local instance] Classical.propDecidable
 def empiricalRisk {H X : Type*} {n : ℕ} (loss : H → X → ℝ) (h : H) (x : Fin n → X) : ℝ :=
   (∑ i, loss h (x i)) / n
 
+/-- The defining formula of `CKSD.empiricalRisk`. -/
+theorem empiricalRisk_def {H X : Type*} {n : ℕ} (loss : H → X → ℝ) (h : H) (x : Fin n → X) :
+    empiricalRisk loss h x = (∑ i, loss h (x i)) / n := by
+  rw [empiricalRisk]
+
 /-- An empirical risk minimizer; existence is a separate assertion. -/
-def IsEmpiricalRiskMinimizer {H X : Type*} {n : ℕ}
+@[expose] def IsEmpiricalRiskMinimizer {H X : Type*} {n : ℕ}
     (loss : H → X → ℝ) (x : Fin n → X) (h : H) : Prop :=
   ∀ g, empiricalRisk loss h x ≤ empiricalRisk loss g x
 
 /-- Ramp margin loss at a positive margin scale. -/
 def marginLoss (ρ margin : ℝ) : ℝ := min 1 (max 0 (1 - margin / ρ))
 
+/-- The defining formula of `CKSD.marginLoss`. -/
+theorem marginLoss_def (ρ margin : ℝ) :
+    marginLoss ρ margin = min 1 (max 0 (1 - margin / ρ)) := by
+  rw [marginLoss]
+
 /-- Exponential loss of a signed binary margin. -/
 def exponentialLoss (margin : ℝ) : ℝ := Real.exp (-margin)
+
+/-- The defining formula of `CKSD.exponentialLoss`. -/
+theorem exponentialLoss_def (margin : ℝ) :
+    exponentialLoss margin = Real.exp (-margin) := by
+  rw [exponentialLoss]
 
 /-- AdaBoost's accumulated score from a sequence of weak binary predictors. -/
 def boostingScore {X : Type*} (h : ℕ → X → ℝ) (α : ℕ → ℝ) (T : ℕ) (x : X) : ℝ :=
   ∑ t ∈ Finset.range T, α t * h t x
+
+/-- The defining formula of `CKSD.boostingScore`. -/
+theorem boostingScore_def {X : Type*} (h : ℕ → X → ℝ) (α : ℕ → ℝ) (T : ℕ) (x : X) :
+    boostingScore h α T x = ∑ t ∈ Finset.range T, α t * h t x := by
+  rw [boostingScore]
 
 /-- AdaBoost's normalized observation weights before round `t`. -/
 def boostingWeight {X : Type*} {n : ℕ} (x : Fin n → X) (y : Fin n → ℝ)
@@ -72,19 +91,46 @@ def boostingWeight {X : Type*} {n : ℕ} (x : Fin n → X) (y : Fin n → ℝ)
   Real.exp (-y i * boostingScore h α t (x i)) /
     ∑ j, Real.exp (-y j * boostingScore h α t (x j))
 
+/-- The defining formula of `CKSD.boostingWeight`. -/
+theorem boostingWeight_def {X : Type*} {n : ℕ} (x : Fin n → X) (y : Fin n → ℝ)
+    (h : ℕ → X → ℝ) (α : ℕ → ℝ) (t : ℕ) (i : Fin n) :
+    boostingWeight x y h α t i =
+      Real.exp (-y i * boostingScore h α t (x i)) /
+        ∑ j, Real.exp (-y j * boostingScore h α t (x j)) := by
+  rw [boostingWeight]
+
 /-- Weighted misclassification error of a weak predictor. -/
 def boostingWeightedError {X : Type*} {n : ℕ} (x : Fin n → X) (y : Fin n → ℝ)
     (h : ℕ → X → ℝ) (α : ℕ → ℝ) (t : ℕ) : ℝ :=
   ∑ i, if h t (x i) ≠ y i then boostingWeight x y h α t i else 0
+
+/-- The defining formula of `CKSD.boostingWeightedError`. -/
+theorem boostingWeightedError_def {X : Type*} {n : ℕ} (x : Fin n → X) (y : Fin n → ℝ)
+    (h : ℕ → X → ℝ) (α : ℕ → ℝ) (t : ℕ) :
+    boostingWeightedError x y h α t =
+      ∑ i, if h t (x i) ≠ y i then boostingWeight x y h α t i else 0 := by
+  rw [boostingWeightedError]
 
 /-- AdaBoost's normalizer `Zₜ = ∑ᵢ Dₜ(i) exp(-αₜ yᵢ hₜ(xᵢ))` in round `t`. -/
 def boostingNormalizer {X : Type*} {n : ℕ} (x : Fin n → X) (y : Fin n → ℝ)
     (h : ℕ → X → ℝ) (α : ℕ → ℝ) (t : ℕ) : ℝ :=
   ∑ i, boostingWeight x y h α t i * Real.exp (-(α t * y i * h t (x i)))
 
+/-- The defining formula of `CKSD.boostingNormalizer`. -/
+theorem boostingNormalizer_def {X : Type*} {n : ℕ} (x : Fin n → X) (y : Fin n → ℝ)
+    (h : ℕ → X → ℝ) (α : ℕ → ℝ) (t : ℕ) :
+    boostingNormalizer x y h α t =
+      ∑ i, boostingWeight x y h α t i * Real.exp (-(α t * y i * h t (x i))) := by
+  rw [boostingNormalizer]
+
 /-- Scalar ReLU activation `x ↦ max 0 x` (the scalar form of TauCeti's vector-valued
 `reluActivation`). -/
 def relu (x : ℝ) : ℝ := max 0 x
+
+/-- The defining formula of `CKSD.relu`. -/
+theorem relu_def (x : ℝ) :
+    relu x = max 0 x := by
+  rw [relu]
 
 /-- A one-hidden-layer real predictor `x ↦ ∑ⱼ aⱼ σ(⟪wⱼ, x⟫ + bⱼ)` with `N` hidden units on a
 real inner product space. -/
@@ -92,20 +138,39 @@ def twoLayerPredictor {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ 
     (σ : ℝ → ℝ) (a : Fin N → ℝ) (w : Fin N → E) (b : Fin N → ℝ) (x : E) : ℝ :=
   ∑ j, a j * σ (inner ℝ (w j) x + b j)
 
+/-- The defining formula of `CKSD.twoLayerPredictor`. -/
+theorem twoLayerPredictor_def {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] {N : ℕ}
+    (σ : ℝ → ℝ) (a : Fin N → ℝ) (w : Fin N → E) (b : Fin N → ℝ) (x : E) :
+    twoLayerPredictor σ a w b x = ∑ j, a j * σ (inner ℝ (w j) x + b j) := by
+  rw [twoLayerPredictor]
+
 /-- Population `k`-means distortion `∫ minⱼ d(x, cⱼ)² dP` for an ordered list of `k` centers.
 The minimum is the real `sInf` of a finite set; for `k = 0` it is `sInf ∅ = 0`. -/
 def kmeansRisk {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X] {k : ℕ}
     (P : Measure X) (centers : Fin k → X) : ℝ :=
   ∫ x, sInf (range fun j ↦ dist x (centers j) ^ 2) ∂P
 
+/-- The defining formula of `CKSD.kmeansRisk`. -/
+theorem kmeansRisk_def {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X] {k : ℕ}
+    (P : Measure X) (centers : Fin k → X) :
+    kmeansRisk P centers = ∫ x, sInf (range fun j ↦ dist x (centers j) ^ 2) ∂P := by
+  rw [kmeansRisk]
+
 /-- A query has sensitivity at most `c` for the supplied neighboring-data relation. -/
-def HasQuerySensitivity {D : Type*} (R : D → D → Prop) (c : ℝ) (f : D → ℝ) : Prop :=
+@[expose] def HasQuerySensitivity {D : Type*} (R : D → D → Prop) (c : ℝ) (f : D → ℝ) : Prop :=
   ∀ d d', R d d' → |f d - f d'| ≤ c
 
 /-- AboveThreshold's first crossing, for fixed threshold noise and a noise stream. -/
 def aboveThresholdTime {D : Type*} (query : ℕ → D → ℝ) (T z : ℝ)
     (noise : ℕ → ℝ) (d : D) : ℕ∞ :=
   thresholdHittingTime (fun n (_ : Unit) ↦ query n d + noise n) (T + z) ()
+
+/-- The defining formula of `CKSD.aboveThresholdTime`. -/
+theorem aboveThresholdTime_def {D : Type*} (query : ℕ → D → ℝ) (T z : ℝ)
+    (noise : ℕ → ℝ) (d : D) :
+    aboveThresholdTime query T z noise d =
+      thresholdHittingTime (fun n (_ : Unit) ↦ query n d + noise n) (T + z) () := by
+  rw [aboveThresholdTime]
 
 /-- GAPS 107.24, exponential loss dominates empirical training error, including zero margins. -/
 theorem training_error_le_exponential_loss {n : ℕ} (margin : Fin n → ℝ) :
@@ -226,12 +291,12 @@ theorem one_sub_le_measureReal_aboveThreshold_accurate {Ω D : Type*} [Measurabl
     rw [union_compl_self, probReal_univ] at h
     linarith
   refine hGr.trans (measureReal_mono fun ω ⟨hz, hn⟩ ↦ ⟨?_, fun i hi h ↦ ?_, fun i hi h ↦ ?_⟩)
-  · refine le_iInf fun n ↦ Nat.cast_le.mpr (not_lt.mp fun hlt ↦ ?_)
+  · rw [aboveThresholdTime, thresholdHittingTime_def]
+    refine le_iInf fun n ↦ Nat.cast_le.mpr (not_lt.mp fun hlt ↦ ?_)
     have h1 := hlow n.val hlt
     have h2 := abs_le.mp (hn n.val (by omega))
     have h3 := abs_le.mp hz
     have h4 := n.2
-    simp only at h4
     linarith
   · exact sub_le_of_threshold_add_le_add hz (hn i hi) h
   · exact le_add_of_add_lt_threshold_add hz (hn i hi) h

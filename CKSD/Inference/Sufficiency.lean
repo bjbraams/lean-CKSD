@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Inference.Basic
+import Mathlib.Probability.Kernel.Composition.IntegralCompProd
 
 /-!
 # Integration identities for sufficient statistics
@@ -18,7 +19,7 @@ structure (GAPS 101.49).
 * `CKSD.ae_integral_kernel_eq_of_isBoundedlyCompleteStatistic`: under bounded completeness, a
   bounded function with constant mean has constant conditional mean `∫ φ dK(T)`.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 

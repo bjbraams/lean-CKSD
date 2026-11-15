@@ -1,12 +1,12 @@
 module
 
 public import CKSD.Learning.Basic
+import TauCeti.Probability.McDiarmid
 public import CKSD.Asymptotics.Basic
 public import CKSD.Nonparametric.Basic
 public import Mathlib.Analysis.Convex.Deriv
 public import Mathlib.Analysis.Calculus.LocalExtr.Basic
 public import Mathlib.Probability.Moments.SubGaussian
-public import TauCeti.Probability.McDiarmid
 
 /-!
 # Empirical risk concentration and Rademacher bounds
@@ -26,7 +26,7 @@ sub-Gaussian bounds (Hoeffding) and TauCeti's bounded-differences inequality (Mc
   (GAPS 107.2).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

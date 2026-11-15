@@ -1,0 +1,537 @@
+module
+
+import CKSD.Bayes.Basic
+public import Mathlib.LinearAlgebra.Matrix.Stochastic
+import Mathlib.Analysis.SpecificLimits.FloorPow
+import Mathlib.Analysis.PSeries
+public import CKSD.Inference.Basic
+
+/-!
+# Finite-state Markov chains: geometric ergodicity and the ergodic theorem
+
+General results on Markov chains with a finite state space `ι`, specified by their
+finite-dimensional path probabilities. Transition matrices are Mathlib's row-stochastic matrices
+(`Matrix.rowStochastic`), and total-variation convergence on a finite space is stated as
+convergence uniform over events `A`.
+
+## Main definitions
+
+* `CKSD.HasTransitionMatrix μ K X`: the process `X` under `μ` has the path probabilities of a
+  chain with transition matrix `K`.
+
+## Main results
+
+* `CKSD.sum_mul_pow_eq_of_stationary`: an invariant law of a matrix is invariant for its powers.
+* `CKSD.abs_sum_pow_sub_le_of_minorization`: Doeblin's geometric bound under a minorization
+  `K x y ≥ ε π y`.
+* `CKSD.pow_three_apply_pos_of_pos_through`: a positive third power from a state that is
+  reachable from, and reaches, every state in one step.
+* `CKSD.exists_sub_mulVec_eq_of_offDiag_pos`: the Poisson equation for a transition matrix with
+  positive off-diagonal entries.
+* `CKSD.ae_tendsto_sampleAverage_of_sub_mulVec_eq`: the ergodic theorem for a chain whose
+  centred observable solves a Poisson equation.
+
+The Metropolis–Hastings chain is in `CKSD.Bayes.MonteCarlo.MetropolisHastings`, and the central
+limit theorem for finite-state chains is in `CKSD.Bayes.MonteCarlo.MarkovChainCLT`.
+-/
+
+public section
+
+noncomputable section
+
+open MeasureTheory ProbabilityTheory Filter Set
+open scoped ENNReal NNReal Topology BigOperators
+
+namespace CKSD
+
+section Doeblin
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+
+/-- An invariant law of a square matrix is invariant for all of its powers. -/
+theorem sum_mul_pow_eq_of_stationary {π : ι → ℝ} {K : Matrix ι ι ℝ}
+    (hstat : ∀ y, ∑ x, π x * K x y = π y) (n : ℕ) (y : ι) :
+    ∑ x, π x * (K ^ n) x y = π y := by
+  induction n generalizing y with
+  | zero => simp [Matrix.one_apply]
+  | succ n ih =>
+      simp_rw [pow_succ, Matrix.mul_apply, Finset.mul_sum]
+      rw [Finset.sum_comm]
+      simp_rw [← mul_assoc, ← Finset.sum_mul, ih, hstat]
+
+/-- Doeblin's bound: a minorization `K x y ≥ ε π y` by an invariant probability vector `π` of a
+matrix with unit row sums gives geometric convergence of every row of `K ^ n` to `π`, uniformly
+over events. -/
+theorem abs_sum_pow_sub_le_of_minorization (π : ι → ℝ)
+    (K : Matrix ι ι ℝ) (hπ : ∀ x, 0 ≤ π x) (hπ1 : ∑ x, π x = 1)
+    (hK1 : ∀ x, ∑ y, K x y = 1)
+    (hstat : ∀ y, ∑ x, π x * K x y = π y) (ε : ℝ) (hmin : ∀ x y, ε * π y ≤ K x y)
+    (A : Finset ι) (n : ℕ) (x : ι) :
+    |∑ y ∈ A, (K ^ n) x y - ∑ y ∈ A, π y| ≤ (1 - ε) ^ n := by
+  have hA0 : 0 ≤ ∑ y ∈ A, π y := Finset.sum_nonneg fun y _ ↦ hπ y
+  have hA1 : ∑ y ∈ A, π y ≤ 1 := hπ1 ▸ Finset.sum_le_sum_of_subset_of_nonneg
+    (Finset.subset_univ A) fun y _ _ ↦ hπ y
+  induction n generalizing x with
+  | zero =>
+      simp only [pow_zero, Matrix.one_apply, Finset.sum_ite_eq, pow_zero]
+      split_ifs <;> rw [abs_le] <;> constructor <;> linarith
+  | succ n ih =>
+      set E : ι → ℝ := fun z ↦ ∑ y ∈ A, (K ^ n) z y - ∑ y ∈ A, π y with hE
+      -- The error propagates through `K`, and also through `K - ε π` since `π E = 0`.
+      have hstep : ∑ y ∈ A, (K ^ (n + 1)) x y - ∑ y ∈ A, π y = ∑ z, K x z * E z := by
+        simp_rw [pow_succ', Matrix.mul_apply, hE, mul_sub, Finset.sum_sub_distrib,
+          ← Finset.sum_mul, hK1, one_mul, Finset.mul_sum]
+        rw [Finset.sum_comm]
+      have hcenter : ∑ z, π z * E z = 0 := by
+        simp_rw [hE, mul_sub, Finset.sum_sub_distrib, ← Finset.sum_mul, hπ1, one_mul,
+          Finset.mul_sum]
+        rw [Finset.sum_comm]
+        simp_rw [sum_mul_pow_eq_of_stationary hstat n, sub_self]
+      have hstep' : ∑ y ∈ A, (K ^ (n + 1)) x y - ∑ y ∈ A, π y =
+          ∑ z, (K x z - ε * π z) * E z := by
+        rw [hstep]
+        simp_rw [sub_mul, Finset.sum_sub_distrib, mul_assoc, ← Finset.mul_sum, hcenter,
+          mul_zero, sub_zero]
+      rw [hstep', pow_succ]
+      calc
+        |∑ z, (K x z - ε * π z) * E z| ≤ ∑ z, (K x z - ε * π z) * |E z| := by
+          refine (Finset.abs_sum_le_sum_abs _ _).trans (le_of_eq ?_)
+          refine Finset.sum_congr rfl fun z _ ↦ ?_
+          rw [abs_mul, abs_of_nonneg (sub_nonneg.mpr (hmin x z))]
+        _ ≤ ∑ z, (K x z - ε * π z) * (1 - ε) ^ n :=
+          Finset.sum_le_sum fun z _ ↦
+            mul_le_mul_of_nonneg_left (ih z) (sub_nonneg.mpr (hmin x z))
+        _ = (1 - ε) ^ n * (1 - ε) := by
+          rw [← Finset.sum_mul, Finset.sum_sub_distrib, hK1, ← Finset.mul_sum, hπ1]
+          ring
+
+/-- A nonnegative matrix that can reach a state `x₀` from everywhere in one step and leave it to
+everywhere in one step has a strictly positive third power. -/
+theorem pow_three_apply_pos_of_pos_through {P : Matrix ι ι ℝ} {x₀ : ι}
+    (hP0 : ∀ u z, 0 ≤ P u z) (hto : ∀ u, 0 < P u x₀) (hfrom : ∀ z, 0 < P x₀ z) (u z : ι) :
+    0 < (P ^ 3) u z := by
+  have hK : (P ^ 3) u z = ∑ b, (∑ a, P u a * P a b) * P b z := by
+    rw [pow_succ, pow_two, Matrix.mul_apply]
+    simp only [Matrix.mul_apply]
+  rw [hK]
+  have hin (b : ι) : 0 ≤ ∑ a, P u a * P a b :=
+    Finset.sum_nonneg fun a _ ↦ mul_nonneg (hP0 u a) (hP0 a b)
+  calc
+    0 < (P u x₀ * P x₀ x₀) * P x₀ z := mul_pos (mul_pos (hto u) (hto x₀)) (hfrom z)
+    _ ≤ (∑ a, P u a * P a x₀) * P x₀ z := by
+      refine mul_le_mul_of_nonneg_right ?_ (hP0 x₀ z)
+      exact Finset.single_le_sum (f := fun a ↦ P u a * P a x₀)
+        (fun a _ ↦ mul_nonneg (hP0 u a) (hP0 a x₀)) (Finset.mem_univ x₀)
+    _ ≤ ∑ b, (∑ a, P u a * P a b) * P b z :=
+      Finset.single_le_sum (f := fun b ↦ (∑ a, P u a * P a b) * P b z)
+        (fun b _ ↦ mul_nonneg (hin b) (hP0 b z)) (Finset.mem_univ x₀)
+
+end Doeblin
+
+section Ergodic
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι]
+
+omit [Fintype ι] [DecidableEq ι] in
+/-- The prefix `(X 0, …, X n)` of a measurable finite-state process is measurable. -/
+theorem measurable_finChainPrefix {Ω : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n)) (n : ℕ) :
+    Measurable fun ω (i : Fin (n + 1)) ↦ X i ω :=
+  measurable_pi_iff.2 fun i ↦ hX i
+
+omit [Fintype ι] [DecidableEq ι] in
+/-- A process `X` with values in `ι` has transition matrix `K` under `μ` when its path
+probabilities factor step by step: the probability of following a path up to time `n + 1` is
+the probability of following it up to time `n` times `K (path n) (path (n + 1))`. The initial
+law is not specified. -/
+def HasTransitionMatrix {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) (K : Matrix ι ι ℝ)
+    (X : ℕ → Ω → ι) : Prop :=
+  ∀ n : ℕ, ∀ path : ℕ → ι,
+    μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
+      μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1))
+
+omit [Fintype ι] [DecidableEq ι] in
+/-- The defining step-by-step factorization of the path probabilities. -/
+theorem HasTransitionMatrix.measureReal_eq {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+    {K : Matrix ι ι ℝ} {X : ℕ → Ω → ι} (h : HasTransitionMatrix μ K X) (n : ℕ)
+    (path : ℕ → ι) :
+    μ.real {ω | ∀ i ≤ n + 1, X i ω = path i} =
+      μ.real {ω | ∀ i ≤ n, X i ω = path i} * K (path n) (path (n + 1)) :=
+  h n path
+
+omit [Fintype ι] [DecidableEq ι] in
+/-- A chain with initial weights `ν` and path probabilities
+`ν(path 0) ∏_{i<n} K(path i, path (i + 1))` has transition matrix `K`. -/
+theorem HasTransitionMatrix.of_measureReal_eq_prod {Ω : Type*} [MeasurableSpace Ω]
+    {μ : Measure Ω} {K : Matrix ι ι ℝ} {X : ℕ → Ω → ι} (ν : ι → ℝ)
+    (hlaw : ∀ n : ℕ, ∀ path : ℕ → ι,
+      μ.real {ω | ∀ i ≤ n, X i ω = path i} = ν (path 0) *
+        ∏ i ∈ Finset.range n, K (path i) (path (i + 1))) :
+    HasTransitionMatrix μ K X := by
+  intro n path
+  rw [hlaw, hlaw, Finset.prod_range_succ, mul_assoc]
+
+omit [DecidableEq ι] in
+/-- One-step Markov property of a finite-state chain given by its path probabilities: for a
+function `F` of the prefix `(X 0, …, X n)`, `𝔼[F · v(X (n + 1))] = 𝔼[F · (K v)(X n)]`. -/
+theorem integral_mul_comp_succ_eq_mulVec {Ω : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix (ι) (ι) ℝ)
+    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
+    (hstep : HasTransitionMatrix μ K X)
+    (n : ℕ) (F : (Fin (n + 1) → ι) → ℝ) (v : ι → ℝ) :
+    ∫ ω, F (fun i : Fin (n + 1) ↦ X i ω) * v (X (n + 1) ω) ∂μ =
+      ∫ ω, F (fun i : Fin (n + 1) ↦ X i ω) * (Matrix.mulVec K v) (X n ω) ∂μ := by
+  have hpre := measurable_finChainPrefix X hX n
+  rw [integral_comp_eq_sum_measureReal μ (fun ω ↦ ((fun i : Fin (n + 1) ↦ X i ω), X (n + 1) ω))
+      (hpre.prodMk (hX (n + 1))) (fun z ↦ F z.1 * v z.2)]
+  have h2 := integral_comp_eq_sum_measureReal μ (fun ω (i : Fin (n + 1)) ↦ X i ω) hpre
+      (fun z ↦ F z * (Matrix.mulVec K v) (z (Fin.last n)))
+  simp only [Fin.val_last] at h2
+  rw [h2, Fintype.sum_prod_type]
+  refine Finset.sum_congr rfl fun z _ ↦ ?_
+  set path : ℕ → ι := fun i ↦ if h : i < n + 1 then z ⟨i, h⟩ else z 0 with hpath
+  have hset (y : ι) : (fun ω ↦ ((fun i : Fin (n + 1) ↦ X i ω), X (n + 1) ω)) ⁻¹' {(z, y)} =
+      {ω | ∀ i ≤ n + 1, X i ω = (Function.update path (n + 1) y) i} := by
+    ext ω
+    simp only [mem_preimage, mem_singleton_iff, Prod.mk.injEq, funext_iff, mem_ofPred_eq]
+    constructor
+    · rintro ⟨h1, h2⟩ i hi
+      rcases Nat.lt_or_ge i (n + 1) with h | h
+      · rw [Function.update_of_ne (by omega), hpath]
+        simp only [h, ↓reduceDIte]
+        exact h1 ⟨i, h⟩
+      · obtain rfl : i = n + 1 := by omega
+        simpa using h2
+    · intro h
+      refine ⟨fun i ↦ ?_, by simpa using h (n + 1) le_rfl⟩
+      have := h i (by omega)
+      rw [Function.update_of_ne (by omega)] at this
+      simpa [hpath, Nat.lt_succ_iff.mp i.2] using this
+  have hset0 : (fun ω (i : Fin (n + 1)) ↦ X i ω) ⁻¹' {z} =
+      {ω | ∀ i ≤ n, X i ω = (Function.update path (n + 1) (z 0)) i} := by
+    ext ω
+    simp only [mem_preimage, mem_singleton_iff, funext_iff, mem_ofPred_eq]
+    constructor
+    · intro h1 i hi
+      rw [Function.update_of_ne (by omega)]
+      simp only [hpath, show i < n + 1 by omega, ↓reduceDIte]
+      exact h1 ⟨i, by omega⟩
+    · intro h i
+      have := h i (by omega)
+      rw [Function.update_of_ne (by omega)] at this
+      simpa [hpath, Nat.lt_succ_iff.mp i.2] using this
+  have hlast : path n = z (Fin.last n) := by
+    simp [hpath, Fin.last]
+  simp_rw [hset, hstep.measureReal_eq]
+  have hpre0 (y : ι) : {ω | ∀ i ≤ n, X i ω = Function.update path (n + 1) y i} =
+      (fun ω (i : Fin (n + 1)) ↦ X i ω) ⁻¹' {z} := by
+    rw [hset0]
+    ext ω
+    simp only [mem_ofPred_eq]
+    refine forall₂_congr fun i hi ↦ ?_
+    rw [Function.update_of_ne (by omega), Function.update_of_ne (by omega)]
+  simp_rw [hpre0, Function.update_self, Function.update_of_ne (by omega : n ≠ n + 1), hlast,
+    Matrix.mulVec, dotProduct, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun y _ ↦ ?_
+  ring
+
+omit [DecidableEq ι] in
+/-- Second moment of the martingale `∑_{i<n} (u(X (i + 1)) - (K u)(X i))` of a finite-state chain:
+the increments are orthogonal, so a bound `B` on them gives `𝔼[Mₙ²] ≤ n B²`. -/
+theorem integral_sq_sum_markovIncrement_le {Ω : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (K : Matrix (ι) (ι) ℝ)
+    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
+    (hstep : HasTransitionMatrix μ K X)
+    (u : ι → ℝ) (B : ℝ) (hB : ∀ x y, |u y - Matrix.mulVec K u x| ≤ B) (n : ℕ) :
+    ∫ ω, (∑ i ∈ Finset.range n, (u (X (i + 1) ω) - Matrix.mulVec K u (X i ω))) ^ 2 ∂μ ≤
+      n * B ^ 2 := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    have hpre := measurable_finChainPrefix X hX n
+    set F : (Fin (n + 1) → ι) → ℝ := fun z ↦
+      ∑ i : Fin n, (u (z i.succ) - Matrix.mulVec K u (z i.castSucc)) with hF
+    have hM (ω : Ω) : ∑ i ∈ Finset.range n, (u (X (i + 1) ω) - Matrix.mulVec K u (X i ω)) =
+        F (fun i : Fin (n + 1) ↦ X i ω) := by
+      rw [hF, ← Fin.sum_univ_eq_sum_range]
+      rfl
+    have hY : Measurable fun ω ↦ ((fun i : Fin (n + 1) ↦ X i ω), X (n + 1) ω) :=
+      hpre.prodMk (hX (n + 1))
+    have hint (G : (Fin (n + 1) → ι) × ι → ℝ) :
+        Integrable (fun ω ↦ G ((fun i : Fin (n + 1) ↦ X i ω), X (n + 1) ω)) μ :=
+      integrable_comp_of_finite μ _ hY G
+    have hexp (ω : Ω) : (∑ i ∈ Finset.range (n + 1),
+        (u (X (i + 1) ω) - Matrix.mulVec K u (X i ω))) ^ 2 =
+        F (fun i : Fin (n + 1) ↦ X i ω) ^ 2 +
+          2 * (F (fun i : Fin (n + 1) ↦ X i ω) * u (X (n + 1) ω) -
+            F (fun i : Fin (n + 1) ↦ X i ω) * Matrix.mulVec K u (X n ω)) +
+          (u (X (n + 1) ω) - Matrix.mulVec K u (X n ω)) ^ 2 := by
+      rw [Finset.sum_range_succ, hM]
+      ring
+    simp_rw [hexp]
+    have hlast (ω : Ω) : X n ω = (fun i : Fin (n + 1) ↦ X i ω) (Fin.last n) := rfl
+    have i1 := hint fun z ↦ F z.1 ^ 2
+    have i2 := hint fun z ↦ F z.1 * u z.2
+    have i3 := hint fun z ↦ F z.1 * Matrix.mulVec K u (z.1 (Fin.last n))
+    have i4 := hint fun z ↦ (u z.2 - Matrix.mulVec K u (z.1 (Fin.last n))) ^ 2
+    simp only [Fin.val_last] at i1 i2 i3 i4
+    have i23 : Integrable (fun ω ↦ 2 * ((F fun i : Fin (n + 1) ↦ X i ω) * u (X (n + 1) ω) -
+        (F fun i : Fin (n + 1) ↦ X i ω) * Matrix.mulVec K u (X n ω))) μ :=
+      (i2.sub i3).const_mul 2
+    have e1 := integral_add (i1.add i23) i4
+    have e2 := integral_add i1 i23
+    simp only [Pi.add_apply] at e1
+    rw [e1, e2, integral_const_mul,
+      integral_sub i2 i3, integral_mul_comp_succ_eq_mulVec μ K X hX hstep n F u, sub_self,
+      mul_zero, add_zero]
+    have hD : ∫ ω, (u (X (n + 1) ω) - Matrix.mulVec K u (X n ω)) ^ 2 ∂μ ≤ B ^ 2 := by
+      calc _ ≤ ∫ _ω, B ^ 2 ∂μ := integral_mono i4 (integrable_const _) fun ω ↦ by
+              simpa [sq_abs] using pow_le_pow_left₀ (abs_nonneg _) (hB (X n ω) (X (n + 1) ω)) 2
+        _ = B ^ 2 := by simp
+    have ih' : ∫ ω, F (fun i : Fin (n + 1) ↦ X i ω) ^ 2 ∂μ ≤ n * B ^ 2 := by
+      simpa only [hM] using ih
+    push_cast
+    linarith
+
+/-- Poisson equation for a finite stochastic matrix with positive off-diagonal entries and a
+positive invariant law `π`: every `π`-centred `g` is `u - P u` for some `u`. The solution is
+`u = ½ ∑ₖ Lᵏ g` for the lazy chain `L = (I + P) / 2`, which converges geometrically by Doeblin's
+bound. -/
+theorem exists_sub_mulVec_eq_of_offDiag_pos (π : ι → ℝ)
+    (P : Matrix (ι) (ι) ℝ) (hπ : ∀ x, 0 < π x) (hπ1 : ∑ x, π x = 1)
+    (hP : P ∈ Matrix.rowStochastic ℝ ι)
+    (hPst : ∀ y, ∑ x, π x * P x y = π y) (hoff : ∀ x y, x ≠ y → 0 < P x y)
+    (g : ι → ℝ) (hg : ∑ x, π x * g x = 0) :
+    ∃ u : ι → ℝ, ∀ x, u x - Matrix.mulVec P u x = g x := by
+  have hP0 (x y : ι) : 0 ≤ P x y := Matrix.nonneg_of_mem_rowStochastic hP
+  have hP1 : ∀ x, ∑ y, P x y = 1 := Matrix.sum_row_of_mem_rowStochastic hP
+  -- The lazy chain `L = (I + P) / 2` has strictly positive entries.
+  set L : Matrix (ι) (ι) ℝ := (2 : ℝ)⁻¹ • (1 + P) with hL
+  have hLe (x y : ι) : L x y = ((if x = y then 1 else 0) + P x y) / 2 := by
+    simp only [hL, Matrix.smul_apply, Matrix.add_apply, Matrix.one_apply, smul_eq_mul]
+    ring
+  have hLpos (x y : ι) : 0 < L x y := by
+    rw [hLe]
+    by_cases h : x = y
+    · subst h; simp only [↓reduceIte]; linarith [hP0 x x]
+    · simp only [h, ↓reduceIte, zero_add]; linarith [hoff x y h]
+  have hL1 (x : ι) : ∑ y, L x y = 1 := by
+    simp only [hLe, ← Finset.sum_div, Finset.sum_add_distrib, hP1, Finset.sum_ite_eq,
+      Finset.mem_univ, ↓reduceIte]
+    norm_num
+  have hLst (y : ι) : ∑ x, π x * L x y = π y := by
+    simp only [hLe, mul_div_assoc', ← Finset.sum_div, mul_add, Finset.sum_add_distrib, hPst,
+      mul_ite, mul_one, mul_zero, Finset.sum_ite_eq', Finset.mem_univ, ↓reduceIte]
+    ring
+  cases isEmpty_or_nonempty ι with
+  | inl _ => exact ⟨0, fun x ↦ isEmptyElim x⟩
+  | inr _ => ?_
+  obtain ⟨x₀⟩ := (inferInstance : Nonempty ι)
+  set m := (Finset.univ : Finset (ι × ι)).inf' ⟨(x₀, x₀), Finset.mem_univ _⟩
+    (fun z ↦ L z.1 z.2) with hm
+  have hm_pos : 0 < m := (Finset.lt_inf'_iff _).2 fun z _ ↦ hLpos z.1 z.2
+  have hm_le (u z : ι) : m ≤ L u z :=
+    Finset.inf'_le (fun z : ι × ι ↦ L z.1 z.2) (Finset.mem_univ (u, z))
+  have hm_one : m ≤ 1 := by
+    have := Finset.single_le_sum (f := fun z ↦ L x₀ z) (fun z _ ↦ (hLpos x₀ z).le)
+      (Finset.mem_univ x₀)
+    linarith [hm_le x₀ x₀, hL1 x₀]
+  have hπle (y : ι) : π y ≤ 1 := hπ1 ▸ Finset.single_le_sum (f := π)
+    (fun z _ ↦ (hπ z).le) (Finset.mem_univ y)
+  have hmin (u z : ι) : m * π z ≤ L u z :=
+    (mul_le_of_le_one_right hm_pos.le (hπle z)).trans (hm_le u z)
+  set G := ∑ y, |g y| with hG
+  -- Geometric decay of `Lᵏ g`, since `g` is centred under `π`.
+  have hdecay (k : ℕ) (x : ι) : |Matrix.mulVec (L ^ k) g x| ≤ G * (1 - m) ^ k := by
+    have hrw : Matrix.mulVec (L ^ k) g x = ∑ y, ((L ^ k) x y - π y) * g y := by
+      simp only [Matrix.mulVec, dotProduct, sub_mul, Finset.sum_sub_distrib, hg, sub_zero]
+    rw [hrw, hG, Finset.sum_mul]
+    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun y _ ↦ ?_)
+    rw [abs_mul, mul_comm]
+    refine mul_le_mul_of_nonneg_left ?_ (abs_nonneg _)
+    simpa using abs_sum_pow_sub_le_of_minorization π L (fun z ↦ (hπ z).le) hπ1
+      hL1 hLst m hmin {y} k x
+  have hsum (x : ι) : Summable fun k ↦ Matrix.mulVec (L ^ k) g x :=
+    Summable.of_norm_bounded
+      ((summable_geometric_of_lt_one (r := 1 - m) (by linarith) (by linarith)).mul_left G)
+      fun k ↦ by simpa [Real.norm_eq_abs] using hdecay k x
+  set w : ι → ℝ := fun x ↦ ∑' k, Matrix.mulVec (L ^ k) g x with hw
+  have hLw (x : ι) : Matrix.mulVec L w x = w x - g x := by
+    have h1 : Matrix.mulVec L w x = ∑' k, Matrix.mulVec (L ^ (k + 1)) g x := by
+      calc Matrix.mulVec L w x = ∑ y, ∑' k, L x y * Matrix.mulVec (L ^ k) g y := by
+            simp only [Matrix.mulVec, dotProduct, hw]
+            exact Finset.sum_congr rfl fun y _ ↦ ((hsum y).tsum_mul_left (L x y)).symm
+        _ = ∑' k, ∑ y, L x y * Matrix.mulVec (L ^ k) g y :=
+            (Summable.tsum_finsetSum fun y _ ↦ (hsum y).mul_left (L x y)).symm
+        _ = ∑' k, Matrix.mulVec (L ^ (k + 1)) g x := by
+            congr 1 with k
+            rw [pow_succ', ← Matrix.mulVec_mulVec]
+            rfl
+    rw [h1]
+    simp only [hw]
+    rw [(hsum x).tsum_eq_zero_add]
+    simp
+  refine ⟨fun x ↦ w x / 2, fun x ↦ ?_⟩
+  have hLv : Matrix.mulVec L w x = (w x + Matrix.mulVec P w x) / 2 := by
+    simp only [hL, Matrix.smul_mulVec, Matrix.add_mulVec, Matrix.one_mulVec, Pi.smul_apply,
+      Pi.add_apply, smul_eq_mul]
+    ring
+  have hPw : Matrix.mulVec P w x = 2 * Matrix.mulVec L w x - w x := by
+    rw [hLv]; ring
+  have hPu : Matrix.mulVec P (fun x ↦ w x / 2) x = Matrix.mulVec P w x / 2 := by
+    simp only [Matrix.mulVec, dotProduct, Finset.sum_div, mul_div_assoc']
+  rw [hPu, hPw, hLw]
+  ring
+/-- For a bounded real sequence, convergence of the centred averages along the squares
+`(k + 1)²` implies convergence of all averages, by monotonicity of the shifted partial sums. -/
+theorem tendsto_avg_of_tendsto_sum_sq_div {a : ℕ → ℝ} {H l : ℝ} (ha : ∀ i, |a i| ≤ H)
+    (hsq : Tendsto (fun k : ℕ ↦ (∑ i ∈ Finset.range ((k + 1) ^ 2), (a i - l)) /
+      (((k + 1) ^ 2 : ℕ) : ℝ)) atTop (𝓝 0)) :
+    Tendsto (fun n : ℕ ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, a i) atTop (𝓝 l) := by
+  set T : ℕ → ℝ := fun n ↦ ∑ i ∈ Finset.range n, (a i + H) with hT
+  have hmono : Monotone T := by
+    refine monotone_nat_of_le_succ fun n ↦ ?_
+    simp only [hT, Finset.sum_range_succ]
+    linarith [(abs_le.1 (ha n)).1]
+  have hTsplit (n : ℕ) : T n = ∑ i ∈ Finset.range n, (a i - l) + n * (l + H) := by
+    simp only [hT, Finset.sum_add_distrib, Finset.sum_sub_distrib, Finset.sum_const,
+      Finset.card_range, nsmul_eq_mul]
+    ring
+  have hTlim : Tendsto (fun n ↦ T n / n) atTop (𝓝 (l + H)) := by
+    refine tendsto_div_of_monotone_of_exists_subseq_tendsto_div T (l + H) hmono fun b hb ↦ ?_
+    refine ⟨fun k ↦ (k + 1) ^ 2, ?_, ?_, ?_⟩
+    · have hlim : Tendsto (fun k : ℕ ↦ (1 + 1 / ((k : ℝ) + 1)) ^ 2) atTop (𝓝 ((1 + 0) ^ 2)) :=
+        ((tendsto_const_nhds.add tendsto_one_div_add_atTop_nhds_zero_nat).pow 2)
+      rw [add_zero, one_pow] at hlim
+      filter_upwards [(tendsto_order.1 hlim).2 b hb] with k hk
+      have hk1 : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+      have : ((k + 1 + 1 : ℕ) : ℝ) ^ 2 = (1 + 1 / ((k : ℝ) + 1)) ^ 2 * ((k : ℝ) + 1) ^ 2 := by
+        field_simp
+        push_cast
+        ring
+      push_cast at this ⊢
+      rw [this]
+      exact mul_le_mul_of_nonneg_right hk.le (by positivity)
+    · exact tendsto_atTop_mono (fun k ↦ by nlinarith : ∀ k : ℕ, k ≤ (k + 1) ^ 2) tendsto_id
+    · have : (fun k : ℕ ↦ T ((k + 1) ^ 2) / (((k + 1) ^ 2 : ℕ) : ℝ)) =
+          fun k : ℕ ↦ (∑ i ∈ Finset.range ((k + 1) ^ 2), (a i - l)) /
+            (((k + 1) ^ 2 : ℕ) : ℝ) + (l + H) := by
+        funext k
+        rw [hTsplit, add_div, mul_div_cancel_left₀ _ (by positivity)]
+      rw [this]
+      simpa using hsq.add_const (l + H)
+  have := hTlim.sub_const H
+  rw [add_sub_cancel_right] at this
+  refine this.congr' ?_
+  filter_upwards [eventually_gt_atTop 0] with n hn
+  have hn' : (n : ℝ) ≠ 0 := by positivity
+  simp only [hT, Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
+  field_simp
+  ring
+
+omit [DecidableEq ι] in
+/-- Ergodic theorem for a finite-state chain from a solution of the Poisson equation: if the
+chain has transition matrix `P` and `u - P u = h - m`, then the sample averages of `h(Xᵢ)`
+converge almost surely to `m`. The proof writes the centred partial sums as a martingale with
+orthogonal bounded increments plus a bounded remainder, and applies Chebyshev's inequality and
+the Borel–Cantelli lemma along the squares. -/
+theorem ae_tendsto_sampleAverage_of_sub_mulVec_eq {Ω : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace ι] [MeasurableSingletonClass ι]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Matrix ι ι ℝ)
+    (hP0 : ∀ x y, 0 ≤ P x y) (hP1 : ∀ x, ∑ y, P x y = 1)
+    (X : ℕ → Ω → ι) (hX : ∀ n, Measurable (X n))
+    (hstep : HasTransitionMatrix μ P X)
+    (h : ι → ℝ) (m : ℝ) (u : ι → ℝ) (hu : ∀ x, u x - Matrix.mulVec P u x = h x - m) :
+    ∀ᵐ ω ∂μ, Tendsto (fun n ↦ sampleAverage (fun i ω ↦ h (X i ω)) n ω) atTop (𝓝 m) := by
+  set U := ∑ y, |u y| with hU
+  have hu_le (y : ι) : |u y| ≤ U :=
+    Finset.single_le_sum (f := fun y ↦ |u y|) (fun _ _ ↦ abs_nonneg _) (Finset.mem_univ y)
+  have hPu_le (x : ι) : |Matrix.mulVec P u x| ≤ U := by
+    calc |Matrix.mulVec P u x| = |∑ y, P x y * u y| := rfl
+      _ ≤ ∑ y, P x y * U := (Finset.abs_sum_le_sum_abs _ _).trans
+          (Finset.sum_le_sum fun y _ ↦ by
+            rw [abs_mul, abs_of_nonneg (hP0 x y)]
+            exact mul_le_mul_of_nonneg_left (hu_le y) (hP0 x y))
+      _ = U := by rw [← Finset.sum_mul, hP1, one_mul]
+  have hB (x y : ι) : |u y - Matrix.mulVec P u x| ≤ 2 * U :=
+    (abs_sub _ _).trans (by linarith [hu_le y, hPu_le x])
+  set M : ℕ → Ω → ℝ := fun n ω ↦
+    ∑ i ∈ Finset.range n, (u (X (i + 1) ω) - Matrix.mulVec P u (X i ω)) with hMdef
+  set S : ℕ → Ω → ℝ := fun n ω ↦ ∑ i ∈ Finset.range n, (h (X i ω) - m) with hSdef
+  have hSM (n : ℕ) (ω : Ω) : S n ω = M n ω + (u (X 0 ω) - u (X n ω)) := by
+    have hi (i : ℕ) : h (X i ω) - m = (u (X i ω) - u (X (i + 1) ω)) +
+        (u (X (i + 1) ω) - Matrix.mulVec P u (X i ω)) := by
+      have := hu (X i ω)
+      linarith
+    simp only [hSdef, hMdef]
+    simp_rw [hi, Finset.sum_add_distrib, Finset.sum_range_sub']
+    ring
+  have hmeasM (n : ℕ) : Measurable (M n) :=
+    Finset.measurable_sum _ fun i _ ↦
+      ((measurable_of_finite u).comp (hX _)).sub
+        ((measurable_of_finite (Matrix.mulVec P u)).comp (hX _))
+  have hMb (n : ℕ) (ω : Ω) : |M n ω| ≤ n * (2 * U) := by
+    refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+    simpa using Finset.sum_le_sum fun i (_ : i ∈ Finset.range n) ↦ hB (X i ω) (X (i + 1) ω)
+  have hc (n : ℕ) (ω : Ω) : |u (X 0 ω) - u (X n ω)| ≤ 2 * U :=
+    (abs_sub _ _).trans (by linarith [hu_le (X 0 ω), hu_le (X n ω)])
+  have hintM2 (n : ℕ) : Integrable (fun ω ↦ M n ω ^ 2) μ :=
+    Integrable.of_bound ((hmeasM n).pow_const 2).aestronglyMeasurable ((n * (2 * U)) ^ 2)
+      (ae_of_all _ fun ω ↦ by
+        rw [Real.norm_eq_abs, abs_pow]
+        exact pow_le_pow_left₀ (abs_nonneg _) (hMb n ω) 2)
+  have hintS2 (n : ℕ) : Integrable (fun ω ↦ S n ω ^ 2) μ := by
+    have hmeas : Measurable (S n) :=
+      Finset.measurable_sum _ fun i _ ↦ ((measurable_of_finite h).comp (hX _)).sub_const m
+    refine Integrable.of_bound (hmeas.pow_const 2).aestronglyMeasurable
+      ((n * (2 * U) + 2 * U) ^ 2) (ae_of_all _ fun ω ↦ ?_)
+    rw [Real.norm_eq_abs, abs_pow, hSM]
+    exact pow_le_pow_left₀ (abs_nonneg _) ((abs_add_le _ _).trans
+      (add_le_add (hMb n ω) (hc n ω))) 2
+  have hC (n : ℕ) : ∫ ω, S n ω ^ 2 ∂μ ≤ (4 * (2 * U) ^ 2) * n := by
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · simp [hSdef]
+    have hn1 : (1 : ℝ) ≤ n := by exact_mod_cast hn
+    calc ∫ ω, S n ω ^ 2 ∂μ ≤ ∫ ω, (2 * M n ω ^ 2 + 2 * (2 * U) ^ 2) ∂μ := by
+          refine integral_mono (hintS2 n) (((hintM2 n).const_mul 2).add (integrable_const _))
+            fun ω ↦ ?_
+          have hcω := hc n ω
+          have hc2 : (u (X 0 ω) - u (X n ω)) ^ 2 ≤ (2 * U) ^ 2 := by
+            rw [← sq_abs]; exact pow_le_pow_left₀ (abs_nonneg _) hcω 2
+          simp only
+          rw [hSM]
+          nlinarith [sq_nonneg (M n ω - (u (X 0 ω) - u (X n ω)))]
+      _ = 2 * ∫ ω, M n ω ^ 2 ∂μ + 2 * (2 * U) ^ 2 := by
+          rw [integral_add ((hintM2 n).const_mul 2) (integrable_const _), integral_const_mul]
+          simp
+      _ ≤ 2 * (n * (2 * U) ^ 2) + 2 * (2 * U) ^ 2 := by
+          have := integral_sq_sum_markovIncrement_le μ P X hX hstep u (2 * U) hB n
+          linarith
+      _ ≤ (4 * (2 * U) ^ 2) * n := by nlinarith [sq_nonneg (2 * U)]
+  -- Chebyshev and Borel–Cantelli along the squares `(k + 1)²`.
+  have hae : ∀ᵐ ω ∂μ, Tendsto (fun k : ℕ ↦ S ((k + 1) ^ 2) ω / (((k + 1) ^ 2 : ℕ) : ℝ))
+      atTop (𝓝 0) := by
+    refine ae_tendsto_div_of_summable_integral_sq_div μ (fun k ↦ S ((k + 1) ^ 2))
+      (fun k ↦ (((k + 1) ^ 2 : ℕ) : ℝ)) (fun k ↦ by positivity) (fun k ↦ hintS2 _) ?_
+    refine Summable.of_nonneg_of_le
+      (fun k ↦ div_nonneg (integral_nonneg fun ω ↦ sq_nonneg _) (sq_nonneg _)) (fun k ↦ ?_)
+      (((summable_nat_add_iff 1).2 (Real.summable_one_div_nat_pow.2 one_lt_two)).mul_left
+        (4 * (2 * U) ^ 2))
+    have hk : (0 : ℝ) < (((k + 1) ^ 2 : ℕ) : ℝ) := by positivity
+    rw [div_le_iff₀ (by positivity)]
+    calc ∫ ω, S ((k + 1) ^ 2) ω ^ 2 ∂μ ≤ 4 * (2 * U) ^ 2 * (((k + 1) ^ 2 : ℕ) : ℝ) := hC _
+      _ = 4 * (2 * U) ^ 2 * (1 / (((k + 1 : ℕ) : ℝ)) ^ 2) * (((k + 1) ^ 2 : ℕ) : ℝ) ^ 2 := by
+        push_cast
+        field_simp
+  filter_upwards [hae] with ω hω
+  have hH (i : ℕ) : |h (X i ω)| ≤ ∑ x, |h x| :=
+    Finset.single_le_sum (f := fun x ↦ |h x|) (fun _ _ ↦ abs_nonneg _) (Finset.mem_univ _)
+  have := tendsto_avg_of_tendsto_sum_sq_div (a := fun i ↦ h (X i ω)) (l := m) hH hω
+  simpa [sampleAverage, smul_eq_mul] using this
+
+end Ergodic
+
+end CKSD

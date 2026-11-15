@@ -1,11 +1,15 @@
 module
 
-public import CKSD.Asymptotics.ConvexArgmin.Basic
-public import CKSD.Asymptotics.Basic
-public import CKSD.Asymptotics.Lindeberg.Basic
-public import Mathlib.Probability.CramerWold
-public import TauCeti.Probability.Distributions.Gaussian.Affine
-public import TauCeti.Probability.Distributions.Gaussian.Transforms
+import CKSD.Asymptotics.ConvexArgmin.Basic
+import CKSD.Asymptotics.Basic
+import CKSD.Asymptotics.Lindeberg.Basic
+import Mathlib.Probability.CramerWold
+import TauCeti.Probability.Distributions.Gaussian.Affine
+import TauCeti.Probability.Distributions.Gaussian.Transforms
+public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import Mathlib.Analysis.Convex.Continuous
+import Mathlib.Analysis.Convex.Deriv
 
 /-!
 # Asymptotics of fixed-design convex regression M-estimators
@@ -42,7 +46,7 @@ the Lindeberg–Feller theorem and the Cramér–Wold device, and the convexity 
   arXiv:1107.3806.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

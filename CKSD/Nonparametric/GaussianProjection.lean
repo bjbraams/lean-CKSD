@@ -1,10 +1,8 @@
 module
 
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
-public import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
-public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
-public import TauCeti.Probability.Distributions.Gaussian.Affine
-public import Statlib.ForMathlib.MeasureTheory.Integral.Pi
+import TauCeti.Probability.Distributions.Gaussian.Affine
+import Statlib.ForMathlib.MeasureTheory.Integral.Pi
 
 /-!
 # Projections of isotropic Gaussian vectors
@@ -37,7 +35,7 @@ Source: GAPS 103.35.
 * C. Giraud, *Introduction to High-Dimensional Statistics*, 2nd ed., Chapman and Hall/CRC, 2021.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

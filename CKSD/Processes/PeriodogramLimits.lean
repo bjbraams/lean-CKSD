@@ -1,15 +1,14 @@
 module
 
 public import CKSD.Processes.Basic
-public import CKSD.Asymptotics.Basic
-public import CKSD.Asymptotics.Lindeberg.Basic
-public import Mathlib.Probability.CramerWold
-public import Mathlib.Probability.ProductMeasure
-public import Mathlib.Probability.Independence.Integration
-public import Mathlib.Analysis.Normed.Group.Tannery
-public import TauCeti.Probability.Distributions.Gaussian.ChiSquared
-public import TauCeti.Probability.Distributions.ChiSquared.Basic
-public import TauCeti.Probability.Distributions.Exponential.Basic
+import CKSD.Asymptotics.Lindeberg.Basic
+import Mathlib.Probability.CramerWold
+import Mathlib.Probability.ProductMeasure
+import Mathlib.Probability.Independence.Integration
+import Mathlib.Analysis.Normed.Group.Tannery
+import TauCeti.Probability.Distributions.Gaussian.ChiSquared
+import TauCeti.Probability.Distributions.Exponential.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 
 /-!
 # Limit laws of the periodogram of a linear process
@@ -45,7 +44,7 @@ The limit law of the normalized periodogram at Fourier frequencies,
 `CKSD.Processes.FilteredPeriodogram`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -184,6 +183,11 @@ theorem sum_range_cos_mul_sin_fourier {n : ℕ} {k l : ℤ} (hk : 0 < 2 * k ∧ 
 def fourierTrig (i : Fin 2) (θ : ℝ) : ℝ :=
   if i = 0 then Real.cos θ else Real.sin θ
 
+/-- The trigonometric coordinate functions are the cosine and the sine. -/
+theorem fourierTrig_def (i : Fin 2) (θ : ℝ) :
+    fourierTrig i θ = if i = 0 then Real.cos θ else Real.sin θ := by
+  rw [fourierTrig]
+
 /-- The trigonometric coordinate functions are bounded by one. -/
 theorem abs_fourierTrig_le_one (i : Fin 2) (θ : ℝ) : |fourierTrig i θ| ≤ 1 := by
   unfold fourierTrig; split_ifs
@@ -200,7 +204,7 @@ theorem sum_range_fourierTrig_mul {m n : ℕ} {k : Fin m → ℤ} (hk : ∀ j, 0
   obtain ⟨j', i'⟩ := p'
   have hjj : (k j = k j') ↔ j = j' := hinj.eq_iff
   fin_cases i <;> fin_cases i' <;>
-    simp only [fourierTrig, Fin.zero_eta, Fin.mk_one, Fin.isValue, ↓reduceIte, one_ne_zero,
+    simp only [fourierTrig_def, Fin.zero_eta, Fin.mk_one, Fin.isValue, ↓reduceIte, one_ne_zero,
       Prod.mk.injEq, and_true, and_false, zero_ne_one]
   · rw [sum_range_cos_mul_cos_fourier (hk j) (hk j')]; simp only [hjj]
   · exact sum_range_cos_mul_sin_fourier (hk j) (hk j')

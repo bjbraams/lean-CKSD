@@ -1,4 +1,4 @@
-module
+module -- shake: keep-all
 
 public import Suggested103
 public import CKSD.Bayes

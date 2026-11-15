@@ -1,11 +1,11 @@
 module
 
-public import CKSD.Processes.Basic
-public import CKSD.Asymptotics.MartingaleCLT.Basic
-public import Mathlib.Probability.Martingale.Basic
-public import Mathlib.Probability.ConditionalExpectation
-public import Mathlib.Probability.CramerWold
-public import Mathlib.Probability.Independence.Integration
+import CKSD.Asymptotics.MartingaleCLT.Basic
+public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
+public import Mathlib.Probability.Distributions.Gaussian.Real
+public import Mathlib.Probability.Process.Filtration
+import CKSD.Asymptotics.Basic
+import CKSD.Asymptotics.Lindeberg.Basic
 
 /-!
 # The martingale central limit theorem for triangular arrays
@@ -31,7 +31,7 @@ events of vanishing probability. The application to sample autocorrelations is i
   1980, Section 3.2.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

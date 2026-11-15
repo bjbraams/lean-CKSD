@@ -1,8 +1,7 @@
 module
 
-public import CKSD.Bayes.Basic
-public import Mathlib.Probability.Martingale.Convergence
-public import Mathlib.MeasureTheory.Function.ConditionalExpectation.PullOut
+import Mathlib.Probability.Martingale.Convergence
+public import Mathlib.Probability.Process.Filtration
 
 /-!
 # Almost-sure convergence of square-integrable martingale-difference series
@@ -12,7 +11,7 @@ expected squared increments then bounds the partial sums in `L¹`, so Mathlib's 
 submartingale convergence theorem applies.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

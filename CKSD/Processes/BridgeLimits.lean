@@ -1,6 +1,8 @@
 module
 
-public import CKSD.Processes.Models
+import CKSD.Processes.Models
+public import CKSD.Inference.Basic
+public import Mathlib.Probability.BrownianMotion.Basic
 
 /-!
 # The CUSUM bridge limit
@@ -10,7 +12,7 @@ includes both endpoint partial sums, which are zero after bridge centering.
 Source: GAPS 106.39.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

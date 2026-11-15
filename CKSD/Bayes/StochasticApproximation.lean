@@ -1,12 +1,10 @@
 module
 
 public import CKSD.Bayes.StochasticApproximation.Basic
-public import CKSD.Bayes.StochasticApproximationPath
-public import CKSD.Bayes.StochasticApproximationLimitSet
-public import CKSD.Bayes.MartingaleSeries
-public import Mathlib.Probability.Martingale.Basic
-public import Mathlib.Probability.Martingale.Convergence
-public import Mathlib.Analysis.InnerProductSpace.Basic
+public import CKSD.Bayes.StochasticApproximation.Path
+public import CKSD.Bayes.StochasticApproximation.LimitSet
+import CKSD.Bayes.MartingaleSeries
+import Mathlib.Probability.Martingale.Convergence
 
 /-!
 # Stochastic approximation: Robbins–Monro and the ODE method
@@ -45,12 +43,12 @@ Mathlib's almost-everywhere martingale convergence theorem
 For the ODE method, predictable clipping and martingale convergence show convergence of the
 accumulated weighted noise. Correcting the affine interpolation by that noise gives an
 approximate ODE solution, controlled by the deterministic results in
-`CKSD.Bayes.StochasticApproximationPath`. The limit-set theorem in
-`CKSD.Bayes.StochasticApproximationLimitSet` identifies the discrete limit set with the compact
+`CKSD.Bayes.StochasticApproximation.Path`. The limit-set theorem in
+`CKSD.Bayes.StochasticApproximation.LimitSet` identifies the discrete limit set with the compact
 connected cluster set of the interpolation and constructs chains inside it.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -623,8 +621,12 @@ theorem ae_isInternallyChainTransitive_limitSet (μ : Measure Ω) [IsProbability
   have hSsucc (n : ℕ) : S (n + 1) - S n = a n • M (n + 1) ω := by
     dsimp [S]
     rw [Finset.sum_range_succ, add_sub_cancel_left]
+  have hts : Tendsto (stochasticApproxTime a) atTop atTop := by
+    rw [show stochasticApproxTime a = fun n ↦ ∑ k ∈ Finset.range n, a k from
+      funext (stochasticApproxTime_def a)]
+    exact hRM.tendsto_sum_step
   apply limitSet_properties_of_stochasticApproximation hRM.step_pos ha0
-    hRM.tendsto_sum_step h L hL Φ hΦ (θ · ω) S hc hbω
+    hts h L hL Φ hΦ (θ · ω) S hc hbω
   intro n
   rw [hrecω n, hSsucc, smul_add]
   abel
@@ -666,8 +668,12 @@ theorem ae_asymptotic_pseudotrajectory (μ : Measure Ω) [IsProbabilityMeasure �
   have hSsucc (n : ℕ) : S (n + 1) - S n = a n • M (n + 1) ω := by
     dsimp [S]
     rw [Finset.sum_range_succ, add_sub_cancel_left]
+  have hts : Tendsto (stochasticApproxTime a) atTop atTop := by
+    rw [show stochasticApproxTime a = fun n ↦ ∑ k ∈ Finset.range n, a k from
+      funext (stochasticApproxTime_def a)]
+    exact hRM.tendsto_sum_step
   apply asymptotic_pseudotrajectory_stochasticApproxInterp hRM.step_pos ha0
-    hRM.tendsto_sum_step h L hL Φ hΦ (θ · ω) S hc hbω _ T
+    hts h L hL Φ hΦ (θ · ω) S hc hbω _ T
   intro n
   rw [hrecω n, hSsucc, smul_add]
   abel
@@ -676,6 +682,6 @@ end Robbins
 
 /-- The interpolation times start at zero. -/
 @[simp] theorem stochasticApproxTime_zero (a : ℕ → ℝ) : stochasticApproxTime a 0 = 0 := by
-  simp [stochasticApproxTime]
+  simp [stochasticApproxTime_def]
 
 end CKSD

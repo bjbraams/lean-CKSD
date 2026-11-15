@@ -1,7 +1,7 @@
 module
 
-public import Mathlib.Data.Fintype.Card
 public import Mathlib.Data.Finset.Card
+import Mathlib.Data.Finset.Basic
 
 /-!
 # Finite counting identities
@@ -14,7 +14,7 @@ multiplicity reconstruction. The statements are independent of the simplicial-ch
 * `CKSD.card_filter_eq_add_of_iff`: the cardinality of a filter split into two disjoint filters.
 -/
 
-@[expose] public section
+public section
 
 namespace CKSD
 

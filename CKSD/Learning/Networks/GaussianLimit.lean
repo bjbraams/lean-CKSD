@@ -1,8 +1,6 @@
 module
 
 public import Mathlib.Probability.Distributions.Gaussian.Real
-public import Mathlib.MeasureTheory.Integral.Pi
-public import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 
 /-!
 # Characteristic functions of wide random layers
@@ -21,7 +19,7 @@ of a Gaussian mixture integral over one hidden unit. The power converges as `N �
 * `CKSD.tendsto_integral_exp_neg_div_pow`: `(𝔼 exp(-h/N))^N → exp(-𝔼 h)` for integrable `h ≥ 0`.
 -/
 
-@[expose] public section
+public section
 
 open MeasureTheory ProbabilityTheory Filter Topology Complex
 

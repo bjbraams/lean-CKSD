@@ -1,8 +1,11 @@
 module
 
-public import CKSD.Nonparametric.Basic
+import CKSD.Nonparametric.Basic
 public import TauCeti.Probability.Moments.Covariance
-public import CKSD.Asymptotics.Basic
+public import CKSD.Inference.Basic
+public import Mathlib.Analysis.CStarAlgebra.Matrix
+public import Mathlib.Analysis.Matrix.MeasurableSpace
+import CKSD.Asymptotics.Basic
 
 /-!
 # Empirical covariance: moment and fluctuation estimates
@@ -22,7 +25,7 @@ nonparametric leading-component results and multivariate Gaussian eigenvalue lim
   to Linear Operators*, Wiley, 2015.
 -/
 
-@[expose] public section
+public section
 noncomputable section
 open MeasureTheory ProbabilityTheory Filter Set
 open scoped ENNReal NNReal Topology BigOperators Matrix.Norms.L2Operator
@@ -40,8 +43,24 @@ def empiricalCovarianceMatrix {Ω : Type*} {d : ℕ}
   fun i j ↦ (∑ k ∈ Finset.range n,
     (X k ω i - sampleAverage X n ω i) * (X k ω j - sampleAverage X n ω j)) / n
 
+/-- Entries of the empirical covariance matrix. -/
+theorem empiricalCovarianceMatrix_apply {Ω : Type*} {d : ℕ}
+    (X : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (n : ℕ) (ω : Ω) (i j : Fin d) :
+    empiricalCovarianceMatrix X n ω i j = (∑ k ∈ Finset.range n,
+      (X k ω i - sampleAverage X n ω i) * (X k ω j - sampleAverage X n ω j)) / n := by
+  rw [empiricalCovarianceMatrix]
+
 /-- The entrywise `ℓ¹` norm `∑ᵢ ∑ⱼ |Aᵢⱼ|` of a square matrix. -/
 def entrySum {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ) : ℝ := ∑ i, ∑ j, |A i j|
+
+/-- The entry sum is the sum of the absolute values of the entries. -/
+theorem entrySum_def {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ) : entrySum A = ∑ i, ∑ j, |A i j| := by
+  rw [entrySum]
+
+/-- The entry sum is nonnegative. -/
+theorem entrySum_nonneg {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ) : 0 ≤ entrySum A := by
+  rw [entrySum_def]
+  exact Finset.sum_nonneg fun i _ ↦ Finset.sum_nonneg fun j _ ↦ abs_nonneg _
 
 /-- The bilinear form of a matrix in coordinates: `⟪x, A y⟫ = ∑ᵢ ∑ⱼ xᵢ Aᵢⱼ yⱼ`. -/
 theorem inner_toEuclideanCLM_eq_sum {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ)
@@ -152,6 +171,13 @@ def sampleProdMean (P : Measure (EuclideanSpace ℝ (Fin d)))
     (i j : Fin d) (n : ℕ) (ω : Ω) : ℝ :=
   (n : ℝ)⁻¹ * ∑ k ∈ Finset.range n, centeredProduct P i j (X k ω)
 
+/-- The sample product mean is the average of the centred products. -/
+theorem sampleProdMean_def (P : Measure (EuclideanSpace ℝ (Fin d)))
+    (X : ℕ → Ω → EuclideanSpace ℝ (Fin d)) (i j : Fin d) (n : ℕ) (ω : Ω) :
+    sampleProdMean P X i j n ω =
+      (n : ℝ)⁻¹ * ∑ k ∈ Finset.range n, centeredProduct P i j (X k ω) := by
+  rw [sampleProdMean]
+
 /-- The sample mean of the centered coordinate statistic, `X̄ᵢ - mᵢ` for `n ≥ 1`. -/
 def sampleCoordMean (P : Measure (EuclideanSpace ℝ (Fin d)))
     (X : ℕ → Ω → EuclideanSpace ℝ (Fin d))
@@ -197,94 +223,6 @@ theorem empiricalCovarianceMatrix_sub_eq (P : Measure (EuclideanSpace ℝ (Fin d
   ring
 
 end Sample
-
-section Limits
-
-variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
-
-/-- Sums of sequences bounded in probability are bounded in probability. -/
-private theorem IsBoundedInProbability.add' [IsFiniteMeasure μ] {X Y : ℕ → Ω → ℝ}
-    (hX : IsBoundedInProbability μ X) (hY : IsBoundedInProbability μ Y) :
-    IsBoundedInProbability μ (fun n ω ↦ X n ω + Y n ω) := by
-  intro ε hε
-  obtain ⟨C₁, hC₁, h₁⟩ := hX (ε / 2) (half_pos hε)
-  obtain ⟨C₂, hC₂, h₂⟩ := hY (ε / 2) (half_pos hε)
-  refine ⟨C₁ + C₂, by positivity, ?_⟩
-  filter_upwards [h₁, h₂] with n hn₁ hn₂
-  calc μ.real {ω | C₁ + C₂ < |X n ω + Y n ω|}
-      ≤ μ.real ({ω | C₁ < |X n ω|} ∪ {ω | C₂ < |Y n ω|}) := by
-        refine measureReal_mono (fun ω (hω : C₁ + C₂ < |X n ω + Y n ω|) ↦ ?_)
-        by_contra h
-        simp only [mem_union, mem_ofPred_eq, not_or, not_lt] at h
-        have := abs_add_le (X n ω) (Y n ω)
-        linarith [h.1, h.2]
-    _ ≤ μ.real {ω | C₁ < |X n ω|} + μ.real {ω | C₂ < |Y n ω|} := measureReal_union_le _ _
-    _ ≤ ε := by linarith
-
-/-- Eventual pointwise domination preserves boundedness in probability. -/
-private theorem IsBoundedInProbability.of_abs_le {X Y : ℕ → Ω → ℝ} (hX : IsBoundedInProbability μ X)
-    (h : ∀ᶠ n in atTop, ∀ ω, |Y n ω| ≤ |X n ω|) [IsFiniteMeasure μ] :
-    IsBoundedInProbability μ Y := by
-  intro ε hε
-  obtain ⟨C, hC, hev⟩ := hX ε hε
-  refine ⟨C, hC, ?_⟩
-  filter_upwards [hev, h] with n hn hn'
-  refine le_trans (measureReal_mono fun ω (hω : C < |Y n ω|) ↦ ?_) hn
-  exact (show C < |X n ω| from hω.trans_le (hn' ω))
-
-/-- Finite sums of sequences tending to zero in probability tend to zero in probability. -/
-theorem tendstoInMeasure_finsetSum_zero [IsFiniteMeasure μ] {ι : Type*} (s : Finset ι)
-    {X : ι → ℕ → Ω → ℝ} (hX : ∀ i ∈ s, TendstoInMeasure μ (X i) atTop (fun _ ↦ 0)) :
-    TendstoInMeasure μ (fun n ω ↦ ∑ i ∈ s, X i n ω) atTop (fun _ ↦ 0) := by
-  classical
-  induction s using Finset.induction_on with
-  | empty =>
-    simpa using tendstoInMeasure_const_of_tendsto μ (fun _ ↦ (0 : ℝ)) tendsto_const_nhds
-  | insert a s ha ih =>
-    simp only [Finset.sum_insert ha]
-    exact tendstoInMeasure_add_zero μ _ _ (hX a (Finset.mem_insert_self a s))
-      (ih fun i hi ↦ hX i (Finset.mem_insert_of_mem hi))
-
-/-- Finite sums of sequences bounded in probability are bounded in probability. -/
-private theorem isBoundedInProbability_finsetSum [IsFiniteMeasure μ] {ι : Type*} (s : Finset ι)
-    {X : ι → ℕ → Ω → ℝ} (hX : ∀ i ∈ s, IsBoundedInProbability μ (X i)) :
-    IsBoundedInProbability μ (fun n ω ↦ ∑ i ∈ s, X i n ω) := by
-  classical
-  induction s using Finset.induction_on with
-  | empty =>
-    simp only [Finset.sum_empty]
-    exact isBoundedInProbability_of_tendstoInMeasure μ _ 0
-      (tendstoInMeasure_const_of_tendsto μ (fun _ ↦ (0 : ℝ)) tendsto_const_nhds)
-  | insert a s ha ih =>
-    simp only [Finset.sum_insert ha]
-    exact (hX a (Finset.mem_insert_self a s)).add'
-      (ih fun i hi ↦ hX i (Finset.mem_insert_of_mem hi))
-
-/-- If `|Yₙ| ≤ K |Vₙ|` whenever `|Uₙ| < δ`, with `Vₙ` bounded and `Uₙ → 0` in probability, then
-`Yₙ` is bounded in probability. -/
-theorem IsBoundedInProbability.of_abs_le_of_tendstoInMeasure [IsFiniteMeasure μ]
-    {V U Y : ℕ → Ω → ℝ} (hV : IsBoundedInProbability μ V)
-    (hU : TendstoInMeasure μ U atTop (fun _ ↦ 0)) {δ K : ℝ} (hδ : 0 < δ) (hK : 0 ≤ K)
-    (h : ∀ n ω, |U n ω| < δ → |Y n ω| ≤ K * |V n ω|) :
-    IsBoundedInProbability μ Y := by
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hU
-  intro ε hε
-  obtain ⟨C, hC, hev⟩ := hV (ε / 2) (half_pos hε)
-  refine ⟨(K + 1) * C, by positivity, ?_⟩
-  have hU' := (hU (δ / 2) (half_pos hδ)).eventually (eventually_le_nhds (half_pos hε))
-  filter_upwards [hev, hU'] with n hn hn'
-  calc μ.real {ω | (K + 1) * C < |Y n ω|}
-      ≤ μ.real ({ω | C < |V n ω|} ∪ {ω | δ / 2 < dist (U n ω) 0}) := by
-        refine measureReal_mono (fun ω (hω : (K + 1) * C < |Y n ω|) ↦ ?_)
-        by_contra hc
-        simp only [mem_union, mem_ofPred_eq, not_or, not_lt, Real.dist_eq, sub_zero] at hc
-        have := h n ω (by linarith [hc.2])
-        nlinarith [hc.1, abs_nonneg (V n ω)]
-    _ ≤ μ.real {ω | C < |V n ω|} + μ.real {ω | δ / 2 < dist (U n ω) 0} :=
-        measureReal_union_le _ _
-    _ ≤ ε := by linarith
-
-end Limits
 
 section IID
 
@@ -396,7 +334,7 @@ private theorem isBoundedInProbability_sqrt_mul_empiricalCovariance_sub
   have hc := isBoundedInProbability_of_tendstoInMeasure μ _ 0
     (tendstoInMeasure_const_mul_zero μ _ (-1)
       (tendstoInMeasure_sqrt_mul_sampleCoordMean_mul hiid h4 i j))
-  refine (ha.add' hc).of_abs_le ?_
+  refine (ha.add hc).of_abs_le ?_
   filter_upwards [eventually_gt_atTop 0] with n hn ω
   rw [empiricalCovarianceMatrix_sub_eq P X hn ω i j]
   apply le_of_eq; congr 1; ring
@@ -406,7 +344,7 @@ theorem tendstoInMeasure_entrySum (hiid : IsIndependentIdenticallyDistributed μ
     (h4 : MemLp id 4 P) :
     TendstoInMeasure μ (fun n ω ↦ entrySum (empiricalCovarianceMatrix X n ω -
       euclideanCovarianceMatrix P)) atTop (fun _ ↦ 0) := by
-  simp only [entrySum, Matrix.sub_apply]
+  simp only [entrySum_def, Matrix.sub_apply]
   refine tendstoInMeasure_finsetSum_zero _ fun i _ ↦ tendstoInMeasure_finsetSum_zero _ fun j _ ↦ ?_
   exact tendstoInMeasure_zero_of_abs_le μ _ _ (fun _ _ ↦ 0) one_pos
     (Filter.Eventually.of_forall fun n ↦ Filter.Eventually.of_forall fun ω _ ↦ by rw [abs_abs])
@@ -418,7 +356,7 @@ theorem isBoundedInProbability_sqrt_mul_entrySum
     (hiid : IsIndependentIdenticallyDistributed μ X P) (h4 : MemLp id 4 P) :
     IsBoundedInProbability μ (fun (n : ℕ) ω ↦ Real.sqrt n * entrySum
       (empiricalCovarianceMatrix X n ω - euclideanCovarianceMatrix P)) := by
-  simp only [entrySum, Matrix.sub_apply, Finset.mul_sum]
+  simp only [entrySum_def, Matrix.sub_apply, Finset.mul_sum]
   refine isBoundedInProbability_finsetSum _ fun i _ ↦ isBoundedInProbability_finsetSum _
     fun j _ ↦ ?_
   refine (isBoundedInProbability_sqrt_mul_empiricalCovariance_sub hiid h4 i j).of_abs_le
@@ -464,6 +402,12 @@ theorem inner_euclideanCovarianceMatrix_self {v : EuclideanSpace ℝ (Fin d)} (h
 def quadStat (P : Measure (EuclideanSpace ℝ (Fin d))) (v : EuclideanSpace ℝ (Fin d))
     (x : EuclideanSpace ℝ (Fin d)) : ℝ :=
   ∑ i, ∑ j, v i * centeredProduct P i j x * v j
+
+/-- The quadratic statistic is the bilinear form of the centred products in `v`. -/
+theorem quadStat_def (P : Measure (EuclideanSpace ℝ (Fin d))) (v : EuclideanSpace ℝ (Fin d))
+    (x : EuclideanSpace ℝ (Fin d)) :
+    quadStat P v x = ∑ i, ∑ j, v i * centeredProduct P i j x * v j := by
+  rw [quadStat]
 
 omit [IsProbabilityMeasure P] in
 /-- The centered quadratic statistic equals `⟪x - m, v⟫² - λ`. -/

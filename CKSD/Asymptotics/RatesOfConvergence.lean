@@ -1,6 +1,6 @@
 module
 
-public import CKSD.Asymptotics.Statistics
+public import CKSD.Asymptotics.Basic
 
 /-!
 # Rate of convergence of M-estimators
@@ -12,7 +12,7 @@ outer probabilities, since `Measure` applied to an arbitrary set is the outer me
 measurability of the estimator or of the suprema is assumed. Source: GAPS 102.25.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -34,7 +34,7 @@ theorem measure_le_outerExpectation_div {Ω : Type*} [MeasurableSpace Ω] (μ : 
     (f : Ω → ℝ≥0∞) (A : Set Ω) {t : ℝ≥0∞} (ht : t ≠ 0) (ht' : t ≠ ∞)
     (h : ∀ ω ∈ A, t ≤ f ω) : μ A ≤ outerExpectation μ f / t := by
   rw [ENNReal.le_div_iff_mul_le (Or.inl ht) (Or.inl ht')]
-  unfold outerExpectation
+  rw [outerExpectation_def]
   refine le_iInf fun g ↦ le_iInf fun hg ↦ le_iInf fun hfg ↦ ?_
   calc μ A * t = t * μ A := mul_comm _ _
     _ ≤ t * μ {ω | t ≤ g ω} := by

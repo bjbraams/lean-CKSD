@@ -1,7 +1,8 @@
 module
 
 public import CKSD.Geometry.SimplicialPersistence.Chains
-public import CKSD.Geometry.DiagramDistances
+public import CKSD.Geometry.Persistence.DiagramDistances
+import CKSD.Geometry.FiniteCombinatorics
 
 /-!
 # Stability of finite simplicial persistence diagrams
@@ -22,7 +23,7 @@ filtration uses the diameter divided by two.
 * `CKSD.ripsFiltrationValue_le_iff`: Rips filtration values and `CKSD.IsRipsSimplex`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -818,6 +819,11 @@ theorem diagramWassersteinEDist_le_of_isSublevelDiagram
 when `diam σ ≤ 2r`. -/
 def ripsFiltrationValue {X : Type*} [PseudoMetricSpace X] (σ : Finset X) : ℝ :=
   Metric.diam (σ : Set X) / 2
+
+/-- The defining formula of `CKSD.ripsFiltrationValue`. -/
+theorem ripsFiltrationValue_def {X : Type*} [PseudoMetricSpace X] (σ : Finset X) :
+    ripsFiltrationValue σ = Metric.diam (σ : Set X) / 2 := by
+  rw [ripsFiltrationValue]
 
 /-- Diameters are monotone, so the Rips filtration is a monotone filtration of the full simplex. -/
 theorem isMonotoneOnFaces_ripsFiltrationValue {X : Type*} [PseudoMetricSpace X] :

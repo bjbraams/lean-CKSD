@@ -1,7 +1,6 @@
 module
 
 public import TauCeti.Probability.Quantile
-public import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 
 /-!
 # Construction of two-sided interval tests
@@ -28,7 +27,7 @@ The window identities use inverse transform sampling for the quantile function
 `MeasureTheory.Measure.monotoneOn_quantile`). On a level set `{Q = c}` of the quantile function
 the randomization `γ` is the fraction of the level set inside the window.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 

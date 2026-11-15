@@ -1,19 +1,18 @@
 module
 
-public import CKSD.LinearModels.Basic
-public import CKSD.Asymptotics.Basic
-public import Mathlib.Probability.CramerWold
-public import TauCeti.Probability.Distributions.Gaussian.Transforms
 import CKSD.Asymptotics.ConvexRegression.Basic
 import CKSD.Inference.Density
 import CKSD.Inference.Density
+public import CKSD.Inference.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import Mathlib.Analysis.Convex.Continuous
 
 /-!
 # Quantile regression and two-stage least squares
 
 The check loss `ρ_τ(u) = u (τ - 1{u < 0})`, quantile regression with fixed design, and the
 two-stage least-squares estimator. Its limit theory in the linear instrumental-variable model is
-in `CKSD.LinearModels.InstrumentalVariables`.
+in `CKSD.LinearModels.Causal.InstrumentalVariables`.
 
 ## Main definitions
 
@@ -38,7 +37,7 @@ and the right continuity of `ProbabilityTheory.cdf`.
 * R. Koenker, *Quantile Regression*, Cambridge University Press, 2005, §4.2.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -75,6 +74,14 @@ def twoStageLeastSquares {n p k : ℕ} (X : Matrix (Fin n) (Fin p) ℝ)
     (Z : Matrix (Fin n) (Fin k) ℝ) (y : Fin n → ℝ) : Fin p → ℝ :=
   let P := Z * (Z.transpose * Z)⁻¹ * Z.transpose
   (X.transpose * P * X)⁻¹.mulVec ((X.transpose * P).mulVec y)
+
+/-- Defining equation of `twoStageLeastSquares`. -/
+theorem twoStageLeastSquares_def {n p k : ℕ} (X : Matrix (Fin n) (Fin p) ℝ)
+    (Z : Matrix (Fin n) (Fin k) ℝ) (y : Fin n → ℝ) :
+    twoStageLeastSquares X Z y =
+      (X.transpose * (Z * (Z.transpose * Z)⁻¹ * Z.transpose) * X)⁻¹.mulVec
+        ((X.transpose * (Z * (Z.transpose * Z)⁻¹ * Z.transpose)).mulVec y) := by
+  rw [twoStageLeastSquares]
 
 /-- Expected check loss for a scalar location candidate. -/
 def expectedQuantileCheckLoss (P : Measure ℝ) (tau a : ℝ) : ℝ :=

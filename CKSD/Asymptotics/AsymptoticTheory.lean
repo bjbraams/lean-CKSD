@@ -1,19 +1,15 @@
 module
 
-public import CKSD.Asymptotics.Basic
-public import CKSD.Asymptotics.UStatistics
-public import Mathlib.Topology.Order.Compact
-public import TauCeti.Probability.Distributions.ChiSquared.Basic
-public import TauCeti.Probability.Distributions.Chi.Gaussian
-public import TauCeti.Probability.Distributions.StudentT.Basic
-public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
+import TauCeti.Probability.Distributions.Chi.Gaussian
+public import CKSD.Inference.Basic
+import CKSD.Asymptotics.MultivariateCLT
 
 /-!
 # Consistency, argmax and multinomial asymptotics
 
 Consistency from outer uniform convergence and a separated maximum, the compact deterministic
 argmax theorem, and Pearson's multinomial limit. U-statistic projection and variance interfaces
-are re-exported from `CKSD.Asymptotics.UStatistics`.
+are re-exported from `CKSD.Asymptotics.UStatistics.Limits`.
 Sources: GAPS 102.23, 102.31 and 102.33, `SYNOPSIS102.md`, and `STRUCTURE102.md`.
 
 Pearson's limit combines the Euclidean central limit theorem of
@@ -22,7 +18,7 @@ Pearson's limit combines the Euclidean central limit theorem of
 standard Gaussian radius.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

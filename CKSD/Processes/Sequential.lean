@@ -1,11 +1,14 @@
 module
 
-public import CKSD.Processes.Independence
-public import Statlib.Testing.Sequential.Wald
-public import Statlib.ForMathlib.MeasureTheory.Measure.Bool
-public import Mathlib.Probability.Martingale.OptionalStopping
-public import Mathlib.Probability.Independence.Integration
-public import CKSD.Asymptotics.Basic
+import CKSD.Processes.Independence
+import Statlib.Testing.Sequential.Wald
+import Statlib.ForMathlib.MeasureTheory.Measure.Bool
+import Mathlib.Probability.Martingale.OptionalStopping
+import CKSD.Asymptotics.Basic
+public import CKSD.Inference.Basic
+public import Mathlib.Order.CompletePartialOrder
+public import Mathlib.Probability.Distributions.Gaussian.Real
+public import Mathlib.Probability.Martingale.Basic
 
 /-!
 # Sequential analysis: Wald's identity, Ville's inequality and Anscombe's theorem
@@ -24,10 +27,10 @@ public import CKSD.Asymptotics.Basic
 * `CKSD.tendstoInDistribution_random_sampleAverage` (GAPS 106.42): Anscombe's theorem. The
   proof standardizes the observations, applies the central limit theorem along `⌈k n⌉`,
   controls the random-index fluctuation with Kolmogorov's maximal inequality, and concludes
-  with Slutsky's lemma from `CKSD.Asymptotics.Estimators`.
+  with Slutsky's lemma from `CKSD.Asymptotics.Basic`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

@@ -1,13 +1,11 @@
 module
 
-public import CKSD.Bayes.Basic
 public import TauCeti.Probability.Distributions.Dirichlet.Basic
 public import Mathlib.Probability.ProductMeasure
-public import Mathlib.Probability.Martingale.Convergence
-public import Mathlib.Probability.Kernel.CondDistrib
-public import Mathlib.MeasureTheory.Constructions.Polish.EmbeddingReal
-public import TauCeti.MeasureTheory.Measure.ProductKernel
-public import TauCeti.Probability.StrongLaw
+import TauCeti.MeasureTheory.Measure.ProductKernel
+import TauCeti.Probability.StrongLaw
+public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
+public import Mathlib.Order.CompletePartialOrder
 
 /-!
 # Random probability measures and posterior consistency
@@ -42,7 +40,7 @@ posterior is identified with a conditional expectation through `condDistrib`, an
 theorem `MeasureTheory.Integrable.tendsto_ae_condExp` gives convergence on a countable basis.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -56,7 +54,7 @@ namespace CKSD
 them. The base measure `α` is meant to be finite, and every result about Dirichlet processes
 assumes `IsFiniteMeasure α`; for an infinite `α` a cell of infinite mass would enter the
 partition clause through the value `α.real (A i) = 0`. -/
-def IsDirichletProcess {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
+@[expose] def IsDirichletProcess {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
     (μ : Measure Ω) (P : Ω → ProbabilityMeasure X) (α : Measure X) : Prop :=
   (∀ A, MeasurableSet A → Measurable (fun ω ↦ (P ω : Measure X) A)) ∧
     (∀ A, MeasurableSet A → α A = 0 → ∀ᵐ ω ∂μ, (P ω : Measure X) A = 0) ∧
@@ -70,22 +68,45 @@ def IsDirichletProcess {Ω X : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
 def dirichletPosteriorBase {X : Type*} [MeasurableSpace X] {n : ℕ}
     (α : Measure X) (x : Fin n → X) : Measure X := α + ∑ i, Measure.dirac (x i)
 
+/-- Defining equation of `dirichletPosteriorBase`. -/
+theorem dirichletPosteriorBase_def {X : Type*} [MeasurableSpace X] {n : ℕ}
+    (α : Measure X) (x : Fin n → X) :
+    dirichletPosteriorBase α x = α + ∑ i, Measure.dirac (x i) := by
+  rw [dirichletPosteriorBase]
+
 /-- Blackwell–MacQueen one-step predictive law. -/
 def polyaPredictiveLaw {X : Type*} [MeasurableSpace X] {n : ℕ}
     (α : Measure X) (x : Fin n → X) : Measure X :=
   (α univ + n)⁻¹ • dirichletPosteriorBase α x
 
+/-- Defining equation of `polyaPredictiveLaw`. -/
+theorem polyaPredictiveLaw_def {X : Type*} [MeasurableSpace X] {n : ℕ}
+    (α : Measure X) (x : Fin n → X) :
+    polyaPredictiveLaw α x = (α univ + n)⁻¹ • dirichletPosteriorBase α x := by
+  rw [polyaPredictiveLaw]
+
 /-- Infinite stick-breaking weights in their size-biased order. -/
 def stickBreakingWeight (V : ℕ → ℝ) (k : ℕ) : ℝ :=
   V k * ∏ j ∈ Finset.range k, (1 - V j)
+
+/-- Defining equation of `stickBreakingWeight`. -/
+theorem stickBreakingWeight_def (V : ℕ → ℝ) (k : ℕ) :
+    stickBreakingWeight V k = V k * ∏ j ∈ Finset.range k, (1 - V j) := by
+  rw [stickBreakingWeight]
 
 /-- Random atomic measure associated to a sequence of atoms and stick-breaking fractions. -/
 def stickBreakingMeasure {X : Type*} [MeasurableSpace X]
     (V : ℕ → ℝ) (θ : ℕ → X) : Measure X :=
   Measure.sum (fun k ↦ ENNReal.ofReal (stickBreakingWeight V k) • Measure.dirac (θ k))
 
+/-- Defining equation of `stickBreakingMeasure`. -/
+theorem stickBreakingMeasure_def {X : Type*} [MeasurableSpace X] (V : ℕ → ℝ) (θ : ℕ → X) :
+    stickBreakingMeasure V θ =
+      Measure.sum (fun k ↦ ENNReal.ofReal (stickBreakingWeight V k) • Measure.dirac (θ k)) := by
+  rw [stickBreakingMeasure]
+
 /-- A chosen posterior kernel is a disintegration of the joint parameter-data law. -/
-def IsPosteriorKernel {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
+@[expose] def IsPosteriorKernel {Θ X : Type*} [MeasurableSpace Θ] [MeasurableSpace X]
     (π : Measure Θ) (P : Kernel Θ X) (post : Kernel X Θ) : Prop :=
   IsMarkovKernel post ∧
     (π ⊗ₘ P).map Prod.swap = (P ∘ₘ π) ⊗ₘ post
@@ -359,10 +380,16 @@ def logLikelihoodRatioSecondMoment {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) : ℝ≥0∞ :=
   ∫⁻ x, ENNReal.ofReal (Real.log ((P.rnDeriv Q x).toReal) ^ 2) ∂P
 
+/-- Defining equation of `logLikelihoodRatioSecondMoment`. -/
+theorem logLikelihoodRatioSecondMoment_def {X : Type*} [MeasurableSpace X] (P Q : Measure X) :
+    logLikelihoodRatioSecondMoment P Q =
+      ∫⁻ x, ENNReal.ofReal (Real.log ((P.rnDeriv Q x).toReal) ^ 2) ∂P := by
+  rw [logLikelihoodRatioSecondMoment]
+
 /-- Posterior contraction at the deterministic rate `ε` with respect to a loss `ρ` on parameters
 (typically `ρ θ = d(θ, θ₀)` for a true parameter `θ₀`): there is `M₀ > 0` such that for every
 `M ≥ M₀` the posterior mass `post n ω {θ | M εₙ ≤ ρ θ}` tends to zero in `μ`-probability. -/
-def HasPosteriorContractionRate {Ω Θ : Type*} [MeasurableSpace Ω] [MeasurableSpace Θ]
+@[expose] def HasPosteriorContractionRate {Ω Θ : Type*} [MeasurableSpace Ω] [MeasurableSpace Θ]
     (μ : Measure Ω) (post : ℕ → Ω → Measure Θ) (ρ : Θ → ℝ) (ε : ℕ → ℝ) : Prop :=
   ∃ M₀ > 0, ∀ M ≥ M₀,
     TendstoInMeasure μ (fun (n : ℕ) ω ↦ (post n ω).real {θ | M * ε n ≤ ρ θ}) atTop (fun _ ↦ 0)

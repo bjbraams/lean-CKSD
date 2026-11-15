@@ -1,12 +1,6 @@
 module
 public import Mathlib.Analysis.Calculus.Deriv.Basic
-public import Mathlib.Topology.Bases
-public import Mathlib.Topology.Compactness.Compact
-public import Mathlib.Topology.Semicontinuity.Defs
 import Mathlib.Analysis.Calculus.Deriv.Slope
-import Mathlib.Analysis.SpecificLimits.Basic
-import Mathlib.Topology.Sequences
-import Mathlib.Topology.Semicontinuity.Basic
 
 /-!
 # Differentiating compact quadratic envelopes

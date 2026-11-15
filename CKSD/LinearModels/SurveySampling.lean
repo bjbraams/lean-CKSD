@@ -1,7 +1,7 @@
 module
 
 public import CKSD.LinearModels.Basic
-public import CKSD.Inference.Basic
+public import Mathlib.Probability.Moments.Variance
 
 /-!
 # Design-based inference in survey sampling and randomized experiments
@@ -46,7 +46,7 @@ formula for the variance; the Neyman lower bound is Mathlib's `Finset.sq_sum_div
   translated in Statist. Sci. 5 (1990).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -269,7 +269,7 @@ theorem simpleRandomSampleDesign_real_superset {N n : ℕ} (B : Finset (Fin N))
     ext s; simp [and_comm]
   have hmeas : MeasurableSet {s : Finset (Fin N) | s.card = n} :=
     (Set.to_countable _).measurableSet
-  simp only [simpleRandomSampleDesign, measureReal_def, smul_apply,
+  simp only [simpleRandomSampleDesign_def, measureReal_def, smul_apply,
     Measure.restrict_apply' hmeas, hset, Measure.count_apply_finset, smul_eq_mul]
   rw [Finset.card_filter_powersetCard_subset B Finset.univ n (Finset.subset_univ B) hB,
     Finset.card_univ, Fintype.card_fin]
@@ -284,7 +284,7 @@ theorem isProbabilityMeasure_simpleRandomSampleDesign {N n : ℕ} (h : n ≤ N) 
       ((Finset.univ : Finset (Fin N)).powersetCard n : Set (Finset (Fin N))) := by
     ext s; simp
   have hC : (Nat.choose N n : ℝ≥0∞) ≠ 0 := by exact_mod_cast (Nat.choose_pos h).ne'
-  simp only [simpleRandomSampleDesign, smul_apply, Measure.restrict_apply MeasurableSet.univ,
+  simp only [simpleRandomSampleDesign_def, smul_apply, Measure.restrict_apply MeasurableSet.univ,
     Set.univ_inter, hset, Measure.count_apply_finset, Finset.card_powersetCard, Finset.card_univ,
     Fintype.card_fin, smul_eq_mul]
   exact ENNReal.inv_mul_cancel hC (ENNReal.natCast_ne_top _)
@@ -299,7 +299,7 @@ theorem simpleRandomSampleDesign_real_superset_eq_card {N n : ℕ} (B : Finset (
     ext s; simp [and_comm]
   have hmeas : MeasurableSet {s : Finset (Fin N) | s.card = n} :=
     (Set.to_countable _).measurableSet
-  simp only [simpleRandomSampleDesign, measureReal_def, smul_apply,
+  simp only [simpleRandomSampleDesign_def, measureReal_def, smul_apply,
     Measure.restrict_apply' hmeas, hset, Measure.count_apply_finset, smul_eq_mul]
   rw [ENNReal.toReal_mul, ENNReal.toReal_inv]
   simp [div_eq_mul_inv, mul_comm]
@@ -366,7 +366,7 @@ theorem simpleRandomSampleDesign_real_mem_mem {N n : ℕ} (hnN : n ≤ N) {i j :
 theorem populationVariance_eq_sum_sq {N : ℕ} (hN : 1 ≤ N) (y : Fin N → ℝ) :
     populationVariance y = ((∑ i, y i ^ 2) - (∑ i, y i) ^ 2 / N) / (N - 1) := by
   have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
-  unfold populationVariance populationMean
+  rw [populationVariance_def, populationMean_def]
   rw [Nat.cast_sub hN, Nat.cast_one]
   congr 1
   simp_rw [sub_sq, Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.sum_mul,
@@ -399,7 +399,7 @@ private theorem simpleRandomSampleDesign_sum_aux {N n : ℕ} (hnN : n ≤ N) (w 
   have := isProbabilityMeasure_simpleRandomSampleDesign hnN
   set P := simpleRandomSampleDesign N n
   have hcard : ∀ᵐ s ∂P, s.card = n := by
-    simp only [P, simpleRandomSampleDesign]
+    simp only [P, simpleRandomSampleDesign_def]
     exact (ae_restrict_mem (Set.to_countable _).measurableSet).filter_mono
       (Measure.ae_smul_measure_le _)
   -- In the degenerate designs `n = 0` and `n = N` the sample total is almost surely constant.
@@ -465,7 +465,7 @@ private theorem simpleRandomSample_mean_aux
   have hN0 : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
   have hn0 : (n : ℝ) ≠ 0 := by exact_mod_cast (show n ≠ 0 by omega)
   rw [hT, h1, h2, populationVariance_eq_sum_sq (by omega), populationVariance_eq_sum_sq (by omega)]
-  simp only [div_pow, ← Finset.sum_div, populationMean]
+  simp only [div_pow, ← Finset.sum_div, populationMean_def]
   refine ⟨by field_simp, ?_⟩
   field_simp
 
@@ -499,8 +499,8 @@ private theorem differenceInMeans_aux {N : ℕ} (n₁ n₀ : ℕ) (hn : n₁ + n
   constructor
   · rw [hT, integral_sub hint (integrable_const c), hm, integral_const, smul_eq_mul,
       probReal_univ, one_mul]
-    simp only [w, c, populationMean, Pi.sub_apply, Finset.sum_sub_distrib, Finset.sum_add_distrib,
-      ← Finset.sum_div]
+    simp only [w, c, populationMean_def, Pi.sub_apply, Finset.sum_sub_distrib,
+      Finset.sum_add_distrib, ← Finset.sum_div]
     rw [hNr]
     field_simp
     ring

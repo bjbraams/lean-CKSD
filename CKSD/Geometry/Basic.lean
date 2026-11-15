@@ -1,7 +1,6 @@
 module
 
-public import CKSD.Nonparametric.Basic
-public import CKSD.LinearModels.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 
 /-!
 # Geometry: basic definitions
@@ -32,7 +31,7 @@ function is `0`. Each docstring records when the defining set is nonempty and bo
 integrals exist; the theorems using these definitions carry the corresponding hypotheses.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -45,15 +44,15 @@ attribute [local instance] Classical.propDecidable
 
 /-- The weighted degree `d_i = ∑_j W i j` of a vertex `i` of a weighted graph with weight matrix
 `W`. -/
-def weightedDegree {n : ℕ} (W : Matrix (Fin n) (Fin n) ℝ) (i : Fin n) : ℝ := ∑ j, W i j
+@[expose] def weightedDegree {n : ℕ} (W : Matrix (Fin n) (Fin n) ℝ) (i : Fin n) : ℝ := ∑ j, W i j
 
 /-- The volume `vol S = ∑_{i ∈ S} d_i` of a set of vertices. -/
-def graphVolume {n : ℕ} (W : Matrix (Fin n) (Fin n) ℝ) (S : Finset (Fin n)) : ℝ :=
+@[expose] def graphVolume {n : ℕ} (W : Matrix (Fin n) (Fin n) ℝ) (S : Finset (Fin n)) : ℝ :=
   ∑ i ∈ S, weightedDegree W i
 
 /-- The weight `∑_{i ∈ S, j ∉ S} W i j` of the edges crossing the cut `(S, Sᶜ)`, each counted
 once. -/
-def cutWeight {n : ℕ} (W : Matrix (Fin n) (Fin n) ℝ) (S : Finset (Fin n)) : ℝ :=
+@[expose] def cutWeight {n : ℕ} (W : Matrix (Fin n) (Fin n) ℝ) (S : Finset (Fin n)) : ℝ :=
   ∑ i ∈ S, ∑ j ∈ Sᶜ, W i j
 
 /-- The Cheeger constant (conductance) `h(G) = min_S w(S, Sᶜ) / min (vol S, vol Sᶜ)` over the
@@ -62,6 +61,12 @@ and for `n ≤ 1` the value is the junk value `0`. -/
 def cheegerConstant {n : ℕ} (W : Matrix (Fin n) (Fin n) ℝ) : ℝ :=
   sInf {r | ∃ S : Finset (Fin n), S.Nonempty ∧ S ≠ Finset.univ ∧
     r = cutWeight W S / min (graphVolume W S) (graphVolume W Sᶜ)}
+
+/-- The defining formula of `CKSD.cheegerConstant`. -/
+theorem cheegerConstant_def {n : ℕ} (W : Matrix (Fin n) (Fin n) ℝ) :
+    cheegerConstant W = sInf {r | ∃ S : Finset (Fin n), S.Nonempty ∧ S ≠ Finset.univ ∧
+      r = cutWeight W S / min (graphVolume W S) (graphVolume W Sᶜ)} := by
+  rw [cheegerConstant]
 
 /-- The spectral gap `λ₁` of the normalized Laplacian `I - D^{-1/2} W D^{-1/2}`, by the
 degree-weighted Rayleigh principle: the infimum of `½ ∑_{i,j} W i j (f i - f j)²` over the
@@ -75,16 +80,35 @@ def spectralGap {n : ℕ} (W : Matrix (Fin n) (Fin n) ℝ) : ℝ :=
     (∑ i, weightedDegree W i * f i ^ 2) = 1 ∧
       r = (∑ i, ∑ j, W i j * (f i - f j) ^ 2) / 2}
 
+/-- The defining formula of `CKSD.spectralGap`. -/
+theorem spectralGap_def {n : ℕ} (W : Matrix (Fin n) (Fin n) ℝ) :
+    spectralGap W = sInf {r | ∃ f : Fin n → ℝ, (∑ i, weightedDegree W i * f i) = 0 ∧
+      (∑ i, weightedDegree W i * f i ^ 2) = 1 ∧
+        r = (∑ i, ∑ j, W i j * (f i - f j) ^ 2) / 2} := by
+  rw [spectralGap]
+
 /-- The radius `δ_{P,u}(x) = inf {r ≥ 0 : P(B̄(x, r)) ≥ u}` needed to capture mass `u` around `x`.
 For a probability measure and `u ∈ (0, 1]` the defining set is nonempty. -/
 def massRadius {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X] (P : Measure X) (u : ℝ)
     (x : X) : ℝ :=
   sInf {r | 0 ≤ r ∧ ENNReal.ofReal u ≤ P (Metric.closedBall x r)}
 
+/-- The defining formula of `CKSD.massRadius`. -/
+theorem massRadius_def {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X] (P : Measure X)
+    (u : ℝ) (x : X) :
+    massRadius P u x = sInf {r | 0 ≤ r ∧ ENNReal.ofReal u ≤ P (Metric.closedBall x r)} := by
+  rw [massRadius]
+
 /-- The distance to the measure `P` at mass `m`, `d_{P,m}(x) = (m⁻¹ ∫₀^m δ_{P,u}(x)² du)^{1/2}`. -/
 def distanceToMeasure {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X] (P : Measure X)
     (m : ℝ) (x : X) : ℝ :=
   Real.sqrt ((∫ u in (0 : ℝ)..m, massRadius P u x ^ 2) / m)
+
+/-- The defining formula of `CKSD.distanceToMeasure`. -/
+theorem distanceToMeasure_def {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X]
+    (P : Measure X) (m : ℝ) (x : X) :
+    distanceToMeasure P m x = Real.sqrt ((∫ u in (0 : ℝ)..m, massRadius P u x ^ 2) / m) := by
+  rw [distanceToMeasure]
 
 /-- The squared maximum mean discrepancy of a kernel `k`, as the kernel double-integral
 expression `∫∫ k dP dP + ∫∫ k dQ dQ - 2 ∫∫ k dP dQ` over product measures. The expression is
@@ -95,12 +119,18 @@ def squaredMMD {X : Type*} [MeasurableSpace X] (k : X → X → ℝ) (P Q : Meas
   (∫ z, k z.1 z.2 ∂P.prod P) + (∫ z, k z.1 z.2 ∂Q.prod Q) -
     2 * ∫ z, k z.1 z.2 ∂P.prod Q
 
+/-- The defining formula of `CKSD.squaredMMD`. -/
+theorem squaredMMD_def {X : Type*} [MeasurableSpace X] (k : X → X → ℝ) (P Q : Measure X) :
+    squaredMMD k P Q = (∫ z, k z.1 z.2 ∂P.prod P) + (∫ z, k z.1 z.2 ∂Q.prod Q) -
+      2 * ∫ z, k z.1 z.2 ∂P.prod Q := by
+  rw [squaredMMD]
+
 /-- A kernel is characteristic when the squared MMD separates probability laws: for probability
 measures `P, Q` for which `k` is integrable against `P ⊗ P`, `Q ⊗ Q` and `P ⊗ Q`, the squared MMD
 vanishes exactly when `P = Q`. For bounded measurable kernels the integrability conditions hold
 for all pairs of probability measures. Symmetry and positive definiteness of the kernel are
 separate properties. -/
-def IsCharacteristicKernel {X : Type*} [MeasurableSpace X] (k : X → X → ℝ) : Prop :=
+@[expose] def IsCharacteristicKernel {X : Type*} [MeasurableSpace X] (k : X → X → ℝ) : Prop :=
   ∀ P Q : Measure X, IsProbabilityMeasure P → IsProbabilityMeasure Q →
     Integrable (fun z : X × X ↦ k z.1 z.2) (P.prod P) →
     Integrable (fun z : X × X ↦ k z.1 z.2) (Q.prod Q) →
@@ -113,16 +143,35 @@ def unbiasedSquaredMMD {X : Type*} (k : X → X → ℝ) (n : ℕ) (x y : Fin n 
   ((∑ i, ∑ j, if i ≠ j then k (x i) (x j) + k (y i) (y j) else 0) /
     ((n : ℝ) * (n - 1 : ℕ))) - 2 / (n : ℝ) ^ 2 * ∑ i, ∑ j, k (x i) (y j)
 
+/-- The defining formula of `CKSD.unbiasedSquaredMMD`. -/
+theorem unbiasedSquaredMMD_def {X : Type*} (k : X → X → ℝ) (n : ℕ) (x y : Fin n → X) :
+    unbiasedSquaredMMD k n x y =
+      ((∑ i, ∑ j, if i ≠ j then k (x i) (x j) + k (y i) (y j) else 0) /
+        ((n : ℝ) * (n - 1 : ℕ))) - 2 / (n : ℝ) ^ 2 * ∑ i, ∑ j, k (x i) (y j) := by
+  rw [unbiasedSquaredMMD]
+
 /-- The distance-induced kernel `k(x, y) = (‖x‖ + ‖y‖ - ‖x - y‖) / 2` with base point `0`, whose
 squared MMD is half the energy distance. -/
-def distanceKernel {E : Type*} [SeminormedAddCommGroup E] (x y : E) : ℝ :=
+@[expose] def distanceKernel {E : Type*} [SeminormedAddCommGroup E] (x y : E) : ℝ :=
   (‖x‖ + ‖y‖ - ‖x - y‖) / 2
+
+/-- The defining formula of `CKSD.distanceKernel`. -/
+theorem distanceKernel_def {E : Type*} [SeminormedAddCommGroup E] (x y : E) :
+    distanceKernel x y = (‖x‖ + ‖y‖ - ‖x - y‖) / 2 := by
+  rw [distanceKernel]
 
 /-- The doubly centered distance
 `d(x, y) - ∫ d(x, z) dP(z) - ∫ d(z, y) dP(z) + ∫∫ d(z, z') dP(z) dP(z')` of distance covariance. -/
 def centeredDistance {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X] (P : Measure X)
     (x y : X) : ℝ :=
   dist x y - (∫ z, dist x z ∂P) - (∫ z, dist z y ∂P) + ∫ z, dist z.1 z.2 ∂P.prod P
+
+/-- The defining formula of `CKSD.centeredDistance`. -/
+theorem centeredDistance_def {X : Type*} [PseudoMetricSpace X] [MeasurableSpace X]
+    (P : Measure X) (x y : X) :
+    centeredDistance P x y =
+      dist x y - (∫ z, dist x z ∂P) - (∫ z, dist z y ∂P) + ∫ z, dist z.1 z.2 ∂P.prod P := by
+  rw [centeredDistance]
 
 /-- Gaussian smoothing `P * N(0, σ² I)`, the law of `X + σ Z` for independent `X ∼ P` and standard
 Gaussian `Z`, as the pushforward of `P ⊗ N(0, σ² I)` under addition. -/
@@ -131,9 +180,16 @@ def gaussianSmoothing {d : ℕ} (sigma : ℝ) (P : Measure (EuclideanSpace ℝ (
   (P.prod (multivariateGaussian 0 (sigma ^ 2 • (1 : Matrix (Fin d) (Fin d) ℝ)))).map
     (fun z ↦ z.1 + z.2)
 
+/-- The defining formula of `CKSD.gaussianSmoothing`. -/
+theorem gaussianSmoothing_def {d : ℕ} (sigma : ℝ) (P : Measure (EuclideanSpace ℝ (Fin d))) :
+    gaussianSmoothing sigma P =
+      (P.prod (multivariateGaussian 0 (sigma ^ 2 • (1 : Matrix (Fin d) (Fin d) ℝ)))).map
+        (fun z ↦ z.1 + z.2) := by
+  rw [gaussianSmoothing]
+
 /-- The Laguerre cell `{x : ‖x - y_j‖² - g_j ≤ ‖x - y_i‖² - g_i for all i}` of the site `y_j` with
 weights `g`, for the squared Euclidean cost. -/
-def laguerreCell {d k : ℕ} (y : Fin k → EuclideanSpace ℝ (Fin d))
+@[expose] def laguerreCell {d k : ℕ} (y : Fin k → EuclideanSpace ℝ (Fin d))
     (g : Fin k → ℝ) (j : Fin k) : Set (EuclideanSpace ℝ (Fin d)) :=
   {x | ∀ i, ‖x - y j‖ ^ 2 - g j ≤ ‖x - y i‖ ^ 2 - g i}
 
@@ -144,11 +200,25 @@ def semidiscreteTransportDual {d k : ℕ} (P : Measure (EuclideanSpace ℝ (Fin 
     (y : Fin k → EuclideanSpace ℝ (Fin d)) (b g : Fin k → ℝ) : ℝ :=
   (∫ x, sInf (range fun j ↦ ‖x - y j‖ ^ 2 - g j) ∂P) + ∑ j, b j * g j
 
+/-- The defining formula of `CKSD.semidiscreteTransportDual`. -/
+theorem semidiscreteTransportDual_def {d k : ℕ} (P : Measure (EuclideanSpace ℝ (Fin d)))
+    (y : Fin k → EuclideanSpace ℝ (Fin d)) (b g : Fin k → ℝ) :
+    semidiscreteTransportDual P y b g =
+      (∫ x, sInf (range fun j ↦ ‖x - y j‖ ^ 2 - g j) ∂P) + ∑ j, b j * g j := by
+  rw [semidiscreteTransportDual]
+
 /-- The random-feature summand `2 cos(⟨w, x⟩ + b) cos(⟨w, y⟩ + b)` at the frequency-phase pair
 `s = (w, b)`. -/
 def randomFourierFeatureTerm {d : ℕ} (x y : EuclideanSpace ℝ (Fin d))
     (s : EuclideanSpace ℝ (Fin d) × ℝ) : ℝ :=
   2 * Real.cos (inner ℝ s.1 x + s.2) * Real.cos (inner ℝ s.1 y + s.2)
+
+/-- The defining formula of `CKSD.randomFourierFeatureTerm`. -/
+theorem randomFourierFeatureTerm_def {d : ℕ} (x y : EuclideanSpace ℝ (Fin d))
+    (s : EuclideanSpace ℝ (Fin d) × ℝ) :
+    randomFourierFeatureTerm x y s =
+      2 * Real.cos (inner ℝ s.1 x + s.2) * Real.cos (inner ℝ s.1 y + s.2) := by
+  rw [randomFourierFeatureTerm]
 
 /-- The random Fourier feature kernel of a sample of `D` frequency-phase pairs: the sample mean
 `D⁻¹ ∑_j 2 cos(⟨w_j, x⟩ + b_j) cos(⟨w_j, y⟩ + b_j)` of the random-feature summands. -/
@@ -156,5 +226,12 @@ def randomFourierFeatureKernel {d D : ℕ}
     (sample : Fin D → EuclideanSpace ℝ (Fin d) × ℝ)
     (x y : EuclideanSpace ℝ (Fin d)) : ℝ :=
   (D : ℝ)⁻¹ * ∑ j, randomFourierFeatureTerm x y (sample j)
+
+/-- The defining formula of `CKSD.randomFourierFeatureKernel`. -/
+theorem randomFourierFeatureKernel_def {d D : ℕ}
+    (sample : Fin D → EuclideanSpace ℝ (Fin d) × ℝ) (x y : EuclideanSpace ℝ (Fin d)) :
+    randomFourierFeatureKernel sample x y =
+      (D : ℝ)⁻¹ * ∑ j, randomFourierFeatureTerm x y (sample j) := by
+  rw [randomFourierFeatureKernel]
 
 end CKSD

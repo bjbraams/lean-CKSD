@@ -1,9 +1,11 @@
 module
 
-public import CKSD.Asymptotics.Basic
-public import Mathlib.Probability.CramerWold
-public import TauCeti.Probability.Distributions.Gaussian.Transforms
+import Mathlib.Probability.CramerWold
+import TauCeti.Probability.Distributions.Gaussian.Transforms
 public import TauCeti.Probability.Moments.Covariance
+public import CKSD.Inference.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import Mathlib.Probability.CentralLimitTheorem
 
 /-!
 # Euclidean central limit theorem
@@ -15,7 +17,7 @@ theorem reduces the result to its scalar IID central limit theorem. TauCeti iden
 covariance matrices with covariance bilinear forms and computes Gaussian scalar projections.
 -/
 
-@[expose] public section
+public section
 open MeasureTheory ProbabilityTheory Filter Set
 open scoped ENNReal NNReal Topology BigOperators
 namespace CKSD

@@ -1,13 +1,12 @@
 module
 
-public import CKSD.Inference.Density
-public import CKSD.Inference.Model
+import CKSD.Inference.Density
 public import TauCeti.Probability.Distributions.Gaussian.Density
-public import Mathlib.Analysis.Calculus.LineDeriv.IntegrationByParts
-public import Mathlib.Analysis.InnerProductSpace.Calculus
-public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
-public import TauCeti.MeasureTheory.Integral.NormRpow
-public import Mathlib.Probability.Distributions.Gaussian.Fernique
+import Mathlib.Analysis.Calculus.LineDeriv.IntegrationByParts
+import Mathlib.Analysis.InnerProductSpace.Calculus
+import TauCeti.MeasureTheory.Integral.NormRpow
+import Mathlib.Probability.Distributions.Gaussian.Fernique
+public import Mathlib.CategoryTheory.Category.Basic
 
 /-!
 # Gaussian models: Stein's identity, James–Stein, Scheffé
@@ -30,7 +29,7 @@ identity to the regularized fields `(‖x‖² + ε)⁻¹ x` and passes to `ε �
 convergence; the integrability of `‖x‖⁻²` in dimension `p ≥ 3` uses TauCeti's
 `integrableOn_norm_rpow_ball`.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 

@@ -1,8 +1,9 @@
 module
 
 public import CKSD.Inference.Basic
-public import Mathlib.Probability.Moments.SubGaussian
-public import Mathlib.Probability.Independence.InfinitePi
+import Mathlib.Probability.Moments.SubGaussian
+import Mathlib.Probability.Independence.InfinitePi
+public import Mathlib.Probability.ProductMeasure
 
 /-!
 # Exponentially consistent tests
@@ -24,7 +25,7 @@ under every product law, so Hoeffding's inequality (Mathlib's
   consistent ones.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

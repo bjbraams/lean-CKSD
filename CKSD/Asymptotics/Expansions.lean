@@ -1,20 +1,23 @@
 module
 
 public import CKSD.Asymptotics.Statistics
-public import Mathlib.Probability.Moments.ComplexMGF
+public import CKSD.Inference.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Real
 
 /-!
 # Edgeworth and saddlepoint expansions
 
+The one-term Edgeworth expansion of the standardized mean under a nonlattice law
+(`CKSD.exists_uniform_edgeworth_expansion`, GAPS 102.49).
 The Edgeworth expansion for smooth functions of means uses `edgeworthApproximation` with
 correction polynomials of the stated degrees and parities, and Cramér's condition on the
 characteristic function (`MeasureTheory.charFun`). The saddlepoint approximation uses Mathlib's
 cumulant generating function `ProbabilityTheory.cgf`, moment generating function `mgf`, and
 complex moment generating function `complexMGF`, together with `saddlepointDensity`.
-Sources: GAPS 102.50 and 102.55.
+Sources: GAPS 102.49, 102.50 and 102.55.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -28,6 +31,23 @@ bound by a constant `c < 1` outside a ball. -/
 def SatisfiesCramerCondition {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
     [MeasurableSpace E] (P : Measure E) : Prop :=
   ∃ c < 1, ∃ R : ℝ, ∀ t : E, R ≤ ‖t‖ → ‖charFun P t‖ ≤ c
+
+/-- GAPS 102.49: the one-term Edgeworth expansion of the standardized mean. For an i.i.d. sequence
+with mean zero, variance one, finite third absolute moment `ρ = E X³`, and a nonlattice law, the
+distribution function of `√n X̄ₙ` is `Φ(t) - φ(t) (t² - 1) ρ / (6 √n) + o(n^{-1/2})` uniformly
+in `t`. -/
+theorem exists_uniform_edgeworth_expansion {Ω : Type*} [MeasurableSpace Ω]
+    (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure ℝ) [IsProbabilityMeasure P]
+    (X : ℕ → Ω → ℝ) (hiid : IsIndependentIdenticallyDistributed μ X P) (h3 : Integrable
+      (fun x ↦ |x| ^ 3) P)
+    (h0 : (∫ x, x ∂P) = 0) (h1 : (∫ x, x ^ 2 ∂P) = 1)
+    (hnonlattice : ∀ a : ℝ, ∀ b > 0, P (range fun j : ℤ ↦ a + b * j) < 1) :
+    let ρ := ∫ x, x ^ 3 ∂P;
+    ∃ e : ℕ → ℝ, Tendsto (fun n : ℕ ↦ Real.sqrt n * e n) atTop (𝓝 0) ∧
+      ∀ (n : ℕ), n ≥ 1 → ∀ t, |μ.real {ω | Real.sqrt n * sampleAverage X n ω ≤ t} -
+        (cdf (gaussianReal 0 1) t - gaussianPDFReal 0 1 t * (t ^ 2 - 1) *
+          ρ / (6 * Real.sqrt n))| ≤ e n := by
+  sorry
 
 /-- GAPS 102.50: Edgeworth expansion of order `j` for a smooth function of a vector mean.
 Here `A` has `j+2` continuous derivatives on a neighbourhood of the mean `m`, `A m = 0`, and

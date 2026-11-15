@@ -1,9 +1,7 @@
 module
 
 public import CKSD.Processes.Basic
-public import Mathlib.Analysis.Normed.Operator.Extend
-public import Mathlib.Analysis.InnerProductSpace.Projection.Basic
-public import TauCeti.Analysis.InnerProductSpace.LinearCombination
+import TauCeti.Analysis.InnerProductSpace.LinearCombination
 
 /-!
 # Hilbert-space Wold decomposition
@@ -35,7 +33,7 @@ that the innovations are shifts of each other and have constant norm, and expand
 The causal autoregression part of GAPS 106.2 is not covered.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

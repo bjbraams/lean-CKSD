@@ -1,5 +1,7 @@
 module
 
+public import Mathlib.Analysis.InnerProductSpace.Basic
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 public import CKSD.Learning.Generalization.Concentration
 
 /-!
@@ -21,7 +23,7 @@ Strict ranks with arbitrary ties yield finite-sample prediction coverage under e
   distinct scores (GAPS 107.6).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

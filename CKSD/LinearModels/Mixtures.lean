@@ -1,8 +1,9 @@
 module
 
-public import CKSD.LinearModels.Basic
-public import CKSD.LinearModels.GaussianMixtureIdentifiability
+import CKSD.LinearModels.GaussianMixtureIdentifiability
 public import TauCeti.Probability.Distributions.Gaussian.Mixture.Multivariate
+public import CKSD.Inference.Basic
+public import Mathlib.CategoryTheory.Category.Basic
 
 /-!
 # Identifiable finite Gaussian mixtures
@@ -35,7 +36,7 @@ Sources: GAPS 105.6 and SYNOPSIS105, item 6.
   Statist. 39 (1968), 209–214.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

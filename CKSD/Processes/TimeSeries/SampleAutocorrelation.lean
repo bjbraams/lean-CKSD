@@ -1,12 +1,13 @@
 module
 
 public import CKSD.Processes.Basic
-public import CKSD.Asymptotics.MartingaleCLT.Basic
-public import Mathlib.Probability.Martingale.Basic
-public import Mathlib.Probability.ConditionalExpectation
-public import Mathlib.Probability.CramerWold
-public import Mathlib.Probability.Independence.Integration
-public import CKSD.Processes.TimeSeries.CentralLimit
+import Mathlib.Probability.ConditionalExpectation
+import Mathlib.Probability.CramerWold
+import Mathlib.Probability.Independence.Integration
+import CKSD.Processes.TimeSeries.CentralLimit
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import CKSD.Asymptotics.Basic
+import Mathlib.MeasureTheory.Function.ConditionalExpectation.PullOut
 
 /-!
 # Central limit theorem for sample autocorrelations
@@ -32,7 +33,7 @@ Slutsky's theorem (Mathlib's
 The general linear-process form of Bartlett's theorem is not covered.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -621,6 +622,7 @@ private theorem measurable_sampleAutocovariance {Ω : Type*} [MeasurableSpace Ω
     have h : sampleAverage X n = fun ω ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, X i ω := by
       funext ω; simp [sampleAverage]
     rw [h]; exact measurable_const.mul (Finset.measurable_fun_sum _ fun i _ ↦ hm i)
+  rw [funext (sampleAutocovariance_def X ℓ n)]
   exact (Finset.measurable_fun_sum _ fun k _ ↦ ((hm _).sub hA).mul ((hm _).sub hA)).div_const _
 
 /-- The remainder in the centered decomposition of the sample autocovariance at lag `ℓ`:
@@ -641,7 +643,7 @@ private theorem sampleAutocovariance_eq_add {Ω : Type*} (X : ℕ → Ω → ℝ
   have h : ∀ k, (X (k + ℓ) ω - sampleAverage X n ω) * (X k ω - sampleAverage X n ω) =
       (X (k + ℓ) ω - c) * (X k ω - c) - B * (X (k + ℓ) ω - c) - B * (X k ω - c) + B * B :=
     fun k ↦ by simp only [B]; ring
-  simp only [sampleAutocovariance, acovRemainder, h, Finset.sum_add_distrib,
+  simp only [sampleAutocovariance_def, acovRemainder, h, Finset.sum_add_distrib,
     Finset.sum_sub_distrib, ← Finset.mul_sum, Finset.sum_const, Finset.card_range,
     nsmul_eq_mul, add_zero]
   ring

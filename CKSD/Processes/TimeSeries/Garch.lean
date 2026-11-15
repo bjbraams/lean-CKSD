@@ -1,7 +1,9 @@
 module
 
 public import CKSD.Processes.Dependence
-public import Mathlib.Probability.Independence.Integration
+import Mathlib.Probability.Independence.Integration
+public import CKSD.Processes.Basic
+import CKSD.Processes.Independence
 
 /-!
 # Stationary GARCH(1,1) series and moments
@@ -32,7 +34,7 @@ The strict-stationarity criterion `𝔼 log(β₁ + α₁ ε_0²) < 0` and uniqu
 the code `a₀ = α₀`, `a = α₁` and `b = β₁`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

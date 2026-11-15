@@ -1,14 +1,12 @@
 module
 
-public import CKSD.Processes.Independence
-public import TauCeti.MeasureTheory.Measure.WithDensity
 public import TauCeti.Probability.Distributions.Gaussian.Density
-public import TauCeti.Probability.Distributions.Gaussian.Sum
-public import TauCeti.Probability.Distributions.Gaussian.Independence
-public import TauCeti.Probability.Distributions.Gaussian.Affine
-public import Mathlib.Data.Matrix.ColumnRowPartitioned
+import TauCeti.Probability.Distributions.Gaussian.Sum
+import TauCeti.Probability.Distributions.Gaussian.Independence
+import TauCeti.Probability.Distributions.Gaussian.Affine
+import Mathlib.Data.Matrix.ColumnRowPartitioned
 public import Mathlib.Probability.Kernel.CondDistrib
-public import Mathlib.Probability.Kernel.Composition.WithDensity
+public import Mathlib.CategoryTheory.Category.Basic
 
 /-!
 # Linear images and conditional laws of Gaussian vectors
@@ -33,7 +31,7 @@ support the Kalman filter but do not depend on its model.
   `Y = y` is `N(g y, S)`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -138,7 +136,8 @@ omit [Fintype κ] [Fintype τ] [Fintype σ] [DecidableEq κ] [DecidableEq τ] [D
 /-- The Gaussian shift kernel at `m` is the Gaussian law with mean `m` and covariance `S`. -/
 @[simp]
 theorem gaussianShiftKernel_apply (S : Matrix ι ι ℝ) (m : EuclideanSpace ℝ ι) :
-    gaussianShiftKernel S m = multivariateGaussian m S := rfl
+    gaussianShiftKernel S m = multivariateGaussian m S := by
+    unfold gaussianShiftKernel; rfl
 
 instance (S : Matrix ι ι ℝ) : IsMarkovKernel (gaussianShiftKernel S) where
   isProbabilityMeasure m := by rw [gaussianShiftKernel_apply]; infer_instance

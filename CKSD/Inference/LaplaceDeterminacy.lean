@@ -1,7 +1,8 @@
 module
 
-public import CKSD.Inference.Density
-public import TauCeti.Probability.Moments.Determinacy
+import TauCeti.Probability.Moments.Determinacy
+public import Mathlib.Analysis.InnerProductSpace.Basic
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
 
 /-!
 # Laplace determinacy of finite measures
@@ -20,7 +21,7 @@ Each one-dimensional projection is determined by its moment generating function 
 (TauCeti's `TauCeti.Measure.ext_of_mgf`), and a measure is determined by the characteristic
 functions of its projections (Mathlib's `Measure.ext_of_charFun`).
 -/
-@[expose] public section
+public section
 
 noncomputable section
 

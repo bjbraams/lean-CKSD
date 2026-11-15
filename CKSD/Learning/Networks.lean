@@ -1,12 +1,12 @@
 module
 
 public import CKSD.Learning.Algorithms
-public import CKSD.Learning.Generalization.Contraction
+import CKSD.Learning.Generalization.Contraction
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
-public import Mathlib.Analysis.Calculus.ContDiff.Basic
 public import CKSD.Learning.Networks.GaussianLimit
-public import Mathlib.MeasureTheory.Measure.LevyConvergence
+import Mathlib.MeasureTheory.Measure.LevyConvergence
+public import CKSD.Learning.Basic
 
 /-!
 # Dense networks: estimation, capacity, depth, and wide limits
@@ -41,7 +41,7 @@ Vectors in `Fin d → ℝ` carry the sup norm. Gaussian laws are Mathlib's `gaus
 Sources: GAPS 107.29, 107.35, 107.37, and 107.39.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -529,7 +529,7 @@ theorem empiricalRademacherComplexity_biasFree_le (σ : ℝ → ℝ) (hσ : Lips
         {θ | (∀ ℓ, θ.bias ℓ = 0) ∧ θ.outBias = 0 ∧
           (∀ ℓ < H, ∑ i, ∑ j, θ.weight ℓ i j ^ 2 ≤ C ^ 2) ∧ ∑ j, θ.outWeight j ^ 2 ≤ C ^ 2}) x ≤
       2 ^ H * C ^ (H + 1) / Real.sqrt n := by
-  unfold empiricalRademacherComplexityOfSet
+  simp only [empiricalRademacherComplexityOfSet_def]
   rcases Nat.eq_zero_or_pos n with rfl | hn
   · simp only [Nat.cast_zero, div_zero, Real.sqrt_zero]
     refine mul_nonpos_of_nonneg_of_nonpos (by positivity) (Finset.sum_nonpos fun s _ ↦ ?_)

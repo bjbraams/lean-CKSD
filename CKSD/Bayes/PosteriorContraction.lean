@@ -1,13 +1,11 @@
 module
 
 public import CKSD.Bayes.Nonparametric
-public import CKSD.Asymptotics.Basic
-public import CKSD.Bayes.HellingerGeometry
-public import CKSD.Bayes.HellingerTests
-public import CKSD.Bayes.ExponentialTests
-public import CKSD.Bayes.EvidenceBounds
-public import CKSD.Bayes.EvidenceConcentration
-public import TauCeti.MeasureTheory.Measure.PiWithDensity
+public import CKSD.Bayes.Hellinger.Geometry
+import CKSD.Bayes.Hellinger.Tests
+import CKSD.Bayes.ExponentialTests
+import CKSD.Bayes.Evidence.Bounds
+import CKSD.Bayes.Evidence.Concentration
 
 /-!
 # Dominated posteriors and posterior contraction
@@ -16,7 +14,7 @@ For a dominated model with densities `f θ`, the posterior after `n` observation
 reweighted by the product likelihood and normalized. Its value at samples with zero evidence
 follows the zero-measure normalization convention; the consistency theorems only control it
 under the true sampling law. Hellinger distance is `CKSD.statisticalHellingerDistance` from
-`CKSD.Bayes.HellingerGeometry`, which reuses Statlib's `sqHellinger` with a factor two to obtain
+`CKSD.Bayes.Hellinger.Geometry`, which reuses Statlib's `sqHellinger` with a factor two to obtain
 the convention `h² = ∫ (√p - √q)²` of `GAPS.md`.
 
 ## Main definitions
@@ -33,7 +31,7 @@ the convention `h² = ∫ (√p - √q)²` of `GAPS.md`.
   Vaart contraction theorem in Hellinger distance (GAPS 104.19).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -688,7 +686,7 @@ theorem hasPosteriorContractionRate_statisticalHellingerDistance
   intro θ n hpos
   have hsym : statisticalHellingerDistance (P θ₀) (P θ) =
       statisticalHellingerDistance (P θ) (P θ₀) := by
-    simp only [statisticalHellingerDistance, ProbabilityTheory.sqHellinger_comm]
+    simp only [statisticalHellingerDistance_def, ProbabilityTheory.sqHellinger_comm]
   have hpos' : 0 < statisticalHellingerDistance (P θ₀) (P θ) := hsym.symm ▸ hpos
   obtain ⟨ψ, hψ, hI, hII⟩ := exists_hellinger_ball_test μ (P θ₀) (P θ)
     (f θ₀) (f θ) (hdensity θ₀) (hdensity θ) hpos' n
@@ -701,18 +699,20 @@ theorem hasPosteriorContractionRate_statisticalHellingerDistance
 
 /-- Statistical Hellinger distance is nonnegative by its definition. -/
 theorem statisticalHellingerDistance_nonneg {X : Type*} [MeasurableSpace X]
-    (P Q : Measure X) : 0 ≤ statisticalHellingerDistance P Q := Real.sqrt_nonneg _
+    (P Q : Measure X) : 0 ≤ statisticalHellingerDistance P Q := by
+  rw [statisticalHellingerDistance_def]
+  exact Real.sqrt_nonneg _
 
 /-- The Hellinger adapter vanishes when its two laws agree, by Statlib. -/
 @[simp] theorem statisticalHellingerDistance_self {X : Type*} [MeasurableSpace X]
     (P : Measure X) [SigmaFinite P] : statisticalHellingerDistance P P = 0 := by
-  simp [statisticalHellingerDistance]
+  simp [statisticalHellingerDistance_def]
 
 /-- Symmetry of the Hellinger adapter follows from Statlib's symmetry theorem. -/
 theorem statisticalHellingerDistance_comm {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) [SigmaFinite P] [SigmaFinite Q] :
     statisticalHellingerDistance P Q = statisticalHellingerDistance Q P := by
-  simp only [statisticalHellingerDistance, ProbabilityTheory.sqHellinger_comm P Q]
+  simp only [statisticalHellingerDistance_def, ProbabilityTheory.sqHellinger_comm P Q]
 
 /-- Before any observations, a probability prior is its own dominated posterior. -/
 @[simp] theorem dominatedPosterior_empty {Θ X : Type*} [MeasurableSpace Θ]

@@ -1,7 +1,9 @@
 module
 
-public import CKSD.Learning.Basic
-public import Mathlib.Probability.Moments.Variance
+import Mathlib.Probability.Moments.Variance
+public import Mathlib.Analysis.Normed.Lp.MeasurableSpace
+public import Mathlib.MeasureTheory.Integral.Bochner.Basic
+public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
 
 /-!
 # Nearest-neighbour rules and local averaging estimates
@@ -32,7 +34,7 @@ test pair.
   averaging (GAPS 107.20).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

@@ -1,10 +1,11 @@
 module
 
-public import CKSD.Geometry.Basic
-public import CKSD.Geometry.ManifoldSampling
-public import CKSD.Asymptotics.MultivariateCLT
-public import CKSD.Bayes.Basic
+import CKSD.Geometry.ManifoldSampling
+import CKSD.Asymptotics.MultivariateCLT
 public import TauCeti.Probability.Moments.Covariance
+public import CKSD.Inference.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import CKSD.Asymptotics.Basic
 
 /-!
 # Geometric statistics: Fréchet means, sampling, and multidimensional scaling
@@ -28,7 +29,7 @@ Cheeger's inequalities for weighted graphs (GAPS 108.1) are in `CKSD.Geometry.Ch
 * `CKSD.centeringMatrix`: the centering matrix `J = I - n⁻¹ 1 1ᵀ`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

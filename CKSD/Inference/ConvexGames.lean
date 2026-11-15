@@ -1,10 +1,9 @@
 module
 
-public import Mathlib.Analysis.LocallyConvex.Separation
-public import Mathlib.Topology.Order.Compact
-public import Mathlib.Topology.Order.Lattice
-public import Mathlib.LinearAlgebra.Pi
-public import Mathlib.Algebra.BigOperators.Field
+import Mathlib.Analysis.LocallyConvex.Separation
+import Mathlib.Algebra.BigOperators.Field
+public import Mathlib.Analysis.Convex.Basic
+public import Mathlib.Topology.MetricSpace.Pseudo.Defs
 
 /-!
 # Saddle points for compact convex finite games
@@ -17,7 +16,7 @@ The proof uses Mathlib's compact extreme-value theorem and
 `geometric_hahn_banach_open` for real finite-dimensional separation.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 open Set

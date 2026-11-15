@@ -1,6 +1,8 @@
 module
 
 public import CKSD.LinearModels.DirectedGraphical.Basic.ActiveTrails
+public import Mathlib.Data.Fintype.Pi
+public import Mathlib.Tactic.Continuity
 
 /-!
 # Discrete directed factorization and the global Markov property
@@ -40,7 +42,7 @@ directed acyclic graph structure, active paths, d-separation and Markov equivale
 Source: GAPS 105.62.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -57,86 +59,107 @@ variable {V S : Type*}
 def CausalGraph.parentFinset [Fintype V] (G : CausalGraph V) (v : V) : Finset V :=
   Finset.univ.filter fun u ↦ G.edge u v
 
+/-- Defining equation of `CausalGraph.parentFinset`. -/
+theorem CausalGraph.parentFinset_def [Fintype V] (G : CausalGraph V) (v : V) :
+    G.parentFinset v = Finset.univ.filter fun u ↦ G.edge u v := by
+  rw [CausalGraph.parentFinset]
+
 /-- Nondescendants of a vertex other than the vertex itself and its parents. -/
 def CausalGraph.nonDescendantFinset [Fintype V] (G : CausalGraph V) (v : V) : Finset V :=
   Finset.univ.filter fun u ↦ u ≠ v ∧ ¬ G.IsDescendant v u ∧ ¬ G.edge u v
 
+/-- Defining equation of `CausalGraph.nonDescendantFinset`. -/
+theorem CausalGraph.nonDescendantFinset_def [Fintype V] (G : CausalGraph V) (v : V) :
+    G.nonDescendantFinset v =
+      Finset.univ.filter fun u ↦ u ≠ v ∧ ¬ G.IsDescendant v u ∧ ¬ G.edge u v := by
+  rw [CausalGraph.nonDescendantFinset]
+
 /-- The graph with all arrows into `X` removed (`G_{\bar X}`). -/
-def CausalGraph.removeIncoming (G : CausalGraph V) (X : Set V) : CausalGraph V where
+@[expose] def CausalGraph.removeIncoming (G : CausalGraph V) (X : Set V) : CausalGraph V where
   edge u v := G.edge u v ∧ v ∉ X
   acyclic v h := G.acyclic v (Relation.TransGen.mono (fun _ _ h ↦ h.1) _ _ h)
 
 /-- The graph with all arrows out of `Z` removed (`G_{\underline Z}`). -/
-def CausalGraph.removeOutgoing (G : CausalGraph V) (Z : Set V) : CausalGraph V where
+@[expose] def CausalGraph.removeOutgoing (G : CausalGraph V) (Z : Set V) : CausalGraph V where
   edge u v := G.edge u v ∧ u ∉ Z
   acyclic v h := G.acyclic v (Relation.TransGen.mono (fun _ _ h ↦ h.1) _ _ h)
 
 /-- A directed path from a vertex of `X` to a vertex of `Y` has some vertex in `Z`. -/
-def CausalGraph.InterceptsDirectedPaths (G : CausalGraph V) (X Y Z : Set V) : Prop :=
+@[expose] def CausalGraph.InterceptsDirectedPaths (G : CausalGraph V) (X Y Z : Set V) : Prop :=
   ∀ n : ℕ, ∀ p : Fin (n + 1) → V, p 0 ∈ X → p (Fin.last n) ∈ Y →
     (∀ i : Fin n, G.edge (p i.castSucc) (p i.succ)) → ∃ i, p i ∈ Z
 
 /-- Every back-door path from `X` to `Y`, that is, every path whose first arrow points into
 its initial vertex in `X`, is blocked by `W`. -/
-def CausalGraph.BlocksBackdoorPaths (G : CausalGraph V) (X Y W : Set V) : Prop :=
+@[expose] def CausalGraph.BlocksBackdoorPaths (G : CausalGraph V) (X Y W : Set V) : Prop :=
   ∀ n : ℕ, ∀ p : Fin (n + 2) → V, p 0 ∈ X → p (Fin.last (n + 1)) ∈ Y → G.edge (p 1) (p 0) →
     ¬ G.IsActivePath W p
 
 /-- The back-door criterion for `Z` relative to `(X, Y)`: no vertex of `Z` is a descendant of
 a vertex of `X`, and `Z` blocks every back-door path from `X` to `Y`. -/
-def CausalGraph.IsBackdoorSet (G : CausalGraph V) (X Y Z : Set V) : Prop :=
+@[expose] def CausalGraph.IsBackdoorSet (G : CausalGraph V) (X Y Z : Set V) : Prop :=
   (∀ x ∈ X, ∀ z ∈ Z, ¬ G.IsDescendant x z) ∧ G.BlocksBackdoorPaths X Y Z
 
 /-- The front-door criterion for `Z` relative to `(X, Y)`. -/
-def CausalGraph.IsFrontdoorSet (G : CausalGraph V) (X Y Z : Set V) : Prop :=
+@[expose] def CausalGraph.IsFrontdoorSet (G : CausalGraph V) (X Y Z : Set V) : Prop :=
   G.InterceptsDirectedPaths X Y Z ∧ G.BlocksBackdoorPaths X Z ∅ ∧ G.BlocksBackdoorPaths Z Y X
 
 /-- A probability mass function on configurations. -/
-def IsProbabilityMass [Fintype V] [Fintype S] (p : (V → S) → ℝ) : Prop :=
+@[expose] def IsProbabilityMass [Fintype V] [Fintype S] (p : (V → S) → ℝ) : Prop :=
   (∀ x, 0 ≤ p x) ∧ ∑ x, p x = 1
 
 /-- Local conditional mass functions: each is a probability mass function in the state of its
 vertex, for every configuration of the other variables. -/
-def IsLocalMassFamily [Fintype S] (localMass : V → (V → S) → S → ℝ) : Prop :=
+@[expose] def IsLocalMassFamily [Fintype S] (localMass : V → (V → S) → S → ℝ) : Prop :=
   (∀ v x s, 0 ≤ localMass v x s) ∧ ∀ v x, ∑ s, localMass v x s = 1
 
 /-- Probability that the variables in `B` take the values of `x`. -/
 def marginalMass [Fintype V] [Fintype S] (p : (V → S) → ℝ) (B : Finset V) (x : V → S) : ℝ :=
   ∑ y, if ∀ v ∈ B, y v = x v then p y else 0
 
+/-- Defining equation of `marginalMass`. -/
+theorem marginalMass_def [Fintype V] [Fintype S] (p : (V → S) → ℝ) (B : Finset V)
+    (x : V → S) : marginalMass p B x = ∑ y, if ∀ v ∈ B, y v = x v then p y else 0 := by
+  rw [marginalMass]
+
 /-- Conditional probability that the variables in `B` take the values of `x`, given that the
 variables in `C` take the values of `x`. -/
 def condMass [Fintype V] [Fintype S] (p : (V → S) → ℝ) (B C : Finset V) (x : V → S) : ℝ :=
   marginalMass p (B ∪ C) x / marginalMass p C x
 
+/-- Defining equation of `condMass`. -/
+theorem condMass_def [Fintype V] [Fintype S] (p : (V → S) → ℝ) (B C : Finset V) (x : V → S) :
+    condMass p B C x = marginalMass p (B ∪ C) x / marginalMass p C x := by
+  rw [condMass]
+
 /-- Conditional independence of `X_A` and `X_B` given `X_C` for a mass function, in product
 form (no division). -/
-def CondIndepMass [Fintype V] [Fintype S] (p : (V → S) → ℝ) (A B C : Finset V) : Prop :=
+@[expose] def CondIndepMass [Fintype V] [Fintype S] (p : (V → S) → ℝ) (A B C : Finset V) : Prop :=
   ∀ x, marginalMass p (A ∪ B ∪ C) x * marginalMass p C x =
     marginalMass p (A ∪ C) x * marginalMass p (B ∪ C) x
 
 /-- Recursive factorization `p(x) = ∏_v p(x_v | x_{pa(v)})`, with the conditional masses of
 `p` itself. -/
-def CausalGraph.RecursivelyFactorizes [Fintype V] [Fintype S] (G : CausalGraph V)
+@[expose] def CausalGraph.RecursivelyFactorizes [Fintype V] [Fintype S] (G : CausalGraph V)
     (p : (V → S) → ℝ) : Prop :=
   ∀ x, p x = ∏ v, condMass p {v} (G.parentFinset v) x
 
 /-- The local directed Markov property: each variable is conditionally independent of its
 nondescendants given its parents. -/
-def CausalGraph.IsLocalDirectedMarkov [Fintype V] [Fintype S] (G : CausalGraph V)
+@[expose] def CausalGraph.IsLocalDirectedMarkov [Fintype V] [Fintype S] (G : CausalGraph V)
     (p : (V → S) → ℝ) : Prop :=
   ∀ v, CondIndepMass p {v} (G.nonDescendantFinset v) (G.parentFinset v)
 
 /-- The global directed Markov property: d-separation of disjoint sets implies conditional
 independence. -/
-def CausalGraph.IsGlobalDirectedMarkov [Fintype V] [Fintype S] (G : CausalGraph V)
+@[expose] def CausalGraph.IsGlobalDirectedMarkov [Fintype V] [Fintype S] (G : CausalGraph V)
     (p : (V → S) → ℝ) : Prop :=
   ∀ A B C : Finset V, Disjoint A B → Disjoint A C → Disjoint B C →
     G.DSeparated A B C → CondIndepMass p A B C
 
 /-- A mass function is faithful to `G` when its conditional independences among disjoint sets
 are exactly the d-separations of `G`. -/
-def CausalGraph.IsFaithful [Fintype V] [Fintype S] (G : CausalGraph V)
+@[expose] def CausalGraph.IsFaithful [Fintype V] [Fintype S] (G : CausalGraph V)
     (p : (V → S) → ℝ) : Prop :=
   ∀ A B C : Finset V, Disjoint A B → Disjoint A C → Disjoint B C →
     (G.DSeparated A B C ↔ CondIndepMass p A B C)
@@ -145,22 +168,41 @@ def CausalGraph.IsFaithful [Fintype V] [Fintype S] (G : CausalGraph V)
 def overwriteOn (B : Finset V) (b : B → S) (x : V → S) : V → S :=
   fun v ↦ if h : v ∈ B then b ⟨v, h⟩ else x v
 
+/-- Values of `overwriteOn`. -/
+theorem overwriteOn_apply (B : Finset V) (b : B → S) (x : V → S) (v : V) :
+    overwriteOn B b x v = if h : v ∈ B then b ⟨v, h⟩ else x v := by
+  rw [overwriteOn]
+
 /-- Interventional probability that the variables in `B` take the values of `y`, under
 `do(X = x)` given by the truncated factorization. -/
 def doMarginalMass [Fintype V] [Fintype S] (localMass : V → (V → S) → S → ℝ) (X : Finset V)
     (x : V → S) (B : Finset V) (y : V → S) : ℝ :=
   ∑ w, if ∀ v ∈ B, w v = y v then interventionMass localMass X x w else 0
 
+/-- Defining equation of `doMarginalMass`. -/
+theorem doMarginalMass_def [Fintype V] [Fintype S] (localMass : V → (V → S) → S → ℝ)
+    (X : Finset V) (x : V → S) (B : Finset V) (y : V → S) :
+    doMarginalMass localMass X x B y =
+      ∑ w, if ∀ v ∈ B, w v = y v then interventionMass localMass X x w else 0 := by
+  rw [doMarginalMass]
+
 /-- The interventional marginal is the marginal of the truncated factorization. -/
 theorem doMarginalMass_eq_marginalMass_interventionMass [Fintype V] [Fintype S]
     (localMass : V → (V → S) → S → ℝ) (X : Finset V) (x : V → S) (B : Finset V) (y : V → S) :
-    doMarginalMass localMass X x B y = marginalMass (interventionMass localMass X x) B y :=
-  rfl
+    doMarginalMass localMass X x B y = marginalMass (interventionMass localMass X x) B y := by
+  rw [doMarginalMass_def, marginalMass_def]
 
 /-- Interventional conditional probability `P(y | do(x), w)`, all values read from `b`. -/
 def condDoMass [Fintype V] [Fintype S] (localMass : V → (V → S) → S → ℝ) (X Y W : Finset V)
     (b : V → S) : ℝ :=
   doMarginalMass localMass X b (Y ∪ W) b / doMarginalMass localMass X b W b
+
+/-- Defining equation of `condDoMass`. -/
+theorem condDoMass_def [Fintype V] [Fintype S] (localMass : V → (V → S) → S → ℝ)
+    (X Y W : Finset V) (b : V → S) :
+    condDoMass localMass X Y W b =
+      doMarginalMass localMass X b (Y ∪ W) b / doMarginalMass localMass X b W b := by
+  rw [condDoMass]
 
 /-- No vertex is adjacent to itself in a directed acyclic graph. -/
 theorem CausalGraph.not_adjacent_self (G : CausalGraph V) (v : V) : ¬ G.Adjacent v v := by
@@ -485,7 +527,7 @@ theorem marginalMass_directedFactorizationMass_eq_of_isAncestral [Fintype V] [Fi
   have hUcl : ∀ w ∈ Dᶜ, ∀ c, G.edge w c → c ∈ Dᶜ := by
     intro w hw c hc
     exact Finset.mem_compl.2 fun hcD ↦ (Finset.mem_compl.1 hw) (hD c hcD w hc)
-  unfold marginalMass directedFactorizationMass
+  simp only [marginalMass_def, directedFactorizationMass_def]
   rw [sum_ite_prod_eq_sum_ite_prod_compl G localMass hloc hpar x E Dᶜ hUcl
     (Finset.disjoint_left.2 fun v hv hv' ↦ (Finset.mem_compl.1 hv') (hE hv))]
   refine Finset.sum_congr rfl fun y _ ↦ ?_

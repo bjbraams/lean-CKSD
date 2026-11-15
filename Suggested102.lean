@@ -1,4 +1,4 @@
-module
+module -- shake: keep-all
 
 public import Suggested101
 public import CKSD.Asymptotics

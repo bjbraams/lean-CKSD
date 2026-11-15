@@ -1,10 +1,12 @@
 module
 
 public import CKSD.Nonparametric.Basic
-public import CKSD.Inference.Density
-public import CKSD.Asymptotics.Lindeberg.Basic
-public import TauCeti.Analysis.Calculus.Taylor
-public import CKSD.Nonparametric.KernelDensityL1
+import CKSD.Inference.Density
+import CKSD.Asymptotics.Lindeberg.Basic
+import TauCeti.Analysis.Calculus.Taylor
+import CKSD.Nonparametric.Density.KernelL1
+public import Mathlib.Probability.Distributions.Gaussian.Real
+import CKSD.Asymptotics.Basic
 
 /-!
 # Empirical distribution functions, kernel density estimation, and rank statistics
@@ -40,7 +42,7 @@ bias term.
 The universal `L¹` consistency combines the expectation bound
 `CKSD.tendsto_integral_integral_abs_finiteKernelDensityEstimator_sub` and the McDiarmid
 concentration bound `CKSD.measureReal_le_integral_abs_finiteKernelDensityEstimator_sub_le` of
-`CKSD.Nonparametric.KernelDensityL1` with Mathlib's Borel–Cantelli lemma
+`CKSD.Nonparametric.Density.KernelL1` with Mathlib's Borel–Cantelli lemma
 `MeasureTheory.ae_eventually_notMem`.
 
 Sources: GAPS 103.1, 103.4, 103.5, 103.8, and 103.14.
@@ -55,7 +57,7 @@ Sources: GAPS 103.1, 103.4, 103.5, 103.8, and 103.14.
 * J. Hájek, Z. Šidák and P. K. Sen, *Theory of Rank Tests*, 2nd ed., Academic Press, 1999.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -506,7 +508,7 @@ theorem ae_tendsto_integral_abs_kernelDensityEstimator_sub {Ω : Type*} [Measura
     linarith
   have hJ : ∀ n ω, ∫ t, |kernelDensityEstimator X K h n ω t - f t| =
       ∫ t, |finiteKernelDensityEstimator K (h n) (fun i : Fin n ↦ X i ω) t - g t| :=
-    fun n ω ↦ integral_congr_ae (hfg.mono fun t ht ↦ by simp [kernelDensityEstimator, ht])
+    fun n ω ↦ integral_congr_ae (hfg.mono fun t ht ↦ by simp [kernelDensityEstimator_def, ht])
   simp_rw [hJ]
   set J : (n : ℕ) → (Fin n → ℝ) → ℝ :=
     fun n x ↦ ∫ t, |finiteKernelDensityEstimator K (h n) x t - g t| with hJdef

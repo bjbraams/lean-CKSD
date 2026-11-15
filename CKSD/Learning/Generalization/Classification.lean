@@ -1,5 +1,8 @@
 module
 
+public import CKSD.Learning.Basic
+public import Mathlib.Analysis.Calculus.Deriv.Basic
+import Mathlib.Analysis.Convex.Deriv
 public import CKSD.Learning.Generalization.Concentration
 
 /-!
@@ -18,7 +21,7 @@ minimizers of convex surrogate risks.
   (GAPS 107.11).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -163,7 +166,7 @@ theorem classificationRisk_sub_bayes_risk_eq {X : Type*} [MeasurableSpace X]
   dsimp only
   let star : X → Bool := fun x ↦ decide ((1 / 2 : ℝ) ≤ η x)
   have hstar : Measurable star := measurable_decide_half_le hη
-  unfold classificationRisk
+  simp only [classificationRisk_def]
   rw [← integral_sub (integrable_classificationLoss P η hη hrange g hg)
     (integrable_classificationLoss P η hη hrange star hstar)]
   apply integral_congr_ae
@@ -193,7 +196,7 @@ theorem classificationRisk_plugin_sub_bayes_risk_le {X : Type*} [MeasurableSpace
   have hiη : Integrable η P := by
     simpa only [Bool.false_eq_true, ite_false] using
       integrable_classificationLoss P η hη hrange (fun _ ↦ false) measurable_const
-  unfold classificationRisk
+  simp only [classificationRisk_def]
   rw [← integral_sub (integrable_classificationLoss P η hη hrange ga hga)
     (integrable_classificationLoss P η hη hrange star hstar), ← integral_const_mul]
   apply integral_mono

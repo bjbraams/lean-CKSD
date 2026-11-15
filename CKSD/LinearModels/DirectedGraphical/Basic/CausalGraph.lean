@@ -1,6 +1,8 @@
 module
 
 public import CKSD.LinearModels.Basic
+public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
+public import Mathlib.Basic.Real.Basic
 
 /-!
 # Causal graphs and d-separation
@@ -50,7 +52,7 @@ pairwise disjoint triples), and `markovEquivalent_iff_skeleton_and_colliders` ho
 * S. L. Lauritzen, *Graphical Models*, Oxford University Press, 1996.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -79,17 +81,17 @@ theorem CausalGraph.not_edge_of_edge {V : Type*} (G : CausalGraph V) {a b : V}
   fun h' ↦ G.acyclic a (Relation.TransGen.tail (Relation.TransGen.single h) h')
 
 /-- Parents of a vertex in a causal graph. -/
-def CausalGraph.parents {V : Type*} (G : CausalGraph V) (v : V) : Set V :=
+@[expose] def CausalGraph.parents {V : Type*} (G : CausalGraph V) (v : V) : Set V :=
   {u | G.edge u v}
 
 /-- Proper descendant relation in a causal graph. -/
-def CausalGraph.IsDescendant {V : Type*} (G : CausalGraph V) (u v : V) : Prop :=
+@[expose] def CausalGraph.IsDescendant {V : Type*} (G : CausalGraph V) (u v : V) : Prop :=
   Relation.TransGen G.edge u v
 
 /-- A path `p 0, …, p n` (pairwise distinct vertices, consecutive ones adjacent) is active given
 `Z` when every interior collider `p (i-1) → p i ← p (i+1)` lies in `Z` or has a descendant in
 `Z`, and every interior noncollider lies outside `Z`. The endpoints are not constrained. -/
-def CausalGraph.IsActivePath {V : Type*} (G : CausalGraph V) (Z : Set V)
+@[expose] def CausalGraph.IsActivePath {V : Type*} (G : CausalGraph V) (Z : Set V)
     {n : ℕ} (p : Fin (n + 1) → V) : Prop :=
   Function.Injective p ∧
     (∀ i : Fin n, G.edge (p i.castSucc) (p i.succ) ∨ G.edge (p i.succ) (p i.castSucc)) ∧
@@ -104,7 +106,7 @@ def CausalGraph.IsActivePath {V : Type*} (G : CausalGraph V) (Z : Set V)
 /-- `Z` d-separates `A` from `B` when no path from a vertex of `A` to a vertex of `B` is active
 given `Z`. The sets need not be disjoint; see the module docstring for the resulting
 conventions (`A ∩ B ≠ ∅` excludes d-separation, endpoints in `Z` do not block). -/
-def CausalGraph.DSeparated {V : Type*} (G : CausalGraph V) (A B Z : Set V) : Prop :=
+@[expose] def CausalGraph.DSeparated {V : Type*} (G : CausalGraph V) (A B Z : Set V) : Prop :=
   ∀ n : ℕ, ∀ p : Fin (n + 1) → V, p 0 ∈ A → p (Fin.last n) ∈ B → ¬ G.IsActivePath Z p
 
 /-- Two causal graphs are Markov equivalent if all their d-separation statements agree. The
@@ -114,16 +116,16 @@ def CausalGraph.MarkovEquivalent {V : Type*} (G H : CausalGraph V) : Prop :=
   ∀ A B Z, G.DSeparated A B Z ↔ H.DSeparated A B Z
 
 /-- Undirected skeleton adjacency. -/
-def CausalGraph.Adjacent {V : Type*} (G : CausalGraph V) (u v : V) : Prop :=
+@[expose] def CausalGraph.Adjacent {V : Type*} (G : CausalGraph V) (u v : V) : Prop :=
   G.edge u v ∨ G.edge v u
 
 /-- An unshielded collider is an inward-facing triple with nonadjacent endpoints. -/
-def CausalGraph.IsUnshieldedCollider {V : Type*} (G : CausalGraph V) (u v w : V) : Prop :=
+@[expose] def CausalGraph.IsUnshieldedCollider {V : Type*} (G : CausalGraph V) (u v w : V) : Prop :=
   u ≠ w ∧ G.edge u v ∧ G.edge w v ∧ ¬ G.Adjacent u w
 
 /-- Local mass functions respect the parents of `G`: the local mass of `v` depends on the
 configuration only through its values at the parents of `v`. -/
-def CausalGraph.RespectsParents {V S : Type*} (G : CausalGraph V)
+@[expose] def CausalGraph.RespectsParents {V S : Type*} (G : CausalGraph V)
     (localMass : V → (V → S) → S → ℝ) : Prop :=
   ∀ v x y, (∀ u ∈ G.parents v, x u = y u) → localMass v x = localMass v y
 
@@ -132,11 +134,24 @@ def directedFactorizationMass {V S : Type*} [Fintype V]
     (localMass : V → (V → S) → S → ℝ) (x : V → S) : ℝ :=
   ∏ v, localMass v x (x v)
 
+/-- Defining equation of `directedFactorizationMass`. -/
+theorem directedFactorizationMass_def {V S : Type*} [Fintype V]
+    (localMass : V → (V → S) → S → ℝ) (x : V → S) :
+    directedFactorizationMass localMass x = ∏ v, localMass v x (x v) := by
+  rw [directedFactorizationMass]
+
 /-- Truncated factorization for the intervention `do(X_A = a_A)`: zero unless `x` agrees with
 `a` on `A`, and otherwise the product of the local masses over the vertices outside `A`. -/
 def interventionMass {V S : Type*} [Fintype V] [DecidableEq V] [DecidableEq S]
     (localMass : V → (V → S) → S → ℝ) (A : Finset V) (a x : V → S) : ℝ :=
   if ∀ v ∈ A, x v = a v then ∏ v ∈ Aᶜ, localMass v x (x v) else 0
+
+/-- Defining equation of `interventionMass`. -/
+theorem interventionMass_def {V S : Type*} [Fintype V] [DecidableEq V] [DecidableEq S]
+    (localMass : V → (V → S) → S → ℝ) (A : Finset V) (a x : V → S) :
+    interventionMass localMass A a x =
+      if ∀ v ∈ A, x v = a v then ∏ v ∈ Aᶜ, localMass v x (x v) else 0 := by
+  rw [interventionMass]
 
 /-- GAPS 105.67 (Verma–Pearl): two directed acyclic graphs on a finite vertex set are Markov
 equivalent if and only if they have the same skeleton (adjacency relation) and the same

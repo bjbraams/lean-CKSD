@@ -1,6 +1,10 @@
 module
 
-public import CKSD.LinearModels.DirectedGraphical.Markov
+public import CKSD.LinearModels.DirectedGraphical.Basic
+public import Mathlib.Data.Fintype.Option
+public import Mathlib.Data.Set.BooleanAlgebra
+public import Mathlib.Order.CompletePartialOrder
+import CKSD.LinearModels.DirectedGraphical.Interventions
 
 /-!
 # Augmentation and rule 3 of the do-calculus
@@ -29,7 +33,7 @@ rule 3 of the do-calculus from the global directed Markov property.
 Source: GAPS 105.64.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -182,18 +186,18 @@ theorem directedFactorizationMass_augmentedLocalMass [Fintype V]
       (if y none = s₀ ∨ y none = s₁ then 1 / 2 else 0) *
         (if y none = s₁ then interventionMass localMass (X ∪ Z) b (fun u ↦ y (some u))
           else interventionMass localMass X b (fun u ↦ y (some u))) := by
-  unfold directedFactorizationMass
+  simp only [directedFactorizationMass_def]
   rw [Fintype.prod_option]
   congr 1
   split_ifs with h1
   · rw [← directedFactorizationMass_intervenedLocalMass]
-    unfold directedFactorizationMass
+    simp only [directedFactorizationMass_def]
     refine Finset.prod_congr rfl fun v _ ↦ ?_
-    simp only [augmentedLocalMass, Option.elim, h1, and_true, intervenedLocalMass,
+    simp only [augmentedLocalMass, Option.elim, h1, and_true, intervenedLocalMass_apply,
       Finset.mem_union]
     by_cases hvZ : v ∈ Z <;> by_cases hvX : v ∈ X <;> simp [hvZ, hvX]
   · rw [← directedFactorizationMass_intervenedLocalMass]
-    unfold directedFactorizationMass
+    simp only [directedFactorizationMass_def]
     refine Finset.prod_congr rfl fun v _ ↦ ?_
     simp [augmentedLocalMass, Option.elim, h1]
 
@@ -218,7 +222,7 @@ theorem marginalMass_augmented [Fintype V] [Fintype S] (localMass : V → (V →
           marginalMass (if s' = s₁ then interventionMass localMass (X ∪ Z) b
             else interventionMass localMass X b) (Finset.univ.filter fun v ↦ some v ∈ T) x
       else 0 := by
-  unfold marginalMass
+  simp only [marginalMass_def]
   have key := sum_option_pi (V := V) (S := S) fun y : Option V → S ↦
     if ∀ o ∈ T, y o = Option.elim o s x then
       directedFactorizationMass (augmentedLocalMass localMass X Z b s₀ s₁) y else 0
@@ -519,13 +523,13 @@ theorem condDoMass_rule_three [Fintype V] [Fintype S] (G : CausalGraph V)
     have hM : ∀ A E : Finset V, doMarginalMass localMass A b E b =
         interventionMass localMass A b b := by
       intro A E
-      unfold doMarginalMass
+      simp only [doMarginalMass_def]
       rw [Finset.sum_eq_single b (fun y _ hy ↦ absurd (hsub y) hy) (by simp)]
       simp
     have h1 := hpos
     have h2 := hpos'
     rw [hM] at h1 h2
-    unfold condDoMass
+    simp only [condDoMass_def]
     rw [hM, hM, hM, hM, div_self h2.ne', div_self h1.ne']
   obtain ⟨s₀, s₁, hs⟩ := hS
   set e : V ↪ Option V := Function.Embedding.some
@@ -565,9 +569,11 @@ theorem condDoMass_rule_three [Fintype V] [Fintype S] (G : CausalGraph V)
   have e2 : X ∪ W = W ∪ X := Finset.union_comm _ _
   rw [e1, e2, marginalMass_union_of_support hsX, marginalMass_union_of_support hsX,
     marginalMass_union_of_support hsXZ, marginalMass_union_of_support hsXZ] at hci
-  simp only [condDoMass, doMarginalMass_eq_marginalMass_interventionMass]
-  have hp0 : 0 < marginalMass (interventionMass localMass X b) W b := hpos
-  have hp1 : 0 < marginalMass (interventionMass localMass (X ∪ Z) b) W b := hpos'
+  simp only [condDoMass_def, doMarginalMass_eq_marginalMass_interventionMass]
+  have hp0 : 0 < marginalMass (interventionMass localMass X b) W b := by
+    rwa [doMarginalMass_eq_marginalMass_interventionMass] at hpos
+  have hp1 : 0 < marginalMass (interventionMass localMass (X ∪ Z) b) W b := by
+    rwa [doMarginalMass_eq_marginalMass_interventionMass] at hpos'
   rw [div_eq_div_iff hp1.ne' hp0.ne']
   nlinarith [hci]
 

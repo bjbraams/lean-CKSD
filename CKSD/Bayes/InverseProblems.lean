@@ -1,9 +1,9 @@
 module
 
-public import CKSD.Bayes.Basic
-public import Mathlib.Probability.ProductMeasure
-public import Mathlib.Probability.Independence.InfinitePi
-public import TauCeti.Probability.Independence.DisjointBlocks
+import Mathlib.Probability.Independence.InfinitePi
+import TauCeti.Probability.Independence.DisjointBlocks
+public import Mathlib.Order.CompletePartialOrder
+public import Mathlib.Probability.Distributions.Gaussian.Real
 
 /-!
 # Linear inverse problems in sequence space
@@ -40,7 +40,7 @@ overlap at least `2e^{-2}/√(2π)`.
 Sources: GAPS 104.20.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -90,8 +90,8 @@ theorem gaussianSeqPosteriorRisk_def (κ : ℕ → ℝ) (β x : ℝ) (f₀ : ℕ
           (κ j * f₀ j) - f₀ j) ^ 2 +
         (((j : ℝ) + 1) ^ (-1 - 2 * β) * κ j /
           (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x)) ^ 2 * x +
-        ((j : ℝ) + 1) ^ (-1 - 2 * β) * x / (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x) :=
-  rfl
+        ((j : ℝ) + 1) ^ (-1 - 2 * β) * x / (κ j ^ 2 * ((j : ℝ) + 1) ^ (-1 - 2 * β) + x) := by
+  rw [gaussianSeqPosteriorRisk]
 
 /-- Polynomially decaying singular values: `c₀⁻¹ j^{-a} ≤ κⱼ ≤ c₀ j^{-a}`, `j ≥ 1`. -/
 def HasPolynomialSingularValues (κ : ℕ → ℝ) (a c₀ : ℝ) : Prop :=

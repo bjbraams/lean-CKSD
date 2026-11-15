@@ -1,15 +1,14 @@
 module
 
 public import CKSD.Inference.Basic
-public import Mathlib.Probability.CDF
-public import CKSD.Inference.Sufficiency
-public import CKSD.Inference.SymmetricCompleteness
-public import TauCeti.Probability.Distributions.OrderStatistic.Joint
-public import TauCeti.Probability.Distributions.OrderStatistic.Basic
-public import TauCeti.Probability.Distributions.Beta.Cdf
-public import TauCeti.Probability.Quantile
-public import TauCeti.Probability.Independence.InfinitePi
-public import TauCeti.MeasureTheory.Measure.PiWithDensity
+import CKSD.Inference.SymmetricCompleteness
+import TauCeti.Probability.Distributions.OrderStatistic.Joint
+import TauCeti.Probability.Distributions.OrderStatistic.Basic
+import TauCeti.Probability.Distributions.Beta.Cdf
+import TauCeti.Probability.Independence.InfinitePi
+import TauCeti.MeasureTheory.Measure.PiWithDensity
+public import Mathlib.Probability.Distributions.Beta
+public import TauCeti.Data.Fin.Tuple.OrderStatistic
 
 /-!
 # Symmetric completeness, order statistics, and the Pitman estimator
@@ -42,7 +41,7 @@ the densities use TauCeti's chamber formula `TauCeti.Probability.map_orderStatis
 beta-law computation of the distribution function of an order statistic, and the probability
 integral transform `MeasureTheory.Measure.cdf_map_eq_volume_restrict`.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 

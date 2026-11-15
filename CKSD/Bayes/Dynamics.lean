@@ -1,15 +1,11 @@
 module
 
-public import CKSD.Bayes.Basic
-public import Mathlib.Analysis.Calculus.Deriv.MeanValue
-public import Mathlib.Analysis.Calculus.Deriv.Support
-public import Mathlib.Analysis.InnerProductSpace.Calculus
-public import Mathlib.MeasureTheory.Integral.IntegralEqImproper
-public import CKSD.Nonparametric.Basic
-public import Mathlib.MeasureTheory.Function.ConditionalExpectation.Real
-public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.BenamouBrenier
-public import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.PlanInterpolation
-public import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Map
+import Mathlib.Analysis.InnerProductSpace.Calculus
+import TauCeti.MeasureTheory.OptimalTransport.ContinuityEquation.BenamouBrenier
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Map
+public import CKSD.Inference.Basic
+public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
+import Mathlib.MeasureTheory.SpecificCodomains.Pi
 
 /-!
 # Langevin dynamics: invariance, contraction, entropy decay, and score matching
@@ -35,7 +31,7 @@ The barycentric action bound uses TauCeti's displacement interpolation and Benam
 bound, with Mathlib's conditional-expectation uniqueness and Jensen inequality.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

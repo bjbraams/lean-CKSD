@@ -1,6 +1,7 @@
 module
 
-public import TauCeti.InformationTheory.KullbackLeibler.Projection
+import TauCeti.InformationTheory.KullbackLeibler.Projection
+public import Mathlib.InformationTheory.KullbackLeibler.Basic
 
 /-!
 # Half-bridges and alternating marginal projections
@@ -27,7 +28,7 @@ coupling.
 Source: GAPS 104.77, in the scope of GAPS_EASY 104.77.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -49,7 +50,8 @@ def bridgeIterate {Ω X Y : Type*} [MeasurableSpace Ω] [MeasurableSpace X]
 @[simp] theorem bridgeIterate_zero {Ω X Y : Type*} [MeasurableSpace Ω]
     [MeasurableSpace X] [MeasurableSpace Y] (R : Measure Ω) (start : Ω → X)
     (finish : Ω → Y) (μ : Measure X) (ν : Measure Y) :
-    bridgeIterate R start finish μ ν 0 = R := rfl
+    bridgeIterate R start finish μ ν 0 = R := by
+  rw [bridgeIterate]
 
 /-- GAPS 104.77: the entropy Pythagorean identity for each step of the path-space iteration.
 It holds for every feasible competitor, without assuming it minimizes entropy. -/

@@ -1,4 +1,4 @@
-module
+module -- shake: keep-all
 
 public import CKSD.Inference
 public import CKSD.Asymptotics
@@ -8,6 +8,7 @@ public import CKSD.LinearModels
 public import CKSD.Processes
 public import CKSD.Learning
 public import CKSD.Geometry
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 
 /-! # Core knowledge of statistics and data science
 

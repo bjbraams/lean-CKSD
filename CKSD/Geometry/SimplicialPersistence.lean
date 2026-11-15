@@ -1,7 +1,7 @@
-module
+module -- shake: keep-all
 
 public import CKSD.Geometry.SimplicialPersistence.Chains
-public import CKSD.Geometry.DiagramDistances
+public import CKSD.Geometry.Persistence.DiagramDistances
 public import CKSD.Geometry.SimplicialPersistence.Stability
 
 /-!

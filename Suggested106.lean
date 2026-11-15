@@ -1,4 +1,4 @@
-module
+module -- shake: keep-all
 
 public import Suggested105
 public import CKSD.Processes

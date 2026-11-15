@@ -1,10 +1,13 @@
 module
 
-public import CKSD.Processes.RiskSetExpansion
-public import Mathlib.MeasureTheory.Integral.IntervalIntegral.AbsolutelyContinuousFun
-public import Mathlib.MeasureTheory.Integral.IntervalIntegral.LebesgueDifferentiationThm
-public import TauCeti.Algebra.Order.BigOperators.ProdSubProd
+import CKSD.Processes.RiskSetExpansion
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.AbsolutelyContinuousFun
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.LebesgueDifferentiationThm
+import TauCeti.Algebra.Order.BigOperators.ProdSubProd
 import CKSD.Inference.Density
+public import CKSD.Processes.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Real
+import CKSD.Asymptotics.Basic
 
 /-!
 # Nelson–Aalen and Kaplan–Meier estimators under random censoring
@@ -45,7 +48,7 @@ The process-level convergence in the Skorokhod space `D[0, τ]` and Greenwood's 
 estimator are not stated.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -624,7 +627,7 @@ theorem tendstoInDistribution_nelsonAalenEstimator {Ω : Type*} [MeasurableSpace
   have hNA (n : ℕ) (ω : Ω) : nelsonAalenEstimator T C n ω t = ∑ i ∈ Finset.range n,
       A (T i ω, C i ω) / (((Finset.range n).filter fun j ↦
         x (T i ω, C i ω) ≤ x (T j ω, C j ω)).card : ℝ) := by
-    unfold nelsonAalenEstimator riskSetSize
+    simp only [nelsonAalenEstimator_def, riskSetSize_def]
     refine Finset.sum_congr rfl fun i _ ↦ ?_
     simp only [hAdef, hxdef]
     split_ifs <;> simp
@@ -734,14 +737,14 @@ private theorem abs_kaplanMeierEstimator_sub_exp_neg_le {Ω : Type*} (T C : ℕ 
   have hK : 1 ≤ K := by rw [hKdef]; exact_mod_cast le_max_right _ _
   have hN (i : ℕ) (hi : i ∈ Finset.range n) (hE : T i ω ≤ C i ω ∧ T i ω ≤ t) :
       K ≤ (riskSetSize T C n i ω : ℝ) := by
-    rw [hKdef]
+    rw [hKdef, riskSetSize_def]
     refine Nat.cast_le.2 (max_le (Finset.card_le_card fun j hj ↦ ?_) ?_)
     · rw [Finset.mem_filter] at hj ⊢
       exact ⟨hj.1, ((min_le_left _ _).trans hE.2).trans hj.2⟩
     · exact Finset.card_pos.2 ⟨i, Finset.mem_filter.2 ⟨hi, le_rfl⟩⟩
   have hexp : Real.exp (-nelsonAalenEstimator T C n ω t) = ∏ i ∈ Finset.range n,
       if T i ω ≤ C i ω ∧ T i ω ≤ t then Real.exp (-(riskSetSize T C n i ω : ℝ)⁻¹) else 1 := by
-    unfold nelsonAalenEstimator
+    simp only [nelsonAalenEstimator_def]
     rw [← Finset.sum_neg_distrib, Real.exp_sum]
     refine Finset.prod_congr rfl fun i _ ↦ ?_
     split_ifs <;> simp
@@ -749,7 +752,7 @@ private theorem abs_kaplanMeierEstimator_sub_exp_neg_le {Ω : Type*} (T C : ℕ 
       0 ≤ (riskSetSize T C n i ω : ℝ)⁻¹ ∧ (riskSetSize T C n i ω : ℝ)⁻¹ ≤ K⁻¹ ∧ K⁻¹ ≤ 1 := by
     have h1 := hN i hi hE
     refine ⟨inv_nonneg.2 (by positivity), inv_anti₀ (by linarith) h1, inv_le_one_of_one_le₀ hK⟩
-  unfold kaplanMeierEstimator
+  simp only [kaplanMeierEstimator_def]
   rw [hexp]
   refine (TauCeti.abs_prod_sub_prod_le_sum_abs_sub _ (fun i hi ↦ ?_) (fun i hi ↦ ?_)).trans ?_
   · split_ifs with hE
@@ -793,7 +796,7 @@ private theorem measurable_nelsonAalenEstimator_kaplanMeierEstimator {Ω : Type*
     have h : (fun ω ↦ (riskSetSize T C n i ω : ℝ)) = fun ω ↦ ∑ j ∈ Finset.range n,
         if min (T i ω) (C i ω) ≤ min (T j ω) (C j ω) then (1 : ℝ) else 0 := by
       funext ω
-      rw [riskSetSize, Finset.natCast_card_filter]
+      rw [riskSetSize_def, Finset.natCast_card_filter]
     rw [h]
     exact Finset.measurable_fun_sum _ fun j _ ↦ Measurable.ite
       (measurableSet_le ((hT i).min (hC i)) ((hT j).min (hC j))) measurable_const
@@ -801,10 +804,10 @@ private theorem measurable_nelsonAalenEstimator_kaplanMeierEstimator {Ω : Type*
   have hE (i : ℕ) : MeasurableSet {ω | T i ω ≤ C i ω ∧ T i ω ≤ t} :=
     (measurableSet_le (hT i) (hC i)).inter (measurableSet_le (hT i) measurable_const)
   refine ⟨?_, ?_⟩
-  · unfold nelsonAalenEstimator
+  · simp only [nelsonAalenEstimator_def]
     exact Finset.measurable_fun_sum _ fun i _ ↦ Measurable.ite (hE i) (hR i).inv
       measurable_const
-  · unfold kaplanMeierEstimator
+  · simp only [kaplanMeierEstimator_def]
     exact Finset.measurable_prod _ fun i _ ↦ Measurable.ite (hE i)
       (measurable_const.sub (hR i).inv) measurable_const
 

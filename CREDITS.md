@@ -441,11 +441,12 @@ Further proofs use these upstream results.
   `abs_prod_sub_prod_le_sum_abs_sub` for the Kaplan–Meier product; `strong_law_ae_infinitePi` and
   `pi_withDensity` for evidence bounds; `map_affine_multivariateGaussian` for convex regression.
 
-The Dirichlet-process results (`CKSD/Bayes/StickBreaking.lean`,
-`CKSD/Bayes/DirichletConjugacy.lean`) follow Sethuraman, *A constructive definition of
-Dirichlet priors*, Statist. Sinica 4 (1994), and Ghosal and van der Vaart, *Fundamentals of
-Nonparametric Bayesian Inference* (2017), Ch. 4. They use TauCeti's Dirichlet laws
-(`dirichletMeasure`, `map_dirichletStickInsert_prod_betaMeasure_dirichletMeasure`,
+The Dirichlet-process results (`CKSD/Bayes/Dirichlet/StickBreaking.lean`,
+`CKSD/Bayes/Dirichlet/FiniteConjugacy.lean`, `CKSD/Bayes/Dirichlet/Conjugacy.lean`) follow
+Sethuraman, *A constructive definition of Dirichlet priors*, Statist. Sinica 4 (1994), and Ghosal
+and van der Vaart, *Fundamentals of Nonparametric Bayesian Inference* (2017), Ch. 4. They use
+TauCeti's Dirichlet laws (`dirichletMeasure`,
+`map_dirichletStickInsert_prod_betaMeasure_dirichletMeasure`,
 `map_euclideanFiberSum_dirichletMeasure`, `dirichletMeasure_eq_map_withDensity_dirichletChartPDF`)
 and Mathlib's `Kernel.ae_eq_of_compProd_eq`, `memPartition` and `natGeneratingSequence` for
 countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
@@ -474,7 +475,7 @@ countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
   inequality to the stated smooth test functions; the sharp constant is `1/m`.
 - Quantitative evidence concentration uses Mathlib's `variance_sum_pi` and
   `meas_ge_le_variance_div_sq`, together with Tonelli's theorem and change of
-  density. The shrinking-ball estimate is in `CKSD/Bayes/EvidenceConcentration.lean`.
+  density. The shrinking-ball estimate is in `CKSD/Bayes/Evidence/Concentration.lean`.
 - Hellinger geometry uses Statlib's Radon–Nikodym affinity formula for
   `sqHellinger`, Mathlib's Radon–Nikodym chain rules, and the Cauchy–Schwarz
   inequality for integrals. Robust Hellinger-ball testing uses TauCeti's Bernstein
@@ -494,7 +495,7 @@ countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
 - Canonical GLM deviance asymptotics use the local convex quadratic approximation
   and minimum-value convergence, Mathlib's central limit theorem and orthogonal
   projections, and TauCeti's Gaussian projection and chi-squared laws. The generic
-  convex-likelihood argument is in `CKSD/LinearModels/ConvexLikelihood.lean`.
+  convex-likelihood argument is in `CKSD/LinearModels/GLM/ConvexLikelihood.lean`.
 
 - The simple covariance-eigenvalue central limit law combines TauCeti's operator Weyl
   inequality and population-gap eigenvector alignment from
@@ -507,7 +508,7 @@ countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
   convergence theorem, conditional expectations, summable `L²` increments, and integral
   Gronwall estimates. Predictable clipping localizes the noise without an initial
   second-moment assumption. The local interpolation and approximate-ODE estimates are
-  in `CKSD/Bayes/StochasticApproximationPath.lean`.
+  in `CKSD/Bayes/StochasticApproximation/Path.lean`.
 - Mean-field coupling uniqueness uses Mathlib's Fubini theorem and TauCeti's integral
   Gronwall estimate. The continuous-path forcing-map inverse uses Mathlib's measurable
   embedding theorem for continuous injective maps between Polish spaces. Countable
@@ -570,10 +571,10 @@ countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
 - The conditional-kernel step of the LAN representation argument follows
   van der Vaart, *Asymptotic Statistics*, Theorem 7.10 and its proof,
   printed pp. 98–99 (PDF pp. 114–115). The local
-  `Asymptotics/RepresentationKernel.lean` proves the common randomization
+  `Inference/KernelDisintegration.lean` proves the common randomization
   kernel for a family of tilted joint laws using Mathlib's conditional
-  kernels, disintegration and weighted kernel products. The full LAN
-  representation theorem remains admitted.
+  kernels, disintegration and weighted kernel products; the LAN
+  representation theorem in `Asymptotics/LAN/Representation.lean` uses it.
 
 - The strongly convex ULA Wasserstein bound uses the coupling principle in
   Chewi, *Log-Concave Sampling*, August 20, 2026, Theorem 4.1.2, with the
@@ -617,7 +618,7 @@ countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
   limit forces the missing Radon–Nikodym mass to vanish. The metric Slutsky
   adapter for varying spaces and laws adapts Rémy Degenne's Mathlib
   `MeasureTheory.tendstoInDistribution_of_tendstoInMeasure_sub`, retaining its
-  Apache 2.0 attribution in `Asymptotics/LANApproximation.lean`.
+  Apache 2.0 attribution in `Asymptotics/LAN/Approximation.lean`.
 - Each discrete JKO step for a continuous nonnegative potential has a unique
   minimizer. The direct method and ordinary-mixture uniqueness follow the
   argument of Santambrogio, *Optimal Transport for Applied Mathematicians*,
@@ -688,7 +689,7 @@ countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
 - `CKSD.norm_intervalIntegral_sq_le` uses TauCeti's Cauchy–Schwarz inequality for set integrals,
   `TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq` from
   `TauCeti/MeasureTheory/Integral/Bochner/Basic.lean`.
-- The interval Cauchy–Schwarz bound in `Bayes/MeanFieldQuantitative.lean` uses TauCeti's
+- The interval Cauchy–Schwarz bound in `Bayes/MeanField/Quantitative.lean` uses TauCeti's
   `TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq`.
-- Pushforwards of empirical laws (`CKSD.map_empiricalMeasure`, `Bayes/MeanFieldWasserstein.lean`)
+- Pushforwards of empirical laws (`CKSD.map_empiricalMeasure`, `Bayes/MeanField/Wasserstein.lean`)
   use TauCeti's `TauCeti.Probability.map_empiricalFiniteMeasure`.

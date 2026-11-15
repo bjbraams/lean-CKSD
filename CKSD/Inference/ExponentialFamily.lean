@@ -1,10 +1,10 @@
 module
 
 public import CKSD.Inference.Model
-public import CKSD.Inference.Factorization
-public import CKSD.Inference.LaplaceDeterminacy
-public import Mathlib.Analysis.Convex.SpecificFunctions.Basic
-public import CKSD.Inference.LogPartition
+import CKSD.Inference.Factorization
+import CKSD.Inference.LaplaceDeterminacy
+import CKSD.Inference.LogPartition
+import CKSD.Inference.Density
 
 /-!
 # Sufficiency and natural exponential families
@@ -39,7 +39,7 @@ and Mathlib's density and pushforward operations.
 The analyticity and moment identities of the log partition function are proved in
 `CKSD.Inference.LogPartition`.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -336,11 +336,24 @@ def RealExponentialFamily.cumulant {X : Type*} [MeasurableSpace X]
     (F : RealExponentialFamily X) (η : ℝ) : ℝ :=
   Real.log (∫ x, Real.exp (η * F.statistic x) ∂F.base)
 
+/-- Defining equation of `RealExponentialFamily.cumulant`. -/
+theorem RealExponentialFamily.cumulant_def {X : Type*} [MeasurableSpace X]
+    (F : RealExponentialFamily X) (η : ℝ) :
+    F.cumulant η = Real.log (∫ x, Real.exp (η * F.statistic x) ∂F.base) := by
+  rw [RealExponentialFamily.cumulant]
+
 /-- The law `exp (η T - A(η)) · base` of the family at a natural parameter `η ∈ domain`. -/
 def RealExponentialFamily.law {X : Type*} [MeasurableSpace X]
     (F : RealExponentialFamily X) (η : F.domain) : Measure X :=
   F.base.withDensity (fun x ↦ ENNReal.ofReal
     (Real.exp (η.val * F.statistic x - F.cumulant η.val)))
+
+/-- Defining equation of `RealExponentialFamily.law`. -/
+theorem RealExponentialFamily.law_def {X : Type*} [MeasurableSpace X]
+    (F : RealExponentialFamily X) (η : F.domain) :
+    F.law η = F.base.withDensity (fun x ↦ ENNReal.ofReal
+      (Real.exp (η.val * F.statistic x - F.cumulant η.val))) := by
+  rw [RealExponentialFamily.law]
 
 /-- The cumulant of a scalar exponential family is the log partition function `CKSD.logPartition`
 of the natural exponential family with base `F.base` and statistic `F.statistic`. -/
@@ -354,7 +367,7 @@ theorem RealExponentialFamily.cumulant_eq_logPartition {X : Type*} [MeasurableSp
 theorem RealExponentialFamily.law_eq_exponentialFamilyMeasure {X : Type*} [MeasurableSpace X]
     (F : RealExponentialFamily X) (η : F.domain) :
     F.law η = exponentialFamilyMeasure F.base F.statistic η := by
-  simp only [RealExponentialFamily.law, exponentialFamilyMeasure, Real.inner_apply,
+  simp only [RealExponentialFamily.law, exponentialFamilyMeasure_def, Real.inner_apply,
     F.cumulant_eq_logPartition]
 
 /-- The parameter domain of a scalar exponential family lies in the natural parameter space

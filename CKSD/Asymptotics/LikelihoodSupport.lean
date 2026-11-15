@@ -1,6 +1,7 @@
 module
 
-public import CKSD.Asymptotics.Basic
+import CKSD.Asymptotics.Basic
+public import CKSD.Inference.Basic
 
 /-!
 # Integral and Taylor estimates for likelihood asymptotics
@@ -13,7 +14,7 @@ Sources: `GAPS.md`, `SYNOPSIS102.md`, and the proof of van der Vaart,
 `Real.abs_log_sub_add_sum_range_le`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

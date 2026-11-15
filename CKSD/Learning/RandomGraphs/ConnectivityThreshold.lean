@@ -1,13 +1,8 @@
 module
 
-public import Mathlib.Probability.Combinatorics.BinomialRandomGraph.Defs
-public import Mathlib.Combinatorics.SimpleGraph.Acyclic
-public import Mathlib.Analysis.SpecialFunctions.Exponential
-public import Mathlib.Analysis.SpecialFunctions.Log.Basic
-public import Mathlib.Data.Nat.Choose.Cast
-public import Mathlib.Algebra.Order.Field.GeomSum
-public import Mathlib.Probability.Distributions.Poisson.PoissonLimitThm
+import Mathlib.Probability.Distributions.Poisson.PoissonLimitThm
 public import CKSD.Learning.RandomGraphs.Connectivity
+import TauCeti.Combinatorics.SimpleGraph.Measurable
 
 /-!
 # Limits at the connectivity threshold of the binomial random graph
@@ -31,7 +26,7 @@ The Poisson-limit lemma `ProbabilityTheory.tendsto_choose_mul_pow_atTop` and the
 series are Mathlib's.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -285,7 +280,8 @@ private theorem tendsto_isolatedMoment_one_of_tendsto_atTop (x : ℕ → ℝ)
   have hlim := (h1.add h2).const_mul (Real.exp 1)
   rw [add_zero, mul_zero] at hlim
   refine squeeze_zero' (Eventually.of_forall fun n ↦ ?_) ?_ hlim
-  · exact Finset.sum_nonneg fun J _ ↦ pow_nonneg (by
+  · rw [isolatedMoment_def]
+    exact Finset.sum_nonneg fun J _ ↦ pow_nonneg (by
       linarith [(Set.projIcc (0 : ℝ) 1 zero_le_one ((Real.log n + x n) / n)).2.2]) _
   filter_upwards [eventually_ge_atTop 1] with n hn
   set pn := Set.projIcc (0 : ℝ) 1 zero_le_one ((Real.log n + x n) / n)
@@ -467,7 +463,7 @@ theorem tendsto_binomialRandom_exists_isolated_of_tendsto_atBot (x : ℕ → ℝ
       {G | isolatedVertices G = ∅}ᶜ := by
     intro n
     ext G
-    simp [isolatedVertices, Finset.eq_empty_iff_forall_notMem]
+    simp [isolatedVertices_def, Finset.eq_empty_iff_forall_notMem]
   have := hP0lim.const_sub 1
   rw [sub_zero] at this
   refine this.congr fun n ↦ ?_

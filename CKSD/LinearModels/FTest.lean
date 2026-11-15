@@ -1,12 +1,12 @@
 module
 
-public import CKSD.LinearModels.Basic
-public import CKSD.LinearModels.Regression
+import CKSD.LinearModels.Regression
 public import CKSD.Inference.Basic
 public import TauCeti.Probability.Distributions.NoncentralF.Basic
-public import TauCeti.Probability.Distributions.NoncentralChiSquared.Gaussian
-public import TauCeti.Probability.Distributions.NoncentralChiSquared.Convolution
-public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
+import TauCeti.Probability.Distributions.NoncentralChiSquared.Gaussian
+import TauCeti.Probability.Distributions.NoncentralChiSquared.Convolution
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import TauCeti.Probability.Distributions.Gaussian.Projection
 
 /-!
 # The F test for nested Gaussian linear models
@@ -43,7 +43,7 @@ and its independent-ratio characterization of the noncentral F law.
   §7.1.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

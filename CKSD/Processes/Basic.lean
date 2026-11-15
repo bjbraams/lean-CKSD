@@ -1,6 +1,6 @@
 module
 
-public import CKSD.Asymptotics.Basic
+public import CKSD.Inference.Basic
 
 /-!
 # Processes: basic definitions
@@ -40,7 +40,7 @@ subject has failure time `T i` and censoring time `C i`, and one observes `min (
 whether `T i ≤ C i`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -118,10 +118,22 @@ def sampleAutocovariance {Ω : Type*} (X : ℕ → Ω → ℝ) (lag n : ℕ) (ω
   (∑ i ∈ Finset.range (n - lag),
     (X (i + lag) ω - sampleAverage X n ω) * (X i ω - sampleAverage X n ω)) / n
 
+/-- The sample autocovariance is the lagged sum of centred products divided by `n`. -/
+theorem sampleAutocovariance_def {Ω : Type*} (X : ℕ → Ω → ℝ) (lag n : ℕ) (ω : Ω) :
+    sampleAutocovariance X lag n ω = (∑ i ∈ Finset.range (n - lag),
+      (X (i + lag) ω - sampleAverage X n ω) * (X i ω - sampleAverage X n ω)) / n := by
+  rw [sampleAutocovariance]
+
 /-- The size `#{j < n : min (T j) (C j) ≥ min (T i) (C i)}` of the risk set at the observed time
 of subject `i`. -/
 def riskSetSize {Ω : Type*} (T C : ℕ → Ω → ℝ) (n i : ℕ) (ω : Ω) : ℕ :=
   ((Finset.range n).filter fun j ↦ min (T i ω) (C i ω) ≤ min (T j ω) (C j ω)).card
+
+/-- The risk set size counts the subjects whose observed time is at least that of `i`. -/
+theorem riskSetSize_def {Ω : Type*} (T C : ℕ → Ω → ℝ) (n i : ℕ) (ω : Ω) :
+    riskSetSize T C n i ω =
+      ((Finset.range n).filter fun j ↦ min (T i ω) (C i ω) ≤ min (T j ω) (C j ω)).card := by
+  rw [riskSetSize]
 
 /-- The Nelson–Aalen estimator `Λ̂(t) = ∑ 1 / #(risk set)` of the cumulative hazard, with one
 term for each subject `i < n` whose failure `T i ≤ C i` is observed by time `t`. -/
@@ -129,11 +141,24 @@ def nelsonAalenEstimator {Ω : Type*} (T C : ℕ → Ω → ℝ) (n : ℕ) (ω :
   ∑ i ∈ Finset.range n, if T i ω ≤ C i ω ∧ T i ω ≤ t then
     (riskSetSize T C n i ω : ℝ)⁻¹ else 0
 
+/-- The Nelson–Aalen estimator sums the inverse risk set sizes of the observed failures. -/
+theorem nelsonAalenEstimator_def {Ω : Type*} (T C : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω) (t : ℝ) :
+    nelsonAalenEstimator T C n ω t = ∑ i ∈ Finset.range n,
+      if T i ω ≤ C i ω ∧ T i ω ≤ t then (riskSetSize T C n i ω : ℝ)⁻¹ else 0 := by
+  rw [nelsonAalenEstimator]
+
 /-- The Kaplan–Meier estimator `Ŝ(t) = ∏ (1 - 1 / #(risk set))` of the survival function, with
 one factor for each subject `i < n` whose failure `T i ≤ C i` is observed by time `t`. -/
 def kaplanMeierEstimator {Ω : Type*} (T C : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω) (t : ℝ) : ℝ :=
   ∏ i ∈ Finset.range n, if T i ω ≤ C i ω ∧ T i ω ≤ t then
     1 - (riskSetSize T C n i ω : ℝ)⁻¹ else 1
+
+/-- The Kaplan–Meier estimator multiplies the factors `1 - 1 / #(risk set)` of the observed
+failures. -/
+theorem kaplanMeierEstimator_def {Ω : Type*} (T C : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω) (t : ℝ) :
+    kaplanMeierEstimator T C n ω t = ∏ i ∈ Finset.range n,
+      if T i ω ≤ C i ω ∧ T i ω ≤ t then 1 - (riskSetSize T C n i ω : ℝ)⁻¹ else 1 := by
+  rw [kaplanMeierEstimator]
 
 /-- If `s ∈ (a, b)` and `1 ≤ m`, then `exp (t s) / m ^ n ≤ exp (|t| max |a| |b|)`. -/
 theorem exp_mul_div_pow_le_of_mem_Ioo {a b s m : ℝ} (t : ℝ) (hs : a < s ∧ s < b) (hm : 1 ≤ m)

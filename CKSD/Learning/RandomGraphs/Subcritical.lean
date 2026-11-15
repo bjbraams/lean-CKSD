@@ -1,6 +1,11 @@
 module
 
-public import CKSD.Learning.RandomGraphs.Connectivity
+import CKSD.Learning.RandomGraphs.Connectivity
+public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
+public import Mathlib.Probability.Combinatorics.BinomialRandomGraph.Defs
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
+import Mathlib.MeasureTheory.Covering.Besicovitch
+import TauCeti.Combinatorics.SimpleGraph.Measurable
 
 /-!
 # Small components of the subcritical binomial random graph
@@ -26,7 +31,7 @@ most `(c' e^{1-c'})^m`, a geometric rate below one.
 * `CKSD.exists_tendsto_binomialRandom_components_le_log`: the subcritical phase of GAPS 107.47.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

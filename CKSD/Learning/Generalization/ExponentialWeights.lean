@@ -1,5 +1,7 @@
 module
 
+public import CKSD.Learning.Basic
+import Mathlib.Probability.Moments.SubGaussian
 public import CKSD.Learning.Generalization.Concentration
 
 /-!
@@ -17,7 +19,7 @@ exponential-weights (Hedge) forecaster.
 * `CKSD.exponentialWeights_succ`: the multiplicative update form of exponential weights.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -77,7 +79,8 @@ theorem hedge_regret_le {K : ℕ} (hK : 0 < K) (loss : ℕ → Fin K → ℝ)
   set W : ℕ → ℝ := fun t ↦ ∑ j, Real.exp (-eta * L t j)
   have hne : (Finset.univ : Finset (Fin K)).Nonempty := ⟨⟨0, hK⟩, Finset.mem_univ _⟩
   have hW : ∀ t, 0 < W t := fun t ↦ Finset.sum_pos (fun j _ ↦ Real.exp_pos _) hne
-  have hp : ∀ t j, hedgeWeight loss eta t j = Real.exp (-eta * L t j) / W t := fun _ _ ↦ rfl
+  have hp : ∀ t j, hedgeWeight loss eta t j = Real.exp (-eta * L t j) / W t :=
+    fun _ _ ↦ hedgeWeight_def loss eta _ _
   have hp0 : ∀ t j, 0 ≤ hedgeWeight loss eta t j := fun t j ↦ by
     rw [hp]; exact div_nonneg (Real.exp_pos _).le (hW t).le
   have hp1 : ∀ t, ∑ j, hedgeWeight loss eta t j = 1 := fun t ↦ by

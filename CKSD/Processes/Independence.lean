@@ -1,6 +1,7 @@
 module
 
-public import CKSD.Processes.Basic
+public import Mathlib.Order.CompletePartialOrder
+public import Mathlib.Probability.Independence.Basic
 
 /-!
 # Independence bookkeeping
@@ -25,7 +26,7 @@ measurability of a sequence evaluated at a random index.
 * `CKSD.measurable_randomIndex`: `ω ↦ g (N ω) ω` is measurable.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

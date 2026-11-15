@@ -1,11 +1,11 @@
 module
 
-public import Mathlib.Analysis.Convex.Continuous
-public import Mathlib.Analysis.Convex.Jensen
-public import Mathlib.Analysis.InnerProductSpace.LinearMap
+import Mathlib.Analysis.Convex.Continuous
+import Mathlib.Analysis.InnerProductSpace.LinearMap
 public import Mathlib.MeasureTheory.Function.ConvergenceInMeasure
 import Mathlib.Analysis.Normed.Affine.Convex
-import Mathlib.Topology.UniformSpace.HeineCantor
+public import Mathlib.Analysis.InnerProductSpace.Defs
+public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 
 /-!
 # The convexity lemma for random convex functions
@@ -42,7 +42,7 @@ is needed.
   Theory 7 (1991), 186–199.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

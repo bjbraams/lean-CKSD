@@ -1,16 +1,12 @@
 module
 
 public import CKSD.LinearModels.Basic
-public import CKSD.Asymptotics.Basic
-public import CKSD.Nonparametric.Basic
 public import TauCeti.Probability.Distributions.ChiSquared.Basic
-public import TauCeti.Probability.Distributions.StudentT.Basic
-public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
-public import TauCeti.Probability.Distributions.Gaussian.Projection
-public import TauCeti.Probability.Distributions.Gaussian.Affine
-public import TauCeti.Probability.Distributions.FisherSnedecor.ChiSquared
+import TauCeti.Probability.Distributions.Gaussian.Projection
+import TauCeti.Probability.Distributions.Gaussian.Affine
 import TauCeti.Probability.Distributions.Gaussian.QuadraticForm
 import TauCeti.Probability.Distributions.Gaussian.Independence
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 
 /-!
 # Gaussian linear models: Gauss–Markov and the residual law
@@ -44,7 +40,7 @@ and affine-image results for standard Gaussian measures.
 * E. L. Lehmann and J. P. Romano, *Testing Statistical Hypotheses*, 3rd ed., Springer, 2005.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -376,7 +372,7 @@ private theorem matrixQuadraticForm_eq_comp {n : ℕ} {A P : Matrix (Fin n) (Fin
     matrixQuadraticForm A x = matrixQuadraticForm P (A.toEuclideanLin x) := by
   have hform (M : Matrix (Fin n) (Fin n) ℝ) (v : EuclideanSpace ℝ (Fin n)) :
       matrixQuadraticForm M v = (M *ᵥ WithLp.ofLp v) ⬝ᵥ WithLp.ofLp v := by
-    simp [matrixQuadraticForm, Matrix.toEuclideanCLM_apply,
+    simp [matrixQuadraticForm_def, Matrix.toEuclideanCLM_apply,
       EuclideanSpace.inner_eq_star_dotProduct]
   rw [hform, hform]
   simp only [toLpLin_apply, WithLp.ofLp_toLp]
@@ -422,7 +418,7 @@ private theorem mul_mul_eq_zero_of_indepFun_matrixQuadraticForm {n : ℕ}
     fun Θ x ↦ ⟪x, Θ.toEuclideanLin x⟫
   have hq (Θ : Matrix (Fin n) (Fin n) ℝ) : matrixQuadraticForm Θ = q Θ := by
     funext x
-    rfl
+    exact matrixQuadraticForm_def Θ x
   have hqm (Θ : Matrix (Fin n) (Fin n) ℝ) : Measurable (q Θ) := by
     rw [← hq]
     exact measurable_matrixQuadraticForm Θ

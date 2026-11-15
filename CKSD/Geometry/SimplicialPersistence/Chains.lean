@@ -1,10 +1,9 @@
 module
 
-public import CKSD.Geometry.Persistence
-public import CKSD.Geometry.MatrixReduction
+public import CKSD.Geometry.Persistence.Basic
 public import Mathlib.AlgebraicTopology.SimplicialComplex.Basic
-public import Mathlib.Topology.MetricSpace.GromovHausdorff
 public import Mathlib.LinearAlgebra.Matrix.ToLin
+public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 
 /-!
 # Finite simplicial persistence rank invariants
@@ -27,7 +26,7 @@ homological reading of the rank invariant needs `f` monotone on faces (`IsMonoto
 * `CKSD.simplicialBoundary_apply_simplicialBoundary`: the boundary squares to zero.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -264,16 +263,31 @@ def simplexIncidence (τ σ : Finset ι) : 𝕜 :=
     (-1) ^ (σ.filter fun w ↦ ∃ v ∈ σ \ τ, w < v).card
   else 0
 
+omit [Fintype ι] in
+/-- The defining formula of `CKSD.simplexIncidence`. -/
+theorem simplexIncidence_def (τ σ : Finset ι) :
+    simplexIncidence 𝕜 τ σ = if τ.Nonempty ∧ τ ⊆ σ ∧ τ.card + 1 = σ.card then
+      (-1) ^ (σ.filter fun w ↦ ∃ v ∈ σ \ τ, w < v).card
+    else 0 := by
+  rw [simplexIncidence]
+
 /-- The simplicial boundary on chains, which are functions on finite vertex sets. Vertices have
 zero boundary (no augmentation). -/
 def simplicialBoundary : (Finset ι → 𝕜) →ₗ[𝕜] (Finset ι → 𝕜) :=
   (Matrix.of fun τ σ : Finset ι ↦ simplexIncidence 𝕜 τ σ).mulVecLin
 
+/-- The defining formula of `CKSD.simplicialBoundary`. -/
+theorem simplicialBoundary_def :
+    simplicialBoundary (ι := ι) 𝕜 =
+      (Matrix.of fun τ σ : Finset ι ↦ simplexIncidence 𝕜 τ σ).mulVecLin := by
+  rw [simplicialBoundary]
+
 /-- A function on simplices is monotone along faces of `K`. -/
-def IsMonotoneOnFaces (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) : Prop :=
+@[expose] def IsMonotoneOnFaces (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) : Prop :=
   ∀ τ σ, σ ∈ K → τ.Nonempty → τ ⊆ σ → f τ ≤ f σ
 
 /-- Chains of dimension `p` of the sublevel subcomplex `K_a = {σ ∈ K : f σ ≤ a}`. -/
+@[expose]
 def sublevelChains (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ) (a : ℝ) :
     Submodule 𝕜 (Finset ι → 𝕜) where
   carrier := {c | ∀ σ, c σ ≠ 0 → σ ∈ K ∧ σ.card = p + 1 ∧ f σ ≤ a}
@@ -288,12 +302,13 @@ def sublevelChains (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ)
     exact hc σ (right_ne_zero_of_mul (by simpa using hσ))
 
 /-- Cycles of dimension `p` of `K_a`. -/
+@[expose]
 def sublevelCycles (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ) (a : ℝ) :
     Submodule 𝕜 (Finset ι → 𝕜) :=
   sublevelChains 𝕜 K f p a ⊓ LinearMap.ker (simplicialBoundary 𝕜)
 
 /-- Boundaries of dimension `p` of `K_b`. -/
-def sublevelBoundaries (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ)
+@[expose] def sublevelBoundaries (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ)
     (b : ℝ) : Submodule 𝕜 (Finset ι → 𝕜) :=
   (sublevelChains 𝕜 K f (p + 1) b).map (simplicialBoundary 𝕜)
 
@@ -306,6 +321,13 @@ def sublevelPersistentBetti (K : PreAbstractSimplicialComplex ι) (f : Finset ι
   finrank 𝕜 (sublevelCycles 𝕜 K f p a) -
     finrank 𝕜 ↥(sublevelCycles 𝕜 K f p a ⊓ sublevelBoundaries 𝕜 K f p b)
 
+/-- The defining formula of `CKSD.sublevelPersistentBetti`. -/
+theorem sublevelPersistentBetti_def (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ)
+    (p : ℕ) (a b : ℝ) :
+    sublevelPersistentBetti 𝕜 K f p a b = finrank 𝕜 (sublevelCycles 𝕜 K f p a) -
+      finrank 𝕜 ↥(sublevelCycles 𝕜 K f p a ⊓ sublevelBoundaries 𝕜 K f p b) := by
+  rw [sublevelPersistentBetti]
+
 /-- The persistent homology group `Z_p(K_a) / (Z_p(K_a) ∩ B_p(K_b))` in degree `p`. When `f` is
 `IsMonotoneOnFaces` and `a ≤ b`, it is the image of `H_p(K_a) → H_p(K_b)`. -/
 abbrev sublevelPersistentHomology (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ)
@@ -316,7 +338,7 @@ abbrev sublevelPersistentHomology (K : PreAbstractSimplicialComplex ι) (f : Fin
 /-- `(D, e)` is the degree-`p` persistence diagram of the sublevel filtration of `f`: finite bars
 `[D.birth i, D.death i)` and essential bars `[e k, ∞)`, such that for `a ≤ b` the persistent
 Betti number counts the bars containing `[a, b]`. -/
-def IsSublevelDiagram (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ)
+@[expose] def IsSublevelDiagram (K : PreAbstractSimplicialComplex ι) (f : Finset ι → ℝ) (p : ℕ)
     {α κ : Type*} [Fintype α] [Fintype κ] (D : FiniteDeathDiagram α) (e : κ → ℝ) : Prop :=
   ∀ a b, a ≤ b → sublevelPersistentBetti 𝕜 K f p a b =
     (Finset.univ.filter fun i ↦ D.birth i ≤ a ∧ b < D.death i).card +

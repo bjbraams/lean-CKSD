@@ -1,7 +1,9 @@
 module
 
-public import CKSD.Processes.Independence
-public import Mathlib.Probability.Independence.Integration
+import CKSD.Processes.Independence
+import Mathlib.Probability.Independence.Integration
+public import CKSD.Inference.Basic
+import CKSD.Processes.Basic
 
 /-!
 # Wald's fundamental identity
@@ -26,7 +28,7 @@ monotone convergence on the stopped part and boundedness of the process before e
   first exit time.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

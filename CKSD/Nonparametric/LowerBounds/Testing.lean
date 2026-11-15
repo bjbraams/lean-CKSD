@@ -1,11 +1,11 @@
 module
 
 public import CKSD.Nonparametric.Basic
-public import Mathlib.Algebra.Order.Chebyshev
-public import Mathlib.Analysis.MeanInequalitiesPow
-public import Statlib.Divergence.KullbackLeibler.Event
-public import Statlib.ForMathlib.InformationTheory.KullbackLeibler.Bernoulli
+import Statlib.Divergence.KullbackLeibler.Event
+import Statlib.ForMathlib.InformationTheory.KullbackLeibler.Bernoulli
 public import Mathlib.InformationTheory.Hamming
+public import Mathlib.InformationTheory.KullbackLeibler.Basic
+public import Mathlib.Order.CompletePartialOrder
 
 /-!
 # Testing lower bounds for minimax risk
@@ -23,6 +23,10 @@ statistical normalization `sup_A |P(A) - Q(A)|` (`CKSD.totalVariationDistance`).
   Kullback–Leibler formula.
 * `CKSD.one_sub_div_log_le_sSup_measureReal` (Fano's method): for `M ≥ 2` parameters that are
   `2s`-separated, `max_j P_j(dist(T, θ_j) ≥ s) ≥ 1 - (M⁻¹ ∑_j KL(P_j, Q) + log 2) / log M`.
+* `CKSD.sum_measureReal_le_one_add_totalVariationDistance`: for disjoint events,
+  `P₀(A₀) + P₁(A₁) ≤ 1 + TV(P₀, P₁)`.
+* `CKSD.sum_measureReal_le_of_klDiv_le`: Fano's inequality in averaged form,
+  `∑_j P_j(A_j) ≤ m / 4 + m (K + log 2) / log (m / 4)` for `m > 4` disjoint events.
 * `CKSD.exists_hamming_packing` (Varshamov–Gilbert): for `m ≥ 8` there is a code in `{0,1}^m`
   containing `0`, of more than `2^(m/8)` words, with pairwise Hamming distance at least `m / 8`.
 * `CKSD.mul_one_sub_div_two_le_sSup_integral_hammingDist` (Assouad's lemma, total variation
@@ -38,7 +42,7 @@ Sources: GAPS 103.39, 103.40, 103.45, and 103.46.
   Press, 2019, Chapter 15.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -439,5 +443,90 @@ theorem mul_one_sub_div_two_le_sSup_integral_hammingDist {X : Type*} [Measurable
   have hcard : (0 : ℝ) < Fintype.card (Fin m → Bool) := by
     exact_mod_cast Fintype.card_pos
   exact le_of_mul_le_mul_left (htotal.trans hle) hcard
+
+section AveragedFano
+
+variable {m : ℕ}
+
+/-- Two-point bound on success probabilities: for disjoint events,
+`P₀(A₀) + P₁(A₁) ≤ 1 + TV(P₀, P₁)`. -/
+theorem sum_measureReal_le_one_add_totalVariationDistance {X : Type*} [MeasurableSpace X]
+    (P : Fin 2 → Measure X) [∀ j, IsProbabilityMeasure (P j)] (A : Fin 2 → Set X)
+    (hA : ∀ j, MeasurableSet (A j)) (hdisj : Disjoint (A 0) (A 1)) :
+    ∑ j, (P j).real (A j) ≤ 1 + totalVariationDistance (P 0) (P 1) := by
+  rw [Fin.sum_univ_two]
+  have h1 := abs_measureReal_sub_le_totalVariationDistance (P 0) (P 1) (A 1) (hA 1)
+  have h2 : (P 0).real (A 0) + (P 0).real (A 1) ≤ 1 := by
+    rw [← measureReal_union hdisj (hA 1)]; exact measureReal_le_one
+  have := neg_abs_le ((P 0).real (A 1) - (P 1).real (A 1))
+  linarith
+
+/-- Fano's inequality in averaged form: for `m > 4` laws at Kullback–Leibler divergence at most
+`K` from a reference law `Q` and pairwise disjoint events, the success probabilities satisfy
+`∑_j P_j(A_j) ≤ m / 4 + m (K + log 2) / log (m / 4)`. -/
+theorem sum_measureReal_le_of_klDiv_le {X : Type*} [MeasurableSpace X] (hm : 4 < m)
+    (P : Fin m → Measure X) [∀ j, IsProbabilityMeasure (P j)] (Q : Measure X)
+    [IsProbabilityMeasure Q] (K : ℝ) (hKL : ∀ j, InformationTheory.klDiv (P j) Q ≠ ∞)
+    (hK : ∀ j, (InformationTheory.klDiv (P j) Q).toReal ≤ K) (A : Fin m → Set X)
+    (hA : ∀ j, MeasurableSet (A j)) (hdisj : Pairwise (Function.onFun Disjoint A)) :
+    ∑ j, (P j).real (A j) ≤ m / 4 + m * (K + Real.log 2) / Real.log (m / 4) := by
+  have hm0 : (0 : ℝ) < m := by exact_mod_cast (show 0 < m by omega)
+  have hm4 : (1 : ℝ) < m / 4 := by
+    rw [lt_div_iff₀ (by norm_num)]; exact_mod_cast (show 4 < m by omega)
+  have hlog : 0 < Real.log (m / 4) := Real.log_pos hm4
+  have hK0 : 0 ≤ K := (ENNReal.toReal_nonneg).trans (hK ⟨0, by omega⟩)
+  have hlog2 : 0 < Real.log 2 := Real.log_pos one_lt_two
+  set G := Finset.univ.filter fun j ↦ Q.real (A j) ≤ 4 / m with hG
+  rw [← Finset.sum_filter_add_sum_filter_not Finset.univ (fun j ↦ Q.real (A j) ≤ 4 / m)]
+  -- few events have large reference mass
+  have hbad : ∑ j ∈ Finset.univ.filter (fun j ↦ ¬ Q.real (A j) ≤ 4 / m), (P j).real (A j) ≤
+      m / 4 := by
+    set B := Finset.univ.filter (fun j ↦ ¬ Q.real (A j) ≤ 4 / m)
+    have hQ : ∑ j, Q.real (A j) ≤ 1 := by
+      rw [← measureReal_iUnion_fintype hdisj hA]; exact measureReal_le_one
+    have hQB : (B.card : ℝ) * (4 / m) ≤ ∑ j ∈ B, Q.real (A j) := by
+      rw [← nsmul_eq_mul, ← Finset.sum_const]
+      exact Finset.sum_le_sum fun j hj ↦ by
+        simp only [B, Finset.mem_filter, Finset.mem_univ, true_and, not_le] at hj; exact hj.le
+    have hBQ : ∑ j ∈ B, Q.real (A j) ≤ ∑ j, Q.real (A j) :=
+      Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _) fun _ _ _ ↦ measureReal_nonneg
+    have hcard : (B.card : ℝ) ≤ m / 4 := by
+      have := hQB.trans (hBQ.trans hQ)
+      rw [mul_div_assoc'] at this
+      rw [le_div_iff₀ (by norm_num)]
+      rw [div_le_one hm0] at this
+      linarith
+    calc ∑ j ∈ B, (P j).real (A j) ≤ ∑ _j ∈ B, (1 : ℝ) :=
+          Finset.sum_le_sum fun j _ ↦ measureReal_le_one
+      _ = B.card := by simp
+      _ ≤ m / 4 := hcard
+  have hgood : ∀ j ∈ G, (P j).real (A j) ≤ (K + Real.log 2) / Real.log (m / 4) := by
+    intro j hj
+    simp only [hG, Finset.mem_filter, Finset.mem_univ, true_and] at hj
+    rw [le_div_iff₀ hlog]
+    rcases (measureReal_nonneg (μ := Q) (s := A j)).eq_or_lt with hq | hq
+    · have hac := (InformationTheory.klDiv_ne_top_iff.mp (hKL j)).1
+      have hQ0 : Q (A j) = 0 := by
+        rw [← ofReal_measureReal (measure_ne_top Q _), ← hq, ENNReal.ofReal_zero]
+      have hP0 : (P j).real (A j) = 0 := by simp [Measure.real, hac hQ0]
+      rw [hP0, zero_mul]; positivity
+    have hev := measureReal_mul_neg_log_sub_log_two_le_klDiv (P j) Q (hKL j) (A j) (hA j)
+    have hlq : Real.log (m / 4) ≤ -Real.log (Q.real (A j)) := by
+      rw [← Real.log_inv]
+      apply Real.log_le_log (by positivity)
+      rw [le_inv_comm₀ (by positivity) hq, inv_div]; exact hj
+    have := mul_le_mul_of_nonneg_left hlq (measureReal_nonneg (μ := P j) (s := A j))
+    linarith [hK j]
+  have hgoodsum : ∑ j ∈ G, (P j).real (A j) ≤ m * (K + Real.log 2) / Real.log (m / 4) := by
+    calc ∑ j ∈ G, (P j).real (A j) ≤ ∑ _j ∈ G, (K + Real.log 2) / Real.log (m / 4) :=
+          Finset.sum_le_sum hgood
+      _ = G.card * ((K + Real.log 2) / Real.log (m / 4)) := by simp
+      _ ≤ m * ((K + Real.log 2) / Real.log (m / 4)) := by
+          gcongr
+          exact_mod_cast (Finset.card_filter_le _ _).trans (by simp)
+      _ = _ := by ring
+  linarith
+
+end AveragedFano
 
 end CKSD

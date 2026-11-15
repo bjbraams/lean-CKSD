@@ -1,6 +1,9 @@
 module
 
-public import CKSD.Processes.Basic
+import CKSD.Processes.Basic
+public import CKSD.Inference.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Real
+import CKSD.Asymptotics.Basic
 
 /-!
 # Risk-set estimators of independent samples
@@ -25,7 +28,7 @@ by second-moment bounds.
   risk-set estimators.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

@@ -1,4 +1,4 @@
-module
+module -- shake: keep-all
 
 public import CKSD.Inference.ExponentialFamily
 public import CKSD.Inference.LogPartition
@@ -42,9 +42,9 @@ Entry module for the CKSD formalization of Section 101 (core statistical inferen
   `CKSD.Inference.MeanParametrization`: decision theory, comparison of experiments, Gaussian models,
   and maximum likelihood in natural exponential families (GAPS 101.32–101.42, 101.57–101.69).
 * `CKSD.Inference.FiniteDecision`, `CKSD.Inference.ConvexGames`,
-  `CKSD.Inference.KernelDisintegration`, `CKSD.Inference.BlackwellFinite`,
-  `CKSD.Inference.BlackwellApproximation`, `CKSD.Inference.BlackwellCoupling`,
-  `CKSD.Inference.BlackwellJoint`, `CKSD.Inference.BlackwellPosterior`: compact risk sets and
+  `CKSD.Inference.KernelDisintegration`, `CKSD.Inference.Blackwell.Finite`,
+  `CKSD.Inference.Blackwell.Approximation`, `CKSD.Inference.Blackwell.Coupling`,
+  `CKSD.Inference.Blackwell.Joint`, `CKSD.Inference.Blackwell.Posterior`: compact risk sets and
   saddle points for finite decision problems, common randomization kernels, and the finite,
   approximation, coupling and posterior steps of Blackwell's comparison of experiments, imported
   through `CKSD.Inference.Decision`.

@@ -1,6 +1,7 @@
 module
 
-public import CKSD.Asymptotics.LikelihoodSupport
+import CKSD.Asymptotics.LikelihoodSupport
+public import CKSD.Asymptotics.Basic
 
 /-!
 # Empirical distribution functions and sample quantiles
@@ -11,7 +12,7 @@ Sources: GAPS 102.6 and `SYNOPSIS102.md`. The Bahadur proof follows Ghosh's cros
 (Ghosh, *Ann. Math. Statist.* 42 (1971)), using Chebyshev's inequality and Slutsky's theorem.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -25,7 +26,7 @@ attribute [local instance] Classical.propDecidable
 /-- The empirical distribution function as a normalised sum of indicators. -/
 theorem empiricalCDF_eq_sum {Ω : Type*} (X : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω) (t : ℝ) :
     empiricalCDF X n ω t = (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, if X i ω ≤ t then (1 : ℝ) else 0 := by
-  rw [empiricalCDF, Finset.sum_boole, div_eq_inv_mul]
+  rw [empiricalCDF_def, Finset.sum_boole, div_eq_inv_mul]
 
 /-- The empirical distribution function is monotone. -/
 theorem empiricalCDF_mono {Ω : Type*} (X : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω) :
@@ -63,6 +64,7 @@ theorem le_empiricalCDF_of_sampleQuantile_lt {Ω : Type*} (X : ℕ → Ω → �
     (∀ s, sampleQuantile X n ω p < s → p ≤ empiricalCDF X n ω s) ∧
       (∀ s, s < sampleQuantile X n ω p → empiricalCDF X n ω s < p) := by
   obtain ⟨h1, h0⟩ := empiricalCDF_extremes X n hn ω
+  rw [sampleQuantile_def]
   set A := {t | p ≤ empiricalCDF X n ω t} with hA
   have hne : A.Nonempty := ⟨∑ i ∈ Finset.range n, |X i ω|, by
     simpa only [hA, Set.mem_ofPred_eq, h1] using hp1⟩
@@ -97,7 +99,7 @@ theorem measurable_sampleQuantile {Ω : Type*} [MeasurableSpace Ω] (X : ℕ →
   rcases Nat.eq_zero_or_pos n with h | hn
   · subst h
     have : ∀ ω, sampleQuantile X 0 ω p = sInf {t : ℝ | p ≤ 0} := fun ω ↦ by
-      simp [sampleQuantile, empiricalCDF]
+      simp [sampleQuantile_def, empiricalCDF_def]
     simp_rw [this]
     exact measurable_const
   refine measurable_of_Iio fun s ↦ ?_

@@ -1,9 +1,7 @@
 module
 
 public import CKSD.Inference.Model
-public import Mathlib.Analysis.InnerProductSpace.Calculus
-public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
-public import Mathlib.Analysis.Convex.Intrinsic
+import Mathlib.Analysis.Normed.Affine.AddTorsorBases
 
 /-!
 # Maximum likelihood in natural exponential families
@@ -30,7 +28,7 @@ separates `t` from that convex hull. Differentiability of the log partition func
 interior of the natural parameter space is proved by dominated differentiation under the
 integral, and uniqueness by strict convexity of the log partition function for a minimal family.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -40,14 +38,6 @@ open scoped ENNReal NNReal Topology BigOperators
 namespace CKSD
 
 attribute [local instance] Classical.propDecidable
-
-/-- The norm is at most the sum of the absolute coordinates in an orthonormal basis. -/
-private theorem norm_le_sum_abs_inner {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-    {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ E) (x : E) :
-    ‖x‖ ≤ ∑ i, |inner ℝ (b i) x| := by
-  conv_lhs => rw [← b.sum_repr' x]
-  refine (norm_sum_le _ _).trans (le_of_eq (Finset.sum_congr rfl fun i _ ↦ ?_))
-  rw [norm_smul, b.orthonormal.1 i, mul_one, Real.norm_eq_abs]
 
 section MaximumLikelihood
 
@@ -131,7 +121,7 @@ private theorem exists_finset_forall_exists_inner_ge [FiniteDimensional ℝ E] {
       inner ℝ η (y - t) := fun w hw ↦ by
     obtain ⟨y, hy, hwy⟩ := hlin.exists_ge_of_mem_convexHull (subset_univ _) (hPF hw)
     exact ⟨y, hy, by rw [inner_sub_right, inner_sub_right]; linarith⟩
-  have hnorm := norm_le_sum_abs_inner b η
+  have hnorm := norm_le_sum_abs_inner_orthonormalBasis b η
   have hκ0 : 0 ≤ ε / 2 / (d + 1) := by positivity
   rcases isEmpty_or_nonempty (Fin d) with hd | hd
   · have hη : ‖η‖ = 0 := le_antisymm (by simpa using hnorm) (norm_nonneg _)
@@ -392,7 +382,8 @@ private theorem exists_integrable_bound_norm_mul_exp_inner
       Real.exp (inner ℝ (η + (-1 * K) • b i) x)) :=
     Finset.sum_nonneg fun i _ ↦ by positivity
   rcases isEmpty_or_nonempty (Fin d) with hd | hd
-  · have hx : ‖x‖ = 0 := le_antisymm (by simpa using norm_le_sum_abs_inner b x) (norm_nonneg _)
+  · have hx : ‖x‖ = 0 :=
+      le_antisymm (by simpa using norm_le_sum_abs_inner_orthonormalBasis b x) (norm_nonneg _)
     rw [hx, zero_mul]
     exact mul_nonneg (inv_nonneg.2 hr0.le) hBnn
   have h1 : inner ℝ ζ x ≤ inner ℝ η x + r * ‖x‖ := by
@@ -414,7 +405,7 @@ private theorem exists_integrable_bound_norm_mul_exp_inner
   obtain ⟨j, -, hj⟩ := Finset.exists_max_image Finset.univ (fun i ↦ |inner ℝ (b i) x|)
     Finset.univ_nonempty
   have h3 : 2 * r * ‖x‖ ≤ K * |inner ℝ (b j) x| := by
-    have h4 := (norm_le_sum_abs_inner b x).trans (Finset.sum_le_card_nsmul _ _ _
+    have h4 := (norm_le_sum_abs_inner_orthonormalBasis b x).trans (Finset.sum_le_card_nsmul _ _ _
       fun i hi ↦ hj i hi)
     simp only [Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at h4
     have h5 : (d : ℝ) * |inner ℝ (b j) x| ≤ (d + 1) * |inner ℝ (b j) x| := by

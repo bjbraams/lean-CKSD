@@ -1,9 +1,11 @@
 module
 
 public import CKSD.Nonparametric.Basic
-public import TauCeti.InformationTheory.KullbackLeibler.Pinsker
-public import TauCeti.Probability.Distributions.Tilted
-public import Statlib.Divergence.KullbackLeibler.CondKL
+import TauCeti.InformationTheory.KullbackLeibler.Pinsker
+import TauCeti.Probability.Distributions.Tilted
+import Statlib.Divergence.KullbackLeibler.CondKL
+public import Mathlib.InformationTheory.KullbackLeibler.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Real
 
 /-!
 # Divergences between Gaussian product laws
@@ -29,7 +31,7 @@ variation at most `√(‖δ‖² / (4v))`. Total variation is in the statistica
 * A. B. Tsybakov, *Introduction to Nonparametric Estimation*, Springer, 2009, Chapter 2.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -81,6 +83,7 @@ theorem klDiv_pi_gaussianReal {ι : Type*} [Fintype ι] (a b : ι → ℝ) {v : 
 theorem totalVariationDistance_le_sqrt_toReal_klDiv {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q] (hfin : klDiv P Q ≠ ∞) :
     totalVariationDistance P Q ≤ Real.sqrt ((klDiv P Q).toReal / 2) := by
+  rw [totalVariationDistance_def]
   apply csSup_le
   · exact ⟨0, ∅, MeasurableSet.empty, by simp⟩
   · rintro r ⟨A, hA, rfl⟩

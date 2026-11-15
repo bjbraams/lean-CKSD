@@ -1,11 +1,12 @@
 module
 
 public import CKSD.Inference.Basic
-public import Mathlib.MeasureTheory.Measure.Portmanteau
-public import Mathlib.Probability.StrongLaw
-public import Mathlib.Probability.CentralLimitTheorem
+import Mathlib.Probability.StrongLaw
+import Mathlib.Probability.CentralLimitTheorem
 import Mathlib.Analysis.CStarAlgebra.ContinuousFunctionalCalculus.Order
 import Mathlib.Analysis.Matrix.Order
+public import Mathlib.Analysis.CStarAlgebra.Matrix
+public import Mathlib.Probability.Distributions.Gaussian.Real
 
 /-!
 # Asymptotic foundations
@@ -16,6 +17,10 @@ The foundational layer of Section 102, imported by the other statistics sections
   ordered-injection U-statistics, sequence contiguity, Kolmogorov distance and the clipped Huber
   score. The empirical quantile and U-statistic are total definitions; their statistical
   theorems specify admissible sample sizes and parameters.
+* Stochastic orders: outer expectation and weak convergence in the outer-expectation sense
+  (`CKSD.outerExpectation`, `CKSD.TendstoInOuterDistribution`), convergence to zero in
+  probability for varying observation spaces (`CKSD.TendstoInProbabilityZero`), and the
+  stochastic orders `CKSD.IsLittleOInProbability` and `CKSD.IsBigOInProbability`.
 * Weak convergence and stochastic algebra: nonseparable Slutsky perturbations, boundedness in
   probability, the delta method, stochastic algebra of convergence in measure, and iid laws of
   large numbers and central limit theorems. Convergence in law is Mathlib's
@@ -39,7 +44,7 @@ The foundational layer of Section 102, imported by the other statistics sections
 Sources: Section 102 of `GAPS.md`, `SYNOPSIS102.md`, and `STRUCTURE102.md`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -55,10 +60,22 @@ observations. -/
 def empiricalCDF {Ω : Type*} (X : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω) (t : ℝ) : ℝ :=
   ((Finset.range n).filter (fun i ↦ X i ω ≤ t)).card / (n : ℝ)
 
+/-- The empirical distribution function is the proportion of the first `n` observations that
+are at most `t`. -/
+theorem empiricalCDF_def {Ω : Type*} (X : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω) (t : ℝ) :
+    empiricalCDF X n ω t = ((Finset.range n).filter (fun i ↦ X i ω ≤ t)).card / (n : ℝ) := by
+  rw [empiricalCDF]
+
 /-- The left empirical `p`-quantile `inf {t | p ≤ Fₙ(t)}`; it is used for nonempty samples and
 probabilities in `(0, 1)`. -/
 def sampleQuantile {Ω : Type*} (X : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω) (p : ℝ) : ℝ :=
   sInf {t | p ≤ empiricalCDF X n ω t}
+
+/-- The sample quantile is the infimum of the levels where the empirical distribution function
+reaches `p`. -/
+theorem sampleQuantile_def {Ω : Type*} (X : ℕ → Ω → ℝ) (n : ℕ) (ω : Ω) (p : ℝ) :
+    sampleQuantile X n ω p = sInf {t | p ≤ empiricalCDF X n ω t} := by
+  rw [sampleQuantile]
 
 /-- The U-statistic of order `m` with kernel `h`: the average of `h (x ∘ f)` over the injections
 `f : Fin m → Fin n` (ordered `m`-tuples of distinct indices). -/
@@ -67,10 +84,16 @@ def uStatistic {E : Type*} (m n : ℕ) (h : (Fin m → E) → ℝ) (x : Fin n �
     ∑ f ∈ (Finset.univ : Finset (Fin m → Fin n)).filter Function.Injective,
       h (x ∘ f)
 
+/-- The U-statistic is the average of the kernel over ordered tuples of distinct indices. -/
+theorem uStatistic_def {E : Type*} (m n : ℕ) (h : (Fin m → E) → ℝ) (x : Fin n → E) :
+    uStatistic m n h x = ((n.descFactorial m : ℕ) : ℝ)⁻¹ *
+      ∑ f ∈ (Finset.univ : Finset (Fin m → Fin n)).filter Function.Injective, h (x ∘ f) := by
+  rw [uStatistic]
+
 /-- Contiguity of `Q n` with respect to `P n` (written `Q n ◁ P n`) on a common measurable
 space: `P n (A n) → 0` implies `Q n (A n) → 0` for measurable sets `A n`. For probability
 measures it is Statlib's `Contiguous5` (`CKSD.isContiguous_iff_contiguous5`). -/
-def IsContiguous {Ω : Type*} [MeasurableSpace Ω]
+@[expose] def IsContiguous {Ω : Type*} [MeasurableSpace Ω]
     (P Q : ℕ → Measure Ω) : Prop :=
   ∀ A : ℕ → Set Ω, (∀ n, MeasurableSet (A n)) →
     Tendsto (fun n ↦ (P n).real (A n)) atTop (𝓝 0) →
@@ -81,8 +104,57 @@ distribution functions `ProbabilityTheory.cdf`; their values lie in `[0, 1]`, so
 supremum is that of a bounded set. -/
 def kolmogorovDistance (P Q : Measure ℝ) : ℝ := sSup (range fun t ↦ |cdf P t - cdf Q t|)
 
+/-- The Kolmogorov distance is the supremum of the absolute differences of the distribution
+functions. -/
+theorem kolmogorovDistance_def (P Q : Measure ℝ) :
+    kolmogorovDistance P Q = sSup (range fun t ↦ |cdf P t - cdf Q t|) := by
+  rw [kolmogorovDistance]
+
 /-- The Huber score `ψ_k(x) = max (-k) (min k x)`, the identity clipped to `[-k, k]`. -/
 def huberScore (k x : ℝ) : ℝ := max (-k) (min k x)
+
+/-- The Huber score clips the identity to `[-k, k]`. -/
+theorem huberScore_def (k x : ℝ) : huberScore k x = max (-k) (min k x) := by
+  rw [huberScore]
+
+/-- Outer expectation of a nonnegative function, as the infimum over measurable majorants. -/
+def outerExpectation {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    (f : Ω → ℝ≥0∞) : ℝ≥0∞ :=
+  ⨅ (g : Ω → ℝ≥0∞) (_ : Measurable g) (_ : ∀ ω, f ω ≤ g ω), ∫⁻ ω, g ω ∂μ
+
+/-- The outer expectation is the infimum of the integrals of measurable majorants. -/
+theorem outerExpectation_def {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
+    (f : Ω → ℝ≥0∞) : outerExpectation μ f =
+      ⨅ (g : Ω → ℝ≥0∞) (_ : Measurable g) (_ : ∀ ω, f ω ≤ g ω), ∫⁻ ω, g ω ∂μ := by
+  rw [outerExpectation]
+
+/-- Weak convergence in the outer-expectation sense, allowing nonmeasurable random elements.
+Shifting a bounded continuous test by its norm makes the integrand nonnegative. -/
+def TendstoInOuterDistribution {Ω E : Type*} [MeasurableSpace Ω]
+    [TopologicalSpace E] [MeasurableSpace E]
+    (μ : Measure Ω) (X : ℕ → Ω → E) (ν : Measure E) : Prop :=
+  ∀ f : BoundedContinuousFunction E ℝ,
+    Tendsto (fun n ↦ (outerExpectation μ (fun ω ↦ ENNReal.ofReal (f (X n ω) + ‖f‖))).toReal)
+      atTop (𝓝 (∫ x, f x + ‖f‖ ∂ν))
+
+/-- Convergence to zero in probability, `P n {ε < |X n|} → 0` for every `ε > 0`, for observation
+spaces and laws varying with `n`. On a fixed probability space it is
+`TendstoInMeasure μ X atTop (fun _ ↦ 0)`. -/
+@[expose] def TendstoInProbabilityZero {Ω : ℕ → Type*} [∀ n, MeasurableSpace (Ω n)]
+    (P : ∀ n, Measure (Ω n)) (X : ∀ n, Ω n → ℝ) : Prop :=
+  ∀ ε > 0, Tendsto (fun n ↦ (P n).real {ω | ε < |X n ω|}) atTop (𝓝 0)
+
+/-- Stochastic little-o with an eventually positive deterministic scale. -/
+def IsLittleOInProbability {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
+    (μ : Measure Ω) (X : ℕ → Ω → E) (r : ℕ → ℝ) : Prop :=
+  (∀ᶠ n in atTop, 0 < r n) ∧
+    TendstoInMeasure μ (fun (n : ℕ) ω ↦ ‖X n ω‖ / r n) atTop (fun _ ↦ 0)
+
+/-- Stochastic big-O with an eventually positive deterministic scale. -/
+def IsBigOInProbability {Ω E : Type*} [MeasurableSpace Ω] [NormedAddCommGroup E]
+    (μ : Measure Ω) (X : ℕ → Ω → E) (r : ℕ → ℝ) : Prop :=
+  (∀ᶠ n in atTop, 0 < r n) ∧
+    IsBoundedInProbability μ (fun n ω ↦ ‖X n ω‖ / r n)
 
 /-- Slutsky-type perturbation: if `Xₙ` converges in law to `Z` and `Yₙ - Xₙ` converges to `0`
 in probability, then `Yₙ` converges in law to `Z`. This generalizes Mathlib's

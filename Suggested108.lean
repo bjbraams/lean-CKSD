@@ -1,4 +1,4 @@
-module
+module -- shake: keep-all
 
 public import Suggested107
 public import CKSD.Geometry

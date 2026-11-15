@@ -1,7 +1,7 @@
 module
 
 public import CKSD.Inference.Basic
-public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
+public import Mathlib.Probability.Distributions.Poisson.Basic
 
 /-!
 # Basic objects for Bayesian computation
@@ -36,7 +36,7 @@ estimate, and empirical-measure integration.
   empirical measure.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -50,6 +50,11 @@ namespace CKSD
 arbitrary prior on `ℝ`. -/
 def poissonMass (θ : ℝ) (x : ℕ) : ℝ := Real.exp (-θ) * θ ^ x / Nat.factorial x
 
+/-- Defining equation of `poissonMass`. -/
+theorem poissonMass_def (θ : ℝ) (x : ℕ) :
+    poissonMass θ x = Real.exp (-θ) * θ ^ x / Nat.factorial x := by
+  rw [poissonMass]
+
 /-- For a nonnegative intensity, `poissonMass` is the mass of Mathlib's Poisson law. -/
 theorem poissonMass_coe (r : ℝ≥0) (x : ℕ) :
     poissonMass r x = (poissonMeasure r).real {x} :=
@@ -60,6 +65,12 @@ from `x` to `y`, with the convention that it is one when `π(x) q(x,y) = 0`. -/
 def metropolisAcceptance {ι : Type*} (π : ι → ℝ) (q : Matrix ι ι ℝ) (x y : ι) : ℝ :=
   if π x * q x y = 0 then 1 else min 1 (π y * q y x / (π x * q x y))
 
+/-- Defining equation of `metropolisAcceptance`. -/
+theorem metropolisAcceptance_def {ι : Type*} (π : ι → ℝ) (q : Matrix ι ι ℝ) (x y : ι) :
+    metropolisAcceptance π q x y =
+      if π x * q x y = 0 then 1 else min 1 (π y * q y x / (π x * q x y)) := by
+  rw [metropolisAcceptance]
+
 /-- Metropolis–Hastings transition matrix of a proposal matrix `q` and target weights `π`: the
 off-diagonal entries are `q(x,y)` times the acceptance probability, and the diagonal also
 carries the total probability of rejected proposals. -/
@@ -67,6 +78,13 @@ def metropolisTransition {ι : Type*} [Fintype ι] [DecidableEq ι] (π : ι →
     (q : Matrix ι ι ℝ) : Matrix ι ι ℝ :=
   fun x y ↦ q x y * metropolisAcceptance π q x y +
     if x = y then 1 - ∑ z, q x z * metropolisAcceptance π q x z else 0
+
+/-- Entries of `metropolisTransition`. -/
+theorem metropolisTransition_apply {ι : Type*} [Fintype ι] [DecidableEq ι] (π : ι → ℝ)
+    (q : Matrix ι ι ℝ) (x y : ι) :
+    metropolisTransition π q x y = q x y * metropolisAcceptance π q x y +
+      if x = y then 1 - ∑ z, q x z * metropolisAcceptance π q x z else 0 := by
+  rw [metropolisTransition]
 
 /-- One leapfrog step `p ↦ p - (h/2) g(x)`, `x ↦ x + h p`, `p ↦ p - (h/2) g(x)` with identity mass
 matrix, step size `h` and force `g` (the gradient of the potential). -/
@@ -77,8 +95,19 @@ def leapfrogStep {d : ℕ} (g : EuclideanSpace ℝ (Fin d) → EuclideanSpace �
   let x := z.1 + h • p
   (x, p - (h / 2) • g x)
 
+/-- Explicit form of `leapfrogStep`. -/
+theorem leapfrogStep_apply {d : ℕ} (g : EuclideanSpace ℝ (Fin d) → EuclideanSpace ℝ (Fin d))
+    (h : ℝ) (z : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d)) :
+    leapfrogStep g h z = (z.1 + h • (z.2 - (h / 2) • g z.1),
+      z.2 - (h / 2) • g z.1 - (h / 2) • g (z.1 + h • (z.2 - (h / 2) • g z.1))) := by
+  rw [leapfrogStep]
+
 /-- Momentum reversal `(x, p) ↦ (x, -p)` on phase space. -/
 def momentumFlip {E : Type*} [Neg E] (z : E × E) : E × E := (z.1, -z.2)
+
+/-- Defining equation of `momentumFlip`. -/
+theorem momentumFlip_apply {E : Type*} [Neg E] (z : E × E) : momentumFlip z = (z.1, -z.2) := by
+  rw [momentumFlip]
 
 /-- Posterior of a normal location with known variance `v` under a prior density `prior`, after
 `n` observations with sample mean `mean`: the prior density times `exp(-n (θ - mean)² / (2v))`,
@@ -86,6 +115,14 @@ normalized. Likelihood factors that do not depend on the parameter cancel in the
 def normalPosterior (prior : ℝ → ℝ) (v : ℝ≥0) (n : ℕ) (mean : ℝ) : Measure ℝ :=
   let density := fun θ ↦ prior θ * Real.exp (-(n : ℝ) * (θ - mean) ^ 2 / (2 * v))
   (ENNReal.ofReal (∫ θ, density θ))⁻¹ • volume.withDensity (fun θ ↦ ENNReal.ofReal (density θ))
+
+/-- Defining equation of `normalPosterior`. -/
+theorem normalPosterior_def (prior : ℝ → ℝ) (v : ℝ≥0) (n : ℕ) (mean : ℝ) :
+    normalPosterior prior v n mean =
+      (ENNReal.ofReal (∫ θ, prior θ * Real.exp (-(n : ℝ) * (θ - mean) ^ 2 / (2 * v))))⁻¹ •
+        volume.withDensity
+          (fun θ ↦ ENNReal.ofReal (prior θ * Real.exp (-(n : ℝ) * (θ - mean) ^ 2 / (2 * v)))) := by
+  rw [normalPosterior]
 
 /-- The integral of a function of a random variable with finitely many values is the sum of the
 values weighted by their probabilities. -/
@@ -153,7 +190,7 @@ theorem integral_empiricalMeasure_vector {E F : Type*} [MeasurableSpace E]
     [MeasurableSingletonClass E] [NormedAddCommGroup F] [NormedSpace ℝ F] [CompleteSpace F]
     {N : ℕ} (x : Fin N → E) (f : E → F) :
     (∫ y, f y ∂empiricalMeasure N x) = (N : ℝ)⁻¹ • ∑ j, f (x j) := by
-  rw [empiricalMeasure, integral_smul_measure, integral_finsetSum_measure]
+  rw [empiricalMeasure_def, integral_smul_measure, integral_finsetSum_measure]
   · simp
   · intro j _
     exact integrable_dirac (by finiteness)

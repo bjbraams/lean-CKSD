@@ -1,24 +1,24 @@
 module
 
+public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
+import Mathlib.MeasureTheory.Measure.TightNormed
+public import Mathlib.Tactic
+public import TauCeti.Probability.Distributions.ChiSquared.Basic
+public import TauCeti.Probability.Process.EmpiricalMeasure
 public import Mathlib.Algebra.Category.ModuleCat.Basic
 public import Mathlib.Analysis.LocallyConvex.AbsConvexOpen
 public import Mathlib.Analysis.Matrix.Order
 public import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
-public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
 public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 public import Mathlib.MeasureTheory.Measure.Support
-public import Mathlib.MeasureTheory.Measure.TightNormed
 public import Mathlib.Order.CompletePartialOrder
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 public import Mathlib.Probability.Distributions.Poisson.Basic
 public import Mathlib.Probability.Independence.Conditional
 public import Mathlib.Probability.ProductMeasure
 public import Mathlib.Probability.StrongLaw
-public import Mathlib.Tactic
-public import TauCeti.Probability.Distributions.ChiSquared.Basic
 public import TauCeti.Probability.Distributions.StudentT.Basic
 public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
-public import TauCeti.Probability.Process.EmpiricalMeasure
 
 /-!
 # Statistical models and convergence interfaces
@@ -74,7 +74,7 @@ Convergence in probability of `X n` to a constant `c` is Mathlib's
 Real-valued integrals and risks are Bochner integrals; theorems using them carry the
 integrability hypotheses that exclude the junk value `0` of a nonintegrable function.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -141,6 +141,7 @@ outer measure, so no measurability of `X n` is required; this serves the stochas
 of possibly nonmeasurable sequences. For almost everywhere measurable `X n` and finite `μ` it is
 tightness of the laws, Mathlib's `IsTightMeasureSet (range fun n ↦ μ.map (X n))`
 (`CKSD.isBoundedInProbability_iff_isTightMeasureSet`). -/
+@[expose]
 def IsBoundedInProbability {Ω : Type*} [MeasurableSpace Ω]
     (μ : Measure Ω) (X : ℕ → Ω → ℝ) : Prop :=
   ∀ ε > 0, ∃ C > 0, ∀ᶠ n in atTop, μ.real {ω | C < |X n ω|} ≤ ε
@@ -188,11 +189,16 @@ theorem isBoundedInProbability_iff_isTightMeasureSet {Ω : Type*} [MeasurableSpa
 def empiricalMeasure {E : Type*} [MeasurableSpace E] (n : ℕ) (x : Fin n → E) : Measure E :=
   (n : ℝ≥0∞)⁻¹ • ∑ i, Measure.dirac (x i)
 
+/-- Defining equation of `empiricalMeasure`. -/
+theorem empiricalMeasure_def {E : Type*} [MeasurableSpace E] (n : ℕ) (x : Fin n → E) :
+    empiricalMeasure n x = (n : ℝ≥0∞)⁻¹ • ∑ i, Measure.dirac (x i) := by
+  rw [empiricalMeasure]
+
 /-- The empirical measure of a nonempty sample is a probability measure. -/
 theorem isProbabilityMeasure_empiricalMeasure {E : Type*} [MeasurableSpace E] {n : ℕ}
     (hn : 0 < n) (x : Fin n → E) : IsProbabilityMeasure (empiricalMeasure n x) := by
   constructor
-  simp [empiricalMeasure]
+  simp [empiricalMeasure_def]
   exact ENNReal.inv_mul_cancel (by exact_mod_cast hn.ne') (ENNReal.natCast_ne_top n)
 
 /-- The empirical measure is the measure underlying TauCeti's empirical finite measure
@@ -200,7 +206,7 @@ theorem isProbabilityMeasure_empiricalMeasure {E : Type*} [MeasurableSpace E] {n
 theorem empiricalMeasure_eq_empiricalFiniteMeasure {E : Type*} [MeasurableSpace E] (n : ℕ)
     (x : Fin n → E) :
     empiricalMeasure n x = (TauCeti.Probability.empiricalFiniteMeasure x : Measure E) := by
-  rw [empiricalMeasure, TauCeti.Probability.empiricalFiniteMeasure_toMeasure, Fintype.card_fin,
+  rw [empiricalMeasure_def, TauCeti.Probability.empiricalFiniteMeasure_toMeasure, Fintype.card_fin,
     Finset.smul_sum]
 
 /-- The empirical measure of a nonempty sample is the measure underlying TauCeti's empirical
@@ -213,23 +219,27 @@ theorem empiricalMeasure_eq_empiricalMeasureOfFintype {E : Type*} [MeasurableSpa
     empiricalMeasure_eq_empiricalFiniteMeasure]
 
 /-- The empirical average of the first `n` observations of a sequence. -/
+@[expose]
 def sampleAverage {Ω E : Type*} [AddCommMonoid E] [Module ℝ E]
     (X : ℕ → Ω → E) (n : ℕ) (ω : Ω) : E :=
   (n : ℝ)⁻¹ • ∑ i ∈ Finset.range n, X i ω
 
 /-- A measurable independent sequence with common law `P`. -/
+@[expose]
 def IsIndependentIdenticallyDistributed {Ω E : Type*} [MeasurableSpace Ω] [MeasurableSpace E]
     (μ : Measure Ω) (X : ℕ → Ω → E) (P : Measure E) : Prop :=
   (∀ i, Measurable (X i)) ∧ iIndepFun X μ ∧ ∀ i, μ.map (X i) = P
 
 /-- `f` is a real density of `P` with respect to `μ`: `f` is measurable, `μ`-almost everywhere
 nonnegative, and `P = μ.withDensity (ofReal ∘ f)`. -/
+@[expose]
 def HasDensity {X : Type*} [MeasurableSpace X]
     (P μ : Measure X) (f : X → ℝ) : Prop :=
   Measurable f ∧ (∀ᵐ x ∂μ, 0 ≤ f x) ∧ P = μ.withDensity (fun x ↦ ENNReal.ofReal (f x))
 
 /-- A randomized test: a measurable function `φ : X → [0, 1]`, the probability of rejection at
 each observation. -/
+@[expose]
 def IsStatisticalTest {X : Type*} [MeasurableSpace X] (φ : X → ℝ) : Prop :=
   Measurable φ ∧ ∀ x, φ x ∈ Icc 0 1
 
@@ -238,8 +248,14 @@ probability `γ` when `T x = c`, and accept otherwise. -/
 def thresholdTest {X α : Type*} [LinearOrder α] (T : X → α) (c : α) (γ : ℝ) (x : X) : ℝ :=
   if c < T x then 1 else if T x = c then γ else 0
 
+/-- Evaluation of `thresholdTest`. -/
+theorem thresholdTest_apply {X α : Type*} [LinearOrder α] (T : X → α) (c : α) (γ : ℝ) (x : X) :
+    thresholdTest T c γ x = if c < T x then 1 else if T x = c then γ else 0 := by
+  rw [thresholdTest]
+
 /-- An unbiased estimator of `g`: a measurable `δ` that is integrable under every `P θ` with
 mean `g θ`. -/
+@[expose]
 def IsUnbiasedEstimator {Θ X : Type*} [MeasurableSpace X]
     (P : Θ → Measure X) (δ : X → ℝ) (g : Θ → ℝ) : Prop :=
   Measurable δ ∧ ∀ θ, Integrable δ (P θ) ∧ (∫ x, δ x ∂P θ) = g θ
@@ -247,6 +263,7 @@ def IsUnbiasedEstimator {Θ X : Type*} [MeasurableSpace X]
 /-- Sufficiency of a measurable statistic `T`: one Markov kernel `K` (the conditional law of the
 observation given `T`) disintegrates every joint law of `(T, X)`, i.e.
 `(P θ).map (T, id) = (P θ).map T ⊗ₘ K` for all `θ`. -/
+@[expose]
 def IsSufficientStatistic {Θ X S : Type*} [MeasurableSpace X] [MeasurableSpace S]
     (P : Θ → Measure X) (T : X → S) : Prop :=
   Measurable T ∧ ∃ K : Kernel S X, IsMarkovKernel K ∧
@@ -254,6 +271,7 @@ def IsSufficientStatistic {Θ X S : Type*} [MeasurableSpace X] [MeasurableSpace 
 
 /-- Completeness of a statistic `T`: every measurable `g` with `g ∘ T` integrable and of mean zero
 under every `P θ` vanishes `P θ`-almost everywhere on the range of `T`. -/
+@[expose]
 def IsCompleteStatistic {Θ X S : Type*} [MeasurableSpace X] [MeasurableSpace S]
     (P : Θ → Measure X) (T : X → S) : Prop :=
   ∀ g : S → ℝ, Measurable g →
@@ -261,6 +279,7 @@ def IsCompleteStatistic {Θ X S : Type*} [MeasurableSpace X] [MeasurableSpace S]
     ∀ θ, ∀ᵐ x ∂P θ, g (T x) = 0
 
 /-- Bounded completeness of a statistic `T`: completeness restricted to bounded measurable `g`. -/
+@[expose]
 def IsBoundedlyCompleteStatistic {Θ X S : Type*} [MeasurableSpace X] [MeasurableSpace S]
     (P : Θ → Measure X) (T : X → S) : Prop :=
   ∀ g : S → ℝ, Measurable g → (∃ C, ∀ s, |g s| ≤ C) →
@@ -268,6 +287,7 @@ def IsBoundedlyCompleteStatistic {Θ X S : Type*} [MeasurableSpace X] [Measurabl
 
 /-- A uniformly most powerful level-`α` test of `H₀` against `H₁`: `φ` has level `α` on `H₀`
 and at every `θ ∈ H₁` its power is at least that of every level-`α` test. -/
+@[expose]
 def IsUniformlyMostPowerfulTest {Θ X : Type*} [MeasurableSpace X] (P : Θ → Measure X)
     (H₀ H₁ : Set Θ) (α : ℝ) (φ : X → ℝ) : Prop :=
   IsStatisticalTest φ ∧ (∀ θ ∈ H₀, (∫ x, φ x ∂P θ) ≤ α) ∧
@@ -276,6 +296,7 @@ def IsUniformlyMostPowerfulTest {Θ X : Type*} [MeasurableSpace X] (P : Θ → M
 
 /-- A uniformly most powerful unbiased level-`α` test: `φ` has level `α` on `H₀`, power at least
 `α` on `H₁`, and maximal power on `H₁` among all such unbiased level-`α` tests. -/
+@[expose]
 def IsUniformlyMostPowerfulUnbiasedTest {Θ X : Type*} [MeasurableSpace X] (P : Θ → Measure X)
     (H₀ H₁ : Set Θ) (α : ℝ) (φ : X → ℝ) : Prop :=
   IsStatisticalTest φ ∧ (∀ θ ∈ H₀, (∫ x, φ x ∂P θ) ≤ α) ∧
@@ -293,6 +314,12 @@ Bochner integral, used for integrable (typically bounded) losses. -/
 def risk {Θ X A : Type*} [MeasurableSpace X] [MeasurableSpace A]
     (P : Θ → Measure X) (L : Θ → A → ℝ) (δ : RandomizedDecisionRule X A) (θ : Θ) : ℝ :=
   ∫ x, ∫ a, L θ a ∂δ.val x ∂P θ
+
+/-- Defining equation of `risk`. -/
+theorem risk_def {Θ X A : Type*} [MeasurableSpace X] [MeasurableSpace A]
+    (P : Θ → Measure X) (L : Θ → A → ℝ) (δ : RandomizedDecisionRule X A) (θ : Θ) :
+    risk P L δ θ = ∫ x, ∫ a, L θ a ∂δ.val x ∂P θ := by
+  rw [risk]
 
 /-- For a finite measure, convergence in measure is the vanishing of the real-valued measures of
 the sets `{ε < dist (f i) (g)}`, with strict inequality; compare Mathlib's
@@ -380,5 +407,14 @@ theorem isStatisticalTest_thresholdTest {X α : Type*} [MeasurableSpace X] [Line
   · exact ⟨zero_le_one, le_rfl⟩
   · exact hγ
   · exact ⟨le_rfl, zero_le_one⟩
+
+/-- The norm of a vector is at most the sum of the absolute values of its coordinates in an
+orthonormal basis. -/
+theorem norm_le_sum_abs_inner_orthonormalBasis {E : Type*} [NormedAddCommGroup E]
+    [InnerProductSpace ℝ E] {ι : Type*} [Fintype ι] (b : OrthonormalBasis ι ℝ E) (x : E) :
+    ‖x‖ ≤ ∑ i, |inner ℝ (b i) x| := by
+  conv_lhs => rw [← b.sum_repr' x]
+  refine (norm_sum_le _ _).trans (le_of_eq (Finset.sum_congr rfl fun i _ ↦ ?_))
+  rw [norm_smul, b.orthonormal.1 i, mul_one, Real.norm_eq_abs]
 
 end CKSD

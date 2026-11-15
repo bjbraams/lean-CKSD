@@ -1,4 +1,4 @@
-module
+module -- shake: keep-all
 
 public import Suggested102
 public import CKSD.Nonparametric

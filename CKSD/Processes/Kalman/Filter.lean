@@ -1,6 +1,11 @@
 module
 
 public import CKSD.Processes.Kalman.Recursion
+public import Mathlib.Probability.Kernel.CondDistrib
+import CKSD.Processes.GaussianConditioning
+import CKSD.Processes.Independence
+import Mathlib.Probability.Kernel.Composition.WithDensity
+import TauCeti.Probability.Distributions.Gaussian.Affine
 
 /-!
 # Gaussian laws and innovations of the Kalman filter
@@ -13,7 +18,7 @@ Gaussian shift and conditioning tools are provided by `CKSD.Processes.GaussianCo
 Source: GAPS 106.7.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

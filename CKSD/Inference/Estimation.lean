@@ -1,9 +1,10 @@
 module
 
-public import CKSD.Inference.Basic
 public import CKSD.Inference.Model
-public import CKSD.Inference.Sufficiency
-public import Mathlib.Algebra.QuadraticDiscriminant
+import CKSD.Inference.Sufficiency
+import Mathlib.Analysis.Convex.Continuous
+import Mathlib.Analysis.Convex.Integral
+import Mathlib.Probability.Kernel.Composition.IntegralCompProd
 
 /-!
 # Unbiased estimation and risk improvement
@@ -23,7 +24,7 @@ public import Mathlib.Algebra.QuadraticDiscriminant
 
 Sufficient statistics are represented by a common disintegrating Markov kernel.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 

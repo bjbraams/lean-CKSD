@@ -1,8 +1,9 @@
 module
 
-public import CKSD.Processes.Basic
 public import Mathlib.Probability.Process.Predictable
-public import Mathlib.Topology.Order.LeftRightLim
+public import CKSD.Inference.Basic
+public import Mathlib.Probability.Distributions.Gaussian.Multivariate
+import Mathlib.Probability.Martingale.Basic
 
 /-!
 # Cox regression and Rebolledo's martingale central limit theorem
@@ -33,7 +34,7 @@ survival function `exp(-Λ₀(t) e^{β·z})` on `[0, τ]`.
   limit theorem, in finite-dimensional form.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

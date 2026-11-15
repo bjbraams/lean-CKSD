@@ -1,11 +1,11 @@
 module
 
-public import CKSD.Inference.Basic
 public import Mathlib.Probability.Kernel.WithDensity
-public import CKSD.Inference.Factorization
-public import CKSD.Inference.LaplaceDeterminacy
 public import CKSD.Inference.Model
-public import Mathlib.Analysis.InnerProductSpace.ProdL2
+import CKSD.Inference.Density
+import Mathlib.Probability.Kernel.Composition.WithDensity
+import Mathlib.Probability.Kernel.Disintegration.StandardBorel
+import Mathlib.Probability.Kernel.MeasurableIntegral
 
 /-!
 # Conditional exponential families and conditional tests
@@ -38,7 +38,7 @@ law of `T` given `S` and the conditional UMPU tests in the presence of a nuisanc
 Conditional laws are expressed by Mathlib's measure-kernel composition `⊗ₘ` and conditional
 sizes by Mathlib's conditional expectation.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -77,7 +77,7 @@ theorem splitExponentialFamilyMeasure_eq_exponentialFamilyMeasure (ν : Measure 
     (S : X → F) (η : E) (ζ : F) :
     splitExponentialFamilyMeasure ν T S η ζ =
       exponentialFamilyMeasure ν (fun x ↦ WithLp.toLp 2 (T x, S x)) (WithLp.toLp 2 (η, ζ)) := by
-  simp [splitExponentialFamilyMeasure, exponentialFamilyMeasure,
+  simp [splitExponentialFamilyMeasure, exponentialFamilyMeasure_def,
     splitLogPartition_eq_logPartition]
 
 /-- The exponential tilt of a family of measures `ν_s` by the parameter `η`, normalized in each

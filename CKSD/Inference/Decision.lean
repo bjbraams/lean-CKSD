@@ -1,18 +1,17 @@
 module
 
 public import CKSD.Inference.Model
-public import CKSD.Inference.FiniteDecision
-import CKSD.Inference.BlackwellFinite
-import CKSD.Inference.BlackwellPosterior
-import CKSD.Inference.BlackwellApproximation
-import CKSD.Inference.BlackwellCoupling
-import CKSD.Inference.BlackwellJoint
+import CKSD.Inference.FiniteDecision
+import CKSD.Inference.Blackwell.Finite
+import CKSD.Inference.Blackwell.Posterior
+import CKSD.Inference.Blackwell.Joint
 import CKSD.Inference.KernelDisintegration
-public import CKSD.Inference.ConvexGames
-public import CKSD.Inference.Sufficiency
-public import CKSD.Inference.MeanParametrization
-public import CKSD.Inference.ExponentialFamilyMLE
-public import Mathlib.Analysis.Calculus.InverseFunctionTheorem.FDeriv
+import CKSD.Inference.ConvexGames
+import CKSD.Inference.MeanParametrization
+import CKSD.Inference.ExponentialFamilyMLE
+import Mathlib.Analysis.Calculus.InverseFunctionTheorem.FDeriv
+import CKSD.Inference.LogPartition
+import Mathlib.Probability.Kernel.MeasurableIntegral
 
 /-!
 # Decision theory: minimax, complete classes, admissibility, and comparison of experiments
@@ -39,7 +38,7 @@ public import Mathlib.Analysis.Calculus.InverseFunctionTheorem.FDeriv
 * E. L. Lehmann and G. Casella, *Theory of Point Estimation*, Chapter 5.
 * D. Blackwell, Equivalent comparisons of experiments, *Ann. Math. Statist.* 24 (1953).
 -/
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -263,8 +262,8 @@ theorem exists_equivariant_rule_risk_eq_average {G A : Type*} [Group G] [Fintype
     have hterm (g : G) : (∫ x, F g (g⁻¹ • x) ∂P θ) = risk P L ⟨δ, hδ⟩ (g⁻¹ • θ) := by
       rw [← integral_map (f := F g) (hX g⁻¹).aemeasurable (hFm g).aestronglyMeasurable,
         hmodel]
-      rfl
-    -- `change` unfolds a definition that `simp` does not see through
+      exact (risk_def P L ⟨δ, hδ⟩ (g⁻¹ • θ)).symm
+    rw [risk_def]
     change (∫ x, ∫ a, L θ a ∂μ x ∂P θ) = _
     simp_rw [hinner]
     rw [integral_const_mul, integral_finsetSum (f := fun g x ↦ F g (g⁻¹ • x)) Finset.univ fun g _ ↦

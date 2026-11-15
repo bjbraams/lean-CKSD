@@ -1,4 +1,4 @@
-module
+module -- shake: keep-all
 
 public import Suggested106
 public import CKSD.Learning

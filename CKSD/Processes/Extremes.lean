@@ -1,11 +1,11 @@
 module
 
-public import CKSD.Processes.Basic
-public import Mathlib.Probability.Distributions.Poisson.PoissonLimitThm
-public import Mathlib.Analysis.Normed.Group.Tannery
-public import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
-public import TauCeti.Probability.Distributions.PoissonBinomial.Count
-public import TauCeti.Probability.Quantile
+import Mathlib.Probability.Distributions.Poisson.PoissonLimitThm
+import Mathlib.Analysis.Normed.Group.Tannery
+import TauCeti.Probability.Distributions.PoissonBinomial.Count
+public import CKSD.Inference.Basic
+public import Mathlib.Probability.Distributions.Binomial
+public import Mathlib.Probability.Distributions.Poisson.Basic
 
 /-!
 # Maxima and exceedances of independent observations
@@ -42,7 +42,7 @@ variation of the tail at the quantiles `U(n)`, using TauCeti's quantile inequali
 `MeasureTheory.Measure.le_cdf_quantile` and `MeasureTheory.Measure.lt_quantile_iff`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

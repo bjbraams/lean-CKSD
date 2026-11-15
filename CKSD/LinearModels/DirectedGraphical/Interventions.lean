@@ -1,6 +1,9 @@
 module
 
 public import CKSD.LinearModels.DirectedGraphical.Basic
+public import Mathlib.CategoryTheory.Category.Basic
+public import Mathlib.Data.Set.BooleanAlgebra
+public import Mathlib.Order.CompletePartialOrder
 
 /-!
 # Marginal and interventional masses; rules 1 and 2 of the do-calculus
@@ -28,7 +31,7 @@ configuration `b` supplies all values occurring in a query.
 Sources: GAPS 105.63 and 105.64.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -46,7 +49,7 @@ variable {V S : Type*}
 /-- A marginal mass depends only on the values of the point at the fixed coordinates. -/
 theorem marginalMass_congr_point [Fintype V] [Fintype S] (p : (V → S) → ℝ) (E : Finset V)
     {x x' : V → S} (h : ∀ v ∈ E, x v = x' v) : marginalMass p E x = marginalMass p E x' := by
-  unfold marginalMass
+  simp only [marginalMass_def]
   refine Finset.sum_congr rfl fun y _ ↦ ?_
   have : (∀ v ∈ E, y v = x v) ↔ ∀ v ∈ E, y v = x' v :=
     forall₂_congr fun v hv ↦ by rw [h v hv]
@@ -54,8 +57,9 @@ theorem marginalMass_congr_point [Fintype V] [Fintype S] (p : (V → S) → ℝ)
 
 /-- Marginal masses of a nonnegative mass function are nonnegative. -/
 theorem marginalMass_nonneg [Fintype V] [Fintype S] {p : (V → S) → ℝ} (hp : ∀ y, 0 ≤ p y)
-    (E : Finset V) (x : V → S) : 0 ≤ marginalMass p E x :=
-  Finset.sum_nonneg fun y _ ↦ by
+    (E : Finset V) (x : V → S) : 0 ≤ marginalMass p E x := by
+  rw [marginalMass_def]
+  exact Finset.sum_nonneg fun y _ ↦ by
     split_ifs
     · exact hp y
     · exact le_rfl
@@ -63,7 +67,7 @@ theorem marginalMass_nonneg [Fintype V] [Fintype S] {p : (V → S) → ℝ} (hp 
 /-- Marginal masses decrease when more coordinates are fixed. -/
 theorem marginalMass_anti [Fintype V] [Fintype S] {p : (V → S) → ℝ} (hp : ∀ y, 0 ≤ p y)
     {E F : Finset V} (hEF : E ⊆ F) (x : V → S) : marginalMass p F x ≤ marginalMass p E x := by
-  unfold marginalMass
+  simp only [marginalMass_def]
   refine Finset.sum_le_sum fun y _ ↦ ?_
   split_ifs with h1 h2 h2
   · exact le_rfl
@@ -75,7 +79,7 @@ theorem marginalMass_anti [Fintype V] [Fintype S] {p : (V → S) → ℝ} (hp : 
 theorem marginalMass_union_of_support [Fintype V] [Fintype S] {p : (V → S) → ℝ}
     {X : Finset V} {x : V → S} (hsupp : ∀ y, p y ≠ 0 → ∀ v ∈ X, y v = x v) (E : Finset V) :
     marginalMass p (E ∪ X) x = marginalMass p E x := by
-  unfold marginalMass
+  simp only [marginalMass_def]
   refine Finset.sum_congr rfl fun y _ ↦ ?_
   by_cases hy : p y = 0
   · simp [hy]
@@ -88,12 +92,12 @@ theorem marginalMass_union_of_support [Fintype V] [Fintype S] {p : (V → S) →
 /-- `overwriteOn` leaves the coordinates outside the overwritten set unchanged. -/
 theorem overwriteOn_of_notMem {B : Finset V} (b : B → S) (x : V → S) {v : V} (hv : v ∉ B) :
     overwriteOn B b x v = x v := by
-  simp [overwriteOn, hv]
+  simp [overwriteOn_apply, hv]
 
 /-- `overwriteOn` with the values of the configuration itself does nothing. -/
 theorem overwriteOn_self (B : Finset V) (x : V → S) : overwriteOn B (fun v ↦ x v) x = x := by
   funext v
-  unfold overwriteOn
+  simp only [overwriteOn_apply]
   split_ifs <;> rfl
 
 /-- The law of total probability: a marginal mass is the sum, over the values of a disjoint
@@ -101,7 +105,7 @@ set `Z` of variables, of the marginal masses with `Z` fixed as well. -/
 theorem marginalMass_eq_sum_overwriteOn [Fintype V] [Fintype S] (p : (V → S) → ℝ)
     {E Z : Finset V} (hEZ : Disjoint E Z) (x : V → S) :
     marginalMass p E x = ∑ z : Z → S, marginalMass p (E ∪ Z) (overwriteOn Z z x) := by
-  unfold marginalMass
+  simp only [marginalMass_def]
   rw [Finset.sum_comm]
   refine Finset.sum_congr rfl fun y _ ↦ ?_
   have key : ∀ z : Z → S, (∀ v ∈ E ∪ Z, y v = overwriteOn Z z x v) ↔
@@ -113,10 +117,10 @@ theorem marginalMass_eq_sum_overwriteOn [Fintype V] [Fintype S] (p : (V → S) �
       · have := h v (Finset.mem_union_left _ hv)
         rwa [overwriteOn_of_notMem _ _ (Finset.disjoint_left.1 hEZ hv)] at this
       · have := h v (Finset.mem_union_right _ v.2)
-        simp only [overwriteOn, v.2, dite_true] at this
+        simp only [overwriteOn_apply, v.2, dite_true] at this
         exact this.symm
     · rintro ⟨h, rfl⟩ v hv
-      unfold overwriteOn
+      simp only [overwriteOn_apply]
       split_ifs with hvZ
       · rfl
       · exact h v ((Finset.mem_union.1 hv).resolve_right hvZ)
@@ -130,7 +134,7 @@ theorem interventionMass_congr [Fintype V] (localMass : V → (V → S) → S �
     {a a' : V → S} (h : ∀ v ∈ A, a v = a' v) :
     interventionMass localMass A a = interventionMass localMass A a' := by
   funext y
-  unfold interventionMass
+  simp only [interventionMass_def]
   have : (∀ v ∈ A, y v = a v) ↔ ∀ v ∈ A, y v = a' v :=
     forall₂_congr fun v hv ↦ by rw [h v hv]
   simp only [this]
@@ -139,13 +143,20 @@ theorem interventionMass_congr [Fintype V] (localMass : V → (V → S) → S �
 theorem interventionMass_empty [Fintype V] (localMass : V → (V → S) → S → ℝ) (a : V → S) :
     interventionMass localMass ∅ a = directedFactorizationMass localMass := by
   funext y
-  simp [interventionMass, directedFactorizationMass]
+  simp [interventionMass_def, directedFactorizationMass_def]
 
 /-- Local masses after the intervention `do(X = b)`: point masses at the values of `b` on `X`,
 the original local masses elsewhere. -/
 def intervenedLocalMass (localMass : V → (V → S) → S → ℝ) (X : Finset V) (b : V → S) :
     V → (V → S) → S → ℝ :=
   fun v y s ↦ if v ∈ X then (if s = b v then 1 else 0) else localMass v y s
+
+/-- Values of `intervenedLocalMass`. -/
+theorem intervenedLocalMass_apply (localMass : V → (V → S) → S → ℝ) (X : Finset V) (b : V → S)
+    (v : V) (y : V → S) (s : S) :
+    intervenedLocalMass localMass X b v y s =
+      if v ∈ X then (if s = b v then 1 else 0) else localMass v y s := by
+  rw [intervenedLocalMass]
 
 /-- Intervened local masses form a local mass family. -/
 theorem isLocalMassFamily_intervenedLocalMass [Fintype S] {localMass : V → (V → S) → S → ℝ}
@@ -181,7 +192,7 @@ theorem directedFactorizationMass_intervenedLocalMass [Fintype V]
     directedFactorizationMass (intervenedLocalMass localMass X b) =
       interventionMass localMass X b := by
   funext y
-  unfold directedFactorizationMass interventionMass intervenedLocalMass
+  simp only [directedFactorizationMass_def, interventionMass_def, intervenedLocalMass]
   have h1 : ∏ v ∈ X, (if v ∈ X then (if y v = b v then (1 : ℝ) else 0)
       else localMass v y (y v)) = if ∀ v ∈ X, y v = b v then 1 else 0 := by
     calc ∏ v ∈ X, (if v ∈ X then (if y v = b v then (1 : ℝ) else 0) else localMass v y (y v))
@@ -209,7 +220,7 @@ theorem interventionMass_intervenedLocalMass [Fintype V] (localMass : V → (V �
 theorem interventionMass_nonneg [Fintype V] [Fintype S] {localMass : V → (V → S) → S → ℝ}
     (hloc : IsLocalMassFamily localMass) (X : Finset V) (a y : V → S) :
     0 ≤ interventionMass localMass X a y := by
-  unfold interventionMass
+  simp only [interventionMass_def]
   split_ifs
   · exact Finset.prod_nonneg fun v _ ↦ hloc.1 v y (y v)
   · exact le_rfl
@@ -219,7 +230,7 @@ with `a` on `X`. -/
 theorem interventionMass_support [Fintype V] {localMass : V → (V → S) → S → ℝ}
     {X : Finset V} {a y : V → S} (h : interventionMass localMass X a y ≠ 0) :
     ∀ v ∈ X, y v = a v := by
-  unfold interventionMass at h
+  simp only [interventionMass_def] at h
   by_contra hc
   rw [ite_eq_right hc] at h
   exact h rfl
@@ -227,15 +238,16 @@ theorem interventionMass_support [Fintype V] {localMass : V → (V → S) → S 
 /-- Recursive product masses are nonnegative. -/
 theorem directedFactorizationMass_nonneg [Fintype V] [Fintype S]
     {localMass : V → (V → S) → S → ℝ} (hloc : IsLocalMassFamily localMass) (y : V → S) :
-    0 ≤ directedFactorizationMass localMass y :=
-  Finset.prod_nonneg fun v _ ↦ hloc.1 v y (y v)
+    0 ≤ directedFactorizationMass localMass y := by
+  rw [directedFactorizationMass_def]
+  exact Finset.prod_nonneg fun v _ ↦ hloc.1 v y (y v)
 
 /-- A recursive product of local masses has total mass one. -/
 theorem marginalMass_empty_directedFactorizationMass [Fintype V] [Fintype S]
     (G : CausalGraph V) {localMass : V → (V → S) → S → ℝ} (hloc : IsLocalMassFamily localMass)
     (hpar : G.RespectsParents localMass) (x : V → S) :
     marginalMass (directedFactorizationMass localMass) ∅ x = 1 := by
-  unfold marginalMass directedFactorizationMass
+  simp only [marginalMass_def, directedFactorizationMass_def]
   rw [sum_ite_prod_eq_sum_ite_prod_compl G localMass hloc hpar x ∅ Finset.univ
     (fun _ _ _ _ ↦ Finset.mem_univ _) (Finset.disjoint_empty_left _)]
   have : ∀ y : V → S, ((∀ v ∈ (∅ : Finset V), y v = x v) ∧ ∀ v ∈ Finset.univ, y v = x v) ↔
@@ -301,7 +313,7 @@ theorem doMarginalMass_eq_marginalMass_of_nonDescendant [Fintype V] [Fintype S]
     · exact (hE v hv).2 u hu huv
   rw [doMarginalMass_eq_marginalMass_interventionMass,
     ← directedFactorizationMass_intervenedLocalMass]
-  unfold marginalMass directedFactorizationMass
+  simp only [marginalMass_def, directedFactorizationMass_def]
   rw [sum_ite_prod_eq_sum_ite_prod_compl (G.removeIncoming ↑X) _
       (isLocalMassFamily_intervenedLocalMass hloc X a)
       (respectsParents_intervenedLocalMass G hpar X a) x E U hclX hEU,
@@ -427,6 +439,8 @@ theorem condDoMass_rule_one [Fintype V] [Fintype S] (G : CausalGraph V)
     (Finset.disjoint_union_right.2 ⟨hXY.symm, hYW⟩)
     (Finset.disjoint_union_right.2 ⟨hXZ.symm, hZW⟩) hsep
   rw [directedFactorizationMass_intervenedLocalMass] at hci
+  rw [doMarginalMass_eq_marginalMass_interventionMass] at hpos
+  simp only [condDoMass_def, doMarginalMass_eq_marginalMass_interventionMass]
   exact div_eq_div_of_condIndepMass (interventionMass_nonneg hloc X b)
     (fun y hy ↦ interventionMass_support hy) hci hpos
 
@@ -470,11 +484,11 @@ theorem condDoMass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
   have hr_eq : ∀ y, (∀ v ∈ Z, y v = b v) → r y = q y := by
     intro y hy
     simp only [r, q, ← directedFactorizationMass_intervenedLocalMass]
-    unfold directedFactorizationMass
+    simp only [directedFactorizationMass_def]
     simp only [rloc, how y hy]
   have hmargA : ∀ E, Z ⊆ E → marginalMass r E b = marginalMass q E b := by
     intro E hZE
-    unfold marginalMass
+    simp only [marginalMass_def]
     refine Finset.sum_congr rfl fun y _ ↦ ?_
     split_ifs with hy
     · exact hr_eq y fun v hv ↦ hy v (hZE hv)
@@ -483,15 +497,15 @@ theorem condDoMass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
       marginalMass r E b = doMarginalMass localMass (X ∪ Z) b E b := by
     intro E hEZ
     have hcl : ∀ w ∈ Z, ∀ c, G2.edge w c → c ∈ Z := fun w hw c hc ↦ absurd hw hc.2
-    unfold marginalMass doMarginalMass
+    simp only [marginalMass_def, doMarginalMass_def]
     simp only [r]
-    unfold directedFactorizationMass
+    simp only [directedFactorizationMass_def]
     rw [sum_ite_prod_eq_sum_ite_prod_compl G2 rloc hrloc hrpar b E Z hcl hEZ]
     refine Finset.sum_congr rfl fun y _ ↦ ?_
     by_cases hyZ : ∀ v ∈ Z, y v = b v
     · have hprod : ∏ v ∈ Zᶜ, rloc v y (y v) = interventionMass localMass (X ∪ Z) b y := by
         rw [← directedFactorizationMass_intervenedLocalMass]
-        unfold directedFactorizationMass
+        simp only [directedFactorizationMass_def]
         rw [← Finset.prod_subset (Finset.subset_univ Zᶜ)]
         · refine Finset.prod_congr rfl fun v hv ↦ ?_
           have hvZ : v ∉ Z := Finset.mem_compl.1 hv
@@ -504,7 +518,7 @@ theorem condDoMass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
       · rw [ite_eq_left ⟨hE, hyZ⟩, ite_eq_left hE]
       · rw [ite_eq_right fun h ↦ hE h.1, ite_eq_right hE]
     · have h0 : interventionMass localMass (X ∪ Z) b y = 0 := by
-        unfold interventionMass
+        simp only [interventionMass_def]
         rw [ite_eq_right]
         intro h
         exact hyZ fun v hv ↦ h v (Finset.mem_union_right _ hv)
@@ -517,13 +531,14 @@ theorem condDoMass_rule_two [Fintype V] [Fintype S] (G : CausalGraph V)
     intro y hy v hv
     by_contra hne
     apply hy
+    simp only [r, directedFactorizationMass_def]
     refine Finset.prod_eq_zero (Finset.mem_univ v) ?_
     simp only [rloc, intervenedLocalMass, hv, ite_true, hne, ite_false]
   have hposr : 0 < marginalMass r (Z ∪ W) b := by
-    rw [hmargA _ Finset.subset_union_left]
+    rw [hmargA _ Finset.subset_union_left, ← doMarginalMass_eq_marginalMass_interventionMass]
     exact hpos
   have key := div_eq_div_of_condIndepMass hr0 hrsupp hci hposr
-  unfold condDoMass
+  simp only [condDoMass_def]
   rw [← hmargB _ (Finset.disjoint_union_left.2 ⟨hYZ, hZW.symm⟩), ← hmargB _ hZW.symm]
   simp only [doMarginalMass_eq_marginalMass_interventionMass]
   rw [← hmargA _ (fun v hv ↦ by simp [hv]), ← hmargA _ Finset.subset_union_left]

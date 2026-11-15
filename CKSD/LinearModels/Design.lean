@@ -1,13 +1,8 @@
 module
 
 public import CKSD.LinearModels.Basic
-public import CKSD.LinearModels.Multivariate
-public import CKSD.Asymptotics.Basic
-public import CKSD.Nonparametric.Basic
-public import TauCeti.Probability.Distributions.ChiSquared.Basic
-public import TauCeti.Probability.Distributions.StudentT.Basic
-public import TauCeti.Probability.Distributions.FisherSnedecor.Basic
-public import Mathlib.FieldTheory.Finite.GaloisField
+import CKSD.LinearModels.Multivariate.NormalSample
+import CKSD.LinearModels.Multivariate.SampleLaws
 
 /-!
 # Optimal and combinatorial experimental design
@@ -51,7 +46,7 @@ orthogonal Latin squares use Mathlib's
   blocks*, Ann. Eugenics 10 (1940).
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

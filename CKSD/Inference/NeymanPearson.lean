@@ -1,7 +1,7 @@
 module
 
-public import CKSD.Inference.Density
-public import TauCeti.Probability.Quantile
+import CKSD.Inference.Density
+public import CKSD.Inference.Basic
 
 /-!
 # The Neyman–Pearson lemma and threshold tests
@@ -28,7 +28,7 @@ statistic attain every size in `(0, 1)`.
 * E. L. Lehmann and J. P. Romano, *Testing Statistical Hypotheses*, Sections 3.2–3.4 and 3.6.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -336,7 +336,8 @@ theorem integral_le_integral_thresholdTest_of_monotone_likelihood_ratio (μ : Me
     (hle : (∫ x, ψ x ∂Pa) ≤ ∫ x, thresholdTest T c γ x ∂Pa) :
     (∫ x, ψ x ∂Pb) ≤ ∫ x, thresholdTest T c γ x ∂Pb := by
   set φ := thresholdTest T c γ
-  have hφdef : ∀ x, φ x = if c < T x then 1 else if T x = c then γ else 0 := fun _ ↦ rfl
+  have hφdef : ∀ x, φ x = if c < T x then 1 else if T x = c then γ else 0 :=
+    thresholdTest_apply T c γ
   have hk : 0 ≤ max (r c) 0 := le_max_right _ _
   have hlt (x : X) : max (r c) 0 * fa x < fb x → c < T x := by
     intro h
@@ -400,7 +401,8 @@ theorem integral_thresholdTest_le_of_monotone_likelihood_ratio (μ : Measure X)
     (hle : (∫ x, thresholdTest T c γ x ∂Pb) ≤ ∫ x, ψ x ∂Pb) :
     (∫ x, thresholdTest T c γ x ∂Pa) ≤ ∫ x, ψ x ∂Pa := by
   set φ := thresholdTest T c γ
-  have hφdef : ∀ x, φ x = if c < T x then 1 else if T x = c then γ else 0 := fun _ ↦ rfl
+  have hφdef : ∀ x, φ x = if c < T x then 1 else if T x = c then γ else 0 :=
+    thresholdTest_apply T c γ
   have hφ' := hφ.one_sub
   have hψ' := hψ.one_sub
   by_cases hrc : 0 < r c
@@ -465,7 +467,7 @@ theorem integral_thresholdTest_le_of_monotone_likelihood_ratio (μ : Measure X)
 theorem integral_thresholdTest (P : Measure X) [IsProbabilityMeasure P] {T : X → ℝ}
     (hT : Measurable T) (c γ : ℝ) :
     (∫ x, thresholdTest T c γ x ∂P) = P.real {x | c < T x} + γ * P.real {x | T x = c} := by
-  unfold thresholdTest
+  simp only [thresholdTest_apply]
   have hm1 : MeasurableSet {x | c < T x} := measurableSet_lt measurable_const hT
   have hm2 : MeasurableSet {x | T x = c} := measurableSet_eq_fun hT measurable_const
   have hpt : (fun x ↦ if c < T x then (1 : ℝ) else if T x = c then γ else 0) =

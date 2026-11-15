@@ -1,10 +1,10 @@
 module
 
 public import CKSD.Inference.Basic
-public import CKSD.Inference.Density
-public import Mathlib.MeasureTheory.Measure.WithDensityFinite
-public import Mathlib.Probability.Kernel.Composition.WithDensity
-public import Mathlib.Probability.Kernel.CondDistrib
+import CKSD.Inference.Density
+import Mathlib.MeasureTheory.Measure.WithDensityFinite
+import Mathlib.Probability.Kernel.Composition.WithDensity
+import Mathlib.Probability.Kernel.CondDistrib
 
 /-!
 # Inference: the factorization theorem
@@ -24,7 +24,7 @@ Sources: `GAPS.md` and `SYNOPSIS101.md`. The proofs use Mathlib's Radon–Nikody
 `Measure.toFinite`, `Measure.withDensity_compProd`, and `ProbabilityTheory.condDistrib`.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

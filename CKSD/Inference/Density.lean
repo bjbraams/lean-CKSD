@@ -18,7 +18,7 @@ integrability under `P` are those of `f · g` under `μ`. These are adapters to 
 * `CKSD.integral_withDensity_ofReal`, `CKSD.integral_map_withDensity_ofReal` and their
   integrability counterparts, for everywhere nonnegative densities.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 

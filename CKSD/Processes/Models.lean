@@ -1,5 +1,7 @@
 module
 
+public import Mathlib.Basic.NNReal.Defs
+public import Mathlib.Data.ENat.Lattice
 public import CKSD.Processes.Basic
 public import Mathlib.Probability.BrownianMotion.Basic
 
@@ -33,7 +35,7 @@ Pathwise definitions shared by the sequential and change-point results of Sectio
 The likelihood-ratio observations `L n` are indexed from zero.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -50,6 +52,11 @@ def brownianBridge {Ω : Type*} (B : ℝ≥0 → Ω → ℝ) (t : ℝ) (ω : Ω)
 /-- The first time `n` with `a ≤ V n ω`, with value `⊤` if the level is never reached. -/
 def thresholdHittingTime {Ω : Type*} (V : ℕ → Ω → ℝ) (a : ℝ) (ω : Ω) : ℕ∞ :=
   ⨅ n : {n : ℕ // a ≤ V n ω}, (n.val : ℕ∞)
+
+/-- The threshold hitting time is the infimum of the times at which the level is reached. -/
+theorem thresholdHittingTime_def {Ω : Type*} (V : ℕ → Ω → ℝ) (a : ℝ) (ω : Ω) :
+    thresholdHittingTime V a ω = ⨅ n : {n : ℕ // a ≤ V n ω}, (n.val : ℕ∞) := by
+  rw [thresholdHittingTime]
 
 /-- Page's CUSUM likelihood-ratio statistic `W_0 = 0`, `W_{n+1} = max(1, W_n) · L_n`, for
 likelihood ratios `L 0, L 1, …`; the CUSUM procedure stops when `W_n ≥ A`. -/

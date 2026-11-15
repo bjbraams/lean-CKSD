@@ -1,10 +1,8 @@
 module
 
-public import Mathlib.Analysis.SpecialFunctions.Exp
-public import Mathlib.Analysis.Matrix.Hermitian
-public import Mathlib.Algebra.MvPolynomial.Funext
-public import Mathlib.Order.Prod.Lex.Basic
-public import Mathlib.Order.Filter.AtTopBot.Field
+import Mathlib.Analysis.Matrix.Hermitian
+import Mathlib.Algebra.MvPolynomial.Funext
+public import Mathlib.Analysis.InnerProductSpace.PiL2
 
 /-!
 # Linear independence of Gaussian exponentials
@@ -19,7 +17,7 @@ Polynomial separation uses Mathlib's `MvPolynomial.funext`, and covariance recov
 Mathlib's symmetric linear-map interface and polarization of quadratic forms.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

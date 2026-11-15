@@ -1,4 +1,4 @@
-module
+module -- shake: keep-all
 
 public import CKSD.Processes.Kalman.Filter
 

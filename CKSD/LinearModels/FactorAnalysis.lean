@@ -1,9 +1,9 @@
 module
 
-public import CKSD.LinearModels.Multivariate
-public import CKSD.LinearModels.MultivariateTests
-public import Mathlib.Order.Hom.Set
-public import TauCeti.Analysis.Matrix.GramFactorization.Uniqueness
+import CKSD.LinearModels.Multivariate.NormalSample
+import TauCeti.Analysis.Matrix.GramFactorization.Uniqueness
+public import Mathlib.Analysis.CStarAlgebra.Matrix
+public import Mathlib.MeasureTheory.Function.ConvergenceInMeasure
 
 /-!
 # Orthogonal factor models
@@ -45,7 +45,7 @@ Sources: GAPS 105.35 and SYNOPSIS105, item 35.
   Chapter 14.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 

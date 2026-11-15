@@ -1,6 +1,7 @@
 module
 
 public import CKSD.Nonparametric.SparseRecovery.Nullspace
+import Mathlib.Algebra.Order.Chebyshev
 
 /-!
 # Stable sparse recovery from restricted isometry
@@ -34,7 +35,7 @@ Source: GAPS 103.49.
   Theorem 6.12.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -48,7 +49,7 @@ attribute [local instance] Classical.propDecidable
 
 /-- The robust null space property of order `s` with constants `ρ` and `τ`: for every `v` and
 every set `S` of at most `s` coordinates, `‖v_S‖₂ ≤ ρ / √s ‖v_{Sᶜ}‖₁ + τ ‖A v‖`. -/
-def HasRobustNullspaceProperty {n p : ℕ}
+@[expose] def HasRobustNullspaceProperty {n p : ℕ}
     (A : EuclideanSpace ℝ (Fin p) →L[ℝ] EuclideanSpace ℝ (Fin n)) (s : ℕ) (ρ τ : ℝ) : Prop :=
   ∀ (v : EuclideanSpace ℝ (Fin p)) (S : Finset (Fin p)), S.card ≤ s →
     Real.sqrt (∑ j ∈ S, v j ^ 2) ≤ ρ / Real.sqrt s * restrictedL1Norm Sᶜ v + τ * ‖A v‖
@@ -296,7 +297,7 @@ theorem norm_le_ripNullspaceRho_mul_add_of_hasRestrictedIsometry {n p s : ℕ} (
       (4 * r - δ) := by
     rw [le_div_iff₀ hden]; linarith
   refine hfinal.trans (le_of_eq ?_)
-  unfold ripNullspaceRho ripNullspaceTau
+  rw [ripNullspaceRho_def, ripNullspaceTau_def]
   rw [← hr]
   field_simp
   ring
@@ -317,8 +318,9 @@ theorem hasRobustNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ} (hs : 
   set L₀ := ∑ j ∈ B₀, |v j| with hL₀
   set Sc := restrictedL1Norm Finset.univ v - L₀ with hSc
   have hSc0 : 0 ≤ Sc := by
-    have : L₀ ≤ restrictedL1Norm Finset.univ v :=
-      Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _) fun j _ _ ↦ abs_nonneg _
+    have : L₀ ≤ restrictedL1Norm Finset.univ v := by
+      rw [restrictedL1Norm_def]
+      exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _) fun j _ _ ↦ abs_nonneg _
     linarith
   have hmain := norm_le_ripNullspaceRho_mul_add_of_hasRestrictedIsometry hs A hδ hrip
     (blockVector ℓ v 0) (fun k ↦ blockVector ℓ v (k + 1)) p
@@ -333,8 +335,9 @@ theorem hasRobustNullspaceProperty_of_hasRestrictedIsometry {n p s : ℕ} (hs : 
       (fun j ↦ sq_nonneg _) fun i j h ↦ by
         rw [← sq_abs (v i), ← sq_abs (v j)]
         exact pow_le_pow_left₀ (abs_nonneg _) h 2
-  have h1 : restrictedL1Norm S v ≤ L₀ :=
-    sum_le_sum_filter_eq_zero_of_decreasing_blocks hcmp hfull S hS (fun j ↦ |v j|)
+  have h1 : restrictedL1Norm S v ≤ L₀ := by
+    rw [restrictedL1Norm_def]
+    exact sum_le_sum_filter_eq_zero_of_decreasing_blocks hcmp hfull S hS (fun j ↦ |v j|)
       (fun j ↦ abs_nonneg _) fun _ _ h ↦ h
   have hSc_le : Sc ≤ restrictedL1Norm Sᶜ v := by
     have := restrictedL1Norm_add_compl S v
@@ -361,13 +364,14 @@ theorem restrictedL1Norm_sub_le_of_hasRobustNullspaceProperty {n p s : ℕ} (hs 
   have hsqrt : 0 < Real.sqrt s := Real.sqrt_pos.mpr hspos
   have h1ρ : 0 < 1 - ρ := by linarith
   set S := Finset.univ.filter fun j ↦ w j ≠ 0 with hS
-  have hScard : S.card ≤ s := hw
+  have hScard : S.card ≤ s := by rwa [sparsity_def] at hw
   have hvS : restrictedL1Norm S v ≤ ρ * restrictedL1Norm Sᶜ v + τ * Real.sqrt s * ‖A v‖ := by
     have h1 := hnsp v S hScard
     have hCS : restrictedL1Norm S v ≤ Real.sqrt s * Real.sqrt (∑ j ∈ S, v j ^ 2) := by
       have hsq : restrictedL1Norm S v ^ 2 ≤ S.card * ∑ j ∈ S, v j ^ 2 := by
         have := sq_sum_le_card_mul_sum_sq (s := S) (f := fun j ↦ |v j|)
         simp only [sq_abs] at this
+        rw [restrictedL1Norm_def]
         exact this
       have hle : (S.card : ℝ) * ∑ j ∈ S, v j ^ 2 ≤ s * ∑ j ∈ S, v j ^ 2 := by
         gcongr
@@ -379,12 +383,14 @@ theorem restrictedL1Norm_sub_le_of_hasRobustNullspaceProperty {n p s : ℕ} (hs 
     linarith
   have hβSc : restrictedL1Norm Sᶜ β ≤ restrictedL1Norm Finset.univ (β - w) := by
     calc restrictedL1Norm Sᶜ β = restrictedL1Norm Sᶜ (β - w) := by
+          rw [restrictedL1Norm_def, restrictedL1Norm_def]
           refine Finset.sum_congr rfl fun j hj ↦ ?_
           have : w j = 0 := by
             simpa [hS] using hj
           simp [this]
-      _ ≤ restrictedL1Norm Finset.univ (β - w) :=
-          Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
+      _ ≤ restrictedL1Norm Finset.univ (β - w) := by
+          rw [restrictedL1Norm_def, restrictedL1Norm_def]
+          exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
             fun j _ _ ↦ abs_nonneg _
   have t1 := restrictedL1Norm_le_add_sub S β b
   have t2 := restrictedL1Norm_le_add_sub Sᶜ v b
@@ -424,7 +430,7 @@ theorem norm_le_of_hasRobustNullspaceProperty {n p s : ℕ} (hs : 0 < s)
   obtain ⟨ℓ, hcmp, hcard, hfull, -⟩ := exists_decreasing_blocks (fun j ↦ v j) hs
   set S0 := Finset.univ.filter fun j ↦ ℓ j = 0 with hS0
   have hmem : ∀ j, j ∈ S0 ↔ ℓ j = 0 := fun j ↦ by simp [hS0]
-  have hL1nn : 0 ≤ restrictedL1Norm Finset.univ v := Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+  have hL1nn : 0 ≤ restrictedL1Norm Finset.univ v := restrictedL1Norm_nonneg _ _
   have hpt : ∀ j ∉ S0, |v j| ≤ restrictedL1Norm Finset.univ v / s := by
     intro j hj
     have hj0 : 0 < ℓ j := by rw [hmem] at hj; omega
@@ -433,9 +439,8 @@ theorem norm_le_of_hasRobustNullspaceProperty {n p s : ℕ} (hs : 0 < s)
     calc |v j| * s = ∑ _i ∈ S0, |v j| := by rw [Finset.sum_const, hc, nsmul_eq_mul]; ring
       _ ≤ ∑ i ∈ S0, |v i| := Finset.sum_le_sum fun i hi ↦ by
           rw [hmem] at hi; exact hcmp j i (by omega)
-      _ ≤ restrictedL1Norm Finset.univ v :=
-          Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
-            fun j _ _ ↦ abs_nonneg _
+      _ ≤ restrictedL1Norm Finset.univ v := by
+          rw [← restrictedL1Norm_def]; exact restrictedL1Norm_le_univ _ _
   have htail :
       Real.sqrt (∑ j ∈ S0ᶜ, v j ^ 2) ≤ restrictedL1Norm Finset.univ v / Real.sqrt s := by
     rw [Real.sqrt_le_iff]
@@ -446,17 +451,16 @@ theorem norm_le_of_hasRobustNullspaceProperty {n p s : ℕ} (hs : 0 < s)
             rw [← sq_abs, sq]
             exact mul_le_mul_of_nonneg_right (hpt j (Finset.mem_compl.mp hj)) (abs_nonneg _)
       _ = restrictedL1Norm Finset.univ v / s * restrictedL1Norm S0ᶜ v := by
-          rw [← Finset.mul_sum]; rfl
+          rw [← Finset.mul_sum, restrictedL1Norm_def S0ᶜ]
       _ ≤ restrictedL1Norm Finset.univ v / s * restrictedL1Norm Finset.univ v := by
-          gcongr
-          exact Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
-            fun j _ _ ↦ abs_nonneg _
+          exact mul_le_mul_of_nonneg_left (restrictedL1Norm_le_univ _ _)
+            (div_nonneg hL1nn hspos.le)
       _ = _ := by ring
   have hhead : Real.sqrt (∑ j ∈ S0, v j ^ 2) ≤
       ρ / Real.sqrt s * restrictedL1Norm Finset.univ v + τ * ‖A v‖ := by
     have h1 := hnsp v S0 (hcard 0)
     have h2 : restrictedL1Norm S0ᶜ v ≤ restrictedL1Norm Finset.univ v :=
-      Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _) fun j _ _ ↦ abs_nonneg _
+      restrictedL1Norm_le_univ _ _
     have h3 := mul_le_mul_of_nonneg_left h2 (div_nonneg hρ0 hsqrt.le)
     linarith
   have hnorm : ‖v‖ = Real.sqrt (∑ j ∈ S0, v j ^ 2 + ∑ j ∈ S0ᶜ, v j ^ 2) := by
@@ -518,13 +522,15 @@ theorem exists_basisPursuit_error_bound
     rw [e]
     exact mul_le_mul_of_nonneg_left hAv (by positivity)
   have : Nonempty {w : EuclideanSpace ℝ (Fin p) // sparsity w ≤ s} :=
-    ⟨⟨0, by simp [sparsity]⟩⟩
-  have hσ0 : 0 ≤ bestSparseL1Error s β :=
-    le_ciInf fun w ↦ Finset.sum_nonneg fun j _ ↦ abs_nonneg _
+    ⟨⟨0, by simp [sparsity_def]⟩⟩
+  have hσ0 : 0 ≤ bestSparseL1Error s β := by
+    rw [bestSparseL1Error_def]
+    exact le_ciInf fun w ↦ restrictedL1Norm_nonneg _ _
   have hl1 :
       restrictedL1Norm Finset.univ v ≤ C₁ * bestSparseL1Error s β + D₁ * Real.sqrt s * η := by
     have : (restrictedL1Norm Finset.univ v - D₁ * Real.sqrt s * η) / C₁ ≤
         bestSparseL1Error s β := by
+      rw [bestSparseL1Error_def]
       refine le_ciInf fun w ↦ ?_
       rw [div_le_iff₀ hC₁0]
       have := hl1w w.val w.property

@@ -1,11 +1,7 @@
 module
 
 public import CKSD.Inference.Model
-public import CKSD.Inference.Density
-public import Mathlib.Analysis.Calculus.FDeriv.Analytic
-public import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
-public import Mathlib.Analysis.InnerProductSpace.Calculus
-public import Mathlib.Probability.Moments.Covariance
+import CKSD.Inference.Density
 
 /-!
 # Analyticity and moments of the log partition function
@@ -37,7 +33,7 @@ radius `r`, whose coefficients are Bochner integrals of continuous multilinear m
 are read off from the first coefficients of the series of `Z` and of
 `ζ ↦ ∫ ⟪v, x⟫ e^{⟪ζ, x⟫} dν`, together with Mathlib's `covariance_eq_sub`.
 -/
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -53,13 +49,6 @@ section LogPartition
 open scoped Nat
 
 variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E]
-
-/-- The norm is at most the sum of the absolute coordinates in an orthonormal basis. -/
-private theorem norm_le_sum_abs_inner_basis {ι : Type*} [Fintype ι]
-    (b : OrthonormalBasis ι ℝ E) (x : E) : ‖x‖ ≤ ∑ i, |inner ℝ (b i) x| := by
-  conv_lhs => rw [← b.sum_repr' x]
-  refine (norm_sum_le _ _).trans (le_of_eq (Finset.sum_congr rfl fun i _ ↦ ?_))
-  rw [norm_smul, b.orthonormal.1 i, mul_one, Real.norm_eq_abs]
 
 /-- At an interior point `η` of the natural parameter space, `exp (⟪η, x⟫ + r ‖x‖)` is integrable
 for some `r > 0`; the bound uses the parameters `η ± K bᵢ` along an orthonormal basis. -/
@@ -90,13 +79,13 @@ private theorem exists_integrable_exp_inner_add_mul_norm [FiniteDimensional ℝ 
   have hS0 : 0 ≤ S x := Finset.sum_nonneg fun i _ ↦ by positivity
   rcases isEmpty_or_nonempty (Fin d) with hd | hd
   · have hx : ‖x‖ = 0 :=
-      le_antisymm (by simpa using norm_le_sum_abs_inner_basis b x) (norm_nonneg _)
+      le_antisymm (by simpa using norm_le_sum_abs_inner_orthonormalBasis b x) (norm_nonneg _)
     rw [hx, mul_zero, add_zero]
     linarith
   obtain ⟨j, -, hj⟩ := Finset.exists_max_image Finset.univ (fun i ↦ |inner ℝ (b i) x|)
     Finset.univ_nonempty
   have h3 : r * ‖x‖ ≤ K * |inner ℝ (b j) x| := by
-    have h4 := (norm_le_sum_abs_inner_basis b x).trans
+    have h4 := (norm_le_sum_abs_inner_orthonormalBasis b x).trans
       (Finset.sum_le_card_nsmul _ _ _ fun i hi ↦ hj i hi)
     simp only [Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at h4
     have hrd : r * d ≤ K := by
@@ -385,7 +374,8 @@ private theorem logPartition_analytic_and_moments
   have hZη := hZpos η hη
   set P := exponentialFamilyMeasure ν id η with hPdef
   set dens : E → ℝ := fun x ↦ Real.exp (inner ℝ η x - logPartition ν id η) with hdensdef
-  have hP : P = ν.withDensity fun x ↦ ENNReal.ofReal (dens x) := rfl
+  have hP : P = ν.withDensity fun x ↦ ENNReal.ofReal (dens x) :=
+    exponentialFamilyMeasure_def ν id η
   have hdens : ∀ x, dens x = (Z η)⁻¹ * Real.exp (inner ℝ η x) := fun x ↦ by
     simp only [dens, Real.exp_sub, hA, Real.exp_log hZη]; ring
   have hdm : Measurable dens := by fun_prop

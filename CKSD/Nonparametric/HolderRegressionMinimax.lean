@@ -1,8 +1,9 @@
 module
 
 public import CKSD.Nonparametric.SmoothingRates
-public import CKSD.Nonparametric.LowerBounds.Testing
-public import CKSD.Nonparametric.LowerBounds.Gaussian
+import CKSD.Nonparametric.LowerBounds.Testing
+import CKSD.Nonparametric.LowerBounds.Gaussian
+import Mathlib.MeasureTheory.Order.Group.Lattice
 
 /-!
 # The fixed-design Hölder regression minimax rate
@@ -35,7 +36,7 @@ Sources: GAPS 103.22.
   Corollaries 2.3 and 2.5.
 -/
 
-@[expose] public section
+public section
 
 noncomputable section
 
@@ -58,7 +59,7 @@ theorem measurable_uncurry_fixedDesignLocalConstant (n : ℕ) (h : ℝ) :
   have e : Function.uncurry (fixedDesignLocalConstant (n := n) h) = fun p : (Fin n → ℝ) × ℝ ↦
     (∑ i : Fin n, (if |p.2 - ((i.val + 1 : ℕ) : ℝ) / n| ≤ h then (1 : ℝ) else 0) * p.1 i) /
       ∑ i : Fin n, (if |p.2 - ((i.val + 1 : ℕ) : ℝ) / n| ≤ h then (1 : ℝ) else 0) := by
-    funext p; simp only [Function.uncurry_def, fixedDesignLocalConstant]
+    funext p; simp only [Function.uncurry_def, fixedDesignLocalConstant_def]
   rw [e]
   exact (Finset.measurable_sum _ fun i _ ↦ (hw i).mul (by fun_prop)).div
     (Finset.measurable_sum _ fun i _ ↦ hw i)
@@ -73,7 +74,7 @@ theorem holderRegressionMinimaxRisk_le (β L σ : ℝ)
         ENNReal.ofReal (C * Real.rpow (n : ℝ) (-2 * β / (2 * β + 1))) := by
   obtain ⟨C, hC, hrisk⟩ := fixedDesignLocalConstant_risk_le β L σ 1 hβ hL hσ le_rfl
   refine ⟨C, hC, fun n hn ↦ ?_⟩
-  unfold holderRegressionMinimaxRisk
+  simp only [holderRegressionMinimaxRisk_def]
   refine iInf_le_of_le ⟨_, measurable_uncurry_fixedDesignLocalConstant n
     (1 * Real.rpow (n : ℝ) (-1 / (2 * β + 1)))⟩ ?_
   exact iSup_le fun f ↦ hrisk n hn f.val f.property
@@ -485,7 +486,8 @@ private theorem bumpLoss_mul_le_iSup_risk {β L σ : ℝ} (hβ : β ∈ Ioc (0 :
   set P : (Fin m → Bool) → Measure (Fin n → ℝ) :=
     fun w ↦ fixedDesignRegressionLaw n (bumpFun β L m w) σ
   have hP : ∀ w, P w = Measure.pi fun i : Fin n ↦
-      gaussianReal (bumpFun β L m w (((i.val + 1 : ℕ) : ℝ) / n)) v := fun w ↦ rfl
+      gaussianReal (bumpFun β L m w (((i.val + 1 : ℕ) : ℝ) / n)) v := fun w ↦
+    fixedDesignRegressionLaw_def n _ σ
   have hprob : ∀ w, IsProbabilityMeasure (P w) := fun w ↦ by rw [hP]; infer_instance
   have hnear : ∀ w w', hammingDist w w' = 1 → totalVariationDistance (P w) (P w') ≤ 1 / 2 := by
     intro w w' hww
@@ -525,7 +527,7 @@ private theorem bumpLoss_mul_le_iSup_risk {β L σ : ℝ} (hβ : β ∈ Ioc (0 :
         rw [← lintegral_mul_const _ hmeas]
         simp only [ENNReal.ofReal_natCast]
     _ ≤ fixedDesignRegressionRisk (bumpFun β L m w₀) σ T := by
-        unfold fixedDesignRegressionRisk
+        rw [fixedDesignRegressionRisk_def]
         exact lintegral_mono fun y ↦ hammingDist_regDecode_mul_le hβ.1 hL
           (hT.comp measurable_prodMk_left) w₀
 
@@ -598,7 +600,7 @@ theorem holderRegressionMinimaxRisk_ge (β L σ : ℝ)
       _ ≤ L ^ 2 * (1 / A ^ (2 * β) + 1 / A ^ (2 * β)) := by gcongr
       _ = 2 * L ^ 2 / A ^ (2 * β) := by ring
       _ ≤ σ ^ 2 := by rw [div_le_iff₀ hApos]; exact hA2'
-  unfold holderRegressionMinimaxRisk
+  simp only [holderRegressionMinimaxRisk_def]
   refine le_iInf fun T ↦ le_trans ?_ (bumpLoss_mul_le_iSup_risk ⟨hβ0, hβ1⟩ hL.le hσ hn hm hTV
     T.val T.property)
   rw [bumpLoss, ENNReal.div_eq_inv_mul, show (4 : ℝ≥0∞)⁻¹ = ENNReal.ofReal 4⁻¹ by
