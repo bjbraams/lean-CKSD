@@ -13,7 +13,8 @@ truncated at `ε √n`; the truncated increments satisfy Bernstein's inequality 
 dyadic grids, and the untruncated part is controlled by an empirical envelope whose expectation
 tends to zero. The consequence used for M-estimators, the uniform local expansion
 `√n (Gₙ f(θ₀ + h/√n) - Gₙ f θ₀) = ⟪h, n^{-1/2} ∑ s(Xᵢ)⟫ + o_P(1)` over bounded sets of `h`, is
-in `CKSD.Asymptotics.MEstimation.LipschitzExpansion`.
+in `CKSD.Asymptotics.MEstimation.LipschitzExpansion`. The case `d = 1` also gives the stochastic
+equicontinuity used for scalar Z-estimators in `CKSD.Asymptotics.MEstimation.ZEstimators`.
 
 ## Main definitions
 
@@ -95,6 +96,32 @@ theorem abs_empiricalProcess_le {Ω X : Type*} [MeasurableSpace X] (P : Measure 
     rw [abs_mul, Nat.abs_cast]; gcongr
   calc _ ≤ |∑ i ∈ Finset.range n, f (Xn i ω)| + |(n : ℝ) * ∫ x, f x ∂P| := abs_sub _ _
     _ ≤ _ := add_le_add h1 h3
+
+/-- At a sample point avoiding a `P`-null set `N`, cutting `g` off on `N` does not change the
+empirical process: `Gₙ (1_{Nᶜ} g) = n^{-1/2} (∑_{i<n} g(Xᵢ) - n ∫ g dP)`. -/
+theorem empiricalProcess_indicator_compl_eq {Ω E : Type*} [MeasurableSpace E] (P : Measure E)
+    (X : ℕ → Ω → E) {N : Set E} (hN : P N = 0) (n : ℕ) (g : E → ℝ) {ω : Ω}
+    (hω : ∀ i, X i ω ∉ N) :
+    empiricalProcess P X n (Nᶜ.indicator g) ω =
+      (Real.sqrt n)⁻¹ * (∑ i ∈ Finset.range n, g (X i ω) - n * ∫ x, g x ∂P) := by
+  rw [empiricalProcess_def]
+  congr 3
+  · funext i
+    exact indicator_of_mem (mem_compl (hω i)) g
+  · refine integral_congr_ae ?_
+    filter_upwards [measure_eq_zero_iff_ae_notMem.1 hN] with x hx
+    exact indicator_of_mem (mem_compl hx) g
+
+/-- An iid sample avoids a measurable `P`-null set almost surely. -/
+theorem measureReal_setOf_not_forall_notMem_eq_zero {Ω E : Type*} [MeasurableSpace Ω]
+    [MeasurableSpace E] (μ : Measure Ω) (P : Measure E) (X : ℕ → Ω → E)
+    (hiid : IsIndependentIdenticallyDistributed μ X P) {N : Set E} (hNm : MeasurableSet N)
+    (hN : P N = 0) : μ.real {ω | ¬ ∀ i, X i ω ∉ N} = 0 := by
+  have he : {ω | ¬ ∀ i, X i ω ∉ N} = ⋃ i, X i ⁻¹' N := by
+    ext ω
+    simp
+  rw [he, measureReal_def, measure_iUnion_null fun i ↦ ?_, ENNReal.toReal_zero]
+  rw [← Measure.map_apply (hiid.1 i) hNm, hiid.2.2 i, hN]
 
 /-- Bernstein's inequality for the empirical process of a bounded function: if `|g| ≤ b` and
 `∫ g² dP ≤ v` with `v > 0`, then `P(t ≤ |Gₙ g|) ≤ 2 exp(-t² / (2 (v + 2 b t / (3 √n))))`. -/
@@ -486,6 +513,20 @@ theorem exp_neg_bernsteinExponent_mul_le {β γ t c : ℝ} (hβ : 0 < β) (hγ :
     Real.exp (-bernsteinExponent β γ (t * c)) ≤ Real.exp (-(bernsteinExponent β γ t * c)) := by
   rw [Real.exp_le_exp, neg_le_neg_iff, mul_comm, mul_comm t]
   exact mul_bernsteinExponent_le hβ hγ ht hc
+
+/-- The Bernstein tail `e^{-φ(A)}` is below any `q > 0` for some `A ≥ 1`. -/
+theorem exists_one_le_exp_neg_bernsteinExponent_le {β γ q : ℝ} (hβ : 0 < β) (hγ : 0 ≤ γ)
+    (hq : 0 < q) : ∃ A, 1 ≤ A ∧ Real.exp (-bernsteinExponent β γ A) ≤ q := by
+  have hφ1 : 0 < bernsteinExponent β γ 1 := by
+    rw [bernsteinExponent_def]
+    positivity
+  have hexp : Tendsto (fun A : ℝ ↦ Real.exp (-(bernsteinExponent β γ 1 * A))) atTop (𝓝 0) :=
+    Real.tendsto_exp_neg_atTop_nhds_zero.comp (tendsto_id.const_mul_atTop hφ1)
+  obtain ⟨A, hA1, hAq⟩ :=
+    ((eventually_ge_atTop 1).and (hexp.eventually (eventually_le_nhds hq))).exists
+  refine ⟨A, hA1, le_trans ?_ hAq⟩
+  have := exp_neg_bernsteinExponent_mul_le hβ hγ zero_le_one hA1
+  rwa [one_mul] at this
 
 /-- The Bernstein tails at the dyadic levels `a 2ʲ` decay geometrically:
 `e^{-φ(a 2ʲ)} ≤ (e^{-φ(a)})^{j + 1}`. -/

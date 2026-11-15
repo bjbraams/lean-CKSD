@@ -761,6 +761,27 @@ theorem exists_pos_mul_sq_le_inner_toEuclideanCLM {ι : Type*} [Fintype ι] [Dec
   rw [h2, h3]
   linarith
 
+/-- A nonnegative function in `Lᵖ` agrees, off a measurable null set `N`, with a measurable
+nonnegative function in `Lᵖ`. -/
+theorem exists_measurable_nonneg_eq_of_memLp {E : Type*} [MeasurableSpace E]
+    {P : Measure E} {M : E → ℝ} {p : ℝ≥0∞} (hM : MemLp M p P) (hM0 : ∀ x, 0 ≤ M x) :
+    ∃ N : Set E, MeasurableSet N ∧ P N = 0 ∧ ∃ L : E → ℝ, Measurable L ∧ (∀ x, 0 ≤ L x) ∧
+      MemLp L p P ∧ ∀ x ∉ N, L x = M x := by
+  set M' : E → ℝ := hM.aestronglyMeasurable.mk M with hM'def
+  have hM'm : Measurable M' := hM.aestronglyMeasurable.stronglyMeasurable_mk.measurable
+  obtain ⟨N, hNsub, hNm, hN0⟩ :=
+    exists_measurable_superset_of_null (ae_iff.1 hM.aestronglyMeasurable.ae_eq_mk)
+  have hLM : ∀ x ∉ N, Nᶜ.indicator M' x = M x := fun x hx ↦ by
+    rw [indicator_of_mem (mem_compl hx)]
+    by_contra h
+    exact hx (hNsub (Ne.symm h))
+  refine ⟨N, hNm, hN0, Nᶜ.indicator M', hM'm.indicator hNm.compl, fun x ↦ ?_, ?_, hLM⟩
+  · by_cases hx : x ∈ N
+    · rw [indicator_of_notMem (notMem_compl_iff.2 hx)]
+    · rw [hLM x hx]; exact hM0 x
+  · refine hM.ae_eq ?_
+    filter_upwards [measure_eq_zero_iff_ae_notMem.1 hN0] with x hx using (hLM x hx).symm
+
 /-- A Lipschitz constant on a nondegenerate interval around `θ₀` is nonnegative. -/
 theorem nonneg_of_forall_abs_sub_le_mul_abs_sub {f : ℝ → ℝ} {θ₀ r c : ℝ} (hr : 0 < r)
     (hlip : ∀ a b, |a - θ₀| < r → |b - θ₀| < r → |f a - f b| ≤ c * |a - b|) : 0 ≤ c := by
@@ -772,22 +793,6 @@ theorem nonneg_of_forall_abs_sub_le_mul_abs_sub {f : ℝ → ℝ} {θ₀ r c : �
   push Not at hneg
   have := mul_neg_of_neg_of_pos hneg hp
   linarith [abs_nonneg (f θ₀ - f (θ₀ + r / 2))]
-
-/-- For `δ ≥ 0`, the sequence `δ √n / 2 ^ n` tends to zero. -/
-theorem tendsto_mul_sqrt_div_two_pow {δ : ℝ} (hδ : 0 ≤ δ) :
-    Tendsto (fun n : ℕ ↦ δ * Real.sqrt n / 2 ^ n) atTop (𝓝 0) := by
-  have h1 := (tendsto_pow_const_div_const_pow_of_one_lt 1 (by norm_num : (1 : ℝ) < 2)).const_mul δ
-  rw [mul_zero] at h1
-  refine squeeze_zero (fun n ↦ by positivity) (fun n ↦ ?_) h1
-  simp only [pow_one]
-  rw [mul_div_assoc]
-  gcongr
-  rcases Nat.eq_zero_or_pos n with h | h
-  · simp [h]
-  · have h1 : (1 : ℝ) ≤ n := by exact_mod_cast h
-    have := Real.sqrt_le_sqrt h1
-    rw [Real.sqrt_one] at this
-    nlinarith [Real.mul_self_sqrt (Nat.cast_nonneg (α := ℝ) n)]
 
 /-- If `D * Wₙ + Wₙ * Rₙ + Zₙ → 0` in probability, with `D ≠ 0`, `Zₙ` bounded in probability and
 `Rₙ → 0` in probability, then `Wₙ` is bounded in probability. -/

@@ -4,8 +4,8 @@ The public entry point is [CKSD.lean](CKSD.lean). Every project declaration is i
 `namespace CKSD` or one of its subnamespaces. The module names follow topics, while
 the stable identifiers of [GAPS.md](GAPS.md) connect code to the mathematical catalogue.
 
-There are **847 definitions, abbreviations, structures, and inductive types**
-and **2868 theorem statements**: **2779 proved**,
+There are **846 definitions, abbreviations, structures, and inductive types**
+and **2864 theorem statements**: **2775 proved**,
 **0 conditional** (the proof is complete but uses an admitted result), and
 **89 admitted**. Definitions contain no admissions. A compiled axiom audit
 checks that proved results do not depend on `sorryAx`; only the usual Lean classical
@@ -158,7 +158,7 @@ checks every project Lean module with both implicit-variable options disabled.
 - **102.3 Asymptotic normality of maximum likelihood.**
   [CKSD.mle_asymptotic_linearization_and_normality](CKSD/Asymptotics/MEstimation/MaximumLikelihood.lean#L222) (proved; scope in docstring).
 - **102.4 Z-estimators.**
-  [CKSD.zEstimator_asymptotic_linearization_and_normality](CKSD/Asymptotics/MEstimation/ZEstimators.lean#L453) (proved; scope in docstring).
+  [CKSD.zEstimator_asymptotic_linearization_and_normality](CKSD/Asymptotics/MEstimation/ZEstimators.lean#L217) (proved; scope in docstring).
 - **102.6 Sample quantiles.**
   [CKSD.tendstoInDistribution_sampleQuantile](CKSD/Asymptotics/Quantiles.lean#L431) (proved; scope in docstring).
 - **102.7 Bahadur representation of sample quantiles.**
@@ -323,9 +323,9 @@ checks every project Lean module with both implicit-variable options disabled.
   [CKSD.integral_mul_poissonMass_div_eq](CKSD/Bayes/Posterior/Basic.lean#L166) (proved; scope in docstring).
   [CKSD.ae_tendsto_robbins_estimator](CKSD/Bayes/Posterior/Basic.lean#L183) (proved; scope in docstring).
 - **104.15 Dirichlet process.**
-  [CKSD.isDirichletProcess_stickBreaking](CKSD/Bayes/Dirichlet/Process.lean#L121) (proved; scope in docstring).
-  [CKSD.ae_isDirichletProcessLaw_posterior](CKSD/Bayes/Dirichlet/Process.lean#L272) (proved; scope in docstring).
-  [CKSD.ae_integral_posterior_eq_polyaPredictiveLaw](CKSD/Bayes/Dirichlet/Process.lean#L285) (proved; scope in docstring).
+  [CKSD.isDirichletProcess_stickBreaking](CKSD/Bayes/Dirichlet/Process.lean#L122) (proved; scope in docstring).
+  [CKSD.ae_isDirichletProcessLaw_posterior](CKSD/Bayes/Dirichlet/Process.lean#L273) (proved; scope in docstring).
+  [CKSD.ae_integral_posterior_eq_polyaPredictiveLaw](CKSD/Bayes/Dirichlet/Process.lean#L286) (proved; scope in docstring).
 - **104.16 Pólya urn scheme and distinct values.**
   [CKSD.integral_distinctObservationCount_polya](CKSD/Bayes/PolyaUrn.lean#L138) (proved; scope in docstring).
   [CKSD.ae_tendsto_distinctObservationCount_div_log_polya](CKSD/Bayes/PolyaUrn.lean#L610) (proved; scope in docstring).

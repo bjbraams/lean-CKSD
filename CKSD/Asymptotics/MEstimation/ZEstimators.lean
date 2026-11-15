@@ -4,15 +4,27 @@ import CKSD.Asymptotics.LikelihoodSupport
 public import CKSD.Inference.Basic
 public import Mathlib.Probability.Distributions.Gaussian.Real
 import CKSD.Asymptotics.Basic
+public import CKSD.Asymptotics.MEstimation.LipschitzChaining
 
 /-!
 # Lipschitz empirical processes and Z-estimator normality
 
-An elementary dyadic chaining estimate controls the centered empirical process of a scalar
-Lipschitz parameter family. It yields stochastic equicontinuity and the asymptotically linear
-expansion and normal limit of a consistent approximate estimating-equation root.
-Sources: GAPS 102.4 and van der Vaart, *Asymptotic Statistics*, Theorem 5.21. The argument uses
-Chebyshev's inequality and the convergence adapters in `CKSD.Asymptotics.Basic`.
+For a scalar parameter family with a square-integrable Lipschitz envelope, the centred empirical
+process evaluated at a consistent random parameter is stochastically equicontinuous. This yields
+the asymptotically linear expansion and normal limit of a consistent approximate
+estimating-equation root.
+
+## Main results
+
+* `CKSD.tendstoInMeasure_centredSum_sub_of_lipschitz`: stochastic equicontinuity at a consistent
+  random parameter.
+* `CKSD.zEstimator_asymptotic_linearization_and_normality`: GAPS 102.4.
+
+Sources: GAPS 102.4 and van der Vaart, *Asymptotic Statistics*, Theorem 5.21. The stochastic
+equicontinuity is the case `d = 1` of the maximal inequality
+`CKSD.measureReal_exists_abs_empiricalProcess_sub_gt_le_four_mul` of
+`CKSD.Asymptotics.MEstimation.LipschitzChaining`; the argument also uses the convergence adapters
+in `CKSD.Asymptotics.Basic`.
 -/
 
 public section
@@ -61,267 +73,50 @@ theorem memLp_two_of_lipschitz_envelope {E : Type*} [MeasurableSpace E] (P : Mea
           simpa [mul_pow, sq_abs] using this
       _ = _ := integral_mul_const _ _
 
-/-- Chebyshev's inequality for the increments of the centred partial-sum process of a parameter
-family with a square-integrable Lipschitz envelope. -/
-theorem measureReal_le_abs_centredSum_sub_le {Ω E : Type*} [MeasurableSpace Ω]
-    [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
-    [IsProbabilityMeasure P] (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
-    (psi : ℝ → E → ℝ) (hm : Measurable (Function.uncurry psi)) (theta₀ r : ℝ) (hr : 0 < r)
-    (M : E → ℝ) (hM : MemLp M 2 P) (hpsi : MemLp (psi theta₀) 2 P)
-    (hlip : ∀ x a b, |a - theta₀| < r → |b - theta₀| < r →
-      |psi a x - psi b x| ≤ M x * |a - b|)
-    (n : ℕ) (a b : ℝ) (ha : |a - theta₀| < r) (hb : |b - theta₀| < r) {c : ℝ} (hc : 0 < c) :
-    μ.real {ω | c ≤ |(∑ i ∈ Finset.range n, psi a (X i ω) - n * ∫ x, psi a x ∂P) -
-      (∑ i ∈ Finset.range n, psi b (X i ω) - n * ∫ x, psi b x ∂P)|} ≤
-      n * (∫ x, M x ^ 2 ∂P) * (a - b) ^ 2 / c ^ 2 := by
-  have hmeas : ∀ t, Measurable (psi t) := fun t ↦
-    hm.comp (measurable_const.prodMk measurable_id)
-  obtain ⟨hd, ha2, hK⟩ := memLp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
-    a b ha hb
-  have hb2 := (memLp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
-    b a hb ha).2.1
-  have hcheb := measureReal_le_abs_sum_sub_le_of_iid μ P X hiid _ ((hmeas a).sub (hmeas b))
-    hd n hc
-  have hint : ∫ x, (psi a x - psi b x) ∂P = ∫ x, psi a x ∂P - ∫ x, psi b x ∂P :=
-    integral_sub (ha2.integrable one_le_two) (hb2.integrable one_le_two)
-  have hset : {ω | c ≤ |(∑ i ∈ Finset.range n, psi a (X i ω) - n * ∫ x, psi a x ∂P) -
-      (∑ i ∈ Finset.range n, psi b (X i ω) - n * ∫ x, psi b x ∂P)|} =
-      {ω | c ≤ |∑ i ∈ Finset.range n, (psi a (X i ω) - psi b (X i ω)) -
-        n * ∫ x, (psi a x - psi b x) ∂P|} := by
-    ext ω
-    simp only [mem_ofPred_eq, hint, Finset.sum_sub_distrib]
-    ring_nf
-  rw [hset]
-  refine hcheb.trans ?_
-  simp only [Pi.sub_apply]
-  rw [mul_assoc]
-  gcongr
-
-/-- Deterministic Lipschitz bound for the increments of the centred partial-sum process. -/
-theorem abs_centredSum_sub_le {E : Type*} [MeasurableSpace E] (P : Measure E)
-    [IsProbabilityMeasure P]
-    (psi : ℝ → E → ℝ) (hm : Measurable (Function.uncurry psi)) (theta₀ r : ℝ) (hr : 0 < r)
-    (M : E → ℝ) (hM : MemLp M 2 P) (hpsi : MemLp (psi theta₀) 2 P)
-    (hlip : ∀ x a b, |a - theta₀| < r → |b - theta₀| < r →
-      |psi a x - psi b x| ≤ M x * |a - b|)
-    (n : ℕ) (y : ℕ → E) (a b : ℝ) (ha : |a - theta₀| < r) (hb : |b - theta₀| < r) :
-    |(∑ i ∈ Finset.range n, psi a (y i) - n * ∫ x, psi a x ∂P) -
-      (∑ i ∈ Finset.range n, psi b (y i) - n * ∫ x, psi b x ∂P)| ≤
-      |a - b| * (∑ i ∈ Finset.range n, M (y i) + n * ∫ x, M x ∂P) := by
-  have ha2 := (memLp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
-    a b ha hb).2.1
-  have hb2 := (memLp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip
-    b a hb ha).2.1
-  have hMi : Integrable M P := hM.integrable one_le_two
-  have hI : |∫ x, psi a x ∂P - ∫ x, psi b x ∂P| ≤ |a - b| * ∫ x, M x ∂P := by
-    rw [← integral_sub (ha2.integrable one_le_two) (hb2.integrable one_le_two),
-      ← integral_const_mul]
-    refine (abs_integral_le_integral_abs).trans (integral_mono
-      ((ha2.integrable one_le_two).sub (hb2.integrable one_le_two)).abs
-      (hMi.const_mul _) fun x ↦ ?_)
-    have := hlip x a b ha hb
-    simp only
-    linarith [mul_comm (M x) |a - b|]
-  have hS : |∑ i ∈ Finset.range n, psi a (y i) - ∑ i ∈ Finset.range n, psi b (y i)| ≤
-      |a - b| * ∑ i ∈ Finset.range n, M (y i) := by
-    rw [← Finset.sum_sub_distrib, Finset.mul_sum]
-    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun i _ ↦ ?_)
-    linarith [hlip (y i) a b ha hb, mul_comm (M (y i)) |a - b|]
-  calc _ = |(∑ i ∈ Finset.range n, psi a (y i) - ∑ i ∈ Finset.range n, psi b (y i)) -
-        n * (∫ x, psi a x ∂P - ∫ x, psi b x ∂P)| := by ring_nf
-    _ ≤ |∑ i ∈ Finset.range n, psi a (y i) - ∑ i ∈ Finset.range n, psi b (y i)| +
-        |(n : ℝ) * (∫ x, psi a x ∂P - ∫ x, psi b x ∂P)| := abs_sub _ _
-    _ ≤ |a - b| * ∑ i ∈ Finset.range n, M (y i) + n * (|a - b| * ∫ x, M x ∂P) := by
-        rw [abs_mul, Nat.abs_cast]
-        gcongr
-    _ = _ := by ring
-
-/-- The left endpoint of the dyadic cell of level `j`, of width `δ / 2 ^ j`, containing `t` in the
-grid anchored at `θ₀`. -/
-def dyadicGridPoint (θ₀ δ : ℝ) (j : ℕ) (t : ℝ) : ℝ :=
-  θ₀ + ⌊(t - θ₀) * 2 ^ j / δ⌋ * (δ / 2 ^ j)
-
-/-- The dyadic cell index of a point within `δ` of the anchor lies in `[-2 ^ j, 2 ^ j)`. -/
-theorem dyadicGridPoint_index_mem {θ₀ δ t : ℝ} (hδ : 0 < δ) (ht : |t - θ₀| < δ) (j : ℕ) :
-    ⌊(t - θ₀) * 2 ^ j / δ⌋ ∈ Finset.Ico (-(2 : ℤ) ^ j) (2 ^ j) := by
-  rw [abs_lt] at ht
-  have h1 : -1 < (t - θ₀) / δ := by rw [lt_div_iff₀ hδ]; linarith
-  have h2 : (t - θ₀) / δ < 1 := by rw [div_lt_one hδ]; linarith
-  have hx : (t - θ₀) * 2 ^ j / δ = (t - θ₀) / δ * 2 ^ j := by ring
-  have hp : (0 : ℝ) < 2 ^ j := by positivity
-  rw [Finset.mem_Ico, Int.le_floor, Int.floor_lt, hx]
-  push_cast
-  constructor <;> nlinarith
-
-/-- A dyadic grid point lies within `δ` of the anchor, as does the midpoint of its cell. -/
-theorem abs_dyadic_sub_le {θ₀ δ : ℝ} (hδ : 0 < δ) {j : ℕ} {k : ℤ}
-    (hk : k ∈ Finset.Ico (-(2 : ℤ) ^ j) (2 ^ j)) :
-    |θ₀ + k * (δ / 2 ^ j) - θ₀| ≤ δ ∧ |θ₀ + k * (δ / 2 ^ j) + δ / 2 ^ j / 2 - θ₀| ≤ δ := by
-  rw [Finset.mem_Ico] at hk
-  have hp : (0 : ℝ) < 2 ^ j := by positivity
-  have h1 : -(2 : ℝ) ^ j ≤ k := by exact_mod_cast hk.1
-  have h2 : (k : ℝ) + 1 ≤ 2 ^ j := by exact_mod_cast (Int.add_one_le_iff.2 hk.2)
-  have hh : 0 < δ / 2 ^ j := div_pos hδ hp
-  have e : (2 : ℝ) ^ j * (δ / 2 ^ j) = δ := by field_simp
-  constructor <;> rw [abs_le] <;> constructor <;> nlinarith
-
-/-- A point is within one cell width of its dyadic grid point. -/
-theorem abs_sub_dyadicGridPoint_le {θ₀ δ : ℝ} (hδ : 0 < δ) (j : ℕ) (t : ℝ) :
-    |t - dyadicGridPoint θ₀ δ j t| ≤ δ / 2 ^ j := by
-  have hp : (0 : ℝ) < 2 ^ j := by positivity
-  have hh : 0 < δ / 2 ^ j := div_pos hδ hp
-  set x := (t - θ₀) * 2 ^ j / δ
-  have hx : t - θ₀ = x * (δ / 2 ^ j) := by simp only [x]; field_simp
-  have h1 := Int.floor_le x
-  have h2 := Int.lt_floor_add_one x
-  unfold dyadicGridPoint
-  rw [abs_le]
-  constructor <;> nlinarith
-
-/-- Consecutive dyadic levels: the finer grid point is the coarser one or the midpoint of its
-cell. -/
-theorem dyadicGridPoint_succ (θ₀ δ : ℝ) (j : ℕ) (t : ℝ) :
-    dyadicGridPoint θ₀ δ (j + 1) t = dyadicGridPoint θ₀ δ j t ∨
-      dyadicGridPoint θ₀ δ (j + 1) t = dyadicGridPoint θ₀ δ j t + δ / 2 ^ j / 2 := by
-  set x := (t - θ₀) * 2 ^ j / δ with hxdef
-  have hx2 : (t - θ₀) * 2 ^ (j + 1) / δ = 2 * x := by rw [hxdef, pow_succ]; ring
-  have hw : δ / 2 ^ (j + 1) = δ / 2 ^ j / 2 := by rw [pow_succ, div_div]
-  have h1 := Int.floor_le x
-  have h2 := Int.lt_floor_add_one x
-  have hk1 : 2 * ⌊x⌋ ≤ ⌊2 * x⌋ := by rw [Int.le_floor]; push_cast; linarith
-  have hk2 : ⌊2 * x⌋ < 2 * ⌊x⌋ + 2 := by rw [Int.floor_lt]; push_cast; linarith
-  unfold dyadicGridPoint
-  rw [hx2, hw, ← hxdef]
-  rcases (by omega : ⌊2 * x⌋ = 2 * ⌊x⌋ ∨ ⌊2 * x⌋ = 2 * ⌊x⌋ + 1) with h | h
-  · left; rw [h]; push_cast; ring
-  · right; rw [h]; push_cast; ring
-
-/-- The level-zero dyadic grid point of a point within `δ` of the anchor is `θ₀ - δ` or `θ₀`. -/
-theorem dyadicGridPoint_zero {θ₀ δ t : ℝ} (hδ : 0 < δ) (ht : |t - θ₀| < δ) :
-    dyadicGridPoint θ₀ δ 0 t = θ₀ - δ ∨ dyadicGridPoint θ₀ δ 0 t = θ₀ := by
-  have hk := dyadicGridPoint_index_mem hδ ht 0
-  simp only [pow_zero, mul_one, Finset.mem_Ico] at hk
-  unfold dyadicGridPoint
-  simp only [pow_zero, mul_one, div_one]
-  rcases (by omega : ⌊(t - θ₀) / δ⌋ = -1 ∨ ⌊(t - θ₀) / δ⌋ = 0) with h | h
-  · left; rw [h]; push_cast; ring
-  · right; rw [h]; simp
-
-/-- Dyadic chaining bound: if the increments of a real process indexed by `[θ₀ - δ, θ₀ + δ]`
-satisfy the Chebyshev bound `P(c ≤ |S a - S b|) ≤ L (a - b)² / c²`, then for any random
-parameter `t` the process at the dyadic grid point of `t` of any level stays within `c` of its value
-at `θ₀`, except on an event of probability at most `300 L δ² / c²` or where `|t - θ₀| ≥ δ`. -/
-theorem measureReal_dyadic_chain_le {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
-    [IsFiniteMeasure μ] (S : ℝ → Ω → ℝ) (θ₀ δ L : ℝ) (hδ : 0 < δ) (hL : 0 ≤ L)
-    (hS : ∀ a b, |a - θ₀| ≤ δ → |b - θ₀| ≤ δ → ∀ c, 0 < c →
-      μ.real {ω | c ≤ |S a ω - S b ω|} ≤ L * (a - b) ^ 2 / c ^ 2)
-    (t : Ω → ℝ) (J : ℕ) {c : ℝ} (hc : 0 < c) :
-    μ.real {ω | |t ω - θ₀| < δ ∧ c ≤ |S (dyadicGridPoint θ₀ δ J (t ω)) ω - S θ₀ ω|} ≤
-      300 * L * δ ^ 2 / c ^ 2 := by
-  set thr : ℕ → ℝ := fun j ↦ c * (3 / 4) ^ j / 8 with hthr
-  have hthr0 : ∀ j, 0 < thr j := fun j ↦ by simp only [hthr]; positivity
-  set I : ℕ → Finset ℤ := fun j ↦ Finset.Ico (-(2 : ℤ) ^ j) (2 ^ j) with hI
-  set B : ℕ → ℤ → Set Ω := fun j k ↦ {ω | thr j ≤
-    |S (θ₀ + k * (δ / 2 ^ j) + δ / 2 ^ j / 2) ω - S (θ₀ + k * (δ / 2 ^ j)) ω|} with hB
-  set A0 : Set Ω := {ω | c / 2 ≤ |S (θ₀ - δ) ω - S θ₀ ω|} with hA0
-  have hgeo1 : ∑ j ∈ Finset.range J, thr j ≤ c / 2 := by
-    have hg := geom_sum_eq (x := (3 / 4 : ℝ)) (by norm_num) J
-    have hp : 0 ≤ (3 / 4 : ℝ) ^ J := by positivity
-    have : ∑ j ∈ Finset.range J, thr j = c / 8 * ∑ j ∈ Finset.range J, (3 / 4 : ℝ) ^ j := by
-      rw [Finset.mul_sum]; refine Finset.sum_congr rfl fun j _ ↦ ?_; simp only [hthr]; ring
-    rw [this, hg]
-    have : ((3 / 4 : ℝ) ^ J - 1) / (3 / 4 - 1) ≤ 4 := by
-      rw [div_le_iff_of_neg (by norm_num)]; linarith
-    nlinarith
-  have hsub : {ω | |t ω - θ₀| < δ ∧ c ≤ |S (dyadicGridPoint θ₀ δ J (t ω)) ω - S θ₀ ω|} ⊆
-      A0 ∪ ⋃ j ∈ Finset.range J, ⋃ k ∈ I j, B j k := by
-    rintro ω ⟨h1, h2⟩
-    by_contra hn
-    simp only [mem_union, mem_iUnion, not_or, not_exists, hA0, hB, mem_ofPred_eq, not_le,
-      Finset.mem_range] at hn
-    obtain ⟨hA, hBn⟩ := hn
-    set π : ℕ → ℝ := fun j ↦ dyadicGridPoint θ₀ δ j (t ω) with hπ
-    have h0 : |S (π 0) ω - S θ₀ ω| < c / 2 := by
-      rcases dyadicGridPoint_zero hδ h1 with h | h
-      · simpa [hπ, h] using hA
-      · simp only [hπ, h, sub_self, abs_zero]; positivity
-    have hstep : ∀ j < J, |S (π (j + 1)) ω - S (π j) ω| < thr j := fun j hj ↦ by
-      rcases dyadicGridPoint_succ θ₀ δ j (t ω) with h | h
-      · simp only [hπ, h, sub_self, abs_zero]; exact hthr0 j
-      · have := hBn j hj _ (dyadicGridPoint_index_mem hδ h1 j)
-        simp only [hπ, h]
-        exact this
-    have htel : S (π J) ω - S θ₀ ω = (S (π 0) ω - S θ₀ ω) +
-        ∑ j ∈ Finset.range J, (S (π (j + 1)) ω - S (π j) ω) := by
-      rw [Finset.sum_range_sub (fun j ↦ S (π j) ω)]; ring
-    have hsum : |∑ j ∈ Finset.range J, (S (π (j + 1)) ω - S (π j) ω)| ≤
-        ∑ j ∈ Finset.range J, thr j :=
-      (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun j hj ↦
-        (hstep j (Finset.mem_range.1 hj)).le)
-    have := abs_add_le (S (π 0) ω - S θ₀ ω)
-      (∑ j ∈ Finset.range J, (S (π (j + 1)) ω - S (π j) ω))
-    rw [← htel] at this
-    simp only [hπ] at this h2 h0
-    linarith
-  have hcardI : ∀ j, ((I j).card : ℝ) = 2 * 2 ^ j := fun j ↦ by
-    simp only [hI, Int.card_Ico]
-    have : ((2 : ℤ) ^ j) = ((2 ^ j : ℕ) : ℤ) := by push_cast; ring
-    rw [this, show ((2 ^ j : ℕ) : ℤ) - -((2 ^ j : ℕ) : ℤ) = ((2 * 2 ^ j : ℕ) : ℤ) by
-      push_cast; ring, Int.toNat_natCast]
-    push_cast; ring
-  have hBj : ∀ j, ∑ k ∈ I j, μ.real (B j k) ≤ 32 * L * δ ^ 2 / c ^ 2 * (8 / 9) ^ j := by
-    intro j
-    have hp : (0 : ℝ) < 2 ^ j := by positivity
-    have hw : (0 : ℝ) < (3 / 4) ^ j := by positivity
-    have hrel : (8 / 9 : ℝ) ^ j = (2 ^ j * ((3 / 4) ^ j) ^ 2)⁻¹ := by
-      rw [← pow_mul, show j * 2 = 2 * j by ring, pow_mul, ← mul_pow, ← inv_pow]
-      norm_num
-    calc ∑ k ∈ I j, μ.real (B j k)
-        ≤ ∑ _k ∈ I j, L * (δ / 2 ^ j / 2) ^ 2 / thr j ^ 2 := by
-          refine Finset.sum_le_sum fun k hk ↦ ?_
-          obtain ⟨ha, hb⟩ := abs_dyadic_sub_le (θ₀ := θ₀) hδ hk
-          have := hS _ _ hb ha (thr j) (hthr0 j)
-          simp only [hB]
-          refine this.trans (le_of_eq ?_)
-          ring
-      _ = 32 * L * δ ^ 2 / c ^ 2 * (8 / 9) ^ j := by
-          rw [Finset.sum_const, nsmul_eq_mul, hcardI, hrel]
-          simp only [hthr]
-          field_simp
-          ring
-  have hgeo2 : ∑ j ∈ Finset.range J, (8 / 9 : ℝ) ^ j ≤ 9 := by
-    rw [geom_sum_eq (by norm_num)]
-    have hp : 0 ≤ (8 / 9 : ℝ) ^ J := by positivity
-    rw [div_le_iff_of_neg (by norm_num)]; linarith
-  have hK : 0 ≤ 32 * L * δ ^ 2 / c ^ 2 := by positivity
-  calc _ ≤ μ.real (A0 ∪ ⋃ j ∈ Finset.range J, ⋃ k ∈ I j, B j k) := measureReal_mono hsub
-    _ ≤ μ.real A0 + ∑ j ∈ Finset.range J, ∑ k ∈ I j, μ.real (B j k) := by
-        refine (measureReal_union_le _ _).trans (add_le_add le_rfl ?_)
-        refine (measureReal_biUnion_finset_le _ _).trans (Finset.sum_le_sum fun j _ ↦ ?_)
-        exact measureReal_biUnion_finset_le _ _
-    _ ≤ L * (θ₀ - δ - θ₀) ^ 2 / (c / 2) ^ 2 +
-        ∑ j ∈ Finset.range J, 32 * L * δ ^ 2 / c ^ 2 * (8 / 9) ^ j := by
-        gcongr with j
-        · exact hS _ _ (by simp [abs_of_pos hδ]) (by simp [hδ.le]) _ (half_pos hc)
-        · exact hBj j
-    _ ≤ 4 * L * δ ^ 2 / c ^ 2 + 32 * L * δ ^ 2 / c ^ 2 * 9 := by
-        have e : L * (θ₀ - δ - θ₀) ^ 2 / (c / 2) ^ 2 = 4 * L * δ ^ 2 / c ^ 2 := by
-          field_simp; ring
-        rw [e, ← Finset.mul_sum]
-        exact add_le_add le_rfl (mul_le_mul_of_nonneg_left hgeo2 hK)
-    _ ≤ 300 * L * δ ^ 2 / c ^ 2 := by
-        have : 0 ≤ L * δ ^ 2 / c ^ 2 := by positivity
-        have e1 : 4 * L * δ ^ 2 / c ^ 2 = 4 * (L * δ ^ 2 / c ^ 2) := by ring
-        have e2 : 32 * L * δ ^ 2 / c ^ 2 * 9 = 288 * (L * δ ^ 2 / c ^ 2) := by ring
-        have e3 : 300 * L * δ ^ 2 / c ^ 2 = 300 * (L * δ ^ 2 / c ^ 2) := by ring
-        rw [e1, e2, e3]; linarith
+/-- Transport of a scalar Lipschitz family to `ℝ¹`. Let `ψ` be jointly measurable, integrable on
+`|t - θ₀| < r`, and Lipschitz there with envelope `L ≥ 0` at every `x ∉ N`. For `δ < r`, the
+family `θ ↦ 1_{Nᶜ} ψ_{θ 0}` on the cube `[θ₀ - δ, θ₀ + δ)` of `ℝ¹` consists of measurable
+integrable functions, is Lipschitz with envelope `L`, and the cube contains the points within
+`δ` of `θ₀`. -/
+theorem lipschitz_indicator_comp_fin_one_halfOpenCube {E : Type*} [MeasurableSpace E]
+    (P : Measure E) (psi : ℝ → E → ℝ) (hm : Measurable (Function.uncurry psi))
+    {theta₀ r δ : ℝ} (hδ : δ < r) (hint : ∀ t, |t - theta₀| < r → Integrable (psi t) P)
+    {N : Set E} (hNm : MeasurableSet N) {L : E → ℝ} (hL0 : ∀ x, 0 ≤ L x)
+    (hlip : ∀ x ∉ N, ∀ a b, |a - theta₀| < r → |b - theta₀| < r →
+      |psi a x - psi b x| ≤ L x * |a - b|) :
+    (∀ t, |t - theta₀| < δ → (WithLp.toLp 2 fun _ : Fin 1 ↦ t) ∈
+      halfOpenCube (WithLp.toLp 2 fun _ : Fin 1 ↦ theta₀ - δ) (2 * δ)) ∧
+    (∀ θ ∈ halfOpenCube (WithLp.toLp 2 fun _ : Fin 1 ↦ theta₀ - δ) (2 * δ),
+      Measurable (Nᶜ.indicator (psi (θ 0))) ∧ Integrable (Nᶜ.indicator (psi (θ 0))) P) ∧
+    (∀ u ∈ halfOpenCube (WithLp.toLp 2 fun _ : Fin 1 ↦ theta₀ - δ) (2 * δ),
+      ∀ v ∈ halfOpenCube (WithLp.toLp 2 fun _ : Fin 1 ↦ theta₀ - δ) (2 * δ), ∀ x,
+        |Nᶜ.indicator (psi (u 0)) x - Nᶜ.indicator (psi (v 0)) x| ≤ L x * ‖u - v‖) := by
+  have hcube : ∀ θ ∈ halfOpenCube (WithLp.toLp 2 fun _ : Fin 1 ↦ theta₀ - δ) (2 * δ),
+      |θ 0 - theta₀| < r := fun θ hθ ↦ by
+    obtain ⟨h1, h2⟩ := hθ 0
+    rw [abs_lt]
+    constructor <;> dsimp only at h1 h2 <;> linarith
+  refine ⟨fun t ht i ↦ ?_, fun θ hθ ↦ ⟨?_, (hint _ (hcube θ hθ)).indicator hNm.compl⟩,
+    fun u hu v hv x ↦ ?_⟩
+  · rw [abs_lt] at ht
+    dsimp only
+    constructor <;> linarith
+  · exact (hm.comp (measurable_const.prodMk measurable_id)).indicator hNm.compl
+  · by_cases hx : x ∈ N
+    · simp only [indicator_of_notMem (notMem_compl_iff.2 hx), sub_self, abs_zero]
+      exact mul_nonneg (hL0 x) (norm_nonneg _)
+    · simp only [indicator_of_mem (mem_compl hx)]
+      rw [EuclideanSpace.norm_eq, Fin.sum_univ_one, Real.norm_eq_abs, sq_abs,
+        Real.sqrt_sq_eq_abs, PiLp.sub_apply]
+      exact hlip x hx _ _ (hcube u hu) (hcube v hv)
 
 /-- Stochastic equicontinuity of the empirical process of a scalar parameter family with a
 square-integrable Lipschitz envelope: evaluated at a consistent random parameter `Tₙ`, the
 normalised centred partial-sum increment
 `n ^ (-1/2) ∑ᵢ (ψ_{Tₙ} - ψ_{θ₀})(Xᵢ) - √n (P ψ_{Tₙ} - P ψ_{θ₀})`
-tends to `0` in probability. The proof is a dyadic chaining argument with Chebyshev's inequality
-at each level. -/
+tends to `0` in probability. The proof transports the family to `ℝ¹` and applies the maximal
+inequality `measureReal_exists_abs_empiricalProcess_sub_gt_le_four_mul` on a small interval
+around `θ₀`, after replacing `M` by a measurable envelope that agrees with it almost everywhere. -/
 theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableSpace Ω]
     [MeasurableSpace E] (μ : Measure Ω) [IsProbabilityMeasure μ] (P : Measure E)
     [IsProbabilityMeasure P] (X : ℕ → Ω → E) (hiid : IsIndependentIdenticallyDistributed μ X P)
@@ -334,120 +129,89 @@ theorem tendstoInMeasure_centredSum_sub_of_lipschitz {Ω E : Type*} [MeasurableS
       ((∑ i ∈ Finset.range n, psi (T n ω) (X i ω) - n * ∫ x, psi (T n ω) x ∂P) -
         (∑ i ∈ Finset.range n, psi theta₀ (X i ω) - n * ∫ x, psi theta₀ x ∂P)))
             atTop (fun _ ↦ 0) := by
-  obtain ⟨hXm, hind, hlaw⟩ := hiid
-  have hiid : IsIndependentIdenticallyDistributed μ X P := ⟨hXm, hind, hlaw⟩
-  set S : ℕ → ℝ → Ω → ℝ := fun n θ ω ↦
-    ∑ i ∈ Finset.range n, psi θ (X i ω) - n * ∫ x, psi θ x ∂P with hSdef
-  set K : ℝ := ∫ x, M x ^ 2 ∂P with hK
-  have hK0 : 0 ≤ K := integral_nonneg fun x ↦ sq_nonneg _
-  have hMnn : ∀ x, 0 ≤ M x := fun x ↦
-    nonneg_of_forall_abs_sub_le_mul_abs_sub (f := fun a ↦ psi a x) hr (hlip x)
-  set M' : E → ℝ := hM.aestronglyMeasurable.mk M with hM'def
-  have hM'm : Measurable M' := hM.aestronglyMeasurable.stronglyMeasurable_mk.measurable
-  have hMM' : M =ᵐ[P] M' := hM.aestronglyMeasurable.ae_eq_mk
-  have hMi : Integrable M P := hM.integrable one_le_two
-  have hM'i : Integrable M' P := hMi.congr hMM'
-  have hMae : ∀ᵐ w ∂μ, ∀ i, M (X i w) = M' (X i w) := by
-    rw [ae_all_iff]
-    intro i
-    have : ∀ᵐ x ∂(μ.map (X i)), M x = M' x := by rw [hlaw i]; exact hMM'
-    exact ae_of_ae_map (hXm i).aemeasurable this
-  set G : Set Ω := {w | ∀ i, M (X i w) = M' (X i w)} with hG
-  have hGc : μ.real Gᶜ = 0 := by
-    rw [measureReal_def, hG, compl_ofPred, ae_iff.mp hMae, ENNReal.toReal_zero]
-  set s : E → ℝ := fun x ↦ M' x + ∫ y, M y ∂P with hs
-  have hsm : Measurable s := hM'm.add measurable_const
-  set V : ℕ → Ω → ℝ := fun n w ↦ (n : ℝ)⁻¹ * ∑ i ∈ Finset.range n, s (X i w) with hV
-  have hVb : IsBoundedInProbability μ V :=
-    isBoundedInProbability_of_tendstoInMeasure μ V _
-      (tendstoInMeasure_sampleMean_of_iid μ P X hiid s hsm
-        (hM'i.add (integrable_const _)))
+  have hint : ∀ t, |t - theta₀| < r → Integrable (psi t) P := fun t ht ↦
+    ((memLp_two_of_lipschitz_envelope P psi hm theta₀ r hr M hM hpsi hlip t theta₀ ht
+      (by simpa using hr)).2.1).integrable one_le_two
+  obtain ⟨N, hNm, hN0, L, hLm, hL0, hL2, hLM⟩ := exists_measurable_nonneg_eq_of_memLp hM
+    fun x ↦ nonneg_of_forall_abs_sub_le_mul_abs_sub (f := fun a ↦ psi a x) hr (hlip x)
+  set f : EuclideanSpace ℝ (Fin 1) → E → ℝ := fun θ ↦ Nᶜ.indicator (psi (θ 0)) with hf
+  set emb : ℝ → EuclideanSpace ℝ (Fin 1) := fun t ↦ WithLp.toLp 2 fun _ ↦ t with hemb
   rw [tendstoInMeasure_iff_measureReal_lt_dist] at hcons ⊢
   intro ε hε
   refine tendsto_zero_of_forall_eventually_le (fun n ↦ measureReal_nonneg) fun η hη ↦ ?_
-  have htδ : Tendsto (fun δ : ℝ ↦ 1200 * K * δ ^ 2 / ε ^ 2) (𝓝[>] 0) (𝓝 0) := by
-    have : Continuous (fun δ : ℝ ↦ 1200 * K * δ ^ 2 / ε ^ 2) := by fun_prop
-    have h := this.tendsto 0
-    simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, mul_zero,
-      zero_div] at h
-    exact h.mono_left nhdsWithin_le_nhds
-  obtain ⟨δ, hδη, hδ0, hδr⟩ :=
-    ((htδ.eventually (gt_mem_nhds (by positivity : (0 : ℝ) < η / 3))).and
-      (Ioo_mem_nhdsGT hr)).exists
-  set u : ℕ → ℝ := fun n ↦ δ * Real.sqrt n / 2 ^ n with hu
-  have hulim : Tendsto u atTop (𝓝 0) := tendsto_mul_sqrt_div_two_pow hδ0.le
-  have hR := tendstoInMeasure_mul_zero_of_isBoundedInProbability μ V (fun n _ ↦ u n) hVb
-    (tendstoInMeasure_const_of_tendsto μ u hulim)
-  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hR
+  -- Choice of the Bernstein level `A` and of the interval `[θ₀ - δ, θ₀ + δ)`.
+  have hβ0 : 0 < ∫ x, L x ^ 2 ∂P + 1 := by
+    have : 0 ≤ ∫ x, L x ^ 2 ∂P := integral_nonneg fun x ↦ sq_nonneg _
+    linarith
+  obtain ⟨A, hA1, hφA⟩ := exists_one_le_exp_neg_bernsteinExponent_le hβ0
+    (by norm_num : (0 : ℝ) ≤ 2 * 1 / 3) (by positivity : (0 : ℝ) < min (1 / 4) (η / 24))
+  have hq : 2 ^ 1 * Real.exp (-bernsteinExponent (∫ x, L x ^ 2 ∂P + 1) (2 * 1 / 3) A) ≤
+      1 / 2 := by
+    have := min_le_left (1 / 4 : ℝ) (η / 24)
+    linarith
+  have hmax' : 4 * (2 ^ 1 * Real.exp (-bernsteinExponent (∫ x, L x ^ 2 ∂P + 1) (2 * 1 / 3) A))
+      ≤ η / 3 := by
+    have := min_le_right (1 / 4 : ℝ) (η / 24)
+    linarith
+  set δ : ℝ := min (r / 2) (ε / (4 * (2 * A + 1))) with hδ
+  have hδ0 : 0 < δ := by positivity
+  have hδε : 4 * δ * (2 * A + 1) ≤ ε := by
+    have h := min_le_right (r / 2) (ε / (4 * (2 * A + 1)))
+    rw [← hδ, le_div_iff₀ (by positivity)] at h
+    linarith
+  set a : EuclideanSpace ℝ (Fin 1) := emb (theta₀ - δ) with ha
+  have hw0 : 0 < 2 * δ := by positivity
+  obtain ⟨hmem, hfmi, hlipf⟩ := lipschitz_indicator_comp_fin_one_halfOpenCube P psi hm
+    ((min_le_left _ _).trans_lt (half_lt_self hr)) hint hNm hL0
+    fun x hx a b ha hb ↦ by rw [hLM x hx]; exact hlip x a b ha hb
+  have hrem := tendstoInMeasure_lipschitzChainRemainder μ P X hiid L hLm hL0 hL2 one_pos
+  rw [tendstoInMeasure_iff_measureReal_lt_dist] at hrem
   filter_upwards [eventually_ge_atTop 1,
     (hcons (δ / 2) (half_pos hδ0)).eventually (eventually_le_nhds (by positivity : 0 < η / 3)),
-    (hR (ε / 4) (by positivity)).eventually (eventually_le_nhds (by positivity : 0 < η / 3))]
+    (hrem 1 one_pos).eventually (eventually_le_nhds (by positivity : (0 : ℝ) < η / 3))]
     with n hn1 hn2 hn3
-  have hsqn : 0 < Real.sqrt n := Real.sqrt_pos.2 (by exact_mod_cast hn1)
-  have hsq : Real.sqrt n ^ 2 = n := Real.sq_sqrt (Nat.cast_nonneg _)
-  have hc : 0 < ε * Real.sqrt n / 2 := by positivity
-  have hchain := measureReal_dyadic_chain_le μ (S n) theta₀ δ (n * K) hδ0 (by positivity)
-    (fun a b ha hb c hc ↦ measureReal_le_abs_centredSum_sub_le μ P X hiid psi hm theta₀ r hr M hM
-      hpsi hlip n a b (by linarith) (by linarith) hc) (T n) n hc
-  have hcb : 300 * (n * K) * δ ^ 2 / (ε * Real.sqrt n / 2) ^ 2 = 1200 * K * δ ^ 2 / ε ^ 2 := by
-    rw [div_pow, mul_pow, hsq]
-    field_simp
-    ring
-  rw [hcb] at hchain
+  have hmax := measureReal_exists_abs_empiricalProcess_sub_gt_le_four_mul μ P X hiid f a hw0
+    (fun θ hθ ↦ (hfmi θ hθ).1) (fun θ hθ ↦ (hfmi θ hθ).2) L hLm hL0 hL2 hlipf one_pos hn1
+    (by linarith) hq
   have hsub : {ω | ε < dist ((Real.sqrt n)⁻¹ *
       ((∑ i ∈ Finset.range n, psi (T n ω) (X i ω) - n * ∫ x, psi (T n ω) x ∂P) -
         (∑ i ∈ Finset.range n, psi theta₀ (X i ω) - n * ∫ x, psi theta₀ x ∂P))) 0} ⊆
       (({ω | δ / 2 < dist (T n ω) theta₀} ∪
-        {ω | |T n ω - theta₀| < δ ∧
-          ε * Real.sqrt n / 2 ≤ |S n (dyadicGridPoint theta₀ δ n (T n ω)) ω - S n theta₀ ω|}) ∪
-        {ω | ε / 4 < dist (V n ω * u n) 0}) ∪ Gᶜ := by
+        {ω | ∃ θ ∈ halfOpenCube a (2 * δ),
+          Real.sqrt ((1 : ℕ) : ℝ) * (2 * δ) * (2 * A + lipschitzChainRemainder P X L 1 n ω) <
+            |empiricalProcess P X n (f θ) ω - empiricalProcess P X n (f a) ω|}) ∪
+        {ω | 1 < dist (lipschitzChainRemainder P X L 1 n ω) 0}) ∪
+        {ω | ¬ ∀ i, X i ω ∉ N} := by
     intro ω hω
     by_contra hcon
-    simp only [mem_union, mem_ofPred_eq, mem_compl_iff, not_or, not_lt, not_and, not_le,
-      not_not] at hcon
+    simp only [mem_union, mem_ofPred_eq, not_or, not_lt, not_exists, not_and, not_not] at hcon
     obtain ⟨⟨⟨h1, h2⟩, h3⟩, h4⟩ := hcon
     rw [Real.dist_eq] at h1
-    have hT : |T n ω - theta₀| < δ := by linarith
-    have h2 := h2 hT
-    simp only [mem_ofPred_eq, Real.dist_eq, sub_zero, abs_mul, abs_inv,
-      abs_of_pos hsqn] at hω
     rw [Real.dist_eq, sub_zero] at h3
-    set πT := dyadicGridPoint theta₀ δ n (T n ω)
-    have hπ : |πT - theta₀| ≤ δ :=
-      (abs_dyadic_sub_le (θ₀ := theta₀) hδ0 (dyadicGridPoint_index_mem hδ0 hT n)).1
-    have hres := abs_centredSum_sub_le P psi hm theta₀ r hr M hM hpsi hlip n (fun i ↦ X i ω)
-      (T n ω) πT (by linarith) (by linarith)
-    have hQ : 0 ≤ ∑ i ∈ Finset.range n, M (X i ω) + n * ∫ x, M x ∂P :=
-      add_nonneg (Finset.sum_nonneg fun i _ ↦ hMnn _)
-        (mul_nonneg (Nat.cast_nonneg _) (integral_nonneg hMnn))
-    have hd := abs_sub_dyadicGridPoint_le (θ₀ := theta₀) hδ0 n (T n ω)
-    have hVu : δ / 2 ^ n * (∑ i ∈ Finset.range n, M (X i ω) + n * ∫ x, M x ∂P) =
-        Real.sqrt n * (V n ω * u n) := by
-      have h4' : ∀ i, M (X i ω) = M' (X i ω) := h4
-      rw [Finset.sum_congr rfl fun i _ ↦ h4' i]
-      simp only [hV, hu, hs, Finset.sum_add_distrib, Finset.sum_const, Finset.card_range,
-        nsmul_eq_mul]
-      have hn0 : (n : ℝ) ≠ 0 := by positivity
-      field_simp
-      rw [hsq]; ring
-    have hres' : |S n (T n ω) ω - S n πT ω| ≤ Real.sqrt n * (ε / 4) := by
-      refine hres.trans ?_
-      calc |T n ω - πT| * (∑ i ∈ Finset.range n, M (X i ω) + n * ∫ x, M x ∂P)
-          ≤ δ / 2 ^ n * (∑ i ∈ Finset.range n, M (X i ω) + n * ∫ x, M x ∂P) := by gcongr
-        _ = Real.sqrt n * (V n ω * u n) := hVu
-        _ ≤ Real.sqrt n * |V n ω * u n| := by gcongr; exact le_abs_self _
-        _ ≤ Real.sqrt n * (ε / 4) := by gcongr
-    have htri := abs_sub_le (S n (T n ω) ω) (S n πT ω) (S n theta₀ ω)
-    have hω' : ε * Real.sqrt n < |S n (T n ω) ω - S n theta₀ ω| := by
-      rw [inv_mul_eq_div, lt_div_iff₀ hsqn] at hω
-      exact hω
+    simp only [mem_ofPred_eq, Real.dist_eq, sub_zero] at hω
+    rw [Nat.cast_one, Real.sqrt_one, one_mul] at h2
+    have hR : 2 * A + lipschitzChainRemainder P X L 1 n ω ≤ 2 * A + 1 := by
+      linarith [le_abs_self (lipschitzChainRemainder P X L 1 n ω)]
+    have hb : ∀ t, |t - theta₀| < δ → |empiricalProcess P X n (f (emb t)) ω -
+        empiricalProcess P X n (f a) ω| ≤ 2 * δ * (2 * A + 1) := fun t ht ↦
+      (h2 _ (hmem t ht)).trans (mul_le_mul_of_nonneg_left hR hw0.le)
+    have hT := hb (T n ω) (by linarith)
+    have h0 := hb theta₀ (by simpa using hδ0)
+    have hG : ∀ t, empiricalProcess P X n (f (emb t)) ω =
+        (Real.sqrt n)⁻¹ * (∑ i ∈ Finset.range n, psi t (X i ω) - n * ∫ x, psi t x ∂P) :=
+      fun t ↦ empiricalProcess_indicator_compl_eq P X hN0 n (psi t) h4
+    rw [mul_sub, ← hG, ← hG] at hω
+    have htri := abs_sub_le (empiricalProcess P X n (f (emb (T n ω))) ω)
+      (empiricalProcess P X n (f a) ω) (empiricalProcess P X n (f (emb theta₀)) ω)
+    rw [abs_sub_comm (empiricalProcess P X n (f a) ω)] at htri
     nlinarith
   calc _ ≤ _ := measureReal_mono hsub
-    _ ≤ η / 3 + 1200 * K * δ ^ 2 / ε ^ 2 + η / 3 + μ.real Gᶜ := by
-        refine (measureReal_union_le _ _).trans (add_le_add ?_ le_rfl)
+    _ ≤ η / 3 + η / 3 + η / 3 + 0 := by
+        refine (measureReal_union_le _ _).trans (add_le_add ?_
+          (measureReal_setOf_not_forall_notMem_eq_zero μ P X hiid hNm hN0).le)
         refine (measureReal_union_le _ _).trans (add_le_add ?_ hn3)
-        exact (measureReal_union_le _ _).trans (add_le_add hn2 hchain)
-    _ ≤ η := by rw [hGc]; linarith
+        exact (measureReal_union_le _ _).trans (add_le_add hn2 (hmax.trans hmax'))
+    _ = η := by ring
 
 /-- GAPS 102.4, the scalar Z-estimator theorem under a square-integrable Lipschitz envelope. -/
 theorem zEstimator_asymptotic_linearization_and_normality
