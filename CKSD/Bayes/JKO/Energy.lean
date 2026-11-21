@@ -84,7 +84,7 @@ theorem jkoFreeEnergy_eq_klDiv_gaussian_add
           ((-a * (∫ x, ‖x‖ ^ 2 ∂wassersteinLaw μ) -
             Real.log (∫ x : E, Real.exp (-(a * ‖x‖ ^ 2))) : ℝ) : EReal) := by
   have h := TauCeti.WassersteinSpace.boltzmannEntropy_eq_klDiv_tilted_add (p := 2)
-    (m := (volume : Measure E)) (a := a) (x₀ := (0 : E)) (by norm_num)
+    (m := (volume : Measure E)) (a := a) (x₀ := (0 : E))
     (by simpa only [ENNReal.toReal_ofNat, Real.rpow_two, dist_zero_right] using
       integrable_exp_neg_mul_norm_sq (d := d) ha) μ
   simp only [ENNReal.toReal_ofNat, Real.rpow_two, dist_zero_right] at h
@@ -176,7 +176,7 @@ theorem integral_norm_sq_eq_wasserstein_dirac_sq (μ : TauCeti.WassersteinSpace 
   have hi : Integrable (fun x : E ↦ ‖x‖ ^ 2) (wassersteinLaw μ) := by
     unfold wassersteinLaw
     simpa only [ENNReal.toReal_ofNat, Real.rpow_two, dist_zero_right] using
-      TauCeti.WassersteinSpace.integrable_dist_rpow (p := 2) (by norm_num) μ (0 : E)
+      TauCeti.WassersteinSpace.integrable_dist_rpow μ (0 : E)
   have hp := TauCeti.eLpNorm_rpow_eq_lintegral (p := (2 : ℝ≥0∞))
     (f := fun x : E ↦ edist (0 : E) x) (μ := wassersteinLaw μ) (by norm_num) (by norm_num)
     (by fun_prop)

@@ -582,7 +582,8 @@ theorem ae_tendsto_robbins_monro (μ : Measure Ω) [IsProbabilityMeasure μ]
     simp only [hY]
     linarith
   have hbdd := eLpNorm_neg_le_of_supermartingale hsup hC₁0 hYlow
-  have hconv := hsup.neg.ae_tendsto_limitProcess hbdd
+  have hconv := hsup.neg.ae_tendsto_limitProcess
+    ((iSup_le hbdd).trans_lt ENNReal.ofReal_lt_top)
   have hsumm : Summable fun k ↦ K * a k ^ 2 / P (k + 1) :=
     Summable.of_norm_bounded (hsumsq.mul_left |K|) hterm
   have hSconv : Tendsto S atTop (𝓝 (∑' k, K * a k ^ 2 / P (k + 1))) :=

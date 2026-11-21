@@ -2,6 +2,7 @@ module
 
 public import TauCeti.MeasureTheory.OptimalTransport.Coupling
 import TauCeti.MeasureTheory.Function.Lusin
+import TauCeti.MeasureTheory.OptimalTransport.Gluing
 import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.EulerLagrange
 
 /-!
@@ -53,7 +54,7 @@ theorem exists_isCoupling_map_prodMap_eq {X Y Z : Type*}
   have hJ : Measurable J := by fun_prop
   have hpg : (TauCeti.graphPlan f μ).snd = π.fst :=
     (TauCeti.snd_graphPlan hf.aemeasurable).trans hπ.fst_eq.symm
-  obtain ⟨σ, hσpair, hσsnd⟩ := TauCeti.Measure.exists_glue_of_standardBorel_left
+  obtain ⟨σ, hσpair, hσsnd⟩ := Measure.exists_glue_of_standardBorel_left
     (TauCeti.graphPlan f μ) π hpg
   have hσfst : σ.map (fun z : X × Z × Y ↦ z.1) = μ := by
     calc σ.map (fun z : X × Z × Y ↦ z.1) = (σ.map J).fst := by
@@ -117,7 +118,7 @@ theorem lowerSemicontinuous_lintegral_coupling_displacement {E : Type*}
     apply TauCeti.lowerSemicontinuousOn_lintegral_comp hc.lowerSemicontinuous
     · intro ε hε
       obtain ⟨F, -, hF, hsmall, hvF⟩ := hv.exists_isClosed_measure_sdiff_lt_continuousOn
-        (μ := μ.toMeasure) MeasurableSet.univ (measure_ne_top _ _) hε
+        (μ := μ.toMeasure) (s := univ) MeasurableSet.univ.nullMeasurableSet (measure_ne_top _ _) hε
       refine ⟨F ×ˢ univ, hF.prod isClosed_univ, ?_, ?_⟩
       · have hvC : ContinuousOn (fun z : E × E ↦ v z.1) (F ×ˢ univ) :=
           hvF.comp continuousOn_fst (fun _ hz ↦ hz.1)
@@ -126,14 +127,7 @@ theorem lowerSemicontinuous_lintegral_coupling_displacement {E : Type*}
         have hset : (F ×ˢ (univ : Set E))ᶜ = Prod.fst ⁻¹' Fᶜ := by ext z; simp
         rw [hset, ← Measure.map_apply measurable_fst hF.measurableSet.compl, ← Measure.fst,
           hγ.fst_eq]
-        have hdiff : (univ : Set E) \ F = Fᶜ := by
-          ext x
-          simp only [Set.mem_sdiff, mem_univ, mem_compl_iff, true_and]
-        rw [hdiff] at hsmall
-        exact hsmall.le
-    · intro γ _
-      exact (hc.measurable.comp (measurable_fst.prodMk ((hv.comp measurable_fst).prodMk
-        measurable_snd))).aemeasurable
+        simpa only [Set.compl_eq_univ_sdiff] using hsmall.le
   have h' : LowerSemicontinuousOn (fun γ : TauCeti.Coupling μ ν ↦
       ∫⁻ z, c (Φ z) ∂γ.1.toMeasure) univ :=
     h.comp continuous_subtype_val.continuousOn (fun γ _ ↦ γ.2)

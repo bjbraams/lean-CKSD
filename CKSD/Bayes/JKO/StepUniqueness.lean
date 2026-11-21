@@ -42,7 +42,7 @@ theorem wasserstein_dist_sq_le_half_add_half (μ ν η ζ : P₂)
       (1 / 2 : ℝ≥0∞) • wassersteinLaw η) :
     dist μ ζ ^ 2 ≤ (dist μ ν ^ 2 + dist μ η ^ 2) / 2 := by
   have h := TauCeti.wassersteinEDist_smul_add_smul_rpow_le (p := (2 : ℝ≥0∞))
-    measurable_edist (by norm_num) (by norm_num)
+    measurable_edist
     (a := (1 / 2 : ℝ≥0∞)) (b := (1 / 2 : ℝ≥0∞))
     (by simpa only [one_div] using ENNReal.inv_two_add_inv_two)
     (wassersteinLaw μ) (wassersteinLaw ν) (wassersteinLaw η)
@@ -111,7 +111,7 @@ theorem jkoFreeEnergy_toReal_half_mixture_lt
   have hmi (μ : P₂) : Integrable (fun x : E ↦ ‖x‖ ^ 2) (wassersteinLaw μ) := by
     unfold wassersteinLaw
     simpa only [ENNReal.toReal_ofNat, Real.rpow_two, dist_zero_right] using
-      TauCeti.WassersteinSpace.integrable_dist_rpow (p := 2) (by norm_num) μ (0 : E)
+      TauCeti.WassersteinSpace.integrable_dist_rpow μ (0 : E)
   have hmV := integral_wasserstein_half_mixture ν η ζ hζ V hνV hηV
   have hmM := integral_wasserstein_half_mixture ν η ζ hζ (fun x : E ↦ ‖x‖ ^ 2) (hmi ν) (hmi η)
   have hreal (μ : P₂) (hμK : klDiv (wassersteinLaw μ) G ≠ ∞)

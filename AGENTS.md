@@ -10,17 +10,11 @@ report that fact rather than proceeding without it.
 - Lake root: the directory containing this `AGENTS.md`.
 - Build output: `.lake/build-CKSD`; preserve the matching `buildDir` in `lakefile.toml`.
 - Ordinary build command: `lake build > /tmp/cksd-build.log 2>&1`.
-- Local exception to the shared build topology: `.lake` is a symlink to
-  `/export/scratch1/braams/lean-CKSD-lake` on local disk, not to the shared
-  `lean-codes-lake`. This project has its own `.lake/packages` because it requires
-  Statlib (`https://github.com/stat-lib/statlib`) in addition to Mathlib and TauCeti,
-  with Lean, Mathlib, and TauCeti revisions newer than those of the sibling projects.
-  The pins in `lakefile.toml`, `lake-manifest.json`, and `lean-toolchain` are
-  authoritative. The other shared rules for `.lake` apply to this target: never replace,
-  delete, or retarget it without being asked, and never write to `lean-codes-lake`
-  from this project.
-- In this project the library search order is Mathlib → pinned TauCeti → pinned
-  Statlib → local project code.
+- `.lake` points to the shared `/export/scratch1/braams/lean-codes-lake` on local disk.
+  CKSD uses the shared `.lake/packages` checkouts.
+  The pins in `lakefile.toml`, `lake-manifest.json`, and `lean-toolchain`
+  are authoritative.
+- In this project the library search order is Mathlib → pinned TauCeti → local project code.
 
 ## Project
 

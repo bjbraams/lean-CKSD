@@ -37,7 +37,7 @@ variable {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V] [FiniteDimension
 theorem det_fderiv_hamiltonianFlow (hX : LipschitzWith K (ω.hamiltonianVectorField H))
     (hH : ContDiff ℝ 2 H) (t : ℝ) (x : V) :
     (fderiv ℝ (ω.hamiltonianFlow H hX t) x).det = 1 := by
-  exact TauCeti.BilinForm.IsIsometry.det_eq_one ω.isAlt ω.nondegenerate
+  exact TauCeti.BilinForm.IsIsometry.det_eq_one_of_isAlt ω.isAlt ω.nondegenerate
     (TauCeti.BilinForm.isIsometry_iff.mpr (ω.apply_fderiv_hamiltonianFlow H hX hH t x))
 variable [MeasurableSpace V] [BorelSpace V]
 /-- Hamiltonian time maps preserve any additive Haar measure. -/
@@ -78,7 +78,7 @@ theorem measurePreserving_hamiltonianFlow_withDensity (μ : Measure V) [IsAddHaa
   exact measurePreserving_withDensity_of_invariant
     (measurePreserving_hamiltonianFlow ω H μ hX hH t) _
     (hw.comp hH.continuous.measurable)
-    (fun x ↦ congrArg w (ω.hamiltonianFlow_conserves H hX (hH.differentiable (by norm_num)) t x))
+    (fun x ↦ congrArg w (ω.hamiltonianFlow_conserves H hX t x))
 section Mechanical
 variable {d : ℕ}
 local notation "E" => EuclideanSpace ℝ (Fin d)

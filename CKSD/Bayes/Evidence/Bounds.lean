@@ -248,8 +248,7 @@ theorem tendsto_infinitePi_evidence_lt {Θ : Type*} [MeasurableSpace Θ]
       integral_log_sub_log_eq_neg_toReal_klDiv (hdensity θ₀) (hdensity θ) hKL
     have hlt : -γ < ∫ x, (Real.log (f θ x) - Real.log (f θ₀ x)) ∂(P θ₀) := by
       rw [hmean]; have := ENNReal.toReal_lt_of_lt_ofReal (hB θ hθ); linarith
-    have hslln := TauCeti.Probability.strong_law_ae_infinitePi (P θ₀)
-      ((hdensity θ).1.log.sub (hdensity θ₀).1.log) hint
+    have hslln := TauCeti.Probability.strong_law_ae_infinitePi (P θ₀) hint
     filter_upwards [hslln, ae_forall_apply_infinitePi (hPQ.ae_le (hdensity θ).ae_pos),
       ae_forall_apply_infinitePi (hdensity θ₀).ae_pos] with ω hω h1 h2
     filter_upwards [hω.eventually (lt_mem_nhds hlt), eventually_gt_atTop 0] with n hn hn0
@@ -258,7 +257,6 @@ theorem tendsto_infinitePi_evidence_lt {Θ : Type*} [MeasurableSpace Θ]
     rw [smul_eq_mul] at hn
     have hmul := mul_lt_mul_of_pos_left hn hn'
     rw [← mul_assoc, mul_inv_cancel₀ hn'.ne', one_mul] at hmul
-    simp only [Pi.sub_apply] at hmul
     linarith
   -- for each `θ ∈ B`, the probability of a bad sample tends to zero
   have hbadm : ∀ n θ, MeasurableSet {ω | ¬ good n θ ω} := fun n θ ↦

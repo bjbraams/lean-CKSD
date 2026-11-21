@@ -3,7 +3,7 @@ module
 import CKSD.Processes.RiskSetExpansion
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.AbsolutelyContinuousFun
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.LebesgueDifferentiationThm
-import TauCeti.Algebra.Order.BigOperators.ProdSubProd
+import TauCeti.Analysis.Normed.Ring.ProdSubProd
 import CKSD.Inference.Density
 public import CKSD.Processes.Basic
 public import Mathlib.Probability.Distributions.Gaussian.Real

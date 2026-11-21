@@ -112,6 +112,7 @@ theorem ae_exists_tendsto_sum_martingaleDifference
       _ ≤ (∑' k, ∫ ω, D k ω ^ 2 ∂μ) + 1 := by
         rw [hsecond]
         exact add_le_add (hs.sum_le_tsum _ fun _ _ ↦ integral_nonneg fun _ ↦ sq_nonneg _) le_rfl
-  exact hMart.submartingale.exists_ae_tendsto_of_bdd hbound
+  exact hMart.submartingale.exists_ae_tendsto_of_bdd
+    ((iSup_le hbound).trans_lt ENNReal.ofReal_lt_top)
 
 end CKSD

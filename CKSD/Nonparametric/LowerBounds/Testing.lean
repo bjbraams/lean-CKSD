@@ -1,8 +1,8 @@
 module
 
 public import CKSD.Nonparametric.Basic
-import Statlib.Divergence.KullbackLeibler.Event
-import Statlib.ForMathlib.InformationTheory.KullbackLeibler.Bernoulli
+import CKSD.Inference.Divergence.Basic
+import Mathlib.InformationTheory.KullbackLeibler.DataProcessing
 public import Mathlib.InformationTheory.Hamming
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
 public import Mathlib.Order.CompletePartialOrder
@@ -19,7 +19,7 @@ statistical normalization `sup_A |P(A) - Q(A)|` (`CKSD.totalVariationDistance`).
 * `CKSD.one_sub_totalVariationDistance_div_two_le_max_measureReal` (Le Cam's two-point
   method): for `2s`-separated parameters, `max_i P_i(dist(T, θ_i) ≥ s) ≥ (1 - TV(P₀, P₁)) / 2`.
 * `CKSD.measureReal_mul_neg_log_sub_log_two_le_klDiv`: the binary data-processing bound
-  `P(A) log(1 / Q(A)) - log 2 ≤ KL(P, Q)`, from Statlib's event chain rule and the Bernoulli
+  `P(A) log(1 / Q(A)) - log 2 ≤ KL(P, Q)`, by data processing for the event indicator and the
   Kullback–Leibler formula.
 * `CKSD.one_sub_div_log_le_sSup_measureReal` (Fano's method): for `M ≥ 2` parameters that are
   `2s`-separated, `max_j P_j(dist(T, θ_j) ≥ s) ≥ 1 - (M⁻¹ ∑_j KL(P_j, Q) + log 2) / log M`.
@@ -89,7 +89,7 @@ theorem one_sub_totalVariationDistance_div_two_le_max_measureReal {X Θ : Type*}
   linarith
 
 /-- Binary data processing for one event: if `KL(P, Q)` is finite, then
-`P(A) log (1 / Q(A)) - log 2 ≤ KL(P, Q)`. Uses Statlib's chain rule for an event and the
+`P(A) log (1 / Q(A)) - log 2 ≤ KL(P, Q)`. Uses Mathlib's data processing theorem and the
 binary Kullback-Leibler formula. -/
 theorem measureReal_mul_neg_log_sub_log_two_le_klDiv {X : Type*} [MeasurableSpace X]
     (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
@@ -107,23 +107,16 @@ theorem measureReal_mul_neg_log_sub_log_two_le_klDiv {X : Type*} [MeasurableSpac
   · rw [← hq, Real.log_zero]; linarith
   rcases hq1.eq_or_lt with hq' | hq'
   · rw [hq', Real.log_one]; linarith
-  -- binary data processing
-  have hchain := klDiv_eq_klDiv_boolMeasure_add_add (μ := P) (ν := Q) hA.compl
-  rw [compl_compl] at hchain
-  have hPA : P A = ENNReal.ofReal p := (ofReal_measureReal (measure_ne_top P A)).symm
-  have hPAc : P Aᶜ = ENNReal.ofReal (1 - p) := by
-    rw [← probReal_compl_eq_one_sub hA, ofReal_measureReal (measure_ne_top P _)]
-  have hQA : Q A = ENNReal.ofReal q := (ofReal_measureReal (measure_ne_top Q A)).symm
-  have hQAc : Q Aᶜ = ENNReal.ofReal (1 - q) := by
-    rw [← probReal_compl_eq_one_sub hA, ofReal_measureReal (measure_ne_top Q _)]
-  rw [hPA, hPAc, hQA, hQAc, InformationTheory.klDiv_boolMeasure_ofReal_eq_klBerReal hp0 hp1 hq hq']
-    at hchain
-  have hle : ENNReal.ofReal (InformationTheory.klBerReal p q) ≤ InformationTheory.klDiv P Q := by
-    rw [hchain, add_assoc]; exact le_self_add
-  have hle' : InformationTheory.klBerReal p q ≤ (InformationTheory.klDiv P Q).toReal := by
-    have := (ENNReal.ofReal_le_iff_le_toReal hKL).mp hle
-    exact this
-  rw [InformationTheory.klBerReal_eq_neg_binEntropy_sub hq.ne' hq'.ne] at hle'
+  have hP := hasLaw_indicator_one_bernoulliMeasure (M := ℝ) (P := P) hA.nullMeasurableSet
+  have hQ := hasLaw_indicator_one_bernoulliMeasure (M := ℝ) (P := Q) hA.nullMeasurableSet
+  have hmeas : Measurable (A.indicator (1 : X → ℝ)) := measurable_one.indicator hA
+  have hle := InformationTheory.klDiv_map_le P Q hmeas
+  rw [hP.map_eq, hQ.map_eq,
+    klDiv_bernoulliMeasure_eq_bernoulliKullbackLeibler (by norm_num : (1 : ℝ) ≠ 0)
+      _ hq hq'] at hle
+  have hle' := (ENNReal.ofReal_le_iff_le_toReal hKL).mp hle
+  change bernoulliKullbackLeibler p q ≤ (InformationTheory.klDiv P Q).toReal at hle'
+  rw [bernoulliKullbackLeibler_eq_neg_binEntropy_sub hq.ne' hq'.ne] at hle'
   have hb := Real.binEntropy_le_log_two (p := p)
   have hl : Real.log (1 - q) ≤ 0 := Real.log_nonpos (by linarith) (by linarith)
   have : (1 - p) * Real.log (1 - q) ≤ 0 := mul_nonpos_of_nonneg_of_nonpos (by linarith) hl

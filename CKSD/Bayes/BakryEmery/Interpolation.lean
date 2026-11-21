@@ -1,5 +1,5 @@
 module
-import TauCeti.MeasureTheory.Integral.PrekopaLeindler
+import TauCeti.MeasureTheory.Integral.PrekopaLeindler.Basic
 import Mathlib.Analysis.Calculus.ParametricIntegral
 public import Mathlib.Analysis.Calculus.Gradient.Basic
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic

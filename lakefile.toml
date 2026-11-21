@@ -17,14 +17,9 @@ name = "CKSD"
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "6135ffb78e8bcd3fcc8ec02f3f82ea0b0737358b"
+rev = "v4.36.0"
 
 [[require]]
 name = "TauCeti"
 git = "https://github.com/TauCetiProject/TauCeti"
-rev = "afa08a3ed16fb167e35de371afb1eb03fbc5913a"
-
-[[require]]
-name = "Statlib"
-git = "https://github.com/stat-lib/statlib"
-rev = "eeaac0283690efaa60c31115400cf561836baeb9"
+rev = "v4.36.0"

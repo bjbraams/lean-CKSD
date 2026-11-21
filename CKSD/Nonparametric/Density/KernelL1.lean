@@ -1,7 +1,7 @@
 module
 
 public import CKSD.Nonparametric.Basic
-import TauCeti.Probability.McDiarmid
+import TauCeti.Probability.McDiarmid.Basic
 import TauCeti.MeasureTheory.Function.Lp.Translation
 import TauCeti.Probability.Moments.SampleMean
 import Mathlib.MeasureTheory.Measure.TightNormed
@@ -734,8 +734,8 @@ theorem measureReal_le_integral_abs_finiteKernelDensityEstimator_sub_le {K f : �
       ∫ y, (∫ t, |finiteKernelDensityEstimator K h y t - f t|) ∂(Measure.pi fun _ : Fin n ↦ P)} ≤
       Real.exp (-(n * ε ^ 2) / (2 * (∫ u, |K u|) ^ 2)) := by
   have hκ : 0 ≤ ∫ u, |K u| := integral_nonneg fun _ ↦ abs_nonneg _
-  have hsub := TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences_fin P
-    (fun x : Fin n → ℝ ↦ ∫ t, |finiteKernelDensityEstimator K h x t - f t|)
+  have hsub := TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences_fin
+    (fun _ : Fin n ↦ P) (fun x : Fin n → ℝ ↦ ∫ t, |finiteKernelDensityEstimator K h x t - f t|)
     (measurable_integral_abs_finiteKernelDensityEstimator_sub hKm hfm n h)
     (2 * (∫ u, |K u|) / n)
     (fun x i b ↦ abs_integral_abs_finiteKernelDensityEstimator_update_sub_le hK hf hh x i b)

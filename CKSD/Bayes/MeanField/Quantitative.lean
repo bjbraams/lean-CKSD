@@ -81,7 +81,7 @@ theorem sq_intervalIntegral_le_length_mul_integral_sq (r : ℝ → ℝ) (hr : Co
     {T : ℝ} (hT : 0 ≤ T) :
     (∫ s in (0 : ℝ)..T, r s) ^ 2 ≤ T * ∫ s in (0 : ℝ)..T, r s ^ 2 := by
   have h := TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq (μ := volume) r
-    (Ioc 0 T) measure_Ioc_lt_top.ne hr.integrableOn_Ioc (hr.pow 2).integrableOn_Ioc
+    (Ioc 0 T) measure_Ioc_lt_top.ne (hr.pow 2).integrableOn_Ioc
   rwa [Real.volume_real_Ioc_of_le hT, sub_zero, ← intervalIntegral.integral_of_le hT,
     ← intervalIntegral.integral_of_le hT] at h
 

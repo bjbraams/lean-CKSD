@@ -1,9 +1,9 @@
 module
 
 import CKSD.Processes.Independence
-import Statlib.Testing.Sequential.Wald
-import Statlib.ForMathlib.MeasureTheory.Measure.Bool
+import Mathlib.MeasureTheory.Integral.DominatedConvergence
 import Mathlib.Probability.Martingale.OptionalStopping
+import Mathlib.Probability.Independence.Integration
 import CKSD.Asymptotics.Basic
 public import CKSD.Inference.Basic
 public import Mathlib.Order.CompletePartialOrder
@@ -17,9 +17,8 @@ public import Mathlib.Probability.Martingale.Basic
 
 * `CKSD.integrable_stopped_sum`, `CKSD.integral_stopped_sum_eq` (GAPS 106.37): Wald's
   identity `𝔼 ∑_{i < N} X_i = 𝔼 N · 𝔼 X_0` for identically distributed integrable summands,
-  each independent of the event `{i < N}`. The proof uses Rémy Degenne's general stopped-sum
-  theorem in `Statlib.Testing.Sequential.Wald`, with a zero term prepended to account for the
-  convention of summing over `range N`.
+  each independent of the event `{i < N}`. A sum of indicators represents the stopped sum and
+  the expectation of the stopping time.
 * `CKSD.measure_iSup_supermartingale_ge_le` (GAPS 106.38): Ville's inequality
   `P(sup_n M_n ≥ 1/α) ≤ α` for a nonnegative supermartingale with `M_0 ≤ 1`, by optional
   stopping of the submartingale `-M` at the hitting time of a level capped at a finite horizon.
@@ -41,6 +40,37 @@ namespace CKSD
 
 attribute [local instance] Classical.propDecidable
 
+/-- A stopped sum is a series of terms restricted to the events `i < N`.
+This is the strict-inequality form of the indicator identity in Statlib's layer-cake development. -/
+private theorem sum_range_eq_tsum_indicator_lt {Ω M : Type*} [AddCommMonoid M]
+    [TopologicalSpace M] (X : ℕ → Ω → M) (N : Ω → ℕ) (ω : Ω) :
+    ∑ i ∈ Finset.range (N ω), X i ω = ∑' i, {ω | i < N ω}.indicator (X i) ω := by
+  rw [tsum_eq_sum (s := Finset.range (N ω))]
+  · exact Finset.sum_congr rfl fun i hi ↦ (indicator_of_mem (Finset.mem_range.mp hi) _).symm
+  · exact fun i hi ↦ indicator_of_notMem (fun h ↦ hi (Finset.mem_range.mpr h)) _
+
+/-- The sum of the strict tail probabilities is the expectation of an integrable natural
+stopping time. -/
+private theorem hasSum_measureReal_lt {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω}
+    [IsFiniteMeasure μ] {N : Ω → ℕ} (hN : Measurable N)
+    (hNi : Integrable (fun ω ↦ (N ω : ℝ)) μ) :
+    HasSum (fun i ↦ μ.real {ω | i < N ω}) (∫ ω, (N ω : ℝ) ∂μ) := by
+  have hA (i : ℕ) : MeasurableSet {ω | i < N ω} := measurableSet_lt measurable_const hN
+  have hpoint (ω : Ω) :
+      (∑' i, {ω | i < N ω}.indicator (fun _ ↦ (1 : ℝ≥0∞)) ω) = (N ω : ℝ≥0∞) := by
+    rw [← sum_range_eq_tsum_indicator_lt (fun _ _ ↦ 1)]
+    simp
+  have htail : (∑' i, μ {ω | i < N ω}) = ENNReal.ofReal (∫ ω, (N ω : ℝ) ∂μ) := by
+    rw [ofReal_integral_eq_lintegral_ofReal hNi (ae_of_all _ fun _ ↦ by positivity)]
+    simp only [ENNReal.ofReal_natCast]
+    rw [← funext hpoint, lintegral_tsum fun i ↦ (measurable_const.indicator (hA i)).aemeasurable]
+    exact tsum_congr fun i ↦ (lintegral_indicator_one (hA i)).symm
+  have h := ENNReal.hasSum_toReal (f := fun i ↦ μ {ω | i < N ω})
+    (by rw [htail]; exact ENNReal.ofReal_ne_top)
+  have hnonneg : 0 ≤ ∫ ω, (N ω : ℝ) ∂μ := integral_nonneg fun _ ↦ Nat.cast_nonneg _
+  rwa [← ENNReal.tsum_toReal_eq (fun _ ↦ measure_ne_top _ _), htail,
+    ENNReal.toReal_ofReal hnonneg] at h
+
 /-- Wald's stopped-sum identity in conjunction form; see
 `integrable_stopped_sum` and `integral_stopped_sum_eq`. -/
 private theorem integrable_stopped_sum_and_integral_eq {Ω : Type*} [MeasurableSpace Ω]
@@ -54,13 +84,12 @@ private theorem integrable_stopped_sum_and_integral_eq {Ω : Type*} [MeasurableS
   have hlaw (i : ℕ) : IdentDistrib (X i) id μ P :=
     ⟨(hX i).aemeasurable, measurable_id.aemeasurable, by simp [(hX i).map_eq]⟩
   have hXi (i : ℕ) : Integrable (X i) μ := (hlaw i).integrable_iff.mpr hP
-  have hXmean (i : ℕ) : (∫ ω, X i ω ∂μ) = ∫ t, t ∂P := (hlaw i).integral_eq
   have hset (i : ℕ) (f : ℝ → ℝ) (hf : Measurable f) :
       (∫ ω in {ω | i < N ω}, f (X i ω) ∂μ) =
         μ.real {ω | i < N ω} * ∫ t, f t ∂P := by
     let b : Ω → Bool := fun ω ↦ decide (i < N ω)
-    have hb : Measurable b :=
-      measurable_decide_mem (measurableSet_lt measurable_const hN)
+    have hA_meas : MeasurableSet {ω | i < N ω} := measurableSet_lt measurable_const hN
+    have hb : Measurable b := measurable_to_bool (by simpa [b, Set.preimage] using hA_meas)
     have hA : MeasurableSet[(inferInstance : MeasurableSpace Bool).comap b]
         {ω | i < N ω} := by
       apply MeasurableSpace.measurableSet_comap.mpr
@@ -72,47 +101,45 @@ private theorem integrable_stopped_sum_and_integral_eq {Ω : Type*} [MeasurableS
       hf.aestronglyMeasurable]
     congr 1
     simpa only [Function.comp_apply, id_eq] using ((hlaw i).comp hf).integral_eq
-  let Y : ℕ → Ω → ℝ := fun n ↦ match n with
-    | 0 => fun _ ↦ 0
-    | n + 1 => X n
-  have hYi (n : ℕ) : Integrable (Y n) μ := by
-    cases n with
-    | zero => simp [Y]
-    | succ n => exact hXi n
-  have hYind (n : ℕ) : (∫ ω in {ω | n ≤ N ω}, Y n ω ∂μ) =
-      μ.real {ω | n ≤ N ω} * ∫ ω, Y n ω ∂μ := by
-    cases n with
-    | zero => simp [Y]
-    | succ n =>
-        simpa only [Y, Nat.succ_le_iff, id_eq, (hlaw n).integral_eq] using
-          hset n id measurable_id
-  have hYsum : Summable (fun n ↦ ∫ ω in {ω | n ≤ N ω}, |Y n ω| ∂μ) := by
-    have htail := (hasSum_measureReal_le hNi).summable.mul_right (∫ t, |t| ∂P)
-    apply htail.of_nonneg_of_le (fun n ↦ integral_nonneg fun ω ↦ abs_nonneg _)
-    intro n
-    cases n with
-    | zero =>
-        simpa [Y] using mul_nonneg
-          (show 0 ≤ μ.real {ω | 0 ≤ N ω} from measureReal_nonneg)
-          (integral_nonneg (μ := P) fun t ↦ abs_nonneg t)
-    | succ n =>
-        apply le_of_eq
-        simpa only [Y, Nat.succ_le_iff] using (hset n (fun t : ℝ ↦ |t|) continuous_abs.measurable)
-  have hsum (ω : Ω) : (∑ i ∈ Finset.Iic (N ω), Y i ω) =
-      ∑ i ∈ Finset.range (N ω), X i ω := by
-    rw [← Nat.range_succ_eq_Iic]
-    simp [Finset.sum_range_succ', Y]
-  have hmeanSum (ω : Ω) : (∑ i ∈ Finset.Iic (N ω), ∫ ω', Y i ω' ∂μ) =
-      (N ω : ℝ) * ∫ t, t ∂P := by
-    rw [← Nat.range_succ_eq_Iic, Finset.sum_range_succ']
-    simp [Y, hXmean]
+  let A : ℕ → Set Ω := fun i ↦ {ω | i < N ω}
+  let F : ℕ → Ω → ℝ := fun i ↦ (A i).indicator (X i)
+  have hA (i : ℕ) : MeasurableSet (A i) := measurableSet_lt measurable_const hN
+  have hF (i : ℕ) : Integrable (F i) μ := (hXi i).indicator (hA i)
+  have htail := hasSum_measureReal_lt hN hNi
+  have hnorm (i : ℕ) : (∫ ω, ‖F i ω‖ ∂μ) = μ.real (A i) * ∫ t, |t| ∂P := by
+    simp_rw [F, norm_indicator_eq_indicator_norm, Real.norm_eq_abs]
+    rw [integral_indicator (hA i)]
+    exact hset i abs continuous_abs.measurable
+  have hsum : Summable (fun i ↦ ∫ ω, ‖F i ω‖ ∂μ) := by
+    simp_rw [hnorm]
+    exact htail.summable.mul_right _
+  have hpoint (ω : Ω) := sum_range_eq_tsum_indicator_lt X N ω
+  simp_rw [hpoint]
   refine ⟨?_, ?_⟩
-  · simpa only [hsum] using integrable_sum_Iic_of_summable
-      (fun n ↦ (hYi n).integrableOn) hN hYsum
-  · rw [← integral_congr_ae (ae_of_all μ hsum),
-      integral_sum_Iic_eq_integral_sum_Iic_integral hYi hN hYind hYsum]
-    simp_rw [hmeanSum]
-    rw [integral_mul_const]
+  · refine ⟨?_, ?_⟩
+    · refine aestronglyMeasurable_of_tendsto_ae (u := atTop)
+        (f := fun n ω ↦ ∑ i ∈ Finset.range n, F i ω)
+        (fun n ↦ Finset.aestronglyMeasurable_fun_sum _ fun i _ ↦ (hF i).1) ?_
+      exact ae_of_all _ fun ω ↦
+        (summable_of_ne_finset_zero (s := Finset.range (N ω)) fun i hi ↦
+          indicator_of_notMem (fun h ↦ hi (Finset.mem_range.mpr h)) _).hasSum.tendsto_sum_nat
+    · calc
+        ∫⁻ ω, ‖∑' i, F i ω‖ₑ ∂μ ≤ ∫⁻ ω, ∑' i, ‖F i ω‖ₑ ∂μ :=
+          lintegral_mono fun _ ↦ enorm_tsum_le_tsum_enorm
+        _ = ∑' i, ∫⁻ ω, ‖F i ω‖ₑ ∂μ := lintegral_tsum fun i ↦ (hF i).1.enorm
+        _ = ∑' i, ENNReal.ofReal (∫ ω, ‖F i ω‖ ∂μ) :=
+          tsum_congr fun i ↦ (ofReal_integral_norm_eq_lintegral_enorm (hF i)).symm
+        _ = ENNReal.ofReal (∑' i, ∫ ω, ‖F i ω‖ ∂μ) :=
+          (ENNReal.ofReal_tsum_of_nonneg (fun i ↦ integral_nonneg fun _ ↦ norm_nonneg _) hsum).symm
+        _ < ∞ := ENNReal.ofReal_lt_top
+  · change (∫ ω, ∑' i, F i ω ∂μ) = _
+    rw [← integral_tsum_of_summable_integral_norm hF hsum]
+    have hmean (i : ℕ) : (∫ ω, F i ω ∂μ) = μ.real (A i) * ∫ t, t ∂P := by
+      dsimp only [F]
+      rw [integral_indicator (hA i)]
+      exact hset i id measurable_id
+    simp_rw [hmean]
+    exact (htail.mul_right _).tsum_eq
 
 /-- GAPS 106.37, Wald's stopped-sum identity under the past/future independence condition,
 integrability part: if the `X i` have a common integrable law `P`, `N` is integrable, and each

@@ -11,8 +11,9 @@ import CKSD.Bayes.Langevin.ULA.Transport
 import CKSD.Bayes.Langevin.Hamiltonian.Invariant
 import CKSD.Bayes.JKO.Energy
 public import CKSD.Nonparametric.Basic
+import Mathlib.Analysis.InnerProductSpace.Calculus
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
-public import TauCeti.Probability.Concentration.PoincareLogSobolev
+public import TauCeti.Probability.Concentration.Poincare.LogSobolev
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
 
 /-!

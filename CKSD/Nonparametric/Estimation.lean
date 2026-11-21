@@ -3,7 +3,7 @@ module
 public import CKSD.Nonparametric.Basic
 import CKSD.Inference.Density
 import CKSD.Asymptotics.Lindeberg.Basic
-import TauCeti.Analysis.Calculus.Taylor
+import TauCeti.Analysis.Calculus.Taylor.Basic
 import CKSD.Nonparametric.Density.KernelL1
 public import Mathlib.Probability.Distributions.Gaussian.Real
 import CKSD.Asymptotics.Basic
@@ -88,8 +88,8 @@ theorem measure_kolmogorovSmirnovStatistic_gt_le {Ω : Type*} [MeasurableSpace �
 private theorem abs_sub_sub_mul_deriv_le {f : ℝ → ℝ} (hf : ContDiff ℝ 2 f) {C : ℝ}
     (hC : ∀ x, |deriv (deriv f) x| ≤ C) (t s : ℝ) :
     |f (t + s) - f t - s * deriv f t| ≤ C * s ^ 2 / 2 := by
-  have h := TauCeti.abs_sub_taylorWithinEval_le (n := 1) (f := f) (hf.of_le (by norm_num))
-    (M := C) (fun x ↦ by simpa [iteratedDeriv_succ] using hC x) t (t + s)
+  have h := TauCeti.abs_sub_taylorWithinEval_le (n := 1) (x₀ := t) (x := t + s)
+    (fun _ _ ↦ hf.contDiffAt) (fun x _ ↦ by simpa [iteratedDeriv_succ] using hC x)
   have htay : taylorWithinEval f 1 univ t (t + s) = f t + s * deriv f t := by
     simp [taylor_within_apply, iteratedDerivWithin_univ, iteratedDeriv_succ]
   rw [htay, add_sub_cancel_left, sq_abs] at h

@@ -3,7 +3,7 @@ module
 public import CKSD.Nonparametric.Basic
 import TauCeti.InformationTheory.KullbackLeibler.Pinsker
 import TauCeti.Probability.Distributions.Tilted
-import Statlib.Divergence.KullbackLeibler.CondKL
+import CKSD.Inference.Divergence.Basic
 public import Mathlib.InformationTheory.KullbackLeibler.Basic
 public import Mathlib.Probability.Distributions.Gaussian.Real
 
@@ -20,7 +20,7 @@ variation at most `√(‖δ‖² / (4v))`. Total variation is in the statistica
 
 * `CKSD.klDiv_gaussianReal_gaussianReal`: `KL(N(a, v), N(b, v)) = (b - a)² / (2v)`, computed
   by exponential tilting (TauCeti's `TauCeti.Probability.gaussianReal_tilted_mul`).
-* `CKSD.klDiv_pi_gaussianReal`: the product formula, from Statlib's tensorization `klDiv_pi`.
+* `CKSD.klDiv_pi_gaussianReal`: the product formula, by `CKSD.klDiv_pi`.
 * `CKSD.totalVariationDistance_le_sqrt_toReal_klDiv`: Pinsker's inequality
   `TV(P, Q) ≤ √(KL(P, Q) / 2)`, from TauCeti's `TauCeti.two_mul_sq_measureReal_sub_le_klDiv`.
 * `CKSD.totalVariationDistance_pi_gaussianReal_le`: `TV ≤ √(∑ (bᵢ - aᵢ)² / (4v))` for

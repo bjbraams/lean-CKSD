@@ -137,9 +137,9 @@ theorem nonempty_moreauYosidaResolvent_jkoFreeEnergy
     (V : E → ℝ) (hVc : Continuous V) (hV : ∀ x, 0 ≤ V x) (τ : ℝ≥0) (hτ : 0 < τ)
     (μ : TauCeti.WassersteinSpace 2 E) :
     (TauCeti.moreauYosidaResolvent (jkoFreeEnergy V) τ μ).Nonempty := by
-  obtain ⟨δ, hδ⟩ := exists_moreauYosida_jkoFreeEnergy_ne_bot V hV (τ + 1) (by positivity)
+  obtain ⟨δ, hδ⟩ := exists_moreauYosida_jkoFreeEnergy_ne_bot V hV (τ + 1) (add_pos hτ one_pos)
   exact TauCeti.WassersteinSpace.moreauYosidaResolvent_nonempty_of_properSpace
     (p := 2) (X := E) (φ := jkoFreeEnergy V) (τ₀ := τ + 1) (μ₀ := δ)
     (fun {v} {ν} hv hν ↦ jkoFreeEnergy_le_liminf_of_isBounded V hVc hV (u := v) (ν := ν) hv hν)
-    hτ (lt_add_of_pos_right τ one_pos) hδ μ
+    (lt_add_of_pos_right τ one_pos) hδ μ
 end CKSD

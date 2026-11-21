@@ -1,16 +1,14 @@
 module
 
 public import CKSD.Learning.Privacy.Mechanisms
-public import Statlib.ForMathlib.InformationTheory.KullbackLeibler.Bernoulli
+public import CKSD.Inference.Divergence.Basic
 import Mathlib.Analysis.Complex.ExponentialBounds
-import Statlib.Divergence.BretagnolleHuber
-import Statlib.Divergence.KullbackLeibler.CondKL
 
 /-!
 # Two-point lower bounds for central private mean estimation
 
 Bernoulli alternatives, testing bounds, and privacy contraction yield a lower bound for the
-central mean risk. Divergence inequalities use Statlib. Source: GAPS 107.66.
+central mean risk. Source: GAPS 107.66.
 -/
 
 public section
@@ -105,8 +103,8 @@ theorem centralMeanRisk_add_centralMeanRisk_ge {n : ℕ} (M : Kernel (Fin n → 
 /-- The binary Kullback–Leibler divergence is at most the χ² divergence
 `(p - q)² / (q (1 - q))`. -/
 theorem klBerReal_le_sq_div {p q : ℝ} (hp0 : 0 ≤ p) (hp1 : p ≤ 1) (hq0 : 0 < q) (hq1 : q < 1) :
-    InformationTheory.klBerReal p q ≤ (p - q) ^ 2 / (q * (1 - q)) := by
-  rw [InformationTheory.klBerReal_apply]
+    bernoulliKullbackLeibler p q ≤ (p - q) ^ 2 / (q * (1 - q)) := by
+  rw [bernoulliKullbackLeibler]
   have h1 : p * Real.log (p / q) ≤ p * (p / q - 1) := by
     rcases eq_or_lt_of_le hp0 with rfl | hp
     · simp
@@ -126,9 +124,8 @@ theorem klBerReal_le_sq_div {p q : ℝ} (hp0 : 0 ≤ p) (hp1 : p ≤ 1) (hq0 : 0
 /-- The non-private part of the central lower bound: for every mechanism some Bernoulli law
 `Ber(1, 0, p)` has mean squared error at least `1 / (192 n)`. The two laws `Ber(1/2)` and
 `Ber(1/2 + δ)` with `δ = 1/(2√n)` have product laws at Kullback–Leibler divergence at most `1`
-(Statlib's `klDiv_pi_const` and `klDiv_bernoulliMeasure_eq_klBerReal`), so by the
-Bretagnolle–Huber inequality (Statlib's `exp_neg_klDiv_le_two_sub_tvDist`) and data processing
-(`tvDist_comp_le`) no test separates them well. -/
+by finite-product tensorization. Pinsker's inequality and total variation contraction
+bound the sum of the two testing errors from below. -/
 theorem exists_bernoulli_centralMeanRisk_ge_inv {n : ℕ} (hn : 0 < n)
     (M : Kernel (Fin n → ℝ) ℝ) [IsMarkovKernel M] :
     ∃ p : unitInterval,
@@ -153,30 +150,31 @@ theorem exists_bernoulli_centralMeanRisk_ge_inv {n : ℕ} (hn : 0 < n)
   set A : Set ℝ := {y | ((a + b : ℝ)) / 2 ≤ y}
   have hA : MeasurableSet A := measurableSet_Ici
   -- Kullback–Leibler divergence of the product laws
-  have hkl : InformationTheory.klBerReal b a ≤ 1 / n := by
+  have hkl : bernoulliKullbackLeibler b a ≤ 1 / n := by
     refine (klBerReal_le_sq_div b.2.1 b.2.2 (by rw [ha]; norm_num) (by rw [ha]; norm_num)).trans
       (le_of_eq ?_)
     rw [ha, hb, show ((1 / 2 + δ - 1 / 2 : ℝ)) ^ 2 / (1 / 2 * (1 - 1 / 2)) = 4 * δ ^ 2 by ring,
       hδ2]
     field_simp
   have hKL : InformationTheory.klDiv μb μa =
-      n * ENNReal.ofReal (InformationTheory.klBerReal b a) := by
+      n * ENNReal.ofReal (bernoulliKullbackLeibler b a) := by
     rw [klDiv_pi_const, Fintype.card_fin,
-      InformationTheory.klDiv_bernoulliMeasure_eq_klBerReal (by norm_num : (1 : ℝ) ≠ 0) b]
-    · intro h; have := congrArg Subtype.val h; rw [ha] at this; norm_num at this
-    · intro h; have := congrArg Subtype.val h; rw [ha] at this; norm_num at this
+      klDiv_bernoulliMeasure_eq_bernoulliKullbackLeibler (by norm_num : (1 : ℝ) ≠ 0) b]
+    · rw [ha]; norm_num
+    · rw [ha]; norm_num
   have hKLne : InformationTheory.klDiv μb μa ≠ ⊤ := by
     rw [hKL]; exact ENNReal.mul_ne_top (ENNReal.natCast_ne_top n) ENNReal.ofReal_ne_top
   have hKLr : (InformationTheory.klDiv μb μa).toReal ≤ 1 := by
     rw [hKL, ENNReal.toReal_mul, ENNReal.toReal_natCast,
-      ENNReal.toReal_ofReal (InformationTheory.klBerReal_nonneg b.2.1 b.2.2
+      ENNReal.toReal_ofReal (bernoulliKullbackLeibler_nonneg b.2.1 b.2.2
         (by rw [ha]; norm_num) (by rw [ha]; norm_num))]
-    calc (n : ℝ) * InformationTheory.klBerReal b a ≤ n * (1 / n) :=
+    calc (n : ℝ) * bernoulliKullbackLeibler b a ≤ n * (1 / n) :=
           mul_le_mul_of_nonneg_left hkl (by positivity)
       _ = 1 := by field_simp
-  have hBH := exp_neg_klDiv_le_two_sub_tvDist μb μa hKLne
-  have hexp : Real.exp (-1) ≤ Real.exp (-(InformationTheory.klDiv μb μa).toReal) :=
-    Real.exp_le_exp.mpr (by linarith)
+  have hKL_le : InformationTheory.klDiv μb μa ≤ 1 := by
+    apply (ENNReal.toReal_le_toReal hKLne ENNReal.one_ne_top).mp
+    simpa only [ENNReal.toReal_one] using hKLr
+  have hOverlap := exp_neg_one_le_two_sub_tvDist_of_klDiv_le_one μb μa hKL_le
   have hTV := tvDist_comp_le μb μa M
   have htest : 1 / 6 ≤ (M ∘ₘ μa).real A + (M ∘ₘ μb).real Aᶜ :=
     one_div_six_le_measureReal_add_measureReal_compl (by linarith) hA

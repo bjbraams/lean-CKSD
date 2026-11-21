@@ -3,8 +3,7 @@ module
 public import CKSD.Learning.Privacy.Mechanisms
 public import CKSD.Nonparametric.Basic
 import CKSD.Learning.Privacy.Basic
-import Statlib.Divergence.BretagnolleHuber
-import Statlib.Divergence.KullbackLeibler.CondKL
+import CKSD.Inference.Divergence.Basic
 
 /-!
 # Local private mean estimation
@@ -135,13 +134,7 @@ theorem exists_bernoulli_localMeanRisk_ge {n : ℕ} (hn : 0 < n) {ε : ℝ} (hε
         rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul,
           ENNReal.ofReal_mul (Nat.cast_nonneg (α := ℝ) n), ENNReal.ofReal_natCast]
       _ ≤ ENNReal.ofReal 1 := ENNReal.ofReal_le_ofReal (by nlinarith)
-  have hKLne : InformationTheory.klDiv μb μa ≠ ⊤ := ne_top_of_le_ne_top ENNReal.ofReal_ne_top hKL
-  have hKLr : (InformationTheory.klDiv μb μa).toReal ≤ 1 := by
-    have := ENNReal.toReal_mono ENNReal.ofReal_ne_top hKL
-    rwa [ENNReal.toReal_ofReal zero_le_one] at this
-  have hBH := exp_neg_klDiv_le_two_sub_tvDist μb μa hKLne
-  have hexp : Real.exp (-1) ≤ Real.exp (-(InformationTheory.klDiv μb μa).toReal) :=
-    Real.exp_le_exp.mpr (by linarith)
+  have hOverlap := exp_neg_one_le_two_sub_tvDist_of_klDiv_le_one μb μa (by simpa using hKL)
   have hTV := tvDist_map_le μb μa hest
   have htest : 1 / 6 ≤ (μa.map est).real A + (μb.map est).real Aᶜ :=
     one_div_six_le_measureReal_add_measureReal_compl (by linarith) hA

@@ -1,5 +1,5 @@
 module
-import TauCeti.Analysis.SpecialFunctions.Gamma
+import TauCeti.Analysis.SpecialFunctions.Gamma.Basic
 public import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
 /-!
 # Integer multiplication of Gamma quotients

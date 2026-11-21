@@ -9,7 +9,7 @@ public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 
 The semiparametric convolution bound is stated for a family of one-dimensional submodels
 through a fixed law `P`, indexed by a parametric direction and a nuisance score taken from a
-linear space `G` of `L²(P)` scores. Quadratic-mean differentiability is Statlib's
+linear space `G` of `L²(P)` scores. Quadratic-mean differentiability uses CKSD's
 (through the adapter `HasQuadraticMeanDerivAt`), relative to a sigma-finite dominating measure.
 This ensures that the Radon–Nikodym expressions represent the actual path laws; absolute
 continuity alone does not suffice for an arbitrary nonsigma-finite reference measure. Efficient

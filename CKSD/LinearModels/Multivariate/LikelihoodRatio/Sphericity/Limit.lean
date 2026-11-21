@@ -99,8 +99,8 @@ theorem tendstoInDistribution_neg_natCast_mul_log_of_beta_product_law
       (fun (n : ℕ) (x : ι → ℝ) ↦ 2 * (-(t n) * Real.log (∏ i, x i)))
       atTop id Q (gammaMeasure (∑ i, b i) (1 / 2)) := by
     refine ⟨fun _ ↦ by fun_prop, measurable_id.aemeasurable, ?_⟩
-    have hscale := TauCeti.Probability.gammaMeasure_map_const_mul hbS zero_lt_one
-      (c := 2) (by norm_num)
+    have hscale := TauCeti.Probability.gammaMeasure_map_const_mul
+      (a := ∑ i, b i) (r := 1) (c := 2) (by norm_num)
     have hlimit : (gammaMeasure (∑ i, b i) 1).map ((fun x : ℝ ↦ 2 * x) ∘ id) =
         (gammaMeasure (∑ i, b i) (1 / 2)).map id := by
       simpa only [Function.comp_id, Measure.map_id] using hscale

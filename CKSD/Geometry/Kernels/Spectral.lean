@@ -222,12 +222,11 @@ theorem exists_probabilityMeasures_charFun_sub_eq_of_even_bump [FiniteDimensiona
   have hgc : Continuous g := Complex.continuous_re.comp G.continuous
   have hΦeven (x : E) : Φ (-x) = conj (Φ x) := by
     simp [Φ, smul_neg, hψeven]
-  have hΦi : Integrable Φ := hΦ.continuous.integrable_of_hasCompactSupport hΦc
   have hGre (x : E) : G x = (g x : ℂ) := by
     -- unfold the local functions `G` and `g`
     change (𝓕⁻ F) x = (((𝓕⁻ F) x).re : ℂ)
     rw [SchwartzMap.fourierInv_coe]
-    exact TauCeti.fourierInv_eq_re_of_map_neg_eq_conj Φ hΦeven hΦi x
+    exact TauCeti.fourierInv_eq_re_of_map_neg_eq_conj Φ hΦeven x
   have hFG : 𝓕 (G : E → ℂ) = Φ := by
     have heq : (𝓕 G : SchwartzMap E ℂ) = F := fourier_fourierInv_eq F
     funext w

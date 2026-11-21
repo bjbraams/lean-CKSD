@@ -3,7 +3,6 @@ module
 public import CKSD.Asymptotics.Basic
 public import CKSD.Asymptotics.LAN.LikelihoodTransfer
 import CKSD.Inference.Density
-public import Statlib.Contiguity.Def
 import CKSD.Asymptotics.LikelihoodSupport
 import Mathlib.MeasureTheory.Measure.Decomposition.IntegralRNDeriv
 
@@ -12,7 +11,7 @@ import Mathlib.MeasureTheory.Measure.Decomposition.IntegralRNDeriv
 
 ## Main results
 
-* `CKSD.isContiguous_iff_contiguous5`: `CKSD.IsContiguous` is Statlib's `Contiguous5`.
+* `CKSD.isContiguous_iff_tendsto_apply`: contiguity tested on sequences of measurable events.
 * `CKSD.isContiguous_of_integral_likelihood_ratio_limit_eq_one`: Le Cam's first lemma
   (GAPS 102.12).
 * `CKSD.tendstoInDistribution_of_log_likelihood_ratio`: Le Cam's third lemma, for observation spaces
@@ -817,12 +816,14 @@ theorem tendstoInDistribution_score_and_log_likelihood_ratio_expansion_of_dqm
     tendstoInMeasure_log_likelihood_ratio_sub_of_dqm mu nu P hP f hf hpos theta₀ score hs
       hs2 hdqm X hiid⟩
 
-/-- For probability measures, `CKSD.IsContiguous` is Statlib's direct set formulation
-`Contiguous5` of contiguity. -/
-theorem isContiguous_iff_contiguous5 {Ω : Type*} [MeasurableSpace Ω]
+/-- For probability measures, contiguity preserves event probabilities tending to zero.
+This is the measurable-set criterion represented by Statlib's `Contiguous5`. -/
+theorem isContiguous_iff_tendsto_apply {Ω : Type*} [MeasurableSpace Ω]
     (P Q : ℕ → ProbabilityMeasure Ω) :
     IsContiguous (fun n ↦ (P n : Measure Ω)) (fun n ↦ (Q n : Measure Ω)) ↔
-      _root_.Contiguous5 atTop P Q := by
+      (∀ ⦃A : ℕ → Set Ω⦄, (∀ n, MeasurableSet (A n)) →
+        Tendsto (fun n ↦ P n (A n)) atTop (𝓝 0) →
+        Tendsto (fun n ↦ Q n (A n)) atTop (𝓝 0)) := by
   constructor
   · intro h A hA hP
     apply NNReal.tendsto_coe.mp

@@ -2,6 +2,7 @@ module
 
 public import CKSD.Geometry.Basic
 import CKSD.Geometry.Persistence.Basic
+import TauCeti.MeasureTheory.Function.LpSeminorm.EDist
 import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Pushforward
 import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Quantile.Isometry
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
@@ -221,7 +222,7 @@ theorem abs_distanceToMeasure_sub_le_wasserstein {d : ℕ}
       MemLp id 2 R → TauCeti.HasFiniteMoment 2 R := by
     intro R _ hR
     refine TauCeti.hasFiniteMoment_def.2
-      ⟨0, (TauCeti.memLp_dist_iff_memLp_edist (by fun_prop)).1 ?_⟩
+      ⟨0, memLp_dist_iff_memLp_edist.1 ?_⟩
     simpa [dist_zero_right] using hR.norm
   have hPm := hmom P hP
   have hQm := hmom Q hQ
@@ -238,8 +239,7 @@ theorem abs_distanceToMeasure_sub_le_wasserstein {d : ℕ}
   set μm := volume.restrict (Ioc (0 : ℝ) m)
   have hle : μm ≤ volume.restrict (Ioo (0 : ℝ) 1) := by
     refine Measure.restrict_mono_ae ?_
-    refine (Filter.EventuallyLE.trans ?_ Ioo_ae_eq_Ioc.symm.le)
-    exact Eventually.of_forall (Ioc_subset_Ioc_right hm.2)
+    exact (Ioc_subset_Ioc_right hm.2).eventuallySubset.trans Ioo_ae_eq_Ioc.symm.subset
   have hqPm : MemLp νP.quantile 2 μm := hqP.mono_measure hle
   have hqQm : MemLp νQ.quantile 2 μm := hqQ.mono_measure hle
   -- the distances to the measures as `L²` norms

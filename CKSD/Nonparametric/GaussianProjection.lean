@@ -2,7 +2,7 @@ module
 
 public import Mathlib.Probability.Distributions.Gaussian.Multivariate
 import TauCeti.Probability.Distributions.Gaussian.Affine
-import Statlib.ForMathlib.MeasureTheory.Integral.Pi
+import TauCeti.MeasureTheory.Integral.Pi
 
 /-!
 # Projections of isotropic Gaussian vectors
@@ -20,7 +20,7 @@ orthogonal-projection fits.
   `TauCeti.Probability.multivariateGaussian_one_eq_map_pi`.
 * `CKSD.lintegral_exp_sq_div_gaussianReal`: `E exp(Z² / (4σ²)) = √2` for `Z ~ N(0, σ²)`.
 * `CKSD.lintegral_exp_sum_sq_inner_multivariateGaussian`: for an orthonormal family `v`,
-  `E exp(∑ᵢ ⟪vᵢ, ε⟫² / (4σ²)) = √2 ^ |ι|`, using Statlib's Tonelli theorem for products.
+  `E exp(∑ᵢ ⟪vᵢ, ε⟫² / (4σ²)) = √2 ^ |ι|`, using TauCeti's Tonelli theorem for products.
 * `CKSD.lintegral_exp_norm_starProjection_sq_le`: the same bound for `‖Π_K ε‖²` plus the square
   of one coordinate orthogonal to `K`.
 * `CKSD.norm_sub_starProjection_add_sq`, `CKSD.norm_starProjection_add_sub_sq`,
@@ -153,7 +153,7 @@ theorem lintegral_exp_sum_sq_inner_multivariateGaussian {n : ℕ} (v : ι → Eu
     rw [← ENNReal.ofReal_prod_of_nonneg fun i _ ↦ (Real.exp_pos _).le, ← Real.exp_sum,
       ← Finset.sum_div]
   simp_rw [hprod]
-  rw [lintegral_fintype_prod_eq_prod
+  rw [TauCeti.lintegral_fintype_prod_eq_prod _
     (f := fun _ (w : ℝ) ↦ ENNReal.ofReal (Real.exp (w ^ 2 / (4 * σ ^ 2)))) fun i ↦ by fun_prop]
   simp only [PiLp.zero_apply, lintegral_exp_sq_div_gaussianReal hσ, Finset.prod_const,
     Finset.card_univ]

@@ -1,8 +1,13 @@
+/-
+Copyright (c) 2024 Rémy Degenne. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Rémy Degenne, Lorenzo Luccioli, Bastiaan J Braams
+-/
 module
 
 import CKSD.Inference.Density
-public import Statlib.Divergence.Hellinger.Basic
 public import CKSD.Inference.Basic
+public import Mathlib.MeasureTheory.Measure.Decomposition.RadonNikodym
 
 /-!
 # Hellinger geometry and bounded testing scores
@@ -15,8 +20,9 @@ under a perturbed law `R` differs from the mean under `Q` by at most `2 h(R,Q) h
 The square-root density representation also gives the triangle inequality
 (`CKSD.statisticalHellingerDistance_triangle`), with densities relative to `P + Q + R`.
 
-Statlib supplies `ProbabilityTheory.sqHellinger` and its Radon–Nikodym affinity formula;
-Mathlib supplies density change of measure, Radon–Nikodym chain rules, and Hölder's inequality.
+The Hellinger divergence and its mixture formula are specialized from Statlib's
+`Divergence.Hellinger.Basic` and `Divergence.FDiv.Basic`. The proofs use Mathlib's
+Radon–Nikodym chain rules and Hölder's inequality.
 -/
 
 public section
@@ -26,17 +32,150 @@ open MeasureTheory ProbabilityTheory InformationTheory Filter Set
 open scoped NNReal ENNReal Topology BigOperators
 namespace CKSD
 
-/-- Real Hellinger adapter in the convention `h² = integral (sqrt p - sqrt q)²`
-for probability measures. For arbitrary measures an infinite squared divergence is totalized to
-zero by `ENNReal.toReal`; distance interpretations require finite divergence. -/
+/-- The Hellinger divergence integrand at exponent one half. Its value at infinity is
+the extended limit of the finite-argument formula. -/
+private def hellingerIntegrand (r : ℝ≥0∞) : ℝ≥0∞ :=
+  if r = ∞ then ∞ else ENNReal.ofReal ((1 - Real.sqrt r.toReal) ^ 2)
+
+/-- The extended Hellinger integrand is measurable. -/
+private theorem measurable_hellingerIntegrand : Measurable hellingerIntegrand := by
+  unfold hellingerIntegrand
+  exact (by
+    apply Measurable.ite (measurableSet_singleton ∞)
+    · exact measurable_const
+    · fun_prop)
+
+/-- Squared Hellinger distance, with the full singular mass of the first measure.
+This uses the convention without a factor of one half. The decomposition follows
+Statlib's square-root specialization of its Hellinger divergence. -/
+def squaredStatisticalHellingerDistance {X : Type*} [MeasurableSpace X]
+    (P Q : Measure X) : ℝ≥0∞ :=
+  (∫⁻ x, hellingerIntegrand (P.rnDeriv Q x) ∂Q) + P.singularPart Q univ
+
+/-- Statistical Hellinger distance in the convention `h² = ∫ (√p - √q)²` for probability laws.
+An infinite value of the squared divergence is sent to zero by `ENNReal.toReal`. -/
 def statisticalHellingerDistance {X : Type*} [MeasurableSpace X]
-    (P Q : Measure X) : ℝ := Real.sqrt (2 * (ProbabilityTheory.sqHellinger P Q).toReal)
+    (P Q : Measure X) : ℝ := Real.sqrt (squaredStatisticalHellingerDistance P Q).toReal
 
 /-- Defining equation of `statisticalHellingerDistance`. -/
 theorem statisticalHellingerDistance_def {X : Type*} [MeasurableSpace X] (P Q : Measure X) :
     statisticalHellingerDistance P Q =
-      Real.sqrt (2 * (ProbabilityTheory.sqHellinger P Q).toReal) := by
+      Real.sqrt (squaredStatisticalHellingerDistance P Q).toReal := by
   rw [statisticalHellingerDistance]
+
+/-- The singular mass of `P` relative to `Q` is the `P`-mass where the `Q` density vanishes.
+This argument follows Statlib's Radon–Nikodym decomposition lemma. -/
+private theorem singularPart_univ_eq_rnDeriv_add_eq_zero {X : Type*} [MeasurableSpace X]
+    (P Q : Measure X) [SigmaFinite P] [SigmaFinite Q] :
+    P.singularPart Q univ = P {x | Q.rnDeriv (P + Q) x = 0} := by
+  let N := {x | Q.rnDeriv (P + Q) x = 0}
+  have hN : MeasurableSet N := measurableSet_eq_fun (Q.measurable_rnDeriv _) measurable_const
+  have hQ : Q ≪ P + Q := Measure.AbsolutelyContinuous.rfl.add_right' P
+  have hQN : Q N = 0 := by
+    rw [← Measure.setLIntegral_rnDeriv hQ,
+      setLIntegral_congr_fun hN (g := 0) fun x hx ↦ hx]
+    simp
+  have hac : P.restrict Nᶜ ≪ Q := by
+    refine Measure.AbsolutelyContinuous.mk fun A hA hQA ↦ ?_
+    rw [Measure.restrict_apply hA]
+    refine Measure.AbsolutelyContinuous.rfl.add_right Q ?_
+    rw [← Measure.setLIntegral_rnDeriv hQ,
+      setLIntegral_eq_zero_iff hA (Q.measurable_rnDeriv _)] at hQA
+    rw [← compl_compl (A ∩ Nᶜ), ← mem_ae_iff]
+    filter_upwards [hQA] with x hx hxN
+    exact hxN.2 (hx hxN.1)
+  have hSing : P.singularPart Q = P.restrict N := by
+    refine Measure.singularPart_eq_restrict ?_ hQN
+    rw [← Measure.restrict_apply_univ, ← Measure.singularPart_restrict P Q hN.compl,
+      Measure.singularPart_eq_zero_of_ac hac]
+    simp
+  rw [hSing, Measure.restrict_apply_univ]
+
+/-- Pointwise square-root identity for a positive denominator in the Hellinger perspective. -/
+private theorem mul_hellingerIntegrand_div {p q : ℝ≥0∞} (hp : p ≠ ∞)
+    (hq : q ≠ ∞) (hq0 : q ≠ 0) :
+    q * hellingerIntegrand (p / q) =
+      ENNReal.ofReal ((Real.sqrt p.toReal - Real.sqrt q.toReal) ^ 2) := by
+  have hdiv : p / q ≠ ∞ := ENNReal.div_ne_top hp hq0
+  have hqpos : 0 < q.toReal := ENNReal.toReal_pos hq0 hq
+  have hid : Real.sqrt (p.toReal / q.toReal) * Real.sqrt q.toReal = Real.sqrt p.toReal := by
+    rw [← Real.sqrt_mul (div_nonneg ENNReal.toReal_nonneg hqpos.le),
+      div_mul_cancel₀ _ hqpos.ne']
+  have hsq : Real.sqrt q.toReal * (1 - Real.sqrt (p.toReal / q.toReal)) =
+      -(Real.sqrt p.toReal - Real.sqrt q.toReal) := by
+    rw [mul_sub, mul_one, mul_comm (Real.sqrt q.toReal), hid]
+    ring
+  have heq := congrArg (fun t : ℝ ↦ t ^ 2) hsq
+  rw [mul_pow, Real.sq_sqrt hqpos.le, neg_sq] at heq
+  rw [hellingerIntegrand, ite_eq_right hdiv, ENNReal.toReal_div]
+  conv_lhs => lhs; rw [← ENNReal.ofReal_toReal hq]
+  rw [← ENNReal.ofReal_mul hqpos.le, heq]
+
+/-- The squared Hellinger distance is the integral of the squared difference of the two
+square-root densities with respect to `P + Q`. This is the Hellinger case of Statlib's
+mixture formula for divergences. -/
+theorem squaredStatisticalHellingerDistance_eq_lintegral {X : Type*} [MeasurableSpace X]
+    (P Q : Measure X) [SigmaFinite P] [SigmaFinite Q] :
+    squaredStatisticalHellingerDistance P Q =
+      ∫⁻ x, ENNReal.ofReal ((Real.sqrt ((P.rnDeriv (P + Q) x).toReal) -
+        Real.sqrt ((Q.rnDeriv (P + Q) x).toReal)) ^ 2) ∂(P + Q) := by
+  let N := {x | Q.rnDeriv (P + Q) x = 0}
+  have hN : MeasurableSet N := measurableSet_eq_fun (Q.measurable_rnDeriv _) measurable_const
+  have hQ : Q ≪ P + Q := Measure.AbsolutelyContinuous.rfl.add_right' P
+  have hQN : Q N = 0 := by
+    rw [← Measure.setLIntegral_rnDeriv hQ,
+      setLIntegral_congr_fun hN (g := 0) fun x hx ↦ hx]
+    simp
+  have hmass : P N = ∫⁻ x, N.indicator (1 : X → ℝ≥0∞) x ∂(P + Q) := by
+    rw [lintegral_indicator_one hN, add_apply, hQN, add_zero]
+  have hdivmeas := (P.measurable_rnDeriv (P + Q)).div (Q.measurable_rnDeriv (P + Q))
+  have hchange :
+      (∫⁻ x, hellingerIntegrand (P.rnDeriv Q x) ∂Q) =
+        ∫⁻ x, Q.rnDeriv (P + Q) x *
+          hellingerIntegrand (P.rnDeriv (P + Q) x / Q.rnDeriv (P + Q) x) ∂(P + Q) := by
+    have htransport :=
+      lintegral_rnDeriv_mul hQ (measurable_hellingerIntegrand.comp hdivmeas).aemeasurable
+    rw [show (∫⁻ x, Q.rnDeriv (P + Q) x *
+      hellingerIntegrand (P.rnDeriv (P + Q) x / Q.rnDeriv (P + Q) x) ∂(P + Q)) =
+        ∫⁻ x, hellingerIntegrand (P.rnDeriv (P + Q) x / Q.rnDeriv (P + Q) x) ∂Q by
+      simpa only [Function.comp_apply, Pi.div_apply] using htransport]
+    exact lintegral_congr_ae ((Measure.rnDeriv_eq_div_rnDeriv_add P Q).mono
+      fun x hx ↦ congrArg hellingerIntegrand hx)
+  have hNm : Measurable (N.indicator (1 : X → ℝ≥0∞)) := measurable_one.indicator hN
+  rw [squaredStatisticalHellingerDistance, singularPart_univ_eq_rnDeriv_add_eq_zero,
+    hchange, hmass, ← lintegral_add_right _ hNm]
+  refine lintegral_congr_ae ?_
+  filter_upwards [Measure.rnDeriv_lt_top P (P + Q), Measure.rnDeriv_lt_top Q (P + Q),
+    P.rnDeriv_add' Q (P + Q), (P + Q).rnDeriv_self] with x hp hq hadd hsum
+  have hpq : P.rnDeriv (P + Q) x + Q.rnDeriv (P + Q) x = 1 := by
+    rw [← Pi.add_apply, ← hadd, hsum]
+  by_cases hqx : Q.rnDeriv (P + Q) x = 0
+  · have hpx : P.rnDeriv (P + Q) x = 1 := by simpa only [hqx, add_zero] using hpq
+    have hxN : x ∈ N := hqx
+    simp [hqx, hpx, indicator_of_mem hxN]
+  · have hxN : x ∉ N := hqx
+    rw [indicator_of_notMem hxN, add_zero, mul_hellingerIntegrand_div hp.ne hq.ne hqx]
+
+/-- Statistical Hellinger distance is nonnegative. -/
+theorem statisticalHellingerDistance_nonneg {X : Type*} [MeasurableSpace X]
+    (P Q : Measure X) : 0 ≤ statisticalHellingerDistance P Q := Real.sqrt_nonneg _
+
+/-- Statistical Hellinger distance vanishes on two copies of the same σ-finite measure. -/
+@[simp] theorem statisticalHellingerDistance_self {X : Type*} [MeasurableSpace X]
+    (P : Measure X) [SigmaFinite P] : statisticalHellingerDistance P P = 0 := by
+  rw [statisticalHellingerDistance_def, squaredStatisticalHellingerDistance_eq_lintegral]
+  simp
+
+/-- Statistical Hellinger distance is symmetric for σ-finite measures. -/
+theorem statisticalHellingerDistance_comm {X : Type*} [MeasurableSpace X]
+    (P Q : Measure X) [SigmaFinite P] [SigmaFinite Q] :
+    statisticalHellingerDistance P Q = statisticalHellingerDistance Q P := by
+  simp only [statisticalHellingerDistance_def, squaredStatisticalHellingerDistance_eq_lintegral]
+  rw [add_comm Q P]
+  congr 2
+  apply lintegral_congr
+  intro x
+  rw [← neg_sub, neg_sq]
 
 /-- Hellinger affinity in terms of densities relative to a common dominating measure. -/
 theorem integral_sqrt_rnDeriv_eq_integral_sqrt_density_mul {X : Type*} [MeasurableSpace X]
@@ -84,18 +223,27 @@ theorem HasDensity.memLp_sqrt {X : Type*} [MeasurableSpace X]
   apply (memLp_two_iff_integrable_sq hP.1.sqrt.aestronglyMeasurable).2
   exact hP.integrable.congr (hP.2.1.mono fun x hx ↦ (Real.sq_sqrt hx).symm)
 
-/-- Hellinger distance is the `L²` distance between square roots of densities. -/
-theorem statisticalHellingerDistance_sq_eq_integral {X : Type*} [MeasurableSpace X]
+/-- A finite measure absolutely continuous with respect to a σ-finite measure has the real
+Radon–Nikodym derivative as a density. -/
+theorem hasDensity_toReal_rnDeriv {X : Type*} [MeasurableSpace X] {P μ : Measure X}
+    [IsFiniteMeasure P] [SigmaFinite μ] (hPμ : P ≪ μ) :
+    HasDensity P μ (fun x ↦ (P.rnDeriv μ x).toReal) := by
+  refine ⟨(Measure.measurable_rnDeriv P μ).ennreal_toReal,
+    ae_of_all _ fun _ ↦ ENNReal.toReal_nonneg, ?_⟩
+  conv_lhs => rw [← Measure.withDensity_rnDeriv_eq P μ hPμ]
+  refine withDensity_congr_ae ?_
+  filter_upwards [Measure.rnDeriv_lt_top P μ] with x hx
+  rw [ENNReal.ofReal_toReal hx.ne]
+
+/-- The square-root density integral is expressed by a mass and affinity formula. -/
+private theorem integral_sq_sub_sqrt_density_eq {X : Type*} [MeasurableSpace X]
     {P Q μ : Measure X} [SigmaFinite μ] [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
     {p q : X → ℝ} (hP : HasDensity P μ p) (hQ : HasDensity Q μ q) :
-    statisticalHellingerDistance P Q ^ 2 =
-      ∫ x, (Real.sqrt (p x) - Real.sqrt (q x)) ^ 2 ∂μ := by
+    (∫ x, (Real.sqrt (p x) - Real.sqrt (q x)) ^ 2 ∂μ) =
+      2 - 2 * ∫ x, Real.sqrt ((P.rnDeriv Q x).toReal) ∂Q := by
+  rw [integral_sqrt_rnDeriv_eq_integral_sqrt_density_mul hP hQ]
   have hprod : Integrable (fun x ↦ Real.sqrt (p x) * Real.sqrt (q x)) μ :=
     hP.memLp_sqrt.integrable_mul hQ.memLp_sqrt
-  rw [statisticalHellingerDistance, Real.sq_sqrt (by positivity),
-    ProbabilityTheory.toReal_sqHellinger_eq_integral,
-    integral_sqrt_rnDeriv_eq_integral_sqrt_density_mul hP hQ]
-  simp only [probReal_univ]
   have hexpand : (fun x ↦ (Real.sqrt (p x) - Real.sqrt (q x)) ^ 2) =ᵐ[μ]
       fun x ↦ p x + q x - 2 * (Real.sqrt (p x) * Real.sqrt (q x)) := by
     filter_upwards [hP.2.1, hQ.2.1] with x hp hq
@@ -106,6 +254,25 @@ theorem statisticalHellingerDistance_sq_eq_integral {X : Type*} [MeasurableSpace
     integral_add (f := p) (g := q) hP.integrable hQ.integrable, integral_const_mul,
     hP.integral_eq_one, hQ.integral_eq_one]
   ring
+
+/-- Hellinger distance is the `L²` distance between square roots of densities. -/
+theorem statisticalHellingerDistance_sq_eq_integral {X : Type*} [MeasurableSpace X]
+    {P Q μ : Measure X} [SigmaFinite μ] [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
+    {p q : X → ℝ} (hP : HasDensity P μ p) (hQ : HasDensity Q μ q) :
+    statisticalHellingerDistance P Q ^ 2 =
+      ∫ x, (Real.sqrt (p x) - Real.sqrt (q x)) ^ 2 ∂μ := by
+  have hP' := hasDensity_toReal_rnDeriv
+    (Measure.AbsolutelyContinuous.rfl.add_right Q : P ≪ P + Q)
+  have hQ' := hasDensity_toReal_rnDeriv
+    (Measure.AbsolutelyContinuous.rfl.add_right' P : Q ≪ P + Q)
+  have hInt : Integrable (fun x ↦ (Real.sqrt ((P.rnDeriv (P + Q) x).toReal) -
+      Real.sqrt ((Q.rnDeriv (P + Q) x).toReal)) ^ 2) (P + Q) :=
+    (hP'.memLp_sqrt.sub hQ'.memLp_sqrt).integrable_sq
+  rw [statisticalHellingerDistance_def, Real.sq_sqrt ENNReal.toReal_nonneg,
+    squaredStatisticalHellingerDistance_eq_lintegral,
+    ← ofReal_integral_eq_lintegral_ofReal hInt (ae_of_all _ fun _ ↦ sq_nonneg _),
+    ENNReal.toReal_ofReal (integral_nonneg fun _ ↦ sq_nonneg _),
+    integral_sq_sub_sqrt_density_eq hP' hQ', integral_sq_sub_sqrt_density_eq hP hQ]
 
 /-- Bounded Hellinger score separating a null density `p` from an alternative density `q`. -/
 def hellingerScore {X : Type*} (p q : X → ℝ) (x : X) : ℝ :=
@@ -362,18 +529,6 @@ theorem statisticalHellingerDistance_triangle_of_hasDensity {X : Type*} [Measura
   have hQR : 0 ≤ statisticalHellingerDistance Q R := Real.sqrt_nonneg _
   have hcs' := (le_abs_self (∫ x, A x * B x ∂μ)).trans hcs
   nlinarith
-
-/-- A finite measure absolutely continuous with respect to a σ-finite measure has the real
-Radon–Nikodym derivative as a density. -/
-theorem hasDensity_toReal_rnDeriv {X : Type*} [MeasurableSpace X] {P μ : Measure X}
-    [IsFiniteMeasure P] [SigmaFinite μ] (hPμ : P ≪ μ) :
-    HasDensity P μ (fun x ↦ (P.rnDeriv μ x).toReal) := by
-  refine ⟨(Measure.measurable_rnDeriv P μ).ennreal_toReal,
-    ae_of_all _ fun _ ↦ ENNReal.toReal_nonneg, ?_⟩
-  conv_lhs => rw [← Measure.withDensity_rnDeriv_eq P μ hPμ]
-  refine withDensity_congr_ae ?_
-  filter_upwards [Measure.rnDeriv_lt_top P μ] with x hx
-  rw [ENNReal.ofReal_toReal hx.ne]
 
 /-- Triangle inequality for Hellinger distance among probability measures. Densities are taken
 with respect to the dominating measure `P + Q + R`. -/

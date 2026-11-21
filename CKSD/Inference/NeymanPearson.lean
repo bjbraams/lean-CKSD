@@ -291,11 +291,11 @@ theorem exists_neyman_pearson_test (P₀ P₁ μ : Measure X) [IsProbabilityMeas
   have hSa : P₀.real S = a := by
     refine measureReal_congr ?_
     filter_upwards [hpos0] with x hx
-    exact propext ⟨fun h ↦ ⟨hx, h⟩, fun h ↦ h.2⟩
+    exact ⟨fun h ↦ ⟨hx, h⟩, fun h ↦ h.2⟩
   have hEa : P₀.real E = t - a := by
     have hE' : E =ᵐ[P₀] (T' \ S' : Set X) := by
       filter_upwards [hpos0] with x hx
-      refine propext ⟨fun h ↦ ⟨⟨hx, h.symm ▸ le_rfl⟩, fun h' ↦ ?_⟩, fun h ↦ ?_⟩
+      refine ⟨fun h ↦ ⟨⟨hx, h.symm ▸ le_rfl⟩, fun h' ↦ ?_⟩, fun h ↦ ?_⟩
       · have := h'.2
         simp only [E, mem_ofPred_eq] at h
         linarith
@@ -493,7 +493,7 @@ theorem exists_integral_thresholdTest_eq (P : Measure X) [IsProbabilityMeasure P
   have h0 : 0 < 1 - β := by linarith [hβ.2]
   have h1 : 1 - β < 1 := by linarith [hβ.1]
   set c := ν.quantile (1 - β)
-  have hlt := ν.measureReal_Iio_quantile_le h0 h1
+  have hlt := ν.measureReal_Iio_quantile_le h0
   have hle := ν.le_cdf_quantile h1
   rw [ProbabilityTheory.cdf_eq_real] at hle
   rw [map_measureReal_apply hT measurableSet_Iio] at hlt

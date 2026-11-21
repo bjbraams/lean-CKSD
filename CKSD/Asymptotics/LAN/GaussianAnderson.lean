@@ -1,5 +1,5 @@
 module
-public import TauCeti.MeasureTheory.Integral.PrekopaLeindler
+public import TauCeti.MeasureTheory.Integral.PrekopaLeindler.Basic
 import TauCeti.Probability.Distributions.Gaussian.Density
 import TauCeti.Probability.Distributions.Gaussian.Symmetry
 import Mathlib.MeasureTheory.Integral.Layercake

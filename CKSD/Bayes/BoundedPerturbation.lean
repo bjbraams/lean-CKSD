@@ -1,7 +1,7 @@
 module
 
 public import CKSD.Bayes.Diffusion.Basic
-public import TauCeti.Probability.Concentration.PoincareLogSobolev
+public import TauCeti.Probability.Concentration.Poincare.LogSobolev
 
 /-!
 # Bounded perturbations of logarithmic Sobolev inequalities

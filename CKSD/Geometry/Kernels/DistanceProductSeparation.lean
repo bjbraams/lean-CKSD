@@ -117,7 +117,7 @@ theorem real_distanceWeightedFst_apply (P : Measure (E × F)) [IsFiniteMeasure P
   rw [Measure.map_apply measurable_fst hA]
   exact TauCeti.Probability.measureReal_withDensity_ofReal
     (ae_of_all _ fun z ↦ (distanceKernel_nonneg_le y z.2).1)
-    (measurable_fst hA) (integrable_distanceKernel_snd P y).integrableOn
+    (measurable_fst hA) (integrable_distanceKernel_snd P y).integrableOn.aemeasurable
 
 /-- Restricting to a first-coordinate event preserves integrability of the second-coordinate
 norm. -/

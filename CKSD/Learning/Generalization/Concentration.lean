@@ -1,7 +1,7 @@
 module
 
 public import CKSD.Learning.Basic
-import TauCeti.Probability.McDiarmid
+import TauCeti.Probability.McDiarmid.Basic
 public import CKSD.Asymptotics.Basic
 public import CKSD.Nonparametric.Basic
 public import Mathlib.Analysis.Convex.Deriv
@@ -396,8 +396,8 @@ theorem measureReal_integral_add_le_sSup_le {H X : Type*} [Fintype H] [Nonempty 
       rw [← hs]; ring
     rw [this, abs_div, abs_of_pos hnr]
     exact div_le_div_of_nonneg_right (hosc h _ _) hnr.le
-  have hsub := TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences P F hFm
-    (fun _ ↦ 1 / n) hbd
+  have hsub := TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences
+    (fun _ : Fin n ↦ P) F hFm (fun _ ↦ 1 / n) hbd
   have hset : {x | ∫ y, F y ∂Pn + t ≤ F x} = {x | t ≤ F x - ∫ y, F y ∂Pn} := by
     ext x; simp only [mem_ofPred_eq]; constructor <;> intro h <;> linarith
   rw [hset]

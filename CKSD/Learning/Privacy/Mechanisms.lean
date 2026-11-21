@@ -4,8 +4,10 @@ public import CKSD.Learning.Basic
 public import TauCeti.Probability.Distributions.Laplace.Basic
 public import Mathlib.Probability.Distributions.Bernoulli
 import Mathlib.Analysis.Complex.ExponentialBounds
-import Statlib.Divergence.TotalVariation.Integral
+import CKSD.Nonparametric.Basic
+import CKSD.Nonparametric.LowerBounds.Gaussian
 public import Mathlib.InformationTheory.Hamming
+public import Mathlib.InformationTheory.KullbackLeibler.Basic
 public import Mathlib.MeasureTheory.Measure.TotalVariation.Defs
 
 /-!
@@ -420,21 +422,56 @@ theorem ofReal_half_le_or_of_ofReal_le_add {x y : ℝ≥0∞} {r : ℝ} (h : ENN
 theorem two_mul_measureReal_sub_le_tvDist {Y : Type*} [MeasurableSpace Y] {Q Q' : Measure Y}
     [IsProbabilityMeasure Q] [IsProbabilityMeasure Q'] {A : Set Y} (hA : MeasurableSet A) :
     2 * (Q.real A - Q'.real A) ≤ tvDist Q Q' := by
-  have hf : ∀ (ξ : Measure Y) [IsProbabilityMeasure ξ],
-      ∫ y, (2 * A.indicator (1 : Y → ℝ) y - 1) ∂ξ = 2 * ξ.real A - 1 := by
-    intro ξ _
-    have hI : Integrable (A.indicator (1 : Y → ℝ)) ξ := (integrable_const (1 : ℝ)).indicator hA
-    rw [integral_sub (hI.const_mul 2) (integrable_const 1), integral_const_mul,
-      integral_indicator_one hA]
-    simp
-  have h := integral_sub_integral_le_tvDist (μ := Q) (ν := Q')
-    (f := fun y ↦ 2 * A.indicator (1 : Y → ℝ) y - 1)
-    ((((measurable_const.indicator hA).const_mul 2).sub_const 1).aestronglyMeasurable)
-    (ae_of_all _ fun y ↦ by
-      by_cases hy : y ∈ A
-      · simp [indicator_of_mem hy]; norm_num
-      · simp [indicator_of_notMem hy])
-  rw [hf Q, hf Q'] at h
+  rw [tvDist_eq_two_mul_totalVariationDistance]
+  exact mul_le_mul_of_nonneg_left
+    ((le_abs_self _).trans (abs_measureReal_sub_le_totalVariationDistance Q Q' A hA)) (by norm_num)
+
+/-- A Markov kernel contracts the total variation distance between probability measures. -/
+theorem tvDist_comp_le {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
+    (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
+    (K : Kernel X Y) [IsMarkovKernel K] :
+    tvDist (K ∘ₘ P) (K ∘ₘ Q) ≤ tvDist P Q := by
+  rw [tvDist_eq_two_mul_totalVariationDistance, tvDist_eq_two_mul_totalVariationDistance]
+  apply mul_le_mul_of_nonneg_left _ (by norm_num)
+  rw [totalVariationDistance_def]
+  refine csSup_le ⟨0, ∅, .empty, by simp⟩ ?_
+  rintro r ⟨A, hA, rfl⟩
+  let f : X → ℝ := fun x ↦ (K x A).toReal
+  have hf : Measurable f := (K.measurable_coe hA).ennreal_toReal
+  have heq (μ : Measure X) : (K ∘ₘ μ).real A = ∫ x, f x ∂μ := by
+    rw [measureReal_def, Measure.bind_apply hA K.aemeasurable,
+      integral_toReal (K.measurable_coe hA).aemeasurable (ae_of_all _ fun _ ↦ measure_lt_top _ _)]
+  rw [heq, heq]
+  simpa only [one_mul] using abs_integral_sub_integral_le_mul_totalVariationDistance P Q (c := 1) hf
+    (fun _ ↦ ENNReal.toReal_nonneg)
+    (fun x ↦ by
+      simpa only [ENNReal.toReal_one] using ENNReal.toReal_mono ENNReal.one_ne_top
+        (prob_le_one (μ := K x) (s := A)))
+
+/-- Applying a measurable statistic contracts the total variation distance. -/
+theorem tvDist_map_le {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
+    (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
+    {f : X → Y} (hf : Measurable f) : tvDist (P.map f) (Q.map f) ≤ tvDist P Q := by
+  simpa only [Measure.deterministic_comp_eq_map hf] using
+    tvDist_comp_le P Q (Kernel.deterministic f hf)
+
+/-- Relative entropy at most one gives enough overlap for the two-point testing bound. -/
+theorem exp_neg_one_le_two_sub_tvDist_of_klDiv_le_one {X : Type*} [MeasurableSpace X]
+    (P Q : Measure X) [IsProbabilityMeasure P] [IsProbabilityMeasure Q]
+    (hKL : InformationTheory.klDiv P Q ≤ 1) :
+    Real.exp (-1) ≤ 2 - tvDist P Q := by
+  have hfinite := ne_top_of_le_ne_top ENNReal.one_ne_top hKL
+  have hKLr : (InformationTheory.klDiv P Q).toReal ≤ 1 := by
+    simpa only [ENNReal.toReal_one] using ENNReal.toReal_mono ENNReal.one_ne_top hKL
+  have hsqrt : Real.sqrt ((InformationTheory.klDiv P Q).toReal / 2) ≤ 3 / 4 := by
+    rw [Real.sqrt_le_left (by norm_num)]
+    linarith
+  have htv : tvDist P Q ≤ 3 / 2 := by
+    rw [tvDist_eq_two_mul_totalVariationDistance]
+    linarith [(totalVariationDistance_le_sqrt_toReal_klDiv P Q hfinite).trans hsqrt]
+  have hexp : Real.exp (-1) ≤ 1 / 2 := by
+    rw [Real.exp_neg, one_div, inv_le_inv₀ (Real.exp_pos 1) (by norm_num)]
+    simpa only [one_add_one_eq_two] using Real.add_one_le_exp 1
   linarith
 
 /-- The testing step of Le Cam's method after the Bretagnolle–Huber inequality: if

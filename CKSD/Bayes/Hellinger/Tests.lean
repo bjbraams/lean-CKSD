@@ -113,7 +113,7 @@ theorem exists_hellinger_ball_test {X : Type*} [MeasurableSpace X]
     have hv := integral_hellingerScore_sq_le hQ hP
     rw [hellingerScore_swap] at hv
     simp only [neg_sq] at hv
-    simpa only [T, h, statisticalHellingerDistance_def, ProbabilityTheory.sqHellinger_comm Q P]
+    simpa only [T, h, statisticalHellingerDistance_comm Q P]
       using hv
   refine ⟨A.indicator 1, ⟨measurable_one.indicator hAm, fun x ↦ ?_⟩, ?_, ?_⟩
   · by_cases hx : x ∈ A <;> simp [Set.indicator, hx]

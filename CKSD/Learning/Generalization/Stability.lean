@@ -2,7 +2,7 @@ module
 
 public import Mathlib.Analysis.InnerProductSpace.Basic
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
-import TauCeti.Probability.McDiarmid
+import TauCeti.Probability.McDiarmid.Basic
 public import CKSD.Learning.Generalization.Concentration
 
 /-!
@@ -242,8 +242,8 @@ theorem measureReal_sum_div_add_lt_integral_le_of_stable {X : Type*} [Measurable
   have hbd : ∀ (i : Fin n) (x x' : Fin n → X), (∀ l, l ≠ i → x l = x' l) →
       |Φ x - Φ x'| ≤ c := fun i x x' hxx' ↦
     abs_integral_sub_sum_div_sub_le_of_stable P loss hm hl hstable i hxx'
-  have hsub := TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences P Φ hΦm
-    (fun _ ↦ c) hbd
+  have hsub := TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences
+    (fun _ : Fin n ↦ P) Φ hΦm (fun _ ↦ c) hbd
   -- the tail bound
   set L := Real.log (1 / delta) with hL
   have hL0 : 0 < L := Real.log_pos (by rw [one_div]; exact one_lt_inv_iff₀.mpr hd)

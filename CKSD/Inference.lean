@@ -3,6 +3,7 @@ module -- shake: keep-all
 public import CKSD.Inference.ExponentialFamily
 public import CKSD.Inference.LogPartition
 public import CKSD.Inference.Density
+public import CKSD.Inference.Divergence.Basic
 public import CKSD.Inference.Factorization
 public import CKSD.Inference.LaplaceDeterminacy
 public import CKSD.Inference.Sufficiency

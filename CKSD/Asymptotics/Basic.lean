@@ -92,7 +92,8 @@ theorem uStatistic_def {E : Type*} (m n : ℕ) (h : (Fin m → E) → ℝ) (x : 
 
 /-- Contiguity of `Q n` with respect to `P n` (written `Q n ◁ P n`) on a common measurable
 space: `P n (A n) → 0` implies `Q n (A n) → 0` for measurable sets `A n`. For probability
-measures it is Statlib's `Contiguous5` (`CKSD.isContiguous_iff_contiguous5`). -/
+measures it is equivalent to the measurable-event formulation
+(`CKSD.isContiguous_iff_tendsto_apply`). -/
 @[expose] def IsContiguous {Ω : Type*} [MeasurableSpace Ω]
     (P Q : ℕ → Measure Ω) : Prop :=
   ∀ A : ℕ → Set Ω, (∀ n, MeasurableSet (A n)) →

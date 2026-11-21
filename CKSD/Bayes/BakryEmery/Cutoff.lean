@@ -67,7 +67,7 @@ theorem exists_expanding_smooth_cutoffs (E : Type*) [NormedAddCommGroup E]
       ∀ x, ∀ᶠ n in atTop, (χ n) =ᶠ[𝓝 x] (fun _ ↦ 1) := by
   have hex (n : ℕ) := TauCeti.exists_contDiff_cutoff_closedBall_lipschitzWith (0 : E)
     (r := (n : ℝ) + 1) (R := (n : ℝ) + 2) (K := 2)
-    (by positivity) (by linarith) (by
+    (by linarith) (by
       have h : (n : ℝ) + 2 - ((n : ℝ) + 1) = 1 := by ring
       rw [h]
       norm_num)

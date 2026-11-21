@@ -41,7 +41,9 @@ some CKMA classifications, so their counts are not directly comparable; see
 the [comparison conventions](STRUCTURE.md#comparison-with-ckma).
 
 Build from the project root with `lake build > /tmp/cksd-build.log 2>&1`.
-The dependency pins and the project-specific `.lake` symlink are authoritative.
+The Lean build depends on Mathlib and TauCeti. Statlib is a source for the coverage
+inventory and for some proofs adapted into CKSD.
+The toolchain and dependency pins are recorded in the Lake configuration.
 See [formalization validation](FORMALIZATION.md#validation) and
 [CREDITS.md](CREDITS.md) for checks and source provenance.
 

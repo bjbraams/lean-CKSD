@@ -3,7 +3,7 @@ module
 import CKSD.Bayes.Basic
 import CKSD.Asymptotics.MartingaleCLT.Basic
 public import CKSD.Bayes.MonteCarlo.FiniteChain
-public import TauCeti.Probability.MarkovChain.Filtered
+public import TauCeti.Probability.MarkovChain.Filtered.Basic
 public import Mathlib.Probability.Distributions.Gaussian.Real
 
 /-!

@@ -10,7 +10,7 @@ Radon–Nikodym derivative zero relative to counting measure.
 remainder then vanishes regardless of the prescribed derivative. These facts explain
 why semiparametric results require a sigma-finite common dominating reference.
 
-The proofs use Mathlib's `withDensity_rnDeriv_le` and Statlib's definition of QMD.
+The proofs use Mathlib's `withDensity_rnDeriv_le` and CKSD's definition of QMD.
 They do not assert a stochastic counterexample to a convolution theorem.
 -/
 
@@ -46,7 +46,7 @@ theorem hasQuadraticMeanDerivAt_of_rnDeriv_eq_zero
     (P : E → Measure X) (ν : Measure X) (θ : E)
     (A : E →ₗ[ℝ] Lp ℝ 2 (P θ)) (hzero : ∀ t, (P t).rnDeriv ν = 0) :
     HasQuadraticMeanDerivAt P ν θ A := by
-  unfold HasQuadraticMeanDerivAt QMD.HasQuadraticMeanDerivWithinAt
+  unfold HasQuadraticMeanDerivAt
   simp only [hzero, Pi.zero_apply, ENNReal.toReal_zero, Real.sqrt_zero, mul_zero, sub_zero,
     lpNorm_fun_zero]
   exact Asymptotics.IsLittleOTVS.zero (𝕜 := ℝ) (E := ℝ) (fun y : E => y - θ) (𝓝[Set.univ] θ)

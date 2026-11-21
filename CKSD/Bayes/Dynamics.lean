@@ -354,7 +354,8 @@ theorem wasserstein_le_barycentric_velocity_action {d : ℕ}
       ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.coe_mk]
   -- Narrow continuity, as in TauCeti.isLeast_lintegral_isContinuityEquation.
   have hνc : Continuous ν := ProbabilityMeasure.toFiniteMeasure_continuous.comp
-    (P.continuous_map_of_forall_continuous (fun _ ↦ by fun_prop) fun _ ↦ by fun_prop)
+    (P.continuous_map_of_ae_continuous (fun _ ↦ by fun_prop)
+      (ae_of_all _ fun _ ↦ by fun_prop))
   have hceν : TauCeti.IsContinuityEquation (fun t ↦ (ν t : Measure _)) v 0 1 := by
     simpa only [hν] using hce'
   have : IsProbabilityMeasure (ν 0 : Measure (EuclideanSpace ℝ (Fin d))) := by

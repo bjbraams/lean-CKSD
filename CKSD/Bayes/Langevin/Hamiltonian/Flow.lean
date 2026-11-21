@@ -1,4 +1,6 @@
 module
+public import Mathlib.Analysis.Calculus.Gradient.Basic
+import Mathlib.Analysis.InnerProductSpace.Calculus
 public import TauCeti.Geometry.Symplectic.Hamiltonian.Flow
 import TauCeti.Geometry.Symplectic.Hamiltonian.Standard
 import TauCeti.MeasureTheory.Integral.Bochner.Basic
@@ -170,7 +172,7 @@ theorem norm_intervalIntegral_sq_le [NormedSpace ℝ E] (f : ℝ → E) (hf : Co
   have hn := intervalIntegral.norm_integral_le_integral_norm (μ := volume) (f := f) hT
   have hp : (∫ s in (0 : ℝ)..T, ‖f s‖) ^ 2 ≤ T * ∫ s in (0 : ℝ)..T, ‖f s‖ ^ 2 := by
     have h := TauCeti.MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq
-      (μ := volume) (fun s ↦ ‖f s‖) (Set.Ioc 0 T) measure_Ioc_lt_top.ne hf.norm.integrableOn_Ioc
+      (μ := volume) (fun s ↦ ‖f s‖) (Set.Ioc 0 T) measure_Ioc_lt_top.ne
       (hf.norm.pow 2).integrableOn_Ioc
     rwa [Real.volume_real_Ioc_of_le hT, sub_zero, ← intervalIntegral.integral_of_le hT,
       ← intervalIntegral.integral_of_le hT] at h

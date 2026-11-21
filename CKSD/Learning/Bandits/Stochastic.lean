@@ -3,7 +3,7 @@ module
 public import Mathlib.Probability.ProductMeasure
 import Mathlib.Probability.Distributions.Beta
 public import Mathlib.Probability.Moments.SubGaussian
-public import Statlib.ForMathlib.InformationTheory.KullbackLeibler.Bernoulli
+public import CKSD.Inference.Divergence.Basic
 import TauCeti.Probability.Quantile
 import CKSD.Learning.Bandits.UCB
 import Mathlib.Probability.Independence.InfinitePi
@@ -142,7 +142,7 @@ theorem tendsto_thompson_regret_div_log (K : ℕ) [NeZero K] (μ : Fin K → uni
     Tendsto (fun n : ℕ ↦ banditRegret (thompsonPolicy K) (thompsonSeedLaw K)
         (fun k ↦ bernoulliMeasure (1 : ℝ) 0 (μ k)) n / Real.log n) atTop
       (𝓝 (∑ k, if k = star then 0 else
-        ((μ star : ℝ) - μ k) / InformationTheory.klBerReal (μ k) (μ star))) := by
+        ((μ star : ℝ) - μ k) / bernoulliKullbackLeibler (μ k) (μ star))) := by
   sorry
 
 /-- The UCB1 policy: each arm once, then a maximizer of `x̄ⱼ + √(2 log t / nⱼ)`. -/

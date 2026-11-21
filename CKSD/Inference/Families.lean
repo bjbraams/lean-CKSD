@@ -286,7 +286,6 @@ theorem map_sort_eq_and_indepFun_orderStatistics {n : ℕ} (P : Measure ℝ)
       {x : Fin n → ℝ | Tuple.sort x = τ} =ᵐ[μ] (fun x : Fin n → ℝ ↦ x ∘ τ) ⁻¹' M := by
     intro τ
     filter_upwards [hne] with x hx
-    apply propext
     constructor
     · intro h
       rw [← h]
@@ -298,7 +297,7 @@ theorem map_sort_eq_and_indepFun_orderStatistics {n : ℕ} (P : Measure ℝ)
   have hkey : ∀ (τ : Equiv.Perm (Fin n)) (t : Set (Fin n → ℝ)), MeasurableSet t →
       μ ({x | Tuple.sort x = τ} ∩ S ⁻¹' t) = μ (M ∩ S ⁻¹' t) := by
     intro τ t ht
-    rw [measure_congr ((hae τ).inter (ae_eq_refl _))]
+    rw [measure_congr ((hae τ).inter .rfl)]
     have : (fun x : Fin n → ℝ ↦ x ∘ τ) ⁻¹' M ∩ S ⁻¹' t =
         (fun x : Fin n → ℝ ↦ x ∘ τ) ⁻¹' (M ∩ S ⁻¹' t) := by
       ext x

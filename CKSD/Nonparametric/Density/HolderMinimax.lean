@@ -7,7 +7,7 @@ public import Mathlib.Topology.MetricSpace.Holder
 import CKSD.Nonparametric.LowerBounds.Gaussian
 import CKSD.Nonparametric.LowerBounds.Testing
 import Mathlib.Analysis.Real.Pi.Bounds
-import Statlib.Divergence.KullbackLeibler.CondKL
+import CKSD.Inference.Divergence.Basic
 
 /-!
 # Pointwise minimax rate for Hölder density estimation
@@ -31,7 +31,7 @@ density estimator; minimax risks are infima over measurable estimators of suprem
 * `CKSD.holderDensityPointwiseMinimaxRisk_lower_bound`: the matching lower bound. It is Le Cam's
   two-point method: a Cauchy density of large scale against its perturbation by two opposite
   tents of height of order `h^β` and width `h = n^(-1/(2β+1)) / 2`, with the Kullback–Leibler
-  divergence of the `n`-fold products bounded through the chi-square integral and Statlib's
+  divergence of the `n`-fold products bounded through the chi-square integral and the
   tensorization.
 * `CKSD.klDiv_densityLaw_le`: `KL(f₁, f₀) ≤ ∫ (f₁ - f₀)² / f₀` for a positive density `f₀`.
 * `CKSD.ofReal_mul_measureReal_le_lintegral_sq`: Markov's inequality for the squared error.

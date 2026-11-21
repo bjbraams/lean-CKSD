@@ -3,7 +3,7 @@ module
 import Mathlib.MeasureTheory.Measure.LevyConvergence
 public import Mathlib.Probability.Distributions.Gaussian.Real
 import Mathlib.Probability.Independence.CharacteristicFunction
-import TauCeti.Algebra.Order.BigOperators.ProdSubProd
+import TauCeti.Analysis.Normed.Ring.ProdSubProd
 public import Mathlib.MeasureTheory.Function.ConvergenceInDistribution
 
 /-!

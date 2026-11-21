@@ -6,10 +6,10 @@ identify the mathematical sources and upstream declarations in detail.
 
 The library baseline is fixed by the project configuration:
 
-- Mathlib `6135ffb78e8bcd3fcc8ec02f3f82ea0b0737358b`.
-- TauCeti `afa08a3ed16fb167e35de371afb1eb03fbc5913a`.
-- Statlib `eeaac0283690efaa60c31115400cf561836baeb9`.
-- Lean `v4.36.0-rc2`.
+- Mathlib `fc4f59e577feb1a4956671bc04ac18aaaf8cd842`.
+- TauCeti `d91980bdc255e6e50506be147ad9bcb88eb9fcc0`.
+- Statlib `eeaac0283690efaa60c31115400cf561836baeb9` (coverage and proof provenance).
+- Lean `v4.36.0`.
 
 The code uses Mathlib's measure theory, Markov kernels, conditional
 expectations, statistical risk framework, independent random variables,
@@ -187,7 +187,7 @@ Specific proof reuse includes:
   and `TauCeti.Probability.uniformMeasure`. The eigenvector bound uses Mathlib's
   `IsSelfAdjoint.hasEigenvector_of_isMaxOn`.
 - Section 104, further proofs: the log-Sobolev-to-Poincaré implication uses TauCeti's
-  `TauCeti/Probability/Concentration/PoincareLogSobolev.lean` and
+  `TauCeti/Probability/Concentration/Poincare/LogSobolev.lean` and
   `TauCeti/MeasureTheory/Integral/Entropy.lean`; the Pólya-urn and Metropolis ergodic
   limits use Mathlib's Borel–Cantelli lemma, harmonic-number bounds, and
   `tendsto_div_of_monotone_of_exists_subseq_tendsto_div`.
@@ -201,7 +201,7 @@ Specific proof reuse includes:
   central-limit adapters.
 - Section 107, further proofs: the stability and Rademacher bounds use TauCeti's
   `TauCeti.Probability.hasSubgaussianMGF_of_bounded_differences`
-  (`TauCeti/Probability/McDiarmid.lean`) and Mathlib's `HasSubgaussianMGF.measure_ge_le`;
+  (`TauCeti/Probability/McDiarmid/Basic.lean`) and Mathlib's `HasSubgaussianMGF.measure_ge_le`;
   Exp3 uses `condExp_mul_of_stronglyMeasurable_left`.
 - Section 108, further proofs: the Čech–Rips inclusion uses Mathlib's
   `geometric_hahn_banach_point_closed`; the Gaussian transport maps use the continuous
@@ -249,8 +249,8 @@ Specific proof reuse includes:
   `GromovHausdorff.ghDist_eq_hausdorffDist`; Wasserstein stability uses the Minkowski
   inequality `ENNReal.Lp_add_le`.
 
-The posterior-contraction formulations reuse Statlib's squared Hellinger
-divergence from `Statlib/Divergence/Hellinger/Basic.lean`. Extreme-value
+The posterior-contraction formulations use CKSD's square-root divergence, adapted from
+`Statlib/Divergence/Hellinger/Basic.lean`. Extreme-value
 formulations reuse TauCeti's order statistics, GEV and generalized Pareto
 laws, including its threshold-excess construction. The multivariate test
 statistics reuse Mathlib's Hermitian eigenvalues, continuous functional
@@ -261,9 +261,9 @@ finite-dimensional linear algebra, and continuous linear maps.
 
 The distribution, order-statistic, Wishart, Wasserstein, and entropic
 constructions imported from TauCeti retain its conventions and attribution.
-The asymptotic framework imports Statlib's `Contiguous5` interface from
-`Statlib/Contiguity/Def.lean` and proves its equivalence with CKSD's
-measure-sequence adapter. `HasQuadraticMeanDerivAt` specializes Statlib's
+The asymptotic framework proves the measurable-set criterion from
+`Statlib/Contiguity/Def.lean` for CKSD's measure-sequence definition.
+`HasQuadraticMeanDerivAt` specializes Statlib's
 `QMD.HasQuadraticMeanDerivWithinAt` from `Statlib/Inference/QMD.lean`.
 These interfaces do not certify the likelihood-ratio characterizations in
 Statlib's contiguity roadmap.
@@ -451,6 +451,20 @@ TauCeti's Dirichlet laws (`dirichletMeasure`,
 and Mathlib's `Kernel.ae_eq_of_compProd_eq`, `memPartition` and `natGeneratingSequence` for
 countably generated spaces, and `tendsto_iff_forall_lipschitz_integral_tendsto`.
 
+
+CKSD's contiguity criterion and quadratic-mean derivative retain the conventions from
+Statlib's `Contiguity/Def.lean` and Yongxi Lin's `Inference/QMD.lean`. The local Hellinger
+formula specializes the square-root divergence, mixture formula, and Radon–Nikodym
+decomposition in Statlib's `Divergence/Hellinger/Basic.lean`, `Divergence/FDiv/Basic.lean`,
+and `ForMathlib/MeasureTheory/Measure/Decomposition/RadonNikodym.lean`.
+The local finite-product KL proof uses the induction from Rémy Degenne and Lorenzo Luccioli's
+`Divergence/KullbackLeibler/CondKL.lean` with TauCeti's two-factor rule. The binary
+relative entropy calculation adapts Rémy Degenne's Bernoulli KL module under
+`ForMathlib/InformationTheory/KullbackLeibler` and the Bernoulli density lemmas of Rémy Degenne
+and Gaëtan Serré.
+The stopped-sum proof follows the indicator-series method in Rémy Degenne's
+`Testing/Sequential/Wald.lean` and the tail probability calculation in
+`ForMathlib/MeasureTheory/Integral/Layercake.lean`.
 
 ## Decision, smoothing, testing, and likelihood proofs
 

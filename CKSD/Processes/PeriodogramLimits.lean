@@ -371,7 +371,7 @@ theorem map_half_sum_sq_pi_gaussianReal :
   rw [hf, ← Measure.map_map (by fun_prop) (by fun_prop), h]
   simp only [NNReal.coe_one, one_mul, Fintype.card_fin, Nat.cast_ofNat, Measure.map_id']
   rw [TauCeti.Probability.chiSquaredMeasure_two,
-    TauCeti.Probability.expMeasure_map_const_mul (by norm_num) (by norm_num)]
+    TauCeti.Probability.expMeasure_map_const_mul (by norm_num)]
   norm_num
 
 /-- The halved squared lengths of the coordinate pairs of a standard Gaussian vector on

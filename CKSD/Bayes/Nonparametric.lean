@@ -188,7 +188,7 @@ private theorem ae_empiricalCdfCoord_eq {X : Type*} [MeasurableSpace X] {e : X �
     intro q
     have hm : MeasurableSet (e ⁻¹' Iic (q : ℝ)) := he measurableSet_Iic
     filter_upwards [TauCeti.Probability.strong_law_ae_infinitePi ν
-      (measurable_const.indicator hm) ((integrable_const (1 : ℝ)).indicator hm)] with x hx
+      ((integrable_const (1 : ℝ)).indicator hm)] with x hx
     rw [integral_indicator_const _ hm, smul_eq_mul, mul_one] at hx
     exact hx.limsup_eq
   filter_upwards [ae_all_iff.mpr h] with x hx

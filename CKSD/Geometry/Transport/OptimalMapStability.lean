@@ -81,7 +81,7 @@ lemma unifIntegrable_of_tendsto_wasserstein_law
   apply unifIntegrable_of_eventually_small_tails hfm
   intro ε hε
   obtain ⟨R, hR⟩ := TauCeti.WassersteinSpace.exists_setLIntegral_edist_rpow_le
-    (by norm_num : (2 : ℝ≥0∞) ≠ ⊤) hconv (0 : E)
+    hconv (0 : E)
     (show 0 < ε ^ (2 : ℝ) from ENNReal.rpow_pos_of_nonneg hε (by norm_num))
   refine ⟨R, hR.mono fun n hn ↦ ?_⟩
   have hmeas : MeasurableSet {y : E | R ≤ ‖y‖₊} := measurableSet_le measurable_const (by fun_prop)

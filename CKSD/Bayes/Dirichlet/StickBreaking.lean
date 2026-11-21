@@ -4,7 +4,7 @@ public import CKSD.Bayes.Nonparametric
 import Mathlib.MeasureTheory.Measure.Portmanteau
 import TauCeti.Probability.Distributions.Dirichlet.Aggregation
 import TauCeti.Probability.Distributions.Dirichlet.Moments
-import TauCeti.Probability.Distributions.Dirichlet.StickBreaking
+import TauCeti.Probability.Distributions.Dirichlet.StickBreaking.Basic
 public import Mathlib.Probability.Distributions.Beta
 import Mathlib.MeasureTheory.Measure.RegularityCompacts
 
@@ -321,7 +321,7 @@ theorem sum_integral_stickInsert_dirichletMeasure [Nonempty ι] {a : ι → ℝ}
   simp_rw [hj, hcancel]
   rw [← integral_finsetSum]
   · refine integral_congr_ae ?_
-    filter_upwards [ae_sum_eq_one_dirichletMeasure ha] with y hy
+    filter_upwards [ae_sum_eq_one_dirichletMeasure (a := a)] with y hy
     rw [← Finset.sum_mul, hy, one_mul]
   · intro j _
     exact (((memLp_eval_dirichletMeasure j 1).integrable le_rfl).bdd_mul

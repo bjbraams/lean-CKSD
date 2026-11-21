@@ -1,8 +1,8 @@
 module
 
 import CKSD.Asymptotics.Basic
-import Statlib.Divergence.TotalVariation.Event
-import Statlib.Divergence.TotalVariation.Integral
+import Mathlib.MeasureTheory.Measure.TotalVariation.Basic
+import TauCeti.MeasureTheory.Measure.TotalVariation.Basic
 public import Mathlib.InformationTheory.KullbackLeibler.KLFun
 public import CKSD.Inference.Basic
 public import Mathlib.MeasureTheory.Measure.TotalVariation.Defs
@@ -33,10 +33,10 @@ statistics, shape constraints, high-dimensional and sparse estimation).
 * `CKSD.abs_measureReal_sub_le_totalVariationDistance`: every event discrepancy is bounded by
   the total variation distance.
 * `CKSD.tvDist_eq_two_mul_totalVariationDistance`: for probability measures, Mathlib's
-  `tvDist` is twice `totalVariationDistance` (via Statlib's `etvDist_eq_two_mul_iSup_sub`).
+  `tvDist` is twice `totalVariationDistance` (via TauCeti's `etvDist_eq_two_mul_iSup_sub`).
 * `CKSD.abs_integral_sub_integral_le_mul_totalVariationDistance`: expectations of a function
   with values in `[0, c]` under two probability measures differ by at most `c` times their
-  total variation distance (via Statlib's `integral_sub_integral_le_tvDist`).
+  total variation distance, by Hahn decomposition.
 * `CKSD.klFun_le_sq_sub_one`: the Kullback–Leibler function is dominated by the `χ²`
   integrand on `[0, ∞)`, the pointwise step of the bound `KL ≤ χ²`.
 * `CKSD.IsBoundedInProbability.add`, `CKSD.isBoundedInProbability_finsetSum`,
@@ -123,14 +123,46 @@ theorem tvDist_eq_two_mul_totalVariationDistance {X : Type*} [MeasurableSpace X]
       have := key Aᶜ hA.compl
       rw [probReal_compl_eq_one_sub hA, probReal_compl_eq_one_sub hA] at this
       linarith
-  rw [tvDist, etvDist_eq_two_mul_iSup_sub P Q (by simp), ← hSdef, hS, ENNReal.toReal_mul,
-    ENNReal.toReal_ofReal hT0]
+  rw [tvDist, MeasureTheory.etvDist_eq_two_mul_iSup_sub (by simp : P univ = Q univ),
+    ← hSdef, hS, ENNReal.toReal_mul, ENNReal.toReal_ofReal hT0]
   simp
 
+/-- If `f` takes values in `[-1,1]`, its integral difference is bounded by the total
+variation norm. The positive and negative parts of the bound come from the two restrictions
+of a Hahn decomposition. -/
+theorem integral_sub_integral_le_tvDist {X : Type*} [MeasurableSpace X]
+    {P Q : Measure X} [IsFiniteMeasure P] [IsFiniteMeasure Q] {f : X → ℝ}
+    (hf : Measurable f) (hb : ∀ x, |f x| ≤ 1) :
+    (∫ x, f x ∂P) - (∫ x, f x ∂Q) ≤ tvDist P Q := by
+  obtain ⟨s, hs⟩ := exists_isHahnDecomposition P Q
+  have hfInt (μ : Measure X) [IsFiniteMeasure μ] : Integrable f μ :=
+    Integrable.of_bound hf.aestronglyMeasurable 1
+      (Eventually.of_forall fun x ↦ by simpa only [Real.norm_eq_abs] using hb x)
+  have hplus (μ : Measure X) [IsFiniteMeasure μ] :
+      (∫ x in s, 1 + f x ∂μ) = μ.real s + ∫ x in s, f x ∂μ := by
+    rw [integral_add (integrable_const 1) (hfInt μ).integrableOn, setIntegral_const, smul_eq_mul,
+      mul_one]
+  have hminus (μ : Measure X) [IsFiniteMeasure μ] :
+      (∫ x in sᶜ, 1 - f x ∂μ) = μ.real sᶜ - ∫ x in sᶜ, f x ∂μ := by
+    rw [integral_sub (integrable_const 1) (hfInt μ).integrableOn, setIntegral_const, smul_eq_mul,
+      mul_one]
+  have hp := integral_mono_measure hs.le_on
+    (f := fun x ↦ 1 + f x) (ae_of_all _ fun x ↦ by
+      change 0 ≤ 1 + f x
+      linarith [(abs_le.mp (hb x)).1])
+    ((integrable_const 1).add (hfInt Q).integrableOn)
+  have hm := integral_mono_measure hs.ge_on_compl
+    (f := fun x ↦ 1 - f x) (ae_of_all _ fun x ↦ sub_nonneg.mpr (abs_le.mp (hb x)).2)
+    ((integrable_const 1).sub (hfInt P).integrableOn)
+  rw [hplus P, hplus Q] at hp
+  rw [hminus Q, hminus P] at hm
+  rw [hs.tvDist_eq, ← integral_add_compl hs.measurableSet (hfInt P),
+    ← integral_add_compl hs.measurableSet (hfInt Q)]
+  linarith
+
 /-- A measurable function with values in `[0, c]` has expectations under two probability
-measures differing by at most `c` times their total variation distance. The proof applies
-Statlib's variational bound `ProbabilityTheory.integral_sub_integral_le_tvDist` to
-`± (2 / c • ψ - 1)`. -/
+measures differing by at most `c` times their total variation distance. This applies the
+variational bound to `± (2 / c • ψ - 1)`. -/
 theorem abs_integral_sub_integral_le_mul_totalVariationDistance {X : Type*} [MeasurableSpace X]
     (P₁ P₂ : Measure X) [IsProbabilityMeasure P₁] [IsProbabilityMeasure P₂] {ψ : X → ℝ}
     {c : ℝ} (hψ : Measurable ψ) (h0 : ∀ x, 0 ≤ ψ x) (hc : ∀ x, ψ x ≤ c) :
@@ -158,10 +190,10 @@ theorem abs_integral_sub_integral_le_mul_totalVariationDistance {X : Type*} [Mea
     simp only [f]
     rw [integral_sub ((hint P).const_mul _) (integrable_const _), integral_const_mul]
     simp
-  have h1 := integral_sub_integral_le_tvDist (μ := P₁) (ν := P₂) (f := f)
-    (by fun_prop) (ae_of_all _ hf)
-  have h2 := integral_sub_integral_le_tvDist (μ := P₁) (ν := P₂) (f := fun x ↦ - f x)
-    (by fun_prop) (ae_of_all _ fun x ↦ by rw [abs_neg]; exact hf x)
+  have h1 := integral_sub_integral_le_tvDist (P := P₁) (Q := P₂) (f := f)
+    (by fun_prop) hf
+  have h2 := integral_sub_integral_le_tvDist (P := P₁) (Q := P₂) (f := fun x ↦ - f x)
+    (by fun_prop) (fun x ↦ by rw [abs_neg]; exact hf x)
   rw [integral_neg, integral_neg, hfi, hfi] at h2
   rw [hfi, hfi] at h1
   have key : |2 / c * (∫ x, ψ x ∂P₁ - ∫ x, ψ x ∂P₂)| ≤ 2 * totalVariationDistance P₁ P₂ := by
